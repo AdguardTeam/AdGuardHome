@@ -25,6 +25,7 @@ export const ICONS = {
     loader: 'loader',
     check: 'check',
     dot: 'dot',
+    attention: 'attention',
 } as const;
 
 export type IconType = keyof typeof ICONS;
@@ -317,6 +318,33 @@ export const Icons = memo(() => (
                 clipRule="evenodd"
                 d="M12 13.5C11.1716 13.5 10.5 12.8284 10.5 12C10.5 11.1716 11.1716 10.5 12 10.5C12.8284 10.5 13.5 11.1716 13.5 12C13.5 12.8284 12.8284 13.5 12 13.5Z"
                 fill="currentColor"
+            />
+        </symbol>
+
+        <symbol id="attention" viewBox="0 0 24 24" fill="none">
+            <circle
+                cx="9"
+                cy="9"
+                r="9"
+                transform="matrix(1 0 0 -1 3 21)"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            />
+            <path
+                d="M12 8V14"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            />
+            <path
+                d="M11.997 16.4045C12.009 16.4025 11.997 16.5955 11.997 16.5955"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
             />
         </symbol>
     </svg>

@@ -1,19 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { Trans } from 'react-i18next';
 import { useDispatch } from 'react-redux';
 import { TOAST_TIMEOUTS } from '../../helpers/constants';
 
 import { removeToast } from '../../actions';
 import { Icon } from 'panel/common/ui/Icon';
+import s from './styles.module.pcss';
+import cn from 'clsx';
 
 interface ToastProps {
     id: string;
     message: string;
     type: string;
-    options?: object;
 }
 
-const Toast = ({ id, message, type, options }: ToastProps) => {
+const Toast = ({ id, message, type }: ToastProps) => {
     const dispatch = useDispatch();
     const [timerId, setTimerId] = useState(null);
 
@@ -31,12 +31,10 @@ const Toast = ({ id, message, type, options }: ToastProps) => {
     }, []);
 
     return (
-        <div className="toast" onMouseOver={clearRemoveToastTimeout} onMouseOut={setRemoveToastTimeout}>
-            <Icon icon={type === 'success' ? 'check' : 'cross'} className={`toast__icon toast__icon_${type}`} />
+        <div className={s.toast} onMouseOver={clearRemoveToastTimeout} onMouseOut={setRemoveToastTimeout}>
+            <Icon icon={type === 'success' ? 'check' : 'attention'} className={cn(s.icon, s[type])} />
 
-            <div className="toast__content">
-                <Trans i18nKey={message} {...options} />
-            </div>
+            <div className={s.content}>{message}</div>
         </div>
     );
 };

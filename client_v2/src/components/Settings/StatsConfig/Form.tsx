@@ -1,27 +1,15 @@
 import React, { useEffect } from 'react';
-import i18next from 'i18next';
+import { getIntervalTitle } from '../helpers';
 import { Controller, useForm } from 'react-hook-form';
 
-import { Input } from 'panel/common/controls/Input';
 import { Button } from 'panel/common/ui/Button';
 import intl from 'panel/common/intl';
 import theme from 'panel/lib/theme';
 
-import { STATS_INTERVALS_DAYS, DAY, RETENTION_CUSTOM, RETENTION_RANGE } from '../../../helpers/constants';
-import { toNumber } from '../../../helpers/form';
+import { STATS_INTERVALS_DAYS, DAY, RETENTION_CUSTOM } from '../../../helpers/constants';
 import { RadioGroup, SwitchGroup } from '../SettingsGroup';
 import { IgnoredDomains } from '../IgnoredDomains';
-
-const getIntervalTitle = (interval: any) => {
-    switch (interval) {
-        case RETENTION_CUSTOM:
-            return i18next.t('settings_custom');
-        case DAY:
-            return i18next.t('interval_24_hour');
-        default:
-            return i18next.t('interval_days', { count: interval / DAY });
-    }
-};
+import { RetentionCustomInput } from '../RetentionCustomInput';
 
 export type FormValues = {
     enabled: boolean;
@@ -29,14 +17,6 @@ export type FormValues = {
     customInterval?: number | null;
     ignored: string;
     ignore_enabled: boolean;
-};
-
-const defaultFormValues = {
-    enabled: false,
-    interval: DAY,
-    customInterval: null,
-    ignored: '',
-    ignore_enabled: false,
 };
 
 type Props = {
@@ -57,8 +37,11 @@ export const Form = ({ initialValues, processing, processingReset, onSubmit, onR
     } = useForm<FormValues>({
         mode: 'onBlur',
         defaultValues: {
-            ...defaultFormValues,
-            ...initialValues,
+            enabled: initialValues.enabled || false,
+            interval: initialValues.interval || DAY,
+            customInterval: initialValues.customInterval ?? undefined,
+            ignored: initialValues.ignored || '',
+            ignore_enabled: initialValues.ignore_enabled || true,
         },
     });
 
@@ -71,6 +54,8 @@ export const Form = ({ initialValues, processing, processingReset, onSubmit, onR
             setValue('customInterval', null);
         }
     }, [intervalValue]);
+
+    // Focus is handled inside RetentionCustomInput
 
     const onSubmitForm = (data: FormValues) => {
         onSubmit(data);
@@ -108,27 +93,14 @@ export const Form = ({ initialValues, processing, processingReset, onSubmit, onR
                         value: interval,
                     })),
                 ]}>
-                <Controller
-                    name="customInterval"
+                <RetentionCustomInput
                     control={control}
-                    render={({ field, fieldState }) => (
-                        <div className={theme.form.input}>
-                            <Input
-                                id="stats_config_custom_interval"
-                                label={intl.getMessage('settings_statistics_retention_hours')}
-                                placeholder={intl.getMessage('settings_rotation_placeholder')}
-                                value={field.value ?? ''}
-                                onChange={(e) => {
-                                    const { value } = e.target;
-                                    field.onChange(toNumber(value));
-                                }}
-                                disabled={processing || STATS_INTERVALS_DAYS.includes(intervalValue)}
-                                errorMessage={fieldState.error?.message}
-                                min={RETENTION_RANGE.MIN}
-                                max={RETENTION_RANGE.MAX}
-                            />
-                        </div>
-                    )}
+                    processing={processing}
+                    intervalValue={intervalValue}
+                    intervals={STATS_INTERVALS_DAYS}
+                    inputId="stats_config_custom_interval"
+                    inputLabel={intl.getMessage('settings_statistics_retention_hours')}
+                    placeholder={intl.getMessage('settings_rotation_placeholder')}
                 />
             </RadioGroup>
 

@@ -3,41 +3,32 @@ import cn from 'clsx';
 
 import intl from 'panel/common/intl';
 import { Checkbox } from 'panel/common/controls/Checkbox';
-import { Loader } from 'panel/common/ui/Loader';
 import theme from 'panel/lib/theme';
+import { PageLoader } from 'panel/common/ui/Loader';
+import { SettingsData, StatsData, QueryLogsData, FilteringData } from 'panel/initialState';
 
 import { StatsConfig } from './StatsConfig/StatsConfig';
 import { LogsConfig } from './LogsConfig';
 import { FiltersConfig } from './FiltersConfig';
-import { getObjectKeysSorted, captitalizeWords } from '../../helpers/helpers';
-import { SettingsData, StatsData, QueryLogsData, FilteringData } from '../../initialState';
+import { getSafeSearchProviderTitle } from './helpers';
 import type { StatsConfigPayload } from './StatsConfig/StatsConfig';
 import type { LogsConfigPayload } from './LogsConfig/LogsConfig';
 import type { FormValues as FiltersFormValues } from './FiltersConfig';
 import { SwitchGroup } from './SettingsGroup';
-
-import s from './styles.module.pcss';
-
-const ORDER_KEY = 'order';
 
 const SETTINGS = {
     safebrowsing: {
         enabled: false,
         title: intl.getMessage('settings_browsing_security'),
         subtitle: intl.getMessage('settings_browsing_security_desc'),
-        testId: 'safebrowsing',
-        [ORDER_KEY]: 0,
     },
     parental: {
         enabled: false,
         title: intl.getMessage('settings_parental_control'),
         subtitle: intl.getMessage('settings_parental_control_desc'),
-        testId: 'parental',
-        [ORDER_KEY]: 1,
     },
 };
 
-type InitSettingsArg = typeof SETTINGS;
 type ToggleSettingArgKey = keyof typeof SETTINGS | 'safesearch';
 type ToggleSettingArgValue = boolean | Record<string, boolean>;
 
@@ -46,16 +37,16 @@ type Props = {
     stats: StatsData;
     queryLogs: QueryLogsData;
     filtering: FilteringData;
-    initSettings: (settings: InitSettingsArg) => void;
+    initSettings: () => void;
     toggleSetting: (key: ToggleSettingArgKey, value: ToggleSettingArgValue) => void;
     getStatsConfig: () => void;
     setStatsConfig: (config: StatsConfigPayload) => void;
     resetStats: () => void;
     setFiltersConfig: (values: FiltersFormValues) => void;
     getFilteringStatus: () => void;
-    getLogsConfig?: () => void;
-    setLogsConfig?: (values: LogsConfigPayload) => void;
-    clearLogs?: () => void;
+    getLogsConfig: () => void;
+    setLogsConfig: (values: LogsConfigPayload) => void;
+    clearLogs: () => void;
 };
 
 export const Settings = ({
@@ -75,21 +66,17 @@ export const Settings = ({
     setFiltersConfig,
 }: Props) => {
     useEffect(() => {
-        initSettings(SETTINGS);
+        initSettings();
         getStatsConfig();
         getFilteringStatus();
-
-        if (getLogsConfig) {
-            getLogsConfig();
-        }
+        getLogsConfig();
     }, []);
 
     const renderSettings = (settingsList?: SettingsData['settingsList']) =>
         settingsList
-            ? getObjectKeysSorted(SETTINGS, ORDER_KEY).map((key: keyof typeof SETTINGS) => {
-                  const setting = settingsList[key];
-                  const { enabled, title, subtitle } = setting;
-
+            ? (Object.keys(SETTINGS) as Array<keyof typeof SETTINGS>).map((key) => {
+                  const { title, subtitle } = SETTINGS[key];
+                  const enabled = Boolean(settingsList[key]?.enabled);
                   return (
                       <div key={key}>
                           <SwitchGroup
@@ -97,7 +84,7 @@ export const Settings = ({
                               description={subtitle}
                               id={String(key)}
                               checked={enabled}
-                              onChange={(checked) => toggleSetting(key as ToggleSettingArgKey, !checked)}
+                              onChange={(e) => toggleSetting(key, !e.target.checked)}
                           />
                       </div>
                   );
@@ -122,7 +109,7 @@ export const Settings = ({
                 onChange={(e) => toggleSetting('safesearch', { ...safesearch, enabled: e.target.checked })}>
                 <div>
                     {Object.keys(searches).map((searchKey) => (
-                        <div key={searchKey} className={s.checkbox}>
+                        <div key={searchKey} className={theme.form.checkbox}>
                             <Checkbox
                                 id={searchKey}
                                 checked={searches[searchKey]}
@@ -130,7 +117,7 @@ export const Settings = ({
                                 onChange={(e) => {
                                     toggleSetting('safesearch', { ...safesearch, [searchKey]: e.target.checked });
                                 }}>
-                                {captitalizeWords(searchKey)}
+                                {getSafeSearchProviderTitle(searchKey)}
                             </Checkbox>
                         </div>
                     ))}
@@ -139,7 +126,7 @@ export const Settings = ({
         );
     };
 
-    const isDataReady = !settings.processing && !stats.processingGetConfig && !queryLogs.processingGetConfig;
+    const isLoading = settings.processing || stats.processingGetConfig || queryLogs.processingGetConfig;
 
     return (
         <div className={theme.layout.container}>
@@ -147,9 +134,9 @@ export const Settings = ({
                 {intl.getMessage('general_settings')}
             </h1>
 
-            {!isDataReady && <Loader />}
+            {isLoading && <PageLoader />}
 
-            {isDataReady && (
+            {!isLoading && (
                 <>
                     <h2 className={cn(theme.layout.subtitle, theme.title.h5, theme.title.h4_tablet)}>
                         {intl.getMessage('settings_filter_requests')}

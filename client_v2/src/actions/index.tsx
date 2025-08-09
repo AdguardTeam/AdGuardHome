@@ -28,7 +28,6 @@ import { apiClient } from '../api/Api';
 import { addErrorToast, addNoticeToast, addSuccessToast } from './toasts';
 import { getFilteringStatus, setRules } from './filtering';
 import type { Dispatch } from 'redux';
-import type { SettingsData } from '../initialState';
 import intl from 'panel/common/intl';
 
 export const toggleSettingStatus = createAction<{
@@ -37,16 +36,8 @@ export const toggleSettingStatus = createAction<{
 }>('SETTING_STATUS_TOGGLE');
 export const showSettingsFailure = createAction('SETTINGS_FAILURE_SHOW');
 
-// Types for settings actions
 type SafeSearchConfig = Record<string, boolean> & { enabled: boolean };
 type ToggleSettingKey = keyof typeof SETTINGS_NAMES;
-type SettingsItem = NonNullable<SettingsData['settingsList']>['safebrowsing'];
-type InitSettingsItemInput = Partial<Pick<SettingsItem, 'enabled' | 'order' | 'subtitle' | 'title'>> &
-    Record<string, unknown>;
-type InitSettingsArg = {
-    safebrowsing?: InitSettingsItemInput;
-    parental?: InitSettingsItemInput;
-};
 
 /**
  *
@@ -89,40 +80,35 @@ export const toggleSetting =
 export const initSettingsRequest = createAction('SETTINGS_INIT_REQUEST');
 export const initSettingsFailure = createAction('SETTINGS_INIT_FAILURE');
 type SettingsSuccessList = {
-    safebrowsing: Record<string, unknown> & { enabled: boolean };
-    parental: Record<string, unknown> & { enabled: boolean };
+    safebrowsing: { enabled: boolean };
+    parental: { enabled: boolean };
     safesearch: SafeSearchConfig;
 };
 export const initSettingsSuccess = createAction<{ settingsList: SettingsSuccessList }>('SETTINGS_INIT_SUCCESS');
 
-export const initSettings =
-    (settingsList: InitSettingsArg = { safebrowsing: {}, parental: {} }) =>
-    async (dispatch: Dispatch) => {
-        dispatch(initSettingsRequest());
-        try {
-            const safebrowsingStatus = await apiClient.getSafebrowsingStatus();
-            const parentalStatus = await apiClient.getParentalStatus();
-            const safesearchStatus = (await apiClient.getSafesearchStatus()) as SafeSearchConfig;
-            const { safebrowsing = {}, parental = {} } = settingsList;
-            const newSettingsList = {
-                safebrowsing: {
-                    ...safebrowsing,
-                    enabled: safebrowsingStatus.enabled,
-                },
-                parental: {
-                    ...parental,
-                    enabled: parentalStatus.enabled,
-                },
-                safesearch: {
-                    ...safesearchStatus,
-                },
-            };
-            dispatch(initSettingsSuccess({ settingsList: newSettingsList }));
-        } catch (error) {
-            dispatch(addErrorToast({ error }));
-            dispatch(initSettingsFailure());
-        }
-    };
+export const initSettings = () => async (dispatch: Dispatch) => {
+    dispatch(initSettingsRequest());
+    try {
+        const safebrowsingStatus = await apiClient.getSafebrowsingStatus();
+        const parentalStatus = await apiClient.getParentalStatus();
+        const safesearchStatus = (await apiClient.getSafesearchStatus()) as SafeSearchConfig;
+        const newSettingsList: SettingsSuccessList = {
+            safebrowsing: {
+                enabled: safebrowsingStatus.enabled,
+            },
+            parental: {
+                enabled: parentalStatus.enabled,
+            },
+            safesearch: {
+                ...safesearchStatus,
+            },
+        };
+        dispatch(initSettingsSuccess({ settingsList: newSettingsList }));
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(initSettingsFailure());
+    }
+};
 
 export const toggleProtectionRequest = createAction('TOGGLE_PROTECTION_REQUEST');
 export const toggleProtectionFailure = createAction('TOGGLE_PROTECTION_FAILURE');

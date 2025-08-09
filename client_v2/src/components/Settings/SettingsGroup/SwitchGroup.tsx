@@ -2,6 +2,7 @@ import React, { ReactNode, useRef } from 'react';
 import cn from 'clsx';
 
 import { Switch } from 'panel/common/controls/Switch';
+import theme from 'panel/lib/theme';
 
 import s from './styles.module.pcss';
 
@@ -19,7 +20,7 @@ type Props = {
 export const SwitchGroup = ({ title, description, id, className, checked, onChange, disabled, children }: Props) => {
     const inputRef = useRef<HTMLInputElement>(null);
 
-    const handleRowClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const handleRowClick = () => {
         if (disabled || !inputRef.current) {
             return;
         }
@@ -31,8 +32,8 @@ export const SwitchGroup = ({ title, description, id, className, checked, onChan
         <div className={cn(s.switch, className)}>
             <div className={s.row} onClick={handleRowClick}>
                 <div className={s.text}>
-                    <div className={s.title}>{title}</div>
-                    {description && <div className={s.desc}>{description}</div>}
+                    <div className={cn(theme.text.t2, theme.text.semibold, s.title)}>{title}</div>
+                    {description && <div className={cn(theme.text.t3, s.desc)}>{description}</div>}
                 </div>
                 <div className={s.input} onClick={(e) => e.stopPropagation()}>
                     <Switch id={id} checked={checked} onChange={onChange} disabled={disabled} ref={inputRef} />

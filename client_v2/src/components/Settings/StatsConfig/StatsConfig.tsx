@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 
-import { Form, FormValues } from './Form';
 import { ConfirmDialog } from 'panel/common/ui/ConfirmDialog';
 import intl from 'panel/common/intl';
 import { HOUR } from 'panel/helpers/constants';
 import { formatIntervalText } from 'panel/components/Settings/helpers';
+
+import { Form, FormValues } from './Form';
 
 export type StatsConfigPayload = {
     enabled: boolean;

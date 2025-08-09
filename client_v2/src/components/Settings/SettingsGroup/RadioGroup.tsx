@@ -2,6 +2,7 @@ import React, { ReactNode } from 'react';
 import cn from 'clsx';
 
 import { Radio } from 'panel/common/controls/Radio';
+import theme from 'panel/lib/theme';
 
 import s from './styles.module.pcss';
 
@@ -34,8 +35,8 @@ export const RadioGroup = <T extends number | string | boolean>({
         <div className={cn(s.switch, className)}>
             <div className={s.row}>
                 <div className={s.text}>
-                    <div className={s.title}>{title}</div>
-                    {description && <div className={s.desc}>{description}</div>}
+                    <div className={cn(s.title, theme.text.t2, theme.text.semibold)}>{title}</div>
+                    {description && <div className={cn(s.desc, theme.text.t3)}>{description}</div>}
                 </div>
                 <div className={s.input} />
             </div>

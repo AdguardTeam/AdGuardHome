@@ -1,20 +1,30 @@
 .buttonGroup {
     display: flex;
-    align-items: center;
     flex-direction: column;
     gap: 16px;
     padding: 8px 16px;
 
     @media (min-width: 768px) {
         flex-direction: row;
+        align-items: center;
     }
 
     .button {
-        flex: 1;
         min-width: 200px;
+        max-width: 100%;
+
+        @media (min-width: 768px) {
+            width: auto;
+        }
     }
 }
 
 .input {
+    padding: 8px 0;
+}
+
+.checkbox {
+    display: flex;
+    align-items: center;
     padding: 8px 0;
 }

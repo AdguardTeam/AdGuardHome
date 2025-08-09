@@ -5,6 +5,7 @@ import { apiClient } from '../api/Api';
 import { normalizeLogs } from '../helpers/helpers';
 import { DEFAULT_LOGS_FILTER, QUERY_LOGS_PAGE_LIMIT } from '../helpers/constants';
 import { addErrorToast, addSuccessToast } from './toasts';
+import intl from 'panel/common/intl';
 
 type SearchFormValues = {
     search: string;
@@ -173,7 +174,7 @@ export const clearLogs = () => async (dispatch: any) => {
     try {
         await apiClient.clearQueryLog();
         dispatch(clearLogsSuccess());
-        dispatch(addSuccessToast('query_log_cleared'));
+        dispatch(addSuccessToast(intl.getMessage('settings_notify_query_log_cleared')));
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(clearLogsFailure(error));
@@ -203,7 +204,7 @@ export const setLogsConfig = (config: any) => async (dispatch: any) => {
     dispatch(setLogsConfigRequest());
     try {
         await apiClient.setQueryLogConfig(config);
-        dispatch(addSuccessToast('config_successfully_saved'));
+        dispatch(addSuccessToast(intl.getMessage('settings_notify_changes_saved')));
         dispatch(setLogsConfigSuccess(config));
     } catch (error) {
         dispatch(addErrorToast({ error }));

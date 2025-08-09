@@ -1,5 +1,6 @@
 import intl from 'panel/common/intl';
-import { HOUR, DAY } from 'panel/helpers/constants';
+import { HOUR, DAY, RETENTION_CUSTOM } from 'panel/helpers/constants';
+import { captitalizeWords } from '../../helpers/helpers';
 
 export const formatIntervalText = (intervalMs: number) => {
     if (intervalMs === 6 * HOUR) {
@@ -12,4 +13,25 @@ export const formatIntervalText = (intervalMs: number) => {
         return intl.getPlural('settings_days', intervalMs / DAY);
     }
     return intl.getPlural('settings_hours', Math.floor(intervalMs / HOUR));
+};
+
+export const getIntervalTitle = (intervalMs: number) => {
+    if (intervalMs === RETENTION_CUSTOM) {
+        return intl.getMessage('settings_custom');
+    }
+    return formatIntervalText(intervalMs);
+};
+
+const SAFESEARCH_TITLES: Record<string, string> = {
+    bing: 'Bing',
+    duckduckgo: 'DuckDuckGo',
+    ecosia: 'Ecosia',
+    google: 'Google',
+    pixabay: 'Pixabay',
+    yandex: 'Yandex',
+    youtube: 'YouTube',
+};
+
+export const getSafeSearchProviderTitle = (key: string) => {
+    return SAFESEARCH_TITLES[key] ?? captitalizeWords(key);
 };

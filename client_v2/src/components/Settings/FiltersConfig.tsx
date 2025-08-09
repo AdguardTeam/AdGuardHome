@@ -1,11 +1,12 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
 import intl from 'panel/common/intl';
 import theme from 'panel/lib/theme';
-import { SwitchGroup } from '../SettingsGroup';
 import { RoutePath } from 'panel/components/Routes/Paths';
 import { Link } from 'panel/common/ui/Link';
+
+import { SwitchGroup } from './SettingsGroup';
 
 export type FormValues = {
     enabled: boolean;

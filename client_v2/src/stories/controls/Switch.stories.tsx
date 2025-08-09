@@ -49,7 +49,7 @@ const meta: Meta<typeof Switch> = {
             control: 'text',
             description: 'Additional CSS class for the wrapper element',
         },
-        handleChange: { action: 'changed' },
+        onChange: { action: 'changed' },
     },
 };
 

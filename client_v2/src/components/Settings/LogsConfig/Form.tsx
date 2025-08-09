@@ -2,28 +2,15 @@ import React, { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
 import intl from 'panel/common/intl';
-import { toNumber } from 'panel/helpers/form';
-import { Input } from 'panel/common/controls/Input';
 import { Button } from 'panel/common/ui/Button';
 import theme from 'panel/lib/theme';
+import { QUERY_LOG_INTERVALS_DAYS, DAY, RETENTION_CUSTOM } from 'panel/helpers/constants';
 
-import { QUERY_LOG_INTERVALS_DAYS, HOUR, DAY, RETENTION_CUSTOM, RETENTION_RANGE } from '../../../helpers/constants';
 import { RadioGroup } from '../SettingsGroup/RadioGroup';
 import { SwitchGroup } from '../SettingsGroup';
 import { IgnoredDomains } from '../IgnoredDomains';
-
-const getIntervalTitle = (intervalDays: number) => {
-    switch (intervalDays) {
-        case RETENTION_CUSTOM:
-            return intl.getMessage('settings_custom');
-        case 6 * HOUR:
-            return intl.getPlural('settings_hours', 6);
-        case DAY:
-            return intl.getPlural('settings_hours', 24);
-        default:
-            return intl.getPlural('settings_days', intervalDays / DAY);
-    }
-};
+import { getIntervalTitle } from '../helpers';
+import { RetentionCustomInput } from '../RetentionCustomInput';
 
 export type FormValues = {
     enabled: boolean;
@@ -121,27 +108,14 @@ export const Form = ({ initialValues, processing, processingReset, onSubmit, onR
                         value: interval,
                     })),
                 ]}>
-                <Controller
-                    name="customInterval"
+                <RetentionCustomInput
                     control={control}
-                    render={({ field, fieldState }) => (
-                        <div className={theme.form.input}>
-                            <Input
-                                id="logs_config_custom_interval"
-                                label={intl.getMessage('settings_log_rotation_hours')}
-                                placeholder={intl.getMessage('settings_rotation_placeholder')}
-                                value={field.value ?? ''}
-                                onChange={(e) => {
-                                    const { value } = e.target;
-                                    field.onChange(toNumber(value));
-                                }}
-                                disabled={processing || QUERY_LOG_INTERVALS_DAYS.includes(intervalValue)}
-                                errorMessage={fieldState.error?.message}
-                                min={RETENTION_RANGE.MIN}
-                                max={RETENTION_RANGE.MAX}
-                            />
-                        </div>
-                    )}
+                    processing={processing}
+                    intervalValue={intervalValue}
+                    intervals={QUERY_LOG_INTERVALS_DAYS}
+                    inputId="logs_config_custom_interval"
+                    inputLabel={intl.getMessage('settings_log_rotation_hours')}
+                    placeholder={intl.getMessage('settings_rotation_placeholder')}
                 />
             </RadioGroup>
 
