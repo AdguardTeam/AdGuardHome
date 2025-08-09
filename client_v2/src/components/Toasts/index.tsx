@@ -5,7 +5,7 @@ import { CSSTransition, TransitionGroup } from 'react-transition-group';
 import { TOAST_TRANSITION_TIMEOUT } from '../../helpers/constants';
 
 import Toast from './Toast';
-import './Toast.css';
+import './Toast.pcss';
 import { RootState } from '../../initialState';
 
 const Toasts = () => {

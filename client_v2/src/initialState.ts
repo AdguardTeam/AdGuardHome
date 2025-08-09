@@ -213,6 +213,7 @@ export type StatsData = {
     enabled: boolean;
     topUpstreamsAvgTime: { name: string; count: number }[];
     topUpstreamsResponses: { name: string; count: number }[];
+    ignored: string[];
 };
 
 export type ClientsData = {
@@ -365,6 +366,7 @@ export type QueryLogsData = {
     isDetailed: boolean;
     isEntireLog: boolean;
     customInterval: any;
+    ignored: string[];
 };
 
 export type ServicesData = {
@@ -566,6 +568,7 @@ export const initialState: RootState = {
         isDetailed: true,
         isEntireLog: false,
         customInterval: null,
+        ignored: [],
     },
     rewrites: {
         processing: true,
@@ -612,6 +615,7 @@ export const initialState: RootState = {
         enabled: true,
         topUpstreamsAvgTime: [],
         topUpstreamsResponses: [],
+        ignored: [],
     },
     toasts: { notices: [] },
 };

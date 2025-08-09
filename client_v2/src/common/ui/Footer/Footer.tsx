@@ -105,7 +105,7 @@ export const Footer = () => {
                         <a
                             key={name}
                             href={href}
-                            className={cn(theme.link.link, theme.link.no_decoration)}
+                            className={cn(theme.link.link, theme.link.noDecoration)}
                             target="_blank"
                             rel="noopener noreferrer">
                             {name}

@@ -27,9 +27,26 @@ import { getTlsStatus } from './encryption';
 import { apiClient } from '../api/Api';
 import { addErrorToast, addNoticeToast, addSuccessToast } from './toasts';
 import { getFilteringStatus, setRules } from './filtering';
+import type { Dispatch } from 'redux';
+import type { SettingsData } from '../initialState';
+import intl from 'panel/common/intl';
 
-export const toggleSettingStatus = createAction('SETTING_STATUS_TOGGLE');
+export const toggleSettingStatus = createAction<{
+    settingKey: keyof typeof SETTINGS_NAMES;
+    value?: boolean | SafeSearchConfig;
+}>('SETTING_STATUS_TOGGLE');
 export const showSettingsFailure = createAction('SETTINGS_FAILURE_SHOW');
+
+// Types for settings actions
+type SafeSearchConfig = Record<string, boolean> & { enabled: boolean };
+type ToggleSettingKey = keyof typeof SETTINGS_NAMES;
+type SettingsItem = NonNullable<SettingsData['settingsList']>['safebrowsing'];
+type InitSettingsItemInput = Partial<Pick<SettingsItem, 'enabled' | 'order' | 'subtitle' | 'title'>> &
+    Record<string, unknown>;
+type InitSettingsArg = {
+    safebrowsing?: InitSettingsItemInput;
+    parental?: InitSettingsItemInput;
+};
 
 /**
  *
@@ -37,62 +54,56 @@ export const showSettingsFailure = createAction('SETTINGS_FAILURE_SHOW');
  * @param {*} status: boolean | SafeSearchConfig
  * @returns
  */
-export const toggleSetting = (settingKey: any, status: any) => async (dispatch: any) => {
-    let successMessage = '';
-    try {
-        switch (settingKey) {
-            case SETTINGS_NAMES.safebrowsing:
-                if (status) {
-                    successMessage = 'disabled_safe_browsing_toast';
-                    await apiClient.disableSafebrowsing();
-                } else {
-                    successMessage = 'enabled_safe_browsing_toast';
-                    await apiClient.enableSafebrowsing();
-                }
-                dispatch(toggleSettingStatus({ settingKey }));
-                break;
-            case SETTINGS_NAMES.parental:
-                if (status) {
-                    successMessage = 'disabled_parental_toast';
-                    await apiClient.disableParentalControl();
-                } else {
-                    successMessage = 'enabled_parental_toast';
-                    await apiClient.enableParentalControl();
-                }
-                dispatch(toggleSettingStatus({ settingKey }));
-                break;
-            case SETTINGS_NAMES.safesearch:
-                successMessage = 'updated_save_search_toast';
-                await apiClient.updateSafesearch(status);
-                dispatch(toggleSettingStatus({ settingKey, value: status }));
-                break;
-            default:
-                break;
+export const toggleSetting =
+    (settingKey: ToggleSettingKey, status: boolean | SafeSearchConfig) => async (dispatch: Dispatch) => {
+        try {
+            switch (settingKey) {
+                case SETTINGS_NAMES.safebrowsing:
+                    if (status) {
+                        await apiClient.disableSafebrowsing();
+                    } else {
+                        await apiClient.enableSafebrowsing();
+                    }
+                    dispatch(toggleSettingStatus({ settingKey }));
+                    break;
+                case SETTINGS_NAMES.parental:
+                    if (status) {
+                        await apiClient.disableParentalControl();
+                    } else {
+                        await apiClient.enableParentalControl();
+                    }
+                    dispatch(toggleSettingStatus({ settingKey }));
+                    break;
+                case SETTINGS_NAMES.safesearch:
+                    await apiClient.updateSafesearch(status as SafeSearchConfig);
+                    dispatch(toggleSettingStatus({ settingKey, value: status }));
+                    break;
+                default:
+                    break;
+            }
+        } catch (error) {
+            dispatch(addErrorToast({ error }));
         }
-        dispatch(addSuccessToast(successMessage));
-    } catch (error) {
-        dispatch(addErrorToast({ error }));
-    }
-};
+    };
 
 export const initSettingsRequest = createAction('SETTINGS_INIT_REQUEST');
 export const initSettingsFailure = createAction('SETTINGS_INIT_FAILURE');
-export const initSettingsSuccess = createAction('SETTINGS_INIT_SUCCESS');
+type SettingsSuccessList = {
+    safebrowsing: Record<string, unknown> & { enabled: boolean };
+    parental: Record<string, unknown> & { enabled: boolean };
+    safesearch: SafeSearchConfig;
+};
+export const initSettingsSuccess = createAction<{ settingsList: SettingsSuccessList }>('SETTINGS_INIT_SUCCESS');
 
 export const initSettings =
-    (
-        settingsList = {
-            safebrowsing: {},
-            parental: {},
-        },
-    ) =>
-    async (dispatch: any) => {
+    (settingsList: InitSettingsArg = { safebrowsing: {}, parental: {} }) =>
+    async (dispatch: Dispatch) => {
         dispatch(initSettingsRequest());
         try {
             const safebrowsingStatus = await apiClient.getSafebrowsingStatus();
             const parentalStatus = await apiClient.getParentalStatus();
-            const safesearchStatus = await apiClient.getSafesearchStatus();
-            const { safebrowsing, parental } = settingsList;
+            const safesearchStatus = (await apiClient.getSafesearchStatus()) as SafeSearchConfig;
+            const { safebrowsing = {}, parental = {} } = settingsList;
             const newSettingsList = {
                 safebrowsing: {
                     ...safebrowsing,
@@ -120,19 +131,21 @@ export const toggleProtectionSuccess = createAction('TOGGLE_PROTECTION_SUCCESS')
 const getDisabledMessage = (time: any) => {
     switch (time) {
         case DISABLE_PROTECTION_TIMINGS.HALF_MINUTE:
-            return i18next.t('disable_notify_for_seconds', {
+            return intl.getMessage('disable_notify_for_seconds', {
                 count: msToSeconds(DISABLE_PROTECTION_TIMINGS.HALF_MINUTE),
             });
         case DISABLE_PROTECTION_TIMINGS.MINUTE:
-            return i18next.t('disable_notify_for_minutes', { count: msToMinutes(DISABLE_PROTECTION_TIMINGS.MINUTE) });
+            return intl.getMessage('disable_notify_for_minutes', {
+                count: msToMinutes(DISABLE_PROTECTION_TIMINGS.MINUTE),
+            });
         case DISABLE_PROTECTION_TIMINGS.TEN_MINUTES:
-            return i18next.t('disable_notify_for_minutes', {
+            return intl.getMessage('disable_notify_for_minutes', {
                 count: msToMinutes(DISABLE_PROTECTION_TIMINGS.TEN_MINUTES),
             });
         case DISABLE_PROTECTION_TIMINGS.HOUR:
-            return i18next.t('disable_notify_for_hours', { count: msToHours(DISABLE_PROTECTION_TIMINGS.HOUR) });
+            return intl.getMessage('disable_notify_for_hours', { count: msToHours(DISABLE_PROTECTION_TIMINGS.HOUR) });
         case DISABLE_PROTECTION_TIMINGS.TOMORROW:
-            return i18next.t('disable_notify_until_tomorrow');
+            return intl.getMessage('disable_notify_until_tomorrow');
         default:
             return 'disabled_protection';
     }
@@ -143,7 +156,7 @@ export const toggleProtection =
     async (dispatch: any) => {
         dispatch(toggleProtectionRequest());
         try {
-            const successMessage = status ? getDisabledMessage(time) : 'enabled_protection';
+            const successMessage = status ? getDisabledMessage(time) : intl.getMessage('enabled_protection');
             await apiClient.setProtection({ enabled: !status, duration: time });
             dispatch(addSuccessToast(successMessage));
             dispatch(toggleProtectionSuccess({ disabledDuration: time }));
@@ -176,9 +189,9 @@ export const getVersion =
                 const currentVersion = dnsVersion === 'undefined' ? 0 : dnsVersion;
 
                 if (data && !areEqualVersions(currentVersion, data.new_version)) {
-                    dispatch(addSuccessToast('updates_checked'));
+                    dispatch(addSuccessToast(intl.getMessage('updates_checked')));
                 } else {
-                    dispatch(addSuccessToast('updates_version_equal'));
+                    dispatch(addSuccessToast(intl.getMessage('updates_version_equal')));
                 }
             }
         } catch (error) {
@@ -413,7 +426,7 @@ export const testUpstream =
             });
 
             if (testMessages.every((message) => message === 'OK' || message.startsWith('WARNING:'))) {
-                dispatch(addSuccessToast('dns_test_ok_toast'));
+                dispatch(addSuccessToast(intl.getMessage('dns_test_ok_toast')));
             }
 
             dispatch(testUpstreamSuccess());
@@ -572,7 +585,7 @@ export const findActiveDhcp = (selectedInterface: any) => async (dispatch: any, 
             });
             dispatch(addErrorToast({ error: warning }));
         } else {
-            dispatch(addSuccessToast('dhcp_not_found'));
+            dispatch(addSuccessToast(intl.getMessage('dhcp_not_found')));
         }
     } catch (error) {
         dispatch(addErrorToast({ error }));
@@ -589,7 +602,7 @@ export const setDhcpConfig = (values: any) => async (dispatch: any) => {
     try {
         await apiClient.setDhcpConfig(values);
         dispatch(setDhcpConfigSuccess(values));
-        dispatch(addSuccessToast('dhcp_config_saved'));
+        dispatch(addSuccessToast(intl.getMessage('dhcp_config_saved')));
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(setDhcpConfigFailure());
@@ -606,14 +619,14 @@ export const toggleDhcp = (values: any) => async (dispatch: any) => {
         ...values,
         enabled: false,
     };
-    let successMessage = 'disabled_dhcp';
+    let successMessage = intl.getMessage('disabled_dhcp');
 
     if (!values.enabled) {
         config = {
             ...values,
             enabled: true,
         };
-        successMessage = 'enabled_dhcp';
+        successMessage = intl.getMessage('enabled_dhcp');
     }
 
     try {
@@ -635,7 +648,7 @@ export const resetDhcp = () => async (dispatch: any) => {
     try {
         const status = await apiClient.resetDhcp();
         dispatch(resetDhcpSuccess(status));
-        dispatch(addSuccessToast('dhcp_config_saved'));
+        dispatch(addSuccessToast(intl.getMessage('dhcp_config_saved')));
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(resetDhcpFailure());
@@ -651,7 +664,7 @@ export const resetDhcpLeases = () => async (dispatch: any) => {
     try {
         const status = await apiClient.resetDhcpLeases();
         dispatch(resetDhcpLeasesSuccess(status));
-        dispatch(addSuccessToast('dhcp_reset_leases_success'));
+        dispatch(addSuccessToast(intl.getMessage('dhcp_reset_leases_success')));
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(resetDhcpLeasesFailure());
@@ -670,7 +683,7 @@ export const addStaticLease = (config: any) => async (dispatch: any) => {
         const name = config.hostname || config.ip;
         await apiClient.addStaticLease(config);
         dispatch(addStaticLeaseSuccess(config));
-        dispatch(addSuccessToast(i18next.t('dhcp_lease_added', { key: name })));
+        dispatch(addSuccessToast(intl.getMessage('dhcp_lease_added', { key: name })));
         dispatch(toggleLeaseModal());
         dispatch(getDhcpStatus());
     } catch (error) {
@@ -689,7 +702,7 @@ export const removeStaticLease = (config: any) => async (dispatch: any) => {
         const name = config.hostname || config.ip;
         await apiClient.removeStaticLease(config);
         dispatch(removeStaticLeaseSuccess(config));
-        dispatch(addSuccessToast(i18next.t('dhcp_lease_deleted', { key: name })));
+        dispatch(addSuccessToast(intl.getMessage('dhcp_lease_deleted', { key: name })));
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(removeStaticLeaseFailure());
@@ -705,7 +718,7 @@ export const updateStaticLease = (config: any) => async (dispatch: any) => {
     try {
         await apiClient.updateStaticLease(config);
         dispatch(updateStaticLeaseSuccess(config));
-        dispatch(addSuccessToast(i18next.t('dhcp_lease_updated', { key: config.hostname || config.ip })));
+        dispatch(addSuccessToast(intl.getMessage('dhcp_lease_updated', { key: config.hostname || config.ip })));
         dispatch(toggleLeaseModal());
         dispatch(getDhcpStatus());
     } catch (error) {
@@ -734,15 +747,23 @@ export const toggleBlocking =
 
         if (matchPreparedBlockingRule) {
             await dispatch(setRules(userRules.replace(`${blockingRule}`, '')));
-            dispatch(addSuccessToast(i18next.t('rule_removed_from_custom_filtering_toast', { rule: blockingRule })));
+            dispatch(
+                addSuccessToast(intl.getMessage('rule_removed_from_custom_filtering_toast', { rule: blockingRule })),
+            );
         } else if (!matchPreparedUnblockingRule) {
             await dispatch(setRules(`${userRules}${lineEnding}${unblockingRule}\n`));
-            dispatch(addSuccessToast(i18next.t('rule_added_to_custom_filtering_toast', { rule: unblockingRule })));
+            dispatch(
+                addSuccessToast(intl.getMessage('rule_added_to_custom_filtering_toast', { rule: unblockingRule })),
+            );
         } else if (matchPreparedUnblockingRule) {
-            dispatch(addSuccessToast(i18next.t('rule_added_to_custom_filtering_toast', { rule: unblockingRule })));
+            dispatch(
+                addSuccessToast(intl.getMessage('rule_added_to_custom_filtering_toast', { rule: unblockingRule })),
+            );
             return;
         } else if (!matchPreparedBlockingRule) {
-            dispatch(addSuccessToast(i18next.t('rule_removed_from_custom_filtering_toast', { rule: blockingRule })));
+            dispatch(
+                addSuccessToast(intl.getMessage('rule_removed_from_custom_filtering_toast', { rule: blockingRule })),
+            );
             return;
         }
 

@@ -64,6 +64,10 @@ const intl = {
         return translator.getMessage(key, values);
     },
 
+    getPlural: (key: string, values?: any) => {
+        return translator.getPlural(key, values);
+    },
+
     getUILanguage: () => currentLanguage,
 
     getBaseMessage: (key: string) => {

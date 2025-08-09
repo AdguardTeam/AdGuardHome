@@ -62,7 +62,7 @@ export const Menu = ({ headerMenu }: Props) => {
                     icon="settings"
                     items={[
                         {
-                            label: intl.getMessage('general_settings_short'),
+                            label: intl.getMessage('settings_general_short'),
                             path: Paths.SettingsPage,
                             routePath: RoutePath.SettingsPage,
                         },

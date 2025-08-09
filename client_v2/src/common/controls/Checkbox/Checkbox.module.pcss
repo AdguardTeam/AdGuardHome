@@ -3,6 +3,10 @@
     align-items: center;
     cursor: pointer;
     gap: 8px;
+
+    &.disabled {
+        cursor: default;
+    }
 }
 
 .input {
@@ -45,11 +49,9 @@
     position: absolute;
     width: 24px;
     height: 24px;
-    transition: color var(--t2);
     color: var(--default-gray-icons);
 }
 
 .active {
-    transition: none;
     color: var(--default-product-icon);
 }

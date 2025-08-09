@@ -18,6 +18,7 @@ import { changeLanguage, getDnsStatus, getTimerStatus } from '../../actions';
 import { RootState } from '../../initialState';
 
 import s from './styles.module.pcss';
+import Settings from 'panel/containers/Settings';
 
 type RouteConfig = {
     path: string;
@@ -25,7 +26,13 @@ type RouteConfig = {
     exact: boolean;
 };
 
-const ROUTES: RouteConfig[] = [];
+const ROUTES: RouteConfig[] = [
+    {
+        path: '/settings',
+        component: Settings,
+        exact: true,
+    },
+];
 
 const App = () => {
     const dispatch = useDispatch();

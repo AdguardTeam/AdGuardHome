@@ -476,7 +476,7 @@ export const TOAST_TYPES = {
 export const SUCCESS_TOAST_TIMEOUT = 5000;
 
 export const ONE_SECOND_IN_MS = 1000;
-export const FAILURE_TOAST_TIMEOUT = 30000;
+export const FAILURE_TOAST_TIMEOUT = 5000;
 
 export const TOAST_TIMEOUTS = {
     [TOAST_TYPES.SUCCESS]: SUCCESS_TOAST_TIMEOUT,

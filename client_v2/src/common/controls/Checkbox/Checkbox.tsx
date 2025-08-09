@@ -27,7 +27,7 @@ export const Checkbox = ({
     onClick,
     plusStyle,
 }: Props) => (
-    <label htmlFor={id} className={cn(s.checkbox, className)} onClick={onClick}>
+    <label htmlFor={id} className={cn(s.checkbox, { [s.disabled]: disabled }, className)} onClick={onClick}>
         <input
             id={id}
             name={name}

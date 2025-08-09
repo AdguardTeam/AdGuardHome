@@ -3,6 +3,7 @@ import { apiClient } from '../api/Api';
 
 import { redirectToCurrentProtocol } from '../helpers/helpers';
 import { addErrorToast, addSuccessToast } from './toasts';
+import intl from 'panel/common/intl';
 
 export const getTlsStatusRequest = createAction('GET_TLS_STATUS_REQUEST');
 export const getTlsStatusFailure = createAction('GET_TLS_STATUS_FAILURE');
@@ -57,7 +58,7 @@ export const setTlsConfig = (config: any) => async (dispatch: any, getState: any
         }
 
         dispatch(setTlsConfigSuccess(response));
-        dispatch(addSuccessToast('encryption_config_saved'));
+        dispatch(addSuccessToast(intl.getMessage('encryption_config_saved')));
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(setTlsConfigFailure());

@@ -1,0 +1,113 @@
+.checkbox {
+    display: inline-block;
+    margin: 0;
+}
+
+.checkbox--single {
+    display: block;
+    margin: 2px auto 6px;
+}
+
+.checkbox--single .checkbox__label:before {
+    margin-right: 0;
+}
+
+.checkbox--settings .checkbox__label:before {
+    top: 2px;
+    margin-right: 20px;
+}
+
+.checkbox--settings .checkbox__label-title {
+    margin-bottom: 2px;
+    font-weight: 600;
+}
+
+.checkbox--form .checkbox__label:before {
+    top: 1px;
+    margin-right: 10px;
+}
+
+.checkbox__label {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 400;
+    user-select: none;
+    cursor: pointer;
+}
+
+.checkbox__label:before {
+    content: '';
+    position: relative;
+    top: 1px;
+    display: inline-block;
+    vertical-align: middle;
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    margin-right: 10px;
+    background-color: var(--checkbox-bg);
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: 12px 10px;
+    border-radius: 3px;
+    transition:
+        0.3s ease-in-out box-shadow,
+        0.3s ease-in-out opacity;
+}
+
+.checkbox__label .checkbox__label-text {
+    line-height: 1.3;
+}
+
+.checkbox__label .checkbox__label-text .md__paragraph {
+    display: inline-block;
+    vertical-align: baseline;
+    margin: 0;
+    text-align: left;
+    line-height: 1.3;
+}
+
+.checkbox__input {
+    position: absolute;
+    opacity: 0;
+}
+
+.checkbox__input:checked + .checkbox__label:before {
+    background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMi4zIDkuMiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwIiBzdHJva2UtbGluZWNhcD0icm91bmQiPjxwYXRoIGQ9Ik0xMS44IDAuNUw1LjMgOC41IDAuNSA0LjIiLz48L3N2Zz4=);
+}
+
+.checkbox__input:focus + .checkbox__label:before {
+    box-shadow: 0 0 1px 1px rgba(74, 74, 74, 0.32);
+}
+
+.checkbox__input:disabled + .checkbox__label {
+    cursor: default;
+    color: var(--gray);
+}
+
+.checkbox__input:disabled + .checkbox__label:before {
+    opacity: 0.6;
+}
+
+.checkbox__label-text {
+    max-width: 515px;
+    line-height: 1.5;
+}
+
+.checkbox__label-text--long {
+    max-width: initial;
+}
+
+.checkbox__label-title {
+    display: block;
+    line-height: 1.5;
+}
+
+.checkbox__label-subtitle {
+    display: block;
+    line-height: 1.5;
+    color: var(--scolor);
+}
