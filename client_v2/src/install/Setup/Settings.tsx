@@ -20,9 +20,8 @@ import {
 
 import { validateRequiredValue } from '../../helpers/validators';
 import { InstallInterface } from '../../initialState';
-import { Input } from '../../components/ui/Controls/Input';
-import { Select } from '../../components/ui/Controls/Select';
 import { toNumber } from '../../helpers/form';
+import { Input } from 'panel/common/controls/Input';
 
 const validateInstallPort = (value: number) => {
     if (value < MIN_PORT || value > MAX_PORT) {
@@ -253,12 +252,12 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                                 name="web.ip"
                                 control={control}
                                 render={({ field }) => (
-                                    <Select {...field} data-testid="install_web_ip">
+                                    <select {...field} data-testid="install_web_ip">
                                         <option value={ALL_INTERFACES_IP}>
                                             {t('install_settings_all_interfaces')}
                                         </option>
                                         {renderInterfaces(interfaces)}
-                                    </Select>
+                                    </select>
                                 )}
                             />
                         </div>
@@ -284,7 +283,7 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                                         type="number"
                                         data-testid="install_web_port"
                                         placeholder={STANDARD_WEB_PORT.toString()}
-                                        error={fieldState.error?.message}
+                                        errorMessage={fieldState.error?.message}
                                         onChange={(e) => {
                                             const { value } = e.target;
                                             field.onChange(toNumber(value));
@@ -343,12 +342,12 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                                 name="dns.ip"
                                 control={control}
                                 render={({ field }) => (
-                                    <Select {...field} data-testid="install_dns_ip">
+                                    <select {...field} data-testid="install_dns_ip">
                                         <option value={ALL_INTERFACES_IP}>
                                             {t('install_settings_all_interfaces')}
                                         </option>
                                         {renderInterfaces(interfaces)}
-                                    </Select>
+                                    </select>
                                 )}
                             />
                         </div>
@@ -374,7 +373,7 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                                         {...field}
                                         type="number"
                                         data-testid="install_dns_port"
-                                        error={fieldState.error?.message}
+                                        errorMessage={fieldState.error?.message}
                                         placeholder={STANDARD_WEB_PORT.toString()}
                                         onChange={(e) => {
                                             const { value } = e.target;
