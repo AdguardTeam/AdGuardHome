@@ -7,7 +7,7 @@ import escapeRegExp from 'lodash/escapeRegExp';
 import React from 'react';
 import { compose } from 'redux';
 import type { Dispatch } from 'redux';
-import intl from 'panel/common/intl';
+import intl, { type LocalesType } from 'panel/common/intl';
 import {
     splitByNewLine,
     sortClients,
@@ -23,6 +23,7 @@ import {
     SETTINGS_NAMES,
     MANUAL_UPDATE_LINK,
     DISABLE_PROTECTION_TIMINGS,
+    THEMES,
 } from '../helpers/constants';
 import { areEqualVersions } from '../helpers/version';
 import { getTlsStatus } from './encryption';
@@ -32,6 +33,7 @@ import { getFilteringStatus, setRules } from './filtering';
 
 type SafeSearchConfig = Record<string, boolean> & { enabled: boolean };
 type ToggleSettingKey = keyof typeof SETTINGS_NAMES;
+type Theme = typeof THEMES[keyof typeof THEMES];
 
 export const toggleSettingStatus = createAction<{
     settingKey: ToggleSettingKey;
@@ -441,13 +443,13 @@ export const testUpstreamWithFormValues = (formValues: any) => async (dispatch: 
 
 export const changeLanguageRequest = createAction('CHANGE_LANGUAGE_REQUEST');
 export const changeLanguageFailure = createAction('CHANGE_LANGUAGE_FAILURE');
-export const changeLanguageSuccess = createAction('CHANGE_LANGUAGE_SUCCESS');
+export const changeLanguageSuccess = createAction<{ language: LocalesType }>('CHANGE_LANGUAGE_SUCCESS');
 
-export const changeLanguage = (lang: any) => async (dispatch: any) => {
+export const changeLanguage = (lang: LocalesType) => async (dispatch: Dispatch) => {
     dispatch(changeLanguageRequest());
     try {
         await apiClient.changeLanguage({ language: lang });
-        dispatch(changeLanguageSuccess());
+        dispatch(changeLanguageSuccess({ language: lang }));
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(changeLanguageFailure());
@@ -456,9 +458,9 @@ export const changeLanguage = (lang: any) => async (dispatch: any) => {
 
 export const changeThemeRequest = createAction('CHANGE_THEME_REQUEST');
 export const changeThemeFailure = createAction('CHANGE_THEME_FAILURE');
-export const changeThemeSuccess = createAction('CHANGE_THEME_SUCCESS');
+export const changeThemeSuccess = createAction<{ theme: Theme }>('CHANGE_THEME_SUCCESS');
 
-export const changeTheme = (theme: any) => async (dispatch: any) => {
+export const changeTheme = (theme: Theme) => async (dispatch: Dispatch) => {
     dispatch(changeThemeRequest());
     try {
         await apiClient.changeTheme({ theme });
