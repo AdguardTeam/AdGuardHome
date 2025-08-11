@@ -22,6 +22,13 @@ export const getIntervalTitle = (intervalMs: number) => {
     return formatIntervalText(intervalMs);
 };
 
+export const getDefaultInterval = (customInterval?: number, interval?: number) => {
+    if (customInterval && customInterval > 0) {
+        return RETENTION_CUSTOM;
+    }
+    return interval || DAY;
+};
+
 const SAFESEARCH_TITLES: Record<string, string> = {
     bing: 'Bing',
     duckduckgo: 'DuckDuckGo',

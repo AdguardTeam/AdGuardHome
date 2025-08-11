@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test } from '@playwright/test';
 import { ADMIN_USERNAME, ADMIN_PASSWORD } from '../constants';
 
 test.describe('Control Panel', () => {

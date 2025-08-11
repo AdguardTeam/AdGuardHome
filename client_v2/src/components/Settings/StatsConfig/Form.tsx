@@ -4,9 +4,9 @@ import { Controller, useForm } from 'react-hook-form';
 import { Button } from 'panel/common/ui/Button';
 import intl from 'panel/common/intl';
 import theme from 'panel/lib/theme';
-import { getIntervalTitle } from '../helpers';
+import { getIntervalTitle, getDefaultInterval } from '../helpers';
 
-import { STATS_INTERVALS_DAYS, DAY, RETENTION_CUSTOM } from '../../../helpers/constants';
+import { STATS_INTERVALS_DAYS, RETENTION_CUSTOM } from '../../../helpers/constants';
 import { RadioGroup, SwitchGroup } from '../SettingsGroup';
 import { IgnoredDomains } from '../IgnoredDomains';
 import { RetentionCustomInput } from '../RetentionCustomInput';
@@ -38,7 +38,7 @@ export const Form = ({ initialValues, processing, processingReset, onSubmit, onR
         mode: 'onBlur',
         defaultValues: {
             enabled: initialValues.enabled || false,
-            interval: initialValues.interval || DAY,
+            interval: getDefaultInterval(initialValues.customInterval, initialValues.interval),
             customInterval: initialValues.customInterval ?? undefined,
             ignored: initialValues.ignored || '',
             ignore_enabled: initialValues.ignore_enabled || true,
