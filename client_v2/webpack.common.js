@@ -5,7 +5,7 @@ import { CleanWebpackPlugin } from 'clean-webpack-plugin';
 import CopyPlugin from 'copy-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import * as url from 'url';
-import { BUILD_ENVS } from './constants.js';
+import { BUILD_ENVS } from './constants';
 
 // eslint-disable-next-line no-underscore-dangle
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
@@ -33,7 +33,7 @@ function getAliasesFromTsconfig(tsconfigPath, resourcesPath) {
         Object.entries(tsConfig.compilerOptions.paths).forEach(([alias, targetArr]) => {
             if (alias.endsWith('/*')) {
                 const aliasName = alias.replace('/*', '');
-                let target = targetArr[0].replace('/*', '');
+                const target = targetArr[0].replace('/*', '');
                 aliases[aliasName] = path.resolve(resourcesPath, target);
             }
         });
