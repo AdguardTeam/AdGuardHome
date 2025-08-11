@@ -41,7 +41,6 @@ const Form = ({ onSubmit, processing }: LoginFormProps) => {
                             <Input
                                 {...field}
                                 id="username"
-                                data-testid="username"
                                 type="text"
                                 label={t('username_label')}
                                 placeholder={t('username_placeholder')}
@@ -62,7 +61,6 @@ const Form = ({ onSubmit, processing }: LoginFormProps) => {
                             <Input
                                 {...field}
                                 id="password"
-                                data-testid="password"
                                 type="password"
                                 label={t('password_label')}
                                 placeholder={t('password_placeholder')}
@@ -74,13 +72,7 @@ const Form = ({ onSubmit, processing }: LoginFormProps) => {
                 </div>
 
                 <div className="form-footer">
-                    <Button
-                        id="sign_in"
-                        data-testid="sign_in"
-                        type="submit"
-                        variant="primary"
-                        size="small"
-                        disabled={processing || !isValid}>
+                    <Button id="sign_in" type="submit" variant="primary" size="small" disabled={processing || !isValid}>
                         {t('sign_in')}
                     </Button>
                 </div>

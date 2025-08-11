@@ -124,7 +124,12 @@ export const Menu = ({ headerMenu }: Props) => {
             </nav>
             <div className={s.referenceWrapper}>
                 <div className={cn(s.menuLinkWrapper)}>
-                    <a href={apiClient.getLogoutUrl()} target="_blank" rel="noopener noreferrer" className={s.menuLink}>
+                    <a
+                        href={apiClient.getLogoutUrl()}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={s.menuLink}
+                        id="sign_out">
                         <Icon className={s.linkIcon} icon="logout" />
                         <span className={theme.common.textOverflow}>{intl.getMessage('logout')}</span>
                     </a>

@@ -131,7 +131,7 @@ export const Form = ({ initialValues, processing, processingReset, onSubmit, onR
             <div className={theme.form.buttonGroup}>
                 <Button
                     type="submit"
-                    data-testid="logs_config_save"
+                    id="logs_config_save"
                     variant="primary"
                     size="small"
                     disabled={disableSubmit}
@@ -141,7 +141,7 @@ export const Form = ({ initialValues, processing, processingReset, onSubmit, onR
 
                 <Button
                     type="button"
-                    data-testid="logs_config_clear"
+                    id="logs_config_clear"
                     variant="secondary"
                     size="small"
                     onClick={onReset}

@@ -35,7 +35,7 @@ class Controls extends Component<ControlsProps> {
             case 3:
                 return (
                     <Button
-                        data-testid="install_back"
+                        id="install_back"
                         type="button"
                         size="small"
                         variant="secondary"
@@ -56,7 +56,7 @@ class Controls extends Component<ControlsProps> {
             case 1:
                 return (
                     <Button
-                        data-testid="install_get_started"
+                        id="install_get_started"
                         type="button"
                         onClick={nextStep}
                         size="small"
@@ -69,7 +69,7 @@ class Controls extends Component<ControlsProps> {
             case 3:
                 return (
                     <Button
-                        data-testid="install_next"
+                        id="install_next"
                         type="submit"
                         size="small"
                         variant="primary"
@@ -81,7 +81,7 @@ class Controls extends Component<ControlsProps> {
             case 4:
                 return (
                     <Button
-                        data-testid="install_next"
+                        id="install_next"
                         type="button"
                         size="small"
                         variant="primary"
@@ -93,7 +93,7 @@ class Controls extends Component<ControlsProps> {
             case 5:
                 return (
                     <Button
-                        data-testid="install_open_dashboard"
+                        id="install_open_dashboard"
                         type="button"
                         size="small"
                         variant="primary"
