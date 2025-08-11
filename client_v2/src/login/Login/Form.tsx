@@ -1,8 +1,9 @@
 import React from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { Input } from '../../components/ui/Controls/Input';
-import { validateRequiredValue } from '../../helpers/validators';
+import { validateRequiredValue } from 'panel/helpers/validators';
+import { Input } from 'panel/common/controls/Input';
+import { Button } from 'panel/common/ui/Button';
 
 export type LoginFormValues = {
     username: string;
@@ -39,14 +40,14 @@ const Form = ({ onSubmit, processing }: LoginFormProps) => {
                         render={({ field, fieldState }) => (
                             <Input
                                 {...field}
+                                id="username"
                                 data-testid="username"
                                 type="text"
                                 label={t('username_label')}
                                 placeholder={t('username_placeholder')}
-                                error={fieldState.error?.message}
+                                errorMessage={fieldState.error?.message}
                                 autoComplete="username"
                                 autoCapitalize="none"
-                                disabled={processing}
                             />
                         )}
                     />
@@ -60,26 +61,28 @@ const Form = ({ onSubmit, processing }: LoginFormProps) => {
                         render={({ field, fieldState }) => (
                             <Input
                                 {...field}
+                                id="password"
                                 data-testid="password"
                                 type="password"
                                 label={t('password_label')}
                                 placeholder={t('password_placeholder')}
-                                error={fieldState.error?.message}
+                                errorMessage={fieldState.error?.message}
                                 autoComplete="current-password"
-                                disabled={processing}
                             />
                         )}
                     />
                 </div>
 
                 <div className="form-footer">
-                    <button
+                    <Button
+                        id="sign_in"
                         data-testid="sign_in"
                         type="submit"
-                        className="btn btn-success btn-block"
+                        variant="primary"
+                        size="small"
                         disabled={processing || !isValid}>
                         {t('sign_in')}
-                    </button>
+                    </Button>
                 </div>
             </div>
         </form>

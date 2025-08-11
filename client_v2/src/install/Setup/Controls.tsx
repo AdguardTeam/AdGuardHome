@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import { Trans } from 'react-i18next';
 
 import * as actionCreators from '../../actions/install';
+import { Button } from 'panel/common/ui/Button';
 
 interface ControlsProps {
     install: {
@@ -33,13 +34,15 @@ class Controls extends Component<ControlsProps> {
             case 2:
             case 3:
                 return (
-                    <button
+                    <Button
                         data-testid="install_back"
                         type="button"
-                        className="btn btn-secondary btn-lg setup__button"
+                        size="small"
+                        variant="secondary"
+                        className="setup__button"
                         onClick={this.props.prevStep}>
                         <Trans>back</Trans>
-                    </button>
+                    </Button>
                 );
             default:
                 return false;
@@ -52,44 +55,52 @@ class Controls extends Component<ControlsProps> {
         switch (step) {
             case 1:
                 return (
-                    <button
+                    <Button
                         data-testid="install_get_started"
                         type="button"
-                        className="btn btn-success btn-lg setup__button"
-                        onClick={nextStep}>
+                        onClick={nextStep}
+                        size="small"
+                        variant="primary"
+                        className="setup__button">
                         <Trans>get_started</Trans>
-                    </button>
+                    </Button>
                 );
             case 2:
             case 3:
                 return (
-                    <button
+                    <Button
                         data-testid="install_next"
                         type="submit"
-                        className="btn btn-success btn-lg setup__button"
+                        size="small"
+                        variant="primary"
+                        className="setup__button"
                         disabled={invalid || pristine || install.processingSubmit}>
                         <Trans>next</Trans>
-                    </button>
+                    </Button>
                 );
             case 4:
                 return (
-                    <button
+                    <Button
                         data-testid="install_next"
                         type="button"
-                        className="btn btn-success btn-lg setup__button"
+                        size="small"
+                        variant="primary"
+                        className="setup__button"
                         onClick={nextStep}>
                         <Trans>next</Trans>
-                    </button>
+                    </Button>
                 );
             case 5:
                 return (
-                    <button
+                    <Button
                         data-testid="install_open_dashboard"
                         type="button"
-                        className="btn btn-success btn-lg setup__button"
+                        size="small"
+                        variant="primary"
+                        className="setup__button"
                         onClick={() => this.props.openDashboard(ip, port)}>
                         <Trans>open_dashboard</Trans>
-                    </button>
+                    </Button>
                 );
             default:
                 return false;
@@ -101,10 +112,8 @@ class Controls extends Component<ControlsProps> {
 
         return (
             <div className="setup__nav">
-                <div className="btn-list">
-                    {this.renderPrevButton(install.step)}
-                    {this.renderNextButton(install.step)}
-                </div>
+                {this.renderPrevButton(install.step)}
+                {this.renderNextButton(install.step)}
             </div>
         );
     }

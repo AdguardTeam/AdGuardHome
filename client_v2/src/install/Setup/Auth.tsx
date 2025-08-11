@@ -3,7 +3,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { Trans, useTranslation } from 'react-i18next';
 import Controls from './Controls';
 import { validatePasswordLength, validateRequiredValue } from '../../helpers/validators';
-import { Input } from '../../components/ui/Controls/Input';
+import { Input } from 'panel/common/controls/Input';
 
 type AuthFormValues = {
     username: string;
@@ -60,10 +60,11 @@ export const Auth = ({ onAuthSubmit }: Props) => {
                             <Input
                                 {...field}
                                 type="text"
+                                id="install_username"
                                 data-testid="install_username"
                                 label={t('install_auth_username')}
                                 placeholder={t('install_auth_username_enter')}
-                                error={fieldState.error?.message}
+                                errorMessage={fieldState.error?.message}
                                 autoComplete="username"
                             />
                         )}
@@ -84,10 +85,11 @@ export const Auth = ({ onAuthSubmit }: Props) => {
                             <Input
                                 {...field}
                                 type="password"
+                                id="install_password"
                                 data-testid="install_password"
                                 label={t('install_auth_password')}
                                 placeholder={t('install_auth_password_enter')}
-                                error={fieldState.error?.message}
+                                errorMessage={fieldState.error?.message}
                                 autoComplete="new-password"
                             />
                         )}
@@ -108,10 +110,11 @@ export const Auth = ({ onAuthSubmit }: Props) => {
                             <Input
                                 {...field}
                                 type="password"
+                                id="install_confirm_password"
                                 data-testid="install_confirm_password"
                                 label={t('install_auth_confirm')}
                                 placeholder={t('install_auth_confirm')}
-                                error={fieldState.error?.message}
+                                errorMessage={fieldState.error?.message}
                                 autoComplete="new-password"
                             />
                         )}
