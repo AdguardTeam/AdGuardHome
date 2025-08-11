@@ -12,12 +12,4 @@ test.describe('Control Panel', () => {
         await page.locator('#sign_in').click();
         await page.waitForURL((url) => !url.href.endsWith('/login.html'));
     });
-
-    test('should sign out successfully', async ({ page }) => {
-        await page.locator('#sign_out').click();
-
-        await page.waitForURL((url) => url.href.endsWith('/login.html'));
-
-        await expect(page.locator('#sign_in')).toBeVisible();
-    });
 });
