@@ -1,4 +1,4 @@
-import React, { ChangeEvent, ComponentProps, MouseEvent, ReactNode } from 'react';
+import React, { ComponentProps, MouseEvent, ReactNode } from 'react';
 import cn from 'clsx';
 import theme from 'panel/lib/theme';
 import { Icon } from 'panel/common/ui/Icon';

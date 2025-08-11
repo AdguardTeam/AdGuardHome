@@ -1,11 +1,11 @@
 import { createAction } from 'redux-actions';
 
+import intl from 'panel/common/intl';
 import { apiClient } from '../api/Api';
 
 import { normalizeLogs } from '../helpers/helpers';
 import { DEFAULT_LOGS_FILTER, QUERY_LOGS_PAGE_LIMIT } from '../helpers/constants';
 import { addErrorToast, addSuccessToast } from './toasts';
-import intl from 'panel/common/intl';
 
 type SearchFormValues = {
     search: string;

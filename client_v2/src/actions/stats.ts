@@ -1,9 +1,9 @@
 import { createAction } from 'redux-actions';
 
+import intl from 'panel/common/intl';
 import { apiClient } from '../api/Api';
 import { normalizeTopStats, secondsToMilliseconds, getParamsForClientsSearch, addClientInfo } from '../helpers/helpers';
 import { addErrorToast, addSuccessToast } from './toasts';
-import intl from 'panel/common/intl';
 
 export const getStatsConfigRequest = createAction('GET_STATS_CONFIG_REQUEST');
 export const getStatsConfigFailure = createAction('GET_STATS_CONFIG_FAILURE');

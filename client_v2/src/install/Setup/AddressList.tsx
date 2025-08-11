@@ -1,9 +1,9 @@
 import React from 'react';
 
+import theme from 'panel/lib/theme';
 import { getIpList, getDnsAddress, getWebAddress } from '../../helpers/helpers';
 import { ALL_INTERFACES_IP } from '../../helpers/constants';
 import { InstallInterface } from '../../initialState';
-import theme from 'panel/lib/theme';
 
 interface renderItemProps {
     ip: string;

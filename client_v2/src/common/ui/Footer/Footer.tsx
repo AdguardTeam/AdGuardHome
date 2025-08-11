@@ -5,6 +5,7 @@ import cn from 'clsx';
 import theme from 'panel/lib/theme';
 import { Dropdown } from 'panel/common/ui/Dropdown';
 import { Icon } from 'panel/common/ui/Icon';
+import intl, { LocalesType } from 'panel/common/intl';
 
 import { REPOSITORY, PRIVACY_POLICY_LINK, THEMES } from '../../../helpers/constants';
 import { LANGUAGES } from '../../../helpers/twosky';
@@ -13,7 +14,6 @@ import { changeTheme, changeLanguage as changeLanguageAction } from '../../../ac
 import { RootState } from '../../../initialState';
 
 import s from './styles.module.pcss';
-import intl, { LocalesType } from 'panel/common/intl';
 
 const linksData = [
     {

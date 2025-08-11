@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
-import { getIntervalTitle } from '../helpers';
 import { Controller, useForm } from 'react-hook-form';
 
 import { Button } from 'panel/common/ui/Button';
 import intl from 'panel/common/intl';
 import theme from 'panel/lib/theme';
+import { getIntervalTitle } from '../helpers';
 
 import { STATS_INTERVALS_DAYS, DAY, RETENTION_CUSTOM } from '../../../helpers/constants';
 import { RadioGroup, SwitchGroup } from '../SettingsGroup';

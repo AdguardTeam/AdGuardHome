@@ -1,11 +1,10 @@
 import { createAction } from 'redux-actions';
-import i18next from 'i18next';
 
+import intl from 'panel/common/intl';
 import { apiClient } from '../api/Api';
 
 import { splitByNewLine } from '../helpers/helpers';
 import { addErrorToast, addSuccessToast } from './toasts';
-import intl from 'panel/common/intl';
 
 export const getDnsConfigRequest = createAction('GET_DNS_CONFIG_REQUEST');
 export const getDnsConfigFailure = createAction('GET_DNS_CONFIG_FAILURE');

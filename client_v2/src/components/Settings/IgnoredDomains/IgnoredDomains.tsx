@@ -3,15 +3,14 @@ import { Controller, type Control, type UseFormSetValue } from 'react-hook-form'
 import cn from 'clsx';
 
 import { Textarea } from 'panel/common/controls/Textarea';
-import { SwitchGroup } from '../SettingsGroup';
 import intl from 'panel/common/intl';
-
 import { trimLinesAndRemoveEmpty } from 'panel/helpers/helpers';
-
-import s from './styles.module.pcss';
 import { Dropdown } from 'panel/common/ui/Dropdown';
 import theme from 'panel/lib/theme';
 import { Icon } from 'panel/common/ui/Icon';
+
+import s from './styles.module.pcss';
+import { SwitchGroup } from '../SettingsGroup';
 
 type Props = {
     control: Control<any>;

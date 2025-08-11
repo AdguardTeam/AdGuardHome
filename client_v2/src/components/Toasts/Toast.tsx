@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
+import { Icon } from 'panel/common/ui/Icon';
+import cn from 'clsx';
 import { TOAST_TIMEOUTS } from '../../helpers/constants';
 
 import { removeToast } from '../../actions';
-import { Icon } from 'panel/common/ui/Icon';
 import s from './styles.module.pcss';
-import cn from 'clsx';
 
 interface ToastProps {
     id: string;

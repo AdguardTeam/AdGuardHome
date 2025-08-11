@@ -6,6 +6,8 @@ import endsWith from 'lodash/endsWith';
 import escapeRegExp from 'lodash/escapeRegExp';
 import React from 'react';
 import { compose } from 'redux';
+import type { Dispatch } from 'redux';
+import intl from 'panel/common/intl';
 import {
     splitByNewLine,
     sortClients,
@@ -27,17 +29,15 @@ import { getTlsStatus } from './encryption';
 import { apiClient } from '../api/Api';
 import { addErrorToast, addNoticeToast, addSuccessToast } from './toasts';
 import { getFilteringStatus, setRules } from './filtering';
-import type { Dispatch } from 'redux';
-import intl from 'panel/common/intl';
-
-export const toggleSettingStatus = createAction<{
-    settingKey: keyof typeof SETTINGS_NAMES;
-    value?: boolean | SafeSearchConfig;
-}>('SETTING_STATUS_TOGGLE');
-export const showSettingsFailure = createAction('SETTINGS_FAILURE_SHOW');
 
 type SafeSearchConfig = Record<string, boolean> & { enabled: boolean };
 type ToggleSettingKey = keyof typeof SETTINGS_NAMES;
+
+export const toggleSettingStatus = createAction<{
+    settingKey: ToggleSettingKey;
+    value?: boolean | SafeSearchConfig;
+}>('SETTING_STATUS_TOGGLE');
+export const showSettingsFailure = createAction('SETTINGS_FAILURE_SHOW');
 
 /**
  *

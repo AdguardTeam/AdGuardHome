@@ -53,3 +53,5 @@ export const Textarea = forwardRef<HTMLTextAreaElement, Props>(
         </div>
     ),
 );
+
+Textarea.displayName = 'Textarea';

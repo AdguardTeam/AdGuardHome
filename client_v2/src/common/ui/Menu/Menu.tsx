@@ -36,7 +36,7 @@ export const Menu = ({ headerMenu }: Props) => {
                 return false;
             }
 
-            const normalizedPath = p.endsWith('/') ? p : p + '/';
+            const normalizedPath = p.endsWith('/') ? p : `${p}/`;
             return currentPath.startsWith(normalizedPath);
         });
     };

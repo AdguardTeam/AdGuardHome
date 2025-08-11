@@ -1,9 +1,9 @@
 import { createAction } from 'redux-actions';
+import intl from 'panel/common/intl';
 import { apiClient } from '../api/Api';
 
 import { redirectToCurrentProtocol } from '../helpers/helpers';
 import { addErrorToast, addSuccessToast } from './toasts';
-import intl from 'panel/common/intl';
 
 export const getTlsStatusRequest = createAction('GET_TLS_STATUS_REQUEST');
 export const getTlsStatusFailure = createAction('GET_TLS_STATUS_FAILURE');

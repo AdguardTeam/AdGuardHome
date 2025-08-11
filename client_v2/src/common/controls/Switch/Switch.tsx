@@ -51,4 +51,4 @@ export const Switch = forwardRef(
     },
 );
 
-export default Switch;
+Switch.displayName = 'Switch';

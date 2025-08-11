@@ -1,8 +1,8 @@
 import React from 'react';
 import cn from 'clsx';
 
-import s from './Radio.module.pcss';
 import { Icon } from 'panel/common/ui/Icon';
+import s from './Radio.module.pcss';
 
 type Props<T> = {
     className?: string;

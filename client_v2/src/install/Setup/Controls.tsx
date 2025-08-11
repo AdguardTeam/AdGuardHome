@@ -2,8 +2,8 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { Trans } from 'react-i18next';
 
-import * as actionCreators from '../../actions/install';
 import { Button } from 'panel/common/ui/Button';
+import * as actionCreators from '../../actions/install';
 
 interface ControlsProps {
     install: {

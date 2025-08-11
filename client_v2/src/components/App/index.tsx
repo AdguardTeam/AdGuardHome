@@ -7,18 +7,16 @@ import { Sidebar } from 'panel/common/ui/Sidebar';
 import { Icons } from 'panel/common/ui/Icons';
 import { Footer } from 'panel/common/ui/Footer';
 import { Header } from 'panel/common/ui/Header';
+import Settings from 'panel/containers/Settings';
 
 import Toasts from '../Toasts';
 import i18n from '../../i18n';
-
 import { THEMES } from '../../helpers/constants';
 import { setHtmlLangAttr, setUITheme } from '../../helpers/helpers';
 import { changeLanguage, getDnsStatus, getTimerStatus } from '../../actions';
-
 import { RootState } from '../../initialState';
 
 import s from './styles.module.pcss';
-import Settings from 'panel/containers/Settings';
 
 type RouteConfig = {
     path: string;
