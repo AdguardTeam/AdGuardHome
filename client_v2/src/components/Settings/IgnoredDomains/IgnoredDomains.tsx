@@ -71,7 +71,7 @@ export const IgnoredDomains = ({ control, processing, ignoreEnabled, setValue, s
                                 </a>
                             </div>
                         }
-                        placeholder="example.com\n*.example.com\n||example.com^"
+                        placeholder={`example.com\n*.example.com\n||example.com^`}
                         size="large"
                         disabled={processing || !ignoreEnabled}
                         errorMessage={fieldState.error?.message}
