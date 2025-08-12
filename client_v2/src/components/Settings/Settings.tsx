@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import cn from 'clsx';
-import { shallowEqual, useDispatch, useSelector } from 'react-redux';
+import { shallowEqual, useDispatch, useSelector, batch } from 'react-redux';
 
 import intl from 'panel/common/intl';
 import { Checkbox } from 'panel/common/controls/Checkbox';
@@ -40,10 +40,12 @@ export const Settings = () => {
     const filtering = useSelector((state: RootState) => state.filtering, shallowEqual);
 
     useEffect(() => {
-        dispatch(initSettings());
-        dispatch(getStatsConfig());
-        dispatch(getFilteringStatus());
-        dispatch(getLogsConfig());
+        batch(() => {
+            dispatch(initSettings());
+            dispatch(getStatsConfig());
+            dispatch(getFilteringStatus());
+            dispatch(getLogsConfig());
+        });
     }, []);
 
     const handleSettingToggle =
