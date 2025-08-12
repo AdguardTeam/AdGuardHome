@@ -4,6 +4,8 @@ import { ConfirmDialog } from 'panel/common/ui/ConfirmDialog';
 import intl from 'panel/common/intl';
 import { HOUR } from 'panel/helpers/constants';
 import { formatIntervalText } from 'panel/components/Settings/helpers';
+import { useDispatch } from 'react-redux';
+import { clearLogs, setLogsConfig } from 'panel/actions/queryLogs';
 import { Form, FormValues } from './Form';
 
 export type LogsConfigPayload = {
@@ -22,8 +24,6 @@ type Props = {
     processing: boolean;
     ignored: string[];
     processingClear: boolean;
-    setLogsConfig: (values: LogsConfigPayload) => unknown;
-    clearLogs: () => void;
 };
 
 export const LogsConfig = ({
@@ -34,9 +34,9 @@ export const LogsConfig = ({
     processing,
     processingClear,
     ignored,
-    setLogsConfig,
-    clearLogs,
 }: Props) => {
+    const dispatch = useDispatch();
+
     const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
     const [confirmConfig, setConfirmConfig] = useState<LogsConfigPayload | null>(null);
 
@@ -49,7 +49,7 @@ export const LogsConfig = ({
     };
 
     const handleClearConfirm = () => {
-        clearLogs();
+        dispatch(clearLogs());
         handleClose();
     };
 
@@ -69,7 +69,7 @@ export const LogsConfig = ({
             return;
         }
 
-        setLogsConfig(data);
+        dispatch(setLogsConfig(data));
     };
 
     return (
@@ -91,7 +91,7 @@ export const LogsConfig = ({
                 <ConfirmDialog
                     onClose={() => setConfirmConfig(null)}
                     onConfirm={() => {
-                        setLogsConfig(confirmConfig);
+                        dispatch(setLogsConfig(confirmConfig));
                         setConfirmConfig(null);
                     }}
                     buttonText={intl.getMessage('settings_yes_decrease')}

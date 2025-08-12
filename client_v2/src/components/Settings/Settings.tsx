@@ -1,19 +1,21 @@
 import React, { useEffect } from 'react';
 import cn from 'clsx';
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 
 import intl from 'panel/common/intl';
 import { Checkbox } from 'panel/common/controls/Checkbox';
 import theme from 'panel/lib/theme';
 import { PageLoader } from 'panel/common/ui/Loader';
-import { SettingsData, StatsData, QueryLogsData, FilteringData } from 'panel/initialState';
+import { RootState, SettingsData } from 'panel/initialState';
+import { initSettings, toggleSetting } from 'panel/actions';
+import { getStatsConfig } from 'panel/actions/stats';
+import { getLogsConfig } from 'panel/actions/queryLogs';
+import { getFilteringStatus } from 'panel/actions/filtering';
 
 import { StatsConfig } from './StatsConfig/StatsConfig';
 import { LogsConfig } from './LogsConfig';
 import { FiltersConfig } from './FiltersConfig';
 import { getSafeSearchProviderTitle } from './helpers';
-import type { StatsConfigPayload } from './StatsConfig/StatsConfig';
-import type { LogsConfigPayload } from './LogsConfig/LogsConfig';
-import type { FormValues as FiltersFormValues } from './FiltersConfig';
 import { SwitchGroup } from './SettingsGroup';
 
 const SETTINGS = {
@@ -29,48 +31,24 @@ const SETTINGS = {
     },
 };
 
-type ToggleSettingArgKey = keyof typeof SETTINGS | 'safesearch';
-type ToggleSettingArgValue = boolean | Record<string, boolean>;
+export const Settings = () => {
+    const dispatch = useDispatch();
 
-type Props = {
-    settings: SettingsData;
-    stats: StatsData;
-    queryLogs: QueryLogsData;
-    filtering: FilteringData;
-    initSettings: () => void;
-    toggleSetting: (key: ToggleSettingArgKey, value: ToggleSettingArgValue) => void;
-    getStatsConfig: () => void;
-    setStatsConfig: (config: StatsConfigPayload) => void;
-    resetStats: () => void;
-    setFiltersConfig: (values: FiltersFormValues) => void;
-    getFilteringStatus: () => void;
-    getLogsConfig: () => void;
-    setLogsConfig: (values: LogsConfigPayload) => void;
-    clearLogs: () => void;
-};
+    const settings = useSelector((state: RootState) => state.settings, shallowEqual);
+    const stats = useSelector((state: RootState) => state.stats, shallowEqual);
+    const queryLogs = useSelector((state: RootState) => state.queryLogs, shallowEqual);
+    const filtering = useSelector((state: RootState) => state.filtering, shallowEqual);
 
-export const Settings = ({
-    initSettings,
-    getStatsConfig,
-    getLogsConfig,
-    getFilteringStatus,
-    settings,
-    toggleSetting,
-    setStatsConfig,
-    resetStats,
-    stats,
-    queryLogs,
-    setLogsConfig,
-    clearLogs,
-    filtering,
-    setFiltersConfig,
-}: Props) => {
     useEffect(() => {
-        initSettings();
-        getStatsConfig();
-        getFilteringStatus();
-        getLogsConfig();
+        dispatch(initSettings());
+        dispatch(getStatsConfig());
+        dispatch(getFilteringStatus());
+        dispatch(getLogsConfig());
     }, []);
+
+    const handleSettingToggle =
+        (key: keyof typeof SETTINGS) => (e: React.ChangeEvent<HTMLInputElement>) =>
+            dispatch(toggleSetting(key, !e.target.checked));
 
     const renderSettings = (settingsList?: SettingsData['settingsList']) =>
         settingsList
@@ -84,7 +62,7 @@ export const Settings = ({
                               description={subtitle}
                               id={String(key)}
                               checked={enabled}
-                              onChange={(e) => toggleSetting(key, !e.target.checked)}
+                              onChange={handleSettingToggle(key)}
                           />
                       </div>
                   );
@@ -100,13 +78,30 @@ export const Settings = ({
 
         const { enabled, ...searches } = safesearch;
 
+        type SafeSearchConfigShape = Record<string, boolean> & { enabled: boolean };
+
+        const onSafeSearchEnabledChange =
+            (e: React.ChangeEvent<HTMLInputElement>) => {
+                const payload = { ...safesearch, enabled: e.target.checked } as SafeSearchConfigShape;
+                dispatch(toggleSetting('safesearch', payload));
+            };
+
+        const onProviderChange =
+            (searchKey: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
+                const payload = {
+                    ...safesearch,
+                    [searchKey]: e.target.checked,
+                } as SafeSearchConfigShape;
+                dispatch(toggleSetting('safesearch', payload));
+            };
+
         return (
             <SwitchGroup
                 id="safesearch"
                 title={intl.getMessage('settings_safe_search')}
                 description={intl.getMessage('settings_safe_search_desc')}
                 checked={enabled}
-                onChange={(e) => toggleSetting('safesearch', { ...safesearch, enabled: e.target.checked })}>
+                onChange={onSafeSearchEnabledChange}>
                 <div>
                     {Object.keys(searches).map((searchKey) => (
                         <div key={searchKey} className={theme.form.checkbox}>
@@ -114,9 +109,7 @@ export const Settings = ({
                                 id={searchKey}
                                 checked={searches[searchKey]}
                                 disabled={!enabled}
-                                onChange={(e) => {
-                                    toggleSetting('safesearch', { ...safesearch, [searchKey]: e.target.checked });
-                                }}>
+                                onChange={onProviderChange(searchKey)}>
                                 {getSafeSearchProviderTitle(searchKey)}
                             </Checkbox>
                         </div>
@@ -148,7 +141,6 @@ export const Settings = ({
                             enabled: filtering.enabled,
                         }}
                         processing={filtering.processingSetConfig}
-                        setFiltersConfig={setFiltersConfig}
                     />
 
                     {renderSettings(settings.settingsList)}
@@ -167,8 +159,6 @@ export const Settings = ({
                         anonymize_client_ip={queryLogs.anonymize_client_ip}
                         processing={queryLogs.processingSetConfig}
                         processingClear={queryLogs.processingClear}
-                        setLogsConfig={setLogsConfig}
-                        clearLogs={clearLogs}
                     />
 
                     <h2 className={cn(theme.layout.subtitle, theme.title.h5, theme.title.h4_tablet)}>
@@ -182,8 +172,6 @@ export const Settings = ({
                         enabled={stats.enabled}
                         processing={stats.processingSetConfig}
                         processingReset={stats.processingReset}
-                        setStatsConfig={setStatsConfig}
-                        resetStats={resetStats}
                     />
                 </>
             )}

@@ -26,10 +26,16 @@ export const RetentionCustomInput = <TFormValues extends { customInterval?: numb
     placeholder,
 }: Props<TFormValues>) => {
     const inputRef = useRef<HTMLInputElement>(null);
+    const prevIntervalRef = useRef(intervalValue);
 
     useEffect(() => {
-        if (intervalValue === RETENTION_CUSTOM && !processing) {
-            inputRef.current?.focus();
+        const wasCustom = prevIntervalRef.current === RETENTION_CUSTOM;
+        const isCustom = intervalValue === RETENTION_CUSTOM;
+
+        prevIntervalRef.current = intervalValue;
+
+        if (!wasCustom && isCustom && !processing) {
+            inputRef.current?.focus({ preventScroll: true });
         }
     }, [intervalValue, processing]);
 
@@ -51,11 +57,7 @@ export const RetentionCustomInput = <TFormValues extends { customInterval?: numb
                         }}
                         onBlur={field.onBlur}
                         disabled={processing || intervals.includes(intervalValue)}
-                        error={
-                            intervalValue === RETENTION_CUSTOM &&
-                            fieldState.isTouched &&
-                            String(field.value ?? '').trim() === ''
-                        }
+                        error={!!fieldState.error}
                         min={RETENTION_RANGE.MIN}
                         max={RETENTION_RANGE.MAX}
                     />

@@ -27,10 +27,10 @@ export const Radio = <T extends number | string | boolean = string>({
         {options.map((o) => (
             <label
                 key={`${o.value}`}
-                htmlFor={name ? `${name}-${String(o.value)}` : String(o.value)}
+                htmlFor={name ? `${name}-${o.value}` : String(o.value)}
                 className={cn(s.radio, className)}>
                 <input
-                    id={name ? `${name}-${String(o.value)}` : String(o.value)}
+                    id={name ? `${name}-${o.value}` : String(o.value)}
                     type="radio"
                     className={s.input}
                     name={name}

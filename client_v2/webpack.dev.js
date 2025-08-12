@@ -1,9 +1,8 @@
 import { merge } from 'webpack-merge';
 import yaml from 'js-yaml';
 import fs from 'fs';
-// eslint-disable-next-line import/extensions
+
 import { BASE_URL } from './constants.js';
-// eslint-disable-next-line import/extensions
 import common from './webpack.common.js';
 
 const ZERO_HOST = '0.0.0.0';

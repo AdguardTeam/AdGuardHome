@@ -29,7 +29,7 @@ export const getDefaultInterval = (customInterval?: number, interval?: number) =
     return interval || DAY;
 };
 
-const SAFESEARCH_TITLES: Record<string, string> = {
+const SAFESEARCH_TITLES = {
     bing: 'Bing',
     duckduckgo: 'DuckDuckGo',
     ecosia: 'Ecosia',
@@ -37,7 +37,7 @@ const SAFESEARCH_TITLES: Record<string, string> = {
     pixabay: 'Pixabay',
     yandex: 'Yandex',
     youtube: 'YouTube',
-};
+} as const;
 
 export const getSafeSearchProviderTitle = (key: string) => {
     return SAFESEARCH_TITLES[key] ?? captitalizeWords(key);

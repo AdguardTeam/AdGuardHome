@@ -6,6 +6,8 @@ import theme from 'panel/lib/theme';
 import { RoutePath } from 'panel/components/Routes/Paths';
 import { Link } from 'panel/common/ui/Link';
 
+import { setFiltersConfig } from 'panel/actions/filtering';
+import { useDispatch } from 'react-redux';
 import { SwitchGroup } from './SettingsGroup';
 
 export type FormValues = {
@@ -15,11 +17,12 @@ export type FormValues = {
 
 type Props = {
     initialValues: FormValues;
-    setFiltersConfig: (values: FormValues) => void;
     processing: boolean;
 };
 
-export const FiltersConfig = ({ initialValues, setFiltersConfig, processing }: Props) => {
+export const FiltersConfig = ({ initialValues, processing }: Props) => {
+    const dispatch = useDispatch();
+
     const { watch, control, setValue } = useForm({
         mode: 'onBlur',
         defaultValues: initialValues,
@@ -28,7 +31,7 @@ export const FiltersConfig = ({ initialValues, setFiltersConfig, processing }: P
     const enabled = watch('enabled');
 
     useEffect(() => {
-        setFiltersConfig({ ...initialValues, enabled });
+        dispatch(setFiltersConfig({ ...initialValues, enabled }));
     }, [enabled]);
 
     return (

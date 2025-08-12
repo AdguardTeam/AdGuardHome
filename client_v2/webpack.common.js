@@ -5,7 +5,6 @@ import { CleanWebpackPlugin } from 'clean-webpack-plugin';
 import CopyPlugin from 'copy-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import * as url from 'url';
-// eslint-disable-next-line import/extensions
 import { BUILD_ENVS } from './constants.js';
 
 // eslint-disable-next-line no-underscore-dangle

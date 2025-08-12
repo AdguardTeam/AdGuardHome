@@ -40,16 +40,7 @@ module.exports = {
                 argsIgnorePattern: '^_',
             },
         ],
-        'import/extensions': [
-            'error',
-            'ignorePackages',
-            {
-                js: 'never',
-                jsx: 'never',
-                ts: 'never',
-                tsx: 'never',
-            },
-        ],
+        'import/extensions': 'off',
         'class-methods-use-this': 'off',
         'no-shadow': 'off',
         camelcase: 'off',

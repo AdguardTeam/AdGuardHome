@@ -5,6 +5,8 @@ import intl from 'panel/common/intl';
 import { HOUR } from 'panel/helpers/constants';
 import { formatIntervalText } from 'panel/components/Settings/helpers';
 
+import { resetStats, setStatsConfig } from 'panel/actions/stats';
+import { useDispatch } from 'react-redux';
 import { Form, FormValues } from './Form';
 
 export type StatsConfigPayload = {
@@ -20,8 +22,6 @@ type Props = {
     enabled: boolean;
     processing: boolean;
     processingReset: boolean;
-    setStatsConfig: (config: StatsConfigPayload) => void;
-    resetStats: () => void;
 };
 
 export const StatsConfig = ({
@@ -31,9 +31,9 @@ export const StatsConfig = ({
     enabled,
     processing,
     processingReset,
-    setStatsConfig,
-    resetStats,
 }: Props) => {
+    const dispatch = useDispatch();
+
     const [openClearDialog, setOpenClearDialog] = useState(false);
     const [confirmConfig, setConfirmConfig] = useState<StatsConfigPayload | null>(null);
 
@@ -46,7 +46,7 @@ export const StatsConfig = ({
     };
 
     const handleClearConfirm = () => {
-        resetStats();
+        dispatch(resetStats());
         handleClose();
     };
 
@@ -66,7 +66,7 @@ export const StatsConfig = ({
             return;
         }
 
-        setStatsConfig(data);
+        dispatch(setStatsConfig(data));
     };
 
     return (
@@ -88,7 +88,7 @@ export const StatsConfig = ({
                 <ConfirmDialog
                     onClose={() => setConfirmConfig(null)}
                     onConfirm={() => {
-                        setStatsConfig(confirmConfig);
+                        dispatch(setStatsConfig(confirmConfig));
                         setConfirmConfig(null);
                     }}
                     buttonText={intl.getMessage('settings_yes_decrease')}

@@ -7,7 +7,7 @@ import { Sidebar } from 'panel/common/ui/Sidebar';
 import { Icons } from 'panel/common/ui/Icons';
 import { Footer } from 'panel/common/ui/Footer';
 import { Header } from 'panel/common/ui/Header';
-import Settings from 'panel/containers/Settings';
+import { Settings } from 'panel/components/Settings';
 
 import { LocalesType } from 'panel/common/intl';
 import Toasts from '../Toasts';
