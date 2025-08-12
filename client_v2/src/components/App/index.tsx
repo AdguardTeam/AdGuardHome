@@ -9,6 +9,7 @@ import { Footer } from 'panel/common/ui/Footer';
 import { Header } from 'panel/common/ui/Header';
 import Settings from 'panel/containers/Settings';
 
+import { LocalesType } from 'panel/common/intl';
 import Toasts from '../Toasts';
 import i18n from '../../i18n';
 import { THEMES } from '../../helpers/constants';
@@ -63,7 +64,7 @@ const App = () => {
             }
         }
 
-        i18n.on('languageChanged', (lang) => {
+        i18n.on('languageChanged', (lang: LocalesType) => {
             dispatch(changeLanguage(lang));
         });
     };
