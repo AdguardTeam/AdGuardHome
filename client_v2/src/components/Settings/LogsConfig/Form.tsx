@@ -6,8 +6,7 @@ import { Button } from 'panel/common/ui/Button';
 import theme from 'panel/lib/theme';
 import { QUERY_LOG_INTERVALS_DAYS, RETENTION_CUSTOM } from 'panel/helpers/constants';
 
-import { RadioGroup } from '../SettingsGroup/RadioGroup';
-import { SwitchGroup } from '../SettingsGroup';
+import { RadioGroup, SwitchGroup } from 'panel/common/ui/SettingsGroup';
 import { IgnoredDomains } from '../IgnoredDomains';
 import { getIntervalTitle, getDefaultInterval } from '../helpers';
 import { RetentionCustomInput } from '../RetentionCustomInput';

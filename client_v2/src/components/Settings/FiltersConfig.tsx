@@ -1,14 +1,13 @@
 import React, { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
+import { useDispatch } from 'react-redux';
 
 import intl from 'panel/common/intl';
 import theme from 'panel/lib/theme';
 import { RoutePath } from 'panel/components/Routes/Paths';
 import { Link } from 'panel/common/ui/Link';
-
 import { setFiltersConfig } from 'panel/actions/filtering';
-import { useDispatch } from 'react-redux';
-import { SwitchGroup } from './SettingsGroup';
+import { SwitchGroup } from 'panel/common/ui/SettingsGroup';
 
 export type FormValues = {
     enabled: boolean;

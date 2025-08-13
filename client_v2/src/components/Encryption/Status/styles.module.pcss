@@ -1,0 +1,47 @@
+.status {
+    display: flex;
+    flex-direction: column;
+    padding: 8px 16px;
+    color: var(--default-main-text);
+    border-radius: 8px;
+    box-shadow: var(--main-box-shadow);
+    background-color: var(--fills-backgrounds-page-background-additional);
+    cursor: default;
+
+    @media (min-width: 1024px) {
+        position: absolute;
+        bottom: 8px;
+        left: calc(100% + 56px);
+        width: 340px;
+    }
+}
+
+.statusTitle {
+    padding: 8px 0;
+    font-weight: var(--weight-semi-bold);
+
+    &_success {
+        color: var(--default-link);
+    }
+
+    &_warning {
+        color: var(--default-attention-link);
+    }
+
+    &_error {
+        color: var(--default-error-link);
+    }
+}
+
+.statusList {
+    margin: 0;
+    padding: 8px 0;
+
+    li {
+        display: block;
+    }
+}
+
+.statusText {
+    padding: 8px 0;
+}

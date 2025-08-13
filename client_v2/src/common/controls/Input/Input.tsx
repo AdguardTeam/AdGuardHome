@@ -3,7 +3,7 @@ import cn from 'clsx';
 
 import s from './Input.module.pcss';
 
-type Props = ComponentProps<'input'> & {
+type Props = Omit<ComponentProps<'input'>, 'size'> & {
     label?: ReactNode;
     className?: string;
     innerClassName?: string;
