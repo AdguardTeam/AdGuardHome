@@ -1,10 +1,9 @@
 package hashprefix
 
 import (
+	"context"
 	"encoding/binary"
 	"time"
-
-	"github.com/AdguardTeam/golibs/log"
 )
 
 // expirySize is the size of expiry in cacheItem.
@@ -91,7 +90,7 @@ func (c *Checker) findInCache(
 }
 
 // storeInCache caches hashes.
-func (c *Checker) storeInCache(hashesToRequest, respHashes []hostnameHash) {
+func (c *Checker) storeInCache(ctx context.Context, hashesToRequest, respHashes []hostnameHash) {
 	hashToStore := make(map[prefix][]hostnameHash)
 
 	for _, hash := range respHashes {
@@ -102,7 +101,7 @@ func (c *Checker) storeInCache(hashesToRequest, respHashes []hostnameHash) {
 	}
 
 	for pref, hash := range hashToStore {
-		c.setCache(pref, hash)
+		c.setCache(ctx, pref, hash)
 	}
 
 	for _, hash := range hashesToRequest {
@@ -111,18 +110,18 @@ func (c *Checker) storeInCache(hashesToRequest, respHashes []hostnameHash) {
 			var pref prefix
 			copy(pref[:], hash[:])
 
-			c.setCache(pref, nil)
+			c.setCache(ctx, pref, nil)
 		}
 	}
 }
 
 // setCache stores hash in cache.
-func (c *Checker) setCache(pref prefix, hashes []hostnameHash) {
+func (c *Checker) setCache(ctx context.Context, pref prefix, hashes []hostnameHash) {
 	item := &cacheItem{
 		expiry: time.Now().Add(c.cacheTime),
 		hashes: hashes,
 	}
 
 	c.cache.Set(pref[:], fromCacheItem(item))
-	log.Debug("%s: stored in cache: %v", c.svc, pref)
+	c.logger.DebugContext(ctx, "stored in cache", "pref", pref)
 }

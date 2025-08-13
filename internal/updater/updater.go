@@ -145,19 +145,15 @@ func NewUpdater(conf *Config) *Updater {
 	}
 }
 
-// Update performs the auto-update.  It returns an error if the update failed.
+// Update performs the auto-update.  It returns an error if the update fails.
 // If firstRun is true, it assumes the configuration file doesn't exist.
 func (u *Updater) Update(ctx context.Context, firstRun bool) (err error) {
 	u.mu.Lock()
 	defer u.mu.Unlock()
 
-	u.logger.InfoContext(ctx, "staring update", "first_run", firstRun)
+	u.logger.InfoContext(ctx, "starting update", "first_run", firstRun)
 	defer func() {
-		if err != nil {
-			u.logger.ErrorContext(ctx, "update failed", slogutil.KeyError, err)
-		} else {
-			u.logger.InfoContext(ctx, "update finished")
-		}
+		u.logUpdateResult(ctx, err)
 	}()
 
 	err = u.prepare(ctx)
@@ -195,6 +191,17 @@ func (u *Updater) Update(ctx context.Context, firstRun bool) (err error) {
 	}
 
 	return nil
+}
+
+// logUpdateResult logs the result of the update operation.
+func (u *Updater) logUpdateResult(ctx context.Context, err error) {
+	if err != nil {
+		u.logger.ErrorContext(ctx, "update failed", slogutil.KeyError, err)
+
+		return
+	}
+
+	u.logger.InfoContext(ctx, "update finished")
 }
 
 // NewVersion returns the available new version.

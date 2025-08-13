@@ -12,7 +12,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/golibs/container"
-	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/urlfilter"
 	"github.com/AdguardTeam/urlfilter/filterlist"
@@ -230,6 +229,8 @@ func validateStrUniq(clients []string) (uc aghalg.UniqChecker[string], err error
 
 // handleAccessSet handles requests to the POST /control/access/set endpoint.
 func (s *Server) handleAccessSet(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	list := &accessListJSON{}
 	err := json.NewDecoder(r.Body).Decode(&list)
 	if err != nil {
@@ -253,14 +254,15 @@ func (s *Server) handleAccessSet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	defer log.Debug(
-		"access: updated lists: %d, %d, %d",
-		len(list.AllowedClients),
-		len(list.DisallowedClients),
-		len(list.BlockedHosts),
+	defer s.logger.DebugContext(
+		ctx,
+		"updated access lists",
+		"allowed", len(list.AllowedClients),
+		"disallowed", len(list.DisallowedClients),
+		"blocked_hosts", len(list.BlockedHosts),
 	)
 
-	defer s.conf.ConfigModified()
+	defer s.conf.ConfModifier.Apply(ctx)
 
 	s.serverLock.Lock()
 	defer s.serverLock.Unlock()

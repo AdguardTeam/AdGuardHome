@@ -144,6 +144,7 @@ func TestUpstreamConfigValidator(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			cv := newUpstreamConfigValidator(tc.general, tc.fallback, tc.private, &upstream.Options{
+				Logger:    testLogger,
 				Timeout:   upsTimeout,
 				Bootstrap: net.DefaultResolver,
 			})
@@ -195,6 +196,7 @@ func TestUpstreamConfigValidator_Check_once(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			cv := newUpstreamConfigValidator(tc.ups, nil, nil, &upstream.Options{
+				Logger:  testLogger,
 				Timeout: testTimeout,
 			})
 

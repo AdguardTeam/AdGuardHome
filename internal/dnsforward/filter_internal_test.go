@@ -9,8 +9,8 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
-	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -46,6 +46,7 @@ func TestHandleDNSRequest_handleDNSRequest(t *testing.T) {
 	}}
 
 	f, err := filtering.New(&filtering.Config{
+		Logger:               testLogger,
 		ProtectionEnabled:    true,
 		ApplyClientFiltering: applyEmptyClientFiltering,
 		BlockedServices:      emptyFilteringBlockedServices(),
@@ -62,11 +63,11 @@ func TestHandleDNSRequest_handleDNSRequest(t *testing.T) {
 		},
 		DNSFilter:   f,
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
-		Logger:      slogutil.NewDiscardLogger(),
+		Logger:      testLogger,
 	})
 	require.NoError(t, err)
 
-	err = s.Prepare(&forwardConf)
+	err = s.Prepare(testutil.ContextWithTimeout(t, testTimeout), &forwardConf)
 	require.NoError(t, err)
 
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{
@@ -226,7 +227,9 @@ func TestHandleDNSRequest_filterDNSResponse(t *testing.T) {
 		ID: 0, Data: []byte(blockRules),
 	}}
 
-	f, err := filtering.New(&filtering.Config{}, filters)
+	f, err := filtering.New(&filtering.Config{
+		Logger: testLogger,
+	}, filters)
 	require.NoError(t, err)
 
 	f.SetEnabled(true)
@@ -235,7 +238,7 @@ func TestHandleDNSRequest_filterDNSResponse(t *testing.T) {
 		DHCPServer:  &testDHCP{},
 		DNSFilter:   f,
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
-		Logger:      slogutil.NewDiscardLogger(),
+		Logger:      testLogger,
 	})
 	require.NoError(t, err)
 
@@ -345,7 +348,7 @@ func TestHandleDNSRequest_filterDNSResponse(t *testing.T) {
 				},
 			}
 
-			fltErr := s.filterDNSResponse(dctx)
+			fltErr := s.filterDNSResponse(testutil.ContextWithTimeout(t, testTimeout), dctx)
 			require.NoError(t, fltErr)
 
 			res := dctx.result

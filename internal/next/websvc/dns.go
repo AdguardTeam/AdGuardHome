@@ -8,12 +8,15 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/jsonpatch"
+	"github.com/AdguardTeam/dnsproxy/proxy"
 )
 
 // ReqPatchSettingsDNS describes the request to the PATCH /api/v1/settings/dns
 // HTTP API.
 type ReqPatchSettingsDNS struct {
 	// TODO(a.garipov): Add more as we go.
+
+	UpstreamMode jsonpatch.NonRemovable[proxy.UpstreamMode] `json:"upstream_mode"`
 
 	Addresses        jsonpatch.NonRemovable[[]netip.AddrPort] `json:"addresses"`
 	BootstrapServers jsonpatch.NonRemovable[[]string]         `json:"bootstrap_servers"`
@@ -22,7 +25,11 @@ type ReqPatchSettingsDNS struct {
 
 	UpstreamTimeout jsonpatch.NonRemovable[aghhttp.JSONDuration] `json:"upstream_timeout"`
 
+	CacheSize jsonpatch.NonRemovable[int] `json:"cache_size"`
+	Ratelimit jsonpatch.NonRemovable[int] `json:"ratelimit"`
+
 	BootstrapPreferIPv6 jsonpatch.NonRemovable[bool] `json:"bootstrap_prefer_ipv6"`
+	RefuseAny           jsonpatch.NonRemovable[bool] `json:"refuse_any"`
 	UseDNS64            jsonpatch.NonRemovable[bool] `json:"use_dns64"`
 }
 
@@ -31,13 +38,23 @@ type ReqPatchSettingsDNS struct {
 type HTTPAPIDNSSettings struct {
 	// TODO(a.garipov): Add more as we go.
 
-	Addresses           []netip.AddrPort     `json:"addresses"`
-	BootstrapServers    []string             `json:"bootstrap_servers"`
-	UpstreamServers     []string             `json:"upstream_servers"`
-	DNS64Prefixes       []netip.Prefix       `json:"dns64_prefixes"`
-	UpstreamTimeout     aghhttp.JSONDuration `json:"upstream_timeout"`
-	BootstrapPreferIPv6 bool                 `json:"bootstrap_prefer_ipv6"`
-	UseDNS64            bool                 `json:"use_dns64"`
+	UpstreamMode proxy.UpstreamMode `json:"upstream_mode"`
+
+	Addresses []netip.AddrPort `json:"addresses"`
+
+	BootstrapServers []string `json:"bootstrap_servers"`
+	UpstreamServers  []string `json:"upstream_servers"`
+
+	DNS64Prefixes []netip.Prefix `json:"dns64_prefixes"`
+
+	UpstreamTimeout aghhttp.JSONDuration `json:"upstream_timeout"`
+
+	Ratelimit int `json:"ratelimit"`
+	CacheSize int `json:"cache_size"`
+
+	BootstrapPreferIPv6 bool `json:"bootstrap_prefer_ipv6"`
+	RefuseAny           bool `json:"refuse_any"`
+	UseDNS64            bool `json:"use_dns64"`
 }
 
 // handlePatchSettingsDNS is the handler for the PATCH /api/v1/settings/dns HTTP
@@ -57,6 +74,8 @@ func (svc *Service) handlePatchSettingsDNS(w http.ResponseWriter, r *http.Reques
 
 	// TODO(a.garipov): Add more as we go.
 
+	req.UpstreamMode.Set(&newConf.UpstreamMode)
+
 	req.Addresses.Set(&newConf.Addresses)
 	req.BootstrapServers.Set(&newConf.BootstrapServers)
 	req.UpstreamServers.Set(&newConf.UpstreamServers)
@@ -64,7 +83,14 @@ func (svc *Service) handlePatchSettingsDNS(w http.ResponseWriter, r *http.Reques
 
 	req.UpstreamTimeout.Set((*aghhttp.JSONDuration)(&newConf.UpstreamTimeout))
 
+	if req.CacheSize.IsSet {
+		newConf.CacheSize = req.CacheSize.Value
+		newConf.CacheEnabled = req.CacheSize.Value > 0
+	}
+	req.Ratelimit.Set(&newConf.Ratelimit)
+
 	req.BootstrapPreferIPv6.Set(&newConf.BootstrapPreferIPv6)
+	req.RefuseAny.Set(&newConf.RefuseAny)
 	req.UseDNS64.Set(&newConf.UseDNS64)
 
 	ctx := r.Context()
@@ -84,12 +110,16 @@ func (svc *Service) handlePatchSettingsDNS(w http.ResponseWriter, r *http.Reques
 	}
 
 	aghhttp.WriteJSONResponseOK(w, r, &HTTPAPIDNSSettings{
+		UpstreamMode:        newConf.UpstreamMode,
 		Addresses:           newConf.Addresses,
 		BootstrapServers:    newConf.BootstrapServers,
 		UpstreamServers:     newConf.UpstreamServers,
 		DNS64Prefixes:       newConf.DNS64Prefixes,
 		UpstreamTimeout:     aghhttp.JSONDuration(newConf.UpstreamTimeout),
+		Ratelimit:           newConf.Ratelimit,
 		BootstrapPreferIPv6: newConf.BootstrapPreferIPv6,
+		CacheSize:           newConf.CacheSize,
+		RefuseAny:           newConf.RefuseAny,
 		UseDNS64:            newConf.UseDNS64,
 	})
 }

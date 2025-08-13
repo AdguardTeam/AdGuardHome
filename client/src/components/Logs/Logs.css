@@ -340,7 +340,8 @@
 }
 
 .button-action--arrow-option:disabled {
-    display: none;
+    opacity: 0.5;
+    cursor: default;
 }
 
 .tooltip-custom__container .button-action--arrow-option {

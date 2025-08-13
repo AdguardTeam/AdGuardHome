@@ -1,6 +1,7 @@
 package dnsforward
 
 import (
+	"context"
 	"net"
 	"time"
 
@@ -9,14 +10,13 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/dnsproxy/proxy"
-	"github.com/AdguardTeam/golibs/log"
 	"github.com/miekg/dns"
 )
 
 // Write Stats data and logs
-func (s *Server) processQueryLogsAndStats(dctx *dnsContext) (rc resultCode) {
-	log.Debug("dnsforward: started processing querylog and stats")
-	defer log.Debug("dnsforward: finished processing querylog and stats")
+func (s *Server) processQueryLogsAndStats(ctx context.Context, dctx *dnsContext) (rc resultCode) {
+	s.logger.DebugContext(ctx, "started processing querylog and stats")
+	defer s.logger.DebugContext(ctx, "finished processing querylog and stats")
 
 	pctx := dctx.proxyCtx
 	q := pctx.Req.Question[0]
@@ -27,7 +27,7 @@ func (s *Server) processQueryLogsAndStats(dctx *dnsContext) (rc resultCode) {
 	s.anonymizer.Load()(ip)
 	ipStr := net.IP(ip).String()
 
-	log.Debug("dnsforward: client ip for stats and querylog: %s", ipStr)
+	s.logger.DebugContext(ctx, "client ip for stats and querylog", "ip", ipStr)
 
 	ids := []string{ipStr}
 	if dctx.clientID != "" {
@@ -47,24 +47,26 @@ func (s *Server) processQueryLogsAndStats(dctx *dnsContext) (rc resultCode) {
 	if s.shouldLog(host, qt, cl, ids) {
 		s.logQuery(dctx, ip, processingTime)
 	} else {
-		log.Debug(
-			"dnsforward: request %s %s %q from %s ignored; not adding to querylog",
-			dns.Class(cl),
-			dns.Type(qt),
-			host,
-			ipStr,
+		s.logger.DebugContext(
+			ctx,
+			"not adding to querylog",
+			"dns_class", dns.Class(cl),
+			"dns_type", dns.Type(qt),
+			"host", host,
+			"ip", ipStr,
 		)
 	}
 
 	if s.shouldCountStat(host, qt, cl, ids) {
 		s.updateStats(dctx, ipStr, processingTime)
 	} else {
-		log.Debug(
-			"dnsforward: request %s %s %q from %s ignored; not counting in stats",
-			dns.Class(cl),
-			dns.Type(qt),
-			host,
-			ipStr,
+		s.logger.DebugContext(
+			ctx,
+			"not counting in stats",
+			"dns_class", dns.Class(cl),
+			"dns_type", dns.Type(qt),
+			"host", host,
+			"ip", ipStr,
 		)
 	}
 

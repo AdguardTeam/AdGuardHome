@@ -4,6 +4,7 @@ import (
 	"net/netip"
 	"testing"
 
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/urlfilter"
 	"github.com/AdguardTeam/urlfilter/rules"
@@ -18,7 +19,11 @@ func TestNewDefaultStorage(t *testing.T) {
 		Answer: "answer.com",
 	}}
 
-	s, err := NewDefaultStorage(-1, items)
+	s, err := NewDefaultStorage(&Config{
+		Logger:   slogutil.NewDiscardLogger(),
+		Rewrites: items,
+		ListID:   -1,
+	})
 	require.NoError(t, err)
 
 	require.Len(t, s.List(), 1)
@@ -27,7 +32,11 @@ func TestNewDefaultStorage(t *testing.T) {
 func TestDefaultStorage_CRUD(t *testing.T) {
 	var items []*Item
 
-	s, err := NewDefaultStorage(-1, items)
+	s, err := NewDefaultStorage(&Config{
+		Logger:   slogutil.NewDiscardLogger(),
+		Rewrites: items,
+		ListID:   -1,
+	})
 	require.NoError(t, err)
 	require.Len(t, s.List(), 0)
 
@@ -112,7 +121,11 @@ func TestDefaultStorage_MatchRequest(t *testing.T) {
 		Answer: "sub.issue4016.com",
 	}}
 
-	s, err := NewDefaultStorage(-1, items)
+	s, err := NewDefaultStorage(&Config{
+		Logger:   slogutil.NewDiscardLogger(),
+		Rewrites: items,
+		ListID:   -1,
+	})
 	require.NoError(t, err)
 
 	testCases := []struct {
@@ -284,7 +297,11 @@ func TestDefaultStorage_MatchRequest_Levels(t *testing.T) {
 		Answer: addr3.String(),
 	}}
 
-	s, err := NewDefaultStorage(-1, items)
+	s, err := NewDefaultStorage(&Config{
+		Logger:   slogutil.NewDiscardLogger(),
+		Rewrites: items,
+		ListID:   -1,
+	})
 	require.NoError(t, err)
 
 	testCases := []struct {
@@ -352,7 +369,11 @@ func TestDefaultStorage_MatchRequest_ExceptionCNAME(t *testing.T) {
 		Answer: "*.sub.host.com",
 	}}
 
-	s, err := NewDefaultStorage(-1, items)
+	s, err := NewDefaultStorage(&Config{
+		Logger:   slogutil.NewDiscardLogger(),
+		Rewrites: items,
+		ListID:   -1,
+	})
 	require.NoError(t, err)
 
 	testCases := []struct {
@@ -416,7 +437,11 @@ func TestDefaultStorage_MatchRequest_ExceptionIP(t *testing.T) {
 		Answer: "A",
 	}}
 
-	s, err := NewDefaultStorage(-1, items)
+	s, err := NewDefaultStorage(&Config{
+		Logger:   slogutil.NewDiscardLogger(),
+		Rewrites: items,
+		ListID:   -1,
+	})
 	require.NoError(t, err)
 
 	testCases := []struct {

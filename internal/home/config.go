@@ -2,13 +2,16 @@ package home
 
 import (
 	"bytes"
+	"context"
 	"fmt"
+	"log/slog"
 	"net/netip"
 	"os"
 	"path/filepath"
 	"slices"
 	"sync"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
@@ -22,6 +25,7 @@ import (
 	"github.com/AdguardTeam/dnsproxy/fastip"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/google/go-cmp/cmp"
@@ -462,7 +466,8 @@ var config = &configuration{
 			}, {
 				Prefix: netip.MustParsePrefix("::1/128"),
 			}},
-			CacheSize: 4 * 1024 * 1024,
+			CacheEnabled: true,
+			CacheSize:    4 * 1024 * 1024,
 
 			EDNSClientSubnet: &dnsforward.EDNSClientSubnet{
 				CustomIP:  netip.Addr{},
@@ -743,12 +748,13 @@ func readConfigFile() (fileData []byte, err error) {
 }
 
 // Saves configuration to the YAML file and also saves the user filter contents to a file
-func (c *configuration) write(tlsMgr *tlsManager) (err error) {
+func (c *configuration) write(tlsMgr *tlsManager, auth *auth) (err error) {
 	c.Lock()
 	defer c.Unlock()
 
-	if globalContext.auth != nil {
-		config.Users = globalContext.auth.usersList()
+	if auth != nil {
+		// TODO(s.chzhen):  Pass context.
+		config.Users = auth.usersList(context.TODO())
 	}
 
 	if tlsMgr != nil {
@@ -835,4 +841,48 @@ func validateTLSCipherIDs(cipherIDs []string) (err error) {
 	}
 
 	return nil
+}
+
+// defaultConfigModifier is a default [agh.ConfigModifier] implementation.
+type defaultConfigModifier struct {
+	auth   *auth
+	config *configuration
+	logger *slog.Logger
+	tlsMgr *tlsManager
+}
+
+// newDefaultConfigModifier returns the new properly initialized
+// *defaultConfigModifier.  All arguments must not be nil.
+//
+// TODO(s.chzhen):  Consider using configuration struct.
+func newDefaultConfigModifier(
+	conf *configuration,
+	l *slog.Logger,
+) (cm *defaultConfigModifier) {
+	return &defaultConfigModifier{
+		config: conf,
+		logger: l,
+	}
+}
+
+// type check
+var _ agh.ConfigModifier = (*defaultConfigModifier)(nil)
+
+// Apply implements the [agh.ConfigModifier] interface for
+// *defaultConfigModifier.
+func (cm *defaultConfigModifier) Apply(ctx context.Context) {
+	err := cm.config.write(cm.tlsMgr, cm.auth)
+	if err != nil {
+		cm.logger.ErrorContext(ctx, "writing config", slogutil.KeyError, err)
+	}
+}
+
+// setAuth sets the auth parameters used by Apply.
+func (cm *defaultConfigModifier) setAuth(a *auth) {
+	cm.auth = a
+}
+
+// setTLSManager sets the TLS manager used by Apply.
+func (cm *defaultConfigModifier) setTLSManager(m *tlsManager) {
+	cm.tlsMgr = m
 }

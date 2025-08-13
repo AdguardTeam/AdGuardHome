@@ -88,6 +88,10 @@ type HostsContainer interface {
 
 // StorageConfig is the client storage configuration structure.
 type StorageConfig struct {
+	// BaseLogger is used to create loggers for other entities.  It should not
+	// have a prefix and must not be nil.
+	BaseLogger *slog.Logger
+
 	// Logger is used for logging the operation of the client storage.  It must
 	// not be nil.
 	Logger *slog.Logger
@@ -174,7 +178,7 @@ func NewStorage(ctx context.Context, conf *StorageConfig) (s *Storage, err error
 		mu:                     &sync.Mutex{},
 		index:                  newIndex(),
 		runtimeIndex:           newRuntimeIndex(),
-		upstreamManager:        newUpstreamManager(conf.Logger, conf.Clock),
+		upstreamManager:        newUpstreamManager(conf.BaseLogger, conf.Clock),
 		dhcp:                   conf.DHCP,
 		etcHosts:               conf.EtcHosts,
 		arpDB:                  conf.ARPDB,
@@ -739,7 +743,7 @@ func (s *Storage) CustomUpstreamConfig(
 		return nil
 	}
 
-	return s.upstreamManager.customUpstreamConfig(c.UID)
+	return s.upstreamManager.customUpstreamConfig(c.UID, c.Name)
 }
 
 // UpdateCommonUpstreamConfig implements the [dnsforward.ClientsContainer]

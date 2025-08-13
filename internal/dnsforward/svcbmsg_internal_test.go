@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
@@ -152,14 +153,14 @@ func TestGenAnswerHTTPS_andSVCB(t *testing.T) {
 				want := &dns.HTTPS{SVCB: *tc.want}
 				want.Hdr.Rrtype = dns.TypeHTTPS
 
-				got := s.genAnswerHTTPS(req, tc.svcb)
+				got := s.genAnswerHTTPS(testutil.ContextWithTimeout(t, testTimeout), req, tc.svcb)
 				assert.Equal(t, want, got)
 			})
 		})
 
 		t.Run("svcb", func(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
-				got := s.genAnswerSVCB(req, tc.svcb)
+				got := s.genAnswerSVCB(testutil.ContextWithTimeout(t, testTimeout), req, tc.svcb)
 				assert.Equal(t, tc.want, got)
 			})
 		})

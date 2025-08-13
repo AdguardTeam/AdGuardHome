@@ -2,6 +2,7 @@ package filtering
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -11,7 +12,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -102,14 +105,19 @@ func TestDNSFilter_handleFilteringSetURL(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			confModifiedCalled := false
+			confModifier := &aghtest.ConfigModifier{}
+			confModifier.OnApply = func(_ context.Context) {
+				confModifiedCalled = true
+			}
 			d, err := New(&Config{
+				Logger:           slogutil.NewDiscardLogger(),
 				FilteringEnabled: true,
 				Filters:          tc.initial,
 				HTTPClient: &http.Client{
 					Timeout: 5 * time.Second,
 				},
-				ConfigModified: func() { confModifiedCalled = true },
-				DataDir:        filtersDir,
+				ConfModifier: confModifier,
+				DataDir:      filtersDir,
 			}, nil)
 			require.NoError(t, err)
 			t.Cleanup(d.Close)
@@ -181,12 +189,15 @@ func TestDNSFilter_handleSafeBrowsingStatus(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			handlers := make(map[string]http.Handler)
+			confModifier := &aghtest.ConfigModifier{}
+			confModifier.OnApply = func(_ context.Context) {
+				testutil.RequireSend(testutil.PanicT{}, confModCh, struct{}{}, testTimeout)
+			}
 
 			d, err := New(&Config{
-				ConfigModified: func() {
-					testutil.RequireSend(testutil.PanicT{}, confModCh, struct{}{}, testTimeout)
-				},
-				DataDir: filtersDir,
+				Logger:       slogutil.NewDiscardLogger(),
+				ConfModifier: confModifier,
+				DataDir:      filtersDir,
 				HTTPRegister: func(_, url string, handler http.HandlerFunc) {
 					handlers[url] = handler
 				},
@@ -265,12 +276,15 @@ func TestDNSFilter_handleParentalStatus(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			handlers := make(map[string]http.Handler)
+			confModifier := &aghtest.ConfigModifier{}
+			confModifier.OnApply = func(_ context.Context) {
+				testutil.RequireSend(testutil.PanicT{}, confModCh, struct{}{}, testTimeout)
+			}
 
 			d, err := New(&Config{
-				ConfigModified: func() {
-					testutil.RequireSend(testutil.PanicT{}, confModCh, struct{}{}, testTimeout)
-				},
-				DataDir: filtersDir,
+				Logger:       slogutil.NewDiscardLogger(),
+				ConfModifier: confModifier,
+				DataDir:      filtersDir,
 				HTTPRegister: func(_, url string, handler http.HandlerFunc) {
 					handlers[url] = handler
 				},
@@ -370,6 +384,7 @@ func TestDNSFilter_HandleCheckHost(t *testing.T) {
 	}
 
 	dnsFilter, err := New(&Config{
+		Logger: slogutil.NewDiscardLogger(),
 		BlockedServices: &BlockedServices{
 			Schedule: schedule.EmptyWeekly(),
 		},

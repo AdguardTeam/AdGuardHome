@@ -2,6 +2,7 @@ package dnsforward
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"net"
@@ -16,6 +17,7 @@ import (
 	"testing/fstest"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
@@ -86,14 +88,16 @@ func TestDNSForwardHTTP_handleGetConfig(t *testing.T) {
 			EDNSClientSubnet:       &EDNSClientSubnet{Enabled: false},
 			ClientsContainer:       EmptyClientsContainer{},
 		},
-		ConfigModified: func() {},
-		ServePlainDNS:  true,
+		ConfModifier:  agh.EmptyConfigModifier{},
+		ServePlainDNS: true,
 	}
 	s := createTestServer(t, filterConf, forwardConf)
 	s.sysResolvers = &emptySysResolvers{}
 
-	require.NoError(t, s.Start())
-	testutil.CleanupAndRequireSuccess(t, s.Stop)
+	require.NoError(t, s.Start(testutil.ContextWithTimeout(t, testTimeout)))
+	testutil.CleanupAndRequireSuccess(t, func() (err error) {
+		return s.Stop(testutil.ContextWithTimeout(t, testTimeout))
+	})
 
 	defaultConf := s.conf
 
@@ -136,7 +140,7 @@ func TestDNSForwardHTTP_handleGetConfig(t *testing.T) {
 			t.Cleanup(w.Body.Reset)
 
 			s.conf = tc.conf()
-			s.handleGetConfig(w, nil)
+			s.handleGetConfig(w, httptest.NewRequest(http.MethodGet, "/", nil))
 
 			cType := w.Header().Get(httphdr.ContentType)
 			assert.Equal(t, aghhttp.HdrValApplicationJSON, cType)
@@ -169,17 +173,19 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 			EDNSClientSubnet:       &EDNSClientSubnet{Enabled: false},
 			ClientsContainer:       EmptyClientsContainer{},
 		},
-		ConfigModified: func() {},
-		ServePlainDNS:  true,
+		ConfModifier:  agh.EmptyConfigModifier{},
+		ServePlainDNS: true,
 	}
 	s := createTestServer(t, filterConf, forwardConf)
 	s.sysResolvers = &emptySysResolvers{}
 
 	defaultConf := s.conf
 
-	err := s.Start()
+	err := s.Start(testutil.ContextWithTimeout(t, testTimeout))
 	assert.NoError(t, err)
-	testutil.CleanupAndRequireSuccess(t, s.Stop)
+	testutil.CleanupAndRequireSuccess(t, func() (err error) {
+		return s.Stop(testutil.ContextWithTimeout(t, testTimeout))
+	})
 
 	w := httptest.NewRecorder()
 
@@ -222,6 +228,9 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 		wantSet: "",
 	}, {
 		name:    "cache_size",
+		wantSet: "",
+	}, {
+		name:    "cache_enabled",
 		wantSet: "",
 	}, {
 		name:    "upstream_mode_parallel",
@@ -296,7 +305,7 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 			assert.Equal(t, tc.wantSet, strings.TrimSuffix(w.Body.String(), "\n"))
 			w.Body.Reset()
 
-			s.handleGetConfig(w, nil)
+			s.handleGetConfig(w, httptest.NewRequest(http.MethodGet, "/", nil))
 			assert.JSONEq(t, string(caseData.Want), w.Body.String())
 			w.Body.Reset()
 		})
@@ -355,10 +364,10 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 			},
 		},
 		&aghtest.FSWatcher{
-			OnStart:  func() (_ error) { panic("not implemented") },
-			OnEvents: func() (e <-chan struct{}) { return nil },
-			OnAdd:    func(_ string) (err error) { return nil },
-			OnClose:  func() (err error) { return nil },
+			OnStart:    func(_ context.Context) (_ error) { panic("not implemented") },
+			OnEvents:   func() (e <-chan struct{}) { return nil },
+			OnAdd:      func(_ string) (err error) { return nil },
+			OnShutdown: func(_ context.Context) (err error) { return nil },
 		},
 		hostsFileName,
 	)

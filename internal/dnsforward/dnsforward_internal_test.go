@@ -2,6 +2,7 @@ package dnsforward
 
 import (
 	"cmp"
+	"context"
 	"crypto/ecdsa"
 	"crypto/rand"
 	"crypto/rsa"
@@ -21,6 +22,7 @@ import (
 	"testing/fstest"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
@@ -38,6 +40,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// testLogger is a logger used in tests.
+var testLogger = slogutil.NewDiscardLogger()
 
 func TestMain(m *testing.M) {
 	testutil.DiscardLogOutput(m)
@@ -102,9 +107,11 @@ func (c *clientsContainer) ClearUpstreamCache() {
 func startDeferStop(t *testing.T, s *Server) {
 	t.Helper()
 
-	err := s.Start()
+	err := s.Start(testutil.ContextWithTimeout(t, testTimeout))
 	require.NoError(t, err)
-	testutil.CleanupAndRequireSuccess(t, s.Stop)
+	testutil.CleanupAndRequireSuccess(t, func() (err error) {
+		return s.Stop(testutil.ContextWithTimeout(t, testTimeout))
+	})
 }
 
 // applyEmptyClientFiltering is a helper function for tests with
@@ -128,6 +135,8 @@ func createTestServer(
 	forwardConf ServerConfig,
 ) (s *Server) {
 	t.Helper()
+
+	filterConf.Logger = cmp.Or(filterConf.Logger, testLogger)
 
 	rules := `||nxdomain.example.org
 ||NULL.example.org^
@@ -159,11 +168,11 @@ func createTestServer(
 		DHCPServer:  dhcp,
 		DNSFilter:   f,
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
-		Logger:      slogutil.NewDiscardLogger(),
+		Logger:      testLogger,
 	})
 	require.NoError(t, err)
 
-	err = s.Prepare(&forwardConf)
+	err = s.Prepare(testutil.ContextWithTimeout(t, testTimeout), &forwardConf)
 	require.NoError(t, err)
 
 	return s
@@ -238,7 +247,7 @@ func createTestTLS(t *testing.T, tlsConf *TLSConfig) (s *Server, certPem []byte)
 		ServePlainDNS: true,
 	})
 
-	err = s.Prepare(&s.conf)
+	err = s.Prepare(testutil.ContextWithTimeout(t, testTimeout), &s.conf)
 	require.NoErrorf(t, err, "failed to prepare server: %s", err)
 
 	return s, certPem
@@ -410,11 +419,11 @@ func TestServer_timeout(t *testing.T) {
 
 		s, err := NewServer(DNSCreateParams{
 			DNSFilter: createTestDNSFilter(t),
-			Logger:    slogutil.NewDiscardLogger(),
+			Logger:    testLogger,
 		})
 		require.NoError(t, err)
 
-		err = s.Prepare(srvConf)
+		err = s.Prepare(testutil.ContextWithTimeout(t, testTimeout), srvConf)
 		require.NoError(t, err)
 
 		assert.Equal(t, testTimeout, s.conf.UpstreamTimeout)
@@ -423,7 +432,7 @@ func TestServer_timeout(t *testing.T) {
 	t.Run("default", func(t *testing.T) {
 		s, err := NewServer(DNSCreateParams{
 			DNSFilter: createTestDNSFilter(t),
-			Logger:    slogutil.NewDiscardLogger(),
+			Logger:    testLogger,
 		})
 		require.NoError(t, err)
 
@@ -433,7 +442,7 @@ func TestServer_timeout(t *testing.T) {
 			Enabled: false,
 		}
 		s.conf.Config.ClientsContainer = EmptyClientsContainer{}
-		err = s.Prepare(&s.conf)
+		err = s.Prepare(testutil.ContextWithTimeout(t, testTimeout), &s.conf)
 		require.NoError(t, err)
 
 		assert.Equal(t, DefaultTimeout, s.conf.UpstreamTimeout)
@@ -456,11 +465,11 @@ func TestServer_Prepare_fallbacks(t *testing.T) {
 	}
 
 	s, err := NewServer(DNSCreateParams{
-		Logger: slogutil.NewDiscardLogger(),
+		Logger: testLogger,
 	})
 	require.NoError(t, err)
 
-	err = s.Prepare(srvConf)
+	err = s.Prepare(testutil.ContextWithTimeout(t, testTimeout), srvConf)
 	require.NoError(t, err)
 	require.NotNil(t, s.dnsProxy.Fallbacks)
 
@@ -527,7 +536,10 @@ func TestDoQServer(t *testing.T) {
 
 	// Create a DNS-over-QUIC upstream.
 	addr := s.dnsProxy.Addr(proxy.ProtoQUIC)
-	opts := &upstream.Options{InsecureSkipVerify: true}
+	opts := &upstream.Options{
+		Logger:             testLogger,
+		InsecureSkipVerify: true,
+	}
 	u, err := upstream.AddressToUpstream(fmt.Sprintf("%s://%s", proxy.ProtoQUIC, addr), opts)
 	require.NoError(t, err)
 
@@ -557,8 +569,8 @@ func TestServerRace(t *testing.T) {
 			UpstreamMode: UpstreamModeLoadBalance,
 			UpstreamDNS:  []string{"8.8.8.8:53", "8.8.4.4:53"},
 		},
-		ConfigModified: func() {},
-		ServePlainDNS:  true,
+		ConfModifier:  agh.EmptyConfigModifier{},
+		ServePlainDNS: true,
 	}
 	s := createTestServer(t, filterConf, forwardConf)
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{newGoogleUpstream()}
@@ -584,6 +596,7 @@ func TestSafeSearch(t *testing.T) {
 	}
 
 	filterConf := &filtering.Config{
+		Logger:              testLogger,
 		BlockingMode:        filtering.BlockingModeDefault,
 		ProtectionEnabled:   true,
 		SafeSearchConf:      safeSearchConf,
@@ -593,7 +606,7 @@ func TestSafeSearch(t *testing.T) {
 
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
 	safeSearch, err := safesearch.NewDefault(ctx, &safesearch.DefaultConfig{
-		Logger:         slogutil.NewDiscardLogger(),
+		Logger:         testLogger,
 		ServicesConfig: safeSearchConf,
 		CacheSize:      filterConf.SafeSearchCacheSize,
 		CacheTTL:       time.Minute * time.Duration(filterConf.CacheTime),
@@ -1055,6 +1068,7 @@ func TestBlockedCustomIP(t *testing.T) {
 	}}
 
 	f, err := filtering.New(&filtering.Config{
+		Logger:               testLogger,
 		ProtectionEnabled:    true,
 		ApplyClientFiltering: applyEmptyClientFiltering,
 		BlockedServices:      emptyFilteringBlockedServices(),
@@ -1073,7 +1087,7 @@ func TestBlockedCustomIP(t *testing.T) {
 		DHCPServer:  dhcp,
 		DNSFilter:   f,
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
-		Logger:      slogutil.NewDiscardLogger(),
+		Logger:      testLogger,
 	})
 	require.NoError(t, err)
 
@@ -1093,7 +1107,7 @@ func TestBlockedCustomIP(t *testing.T) {
 	}
 
 	// Invalid BlockingIPv4.
-	err = s.Prepare(conf)
+	err = s.Prepare(testutil.ContextWithTimeout(t, testTimeout), conf)
 	assert.Error(t, err)
 
 	s.dnsFilter.SetBlockingMode(
@@ -1101,7 +1115,7 @@ func TestBlockedCustomIP(t *testing.T) {
 		netip.AddrFrom4([4]byte{0, 0, 0, 1}),
 		netip.MustParseAddr("::1"))
 
-	err = s.Prepare(conf)
+	err = s.Prepare(testutil.ContextWithTimeout(t, testTimeout), conf)
 	require.NoError(t, err)
 
 	f.SetEnabled(true)
@@ -1173,6 +1187,7 @@ func TestBlockedBySafeBrowsing(t *testing.T) {
 	)
 
 	sbChecker := hashprefix.New(&hashprefix.Config{
+		Logger:    testLogger,
 		CacheTime: cacheTime,
 		CacheSize: cacheSize,
 		Upstream:  aghtest.NewBlockUpstream(hostname, true),
@@ -1216,6 +1231,7 @@ func TestBlockedBySafeBrowsing(t *testing.T) {
 
 func TestRewrite(t *testing.T) {
 	c := &filtering.Config{
+		Logger:               testLogger,
 		ApplyClientFiltering: applyEmptyClientFiltering,
 		BlockedServices:      emptyFilteringBlockedServices(),
 		BlockingMode:         filtering.BlockingModeDefault,
@@ -1247,11 +1263,11 @@ func TestRewrite(t *testing.T) {
 		DHCPServer:  dhcp,
 		DNSFilter:   f,
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
-		Logger:      slogutil.NewDiscardLogger(),
+		Logger:      testLogger,
 	})
 	require.NoError(t, err)
 
-	assert.NoError(t, s.Prepare(&ServerConfig{
+	assert.NoError(t, s.Prepare(testutil.ContextWithTimeout(t, testTimeout), &ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		TLSConf:        &TLSConfig{},
@@ -1321,7 +1337,7 @@ func TestRewrite(t *testing.T) {
 
 	for _, protect := range []bool{true, false} {
 		val := protect
-		conf := s.getDNSConfig()
+		conf := s.getDNSConfig(testutil.ContextWithTimeout(t, testTimeout))
 		conf.ProtectionEnabled = &val
 		s.setConfig(conf)
 
@@ -1365,6 +1381,7 @@ func TestPTRResponseFromDHCPLeases(t *testing.T) {
 	const localDomain = "lan"
 
 	flt, err := filtering.New(&filtering.Config{
+		Logger:               testLogger,
 		ApplyClientFiltering: applyEmptyClientFiltering,
 		BlockedServices:      emptyFilteringBlockedServices(),
 		BlockingMode:         filtering.BlockingModeDefault,
@@ -1381,7 +1398,7 @@ func TestPTRResponseFromDHCPLeases(t *testing.T) {
 			},
 		},
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
-		Logger:      slogutil.NewDiscardLogger(),
+		Logger:      testLogger,
 		LocalDomain: localDomain,
 	})
 	require.NoError(t, err)
@@ -1394,12 +1411,12 @@ func TestPTRResponseFromDHCPLeases(t *testing.T) {
 	s.conf.Config.ClientsContainer = EmptyClientsContainer{}
 	s.conf.Config.UpstreamMode = UpstreamModeLoadBalance
 
-	err = s.Prepare(&s.conf)
+	err = s.Prepare(testutil.ContextWithTimeout(t, testTimeout), &s.conf)
 	require.NoError(t, err)
 
-	err = s.Start()
+	err = s.Start(testutil.ContextWithTimeout(t, testTimeout))
 	require.NoError(t, err)
-	t.Cleanup(s.Close)
+	t.Cleanup(func() { s.Close(testutil.ContextWithTimeout(t, testTimeout)) })
 
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
 	req := createTestMessageWithType("34.12.168.192.in-addr.arpa.", dns.TypePTR)
@@ -1438,7 +1455,7 @@ func TestPTRResponseFromHosts(t *testing.T) {
 
 	var eventsCalledCounter uint32
 	hc, err := aghnet.NewHostsContainer(testFS, &aghtest.FSWatcher{
-		OnStart: func() (_ error) { panic("not implemented") },
+		OnStart: func(_ context.Context) (_ error) { panic("not implemented") },
 		OnEvents: func() (e <-chan struct{}) {
 			assert.Equal(t, uint32(1), atomic.AddUint32(&eventsCalledCounter, 1))
 
@@ -1449,7 +1466,7 @@ func TestPTRResponseFromHosts(t *testing.T) {
 
 			return nil
 		},
-		OnClose: func() (err error) { panic("not implemented") },
+		OnShutdown: func(_ context.Context) (err error) { panic("not implemented") },
 	}, hostsFilename)
 	require.NoError(t, err)
 	t.Cleanup(func() {
@@ -1457,6 +1474,7 @@ func TestPTRResponseFromHosts(t *testing.T) {
 	})
 
 	flt, err := filtering.New(&filtering.Config{
+		Logger:               testLogger,
 		ApplyClientFiltering: applyEmptyClientFiltering,
 		BlockedServices:      emptyFilteringBlockedServices(),
 		BlockingMode:         filtering.BlockingModeDefault,
@@ -1471,7 +1489,7 @@ func TestPTRResponseFromHosts(t *testing.T) {
 		DHCPServer:  dhcp,
 		DNSFilter:   flt,
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
-		Logger:      slogutil.NewDiscardLogger(),
+		Logger:      testLogger,
 	})
 	require.NoError(t, err)
 
@@ -1483,12 +1501,12 @@ func TestPTRResponseFromHosts(t *testing.T) {
 	s.conf.Config.ClientsContainer = EmptyClientsContainer{}
 	s.conf.Config.UpstreamMode = UpstreamModeLoadBalance
 
-	err = s.Prepare(&s.conf)
+	err = s.Prepare(testutil.ContextWithTimeout(t, testTimeout), &s.conf)
 	require.NoError(t, err)
 
-	err = s.Start()
+	err = s.Start(testutil.ContextWithTimeout(t, testTimeout))
 	require.NoError(t, err)
-	t.Cleanup(s.Close)
+	t.Cleanup(func() { s.Close(testutil.ContextWithTimeout(t, testTimeout)) })
 
 	subTestFunc := func(t *testing.T) {
 		addr := s.dnsProxy.Addr(proxy.ProtoUDP)
@@ -1509,7 +1527,7 @@ func TestPTRResponseFromHosts(t *testing.T) {
 
 	for _, protect := range []bool{true, false} {
 		val := protect
-		conf := s.getDNSConfig()
+		conf := s.getDNSConfig(testutil.ContextWithTimeout(t, testTimeout))
 		conf.ProtectionEnabled = &val
 		s.setConfig(conf)
 
@@ -1527,27 +1545,27 @@ func TestNewServer(t *testing.T) {
 	}{{
 		name: "success",
 		in: DNSCreateParams{
-			Logger: slogutil.NewDiscardLogger(),
+			Logger: testLogger,
 		},
 		wantErrMsg: "",
 	}, {
 		name: "success_local_tld",
 		in: DNSCreateParams{
-			Logger:      slogutil.NewDiscardLogger(),
+			Logger:      testLogger,
 			LocalDomain: "mynet",
 		},
 		wantErrMsg: "",
 	}, {
 		name: "success_local_domain",
 		in: DNSCreateParams{
-			Logger:      slogutil.NewDiscardLogger(),
+			Logger:      testLogger,
 			LocalDomain: "my.local.net",
 		},
 		wantErrMsg: "",
 	}, {
 		name: "bad_local_domain",
 		in: DNSCreateParams{
-			Logger:      slogutil.NewDiscardLogger(),
+			Logger:      testLogger,
 			LocalDomain: "!!!",
 		},
 		wantErrMsg: `local domain: bad domain name "!!!": ` +

@@ -166,7 +166,7 @@ func (s *StatsCtx) handleStatsConfig(w http.ResponseWriter, r *http.Request) {
 
 	limit := time.Duration(reqData.IntervalDays) * timeutil.Day
 
-	defer s.configModified()
+	defer s.configModifier.Apply(ctx)
 
 	s.confMu.Lock()
 	defer s.confMu.Unlock()
@@ -216,7 +216,7 @@ func (s *StatsCtx) handlePutStatsConfig(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	defer s.configModified()
+	defer s.configModifier.Apply(ctx)
 
 	s.confMu.Lock()
 	defer s.confMu.Unlock()

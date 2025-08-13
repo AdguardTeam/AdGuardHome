@@ -1,6 +1,7 @@
 package filtering
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -17,7 +18,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
 	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 )
 
 // filterDir is the subdirectory of a data directory to store downloaded
@@ -105,12 +106,13 @@ func (d *DNSFilter) filterSetProperties(
 	}
 
 	flt := &filters[i]
-	log.Debug(
-		"filtering: set name to %q, url to %s, enabled to %t for filter %s",
-		newList.Name,
-		newList.URL,
-		newList.Enabled,
-		flt.URL,
+	d.logger.DebugContext(
+		context.TODO(),
+		"updating filter",
+		"name", newList.Name,
+		"url", newList.URL,
+		"enabled", newList.Enabled,
+		"filter_url", flt.URL,
 	)
 
 	defer func(oldURL, oldName string, oldEnabled bool, oldUpdated time.Time, oldRulesCount int) {
@@ -142,21 +144,22 @@ func (d *DNSFilter) filterSetProperties(
 		shouldRestart = true
 	}
 
-	if flt.Enabled {
-		if shouldRestart {
-			// Download the filter contents.
-			shouldRestart, err = d.update(flt)
-		}
-	} else {
+	if !flt.Enabled {
 		// TODO(e.burkov):  The validation of the contents of the new URL is
 		// currently skipped if the rule list is disabled.  This makes it
 		// possible to set a bad rules source, but the validation should still
 		// kick in when the filter is enabled.  Consider changing this behavior
 		// to be stricter.
 		flt.unload()
+
+		return shouldRestart, err
 	}
 
-	return shouldRestart, err
+	if !shouldRestart {
+		return false, nil
+	}
+
+	return d.update(flt)
 }
 
 // filterExists returns true if a filter with the same url exists in d.  It's
@@ -213,12 +216,12 @@ func (d *DNSFilter) filterAdd(flt FilterYAML) (err error) {
 
 // Load filters from the disk
 // And if any filter has zero ID, assign a new one
-func (d *DNSFilter) loadFilters(array []FilterYAML) {
+func (d *DNSFilter) loadFilters(ctx context.Context, array []FilterYAML) {
 	for i := range array {
 		filter := &array[i] // otherwise we're operating on a copy
 		if filter.ID == 0 {
 			newID := d.idGen.next()
-			log.Info("filtering: warning: filter at index %d has no id; assigning to %d", i, newID)
+			d.logger.WarnContext(ctx, "filter has no id", "idx", i, "new_id", newID)
 
 			filter.ID = newID
 		}
@@ -228,9 +231,9 @@ func (d *DNSFilter) loadFilters(array []FilterYAML) {
 			continue
 		}
 
-		err := d.load(filter)
+		err := d.load(ctx, filter)
 		if err != nil {
-			log.Error("filtering: loading filter %d: %s", filter.ID, err)
+			d.logger.ErrorContext(ctx, "loading filter", "id", filter.ID, slogutil.KeyError, err)
 		}
 	}
 }
@@ -300,36 +303,61 @@ func (d *DNSFilter) listsToUpdate(filters *[]FilterYAML, force bool) (toUpd []Fi
 	return toUpd
 }
 
-func (d *DNSFilter) refreshFiltersArray(filters *[]FilterYAML, force bool) (int, []FilterYAML, []bool, bool) {
-	var updateFlags []bool // 'true' if filter data has changed
-
-	updateFilters := d.listsToUpdate(filters, force)
+// refreshFiltersArray updates the filters array and returns the number of
+// filters that have been refreshed.  updateFlags is true if filter data has
+// changed.
+func (d *DNSFilter) refreshFiltersArray(
+	ctx context.Context,
+	filters *[]FilterYAML,
+	force bool,
+) (updateCount int, updateFilters []FilterYAML, updateFlags []bool, isNetErr bool) {
+	updateFilters = d.listsToUpdate(filters, force)
 	if len(updateFilters) == 0 {
 		return 0, nil, nil, false
 	}
 
-	failNum := 0
+	failNum, updateFlags := d.updateFilterList(ctx, updateFilters)
+	if failNum == len(updateFilters) {
+		return 0, nil, nil, true
+	}
+
+	d.conf.filtersMu.Lock()
+	defer d.conf.filtersMu.Unlock()
+
+	updateCount = d.syncUpdatedFilters(ctx, filters, updateFilters, updateFlags)
+
+	return updateCount, updateFilters, updateFlags, false
+}
+
+// updateFilterList updates each filter in updateFilters and returns the number
+// of failures and the updateFlags slice aligned with updateFilters indicating
+// whether each filter's data changed.
+func (d *DNSFilter) updateFilterList(
+	ctx context.Context,
+	updateFilters []FilterYAML,
+) (failNum int, updateFlags []bool) {
 	for i := range updateFilters {
 		uf := &updateFilters[i]
 		updated, err := d.update(uf)
 		updateFlags = append(updateFlags, updated)
 		if err != nil {
 			failNum++
-			log.Error("filtering: updating filter from url %q: %s\n", uf.URL, err)
-
-			continue
+			d.logger.ErrorContext(ctx, "updating filter", "url", uf.URL, slogutil.KeyError, err)
 		}
 	}
 
-	if failNum == len(updateFilters) {
-		return 0, nil, nil, true
-	}
+	return failNum, updateFlags
+}
 
-	updateCount := 0
-
-	d.conf.filtersMu.Lock()
-	defer d.conf.filtersMu.Unlock()
-
+// syncUpdatedFilters syncs updated filters back to the original filters slice
+// and returns the updateCount.  filters must not be nil.  updateFlags must
+// align with updateFilters.  d.conf.filtersMu must be locked.
+func (d *DNSFilter) syncUpdatedFilters(
+	ctx context.Context,
+	filters *[]FilterYAML,
+	updateFilters []FilterYAML,
+	updateFlags []bool,
+) (updateCount int) {
 	for i := range updateFilters {
 		uf := &updateFilters[i]
 		updated := updateFlags[i]
@@ -345,11 +373,12 @@ func (d *DNSFilter) refreshFiltersArray(filters *[]FilterYAML, force bool) (int,
 				continue
 			}
 
-			log.Info(
-				"filtering: updated filter %d; rule count: %d (was %d)",
-				f.ID,
-				uf.RulesCount,
-				f.RulesCount,
+			d.logger.InfoContext(
+				ctx,
+				"updated filter",
+				"id", f.ID,
+				"rules_count", uf.RulesCount,
+				"prev_rules_count", f.RulesCount,
 			)
 
 			f.Name = uf.Name
@@ -359,7 +388,7 @@ func (d *DNSFilter) refreshFiltersArray(filters *[]FilterYAML, force bool) (int,
 		}
 	}
 
-	return updateCount, updateFilters, updateFlags, false
+	return updateCount
 }
 
 // refreshFiltersIntl checks filters and updates them if necessary.  If force is
@@ -381,19 +410,27 @@ func (d *DNSFilter) refreshFiltersArray(filters *[]FilterYAML, force bool) (int,
 //
 // TODO(a.garipov, e.burkov): What the hell?
 func (d *DNSFilter) refreshFiltersIntl(block, allow, force bool) (int, bool) {
+	ctx := context.TODO()
+
 	updNum := 0
-	log.Debug("filtering: starting updating")
-	defer func() { log.Debug("filtering: finished updating, %d updated", updNum) }()
+	d.logger.DebugContext(ctx, "starting update")
+	defer func() {
+		d.logger.DebugContext(ctx, "finished update", "updated", updNum)
+	}()
 
 	var lists []FilterYAML
 	var toUpd []bool
 	isNetErr := false
 
 	if block {
-		updNum, lists, toUpd, isNetErr = d.refreshFiltersArray(&d.conf.Filters, force)
+		updNum, lists, toUpd, isNetErr = d.refreshFiltersArray(ctx, &d.conf.Filters, force)
 	}
 	if allow {
-		updNumAl, listsAl, toUpdAl, isNetErrAl := d.refreshFiltersArray(&d.conf.WhitelistFilters, force)
+		updNumAl, listsAl, toUpdAl, isNetErrAl := d.refreshFiltersArray(
+			ctx,
+			&d.conf.WhitelistFilters,
+			force,
+		)
 
 		updNum += updNumAl
 		lists = append(lists, listsAl...)
@@ -404,21 +441,23 @@ func (d *DNSFilter) refreshFiltersIntl(block, allow, force bool) (int, bool) {
 		return 0, true
 	}
 
-	if updNum != 0 {
-		d.EnableFilters(false)
+	if updNum == 0 {
+		return 0, false
+	}
 
-		for i := range lists {
-			uf := &lists[i]
-			updated := toUpd[i]
-			if !updated {
-				continue
-			}
+	d.EnableFilters(false)
 
-			p := uf.Path(d.conf.DataDir)
-			err := os.Remove(p + ".old")
-			if err != nil {
-				log.Debug("filtering: removing old filter file %q: %s", p, err)
-			}
+	for i := range lists {
+		uf := &lists[i]
+		updated := toUpd[i]
+		if !updated {
+			continue
+		}
+
+		p := uf.Path(d.conf.DataDir)
+		err := os.Remove(p + ".old")
+		if err != nil {
+			d.logger.ErrorContext(ctx, "removing old filter", "path", p, slogutil.KeyError, err)
 		}
 	}
 
@@ -427,7 +466,9 @@ func (d *DNSFilter) refreshFiltersIntl(block, allow, force bool) (int, bool) {
 
 // update refreshes filter's content and a/mtimes of it's file.
 func (d *DNSFilter) update(filter *FilterYAML) (b bool, err error) {
-	b, err = d.updateIntl(filter)
+	ctx := context.TODO()
+
+	b, err = d.updateIntl(ctx, filter)
 	filter.LastUpdated = time.Now()
 	if !b {
 		chErr := os.Chtimes(
@@ -436,7 +477,7 @@ func (d *DNSFilter) update(filter *FilterYAML) (b bool, err error) {
 			filter.LastUpdated,
 		)
 		if chErr != nil {
-			log.Error("filtering: os.Chtimes(): %s", chErr)
+			d.logger.ErrorContext(ctx, "changing last modified time", slogutil.KeyError, chErr)
 		}
 	}
 
@@ -445,8 +486,8 @@ func (d *DNSFilter) update(filter *FilterYAML) (b bool, err error) {
 
 // updateIntl updates the flt rewriting it's actual file.  It returns true if
 // the actual update has been performed.
-func (d *DNSFilter) updateIntl(flt *FilterYAML) (ok bool, err error) {
-	log.Debug("filtering: downloading update for filter %d from %q", flt.ID, flt.URL)
+func (d *DNSFilter) updateIntl(ctx context.Context, flt *FilterYAML) (ok bool, err error) {
+	d.logger.DebugContext(ctx, "downloading update for filter", "id", flt.ID, "url", flt.URL)
 
 	var res *rulelist.ParseResult
 
@@ -454,7 +495,7 @@ func (d *DNSFilter) updateIntl(flt *FilterYAML) (ok bool, err error) {
 	if err != nil {
 		return false, err
 	}
-	defer func() { err = d.finalizeUpdate(tmpFile, flt, res, err, ok) }()
+	defer func() { err = d.finalizeUpdate(ctx, tmpFile, flt, res, err, ok) }()
 
 	r, err := d.reader(flt.URL)
 	if err != nil {
@@ -476,6 +517,7 @@ func (d *DNSFilter) updateIntl(flt *FilterYAML) (ok bool, err error) {
 // according to updated.  It also saves new values of flt's name, rules number
 // and checksum if succeeded.
 func (d *DNSFilter) finalizeUpdate(
+	ctx context.Context,
 	file aghrenameio.PendingFile,
 	flt *FilterYAML,
 	res *rulelist.ParseResult,
@@ -485,13 +527,13 @@ func (d *DNSFilter) finalizeUpdate(
 	id := flt.ID
 	if !updated {
 		if returned == nil {
-			log.Debug("filtering: filter %d from url %q has no changes, skipping", id, flt.URL)
+			d.logger.DebugContext(ctx, "skipping filter with no changes", "id", id, "url", flt.URL)
 		}
 
 		return errors.WithDeferred(returned, file.Cleanup())
 	}
 
-	log.Info("filtering: saving contents of filter %d into %q", id, flt.Path(d.conf.DataDir))
+	d.logger.InfoContext(ctx, "saving contents", "id", id, "path", flt.Path(d.conf.DataDir))
 
 	err = file.CloseReplace()
 	if err != nil {
@@ -499,7 +541,13 @@ func (d *DNSFilter) finalizeUpdate(
 	}
 
 	rulesCount := res.RulesCount
-	log.Info("filtering: updated filter %d: %d bytes, %d rules", id, res.BytesWritten, rulesCount)
+	d.logger.InfoContext(
+		ctx,
+		"filter updated",
+		"id", id,
+		"bytes_written", res.BytesWritten,
+		"rules_count", rulesCount,
+	)
 
 	flt.ensureName(res.Title)
 	flt.checksum = res.Checksum
@@ -550,10 +598,10 @@ func (d *DNSFilter) readerFromURL(fltURL string) (r io.ReadCloser, err error) {
 }
 
 // loads filter contents from the file in dataDir
-func (d *DNSFilter) load(flt *FilterYAML) (err error) {
+func (d *DNSFilter) load(ctx context.Context, flt *FilterYAML) (err error) {
 	fileName := flt.Path(d.conf.DataDir)
 
-	log.Debug("filtering: loading filter %d from %q", flt.ID, fileName)
+	d.logger.DebugContext(ctx, "loading filter", "id", flt.ID, "path", fileName)
 
 	file, err := os.Open(fileName)
 	if errors.Is(err, os.ErrNotExist) {
@@ -569,7 +617,7 @@ func (d *DNSFilter) load(flt *FilterYAML) (err error) {
 		return fmt.Errorf("getting filter file stat: %w", err)
 	}
 
-	log.Debug("filtering: file %q, id %d, length %d", fileName, flt.ID, st.Size())
+	d.logger.DebugContext(ctx, "filter file", "id", flt.ID, "path", fileName, "len", st.Size())
 
 	bufPtr := d.bufPool.Get()
 	defer d.bufPool.Put(bufPtr)
@@ -586,14 +634,16 @@ func (d *DNSFilter) load(flt *FilterYAML) (err error) {
 	return nil
 }
 
+// EnableFilters enables filters.
 func (d *DNSFilter) EnableFilters(async bool) {
 	d.conf.filtersMu.RLock()
 	defer d.conf.filtersMu.RUnlock()
 
-	d.enableFiltersLocked(async)
+	d.enableFiltersLocked(context.TODO(), async)
 }
 
-func (d *DNSFilter) enableFiltersLocked(async bool) {
+// enableFiltersLocked enables filters under the conf.filtersMu lock.
+func (d *DNSFilter) enableFiltersLocked(ctx context.Context, async bool) {
 	filters := make([]Filter, 1, len(d.conf.Filters)+len(d.conf.WhitelistFilters)+1)
 	filters[0] = Filter{
 		ID:   rulelist.URLFilterIDCustom,
@@ -623,9 +673,9 @@ func (d *DNSFilter) enableFiltersLocked(async bool) {
 		})
 	}
 
-	err := d.setFilters(filters, allowFilters, async)
+	err := d.setFilters(ctx, filters, allowFilters, async)
 	if err != nil {
-		log.Error("filtering: enabling filters: %s", err)
+		d.logger.ErrorContext(ctx, "enabling filters", slogutil.KeyError, err)
 	}
 
 	d.SetEnabled(d.conf.FilteringEnabled)

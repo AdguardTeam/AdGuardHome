@@ -1,8 +1,10 @@
 package filtering
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"slices"
 	"time"
@@ -10,7 +12,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
 	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/urlfilter/rules"
 )
 
@@ -20,23 +22,30 @@ var serviceRules map[string][]*rules.NetworkRule
 // serviceIDs contains service IDs sorted alphabetically.
 var serviceIDs []string
 
-// initBlockedServices initializes package-level blocked service data.
-func initBlockedServices() {
-	l := len(blockedServices)
-	serviceIDs = make([]string, l)
-	serviceRules = make(map[string][]*rules.NetworkRule, l)
+// initBlockedServices initializes package-level blocked service data.  l must
+// not be nil.
+func initBlockedServices(ctx context.Context, l *slog.Logger) {
+	svcLen := len(blockedServices)
+	serviceIDs = make([]string, svcLen)
+	serviceRules = make(map[string][]*rules.NetworkRule, svcLen)
 
 	for i, s := range blockedServices {
 		netRules := make([]*rules.NetworkRule, 0, len(s.Rules))
 		for _, text := range s.Rules {
 			rule, err := rules.NewNetworkRule(text, rulelist.URLFilterIDBlockedService)
-			if err != nil {
-				log.Error("parsing blocked service %q rule %q: %s", s.ID, text, err)
+			if err == nil {
+				netRules = append(netRules, rule)
 
 				continue
 			}
 
-			netRules = append(netRules, rule)
+			l.ErrorContext(
+				ctx,
+				"parsing blocked service rule",
+				"svc", s.ID,
+				"rule", text,
+				slogutil.KeyError, err,
+			)
 		}
 
 		serviceIDs[i] = s.ID
@@ -45,7 +54,7 @@ func initBlockedServices() {
 
 	slices.Sort(serviceIDs)
 
-	log.Debug("filtering: initialized %d services", l)
+	l.DebugContext(ctx, "initialized services", "svc_len", svcLen)
 }
 
 // BlockedServices is the configuration of blocked services.
@@ -105,7 +114,7 @@ func (d *DNSFilter) ApplyBlockedServicesList(setts *Settings, list []string) {
 	for _, name := range list {
 		rules, ok := serviceRules[name]
 		if !ok {
-			log.Error("unknown service name: %s", name)
+			d.logger.ErrorContext(context.TODO(), "unknown service name", "name", name)
 
 			continue
 		}
@@ -150,6 +159,8 @@ func (d *DNSFilter) handleBlockedServicesList(w http.ResponseWriter, r *http.Req
 //
 // Deprecated:  Use handleBlockedServicesUpdate.
 func (d *DNSFilter) handleBlockedServicesSet(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	list := []string{}
 	err := json.NewDecoder(r.Body).Decode(&list)
 	if err != nil {
@@ -163,10 +174,10 @@ func (d *DNSFilter) handleBlockedServicesSet(w http.ResponseWriter, r *http.Requ
 		defer d.confMu.Unlock()
 
 		d.conf.BlockedServices.IDs = list
-		log.Debug("Updated blocked services list: %d", len(list))
+		d.logger.DebugContext(ctx, "updated blocked services list", "len", len(list))
 	}()
 
-	d.conf.ConfigModified()
+	d.conf.ConfModifier.Apply(ctx)
 }
 
 // handleBlockedServicesGet is the handler for the GET
@@ -186,6 +197,8 @@ func (d *DNSFilter) handleBlockedServicesGet(w http.ResponseWriter, r *http.Requ
 // handleBlockedServicesUpdate is the handler for the PUT
 // /control/blocked_services/update HTTP API.
 func (d *DNSFilter) handleBlockedServicesUpdate(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	bsvc := &BlockedServices{}
 	err := json.NewDecoder(r.Body).Decode(bsvc)
 	if err != nil {
@@ -212,7 +225,7 @@ func (d *DNSFilter) handleBlockedServicesUpdate(w http.ResponseWriter, r *http.R
 		d.conf.BlockedServices = bsvc
 	}()
 
-	log.Debug("updated blocked services schedule: %d", len(bsvc.IDs))
+	d.logger.DebugContext(ctx, "updated blocked services schedule", "len", len(bsvc.IDs))
 
-	d.conf.ConfigModified()
+	d.conf.ConfModifier.Apply(ctx)
 }

@@ -1,6 +1,7 @@
 package filtering_test
 
 import (
+	"context"
 	"fmt"
 	"net/netip"
 	"testing"
@@ -10,6 +11,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
@@ -42,16 +44,17 @@ func TestDNSFilter_CheckHost_hostsContainer(t *testing.T) {
 		},
 	}
 	watcher := &aghtest.FSWatcher{
-		OnStart:  func() (_ error) { panic("not implemented") },
-		OnEvents: func() (e <-chan struct{}) { return nil },
-		OnAdd:    func(name string) (err error) { return nil },
-		OnClose:  func() (err error) { return nil },
+		OnStart:    func(_ context.Context) (_ error) { panic("not implemented") },
+		OnEvents:   func() (e <-chan struct{}) { return nil },
+		OnAdd:      func(name string) (err error) { return nil },
+		OnShutdown: func(_ context.Context) (err error) { return nil },
 	}
 	hc, err := aghnet.NewHostsContainer(files, watcher, "hosts")
 	require.NoError(t, err)
 	testutil.CleanupAndRequireSuccess(t, hc.Close)
 
 	conf := &filtering.Config{
+		Logger:   slogutil.NewDiscardLogger(),
 		EtcHosts: hc,
 	}
 	f, err := filtering.New(conf, nil)
