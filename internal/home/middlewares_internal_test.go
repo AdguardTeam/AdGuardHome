@@ -39,14 +39,14 @@ func TestLimitRequestBody(t *testing.T) {
 		want:    []byte(nil),
 	}}
 
-	makeHandler := func(t *testing.T, err *error) http.HandlerFunc {
-		t.Helper()
+	makeHandler := func(tb testing.TB, err *error) http.HandlerFunc {
+		tb.Helper()
 
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			var b []byte
 			b, *err = io.ReadAll(r.Body)
 			_, werr := w.Write(b)
-			require.NoError(t, werr)
+			require.NoError(tb, werr)
 		})
 	}
 

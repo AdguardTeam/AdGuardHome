@@ -17,6 +17,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/next/websvc"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/netutil/urlutil"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -45,7 +46,7 @@ func TestService_HandlePatchSettingsDNS(t *testing.T) {
 
 				return nil
 			},
-			OnShutdown: func(_ context.Context) (err error) { panic("not implemented") },
+			OnShutdown: func(ctx context.Context) (_ error) { panic(testutil.UnexpectedCall(ctx)) },
 			OnConfig:   func() (c *dnssvc.Config) { return &dnssvc.Config{} },
 		}
 	}

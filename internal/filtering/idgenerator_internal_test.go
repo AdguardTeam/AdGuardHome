@@ -75,13 +75,13 @@ func TestIDGenerator_Fix(t *testing.T) {
 
 // assertUniqueIDs is a test helper that asserts that the IDs of filters are
 // unique.
-func assertUniqueIDs(t testing.TB, flts []FilterYAML) {
-	t.Helper()
+func assertUniqueIDs(tb testing.TB, flts []FilterYAML) {
+	tb.Helper()
 
 	uc := aghalg.UniqChecker[rulelist.URLFilterID]{}
 	for _, f := range flts {
 		uc.Add(f.ID)
 	}
 
-	assert.NoError(t, uc.Validate())
+	assert.NoError(tb, uc.Validate())
 }

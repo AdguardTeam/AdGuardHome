@@ -54,6 +54,8 @@ func getField[T any](t require.TestingT, obj any, indexes ...any) (val T) {
 }
 
 func TestMigrateConfig_Migrate(t *testing.T) {
+	t.Parallel()
+
 	const (
 		inputFileName  = "input.yml"
 		outputFileName = "output.yml"
@@ -201,6 +203,8 @@ func TestMigrateConfig_Migrate(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			body, err := fs.ReadFile(testdata, path.Join(t.Name(), inputFileName))
 			require.NoError(t, err)
 

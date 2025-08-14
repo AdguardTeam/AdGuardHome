@@ -13,20 +13,20 @@ import (
 
 // newTestQLogReader creates new *qLogReader for tests and registers the
 // required cleanup functions.
-func newTestQLogReader(t *testing.T, filesNum, linesNum int) (reader *qLogReader) {
-	t.Helper()
+func newTestQLogReader(tb testing.TB, filesNum, linesNum int) (reader *qLogReader) {
+	tb.Helper()
 
-	testFiles := prepareTestFiles(t, filesNum, linesNum)
+	testFiles := prepareTestFiles(tb, filesNum, linesNum)
 
 	logger := slogutil.NewDiscardLogger()
-	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	ctx := testutil.ContextWithTimeout(tb, testTimeout)
 
 	// Create the new qLogReader instance.
 	reader, err := newQLogReader(ctx, logger, testFiles)
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
-	assert.NotNil(t, reader)
-	testutil.CleanupAndRequireSuccess(t, reader.Close)
+	assert.NotNil(tb, reader)
+	testutil.CleanupAndRequireSuccess(tb, reader.Close)
 
 	return reader
 }

@@ -2,7 +2,6 @@ package aghtest
 
 import (
 	"context"
-	"net"
 	"net/netip"
 	"time"
 
@@ -14,14 +13,6 @@ import (
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/miekg/dns"
 )
-
-// Interface Mocks
-//
-// Keep entities in this file in alphabetic order.
-
-// Module adguard-home
-
-// Package aghos
 
 // FSWatcher is a fake [aghos.FSWatcher] implementation for tests.
 type FSWatcher struct {
@@ -54,8 +45,6 @@ func (w *FSWatcher) Add(name string) (err error) {
 	return w.OnAdd(name)
 }
 
-// Package nextagh
-
 // ServiceWithConfig is a fake [nextagh.ServiceWithConfig] implementation for
 // tests.
 type ServiceWithConfig[ConfigType any] struct {
@@ -84,8 +73,6 @@ func (s *ServiceWithConfig[_]) Shutdown(ctx context.Context) (err error) {
 func (s *ServiceWithConfig[ConfigType]) Config() (c ConfigType) {
 	return s.OnConfig()
 }
-
-// Package client
 
 // AddressProcessor is a fake [client.AddressProcessor] implementation for
 // tests.
@@ -122,20 +109,6 @@ func (p *AddressUpdater) UpdateAddress(
 	p.OnUpdateAddress(ctx, ip, host, info)
 }
 
-// Package filtering
-
-// Resolver is a fake [filtering.Resolver] implementation for tests.
-type Resolver struct {
-	OnLookupIP func(ctx context.Context, network, host string) (ips []net.IP, err error)
-}
-
-// LookupIP implements the [filtering.Resolver] interface for *Resolver.
-func (r *Resolver) LookupIP(ctx context.Context, network, host string) (ips []net.IP, err error) {
-	return r.OnLookupIP(ctx, network, host)
-}
-
-// Package rdns
-
 // Exchanger is a fake [rdns.Exchanger] implementation for tests.
 type Exchanger struct {
 	OnExchange func(ip netip.Addr) (host string, ttl time.Duration, err error)
@@ -148,10 +121,6 @@ var _ rdns.Exchanger = (*Exchanger)(nil)
 func (e *Exchanger) Exchange(ip netip.Addr) (host string, ttl time.Duration, err error) {
 	return e.OnExchange(ip)
 }
-
-// Module dnsproxy
-
-// Package upstream
 
 // UpstreamMock is a fake [upstream.Upstream] implementation for tests.
 //

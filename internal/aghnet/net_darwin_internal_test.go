@@ -9,7 +9,7 @@ import (
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/testutil"
-	"github.com/AdguardTeam/golibs/testutil/fakefs"
+	"github.com/AdguardTeam/golibs/testutil/fakeio/fakefs"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -121,7 +121,7 @@ func TestIfaceSetStaticIP(t *testing.T) {
 		},
 	}
 	panicFsys := &fakefs.FS{
-		OnOpen: func(name string) (fs.File, error) { panic("not implemented") },
+		OnOpen: func(name string) (_ fs.File, _ error) { panic(testutil.UnexpectedCall(name)) },
 	}
 
 	testCases := []struct {

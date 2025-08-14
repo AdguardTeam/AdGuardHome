@@ -209,20 +209,20 @@ func TestDNSFilter_handleRewriteHTTP(t *testing.T) {
 
 // assertRewritesList checks if rewrites list equals the list received from the
 // handler by listURL.
-func assertRewritesList(t *testing.T, handler http.Handler, wantList []*rewriteJSON) {
-	t.Helper()
+func assertRewritesList(tb testing.TB, handler http.Handler, wantList []*rewriteJSON) {
+	tb.Helper()
 
 	r := httptest.NewRequest(http.MethodGet, listURL, nil)
 	w := httptest.NewRecorder()
 
 	handler.ServeHTTP(w, r)
-	require.Equal(t, http.StatusOK, w.Code)
+	require.Equal(tb, http.StatusOK, w.Code)
 
 	var actual []*rewriteJSON
 	err := json.NewDecoder(w.Body).Decode(&actual)
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
-	assert.Equal(t, wantList, actual)
+	assert.Equal(tb, wantList, actual)
 }
 
 // rewriteEntriesToLegacyRewrites gets legacy rewrites from json entries.

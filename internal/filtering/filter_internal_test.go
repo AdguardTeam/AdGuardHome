@@ -22,17 +22,16 @@ const testTimeout = 5 * time.Second
 
 // serveHTTPLocally starts a new HTTP server, that handles its index with h.  It
 // also gracefully closes the listener when the test under t finishes.
-func serveHTTPLocally(t *testing.T, h http.Handler) (urlStr string) {
-	t.Helper()
+func serveHTTPLocally(tb testing.TB, h http.Handler) (urlStr string) {
+	tb.Helper()
 
 	l, err := net.Listen("tcp", ":0")
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
 	go func() { _ = http.Serve(l, h) }()
-	testutil.CleanupAndRequireSuccess(t, l.Close)
+	testutil.CleanupAndRequireSuccess(tb, l.Close)
 
-	addr := l.Addr()
-	require.IsType(t, (*net.TCPAddr)(nil), addr)
+	addr := testutil.RequireTypeAssert[*net.TCPAddr](tb, l.Addr())
 
 	return (&url.URL{
 		Scheme: urlutil.SchemeHTTP,
@@ -42,10 +41,10 @@ func serveHTTPLocally(t *testing.T, h http.Handler) (urlStr string) {
 
 // serveFiltersLocally is a helper that concurrently listens on a free port to
 // respond with fltContent.
-func serveFiltersLocally(t *testing.T, fltContent []byte) (urlStr string) {
-	t.Helper()
+func serveFiltersLocally(tb testing.TB, fltContent []byte) (urlStr string) {
+	tb.Helper()
 
-	return serveHTTPLocally(t, http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+	return serveHTTPLocally(tb, http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		pt := testutil.PanicT{}
 
 		n, werr := w.Write(fltContent)
@@ -57,43 +56,43 @@ func serveFiltersLocally(t *testing.T, fltContent []byte) (urlStr string) {
 // updateAndAssert loads filter content from its URL and then asserts rules
 // count.
 func updateAndAssert(
-	t *testing.T,
+	tb testing.TB,
 	ctx context.Context,
 	dnsFilter *DNSFilter,
 	f *FilterYAML,
 	wantUpd require.BoolAssertionFunc,
 	wantRulesCount int,
 ) {
-	t.Helper()
+	tb.Helper()
 
 	ok, err := dnsFilter.update(f)
-	require.NoError(t, err)
-	wantUpd(t, ok)
+	require.NoError(tb, err)
+	wantUpd(tb, ok)
 
-	assert.Equal(t, wantRulesCount, f.RulesCount)
+	assert.Equal(tb, wantRulesCount, f.RulesCount)
 
 	dir, err := os.ReadDir(filepath.Join(dnsFilter.conf.DataDir, filterDir))
-	require.NoError(t, err)
-	require.FileExists(t, f.Path(dnsFilter.conf.DataDir))
+	require.NoError(tb, err)
+	require.FileExists(tb, f.Path(dnsFilter.conf.DataDir))
 
-	assert.Len(t, dir, 1)
+	assert.Len(tb, dir, 1)
 
 	err = dnsFilter.load(ctx, f)
-	require.NoError(t, err)
+	require.NoError(tb, err)
 }
 
 // newDNSFilter returns a new properly initialized DNS filter instance.
-func newDNSFilter(t *testing.T) (d *DNSFilter) {
-	t.Helper()
+func newDNSFilter(tb testing.TB) (d *DNSFilter) {
+	tb.Helper()
 
 	dnsFilter, err := New(&Config{
 		Logger:  slogutil.NewDiscardLogger(),
-		DataDir: t.TempDir(),
+		DataDir: tb.TempDir(),
 		HTTPClient: &http.Client{
 			Timeout: testTimeout,
 		},
 	}, nil)
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
 	return dnsFilter
 }

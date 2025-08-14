@@ -34,16 +34,16 @@ func HostToIPs(host string) (ipv4, ipv6 netip.Addr) {
 
 // StartHTTPServer is a helper that starts the HTTP server, which is configured
 // to return data on every request, and returns the client and server URL.
-func StartHTTPServer(t testing.TB, data []byte) (c *http.Client, u *url.URL) {
-	t.Helper()
+func StartHTTPServer(tb testing.TB, data []byte) (c *http.Client, u *url.URL) {
+	tb.Helper()
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		_, _ = w.Write(data)
 	}))
-	t.Cleanup(srv.Close)
+	tb.Cleanup(srv.Close)
 
 	u, err := url.Parse(srv.URL)
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
 	return srv.Client(), u
 }
@@ -55,8 +55,8 @@ const testTimeout = 1 * time.Second
 
 // StartLocalhostUpstream is a test helper that starts a DNS server on
 // localhost.
-func StartLocalhostUpstream(t *testing.T, h dns.Handler) (addr *url.URL) {
-	t.Helper()
+func StartLocalhostUpstream(tb *testing.T, h dns.Handler) (addr *url.URL) {
+	tb.Helper()
 
 	startCh := make(chan netip.AddrPort)
 	defer close(startCh)
@@ -83,12 +83,12 @@ func StartLocalhostUpstream(t *testing.T, h dns.Handler) (addr *url.URL) {
 			Host:   addrPort.String(),
 		}
 
-		testutil.CleanupAndRequireSuccess(t, func() (err error) { return <-errCh })
-		testutil.CleanupAndRequireSuccess(t, srv.Shutdown)
+		testutil.CleanupAndRequireSuccess(tb, func() (err error) { return <-errCh })
+		testutil.CleanupAndRequireSuccess(tb, srv.Shutdown)
 	case err := <-errCh:
-		require.NoError(t, err)
+		require.NoError(tb, err)
 	case <-time.After(testTimeout):
-		require.FailNow(t, "timeout exceeded")
+		require.FailNow(tb, "timeout exceeded")
 	}
 
 	return addr

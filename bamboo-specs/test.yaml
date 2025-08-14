@@ -6,7 +6,7 @@
     'name': 'AdGuard Home - Build and run tests'
 'variables':
     'dockerFrontend': 'adguard/home-js-builder:3.1'
-    'dockerGo': 'adguard/go-builder:1.24.5--2'
+    'dockerGo': 'adguard/go-builder:1.24.6--1'
     'channel': 'development'
 
 'stages':
@@ -67,6 +67,13 @@
         'volumes':
             '${system.GO_CACHE_DIR}': '${bamboo.cacheGo}'
             '${system.GO_PKG_CACHE_DIR}': '${bamboo.cacheGoPkg}'
+    'final-tasks':
+      - 'test-parser':
+          # The default pattern, '**/test-reports/*.xml', works, so don't set
+          # the test-results property.
+          'type': 'junit'
+          'ignore-time': true
+      - 'clean'
     'key': 'GOTEST'
     'other':
         'clean-working-dir': true
@@ -81,16 +88,26 @@
 
                 set -e -f -u -x
 
-                make\
-                    GOMAXPROCS=1\
-                    VERBOSE=1\
+                make \
+                    GOMAXPROCS=1 \
+                    VERBOSE=1 \
                     go-deps go-tools go-lint
 
-                make\
-                    VERBOSE=1\
-                    go-test
-    'final-tasks':
-      - 'clean'
+                make \
+                    TEST_REPORTS_DIR="./test-reports/" \
+                    VERBOSE=1 \
+                    go-test \
+                    ;
+
+                exit_code="$(cat ./test-reports/test-exit-code.txt)"
+                readonly exit_code
+
+                make VERBOSE=1 \
+                    go-fuzz \
+                    go-bench \
+                    ;
+
+                exit "$exit_code"
     'requirements':
       - 'adg-docker': 'true'
 
@@ -234,5 +251,5 @@
         # may need to build a few of these.
         'variables':
             'dockerFrontend': 'adguard/home-js-builder:3.1'
-            'dockerGo': 'adguard/go-builder:1.24.5--2'
+            'dockerGo': 'adguard/go-builder:1.24.6--1'
             'channel': 'candidate'
