@@ -1,5 +1,6 @@
 import { createAction } from 'redux-actions';
 
+import intl from 'panel/common/intl';
 import { apiClient } from '../api/Api';
 import { normalizeTopStats, secondsToMilliseconds, getParamsForClientsSearch, addClientInfo } from '../helpers/helpers';
 import { addErrorToast, addSuccessToast } from './toasts';
@@ -27,7 +28,7 @@ export const setStatsConfig = (config: any) => async (dispatch: any) => {
     dispatch(setStatsConfigRequest());
     try {
         await apiClient.setStatsConfig(config);
-        dispatch(addSuccessToast('config_successfully_saved'));
+        dispatch(addSuccessToast(intl.getMessage('settings_notify_changes_saved')));
         dispatch(setStatsConfigSuccess(config));
     } catch (error) {
         dispatch(addErrorToast({ error }));
@@ -74,7 +75,7 @@ export const resetStats = () => async (dispatch: any) => {
     dispatch(getStatsRequest());
     try {
         await apiClient.resetStats();
-        dispatch(addSuccessToast('statistics_cleared'));
+        dispatch(addSuccessToast(intl.getMessage('settings_notify_statistics_cleared')));
         dispatch(resetStatsSuccess());
     } catch (error) {
         dispatch(addErrorToast({ error }));

@@ -1,4 +1,5 @@
 import { createAction } from 'redux-actions';
+import intl from 'panel/common/intl';
 import { apiClient } from '../api/Api';
 
 import { redirectToCurrentProtocol } from '../helpers/helpers';
@@ -57,7 +58,7 @@ export const setTlsConfig = (config: any) => async (dispatch: any, getState: any
         }
 
         dispatch(setTlsConfigSuccess(response));
-        dispatch(addSuccessToast('encryption_config_saved'));
+        dispatch(addSuccessToast(intl.getMessage('encryption_config_saved')));
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(setTlsConfigFailure());

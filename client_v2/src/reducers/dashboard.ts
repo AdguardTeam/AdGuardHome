@@ -163,6 +163,10 @@ const dashboard = handleActions(
             theme: payload.theme,
             processingProfile: false,
         }),
+        [actions.changeLanguageSuccess.toString()]: (state, { payload }: any) => ({
+            ...state,
+            language: payload.language,
+        }),
         [actions.changeThemeSuccess.toString()]: (state, { payload }: any) => ({
             ...state,
             theme: payload.theme,
@@ -188,6 +192,7 @@ const dashboard = handleActions(
         supportedTags: [],
         name: '',
         theme: undefined,
+        language: undefined,
         checkUpdateFlag: false,
     },
 );

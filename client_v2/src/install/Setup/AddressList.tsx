@@ -1,5 +1,6 @@
 import React from 'react';
 
+import theme from 'panel/lib/theme';
 import { getIpList, getDnsAddress, getWebAddress } from '../../helpers/helpers';
 import { ALL_INTERFACES_IP } from '../../helpers/constants';
 import { InstallInterface } from '../../initialState';
@@ -19,7 +20,7 @@ const renderItem = ({ ip, port, isDns }: renderItemProps) => {
             {isDns ? (
                 <strong>{dnsAddress}</strong>
             ) : (
-                <a href={webAddress} target="_blank" rel="noopener noreferrer">
+                <a href={webAddress} target="_blank" className={theme.link.link} rel="noopener noreferrer">
                     {webAddress}
                 </a>
             )}

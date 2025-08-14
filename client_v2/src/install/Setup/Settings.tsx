@@ -3,6 +3,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { Trans, useTranslation } from 'react-i18next';
 import i18n from 'i18next';
 
+import { Input } from 'panel/common/controls/Input';
 import Controls from './Controls';
 import AddressList from './AddressList';
 
@@ -20,8 +21,6 @@ import {
 
 import { validateRequiredValue } from '../../helpers/validators';
 import { InstallInterface } from '../../initialState';
-import { Input } from '../../components/ui/Controls/Input';
-import { Select } from '../../components/ui/Controls/Select';
 import { toNumber } from '../../helpers/form';
 
 const validateInstallPort = (value: number) => {
@@ -253,12 +252,12 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                                 name="web.ip"
                                 control={control}
                                 render={({ field }) => (
-                                    <Select {...field} data-testid="install_web_ip">
+                                    <select {...field} id="install_web_ip">
                                         <option value={ALL_INTERFACES_IP}>
                                             {t('install_settings_all_interfaces')}
                                         </option>
                                         {renderInterfaces(interfaces)}
-                                    </Select>
+                                    </select>
                                 )}
                             />
                         </div>
@@ -282,9 +281,9 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                                     <Input
                                         {...field}
                                         type="number"
-                                        data-testid="install_web_port"
+                                        id="install_web_port"
                                         placeholder={STANDARD_WEB_PORT.toString()}
-                                        error={fieldState.error?.message}
+                                        errorMessage={fieldState.error?.message}
                                         onChange={(e) => {
                                             const { value } = e.target;
                                             field.onChange(toNumber(value));
@@ -302,7 +301,7 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                                 {isWebFixAvailable && (
                                     <button
                                         type="button"
-                                        data-testid="install_web_fix"
+                                        id="install_web_fix"
                                         className="btn btn-secondary btn-sm ml-2"
                                         onClick={() => handleAutofix('web')}>
                                         <Trans>fix</Trans>
@@ -343,12 +342,12 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                                 name="dns.ip"
                                 control={control}
                                 render={({ field }) => (
-                                    <Select {...field} data-testid="install_dns_ip">
+                                    <select {...field} id="install_dns_ip">
                                         <option value={ALL_INTERFACES_IP}>
                                             {t('install_settings_all_interfaces')}
                                         </option>
                                         {renderInterfaces(interfaces)}
-                                    </Select>
+                                    </select>
                                 )}
                             />
                         </div>
@@ -373,8 +372,8 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                                     <Input
                                         {...field}
                                         type="number"
-                                        data-testid="install_dns_port"
-                                        error={fieldState.error?.message}
+                                        id="install_dns_port"
+                                        errorMessage={fieldState.error?.message}
                                         placeholder={STANDARD_WEB_PORT.toString()}
                                         onChange={(e) => {
                                             const { value } = e.target;
@@ -394,7 +393,7 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                                     {isDnsFixAvailable && (
                                         <button
                                             type="button"
-                                            data-testid="install_dns_fix"
+                                            id="install_dns_fix"
                                             className="btn btn-secondary btn-sm ml-2"
                                             onClick={() => handleAutofix('dns')}>
                                             <Trans>fix</Trans>

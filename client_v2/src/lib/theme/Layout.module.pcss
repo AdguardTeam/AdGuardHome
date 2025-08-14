@@ -1,37 +1,27 @@
 .container {
-    margin: 0 16px;
-    padding: 24px 0;
+    padding: 40px 0;
     height: 100%;
     min-height: 100vh;
     color: var(--default-main-text);
 
-    @media (min-width: 768px) {
-        padding: 48px 24px 80px;
-
-        &[data-height='true'] {
-            min-height: 70vh;
-        }
+    @media (min-width: 1024px) {
+        padding: 48px 24px 72px;
+        max-width: 632px;
     }
 
-    @media (min-width: 1200px) {
-        max-width: 1164px;
-        margin: 0 auto;
-
-        &[data-height='true'] {
-            min-height: 100vh;
-        }
+    &_full {
+        max-width: 100%;
     }
+}
 
-    @media (min-width: 1400px) {
-        min-width: 0;
-        width: 100%;
-    }
+.title {
+    padding: 0 16px;
+}
 
-    &_update {
-        margin: 0;
+.subtitle {
+    padding: 40px 16px 16px 16px;
 
-        @media (min-width: 1400px) {
-            margin: 0 auto;
-        }
+    @media (min-width: 1024px) {
+        padding-top: 32px;
     }
 }

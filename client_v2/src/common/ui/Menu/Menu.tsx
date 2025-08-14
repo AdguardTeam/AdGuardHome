@@ -36,7 +36,7 @@ export const Menu = ({ headerMenu }: Props) => {
                 return false;
             }
 
-            const normalizedPath = p.endsWith('/') ? p : p + '/';
+            const normalizedPath = p.endsWith('/') ? p : `${p}/`;
             return currentPath.startsWith(normalizedPath);
         });
     };
@@ -62,7 +62,7 @@ export const Menu = ({ headerMenu }: Props) => {
                     icon="settings"
                     items={[
                         {
-                            label: intl.getMessage('general_settings_short'),
+                            label: intl.getMessage('settings_general_short'),
                             path: Paths.SettingsPage,
                             routePath: RoutePath.SettingsPage,
                         },
@@ -124,7 +124,12 @@ export const Menu = ({ headerMenu }: Props) => {
             </nav>
             <div className={s.referenceWrapper}>
                 <div className={cn(s.menuLinkWrapper)}>
-                    <a href={apiClient.getLogoutUrl()} target="_blank" rel="noopener noreferrer" className={s.menuLink}>
+                    <a
+                        href={apiClient.getLogoutUrl()}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={s.menuLink}
+                        id="sign_out">
                         <Icon className={s.linkIcon} icon="logout" />
                         <span className={theme.common.textOverflow}>{intl.getMessage('logout')}</span>
                     </a>

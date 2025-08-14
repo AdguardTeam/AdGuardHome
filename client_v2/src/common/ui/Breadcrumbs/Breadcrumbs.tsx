@@ -22,7 +22,7 @@ export const Breadcrumbs = ({ parentLinks, currentTitle }: Props) => (
             <div key={path} className={s.link}>
                 <Link
                     to={path}
-                    className={cn(theme.link.link, theme.link.no_decoration, theme.common.textOverflow)}
+                    className={cn(theme.link.link, theme.link.noDecoration, theme.common.textOverflow)}
                     props={props}>
                     {title}
                 </Link>

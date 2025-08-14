@@ -52,7 +52,9 @@
 }
 
 .setup__nav {
-    text-align: center;
+    display: flex;
+    gap: 16px;
+    justify-content: center;
 }
 
 .setup__step {
@@ -130,9 +132,7 @@
 }
 
 .setup__button {
-    min-width: 120px;
-    padding-left: 30px;
-    padding-right: 30px;
+    max-width: 200px;
 }
 
 .setup__error {

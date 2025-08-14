@@ -1,6 +1,5 @@
 import 'url-polyfill';
-import dateParse from 'date-fns/parse';
-import dateFormat from 'date-fns/format';
+import { parse as dateParse, format as dateFormat } from 'date-fns';
 import round from 'lodash/round';
 import axios from 'axios';
 import i18n from 'i18next';

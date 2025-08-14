@@ -1,11 +1,15 @@
 import axios from 'axios';
 
+import type { LocalesType } from 'panel/common/intl';
+
 import { BASE_URL } from '../../constants';
 
 import { getPathWithQueryString } from '../helpers/helpers';
 import { QUERY_LOGS_PAGE_LIMIT, HTML_PAGES, R_PATH_LAST_PART, THEMES } from '../helpers/constants';
 import i18n from '../i18n';
 import { LANGUAGES } from '../helpers/twosky';
+
+type Theme = typeof THEMES[keyof typeof THEMES];
 
 class Api {
     baseUrl: string;
@@ -258,8 +262,7 @@ class Api {
     // }
 
     // Language
-
-    async changeLanguage(config: any) {
+    async changeLanguage(config: { language: LocalesType }) {
         const profile = await this.getProfile();
         profile.language = config.language;
 
@@ -267,8 +270,7 @@ class Api {
     }
 
     // Theme
-
-    async changeTheme(config: any) {
+    async changeTheme(config: { theme: Theme }) {
         const profile = await this.getProfile();
         profile.theme = config.theme;
 

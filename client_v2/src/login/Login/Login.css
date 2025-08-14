@@ -38,6 +38,12 @@
     letter-spacing: 0;
 }
 
+.login__link {
+    margin-top: 16px;
+    border: 0;
+    background: transparent;
+}
+
 @media screen and (min-width: 992px) {
     .login__message {
         position: absolute;

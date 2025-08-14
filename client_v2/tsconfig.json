@@ -4,6 +4,7 @@
         "jsx": "react",
         "module": "ESNext",
         "moduleResolution": "bundler",
+        "baseUrl": ".",
         "allowArbitraryExtensions": true,
         "resolveJsonModule": true,
         "allowJs": true,

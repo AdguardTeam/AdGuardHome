@@ -6,6 +6,7 @@ import title from './Title.module.pcss';
 import text from './Text.module.pcss';
 import dropdown from './Dropdown.module.pcss';
 import select from './Select.module.pcss';
+import form from './Form.module.pcss';
 
 const theme = {
     link,
@@ -16,6 +17,7 @@ const theme = {
     text,
     dropdown,
     select,
+    form,
 };
 
 export default theme;

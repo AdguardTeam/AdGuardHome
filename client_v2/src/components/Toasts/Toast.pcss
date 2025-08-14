@@ -1,0 +1,31 @@
+.toasts {
+    position: fixed;
+    right: 16px;
+    width: 100%;
+    max-width: 345px;
+    bottom: 24px;
+    z-index: 105;
+
+    @media (min-width: 768px) {
+        right: 24px;
+        max-width: 400px;
+    }
+}
+
+.toast-enter {
+    opacity: 0.01;
+}
+
+.toast-enter-active {
+    opacity: 1;
+    transition: all 0.3s ease-out;
+}
+
+.toast-exit {
+    opacity: 1;
+}
+
+.toast-exit-active {
+    opacity: 0.01;
+    transition: all 0.3s ease-out;
+}

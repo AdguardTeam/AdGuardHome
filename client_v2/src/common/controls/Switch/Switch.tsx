@@ -1,4 +1,4 @@
-import React, { ChangeEvent, ReactNode } from 'react';
+import React, { ChangeEvent, ReactNode, forwardRef, ForwardedRef } from 'react';
 import cn from 'clsx';
 
 import s from './Switch.module.pcss';
@@ -10,48 +10,45 @@ type Props = {
     labelClassName?: string;
     className?: string;
     wrapperClassName?: string;
-    handleChange: (e: ChangeEvent<HTMLInputElement>) => void;
+    onChange: (e: ChangeEvent<HTMLInputElement>) => void;
     children?: ReactNode;
 };
 
-export const Switch = ({
-    id,
-    checked,
-    disabled,
-    children,
-    className,
-    labelClassName,
-    wrapperClassName,
-    handleChange,
-}: Props) => {
-    const switchControls = (
-        <>
-            <input
-                id={id}
-                type="checkbox"
-                className={s.input}
-                onChange={handleChange}
-                checked={checked}
-                disabled={disabled}
-            />
-            <div className={s.handler} />
-            {children && <div className={cn(s.label, labelClassName)}>{children}</div>}
-        </>
-    );
+export const Switch = forwardRef(
+    (
+        { id, checked, disabled, children, className, labelClassName, wrapperClassName, onChange }: Props,
+        ref: ForwardedRef<HTMLInputElement>,
+    ) => {
+        const switchControls = (
+            <>
+                <input
+                    id={id}
+                    type="checkbox"
+                    className={s.input}
+                    onChange={onChange}
+                    checked={checked}
+                    disabled={disabled}
+                    ref={ref}
+                />
+                <div className={s.handler} />
+                {children && <div className={cn(s.label, labelClassName)}>{children}</div>}
+            </>
+        );
 
-    const getContent = () => {
-        if (wrapperClassName) {
-            return <div className={wrapperClassName}>{switchControls}</div>;
-        }
+        const getContent = () => {
+            if (wrapperClassName) {
+                return <div className={wrapperClassName}>{switchControls}</div>;
+            }
 
-        return switchControls;
-    };
+            return switchControls;
+        };
 
-    return (
-        <label htmlFor={id} className={cn(s.switch, className, { [s.disabled]: disabled })}>
-            {getContent()}
-        </label>
-    );
-};
+        return (
+            <label htmlFor={id} className={cn(s.switch, className, { [s.disabled]: disabled })}>
+                {getContent()}
+            </label>
+        );
+    },
+);
 
-export default Switch;
+Switch.displayName = 'Switch';

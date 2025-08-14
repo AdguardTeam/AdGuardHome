@@ -33,7 +33,7 @@ function getAliasesFromTsconfig(tsconfigPath, resourcesPath) {
         Object.entries(tsConfig.compilerOptions.paths).forEach(([alias, targetArr]) => {
             if (alias.endsWith('/*')) {
                 const aliasName = alias.replace('/*', '');
-                let target = targetArr[0].replace('/*', '');
+                const target = targetArr[0].replace('/*', '');
                 aliases[aliasName] = path.resolve(resourcesPath, target);
             }
         });

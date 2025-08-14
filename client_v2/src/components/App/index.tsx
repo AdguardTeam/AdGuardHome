@@ -7,14 +7,15 @@ import { Sidebar } from 'panel/common/ui/Sidebar';
 import { Icons } from 'panel/common/ui/Icons';
 import { Footer } from 'panel/common/ui/Footer';
 import { Header } from 'panel/common/ui/Header';
+import { Settings } from 'panel/components/Settings';
 
+import { LocalesType } from 'panel/common/intl';
+import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from 'panel/helpers/localStorageHelper';
 import Toasts from '../Toasts';
 import i18n from '../../i18n';
-
 import { THEMES } from '../../helpers/constants';
 import { setHtmlLangAttr, setUITheme } from '../../helpers/helpers';
 import { changeLanguage, getDnsStatus, getTimerStatus } from '../../actions';
-
 import { RootState } from '../../initialState';
 
 import s from './styles.module.pcss';
@@ -25,7 +26,13 @@ type RouteConfig = {
     exact: boolean;
 };
 
-const ROUTES: RouteConfig[] = [];
+const ROUTES: RouteConfig[] = [
+    {
+        path: '/settings',
+        component: Settings,
+        exact: true,
+    },
+];
 
 const App = () => {
     const dispatch = useDispatch();
@@ -55,10 +62,11 @@ const App = () => {
             if (language) {
                 i18n.changeLanguage(language);
                 setHtmlLangAttr(language);
+                LocalStorageHelper.setItem(LOCAL_STORAGE_KEYS.LANGUAGE, language);
             }
         }
 
-        i18n.on('languageChanged', (lang) => {
+        i18n.on('languageChanged', (lang: LocalesType) => {
             dispatch(changeLanguage(lang));
         });
     };

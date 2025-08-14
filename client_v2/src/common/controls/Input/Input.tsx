@@ -1,4 +1,4 @@
-import React, { ChangeEvent, ComponentProps, forwardRef, type ReactNode, useState } from 'react';
+import React, { ComponentProps, forwardRef, type ReactNode, useState } from 'react';
 import cn from 'clsx';
 
 import s from './Input.module.pcss';

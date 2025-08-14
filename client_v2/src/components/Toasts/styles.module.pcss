@@ -1,0 +1,38 @@
+.toast {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding: 16px;
+    font-weight: var(--weight-regular);
+    color: var(--default-main-text);
+    background-color: var(--default-page-background);
+    border-radius: 8px;
+    box-shadow:
+        2px 2px 4px 0 rgba(0, 0, 0, 0.1),
+        4px 4px 8px 0 rgba(0, 0, 0, 0.2);
+
+    &:last-child {
+        margin-bottom: 0;
+    }
+}
+
+.content {
+    flex: 1 1 auto;
+    margin: 0 12px 0 0;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.icon {
+    width: 24px;
+    height: 24px;
+
+    &.success {
+        color: var(--default-product-icon);
+    }
+
+    &.error {
+        color: var(--default-error-icon);
+    }
+}

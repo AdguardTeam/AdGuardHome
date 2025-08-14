@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Trans } from 'react-i18next';
+import cn from 'clsx';
+
+import theme from 'panel/lib/theme';
 
 import * as actionCreators from '../../actions/login';
-
 import Toasts from '../../components/Toasts';
 import Form, { LoginFormValues } from './Form';
+import { LoginState } from '../../initialState';
 
 import './Login.css';
-import { LoginState } from '../../initialState';
 
 export const Login = () => {
     const dispatch = useDispatch();
@@ -29,7 +31,7 @@ export const Login = () => {
                 <Form onSubmit={handleSubmit} processing={processingLogin} />
 
                 <div className="login__info">
-                    <button type="button" className="btn btn-link login__link" onClick={toggleText}>
+                    <button type="button" className={cn(theme.link.link, 'login__link')} onClick={toggleText}>
                         <Trans>forgot_password</Trans>
                     </button>
 
@@ -41,7 +43,9 @@ export const Login = () => {
                                         href="https://github.com/AdguardTeam/AdGuardHome/wiki/Configuration#password-reset"
                                         key="0"
                                         target="_blank"
-                                        rel="noopener noreferrer">
+                                        rel="noopener noreferrer"
+                                        className={theme.link.link}
+                                    >
                                         link
                                     </a>,
                                 ]}>

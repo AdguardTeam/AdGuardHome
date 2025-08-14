@@ -5,7 +5,9 @@ import cn from 'clsx';
 import theme from 'panel/lib/theme';
 import { Dropdown } from 'panel/common/ui/Dropdown';
 import { Icon } from 'panel/common/ui/Icon';
+import intl, { LocalesType } from 'panel/common/intl';
 
+import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from 'panel/helpers/localStorageHelper';
 import { REPOSITORY, PRIVACY_POLICY_LINK, THEMES } from '../../../helpers/constants';
 import { LANGUAGES } from '../../../helpers/twosky';
 import { setHtmlLangAttr, setUITheme } from '../../../helpers/helpers';
@@ -13,7 +15,6 @@ import { changeTheme, changeLanguage as changeLanguageAction } from '../../../ac
 import { RootState } from '../../../initialState';
 
 import s from './styles.module.pcss';
-import intl, { LocalesType } from 'panel/common/intl';
 
 const linksData = [
     {
@@ -73,11 +74,11 @@ export const Footer = () => {
     };
 
     const changeLanguage = async (newLang: LocalesType) => {
-        intl.changeLanguage(newLang);
         setHtmlLangAttr(newLang);
 
         try {
             await dispatch(changeLanguageAction(newLang));
+            LocalStorageHelper.setItem(LOCAL_STORAGE_KEYS.LANGUAGE, newLang);
             window.location.reload();
         } catch (error) {
             console.error('Failed to save language preference:', error);
@@ -105,7 +106,7 @@ export const Footer = () => {
                         <a
                             key={name}
                             href={href}
-                            className={cn(theme.link.link, theme.link.no_decoration)}
+                            className={cn(theme.link.link, theme.link.noDecoration)}
                             target="_blank"
                             rel="noopener noreferrer">
                             {name}
@@ -156,7 +157,10 @@ export const Footer = () => {
                                         className={cn(theme.dropdown.item, {
                                             [theme.dropdown.item_active]: currentLanguage === lang,
                                         })}
-                                        onClick={() => changeLanguage(lang as LocalesType)}>
+                                        onClick={() => {
+                                            changeLanguage(lang as LocalesType);
+                                            setLangDropdownOpen(false);
+                                        }}>
                                         {LANGUAGES[lang]}
                                     </button>
                                 ))}

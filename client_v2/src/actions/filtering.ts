@@ -154,19 +154,10 @@ export const setFiltersConfigRequest = createAction('SET_FILTERS_CONFIG_REQUEST'
 export const setFiltersConfigFailure = createAction('SET_FILTERS_CONFIG_FAILURE');
 export const setFiltersConfigSuccess = createAction('SET_FILTERS_CONFIG_SUCCESS');
 
-export const setFiltersConfig = (config: any) => async (dispatch: any, getState: any) => {
+export const setFiltersConfig = (config: any) => async (dispatch: any) => {
     dispatch(setFiltersConfigRequest());
     try {
-        const { enabled } = config;
-        const prevEnabled = getState().filtering.enabled;
-        let successToastMessage = 'config_successfully_saved';
-
-        if (prevEnabled !== enabled) {
-            successToastMessage = enabled ? 'enabled_filtering_toast' : 'disabled_filtering_toast';
-        }
-
         await apiClient.setFiltersConfig(config);
-        dispatch(addSuccessToast(successToastMessage));
         dispatch(setFiltersConfigSuccess(config));
     } catch (error) {
         dispatch(addErrorToast({ error }));

@@ -1,6 +1,6 @@
 import { createAction } from 'redux-actions';
-import i18next from 'i18next';
 
+import intl from 'panel/common/intl';
 import { apiClient } from '../api/Api';
 
 import { splitByNewLine } from '../helpers/helpers';
@@ -30,7 +30,7 @@ export const clearDnsCache = () => async (dispatch: any) => {
     try {
         const data = await apiClient.clearCache();
         dispatch(clearDnsCacheSuccess(data));
-        dispatch(addSuccessToast(i18next.t('cache_cleared')));
+        dispatch(addSuccessToast(intl.getMessage('cache_cleared')));
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(clearDnsCacheFailure());
@@ -71,9 +71,9 @@ export const setDnsConfig = (config: any) => async (dispatch: any) => {
         await apiClient.setDnsConfig(data);
 
         if (hasDnsSettings) {
-            dispatch(addSuccessToast('updated_upstream_dns_toast'));
+            dispatch(addSuccessToast(intl.getMessage('updated_upstream_dns_toast')));
         } else {
-            dispatch(addSuccessToast('config_successfully_saved'));
+            dispatch(addSuccessToast(intl.getMessage('settings_notify_changes_saved')));
         }
 
         dispatch(setDnsConfigSuccess(config));

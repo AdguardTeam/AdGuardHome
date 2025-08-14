@@ -22,8 +22,8 @@ export type ISelectValue<T, Multi extends boolean> = Multi extends true ? IOptio
 const CustomMenuList = <
     T,
     Multi extends boolean,
-    Group extends GroupBase<IOption<T> & ExtendOption>,
     ExtendOption extends Record<string, any>,
+    Group extends GroupBase<IOption<T> & ExtendOption>,
 >(
     props: MenuListProps<IOption<T> & ExtendOption, Multi, Group>,
 ): React.ReactElement => {
@@ -45,8 +45,8 @@ const CustomMenuList = <
 interface SelectProps<
     T,
     Multi extends boolean,
-    Group extends GroupBase<IOption<T> & ExtendOption>,
     ExtendOption extends Record<string, any>,
+    Group extends GroupBase<IOption<T> & ExtendOption>,
 > {
     size?: ISelectSize;
     height?: ISelectHeight;
@@ -84,7 +84,7 @@ interface SelectProps<
 export const Select = <
     T,
     Multi extends boolean = false,
-    ExtendOption extends Record<any, any> = {},
+    ExtendOption extends Record<any, any> = object,
     Group extends GroupBase<IOption<T> & ExtendOption> = GroupBase<IOption<T> & ExtendOption>,
 >({
     autoFocus,
@@ -118,7 +118,7 @@ export const Select = <
     isDropdownSelect,
     onMenuOpen,
     onMenuClose,
-}: SelectProps<T, Multi, Group, ExtendOption>) => {
+}: SelectProps<T, Multi, ExtendOption, Group>) => {
     const selectClass = cn(
         { 'desktop-select-always': mobile === false },
         { 'mobile-select-always': mobile },

@@ -1,8 +1,8 @@
 import React from 'react';
 import cn from 'clsx';
 
-import s from './Radio.module.pcss';
 import { Icon } from 'panel/common/ui/Icon';
+import s from './Radio.module.pcss';
 
 type Props<T> = {
     className?: string;
@@ -11,6 +11,7 @@ type Props<T> = {
     handleChange: (e: T) => void;
     value: T;
     options: { text: string; value: T }[];
+    name?: string;
 };
 
 export const Radio = <T extends number | string | boolean = string>({
@@ -20,14 +21,19 @@ export const Radio = <T extends number | string | boolean = string>({
     handleChange,
     value,
     options,
+    name,
 }: Props<T>) => (
     <div className={cn(s.wrap, wrapClass)}>
         {options.map((o) => (
-            <label key={`${o.value}`} htmlFor={String(o.value)} className={cn(s.radio, className)}>
+            <label
+                key={`${o.value}`}
+                htmlFor={name ? `${name}-${o.value}` : String(o.value)}
+                className={cn(s.radio, className)}>
                 <input
-                    id={String(o.value)}
+                    id={name ? `${name}-${o.value}` : String(o.value)}
                     type="radio"
                     className={s.input}
+                    name={name}
                     onChange={() => handleChange(o.value)}
                     checked={value === o.value}
                     disabled={disabled}

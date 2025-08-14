@@ -30,7 +30,7 @@
 }
 
 .chartOverlay,
-.modalOverlay {
+.pageOverlay {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -39,18 +39,23 @@
     padding: 8px 16px;
 }
 
-.modalOverlay {
+.pageOverlay {
     min-height: 440px;
 }
 
-.chartLoader,
-.modalLoader {
+.chartLoader {
     width: 72px;
     height: 72px;
-    color: var(--default-link);
+    color: var(--default-product-icon);
 
     @media (min-width: 768px) {
         width: 96px;
         height: 96px;
     }
+}
+
+.pageLoader {
+    width: 72px;
+    height: 72px;
+    color: var(--default-product-icon);
 }

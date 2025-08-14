@@ -5,19 +5,19 @@ import { ADMIN_USERNAME, ADMIN_PASSWORD } from '../constants';
 test.describe('General Settings', () => {
     test.beforeEach(async ({ page }) => {
         await page.goto('/login.html');
-        await page.getByTestId('username').click();
-        await page.getByTestId('username').fill(ADMIN_USERNAME);
-        await page.getByTestId('password').click();
-        await page.getByTestId('password').fill(ADMIN_PASSWORD);
+        await page.locator('#username').click();
+        await page.locator('#username').fill(ADMIN_USERNAME);
+        await page.locator('#password').click();
+        await page.locator('#password').fill(ADMIN_PASSWORD);
         await page.keyboard.press('Tab');
-        await page.getByTestId('sign_in').click();
+        await page.locator('#sign_in').click();
         await page.waitForURL((url) => !url.href.endsWith('/login.html'));
     });
 
     test('should toggle browsing security feature and verify DNS changes', async ({ page }) => {
         await page.goto('/#settings');
 
-        const browsingSecurity = await page.getByTestId('safebrowsing');
+        const browsingSecurity = await page.locator('#safebrowsing');
         const browsingSecurityLabel = await browsingSecurity.locator('xpath=following-sibling::*[1]');
 
         const initialState = await browsingSecurity.isChecked();
@@ -45,7 +45,7 @@ test.describe('General Settings', () => {
     test('should toggle parental control feature and verify DNS changes', async ({ page }) => {
         await page.goto('/#settings');
 
-        const parentalControl = page.getByTestId('parental');
+        const parentalControl = page.locator('#parental');
         const parentalControlLabel = await parentalControl.locator('xpath=following-sibling::*[1]');
 
         const initialState = await parentalControl.isChecked();
@@ -73,7 +73,7 @@ test.describe('General Settings', () => {
     test('should toggle safe search feature', async ({ page }) => {
         await page.goto('/#settings');
 
-        const safeSearch = page.getByTestId('safesearch');
+        const safeSearch = page.locator('#safesearch');
         const safeSearchLabel = await safeSearch.locator('xpath=following-sibling::*[1]');
 
         const initialState = await safeSearch.isChecked();

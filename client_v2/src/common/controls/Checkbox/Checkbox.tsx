@@ -1,4 +1,4 @@
-import React, { ChangeEvent, ComponentProps, MouseEvent, ReactNode } from 'react';
+import React, { ComponentProps, MouseEvent, ReactNode } from 'react';
 import cn from 'clsx';
 import theme from 'panel/lib/theme';
 import { Icon } from 'panel/common/ui/Icon';
@@ -27,7 +27,7 @@ export const Checkbox = ({
     onClick,
     plusStyle,
 }: Props) => (
-    <label htmlFor={id} className={cn(s.checkbox, className)} onClick={onClick}>
+    <label htmlFor={id} className={cn(s.checkbox, { [s.disabled]: disabled }, className)} onClick={onClick}>
         <input
             id={id}
             name={name}
