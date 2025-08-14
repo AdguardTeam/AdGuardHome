@@ -2,45 +2,37 @@ package aghtest
 
 import (
 	"context"
-	"net"
 	"net/netip"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
-	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
+	nextagh "github.com/AdguardTeam/AdGuardHome/internal/next/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/rdns"
 	"github.com/AdguardTeam/AdGuardHome/internal/whois"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/miekg/dns"
 )
 
-// Interface Mocks
-//
-// Keep entities in this file in alphabetic order.
-
-// Module adguard-home
-
-// Package aghos
-
 // FSWatcher is a fake [aghos.FSWatcher] implementation for tests.
 type FSWatcher struct {
-	OnStart  func() (err error)
-	OnClose  func() (err error)
-	OnEvents func() (e <-chan struct{})
-	OnAdd    func(name string) (err error)
+	OnStart    func(ctx context.Context) (err error)
+	OnShutdown func(ctx context.Context) (err error)
+	OnEvents   func() (e <-chan struct{})
+	OnAdd      func(name string) (err error)
 }
 
 // type check
 var _ aghos.FSWatcher = (*FSWatcher)(nil)
 
 // Start implements the [aghos.FSWatcher] interface for *FSWatcher.
-func (w *FSWatcher) Start() (err error) {
-	return w.OnStart()
+func (w *FSWatcher) Start(ctx context.Context) (err error) {
+	return w.OnStart(ctx)
 }
 
-// Close implements the [aghos.FSWatcher] interface for *FSWatcher.
-func (w *FSWatcher) Close() (err error) {
-	return w.OnClose()
+// Shutdown implements the [aghos.FSWatcher] interface for *FSWatcher.
+func (w *FSWatcher) Shutdown(ctx context.Context) (err error) {
+	return w.OnShutdown(ctx)
 }
 
 // Events implements the [aghos.FSWatcher] interface for *FSWatcher.
@@ -53,9 +45,8 @@ func (w *FSWatcher) Add(name string) (err error) {
 	return w.OnAdd(name)
 }
 
-// Package agh
-
-// ServiceWithConfig is a fake [agh.ServiceWithConfig] implementation for tests.
+// ServiceWithConfig is a fake [nextagh.ServiceWithConfig] implementation for
+// tests.
 type ServiceWithConfig[ConfigType any] struct {
 	OnStart    func(ctx context.Context) (err error)
 	OnShutdown func(ctx context.Context) (err error)
@@ -63,27 +54,25 @@ type ServiceWithConfig[ConfigType any] struct {
 }
 
 // type check
-var _ agh.ServiceWithConfig[struct{}] = (*ServiceWithConfig[struct{}])(nil)
+var _ nextagh.ServiceWithConfig[struct{}] = (*ServiceWithConfig[struct{}])(nil)
 
-// Start implements the [agh.ServiceWithConfig] interface for
+// Start implements the [nextagh.ServiceWithConfig] interface for
 // *ServiceWithConfig.
 func (s *ServiceWithConfig[_]) Start(ctx context.Context) (err error) {
 	return s.OnStart(ctx)
 }
 
-// Shutdown implements the [agh.ServiceWithConfig] interface for
+// Shutdown implements the [nextagh.ServiceWithConfig] interface for
 // *ServiceWithConfig.
 func (s *ServiceWithConfig[_]) Shutdown(ctx context.Context) (err error) {
 	return s.OnShutdown(ctx)
 }
 
-// Config implements the [agh.ServiceWithConfig] interface for
+// Config implements the [nextagh.ServiceWithConfig] interface for
 // *ServiceWithConfig.
 func (s *ServiceWithConfig[ConfigType]) Config() (c ConfigType) {
 	return s.OnConfig()
 }
-
-// Package client
 
 // AddressProcessor is a fake [client.AddressProcessor] implementation for
 // tests.
@@ -120,20 +109,6 @@ func (p *AddressUpdater) UpdateAddress(
 	p.OnUpdateAddress(ctx, ip, host, info)
 }
 
-// Package filtering
-
-// Resolver is a fake [filtering.Resolver] implementation for tests.
-type Resolver struct {
-	OnLookupIP func(ctx context.Context, network, host string) (ips []net.IP, err error)
-}
-
-// LookupIP implements the [filtering.Resolver] interface for *Resolver.
-func (r *Resolver) LookupIP(ctx context.Context, network, host string) (ips []net.IP, err error) {
-	return r.OnLookupIP(ctx, network, host)
-}
-
-// Package rdns
-
 // Exchanger is a fake [rdns.Exchanger] implementation for tests.
 type Exchanger struct {
 	OnExchange func(ip netip.Addr) (host string, ttl time.Duration, err error)
@@ -146,10 +121,6 @@ var _ rdns.Exchanger = (*Exchanger)(nil)
 func (e *Exchanger) Exchange(ip netip.Addr) (host string, ttl time.Duration, err error) {
 	return e.OnExchange(ip)
 }
-
-// Module dnsproxy
-
-// Package upstream
 
 // UpstreamMock is a fake [upstream.Upstream] implementation for tests.
 //
@@ -177,4 +148,17 @@ func (u *UpstreamMock) Exchange(req *dns.Msg) (resp *dns.Msg, err error) {
 // Close implements the [upstream.Upstream] interface for *UpstreamMock.
 func (u *UpstreamMock) Close() (err error) {
 	return u.OnClose()
+}
+
+// ConfigModifier is a fake [agh.ConfigModifier] implementation for tests.
+type ConfigModifier struct {
+	OnApply func(ctx context.Context)
+}
+
+// type check
+var _ agh.ConfigModifier = (*ConfigModifier)(nil)
+
+// Apply implements the [ConfigModifier] interface for *ConfigModifier.
+func (m *ConfigModifier) Apply(ctx context.Context) {
+	m.OnApply(ctx)
 }

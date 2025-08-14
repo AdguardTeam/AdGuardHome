@@ -56,7 +56,7 @@ func TestAuthMiddlewareGLiNet(t *testing.T) {
 	}{{
 		req:      httptest.NewRequest(http.MethodGet, "/", nil),
 		name:     "no_cookie",
-		wantCode: http.StatusUnauthorized,
+		wantCode: http.StatusFound,
 	}, {
 		req:      reqValidCookie,
 		name:     "valid_cookie",
@@ -64,7 +64,7 @@ func TestAuthMiddlewareGLiNet(t *testing.T) {
 	}, {
 		req:      reqInvalidCookie,
 		name:     "invalid_cookie",
-		wantCode: http.StatusUnauthorized,
+		wantCode: http.StatusFound,
 	}}
 
 	for _, tc := range testCases {
@@ -77,26 +77,4 @@ func TestAuthMiddlewareGLiNet(t *testing.T) {
 			assert.Equal(t, tc.wantCode, w.Code)
 		})
 	}
-}
-
-func TestAuthGL(t *testing.T) {
-	dir := t.TempDir()
-
-	GLMode = true
-	t.Cleanup(func() { GLMode = false })
-	glFilePrefix = dir + "/gl_token_"
-
-	data := make([]byte, 4)
-	binary.NativeEndian.PutUint32(data, 1)
-
-	require.NoError(t, os.WriteFile(glFilePrefix+"test", data, 0o644))
-	assert.False(t, glCheckToken("test"))
-
-	data = make([]byte, 4)
-	binary.NativeEndian.PutUint32(data, uint32(time.Now().UTC().Unix()+60))
-
-	require.NoError(t, os.WriteFile(glFilePrefix+"test", data, 0o644))
-	r, _ := http.NewRequest(http.MethodGet, "http://localhost/", nil)
-	r.AddCookie(&http.Cookie{Name: glCookieName, Value: "test"})
-	assert.True(t, glProcessCookie(r))
 }

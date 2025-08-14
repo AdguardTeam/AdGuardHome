@@ -10,6 +10,7 @@ import (
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -57,8 +58,8 @@ func TestHandleDNSRequest_handleDNSRequest(t *testing.T) {
 	s, err := NewServer(DNSCreateParams{
 		DHCPServer: &testDHCP{
 			OnEnabled:  func() (ok bool) { return false },
-			OnHostByIP: func(ip netip.Addr) (host string) { panic("not implemented") },
-			OnIPByHost: func(host string) (ip netip.Addr) { panic("not implemented") },
+			OnHostByIP: func(ip netip.Addr) (_ string) { panic(testutil.UnexpectedCall(ip)) },
+			OnIPByHost: func(host string) (_ netip.Addr) { panic(testutil.UnexpectedCall(host)) },
 		},
 		DNSFilter:   f,
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
@@ -66,7 +67,7 @@ func TestHandleDNSRequest_handleDNSRequest(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	err = s.Prepare(&forwardConf)
+	err = s.Prepare(testutil.ContextWithTimeout(t, testTimeout), &forwardConf)
 	require.NoError(t, err)
 
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{
@@ -347,7 +348,7 @@ func TestHandleDNSRequest_filterDNSResponse(t *testing.T) {
 				},
 			}
 
-			fltErr := s.filterDNSResponse(dctx)
+			fltErr := s.filterDNSResponse(testutil.ContextWithTimeout(t, testTimeout), dctx)
 			require.NoError(t, fltErr)
 
 			res := dctx.result

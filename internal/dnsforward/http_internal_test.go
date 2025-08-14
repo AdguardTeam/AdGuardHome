@@ -2,6 +2,7 @@ package dnsforward
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"net"
@@ -16,6 +17,7 @@ import (
 	"testing/fstest"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
@@ -42,16 +44,18 @@ func (emptySysResolvers) Addrs() (addrs []netip.AddrPort) {
 	return nil
 }
 
-func loadTestData(t *testing.T, casesFileName string, cases any) {
-	t.Helper()
+// loadTestData loads the test data from the file with the given name into
+// cases.
+func loadTestData(tb testing.TB, casesFileName string, cases any) {
+	tb.Helper()
 
 	var f *os.File
 	f, err := os.Open(filepath.Join("testdata", casesFileName))
-	require.NoError(t, err)
-	testutil.CleanupAndRequireSuccess(t, f.Close)
+	require.NoError(tb, err)
+	testutil.CleanupAndRequireSuccess(tb, f.Close)
 
 	err = json.NewDecoder(f).Decode(cases)
-	require.NoError(t, err)
+	require.NoError(tb, err)
 }
 
 const (
@@ -86,14 +90,16 @@ func TestDNSForwardHTTP_handleGetConfig(t *testing.T) {
 			EDNSClientSubnet:       &EDNSClientSubnet{Enabled: false},
 			ClientsContainer:       EmptyClientsContainer{},
 		},
-		ConfigModified: func() {},
-		ServePlainDNS:  true,
+		ConfModifier:  agh.EmptyConfigModifier{},
+		ServePlainDNS: true,
 	}
 	s := createTestServer(t, filterConf, forwardConf)
 	s.sysResolvers = &emptySysResolvers{}
 
-	require.NoError(t, s.Start())
-	testutil.CleanupAndRequireSuccess(t, s.Stop)
+	require.NoError(t, s.Start(testutil.ContextWithTimeout(t, testTimeout)))
+	testutil.CleanupAndRequireSuccess(t, func() (err error) {
+		return s.Stop(testutil.ContextWithTimeout(t, testTimeout))
+	})
 
 	defaultConf := s.conf
 
@@ -136,7 +142,7 @@ func TestDNSForwardHTTP_handleGetConfig(t *testing.T) {
 			t.Cleanup(w.Body.Reset)
 
 			s.conf = tc.conf()
-			s.handleGetConfig(w, nil)
+			s.handleGetConfig(w, httptest.NewRequest(http.MethodGet, "/", nil))
 
 			cType := w.Header().Get(httphdr.ContentType)
 			assert.Equal(t, aghhttp.HdrValApplicationJSON, cType)
@@ -169,17 +175,19 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 			EDNSClientSubnet:       &EDNSClientSubnet{Enabled: false},
 			ClientsContainer:       EmptyClientsContainer{},
 		},
-		ConfigModified: func() {},
-		ServePlainDNS:  true,
+		ConfModifier:  agh.EmptyConfigModifier{},
+		ServePlainDNS: true,
 	}
 	s := createTestServer(t, filterConf, forwardConf)
 	s.sysResolvers = &emptySysResolvers{}
 
 	defaultConf := s.conf
 
-	err := s.Start()
+	err := s.Start(testutil.ContextWithTimeout(t, testTimeout))
 	assert.NoError(t, err)
-	testutil.CleanupAndRequireSuccess(t, s.Stop)
+	testutil.CleanupAndRequireSuccess(t, func() (err error) {
+		return s.Stop(testutil.ContextWithTimeout(t, testTimeout))
+	})
 
 	w := httptest.NewRecorder()
 
@@ -222,6 +230,9 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 		wantSet: "",
 	}, {
 		name:    "cache_size",
+		wantSet: "",
+	}, {
+		name:    "cache_enabled",
 		wantSet: "",
 	}, {
 		name:    "upstream_mode_parallel",
@@ -296,21 +307,24 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 			assert.Equal(t, tc.wantSet, strings.TrimSuffix(w.Body.String(), "\n"))
 			w.Body.Reset()
 
-			s.handleGetConfig(w, nil)
+			s.handleGetConfig(w, httptest.NewRequest(http.MethodGet, "/", nil))
 			assert.JSONEq(t, string(caseData.Want), w.Body.String())
 			w.Body.Reset()
 		})
 	}
 }
 
-func newLocalUpstreamListener(t *testing.T, port uint16, handler dns.Handler) (real netip.AddrPort) {
-	t.Helper()
+// newLocalUpstreamListener creates a local upstream listener and returns its
+// address.  The listener is started in a separate goroutine and stopped when
+// the tb's test is finished.
+func newLocalUpstreamListener(tb testing.TB, port uint16, h dns.Handler) (real netip.AddrPort) {
+	tb.Helper()
 
 	startCh := make(chan struct{})
 	upsSrv := &dns.Server{
 		Addr:              netip.AddrPortFrom(netutil.IPv4Localhost(), port).String(),
 		Net:               "tcp",
-		Handler:           handler,
+		Handler:           h,
 		NotifyStartedFunc: func() { close(startCh) },
 	}
 	go func() {
@@ -319,9 +333,9 @@ func newLocalUpstreamListener(t *testing.T, port uint16, handler dns.Handler) (r
 	}()
 
 	<-startCh
-	testutil.CleanupAndRequireSuccess(t, upsSrv.Shutdown)
+	testutil.CleanupAndRequireSuccess(tb, upsSrv.Shutdown)
 
-	return testutil.RequireTypeAssert[*net.TCPAddr](t, upsSrv.Listener.Addr()).AddrPort()
+	return testutil.RequireTypeAssert[*net.TCPAddr](tb, upsSrv.Listener.Addr()).AddrPort()
 }
 
 func TestServer_HandleTestUpstreamDNS(t *testing.T) {
@@ -355,10 +369,10 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 			},
 		},
 		&aghtest.FSWatcher{
-			OnStart:  func() (_ error) { panic("not implemented") },
-			OnEvents: func() (e <-chan struct{}) { return nil },
-			OnAdd:    func(_ string) (err error) { return nil },
-			OnClose:  func() (err error) { return nil },
+			OnStart:    func(ctx context.Context) (_ error) { panic(testutil.UnexpectedCall(ctx)) },
+			OnEvents:   func() (e <-chan struct{}) { return nil },
+			OnAdd:      func(_ string) (err error) { return nil },
+			OnShutdown: func(_ context.Context) (err error) { return nil },
 		},
 		hostsFileName,
 	)
@@ -460,10 +474,8 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Contains(t, resp, sleepyUps)
-		require.IsType(t, "", resp[sleepyUps])
-		sleepyRes, _ := resp[sleepyUps].(string)
+		sleepyRes := testutil.RequireTypeAssert[string](t, resp[sleepyUps])
 
-		// TODO(e.burkov):  Improve the format of an error in dnsproxy.
 		assert.True(t, strings.HasSuffix(sleepyRes, "i/o timeout"))
 	})
 }

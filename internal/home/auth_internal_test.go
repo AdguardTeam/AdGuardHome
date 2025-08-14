@@ -1,69 +1,52 @@
 package home
 
 import (
-	"encoding/hex"
 	"path/filepath"
 	"testing"
-	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghuser"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/crypto/bcrypt"
 )
 
-func TestAuth(t *testing.T) {
-	dir := t.TempDir()
-	fn := filepath.Join(dir, "sessions.db")
+func TestAuth_UsersList(t *testing.T) {
+	const (
+		userName     = "name"
+		userPassword = "password"
+	)
 
-	users := []webUser{{
-		Name:         "name",
-		PasswordHash: "$2y$05$..vyzAECIhJPfaQiOK17IukcQnqEgKJHy0iETyYqxn3YXJl8yZuo2",
-	}}
-	a := InitAuth(fn, nil, 60, nil, nil)
-	s := session{}
-
-	user := webUser{Name: "name"}
-	err := a.addUser(&user, "password")
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(userPassword), bcrypt.DefaultCost)
 	require.NoError(t, err)
 
-	assert.Equal(t, checkSessionNotFound, a.checkSession("notfound"))
-	a.removeSession("notfound")
+	sessionsDB := filepath.Join(t.TempDir(), "sessions.db")
 
-	sess := newSessionToken()
-	sessStr := hex.EncodeToString(sess)
+	user := webUser{
+		Name:         userName,
+		PasswordHash: string(passwordHash),
+		UserID:       aghuser.MustNewUserID(),
+	}
 
-	now := time.Now().UTC().Unix()
-	// check expiration
-	s.expire = uint32(now)
-	a.addSession(sess, &s)
-	assert.Equal(t, checkSessionExpired, a.checkSession(sessStr))
+	auth, err := newAuth(testutil.ContextWithTimeout(t, testTimeout), &authConfig{
+		baseLogger:     testLogger,
+		rateLimiter:    emptyRateLimiter{},
+		trustedProxies: nil,
+		dbFilename:     sessionsDB,
+		users:          nil,
+		sessionTTL:     testTimeout,
+		isGLiNet:       false,
+	})
+	require.NoError(t, err)
 
-	// add session with TTL = 2 sec
-	s = session{}
-	s.expire = uint32(time.Now().UTC().Unix() + 2)
-	a.addSession(sess, &s)
-	assert.Equal(t, checkSessionOK, a.checkSession(sessStr))
+	t.Cleanup(func() { auth.close(testutil.ContextWithTimeout(t, testTimeout)) })
 
-	a.Close()
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
 
-	// load saved session
-	a = InitAuth(fn, users, 60, nil, nil)
+	assert.Empty(t, auth.usersList(ctx))
 
-	// the session is still alive
-	assert.Equal(t, checkSessionOK, a.checkSession(sessStr))
-	// reset our expiration time because checkSession() has just updated it
-	s.expire = uint32(time.Now().UTC().Unix() + 2)
-	a.storeSession(sess, &s)
-	a.Close()
+	err = auth.addUser(ctx, &user, userPassword)
+	require.NoError(t, err)
 
-	u, ok := a.findUser("name", "password")
-	assert.True(t, ok)
-	assert.NotEmpty(t, u.Name)
-
-	time.Sleep(3 * time.Second)
-
-	// load and remove expired sessions
-	a = InitAuth(fn, users, 60, nil, nil)
-	assert.Equal(t, checkSessionNotFound, a.checkSession(sessStr))
-
-	a.Close()
+	assert.Equal(t, []webUser{user}, auth.usersList(ctx))
 }

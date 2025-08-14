@@ -390,20 +390,20 @@ func addEntry(l *queryLog, host string, answerStr, client net.IP) {
 	l.Add(params)
 }
 
-func assertLogEntry(t *testing.T, entry *logEntry, host string, answer, client net.IP) {
-	t.Helper()
+func assertLogEntry(tb testing.TB, entry *logEntry, host string, answer, client net.IP) {
+	tb.Helper()
 
-	require.NotNil(t, entry)
+	require.NotNil(tb, entry)
 
-	assert.Equal(t, host, entry.QHost)
-	assert.Equal(t, client, entry.IP)
-	assert.Equal(t, "A", entry.QType)
-	assert.Equal(t, "IN", entry.QClass)
+	assert.Equal(tb, host, entry.QHost)
+	assert.Equal(tb, client, entry.IP)
+	assert.Equal(tb, "A", entry.QType)
+	assert.Equal(tb, "IN", entry.QClass)
 
 	msg := &dns.Msg{}
-	require.NoError(t, msg.Unpack(entry.Answer))
-	require.Len(t, msg.Answer, 1)
+	require.NoError(tb, msg.Unpack(entry.Answer))
+	require.Len(tb, msg.Answer, 1)
 
-	a := testutil.RequireTypeAssert[*dns.A](t, msg.Answer[0])
-	assert.Equal(t, answer, a.A.To16())
+	a := testutil.RequireTypeAssert[*dns.A](tb, msg.Answer[0])
+	assert.Equal(tb, answer, a.A.To16())
 }

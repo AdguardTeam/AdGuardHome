@@ -1,115 +1,39 @@
 package home
 
 import (
-	"bytes"
 	"context"
 	"encoding/binary"
 	"io"
 	"log/slog"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 
-	"github.com/AdguardTeam/golibs/ioutil"
-	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil/httputil"
+	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 )
 
-// GLMode - enable GL-Inet compatibility mode
-var GLMode bool
-
+// glFilePrefix is the prefix of the filepath where the authentication token is
+// stored.  Note that it is variable so it can be edited in tests.
+//
+// TODO(s.chzhen):  Make it a constant.
 var glFilePrefix = "/tmp/gl_token_"
 
 const (
-	glTokenTimeoutSeconds = 3600
-	glCookieName          = "Admin-Token"
+	// glTokenTimeout is the TTL (Time To Live) of the authentication token.
+	glTokenTimeout = 3600 * time.Second
+
+	// glCookieName is the name of the cookie that stores the authentication
+	// token.
+	glCookieName = "Admin-Token"
 )
-
-func glProcessRedirect(w http.ResponseWriter, r *http.Request) bool {
-	if !GLMode {
-		return false
-	}
-	// redirect to gl-inet login
-	host, _, _ := net.SplitHostPort(r.Host)
-	url := "http://" + host
-	log.Debug("Auth: redirecting to %s", url)
-	http.Redirect(w, r, url, http.StatusFound)
-	return true
-}
-
-func glProcessCookie(r *http.Request) bool {
-	if !GLMode {
-		return false
-	}
-
-	glCookie, glerr := r.Cookie(glCookieName)
-	if glerr != nil {
-		return false
-	}
-
-	log.Debug("Auth: GL cookie value: %s", glCookie.Value)
-	if glCheckToken(glCookie.Value) {
-		return true
-	}
-	log.Info("Auth: invalid GL cookie value: %s", glCookie)
-	return false
-}
-
-func glCheckToken(sess string) bool {
-	tokenName := glFilePrefix + sess
-	_, err := os.Stat(tokenName)
-	if err != nil {
-		log.Error("os.Stat: %s", err)
-		return false
-	}
-	tokenDate := glGetTokenDate(tokenName)
-	now := uint32(time.Now().UTC().Unix())
-	return now <= (tokenDate + glTokenTimeoutSeconds)
-}
 
 // MaxFileSize is a maximum file length in bytes.
 const MaxFileSize = 1024 * 1024
-
-func glGetTokenDate(file string) uint32 {
-	f, err := os.Open(file)
-	if err != nil {
-		log.Error("os.Open: %s", err)
-
-		return 0
-	}
-	defer func() {
-		derr := f.Close()
-		if derr != nil {
-			log.Error("glinet: closing file: %s", err)
-		}
-	}()
-
-	fileReader := ioutil.LimitReader(f, MaxFileSize)
-
-	var dateToken uint32
-
-	// This use of ReadAll is now safe, because we limited reader.
-	bs, err := io.ReadAll(fileReader)
-	if err != nil {
-		log.Error("reading token: %s", err)
-
-		return 0
-	}
-
-	buf := bytes.NewBuffer(bs)
-
-	err = binary.Read(buf, binary.NativeEndian, &dateToken)
-	if err != nil {
-		log.Error("decoding token: %s", err)
-
-		return 0
-	}
-
-	return dateToken
-}
 
 // authMiddlewareGLiNetConfig is the configuration structure for the GLiNet
 // authentication middleware.
@@ -166,8 +90,33 @@ var _ httputil.Middleware = (*authMiddlewareGLiNet)(nil)
 func (mw *authMiddlewareGLiNet) Wrap(h http.Handler) (wrapped http.Handler) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
+
+		path := r.URL.Path
+		if isPublicResource(path) {
+			h.ServeHTTP(w, r)
+
+			return
+		}
+
 		if mw.isAuthenticated(ctx, r) {
 			h.ServeHTTP(w, r)
+
+			return
+		}
+
+		if path == "/" || path == "/index.html" {
+			host := r.Host
+
+			if h, _, err := net.SplitHostPort(r.Host); err == nil {
+				host = h
+			}
+
+			u := &url.URL{
+				Scheme: urlutil.SchemeHTTP,
+				Host:   host,
+			}
+
+			http.Redirect(w, r, u.String(), http.StatusFound)
 
 			return
 		}

@@ -20,17 +20,17 @@ import (
 
 // prepareTestFile prepares one test query log file with the specified lines
 // count.
-func prepareTestFile(t *testing.T, dir string, linesNum int) (name string) {
-	t.Helper()
+func prepareTestFile(tb testing.TB, dir string, linesNum int) (name string) {
+	tb.Helper()
 
 	f, err := os.CreateTemp(dir, "*.txt")
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
 	// Use defer and not t.Cleanup to make sure that the file is closed
 	// after this function is done.
 	defer func() {
 		derr := f.Close()
-		require.NoError(t, derr)
+		require.NoError(tb, derr)
 	}()
 
 	const ans = `"AAAAAAABAAEAAAAAB2V4YW1wbGUDb3JnAAABAAEHZXhhbXBsZQNvcmcAAAEAAQAAAAAABAECAwQ="`
@@ -49,7 +49,7 @@ func prepareTestFile(t *testing.T, dir string, linesNum int) (name string) {
 		line := fmt.Sprintf(format, ip, lineTime.Format(time.RFC3339Nano))
 
 		_, err = f.WriteString(line)
-		require.NoError(t, err)
+		require.NoError(tb, err)
 	}
 
 	return f.Name()
@@ -57,18 +57,18 @@ func prepareTestFile(t *testing.T, dir string, linesNum int) (name string) {
 
 // prepareTestFiles prepares several test query log files, each with the
 // specified lines count.
-func prepareTestFiles(t *testing.T, filesNum, linesNum int) []string {
-	t.Helper()
+func prepareTestFiles(tb testing.TB, filesNum, linesNum int) []string {
+	tb.Helper()
 
 	if filesNum == 0 {
 		return []string{}
 	}
 
-	dir := t.TempDir()
+	dir := tb.TempDir()
 
 	files := make([]string, filesNum)
 	for i := range files {
-		files[filesNum-i-1] = prepareTestFile(t, dir, linesNum)
+		files[filesNum-i-1] = prepareTestFile(tb, dir, linesNum)
 	}
 
 	return files
@@ -76,17 +76,17 @@ func prepareTestFiles(t *testing.T, filesNum, linesNum int) []string {
 
 // newTestQLogFile creates new *qLogFile for tests and registers the required
 // cleanup functions.
-func newTestQLogFile(t *testing.T, linesNum int) (file *qLogFile) {
-	t.Helper()
+func newTestQLogFile(tb testing.TB, linesNum int) (file *qLogFile) {
+	tb.Helper()
 
-	testFile := prepareTestFiles(t, 1, linesNum)[0]
+	testFile := prepareTestFiles(tb, 1, linesNum)[0]
 
 	// Create the new qLogFile instance.
 	file, err := newQLogFile(testFile)
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
-	assert.NotNil(t, file)
-	testutil.CleanupAndRequireSuccess(t, file.Close)
+	assert.NotNil(tb, file)
+	testutil.CleanupAndRequireSuccess(tb, file.Close)
 
 	return file
 }

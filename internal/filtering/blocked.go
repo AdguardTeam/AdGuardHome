@@ -159,6 +159,8 @@ func (d *DNSFilter) handleBlockedServicesList(w http.ResponseWriter, r *http.Req
 //
 // Deprecated:  Use handleBlockedServicesUpdate.
 func (d *DNSFilter) handleBlockedServicesSet(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	list := []string{}
 	err := json.NewDecoder(r.Body).Decode(&list)
 	if err != nil {
@@ -172,10 +174,10 @@ func (d *DNSFilter) handleBlockedServicesSet(w http.ResponseWriter, r *http.Requ
 		defer d.confMu.Unlock()
 
 		d.conf.BlockedServices.IDs = list
-		d.logger.DebugContext(r.Context(), "updated blocked services list", "len", len(list))
+		d.logger.DebugContext(ctx, "updated blocked services list", "len", len(list))
 	}()
 
-	d.conf.ConfigModified()
+	d.conf.ConfModifier.Apply(ctx)
 }
 
 // handleBlockedServicesGet is the handler for the GET
@@ -195,6 +197,8 @@ func (d *DNSFilter) handleBlockedServicesGet(w http.ResponseWriter, r *http.Requ
 // handleBlockedServicesUpdate is the handler for the PUT
 // /control/blocked_services/update HTTP API.
 func (d *DNSFilter) handleBlockedServicesUpdate(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	bsvc := &BlockedServices{}
 	err := json.NewDecoder(r.Body).Decode(bsvc)
 	if err != nil {
@@ -221,7 +225,7 @@ func (d *DNSFilter) handleBlockedServicesUpdate(w http.ResponseWriter, r *http.R
 		d.conf.BlockedServices = bsvc
 	}()
 
-	d.logger.DebugContext(r.Context(), "updated blocked services schedule", "len", len(bsvc.IDs))
+	d.logger.DebugContext(ctx, "updated blocked services schedule", "len", len(bsvc.IDs))
 
-	d.conf.ConfigModified()
+	d.conf.ConfModifier.Apply(ctx)
 }

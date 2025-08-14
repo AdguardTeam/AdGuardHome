@@ -1,6 +1,7 @@
 package filtering_test
 
 import (
+	"context"
 	"fmt"
 	"net/netip"
 	"testing"
@@ -43,10 +44,10 @@ func TestDNSFilter_CheckHost_hostsContainer(t *testing.T) {
 		},
 	}
 	watcher := &aghtest.FSWatcher{
-		OnStart:  func() (_ error) { panic("not implemented") },
-		OnEvents: func() (e <-chan struct{}) { return nil },
-		OnAdd:    func(name string) (err error) { return nil },
-		OnClose:  func() (err error) { return nil },
+		OnStart:    func(ctx context.Context) (_ error) { panic(testutil.UnexpectedCall(ctx)) },
+		OnEvents:   func() (e <-chan struct{}) { return nil },
+		OnAdd:      func(name string) (err error) { return nil },
+		OnShutdown: func(_ context.Context) (err error) { return nil },
 	}
 	hc, err := aghnet.NewHostsContainer(files, watcher, "hosts")
 	require.NoError(t, err)

@@ -1,6 +1,7 @@
 package dnsforward
 
 import (
+	"context"
 	"encoding/base64"
 	"net"
 	"strconv"
@@ -14,9 +15,9 @@ import (
 //
 // See the comment on genAnswerSVCB for a list of current restrictions on
 // parameter values.
-func (s *Server) genAnswerHTTPS(req *dns.Msg, svcb *rules.DNSSVCB) (ans *dns.HTTPS) {
+func (s *Server) genAnswerHTTPS(ctx context.Context, req *dns.Msg, svcb *rules.DNSSVCB) (ans *dns.HTTPS) {
 	ans = &dns.HTTPS{
-		SVCB: *s.genAnswerSVCB(req, svcb),
+		SVCB: *s.genAnswerSVCB(ctx, req, svcb),
 	}
 
 	ans.Hdr.Rrtype = dns.TypeHTTPS
@@ -163,7 +164,11 @@ var svcbKeyHandlers = map[string]svcbKeyHandler{
 //	ipv4hint="127.0.0.1,127.0.0.2" // Unsupported.
 //
 // TODO(a.garipov): Support all of these.
-func (s *Server) genAnswerSVCB(req *dns.Msg, svcb *rules.DNSSVCB) (ans *dns.SVCB) {
+func (s *Server) genAnswerSVCB(
+	ctx context.Context,
+	req *dns.Msg,
+	svcb *rules.DNSSVCB,
+) (ans *dns.SVCB) {
 	ans = &dns.SVCB{
 		Hdr:      s.hdr(req, dns.TypeSVCB),
 		Priority: svcb.Priority,
@@ -177,7 +182,7 @@ func (s *Server) genAnswerSVCB(req *dns.Msg, svcb *rules.DNSSVCB) (ans *dns.SVCB
 	for k, valStr := range svcb.Params {
 		handler, ok := svcbKeyHandlers[k]
 		if !ok {
-			log.Debug("unknown svcb/https key %q, ignoring", k)
+			s.logger.DebugContext(ctx, "unknown svcb/https key, ignoring", "key", k)
 
 			continue
 		}

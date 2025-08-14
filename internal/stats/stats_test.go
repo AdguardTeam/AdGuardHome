@@ -26,25 +26,25 @@ import (
 // constUnitID is the UnitIDGenFunc which always return 0.
 func constUnitID() (id uint32) { return 0 }
 
-func assertSuccessAndUnmarshal(t *testing.T, to any, handler http.Handler, req *http.Request) {
-	t.Helper()
+func assertSuccessAndUnmarshal(tb testing.TB, to any, handler http.Handler, req *http.Request) {
+	tb.Helper()
 
-	require.NotNil(t, handler)
+	require.NotNil(tb, handler)
 
 	rw := httptest.NewRecorder()
 
 	handler.ServeHTTP(rw, req)
-	require.Equal(t, http.StatusOK, rw.Code)
+	require.Equal(tb, http.StatusOK, rw.Code)
 
 	data := rw.Body.Bytes()
 	if to == nil {
-		assert.Empty(t, data)
+		assert.Empty(tb, data)
 
 		return
 	}
 
 	err := json.Unmarshal(data, to)
-	require.NoError(t, err)
+	require.NoError(tb, err)
 }
 
 func TestStats(t *testing.T) {

@@ -13,13 +13,59 @@ The format is based on [*Keep a Changelog*](https://keepachangelog.com/en/1.0.0/
 
 See also the [v0.107.65 GitHub milestone][ms-v0.107.65].
 
-[ms-v0.107.65]: https://github.com/AdguardTeam/AdGuardHome/milestone/100?closed=1
+[ms-v0.107.65]: https://github.com/AdguardTeam/AdGuardHome/milestone/101?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
+
+## [v0.107.65] - 2025-08-18
+
+See also the [v0.107.65 GitHub milestone][ms-v0.107.65].
+
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.24.6][go-1.24.6].
+
+### Added
+
+- A separate checkbox in the Web UI to enable or disable the global DNS response cache without losing the configured cache size.
+
+- A new `"cache_enabled"` field to the HTTP API (`GET /control/dns_info` and `POST /control/dns_config`).  See `openapi/openapi.yaml` for the full description.
+
+### Changed
+
+#### Configuration changes
+
+In this release, the schema version has changed from 29 to 30.
+
+- Added a new boolean field `dns.cache_enabled` to the configuration.  This field explicitly controls whether DNS caching is enabled, replacing the previous implicit logic based on `dns.cache_size`.
+
+    ```yaml
+    # BEFORE:
+    'dns':
+        # …
+        'cache_size': 123456
+
+    # AFTER:
+    'dns':
+        # …
+        'cache_enabled': true
+        'cache_size': 123456
+    ```
+
+    To roll back this change, set the schema_version back to `29`.
+
+### Fixed
+
+- Disabled state of *Top clients* action button in web UI ([#7923]).
+
+[#7923]: https://github.com/AdguardTeam/AdGuardHome/issues/7923
+
+[go-1.24.6]: https://groups.google.com/g/golang-announce/c/x5MKroML2yM
+[ms-v0.107.65]: https://github.com/AdguardTeam/AdGuardHome/milestone/100?closed=1
 
 ## [v0.107.64] - 2025-07-28
 
@@ -3177,11 +3223,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 [ms-v0.104.2]: https://github.com/AdguardTeam/AdGuardHome/milestone/28?closed=1
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.65...HEAD
-[v0.107.65]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.64...v0.107.65
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.66...HEAD
+[v0.107.66]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.65...v0.107.66
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.64...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.65...HEAD
+[v0.107.65]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.64...v0.107.65
 [v0.107.64]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.63...v0.107.64
 [v0.107.63]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.62...v0.107.63
 [v0.107.62]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.61...v0.107.62
