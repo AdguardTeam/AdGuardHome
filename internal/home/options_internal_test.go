@@ -9,26 +9,34 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func testParseOK(t *testing.T, ss ...string) options {
-	t.Helper()
+// testParseOK is a helper that parses the command-line options and returns the
+// parsed options.
+func testParseOK(tb testing.TB, ss ...string) (o options) {
+	tb.Helper()
 
 	o, _, err := parseCmdOpts("", ss)
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
 	return o
 }
 
-func testParseErr(t *testing.T, descr string, ss ...string) {
-	t.Helper()
+// testParseErr is a helper that asserts that parsing the command-line options
+// fails with error.
+//
+// TODO(a.garipov):  Search descr within an error.
+func testParseErr(tb testing.TB, descr string, ss ...string) {
+	tb.Helper()
 
 	_, _, err := parseCmdOpts("", ss)
-	require.Error(t, err)
+	require.Errorf(tb, err, "should have got error: %s", descr)
 }
 
-func testParseParamMissing(t *testing.T, param string) {
-	t.Helper()
+// testParseParamMissing is a helper that asserts that parsing the command-line
+// options fails with error due to missing parameter.
+func testParseParamMissing(tb testing.TB, param string) {
+	tb.Helper()
 
-	testParseErr(t, fmt.Sprintf("%s parameter missing", param), param)
+	testParseErr(tb, fmt.Sprintf("%s parameter missing", param), param)
 }
 
 func TestParseVerbose(t *testing.T) {

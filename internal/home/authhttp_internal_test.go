@@ -7,7 +7,6 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"maps"
 	"net/http"
 	"net/http/httptest"
@@ -48,20 +47,20 @@ var _ aghuser.SessionStorage = (*testSessionStorage)(nil)
 // panic.
 func newTestSessionStorage() (ts *testSessionStorage) {
 	return &testSessionStorage{
-		onNew: func(_ context.Context, u *aghuser.User) (_ *aghuser.Session, _ error) {
-			panic(fmt.Errorf("unexpected call to testSessionStorage.New(%v)", u))
+		onNew: func(ctx context.Context, u *aghuser.User) (_ *aghuser.Session, _ error) {
+			panic(testutil.UnexpectedCall(ctx, u))
 		},
 		onFindByToken: func(
-			_ context.Context,
+			ctx context.Context,
 			t aghuser.SessionToken,
 		) (_ *aghuser.Session, err error) {
-			panic(fmt.Errorf("unexpected call to testSessionStorage.FindByToken(%v)", t))
+			panic(testutil.UnexpectedCall(ctx, t))
 		},
-		onDeleteByToken: func(_ context.Context, t aghuser.SessionToken) (_ error) {
-			panic(fmt.Errorf("unexpected call to testSessionStorage.DeleteByToken(%v)", t))
+		onDeleteByToken: func(ctx context.Context, t aghuser.SessionToken) (_ error) {
+			panic(testutil.UnexpectedCall(ctx, t))
 		},
 		onClose: func() (_ error) {
-			panic("unexpected call to testSessionStorage.Close")
+			panic(testutil.UnexpectedCall())
 		},
 	}
 }
@@ -110,17 +109,17 @@ type testUsersDB struct {
 // newTestUsersDB returns a new *testUsersDB all methods of which panic.
 func newTestUsersDB() (ts *testUsersDB) {
 	return &testUsersDB{
-		onAll: func(_ context.Context) (_ []*aghuser.User, _ error) {
-			panic("unexpected call to testUsersDB.All")
+		onAll: func(ctx context.Context) (_ []*aghuser.User, _ error) {
+			panic(testutil.UnexpectedCall(ctx))
 		},
-		onByLogin: func(_ context.Context, l aghuser.Login) (_ *aghuser.User, _ error) {
-			panic(fmt.Errorf("unexpected call to testUsersDB.ByLogin(%v)", l))
+		onByLogin: func(ctx context.Context, l aghuser.Login) (_ *aghuser.User, _ error) {
+			panic(testutil.UnexpectedCall(ctx, l))
 		},
-		onByUUID: func(_ context.Context, id aghuser.UserID) (_ *aghuser.User, _ error) {
-			panic(fmt.Errorf("unexpected call to testUsersDB.ByUUID(%v)", id))
+		onByUUID: func(ctx context.Context, id aghuser.UserID) (_ *aghuser.User, _ error) {
+			panic(testutil.UnexpectedCall(ctx, id))
 		},
-		onCreate: func(_ context.Context, u *aghuser.User) (_ error) {
-			panic(fmt.Errorf("unexpected call to testUsersDB.Create(%v)", u))
+		onCreate: func(ctx context.Context, u *aghuser.User) (_ error) {
+			panic(testutil.UnexpectedCall(ctx, u))
 		},
 	}
 }
@@ -574,11 +573,11 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 
 // generateAuthCookie is a helper function that logs in with the provided
 // credentials and returns the resulting authentication cookie.
-func generateAuthCookie(t *testing.T, mux http.Handler, name, password string) (ac *http.Cookie) {
-	t.Helper()
+func generateAuthCookie(tb testing.TB, mux http.Handler, name, password string) (ac *http.Cookie) {
+	tb.Helper()
 
 	creds, err := json.Marshal(&loginJSON{Name: name, Password: password})
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
 	r := httptest.NewRequest(http.MethodPost, "/control/login", bytes.NewReader(creds))
 	r.Header.Set(httphdr.ContentType, aghhttp.HdrValApplicationJSON)
@@ -594,20 +593,20 @@ func generateAuthCookie(t *testing.T, mux http.Handler, name, password string) (
 		}
 	}
 
-	require.NotNil(t, ac)
+	require.NotNil(tb, ac)
 
 	return ac
 }
 
 // assertHandlerStatusCode is a helper function that asserts the response status
 // code of a HTTP handler.
-func assertHandlerStatusCode(t *testing.T, h http.Handler, r *http.Request, wantCode int) {
-	t.Helper()
+func assertHandlerStatusCode(tb testing.TB, h http.Handler, r *http.Request, wantCode int) {
+	tb.Helper()
 
 	w := httptest.NewRecorder()
 	h.ServeHTTP(w, r)
 
-	assert.Equal(t, wantCode, w.Code)
+	assert.Equal(tb, wantCode, w.Code)
 }
 
 func TestAuth_ServeHTTP_logout(t *testing.T) {

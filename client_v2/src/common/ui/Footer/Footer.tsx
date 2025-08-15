@@ -157,7 +157,10 @@ export const Footer = () => {
                                         className={cn(theme.dropdown.item, {
                                             [theme.dropdown.item_active]: currentLanguage === lang,
                                         })}
-                                        onClick={() => changeLanguage(lang as LocalesType)}>
+                                        onClick={() => {
+                                            changeLanguage(lang as LocalesType);
+                                            setLangDropdownOpen(false);
+                                        }}>
                                         {LANGUAGES[lang]}
                                     </button>
                                 ))}

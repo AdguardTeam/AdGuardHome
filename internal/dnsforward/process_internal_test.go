@@ -94,7 +94,7 @@ func TestServer_ProcessInitial(t *testing.T) {
 			var gotAddr netip.Addr
 			s.addrProc = &aghtest.AddressProcessor{
 				OnProcess: func(ctx context.Context, ip netip.Addr) { gotAddr = ip },
-				OnClose:   func() (err error) { panic("not implemented") },
+				OnClose:   func() (_ error) { panic(testutil.UnexpectedCall()) },
 			}
 
 			dctx := &dnsContext{
@@ -373,14 +373,14 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 }
 
 // createTestDNSFilter returns the minimum valid DNSFilter.
-func createTestDNSFilter(t *testing.T) (f *filtering.DNSFilter) {
-	t.Helper()
+func createTestDNSFilter(tb testing.TB) (f *filtering.DNSFilter) {
+	tb.Helper()
 
 	f, err := filtering.New(&filtering.Config{
 		Logger:       testLogger,
 		BlockingMode: filtering.BlockingModeDefault,
 	}, []filtering.Filter{})
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
 	return f
 }
@@ -519,7 +519,7 @@ func TestServer_ProcessDHCPHosts(t *testing.T) {
 		OnIPByHost: func(host string) (ip netip.Addr) {
 			return knownClients[host]
 		},
-		OnHostByIP: func(ip netip.Addr) (host string) { panic("not implemented") },
+		OnHostByIP: func(ip netip.Addr) (_ string) { panic(testutil.UnexpectedCall(ip)) },
 	}
 
 	testCases := []struct {

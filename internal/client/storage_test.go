@@ -1208,12 +1208,8 @@ func TestStorage_CustomUpstreamConfig(t *testing.T) {
 	}
 
 	dhcp := &testDHCP{
-		OnLeases: func() (ls []*dhcpsvc.Lease) {
-			panic("not implemented")
-		},
-		OnHostBy: func(ip netip.Addr) (host string) {
-			panic("not implemented")
-		},
+		OnLeases: func() (_ []*dhcpsvc.Lease) { panic(testutil.UnexpectedCall()) },
+		OnHostBy: func(ip netip.Addr) (_ string) { panic(testutil.UnexpectedCall(ip)) },
 		OnMACBy: func(ip netip.Addr) (mac net.HardwareAddr) {
 			return ipToMAC[ip]
 		},

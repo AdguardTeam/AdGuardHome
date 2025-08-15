@@ -68,7 +68,9 @@ func TestNewHostsContainer(t *testing.T) {
 			}
 
 			hc, err := aghnet.NewHostsContainer(testFS, &aghtest.FSWatcher{
-				OnStart:    func(_ context.Context) (_ error) { panic("not implemented") },
+				OnStart: func(ctx context.Context) (_ error) {
+					panic(testutil.UnexpectedCall(ctx))
+				},
 				OnEvents:   onEvents,
 				OnAdd:      onAdd,
 				OnShutdown: func(_ context.Context) (err error) { return nil },
@@ -95,10 +97,12 @@ func TestNewHostsContainer(t *testing.T) {
 	t.Run("nil_fs", func(t *testing.T) {
 		require.Panics(t, func() {
 			_, _ = aghnet.NewHostsContainer(nil, &aghtest.FSWatcher{
-				OnStart: func(_ context.Context) (_ error) { panic("not implemented") },
+				OnStart: func(ctx context.Context) (_ error) {
+					panic(testutil.UnexpectedCall(ctx))
+				},
 				// Those shouldn't panic.
 				OnEvents:   func() (e <-chan struct{}) { return nil },
-				OnAdd:      func(name string) (err error) { return nil },
+				OnAdd:      func(_ string) (err error) { return nil },
 				OnShutdown: func(_ context.Context) (err error) { return nil },
 			}, p)
 		})
@@ -114,9 +118,9 @@ func TestNewHostsContainer(t *testing.T) {
 		const errOnAdd errors.Error = "error"
 
 		errWatcher := &aghtest.FSWatcher{
-			OnStart:    func(_ context.Context) (_ error) { panic("not implemented") },
-			OnEvents:   func() (e <-chan struct{}) { panic("not implemented") },
-			OnAdd:      func(name string) (err error) { return errOnAdd },
+			OnStart:    func(ctx context.Context) (_ error) { panic(testutil.UnexpectedCall(ctx)) },
+			OnEvents:   func() (_ <-chan struct{}) { panic(testutil.UnexpectedCall()) },
+			OnAdd:      func(_ string) (err error) { return errOnAdd },
 			OnShutdown: func(_ context.Context) (err error) { return nil },
 		}
 
@@ -159,7 +163,7 @@ func TestHostsContainer_refresh(t *testing.T) {
 	t.Cleanup(func() { close(eventsCh) })
 
 	w := &aghtest.FSWatcher{
-		OnStart:  func(_ context.Context) (_ error) { panic("not implemented") },
+		OnStart:  func(ctx context.Context) (_ error) { panic(testutil.UnexpectedCall(ctx)) },
 		OnEvents: func() (e <-chan event) { return eventsCh },
 		OnAdd: func(name string) (err error) {
 			assert.Equal(t, "dir", name)

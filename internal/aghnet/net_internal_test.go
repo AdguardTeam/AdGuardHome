@@ -19,11 +19,11 @@ import (
 
 // substRootDirFS replaces the aghos.RootDirFS function used throughout the
 // package with fsys for tests ran under t.
-func substRootDirFS(t testing.TB, fsys fs.FS) {
-	t.Helper()
+func substRootDirFS(tb testing.TB, fsys fs.FS) {
+	tb.Helper()
 
 	prev := rootDirFS
-	t.Cleanup(func() { rootDirFS = prev })
+	tb.Cleanup(func() { rootDirFS = prev })
 	rootDirFS = fsys
 }
 
@@ -32,11 +32,11 @@ type RunCmdFunc func(cmd string, args ...string) (code int, out []byte, err erro
 
 // substShell replaces the the aghos.RunCommand function used throughout the
 // package with rc for tests ran under t.
-func substShell(t testing.TB, rc RunCmdFunc) {
-	t.Helper()
+func substShell(tb testing.TB, rc RunCmdFunc) {
+	tb.Helper()
 
 	prev := aghosRunCommand
-	t.Cleanup(func() { aghosRunCommand = prev })
+	tb.Cleanup(func() { aghosRunCommand = prev })
 	aghosRunCommand = rc
 }
 
@@ -72,11 +72,11 @@ type ifaceAddrsFunc func() (ifaces []net.Addr, err error)
 
 // substNetInterfaceAddrs replaces the the net.InterfaceAddrs function used
 // throughout the package with f for tests ran under t.
-func substNetInterfaceAddrs(t *testing.T, f ifaceAddrsFunc) {
-	t.Helper()
+func substNetInterfaceAddrs(tb testing.TB, f ifaceAddrsFunc) {
+	tb.Helper()
 
 	prev := netInterfaceAddrs
-	t.Cleanup(func() { netInterfaceAddrs = prev })
+	tb.Cleanup(func() { netInterfaceAddrs = prev })
 	netInterfaceAddrs = f
 }
 

@@ -15,11 +15,11 @@ import (
 
 // setupDNSIPs is a helper that sets up the server IP address configuration for
 // tests and also tears it down in a cleanup function.
-func setupDNSIPs(t testing.TB) {
-	t.Helper()
+func setupDNSIPs(tb testing.TB) {
+	tb.Helper()
 
 	prevConfig := config
-	t.Cleanup(func() {
+	tb.Cleanup(func() {
 		config = prevConfig
 	})
 

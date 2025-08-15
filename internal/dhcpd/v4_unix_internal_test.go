@@ -44,12 +44,12 @@ func defaultV4ServerConf() (conf *V4ServerConf) {
 
 // defaultSrv prepares the default DHCPServer to use in tests.  The underlying
 // type of s is *v4Server.
-func defaultSrv(t *testing.T) (s DHCPServer) {
-	t.Helper()
+func defaultSrv(tb testing.TB) (s DHCPServer) {
+	tb.Helper()
 
 	var err error
 	s, err = v4Create(defaultV4ServerConf())
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
 	return s
 }

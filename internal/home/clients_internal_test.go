@@ -12,12 +12,12 @@ import (
 
 // newClientsContainer is a helper that creates a new clients container for
 // tests.
-func newClientsContainer(t *testing.T) (c *clientsContainer) {
-	t.Helper()
+func newClientsContainer(tb testing.TB) (c *clientsContainer) {
+	tb.Helper()
 
 	c = &clientsContainer{}
 
-	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	ctx := testutil.ContextWithTimeout(tb, testTimeout)
 	err := c.Init(
 		ctx,
 		testLogger,
@@ -32,7 +32,7 @@ func newClientsContainer(t *testing.T) (c *clientsContainer) {
 		agh.EmptyConfigModifier{},
 	)
 
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
 	return c
 }

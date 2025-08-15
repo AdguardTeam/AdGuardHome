@@ -34,18 +34,18 @@ func defaultResponse() *dhcpStatusResponse {
 
 // handleLease is the helper function that calls handler with provided static
 // lease as body and returns modified response recorder.
-func handleLease(t *testing.T, lease *leaseStatic, handler http.HandlerFunc) (w *httptest.ResponseRecorder) {
-	t.Helper()
+func handleLease(tb testing.TB, lease *leaseStatic, handler http.HandlerFunc) (w *httptest.ResponseRecorder) {
+	tb.Helper()
 
 	w = httptest.NewRecorder()
 
 	b := &bytes.Buffer{}
 	err := json.NewEncoder(b).Encode(lease)
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
 	var r *http.Request
 	r, err = http.NewRequest(http.MethodPost, "", b)
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
 	handler(w, r)
 

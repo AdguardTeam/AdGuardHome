@@ -11,6 +11,7 @@ import { Settings } from 'panel/components/Settings';
 import { LocalesType } from 'panel/common/intl';
 import { Encryption } from 'panel/components/Encryption';
 
+import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from 'panel/helpers/localStorageHelper';
 import Toasts from '../Toasts';
 import i18n from '../../i18n';
 import { THEMES } from '../../helpers/constants';
@@ -67,6 +68,7 @@ const App = () => {
             if (language) {
                 i18n.changeLanguage(language);
                 setHtmlLangAttr(language);
+                LocalStorageHelper.setItem(LOCAL_STORAGE_KEYS.LANGUAGE, language);
             }
         }
 

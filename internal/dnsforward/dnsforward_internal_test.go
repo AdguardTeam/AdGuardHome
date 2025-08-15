@@ -104,13 +104,16 @@ func (c *clientsContainer) ClearUpstreamCache() {
 	c.OnClearUpstreamCache()
 }
 
-func startDeferStop(t *testing.T, s *Server) {
-	t.Helper()
+// startDeferStop starts the server and stops it when the test ends.
+//
+// TODO(e.burkov):  Replace with [servicetest.RequireRun].
+func startDeferStop(tb testing.TB, s *Server) {
+	tb.Helper()
 
-	err := s.Start(testutil.ContextWithTimeout(t, testTimeout))
-	require.NoError(t, err)
-	testutil.CleanupAndRequireSuccess(t, func() (err error) {
-		return s.Stop(testutil.ContextWithTimeout(t, testTimeout))
+	err := s.Start(testutil.ContextWithTimeout(tb, testTimeout))
+	require.NoError(tb, err)
+	testutil.CleanupAndRequireSuccess(tb, func() (err error) {
+		return s.Stop(testutil.ContextWithTimeout(tb, testTimeout))
 	})
 }
 
@@ -130,11 +133,11 @@ func emptyFilteringBlockedServices() (bsvc *filtering.BlockedServices) {
 // *Server for use in tests, given the provided parameters.  It also populates
 // the filtering configuration with default parameters.
 func createTestServer(
-	t *testing.T,
+	tb testing.TB,
 	filterConf *filtering.Config,
 	forwardConf ServerConfig,
 ) (s *Server) {
-	t.Helper()
+	tb.Helper()
 
 	filterConf.Logger = cmp.Or(filterConf.Logger, testLogger)
 
@@ -155,14 +158,14 @@ func createTestServer(
 	}
 
 	f, err := filtering.New(filterConf, filters)
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
 	f.SetEnabled(true)
 
 	dhcp := &testDHCP{
 		OnEnabled:  func() (ok bool) { return false },
 		OnHostByIP: func(ip netip.Addr) (host string) { return "" },
-		OnIPByHost: func(host string) (ip netip.Addr) { panic("not implemented") },
+		OnIPByHost: func(host string) (_ netip.Addr) { panic(testutil.UnexpectedCall(host)) },
 	}
 	s, err = NewServer(DNSCreateParams{
 		DHCPServer:  dhcp,
@@ -170,23 +173,23 @@ func createTestServer(
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
 		Logger:      testLogger,
 	})
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
-	err = s.Prepare(testutil.ContextWithTimeout(t, testTimeout), &forwardConf)
-	require.NoError(t, err)
+	err = s.Prepare(testutil.ContextWithTimeout(tb, testTimeout), &forwardConf)
+	require.NoError(tb, err)
 
 	return s
 }
 
-func createServerTLSConfig(t *testing.T) (*tls.Config, []byte, []byte) {
-	t.Helper()
+func createServerTLSConfig(tb testing.TB) (*tls.Config, []byte, []byte) {
+	tb.Helper()
 
 	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
-	require.NoErrorf(t, err, "cannot generate RSA key: %s", err)
+	require.NoErrorf(tb, err, "cannot generate RSA key: %s", err)
 
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
-	require.NoErrorf(t, err, "failed to generate serial number: %s", err)
+	require.NoErrorf(tb, err, "failed to generate serial number: %s", err)
 
 	notBefore := time.Now()
 	notAfter := notBefore.Add(5 * 365 * timeutil.Day)
@@ -207,13 +210,13 @@ func createServerTLSConfig(t *testing.T) (*tls.Config, []byte, []byte) {
 	template.DNSNames = append(template.DNSNames, tlsServerName)
 
 	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, publicKey(privateKey), privateKey)
-	require.NoErrorf(t, err, "failed to create certificate: %s", err)
+	require.NoErrorf(tb, err, "failed to create certificate: %s", err)
 
 	certPem := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
 	keyPem := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(privateKey)})
 
 	cert, err := tls.X509KeyPair(certPem, keyPem)
-	require.NoErrorf(t, err, "failed to create certificate: %s", err)
+	require.NoErrorf(tb, err, "failed to create certificate: %s", err)
 
 	return &tls.Config{
 		Certificates: []tls.Certificate{cert},
@@ -222,18 +225,18 @@ func createServerTLSConfig(t *testing.T) (*tls.Config, []byte, []byte) {
 	}, certPem, keyPem
 }
 
-func createTestTLS(t *testing.T, tlsConf *TLSConfig) (s *Server, certPem []byte) {
-	t.Helper()
+func createTestTLS(tb testing.TB, tlsConf *TLSConfig) (s *Server, certPem []byte) {
+	tb.Helper()
 
 	var keyPem []byte
-	_, certPem, keyPem = createServerTLSConfig(t)
+	_, certPem, keyPem = createServerTLSConfig(tb)
 
 	cert, err := tls.X509KeyPair(certPem, keyPem)
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
 	tlsConf.Cert = &cert
 
-	s = createTestServer(t, &filtering.Config{
+	s = createTestServer(tb, &filtering.Config{
 		BlockingMode: filtering.BlockingModeDefault,
 	}, ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
@@ -247,8 +250,8 @@ func createTestTLS(t *testing.T, tlsConf *TLSConfig) (s *Server, certPem []byte)
 		ServePlainDNS: true,
 	})
 
-	err = s.Prepare(testutil.ContextWithTimeout(t, testTimeout), &s.conf)
-	require.NoErrorf(t, err, "failed to prepare server: %s", err)
+	err = s.Prepare(testutil.ContextWithTimeout(tb, testTimeout), &s.conf)
+	require.NoErrorf(tb, err, "failed to prepare server: %s", err)
 
 	return s, certPem
 }
@@ -304,25 +307,27 @@ func newResp(rcode int, req *dns.Msg, ans []dns.RR) (resp *dns.Msg) {
 	return resp
 }
 
-func assertGoogleAResponse(t *testing.T, reply *dns.Msg) {
-	assertResponse(t, reply, netip.AddrFrom4([4]byte{8, 8, 8, 8}))
+func assertGoogleAResponse(tb testing.TB, reply *dns.Msg) {
+	tb.Helper()
+
+	assertResponse(tb, reply, netip.AddrFrom4([4]byte{8, 8, 8, 8}))
 }
 
-func assertResponse(t *testing.T, reply *dns.Msg, ip netip.Addr) {
-	t.Helper()
+func assertResponse(tb testing.TB, reply *dns.Msg, ip netip.Addr) {
+	tb.Helper()
 
-	require.Lenf(t, reply.Answer, 1, "dns server returned reply with wrong number of answers - %d", len(reply.Answer))
+	require.Lenf(tb, reply.Answer, 1, "dns server returned reply with wrong number of answers - %d", len(reply.Answer))
 
 	a, ok := reply.Answer[0].(*dns.A)
-	require.Truef(t, ok, "dns server returned wrong answer type instead of A: %v", reply.Answer[0])
-	assert.Equal(t, net.IP(ip.AsSlice()), a.A)
+	require.Truef(tb, ok, "dns server returned wrong answer type instead of A: %v", reply.Answer[0])
+	assert.Equal(tb, net.IP(ip.AsSlice()), a.A)
 }
 
 // sendTestMessagesAsync sends messages in parallel to check for race issues.
 //
 //lint:ignore U1000 it's called from the function which is skipped for now.
-func sendTestMessagesAsync(t *testing.T, conn *dns.Conn) {
-	t.Helper()
+func sendTestMessagesAsync(tb testing.TB, conn *dns.Conn) {
+	tb.Helper()
 
 	wg := &sync.WaitGroup{}
 
@@ -334,29 +339,29 @@ func sendTestMessagesAsync(t *testing.T, conn *dns.Conn) {
 			defer wg.Done()
 
 			err := conn.WriteMsg(msg)
-			require.NoErrorf(t, err, "cannot write message: %s", err)
+			require.NoErrorf(tb, err, "cannot write message: %s", err)
 
 			res, err := conn.ReadMsg()
-			require.NoErrorf(t, err, "cannot read response to message: %s", err)
+			require.NoErrorf(tb, err, "cannot read response to message: %s", err)
 
-			assertGoogleAResponse(t, res)
+			assertGoogleAResponse(tb, res)
 		}()
 	}
 
 	wg.Wait()
 }
 
-func sendTestMessages(t *testing.T, conn *dns.Conn) {
-	t.Helper()
+func sendTestMessages(tb testing.TB, conn *dns.Conn) {
+	tb.Helper()
 
 	for i := range testMessagesCount {
 		req := createGoogleATestMessage()
 		err := conn.WriteMsg(req)
-		assert.NoErrorf(t, err, "cannot write message #%d: %s", i, err)
+		assert.NoErrorf(tb, err, "cannot write message #%d: %s", i, err)
 
 		res, err := conn.ReadMsg()
-		assert.NoErrorf(t, err, "cannot read response to message #%d: %s", i, err)
-		assertGoogleAResponse(t, res)
+		assert.NoErrorf(tb, err, "cannot read response to message #%d: %s", i, err)
+		assertGoogleAResponse(tb, res)
 	}
 }
 
@@ -1080,8 +1085,8 @@ func TestBlockedCustomIP(t *testing.T) {
 
 	dhcp := &testDHCP{
 		OnEnabled:  func() (ok bool) { return false },
-		OnHostByIP: func(_ netip.Addr) (host string) { panic("not implemented") },
-		OnIPByHost: func(_ string) (ip netip.Addr) { panic("not implemented") },
+		OnHostByIP: func(ip netip.Addr) (_ string) { panic(testutil.UnexpectedCall(ip)) },
+		OnIPByHost: func(host string) (_ netip.Addr) { panic(testutil.UnexpectedCall(host)) },
 	}
 	s, err := NewServer(DNSCreateParams{
 		DHCPServer:  dhcp,
@@ -1256,8 +1261,8 @@ func TestRewrite(t *testing.T) {
 
 	dhcp := &testDHCP{
 		OnEnabled:  func() (ok bool) { return false },
-		OnHostByIP: func(ip netip.Addr) (host string) { panic("not implemented") },
-		OnIPByHost: func(host string) (ip netip.Addr) { panic("not implemented") },
+		OnHostByIP: func(ip netip.Addr) (_ string) { panic(testutil.UnexpectedCall(ip)) },
+		OnIPByHost: func(host string) (_ netip.Addr) { panic(testutil.UnexpectedCall(host)) },
 	}
 	s, err := NewServer(DNSCreateParams{
 		DHCPServer:  dhcp,
@@ -1392,7 +1397,7 @@ func TestPTRResponseFromDHCPLeases(t *testing.T) {
 		DNSFilter: flt,
 		DHCPServer: &testDHCP{
 			OnEnabled:  func() (ok bool) { return true },
-			OnIPByHost: func(host string) (ip netip.Addr) { panic("not implemented") },
+			OnIPByHost: func(host string) (_ netip.Addr) { panic(testutil.UnexpectedCall(host)) },
 			OnHostByIP: func(ip netip.Addr) (host string) {
 				return "myhost"
 			},
@@ -1449,13 +1454,13 @@ func TestPTRResponseFromHosts(t *testing.T) {
 
 	dhcp := &testDHCP{
 		OnEnabled:  func() (ok bool) { return false },
-		OnIPByHost: func(host string) (ip netip.Addr) { panic("not implemented") },
+		OnIPByHost: func(host string) (_ netip.Addr) { panic(testutil.UnexpectedCall(host)) },
 		OnHostByIP: func(ip netip.Addr) (host string) { return "" },
 	}
 
 	var eventsCalledCounter uint32
 	hc, err := aghnet.NewHostsContainer(testFS, &aghtest.FSWatcher{
-		OnStart: func(_ context.Context) (_ error) { panic("not implemented") },
+		OnStart: func(ctx context.Context) (_ error) { panic(testutil.UnexpectedCall(ctx)) },
 		OnEvents: func() (e <-chan struct{}) {
 			assert.Equal(t, uint32(1), atomic.AddUint32(&eventsCalledCounter, 1))
 
@@ -1466,7 +1471,7 @@ func TestPTRResponseFromHosts(t *testing.T) {
 
 			return nil
 		},
-		OnShutdown: func(_ context.Context) (err error) { panic("not implemented") },
+		OnShutdown: func(ctx context.Context) (err error) { panic(testutil.UnexpectedCall(ctx)) },
 	}, hostsFilename)
 	require.NoError(t, err)
 	t.Cleanup(func() {
