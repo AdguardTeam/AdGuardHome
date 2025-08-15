@@ -44,16 +44,18 @@ func (emptySysResolvers) Addrs() (addrs []netip.AddrPort) {
 	return nil
 }
 
-func loadTestData(t *testing.T, casesFileName string, cases any) {
-	t.Helper()
+// loadTestData loads the test data from the file with the given name into
+// cases.
+func loadTestData(tb testing.TB, casesFileName string, cases any) {
+	tb.Helper()
 
 	var f *os.File
 	f, err := os.Open(filepath.Join("testdata", casesFileName))
-	require.NoError(t, err)
-	testutil.CleanupAndRequireSuccess(t, f.Close)
+	require.NoError(tb, err)
+	testutil.CleanupAndRequireSuccess(tb, f.Close)
 
 	err = json.NewDecoder(f).Decode(cases)
-	require.NoError(t, err)
+	require.NoError(tb, err)
 }
 
 const (
@@ -312,14 +314,17 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 	}
 }
 
-func newLocalUpstreamListener(t *testing.T, port uint16, handler dns.Handler) (real netip.AddrPort) {
-	t.Helper()
+// newLocalUpstreamListener creates a local upstream listener and returns its
+// address.  The listener is started in a separate goroutine and stopped when
+// the tb's test is finished.
+func newLocalUpstreamListener(tb testing.TB, port uint16, h dns.Handler) (real netip.AddrPort) {
+	tb.Helper()
 
 	startCh := make(chan struct{})
 	upsSrv := &dns.Server{
 		Addr:              netip.AddrPortFrom(netutil.IPv4Localhost(), port).String(),
 		Net:               "tcp",
-		Handler:           handler,
+		Handler:           h,
 		NotifyStartedFunc: func() { close(startCh) },
 	}
 	go func() {
@@ -328,9 +333,9 @@ func newLocalUpstreamListener(t *testing.T, port uint16, handler dns.Handler) (r
 	}()
 
 	<-startCh
-	testutil.CleanupAndRequireSuccess(t, upsSrv.Shutdown)
+	testutil.CleanupAndRequireSuccess(tb, upsSrv.Shutdown)
 
-	return testutil.RequireTypeAssert[*net.TCPAddr](t, upsSrv.Listener.Addr()).AddrPort()
+	return testutil.RequireTypeAssert[*net.TCPAddr](tb, upsSrv.Listener.Addr()).AddrPort()
 }
 
 func TestServer_HandleTestUpstreamDNS(t *testing.T) {
@@ -364,7 +369,7 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 			},
 		},
 		&aghtest.FSWatcher{
-			OnStart:    func(_ context.Context) (_ error) { panic("not implemented") },
+			OnStart:    func(ctx context.Context) (_ error) { panic(testutil.UnexpectedCall(ctx)) },
 			OnEvents:   func() (e <-chan struct{}) { return nil },
 			OnAdd:      func(_ string) (err error) { return nil },
 			OnShutdown: func(_ context.Context) (err error) { return nil },
@@ -469,10 +474,8 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Contains(t, resp, sleepyUps)
-		require.IsType(t, "", resp[sleepyUps])
-		sleepyRes, _ := resp[sleepyUps].(string)
+		sleepyRes := testutil.RequireTypeAssert[string](t, resp[sleepyUps])
 
-		// TODO(e.burkov):  Improve the format of an error in dnsproxy.
 		assert.True(t, strings.HasSuffix(sleepyRes, "i/o timeout"))
 	})
 }

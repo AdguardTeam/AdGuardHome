@@ -63,37 +63,37 @@ func newChecker(host string) Checker {
 	})
 }
 
-func (d *DNSFilter) checkMatch(t *testing.T, hostname string, setts *Settings) {
-	t.Helper()
+func (d *DNSFilter) checkMatch(tb testing.TB, hostname string, setts *Settings) {
+	tb.Helper()
 
 	res, err := d.CheckHost(hostname, dns.TypeA, setts)
-	require.NoErrorf(t, err, "host %q", hostname)
+	require.NoErrorf(tb, err, "host %q", hostname)
 
-	assert.Truef(t, res.IsFiltered, "host %q", hostname)
+	assert.Truef(tb, res.IsFiltered, "host %q", hostname)
 }
 
-func (d *DNSFilter) checkMatchIP(t *testing.T, hostname, ip string, qtype uint16, setts *Settings) {
-	t.Helper()
+func (d *DNSFilter) checkMatchIP(tb testing.TB, hostname, ip string, qtype uint16, setts *Settings) {
+	tb.Helper()
 
 	res, err := d.CheckHost(hostname, qtype, setts)
-	require.NoErrorf(t, err, "host %q", hostname, err)
-	require.NotEmpty(t, res.Rules, "host %q", hostname)
+	require.NoErrorf(tb, err, "host %q", hostname, err)
+	require.NotEmpty(tb, res.Rules, "host %q", hostname)
 
-	assert.Truef(t, res.IsFiltered, "host %q", hostname)
+	assert.Truef(tb, res.IsFiltered, "host %q", hostname)
 
 	r := res.Rules[0]
-	require.NotNilf(t, r.IP, "Expected ip %s to match, actual: %v", ip, r.IP)
+	require.NotNilf(tb, r.IP, "Expected ip %s to match, actual: %v", ip, r.IP)
 
-	assert.Equalf(t, ip, r.IP.String(), "host %q", hostname)
+	assert.Equalf(tb, ip, r.IP.String(), "host %q", hostname)
 }
 
-func (d *DNSFilter) checkMatchEmpty(t *testing.T, hostname string, setts *Settings) {
-	t.Helper()
+func (d *DNSFilter) checkMatchEmpty(tb testing.TB, hostname string, setts *Settings) {
+	tb.Helper()
 
 	res, err := d.CheckHost(hostname, dns.TypeA, setts)
-	require.NoErrorf(t, err, "host %q", hostname)
+	require.NoErrorf(tb, err, "host %q", hostname)
 
-	assert.Falsef(t, res.IsFiltered, "host %q", hostname)
+	assert.Falsef(tb, res.IsFiltered, "host %q", hostname)
 }
 
 func TestDNSFilter_CheckHost_hostRules(t *testing.T) {

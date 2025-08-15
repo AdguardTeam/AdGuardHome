@@ -18,6 +18,10 @@ See also the [v0.107.65 GitHub milestone][ms-v0.107.65].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.24.6][go-1.24.6].
+
 ### Added
 
 - A separate checkbox in the Web UI to enable or disable the global DNS response cache without losing the configured cache size.
@@ -52,6 +56,8 @@ In this release, the schema version has changed from 29 to 30.
 - Disabled state of Top clients action button in web UI ([#7923]).
 
 [#7923]: https://github.com/AdguardTeam/AdGuardHome/issues/7923
+
+[go-1.24.6]: https://groups.google.com/g/golang-announce/c/x5MKroML2yM
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

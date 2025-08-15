@@ -27,16 +27,16 @@ const maxDNS64SynTTL uint32 = 600
 // newRR is a helper that creates a new dns.RR with the given name, qtype, ttl
 // and value.  It fails the test if the qtype is not supported or the type of
 // value doesn't match the qtype.
-func newRR(t *testing.T, name string, qtype uint16, ttl uint32, val any) (rr dns.RR) {
-	t.Helper()
+func newRR(tb testing.TB, name string, qtype uint16, ttl uint32, val any) (rr dns.RR) {
+	tb.Helper()
 
 	switch qtype {
 	case dns.TypeA:
-		rr = &dns.A{A: testutil.RequireTypeAssert[net.IP](t, val)}
+		rr = &dns.A{A: testutil.RequireTypeAssert[net.IP](tb, val)}
 	case dns.TypeAAAA:
-		rr = &dns.AAAA{AAAA: testutil.RequireTypeAssert[net.IP](t, val)}
+		rr = &dns.AAAA{AAAA: testutil.RequireTypeAssert[net.IP](tb, val)}
 	case dns.TypeCNAME:
-		rr = &dns.CNAME{Target: testutil.RequireTypeAssert[string](t, val)}
+		rr = &dns.CNAME{Target: testutil.RequireTypeAssert[string](tb, val)}
 	case dns.TypeSOA:
 		rr = &dns.SOA{
 			Ns:      "ns." + name,
@@ -48,9 +48,9 @@ func newRR(t *testing.T, name string, qtype uint16, ttl uint32, val any) (rr dns
 			Minttl:  1,
 		}
 	case dns.TypePTR:
-		rr = &dns.PTR{Ptr: testutil.RequireTypeAssert[string](t, val)}
+		rr = &dns.PTR{Ptr: testutil.RequireTypeAssert[string](tb, val)}
 	default:
-		t.Fatalf("unsupported qtype: %d", qtype)
+		tb.Fatalf("unsupported qtype: %d", qtype)
 	}
 
 	*rr.Header() = dns.RR_Header{
@@ -325,7 +325,7 @@ func TestServer_dns64WithDisabledRDNS(t *testing.T) {
 
 	// Shouldn't go to upstream at all.
 	panicHdlr := dns.HandlerFunc(func(w dns.ResponseWriter, m *dns.Msg) {
-		panic("not implemented")
+		panic(testutil.UnexpectedCall(w, m))
 	})
 	upsAddr := aghtest.StartLocalhostUpstream(t, panicHdlr).String()
 	localUpsAddr := aghtest.StartLocalhostUpstream(t, panicHdlr).String()

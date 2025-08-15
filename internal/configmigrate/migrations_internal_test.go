@@ -242,8 +242,8 @@ func TestUpgradeSchema8to9(t *testing.T) {
 }
 
 // assertEqualExcept removes entries from configs and compares them.
-func assertEqualExcept(t *testing.T, oldConf, newConf yobj, oldKeys, newKeys []string) {
-	t.Helper()
+func assertEqualExcept(tb testing.TB, oldConf, newConf yobj, oldKeys, newKeys []string) {
+	tb.Helper()
 
 	for _, k := range oldKeys {
 		delete(oldConf, k)
@@ -252,7 +252,7 @@ func assertEqualExcept(t *testing.T, oldConf, newConf yobj, oldKeys, newKeys []s
 		delete(newConf, k)
 	}
 
-	assert.Equal(t, oldConf, newConf)
+	assert.Equal(tb, oldConf, newConf)
 }
 
 func testDiskConf(schemaVersion int) (diskConf yobj) {
