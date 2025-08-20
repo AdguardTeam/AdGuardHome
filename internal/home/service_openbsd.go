@@ -4,6 +4,7 @@ package home
 
 import (
 	"cmp"
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
@@ -15,6 +16,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/osutil/executil"
 	"github.com/kardianos/service"
 )
 
@@ -210,8 +212,11 @@ func (s *openbsdRunComService) configureSysStartup(enable bool) (err error) {
 		cmd = "disable"
 	}
 
+	// TODO(s.chzhen):  Pass context.
+	ctx := context.TODO()
+	cmdCons := executil.SystemCommandConstructor{}
 	var code int
-	code, _, err = aghos.RunCommand("rcctl", cmd, s.cfg.Name)
+	code, _, err = aghos.RunCommand(ctx, cmdCons, "rcctl", cmd, s.cfg.Name)
 	if err != nil {
 		return err
 	} else if code != 0 {
@@ -312,11 +317,15 @@ func (s *openbsdRunComService) runCom(cmd string) (out string, err error) {
 		return "", err
 	}
 
+	// TODO(s.chzhen):  Pass context.
+	ctx := context.TODO()
+	cmdCons := executil.SystemCommandConstructor{}
+
 	// TODO(e.burkov):  It's possible that os.ErrNotExist is caused by
 	// something different than the service script's non-existence.  Keep it
 	// in mind, when replace the aghos.RunCommand.
 	var outData []byte
-	_, outData, err = aghos.RunCommand(scriptPath, cmd)
+	_, outData, err = aghos.RunCommand(ctx, cmdCons, scriptPath, cmd)
 	if errors.Is(err, os.ErrNotExist) {
 		return "", service.ErrNotInstalled
 	}

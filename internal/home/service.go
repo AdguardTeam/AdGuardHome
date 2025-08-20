@@ -18,6 +18,7 @@ import (
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/AdguardTeam/golibs/osutil"
+	"github.com/AdguardTeam/golibs/osutil/executil"
 	"github.com/kardianos/service"
 )
 
@@ -76,11 +77,11 @@ func (p *program) Stop(_ service.Service) (err error) {
 //
 // On OpenWrt, the service utility may not exist.  We use our service script
 // directly in this case.
-func svcStatus(s service.Service) (status service.Status, err error) {
+func svcStatus(ctx context.Context, s service.Service) (status service.Status, err error) {
 	status, err = s.Status()
 	if err != nil && service.Platform() == "unix-systemv" {
 		var code int
-		code, err = runInitdCommand("status")
+		code, err = runInitdCommand(ctx, "status")
 		if err != nil || code != 0 {
 			return service.StatusStopped, nil
 		}
@@ -105,7 +106,7 @@ func svcAction(ctx context.Context, l *slog.Logger, s service.Service, action st
 	err = service.Control(s, action)
 	if err != nil && service.Platform() == "unix-systemv" &&
 		(action == "start" || action == "stop" || action == "restart") {
-		_, err = runInitdCommand(action)
+		_, err = runInitdCommand(ctx, action)
 	}
 
 	return err
@@ -326,7 +327,7 @@ func handleServiceStatusCommand(
 	l *slog.Logger,
 	s service.Service,
 ) {
-	status, errSt := svcStatus(s)
+	status, errSt := svcStatus(ctx, s)
 	if errSt != nil {
 		l.ErrorContext(ctx, "failed to get service status", slogutil.KeyError, errSt)
 		os.Exit(osutil.ExitCodeFailure)
@@ -356,7 +357,7 @@ func handleServiceInstallCommand(ctx context.Context, l *slog.Logger, s service.
 		// On OpenWrt it is important to run enable after the service
 		// installation.  Otherwise, the service won't start on the system
 		// startup.
-		_, err = runInitdCommand("enable")
+		_, err = runInitdCommand(ctx, "enable")
 		if err != nil {
 			l.ErrorContext(ctx, "running init enable", slogutil.KeyError, err)
 			os.Exit(osutil.ExitCodeFailure)
@@ -386,7 +387,7 @@ func handleServiceUninstallCommand(ctx context.Context, l *slog.Logger, s servic
 	if aghos.IsOpenWrt() {
 		// On OpenWrt it is important to run disable command first
 		// as it will remove the symlink
-		_, err := runInitdCommand("disable")
+		_, err := runInitdCommand(ctx, "disable")
 		if err != nil {
 			l.ErrorContext(ctx, "running init disable", slogutil.KeyError, err)
 			os.Exit(osutil.ExitCodeFailure)
@@ -458,10 +459,11 @@ func configureService(c *service.Config) {
 
 // runInitdCommand runs init.d service command
 // returns command code or error if any
-func runInitdCommand(action string) (int, error) {
+func runInitdCommand(ctx context.Context, action string) (int, error) {
 	confPath := "/etc/init.d/" + serviceName
 	// Pass the script and action as a single string argument.
-	code, _, err := aghos.RunCommand("sh", "-c", confPath+" "+action)
+	cmdCons := executil.SystemCommandConstructor{}
+	code, _, err := aghos.RunCommand(ctx, cmdCons, "sh", "-c", confPath+" "+action)
 
 	return code, err
 }

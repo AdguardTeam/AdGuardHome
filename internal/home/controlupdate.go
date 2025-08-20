@@ -7,7 +7,6 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-	"os/exec"
 	"runtime"
 	"syscall"
 	"time"
@@ -19,6 +18,7 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/osutil"
+	"github.com/AdguardTeam/golibs/osutil/executil"
 )
 
 // temporaryError is the interface for temporary errors from the Go standard
@@ -195,6 +195,8 @@ func finishUpdate(ctx context.Context, l *slog.Logger, execPath string, runningA
 	cleanup(ctx)
 	cleanupAlways()
 
+	cons := executil.SystemCommandConstructor{}
+
 	var err error
 	if runtime.GOOS == "windows" {
 		if runningAsService {
@@ -203,8 +205,16 @@ func finishUpdate(ctx context.Context, l *slog.Logger, execPath string, runningA
 			// instance, because Windows doesn't allow it.
 			//
 			// TODO(a.garipov): Recheck the claim above.
-			cmd := exec.Command("cmd", "/c", "net stop AdGuardHome & net start AdGuardHome")
-			err = cmd.Start()
+			var cmd executil.Command
+			cmd, err = cons.New(ctx, &executil.CommandConfig{
+				Path: "cmd",
+				Args: []string{"/c", "net stop AdGuardHome & net start AdGuardHome"},
+			})
+			if err != nil {
+				panic(fmt.Errorf("constructing cmd: %w", err))
+			}
+
+			err = cmd.Start(ctx)
 			if err != nil {
 				panic(fmt.Errorf("restarting service: %w", err))
 			}
@@ -212,12 +222,21 @@ func finishUpdate(ctx context.Context, l *slog.Logger, execPath string, runningA
 			os.Exit(osutil.ExitCodeSuccess)
 		}
 
-		cmd := exec.Command(execPath, os.Args[1:]...)
 		l.InfoContext(ctx, "restarting", "exec_path", execPath, "args", os.Args[1:])
-		cmd.Stdin = os.Stdin
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		err = cmd.Start()
+
+		var cmd executil.Command
+		cmd, err = cons.New(ctx, &executil.CommandConfig{
+			Path:   execPath,
+			Args:   os.Args[1:],
+			Stdin:  os.Stdin,
+			Stdout: os.Stdout,
+			Stderr: os.Stderr,
+		})
+		if err != nil {
+			panic(fmt.Errorf("constructing cmd: %w", err))
+		}
+
+		err = cmd.Start(ctx)
 		if err != nil {
 			panic(fmt.Errorf("restarting: %w", err))
 		}

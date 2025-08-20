@@ -5,13 +5,13 @@ package aghos
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"fmt"
 	"io"
 	"io/fs"
 	"log/slog"
 	"os"
-	"os/exec"
 	"path"
 	"runtime"
 	"slices"
@@ -19,6 +19,9 @@ import (
 	"strings"
 
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/ioutil"
+	"github.com/AdguardTeam/golibs/osutil"
+	"github.com/AdguardTeam/golibs/osutil/executil"
 )
 
 // Default file, binary, and directory permissions.
@@ -50,22 +53,47 @@ func HaveAdminRights() (bool, error) {
 const MaxCmdOutputSize = 64 * 1024
 
 // RunCommand runs shell command.
-func RunCommand(command string, arguments ...string) (code int, output []byte, err error) {
-	cmd := exec.Command(command, arguments...)
-	out, err := cmd.Output()
+//
+// TODO(s.chzhen):  Consider removing this after addressing the current behavior
+// where a non-zero exit code is returned together with a nil error.
+func RunCommand(
+	ctx context.Context,
+	cmdCons executil.CommandConstructor,
+	command string,
+	arguments ...string,
+) (code int, output []byte, err error) {
+	stdoutBuf := bytes.Buffer{}
+	stderrBuf := bytes.Buffer{}
 
-	out = out[:min(len(out), MaxCmdOutputSize)]
+	err = executil.Run(
+		ctx,
+		cmdCons,
+		&executil.CommandConfig{
+			Path:   command,
+			Args:   arguments,
+			Stdout: ioutil.NewTruncatedWriter(&stdoutBuf, MaxCmdOutputSize),
+			Stderr: &stderrBuf,
+		},
+	)
 
-	if err != nil {
-		if eerr := new(exec.ExitError); errors.As(err, &eerr) {
-			return eerr.ExitCode(), eerr.Stderr, nil
-		}
-
-		return 1, nil, fmt.Errorf("command %q failed: %w: %s", command, err, out)
+	if err == nil {
+		return osutil.ExitCodeSuccess, stdoutBuf.Bytes(), nil
 	}
 
-	return cmd.ProcessState.ExitCode(), out, nil
+	code, ok := executil.ExitCodeFromError(err)
+	if ok {
+		// Mirror the old behavior and return a nil-error on non-zero code
+		// status.
+		return code, stderrBuf.Bytes(), nil
+	}
+
+	return osutil.ExitCodeFailure,
+		nil,
+		fmt.Errorf("command %q failed: %w: %s", command, err, stdoutBuf.Bytes())
 }
+
+// psArgs holds the default ps arguments to avoid per-call slice allocations.
+var psArgs = []string{"-A", "-o", "pid=", "-o", "comm="}
 
 // PIDByCommand searches for process named command and returns its PID ignoring
 // the PIDs from except.  If no processes found, the error returned.  l must not
@@ -76,29 +104,32 @@ func PIDByCommand(
 	command string,
 	except ...int,
 ) (pid int, err error) {
+	const psCmd = "ps"
+
+	l.DebugContext(ctx, "executing", "cmd", psCmd, "args", psArgs)
+
 	// Don't use -C flag here since it's a feature of linux's ps
 	// implementation.  Use POSIX-compatible flags instead.
 	//
 	// See https://github.com/AdguardTeam/AdGuardHome/issues/3457.
-	cmd := exec.Command("ps", "-A", "-o", "pid=", "-o", "comm=")
-
-	var stdout io.ReadCloser
-	if stdout, err = cmd.StdoutPipe(); err != nil {
-		return 0, fmt.Errorf("getting the command's stdout pipe: %w", err)
-	}
-
-	if err = cmd.Start(); err != nil {
-		return 0, fmt.Errorf("start command executing: %w", err)
+	stdoutBuf := bytes.Buffer{}
+	err = executil.Run(
+		ctx,
+		executil.SystemCommandConstructor{},
+		&executil.CommandConfig{
+			Path:   psCmd,
+			Args:   psArgs,
+			Stdout: &stdoutBuf,
+		},
+	)
+	if err != nil {
+		return 0, fmt.Errorf("executing the command: %w", err)
 	}
 
 	var instNum int
-	pid, instNum, err = parsePSOutput(stdout, command, except)
+	pid, instNum, err = parsePSOutput(&stdoutBuf, command, except)
 	if err != nil {
 		return 0, err
-	}
-
-	if err = cmd.Wait(); err != nil {
-		return 0, fmt.Errorf("executing the command: %w", err)
 	}
 
 	switch instNum {
@@ -109,10 +140,6 @@ func PIDByCommand(
 		// Go on.
 	default:
 		l.WarnContext(ctx, "instances found", "num", instNum, "command", command)
-	}
-
-	if code := cmd.ProcessState.ExitCode(); code != 0 {
-		return 0, fmt.Errorf("ps finished with code %d", code)
 	}
 
 	return pid, nil

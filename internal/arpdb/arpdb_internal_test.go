@@ -1,15 +1,14 @@
 package arpdb
 
 import (
-	"fmt"
 	"io/fs"
 	"net"
 	"net/netip"
 	"os"
-	"strings"
 	"sync"
 	"testing"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/testutil"
@@ -22,43 +21,6 @@ var testdata fs.FS = os.DirFS("./testdata")
 
 // RunCmdFunc is the signature of aghos.RunCommand function.
 type RunCmdFunc func(cmd string, args ...string) (code int, out []byte, err error)
-
-// substShell replaces the the aghos.RunCommand function used throughout the
-// package with rc for tests ran under tb.
-func substShell(tb testing.TB, rc RunCmdFunc) {
-	tb.Helper()
-
-	prev := aghosRunCommand
-	tb.Cleanup(func() { aghosRunCommand = prev })
-	aghosRunCommand = rc
-}
-
-// mapShell is a substitution of aghos.RunCommand that maps the command to it's
-// execution result.  It's only needed to simplify testing.
-//
-// TODO(e.burkov):  Perhaps put all the shell interactions behind an interface.
-type mapShell map[string]struct {
-	err  error
-	out  string
-	code int
-}
-
-// theOnlyCmd returns mapShell that only handles a single command and arguments
-// combination from cmd.
-func theOnlyCmd(cmd string, code int, out string, err error) (s mapShell) {
-	return mapShell{cmd: {code: code, out: out, err: err}}
-}
-
-// RunCmd is a RunCmdFunc handled by s.
-func (s mapShell) RunCmd(cmd string, args ...string) (code int, out []byte, err error) {
-	key := strings.Join(append([]string{cmd}, args...), " ")
-	ret, ok := s[key]
-	if !ok {
-		return 0, nil, fmt.Errorf("unexpected shell command %q", key)
-	}
-
-	return ret.code, []byte(ret.out), ret.err
-}
 
 func Test_New(t *testing.T) {
 	var a Interface
@@ -212,8 +174,7 @@ func TestCmdARPDB_arpa(t *testing.T) {
 	}
 
 	t.Run("arp_a", func(t *testing.T) {
-		sh := theOnlyCmd("cmd", 0, arpAOutput, nil)
-		substShell(t, sh.RunCmd)
+		a.cmdCons = agh.NewCommandConstructor("cmd", 0, arpAOutput, nil)
 
 		err := a.Refresh()
 		require.NoError(t, err)
@@ -222,24 +183,25 @@ func TestCmdARPDB_arpa(t *testing.T) {
 	})
 
 	t.Run("runcmd_error", func(t *testing.T) {
-		sh := theOnlyCmd("cmd", 0, "", errors.Error("can't run"))
-		substShell(t, sh.RunCmd)
+		a.cmdCons = agh.NewCommandConstructor("cmd", 0, "", errors.Error("can't run"))
 
 		err := a.Refresh()
-		testutil.AssertErrorMsg(t, "cmd arpdb: running command: can't run", err)
+		testutil.AssertErrorMsg(t, "cmd arpdb: running command: running: can't run", err)
 	})
 
 	t.Run("bad_code", func(t *testing.T) {
-		sh := theOnlyCmd("cmd", 1, "", nil)
-		substShell(t, sh.RunCmd)
+		a.cmdCons = agh.NewCommandConstructor("cmd", 1, "", nil)
 
 		err := a.Refresh()
-		testutil.AssertErrorMsg(t, "cmd arpdb: running command: unexpected exit code 1", err)
+		testutil.AssertErrorMsg(
+			t,
+			"cmd arpdb: running command: unexpected exit code 1",
+			err,
+		)
 	})
 
 	t.Run("empty", func(t *testing.T) {
-		sh := theOnlyCmd("cmd", 0, "", nil)
-		substShell(t, sh.RunCmd)
+		a.cmdCons = agh.NewCommandConstructor("cmd", 0, "", nil)
 
 		err := a.Refresh()
 		require.NoError(t, err)

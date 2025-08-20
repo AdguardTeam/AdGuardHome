@@ -9,6 +9,7 @@ import (
 	"testing"
 	"testing/fstest"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -62,18 +63,13 @@ func TestFSysARPDB(t *testing.T) {
 }
 
 func TestCmdARPDB_linux(t *testing.T) {
-	sh := mapShell{
-		"arp -a":   {err: nil, out: arpAOutputWrt, code: 0},
-		"ip neigh": {err: nil, out: ipNeighOutput, code: 0},
-	}
-	substShell(t, sh.RunCmd)
-
 	t.Run("wrt", func(t *testing.T) {
 		a := &cmdARPDB{
-			logger: slogutil.NewDiscardLogger(),
-			parse:  parseArpAWrt,
-			cmd:    "arp",
-			args:   []string{"-a"},
+			logger:  slogutil.NewDiscardLogger(),
+			cmdCons: agh.NewCommandConstructor("arp -a", 0, arpAOutputWrt, nil),
+			parse:   parseArpAWrt,
+			cmd:     "arp",
+			args:    []string{"-a"},
 			ns: &neighs{
 				mu: &sync.RWMutex{},
 				ns: make([]Neighbor, 0),
@@ -88,10 +84,11 @@ func TestCmdARPDB_linux(t *testing.T) {
 
 	t.Run("ip_neigh", func(t *testing.T) {
 		a := &cmdARPDB{
-			logger: slogutil.NewDiscardLogger(),
-			parse:  parseIPNeigh,
-			cmd:    "ip",
-			args:   []string{"neigh"},
+			logger:  slogutil.NewDiscardLogger(),
+			cmdCons: agh.NewCommandConstructor("ip neigh", 0, ipNeighOutput, nil),
+			parse:   parseIPNeigh,
+			cmd:     "ip",
+			args:    []string{"neigh"},
 			ns: &neighs{
 				mu: &sync.RWMutex{},
 				ns: make([]Neighbor, 0),

@@ -4,6 +4,7 @@ package arpdb
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"fmt"
 	"log/slog"
 	"net"
@@ -11,18 +12,15 @@ import (
 	"slices"
 	"sync"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/osutil"
+	"github.com/AdguardTeam/golibs/osutil/executil"
 )
 
 // Variables and functions to substitute in tests.
 var (
-	// aghosRunCommand is the function to run shell commands.
-	aghosRunCommand = aghos.RunCommand
-
 	// rootDirFS is the filesystem pointing to the root directory.
 	rootDirFS = osutil.RootDirFS()
 )
@@ -40,7 +38,7 @@ type Interface interface {
 
 // New returns the [Interface] properly initialized for the OS.
 func New(logger *slog.Logger) (arp Interface) {
-	return newARPDB(logger)
+	return newARPDB(logger, executil.SystemCommandConstructor{})
 }
 
 // Empty is the [Interface] implementation that does nothing.
@@ -164,11 +162,12 @@ type parseNeighsFunc func(logger *slog.Logger, sc *bufio.Scanner, lenHint int) (
 // cmdARPDB is the implementation of the [Interface] that uses command line to
 // retrieve data.
 type cmdARPDB struct {
-	logger *slog.Logger
-	parse  parseNeighsFunc
-	ns     *neighs
-	cmd    string
-	args   []string
+	logger  *slog.Logger
+	cmdCons executil.CommandConstructor
+	parse   parseNeighsFunc
+	ns      *neighs
+	cmd     string
+	args    []string
 }
 
 // type check
@@ -178,14 +177,26 @@ var _ Interface = (*cmdARPDB)(nil)
 func (arp *cmdARPDB) Refresh() (err error) {
 	defer func() { err = errors.Annotate(err, "cmd arpdb: %w") }()
 
-	code, out, err := aghosRunCommand(arp.cmd, arp.args...)
+	var stdout bytes.Buffer
+	err = executil.Run(
+		// TODO(s.chzhen):  Pass context.
+		context.TODO(),
+		arp.cmdCons,
+		&executil.CommandConfig{
+			Path:   arp.cmd,
+			Args:   arp.args,
+			Stdout: &stdout,
+		},
+	)
 	if err != nil {
+		if code, ok := executil.ExitCodeFromError(err); ok {
+			return fmt.Errorf("running command: unexpected exit code %d", code)
+		}
+
 		return fmt.Errorf("running command: %w", err)
-	} else if code != 0 {
-		return fmt.Errorf("running command: unexpected exit code %d", code)
 	}
 
-	sc := bufio.NewScanner(bytes.NewReader(out))
+	sc := bufio.NewScanner(&stdout)
 	ns := arp.parse(arp.logger, sc, arp.ns.len())
 	if err = sc.Err(); err != nil {
 		// TODO(e.burkov):  This error seems unreachable.  Investigate.

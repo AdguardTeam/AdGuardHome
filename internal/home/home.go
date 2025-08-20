@@ -43,6 +43,7 @@ import (
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/AdguardTeam/golibs/osutil"
+	"github.com/AdguardTeam/golibs/osutil/executil"
 )
 
 // Global context
@@ -820,18 +821,19 @@ func newUpdater(
 	l.DebugContext(ctx, "creating updater", "config_path", confPath)
 
 	return updater.NewUpdater(&updater.Config{
-		Client:          conf.Filtering.HTTPClient,
-		Logger:          l,
-		Version:         version.Version(),
-		Channel:         version.Channel(),
-		GOARCH:          runtime.GOARCH,
-		GOOS:            runtime.GOOS,
-		GOARM:           version.GOARM(),
-		GOMIPS:          version.GOMIPS(),
-		WorkDir:         workDir,
-		ConfName:        confPath,
-		ExecPath:        execPath,
-		VersionCheckURL: versionURL,
+		Client:             conf.Filtering.HTTPClient,
+		Logger:             l,
+		CommandConstructor: executil.SystemCommandConstructor{},
+		Version:            version.Version(),
+		Channel:            version.Channel(),
+		GOARCH:             runtime.GOARCH,
+		GOOS:               runtime.GOOS,
+		GOARM:              version.GOARM(),
+		GOMIPS:             version.GOMIPS(),
+		WorkDir:            workDir,
+		ConfName:           confPath,
+		ExecPath:           execPath,
+		VersionCheckURL:    versionURL,
 	}), isCustomURL
 }
 
