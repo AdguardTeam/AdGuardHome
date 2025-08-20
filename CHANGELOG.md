@@ -21,7 +21,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
 
-## [v0.107.65] - 2025-08-18
+## [v0.107.65] - 2025-08-20
 
 See also the [v0.107.65 GitHub milestone][ms-v0.107.65].
 
