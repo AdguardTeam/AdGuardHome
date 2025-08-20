@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Trans, useTranslation } from 'react-i18next';
 import { Controller, useForm } from 'react-hook-form';
 import i18next from 'i18next';
 import cn from 'clsx';
@@ -96,9 +95,10 @@ const defaultValues = {
 };
 
 export const Form = ({ initialValues, encryption, onSubmit, debouncedConfigValidation }: Props) => {
-    const { t } = useTranslation();
     const dispatch = useDispatch();
-    const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
+    const [openConfirmReset, setOpenConfirmReset] = useState(false);
+    const [openPlainDnsDisable, setOpenPlainDnsDisable] = useState(false);
+    const [stagedFormValues, setStagedFormValues] = useState<EncryptionFormValues | null>(null);
 
     const {
         not_after,
@@ -106,6 +106,7 @@ export const Form = ({ initialValues, encryption, onSubmit, debouncedConfigValid
         valid_key,
         valid_cert,
         valid_pair,
+        key_type,
         dns_names,
         issuer,
         subject,
@@ -157,9 +158,24 @@ export const Form = ({ initialValues, encryption, onSubmit, debouncedConfigValid
         return !isValid || processing || !valid_key || !valid_cert || !valid_pair;
     };
 
-    const handleResetConfirmOpen = () => setOpenConfirmDialog(true);
+    const handleResetOpen = () => setOpenConfirmReset(true);
 
-    const handleResetConfirmClose = () => setOpenConfirmDialog(false);
+    const handleResetClose = () => setOpenConfirmReset(false);
+
+    const handlePlainDnsDisableOpen = () => setOpenPlainDnsDisable(true);
+
+    const handlePlainDnsDisableClose = () => {
+        setOpenPlainDnsDisable(false);
+        setStagedFormValues(null);
+    };
+
+    const handlePlainDnsDisableConfirm = () => {
+        if (stagedFormValues) {
+            onSubmit(stagedFormValues);
+            setStagedFormValues(null);
+        }
+        setOpenPlainDnsDisable(false);
+    };
 
     const handleReset = () => {
         reset();
@@ -187,13 +203,42 @@ export const Form = ({ initialValues, encryption, onSubmit, debouncedConfigValid
             Object.entries(validationErrors).forEach(([field, message]) => {
                 setError(field as keyof EncryptionFormValues, { type: 'manual', message });
             });
-        } else {
-            onSubmit(data);
+            return;
         }
+
+        if (data.serve_plain_dns === false) {
+            setStagedFormValues(data);
+            handlePlainDnsDisableOpen();
+            return;
+        }
+
+        onSubmit(data);
+    };
+
+    const renderCertificateStatus = () => {
+        if (warning_validation) {
+            const isWarning = valid_key && valid_cert && valid_pair;
+
+            return <ValidationStatus type={isWarning ? 'warning' : 'error'} message={warning_validation} />;
+        }
+
+        if (!certificateChain && !certificatePath) {
+            return null;
+        }
+
+        return (
+            <CertificateStatus
+                validChain={valid_chain}
+                validCert={valid_cert}
+                subject={subject}
+                issuer={issuer}
+                notAfter={not_after}
+                dnsNames={dns_names}
+            />
+        );
     };
 
     const isDisabled = isSavingDisabled();
-    const isWarning = valid_key && valid_cert && valid_pair;
 
     return (
         <form onSubmit={handleSubmit(onFormSubmit)}>
@@ -206,8 +251,139 @@ export const Form = ({ initialValues, encryption, onSubmit, debouncedConfigValid
                         title={intl.getMessage('encryption_encrypted_dns')}
                         description={intl.getMessage('encryption_encrypted_dns_desc')}
                         checked={field.value}
-                        onChange={field.onChange}
-                    />
+                        onChange={field.onChange}>
+                        <div className={s.group}>
+                            <div>
+                                <Controller
+                                    name="server_name"
+                                    control={control}
+                                    rules={{ validate: validateServerName }}
+                                    render={({ field, fieldState }) => (
+                                        <Input
+                                            {...field}
+                                            type="text"
+                                            label={
+                                                <>
+                                                    {intl.getMessage('encryption_server')}
+
+                                                    <FaqTooltip
+                                                        text={
+                                                            <>
+                                                                <div className={s.tooltipText}>
+                                                                    {intl.getMessage('encryption_server_tooltip_1')}
+                                                                </div>
+                                                                <div className={s.tooltipText}>
+                                                                    {intl.getMessage('encryption_server_tooltip_2')}
+                                                                </div>
+                                                            </>
+                                                        }
+                                                        menuSize="large"
+                                                    />
+                                                </>
+                                            }
+                                            placeholder={intl.getMessage('encryption_server_enter')}
+                                            errorMessage={fieldState.error?.message}
+                                            disabled={!isEnabled}
+                                            onBlur={handleBlur}
+                                        />
+                                    )}
+                                />
+                            </div>
+                            <div>
+                                <Controller
+                                    name="port_https"
+                                    control={control}
+                                    rules={{ validate: { validatePort, validateIsSafePort } }}
+                                    render={({ field, fieldState }) => (
+                                        <Input
+                                            {...field}
+                                            type="number"
+                                            label={
+                                                <>
+                                                    {intl.getMessage('encryption_https')}
+
+                                                    <FaqTooltip
+                                                        text={intl.getMessage('encryption_https_tooltip')}
+                                                        menuSize="large"
+                                                    />
+                                                </>
+                                            }
+                                            placeholder={intl.getMessage('encryption_https')}
+                                            errorMessage={fieldState.error?.message}
+                                            disabled={!isEnabled}
+                                            onChange={(e) => {
+                                                const { value } = e.target;
+                                                field.onChange(toNumber(value));
+                                            }}
+                                            onBlur={handleBlur}
+                                        />
+                                    )}
+                                />
+                            </div>
+                            <div>
+                                <Controller
+                                    name="port_dns_over_tls"
+                                    control={control}
+                                    rules={{ validate: validatePortTLS }}
+                                    render={({ field, fieldState }) => (
+                                        <Input
+                                            {...field}
+                                            type="number"
+                                            label={
+                                                <>
+                                                    {intl.getMessage('encryption_dot')}
+
+                                                    <FaqTooltip
+                                                        text={intl.getMessage('encryption_dot_tooltip')}
+                                                        menuSize="large"
+                                                    />
+                                                </>
+                                            }
+                                            placeholder={intl.getMessage('encryption_dot')}
+                                            errorMessage={fieldState.error?.message}
+                                            disabled={!isEnabled}
+                                            onChange={(e) => {
+                                                const { value } = e.target;
+                                                field.onChange(toNumber(value));
+                                            }}
+                                            onBlur={handleBlur}
+                                        />
+                                    )}
+                                />
+                            </div>
+                            <div>
+                                <Controller
+                                    name="port_dns_over_quic"
+                                    control={control}
+                                    rules={{ validate: validatePortQuic }}
+                                    render={({ field, fieldState }) => (
+                                        <Input
+                                            {...field}
+                                            type="number"
+                                            label={
+                                                <>
+                                                    {intl.getMessage('encryption_doq')}
+
+                                                    <FaqTooltip
+                                                        text={intl.getMessage('encryption_doq_tooltip')}
+                                                        menuSize="large"
+                                                    />
+                                                </>
+                                            }
+                                            placeholder={intl.getMessage('encryption_doq')}
+                                            errorMessage={fieldState.error?.message}
+                                            disabled={!isEnabled}
+                                            onChange={(e) => {
+                                                const { value } = e.target;
+                                                field.onChange(toNumber(value));
+                                            }}
+                                            onBlur={handleBlur}
+                                        />
+                                    )}
+                                />
+                            </div>
+                        </div>
+                    </SwitchGroup>
                 )}
             />
 
@@ -224,138 +400,10 @@ export const Form = ({ initialValues, encryption, onSubmit, debouncedConfigValid
                         description={intl.getMessage('encryption_plain_dns_desc')}
                         checked={field.value}
                         onChange={field.onChange}
+                        disabled={!isEnabled}
                     />
                 )}
             />
-
-            <div className={theme.form.group}>
-                <div className={theme.form.input}>
-                    <Controller
-                        name="server_name"
-                        control={control}
-                        rules={{ validate: validateServerName }}
-                        render={({ field, fieldState }) => (
-                            <Input
-                                {...field}
-                                type="text"
-                                label={
-                                    <>
-                                        {intl.getMessage('encryption_server')}
-
-                                        <FaqTooltip
-                                            text={
-                                                <>
-                                                    <div className={s.tooltipText}>
-                                                        {intl.getMessage('encryption_server_tooltip_1')}
-                                                    </div>
-                                                    <div className={s.tooltipText}>
-                                                        {intl.getMessage('encryption_server_tooltip_2')}
-                                                    </div>
-                                                </>
-                                            }
-                                            menuSize="large"
-                                        />
-                                    </>
-                                }
-                                placeholder={t('encryption_server_enter')}
-                                errorMessage={fieldState.error?.message}
-                                disabled={!isEnabled}
-                                onBlur={handleBlur}
-                            />
-                        )}
-                    />
-                </div>
-
-                <div className={theme.form.input}>
-                    <Controller
-                        name="port_https"
-                        control={control}
-                        rules={{ validate: { validatePort, validateIsSafePort } }}
-                        render={({ field, fieldState }) => (
-                            <Input
-                                {...field}
-                                type="number"
-                                label={
-                                    <>
-                                        {intl.getMessage('encryption_https')}
-
-                                        <FaqTooltip
-                                            text={intl.getMessage('encryption_https_tooltip')}
-                                            menuSize="large"
-                                        />
-                                    </>
-                                }
-                                placeholder={t('encryption_https')}
-                                errorMessage={fieldState.error?.message}
-                                disabled={!isEnabled}
-                                onChange={(e) => {
-                                    const { value } = e.target;
-                                    field.onChange(toNumber(value));
-                                }}
-                                onBlur={handleBlur}
-                            />
-                        )}
-                    />
-                </div>
-
-                <div className={theme.form.input}>
-                    <Controller
-                        name="port_dns_over_tls"
-                        control={control}
-                        rules={{ validate: validatePortTLS }}
-                        render={({ field, fieldState }) => (
-                            <Input
-                                {...field}
-                                type="number"
-                                label={
-                                    <>
-                                        {intl.getMessage('encryption_dot')}
-
-                                        <FaqTooltip text={intl.getMessage('encryption_dot_tooltip')} menuSize="large" />
-                                    </>
-                                }
-                                placeholder={t('encryption_dot')}
-                                errorMessage={fieldState.error?.message}
-                                disabled={!isEnabled}
-                                onChange={(e) => {
-                                    const { value } = e.target;
-                                    field.onChange(toNumber(value));
-                                }}
-                                onBlur={handleBlur}
-                            />
-                        )}
-                    />
-                </div>
-
-                <div className={theme.form.input}>
-                    <Controller
-                        name="port_dns_over_quic"
-                        control={control}
-                        rules={{ validate: validatePortQuic }}
-                        render={({ field, fieldState }) => (
-                            <Input
-                                {...field}
-                                type="number"
-                                label={
-                                    <>
-                                        {intl.getMessage('encryption_doq')}
-
-                                        <FaqTooltip text={intl.getMessage('encryption_doq_tooltip')} menuSize="large" />
-                                    </>
-                                }
-                                placeholder={t('encryption_doq')}
-                                errorMessage={fieldState.error?.message}
-                                disabled={!isEnabled}
-                                onChange={(e) => {
-                                    const { value } = e.target;
-                                    field.onChange(toNumber(value));
-                                }}
-                                onBlur={handleBlur}
-                            />
-                        )}
-                    />
-                </div>
-            </div>
 
             <Controller
                 name="force_https"
@@ -408,10 +456,11 @@ export const Form = ({ initialValues, encryption, onSubmit, debouncedConfigValid
                             render={({ field, fieldState }) => (
                                 <Textarea
                                     {...field}
-                                    placeholder={t('encryption_certificates_input')}
+                                    placeholder={intl.getMessage('encryption_certificates_input')}
                                     disabled={!isEnabled}
                                     errorMessage={fieldState.error?.message}
                                     onBlur={handleBlur}
+                                    size="large"
                                 />
                             )}
                         />
@@ -423,7 +472,7 @@ export const Form = ({ initialValues, encryption, onSubmit, debouncedConfigValid
                                 <Input
                                     {...field}
                                     type="text"
-                                    placeholder={t('encryption_certificate_path')}
+                                    placeholder={intl.getMessage('encryption_certificate_path')}
                                     errorMessage={fieldState.error?.message}
                                     disabled={!isEnabled}
                                     onBlur={handleBlur}
@@ -434,16 +483,7 @@ export const Form = ({ initialValues, encryption, onSubmit, debouncedConfigValid
                     )}
                 </div>
 
-                {(certificateChain || certificatePath) && (
-                    <CertificateStatus
-                        validChain={valid_chain}
-                        validCert={valid_cert}
-                        subject={subject}
-                        issuer={issuer}
-                        notAfter={not_after}
-                        dnsNames={dns_names}
-                    />
-                )}
+                {renderCertificateStatus()}
             </div>
 
             <h2 className={cn(theme.layout.subtitle, theme.title.h5, theme.title.h4_tablet)}>
@@ -481,7 +521,7 @@ export const Form = ({ initialValues, encryption, onSubmit, debouncedConfigValid
                             }}
                             onBlur={handleBlur}
                             className={s.useSavedKey}>
-                            {t('use_saved_key')}
+                            {intl.getMessage('use_saved_key')}
                         </Checkbox>
                     )}
                 />
@@ -494,10 +534,11 @@ export const Form = ({ initialValues, encryption, onSubmit, debouncedConfigValid
                             render={({ field, fieldState }) => (
                                 <Textarea
                                     {...field}
-                                    placeholder={t('encryption_key_input')}
+                                    placeholder={intl.getMessage('encryption_key_input')}
                                     disabled={!isEnabled || privateKeySaved}
                                     errorMessage={fieldState.error?.message}
                                     onBlur={handleBlur}
+                                    size="large"
                                 />
                             )}
                         />
@@ -509,7 +550,7 @@ export const Form = ({ initialValues, encryption, onSubmit, debouncedConfigValid
                                 <Input
                                     {...field}
                                     type="text"
-                                    placeholder={t('encryption_private_key_path')}
+                                    placeholder={intl.getMessage('encryption_private_key_path')}
                                     errorMessage={fieldState.error?.message}
                                     disabled={!isEnabled}
                                     onBlur={handleBlur}
@@ -520,14 +561,10 @@ export const Form = ({ initialValues, encryption, onSubmit, debouncedConfigValid
                     )}
                 </div>
 
-                {(privateKey || privateKeyPath) && <KeyStatus validKey={valid_key} />}
+                {(privateKey || privateKeyPath) && <KeyStatus validKey={valid_key} keyType={key_type} />}
             </div>
 
             <div className={theme.form.buttonGroup}>
-                {warning_validation && (
-                    <ValidationStatus type={isWarning ? 'warning' : 'error'} message={warning_validation} />
-                )}
-
                 <Button
                     type="submit"
                     variant="primary"
@@ -539,23 +576,35 @@ export const Form = ({ initialValues, encryption, onSubmit, debouncedConfigValid
 
                 <Button
                     type="button"
-                    variant="secondary"
+                    variant="secondary-danger"
                     size="small"
                     disabled={isSubmitting || processingConfig}
-                    onClick={handleResetConfirmOpen}
+                    onClick={handleResetOpen}
                     className={theme.form.button}>
-                    <Trans>reset_settings</Trans>
+                    {intl.getMessage('reset')}
                 </Button>
             </div>
 
-            {openConfirmDialog && (
+            {openConfirmReset && (
                 <ConfirmDialog
-                    onClose={handleResetConfirmClose}
+                    onClose={handleResetClose}
                     onConfirm={handleReset}
-                    buttonText={intl.getMessage('confirm')}
+                    buttonText={intl.getMessage('reset')}
                     cancelText={intl.getMessage('cancel')}
                     title={intl.getMessage('encryption_confirm_clear')}
                     text={intl.getMessage('encryption_confirm_clear_desc')}
+                    buttonVariant="danger"
+                />
+            )}
+
+            {openPlainDnsDisable && (
+                <ConfirmDialog
+                    onClose={handlePlainDnsDisableClose}
+                    onConfirm={handlePlainDnsDisableConfirm}
+                    buttonText={intl.getMessage('disable')}
+                    cancelText={intl.getMessage('cancel')}
+                    title={intl.getMessage('encryption_disable_plain_dns')}
+                    text={intl.getMessage('encryption_disable_plain_dns_desc')}
                     buttonVariant="danger"
                 />
             )}

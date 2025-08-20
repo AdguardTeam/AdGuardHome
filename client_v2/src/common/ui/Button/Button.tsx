@@ -5,7 +5,7 @@ import s from './Button.module.pcss';
 
 export type ButtonProps = ComponentProps<'button'> & {
     size?: 'small' | 'medium' | 'big';
-    variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
+    variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'secondary-danger';
     children?: ReactNode;
     leftAddon?: ReactNode;
     rightAddon?: ReactNode;
