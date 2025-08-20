@@ -9,14 +9,21 @@ The format is based on [*Keep a Changelog*](https://keepachangelog.com/en/1.0.0/
 <!--
 ## [v0.108.0] – TBA
 
-## [v0.107.65] - 2025-07-30 (APPROX.)
+## [v0.107.66] - 2025-09-03 (APPROX.)
 
-See also the [v0.107.65 GitHub milestone][ms-v0.107.65].
+See also the [v0.107.66 GitHub milestone][ms-v0.107.66].
 
-[ms-v0.107.65]: https://github.com/AdguardTeam/AdGuardHome/milestone/100?closed=1
+[ms-v0.107.66]: https://github.com/AdguardTeam/AdGuardHome/milestone/101?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
+<!--
+NOTE: Add new changes ABOVE THIS COMMENT.
+-->
+
+## [v0.107.65] - 2025-08-20
+
+See also the [v0.107.65 GitHub milestone][ms-v0.107.65].
 
 ### Security
 
@@ -53,15 +60,12 @@ In this release, the schema version has changed from 29 to 30.
 
 ### Fixed
 
-- Disabled state of Top clients action button in web UI ([#7923]).
+- Disabled state of *Top clients* action button in web UI ([#7923]).
 
 [#7923]: https://github.com/AdguardTeam/AdGuardHome/issues/7923
 
 [go-1.24.6]: https://groups.google.com/g/golang-announce/c/x5MKroML2yM
-
-<!--
-NOTE: Add new changes ABOVE THIS COMMENT.
--->
+[ms-v0.107.65]: https://github.com/AdguardTeam/AdGuardHome/milestone/100?closed=1
 
 ## [v0.107.64] - 2025-07-28
 
@@ -3219,11 +3223,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 [ms-v0.104.2]: https://github.com/AdguardTeam/AdGuardHome/milestone/28?closed=1
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.65...HEAD
-[v0.107.65]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.64...v0.107.65
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.66...HEAD
+[v0.107.66]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.65...v0.107.66
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.64...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.65...HEAD
+[v0.107.65]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.64...v0.107.65
 [v0.107.64]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.63...v0.107.64
 [v0.107.63]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.62...v0.107.63
 [v0.107.62]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.61...v0.107.62
