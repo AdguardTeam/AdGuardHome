@@ -114,7 +114,7 @@ func PIDByCommand(
 	l.DebugContext(ctx, "executing", "cmd", psCmd, "args", psArgs)
 
 	stdoutBuf := bytes.Buffer{}
-	err = executil.Run(
+	runErr := executil.Run(
 		ctx,
 		executil.SystemCommandConstructor{},
 		&executil.CommandConfig{
@@ -123,9 +123,6 @@ func PIDByCommand(
 			Stdout: &stdoutBuf,
 		},
 	)
-	if err != nil {
-		return 0, fmt.Errorf("executing the command: %w", err)
-	}
 
 	var instNum int
 	pid, instNum, err = parsePSOutput(&stdoutBuf, command, except)
@@ -141,6 +138,14 @@ func PIDByCommand(
 		// Go on.
 	default:
 		l.WarnContext(ctx, "instances found", "num", instNum, "command", command)
+	}
+
+	if runErr != nil {
+		if code, ok := executil.ExitCodeFromError(runErr); ok {
+			return 0, fmt.Errorf("ps finished with code %d", code)
+		}
+
+		return 0, fmt.Errorf("executing the command: %w", runErr)
 	}
 
 	return pid, nil

@@ -32,7 +32,7 @@ type Interface interface {
 	// Refresher updates the stored data.  It must be safe for concurrent use.
 	service.Refresher
 
-	// Neighbors returnes the last set of data reported by ARP.  Both the method
+	// Neighbors returns the last set of data reported by ARP.  Both the method
 	// and it's result must be safe for concurrent use.
 	Neighbors() (ns []Neighbor)
 }

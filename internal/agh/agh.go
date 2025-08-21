@@ -67,6 +67,10 @@ type ExternalCommand struct {
 
 // keyCommand builds a key for a command lookup.
 func keyCommand(path string, args []string) (k string) {
+	if len(args) == 0 {
+		return path
+	}
+
 	return path + " " + strings.Join(args, " ")
 }
 
