@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import i18next from 'i18next';
 import cn from 'clsx';
 
 import { toNumber } from 'panel/helpers/form';
@@ -33,22 +32,22 @@ import s from './styles.module.pcss';
 
 const certificateSourceOptions = [
     {
-        text: i18next.t('encryption_certificates_source_path'),
+        text: intl.getMessage('encryption_certificates_source_path'),
         value: ENCRYPTION_SOURCE.PATH,
     },
     {
-        text: i18next.t('encryption_certificates_source_content'),
+        text: intl.getMessage('encryption_certificates_source_content'),
         value: ENCRYPTION_SOURCE.CONTENT,
     },
 ];
 
 const keySourceOptions = [
     {
-        text: i18next.t('encryption_key_source_path'),
+        text: intl.getMessage('encryption_key_source_path'),
         value: ENCRYPTION_SOURCE.PATH,
     },
     {
-        text: i18next.t('encryption_key_source_content'),
+        text: intl.getMessage('encryption_key_source_content'),
         value: ENCRYPTION_SOURCE.CONTENT,
     },
 ];
@@ -188,8 +187,8 @@ export const Form = ({ initialValues, encryption, onSubmit, debouncedConfigValid
 
         if (values.port_dns_over_tls && values.port_https) {
             if (values.port_dns_over_tls === values.port_https) {
-                errors.port_dns_over_tls = i18next.t('form_error_equal');
-                errors.port_https = i18next.t('form_error_equal');
+                errors.port_dns_over_tls = intl.getMessage('form_error_equal');
+                errors.port_https = intl.getMessage('form_error_equal');
             }
         }
 
@@ -284,7 +283,10 @@ export const Form = ({ initialValues, encryption, onSubmit, debouncedConfigValid
                                             placeholder={intl.getMessage('encryption_server_enter')}
                                             errorMessage={fieldState.error?.message}
                                             disabled={!isEnabled}
-                                            onBlur={handleBlur}
+                                            onBlur={() => {
+                                                field.onBlur();
+                                                handleBlur();
+                                            }}
                                         />
                                     )}
                                 />
@@ -315,7 +317,10 @@ export const Form = ({ initialValues, encryption, onSubmit, debouncedConfigValid
                                                 const { value } = e.target;
                                                 field.onChange(toNumber(value));
                                             }}
-                                            onBlur={handleBlur}
+                                            onBlur={() => {
+                                                field.onBlur();
+                                                handleBlur();
+                                            }}
                                         />
                                     )}
                                 />
@@ -346,7 +351,10 @@ export const Form = ({ initialValues, encryption, onSubmit, debouncedConfigValid
                                                 const { value } = e.target;
                                                 field.onChange(toNumber(value));
                                             }}
-                                            onBlur={handleBlur}
+                                            onBlur={() => {
+                                                field.onBlur();
+                                                handleBlur();
+                                            }}
                                         />
                                     )}
                                 />
@@ -377,7 +385,10 @@ export const Form = ({ initialValues, encryption, onSubmit, debouncedConfigValid
                                                 const { value } = e.target;
                                                 field.onChange(toNumber(value));
                                             }}
-                                            onBlur={handleBlur}
+                                            onBlur={() => {
+                                                field.onBlur();
+                                                handleBlur();
+                                            }}
                                         />
                                     )}
                                 />
@@ -459,7 +470,10 @@ export const Form = ({ initialValues, encryption, onSubmit, debouncedConfigValid
                                     placeholder={intl.getMessage('encryption_certificates_input')}
                                     disabled={!isEnabled}
                                     errorMessage={fieldState.error?.message}
-                                    onBlur={handleBlur}
+                                    onBlur={() => {
+                                        field.onBlur();
+                                        handleBlur();
+                                    }}
                                     size="large"
                                 />
                             )}
@@ -475,7 +489,10 @@ export const Form = ({ initialValues, encryption, onSubmit, debouncedConfigValid
                                     placeholder={intl.getMessage('encryption_certificate_path')}
                                     errorMessage={fieldState.error?.message}
                                     disabled={!isEnabled}
-                                    onBlur={handleBlur}
+                                    onBlur={() => {
+                                        field.onBlur();
+                                        handleBlur();
+                                    }}
                                     size="medium"
                                 />
                             )}
@@ -537,7 +554,10 @@ export const Form = ({ initialValues, encryption, onSubmit, debouncedConfigValid
                                     placeholder={intl.getMessage('encryption_key_input')}
                                     disabled={!isEnabled || privateKeySaved}
                                     errorMessage={fieldState.error?.message}
-                                    onBlur={handleBlur}
+                                    onBlur={() => {
+                                        field.onBlur();
+                                        handleBlur();
+                                    }}
                                     size="large"
                                 />
                             )}
@@ -553,7 +573,10 @@ export const Form = ({ initialValues, encryption, onSubmit, debouncedConfigValid
                                     placeholder={intl.getMessage('encryption_private_key_path')}
                                     errorMessage={fieldState.error?.message}
                                     disabled={!isEnabled}
-                                    onBlur={handleBlur}
+                                    onBlur={() => {
+                                        field.onBlur();
+                                        handleBlur();
+                                    }}
                                     size="medium"
                                 />
                             )}
