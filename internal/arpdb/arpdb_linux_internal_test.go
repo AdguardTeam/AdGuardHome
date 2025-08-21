@@ -11,6 +11,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -55,7 +56,7 @@ func TestFSysARPDB(t *testing.T) {
 		filename: "proc_net_arp",
 	}
 
-	err := a.Refresh()
+	err := a.Refresh(testutil.ContextWithTimeout(t, testTimeout))
 	require.NoError(t, err)
 
 	ns := a.Neighbors()
@@ -76,7 +77,7 @@ func TestCmdARPDB_linux(t *testing.T) {
 			},
 		}
 
-		err := a.Refresh()
+		err := a.Refresh(testutil.ContextWithTimeout(t, testTimeout))
 		require.NoError(t, err)
 
 		assert.Equal(t, wantNeighs, a.Neighbors())
@@ -94,7 +95,7 @@ func TestCmdARPDB_linux(t *testing.T) {
 				ns: make([]Neighbor, 0),
 			},
 		}
-		err := a.Refresh()
+		err := a.Refresh(testutil.ContextWithTimeout(t, testTimeout))
 		require.NoError(t, err)
 
 		assert.Equal(t, wantNeighs, a.Neighbors())

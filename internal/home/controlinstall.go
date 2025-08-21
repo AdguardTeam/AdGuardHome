@@ -1,7 +1,6 @@
 package home
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -256,13 +255,12 @@ func checkDNSStubListener(ctx context.Context, l *slog.Logger) (ok bool) {
 	for _, cmd := range cmds {
 		l.DebugContext(ctx, "executing", "cmd", cmd.Key, "args", cmd.Value)
 
-		err := executil.Run(
+		err := executil.RunWithPeek(
 			ctx,
 			executil.SystemCommandConstructor{},
-			&executil.CommandConfig{
-				Path: cmd.Key,
-				Args: cmd.Value,
-			},
+			agh.DefaultOutputLimit,
+			cmd.Key,
+			cmd.Value...,
 		)
 		if err != nil {
 			l.InfoContext(ctx, "execution failed", "cmd", cmd.Key, slogutil.KeyError, err)
@@ -308,23 +306,16 @@ func disableDNSStubListener(ctx context.Context, l *slog.Logger) (err error) {
 		systemctlCmd = "systemctl"
 	)
 
-	var (
-		systemctlArgs   = []string{"reload-or-restart", "systemd-resolved"}
-		systemctlStdout bytes.Buffer
-		systemctlStderr bytes.Buffer
-	)
+	systemctlArgs := []string{"reload-or-restart", "systemd-resolved"}
 
 	l.DebugContext(ctx, "executing", "cmd", systemctlCmd, "args", systemctlArgs)
 
-	err = executil.Run(
+	err = executil.RunWithPeek(
 		ctx,
 		executil.SystemCommandConstructor{},
-		&executil.CommandConfig{
-			Path:   systemctlCmd,
-			Args:   systemctlArgs,
-			Stdout: &systemctlStdout,
-			Stderr: &systemctlStderr,
-		},
+		agh.DefaultOutputLimit,
+		systemctlCmd,
+		systemctlArgs...,
 	)
 	if err != nil {
 		return fmt.Errorf("executing cmd: %w", err)

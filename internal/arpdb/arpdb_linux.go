@@ -4,6 +4,7 @@ package arpdb
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io/fs"
 	"log/slog"
@@ -76,7 +77,7 @@ type fsysARPDB struct {
 var _ Interface = (*fsysARPDB)(nil)
 
 // Refresh implements the [Interface] interface for *fsysARPDB.
-func (arp *fsysARPDB) Refresh() (err error) {
+func (arp *fsysARPDB) Refresh(_ context.Context) (err error) {
 	var f fs.File
 	f, err = arp.fsys.Open(arp.filename)
 	if err != nil {

@@ -17,6 +17,7 @@ import (
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/osutil"
 	"github.com/AdguardTeam/golibs/osutil/executil"
+	"github.com/AdguardTeam/golibs/service"
 )
 
 // Variables and functions to substitute in tests.
@@ -28,8 +29,8 @@ var (
 // Interface stores and refreshes the network neighborhood reported by ARP
 // (Address Resolution Protocol).
 type Interface interface {
-	// Refresh updates the stored data.  It must be safe for concurrent use.
-	Refresh() (err error)
+	// Refresher updates the stored data.  It must be safe for concurrent use.
+	service.Refresher
 
 	// Neighbors returnes the last set of data reported by ARP.  Both the method
 	// and it's result must be safe for concurrent use.
@@ -49,7 +50,7 @@ var _ Interface = Empty{}
 
 // Refresh implements the [Interface] interface for EmptyARPContainer.  It does
 // nothing and always returns nil error.
-func (Empty) Refresh() (err error) { return nil }
+func (Empty) Refresh(_ context.Context) (err error) { return nil }
 
 // Neighbors implements the [Interface] interface for EmptyARPContainer.  It
 // always returns nil.
@@ -174,13 +175,12 @@ type cmdARPDB struct {
 var _ Interface = (*cmdARPDB)(nil)
 
 // Refresh implements the [Interface] interface for *cmdARPDB.
-func (arp *cmdARPDB) Refresh() (err error) {
+func (arp *cmdARPDB) Refresh(ctx context.Context) (err error) {
 	defer func() { err = errors.Annotate(err, "cmd arpdb: %w") }()
 
 	var stdout bytes.Buffer
 	err = executil.Run(
-		// TODO(s.chzhen):  Pass context.
-		context.TODO(),
+		ctx,
 		arp.cmdCons,
 		&executil.CommandConfig{
 			Path:   arp.cmd,
@@ -237,11 +237,11 @@ func newARPDBs(arps ...Interface) (arp *arpdbs) {
 var _ Interface = (*arpdbs)(nil)
 
 // Refresh implements the [Interface] interface for *arpdbs.
-func (arp *arpdbs) Refresh() (err error) {
+func (arp *arpdbs) Refresh(ctx context.Context) (err error) {
 	var errs []error
 
 	for _, a := range arp.arps {
-		err = a.Refresh()
+		err = a.Refresh(ctx)
 		if err != nil {
 			errs = append(errs, err)
 

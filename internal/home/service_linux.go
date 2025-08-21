@@ -156,9 +156,7 @@ var _ service.Service = (*systemdService)(nil)
 
 // Status implements the [service.Service] interface for *systemdService.
 func (s *systemdService) Status() (status service.Status, err error) {
-	const (
-		systemctlCmd = "systemctl"
-	)
+	const systemctlCmd = "systemctl"
 
 	var (
 		systemctlArgs   = []string{"show", s.unitName}

@@ -93,6 +93,11 @@ func RunCommand(
 }
 
 // psArgs holds the default ps arguments to avoid per-call slice allocations.
+//
+// Don't use -C flag here since it's a feature of linux's ps
+// implementation.  Use POSIX-compatible flags instead.
+//
+// See https://github.com/AdguardTeam/AdGuardHome/issues/3457.
 var psArgs = []string{"-A", "-o", "pid=", "-o", "comm="}
 
 // PIDByCommand searches for process named command and returns its PID ignoring
@@ -108,10 +113,6 @@ func PIDByCommand(
 
 	l.DebugContext(ctx, "executing", "cmd", psCmd, "args", psArgs)
 
-	// Don't use -C flag here since it's a feature of linux's ps
-	// implementation.  Use POSIX-compatible flags instead.
-	//
-	// See https://github.com/AdguardTeam/AdGuardHome/issues/3457.
 	stdoutBuf := bytes.Buffer{}
 	err = executil.Run(
 		ctx,

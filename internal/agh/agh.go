@@ -11,6 +11,10 @@ import (
 	"github.com/AdguardTeam/golibs/testutil/fakeos/fakeexec"
 )
 
+// DefaultOutputLimit is the default limit of bytes for commands' standard
+// output and standard error.
+const DefaultOutputLimit = 512
+
 // ConfigModifier defines an interface for updating the global configuration.
 type ConfigModifier interface {
 	// Apply applies changes to the global configuration.
@@ -27,11 +31,8 @@ var _ ConfigModifier = EmptyConfigModifier{}
 // Apply implements the [ConfigModifier] for EmptyConfigModifier.
 func (em EmptyConfigModifier) Apply(ctx context.Context) {}
 
-// TODO(s.chzhen): !! Is there another way?
-//
-// TODO(s.chzhen): !! Docs, naming.
-//
-// TODO(s.chzhen):  Move to aghtest once the import cycle is resolved.
+// exitErr implements [executil.ExitCodeError] for tests to simulate non-zero
+// process exit codes.
 type exitErr struct {
 	code osutil.ExitCode
 }
@@ -39,25 +40,37 @@ type exitErr struct {
 // type check
 var _ executil.ExitCodeError = exitErr{}
 
+// Error implements the [executil.ExitCodeError] for exitErr.
 func (e exitErr) Error() (s string) {
 	return fmt.Sprintf("exit code %d", e.code)
 }
 
+// ExitCode implements the [executil.ExitCodeError] for exitErr.
 func (e exitErr) ExitCode() (code osutil.ExitCode) {
 	return e.code
 }
 
+// ExternalCommand is a fake command used by [NewMultipleCommandConstructor].
 type ExternalCommand struct {
-	Err  error
-	Cmd  string
-	Out  string
+	// Err is the error returned, if non-nil.
+	Err error
+
+	// Cmd contains the command path and arguments.
+	Cmd string
+
+	// Out is written to stdout if non-empty.
+	Out string
+
+	// Code is returned as the exit code if non-zero.
 	Code int
 }
 
+// keyCommand builds a key for a command lookup.
 func keyCommand(path string, args []string) (k string) {
 	return path + " " + strings.Join(args, " ")
 }
 
+// parseCommand splits a command string into the executable path and args.
 func parseCommand(s string) (path string, args []string) {
 	f := strings.Fields(s)
 	if len(f) == 0 {
@@ -68,7 +81,11 @@ func parseCommand(s string) (path string, args []string) {
 }
 
 // NewMultipleCommandConstructor is a helper function that returns a mock
-// [executil.CommandConstructor] for tests.
+// [executil.CommandConstructor] for tests that supports multiple commands.
+//
+// TODO(s.chzhen):  Use this.
+//
+// TODO(s.chzhen):  Move to aghtest once the import cycle is resolved.
 func NewMultipleCommandConstructor(cmds ...ExternalCommand) (cs executil.CommandConstructor) {
 	table := make(map[string]ExternalCommand, len(cmds))
 	for _, ec := range cmds {
