@@ -27,9 +27,11 @@ fi
 readonly version
 
 # Allow users to use sudo.
-sudo_cmd="${SUDO:-}"
+sudo_cmd="${SUDO:-exec}"
 readonly sudo_cmd
 
+# Make sure that those are built using something like:
+#	make ARCH='386 amd64 arm arm64 ppc64le' OS=linux VERBOSE=1 build-release
 docker_platforms="\
 linux/386,\
 linux/amd64,\
@@ -104,20 +106,46 @@ cp "${dist_dir}/AdGuardHome_linux_arm_7/AdGuardHome/AdGuardHome" \
 cp "${dist_dir}/AdGuardHome_linux_ppc64le/AdGuardHome/AdGuardHome" \
 	"${dist_docker}/AdGuardHome_linux_ppc64le_"
 
-# Don't use quotes with $docker_version_tag and $docker_channel_tag, because we
-# want word splitting and or an empty space if tags are empty.
-#
-# TODO(a.garipov): Once flag --tag of docker buildx build supports commas, use
-# them instead.
-#
-# shellcheck disable=SC2086
-$sudo_cmd docker "$debug_flags" \
-	buildx build \
-	--build-arg BUILD_DATE="$build_date" \
-	--build-arg DIST_DIR="$dist_dir" \
-	--build-arg VCS_REF="$commit" \
-	--build-arg VERSION="$version" \
-	--output "$docker_output" \
-	--platform "$docker_platforms" \
-	--progress 'plain' \
-	$docker_version_tag $docker_channel_tag -f ./docker/Dockerfile .
+# docker_opt_tag is a function that wraps the call to docker to optionally add
+# --tag flags.
+docker_opt_tag() {
+	# Unset all positional parameters of the function.
+	set --
+
+	# Set the initial parameters.
+	set -- \
+		"$debug_flags" \
+		buildx \
+		build \
+		--build-arg BUILD_DATE="$build_date" \
+		--build-arg DIST_DIR="$dist_dir" \
+		--build-arg VCS_REF="$commit" \
+		--build-arg VERSION="$version" \
+		--output "$docker_output" \
+		--platform "$docker_platforms" \
+		--progress 'plain' \
+		;
+
+	# Append the channel tag, if any.
+	if [ "$docker_channel_tag" != '' ]; then
+		set -- "$@" "$docker_channel_tag"
+	fi
+
+	# Append the version tag, if any.
+	if [ "$docker_version_tag" != '' ]; then
+		set -- "$@" "$docker_version_tag"
+	fi
+
+	# Append the rest.
+	set -- \
+		"$@" \
+		-f \
+		./docker/Dockerfile \
+		. \
+		;
+
+	# Call the docker command with the assembled parameters.
+	"$sudo_cmd" docker "$@"
+}
+
+docker_opt_tag
