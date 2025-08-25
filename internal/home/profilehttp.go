@@ -47,14 +47,10 @@ type profileJSON struct {
 // handleGetProfile is the handler for GET /control/profile endpoint.
 func (web *webAPI) handleGetProfile(w http.ResponseWriter, r *http.Request) {
 	var name string
-	if !web.auth.isGLiNet {
-		u, ok := webUserFromContext(r.Context())
-		if !ok {
-			w.WriteHeader(http.StatusUnauthorized)
-
-			return
-		}
-
+	u, ok := webUserFromContext(r.Context())
+	// There may be no user in the context if the configuration file defines no
+	// users.
+	if ok {
 		name = string(u.Login)
 	}
 

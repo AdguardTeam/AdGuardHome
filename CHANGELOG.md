@@ -17,6 +17,13 @@ See also the [v0.107.66 GitHub milestone][ms-v0.107.66].
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
+
+### Fixed
+
+- The HTTP API `GET /control/profile` endpoint failing when no users were configured ([#7985]).
+
+[#7985]: https://github.com/AdguardTeam/AdGuardHome/issues/7985
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
