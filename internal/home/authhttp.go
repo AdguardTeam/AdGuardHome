@@ -506,24 +506,21 @@ func (mw *authMiddlewareDefault) userFromRequestBasicAuth(
 		return nil, fmt.Errorf("login attempt blocked for %s", left)
 	}
 
-	rateLimiter.inc(remoteIP)
-	defer func() {
-		if err != nil {
-			return
-		}
-
-		rateLimiter.remove(remoteIP)
-	}()
-
 	user, _ = mw.users.ByLogin(ctx, aghuser.Login(login))
 	if user == nil {
+		rateLimiter.inc(remoteIP)
+
 		return nil, errInvalidLogin
 	}
 
 	ok = user.Password.Authenticate(ctx, pass)
 	if !ok {
+		rateLimiter.inc(remoteIP)
+
 		return nil, errInvalidLogin
 	}
+
+	rateLimiter.remove(remoteIP)
 
 	return user, nil
 }

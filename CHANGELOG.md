@@ -17,6 +17,13 @@ See also the [v0.107.66 GitHub milestone][ms-v0.107.66].
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
+
+### Fixed
+
+- Authentication errors in the Web UI when AdGuard Home is behind a proxy that sets Basic Auth headers ([#7987]).
+
+[#7987]: https://github.com/AdguardTeam/AdGuardHome/issues/7987
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
