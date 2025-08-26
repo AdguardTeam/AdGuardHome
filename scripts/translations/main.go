@@ -25,13 +25,12 @@ import (
 	"github.com/AdguardTeam/golibs/osutil"
 )
 
+// TODO(ik): Update localesDir to "./client_v2/src/" for new frontend migration
 const (
 	twoskyConfFile   = "./.twosky.json"
-	// TODO(ik): Update localesDir to "./client_v2/src/__locales" for new frontend migration
 	localesDir       = "./client/src/__locales"
 	defaultBaseFile  = "en.json"
 	defaultProjectID = "home"
-	// TODO(ik): Update srcDir to "./client_v2/src" for new frontend migration
 	srcDir           = "./client/src"
 	twoskyURI        = "https://twosky.int.agrd.dev/api/v1"
 
