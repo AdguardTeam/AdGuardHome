@@ -27,12 +27,14 @@ const SETTINGS = {
         enabled: false,
         title: i18next.t('use_adguard_browsing_sec'),
         subtitle: i18next.t('use_adguard_browsing_sec_hint'),
+        testId: 'safebrowsing',
         [ORDER_KEY]: 0,
     },
     parental: {
         enabled: false,
         title: i18next.t('use_adguard_parental'),
         subtitle: i18next.t('use_adguard_parental_hint'),
+        testId: 'parental',
         [ORDER_KEY]: 1,
     },
 };
@@ -90,11 +92,12 @@ class Settings extends Component<SettingsProps> {
     renderSettings = (settings: any) =>
         getObjectKeysSorted(SETTINGS, ORDER_KEY).map((key: any) => {
             const setting = settings[key];
-            const { enabled, title, subtitle } = setting;
+            const { enabled, title, subtitle, testId } = setting;
 
             return (
                 <div key={key} className="form__group form__group--checkbox">
                     <Checkbox
+                        data-testid={testId}
                         value={enabled}
                         title={title}
                         subtitle={subtitle}
@@ -118,6 +121,7 @@ class Settings extends Component<SettingsProps> {
             <>
                 <div className="form__group form__group--checkbox">
                     <Checkbox
+                        data-testid="safesearch"
                         value={enabled}
                         title={i18next.t('enforce_safe_search')}
                         subtitle={i18next.t('enforce_save_search_hint')}

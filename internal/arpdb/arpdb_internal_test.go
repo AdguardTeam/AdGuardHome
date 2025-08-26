@@ -24,12 +24,12 @@ var testdata fs.FS = os.DirFS("./testdata")
 type RunCmdFunc func(cmd string, args ...string) (code int, out []byte, err error)
 
 // substShell replaces the the aghos.RunCommand function used throughout the
-// package with rc for tests ran under t.
-func substShell(t testing.TB, rc RunCmdFunc) {
-	t.Helper()
+// package with rc for tests ran under tb.
+func substShell(tb testing.TB, rc RunCmdFunc) {
+	tb.Helper()
 
 	prev := aghosRunCommand
-	t.Cleanup(func() { aghosRunCommand = prev })
+	tb.Cleanup(func() { aghosRunCommand = prev })
 	aghosRunCommand = rc
 }
 

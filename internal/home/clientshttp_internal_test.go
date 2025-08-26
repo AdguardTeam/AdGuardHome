@@ -153,7 +153,7 @@ func TestClientsContainer_HandleAddClient(t *testing.T) {
 	clientTwo := newPersistentClientWithIDs(t, "client2", []string{testClientIP2})
 
 	clientEmptyID := newPersistentClient("empty_client_id")
-	clientEmptyID.ClientIDs = []string{""}
+	clientEmptyID.ClientIDs = []client.ClientID{""}
 
 	testCases := []struct {
 		name       string
@@ -278,7 +278,7 @@ func TestClientsContainer_HandleUpdateClient(t *testing.T) {
 	clientModified := newPersistentClientWithIDs(t, "client2", []string{testClientIP2})
 
 	clientEmptyID := newPersistentClient("empty_client_id")
-	clientEmptyID.ClientIDs = []string{""}
+	clientEmptyID.ClientIDs = []client.ClientID{""}
 
 	testCases := []struct {
 		name       string
@@ -421,7 +421,6 @@ func TestClientsContainer_HandleSearchClient(t *testing.T) {
 		allowed     = false
 		dissallowed = true
 
-		emptyRule      = ""
 		disallowedRule = "disallowed_rule"
 	)
 
@@ -432,7 +431,7 @@ func TestClientsContainer_HandleSearchClient(t *testing.T) {
 				return true, disallowedRule
 			}
 
-			return false, emptyRule
+			return false, ""
 		},
 	}
 
@@ -481,11 +480,10 @@ func TestClientsContainer_HandleSearchClient(t *testing.T) {
 			}},
 		},
 		wantRuntime: &clientJSON{
-			Name:           runtimeCli,
-			IDs:            []string{runtimeCliIP},
-			Disallowed:     &allowed,
-			DisallowedRule: &emptyRule,
-			WHOIS:          &whois.Info{},
+			Name:       runtimeCli,
+			IDs:        []string{runtimeCliIP},
+			Disallowed: &allowed,
+			WHOIS:      &whois.Info{},
 		},
 	}, {
 		name: "blocked_access",
@@ -508,10 +506,9 @@ func TestClientsContainer_HandleSearchClient(t *testing.T) {
 			}},
 		},
 		wantRuntime: &clientJSON{
-			IDs:            []string{nonExistentCliIP},
-			Disallowed:     &allowed,
-			DisallowedRule: &emptyRule,
-			WHOIS:          &whois.Info{},
+			IDs:        []string{nonExistentCliIP},
+			Disallowed: &allowed,
+			WHOIS:      &whois.Info{},
 		},
 	}}
 

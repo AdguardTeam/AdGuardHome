@@ -35,7 +35,7 @@ type index struct {
 	nameToUID map[string]UID
 
 	// clientIDToUID maps ClientID to UID.
-	clientIDToUID map[string]UID
+	clientIDToUID map[ClientID]UID
 
 	// ipToUID maps IP address to UID.
 	ipToUID map[netip.Addr]UID
@@ -54,7 +54,7 @@ type index struct {
 func newIndex() (ci *index) {
 	return &index{
 		nameToUID:     map[string]UID{},
-		clientIDToUID: map[string]UID{},
+		clientIDToUID: map[ClientID]UID{},
 		ipToUID:       map[netip.Addr]UID{},
 		subnetToUID:   aghalg.NewSortedMap[netip.Prefix, UID](subnetCompare),
 		macToUID:      map[macKey]UID{},
@@ -207,7 +207,7 @@ func (ci *index) clashesMAC(c *Persistent) (p *Persistent, mac net.HardwareAddr)
 // find finds persistent client by string representation of the ClientID, IP
 // address, or MAC.
 func (ci *index) find(id string) (c *Persistent, ok bool) {
-	c, ok = ci.findByClientID(id)
+	c, ok = ci.findByClientID(ClientID(id))
 	if ok {
 		return c, true
 	}
@@ -230,7 +230,7 @@ func (ci *index) find(id string) (c *Persistent, ok bool) {
 }
 
 // findByClientID finds persistent client by ClientID.
-func (ci *index) findByClientID(clientID string) (c *Persistent, ok bool) {
+func (ci *index) findByClientID(clientID ClientID) (c *Persistent, ok bool) {
 	uid, ok := ci.clientIDToUID[clientID]
 	if ok {
 		return ci.uidToClient[uid], true
@@ -269,6 +269,26 @@ func (ci *index) findByIP(ip netip.Addr) (c *Persistent, found bool) {
 	})
 
 	if found {
+		return ci.uidToClient[uid], true
+	}
+
+	return nil, false
+}
+
+// findByCIDR searches for a persistent client with the provided subnet as an
+// identifier.  Note that this function looks for an exact match of subnets,
+// rather than checking if one subnet contains another.
+func (ci *index) findByCIDR(subnet netip.Prefix) (c *Persistent, ok bool) {
+	var uid UID
+	for pref, id := range ci.subnetToUID.Range {
+		if subnet == pref {
+			uid, ok = id, true
+
+			break
+		}
+	}
+
+	if ok {
 		return ci.uidToClient[uid], true
 	}
 

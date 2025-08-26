@@ -9,6 +9,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -121,7 +122,7 @@ func TestServer_HandleBefore_tls(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			s, _ := createTestTLS(t, TLSConfig{
+			s, _ := createTestTLS(t, &TLSConfig{
 				TLSListenAddrs: []*net.TCPAddr{{}},
 				ServerName:     tlsServerName,
 			})
@@ -132,7 +133,7 @@ func TestServer_HandleBefore_tls(t *testing.T) {
 			s.conf.DisallowedClients = tc.disallowedClients
 			s.conf.BlockedHosts = tc.blockedHosts
 
-			err := s.Prepare(&s.conf)
+			err := s.Prepare(testutil.ContextWithTimeout(t, testTimeout), &s.conf)
 			require.NoError(t, err)
 
 			startDeferStop(t, s)
@@ -259,6 +260,7 @@ func TestServer_HandleBefore_udp(t *testing.T) {
 			}, ServerConfig{
 				UDPListenAddrs: []*net.UDPAddr{{}},
 				TCPListenAddrs: []*net.TCPAddr{{}},
+				TLSConf:        &TLSConfig{},
 				Config: Config{
 					AllowedClients:    tc.allowedClients,
 					DisallowedClients: tc.disallowedClients,

@@ -6,6 +6,8 @@ import { useDispatch } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import classNames from 'classnames';
 import { useFormContext } from 'react-hook-form';
+import queryString from 'query-string';
+
 import {
     DEBOUNCE_FILTER_TIMEOUT,
     DEFAULT_LOGS_FILTER,
@@ -54,9 +56,17 @@ export const Form = ({ className, setIsLoading }: Props) => {
         }
     }, [responseStatusValue, setValue]);
 
+    useEffect(() => {
+        const { search: searchUrlParam } = queryString.parse(history.location.search);
+
+        if (searchUrlParam !== searchValue) {
+            setValue('search', searchUrlParam ? searchUrlParam.toString() : '');
+        }
+    }, [history.location.search]);
+
     const onInputClear = async () => {
         setIsLoading(true);
-        setValue('search', DEFAULT_LOGS_FILTER.search);
+        history.push(getLogsUrlParams(DEFAULT_LOGS_FILTER.search, responseStatusValue));
         setIsLoading(false);
     };
 
@@ -74,6 +84,7 @@ export const Form = ({ className, setIsLoading }: Props) => {
             }}>
             <div className="field__search">
                 <SearchField
+                    data-testid="querylog_search"
                     value={searchValue}
                     handleChange={(val) => setValue('search', val)}
                     onKeyDown={onEnterPress}

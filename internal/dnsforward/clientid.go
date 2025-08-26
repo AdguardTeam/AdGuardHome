@@ -7,25 +7,11 @@ import (
 	"path"
 	"strings"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/dnsproxy/proxy"
-	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
-	"github.com/quic-go/quic-go"
 )
-
-// ValidateClientID returns an error if id is not a valid ClientID.
-//
-// Keep in sync with [client.ValidateClientID].
-func ValidateClientID(id string) (err error) {
-	err = netutil.ValidateHostnameLabel(id)
-	if err != nil {
-		// Replace the domain name label wrapper with our own.
-		return fmt.Errorf("invalid clientid %q: %w", id, errors.Unwrap(err))
-	}
-
-	return nil
-}
 
 // clientIDFromClientServerName extracts and validates a ClientID.  hostSrvName
 // is the server name of the host.  cliSrvName is the server name as sent by the
@@ -53,7 +39,7 @@ func clientIDFromClientServerName(
 	}
 
 	clientID = cliSrvName[:len(cliSrvName)-len(hostSrvName)-1]
-	err = ValidateClientID(clientID)
+	err = client.ValidateClientID(clientID)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
 		return "", err
@@ -93,7 +79,7 @@ func clientIDFromDNSContextHTTPS(pctx *proxy.DNSContext) (clientID string, err e
 		return "", fmt.Errorf("clientid check: invalid path %q: extra parts", origPath)
 	}
 
-	err = ValidateClientID(clientID)
+	err = client.ValidateClientID(clientID)
 	if err != nil {
 		return "", fmt.Errorf("clientid check: %w", err)
 	}
@@ -104,11 +90,6 @@ func clientIDFromDNSContextHTTPS(pctx *proxy.DNSContext) (clientID string, err e
 // tlsConn is a narrow interface for *tls.Conn to simplify testing.
 type tlsConn interface {
 	ConnectionState() (cs tls.ConnectionState)
-}
-
-// quicConnection is a narrow interface for quic.Connection to simplify testing.
-type quicConnection interface {
-	ConnectionState() (cs quic.ConnectionState)
 }
 
 // clientServerName returns the TLS server name based on the protocol.  For
@@ -129,13 +110,7 @@ func clientServerName(pctx *proxy.DNSContext, proto proxy.Proto) (srvName string
 			from = "host header"
 		}
 	case proxy.ProtoQUIC:
-		qConn := pctx.QUICConnection
-		conn, ok := qConn.(quicConnection)
-		if !ok {
-			return "", fmt.Errorf("pctx conn of proto %s is %T, want quic.Connection", proto, qConn)
-		}
-
-		srvName = conn.ConnectionState().TLS.ServerName
+		srvName = pctx.QUICConnection.ConnectionState().TLS.ServerName
 	case proxy.ProtoTLS:
 		conn := pctx.Conn
 		tc, ok := conn.(tlsConn)

@@ -3,6 +3,7 @@ package configmgr
 import (
 	"net/netip"
 
+	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/timeutil"
@@ -51,13 +52,17 @@ func (c *config) Validate() (err error) {
 
 // dnsConfig is the on-disk DNS configuration.
 type dnsConfig struct {
-	Addresses           []netip.AddrPort  `yaml:"addresses"`
-	BootstrapDNS        []string          `yaml:"bootstrap_dns"`
-	UpstreamDNS         []string          `yaml:"upstream_dns"`
-	DNS64Prefixes       []netip.Prefix    `yaml:"dns64_prefixes"`
-	UpstreamTimeout     timeutil.Duration `yaml:"upstream_timeout"`
-	BootstrapPreferIPv6 bool              `yaml:"bootstrap_prefer_ipv6"`
-	UseDNS64            bool              `yaml:"use_dns64"`
+	UpstreamMode        proxy.UpstreamMode `yaml:"upstream_mode"`
+	Addresses           []netip.AddrPort   `yaml:"addresses"`
+	BootstrapDNS        []string           `yaml:"bootstrap_dns"`
+	UpstreamDNS         []string           `yaml:"upstream_dns"`
+	DNS64Prefixes       []netip.Prefix     `yaml:"dns64_prefixes"`
+	UpstreamTimeout     timeutil.Duration  `yaml:"upstream_timeout"`
+	Ratelimit           int                `yaml:"ratelimit"`
+	CacheSize           int                `yaml:"cache_size"`
+	BootstrapPreferIPv6 bool               `yaml:"bootstrap_prefer_ipv6"`
+	RefuseAny           bool               `yaml:"refuse_any"`
+	UseDNS64            bool               `yaml:"use_dns64"`
 }
 
 // type check

@@ -739,6 +739,20 @@
       - 'name': 'name'
         'in': 'query'
         'description': 'Filter by host name'
+        'required': true
+        'example': 'google.com'
+        'schema':
+          'type': 'string'
+      - 'name': 'client'
+        'in': 'query'
+        'description': 'Optional ClientID or client IP address'
+        'example': '192.0.2.1'
+        'schema':
+          'type': 'string'
+      - 'name': 'qtype'
+        'in': 'query'
+        'description': 'Optional DNS type'
+        'example': 'AAAA'
         'schema':
           'type': 'string'
       'responses':
@@ -966,7 +980,8 @@
       - 'clients'
       'operationId': 'clientsSearch'
       'summary': >
-        Get information about clients by their IP addresses, CIDRs, MAC addresses, or ClientIDs.
+        Retrieve information about clients by performing an exact match search
+        using IP addresses, CIDRs, MAC addresses, or ClientIDs.
       'requestBody':
         'content':
           'application/json':
@@ -1544,6 +1559,14 @@
           'type': 'integer'
         'cache_ttl_max':
           'type': 'integer'
+        'cache_enabled':
+          'type': 'boolean'
+          'description': |
+            Enables or disables the DNS response cache.
+
+            If `cache_enabled` is `true`, the companion field `cache_size` must
+            be present and greater than 0, or the `dns.cache_size` setting in
+            the configuration file must already be greater than 0.
         'cache_optimistic':
           'type': 'boolean'
         'upstream_mode':

@@ -52,8 +52,8 @@ func newURLFilterID() (id rulelist.URLFilterID) {
 // newFilter is a helper for creating new filters in tests.  It does not
 // register the closing of the filter using t.Cleanup; callers must do that
 // either directly or by using the filter in an engine.
-func newFilter(t testing.TB, u *url.URL, name string) (f *rulelist.Filter) {
-	t.Helper()
+func newFilter(tb testing.TB, u *url.URL, name string) (f *rulelist.Filter) {
+	tb.Helper()
 
 	f, err := rulelist.NewFilter(&rulelist.FilterConfig{
 		URL:         u,
@@ -62,7 +62,7 @@ func newFilter(t testing.TB, u *url.URL, name string) (f *rulelist.Filter) {
 		URLFilterID: newURLFilterID(),
 		Enabled:     true,
 	})
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
 	return f
 }
@@ -71,24 +71,24 @@ func newFilter(t testing.TB, u *url.URL, name string) (f *rulelist.Filter) {
 // file and the HTTP-server.  It also registers file removal and server stopping
 // using t.Cleanup.
 func newFilterLocations(
-	t testing.TB,
+	tb testing.TB,
 	cacheDir string,
 	fileData string,
 	httpData string,
 ) (fileURL, srvURL *url.URL) {
-	t.Helper()
+	tb.Helper()
 
 	f, err := os.CreateTemp(cacheDir, "")
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
 	err = f.Close()
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
 	filePath := f.Name()
 	err = os.WriteFile(filePath, []byte(fileData), 0o644)
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
-	testutil.CleanupAndRequireSuccess(t, func() (err error) {
+	testutil.CleanupAndRequireSuccess(tb, func() (err error) {
 		return os.Remove(filePath)
 	})
 
@@ -98,10 +98,10 @@ func newFilterLocations(
 	}
 
 	srv := newStringHTTPServer(httpData)
-	t.Cleanup(srv.Close)
+	tb.Cleanup(srv.Close)
 
 	srvURL, err = url.Parse(srv.URL)
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
 	return fileURL, srvURL
 }

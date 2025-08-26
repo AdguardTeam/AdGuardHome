@@ -19,7 +19,7 @@ import (
 	"github.com/AdguardTeam/golibs/netutil/httputil"
 	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/AdguardTeam/golibs/testutil"
-	"github.com/AdguardTeam/golibs/testutil/fakefs"
+	"github.com/AdguardTeam/golibs/testutil/fakeio/fakefs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -65,13 +65,17 @@ func (m *configManager) UpdateWeb(ctx context.Context, c *websvc.Config) (err er
 // newConfigManager returns a *configManager all methods of which panic.
 func newConfigManager() (m *configManager) {
 	return &configManager{
-		onDNS: func() (svc agh.ServiceWithConfig[*dnssvc.Config]) { panic("not implemented") },
-		onWeb: func() (svc agh.ServiceWithConfig[*websvc.Config]) { panic("not implemented") },
-		onUpdateDNS: func(_ context.Context, _ *dnssvc.Config) (err error) {
-			panic("not implemented")
+		onDNS: func() (_ agh.ServiceWithConfig[*dnssvc.Config]) {
+			panic(testutil.UnexpectedCall())
 		},
-		onUpdateWeb: func(_ context.Context, _ *websvc.Config) (err error) {
-			panic("not implemented")
+		onWeb: func() (_ agh.ServiceWithConfig[*websvc.Config]) {
+			panic(testutil.UnexpectedCall())
+		},
+		onUpdateDNS: func(ctx context.Context, c *dnssvc.Config) (_ error) {
+			panic(testutil.UnexpectedCall(ctx, c))
+		},
+		onUpdateWeb: func(ctx context.Context, c *websvc.Config) (_ error) {
+			panic(testutil.UnexpectedCall(ctx, c))
 		},
 	}
 }
@@ -80,10 +84,10 @@ func newConfigManager() (m *configManager) {
 // sole address.  It also registers a cleanup procedure, which shuts the
 // instance down.
 func newTestServer(
-	t testing.TB,
+	tb testing.TB,
 	confMgr websvc.ConfigManager,
 ) (svc *websvc.Service, addr netip.AddrPort) {
-	t.Helper()
+	tb.Helper()
 
 	c := &websvc.Config{
 		Logger: slogutil.NewDiscardLogger(),
@@ -103,17 +107,17 @@ func newTestServer(
 	}
 
 	svc, err := websvc.New(c)
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
-	err = svc.Start(testutil.ContextWithTimeout(t, testTimeout))
-	require.NoError(t, err)
-	testutil.CleanupAndRequireSuccess(t, func() (err error) {
-		return svc.Shutdown(testutil.ContextWithTimeout(t, testTimeout))
+	err = svc.Start(testutil.ContextWithTimeout(tb, testTimeout))
+	require.NoError(tb, err)
+	testutil.CleanupAndRequireSuccess(tb, func() (err error) {
+		return svc.Shutdown(testutil.ContextWithTimeout(tb, testTimeout))
 	})
 
 	c = svc.Config()
-	require.NotNil(t, c)
-	require.Len(t, c.Addresses, 1)
+	require.NotNil(tb, c)
+	require.Len(tb, c.Addresses, 1)
 
 	return svc, c.Addresses[0]
 }
@@ -125,23 +129,23 @@ type jobj map[string]any
 // the response as well as checks that the status code is correct.
 //
 // TODO(a.garipov): Add helpers for other methods.
-func httpGet(t testing.TB, u *url.URL, wantCode int) (body []byte) {
-	t.Helper()
+func httpGet(tb testing.TB, u *url.URL, wantCode int) (body []byte) {
+	tb.Helper()
 
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
-	require.NoErrorf(t, err, "creating req")
+	require.NoErrorf(tb, err, "creating req")
 
 	httpCli := &http.Client{
 		Timeout: testTimeout,
 	}
 	resp, err := httpCli.Do(req)
-	require.NoErrorf(t, err, "performing req")
-	require.Equal(t, wantCode, resp.StatusCode)
+	require.NoErrorf(tb, err, "performing req")
+	require.Equal(tb, wantCode, resp.StatusCode)
 
-	testutil.CleanupAndRequireSuccess(t, resp.Body.Close)
+	testutil.CleanupAndRequireSuccess(tb, resp.Body.Close)
 
 	body, err = io.ReadAll(resp.Body)
-	require.NoErrorf(t, err, "reading body")
+	require.NoErrorf(tb, err, "reading body")
 
 	return body
 }
@@ -151,26 +155,26 @@ func httpGet(t testing.TB, u *url.URL, wantCode int) (body []byte) {
 // checks that the status code is correct.
 //
 // TODO(a.garipov): Add helpers for other methods.
-func httpPatch(t testing.TB, u *url.URL, reqBody any, wantCode int) (body []byte) {
-	t.Helper()
+func httpPatch(tb testing.TB, u *url.URL, reqBody any, wantCode int) (body []byte) {
+	tb.Helper()
 
 	b, err := json.Marshal(reqBody)
-	require.NoErrorf(t, err, "marshaling reqBody")
+	require.NoErrorf(tb, err, "marshaling reqBody")
 
 	req, err := http.NewRequest(http.MethodPatch, u.String(), bytes.NewReader(b))
-	require.NoErrorf(t, err, "creating req")
+	require.NoErrorf(tb, err, "creating req")
 
 	httpCli := &http.Client{
 		Timeout: testTimeout,
 	}
 	resp, err := httpCli.Do(req)
-	require.NoErrorf(t, err, "performing req")
-	require.Equal(t, wantCode, resp.StatusCode)
+	require.NoErrorf(tb, err, "performing req")
+	require.Equal(tb, wantCode, resp.StatusCode)
 
-	testutil.CleanupAndRequireSuccess(t, resp.Body.Close)
+	testutil.CleanupAndRequireSuccess(tb, resp.Body.Close)
 
 	body, err = io.ReadAll(resp.Body)
-	require.NoErrorf(t, err, "reading body")
+	require.NoErrorf(tb, err, "reading body")
 
 	return body
 }

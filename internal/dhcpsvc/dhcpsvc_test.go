@@ -1,13 +1,11 @@
 package dhcpsvc_test
 
 import (
-	"net"
 	"net/netip"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
-	"github.com/stretchr/testify/require"
 )
 
 // testLocalTLD is a common local TLD for tests.
@@ -55,12 +53,4 @@ var testInterfaceConf = map[string]*dhcpsvc.InterfaceConfig{
 			RASLAACOnly:   true,
 		},
 	},
-}
-
-// mustParseMAC parses a hardware address from s and requires no errors.
-func mustParseMAC(t require.TestingT, s string) (mac net.HardwareAddr) {
-	mac, err := net.ParseMAC(s)
-	require.NoError(t, err)
-
-	return mac
 }

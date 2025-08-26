@@ -45,17 +45,6 @@ type netInterface struct {
 	leaseTTL time.Duration
 }
 
-// newNetInterface creates a new netInterface with the given name, leaseTTL, and
-// logger.
-func newNetInterface(name string, l *slog.Logger, leaseTTL time.Duration) (iface *netInterface) {
-	return &netInterface{
-		logger:   l,
-		leases:   map[macKey]*Lease{},
-		name:     name,
-		leaseTTL: leaseTTL,
-	}
-}
-
 // reset clears all the slices in iface for reuse.
 func (iface *netInterface) reset() {
 	clear(iface.leases)

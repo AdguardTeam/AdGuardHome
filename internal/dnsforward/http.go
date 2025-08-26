@@ -2,6 +2,7 @@ package dnsforward
 
 import (
 	"cmp"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -12,11 +13,12 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghslog"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/golibs/validate"
@@ -91,6 +93,9 @@ type jsonDNSConfig struct {
 	// CacheMaxTTL is custom maximum TTL for cached DNS responses.
 	CacheMaxTTL *uint32 `json:"cache_ttl_max"`
 
+	// CacheEnabled defines if the DNS cache should be used.
+	CacheEnabled *bool `json:"cache_enabled"`
+
 	// CacheOptimistic defines if expired entries should be served.
 	CacheOptimistic *bool `json:"cache_optimistic"`
 
@@ -136,8 +141,8 @@ const (
 	jsonUpstreamModeFastestAddr jsonUpstreamMode = "fastest_addr"
 )
 
-func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
-	protectionEnabled, protectionDisabledUntil := s.UpdatedProtectionStatus()
+func (s *Server) getDNSConfig(ctx context.Context) (c *jsonDNSConfig) {
+	protectionEnabled, protectionDisabledUntil := s.UpdatedProtectionStatus(ctx)
 
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()
@@ -160,6 +165,7 @@ func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
 
 	enableDNSSEC := s.conf.EnableDNSSEC
 	aaaaDisabled := s.conf.AAAADisabled
+	cacheEnabled := s.conf.CacheEnabled
 	cacheSize := s.conf.CacheSize
 	cacheMinTTL := s.conf.CacheMinTTL
 	cacheMaxTTL := s.conf.CacheMaxTTL
@@ -182,7 +188,7 @@ func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
 
 	defPTRUps, err := s.defaultLocalPTRUpstreams()
 	if err != nil {
-		log.Error("dnsforward: %s", err)
+		s.logger.ErrorContext(ctx, "getting local ptr upstreams", slogutil.KeyError, err)
 	}
 
 	return &jsonDNSConfig{
@@ -205,6 +211,7 @@ func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
 		DNSSECEnabled:            &enableDNSSEC,
 		DisableIPv6:              &aaaaDisabled,
 		BlockedResponseTTL:       &blockedResponseTTL,
+		CacheEnabled:             &cacheEnabled,
 		CacheSize:                &cacheSize,
 		CacheMinTTL:              &cacheMinTTL,
 		CacheMaxTTL:              &cacheMaxTTL,
@@ -238,7 +245,7 @@ func (s *Server) defaultLocalPTRUpstreams() (ups []string, err error) {
 
 // handleGetConfig handles requests to the GET /control/dns_info endpoint.
 func (s *Server) handleGetConfig(w http.ResponseWriter, r *http.Request) {
-	resp := s.getDNSConfig()
+	resp := s.getDNSConfig(r.Context())
 	aghhttp.WriteJSONResponseOK(w, r, resp)
 }
 
@@ -276,6 +283,7 @@ func (req *jsonDNSConfig) validate(
 	ownAddrs addrPortSet,
 	sysResolvers SystemResolvers,
 	privateNets netutil.SubnetSet,
+	curCacheSize uint32,
 ) (err error) {
 	defer func() { err = errors.Annotate(err, "validating dns config: %w") }()
 
@@ -303,7 +311,7 @@ func (req *jsonDNSConfig) validate(
 		return err
 	}
 
-	err = req.checkCacheTTL()
+	err = req.validateCacheSettings(curCacheSize)
 	if err != nil {
 		// Don't wrap the error since it's informative enough as is.
 		return err
@@ -366,7 +374,9 @@ func (req *jsonDNSConfig) checkPrivateRDNS(
 
 	addrs := cmp.Or(req.LocalPTRUpstreams, &[]string{})
 
-	uc, err := newPrivateConfig(*addrs, ownAddrs, sysResolvers, privateNets, &upstream.Options{})
+	uc, err := newPrivateConfig(*addrs, ownAddrs, sysResolvers, privateNets, &upstream.Options{
+		Logger: slogutil.NewDiscardLogger(),
+	})
 	err = errors.WithDeferred(err, uc.Close())
 	if err != nil {
 		return fmt.Errorf("private upstream servers: %w", err)
@@ -382,7 +392,9 @@ func (req *jsonDNSConfig) validateUpstreamDNSServers(
 	privateNets netutil.SubnetSet,
 ) (err error) {
 	var uc *proxy.UpstreamConfig
-	opts := &upstream.Options{}
+	opts := &upstream.Options{
+		Logger: slogutil.NewDiscardLogger(),
+	}
 
 	if req.Upstreams != nil {
 		uc, err = proxy.ParseUpstreamsConfig(*req.Upstreams, opts)
@@ -415,9 +427,14 @@ func (req *jsonDNSConfig) validateUpstreamDNSServers(
 	return nil
 }
 
-// checkCacheTTL returns an error if the configuration of the cache TTL is
-// invalid.
-func (req *jsonDNSConfig) checkCacheTTL() (err error) {
+// validateCacheSettings returns an error if the cache configuration is invalid.
+func (req *jsonDNSConfig) validateCacheSettings(curCacheSize uint32) (err error) {
+	err = req.validateCacheSize(curCacheSize)
+	if err != nil {
+		// Don't wrap the error because it's informative enough as is.
+		return err
+	}
+
 	if req.CacheMinTTL == nil && req.CacheMaxTTL == nil {
 		return nil
 	}
@@ -432,6 +449,28 @@ func (req *jsonDNSConfig) checkCacheTTL() (err error) {
 	}
 
 	return validateCacheTTL(minTTL, maxTTL)
+}
+
+// validateCacheSize returns an error if the cache size configuration is
+// invalid.  It also explicitly sets CacheEnabled to support legacy behavior.
+func (req *jsonDNSConfig) validateCacheSize(curCacheSize uint32) (err error) {
+	if req.CacheEnabled != nil && *req.CacheEnabled {
+		size := curCacheSize
+		if req.CacheSize != nil {
+			size = *req.CacheSize
+		}
+
+		if size == 0 {
+			return errors.Error("cache_size must be greater than zero when cache_enabled is true")
+		}
+	}
+
+	if req.CacheEnabled == nil && req.CacheSize != nil {
+		isEnabled := *req.CacheSize > 0
+		req.CacheEnabled = &isEnabled
+	}
+
+	return nil
 }
 
 // checkRatelimitSubnetMaskLen returns an error if the length of the subnet mask
@@ -480,6 +519,8 @@ func checkInclusion(ptr *int, minN, maxN int) (err error) {
 
 // handleSetConfig handles requests to the POST /control/dns_config endpoint.
 func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	req := &jsonDNSConfig{}
 	err := json.NewDecoder(r.Body).Decode(req)
 	if err != nil {
@@ -497,7 +538,7 @@ func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = req.validate(ourAddrs, s.sysResolvers, s.privateNets)
+	err = req.validate(ourAddrs, s.sysResolvers, s.privateNets, s.conf.CacheSize)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 
@@ -505,10 +546,10 @@ func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	restart := s.setConfig(req)
-	s.conf.ConfigModified()
+	s.conf.ConfModifier.Apply(ctx)
 
 	if restart {
-		err = s.Reconfigure(nil)
+		err = s.Reconfigure(ctx, nil)
 		if err != nil {
 			aghhttp.Error(r, w, http.StatusInternalServerError, "%s", err)
 		}
@@ -590,6 +631,7 @@ func (s *Server) setConfigRestartable(dc *jsonDNSConfig) (shouldRestart bool) {
 		setIfNotNil(&s.conf.FallbackDNS, dc.Fallbacks),
 		setIfNotNil(&s.conf.EDNSClientSubnet.Enabled, dc.EDNSCSEnabled),
 		setIfNotNil(&s.conf.EDNSClientSubnet.UseCustom, dc.EDNSCSUseCustom),
+		setIfNotNil(&s.conf.CacheEnabled, dc.CacheEnabled),
 		setIfNotNil(&s.conf.CacheSize, dc.CacheSize),
 		setIfNotNil(&s.conf.CacheMinTTL, dc.CacheMinTTL),
 		setIfNotNil(&s.conf.CacheMaxTTL, dc.CacheMaxTTL),
@@ -651,6 +693,7 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 	req.BootstrapDNS = stringutil.FilterOut(req.BootstrapDNS, aghnet.IsCommentOrEmpty)
 
 	opts := &upstream.Options{
+		Logger:     aghslog.NewForUpstream(s.baseLogger, aghslog.UpstreamTypeTest),
 		Timeout:    s.conf.UpstreamTimeout,
 		PreferIPv6: s.conf.BootstrapPreferIPv6,
 	}
@@ -719,7 +762,7 @@ func (s *Server) handleSetProtection(w http.ResponseWriter, r *http.Request) {
 		s.dnsFilter.SetProtectionStatus(protectionReq.Enabled, disabledUntil)
 	}()
 
-	s.conf.ConfigModified()
+	s.conf.ConfModifier.Apply(r.Context())
 
 	aghhttp.OK(w)
 }

@@ -6,7 +6,6 @@ import (
 	"slices"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
-	"github.com/AdguardTeam/golibs/log"
 )
 
 // TODO(d.kolyshev): Use [rewrite.Item] instead.
@@ -37,6 +36,8 @@ func (d *DNSFilter) handleRewriteList(w http.ResponseWriter, r *http.Request) {
 
 // handleRewriteAdd is the handler for the POST /control/rewrite/add HTTP API.
 func (d *DNSFilter) handleRewriteAdd(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	rwJSON := rewriteEntryJSON{}
 	err := json.NewDecoder(r.Body).Decode(&rwJSON)
 	if err != nil {
@@ -50,7 +51,7 @@ func (d *DNSFilter) handleRewriteAdd(w http.ResponseWriter, r *http.Request) {
 		Answer: rwJSON.Answer,
 	}
 
-	err = rw.normalize()
+	err = rw.normalize(ctx, d.logger)
 	if err != nil {
 		// Shouldn't happen currently, since normalize only returns a non-nil
 		// error when a rewrite is nil, but be change-proof.
@@ -64,20 +65,23 @@ func (d *DNSFilter) handleRewriteAdd(w http.ResponseWriter, r *http.Request) {
 		defer d.confMu.Unlock()
 
 		d.conf.Rewrites = append(d.conf.Rewrites, rw)
-		log.Debug(
-			"rewrite: added element: %s -> %s [%d]",
-			rw.Domain,
-			rw.Answer,
-			len(d.conf.Rewrites),
+		d.logger.DebugContext(
+			ctx,
+			"added rewrite element",
+			"domain", rw.Domain,
+			"answer", rw.Answer,
+			"rewrites_len", len(d.conf.Rewrites),
 		)
 	}()
 
-	d.conf.ConfigModified()
+	d.conf.ConfModifier.Apply(ctx)
 }
 
 // handleRewriteDelete is the handler for the POST /control/rewrite/delete HTTP
 // API.
 func (d *DNSFilter) handleRewriteDelete(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	jsent := rewriteEntryJSON{}
 	err := json.NewDecoder(r.Body).Decode(&jsent)
 	if err != nil {
@@ -92,23 +96,27 @@ func (d *DNSFilter) handleRewriteDelete(w http.ResponseWriter, r *http.Request) 
 	}
 	arr := []*LegacyRewrite{}
 
-	func() {
-		d.confMu.Lock()
-		defer d.confMu.Unlock()
+	defer d.conf.ConfModifier.Apply(ctx)
 
-		for _, ent := range d.conf.Rewrites {
-			if ent.equal(entDel) {
-				log.Debug("rewrite: removed element: %s -> %s", ent.Domain, ent.Answer)
+	d.confMu.Lock()
+	defer d.confMu.Unlock()
 
-				continue
-			}
-
+	for _, ent := range d.conf.Rewrites {
+		if !ent.equal(entDel) {
 			arr = append(arr, ent)
-		}
-		d.conf.Rewrites = arr
-	}()
 
-	d.conf.ConfigModified()
+			continue
+		}
+
+		d.logger.DebugContext(
+			ctx,
+			"removed rewrite element",
+			"domain", ent.Domain,
+			"answer", ent.Answer,
+		)
+	}
+
+	d.conf.Rewrites = arr
 }
 
 // rewriteUpdateJSON is a struct for JSON object with rewrite rule update info.
@@ -120,6 +128,8 @@ type rewriteUpdateJSON struct {
 // handleRewriteUpdate is the handler for the PUT /control/rewrite/update HTTP
 // API.
 func (d *DNSFilter) handleRewriteUpdate(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	updateJSON := rewriteUpdateJSON{}
 	err := json.NewDecoder(r.Body).Decode(&updateJSON)
 	if err != nil {
@@ -138,7 +148,7 @@ func (d *DNSFilter) handleRewriteUpdate(w http.ResponseWriter, r *http.Request) 
 		Answer: updateJSON.Update.Answer,
 	}
 
-	err = rwAdd.normalize()
+	err = rwAdd.normalize(ctx, d.logger)
 	if err != nil {
 		// Shouldn't happen currently, since normalize only returns a non-nil
 		// error when a rewrite is nil, but be change-proof.
@@ -150,7 +160,7 @@ func (d *DNSFilter) handleRewriteUpdate(w http.ResponseWriter, r *http.Request) 
 	index := -1
 	defer func() {
 		if index >= 0 {
-			d.conf.ConfigModified()
+			d.conf.ConfModifier.Apply(ctx)
 		}
 	}()
 
@@ -166,6 +176,16 @@ func (d *DNSFilter) handleRewriteUpdate(w http.ResponseWriter, r *http.Request) 
 
 	d.conf.Rewrites = slices.Replace(d.conf.Rewrites, index, index+1, rwAdd)
 
-	log.Debug("rewrite: removed element: %s -> %s", rwDel.Domain, rwDel.Answer)
-	log.Debug("rewrite: added element: %s -> %s", rwAdd.Domain, rwAdd.Answer)
+	d.logger.DebugContext(
+		ctx,
+		"removed rewrite element",
+		"domain", rwDel.Domain,
+		"answer", rwDel.Answer,
+	)
+	d.logger.DebugContext(
+		ctx,
+		"added rewrite element",
+		"domain", rwAdd.Domain,
+		"answer", rwAdd.Answer,
+	)
 }

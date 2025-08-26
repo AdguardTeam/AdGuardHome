@@ -11,7 +11,33 @@ import (
 	"slices"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/whois"
+	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/netutil"
 )
+
+// ClientID is a unique identifier for a persistent client used in
+// DNS-over-HTTPS, DNS-over-TLS, and DNS-over-QUIC queries.
+//
+// TODO(s.chzhen):  Use everywhere.
+type ClientID string
+
+// ValidateClientID returns an error if id is not a valid ClientID.
+//
+// TODO(s.chzhen):  Consider implementing [validate.Interface] for ClientID.
+func ValidateClientID(id string) (err error) {
+	err = netutil.ValidateHostnameLabel(id)
+	if err != nil {
+		// Replace the domain name label wrapper with our own.
+		return fmt.Errorf("invalid clientid %q: %w", id, errors.Unwrap(err))
+	}
+
+	return nil
+}
+
+// isValidClientID returns false if id is not a valid ClientID.
+func isValidClientID(id string) (ok bool) {
+	return netutil.IsValidHostnameLabel(id)
+}
 
 // Source represents the source from which the information about the client has
 // been obtained.

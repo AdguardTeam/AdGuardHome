@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/next/dnssvc"
+	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/miekg/dns"
@@ -56,14 +57,12 @@ func TestService(t *testing.T) {
 	_, _ = testutil.RequireReceive(t, upstreamStartedCh, testTimeout)
 
 	c := &dnssvc.Config{
-		Logger:              slogutil.NewDiscardLogger(),
-		Addresses:           []netip.AddrPort{netip.MustParseAddrPort(listenAddr)},
-		BootstrapServers:    []string{upstreamSrv.PacketConn.LocalAddr().String()},
-		UpstreamServers:     []string{upstreamAddr},
-		DNS64Prefixes:       nil,
-		UpstreamTimeout:     testTimeout,
-		BootstrapPreferIPv6: false,
-		UseDNS64:            false,
+		Logger:           slogutil.NewDiscardLogger(),
+		UpstreamMode:     proxy.UpstreamModeParallel,
+		Addresses:        []netip.AddrPort{netip.MustParseAddrPort(listenAddr)},
+		BootstrapServers: []string{upstreamSrv.PacketConn.LocalAddr().String()},
+		UpstreamServers:  []string{upstreamAddr},
+		UpstreamTimeout:  testTimeout,
 	}
 
 	svc, err := dnssvc.New(c)

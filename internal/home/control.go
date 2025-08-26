@@ -68,7 +68,8 @@ func appendDNSAddrsWithIfaces(dst []string, src []netip.Addr) (res []string, err
 
 // collectDNSAddresses returns the list of DNS addresses the server is listening
 // on, including the addresses on all interfaces in cases of unspecified IPs.
-func collectDNSAddresses() (addrs []string, err error) {
+// tlsMgr must not be nil.
+func collectDNSAddresses(tlsMgr *tlsManager) (addrs []string, err error) {
 	if hosts := config.DNS.BindHosts; len(hosts) == 0 {
 		addrs = appendDNSAddrs(addrs, netutil.IPv4Localhost())
 	} else {
@@ -78,7 +79,7 @@ func collectDNSAddresses() (addrs []string, err error) {
 		}
 	}
 
-	de := getDNSEncryption()
+	de := getDNSEncryption(tlsMgr)
 	if de.https != "" {
 		addrs = append(addrs, de.https)
 	}
@@ -113,8 +114,10 @@ type statusResponse struct {
 	IsRunning       bool `json:"running"`
 }
 
-func handleStatus(w http.ResponseWriter, r *http.Request) {
-	dnsAddrs, err := collectDNSAddresses()
+func (web *webAPI) handleStatus(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	dnsAddrs, err := collectDNSAddresses(web.tlsManager)
 	if err != nil {
 		// Don't add a lot of formatting, since the error is already
 		// wrapped by collectDNSAddresses.
@@ -124,14 +127,14 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var (
-		fltConf                 *dnsforward.Config
-		protectionDisabledUntil *time.Time
-		protectionEnabled       bool
+		fltConf           *dnsforward.Config
+		protDisabledUntil *time.Time
+		protEnabled       bool
 	)
 	if globalContext.dnsServer != nil {
 		fltConf = &dnsforward.Config{}
 		globalContext.dnsServer.WriteDiskConfig(fltConf)
-		protectionEnabled, protectionDisabledUntil = globalContext.dnsServer.UpdatedProtectionStatus()
+		protEnabled, protDisabledUntil = globalContext.dnsServer.UpdatedProtectionStatus(ctx)
 	}
 
 	var resp statusResponse
@@ -140,11 +143,11 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 		defer config.RUnlock()
 
 		var protectionDisabledDuration int64
-		if protectionDisabledUntil != nil {
+		if protDisabledUntil != nil {
 			// Make sure that we don't send negative numbers to the frontend,
 			// since enough time might have passed to make the difference less
 			// than zero.
-			protectionDisabledDuration = max(0, time.Until(*protectionDisabledUntil).Milliseconds())
+			protectionDisabledDuration = max(0, time.Until(*protDisabledUntil).Milliseconds())
 		}
 
 		resp = statusResponse{
@@ -154,7 +157,7 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 			DNSPort:                    config.DNS.Port,
 			HTTPPort:                   config.HTTPConfig.Address.Port(),
 			ProtectionDisabledDuration: protectionDisabledDuration,
-			ProtectionEnabled:          protectionEnabled,
+			ProtectionEnabled:          protEnabled,
 			IsRunning:                  isRunning(),
 		}
 	}()
@@ -167,28 +170,25 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 	aghhttp.WriteJSONResponseOK(w, r, resp)
 }
 
-// ------------------------
-// registration of handlers
-// ------------------------
+// registerControlHandlers sets up HTTP handlers for various control endpoints.
+// web must not be nil.
 func registerControlHandlers(web *webAPI) {
-	globalContext.mux.HandleFunc(
-		"/control/version.json",
-		postInstall(optionalAuth(web.handleVersionJSON)),
-	)
+	globalContext.mux.HandleFunc("/control/version.json", postInstall(web.handleVersionJSON))
 	httpRegister(http.MethodPost, "/control/update", web.handleUpdate)
 
-	httpRegister(http.MethodGet, "/control/status", handleStatus)
-	httpRegister(http.MethodPost, "/control/i18n/change_language", handleI18nChangeLanguage)
+	httpRegister(http.MethodGet, "/control/status", web.handleStatus)
+	httpRegister(http.MethodPost, "/control/i18n/change_language", web.handleI18nChangeLanguage)
 	httpRegister(http.MethodGet, "/control/i18n/current_language", handleI18nCurrentLanguage)
-	httpRegister(http.MethodGet, "/control/profile", handleGetProfile)
-	httpRegister(http.MethodPut, "/control/profile/update", handlePutProfile)
+	httpRegister(http.MethodGet, "/control/profile", web.handleGetProfile)
+	httpRegister(http.MethodPut, "/control/profile/update", web.handlePutProfile)
 
 	// No auth is necessary for DoH/DoT configurations
 	globalContext.mux.HandleFunc("/apple/doh.mobileconfig", postInstall(handleMobileConfigDoH))
 	globalContext.mux.HandleFunc("/apple/dot.mobileconfig", postInstall(handleMobileConfigDoT))
-	RegisterAuthHandlers()
+	RegisterAuthHandlers(web)
 }
 
+// httpRegister registers an HTTP handler.
 func httpRegister(method, url string, handler http.HandlerFunc) {
 	if method == "" {
 		// "/dns-query" handler doesn't need auth, gzip and isn't restricted by 1 HTTP method
@@ -196,7 +196,10 @@ func httpRegister(method, url string, handler http.HandlerFunc) {
 		return
 	}
 
-	globalContext.mux.Handle(url, postInstallHandler(optionalAuthHandler(gziphandler.GzipHandler(ensureHandler(method, handler)))))
+	globalContext.mux.Handle(
+		url,
+		postInstallHandler(gziphandler.GzipHandler(ensureHandler(method, handler))),
+	)
 }
 
 // ensure returns a wrapped handler that makes sure that the request has the

@@ -3,7 +3,7 @@
 # This comment is used to simplify checking local copies of the script.  Bump
 # this number every time a significant change is made to this script.
 #
-# AdGuard-Project-Version: 13
+# AdGuard-Project-Version: 14
 
 verbose="${VERBOSE:-0}"
 readonly verbose
@@ -26,11 +26,11 @@ set -f -u
 
 # Simple analyzers
 
-# blocklist_imports is a simple check against unwanted packages.  The following
-# packages are banned:
+# blocklist_imports is a simple best-effort check against unwanted packages.
+# The following packages are banned:
 #
 #   *  Package errors is replaced by our own package in the
-#   github.com/AdguardTeam/golibs module.
+#      github.com/AdguardTeam/golibs module.
 #
 #   *  Packages log and github.com/AdguardTeam/golibs/log are replaced by
 #      stdlib's new package log/slog and AdGuard's new utilities package
@@ -67,7 +67,10 @@ set -f -u
 #
 # TODO(a.garipov): Add golibs/log.
 blocklist_imports() {
-	find . \
+	import_or_tab="$(printf '^\\(import \\|\t\\)')"
+	readonly import_or_tab
+
+	find_with_ignore \
 		-type 'f' \
 		-name '*.go' \
 		'!' '(' \
@@ -77,16 +80,16 @@ blocklist_imports() {
 		-exec \
 		'grep' \
 		'-H' \
-		'-e' '[[:space:]]"errors"$' \
-		'-e' '[[:space:]]"github.com/prometheus/client_golang/prometheus/promauto"$' \
-		'-e' '[[:space:]]"golang.org/x/exp/maps"$' \
-		'-e' '[[:space:]]"golang.org/x/exp/slices"$' \
-		'-e' '[[:space:]]"golang.org/x/net/context"$' \
-		'-e' '[[:space:]]"io/ioutil"$' \
-		'-e' '[[:space:]]"log"$' \
-		'-e' '[[:space:]]"reflect"$' \
-		'-e' '[[:space:]]"sort"$' \
-		'-e' '[[:space:]]"unsafe"$' \
+		'-e' "$import_or_tab"'"errors"$' \
+		'-e' "$import_or_tab"'"github.com/prometheus/client_golang/prometheus/promauto"$' \
+		'-e' "$import_or_tab"'"golang.org/x/exp/maps"$' \
+		'-e' "$import_or_tab"'"golang.org/x/exp/slices"$' \
+		'-e' "$import_or_tab"'"golang.org/x/net/context"$' \
+		'-e' "$import_or_tab"'"io/ioutil"$' \
+		'-e' "$import_or_tab"'"log"$' \
+		'-e' "$import_or_tab"'"reflect"$' \
+		'-e' "$import_or_tab"'"sort"$' \
+		'-e' "$import_or_tab"'"unsafe"$' \
 		'-n' \
 		'{}' \
 		';'
@@ -94,8 +97,11 @@ blocklist_imports() {
 
 # method_const is a simple check against the usage of some raw strings and
 # numbers where one should use named constants.
+#
+# NOTE:  Flag -H for grep is non-POSIX but all of Busybox, GNU, macOS, and
+# OpenBSD support it.
 method_const() {
-	find . \
+	find_with_ignore \
 		-type 'f' \
 		-name '*.go' \
 		-exec \
@@ -116,10 +122,11 @@ method_const() {
 # use of filenames like client_manager.go.
 underscores() {
 	underscore_files="$(
-		find . \
+		find_with_ignore \
 			-type 'f' \
 			-name '*_*.go' \
-			'!' '(' -name '*_bsd.go' \
+			'!' '(' \
+			-name '*_bsd.go' \
 			-o -name '*_darwin.go' \
 			-o -name '*_freebsd.go' \
 			-o -name '*_generate.go' \
@@ -169,15 +176,6 @@ run_linter gocognit --over='19' \
 	./internal/home/ \
 	;
 
-run_linter gocognit --over='18' \
-	./internal/aghtls/ \
-	;
-
-run_linter gocognit --over='15' \
-	./internal/aghos/ \
-	./internal/filtering/ \
-	;
-
 run_linter gocognit --over='14' \
 	./internal/dhcpd \
 	;
@@ -186,32 +184,26 @@ run_linter gocognit --over='13' \
 	./internal/aghnet/ \
 	;
 
-run_linter gocognit --over='12' \
-	./internal/filtering/rewrite/ \
-	;
-
-run_linter gocognit --over='11' \
-	./internal/updater/ \
-	;
-
 run_linter gocognit --over='10' \
 	./internal/aghalg/ \
 	./internal/aghhttp/ \
+	./internal/aghos/ \
 	./internal/aghrenameio/ \
 	./internal/aghtest/ \
+	./internal/aghtls/ \
+	./internal/aghuser/ \
 	./internal/arpdb/ \
 	./internal/client/ \
 	./internal/configmigrate/ \
 	./internal/dhcpsvc \
 	./internal/dnsforward/ \
-	./internal/filtering/hashprefix/ \
-	./internal/filtering/rulelist/ \
-	./internal/filtering/safesearch/ \
+	./internal/filtering/ \
 	./internal/ipset \
 	./internal/next/ \
 	./internal/rdns/ \
 	./internal/schedule/ \
 	./internal/stats/ \
+	./internal/updater/ \
 	./internal/version/ \
 	./internal/whois/ \
 	./scripts/ \
@@ -221,13 +213,7 @@ run_linter ineffassign ./...
 
 run_linter unparam ./...
 
-find . \
-	'(' \
-	-name 'node_modules' \
-	-type 'd' \
-	-prune \
-	')' \
-	-o \
+find_with_ignore \
 	-type 'f' \
 	'(' \
 	-name 'Makefile' \
@@ -250,6 +236,7 @@ run_linter fieldalignment \
 	./internal/aghrenameio/ \
 	./internal/aghtest/ \
 	./internal/aghtls/ \
+	./internal/aghuser/ \
 	./internal/arpdb/ \
 	./internal/client/ \
 	./internal/configmigrate/ \
@@ -280,6 +267,7 @@ run_linter gosec --exclude G115 --quiet \
 	./internal/aghos/ \
 	./internal/aghrenameio/ \
 	./internal/aghtest/ \
+	./internal/aghuser/ \
 	./internal/arpdb/ \
 	./internal/client/ \
 	./internal/configmigrate/ \

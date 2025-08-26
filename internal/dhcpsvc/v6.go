@@ -10,20 +10,22 @@ import (
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/golibs/validate"
 	"github.com/google/gopacket/layers"
 )
 
 // IPv6Config is the interface-specific configuration for DHCPv6.
 type IPv6Config struct {
 	// RangeStart is the first address in the range to assign to DHCP clients.
+	// It should be a valid IPv6 address.
 	RangeStart netip.Addr
 
-	// Options is the list of DHCP options to send to DHCP clients.  The options
-	// with zero length are treated as deletions of the corresponding options,
-	// either implicit or explicit.
+	// Options is the list of explicit DHCP options to send to clients.  The
+	// options with zero length are treated as deletions of the corresponding
+	// options, either implicit or explicit.
 	Options layers.DHCPv6Options
 
-	// LeaseDuration is the TTL of a DHCP lease.
+	// LeaseDuration is the TTL of a DHCP lease.  It should be positive.
 	LeaseDuration time.Duration
 
 	// RASlaacOnly defines whether the DHCP clients should only use SLAAC for
@@ -39,10 +41,13 @@ type IPv6Config struct {
 	Enabled bool
 }
 
-// validate returns an error in conf if any.
-func (c *IPv6Config) validate() (err error) {
+// type check
+var _ validate.Interface = (*IPv6Config)(nil)
+
+// Validate implements the [validate.Interface] interface for *IPv6Config.
+func (c *IPv6Config) Validate() (err error) {
 	if c == nil {
-		return errNilConfig
+		return errors.ErrNoValue
 	} else if !c.Enabled {
 		return nil
 	}
@@ -89,31 +94,34 @@ type dhcpInterfaceV6 struct {
 }
 
 // newDHCPInterfaceV6 creates a new DHCP interface for IPv6 address family with
-// the given configuration.
-//
-// TODO(e.burkov):  Validate properly.
+// the given configuration.  If the interface is disabled, it returns nil.  conf
+// must be valid.
 func newDHCPInterfaceV6(
 	ctx context.Context,
 	l *slog.Logger,
 	name string,
 	conf *IPv6Config,
-) (i *dhcpInterfaceV6) {
-	l = l.With(keyInterface, name, keyFamily, netutil.AddrFamilyIPv6)
+) (iface *dhcpInterfaceV6) {
 	if !conf.Enabled {
 		l.DebugContext(ctx, "disabled")
 
 		return nil
 	}
 
-	i = &dhcpInterfaceV6{
-		rangeStart:   conf.RangeStart,
-		common:       newNetInterface(name, l, conf.LeaseDuration),
+	iface = &dhcpInterfaceV6{
+		rangeStart: conf.RangeStart,
+		common: &netInterface{
+			logger:   l,
+			leases:   map[macKey]*Lease{},
+			name:     name,
+			leaseTTL: conf.LeaseDuration,
+		},
 		raSLAACOnly:  conf.RASLAACOnly,
 		raAllowSLAAC: conf.RAAllowSLAAC,
 	}
-	i.implicitOpts, i.explicitOpts = conf.options(ctx, l)
+	iface.implicitOpts, iface.explicitOpts = conf.options(ctx, l)
 
-	return i
+	return iface
 }
 
 // dhcpInterfacesV6 is a slice of network interfaces of IPv6 address family.

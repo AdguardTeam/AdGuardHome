@@ -9,32 +9,223 @@ The format is based on [*Keep a Changelog*](https://keepachangelog.com/en/1.0.0/
 <!--
 ## [v0.108.0] – TBA
 
-## [v0.107.58] - 2025-03-11 (APPROX.)
+## [v0.107.66] - 2025-09-03 (APPROX.)
 
-See also the [v0.107.58 GitHub milestone][ms-v0.107.58].
+See also the [v0.107.66 GitHub milestone][ms-v0.107.66].
 
-[ms-v0.107.58]: https://github.com/AdguardTeam/AdGuardHome/milestone/93?closed=1
+[ms-v0.107.66]: https://github.com/AdguardTeam/AdGuardHome/milestone/101?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
+<!--
+NOTE: Add new changes ABOVE THIS COMMENT.
+-->
+
+## [v0.107.65] - 2025-08-20
+
+See also the [v0.107.65 GitHub milestone][ms-v0.107.65].
+
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.24.6][go-1.24.6].
+
+### Added
+
+- A separate checkbox in the Web UI to enable or disable the global DNS response cache without losing the configured cache size.
+
+- A new `"cache_enabled"` field to the HTTP API (`GET /control/dns_info` and `POST /control/dns_config`).  See `openapi/openapi.yaml` for the full description.
+
+### Changed
+
+#### Configuration changes
+
+In this release, the schema version has changed from 29 to 30.
+
+- Added a new boolean field `dns.cache_enabled` to the configuration.  This field explicitly controls whether DNS caching is enabled, replacing the previous implicit logic based on `dns.cache_size`.
+
+    ```yaml
+    # BEFORE:
+    'dns':
+        # …
+        'cache_size': 123456
+
+    # AFTER:
+    'dns':
+        # …
+        'cache_enabled': true
+        'cache_size': 123456
+    ```
+
+    To roll back this change, set the schema_version back to `29`.
+
+### Fixed
+
+- Disabled state of *Top clients* action button in web UI ([#7923]).
+
+[#7923]: https://github.com/AdguardTeam/AdGuardHome/issues/7923
+
+[go-1.24.6]: https://groups.google.com/g/golang-announce/c/x5MKroML2yM
+[ms-v0.107.65]: https://github.com/AdguardTeam/AdGuardHome/milestone/100?closed=1
+
+## [v0.107.64] - 2025-07-28
+
+See also the [v0.107.64 GitHub milestone][ms-v0.107.64].
+
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.24.5][go-1.24.5].
+
+### Fixed
+
+- TTL override calculation ([#7903]).
+- Validation process for DNSCrypt settings ([#7856]).
+
+[#7856]: https://github.com/AdguardTeam/AdGuardHome/issues/7856
+[#7903]: https://github.com/AdguardTeam/AdGuardHome/issues/7903
+
+[go-1.24.5]: https://groups.google.com/g/golang-announce/c/gTNJnDXmn34
+[ms-v0.107.64]: https://github.com/AdguardTeam/AdGuardHome/milestone/99?closed=1
+
+## [v0.107.63] - 2025-06-26
+
+See also the [v0.107.63 GitHub milestone][ms-v0.107.63].
+
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.24.4][go-1.24.4].
+
+### Fixed
+
+- The hostnames of DHCP clients with multiple labels not being recognized.
+
+- Status reported by the systemd service implementation in cases of auto-restart after a failed start.
+
+[go-1.24.4]: https://groups.google.com/g/golang-announce/c/ufZ8WpEsA3A
+[ms-v0.107.63]: https://github.com/AdguardTeam/AdGuardHome/milestone/98?closed=1
+
+## [v0.107.62] - 2025-05-27
+
+See also the [v0.107.62 GitHub milestone][ms-v0.107.62].
+
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.24.3][go-1.24.3].
+
+### Fixed
+
+- Clients with CIDR identifiers showing zero requests on the *Settings → Client settings* page ([#2945]).
+
+- Command line option `--update` when the `dns.serve_plain_dns` configuration property was disabled ([#7801]).
+
+- DNS cache not working for custom upstream configurations.
+
+- Validation process for the DNS-over-TLS, DNS-over-QUIC, and HTTPS ports on the *Encryption Settings* page.
+
+- Searching for persistent clients using an exact match for CIDR in the `POST /clients/search` HTTP API.
+
+[#2945]: https://github.com/AdguardTeam/AdGuardHome/issues/2945
+[#7801]: https://github.com/AdguardTeam/AdGuardHome/issues/7801
+
+[go-1.24.3]: https://groups.google.com/g/golang-announce/c/UZoIkUT367A
+[ms-v0.107.62]: https://github.com/AdguardTeam/AdGuardHome/milestone/97?closed=1
+
+## [v0.107.61] - 2025-04-22
+
+See also the [v0.107.61 GitHub milestone][ms-v0.107.61].
+
+### Security
+
+- Any simultaneous requests that are considered duplicates will now only result in a single request to upstreams, reducing the chance of a cache poisoning attack succeeding.  This is controlled by the new configuration object `pending_requests`, which has a single `enabled` property, set to `true` by default.
+
+    **NOTE:** We thank [Xiang Li][mr-xiang-li] for reporting this security issue.  It's strongly recommended to leave it enabled, otherwise AdGuard Home will be vulnerable to untrusted clients.
+
+[mr-xiang-li]:  https://lixiang521.com/
+[ms-v0.107.61]: https://github.com/AdguardTeam/AdGuardHome/milestone/96?closed=1
+
+## [v0.107.60] - 2025-04-14
+
+See also the [v0.107.60 GitHub milestone][ms-v0.107.60].
+
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.24.2][go-1.24.2].
+
+### Changed
+
+- Alpine Linux version in `Dockerfile` has been updated to 3.21 ([#7588]).
+
+### Deprecated
+
+- Node 20 support, Node 22 will be required in future releases.
+
+    **NOTE:** `npm` may be replaced with a different tool, such as `pnpm` or `yarn`, in a future release.
+
+### Fixed
+
+- Filtering for DHCP clients ([#7734]).
+
+- Incorrect label on login page ([#7729]).
+
+- Validation process for the HTTPS port on the *Encryption Settings* page.
+
+### Removed
+
+- Node 18 support.
+
+[#7588]: https://github.com/AdguardTeam/AdGuardHome/issues/7588
+[#7729]: https://github.com/AdguardTeam/AdGuardHome/issues/7729
+[#7734]: https://github.com/AdguardTeam/AdGuardHome/issues/7734
+
+[go-1.24.2]:    https://groups.google.com/g/golang-announce/c/Y2uBTVKjBQk
+[ms-v0.107.60]: https://github.com/AdguardTeam/AdGuardHome/milestone/95?closed=1
+
+## [v0.107.59] - 2025-03-21
+
+See also the [v0.107.59 GitHub milestone][ms-v0.107.59].
+
+- Rules with the `client` modifier not working ([#7708]).
+
+- The search form not working in the query log ([#7704]).
+
+[#7704]: https://github.com/AdguardTeam/AdGuardHome/issues/7704
+[#7708]: https://github.com/AdguardTeam/AdGuardHome/issues/7708
+
+[ms-v0.107.59]: https://github.com/AdguardTeam/AdGuardHome/milestone/94?closed=1
+
+## [v0.107.58] - 2025-03-19
+
+See also the [v0.107.58 GitHub milestone][ms-v0.107.58].
 
 ### Security
 
 - Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.24.1][go-1.24.1].
 
+### Added
+
+- The ability to check filtering rules for host names using an optional query type and optional ClientID or client IP address ([#4036]).
+
+- Optional `client` and `qtype` URL query parameters to the `GET /control/check_host` HTTP API.
+
 ### Fixed
 
+- Clearing the DNS cache on the *DNS settings* page now includes both global cache and custom client cache.
+
+- Invalid ICMPv6 Router Advertisement messages ([#7547]).
+
+- Disabled button for autofilled login form.
+
 - Formatting of elapsed times less than one millisecond.
+
 - Changes to global upstream DNS settings not applying to custom client upstream configurations.
+
 - The formatting of large numbers in the clients tables on the *Client settings* page ([#7583]).
 
+[#4036]: https://github.com/AdguardTeam/AdGuardHome/issues/4036
+[#7547]: https://github.com/AdguardTeam/AdGuardHome/issues/7547
 [#7583]: https://github.com/AdguardTeam/AdGuardHome/issues/7583
 
 [go-1.24.1]: https://groups.google.com/g/golang-announce/c/4t3lzH3I0eI
-
-<!--
-NOTE: Add new changes ABOVE THIS COMMENT.
--->
+[ms-v0.107.58]: https://github.com/AdguardTeam/AdGuardHome/milestone/93?closed=1
 
 ## [v0.107.57] - 2025-02-20
 
@@ -55,6 +246,7 @@ See also the [v0.107.57 GitHub milestone][ms-v0.107.57].
 ### Fixed
 
 - The hostnames of DHCP clients not being shown in the *Top clients* table on the dashboard ([#7627]).
+
 - The formatting of large numbers in the upstream table and query log ([#7590]).
 
 [#7590]: https://github.com/AdguardTeam/AdGuardHome/issues/7590
@@ -2717,7 +2909,7 @@ See also the [v0.106.0 GitHub milestone][ms-v0.106.0].
 
 - Quality of logging ([#2954]).
 
-- Normalization of hostnames sent by DHCP clients ([#2945], [#2952]).
+- Normalization of hostnames sent by DHCP clients ([#2946], [#2952]).
 
 - The access to the private hosts is now forbidden for users from external networks ([#2889]).
 
@@ -2777,7 +2969,7 @@ See also the [v0.106.0 GitHub milestone][ms-v0.106.0].
 [#2923]: https://github.com/AdguardTeam/AdGuardHome/issues/2923
 [#2927]: https://github.com/AdguardTeam/AdGuardHome/issues/2927
 [#2934]: https://github.com/AdguardTeam/AdGuardHome/issues/2934
-[#2945]: https://github.com/AdguardTeam/AdGuardHome/issues/2945
+[#2946]: https://github.com/AdguardTeam/AdGuardHome/issues/2946
 [#2947]: https://github.com/AdguardTeam/AdGuardHome/issues/2947
 [#2952]: https://github.com/AdguardTeam/AdGuardHome/issues/2952
 [#2954]: https://github.com/AdguardTeam/AdGuardHome/issues/2954
@@ -3031,11 +3223,19 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 [ms-v0.104.2]: https://github.com/AdguardTeam/AdGuardHome/milestone/28?closed=1
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.58...HEAD
-[v0.107.58]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.57...v0.107.58
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.66...HEAD
+[v0.107.66]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.65...v0.107.66
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.57...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.65...HEAD
+[v0.107.65]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.64...v0.107.65
+[v0.107.64]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.63...v0.107.64
+[v0.107.63]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.62...v0.107.63
+[v0.107.62]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.61...v0.107.62
+[v0.107.61]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.60...v0.107.61
+[v0.107.60]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.59...v0.107.60
+[v0.107.59]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.58...v0.107.59
+[v0.107.58]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.57...v0.107.58
 [v0.107.57]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.56...v0.107.57
 [v0.107.56]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.55...v0.107.56
 [v0.107.55]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.54...v0.107.55

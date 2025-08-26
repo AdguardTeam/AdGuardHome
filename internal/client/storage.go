@@ -12,11 +12,13 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/arpdb"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/whois"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/hostsfile"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 )
 
@@ -86,6 +88,10 @@ type HostsContainer interface {
 
 // StorageConfig is the client storage configuration structure.
 type StorageConfig struct {
+	// BaseLogger is used to create loggers for other entities.  It should not
+	// have a prefix and must not be nil.
+	BaseLogger *slog.Logger
+
 	// Logger is used for logging the operation of the client storage.  It must
 	// not be nil.
 	Logger *slog.Logger
@@ -172,7 +178,7 @@ func NewStorage(ctx context.Context, conf *StorageConfig) (s *Storage, err error
 		mu:                     &sync.Mutex{},
 		index:                  newIndex(),
 		runtimeIndex:           newRuntimeIndex(),
-		upstreamManager:        newUpstreamManager(conf.Logger, conf.Clock),
+		upstreamManager:        newUpstreamManager(conf.BaseLogger, conf.Clock),
 		dhcp:                   conf.DHCP,
 		etcHosts:               conf.EtcHosts,
 		arpDB:                  conf.ARPDB,
@@ -432,48 +438,138 @@ func (s *Storage) Add(ctx context.Context, p *Persistent) (err error) {
 		ctx,
 		"client added",
 		"name", p.Name,
-		"ids", p.IDs(),
+		"ids", p.Identifiers(),
 		"clients_count", s.index.size(),
 	)
 
 	return nil
 }
 
-// FindByName finds persistent client by name.  And returns its shallow copy.
-func (s *Storage) FindByName(name string) (p *Persistent, ok bool) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+// FindParams represents the parameters for searching a client.  At least one
+// field must be non-empty.
+type FindParams struct {
+	// ClientID is a unique identifier for the client used in DoH, DoT, and DoQ
+	// DNS queries.
+	ClientID ClientID
 
-	p, ok = s.index.findByName(name)
-	if ok {
-		return p.ShallowClone(), ok
-	}
+	// RemoteIP is the IP address used as a client search parameter.
+	RemoteIP netip.Addr
 
-	return nil, false
+	// Subnet is the CIDR used as a client search parameter.
+	Subnet netip.Prefix
+
+	// MAC is the physical hardware address used as a client search parameter.
+	MAC net.HardwareAddr
+
+	// UID is the unique ID of persistent client used as a search parameter.
+	//
+	// TODO(s.chzhen):  Use this.
+	UID UID
 }
 
-// Find finds persistent client by string representation of the ClientID, IP
-// address, or MAC.  And returns its shallow copy.
+// ErrBadIdentifier is returned by [FindParams.Set] when it cannot parse the
+// provided client identifier.
+const ErrBadIdentifier errors.Error = "bad client identifier"
+
+// Set clears the stored search parameters and parses the string representation
+// of the search parameter into typed parameter, storing it.  In some cases, it
+// may result in storing both an IP address and a MAC address because they might
+// have identical string representations.  It returns [ErrBadIdentifier] if id
+// cannot be parsed.
 //
-// TODO(s.chzhen):  Accept ClientIDData structure instead, which will contain
-// the parsed IP address, if any.
-func (s *Storage) Find(id string) (p *Persistent, ok bool) {
+// TODO(s.chzhen):  Add support for UID.
+func (p *FindParams) Set(id string) (err error) {
+	*p = FindParams{}
+
+	isFound := false
+
+	if netutil.IsValidIPString(id) {
+		// It is safe to use [netip.MustParseAddr] because it has already been
+		// validated that id contains the string representation of the IP
+		// address.
+		p.RemoteIP = netip.MustParseAddr(id)
+
+		// Even if id can be parsed as an IP address, it may be a MAC address.
+		// So do not return prematurely, continue parsing.
+		isFound = true
+	}
+
+	if netutil.IsValidMACString(id) {
+		p.MAC, err = net.ParseMAC(id)
+		if err != nil {
+			panic(fmt.Errorf("parsing mac from %q: %w", id, err))
+		}
+
+		isFound = true
+	}
+
+	if isFound {
+		return nil
+	}
+
+	if netutil.IsValidIPPrefixString(id) {
+		// It is safe to use [netip.MustParsePrefix] because it has already been
+		// validated that id contains the string representation of IP prefix.
+		p.Subnet = netip.MustParsePrefix(id)
+
+		return nil
+	}
+
+	if !isValidClientID(id) {
+		return ErrBadIdentifier
+	}
+
+	p.ClientID = ClientID(id)
+
+	return nil
+}
+
+// Find represents the parameters for searching a client.  params must not be
+// nil and must have at least one non-empty field.
+func (s *Storage) Find(params *FindParams) (p *Persistent, ok bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	p, ok = s.index.find(id)
+	isClientID := params.ClientID != ""
+	isRemoteIP := params.RemoteIP != (netip.Addr{})
+	isSubnet := params.Subnet != (netip.Prefix{})
+	isMAC := params.MAC != nil
+
+	for {
+		switch {
+		case isClientID:
+			isClientID = false
+			p, ok = s.index.findByClientID(params.ClientID)
+		case isRemoteIP:
+			isRemoteIP = false
+			p, ok = s.findByIP(params.RemoteIP)
+		case isSubnet:
+			isSubnet = false
+			p, ok = s.index.findByCIDR(params.Subnet)
+		case isMAC:
+			isMAC = false
+			p, ok = s.index.findByMAC(params.MAC)
+		default:
+			return nil, false
+		}
+
+		if ok {
+			return p.ShallowClone(), true
+		}
+	}
+}
+
+// findByIP finds persistent client by IP address.  s.mu is expected to be
+// locked.
+func (s *Storage) findByIP(addr netip.Addr) (p *Persistent, ok bool) {
+	p, ok = s.index.findByIP(addr)
 	if ok {
-		return p.ShallowClone(), ok
+		return p, true
 	}
 
-	ip, err := netip.ParseAddr(id)
-	if err != nil {
-		return nil, false
-	}
-
-	foundMAC := s.dhcp.MACByIP(ip)
+	foundMAC := s.dhcp.MACByIP(addr)
 	if foundMAC != nil {
-		return s.FindByMAC(foundMAC)
+		return s.index.findByMAC(foundMAC)
 	}
 
 	return nil, false
@@ -486,6 +582,8 @@ func (s *Storage) Find(id string) (p *Persistent, ok bool) {
 //
 // Note that multiple clients can have the same IP address with different zones.
 // Therefore, the result of this method is indeterminate.
+//
+// TODO(s.chzhen):  Consider accepting [FindParams].
 func (s *Storage) FindLoose(ip netip.Addr, id string) (p *Persistent, ok bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -495,20 +593,14 @@ func (s *Storage) FindLoose(ip netip.Addr, id string) (p *Persistent, ok bool) {
 		return p.ShallowClone(), ok
 	}
 
+	foundMAC := s.dhcp.MACByIP(ip)
+	if foundMAC != nil {
+		return s.index.findByMAC(foundMAC)
+	}
+
 	p = s.index.findByIPWithoutZone(ip)
 	if p != nil {
 		return p.ShallowClone(), true
-	}
-
-	return nil, false
-}
-
-// FindByMAC finds persistent client by MAC and returns its shallow copy.  s.mu
-// is expected to be locked.
-func (s *Storage) FindByMAC(mac net.HardwareAddr) (p *Persistent, ok bool) {
-	p, ok = s.index.findByMAC(mac)
-	if ok {
-		return p.ShallowClone(), ok
 	}
 
 	return nil, false
@@ -642,16 +734,16 @@ func (s *Storage) CustomUpstreamConfig(
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	c, ok := s.index.findByClientID(id)
+	c, ok := s.index.findByClientID(ClientID(id))
 	if !ok {
-		c, ok = s.index.findByIP(addr)
+		c, ok = s.findByIP(addr)
 	}
 
 	if !ok {
 		return nil
 	}
 
-	return s.upstreamManager.customUpstreamConfig(c.UID)
+	return s.upstreamManager.customUpstreamConfig(c.UID, c.Name)
 }
 
 // UpdateCommonUpstreamConfig implements the [dnsforward.ClientsContainer]
@@ -670,4 +762,45 @@ func (s *Storage) ClearUpstreamCache() {
 	defer s.mu.Unlock()
 
 	s.upstreamManager.clearUpstreamCache()
+}
+
+// ApplyClientFiltering retrieves persistent client information using the
+// ClientID or client IP address, and applies it to the filtering settings.
+// setts must not be nil.
+func (s *Storage) ApplyClientFiltering(id string, addr netip.Addr, setts *filtering.Settings) {
+	c, ok := s.index.findByClientID(ClientID(id))
+	if !ok {
+		c, ok = s.index.findByIP(addr)
+	}
+
+	if !ok {
+		foundMAC := s.dhcp.MACByIP(addr)
+		if foundMAC != nil {
+			c, ok = s.index.findByMAC(foundMAC)
+		}
+	}
+
+	if !ok {
+		s.logger.Debug("no client filtering settings found", "clientid", id, "addr", addr)
+
+		return
+	}
+
+	s.logger.Debug("applying custom client filtering settings", "client_name", c.Name)
+
+	if c.UseOwnBlockedServices {
+		setts.BlockedServices = c.BlockedServices.Clone()
+	}
+
+	setts.ClientName = c.Name
+	setts.ClientTags = slices.Clone(c.Tags)
+	if !c.UseOwnSettings {
+		return
+	}
+
+	setts.FilteringEnabled = c.FilteringEnabled
+	setts.SafeSearchEnabled = c.SafeSearchConf.Enabled
+	setts.ClientSafeSearch = c.SafeSearch
+	setts.SafeBrowsingEnabled = c.SafeBrowsingEnabled
+	setts.ParentalEnabled = c.ParentalEnabled
 }

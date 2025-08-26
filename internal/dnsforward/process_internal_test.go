@@ -3,6 +3,7 @@ package dnsforward
 import (
 	"cmp"
 	"context"
+	"crypto/tls"
 	"net"
 	"net/netip"
 	"testing"
@@ -11,7 +12,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
-	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/urlfilter/rules"
@@ -77,6 +77,7 @@ func TestServer_ProcessInitial(t *testing.T) {
 			t.Parallel()
 
 			c := ServerConfig{
+				TLSConf: &TLSConfig{},
 				Config: Config{
 					AAAADisabled:     tc.aaaaDisabled,
 					UpstreamMode:     UpstreamModeLoadBalance,
@@ -93,7 +94,7 @@ func TestServer_ProcessInitial(t *testing.T) {
 			var gotAddr netip.Addr
 			s.addrProc = &aghtest.AddressProcessor{
 				OnProcess: func(ctx context.Context, ip netip.Addr) { gotAddr = ip },
-				OnClose:   func() (err error) { panic("not implemented") },
+				OnClose:   func() (_ error) { panic(testutil.UnexpectedCall()) },
 			}
 
 			dctx := &dnsContext{
@@ -104,7 +105,7 @@ func TestServer_ProcessInitial(t *testing.T) {
 				},
 			}
 
-			gotRC := s.processInitial(dctx)
+			gotRC := s.processInitial(testutil.ContextWithTimeout(t, testTimeout), dctx)
 			assert.Equal(t, tc.wantRC, gotRC)
 			assert.Equal(t, testClientAddrPort.Addr(), gotAddr)
 
@@ -177,6 +178,7 @@ func TestServer_ProcessFilteringAfterResponse(t *testing.T) {
 			t.Parallel()
 
 			c := ServerConfig{
+				TLSConf: &TLSConfig{},
 				Config: Config{
 					AAAADisabled:     tc.aaaaDisabled,
 					UpstreamMode:     UpstreamModeLoadBalance,
@@ -206,8 +208,8 @@ func TestServer_ProcessFilteringAfterResponse(t *testing.T) {
 					Addr:  testClientAddrPort,
 				},
 			}
-
-			gotRC := s.processFilteringAfterResponse(dctx)
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			gotRC := s.processFilteringAfterResponse(ctx, dctx)
 			assert.Equal(t, tc.wantRC, gotRC)
 			assert.Equal(t, newResp(dns.RcodeSuccess, tc.req, tc.wantRespAns), dctx.proxyCtx.Res)
 		})
@@ -316,6 +318,8 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 	}}
 
 	_, certPem, keyPem := createServerTLSConfig(t)
+	cert, err := tls.X509KeyPair(certPem, keyPem)
+	require.NoError(t, err)
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -328,19 +332,18 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 					EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 					ClientsContainer: EmptyClientsContainer{},
 				},
-				TLSConfig: TLSConfig{
-					ServerName:           ddrTestDomainName,
-					CertificateChainData: certPem,
-					PrivateKeyData:       keyPem,
-					TLSListenAddrs:       tc.addrsDoT,
-					HTTPSListenAddrs:     tc.addrsDoH,
-					QUICListenAddrs:      tc.addrsDoQ,
+				TLSConf: &TLSConfig{
+					ServerName:       ddrTestDomainName,
+					Cert:             &cert,
+					TLSListenAddrs:   tc.addrsDoT,
+					HTTPSListenAddrs: tc.addrsDoH,
+					QUICListenAddrs:  tc.addrsDoQ,
 				},
 				ServePlainDNS: true,
 			})
 			// TODO(e.burkov):  Generate a certificate actually containing the
 			// IP addresses.
-			s.conf.hasIPAddrs = true
+			s.hasIPAddrs = true
 
 			req := createTestMessageWithType(tc.host, tc.qtype)
 
@@ -350,7 +353,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 				},
 			}
 
-			res := s.processDDRQuery(dctx)
+			res := s.processDDRQuery(testutil.ContextWithTimeout(t, testTimeout), dctx)
 			require.Equal(t, tc.wantRes, res)
 
 			if tc.wantRes != resultCodeFinish {
@@ -370,13 +373,14 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 }
 
 // createTestDNSFilter returns the minimum valid DNSFilter.
-func createTestDNSFilter(t *testing.T) (f *filtering.DNSFilter) {
-	t.Helper()
+func createTestDNSFilter(tb testing.TB) (f *filtering.DNSFilter) {
+	tb.Helper()
 
 	f, err := filtering.New(&filtering.Config{
+		Logger:       testLogger,
 		BlockingMode: filtering.BlockingModeDefault,
 	}, []filtering.Filter{})
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
 	return f
 }
@@ -435,7 +439,8 @@ func TestServer_ProcessDHCPHosts_localRestriction(t *testing.T) {
 				dnsFilter:         createTestDNSFilter(t),
 				dhcpServer:        dhcp,
 				localDomainSuffix: localDomainSuffix,
-				baseLogger:        slogutil.NewDiscardLogger(),
+				baseLogger:        testLogger,
+				logger:            testLogger,
 			}
 
 			req := &dns.Msg{
@@ -456,7 +461,7 @@ func TestServer_ProcessDHCPHosts_localRestriction(t *testing.T) {
 				},
 			}
 
-			res := s.processDHCPHosts(dctx)
+			res := s.processDHCPHosts(testutil.ContextWithTimeout(t, testTimeout), dctx)
 
 			pctx := dctx.proxyCtx
 			if !tc.isLocalCli {
@@ -494,14 +499,28 @@ func TestServer_ProcessDHCPHosts_localRestriction(t *testing.T) {
 
 func TestServer_ProcessDHCPHosts(t *testing.T) {
 	const (
-		localTLD = "lan"
+		localTLD  = "lan"
+		customTLD = "custom"
 
-		knownClient  = "example"
-		externalHost = knownClient + ".com"
-		clientHost   = knownClient + "." + localTLD
+		oneLabelClient     = "example"
+		twoLabelClient     = "sub.example"
+		externalHost       = oneLabelClient + ".com"
+		oneLabelClientHost = oneLabelClient + "." + localTLD
+		twoLabelClientHost = twoLabelClient + "." + localTLD
 	)
 
-	knownIP := netip.MustParseAddr("1.2.3.4")
+	knownClients := map[string]netip.Addr{
+		oneLabelClient: netip.MustParseAddr("1.2.3.4"),
+		twoLabelClient: netip.MustParseAddr("1.2.3.5"),
+	}
+
+	testDHCP := &testDHCP{
+		OnEnabled: func() (ok bool) { return true },
+		OnIPByHost: func(host string) (ip netip.Addr) {
+			return knownClients[host]
+		},
+		OnHostByIP: func(ip netip.Addr) (_ string) { panic(testutil.UnexpectedCall(ip)) },
+	}
 
 	testCases := []struct {
 		wantIP  netip.Addr
@@ -525,9 +544,16 @@ func TestServer_ProcessDHCPHosts(t *testing.T) {
 		wantRes: resultCodeSuccess,
 		qtyp:    dns.TypeCNAME,
 	}, {
-		wantIP:  knownIP,
+		wantIP:  knownClients[oneLabelClient],
 		name:    "internal",
-		host:    clientHost,
+		host:    oneLabelClientHost,
+		suffix:  localTLD,
+		wantRes: resultCodeSuccess,
+		qtyp:    dns.TypeA,
+	}, {
+		wantIP:  knownClients[twoLabelClient],
+		name:    "internal_two_label",
+		host:    twoLabelClientHost,
 		suffix:  localTLD,
 		wantRes: resultCodeSuccess,
 		qtyp:    dns.TypeA,
@@ -541,49 +567,36 @@ func TestServer_ProcessDHCPHosts(t *testing.T) {
 	}, {
 		wantIP:  netip.Addr{},
 		name:    "internal_aaaa",
-		host:    clientHost,
+		host:    oneLabelClientHost,
 		suffix:  localTLD,
 		wantRes: resultCodeSuccess,
 		qtyp:    dns.TypeAAAA,
 	}, {
-		wantIP:  knownIP,
+		wantIP:  knownClients[oneLabelClient],
 		name:    "custom_suffix",
-		host:    knownClient + ".custom",
-		suffix:  "custom",
+		host:    oneLabelClient + "." + customTLD,
+		suffix:  customTLD,
+		wantRes: resultCodeSuccess,
+		qtyp:    dns.TypeA,
+	}, {
+		wantIP:  knownClients[twoLabelClient],
+		name:    "custom_suffix_two_label",
+		host:    twoLabelClient + "." + customTLD,
+		suffix:  customTLD,
 		wantRes: resultCodeSuccess,
 		qtyp:    dns.TypeA,
 	}}
 
 	for _, tc := range testCases {
-		testDHCP := &testDHCP{
-			OnEnabled: func() (_ bool) { return true },
-			OnIPByHost: func(host string) (ip netip.Addr) {
-				if host == knownClient {
-					ip = knownIP
-				}
-
-				return ip
-			},
-			OnHostByIP: func(ip netip.Addr) (host string) { panic("not implemented") },
-		}
-
 		s := &Server{
 			dnsFilter:         createTestDNSFilter(t),
 			dhcpServer:        testDHCP,
 			localDomainSuffix: tc.suffix,
-			baseLogger:        slogutil.NewDiscardLogger(),
+			baseLogger:        testLogger,
+			logger:            testLogger,
 		}
 
-		req := &dns.Msg{
-			MsgHdr: dns.MsgHdr{
-				Id: 1234,
-			},
-			Question: []dns.Question{{
-				Name:   dns.Fqdn(tc.host),
-				Qtype:  tc.qtyp,
-				Qclass: dns.ClassINET,
-			}},
-		}
+		req := (&dns.Msg{}).SetQuestion(dns.Fqdn(tc.host), tc.qtyp)
 
 		dctx := &dnsContext{
 			proxyCtx: &proxy.DNSContext{
@@ -593,14 +606,14 @@ func TestServer_ProcessDHCPHosts(t *testing.T) {
 		}
 
 		t.Run(tc.name, func(t *testing.T) {
-			res := s.processDHCPHosts(dctx)
+			res := s.processDHCPHosts(testutil.ContextWithTimeout(t, testTimeout), dctx)
 			pctx := dctx.proxyCtx
 			assert.Equal(t, tc.wantRes, res)
 			require.NoError(t, dctx.err)
 
 			if tc.qtyp == dns.TypeAAAA {
-				// TODO(a.garipov): Remove this special handling
-				// when we fully support AAAA.
+				// TODO(a.garipov): Remove this special handling when we fully
+				// support AAAA.
 				require.NotNil(t, pctx.Res)
 
 				ans := pctx.Res.Answer
@@ -657,6 +670,7 @@ func TestServer_HandleDNSRequest_restrictLocal(t *testing.T) {
 	}, ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
+		TLSConf:        &TLSConfig{},
 		// TODO(s.chzhen):  Add tests where EDNSClientSubnet.Enabled is true.
 		// Improve Config declaration for tests.
 		Config: Config{
@@ -789,6 +803,7 @@ func TestServer_ProcessUpstream_localPTR(t *testing.T) {
 			ServerConfig{
 				UDPListenAddrs: []*net.UDPAddr{{}},
 				TCPListenAddrs: []*net.TCPAddr{{}},
+				TLSConf:        &TLSConfig{},
 				Config: Config{
 					UpstreamMode:     UpstreamModeLoadBalance,
 					EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
@@ -799,9 +814,9 @@ func TestServer_ProcessUpstream_localPTR(t *testing.T) {
 				ServePlainDNS:     true,
 			},
 		)
+		ctx := testutil.ContextWithTimeout(t, testTimeout)
 		pctx := newPrxCtx()
-
-		rc := s.processUpstream(&dnsContext{proxyCtx: pctx})
+		rc := s.processUpstream(ctx, &dnsContext{proxyCtx: pctx})
 		require.Equal(t, resultCodeSuccess, rc)
 		require.NotEmpty(t, pctx.Res.Answer)
 		ptr := testutil.RequireTypeAssert[*dns.PTR](t, pctx.Res.Answer[0])
@@ -818,6 +833,7 @@ func TestServer_ProcessUpstream_localPTR(t *testing.T) {
 			ServerConfig{
 				UDPListenAddrs: []*net.UDPAddr{{}},
 				TCPListenAddrs: []*net.TCPAddr{{}},
+				TLSConf:        &TLSConfig{},
 				Config: Config{
 					UpstreamMode:     UpstreamModeLoadBalance,
 					EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
@@ -830,7 +846,8 @@ func TestServer_ProcessUpstream_localPTR(t *testing.T) {
 		)
 		pctx := newPrxCtx()
 
-		rc := s.processUpstream(&dnsContext{proxyCtx: pctx})
+		ctx := testutil.ContextWithTimeout(t, testTimeout)
+		rc := s.processUpstream(ctx, &dnsContext{proxyCtx: pctx})
 		require.Equal(t, resultCodeError, rc)
 		require.Empty(t, pctx.Res.Answer)
 	})

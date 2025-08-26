@@ -3,6 +3,12 @@
 package home
 
 import (
+	"bufio"
+	"fmt"
+	"io"
+	"os/exec"
+	"strings"
+
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/kardianos/service"
 )
@@ -11,54 +17,71 @@ import (
 // implementation if needed.
 func chooseSystem() {
 	sys := service.ChosenSystem()
-	// By default, package service uses the SysV system if it cannot detect
-	// anything other, but the update-rc.d fix should not be applied on OpenWrt,
-	// so exclude it explicitly.
-	//
-	// See https://github.com/AdguardTeam/AdGuardHome/issues/4480 and
-	// https://github.com/AdguardTeam/AdGuardHome/issues/4677.
-	if sys.String() == "unix-systemv" && !aghos.IsOpenWrt() {
-		service.ChooseSystem(sysvSystem{System: sys})
+	switch sys.String() {
+	case "unix-systemv":
+		// By default, package service uses the SysV system if it cannot detect
+		// anything other, but the update-rc.d fix should not be applied on
+		// OpenWrt, so exclude it explicitly.
+		//
+		// See https://github.com/AdguardTeam/AdGuardHome/issues/4480 and
+		// https://github.com/AdguardTeam/AdGuardHome/issues/4677.
+		if !aghos.IsOpenWrt() {
+			service.ChooseSystem(&sysvSystem{System: sys})
+		}
+	case "linux-systemd":
+		service.ChooseSystem(&systemdSystem{System: sys})
+	default:
+		// Do nothing.
 	}
 }
 
-// sysvSystem is a wrapper for service.System that wraps the service.Service
-// while creating a new one.
+// sysvSystem is a wrapper for a [service.System] that returns the custom
+// implementation of the [service.Service] interface.
 //
 // TODO(e.burkov):  File a PR to github.com/kardianos/service.
 type sysvSystem struct {
-	// System is expected to have an unexported type
-	// *service.linuxSystemService.
+	// System must have an unexported type *service.linuxSystemService.
 	service.System
 }
 
-// New returns a wrapped service.Service.
-func (sys sysvSystem) New(i service.Interface, c *service.Config) (s service.Service, err error) {
+// type check
+var _ service.System = (*sysvSystem)(nil)
+
+// New implements the [service.System] interface for *sysvSystem.  i and c must
+// not be nil.
+func (sys *sysvSystem) New(i service.Interface, c *service.Config) (s service.Service, err error) {
 	s, err = sys.System.New(i, c)
 	if err != nil {
+		// Don't wrap the error to keep it as close to the original one as
+		// possible.
 		return s, err
 	}
 
-	return sysvService{
+	return &sysvService{
 		Service: s,
 		name:    c.Name,
 	}, nil
 }
 
-// sysvService is a wrapper for a service.Service that also calls update-rc.d in
-// a proper way on installing and uninstalling.
+// sysvService is a wrapper for a SysV [service.Service] that supplements the
+// installation and uninstallation.
 type sysvService struct {
-	// Service is expected to have an unexported type *service.sysv.
+	// Service must have an unexported type *service.sysv.
 	service.Service
+
 	// name stores the name of the service to call updating script with it.
 	name string
 }
 
-// Install wraps service.Service.Install call with calling the updating script.
-func (svc sysvService) Install() (err error) {
+// type check
+var _ service.Service = (*sysvService)(nil)
+
+// Install implements the [service.Service] interface for *sysvService.
+func (svc *sysvService) Install() (err error) {
 	err = svc.Service.Install()
 	if err != nil {
-		// Don't wrap an error since it's informative enough as is.
+		// Don't wrap the error to keep it as close to the original one as
+		// possible.
 		return err
 	}
 
@@ -68,12 +91,12 @@ func (svc sysvService) Install() (err error) {
 	return err
 }
 
-// Uninstall wraps service.Service.Uninstall call with calling the updating
-// script.
-func (svc sysvService) Uninstall() (err error) {
+// Uninstall implements the [service.Service] interface for *sysvService.
+func (svc *sysvService) Uninstall() (err error) {
 	err = svc.Service.Uninstall()
 	if err != nil {
-		// Don't wrap an error since it's informative enough as is.
+		// Don't wrap the error to keep it as close to the original one as
+		// possible.
 		return err
 	}
 
@@ -81,4 +104,140 @@ func (svc sysvService) Uninstall() (err error) {
 
 	// Don't wrap an error since it's informative enough as is.
 	return err
+}
+
+// systemdSystem is a wrapper for a [service.System] that returns the custom
+// implementation of the [service.Service] interface.
+type systemdSystem struct {
+	// System must have an unexported type *service.linuxSystemService.
+	service.System
+}
+
+// type check
+var _ service.System = (*systemdSystem)(nil)
+
+// New implements the [service.System] interface for *systemdSystem.  i and c
+// must not be nil.
+func (sys *systemdSystem) New(i service.Interface, c *service.Config) (s service.Service, err error) {
+	s, err = sys.System.New(i, c)
+	if err != nil {
+		// Don't wrap the error to keep it as close to the original one as
+		// possible.
+		return s, err
+	}
+
+	return &systemdService{
+		Service:  s,
+		unitName: fmt.Sprintf("%s.service", c.Name),
+	}, nil
+}
+
+// type check
+var _ service.Service = (*systemdService)(nil)
+
+// systemdService is a wrapper for a systemd [service.Service] that enriches the
+// service status information.
+type systemdService struct {
+	// Service is expected to have an unexported type *service.systemd.
+	service.Service
+
+	// unitName stores the name of the systemd daemon.
+	unitName string
+}
+
+// type check
+var _ service.Service = (*systemdService)(nil)
+
+// Status implements the [service.Service] interface for *systemdService.
+func (s *systemdService) Status() (status service.Status, err error) {
+	cmd := exec.Command("systemctl", "show", s.unitName)
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return service.StatusUnknown, fmt.Errorf("connecting to command stdout: %w", err)
+	}
+
+	if err = cmd.Start(); err != nil {
+		return service.StatusUnknown, fmt.Errorf("start command executing: %w", err)
+	}
+
+	status, err = parseSystemctlShow(stdout)
+	if err != nil {
+		return service.StatusUnknown, fmt.Errorf("parsing command output: %w", err)
+	}
+
+	err = cmd.Wait()
+	if err != nil {
+		return service.StatusUnknown, fmt.Errorf("executing command: %w", err)
+	}
+
+	return status, nil
+}
+
+// Searched property names.  See man systemctl(1).
+const (
+	propNameLoadState   = "LoadState"
+	propNameActiveState = "ActiveState"
+	propNameSubState    = "SubState"
+)
+
+// parseSystemctlShow parses the output of the systemctl show command.  It
+// expects the key=value pairs separated by newlines.
+func parseSystemctlShow(output io.Reader) (status service.Status, err error) {
+	var loadState, activeState, subState string
+
+	scanner := bufio.NewScanner(output)
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		propName, propValue, ok := strings.Cut(line, "=")
+		if !ok {
+			return service.StatusUnknown, fmt.Errorf("unexpected line format: %q", line)
+		}
+
+		switch propName {
+		case propNameLoadState:
+			loadState = propValue
+		case propNameActiveState:
+			activeState = propValue
+		case propNameSubState:
+			subState = propValue
+		default:
+			// Go on.
+		}
+	}
+	if err = scanner.Err(); err != nil {
+		return service.StatusUnknown, err
+	}
+
+	return statusFromState(loadState, activeState, subState)
+}
+
+// statusFromState returns the service status based on the systemctl state
+// property values.
+func statusFromState(loadState, activeState, subState string) (status service.Status, err error) {
+	// Desired property values.  See man systemctl(1).
+	const (
+		propValueLoadStateNotFound   = "not-found"
+		propValueActiveStateActive   = "active"
+		propValueActiveStateInactive = "inactive"
+		propValueSubStateAutoRestart = "auto-restart"
+	)
+
+	switch {
+	case loadState == propValueLoadStateNotFound:
+		return service.StatusUnknown, service.ErrNotInstalled
+	case activeState == propValueActiveStateActive:
+		return service.StatusRunning, nil
+	case activeState == propValueActiveStateInactive:
+		return service.StatusStopped, nil
+	case subState == propValueSubStateAutoRestart:
+		return statusRestartOnFail, nil
+	default:
+		return service.StatusUnknown, fmt.Errorf(
+			"unexpected state: %s=%q, %s=%q, %s=%q",
+			propNameLoadState, loadState,
+			propNameActiveState, activeState,
+			propNameSubState, subState,
+		)
+	}
 }

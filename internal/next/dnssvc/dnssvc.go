@@ -14,13 +14,12 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghslog"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
-
-	// TODO(a.garipov): Add a “dnsproxy proxy” package to shield us from changes
-	// and replacement of module dnsproxy.
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 )
 
 // Service is the AdGuard Home DNS service.  A nil *Service is a valid
@@ -29,16 +28,30 @@ import (
 // TODO(a.garipov): Consider saving a [*proxy.Config] instance for those
 // fields that are only used in [New] and [Service.Config].
 type Service struct {
-	logger              *slog.Logger
-	proxy               *proxy.Proxy
+	// logger is used for logging the operation of the DNS service.
+	logger *slog.Logger
+
+	// proxy is the current DNS proxy.
+	proxy *proxy.Proxy
+
+	// proxyConf contains the fields that have been used to create proxy to
+	// return them in [Service.Config].
+	proxyConf *proxy.Config
+
+	// The fields below have been used to create proxy and are saved to return
+	// them in [Service.Config].
+
 	bootstraps          []string
 	bootstrapResolvers  []*upstream.UpstreamResolver
 	upstreams           []string
-	dns64Prefixes       []netip.Prefix
-	upsTimeout          time.Duration
-	running             atomic.Bool
+	upstreamTimeout     time.Duration
 	bootstrapPreferIPv6 bool
-	useDNS64            bool
+
+	// The fields above have been used to create proxy and are saved to return
+	// them in [Service.Config].
+
+	// running is true when the service has started.
+	running atomic.Bool
 }
 
 // New returns a new properly initialized *Service.  If c is nil, svc is a nil
@@ -50,16 +63,24 @@ func New(c *Config) (svc *Service, err error) {
 	}
 
 	svc = &Service{
-		logger:              c.Logger,
+		logger: c.Logger,
+		proxyConf: &proxy.Config{
+			UpstreamMode:   c.UpstreamMode,
+			Ratelimit:      c.Ratelimit,
+			DNS64Prefs:     c.DNS64Prefixes,
+			CacheSizeBytes: c.CacheSize,
+			CacheEnabled:   c.CacheEnabled,
+			RefuseAny:      c.RefuseAny,
+			UseDNS64:       c.UseDNS64,
+		},
 		bootstraps:          c.BootstrapServers,
 		upstreams:           c.UpstreamServers,
-		dns64Prefixes:       c.DNS64Prefixes,
-		upsTimeout:          c.UpstreamTimeout,
+		upstreamTimeout:     c.UpstreamTimeout,
 		bootstrapPreferIPv6: c.BootstrapPreferIPv6,
-		useDNS64:            c.UseDNS64,
 	}
 
 	upstreams, resolvers, err := addressesToUpstreams(
+		svc.logger.With(slogutil.KeyPrefix, aghslog.PrefixDNSProxy),
 		c.UpstreamServers,
 		c.BootstrapServers,
 		c.UpstreamTimeout,
@@ -70,15 +91,20 @@ func New(c *Config) (svc *Service, err error) {
 	}
 
 	svc.bootstrapResolvers = resolvers
+
 	svc.proxy, err = proxy.New(&proxy.Config{
-		Logger:        svc.logger,
-		UDPListenAddr: udpAddrs(c.Addresses),
-		TCPListenAddr: tcpAddrs(c.Addresses),
+		Logger: svc.logger,
 		UpstreamConfig: &proxy.UpstreamConfig{
 			Upstreams: upstreams,
 		},
-		UseDNS64:   c.UseDNS64,
-		DNS64Prefs: c.DNS64Prefixes,
+		UDPListenAddr: udpAddrs(c.Addresses),
+		TCPListenAddr: tcpAddrs(c.Addresses),
+		UpstreamMode:  svc.proxyConf.UpstreamMode,
+		Ratelimit:     svc.proxyConf.Ratelimit,
+		DNS64Prefs:    svc.proxyConf.DNS64Prefs,
+		CacheEnabled:  svc.proxyConf.CacheEnabled,
+		RefuseAny:     svc.proxyConf.RefuseAny,
+		UseDNS64:      svc.proxyConf.UseDNS64,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("proxy: %w", err)
@@ -89,19 +115,19 @@ func New(c *Config) (svc *Service, err error) {
 
 // addressesToUpstreams is a wrapper around [upstream.AddressToUpstream].  It
 // accepts a slice of addresses and other upstream parameters, and returns a
-// slice of upstreams.
+// slice of upstreams.  logger must not be nil.
 func addressesToUpstreams(
+	logger *slog.Logger,
 	upsStrs []string,
 	bootstraps []string,
 	timeout time.Duration,
 	preferIPv6 bool,
 ) (upstreams []upstream.Upstream, boots []*upstream.UpstreamResolver, err error) {
-	opts := &upstream.Options{
+	boots, err = aghnet.ParseBootstraps(bootstraps, &upstream.Options{
+		Logger:     logger.With(aghslog.KeyUpstreamType, aghslog.UpstreamTypeBootstrap),
 		Timeout:    timeout,
 		PreferIPv6: preferIPv6,
-	}
-
-	boots, err = aghnet.ParseBootstraps(bootstraps, opts)
+	})
 	if err != nil {
 		// Don't wrap the error, since it's informative enough as is.
 		return nil, nil, err
@@ -116,6 +142,7 @@ func addressesToUpstreams(
 	upstreams = make([]upstream.Upstream, len(upsStrs))
 	for i, upsStr := range upsStrs {
 		upstreams[i], err = upstream.AddressToUpstream(upsStr, &upstream.Options{
+			Logger:     logger.With(aghslog.KeyUpstreamType, aghslog.UpstreamTypeMain),
 			Bootstrap:  bootstrap,
 			Timeout:    timeout,
 			PreferIPv6: preferIPv6,
@@ -220,13 +247,18 @@ func (svc *Service) Config() (c *Config) {
 
 	c = &Config{
 		Logger:              svc.logger,
+		UpstreamMode:        svc.proxyConf.UpstreamMode,
 		Addresses:           addrs,
 		BootstrapServers:    svc.bootstraps,
 		UpstreamServers:     svc.upstreams,
-		DNS64Prefixes:       svc.dns64Prefixes,
-		UpstreamTimeout:     svc.upsTimeout,
+		DNS64Prefixes:       svc.proxyConf.DNS64Prefs,
+		UpstreamTimeout:     svc.upstreamTimeout,
+		CacheSize:           svc.proxyConf.CacheSizeBytes,
+		Ratelimit:           svc.proxyConf.Ratelimit,
 		BootstrapPreferIPv6: svc.bootstrapPreferIPv6,
-		UseDNS64:            svc.useDNS64,
+		CacheEnabled:        svc.proxyConf.CacheEnabled,
+		RefuseAny:           svc.proxyConf.RefuseAny,
+		UseDNS64:            svc.proxyConf.UseDNS64,
 	}
 
 	return c

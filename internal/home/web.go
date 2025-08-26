@@ -12,10 +12,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/updater"
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/netutil/httputil"
@@ -48,6 +47,17 @@ type webConfig struct {
 	// baseLogger is used to create loggers for other entities.  It must not be
 	// nil.
 	baseLogger *slog.Logger
+
+	// confModifier is used to update the global configuration.
+	confModifier agh.ConfigModifier
+
+	// tlsManager contains the current configuration and state of TLS
+	// encryption.  It must not be nil.
+	tlsManager *tlsManager
+
+	// auth stores web user information and handles authentication.  It must not
+	// be nil.
+	auth *auth
 
 	clientFS fs.FS
 
@@ -98,6 +108,9 @@ type httpsServer struct {
 type webAPI struct {
 	conf *webConfig
 
+	// confModifier is used to update the global configuration.
+	confModifier agh.ConfigModifier
+
 	// TODO(a.garipov): Refactor all these servers.
 	httpServer *http.Server
 
@@ -107,6 +120,13 @@ type webAPI struct {
 	// baseLogger is used to create loggers for other entities.  It must not be
 	// nil.
 	baseLogger *slog.Logger
+
+	// tlsManager contains the current configuration and state of TLS
+	// encryption.
+	tlsManager *tlsManager
+
+	// auth stores web user information and handles authentication.
+	auth *auth
 
 	// httpsServer is the server that handles HTTPS traffic.  If it is not nil,
 	// [Web.http3Server] must also not be nil.
@@ -121,15 +141,21 @@ func newWebAPI(ctx context.Context, conf *webConfig) (w *webAPI) {
 	conf.logger.InfoContext(ctx, "initializing")
 
 	w = &webAPI{
-		conf:       conf,
-		logger:     conf.logger,
-		baseLogger: conf.baseLogger,
+		conf:         conf,
+		confModifier: conf.confModifier,
+		logger:       conf.logger,
+		baseLogger:   conf.baseLogger,
+		tlsManager:   conf.tlsManager,
+		auth:         conf.auth,
 	}
 
 	clientFS := http.FileServer(http.FS(conf.clientFS))
 
 	// if not configured, redirect / to /install.html, otherwise redirect /install.html to /
-	globalContext.mux.Handle("/", withMiddlewares(clientFS, gziphandler.GzipHandler, optionalAuthHandler, postInstallHandler))
+	globalContext.mux.Handle(
+		"/",
+		withMiddlewares(clientFS, gziphandler.GzipHandler, postInstallHandler),
+	)
 
 	// add handlers for /install paths, we only need them when we're not configured yet
 	if conf.firstRun {
@@ -149,30 +175,9 @@ func newWebAPI(ctx context.Context, conf *webConfig) (w *webAPI) {
 	return w
 }
 
-// webCheckPortAvailable checks if port, which is considered an HTTPS port, is
-// available, unless the HTTPS server isn't active.
-//
-// TODO(a.garipov): Adapt for HTTP/3.
-func webCheckPortAvailable(port uint16) (ok bool) {
-	if globalContext.web.httpsServer.server != nil {
-		return true
-	}
-
-	addrPort := netip.AddrPortFrom(config.HTTPConfig.Address.Addr(), port)
-
-	err := aghnet.CheckPort("tcp", addrPort)
-	if err != nil {
-		log.Info("web: warning: checking https port: %s", err)
-
-		return false
-	}
-
-	return true
-}
-
 // tlsConfigChanged updates the TLS configuration and restarts the HTTPS server
-// if necessary.
-func (web *webAPI) tlsConfigChanged(ctx context.Context, tlsConf tlsConfigSettings) {
+// if necessary.  tlsConf must not be nil.
+func (web *webAPI) tlsConfigChanged(ctx context.Context, tlsConf *tlsConfigSettings) {
 	defer slogutil.RecoverAndExit(ctx, web.logger, osutil.ExitCodeFailure)
 
 	web.logger.DebugContext(ctx, "applying new tls configuration")
@@ -220,11 +225,14 @@ func (web *webAPI) start(ctx context.Context) {
 
 	// this loop is used as an ability to change listening host and/or port
 	for !web.httpsServer.inShutdown {
-		printHTTPAddresses(urlutil.SchemeHTTP)
+		printHTTPAddresses(urlutil.SchemeHTTP, web.tlsManager)
 		errs := make(chan error, 2)
 
 		// Use an h2c handler to support unencrypted HTTP/2, e.g. for proxies.
-		hdlr := h2c.NewHandler(withMiddlewares(globalContext.mux, limitRequestBody), &http2.Server{})
+		hdlr := h2c.NewHandler(
+			withMiddlewares(globalContext.mux, limitRequestBody),
+			&http2.Server{},
+		)
 
 		logger := web.baseLogger.With(loggerKeyServer, "plain")
 
@@ -235,7 +243,7 @@ func (web *webAPI) start(ctx context.Context) {
 		// Create a new instance, because the Web is not usable after Shutdown.
 		web.httpServer = &http.Server{
 			Addr:              web.conf.BindAddr.String(),
-			Handler:           hdlr,
+			Handler:           web.auth.middleware().Wrap(hdlr),
 			ReadTimeout:       web.conf.ReadTimeout,
 			ReadHeaderTimeout: web.conf.ReadHeaderTimeout,
 			WriteTimeout:      web.conf.WriteTimeout,
@@ -275,6 +283,10 @@ func (web *webAPI) close(ctx context.Context) {
 	shutdownSrv(ctx, web.logger, web.httpsServer.server)
 	shutdownSrv3(ctx, web.logger, web.httpsServer.server3)
 	shutdownSrv(ctx, web.logger, web.httpServer)
+
+	if web.auth != nil {
+		web.auth.close(ctx)
+	}
 
 	web.logger.InfoContext(ctx, "stopped http server")
 }
@@ -317,11 +329,11 @@ func (web *webAPI) tlsServerLoop(ctx context.Context) {
 
 		web.httpsServer.server = &http.Server{
 			Addr:    addr,
-			Handler: hdlr,
+			Handler: web.auth.middleware().Wrap(hdlr),
 			TLSConfig: &tls.Config{
 				Certificates: []tls.Certificate{web.httpsServer.cert},
-				RootCAs:      globalContext.tlsRoots,
-				CipherSuites: globalContext.tlsCipherIDs,
+				RootCAs:      web.tlsManager.rootCerts,
+				CipherSuites: web.tlsManager.customCipherIDs,
 				MinVersion:   tls.VersionTLS12,
 			},
 			ReadTimeout:       web.conf.ReadTimeout,
@@ -330,7 +342,7 @@ func (web *webAPI) tlsServerLoop(ctx context.Context) {
 			ErrorLog:          slog.NewLogLogger(logger.Handler(), slog.LevelError),
 		}
 
-		printHTTPAddresses(urlutil.SchemeHTTPS)
+		printHTTPAddresses(urlutil.SchemeHTTPS, web.tlsManager)
 
 		if web.conf.serveHTTP3 {
 			go web.mustStartHTTP3(ctx, addr)
@@ -354,11 +366,11 @@ func (web *webAPI) mustStartHTTP3(ctx context.Context, address string) {
 		Addr: address,
 		TLSConfig: &tls.Config{
 			Certificates: []tls.Certificate{web.httpsServer.cert},
-			RootCAs:      globalContext.tlsRoots,
-			CipherSuites: globalContext.tlsCipherIDs,
+			RootCAs:      web.tlsManager.rootCerts,
+			CipherSuites: web.tlsManager.customCipherIDs,
 			MinVersion:   tls.VersionTLS12,
 		},
-		Handler: withMiddlewares(globalContext.mux, limitRequestBody),
+		Handler: web.auth.middleware().Wrap(withMiddlewares(globalContext.mux, limitRequestBody)),
 	}
 
 	web.logger.DebugContext(ctx, "starting http/3 server")

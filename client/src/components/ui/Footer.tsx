@@ -94,14 +94,17 @@ const Footer = () => {
             auto: {
                 desc: t('theme_auto_desc'),
                 icon: '#auto',
+                testId: 'theme_auto',
             },
             dark: {
                 desc: t('theme_dark_desc'),
                 icon: '#dark',
+                testId: 'theme_dark',
             },
             light: {
                 desc: t('theme_light_desc'),
                 icon: '#light',
+                testId: 'theme_light',
             },
         };
 
@@ -113,7 +116,9 @@ const Footer = () => {
                     type="button"
                     className="btn btn-sm btn-secondary footer__theme-button"
                     onClick={() => onThemeChange(theme)}
-                    title={content[theme].desc}>
+                    title={content[theme].desc}
+                    data-testid={content[theme].testId}
+                >
                     <svg className={cn('footer__theme-icon', { 'footer__theme-icon--active': currentValue === theme })}>
                         <use xlinkHref={content[theme].icon} />
                     </svg>

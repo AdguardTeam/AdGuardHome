@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
-	"github.com/AdguardTeam/golibs/log"
 )
 
 // Theme is an enum of all allowed UI themes.
@@ -46,8 +45,18 @@ type profileJSON struct {
 }
 
 // handleGetProfile is the handler for GET /control/profile endpoint.
-func handleGetProfile(w http.ResponseWriter, r *http.Request) {
-	u := globalContext.auth.getCurrentUser(r)
+func (web *webAPI) handleGetProfile(w http.ResponseWriter, r *http.Request) {
+	var name string
+	if !web.auth.isGLiNet {
+		u, ok := webUserFromContext(r.Context())
+		if !ok {
+			w.WriteHeader(http.StatusUnauthorized)
+
+			return
+		}
+
+		name = string(u.Login)
+	}
 
 	var resp profileJSON
 	func() {
@@ -55,7 +64,7 @@ func handleGetProfile(w http.ResponseWriter, r *http.Request) {
 		defer config.RUnlock()
 
 		resp = profileJSON{
-			Name:     u.Name,
+			Name:     name,
 			Language: config.Language,
 			Theme:    config.Theme,
 		}
@@ -65,7 +74,9 @@ func handleGetProfile(w http.ResponseWriter, r *http.Request) {
 }
 
 // handlePutProfile is the handler for PUT /control/profile/update endpoint.
-func handlePutProfile(w http.ResponseWriter, r *http.Request) {
+func (web *webAPI) handlePutProfile(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	if aghhttp.WriteTextPlainDeprecated(w, r) {
 		return
 	}
@@ -93,10 +104,10 @@ func handlePutProfile(w http.ResponseWriter, r *http.Request) {
 
 		config.Language = lang
 		config.Theme = theme
-		log.Printf("home: language is set to %s", lang)
-		log.Printf("home: theme is set to %s", theme)
+		web.logger.InfoContext(ctx, "profile updated", "lang", lang, "theme", theme)
 	}()
 
-	onConfigModified()
+	web.confModifier.Apply(ctx)
+
 	aghhttp.OK(w)
 }

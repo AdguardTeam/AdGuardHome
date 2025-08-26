@@ -4,6 +4,16 @@
 
 ## v0.108.0: API changes
 
+## v0.107.64: API changes
+
+- The new field `"cache_enabled"` in `GET /control/dns_info` and `POST /control/dns_config`.  Setting this flag to true turns the DNS-response cache on and requires a positive `cache_size` value (or a positive `dns.cache_size` in the configuration file).
+
+## v0.107.58: API changes
+
+### The ability to check rules for query types and/or clients: GET /control/check_host
+
+- Added optional `client` and `qtype` URL query parameters.
+
 ## v0.107.57: API changes
 
 - The new field `"upstream_timeout"` in `GET /control/dns_info` and `POST /control/dns_config` is the number of seconds to wait for a response from the upstream server.

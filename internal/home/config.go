@@ -2,12 +2,16 @@ package home
 
 import (
 	"bytes"
+	"context"
 	"fmt"
+	"log/slog"
 	"net/netip"
 	"os"
 	"path/filepath"
+	"slices"
 	"sync"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
@@ -21,8 +25,10 @@ import (
 	"github.com/AdguardTeam/dnsproxy/fastip"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/timeutil"
+	"github.com/google/go-cmp/cmp"
 	"github.com/google/renameio/v2/maybe"
 	yaml "gopkg.in/yaml.v3"
 )
@@ -261,30 +267,128 @@ type dnsConfig struct {
 	// HostsFileEnabled defines whether to use information from the system hosts
 	// file to resolve queries.
 	HostsFileEnabled bool `yaml:"hostsfile_enabled"`
+
+	// PendingRequests configures duplicate requests policy.
+	PendingRequests *pendingRequests `yaml:"pending_requests"`
 }
 
-type tlsConfigSettings struct {
-	Enabled         bool   `yaml:"enabled" json:"enabled"`                                 // Enabled is the encryption (DoT/DoH/HTTPS) status
-	ServerName      string `yaml:"server_name" json:"server_name,omitempty"`               // ServerName is the hostname of your HTTPS/TLS server
-	ForceHTTPS      bool   `yaml:"force_https" json:"force_https"`                         // ForceHTTPS: if true, forces HTTP->HTTPS redirect
-	PortHTTPS       uint16 `yaml:"port_https" json:"port_https,omitempty"`                 // HTTPS port. If 0, HTTPS will be disabled
-	PortDNSOverTLS  uint16 `yaml:"port_dns_over_tls" json:"port_dns_over_tls,omitempty"`   // DNS-over-TLS port. If 0, DoT will be disabled
-	PortDNSOverQUIC uint16 `yaml:"port_dns_over_quic" json:"port_dns_over_quic,omitempty"` // DNS-over-QUIC port. If 0, DoQ will be disabled
+// pendingRequests is a block with pending requests configuration.
+type pendingRequests struct {
+	// Enabled controls if duplicate requests should be sent to the upstreams
+	// along with the original one.
+	Enabled bool `yaml:"enabled"`
+}
 
-	// PortDNSCrypt is the port for DNSCrypt requests.  If it's zero,
-	// DNSCrypt is disabled.
+// tlsConfigSettings is the TLS configuration for DNS-over-TLS, DNS-over-QUIC,
+// and HTTPS.  When adding new properties, update the [tlsConfigSettings.clone]
+// and [tlsConfigSettings.setPrivateFieldsAndCompare] methods as necessary.
+type tlsConfigSettings struct {
+	// Enabled indicates whether encryption (DoT/DoH/HTTPS) is enabled.
+	Enabled bool `yaml:"enabled" json:"enabled"`
+
+	// ServerName is the hostname of the HTTPS/TLS server.
+	ServerName string `yaml:"server_name" json:"server_name,omitempty"`
+
+	// ForceHTTPS, if true, forces an HTTP to HTTPS redirect.
+	ForceHTTPS bool `yaml:"force_https" json:"force_https"`
+
+	// PortHTTPS is the HTTPS port.  If 0, HTTPS will be disabled.
+	PortHTTPS uint16 `yaml:"port_https" json:"port_https,omitempty"`
+
+	// PortDNSOverTLS is the DNS-over-TLS port.  If 0, DoT will be disabled.
+	PortDNSOverTLS uint16 `yaml:"port_dns_over_tls" json:"port_dns_over_tls,omitempty"`
+
+	// PortDNSOverQUIC is the DNS-over-QUIC port.  If 0, DoQ will be disabled.
+	PortDNSOverQUIC uint16 `yaml:"port_dns_over_quic" json:"port_dns_over_quic,omitempty"`
+
+	// PortDNSCrypt is the port for DNSCrypt requests.  If it's zero, DNSCrypt
+	// is disabled.
 	PortDNSCrypt uint16 `yaml:"port_dnscrypt" json:"port_dnscrypt"`
-	// DNSCryptConfigFile is the path to the DNSCrypt config file.  Must be
-	// set if PortDNSCrypt is not zero.
+
+	// DNSCryptConfigFile is the path to the DNSCrypt config file.  Must be set
+	// if PortDNSCrypt is not zero.
 	//
 	// See https://github.com/AdguardTeam/dnsproxy and
 	// https://github.com/ameshkov/dnscrypt.
 	DNSCryptConfigFile string `yaml:"dnscrypt_config_file" json:"dnscrypt_config_file"`
 
-	// Allow DoH queries via unencrypted HTTP (e.g. for reverse proxying)
+	// AllowUnencryptedDoH allows DoH queries via unencrypted HTTP (e.g. for
+	// reverse proxying).
+	//
+	// TODO(s.chzhen):  Add this option into the Web UI.
 	AllowUnencryptedDoH bool `yaml:"allow_unencrypted_doh" json:"allow_unencrypted_doh"`
 
-	dnsforward.TLSConfig `yaml:",inline" json:",inline"`
+	// CertificateChain is the PEM-encoded certificate chain.  Must be empty if
+	// [tlsConfigSettings.CertificatePath] is provided.
+	CertificateChain string `yaml:"certificate_chain" json:"certificate_chain"`
+
+	// PrivateKey is the PEM-encoded private key.  Must be empty if
+	// [tlsConfigSettings.PrivateKeyPath] is provided.
+	PrivateKey string `yaml:"private_key" json:"private_key"`
+
+	// CertificatePath is the path to the certificate file.  Must be empty if
+	// [tlsConfigSettings.CertificateChain] is provided.
+	CertificatePath string `yaml:"certificate_path" json:"certificate_path"`
+
+	// PrivateKeyPath is the path to the private key file.  Must be empty if
+	// [tlsConfigSettings.PrivateKey] is provided.
+	PrivateKeyPath string `yaml:"private_key_path" json:"private_key_path"`
+
+	// OverrideTLSCiphers, when set, contains the names of the cipher suites to
+	// use.  If the slice is empty, the default safe suites are used.
+	OverrideTLSCiphers []string `yaml:"override_tls_ciphers,omitempty" json:"-"`
+
+	// CertificateChainData is the PEM-encoded byte data for the certificate
+	// chain.
+	CertificateChainData []byte `yaml:"-" json:"-"`
+
+	// PrivateKeyData is the PEM-encoded byte data for the private key.
+	PrivateKeyData []byte `yaml:"-" json:"-"`
+
+	// StrictSNICheck controls if the connections with SNI mismatching the
+	// certificate's ones should be rejected.
+	StrictSNICheck bool `yaml:"strict_sni_check" json:"-"`
+}
+
+// clone returns a deep copy of c.
+func (c *tlsConfigSettings) clone() (clone *tlsConfigSettings) {
+	clone = &tlsConfigSettings{}
+	*clone = *c
+
+	clone.OverrideTLSCiphers = slices.Clone(c.OverrideTLSCiphers)
+	clone.CertificateChainData = slices.Clone(c.CertificateChainData)
+	clone.PrivateKeyData = slices.Clone(c.PrivateKeyData)
+
+	return clone
+}
+
+// setPrivateFieldsAndCompare sets any missing properties in conf to match those
+// in c and returns true if TLS configurations are equal.  conf must not be be
+// nil.
+// It sets the following properties because these are not accepted from the
+// frontend:
+//
+//	[tlsConfigSettings.AllowUnencryptedDoH]
+//	[tlsConfigSettings.DNSCryptConfigFile]
+//	[tlsConfigSettings.OverrideTLSCiphers]
+//	[tlsConfigSettings.PortDNSCrypt]
+//
+// The following properties are skipped as they are set by
+// [tlsManager.loadTLSConfig]:
+//
+//	[tlsConfigSettings.CertificateChainData]
+//	[tlsConfigSettings.PrivateKeyData]
+func (c *tlsConfigSettings) setPrivateFieldsAndCompare(conf *tlsConfigSettings) (equal bool) {
+	conf.OverrideTLSCiphers = slices.Clone(c.OverrideTLSCiphers)
+
+	// TODO(s.chzhen):  Remove this once the frontend supports it.
+	conf.AllowUnencryptedDoH = c.AllowUnencryptedDoH
+
+	conf.DNSCryptConfigFile = c.DNSCryptConfigFile
+	conf.PortDNSCrypt = c.PortDNSCrypt
+
+	// TODO(a.garipov): Define a custom comparer.
+	return cmp.Equal(c, conf)
 }
 
 type queryLogConfig struct {
@@ -362,7 +466,8 @@ var config = &configuration{
 			}, {
 				Prefix: netip.MustParsePrefix("::1/128"),
 			}},
-			CacheSize: 4 * 1024 * 1024,
+			CacheEnabled: true,
+			CacheSize:    4 * 1024 * 1024,
 
 			EDNSClientSubnet: &dnsforward.EDNSClientSubnet{
 				CustomIP:  netip.Addr{},
@@ -380,6 +485,9 @@ var config = &configuration{
 		UsePrivateRDNS:   true,
 		ServePlainDNS:    true,
 		HostsFileEnabled: true,
+		PendingRequests: &pendingRequests{
+			Enabled: true,
+		},
 	},
 	TLS: tlsConfigSettings{
 		PortHTTPS:       defaultPortHTTPS,
@@ -568,7 +676,7 @@ func parseConfig() (err error) {
 	}
 
 	// Do not wrap the error because it's informative enough as is.
-	return setContextTLSCipherIDs()
+	return validateTLSCipherIDs(config.TLS.OverrideTLSCiphers)
 }
 
 // validateConfig returns error if the configuration is invalid.
@@ -640,18 +748,18 @@ func readConfigFile() (fileData []byte, err error) {
 }
 
 // Saves configuration to the YAML file and also saves the user filter contents to a file
-func (c *configuration) write() (err error) {
+func (c *configuration) write(tlsMgr *tlsManager, auth *auth) (err error) {
 	c.Lock()
 	defer c.Unlock()
 
-	if globalContext.auth != nil {
-		config.Users = globalContext.auth.usersList()
+	if auth != nil {
+		// TODO(s.chzhen):  Pass context.
+		config.Users = auth.usersList(context.TODO())
 	}
 
-	if globalContext.tls != nil {
-		tlsConf := tlsConfigSettings{}
-		globalContext.tls.WriteDiskConfig(&tlsConf)
-		config.TLS = tlsConf
+	if tlsMgr != nil {
+		tlsConf := tlsMgr.config()
+		config.TLS = *tlsConf
 	}
 
 	if globalContext.stats != nil {
@@ -721,22 +829,60 @@ func (c *configuration) write() (err error) {
 	return nil
 }
 
-// setContextTLSCipherIDs sets the TLS cipher suite IDs to use.
-func setContextTLSCipherIDs() (err error) {
-	if len(config.TLS.OverrideTLSCiphers) == 0 {
-		log.Info("tls: using default ciphers")
-
-		globalContext.tlsCipherIDs = aghtls.SaferCipherSuites()
-
+// validateTLSCipherIDs validates the custom TLS cipher suite IDs.
+func validateTLSCipherIDs(cipherIDs []string) (err error) {
+	if len(cipherIDs) == 0 {
 		return nil
 	}
 
-	log.Info("tls: overriding ciphers: %s", config.TLS.OverrideTLSCiphers)
-
-	globalContext.tlsCipherIDs, err = aghtls.ParseCiphers(config.TLS.OverrideTLSCiphers)
+	_, err = aghtls.ParseCiphers(cipherIDs)
 	if err != nil {
-		return fmt.Errorf("parsing override ciphers: %w", err)
+		return fmt.Errorf("override_tls_ciphers: %w", err)
 	}
 
 	return nil
+}
+
+// defaultConfigModifier is a default [agh.ConfigModifier] implementation.
+type defaultConfigModifier struct {
+	auth   *auth
+	config *configuration
+	logger *slog.Logger
+	tlsMgr *tlsManager
+}
+
+// newDefaultConfigModifier returns the new properly initialized
+// *defaultConfigModifier.  All arguments must not be nil.
+//
+// TODO(s.chzhen):  Consider using configuration struct.
+func newDefaultConfigModifier(
+	conf *configuration,
+	l *slog.Logger,
+) (cm *defaultConfigModifier) {
+	return &defaultConfigModifier{
+		config: conf,
+		logger: l,
+	}
+}
+
+// type check
+var _ agh.ConfigModifier = (*defaultConfigModifier)(nil)
+
+// Apply implements the [agh.ConfigModifier] interface for
+// *defaultConfigModifier.
+func (cm *defaultConfigModifier) Apply(ctx context.Context) {
+	err := cm.config.write(cm.tlsMgr, cm.auth)
+	if err != nil {
+		cm.logger.ErrorContext(ctx, "writing config", slogutil.KeyError, err)
+	}
+}
+
+// setAuth sets the auth parameters used by Apply.
+func (cm *defaultConfigModifier) setAuth(a *auth) {
+	cm.auth = a
+}
+
+// setTLSManager sets the TLS manager used by Apply.
+func (cm *defaultConfigModifier) setTLSManager(m *tlsManager) {
+	cm.tlsMgr = m
 }

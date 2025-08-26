@@ -9,13 +9,15 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/miekg/dns"
 )
@@ -131,7 +133,7 @@ func (d *DNSFilter) handleFilteringAddURL(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	d.conf.ConfigModified()
+	d.conf.ConfModifier.Apply(r.Context())
 	d.EnableFilters(true)
 
 	_, err = fmt.Fprintf(w, "OK %d rules\n", filt.RulesCount)
@@ -145,6 +147,8 @@ func (d *DNSFilter) handleFilteringRemoveURL(w http.ResponseWriter, r *http.Requ
 		URL       string `json:"url"`
 		Whitelist bool   `json:"whitelist"`
 	}
+
+	ctx := r.Context()
 
 	req := request{}
 	err := json.NewDecoder(r.Body).Decode(&req)
@@ -168,7 +172,12 @@ func (d *DNSFilter) handleFilteringRemoveURL(w http.ResponseWriter, r *http.Requ
 			return flt.URL == req.URL
 		})
 		if delIdx == -1 {
-			log.Error("deleting filter with url %q: %s", req.URL, errFilterNotExist)
+			d.logger.ErrorContext(
+				ctx,
+				"deleting filter",
+				"url", req.URL,
+				slogutil.KeyError, errFilterNotExist,
+			)
 
 			return
 		}
@@ -177,17 +186,23 @@ func (d *DNSFilter) handleFilteringRemoveURL(w http.ResponseWriter, r *http.Requ
 		p := deleted.Path(d.conf.DataDir)
 		err = os.Rename(p, p+".old")
 		if err != nil && !errors.Is(err, os.ErrNotExist) {
-			log.Error("deleting filter %d: renaming file %q: %s", deleted.ID, p, err)
+			d.logger.ErrorContext(
+				ctx,
+				"renaming filter file",
+				"id", deleted.ID,
+				"path", p,
+				slogutil.KeyError, err,
+			)
 
 			return
 		}
 
 		*filters = slices.Delete(*filters, delIdx, delIdx+1)
 
-		log.Info("deleted filter %d", deleted.ID)
+		d.logger.InfoContext(ctx, "deleted filter", "id", deleted.ID)
 	}()
 
-	d.conf.ConfigModified()
+	d.conf.ConfModifier.Apply(ctx)
 	d.EnableFilters(true)
 
 	// NOTE: The old files "filter.txt.old" aren't deleted.  It's not really
@@ -249,7 +264,7 @@ func (d *DNSFilter) handleFilteringSetURL(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	d.conf.ConfigModified()
+	d.conf.ConfModifier.Apply(r.Context())
 	if restart {
 		d.EnableFilters(true)
 	}
@@ -274,7 +289,7 @@ func (d *DNSFilter) handleFilteringSetRules(w http.ResponseWriter, r *http.Reque
 	}
 
 	d.conf.UserRules = req.Rules
-	d.conf.ConfigModified()
+	d.conf.ConfModifier.Apply(r.Context())
 	d.EnableFilters(true)
 }
 
@@ -388,7 +403,7 @@ func (d *DNSFilter) handleFilteringConfig(w http.ResponseWriter, r *http.Request
 		d.conf.FiltersUpdateIntervalHours = req.Interval
 	}()
 
-	d.conf.ConfigModified()
+	d.conf.ConfModifier.Apply(r.Context())
 	d.EnableFilters(true)
 }
 
@@ -420,15 +435,52 @@ type checkHostResp struct {
 	FilterID rulelist.URLFilterID `json:"filter_id"`
 }
 
+// handleCheckHost is the handler for the GET /control/filtering/check_host HTTP
+// API.
 func (d *DNSFilter) handleCheckHost(w http.ResponseWriter, r *http.Request) {
-	host := r.URL.Query().Get("name")
+	query := r.URL.Query()
+	host := query.Get("name")
+	if host == "" {
+		aghhttp.Error(
+			r,
+			w,
+			http.StatusBadRequest,
+			`query parameter "name" is required`,
+		)
+
+		return
+	}
+
+	cli := query.Get("client")
+	qTypeStr := query.Get("qtype")
+	qType, err := stringToDNSType(qTypeStr)
+	if err != nil {
+		aghhttp.Error(
+			r,
+			w,
+			http.StatusUnprocessableEntity,
+			"bad qtype query parameter: %q",
+			qTypeStr,
+		)
+
+		return
+	}
 
 	setts := d.Settings()
 	setts.FilteringEnabled = true
 	setts.ProtectionEnabled = true
 
-	d.ApplyBlockedServices(setts)
-	result, err := d.CheckHost(host, dns.TypeA, setts)
+	addr, err := netip.ParseAddr(cli)
+	if err == nil {
+		d.ApplyAdditionalFiltering(addr, "", setts)
+	} else if cli != "" {
+		// TODO(s.chzhen):  Set [Settings.ClientName] once urlfilter supports
+		// multiple client names.  This will handle the case when a rule exists
+		// but the persistent client does not.
+		d.ApplyAdditionalFiltering(netip.Addr{}, cli, setts)
+	}
+
+	result, err := d.CheckHost(host, qType, setts)
 	if err != nil {
 		aghhttp.Error(
 			r,
@@ -466,6 +518,33 @@ func (d *DNSFilter) handleCheckHost(w http.ResponseWriter, r *http.Request) {
 	aghhttp.WriteJSONResponseOK(w, r, resp)
 }
 
+// stringToDNSType is a helper function that converts a string to DNS type.  If
+// the string is empty, it returns the default value [dns.TypeA].
+func stringToDNSType(str string) (qtype uint16, err error) {
+	if str == "" {
+		return dns.TypeA, nil
+	}
+
+	qtype, ok := dns.StringToType[str]
+	if ok {
+		return qtype, nil
+	}
+
+	// typePref is a prefix for DNS types from experimental RFCs.
+	const typePref = "TYPE"
+
+	if !strings.HasPrefix(str, typePref) {
+		return 0, errors.ErrBadEnumValue
+	}
+
+	val, err := strconv.ParseUint(str[len(typePref):], 10, 16)
+	if err != nil {
+		return 0, errors.ErrBadEnumValue
+	}
+
+	return uint16(val), nil
+}
+
 // setProtectedBool sets the value of a boolean pointer under a lock.  l must
 // protect the value under ptr.
 //
@@ -492,14 +571,14 @@ func protectedBool(mu *sync.RWMutex, ptr *bool) (val bool) {
 // /control/safebrowsing/enable HTTP API.
 func (d *DNSFilter) handleSafeBrowsingEnable(w http.ResponseWriter, r *http.Request) {
 	setProtectedBool(d.confMu, &d.conf.SafeBrowsingEnabled, true)
-	d.conf.ConfigModified()
+	d.conf.ConfModifier.Apply(r.Context())
 }
 
 // handleSafeBrowsingDisable is the handler for the POST
 // /control/safebrowsing/disable HTTP API.
 func (d *DNSFilter) handleSafeBrowsingDisable(w http.ResponseWriter, r *http.Request) {
 	setProtectedBool(d.confMu, &d.conf.SafeBrowsingEnabled, false)
-	d.conf.ConfigModified()
+	d.conf.ConfModifier.Apply(r.Context())
 }
 
 // handleSafeBrowsingStatus is the handler for the GET
@@ -518,14 +597,14 @@ func (d *DNSFilter) handleSafeBrowsingStatus(w http.ResponseWriter, r *http.Requ
 // HTTP API.
 func (d *DNSFilter) handleParentalEnable(w http.ResponseWriter, r *http.Request) {
 	setProtectedBool(d.confMu, &d.conf.ParentalEnabled, true)
-	d.conf.ConfigModified()
+	d.conf.ConfModifier.Apply(r.Context())
 }
 
 // handleParentalDisable is the handler for the POST /control/parental/disable
 // HTTP API.
 func (d *DNSFilter) handleParentalDisable(w http.ResponseWriter, r *http.Request) {
 	setProtectedBool(d.confMu, &d.conf.ParentalEnabled, false)
-	d.conf.ConfigModified()
+	d.conf.ConfModifier.Apply(r.Context())
 }
 
 // handleParentalStatus is the handler for the GET /control/parental/status

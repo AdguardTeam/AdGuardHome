@@ -15,6 +15,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
@@ -392,6 +393,8 @@ const PasswordMinRunes = 8
 
 // Apply new configuration, start DNS server, restart Web server
 func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	req, restartHTTP, err := decodeApplyConfigReq(r.Body)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
@@ -431,6 +434,7 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 	globalContext.firstRun = false
 	config.DNS.BindHosts = []netip.Addr{req.DNS.IP}
 	config.DNS.Port = req.DNS.Port
+	config.Filtering.Logger = web.baseLogger.With(slogutil.KeyPrefix, "filtering")
 	config.Filtering.SafeFSPatterns = []string{
 		filepath.Join(globalContext.workDir, userFilterDataDir, "*"),
 	}
@@ -439,7 +443,7 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 	u := &webUser{
 		Name: req.Username,
 	}
-	err = globalContext.auth.addUser(u, req.Password)
+	err = web.auth.addUser(ctx, u, req.Password)
 	if err != nil {
 		globalContext.firstRun = true
 		copyInstallSettings(config, curConfig)
@@ -452,7 +456,7 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 	// moment we'll allow setting up TLS in the initial configuration or the
 	// configuration itself will use HTTPS protocol, because the underlying
 	// functions potentially restart the HTTPS server.
-	err = startMods(web.baseLogger)
+	err = startMods(ctx, web.baseLogger, web.tlsManager, web.confModifier)
 	if err != nil {
 		globalContext.firstRun = true
 		copyInstallSettings(config, curConfig)
@@ -461,7 +465,7 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	err = config.write()
+	err = config.write(web.tlsManager, web.auth)
 	if err != nil {
 		globalContext.firstRun = true
 		copyInstallSettings(config, curConfig)
@@ -488,11 +492,11 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 	// and with its own context, because it waits until all requests are handled
 	// and will be blocked by it's own caller.
 	go func(timeout time.Duration) {
-		ctx, cancel := context.WithTimeout(context.Background(), timeout)
-		defer slogutil.RecoverAndLog(ctx, web.logger)
+		shutdownCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), timeout)
+		defer slogutil.RecoverAndLog(shutdownCtx, web.logger)
 		defer cancel()
 
-		shutdownSrv(ctx, web.logger, web.httpServer)
+		shutdownSrv(shutdownCtx, web.logger, web.httpServer)
 	}(shutdownTimeout)
 }
 
@@ -525,6 +529,36 @@ func decodeApplyConfigReq(r io.Reader) (req *applyConfigReq, restartHTTP bool, e
 	}
 
 	return req, restartHTTP, err
+}
+
+// startMods initializes and starts the DNS server after installation.
+// baseLogger and tlsMgr must not be nil.
+func startMods(
+	ctx context.Context,
+	baseLogger *slog.Logger,
+	tlsMgr *tlsManager,
+	confModifier agh.ConfigModifier,
+) (err error) {
+	statsDir, querylogDir, err := checkStatsAndQuerylogDirs(&globalContext, config)
+	if err != nil {
+		return err
+	}
+
+	err = initDNS(ctx, baseLogger, tlsMgr, confModifier, statsDir, querylogDir)
+	if err != nil {
+		return err
+	}
+
+	tlsMgr.start(ctx)
+
+	err = startDNSServer()
+	if err != nil {
+		closeDNSServer(ctx)
+
+		return err
+	}
+
+	return nil
 }
 
 func (web *webAPI) registerInstallHandlers() {

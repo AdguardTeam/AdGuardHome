@@ -1,0 +1,160 @@
+package querylog
+
+import (
+	"io"
+	"testing"
+	"time"
+
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/golibs/testutil"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+// newTestQLogReader creates new *qLogReader for tests and registers the
+// required cleanup functions.
+func newTestQLogReader(tb testing.TB, filesNum, linesNum int) (reader *qLogReader) {
+	tb.Helper()
+
+	testFiles := prepareTestFiles(tb, filesNum, linesNum)
+
+	logger := slogutil.NewDiscardLogger()
+	ctx := testutil.ContextWithTimeout(tb, testTimeout)
+
+	// Create the new qLogReader instance.
+	reader, err := newQLogReader(ctx, logger, testFiles)
+	require.NoError(tb, err)
+
+	assert.NotNil(tb, reader)
+	testutil.CleanupAndRequireSuccess(tb, reader.Close)
+
+	return reader
+}
+
+func TestQLogReader(t *testing.T) {
+	testCases := []struct {
+		name     string
+		filesNum int
+		linesNum int
+	}{{
+		name:     "empty",
+		filesNum: 0,
+		linesNum: 0,
+	}, {
+		name:     "one_file",
+		filesNum: 1,
+		linesNum: 10,
+	}, {
+		name:     "multiple_files",
+		filesNum: 5,
+		linesNum: 10000,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			r := newTestQLogReader(t, tc.filesNum, tc.linesNum)
+
+			// Seek to the start.
+			err := r.SeekStart()
+			require.NoError(t, err)
+
+			// Read everything.
+			var read int
+			var line string
+			for err == nil {
+				line, err = r.ReadNext()
+				if err == nil {
+					assert.NotEmpty(t, line)
+					read++
+				}
+			}
+
+			require.Equal(t, io.EOF, err)
+			assert.Equal(t, tc.filesNum*tc.linesNum, read)
+		})
+	}
+}
+
+func TestQLogReader_Seek(t *testing.T) {
+	r := newTestQLogReader(t, 2, 10000)
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+
+	testCases := []struct {
+		want error
+		name string
+		time string
+	}{{
+		name: "not_too_old",
+		time: "2020-02-18T22:39:35.920973+03:00",
+		want: nil,
+	}, {
+		name: "old",
+		time: "2020-02-19T01:28:16.920973+03:00",
+		want: nil,
+	}, {
+		name: "first",
+		time: "2020-02-18T22:36:36.920973+03:00",
+		want: nil,
+	}, {
+		name: "last",
+		time: "2020-02-19T01:23:16.920973+03:00",
+		want: nil,
+	}, {
+		name: "non-existent_long_ago",
+		time: "2000-02-19T01:23:16.920973+03:00",
+		want: errTSNotFound,
+	}, {
+		name: "non-existent_far_ahead",
+		time: "2100-02-19T01:23:16.920973+03:00",
+		want: nil,
+	}, {
+		name: "non-existent_but_could",
+		time: "2020-02-18T22:36:37.000000+03:00",
+		want: errTSNotFound,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ts, err := time.Parse(time.RFC3339Nano, tc.time)
+			require.NoError(t, err)
+
+			err = r.seekTS(ctx, ts.UnixNano())
+			assert.ErrorIs(t, err, tc.want)
+		})
+	}
+}
+
+func TestQLogReader_ReadNext(t *testing.T) {
+	const linesNum = 10
+	const filesNum = 1
+	r := newTestQLogReader(t, filesNum, linesNum)
+
+	testCases := []struct {
+		want  error
+		name  string
+		start int
+	}{{
+		name:  "ok",
+		start: 0,
+		want:  nil,
+	}, {
+		name:  "too_big",
+		start: linesNum + 1,
+		want:  io.EOF,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := r.SeekStart()
+			require.NoError(t, err)
+
+			for i := 1; i < tc.start; i++ {
+				_, err = r.ReadNext()
+				require.NoError(t, err)
+			}
+
+			_, err = r.ReadNext()
+			assert.Equal(t, tc.want, err)
+		})
+	}
+}
