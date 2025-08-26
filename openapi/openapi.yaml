@@ -2232,6 +2232,7 @@
           - 'doq'
           - 'dnscrypt'
           - ''
+          'type': 'string'
         'ecs':
           'type': 'string'
           'example': '192.168.0.0/16'
