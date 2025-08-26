@@ -95,6 +95,7 @@ func main() {
 
 	errors.Check(enc.Encode(aghFlt))
 
+	// TODO: Update output path to "client_v2/src/helpers/filters/filters.ts" for new frontend migration
 	err = maybe.WriteFile("client/src/helpers/filters/filters.ts", buf.Bytes(), 0o644)
 	errors.Check(err)
 }

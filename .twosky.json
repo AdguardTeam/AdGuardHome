@@ -43,5 +43,26 @@
       "zh-hk": "繁體中文（香港）",
       "zh-tw": "正體中文（台灣）"
     }
+  },
+  {
+    "project_id": "home_v2",
+    "base_locale": "en",
+    "localizable_files": [
+      "client_v2/src/__locales/en.json"
+    ],
+    "languages": {
+      "de": "Deutsch",
+      "en": "English",
+      "es": "Español",
+      "fr": "Français",
+      "it": "Italiano",
+      "ja": "日本語",
+      "ko": "한국어",
+      "pt-br": "Português (BR)",
+      "pt-pt": "Português (PT)",
+      "ru": "Русский",
+      "zh-cn": "简体中文",
+      "zh-tw": "正體中文（台灣）"
+    }
   }
 ]
