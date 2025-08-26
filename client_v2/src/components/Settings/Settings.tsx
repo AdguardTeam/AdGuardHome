@@ -11,12 +11,12 @@ import { initSettings, toggleSetting } from 'panel/actions';
 import { getStatsConfig } from 'panel/actions/stats';
 import { getLogsConfig } from 'panel/actions/queryLogs';
 import { getFilteringStatus } from 'panel/actions/filtering';
+import { SwitchGroup } from 'panel/common/ui/SettingsGroup';
 
 import { StatsConfig } from './StatsConfig/StatsConfig';
 import { LogsConfig } from './LogsConfig';
 import { FiltersConfig } from './FiltersConfig';
 import { getSafeSearchProviderTitle } from './helpers';
-import { SwitchGroup } from './SettingsGroup';
 
 const SETTINGS = {
     safebrowsing: {
@@ -48,9 +48,8 @@ export const Settings = () => {
         });
     }, []);
 
-    const handleSettingToggle =
-        (key: keyof typeof SETTINGS) => (e: React.ChangeEvent<HTMLInputElement>) =>
-            dispatch(toggleSetting(key, !e.target.checked));
+    const handleSettingToggle = (key: keyof typeof SETTINGS) => (e: React.ChangeEvent<HTMLInputElement>) =>
+        dispatch(toggleSetting(key, !e.target.checked));
 
     const renderSettings = (settingsList?: SettingsData['settingsList']) =>
         settingsList
@@ -82,20 +81,18 @@ export const Settings = () => {
 
         type SafeSearchConfigShape = Record<string, boolean> & { enabled: boolean };
 
-        const onSafeSearchEnabledChange =
-            (e: React.ChangeEvent<HTMLInputElement>) => {
-                const payload = { ...safesearch, enabled: e.target.checked } as SafeSearchConfigShape;
-                dispatch(toggleSetting('safesearch', payload));
-            };
+        const onSafeSearchEnabledChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+            const payload = { ...safesearch, enabled: e.target.checked } as SafeSearchConfigShape;
+            dispatch(toggleSetting('safesearch', payload));
+        };
 
-        const onProviderChange =
-            (searchKey: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
-                const payload = {
-                    ...safesearch,
-                    [searchKey]: e.target.checked,
-                } as SafeSearchConfigShape;
-                dispatch(toggleSetting('safesearch', payload));
-            };
+        const onProviderChange = (searchKey: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
+            const payload = {
+                ...safesearch,
+                [searchKey]: e.target.checked,
+            } as SafeSearchConfigShape;
+            dispatch(toggleSetting('safesearch', payload));
+        };
 
         return (
             <SwitchGroup

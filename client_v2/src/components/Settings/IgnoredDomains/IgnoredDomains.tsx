@@ -5,12 +5,11 @@ import cn from 'clsx';
 import { Textarea } from 'panel/common/controls/Textarea';
 import intl from 'panel/common/intl';
 import { trimLinesAndRemoveEmpty } from 'panel/helpers/helpers';
-import { Dropdown } from 'panel/common/ui/Dropdown';
 import theme from 'panel/lib/theme';
-import { Icon } from 'panel/common/ui/Icon';
+import { SwitchGroup } from 'panel/common/ui/SettingsGroup';
 
+import { FaqTooltip } from 'panel/common/ui/FaqTooltip';
 import s from './styles.module.pcss';
-import { SwitchGroup } from '../SettingsGroup';
 
 type Props = {
     control: Control<any>;
@@ -38,30 +37,25 @@ export const IgnoredDomains = ({ control, processing, ignoreEnabled, setValue, s
                         {...field}
                         id={textareaId}
                         label={
-                            <div className={s.label}>
+                            <>
                                 {intl.getMessage('settings_domain_names')}
-                                <Dropdown
-                                    trigger="hover"
-                                    menu={
-                                        <div className={cn(theme.dropdown.menu, s.dropdownMenu)}>
+
+                                <FaqTooltip
+                                    text={
+                                        <>
                                             <div className={s.dropdownTitle}>
                                                 {intl.getMessage('settings_tooltip_domain_names')}
                                             </div>
-                                            <div className={s.dropdownText}>
+                                            <div>
                                                 <strong>{intl.getMessage('settings_tooltip_examples')}</strong>
                                                 <div>example.com</div>
                                                 <div>*.example.com</div>
                                                 <div>||example.com^</div>
                                             </div>
-                                        </div>
+                                        </>
                                     }
-                                    className={s.dropdown}
-                                    position="bottomLeft"
-                                    noIcon>
-                                    <div className={s.dropdownTrigger}>
-                                        <Icon icon="faq" className={s.icon} />
-                                    </div>
-                                </Dropdown>
+                                />
+
                                 <a
                                     href="https://link.adtidy.org/forward.html?action=dns_kb_filtering_syntax&from=ui&app=home"
                                     target="_blank"
@@ -69,7 +63,7 @@ export const IgnoredDomains = ({ control, processing, ignoreEnabled, setValue, s
                                     className={cn(s.link, theme.link.link, theme.link.noDecoration)}>
                                     {intl.getMessage('settings_rule_syntax')}
                                 </a>
-                            </div>
+                            </>
                         }
                         placeholder={`example.com\n*.example.com\n||example.com^`}
                         size="large"

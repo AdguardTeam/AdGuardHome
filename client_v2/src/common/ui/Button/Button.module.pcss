@@ -115,6 +115,27 @@
     }
 }
 
+.secondary-danger {
+    color: var(--default-danger-button);
+    border-color: var(--default-danger-button);
+
+    &:hover,
+    &:focus {
+        color: var(--hovered-danger-button);
+        border-color: var(--hovered-danger-button);
+    }
+
+    &:active {
+        color: var(--pressed-danger-button);
+        border-color: var(--pressed-danger-button);
+    }
+
+    &:disabled {
+        color: var(--disabled-danger-button);
+        border-color: var(--disabled-danger-button);
+    }
+}
+
 .danger {
     color: var(--gray-0);
     background: var(--default-danger-button);

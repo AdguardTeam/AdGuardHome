@@ -4,10 +4,10 @@ import { Controller, useForm } from 'react-hook-form';
 import { Button } from 'panel/common/ui/Button';
 import intl from 'panel/common/intl';
 import theme from 'panel/lib/theme';
-import { getIntervalTitle, getDefaultInterval } from '../helpers';
+import { RadioGroup, SwitchGroup } from 'panel/common/ui/SettingsGroup';
 
+import { getIntervalTitle, getDefaultInterval } from '../helpers';
 import { STATS_INTERVALS_DAYS, RETENTION_CUSTOM } from '../../../helpers/constants';
-import { RadioGroup, SwitchGroup } from '../SettingsGroup';
 import { IgnoredDomains } from '../IgnoredDomains';
 import { RetentionCustomInput } from '../RetentionCustomInput';
 

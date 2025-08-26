@@ -25,13 +25,12 @@ import (
 	"github.com/AdguardTeam/golibs/osutil"
 )
 
+// TODO(ik): Update localesDir and srcDir to "./client_v2/src/" for new frontend migration
 const (
 	twoskyConfFile   = "./.twosky.json"
-	// TODO: Update localesDir to "./client_v2/src/__locales" for new frontend migration
 	localesDir       = "./client/src/__locales"
 	defaultBaseFile  = "en.json"
 	defaultProjectID = "home"
-	// TODO: Update srcDir to "./client_v2/src" for new frontend migration
 	srcDir           = "./client/src"
 	twoskyURI        = "https://twosky.int.agrd.dev/api/v1"
 
@@ -79,8 +78,7 @@ func main() {
 		usage("")
 	}
 
-	// TODO: Support multiple projects in .twosky.json - add PROJECT_ID env var to select between 'home' and 'home_v2'
-	// TODO: Modify readTwoskyConfig() to return all configs and add selectProject() function
+	// TODO(ik): Support multiple projects in .twosky.json - add PROJECT_ID env var to select between 'home' and 'home_v2'
 	conf := errors.Must(readTwoskyConfig())
 
 	var cli *twoskyClient
@@ -110,7 +108,7 @@ func main() {
 // usage prints usage.  If addStr is not empty print addStr and exit with code
 // 1, otherwise exit with code 0.
 func usage(addStr string) {
-	// TODO: Add PROJECT_ID environment variable documentation when multi-project support is implemented
+	// TODO(ik): Add PROJECT_ID environment variable documentation when multi-project support is implemented
 	const usageStr = `Usage: go run main.go <command> [<args>]
 Commands:
   help
@@ -166,7 +164,7 @@ func readTwoskyConfig() (t *twoskyConfig, err error) {
 		return nil, fmt.Errorf("%q is empty", twoskyConfFile)
 	}
 
-	// TODO: Currently only uses first project - modify to support project selection
+	// TODO(ik): Currently only uses first project - modify to support project selection
 	conf := tsc[0]
 
 	for _, lang := range conf.Languages {

@@ -8,8 +8,9 @@ import { Icons } from 'panel/common/ui/Icons';
 import { Footer } from 'panel/common/ui/Footer';
 import { Header } from 'panel/common/ui/Header';
 import { Settings } from 'panel/components/Settings';
-
 import { LocalesType } from 'panel/common/intl';
+import { Encryption } from 'panel/components/Encryption';
+
 import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from 'panel/helpers/localStorageHelper';
 import Toasts from '../Toasts';
 import i18n from '../../i18n';
@@ -30,6 +31,11 @@ const ROUTES: RouteConfig[] = [
     {
         path: '/settings',
         component: Settings,
+        exact: true,
+    },
+    {
+        path: '/encryption',
+        component: Encryption,
         exact: true,
     },
 ];

@@ -6,7 +6,7 @@ set -e -f -u -x
 # for this database is https://github.com/AdguardTeam/companiesdb.
 #
 trackers_url='https://raw.githubusercontent.com/AdguardTeam/companiesdb/main/dist/trackers.json'
-# TODO: Update output path to './client_v2/src/helpers/trackers/trackers.json' for new frontend migration
+# TODO(ik): Update output path to './client_v2/src/helpers/trackers/trackers.json' for new frontend migration
 output='./client/src/helpers/trackers/trackers.json'
 readonly trackers_url output
 
