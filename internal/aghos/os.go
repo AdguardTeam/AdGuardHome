@@ -114,6 +114,8 @@ func PIDByCommand(
 	l.DebugContext(ctx, "executing", "cmd", psCmd, "args", psArgs)
 
 	stdoutBuf := bytes.Buffer{}
+
+	// TODO(s.chzhen):  Catch stderr.
 	runErr := executil.Run(
 		ctx,
 		executil.SystemCommandConstructor{},
