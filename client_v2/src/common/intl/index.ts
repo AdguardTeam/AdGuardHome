@@ -80,11 +80,11 @@ export const i18n = (lang: LocalesType) => {
     };
 };
 
-const detectedLanguage = (
-    (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && LocalStorageHelper.getItem(LOCAL_STORAGE_KEYS.LANGUAGE)) ||
+const detectedLanguage = ((typeof window !== 'undefined' &&
+    typeof localStorage !== 'undefined' &&
+    LocalStorageHelper.getItem(LOCAL_STORAGE_KEYS.LANGUAGE)) ||
     (typeof navigator !== 'undefined' && (navigator.language as string)) ||
-    BASE_LOCALE
-) as LocalesType;
+    BASE_LOCALE) as LocalesType;
 
 let currentLanguage: LocalesType = resolveLanguage(detectedLanguage);
 
@@ -97,6 +97,10 @@ let translator = translate.createReactTranslator<any>(i18n(currentLanguage), Rea
         {
             key: 'strong',
             createdTag: 'strong',
+        },
+        {
+            key: 'code',
+            createdTag: 'code',
         },
     ],
 });
@@ -130,6 +134,10 @@ const intl = {
                 {
                     key: 'strong',
                     createdTag: 'strong',
+                },
+                {
+                    key: 'code',
+                    createdTag: 'code',
                 },
             ],
         });

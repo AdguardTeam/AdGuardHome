@@ -26,6 +26,7 @@ export const ICONS = {
     check: 'check',
     dot: 'dot',
     attention: 'attention',
+    label: 'label',
 } as const;
 
 export type IconType = keyof typeof ICONS;
@@ -332,19 +333,22 @@ export const Icons = memo(() => (
                 strokeLinecap="round"
                 strokeLinejoin="round"
             />
-            <path
-                d="M12 8V14"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
+            <path d="M12 8V14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             <path
                 d="M11.997 16.4045C12.009 16.4025 11.997 16.5955 11.997 16.5955"
                 stroke="currentColor"
                 strokeWidth="1.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
+            />
+        </symbol>
+
+        <symbol id="label" viewBox="0 0 24 24" fill="none">
+            <path
+                fillRule="evenodd"
+                clipRule="evenodd"
+                d="M12 8C9.79086 8 8 9.79086 8 12C8 14.2091 9.79086 16 12 16C14.2091 16 16 14.2091 16 12C15.9974 9.79193 14.2081 8.00258 12 8Z"
+                fill="currentColor"
             />
         </symbol>
     </svg>

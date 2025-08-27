@@ -10,6 +10,18 @@
     margin: 0;
     padding: 8px 0;
     cursor: pointer;
+
+    &.center {
+        align-items: center;
+    }
+
+    &.start {
+        align-items: flex-start;
+    }
+
+    &.end {
+        align-items: flex-end;
+    }
 }
 
 .input {
@@ -18,9 +30,12 @@
 
 .text {
     max-width: 250px;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
+    flex: 1;
+}
+
+.description {
+    margin-top: 2px;
+    color: var(--default-description-text);
 }
 
 .icon {
