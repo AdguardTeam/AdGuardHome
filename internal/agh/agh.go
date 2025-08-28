@@ -33,6 +33,8 @@ func (em EmptyConfigModifier) Apply(ctx context.Context) {}
 
 // exitErr implements [executil.ExitCodeError] for tests to simulate non-zero
 // process exit codes.
+//
+// TODO(s.chzhen):  Consider constructing an [exec.ExitError] instead.
 type exitErr struct {
 	code osutil.ExitCode
 }

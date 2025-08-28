@@ -171,9 +171,9 @@ func (s *systemdService) Status() (status service.Status, err error) {
 
 	// TODO(s.chzhen):  Consider streaming the output if needed.  Using
 	// [io.Pipe] here is unnecessary; it complicates lifecycle management
-	// because you must read concurrently and explicitly Close the PipeWriter to
-	// signal EOF.  Since this command’s output is small, a bytes.Buffer via
-	// executil.Run is simplest and safe.
+	// because the output must be read concurrently, and the PipeWriter must be
+	// explicitly closed to signal EOF.  Since this command's output is small, a
+	// bytes.Buffer via executil.Run is sufficient.
 	err = executil.Run(
 		// TODO(s.chzhen):  Pass context.
 		context.TODO(),
