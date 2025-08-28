@@ -20,7 +20,10 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- The HTTP API `GET /control/profile` endpoint failing when no users were configured ([#7985]).
 - Missing warning on the *Encryption Settings* page when using a certificate without an IP address.
+
+[#7985]: https://github.com/AdguardTeam/AdGuardHome/issues/7985
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

@@ -9,8 +9,8 @@ import (
 // cache.
 const failedAuthTTL = 1 * time.Minute
 
-// loginRaateLimiter is an interface for rate limiting login attempts.
-type loginRaateLimiter interface {
+// loginRateLimiter is an interface for rate limiting login attempts.
+type loginRateLimiter interface {
 	// check returns the duration of time left until a user is unblocked.
 	// A non-positive result indicates that the user is not blocked.
 	check(usrID string) (left time.Duration)
@@ -66,7 +66,7 @@ func newAuthRateLimiter(blockDur time.Duration, maxAttempts uint) (ab *authRateL
 }
 
 // type check
-var _ loginRaateLimiter = (*authRateLimiter)(nil)
+var _ loginRateLimiter = (*authRateLimiter)(nil)
 
 // cleanupLocked checks each blocked users removing ones with expired TTL.  For
 // internal use only.

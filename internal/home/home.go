@@ -178,7 +178,8 @@ func setupContext(ctx context.Context, baseLogger *slog.Logger, opts options) (e
 		return nil
 	}
 
-	err = parseConfig()
+	// TODO(s.chzhen):  Consider adding a key prefix.
+	err = parseConfig(ctx, baseLogger)
 	if err != nil {
 		log.Error("parsing configuration file: %s", err)
 
@@ -862,7 +863,7 @@ func initUsers(
 	baseLogger *slog.Logger,
 	isGLiNet bool,
 ) (auth *auth, err error) {
-	var rateLimiter loginRaateLimiter
+	var rateLimiter loginRateLimiter
 	if config.AuthAttempts > 0 && config.AuthBlockMin > 0 {
 		blockDur := time.Duration(config.AuthBlockMin) * time.Minute
 		rateLimiter = newAuthRateLimiter(blockDur, config.AuthAttempts)
