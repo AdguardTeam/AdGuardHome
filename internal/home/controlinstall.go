@@ -130,6 +130,7 @@ func (req *checkConfReq) validateDNS(
 	ctx context.Context,
 	l *slog.Logger,
 	tcpPorts aghalg.UniqChecker[tcpPort],
+	cmdCons executil.CommandConstructor,
 ) (canAutofix bool, err error) {
 	defer func() { err = errors.Annotate(err, "validating ports: %w") }()
 
@@ -161,7 +162,7 @@ func (req *checkConfReq) validateDNS(
 	// Try to fix automatically.
 	canAutofix = checkDNSStubListener(ctx, l)
 	if canAutofix && req.DNS.Autofix {
-		if derr := disableDNSStubListener(ctx, l); derr != nil {
+		if derr := disableDNSStubListener(ctx, l, cmdCons); derr != nil {
 			l.ErrorContext(ctx, "disabling DNSStubListener", slogutil.KeyError, err)
 		}
 
@@ -189,7 +190,8 @@ func (web *webAPI) handleInstallCheckConfig(w http.ResponseWriter, r *http.Reque
 		resp.Web.Status = err.Error()
 	}
 
-	if resp.DNS.CanAutofix, err = req.validateDNS(r.Context(), web.logger, tcpPorts); err != nil {
+	resp.DNS.CanAutofix, err = req.validateDNS(r.Context(), web.logger, tcpPorts, web.cmdCons)
+	if err != nil {
 		resp.DNS.Status = err.Error()
 	} else if !req.DNS.IP.IsUnspecified() {
 		resp.StaticIP = handleStaticIP(req.DNS.IP, req.SetStaticIP)
@@ -283,7 +285,11 @@ const resolvConfPath = "/etc/resolv.conf"
 
 // disableDNSStubListener deactivates DNSStubListerner and returns an error, if
 // any.
-func disableDNSStubListener(ctx context.Context, l *slog.Logger) (err error) {
+func disableDNSStubListener(
+	ctx context.Context,
+	l *slog.Logger,
+	cmdCons executil.CommandConstructor,
+) (err error) {
 	dir := filepath.Dir(resolvedConfPath)
 	err = os.MkdirAll(dir, 0o755)
 	if err != nil {
@@ -302,9 +308,7 @@ func disableDNSStubListener(ctx context.Context, l *slog.Logger) (err error) {
 		return fmt.Errorf("os.Symlink: %s: %w", resolvConfPath, err)
 	}
 
-	const (
-		systemctlCmd = "systemctl"
-	)
+	const systemctlCmd = "systemctl"
 
 	systemctlArgs := []string{"reload-or-restart", "systemd-resolved"}
 
@@ -312,7 +316,7 @@ func disableDNSStubListener(ctx context.Context, l *slog.Logger) (err error) {
 
 	err = executil.RunWithPeek(
 		ctx,
-		executil.SystemCommandConstructor{},
+		cmdCons,
 		agh.DefaultOutputLimit,
 		systemctlCmd,
 		systemctlArgs...,

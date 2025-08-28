@@ -87,9 +87,9 @@ func RunCommand(
 		return code, stderrBuf.Bytes(), nil
 	}
 
-	return osutil.ExitCodeFailure,
-		nil,
-		fmt.Errorf("command %q failed: %w: %s", command, err, stdoutBuf.Bytes())
+	code = osutil.ExitCodeFailure
+
+	return code, nil, fmt.Errorf("command %q failed: %w: %s", command, err, &stdoutBuf)
 }
 
 // psArgs holds the default ps arguments to avoid per-call slice allocations.
@@ -116,6 +116,12 @@ func PIDByCommand(
 	stdoutBuf := bytes.Buffer{}
 
 	// TODO(s.chzhen):  Catch stderr.
+	//
+	// TODO(s.chzhen):  Consider streaming the output if needed.  Using
+	// [io.Pipe] here is unnecessary; it complicates lifecycle management
+	// because you must read concurrently and explicitly Close the PipeWriter to
+	// signal EOF.  Since this command’s output is small, a bytes.Buffer via
+	// executil.Run is simplest and safe.
 	runErr := executil.Run(
 		ctx,
 		executil.SystemCommandConstructor{},

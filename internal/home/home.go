@@ -589,12 +589,13 @@ func initWeb(
 	disableUpdate := !isUpdateEnabled(ctx, baseLogger, &opts, isCustomUpdURL)
 
 	webConf := &webConfig{
-		updater:      upd,
-		logger:       logger,
-		baseLogger:   baseLogger,
-		confModifier: confModifier,
-		tlsManager:   tlsMgr,
-		auth:         auth,
+		CommandConstructor: executil.SystemCommandConstructor{},
+		updater:            upd,
+		logger:             logger,
+		baseLogger:         baseLogger,
+		confModifier:       confModifier,
+		tlsManager:         tlsMgr,
+		auth:               auth,
 
 		clientFS: clientFS,
 

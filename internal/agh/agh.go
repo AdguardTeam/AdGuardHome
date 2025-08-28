@@ -37,6 +37,11 @@ type exitErr struct {
 	code osutil.ExitCode
 }
 
+// newExitErr returns a properly initialized exitErr with the provided code.
+func newExitErr(code osutil.ExitCode) (err exitErr) {
+	return exitErr{code: code}
+}
+
 // type check
 var _ executil.ExitCodeError = exitErr{}
 
@@ -62,7 +67,7 @@ type ExternalCommand struct {
 	Out string
 
 	// Code is returned as the exit code if non-zero.
-	Code int
+	Code osutil.ExitCode
 }
 
 // keyCommand builds a key for a command lookup.
@@ -87,9 +92,9 @@ func parseCommand(s string) (path string, args []string) {
 // NewMultipleCommandConstructor is a helper function that returns a mock
 // [executil.CommandConstructor] for tests that supports multiple commands.
 //
-// TODO(s.chzhen):  Use this.
-//
-// TODO(s.chzhen):  Move to aghtest once the import cycle is resolved.
+// TODO(s.chzhen):  Move to aghtest once the import cycle is resolved, since it
+// will be called from the aghnet package, which imports the whois package,
+// which in turn imports aghnet.
 func NewMultipleCommandConstructor(cmds ...ExternalCommand) (cs executil.CommandConstructor) {
 	table := make(map[string]ExternalCommand, len(cmds))
 	for _, ec := range cmds {
@@ -97,44 +102,44 @@ func NewMultipleCommandConstructor(cmds ...ExternalCommand) (cs executil.Command
 		table[keyCommand(p, a)] = ec
 	}
 
-	return &fakeexec.CommandConstructor{
-		OnNew: func(
-			_ context.Context,
-			conf *executil.CommandConfig,
-		) (c executil.Command, err error) {
-			ec := table[keyCommand(conf.Path, conf.Args)]
+	onNew := func(
+		_ context.Context,
+		conf *executil.CommandConfig,
+	) (c executil.Command, err error) {
+		ec := table[keyCommand(conf.Path, conf.Args)]
 
-			cmd := fakeexec.NewCommand()
-			cmd.OnStart = func(_ context.Context) (err error) {
-				if ec.Out != "" {
-					_, _ = conf.Stdout.Write([]byte(ec.Out))
-				}
-
-				return nil
+		cmd := fakeexec.NewCommand()
+		cmd.OnStart = func(_ context.Context) (err error) {
+			if ec.Out != "" {
+				_, _ = conf.Stdout.Write([]byte(ec.Out))
 			}
 
-			cmd.OnWait = func(_ context.Context) (err error) {
-				if ec.Err != nil {
-					return ec.Err
-				}
+			return nil
+		}
 
-				if ec.Code != 0 {
-					return exitErr{code: ec.Code}
-				}
-
-				return nil
+		cmd.OnWait = func(_ context.Context) (err error) {
+			if ec.Err != nil {
+				return ec.Err
 			}
 
-			return cmd, nil
-		},
+			if ec.Code != 0 {
+				return newExitErr(ec.Code)
+			}
+
+			return nil
+		}
+
+		return cmd, nil
 	}
+
+	return &fakeexec.CommandConstructor{OnNew: onNew}
 }
 
 // NewCommandConstructor is a helper function that returns a mock
 // [executil.CommandConstructor] for tests.
 func NewCommandConstructor(
 	_ string,
-	code int,
+	code osutil.ExitCode,
 	stdout string,
 	cmdErr error,
 ) (cs executil.CommandConstructor) {
@@ -158,7 +163,7 @@ func NewCommandConstructor(
 				}
 
 				if code != 0 {
-					return exitErr{code: code}
+					return newExitErr(code)
 				}
 
 				return nil

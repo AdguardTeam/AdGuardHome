@@ -487,6 +487,11 @@ func changedLocales(
 	gitArgs := []string{"diff", "--numstat", localesDir}
 	l.DebugContext(ctx, "executing", "cmd", gitCmd, "args", gitArgs)
 
+	// TODO(s.chzhen):  Consider streaming the output if needed.  Using
+	// [io.Pipe] here is unnecessary; it complicates lifecycle management
+	// because you must read concurrently and explicitly Close the PipeWriter to
+	// signal EOF.  Since this command’s output is small, a bytes.Buffer via
+	// executil.Run is simplest and safe.
 	var out bytes.Buffer
 	err = executil.Run(ctx, cmdCons, &executil.CommandConfig{
 		Path:   gitCmd,

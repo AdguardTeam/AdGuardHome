@@ -60,6 +60,7 @@ func (sys *sysvSystem) New(i service.Interface, c *service.Config) (s service.Se
 	}
 
 	return &sysvService{
+		cmdCons: executil.SystemCommandConstructor{},
 		Service: s,
 		name:    c.Name,
 	}, nil
@@ -68,6 +69,9 @@ func (sys *sysvSystem) New(i service.Interface, c *service.Config) (s service.Se
 // sysvService is a wrapper for a SysV [service.Service] that supplements the
 // installation and uninstallation.
 type sysvService struct {
+	// cmdCons is used to run external commands.  It must not be nil.
+	cmdCons executil.CommandConstructor
+
 	// Service must have an unexported type *service.sysv.
 	service.Service
 
@@ -87,9 +91,8 @@ func (svc *sysvService) Install() (err error) {
 		return err
 	}
 
-	cmdCons := executil.SystemCommandConstructor{}
 	// TODO(s.chzhen):  Pass context.
-	_, _, err = aghos.RunCommand(context.TODO(), cmdCons, "update-rc.d", svc.name, "defaults")
+	_, _, err = aghos.RunCommand(context.TODO(), svc.cmdCons, "update-rc.d", svc.name, "defaults")
 
 	// Don't wrap an error since it's informative enough as is.
 	return err
@@ -104,9 +107,8 @@ func (svc *sysvService) Uninstall() (err error) {
 		return err
 	}
 
-	cmdCons := executil.SystemCommandConstructor{}
 	// TODO(s.chzhen):  Pass context.
-	_, _, err = aghos.RunCommand(context.TODO(), cmdCons, "update-rc.d", svc.name, "remove")
+	_, _, err = aghos.RunCommand(context.TODO(), svc.cmdCons, "update-rc.d", svc.name, "remove")
 
 	// Don't wrap an error since it's informative enough as is.
 	return err
@@ -133,6 +135,7 @@ func (sys *systemdSystem) New(i service.Interface, c *service.Config) (s service
 	}
 
 	return &systemdService{
+		cmdCons:  executil.SystemCommandConstructor{},
 		Service:  s,
 		unitName: fmt.Sprintf("%s.service", c.Name),
 	}, nil
@@ -144,6 +147,9 @@ var _ service.Service = (*systemdService)(nil)
 // systemdService is a wrapper for a systemd [service.Service] that enriches the
 // service status information.
 type systemdService struct {
+	// cmdCons is used to run external commands.  It must not be nil.
+	cmdCons executil.CommandConstructor
+
 	// Service is expected to have an unexported type *service.systemd.
 	service.Service
 
@@ -163,12 +169,15 @@ func (s *systemdService) Status() (status service.Status, err error) {
 		systemctlStdout bytes.Buffer
 	)
 
-	// TODO(s.chzhen):  Pass context.
-	ctx := context.TODO()
-
+	// TODO(s.chzhen):  Consider streaming the output if needed.  Using
+	// [io.Pipe] here is unnecessary; it complicates lifecycle management
+	// because you must read concurrently and explicitly Close the PipeWriter to
+	// signal EOF.  Since this command’s output is small, a bytes.Buffer via
+	// executil.Run is simplest and safe.
 	err = executil.Run(
-		ctx,
-		executil.SystemCommandConstructor{},
+		// TODO(s.chzhen):  Pass context.
+		context.TODO(),
+		s.cmdCons,
 		&executil.CommandConfig{
 			Path:   systemctlCmd,
 			Args:   systemctlArgs,

@@ -20,6 +20,7 @@ import (
 	"github.com/AdguardTeam/golibs/netutil/httputil"
 	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/AdguardTeam/golibs/osutil"
+	"github.com/AdguardTeam/golibs/osutil/executil"
 	"github.com/NYTimes/gziphandler"
 	"github.com/quic-go/quic-go/http3"
 	"golang.org/x/net/http2"
@@ -39,6 +40,9 @@ const (
 )
 
 type webConfig struct {
+	// CommandConstructor is used to run external commands.  It must not be nil.
+	CommandConstructor executil.CommandConstructor
+
 	updater *updater.Updater
 
 	// logger is a slog logger used in webAPI. It must not be nil.
@@ -111,6 +115,9 @@ type webAPI struct {
 	// confModifier is used to update the global configuration.
 	confModifier agh.ConfigModifier
 
+	// cmdCons is used to run external commands.
+	cmdCons executil.CommandConstructor
+
 	// TODO(a.garipov): Refactor all these servers.
 	httpServer *http.Server
 
@@ -143,6 +150,7 @@ func newWebAPI(ctx context.Context, conf *webConfig) (w *webAPI) {
 	w = &webAPI{
 		conf:         conf,
 		confModifier: conf.confModifier,
+		cmdCons:      conf.CommandConstructor,
 		logger:       conf.logger,
 		baseLogger:   conf.baseLogger,
 		tlsManager:   conf.tlsManager,

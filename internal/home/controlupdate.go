@@ -148,7 +148,13 @@ func (web *webAPI) handleUpdate(w http.ResponseWriter, r *http.Request) {
 	// The background context is used because the underlying functions wrap it
 	// with timeout and shut down the server, which handles current request.  It
 	// also should be done in a separate goroutine for the same reason.
-	go finishUpdate(context.Background(), web.logger, execPath, web.conf.runningAsService)
+	go finishUpdate(
+		context.Background(),
+		web.logger,
+		web.cmdCons,
+		execPath,
+		web.conf.runningAsService,
+	)
 }
 
 // versionResponse is the response for /control/version.json endpoint.
@@ -187,15 +193,19 @@ func tlsConfUsesPrivilegedPorts(c *tlsConfigSettings) (ok bool) {
 
 // finishUpdate completes an update procedure.  It is intended to be used as a
 // goroutine.
-func finishUpdate(ctx context.Context, l *slog.Logger, execPath string, runningAsService bool) {
+func finishUpdate(
+	ctx context.Context,
+	l *slog.Logger,
+	cmdCons executil.CommandConstructor,
+	execPath string,
+	runningAsService bool,
+) {
 	defer slogutil.RecoverAndExit(ctx, l, osutil.ExitCodeFailure)
 
 	l.InfoContext(ctx, "stopping all tasks")
 
 	cleanup(ctx)
 	cleanupAlways()
-
-	cons := executil.SystemCommandConstructor{}
 
 	var err error
 	if runtime.GOOS == "windows" {
@@ -206,7 +216,7 @@ func finishUpdate(ctx context.Context, l *slog.Logger, execPath string, runningA
 			//
 			// TODO(a.garipov): Recheck the claim above.
 			var cmd executil.Command
-			cmd, err = cons.New(ctx, &executil.CommandConfig{
+			cmd, err = cmdCons.New(ctx, &executil.CommandConfig{
 				Path: "cmd",
 				Args: []string{"/c", "net stop AdGuardHome & net start AdGuardHome"},
 			})
@@ -225,7 +235,7 @@ func finishUpdate(ctx context.Context, l *slog.Logger, execPath string, runningA
 		l.InfoContext(ctx, "restarting", "exec_path", execPath, "args", os.Args[1:])
 
 		var cmd executil.Command
-		cmd, err = cons.New(ctx, &executil.CommandConfig{
+		cmd, err = cmdCons.New(ctx, &executil.CommandConfig{
 			Path:   execPath,
 			Args:   os.Args[1:],
 			Stdin:  os.Stdin,
