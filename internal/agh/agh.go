@@ -102,10 +102,7 @@ func NewMultipleCommandConstructor(cmds ...ExternalCommand) (cs executil.Command
 		table[keyCommand(p, a)] = ec
 	}
 
-	onNew := func(
-		_ context.Context,
-		conf *executil.CommandConfig,
-	) (c executil.Command, err error) {
+	onNew := func(_ context.Context, conf *executil.CommandConfig) (c executil.Command, err error) {
 		ec := table[keyCommand(conf.Path, conf.Args)]
 
 		cmd := fakeexec.NewCommand()
@@ -143,33 +140,30 @@ func NewCommandConstructor(
 	stdout string,
 	cmdErr error,
 ) (cs executil.CommandConstructor) {
-	return &fakeexec.CommandConstructor{
-		OnNew: func(
-			_ context.Context,
-			conf *executil.CommandConfig,
-		) (c executil.Command, err error) {
-			cmd := fakeexec.NewCommand()
-			cmd.OnStart = func(_ context.Context) (err error) {
-				if conf.Stdout != nil {
-					_, _ = conf.Stdout.Write([]byte(stdout))
-				}
-
-				return nil
+	onNew := func(_ context.Context, conf *executil.CommandConfig) (c executil.Command, err error) {
+		cmd := fakeexec.NewCommand()
+		cmd.OnStart = func(_ context.Context) (err error) {
+			if conf.Stdout != nil {
+				_, _ = conf.Stdout.Write([]byte(stdout))
 			}
 
-			cmd.OnWait = func(_ context.Context) (err error) {
-				if cmdErr != nil {
-					return cmdErr
-				}
+			return nil
+		}
 
-				if code != 0 {
-					return newExitErr(code)
-				}
-
-				return nil
+		cmd.OnWait = func(_ context.Context) (err error) {
+			if cmdErr != nil {
+				return cmdErr
 			}
 
-			return cmd, nil
-		},
+			if code != 0 {
+				return newExitErr(code)
+			}
+
+			return nil
+		}
+
+		return cmd, nil
 	}
+
+	return &fakeexec.CommandConstructor{OnNew: onNew}
 }
