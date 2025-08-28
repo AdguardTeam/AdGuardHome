@@ -17,6 +17,11 @@ See also the [v0.107.66 GitHub milestone][ms-v0.107.66].
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
+
+### Fixed
+
+- Missing warning on the *Encryption Settings* page when using a certificate without an IP address.
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->

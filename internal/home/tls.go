@@ -907,11 +907,13 @@ func (m *tlsManager) validateCertificate(
 	certChain []byte,
 	serverName string,
 ) (ok bool, err error) {
+	// parseErr is a non-critical parse warning.
+	var parseErr error
 	var certs []*x509.Certificate
-	certs, status.ValidCert, err = m.parseCertChain(ctx, certChain)
+	certs, status.ValidCert, parseErr = m.parseCertChain(ctx, certChain)
 	if !status.ValidCert {
 		// Don't wrap the error, since it's informative enough as is.
-		return false, err
+		return false, parseErr
 	}
 
 	mainCert := certs[0]
@@ -930,7 +932,8 @@ func (m *tlsManager) validateCertificate(
 
 	status.ValidChain = true
 
-	return true, nil
+	// Propagate the non-critical parse warning.
+	return true, parseErr
 }
 
 // Key types.
