@@ -506,9 +506,10 @@ func (mw *authMiddlewareDefault) userFromRequestBasicAuth(
 		return nil, fmt.Errorf("login attempt blocked for %s", left)
 	}
 
-	rateLimiter.inc(remoteIP)
 	defer func() {
 		if err != nil {
+			rateLimiter.inc(remoteIP)
+
 			return
 		}
 

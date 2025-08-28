@@ -20,10 +20,12 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Authentication errors in the Web UI when AdGuard Home is behind a proxy that sets Basic Auth headers ([#7987]).
 - The HTTP API `GET /control/profile` endpoint failing when no users were configured ([#7985]).
 - Missing warning on the *Encryption Settings* page when using a certificate without an IP address.
 
 [#7985]: https://github.com/AdguardTeam/AdGuardHome/issues/7985
+[#7987]: https://github.com/AdguardTeam/AdGuardHome/issues/7987
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
