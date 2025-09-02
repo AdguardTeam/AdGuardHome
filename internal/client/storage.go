@@ -249,7 +249,7 @@ func (s *Storage) addFromSystemARP(ctx context.Context) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if err := s.arpDB.Refresh(); err != nil {
+	if err := s.arpDB.Refresh(ctx); err != nil {
 		s.arpDB = arpdb.Empty{}
 		s.logger.ErrorContext(ctx, "refreshing arp container", slogutil.KeyError, err)
 

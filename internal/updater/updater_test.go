@@ -15,6 +15,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/updater"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/golibs/osutil/executil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -76,15 +77,16 @@ func TestUpdater_Update(t *testing.T) {
 	require.NoError(t, err)
 
 	u := updater.NewUpdater(&updater.Config{
-		Client:          srv.Client(),
-		Logger:          testLogger,
-		GOARCH:          "amd64",
-		GOOS:            "linux",
-		Version:         "v0.103.0",
-		ConfName:        yamlPath,
-		WorkDir:         wd,
-		ExecPath:        exePath,
-		VersionCheckURL: versionCheckURL,
+		Client:             srv.Client(),
+		Logger:             testLogger,
+		CommandConstructor: executil.EmptyCommandConstructor{},
+		GOARCH:             "amd64",
+		GOOS:               "linux",
+		Version:            "v0.103.0",
+		ConfName:           yamlPath,
+		WorkDir:            wd,
+		ExecPath:           exePath,
+		VersionCheckURL:    versionCheckURL,
 	})
 
 	ctx := testutil.ContextWithTimeout(t, testTimeout)

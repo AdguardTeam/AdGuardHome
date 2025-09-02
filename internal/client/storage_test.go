@@ -1,6 +1,7 @@
 package client_test
 
 import (
+	"context"
 	"net"
 	"net/netip"
 	"runtime"
@@ -18,6 +19,7 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/hostsfile"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/golibs/service"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/golibs/testutil/faketime"
 	"github.com/AdguardTeam/golibs/timeutil"
@@ -63,17 +65,17 @@ func (c *testHostsContainer) Upd() (updates <-chan *hostsfile.DefaultStorage) {
 // Interface stores and refreshes the network neighborhood reported by ARP
 // (Address Resolution Protocol).
 type Interface interface {
-	// Refresh updates the stored data.  It must be safe for concurrent use.
-	Refresh() (err error)
+	// Refresher updates the stored data.  It must be safe for concurrent use.
+	service.Refresher
 
-	// Neighbors returnes the last set of data reported by ARP.  Both the method
+	// Neighbors returns the last set of data reported by ARP.  Both the method
 	// and it's result must be safe for concurrent use.
 	Neighbors() (ns []arpdb.Neighbor)
 }
 
 // testARPDB is a mock implementation of the [arpdb.Interface].
 type testARPDB struct {
-	onRefresh   func() (err error)
+	onRefresh   func(ctx context.Context) (err error)
 	onNeighbors func() (ns []arpdb.Neighbor)
 }
 
@@ -81,8 +83,8 @@ type testARPDB struct {
 var _ arpdb.Interface = (*testARPDB)(nil)
 
 // Refresh implements the [arpdb.Interface] interface for *testARP.
-func (c *testARPDB) Refresh() (err error) {
-	return c.onRefresh()
+func (c *testARPDB) Refresh(ctx context.Context) (err error) {
+	return c.onRefresh(ctx)
 }
 
 // Neighbors implements the [arpdb.Interface] interface for *testARP.
@@ -218,7 +220,7 @@ func TestStorage_Add_arp(t *testing.T) {
 	)
 
 	a := &testARPDB{
-		onRefresh: func() (err error) { return nil },
+		onRefresh: func(_ context.Context) (err error) { return nil },
 		onNeighbors: func() (ns []arpdb.Neighbor) {
 			mu.Lock()
 			defer mu.Unlock()
@@ -392,7 +394,7 @@ func TestClientsDHCP(t *testing.T) {
 
 	arpCh := make(chan []arpdb.Neighbor, 1)
 	arpDB := &testARPDB{
-		onRefresh: func() (err error) { return nil },
+		onRefresh: func(_ context.Context) (err error) { return nil },
 		onNeighbors: func() (ns []arpdb.Neighbor) {
 			select {
 			case ns = <-arpCh:

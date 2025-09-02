@@ -18,6 +18,7 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/osutil"
+	"github.com/AdguardTeam/golibs/osutil/executil"
 )
 
 // DialContextFunc is the semantic alias for dialing functions, such as
@@ -27,7 +28,16 @@ type DialContextFunc = func(ctx context.Context, network, addr string) (conn net
 // Variables and functions to substitute in tests.
 var (
 	// aghosRunCommand is the function to run shell commands.
-	aghosRunCommand = aghos.RunCommand
+	//
+	// TODO(s.chzhen):  Use [aghos.RunCommand] directly.
+	aghosRunCommand = (func() func(string, ...string) (int, []byte, error) {
+		ctx := context.TODO()
+		cmdCons := executil.SystemCommandConstructor{}
+
+		return func(command string, arguments ...string) (int, []byte, error) {
+			return aghos.RunCommand(ctx, cmdCons, command, arguments...)
+		}
+	})()
 
 	// netInterfaces is the function to get the available network interfaces.
 	netInterfaceAddrs = net.InterfaceAddrs
