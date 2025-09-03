@@ -8,6 +8,8 @@ import (
 	"testing"
 	"testing/fstest"
 
+	"github.com/AdguardTeam/golibs/osutil/executil"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -62,7 +64,8 @@ func TestIfaceHasStaticIP(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			substRootDirFS(t, tc.rootFsys)
 
-			has, err := IfaceHasStaticIP(ifaceName)
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			has, err := IfaceHasStaticIP(ctx, executil.EmptyCommandConstructor{}, ifaceName)
 			require.NoError(t, err)
 
 			tc.wantHas(t, has)

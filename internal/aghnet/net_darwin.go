@@ -5,12 +5,14 @@ package aghnet
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"regexp"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/osutil/executil"
 )
 
 // hardwarePortInfo contains information about the current state of the internet
@@ -23,8 +25,12 @@ type hardwarePortInfo struct {
 	static    bool
 }
 
-func ifaceHasStaticIP(ifaceName string) (ok bool, err error) {
-	portInfo, err := getCurrentHardwarePortInfo(ifaceName)
+func ifaceHasStaticIP(
+	ctx context.Context,
+	cmdCons executil.CommandConstructor,
+	ifaceName string,
+) (ok bool, err error) {
+	portInfo, err := getCurrentHardwarePortInfo(ctx, cmdCons, ifaceName)
 	if err != nil {
 		return false, err
 	}
@@ -34,15 +40,19 @@ func ifaceHasStaticIP(ifaceName string) (ok bool, err error) {
 
 // getCurrentHardwarePortInfo gets information for the specified network
 // interface.
-func getCurrentHardwarePortInfo(ifaceName string) (hardwarePortInfo, error) {
+func getCurrentHardwarePortInfo(
+	ctx context.Context,
+	cmdCons executil.CommandConstructor,
+	ifaceName string,
+) (hardwarePortInfo, error) {
 	// First of all we should find hardware port name.
-	m := getNetworkSetupHardwareReports()
+	m := getNetworkSetupHardwareReports(ctx, cmdCons)
 	hardwarePort, ok := m[ifaceName]
 	if !ok {
 		return hardwarePortInfo{}, fmt.Errorf("could not find hardware port for %s", ifaceName)
 	}
 
-	return getHardwarePortInfo(hardwarePort)
+	return getHardwarePortInfo(ctx, cmdCons, hardwarePort)
 }
 
 // hardwareReportsReg is the regular expression matching the lines of
@@ -57,8 +67,11 @@ var hardwareReportsReg = regexp.MustCompile("Hardware Port: (.*?)\nDevice: (.*?)
 // TODO(e.burkov):  There should be more proper approach than parsing the
 // command output.  For example, see
 // https://developer.apple.com/documentation/systemconfiguration.
-func getNetworkSetupHardwareReports() (reports map[string]string) {
-	_, out, err := aghosRunCommand("networksetup", "-listallhardwareports")
+func getNetworkSetupHardwareReports(
+	ctx context.Context,
+	cmdCons executil.CommandConstructor,
+) (reports map[string]string) {
+	_, out, err := aghos.RunCommand(ctx, cmdCons, "networksetup", "-listallhardwareports")
 	if err != nil {
 		return nil
 	}
@@ -77,8 +90,12 @@ func getNetworkSetupHardwareReports() (reports map[string]string) {
 // command output lines containing the port information.
 var hardwarePortReg = regexp.MustCompile("IP address: (.*?)\nSubnet mask: (.*?)\nRouter: (.*?)\n")
 
-func getHardwarePortInfo(hardwarePort string) (h hardwarePortInfo, err error) {
-	_, out, err := aghosRunCommand("networksetup", "-getinfo", hardwarePort)
+func getHardwarePortInfo(
+	ctx context.Context,
+	cmdCons executil.CommandConstructor,
+	hardwarePort string,
+) (h hardwarePortInfo, err error) {
+	_, out, err := aghos.RunCommand(ctx, cmdCons, "networksetup", "-getinfo", hardwarePort)
 	if err != nil {
 		return h, err
 	}
@@ -97,8 +114,12 @@ func getHardwarePortInfo(hardwarePort string) (h hardwarePortInfo, err error) {
 	}, nil
 }
 
-func ifaceSetStaticIP(ifaceName string) (err error) {
-	portInfo, err := getCurrentHardwarePortInfo(ifaceName)
+func ifaceSetStaticIP(
+	ctx context.Context,
+	cmdCons executil.CommandConstructor,
+	ifaceName string,
+) (err error) {
+	portInfo, err := getCurrentHardwarePortInfo(ctx, cmdCons, ifaceName)
 	if err != nil {
 		return err
 	}
@@ -115,7 +136,7 @@ func ifaceSetStaticIP(ifaceName string) (err error) {
 	args := append([]string{"-setdnsservers", portInfo.name}, dnsAddrs...)
 
 	// Setting DNS servers is necessary when configuring a static IP
-	code, _, err := aghosRunCommand("networksetup", args...)
+	code, _, err := aghos.RunCommand(ctx, cmdCons, "networksetup", args...)
 	if err != nil {
 		return err
 	} else if code != 0 {
@@ -123,7 +144,9 @@ func ifaceSetStaticIP(ifaceName string) (err error) {
 	}
 
 	// Actually configures hardware port to have static IP
-	code, _, err = aghosRunCommand(
+	code, _, err = aghos.RunCommand(
+		ctx,
+		cmdCons,
 		"networksetup",
 		"-setmanual",
 		portInfo.name,

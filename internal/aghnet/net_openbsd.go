@@ -4,15 +4,21 @@ package aghnet
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"strings"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/golibs/osutil/executil"
 )
 
-func ifaceHasStaticIP(ifaceName string) (ok bool, err error) {
+func ifaceHasStaticIP(
+	_ context.Context,
+	_ executil.CommandConstructor,
+	ifaceName string,
+) (ok bool, err error) {
 	filename := fmt.Sprintf("etc/hostname.%s", ifaceName)
 
 	return aghos.FileWalker(hostnameIfStaticConfig).Walk(rootDirFS, filename)
@@ -39,6 +45,6 @@ func hostnameIfStaticConfig(r io.Reader) (_ []string, ok bool, err error) {
 	return nil, true, s.Err()
 }
 
-func ifaceSetStaticIP(string) (err error) {
+func ifaceSetStaticIP(_ context.Context, _ executil.CommandConstructor, _ string) (err error) {
 	return aghos.Unsupported("setting static ip")
 }

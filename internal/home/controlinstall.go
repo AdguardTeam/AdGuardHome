@@ -175,6 +175,8 @@ func (req *checkConfReq) validateDNS(
 
 // handleInstallCheckConfig handles the /check_config endpoint.
 func (web *webAPI) handleInstallCheckConfig(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	req := &checkConfReq{}
 
 	err := json.NewDecoder(r.Body).Decode(req)
@@ -190,11 +192,11 @@ func (web *webAPI) handleInstallCheckConfig(w http.ResponseWriter, r *http.Reque
 		resp.Web.Status = err.Error()
 	}
 
-	resp.DNS.CanAutofix, err = req.validateDNS(r.Context(), web.logger, tcpPorts, web.cmdCons)
+	resp.DNS.CanAutofix, err = req.validateDNS(ctx, web.logger, tcpPorts, web.cmdCons)
 	if err != nil {
 		resp.DNS.Status = err.Error()
 	} else if !req.DNS.IP.IsUnspecified() {
-		resp.StaticIP = handleStaticIP(req.DNS.IP, req.SetStaticIP)
+		resp.StaticIP = handleStaticIP(ctx, req.DNS.IP, req.SetStaticIP, web.cmdCons)
 	}
 
 	aghhttp.WriteJSONResponseOK(w, r, resp)
@@ -203,7 +205,12 @@ func (web *webAPI) handleInstallCheckConfig(w http.ResponseWriter, r *http.Reque
 // handleStaticIP - handles static IP request
 // It either checks if we have a static IP
 // Or if set=true, it tries to set it
-func handleStaticIP(ip netip.Addr, set bool) staticIPJSON {
+func handleStaticIP(
+	ctx context.Context,
+	ip netip.Addr,
+	set bool,
+	cmdCons executil.CommandConstructor,
+) staticIPJSON {
 	resp := staticIPJSON{}
 
 	interfaceName := aghnet.InterfaceByIP(ip)
@@ -217,7 +224,7 @@ func handleStaticIP(ip netip.Addr, set bool) staticIPJSON {
 
 	if set {
 		// Try to set static IP for the specified interface
-		err := aghnet.IfaceSetStaticIP(interfaceName)
+		err := aghnet.IfaceSetStaticIP(ctx, cmdCons, interfaceName)
 		if err != nil {
 			resp.Static = "error"
 			resp.Error = err.Error()
@@ -227,7 +234,7 @@ func handleStaticIP(ip netip.Addr, set bool) staticIPJSON {
 
 	// Fallthrough here even if we set static IP
 	// Check if we have a static IP and return the details
-	isStaticIP, err := aghnet.IfaceHasStaticIP(interfaceName)
+	isStaticIP, err := aghnet.IfaceHasStaticIP(ctx, cmdCons, interfaceName)
 	if err != nil {
 		resp.Static = "error"
 		resp.Error = err.Error()

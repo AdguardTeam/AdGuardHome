@@ -4,6 +4,7 @@ package aghnet
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"net/netip"
@@ -13,6 +14,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/osutil/executil"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/google/renameio/v2/maybe"
 	"golang.org/x/sys/unix"
@@ -104,7 +106,11 @@ func (n interfaceName) ifacesStaticConfig(r io.Reader) (sub []string, cont bool,
 	return sub, true, s.Err()
 }
 
-func ifaceHasStaticIP(ifaceName string) (has bool, err error) {
+func ifaceHasStaticIP(
+	_ context.Context,
+	_ executil.CommandConstructor,
+	ifaceName string,
+) (has bool, err error) {
 	// TODO(a.garipov): Currently, this function returns the first definitive
 	// result.  So if /etc/dhcpcd.conf has and /etc/network/interfaces has no
 	// static IP configuration, it will return true.  Perhaps this is not the
@@ -149,7 +155,11 @@ func findIfaceLine(s *bufio.Scanner, name string) (ok bool) {
 
 // ifaceSetStaticIP configures the system to retain its current IP on the
 // interface through dhcpcd.conf.
-func ifaceSetStaticIP(ifaceName string) (err error) {
+func ifaceSetStaticIP(
+	ctx context.Context,
+	cmdCons executil.CommandConstructor,
+	ifaceName string,
+) (err error) {
 	ipNet := GetSubnet(ifaceName)
 	if !ipNet.Addr().IsValid() {
 		return errors.Error("can't get IP address")
@@ -160,7 +170,7 @@ func ifaceSetStaticIP(ifaceName string) (err error) {
 		return err
 	}
 
-	gatewayIP := GatewayIP(ifaceName)
+	gatewayIP := GatewayIP(ctx, cmdCons, ifaceName)
 	add := dhcpcdConfIface(ifaceName, ipNet, gatewayIP)
 
 	body = append(body, []byte(add)...)
