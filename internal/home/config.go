@@ -629,8 +629,8 @@ func validateBindHosts(conf *configuration) (err error) {
 }
 
 // parseConfig loads configuration from the YAML file, upgrading it if
-// necessary.
-func parseConfig() (err error) {
+// necessary.  l must not be nil.
+func parseConfig(ctx context.Context, l *slog.Logger) (err error) {
 	// Do the upgrade if necessary.
 	config.fileData, err = readConfigFile()
 	if err != nil {
@@ -652,7 +652,7 @@ func parseConfig() (err error) {
 		return err
 	} else if upgraded {
 		confPath := configFilePath()
-		log.Debug("writing config file %q after config upgrade", confPath)
+		l.DebugContext(ctx, "writing config file after config upgrade", "path", confPath)
 
 		err = maybe.WriteFile(confPath, config.fileData, aghos.DefaultPermFile)
 		if err != nil {
@@ -666,7 +666,7 @@ func parseConfig() (err error) {
 		return err
 	}
 
-	err = validateConfig()
+	err = validateConfig(ctx, l)
 	if err != nil {
 		return err
 	}
@@ -679,8 +679,9 @@ func parseConfig() (err error) {
 	return validateTLSCipherIDs(config.TLS.OverrideTLSCiphers)
 }
 
-// validateConfig returns error if the configuration is invalid.
-func validateConfig() (err error) {
+// validateConfig returns error if the configuration is invalid.  l must not be
+// nil.
+func validateConfig(ctx context.Context, l *slog.Logger) (err error) {
 	err = validateBindHosts(config)
 	if err != nil {
 		// Don't wrap the error since it's informative enough as is.
@@ -714,6 +715,10 @@ func validateConfig() (err error) {
 
 	if !filtering.ValidateUpdateIvl(config.Filtering.FiltersUpdateIntervalHours) {
 		config.Filtering.FiltersUpdateIntervalHours = 24
+	}
+
+	if len(config.Users) == 0 {
+		l.WarnContext(ctx, "no users in the configuration file; authentication is disabled")
 	}
 
 	return nil

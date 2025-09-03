@@ -4,6 +4,7 @@ package updater
 import (
 	"archive/tar"
 	"archive/zip"
+	"bytes"
 	"compress/gzip"
 	"context"
 	"fmt"
@@ -13,7 +14,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
 	"strings"
@@ -26,12 +26,15 @@ import (
 	"github.com/AdguardTeam/golibs/ioutil"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil/urlutil"
+	"github.com/AdguardTeam/golibs/osutil/executil"
 )
 
 // Updater is the AdGuard Home updater.
 type Updater struct {
 	client *http.Client
 	logger *slog.Logger
+
+	cmdCons executil.CommandConstructor
 
 	version string
 	channel string
@@ -88,6 +91,9 @@ type Config struct {
 	// be nil, see [DefaultVersionURL].
 	VersionCheckURL *url.URL
 
+	// CommandConstructor is used to run external commands.  It must not be nil.
+	CommandConstructor executil.CommandConstructor
+
 	// Version is the current AdGuard Home version.  It must not be empty.
 	Version string
 
@@ -128,6 +134,8 @@ func NewUpdater(conf *Config) *Updater {
 	return &Updater{
 		client: conf.Client,
 		logger: conf.Logger,
+
+		cmdCons: conf.CommandConstructor,
 
 		version: conf.Version,
 		channel: conf.Channel,
@@ -286,11 +294,27 @@ func (u *Updater) check(ctx context.Context) (err error) {
 		"%s" +
 		"end of the output"
 
-	cmd := exec.Command(u.updateExeName, "--check-config")
-	out, err := cmd.CombinedOutput()
-	code := cmd.ProcessState.ExitCode()
-	if err != nil || code != 0 {
-		return fmt.Errorf(format, err, code, out)
+	var (
+		args = []string{"--check-config"}
+		buf  bytes.Buffer
+	)
+
+	u.logger.DebugContext(ctx, "executing", "cmd", u.updateExeName, "args", args)
+
+	err = executil.Run(
+		ctx,
+		u.cmdCons,
+		&executil.CommandConfig{
+			Path:   u.updateExeName,
+			Args:   args,
+			Stdout: &buf,
+			Stderr: &buf,
+		},
+	)
+	if err != nil {
+		code, _ := executil.ExitCodeFromError(err)
+
+		return fmt.Errorf(format, err, code, buf.Bytes())
 	}
 
 	return nil
