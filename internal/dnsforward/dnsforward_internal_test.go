@@ -316,10 +316,15 @@ func assertGoogleAResponse(tb testing.TB, reply *dns.Msg) {
 func assertResponse(tb testing.TB, reply *dns.Msg, ip netip.Addr) {
 	tb.Helper()
 
-	require.Lenf(tb, reply.Answer, 1, "dns server returned reply with wrong number of answers - %d", len(reply.Answer))
+	if !assert.Len(tb, reply.Answer, 1, "wrong number of answers") {
+		return
+	}
 
 	a, ok := reply.Answer[0].(*dns.A)
-	require.Truef(tb, ok, "dns server returned wrong answer type instead of A: %v", reply.Answer[0])
+	if !assert.True(tb, ok, "wrong answer type instead of A: %T", reply.Answer[0]) {
+		return
+	}
+
 	assert.Equal(tb, net.IP(ip.AsSlice()), a.A)
 }
 
@@ -333,11 +338,8 @@ func sendTestMessagesAsync(tb testing.TB, conn *dns.Conn) {
 
 	for range testMessagesCount {
 		msg := createGoogleATestMessage()
-		wg.Add(1)
 
-		go func() {
-			defer wg.Done()
-
+		wg.Go(func() {
 			err := conn.WriteMsg(msg)
 			require.NoErrorf(tb, err, "cannot write message: %s", err)
 
@@ -345,10 +347,14 @@ func sendTestMessagesAsync(tb testing.TB, conn *dns.Conn) {
 			require.NoErrorf(tb, err, "cannot read response to message: %s", err)
 
 			assertGoogleAResponse(tb, res)
-		}()
+		})
 	}
 
 	wg.Wait()
+
+	if tb.Failed() {
+		tb.FailNow()
+	}
 }
 
 func sendTestMessages(tb testing.TB, conn *dns.Conn) {

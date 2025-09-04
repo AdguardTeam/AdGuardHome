@@ -85,11 +85,10 @@ func assertClients(tb testing.TB, want, got []*client.Persistent) {
 	slices.SortFunc(want, sortFunc)
 	slices.SortFunc(got, sortFunc)
 
-	slices.CompareFunc(want, got, func(a, b *client.Persistent) (n int) {
-		assert.True(tb, a.EqualIDs(b), "%q doesn't have the same ids as %q", a.Name, b.Name)
-
-		return 0
-	})
+	for i, a := range want {
+		b := got[i]
+		assert.Truef(tb, a.EqualIDs(b), "%q doesn't have the same ids as %q", a.Name, b.Name)
+	}
 }
 
 // assertPersistentClients is a helper function that uses HTTP API to check

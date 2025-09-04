@@ -118,9 +118,6 @@ fi
 readonly CGO_ENABLED race_flags
 export CGO_ENABLED
 
-GO111MODULE='on'
-export GO111MODULE
-
 # Build the new binary if requested.
 if [ "${NEXTAPI:-0}" -eq '0' ]; then
 	tags_flags='--tags='
@@ -147,5 +144,4 @@ fi
 	--trimpath \
 	"$o_flags" \
 	"$v_flags" \
-	"$x_flags" \
-	;
+	"$x_flags"

@@ -64,7 +64,7 @@ func TestStats_races(t *testing.T) {
 		readersNum = 5
 	)
 
-	for round := 0; round < roundsNum; round++ {
+	for round := range roundsNum {
 		atomic.StoreUint32(&r, uint32(round))
 
 		startWG, finWG := &sync.WaitGroup{}, &sync.WaitGroup{}

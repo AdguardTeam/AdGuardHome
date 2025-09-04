@@ -6,7 +6,7 @@
 # right after the initial environment processing.
 
 # This comment is used to simplify checking local copies of the script.  Bump
-# this number every time a remarkable change is made to this script.
+# this number every time a significant change is made to this script.
 #
 # AdGuard-Project-Version: 5
 
