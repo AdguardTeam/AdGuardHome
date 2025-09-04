@@ -137,6 +137,8 @@ func setProxyUpstreamMode(
 	switch upstreamMode {
 	case UpstreamModeParallel:
 		conf.UpstreamMode = proxy.UpstreamModeParallel
+	case UpstreamModeRandom:
+		conf.UpstreamMode = proxy.UpstreamModeRandom
 	case UpstreamModeFastestAddr:
 		conf.UpstreamMode = proxy.UpstreamModeFastestAddr
 		conf.FastestPingTimeout = fastestTimeout
