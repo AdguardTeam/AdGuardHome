@@ -458,9 +458,9 @@ func (d *DNSFilter) refreshFiltersIntl(block, allow, force bool) (int, bool) {
 }
 
 // removeOldFilterFile deletes the old filter file and logs any error at the
-// appropriate level.
-func removeOldFilterFile(ctx context.Context, l *slog.Logger, path string) {
-	err := os.Remove(path + ".old")
+// appropriate level.  l must not be nil.
+func removeOldFilterFile(ctx context.Context, l *slog.Logger, fltPath string) {
+	err := os.Remove(fltPath + ".old")
 	if err == nil {
 		return
 	}
@@ -470,7 +470,7 @@ func removeOldFilterFile(ctx context.Context, l *slog.Logger, path string) {
 		lvl = slog.LevelDebug
 	}
 
-	l.Log(ctx, lvl, "removing old filter", "path", path, slogutil.KeyError, err)
+	l.Log(ctx, lvl, "removing old filter", "path", fltPath, slogutil.KeyError, err)
 }
 
 // update refreshes filter's content and a/mtimes of it's file.
