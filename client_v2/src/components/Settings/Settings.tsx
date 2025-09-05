@@ -122,58 +122,60 @@ export const Settings = () => {
 
     return (
         <div className={theme.layout.container}>
-            <h1 className={cn(theme.layout.title, theme.title.h4, theme.title.h3_tablet)}>
-                {intl.getMessage('general_settings')}
-            </h1>
+            <div className={cn(theme.layout.containerIn, theme.layout.containerIn_one_col)}>
+                <h1 className={cn(theme.layout.title, theme.title.h4, theme.title.h3_tablet)}>
+                    {intl.getMessage('general_settings')}
+                </h1>
 
-            {isLoading && <PageLoader />}
+                {isLoading && <PageLoader />}
 
-            {!isLoading && (
-                <>
-                    <h2 className={cn(theme.layout.subtitle, theme.title.h5, theme.title.h4_tablet)}>
-                        {intl.getMessage('settings_filter_requests')}
-                    </h2>
+                {!isLoading && (
+                    <>
+                        <h2 className={cn(theme.layout.subtitle, theme.title.h5, theme.title.h4_tablet)}>
+                            {intl.getMessage('settings_filter_requests')}
+                        </h2>
 
-                    <FiltersConfig
-                        initialValues={{
-                            interval: filtering.interval,
-                            enabled: filtering.enabled,
-                        }}
-                        processing={filtering.processingSetConfig}
-                    />
+                        <FiltersConfig
+                            initialValues={{
+                                interval: filtering.interval,
+                                enabled: filtering.enabled,
+                            }}
+                            processing={filtering.processingSetConfig}
+                        />
 
-                    {renderSettings(settings.settingsList)}
+                        {renderSettings(settings.settingsList)}
 
-                    {renderSafeSearch()}
+                        {renderSafeSearch()}
 
-                    <h2 className={cn(theme.layout.subtitle, theme.title.h5, theme.title.h4_tablet)}>
-                        {intl.getMessage('query_log')}
-                    </h2>
+                        <h2 className={cn(theme.layout.subtitle, theme.title.h5, theme.title.h4_tablet)}>
+                            {intl.getMessage('query_log')}
+                        </h2>
 
-                    <LogsConfig
-                        enabled={queryLogs.enabled}
-                        ignored={queryLogs.ignored}
-                        interval={queryLogs.interval}
-                        customInterval={queryLogs.customInterval}
-                        anonymize_client_ip={queryLogs.anonymize_client_ip}
-                        processing={queryLogs.processingSetConfig}
-                        processingClear={queryLogs.processingClear}
-                    />
+                        <LogsConfig
+                            enabled={queryLogs.enabled}
+                            ignored={queryLogs.ignored}
+                            interval={queryLogs.interval}
+                            customInterval={queryLogs.customInterval}
+                            anonymize_client_ip={queryLogs.anonymize_client_ip}
+                            processing={queryLogs.processingSetConfig}
+                            processingClear={queryLogs.processingClear}
+                        />
 
-                    <h2 className={cn(theme.layout.subtitle, theme.title.h5, theme.title.h4_tablet)}>
-                        {intl.getMessage('settings_statistics')}
-                    </h2>
+                        <h2 className={cn(theme.layout.subtitle, theme.title.h5, theme.title.h4_tablet)}>
+                            {intl.getMessage('settings_statistics')}
+                        </h2>
 
-                    <StatsConfig
-                        interval={stats.interval}
-                        customInterval={stats.customInterval}
-                        ignored={stats.ignored}
-                        enabled={stats.enabled}
-                        processing={stats.processingSetConfig}
-                        processingReset={stats.processingReset}
-                    />
-                </>
-            )}
+                        <StatsConfig
+                            interval={stats.interval}
+                            customInterval={stats.customInterval}
+                            ignored={stats.ignored}
+                            enabled={stats.enabled}
+                            processing={stats.processingSetConfig}
+                            processingReset={stats.processingReset}
+                        />
+                    </>
+                )}
+            </div>
         </div>
     );
 };

@@ -12,6 +12,7 @@ type Props = ComponentProps<'input'> & {
     onClick?: (e: MouseEvent<HTMLElement>) => void;
     children?: ReactNode;
     plusStyle?: boolean;
+    verticalAlign?: 'center' | 'start' | 'end';
 };
 
 export const Checkbox = ({
@@ -26,8 +27,12 @@ export const Checkbox = ({
     overflow,
     onClick,
     plusStyle,
+    verticalAlign,
 }: Props) => (
-    <label htmlFor={id} className={cn(s.checkbox, { [s.disabled]: disabled }, className)} onClick={onClick}>
+    <label
+        htmlFor={id}
+        className={cn(s.checkbox, { [s.disabled]: disabled }, s[verticalAlign], className)}
+        onClick={onClick}>
         <input
             id={id}
             name={name}

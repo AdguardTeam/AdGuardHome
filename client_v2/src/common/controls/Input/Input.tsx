@@ -39,7 +39,7 @@ export const Input = forwardRef<HTMLInputElement, Props>(
             disabled,
             error,
             errorMessage,
-            size,
+            size = 'large',
             autoComplete,
         },
         ref,

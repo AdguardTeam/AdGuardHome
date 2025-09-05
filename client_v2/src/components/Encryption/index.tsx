@@ -96,20 +96,22 @@ export const Encryption = () => {
 
     return (
         <div className={theme.layout.container}>
-            <h1 className={cn(theme.layout.title, theme.title.h4, theme.title.h3_tablet, s.title)}>
-                {intl.getMessage('encryption_title')}
-            </h1>
+            <div className={cn(theme.layout.containerIn, theme.layout.containerIn_one_col)}>
+                <h1 className={cn(theme.layout.title, theme.title.h4, theme.title.h3_tablet, s.title)}>
+                    {intl.getMessage('encryption_title')}
+                </h1>
 
-            {encryption.processing ? (
-                <PageLoader />
-            ) : (
-                <Form
-                    initialValues={initialValues}
-                    onSubmit={handleFormSubmit}
-                    debouncedConfigValidation={debouncedConfigValidation}
-                    encryption={encryption}
-                />
-            )}
+                {encryption.processing ? (
+                    <PageLoader />
+                ) : (
+                    <Form
+                        initialValues={initialValues}
+                        onSubmit={handleFormSubmit}
+                        debouncedConfigValidation={debouncedConfigValidation}
+                        encryption={encryption}
+                    />
+                )}
+            </div>
         </div>
     );
 };
