@@ -888,7 +888,7 @@
     "access_settings_disallowed_faq": "A list of CIDRs, IP addresses, or <a>ClientIDs</a>. If this field has entries, AdGuard Home will drop requests from these clients. This field is ignored if there are entries in <strong>Allowed clients</strong>",
     "access_settings_blocked_title": "Disallowed domains, one per line",
     "access_settings_blocked_faq_1": "AdGuard Home will drop DNS queries matching these domains. Such queries don’t appear in the query log. You can enter exact domain names, wildcards, or URL filter rules, such as example.org, *.example.org, or ||example.org^",
-    "access_settings_blocked_faq_2": "Not to be confused with filters"
+    "access_settings_blocked_faq_2": "Not to be confused with filters",
     "blocklists_title": "Blocklists",
     "blocklists_desc": "Domains from these lists are blocked",
     "blocklists_add": "Add blocklist",
