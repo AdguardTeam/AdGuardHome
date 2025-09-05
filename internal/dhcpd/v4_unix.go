@@ -1096,9 +1096,7 @@ func (s *v4Server) handleRelease(req, resp *dhcpv4.DHCPv4) (err error) {
 
 		err = s.rmDynamicLease(l)
 		if err != nil {
-			err = fmt.Errorf("removing dynamic lease for %s: %w", mac, err)
-
-			return
+			return fmt.Errorf("removing dynamic lease for %s: %w", mac, err)
 		}
 
 		n++
@@ -1391,7 +1389,7 @@ func (s *v4Server) configureDNSIPAddrs(dnsIPAddrs []net.IP) {
 // Stop - stop server
 func (s *v4Server) Stop() (err error) {
 	if s.srv == nil {
-		return
+		return nil
 	}
 
 	log.Debug("dhcpv4: stopping")

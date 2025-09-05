@@ -18,8 +18,13 @@ See also the [v0.107.66 GitHub milestone][ms-v0.107.66].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.25.1][go-1.25.1].
+
 ### Changed
 
+- Our snap package now uses the `core24` image as its base.
 - Outgoing HTTP requests now use the `User-Agent` header `AdGuardHome/v0.107.66` (where `v0.107.66` is the current version) instead of `Go-http-client/1.1` ([#7979]).
 
 ### Fixed
@@ -31,6 +36,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#7979]: https://github.com/AdguardTeam/AdGuardHome/issues/7979
 [#7985]: https://github.com/AdguardTeam/AdGuardHome/issues/7985
 [#7987]: https://github.com/AdguardTeam/AdGuardHome/issues/7987
+
+[go-1.25.1]: https://groups.google.com/g/golang-announce/c/PtW9VW21NPs
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

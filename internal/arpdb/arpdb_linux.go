@@ -139,9 +139,9 @@ func (arp *fsysARPDB) Neighbors() (ns []Neighbor) {
 //	IP address     HW type  Flags  HW address         Mask  Device
 //	192.168.11.98  0x1      0x2    5a:92:df:a9:7e:28  *     wan
 func parseArpAWrt(logger *slog.Logger, sc *bufio.Scanner, lenHint int) (ns []Neighbor) {
+	// Skip the header.
 	if !sc.Scan() {
-		// Skip the header.
-		return
+		return nil
 	}
 
 	ns = make([]Neighbor, 0, lenHint)

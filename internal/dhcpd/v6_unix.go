@@ -771,7 +771,7 @@ func (s *v6Server) Stop() (err error) {
 
 	// DHCPv6 server may not be initialized if ra_slaac_only=true
 	if s.srv == nil {
-		return
+		return nil
 	}
 
 	log.Debug("dhcpv6: stopping")

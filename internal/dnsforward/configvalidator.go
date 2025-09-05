@@ -191,29 +191,24 @@ func (cv *upstreamConfigValidator) check() {
 	}
 
 	wg := &sync.WaitGroup{}
-	wg.Add(len(cv.generalUpstreamResults) +
-		len(cv.fallbackUpstreamResults) +
-		len(cv.privateUpstreamResults))
 
 	for _, res := range cv.generalUpstreamResults {
-		go checkSrv(res, wg, commonChecker)
+		wg.Go(func() { checkSrv(res, commonChecker) })
 	}
 	for _, res := range cv.fallbackUpstreamResults {
-		go checkSrv(res, wg, commonChecker)
+		wg.Go(func() { checkSrv(res, commonChecker) })
 	}
 	for _, res := range cv.privateUpstreamResults {
-		go checkSrv(res, wg, arpaChecker)
+		wg.Go(func() { checkSrv(res, arpaChecker) })
 	}
 
 	wg.Wait()
 }
 
 // checkSrv runs hc on the server from res, if any, and stores any occurred
-// error in res.  wg is always marked done in the end.  It is intended to be
-// used as a goroutine.
-func checkSrv(res *upstreamResult, wg *sync.WaitGroup, hc *healthchecker) {
+// error in res.  It is used to be run in a separate goroutine.
+func checkSrv(res *upstreamResult, hc *healthchecker) {
 	defer log.OnPanic(fmt.Sprintf("dnsforward: checking upstream %s", res.server.Address()))
-	defer wg.Done()
 
 	res.err = hc.check(res.server)
 	if res.err != nil && res.isSpecific {

@@ -10,7 +10,7 @@
 # Make sure to sync any changes with the branch overrides below.
 'variables':
     'channel': 'edge'
-    'dockerSnap': 'adguard/snap-builder:1.1'
+    'dockerSnap': 'adguard/snap-builder:2.1'
     'snapcraftChannel': 'edge'
 
 'stages':
@@ -68,10 +68,10 @@
 
               set -e -f -u -x
 
-              env\
-                      CHANNEL="${bamboo.channel}"\
-                      VERBOSE='1'\
-                      sh ./scripts/snap/download.sh
+              env \
+                  CHANNEL="${bamboo.channel}" \
+                  VERBOSE='1' \
+                  sh ./scripts/snap/download.sh
     'requirements':
       - 'adg-docker': 'true'
 
@@ -114,9 +114,9 @@
 
               set -e -f -u -x
 
-              env\
-                      VERBOSE='1'\
-                      sh ./scripts/snap/build.sh
+              env \
+                  VERBOSE='1' \
+                  sh ./scripts/snap/build.sh
     'requirements':
       - 'adg-docker': 'true'
 
@@ -142,11 +142,11 @@
 
                 set -e -f -u -x
 
-                env\
-                        SNAPCRAFT_CHANNEL="${bamboo.snapcraftChannel}"\
-                        SNAPCRAFT_STORE_CREDENTIALS="${bamboo.snapcraftMacaroonPassword}"\
-                        VERBOSE='1'\
-                        sh ./scripts/snap/upload.sh
+                env \
+                    SNAPCRAFT_CHANNEL="${bamboo.snapcraftChannel}" \
+                    SNAPCRAFT_STORE_CREDENTIALS="${bamboo.snapcraftMacaroonPassword}" \
+                    VERBOSE='1' \
+                    sh ./scripts/snap/upload.sh
     'final-tasks':
       - 'clean'
     'requirements':
@@ -191,7 +191,7 @@
         # need to build a few of these.
         'variables':
             'channel': 'beta'
-            'dockerSnap': 'adguard/snap-builder:1.1'
+            'dockerSnap': 'adguard/snap-builder:2.1'
             'snapcraftChannel': 'beta'
     # release-vX.Y.Z branches are the branches from which the actual final
     # release is built.
@@ -207,5 +207,5 @@
         # are the ones that actually get released.
         'variables':
             'channel': 'release'
-            'dockerSnap': 'adguard/snap-builder:1.1'
+            'dockerSnap': 'adguard/snap-builder:2.1'
             'snapcraftChannel': 'candidate'

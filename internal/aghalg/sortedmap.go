@@ -5,7 +5,7 @@ import (
 )
 
 // SortedMap is a map that keeps elements in order with internal sorting
-// function.  Must be initialised by the [NewSortedMap].
+// function.  Must be initialized by the [NewSortedMap].
 type SortedMap[K comparable, V any] struct {
 	vals map[K]V
 	cmp  func(a, b K) (res int)
@@ -38,7 +38,9 @@ func (m *SortedMap[K, V]) Set(key K, val V) {
 // Get returns val by key from the sorted map.
 func (m *SortedMap[K, V]) Get(key K) (val V, ok bool) {
 	if m == nil {
-		return
+		var zero V
+
+		return zero, false
 	}
 
 	val, ok = m.vals[key]

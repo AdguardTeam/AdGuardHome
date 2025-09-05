@@ -19,6 +19,10 @@ log() {
 	fi
 }
 
+# Allow developers to overwrite the command, e.g. for testing.
+snapcraft_cmd="${SNAPCRAFT_CMD:-snapcraft}"
+readonly snapcraft_cmd
+
 version="$(./AdGuardHome_amd64 --version | cut -d ' ' -f 4)"
 if [ "$version" = '' ]; then
 	log 'empty version from ./AdGuardHome_amd64'
@@ -51,19 +55,7 @@ for arch in \
 		./snap/snap.tmpl.yaml \
 		>"${snap_dir}/meta/snap.yaml"
 
-	# TODO(a.garipov): The snapcraft tool will *always* write everything,
-	# including errors, to stdout.  And there doesn't seem to be a way to change
-	# that.  So, save the combined output, but only show it when snapcraft
-	# actually fails.
-	set +e
-	snapcraft_output="$(snapcraft pack "$snap_dir" --output "$snap_output" 2>&1)"
-	snapcraft_exit_code="$?"
-	set -e
-
-	if [ "$snapcraft_exit_code" -ne '0' ]; then
-		log "$snapcraft_output"
-		exit "$snapcraft_exit_code"
-	fi
+	"$snapcraft_cmd" pack "$snap_dir" --output "$snap_output"
 
 	log "$snap_output"
 
