@@ -25,6 +25,8 @@ type hardwarePortInfo struct {
 	static    bool
 }
 
+// ifaceHasStaticIP reports whether ifaceName is configured with a static IP.
+// cmdCons must not be nil.
 func ifaceHasStaticIP(
 	ctx context.Context,
 	cmdCons executil.CommandConstructor,
@@ -38,14 +40,14 @@ func ifaceHasStaticIP(
 	return portInfo.static, nil
 }
 
-// getCurrentHardwarePortInfo gets information for the specified network
-// interface.
+// getCurrentHardwarePortInfo returns information for the specified network
+// interface.  cmdCons must not be nil.
 func getCurrentHardwarePortInfo(
 	ctx context.Context,
 	cmdCons executil.CommandConstructor,
 	ifaceName string,
 ) (hardwarePortInfo, error) {
-	// First of all we should find hardware port name.
+	// First, find the hardware port name.
 	m := getNetworkSetupHardwareReports(ctx, cmdCons)
 	hardwarePort, ok := m[ifaceName]
 	if !ok {
@@ -59,10 +61,8 @@ func getCurrentHardwarePortInfo(
 // networksetup command output lines containing the interface information.
 var hardwareReportsReg = regexp.MustCompile("Hardware Port: (.*?)\nDevice: (.*?)\n")
 
-// getNetworkSetupHardwareReports parses the output of the `networksetup
-// -listallhardwareports` command it returns a map where the key is the
-// interface name, and the value is the "hardware port" returns nil if it fails
-// to parse the output
+// getNetworkSetupHardwareReports returns a map of interface names to hardware
+// port names.  It returns nil if parsing fails.  cmdCons must not be nil.
 //
 // TODO(e.burkov):  There should be more proper approach than parsing the
 // command output.  For example, see
@@ -90,6 +90,8 @@ func getNetworkSetupHardwareReports(
 // command output lines containing the port information.
 var hardwarePortReg = regexp.MustCompile("IP address: (.*?)\nSubnet mask: (.*?)\nRouter: (.*?)\n")
 
+// getHardwarePortInfo returns IP, subnet, gateway, and static/dynamic status
+// for the given hardware port.  cmdCons must not be nil.
 func getHardwarePortInfo(
 	ctx context.Context,
 	cmdCons executil.CommandConstructor,
@@ -114,6 +116,7 @@ func getHardwarePortInfo(
 	}, nil
 }
 
+// ifaceSetStaticIP sets a static IP on ifaceName.  cmdCons must not be nil.
 func ifaceSetStaticIP(
 	ctx context.Context,
 	cmdCons executil.CommandConstructor,

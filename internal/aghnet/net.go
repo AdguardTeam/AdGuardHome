@@ -1,4 +1,6 @@
-// Package aghnet contains some utilities for networking.
+// Package aghnet contains networking utilities.
+//
+// TODO(s.chzhen):  Use slog.
 package aghnet
 
 import (
@@ -35,12 +37,12 @@ var (
 )
 
 // ErrNoStaticIPInfo is returned by IfaceHasStaticIP when no information about
-// the IP being static is available.
+// whether the IP is static is available.
 const ErrNoStaticIPInfo errors.Error = "no information about static ip"
 
-// IfaceHasStaticIP checks if interface is configured to have static IP address.
-// If it can't give a definitive answer, it returns false and an error for which
-// errors.Is(err, ErrNoStaticIPInfo) is true.
+// IfaceHasStaticIP reports whether the interface has a static IP.  If the
+// status is indeterminate, it returns false with an error matching
+// [ErrNoStaticIPInfo].  cmdCons must not be nil.
 func IfaceHasStaticIP(
 	ctx context.Context,
 	cmdCons executil.CommandConstructor,
@@ -49,7 +51,8 @@ func IfaceHasStaticIP(
 	return ifaceHasStaticIP(ctx, cmdCons, ifaceName)
 }
 
-// IfaceSetStaticIP sets static IP address for network interface.
+// IfaceSetStaticIP sets a static IP address for network interface.  cmdCons
+// must not be nil.
 func IfaceSetStaticIP(
 	ctx context.Context,
 	cmdCons executil.CommandConstructor,
@@ -58,7 +61,8 @@ func IfaceSetStaticIP(
 	return ifaceSetStaticIP(ctx, cmdCons, ifaceName)
 }
 
-// GatewayIP returns IP address of interface's gateway.
+// GatewayIP returns the gateway IP address for the interface.  cmdCons must not
+// be nil.
 //
 // TODO(e.burkov):  Investigate if the gateway address may be fetched in another
 // way since not every machine has the software installed.
@@ -88,14 +92,11 @@ func GatewayIP(
 	}
 
 	fields := bytes.Fields(stdout.Bytes())
-	// The meaningful "ip route" command output should contain the word
-	// "default" at first field and default gateway IP address at third field.
-	if len(fields) < 3 || string(fields[0]) != "default" {
+	if len(fields) < 3 || !bytes.Equal(fields[0], []byte("default")) {
 		return netip.Addr{}
 	}
 
-	ip, err = netip.ParseAddr(string(fields[2]))
-	if err != nil {
+	if err = ip.UnmarshalText(fields[2]); err != nil {
 		return netip.Addr{}
 	}
 
@@ -134,6 +135,9 @@ func (iface NetInterface) MarshalJSON() ([]byte, error) {
 	})
 }
 
+// NetInterfaceFrom converts a [net.Interface] to [NetInterface], populating
+// name, MAC address, flags, MTU, IP addresses, and subnets.  iface must not be
+// nil.
 func NetInterfaceFrom(iface *net.Interface) (niface *NetInterface, err error) {
 	niface = &NetInterface{
 		Name:         iface.Name,

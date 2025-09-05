@@ -340,7 +340,7 @@ func (s *server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.setConfFromJSON(conf, srv4, srv6)
-	s.conf.ConfModifier.Apply(r.Context())
+	s.conf.ConfModifier.Apply(ctx)
 
 	err = s.dbLoad()
 	if err != nil {
@@ -426,6 +426,7 @@ func (s *server) handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 }
 
 // newNetInterfaceJSON creates a JSON object from a [net.Interface] iface.
+// cmdCons must not be nil.
 func newNetInterfaceJSON(
 	ctx context.Context,
 	iface net.Interface,

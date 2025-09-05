@@ -125,7 +125,7 @@ func (req *checkConfReq) validateWeb(tcpPorts aghalg.UniqChecker[tcpPort]) (err 
 
 // validateDNS returns error if the DNS part of the initial configuration can't
 // be set.  canAutofix is true if the port can be unbound by AdGuard Home
-// automatically.
+// automatically.  cmdCons must not be nil.
 func (req *checkConfReq) validateDNS(
 	ctx context.Context,
 	l *slog.Logger,
@@ -202,49 +202,51 @@ func (web *webAPI) handleInstallCheckConfig(w http.ResponseWriter, r *http.Reque
 	aghhttp.WriteJSONResponseOK(w, r, resp)
 }
 
-// handleStaticIP - handles static IP request
-// It either checks if we have a static IP
-// Or if set=true, it tries to set it
+// handleStaticIP checks and optionally sets a static IP on the interface that
+// owns IP.  cmdCons must not be nil.
 func handleStaticIP(
 	ctx context.Context,
 	ip netip.Addr,
 	set bool,
 	cmdCons executil.CommandConstructor,
-) staticIPJSON {
-	resp := staticIPJSON{}
-
+) (ipResp staticIPJSON) {
 	interfaceName := aghnet.InterfaceByIP(ip)
-	resp.Static = "no"
+	ipResp.Static = "no"
 
-	if len(interfaceName) == 0 {
-		resp.Static = "error"
-		resp.Error = fmt.Sprintf("Couldn't find network interface by IP %s", ip)
-		return resp
+	if interfaceName == "" {
+		ipResp.Static = "error"
+		ipResp.Error = fmt.Sprintf("Couldn't find network interface by IP %s", ip)
+
+		return ipResp
 	}
 
 	if set {
-		// Try to set static IP for the specified interface
+		// Try to set a static IP for the specified interface.
 		err := aghnet.IfaceSetStaticIP(ctx, cmdCons, interfaceName)
 		if err != nil {
-			resp.Static = "error"
-			resp.Error = err.Error()
-			return resp
+			ipResp.Static = "error"
+			ipResp.Error = err.Error()
+
+			return ipResp
 		}
 	}
 
-	// Fallthrough here even if we set static IP
-	// Check if we have a static IP and return the details
+	// Fall through even if we just set the static IP.  Check whether the
+	// interface has a static IP and return the details.
 	isStaticIP, err := aghnet.IfaceHasStaticIP(ctx, cmdCons, interfaceName)
 	if err != nil {
-		resp.Static = "error"
-		resp.Error = err.Error()
-	} else {
-		if isStaticIP {
-			resp.Static = "yes"
-		}
-		resp.IP = aghnet.GetSubnet(interfaceName).String()
+		ipResp.Static = "error"
+		ipResp.Error = err.Error()
+
+		return ipResp
 	}
-	return resp
+
+	if isStaticIP {
+		ipResp.Static = "yes"
+	}
+	ipResp.IP = aghnet.GetSubnet(interfaceName).String()
+
+	return ipResp
 }
 
 // checkDNSStubListener returns true if DNSStubListener is active.
@@ -291,7 +293,7 @@ DNSStubListener=no
 const resolvConfPath = "/etc/resolv.conf"
 
 // disableDNSStubListener deactivates DNSStubListerner and returns an error, if
-// any.
+// any.  cmdCons must not be nil.
 func disableDNSStubListener(
 	ctx context.Context,
 	l *slog.Logger,

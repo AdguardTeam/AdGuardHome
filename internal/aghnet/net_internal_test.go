@@ -21,6 +21,9 @@ import (
 // testTimeout is the common timeout for tests.
 const testTimeout = 1 * time.Second
 
+// testCmdCons is the common command constructor for tests.
+var testCmdCons = executil.EmptyCommandConstructor{}
+
 // substRootDirFS replaces the aghos.RootDirFS function used throughout the
 // package with fsys for tests ran under t.
 func substRootDirFS(tb testing.TB, fsys fs.FS) {

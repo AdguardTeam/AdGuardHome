@@ -10,7 +10,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/updater"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
-	"github.com/AdguardTeam/golibs/osutil/executil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -61,7 +60,7 @@ func TestUpdater_VersionInfo(t *testing.T) {
 	u := updater.NewUpdater(&updater.Config{
 		Client:             srv.Client(),
 		Logger:             testLogger,
-		CommandConstructor: executil.EmptyCommandConstructor{},
+		CommandConstructor: testCmdCons,
 		Version:            "v0.103.0-beta.1",
 		Channel:            version.ChannelBeta,
 		GOARCH:             "arm",
@@ -136,7 +135,7 @@ func TestUpdater_VersionInfo_others(t *testing.T) {
 		u := updater.NewUpdater(&updater.Config{
 			Client:             fakeClient,
 			Logger:             testLogger,
-			CommandConstructor: executil.EmptyCommandConstructor{},
+			CommandConstructor: testCmdCons,
 			Version:            "v0.103.0-beta.1",
 			Channel:            version.ChannelBeta,
 			GOOS:               "linux",

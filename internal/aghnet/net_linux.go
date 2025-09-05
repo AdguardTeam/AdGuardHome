@@ -154,7 +154,7 @@ func findIfaceLine(s *bufio.Scanner, name string) (ok bool) {
 }
 
 // ifaceSetStaticIP configures the system to retain its current IP on the
-// interface through dhcpcd.conf.
+// interface through dhcpcd.conf.  cmdCons must not be nil.
 func ifaceSetStaticIP(
 	ctx context.Context,
 	cmdCons executil.CommandConstructor,
