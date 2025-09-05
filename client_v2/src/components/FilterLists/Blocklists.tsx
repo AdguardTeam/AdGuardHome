@@ -20,7 +20,7 @@ import {
 } from 'panel/actions/filtering';
 import { Icon } from 'panel/common/ui/Icon';
 import { Modal } from './blocks/Modal';
-import { Table } from './blocks/Table';
+import { ListsTable, TABLE_IDS } from './blocks/ListsTable/ListsTable';
 import { FilterUpdateModal } from './blocks/FilterUpdateModal';
 
 import s from './Blocklists.module.pcss';
@@ -175,12 +175,14 @@ export const Blocklists = () => {
             />
 
             <div className={s.group}>
-                <Table
+                <ListsTable
+                    tableId={TABLE_IDS.BLOCKLISTS_TABLE}
                     filters={filters}
                     processingConfigFilter={processingConfigFilter}
-                    toggleFilteringModal={handleToggleFilteringModal}
-                    handleDelete={handleDeleteOpen}
-                    toggleFilter={toggleFilter}
+                    toggleFilterList={toggleFilter}
+                    addFilterList={openSelectTypeModal}
+                    editFilterList={handleToggleFilteringModal}
+                    deleteFilterList={handleDeleteOpen}
                 />
             </div>
 

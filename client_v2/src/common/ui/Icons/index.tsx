@@ -33,6 +33,7 @@ export const ICONS = {
     refresh: 'refresh',
     bullets: 'bullets',
     link: 'link',
+    not_found_search: 'not_found_search',
 } as const;
 
 export type IconType = keyof typeof ICONS;
@@ -490,6 +491,23 @@ export const Icons = memo(() => (
                 strokeWidth="1.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
+            />
+        </symbol>
+
+        <symbol id="not_found_search" viewBox="0 0 64 64" fill="none">
+            <path
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="1.5"
+                d="M39.631 24.31a15.16 15.16 0 0 1-4.196 12.723c-5.872 5.999-15.505 6.099-21.504.226-5.998-5.872-6.107-15.505-.226-21.504 4.377-4.476 10.838-5.672 16.33-3.552M35.435 37.033 55 56.172"
+            />
+            <path
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="1.5"
+                d="M39.522 21.564a7.023 7.023 0 1 0 0-14.046 7.023 7.023 0 0 0 0 14.046ZM35.753 10.645l7.54 7.54M35.753 18.157l7.54-7.54"
             />
         </symbol>
     </svg>

@@ -1,0 +1,56 @@
+.header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.desc {
+    width: 100%;
+    max-width: 556px;
+    padding: 12px 16px 0;
+}
+
+.button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    font-size: 16px;
+    color: var(--default-main-text);
+    border-radius: 8px;
+    transition: var(--t2) background-color;
+    border: 0;
+    background: none;
+    cursor: pointer;
+
+    &:hover,
+    &:focus {
+        background: var(--hovered-secondary-button);
+    }
+
+    &:active {
+        background: var(--pressed-secondary-button);
+    }
+
+    &:disabled {
+        background: var(--disabled-secondary-button);
+        color: var(--disabled-secondary-button-stroke);
+        cursor: default;
+    }
+
+    &_checkUpdates {
+        margin-left: auto;
+    }
+
+    &_add {
+        color: var(--default-link);
+    }
+}
+
+.group {
+    padding: 8px 16px;
+
+    &.stretchSelf {
+        flex: 1 0 auto;
+    }
+}

@@ -129,7 +129,12 @@ export const MODAL_TYPE = {
     ADD_LEASE: 'ADD_LEASE',
     ADD_CLIENT: 'ADD_CLIENT',
     EDIT_CLIENT: 'EDIT_CLIENT',
+    ADD_ALLOWLIST: 'ADD_ALLOWLIST',
+    EDIT_ALLOWLIST: 'EDIT_ALLOWLIST',
+    DELETE_ALLOWLIST: 'DELETE_ALLOWLIST',
 } as const;
+
+export type ModalType = (typeof MODAL_TYPE)[keyof typeof MODAL_TYPE];
 
 export const TAB_TYPE = {
     LIST: 'list',

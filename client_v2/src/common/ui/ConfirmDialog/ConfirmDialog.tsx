@@ -13,6 +13,7 @@ type Props = {
     buttonText: string;
     cancelText: string;
     onConfirm?: () => void;
+    submitDisabled?: boolean;
     buttonVariant?: ButtonProps['variant'];
     submitId?: string;
     cancelId?: string;
@@ -26,6 +27,7 @@ export const ConfirmDialog = ({
     buttonText,
     onClose,
     onConfirm,
+    submitDisabled = false,
     buttonVariant = 'primary',
     submitId,
     cancelId,
@@ -49,7 +51,8 @@ export const ConfirmDialog = ({
                     variant={buttonVariant}
                     size="small"
                     onClick={onConfirm}
-                    className={theme.dialog.button}>
+                    className={theme.dialog.button}
+                    disabled={submitDisabled}>
                     {buttonText}
                 </Button>
 

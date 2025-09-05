@@ -10,9 +10,10 @@ import { Header } from 'panel/common/ui/Header';
 import { Settings } from 'panel/components/Settings';
 import { LocalesType } from 'panel/common/intl';
 import { Encryption } from 'panel/components/Encryption';
-import { Blocklists } from 'panel/components/Blocklists';
+import { Blocklists } from 'panel/components/FilterLists/Blocklists';
 import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from 'panel/helpers/localStorageHelper';
 
+import { Allowlists } from 'panel/components/FilterLists/Allowlists';
 import Toasts from '../Toasts';
 import i18n from '../../i18n';
 import { THEMES } from '../../helpers/constants';
@@ -42,6 +43,11 @@ const ROUTES: RouteConfig[] = [
     {
         path: '/blocklists',
         component: Blocklists,
+        exact: true,
+    },
+    {
+        path: '/allowlists',
+        component: Allowlists,
         exact: true,
     },
 ];

@@ -5,6 +5,8 @@ import { Loader } from 'panel/common/ui/Loader';
 import theme from 'panel/lib/theme';
 import { Pagination } from './blocks/Pagination';
 
+import s from './Table.module.pcss';
+
 import { Icon } from '../Icon';
 
 const DEFAULT_PAGE_SIZE_OPTIONS = [10, 20, 30, 40, 50];
@@ -15,6 +17,7 @@ export interface TableColumn<T = any> {
     accessor?: keyof T | ((row: T) => any);
     render?: (value: any, row: T, index: number) => ReactNode;
     sortable?: boolean;
+    fitContent?: boolean;
     width?: number | string;
     minWidth?: number;
     maxWidth?: number;
@@ -24,8 +27,8 @@ export interface TableColumn<T = any> {
 export interface TableProps<T = any> {
     data: T[];
     columns: TableColumn<T>[];
+    emptyTable: ReactNode;
     loading?: boolean;
-    emptyMessage?: string;
     className?: string;
     pagination?: boolean;
     pageSize?: number;
@@ -37,7 +40,6 @@ export interface TableProps<T = any> {
         direction: 'asc' | 'desc';
     };
     onSortChange?: (key: string, direction: 'asc' | 'desc') => void;
-    renderHeaderCheckbox?: () => ReactNode;
     getRowId?: (row: T, index: number) => string | number;
 }
 
@@ -52,8 +54,7 @@ export const Table = <T extends Record<string, any>>({
     data,
     columns,
     loading,
-    emptyMessage,
-    className,
+    emptyTable,
     pagination = true,
     pageSize: initialPageSize = DEFAULT_PAGE_SIZE_OPTIONS[0],
     onPageSizeChange,
@@ -61,7 +62,6 @@ export const Table = <T extends Record<string, any>>({
     sortable = true,
     defaultSort,
     onSortChange,
-    renderHeaderCheckbox,
     getRowId = (row: T, index: number) => index,
 }: TableProps<T>) => {
     const [state, setState] = useState<TableState>({
@@ -206,63 +206,61 @@ export const Table = <T extends Record<string, any>>({
         );
     }
 
+    const hasData = paginatedData.length > 0;
+
     return (
-        <div className={theme.table.tableContainer}>
-            <table className={cn(theme.table.table, className)}>
-                <thead>
-                    <tr>
-                        {renderHeaderCheckbox && <th>{renderHeaderCheckbox()}</th>}
+        <div className={s.tableContainer}>
+            <div className={s.tableMain}>
+                <div className={s.table}>
+                    <div className={s.tableHeader}>
                         {columns.map((column) => (
-                            <th
+                            <div
                                 key={column.key}
-                                style={{
-                                    width: column.width,
-                                    minWidth: column.minWidth,
-                                    maxWidth: column.maxWidth,
-                                    cursor: sortable && column.sortable !== false ? 'pointer' : 'default',
-                                }}
-                                className={column.className}
-                                onClick={() => sortable && column.sortable !== false && handleSort(column.key)}>
-                                <div>
-                                    <span>{column.header}</span>
-                                    {sortable && column.sortable !== false && (
-                                        <span>
-                                            {state.sortKey === column.key && state.sortDirection === 'asc' && (
-                                                <Icon icon="arrow" className={theme.table.sortAsc} />
-                                            )}
-                                            {state.sortKey === column.key && state.sortDirection === 'desc' && (
-                                                <Icon icon="arrow" className={theme.table.sortDesc} />
-                                            )}
-                                        </span>
-                                    )}
-                                </div>
-                            </th>
+                                className={cn(s.tableCell, {
+                                    [s.sortable]: column.sortable,
+                                    [s.fitContent]: column.fitContent,
+                                })}
+                                onClick={() => sortable && column.sortable && handleSort(column.key)}
+                            >
+                                <span className={cn(theme.text.t3, theme.text.condenced, theme.text.semibold)}>
+                                    {column.header}
+                                </span>
+
+                                {sortable && column.sortable && (
+                                    <span>
+                                        {state.sortKey === column.key && state.sortDirection === 'asc' && (
+                                            <Icon icon="arrow" color="gray" className={s.sortAsc} />
+                                        )}
+                                        {state.sortKey === column.key && state.sortDirection === 'desc' && (
+                                            <Icon icon="arrow" color="gray" className={s.sortDesc} />
+                                        )}
+                                    </span>
+                                )}
+                            </div>
                         ))}
-                    </tr>
-                </thead>
-                <tbody>
-                    {paginatedData.length > 0 ? (
-                        paginatedData.map((row, index) => {
-                            const rowId = getRowId(row, index);
-                            return (
-                                <tr key={rowId}>
-                                    {columns.map((column) => (
-                                        <td key={column.key} className={column.className}>
-                                            {renderCell(column, row, index)}
-                                        </td>
-                                    ))}
-                                </tr>
-                            );
-                        })
-                    ) : (
-                        <tr>
-                            <td colSpan={columns.length} className="text-center p-4">
-                                {emptyMessage}
-                            </td>
-                        </tr>
+                    </div>
+
+                    {hasData && (
+                        <>
+                            {paginatedData.map((row, index) => {
+                                const rowId = getRowId(row, index);
+
+                                return (
+                                    <div key={rowId} className={s.tableRow}>
+                                        {columns.map((column) => (
+                                            <div key={column.key} className={s.tableCell}>
+                                                {renderCell(column, row, index)}
+                                            </div>
+                                        ))}
+                                    </div>
+                                );
+                            })}
+                        </>
                     )}
-                </tbody>
-            </table>
+                </div>
+
+                {!hasData && <div className={s.emptyTableWrapper}>{emptyTable}</div>}
+            </div>
 
             {pagination && sortedData.length > 0 && (
                 <Pagination

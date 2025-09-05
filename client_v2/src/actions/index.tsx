@@ -33,7 +33,7 @@ import { getFilteringStatus, setRules } from './filtering';
 
 type SafeSearchConfig = Record<string, boolean> & { enabled: boolean };
 type ToggleSettingKey = keyof typeof SETTINGS_NAMES;
-type Theme = typeof THEMES[keyof typeof THEMES];
+type Theme = (typeof THEMES)[keyof typeof THEMES];
 
 export const toggleSettingStatus = createAction<{
     settingKey: ToggleSettingKey;

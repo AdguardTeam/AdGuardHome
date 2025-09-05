@@ -833,7 +833,8 @@
     "blocklists_add": "Add blocklist",
     "blocklists_add_list": "Add blocklists",
     "blocklists_check_for_updates": "Check for updates",
-    "blocklists_empty": "No blocklists yet — <a>add your first one</a>",
+    "blocklists_empty": "No blocklists yet — <button>add your first one</button>",
+    "allowlists_desc": "Domains from DNS allowlists will be allowed even if they are in any of the blocklists. AdGuard Home understands basic adblock rules and hosts files syntax",
     "name_label": "Name",
     "url_label": "URL",
     "rules_label": "Rules",
@@ -871,5 +872,12 @@
     "blocklist_add_success_several": "Added blocklists: %name% and %value% more",
     "blocklist_remove_success": "Removed blocklist: %name%",
     "changes_saved_success": "Changes saved",
-    "blocklist_placeholder_example": "My blocklist"
+    "blocklist_placeholder_example": "My blocklist",
+    "allowlists_title": "Allowlists",
+    "allowlist_remove": "Remove allowlist?",
+    "allowlist_remove_desc": "<strong>%value%</strong> will be removed",
+    "allowlist_placeholder_example": "My allowlist",
+    "allowlist_add": "Add allowlist",
+    "allowlist_edit": "Edit allowlist",
+    "allowlist_empty": "No allowlists yet — <button>add your first one</button>"
 }

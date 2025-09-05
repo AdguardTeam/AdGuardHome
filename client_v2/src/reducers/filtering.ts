@@ -90,14 +90,17 @@ const filtering = handleActions(
         [actions.editFilterRequest.toString()]: (state: any) => ({
             ...state,
             processingConfigFilter: true,
+            isFilterEdited: false,
         }),
         [actions.editFilterFailure.toString()]: (state: any) => ({
             ...state,
             processingConfigFilter: false,
+            isFilterEdited: false,
         }),
         [actions.editFilterSuccess.toString()]: (state: any) => ({
             ...state,
             processingConfigFilter: false,
+            isFilterEdited: true,
         }),
 
         [actions.refreshFiltersRequest.toString()]: (state: any) => ({
@@ -116,14 +119,17 @@ const filtering = handleActions(
         [actions.removeFilterRequest.toString()]: (state: any) => ({
             ...state,
             processingRemoveFilter: true,
+            isFilterRemoved: false,
         }),
         [actions.removeFilterFailure.toString()]: (state: any) => ({
             ...state,
             processingRemoveFilter: false,
+            isFilterRemoved: false,
         }),
         [actions.removeFilterSuccess.toString()]: (state: any) => ({
             ...state,
             processingRemoveFilter: false,
+            isFilterRemoved: true,
         }),
 
         [actions.setFiltersConfigRequest.toString()]: (state: any) => ({
@@ -165,6 +171,8 @@ const filtering = handleActions(
         processingSetConfig: false,
         processingCheck: false,
         isFilterAdded: false,
+        isFilterRemoved: false,
+        isFilterEdited: false,
         filters: [],
         whitelistFilters: [],
         userRules: '',
