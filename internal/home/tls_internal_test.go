@@ -106,6 +106,29 @@ func TestValidateCertificates(t *testing.T) {
 		assert.Equal(t, notAfter, status.NotAfter)
 		assert.True(t, status.ValidPair)
 	})
+
+	t.Run("no_ip_in_cert", func(t *testing.T) {
+		caCert, chainPEM, leafKeyPEM := newCertWithoutIP(t)
+
+		m.rootCerts = x509.NewCertPool()
+		m.rootCerts.AddCert(caCert)
+
+		status := &tlsConfigStatus{}
+		var ok bool
+		ok, err = m.validateCertificate(ctx, status, chainPEM, "")
+		assert.True(t, ok)
+		assert.ErrorIs(t, err, errNoIPInCert)
+		assert.True(t, status.ValidCert)
+		assert.True(t, status.ValidChain)
+
+		status = &tlsConfigStatus{}
+		err = m.validateCertificates(ctx, status, chainPEM, leafKeyPEM, "")
+		assert.ErrorIs(t, err, errNoIPInCert)
+		assert.True(t, status.ValidCert)
+		assert.True(t, status.ValidChain)
+		assert.True(t, status.ValidKey)
+		assert.True(t, status.ValidPair)
+	})
 }
 
 // storeGlobals is a test helper function that saves global variables and
@@ -143,6 +166,68 @@ func storeGlobals(tb testing.TB) {
 		globalContext.mux = mux
 		globalContext.web = web
 	})
+}
+
+// newCertWithoutIP generates a CA certificate, a leaf certificate without an IP
+// address, and the PEM-encoded leaf private key.
+func newCertWithoutIP(tb testing.TB) (
+	caCert *x509.Certificate,
+	chainPEM []byte,
+	leafKeyPEM []byte,
+) {
+	tb.Helper()
+
+	caKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	require.NoError(tb, err)
+
+	now := time.Now()
+	caTmpl := &x509.Certificate{
+		SerialNumber:          big.NewInt(1),
+		NotBefore:             now.Add(-time.Hour),
+		NotAfter:              now.Add(time.Hour),
+		IsCA:                  true,
+		BasicConstraintsValid: true,
+		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
+	}
+
+	caDER, err := x509.CreateCertificate(rand.Reader, caTmpl, caTmpl, &caKey.PublicKey, caKey)
+	require.NoError(tb, err)
+
+	caCert, err = x509.ParseCertificate(caDER)
+	require.NoError(tb, err)
+
+	leafKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	require.NoError(tb, err)
+
+	leafTmpl := &x509.Certificate{
+		SerialNumber: big.NewInt(2),
+		NotBefore:    now.Add(-time.Hour),
+		NotAfter:     now.Add(time.Hour),
+		KeyUsage:     x509.KeyUsageDigitalSignature,
+	}
+
+	leafDER, err := x509.CreateCertificate(
+		rand.Reader,
+		leafTmpl,
+		caTmpl,
+		&leafKey.PublicKey,
+		caKey,
+	)
+	require.NoError(tb, err)
+
+	buf := bytes.Buffer{}
+	err = pem.Encode(&buf, &pem.Block{Type: "CERTIFICATE", Bytes: leafDER})
+	require.NoError(tb, err)
+
+	err = pem.Encode(&buf, &pem.Block{Type: "CERTIFICATE", Bytes: caDER})
+	require.NoError(tb, err)
+
+	leafKeyPEM = pem.EncodeToMemory(&pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(leafKey),
+	})
+
+	return caCert, buf.Bytes(), leafKeyPEM
 }
 
 // newCertAndKey is a helper function that generates certificate and key.

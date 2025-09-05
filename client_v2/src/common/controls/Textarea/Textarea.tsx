@@ -5,7 +5,7 @@ import s from './styles.module.pcss';
 
 type Props = ComponentProps<'textarea'> & {
     label?: ReactNode;
-    size?: 'small' | 'large';
+    size?: 'small' | 'medium' | 'large';
     errorMessage?: string;
 };
 

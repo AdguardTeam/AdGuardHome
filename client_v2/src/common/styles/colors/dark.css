@@ -3,7 +3,7 @@
     --default-page-background: var(--gray-90);
     --hovered-page-background: var(--gray-80);
     --pressed-page-background: var(--gray-70);
-    --fills-backgrounds-page-background-additional: var(--gray-80);
+    --page-background-additional: var(--gray-80);
     /* Cards background */
     --default-cards-background: var(--gray-80);
     /* Popup background */

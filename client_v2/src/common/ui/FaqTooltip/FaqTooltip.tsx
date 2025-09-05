@@ -10,9 +10,10 @@ import s from './styles.module.pcss';
 type Props = {
     text: ReactNode;
     menuSize?: 'small' | 'large';
+    spacing?: boolean;
 };
 
-export const FaqTooltip = ({ text, menuSize = 'small' }: Props) => {
+export const FaqTooltip = ({ text, menuSize = 'small', spacing = false }: Props) => {
     return (
         <Dropdown
             trigger="hover"
@@ -20,6 +21,7 @@ export const FaqTooltip = ({ text, menuSize = 'small' }: Props) => {
                 <div
                     className={cn(theme.dropdown.menu, s.menu, {
                         [s.menu_large]: menuSize === 'large',
+                        [s.menu_spacing]: spacing,
                     })}>
                     {text}
                 </div>

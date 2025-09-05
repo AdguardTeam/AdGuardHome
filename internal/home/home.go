@@ -43,6 +43,7 @@ import (
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/AdguardTeam/golibs/osutil"
+	"github.com/AdguardTeam/golibs/osutil/executil"
 )
 
 // Global context
@@ -178,7 +179,8 @@ func setupContext(ctx context.Context, baseLogger *slog.Logger, opts options) (e
 		return nil
 	}
 
-	err = parseConfig()
+	// TODO(s.chzhen):  Consider adding a key prefix.
+	err = parseConfig(ctx, baseLogger)
 	if err != nil {
 		log.Error("parsing configuration file: %s", err)
 
@@ -588,12 +590,13 @@ func initWeb(
 	disableUpdate := !isUpdateEnabled(ctx, baseLogger, &opts, isCustomUpdURL)
 
 	webConf := &webConfig{
-		updater:      upd,
-		logger:       logger,
-		baseLogger:   baseLogger,
-		confModifier: confModifier,
-		tlsManager:   tlsMgr,
-		auth:         auth,
+		CommandConstructor: executil.SystemCommandConstructor{},
+		updater:            upd,
+		logger:             logger,
+		baseLogger:         baseLogger,
+		confModifier:       confModifier,
+		tlsManager:         tlsMgr,
+		auth:               auth,
 
 		clientFS: clientFS,
 
@@ -820,18 +823,19 @@ func newUpdater(
 	l.DebugContext(ctx, "creating updater", "config_path", confPath)
 
 	return updater.NewUpdater(&updater.Config{
-		Client:          conf.Filtering.HTTPClient,
-		Logger:          l,
-		Version:         version.Version(),
-		Channel:         version.Channel(),
-		GOARCH:          runtime.GOARCH,
-		GOOS:            runtime.GOOS,
-		GOARM:           version.GOARM(),
-		GOMIPS:          version.GOMIPS(),
-		WorkDir:         workDir,
-		ConfName:        confPath,
-		ExecPath:        execPath,
-		VersionCheckURL: versionURL,
+		Client:             conf.Filtering.HTTPClient,
+		Logger:             l,
+		CommandConstructor: executil.SystemCommandConstructor{},
+		Version:            version.Version(),
+		Channel:            version.Channel(),
+		GOARCH:             runtime.GOARCH,
+		GOOS:               runtime.GOOS,
+		GOARM:              version.GOARM(),
+		GOMIPS:             version.GOMIPS(),
+		WorkDir:            workDir,
+		ConfName:           confPath,
+		ExecPath:           execPath,
+		VersionCheckURL:    versionURL,
 	}), isCustomURL
 }
 
@@ -862,7 +866,7 @@ func initUsers(
 	baseLogger *slog.Logger,
 	isGLiNet bool,
 ) (auth *auth, err error) {
-	var rateLimiter loginRaateLimiter
+	var rateLimiter loginRateLimiter
 	if config.AuthAttempts > 0 && config.AuthBlockMin > 0 {
 		blockDur := time.Duration(config.AuthBlockMin) * time.Minute
 		rateLimiter = newAuthRateLimiter(blockDur, config.AuthAttempts)

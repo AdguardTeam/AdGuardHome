@@ -12,6 +12,7 @@ type Props = ComponentProps<'input'> & {
     onClick?: (e: MouseEvent<HTMLElement>) => void;
     children?: ReactNode;
     plusStyle?: boolean;
+    verticalAlign?: 'center' | 'start' | 'end';
 };
 
 export const Checkbox = forwardRef<HTMLInputElement, Props>(({
@@ -27,7 +28,11 @@ export const Checkbox = forwardRef<HTMLInputElement, Props>(({
     onClick,
     plusStyle,
 }: Props, ref: ForwardedRef<HTMLInputElement>) => (
-    <label htmlFor={id} className={cn(s.checkbox, { [s.disabled]: disabled }, className)} onClick={onClick}>
+    <label
+        htmlFor={id}
+        className={cn(s.checkbox, { [s.disabled]: disabled }, s[verticalAlign], className)}
+        onClick={onClick}
+    >
         <input
             ref={ref}
             id={id}

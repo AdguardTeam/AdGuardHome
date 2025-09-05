@@ -54,7 +54,7 @@ type authConfig struct {
 
 	// rateLimiter manages the rate limiting for login attempts.  It must not be
 	// nil.
-	rateLimiter loginRaateLimiter
+	rateLimiter loginRateLimiter
 
 	// trustedProxies is a set of subnets considered as trusted.
 	trustedProxies netutil.SubnetSet
@@ -75,12 +75,27 @@ type authConfig struct {
 
 // auth stores web user information and handles authentication.
 type auth struct {
-	logger         *slog.Logger
-	rateLimiter    loginRaateLimiter
+	// logger is used to log the operation of the auth module.
+	logger *slog.Logger
+
+	// rateLimiter manages rate limiting for login attempts.
+	rateLimiter loginRateLimiter
+
+	// trustedProxies is a set of subnets considered trusted.
 	trustedProxies netutil.SubnetSet
-	sessions       aghuser.SessionStorage
-	users          aghuser.DB
-	isGLiNet       bool
+
+	// sessions stores web users' sessions.
+	sessions aghuser.SessionStorage
+
+	// users stores user credentials.
+	users aghuser.DB
+
+	// isGLiNet indicates whether GLiNet mode is enabled.
+	isGLiNet bool
+
+	// isUserless indicates that there are no users defined in the configuration
+	// file.
+	isUserless bool
 }
 
 // newAuth returns the new properly initialized *auth.
@@ -111,6 +126,7 @@ func newAuth(ctx context.Context, conf *authConfig) (a *auth, err error) {
 		sessions:       s,
 		users:          userDB,
 		isGLiNet:       conf.isGLiNet,
+		isUserless:     len(conf.users) == 0,
 	}, nil
 }
 
@@ -173,6 +189,8 @@ func (a *auth) addUser(ctx context.Context, u *webUser, password string) (err er
 		// Should not happen.
 		panic(err)
 	}
+
+	a.isUserless = false
 
 	a.logger.DebugContext(ctx, "added user", "login", u.Name)
 

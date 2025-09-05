@@ -1,0 +1,29 @@
+.accordion {
+    overflow: hidden;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 16px;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    background-color: transparent;
+    outline: none;
+}
+
+.title {
+    color: var(--default-main-text);
+}
+
+.arrow {
+    transition: transform var(--t2);
+    color: var(--default-gray-icons);
+}
+
+.arrowOpen {
+    transform: rotate(180deg);
+}

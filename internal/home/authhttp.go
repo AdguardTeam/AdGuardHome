@@ -320,7 +320,7 @@ type authMiddlewareDefaultConfig struct {
 	logger *slog.Logger
 
 	// rateLimiter manages the rate limiting for login attempts.
-	rateLimiter loginRaateLimiter
+	rateLimiter loginRateLimiter
 
 	// trustedProxies is a set of subnets considered as trusted.
 	//
@@ -340,7 +340,7 @@ type authMiddlewareDefaultConfig struct {
 // passes it with the context.
 type authMiddlewareDefault struct {
 	logger         *slog.Logger
-	rateLimiter    loginRaateLimiter
+	rateLimiter    loginRateLimiter
 	trustedProxies netutil.SubnetSet
 	sessions       aghuser.SessionStorage
 	users          aghuser.DB
@@ -506,9 +506,10 @@ func (mw *authMiddlewareDefault) userFromRequestBasicAuth(
 		return nil, fmt.Errorf("login attempt blocked for %s", left)
 	}
 
-	rateLimiter.inc(remoteIP)
 	defer func() {
 		if err != nil {
+			rateLimiter.inc(remoteIP)
+
 			return
 		}
 

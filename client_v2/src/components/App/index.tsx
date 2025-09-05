@@ -22,6 +22,7 @@ import { changeLanguage, getDnsStatus, getTimerStatus } from '../../actions';
 import { RootState } from '../../initialState';
 
 import s from './styles.module.pcss';
+import { DnsSettings } from '../DnsSettings';
 
 type RouteConfig = {
     path: string;
@@ -38,6 +39,11 @@ const ROUTES: RouteConfig[] = [
     {
         path: '/encryption',
         component: Encryption,
+        exact: true,
+    },
+    {
+        path: '/dns',
+        component: DnsSettings,
         exact: true,
     },
     {

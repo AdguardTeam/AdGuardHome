@@ -1,6 +1,7 @@
 import { createAction } from 'redux-actions';
 import i18next from 'i18next';
 
+import intl from 'panel/common/intl';
 import { apiClient } from '../api/Api';
 import { addErrorToast, addSuccessToast } from './toasts';
 
@@ -38,7 +39,7 @@ export const setAccessList = (config: any) => async (dispatch: any) => {
 
         await apiClient.setAccessList(values);
         dispatch(setAccessListSuccess());
-        dispatch(addSuccessToast('access_settings_saved'));
+        dispatch(addSuccessToast(intl.getMessage('settings_notify_changes_saved')));
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(setAccessListFailure());
