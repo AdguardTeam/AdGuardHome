@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/netip"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
 	"time"
@@ -20,8 +19,10 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
+	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/golibs/osutil/executil"
 	"github.com/quic-go/quic-go/http3"
 )
 
@@ -129,6 +130,7 @@ func (req *checkConfReq) validateDNS(
 	ctx context.Context,
 	l *slog.Logger,
 	tcpPorts aghalg.UniqChecker[tcpPort],
+	cmdCons executil.CommandConstructor,
 ) (canAutofix bool, err error) {
 	defer func() { err = errors.Annotate(err, "validating ports: %w") }()
 
@@ -160,7 +162,7 @@ func (req *checkConfReq) validateDNS(
 	// Try to fix automatically.
 	canAutofix = checkDNSStubListener(ctx, l)
 	if canAutofix && req.DNS.Autofix {
-		if derr := disableDNSStubListener(ctx, l); derr != nil {
+		if derr := disableDNSStubListener(ctx, l, cmdCons); derr != nil {
 			l.ErrorContext(ctx, "disabling DNSStubListener", slogutil.KeyError, err)
 		}
 
@@ -188,7 +190,8 @@ func (web *webAPI) handleInstallCheckConfig(w http.ResponseWriter, r *http.Reque
 		resp.Web.Status = err.Error()
 	}
 
-	if resp.DNS.CanAutofix, err = req.validateDNS(r.Context(), web.logger, tcpPorts); err != nil {
+	resp.DNS.CanAutofix, err = req.validateDNS(r.Context(), web.logger, tcpPorts, web.cmdCons)
+	if err != nil {
 		resp.DNS.Status = err.Error()
 	} else if !req.DNS.IP.IsUnspecified() {
 		resp.StaticIP = handleStaticIP(req.DNS.IP, req.SetStaticIP)
@@ -243,34 +246,29 @@ func checkDNSStubListener(ctx context.Context, l *slog.Logger) (ok bool) {
 		return false
 	}
 
-	cmd := exec.Command("systemctl", "is-enabled", "systemd-resolved")
-	l.DebugContext(ctx, "executing", "cmd", cmd.Path, "args", cmd.Args)
-	_, err := cmd.Output()
-	if err != nil || cmd.ProcessState.ExitCode() != 0 {
-		l.InfoContext(
+	cmds := container.KeyValues[string, []string]{{
+		Key:   "systemctl",
+		Value: []string{"is-enabled", "systemd-resolved"},
+	}, {
+		Key:   "grep",
+		Value: []string{"-E", "#?DNSStubListener=yes", "/etc/systemd/resolved.conf"},
+	}}
+
+	for _, cmd := range cmds {
+		l.DebugContext(ctx, "executing", "cmd", cmd.Key, "args", cmd.Value)
+
+		err := executil.RunWithPeek(
 			ctx,
-			"execution failed",
-			"cmd", cmd.Path,
-			"code", cmd.ProcessState.ExitCode(),
-			slogutil.KeyError, err,
+			executil.SystemCommandConstructor{},
+			agh.DefaultOutputLimit,
+			cmd.Key,
+			cmd.Value...,
 		)
+		if err != nil {
+			l.InfoContext(ctx, "execution failed", "cmd", cmd.Key, slogutil.KeyError, err)
 
-		return false
-	}
-
-	cmd = exec.Command("grep", "-E", "#?DNSStubListener=yes", "/etc/systemd/resolved.conf")
-	l.DebugContext(ctx, "executing", "cmd", cmd.Path, "args", cmd.Args)
-	_, err = cmd.Output()
-	if err != nil || cmd.ProcessState.ExitCode() != 0 {
-		l.InfoContext(
-			ctx,
-			"execution failed",
-			"cmd", cmd.Path,
-			"code", cmd.ProcessState.ExitCode(),
-			slogutil.KeyError, err,
-		)
-
-		return false
+			return false
+		}
 	}
 
 	return true
@@ -287,7 +285,11 @@ const resolvConfPath = "/etc/resolv.conf"
 
 // disableDNSStubListener deactivates DNSStubListerner and returns an error, if
 // any.
-func disableDNSStubListener(ctx context.Context, l *slog.Logger) (err error) {
+func disableDNSStubListener(
+	ctx context.Context,
+	l *slog.Logger,
+	cmdCons executil.CommandConstructor,
+) (err error) {
 	dir := filepath.Dir(resolvedConfPath)
 	err = os.MkdirAll(dir, 0o755)
 	if err != nil {
@@ -306,15 +308,21 @@ func disableDNSStubListener(ctx context.Context, l *slog.Logger) (err error) {
 		return fmt.Errorf("os.Symlink: %s: %w", resolvConfPath, err)
 	}
 
-	cmd := exec.Command("systemctl", "reload-or-restart", "systemd-resolved")
-	l.DebugContext(ctx, "executing", "cmd", cmd.Path, "args", cmd.Args)
-	_, err = cmd.Output()
+	const systemctlCmd = "systemctl"
+
+	systemctlArgs := []string{"reload-or-restart", "systemd-resolved"}
+
+	l.DebugContext(ctx, "executing", "cmd", systemctlCmd, "args", systemctlArgs)
+
+	err = executil.RunWithPeek(
+		ctx,
+		cmdCons,
+		agh.DefaultOutputLimit,
+		systemctlCmd,
+		systemctlArgs...,
+	)
 	if err != nil {
-		return err
-	}
-	if cmd.ProcessState.ExitCode() != 0 {
-		return fmt.Errorf("process %s exited with an error: %d",
-			cmd.Path, cmd.ProcessState.ExitCode())
+		return fmt.Errorf("executing cmd: %w", err)
 	}
 
 	return nil

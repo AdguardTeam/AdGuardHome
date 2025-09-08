@@ -1,6 +1,7 @@
 package client_test
 
 import (
+	"context"
 	"net"
 	"net/netip"
 	"runtime"
@@ -18,8 +19,10 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/hostsfile"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/golibs/service"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/golibs/testutil/faketime"
+	"github.com/AdguardTeam/golibs/testutil/servicetest"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -63,17 +66,17 @@ func (c *testHostsContainer) Upd() (updates <-chan *hostsfile.DefaultStorage) {
 // Interface stores and refreshes the network neighborhood reported by ARP
 // (Address Resolution Protocol).
 type Interface interface {
-	// Refresh updates the stored data.  It must be safe for concurrent use.
-	Refresh() (err error)
+	// Refresher updates the stored data.  It must be safe for concurrent use.
+	service.Refresher
 
-	// Neighbors returnes the last set of data reported by ARP.  Both the method
+	// Neighbors returns the last set of data reported by ARP.  Both the method
 	// and it's result must be safe for concurrent use.
 	Neighbors() (ns []arpdb.Neighbor)
 }
 
 // testARPDB is a mock implementation of the [arpdb.Interface].
 type testARPDB struct {
-	onRefresh   func() (err error)
+	onRefresh   func(ctx context.Context) (err error)
 	onNeighbors func() (ns []arpdb.Neighbor)
 }
 
@@ -81,8 +84,8 @@ type testARPDB struct {
 var _ arpdb.Interface = (*testARPDB)(nil)
 
 // Refresh implements the [arpdb.Interface] interface for *testARP.
-func (c *testARPDB) Refresh() (err error) {
-	return c.onRefresh()
+func (c *testARPDB) Refresh(ctx context.Context) (err error) {
+	return c.onRefresh(ctx)
 }
 
 // Neighbors implements the [arpdb.Interface] interface for *testARP.
@@ -146,12 +149,7 @@ func TestStorage_Add_hostsfile(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	err = storage.Start(testutil.ContextWithTimeout(t, testTimeout))
-	require.NoError(t, err)
-
-	testutil.CleanupAndRequireSuccess(t, func() (err error) {
-		return storage.Shutdown(testutil.ContextWithTimeout(t, testTimeout))
-	})
+	servicetest.RequireRun(t, storage, testTimeout)
 
 	t.Run("add_hosts", func(t *testing.T) {
 		var s *hostsfile.DefaultStorage
@@ -165,15 +163,11 @@ func TestStorage_Add_hostsfile(t *testing.T) {
 
 		testutil.RequireSend(t, hostCh, s, testTimeout)
 
-		require.Eventually(t, func() (ok bool) {
+		require.EventuallyWithT(t, func(ct *assert.CollectT) {
 			cli1 := storage.ClientRuntime(cliIP1)
-			if cli1 == nil {
-				return false
-			}
+			require.NotNil(ct, cli1)
 
-			assert.True(t, compareRuntimeInfo(cli1, client.SourceHostsFile, cliName1))
-
-			return true
+			assert.True(ct, compareRuntimeInfo(cli1, client.SourceHostsFile, cliName1))
 		}, testTimeout, testTimeout/10)
 	})
 
@@ -189,18 +183,14 @@ func TestStorage_Add_hostsfile(t *testing.T) {
 
 		testutil.RequireSend(t, hostCh, s, testTimeout)
 
-		require.Eventually(t, func() (ok bool) {
+		require.EventuallyWithT(t, func(ct *assert.CollectT) {
 			cli2 := storage.ClientRuntime(cliIP2)
-			if cli2 == nil {
-				return false
-			}
+			require.NotNil(ct, cli2)
 
-			assert.True(t, compareRuntimeInfo(cli2, client.SourceHostsFile, cliName2))
+			assert.True(ct, compareRuntimeInfo(cli2, client.SourceHostsFile, cliName2))
 
 			cli1 := storage.ClientRuntime(cliIP1)
-			require.Nil(t, cli1)
-
-			return true
+			require.Nil(ct, cli1)
 		}, testTimeout, testTimeout/10)
 	})
 }
@@ -218,7 +208,7 @@ func TestStorage_Add_arp(t *testing.T) {
 	)
 
 	a := &testARPDB{
-		onRefresh: func() (err error) { return nil },
+		onRefresh: func(_ context.Context) (err error) { return nil },
 		onNeighbors: func() (ns []arpdb.Neighbor) {
 			mu.Lock()
 			defer mu.Unlock()
@@ -237,12 +227,7 @@ func TestStorage_Add_arp(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	err = storage.Start(testutil.ContextWithTimeout(t, testTimeout))
-	require.NoError(t, err)
-
-	testutil.CleanupAndRequireSuccess(t, func() (err error) {
-		return storage.Shutdown(testutil.ContextWithTimeout(t, testTimeout))
-	})
+	servicetest.RequireRun(t, storage, testTimeout)
 
 	t.Run("add_hosts", func(t *testing.T) {
 		func() {
@@ -255,15 +240,11 @@ func TestStorage_Add_arp(t *testing.T) {
 			}}
 		}()
 
-		require.Eventually(t, func() (ok bool) {
+		require.EventuallyWithT(t, func(ct *assert.CollectT) {
 			cli1 := storage.ClientRuntime(cliIP1)
-			if cli1 == nil {
-				return false
-			}
+			require.NotNil(ct, cli1)
 
-			assert.True(t, compareRuntimeInfo(cli1, client.SourceARP, cliName1))
-
-			return true
+			assert.True(ct, compareRuntimeInfo(cli1, client.SourceARP, cliName1))
 		}, testTimeout, testTimeout/10)
 	})
 
@@ -278,18 +259,14 @@ func TestStorage_Add_arp(t *testing.T) {
 			}}
 		}()
 
-		require.Eventually(t, func() (ok bool) {
+		require.EventuallyWithT(t, func(ct *assert.CollectT) {
 			cli2 := storage.ClientRuntime(cliIP2)
-			if cli2 == nil {
-				return false
-			}
+			require.NotNil(ct, cli2)
 
-			assert.True(t, compareRuntimeInfo(cli2, client.SourceARP, cliName2))
+			assert.True(ct, compareRuntimeInfo(cli2, client.SourceARP, cliName2))
 
 			cli1 := storage.ClientRuntime(cliIP1)
-			require.Nil(t, cli1)
-
-			return true
+			require.Nil(ct, cli1)
 		}, testTimeout, testTimeout/10)
 	})
 }
@@ -392,7 +369,7 @@ func TestClientsDHCP(t *testing.T) {
 
 	arpCh := make(chan []arpdb.Neighbor, 1)
 	arpDB := &testARPDB{
-		onRefresh: func() (err error) { return nil },
+		onRefresh: func(_ context.Context) (err error) { return nil },
 		onNeighbors: func() (ns []arpdb.Neighbor) {
 			select {
 			case ns = <-arpCh:
@@ -434,12 +411,7 @@ func TestClientsDHCP(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	err = storage.Start(testutil.ContextWithTimeout(t, testTimeout))
-	require.NoError(t, err)
-
-	testutil.CleanupAndRequireSuccess(t, func() (err error) {
-		return storage.Shutdown(testutil.ContextWithTimeout(t, testTimeout))
-	})
+	servicetest.RequireRun(t, storage, testTimeout)
 
 	require.True(t, t.Run("find_runtime_lower_priority", func(t *testing.T) {
 		// Add a lower-priority client.
@@ -493,15 +465,11 @@ func TestClientsDHCP(t *testing.T) {
 		cli1 := storage.ClientRuntime(cliIP1)
 		require.NotNil(t, cli1)
 
-		require.Eventually(t, func() (ok bool) {
+		require.EventuallyWithT(t, func(ct *assert.CollectT) {
 			cli := storage.ClientRuntime(cliIP1)
-			if cli == nil {
-				return false
-			}
+			require.NotNil(ct, cli)
 
-			assert.True(t, compareRuntimeInfo(cli, client.SourceHostsFile, cliName1))
-
-			return true
+			assert.True(ct, compareRuntimeInfo(cli, client.SourceHostsFile, cliName1))
 		}, testTimeout, testTimeout/10)
 
 		// Remove the matching client.
@@ -513,10 +481,11 @@ func TestClientsDHCP(t *testing.T) {
 
 		testutil.RequireSend(t, etcHostsCh, s, testTimeout)
 
-		require.Eventually(t, func() (ok bool) {
+		require.EventuallyWithT(t, func(ct *assert.CollectT) {
 			cli := storage.ClientRuntime(cliIP1)
+			require.NotNil(ct, cli)
 
-			return compareRuntimeInfo(cli, client.SourceDHCP, cliName1)
+			assert.True(ct, compareRuntimeInfo(cli, client.SourceDHCP, cliName1))
 		}, testTimeout, testTimeout/10)
 	}))
 

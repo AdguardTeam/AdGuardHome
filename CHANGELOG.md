@@ -9,17 +9,43 @@ The format is based on [*Keep a Changelog*](https://keepachangelog.com/en/1.0.0/
 <!--
 ## [v0.108.0] – TBA
 
-## [v0.107.66] - 2025-09-03 (APPROX.)
+## [v0.107.67] - 2025-09-25 (APPROX.)
 
-See also the [v0.107.66 GitHub milestone][ms-v0.107.66].
+See also the [v0.107.67 GitHub milestone][ms-v0.107.67].
 
-[ms-v0.107.66]: https://github.com/AdguardTeam/AdGuardHome/milestone/101?closed=1
+[ms-v0.107.67]: https://github.com/AdguardTeam/AdGuardHome/milestone/102?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
+
+## [v0.107.66] - 2025-09-11
+
+See also the [v0.107.66 GitHub milestone][ms-v0.107.66].
+
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.25.1][go-1.25.1].
+
+### Changed
+
+- Our snap package now uses the `core24` image as its base.
+- Outgoing HTTP requests now use the `User-Agent` header `AdGuardHome/v0.107.66` (where `v0.107.66` is the current version) instead of `Go-http-client/1.1` ([#7979]).
+
+### Fixed
+
+- Authentication errors in the Web UI when AdGuard Home is behind a proxy that sets Basic Auth headers ([#7987]).
+- The HTTP API `GET /control/profile` endpoint failing when no users were configured ([#7985]).
+- Missing warning on the *Encryption Settings* page when using a certificate without an IP address.
+
+[#7979]: https://github.com/AdguardTeam/AdGuardHome/issues/7979
+[#7985]: https://github.com/AdguardTeam/AdGuardHome/issues/7985
+[#7987]: https://github.com/AdguardTeam/AdGuardHome/issues/7987
+
+[go-1.25.1]: https://groups.google.com/g/golang-announce/c/PtW9VW21NPs
+[ms-v0.107.66]: https://github.com/AdguardTeam/AdGuardHome/milestone/101?closed=1
 
 ## [v0.107.65] - 2025-08-20
 
@@ -3223,11 +3249,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 [ms-v0.104.2]: https://github.com/AdguardTeam/AdGuardHome/milestone/28?closed=1
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.66...HEAD
-[v0.107.66]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.65...v0.107.66
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.67...HEAD
+[v0.107.67]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.66...v0.107.67
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.65...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.66...HEAD
+[v0.107.66]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.65...v0.107.66
 [v0.107.65]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.64...v0.107.65
 [v0.107.64]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.63...v0.107.64
 [v0.107.63]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.62...v0.107.63

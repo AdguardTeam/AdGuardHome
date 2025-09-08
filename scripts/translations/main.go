@@ -13,7 +13,6 @@ import (
 	"maps"
 	"net/url"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -23,6 +22,7 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/osutil"
+	"github.com/AdguardTeam/golibs/osutil/executil"
 )
 
 const (
@@ -96,7 +96,7 @@ func main() {
 
 		errors.Check(cli.upload())
 	case "auto-add":
-		err := autoAdd(conf.LocalizableFiles[0])
+		err := autoAdd(ctx, l, conf.LocalizableFiles[0])
 		errors.Check(err)
 	default:
 		usage("unknown command")
@@ -395,10 +395,12 @@ func findUnused(fileNames []string, loc locales) (err error) {
 
 // autoAdd adds locales with additions to the git and restores locales with
 // deletions.
-func autoAdd(basePath string) (err error) {
+func autoAdd(ctx context.Context, l *slog.Logger, basePath string) (err error) {
 	defer func() { err = errors.Annotate(err, "auto add: %w") }()
 
-	adds, dels, err := changedLocales()
+	cmdCons := executil.SystemCommandConstructor{}
+
+	adds, dels, err := changedLocales(ctx, l, cmdCons)
 	if err != nil {
 		// Don't wrap the error since it's informative enough as is.
 		return err
@@ -408,13 +410,13 @@ func autoAdd(basePath string) (err error) {
 		return errors.Error("base locale contains deletions")
 	}
 
-	err = handleAdds(adds)
+	err = handleAdds(ctx, l, cmdCons, adds)
 	if err != nil {
 		// Don't wrap the error since it's informative enough as is.
 		return nil
 	}
 
-	err = handleDels(dels)
+	err = handleDels(ctx, l, cmdCons, dels)
 	if err != nil {
 		// Don't wrap the error since it's informative enough as is.
 		return nil
@@ -423,14 +425,24 @@ func autoAdd(basePath string) (err error) {
 	return nil
 }
 
+// gitCmd is the shell command for Git.
+const gitCmd = "git"
+
 // handleAdds adds locales with additions to the git.
-func handleAdds(locales []string) (err error) {
+func handleAdds(
+	ctx context.Context,
+	l *slog.Logger,
+	cmdCons executil.CommandConstructor,
+	locales []string,
+) (err error) {
 	if len(locales) == 0 {
 		return nil
 	}
 
-	args := append([]string{"add"}, locales...)
-	code, out, err := aghos.RunCommand("git", args...)
+	gitArgs := append([]string{"add"}, locales...)
+	l.DebugContext(ctx, "executing", "cmd", gitCmd, "args", gitArgs)
+
+	code, out, err := aghos.RunCommand(ctx, cmdCons, gitCmd, gitArgs...)
 
 	if err != nil || code != 0 {
 		return fmt.Errorf("git add exited with code %d output %q: %w", code, out, err)
@@ -440,13 +452,20 @@ func handleAdds(locales []string) (err error) {
 }
 
 // handleDels restores locales with deletions.
-func handleDels(locales []string) (err error) {
+func handleDels(
+	ctx context.Context,
+	l *slog.Logger,
+	cmdCons executil.CommandConstructor,
+	locales []string,
+) (err error) {
 	if len(locales) == 0 {
 		return nil
 	}
 
-	args := append([]string{"restore"}, locales...)
-	code, out, err := aghos.RunCommand("git", args...)
+	gitArgs := append([]string{"restore"}, locales...)
+	l.DebugContext(ctx, "executing", "cmd", gitCmd, "args", gitArgs)
+
+	code, out, err := aghos.RunCommand(ctx, cmdCons, gitCmd, gitArgs...)
 
 	if err != nil || code != 0 {
 		return fmt.Errorf("git restore exited with code %d output %q: %w", code, out, err)
@@ -458,22 +477,32 @@ func handleDels(locales []string) (err error) {
 // changedLocales returns cleaned paths of locales with changes or error.  adds
 // is the list of locales with only additions.  dels is the list of locales
 // with only deletions.
-func changedLocales() (adds, dels []string, err error) {
+func changedLocales(
+	ctx context.Context,
+	l *slog.Logger,
+	cmdCons executil.CommandConstructor,
+) (adds, dels []string, err error) {
 	defer func() { err = errors.Annotate(err, "getting changes: %w") }()
 
-	cmd := exec.Command("git", "diff", "--numstat", localesDir)
+	gitArgs := []string{"diff", "--numstat", localesDir}
+	l.DebugContext(ctx, "executing", "cmd", gitCmd, "args", gitArgs)
 
-	stdout, err := cmd.StdoutPipe()
+	// TODO(s.chzhen):  Consider streaming the output if needed.  Using
+	// [io.Pipe] here is unnecessary; it complicates lifecycle management
+	// because the output must be read concurrently, and the PipeWriter must be
+	// explicitly closed to signal EOF.  Since this command's output is small, a
+	// bytes.Buffer via executil.Run is sufficient.
+	var out bytes.Buffer
+	err = executil.Run(ctx, cmdCons, &executil.CommandConfig{
+		Path:   gitCmd,
+		Args:   gitArgs,
+		Stdout: &out,
+	})
 	if err != nil {
-		return nil, nil, fmt.Errorf("piping: %w", err)
+		return nil, nil, fmt.Errorf("executing cmd: %w", err)
 	}
 
-	err = cmd.Start()
-	if err != nil {
-		return nil, nil, fmt.Errorf("starting: %w", err)
-	}
-
-	scanner := bufio.NewScanner(stdout)
+	scanner := bufio.NewScanner(&out)
 
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -495,11 +524,6 @@ func changedLocales() (adds, dels []string, err error) {
 	err = scanner.Err()
 	if err != nil {
 		return nil, nil, fmt.Errorf("scanning: %w", err)
-	}
-
-	err = cmd.Wait()
-	if err != nil {
-		return nil, nil, fmt.Errorf("waiting: %w", err)
 	}
 
 	return adds, dels, nil

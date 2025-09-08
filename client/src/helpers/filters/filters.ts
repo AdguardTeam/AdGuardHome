@@ -34,6 +34,12 @@ export default {
             "homepage": "https://badmojr.github.io/1Hosts/",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_64.txt"
         },
+        "1hosts_xtra": {
+            "name": "1Hosts (Xtra)",
+            "categoryId": "general",
+            "homepage": "https://badmojr.github.io/1Hosts/",
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_70.txt"
+        },
         "CHN_adrules": {
             "name": "CHN: AdRules DNS List",
             "categoryId": "regional",
@@ -196,6 +202,12 @@ export default {
             "homepage": "https://github.com/hagezi/dns-blocklists#piracy",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_46.txt"
         },
+        "hagezi_apple_tracker_blocklist": {
+            "name": "HaGeZi's Apple Tracker Blocklist",
+            "categoryId": "other",
+            "homepage": "https://github.com/hagezi/dns-blocklists",
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_67.txt"
+        },
         "hagezi_badware_hoster_blocklist": {
             "name": "HaGeZi's Badware Hoster Blocklist",
             "categoryId": "security",
@@ -225,6 +237,12 @@ export default {
             "categoryId": "general",
             "homepage": "https://github.com/hagezi/dns-blocklists",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_34.txt"
+        },
+        "hagezi_oppo_realme_tracker_blocklist": {
+            "name": "HaGeZi's OPPO \u0026 Realme Tracker Blocklist",
+            "categoryId": "other",
+            "homepage": "https://github.com/hagezi/dns-blocklists",
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_66.txt"
         },
         "hagezi_pro": {
             "name": "HaGeZi's Pro Blocklist",
@@ -261,6 +279,18 @@ export default {
             "categoryId": "general",
             "homepage": "https://github.com/hagezi/dns-blocklists",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_49.txt"
+        },
+        "hagezi_url_shortener_blocklist": {
+            "name": "HaGeZi's URL Shortener Blocklist",
+            "categoryId": "security",
+            "homepage": "https://github.com/hagezi/dns-blocklists",
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_68.txt"
+        },
+        "hagezi_vivo_tracker_blocklist": {
+            "name": "HaGeZi's Vivo Tracker Blocklist",
+            "categoryId": "other",
+            "homepage": "https://github.com/hagezi/dns-blocklists",
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_65.txt"
         },
         "hagezi_windows_office_tracker_blocklist": {
             "name": "HaGeZi's Windows/Office Tracker Blocklist",
@@ -321,6 +351,12 @@ export default {
             "categoryId": "security",
             "homepage": "https://github.com/durablenapkin/scamblocklist",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_10.txt"
+        },
+        "shadowwhisperer_tracking_list": {
+            "name": "ShadowWhisperer Tracking List",
+            "categoryId": "general",
+            "homepage": "https://github.com/ShadowWhisperer/BlockLists",
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_69.txt"
         },
         "shadowwhisperers_dating_list": {
             "name": "ShadowWhisperer's Dating List",

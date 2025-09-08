@@ -7,7 +7,6 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-	"os/exec"
 	"runtime"
 	"syscall"
 	"time"
@@ -19,6 +18,7 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/osutil"
+	"github.com/AdguardTeam/golibs/osutil/executil"
 )
 
 // temporaryError is the interface for temporary errors from the Go standard
@@ -148,7 +148,13 @@ func (web *webAPI) handleUpdate(w http.ResponseWriter, r *http.Request) {
 	// The background context is used because the underlying functions wrap it
 	// with timeout and shut down the server, which handles current request.  It
 	// also should be done in a separate goroutine for the same reason.
-	go finishUpdate(context.Background(), web.logger, execPath, web.conf.runningAsService)
+	go finishUpdate(
+		context.Background(),
+		web.logger,
+		web.cmdCons,
+		execPath,
+		web.conf.runningAsService,
+	)
 }
 
 // versionResponse is the response for /control/version.json endpoint.
@@ -187,7 +193,13 @@ func tlsConfUsesPrivilegedPorts(c *tlsConfigSettings) (ok bool) {
 
 // finishUpdate completes an update procedure.  It is intended to be used as a
 // goroutine.
-func finishUpdate(ctx context.Context, l *slog.Logger, execPath string, runningAsService bool) {
+func finishUpdate(
+	ctx context.Context,
+	l *slog.Logger,
+	cmdCons executil.CommandConstructor,
+	execPath string,
+	runningAsService bool,
+) {
 	defer slogutil.RecoverAndExit(ctx, l, osutil.ExitCodeFailure)
 
 	l.InfoContext(ctx, "stopping all tasks")
@@ -203,8 +215,16 @@ func finishUpdate(ctx context.Context, l *slog.Logger, execPath string, runningA
 			// instance, because Windows doesn't allow it.
 			//
 			// TODO(a.garipov): Recheck the claim above.
-			cmd := exec.Command("cmd", "/c", "net stop AdGuardHome & net start AdGuardHome")
-			err = cmd.Start()
+			var cmd executil.Command
+			cmd, err = cmdCons.New(ctx, &executil.CommandConfig{
+				Path: "cmd",
+				Args: []string{"/c", "net stop AdGuardHome & net start AdGuardHome"},
+			})
+			if err != nil {
+				panic(fmt.Errorf("constructing cmd: %w", err))
+			}
+
+			err = cmd.Start(ctx)
 			if err != nil {
 				panic(fmt.Errorf("restarting service: %w", err))
 			}
@@ -212,12 +232,21 @@ func finishUpdate(ctx context.Context, l *slog.Logger, execPath string, runningA
 			os.Exit(osutil.ExitCodeSuccess)
 		}
 
-		cmd := exec.Command(execPath, os.Args[1:]...)
 		l.InfoContext(ctx, "restarting", "exec_path", execPath, "args", os.Args[1:])
-		cmd.Stdin = os.Stdin
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		err = cmd.Start()
+
+		var cmd executil.Command
+		cmd, err = cmdCons.New(ctx, &executil.CommandConfig{
+			Path:   execPath,
+			Args:   os.Args[1:],
+			Stdin:  os.Stdin,
+			Stdout: os.Stdout,
+			Stderr: os.Stderr,
+		})
+		if err != nil {
+			panic(fmt.Errorf("constructing cmd: %w", err))
+		}
+
+		err = cmd.Start(ctx)
 		if err != nil {
 			panic(fmt.Errorf("restarting: %w", err))
 		}

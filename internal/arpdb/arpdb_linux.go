@@ -4,6 +4,7 @@ package arpdb
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io/fs"
 	"log/slog"
@@ -14,10 +15,11 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/golibs/osutil/executil"
 	"github.com/AdguardTeam/golibs/stringutil"
 )
 
-func newARPDB(logger *slog.Logger) (arp *arpdbs) {
+func newARPDB(logger *slog.Logger, cmdCons executil.CommandConstructor) (arp *arpdbs) {
 	// Use the common storage among the implementations.
 	ns := &neighs{
 		mu: &sync.RWMutex{},
@@ -40,10 +42,11 @@ func newARPDB(logger *slog.Logger) (arp *arpdbs) {
 		},
 		// Then, try "arp -a -n".
 		&cmdARPDB{
-			logger: logger,
-			parse:  parseF,
-			ns:     ns,
-			cmd:    "arp",
+			logger:  logger,
+			cmdCons: cmdCons,
+			parse:   parseF,
+			ns:      ns,
+			cmd:     "arp",
 			// Use -n flag to avoid resolving the hostnames of the neighbors.
 			// By default ARP attempts to resolve the hostnames via DNS.  See
 			// man 8 arp.
@@ -53,11 +56,12 @@ func newARPDB(logger *slog.Logger) (arp *arpdbs) {
 		},
 		// Finally, try "ip neigh".
 		&cmdARPDB{
-			logger: logger,
-			parse:  parseIPNeigh,
-			ns:     ns,
-			cmd:    "ip",
-			args:   []string{"neigh"},
+			logger:  logger,
+			cmdCons: cmdCons,
+			parse:   parseIPNeigh,
+			ns:      ns,
+			cmd:     "ip",
+			args:    []string{"neigh"},
 		},
 	)
 }
@@ -73,7 +77,7 @@ type fsysARPDB struct {
 var _ Interface = (*fsysARPDB)(nil)
 
 // Refresh implements the [Interface] interface for *fsysARPDB.
-func (arp *fsysARPDB) Refresh() (err error) {
+func (arp *fsysARPDB) Refresh(_ context.Context) (err error) {
 	var f fs.File
 	f, err = arp.fsys.Open(arp.filename)
 	if err != nil {
@@ -135,9 +139,9 @@ func (arp *fsysARPDB) Neighbors() (ns []Neighbor) {
 //	IP address     HW type  Flags  HW address         Mask  Device
 //	192.168.11.98  0x1      0x2    5a:92:df:a9:7e:28  *     wan
 func parseArpAWrt(logger *slog.Logger, sc *bufio.Scanner, lenHint int) (ns []Neighbor) {
+	// Skip the header.
 	if !sc.Scan() {
-		// Skip the header.
-		return
+		return nil
 	}
 
 	ns = make([]Neighbor, 0, lenHint)

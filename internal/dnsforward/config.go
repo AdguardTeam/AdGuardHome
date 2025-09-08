@@ -648,7 +648,7 @@ func (s *Server) prepareTLS(ctx context.Context, proxyConf *proxy.Config) (err e
 	s.prepareDNSCrypt(proxyConf)
 
 	if s.conf.TLSConf.Cert == nil {
-		return
+		return nil
 	}
 
 	if s.conf.TLSConf.TLSListenAddrs == nil && s.conf.TLSConf.QUICListenAddrs == nil {

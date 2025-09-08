@@ -4,6 +4,7 @@ package home
 
 import (
 	"cmp"
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
@@ -15,6 +16,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/osutil/executil"
 	"github.com/kardianos/service"
 )
 
@@ -57,16 +59,18 @@ func (openbsdSystem) Interactive() (ok bool) {
 // New implements service.System interface for openbsdSystem.
 func (openbsdSystem) New(i service.Interface, c *service.Config) (s service.Service, err error) {
 	return &openbsdRunComService{
-		i:   i,
-		cfg: c,
+		cmdCons: executil.SystemCommandConstructor{},
+		i:       i,
+		cfg:     c,
 	}, nil
 }
 
 // openbsdRunComService is the RunCom-based service.Service to be used on the
 // OpenBSD.
 type openbsdRunComService struct {
-	i   service.Interface
-	cfg *service.Config
+	cmdCons executil.CommandConstructor
+	i       service.Interface
+	cfg     *service.Config
 }
 
 // Platform implements service.Service interface for *openbsdRunComService.
@@ -210,8 +214,10 @@ func (s *openbsdRunComService) configureSysStartup(enable bool) (err error) {
 		cmd = "disable"
 	}
 
+	// TODO(s.chzhen):  Pass context.
+	ctx := context.TODO()
 	var code int
-	code, _, err = aghos.RunCommand("rcctl", cmd, s.cfg.Name)
+	code, _, err = aghos.RunCommand(ctx, s.cmdCons, "rcctl", cmd, s.cfg.Name)
 	if err != nil {
 		return err
 	} else if code != 0 {
@@ -312,11 +318,14 @@ func (s *openbsdRunComService) runCom(cmd string) (out string, err error) {
 		return "", err
 	}
 
+	// TODO(s.chzhen):  Pass context.
+	ctx := context.TODO()
+
 	// TODO(e.burkov):  It's possible that os.ErrNotExist is caused by
 	// something different than the service script's non-existence.  Keep it
 	// in mind, when replace the aghos.RunCommand.
 	var outData []byte
-	_, outData, err = aghos.RunCommand(scriptPath, cmd)
+	_, outData, err = aghos.RunCommand(ctx, s.cmdCons, scriptPath, cmd)
 	if errors.Is(err, os.ErrNotExist) {
 		return "", service.ErrNotInstalled
 	}

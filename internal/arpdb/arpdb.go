@@ -4,6 +4,7 @@ package arpdb
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"fmt"
 	"log/slog"
 	"net"
@@ -11,18 +12,16 @@ import (
 	"slices"
 	"sync"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/osutil"
+	"github.com/AdguardTeam/golibs/osutil/executil"
+	"github.com/AdguardTeam/golibs/service"
 )
 
 // Variables and functions to substitute in tests.
 var (
-	// aghosRunCommand is the function to run shell commands.
-	aghosRunCommand = aghos.RunCommand
-
 	// rootDirFS is the filesystem pointing to the root directory.
 	rootDirFS = osutil.RootDirFS()
 )
@@ -30,17 +29,17 @@ var (
 // Interface stores and refreshes the network neighborhood reported by ARP
 // (Address Resolution Protocol).
 type Interface interface {
-	// Refresh updates the stored data.  It must be safe for concurrent use.
-	Refresh() (err error)
+	// Refresher updates the stored data.  It must be safe for concurrent use.
+	service.Refresher
 
-	// Neighbors returnes the last set of data reported by ARP.  Both the method
+	// Neighbors returns the last set of data reported by ARP.  Both the method
 	// and it's result must be safe for concurrent use.
 	Neighbors() (ns []Neighbor)
 }
 
 // New returns the [Interface] properly initialized for the OS.
 func New(logger *slog.Logger) (arp Interface) {
-	return newARPDB(logger)
+	return newARPDB(logger, executil.SystemCommandConstructor{})
 }
 
 // Empty is the [Interface] implementation that does nothing.
@@ -51,7 +50,7 @@ var _ Interface = Empty{}
 
 // Refresh implements the [Interface] interface for EmptyARPContainer.  It does
 // nothing and always returns nil error.
-func (Empty) Refresh() (err error) { return nil }
+func (Empty) Refresh(_ context.Context) (err error) { return nil }
 
 // Neighbors implements the [Interface] interface for EmptyARPContainer.  It
 // always returns nil.
@@ -164,28 +163,40 @@ type parseNeighsFunc func(logger *slog.Logger, sc *bufio.Scanner, lenHint int) (
 // cmdARPDB is the implementation of the [Interface] that uses command line to
 // retrieve data.
 type cmdARPDB struct {
-	logger *slog.Logger
-	parse  parseNeighsFunc
-	ns     *neighs
-	cmd    string
-	args   []string
+	logger  *slog.Logger
+	cmdCons executil.CommandConstructor
+	parse   parseNeighsFunc
+	ns      *neighs
+	cmd     string
+	args    []string
 }
 
 // type check
 var _ Interface = (*cmdARPDB)(nil)
 
 // Refresh implements the [Interface] interface for *cmdARPDB.
-func (arp *cmdARPDB) Refresh() (err error) {
+func (arp *cmdARPDB) Refresh(ctx context.Context) (err error) {
 	defer func() { err = errors.Annotate(err, "cmd arpdb: %w") }()
 
-	code, out, err := aghosRunCommand(arp.cmd, arp.args...)
+	var stdout bytes.Buffer
+	err = executil.Run(
+		ctx,
+		arp.cmdCons,
+		&executil.CommandConfig{
+			Path:   arp.cmd,
+			Args:   arp.args,
+			Stdout: &stdout,
+		},
+	)
 	if err != nil {
+		if code, ok := executil.ExitCodeFromError(err); ok {
+			return fmt.Errorf("running command: unexpected exit code %d", code)
+		}
+
 		return fmt.Errorf("running command: %w", err)
-	} else if code != 0 {
-		return fmt.Errorf("running command: unexpected exit code %d", code)
 	}
 
-	sc := bufio.NewScanner(bytes.NewReader(out))
+	sc := bufio.NewScanner(&stdout)
 	ns := arp.parse(arp.logger, sc, arp.ns.len())
 	if err = sc.Err(); err != nil {
 		// TODO(e.burkov):  This error seems unreachable.  Investigate.
@@ -226,11 +237,11 @@ func newARPDBs(arps ...Interface) (arp *arpdbs) {
 var _ Interface = (*arpdbs)(nil)
 
 // Refresh implements the [Interface] interface for *arpdbs.
-func (arp *arpdbs) Refresh() (err error) {
+func (arp *arpdbs) Refresh(ctx context.Context) (err error) {
 	var errs []error
 
 	for _, a := range arp.arps {
-		err = a.Refresh()
+		err = a.Refresh(ctx)
 		if err != nil {
 			errs = append(errs, err)
 

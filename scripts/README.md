@@ -182,6 +182,10 @@ Required environment:
 
 Builds the Snapcraft packages from the binaries created by `download.sh`.
 
+Optional environment:
+
+- `SNAPCRAFT_CMD`: Overrides the Snapcraft command. Default: `snapcraft`.
+
 ### `download.sh`
 
 Downloads the binaries to pack them into Snapcraft packages.
