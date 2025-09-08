@@ -24,6 +24,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Changed
 
+- Optimized matching of filtering rules.
 - Our snap package now uses the `core24` image as its base.
 - Outgoing HTTP requests now use the `User-Agent` header `AdGuardHome/v0.107.66` (where `v0.107.66` is the current version) instead of `Go-http-client/1.1` ([#7979]).
 

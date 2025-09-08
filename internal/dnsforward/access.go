@@ -88,12 +88,12 @@ func newAccessCtx(allowed, blocked, blockedHosts []string) (a *accessManager, er
 		stringutil.WriteToBuilder(b, strings.ToLower(h), "\n")
 	}
 
-	lists := []filterlist.RuleList{
-		&filterlist.StringRuleList{
+	lists := []filterlist.Interface{
+		filterlist.NewString(&filterlist.StringConfig{
 			ID:             0,
 			RulesText:      b.String(),
 			IgnoreCosmetic: true,
-		},
+		}),
 	}
 
 	rulesStrg, err := filterlist.NewRuleStorage(lists)

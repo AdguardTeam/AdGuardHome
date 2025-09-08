@@ -6,7 +6,7 @@ require (
 	github.com/AdguardTeam/dnsproxy v0.76.1
 	// TODO(s.chzhen): Use osutil/executil and fakeos/fakeexec.
 	github.com/AdguardTeam/golibs v0.34.0
-	github.com/AdguardTeam/urlfilter v0.20.0
+	github.com/AdguardTeam/urlfilter v0.21.0
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/ameshkov/dnscrypt/v2 v2.4.0
 	github.com/bluele/gcache v0.0.2
@@ -28,7 +28,7 @@ require (
 	// TODO(a.garipov): This package is deprecated; find a new one or use our
 	// own code for that.  Perhaps, use gopacket.
 	github.com/mdlayher/raw v0.1.0
-	github.com/miekg/dns v1.1.66
+	github.com/miekg/dns v1.1.68
 	github.com/quic-go/quic-go v0.53.0
 	github.com/stretchr/testify v1.11.1
 	github.com/ti-mo/netfilter v0.5.3

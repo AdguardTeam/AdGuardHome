@@ -55,7 +55,7 @@ type DefaultStorage struct {
 	engine *urlfilter.DNSEngine
 
 	// ruleList is the filtering rule ruleList used by the engine.
-	ruleList filterlist.RuleList
+	ruleList filterlist.Interface
 
 	// rewrites stores the rewrite entries from configuration.
 	rewrites []*Item
@@ -249,13 +249,13 @@ func (s *DefaultStorage) resetRules() (err error) {
 		rulesText = append(rulesText, rewrite.toRule())
 	}
 
-	strList := &filterlist.StringRuleList{
+	strList := filterlist.NewString(&filterlist.StringConfig{
 		ID:             s.urlFilterID,
 		RulesText:      strings.Join(rulesText, "\n"),
 		IgnoreCosmetic: true,
-	}
+	})
 
-	rs, err := filterlist.NewRuleStorage([]filterlist.RuleList{strList})
+	rs, err := filterlist.NewRuleStorage([]filterlist.Interface{strList})
 	if err != nil {
 		return fmt.Errorf("creating list storage: %w", err)
 	}

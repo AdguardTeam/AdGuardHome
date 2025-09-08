@@ -30,7 +30,7 @@ type Filter struct {
 	url *url.URL
 
 	// ruleList is the last successfully compiled [filterlist.RuleList].
-	ruleList filterlist.RuleList
+	ruleList filterlist.Interface
 
 	// updated is the time of the last successful update.
 	updated time.Time
@@ -161,11 +161,11 @@ func (f *Filter) setFromHTTP(
 	}
 
 	// TODO(a.garipov): Add filterlist.BytesRuleList.
-	f.ruleList = &filterlist.StringRuleList{
+	f.ruleList = filterlist.NewString(&filterlist.StringConfig{
 		ID:             f.urlFilterID,
 		RulesText:      text,
 		IgnoreCosmetic: true,
-	}
+	})
 
 	return parseRes, nil
 }
@@ -255,7 +255,11 @@ func (f *Filter) setFromFile(
 		return nil, fmt.Errorf("closing old rule list: %w", err)
 	}
 
-	rl, err := filterlist.NewFileRuleList(f.urlFilterID, cachePath, true)
+	rl, err := filterlist.NewFile(&filterlist.FileConfig{
+		ID:             f.urlFilterID,
+		Path:           cachePath,
+		IgnoreCosmetic: true,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("opening new rule list: %w", err)
 	}
