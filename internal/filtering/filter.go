@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/netip"
 	"os"
@@ -448,20 +449,28 @@ func (d *DNSFilter) refreshFiltersIntl(block, allow, force bool) (int, bool) {
 	d.EnableFilters(false)
 
 	for i := range lists {
-		uf := &lists[i]
-		updated := toUpd[i]
-		if !updated {
-			continue
-		}
-
-		p := uf.Path(d.conf.DataDir)
-		err := os.Remove(p + ".old")
-		if err != nil {
-			d.logger.ErrorContext(ctx, "removing old filter", "path", p, slogutil.KeyError, err)
+		if toUpd[i] {
+			removeOldFilterFile(ctx, d.logger, lists[i].Path(d.conf.DataDir))
 		}
 	}
 
 	return updNum, false
+}
+
+// removeOldFilterFile deletes the old filter file and logs any error at the
+// appropriate level.  l must not be nil.
+func removeOldFilterFile(ctx context.Context, l *slog.Logger, fltPath string) {
+	err := os.Remove(fltPath + ".old")
+	if err == nil {
+		return
+	}
+
+	lvl := slog.LevelWarn
+	if errors.Is(err, os.ErrNotExist) {
+		lvl = slog.LevelDebug
+	}
+
+	l.Log(ctx, lvl, "removing old filter", "path", fltPath, slogutil.KeyError, err)
 }
 
 // update refreshes filter's content and a/mtimes of it's file.
