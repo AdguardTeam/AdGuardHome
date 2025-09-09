@@ -36,6 +36,7 @@
     - 'network-control'
     'daemon': 'simple'
     'restart-condition': 'always'
+    'restart-delay': '30s'
   'adguard-home-web':
     'command': 'adguard-home-web.sh'
     'plugs':
