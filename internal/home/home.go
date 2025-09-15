@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"slices"
+	"strconv"
 	"sync"
 	"syscall"
 	"time"
@@ -575,6 +576,8 @@ func initWeb(
 ) (web *webAPI, err error) {
 	logger := baseLogger.With(slogutil.KeyPrefix, "webapi")
 
+	webPort := suggestedWebPort(ctx, logger)
+
 	var clientFS fs.FS
 	if opts.localFrontend {
 		logger.WarnContext(ctx, "using local frontend files")
@@ -606,6 +609,8 @@ func initWeb(
 		ReadHeaderTimeout: readHdrTimeout,
 		WriteTimeout:      writeTimeout,
 
+		defaultWebPort: webPort,
+
 		firstRun:         globalContext.firstRun,
 		disableUpdate:    disableUpdate,
 		runningAsService: opts.runningAsService,
@@ -618,6 +623,37 @@ func initWeb(
 	}
 
 	return web, nil
+}
+
+// suggestedWebPort returns the suggested default HTTP port for the installation
+// wizard, using the port provided via an environment variable.  It falls back
+// to [defaultPortHTTP] on error.
+func suggestedWebPort(ctx context.Context, l *slog.Logger) (p uint16) {
+	const webPortEnv = "ADGUARD_HOME_DEFAULT_WEB_PORT"
+
+	s := os.Getenv(webPortEnv)
+	if s == "" {
+		return defaultPortHTTP
+	}
+
+	v, err := strconv.ParseUint(s, 10, 16)
+	if err == nil && v == 0 {
+		err = errors.ErrOutOfRange
+	}
+
+	if err != nil {
+		l.WarnContext(
+			ctx,
+			"invalid web port; using default",
+			"env", webPortEnv,
+			"val", s,
+			slogutil.KeyError, err,
+		)
+
+		return defaultPortHTTP
+	}
+
+	return uint16(v)
 }
 
 func fatalOnError(err error) {

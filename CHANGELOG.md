@@ -18,6 +18,10 @@ See also the [v0.107.66 GitHub milestone][ms-v0.107.66].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Added
+
+- Support for configuring the suggested default HTTP port for the installation wizard via the `ADGUARD_HOME_DEFAULT_WEB_PORT` environment variable (useful for vendors).
+
 ### Security
 
 - Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.25.1][go-1.25.1].

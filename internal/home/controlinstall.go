@@ -46,7 +46,7 @@ func (web *webAPI) handleInstallGetAddresses(w http.ResponseWriter, r *http.Requ
 	data := getAddrsResponse{
 		Version: version.Version(),
 
-		WebPort: int(defaultPortHTTP),
+		WebPort: int(web.conf.defaultWebPort),
 		DNSPort: int(defaultPortDNS),
 	}
 
