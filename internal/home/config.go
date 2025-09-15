@@ -721,6 +721,14 @@ func validateConfig(ctx context.Context, l *slog.Logger) (err error) {
 		l.WarnContext(ctx, "no users in the configuration file; authentication is disabled")
 	}
 
+	if config.Language != "" && !allowedLanguages.Has(config.Language) {
+		l.WarnContext(ctx, "unsupported language", "lang", config.Language)
+
+		// Clear the language so the frontend can use the client's browser
+		// language.
+		config.Language = ""
+	}
+
 	return nil
 }
 
