@@ -307,6 +307,7 @@ func initContextClients(
 	config.DHCP.WorkDir = globalContext.workDir
 	config.DHCP.DataDir = globalContext.getDataDir()
 	config.DHCP.HTTPRegister = httpRegister
+	config.DHCP.CommandConstructor = executil.SystemCommandConstructor{}
 	config.DHCP.ConfModifier = confModifier
 
 	globalContext.dhcpServer, err = dhcpd.Create(config.DHCP)

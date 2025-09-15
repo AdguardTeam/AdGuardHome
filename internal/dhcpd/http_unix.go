@@ -3,6 +3,7 @@
 package dhcpd
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -20,6 +21,7 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/golibs/osutil/executil"
 )
 
 type v4ServerConfJSON struct {
@@ -171,9 +173,10 @@ func (s *server) handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
 	aghhttp.WriteJSONResponseOK(w, r, status)
 }
 
-func (s *server) enableDHCP(ifaceName string) (code int, err error) {
+func (s *server) enableDHCP(ctx context.Context, ifaceName string) (code int, err error) {
 	var hasStaticIP bool
-	hasStaticIP, err = aghnet.IfaceHasStaticIP(ifaceName)
+	cmdCons := s.conf.CommandConstructor
+	hasStaticIP, err = aghnet.IfaceHasStaticIP(ctx, cmdCons, ifaceName)
 	if err != nil {
 		if errors.Is(err, os.ErrPermission) {
 			// ErrPermission may happen here on Linux systems where AdGuard Home
@@ -202,7 +205,7 @@ func (s *server) enableDHCP(ifaceName string) (code int, err error) {
 	}
 
 	if !hasStaticIP {
-		err = aghnet.IfaceSetStaticIP(ifaceName)
+		err = aghnet.IfaceSetStaticIP(ctx, cmdCons, ifaceName)
 		if err != nil {
 			err = fmt.Errorf("setting static ip: %w", err)
 
@@ -309,6 +312,8 @@ func (s *server) createServers(conf *dhcpServerConfigJSON) (srv4, srv6 DHCPServe
 // handleDHCPSetConfig is the handler for the POST /control/dhcp/set_config
 // HTTP API.
 func (s *server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	conf := &dhcpServerConfigJSON{}
 	conf.Enabled = aghalg.BoolToNullBool(s.conf.Enabled)
 	conf.InterfaceName = s.conf.InterfaceName
@@ -335,7 +340,7 @@ func (s *server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.setConfFromJSON(conf, srv4, srv6)
-	s.conf.ConfModifier.Apply(r.Context())
+	s.conf.ConfModifier.Apply(ctx)
 
 	err = s.dbLoad()
 	if err != nil {
@@ -346,7 +351,7 @@ func (s *server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 
 	if s.conf.Enabled {
 		var code int
-		code, err = s.enableDHCP(conf.InterfaceName)
+		code, err = s.enableDHCP(ctx, conf.InterfaceName)
 		if err != nil {
 			aghhttp.Error(r, w, code, "enabling dhcp: %s", err)
 		}
@@ -405,7 +410,7 @@ func (s *server) handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		jsonIface, iErr := newNetInterfaceJSON(iface)
+		jsonIface, iErr := newNetInterfaceJSON(r.Context(), iface, s.conf.CommandConstructor)
 		if iErr != nil {
 			aghhttp.Error(r, w, http.StatusInternalServerError, "%s", iErr)
 
@@ -421,7 +426,12 @@ func (s *server) handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 }
 
 // newNetInterfaceJSON creates a JSON object from a [net.Interface] iface.
-func newNetInterfaceJSON(iface net.Interface) (out *netInterfaceJSON, err error) {
+// cmdCons must not be nil.
+func newNetInterfaceJSON(
+	ctx context.Context,
+	iface net.Interface,
+	cmdCons executil.CommandConstructor,
+) (out *netInterfaceJSON, err error) {
 	addrs, err := iface.Addrs()
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -473,7 +483,7 @@ func newNetInterfaceJSON(iface net.Interface) (out *netInterfaceJSON, err error)
 		return nil, nil
 	}
 
-	out.GatewayIP = aghnet.GatewayIP(iface.Name)
+	out.GatewayIP = aghnet.GatewayIP(ctx, cmdCons, iface.Name)
 
 	return out, nil
 }
@@ -558,7 +568,8 @@ func (s *server) handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Reque
 		},
 	}
 
-	if isStaticIP, serr := aghnet.IfaceHasStaticIP(ifaceName); serr != nil {
+	cmdCons := s.conf.CommandConstructor
+	if isStaticIP, serr := aghnet.IfaceHasStaticIP(r.Context(), cmdCons, ifaceName); serr != nil {
 		result.V4.StaticIP.Static = "error"
 		result.V4.StaticIP.Error = serr.Error()
 	} else if !isStaticIP {

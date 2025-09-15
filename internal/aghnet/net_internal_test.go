@@ -3,19 +3,26 @@ package aghnet
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io/fs"
 	"net"
 	"net/netip"
-	"strings"
 	"testing"
+	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/golibs/osutil/executil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// testTimeout is the common timeout for tests.
+const testTimeout = 1 * time.Second
+
+// testCmdCons is the common command constructor for tests.
+var testCmdCons = executil.EmptyCommandConstructor{}
 
 // substRootDirFS replaces the aghos.RootDirFS function used throughout the
 // package with fsys for tests ran under t.
@@ -29,43 +36,6 @@ func substRootDirFS(tb testing.TB, fsys fs.FS) {
 
 // RunCmdFunc is the signature of aghos.RunCommand function.
 type RunCmdFunc func(cmd string, args ...string) (code int, out []byte, err error)
-
-// substShell replaces the the aghos.RunCommand function used throughout the
-// package with rc for tests ran under t.
-func substShell(tb testing.TB, rc RunCmdFunc) {
-	tb.Helper()
-
-	prev := aghosRunCommand
-	tb.Cleanup(func() { aghosRunCommand = prev })
-	aghosRunCommand = rc
-}
-
-// mapShell is a substitution of aghos.RunCommand that maps the command to it's
-// execution result.  It's only needed to simplify testing.
-//
-// TODO(e.burkov):  Perhaps put all the shell interactions behind an interface.
-type mapShell map[string]struct {
-	err  error
-	out  string
-	code int
-}
-
-// theOnlyCmd returns mapShell that only handles a single command and arguments
-// combination from cmd.
-func theOnlyCmd(cmd string, code int, out string, err error) (s mapShell) {
-	return mapShell{cmd: {code: code, out: out, err: err}}
-}
-
-// RunCmd is a RunCmdFunc handled by s.
-func (s mapShell) RunCmd(cmd string, args ...string) (code int, out []byte, err error) {
-	key := strings.Join(append([]string{cmd}, args...), " ")
-	ret, ok := s[key]
-	if !ok {
-		return 0, nil, fmt.Errorf("unexpected shell command %q", key)
-	}
-
-	return ret.code, []byte(ret.out), ret.err
-}
 
 // ifaceAddrsFunc is the signature of net.InterfaceAddrs function.
 type ifaceAddrsFunc func() (ifaces []net.Addr, err error)
@@ -81,40 +51,43 @@ func substNetInterfaceAddrs(tb testing.TB, f ifaceAddrsFunc) {
 }
 
 func TestGatewayIP(t *testing.T) {
+	t.Parallel()
+
 	const ifaceName = "ifaceName"
 	const cmd = "ip route show dev " + ifaceName
 
 	testCases := []struct {
-		shell mapShell
-		want  netip.Addr
-		name  string
+		cmdCons executil.CommandConstructor
+		want    netip.Addr
+		name    string
 	}{{
-		shell: theOnlyCmd(cmd, 0, `default via 1.2.3.4 onlink`, nil),
-		want:  netip.MustParseAddr("1.2.3.4"),
-		name:  "success_v4",
+		cmdCons: agh.NewCommandConstructor(cmd, 0, `default via 1.2.3.4 onlink`, nil),
+		want:    netip.MustParseAddr("1.2.3.4"),
+		name:    "success_v4",
 	}, {
-		shell: theOnlyCmd(cmd, 0, `default via ::ffff onlink`, nil),
-		want:  netip.MustParseAddr("::ffff"),
-		name:  "success_v6",
+		cmdCons: agh.NewCommandConstructor(cmd, 0, `default via ::ffff onlink`, nil),
+		want:    netip.MustParseAddr("::ffff"),
+		name:    "success_v6",
 	}, {
-		shell: theOnlyCmd(cmd, 0, `non-default via 1.2.3.4 onlink`, nil),
-		want:  netip.Addr{},
-		name:  "bad_output",
+		cmdCons: agh.NewCommandConstructor(cmd, 0, `non-default via 1.2.3.4 onlink`, nil),
+		want:    netip.Addr{},
+		name:    "bad_output",
 	}, {
-		shell: theOnlyCmd(cmd, 0, "", errors.Error("can't run command")),
-		want:  netip.Addr{},
-		name:  "err_runcmd",
+		cmdCons: agh.NewCommandConstructor(cmd, 0, "", errors.Error("can't run command")),
+		want:    netip.Addr{},
+		name:    "err_runcmd",
 	}, {
-		shell: theOnlyCmd(cmd, 1, "", nil),
-		want:  netip.Addr{},
-		name:  "bad_code",
+		cmdCons: agh.NewCommandConstructor(cmd, 1, "", nil),
+		want:    netip.Addr{},
+		name:    "bad_code",
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			substShell(t, tc.shell.RunCmd)
+			t.Parallel()
 
-			assert.Equal(t, tc.want, GatewayIP(ifaceName))
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			assert.Equal(t, tc.want, GatewayIP(ctx, tc.cmdCons, ifaceName))
 		})
 	}
 }
