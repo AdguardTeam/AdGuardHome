@@ -34,6 +34,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Excessive configuration file overwrites when visiting the Web UI and a non-empty `language` is set.
 - Lowered the severity of log messages for failed deletion of old filter files ([#7964]).
 - Authentication errors in the Web UI when AdGuard Home is behind a proxy that sets Basic Auth headers ([#7987]).
 - The HTTP API `GET /control/profile` endpoint failing when no users were configured ([#7985]).
