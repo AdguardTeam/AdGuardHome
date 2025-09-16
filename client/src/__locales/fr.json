@@ -13,7 +13,7 @@
     "fallback_dns_desc": "Liste des serveurs DNS de repli utilisés lorsque les serveurs DNS en amont ne répondent pas. La syntaxe est la même que dans le champ principal en amont ci-dessus.",
     "fallback_dns_placeholder": "Saisissez un serveur DNS de repli par ligne",
     "local_ptr_title": "Serveurs DNS privés inverses",
-    "local_ptr_desc": "Les serveurs DNS utilisés par AdGuard Home pour les requêtes privées PTR, SOA et NS. Une requête est considérée privée si elle demande un domaine ARPA contenant un sous-réseau entre les plages IP privées (par exemple \"192.168.12.34\") et provient d'un client avec une adresse IP privée. Sans réglages additionnels, les résolveurs DNS par défaut de votre système d'exploitation seront utilisés, sauf pour les adresses IP d'AdGuard Home.",
+    "local_ptr_desc": "Les serveurs DNS utilisés par AdGuard Home pour les requêtes privées PTR, SOA et NS. Une requête est considérée privée si elle demande un domaine ARPA contenant un sous-réseau entre les plages IP privées (par exemple « 192.168.12.34 ») et provient d'un client avec une adresse IP privée. Sans réglages additionnels, les résolveurs DNS par défaut de votre système d'exploitation seront utilisés, sauf pour les adresses IP d'AdGuard Home.",
     "local_ptr_default_resolver": "Par défaut, AdGuard Home utilise les résolveurs DNS inversés suivants : {{ip}}.",
     "local_ptr_no_default_resolver": "AdGuard Home n'a pas pu déterminer de résolveurs DNS inversés privés appropriés pour ce système.",
     "local_ptr_placeholder": "Saisissez une adresse IP par ligne",
