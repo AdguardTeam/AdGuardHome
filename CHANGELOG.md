@@ -17,6 +17,21 @@ See also the [v0.107.67 GitHub milestone][ms-v0.107.67].
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
+
+### Added
+
+- Support for configuring the suggested default HTTP port for the installation wizard via the `ADGUARD_HOME_DEFAULT_WEB_PORT` environment variable (useful for vendors).
+
+### Changed
+
+- Optimized matching of filtering rules.
+
+### Fixed
+
+- Lowered the severity of log messages for failed deletion of old filter files ([#7964]).
+
+[#7964]: https://github.com/AdguardTeam/AdGuardHome/issues/7964
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
