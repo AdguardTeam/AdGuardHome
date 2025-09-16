@@ -166,32 +166,32 @@ func TestWeb_HandlePutProfile(t *testing.T) {
 		wantBody string
 		wantCode int
 	}{{
-		req:      profileUpdateRequest(http.MethodPut, dataValid, true),
+		req:      newProfileUpdateRequest(http.MethodPut, dataValid, true),
 		name:     "basic",
 		wantBody: "OK\n",
 		wantCode: http.StatusOK,
 	}, {
-		req:      profileUpdateRequest(http.MethodGet, dataValid, true),
+		req:      newProfileUpdateRequest(http.MethodGet, dataValid, true),
 		name:     "invalid_method",
 		wantBody: "only method PUT is allowed\n",
 		wantCode: http.StatusMethodNotAllowed,
 	}, {
-		req:      profileUpdateRequest(http.MethodPut, dataValid, false),
+		req:      newProfileUpdateRequest(http.MethodPut, dataValid, false),
 		name:     "invalid_content_type",
 		wantBody: "only content-type application/json is allowed\n",
 		wantCode: http.StatusUnsupportedMediaType,
 	}, {
-		req:      profileUpdateRequest(http.MethodPut, nil, false),
+		req:      newProfileUpdateRequest(http.MethodPut, nil, false),
 		name:     "empty_body",
 		wantBody: "reading req: EOF\n",
 		wantCode: http.StatusBadRequest,
 	}, {
-		req:      profileUpdateRequest(http.MethodPut, dataInvalidLang, true),
+		req:      newProfileUpdateRequest(http.MethodPut, dataInvalidLang, true),
 		name:     "invalid_language",
 		wantBody: `unknown language: "invalid_lang"` + "\n",
 		wantCode: http.StatusBadRequest,
 	}, {
-		req:  profileUpdateRequest(http.MethodPut, dataInvalidTheme, true),
+		req:  newProfileUpdateRequest(http.MethodPut, dataInvalidTheme, true),
 		name: "invalid_theme",
 		wantBody: `reading req: invalid theme "invalid_theme", ` +
 			`supported: "auto", "dark", "light"` + "\n",
@@ -215,24 +215,24 @@ func TestWeb_HandlePutProfile(t *testing.T) {
 
 		w := httptest.NewRecorder()
 
-		mux.ServeHTTP(w, profileUpdateRequest(http.MethodPut, dataValid, true))
+		mux.ServeHTTP(w, newProfileUpdateRequest(http.MethodPut, dataValid, true))
 		require.Equal(t, http.StatusOK, w.Code)
 
 		assert.True(t, isConfigChanged)
 
 		isConfigChanged = false
 
-		mux.ServeHTTP(w, profileUpdateRequest(http.MethodPut, dataValid, true))
+		mux.ServeHTTP(w, newProfileUpdateRequest(http.MethodPut, dataValid, true))
 		require.Equal(t, http.StatusOK, w.Code)
 
 		assert.False(t, isConfigChanged)
 	}))
 }
 
-// profileUpdateRequest builds an *http.Request for the profile update endpoint.
-// If body is non-nil, it is used as the request body.  If setCT is true, the
-// Content-Type header is set to application/json.
-func profileUpdateRequest(method string, body []byte, setCT bool) (req *http.Request) {
+// newProfileUpdateRequest builds an *http.Request for the profile update
+// endpoint.  If body is non-nil, it is used as the request body.  If setCT is
+// true, the Content-Type header is set to application/json.
+func newProfileUpdateRequest(method string, body []byte, setCT bool) (req *http.Request) {
 	var r io.Reader
 	if body != nil {
 		r = bytes.NewReader(body)
