@@ -90,6 +90,8 @@ func checkOtherDHCPv4(iface *net.Interface) (ok bool, err error) {
 	return discover4(iface, dstAddr, hostname)
 }
 
+// TODO(f.setrakov): continue refactoring, reduce cognitive
+// complexity.
 func discover4(iface *net.Interface, dstAddr *net.UDPAddr, hostname string) (ok bool, err error) {
 	var req *dhcpv4.DHCPv4
 	if req, err = dhcpv4.NewDiscovery(iface.HardwareAddr); err != nil {
@@ -221,6 +223,8 @@ func checkOtherDHCPv6(iface *net.Interface) (ok bool, err error) {
 	return discover6(iface, udpAddr, dstAddr)
 }
 
+// TODO(f.setrakov): continue refactoring, reduce cognitive
+// complexity.
 func discover6(iface *net.Interface, udpAddr, dstAddr *net.UDPAddr) (ok bool, err error) {
 	req, err := dhcpv6.NewSolicit(iface.HardwareAddr)
 	if err != nil {

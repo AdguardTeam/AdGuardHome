@@ -146,34 +146,42 @@ func NetInterfaceFrom(iface *net.Interface) (niface *NetInterface, err error) {
 		MTU:          iface.MTU,
 	}
 
-	addrs, err := iface.Addrs()
+	var addrs []net.Addr
+	addrs, err = iface.Addrs()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get addresses for interface %s: %w", iface.Name, err)
 	}
 
-	// Collect network interface addresses.
+	if err = populateAddrs(niface, iface.Name, addrs); err != nil {
+		return nil, err
+	}
+
+	return niface, nil
+}
+
+// populateAddrs fills [*NetInterface] IP addresses and subnets from [[]net.Addr].
+func populateAddrs(niface *NetInterface, ifaceName string, addrs []net.Addr) (err error) {
 	for _, addr := range addrs {
-		n, ok := addr.(*net.IPNet)
-		if !ok {
-			// Should be *net.IPNet, this is weird.
-			return nil, fmt.Errorf("expected %[2]s to be %[1]T, got %[2]T", n, addr)
-		} else if ip4 := n.IP.To4(); ip4 != nil {
-			n.IP = ip4
+		var n *net.IPNet
+		n, err = ipNetFromAddr(addr)
+		if err != nil {
+			return err
 		}
 
 		ip, ok := netip.AddrFromSlice(n.IP)
 		if !ok {
-			return nil, fmt.Errorf("bad address %s", n.IP)
+			return fmt.Errorf("bad address %s", n.IP)
 		}
 
 		ip = ip.Unmap()
-		if ip.IsLinkLocalUnicast() {
-			// Ignore link-local IPv4.
-			if ip.Is4() {
-				continue
-			}
 
-			ip = ip.WithZone(iface.Name)
+		// Skip link-local IPv4 addresses
+		if isLinkLocalV4(ip) {
+			continue
+		}
+
+		if ip.IsLinkLocalUnicast() {
+			ip = ip.WithZone(ifaceName)
 		}
 
 		ones, _ := n.Mask.Size()
@@ -183,7 +191,27 @@ func NetInterfaceFrom(iface *net.Interface) (niface *NetInterface, err error) {
 		niface.Subnets = append(niface.Subnets, p)
 	}
 
-	return niface, nil
+	return nil
+}
+
+// ipNetFromAddr casts [net.Addr] to [*net.IPNet] and converts its IP
+// to v4 if necessary.
+func ipNetFromAddr(addr net.Addr) (ip *net.IPNet, err error) {
+	ipNet, ok := addr.(*net.IPNet)
+	if !ok {
+		// Should be *net.IPNet, this is weird.
+		return nil, fmt.Errorf("expected %[2]s to be %[1]T, got %[2]T", ipNet, addr)
+	}
+
+	if ip4 := ipNet.IP.To4(); ip4 != nil {
+		ipNet.IP = ip4
+	}
+
+	return ipNet, nil
+}
+
+func isLinkLocalV4(ip netip.Addr) (skip bool) {
+	return ip.Is4() && ip.IsLinkLocalUnicast()
 }
 
 // GetValidNetInterfacesForWeb returns interfaces that are eligible for DNS and

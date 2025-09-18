@@ -24,6 +24,9 @@ type NetIface interface {
 }
 
 // IfaceIPAddrs returns the interface's IP addresses.
+//
+// TODO(f.setrakov): continue refactoring, reduce cognitive
+// complexity.
 func IfaceIPAddrs(iface NetIface, ipv IPVersion) (ips []net.IP, err error) {
 	switch ipv {
 	case IPVersion4, IPVersion6:
