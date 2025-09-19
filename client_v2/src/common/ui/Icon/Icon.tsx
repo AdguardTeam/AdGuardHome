@@ -4,16 +4,17 @@ import { IconType } from 'panel/common/ui/Icons';
 
 import s from './Icon.module.pcss';
 
-interface IconProps {
-    icon: IconType;
-    color?: string;
-    className?: string;
-    small?: boolean;
-    onClick?: (e: MouseEvent) => void;
-}
+export type IconColor = 'green' | 'gray' | 'red' | 'black';
 
-export const Icon = ({ icon, color, className, onClick, small }: IconProps) => {
-    const iconClass = cn(s.icon, color, className, { [s.smallIcon]: small });
+type Props = {
+    icon: IconType;
+    color?: IconColor;
+    className?: string;
+    onClick?: (e: MouseEvent) => void;
+};
+
+export const Icon = ({ icon, color, className, onClick }: Props) => {
+    const iconClass = cn(s.icon, s[color], className);
 
     return (
         <svg className={iconClass} onClick={onClick}>

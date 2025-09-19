@@ -26,6 +26,14 @@ export const ICONS = {
     check: 'check',
     dot: 'dot',
     attention: 'attention',
+    arrow: 'arrow',
+    edit: 'edit',
+    delete: 'delete',
+    plus: 'plus',
+    refresh: 'refresh',
+    bullets: 'bullets',
+    link: 'link',
+    not_found_search: 'not_found_search',
     label: 'label',
 } as const;
 
@@ -333,7 +341,13 @@ export const Icons = memo(() => (
                 strokeLinecap="round"
                 strokeLinejoin="round"
             />
-            <path d="M12 8V14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+                d="M12 8V14"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
             <path
                 d="M11.997 16.4045C12.009 16.4025 11.997 16.5955 11.997 16.5955"
                 stroke="currentColor"
@@ -351,6 +365,168 @@ export const Icons = memo(() => (
                 fill="currentColor"
             />
         </symbol>
+
+        <symbol id="arrow" viewBox="0 0 24 24" fill="none">
+            <path
+                d="M9 18L15 12L9 6"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+        </symbol>
+
+        <symbol id="edit" viewBox="0 0 24 24" fill="none">
+            <path
+                d="M4 20.5H19.9828"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+            <path
+                fillRule="evenodd"
+                clipRule="evenodd"
+                d="M10.7773 16.435L6.5347 12.1924L13.6058 5.12132C14.7773 3.94975 16.6768 3.94975 17.8484 5.12132V5.12132C19.02 6.29289 19.02 8.19239 17.8484 9.36396L10.7773 16.435Z"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+            <path
+                fillRule="evenodd"
+                clipRule="evenodd"
+                d="M5.12087 17.8492L6.53508 12.1924L10.7777 16.435L5.12087 17.8492Z"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+            <path
+                d="M16.7891 9.0104L13.9607 6.18197"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+        </symbol>
+
+        <symbol id="delete" viewBox="0 0 24 24" fill="none">
+            <path
+                fillRule="evenodd"
+                clipRule="evenodd"
+                d="M7 9H17L16.2367 19.0755C16.1972 19.597 15.7625 20 15.2396 20H8.76044C8.23746 20 7.80281 19.597 7.7633 19.0755L7 9Z"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+            <path d="M6 6.5H18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+                d="M14 6V4L10 4V6"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+            <path
+                fillRule="evenodd"
+                clipRule="evenodd"
+                d="M13.5 12V17V12Z"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+            <path
+                fillRule="evenodd"
+                clipRule="evenodd"
+                d="M10.5 12V17V12Z"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+        </symbol>
+
+        <symbol id="plus" viewBox="0 0 24 24" fill="none">
+            <path d="M4 12H20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            <path d="M12 4L12 20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        </symbol>
+
+        <symbol id="refresh" viewBox="0 0 24 24" fill="none">
+            <path
+                d="M16.9111 16.1024C15.7416 17.4924 13.9892 18.3756 12.0305 18.3756C9.67057 18.3756 7.61013 17.0935 6.50777 15.1878H7.6973L4.84867 10.2538L2 15.1878H4.69083C5.92255 18.0198 8.7452 20 12.0305 20C14.3141 20 16.3742 19.0432 17.8319 17.5085L16.9111 16.1024Z"
+                fill="currentColor"
+            />
+            <path
+                d="M6.08645 9.68933C7.0119 7.31041 9.32428 5.62437 12.0305 5.62437C15.1493 5.62437 17.745 7.86377 18.2975 10.8223H16.0508L18.8994 15.7563L21.7481 10.8223H19.9444C19.3749 6.96241 16.0486 4 12.0305 4C8.96982 4 6.3106 5.71875 4.96534 8.24372L6.08645 9.68933Z"
+                fill="currentColor"
+            />
+        </symbol>
+
+        <symbol id="bullets" viewBox="0 0 24 24" fill="none">
+            <path
+                fillRule="evenodd"
+                clipRule="evenodd"
+                d="M12 7C11.1716 7 10.5 6.32843 10.5 5.5C10.5 4.67157 11.1716 4 12 4C12.8284 4 13.5 4.67157 13.5 5.5C13.5 6.32843 12.8284 7 12 7Z"
+                fill="currentColor"
+            />
+            <path
+                fillRule="evenodd"
+                clipRule="evenodd"
+                d="M12 13.5C11.1716 13.5 10.5 12.8284 10.5 12C10.5 11.1716 11.1716 10.5 12 10.5C12.8284 10.5 13.5 11.1716 13.5 12C13.5 12.8284 12.8284 13.5 12 13.5Z"
+                fill="currentColor"
+            />
+            <path
+                fillRule="evenodd"
+                clipRule="evenodd"
+                d="M12 20C11.1716 20 10.5 19.3284 10.5 18.5C10.5 17.6716 11.1716 17 12 17C12.8284 17 13.5 17.6716 13.5 18.5C13.5 19.3284 12.8284 20 12 20Z"
+                fill="currentColor"
+            />
+        </symbol>
+
+        <symbol id="link" viewBox="0 0 24 24" fill="none">
+            <path
+                d="M18 11.8333V6.00001L12.2857 6.00001"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+            <path
+                d="M17.9219 6.03911L11.1328 12.9696"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+            <path
+                d="M8.76672 7H8C6.89543 7 6 7.89543 6 9V16C6 17.1046 6.89543 18 8 18H15C16.1046 18 17 17.1046 17 16V15.2961"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+        </symbol>
+
+        <symbol id="not_found_search" viewBox="0 0 64 64" fill="none">
+            <path
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="1.5"
+                d="M39.631 24.31a15.16 15.16 0 0 1-4.196 12.723c-5.872 5.999-15.505 6.099-21.504.226-5.998-5.872-6.107-15.505-.226-21.504 4.377-4.476 10.838-5.672 16.33-3.552M35.435 37.033 55 56.172"
+            />
+            <path
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="1.5"
+                d="M39.522 21.564a7.023 7.023 0 1 0 0-14.046 7.023 7.023 0 0 0 0 14.046ZM35.753 10.645l7.54 7.54M35.753 18.157l7.54-7.54"
+            />
+        </symbol>
     </svg>
 ));
+
 Icons.displayName = 'Icons';

@@ -129,7 +129,21 @@ export const MODAL_TYPE = {
     ADD_LEASE: 'ADD_LEASE',
     ADD_CLIENT: 'ADD_CLIENT',
     EDIT_CLIENT: 'EDIT_CLIENT',
-};
+    ADD_BLOCKLIST: 'ADD_BLOCKLIST',
+    EDIT_BLOCKLIST: 'EDIT_BLOCKLIST',
+    DELETE_BLOCKLIST: 'DELETE_BLOCKLIST',
+    ADD_ALLOWLIST: 'ADD_ALLOWLIST',
+    EDIT_ALLOWLIST: 'EDIT_ALLOWLIST',
+    DELETE_ALLOWLIST: 'DELETE_ALLOWLIST',
+    FILTER_UPDATE: 'FILTER_UPDATE',
+} as const;
+
+export type ModalType = (typeof MODAL_TYPE)[keyof typeof MODAL_TYPE];
+
+export const TAB_TYPE = {
+    LIST: 'list',
+    MANUAL: 'manual',
+} as const;
 
 export const CLIENT_ID = {
     MAC: 'mac',
@@ -360,6 +374,15 @@ export const DEFAULT_DATE_FORMAT_OPTIONS = {
     hour: 'numeric',
     hourCycle: 'h23',
     minute: 'numeric',
+} as const;
+
+export const SHORT_DATE_FORMAT_OPTIONS = {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
 } as const;
 
 export const DETAILED_DATE_FORMAT_OPTIONS = {

@@ -44,7 +44,7 @@ export const Default: Story = {
 
 export const WithColor: Story = {
     args: {
-        color: '#007bff',
+        color: 'red',
     },
 };
 
@@ -85,7 +85,7 @@ export const CustomClassName: Story = {
 export const ColoredOverlay: Story = {
     args: {
         overlay: true,
-        color: '#28a745',
+        color: 'green',
     },
     render: (args) => (
         <div

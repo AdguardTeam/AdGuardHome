@@ -1,4 +1,4 @@
-import React, { ComponentProps, MouseEvent, ReactNode } from 'react';
+import React, { ComponentProps, ForwardedRef, forwardRef, MouseEvent, ReactNode } from 'react';
 import cn from 'clsx';
 import theme from 'panel/lib/theme';
 import { Icon } from 'panel/common/ui/Icon';
@@ -15,45 +15,57 @@ type Props = ComponentProps<'input'> & {
     verticalAlign?: 'center' | 'start' | 'end';
 };
 
-export const Checkbox = ({
-    checked,
-    children,
-    className,
-    labelClassName,
-    disabled,
-    onChange,
-    id,
-    name,
-    overflow,
-    onClick,
-    plusStyle,
-    verticalAlign,
-}: Props) => (
-    <label
-        htmlFor={id}
-        className={cn(s.checkbox, { [s.disabled]: disabled }, s[verticalAlign], className)}
-        onClick={onClick}>
-        <input
-            id={id}
-            name={name}
-            type="checkbox"
-            className={s.input}
-            onChange={onChange}
-            checked={checked}
-            disabled={disabled}
-        />
-        <div className={s.handler}>
-            {plusStyle ? (
-                <Icon
-                    icon={checked ? 'checkbox_minus' : 'checkbox_plus'}
-                    className={cn(s.icon, { [s.active]: checked })}
-                />
-            ) : (
-                <Icon icon={checked ? 'checkbox_on' : 'checkbox_off'} className={cn(s.icon, { [s.active]: checked })} />
+export const Checkbox = forwardRef<HTMLInputElement, Props>(
+    (
+        {
+            checked,
+            children,
+            className,
+            labelClassName,
+            disabled,
+            onChange,
+            id,
+            name,
+            overflow,
+            onClick,
+            plusStyle,
+            verticalAlign,
+        }: Props,
+        ref: ForwardedRef<HTMLInputElement>,
+    ) => (
+        <label
+            htmlFor={id}
+            className={cn(s.checkbox, { [s.disabled]: disabled }, s[verticalAlign], className)}
+            onClick={onClick}
+        >
+            <input
+                ref={ref}
+                id={id}
+                name={name}
+                type="checkbox"
+                className={s.input}
+                onChange={onChange}
+                checked={checked}
+                disabled={disabled}
+            />
+            <div className={s.handler}>
+                {plusStyle ? (
+                    <Icon
+                        icon={checked ? 'checkbox_minus' : 'checkbox_plus'}
+                        className={cn(s.icon, { [s.active]: checked })}
+                    />
+                ) : (
+                    <Icon
+                        icon={checked ? 'checkbox_on' : 'checkbox_off'}
+                        className={cn(s.icon, { [s.active]: checked })}
+                    />
+                )}
+            </div>
+            {children && (
+                <div className={cn(s.label, { [theme.common.textOverflow]: overflow }, labelClassName)}>{children}</div>
             )}
-        </div>
-        {children && (
-            <div className={cn(s.label, { [theme.common.textOverflow]: overflow }, labelClassName)}>{children}</div>
-        )}
-    </label>
+        </label>
+    ),
 );
+
+Checkbox.displayName = 'Checkbox';

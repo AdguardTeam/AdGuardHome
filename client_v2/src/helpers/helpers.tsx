@@ -25,6 +25,7 @@ import {
     STANDARD_WEB_PORT,
     SPECIAL_FILTER_ID,
     THEMES,
+    SHORT_DATE_FORMAT_OPTIONS,
 } from './constants';
 import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from './localStorageHelper';
 import { DhcpInterface, InstallInterface } from '../initialState';
@@ -55,6 +56,12 @@ export const formatDateTime = (dateTime: string, options: Intl.DateTimeFormatOpt
  * @returns {string} Returns the date and time in the format with the full month name
  */
 export const formatDetailedDateTime = (dateTime: string) => formatDateTime(dateTime, DETAILED_DATE_FORMAT_OPTIONS);
+
+/**
+ * @param dateTime {string} The date to format
+ * @returns {string} Returns the date and time in the format with the short month name. Example: 8 Nov, 2024, 13:15
+ */
+export const formatShortDateTime = (dateTime: string) => formatDateTime(dateTime, SHORT_DATE_FORMAT_OPTIONS);
 
 export const normalizeLogs = (logs: any) =>
     logs.map((log: any) => {
@@ -493,6 +500,7 @@ export const getCurrentFilter = (url: any, filters: any) => {
     }
 
     return {
+        enabled: true,
         name: '',
         url: '',
     };

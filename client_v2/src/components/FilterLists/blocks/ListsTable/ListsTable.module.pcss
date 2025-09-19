@@ -1,0 +1,84 @@
+.headerCell {
+    @media (min-width: 768px) {
+        width: 100%;
+        min-height: 42px;
+        padding: 0 12px;
+    }
+}
+
+.cell {
+    width: 100%;
+    min-height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+
+    @media (min-width: 768px) {
+        padding: 0 12px;
+    }
+}
+
+.cellLabel {
+    width: 100%;
+
+    @media (min-width: 768px) {
+        display: none;
+    }
+}
+
+.cellValue {
+    width: 100%;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    text-align: right;
+
+    @media (min-width: 768px) {
+        text-align: left;
+        justify-content: initial;
+    }
+}
+
+.cellActions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.emptyTableContent {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.emptyTableIcon {
+    width: 64px;
+    height: 64px;
+}
+
+.emptyTableDesc {
+    color: var(--default-description-text);
+}
+
+.action {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 0;
+    outline: 0;
+    cursor: pointer;
+    background: none;
+    color: var(--default-gray-icons);
+
+    &_danger {
+        color: var(--red);
+    }
+}
+
+

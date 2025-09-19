@@ -1,11 +1,11 @@
 import React from 'react';
 import cn from 'clsx';
-import { Icon, IconType } from 'panel/common/ui/Icon';
+import { Icon, IconColor, IconType } from 'panel/common/ui/Icon';
 
 import s from './Loader.module.pcss';
 
 type Props = {
-    color?: string;
+    color?: IconColor;
     className?: string;
     overlay?: boolean;
     overlayClassName?: string;

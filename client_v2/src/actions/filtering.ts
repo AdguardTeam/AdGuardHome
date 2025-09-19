@@ -1,11 +1,12 @@
 import { createAction } from 'redux-actions';
-import i18next from 'i18next';
 
+import intl from 'panel/common/intl';
 import { normalizeFilteringStatus, normalizeRulesTextarea } from '../helpers/helpers';
 import { apiClient } from '../api/Api';
 import { addErrorToast, addSuccessToast } from './toasts';
 
 export const toggleFilteringModal = createAction('FILTERING_MODAL_TOGGLE');
+export const setFilterModalUrl = createAction('SET_FILTER_MODAL_URL');
 export const handleRulesChange = createAction('HANDLE_RULES_CHANGE');
 
 export const getFilteringStatusRequest = createAction('GET_FILTERING_STATUS_REQUEST');
@@ -34,7 +35,7 @@ export const setRules = (rules: any) => async (dispatch: any) => {
             rules: normalizeRulesTextarea(rules)?.split('\n'),
         };
         await apiClient.setRules(normalizedRules);
-        dispatch(addSuccessToast('updated_custom_filtering_toast'));
+        dispatch(addSuccessToast(intl.getMessage('updated_custom_filtering_toast')));
         dispatch(setRulesSuccess());
     } catch (error) {
         dispatch(addErrorToast({ error }));
@@ -56,7 +57,6 @@ export const addFilter =
             if (getState().filtering.isModalOpen) {
                 dispatch(toggleFilteringModal());
             }
-            dispatch(addSuccessToast('filter_added_successfully'));
             dispatch(getFilteringStatus());
         } catch (error) {
             dispatch(addErrorToast({ error }));
@@ -78,7 +78,7 @@ export const removeFilter =
             if (getState().filtering.isModalOpen) {
                 dispatch(toggleFilteringModal());
             }
-            dispatch(addSuccessToast('filter_removed_successfully'));
+            dispatch(addSuccessToast(intl.getMessage('filter_removed_successfully')));
             dispatch(getFilteringStatus());
         } catch (error) {
             dispatch(addErrorToast({ error }));
@@ -118,7 +118,7 @@ export const editFilter =
             if (getState().filtering.isModalOpen) {
                 dispatch(toggleFilteringModal());
             }
-            dispatch(addSuccessToast('filter_updated'));
+            dispatch(addSuccessToast(intl.getMessage('changes_saved_success')));
             dispatch(getFilteringStatus());
         } catch (error) {
             dispatch(addErrorToast({ error }));
@@ -138,9 +138,9 @@ export const refreshFilters = (config: any) => async (dispatch: any) => {
         dispatch(refreshFiltersSuccess());
 
         if (updated > 0) {
-            dispatch(addSuccessToast(i18next.t('list_updated', { count: updated })));
+            dispatch(addSuccessToast(intl.getMessage('list_updated', { count: updated })));
         } else {
-            dispatch(addSuccessToast('all_lists_up_to_date_toast'));
+            dispatch(addSuccessToast(intl.getMessage('all_lists_up_to_date_toast')));
         }
 
         dispatch(getFilteringStatus());

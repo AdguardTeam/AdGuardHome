@@ -82,7 +82,7 @@ export const Menu = ({ headerMenu }: Props) => {
                     icon="tune"
                     items={[
                         {
-                            label: intl.getMessage('blocklists'),
+                            label: intl.getMessage('blocklists_title'),
                             path: Paths.DnsBlocklists,
                             routePath: RoutePath.DnsBlocklists,
                         },

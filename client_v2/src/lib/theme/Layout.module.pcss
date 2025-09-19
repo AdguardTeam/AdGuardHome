@@ -2,6 +2,8 @@
     width: 100%;
     height: 100%;
     min-height: 100vh;
+    display: flex;
+    flex-direction: column;
     padding: 40px 0;
     color: var(--default-main-text);
 
@@ -22,7 +24,11 @@
 }
 
 .containerIn {
+    flex: 1 0 auto;
     width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 
     &_one_col {
         @media (min-width: 1024px) {

@@ -7,6 +7,7 @@ import text from './Text.module.pcss';
 import dropdown from './Dropdown.module.pcss';
 import select from './Select.module.pcss';
 import form from './Form.module.pcss';
+import pagination from './Pagination.module.pcss';
 
 const theme = {
     link,
@@ -18,6 +19,7 @@ const theme = {
     dropdown,
     select,
     form,
+    pagination,
 };
 
 export default theme;

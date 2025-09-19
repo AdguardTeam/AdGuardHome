@@ -1,6 +1,7 @@
 import { combineReducers } from 'redux';
 
 import toasts from './toasts';
+import modals from './modals';
 import encryption from './encryption';
 import clients from './clients';
 import access from './access';
@@ -28,4 +29,5 @@ export default combineReducers({
     services,
     stats,
     dnsConfig,
+    modals,
 });

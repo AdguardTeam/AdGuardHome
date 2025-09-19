@@ -2,6 +2,7 @@ import {
     BLOCKING_MODES,
     DAY,
     DEFAULT_LOGS_FILTER,
+    ModalType,
     STANDARD_DNS_PORT,
     STANDARD_WEB_PORT,
     TIME_UNITS,
@@ -335,6 +336,8 @@ export type FilteringData = {
     processingSetConfig: boolean;
     processingCheck: boolean;
     isFilterAdded: boolean;
+    isFilterRemoved: boolean;
+    isFilterEdited: boolean;
     filters: Filter[];
     whitelistFilters: any[];
     userRules: string;
@@ -372,6 +375,10 @@ export type ServicesData = {
     allServices: any[];
 };
 
+export type ModalsData = {
+    modalId: ModalType | null;
+};
+
 export type RootState = {
     access?: AccessData;
     clients?: ClientsData;
@@ -387,6 +394,7 @@ export type RootState = {
     stats?: StatsData;
     install?: InstallData;
     toasts: { notices: any[] };
+    modals: ModalsData;
 };
 
 export type InstallState = {
@@ -538,6 +546,8 @@ export const initialState: RootState = {
         processingSetConfig: false,
         processingCheck: false,
         isFilterAdded: false,
+        isFilterRemoved: false,
+        isFilterEdited: false,
         filters: [],
         whitelistFilters: [],
         userRules: '',
@@ -613,4 +623,5 @@ export const initialState: RootState = {
         ignored: [],
     },
     toasts: { notices: [] },
+    modals: { modalId: null },
 };
