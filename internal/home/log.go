@@ -10,8 +10,8 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	yaml "go.yaml.in/yaml/v4"
 	"gopkg.in/natefinch/lumberjack.v2"
-	"gopkg.in/yaml.v3"
 )
 
 // configSyslog is used to indicate that syslog or eventlog (win) should be used

@@ -30,7 +30,7 @@ import (
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/renameio/v2/maybe"
-	yaml "gopkg.in/yaml.v3"
+	yaml "go.yaml.in/yaml/v4"
 )
 
 const (

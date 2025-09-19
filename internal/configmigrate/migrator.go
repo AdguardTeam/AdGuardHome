@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/AdguardTeam/golibs/log"
-	yaml "gopkg.in/yaml.v3"
+	yaml "go.yaml.in/yaml/v4"
 )
 
 // Config is a the configuration for initializing a [Migrator].

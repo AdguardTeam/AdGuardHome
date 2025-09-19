@@ -12,8 +12,8 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/configmigrate"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/require"
+	yaml "go.yaml.in/yaml/v4"
 	"golang.org/x/crypto/bcrypt"
-	yaml "gopkg.in/yaml.v3"
 )
 
 func TestMain(m *testing.M) {
