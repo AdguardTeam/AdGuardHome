@@ -136,7 +136,7 @@ func (iface NetInterface) MarshalJSON() ([]byte, error) {
 }
 
 // NetInterfaceFrom converts a [net.Interface] to [NetInterface], populating
-// name, MAC address, flags, MTU, IP addresses, and subnets.  iface must not be
+// name, MAC address, flags, MTU, IP addresses, and subnets. iface must not be
 // nil.
 func NetInterfaceFrom(iface *net.Interface) (niface *NetInterface, err error) {
 	niface = &NetInterface{
@@ -146,50 +146,49 @@ func NetInterfaceFrom(iface *net.Interface) (niface *NetInterface, err error) {
 		MTU:          iface.MTU,
 	}
 
-	var addrs []net.Addr
-	addrs, err = iface.Addrs()
+	addrs, err := iface.Addrs()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get addresses for interface %s: %w", iface.Name, err)
+		return nil, fmt.Errorf("getting addresses for interface %q: %w", iface.Name, err)
 	}
 
-	if err = populateAddrs(niface, iface.Name, addrs); err != nil {
-		return nil, err
+	for i, addr := range addrs {
+		if err = populateAddrs(addr, niface); err != nil {
+			return nil, fmt.Errorf("populating from addrs[%d]: %v", i, err)
+		}
 	}
 
 	return niface, nil
 }
 
-// populateAddrs fills [*NetInterface] IP addresses and subnets from [[]net.Addr].
-func populateAddrs(niface *NetInterface, ifaceName string, addrs []net.Addr) (err error) {
-	for _, addr := range addrs {
-		var n *net.IPNet
-		n, err = ipNetFromAddr(addr)
-		if err != nil {
-			return err
-		}
-
-		ip, ok := netip.AddrFromSlice(n.IP)
-		if !ok {
-			return fmt.Errorf("bad address %s", n.IP)
-		}
-
-		ip = ip.Unmap()
-
-		// Skip link-local IPv4 addresses
-		if isLinkLocalV4(ip) {
-			continue
-		}
-
-		if ip.IsLinkLocalUnicast() {
-			ip = ip.WithZone(ifaceName)
-		}
-
-		ones, _ := n.Mask.Size()
-		p := netip.PrefixFrom(ip, ones)
-
-		niface.Addresses = append(niface.Addresses, ip)
-		niface.Subnets = append(niface.Subnets, p)
+// populateAddrs fills [*NetInterface] IP addresses and subnets. niface
+// must not be nil.
+func populateAddrs(addr net.Addr, niface *NetInterface) (err error) {
+	n, err := ipNetFromAddr(addr)
+	if err != nil {
+		return err
 	}
+
+	ip, ok := netip.AddrFromSlice(n.IP)
+	if !ok {
+		return fmt.Errorf("bad address %s", n.IP)
+	}
+
+	ip = ip.Unmap()
+
+	// Skip link-local IPv4 addresses
+	if isLinkLocalV4(ip) {
+		return nil
+	}
+
+	if ip.IsLinkLocalUnicast() {
+		ip = ip.WithZone(niface.Name)
+	}
+
+	ones, _ := n.Mask.Size()
+	p := netip.PrefixFrom(ip, ones)
+
+	niface.Addresses = append(niface.Addresses, ip)
+	niface.Subnets = append(niface.Subnets, p)
 
 	return nil
 }
