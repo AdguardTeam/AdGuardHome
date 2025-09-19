@@ -2,7 +2,7 @@
 
 <!-- TODO(a.garipov): Reformat in accordance with the KeepAChangelog spec. -->
 
-## v0.108.0: API changes
+## v0.107.67: API changes
 
 - The new field `"group_id"` in `GET /control/blocked_services/all` is the id
 of group, service belongs to.
