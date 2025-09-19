@@ -13,7 +13,7 @@ import './Select.css';
 
 import { setHtmlLangAttr, setUITheme } from '../../helpers/helpers';
 
-import { changeTheme } from '../../actions';
+import { changeLanguage, changeTheme } from '../../actions';
 import { RootState } from '../../initialState';
 
 const linksData = [
@@ -46,10 +46,10 @@ const Footer = () => {
         return today.getFullYear();
     };
 
-    const changeLanguage = (event: any) => {
-        const { value } = event.target;
-        i18n.changeLanguage(value);
-        setHtmlLangAttr(value);
+    const onLanguageChange = (language: string) => {
+        i18n.changeLanguage(language);
+        setHtmlLangAttr(language);
+        dispatch(changeLanguage(language));
     };
 
     const onThemeChange = (value: any) => {
@@ -143,7 +143,7 @@ const Footer = () => {
                             <select
                                 className="form-control select select--language"
                                 value={i18n.language}
-                                onChange={changeLanguage}>
+                                onChange={(e) => onLanguageChange(e.target.value)}>
                                 {Object.keys(LANGUAGES).map((lang) => (
                                     <option key={lang} value={lang}>
                                         {LANGUAGES[lang]}

@@ -26,7 +26,7 @@ import { getLogsUrlParams, setHtmlLangAttr, setUITheme } from '../../helpers/hel
 
 import Header from '../Header';
 
-import { changeLanguage, getDnsStatus, getTimerStatus } from '../../actions';
+import { getDnsStatus, getTimerStatus } from '../../actions';
 
 import Dashboard from '../../containers/Dashboard';
 import SetupGuide from '../../containers/SetupGuide';
@@ -134,16 +134,12 @@ const App = () => {
     }, []);
 
     const setLanguage = () => {
-        if (!processing) {
-            if (language) {
-                i18n.changeLanguage(language);
-                setHtmlLangAttr(language);
-            }
+        if (processing || !language) {
+            return;
         }
 
-        i18n.on('languageChanged', (lang) => {
-            dispatch(changeLanguage(lang));
-        });
+        i18n.changeLanguage(language);
+        setHtmlLangAttr(language);
     };
 
     useEffect(() => {
