@@ -22,6 +22,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Support for configuring the suggested default HTTP port for the installation wizard via the `ADGUARD_HOME_DEFAULT_WEB_PORT` environment variable (useful for vendors).
 
+- A new `"group_id"` field to the HTTP API (`GET /control/blocked_services/all`).  See `openapi/openapi.yaml` for the full description.
+
 ### Changed
 
 - Optimized matching of filtering rules.

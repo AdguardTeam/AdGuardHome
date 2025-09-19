@@ -86,6 +86,7 @@ type blockedService struct {
 	Name    string   ` + "`" + `json:"name"` + "`" + `
 	IconSVG []byte   ` + "`" + `json:"icon_svg"` + "`" + `
 	Rules   []string ` + "`" + `json:"rules"` + "`" + `
+	GroupID string   ` + "`" + `json:"group_id"` + "`" + `
 }
 
 // blockedServices contains raw blocked service data.
@@ -97,6 +98,7 @@ var blockedServices = []blockedService{<% $l := len .BlockedServices %>
 	Rules: []string{<% range $s.Rules %>
 		<% printf "%q" . %>,<% end %>
 	},
+	GroupID: <% printf "%q" $s.Group %>,
 }<% if isnotlast $i $l %>, <% end %><% end %>}
 `
 
@@ -113,4 +115,5 @@ type hlServicesService struct {
 	Name    string   `json:"name"`
 	IconSVG string   `json:"icon_svg"`
 	Rules   []string `json:"rules"`
+	Group   string   `json:"group"`
 }
