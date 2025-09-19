@@ -136,7 +136,7 @@ func (iface NetInterface) MarshalJSON() ([]byte, error) {
 }
 
 // NetInterfaceFrom converts a [net.Interface] to [NetInterface], populating
-// name, MAC address, flags, MTU, IP addresses, and subnets. iface must not be
+// name, MAC address, flags, MTU, IP addresses, and subnets.  iface must not be
 // nil.
 func NetInterfaceFrom(iface *net.Interface) (niface *NetInterface, err error) {
 	niface = &NetInterface{
@@ -153,7 +153,7 @@ func NetInterfaceFrom(iface *net.Interface) (niface *NetInterface, err error) {
 
 	for i, addr := range addrs {
 		if err = populateAddrs(addr, niface); err != nil {
-			return nil, fmt.Errorf("populating from addrs[%d]: %v", i, err)
+			return nil, fmt.Errorf("populating at index %d: %w", i, err)
 		}
 	}
 

@@ -39,6 +39,7 @@ func checkOtherDHCP(ifaceName string) (ok4, ok6 bool, err4, err6 error) {
 }
 
 // ifaceIPv4Subnet returns the first suitable IPv4 subnetwork iface has.
+// iface must not be nil
 func ifaceIPv4Subnet(iface *net.Interface) (subnet netip.Prefix, err error) {
 	var addrs []net.Addr
 	if addrs, err = iface.Addrs(); err != nil {
@@ -91,7 +92,7 @@ func checkOtherDHCPv4(iface *net.Interface) (ok bool, err error) {
 }
 
 // discover4 sends a DHCPv4 discovery to the specified network interface and
-// waits for response. iface and dstAddr must not be nil.
+// waits for response.  iface and dstAddr must not be nil.
 func discover4(iface *net.Interface, dstAddr *net.UDPAddr, hostname string) (ok bool, err error) {
 	var req *dhcpv4.DHCPv4
 	if req, err = dhcpv4.NewDiscovery(iface.HardwareAddr); err != nil {
@@ -138,13 +139,13 @@ func discover4(iface *net.Interface, dstAddr *net.UDPAddr, hostname string) (ok 
 
 // getDHCP4Response reads and validates DHCP response from [net.PacketConn].
 // req, c and iface must not be nil.
-func getDHCP4Response(req *dhcpv4.DHCPv4, c net.PacketConn, iface *net.Interface) (ok, next bool, err error) {
+func getDHCP4Response(
+	req *dhcpv4.DHCPv4,
+	c net.PacketConn,
+	iface *net.Interface,
+) (ok, next bool, err error) {
 	ok, next, err = tryConn4(req, c, iface)
 	if next {
-		if err != nil {
-			log.Debug("dhcpv4: trying a connection: %s", err)
-		}
-
 		return false, next, err
 	}
 
@@ -156,7 +157,7 @@ func getDHCP4Response(req *dhcpv4.DHCPv4, c net.PacketConn, iface *net.Interface
 }
 
 // tryConn4 reads and validates DHCPv4 response packet if it matches
-// the original request. req and c must not be nil.
+// the original request.  req and c must not be nil.
 //
 // TODO(a.garipov): Refactor further.  Inspect error handling, remove parameter
 // next, address the TODO, merge with tryConn6, etc.
@@ -241,7 +242,7 @@ func checkOtherDHCPv6(iface *net.Interface) (ok bool, err error) {
 }
 
 // discover6 sends a DHCPv6 discovery to the specified network interface and
-// waits for response. iface, updAddr and dstAddr must not be nil.
+// waits for response.  iface, updAddr and dstAddr must not be nil.
 func discover6(iface *net.Interface, udpAddr, dstAddr *net.UDPAddr) (ok bool, err error) {
 	req, err := dhcpv6.NewSolicit(iface.HardwareAddr)
 	if err != nil {
@@ -295,7 +296,7 @@ func getDHCP6Response(req *dhcpv6.Message, c net.PacketConn) (ok, next bool, err
 }
 
 // tryConn6 reads and validates DHCPv6 response packet if it matches
-// the original request. req and c must not be nil.
+// the original request.  req and c must not be nil.
 //
 // TODO(a.garipov): See the comment on tryConn4.  Sigh…
 func tryConn6(req *dhcpv6.Message, c net.PacketConn) (ok, next bool, err error) {
