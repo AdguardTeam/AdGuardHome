@@ -3037,7 +3037,7 @@
             'type': 'string'
           'type': 'array'
         'group_id':
-          'desctiption': >
+          'description': >
             ID of group, service belongs to.
           'type': 'string'
       'required':
