@@ -28,6 +28,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Excessive configuration file overwrites when visiting the Web UI and a non-empty `language` is set.
 - Lowered the severity of log messages for failed deletion of old filter files ([#7964]).
 
 [#7964]: https://github.com/AdguardTeam/AdGuardHome/issues/7964
