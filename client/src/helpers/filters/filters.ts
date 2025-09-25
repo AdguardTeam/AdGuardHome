@@ -214,6 +214,12 @@ export default {
             "homepage": "https://github.com/hagezi/dns-blocklists",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_55.txt"
         },
+        "hagezi_dns_rebind_protection": {
+            "name": "HaGeZi's DNS Rebind Protection",
+            "categoryId": "security",
+            "homepage": "https://github.com/hagezi/dns-blocklists",
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_71.txt"
+        },
         "hagezi_dyndns_blocklist": {
             "name": "HaGeZi's DynDNS Blocklist",
             "categoryId": "security",
