@@ -27,6 +27,9 @@ const testTimeout = 1 * time.Second
 // testLogger is the common logger for tests.
 var testLogger = slogutil.NewDiscardLogger()
 
+// testCmdCons is the common command constructor for tests.
+var testCmdCons = executil.EmptyCommandConstructor{}
+
 func TestUpdater_Update(t *testing.T) {
 	const jsonData = `{
   "version": "v0.103.0-beta.2",
@@ -79,7 +82,7 @@ func TestUpdater_Update(t *testing.T) {
 	u := updater.NewUpdater(&updater.Config{
 		Client:             srv.Client(),
 		Logger:             testLogger,
-		CommandConstructor: executil.EmptyCommandConstructor{},
+		CommandConstructor: testCmdCons,
 		GOARCH:             "amd64",
 		GOOS:               "linux",
 		Version:            "v0.103.0",

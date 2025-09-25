@@ -9,17 +9,40 @@ The format is based on [*Keep a Changelog*](https://keepachangelog.com/en/1.0.0/
 <!--
 ## [v0.108.0] – TBA
 
-## [v0.107.67] - 2025-09-25 (APPROX.)
+## [v0.107.68] - 2025-10-14 (APPROX.)
 
-See also the [v0.107.67 GitHub milestone][ms-v0.107.67].
+See also the [v0.107.68 GitHub milestone][ms-v0.107.68].
 
-[ms-v0.107.67]: https://github.com/AdguardTeam/AdGuardHome/milestone/102?closed=1
+[ms-v0.107.68]: https://github.com/AdguardTeam/AdGuardHome/milestone/103?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
+
+## [v0.107.67] - 2025-09-29
+
+See also the [v0.107.67 GitHub milestone][ms-v0.107.67].
+
+### Added
+
+- The *HaGeZi's DNS Rebind Protection* filter for protecting against DNS rebinding attacks ([#102]).
+- Support for configuring the suggested default HTTP port for the installation wizard via the `ADGUARD_HOME_DEFAULT_WEB_PORT` environment variable (useful for vendors).
+
+### Changed
+
+- Optimized matching of filtering rules.
+
+### Fixed
+
+- Excessive configuration file overwrites when visiting the Web UI and a non-empty `language` is set.
+- Lowered the severity of log messages for failed deletion of old filter files ([#7964]).
+
+[#102]:  https://github.com/AdguardTeam/AdGuardHome/issues/102
+[#7964]: https://github.com/AdguardTeam/AdGuardHome/issues/7964
+
+[ms-v0.107.67]: https://github.com/AdguardTeam/AdGuardHome/milestone/102?closed=1
 
 ## [v0.107.66] - 2025-09-15
 
@@ -44,7 +67,7 @@ See also the [v0.107.66 GitHub milestone][ms-v0.107.66].
 [#7985]: https://github.com/AdguardTeam/AdGuardHome/issues/7985
 [#7987]: https://github.com/AdguardTeam/AdGuardHome/issues/7987
 
-[go-1.25.1]: https://groups.google.com/g/golang-announce/c/PtW9VW21NPs
+[go-1.25.1]:    https://groups.google.com/g/golang-announce/c/PtW9VW21NPs
 [ms-v0.107.66]: https://github.com/AdguardTeam/AdGuardHome/milestone/101?closed=1
 
 ## [v0.107.65] - 2025-08-20
@@ -90,7 +113,7 @@ In this release, the schema version has changed from 29 to 30.
 
 [#7923]: https://github.com/AdguardTeam/AdGuardHome/issues/7923
 
-[go-1.24.6]: https://groups.google.com/g/golang-announce/c/x5MKroML2yM
+[go-1.24.6]:    https://groups.google.com/g/golang-announce/c/x5MKroML2yM
 [ms-v0.107.65]: https://github.com/AdguardTeam/AdGuardHome/milestone/100?closed=1
 
 ## [v0.107.64] - 2025-07-28
@@ -109,7 +132,7 @@ See also the [v0.107.64 GitHub milestone][ms-v0.107.64].
 [#7856]: https://github.com/AdguardTeam/AdGuardHome/issues/7856
 [#7903]: https://github.com/AdguardTeam/AdGuardHome/issues/7903
 
-[go-1.24.5]: https://groups.google.com/g/golang-announce/c/gTNJnDXmn34
+[go-1.24.5]:    https://groups.google.com/g/golang-announce/c/gTNJnDXmn34
 [ms-v0.107.64]: https://github.com/AdguardTeam/AdGuardHome/milestone/99?closed=1
 
 ## [v0.107.63] - 2025-06-26
@@ -126,7 +149,7 @@ See also the [v0.107.63 GitHub milestone][ms-v0.107.63].
 
 - Status reported by the systemd service implementation in cases of auto-restart after a failed start.
 
-[go-1.24.4]: https://groups.google.com/g/golang-announce/c/ufZ8WpEsA3A
+[go-1.24.4]:    https://groups.google.com/g/golang-announce/c/ufZ8WpEsA3A
 [ms-v0.107.63]: https://github.com/AdguardTeam/AdGuardHome/milestone/98?closed=1
 
 ## [v0.107.62] - 2025-05-27
@@ -152,7 +175,7 @@ See also the [v0.107.62 GitHub milestone][ms-v0.107.62].
 [#2945]: https://github.com/AdguardTeam/AdGuardHome/issues/2945
 [#7801]: https://github.com/AdguardTeam/AdGuardHome/issues/7801
 
-[go-1.24.3]: https://groups.google.com/g/golang-announce/c/UZoIkUT367A
+[go-1.24.3]:    https://groups.google.com/g/golang-announce/c/UZoIkUT367A
 [ms-v0.107.62]: https://github.com/AdguardTeam/AdGuardHome/milestone/97?closed=1
 
 ## [v0.107.61] - 2025-04-22
@@ -3249,11 +3272,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 [ms-v0.104.2]: https://github.com/AdguardTeam/AdGuardHome/milestone/28?closed=1
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.67...HEAD
-[v0.107.67]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.66...v0.107.67
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.68...HEAD
+[v0.107.68]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.67...v0.107.68
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.66...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.67...HEAD
+[v0.107.67]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.66...v0.107.67
 [v0.107.66]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.65...v0.107.66
 [v0.107.65]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.64...v0.107.65
 [v0.107.64]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.63...v0.107.64

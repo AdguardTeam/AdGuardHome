@@ -42,12 +42,12 @@ type TextEngineConfig struct {
 // directly.  The engine is ready to use and should not be refreshed.
 func NewTextEngine(c *TextEngineConfig) (e *TextEngine, err error) {
 	text := strings.Join(c.Rules, "\n")
-	storage, err := filterlist.NewRuleStorage([]filterlist.RuleList{
-		&filterlist.StringRuleList{
+	storage, err := filterlist.NewRuleStorage([]filterlist.Interface{
+		filterlist.NewString(&filterlist.StringConfig{
 			RulesText:      text,
 			ID:             c.ID,
 			IgnoreCosmetic: true,
-		},
+		}),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("creating rule storage: %w", err)

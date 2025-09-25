@@ -30,7 +30,7 @@ import (
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/renameio/v2/maybe"
-	yaml "gopkg.in/yaml.v3"
+	yaml "go.yaml.in/yaml/v4"
 )
 
 const (
@@ -719,6 +719,14 @@ func validateConfig(ctx context.Context, l *slog.Logger) (err error) {
 
 	if len(config.Users) == 0 {
 		l.WarnContext(ctx, "no users in the configuration file; authentication is disabled")
+	}
+
+	if config.Language != "" && !allowedLanguages.Has(config.Language) {
+		l.WarnContext(ctx, "unsupported language", "lang", config.Language)
+
+		// Clear the language so the frontend can use the client's browser
+		// language.
+		config.Language = ""
 	}
 
 	return nil

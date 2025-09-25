@@ -6,7 +6,7 @@ require (
 	github.com/AdguardTeam/dnsproxy v0.76.1
 	// TODO(s.chzhen): Use osutil/executil and fakeos/fakeexec.
 	github.com/AdguardTeam/golibs v0.34.0
-	github.com/AdguardTeam/urlfilter v0.20.0
+	github.com/AdguardTeam/urlfilter v0.21.0
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/ameshkov/dnscrypt/v2 v2.4.0
 	github.com/bluele/gcache v0.0.2
@@ -28,17 +28,17 @@ require (
 	// TODO(a.garipov): This package is deprecated; find a new one or use our
 	// own code for that.  Perhaps, use gopacket.
 	github.com/mdlayher/raw v0.1.0
-	github.com/miekg/dns v1.1.66
+	github.com/miekg/dns v1.1.68
 	github.com/quic-go/quic-go v0.53.0
 	github.com/stretchr/testify v1.11.1
 	github.com/ti-mo/netfilter v0.5.3
 	go.etcd.io/bbolt v1.4.1
+	go.yaml.in/yaml/v4 v4.0.0-rc.2
 	golang.org/x/crypto v0.41.0
 	golang.org/x/exp v0.0.0-20250813145105-42675adae3e6
 	golang.org/x/net v0.43.0
 	golang.org/x/sys v0.35.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
-	gopkg.in/yaml.v3 v3.0.1
 	howett.net/plist v1.0.1
 )
 
@@ -103,6 +103,7 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250826171959-ef028d996bc1 // indirect
 	google.golang.org/grpc v1.75.0 // indirect
 	google.golang.org/protobuf v1.36.8 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 	honnef.co/go/tools v0.6.1 // indirect
 	mvdan.cc/editorconfig v0.3.0 // indirect
 	mvdan.cc/gofumpt v0.9.0 // indirect

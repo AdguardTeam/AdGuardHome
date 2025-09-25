@@ -11,11 +11,15 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/osutil/executil"
 )
 
 // ServerConfig is the configuration for the DHCP server.  The order of YAML
 // fields is important, since the YAML configuration file follows it.
 type ServerConfig struct {
+	// CommandConstructor is used to run external commands.  It must not be nil.
+	CommandConstructor executil.CommandConstructor `yaml:"-"`
+
 	// ConfModifier is used to update the global configuration.  It must not be
 	// nil.
 	ConfModifier agh.ConfigModifier `yaml:"-"`

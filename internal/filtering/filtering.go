@@ -766,9 +766,9 @@ func (d *DNSFilter) matchBlockedServicesRules(
 //
 
 func newRuleStorage(filters []Filter) (rs *filterlist.RuleStorage, err error) {
-	lists := make([]filterlist.RuleList, 0, len(filters))
+	lists := make([]filterlist.Interface, 0, len(filters))
 	for _, f := range filters {
-		var rl filterlist.RuleList
+		var rl filterlist.Interface
 		var skip bool
 		rl, skip, err = ruleListFromFilter(f)
 		if skip {
@@ -792,15 +792,15 @@ func newRuleStorage(filters []Filter) (rs *filterlist.RuleStorage, err error) {
 }
 
 // ruleListFromFilter returns a rule list from a Filter.
-func ruleListFromFilter(f Filter) (rl filterlist.RuleList, skip bool, err error) {
+func ruleListFromFilter(f Filter) (rl filterlist.Interface, skip bool, err error) {
 	id := int(f.ID)
 
 	if len(f.Data) != 0 {
-		return &filterlist.StringRuleList{
+		return filterlist.NewBytes(&filterlist.BytesConfig{
 			ID:             id,
-			RulesText:      string(f.Data),
+			RulesText:      f.Data,
 			IgnoreCosmetic: true,
-		}, false, nil
+		}), false, nil
 	}
 
 	if f.FilePath == "" {
@@ -818,22 +818,25 @@ func ruleListFromFilter(f Filter) (rl filterlist.RuleList, skip bool, err error)
 			return nil, false, fmt.Errorf("reading filter content: %w", err)
 		}
 
-		return &filterlist.StringRuleList{
+		return filterlist.NewBytes(&filterlist.BytesConfig{
 			ID:             id,
-			RulesText:      string(data),
+			RulesText:      data,
 			IgnoreCosmetic: true,
-		}, false, nil
+		}), false, nil
 	}
 
-	var list *filterlist.FileRuleList
-	list, err = filterlist.NewFileRuleList(id, f.FilePath, true)
+	rl, err = filterlist.NewFile(&filterlist.FileConfig{
+		ID:             id,
+		Path:           f.FilePath,
+		IgnoreCosmetic: true,
+	})
 	if errors.Is(err, fs.ErrNotExist) {
 		return nil, true, nil
 	} else if err != nil {
 		return nil, false, fmt.Errorf("creating file rule list with %q: %w", f.FilePath, err)
 	}
 
-	return list, false, nil
+	return rl, false, nil
 }
 
 // Initialize urlfilter objects.

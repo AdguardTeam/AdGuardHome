@@ -149,13 +149,15 @@ func (ss *Default) resetEngine(
 		}
 	}
 
-	strList := &filterlist.StringRuleList{
-		ID:             listID,
-		RulesText:      sb.String(),
-		IgnoreCosmetic: true,
+	strList := []filterlist.Interface{
+		filterlist.NewString(&filterlist.StringConfig{
+			ID:             listID,
+			RulesText:      sb.String(),
+			IgnoreCosmetic: true,
+		}),
 	}
 
-	rs, err := filterlist.NewRuleStorage([]filterlist.RuleList{strList})
+	rs, err := filterlist.NewRuleStorage(strList)
 	if err != nil {
 		return fmt.Errorf("creating rule storage: %w", err)
 	}

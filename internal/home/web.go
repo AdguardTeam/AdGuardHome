@@ -80,6 +80,9 @@ type webConfig struct {
 	// appropriate field.
 	WriteTimeout time.Duration
 
+	// defaultWebPort is the suggested default HTTP port for the install wizard.
+	defaultWebPort uint16
+
 	firstRun bool
 
 	// disableUpdate, if true, tells AdGuard Home to not check for updates.
