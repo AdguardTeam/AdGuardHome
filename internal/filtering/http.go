@@ -327,12 +327,14 @@ func (d *DNSFilter) handleFilteringRefresh(w http.ResponseWriter, r *http.Reques
 }
 
 type filterJSON struct {
-	URL         string               `json:"url"`
-	Name        string               `json:"name"`
-	LastUpdated string               `json:"last_updated,omitempty"`
-	ID          rulelist.URLFilterID `json:"id"`
-	RulesCount  uint32               `json:"rules_count"`
-	Enabled     bool                 `json:"enabled"`
+	URL         string `json:"url"`
+	Name        string `json:"name"`
+	LastUpdated string `json:"last_updated,omitempty"`
+
+	ID rulelist.APIID `json:"id"`
+
+	RulesCount uint64 `json:"rules_count"`
+	Enabled    bool   `json:"enabled"`
 }
 
 type filteringConfig struct {
@@ -345,11 +347,13 @@ type filteringConfig struct {
 
 func filterToJSON(f FilterYAML) filterJSON {
 	fj := filterJSON{
-		ID:         f.ID,
-		Enabled:    f.Enabled,
-		URL:        f.URL,
-		Name:       f.Name,
-		RulesCount: uint32(f.RulesCount),
+		// #nosec G115 -- The overflow is required for backwards compatibility.
+		ID:      rulelist.APIID(f.ID),
+		Enabled: f.Enabled,
+		URL:     f.URL,
+		Name:    f.Name,
+		// #nosec G115 -- The number of rules must not be negative.
+		RulesCount: uint64(f.RulesCount),
 	}
 
 	if !f.LastUpdated.IsZero() {
@@ -408,8 +412,9 @@ func (d *DNSFilter) handleFilteringConfig(w http.ResponseWriter, r *http.Request
 }
 
 type checkHostRespRule struct {
-	Text         string               `json:"text"`
-	FilterListID rulelist.URLFilterID `json:"filter_list_id"`
+	Text string `json:"text"`
+
+	FilterListID rulelist.APIID `json:"filter_list_id"`
 }
 
 type checkHostResp struct {
@@ -432,7 +437,7 @@ type checkHostResp struct {
 	// FilterID is the ID of the rule's filter list.
 	//
 	// Deprecated: Use Rules[*].FilterListID.
-	FilterID rulelist.URLFilterID `json:"filter_id"`
+	FilterID rulelist.APIID `json:"filter_id"`
 }
 
 // handleCheckHost is the handler for the GET /control/filtering/check_host HTTP

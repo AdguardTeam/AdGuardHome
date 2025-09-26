@@ -17,6 +17,7 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/ioutil"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/golibs/syncutil"
 )
 
 // download and save all translations.
@@ -47,7 +48,7 @@ func (c *twoskyClient) download(ctx context.Context, l *slog.Logger) (err error)
 	dw := &downloadWorker{
 		ctx:    ctx,
 		l:      l,
-		failed: &sync.Map{},
+		failed: syncutil.NewMap[string, struct{}](),
 		client: &http.Client{
 			Timeout: 10 * time.Second,
 		},
@@ -72,25 +73,24 @@ func (c *twoskyClient) download(ctx context.Context, l *slog.Logger) (err error)
 	return nil
 }
 
-// printFailedLocales prints sorted list of failed downloads, if any.
-func printFailedLocales(ctx context.Context, l *slog.Logger, failed *sync.Map) {
-	keys := []string{}
-	failed.Range(func(k, _ any) bool {
-		s, ok := k.(string)
-		if !ok {
-			panic("unexpected type")
-		}
-
-		keys = append(keys, s)
-
-		return true
-	})
+// printFailedLocales prints sorted list of failed downloads, if any.  l and
+// failed must not be nil.
+func printFailedLocales(
+	ctx context.Context,
+	l *slog.Logger,
+	failed *syncutil.Map[string, struct{}],
+) {
+	var keys []string
+	for k := range failed.Range {
+		keys = append(keys, k)
+	}
 
 	if len(keys) == 0 {
 		return
 	}
 
 	slices.Sort(keys)
+
 	l.InfoContext(ctx, "failed", "locales", keys)
 }
 
@@ -100,7 +100,7 @@ func printFailedLocales(ctx context.Context, l *slog.Logger, failed *sync.Map) {
 type downloadWorker struct {
 	ctx    context.Context
 	l      *slog.Logger
-	failed *sync.Map
+	failed *syncutil.Map[string, struct{}]
 	client *http.Client
 	uriCh  <-chan *url.URL
 }

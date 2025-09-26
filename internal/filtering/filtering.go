@@ -302,85 +302,9 @@ type Filter struct {
 	// Data is the content of the file.
 	Data []byte `yaml:"-"`
 
-	// ID is automatically assigned when filter is added using nextFilterID.
-	ID rulelist.URLFilterID `yaml:"id"`
+	// ID is automatically assigned when filter is added.
+	ID rules.ListID `yaml:"id"`
 }
-
-// Reason holds an enum detailing why it was filtered or not filtered
-type Reason int
-
-const (
-	// reasons for not filtering
-
-	// NotFilteredNotFound - host was not find in any checks, default value for result
-	NotFilteredNotFound Reason = iota
-	// NotFilteredAllowList - the host is explicitly allowed
-	NotFilteredAllowList
-	// NotFilteredError is returned when there was an error during
-	// checking.  Reserved, currently unused.
-	NotFilteredError
-
-	// reasons for filtering
-
-	// FilteredBlockList - the host was matched to be advertising host
-	FilteredBlockList
-	// FilteredSafeBrowsing - the host was matched to be malicious/phishing
-	FilteredSafeBrowsing
-	// FilteredParental - the host was matched to be outside of parental control settings
-	FilteredParental
-	// FilteredInvalid - the request was invalid and was not processed
-	FilteredInvalid
-	// FilteredSafeSearch - the host was replaced with safesearch variant
-	FilteredSafeSearch
-	// FilteredBlockedService - the host is blocked by "blocked services" settings
-	FilteredBlockedService
-
-	// Rewritten is returned when there was a rewrite by a legacy DNS rewrite
-	// rule.
-	Rewritten
-
-	// RewrittenAutoHosts is returned when there was a rewrite by autohosts
-	// rules (/etc/hosts and so on).
-	RewrittenAutoHosts
-
-	// RewrittenRule is returned when a $dnsrewrite filter rule was applied.
-	//
-	// TODO(a.garipov): Remove Rewritten and RewrittenAutoHosts by merging their
-	// functionality into RewrittenRule.
-	//
-	// See https://github.com/AdguardTeam/AdGuardHome/issues/2499.
-	RewrittenRule
-)
-
-// TODO(a.garipov): Resync with actual code names or replace completely
-// in HTTP API v1.
-var reasonNames = []string{
-	NotFilteredNotFound:  "NotFilteredNotFound",
-	NotFilteredAllowList: "NotFilteredWhiteList",
-	NotFilteredError:     "NotFilteredError",
-
-	FilteredBlockList:      "FilteredBlackList",
-	FilteredSafeBrowsing:   "FilteredSafeBrowsing",
-	FilteredParental:       "FilteredParental",
-	FilteredInvalid:        "FilteredInvalid",
-	FilteredSafeSearch:     "FilteredSafeSearch",
-	FilteredBlockedService: "FilteredBlockedService",
-
-	Rewritten:          "Rewrite",
-	RewrittenAutoHosts: "RewriteEtcHosts",
-	RewrittenRule:      "RewriteRule",
-}
-
-func (r Reason) String() string {
-	if r < 0 || int(r) >= len(reasonNames) {
-		return ""
-	}
-
-	return reasonNames[r]
-}
-
-// In returns true if reasons include r.
-func (r Reason) In(reasons ...Reason) (ok bool) { return slices.Contains(reasons, r) }
 
 // SetEnabled sets the status of the *DNSFilter.
 func (d *DNSFilter) SetEnabled(enabled bool) {
@@ -556,54 +480,6 @@ func (d *DNSFilter) ParentalBlockHost() (host string) {
 	return d.conf.ParentalBlockHost
 }
 
-// ResultRule contains information about applied rules.
-type ResultRule struct {
-	// Text is the text of the rule.
-	Text string `json:",omitempty"`
-
-	// IP is the host IP.  It is nil unless the rule uses the
-	// /etc/hosts syntax or the reason is FilteredSafeSearch.
-	IP netip.Addr `json:",omitempty"`
-
-	// FilterListID is the ID of the rule's filter list.
-	FilterListID rulelist.URLFilterID `json:",omitempty"`
-}
-
-// Result contains the result of a request check.
-//
-// All fields transitively have omitempty tags so that the query log doesn't
-// become too large.
-//
-// TODO(a.garipov): Clarify relationships between fields.  Perhaps replace with
-// a sum type or an interface?
-type Result struct {
-	// DNSRewriteResult is the $dnsrewrite filter rule result.
-	DNSRewriteResult *DNSRewriteResult `json:",omitempty"`
-
-	// CanonName is the CNAME value from the lookup rewrite result.  It is empty
-	// unless Reason is set to Rewritten or RewrittenRule.
-	CanonName string `json:",omitempty"`
-
-	// ServiceName is the name of the blocked service.  It is empty unless
-	// Reason is set to FilteredBlockedService.
-	ServiceName string `json:",omitempty"`
-
-	// IPList is the lookup rewrite result.  It is empty unless Reason is set to
-	// Rewritten.
-	IPList []netip.Addr `json:",omitempty"`
-
-	// Rules are applied rules.  If Rules are not empty, each rule is not nil.
-	Rules []*ResultRule `json:",omitempty"`
-
-	// Reason is the reason for blocking or unblocking the request.
-	Reason Reason `json:",omitempty"`
-
-	// IsFiltered is true if the request is filtered.
-	//
-	// TODO(d.kolyshev): Get rid of this flag.
-	IsFiltered bool `json:",omitempty"`
-}
-
 // Matched returns true if any match at all was found regardless of
 // whether it was filtered or not.
 func (r Reason) Matched() bool {
@@ -741,7 +617,9 @@ func (d *DNSFilter) matchBlockedServicesRules(
 
 				ruleText := rule.Text()
 				res.Rules = []*ResultRule{{
-					FilterListID: rule.GetFilterListID(),
+					// #nosec G115 -- The overflow is required for backwards
+					// compatibility.
+					FilterListID: rulelist.APIID(rule.GetFilterListID()),
 					Text:         ruleText,
 				}}
 
@@ -793,11 +671,9 @@ func newRuleStorage(filters []Filter) (rs *filterlist.RuleStorage, err error) {
 
 // ruleListFromFilter returns a rule list from a Filter.
 func ruleListFromFilter(f Filter) (rl filterlist.Interface, skip bool, err error) {
-	id := int(f.ID)
-
 	if len(f.Data) != 0 {
 		return filterlist.NewBytes(&filterlist.BytesConfig{
-			ID:             id,
+			ID:             f.ID,
 			RulesText:      f.Data,
 			IgnoreCosmetic: true,
 		}), false, nil
@@ -819,14 +695,14 @@ func ruleListFromFilter(f Filter) (rl filterlist.Interface, skip bool, err error
 		}
 
 		return filterlist.NewBytes(&filterlist.BytesConfig{
-			ID:             id,
+			ID:             f.ID,
 			RulesText:      data,
 			IgnoreCosmetic: true,
 		}), false, nil
 	}
 
 	rl, err = filterlist.NewFile(&filterlist.FileConfig{
-		ID:             id,
+		ID:             f.ID,
 		Path:           f.FilePath,
 		IgnoreCosmetic: true,
 	})
@@ -1048,10 +924,7 @@ func (d *DNSFilter) matchHost(
 func makeResult(matchedRules []rules.Rule, reason Reason) (res Result) {
 	resRules := make([]*ResultRule, len(matchedRules))
 	for i, mr := range matchedRules {
-		resRules[i] = &ResultRule{
-			FilterListID: mr.GetFilterListID(),
-			Text:         mr.Text(),
-		}
+		resRules[i] = NewResultRule(mr)
 	}
 
 	return Result{
@@ -1072,8 +945,9 @@ func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
 	ctx := context.TODO()
 
 	d = &DNSFilter{
-		logger:                 c.Logger,
-		idGen:                  newIDGenerator(int32(time.Now().Unix()), c.Logger),
+		logger: c.Logger,
+		// #nosec G115 -- The Unix epoch time is highly unlikely to be negative.
+		idGen:                  newIDGenerator(uint64(time.Now().Unix()), c.Logger),
 		bufPool:                syncutil.NewSlicePool[byte](rulelist.DefaultRuleBufSize),
 		safeSearch:             c.SafeSearch,
 		refreshLock:            &sync.Mutex{},
@@ -1253,7 +1127,7 @@ func (d *DNSFilter) checkSafeBrowsing(
 	res = Result{
 		Rules: []*ResultRule{{
 			Text:         "adguard-malware-shavar",
-			FilterListID: rulelist.URLFilterIDSafeBrowsing,
+			FilterListID: rulelist.APIIDSafeBrowsing,
 		}},
 		Reason:     FilteredSafeBrowsing,
 		IsFiltered: true,
@@ -1289,7 +1163,7 @@ func (d *DNSFilter) checkParental(
 	res = Result{
 		Rules: []*ResultRule{{
 			Text:         "parental CATEGORY_BLACKLISTED",
-			FilterListID: rulelist.URLFilterIDParentalControl,
+			FilterListID: rulelist.APIIDParentalControl,
 		}},
 		Reason:     FilteredParental,
 		IsFiltered: true,

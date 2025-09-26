@@ -191,6 +191,8 @@ func (c *Persistent) SetIDs(ids []string) (err error) {
 // subnetCompare is a comparison function for the two subnets.  It returns -1 if
 // x sorts before y, 1 if x sorts after y, and 0 if their relative sorting
 // position is the same.
+//
+// TODO(s.chzhen):  Use netip.Prefix.Compare in Go 1.26.
 func subnetCompare(x, y netip.Prefix) (cmp int) {
 	if x == y {
 		return 0

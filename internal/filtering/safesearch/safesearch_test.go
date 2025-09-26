@@ -101,7 +101,7 @@ func TestDefault_CheckHost_yandex(t *testing.T) {
 
 					rule := res.Rules[0]
 					assert.Equal(t, tc.want, rule.IP)
-					assert.Equal(t, rulelist.URLFilterIDSafeSearch, rule.FilterListID)
+					assert.Equal(t, rulelist.APIIDSafeSearch, rule.FilterListID)
 				}
 			}
 		})

@@ -32,7 +32,7 @@ func initBlockedServices(ctx context.Context, l *slog.Logger) {
 	for i, s := range blockedServices {
 		netRules := make([]*rules.NetworkRule, 0, len(s.Rules))
 		for _, text := range s.Rules {
-			rule, err := rules.NewNetworkRule(text, rulelist.URLFilterIDBlockedService)
+			rule, err := rules.NewNetworkRule(text, rulelist.IDBlockedService)
 			if err == nil {
 				netRules = append(netRules, rule)
 
