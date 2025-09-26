@@ -3012,8 +3012,12 @@
           'items':
             '$ref': '#/components/schemas/BlockedService'
           'type': 'array'
+        'groups':
+          'items':
+            '$ref': '#/components/schemas/ServiceGroup'
       'required':
       - 'blocked_services'
+      - 'groups'
       'type': 'object'
     'BlockedService':
       'properties':
@@ -3036,11 +3040,24 @@
           'items':
             'type': 'string'
           'type': 'array'
+        'group_id':
+          'description': >
+            The ID of the group, that the service belongs to.
+          'type': 'string'
       'required':
       - 'icon_svg'
       - 'id'
       - 'name'
       - 'rules'
+      'type': 'object'
+    'ServiceGroup':
+      'properties':
+        'id':
+          'description': >
+            The ID of this group.
+          'type': 'string'
+      'required':
+      -  'id'
       'type': 'object'
     'BlockedServicesSchedule':
       'type': 'object'

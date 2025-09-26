@@ -2,7 +2,11 @@
 
 <!-- TODO(a.garipov): Reformat in accordance with the KeepAChangelog spec. -->
 
-## v0.108.0: API changes
+## v0.107.67: API changes
+
+- The new field `"groups"` in `GET /control/blocked_services/all` is a list of service group.  Groups make it possible to block multiple services with equal `"group_id"` at once.
+
+- The new field `"group_id"` for each `BlockedService` object in `GET /control/blocked_services/all` indicates which group the service belongs to.
 
 ## v0.107.64: API changes
 

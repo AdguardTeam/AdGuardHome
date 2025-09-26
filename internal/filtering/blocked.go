@@ -133,8 +133,10 @@ func (d *DNSFilter) handleBlockedServicesIDs(w http.ResponseWriter, r *http.Requ
 func (d *DNSFilter) handleBlockedServicesAll(w http.ResponseWriter, r *http.Request) {
 	aghhttp.WriteJSONResponseOK(w, r, struct {
 		BlockedServices []blockedService `json:"blocked_services"`
+		ServiceGroups   []serviceGroup   `json:"groups"`
 	}{
 		BlockedServices: blockedServices,
+		ServiceGroups:   serviceGroups,
 	})
 }
 
