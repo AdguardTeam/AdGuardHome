@@ -23,7 +23,7 @@ type NetIface interface {
 	Addrs() ([]net.Addr, error)
 }
 
-// IfaceIPAddrs returns the interface's IP addresses.
+// IfaceIPAddrs returns the interface's IP addresses.  iface must not be nil.
 func IfaceIPAddrs(iface NetIface, ipv IPVersion) (ips []net.IP, err error) {
 	switch ipv {
 	case IPVersion4, IPVersion6:
@@ -38,30 +38,35 @@ func IfaceIPAddrs(iface NetIface, ipv IPVersion) (ips []net.IP, err error) {
 	}
 
 	for _, a := range addrs {
-		var ip net.IP
-		switch a := a.(type) {
-		case *net.IPAddr:
-			ip = a.IP
-		case *net.IPNet:
-			ip = a.IP
-		default:
-			continue
-		}
-
-		// Assume that net.(*Interface).Addrs can only return valid IPv4 and
-		// IPv6 addresses.  Thus, if it isn't an IPv4 address, it must be an
-		// IPv6 one.
-		ip4 := ip.To4()
-		if ipv == IPVersion4 {
-			if ip4 != nil {
-				ips = append(ips, ip4)
-			}
-		} else if ip4 == nil {
+		if ip := ipFromAddr(a, ipv); ip != nil {
 			ips = append(ips, ip)
 		}
 	}
 
 	return ips, nil
+}
+
+// ipFromAddr converts addr to IP.  addr must not be nil.
+func ipFromAddr(addr net.Addr, ipv IPVersion) (ip net.IP) {
+	switch addr := addr.(type) {
+	case *net.IPAddr:
+		ip = addr.IP
+	case *net.IPNet:
+		ip = addr.IP
+	default:
+		return nil
+	}
+
+	// Assume that net.Addr can only be valid IPv4 or IPv6.  Thus,
+	// if it isn't an IPv4 address, it must be an IPv6 one.
+	ip4 := ip.To4()
+	if ipv == IPVersion4 {
+		return ip4
+	} else if ip4 == nil {
+		return ip
+	}
+
+	return nil
 }
 
 // IfaceDNSIPAddrs returns IP addresses of the interface suitable to send to

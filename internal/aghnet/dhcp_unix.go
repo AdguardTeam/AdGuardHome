@@ -39,6 +39,7 @@ func checkOtherDHCP(ifaceName string) (ok4, ok6 bool, err4, err6 error) {
 }
 
 // ifaceIPv4Subnet returns the first suitable IPv4 subnetwork iface has.
+// iface must not be nil.
 func ifaceIPv4Subnet(iface *net.Interface) (subnet netip.Prefix, err error) {
 	var addrs []net.Addr
 	if addrs, err = iface.Addrs(); err != nil {
@@ -90,6 +91,8 @@ func checkOtherDHCPv4(iface *net.Interface) (ok bool, err error) {
 	return discover4(iface, dstAddr, hostname)
 }
 
+// discover4 sends a DHCPv4 discovery to the specified network interface and
+// waits for response.  iface and dstAddr must not be nil.
 func discover4(iface *net.Interface, dstAddr *net.UDPAddr, hostname string) (ok bool, err error) {
 	var req *dhcpv4.DHCPv4
 	if req, err = dhcpv4.NewDiscovery(iface.HardwareAddr); err != nil {
@@ -120,17 +123,9 @@ func discover4(iface *net.Interface, dstAddr *net.UDPAddr, hostname string) (ok 
 	}
 
 	for {
-		if err = c.SetDeadline(time.Now().Add(defaultDiscoverTime)); err != nil {
-			return false, fmt.Errorf("setting deadline: %w", err)
-		}
-
 		var next bool
 		ok, next, err = tryConn4(req, c, iface)
 		if next {
-			if err != nil {
-				log.Debug("dhcpv4: trying a connection: %s", err)
-			}
-
 			continue
 		}
 
@@ -142,9 +137,20 @@ func discover4(iface *net.Interface, dstAddr *net.UDPAddr, hostname string) (ok 
 	}
 }
 
+// tryConn4 reads and validates DHCPv4 response packet if it matches
+// the original request.  req and c must not be nil.
+//
 // TODO(a.garipov): Refactor further.  Inspect error handling, remove parameter
 // next, address the TODO, merge with tryConn6, etc.
-func tryConn4(req *dhcpv4.DHCPv4, c net.PacketConn, iface *net.Interface) (ok, next bool, err error) {
+func tryConn4(
+	req *dhcpv4.DHCPv4,
+	c net.PacketConn,
+	iface *net.Interface,
+) (ok, next bool, err error) {
+	if err = c.SetDeadline(time.Now().Add(defaultDiscoverTime)); err != nil {
+		return false, false, fmt.Errorf("dhcpv4: setting deadline: %w", err)
+	}
+
 	// TODO: replicate dhclient's behavior of retrying several times with
 	// progressively longer timeouts.
 	log.Tracef("dhcpv4: waiting %v for an answer", defaultDiscoverTime)
@@ -221,6 +227,8 @@ func checkOtherDHCPv6(iface *net.Interface) (ok bool, err error) {
 	return discover6(iface, udpAddr, dstAddr)
 }
 
+// discover6 sends a DHCPv6 discovery to the specified network interface and
+// waits for response.  iface, updAddr and dstAddr must not be nil.
 func discover6(iface *net.Interface, udpAddr, dstAddr *net.UDPAddr) (ok bool, err error) {
 	req, err := dhcpv6.NewSolicit(iface.HardwareAddr)
 	if err != nil {
@@ -243,10 +251,6 @@ func discover6(iface *net.Interface, udpAddr, dstAddr *net.UDPAddr) (ok bool, er
 		var next bool
 		ok, next, err = tryConn6(req, c)
 		if next {
-			if err != nil {
-				log.Debug("dhcpv6: trying a connection: %s", err)
-			}
-
 			continue
 		}
 
@@ -258,6 +262,9 @@ func discover6(iface *net.Interface, udpAddr, dstAddr *net.UDPAddr) (ok bool, er
 	}
 }
 
+// tryConn6 reads and validates DHCPv6 response packet if it matches
+// the original request.  req and c must not be nil.
+//
 // TODO(a.garipov): See the comment on tryConn4.  Sigh…
 func tryConn6(req *dhcpv6.Message, c net.PacketConn) (ok, next bool, err error) {
 	// TODO: replicate dhclient's behavior of retrying several times with
