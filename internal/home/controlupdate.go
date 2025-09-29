@@ -115,6 +115,8 @@ func (web *webAPI) requestVersionInfo(
 
 // handleUpdate performs an update to the latest available version procedure.
 func (web *webAPI) handleUpdate(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	updater := web.conf.updater
 	if updater.NewVersion() == "" {
 		aghhttp.Error(r, w, http.StatusBadRequest, "/update request isn't allowed now")
@@ -133,7 +135,7 @@ func (web *webAPI) handleUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = updater.Update(r.Context(), false)
+	err = updater.Update(ctx, false)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusInternalServerError, "%s", err)
 
@@ -141,8 +143,11 @@ func (web *webAPI) handleUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	aghhttp.OK(w)
-	if f, ok := w.(http.Flusher); ok {
-		f.Flush()
+
+	rc := http.NewResponseController(w)
+	err = rc.Flush()
+	if err != nil {
+		web.logger.WarnContext(ctx, "flushing response", slogutil.KeyError, err)
 	}
 
 	// The background context is used because the underlying functions wrap it

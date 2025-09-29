@@ -497,8 +497,11 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 	registerControlHandlers(web)
 
 	aghhttp.OK(w)
-	if f, ok := w.(http.Flusher); ok {
-		f.Flush()
+
+	rc := http.NewResponseController(w)
+	err = rc.Flush()
+	if err != nil {
+		web.logger.WarnContext(ctx, "flushing response", slogutil.KeyError, err)
 	}
 
 	if !restartHTTP {
