@@ -126,6 +126,7 @@ func (m *Migrator) upgradeConfigSchema(current, target uint, diskConf yobj) (err
 		27: migrateTo28,
 		28: m.migrateTo29,
 		29: m.migrateTo30,
+		30: m.migrateTo31,
 	}
 
 	for i, migrate := range upgrades[current:target] {

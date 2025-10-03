@@ -16,6 +16,8 @@
 - 'basicAuth': []
 
 'tags':
+- 'name': 'blocked_services'
+  'description': 'Blocked services controls'
 - 'name': 'clients'
   'description': 'Clients list operations'
 - 'name': 'dhcp'
@@ -34,6 +36,8 @@
   'description': 'Apple .mobileconfig'
 - 'name': 'parental'
   'description': 'Blocking adult and explicit materials'
+- 'name': 'rewrite'
+  'description': 'DNS rewrites'
 - 'name': 'safebrowsing'
   'description': 'Blocking malware/phishing sites'
 - 'name': 'safesearch'
@@ -1153,6 +1157,30 @@
       'responses':
         '200':
           'description': 'OK.'
+  '/rewrite/settings':
+    'get':
+      'tags':
+        - 'rewrite'
+      'operationId': 'rewriteSettingsGet'
+      'summary': 'Get rewrite settings'
+      'responses':
+        '200':
+          'description': 'OK.'
+          'content':
+            'application/json':
+              'schema':
+                '$ref': '#/components/schemas/RewriteSettings'
+  '/rewrite/settings/update':
+    'put':
+      'tags':
+        - 'rewrite'
+      'operationId': 'rewriteSettingsUpdate'
+      'summary': 'Update rewrite settings'
+      'requestBody':
+        '$ref': '#/components/requestBodies/RewriteSettings'
+      'responses':
+        '200':
+          'description': 'OK.'
   '/rewrite/update':
     'put':
       'tags':
@@ -1413,6 +1441,12 @@
         'application/json':
           'schema':
             '$ref': '#/components/schemas/RewriteEntry'
+      'required': true
+    'RewriteSettings':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/RewriteSettings'
       'required': true
     'RewriteUpdate':
       'content':
@@ -3002,6 +3036,23 @@
           'type': 'string'
           'description': 'value of A, AAAA or CNAME DNS record'
           'example': '127.0.0.1'
+        'enabled':
+          'type': 'boolean'
+          'description': >
+            Optional. If omitted on add, defaults to `true`. On update, omitted
+            preserves previous value.
+          'example': true
+          'default': true
+    'RewriteSettings':
+      'type': 'object'
+      'description': 'DNS rewrite settings'
+      'required':
+      - 'enabled'
+      'properties':
+        'enabled':
+          'type': 'boolean'
+          'description': 'indicates whether rewrites are applied'
+          'example': true
     'BlockedServicesArray':
       'type': 'array'
       'items':

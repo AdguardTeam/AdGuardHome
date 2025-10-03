@@ -32,6 +32,9 @@ type LegacyRewrite struct {
 
 	// Type is the DNS record type: A, AAAA, or CNAME.
 	Type uint16 `yaml:"-"`
+
+	// Enabled indicates whether this rewrite is active.
+	Enabled bool `yaml:"enabled"`
 }
 
 // equal returns true if the rw is equal to the other.
@@ -162,6 +165,10 @@ func findRewrites(
 	qtype uint16,
 ) (rewrites []*LegacyRewrite, matched bool) {
 	for _, e := range entries {
+		if !e.Enabled {
+			continue
+		}
+
 		if e.Domain != host && !matchDomainWildcard(host, e.Domain) {
 			continue
 		}
@@ -176,6 +183,11 @@ func findRewrites(
 		return nil, matched
 	}
 
+	return finalizeRewrites(rewrites), matched
+}
+
+// finalizeRewrites sorts rewrites and truncates wildcard ones.
+func finalizeRewrites(rewrites []*LegacyRewrite) (resRewrites []*LegacyRewrite) {
 	slices.SortFunc(rewrites, (*LegacyRewrite).Compare)
 
 	for i, r := range rewrites {
@@ -188,7 +200,7 @@ func findRewrites(
 		}
 	}
 
-	return rewrites, matched
+	return rewrites
 }
 
 // setRewriteResult sets the Reason or IPList of res if necessary.  res must not

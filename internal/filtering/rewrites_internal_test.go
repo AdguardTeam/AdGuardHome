@@ -29,64 +29,86 @@ func TestRewrites(t *testing.T) {
 
 	d.conf.Rewrites = []*LegacyRewrite{{
 		// This one and below are about CNAME, A and AAAA.
-		Domain: "somecname",
-		Answer: "somehost.com",
+		Domain:  "somecname",
+		Answer:  "somehost.com",
+		Enabled: true,
 	}, {
-		Domain: "somehost.com",
-		Answer: netip.IPv4Unspecified().String(),
+		Domain:  "somehost.com",
+		Answer:  netip.IPv4Unspecified().String(),
+		Enabled: true,
 	}, {
-		Domain: "host.com",
-		Answer: addr1v4.String(),
+		Domain:  "host.com",
+		Answer:  addr1v4.String(),
+		Enabled: true,
 	}, {
-		Domain: "host.com",
-		Answer: addr2v4.String(),
+		Domain:  "host.com",
+		Answer:  addr2v4.String(),
+		Enabled: true,
 	}, {
-		Domain: "host.com",
-		Answer: addr1v6.String(),
+		Domain:  "host.com",
+		Answer:  addr1v6.String(),
+		Enabled: true,
 	}, {
-		Domain: "www.host.com",
-		Answer: "host.com",
+		Domain:  "www.host.com",
+		Answer:  "host.com",
+		Enabled: true,
 	}, {
 		// This one is a wildcard.
-		Domain: "*.host.com",
-		Answer: addr2v4.String(),
+		Domain:  "*.host.com",
+		Answer:  addr2v4.String(),
+		Enabled: true,
 	}, {
 		// This one and below are about wildcard overriding.
-		Domain: "a.host.com",
-		Answer: addr1v4.String(),
+		Domain:  "a.host.com",
+		Answer:  addr1v4.String(),
+		Enabled: true,
 	}, {
 		// This one is about CNAME and wildcard interacting.
-		Domain: "*.host2.com",
-		Answer: "host.com",
+		Domain:  "*.host2.com",
+		Answer:  "host.com",
+		Enabled: true,
 	}, {
 		// This one and below are about 2 level CNAME.
-		Domain: "b.host.com",
-		Answer: "somecname",
+		Domain:  "b.host.com",
+		Answer:  "somecname",
+		Enabled: true,
 	}, {
 		// This one and below are about 2 level CNAME and wildcard.
-		Domain: "b.host3.com",
-		Answer: "a.host3.com",
+		Domain:  "b.host3.com",
+		Answer:  "a.host3.com",
+		Enabled: true,
 	}, {
-		Domain: "a.host3.com",
-		Answer: "x.host.com",
+		Domain:  "a.host3.com",
+		Answer:  "x.host.com",
+		Enabled: true,
 	}, {
-		Domain: "*.hostboth.com",
-		Answer: addr3v4.String(),
+		Domain:  "*.hostboth.com",
+		Answer:  addr3v4.String(),
+		Enabled: true,
 	}, {
-		Domain: "*.hostboth.com",
-		Answer: addr2v6.String(),
+		Domain:  "*.hostboth.com",
+		Answer:  addr2v6.String(),
+		Enabled: true,
 	}, {
-		Domain: "BIGHOST.COM",
-		Answer: addr4v4.String(),
+		Domain:  "BIGHOST.COM",
+		Answer:  addr4v4.String(),
+		Enabled: true,
 	}, {
-		Domain: "*.issue4016.com",
-		Answer: "sub.issue4016.com",
+		Domain:  "*.issue4016.com",
+		Answer:  "sub.issue4016.com",
+		Enabled: true,
 	}, {
-		Domain: "*.sub.issue6226.com",
-		Answer: addr2v4.String(),
+		Domain:  "*.sub.issue6226.com",
+		Answer:  addr2v4.String(),
+		Enabled: true,
 	}, {
-		Domain: "*.issue6226.com",
-		Answer: addr1v4.String(),
+		Domain:  "*.issue6226.com",
+		Answer:  addr1v4.String(),
+		Enabled: true,
+	}, {
+		Domain:  "disabled.rewrite.test",
+		Answer:  addr1v4.String(),
+		Enabled: false,
 	}}
 
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
@@ -204,6 +226,13 @@ func TestRewrites(t *testing.T) {
 		wantIPs:    []netip.Addr{addr2v4},
 		wantReason: Rewritten,
 		dtyp:       dns.TypeA,
+	}, {
+		name:       "not_filtered_disabled_rewrite",
+		host:       "disabled.rewrite.test",
+		wantCName:  "",
+		wantIPs:    nil,
+		wantReason: NotFilteredNotFound,
+		dtyp:       dns.TypeA,
 	}}
 
 	for _, tc := range testCases {
@@ -225,17 +254,20 @@ func TestRewritesLevels(t *testing.T) {
 	t.Cleanup(d.Close)
 	// Exact host, wildcard L2, wildcard L3.
 	d.conf.Rewrites = []*LegacyRewrite{{
-		Domain: "host.com",
-		Answer: "1.1.1.1",
-		Type:   dns.TypeA,
+		Domain:  "host.com",
+		Answer:  "1.1.1.1",
+		Type:    dns.TypeA,
+		Enabled: true,
 	}, {
-		Domain: "*.host.com",
-		Answer: "2.2.2.2",
-		Type:   dns.TypeA,
+		Domain:  "*.host.com",
+		Answer:  "2.2.2.2",
+		Type:    dns.TypeA,
+		Enabled: true,
 	}, {
-		Domain: "*.sub.host.com",
-		Answer: "3.3.3.3",
-		Type:   dns.TypeA,
+		Domain:  "*.sub.host.com",
+		Answer:  "3.3.3.3",
+		Type:    dns.TypeA,
+		Enabled: true,
 	}}
 
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
@@ -273,14 +305,17 @@ func TestRewritesExceptionCNAME(t *testing.T) {
 	t.Cleanup(d.Close)
 	// Wildcard and exception for a sub-domain.
 	d.conf.Rewrites = []*LegacyRewrite{{
-		Domain: "*.host.com",
-		Answer: "2.2.2.2",
+		Domain:  "*.host.com",
+		Answer:  "2.2.2.2",
+		Enabled: true,
 	}, {
-		Domain: "sub.host.com",
-		Answer: "sub.host.com",
+		Domain:  "sub.host.com",
+		Answer:  "sub.host.com",
+		Enabled: true,
 	}, {
-		Domain: "*.sub.host.com",
-		Answer: "*.sub.host.com",
+		Domain:  "*.sub.host.com",
+		Answer:  "*.sub.host.com",
+		Enabled: true,
 	}}
 
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
@@ -325,25 +360,30 @@ func TestRewritesExceptionIP(t *testing.T) {
 	t.Cleanup(d.Close)
 	// Exception for AAAA record.
 	d.conf.Rewrites = []*LegacyRewrite{{
-		Domain: "host.com",
-		Answer: "1.2.3.4",
-		Type:   dns.TypeA,
+		Domain:  "host.com",
+		Answer:  "1.2.3.4",
+		Type:    dns.TypeA,
+		Enabled: true,
 	}, {
-		Domain: "host.com",
-		Answer: "AAAA",
-		Type:   dns.TypeAAAA,
+		Domain:  "host.com",
+		Answer:  "AAAA",
+		Type:    dns.TypeAAAA,
+		Enabled: true,
 	}, {
-		Domain: "host2.com",
-		Answer: "::1",
-		Type:   dns.TypeAAAA,
+		Domain:  "host2.com",
+		Answer:  "::1",
+		Type:    dns.TypeAAAA,
+		Enabled: true,
 	}, {
-		Domain: "host2.com",
-		Answer: "A",
-		Type:   dns.TypeA,
+		Domain:  "host2.com",
+		Answer:  "A",
+		Type:    dns.TypeA,
+		Enabled: true,
 	}, {
-		Domain: "host3.com",
-		Answer: "A",
-		Type:   dns.TypeA,
+		Domain:  "host3.com",
+		Answer:  "A",
+		Type:    dns.TypeA,
+		Enabled: true,
 	}}
 
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
