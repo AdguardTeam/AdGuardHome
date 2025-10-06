@@ -71,7 +71,8 @@ func TestWeb_HandleGetProfile(t *testing.T) {
 
 	t.Cleanup(func() { auth.close(testutil.ContextWithTimeout(t, testTimeout)) })
 
-	globalContext.mux = http.NewServeMux()
+	baseMux := http.NewServeMux()
+	globalContext.mux = baseMux
 
 	tlsMgr, err := newTLSManager(testutil.ContextWithTimeout(t, testTimeout), &tlsManagerConfig{
 		logger:       testLogger,
@@ -87,14 +88,16 @@ func TestWeb_HandleGetProfile(t *testing.T) {
 		testLogger,
 		tlsMgr,
 		auth,
+		baseMux,
 		agh.EmptyConfigModifier{},
+		false,
 		false,
 	)
 	require.NoError(t, err)
 
 	globalContext.web = web
 
-	mux := auth.middleware().Wrap(globalContext.mux)
+	mux := auth.middleware().Wrap(baseMux)
 
 	require.True(t, t.Run("userless", func(t *testing.T) {
 		w := httptest.NewRecorder()
@@ -138,7 +141,19 @@ func TestWeb_HandlePutProfile(t *testing.T) {
 	}
 
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
-	web, err := initWeb(ctx, options{}, nil, nil, testLogger, nil, nil, confModifier, false)
+	web, err := initWeb(
+		ctx,
+		options{},
+		nil,
+		nil,
+		testLogger,
+		nil,
+		nil,
+		mux,
+		confModifier,
+		false,
+		false,
+	)
 	require.NoError(t, err)
 
 	globalContext.web = web

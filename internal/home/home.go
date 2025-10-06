@@ -58,20 +58,8 @@ type homeContext struct {
 	dnsServer  *dnsforward.Server // DNS module
 	dhcpServer dhcpd.Interface    // DHCP module
 
-	// auth stores web user information and handles authentication.
-	//
-	// TODO(s.chzhen):  Remove once it is no longer called from different
-	// modules.  See [onConfigModified].
-	auth *auth
-
 	filters *filtering.DNSFilter // DNS filtering module
 	web     *webAPI              // Web (HTTP, HTTPS) module
-
-	// tls contains the current configuration and state of TLS encryption.
-	//
-	// TODO(s.chzhen):  Remove once it is no longer called from different
-	// modules.  See [onConfigModified].
-	tls *tlsManager
 
 	// etcHosts contains IP-hostname mappings taken from the OS-specific hosts
 	// configuration files, for example /etc/hosts.
@@ -90,10 +78,6 @@ type homeContext struct {
 	workDir     string // Location of our directory, used to protect against CWD being somewhere else
 	pidFileName string // PID file name.  Empty if no PID file was created.
 	controlLock sync.Mutex
-
-	// firstRun, if true, tells AdGuard Home to only start the web interface
-	// service, and only serve the first-run APIs.
-	firstRun bool
 }
 
 // getDataDir returns path to the directory where we store databases and filters
@@ -160,9 +144,12 @@ func Main(clientBuildFS fs.FS) {
 
 // setupContext initializes [globalContext] fields.  It also reads and upgrades
 // config file if necessary.  baseLogger must not be nil.
-func setupContext(ctx context.Context, baseLogger *slog.Logger, opts options) (err error) {
-	globalContext.firstRun = detectFirstRun()
-
+func setupContext(
+	ctx context.Context,
+	baseLogger *slog.Logger,
+	opts options,
+	isFirstRun bool,
+) (err error) {
 	globalContext.mux = http.NewServeMux()
 
 	if !opts.noEtcHosts {
@@ -173,7 +160,7 @@ func setupContext(ctx context.Context, baseLogger *slog.Logger, opts options) (e
 		}
 	}
 
-	if globalContext.firstRun {
+	if isFirstRun {
 		log.Info("This is the first time AdGuard Home is launched")
 		checkNetworkPermissions()
 
@@ -562,8 +549,8 @@ func isUpdateEnabled(
 	}
 }
 
-// initWeb initializes the web module.  upd, baseLogger, tlsMgr, and auth must
-// not be nil.
+// initWeb initializes the web module.  upd, baseLogger, tlsMgr, auth, and mux
+// must not be nil.
 func initWeb(
 	ctx context.Context,
 	opts options,
@@ -572,8 +559,10 @@ func initWeb(
 	baseLogger *slog.Logger,
 	tlsMgr *tlsManager,
 	auth *auth,
+	mux *http.ServeMux,
 	confModifier agh.ConfigModifier,
 	isCustomUpdURL bool,
+	isFirstRun bool,
 ) (web *webAPI, err error) {
 	logger := baseLogger.With(slogutil.KeyPrefix, "webapi")
 
@@ -601,6 +590,7 @@ func initWeb(
 		confModifier:       confModifier,
 		tlsManager:         tlsMgr,
 		auth:               auth,
+		mux:                mux,
 
 		clientFS: clientFS,
 
@@ -612,7 +602,7 @@ func initWeb(
 
 		defaultWebPort: webPort,
 
-		firstRun:         globalContext.firstRun,
+		firstRun:         isFirstRun,
 		disableUpdate:    disableUpdate,
 		runningAsService: opts.runningAsService,
 		serveHTTP3:       config.DNS.ServeHTTP3,
@@ -696,7 +686,9 @@ func run(
 
 	aghtls.Init(ctx, slogLogger.With(slogutil.KeyPrefix, "aghtls"))
 
-	err = setupContext(ctx, slogLogger, opts)
+	isFirstRun := detectFirstRun()
+
+	err = setupContext(ctx, slogLogger, opts, isFirstRun)
 	fatalOnError(err)
 
 	err = configureOS(config)
@@ -728,7 +720,6 @@ func run(
 		confModifier.Apply(ctx)
 	}
 
-	globalContext.tls = tlsMgr
 	confModifier.setTLSManager(tlsMgr)
 
 	err = setupDNSFilteringConf(ctx, slogLogger, config.Filtering, tlsMgr, confModifier)
@@ -747,9 +738,9 @@ func run(
 
 	// TODO(e.burkov): This could be made earlier, probably as the option's
 	// effect.
-	cmdlineUpdate(ctx, updLogger, opts, upd, tlsMgr)
+	cmdlineUpdate(ctx, updLogger, opts, upd, tlsMgr, isFirstRun)
 
-	if !globalContext.firstRun {
+	if !isFirstRun {
 		// Save the updated config.
 		err = config.write(nil, nil)
 		fatalOnError(err)
@@ -766,7 +757,6 @@ func run(
 	auth, err := initUsers(ctx, slogLogger, opts.glinetMode)
 	fatalOnError(err)
 
-	globalContext.auth = auth
 	confModifier.setAuth(auth)
 
 	web, err := initWeb(
@@ -777,8 +767,10 @@ func run(
 		slogLogger,
 		tlsMgr,
 		auth,
+		globalContext.mux,
 		confModifier,
 		isCustomURL,
+		isFirstRun,
 	)
 	fatalOnError(err)
 
@@ -790,7 +782,7 @@ func run(
 	statsDir, querylogDir, err := checkStatsAndQuerylogDirs(&globalContext, config)
 	fatalOnError(err)
 
-	if !globalContext.firstRun {
+	if !isFirstRun {
 		err = initDNS(ctx, slogLogger, tlsMgr, confModifier, statsDir, querylogDir)
 		fatalOnError(err)
 
@@ -1176,14 +1168,15 @@ type jsonError struct {
 	Message string `json:"message"`
 }
 
-// cmdlineUpdate updates current application and exits.  l and tlsMgr must not
-// be nil.
+// cmdlineUpdate updates current application and exits.  l, upd, and tlsMgr must
+// not be nil.
 func cmdlineUpdate(
 	ctx context.Context,
 	l *slog.Logger,
 	opts options,
 	upd *updater.Updater,
 	tlsMgr *tlsManager,
+	isFirstRun bool,
 ) {
 	if !opts.performUpdate {
 		return
@@ -1212,7 +1205,7 @@ func cmdlineUpdate(
 		os.Exit(osutil.ExitCodeSuccess)
 	}
 
-	err = upd.Update(ctx, globalContext.firstRun)
+	err = upd.Update(ctx, isFirstRun)
 	fatalOnError(err)
 
 	err = restartService(ctx, l)

@@ -445,10 +445,28 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	web.finalizeInstall(ctx, w, r, req, restartHTTP)
+}
+
+// finalizeInstall completes first-run setup by applying user-provided settings.
+// w, r, and req must not be nil.
+func (web *webAPI) finalizeInstall(
+	ctx context.Context,
+	w http.ResponseWriter,
+	r *http.Request,
+	req *applyConfigReq,
+	restartHTTP bool,
+) {
+	var err error
 	curConfig := &configuration{}
 	copyInstallSettings(curConfig, config)
 
-	globalContext.firstRun = false
+	defer func() {
+		if err != nil {
+			copyInstallSettings(config, curConfig)
+		}
+	}()
+
 	config.DNS.BindHosts = []netip.Addr{req.DNS.IP}
 	config.DNS.Port = req.DNS.Port
 	config.Filtering.Logger = web.baseLogger.With(slogutil.KeyPrefix, "filtering")
@@ -462,8 +480,6 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 	}
 	err = web.auth.addUser(ctx, u, req.Password)
 	if err != nil {
-		globalContext.firstRun = true
-		copyInstallSettings(config, curConfig)
 		aghhttp.Error(r, w, http.StatusUnprocessableEntity, "%s", err)
 
 		return
@@ -475,8 +491,6 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 	// functions potentially restart the HTTPS server.
 	err = startMods(ctx, web.baseLogger, web.tlsManager, web.confModifier)
 	if err != nil {
-		globalContext.firstRun = true
-		copyInstallSettings(config, curConfig)
 		aghhttp.Error(r, w, http.StatusInternalServerError, "%s", err)
 
 		return
@@ -484,8 +498,6 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 
 	err = config.write(web.tlsManager, web.auth)
 	if err != nil {
-		globalContext.firstRun = true
-		copyInstallSettings(config, curConfig)
 		aghhttp.Error(r, w, http.StatusInternalServerError, "Couldn't write config: %s", err)
 
 		return
@@ -494,7 +506,7 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 	web.conf.firstRun = false
 	web.conf.BindAddr = netip.AddrPortFrom(req.Web.IP, req.Web.Port)
 
-	registerControlHandlers(web)
+	web.registerControlHandlers()
 
 	aghhttp.OK(w)
 
@@ -581,8 +593,20 @@ func startMods(
 	return nil
 }
 
+// registerInstallHandlers registers install handlers.
 func (web *webAPI) registerInstallHandlers() {
-	globalContext.mux.HandleFunc("/control/install/get_addresses", preInstall(ensureGET(web.handleInstallGetAddresses)))
-	globalContext.mux.HandleFunc("/control/install/check_config", preInstall(ensurePOST(web.handleInstallCheckConfig)))
-	globalContext.mux.HandleFunc("/control/install/configure", preInstall(ensurePOST(web.handleInstallConfigure)))
+	mux := web.conf.mux
+
+	mux.Handle(
+		"/control/install/get_addresses",
+		web.preInstallHandler(ensure(http.MethodGet, web.handleInstallGetAddresses)),
+	)
+	mux.Handle(
+		"/control/install/check_config",
+		web.preInstallHandler(ensure(http.MethodPost, web.handleInstallCheckConfig)),
+	)
+	mux.Handle(
+		"/control/install/configure",
+		web.preInstallHandler(ensure(http.MethodPost, web.handleInstallConfigure)),
+	)
 }

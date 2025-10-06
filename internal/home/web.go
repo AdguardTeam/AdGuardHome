@@ -63,6 +63,10 @@ type webConfig struct {
 	// be nil.
 	auth *auth
 
+	// mux is the default *http.ServeMux, the same as [globalContext.mux].  It
+	// must not be nil.
+	mux *http.ServeMux
+
 	clientFS fs.FS
 
 	// BindAddr is the binding address with port for plain HTTP web interface.
@@ -162,11 +166,9 @@ func newWebAPI(ctx context.Context, conf *webConfig) (w *webAPI) {
 
 	clientFS := http.FileServer(http.FS(conf.clientFS))
 
+	mux := conf.mux
 	// if not configured, redirect / to /install.html, otherwise redirect /install.html to /
-	globalContext.mux.Handle(
-		"/",
-		withMiddlewares(clientFS, gziphandler.GzipHandler, postInstallHandler),
-	)
+	mux.Handle("/", withMiddlewares(clientFS, gziphandler.GzipHandler, w.postInstallHandler))
 
 	// add handlers for /install paths, we only need them when we're not configured yet
 	if conf.firstRun {
@@ -175,10 +177,10 @@ func newWebAPI(ctx context.Context, conf *webConfig) (w *webAPI) {
 			"This is the first launch of AdGuard Home, redirecting everything to /install.html",
 		)
 
-		globalContext.mux.Handle("/install.html", preInstallHandler(clientFS))
+		mux.Handle("/install.html", w.preInstallHandler(clientFS))
 		w.registerInstallHandlers()
 	} else {
-		registerControlHandlers(w)
+		w.registerControlHandlers()
 	}
 
 	w.httpsServer.cond = sync.NewCond(&w.httpsServer.condLock)
@@ -241,7 +243,7 @@ func (web *webAPI) start(ctx context.Context) {
 
 		// Use an h2c handler to support unencrypted HTTP/2, e.g. for proxies.
 		hdlr := h2c.NewHandler(
-			withMiddlewares(globalContext.mux, limitRequestBody),
+			withMiddlewares(web.conf.mux, limitRequestBody),
 			&http2.Server{},
 		)
 
@@ -336,7 +338,7 @@ func (web *webAPI) tlsServerLoop(ctx context.Context) {
 
 		// TODO(a.garipov):  Remove other logs like this in other code.
 		logMw := httputil.NewLogMiddleware(logger, slog.LevelDebug)
-		hdlr := logMw.Wrap(withMiddlewares(globalContext.mux, limitRequestBody))
+		hdlr := logMw.Wrap(withMiddlewares(web.conf.mux, limitRequestBody))
 
 		web.httpsServer.server = &http.Server{
 			Addr:    addr,
@@ -381,7 +383,7 @@ func (web *webAPI) mustStartHTTP3(ctx context.Context, address string) {
 			CipherSuites: web.tlsManager.customCipherIDs,
 			MinVersion:   tls.VersionTLS12,
 		},
-		Handler: web.auth.middleware().Wrap(withMiddlewares(globalContext.mux, limitRequestBody)),
+		Handler: web.auth.middleware().Wrap(withMiddlewares(web.conf.mux, limitRequestBody)),
 	}
 
 	web.logger.DebugContext(ctx, "starting http/3 server")

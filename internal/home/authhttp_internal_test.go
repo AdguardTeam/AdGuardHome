@@ -321,8 +321,6 @@ func authRequest(path string, c *http.Cookie, user, pass string) (r *http.Reques
 func TestAuth_ServeHTTP_firstRun(t *testing.T) {
 	storeGlobals(t)
 
-	globalContext.firstRun = true
-
 	mux := http.NewServeMux()
 	globalContext.mux = mux
 
@@ -335,8 +333,10 @@ func TestAuth_ServeHTTP_firstRun(t *testing.T) {
 		testLogger,
 		nil,
 		nil,
+		mux,
 		agh.EmptyConfigModifier{},
 		false,
+		true,
 	)
 	require.NoError(t, err)
 
@@ -484,7 +484,8 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 
 	t.Cleanup(func() { auth.close(testutil.ContextWithTimeout(t, testTimeout)) })
 
-	globalContext.mux = http.NewServeMux()
+	baseMux := http.NewServeMux()
+	globalContext.mux = baseMux
 
 	tlsMgr, err := newTLSManager(testutil.ContextWithTimeout(t, testTimeout), &tlsManagerConfig{
 		logger:       testLogger,
@@ -501,17 +502,19 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 		testLogger,
 		tlsMgr,
 		auth,
+		baseMux,
 		agh.EmptyConfigModifier{},
+		false,
 		false,
 	)
 	require.NoError(t, err)
 
 	globalContext.web = web
 
-	mux := auth.middleware().Wrap(globalContext.mux)
+	mux := auth.middleware().Wrap(baseMux)
 
 	auth.isGLiNet = true
-	gliNetMw := auth.middleware().Wrap(globalContext.mux)
+	gliNetMw := auth.middleware().Wrap(baseMux)
 
 	loginCookie := generateAuthCookie(t, mux, userName, userPassword)
 
@@ -642,24 +645,28 @@ func TestAuth_ServeHTTP_logout(t *testing.T) {
 
 	t.Cleanup(func() { auth.close(testutil.ContextWithTimeout(t, testTimeout)) })
 
-	globalContext.mux = http.NewServeMux()
+	baseMux := http.NewServeMux()
+	globalContext.mux = baseMux
 
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
-	web, err := initWeb(ctx,
+	web, err := initWeb(
+		ctx,
 		options{},
 		nil,
 		nil,
 		testLogger,
 		nil,
 		auth,
+		baseMux,
 		agh.EmptyConfigModifier{},
+		false,
 		false,
 	)
 	require.NoError(t, err)
 
 	globalContext.web = web
 
-	mux := auth.middleware().Wrap(globalContext.mux)
+	mux := auth.middleware().Wrap(baseMux)
 
 	loginCookie := generateAuthCookie(t, mux, userName, userPassword)
 
