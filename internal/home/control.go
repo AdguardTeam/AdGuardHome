@@ -121,7 +121,7 @@ func (web *webAPI) handleStatus(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		// Don't add a lot of formatting, since the error is already
 		// wrapped by collectDNSAddresses.
-		aghhttp.Error(r, w, http.StatusInternalServerError, "%s", err)
+		aghhttp.ErrorAndLog(ctx, web.logger, r, w, http.StatusInternalServerError, "%s", err)
 
 		return
 	}

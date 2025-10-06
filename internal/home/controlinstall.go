@@ -43,6 +43,8 @@ type getAddrsResponse struct {
 
 // handleInstallGetAddresses is the handler for /install/get_addresses endpoint.
 func (web *webAPI) handleInstallGetAddresses(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	data := getAddrsResponse{
 		Version: version.Version(),
 
@@ -52,7 +54,15 @@ func (web *webAPI) handleInstallGetAddresses(w http.ResponseWriter, r *http.Requ
 
 	ifaces, err := aghnet.GetValidNetInterfacesForWeb()
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "Couldn't get interfaces: %s", err)
+		aghhttp.ErrorAndLog(
+			ctx,
+			web.logger,
+			r,
+			w,
+			http.StatusInternalServerError,
+			"Couldn't get interfaces: %s",
+			err,
+		)
 
 		return
 	}
@@ -181,7 +191,15 @@ func (web *webAPI) handleInstallCheckConfig(w http.ResponseWriter, r *http.Reque
 
 	err := json.NewDecoder(r.Body).Decode(req)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "decoding the request: %s", err)
+		aghhttp.ErrorAndLog(
+			ctx,
+			web.logger,
+			r,
+			w,
+			http.StatusBadRequest,
+			"decoding the request: %s",
+			err,
+		)
 
 		return
 	}
@@ -415,13 +433,15 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 
 	req, restartHTTP, err := decodeApplyConfigReq(r.Body)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+		aghhttp.ErrorAndLog(ctx, web.logger, r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
 
 	if utf8.RuneCountInString(req.Password) < PasswordMinRunes {
-		aghhttp.Error(
+		aghhttp.ErrorAndLog(
+			ctx,
+			web.logger,
 			r,
 			w,
 			http.StatusUnprocessableEntity,
@@ -434,14 +454,14 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 
 	err = aghnet.CheckPort("udp", netip.AddrPortFrom(req.DNS.IP, req.DNS.Port))
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+		aghhttp.ErrorAndLog(ctx, web.logger, r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
 
 	err = aghnet.CheckPort("tcp", netip.AddrPortFrom(req.DNS.IP, req.DNS.Port))
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+		aghhttp.ErrorAndLog(ctx, web.logger, r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
@@ -481,7 +501,7 @@ func (web *webAPI) finalizeInstall(
 	}
 	err = web.auth.addUser(ctx, u, req.Password)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusUnprocessableEntity, "%s", err)
+		aghhttp.ErrorAndLog(ctx, web.logger, r, w, http.StatusUnprocessableEntity, "%s", err)
 
 		return
 	}
@@ -492,14 +512,22 @@ func (web *webAPI) finalizeInstall(
 	// functions potentially restart the HTTPS server.
 	err = startMods(ctx, web.baseLogger, web.tlsManager, web.confModifier)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "%s", err)
+		aghhttp.ErrorAndLog(ctx, web.logger, r, w, http.StatusInternalServerError, "%s", err)
 
 		return
 	}
 
 	err = config.write(web.tlsManager, web.auth)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "Couldn't write config: %s", err)
+		aghhttp.ErrorAndLog(
+			ctx,
+			web.logger,
+			r,
+			w,
+			http.StatusInternalServerError,
+			"Couldn't write config: %s",
+			err,
+		)
 
 		return
 	}
@@ -509,7 +537,7 @@ func (web *webAPI) finalizeInstall(
 
 	web.registerControlHandlers()
 
-	aghhttp.OK(w)
+	aghhttp.OK(ctx, web.logger, w)
 
 	rc := http.NewResponseController(w)
 	err = rc.Flush()

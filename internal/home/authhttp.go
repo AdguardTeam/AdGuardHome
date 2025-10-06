@@ -103,7 +103,7 @@ func (web *webAPI) handleLogin(w http.ResponseWriter, r *http.Request) {
 	req := loginJSON{}
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "json decode: %s", err)
+		aghhttp.ErrorAndLog(ctx, web.logger, r, w, http.StatusBadRequest, "json decode: %s", err)
 
 		return
 	}
@@ -173,7 +173,7 @@ func (web *webAPI) handleLogin(w http.ResponseWriter, r *http.Request) {
 	h.Set(httphdr.Pragma, "no-cache")
 	h.Set(httphdr.Expires, "0")
 
-	aghhttp.OK(w)
+	aghhttp.OK(ctx, web.logger, w)
 }
 
 // newCookie creates a new authentication cookie.  rateLimiter must not be nil.

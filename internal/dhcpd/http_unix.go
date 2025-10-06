@@ -314,6 +314,7 @@ func (s *server) createServers(conf *dhcpServerConfigJSON) (srv4, srv6 DHCPServe
 // HTTP API.
 func (s *server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	l := s.conf.Logger
 
 	conf := &dhcpServerConfigJSON{}
 	conf.Enabled = aghalg.BoolToNullBool(s.conf.Enabled)
@@ -321,21 +322,29 @@ func (s *server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(conf)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "failed to parse new dhcp config json: %s", err)
+		aghhttp.ErrorAndLog(
+			ctx,
+			l,
+			r,
+			w,
+			http.StatusBadRequest,
+			"failed to parse new dhcp config json: %s",
+			err,
+		)
 
 		return
 	}
 
 	srv4, srv6, err := s.createServers(conf)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
 
 	err = s.Stop()
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "stopping dhcp: %s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusInternalServerError, "stopping dhcp: %s", err)
 
 		return
 	}
@@ -345,7 +354,15 @@ func (s *server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 
 	err = s.dbLoad()
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "loading leases db: %s", err)
+		aghhttp.ErrorAndLog(
+			ctx,
+			l,
+			r,
+			w,
+			http.StatusInternalServerError,
+			"loading leases db: %s",
+			err,
+		)
 
 		return
 	}
@@ -354,7 +371,7 @@ func (s *server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 		var code int
 		code, err = s.enableDHCP(ctx, conf.InterfaceName)
 		if err != nil {
-			aghhttp.Error(r, w, code, "enabling dhcp: %s", err)
+			aghhttp.ErrorAndLog(ctx, l, r, w, code, "enabling dhcp: %s", err)
 		}
 	}
 }
@@ -392,11 +409,21 @@ type netInterfaceJSON struct {
 // HTTP API.
 func (s *server) handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	l := s.conf.Logger
+
 	resp := map[string]*netInterfaceJSON{}
 
 	ifaces, err := net.Interfaces()
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "Couldn't get interfaces: %s", err)
+		aghhttp.ErrorAndLog(
+			ctx,
+			l,
+			r,
+			w,
+			http.StatusInternalServerError,
+			"Couldn't get interfaces: %s",
+			err,
+		)
 
 		return
 	}
@@ -414,7 +441,7 @@ func (s *server) handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 
 		jsonIface, iErr := newNetInterfaceJSON(ctx, s.conf.Logger, iface, s.conf.CommandConstructor)
 		if iErr != nil {
-			aghhttp.Error(r, w, http.StatusInternalServerError, "%s", iErr)
+			aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusInternalServerError, "%s", iErr)
 
 			return
 		}
@@ -537,22 +564,23 @@ type findActiveServerReq struct {
 //  3. responds with the results.
 func (s *server) handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	l := s.conf.Logger
 
-	if aghhttp.WriteTextPlainDeprecated(w, r) {
+	if aghhttp.WriteTextPlainDeprecated(ctx, l, w, r) {
 		return
 	}
 
 	req := &findActiveServerReq{}
 	err := json.NewDecoder(r.Body).Decode(req)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "reading req: %s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "reading req: %s", err)
 
 		return
 	}
 
 	ifaceName := req.Interface
 	if ifaceName == "" {
-		aghhttp.Error(r, w, http.StatusBadRequest, "empty interface name")
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "empty interface name")
 
 		return
 	}
@@ -643,52 +671,64 @@ func (s *server) parseLease(r io.Reader) (srv DHCPServer, lease *dhcpsvc.Lease, 
 // handleDHCPAddStaticLease is the handler for the POST
 // /control/dhcp/add_static_lease HTTP API.
 func (s *server) handleDHCPAddStaticLease(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	l := s.conf.Logger
+
 	srv, lease, err := s.parseLease(r.Body)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
 
 	if err = srv.AddStaticLease(lease); err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "%s", err)
 	}
 }
 
 // handleDHCPRemoveStaticLease is the handler for the POST
 // /control/dhcp/remove_static_lease HTTP API.
 func (s *server) handleDHCPRemoveStaticLease(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	l := s.conf.Logger
+
 	srv, lease, err := s.parseLease(r.Body)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
 
 	if err = srv.RemoveStaticLease(lease); err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "%s", err)
 	}
 }
 
 // handleDHCPUpdateStaticLease is the handler for the POST
 // /control/dhcp/update_static_lease HTTP API.
 func (s *server) handleDHCPUpdateStaticLease(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	l := s.conf.Logger
+
 	srv, lease, err := s.parseLease(r.Body)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
 
 	if err = srv.UpdateStaticLease(lease); err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "%s", err)
 	}
 }
 
 func (s *server) handleReset(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	l := s.conf.Logger
+
 	err := s.Stop()
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "stopping dhcp: %s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusInternalServerError, "stopping dhcp: %s", err)
 
 		return
 	}
@@ -722,14 +762,16 @@ func (s *server) handleReset(w http.ResponseWriter, r *http.Request) {
 	}
 	s.srv6, _ = v6Create(v6conf)
 
-	s.conf.ConfModifier.Apply(r.Context())
+	s.conf.ConfModifier.Apply(ctx)
 }
 
 func (s *server) handleResetLeases(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	err := s.resetLeases()
 	if err != nil {
 		msg := "resetting leases: %s"
-		aghhttp.Error(r, w, http.StatusInternalServerError, msg, err)
+		aghhttp.ErrorAndLog(ctx, s.conf.Logger, r, w, http.StatusInternalServerError, msg, err)
 
 		return
 	}

@@ -327,25 +327,34 @@ func clientToJSON(c *client.Persistent) (cj *clientJSON) {
 // handleAddClient is the handler for POST /control/clients/add HTTP API.
 func (clients *clientsContainer) handleAddClient(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	l := clients.logger
 
 	cj := clientJSON{}
 	err := json.NewDecoder(r.Body).Decode(&cj)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "failed to process request body: %s", err)
+		aghhttp.ErrorAndLog(
+			ctx,
+			l,
+			r,
+			w,
+			http.StatusBadRequest,
+			"failed to process request body: %s",
+			err,
+		)
 
 		return
 	}
 
 	c, err := clients.jsonToClient(ctx, cj, nil)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
 
 	err = clients.storage.Add(ctx, c)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
@@ -356,23 +365,32 @@ func (clients *clientsContainer) handleAddClient(w http.ResponseWriter, r *http.
 // handleDelClient is the handler for POST /control/clients/delete HTTP API.
 func (clients *clientsContainer) handleDelClient(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	l := clients.logger
 
 	cj := clientJSON{}
 	err := json.NewDecoder(r.Body).Decode(&cj)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "failed to process request body: %s", err)
+		aghhttp.ErrorAndLog(
+			ctx,
+			l,
+			r,
+			w,
+			http.StatusBadRequest,
+			"failed to process request body: %s",
+			err,
+		)
 
 		return
 	}
 
 	if len(cj.Name) == 0 {
-		aghhttp.Error(r, w, http.StatusBadRequest, "client's name must be non-empty")
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "client's name must be non-empty")
 
 		return
 	}
 
 	if !clients.storage.RemoveByName(ctx, cj.Name) {
-		aghhttp.Error(r, w, http.StatusBadRequest, "Client not found")
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "Client not found")
 
 		return
 	}
@@ -391,31 +409,40 @@ type updateJSON struct {
 // TODO(s.chzhen):  Accept updated parameters instead of whole structure.
 func (clients *clientsContainer) handleUpdateClient(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	l := clients.logger
 
 	dj := updateJSON{}
 	err := json.NewDecoder(r.Body).Decode(&dj)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "failed to process request body: %s", err)
+		aghhttp.ErrorAndLog(
+			ctx,
+			l,
+			r,
+			w,
+			http.StatusBadRequest,
+			"failed to process request body: %s",
+			err,
+		)
 
 		return
 	}
 
 	if len(dj.Name) == 0 {
-		aghhttp.Error(r, w, http.StatusBadRequest, "Invalid request")
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "Invalid request")
 
 		return
 	}
 
 	c, err := clients.jsonToClient(ctx, dj.Data, nil)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
 
 	err = clients.storage.Update(ctx, dj.Name, c)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
@@ -502,10 +529,20 @@ type searchClientJSON struct {
 // handleSearchClient is the handler for the POST /control/clients/search HTTP
 // API.
 func (clients *clientsContainer) handleSearchClient(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	q := searchQueryJSON{}
 	err := json.NewDecoder(r.Body).Decode(&q)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "failed to process request body: %s", err)
+		aghhttp.ErrorAndLog(
+			ctx,
+			clients.logger,
+			r,
+			w,
+			http.StatusBadRequest,
+			"failed to process request body: %s",
+			err,
+		)
 
 		return
 	}
@@ -518,7 +555,7 @@ func (clients *clientsContainer) handleSearchClient(w http.ResponseWriter, r *ht
 		err = params.Set(idStr)
 		if err != nil {
 			clients.logger.DebugContext(
-				r.Context(),
+				ctx,
 				"searching client",
 				"id", idStr,
 				slogutil.KeyError, err,

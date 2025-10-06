@@ -66,22 +66,23 @@ func handleI18nCurrentLanguage(w http.ResponseWriter, r *http.Request) {
 // TODO(d.kolyshev): Deprecated, remove it later.
 func (web *webAPI) handleI18nChangeLanguage(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	l := web.logger
 
-	if aghhttp.WriteTextPlainDeprecated(w, r) {
+	if aghhttp.WriteTextPlainDeprecated(ctx, l, w, r) {
 		return
 	}
 
 	langReq := &languageJSON{}
 	err := json.NewDecoder(r.Body).Decode(langReq)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "reading req: %s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusInternalServerError, "reading req: %s", err)
 
 		return
 	}
 
 	lang := langReq.Language
 	if !allowedLanguages.Has(lang) {
-		aghhttp.Error(r, w, http.StatusBadRequest, "unknown language: %q", lang)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "unknown language: %q", lang)
 
 		return
 	}
@@ -91,10 +92,10 @@ func (web *webAPI) handleI18nChangeLanguage(w http.ResponseWriter, r *http.Reque
 		defer config.Unlock()
 
 		config.Language = lang
-		web.logger.InfoContext(ctx, "language is updated", "lang", lang)
+		l.InfoContext(ctx, "language is updated", "lang", lang)
 	}()
 
 	web.confModifier.Apply(ctx)
 
-	aghhttp.OK(w)
+	aghhttp.OK(ctx, l, w)
 }

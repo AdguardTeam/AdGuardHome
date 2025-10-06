@@ -520,11 +520,12 @@ func checkInclusion(ptr *int, minN, maxN int) (err error) {
 // handleSetConfig handles requests to the POST /control/dns_config endpoint.
 func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	l := s.logger
 
 	req := &jsonDNSConfig{}
 	err := json.NewDecoder(r.Body).Decode(req)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "decoding request: %s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "decoding request: %s", err)
 
 		return
 	}
@@ -533,14 +534,22 @@ func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
 	ourAddrs, err := s.conf.ourAddrsSet()
 	if err != nil {
 		// TODO(e.burkov):  Put into openapi.
-		aghhttp.Error(r, w, http.StatusInternalServerError, "getting our addresses: %s", err)
+		aghhttp.ErrorAndLog(
+			ctx,
+			l,
+			r,
+			w,
+			http.StatusInternalServerError,
+			"getting our addresses: %s",
+			err,
+		)
 
 		return
 	}
 
 	err = req.validate(ourAddrs, s.sysResolvers, s.privateNets, s.conf.CacheSize)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
@@ -551,7 +560,7 @@ func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
 	if restart {
 		err = s.Reconfigure(ctx, nil)
 		if err != nil {
-			aghhttp.Error(r, w, http.StatusInternalServerError, "%s", err)
+			aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusInternalServerError, "%s", err)
 		}
 	}
 }
@@ -682,10 +691,21 @@ func closeBoots(boots []*upstream.UpstreamResolver) {
 // handleTestUpstreamDNS handles requests to the POST /control/test_upstream_dns
 // endpoint.
 func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	l := s.logger
+
 	req := &upstreamJSON{}
 	err := json.NewDecoder(r.Body).Decode(req)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "Failed to read request body: %s", err)
+		aghhttp.ErrorAndLog(
+			ctx,
+			l,
+			r,
+			w,
+			http.StatusBadRequest,
+			"Failed to read request body: %s",
+			err,
+		)
 
 		return
 	}
@@ -701,7 +721,15 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 	var boots []*upstream.UpstreamResolver
 	opts.Bootstrap, boots, err = newBootstrap(req.BootstrapDNS, s.etcHosts, opts)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "Failed to parse bootstrap servers: %s", err)
+		aghhttp.ErrorAndLog(
+			ctx,
+			l,
+			r,
+			w,
+			http.StatusBadRequest,
+			"Failed to parse bootstrap servers: %s",
+			err,
+		)
 
 		return
 	}
@@ -730,10 +758,13 @@ type protectionJSON struct {
 
 // handleSetProtection is a handler for the POST /control/protection HTTP API.
 func (s *Server) handleSetProtection(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	l := s.logger
+
 	protectionReq := &protectionJSON{}
 	err := json.NewDecoder(r.Body).Decode(protectionReq)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "reading req: %s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "reading req: %s", err)
 
 		return
 	}
@@ -741,7 +772,9 @@ func (s *Server) handleSetProtection(w http.ResponseWriter, r *http.Request) {
 	var disabledUntil *time.Time
 	if protectionReq.Duration > 0 {
 		if protectionReq.Enabled {
-			aghhttp.Error(
+			aghhttp.ErrorAndLog(
+				ctx,
+				l,
 				r,
 				w,
 				http.StatusBadRequest,
@@ -762,9 +795,9 @@ func (s *Server) handleSetProtection(w http.ResponseWriter, r *http.Request) {
 		s.dnsFilter.SetProtectionStatus(protectionReq.Enabled, disabledUntil)
 	}()
 
-	s.conf.ConfModifier.Apply(r.Context())
+	s.conf.ConfModifier.Apply(ctx)
 
-	aghhttp.OK(w)
+	aghhttp.OK(ctx, s.logger, w)
 }
 
 // handleDoH is the DNS-over-HTTPs handler.
@@ -778,14 +811,24 @@ func (s *Server) handleSetProtection(w http.ResponseWriter, r *http.Request) {
 //	-> proxy.handleDNSRequest
 //	-> dnsforward.handleDNSRequest
 func (s *Server) handleDoH(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	l := s.logger
+
 	if !s.conf.TLSAllowUnencryptedDoH && r.TLS == nil {
-		aghhttp.Error(r, w, http.StatusNotFound, "Not Found")
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusNotFound, "Not Found")
 
 		return
 	}
 
 	if !s.IsRunning() {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "dns server is not running")
+		aghhttp.ErrorAndLog(
+			ctx,
+			l,
+			r,
+			w,
+			http.StatusInternalServerError,
+			"dns server is not running",
+		)
 
 		return
 	}
