@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net"
 	"net/http"
 	"net/netip"
@@ -205,7 +206,7 @@ func (s *server) enableDHCP(ctx context.Context, ifaceName string) (code int, er
 	}
 
 	if !hasStaticIP {
-		err = aghnet.IfaceSetStaticIP(ctx, cmdCons, ifaceName)
+		err = aghnet.IfaceSetStaticIP(ctx, s.conf.Logger, cmdCons, ifaceName)
 		if err != nil {
 			err = fmt.Errorf("setting static ip: %w", err)
 
@@ -213,7 +214,7 @@ func (s *server) enableDHCP(ctx context.Context, ifaceName string) (code int, er
 		}
 	}
 
-	err = s.Start()
+	err = s.Start(ctx)
 	if err != nil {
 		return http.StatusBadRequest, fmt.Errorf("starting dhcp server: %w", err)
 	}
@@ -390,6 +391,7 @@ type netInterfaceJSON struct {
 // handleDHCPInterfaces is the handler for the GET /control/dhcp/interfaces
 // HTTP API.
 func (s *server) handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	resp := map[string]*netInterfaceJSON{}
 
 	ifaces, err := net.Interfaces()
@@ -410,7 +412,7 @@ func (s *server) handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		jsonIface, iErr := newNetInterfaceJSON(r.Context(), iface, s.conf.CommandConstructor)
+		jsonIface, iErr := newNetInterfaceJSON(ctx, s.conf.Logger, iface, s.conf.CommandConstructor)
 		if iErr != nil {
 			aghhttp.Error(r, w, http.StatusInternalServerError, "%s", iErr)
 
@@ -426,9 +428,10 @@ func (s *server) handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 }
 
 // newNetInterfaceJSON creates a JSON object from a [net.Interface] iface.
-// cmdCons must not be nil.
+// l and cmdCons must not be nil.
 func newNetInterfaceJSON(
 	ctx context.Context,
+	l *slog.Logger,
 	iface net.Interface,
 	cmdCons executil.CommandConstructor,
 ) (out *netInterfaceJSON, err error) {
@@ -483,7 +486,7 @@ func newNetInterfaceJSON(
 		return nil, nil
 	}
 
-	out.GatewayIP = aghnet.GatewayIP(ctx, cmdCons, iface.Name)
+	out.GatewayIP = aghnet.GatewayIP(ctx, l, cmdCons, iface.Name)
 
 	return out, nil
 }
@@ -533,6 +536,8 @@ type findActiveServerReq struct {
 //  2. check if a static IP is configured for the network interface;
 //  3. responds with the results.
 func (s *server) handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	if aghhttp.WriteTextPlainDeprecated(w, r) {
 		return
 	}
@@ -569,24 +574,28 @@ func (s *server) handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Reque
 	}
 
 	cmdCons := s.conf.CommandConstructor
-	if isStaticIP, serr := aghnet.IfaceHasStaticIP(r.Context(), cmdCons, ifaceName); serr != nil {
+	if isStaticIP, serr := aghnet.IfaceHasStaticIP(ctx, cmdCons, ifaceName); serr != nil {
 		result.V4.StaticIP.Static = "error"
 		result.V4.StaticIP.Error = serr.Error()
 	} else if !isStaticIP {
 		result.V4.StaticIP.Static = "no"
 		// TODO(e.burkov):  The returned IP should only be of version 4.
-		result.V4.StaticIP.IP = aghnet.GetSubnet(ifaceName).String()
+		result.V4.StaticIP.IP = aghnet.GetSubnet(ctx, s.conf.Logger, ifaceName).String()
 	}
 
-	setOtherDHCPResult(ifaceName, result)
+	s.setOtherDHCPResult(ctx, ifaceName, result)
 
 	aghhttp.WriteJSONResponseOK(w, r, result)
 }
 
 // setOtherDHCPResult sets the results of the check for another DHCP server in
-// result.
-func setOtherDHCPResult(ifaceName string, result *dhcpSearchResult) {
-	found4, found6, err4, err6 := aghnet.CheckOtherDHCP(ifaceName)
+// result.  result must not be nil.
+func (s *server) setOtherDHCPResult(
+	ctx context.Context,
+	ifaceName string,
+	result *dhcpSearchResult,
+) {
+	found4, found6, err4, err6 := aghnet.CheckOtherDHCP(ctx, s.conf.Logger, ifaceName)
 	if err4 != nil {
 		result.V4.OtherServer.Found = "error"
 		result.V4.OtherServer.Error = err4.Error()

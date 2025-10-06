@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"strings"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
@@ -45,6 +46,11 @@ func hostnameIfStaticConfig(r io.Reader) (_ []string, ok bool, err error) {
 	return nil, true, s.Err()
 }
 
-func ifaceSetStaticIP(_ context.Context, _ executil.CommandConstructor, _ string) (err error) {
+func ifaceSetStaticIP(
+	_ context.Context,
+	_ *slog.Logger,
+	_ executil.CommandConstructor,
+	_ string,
+) (err error) {
 	return aghos.Unsupported("setting static ip")
 }

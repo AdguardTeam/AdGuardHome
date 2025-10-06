@@ -196,7 +196,7 @@ func (web *webAPI) handleInstallCheckConfig(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		resp.DNS.Status = err.Error()
 	} else if !req.DNS.IP.IsUnspecified() {
-		resp.StaticIP = handleStaticIP(ctx, req.DNS.IP, req.SetStaticIP, web.cmdCons)
+		resp.StaticIP = handleStaticIP(ctx, web.logger, req.DNS.IP, req.SetStaticIP, web.cmdCons)
 	}
 
 	aghhttp.WriteJSONResponseOK(w, r, resp)
@@ -206,6 +206,7 @@ func (web *webAPI) handleInstallCheckConfig(w http.ResponseWriter, r *http.Reque
 // owns IP.  cmdCons must not be nil.
 func handleStaticIP(
 	ctx context.Context,
+	l *slog.Logger,
 	ip netip.Addr,
 	set bool,
 	cmdCons executil.CommandConstructor,
@@ -222,7 +223,7 @@ func handleStaticIP(
 
 	if set {
 		// Try to set a static IP for the specified interface.
-		err := aghnet.IfaceSetStaticIP(ctx, cmdCons, interfaceName)
+		err := aghnet.IfaceSetStaticIP(ctx, l, cmdCons, interfaceName)
 		if err != nil {
 			ipResp.Static = "error"
 			ipResp.Error = err.Error()
@@ -244,7 +245,7 @@ func handleStaticIP(
 	if isStaticIP {
 		ipResp.Static = "yes"
 	}
-	ipResp.IP = aghnet.GetSubnet(interfaceName).String()
+	ipResp.IP = aghnet.GetSubnet(ctx, l, interfaceName).String()
 
 	return ipResp
 }

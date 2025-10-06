@@ -162,7 +162,7 @@ func setupContext(
 
 	if isFirstRun {
 		log.Info("This is the first time AdGuard Home is launched")
-		checkNetworkPermissions()
+		checkNetworkPermissions(ctx, baseLogger)
 
 		return nil
 	}
@@ -240,9 +240,16 @@ func configureOS(conf *configuration) (err error) {
 // setupHostsContainer initializes the structures to keep up-to-date the hosts
 // provided by the OS.  baseLogger must not be nil.
 func setupHostsContainer(ctx context.Context, baseLogger *slog.Logger) (err error) {
+	l := baseLogger.With(slogutil.KeyPrefix, "hosts")
+
 	hostsWatcher, err := aghos.NewOSWritesWatcher(baseLogger.With(slogutil.KeyPrefix, "oswatcher"))
 	if err != nil {
-		log.Info("WARNING: initializing filesystem watcher: %s; not watching for changes", err)
+		l.WarnContext(
+			ctx,
+			"initializing filesystem watcher; not watching for changes",
+			slogutil.KeyError,
+			err,
+		)
 
 		hostsWatcher = aghos.EmptyFSWatcher{}
 	}
@@ -252,11 +259,17 @@ func setupHostsContainer(ctx context.Context, baseLogger *slog.Logger) (err erro
 		return fmt.Errorf("getting default system hosts paths: %w", err)
 	}
 
-	globalContext.etcHosts, err = aghnet.NewHostsContainer(osutil.RootDirFS(), hostsWatcher, paths...)
+	globalContext.etcHosts, err = aghnet.NewHostsContainer(
+		ctx,
+		l,
+		osutil.RootDirFS(),
+		hostsWatcher,
+		paths...,
+	)
 	if err != nil {
 		closeErr := hostsWatcher.Shutdown(ctx)
 		if errors.Is(err, aghnet.ErrNoHostsPaths) {
-			log.Info("warning: initing hosts container: %s", err)
+			l.WarnContext(ctx, "initializing hosts container", slogutil.KeyError, err)
 
 			return closeErr
 		}
@@ -295,9 +308,10 @@ func initContextClients(
 	config.DHCP.DataDir = globalContext.getDataDir()
 	config.DHCP.HTTPRegister = httpRegister
 	config.DHCP.CommandConstructor = executil.SystemCommandConstructor{}
+	config.DHCP.Logger = logger.With(slogutil.KeyPrefix, "dhcpd")
 	config.DHCP.ConfModifier = confModifier
 
-	globalContext.dhcpServer, err = dhcpd.Create(config.DHCP)
+	globalContext.dhcpServer, err = dhcpd.Create(ctx, config.DHCP)
 	if globalContext.dhcpServer == nil || err != nil {
 		// TODO(a.garipov): There are a lot of places in the code right
 		// now which assume that the DHCP server can be nil despite this
@@ -797,7 +811,7 @@ func run(
 		}()
 
 		if globalContext.dhcpServer != nil {
-			err = globalContext.dhcpServer.Start()
+			err = globalContext.dhcpServer.Start(ctx)
 			if err != nil {
 				log.Error("starting dhcp server: %s", err)
 			}
@@ -931,38 +945,48 @@ func (c *configuration) anonymizer() (ipmut *aghnet.IPMut) {
 	return aghnet.NewIPMut(anonFunc)
 }
 
-// checkNetworkPermissions checks if the current user permissions are enough to
-// use the required networking functionality.
-func checkNetworkPermissions() {
-	log.Info("Checking if AdGuard Home has necessary permissions")
+// permCheckHelp is printed when binding to privileged ports is not permitted.
+const permCheckHelp = `Permission check failed.
 
-	if ok, err := aghnet.CanBindPrivilegedPorts(); !ok || err != nil {
-		log.Fatal("This is the first launch of AdGuard Home. You must run it as Administrator.")
+AdGuard Home is not allowed to bind to privileged ports (for instance, port 53).
+Please note that this is crucial for a server to be able to use privileged ports.
+
+You have two options:
+1. Run AdGuard Home with root privileges.
+2. On Linux you can grant the CAP_NET_BIND_SERVICE capability:
+https://github.com/AdguardTeam/AdGuardHome/wiki/Getting-Started#running-without-superuser`
+
+// checkNetworkPermissions checks if the current user permissions are enough to
+// use the required networking functionality.  l must not be nil.
+func checkNetworkPermissions(ctx context.Context, l *slog.Logger) {
+	l.InfoContext(ctx, "checking if adguard home has the necessary permissions")
+
+	if ok, err := aghnet.CanBindPrivilegedPorts(ctx, l); !ok || err != nil {
+		l.ErrorContext(
+			ctx,
+			"this is the first launch of adguard home; you must run it as administrator.",
+		)
+
+		os.Exit(osutil.ExitCodeFailure)
 	}
 
 	// We should check if AdGuard Home is able to bind to port 53
 	err := aghnet.CheckPort("tcp", netip.AddrPortFrom(netutil.IPv4Localhost(), defaultPortDNS))
 	if err != nil {
 		if errors.Is(err, os.ErrPermission) {
-			log.Fatal(`Permission check failed.
+			slogutil.PrintLines(ctx, l, slog.LevelError, "", permCheckHelp)
 
-AdGuard Home is not allowed to bind to privileged ports (for instance, port 53).
-Please note, that this is crucial for a server to be able to use privileged ports.
-
-You have two options:
-1. Run AdGuard Home with root privileges
-2. On Linux you can grant the CAP_NET_BIND_SERVICE capability:
-https://github.com/AdguardTeam/AdGuardHome/wiki/Getting-Started#running-without-superuser`)
+			os.Exit(osutil.ExitCodeFailure)
 		}
 
-		log.Info(
-			"AdGuard failed to bind to port 53: %s\n\n"+
-				"Please note, that this is crucial for a DNS server to be able to use that port.",
-			err,
+		l.ErrorContext(
+			ctx,
+			"failed to bind to port 53; binding to port 53 is required for a dns server",
+			slogutil.KeyError, err,
 		)
 	}
 
-	log.Info("AdGuard Home can bind to port 53")
+	l.InfoContext(ctx, "adguard home can bind to port 53")
 }
 
 // Write PID to a file

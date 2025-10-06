@@ -67,7 +67,8 @@ func TestNewHostsContainer(t *testing.T) {
 				return eventsCh
 			}
 
-			hc, err := aghnet.NewHostsContainer(testFS, &aghtest.FSWatcher{
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			hc, err := aghnet.NewHostsContainer(ctx, testLogger, testFS, &aghtest.FSWatcher{
 				OnStart: func(ctx context.Context) (_ error) {
 					panic(testutil.UnexpectedCall(ctx))
 				},
@@ -96,7 +97,8 @@ func TestNewHostsContainer(t *testing.T) {
 
 	t.Run("nil_fs", func(t *testing.T) {
 		require.Panics(t, func() {
-			_, _ = aghnet.NewHostsContainer(nil, &aghtest.FSWatcher{
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			_, _ = aghnet.NewHostsContainer(ctx, testLogger, nil, &aghtest.FSWatcher{
 				OnStart: func(ctx context.Context) (_ error) {
 					panic(testutil.UnexpectedCall(ctx))
 				},
@@ -110,7 +112,8 @@ func TestNewHostsContainer(t *testing.T) {
 
 	t.Run("nil_watcher", func(t *testing.T) {
 		require.Panics(t, func() {
-			_, _ = aghnet.NewHostsContainer(testFS, nil, p)
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			_, _ = aghnet.NewHostsContainer(ctx, testLogger, testFS, nil, p)
 		})
 	})
 
@@ -124,7 +127,8 @@ func TestNewHostsContainer(t *testing.T) {
 			OnShutdown: func(_ context.Context) (err error) { return nil },
 		}
 
-		hc, err := aghnet.NewHostsContainer(testFS, errWatcher, p)
+		ctx := testutil.ContextWithTimeout(t, testTimeout)
+		hc, err := aghnet.NewHostsContainer(ctx, testLogger, testFS, errWatcher, p)
 		require.ErrorIs(t, err, errOnAdd)
 
 		assert.Nil(t, hc)
@@ -173,7 +177,8 @@ func TestHostsContainer_refresh(t *testing.T) {
 		OnShutdown: func(_ context.Context) (err error) { return nil },
 	}
 
-	hc, err := aghnet.NewHostsContainer(testFS, w, "dir")
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	hc, err := aghnet.NewHostsContainer(ctx, testLogger, testFS, w, "dir")
 	require.NoError(t, err)
 	testutil.CleanupAndRequireSuccess(t, hc.Close)
 

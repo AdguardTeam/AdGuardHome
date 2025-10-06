@@ -32,6 +32,8 @@ type temporaryError interface {
 //
 // TODO(a.garipov): Find out if this API used with a GET method by anyone.
 func (web *webAPI) handleVersionJSON(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	resp := &versionResponse{}
 	if web.conf.disableUpdate {
 		resp.Disabled = true
@@ -54,7 +56,7 @@ func (web *webAPI) handleVersionJSON(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	err = web.requestVersionInfo(r.Context(), resp, req.Recheck)
+	err = web.requestVersionInfo(ctx, resp, req.Recheck)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
 		aghhttp.Error(r, w, http.StatusBadGateway, "%s", err)
@@ -62,7 +64,7 @@ func (web *webAPI) handleVersionJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = resp.setAllowedToAutoUpdate(web.tlsManager)
+	err = resp.setAllowedToAutoUpdate(ctx, web.logger, web.tlsManager)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
 		aghhttp.Error(r, w, http.StatusInternalServerError, "%s", err)
@@ -169,8 +171,13 @@ type versionResponse struct {
 }
 
 // setAllowedToAutoUpdate sets CanAutoUpdate to true if AdGuard Home is actually
-// allowed to perform an automatic update by the OS.  tlsMgr must not be nil.
-func (vr *versionResponse) setAllowedToAutoUpdate(tlsMgr *tlsManager) (err error) {
+// allowed to perform an automatic update by the OS.  l and tlsMgr must not be
+// nil.
+func (vr *versionResponse) setAllowedToAutoUpdate(
+	ctx context.Context,
+	l *slog.Logger,
+	tlsMgr *tlsManager,
+) (err error) {
 	if vr.CanAutoUpdate != aghalg.NBTrue {
 		return nil
 	}
@@ -179,7 +186,7 @@ func (vr *versionResponse) setAllowedToAutoUpdate(tlsMgr *tlsManager) (err error
 	if tlsConfUsesPrivilegedPorts(tlsMgr.config()) ||
 		config.HTTPConfig.Address.Port() < 1024 ||
 		config.DNS.Port < 1024 {
-		canUpdate, err = aghnet.CanBindPrivilegedPorts()
+		canUpdate, err = aghnet.CanBindPrivilegedPorts(ctx, l)
 		if err != nil {
 			return fmt.Errorf("checking ability to bind privileged ports: %w", err)
 		}
@@ -197,7 +204,7 @@ func tlsConfUsesPrivilegedPorts(c *tlsConfigSettings) (ok bool) {
 }
 
 // finishUpdate completes an update procedure.  It is intended to be used as a
-// goroutine.
+// goroutine.  l and cmdCons must not be nil.
 func finishUpdate(
 	ctx context.Context,
 	l *slog.Logger,

@@ -1465,7 +1465,8 @@ func TestPTRResponseFromHosts(t *testing.T) {
 	}
 
 	var eventsCalledCounter uint32
-	hc, err := aghnet.NewHostsContainer(testFS, &aghtest.FSWatcher{
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	hc, err := aghnet.NewHostsContainer(ctx, testLogger, testFS, &aghtest.FSWatcher{
 		OnStart: func(ctx context.Context) (_ error) { panic(testutil.UnexpectedCall(ctx)) },
 		OnEvents: func() (e <-chan struct{}) {
 			assert.Equal(t, uint32(1), atomic.AddUint32(&eventsCalledCounter, 1))

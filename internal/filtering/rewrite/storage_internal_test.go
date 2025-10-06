@@ -16,6 +16,9 @@ import (
 // testListID is the common rule-list ID for tests.
 const testListID rules.ListID = 1
 
+// testLogger is a logger used in tests.
+var testLogger = slogutil.NewDiscardLogger()
+
 func TestNewDefaultStorage(t *testing.T) {
 	items := []*Item{{
 		Domain: "example.com",
@@ -23,7 +26,7 @@ func TestNewDefaultStorage(t *testing.T) {
 	}}
 
 	s, err := NewDefaultStorage(&Config{
-		Logger:   slogutil.NewDiscardLogger(),
+		Logger:   testLogger,
 		Rewrites: items,
 		ListID:   testListID,
 	})
@@ -36,7 +39,7 @@ func TestDefaultStorage_CRUD(t *testing.T) {
 	var items []*Item
 
 	s, err := NewDefaultStorage(&Config{
-		Logger:   slogutil.NewDiscardLogger(),
+		Logger:   testLogger,
 		Rewrites: items,
 		ListID:   testListID,
 	})
@@ -125,7 +128,7 @@ func TestDefaultStorage_MatchRequest(t *testing.T) {
 	}}
 
 	s, err := NewDefaultStorage(&Config{
-		Logger:   slogutil.NewDiscardLogger(),
+		Logger:   testLogger,
 		Rewrites: items,
 		ListID:   testListID,
 	})
@@ -301,7 +304,7 @@ func TestDefaultStorage_MatchRequest_Levels(t *testing.T) {
 	}}
 
 	s, err := NewDefaultStorage(&Config{
-		Logger:   slogutil.NewDiscardLogger(),
+		Logger:   testLogger,
 		Rewrites: items,
 		ListID:   testListID,
 	})
@@ -373,7 +376,7 @@ func TestDefaultStorage_MatchRequest_ExceptionCNAME(t *testing.T) {
 	}}
 
 	s, err := NewDefaultStorage(&Config{
-		Logger:   slogutil.NewDiscardLogger(),
+		Logger:   testLogger,
 		Rewrites: items,
 		ListID:   testListID,
 	})
@@ -441,7 +444,7 @@ func TestDefaultStorage_MatchRequest_ExceptionIP(t *testing.T) {
 	}}
 
 	s, err := NewDefaultStorage(&Config{
-		Logger:   slogutil.NewDiscardLogger(),
+		Logger:   testLogger,
 		Rewrites: items,
 		ListID:   testListID,
 	})

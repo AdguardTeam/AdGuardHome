@@ -1,7 +1,9 @@
 package dhcpd
 
 import (
+	"context"
 	"fmt"
+	"log/slog"
 	"net"
 	"net/netip"
 	"time"
@@ -17,6 +19,10 @@ import (
 // ServerConfig is the configuration for the DHCP server.  The order of YAML
 // fields is important, since the YAML configuration file follows it.
 type ServerConfig struct {
+	// Logger is used for logging the operation of the DHCP server.  It must not
+	// be nil.
+	Logger *slog.Logger `yaml:"-"`
+
 	// CommandConstructor is used to run external commands.  It must not be nil.
 	CommandConstructor executil.CommandConstructor `yaml:"-"`
 
@@ -85,7 +91,7 @@ type DHCPServer interface {
 	WriteDiskConfig6(c *V6ServerConf)
 
 	// Start - start server
-	Start() (err error)
+	Start(ctx context.Context) (err error)
 	// Stop - stop server
 	Stop() (err error)
 	getLeasesRef() []*dhcpsvc.Lease
@@ -93,6 +99,10 @@ type DHCPServer interface {
 
 // V4ServerConf - server configuration
 type V4ServerConf struct {
+	// Logger is used for logging the operation of the DHCPv4 server.  It must
+	// not be nil.
+	Logger *slog.Logger `yaml:"-" json:"-"`
+
 	Enabled       bool   `yaml:"-" json:"-"`
 	InterfaceName string `yaml:"-" json:"-"`
 
@@ -232,6 +242,10 @@ func (c *V4ServerConf) Validate() (err error) {
 
 // V6ServerConf - server configuration
 type V6ServerConf struct {
+	// Logger is used for logging the operation of the DHCPv6 server.  It must
+	// not be nil.
+	Logger *slog.Logger `yaml:"-" json:"-"`
+
 	Enabled       bool   `yaml:"-" json:"-"`
 	InterfaceName string `yaml:"-" json:"-"`
 

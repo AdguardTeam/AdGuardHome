@@ -362,7 +362,10 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 		Host:   netutil.JoinHostPort(upstreamHost, hostsListener.Port()),
 	}).String()
 
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
 	hc, err := aghnet.NewHostsContainer(
+		ctx,
+		testLogger,
 		fstest.MapFS{
 			hostsFileName: &fstest.MapFile{
 				Data: []byte(hostsListener.Addr().String() + " " + upstreamHost),

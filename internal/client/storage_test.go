@@ -576,6 +576,7 @@ func TestClientsAddExisting(t *testing.T) {
 
 		// First, init a DHCP server with a single static lease.
 		config := &dhcpd.ServerConfig{
+			Logger:  testLogger,
 			Enabled: true,
 			DataDir: t.TempDir(),
 			Conf4: dhcpd.V4ServerConf{
@@ -587,7 +588,8 @@ func TestClientsAddExisting(t *testing.T) {
 			},
 		}
 
-		dhcpServer, err := dhcpd.Create(config)
+		ctx = testutil.ContextWithTimeout(t, testTimeout)
+		dhcpServer, err := dhcpd.Create(ctx, config)
 		require.NoError(t, err)
 
 		storage, err := client.NewStorage(ctx, &client.StorageConfig{

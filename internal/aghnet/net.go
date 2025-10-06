@@ -1,6 +1,4 @@
 // Package aghnet contains networking utilities.
-//
-// TODO(s.chzhen):  Use slog.
 package aghnet
 
 import (
@@ -9,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net"
 	"net/netip"
 	"net/url"
@@ -17,7 +16,7 @@ import (
 
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/osutil"
 	"github.com/AdguardTeam/golibs/osutil/executil"
 )
@@ -51,23 +50,25 @@ func IfaceHasStaticIP(
 	return ifaceHasStaticIP(ctx, cmdCons, ifaceName)
 }
 
-// IfaceSetStaticIP sets a static IP address for network interface.  cmdCons
-// must not be nil.
+// IfaceSetStaticIP sets a static IP address for network interface.  l and
+// cmdCons must not be nil.
 func IfaceSetStaticIP(
 	ctx context.Context,
+	l *slog.Logger,
 	cmdCons executil.CommandConstructor,
 	ifaceName string,
 ) (err error) {
-	return ifaceSetStaticIP(ctx, cmdCons, ifaceName)
+	return ifaceSetStaticIP(ctx, l, cmdCons, ifaceName)
 }
 
-// GatewayIP returns the gateway IP address for the interface.  cmdCons must not
-// be nil.
+// GatewayIP returns the gateway IP address for the interface.  l and cmdCons
+// must not be nil.
 //
 // TODO(e.burkov):  Investigate if the gateway address may be fetched in another
 // way since not every machine has the software installed.
 func GatewayIP(
 	ctx context.Context,
+	l *slog.Logger,
 	cmdCons executil.CommandConstructor,
 	ifaceName string,
 ) (ip netip.Addr) {
@@ -83,10 +84,10 @@ func GatewayIP(
 	)
 	if err != nil {
 		if code, ok := executil.ExitCodeFromError(err); ok {
-			log.Debug("fetching gateway ip: unexpected exit code: %d", code)
-		} else {
-			log.Debug("%s", err)
+			err = fmt.Errorf("unexpected exit code %d: %w", code, err)
 		}
+
+		l.DebugContext(ctx, "fetching gateway ip", slogutil.KeyError, err)
 
 		return netip.Addr{}
 	}
@@ -104,9 +105,9 @@ func GatewayIP(
 }
 
 // CanBindPrivilegedPorts checks if current process can bind to privileged
-// ports.
-func CanBindPrivilegedPorts() (can bool, err error) {
-	return canBindPrivilegedPorts()
+// ports.  l must not be nil.
+func CanBindPrivilegedPorts(ctx context.Context, l *slog.Logger) (can bool, err error) {
+	return canBindPrivilegedPorts(ctx, l)
 }
 
 // NetInterface represents an entry of network interfaces map.
@@ -265,13 +266,13 @@ func InterfaceByIP(ip netip.Addr) (ifaceName string) {
 }
 
 // GetSubnet returns the subnet corresponding to the interface of zero prefix if
-// the search fails.
+// the search fails.  l must not be nil.
 //
 // TODO(e.burkov):  See TODO on GetValidNetInterfacesForWeb.
-func GetSubnet(ifaceName string) (p netip.Prefix) {
+func GetSubnet(ctx context.Context, l *slog.Logger, ifaceName string) (p netip.Prefix) {
 	netIfaces, err := GetValidNetInterfacesForWeb()
 	if err != nil {
-		log.Error("Could not get network interfaces info: %v", err)
+		l.ErrorContext(ctx, "could not get network interfaces info", slogutil.KeyError, err)
 
 		return p
 	}

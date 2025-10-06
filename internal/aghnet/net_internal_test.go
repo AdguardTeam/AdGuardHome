@@ -11,6 +11,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/osutil/executil"
 	"github.com/AdguardTeam/golibs/testutil"
@@ -23,6 +24,9 @@ const testTimeout = 1 * time.Second
 
 // testCmdCons is the common command constructor for tests.
 var testCmdCons = executil.EmptyCommandConstructor{}
+
+// testLogger is a logger used in tests.
+var testLogger = slogutil.NewDiscardLogger()
 
 // substRootDirFS replaces the aghos.RootDirFS function used throughout the
 // package with fsys for tests ran under t.
@@ -87,7 +91,7 @@ func TestGatewayIP(t *testing.T) {
 			t.Parallel()
 
 			ctx := testutil.ContextWithTimeout(t, testTimeout)
-			assert.Equal(t, tc.want, GatewayIP(ctx, tc.cmdCons, ifaceName))
+			assert.Equal(t, tc.want, GatewayIP(ctx, testLogger, tc.cmdCons, ifaceName))
 		})
 	}
 }
