@@ -1,6 +1,7 @@
 package configmigrate
 
 import (
+	"context"
 	"time"
 
 	"github.com/AdguardTeam/golibs/timeutil"
@@ -17,7 +18,7 @@ import (
 //	'schema_version': 12
 //	'querylog_interval': '2160h'
 //	# …
-func migrateTo12(diskConf yobj) (err error) {
+func (m *Migrator) migrateTo12(_ context.Context, diskConf yobj) (err error) {
 	diskConf["schema_version"] = 12
 
 	dns, ok, err := fieldVal[yobj](diskConf, "dns")

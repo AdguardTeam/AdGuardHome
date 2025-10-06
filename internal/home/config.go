@@ -638,12 +638,14 @@ func parseConfig(ctx context.Context, l *slog.Logger) (err error) {
 	}
 
 	migrator := configmigrate.New(&configmigrate.Config{
+		Logger:     l.With(slogutil.KeyPrefix, "config_migrator"),
 		WorkingDir: globalContext.workDir,
 		DataDir:    globalContext.getDataDir(),
 	})
 
 	var upgraded bool
 	config.fileData, upgraded, err = migrator.Migrate(
+		ctx,
 		config.fileData,
 		configmigrate.LastSchemaVersion,
 	)

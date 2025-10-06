@@ -1,5 +1,7 @@
 package configmigrate
 
+import "context"
+
 // migrateTo13 performs the following changes:
 //
 //	# BEFORE:
@@ -15,7 +17,7 @@ package configmigrate
 //	  'local_domain_name': 'lan'
 //	  # …
 //	# …
-func migrateTo13(diskConf yobj) (err error) {
+func (m *Migrator) migrateTo13(_ context.Context, diskConf yobj) (err error) {
 	diskConf["schema_version"] = 13
 
 	dns, ok, err := fieldVal[yobj](diskConf, "dns")

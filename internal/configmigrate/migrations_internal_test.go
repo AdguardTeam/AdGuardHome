@@ -12,17 +12,25 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TODO(e.burkov): Cover all migrations, use a testdata/ dir.
-
-func TestUpgradeSchema1to2(t *testing.T) {
-	diskConf := testDiskConf(1)
-
-	m := New(&Config{
+// emptyMigrator is a helper function that returns initialized with empty values
+// *Migrator and no-op implementations for tests.
+func emptyMigrator() (m *Migrator) {
+	return New(&Config{
+		Logger:     testLogger,
 		WorkingDir: "",
 		DataDir:    "",
 	})
+}
 
-	err := m.migrateTo2(diskConf)
+func TestUpgradeSchema1to2(t *testing.T) {
+	t.Parallel()
+
+	diskConf := testDiskConf(1)
+
+	m := emptyMigrator()
+
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	err := m.migrateTo2(ctx, diskConf)
 	require.NoError(t, err)
 
 	require.Equal(t, diskConf["schema_version"], 2)
@@ -43,9 +51,13 @@ func TestUpgradeSchema1to2(t *testing.T) {
 }
 
 func TestUpgradeSchema2to3(t *testing.T) {
+	t.Parallel()
+
 	diskConf := testDiskConf(2)
 
-	err := migrateTo3(diskConf)
+	m := emptyMigrator()
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	err := m.migrateTo3(ctx, diskConf)
 	require.NoError(t, err)
 
 	require.Equal(t, diskConf["schema_version"], 3)
@@ -75,6 +87,8 @@ func TestUpgradeSchema2to3(t *testing.T) {
 }
 
 func TestUpgradeSchema5to6(t *testing.T) {
+	t.Parallel()
+
 	const newSchemaVer = 6
 
 	testCases := []struct {
@@ -156,7 +170,11 @@ func TestUpgradeSchema5to6(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := migrateTo6(tc.in)
+			t.Parallel()
+
+			m := emptyMigrator()
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			err := m.migrateTo6(ctx, tc.in)
 			testutil.AssertErrorMsg(t, tc.wantErr, err)
 			assert.Equal(t, tc.want, tc.in)
 		})
@@ -164,6 +182,8 @@ func TestUpgradeSchema5to6(t *testing.T) {
 }
 
 func TestUpgradeSchema7to8(t *testing.T) {
+	t.Parallel()
+
 	const host = "1.2.3.4"
 	oldConf := yobj{
 		"dns": yobj{
@@ -172,7 +192,9 @@ func TestUpgradeSchema7to8(t *testing.T) {
 		"schema_version": 7,
 	}
 
-	err := migrateTo8(oldConf)
+	m := emptyMigrator()
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	err := m.migrateTo8(ctx, oldConf)
 	require.NoError(t, err)
 
 	require.Equal(t, oldConf["schema_version"], 8)
@@ -190,9 +212,13 @@ func TestUpgradeSchema7to8(t *testing.T) {
 }
 
 func TestUpgradeSchema8to9(t *testing.T) {
+	t.Parallel()
+
 	const tld = "foo"
 
 	t.Run("with_autohost_tld", func(t *testing.T) {
+		t.Parallel()
+
 		oldConf := yobj{
 			"dns": yobj{
 				"autohost_tld": tld,
@@ -200,7 +226,9 @@ func TestUpgradeSchema8to9(t *testing.T) {
 			"schema_version": 8,
 		}
 
-		err := migrateTo9(oldConf)
+		m := emptyMigrator()
+		ctx := testutil.ContextWithTimeout(t, testTimeout)
+		err := m.migrateTo9(ctx, oldConf)
 		require.NoError(t, err)
 
 		require.Equal(t, oldConf["schema_version"], 9)
@@ -218,12 +246,16 @@ func TestUpgradeSchema8to9(t *testing.T) {
 	})
 
 	t.Run("without_autohost_tld", func(t *testing.T) {
+		t.Parallel()
+
 		oldConf := yobj{
 			"dns":            yobj{},
 			"schema_version": 8,
 		}
 
-		err := migrateTo9(oldConf)
+		m := emptyMigrator()
+		ctx := testutil.ContextWithTimeout(t, testTimeout)
+		err := m.migrateTo9(ctx, oldConf)
 		require.NoError(t, err)
 
 		require.Equal(t, oldConf["schema_version"], 9)
@@ -315,6 +347,8 @@ func testDNSConf(schemaVersion int) (dnsConf yobj) {
 }
 
 func TestAddQUICPort(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name string
 		ups  string
@@ -387,6 +421,8 @@ func TestAddQUICPort(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			withPort := addQUICPort(tc.ups, 784)
 
 			assert.Equal(t, tc.want, withPort)
@@ -395,6 +431,8 @@ func TestAddQUICPort(t *testing.T) {
 }
 
 func TestUpgradeSchema9to10(t *testing.T) {
+	t.Parallel()
+
 	const ultimateAns = 42
 
 	testCases := []struct {
@@ -427,7 +465,11 @@ func TestUpgradeSchema9to10(t *testing.T) {
 			"schema_version": 9,
 		}
 		t.Run(tc.name, func(t *testing.T) {
-			err := migrateTo10(conf)
+			t.Parallel()
+
+			m := emptyMigrator()
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			err := m.migrateTo10(ctx, conf)
 
 			if tc.wantErr != "" {
 				testutil.AssertErrorMsg(t, tc.wantErr, err)
@@ -452,13 +494,21 @@ func TestUpgradeSchema9to10(t *testing.T) {
 	}
 
 	t.Run("no_dns", func(t *testing.T) {
-		err := migrateTo10(yobj{})
+		t.Parallel()
+
+		m := emptyMigrator()
+		ctx := testutil.ContextWithTimeout(t, testTimeout)
+		err := m.migrateTo10(ctx, yobj{})
 
 		assert.NoError(t, err)
 	})
 
 	t.Run("bad_dns", func(t *testing.T) {
-		err := migrateTo10(yobj{
+		t.Parallel()
+
+		m := emptyMigrator()
+		ctx := testutil.ContextWithTimeout(t, testTimeout)
+		err := m.migrateTo10(ctx, yobj{
 			"dns": ultimateAns,
 		})
 
@@ -467,10 +517,14 @@ func TestUpgradeSchema9to10(t *testing.T) {
 }
 
 func TestUpgradeSchema10to11(t *testing.T) {
+	t.Parallel()
+
 	check := func(t *testing.T, conf yobj) {
 		rlimit, _ := conf["rlimit_nofile"].(int)
 
-		err := migrateTo11(conf)
+		m := emptyMigrator()
+		ctx := testutil.ContextWithTimeout(t, testTimeout)
+		err := m.migrateTo11(ctx, conf)
 		require.NoError(t, err)
 
 		require.Equal(t, conf["schema_version"], 11)
@@ -498,6 +552,8 @@ func TestUpgradeSchema10to11(t *testing.T) {
 
 	const rlimit = 42
 	t.Run("with_rlimit", func(t *testing.T) {
+		t.Parallel()
+
 		conf := yobj{
 			"rlimit_nofile":  rlimit,
 			"schema_version": 10,
@@ -506,6 +562,8 @@ func TestUpgradeSchema10to11(t *testing.T) {
 	})
 
 	t.Run("without_rlimit", func(t *testing.T) {
+		t.Parallel()
+
 		conf := yobj{
 			"schema_version": 10,
 		}
@@ -514,6 +572,8 @@ func TestUpgradeSchema10to11(t *testing.T) {
 }
 
 func TestUpgradeSchema11to12(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		ivl     any
 		want    any
@@ -539,7 +599,11 @@ func TestUpgradeSchema11to12(t *testing.T) {
 			"schema_version": 11,
 		}
 		t.Run(tc.name, func(t *testing.T) {
-			err := migrateTo12(conf)
+			t.Parallel()
+
+			m := emptyMigrator()
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			err := m.migrateTo12(ctx, conf)
 
 			if tc.wantErr != "" {
 				require.Error(t, err)
@@ -568,13 +632,21 @@ func TestUpgradeSchema11to12(t *testing.T) {
 	}
 
 	t.Run("no_dns", func(t *testing.T) {
-		err := migrateTo12(yobj{})
+		t.Parallel()
+
+		m := emptyMigrator()
+		ctx := testutil.ContextWithTimeout(t, testTimeout)
+		err := m.migrateTo12(ctx, yobj{})
 
 		assert.NoError(t, err)
 	})
 
 	t.Run("bad_dns", func(t *testing.T) {
-		err := migrateTo12(yobj{
+		t.Parallel()
+
+		m := emptyMigrator()
+		ctx := testutil.ContextWithTimeout(t, testTimeout)
+		err := m.migrateTo12(ctx, yobj{
 			"dns": 0,
 		})
 
@@ -582,11 +654,15 @@ func TestUpgradeSchema11to12(t *testing.T) {
 	})
 
 	t.Run("no_field", func(t *testing.T) {
+		t.Parallel()
+
 		conf := yobj{
 			"dns": yobj{},
 		}
 
-		err := migrateTo12(conf)
+		m := emptyMigrator()
+		ctx := testutil.ContextWithTimeout(t, testTimeout)
+		err := m.migrateTo12(ctx, conf)
 		require.NoError(t, err)
 
 		dns, ok := conf["dns"]
@@ -609,6 +685,8 @@ func TestUpgradeSchema11to12(t *testing.T) {
 }
 
 func TestUpgradeSchema12to13(t *testing.T) {
+	t.Parallel()
+
 	const newSchemaVer = 13
 
 	testCases := []struct {
@@ -646,7 +724,11 @@ func TestUpgradeSchema12to13(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := migrateTo13(tc.in)
+			t.Parallel()
+
+			m := emptyMigrator()
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			err := m.migrateTo13(ctx, tc.in)
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.want, tc.in)
@@ -655,6 +737,8 @@ func TestUpgradeSchema12to13(t *testing.T) {
 }
 
 func TestUpgradeSchema13to14(t *testing.T) {
+	t.Parallel()
+
 	const newSchemaVer = 14
 
 	testClient := yobj{
@@ -728,7 +812,11 @@ func TestUpgradeSchema13to14(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := migrateTo14(tc.in)
+			t.Parallel()
+
+			m := emptyMigrator()
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			err := m.migrateTo14(ctx, tc.in)
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.want, tc.in)
@@ -737,6 +825,8 @@ func TestUpgradeSchema13to14(t *testing.T) {
 }
 
 func TestUpgradeSchema14to15(t *testing.T) {
+	t.Parallel()
+
 	const newSchemaVer = 15
 
 	defaultWantObj := yobj{
@@ -776,7 +866,11 @@ func TestUpgradeSchema14to15(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := migrateTo15(tc.in)
+			t.Parallel()
+
+			m := emptyMigrator()
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			err := m.migrateTo15(ctx, tc.in)
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.want, tc.in)
@@ -785,6 +879,8 @@ func TestUpgradeSchema14to15(t *testing.T) {
 }
 
 func TestUpgradeSchema15to16(t *testing.T) {
+	t.Parallel()
+
 	const newSchemaVer = 16
 
 	defaultWantObj := yobj{
@@ -835,7 +931,11 @@ func TestUpgradeSchema15to16(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := migrateTo16(tc.in)
+			t.Parallel()
+
+			m := emptyMigrator()
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			err := m.migrateTo16(ctx, tc.in)
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.want, tc.in)
@@ -844,6 +944,8 @@ func TestUpgradeSchema15to16(t *testing.T) {
 }
 
 func TestUpgradeSchema16to17(t *testing.T) {
+	t.Parallel()
+
 	const newSchemaVer = 17
 
 	defaultWantObj := yobj{
@@ -896,7 +998,11 @@ func TestUpgradeSchema16to17(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := migrateTo17(tc.in)
+			t.Parallel()
+
+			m := emptyMigrator()
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			err := m.migrateTo17(ctx, tc.in)
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.want, tc.in)
@@ -905,6 +1011,8 @@ func TestUpgradeSchema16to17(t *testing.T) {
 }
 
 func TestUpgradeSchema17to18(t *testing.T) {
+	t.Parallel()
+
 	const newSchemaVer = 18
 
 	defaultWantObj := yobj{
@@ -955,7 +1063,11 @@ func TestUpgradeSchema17to18(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := migrateTo18(tc.in)
+			t.Parallel()
+
+			m := emptyMigrator()
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			err := m.migrateTo18(ctx, tc.in)
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.want, tc.in)
@@ -964,6 +1076,8 @@ func TestUpgradeSchema17to18(t *testing.T) {
 }
 
 func TestUpgradeSchema18to19(t *testing.T) {
+	t.Parallel()
+
 	const newSchemaVer = 19
 
 	defaultWantObj := yobj{
@@ -1039,7 +1153,11 @@ func TestUpgradeSchema18to19(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := migrateTo19(tc.in)
+			t.Parallel()
+
+			m := emptyMigrator()
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			err := m.migrateTo19(ctx, tc.in)
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.want, tc.in)
@@ -1048,6 +1166,8 @@ func TestUpgradeSchema18to19(t *testing.T) {
 }
 
 func TestUpgradeSchema19to20(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		ivl     any
 		want    any
@@ -1078,7 +1198,11 @@ func TestUpgradeSchema19to20(t *testing.T) {
 			"schema_version": 19,
 		}
 		t.Run(tc.name, func(t *testing.T) {
-			err := migrateTo20(conf)
+			t.Parallel()
+
+			m := emptyMigrator()
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			err := m.migrateTo20(ctx, conf)
 
 			if tc.wantErr != "" {
 				require.Error(t, err)
@@ -1107,13 +1231,21 @@ func TestUpgradeSchema19to20(t *testing.T) {
 	}
 
 	t.Run("no_stats", func(t *testing.T) {
-		err := migrateTo20(yobj{})
+		t.Parallel()
+
+		m := emptyMigrator()
+		ctx := testutil.ContextWithTimeout(t, testTimeout)
+		err := m.migrateTo20(ctx, yobj{})
 
 		assert.NoError(t, err)
 	})
 
 	t.Run("bad_stats", func(t *testing.T) {
-		err := migrateTo20(yobj{
+		t.Parallel()
+
+		m := emptyMigrator()
+		ctx := testutil.ContextWithTimeout(t, testTimeout)
+		err := m.migrateTo20(ctx, yobj{
 			"statistics": 0,
 		})
 
@@ -1121,11 +1253,15 @@ func TestUpgradeSchema19to20(t *testing.T) {
 	})
 
 	t.Run("no_field", func(t *testing.T) {
+		t.Parallel()
+
 		conf := yobj{
 			"statistics": yobj{},
 		}
 
-		err := migrateTo20(conf)
+		m := emptyMigrator()
+		ctx := testutil.ContextWithTimeout(t, testTimeout)
+		err := m.migrateTo20(ctx, conf)
 		require.NoError(t, err)
 
 		statsVal, ok := conf["statistics"]
@@ -1148,6 +1284,8 @@ func TestUpgradeSchema19to20(t *testing.T) {
 }
 
 func TestUpgradeSchema20to21(t *testing.T) {
+	t.Parallel()
+
 	const newSchemaVer = 21
 
 	testCases := []struct {
@@ -1182,7 +1320,11 @@ func TestUpgradeSchema20to21(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := migrateTo21(tc.in)
+			t.Parallel()
+
+			m := emptyMigrator()
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			err := m.migrateTo21(ctx, tc.in)
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.want, tc.in)
@@ -1191,6 +1333,8 @@ func TestUpgradeSchema20to21(t *testing.T) {
 }
 
 func TestUpgradeSchema21to22(t *testing.T) {
+	t.Parallel()
+
 	const newSchemaVer = 22
 
 	testCases := []struct {
@@ -1252,7 +1396,11 @@ func TestUpgradeSchema21to22(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := migrateTo22(tc.in)
+			t.Parallel()
+
+			m := emptyMigrator()
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			err := m.migrateTo22(ctx, tc.in)
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.want, tc.in)
@@ -1261,6 +1409,8 @@ func TestUpgradeSchema21to22(t *testing.T) {
 }
 
 func TestUpgradeSchema22to23(t *testing.T) {
+	t.Parallel()
+
 	const newSchemaVer = 23
 
 	testCases := []struct {
@@ -1305,7 +1455,11 @@ func TestUpgradeSchema22to23(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := migrateTo23(tc.in)
+			t.Parallel()
+
+			m := emptyMigrator()
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			err := m.migrateTo23(ctx, tc.in)
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.want, tc.in)
@@ -1314,6 +1468,8 @@ func TestUpgradeSchema22to23(t *testing.T) {
 }
 
 func TestUpgradeSchema23to24(t *testing.T) {
+	t.Parallel()
+
 	const newSchemaVer = 24
 
 	testCases := []struct {
@@ -1372,7 +1528,11 @@ func TestUpgradeSchema23to24(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := migrateTo24(tc.in)
+			t.Parallel()
+
+			m := emptyMigrator()
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			err := m.migrateTo24(ctx, tc.in)
 			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
 
 			assert.Equal(t, tc.want, tc.in)
@@ -1381,6 +1541,8 @@ func TestUpgradeSchema23to24(t *testing.T) {
 }
 
 func TestUpgradeSchema24to25(t *testing.T) {
+	t.Parallel()
+
 	const newSchemaVer = 25
 
 	testCases := []struct {
@@ -1459,7 +1621,11 @@ func TestUpgradeSchema24to25(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := migrateTo25(tc.in)
+			t.Parallel()
+
+			m := emptyMigrator()
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			err := m.migrateTo25(ctx, tc.in)
 			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
 
 			assert.Equal(t, tc.want, tc.in)
@@ -1468,6 +1634,8 @@ func TestUpgradeSchema24to25(t *testing.T) {
 }
 
 func TestUpgradeSchema25to26(t *testing.T) {
+	t.Parallel()
+
 	const newSchemaVer = 26
 
 	testCases := []struct {
@@ -1558,7 +1726,11 @@ func TestUpgradeSchema25to26(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := migrateTo26(tc.in)
+			t.Parallel()
+
+			m := emptyMigrator()
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			err := m.migrateTo26(ctx, tc.in)
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.want, tc.in)
@@ -1567,6 +1739,8 @@ func TestUpgradeSchema25to26(t *testing.T) {
 }
 
 func TestUpgradeSchema26to27(t *testing.T) {
+	t.Parallel()
+
 	const newSchemaVer = 27
 
 	testCases := []struct {
@@ -1641,7 +1815,11 @@ func TestUpgradeSchema26to27(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := migrateTo27(tc.in)
+			t.Parallel()
+
+			m := emptyMigrator()
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			err := m.migrateTo27(ctx, tc.in)
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.want, tc.in)
@@ -1650,6 +1828,8 @@ func TestUpgradeSchema26to27(t *testing.T) {
 }
 
 func TestUpgradeSchema27to28(t *testing.T) {
+	t.Parallel()
+
 	const newSchemaVer = 28
 
 	testCases := []struct {
@@ -1722,7 +1902,11 @@ func TestUpgradeSchema27to28(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := migrateTo28(tc.in)
+			t.Parallel()
+
+			m := emptyMigrator()
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			err := m.migrateTo28(ctx, tc.in)
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.want, tc.in)
