@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
@@ -178,13 +179,13 @@ func (web *webAPI) registerControlHandlers() {
 		"/control/version.json",
 		web.postInstallHandler(http.HandlerFunc(web.handleVersionJSON)),
 	)
-	httpRegister(http.MethodPost, "/control/update", web.handleUpdate)
+	web.httpRegister(http.MethodPost, "/control/update", web.handleUpdate)
 
-	httpRegister(http.MethodGet, "/control/status", web.handleStatus)
-	httpRegister(http.MethodPost, "/control/i18n/change_language", web.handleI18nChangeLanguage)
-	httpRegister(http.MethodGet, "/control/i18n/current_language", handleI18nCurrentLanguage)
-	httpRegister(http.MethodGet, "/control/profile", web.handleGetProfile)
-	httpRegister(http.MethodPut, "/control/profile/update", web.handlePutProfile)
+	web.httpRegister(http.MethodGet, "/control/status", web.handleStatus)
+	web.httpRegister(http.MethodPost, "/control/i18n/change_language", web.handleI18nChangeLanguage)
+	web.httpRegister(http.MethodGet, "/control/i18n/current_language", handleI18nCurrentLanguage)
+	web.httpRegister(http.MethodGet, "/control/profile", web.handleGetProfile)
+	web.httpRegister(http.MethodPut, "/control/profile/update", web.handlePutProfile)
 
 	// No authentication is required for DoH/DoT configuration endpoints.
 	mux.Handle(
@@ -199,20 +200,79 @@ func (web *webAPI) registerControlHandlers() {
 	web.registerAuthHandlers()
 }
 
-// httpRegister registers an HTTP handler.
-//
-// TODO(s.chzhen):  Do not use [globalContext.mux].
-func httpRegister(method, url string, handler http.HandlerFunc) {
+func (web *webAPI) register(method, path string, handler http.HandlerFunc) {
 	if method == "" {
-		// "/dns-query" handler doesn't need auth, gzip and isn't restricted by 1 HTTP method
-		globalContext.mux.Handle(url, postInstallHandler(handler))
+		// The "/dns-query" handler doesn't require authentication or gzip, and
+		// it isn't restricted to a single HTTP method.
+		web.conf.mux.Handle(path, web.postInstallHandler(handler))
+
 		return
 	}
 
-	globalContext.mux.Handle(
-		url,
-		postInstallHandler(gziphandler.GzipHandler(ensure(method, handler))),
+	web.conf.mux.Handle(
+		path,
+		web.postInstallHandler(gziphandler.GzipHandler(ensure(method, handler))),
 	)
+}
+
+// TODO(s.chzhen): !! Consider alternative approaches.
+type httpRegistrar struct {
+	mu         *sync.Mutex
+	registerFn aghhttp.RegisterFunc
+	queue      []item
+}
+
+type item struct {
+	handlerFn http.HandlerFunc
+	method    string
+	path      string
+}
+
+func newHTTPRegistrar() (r *httpRegistrar) {
+	return &httpRegistrar{
+		mu: &sync.Mutex{},
+	}
+}
+
+func (r *httpRegistrar) register(method, path string, h http.HandlerFunc) {
+	var fn aghhttp.RegisterFunc
+	defer func() {
+		if fn != nil {
+			fn(method, path, h)
+		}
+	}()
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if r.registerFn == nil {
+		r.queue = append(r.queue, item{
+			handlerFn: h,
+			method:    method,
+			path:      path,
+		})
+
+		return
+	}
+
+	fn = r.registerFn
+}
+
+func (r *httpRegistrar) bind(fn aghhttp.RegisterFunc) {
+	var q []item
+
+	func() {
+		r.mu.Lock()
+		defer r.mu.Unlock()
+
+		q = r.queue
+		r.queue = nil
+		r.registerFn = fn
+	}()
+
+	for _, it := range q {
+		fn(it.method, it.path, it.handlerFn)
+	}
 }
 
 // ensure returns a wrapped handler that makes sure that the request has the
@@ -379,36 +439,6 @@ func httpsURL(u *url.URL, host string, portHTTPS uint16) (redirectURL *url.URL) 
 		Path:     u.Path,
 		RawQuery: u.RawQuery,
 	}
-}
-
-// postInstallHandler lets the handler to run only if firstRun is false.
-// Otherwise, it redirects to /install.html.  It also enforces HTTPS if it is
-// enabled and configured and sets appropriate access control headers.
-//
-// TODO(s.chzhen):  Replace with [web.postInstall] after fixing its usage in
-// [httpRegister], which is called by [dhcpd.Create] before [web] is
-// initialized.
-func postInstallHandler(handler http.Handler) (wrapped http.Handler) {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if globalContext.web == nil {
-			aghhttp.Error(r, w, http.StatusTooEarly, "it is not initialized yet")
-
-			return
-		}
-
-		path := r.URL.Path
-		if globalContext.web.conf.firstRun &&
-			!strings.HasPrefix(path, "/install.") &&
-			!strings.HasPrefix(path, "/assets/") {
-			http.Redirect(w, r, "install.html", http.StatusFound)
-
-			return
-		}
-
-		if handleHTTPSRedirect(w, r) {
-			handler.ServeHTTP(w, r)
-		}
-	})
 }
 
 // postInstallHandler lets the handler to run only if firstRun is false.

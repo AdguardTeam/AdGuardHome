@@ -60,7 +60,10 @@ type tlsManager struct {
 	// confModifier is used to update the global configuration.
 	confModifier agh.ConfigModifier
 
-	// customCipherIDs are the ID of the cipher suites that AdGuard Home must use.
+	httpRegister aghhttp.RegisterFunc
+
+	// customCipherIDs are the IDs of the cipher suites that AdGuard Home must
+	// use.
 	customCipherIDs []uint16
 
 	// servePlainDNS defines if plain DNS is allowed for incoming requests.
@@ -76,6 +79,8 @@ type tlsManagerConfig struct {
 	// confModifier is used to update the global configuration.  It must not be
 	// nil.
 	confModifier agh.ConfigModifier
+
+	httpRegister aghhttp.RegisterFunc
 
 	// tlsSettings contains the TLS configuration settings.
 	tlsSettings tlsConfigSettings
@@ -94,6 +99,7 @@ func newTLSManager(ctx context.Context, conf *tlsManagerConfig) (m *tlsManager, 
 		logger:        conf.logger,
 		mu:            &sync.Mutex{},
 		confModifier:  conf.confModifier,
+		httpRegister:  conf.httpRegister,
 		status:        &tlsConfigStatus{},
 		conf:          &conf.tlsSettings,
 		servePlainDNS: conf.servePlainDNS,
@@ -251,7 +257,7 @@ func (m *tlsManager) reconfigureDNSServer(ctx context.Context) (err error) {
 		config.Clients.Sources,
 		m.conf,
 		m,
-		httpRegister,
+		m.httpRegister,
 		globalContext.clients.storage,
 		m.confModifier,
 	)
@@ -1043,7 +1049,7 @@ func marshalTLS(w http.ResponseWriter, r *http.Request, data tlsConfig) {
 
 // registerWebHandlers registers HTTP handlers for TLS configuration.
 func (m *tlsManager) registerWebHandlers() {
-	httpRegister(http.MethodGet, "/control/tls/status", m.handleTLSStatus)
-	httpRegister(http.MethodPost, "/control/tls/configure", m.handleTLSConfigure)
-	httpRegister(http.MethodPost, "/control/tls/validate", m.handleTLSValidate)
+	m.httpRegister(http.MethodGet, "/control/tls/status", m.handleTLSStatus)
+	m.httpRegister(http.MethodPost, "/control/tls/configure", m.handleTLSConfigure)
+	m.httpRegister(http.MethodPost, "/control/tls/validate", m.handleTLSValidate)
 }

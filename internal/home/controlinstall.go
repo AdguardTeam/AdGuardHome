@@ -510,7 +510,7 @@ func (web *webAPI) finalizeInstall(
 	// moment we'll allow setting up TLS in the initial configuration or the
 	// configuration itself will use HTTPS protocol, because the underlying
 	// functions potentially restart the HTTPS server.
-	err = startMods(ctx, web.baseLogger, web.tlsManager, web.confModifier)
+	err = startMods(ctx, web.baseLogger, web.tlsManager, web.confModifier, web.httpRegister)
 	if err != nil {
 		aghhttp.ErrorAndLog(ctx, web.logger, r, w, http.StatusInternalServerError, "%s", err)
 
@@ -599,13 +599,14 @@ func startMods(
 	baseLogger *slog.Logger,
 	tlsMgr *tlsManager,
 	confModifier agh.ConfigModifier,
+	httpRegister aghhttp.RegisterFunc,
 ) (err error) {
 	statsDir, querylogDir, err := checkStatsAndQuerylogDirs(&globalContext, config)
 	if err != nil {
 		return err
 	}
 
-	err = initDNS(ctx, baseLogger, tlsMgr, confModifier, statsDir, querylogDir)
+	err = initDNS(ctx, baseLogger, tlsMgr, confModifier, httpRegister, statsDir, querylogDir)
 	if err != nil {
 		return err
 	}

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agh"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/arpdb"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
@@ -43,6 +44,8 @@ type clientsContainer struct {
 	// confModifier is used to update the global configuration.  It must not be
 	// nil.
 	confModifier agh.ConfigModifier
+
+	httpRegister aghhttp.RegisterFunc
 
 	// lock protects all fields.
 	//
@@ -79,6 +82,7 @@ func (clients *clientsContainer) Init(
 	filteringConf *filtering.Config,
 	sigHdlr *signalHandler,
 	confModifier agh.ConfigModifier,
+	httpRegister aghhttp.RegisterFunc,
 ) (err error) {
 	// TODO(s.chzhen):  Refactor it.
 	if clients.storage != nil {
@@ -90,6 +94,7 @@ func (clients *clientsContainer) Init(
 	clients.safeSearchCacheSize = filteringConf.SafeSearchCacheSize
 	clients.safeSearchCacheTTL = time.Minute * time.Duration(filteringConf.CacheTime)
 	clients.confModifier = confModifier
+	clients.httpRegister = httpRegister
 
 	confClients := make([]*client.Persistent, 0, len(objects))
 	for i, o := range objects {

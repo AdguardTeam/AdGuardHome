@@ -48,6 +48,7 @@ func initDNS(
 	baseLogger *slog.Logger,
 	tlsMgr *tlsManager,
 	confModifier agh.ConfigModifier,
+	httpRegister aghhttp.RegisterFunc,
 	statsDir string,
 	querylogDir string,
 ) (err error) {
@@ -132,7 +133,7 @@ func initDNSServer(
 	qlog querylog.QueryLog,
 	dhcpSrv dnsforward.DHCP,
 	anonymizer *aghnet.IPMut,
-	httpReg aghhttp.RegisterFunc,
+	httpRegister aghhttp.RegisterFunc,
 	tlsMgr *tlsManager,
 	l *slog.Logger,
 	confModifier agh.ConfigModifier,
@@ -164,7 +165,7 @@ func initDNSServer(
 		config.Clients.Sources,
 		tlsMgr.config(),
 		tlsMgr,
-		httpReg,
+		httpRegister,
 		globalContext.clients.storage,
 		confModifier,
 	)
@@ -241,7 +242,7 @@ func newServerConfig(
 	clientSrcConf *clientSourcesConfig,
 	tlsConf *tlsConfigSettings,
 	tlsMgr *tlsManager,
-	httpReg aghhttp.RegisterFunc,
+	httpRegister aghhttp.RegisterFunc,
 	clientsContainer dnsforward.ClientsContainer,
 	confModifier agh.ConfigModifier,
 ) (newConf *dnsforward.ServerConfig, err error) {
@@ -264,7 +265,7 @@ func newServerConfig(
 		UpstreamTimeout:        time.Duration(dnsConf.UpstreamTimeout),
 		TLSv12Roots:            tlsMgr.rootCerts,
 		ConfModifier:           confModifier,
-		HTTPRegister:           httpReg,
+		HTTPRegister:           httpRegister,
 		LocalPTRResolvers:      dnsConf.PrivateRDNSResolvers,
 		UseDNS64:               dnsConf.UseDNS64,
 		DNS64Prefixes:          dnsConf.DNS64Prefixes,

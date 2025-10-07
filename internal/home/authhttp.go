@@ -270,7 +270,7 @@ func (web *webAPI) registerAuthHandlers() {
 		"/control/login",
 		web.postInstallHandler(ensure(http.MethodPost, web.handleLogin)),
 	)
-	httpRegister(http.MethodGet, "/control/logout", web.handleLogout)
+	web.httpRegister(http.MethodGet, "/control/logout", web.handleLogout)
 }
 
 // isPublicResource returns true if p is a path to a public resource.

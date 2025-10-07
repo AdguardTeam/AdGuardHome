@@ -21,6 +21,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghslog"
@@ -302,6 +303,7 @@ func initContextClients(
 	logger *slog.Logger,
 	sigHdlr *signalHandler,
 	confModifier agh.ConfigModifier,
+	httpRegister aghhttp.RegisterFunc,
 ) (err error) {
 	//lint:ignore SA1019 Migration is not over.
 	config.DHCP.WorkDir = globalContext.workDir
@@ -335,6 +337,7 @@ func initContextClients(
 		config.Filtering,
 		sigHdlr,
 		confModifier,
+		httpRegister,
 	)
 }
 
@@ -386,6 +389,7 @@ func setupDNSFilteringConf(
 	conf *filtering.Config,
 	tlsMgr *tlsManager,
 	confModifier agh.ConfigModifier,
+	httpRegister aghhttp.RegisterFunc,
 ) (err error) {
 	const (
 		dnsTimeout = 3 * time.Second
@@ -575,6 +579,7 @@ func initWeb(
 	auth *auth,
 	mux *http.ServeMux,
 	confModifier agh.ConfigModifier,
+	httpRegister aghhttp.RegisterFunc,
 	isCustomUpdURL bool,
 	isFirstRun bool,
 ) (web *webAPI, err error) {
@@ -602,6 +607,7 @@ func initWeb(
 		logger:             logger,
 		baseLogger:         baseLogger,
 		confModifier:       confModifier,
+		httpRegister:       httpRegister,
 		tlsManager:         tlsMgr,
 		auth:               auth,
 		mux:                mux,
@@ -718,7 +724,10 @@ func run(
 		slogLogger.With(slogutil.KeyPrefix, "config_modifier"),
 	)
 
-	err = initContextClients(ctx, slogLogger, sigHdlr, confModifier)
+	reg := newHTTPRegistrar()
+	httpRegister := reg.register
+
+	err = initContextClients(ctx, slogLogger, sigHdlr, confModifier, httpRegister)
 	fatalOnError(err)
 
 	tlsMgrLogger := slogLogger.With(slogutil.KeyPrefix, "tls_manager")
@@ -726,6 +735,7 @@ func run(
 	tlsMgr, err := newTLSManager(ctx, &tlsManagerConfig{
 		logger:        tlsMgrLogger,
 		confModifier:  confModifier,
+		httpRegister:  httpRegister,
 		tlsSettings:   config.TLS,
 		servePlainDNS: config.DNS.ServePlainDNS,
 	})
@@ -736,7 +746,14 @@ func run(
 
 	confModifier.setTLSManager(tlsMgr)
 
-	err = setupDNSFilteringConf(ctx, slogLogger, config.Filtering, tlsMgr, confModifier)
+	err = setupDNSFilteringConf(
+		ctx,
+		slogLogger,
+		config.Filtering,
+		tlsMgr,
+		confModifier,
+		httpRegister,
+	)
 	fatalOnError(err)
 
 	err = setupOpts(opts)
@@ -783,10 +800,13 @@ func run(
 		auth,
 		globalContext.mux,
 		confModifier,
+		httpRegister,
 		isCustomURL,
 		isFirstRun,
 	)
 	fatalOnError(err)
+
+	reg.bind(web.register)
 
 	globalContext.web = web
 
@@ -797,7 +817,7 @@ func run(
 	fatalOnError(err)
 
 	if !isFirstRun {
-		err = initDNS(ctx, slogLogger, tlsMgr, confModifier, statsDir, querylogDir)
+		err = initDNS(ctx, slogLogger, tlsMgr, confModifier, httpRegister, statsDir, querylogDir)
 		fatalOnError(err)
 
 		tlsMgr.start(ctx)

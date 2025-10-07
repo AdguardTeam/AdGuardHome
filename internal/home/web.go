@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agh"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/updater"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
@@ -54,6 +55,8 @@ type webConfig struct {
 
 	// confModifier is used to update the global configuration.
 	confModifier agh.ConfigModifier
+
+	httpRegister aghhttp.RegisterFunc
 
 	// tlsManager contains the current configuration and state of TLS
 	// encryption.  It must not be nil.
@@ -125,6 +128,8 @@ type webAPI struct {
 	// cmdCons is used to run external commands.
 	cmdCons executil.CommandConstructor
 
+	httpRegister aghhttp.RegisterFunc
+
 	// TODO(a.garipov): Refactor all these servers.
 	httpServer *http.Server
 
@@ -157,6 +162,7 @@ func newWebAPI(ctx context.Context, conf *webConfig) (w *webAPI) {
 	w = &webAPI{
 		conf:         conf,
 		confModifier: conf.confModifier,
+		httpRegister: conf.httpRegister,
 		cmdCons:      conf.CommandConstructor,
 		logger:       conf.logger,
 		baseLogger:   conf.baseLogger,
