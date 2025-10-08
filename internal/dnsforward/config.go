@@ -270,7 +270,7 @@ type ServerConfig struct {
 	ConfModifier agh.ConfigModifier
 
 	// Register an HTTP handler
-	HTTPRegister aghhttp.RegisterFunc
+	HTTPReg aghhttp.Registrar
 
 	// LocalPTRResolvers is a slice of addresses to be used as upstreams for
 	// resolving PTR queries for local addresses.

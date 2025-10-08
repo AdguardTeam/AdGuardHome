@@ -45,7 +45,7 @@ type clientsContainer struct {
 	// nil.
 	confModifier agh.ConfigModifier
 
-	httpRegister aghhttp.RegisterFunc
+	httpReg aghhttp.Registrar
 
 	// lock protects all fields.
 	//
@@ -82,7 +82,7 @@ func (clients *clientsContainer) Init(
 	filteringConf *filtering.Config,
 	sigHdlr *signalHandler,
 	confModifier agh.ConfigModifier,
-	httpRegister aghhttp.RegisterFunc,
+	httpReg aghhttp.Registrar,
 ) (err error) {
 	// TODO(s.chzhen):  Refactor it.
 	if clients.storage != nil {
@@ -94,7 +94,7 @@ func (clients *clientsContainer) Init(
 	clients.safeSearchCacheSize = filteringConf.SafeSearchCacheSize
 	clients.safeSearchCacheTTL = time.Minute * time.Duration(filteringConf.CacheTime)
 	clients.confModifier = confModifier
-	clients.httpRegister = httpRegister
+	clients.httpReg = httpReg
 
 	confClients := make([]*client.Persistent, 0, len(objects))
 	for i, o := range objects {

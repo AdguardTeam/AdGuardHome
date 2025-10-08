@@ -7,7 +7,6 @@ import (
 	"net/url"
 	"runtime"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
@@ -179,13 +178,13 @@ func (web *webAPI) registerControlHandlers() {
 		"/control/version.json",
 		web.postInstallHandler(http.HandlerFunc(web.handleVersionJSON)),
 	)
-	web.httpRegister(http.MethodPost, "/control/update", web.handleUpdate)
+	web.httpReg.Register(http.MethodPost, "/control/update", web.handleUpdate)
 
-	web.httpRegister(http.MethodGet, "/control/status", web.handleStatus)
-	web.httpRegister(http.MethodPost, "/control/i18n/change_language", web.handleI18nChangeLanguage)
-	web.httpRegister(http.MethodGet, "/control/i18n/current_language", handleI18nCurrentLanguage)
-	web.httpRegister(http.MethodGet, "/control/profile", web.handleGetProfile)
-	web.httpRegister(http.MethodPut, "/control/profile/update", web.handlePutProfile)
+	web.httpReg.Register(http.MethodGet, "/control/status", web.handleStatus)
+	web.httpReg.Register(http.MethodPost, "/control/i18n/change_language", web.handleI18nChangeLanguage)
+	web.httpReg.Register(http.MethodGet, "/control/i18n/current_language", handleI18nCurrentLanguage)
+	web.httpReg.Register(http.MethodGet, "/control/profile", web.handleGetProfile)
+	web.httpReg.Register(http.MethodPut, "/control/profile/update", web.handlePutProfile)
 
 	// No authentication is required for DoH/DoT configuration endpoints.
 	mux.Handle(
@@ -213,66 +212,6 @@ func (web *webAPI) register(method, path string, handler http.HandlerFunc) {
 		path,
 		web.postInstallHandler(gziphandler.GzipHandler(ensure(method, handler))),
 	)
-}
-
-// TODO(s.chzhen): !! Consider alternative approaches.
-type httpRegistrar struct {
-	mu         *sync.Mutex
-	registerFn aghhttp.RegisterFunc
-	queue      []item
-}
-
-type item struct {
-	handlerFn http.HandlerFunc
-	method    string
-	path      string
-}
-
-func newHTTPRegistrar() (r *httpRegistrar) {
-	return &httpRegistrar{
-		mu: &sync.Mutex{},
-	}
-}
-
-func (r *httpRegistrar) register(method, path string, h http.HandlerFunc) {
-	var fn aghhttp.RegisterFunc
-	defer func() {
-		if fn != nil {
-			fn(method, path, h)
-		}
-	}()
-
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	if r.registerFn == nil {
-		r.queue = append(r.queue, item{
-			handlerFn: h,
-			method:    method,
-			path:      path,
-		})
-
-		return
-	}
-
-	fn = r.registerFn
-}
-
-func (r *httpRegistrar) bind(fn aghhttp.RegisterFunc) {
-	var q []item
-
-	func() {
-		r.mu.Lock()
-		defer r.mu.Unlock()
-
-		q = r.queue
-		r.queue = nil
-		r.registerFn = fn
-	}()
-
-	for _, it := range q {
-		fn(it.method, it.path, it.handlerFn)
-	}
 }
 
 // ensure returns a wrapped handler that makes sure that the request has the

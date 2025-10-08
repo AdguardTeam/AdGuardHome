@@ -31,7 +31,7 @@ type ServerConfig struct {
 	ConfModifier agh.ConfigModifier `yaml:"-"`
 
 	// Register an HTTP handler
-	HTTPRegister aghhttp.RegisterFunc `yaml:"-"`
+	HTTPReg aghhttp.Registrar `yaml:"-"`
 
 	Enabled       bool   `yaml:"enabled"`
 	InterfaceName string `yaml:"interface_name"`

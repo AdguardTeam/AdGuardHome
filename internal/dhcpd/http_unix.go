@@ -741,7 +741,7 @@ func (s *server) handleReset(w http.ResponseWriter, r *http.Request) {
 	s.conf = &ServerConfig{
 		ConfModifier: s.conf.ConfModifier,
 
-		HTTPRegister: s.conf.HTTPRegister,
+		HTTPReg: s.conf.HTTPReg,
 
 		LocalDomainName: s.conf.LocalDomainName,
 
@@ -778,17 +778,17 @@ func (s *server) handleResetLeases(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) registerHandlers() {
-	if s.conf.HTTPRegister == nil {
+	if s.conf.HTTPReg == nil {
 		return
 	}
 
-	s.conf.HTTPRegister(http.MethodGet, "/control/dhcp/status", s.handleDHCPStatus)
-	s.conf.HTTPRegister(http.MethodGet, "/control/dhcp/interfaces", s.handleDHCPInterfaces)
-	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/set_config", s.handleDHCPSetConfig)
-	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/find_active_dhcp", s.handleDHCPFindActiveServer)
-	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/add_static_lease", s.handleDHCPAddStaticLease)
-	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/remove_static_lease", s.handleDHCPRemoveStaticLease)
-	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/update_static_lease", s.handleDHCPUpdateStaticLease)
-	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/reset", s.handleReset)
-	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/reset_leases", s.handleResetLeases)
+	s.conf.HTTPReg.Register(http.MethodGet, "/control/dhcp/status", s.handleDHCPStatus)
+	s.conf.HTTPReg.Register(http.MethodGet, "/control/dhcp/interfaces", s.handleDHCPInterfaces)
+	s.conf.HTTPReg.Register(http.MethodPost, "/control/dhcp/set_config", s.handleDHCPSetConfig)
+	s.conf.HTTPReg.Register(http.MethodPost, "/control/dhcp/find_active_dhcp", s.handleDHCPFindActiveServer)
+	s.conf.HTTPReg.Register(http.MethodPost, "/control/dhcp/add_static_lease", s.handleDHCPAddStaticLease)
+	s.conf.HTTPReg.Register(http.MethodPost, "/control/dhcp/remove_static_lease", s.handleDHCPRemoveStaticLease)
+	s.conf.HTTPReg.Register(http.MethodPost, "/control/dhcp/update_static_lease", s.handleDHCPUpdateStaticLease)
+	s.conf.HTTPReg.Register(http.MethodPost, "/control/dhcp/reset", s.handleReset)
+	s.conf.HTTPReg.Register(http.MethodPost, "/control/dhcp/reset_leases", s.handleResetLeases)
 }

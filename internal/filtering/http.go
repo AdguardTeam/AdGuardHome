@@ -711,7 +711,7 @@ func (d *DNSFilter) handleParentalStatus(w http.ResponseWriter, r *http.Request)
 
 // RegisterFilteringHandlers - register handlers
 func (d *DNSFilter) RegisterFilteringHandlers() {
-	registerHTTP := d.conf.HTTPRegister
+	registerHTTP := d.conf.HTTPReg.Register
 	if registerHTTP == nil {
 		return
 	}

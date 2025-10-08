@@ -615,12 +615,12 @@ func (clients *clientsContainer) findRuntime(
 
 // registerWebHandlers registers HTTP handlers.
 func (clients *clientsContainer) registerWebHandlers() {
-	clients.httpRegister(http.MethodGet, "/control/clients", clients.handleGetClients)
-	clients.httpRegister(http.MethodPost, "/control/clients/add", clients.handleAddClient)
-	clients.httpRegister(http.MethodPost, "/control/clients/delete", clients.handleDelClient)
-	clients.httpRegister(http.MethodPost, "/control/clients/update", clients.handleUpdateClient)
-	clients.httpRegister(http.MethodPost, "/control/clients/search", clients.handleSearchClient)
+	clients.httpReg.Register(http.MethodGet, "/control/clients", clients.handleGetClients)
+	clients.httpReg.Register(http.MethodPost, "/control/clients/add", clients.handleAddClient)
+	clients.httpReg.Register(http.MethodPost, "/control/clients/delete", clients.handleDelClient)
+	clients.httpReg.Register(http.MethodPost, "/control/clients/update", clients.handleUpdateClient)
+	clients.httpReg.Register(http.MethodPost, "/control/clients/search", clients.handleSearchClient)
 
 	// Deprecated handler.
-	clients.httpRegister(http.MethodGet, "/control/clients/find", clients.handleFindClient)
+	clients.httpReg.Register(http.MethodGet, "/control/clients/find", clients.handleFindClient)
 }

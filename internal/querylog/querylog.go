@@ -53,7 +53,7 @@ type Config struct {
 	ConfigModifier agh.ConfigModifier
 
 	// HTTPRegister registers an HTTP handler.
-	HTTPRegister aghhttp.RegisterFunc
+	HTTPReg aghhttp.Registrar
 
 	// FindClient returns client information by their IDs.
 	FindClient func(ids []string) (c *Client, err error)

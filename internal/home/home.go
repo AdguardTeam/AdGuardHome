@@ -303,12 +303,12 @@ func initContextClients(
 	logger *slog.Logger,
 	sigHdlr *signalHandler,
 	confModifier agh.ConfigModifier,
-	httpRegister aghhttp.RegisterFunc,
+	httpReg aghhttp.Registrar,
 ) (err error) {
 	//lint:ignore SA1019 Migration is not over.
 	config.DHCP.WorkDir = globalContext.workDir
 	config.DHCP.DataDir = globalContext.getDataDir()
-	config.DHCP.HTTPRegister = httpRegister
+	config.DHCP.HTTPReg = httpReg
 	config.DHCP.CommandConstructor = executil.SystemCommandConstructor{}
 	config.DHCP.Logger = logger.With(slogutil.KeyPrefix, "dhcpd")
 	config.DHCP.ConfModifier = confModifier
@@ -337,7 +337,7 @@ func initContextClients(
 		config.Filtering,
 		sigHdlr,
 		confModifier,
-		httpRegister,
+		httpReg,
 	)
 }
 
@@ -389,7 +389,7 @@ func setupDNSFilteringConf(
 	conf *filtering.Config,
 	tlsMgr *tlsManager,
 	confModifier agh.ConfigModifier,
-	httpRegister aghhttp.RegisterFunc,
+	httpReg aghhttp.Registrar,
 ) (err error) {
 	const (
 		dnsTimeout = 3 * time.Second
@@ -412,7 +412,7 @@ func setupDNSFilteringConf(
 	}
 
 	conf.ConfModifier = confModifier
-	conf.HTTPRegister = httpRegister
+	conf.HTTPReg = httpReg
 	conf.DataDir = globalContext.getDataDir()
 	conf.Filters = slices.Clone(config.Filters)
 	conf.WhitelistFilters = slices.Clone(config.WhitelistFilters)
@@ -579,7 +579,7 @@ func initWeb(
 	auth *auth,
 	mux *http.ServeMux,
 	confModifier agh.ConfigModifier,
-	httpRegister aghhttp.RegisterFunc,
+	httpReg aghhttp.Registrar,
 	isCustomUpdURL bool,
 	isFirstRun bool,
 ) (web *webAPI, err error) {
@@ -607,7 +607,7 @@ func initWeb(
 		logger:             logger,
 		baseLogger:         baseLogger,
 		confModifier:       confModifier,
-		httpRegister:       httpRegister,
+		httpReg:            httpReg,
 		tlsManager:         tlsMgr,
 		auth:               auth,
 		mux:                mux,
@@ -724,10 +724,9 @@ func run(
 		slogLogger.With(slogutil.KeyPrefix, "config_modifier"),
 	)
 
-	reg := newHTTPRegistrar()
-	httpRegister := reg.register
+	httpReg := aghhttp.NewDeferredRegistrar()
 
-	err = initContextClients(ctx, slogLogger, sigHdlr, confModifier, httpRegister)
+	err = initContextClients(ctx, slogLogger, sigHdlr, confModifier, httpReg)
 	fatalOnError(err)
 
 	tlsMgrLogger := slogLogger.With(slogutil.KeyPrefix, "tls_manager")
@@ -735,7 +734,7 @@ func run(
 	tlsMgr, err := newTLSManager(ctx, &tlsManagerConfig{
 		logger:        tlsMgrLogger,
 		confModifier:  confModifier,
-		httpRegister:  httpRegister,
+		httpReg:       httpReg,
 		tlsSettings:   config.TLS,
 		servePlainDNS: config.DNS.ServePlainDNS,
 	})
@@ -752,7 +751,7 @@ func run(
 		config.Filtering,
 		tlsMgr,
 		confModifier,
-		httpRegister,
+		httpReg,
 	)
 	fatalOnError(err)
 
@@ -800,13 +799,13 @@ func run(
 		auth,
 		globalContext.mux,
 		confModifier,
-		httpRegister,
+		httpReg,
 		isCustomURL,
 		isFirstRun,
 	)
 	fatalOnError(err)
 
-	reg.bind(web.register)
+	httpReg.Bind(web.register)
 
 	globalContext.web = web
 
@@ -817,7 +816,7 @@ func run(
 	fatalOnError(err)
 
 	if !isFirstRun {
-		err = initDNS(ctx, slogLogger, tlsMgr, confModifier, httpRegister, statsDir, querylogDir)
+		err = initDNS(ctx, slogLogger, tlsMgr, confModifier, httpReg, statsDir, querylogDir)
 		fatalOnError(err)
 
 		tlsMgr.start(ctx)

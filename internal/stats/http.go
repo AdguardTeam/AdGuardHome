@@ -244,16 +244,16 @@ func (s *StatsCtx) handleStatsReset(w http.ResponseWriter, r *http.Request) {
 
 // initWeb registers the handlers for web endpoints of statistics module.
 func (s *StatsCtx) initWeb() {
-	if s.httpRegister == nil {
+	if s.httpReg == nil {
 		return
 	}
 
-	s.httpRegister(http.MethodGet, "/control/stats", s.handleStats)
-	s.httpRegister(http.MethodPost, "/control/stats_reset", s.handleStatsReset)
-	s.httpRegister(http.MethodGet, "/control/stats/config", s.handleGetStatsConfig)
-	s.httpRegister(http.MethodPut, "/control/stats/config/update", s.handlePutStatsConfig)
+	s.httpReg.Register(http.MethodGet, "/control/stats", s.handleStats)
+	s.httpReg.Register(http.MethodPost, "/control/stats_reset", s.handleStatsReset)
+	s.httpReg.Register(http.MethodGet, "/control/stats/config", s.handleGetStatsConfig)
+	s.httpReg.Register(http.MethodPut, "/control/stats/config/update", s.handlePutStatsConfig)
 
 	// Deprecated handlers.
-	s.httpRegister(http.MethodGet, "/control/stats_info", s.handleStatsInfo)
-	s.httpRegister(http.MethodPost, "/control/stats_config", s.handleStatsConfig)
+	s.httpReg.Register(http.MethodGet, "/control/stats_info", s.handleStatsInfo)
+	s.httpReg.Register(http.MethodPost, "/control/stats_config", s.handleStatsConfig)
 }
