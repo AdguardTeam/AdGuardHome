@@ -31,6 +31,9 @@ import (
 	"github.com/ameshkov/dnscrypt/v2"
 )
 
+// See https://github.com/AdguardTeam/dnsproxy for more details about some of the
+// settings.
+
 // Config represents the DNS filtering configuration of AdGuard Home.  The zero
 // Config is empty and ready for use.
 type Config struct {
@@ -146,8 +149,11 @@ type Config struct {
 	EDNSClientSubnet *EDNSClientSubnet `yaml:"edns_client_subnet"`
 
 	// MaxGoroutines is the max number of parallel goroutines for processing
-	// incoming requests.
+	// incoming requests. 0 means no limit.
 	MaxGoroutines uint `yaml:"max_goroutines"`
+
+	// Set the size of the UDP buffer in bytes. A value <= 0 will use the system default.
+	UDPBufferSize int `yaml:"udp_buf_size"`
 
 	// HandleDDR, if true, handle DDR requests
 	HandleDDR bool `yaml:"handle_ddr"`
@@ -346,6 +352,7 @@ func (s *Server) newProxyConfig(ctx context.Context) (conf *proxy.Config, err er
 		HTTPSServerName:           aghhttp.UserAgent(),
 		EnableEDNSClientSubnet:    srvConf.EDNSClientSubnet.Enabled,
 		MaxGoroutines:             srvConf.MaxGoroutines,
+		UDPBufferSize:             srvConf.UDPBufferSize,
 		UseDNS64:                  srvConf.UseDNS64,
 		DNS64Prefs:                srvConf.DNS64Prefixes,
 		UsePrivateRDNS:            srvConf.UsePrivateRDNS,
