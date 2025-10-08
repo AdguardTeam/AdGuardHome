@@ -45,6 +45,7 @@ type clientsContainer struct {
 	// nil.
 	confModifier agh.ConfigModifier
 
+	// httpReg registers HTTP handlers.  It must not be nil.
 	httpReg aghhttp.Registrar
 
 	// lock protects all fields.

@@ -33,11 +33,12 @@ type temporaryError interface {
 // TODO(a.garipov): Find out if this API used with a GET method by anyone.
 func (web *webAPI) handleVersionJSON(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	l := web.logger
 
 	resp := &versionResponse{}
 	if web.conf.disableUpdate {
 		resp.Disabled = true
-		aghhttp.WriteJSONResponseOK(w, r, resp)
+		aghhttp.WriteJSONResponseOK(ctx, l, w, r, resp)
 
 		return
 	}
@@ -50,15 +51,7 @@ func (web *webAPI) handleVersionJSON(w http.ResponseWriter, r *http.Request) {
 	if r.ContentLength != 0 {
 		err = json.NewDecoder(r.Body).Decode(req)
 		if err != nil {
-			aghhttp.ErrorAndLog(
-				ctx,
-				web.logger,
-				r,
-				w,
-				http.StatusBadRequest,
-				"parsing request: %s",
-				err,
-			)
+			aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "parsing request: %s", err)
 
 			return
 		}
@@ -67,20 +60,20 @@ func (web *webAPI) handleVersionJSON(w http.ResponseWriter, r *http.Request) {
 	err = web.requestVersionInfo(ctx, resp, req.Recheck)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
-		aghhttp.ErrorAndLog(ctx, web.logger, r, w, http.StatusBadGateway, "%s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadGateway, "%s", err)
 
 		return
 	}
 
-	err = resp.setAllowedToAutoUpdate(ctx, web.logger, web.tlsManager)
+	err = resp.setAllowedToAutoUpdate(ctx, l, web.tlsManager)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
-		aghhttp.ErrorAndLog(ctx, web.logger, r, w, http.StatusInternalServerError, "%s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusInternalServerError, "%s", err)
 
 		return
 	}
 
-	aghhttp.WriteJSONResponseOK(w, r, resp)
+	aghhttp.WriteJSONResponseOK(ctx, l, w, r, resp)
 }
 
 // requestVersionInfo sets the VersionInfo field of resp if it can reach the

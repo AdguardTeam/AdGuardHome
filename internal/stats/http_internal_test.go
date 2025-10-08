@@ -11,6 +11,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/golibs/timeutil"
@@ -30,6 +31,7 @@ func TestHandleStatsConfig(t *testing.T) {
 		UnitID:            func() (id uint32) { return 0 },
 		ConfigModifier:    agh.EmptyConfigModifier{},
 		ShouldCountClient: func([]string) bool { return true },
+		HTTPReg:           aghhttp.EmptyRegistrar{},
 		Filename:          filepath.Join(t.TempDir(), "stats.db"),
 		Limit:             time.Hour * 24,
 		Enabled:           true,

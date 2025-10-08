@@ -66,9 +66,6 @@ type homeContext struct {
 	// configuration files, for example /etc/hosts.
 	etcHosts *aghnet.HostsContainer
 
-	// mux is our custom http.ServeMux.
-	mux *http.ServeMux
-
 	// Runtime properties
 	// --
 
@@ -151,8 +148,6 @@ func setupContext(
 	opts options,
 	isFirstRun bool,
 ) (err error) {
-	globalContext.mux = http.NewServeMux()
-
 	if !opts.noEtcHosts {
 		err = setupHostsContainer(ctx, baseLogger)
 		if err != nil {
@@ -567,8 +562,7 @@ func isUpdateEnabled(
 	}
 }
 
-// initWeb initializes the web module.  upd, baseLogger, tlsMgr, auth, and mux
-// must not be nil.
+// initWeb initializes the web module.  All arguments must not be nil.
 func initWeb(
 	ctx context.Context,
 	opts options,
@@ -797,7 +791,7 @@ func run(
 		slogLogger,
 		tlsMgr,
 		auth,
-		globalContext.mux,
+		http.NewServeMux(),
 		confModifier,
 		httpReg,
 		isCustomURL,

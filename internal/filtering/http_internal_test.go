@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
 	"github.com/AdguardTeam/golibs/testutil"
@@ -116,6 +117,7 @@ func TestDNSFilter_handleFilteringSetURL(t *testing.T) {
 					Timeout: 5 * time.Second,
 				},
 				ConfModifier: confModifier,
+				HTTPReg:      aghhttp.EmptyRegistrar{},
 				DataDir:      filtersDir,
 			}, nil)
 			require.NoError(t, err)
@@ -197,8 +199,10 @@ func TestDNSFilter_handleSafeBrowsingStatus(t *testing.T) {
 				Logger:       testLogger,
 				ConfModifier: confModifier,
 				DataDir:      filtersDir,
-				HTTPRegister: func(_, url string, handler http.HandlerFunc) {
-					handlers[url] = handler
+				HTTPReg: &aghtest.Registrar{
+					OnRegister: func(_, url string, handler http.HandlerFunc) {
+						handlers[url] = handler
+					},
 				},
 				SafeBrowsingEnabled: tc.enabled,
 			}, nil)
@@ -284,8 +288,10 @@ func TestDNSFilter_handleParentalStatus(t *testing.T) {
 				Logger:       testLogger,
 				ConfModifier: confModifier,
 				DataDir:      filtersDir,
-				HTTPRegister: func(_, url string, handler http.HandlerFunc) {
-					handlers[url] = handler
+				HTTPReg: &aghtest.Registrar{
+					OnRegister: func(_, url string, handler http.HandlerFunc) {
+						handlers[url] = handler
+					},
 				},
 				ParentalEnabled: tc.enabled,
 			}, nil)

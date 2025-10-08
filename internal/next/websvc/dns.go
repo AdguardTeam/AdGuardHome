@@ -60,11 +60,13 @@ type HTTPAPIDNSSettings struct {
 // handlePatchSettingsDNS is the handler for the PATCH /api/v1/settings/dns HTTP
 // API.
 func (svc *Service) handlePatchSettingsDNS(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	l := svc.logger
 	req := &ReqPatchSettingsDNS{}
 
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		aghhttp.WriteJSONResponseError(w, r, fmt.Errorf("decoding: %w", err))
+		aghhttp.WriteJSONResponseError(ctx, l, w, r, fmt.Errorf("decoding: %w", err))
 
 		return
 	}
@@ -93,10 +95,9 @@ func (svc *Service) handlePatchSettingsDNS(w http.ResponseWriter, r *http.Reques
 	req.RefuseAny.Set(&newConf.RefuseAny)
 	req.UseDNS64.Set(&newConf.UseDNS64)
 
-	ctx := r.Context()
 	err = svc.confMgr.UpdateDNS(ctx, newConf)
 	if err != nil {
-		aghhttp.WriteJSONResponseError(w, r, fmt.Errorf("updating: %w", err))
+		aghhttp.WriteJSONResponseError(ctx, l, w, r, fmt.Errorf("updating: %w", err))
 
 		return
 	}
@@ -104,12 +105,12 @@ func (svc *Service) handlePatchSettingsDNS(w http.ResponseWriter, r *http.Reques
 	newSvc := svc.confMgr.DNS()
 	err = newSvc.Start(ctx)
 	if err != nil {
-		aghhttp.WriteJSONResponseError(w, r, fmt.Errorf("starting new service: %w", err))
+		aghhttp.WriteJSONResponseError(ctx, l, w, r, fmt.Errorf("starting new service: %w", err))
 
 		return
 	}
 
-	aghhttp.WriteJSONResponseOK(w, r, &HTTPAPIDNSSettings{
+	aghhttp.WriteJSONResponseOK(ctx, l, w, r, &HTTPAPIDNSSettings{
 		UpstreamMode:        newConf.UpstreamMode,
 		Addresses:           newConf.Addresses,
 		BootstrapServers:    newConf.BootstrapServers,

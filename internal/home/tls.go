@@ -60,6 +60,7 @@ type tlsManager struct {
 	// confModifier is used to update the global configuration.
 	confModifier agh.ConfigModifier
 
+	// httpReg registers HTTP handlers.  It must not be nil.
 	httpReg aghhttp.Registrar
 
 	// customCipherIDs are the IDs of the cipher suites that AdGuard Home must
@@ -440,7 +441,7 @@ func (m *tlsManager) handleTLSStatus(w http.ResponseWriter, r *http.Request) {
 		tlsConfigStatus: m.status,
 	}
 
-	marshalTLS(w, r, data)
+	m.marshalTLS(w, r, data)
 }
 
 // handleTLSValidate is the handler for the POST /control/tls/validate HTTP API.
@@ -482,7 +483,7 @@ func (m *tlsManager) handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 		tlsConfigStatus:      status,
 	}
 
-	marshalTLS(w, r, resp)
+	m.marshalTLS(w, r, resp)
 }
 
 // setConfig updates manager TLS configuration with the given one.  m.mu is
@@ -559,7 +560,7 @@ func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) 
 			tlsConfigStatus:      status,
 		}
 
-		marshalTLS(w, r, resp)
+		m.marshalTLS(w, r, resp)
 
 		return
 	}
@@ -590,7 +591,7 @@ func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) 
 		tlsConfigStatus:      m.status,
 	}
 
-	marshalTLS(w, r, resp)
+	m.marshalTLS(w, r, resp)
 	rc := http.NewResponseController(w)
 	err = rc.Flush()
 	if err != nil {
@@ -1033,7 +1034,8 @@ func unmarshalTLS(r *http.Request) (tlsConfigSettingsExt, error) {
 	return data, nil
 }
 
-func marshalTLS(w http.ResponseWriter, r *http.Request, data tlsConfig) {
+// marshalTLS encodes sensitive fields and writes data as JSON.
+func (m *tlsManager) marshalTLS(w http.ResponseWriter, r *http.Request, data tlsConfig) {
 	if data.CertificateChain != "" {
 		encoded := base64.StdEncoding.EncodeToString([]byte(data.CertificateChain))
 		data.CertificateChain = encoded
@@ -1044,7 +1046,7 @@ func marshalTLS(w http.ResponseWriter, r *http.Request, data tlsConfig) {
 		data.PrivateKey = ""
 	}
 
-	aghhttp.WriteJSONResponseOK(w, r, data)
+	aghhttp.WriteJSONResponseOK(r.Context(), m.logger, w, r, data)
 }
 
 // registerWebHandlers registers HTTP handlers for TLS configuration.

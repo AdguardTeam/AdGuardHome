@@ -31,7 +31,7 @@ func (d *DNSFilter) handleRewriteList(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	aghhttp.WriteJSONResponseOK(w, r, arr)
+	aghhttp.WriteJSONResponseOK(r.Context(), d.logger, w, r, arr)
 }
 
 // handleRewriteAdd is the handler for the POST /control/rewrite/add HTTP API.

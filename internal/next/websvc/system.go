@@ -24,7 +24,7 @@ type RespGetV1SystemInfo struct {
 // handleGetV1SystemInfo is the handler for the GET /api/v1/system/info HTTP
 // API.
 func (svc *Service) handleGetV1SystemInfo(w http.ResponseWriter, r *http.Request) {
-	aghhttp.WriteJSONResponseOK(w, r, &RespGetV1SystemInfo{
+	aghhttp.WriteJSONResponseOK(r.Context(), svc.logger, w, r, &RespGetV1SystemInfo{
 		Arch:    runtime.GOARCH,
 		Channel: version.Channel(),
 		OS:      runtime.GOOS,

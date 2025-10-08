@@ -10,6 +10,15 @@ type Registrar interface {
 	Register(method, path string, h http.HandlerFunc)
 }
 
+// EmptyRegistrar is an implementation of [Registrar] that does nothing.
+type EmptyRegistrar struct{}
+
+// type check
+var _ Registrar = EmptyRegistrar{}
+
+// Register implements the [Registrar] interface.
+func (EmptyRegistrar) Register(_, _ string, _ http.HandlerFunc) {}
+
 // DeferredRegistrar is an implementation of [Registrar] that queues handler
 // registrations until Bind is called.
 type DeferredRegistrar struct {

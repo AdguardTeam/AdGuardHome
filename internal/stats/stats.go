@@ -121,7 +121,7 @@ type StatsCtx struct {
 	// unit.  It's here for only testing purposes.
 	unitIDGen UnitIDGenFunc
 
-	// httpReg is used to set HTTP handlers.
+	// httpReg registers HTTP handlers.  It must not be nil.
 	httpReg aghhttp.Registrar
 
 	// configModifier is used to update the global configuration.

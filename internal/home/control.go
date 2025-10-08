@@ -116,12 +116,13 @@ type statusResponse struct {
 
 func (web *webAPI) handleStatus(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	l := web.logger
 
 	dnsAddrs, err := collectDNSAddresses(web.tlsManager)
 	if err != nil {
 		// Don't add a lot of formatting, since the error is already
 		// wrapped by collectDNSAddresses.
-		aghhttp.ErrorAndLog(ctx, web.logger, r, w, http.StatusInternalServerError, "%s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusInternalServerError, "%s", err)
 
 		return
 	}
@@ -167,7 +168,7 @@ func (web *webAPI) handleStatus(w http.ResponseWriter, r *http.Request) {
 		resp.IsDHCPAvailable = globalContext.dhcpServer != nil
 	}
 
-	aghhttp.WriteJSONResponseOK(w, r, resp)
+	aghhttp.WriteJSONResponseOK(ctx, l, w, r, resp)
 }
 
 // registerControlHandlers sets up HTTP handlers for various control endpoints.
@@ -181,8 +182,16 @@ func (web *webAPI) registerControlHandlers() {
 	web.httpReg.Register(http.MethodPost, "/control/update", web.handleUpdate)
 
 	web.httpReg.Register(http.MethodGet, "/control/status", web.handleStatus)
-	web.httpReg.Register(http.MethodPost, "/control/i18n/change_language", web.handleI18nChangeLanguage)
-	web.httpReg.Register(http.MethodGet, "/control/i18n/current_language", handleI18nCurrentLanguage)
+	web.httpReg.Register(
+		http.MethodPost,
+		"/control/i18n/change_language",
+		web.handleI18nChangeLanguage,
+	)
+	web.httpReg.Register(
+		http.MethodGet,
+		"/control/i18n/current_language",
+		web.handleI18nCurrentLanguage,
+	)
 	web.httpReg.Register(http.MethodGet, "/control/profile", web.handleGetProfile)
 	web.httpReg.Register(http.MethodPut, "/control/profile/update", web.handlePutProfile)
 
@@ -199,6 +208,7 @@ func (web *webAPI) registerControlHandlers() {
 	web.registerAuthHandlers()
 }
 
+// register registers an HTTP handler.
 func (web *webAPI) register(method, path string, handler http.HandlerFunc) {
 	if method == "" {
 		// The "/dns-query" handler doesn't require authentication or gzip, and
@@ -210,26 +220,34 @@ func (web *webAPI) register(method, path string, handler http.HandlerFunc) {
 
 	web.conf.mux.Handle(
 		path,
-		web.postInstallHandler(gziphandler.GzipHandler(ensure(method, handler))),
+		web.postInstallHandler(gziphandler.GzipHandler(web.ensure(method, handler))),
 	)
 }
 
-// ensure returns a wrapped handler that makes sure that the request has the
-// correct method as well as additional method and header checks.
-func ensure(
+// ensure returns a wrapped handler that verifies the request method.  It also
+// performs additional method and header checks.
+func (web *webAPI) ensure(
 	method string,
 	handler func(http.ResponseWriter, *http.Request),
 ) (wrapped http.HandlerFunc) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		m := r.Method
 		if m != method {
-			aghhttp.Error(r, w, http.StatusMethodNotAllowed, "only method %s is allowed", method)
+			aghhttp.ErrorAndLog(
+				r.Context(),
+				web.logger,
+				r,
+				w,
+				http.StatusMethodNotAllowed,
+				"only method %s is allowed",
+				method,
+			)
 
 			return
 		}
 
 		if modifiesData(m) {
-			if !ensureContentType(w, r) {
+			if !web.ensureContentType(w, r) {
 				return
 			}
 
@@ -249,8 +267,10 @@ func modifiesData(m string) (ok bool) {
 // ensureContentType makes sure that the content type of a data-modifying
 // request is set correctly.  If it is not, ensureContentType writes a response
 // to w, and ok is false.
-func ensureContentType(w http.ResponseWriter, r *http.Request) (ok bool) {
+func (web *webAPI) ensureContentType(w http.ResponseWriter, r *http.Request) (ok bool) {
 	const statusUnsup = http.StatusUnsupportedMediaType
+
+	ctx := r.Context()
 
 	cType := r.Header.Get(httphdr.ContentType)
 	if r.ContentLength == 0 {
@@ -261,7 +281,15 @@ func ensureContentType(w http.ResponseWriter, r *http.Request) (ok bool) {
 		// Assume that browsers always send a content type when submitting HTML
 		// forms and require no content type for requests with no body to make
 		// sure that the request comes from JavaScript.
-		aghhttp.Error(r, w, statusUnsup, "empty body with content-type %q not allowed", cType)
+		aghhttp.ErrorAndLog(
+			ctx,
+			web.logger,
+			r,
+			w,
+			statusUnsup,
+			"empty body with content-type %q not allowed",
+			cType,
+		)
 
 		return false
 
@@ -272,7 +300,15 @@ func ensureContentType(w http.ResponseWriter, r *http.Request) (ok bool) {
 		return true
 	}
 
-	aghhttp.Error(r, w, statusUnsup, "only content-type %s is allowed", wantCType)
+	aghhttp.ErrorAndLog(
+		ctx,
+		web.logger,
+		r,
+		w,
+		statusUnsup,
+		"only content-type %s is allowed",
+		wantCType,
+	)
 
 	return false
 }
@@ -296,15 +332,16 @@ func (web *webAPI) preInstallHandler(handler http.Handler) (wrapped http.Handler
 // handleHTTPSRedirect redirects the request to HTTPS, if needed, and adds some
 // HTTPS-related headers.  If proceed is true, the middleware must continue
 // handling the request.
-func handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (proceed bool) {
-	web := globalContext.web
+func (web *webAPI) handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (proceed bool) {
 	if web.httpsServer.server == nil {
 		return true
 	}
 
+	ctx := r.Context()
+
 	host, err := netutil.SplitHost(r.Host)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "bad host: %s", err)
+		aghhttp.ErrorAndLog(ctx, web.logger, r, w, http.StatusBadRequest, "bad host: %s", err)
 
 		return false
 	}
@@ -394,7 +431,7 @@ func (web *webAPI) postInstallHandler(handler http.Handler) (wrapped http.Handle
 			return
 		}
 
-		if handleHTTPSRedirect(w, r) {
+		if web.handleHTTPSRedirect(w, r) {
 			handler.ServeHTTP(w, r)
 		}
 	})

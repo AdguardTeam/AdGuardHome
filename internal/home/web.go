@@ -56,6 +56,7 @@ type webConfig struct {
 	// confModifier is used to update the global configuration.
 	confModifier agh.ConfigModifier
 
+	// httpReg registers HTTP handlers.  It must not be nil.
 	httpReg aghhttp.Registrar
 
 	// tlsManager contains the current configuration and state of TLS
@@ -128,6 +129,7 @@ type webAPI struct {
 	// cmdCons is used to run external commands.
 	cmdCons executil.CommandConstructor
 
+	// httpReg registers HTTP handlers.
 	httpReg aghhttp.Registrar
 
 	// TODO(a.garipov): Refactor all these servers.

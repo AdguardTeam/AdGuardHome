@@ -245,8 +245,10 @@ func (s *Server) defaultLocalPTRUpstreams() (ups []string, err error) {
 
 // handleGetConfig handles requests to the GET /control/dns_info endpoint.
 func (s *Server) handleGetConfig(w http.ResponseWriter, r *http.Request) {
-	resp := s.getDNSConfig(r.Context())
-	aghhttp.WriteJSONResponseOK(w, r, resp)
+	ctx := r.Context()
+
+	resp := s.getDNSConfig(ctx)
+	aghhttp.WriteJSONResponseOK(ctx, s.logger, w, r, resp)
 }
 
 // checkBlockingMode returns an error if blocking mode is invalid.
@@ -739,7 +741,7 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 	cv.check()
 	cv.close()
 
-	aghhttp.WriteJSONResponseOK(w, r, cv.status())
+	aghhttp.WriteJSONResponseOK(ctx, l, w, r, cv.status())
 }
 
 // handleCacheClear is the handler for the POST /control/cache_clear HTTP API.
@@ -797,7 +799,7 @@ func (s *Server) handleSetProtection(w http.ResponseWriter, r *http.Request) {
 
 	s.conf.ConfModifier.Apply(ctx)
 
-	aghhttp.OK(ctx, s.logger, w)
+	aghhttp.OK(ctx, l, w)
 }
 
 // handleDoH is the DNS-over-HTTPs handler.

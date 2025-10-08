@@ -186,7 +186,7 @@ func (s *Server) accessListJSON() (j accessListJSON) {
 
 // handleAccessList handles requests to the GET /control/access/list endpoint.
 func (s *Server) handleAccessList(w http.ResponseWriter, r *http.Request) {
-	aghhttp.WriteJSONResponseOK(w, r, s.accessListJSON())
+	aghhttp.WriteJSONResponseOK(r.Context(), s.logger, w, r, s.accessListJSON())
 }
 
 // validateAccessSet checks the internal accessListJSON lists.  To search for

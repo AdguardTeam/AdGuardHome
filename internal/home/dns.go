@@ -41,8 +41,8 @@ const (
 
 // initDNS updates all the fields of the [globalContext] needed to initialize
 // the DNS server and initializes it at last.  It also must not be called unless
-// [config] and [globalContext] are initialized.  baseLogger, tlsMgr and
-// confModfier must not be nil.
+// [config] and [globalContext] are initialized.  baseLogger, tlsMgr,
+// confModifier, and httpReg must not be nil.
 func initDNS(
 	ctx context.Context,
 	baseLogger *slog.Logger,
@@ -236,7 +236,7 @@ func ipsToUDPAddrs(ips []netip.Addr, port uint16) (udpAddrs []*net.UDPAddr) {
 }
 
 // newServerConfig converts values from the configuration file into the internal
-// DNS server configuration.  All arguments must not be nil, except for httpReg.
+// DNS server configuration.  All arguments must not be nil.
 func newServerConfig(
 	dnsConf *dnsConfig,
 	clientSrcConf *clientSourcesConfig,

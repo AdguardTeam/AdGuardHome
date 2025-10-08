@@ -94,7 +94,7 @@ func (l *queryLog) handleQueryLog(w http.ResponseWriter, r *http.Request) {
 
 	resp := l.entriesToJSON(ctx, entries, oldest, l.anonymizer.Load())
 
-	aghhttp.WriteJSONResponseOK(w, r, resp)
+	aghhttp.WriteJSONResponseOK(ctx, l.logger, w, r, resp)
 }
 
 // handleQueryLogClear is the handler for the POST /control/querylog/clear HTTP
@@ -119,7 +119,7 @@ func (l *queryLog) handleQueryLogInfo(w http.ResponseWriter, r *http.Request) {
 		ivl = timeutil.Day * 90
 	}
 
-	aghhttp.WriteJSONResponseOK(w, r, configJSON{
+	aghhttp.WriteJSONResponseOK(r.Context(), l.logger, w, r, configJSON{
 		Enabled:           aghalg.BoolToNullBool(l.conf.Enabled),
 		Interval:          ivl.Hours() / 24,
 		AnonymizeClientIP: aghalg.BoolToNullBool(l.conf.AnonymizeClientIP),
@@ -142,7 +142,7 @@ func (l *queryLog) handleGetQueryLogConfig(w http.ResponseWriter, r *http.Reques
 		}
 	}()
 
-	aghhttp.WriteJSONResponseOK(w, r, resp)
+	aghhttp.WriteJSONResponseOK(r.Context(), l.logger, w, r, resp)
 }
 
 // AnonymizeIP masks ip to anonymize the client if the ip is a valid one.
