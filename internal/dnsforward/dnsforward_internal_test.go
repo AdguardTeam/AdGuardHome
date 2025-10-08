@@ -209,11 +209,19 @@ func createServerTLSConfig(tb testing.TB) (*tls.Config, []byte, []byte) {
 	}
 	template.DNSNames = append(template.DNSNames, tlsServerName)
 
-	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, publicKey(privateKey), privateKey)
+	derBytes, err := x509.CreateCertificate(
+		rand.Reader,
+		&template,
+		&template,
+		publicKey(privateKey),
+		privateKey,
+	)
 	require.NoErrorf(tb, err, "failed to create certificate: %s", err)
 
 	certPem := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
-	keyPem := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(privateKey)})
+	keyPem := pem.EncodeToMemory(
+		&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(privateKey)},
+	)
 
 	cert, err := tls.X509KeyPair(certPem, keyPem)
 	require.NoErrorf(tb, err, "failed to create certificate: %s", err)
@@ -1065,10 +1073,22 @@ func TestNullBlockedRequest(t *testing.T) {
 
 	reply, err := dns.Exchange(&req, addr.String())
 	require.NoErrorf(t, err, "couldn't talk to server %s: %s", addr, err)
-	require.Lenf(t, reply.Answer, 1, "dns server %s returned reply with wrong number of answers - %d", addr, len(reply.Answer))
-	a, ok := reply.Answer[0].(*dns.A)
-	require.Truef(t, ok, "dns server %s returned wrong answer type instead of A: %v", addr, reply.Answer[0])
-	assert.Truef(t, a.A.IsUnspecified(), "dns server %s returned wrong answer instead of 0.0.0.0: %v", addr, a.A)
+	require.Lenf(
+		t,
+		reply.Answer,
+		1,
+		"dns server %s returned reply with wrong number of answers - %d",
+		addr,
+		len(reply.Answer),
+	)
+	a := testutil.RequireTypeAssert[*dns.A](t, reply.Answer[0])
+	assert.Truef(
+		t,
+		a.A.IsUnspecified(),
+		"dns server %s returned wrong answer instead of 0.0.0.0: %v",
+		addr,
+		a.A,
+	)
 }
 
 func TestBlockedCustomIP(t *testing.T) {
@@ -1184,10 +1204,30 @@ func TestBlockedByHosts(t *testing.T) {
 
 	reply, err := dns.Exchange(req, addr.String())
 	require.NoErrorf(t, err, "couldn't talk to server %s: %s", addr, err)
-	require.Lenf(t, reply.Answer, 1, "dns server %s returned reply with wrong number of answers - %d", addr, len(reply.Answer))
+	require.Lenf(
+		t,
+		reply.Answer,
+		1,
+		"dns server %s returned reply with wrong number of answers - %d",
+		addr,
+		len(reply.Answer),
+	)
 	a, ok := reply.Answer[0].(*dns.A)
-	require.Truef(t, ok, "dns server %s returned wrong answer type instead of A: %v", addr, reply.Answer[0])
-	assert.Equalf(t, net.IP{127, 0, 0, 1}, a.A, "dns server %s returned wrong answer instead of 8.8.8.8: %v", addr, a.A)
+	require.Truef(
+		t,
+		ok,
+		"dns server %s returned wrong answer type instead of A: %v",
+		addr,
+		reply.Answer[0],
+	)
+	assert.Equalf(
+		t,
+		net.IP{127, 0, 0, 1},
+		a.A,
+		"dns server %s returned wrong answer instead of 8.8.8.8: %v",
+		addr,
+		a.A,
+	)
 }
 
 func TestBlockedBySafeBrowsing(t *testing.T) {
@@ -1235,7 +1275,14 @@ func TestBlockedBySafeBrowsing(t *testing.T) {
 
 	reply, err := dns.Exchange(req, addr.String())
 	require.NoErrorf(t, err, "couldn't talk to server %s: %s", addr, err)
-	require.Lenf(t, reply.Answer, 1, "dns server %s returned reply with wrong number of answers - %d", addr, len(reply.Answer))
+	require.Lenf(
+		t,
+		reply.Answer,
+		1,
+		"dns server %s returned reply with wrong number of answers - %d",
+		addr,
+		len(reply.Answer),
+	)
 
 	assertResponse(t, reply, ans4)
 }
@@ -1643,7 +1690,9 @@ func TestServer_Exchange(t *testing.T) {
 	extUpsHdlr := dns.HandlerFunc(func(w dns.ResponseWriter, req *dns.Msg) {
 		resp := cmp.Or(
 			aghtest.MatchedResponse(req, dns.TypePTR, onesRevExtIPv4, dns.Fqdn(onesHost)),
-			doubleTTL(aghtest.MatchedResponse(req, dns.TypePTR, twosRevExtIPv4, dns.Fqdn(twosHost))),
+			doubleTTL(
+				aghtest.MatchedResponse(req, dns.TypePTR, twosRevExtIPv4, dns.Fqdn(twosHost)),
+			),
 			new(dns.Msg).SetRcode(req, dns.RcodeNameError),
 		)
 

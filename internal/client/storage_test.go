@@ -153,10 +153,12 @@ func TestStorage_Add_hostsfile(t *testing.T) {
 
 	t.Run("add_hosts", func(t *testing.T) {
 		var s *hostsfile.DefaultStorage
-		s, err = hostsfile.NewDefaultStorage()
+		s, err = hostsfile.NewDefaultStorage(ctx, &hostsfile.DefaultStorageConfig{
+			Logger: testLogger,
+		})
 		require.NoError(t, err)
 
-		s.Add(&hostsfile.Record{
+		s.Add(ctx, &hostsfile.Record{
 			Addr:  cliIP1,
 			Names: []string{cliName1},
 		})
@@ -173,10 +175,12 @@ func TestStorage_Add_hostsfile(t *testing.T) {
 
 	t.Run("update_hosts", func(t *testing.T) {
 		var s *hostsfile.DefaultStorage
-		s, err = hostsfile.NewDefaultStorage()
+		s, err = hostsfile.NewDefaultStorage(ctx, &hostsfile.DefaultStorageConfig{
+			Logger: testLogger,
+		})
 		require.NoError(t, err)
 
-		s.Add(&hostsfile.Record{
+		s.Add(ctx, &hostsfile.Record{
 			Addr:  cliIP2,
 			Names: []string{cliName2},
 		})
@@ -452,10 +456,12 @@ func TestClientsDHCP(t *testing.T) {
 
 	require.True(t, t.Run("find_runtime_higher_priority", func(t *testing.T) {
 		// Add a higher-priority client.
-		s, strgErr := hostsfile.NewDefaultStorage()
+		s, strgErr := hostsfile.NewDefaultStorage(ctx, &hostsfile.DefaultStorageConfig{
+			Logger: testLogger,
+		})
 		require.NoError(t, strgErr)
 
-		s.Add(&hostsfile.Record{
+		s.Add(ctx, &hostsfile.Record{
 			Addr:  cliIP1,
 			Names: []string{cliName1},
 		})
@@ -476,7 +482,9 @@ func TestClientsDHCP(t *testing.T) {
 		//
 		// TODO(a.garipov):  Consider adding ways of explicitly clearing runtime
 		// sources by source.
-		s, strgErr = hostsfile.NewDefaultStorage()
+		s, strgErr = hostsfile.NewDefaultStorage(ctx, &hostsfile.DefaultStorageConfig{
+			Logger: testLogger,
+		})
 		require.NoError(t, strgErr)
 
 		testutil.RequireSend(t, etcHostsCh, s, testTimeout)

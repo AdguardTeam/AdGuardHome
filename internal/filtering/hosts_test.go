@@ -48,6 +48,7 @@ func TestDNSFilter_CheckHost_hostsContainer(t *testing.T) {
 		OnAdd:      func(name string) (err error) { return nil },
 		OnShutdown: func(_ context.Context) (err error) { return nil },
 	}
+
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
 	hc, err := aghnet.NewHostsContainer(ctx, testLogger, files, watcher, "hosts")
 	require.NoError(t, err)

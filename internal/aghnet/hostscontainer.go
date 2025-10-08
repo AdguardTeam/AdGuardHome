@@ -221,10 +221,12 @@ func (hc *HostsContainer) refresh(ctx context.Context) (err error) {
 	hc.logger.DebugContext(ctx, "refreshing")
 
 	// The error is always nil here since no readers passed.
-	strg, _ := hostsfile.NewDefaultStorage()
+	strg, _ := hostsfile.NewDefaultStorage(ctx, &hostsfile.DefaultStorageConfig{
+		Logger: hc.logger,
+	})
 	_, err = aghos.FileWalker(func(r io.Reader) (patterns []string, cont bool, err error) {
 		// Don't wrap the error since it's already informative enough as is.
-		return nil, true, hostsfile.Parse(strg, r, nil)
+		return nil, true, hostsfile.Parse(ctx, strg, r, nil)
 	}).Walk(hc.fsys, hc.patterns...)
 	if err != nil {
 		// Don't wrap the error since it's informative enough as is.
