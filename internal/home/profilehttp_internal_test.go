@@ -90,6 +90,8 @@ func TestWeb_HandleGetProfile(t *testing.T) {
 		auth,
 		baseMux,
 		agh.EmptyConfigModifier{},
+		"",
+		"",
 		false,
 		false,
 	)
@@ -151,6 +153,8 @@ func TestWeb_HandlePutProfile(t *testing.T) {
 		nil,
 		mux,
 		confModifier,
+		"",
+		"",
 		false,
 		false,
 	)

@@ -71,18 +71,8 @@ type homeContext struct {
 	// Runtime properties
 	// --
 
-	// confFilePath is the configuration file path as set by default or from the
-	// command-line options.
-	confFilePath string
-
-	workDir     string // Location of our directory, used to protect against CWD being somewhere else
 	pidFileName string // PID file name.  Empty if no PID file was created.
 	controlLock sync.Mutex
-}
-
-// getDataDir returns path to the directory where we store databases and filters
-func (c *homeContext) getDataDir() string {
-	return filepath.Join(c.workDir, dataDir)
 }
 
 // globalContext is a global context object.
@@ -92,6 +82,8 @@ var globalContext homeContext
 
 // Main is the entry point
 func Main(clientBuildFS fs.FS) {
+	ctx := context.Background()
+
 	initCmdLineOpts()
 
 	// The configuration file path can be overridden, but other command-line
@@ -102,7 +94,17 @@ func Main(clientBuildFS fs.FS) {
 	// package flag.
 	opts := loadCmdLineOpts()
 
-	ls := getLogSettings(opts)
+	l := slog.Default()
+	workDir, err := initWorkingDir(opts)
+	if err != nil {
+		l.ErrorContext(ctx, "failed to init working directory", slogutil.KeyError, err)
+
+		os.Exit(osutil.ExitCodeFailure)
+	}
+
+	confPath := initConfigFilename(ctx, l, opts, workDir)
+
+	ls := getLogSettings(ctx, l, opts, workDir, confPath)
 
 	// TODO(a.garipov): Use slog everywhere.
 	baseLogger := newSlogLogger(ls)
@@ -112,7 +114,6 @@ func Main(clientBuildFS fs.FS) {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT)
 
-	ctx := context.Background()
 	sigHdlrLogger := baseLogger.With(slogutil.KeyPrefix, "signalhdlr")
 	sigHdlr := newSignalHandler(sigHdlrLogger, signals, func(ctx context.Context) {
 		cleanup(ctx)
@@ -133,13 +134,15 @@ func Main(clientBuildFS fs.FS) {
 			signals,
 			done,
 			sigHdlr,
+			workDir,
+			confPath,
 		)
 
 		return
 	}
 
 	// run the protection
-	run(ctx, baseLogger, opts, clientBuildFS, done, sigHdlr)
+	run(ctx, baseLogger, opts, clientBuildFS, done, sigHdlr, workDir, confPath)
 }
 
 // setupContext initializes [globalContext] fields.  It also reads and upgrades
@@ -148,6 +151,8 @@ func setupContext(
 	ctx context.Context,
 	baseLogger *slog.Logger,
 	opts options,
+	workDir string,
+	confPath string,
 	isFirstRun bool,
 ) (err error) {
 	globalContext.mux = http.NewServeMux()
@@ -168,7 +173,7 @@ func setupContext(
 	}
 
 	// TODO(s.chzhen):  Consider adding a key prefix.
-	err = parseConfig(ctx, baseLogger)
+	err = parseConfig(ctx, baseLogger, workDir, confPath)
 	if err != nil {
 		log.Error("parsing configuration file: %s", err)
 
@@ -302,10 +307,11 @@ func initContextClients(
 	logger *slog.Logger,
 	sigHdlr *signalHandler,
 	confModifier agh.ConfigModifier,
+	workDir string,
 ) (err error) {
 	//lint:ignore SA1019 Migration is not over.
-	config.DHCP.WorkDir = globalContext.workDir
-	config.DHCP.DataDir = globalContext.getDataDir()
+	config.DHCP.WorkDir = workDir
+	config.DHCP.DataDir = filepath.Join(workDir, dataDir)
 	config.DHCP.HTTPRegister = httpRegister
 	config.DHCP.CommandConstructor = executil.SystemCommandConstructor{}
 	config.DHCP.Logger = logger.With(slogutil.KeyPrefix, "dhcpd")
@@ -386,6 +392,7 @@ func setupDNSFilteringConf(
 	conf *filtering.Config,
 	tlsMgr *tlsManager,
 	confModifier agh.ConfigModifier,
+	workDir string,
 ) (err error) {
 	const (
 		dnsTimeout = 3 * time.Second
@@ -409,7 +416,7 @@ func setupDNSFilteringConf(
 
 	conf.ConfModifier = confModifier
 	conf.HTTPRegister = httpRegister
-	conf.DataDir = globalContext.getDataDir()
+	conf.DataDir = filepath.Join(workDir, dataDir)
 	conf.Filters = slices.Clone(config.Filters)
 	conf.WhitelistFilters = slices.Clone(config.WhitelistFilters)
 	conf.UserRules = slices.Clone(config.UserRules)
@@ -575,6 +582,8 @@ func initWeb(
 	auth *auth,
 	mux *http.ServeMux,
 	confModifier agh.ConfigModifier,
+	workDir string,
+	confPath string,
 	isCustomUpdURL bool,
 	isFirstRun bool,
 ) (web *webAPI, err error) {
@@ -609,6 +618,9 @@ func initWeb(
 		clientFS: clientFS,
 
 		BindAddr: config.HTTPConfig.Address,
+
+		workDir:  workDir,
+		confPath: confPath,
 
 		ReadTimeout:       readTimeout,
 		ReadHeaderTimeout: readHdrTimeout,
@@ -677,32 +689,27 @@ func run(
 	clientBuildFS fs.FS,
 	done chan struct{},
 	sigHdlr *signalHandler,
+	workDir string,
+	confPath string,
 ) {
-	// Configure working dir.
-	err := initWorkingDir(opts)
-	fatalOnError(err)
-
-	// Configure config filename.
-	initConfigFilename(opts)
-
-	ls := getLogSettings(opts)
+	ls := getLogSettings(ctx, slogLogger, opts, workDir, confPath)
 
 	// Configure log level and output.
-	err = configureLogger(ls)
+	err := configureLogger(ls, workDir)
 	fatalOnError(err)
 
 	// Print the first message after logger is configured.
 	log.Info("%s", version.Full())
-	log.Debug("current working directory is %s", globalContext.workDir)
+	log.Debug("current working directory is %s", workDir)
 	if opts.runningAsService {
 		log.Info("AdGuard Home is running as a service")
 	}
 
 	aghtls.Init(ctx, slogLogger.With(slogutil.KeyPrefix, "aghtls"))
 
-	isFirstRun := detectFirstRun()
+	isFirstRun := detectFirstRun(ctx, slogLogger, workDir, confPath)
 
-	err = setupContext(ctx, slogLogger, opts, isFirstRun)
+	err = setupContext(ctx, slogLogger, opts, workDir, confPath, isFirstRun)
 	fatalOnError(err)
 
 	err = configureOS(config)
@@ -716,9 +723,11 @@ func run(
 	confModifier := newDefaultConfigModifier(
 		config,
 		slogLogger.With(slogutil.KeyPrefix, "config_modifier"),
+		workDir,
+		confPath,
 	)
 
-	err = initContextClients(ctx, slogLogger, sigHdlr, confModifier)
+	err = initContextClients(ctx, slogLogger, sigHdlr, confModifier, workDir)
 	fatalOnError(err)
 
 	tlsMgrLogger := slogLogger.With(slogutil.KeyPrefix, "tls_manager")
@@ -736,7 +745,7 @@ func run(
 
 	confModifier.setTLSManager(tlsMgr)
 
-	err = setupDNSFilteringConf(ctx, slogLogger, config.Filtering, tlsMgr, confModifier)
+	err = setupDNSFilteringConf(ctx, slogLogger, config.Filtering, tlsMgr, confModifier, workDir)
 	fatalOnError(err)
 
 	err = setupOpts(opts)
@@ -745,10 +754,8 @@ func run(
 	execPath, err := os.Executable()
 	fatalOnError(errors.Annotate(err, "getting executable path: %w"))
 
-	confPath := configFilePath()
-
 	updLogger := slogLogger.With(slogutil.KeyPrefix, "updater")
-	upd, isCustomURL := newUpdater(ctx, updLogger, config, globalContext.workDir, confPath, execPath)
+	upd, isCustomURL := newUpdater(ctx, updLogger, config, workDir, confPath, execPath)
 
 	// TODO(e.burkov): This could be made earlier, probably as the option's
 	// effect.
@@ -756,7 +763,7 @@ func run(
 
 	if !isFirstRun {
 		// Save the updated config.
-		err = config.write(nil, nil)
+		err = config.write(ctx, slogLogger, nil, nil, workDir, confPath)
 		fatalOnError(err)
 
 		if config.HTTPConfig.Pprof.Enabled {
@@ -764,11 +771,11 @@ func run(
 		}
 	}
 
-	dataDir := globalContext.getDataDir()
-	err = os.MkdirAll(dataDir, aghos.DefaultPermDir)
-	fatalOnError(errors.Annotate(err, "creating DNS data dir at %s: %w", dataDir))
+	dataDirPath := filepath.Join(workDir, dataDir)
+	err = os.MkdirAll(dataDirPath, aghos.DefaultPermDir)
+	fatalOnError(errors.Annotate(err, "creating DNS data dir at %s: %w", dataDirPath))
 
-	auth, err := initUsers(ctx, slogLogger, opts.glinetMode)
+	auth, err := initUsers(ctx, slogLogger, workDir, opts.glinetMode)
 	fatalOnError(err)
 
 	confModifier.setAuth(auth)
@@ -783,6 +790,8 @@ func run(
 		auth,
 		globalContext.mux,
 		confModifier,
+		workDir,
+		confPath,
 		isCustomURL,
 		isFirstRun,
 	)
@@ -793,7 +802,7 @@ func run(
 	tlsMgr.setWebAPI(web)
 	sigHdlr.addTLSManager(tlsMgr)
 
-	statsDir, querylogDir, err := checkStatsAndQuerylogDirs(&globalContext, config)
+	statsDir, querylogDir, err := checkStatsAndQuerylogDirs(config, workDir)
 	fatalOnError(err)
 
 	if !isFirstRun {
@@ -819,7 +828,7 @@ func run(
 	}
 
 	if !opts.noPermCheck {
-		checkPermissions(ctx, slogLogger, globalContext.workDir, confPath, dataDir, statsDir, querylogDir)
+		checkPermissions(ctx, slogLogger, workDir, confPath, dataDirPath, statsDir, querylogDir)
 	}
 
 	web.start(ctx)
@@ -889,17 +898,17 @@ func checkPermissions(
 	baseLogger *slog.Logger,
 	workDir string,
 	confPath string,
-	dataDir string,
+	dataDirPath string,
 	statsDir string,
 	querylogDir string,
 ) {
 	l := baseLogger.With(slogutil.KeyPrefix, "permcheck")
 
 	if permcheck.NeedsMigration(ctx, l, workDir, confPath) {
-		permcheck.Migrate(ctx, l, workDir, dataDir, statsDir, querylogDir, confPath)
+		permcheck.Migrate(ctx, l, workDir, dataDirPath, statsDir, querylogDir, confPath)
 	}
 
-	permcheck.Check(ctx, l, workDir, dataDir, statsDir, querylogDir, confPath)
+	permcheck.Check(ctx, l, workDir, dataDirPath, statsDir, querylogDir, confPath)
 }
 
 // initUsers initializes authentication module and clears the [config.Users]
@@ -907,6 +916,7 @@ func checkPermissions(
 func initUsers(
 	ctx context.Context,
 	baseLogger *slog.Logger,
+	workDir string,
 	isGLiNet bool,
 ) (auth *auth, err error) {
 	var rateLimiter loginRateLimiter
@@ -918,11 +928,12 @@ func initUsers(
 		rateLimiter = emptyRateLimiter{}
 	}
 
+	dataDirPath := filepath.Join(workDir, dataDir)
 	auth, err = newAuth(ctx, &authConfig{
 		baseLogger:     baseLogger,
 		rateLimiter:    rateLimiter,
 		trustedProxies: netutil.SliceSubnetSet(netutil.UnembedPrefixes(config.DNS.TrustedProxies)),
-		dbFilename:     filepath.Join(globalContext.getDataDir(), sessionsDBName),
+		dbFilename:     filepath.Join(dataDirPath, sessionsDBName),
 		users:          config.Users,
 		sessionTTL:     time.Duration(config.HTTPConfig.SessionTTL),
 		isGLiNet:       isGLiNet,
@@ -1000,47 +1011,50 @@ func writePIDFile(fn string) bool {
 	return true
 }
 
-// initConfigFilename sets up context config file path.  This file path can be
-// overridden by command-line arguments, or is set to default.  Must only be
-// called after initializing the workDir with initWorkingDir.
-func initConfigFilename(opts options) {
-	confPath := opts.confFilename
-	if confPath == "" {
-		globalContext.confFilePath = filepath.Join(globalContext.workDir, "AdGuardHome.yaml")
+// initConfigFilename returns the configuration file path.  If a path is
+// provided via command-line argument, it is used; otherwise a default within
+// workDir is returned.  l must not be nil.
+func initConfigFilename(
+	ctx context.Context,
+	l *slog.Logger,
+	opts options,
+	workDir string,
+) (confPath string) {
+	confPath = opts.confFilename
+	if confPath != "" {
+		l.DebugContext(ctx, "config path overridden from cmdline", "path", confPath)
 
-		return
+		return confPath
 	}
 
-	log.Debug("config path overridden to %q from cmdline", confPath)
+	confPath = filepath.Join(workDir, "AdGuardHome.yaml")
 
-	globalContext.confFilePath = confPath
+	return confPath
 }
 
-// initWorkingDir initializes the workDir.  If no command-line arguments are
-// specified, the directory with the binary file is used.
-func initWorkingDir(opts options) (err error) {
-	execPath, err := os.Executable()
-	if err != nil {
-		// Don't wrap the error, because it's informative enough as is.
-		return err
-	}
-
+// initWorkingDir returns the working directory path.  If no command-line
+// argument is provided, it uses the executable's directory.
+func initWorkingDir(opts options) (workDir string, err error) {
 	if opts.workDir != "" {
-		// If there is a custom config file, use it's directory as our working dir
-		globalContext.workDir = opts.workDir
+		workDir = opts.workDir
 	} else {
-		globalContext.workDir = filepath.Dir(execPath)
+		var execPath string
+		execPath, err = os.Executable()
+		if err != nil {
+			// Don't wrap the error, because it's informative enough as is.
+			return "", err
+		}
+
+		workDir = filepath.Dir(execPath)
 	}
 
-	workDir, err := filepath.EvalSymlinks(globalContext.workDir)
+	workDir, err = filepath.EvalSymlinks(workDir)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
-		return err
+		return "", err
 	}
 
-	globalContext.workDir = workDir
-
-	return nil
+	return workDir, nil
 }
 
 // cleanup stops and resets all the modules.
@@ -1164,11 +1178,11 @@ func printHTTPAddresses(proto string, tlsMgr *tlsManager) {
 	}
 }
 
-// detectFirstRun returns true if this is the first run of AdGuard Home.
-func detectFirstRun() (ok bool) {
-	confPath := globalContext.confFilePath
+// detectFirstRun returns true if this is the first run of AdGuard Home.  l must
+// not be nil.
+func detectFirstRun(ctx context.Context, l *slog.Logger, workDir, confPath string) (ok bool) {
 	if !filepath.IsAbs(confPath) {
-		confPath = filepath.Join(globalContext.workDir, globalContext.confFilePath)
+		confPath = filepath.Join(workDir, confPath)
 	}
 
 	_, err := os.Stat(confPath)
@@ -1178,7 +1192,7 @@ func detectFirstRun() (ok bool) {
 		return true
 	}
 
-	log.Error("detecting first run: %s; considering first run", err)
+	l.ErrorContext(ctx, "failed to detect first run; considering first run", slogutil.KeyError, err)
 
 	return true
 }

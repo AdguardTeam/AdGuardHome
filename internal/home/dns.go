@@ -520,10 +520,10 @@ func closeDNSServer(ctx context.Context) {
 // checkStatsAndQuerylogDirs checks and returns directory paths to store
 // statistics and query log.
 func checkStatsAndQuerylogDirs(
-	ctx *homeContext,
 	conf *configuration,
+	workDir string,
 ) (statsDir, querylogDir string, err error) {
-	baseDir := ctx.getDataDir()
+	baseDir := filepath.Join(workDir, dataDir)
 
 	statsDir = conf.Stats.DirPath
 	if statsDir == "" {

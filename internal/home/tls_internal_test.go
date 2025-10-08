@@ -307,6 +307,8 @@ func initEmptyWeb(tb testing.TB) (web *webAPI) {
 		nil,
 		http.NewServeMux(),
 		agh.EmptyConfigModifier{},
+		"",
+		"",
 		false,
 		false,
 	)

@@ -335,6 +335,8 @@ func TestAuth_ServeHTTP_firstRun(t *testing.T) {
 		nil,
 		mux,
 		agh.EmptyConfigModifier{},
+		"",
+		"",
 		false,
 		true,
 	)
@@ -504,6 +506,8 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 		auth,
 		baseMux,
 		agh.EmptyConfigModifier{},
+		"",
+		"",
 		false,
 		false,
 	)
@@ -659,6 +663,8 @@ func TestAuth_ServeHTTP_logout(t *testing.T) {
 		auth,
 		baseMux,
 		agh.EmptyConfigModifier{},
+		"",
+		"",
 		false,
 		false,
 	)
