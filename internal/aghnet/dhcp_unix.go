@@ -4,14 +4,16 @@ package aghnet
 
 import (
 	"bytes"
+	"context"
 	"fmt"
+	"log/slog"
 	"net"
 	"net/netip"
 	"os"
 	"time"
 
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv6"
@@ -23,7 +25,11 @@ import (
 // response.
 const defaultDiscoverTime = 3 * time.Second
 
-func checkOtherDHCP(ifaceName string) (ok4, ok6 bool, err4, err6 error) {
+func checkOtherDHCP(
+	ctx context.Context,
+	l *slog.Logger,
+	ifaceName string,
+) (ok4, ok6 bool, err4, err6 error) {
 	iface, err := net.InterfaceByName(ifaceName)
 	if err != nil {
 		err = fmt.Errorf("couldn't find interface by name %s: %w", ifaceName, err)
@@ -32,8 +38,8 @@ func checkOtherDHCP(ifaceName string) (ok4, ok6 bool, err4, err6 error) {
 		return false, false, err4, err6
 	}
 
-	ok4, err4 = checkOtherDHCPv4(iface)
-	ok6, err6 = checkOtherDHCPv6(iface)
+	ok4, err4 = checkOtherDHCPv4(ctx, l, iface)
+	ok6, err6 = checkOtherDHCPv6(ctx, l, iface)
 
 	return ok4, ok6, err4, err6
 }
@@ -69,8 +75,13 @@ func ifaceIPv4Subnet(iface *net.Interface) (subnet netip.Prefix, err error) {
 }
 
 // checkOtherDHCPv4 sends a DHCP request to the specified network interface, and
-// waits for a response for a period defined by defaultDiscoverTime.
-func checkOtherDHCPv4(iface *net.Interface) (ok bool, err error) {
+// waits for a response for a period defined by defaultDiscoverTime.  l must not
+// be nil.
+func checkOtherDHCPv4(
+	ctx context.Context,
+	l *slog.Logger,
+	iface *net.Interface,
+) (ok bool, err error) {
 	var subnet netip.Prefix
 	if subnet, err = ifaceIPv4Subnet(iface); err != nil {
 		return false, err
@@ -88,12 +99,18 @@ func checkOtherDHCPv4(iface *net.Interface) (ok bool, err error) {
 		return false, fmt.Errorf("couldn't get hostname: %w", err)
 	}
 
-	return discover4(iface, dstAddr, hostname)
+	return discover4(ctx, l, iface, dstAddr, hostname)
 }
 
 // discover4 sends a DHCPv4 discovery to the specified network interface and
 // waits for response.  iface and dstAddr must not be nil.
-func discover4(iface *net.Interface, dstAddr *net.UDPAddr, hostname string) (ok bool, err error) {
+func discover4(
+	ctx context.Context,
+	l *slog.Logger,
+	iface *net.Interface,
+	dstAddr *net.UDPAddr,
+	hostname string,
+) (ok bool, err error) {
 	var req *dhcpv4.DHCPv4
 	if req, err = dhcpv4.NewDiscovery(iface.HardwareAddr); err != nil {
 		return false, fmt.Errorf("dhcpv4.NewDiscovery: %w", err)
@@ -124,7 +141,7 @@ func discover4(iface *net.Interface, dstAddr *net.UDPAddr, hostname string) (ok 
 
 	for {
 		var next bool
-		ok, next, err = tryConn4(req, c, iface)
+		ok, next, err = tryConn4(ctx, l, req, c, iface)
 		if next {
 			continue
 		}
@@ -143,6 +160,8 @@ func discover4(iface *net.Interface, dstAddr *net.UDPAddr, hostname string) (ok 
 // TODO(a.garipov): Refactor further.  Inspect error handling, remove parameter
 // next, address the TODO, merge with tryConn6, etc.
 func tryConn4(
+	ctx context.Context,
+	l *slog.Logger,
 	req *dhcpv4.DHCPv4,
 	c net.PacketConn,
 	iface *net.Interface,
@@ -153,13 +172,13 @@ func tryConn4(
 
 	// TODO: replicate dhclient's behavior of retrying several times with
 	// progressively longer timeouts.
-	log.Tracef("dhcpv4: waiting %v for an answer", defaultDiscoverTime)
+	l.Log(ctx, slogutil.LevelTrace, "waiting for an answer", "timeout", defaultDiscoverTime)
 
 	b := make([]byte, 1500)
 	n, _, err := c.ReadFrom(b)
 	if err != nil {
 		if errors.Is(err, os.ErrDeadlineExceeded) {
-			log.Debug("dhcpv4: didn't receive dhcp response")
+			l.DebugContext(ctx, "did not receive response")
 
 			return false, false, nil
 		}
@@ -167,16 +186,16 @@ func tryConn4(
 		return false, false, fmt.Errorf("receiving packet: %w", err)
 	}
 
-	log.Tracef("dhcpv4: received packet, %d bytes", n)
+	l.Log(ctx, slogutil.LevelTrace, "received packet", "size", n)
 
 	response, err := dhcpv4.FromBytes(b[:n])
 	if err != nil {
-		log.Debug("dhcpv4: encoding: %s", err)
+		l.DebugContext(ctx, "encoding", slogutil.KeyError, err)
 
 		return false, true, err
 	}
 
-	log.Debug("dhcpv4: received message from server: %s", response.Summary())
+	l.DebugContext(ctx, "received message from server", "summary", response.Summary())
 
 	switch {
 	case
@@ -185,19 +204,24 @@ func tryConn4(
 		!bytes.Equal(response.ClientHWAddr, iface.HardwareAddr),
 		response.TransactionID != req.TransactionID,
 		!response.Options.Has(dhcpv4.OptionDHCPMessageType):
-		log.Debug("dhcpv4: received response doesn't match the request")
+		l.DebugContext(ctx, "dhcpv4: received response does not match the request")
 
 		return false, true, nil
 	default:
-		log.Tracef("dhcpv4: the packet is from an active dhcp server")
+		l.Log(ctx, slogutil.LevelTrace, "packet is from an active dhcp server")
 
 		return true, false, nil
 	}
 }
 
 // checkOtherDHCPv6 sends a DHCP request to the specified network interface, and
-// waits for a response for a period defined by defaultDiscoverTime.
-func checkOtherDHCPv6(iface *net.Interface) (ok bool, err error) {
+// waits for a response for a period defined by defaultDiscoverTime.  l must not
+// be nil.
+func checkOtherDHCPv6(
+	ctx context.Context,
+	l *slog.Logger,
+	iface *net.Interface,
+) (ok bool, err error) {
 	ifaceIPNet, err := IfaceIPAddrs(iface, IPVersion6)
 	if err != nil {
 		return false, fmt.Errorf("getting ipv6 addrs for iface %s: %w", iface.Name, err)
@@ -224,18 +248,24 @@ func checkOtherDHCPv6(iface *net.Interface) (ok bool, err error) {
 		return false, fmt.Errorf("dhcpv6: Couldn't resolve UDP address %s: %w", dst, err)
 	}
 
-	return discover6(iface, udpAddr, dstAddr)
+	return discover6(ctx, l, iface, udpAddr, dstAddr)
 }
 
 // discover6 sends a DHCPv6 discovery to the specified network interface and
 // waits for response.  iface, updAddr and dstAddr must not be nil.
-func discover6(iface *net.Interface, udpAddr, dstAddr *net.UDPAddr) (ok bool, err error) {
+func discover6(
+	ctx context.Context,
+	l *slog.Logger,
+	iface *net.Interface,
+	udpAddr *net.UDPAddr,
+	dstAddr *net.UDPAddr,
+) (ok bool, err error) {
 	req, err := dhcpv6.NewSolicit(iface.HardwareAddr)
 	if err != nil {
 		return false, fmt.Errorf("dhcpv6: dhcpv6.NewSolicit: %w", err)
 	}
 
-	log.Debug("DHCPv6: Listening to udp6 %+v", udpAddr)
+	l.DebugContext(ctx, "listening on udp6", "addr", udpAddr)
 	c, err := nclient6.NewIPv6UDPConn(iface.Name, dhcpv6.DefaultClientPort)
 	if err != nil {
 		return false, fmt.Errorf("dhcpv6: Couldn't listen on :546: %w", err)
@@ -249,7 +279,7 @@ func discover6(iface *net.Interface, udpAddr, dstAddr *net.UDPAddr) (ok bool, er
 
 	for {
 		var next bool
-		ok, next, err = tryConn6(req, c)
+		ok, next, err = tryConn6(ctx, l, req, c)
 		if next {
 			continue
 		}
@@ -266,10 +296,15 @@ func discover6(iface *net.Interface, udpAddr, dstAddr *net.UDPAddr) (ok bool, er
 // the original request.  req and c must not be nil.
 //
 // TODO(a.garipov): See the comment on tryConn4.  Sigh…
-func tryConn6(req *dhcpv6.Message, c net.PacketConn) (ok, next bool, err error) {
+func tryConn6(
+	ctx context.Context,
+	l *slog.Logger,
+	req *dhcpv6.Message,
+	c net.PacketConn,
+) (ok, next bool, err error) {
 	// TODO: replicate dhclient's behavior of retrying several times with
 	// progressively longer timeouts.
-	log.Tracef("dhcpv6: waiting %v for an answer", defaultDiscoverTime)
+	l.Log(ctx, slogutil.LevelTrace, "waiting for an answer", "timeout", defaultDiscoverTime)
 
 	b := make([]byte, 4096)
 	err = c.SetDeadline(time.Now().Add(defaultDiscoverTime))
@@ -280,7 +315,7 @@ func tryConn6(req *dhcpv6.Message, c net.PacketConn) (ok, next bool, err error) 
 	n, _, err := c.ReadFrom(b)
 	if err != nil {
 		if errors.Is(err, os.ErrDeadlineExceeded) {
-			log.Debug("dhcpv6: didn't receive dhcp response")
+			l.DebugContext(ctx, "did not receive response")
 
 			return false, false, nil
 		}
@@ -288,21 +323,21 @@ func tryConn6(req *dhcpv6.Message, c net.PacketConn) (ok, next bool, err error) 
 		return false, false, fmt.Errorf("receiving packet: %w", err)
 	}
 
-	log.Tracef("dhcpv6: received packet, %d bytes", n)
+	l.Log(ctx, slogutil.LevelTrace, "dhcpv6: received packet", "size", n)
 
 	response, err := dhcpv6.FromBytes(b[:n])
 	if err != nil {
-		log.Debug("dhcpv6: encoding: %s", err)
+		l.DebugContext(ctx, "encoding", slogutil.KeyError, err)
 
 		return false, true, err
 	}
 
-	log.Debug("dhcpv6: received message from server: %s", response.Summary())
+	l.DebugContext(ctx, "received message from server", "summary", response.Summary())
 
 	cid := req.Options.ClientID()
 	msg, err := response.GetInnerMessage()
 	if err != nil {
-		log.Debug("dhcpv6: resp.GetInnerMessage(): %s", err)
+		l.DebugContext(ctx, "getting inner message", slogutil.KeyError, err)
 
 		return false, true, err
 	}
@@ -313,12 +348,12 @@ func tryConn6(req *dhcpv6.Message, c net.PacketConn) (ok, next bool, err error) 
 		rcid != nil &&
 		cid.Equal(rcid)) {
 
-		log.Debug("dhcpv6: received message from server doesn't match our request")
+		l.DebugContext(ctx, "received message from server does not match our request")
 
 		return false, true, nil
 	}
 
-	log.Tracef("dhcpv6: the packet is from an active dhcp server")
+	l.Log(ctx, slogutil.LevelTrace, "dhcpv6: the packet is from an active dhcp server")
 
 	return true, false, nil
 }

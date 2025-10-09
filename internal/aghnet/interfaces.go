@@ -1,11 +1,11 @@
 package aghnet
 
 import (
+	"context"
 	"fmt"
+	"log/slog"
 	"net"
 	"time"
-
-	"github.com/AdguardTeam/golibs/log"
 )
 
 // IPVersion is a alias for int for documentation purposes.  Use it when the
@@ -71,7 +71,7 @@ func ipFromAddr(addr net.Addr, ipv IPVersion) (ip net.IP) {
 
 // IfaceDNSIPAddrs returns IP addresses of the interface suitable to send to
 // clients as DNS addresses.  If err is nil, addrs contains either no addresses
-// or at least two.
+// or at least two.  l must not be nil.
 //
 // It makes up to maxAttempts attempts to get the addresses if there are none,
 // each time using the provided backoff.  Sometimes an interface needs a few
@@ -79,6 +79,8 @@ func ipFromAddr(addr net.Addr, ipv IPVersion) (ip net.IP) {
 //
 // See https://github.com/AdguardTeam/AdGuardHome/issues/2304.
 func IfaceDNSIPAddrs(
+	ctx context.Context,
+	l *slog.Logger,
 	iface NetIface,
 	ipv IPVersion,
 	maxAttempts int,
@@ -95,7 +97,7 @@ func IfaceDNSIPAddrs(
 			break
 		}
 
-		log.Debug("dhcpv%d: attempt %d: no ip addresses", ipv, n)
+		l.DebugContext(ctx, "no ip addresses", "attempt", n, "ipv", ipv)
 
 		time.Sleep(backoff)
 	}
@@ -107,7 +109,7 @@ func IfaceDNSIPAddrs(
 		// Don't return errors in case the users want to try and enable the DHCP
 		// server later.
 		t := time.Duration(n) * backoff
-		log.Error("dhcpv%d: no ip for iface after %d attempts and %s", ipv, n, t)
+		l.ErrorContext(ctx, "no ip addresses for iface", "attempts", n, "duration", t, "ipv", ipv)
 
 		return nil, nil
 	case 1:
@@ -116,13 +118,13 @@ func IfaceDNSIPAddrs(
 		// address.
 		//
 		// See https://github.com/AdguardTeam/AdGuardHome/issues/1708.
-		log.Debug("dhcpv%d: setting secondary dns ip to itself", ipv)
+		l.DebugContext(ctx, "setting secondary dns ip to itself", "ipv", ipv)
 		addrs = append(addrs, addrs[0])
 	default:
 		// Go on.
 	}
 
-	log.Debug("dhcpv%d: got addresses %s after %d attempts", ipv, addrs, n)
+	l.DebugContext(ctx, "got addresses", "addrs", addrs, "attempts", n, "ipv", ipv)
 
 	return addrs, nil
 }

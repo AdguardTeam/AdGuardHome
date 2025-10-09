@@ -4,6 +4,7 @@ package dhcpd
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"net"
 	"net/netip"
@@ -657,8 +658,13 @@ func (s *v6Server) packetHandler(conn net.PacketConn, peer net.Addr, req dhcpv6.
 
 // configureDNSIPAddrs updates v6Server configuration with the slice of DNS IP
 // addresses of provided interface iface.  Initializes RA module.
-func (s *v6Server) configureDNSIPAddrs(iface *net.Interface) (ok bool, err error) {
+func (s *v6Server) configureDNSIPAddrs(
+	ctx context.Context,
+	iface *net.Interface,
+) (ok bool, err error) {
 	dnsIPAddrs, err := aghnet.IfaceDNSIPAddrs(
+		ctx,
+		s.conf.Logger,
 		iface,
 		aghnet.IPVersion6,
 		defaultMaxAttempts,
@@ -700,7 +706,7 @@ func (s *v6Server) initRA(iface *net.Interface) (err error) {
 }
 
 // Start starts the IPv6 DHCP server.
-func (s *v6Server) Start() (err error) {
+func (s *v6Server) Start(ctx context.Context) (err error) {
 	defer func() { err = errors.Annotate(err, "dhcpv6: %w") }()
 
 	if !s.conf.Enabled {
@@ -715,7 +721,7 @@ func (s *v6Server) Start() (err error) {
 
 	log.Debug("dhcpv6: starting...")
 
-	ok, err := s.configureDNSIPAddrs(iface)
+	ok, err := s.configureDNSIPAddrs(ctx, iface)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
 		return err

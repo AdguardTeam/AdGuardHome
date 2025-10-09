@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agh"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -84,7 +85,9 @@ func TestServer_handleDHCPStatus(t *testing.T) {
 		Hostname: staticName,
 	}
 
-	s, err := Create(&ServerConfig{
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	s, err := Create(ctx, &ServerConfig{
+		Logger:       testLogger,
 		Enabled:      true,
 		Conf4:        *defaultV4ServerConf(),
 		DataDir:      t.TempDir(),
@@ -178,7 +181,9 @@ func TestServer_HandleUpdateStaticLease(t *testing.T) {
 		},
 	}
 
-	s, err := Create(&ServerConfig{
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	s, err := Create(ctx, &ServerConfig{
+		Logger:       testLogger,
 		Enabled:      true,
 		Conf4:        *defaultV4ServerConf(),
 		Conf6:        V6ServerConf{},
@@ -266,7 +271,9 @@ func TestServer_HandleUpdateStaticLease_validation(t *testing.T) {
 		Hostname: anotherV4Name,
 	}}
 
-	s, err := Create(&ServerConfig{
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	s, err := Create(ctx, &ServerConfig{
+		Logger:       testLogger,
 		Enabled:      true,
 		Conf4:        *defaultV4ServerConf(),
 		Conf6:        V6ServerConf{},

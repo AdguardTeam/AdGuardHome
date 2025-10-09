@@ -166,7 +166,7 @@ func (d *DNSFilter) handleBlockedServicesSet(w http.ResponseWriter, r *http.Requ
 	list := []string{}
 	err := json.NewDecoder(r.Body).Decode(&list)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "json.Decode: %s", err)
+		aghhttp.ErrorAndLog(ctx, d.logger, r, w, http.StatusBadRequest, "json.Decode: %s", err)
 
 		return
 	}
@@ -200,18 +200,19 @@ func (d *DNSFilter) handleBlockedServicesGet(w http.ResponseWriter, r *http.Requ
 // /control/blocked_services/update HTTP API.
 func (d *DNSFilter) handleBlockedServicesUpdate(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	l := d.logger
 
 	bsvc := &BlockedServices{}
 	err := json.NewDecoder(r.Body).Decode(bsvc)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "json.Decode: %s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "json.Decode: %s", err)
 
 		return
 	}
 
 	err = bsvc.Validate()
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusUnprocessableEntity, "validating: %s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusUnprocessableEntity, "validating: %s", err)
 
 		return
 	}
@@ -227,7 +228,7 @@ func (d *DNSFilter) handleBlockedServicesUpdate(w http.ResponseWriter, r *http.R
 		d.conf.BlockedServices = bsvc
 	}()
 
-	d.logger.DebugContext(ctx, "updated blocked services schedule", "len", len(bsvc.IDs))
+	l.DebugContext(ctx, "updated blocked services schedule", "len", len(bsvc.IDs))
 
 	d.conf.ConfModifier.Apply(ctx)
 }

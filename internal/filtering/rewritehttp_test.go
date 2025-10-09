@@ -9,12 +9,10 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
-	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -42,9 +40,6 @@ type rewriteUpdateJSON struct {
 }
 
 const (
-	// testTimeout is the common timeout for tests.
-	testTimeout = 100 * time.Millisecond
-
 	listURL   = "/control/rewrite/list"
 	addURL    = "/control/rewrite/add"
 	deleteURL = "/control/rewrite/delete"
@@ -264,7 +259,7 @@ func TestDNSFilter_HandleRewriteHTTP(t *testing.T) {
 			}
 
 			d, err := filtering.New(&filtering.Config{
-				Logger:       slogutil.NewDiscardLogger(),
+				Logger:       testLogger,
 				ConfModifier: confModifier,
 				HTTPRegister: func(_, url string, handler http.HandlerFunc) {
 					handlers[url] = handler
@@ -365,7 +360,7 @@ func TestDNSFilter_HandleRewriteSettings(t *testing.T) {
 	handlers := make(map[string]http.Handler)
 
 	d, err := filtering.New(&filtering.Config{
-		Logger:       slogutil.NewDiscardLogger(),
+		Logger:       testLogger,
 		ConfModifier: confModifier,
 		HTTPRegister: func(_, url string, handler http.HandlerFunc) {
 			handlers[url] = handler

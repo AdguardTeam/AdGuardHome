@@ -1,6 +1,10 @@
 package configmigrate
 
-import "github.com/AdguardTeam/golibs/errors"
+import (
+	"context"
+
+	"github.com/AdguardTeam/golibs/errors"
+)
 
 // migrateTo7 performs the following changes:
 //
@@ -30,7 +34,7 @@ import "github.com/AdguardTeam/golibs/errors"
 //	    'lease_duration': 86400
 //	    'icmp_timeout_msec': 1000
 //	# …
-func migrateTo7(diskConf yobj) (err error) {
+func (m *Migrator) migrateTo7(_ context.Context, diskConf yobj) (err error) {
 	diskConf["schema_version"] = 7
 
 	dhcp, ok, _ := fieldVal[yobj](diskConf, "dhcp")

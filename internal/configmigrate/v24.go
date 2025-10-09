@@ -1,6 +1,10 @@
 package configmigrate
 
-import "github.com/AdguardTeam/golibs/errors"
+import (
+	"context"
+
+	"github.com/AdguardTeam/golibs/errors"
+)
 
 // migrateTo24 performs the following changes:
 //
@@ -26,7 +30,7 @@ import "github.com/AdguardTeam/golibs/errors"
 //	  'local_time': false
 //	  'verbose': false
 //	# …
-func migrateTo24(diskConf yobj) (err error) {
+func (m *Migrator) migrateTo24(_ context.Context, diskConf yobj) (err error) {
 	diskConf["schema_version"] = 24
 
 	logObj := yobj{}

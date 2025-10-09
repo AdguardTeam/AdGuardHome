@@ -1,6 +1,7 @@
 package configmigrate
 
 import (
+	"context"
 	"fmt"
 )
 
@@ -30,7 +31,7 @@ import (
 //	    # …
 //	  # …
 //	# …
-func migrateTo22(diskConf yobj) (err error) {
+func (m *Migrator) migrateTo22(_ context.Context, diskConf yobj) (err error) {
 	diskConf["schema_version"] = 22
 
 	const field = "blocked_services"

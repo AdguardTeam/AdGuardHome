@@ -17,6 +17,11 @@ See also the [v0.107.68 GitHub milestone][ms-v0.107.68].
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
+
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.25.2][go-1.25.2].
+
 ### Added
 
 - New DNS rewrite settings endpoints `GET /control/rewrite/settings` and `PUT /control/rewrite/settings/update`.  See `openapi/openapi.yaml` for details.
@@ -52,6 +57,8 @@ In this release, the schema version has changed from 30 to 31.
     ```
 
     To roll back this change, set `schema_version` back to `30`.
+
+[go-1.25.2]:    https://groups.google.com/g/golang-announce/c/4Emdl2iQ_bI
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

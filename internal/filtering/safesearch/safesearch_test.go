@@ -41,6 +41,9 @@ var testConf = filtering.SafeSearchConfig{
 	YouTube:    true,
 }
 
+// testLogger is a logger used in tests.
+var testLogger = slogutil.NewDiscardLogger()
+
 // yandexIP is the expected IP address of Yandex safe search results.  Keep in
 // sync with the rules data.
 var yandexIP = netip.AddrFrom4([4]byte{213, 180, 193, 56})
@@ -49,7 +52,7 @@ func TestDefault_CheckHost_yandex(t *testing.T) {
 	conf := testConf
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
 	ss, err := safesearch.NewDefault(ctx, &safesearch.DefaultConfig{
-		Logger:         slogutil.NewDiscardLogger(),
+		Logger:         testLogger,
 		ServicesConfig: conf,
 		CacheSize:      testCacheSize,
 		CacheTTL:       testCacheTTL,
@@ -111,7 +114,7 @@ func TestDefault_CheckHost_yandex(t *testing.T) {
 func TestDefault_CheckHost_google(t *testing.T) {
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
 	ss, err := safesearch.NewDefault(ctx, &safesearch.DefaultConfig{
-		Logger:         slogutil.NewDiscardLogger(),
+		Logger:         testLogger,
 		ServicesConfig: testConf,
 		CacheSize:      testCacheSize,
 		CacheTTL:       testCacheTTL,
@@ -163,7 +166,7 @@ func (r *testResolver) LookupIP(
 func TestDefault_CheckHost_duckduckgoAAAA(t *testing.T) {
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
 	ss, err := safesearch.NewDefault(ctx, &safesearch.DefaultConfig{
-		Logger:         slogutil.NewDiscardLogger(),
+		Logger:         testLogger,
 		ServicesConfig: testConf,
 		CacheSize:      testCacheSize,
 		CacheTTL:       testCacheTTL,
@@ -186,7 +189,7 @@ func TestDefault_Update(t *testing.T) {
 	conf := testConf
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
 	ss, err := safesearch.NewDefault(ctx, &safesearch.DefaultConfig{
-		Logger:         slogutil.NewDiscardLogger(),
+		Logger:         testLogger,
 		ServicesConfig: conf,
 		CacheSize:      testCacheSize,
 		CacheTTL:       testCacheTTL,

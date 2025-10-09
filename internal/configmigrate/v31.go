@@ -1,5 +1,7 @@
 package configmigrate
 
+import "context"
+
 // migrateTo31 performs the following changes:
 //
 //	# BEFORE:
@@ -18,7 +20,7 @@ package configmigrate
 //	      'enabled': true
 //	  # …
 //	# …
-func (m Migrator) migrateTo31(diskConf yobj) (err error) {
+func (m *Migrator) migrateTo31(_ context.Context, diskConf yobj) (err error) {
 	diskConf["schema_version"] = 31
 
 	fltConf, ok, err := fieldVal[yobj](diskConf, "filtering")

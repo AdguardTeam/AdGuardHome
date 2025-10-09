@@ -1,5 +1,7 @@
 package configmigrate
 
+import "context"
+
 // migrateTo25 performs the following changes:
 //
 //	# BEFORE:
@@ -14,7 +16,7 @@ package configmigrate
 //	    'enabled': true
 //	    'port': 6060
 //	# …
-func migrateTo25(diskConf yobj) (err error) {
+func (m *Migrator) migrateTo25(_ context.Context, diskConf yobj) (err error) {
 	diskConf["schema_version"] = 25
 
 	httpObj, ok, err := fieldVal[yobj](diskConf, "http")

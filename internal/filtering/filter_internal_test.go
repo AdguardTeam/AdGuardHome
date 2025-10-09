@@ -8,17 +8,12 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
-	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-// testTimeout is the common timeout for tests.
-const testTimeout = 5 * time.Second
 
 // serveHTTPLocally starts a new HTTP server, that handles its index with h.  It
 // also gracefully closes the listener when the test under t finishes.
@@ -86,7 +81,7 @@ func newDNSFilter(tb testing.TB) (d *DNSFilter) {
 	tb.Helper()
 
 	dnsFilter, err := New(&Config{
-		Logger:  slogutil.NewDiscardLogger(),
+		Logger:  testLogger,
 		DataDir: tb.TempDir(),
 		HTTPClient: &http.Client{
 			Timeout: testTimeout,
