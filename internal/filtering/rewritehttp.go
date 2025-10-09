@@ -194,8 +194,9 @@ func (d *DNSFilter) handleRewriteUpdate(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	rwDel.Enabled = d.conf.Rewrites[index].Enabled
 	if updateJSON.Update.Enabled == aghalg.NBNull {
-		rwAdd.Enabled = d.conf.Rewrites[index].Enabled
+		rwAdd.Enabled = rwDel.Enabled
 	} else {
 		rwAdd.Enabled = updateJSON.Update.Enabled == aghalg.NBTrue
 	}
@@ -207,12 +208,14 @@ func (d *DNSFilter) handleRewriteUpdate(w http.ResponseWriter, r *http.Request) 
 		"removed rewrite element",
 		"domain", rwDel.Domain,
 		"answer", rwDel.Answer,
+		"enabled", rwDel.Enabled,
 	)
 	d.logger.DebugContext(
 		ctx,
 		"added rewrite element",
 		"domain", rwAdd.Domain,
 		"answer", rwAdd.Answer,
+		"enabled", rwAdd.Enabled,
 	)
 }
 

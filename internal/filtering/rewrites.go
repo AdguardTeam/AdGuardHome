@@ -17,9 +17,11 @@ import (
 
 // LegacyRewrite is a single legacy DNS rewrite record.
 //
-// Instances of *LegacyRewrite must never be nil.
+// Instances of *LegacyRewrite must not be nil.
+//
+// NOTE:  Keep fields in sync with [cloneRewrites].
 type LegacyRewrite struct {
-	// Domain is the domain pattern for which this rewrite should work.
+	// Domain is the pattern to which this rewrite applies.
 	Domain string `yaml:"domain"`
 
 	// Answer is the IP address, canonical name, or one of the special
@@ -233,10 +235,11 @@ func cloneRewrites(entries []*LegacyRewrite) (clone []*LegacyRewrite) {
 	clone = make([]*LegacyRewrite, len(entries))
 	for i, rw := range entries {
 		clone[i] = &LegacyRewrite{
-			Domain: rw.Domain,
-			Answer: rw.Answer,
-			IP:     rw.IP,
-			Type:   rw.Type,
+			Domain:  rw.Domain,
+			Answer:  rw.Answer,
+			IP:      rw.IP,
+			Type:    rw.Type,
+			Enabled: rw.Enabled,
 		}
 	}
 
