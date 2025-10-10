@@ -94,6 +94,7 @@ func Main(clientBuildFS fs.FS) {
 	// package flag.
 	opts := loadCmdLineOpts()
 
+	// TODO(s.chzhen):  Construct logger from command-line options.
 	l := slog.Default()
 	workDir, err := initWorkingDir(opts)
 	if err != nil {
@@ -166,7 +167,7 @@ func setupContext(
 	}
 
 	if isFirstRun {
-		log.Info("This is the first time AdGuard Home is launched")
+		baseLogger.InfoContext(ctx, "this is the first time adguard home has been launched")
 		checkNetworkPermissions(ctx, baseLogger)
 
 		return nil
@@ -175,13 +176,13 @@ func setupContext(
 	// TODO(s.chzhen):  Consider adding a key prefix.
 	err = parseConfig(ctx, baseLogger, workDir, confPath)
 	if err != nil {
-		log.Error("parsing configuration file: %s", err)
+		baseLogger.ErrorContext(ctx, "failed to parse configuration file", slogutil.KeyError, err)
 
 		os.Exit(osutil.ExitCodeFailure)
 	}
 
 	if opts.checkConfig {
-		log.Info("configuration file is ok")
+		baseLogger.InfoContext(ctx, "configuration file is ok")
 
 		os.Exit(osutil.ExitCodeSuccess)
 	}
@@ -572,6 +573,8 @@ func isUpdateEnabled(
 
 // initWeb initializes the web module.  upd, baseLogger, tlsMgr, auth, and mux
 // must not be nil.
+//
+// TODO(s.chzhen):  Use a configuration structure.
 func initWeb(
 	ctx context.Context,
 	opts options,
@@ -699,10 +702,10 @@ func run(
 	fatalOnError(err)
 
 	// Print the first message after logger is configured.
-	log.Info("%s", version.Full())
-	log.Debug("current working directory is %s", workDir)
+	slogLogger.InfoContext(ctx, "starting adguard home", "version", version.Full())
+	slogLogger.DebugContext(ctx, "current working directory", "path", workDir)
 	if opts.runningAsService {
-		log.Info("AdGuard Home is running as a service")
+		slogLogger.InfoContext(ctx, "adguard home is running as a service")
 	}
 
 	aghtls.Init(ctx, slogLogger.With(slogutil.KeyPrefix, "aghtls"))
@@ -822,7 +825,7 @@ func run(
 		if globalContext.dhcpServer != nil {
 			err = globalContext.dhcpServer.Start(ctx)
 			if err != nil {
-				log.Error("starting dhcp server: %s", err)
+				slogLogger.ErrorContext(ctx, "starting dhcp server", slogutil.KeyError, err)
 			}
 		}
 	}

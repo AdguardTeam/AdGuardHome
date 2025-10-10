@@ -89,7 +89,8 @@ func getLogSettings(
 	ctx context.Context,
 	l *slog.Logger,
 	opts options,
-	workDir, confPath string,
+	workDir string,
+	confPath string,
 ) (ls *logSettings) {
 	configLogSettings := config.Log
 
@@ -121,7 +122,8 @@ func getLogSettings(
 func readLogSettings(
 	ctx context.Context,
 	l *slog.Logger,
-	workDir, confPath string,
+	workDir string,
+	confPath string,
 ) (ls *logSettings) {
 	// TODO(s.chzhen):  Add a helper function that returns default parameters
 	// for this structure and for the global configuration structure [config].
