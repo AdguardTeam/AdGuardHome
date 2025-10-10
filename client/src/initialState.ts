@@ -172,10 +172,12 @@ export type RewritesData = {
     currentRewrite?: {
         answer: string;
         domain: string;
+        enabled: boolean;
     };
     list: {
         answer: string;
         domain: string;
+        enabled: boolean;
     }[];
 };
 

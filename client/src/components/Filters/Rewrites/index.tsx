@@ -46,6 +46,17 @@ class Rewrites extends Component<RewritesProps> {
         }
     };
 
+    toggleRewrite = (currentRewrite: any) => {
+        const { enabled } = currentRewrite;
+
+        currentRewrite.enabled = !enabled;
+
+        this.props.updateRewrite({
+            target: currentRewrite,
+            update: currentRewrite,
+        });
+    };
+
     render() {
         const {
             t,
@@ -80,6 +91,7 @@ class Rewrites extends Component<RewritesProps> {
                             processingUpdate={processingUpdate}
                             handleDelete={this.handleDelete}
                             toggleRewritesModal={toggleRewritesModal}
+                            toggleRewrite={this.toggleRewrite}
                         />
 
                         <button

@@ -17,6 +17,7 @@ interface TableProps {
     processingUpdate: boolean;
     handleDelete: (...args: unknown[]) => unknown;
     toggleRewritesModal: (...args: unknown[]) => unknown;
+    toggleRewrite: (...args: unknown[]) => unknown;
 }
 
 class Table extends Component<TableProps> {
@@ -28,7 +29,31 @@ class Table extends Component<TableProps> {
         </div>
     );
 
+    renderCheckbox = ({ original }: any) => {
+        const { processing, toggleRewrite } = this.props;
+        const { enabled } = original;
+
+        return (
+            <label className="checkbox">
+                <input
+                    type="checkbox"
+                    className="checkbox__input"
+                    onChange={() => toggleRewrite(original)}
+                    checked={enabled}
+                    disabled={processing}
+                />
+
+                <span className="checkbox__label" />
+            </label>
+        );
+    };
+
     columns = [
+        {
+            Header: 'enabled',
+            accessor: 'enabled',
+            Cell: this.renderCheckbox,
+        },
         {
             Header: this.props.t('domain'),
             accessor: 'domain',
