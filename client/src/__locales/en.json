@@ -514,6 +514,7 @@
     "rewrite_added": "DNS rewrite for \"{{key}}\" successfully added",
     "rewrite_deleted": "DNS rewrite for \"{{key}}\" successfully deleted",
     "rewrite_updated": "DNS rewrite successfully updated",
+    "rewrite_settings_updated": "DNS rewrite settings successfully updated",
     "rewrite_add": "Add DNS rewrite",
     "rewrite_edit": "Edit DNS rewrite",
     "rewrite_not_found": "No DNS rewrites found",

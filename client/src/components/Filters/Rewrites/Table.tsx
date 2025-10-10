@@ -15,9 +15,11 @@ interface TableProps {
     processingAdd: boolean;
     processingDelete: boolean;
     processingUpdate: boolean;
+    settings: Record<string, boolean>;
     handleDelete: (...args: unknown[]) => unknown;
     toggleRewritesModal: (...args: unknown[]) => unknown;
     toggleRewrite: (...args: unknown[]) => unknown;
+    toggleRewriteSettings: (...args: unknown[]) => unknown;
 }
 
 class Table extends Component<TableProps> {
@@ -50,8 +52,27 @@ class Table extends Component<TableProps> {
 
     columns = [
         {
-            Header: 'enabled',
+            Header: () => {
+                const { processing, settings, toggleRewriteSettings } = this.props;
+                const isEnabledSettings = Boolean(settings && settings.enabled);
+
+                return (
+                    <label className="checkbox">
+                        <input
+                            type="checkbox"
+                            className="checkbox__input"
+                            onChange={() => toggleRewriteSettings(!isEnabledSettings)}
+                            checked={isEnabledSettings}
+                            disabled={processing}
+                        />
+
+                        <span className="checkbox__label" />
+                    </label>
+                );
+            },
             accessor: 'enabled',
+            sortable: false,
+            resizable: false,
             Cell: this.renderCheckbox,
         },
         {

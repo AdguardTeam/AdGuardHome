@@ -18,12 +18,15 @@ interface RewritesProps {
     addRewrite: (...args: unknown[]) => unknown;
     deleteRewrite: (...args: unknown[]) => unknown;
     updateRewrite: (...args: unknown[]) => unknown;
+    updateRewriteSettings: (...args: unknown[]) => unknown;
+    getRewriteSettings: () => (dispatch: any) => void;
     rewrites: RewritesData;
 }
 
 class Rewrites extends Component<RewritesProps> {
     componentDidMount() {
         this.props.getRewritesList();
+        this.props.getRewriteSettings();
     }
 
     handleDelete = (values: any) => {
@@ -55,6 +58,10 @@ class Rewrites extends Component<RewritesProps> {
             target: currentRewrite,
             update: currentRewrite,
         });
+    };
+
+    toggleRewriteSettings = (isSettingsEnabled: boolean) => {
+        this.props.updateRewriteSettings({ enabled: isSettingsEnabled });
     };
 
     render() {
@@ -92,6 +99,8 @@ class Rewrites extends Component<RewritesProps> {
                             handleDelete={this.handleDelete}
                             toggleRewritesModal={toggleRewritesModal}
                             toggleRewrite={this.toggleRewrite}
+                            toggleRewriteSettings={this.toggleRewriteSettings}
+                            settings={rewrites.settings}
                         />
 
                         <button
