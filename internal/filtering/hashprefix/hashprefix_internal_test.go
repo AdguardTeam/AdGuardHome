@@ -22,6 +22,9 @@ const (
 	cacheSize = 10000
 )
 
+// testLogger is a logger used in tests.
+var testLogger = slogutil.NewDiscardLogger()
+
 func TestChcker_getQuestion(t *testing.T) {
 	const suf = "sb.dns.adguard.com."
 
@@ -45,7 +48,7 @@ func TestChcker_getQuestion(t *testing.T) {
 	assert.False(t, slices.Contains(hashes, hash))
 
 	c := New(&Config{
-		Logger:    slogutil.NewDiscardLogger(),
+		Logger:    testLogger,
 		TXTSuffix: suf,
 	})
 
@@ -100,7 +103,7 @@ func TestChecker_storeInCache(t *testing.T) {
 	const testTimeout = 1 * time.Second
 
 	c := New(&Config{
-		Logger:    slogutil.NewDiscardLogger(),
+		Logger:    testLogger,
 		CacheTime: cacheTime,
 	})
 
@@ -158,7 +161,7 @@ func TestChecker_storeInCache(t *testing.T) {
 	assert.True(t, ok)
 
 	c = New(&Config{
-		Logger:    slogutil.NewDiscardLogger(),
+		Logger:    testLogger,
 		CacheTime: cacheTime,
 	})
 
@@ -195,7 +198,7 @@ func TestChecker_Check(t *testing.T) {
 
 	for _, tc := range testCases {
 		c := New(&Config{
-			Logger:    slogutil.NewDiscardLogger(),
+			Logger:    testLogger,
 			CacheTime: cacheTime,
 			CacheSize: cacheSize,
 		})

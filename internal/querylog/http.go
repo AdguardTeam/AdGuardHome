@@ -78,7 +78,7 @@ func (l *queryLog) handleQueryLog(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	params, err := l.parseSearchParams(ctx, r)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "parsing params: %s", err)
+		aghhttp.ErrorAndLog(ctx, l.logger, r, w, http.StatusBadRequest, "parsing params: %s", err)
 
 		return
 	}
@@ -164,6 +164,8 @@ func AnonymizeIP(ip net.IP) {
 //
 // Deprecated:  Remove it when migration to the new API is over.
 func (l *queryLog) handleQueryLogConfig(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	// Set NaN as initial value to be able to know if it changed later by
 	// comparing it to NaN.
 	newConf := &configJSON{
@@ -172,7 +174,7 @@ func (l *queryLog) handleQueryLogConfig(w http.ResponseWriter, r *http.Request) 
 
 	err := json.NewDecoder(r.Body).Decode(newConf)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+		aghhttp.ErrorAndLog(ctx, l.logger, r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
@@ -181,12 +183,12 @@ func (l *queryLog) handleQueryLogConfig(w http.ResponseWriter, r *http.Request) 
 
 	hasIvl := !math.IsNaN(newConf.Interval)
 	if hasIvl && !checkInterval(ivl) {
-		aghhttp.Error(r, w, http.StatusBadRequest, "unsupported interval")
+		aghhttp.ErrorAndLog(ctx, l.logger, r, w, http.StatusBadRequest, "unsupported interval")
 
 		return
 	}
 
-	defer l.conf.ConfigModifier.Apply(r.Context())
+	defer l.conf.ConfigModifier.Apply(ctx)
 
 	l.confMu.Lock()
 	defer l.confMu.Unlock()
@@ -215,17 +217,27 @@ func (l *queryLog) handleQueryLogConfig(w http.ResponseWriter, r *http.Request) 
 // handlePutQueryLogConfig is the handler for the PUT
 // /control/querylog/config/update HTTP API.
 func (l *queryLog) handlePutQueryLogConfig(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	newConf := &getConfigResp{}
 	err := json.NewDecoder(r.Body).Decode(newConf)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+		aghhttp.ErrorAndLog(ctx, l.logger, r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
 
 	engine, err := aghnet.NewIgnoreEngine(newConf.Ignored)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusUnprocessableEntity, "ignored: %s", err)
+		aghhttp.ErrorAndLog(
+			ctx,
+			l.logger,
+			r,
+			w,
+			http.StatusUnprocessableEntity,
+			"ignored: %s",
+			err,
+		)
 
 		return
 	}
@@ -233,24 +245,39 @@ func (l *queryLog) handlePutQueryLogConfig(w http.ResponseWriter, r *http.Reques
 	ivl := time.Duration(newConf.Interval) * time.Millisecond
 	err = validateIvl(ivl)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusUnprocessableEntity, "unsupported interval: %s", err)
+		aghhttp.ErrorAndLog(
+			ctx,
+			l.logger,
+			r,
+			w,
+			http.StatusUnprocessableEntity,
+			"unsupported interval: %s",
+			err,
+		)
 
 		return
 	}
 
 	if newConf.Enabled == aghalg.NBNull {
-		aghhttp.Error(r, w, http.StatusUnprocessableEntity, "enabled is null")
+		aghhttp.ErrorAndLog(ctx, l.logger, r, w, http.StatusUnprocessableEntity, "enabled is null")
 
 		return
 	}
 
 	if newConf.AnonymizeClientIP == aghalg.NBNull {
-		aghhttp.Error(r, w, http.StatusUnprocessableEntity, "anonymize_client_ip is null")
+		aghhttp.ErrorAndLog(
+			ctx,
+			l.logger,
+			r,
+			w,
+			http.StatusUnprocessableEntity,
+			"anonymize_client_ip is null",
+		)
 
 		return
 	}
 
-	defer l.conf.ConfigModifier.Apply(r.Context())
+	defer l.conf.ConfigModifier.Apply(ctx)
 
 	l.confMu.Lock()
 	defer l.confMu.Unlock()

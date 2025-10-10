@@ -249,7 +249,7 @@ func TestIfaceSetStaticIP(t *testing.T) {
 			substRootDirFS(t, tc.fsys)
 
 			ctx := testutil.ContextWithTimeout(t, testTimeout)
-			err := IfaceSetStaticIP(ctx, tc.cmdCons, "en0")
+			err := IfaceSetStaticIP(ctx, testLogger, tc.cmdCons, "en0")
 			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
 		})
 	}

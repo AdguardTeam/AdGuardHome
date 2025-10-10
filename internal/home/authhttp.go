@@ -103,7 +103,7 @@ func (web *webAPI) handleLogin(w http.ResponseWriter, r *http.Request) {
 	req := loginJSON{}
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "json decode: %s", err)
+		aghhttp.ErrorAndLog(ctx, web.logger, r, w, http.StatusBadRequest, "json decode: %s", err)
 
 		return
 	}
@@ -173,7 +173,7 @@ func (web *webAPI) handleLogin(w http.ResponseWriter, r *http.Request) {
 	h.Set(httphdr.Pragma, "no-cache")
 	h.Set(httphdr.Expires, "0")
 
-	aghhttp.OK(w)
+	aghhttp.OK(ctx, web.logger, w)
 }
 
 // newCookie creates a new authentication cookie.  rateLimiter must not be nil.
@@ -264,11 +264,11 @@ func (web *webAPI) handleLogout(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusFound)
 }
 
-// RegisterAuthHandlers - register handlers
-func RegisterAuthHandlers(web *webAPI) {
-	globalContext.mux.Handle(
+// registerAuthHandlers registers authentication handlers.
+func (web *webAPI) registerAuthHandlers() {
+	web.conf.mux.Handle(
 		"/control/login",
-		postInstallHandler(ensureHandler(http.MethodPost, web.handleLogin)),
+		web.postInstallHandler(ensure(http.MethodPost, web.handleLogin)),
 	)
 	httpRegister(http.MethodGet, "/control/logout", web.handleLogout)
 }

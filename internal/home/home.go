@@ -58,20 +58,8 @@ type homeContext struct {
 	dnsServer  *dnsforward.Server // DNS module
 	dhcpServer dhcpd.Interface    // DHCP module
 
-	// auth stores web user information and handles authentication.
-	//
-	// TODO(s.chzhen):  Remove once it is no longer called from different
-	// modules.  See [onConfigModified].
-	auth *auth
-
 	filters *filtering.DNSFilter // DNS filtering module
 	web     *webAPI              // Web (HTTP, HTTPS) module
-
-	// tls contains the current configuration and state of TLS encryption.
-	//
-	// TODO(s.chzhen):  Remove once it is no longer called from different
-	// modules.  See [onConfigModified].
-	tls *tlsManager
 
 	// etcHosts contains IP-hostname mappings taken from the OS-specific hosts
 	// configuration files, for example /etc/hosts.
@@ -90,10 +78,6 @@ type homeContext struct {
 	workDir     string // Location of our directory, used to protect against CWD being somewhere else
 	pidFileName string // PID file name.  Empty if no PID file was created.
 	controlLock sync.Mutex
-
-	// firstRun, if true, tells AdGuard Home to only start the web interface
-	// service, and only serve the first-run APIs.
-	firstRun bool
 }
 
 // getDataDir returns path to the directory where we store databases and filters
@@ -160,9 +144,12 @@ func Main(clientBuildFS fs.FS) {
 
 // setupContext initializes [globalContext] fields.  It also reads and upgrades
 // config file if necessary.  baseLogger must not be nil.
-func setupContext(ctx context.Context, baseLogger *slog.Logger, opts options) (err error) {
-	globalContext.firstRun = detectFirstRun()
-
+func setupContext(
+	ctx context.Context,
+	baseLogger *slog.Logger,
+	opts options,
+	isFirstRun bool,
+) (err error) {
 	globalContext.mux = http.NewServeMux()
 
 	if !opts.noEtcHosts {
@@ -173,9 +160,9 @@ func setupContext(ctx context.Context, baseLogger *slog.Logger, opts options) (e
 		}
 	}
 
-	if globalContext.firstRun {
+	if isFirstRun {
 		log.Info("This is the first time AdGuard Home is launched")
-		checkNetworkPermissions()
+		checkNetworkPermissions(ctx, baseLogger)
 
 		return nil
 	}
@@ -253,9 +240,16 @@ func configureOS(conf *configuration) (err error) {
 // setupHostsContainer initializes the structures to keep up-to-date the hosts
 // provided by the OS.  baseLogger must not be nil.
 func setupHostsContainer(ctx context.Context, baseLogger *slog.Logger) (err error) {
+	l := baseLogger.With(slogutil.KeyPrefix, "hosts")
+
 	hostsWatcher, err := aghos.NewOSWritesWatcher(baseLogger.With(slogutil.KeyPrefix, "oswatcher"))
 	if err != nil {
-		log.Info("WARNING: initializing filesystem watcher: %s; not watching for changes", err)
+		l.WarnContext(
+			ctx,
+			"initializing filesystem watcher; not watching for changes",
+			slogutil.KeyError,
+			err,
+		)
 
 		hostsWatcher = aghos.EmptyFSWatcher{}
 	}
@@ -265,11 +259,17 @@ func setupHostsContainer(ctx context.Context, baseLogger *slog.Logger) (err erro
 		return fmt.Errorf("getting default system hosts paths: %w", err)
 	}
 
-	globalContext.etcHosts, err = aghnet.NewHostsContainer(osutil.RootDirFS(), hostsWatcher, paths...)
+	globalContext.etcHosts, err = aghnet.NewHostsContainer(
+		ctx,
+		l,
+		osutil.RootDirFS(),
+		hostsWatcher,
+		paths...,
+	)
 	if err != nil {
 		closeErr := hostsWatcher.Shutdown(ctx)
 		if errors.Is(err, aghnet.ErrNoHostsPaths) {
-			log.Info("warning: initing hosts container: %s", err)
+			l.WarnContext(ctx, "initializing hosts container", slogutil.KeyError, err)
 
 			return closeErr
 		}
@@ -308,9 +308,10 @@ func initContextClients(
 	config.DHCP.DataDir = globalContext.getDataDir()
 	config.DHCP.HTTPRegister = httpRegister
 	config.DHCP.CommandConstructor = executil.SystemCommandConstructor{}
+	config.DHCP.Logger = logger.With(slogutil.KeyPrefix, "dhcpd")
 	config.DHCP.ConfModifier = confModifier
 
-	globalContext.dhcpServer, err = dhcpd.Create(config.DHCP)
+	globalContext.dhcpServer, err = dhcpd.Create(ctx, config.DHCP)
 	if globalContext.dhcpServer == nil || err != nil {
 		// TODO(a.garipov): There are a lot of places in the code right
 		// now which assume that the DHCP server can be nil despite this
@@ -562,8 +563,8 @@ func isUpdateEnabled(
 	}
 }
 
-// initWeb initializes the web module.  upd, baseLogger, tlsMgr, and auth must
-// not be nil.
+// initWeb initializes the web module.  upd, baseLogger, tlsMgr, auth, and mux
+// must not be nil.
 func initWeb(
 	ctx context.Context,
 	opts options,
@@ -572,8 +573,10 @@ func initWeb(
 	baseLogger *slog.Logger,
 	tlsMgr *tlsManager,
 	auth *auth,
+	mux *http.ServeMux,
 	confModifier agh.ConfigModifier,
 	isCustomUpdURL bool,
+	isFirstRun bool,
 ) (web *webAPI, err error) {
 	logger := baseLogger.With(slogutil.KeyPrefix, "webapi")
 
@@ -601,6 +604,7 @@ func initWeb(
 		confModifier:       confModifier,
 		tlsManager:         tlsMgr,
 		auth:               auth,
+		mux:                mux,
 
 		clientFS: clientFS,
 
@@ -612,7 +616,7 @@ func initWeb(
 
 		defaultWebPort: webPort,
 
-		firstRun:         globalContext.firstRun,
+		firstRun:         isFirstRun,
 		disableUpdate:    disableUpdate,
 		runningAsService: opts.runningAsService,
 		serveHTTP3:       config.DNS.ServeHTTP3,
@@ -696,7 +700,9 @@ func run(
 
 	aghtls.Init(ctx, slogLogger.With(slogutil.KeyPrefix, "aghtls"))
 
-	err = setupContext(ctx, slogLogger, opts)
+	isFirstRun := detectFirstRun()
+
+	err = setupContext(ctx, slogLogger, opts, isFirstRun)
 	fatalOnError(err)
 
 	err = configureOS(config)
@@ -728,7 +734,6 @@ func run(
 		confModifier.Apply(ctx)
 	}
 
-	globalContext.tls = tlsMgr
 	confModifier.setTLSManager(tlsMgr)
 
 	err = setupDNSFilteringConf(ctx, slogLogger, config.Filtering, tlsMgr, confModifier)
@@ -743,13 +748,20 @@ func run(
 	confPath := configFilePath()
 
 	updLogger := slogLogger.With(slogutil.KeyPrefix, "updater")
-	upd, isCustomURL := newUpdater(ctx, updLogger, config, globalContext.workDir, confPath, execPath)
+	upd, isCustomURL := newUpdater(
+		ctx,
+		updLogger,
+		config,
+		globalContext.workDir,
+		confPath,
+		execPath,
+	)
 
 	// TODO(e.burkov): This could be made earlier, probably as the option's
 	// effect.
-	cmdlineUpdate(ctx, updLogger, opts, upd, tlsMgr)
+	cmdlineUpdate(ctx, updLogger, opts, upd, tlsMgr, isFirstRun)
 
-	if !globalContext.firstRun {
+	if !isFirstRun {
 		// Save the updated config.
 		err = config.write(nil, nil)
 		fatalOnError(err)
@@ -766,7 +778,6 @@ func run(
 	auth, err := initUsers(ctx, slogLogger, opts.glinetMode)
 	fatalOnError(err)
 
-	globalContext.auth = auth
 	confModifier.setAuth(auth)
 
 	web, err := initWeb(
@@ -777,8 +788,10 @@ func run(
 		slogLogger,
 		tlsMgr,
 		auth,
+		globalContext.mux,
 		confModifier,
 		isCustomURL,
+		isFirstRun,
 	)
 	fatalOnError(err)
 
@@ -790,7 +803,7 @@ func run(
 	statsDir, querylogDir, err := checkStatsAndQuerylogDirs(&globalContext, config)
 	fatalOnError(err)
 
-	if !globalContext.firstRun {
+	if !isFirstRun {
 		err = initDNS(ctx, slogLogger, tlsMgr, confModifier, statsDir, querylogDir)
 		fatalOnError(err)
 
@@ -805,7 +818,7 @@ func run(
 		}()
 
 		if globalContext.dhcpServer != nil {
-			err = globalContext.dhcpServer.Start()
+			err = globalContext.dhcpServer.Start(ctx)
 			if err != nil {
 				log.Error("starting dhcp server: %s", err)
 			}
@@ -813,7 +826,15 @@ func run(
 	}
 
 	if !opts.noPermCheck {
-		checkPermissions(ctx, slogLogger, globalContext.workDir, confPath, dataDir, statsDir, querylogDir)
+		checkPermissions(
+			ctx,
+			slogLogger,
+			globalContext.workDir,
+			confPath,
+			dataDir,
+			statsDir,
+			querylogDir,
+		)
 	}
 
 	web.start(ctx)
@@ -939,38 +960,48 @@ func (c *configuration) anonymizer() (ipmut *aghnet.IPMut) {
 	return aghnet.NewIPMut(anonFunc)
 }
 
-// checkNetworkPermissions checks if the current user permissions are enough to
-// use the required networking functionality.
-func checkNetworkPermissions() {
-	log.Info("Checking if AdGuard Home has necessary permissions")
+// permCheckHelp is printed when binding to privileged ports is not permitted.
+const permCheckHelp = `Permission check failed.
 
-	if ok, err := aghnet.CanBindPrivilegedPorts(); !ok || err != nil {
-		log.Fatal("This is the first launch of AdGuard Home. You must run it as Administrator.")
+AdGuard Home is not allowed to bind to privileged ports (for instance, port 53).
+Please note that this is crucial for a server to be able to use privileged ports.
+
+You have two options:
+1. Run AdGuard Home with root privileges.
+2. On Linux you can grant the CAP_NET_BIND_SERVICE capability:
+https://github.com/AdguardTeam/AdGuardHome/wiki/Getting-Started#running-without-superuser`
+
+// checkNetworkPermissions checks if the current user permissions are enough to
+// use the required networking functionality.  l must not be nil.
+func checkNetworkPermissions(ctx context.Context, l *slog.Logger) {
+	l.InfoContext(ctx, "checking if adguard home has the necessary permissions")
+
+	if ok, err := aghnet.CanBindPrivilegedPorts(ctx, l); !ok || err != nil {
+		l.ErrorContext(
+			ctx,
+			"this is the first launch of adguard home; you must run it as administrator.",
+		)
+
+		os.Exit(osutil.ExitCodeFailure)
 	}
 
 	// We should check if AdGuard Home is able to bind to port 53
 	err := aghnet.CheckPort("tcp", netip.AddrPortFrom(netutil.IPv4Localhost(), defaultPortDNS))
 	if err != nil {
 		if errors.Is(err, os.ErrPermission) {
-			log.Fatal(`Permission check failed.
+			slogutil.PrintLines(ctx, l, slog.LevelError, "", permCheckHelp)
 
-AdGuard Home is not allowed to bind to privileged ports (for instance, port 53).
-Please note, that this is crucial for a server to be able to use privileged ports.
-
-You have two options:
-1. Run AdGuard Home with root privileges
-2. On Linux you can grant the CAP_NET_BIND_SERVICE capability:
-https://github.com/AdguardTeam/AdGuardHome/wiki/Getting-Started#running-without-superuser`)
+			os.Exit(osutil.ExitCodeFailure)
 		}
 
-		log.Info(
-			"AdGuard failed to bind to port 53: %s\n\n"+
-				"Please note, that this is crucial for a DNS server to be able to use that port.",
-			err,
+		l.ErrorContext(
+			ctx,
+			"failed to bind to port 53; binding to port 53 is required for a dns server",
+			slogutil.KeyError, err,
 		)
 	}
 
-	log.Info("AdGuard Home can bind to port 53")
+	l.InfoContext(ctx, "adguard home can bind to port 53")
 }
 
 // Write PID to a file
@@ -1176,14 +1207,15 @@ type jsonError struct {
 	Message string `json:"message"`
 }
 
-// cmdlineUpdate updates current application and exits.  l and tlsMgr must not
-// be nil.
+// cmdlineUpdate updates current application and exits.  l, upd, and tlsMgr must
+// not be nil.
 func cmdlineUpdate(
 	ctx context.Context,
 	l *slog.Logger,
 	opts options,
 	upd *updater.Updater,
 	tlsMgr *tlsManager,
+	isFirstRun bool,
 ) {
 	if !opts.performUpdate {
 		return
@@ -1212,7 +1244,7 @@ func cmdlineUpdate(
 		os.Exit(osutil.ExitCodeSuccess)
 	}
 
-	err = upd.Update(ctx, globalContext.firstRun)
+	err = upd.Update(ctx, isFirstRun)
 	fatalOnError(err)
 
 	err = restartService(ctx, l)

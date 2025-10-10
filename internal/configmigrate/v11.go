@@ -1,5 +1,7 @@
 package configmigrate
 
+import "context"
+
 // migrateTo11 performs the following changes:
 //
 //	# BEFORE:
@@ -14,7 +16,7 @@ package configmigrate
 //	  'rlimit_nofile': 42
 //	  'user': ''
 //	# …
-func migrateTo11(diskConf yobj) (err error) {
+func (m *Migrator) migrateTo11(_ context.Context, diskConf yobj) (err error) {
 	diskConf["schema_version"] = 11
 
 	rlimit, _, err := fieldVal[int](diskConf, "rlimit_nofile")

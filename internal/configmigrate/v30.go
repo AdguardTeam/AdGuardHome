@@ -1,5 +1,7 @@
 package configmigrate
 
+import "context"
+
 // migrateTo30 performs the following changes:
 //
 //	# BEFORE:
@@ -14,7 +16,7 @@ package configmigrate
 //	  # …
 //
 // If cache_size is zero, then cache_enabled should be false.
-func (m Migrator) migrateTo30(diskConf yobj) (err error) {
+func (m Migrator) migrateTo30(_ context.Context, diskConf yobj) (err error) {
 	diskConf["schema_version"] = 30
 
 	dnsConf, ok, err := fieldVal[yobj](diskConf, "dns")

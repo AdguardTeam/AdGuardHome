@@ -1,6 +1,9 @@
 package configmigrate
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+)
 
 // migrateTo6 performs the following changes:
 //
@@ -24,7 +27,7 @@ import "fmt"
 //	   - 'AA:AA:AA:AA:AA:AA'
 //	  # …
 //	# …
-func migrateTo6(diskConf yobj) (err error) {
+func (m *Migrator) migrateTo6(_ context.Context, diskConf yobj) (err error) {
 	diskConf["schema_version"] = 6
 
 	clients, ok, err := fieldVal[yarr](diskConf, "clients")

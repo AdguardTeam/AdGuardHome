@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"regexp"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
@@ -119,6 +120,7 @@ func getHardwarePortInfo(
 // ifaceSetStaticIP sets a static IP on ifaceName.  cmdCons must not be nil.
 func ifaceSetStaticIP(
 	ctx context.Context,
+	_ *slog.Logger,
 	cmdCons executil.CommandConstructor,
 	ifaceName string,
 ) (err error) {

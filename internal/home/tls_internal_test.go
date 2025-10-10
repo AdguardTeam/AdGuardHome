@@ -153,7 +153,6 @@ func storeGlobals(tb testing.TB) {
 	prefGLFilePrefix := glFilePrefix
 	storage := globalContext.clients.storage
 	dnsServer := globalContext.dnsServer
-	firstRun := globalContext.firstRun
 	mux := globalContext.mux
 	web := globalContext.web
 
@@ -162,7 +161,6 @@ func storeGlobals(tb testing.TB) {
 		glFilePrefix = prefGLFilePrefix
 		globalContext.clients.storage = storage
 		globalContext.dnsServer = dnsServer
-		globalContext.firstRun = firstRun
 		globalContext.mux = mux
 		globalContext.web = web
 	})
@@ -295,6 +293,28 @@ func assertCertSerialNumber(tb testing.TB, conf *tlsConfigSettings, wantSN int64
 	assert.Equal(tb, wantSN, cert.Leaf.SerialNumber.Int64())
 }
 
+// initEmptyWeb returns an initialized *webAPI with zero values and no-op mocks.
+func initEmptyWeb(tb testing.TB) (web *webAPI) {
+	tb.Helper()
+
+	web, err := initWeb(
+		testutil.ContextWithTimeout(tb, testTimeout),
+		options{},
+		nil,
+		nil,
+		testLogger,
+		nil,
+		nil,
+		http.NewServeMux(),
+		agh.EmptyConfigModifier{},
+		false,
+		false,
+	)
+	require.NoError(tb, err)
+
+	return web
+}
+
 func TestTLSManager_Reload(t *testing.T) {
 	storeGlobals(t)
 
@@ -343,9 +363,7 @@ func TestTLSManager_Reload(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	web, err := initWeb(ctx, options{}, nil, nil, testLogger, nil, nil, agh.EmptyConfigModifier{}, false)
-	require.NoError(t, err)
-
+	web := initEmptyWeb(t)
 	m.setWebAPI(web)
 
 	conf := m.config()
@@ -415,9 +433,7 @@ func TestValidateTLSSettings(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	web, err := initWeb(ctx, options{}, nil, nil, testLogger, nil, nil, agh.EmptyConfigModifier{}, false)
-	require.NoError(t, err)
-
+	web := initEmptyWeb(t)
 	m.setWebAPI(web)
 
 	tcpLn, err := net.Listen("tcp", ":0")
@@ -519,9 +535,7 @@ func TestTLSManager_HandleTLSValidate(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	web, err := initWeb(ctx, options{}, nil, nil, testLogger, nil, nil, agh.EmptyConfigModifier{}, false)
-	require.NoError(t, err)
-
+	web := initEmptyWeb(t)
 	m.setWebAPI(web)
 
 	setts := &tlsConfigSettingsExt{
@@ -612,9 +626,7 @@ func TestTLSManager_HandleTLSConfigure(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	web, err := initWeb(ctx, options{}, nil, nil, testLogger, nil, nil, agh.EmptyConfigModifier{}, false)
-	require.NoError(t, err)
-
+	web := initEmptyWeb(t)
 	m.setWebAPI(web)
 
 	conf := m.config()

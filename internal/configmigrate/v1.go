@@ -1,11 +1,12 @@
 package configmigrate
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 )
 
 // migrateTo1 performs the following changes:
@@ -19,14 +20,14 @@ import (
 //
 // It also deletes the unused dnsfilter.txt file, since the following versions
 // store filters in data/filters/.
-func (m *Migrator) migrateTo1(diskConf yobj) (err error) {
+func (m *Migrator) migrateTo1(ctx context.Context, diskConf yobj) (err error) {
 	diskConf["schema_version"] = 1
 
 	dnsFilterPath := filepath.Join(m.workingDir, "dnsfilter.txt")
-	log.Printf("deleting %s as we don't need it anymore", dnsFilterPath)
+	m.logger.InfoContext(ctx, "deleting file as we do not need it anymore", "path", dnsFilterPath)
 	err = os.Remove(dnsFilterPath)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
-		log.Info("warning: %s", err)
+		m.logger.InfoContext(ctx, "failed to delete", slogutil.KeyError, err)
 
 		// Go on.
 	}

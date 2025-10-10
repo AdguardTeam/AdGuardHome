@@ -51,11 +51,12 @@ func (d *DNSFilter) handleRewriteList(w http.ResponseWriter, r *http.Request) {
 // handleRewriteAdd is the handler for the POST /control/rewrite/add HTTP API.
 func (d *DNSFilter) handleRewriteAdd(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	l := d.logger
 
 	rwJSON := rewriteEntryJSON{}
 	err := json.NewDecoder(r.Body).Decode(&rwJSON)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "json.Decode: %s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "json.Decode: %s", err)
 
 		return
 	}
@@ -71,11 +72,11 @@ func (d *DNSFilter) handleRewriteAdd(w http.ResponseWriter, r *http.Request) {
 		Enabled: enabled,
 	}
 
-	err = rw.normalize(ctx, d.logger)
+	err = rw.normalize(ctx, l)
 	if err != nil {
 		// Shouldn't happen currently, since normalize only returns a non-nil
 		// error when a rewrite is nil, but be change-proof.
-		aghhttp.Error(r, w, http.StatusBadRequest, "normalizing: %s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "normalizing: %s", err)
 
 		return
 	}
@@ -85,7 +86,7 @@ func (d *DNSFilter) handleRewriteAdd(w http.ResponseWriter, r *http.Request) {
 		defer d.confMu.Unlock()
 
 		d.conf.Rewrites = append(d.conf.Rewrites, rw)
-		d.logger.DebugContext(
+		l.DebugContext(
 			ctx,
 			"added rewrite element",
 			"domain", rw.Domain,
@@ -101,11 +102,12 @@ func (d *DNSFilter) handleRewriteAdd(w http.ResponseWriter, r *http.Request) {
 // API.
 func (d *DNSFilter) handleRewriteDelete(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	l := d.logger
 
 	jsent := rewriteEntryJSON{}
 	err := json.NewDecoder(r.Body).Decode(&jsent)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "json.Decode: %s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "json.Decode: %s", err)
 
 		return
 	}
@@ -128,7 +130,7 @@ func (d *DNSFilter) handleRewriteDelete(w http.ResponseWriter, r *http.Request) 
 			continue
 		}
 
-		d.logger.DebugContext(
+		l.DebugContext(
 			ctx,
 			"removed rewrite element",
 			"domain", ent.Domain,
@@ -149,11 +151,12 @@ type rewriteUpdateJSON struct {
 // API.
 func (d *DNSFilter) handleRewriteUpdate(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	l := d.logger
 
 	updateJSON := rewriteUpdateJSON{}
 	err := json.NewDecoder(r.Body).Decode(&updateJSON)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "json.Decode: %s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "json.Decode: %s", err)
 
 		return
 	}
@@ -168,11 +171,11 @@ func (d *DNSFilter) handleRewriteUpdate(w http.ResponseWriter, r *http.Request) 
 		Answer: updateJSON.Update.Answer,
 	}
 
-	err = rwAdd.normalize(ctx, d.logger)
+	err = rwAdd.normalize(ctx, l)
 	if err != nil {
 		// Shouldn't happen currently, since normalize only returns a non-nil
 		// error when a rewrite is nil, but be change-proof.
-		aghhttp.Error(r, w, http.StatusBadRequest, "normalizing: %s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "normalizing: %s", err)
 
 		return
 	}
@@ -189,30 +192,33 @@ func (d *DNSFilter) handleRewriteUpdate(w http.ResponseWriter, r *http.Request) 
 
 	index = slices.IndexFunc(d.conf.Rewrites, rwDel.equal)
 	if index == -1 {
-		aghhttp.Error(r, w, http.StatusBadRequest, "target rule not found")
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "target rule not found")
 
 		return
 	}
 
+	rwDel.Enabled = d.conf.Rewrites[index].Enabled
 	if updateJSON.Update.Enabled == aghalg.NBNull {
-		rwAdd.Enabled = d.conf.Rewrites[index].Enabled
+		rwAdd.Enabled = rwDel.Enabled
 	} else {
 		rwAdd.Enabled = updateJSON.Update.Enabled == aghalg.NBTrue
 	}
 
 	d.conf.Rewrites = slices.Replace(d.conf.Rewrites, index, index+1, rwAdd)
 
-	d.logger.DebugContext(
+	l.DebugContext(
 		ctx,
 		"removed rewrite element",
 		"domain", rwDel.Domain,
 		"answer", rwDel.Answer,
+		"enabled", rwDel.Enabled,
 	)
-	d.logger.DebugContext(
+	l.DebugContext(
 		ctx,
 		"added rewrite element",
 		"domain", rwAdd.Domain,
 		"answer", rwAdd.Answer,
+		"enabled", rwAdd.Enabled,
 	)
 }
 
