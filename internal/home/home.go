@@ -793,7 +793,7 @@ func run(
 		slogLogger,
 		tlsMgr,
 		auth,
-		http.NewServeMux(),
+		mux,
 		confModifier,
 		httpReg,
 		isCustomURL,
