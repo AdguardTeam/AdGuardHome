@@ -69,7 +69,7 @@ func (web *webAPI) handleI18nCurrentLanguage(w http.ResponseWriter, r *http.Requ
 }
 
 // handleI18nChangeLanguage is the handler for the POST
-// /control/i18n/change_language
+// /control/i18n/change_language HTTP API.
 //
 // TODO(d.kolyshev): Deprecated, remove it later.
 func (web *webAPI) handleI18nChangeLanguage(w http.ResponseWriter, r *http.Request) {

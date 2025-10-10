@@ -70,9 +70,12 @@ type BlockedClientChecker interface {
 	IsBlockedClient(ip netip.Addr, clientID string) (blocked bool, rule string)
 }
 
-// Init initializes clients container
-// dhcpServer: optional
-// Note: this function must be called only once
+// Init initializes the clients container.  All arguments must not be nil except
+// for objects.
+//
+// NOTE:  This function must be called only once.
+//
+// TODO(s.chzhen):  Use a configuration structure.
 func (clients *clientsContainer) Init(
 	ctx context.Context,
 	baseLogger *slog.Logger,

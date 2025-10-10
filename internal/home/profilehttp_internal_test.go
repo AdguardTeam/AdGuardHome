@@ -132,8 +132,9 @@ func TestWeb_HandleGetProfile(t *testing.T) {
 func TestWeb_HandlePutProfile(t *testing.T) {
 	storeGlobals(t)
 
+	mw := &webMw{}
 	mux := http.NewServeMux()
-	httpReg := aghhttp.NewDeferredRegistrar()
+	httpReg := aghhttp.NewDefaultRegistrar(mux, mw.wrap)
 
 	isConfigChanged := false
 	confModifier := &aghtest.ConfigModifier{
@@ -158,7 +159,7 @@ func TestWeb_HandlePutProfile(t *testing.T) {
 	require.NoError(t, err)
 
 	globalContext.web = web
-	httpReg.Bind(web.register)
+	mw.bind(web)
 
 	var (
 		dataValid = errors.Must(json.Marshal(&profileJSON{

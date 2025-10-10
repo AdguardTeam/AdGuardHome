@@ -321,8 +321,9 @@ func authRequest(path string, c *http.Cookie, user, pass string) (r *http.Reques
 func TestAuth_ServeHTTP_firstRun(t *testing.T) {
 	storeGlobals(t)
 
+	mw := &webMw{}
 	mux := http.NewServeMux()
-	httpReg := aghhttp.NewDeferredRegistrar()
+	httpReg := aghhttp.NewDefaultRegistrar(mux, mw.wrap)
 
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
 	web, err := initWeb(
@@ -342,7 +343,7 @@ func TestAuth_ServeHTTP_firstRun(t *testing.T) {
 	require.NoError(t, err)
 
 	globalContext.web = web
-	httpReg.Bind(web.register)
+	mw.bind(web)
 
 	testCases := []struct {
 		name     string
@@ -486,8 +487,9 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 
 	t.Cleanup(func() { auth.close(testutil.ContextWithTimeout(t, testTimeout)) })
 
+	mw := &webMw{}
 	baseMux := http.NewServeMux()
-	httpReg := aghhttp.NewDeferredRegistrar()
+	httpReg := aghhttp.NewDefaultRegistrar(baseMux, mw.wrap)
 
 	tlsMgr, err := newTLSManager(testutil.ContextWithTimeout(t, testTimeout), &tlsManagerConfig{
 		logger:       testLogger,
@@ -513,7 +515,7 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 	require.NoError(t, err)
 
 	globalContext.web = web
-	httpReg.Bind(web.register)
+	mw.bind(web)
 
 	mux := auth.middleware().Wrap(baseMux)
 
@@ -649,8 +651,9 @@ func TestAuth_ServeHTTP_logout(t *testing.T) {
 
 	t.Cleanup(func() { auth.close(testutil.ContextWithTimeout(t, testTimeout)) })
 
+	mw := &webMw{}
 	baseMux := http.NewServeMux()
-	httpReg := aghhttp.NewDeferredRegistrar()
+	httpReg := aghhttp.NewDefaultRegistrar(baseMux, mw.wrap)
 
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
 	web, err := initWeb(
@@ -670,7 +673,7 @@ func TestAuth_ServeHTTP_logout(t *testing.T) {
 	require.NoError(t, err)
 
 	globalContext.web = web
-	httpReg.Bind(web.register)
+	mw.bind(web)
 
 	mux := auth.middleware().Wrap(baseMux)
 

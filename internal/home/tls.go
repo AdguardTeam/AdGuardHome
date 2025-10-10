@@ -433,7 +433,7 @@ func (m *tlsManager) handleTLSStatus(w http.ResponseWriter, r *http.Request) {
 		servePlainDNS = m.servePlainDNS
 	}()
 
-	data := tlsConfig{
+	data := &tlsConfig{
 		tlsConfigSettingsExt: tlsConfigSettingsExt{
 			tlsConfigSettings: *tlsConf,
 			ServePlainDNS:     aghalg.BoolToNullBool(servePlainDNS),
@@ -441,7 +441,7 @@ func (m *tlsManager) handleTLSStatus(w http.ResponseWriter, r *http.Request) {
 		tlsConfigStatus: m.status,
 	}
 
-	m.marshalTLS(w, r, data)
+	m.marshalTLS(r.Context(), w, r, data)
 }
 
 // handleTLSValidate is the handler for the POST /control/tls/validate HTTP API.
@@ -478,12 +478,12 @@ func (m *tlsManager) handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 	// status.WarningValidation.
 	status := &tlsConfigStatus{}
 	_ = m.loadTLSConfig(ctx, &setts.tlsConfigSettings, status)
-	resp := tlsConfig{
+	resp := &tlsConfig{
 		tlsConfigSettingsExt: setts,
 		tlsConfigStatus:      status,
 	}
 
-	m.marshalTLS(w, r, resp)
+	m.marshalTLS(ctx, w, r, resp)
 }
 
 // setConfig updates manager TLS configuration with the given one.  m.mu is
@@ -555,12 +555,12 @@ func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) 
 	status := &tlsConfigStatus{}
 	err = m.loadTLSConfig(ctx, &req.tlsConfigSettings, status)
 	if err != nil {
-		resp := tlsConfig{
+		resp := &tlsConfig{
 			tlsConfigSettingsExt: req,
 			tlsConfigStatus:      status,
 		}
 
-		m.marshalTLS(w, r, resp)
+		m.marshalTLS(ctx, w, r, resp)
 
 		return
 	}
@@ -586,12 +586,12 @@ func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	resp := tlsConfig{
+	resp := &tlsConfig{
 		tlsConfigSettingsExt: req,
 		tlsConfigStatus:      m.status,
 	}
 
-	m.marshalTLS(w, r, resp)
+	m.marshalTLS(ctx, w, r, resp)
 	rc := http.NewResponseController(w)
 	err = rc.Flush()
 	if err != nil {
@@ -1034,8 +1034,14 @@ func unmarshalTLS(r *http.Request) (tlsConfigSettingsExt, error) {
 	return data, nil
 }
 
-// marshalTLS encodes sensitive fields and writes data as JSON.
-func (m *tlsManager) marshalTLS(w http.ResponseWriter, r *http.Request, data tlsConfig) {
+// marshalTLS encodes sensitive fields and writes data as JSON.  All arguments
+// must not be nil.
+func (m *tlsManager) marshalTLS(
+	ctx context.Context,
+	w http.ResponseWriter,
+	r *http.Request,
+	data *tlsConfig,
+) {
 	if data.CertificateChain != "" {
 		encoded := base64.StdEncoding.EncodeToString([]byte(data.CertificateChain))
 		data.CertificateChain = encoded
@@ -1046,7 +1052,7 @@ func (m *tlsManager) marshalTLS(w http.ResponseWriter, r *http.Request, data tls
 		data.PrivateKey = ""
 	}
 
-	aghhttp.WriteJSONResponseOK(r.Context(), m.logger, w, r, data)
+	aghhttp.WriteJSONResponseOK(ctx, m.logger, w, r, *data)
 }
 
 // registerWebHandlers registers HTTP handlers for TLS configuration.

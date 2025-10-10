@@ -718,7 +718,9 @@ func run(
 		slogLogger.With(slogutil.KeyPrefix, "config_modifier"),
 	)
 
-	httpReg := aghhttp.NewDeferredRegistrar()
+	mw := &webMw{}
+	mux := http.NewServeMux()
+	httpReg := aghhttp.NewDefaultRegistrar(mux, mw.wrap)
 
 	err = initContextClients(ctx, slogLogger, sigHdlr, confModifier, httpReg)
 	fatalOnError(err)
@@ -799,7 +801,7 @@ func run(
 	)
 	fatalOnError(err)
 
-	httpReg.Bind(web.register)
+	mw.bind(web)
 
 	globalContext.web = web
 

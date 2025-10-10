@@ -625,8 +625,8 @@ func (web *webAPI) registerInstallHandlers() {
 	mux := web.conf.mux
 
 	mux.Handle(
-		"/control/install/get_addresses",
-		web.preInstallHandler(web.ensure(http.MethodGet, web.handleInstallGetAddresses)),
+		http.MethodGet+" "+"/control/install/get_addresses",
+		web.preInstallHandler(http.HandlerFunc(web.handleInstallGetAddresses)),
 	)
 	mux.Handle(
 		"/control/install/check_config",

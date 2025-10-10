@@ -7,6 +7,8 @@ import (
 	"net/url"
 	"runtime"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
@@ -208,20 +210,49 @@ func (web *webAPI) registerControlHandlers() {
 	web.registerAuthHandlers()
 }
 
-// register registers an HTTP handler.
-func (web *webAPI) register(method, path string, handler http.HandlerFunc) {
-	if method == "" {
-		// The "/dns-query" handler doesn't require authentication or gzip, and
-		// it isn't restricted to a single HTTP method.
-		web.conf.mux.Handle(path, web.postInstallHandler(handler))
+// webMw defers building route handler chains until a *webAPI is bound.
+type webMw struct {
+	web atomic.Pointer[webAPI]
+}
 
-		return
+// bind sets the active *webAPI used to compose handler chains.
+func (mw *webMw) bind(web *webAPI) {
+	mw.web.Store(web)
+}
+
+// wrap returns an HTTP handler for the given route.  It lazily composes and
+// caches the handler chain after bind is called.  Before that it replies with
+// [http.StatusTooEarly].
+func (mw *webMw) wrap(method, path string, h http.HandlerFunc) (wrapped http.Handler) {
+	var (
+		once   sync.Once
+		cached http.Handler
+	)
+
+	f := func(w http.ResponseWriter, r *http.Request) {
+		web := mw.web.Load()
+		if web == nil {
+			http.Error(w, "service initializing", http.StatusTooEarly)
+
+			return
+		}
+
+		once.Do(func() {
+			if method == "" {
+				// The "/dns-query" handler doesn't require authentication or
+				// gzip, and it isn't restricted to a single HTTP method.
+				cached = web.postInstallHandler(h)
+
+				return
+			}
+
+			cached = web.postInstallHandler(gziphandler.GzipHandler(web.ensure(method, h)))
+		})
+
+		cached.ServeHTTP(w, r)
 	}
 
-	web.conf.mux.Handle(
-		path,
-		web.postInstallHandler(gziphandler.GzipHandler(web.ensure(method, handler))),
-	)
+	return http.HandlerFunc(f)
 }
 
 // ensure returns a wrapped handler that verifies the request method.  It also
