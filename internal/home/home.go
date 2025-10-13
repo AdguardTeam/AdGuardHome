@@ -801,7 +801,7 @@ func run(
 	)
 	fatalOnError(err)
 
-	mw.bind(web)
+	mw.set(web)
 
 	globalContext.web = web
 

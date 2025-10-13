@@ -159,7 +159,7 @@ func TestWeb_HandlePutProfile(t *testing.T) {
 	require.NoError(t, err)
 
 	globalContext.web = web
-	mw.bind(web)
+	mw.set(web)
 
 	var (
 		dataValid = errors.Must(json.Marshal(&profileJSON{

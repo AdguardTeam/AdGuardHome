@@ -215,12 +215,12 @@ type webMw struct {
 	web atomic.Pointer[webAPI]
 }
 
-// bind sets the active *webAPI used to compose handler chains.
-func (mw *webMw) bind(web *webAPI) {
+// set sets the active *webAPI used to build handler chains.
+func (mw *webMw) set(web *webAPI) {
 	mw.web.Store(web)
 }
 
-// wrap returns an HTTP handler for the given route.  It lazily composes and
+// wrap returns an HTTP handler for the given route.  It lazily builds and
 // caches the handler chain after bind is called.  Before that it replies with
 // [http.StatusTooEarly].
 func (mw *webMw) wrap(method, path string, h http.HandlerFunc) (wrapped http.Handler) {

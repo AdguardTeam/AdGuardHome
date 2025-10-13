@@ -20,22 +20,22 @@ var _ Registrar = EmptyRegistrar{}
 // Register implements the [Registrar] interface.
 func (EmptyRegistrar) Register(_, _ string, _ http.HandlerFunc) {}
 
-// wrapFunc composes an HTTP handler for a route.
-type wrapFunc func(method, path string, h http.HandlerFunc) (wrapped http.Handler)
+// WrapFunc is a wrapper function that builds an HTTP handler for a route.
+type WrapFunc func(method, path string, h http.HandlerFunc) (wrapped http.Handler)
 
 // DefaultRegistrar is an implementation of [Registrar] that registers handlers
-// after applying a user-provided wrap function.
+// after applying a user-provided wrapper function.
 type DefaultRegistrar struct {
-	mux  *http.ServeMux
-	wrap wrapFunc
+	mux    *http.ServeMux
+	wrapFn WrapFunc
 }
 
 // NewDefaultRegistrar returns a new properly initialized *DefaultRegistrar.
 // mux and wrap must not be nil.
-func NewDefaultRegistrar(mux *http.ServeMux, wrap wrapFunc) (r *DefaultRegistrar) {
+func NewDefaultRegistrar(mux *http.ServeMux, wrap WrapFunc) (r *DefaultRegistrar) {
 	return &DefaultRegistrar{
-		mux:  mux,
-		wrap: wrap,
+		mux:    mux,
+		wrapFn: wrap,
 	}
 }
 
@@ -44,6 +44,6 @@ var _ Registrar = (*DefaultRegistrar)(nil)
 
 // Register implements the [Registrar] interface.
 func (r *DefaultRegistrar) Register(method, path string, h http.HandlerFunc) {
-	wrapped := r.wrap(method, path, h)
+	wrapped := r.wrapFn(method, path, h)
 	r.mux.Handle(path, wrapped)
 }
