@@ -220,9 +220,9 @@ func (mw *webMw) set(web *webAPI) {
 	mw.web.Store(web)
 }
 
-// wrap returns an HTTP handler for the given route.  It lazily builds and
-// caches the handler chain after bind is called.  Before that it replies with
-// [http.StatusTooEarly].
+// wrap returns an HTTP handler for the given route.  Before set is called, it
+// replies with [http.StatusTooEarly].  After set is called, the first request
+// lazily builds and caches the handler chain.
 func (mw *webMw) wrap(method, path string, h http.HandlerFunc) (wrapped http.Handler) {
 	var (
 		once   sync.Once
