@@ -6,10 +6,6 @@ The format is based on [*Keep a Changelog*](https://keepachangelog.com/en/1.0.0/
 
 ## [Unreleased]
 
-### Changed
-
-- Node.JS 24 is now used to build the frontend.
-
 <!--
 ## [v0.108.0] – TBA
 
@@ -21,6 +17,10 @@ See also the [v0.107.68 GitHub milestone][ms-v0.107.68].
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
+
+### Changed
+
+- Node.JS 24 is now used to build the frontend.
 
 ### Security
 
