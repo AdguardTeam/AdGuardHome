@@ -18,10 +18,6 @@ See also the [v0.107.68 GitHub milestone][ms-v0.107.68].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
-### Changed
-
-- Node.JS 24 is now used to build the frontend.
-
 ### Security
 
 - Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.25.2][go-1.25.2].
@@ -29,6 +25,11 @@ NOTE: Add new changes BELOW THIS COMMENT.
 ### Added
 
 - New fields `"groups"` and `"group_id"` added to the HTTP API (`GET /control/blocked_services/all`).  See `openapi/openapi.yaml` for the full description.
+- Node.JS 24 is now used to build the frontend.
+
+### Deprecated
+
+- Node 20 and 22 support.
 
 [go-1.25.2]:    https://groups.google.com/g/golang-announce/c/4Emdl2iQ_bI
 
