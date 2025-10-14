@@ -25,6 +25,9 @@ NOTE: Add new changes BELOW THIS COMMENT.
 ### Added
 
 - New fields `"groups"` and `"group_id"` added to the HTTP API (`GET /control/blocked_services/all`).  See `openapi/openapi.yaml` for the full description.
+
+### Changed
+
 - Node.JS 24 is now used to build the frontend.
 
 ### Deprecated
