@@ -53,7 +53,8 @@
         "redux-actions": "^2.6.5",
         "redux-thunk": "^2.3.0",
         "ts-migrate": "^0.1.35",
-        "url-polyfill": "^1.1.12"
+        "url-polyfill": "^1.1.12",
+        "yaml": "2.8.1"
     },
     "devDependencies": {
         "@babel/core": "^7.24.5",
