@@ -21,7 +21,7 @@ var _ Registrar = EmptyRegistrar{}
 func (EmptyRegistrar) Register(_, _ string, _ http.HandlerFunc) {}
 
 // WrapFunc is a wrapper function that builds an HTTP handler for a route.
-type WrapFunc func(method, path string, h http.HandlerFunc) (wrapped http.Handler)
+type WrapFunc func(method string, h http.HandlerFunc) (wrapped http.Handler)
 
 // DefaultRegistrar is an implementation of [Registrar] that registers handlers
 // after applying a user-provided wrapper function.
@@ -44,6 +44,6 @@ var _ Registrar = (*DefaultRegistrar)(nil)
 
 // Register implements the [Registrar] interface.
 func (r *DefaultRegistrar) Register(method, path string, h http.HandlerFunc) {
-	wrapped := r.wrapFn(method, path, h)
+	wrapped := r.wrapFn(method, h)
 	r.mux.Handle(path, wrapped)
 }

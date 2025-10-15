@@ -7,7 +7,6 @@ import (
 	"net/url"
 	"runtime"
 	"strings"
-	"sync"
 	"sync/atomic"
 	"time"
 
@@ -210,46 +209,54 @@ func (web *webAPI) registerControlHandlers() {
 	web.registerAuthHandlers()
 }
 
-// webMw defers building route handler chains until a *webAPI is bound.
+// webMw provides middleware for route handlers.
 type webMw struct {
-	web atomic.Pointer[webAPI]
+	// postInstallMw is middleware that verifies that AdGuard Home is not
+	// running for the first time.
+	postInstallMw func(h http.Handler) (wrapped http.Handler)
+
+	// ensureMw is like postInstallMw, but also applies gzip and enforces the
+	// HTTP method.
+	ensureMw aghhttp.WrapFunc
+
+	// ready signals that the middleware functions can be used for routing.
+	ready atomic.Bool
 }
 
-// set sets the active *webAPI used to build handler chains.
+// set sets the middleware functions used to build handler chains.
 func (mw *webMw) set(web *webAPI) {
-	mw.web.Store(web)
+	mw.postInstallMw = web.postInstallHandler
+
+	mw.ensureMw = func(method string, h http.HandlerFunc) (wrapped http.Handler) {
+		return web.postInstallHandler(gziphandler.GzipHandler(web.ensure(method, h)))
+	}
+
+	mw.ready.Store(true)
 }
 
 // wrap returns an HTTP handler for the given route.  Before set is called, it
-// replies with [http.StatusTooEarly].  After set is called, the first request
-// lazily builds and caches the handler chain.
-func (mw *webMw) wrap(method, path string, h http.HandlerFunc) (wrapped http.Handler) {
-	var (
-		once   sync.Once
-		cached http.Handler
-	)
-
+// replies with [http.StatusTooEarly].  After set is called, it selects the
+// appropriate middleware for the request.
+//
+// TODO(s.chzhen):  Implement [httputil.Middleware].
+func (mw *webMw) wrap(method string, h http.HandlerFunc) (wrapped http.Handler) {
 	f := func(w http.ResponseWriter, r *http.Request) {
-		web := mw.web.Load()
-		if web == nil {
+		if !mw.ready.Load() {
 			http.Error(w, "service initializing", http.StatusTooEarly)
 
 			return
 		}
 
-		once.Do(func() {
-			if method == "" {
-				// The "/dns-query" handler doesn't require authentication or
-				// gzip, and it isn't restricted to a single HTTP method.
-				cached = web.postInstallHandler(h)
+		var handler http.Handler
+		if method == "" {
+			// The "/dns-query" handler doesn't require authentication or gzip,
+			// and it isn't restricted to a single HTTP method.
+			handler = mw.postInstallMw(h)
+		} else {
+			handler = mw.ensureMw(method, h)
+		}
 
-				return
-			}
-
-			cached = web.postInstallHandler(gziphandler.GzipHandler(web.ensure(method, h)))
-		})
-
-		cached.ServeHTTP(w, r)
+		handler.ServeHTTP(w, r)
 	}
 
 	return http.HandlerFunc(f)
