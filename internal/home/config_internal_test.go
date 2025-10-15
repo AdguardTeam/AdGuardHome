@@ -14,15 +14,29 @@ func TestConfigFilePath(t *testing.T) {
 	origDir, err := os.Getwd()
 	require.NoError(t, err)
 
+	const (
+		realConf       = "real.yaml"
+		linkConf       = "conf.link"
+		missingConf    = "missing.yaml"
+		brokenLinkConf = "broken.link"
+	)
+
 	workDir := t.TempDir()
-	targetPath := filepath.Join(workDir, "real.yaml")
-	linkPath := filepath.Join(workDir, "link.yaml")
+	targetPath := filepath.Join(workDir, realConf)
+	linkPath := filepath.Join(workDir, linkConf)
+	missingPath := filepath.Join(workDir, missingConf)
+	brokenLinkPath := filepath.Join(workDir, brokenLinkConf)
 
 	err = os.Symlink(targetPath, linkPath)
 	require.NoError(t, err)
 
-	_, err = os.Create(targetPath)
+	err = os.Symlink(missingPath, brokenLinkPath)
 	require.NoError(t, err)
+
+	f, err := os.Create(targetPath)
+	require.NoError(t, err)
+
+	testutil.CleanupAndRequireSuccess(t, f.Close)
 
 	otherDir := t.TempDir()
 
@@ -31,13 +45,31 @@ func TestConfigFilePath(t *testing.T) {
 		chDir    string
 		confPath string
 		want     string
-		workDir  string
 	}{{
+		name:     "absolute_path",
+		chDir:    "",
+		confPath: targetPath,
+		want:     targetPath,
+	}, {
+		name:     "relative_path",
+		chDir:    "",
+		confPath: realConf,
+		want:     targetPath,
+	}, {
+		name:     "symlink",
+		chDir:    "",
+		confPath: linkConf,
+		want:     targetPath,
+	}, {
+		name:     "symlink_broken",
+		chDir:    "",
+		confPath: brokenLinkConf,
+		want:     brokenLinkPath,
+	}, {
 		name:     "symlink_after_abs",
 		chDir:    otherDir,
-		confPath: "link.yaml",
+		confPath: linkConf,
 		want:     targetPath,
-		workDir:  workDir,
 	}}
 
 	for _, tc := range testCases {
@@ -52,7 +84,7 @@ func TestConfigFilePath(t *testing.T) {
 			}
 
 			ctx := testutil.ContextWithTimeout(t, testTimeout)
-			got := configFilePath(ctx, testLogger, tc.workDir, tc.confPath)
+			got := configFilePath(ctx, testLogger, workDir, tc.confPath)
 			assert.Equal(t, tc.want, got)
 		})
 	}
