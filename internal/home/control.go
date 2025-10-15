@@ -7,7 +7,6 @@ import (
 	"net/url"
 	"runtime"
 	"strings"
-	"sync/atomic"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
@@ -209,7 +208,8 @@ func (web *webAPI) registerControlHandlers() {
 	web.registerAuthHandlers()
 }
 
-// webMw provides middleware for route handlers.
+// webMw provides middleware for route handlers.  The set method must be called
+// to initialize the middleware.
 type webMw struct {
 	// postInstallMw is middleware that verifies that AdGuard Home is not
 	// running for the first time.
@@ -218,9 +218,6 @@ type webMw struct {
 	// ensureMw is like postInstallMw, but also applies gzip and enforces the
 	// HTTP method.
 	ensureMw aghhttp.WrapFunc
-
-	// ready signals that the middleware functions can be used for routing.
-	ready atomic.Bool
 }
 
 // set sets the middleware functions used to build handler chains.
@@ -230,23 +227,13 @@ func (mw *webMw) set(web *webAPI) {
 	mw.ensureMw = func(method string, h http.HandlerFunc) (wrapped http.Handler) {
 		return web.postInstallHandler(gziphandler.GzipHandler(web.ensure(method, h)))
 	}
-
-	mw.ready.Store(true)
 }
 
-// wrap returns an HTTP handler for the given route.  Before set is called, it
-// replies with [http.StatusTooEarly].  After set is called, it selects the
-// appropriate middleware for the request.
+// wrap returns a wrapped HTTP handler for the given route.
 //
 // TODO(s.chzhen):  Implement [httputil.Middleware].
 func (mw *webMw) wrap(method string, h http.HandlerFunc) (wrapped http.Handler) {
 	f := func(w http.ResponseWriter, r *http.Request) {
-		if !mw.ready.Load() {
-			http.Error(w, "service initializing", http.StatusTooEarly)
-
-			return
-		}
-
 		var handler http.Handler
 		if method == "" {
 			// The "/dns-query" handler doesn't require authentication or gzip,
