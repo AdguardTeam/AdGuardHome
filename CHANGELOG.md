@@ -20,13 +20,13 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Security
 
-- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.25.2][go-1.25.2].
+- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.25.3][go-1.25.3].
 
 ### Added
 
 - New fields `"groups"` and `"group_id"` added to the HTTP API (`GET /control/blocked_services/all`).  See `openapi/openapi.yaml` for the full description.
 
-[go-1.25.2]:    https://groups.google.com/g/golang-announce/c/4Emdl2iQ_bI
+[go-1.25.3]: https://groups.google.com/g/golang-announce/c/YEyj6FUNbik
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
