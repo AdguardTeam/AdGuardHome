@@ -49,7 +49,9 @@ func TestIPv4Config_Options(t *testing.T) {
 				layers.NewDHCPOption(layers.DHCPOptBroadcastAddr, nil),
 			},
 		},
-		wantExplicit: nil,
+		wantExplicit: layers.DHCPOptions{
+			layers.NewDHCPOption(layers.DHCPOptBroadcastAddr, nil),
+		},
 	}, {
 		name: "rewritten_del",
 		conf: &IPv4Config{
