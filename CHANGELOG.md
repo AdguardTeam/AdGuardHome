@@ -24,7 +24,39 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Added
 
+- New DNS rewrite settings endpoints `GET /control/rewrite/settings` and `PUT /control/rewrite/settings/update`.  See `openapi/openapi.yaml` for details.
 - New fields `"groups"` and `"group_id"` added to the HTTP API (`GET /control/blocked_services/all`).  See `openapi/openapi.yaml` for the full description.
+
+### Changed
+
+- `POST /control/rewrite/add` and `PUT /control/rewrite/update` now accept the optional field "enabled".  See `openapi/openapi.yaml` for details.
+
+#### Configuration changes
+
+In this release, the schema version has changed from 30 to 31.
+
+- Added a new boolean field `filtering.rewrites_enabled` to globally enable/disable DNS rewrites.
+- Added a new boolean field `enabled` for each entry in `filtering.rewrites` to toggle individual rewrites.
+
+    ```yaml
+    # BEFORE:
+    'filtering':
+      'rewrites':
+        - 'domain': test.example
+          'answer': 192.0.2.0
+      # …
+
+    # AFTER:
+    'filtering':
+      'rewrites_enabled': true
+      'rewrites':
+        - 'domain': test.example
+          'answer': 192.0.2.0
+          'enabled': true
+      # …
+    ```
+
+    To roll back this change, set `schema_version` back to `30`.
 
 [go-1.25.3]: https://groups.google.com/g/golang-announce/c/YEyj6FUNbik
 

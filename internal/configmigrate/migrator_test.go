@@ -199,6 +199,10 @@ func TestMigrateConfig_Migrate(t *testing.T) {
 		yamlEqFunc:    require.YAMLEq,
 		name:          "v30",
 		targetVersion: 30,
+	}, {
+		yamlEqFunc:    require.YAMLEq,
+		name:          "v31",
+		targetVersion: 31,
 	}}
 
 	for _, tc := range testCases {

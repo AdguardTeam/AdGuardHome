@@ -1294,18 +1294,22 @@ func TestRewrite(t *testing.T) {
 		BlockedServices:      emptyFilteringBlockedServices(),
 		BlockingMode:         filtering.BlockingModeDefault,
 		Rewrites: []*filtering.LegacyRewrite{{
-			Domain: "test.com",
-			Answer: "1.2.3.4",
-			Type:   dns.TypeA,
+			Domain:  "test.com",
+			Answer:  "1.2.3.4",
+			Type:    dns.TypeA,
+			Enabled: true,
 		}, {
-			Domain: "alias.test.com",
-			Answer: "test.com",
-			Type:   dns.TypeCNAME,
+			Domain:  "alias.test.com",
+			Answer:  "test.com",
+			Type:    dns.TypeCNAME,
+			Enabled: true,
 		}, {
-			Domain: "my.alias.example.org",
-			Answer: "example.org",
-			Type:   dns.TypeCNAME,
+			Domain:  "my.alias.example.org",
+			Answer:  "example.org",
+			Type:    dns.TypeCNAME,
+			Enabled: true,
 		}},
+		RewritesEnabled: true,
 	}
 	f, err := filtering.New(c, nil)
 	require.NoError(t, err)

@@ -138,6 +138,7 @@ type Config struct {
 	// to DNS requests blocked by safe-browsing.
 	SafeBrowsingBlockHost string `yaml:"safebrowsing_block_host"`
 
+	// Rewrites is a list of legacy DNS rewrite records.
 	Rewrites []*LegacyRewrite `yaml:"rewrites"`
 
 	// Filters are the blocking filter lists.
@@ -176,6 +177,9 @@ type Config struct {
 
 	// FilteringEnabled indicates whether or not use filter lists.
 	FilteringEnabled bool `yaml:"filtering_enabled"`
+
+	// RewritesEnabled indicates whether legacy rewrites are applied.
+	RewritesEnabled bool `yaml:"rewrites_enabled"`
 
 	ParentalEnabled     bool `yaml:"parental_enabled"`
 	SafeBrowsingEnabled bool `yaml:"safebrowsing_enabled"`
@@ -542,6 +546,10 @@ func (d *DNSFilter) processRewrites(host string, qtype uint16) (res Result) {
 
 	ctx := context.TODO()
 
+	if !d.conf.RewritesEnabled {
+		return Result{}
+	}
+
 	rewrites, matched := findRewrites(d.conf.Rewrites, host, qtype)
 	if !matched {
 		return Result{}
@@ -549,8 +557,22 @@ func (d *DNSFilter) processRewrites(host string, qtype uint16) (res Result) {
 
 	res.Reason = Rewritten
 
+	return d.handleRewriteLoop(ctx, host, qtype, rewrites, matched, &res)
+}
+
+// handleRewriteLoop performs filtering rewrite processing based on the legacy
+// rewrite records.  res must not be nil.
+func (d *DNSFilter) handleRewriteLoop(
+	ctx context.Context,
+	host string,
+	qtype uint16,
+	rewrites []*LegacyRewrite,
+	matched bool,
+	res *Result,
+) (resResult Result) {
 	cnames := container.NewMapSet[string]()
 	origHost := host
+
 	for matched && len(rewrites) > 0 && rewrites[0].Type == dns.TypeCNAME {
 		rw := rewrites[0]
 		rwPat := rw.Domain
@@ -577,7 +599,7 @@ func (d *DNSFilter) processRewrites(host string, qtype uint16) (res Result) {
 		if cnames.Has(host) {
 			d.logger.InfoContext(ctx, "cname loop", "host", host, "original", origHost)
 
-			return res
+			return *res
 		}
 
 		cnames.Add(host)
@@ -585,9 +607,9 @@ func (d *DNSFilter) processRewrites(host string, qtype uint16) (res Result) {
 		rewrites, matched = findRewrites(d.conf.Rewrites, host, qtype)
 	}
 
-	d.setRewriteResult(ctx, &res, host, rewrites, qtype)
+	d.setRewriteResult(ctx, res, host, rewrites, qtype)
 
-	return res
+	return *res
 }
 
 // matchBlockedServicesRules checks the host against the blocked services rules

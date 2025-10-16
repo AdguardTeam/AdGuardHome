@@ -49,7 +49,8 @@ func newForTest(t testing.TB, c *Config, filters []Filter) (f *DNSFilter, setts 
 	} else {
 		// It must not be nil.
 		c = &Config{
-			Logger: testLogger,
+			Logger:          testLogger,
+			RewritesEnabled: true,
 		}
 	}
 	f, err := New(c, filters)
