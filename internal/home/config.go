@@ -592,16 +592,17 @@ var config = &configuration{
 
 // configFilePath returns the absolute, symlink-resolved path to the current
 // configuration file.  l must not be nil.
+//
+// TODO(s.chzhen):  Fix the bug where the wrong file may be resolved:
+// [filepath.EvalSymlinks] resolves a relative path against the current working
+// directory, not workDir.  Make the path absolute relative to workDir before
+// calling EvalSymlinks.
 func configFilePath(
 	ctx context.Context,
 	l *slog.Logger,
 	workDir string,
 	confPath string,
 ) (resolved string) {
-	if !filepath.IsAbs(confPath) {
-		confPath = filepath.Join(workDir, confPath)
-	}
-
 	resolved, err := filepath.EvalSymlinks(confPath)
 	if err != nil {
 		l.DebugContext(
@@ -611,7 +612,11 @@ func configFilePath(
 			slogutil.KeyError, err,
 		)
 
-		return confPath
+		resolved = confPath
+	}
+
+	if !filepath.IsAbs(confPath) {
+		resolved = filepath.Join(workDir, confPath)
 	}
 
 	return resolved

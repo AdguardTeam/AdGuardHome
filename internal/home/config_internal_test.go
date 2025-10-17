@@ -59,17 +59,17 @@ func TestConfigFilePath(t *testing.T) {
 		name:     "symlink",
 		chDir:    "",
 		confPath: linkConf,
-		want:     targetPath,
+		want:     linkPath,
 	}, {
 		name:     "symlink_broken",
 		chDir:    "",
 		confPath: brokenLinkConf,
 		want:     brokenLinkPath,
 	}, {
-		name:     "symlink_after_abs",
+		name:     "symlink_before_join",
 		chDir:    otherDir,
 		confPath: linkConf,
-		want:     targetPath,
+		want:     linkPath,
 	}}
 
 	for _, tc := range testCases {
