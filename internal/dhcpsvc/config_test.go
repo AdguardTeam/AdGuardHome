@@ -8,11 +8,13 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
 	"github.com/AdguardTeam/golibs/testutil"
+	"github.com/AdguardTeam/golibs/timeutil"
 )
 
 func TestConfig_Validate(t *testing.T) {
 	validIPv4Conf := &dhcpsvc.IPv4Config{
 		Enabled:       true,
+		Clock:         timeutil.SystemClock{},
 		GatewayIP:     netip.MustParseAddr("192.168.0.1"),
 		SubnetMask:    netip.MustParseAddr("255.255.255.0"),
 		RangeStart:    netip.MustParseAddr("192.168.0.2"),
@@ -21,6 +23,7 @@ func TestConfig_Validate(t *testing.T) {
 	}
 	gwInRangeConf := &dhcpsvc.IPv4Config{
 		Enabled:       true,
+		Clock:         timeutil.SystemClock{},
 		GatewayIP:     netip.MustParseAddr("192.168.0.100"),
 		SubnetMask:    netip.MustParseAddr("255.255.255.0"),
 		RangeStart:    netip.MustParseAddr("192.168.0.1"),
@@ -29,6 +32,7 @@ func TestConfig_Validate(t *testing.T) {
 	}
 	badStartConf := &dhcpsvc.IPv4Config{
 		Enabled:       true,
+		Clock:         timeutil.SystemClock{},
 		GatewayIP:     netip.MustParseAddr("192.168.0.1"),
 		SubnetMask:    netip.MustParseAddr("255.255.255.0"),
 		RangeStart:    netip.MustParseAddr("127.0.0.1"),

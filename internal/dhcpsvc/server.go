@@ -362,7 +362,7 @@ func (srv *DHCPServer) RemoveLease(ctx context.Context, l *Lease) (err error) {
 // removeLeaseByAddr removes the lease with the given IP address from the
 // server.  It returns an error if the lease can't be removed.
 //
-//lint:ignore U1000 TODO(e.burkov):  Use
+//lint:ignore U1000 TODO(e.burkov):  Use.
 func (srv *DHCPServer) removeLeaseByAddr(ctx context.Context, addr netip.Addr) (err error) {
 	defer func() { err = errors.Annotate(err, "removing lease by address: %w") }()
 

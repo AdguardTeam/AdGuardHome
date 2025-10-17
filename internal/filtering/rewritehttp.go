@@ -5,13 +5,26 @@ import (
 	"net/http"
 	"slices"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 )
 
+// rewriteEntryJSON is a single entry of the DNS rewrite.
+//
 // TODO(d.kolyshev): Use [rewrite.Item] instead.
 type rewriteEntryJSON struct {
-	Domain string `json:"domain"`
-	Answer string `json:"answer"`
+	Domain  string          `json:"domain"`
+	Answer  string          `json:"answer"`
+	Enabled aghalg.NullBool `json:"enabled"`
+}
+
+// rewriteSettings contains DNS rewrite settings.
+type rewriteSettings struct {
+	// Enabled indicates whether legacy rewrites are applied.
+	//
+	// TODO(s.chzhen):  Consider using [aghalg.NullBool] so "{}" won't
+	// accidentally disable rewrites on decode.
+	Enabled bool `json:"enabled"`
 }
 
 // handleRewriteList is the handler for the GET /control/rewrite/list HTTP API.
@@ -24,8 +37,9 @@ func (d *DNSFilter) handleRewriteList(w http.ResponseWriter, r *http.Request) {
 
 		for _, ent := range d.conf.Rewrites {
 			jsonEnt := rewriteEntryJSON{
-				Domain: ent.Domain,
-				Answer: ent.Answer,
+				Domain:  ent.Domain,
+				Answer:  ent.Answer,
+				Enabled: aghalg.BoolToNullBool(ent.Enabled),
 			}
 			arr = append(arr, &jsonEnt)
 		}
@@ -47,9 +61,15 @@ func (d *DNSFilter) handleRewriteAdd(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	enabled := true
+	if rwJSON.Enabled != aghalg.NBNull {
+		enabled = rwJSON.Enabled == aghalg.NBTrue
+	}
+
 	rw := &LegacyRewrite{
-		Domain: rwJSON.Domain,
-		Answer: rwJSON.Answer,
+		Domain:  rwJSON.Domain,
+		Answer:  rwJSON.Answer,
+		Enabled: enabled,
 	}
 
 	err = rw.normalize(ctx, l)
@@ -177,8 +197,52 @@ func (d *DNSFilter) handleRewriteUpdate(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	rwDel.Enabled = d.conf.Rewrites[index].Enabled
+	if updateJSON.Update.Enabled == aghalg.NBNull {
+		rwAdd.Enabled = rwDel.Enabled
+	} else {
+		rwAdd.Enabled = updateJSON.Update.Enabled == aghalg.NBTrue
+	}
+
 	d.conf.Rewrites = slices.Replace(d.conf.Rewrites, index, index+1, rwAdd)
 
-	l.DebugContext(ctx, "removed rewrite element", "domain", rwDel.Domain, "answer", rwDel.Answer)
-	l.DebugContext(ctx, "added rewrite element", "domain", rwAdd.Domain, "answer", rwAdd.Answer)
+	l.DebugContext(
+		ctx,
+		"removed rewrite element",
+		"domain", rwDel.Domain,
+		"answer", rwDel.Answer,
+		"enabled", rwDel.Enabled,
+	)
+	l.DebugContext(
+		ctx,
+		"added rewrite element",
+		"domain", rwAdd.Domain,
+		"answer", rwAdd.Answer,
+		"enabled", rwAdd.Enabled,
+	)
+}
+
+// handleRewriteSettings is the handler for the GET /control/rewrite/settings
+// HTTP API.
+func (d *DNSFilter) handleRewriteSettings(w http.ResponseWriter, r *http.Request) {
+	resp := &rewriteSettings{
+		Enabled: protectedBool(d.confMu, &d.conf.RewritesEnabled),
+	}
+
+	aghhttp.WriteJSONResponseOK(w, r, resp)
+}
+
+// handleRewriteSettingsUpdate is the handler for the PUT
+// /control/rewrite/settings/update HTTP API.
+func (d *DNSFilter) handleRewriteSettingsUpdate(w http.ResponseWriter, r *http.Request) {
+	req := &rewriteSettings{}
+	err := json.NewDecoder(r.Body).Decode(req)
+	if err != nil {
+		aghhttp.Error(r, w, http.StatusBadRequest, "json.Decode: %s", err)
+
+		return
+	}
+
+	setProtectedBool(d.confMu, &d.conf.RewritesEnabled, req.Enabled)
+	d.conf.ConfModifier.Apply(r.Context())
 }

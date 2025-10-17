@@ -730,9 +730,11 @@ func (d *DNSFilter) RegisterFilteringHandlers() {
 	registerHTTP(http.MethodPut, "/control/safesearch/settings", d.handleSafeSearchSettings)
 
 	registerHTTP(http.MethodGet, "/control/rewrite/list", d.handleRewriteList)
+	registerHTTP(http.MethodGet, "/control/rewrite/settings", d.handleRewriteSettings)
 	registerHTTP(http.MethodPost, "/control/rewrite/add", d.handleRewriteAdd)
-	registerHTTP(http.MethodPut, "/control/rewrite/update", d.handleRewriteUpdate)
 	registerHTTP(http.MethodPost, "/control/rewrite/delete", d.handleRewriteDelete)
+	registerHTTP(http.MethodPut, "/control/rewrite/settings/update", d.handleRewriteSettingsUpdate)
+	registerHTTP(http.MethodPut, "/control/rewrite/update", d.handleRewriteUpdate)
 
 	registerHTTP(http.MethodGet, "/control/blocked_services/services", d.handleBlockedServicesIDs)
 	registerHTTP(http.MethodGet, "/control/blocked_services/all", d.handleBlockedServicesAll)

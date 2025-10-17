@@ -15,8 +15,10 @@ interface TableProps {
     processingAdd: boolean;
     processingDelete: boolean;
     processingUpdate: boolean;
+    settings: Record<string, boolean>;
     handleDelete: (...args: unknown[]) => unknown;
     toggleRewritesModal: (...args: unknown[]) => unknown;
+    toggleRewrite: (...args: unknown[]) => unknown;
 }
 
 class Table extends Component<TableProps> {
@@ -43,24 +45,35 @@ class Table extends Component<TableProps> {
         {
             Header: this.props.t('actions_table_header'),
             accessor: 'actions',
-            maxWidth: 100,
+            maxWidth: 150,
             sortable: false,
             resizable: false,
-            Cell: (value: any) => {
-                const currentRewrite = {
-                    answer: value.row.answer,
-                    domain: value.row.domain,
-                };
+            Cell: (row: any) => {
+                const { original } = row;
+                const { processing, settings, toggleRewrite } = this.props;
+                const isEnabledSettings = Boolean(settings && settings.enabled);
 
                 return (
                     <div className="logs__row logs__row--center">
+                        <label className="checkbox">
+                            <input
+                                type="checkbox"
+                                className="checkbox__input"
+                                onChange={() => toggleRewrite(original)}
+                                checked={original.enabled}
+                                disabled={processing || !isEnabledSettings}
+                            />
+
+                            <span className="checkbox__label checkbox__label--l" />
+                        </label>
+
                         <button
                             type="button"
                             className="btn btn-icon btn-outline-primary btn-sm mr-2"
                             onClick={() => {
                                 this.props.toggleRewritesModal({
                                     type: MODAL_TYPE.EDIT_REWRITE,
-                                    currentRewrite,
+                                    original,
                                 });
                             }}
                             disabled={this.props.processingUpdate}
@@ -73,7 +86,7 @@ class Table extends Component<TableProps> {
                         <button
                             type="button"
                             className="btn btn-icon btn-outline-secondary btn-sm"
-                            onClick={() => this.props.handleDelete(currentRewrite)}
+                            onClick={() => this.props.handleDelete(original)}
                             title={this.props.t('delete_table_action')}>
                             <svg className="icons">
                                 <use xlinkHref="#delete" />

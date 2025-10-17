@@ -529,6 +529,8 @@ var config = &configuration{
 		FilteringEnabled:           true,
 		FiltersUpdateIntervalHours: 24,
 
+		RewritesEnabled: true,
+
 		ParentalEnabled:     false,
 		SafeBrowsingEnabled: false,
 

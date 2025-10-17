@@ -130,23 +130,23 @@ func (r *qLogReader) ReadNext() (string, error) {
 	for r.currentFile >= 0 {
 		q := r.qFiles[r.currentFile]
 		line, err := q.ReadNext()
-		if err != nil {
-			// Shift to the older file.
-			r.currentFile--
-			if r.currentFile < 0 {
-				break
-			}
-
-			q = r.qFiles[r.currentFile]
-
-			// Set its position to the start right away.
-			_, err = q.SeekStart()
-			// This is unexpected, return an error right away.
-			if err != nil {
-				return "", err
-			}
-		} else {
+		if err == nil {
 			return line, nil
+		}
+
+		// Shift to the older file.
+		r.currentFile--
+		if r.currentFile < 0 {
+			break
+		}
+
+		q = r.qFiles[r.currentFile]
+
+		// Set its position to the start right away.
+		_, err = q.SeekStart()
+		// This is unexpected, return an error right away.
+		if err != nil {
+			return "", err
 		}
 	}
 

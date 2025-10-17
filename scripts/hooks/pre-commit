@@ -89,7 +89,7 @@ if [ "$(git diff --cached --name-only -- '*.sh' || :)" != '' ]; then
 	make VERBOSE="$verbose" sh-lint
 fi
 
-if [ "$(git diff --cached --name-only -- '*.md' '*.txt' '*.yaml' '*.yml' || :)" != '' ]; then
+if [ "$(git diff --cached --name-only -- '*.md' '*.json' '*.txt' '*.yaml' '*.yml' || :)" != '' ]; then
 	make VERBOSE="$verbose" txt-lint
 fi
 

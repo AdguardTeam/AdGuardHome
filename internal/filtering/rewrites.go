@@ -17,9 +17,11 @@ import (
 
 // LegacyRewrite is a single legacy DNS rewrite record.
 //
-// Instances of *LegacyRewrite must never be nil.
+// Instances of *LegacyRewrite must not be nil.
+//
+// NOTE:  Keep fields in sync with [cloneRewrites].
 type LegacyRewrite struct {
-	// Domain is the domain pattern for which this rewrite should work.
+	// Domain is the pattern to which this rewrite applies.
 	Domain string `yaml:"domain"`
 
 	// Answer is the IP address, canonical name, or one of the special
@@ -32,6 +34,9 @@ type LegacyRewrite struct {
 
 	// Type is the DNS record type: A, AAAA, or CNAME.
 	Type uint16 `yaml:"-"`
+
+	// Enabled indicates whether this rewrite is active.
+	Enabled bool `yaml:"enabled"`
 }
 
 // equal returns true if the rw is equal to the other.
@@ -162,6 +167,10 @@ func findRewrites(
 	qtype uint16,
 ) (rewrites []*LegacyRewrite, matched bool) {
 	for _, e := range entries {
+		if !e.Enabled {
+			continue
+		}
+
 		if e.Domain != host && !matchDomainWildcard(host, e.Domain) {
 			continue
 		}
@@ -176,6 +185,11 @@ func findRewrites(
 		return nil, matched
 	}
 
+	return finalizeRewrites(rewrites), matched
+}
+
+// finalizeRewrites sorts rewrites and truncates wildcard ones.
+func finalizeRewrites(rewrites []*LegacyRewrite) (resRewrites []*LegacyRewrite) {
 	slices.SortFunc(rewrites, (*LegacyRewrite).Compare)
 
 	for i, r := range rewrites {
@@ -188,7 +202,7 @@ func findRewrites(
 		}
 	}
 
-	return rewrites, matched
+	return rewrites
 }
 
 // setRewriteResult sets the Reason or IPList of res if necessary.  res must not
@@ -221,10 +235,11 @@ func cloneRewrites(entries []*LegacyRewrite) (clone []*LegacyRewrite) {
 	clone = make([]*LegacyRewrite, len(entries))
 	for i, rw := range entries {
 		clone[i] = &LegacyRewrite{
-			Domain: rw.Domain,
-			Answer: rw.Answer,
-			IP:     rw.IP,
-			Type:   rw.Type,
+			Domain:  rw.Domain,
+			Answer:  rw.Answer,
+			IP:      rw.IP,
+			Type:    rw.Type,
+			Enabled: rw.Enabled,
 		}
 	}
 

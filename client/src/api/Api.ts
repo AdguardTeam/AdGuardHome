@@ -489,6 +489,10 @@ class Api {
 
     REWRITE_DELETE = { path: 'rewrite/delete', method: 'POST' };
 
+    REWRITE_SETTINGS = { path: 'rewrite/settings', method: 'GET' };
+
+    REWRITE_SETTINGS_UPDATE = { path: 'rewrite/settings/update', method: 'PUT' };
+
     getRewritesList() {
         const { path, method } = this.REWRITES_LIST;
 
@@ -511,12 +515,26 @@ class Api {
         return this.makeRequest(path, method, parameters);
     }
 
+    updateRewriteSettings(config: any) {
+        const { path, method } = this.REWRITE_SETTINGS_UPDATE;
+        const parameters = {
+            data: config,
+        };
+        return this.makeRequest(path, method, parameters);
+    }
+
     deleteRewrite(config: any) {
         const { path, method } = this.REWRITE_DELETE;
         const parameters = {
             data: config,
         };
         return this.makeRequest(path, method, parameters);
+    }
+
+    getRewriteSettings() {
+        const { path, method } = this.REWRITE_SETTINGS;
+
+        return this.makeRequest(path, method);
     }
 
     // Blocked services
