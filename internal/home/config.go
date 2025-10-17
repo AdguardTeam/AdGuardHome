@@ -616,13 +616,20 @@ func configFilePath() (confPath string) {
 
 // validateBindHosts returns error if any of binding hosts from configuration is
 // not a valid IP address.
-func validateBindHosts(conf *configuration) (err error) {
+func validateBindHosts(
+	ctx context.Context,
+	l *slog.Logger,
+	conf *configuration,
+	fileData []byte,
+) (err error) {
 	if !conf.HTTPConfig.Address.IsValid() {
 		return errors.Error("http.address is not a valid ip address")
 	}
 
 	for i, addr := range conf.DNS.BindHosts {
 		if !addr.IsValid() {
+			logIPHint(ctx, l, fileData)
+
 			return fmt.Errorf("dns.bind_hosts at index %d is not a valid ip address", i)
 		}
 	}
@@ -670,7 +677,7 @@ func parseConfig(ctx context.Context, l *slog.Logger) (err error) {
 		return err
 	}
 
-	err = validateConfig(ctx, l)
+	err = validateConfig(ctx, l, config.fileData)
 	if err != nil {
 		return err
 	}
@@ -683,10 +690,60 @@ func parseConfig(ctx context.Context, l *slog.Logger) (err error) {
 	return validateTLSCipherIDs(config.TLS.OverrideTLSCiphers)
 }
 
+// logIPHint logs an informational message when the config contains an unquoted
+// IP address with a trailing colon.  It's a best-effort check for a YAML
+// parsing behavior where a list item is decoded as {key: null}.  l must not be
+// nil.
+func logIPHint(ctx context.Context, l *slog.Logger, data []byte) {
+	var conf struct {
+		DNS struct {
+			BindHosts []any `yaml:"bind_hosts"`
+		} `yaml:"dns"`
+	}
+
+	err := yaml.Unmarshal(data, &conf)
+	if err != nil {
+		// This should not happen since this is already the validation process.
+		l.DebugContext(
+			ctx,
+			"failed to unmarshal config while logging ip hint",
+			slogutil.KeyError, err,
+		)
+
+		return
+	}
+
+	for _, h := range conf.DNS.BindHosts {
+		m, ok := h.(map[string]any)
+		if !ok {
+			continue
+		}
+
+		if !hasNilValue(m) {
+			continue
+		}
+
+		l.WarnContext(ctx, "quote addresses that end with a colon in 'dns.bind_hosts'")
+
+		return
+	}
+}
+
+// hasNilValue returns true if m contains a nil value.
+func hasNilValue(m map[string]any) (ok bool) {
+	for _, v := range m {
+		if v == nil {
+			return true
+		}
+	}
+
+	return false
+}
+
 // validateConfig returns error if the configuration is invalid.  l must not be
 // nil.
-func validateConfig(ctx context.Context, l *slog.Logger) (err error) {
-	err = validateBindHosts(config)
+func validateConfig(ctx context.Context, l *slog.Logger, fileData []byte) (err error) {
+	err = validateBindHosts(ctx, l, config, fileData)
 	if err != nil {
 		// Don't wrap the error since it's informative enough as is.
 		return err
