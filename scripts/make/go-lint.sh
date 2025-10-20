@@ -180,13 +180,10 @@ run_linter gocognit --over='14' \
 	./internal/dhcpd \
 	;
 
-run_linter gocognit --over='13' \
-	./internal/aghnet/ \
-	;
-
 run_linter gocognit --over='10' \
 	./internal/aghalg/ \
 	./internal/aghhttp/ \
+	./internal/aghnet/ \
 	./internal/aghos/ \
 	./internal/aghrenameio/ \
 	./internal/aghtest/ \

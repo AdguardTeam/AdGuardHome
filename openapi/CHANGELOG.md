@@ -2,7 +2,27 @@
 
 <!-- TODO(a.garipov): Reformat in accordance with the KeepAChangelog spec. -->
 
-## v0.108.0: API changes
+## v0.107.68: API changes
+
+### New HTTP APIs 'GET /control/rewrite/settings' and 'PUT /control/rewrite/settings/update'
+
+- New HTTP APIs to manage global DNS rewrites.
+
+    ```json
+    {
+      "enabled": true
+    }
+    ```
+
+### New `"enabled"` field in 'POST /control/rewrite/add' and 'PUT /control/rewrite/update'
+
+- New optional field `"enabled"` indicates whether the rewrite is active.
+
+### The blocked services groups
+
+- The new field `"groups"` in `GET /control/blocked_services/all` is a list of service group.  Groups make it possible to block multiple services with equal `"group_id"` at once.
+
+- The new field `"group_id"` for each `BlockedService` object in `GET /control/blocked_services/all` indicates which group the service belongs to.
 
 ## v0.107.64: API changes
 

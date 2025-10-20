@@ -77,22 +77,23 @@ func (web *webAPI) handleGetProfile(w http.ResponseWriter, r *http.Request) {
 // handlePutProfile is the handler for PUT /control/profile/update endpoint.
 func (web *webAPI) handlePutProfile(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	l := web.logger
 
-	if aghhttp.WriteTextPlainDeprecated(w, r) {
+	if aghhttp.WriteTextPlainDeprecated(ctx, l, w, r) {
 		return
 	}
 
 	profileReq := &profileJSON{}
 	err := json.NewDecoder(r.Body).Decode(profileReq)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "reading req: %s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "reading req: %s", err)
 
 		return
 	}
 
 	lang := profileReq.Language
 	if !allowedLanguages.Has(lang) {
-		aghhttp.Error(r, w, http.StatusBadRequest, "unknown language: %q", lang)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "unknown language: %q", lang)
 
 		return
 	}
@@ -105,7 +106,7 @@ func (web *webAPI) handlePutProfile(w http.ResponseWriter, r *http.Request) {
 		defer config.Unlock()
 
 		if config.Language == lang && config.Theme == theme {
-			web.logger.DebugContext(ctx, "updating profile; no changes")
+			l.DebugContext(ctx, "updating profile; no changes")
 
 			return
 		}
@@ -113,12 +114,12 @@ func (web *webAPI) handlePutProfile(w http.ResponseWriter, r *http.Request) {
 		changed = true
 		config.Language = lang
 		config.Theme = theme
-		web.logger.InfoContext(ctx, "profile updated", "lang", lang, "theme", theme)
+		l.InfoContext(ctx, "profile updated", "lang", lang, "theme", theme)
 	}()
 
 	if changed {
 		web.confModifier.Apply(ctx)
 	}
 
-	aghhttp.OK(w)
+	aghhttp.OK(ctx, l, w)
 }

@@ -16,6 +16,7 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/ioutil"
 	"github.com/AdguardTeam/urlfilter/filterlist"
+	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/c2h5oh/datasize"
 )
 
@@ -42,7 +43,7 @@ type Filter struct {
 	uid UID
 
 	// urlFilterID is used for working with package urlfilter.
-	urlFilterID URLFilterID
+	urlFilterID rules.ListID
 
 	// rulesCount contains the number of rules in this rule-list filter.
 	rulesCount int
@@ -72,7 +73,7 @@ type FilterConfig struct {
 	UID UID
 
 	// URLFilterID is used for working with package urlfilter.
-	URLFilterID URLFilterID
+	URLFilterID rules.ListID
 
 	// Enabled, if true, means that this rule-list filter is used for filtering.
 	Enabled bool
@@ -154,16 +155,15 @@ func (f *Filter) setFromHTTP(
 ) (parseRes *ParseResult, err error) {
 	defer func() { err = errors.Annotate(err, "setting from http: %w") }()
 
-	text, parseRes, err := f.readFromHTTP(ctx, parseBuf, cli, cachePath, maxSize)
+	data, parseRes, err := f.readFromHTTP(ctx, parseBuf, cli, cachePath, maxSize)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
 		return nil, err
 	}
 
-	// TODO(a.garipov): Add filterlist.BytesRuleList.
-	f.ruleList = filterlist.NewString(&filterlist.StringConfig{
+	f.ruleList = filterlist.NewBytes(&filterlist.BytesConfig{
 		ID:             f.urlFilterID,
-		RulesText:      text,
+		RulesText:      data,
 		IgnoreCosmetic: true,
 	})
 
@@ -179,27 +179,27 @@ func (f *Filter) readFromHTTP(
 	cli *http.Client,
 	cachePath string,
 	maxSize uint64,
-) (text string, parseRes *ParseResult, err error) {
+) (data []byte, parseRes *ParseResult, err error) {
 	urlStr := f.url.String()
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, urlStr, nil)
 	if err != nil {
-		return "", nil, fmt.Errorf("making request for http url %q: %w", urlStr, err)
+		return nil, nil, fmt.Errorf("making request for http url %q: %w", urlStr, err)
 	}
 
 	resp, err := cli.Do(req)
 	if err != nil {
-		return "", nil, fmt.Errorf("requesting from http url: %w", err)
+		return nil, nil, fmt.Errorf("requesting from http url: %w", err)
 	}
 	defer func() { err = errors.WithDeferred(err, resp.Body.Close()) }()
 
 	// TODO(a.garipov): Use [agdhttp.CheckStatus] when it's moved to golibs.
 	if resp.StatusCode != http.StatusOK {
-		return "", nil, fmt.Errorf("got status code %d, want %d", resp.StatusCode, http.StatusOK)
+		return nil, nil, fmt.Errorf("got status code %d, want %d", resp.StatusCode, http.StatusOK)
 	}
 
 	fltFile, err := aghrenameio.NewPendingFile(cachePath, aghos.DefaultPermFile)
 	if err != nil {
-		return "", nil, fmt.Errorf("creating temp file: %w", err)
+		return nil, nil, fmt.Errorf("creating temp file: %w", err)
 	}
 	defer func() { err = aghrenameio.WithDeferredCleanup(err, fltFile) }()
 
@@ -210,10 +210,10 @@ func (f *Filter) readFromHTTP(
 	httpBody := ioutil.LimitReader(resp.Body, maxSize)
 	parseRes, err = parser.Parse(mw, httpBody, parseBuf)
 	if err != nil {
-		return "", nil, fmt.Errorf("parsing response from http url %q: %w", urlStr, err)
+		return nil, nil, fmt.Errorf("parsing response from http url %q: %w", urlStr, err)
 	}
 
-	return buf.String(), parseRes, nil
+	return buf.Bytes(), parseRes, nil
 }
 
 // setName sets the title using either the already-present name, the given title

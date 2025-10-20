@@ -370,6 +370,10 @@
     text-overflow: ellipsis;
 }
 
+.logs__row--center {
+    align-items: center;
+}
+
 .logs__row--icons {
     flex-wrap: wrap;
 }

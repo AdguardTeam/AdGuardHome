@@ -21,6 +21,8 @@ type cacheItem struct {
 // toCacheItem decodes cacheItem from data.  data must be at least equal to
 // expiry size.
 func toCacheItem(data []byte) *cacheItem {
+	// #nosec G115 -- Assume that the values are as the ones that have been
+	// encoded.
 	t := time.Unix(int64(binary.BigEndian.Uint64(data)), 0)
 
 	data = data[expirySize:]
@@ -43,6 +45,7 @@ func fromCacheItem(item *cacheItem) (data []byte) {
 	data = make([]byte, 0, len(item.hashes)*hashSize+expirySize)
 
 	expiry := item.expiry.Unix()
+	// #nosec G115 -- The Unix epoch time is highly unlikely to be negative.
 	data = binary.BigEndian.AppendUint64(data, uint64(expiry))
 
 	for _, v := range item.hashes {

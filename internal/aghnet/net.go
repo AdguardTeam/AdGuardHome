@@ -1,6 +1,4 @@
 // Package aghnet contains networking utilities.
-//
-// TODO(s.chzhen):  Use slog.
 package aghnet
 
 import (
@@ -9,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net"
 	"net/netip"
 	"net/url"
@@ -17,7 +16,7 @@ import (
 
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/osutil"
 	"github.com/AdguardTeam/golibs/osutil/executil"
 )
@@ -51,23 +50,25 @@ func IfaceHasStaticIP(
 	return ifaceHasStaticIP(ctx, cmdCons, ifaceName)
 }
 
-// IfaceSetStaticIP sets a static IP address for network interface.  cmdCons
-// must not be nil.
+// IfaceSetStaticIP sets a static IP address for network interface.  l and
+// cmdCons must not be nil.
 func IfaceSetStaticIP(
 	ctx context.Context,
+	l *slog.Logger,
 	cmdCons executil.CommandConstructor,
 	ifaceName string,
 ) (err error) {
-	return ifaceSetStaticIP(ctx, cmdCons, ifaceName)
+	return ifaceSetStaticIP(ctx, l, cmdCons, ifaceName)
 }
 
-// GatewayIP returns the gateway IP address for the interface.  cmdCons must not
-// be nil.
+// GatewayIP returns the gateway IP address for the interface.  l and cmdCons
+// must not be nil.
 //
 // TODO(e.burkov):  Investigate if the gateway address may be fetched in another
 // way since not every machine has the software installed.
 func GatewayIP(
 	ctx context.Context,
+	l *slog.Logger,
 	cmdCons executil.CommandConstructor,
 	ifaceName string,
 ) (ip netip.Addr) {
@@ -83,10 +84,10 @@ func GatewayIP(
 	)
 	if err != nil {
 		if code, ok := executil.ExitCodeFromError(err); ok {
-			log.Debug("fetching gateway ip: unexpected exit code: %d", code)
-		} else {
-			log.Debug("%s", err)
+			err = fmt.Errorf("unexpected exit code %d: %w", code, err)
 		}
+
+		l.DebugContext(ctx, "fetching gateway ip", slogutil.KeyError, err)
 
 		return netip.Addr{}
 	}
@@ -104,9 +105,9 @@ func GatewayIP(
 }
 
 // CanBindPrivilegedPorts checks if current process can bind to privileged
-// ports.
-func CanBindPrivilegedPorts() (can bool, err error) {
-	return canBindPrivilegedPorts()
+// ports.  l must not be nil.
+func CanBindPrivilegedPorts(ctx context.Context, l *slog.Logger) (can bool, err error) {
+	return canBindPrivilegedPorts(ctx, l)
 }
 
 // NetInterface represents an entry of network interfaces map.
@@ -148,42 +149,70 @@ func NetInterfaceFrom(iface *net.Interface) (niface *NetInterface, err error) {
 
 	addrs, err := iface.Addrs()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get addresses for interface %s: %w", iface.Name, err)
+		return nil, fmt.Errorf("getting addresses for interface %q: %w", iface.Name, err)
 	}
 
-	// Collect network interface addresses.
-	for _, addr := range addrs {
-		n, ok := addr.(*net.IPNet)
-		if !ok {
-			// Should be *net.IPNet, this is weird.
-			return nil, fmt.Errorf("expected %[2]s to be %[1]T, got %[2]T", n, addr)
-		} else if ip4 := n.IP.To4(); ip4 != nil {
-			n.IP = ip4
+	for i, addr := range addrs {
+		if err = populateAddrs(addr, niface); err != nil {
+			return nil, fmt.Errorf("populating at index %d: %w", i, err)
 		}
-
-		ip, ok := netip.AddrFromSlice(n.IP)
-		if !ok {
-			return nil, fmt.Errorf("bad address %s", n.IP)
-		}
-
-		ip = ip.Unmap()
-		if ip.IsLinkLocalUnicast() {
-			// Ignore link-local IPv4.
-			if ip.Is4() {
-				continue
-			}
-
-			ip = ip.WithZone(iface.Name)
-		}
-
-		ones, _ := n.Mask.Size()
-		p := netip.PrefixFrom(ip, ones)
-
-		niface.Addresses = append(niface.Addresses, ip)
-		niface.Subnets = append(niface.Subnets, p)
 	}
 
 	return niface, nil
+}
+
+// populateAddrs fills *NetInterface IP addresses and subnets.  addr and niface
+// must not be nil.
+func populateAddrs(addr net.Addr, niface *NetInterface) (err error) {
+	n, err := ipNetFromAddr(addr)
+	if err != nil {
+		return err
+	}
+
+	ip, ok := netip.AddrFromSlice(n.IP)
+	if !ok {
+		return fmt.Errorf("bad address %s", n.IP)
+	}
+
+	ip = ip.Unmap()
+
+	// Skip link-local IPv4 addresses
+	if isLinkLocalV4(ip) {
+		return nil
+	}
+
+	if ip.IsLinkLocalUnicast() {
+		ip = ip.WithZone(niface.Name)
+	}
+
+	ones, _ := n.Mask.Size()
+	p := netip.PrefixFrom(ip, ones)
+
+	niface.Addresses = append(niface.Addresses, ip)
+	niface.Subnets = append(niface.Subnets, p)
+
+	return nil
+}
+
+// ipNetFromAddr converts net.Addr to *net.IPNet and its IP to v4 if necessary.
+func ipNetFromAddr(addr net.Addr) (ip *net.IPNet, err error) {
+	ipNet, ok := addr.(*net.IPNet)
+	if !ok {
+		// Should be *net.IPNet, this is weird.
+		return nil, fmt.Errorf("bad type for interface net.Addr %T(%[1]v)", ipNet)
+	}
+
+	// TODO(f.setrakov): Explore whether this logic can be safely removed.
+	if ip4 := ipNet.IP.To4(); ip4 != nil {
+		ipNet.IP = ip4
+	}
+
+	return ipNet, nil
+}
+
+// isLinkLocalV4 checks if ip is link-local unicast IPv4 address.
+func isLinkLocalV4(ip netip.Addr) (ok bool) {
+	return ip.Is4() && ip.IsLinkLocalUnicast()
 }
 
 // GetValidNetInterfacesForWeb returns interfaces that are eligible for DNS and
@@ -237,13 +266,13 @@ func InterfaceByIP(ip netip.Addr) (ifaceName string) {
 }
 
 // GetSubnet returns the subnet corresponding to the interface of zero prefix if
-// the search fails.
+// the search fails.  l must not be nil.
 //
 // TODO(e.burkov):  See TODO on GetValidNetInterfacesForWeb.
-func GetSubnet(ifaceName string) (p netip.Prefix) {
+func GetSubnet(ctx context.Context, l *slog.Logger, ifaceName string) (p netip.Prefix) {
 	netIfaces, err := GetValidNetInterfacesForWeb()
 	if err != nil {
-		log.Error("Could not get network interfaces info: %v", err)
+		l.ErrorContext(ctx, "could not get network interfaces info", slogutil.KeyError, err)
 
 		return p
 	}

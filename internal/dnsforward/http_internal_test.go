@@ -292,7 +292,11 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 
 		t.Run(tc.name, func(t *testing.T) {
 			t.Cleanup(func() {
-				s.dnsFilter.SetBlockingMode(filtering.BlockingModeDefault, netip.Addr{}, netip.Addr{})
+				s.dnsFilter.SetBlockingMode(
+					filtering.BlockingModeDefault,
+					netip.Addr{},
+					netip.Addr{},
+				)
 				s.conf = defaultConf
 				s.conf.Config.EDNSClientSubnet = &EDNSClientSubnet{}
 				s.dnsFilter.SetBlockedResponseTTL(testBlockedRespTTL)
@@ -362,7 +366,10 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 		Host:   netutil.JoinHostPort(upstreamHost, hostsListener.Port()),
 	}).String()
 
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
 	hc, err := aghnet.NewHostsContainer(
+		ctx,
+		testLogger,
 		fstest.MapFS{
 			hostsFileName: &fstest.MapFile{
 				Data: []byte(hostsListener.Addr().String() + " " + upstreamHost),

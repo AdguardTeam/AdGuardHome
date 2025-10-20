@@ -86,6 +86,8 @@ func (srv *DHCPServer) handleDiscover(ctx context.Context, rw responseWriter4, r
 }
 
 // handleRequest handles the DHCPv4 message of request type.
+//
+// See https://datatracker.ietf.org/doc/html/rfc2131#section-4.3.2.
 func (srv *DHCPServer) handleRequest(ctx context.Context, rw responseWriter4, req *layers.DHCPv4) {
 	srvID, hasSrvID := serverID4(req)
 	reqIP, hasReqIP := requestedIPv4(req)
@@ -108,7 +110,10 @@ func (srv *DHCPServer) handleRequest(ctx context.Context, rw responseWriter4, re
 		// its previously assigned address.
 		iface, hasIface := srv.interfaces4.findInterface(reqIP)
 		if !hasIface {
-			srv.logger.DebugContext(ctx, "skipping init-reboot request", "requestedip", reqIP)
+			// If the DHCP server detects that the client is on the wrong net
+			// then the server SHOULD send a DHCPNAK message to the client.
+			srv.logger.DebugContext(ctx, "request with wrong init-reboot net", "requestedip", reqIP)
+			iface.respondNAK(ctx, rw, req)
 
 			return
 		}
@@ -120,7 +125,7 @@ func (srv *DHCPServer) handleRequest(ctx context.Context, rw responseWriter4, re
 		ip, _ := netip.AddrFromSlice(req.ClientIP.To4())
 		iface, hasIface := srv.interfaces4.findInterface(ip)
 		if !hasIface {
-			srv.logger.DebugContext(ctx, "skipping init-reboot request", "clientip", ip)
+			srv.logger.DebugContext(ctx, "request with wrong renew net", "clientip", ip)
 
 			return
 		}

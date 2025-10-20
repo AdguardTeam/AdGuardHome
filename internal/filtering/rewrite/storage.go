@@ -40,7 +40,7 @@ type Config struct {
 	Rewrites []*Item
 
 	// ListID is used as an identifier of the underlying rules list.
-	ListID int
+	ListID rules.ListID
 }
 
 // DefaultStorage is the default storage for rewrite rules.
@@ -61,10 +61,7 @@ type DefaultStorage struct {
 	rewrites []*Item
 
 	// urlFilterID is the synthetic integer identifier for the urlfilter engine.
-	//
-	// TODO(a.garipov): Change the type to a string in module urlfilter and
-	// remove this crutch.
-	urlFilterID int
+	urlFilterID rules.ListID
 }
 
 // NewDefaultStorage returns new rewrites storage.  conf must not be nil.
@@ -140,7 +137,7 @@ func (s *DefaultStorage) resolveCNAMEChain(
 			return nil, nil
 		}
 
-		if isSelfMatchingWildcard(host, rwAns, rule.RuleText) {
+		if isSelfMatchingWildcard(host, rwAns, rule.Text()) {
 			return nil, rule.DNSRewrite
 		}
 

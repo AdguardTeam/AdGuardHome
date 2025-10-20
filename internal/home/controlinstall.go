@@ -43,6 +43,8 @@ type getAddrsResponse struct {
 
 // handleInstallGetAddresses is the handler for /install/get_addresses endpoint.
 func (web *webAPI) handleInstallGetAddresses(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	data := getAddrsResponse{
 		Version: version.Version(),
 
@@ -52,7 +54,15 @@ func (web *webAPI) handleInstallGetAddresses(w http.ResponseWriter, r *http.Requ
 
 	ifaces, err := aghnet.GetValidNetInterfacesForWeb()
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "Couldn't get interfaces: %s", err)
+		aghhttp.ErrorAndLog(
+			ctx,
+			web.logger,
+			r,
+			w,
+			http.StatusInternalServerError,
+			"Couldn't get interfaces: %s",
+			err,
+		)
 
 		return
 	}
@@ -181,7 +191,15 @@ func (web *webAPI) handleInstallCheckConfig(w http.ResponseWriter, r *http.Reque
 
 	err := json.NewDecoder(r.Body).Decode(req)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "decoding the request: %s", err)
+		aghhttp.ErrorAndLog(
+			ctx,
+			web.logger,
+			r,
+			w,
+			http.StatusBadRequest,
+			"decoding the request: %s",
+			err,
+		)
 
 		return
 	}
@@ -196,7 +214,7 @@ func (web *webAPI) handleInstallCheckConfig(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		resp.DNS.Status = err.Error()
 	} else if !req.DNS.IP.IsUnspecified() {
-		resp.StaticIP = handleStaticIP(ctx, req.DNS.IP, req.SetStaticIP, web.cmdCons)
+		resp.StaticIP = handleStaticIP(ctx, web.logger, req.DNS.IP, req.SetStaticIP, web.cmdCons)
 	}
 
 	aghhttp.WriteJSONResponseOK(w, r, resp)
@@ -206,6 +224,7 @@ func (web *webAPI) handleInstallCheckConfig(w http.ResponseWriter, r *http.Reque
 // owns IP.  cmdCons must not be nil.
 func handleStaticIP(
 	ctx context.Context,
+	l *slog.Logger,
 	ip netip.Addr,
 	set bool,
 	cmdCons executil.CommandConstructor,
@@ -222,7 +241,7 @@ func handleStaticIP(
 
 	if set {
 		// Try to set a static IP for the specified interface.
-		err := aghnet.IfaceSetStaticIP(ctx, cmdCons, interfaceName)
+		err := aghnet.IfaceSetStaticIP(ctx, l, cmdCons, interfaceName)
 		if err != nil {
 			ipResp.Static = "error"
 			ipResp.Error = err.Error()
@@ -244,7 +263,7 @@ func handleStaticIP(
 	if isStaticIP {
 		ipResp.Static = "yes"
 	}
-	ipResp.IP = aghnet.GetSubnet(interfaceName).String()
+	ipResp.IP = aghnet.GetSubnet(ctx, l, interfaceName).String()
 
 	return ipResp
 }
@@ -414,13 +433,15 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 
 	req, restartHTTP, err := decodeApplyConfigReq(r.Body)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+		aghhttp.ErrorAndLog(ctx, web.logger, r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
 
 	if utf8.RuneCountInString(req.Password) < PasswordMinRunes {
-		aghhttp.Error(
+		aghhttp.ErrorAndLog(
+			ctx,
+			web.logger,
 			r,
 			w,
 			http.StatusUnprocessableEntity,
@@ -433,22 +454,40 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 
 	err = aghnet.CheckPort("udp", netip.AddrPortFrom(req.DNS.IP, req.DNS.Port))
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+		aghhttp.ErrorAndLog(ctx, web.logger, r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
 
 	err = aghnet.CheckPort("tcp", netip.AddrPortFrom(req.DNS.IP, req.DNS.Port))
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+		aghhttp.ErrorAndLog(ctx, web.logger, r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
 
+	web.finalizeInstall(ctx, w, r, req, restartHTTP)
+}
+
+// finalizeInstall completes first-run setup by applying user-provided settings.
+// w, r, and req must not be nil.
+func (web *webAPI) finalizeInstall(
+	ctx context.Context,
+	w http.ResponseWriter,
+	r *http.Request,
+	req *applyConfigReq,
+	restartHTTP bool,
+) {
+	var err error
 	curConfig := &configuration{}
 	copyInstallSettings(curConfig, config)
 
-	globalContext.firstRun = false
+	defer func() {
+		if err != nil {
+			copyInstallSettings(config, curConfig)
+		}
+	}()
+
 	config.DNS.BindHosts = []netip.Addr{req.DNS.IP}
 	config.DNS.Port = req.DNS.Port
 	config.Filtering.Logger = web.baseLogger.With(slogutil.KeyPrefix, "filtering")
@@ -462,9 +501,7 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 	}
 	err = web.auth.addUser(ctx, u, req.Password)
 	if err != nil {
-		globalContext.firstRun = true
-		copyInstallSettings(config, curConfig)
-		aghhttp.Error(r, w, http.StatusUnprocessableEntity, "%s", err)
+		aghhttp.ErrorAndLog(ctx, web.logger, r, w, http.StatusUnprocessableEntity, "%s", err)
 
 		return
 	}
@@ -475,18 +512,22 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 	// functions potentially restart the HTTPS server.
 	err = startMods(ctx, web.baseLogger, web.tlsManager, web.confModifier)
 	if err != nil {
-		globalContext.firstRun = true
-		copyInstallSettings(config, curConfig)
-		aghhttp.Error(r, w, http.StatusInternalServerError, "%s", err)
+		aghhttp.ErrorAndLog(ctx, web.logger, r, w, http.StatusInternalServerError, "%s", err)
 
 		return
 	}
 
 	err = config.write(web.tlsManager, web.auth)
 	if err != nil {
-		globalContext.firstRun = true
-		copyInstallSettings(config, curConfig)
-		aghhttp.Error(r, w, http.StatusInternalServerError, "Couldn't write config: %s", err)
+		aghhttp.ErrorAndLog(
+			ctx,
+			web.logger,
+			r,
+			w,
+			http.StatusInternalServerError,
+			"Couldn't write config: %s",
+			err,
+		)
 
 		return
 	}
@@ -494,11 +535,14 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 	web.conf.firstRun = false
 	web.conf.BindAddr = netip.AddrPortFrom(req.Web.IP, req.Web.Port)
 
-	registerControlHandlers(web)
+	web.registerControlHandlers()
 
-	aghhttp.OK(w)
-	if f, ok := w.(http.Flusher); ok {
-		f.Flush()
+	aghhttp.OK(ctx, web.logger, w)
+
+	rc := http.NewResponseController(w)
+	err = rc.Flush()
+	if err != nil {
+		web.logger.WarnContext(ctx, "flushing response", slogutil.KeyError, err)
 	}
 
 	if !restartHTTP {
@@ -578,8 +622,20 @@ func startMods(
 	return nil
 }
 
+// registerInstallHandlers registers install handlers.
 func (web *webAPI) registerInstallHandlers() {
-	globalContext.mux.HandleFunc("/control/install/get_addresses", preInstall(ensureGET(web.handleInstallGetAddresses)))
-	globalContext.mux.HandleFunc("/control/install/check_config", preInstall(ensurePOST(web.handleInstallCheckConfig)))
-	globalContext.mux.HandleFunc("/control/install/configure", preInstall(ensurePOST(web.handleInstallConfigure)))
+	mux := web.conf.mux
+
+	mux.Handle(
+		"/control/install/get_addresses",
+		web.preInstallHandler(ensure(http.MethodGet, web.handleInstallGetAddresses)),
+	)
+	mux.Handle(
+		"/control/install/check_config",
+		web.preInstallHandler(ensure(http.MethodPost, web.handleInstallCheckConfig)),
+	)
+	mux.Handle(
+		"/control/install/configure",
+		web.preInstallHandler(ensure(http.MethodPost, web.handleInstallConfigure)),
+	)
 }

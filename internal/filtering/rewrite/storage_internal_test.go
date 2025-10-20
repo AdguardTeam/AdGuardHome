@@ -13,6 +13,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// testListID is the common rule-list ID for tests.
+const testListID rules.ListID = 1
+
+// testLogger is a logger used in tests.
+var testLogger = slogutil.NewDiscardLogger()
+
 func TestNewDefaultStorage(t *testing.T) {
 	items := []*Item{{
 		Domain: "example.com",
@@ -20,9 +26,9 @@ func TestNewDefaultStorage(t *testing.T) {
 	}}
 
 	s, err := NewDefaultStorage(&Config{
-		Logger:   slogutil.NewDiscardLogger(),
+		Logger:   testLogger,
 		Rewrites: items,
-		ListID:   -1,
+		ListID:   testListID,
 	})
 	require.NoError(t, err)
 
@@ -33,9 +39,9 @@ func TestDefaultStorage_CRUD(t *testing.T) {
 	var items []*Item
 
 	s, err := NewDefaultStorage(&Config{
-		Logger:   slogutil.NewDiscardLogger(),
+		Logger:   testLogger,
 		Rewrites: items,
-		ListID:   -1,
+		ListID:   testListID,
 	})
 	require.NoError(t, err)
 	require.Len(t, s.List(), 0)
@@ -122,9 +128,9 @@ func TestDefaultStorage_MatchRequest(t *testing.T) {
 	}}
 
 	s, err := NewDefaultStorage(&Config{
-		Logger:   slogutil.NewDiscardLogger(),
+		Logger:   testLogger,
 		Rewrites: items,
-		ListID:   -1,
+		ListID:   testListID,
 	})
 	require.NoError(t, err)
 
@@ -298,9 +304,9 @@ func TestDefaultStorage_MatchRequest_Levels(t *testing.T) {
 	}}
 
 	s, err := NewDefaultStorage(&Config{
-		Logger:   slogutil.NewDiscardLogger(),
+		Logger:   testLogger,
 		Rewrites: items,
-		ListID:   -1,
+		ListID:   testListID,
 	})
 	require.NoError(t, err)
 
@@ -370,9 +376,9 @@ func TestDefaultStorage_MatchRequest_ExceptionCNAME(t *testing.T) {
 	}}
 
 	s, err := NewDefaultStorage(&Config{
-		Logger:   slogutil.NewDiscardLogger(),
+		Logger:   testLogger,
 		Rewrites: items,
-		ListID:   -1,
+		ListID:   testListID,
 	})
 	require.NoError(t, err)
 
@@ -438,9 +444,9 @@ func TestDefaultStorage_MatchRequest_ExceptionIP(t *testing.T) {
 	}}
 
 	s, err := NewDefaultStorage(&Config{
-		Logger:   slogutil.NewDiscardLogger(),
+		Logger:   testLogger,
 		Rewrites: items,
-		ListID:   -1,
+		ListID:   testListID,
 	})
 	require.NoError(t, err)
 

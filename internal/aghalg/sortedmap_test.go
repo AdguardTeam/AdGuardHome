@@ -1,7 +1,6 @@
 package aghalg_test
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
@@ -9,7 +8,7 @@ import (
 )
 
 func TestNewSortedMap(t *testing.T) {
-	var m aghalg.SortedMap[string, int]
+	var m *aghalg.SortedMap[string, int]
 
 	letters := []string{}
 	for i := range 10 {
@@ -18,7 +17,7 @@ func TestNewSortedMap(t *testing.T) {
 	}
 
 	t.Run("create_and_fill", func(t *testing.T) {
-		m = aghalg.NewSortedMap[string, int](strings.Compare)
+		m = aghalg.NewSortedMap[string, int]()
 
 		nums := []int{}
 		for i, r := range letters {

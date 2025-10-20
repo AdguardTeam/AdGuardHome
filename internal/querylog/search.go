@@ -217,13 +217,11 @@ func (l *queryLog) readEntries(
 ) (entries []*logEntry, oldestNano int64, total int) {
 	for total < params.maxFileScanEntries || params.maxFileScanEntries <= 0 {
 		ent, ts, rErr := l.readNextEntry(ctx, r, params, cache)
-		if rErr != nil {
-			if rErr == io.EOF {
-				oldestNano = 0
+		if rErr == io.EOF {
+			oldestNano = 0
 
-				break
-			}
-
+			break
+		} else if rErr != nil {
 			l.logger.ErrorContext(ctx, "reading next entry", slogutil.KeyError, rErr)
 		}
 

@@ -1,5 +1,6 @@
 import React, { Component, Fragment } from 'react';
 import { Trans, withTranslation } from 'react-i18next';
+import cn from 'classnames';
 
 import Table from './Table';
 
@@ -18,12 +19,15 @@ interface RewritesProps {
     addRewrite: (...args: unknown[]) => unknown;
     deleteRewrite: (...args: unknown[]) => unknown;
     updateRewrite: (...args: unknown[]) => unknown;
+    updateRewriteSettings: (...args: unknown[]) => unknown;
+    getRewriteSettings: () => (dispatch: any) => void;
     rewrites: RewritesData;
 }
 
 class Rewrites extends Component<RewritesProps> {
     componentDidMount() {
         this.props.getRewritesList();
+        this.props.getRewriteSettings();
     }
 
     handleDelete = (values: any) => {
@@ -46,6 +50,21 @@ class Rewrites extends Component<RewritesProps> {
         }
     };
 
+    toggleRewrite = (currentRewrite: any) => {
+        const updatedRewrite = { ...currentRewrite, enabled: !currentRewrite.enabled };
+
+        this.props.updateRewrite({
+            target: currentRewrite,
+            update: updatedRewrite,
+        });
+    };
+
+    toggleRewriteSettings = () => {
+        const { enabled } = this.props.rewrites.settings;
+
+        this.props.updateRewriteSettings({ enabled: !enabled });
+    };
+
     render() {
         const {
             t,
@@ -64,11 +83,18 @@ class Rewrites extends Component<RewritesProps> {
             processingUpdate,
             modalType,
             currentRewrite,
+            settings
         } = rewrites;
+
+        const isEnabledSettings = settings.enabled;
 
         return (
             <Fragment>
                 <PageTitle title={t('dns_rewrites')} subtitle={t('rewrite_desc')} />
+
+                <div className={cn(isEnabledSettings ? 'text-success' : 'text-warning', 'mb-2')}>
+                    {isEnabledSettings ? this.props.t('rewrites_enabled_table_header') : this.props.t('rewrites_disabled_table_header')}
+                </div>
 
                 <Card id="rewrites" bodyType="card-body box-body--settings">
                     <Fragment>
@@ -80,15 +106,27 @@ class Rewrites extends Component<RewritesProps> {
                             processingUpdate={processingUpdate}
                             handleDelete={this.handleDelete}
                             toggleRewritesModal={toggleRewritesModal}
+                            toggleRewrite={this.toggleRewrite}
+                            settings={settings}
                         />
 
-                        <button
-                            type="button"
-                            className="btn btn-success btn-standard mt-3"
-                            onClick={() => toggleRewritesModal({ type: MODAL_TYPE.ADD_REWRITE })}
-                            disabled={processingAdd}>
-                            <Trans>rewrite_add</Trans>
-                        </button>
+                        <div className="card-actions">
+                            <button
+                                type="button"
+                                className="btn btn-success btn-standard  mr-2"
+                                onClick={() => toggleRewritesModal({ type: MODAL_TYPE.ADD_REWRITE })}
+                                disabled={processingAdd}>
+                                <Trans>rewrite_add</Trans>
+                            </button>
+
+                            <button
+                                type="button"
+                                className="btn btn-primary btn-standard"
+                                onClick={() => this.toggleRewriteSettings()}
+                                disabled={processingUpdate}>
+                                <Trans>{isEnabledSettings ? 'disable_rewrites' : 'enable_rewrites'}</Trans>
+                            </button>
+                        </div>
 
                         <Modal
                             isModalOpen={isModalOpen}

@@ -5,6 +5,7 @@ package aghnet
 import (
 	"context"
 	"io"
+	"log/slog"
 	"syscall"
 	"time"
 
@@ -14,7 +15,7 @@ import (
 	"golang.org/x/sys/windows"
 )
 
-func canBindPrivilegedPorts() (can bool, err error) {
+func canBindPrivilegedPorts(_ context.Context, _ *slog.Logger) (can bool, err error) {
 	return true, nil
 }
 
@@ -26,7 +27,12 @@ func ifaceHasStaticIP(
 	return false, aghos.Unsupported("checking static ip")
 }
 
-func ifaceSetStaticIP(_ context.Context, _ executil.CommandConstructor, _ string) (err error) {
+func ifaceSetStaticIP(
+	_ context.Context,
+	_ *slog.Logger,
+	_ executil.CommandConstructor,
+	_ string,
+) (err error) {
 	return aghos.Unsupported("setting static ip")
 }
 

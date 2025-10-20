@@ -7,6 +7,7 @@ import (
 
 	"github.com/AdguardTeam/urlfilter"
 	"github.com/AdguardTeam/urlfilter/filterlist"
+	"github.com/AdguardTeam/urlfilter/rules"
 )
 
 // TextEngine is a single DNS filter based on a list of rules in text form.
@@ -35,7 +36,7 @@ type TextEngineConfig struct {
 	Rules []string
 
 	// ID is the ID to use inside a URL-filter engine.
-	ID URLFilterID
+	ID rules.ListID
 }
 
 // NewTextEngine returns a new rule-list filtering engine that uses rules
