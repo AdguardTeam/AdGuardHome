@@ -366,6 +366,7 @@ var _ httputil.Middleware = (*authMiddlewareDefault)(nil)
 func (mw *authMiddlewareDefault) Wrap(h http.Handler) (wrapped http.Handler) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
+		path := r.URL.Path
 
 		if !mw.needsAuthentication(ctx) {
 			h.ServeHTTP(w, r)
@@ -373,38 +374,74 @@ func (mw *authMiddlewareDefault) Wrap(h http.Handler) (wrapped http.Handler) {
 			return
 		}
 
-		path := r.URL.Path
-		u, err := mw.userFromRequest(ctx, r)
-		if err != nil {
-			mw.logger.ErrorContext(ctx, "retrieving user from request", slogutil.KeyError, err)
-		}
-
-		if u != nil {
-			if path == "/login.html" {
-				http.Redirect(w, r, "/", http.StatusFound)
-
-				return
-			}
-
-			h.ServeHTTP(w, r.WithContext(withWebUser(ctx, u)))
-
+		user := mw.tryGetUser(ctx, r)
+		if mw.handleAuthenticatedUser(ctx, w, r, h, path, user) {
 			return
 		}
 
-		if isPublicResource(path) {
-			h.ServeHTTP(w, r)
-
-			return
-		}
-
-		if path == "/" || path == "/index.html" {
-			http.Redirect(w, r, "login.html", http.StatusFound)
-
+		if mw.handlePublicAccess(w, r, h, path) {
 			return
 		}
 
 		w.WriteHeader(http.StatusUnauthorized)
 	})
+}
+
+// tryGetUser extracts user from request, logging errors but not failing.
+func (mw *authMiddlewareDefault) tryGetUser(ctx context.Context, r *http.Request) *aghuser.User {
+	u, err := mw.userFromRequest(ctx, r)
+	if err != nil {
+		mw.logger.ErrorContext(ctx, "retrieving user from request", slogutil.KeyError, err)
+	}
+
+	return u
+}
+
+// handleAuthenticatedUser processes request if user is already authenticated.
+// Returns true if request was handled.
+func (mw *authMiddlewareDefault) handleAuthenticatedUser(
+	ctx context.Context,
+	w http.ResponseWriter,
+	r *http.Request,
+	h http.Handler,
+	path string,
+	u *aghuser.User,
+) bool {
+	if u == nil {
+		return false
+	}
+
+	if path == "/login.html" {
+		http.Redirect(w, r, "/", http.StatusFound)
+		return true
+	}
+
+	h.ServeHTTP(w, r.WithContext(withWebUser(ctx, u)))
+
+	return true
+}
+
+// handlePublicAccess handles request if user is trying to access public or root
+// pages.
+func (mw *authMiddlewareDefault) handlePublicAccess(
+	w http.ResponseWriter,
+	r *http.Request,
+	h http.Handler,
+	path string,
+) bool {
+	if isPublicResource(path) {
+		h.ServeHTTP(w, r)
+
+		return true
+	}
+
+	if path == "/" || path == "/index.html" {
+		http.Redirect(w, r, "login.html", http.StatusFound)
+
+		return true
+	}
+
+	return false
 }
 
 // needsAuthentication returns true if there are stored web users and requests

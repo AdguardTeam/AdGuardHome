@@ -678,98 +678,13 @@ func run(
 	done chan struct{},
 	sigHdlr *signalHandler,
 ) {
-	// Configure working dir.
-	err := initWorkingDir(opts)
-	fatalOnError(err)
-
-	// Configure config filename.
-	initConfigFilename(opts)
-
-	ls := getLogSettings(opts)
-
-	// Configure log level and output.
-	err = configureLogger(ls)
-	fatalOnError(err)
-
-	// Print the first message after logger is configured.
-	log.Info("%s", version.Full())
-	log.Debug("current working directory is %s", globalContext.workDir)
-	if opts.runningAsService {
-		log.Info("AdGuard Home is running as a service")
-	}
-
-	aghtls.Init(ctx, slogLogger.With(slogutil.KeyPrefix, "aghtls"))
+	var err error
+	initEnvironment(ctx, opts, slogLogger)
 
 	isFirstRun := detectFirstRun()
 
-	err = setupContext(ctx, slogLogger, opts, isFirstRun)
-	fatalOnError(err)
-
-	err = configureOS(config)
-	fatalOnError(err)
-
-	// Clients package uses filtering package's static data
-	// (filtering.BlockedSvcKnown()), so we have to initialize filtering static
-	// data first, but also to avoid relying on automatic Go init() function.
-	filtering.InitModule(ctx, slogLogger)
-
-	confModifier := newDefaultConfigModifier(
-		config,
-		slogLogger.With(slogutil.KeyPrefix, "config_modifier"),
-	)
-
-	err = initContextClients(ctx, slogLogger, sigHdlr, confModifier)
-	fatalOnError(err)
-
-	tlsMgrLogger := slogLogger.With(slogutil.KeyPrefix, "tls_manager")
-
-	tlsMgr, err := newTLSManager(ctx, &tlsManagerConfig{
-		logger:        tlsMgrLogger,
-		confModifier:  confModifier,
-		tlsSettings:   config.TLS,
-		servePlainDNS: config.DNS.ServePlainDNS,
-	})
-	if err != nil {
-		tlsMgrLogger.ErrorContext(ctx, "initializing", slogutil.KeyError, err)
-		confModifier.Apply(ctx)
-	}
-
-	confModifier.setTLSManager(tlsMgr)
-
-	err = setupDNSFilteringConf(ctx, slogLogger, config.Filtering, tlsMgr, confModifier)
-	fatalOnError(err)
-
-	err = setupOpts(opts)
-	fatalOnError(err)
-
-	execPath, err := os.Executable()
-	fatalOnError(errors.Annotate(err, "getting executable path: %w"))
-
-	confPath := configFilePath()
-
-	updLogger := slogLogger.With(slogutil.KeyPrefix, "updater")
-	upd, isCustomURL := newUpdater(
-		ctx,
-		updLogger,
-		config,
-		globalContext.workDir,
-		confPath,
-		execPath,
-	)
-
-	// TODO(e.burkov): This could be made earlier, probably as the option's
-	// effect.
-	cmdlineUpdate(ctx, updLogger, opts, upd, tlsMgr, isFirstRun)
-
-	if !isFirstRun {
-		// Save the updated config.
-		err = config.write(nil, nil)
-		fatalOnError(err)
-
-		if config.HTTPConfig.Pprof.Enabled {
-			startPprof(slogLogger, config.HTTPConfig.Pprof.Port)
-		}
-	}
+	confModifier, tlsMgr := initFiltering(ctx, slogLogger, opts, isFirstRun, sigHdlr)
+	confPath, upd, isCustomURL := initUpdate(ctx, slogLogger, opts, tlsMgr, isFirstRun)
 
 	dataDir := globalContext.getDataDir()
 	err = os.MkdirAll(dataDir, aghos.DefaultPermDir)
@@ -803,8 +718,39 @@ func run(
 	statsDir, querylogDir, err := checkStatsAndQuerylogDirs(&globalContext, config)
 	fatalOnError(err)
 
+	runDNSServer(ctx, isFirstRun, slogLogger, tlsMgr, confModifier, statsDir, querylogDir)
+
+	if !opts.noPermCheck {
+		checkPermissions(
+			ctx,
+			slogLogger,
+			globalContext.workDir,
+			confPath,
+			dataDir,
+			statsDir,
+			querylogDir,
+		)
+	}
+
+	web.start(ctx)
+
+	// Wait for other goroutines to complete their job.
+	<-done
+}
+
+// runDNSServer initializes and starts DNS and DHCP servers if this is not the
+// first run.
+func runDNSServer(
+	ctx context.Context,
+	isFirstRun bool,
+	slogLogger *slog.Logger,
+	tlsMgr *tlsManager,
+	confModifier *defaultConfigModifier,
+	statsDir string,
+	querylogDir string,
+) {
 	if !isFirstRun {
-		err = initDNS(ctx, slogLogger, tlsMgr, confModifier, statsDir, querylogDir)
+		err := initDNS(ctx, slogLogger, tlsMgr, confModifier, statsDir, querylogDir)
 		fatalOnError(err)
 
 		tlsMgr.start(ctx)
@@ -824,23 +770,124 @@ func run(
 			}
 		}
 	}
+}
 
-	if !opts.noPermCheck {
-		checkPermissions(
-			ctx,
-			slogLogger,
-			globalContext.workDir,
-			confPath,
-			dataDir,
-			statsDir,
-			querylogDir,
-		)
+// initFiltering configures the core filtering and TLS subsystems.  Returns a
+// configuration modifier and the initialized TLS manager.  slogLogger
+func initFiltering(
+	ctx context.Context,
+	slogLogger *slog.Logger,
+	opts options,
+	isFirstRun bool,
+	sigHdlr *signalHandler,
+) (confModifier *defaultConfigModifier, tlsMgr *tlsManager) {
+	err := setupContext(ctx, slogLogger, opts, isFirstRun)
+	fatalOnError(err)
+
+	err = configureOS(config)
+	fatalOnError(err)
+
+	// Clients package uses filtering package's static data
+	// (filtering.BlockedSvcKnown()), so we have to initialize filtering static
+	// data first, but also to avoid relying on automatic Go init() function.
+	filtering.InitModule(ctx, slogLogger)
+
+	confModifier = newDefaultConfigModifier(
+		config,
+		slogLogger.With(slogutil.KeyPrefix, "config_modifier"),
+	)
+
+	err = initContextClients(ctx, slogLogger, sigHdlr, confModifier)
+	fatalOnError(err)
+
+	tlsMgrLogger := slogLogger.With(slogutil.KeyPrefix, "tls_manager")
+
+	tlsMgr, err = newTLSManager(ctx, &tlsManagerConfig{
+		logger:        tlsMgrLogger,
+		confModifier:  confModifier,
+		tlsSettings:   config.TLS,
+		servePlainDNS: config.DNS.ServePlainDNS,
+	})
+	if err != nil {
+		tlsMgrLogger.ErrorContext(ctx, "initializing", slogutil.KeyError, err)
+		confModifier.Apply(ctx)
 	}
 
-	web.start(ctx)
+	confModifier.setTLSManager(tlsMgr)
 
-	// Wait for other goroutines to complete their job.
-	<-done
+	err = setupDNSFilteringConf(ctx, slogLogger, config.Filtering, tlsMgr, confModifier)
+	fatalOnError(err)
+
+	err = setupOpts(opts)
+	fatalOnError(err)
+	return confModifier, tlsMgr
+}
+
+// initUpdate configures and runs update of this application.  slogLogger, opts
+// and tlsMgr must not be nil.
+func initUpdate(
+	ctx context.Context,
+	slogLogger *slog.Logger,
+	opts options,
+	tlsMgr *tlsManager,
+	isFirstRun bool,
+) (confPath string, upd *updater.Updater, isCustomURL bool) {
+	execPath, err := os.Executable()
+	fatalOnError(errors.Annotate(err, "getting executable path: %w"))
+
+	confPath = configFilePath()
+
+	updLogger := slogLogger.With(slogutil.KeyPrefix, "updater")
+	upd, isCustomURL = newUpdater(
+		ctx,
+		updLogger,
+		config,
+		globalContext.workDir,
+		confPath,
+		execPath,
+	)
+
+	// TODO(e.burkov): This could be made earlier, probably as the option's
+	// effect.
+	cmdlineUpdate(ctx, updLogger, opts, upd, tlsMgr, isFirstRun)
+
+	if !isFirstRun {
+		// Save the updated config.
+		err = config.write(nil, nil)
+		fatalOnError(err)
+
+		if config.HTTPConfig.Pprof.Enabled {
+			startPprof(slogLogger, config.HTTPConfig.Pprof.Port)
+		}
+	}
+
+	return confPath, upd, isCustomURL
+}
+
+// initEnvironment inits working environment.  opts and slogLogger must not be
+// nil.
+func initEnvironment(ctx context.Context, opts options, slogLogger *slog.Logger) {
+	// Configure working dir.
+	err := initWorkingDir(opts)
+	fatalOnError(err)
+
+	// Configure config filename.
+	initConfigFilename(opts)
+
+	ls := getLogSettings(opts)
+
+	// Configure log level and output.
+	err = configureLogger(ls)
+	fatalOnError(err)
+
+	// Print the first message after logger is configured.
+	log.Info("%s", version.Full())
+	log.Debug("current working directory is %s", globalContext.workDir)
+	if opts.runningAsService {
+		log.Info("AdGuard Home is running as a service")
+	}
+
+	aghtls.Init(ctx, slogLogger.With(slogutil.KeyPrefix, "aghtls"))
 }
 
 // newUpdater creates a new AdGuard Home updater.  l and conf must not be nil.

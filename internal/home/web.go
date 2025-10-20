@@ -308,66 +308,75 @@ func (web *webAPI) tlsServerLoop(ctx context.Context) {
 	defer slogutil.RecoverAndExit(ctx, web.logger, osutil.ExitCodeFailure)
 
 	for {
-		web.httpsServer.cond.L.Lock()
-		if web.httpsServer.inShutdown {
-			web.httpsServer.cond.L.Unlock()
-			break
-		}
-
-		// this mechanism doesn't let us through until all conditions are met
-		for !web.httpsServer.enabled { // sleep until necessary data is supplied
-			web.httpsServer.cond.Wait()
-			if web.httpsServer.inShutdown {
-				web.httpsServer.cond.L.Unlock()
-				return
-			}
-		}
-
-		web.httpsServer.cond.L.Unlock()
-
-		var portHTTPS uint16
-		func() {
-			config.RLock()
-			defer config.RUnlock()
-
-			portHTTPS = config.TLS.PortHTTPS
-		}()
-
-		addr := netip.AddrPortFrom(web.conf.BindAddr.Addr(), portHTTPS).String()
-		logger := web.baseLogger.With(loggerKeyServer, "https")
-
-		// TODO(a.garipov):  Remove other logs like this in other code.
-		logMw := httputil.NewLogMiddleware(logger, slog.LevelDebug)
-		hdlr := logMw.Wrap(withMiddlewares(web.conf.mux, limitRequestBody))
-
-		web.httpsServer.server = &http.Server{
-			Addr:    addr,
-			Handler: web.auth.middleware().Wrap(hdlr),
-			TLSConfig: &tls.Config{
-				Certificates: []tls.Certificate{web.httpsServer.cert},
-				RootCAs:      web.tlsManager.rootCerts,
-				CipherSuites: web.tlsManager.customCipherIDs,
-				MinVersion:   tls.VersionTLS12,
-			},
-			ReadTimeout:       web.conf.ReadTimeout,
-			ReadHeaderTimeout: web.conf.ReadHeaderTimeout,
-			WriteTimeout:      web.conf.WriteTimeout,
-			ErrorLog:          slog.NewLogLogger(logger.Handler(), slog.LevelError),
-		}
-
-		printHTTPAddresses(urlutil.SchemeHTTPS, web.tlsManager)
-
-		if web.conf.serveHTTP3 {
-			go web.mustStartHTTP3(ctx, addr)
-		}
-
-		logger.InfoContext(ctx, "starting https server")
-		err := web.httpsServer.server.ListenAndServeTLS("", "")
-		if !errors.Is(err, http.ErrServerClosed) {
-			cleanupAlways()
-			panic(fmt.Errorf("https: %w", err))
+		shouldReturn := web.serveTLS(ctx)
+		if shouldReturn {
+			return
 		}
 	}
+}
+
+// TODO(f.setrakov): !! Imp maintainability.
+func (web *webAPI) serveTLS(ctx context.Context) (next bool) {
+	web.httpsServer.cond.L.Lock()
+	if web.httpsServer.inShutdown {
+		web.httpsServer.cond.L.Unlock()
+		return false
+	}
+
+	// this mechanism doesn't let us through until all conditions are met
+	for !web.httpsServer.enabled { // sleep until necessary data is supplied
+		web.httpsServer.cond.Wait()
+		if web.httpsServer.inShutdown {
+			web.httpsServer.cond.L.Unlock()
+			return false
+		}
+	}
+
+	web.httpsServer.cond.L.Unlock()
+
+	var portHTTPS uint16
+	func() {
+		config.RLock()
+		defer config.RUnlock()
+
+		portHTTPS = config.TLS.PortHTTPS
+	}()
+
+	addr := netip.AddrPortFrom(web.conf.BindAddr.Addr(), portHTTPS).String()
+	logger := web.baseLogger.With(loggerKeyServer, "https")
+
+	// TODO(a.garipov):  Remove other logs like this in other code.
+	logMw := httputil.NewLogMiddleware(logger, slog.LevelDebug)
+	hdlr := logMw.Wrap(withMiddlewares(web.conf.mux, limitRequestBody))
+
+	web.httpsServer.server = &http.Server{
+		Addr:    addr,
+		Handler: web.auth.middleware().Wrap(hdlr),
+		TLSConfig: &tls.Config{
+			Certificates: []tls.Certificate{web.httpsServer.cert},
+			RootCAs:      web.tlsManager.rootCerts,
+			CipherSuites: web.tlsManager.customCipherIDs,
+			MinVersion:   tls.VersionTLS12,
+		},
+		ReadTimeout:       web.conf.ReadTimeout,
+		ReadHeaderTimeout: web.conf.ReadHeaderTimeout,
+		WriteTimeout:      web.conf.WriteTimeout,
+		ErrorLog:          slog.NewLogLogger(logger.Handler(), slog.LevelError),
+	}
+
+	printHTTPAddresses(urlutil.SchemeHTTPS, web.tlsManager)
+
+	if web.conf.serveHTTP3 {
+		go web.mustStartHTTP3(ctx, addr)
+	}
+
+	logger.InfoContext(ctx, "starting https server")
+	err := web.httpsServer.server.ListenAndServeTLS("", "")
+	if !errors.Is(err, http.ErrServerClosed) {
+		cleanupAlways()
+		panic(fmt.Errorf("https: %w", err))
+	}
+	return true
 }
 
 func (web *webAPI) mustStartHTTP3(ctx context.Context, address string) {
