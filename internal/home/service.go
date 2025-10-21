@@ -382,10 +382,13 @@ func handleServiceInstallCommand(ctx context.Context, l *slog.Logger, s service.
 	}
 }
 
-// handleServiceUninstallCommand handles service "uninstall" command.
+// handleServiceUninstallCommand handles service "uninstall" command.  l and s
+// must not be nil.
 func handleServiceUninstallCommand(ctx context.Context, l *slog.Logger, s service.Service) {
 	if aghos.IsOpenWrt() {
 		handleOpenWrtUninstall(ctx, l)
+
+		os.Exit(osutil.ExitCodeFailure)
 	}
 
 	if err := svcAction(ctx, l, s, "stop"); err != nil {
@@ -394,6 +397,7 @@ func handleServiceUninstallCommand(ctx context.Context, l *slog.Logger, s servic
 
 	if err := svcAction(ctx, l, s, "uninstall"); err != nil {
 		l.ErrorContext(ctx, "executing action uninstall", slogutil.KeyError, err)
+
 		os.Exit(osutil.ExitCodeFailure)
 	}
 
@@ -402,18 +406,19 @@ func handleServiceUninstallCommand(ctx context.Context, l *slog.Logger, s servic
 	}
 }
 
-// handleOpenWrtUninstall handles service "uninstall" command for OpenWrt.
+// handleOpenWrtUninstall handles service "uninstall" command for OpenWrt.  l
+// must not be nil.
 func handleOpenWrtUninstall(ctx context.Context, l *slog.Logger) {
-	// On OpenWrt it is important to run disable command first
-	// as it will remove the symlink
+	// On OpenWrt it is important to run disable command first as it will remove
+	// the symlink.
 	_, err := runInitdCommand(ctx, "disable")
 	if err != nil {
 		l.ErrorContext(ctx, "running init disable", slogutil.KeyError, err)
-		os.Exit(osutil.ExitCodeFailure)
 	}
 }
 
-// handleOpenWrtUninstall handles service "uninstall" command for darwin.
+// handleOpenWrtUninstall handles service "uninstall" command for darwin.  l
+// must not be nil.
 func handleDarwinUninstall(ctx context.Context, l *slog.Logger) {
 	// Remove log files on cleanup and log errors.
 	err := os.Remove(launchdStdoutPath)

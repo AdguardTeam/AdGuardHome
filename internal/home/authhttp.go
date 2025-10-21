@@ -374,8 +374,7 @@ func (mw *authMiddlewareDefault) Wrap(h http.Handler) (wrapped http.Handler) {
 			return
 		}
 
-		user := mw.tryGetUser(ctx, r)
-		if mw.handleAuthenticatedUser(ctx, w, r, h, path, user) {
+		if mw.handleAuthenticatedUser(ctx, w, r, h, path) {
 			return
 		}
 
@@ -387,32 +386,27 @@ func (mw *authMiddlewareDefault) Wrap(h http.Handler) (wrapped http.Handler) {
 	})
 }
 
-// tryGetUser extracts user from request, logging errors but not failing.
-func (mw *authMiddlewareDefault) tryGetUser(ctx context.Context, r *http.Request) *aghuser.User {
-	u, err := mw.userFromRequest(ctx, r)
-	if err != nil {
-		mw.logger.ErrorContext(ctx, "retrieving user from request", slogutil.KeyError, err)
-	}
-
-	return u
-}
-
-// handleAuthenticatedUser processes request if user is already authenticated.
-// Returns true if request was handled.
+// handleAuthenticatedUser tries to get user from request and processes request
+// if user was successfully authenticated.  Returns true if request was handled.
 func (mw *authMiddlewareDefault) handleAuthenticatedUser(
 	ctx context.Context,
 	w http.ResponseWriter,
 	r *http.Request,
 	h http.Handler,
 	path string,
-	u *aghuser.User,
-) bool {
+) (ok bool) {
+	u, err := mw.userFromRequest(ctx, r)
+	if err != nil {
+		mw.logger.ErrorContext(ctx, "retrieving user from request", slogutil.KeyError, err)
+	}
+
 	if u == nil {
 		return false
 	}
 
 	if path == "/login.html" {
 		http.Redirect(w, r, "/", http.StatusFound)
+
 		return true
 	}
 
@@ -428,7 +422,7 @@ func (mw *authMiddlewareDefault) handlePublicAccess(
 	r *http.Request,
 	h http.Handler,
 	path string,
-) bool {
+) (ok bool) {
 	if isPublicResource(path) {
 		h.ServeHTTP(w, r)
 

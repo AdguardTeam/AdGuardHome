@@ -749,25 +749,27 @@ func runDNSServer(
 	statsDir string,
 	querylogDir string,
 ) {
-	if !isFirstRun {
-		err := initDNS(ctx, slogLogger, tlsMgr, confModifier, statsDir, querylogDir)
-		fatalOnError(err)
+	if isFirstRun {
+		return
+	}
 
-		tlsMgr.start(ctx)
+	err := initDNS(ctx, slogLogger, tlsMgr, confModifier, statsDir, querylogDir)
+	fatalOnError(err)
 
-		go func() {
-			startErr := startDNSServer()
-			if startErr != nil {
-				closeDNSServer(ctx)
-				fatalOnError(startErr)
-			}
-		}()
+	tlsMgr.start(ctx)
 
-		if globalContext.dhcpServer != nil {
-			err = globalContext.dhcpServer.Start(ctx)
-			if err != nil {
-				log.Error("starting dhcp server: %s", err)
-			}
+	go func() {
+		startErr := startDNSServer()
+		if startErr != nil {
+			closeDNSServer(ctx)
+			fatalOnError(startErr)
+		}
+	}()
+
+	if globalContext.dhcpServer != nil {
+		err = globalContext.dhcpServer.Start(ctx)
+		if err != nil {
+			log.Error("starting dhcp server: %s", err)
 		}
 	}
 }

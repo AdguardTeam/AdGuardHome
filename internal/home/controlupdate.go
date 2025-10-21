@@ -236,7 +236,9 @@ func finishUpdate(
 	cleanupAlways()
 
 	if runtime.GOOS == "windows" {
-		finishWindowsUpdate(ctx, l, cmdCons, execPath, runningAsService)
+		finalizeWindowsUpdate(ctx, l, cmdCons, execPath, runningAsService)
+
+		os.Exit(osutil.ExitCodeSuccess)
 	}
 
 	var err error
@@ -247,48 +249,38 @@ func finishUpdate(
 	}
 }
 
-// finishWindowsUpdate completes an update procedure for windows.  l and cmdCons
+// finalizeWindowsUpdate completes an update procedure for windows.  l and cmdCons
 // must not be nil.
-func finishWindowsUpdate(ctx context.Context,
+func finalizeWindowsUpdate(ctx context.Context,
 	l *slog.Logger,
 	cmdCons executil.CommandConstructor,
 	execPath string,
 	runningAsService bool,
 ) {
-	var err error
+	commandConf := &executil.CommandConfig{
+		Path:   execPath,
+		Args:   os.Args[1:],
+		Stdin:  os.Stdin,
+		Stdout: os.Stdout,
+		Stderr: os.Stderr,
+	}
+
 	if runningAsService {
 		// NOTE: We can't restart the service via "kardianos/service"
 		// package, because it kills the process first we can't start a new
 		// instance, because Windows doesn't allow it.
 		//
 		// TODO(a.garipov): Recheck the claim above.
-		var cmd executil.Command
-		cmd, err = cmdCons.New(ctx, &executil.CommandConfig{
+		commandConf = &executil.CommandConfig{
 			Path: "cmd",
 			Args: []string{"/c", "net stop AdGuardHome & net start AdGuardHome"},
-		})
-		if err != nil {
-			panic(fmt.Errorf("constructing cmd: %w", err))
 		}
-
-		err = cmd.Start(ctx)
-		if err != nil {
-			panic(fmt.Errorf("restarting service: %w", err))
-		}
-
-		os.Exit(osutil.ExitCodeSuccess)
 	}
 
 	l.InfoContext(ctx, "restarting", "exec_path", execPath, "args", os.Args[1:])
 
 	var cmd executil.Command
-	cmd, err = cmdCons.New(ctx, &executil.CommandConfig{
-		Path:   execPath,
-		Args:   os.Args[1:],
-		Stdin:  os.Stdin,
-		Stdout: os.Stdout,
-		Stderr: os.Stderr,
-	})
+	cmd, err := cmdCons.New(ctx, commandConf)
 	if err != nil {
 		panic(fmt.Errorf("constructing cmd: %w", err))
 	}
@@ -297,6 +289,4 @@ func finishWindowsUpdate(ctx context.Context,
 	if err != nil {
 		panic(fmt.Errorf("restarting: %w", err))
 	}
-
-	os.Exit(osutil.ExitCodeSuccess)
 }

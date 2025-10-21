@@ -389,15 +389,10 @@ func parseCmdOpts(cmdName string, args []string) (o options, eff effect, err err
 	next, stop := iter.Pull2(slices.All(args))
 	defer stop()
 
-	for {
-		_, arg, ok := next()
-		if !ok {
-			break
-		}
-
+	for i, arg, ok := next(); ok; i, arg, ok = next() {
 		o, eff, err = parseArg(cmdName, next, o, eff, arg)
 		if err != nil {
-			return o, eff, err
+			return o, eff, fmt.Errorf("parsing arg at index %d: %w", i, err)
 		}
 	}
 
@@ -438,6 +433,7 @@ func applyOptNoValue(
 	if err != nil {
 		return o, eff, fmt.Errorf("applying option %s: %w", arg, err)
 	}
+
 	return newOpts, newEff, nil
 }
 
@@ -449,7 +445,7 @@ func applyOptWithValue(
 	o options,
 	eff effect,
 	arg string,
-) (options, effect, error) {
+) (newOpt options, newEff effect, err error) {
 	_, val, ok := next()
 	if !ok {
 		return o, eff, fmt.Errorf("got %s without argument", arg)
