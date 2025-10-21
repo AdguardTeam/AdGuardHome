@@ -159,7 +159,7 @@ func (l *queryLog) finalizeSearchResults(
 		if len(entries) > params.offset {
 			entries = entries[params.offset:]
 		} else {
-			return []*logEntry{}, time.Time{}
+			return nil, time.Time{}
 		}
 	}
 

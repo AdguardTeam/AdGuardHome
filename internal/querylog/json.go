@@ -52,7 +52,7 @@ func (l *queryLog) entryToJSON(
 	entry *logEntry,
 	anonFunc aghnet.IPMutFunc,
 ) (jsonEntry jobject) {
-	question := makeQuestionJSON(ctx, l.logger, entry)
+	question := questionPayload(ctx, l.logger, entry)
 	entIP := slices.Clone(entry.IP)
 	anonFunc(entIP)
 
@@ -97,9 +97,9 @@ func (l *queryLog) entryToJSON(
 	return jsonEntry
 }
 
-// makeQuestionJSON builds the "question" property for a logEntry.  l and entry
-// must not be nil.
-func makeQuestionJSON(ctx context.Context, l *slog.Logger, entry *logEntry) (q jobject) {
+// questionPayload builds the "question" field for a logEntry.  l and entry must
+// not be nil.
+func questionPayload(ctx context.Context, l *slog.Logger, entry *logEntry) (q jobject) {
 	hostname := entry.QHost
 	q = jobject{
 		"type":  entry.QType,

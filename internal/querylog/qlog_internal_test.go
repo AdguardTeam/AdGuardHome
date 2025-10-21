@@ -28,32 +28,28 @@ func searchCriTerm(val string, isStrict bool) (c searchCriterion) {
 // TestQueryLog tests adding and loading (with filtering) entries from disk and
 // memory.
 func TestQueryLog(t *testing.T) {
-	var (
-		ans1 = net.IPv4(192, 0, 2, 1)
-		cli1 = net.IPv4(203, 0, 113, 1)
+	hosts := []string{
+		"example.org",
+		"example.org",
+		"test.example.org",
+		"example.com",
+		"",
+	}
 
-		ans2 = net.IPv4(192, 0, 2, 2)
-		cli2 = net.IPv4(203, 0, 113, 2)
+	entries := make([]*logEntry, len(hosts))
+	for i, h := range hosts {
+		n := byte(i + 1)
+		entries[i] = &logEntry{
+			QHost:  h,
+			Answer: net.IPv4(192, 0, 2, n),
+			IP:     net.IPv4(203, 0, 113, n),
+		}
+	}
 
-		ans3 = net.IPv4(192, 0, 2, 3)
-		cli3 = net.IPv4(203, 0, 113, 3)
+	entry1, entry2, entry3, entry4 := entries[0], entries[1], entries[2], entries[3]
 
-		ans4 = net.IPv4(192, 0, 2, 4)
-		cli4 = net.IPv4(203, 0, 113, 4)
-
-		ans5 = net.IPv4(192, 0, 2, 5)
-		cli5 = net.IPv4(203, 0, 113, 5)
-	)
-
-	var (
-		entry1 = &logEntry{QHost: "example.org", Answer: ans1, IP: cli1}
-		entry2 = &logEntry{QHost: "example.org", Answer: ans2, IP: cli2}
-		entry3 = &logEntry{QHost: "test.example.org", Answer: ans3, IP: cli3}
-		entry4 = &logEntry{QHost: "example.com", Answer: ans4, IP: cli4}
-
-		entryRoot     = &logEntry{QHost: "", Answer: ans5, IP: cli5}
-		entryRootWant = &logEntry{QHost: ".", Answer: ans5, IP: cli5}
-	)
+	entryRoot := entries[4]
+	entryRootWant := &logEntry{QHost: ".", Answer: entryRoot.Answer, IP: entryRoot.IP}
 
 	l, err := newQueryLog(Config{
 		Logger:      slogutil.NewDiscardLogger(),
@@ -103,7 +99,7 @@ func TestQueryLog(t *testing.T) {
 		want: []*logEntry{entry3, entry2, entry1},
 	}, {
 		name: "by_client_ip_strict",
-		sCr:  []searchCriterion{searchCriTerm(cli2.String(), true)},
+		sCr:  []searchCriterion{searchCriTerm(entry2.IP.String(), true)},
 		want: []*logEntry{entry2},
 	}, {
 		name: "by_client_ip_non-strict",
@@ -116,7 +112,7 @@ func TestQueryLog(t *testing.T) {
 			params := newSearchParams()
 			params.searchCriteria = tc.sCr
 
-			entries, _ := l.search(ctx, params)
+			entries, _ = l.search(ctx, params)
 			require.Len(t, entries, len(tc.want))
 
 			for i, want := range tc.want {

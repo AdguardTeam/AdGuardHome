@@ -60,39 +60,41 @@ func TestQueryLog_DecodeLogEntry_success(t *testing.T) {
 	ans, err := base64.StdEncoding.DecodeString(ansStr)
 	require.NoError(t, err)
 
-	want := &logEntry{
-		IP:          net.IPv4(127, 0, 0, 1),
-		Time:        time.Date(2020, 11, 25, 15, 55, 56, 519796000, time.UTC),
-		QHost:       "an.yandex.ru",
-		QType:       "A",
-		QClass:      "IN",
-		ClientID:    "cli42",
-		ClientProto: "",
-		ReqECS:      "1.2.3.0/24",
-		Answer:      ans,
-		Cached:      true,
-		Result: filtering.Result{
-			DNSRewriteResult: &filtering.DNSRewriteResult{
-				RCode: dns.RcodeSuccess,
-				Response: filtering.DNSRewriteResultResponse{
-					dns.TypeA: []rules.RRValue{net.IPv4(127, 0, 0, 2)},
-				},
+	result := filtering.Result{
+		DNSRewriteResult: &filtering.DNSRewriteResult{
+			RCode: dns.RcodeSuccess,
+			Response: filtering.DNSRewriteResultResponse{
+				dns.TypeA: []rules.RRValue{net.IPv4(127, 0, 0, 2)},
 			},
-			CanonName:   "example.com",
-			ServiceName: "example.org",
-			IPList:      []netip.Addr{netip.AddrFrom4([4]byte{127, 0, 0, 2})},
-			Rules: []*filtering.ResultRule{{
-				FilterListID: 42,
-				Text:         "||an.yandex.ru",
-				IP:           netip.AddrFrom4([4]byte{127, 0, 0, 2}),
-			}, {
-				FilterListID: 43,
-				Text:         "||an2.yandex.ru",
-				IP:           netip.AddrFrom4([4]byte{127, 0, 0, 3}),
-			}},
-			Reason:     filtering.FilteredBlockList,
-			IsFiltered: true,
 		},
+		CanonName:   "example.com",
+		ServiceName: "example.org",
+		IPList:      []netip.Addr{netip.AddrFrom4([4]byte{127, 0, 0, 2})},
+		Rules: []*filtering.ResultRule{{
+			FilterListID: 42,
+			Text:         "||an.yandex.ru",
+			IP:           netip.AddrFrom4([4]byte{127, 0, 0, 2}),
+		}, {
+			FilterListID: 43,
+			Text:         "||an2.yandex.ru",
+			IP:           netip.AddrFrom4([4]byte{127, 0, 0, 3}),
+		}},
+		Reason:     filtering.FilteredBlockList,
+		IsFiltered: true,
+	}
+
+	want := &logEntry{
+		IP:                net.IPv4(127, 0, 0, 1),
+		Time:              time.Date(2020, 11, 25, 15, 55, 56, 519796000, time.UTC),
+		QHost:             "an.yandex.ru",
+		QType:             "A",
+		QClass:            "IN",
+		ClientID:          "cli42",
+		ClientProto:       "",
+		ReqECS:            "1.2.3.0/24",
+		Answer:            ans,
+		Cached:            true,
+		Result:            result,
 		Upstream:          "https://some.upstream",
 		Elapsed:           837429,
 		AuthenticatedData: true,

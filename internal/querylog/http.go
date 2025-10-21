@@ -16,6 +16,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"golang.org/x/net/idna"
@@ -219,15 +220,14 @@ func (l *queryLog) handleQueryLogConfig(w http.ResponseWriter, r *http.Request) 
 func (l *queryLog) handlePutQueryLogConfig(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	newConf, errMsg, err := readConfigResp(r)
+	newConf, err := readConfigResp(r)
 	if err != nil {
-		aghhttp.ErrorAndLog(ctx, l.logger, r, w, http.StatusBadRequest, "%s", err)
+		code := http.StatusBadRequest
+		if errors.Is(err, ErrNullConfEnabled) || errors.Is(err, ErrNullAnonymizeIP) {
+			code = http.StatusUnprocessableEntity
+		}
 
-		return
-	}
-
-	if errMsg != "" {
-		aghhttp.ErrorAndLog(ctx, l.logger, r, w, http.StatusUnprocessableEntity, "%s", errMsg)
+		aghhttp.ErrorAndLog(ctx, l.logger, r, w, code, "%s", err)
 
 		return
 	}
@@ -266,26 +266,34 @@ func (l *queryLog) handlePutQueryLogConfig(w http.ResponseWriter, r *http.Reques
 	l.applyQueryLogConfig(ctx, engine, ivl, newConf)
 }
 
-// readConfigResp decodes and minimally validates the request body.  If the
-// config is valid, it returns an empty errMsg and a nil error.  r must not be
-// nil.
-func readConfigResp(r *http.Request) (conf *getConfigResp, errMsg string, err error) {
+const (
+	// ErrNullConfEnabled is returned when [getConfigResp.Enabled] is not set.
+	ErrNullConfEnabled errors.Error = "enabled is null"
+
+	// ErrNullAnonymizeIP is returned when [getConfigResp.AnonymizeClientIP] is
+	// not set.
+	ErrNullAnonymizeIP errors.Error = "anonymize_client_ip is null"
+)
+
+// readConfigResp decodes and minimally validates the request body.  r must not
+// be nil.
+func readConfigResp(r *http.Request) (conf *getConfigResp, err error) {
 	conf = &getConfigResp{}
 	err = json.NewDecoder(r.Body).Decode(conf)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
-		return nil, "", err
+		return nil, err
 	}
 
 	if conf.Enabled == aghalg.NBNull {
-		return nil, "enabled is null", nil
+		return nil, ErrNullConfEnabled
 	}
 
 	if conf.AnonymizeClientIP == aghalg.NBNull {
-		return nil, "anonymize_client_ip is null", nil
+		return nil, ErrNullAnonymizeIP
 	}
 
-	return conf, "", nil
+	return conf, nil
 }
 
 // applyQueryLogConfig applies the validated config to queryLog.  engine must
