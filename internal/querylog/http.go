@@ -219,10 +219,15 @@ func (l *queryLog) handleQueryLogConfig(w http.ResponseWriter, r *http.Request) 
 func (l *queryLog) handlePutQueryLogConfig(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	newConf := &getConfigResp{}
-	err := json.NewDecoder(r.Body).Decode(newConf)
+	newConf, errMsg, err := readConfigResp(r)
 	if err != nil {
 		aghhttp.ErrorAndLog(ctx, l.logger, r, w, http.StatusBadRequest, "%s", err)
+
+		return
+	}
+
+	if errMsg != "" {
+		aghhttp.ErrorAndLog(ctx, l.logger, r, w, http.StatusUnprocessableEntity, "%s", errMsg)
 
 		return
 	}
@@ -258,25 +263,39 @@ func (l *queryLog) handlePutQueryLogConfig(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if newConf.Enabled == aghalg.NBNull {
-		aghhttp.ErrorAndLog(ctx, l.logger, r, w, http.StatusUnprocessableEntity, "enabled is null")
+	l.applyQueryLogConfig(ctx, engine, ivl, newConf)
+}
 
-		return
+// readConfigResp decodes and minimally validates the request body.  If the
+// config is valid, it returns an empty errMsg and a nil error.  r must not be
+// nil.
+func readConfigResp(r *http.Request) (conf *getConfigResp, errMsg string, err error) {
+	conf = &getConfigResp{}
+	err = json.NewDecoder(r.Body).Decode(conf)
+	if err != nil {
+		// Don't wrap the error, because it's informative enough as is.
+		return nil, "", err
 	}
 
-	if newConf.AnonymizeClientIP == aghalg.NBNull {
-		aghhttp.ErrorAndLog(
-			ctx,
-			l.logger,
-			r,
-			w,
-			http.StatusUnprocessableEntity,
-			"anonymize_client_ip is null",
-		)
-
-		return
+	if conf.Enabled == aghalg.NBNull {
+		return nil, "enabled is null", nil
 	}
 
+	if conf.AnonymizeClientIP == aghalg.NBNull {
+		return nil, "anonymize_client_ip is null", nil
+	}
+
+	return conf, "", nil
+}
+
+// applyQueryLogConfig applies the validated config to queryLog.  engine must
+// not be nil.  ivl and newConf must be valid.
+func (l *queryLog) applyQueryLogConfig(
+	ctx context.Context,
+	engine *aghnet.IgnoreEngine,
+	ivl time.Duration,
+	newConf *getConfigResp,
+) {
 	defer l.conf.ConfigModifier.Apply(ctx)
 
 	l.confMu.Lock()

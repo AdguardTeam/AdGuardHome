@@ -135,7 +135,7 @@ func readAllLines(tb testing.TB, q *qLogFile) (n int) {
 	for {
 		line, err := q.ReadNext()
 		if err == io.EOF {
-			break
+			return n
 		}
 
 		require.NoError(tb, err)
@@ -144,8 +144,6 @@ func readAllLines(tb testing.TB, q *qLogFile) (n int) {
 
 		n++
 	}
-
-	return n
 }
 
 func TestQLogFile_SeekTS_good(t *testing.T) {

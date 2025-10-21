@@ -250,13 +250,11 @@ func (q *qLogFile) readAndValidateProbe(
 		return "", 0, 0, fmt.Errorf("reading probe line: %w", err)
 	}
 
-	// Check if the line index is invalid.
 	err = q.validateQLogLineIdx(lineIdx, st.lastProbeLineIdx, timestamp, st.fileSize)
 	if err != nil {
 		return "", 0, 0, fmt.Errorf("validating line index: %w", err)
 	}
 
-	// Save the last probed index.
 	st.lastProbeLineIdx = lineIdx
 
 	return line, lineIdx, lineEndIdx, nil
