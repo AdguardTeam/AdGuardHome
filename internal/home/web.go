@@ -304,6 +304,7 @@ func (web *webAPI) close(ctx context.Context) {
 	web.logger.InfoContext(ctx, "stopped http server")
 }
 
+// tlsServerLoop implements retry logic for http server start.
 func (web *webAPI) tlsServerLoop(ctx context.Context) {
 	defer slogutil.RecoverAndExit(ctx, web.logger, osutil.ExitCodeFailure)
 
@@ -315,24 +316,12 @@ func (web *webAPI) tlsServerLoop(ctx context.Context) {
 	}
 }
 
-// TODO(f.setrakov): !! Imp maintainability.
+// serveTLS initializes and starts the HTTPS server.  Returns true when server
+// shuts down gracefully.
 func (web *webAPI) serveTLS(ctx context.Context) (next bool) {
-	web.httpsServer.cond.L.Lock()
-	if web.httpsServer.inShutdown {
-		web.httpsServer.cond.L.Unlock()
+	if !web.waitForTLSReady() {
 		return false
 	}
-
-	// this mechanism doesn't let us through until all conditions are met
-	for !web.httpsServer.enabled { // sleep until necessary data is supplied
-		web.httpsServer.cond.Wait()
-		if web.httpsServer.inShutdown {
-			web.httpsServer.cond.L.Unlock()
-			return false
-		}
-	}
-
-	web.httpsServer.cond.L.Unlock()
 
 	var portHTTPS uint16
 	func() {
@@ -376,6 +365,29 @@ func (web *webAPI) serveTLS(ctx context.Context) (next bool) {
 		cleanupAlways()
 		panic(fmt.Errorf("https: %w", err))
 	}
+	return true
+}
+
+// waitForTLSReady blocks until the HTTPS server is enabled or a shutdown signal
+// is received.  Returns true when server is ready.
+func (web *webAPI) waitForTLSReady() (ok bool) {
+	web.httpsServer.cond.L.Lock()
+	defer web.httpsServer.cond.L.Unlock()
+
+	if web.httpsServer.inShutdown {
+		web.httpsServer.cond.L.Unlock()
+		return false
+	}
+
+	// this mechanism doesn't let us through until all conditions are met
+	for !web.httpsServer.enabled { // sleep until necessary data is supplied
+		web.httpsServer.cond.Wait()
+		if web.httpsServer.inShutdown {
+			web.httpsServer.cond.L.Unlock()
+			return false
+		}
+	}
+
 	return true
 }
 

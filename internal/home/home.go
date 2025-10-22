@@ -718,7 +718,9 @@ func run(
 	statsDir, querylogDir, err := checkStatsAndQuerylogDirs(&globalContext, config)
 	fatalOnError(err)
 
-	runDNSServer(ctx, isFirstRun, slogLogger, tlsMgr, confModifier, statsDir, querylogDir)
+	if !isFirstRun {
+		runDNSServer(ctx, slogLogger, tlsMgr, confModifier, statsDir, querylogDir)
+	}
 
 	if !opts.noPermCheck {
 		checkPermissions(
@@ -742,17 +744,12 @@ func run(
 // first run.
 func runDNSServer(
 	ctx context.Context,
-	isFirstRun bool,
 	slogLogger *slog.Logger,
 	tlsMgr *tlsManager,
 	confModifier *defaultConfigModifier,
 	statsDir string,
 	querylogDir string,
 ) {
-	if isFirstRun {
-		return
-	}
-
 	err := initDNS(ctx, slogLogger, tlsMgr, confModifier, statsDir, querylogDir)
 	fatalOnError(err)
 
