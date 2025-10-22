@@ -58,6 +58,10 @@ In this release, the schema version has changed from 30 to 31.
 
     To roll back this change, set `schema_version` back to `30`.
 
+### Removed
+
+- The outdated querylog anonymization script.
+
 [go-1.25.3]: https://groups.google.com/g/golang-announce/c/YEyj6FUNbik
 
 <!--
