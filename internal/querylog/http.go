@@ -297,7 +297,8 @@ func readConfigResp(r *http.Request) (conf *getConfigResp, err error) {
 }
 
 // applyQueryLogConfig applies the validated config to queryLog.  engine must
-// not be nil.  ivl and newConf must be valid.
+// not be nil.  ivl must pass [validateIvl], and newConf must be produced by
+// [readConfigResp].
 func (l *queryLog) applyQueryLogConfig(
 	ctx context.Context,
 	engine *aghnet.IgnoreEngine,
