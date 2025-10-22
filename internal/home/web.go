@@ -365,6 +365,7 @@ func (web *webAPI) serveTLS(ctx context.Context) (next bool) {
 		cleanupAlways()
 		panic(fmt.Errorf("https: %w", err))
 	}
+
 	return true
 }
 

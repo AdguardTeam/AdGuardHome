@@ -819,6 +819,7 @@ func initFiltering(
 
 	err = setupOpts(opts)
 	fatalOnError(err)
+
 	return confModifier, tlsMgr
 }
 

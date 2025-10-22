@@ -399,7 +399,7 @@ func parseCmdOpts(cmdName string, args []string) (o options, eff effect, err err
 	return o, eff, nil
 }
 
-// parseArg parses command-line argument into options and effects.  next, o,
+// parseArg parses command-line argument into options and effects.  next and
 // eff must not be nil.
 func parseArg(
 	cmdName string,
@@ -420,7 +420,7 @@ func parseArg(
 	return applyOptNoValue(opt, cmdName, o, eff, arg)
 }
 
-// applyOptNoValue applies option with no value.  opt, o and eff must not be
+// applyOptNoValue applies option with no value.  eff must not be
 // nil.
 func applyOptNoValue(
 	opt cmdLineOpt,
@@ -437,7 +437,7 @@ func applyOptNoValue(
 	return newOpts, newEff, nil
 }
 
-// applyOptWithValue applies argument with value.  opt, next, o and eff must not
+// applyOptWithValue applies argument with value.   next and eff must not
 // be nil.
 func applyOptWithValue(
 	opt cmdLineOpt,
@@ -467,6 +467,7 @@ func findMatchingOpt(arg string) (opt cmdLineOpt, ok bool) {
 			return opt, true
 		}
 	}
+
 	return cmdLineOpt{}, false
 }
 
