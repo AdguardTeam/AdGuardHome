@@ -377,6 +377,7 @@ func (web *webAPI) waitForTLSReady() (ok bool) {
 
 	if web.httpsServer.inShutdown {
 		web.httpsServer.cond.L.Unlock()
+
 		return false
 	}
 
@@ -385,6 +386,7 @@ func (web *webAPI) waitForTLSReady() (ok bool) {
 		web.httpsServer.cond.Wait()
 		if web.httpsServer.inShutdown {
 			web.httpsServer.cond.L.Unlock()
+
 			return false
 		}
 	}
