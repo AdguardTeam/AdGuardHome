@@ -257,13 +257,7 @@ func finalizeWindowsUpdate(ctx context.Context,
 	execPath string,
 	runningAsService bool,
 ) {
-	commandConf := &executil.CommandConfig{
-		Path:   execPath,
-		Args:   os.Args[1:],
-		Stdin:  os.Stdin,
-		Stdout: os.Stdout,
-		Stderr: os.Stderr,
-	}
+	var commandConf *executil.CommandConfig
 
 	if runningAsService {
 		// NOTE: We can't restart the service via "kardianos/service"
@@ -274,6 +268,14 @@ func finalizeWindowsUpdate(ctx context.Context,
 		commandConf = &executil.CommandConfig{
 			Path: "cmd",
 			Args: []string{"/c", "net stop AdGuardHome & net start AdGuardHome"},
+		}
+	} else {
+		commandConf = &executil.CommandConfig{
+			Path:   execPath,
+			Args:   os.Args[1:],
+			Stdin:  os.Stdin,
+			Stdout: os.Stdout,
+			Stderr: os.Stderr,
 		}
 	}
 
