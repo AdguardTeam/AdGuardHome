@@ -249,8 +249,8 @@ func finishUpdate(
 	}
 }
 
-// finalizeWindowsUpdate completes an update procedure for windows.  l and cmdCons
-// must not be nil.
+// finalizeWindowsUpdate completes an update procedure on windows.  l and
+// cmdCons must not be nil.
 func finalizeWindowsUpdate(ctx context.Context,
 	l *slog.Logger,
 	cmdCons executil.CommandConstructor,

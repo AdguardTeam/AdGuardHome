@@ -416,7 +416,7 @@ func handleOpenWrtUninstall(ctx context.Context, l *slog.Logger) {
 	}
 }
 
-// handleOpenWrtUninstall handles service "uninstall" command for darwin.  l
+// handleDarwinUninstall handles service "uninstall" command for Darwin.  l
 // must not be nil.
 func handleDarwinUninstall(ctx context.Context, l *slog.Logger) {
 	// Remove log files on cleanup and log errors.
