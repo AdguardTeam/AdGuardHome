@@ -177,7 +177,7 @@ func initDNSServer(
 	// failed to prepare as is.  See TODO on [dnsforward.PrivateRDNSError].
 	err = globalContext.dnsServer.Prepare(ctx, dnsConf)
 	if privRDNSErr := (&dnsforward.PrivateRDNSError{}); errors.As(err, &privRDNSErr) {
-		log.Info("WARNING: %s; trying to disable private RDNS resolution", err)
+		l.WarnContext(ctx, "private rdns resolution failed; disabling", slogutil.KeyError, err)
 
 		dnsConf.UsePrivateRDNS = false
 		err = globalContext.dnsServer.Prepare(ctx, dnsConf)
@@ -521,10 +521,10 @@ func closeDNSServer(ctx context.Context) {
 // checkStatsAndQuerylogDirs checks and returns directory paths to store
 // statistics and query log.
 func checkStatsAndQuerylogDirs(
-	ctx *homeContext,
 	conf *configuration,
+	workDir string,
 ) (statsDir, querylogDir string, err error) {
-	baseDir := ctx.getDataDir()
+	baseDir := filepath.Join(workDir, dataDir)
 
 	statsDir = conf.Stats.DirPath
 	if statsDir == "" {

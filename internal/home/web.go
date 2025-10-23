@@ -76,6 +76,12 @@ type webConfig struct {
 	// BindAddr is the binding address with port for plain HTTP web interface.
 	BindAddr netip.AddrPort
 
+	// workDir is the base working directory.
+	workDir string
+
+	// confPath is the configuration file path.
+	confPath string
+
 	// ReadTimeout is an option to pass to http.Server for setting an
 	// appropriate field.
 	ReadTimeout time.Duration

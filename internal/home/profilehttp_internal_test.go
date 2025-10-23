@@ -90,6 +90,8 @@ func TestWeb_HandleGetProfile(t *testing.T) {
 		baseMux,
 		agh.EmptyConfigModifier{},
 		aghhttp.EmptyRegistrar{},
+		"",
+		"",
 		false,
 		false,
 	)
@@ -153,6 +155,8 @@ func TestWeb_HandlePutProfile(t *testing.T) {
 		mux,
 		confModifier,
 		httpReg,
+		"",
+		"",
 		false,
 		false,
 	)

@@ -24,7 +24,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/dnsproxy/fastip"
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/timeutil"
@@ -593,25 +592,36 @@ var config = &configuration{
 	Theme:         ThemeAuto,
 }
 
-// configFilePath returns the absolute path to the symlink-evaluated path to the
-// current config file.
-func configFilePath() (confPath string) {
-	confPath, err := filepath.EvalSymlinks(globalContext.confFilePath)
+// configFilePath returns the absolute, symlink-resolved path to the current
+// configuration file.  l must not be nil.
+//
+// TODO(s.chzhen):  Fix the bug where the wrong file may be resolved:
+// [filepath.EvalSymlinks] resolves a relative path against the current working
+// directory, not workDir.  Make the path absolute relative to workDir before
+// calling EvalSymlinks.
+func configFilePath(
+	ctx context.Context,
+	l *slog.Logger,
+	workDir string,
+	confPath string,
+) (resolved string) {
+	resolved, err := filepath.EvalSymlinks(confPath)
 	if err != nil {
-		confPath = globalContext.confFilePath
-		logFunc := log.Error
-		if errors.Is(err, os.ErrNotExist) {
-			logFunc = log.Debug
-		}
+		l.DebugContext(
+			ctx,
+			"symlink resolve failed; using original path",
+			"path", confPath,
+			slogutil.KeyError, err,
+		)
 
-		logFunc("evaluating config path: %s; using %q", err, confPath)
+		resolved = confPath
 	}
 
 	if !filepath.IsAbs(confPath) {
-		confPath = filepath.Join(globalContext.workDir, confPath)
+		resolved = filepath.Join(workDir, confPath)
 	}
 
-	return confPath
+	return resolved
 }
 
 // validateBindHosts returns error if any of binding hosts from configuration is
@@ -639,17 +649,17 @@ func validateBindHosts(
 
 // parseConfig loads configuration from the YAML file, upgrading it if
 // necessary.  l must not be nil.
-func parseConfig(ctx context.Context, l *slog.Logger) (err error) {
+func parseConfig(ctx context.Context, l *slog.Logger, workDir, confPath string) (err error) {
 	// Do the upgrade if necessary.
-	config.fileData, err = readConfigFile()
+	config.fileData, err = readConfigFile(ctx, l, workDir, confPath)
 	if err != nil {
 		return err
 	}
 
 	migrator := configmigrate.New(&configmigrate.Config{
 		Logger:     l.With(slogutil.KeyPrefix, "config_migrator"),
-		WorkingDir: globalContext.workDir,
-		DataDir:    globalContext.getDataDir(),
+		WorkingDir: workDir,
+		DataDir:    filepath.Join(workDir, dataDir),
 	})
 
 	var upgraded bool
@@ -662,7 +672,7 @@ func parseConfig(ctx context.Context, l *slog.Logger) (err error) {
 		// Don't wrap the error, because it's informative enough as is.
 		return err
 	} else if upgraded {
-		confPath := configFilePath()
+		confPath = configFilePath(ctx, l, workDir, confPath)
 		l.DebugContext(ctx, "writing config file after config upgrade", "path", confPath)
 
 		err = maybe.WriteFile(confPath, config.fileData, aghos.DefaultPermFile)
@@ -808,27 +818,39 @@ func addPorts[T tcpPort | udpPort](uc aghalg.UniqChecker[T], ports ...T) {
 	}
 }
 
-// readConfigFile reads configuration file contents.
-func readConfigFile() (fileData []byte, err error) {
+// readConfigFile reads configuration file contents.  l must not be nil.
+func readConfigFile(
+	ctx context.Context,
+	l *slog.Logger,
+	workDir string,
+	confPath string,
+) (fileData []byte, err error) {
 	if len(config.fileData) > 0 {
 		return config.fileData, nil
 	}
 
-	confPath := configFilePath()
-	log.Debug("reading config file %q", confPath)
+	confPath = configFilePath(ctx, l, workDir, confPath)
+	l.DebugContext(ctx, "reading config file", "path", confPath)
 
 	// Do not wrap the error because it's informative enough as is.
 	return os.ReadFile(confPath)
 }
 
-// Saves configuration to the YAML file and also saves the user filter contents to a file
-func (c *configuration) write(tlsMgr *tlsManager, auth *auth) (err error) {
+// write saves configuration to the YAML file and also saves the user filter
+// contents to a file.  l must not be nil.
+func (c *configuration) write(
+	ctx context.Context,
+	l *slog.Logger,
+	tlsMgr *tlsManager,
+	auth *auth,
+	workDir string,
+	confPath string,
+) (err error) {
 	c.Lock()
 	defer c.Unlock()
 
 	if auth != nil {
-		// TODO(s.chzhen):  Pass context.
-		config.Users = auth.usersList(context.TODO())
+		config.Users = auth.usersList(ctx)
 	}
 
 	if tlsMgr != nil {
@@ -883,8 +905,8 @@ func (c *configuration) write(tlsMgr *tlsManager, auth *auth) (err error) {
 
 	config.Clients.Persistent = globalContext.clients.forConfig()
 
-	confPath := configFilePath()
-	log.Debug("writing config file %q", confPath)
+	confPath = configFilePath(ctx, l, workDir, confPath)
+	l.DebugContext(ctx, "writing config file", "path", confPath)
 
 	buf := &bytes.Buffer{}
 	enc := yaml.NewEncoder(buf)
@@ -919,10 +941,12 @@ func validateTLSCipherIDs(cipherIDs []string) (err error) {
 
 // defaultConfigModifier is a default [agh.ConfigModifier] implementation.
 type defaultConfigModifier struct {
-	auth   *auth
-	config *configuration
-	logger *slog.Logger
-	tlsMgr *tlsManager
+	auth     *auth
+	config   *configuration
+	logger   *slog.Logger
+	tlsMgr   *tlsManager
+	workDir  string
+	confPath string
 }
 
 // newDefaultConfigModifier returns the new properly initialized
@@ -932,10 +956,14 @@ type defaultConfigModifier struct {
 func newDefaultConfigModifier(
 	conf *configuration,
 	l *slog.Logger,
+	workDir string,
+	confPath string,
 ) (cm *defaultConfigModifier) {
 	return &defaultConfigModifier{
-		config: conf,
-		logger: l,
+		config:   conf,
+		logger:   l,
+		workDir:  workDir,
+		confPath: confPath,
 	}
 }
 
@@ -945,7 +973,7 @@ var _ agh.ConfigModifier = (*defaultConfigModifier)(nil)
 // Apply implements the [agh.ConfigModifier] interface for
 // *defaultConfigModifier.
 func (cm *defaultConfigModifier) Apply(ctx context.Context) {
-	err := cm.config.write(cm.tlsMgr, cm.auth)
+	err := cm.config.write(ctx, cm.logger, cm.tlsMgr, cm.auth, cm.workDir, cm.confPath)
 	if err != nil {
 		cm.logger.ErrorContext(ctx, "writing config", slogutil.KeyError, err)
 	}

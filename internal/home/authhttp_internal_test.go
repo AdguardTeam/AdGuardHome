@@ -337,6 +337,8 @@ func TestAuth_ServeHTTP_firstRun(t *testing.T) {
 		mux,
 		agh.EmptyConfigModifier{},
 		httpReg,
+		"",
+		"",
 		false,
 		true,
 	)
@@ -509,6 +511,8 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 		baseMux,
 		agh.EmptyConfigModifier{},
 		httpReg,
+		"",
+		"",
 		false,
 		false,
 	)
@@ -667,6 +671,8 @@ func TestAuth_ServeHTTP_logout(t *testing.T) {
 		baseMux,
 		agh.EmptyConfigModifier{},
 		httpReg,
+		"",
+		"",
 		false,
 		false,
 	)

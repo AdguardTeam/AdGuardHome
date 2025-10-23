@@ -489,7 +489,7 @@ func (web *webAPI) finalizeInstall(
 	config.DNS.Port = req.DNS.Port
 	config.Filtering.Logger = web.baseLogger.With(slogutil.KeyPrefix, "filtering")
 	config.Filtering.SafeFSPatterns = []string{
-		filepath.Join(globalContext.workDir, userFilterDataDir, "*"),
+		filepath.Join(web.conf.workDir, userFilterDataDir, "*"),
 	}
 	config.HTTPConfig.Address = netip.AddrPortFrom(req.Web.IP, req.Web.Port)
 
@@ -507,14 +507,28 @@ func (web *webAPI) finalizeInstall(
 	// moment we'll allow setting up TLS in the initial configuration or the
 	// configuration itself will use HTTPS protocol, because the underlying
 	// functions potentially restart the HTTPS server.
-	err = startMods(ctx, web.baseLogger, web.tlsManager, web.confModifier, web.httpReg)
+	err = startMods(
+		ctx,
+		web.baseLogger,
+		web.tlsManager,
+		web.confModifier,
+		web.httpReg,
+		web.conf.workDir,
+	)
 	if err != nil {
 		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusInternalServerError, "%s", err)
 
 		return
 	}
 
-	err = config.write(web.tlsManager, web.auth)
+	err = config.write(
+		ctx,
+		web.logger,
+		web.tlsManager,
+		web.auth,
+		web.conf.workDir,
+		web.conf.confPath,
+	)
 	if err != nil {
 		aghhttp.ErrorAndLog(
 			ctx,
@@ -597,8 +611,9 @@ func startMods(
 	tlsMgr *tlsManager,
 	confModifier agh.ConfigModifier,
 	httpReg aghhttp.Registrar,
+	workDir string,
 ) (err error) {
-	statsDir, querylogDir, err := checkStatsAndQuerylogDirs(&globalContext, config)
+	statsDir, querylogDir, err := checkStatsAndQuerylogDirs(config, workDir)
 	if err != nil {
 		return err
 	}
