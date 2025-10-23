@@ -11,7 +11,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
@@ -59,8 +61,10 @@ func TestStats(t *testing.T) {
 		Limit:             timeutil.Day,
 		Enabled:           true,
 		UnitID:            constUnitID,
-		HTTPRegister: func(_, url string, handler http.HandlerFunc) {
-			handlers[url] = handler
+		HTTPReg: &aghtest.Registrar{
+			OnRegister: func(_, url string, handler http.HandlerFunc) {
+				handlers[url] = handler
+			},
 		},
 	}
 
@@ -180,7 +184,11 @@ func TestLargeNumbers(t *testing.T) {
 		Limit:             timeutil.Day,
 		Enabled:           true,
 		UnitID:            func() (id uint32) { return atomic.LoadUint32(&curHour) },
-		HTTPRegister:      func(_, url string, handler http.HandlerFunc) { handlers[url] = handler },
+		HTTPReg: &aghtest.Registrar{
+			OnRegister: func(_, url string, handler http.HandlerFunc) {
+				handlers[url] = handler
+			},
+		},
 	}
 
 	s, err := stats.New(conf)
@@ -234,6 +242,7 @@ func TestShouldCount(t *testing.T) {
 		ShouldCountClient: func(ids []string) (a bool) {
 			return ids[0] != "no_count"
 		},
+		HTTPReg: aghhttp.EmptyRegistrar{},
 	})
 	require.NoError(t, err)
 

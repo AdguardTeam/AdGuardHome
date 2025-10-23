@@ -65,7 +65,7 @@ type Config struct {
 
 	// HTTPRegister is the function that registers handlers for the stats
 	// endpoints.
-	HTTPRegister aghhttp.RegisterFunc
+	HTTPReg aghhttp.Registrar
 
 	// Ignored contains the list of host names, which should not be counted,
 	// and matches them.
@@ -121,8 +121,8 @@ type StatsCtx struct {
 	// unit.  It's here for only testing purposes.
 	unitIDGen UnitIDGenFunc
 
-	// httpRegister is used to set HTTP handlers.
-	httpRegister aghhttp.RegisterFunc
+	// httpReg registers HTTP handlers.  It must not be nil.
+	httpReg aghhttp.Registrar
 
 	// configModifier is used to update the global configuration.
 	configModifier agh.ConfigModifier
@@ -164,7 +164,7 @@ func New(conf Config) (s *StatsCtx, err error) {
 	s = &StatsCtx{
 		logger:         conf.Logger,
 		currMu:         &sync.RWMutex{},
-		httpRegister:   conf.HTTPRegister,
+		httpReg:        conf.HTTPReg,
 		configModifier: conf.ConfigModifier,
 		filename:       conf.Filename,
 

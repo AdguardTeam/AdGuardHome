@@ -245,8 +245,10 @@ func (s *Server) defaultLocalPTRUpstreams() (ups []string, err error) {
 
 // handleGetConfig handles requests to the GET /control/dns_info endpoint.
 func (s *Server) handleGetConfig(w http.ResponseWriter, r *http.Request) {
-	resp := s.getDNSConfig(r.Context())
-	aghhttp.WriteJSONResponseOK(w, r, resp)
+	ctx := r.Context()
+
+	resp := s.getDNSConfig(ctx)
+	aghhttp.WriteJSONResponseOK(ctx, s.logger, w, r, resp)
 }
 
 // checkBlockingMode returns an error if blocking mode is invalid.
@@ -739,7 +741,7 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 	cv.check()
 	cv.close()
 
-	aghhttp.WriteJSONResponseOK(w, r, cv.status())
+	aghhttp.WriteJSONResponseOK(ctx, l, w, r, cv.status())
 }
 
 // handleCacheClear is the handler for the POST /control/cache_clear HTTP API.
@@ -797,7 +799,7 @@ func (s *Server) handleSetProtection(w http.ResponseWriter, r *http.Request) {
 
 	s.conf.ConfModifier.Apply(ctx)
 
-	aghhttp.OK(ctx, s.logger, w)
+	aghhttp.OK(ctx, l, w)
 }
 
 // handleDoH is the DNS-over-HTTPs handler.
@@ -837,19 +839,19 @@ func (s *Server) handleDoH(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) registerHandlers() {
-	if webRegistered || s.conf.HTTPRegister == nil {
+	if webRegistered || s.conf.HTTPReg == nil {
 		return
 	}
 
-	s.conf.HTTPRegister(http.MethodGet, "/control/dns_info", s.handleGetConfig)
-	s.conf.HTTPRegister(http.MethodPost, "/control/dns_config", s.handleSetConfig)
-	s.conf.HTTPRegister(http.MethodPost, "/control/test_upstream_dns", s.handleTestUpstreamDNS)
-	s.conf.HTTPRegister(http.MethodPost, "/control/protection", s.handleSetProtection)
+	s.conf.HTTPReg.Register(http.MethodGet, "/control/dns_info", s.handleGetConfig)
+	s.conf.HTTPReg.Register(http.MethodPost, "/control/dns_config", s.handleSetConfig)
+	s.conf.HTTPReg.Register(http.MethodPost, "/control/test_upstream_dns", s.handleTestUpstreamDNS)
+	s.conf.HTTPReg.Register(http.MethodPost, "/control/protection", s.handleSetProtection)
 
-	s.conf.HTTPRegister(http.MethodGet, "/control/access/list", s.handleAccessList)
-	s.conf.HTTPRegister(http.MethodPost, "/control/access/set", s.handleAccessSet)
+	s.conf.HTTPReg.Register(http.MethodGet, "/control/access/list", s.handleAccessList)
+	s.conf.HTTPReg.Register(http.MethodPost, "/control/access/set", s.handleAccessSet)
 
-	s.conf.HTTPRegister(http.MethodPost, "/control/cache_clear", s.handleCacheClear)
+	s.conf.HTTPReg.Register(http.MethodPost, "/control/cache_clear", s.handleCacheClear)
 
 	// Register both versions, with and without the trailing slash, to
 	// prevent a 301 Moved Permanently redirect when clients request the
@@ -858,8 +860,8 @@ func (s *Server) registerHandlers() {
 	// See go doc net/http.ServeMux.
 	//
 	// See also https://github.com/AdguardTeam/AdGuardHome/issues/2628.
-	s.conf.HTTPRegister("", "/dns-query", s.handleDoH)
-	s.conf.HTTPRegister("", "/dns-query/", s.handleDoH)
+	s.conf.HTTPReg.Register("", "/dns-query", s.handleDoH)
+	s.conf.HTTPReg.Register("", "/dns-query/", s.handleDoH)
 
 	webRegistered = true
 }

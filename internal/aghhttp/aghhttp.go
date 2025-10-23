@@ -10,7 +10,6 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/httphdr"
-	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 )
 
@@ -25,15 +24,6 @@ func OK(ctx context.Context, l *slog.Logger, w http.ResponseWriter) {
 	if _, err := io.WriteString(w, "OK\n"); err != nil {
 		l.WarnContext(ctx, "writing ok body", slogutil.KeyError, err)
 	}
-}
-
-// Error writes formatted message to w and also logs it.
-//
-// TODO(s.chzhen):  Remove it.
-func Error(r *http.Request, w http.ResponseWriter, code int, format string, args ...any) {
-	text := fmt.Sprintf(format, args...)
-	log.Error("%s %s %s: %s", r.Method, r.Host, r.URL, text)
-	http.Error(w, text, code)
 }
 
 // ErrorAndLog writes a formatted HTTP error response and logs it at

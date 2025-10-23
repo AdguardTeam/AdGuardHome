@@ -2,10 +2,12 @@ package aghtest
 
 import (
 	"context"
+	"net/http"
 	"net/netip"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agh"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	nextagh "github.com/AdguardTeam/AdGuardHome/internal/next/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/rdns"
@@ -158,7 +160,20 @@ type ConfigModifier struct {
 // type check
 var _ agh.ConfigModifier = (*ConfigModifier)(nil)
 
-// Apply implements the [ConfigModifier] interface for *ConfigModifier.
+// Apply implements the [agh.ConfigModifier] interface for *ConfigModifier.
 func (m *ConfigModifier) Apply(ctx context.Context) {
 	m.OnApply(ctx)
+}
+
+// Registrar is a fake [aghhttp.Registrar] implementation for tests.
+type Registrar struct {
+	OnRegister func(method, path string, h http.HandlerFunc)
+}
+
+// type check
+var _ aghhttp.Registrar = (*Registrar)(nil)
+
+// Register implements the [aghhttp.Registrar] interface for *Registrar.
+func (m *Registrar) Register(method, path string, h http.HandlerFunc) {
+	m.OnRegister(method, path, h)
 }

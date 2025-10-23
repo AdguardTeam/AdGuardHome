@@ -171,7 +171,7 @@ func (s *server) handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
 	status.Leases = leasesToDynamic(leases[dynamicIdx:])
 	status.StaticLeases = leasesToStatic(leases[:dynamicIdx])
 
-	aghhttp.WriteJSONResponseOK(w, r, status)
+	aghhttp.WriteJSONResponseOK(r.Context(), s.conf.Logger, w, r, status)
 }
 
 func (s *server) enableDHCP(ctx context.Context, ifaceName string) (code int, err error) {
@@ -451,7 +451,7 @@ func (s *server) handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	aghhttp.WriteJSONResponseOK(w, r, resp)
+	aghhttp.WriteJSONResponseOK(ctx, l, w, r, resp)
 }
 
 // newNetInterfaceJSON creates a JSON object from a [net.Interface] iface.
@@ -613,7 +613,7 @@ func (s *server) handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Reque
 
 	s.setOtherDHCPResult(ctx, ifaceName, result)
 
-	aghhttp.WriteJSONResponseOK(w, r, result)
+	aghhttp.WriteJSONResponseOK(ctx, l, w, r, result)
 }
 
 // setOtherDHCPResult sets the results of the check for another DHCP server in
@@ -741,7 +741,7 @@ func (s *server) handleReset(w http.ResponseWriter, r *http.Request) {
 	s.conf = &ServerConfig{
 		ConfModifier: s.conf.ConfModifier,
 
-		HTTPRegister: s.conf.HTTPRegister,
+		HTTPReg: s.conf.HTTPReg,
 
 		LocalDomainName: s.conf.LocalDomainName,
 
@@ -778,17 +778,17 @@ func (s *server) handleResetLeases(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) registerHandlers() {
-	if s.conf.HTTPRegister == nil {
+	if s.conf.HTTPReg == nil {
 		return
 	}
 
-	s.conf.HTTPRegister(http.MethodGet, "/control/dhcp/status", s.handleDHCPStatus)
-	s.conf.HTTPRegister(http.MethodGet, "/control/dhcp/interfaces", s.handleDHCPInterfaces)
-	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/set_config", s.handleDHCPSetConfig)
-	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/find_active_dhcp", s.handleDHCPFindActiveServer)
-	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/add_static_lease", s.handleDHCPAddStaticLease)
-	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/remove_static_lease", s.handleDHCPRemoveStaticLease)
-	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/update_static_lease", s.handleDHCPUpdateStaticLease)
-	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/reset", s.handleReset)
-	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/reset_leases", s.handleResetLeases)
+	s.conf.HTTPReg.Register(http.MethodGet, "/control/dhcp/status", s.handleDHCPStatus)
+	s.conf.HTTPReg.Register(http.MethodGet, "/control/dhcp/interfaces", s.handleDHCPInterfaces)
+	s.conf.HTTPReg.Register(http.MethodPost, "/control/dhcp/set_config", s.handleDHCPSetConfig)
+	s.conf.HTTPReg.Register(http.MethodPost, "/control/dhcp/find_active_dhcp", s.handleDHCPFindActiveServer)
+	s.conf.HTTPReg.Register(http.MethodPost, "/control/dhcp/add_static_lease", s.handleDHCPAddStaticLease)
+	s.conf.HTTPReg.Register(http.MethodPost, "/control/dhcp/remove_static_lease", s.handleDHCPRemoveStaticLease)
+	s.conf.HTTPReg.Register(http.MethodPost, "/control/dhcp/update_static_lease", s.handleDHCPUpdateStaticLease)
+	s.conf.HTTPReg.Register(http.MethodPost, "/control/dhcp/reset", s.handleReset)
+	s.conf.HTTPReg.Register(http.MethodPost, "/control/dhcp/reset_leases", s.handleResetLeases)
 }

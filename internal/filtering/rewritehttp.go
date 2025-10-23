@@ -45,7 +45,7 @@ func (d *DNSFilter) handleRewriteList(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	aghhttp.WriteJSONResponseOK(w, r, arr)
+	aghhttp.WriteJSONResponseOK(r.Context(), d.logger, w, r, arr)
 }
 
 // handleRewriteAdd is the handler for the POST /control/rewrite/add HTTP API.
@@ -229,20 +229,22 @@ func (d *DNSFilter) handleRewriteSettings(w http.ResponseWriter, r *http.Request
 		Enabled: protectedBool(d.confMu, &d.conf.RewritesEnabled),
 	}
 
-	aghhttp.WriteJSONResponseOK(w, r, resp)
+	aghhttp.WriteJSONResponseOK(r.Context(), d.logger, w, r, resp)
 }
 
 // handleRewriteSettingsUpdate is the handler for the PUT
 // /control/rewrite/settings/update HTTP API.
 func (d *DNSFilter) handleRewriteSettingsUpdate(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	req := &rewriteSettings{}
 	err := json.NewDecoder(r.Body).Decode(req)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "json.Decode: %s", err)
+		aghhttp.ErrorAndLog(ctx, d.logger, r, w, http.StatusBadRequest, "json.Decode: %s", err)
 
 		return
 	}
 
 	setProtectedBool(d.confMu, &d.conf.RewritesEnabled, req.Enabled)
-	d.conf.ConfModifier.Apply(r.Context())
+	d.conf.ConfModifier.Apply(ctx)
 }

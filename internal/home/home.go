@@ -21,6 +21,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghslog"
@@ -64,9 +65,6 @@ type homeContext struct {
 	// etcHosts contains IP-hostname mappings taken from the OS-specific hosts
 	// configuration files, for example /etc/hosts.
 	etcHosts *aghnet.HostsContainer
-
-	// mux is our custom http.ServeMux.
-	mux *http.ServeMux
 
 	// Runtime properties
 	// --
@@ -150,8 +148,6 @@ func setupContext(
 	opts options,
 	isFirstRun bool,
 ) (err error) {
-	globalContext.mux = http.NewServeMux()
-
 	if !opts.noEtcHosts {
 		err = setupHostsContainer(ctx, baseLogger)
 		if err != nil {
@@ -302,11 +298,12 @@ func initContextClients(
 	logger *slog.Logger,
 	sigHdlr *signalHandler,
 	confModifier agh.ConfigModifier,
+	httpReg aghhttp.Registrar,
 ) (err error) {
 	//lint:ignore SA1019 Migration is not over.
 	config.DHCP.WorkDir = globalContext.workDir
 	config.DHCP.DataDir = globalContext.getDataDir()
-	config.DHCP.HTTPRegister = httpRegister
+	config.DHCP.HTTPReg = httpReg
 	config.DHCP.CommandConstructor = executil.SystemCommandConstructor{}
 	config.DHCP.Logger = logger.With(slogutil.KeyPrefix, "dhcpd")
 	config.DHCP.ConfModifier = confModifier
@@ -335,6 +332,7 @@ func initContextClients(
 		config.Filtering,
 		sigHdlr,
 		confModifier,
+		httpReg,
 	)
 }
 
@@ -386,6 +384,7 @@ func setupDNSFilteringConf(
 	conf *filtering.Config,
 	tlsMgr *tlsManager,
 	confModifier agh.ConfigModifier,
+	httpReg aghhttp.Registrar,
 ) (err error) {
 	const (
 		dnsTimeout = 3 * time.Second
@@ -408,7 +407,7 @@ func setupDNSFilteringConf(
 	}
 
 	conf.ConfModifier = confModifier
-	conf.HTTPRegister = httpRegister
+	conf.HTTPReg = httpReg
 	conf.DataDir = globalContext.getDataDir()
 	conf.Filters = slices.Clone(config.Filters)
 	conf.WhitelistFilters = slices.Clone(config.WhitelistFilters)
@@ -563,8 +562,7 @@ func isUpdateEnabled(
 	}
 }
 
-// initWeb initializes the web module.  upd, baseLogger, tlsMgr, auth, and mux
-// must not be nil.
+// initWeb initializes the web module.  All arguments must not be nil.
 func initWeb(
 	ctx context.Context,
 	opts options,
@@ -575,6 +573,7 @@ func initWeb(
 	auth *auth,
 	mux *http.ServeMux,
 	confModifier agh.ConfigModifier,
+	httpReg aghhttp.Registrar,
 	isCustomUpdURL bool,
 	isFirstRun bool,
 ) (web *webAPI, err error) {
@@ -602,6 +601,7 @@ func initWeb(
 		logger:             logger,
 		baseLogger:         baseLogger,
 		confModifier:       confModifier,
+		httpReg:            httpReg,
 		tlsManager:         tlsMgr,
 		auth:               auth,
 		mux:                mux,
@@ -718,7 +718,11 @@ func run(
 		slogLogger.With(slogutil.KeyPrefix, "config_modifier"),
 	)
 
-	err = initContextClients(ctx, slogLogger, sigHdlr, confModifier)
+	mw := &webMw{}
+	mux := http.NewServeMux()
+	httpReg := aghhttp.NewDefaultRegistrar(mux, mw.wrap)
+
+	err = initContextClients(ctx, slogLogger, sigHdlr, confModifier, httpReg)
 	fatalOnError(err)
 
 	tlsMgrLogger := slogLogger.With(slogutil.KeyPrefix, "tls_manager")
@@ -726,6 +730,7 @@ func run(
 	tlsMgr, err := newTLSManager(ctx, &tlsManagerConfig{
 		logger:        tlsMgrLogger,
 		confModifier:  confModifier,
+		httpReg:       httpReg,
 		tlsSettings:   config.TLS,
 		servePlainDNS: config.DNS.ServePlainDNS,
 	})
@@ -736,7 +741,14 @@ func run(
 
 	confModifier.setTLSManager(tlsMgr)
 
-	err = setupDNSFilteringConf(ctx, slogLogger, config.Filtering, tlsMgr, confModifier)
+	err = setupDNSFilteringConf(
+		ctx,
+		slogLogger,
+		config.Filtering,
+		tlsMgr,
+		confModifier,
+		httpReg,
+	)
 	fatalOnError(err)
 
 	err = setupOpts(opts)
@@ -788,12 +800,15 @@ func run(
 		slogLogger,
 		tlsMgr,
 		auth,
-		globalContext.mux,
+		mux,
 		confModifier,
+		httpReg,
 		isCustomURL,
 		isFirstRun,
 	)
 	fatalOnError(err)
+
+	mw.set(web)
 
 	globalContext.web = web
 
@@ -804,7 +819,7 @@ func run(
 	fatalOnError(err)
 
 	if !isFirstRun {
-		err = initDNS(ctx, slogLogger, tlsMgr, confModifier, statsDir, querylogDir)
+		err = initDNS(ctx, slogLogger, tlsMgr, confModifier, httpReg, statsDir, querylogDir)
 		fatalOnError(err)
 
 		tlsMgr.start(ctx)

@@ -24,7 +24,9 @@ type jsonError struct {
 // TODO(a.garipov): Either take the logger from the server after we've
 // refactored logging or make this not a method of *Server.
 func (s *server) notImplemented(w http.ResponseWriter, r *http.Request) {
-	aghhttp.WriteJSONResponse(w, r, http.StatusNotImplemented, &jsonError{
+	ctx := r.Context()
+
+	aghhttp.WriteJSONResponse(ctx, s.conf.Logger, w, r, http.StatusNotImplemented, &jsonError{
 		Message: aghos.Unsupported("dhcp").Error(),
 	})
 }
@@ -37,13 +39,13 @@ func (s *server) notImplemented(w http.ResponseWriter, r *http.Request) {
 // interconnected parts--such as HTTP handlers and frontend--to make that work
 // properly.
 func (s *server) registerHandlers() {
-	s.conf.HTTPRegister(http.MethodGet, "/control/dhcp/status", s.notImplemented)
-	s.conf.HTTPRegister(http.MethodGet, "/control/dhcp/interfaces", s.notImplemented)
-	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/set_config", s.notImplemented)
-	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/find_active_dhcp", s.notImplemented)
-	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/add_static_lease", s.notImplemented)
-	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/remove_static_lease", s.notImplemented)
-	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/update_static_lease", s.notImplemented)
-	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/reset", s.notImplemented)
-	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/reset_leases", s.notImplemented)
+	s.conf.HTTPReg.Register(http.MethodGet, "/control/dhcp/status", s.notImplemented)
+	s.conf.HTTPReg.Register(http.MethodGet, "/control/dhcp/interfaces", s.notImplemented)
+	s.conf.HTTPReg.Register(http.MethodPost, "/control/dhcp/set_config", s.notImplemented)
+	s.conf.HTTPReg.Register(http.MethodPost, "/control/dhcp/find_active_dhcp", s.notImplemented)
+	s.conf.HTTPReg.Register(http.MethodPost, "/control/dhcp/add_static_lease", s.notImplemented)
+	s.conf.HTTPReg.Register(http.MethodPost, "/control/dhcp/remove_static_lease", s.notImplemented)
+	s.conf.HTTPReg.Register(http.MethodPost, "/control/dhcp/update_static_lease", s.notImplemented)
+	s.conf.HTTPReg.Register(http.MethodPost, "/control/dhcp/reset", s.notImplemented)
+	s.conf.HTTPReg.Register(http.MethodPost, "/control/dhcp/reset_leases", s.notImplemented)
 }

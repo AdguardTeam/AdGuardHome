@@ -261,8 +261,10 @@ func TestDNSFilter_HandleRewriteHTTP(t *testing.T) {
 			d, err := filtering.New(&filtering.Config{
 				Logger:       testLogger,
 				ConfModifier: confModifier,
-				HTTPRegister: func(_, url string, handler http.HandlerFunc) {
-					handlers[url] = handler
+				HTTPReg: &aghtest.Registrar{
+					OnRegister: func(_, url string, handler http.HandlerFunc) {
+						handlers[url] = handler
+					},
 				},
 				Rewrites: rewriteEntriesToLegacyRewrites(testRewrites),
 			}, nil)
@@ -362,8 +364,10 @@ func TestDNSFilter_HandleRewriteSettings(t *testing.T) {
 	d, err := filtering.New(&filtering.Config{
 		Logger:       testLogger,
 		ConfModifier: confModifier,
-		HTTPRegister: func(_, url string, handler http.HandlerFunc) {
-			handlers[url] = handler
+		HTTPReg: &aghtest.Registrar{
+			OnRegister: func(_, url string, handler http.HandlerFunc) {
+				handlers[url] = handler
+			},
 		},
 		RewritesEnabled: false,
 	}, nil)
