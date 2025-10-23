@@ -309,15 +309,15 @@ func (web *webAPI) tlsServerLoop(ctx context.Context) {
 	defer slogutil.RecoverAndExit(ctx, web.logger, osutil.ExitCodeFailure)
 
 	for {
-		shouldReturn := web.serveTLS(ctx)
-		if shouldReturn {
+		shouldContinue := web.serveTLS(ctx)
+		if !shouldContinue {
 			return
 		}
 	}
 }
 
-// serveTLS initializes and starts the HTTPS server.  Returns true when server
-// shuts down gracefully.
+// serveTLS initializes and starts the HTTPS server.  Returns true when next
+// retry is necessary.
 func (web *webAPI) serveTLS(ctx context.Context) (next bool) {
 	if !web.waitForTLSReady() {
 		return false
@@ -376,8 +376,6 @@ func (web *webAPI) waitForTLSReady() (ok bool) {
 	defer web.httpsServer.cond.L.Unlock()
 
 	if web.httpsServer.inShutdown {
-		web.httpsServer.cond.L.Unlock()
-
 		return false
 	}
 
@@ -385,8 +383,6 @@ func (web *webAPI) waitForTLSReady() (ok bool) {
 	for !web.httpsServer.enabled { // sleep until necessary data is supplied
 		web.httpsServer.cond.Wait()
 		if web.httpsServer.inShutdown {
-			web.httpsServer.cond.L.Unlock()
-
 			return false
 		}
 	}

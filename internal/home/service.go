@@ -387,8 +387,6 @@ func handleServiceInstallCommand(ctx context.Context, l *slog.Logger, s service.
 func handleServiceUninstallCommand(ctx context.Context, l *slog.Logger, s service.Service) {
 	if aghos.IsOpenWrt() {
 		handleOpenWrtUninstall(ctx, l)
-
-		os.Exit(osutil.ExitCodeFailure)
 	}
 
 	if err := svcAction(ctx, l, s, "stop"); err != nil {
@@ -406,14 +404,15 @@ func handleServiceUninstallCommand(ctx context.Context, l *slog.Logger, s servic
 	}
 }
 
-// handleOpenWrtUninstall handles service "uninstall" command for OpenWrt.  l
-// must not be nil.
+// handleOpenWrtUninstall handles service "uninstall" command for OpenWrt.
+// Exits on error.  l must not be nil.
 func handleOpenWrtUninstall(ctx context.Context, l *slog.Logger) {
 	// On OpenWrt it is important to run disable command first as it will remove
 	// the symlink.
 	_, err := runInitdCommand(ctx, "disable")
 	if err != nil {
 		l.ErrorContext(ctx, "running init disable", slogutil.KeyError, err)
+		os.Exit(osutil.ExitCodeFailure)
 	}
 }
 
