@@ -24,6 +24,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Added
 
+- New field `"start_time"` in the `GET /control/status` response.
 - New DNS rewrite settings endpoints `GET /control/rewrite/settings` and `PUT /control/rewrite/settings/update`.  See `openapi/openapi.yaml` for details.
 - New fields `"groups"` and `"group_id"` added to the HTTP API (`GET /control/blocked_services/all`).  See `openapi/openapi.yaml` for the full description.
 

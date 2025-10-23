@@ -107,6 +107,9 @@ type statusResponse struct {
 	// milliseconds.
 	ProtectionDisabledDuration int64 `json:"protection_disabled_duration"`
 
+	// StartTime is the start time of the web API server in Unix milliseconds.
+	StartTime int64 `json:"start_time"`
+
 	ProtectionEnabled bool `json:"protection_enabled"`
 	// TODO(e.burkov): Inspect if front-end doesn't requires this field as
 	// openapi.yaml declares.
@@ -157,6 +160,7 @@ func (web *webAPI) handleStatus(w http.ResponseWriter, r *http.Request) {
 			DNSPort:                    config.DNS.Port,
 			HTTPPort:                   config.HTTPConfig.Address.Port(),
 			ProtectionDisabledDuration: protectionDisabledDuration,
+			StartTime:                  web.startTime,
 			ProtectionEnabled:          protEnabled,
 			IsRunning:                  isRunning(),
 		}

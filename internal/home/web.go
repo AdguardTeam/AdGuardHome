@@ -145,6 +145,9 @@ type webAPI struct {
 	// httpsServer is the server that handles HTTPS traffic.  If it is not nil,
 	// [Web.http3Server] must also not be nil.
 	httpsServer httpsServer
+
+	// startTime is the start time of the web API server in Unix milliseconds.
+	startTime int64
 }
 
 // newWebAPI creates a new instance of the web UI and API server.  conf must be
@@ -162,6 +165,7 @@ func newWebAPI(ctx context.Context, conf *webConfig) (w *webAPI) {
 		baseLogger:   conf.baseLogger,
 		tlsManager:   conf.tlsManager,
 		auth:         conf.auth,
+		startTime:    time.Now().UnixMilli(),
 	}
 
 	clientFS := http.FileServer(http.FS(conf.clientFS))
