@@ -9,14 +9,34 @@ The format is based on [*Keep a Changelog*](https://keepachangelog.com/en/1.0.0/
 <!--
 ## [v0.108.0] – TBA
 
-## [v0.107.68] - 2025-10-14 (APPROX.)
+## [v0.107.69] - 2025-11-06 (APPROX.)
 
-See also the [v0.107.68 GitHub milestone][ms-v0.107.68].
+See also the [v0.107.69 GitHub milestone][ms-v0.107.69].
 
-[ms-v0.107.68]: https://github.com/AdguardTeam/AdGuardHome/milestone/103?closed=1
+[ms-v0.107.69]: https://github.com/AdguardTeam/AdGuardHome/milestone/104?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
+
+### Changed
+
+- Node.js 24 is now used to build the frontend.
+
+### Deprecated
+
+- Node.js 20 and 22 support.
+
+### Removed
+
+- The outdated querylog anonymization script.
+
+<!--
+NOTE: Add new changes ABOVE THIS COMMENT.
+-->
+
+## [v0.107.68] - 2025-10-23
+
+See also the [v0.107.68 GitHub milestone][ms-v0.107.68].
 
 ### Security
 
@@ -24,13 +44,12 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Added
 
-- New DNS rewrite settings endpoints `GET /control/rewrite/settings` and `PUT /control/rewrite/settings/update`.  See `openapi/openapi.yaml` for details.
+- New DNS rewrite settings endpoints `GET /control/rewrite/settings` and `PUT /control/rewrite/settings/update` ([#1765]).  See `openapi/openapi.yaml` for details.
 - New fields `"groups"` and `"group_id"` added to the HTTP API (`GET /control/blocked_services/all`).  See `openapi/openapi.yaml` for the full description.
 
 ### Changed
 
-- `POST /control/rewrite/add` and `PUT /control/rewrite/update` now accept the optional field "enabled".  See `openapi/openapi.yaml` for details.
-- Node.js 24 is now used to build the frontend.
+- `POST /control/rewrite/add` and `PUT /control/rewrite/update` now accept the optional field "enabled" ([#1765]).  See `openapi/openapi.yaml` for details.
 
 #### Configuration changes
 
@@ -59,19 +78,10 @@ In this release, the schema version has changed from 30 to 31.
 
     To roll back this change, set `schema_version` back to `30`.
 
-### Deprecated
-
-- Node.js 20 and 22 support.
-
-### Removed
-
-- The outdated querylog anonymization script.
+[#1765]: https://github.com/AdguardTeam/AdGuardHome/issues/1765
 
 [go-1.25.3]: https://groups.google.com/g/golang-announce/c/YEyj6FUNbik
-
-<!--
-NOTE: Add new changes ABOVE THIS COMMENT.
--->
+[ms-v0.107.68]: https://github.com/AdguardTeam/AdGuardHome/milestone/103?closed=1
 
 ## [v0.107.67] - 2025-09-29
 
@@ -3324,11 +3334,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 [ms-v0.104.2]: https://github.com/AdguardTeam/AdGuardHome/milestone/28?closed=1
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.68...HEAD
-[v0.107.68]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.67...v0.107.68
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.69...HEAD
+[v0.107.69]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.68...v0.107.69
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.67...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.68...HEAD
+[v0.107.68]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.67...v0.107.68
 [v0.107.67]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.66...v0.107.67
 [v0.107.66]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.65...v0.107.66
 [v0.107.65]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.64...v0.107.65
