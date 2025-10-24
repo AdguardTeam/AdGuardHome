@@ -58,6 +58,9 @@ In this release, the schema version has changed from 30 to 31.
 
     To roll back this change, set `schema_version` back to `30`.
 
+### Fixed
+- Fixed the issue where the DNS Rewrite edit modal wasn't filled with the correct values.
+
 ### Removed
 
 - The outdated querylog anonymization script.

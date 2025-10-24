@@ -68,9 +68,7 @@ class Rewrites extends Component<RewritesProps> {
     render() {
         const {
             t,
-
             rewrites,
-
             toggleRewritesModal,
         } = this.props;
 
@@ -93,7 +91,7 @@ class Rewrites extends Component<RewritesProps> {
                 <PageTitle title={t('dns_rewrites')} subtitle={t('rewrite_desc')} />
 
                 <div className={cn(isEnabledSettings ? 'text-success' : 'text-warning', 'mb-2')}>
-                    {isEnabledSettings ? this.props.t('rewrites_enabled_table_header') : this.props.t('rewrites_disabled_table_header')}
+                    {isEnabledSettings ? t('rewrites_enabled_table_header') : t('rewrites_disabled_table_header')}
                 </div>
 
                 <Card id="rewrites" bodyType="card-body box-body--settings">
@@ -112,6 +110,7 @@ class Rewrites extends Component<RewritesProps> {
 
                         <div className="card-actions">
                             <button
+                                data-testid="add-rewrite"
                                 type="button"
                                 className="btn btn-success btn-standard  mr-2"
                                 onClick={() => toggleRewritesModal({ type: MODAL_TYPE.ADD_REWRITE })}
@@ -120,6 +119,7 @@ class Rewrites extends Component<RewritesProps> {
                             </button>
 
                             <button
+                                data-testid="toggle-rewrite-settings"
                                 type="button"
                                 className="btn btn-primary btn-standard"
                                 onClick={() => this.toggleRewriteSettings()}
