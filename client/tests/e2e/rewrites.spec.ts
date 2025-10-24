@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { ADMIN_PASSWORD, ADMIN_USERNAME } from '../constants';
 
-const EXAMPLE_DOMAIN = `edit.org`;
+const EXAMPLE_DOMAIN = `example.org`;
 const EXAMPLE_UPDATED_DOMAIN = `updated.org`;
 const EXAMPLE_ANSWER = '192.168.1.1';
 
