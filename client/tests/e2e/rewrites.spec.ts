@@ -7,10 +7,12 @@ const EXAMPLE_ANSWER = '192.168.1.1';
 
 test.describe('Rewrites', () => {
     test.beforeEach(async ({ page }) => {
+        await page.goto('/login.html');
         await page.getByTestId('username').click();
         await page.getByTestId('username').fill(ADMIN_USERNAME);
         await page.getByTestId('password').click();
         await page.getByTestId('password').fill(ADMIN_PASSWORD);
+        await page.keyboard.press('Tab');
         await page.getByTestId('sign_in').click();
         await page.waitForURL((url) => !url.href.endsWith('/login.html'));
         await page.goto('/#dns_rewrites');
