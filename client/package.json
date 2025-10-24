@@ -21,7 +21,7 @@
     "type": "module",
     "dependencies": {
         "@nivo/line": "^0.64.0",
-        "axios": "^0.19.2",
+        "axios": "^0.21.1",
         "classnames": "^2.5.1",
         "clsx": "^2.1.1",
         "countries-and-timezones": "^3.6.0",
@@ -53,7 +53,8 @@
         "redux-actions": "^2.6.5",
         "redux-thunk": "^2.3.0",
         "ts-migrate": "^0.1.35",
-        "url-polyfill": "^1.1.12"
+        "url-polyfill": "^1.1.12",
+        "yaml": "2.8.1"
     },
     "devDependencies": {
         "@babel/core": "^7.24.5",
@@ -64,7 +65,7 @@
         "@babel/plugin-transform-runtime": "^7.24.3",
         "@babel/preset-env": "^7.24.5",
         "@babel/preset-react": "^7.24.1",
-        "@playwright/test": "1.50.1",
+        "@playwright/test": "1.56.0",
         "@types/lodash": "^4.17.4",
         "@types/node": "^22.13.10",
         "@types/react": "^17.0.80",
@@ -90,6 +91,7 @@
         "file-loader": "^6.2.0",
         "html-webpack-plugin": "^5.6.0",
         "jscodeshift": "^0.15.2",
+        "jsdom": "^27.0.0",
         "mini-css-extract-plugin": "^2.9.0",
         "path": "^0.12.7",
         "postcss-loader": "^8.1.1",

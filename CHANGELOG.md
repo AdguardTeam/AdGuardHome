@@ -30,6 +30,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 ### Changed
 
 - `POST /control/rewrite/add` and `PUT /control/rewrite/update` now accept the optional field "enabled".  See `openapi/openapi.yaml` for details.
+- Node.js 24 is now used to build the frontend.
 
 #### Configuration changes
 
@@ -59,7 +60,12 @@ In this release, the schema version has changed from 30 to 31.
     To roll back this change, set `schema_version` back to `30`.
 
 ### Fixed
+
 - Fixed the issue where the DNS Rewrite edit modal wasn't filled with the correct values.
+
+### Deprecated
+
+- Node.js 20 and 22 support.
 
 ### Removed
 
