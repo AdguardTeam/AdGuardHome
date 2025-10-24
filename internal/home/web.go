@@ -147,7 +147,7 @@ type webAPI struct {
 	httpsServer httpsServer
 
 	// startTime is the start time of the web API server in Unix milliseconds.
-	startTime int64
+	startTime time.Time
 }
 
 // newWebAPI creates a new instance of the web UI and API server.  conf must be
@@ -165,7 +165,7 @@ func newWebAPI(ctx context.Context, conf *webConfig) (w *webAPI) {
 		baseLogger:   conf.baseLogger,
 		tlsManager:   conf.tlsManager,
 		auth:         conf.auth,
-		startTime:    time.Now().UnixMilli(),
+		startTime:    time.Now(),
 	}
 
 	clientFS := http.FileServer(http.FS(conf.clientFS))
