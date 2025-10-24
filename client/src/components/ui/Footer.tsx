@@ -49,7 +49,10 @@ const Footer = () => {
     const onLanguageChange = (language: string) => {
         i18n.changeLanguage(language);
         setHtmlLangAttr(language);
-        dispatch(changeLanguage(language));
+
+        if (isLoggedIn) {
+            dispatch(changeLanguage(language));
+        }
     };
 
     const onThemeChange = (value: any) => {
