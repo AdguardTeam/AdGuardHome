@@ -73,7 +73,7 @@ class Table extends Component<TableProps> {
                             onClick={() => {
                                 this.props.toggleRewritesModal({
                                     type: MODAL_TYPE.EDIT_REWRITE,
-                                    original,
+                                    currentRewrite: original,
                                 });
                             }}
                             disabled={this.props.processingUpdate}
