@@ -26,6 +26,10 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Node.js 20 and 22 support.
 
+### Fixed
+
+- Fixed the issue where the DNS Rewrite edit modal wasn't filled with the correct values.
+
 ### Removed
 
 - The outdated querylog anonymization script.
