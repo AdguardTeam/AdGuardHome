@@ -21,6 +21,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/osutil/executil"
 )
@@ -243,6 +244,7 @@ func (s *server) handleDHCPSetConfigV4(
 	}
 
 	v4Conf.InterfaceName = conf.InterfaceName
+	v4Conf.Logger = s.conf.Logger.With("ip_version", "4")
 
 	// Set the default values for the fields not configurable via web API.
 	c4 := &V4ServerConf{
@@ -283,6 +285,7 @@ func (s *server) handleDHCPSetConfigV6(
 
 	enabled = v6Conf.Enabled
 	v6Conf.InterfaceName = conf.InterfaceName
+	v6Conf.Logger = s.conf.Logger.With("ip_version", "6")
 	v6Conf.notify = s.onNotify
 
 	srv6, err = v6Create(v6Conf)
@@ -735,11 +738,13 @@ func (s *server) handleReset(w http.ResponseWriter, r *http.Request) {
 
 	err = os.Remove(s.conf.dbFilePath)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
-		log.Error("dhcp: removing db: %s", err)
+		l.ErrorContext(ctx, "failed to remove database file", slogutil.KeyError, err)
 	}
 
 	s.conf = &ServerConfig{
-		ConfModifier: s.conf.ConfModifier,
+		Logger:             l,
+		CommandConstructor: s.conf.CommandConstructor,
+		ConfModifier:       s.conf.ConfModifier,
 
 		HTTPReg: s.conf.HTTPReg,
 
@@ -750,6 +755,7 @@ func (s *server) handleReset(w http.ResponseWriter, r *http.Request) {
 	}
 
 	v4conf := &V4ServerConf{
+		Logger:        s.conf.Logger.With("ip_version", "4"),
 		LeaseDuration: DefaultDHCPLeaseTTL,
 		ICMPTimeout:   DefaultDHCPTimeoutICMP,
 		notify:        s.onNotify,
@@ -757,6 +763,7 @@ func (s *server) handleReset(w http.ResponseWriter, r *http.Request) {
 	s.srv4, _ = v4Create(v4conf)
 
 	v6conf := V6ServerConf{
+		Logger:        s.conf.Logger.With("ip_version", "6"),
 		LeaseDuration: DefaultDHCPLeaseTTL,
 		notify:        s.onNotify,
 	}
