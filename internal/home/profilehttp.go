@@ -46,10 +46,12 @@ type profileJSON struct {
 
 // handleGetProfile is the handler for GET /control/profile endpoint.
 func (web *webAPI) handleGetProfile(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	var name string
 
 	if !web.auth.isGLiNet && !web.auth.isUserless {
-		u, ok := webUserFromContext(r.Context())
+		u, ok := webUserFromContext(ctx)
 		if !ok {
 			w.WriteHeader(http.StatusUnauthorized)
 
@@ -71,7 +73,7 @@ func (web *webAPI) handleGetProfile(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	aghhttp.WriteJSONResponseOK(w, r, resp)
+	aghhttp.WriteJSONResponseOK(ctx, web.logger, w, r, resp)
 }
 
 // handlePutProfile is the handler for PUT /control/profile/update endpoint.

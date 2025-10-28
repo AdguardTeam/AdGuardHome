@@ -6,7 +6,6 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/golibs/container"
-	"github.com/AdguardTeam/golibs/log"
 )
 
 // TODO(a.garipov): Get rid of a global or generate from .twosky.json.
@@ -54,15 +53,24 @@ type languageJSON struct {
 	Language string `json:"language"`
 }
 
+// handleI18nCurrentLanguage is the handler for the GET
+// /control/i18n/current_language HTTP API.
+//
 // TODO(d.kolyshev): Deprecated, remove it later.
-func handleI18nCurrentLanguage(w http.ResponseWriter, r *http.Request) {
-	log.Printf("home: language is %s", config.Language)
+func (web *webAPI) handleI18nCurrentLanguage(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	l := web.logger
 
-	aghhttp.WriteJSONResponseOK(w, r, &languageJSON{
+	l.InfoContext(ctx, "current language", "lang", config.Language)
+
+	aghhttp.WriteJSONResponseOK(ctx, l, w, r, &languageJSON{
 		Language: config.Language,
 	})
 }
 
+// handleI18nChangeLanguage is the handler for the POST
+// /control/i18n/change_language HTTP API.
+//
 // TODO(d.kolyshev): Deprecated, remove it later.
 func (web *webAPI) handleI18nChangeLanguage(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()

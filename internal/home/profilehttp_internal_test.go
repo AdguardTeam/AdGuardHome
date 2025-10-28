@@ -72,7 +72,6 @@ func TestWeb_HandleGetProfile(t *testing.T) {
 	t.Cleanup(func() { auth.close(testutil.ContextWithTimeout(t, testTimeout)) })
 
 	baseMux := http.NewServeMux()
-	globalContext.mux = baseMux
 
 	tlsMgr, err := newTLSManager(testutil.ContextWithTimeout(t, testTimeout), &tlsManagerConfig{
 		logger:       testLogger,
@@ -90,6 +89,9 @@ func TestWeb_HandleGetProfile(t *testing.T) {
 		auth,
 		baseMux,
 		agh.EmptyConfigModifier{},
+		aghhttp.EmptyRegistrar{},
+		"",
+		"",
 		false,
 		false,
 	)
@@ -132,8 +134,9 @@ func TestWeb_HandleGetProfile(t *testing.T) {
 func TestWeb_HandlePutProfile(t *testing.T) {
 	storeGlobals(t)
 
+	mw := &webMw{}
 	mux := http.NewServeMux()
-	globalContext.mux = mux
+	httpReg := aghhttp.NewDefaultRegistrar(mux, mw.wrap)
 
 	isConfigChanged := false
 	confModifier := &aghtest.ConfigModifier{
@@ -151,12 +154,16 @@ func TestWeb_HandlePutProfile(t *testing.T) {
 		nil,
 		mux,
 		confModifier,
+		httpReg,
+		"",
+		"",
 		false,
 		false,
 	)
 	require.NoError(t, err)
 
 	globalContext.web = web
+	mw.set(web)
 
 	var (
 		dataValid = errors.Must(json.Marshal(&profileJSON{

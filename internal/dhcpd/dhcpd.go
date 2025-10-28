@@ -112,7 +112,7 @@ func Create(ctx context.Context, conf *ServerConfig) (s *server, err error) {
 			CommandConstructor: conf.CommandConstructor,
 			ConfModifier:       conf.ConfModifier,
 
-			HTTPRegister: conf.HTTPRegister,
+			HTTPReg: conf.HTTPReg,
 
 			Enabled:       conf.Enabled,
 			InterfaceName: conf.InterfaceName,

@@ -60,7 +60,11 @@ type tlsManager struct {
 	// confModifier is used to update the global configuration.
 	confModifier agh.ConfigModifier
 
-	// customCipherIDs are the ID of the cipher suites that AdGuard Home must use.
+	// httpReg registers HTTP handlers.  It must not be nil.
+	httpReg aghhttp.Registrar
+
+	// customCipherIDs are the IDs of the cipher suites that AdGuard Home must
+	// use.
 	customCipherIDs []uint16
 
 	// servePlainDNS defines if plain DNS is allowed for incoming requests.
@@ -76,6 +80,8 @@ type tlsManagerConfig struct {
 	// confModifier is used to update the global configuration.  It must not be
 	// nil.
 	confModifier agh.ConfigModifier
+
+	httpReg aghhttp.Registrar
 
 	// tlsSettings contains the TLS configuration settings.
 	tlsSettings tlsConfigSettings
@@ -94,6 +100,7 @@ func newTLSManager(ctx context.Context, conf *tlsManagerConfig) (m *tlsManager, 
 		logger:        conf.logger,
 		mu:            &sync.Mutex{},
 		confModifier:  conf.confModifier,
+		httpReg:       conf.httpReg,
 		status:        &tlsConfigStatus{},
 		conf:          &conf.tlsSettings,
 		servePlainDNS: conf.servePlainDNS,
@@ -251,7 +258,7 @@ func (m *tlsManager) reconfigureDNSServer(ctx context.Context) (err error) {
 		config.Clients.Sources,
 		m.conf,
 		m,
-		httpRegister,
+		m.httpReg,
 		globalContext.clients.storage,
 		m.confModifier,
 	)
@@ -426,7 +433,7 @@ func (m *tlsManager) handleTLSStatus(w http.ResponseWriter, r *http.Request) {
 		servePlainDNS = m.servePlainDNS
 	}()
 
-	data := tlsConfig{
+	data := &tlsConfig{
 		tlsConfigSettingsExt: tlsConfigSettingsExt{
 			tlsConfigSettings: *tlsConf,
 			ServePlainDNS:     aghalg.BoolToNullBool(servePlainDNS),
@@ -434,7 +441,7 @@ func (m *tlsManager) handleTLSStatus(w http.ResponseWriter, r *http.Request) {
 		tlsConfigStatus: m.status,
 	}
 
-	marshalTLS(w, r, data)
+	m.marshalTLS(r.Context(), w, r, data)
 }
 
 // handleTLSValidate is the handler for the POST /control/tls/validate HTTP API.
@@ -471,12 +478,12 @@ func (m *tlsManager) handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 	// status.WarningValidation.
 	status := &tlsConfigStatus{}
 	_ = m.loadTLSConfig(ctx, &setts.tlsConfigSettings, status)
-	resp := tlsConfig{
+	resp := &tlsConfig{
 		tlsConfigSettingsExt: setts,
 		tlsConfigStatus:      status,
 	}
 
-	marshalTLS(w, r, resp)
+	m.marshalTLS(ctx, w, r, resp)
 }
 
 // setConfig updates manager TLS configuration with the given one.  m.mu is
@@ -548,12 +555,12 @@ func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) 
 	status := &tlsConfigStatus{}
 	err = m.loadTLSConfig(ctx, &req.tlsConfigSettings, status)
 	if err != nil {
-		resp := tlsConfig{
+		resp := &tlsConfig{
 			tlsConfigSettingsExt: req,
 			tlsConfigStatus:      status,
 		}
 
-		marshalTLS(w, r, resp)
+		m.marshalTLS(ctx, w, r, resp)
 
 		return
 	}
@@ -579,12 +586,12 @@ func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	resp := tlsConfig{
+	resp := &tlsConfig{
 		tlsConfigSettingsExt: req,
 		tlsConfigStatus:      m.status,
 	}
 
-	marshalTLS(w, r, resp)
+	m.marshalTLS(ctx, w, r, resp)
 	rc := http.NewResponseController(w)
 	err = rc.Flush()
 	if err != nil {
@@ -1027,7 +1034,14 @@ func unmarshalTLS(r *http.Request) (tlsConfigSettingsExt, error) {
 	return data, nil
 }
 
-func marshalTLS(w http.ResponseWriter, r *http.Request, data tlsConfig) {
+// marshalTLS encodes sensitive fields and writes data as JSON.  All arguments
+// must not be nil.
+func (m *tlsManager) marshalTLS(
+	ctx context.Context,
+	w http.ResponseWriter,
+	r *http.Request,
+	data *tlsConfig,
+) {
 	if data.CertificateChain != "" {
 		encoded := base64.StdEncoding.EncodeToString([]byte(data.CertificateChain))
 		data.CertificateChain = encoded
@@ -1038,12 +1052,12 @@ func marshalTLS(w http.ResponseWriter, r *http.Request, data tlsConfig) {
 		data.PrivateKey = ""
 	}
 
-	aghhttp.WriteJSONResponseOK(w, r, data)
+	aghhttp.WriteJSONResponseOK(ctx, m.logger, w, r, *data)
 }
 
 // registerWebHandlers registers HTTP handlers for TLS configuration.
 func (m *tlsManager) registerWebHandlers() {
-	httpRegister(http.MethodGet, "/control/tls/status", m.handleTLSStatus)
-	httpRegister(http.MethodPost, "/control/tls/configure", m.handleTLSConfigure)
-	httpRegister(http.MethodPost, "/control/tls/validate", m.handleTLSValidate)
+	m.httpReg.Register(http.MethodGet, "/control/tls/status", m.handleTLSStatus)
+	m.httpReg.Register(http.MethodPost, "/control/tls/configure", m.handleTLSConfigure)
+	m.httpReg.Register(http.MethodPost, "/control/tls/validate", m.handleTLSValidate)
 }

@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agh"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/updater"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
@@ -55,6 +56,9 @@ type webConfig struct {
 	// confModifier is used to update the global configuration.
 	confModifier agh.ConfigModifier
 
+	// httpReg registers HTTP handlers.  It must not be nil.
+	httpReg aghhttp.Registrar
+
 	// tlsManager contains the current configuration and state of TLS
 	// encryption.  It must not be nil.
 	tlsManager *tlsManager
@@ -71,6 +75,12 @@ type webConfig struct {
 
 	// BindAddr is the binding address with port for plain HTTP web interface.
 	BindAddr netip.AddrPort
+
+	// workDir is the base working directory.
+	workDir string
+
+	// confPath is the configuration file path.
+	confPath string
 
 	// ReadTimeout is an option to pass to http.Server for setting an
 	// appropriate field.
@@ -125,6 +135,9 @@ type webAPI struct {
 	// cmdCons is used to run external commands.
 	cmdCons executil.CommandConstructor
 
+	// httpReg registers HTTP handlers.
+	httpReg aghhttp.Registrar
+
 	// TODO(a.garipov): Refactor all these servers.
 	httpServer *http.Server
 
@@ -157,6 +170,7 @@ func newWebAPI(ctx context.Context, conf *webConfig) (w *webAPI) {
 	w = &webAPI{
 		conf:         conf,
 		confModifier: conf.confModifier,
+		httpReg:      conf.httpReg,
 		cmdCons:      conf.CommandConstructor,
 		logger:       conf.logger,
 		baseLogger:   conf.baseLogger,

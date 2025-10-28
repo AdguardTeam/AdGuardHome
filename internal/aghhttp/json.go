@@ -1,14 +1,16 @@
 package aghhttp
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/AdguardTeam/golibs/httphdr"
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 )
 
 // JSON Utilities
@@ -88,8 +90,15 @@ func (t *JSONTime) UnmarshalJSON(b []byte) (err error) {
 
 // WriteJSONResponse writes headers with the code, encodes resp into w, and logs
 // any errors it encounters.  r is used to get additional information from the
-// request.
-func WriteJSONResponse(w http.ResponseWriter, r *http.Request, code int, resp any) {
+// request.  l, w, and r must not be nil.
+func WriteJSONResponse(
+	ctx context.Context,
+	l *slog.Logger,
+	w http.ResponseWriter,
+	r *http.Request,
+	code int,
+	resp any,
+) {
 	h := w.Header()
 	h.Set(httphdr.ContentType, HdrValApplicationJSON)
 	h.Set(httphdr.Server, UserAgent())
@@ -98,15 +107,27 @@ func WriteJSONResponse(w http.ResponseWriter, r *http.Request, code int, resp an
 
 	err := json.NewEncoder(w).Encode(resp)
 	if err != nil {
-		log.Error("aghhttp: writing json resp to %s %s: %s", r.Method, r.URL.Path, err)
+		l.ErrorContext(
+			ctx,
+			"writing json response",
+			"method", r.Method,
+			"path", r.URL.Path,
+			slogutil.KeyError, err,
+		)
 	}
 }
 
 // WriteJSONResponseOK writes headers with the code 200 OK, encodes v into w,
 // and logs any errors it encounters.  r is used to get additional information
-// from the request.
-func WriteJSONResponseOK(w http.ResponseWriter, r *http.Request, v any) {
-	WriteJSONResponse(w, r, http.StatusOK, v)
+// from the request.  l, w, and r must not be nil.
+func WriteJSONResponseOK(
+	ctx context.Context,
+	l *slog.Logger,
+	w http.ResponseWriter,
+	r *http.Request,
+	v any,
+) {
+	WriteJSONResponse(ctx, l, w, r, http.StatusOK, v)
 }
 
 // ErrorCode is the error code as used by the HTTP API.  See the ErrorCode
@@ -131,11 +152,23 @@ type HTTPAPIErrorResp struct {
 
 // WriteJSONResponseError encodes err as a JSON error into w, and logs any
 // errors it encounters.  r is used to get additional information from the
-// request.
-func WriteJSONResponseError(w http.ResponseWriter, r *http.Request, err error) {
-	log.Error("aghhttp: writing json error to %s %s: %s", r.Method, r.URL.Path, err)
+// request.  l, w, and r must not be nil.
+func WriteJSONResponseError(
+	ctx context.Context,
+	l *slog.Logger,
+	w http.ResponseWriter,
+	r *http.Request,
+	err error,
+) {
+	l.ErrorContext(
+		ctx,
+		"writing json error",
+		"method", r.Method,
+		"path", r.URL.Path,
+		slogutil.KeyError, err,
+	)
 
-	WriteJSONResponse(w, r, http.StatusUnprocessableEntity, &HTTPAPIErrorResp{
+	WriteJSONResponse(ctx, l, w, r, http.StatusUnprocessableEntity, &HTTPAPIErrorResp{
 		Code: ErrorCodeTMP000,
 		Msg:  err.Error(),
 	})

@@ -109,8 +109,8 @@ type Config struct {
 	// nil.
 	ConfModifier agh.ConfigModifier `yaml:"-"`
 
-	// Register an HTTP handler
-	HTTPRegister aghhttp.RegisterFunc `yaml:"-"`
+	// HTTPReg registers HTTP handlers.  It must not be nil.
+	HTTPReg aghhttp.Registrar `yaml:"-"`
 
 	// HTTPClient is the client to use for updating the remote filters.
 	HTTPClient *http.Client `yaml:"-"`

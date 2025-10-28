@@ -370,11 +370,12 @@ func (d *DNSFilter) handleFilteringRefresh(w http.ResponseWriter, r *http.Reques
 	var err error
 
 	ctx := r.Context()
+	l := d.logger
 
 	req := Req{}
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		aghhttp.ErrorAndLog(ctx, d.logger, r, w, http.StatusBadRequest, "json decode: %s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "json decode: %s", err)
 
 		return
 	}
@@ -387,7 +388,7 @@ func (d *DNSFilter) handleFilteringRefresh(w http.ResponseWriter, r *http.Reques
 	if !ok {
 		aghhttp.ErrorAndLog(
 			ctx,
-			d.logger,
+			l,
 			r,
 			w,
 			http.StatusInternalServerError,
@@ -397,7 +398,7 @@ func (d *DNSFilter) handleFilteringRefresh(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	aghhttp.WriteJSONResponseOK(w, r, resp)
+	aghhttp.WriteJSONResponseOK(ctx, l, w, r, resp)
 }
 
 type filterJSON struct {
@@ -454,7 +455,7 @@ func (d *DNSFilter) handleFilteringStatus(w http.ResponseWriter, r *http.Request
 	resp.UserRules = d.conf.UserRules
 	d.conf.filtersMu.RUnlock()
 
-	aghhttp.WriteJSONResponseOK(w, r, resp)
+	aghhttp.WriteJSONResponseOK(r.Context(), d.logger, w, r, resp)
 }
 
 // Set filtering configuration
@@ -521,13 +522,14 @@ type checkHostResp struct {
 // API.
 func (d *DNSFilter) handleCheckHost(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	l := d.logger
 
 	query := r.URL.Query()
 	host := query.Get("name")
 	if host == "" {
 		aghhttp.ErrorAndLog(
 			ctx,
-			d.logger,
+			l,
 			r,
 			w,
 			http.StatusBadRequest,
@@ -543,7 +545,7 @@ func (d *DNSFilter) handleCheckHost(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		aghhttp.ErrorAndLog(
 			ctx,
-			d.logger,
+			l,
 			r,
 			w,
 			http.StatusUnprocessableEntity,
@@ -572,7 +574,7 @@ func (d *DNSFilter) handleCheckHost(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		aghhttp.ErrorAndLog(
 			ctx,
-			d.logger,
+			l,
 			r,
 			w,
 			http.StatusInternalServerError,
@@ -605,7 +607,7 @@ func (d *DNSFilter) handleCheckHost(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	aghhttp.WriteJSONResponseOK(w, r, resp)
+	aghhttp.WriteJSONResponseOK(ctx, l, w, r, resp)
 }
 
 // stringToDNSType is a helper function that converts a string to DNS type.  If
@@ -680,7 +682,7 @@ func (d *DNSFilter) handleSafeBrowsingStatus(w http.ResponseWriter, r *http.Requ
 		Enabled: protectedBool(d.confMu, &d.conf.SafeBrowsingEnabled),
 	}
 
-	aghhttp.WriteJSONResponseOK(w, r, resp)
+	aghhttp.WriteJSONResponseOK(r.Context(), d.logger, w, r, resp)
 }
 
 // handleParentalEnable is the handler for the POST /control/parental/enable
@@ -706,15 +708,12 @@ func (d *DNSFilter) handleParentalStatus(w http.ResponseWriter, r *http.Request)
 		Enabled: protectedBool(d.confMu, &d.conf.ParentalEnabled),
 	}
 
-	aghhttp.WriteJSONResponseOK(w, r, resp)
+	aghhttp.WriteJSONResponseOK(r.Context(), d.logger, w, r, resp)
 }
 
 // RegisterFilteringHandlers - register handlers
 func (d *DNSFilter) RegisterFilteringHandlers() {
-	registerHTTP := d.conf.HTTPRegister
-	if registerHTTP == nil {
-		return
-	}
+	registerHTTP := d.conf.HTTPReg.Register
 
 	registerHTTP(http.MethodPost, "/control/safebrowsing/enable", d.handleSafeBrowsingEnable)
 	registerHTTP(http.MethodPost, "/control/safebrowsing/disable", d.handleSafeBrowsingDisable)

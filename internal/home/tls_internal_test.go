@@ -22,6 +22,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/golibs/testutil"
@@ -153,7 +154,6 @@ func storeGlobals(tb testing.TB) {
 	prefGLFilePrefix := glFilePrefix
 	storage := globalContext.clients.storage
 	dnsServer := globalContext.dnsServer
-	mux := globalContext.mux
 	web := globalContext.web
 
 	tb.Cleanup(func() {
@@ -161,7 +161,6 @@ func storeGlobals(tb testing.TB) {
 		glFilePrefix = prefGLFilePrefix
 		globalContext.clients.storage = storage
 		globalContext.dnsServer = dnsServer
-		globalContext.mux = mux
 		globalContext.web = web
 	})
 }
@@ -307,6 +306,9 @@ func initEmptyWeb(tb testing.TB) (web *webAPI) {
 		nil,
 		http.NewServeMux(),
 		agh.EmptyConfigModifier{},
+		aghhttp.EmptyRegistrar{},
+		"",
+		"",
 		false,
 		false,
 	)
@@ -336,8 +338,6 @@ func TestTLSManager_Reload(t *testing.T) {
 		Clock:      timeutil.SystemClock{},
 	})
 	require.NoError(t, err)
-
-	globalContext.mux = http.NewServeMux()
 
 	const (
 		snBefore int64 = 1
@@ -418,8 +418,6 @@ func TestTLSManager_HandleTLSStatus(t *testing.T) {
 
 func TestValidateTLSSettings(t *testing.T) {
 	storeGlobals(t)
-
-	globalContext.mux = http.NewServeMux()
 
 	var (
 		ctx = testutil.ContextWithTimeout(t, testTimeout)
@@ -516,8 +514,6 @@ func TestValidateTLSSettings(t *testing.T) {
 func TestTLSManager_HandleTLSValidate(t *testing.T) {
 	storeGlobals(t)
 
-	globalContext.mux = http.NewServeMux()
-
 	var (
 		ctx = testutil.ContextWithTimeout(t, testTimeout)
 		err error
@@ -597,8 +593,6 @@ func TestTLSManager_HandleTLSConfigure(t *testing.T) {
 		Clock:      timeutil.SystemClock{},
 	})
 	require.NoError(t, err)
-
-	globalContext.mux = http.NewServeMux()
 
 	config.DNS.BindHosts = []netip.Addr{netip.MustParseAddr("127.0.0.1")}
 	config.DNS.Port = 0

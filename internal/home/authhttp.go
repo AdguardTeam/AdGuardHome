@@ -267,10 +267,10 @@ func (web *webAPI) handleLogout(w http.ResponseWriter, r *http.Request) {
 // registerAuthHandlers registers authentication handlers.
 func (web *webAPI) registerAuthHandlers() {
 	web.conf.mux.Handle(
-		"/control/login",
-		web.postInstallHandler(ensure(http.MethodPost, web.handleLogin)),
+		http.MethodPost+" "+"/control/login",
+		web.postInstallHandler(http.HandlerFunc(web.handleLogin)),
 	)
-	httpRegister(http.MethodGet, "/control/logout", web.handleLogout)
+	web.httpReg.Register(http.MethodGet, "/control/logout", web.handleLogout)
 }
 
 // isPublicResource returns true if p is a path to a public resource.

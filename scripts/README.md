@@ -6,14 +6,6 @@
 
 Run `make init` from the project root.
 
-## `querylog/`: Query Log Helpers
-
-### Usage
-
-- `npm install`: install dependencies. Run this first.
-
-- `npm run anonymize <source> <dst>`: read the query log from the `<source>` and write anonymized version to `<dst>`.
-
 ## `make/`: Makefile scripts
 
 The release channels are: `development` (the default), `edge`, `beta`, and `release`. If verbosity levels aren’t documented here, there are only two: `0`, don’t print anything, and `1`, be verbose.
