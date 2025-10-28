@@ -31,7 +31,7 @@ test.describe('Rewrites', () => {
     test('should edit a DNS rewrite', async ({ page }) => {
         await page.getByTestId('edit-rewrite').first().click();
         await expect(page.getByTestId('rewrites_domain')).toHaveValue(EXAMPLE_DOMAIN);
-        
+
         await page.getByTestId('rewrites_domain').clear();
         await page.getByTestId('rewrites_domain').fill(EXAMPLE_UPDATED_DOMAIN);
         await page.getByTestId('rewrites_save').click();

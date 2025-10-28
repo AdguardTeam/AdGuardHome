@@ -88,10 +88,18 @@
 
                 set -e -f -u -x
 
+                # Do not sort the commands below, as they are arranged
+                # intentionally to keep faster commands first.
                 make \
                     GOMAXPROCS=1 \
                     VERBOSE=1 \
-                    go-deps go-tools go-lint
+                    go-deps \
+                    go-tools \
+                    md-lint \
+                    sh-lint \
+                    txt-lint \
+                    go-lint \
+                    ;
 
                 make \
                     TEST_REPORTS_DIR="./test-reports/" \
