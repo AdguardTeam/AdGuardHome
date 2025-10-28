@@ -4,7 +4,7 @@ go 1.25.3
 
 require (
 	github.com/AdguardTeam/dnsproxy v0.77.0
-	github.com/AdguardTeam/golibs v0.35.0
+	github.com/AdguardTeam/golibs v0.35.2
 	github.com/AdguardTeam/urlfilter v0.22.1
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/ameshkov/dnscrypt/v2 v2.4.0
@@ -19,7 +19,7 @@ require (
 	github.com/google/gopacket v1.1.19
 	github.com/google/renameio/v2 v2.0.0
 	github.com/google/uuid v1.6.0
-	github.com/insomniacslk/dhcp v0.0.0-20251007151141-da879a2c3546
+	github.com/insomniacslk/dhcp v0.0.0-20251020182700-175e84fbb167
 	github.com/kardianos/service v1.2.4
 	github.com/mdlayher/ethernet v0.0.0-20220221185849-529eae5b6118
 	github.com/mdlayher/netlink v1.8.0
@@ -34,7 +34,7 @@ require (
 	go.etcd.io/bbolt v1.4.3
 	go.yaml.in/yaml/v4 v4.0.0-rc.2
 	golang.org/x/crypto v0.43.0
-	golang.org/x/exp v0.0.0-20251009144603-d2f985daa21b
+	golang.org/x/exp v0.0.0-20251023183803-a4bb9ffd2546
 	golang.org/x/net v0.46.0
 	golang.org/x/sys v0.37.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
@@ -87,25 +87,25 @@ require (
 	go.opentelemetry.io/otel/metric v1.38.0 // indirect
 	go.opentelemetry.io/otel/trace v1.38.0 // indirect
 	go.uber.org/mock v0.6.0 // indirect
-	golang.org/x/exp/typeparams v0.0.0-20251009144603-d2f985daa21b // indirect
+	golang.org/x/exp/typeparams v0.0.0-20251023183803-a4bb9ffd2546 // indirect
 	golang.org/x/mod v0.29.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
-	golang.org/x/telemetry v0.0.0-20251014153721-24f779f6aaef // indirect
+	golang.org/x/telemetry v0.0.0-20251022145735-5be28d707443 // indirect
 	golang.org/x/term v0.36.0 // indirect
 	golang.org/x/text v0.30.0 // indirect
 	golang.org/x/tools v0.38.0 // indirect
 	golang.org/x/vuln v1.1.4 // indirect
 	gonum.org/v1/gonum v0.16.0 // indirect
-	google.golang.org/genai v1.31.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20251014184007-4626949a642f // indirect
+	google.golang.org/genai v1.32.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20251022142026-3a174f9686a8 // indirect
 	google.golang.org/grpc v1.76.0 // indirect
 	google.golang.org/protobuf v1.36.10 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	honnef.co/go/tools v0.6.1 // indirect
 	mvdan.cc/editorconfig v0.3.0 // indirect
-	mvdan.cc/gofumpt v0.9.1 // indirect
+	mvdan.cc/gofumpt v0.9.2 // indirect
 	mvdan.cc/sh/v3 v3.12.0 // indirect
-	mvdan.cc/unparam v0.0.0-20250301125049-0df0534333a4 // indirect
+	mvdan.cc/unparam v0.0.0-20251027182757-5beb8c8f8f15 // indirect
 )
 
 // NOTE:  Keep in sync with .gitignore.
