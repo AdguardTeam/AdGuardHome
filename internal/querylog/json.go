@@ -2,6 +2,7 @@ package querylog
 
 import (
 	"context"
+	"log/slog"
 	"slices"
 	"strconv"
 	"strings"
@@ -51,24 +52,7 @@ func (l *queryLog) entryToJSON(
 	entry *logEntry,
 	anonFunc aghnet.IPMutFunc,
 ) (jsonEntry jobject) {
-	hostname := entry.QHost
-	question := jobject{
-		"type":  entry.QType,
-		"class": entry.QClass,
-		"name":  hostname,
-	}
-
-	if qhost, err := idna.ToUnicode(hostname); err != nil {
-		l.logger.DebugContext(
-			ctx,
-			"translating into unicode",
-			"hostname", hostname,
-			slogutil.KeyError, err,
-		)
-	} else if qhost != hostname && qhost != "" {
-		question["unicode_name"] = qhost
-	}
-
+	question := questionPayload(ctx, l.logger, entry)
 	entIP := slices.Clone(entry.IP)
 	anonFunc(entIP)
 
@@ -111,6 +95,30 @@ func (l *queryLog) entryToJSON(
 	l.setOrigAns(ctx, entry, jsonEntry)
 
 	return jsonEntry
+}
+
+// questionPayload builds the "question" field for a logEntry.  l and entry must
+// not be nil.
+func questionPayload(ctx context.Context, l *slog.Logger, entry *logEntry) (q jobject) {
+	hostname := entry.QHost
+	q = jobject{
+		"type":  entry.QType,
+		"class": entry.QClass,
+		"name":  hostname,
+	}
+
+	if qhost, err := idna.ToUnicode(hostname); err != nil {
+		l.DebugContext(
+			ctx,
+			"translating into unicode",
+			"hostname", hostname,
+			slogutil.KeyError, err,
+		)
+	} else if qhost != hostname && qhost != "" {
+		q["unicode_name"] = qhost
+	}
+
+	return q
 }
 
 // setMsgData sets the message data in jsonEntry.
