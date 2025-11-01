@@ -390,16 +390,11 @@ func handleServiceInstallCommand(
 	}
 }
 
-// handleServiceUninstallCommand handles service "uninstall" command.
+// handleServiceUninstallCommand handles service "uninstall" command.  l and s
+// must not be nil.
 func handleServiceUninstallCommand(ctx context.Context, l *slog.Logger, s service.Service) {
 	if aghos.IsOpenWrt() {
-		// On OpenWrt it is important to run disable command first
-		// as it will remove the symlink
-		_, err := runInitdCommand(ctx, "disable")
-		if err != nil {
-			l.ErrorContext(ctx, "running init disable", slogutil.KeyError, err)
-			os.Exit(osutil.ExitCodeFailure)
-		}
+		handleOpenWrtUninstall(ctx, l)
 	}
 
 	if err := svcAction(ctx, l, s, "stop"); err != nil {
@@ -408,20 +403,39 @@ func handleServiceUninstallCommand(ctx context.Context, l *slog.Logger, s servic
 
 	if err := svcAction(ctx, l, s, "uninstall"); err != nil {
 		l.ErrorContext(ctx, "executing action uninstall", slogutil.KeyError, err)
+
 		os.Exit(osutil.ExitCodeFailure)
 	}
 
 	if runtime.GOOS == "darwin" {
-		// Remove log files on cleanup and log errors.
-		err := os.Remove(launchdStdoutPath)
-		if err != nil && !errors.Is(err, os.ErrNotExist) {
-			l.WarnContext(ctx, "removing stdout file", slogutil.KeyError, err)
-		}
+		handleDarwinUninstall(ctx, l)
+	}
+}
 
-		err = os.Remove(launchdStderrPath)
-		if err != nil && !errors.Is(err, os.ErrNotExist) {
-			l.WarnContext(ctx, "removing stderr file", slogutil.KeyError, err)
-		}
+// handleOpenWrtUninstall handles service "uninstall" command for OpenWrt.
+// Exits on error.  l must not be nil.
+func handleOpenWrtUninstall(ctx context.Context, l *slog.Logger) {
+	// On OpenWrt it is important to run disable command first as it will remove
+	// the symlink.
+	_, err := runInitdCommand(ctx, "disable")
+	if err != nil {
+		l.ErrorContext(ctx, "running init disable", slogutil.KeyError, err)
+		os.Exit(osutil.ExitCodeFailure)
+	}
+}
+
+// handleDarwinUninstall handles service "uninstall" command for Darwin.  l
+// must not be nil.
+func handleDarwinUninstall(ctx context.Context, l *slog.Logger) {
+	// Remove log files on cleanup and log errors.
+	err := os.Remove(launchdStdoutPath)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		l.WarnContext(ctx, "removing stdout file", slogutil.KeyError, err)
+	}
+
+	err = os.Remove(launchdStderrPath)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		l.WarnContext(ctx, "removing stderr file", slogutil.KeyError, err)
 	}
 }
 
