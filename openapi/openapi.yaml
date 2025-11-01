@@ -1500,6 +1500,11 @@
         'language':
           'type': 'string'
           'example': 'en'
+        'start_time':
+          'type': 'number'
+          'format': 'double'
+          'example': 1700000000000
+          'description': 'Start time of the web API server (Unix time in milliseconds).'
     'DNSConfig':
       'type': 'object'
       'description': 'DNS server configuration'

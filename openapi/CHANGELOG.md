@@ -2,6 +2,12 @@
 
 <!-- TODO(a.garipov): Reformat in accordance with the KeepAChangelog spec. -->
 
+## v0.107.70: API changes
+
+### New `"start_time"` field in 'GET /control/status'
+
+- New field `"start_time"` indicates the start time of the web API server (Unix time in milliseconds).
+
 ## v0.107.68: API changes
 
 ### New HTTP APIs 'GET /control/rewrite/settings' and 'PUT /control/rewrite/settings/update'

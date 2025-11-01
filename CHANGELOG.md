@@ -18,6 +18,10 @@ See also the [v0.107.70 GitHub milestone][ms-v0.107.70].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Added
+
+- New field `"start_time"` in the `GET /control/status` response.
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
