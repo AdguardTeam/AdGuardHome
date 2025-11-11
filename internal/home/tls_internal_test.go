@@ -22,7 +22,6 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
-	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/golibs/testutil"
@@ -292,31 +291,6 @@ func assertCertSerialNumber(tb testing.TB, conf *tlsConfigSettings, wantSN int64
 	assert.Equal(tb, wantSN, cert.Leaf.SerialNumber.Int64())
 }
 
-// initEmptyWeb returns an initialized *webAPI with zero values and no-op mocks.
-func initEmptyWeb(tb testing.TB) (web *webAPI) {
-	tb.Helper()
-
-	web, err := initWeb(
-		testutil.ContextWithTimeout(tb, testTimeout),
-		options{},
-		nil,
-		nil,
-		testLogger,
-		nil,
-		nil,
-		http.NewServeMux(),
-		agh.EmptyConfigModifier{},
-		aghhttp.EmptyRegistrar{},
-		"",
-		"",
-		false,
-		false,
-	)
-	require.NoError(tb, err)
-
-	return web
-}
-
 func TestTLSManager_Reload(t *testing.T) {
 	storeGlobals(t)
 
@@ -363,7 +337,7 @@ func TestTLSManager_Reload(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	web := initEmptyWeb(t)
+	web := newTestWeb(t, &webConfig{})
 	m.setWebAPI(web)
 
 	conf := m.config()
@@ -431,7 +405,7 @@ func TestValidateTLSSettings(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	web := initEmptyWeb(t)
+	web := newTestWeb(t, &webConfig{})
 	m.setWebAPI(web)
 
 	tcpLn, err := net.Listen("tcp", ":0")
@@ -531,7 +505,7 @@ func TestTLSManager_HandleTLSValidate(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	web := initEmptyWeb(t)
+	web := newTestWeb(t, &webConfig{})
 	m.setWebAPI(web)
 
 	setts := &tlsConfigSettingsExt{
@@ -620,7 +594,7 @@ func TestTLSManager_HandleTLSConfigure(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	web := initEmptyWeb(t)
+	web := newTestWeb(t, &webConfig{})
 	m.setWebAPI(web)
 
 	conf := m.config()

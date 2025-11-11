@@ -325,24 +325,11 @@ func TestAuth_ServeHTTP_firstRun(t *testing.T) {
 	mux := http.NewServeMux()
 	httpReg := aghhttp.NewDefaultRegistrar(mux, mw.wrap)
 
-	ctx := testutil.ContextWithTimeout(t, testTimeout)
-	web, err := initWeb(
-		ctx,
-		options{},
-		nil,
-		nil,
-		testLogger,
-		nil,
-		nil,
-		mux,
-		agh.EmptyConfigModifier{},
-		httpReg,
-		"",
-		"",
-		false,
-		true,
-	)
-	require.NoError(t, err)
+	web := newTestWeb(t, &webConfig{
+		mux:        mux,
+		httpReg:    httpReg,
+		isFirstRun: true,
+	})
 
 	globalContext.web = web
 	mw.set(web)
@@ -499,23 +486,12 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	ctx := testutil.ContextWithTimeout(t, testTimeout)
-	web, err := initWeb(
-		ctx,
-		options{},
-		nil,
-		nil,
-		testLogger,
-		tlsMgr,
-		auth,
-		baseMux,
-		agh.EmptyConfigModifier{},
-		httpReg,
-		"",
-		"",
-		false,
-		false,
-	)
+	web := newTestWeb(t, &webConfig{
+		tlsManager: tlsMgr,
+		auth:       auth,
+		mux:        baseMux,
+		httpReg:    httpReg,
+	})
 	require.NoError(t, err)
 
 	globalContext.web = web
@@ -659,23 +635,11 @@ func TestAuth_ServeHTTP_logout(t *testing.T) {
 	baseMux := http.NewServeMux()
 	httpReg := aghhttp.NewDefaultRegistrar(baseMux, mw.wrap)
 
-	ctx := testutil.ContextWithTimeout(t, testTimeout)
-	web, err := initWeb(
-		ctx,
-		options{},
-		nil,
-		nil,
-		testLogger,
-		nil,
-		auth,
-		baseMux,
-		agh.EmptyConfigModifier{},
-		httpReg,
-		"",
-		"",
-		false,
-		false,
-	)
+	web := newTestWeb(t, &webConfig{
+		auth:    auth,
+		mux:     baseMux,
+		httpReg: httpReg,
+	})
 	require.NoError(t, err)
 
 	globalContext.web = web

@@ -570,60 +570,90 @@ func isUpdateEnabled(
 	}
 }
 
-// initWeb initializes the web module.  All arguments must not be nil.
-//
-// TODO(s.chzhen):  Use a configuration structure.
-func initWeb(
-	ctx context.Context,
-	opts options,
-	clientBuildFS fs.FS,
-	upd *updater.Updater,
-	baseLogger *slog.Logger,
-	tlsMgr *tlsManager,
-	auth *auth,
-	mux *http.ServeMux,
-	confModifier agh.ConfigModifier,
-	httpReg aghhttp.Registrar,
-	workDir string,
-	confPath string,
-	isCustomUpdURL bool,
-	isFirstRun bool,
-) (web *webAPI, err error) {
-	logger := baseLogger.With(slogutil.KeyPrefix, "webapi")
+// webConfig is a configuration structure for webAPI.
+type webConfig struct {
+	// opts are used to determine if update is enabled.
+	opts options
+
+	// clientBuildFS is used for initializing client FS.  If opts.localFrontend
+	// is false, then this field must not be nil.
+	clientBuildFS fs.FS
+
+	// updater is used for handling updates.  It must not be nil.
+	updater *updater.Updater
+
+	// baseLogger is used for logging init process and for logging inside web
+	// api.  It must not be nil.
+	baseLogger *slog.Logger
+
+	// tlsManager contains the current configuration and state of TLS
+	// encryption. It must not be nil.
+	tlsManager *tlsManager
+
+	// auth stores web user information and handles authentication.  It must not
+	// be nil.
+	auth *auth
+
+	// mux is the default *http.ServeMux, the same as [globalContext.mux]. It
+	// must not be nil.
+	mux *http.ServeMux
+
+	// configModifier is used to update the global configuration.
+	configModifier agh.ConfigModifier
+
+	// httpReg registers HTTP handlers. It must not be nil.
+	httpReg aghhttp.Registrar
+
+	// workDir is a base working directory.
+	workDir string
+
+	// confPath is a config path.
+	confPath string
+
+	// isCustomUpdURL defines if updater should use custom url.
+	isCustomUpdURL bool
+
+	// isFirstRun defines if current run is the first run.
+	isFirstRun bool
+}
+
+// newWeb initializes the web module.  conf must not be nil.
+func newWeb(ctx context.Context, conf *webConfig) (web *webAPI, err error) {
+	logger := conf.baseLogger.With(slogutil.KeyPrefix, "webapi")
 
 	webPort := suggestedWebPort(ctx, logger)
 
 	var clientFS fs.FS
-	if opts.localFrontend {
+	if conf.opts.localFrontend {
 		logger.WarnContext(ctx, "using local frontend files")
 
 		clientFS = os.DirFS("build/static")
 	} else {
-		clientFS, err = fs.Sub(clientBuildFS, "build/static")
+		clientFS, err = fs.Sub(conf.clientBuildFS, "build/static")
 		if err != nil {
 			return nil, fmt.Errorf("getting embedded client subdir: %w", err)
 		}
 	}
 
-	disableUpdate := !isUpdateEnabled(ctx, baseLogger, &opts, isCustomUpdURL)
+	disableUpdate := !isUpdateEnabled(ctx, conf.baseLogger, &conf.opts, conf.isCustomUpdURL)
 
-	webConf := &webConfig{
+	webConf := &webAPIConfig{
 		CommandConstructor: executil.SystemCommandConstructor{},
-		updater:            upd,
+		updater:            conf.updater,
 		logger:             logger,
-		baseLogger:         baseLogger,
-		confModifier:       confModifier,
-		httpReg:            httpReg,
-		tlsManager:         tlsMgr,
-		auth:               auth,
-		mux:                mux,
+		baseLogger:         conf.baseLogger,
+		confModifier:       conf.configModifier,
+		httpReg:            conf.httpReg,
+		tlsManager:         conf.tlsManager,
+		auth:               conf.auth,
+		mux:                conf.mux,
 
 		clientFS: clientFS,
 
 		BindAddr: config.HTTPConfig.Address,
 
-		workDir:  workDir,
-		confPath: confPath,
+		workDir:  conf.workDir,
+		confPath: conf.confPath,
 
 		ReadTimeout:       readTimeout,
 		ReadHeaderTimeout: readHdrTimeout,
@@ -631,9 +661,9 @@ func initWeb(
 
 		defaultWebPort: webPort,
 
-		firstRun:         isFirstRun,
+		firstRun:         conf.isFirstRun,
 		disableUpdate:    disableUpdate,
-		runningAsService: opts.runningAsService,
+		runningAsService: conf.opts.runningAsService,
 		serveHTTP3:       config.DNS.ServeHTTP3,
 	}
 
@@ -725,22 +755,23 @@ func run(
 
 	confModifier.setAuth(auth)
 
-	web, err := initWeb(
-		ctx,
-		opts,
-		clientBuildFS,
-		upd,
-		slogLogger,
-		tlsMgr,
-		auth,
-		mux,
-		confModifier,
-		httpReg,
-		workDir,
-		confPath,
-		isCustomURL,
-		isFirstRun,
-	)
+	conf := &webConfig{
+		clientBuildFS:  clientBuildFS,
+		updater:        upd,
+		opts:           opts,
+		baseLogger:     slogLogger,
+		tlsManager:     tlsMgr,
+		auth:           auth,
+		mux:            mux,
+		configModifier: confModifier,
+		httpReg:        httpReg,
+		workDir:        workDir,
+		confPath:       confPath,
+		isCustomUpdURL: isCustomURL,
+		isFirstRun:     isFirstRun,
+	}
+
+	web, err := newWeb(ctx, conf)
 	fatalOnError(err)
 
 	mw.set(web)

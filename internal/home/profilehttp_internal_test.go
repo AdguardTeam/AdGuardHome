@@ -79,22 +79,11 @@ func TestWeb_HandleGetProfile(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	web, err := initWeb(
-		testutil.ContextWithTimeout(t, testTimeout),
-		options{},
-		nil,
-		nil,
-		testLogger,
-		tlsMgr,
-		auth,
-		baseMux,
-		agh.EmptyConfigModifier{},
-		aghhttp.EmptyRegistrar{},
-		"",
-		"",
-		false,
-		false,
-	)
+	web := newTestWeb(t, &webConfig{
+		tlsManager: tlsMgr,
+		auth:       auth,
+		mux:        baseMux,
+	})
 	require.NoError(t, err)
 
 	globalContext.web = web
@@ -143,24 +132,11 @@ func TestWeb_HandlePutProfile(t *testing.T) {
 		OnApply: func(_ context.Context) { isConfigChanged = true },
 	}
 
-	ctx := testutil.ContextWithTimeout(t, testTimeout)
-	web, err := initWeb(
-		ctx,
-		options{},
-		nil,
-		nil,
-		testLogger,
-		nil,
-		nil,
-		mux,
-		confModifier,
-		httpReg,
-		"",
-		"",
-		false,
-		false,
-	)
-	require.NoError(t, err)
+	web := newTestWeb(t, &webConfig{
+		mux:            mux,
+		configModifier: confModifier,
+		httpReg:        httpReg,
+	})
 
 	globalContext.web = web
 	mw.set(web)

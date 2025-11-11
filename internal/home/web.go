@@ -40,10 +40,13 @@ const (
 	writeTimeout = 5 * time.Minute
 )
 
-type webConfig struct {
+// webAPIConfig is a configuration structure for webAPI.
+type webAPIConfig struct {
 	// CommandConstructor is used to run external commands.  It must not be nil.
 	CommandConstructor executil.CommandConstructor
 
+	// updater is used for updating AdGuard home.  If disableUpdate is set to
+	// false, it must not be nil.
 	updater *updater.Updater
 
 	// logger is a slog logger used in webAPI. It must not be nil.
@@ -71,6 +74,7 @@ type webConfig struct {
 	// must not be nil.
 	mux *http.ServeMux
 
+	// clientFS is used to initialize file server.  It must not be nil.
 	clientFS fs.FS
 
 	// BindAddr is the binding address with port for plain HTTP web interface.
@@ -97,6 +101,7 @@ type webConfig struct {
 	// defaultWebPort is the suggested default HTTP port for the install wizard.
 	defaultWebPort uint16
 
+	// firstRun, if true, tells AdGuard Home to register install handlers.
 	firstRun bool
 
 	// disableUpdate, if true, tells AdGuard Home to not check for updates.
@@ -106,6 +111,7 @@ type webConfig struct {
 	// service runner.
 	runningAsService bool
 
+	// serveHTTP3, if true, tells AdGuard Home to start HTTP3 server.
 	serveHTTP3 bool
 }
 
@@ -127,7 +133,7 @@ type httpsServer struct {
 
 // webAPI is the web UI and API server.
 type webAPI struct {
-	conf *webConfig
+	conf *webAPIConfig
 
 	// confModifier is used to update the global configuration.
 	confModifier agh.ConfigModifier
@@ -167,7 +173,7 @@ type webAPI struct {
 // valid.
 //
 // TODO(a.garipov):  Return a proper error.
-func newWebAPI(ctx context.Context, conf *webConfig) (w *webAPI) {
+func newWebAPI(ctx context.Context, conf *webAPIConfig) (w *webAPI) {
 	conf.logger.InfoContext(ctx, "initializing")
 
 	w = &webAPI{
@@ -408,6 +414,7 @@ func (web *webAPI) waitForTLSReady() (ok bool) {
 	return true
 }
 
+// mustStartHTTP3 initializes and starts HTTP3 server.
 func (web *webAPI) mustStartHTTP3(ctx context.Context, address string) {
 	defer slogutil.RecoverAndExit(ctx, web.logger, osutil.ExitCodeFailure)
 
