@@ -154,7 +154,7 @@ type dhcpInterfaceV4 struct {
 // newDHCPInterfaceV4 creates a new DHCP interface for IPv4 address family with
 // the given configuration.  If the interface is disabled, it returns nil.  conf
 // must be valid.
-func newDHCPInterfaceV4(
+func (srv *DHCPServer) newDHCPInterfaceV4(
 	ctx context.Context,
 	l *slog.Logger,
 	name string,
@@ -178,6 +178,8 @@ func newDHCPInterfaceV4(
 		addrSpace: addrSpace,
 		common: &netInterface{
 			logger:   l,
+			indexMu:  srv.leasesMu,
+			index:    srv.leases,
 			leases:   map[macKey]*Lease{},
 			name:     name,
 			leaseTTL: conf.LeaseDuration,
@@ -284,7 +286,10 @@ func (iface *dhcpInterfaceV4) buildResponse(
 	// TODO(e.burkov):  Lease should always has a hostname, investigate when
 	// it isn't the case.
 	if l.Hostname != "" {
-		resp.Options = append(resp.Options, layers.NewDHCPOption(layers.DHCPOptHostname, []byte(l.Hostname)))
+		resp.Options = append(
+			resp.Options,
+			layers.NewDHCPOption(layers.DHCPOptHostname, []byte(l.Hostname)),
+		)
 	}
 
 	return resp
@@ -296,11 +301,13 @@ func (iface *dhcpInterfaceV4) handleDiscover(
 	rw responseWriter4,
 	req *layers.DHCPv4,
 ) {
-	mac := req.ClientHWAddr
 	l := iface.common.logger
+	mac := req.ClientHWAddr
+	mk := macToKey(mac)
 
 	// Check if there's an existing lease for this MAC address.
-	mk := macToKey(mac)
+	iface.common.indexMu.Lock()
+	defer iface.common.indexMu.Unlock()
 
 	lease, hasLease := iface.common.leases[mk]
 	if hasLease {
@@ -349,6 +356,9 @@ func (iface *dhcpInterfaceV4) handleSelecting(
 	mac := req.ClientHWAddr
 	mk := macToKey(mac)
 
+	iface.common.indexMu.Lock()
+	defer iface.common.indexMu.Unlock()
+
 	lease, hasLease := iface.common.leases[mk]
 	if !hasLease {
 		l.DebugContext(ctx, "no reserved lease", "clienthwaddr", mac)
@@ -378,7 +388,6 @@ func (iface *dhcpInterfaceV4) handleInitReboot(
 	req *layers.DHCPv4,
 	reqIP netip.Addr,
 ) {
-	mac := req.ClientHWAddr
 	l := iface.common.logger
 
 	if !reqIP.Is4() {
@@ -397,7 +406,12 @@ func (iface *dhcpInterfaceV4) handleInitReboot(
 	}
 
 	// Check if the lease exists and matches.
+	mac := req.ClientHWAddr
 	mk := macToKey(mac)
+
+	iface.common.indexMu.Lock()
+	defer iface.common.indexMu.Unlock()
+
 	lease, hasLease := iface.common.leases[mk]
 	if !hasLease {
 		// If the DHCP server has no record of this client, then it MUST remain
@@ -425,7 +439,6 @@ func (iface *dhcpInterfaceV4) handleRenew(
 	rw responseWriter4,
 	req *layers.DHCPv4,
 ) {
-	mac := req.ClientHWAddr
 	l := iface.common.logger
 
 	// ciaddr MUST be filled in with client's IP address.
@@ -437,7 +450,12 @@ func (iface *dhcpInterfaceV4) handleRenew(
 	}
 
 	// Check if the lease exists and matches.
+	mac := req.ClientHWAddr
 	mk := macToKey(mac)
+
+	iface.common.indexMu.Lock()
+	defer iface.common.indexMu.Unlock()
+
 	lease, hasLease := iface.common.leases[mk]
 	if !hasLease {
 		// If the DHCP server has no record of this client, then it MUST remain
