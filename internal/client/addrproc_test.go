@@ -99,16 +99,24 @@ func TestDefaultAddrProc_Process_rDNS(t *testing.T) {
 			updIPCh := make(chan netip.Addr, 1)
 			updHostCh := make(chan string, 1)
 			updInfoCh := make(chan *whois.Info, 1)
+			onExchange := func(
+				_ context.Context,
+				ip netip.Addr,
+			) (host string, ttl time.Duration, err error) {
+				return tc.host, 0, tc.rdnsErr
+			}
 
 			p := client.NewDefaultAddrProc(&client.DefaultAddrProcConfig{
 				BaseLogger: slogutil.NewDiscardLogger(),
-				DialContext: func(_ context.Context, _, _ string) (conn net.Conn, err error) {
-					panic("not implemented")
+				DialContext: func(
+					ctx context.Context,
+					network,
+					addr string,
+				) (conn net.Conn, err error) {
+					panic(testutil.UnexpectedCall(ctx, network, addr))
 				},
 				Exchanger: &aghtest.Exchanger{
-					OnExchange: func(ip netip.Addr) (host string, ttl time.Duration, err error) {
-						return tc.host, 0, tc.rdnsErr
-					},
+					OnExchange: onExchange,
 				},
 				PrivateSubnets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
 				AddressUpdater: &aghtest.AddressUpdater{
@@ -211,15 +219,20 @@ func TestDefaultAddrProc_Process_WHOIS(t *testing.T) {
 			updHostCh := make(chan string, 1)
 			updInfoCh := make(chan *whois.Info, 1)
 
+			onExchange := func(
+				ctx context.Context,
+				addr netip.Addr,
+			) (_ string, _ time.Duration, _ error) {
+				panic(testutil.UnexpectedCall(ctx, addr))
+			}
+
 			p := client.NewDefaultAddrProc(&client.DefaultAddrProcConfig{
 				BaseLogger: slogutil.NewDiscardLogger(),
 				DialContext: func(_ context.Context, _, _ string) (conn net.Conn, err error) {
 					return whoisConn, nil
 				},
 				Exchanger: &aghtest.Exchanger{
-					OnExchange: func(_ netip.Addr) (_ string, _ time.Duration, _ error) {
-						panic("not implemented")
-					},
+					OnExchange: onExchange,
 				},
 				PrivateSubnets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
 				AddressUpdater: &aghtest.AddressUpdater{

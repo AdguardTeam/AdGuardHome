@@ -23,7 +23,9 @@ func (s *Server) HandleBefore(
 	_ *proxy.Proxy,
 	pctx *proxy.DNSContext,
 ) (err error) {
-	clientID, err := s.clientIDFromDNSContext(pctx)
+	// TODO(f.setrakov): Obtain context from arguments.
+	ctx := context.TODO()
+	clientID, err := s.clientIDFromDNSContext(ctx, pctx)
 	if err != nil {
 		return &proxy.BeforeRequestError{
 			Err:      fmt.Errorf("getting clientid: %w", err),
@@ -65,7 +67,10 @@ func (s *Server) HandleBefore(
 // clientIDFromDNSContext extracts the client's ID from the server name of the
 // client's DoT or DoQ request or the path of the client's DoH.  If the protocol
 // is not one of these, clientID is an empty string and err is nil.
-func (s *Server) clientIDFromDNSContext(pctx *proxy.DNSContext) (clientID string, err error) {
+func (s *Server) clientIDFromDNSContext(
+	ctx context.Context,
+	pctx *proxy.DNSContext,
+) (clientID string, err error) {
 	proto := pctx.Proto
 	if proto == proxy.ProtoHTTPS {
 		clientID, err = clientIDFromDNSContextHTTPS(pctx)
@@ -85,7 +90,7 @@ func (s *Server) clientIDFromDNSContext(pctx *proxy.DNSContext) (clientID string
 		return "", nil
 	}
 
-	cliSrvName, err := clientServerName(pctx, proto)
+	cliSrvName, err := clientServerName(ctx, s.logger, pctx, proto)
 	if err != nil {
 		return "", fmt.Errorf("getting client server-name: %w", err)
 	}
