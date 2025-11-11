@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strings"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/golibs/errors"
@@ -47,12 +48,22 @@ type dnsSettings struct {
 type payloadContent struct {
 	DNSSettings *dnsSettings
 
+	OnDemandEnabled int
+	OnDemandRules   []*onDemandRule
+
 	PayloadType        string
 	PayloadIdentifier  string
 	PayloadDisplayName string
 	PayloadDescription string
-	PayloadUUID        uuid.UUID
+	PayloadUUID        string
 	PayloadVersion     int
+}
+
+// onDemandRule determines which queries use the DNS server.
+//
+// See https://developer.apple.com/documentation/devicemanagement/dnssettings/ondemandruleselement.
+type onDemandRule struct {
+	Action string
 }
 
 // dnsSettingsPayloadType is the payload type for a DNSSettings profile.
@@ -67,10 +78,11 @@ type mobileConfig struct {
 	PayloadDisplayName       string
 	PayloadType              string
 	PayloadContent           []*payloadContent
-	PayloadIdentifier        uuid.UUID
-	PayloadUUID              uuid.UUID
+	PayloadIdentifier        string
+	PayloadUUID              string
 	PayloadVersion           int
 	PayloadRemovalDisallowed bool
+	PayloadScope             string
 }
 
 const (
@@ -107,18 +119,22 @@ func encodeMobileConfig(d *dnsSettings, clientID string) ([]byte, error) {
 		PayloadDescription: "Adds AdGuard Home to macOS Big Sur and iOS 14 or newer systems",
 		PayloadDisplayName: dspName,
 		PayloadType:        "Configuration",
+		PayloadScope:       "System",
 		PayloadContent: []*payloadContent{{
-			DNSSettings: d,
-
+			DNSSettings:     d,
+			OnDemandEnabled: 1,
+			OnDemandRules: []*onDemandRule{{
+				Action: "Connect",
+			}},
 			PayloadType:        dnsSettingsPayloadType,
 			PayloadIdentifier:  payloadID,
 			PayloadDisplayName: dspName,
 			PayloadDescription: "Configures device to use AdGuard Home",
-			PayloadUUID:        uuid.New(),
+			PayloadUUID:        strings.ToUpper(uuid.New().String()),
 			PayloadVersion:     1,
 		}},
-		PayloadIdentifier:        uuid.New(),
-		PayloadUUID:              uuid.New(),
+		PayloadIdentifier:        strings.ToUpper(uuid.New().String()),
+		PayloadUUID:              strings.ToUpper(uuid.New().String()),
 		PayloadVersion:           1,
 		PayloadRemovalDisallowed: false,
 	}
