@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
+	"sync"
 	"time"
 )
 
@@ -33,7 +34,15 @@ func macToKey(mac net.HardwareAddr) (key macKey) {
 // TODO(e.burkov):  Add other methods as [DHCPServer] evolves.
 type netInterface struct {
 	// logger logs the events related to the network interface.
+	//
+	// TODO(e.burkov):  Consider removing it and using the value from context.
 	logger *slog.Logger
+
+	// indexMu protects the index as well as leases in the interfaces.
+	indexMu *sync.RWMutex
+
+	// index stores the DHCP leases for quick lookups.
+	index *leaseIndex
 
 	// leases is the set of DHCP leases assigned to this interface.
 	leases map[macKey]*Lease

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/netip"
 	"os"
@@ -51,7 +52,8 @@ func (filter *FilterYAML) Path(dataDir string) string {
 	return filepath.Join(
 		dataDir,
 		filterDir,
-		strconv.FormatInt(int64(filter.ID), 10)+".txt")
+		strconv.FormatUint(uint64(filter.ID), 10)+".txt",
+	)
 }
 
 // ensureName sets provided title or default name for the filter if it doesn't
@@ -448,20 +450,28 @@ func (d *DNSFilter) refreshFiltersIntl(block, allow, force bool) (int, bool) {
 	d.EnableFilters(false)
 
 	for i := range lists {
-		uf := &lists[i]
-		updated := toUpd[i]
-		if !updated {
-			continue
-		}
-
-		p := uf.Path(d.conf.DataDir)
-		err := os.Remove(p + ".old")
-		if err != nil {
-			d.logger.ErrorContext(ctx, "removing old filter", "path", p, slogutil.KeyError, err)
+		if toUpd[i] {
+			removeOldFilterFile(ctx, d.logger, lists[i].Path(d.conf.DataDir))
 		}
 	}
 
 	return updNum, false
+}
+
+// removeOldFilterFile deletes the old filter file and logs any error at the
+// appropriate level.  l must not be nil.
+func removeOldFilterFile(ctx context.Context, l *slog.Logger, fltPath string) {
+	err := os.Remove(fltPath + ".old")
+	if err == nil {
+		return
+	}
+
+	lvl := slog.LevelWarn
+	if errors.Is(err, os.ErrNotExist) {
+		lvl = slog.LevelDebug
+	}
+
+	l.Log(ctx, lvl, "removing old filter", "path", fltPath, slogutil.KeyError, err)
 }
 
 // update refreshes filter's content and a/mtimes of it's file.
@@ -603,6 +613,7 @@ func (d *DNSFilter) load(ctx context.Context, flt *FilterYAML) (err error) {
 
 	d.logger.DebugContext(ctx, "loading filter", "id", flt.ID, "path", fileName)
 
+	// #nosec G304 -- Assume that fileName is always within DataDir.
 	file, err := os.Open(fileName)
 	if errors.Is(err, os.ErrNotExist) {
 		// Do nothing, file doesn't exist.
@@ -646,7 +657,7 @@ func (d *DNSFilter) EnableFilters(async bool) {
 func (d *DNSFilter) enableFiltersLocked(ctx context.Context, async bool) {
 	filters := make([]Filter, 1, len(d.conf.Filters)+len(d.conf.WhitelistFilters)+1)
 	filters[0] = Filter{
-		ID:   rulelist.URLFilterIDCustom,
+		ID:   rulelist.IDCustom,
 		Data: []byte(strings.Join(d.conf.UserRules, "\n")),
 	}
 

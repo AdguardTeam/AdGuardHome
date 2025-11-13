@@ -75,7 +75,7 @@ func (d *DNSFilter) hostsRewrites(
 			vals = append(vals, name)
 			rls = append(rls, &ResultRule{
 				Text:         fmt.Sprintf("%s %s", addr, name),
-				FilterListID: rulelist.URLFilterIDEtcHosts,
+				FilterListID: rulelist.APIIDEtcHosts,
 			})
 		}
 
@@ -97,7 +97,7 @@ func (d *DNSFilter) hostsRewrites(
 		}
 		rls = append(rls, &ResultRule{
 			Text:         fmt.Sprintf("%s %s", addr, host),
-			FilterListID: rulelist.URLFilterIDEtcHosts,
+			FilterListID: rulelist.APIIDEtcHosts,
 		})
 	}
 

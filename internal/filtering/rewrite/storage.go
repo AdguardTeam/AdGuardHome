@@ -40,7 +40,7 @@ type Config struct {
 	Rewrites []*Item
 
 	// ListID is used as an identifier of the underlying rules list.
-	ListID int
+	ListID rules.ListID
 }
 
 // DefaultStorage is the default storage for rewrite rules.
@@ -55,16 +55,13 @@ type DefaultStorage struct {
 	engine *urlfilter.DNSEngine
 
 	// ruleList is the filtering rule ruleList used by the engine.
-	ruleList filterlist.RuleList
+	ruleList filterlist.Interface
 
 	// rewrites stores the rewrite entries from configuration.
 	rewrites []*Item
 
 	// urlFilterID is the synthetic integer identifier for the urlfilter engine.
-	//
-	// TODO(a.garipov): Change the type to a string in module urlfilter and
-	// remove this crutch.
-	urlFilterID int
+	urlFilterID rules.ListID
 }
 
 // NewDefaultStorage returns new rewrites storage.  conf must not be nil.
@@ -140,7 +137,7 @@ func (s *DefaultStorage) resolveCNAMEChain(
 			return nil, nil
 		}
 
-		if isSelfMatchingWildcard(host, rwAns, rule.RuleText) {
+		if isSelfMatchingWildcard(host, rwAns, rule.Text()) {
 			return nil, rule.DNSRewrite
 		}
 
@@ -249,13 +246,13 @@ func (s *DefaultStorage) resetRules() (err error) {
 		rulesText = append(rulesText, rewrite.toRule())
 	}
 
-	strList := &filterlist.StringRuleList{
+	strList := filterlist.NewString(&filterlist.StringConfig{
 		ID:             s.urlFilterID,
 		RulesText:      strings.Join(rulesText, "\n"),
 		IgnoreCosmetic: true,
-	}
+	})
 
-	rs, err := filterlist.NewRuleStorage([]filterlist.RuleList{strList})
+	rs, err := filterlist.NewRuleStorage([]filterlist.Interface{strList})
 	if err != nil {
 		return fmt.Errorf("creating list storage: %w", err)
 	}

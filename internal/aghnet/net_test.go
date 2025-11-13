@@ -5,12 +5,20 @@ import (
 	"net/netip"
 	"net/url"
 	"testing"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 )
+
+// testTimeout is a common timeout for tests.
+const testTimeout = 1 * time.Second
+
+// testLogger is a logger used in tests.
+var testLogger = slogutil.NewDiscardLogger()
 
 func TestMain(m *testing.M) {
 	testutil.DiscardLogOutput(m)

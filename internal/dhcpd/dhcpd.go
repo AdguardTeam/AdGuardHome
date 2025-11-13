@@ -2,6 +2,7 @@
 package dhcpd
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/netip"
@@ -9,7 +10,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 )
 
@@ -53,7 +54,7 @@ const (
 
 // Interface is the DHCP server that deals with both IP address families.
 type Interface interface {
-	Start() (err error)
+	Start(ctx context.Context) (err error)
 	Stop() (err error)
 
 	// Enabled returns true if the DHCP server is running.
@@ -104,12 +105,14 @@ var _ Interface = (*server)(nil)
 
 // Create initializes and returns the DHCP server handling both address
 // families.  It also registers the corresponding HTTP API endpoints.
-func Create(conf *ServerConfig) (s *server, err error) {
+func Create(ctx context.Context, conf *ServerConfig) (s *server, err error) {
 	s = &server{
 		conf: &ServerConfig{
-			ConfModifier: conf.ConfModifier,
+			Logger:             conf.Logger,
+			CommandConstructor: conf.CommandConstructor,
+			ConfModifier:       conf.ConfModifier,
 
-			HTTPRegister: conf.HTTPRegister,
+			HTTPReg: conf.HTTPReg,
 
 			Enabled:       conf.Enabled,
 			InterfaceName: conf.InterfaceName,
@@ -124,7 +127,7 @@ func Create(conf *ServerConfig) (s *server, err error) {
 	// [aghhttp.RegisterFunc].
 	s.registerHandlers()
 
-	v4Enabled, v6Enabled, err := s.setServers(conf)
+	v4Enabled, v6Enabled, err := s.setServers(ctx, conf)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
 		return nil, err
@@ -157,8 +160,12 @@ func Create(conf *ServerConfig) (s *server, err error) {
 // setServers updates DHCPv4 and DHCPv6 servers created from the provided
 // configuration conf.  It returns the status of both the DHCPv4 and the DHCPv6
 // servers, which is always false for corresponding server on any error.
-func (s *server) setServers(conf *ServerConfig) (v4Enabled, v6Enabled bool, err error) {
+func (s *server) setServers(
+	ctx context.Context,
+	conf *ServerConfig,
+) (v4Enabled, v6Enabled bool, err error) {
 	v4conf := conf.Conf4
+	v4conf.Logger = s.conf.Logger.With("ip_version", "4")
 	v4conf.InterfaceName = s.conf.InterfaceName
 	v4conf.notify = s.onNotify
 	v4conf.Enabled = s.conf.Enabled && v4conf.RangeStart.IsValid()
@@ -169,10 +176,11 @@ func (s *server) setServers(conf *ServerConfig) (v4Enabled, v6Enabled bool, err 
 			return false, false, fmt.Errorf("creating dhcpv4 srv: %w", err)
 		}
 
-		log.Debug("dhcpd: warning: creating dhcpv4 srv: %s", err)
+		s.conf.Logger.WarnContext(ctx, "creating dhcpv4 server", slogutil.KeyError, err)
 	}
 
 	v6conf := conf.Conf6
+	v6conf.Logger = s.conf.Logger.With("ip_version", "6")
 	v6conf.InterfaceName = s.conf.InterfaceName
 	v6conf.notify = s.onNotify
 	v6conf.Enabled = s.conf.Enabled && len(v6conf.RangeStart) != 0
@@ -212,7 +220,9 @@ func (s *server) onNotify(flags uint32) {
 	if flags == LeaseChangedDBStore {
 		err := s.dbStore()
 		if err != nil {
-			log.Error("updating db: %s", err)
+			// TODO(s.chzhen):  Pass context.
+			ctx := context.TODO()
+			s.conf.Logger.ErrorContext(ctx, "updating db", slogutil.KeyError, err)
 		}
 
 		return
@@ -238,13 +248,13 @@ func (s *server) WriteDiskConfig(c *ServerConfig) {
 }
 
 // Start will listen on port 67 and serve DHCP requests.
-func (s *server) Start() (err error) {
-	err = s.srv4.Start()
+func (s *server) Start(ctx context.Context) (err error) {
+	err = s.srv4.Start(ctx)
 	if err != nil {
 		return err
 	}
 
-	err = s.srv6.Start()
+	err = s.srv6.Start(ctx)
 	if err != nil {
 		return err
 	}

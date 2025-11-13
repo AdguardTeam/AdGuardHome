@@ -96,7 +96,7 @@ type dhcpInterfaceV6 struct {
 // newDHCPInterfaceV6 creates a new DHCP interface for IPv6 address family with
 // the given configuration.  If the interface is disabled, it returns nil.  conf
 // must be valid.
-func newDHCPInterfaceV6(
+func (srv *DHCPServer) newDHCPInterfaceV6(
 	ctx context.Context,
 	l *slog.Logger,
 	name string,
@@ -113,6 +113,8 @@ func newDHCPInterfaceV6(
 		common: &netInterface{
 			logger:   l,
 			leases:   map[macKey]*Lease{},
+			indexMu:  srv.leasesMu,
+			index:    srv.leases,
 			name:     name,
 			leaseTTL: conf.LeaseDuration,
 		},

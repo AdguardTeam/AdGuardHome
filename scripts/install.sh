@@ -301,7 +301,7 @@ fix_darwin() {
 
 # Function fix_freebsd performs some fixes to make it work on FreeBSD.
 fix_freebsd() {
-	if ! [ "$os" = 'freebsd' ]; then
+	if [ "$os" != 'freebsd' ]; then
 		return 0
 	fi
 

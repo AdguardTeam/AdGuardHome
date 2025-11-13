@@ -2,14 +2,19 @@ package configmigrate
 
 import (
 	"bytes"
+	"context"
 	"fmt"
+	"log/slog"
 
-	"github.com/AdguardTeam/golibs/log"
-	yaml "gopkg.in/yaml.v3"
+	yaml "go.yaml.in/yaml/v4"
 )
 
 // Config is a the configuration for initializing a [Migrator].
 type Config struct {
+	// Logger is used to log the operation of configuration migrator.  It must
+	// not be nil.
+	Logger *slog.Logger
+
 	// WorkingDir is the absolute path to the working directory of AdGuardHome.
 	WorkingDir string
 
@@ -19,6 +24,7 @@ type Config struct {
 
 // Migrator performs the YAML configuration file migrations.
 type Migrator struct {
+	logger     *slog.Logger
 	workingDir string
 	dataDir    string
 }
@@ -26,6 +32,7 @@ type Migrator struct {
 // New creates a new Migrator.
 func New(c *Config) (m *Migrator) {
 	return &Migrator{
+		logger:     c.Logger,
 		workingDir: c.WorkingDir,
 		dataDir:    c.DataDir,
 	}
@@ -35,7 +42,11 @@ func New(c *Config) (m *Migrator) {
 // schema version, if needed.  It returns the body of the upgraded config file,
 // whether the file was upgraded, and an error, if any.  If upgraded is false,
 // the body is the same as the input.
-func (m *Migrator) Migrate(body []byte, target uint) (newBody []byte, upgraded bool, err error) {
+func (m *Migrator) Migrate(
+	ctx context.Context,
+	body []byte,
+	target uint,
+) (newBody []byte, upgraded bool, err error) {
 	diskConf := yobj{}
 	err = yaml.Unmarshal(body, &diskConf)
 	if err != nil {
@@ -49,7 +60,7 @@ func (m *Migrator) Migrate(body []byte, target uint) (newBody []byte, upgraded b
 	}
 
 	current := uint(currentInt)
-	log.Debug("got schema version %v", current)
+	m.logger.DebugContext(ctx, "got", "schema_version", current)
 
 	if err = validateVersion(current, target); err != nil {
 		// Don't wrap the error, since it's informative enough as is.
@@ -58,7 +69,7 @@ func (m *Migrator) Migrate(body []byte, target uint) (newBody []byte, upgraded b
 		return body, false, nil
 	}
 
-	if err = m.upgradeConfigSchema(current, target, diskConf); err != nil {
+	if err = m.upgradeConfigSchema(ctx, current, target, diskConf); err != nil {
 		// Don't wrap the error, since it's informative enough as is.
 		return body, false, err
 	}
@@ -89,52 +100,57 @@ func validateVersion(current, target uint) (err error) {
 }
 
 // migrateFunc is a function that upgrades a config and returns an error.
-type migrateFunc = func(diskConf yobj) (err error)
+type migrateFunc = func(ctx context.Context, diskConf yobj) (err error)
 
 // upgradeConfigSchema upgrades the configuration schema in diskConf from
 // current to target version.  current must be less than target, and both must
 // be non-negative and less or equal to [LastSchemaVersion].
-func (m *Migrator) upgradeConfigSchema(current, target uint, diskConf yobj) (err error) {
+func (m *Migrator) upgradeConfigSchema(
+	ctx context.Context,
+	current, target uint,
+	diskConf yobj,
+) (err error) {
 	upgrades := [LastSchemaVersion]migrateFunc{
 		0:  m.migrateTo1,
 		1:  m.migrateTo2,
-		2:  migrateTo3,
-		3:  migrateTo4,
-		4:  migrateTo5,
-		5:  migrateTo6,
-		6:  migrateTo7,
-		7:  migrateTo8,
-		8:  migrateTo9,
-		9:  migrateTo10,
-		10: migrateTo11,
-		11: migrateTo12,
-		12: migrateTo13,
-		13: migrateTo14,
-		14: migrateTo15,
-		15: migrateTo16,
-		16: migrateTo17,
-		17: migrateTo18,
-		18: migrateTo19,
-		19: migrateTo20,
-		20: migrateTo21,
-		21: migrateTo22,
-		22: migrateTo23,
-		23: migrateTo24,
-		24: migrateTo25,
-		25: migrateTo26,
-		26: migrateTo27,
-		27: migrateTo28,
+		2:  m.migrateTo3,
+		3:  m.migrateTo4,
+		4:  m.migrateTo5,
+		5:  m.migrateTo6,
+		6:  m.migrateTo7,
+		7:  m.migrateTo8,
+		8:  m.migrateTo9,
+		9:  m.migrateTo10,
+		10: m.migrateTo11,
+		11: m.migrateTo12,
+		12: m.migrateTo13,
+		13: m.migrateTo14,
+		14: m.migrateTo15,
+		15: m.migrateTo16,
+		16: m.migrateTo17,
+		17: m.migrateTo18,
+		18: m.migrateTo19,
+		19: m.migrateTo20,
+		20: m.migrateTo21,
+		21: m.migrateTo22,
+		22: m.migrateTo23,
+		23: m.migrateTo24,
+		24: m.migrateTo25,
+		25: m.migrateTo26,
+		26: m.migrateTo27,
+		27: m.migrateTo28,
 		28: m.migrateTo29,
 		29: m.migrateTo30,
+		30: m.migrateTo31,
 	}
 
 	for i, migrate := range upgrades[current:target] {
 		cur := current + uint(i)
 		next := current + uint(i) + 1
 
-		log.Printf("Upgrade yaml: %d to %d", cur, next)
+		m.logger.InfoContext(ctx, "upgrade yaml", "from", cur, "to", next)
 
-		if err = migrate(diskConf); err != nil {
+		if err = migrate(ctx, diskConf); err != nil {
 			return fmt.Errorf("migrating schema %d to %d: %w", cur, next, err)
 		}
 	}

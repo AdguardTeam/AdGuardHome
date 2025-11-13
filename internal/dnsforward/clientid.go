@@ -1,15 +1,16 @@
 package dnsforward
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"path"
 	"strings"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/dnsproxy/proxy"
-	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 )
 
@@ -94,8 +95,13 @@ type tlsConn interface {
 
 // clientServerName returns the TLS server name based on the protocol.  For
 // DNS-over-HTTPS requests, it will return the hostname part of the Host header
-// if there is one.
-func clientServerName(pctx *proxy.DNSContext, proto proxy.Proto) (srvName string, err error) {
+// if there is one.  l and pctx must not be nil.
+func clientServerName(
+	ctx context.Context,
+	l *slog.Logger,
+	pctx *proxy.DNSContext,
+	proto proxy.Proto,
+) (srvName string, err error) {
 	from := "tls conn"
 
 	switch proto {
@@ -121,7 +127,7 @@ func clientServerName(pctx *proxy.DNSContext, proto proxy.Proto) (srvName string
 		srvName = tc.ConnectionState().ServerName
 	}
 
-	log.Debug("dnsforward: got client server name %q from %s", srvName, from)
+	l.DebugContext(ctx, "got client server name", "name", srvName, "from", from)
 
 	return srvName, nil
 }

@@ -14,7 +14,9 @@ import (
 )
 
 func TestServer_notImplemented(t *testing.T) {
-	s := &server{}
+	s := &server{conf: &ServerConfig{
+		Logger: testLogger,
+	}}
 
 	w := httptest.NewRecorder()
 	r, err := http.NewRequest(http.MethodGet, "/unsupported", nil)

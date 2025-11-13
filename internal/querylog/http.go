@@ -16,6 +16,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"golang.org/x/net/idna"
@@ -59,18 +60,18 @@ type getConfigResp struct {
 
 // Register web handlers
 func (l *queryLog) initWeb() {
-	l.conf.HTTPRegister(http.MethodGet, "/control/querylog", l.handleQueryLog)
-	l.conf.HTTPRegister(http.MethodPost, "/control/querylog_clear", l.handleQueryLogClear)
-	l.conf.HTTPRegister(http.MethodGet, "/control/querylog/config", l.handleGetQueryLogConfig)
-	l.conf.HTTPRegister(
+	l.conf.HTTPReg.Register(http.MethodGet, "/control/querylog", l.handleQueryLog)
+	l.conf.HTTPReg.Register(http.MethodPost, "/control/querylog_clear", l.handleQueryLogClear)
+	l.conf.HTTPReg.Register(http.MethodGet, "/control/querylog/config", l.handleGetQueryLogConfig)
+	l.conf.HTTPReg.Register(
 		http.MethodPut,
 		"/control/querylog/config/update",
 		l.handlePutQueryLogConfig,
 	)
 
 	// Deprecated handlers.
-	l.conf.HTTPRegister(http.MethodGet, "/control/querylog_info", l.handleQueryLogInfo)
-	l.conf.HTTPRegister(http.MethodPost, "/control/querylog_config", l.handleQueryLogConfig)
+	l.conf.HTTPReg.Register(http.MethodGet, "/control/querylog_info", l.handleQueryLogInfo)
+	l.conf.HTTPReg.Register(http.MethodPost, "/control/querylog_config", l.handleQueryLogConfig)
 }
 
 // handleQueryLog is the handler for the GET /control/querylog HTTP API.
@@ -78,7 +79,7 @@ func (l *queryLog) handleQueryLog(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	params, err := l.parseSearchParams(ctx, r)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "parsing params: %s", err)
+		aghhttp.ErrorAndLog(ctx, l.logger, r, w, http.StatusBadRequest, "parsing params: %s", err)
 
 		return
 	}
@@ -94,7 +95,7 @@ func (l *queryLog) handleQueryLog(w http.ResponseWriter, r *http.Request) {
 
 	resp := l.entriesToJSON(ctx, entries, oldest, l.anonymizer.Load())
 
-	aghhttp.WriteJSONResponseOK(w, r, resp)
+	aghhttp.WriteJSONResponseOK(ctx, l.logger, w, r, resp)
 }
 
 // handleQueryLogClear is the handler for the POST /control/querylog/clear HTTP
@@ -119,7 +120,7 @@ func (l *queryLog) handleQueryLogInfo(w http.ResponseWriter, r *http.Request) {
 		ivl = timeutil.Day * 90
 	}
 
-	aghhttp.WriteJSONResponseOK(w, r, configJSON{
+	aghhttp.WriteJSONResponseOK(r.Context(), l.logger, w, r, configJSON{
 		Enabled:           aghalg.BoolToNullBool(l.conf.Enabled),
 		Interval:          ivl.Hours() / 24,
 		AnonymizeClientIP: aghalg.BoolToNullBool(l.conf.AnonymizeClientIP),
@@ -142,7 +143,7 @@ func (l *queryLog) handleGetQueryLogConfig(w http.ResponseWriter, r *http.Reques
 		}
 	}()
 
-	aghhttp.WriteJSONResponseOK(w, r, resp)
+	aghhttp.WriteJSONResponseOK(r.Context(), l.logger, w, r, resp)
 }
 
 // AnonymizeIP masks ip to anonymize the client if the ip is a valid one.
@@ -164,6 +165,8 @@ func AnonymizeIP(ip net.IP) {
 //
 // Deprecated:  Remove it when migration to the new API is over.
 func (l *queryLog) handleQueryLogConfig(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	// Set NaN as initial value to be able to know if it changed later by
 	// comparing it to NaN.
 	newConf := &configJSON{
@@ -172,7 +175,7 @@ func (l *queryLog) handleQueryLogConfig(w http.ResponseWriter, r *http.Request) 
 
 	err := json.NewDecoder(r.Body).Decode(newConf)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+		aghhttp.ErrorAndLog(ctx, l.logger, r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
@@ -181,12 +184,12 @@ func (l *queryLog) handleQueryLogConfig(w http.ResponseWriter, r *http.Request) 
 
 	hasIvl := !math.IsNaN(newConf.Interval)
 	if hasIvl && !checkInterval(ivl) {
-		aghhttp.Error(r, w, http.StatusBadRequest, "unsupported interval")
+		aghhttp.ErrorAndLog(ctx, l.logger, r, w, http.StatusBadRequest, "unsupported interval")
 
 		return
 	}
 
-	defer l.conf.ConfigModifier.Apply(r.Context())
+	defer l.conf.ConfigModifier.Apply(ctx)
 
 	l.confMu.Lock()
 	defer l.confMu.Unlock()
@@ -215,17 +218,31 @@ func (l *queryLog) handleQueryLogConfig(w http.ResponseWriter, r *http.Request) 
 // handlePutQueryLogConfig is the handler for the PUT
 // /control/querylog/config/update HTTP API.
 func (l *queryLog) handlePutQueryLogConfig(w http.ResponseWriter, r *http.Request) {
-	newConf := &getConfigResp{}
-	err := json.NewDecoder(r.Body).Decode(newConf)
+	ctx := r.Context()
+
+	newConf, err := readConfigResp(r)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+		code := http.StatusBadRequest
+		if errors.Is(err, ErrNullConfEnabled) || errors.Is(err, ErrNullAnonymizeIP) {
+			code = http.StatusUnprocessableEntity
+		}
+
+		aghhttp.ErrorAndLog(ctx, l.logger, r, w, code, "%s", err)
 
 		return
 	}
 
 	engine, err := aghnet.NewIgnoreEngine(newConf.Ignored)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusUnprocessableEntity, "ignored: %s", err)
+		aghhttp.ErrorAndLog(
+			ctx,
+			l.logger,
+			r,
+			w,
+			http.StatusUnprocessableEntity,
+			"ignored: %s",
+			err,
+		)
 
 		return
 	}
@@ -233,24 +250,62 @@ func (l *queryLog) handlePutQueryLogConfig(w http.ResponseWriter, r *http.Reques
 	ivl := time.Duration(newConf.Interval) * time.Millisecond
 	err = validateIvl(ivl)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusUnprocessableEntity, "unsupported interval: %s", err)
+		aghhttp.ErrorAndLog(
+			ctx,
+			l.logger,
+			r,
+			w,
+			http.StatusUnprocessableEntity,
+			"unsupported interval: %s",
+			err,
+		)
 
 		return
 	}
 
-	if newConf.Enabled == aghalg.NBNull {
-		aghhttp.Error(r, w, http.StatusUnprocessableEntity, "enabled is null")
+	l.applyQueryLogConfig(ctx, engine, ivl, newConf)
+}
 
-		return
+const (
+	// ErrNullConfEnabled is returned when [getConfigResp.Enabled] is not set.
+	ErrNullConfEnabled errors.Error = "enabled is null"
+
+	// ErrNullAnonymizeIP is returned when [getConfigResp.AnonymizeClientIP] is
+	// not set.
+	ErrNullAnonymizeIP errors.Error = "anonymize_client_ip is null"
+)
+
+// readConfigResp decodes and minimally validates the request body.  r must not
+// be nil.
+func readConfigResp(r *http.Request) (conf *getConfigResp, err error) {
+	conf = &getConfigResp{}
+	err = json.NewDecoder(r.Body).Decode(conf)
+	if err != nil {
+		// Don't wrap the error, because it's informative enough as is.
+		return nil, err
 	}
 
-	if newConf.AnonymizeClientIP == aghalg.NBNull {
-		aghhttp.Error(r, w, http.StatusUnprocessableEntity, "anonymize_client_ip is null")
-
-		return
+	if conf.Enabled == aghalg.NBNull {
+		return nil, ErrNullConfEnabled
 	}
 
-	defer l.conf.ConfigModifier.Apply(r.Context())
+	if conf.AnonymizeClientIP == aghalg.NBNull {
+		return nil, ErrNullAnonymizeIP
+	}
+
+	return conf, nil
+}
+
+// applyQueryLogConfig applies the validated config to queryLog.  engine must
+// not be nil.  ivl must pass [validateIvl], and newConf must be produced by
+// [readConfigResp].
+func (l *queryLog) applyQueryLogConfig(
+	ctx context.Context,
+	engine *aghnet.IgnoreEngine,
+	ivl time.Duration,
+	newConf *getConfigResp,
+) {
+	defer l.conf.ConfigModifier.Apply(ctx)
 
 	l.confMu.Lock()
 	defer l.confMu.Unlock()

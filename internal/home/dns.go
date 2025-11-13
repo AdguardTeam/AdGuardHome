@@ -27,7 +27,7 @@ import (
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/ameshkov/dnscrypt/v2"
-	yaml "gopkg.in/yaml.v3"
+	yaml "go.yaml.in/yaml/v4"
 )
 
 // Default listening ports.
@@ -41,13 +41,14 @@ const (
 
 // initDNS updates all the fields of the [globalContext] needed to initialize
 // the DNS server and initializes it at last.  It also must not be called unless
-// [config] and [globalContext] are initialized.  baseLogger, tlsMgr and
-// confModfier must not be nil.
+// [config] and [globalContext] are initialized.  baseLogger, tlsMgr,
+// confModifier, and httpReg must not be nil.
 func initDNS(
 	ctx context.Context,
 	baseLogger *slog.Logger,
 	tlsMgr *tlsManager,
 	confModifier agh.ConfigModifier,
+	httpReg aghhttp.Registrar,
 	statsDir string,
 	querylogDir string,
 ) (err error) {
@@ -58,7 +59,7 @@ func initDNS(
 		Filename:          filepath.Join(statsDir, "stats.db"),
 		Limit:             time.Duration(config.Stats.Interval),
 		ConfigModifier:    confModifier,
-		HTTPRegister:      httpRegister,
+		HTTPReg:           httpReg,
 		Enabled:           config.Stats.Enabled,
 		ShouldCountClient: globalContext.clients.shouldCountClient,
 	}
@@ -78,7 +79,7 @@ func initDNS(
 		Logger:            baseLogger.With(slogutil.KeyPrefix, "querylog"),
 		Anonymizer:        anonymizer,
 		ConfigModifier:    confModifier,
-		HTTPRegister:      httpRegister,
+		HTTPReg:           httpReg,
 		FindClient:        globalContext.clients.findMultiple,
 		BaseDir:           querylogDir,
 		AnonymizeClientIP: config.DNS.AnonymizeClientIP,
@@ -112,7 +113,7 @@ func initDNS(
 		globalContext.queryLog,
 		globalContext.dhcpServer,
 		anonymizer,
-		httpRegister,
+		httpReg,
 		tlsMgr,
 		baseLogger,
 		confModifier,
@@ -132,7 +133,7 @@ func initDNSServer(
 	qlog querylog.QueryLog,
 	dhcpSrv dnsforward.DHCP,
 	anonymizer *aghnet.IPMut,
-	httpReg aghhttp.RegisterFunc,
+	httpReg aghhttp.Registrar,
 	tlsMgr *tlsManager,
 	l *slog.Logger,
 	confModifier agh.ConfigModifier,
@@ -176,7 +177,7 @@ func initDNSServer(
 	// failed to prepare as is.  See TODO on [dnsforward.PrivateRDNSError].
 	err = globalContext.dnsServer.Prepare(ctx, dnsConf)
 	if privRDNSErr := (&dnsforward.PrivateRDNSError{}); errors.As(err, &privRDNSErr) {
-		log.Info("WARNING: %s; trying to disable private RDNS resolution", err)
+		l.WarnContext(ctx, "private rdns resolution failed; disabling", slogutil.KeyError, err)
 
 		dnsConf.UsePrivateRDNS = false
 		err = globalContext.dnsServer.Prepare(ctx, dnsConf)
@@ -235,13 +236,13 @@ func ipsToUDPAddrs(ips []netip.Addr, port uint16) (udpAddrs []*net.UDPAddr) {
 }
 
 // newServerConfig converts values from the configuration file into the internal
-// DNS server configuration.  All arguments must not be nil, except for httpReg.
+// DNS server configuration.  All arguments must not be nil.
 func newServerConfig(
 	dnsConf *dnsConfig,
 	clientSrcConf *clientSourcesConfig,
 	tlsConf *tlsConfigSettings,
 	tlsMgr *tlsManager,
-	httpReg aghhttp.RegisterFunc,
+	httpReg aghhttp.Registrar,
 	clientsContainer dnsforward.ClientsContainer,
 	confModifier agh.ConfigModifier,
 ) (newConf *dnsforward.ServerConfig, err error) {
@@ -264,7 +265,7 @@ func newServerConfig(
 		UpstreamTimeout:        time.Duration(dnsConf.UpstreamTimeout),
 		TLSv12Roots:            tlsMgr.rootCerts,
 		ConfModifier:           confModifier,
-		HTTPRegister:           httpReg,
+		HTTPReg:                httpReg,
 		LocalPTRResolvers:      dnsConf.PrivateRDNSResolvers,
 		UseDNS64:               dnsConf.UseDNS64,
 		DNS64Prefixes:          dnsConf.DNS64Prefixes,
@@ -520,10 +521,10 @@ func closeDNSServer(ctx context.Context) {
 // checkStatsAndQuerylogDirs checks and returns directory paths to store
 // statistics and query log.
 func checkStatsAndQuerylogDirs(
-	ctx *homeContext,
 	conf *configuration,
+	workDir string,
 ) (statsDir, querylogDir string, err error) {
-	baseDir := ctx.getDataDir()
+	baseDir := filepath.Join(workDir, dataDir)
 
 	statsDir = conf.Stats.DirPath
 	if statsDir == "" {

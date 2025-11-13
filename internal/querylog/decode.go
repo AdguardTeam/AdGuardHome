@@ -188,7 +188,7 @@ func (l *queryLog) decodeResultRuleKey(
 		ent.Result.Rules, vToken = l.decodeVTokenAndAddRule(ctx, key, i, dec, ent.Result.Rules)
 		if n, ok := vToken.(json.Number); ok {
 			id, _ := n.Int64()
-			ent.Result.Rules[i].FilterListID = rulelist.URLFilterID(id)
+			ent.Result.Rules[i].FilterListID = rulelist.APIID(id)
 		}
 	case "IP":
 		ent.Result.Rules, vToken = l.decodeVTokenAndAddRule(ctx, key, i, dec, ent.Result.Rules)
@@ -643,7 +643,7 @@ var resultHandlers = map[string]logEntryHandler{
 			l++
 		}
 
-		ent.Result.Rules[l-1].FilterListID = rulelist.URLFilterID(id)
+		ent.Result.Rules[l-1].FilterListID = rulelist.APIID(id)
 
 		return nil
 	},

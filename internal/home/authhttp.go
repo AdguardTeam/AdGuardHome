@@ -103,7 +103,7 @@ func (web *webAPI) handleLogin(w http.ResponseWriter, r *http.Request) {
 	req := loginJSON{}
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "json decode: %s", err)
+		aghhttp.ErrorAndLog(ctx, web.logger, r, w, http.StatusBadRequest, "json decode: %s", err)
 
 		return
 	}
@@ -173,7 +173,7 @@ func (web *webAPI) handleLogin(w http.ResponseWriter, r *http.Request) {
 	h.Set(httphdr.Pragma, "no-cache")
 	h.Set(httphdr.Expires, "0")
 
-	aghhttp.OK(w)
+	aghhttp.OK(ctx, web.logger, w)
 }
 
 // newCookie creates a new authentication cookie.  rateLimiter must not be nil.
@@ -264,13 +264,13 @@ func (web *webAPI) handleLogout(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusFound)
 }
 
-// RegisterAuthHandlers - register handlers
-func RegisterAuthHandlers(web *webAPI) {
-	globalContext.mux.Handle(
-		"/control/login",
-		postInstallHandler(ensureHandler(http.MethodPost, web.handleLogin)),
+// registerAuthHandlers registers authentication handlers.
+func (web *webAPI) registerAuthHandlers() {
+	web.conf.mux.Handle(
+		http.MethodPost+" "+"/control/login",
+		web.postInstallHandler(http.HandlerFunc(web.handleLogin)),
 	)
-	httpRegister(http.MethodGet, "/control/logout", web.handleLogout)
+	web.httpReg.Register(http.MethodGet, "/control/logout", web.handleLogout)
 }
 
 // isPublicResource returns true if p is a path to a public resource.
@@ -374,37 +374,68 @@ func (mw *authMiddlewareDefault) Wrap(h http.Handler) (wrapped http.Handler) {
 		}
 
 		path := r.URL.Path
-		u, err := mw.userFromRequest(ctx, r)
-		if err != nil {
-			mw.logger.ErrorContext(ctx, "retrieving user from request", slogutil.KeyError, err)
-		}
-
-		if u != nil {
-			if path == "/login.html" {
-				http.Redirect(w, r, "/", http.StatusFound)
-
-				return
-			}
-
-			h.ServeHTTP(w, r.WithContext(withWebUser(ctx, u)))
-
+		if mw.handleAuthenticatedUser(ctx, w, r, h, path) {
 			return
 		}
 
-		if isPublicResource(path) {
-			h.ServeHTTP(w, r)
-
-			return
-		}
-
-		if path == "/" || path == "/index.html" {
-			http.Redirect(w, r, "login.html", http.StatusFound)
-
+		if mw.handlePublicAccess(w, r, h, path) {
 			return
 		}
 
 		w.WriteHeader(http.StatusUnauthorized)
 	})
+}
+
+// handleAuthenticatedUser tries to get user from request and processes request
+// if user was successfully authenticated.  Returns true if request was handled.
+func (mw *authMiddlewareDefault) handleAuthenticatedUser(
+	ctx context.Context,
+	w http.ResponseWriter,
+	r *http.Request,
+	h http.Handler,
+	path string,
+) (ok bool) {
+	u, err := mw.userFromRequest(ctx, r)
+	if err != nil {
+		mw.logger.ErrorContext(ctx, "retrieving user from request", slogutil.KeyError, err)
+	}
+
+	if u == nil {
+		return false
+	}
+
+	if path == "/login.html" {
+		http.Redirect(w, r, "/", http.StatusFound)
+
+		return true
+	}
+
+	h.ServeHTTP(w, r.WithContext(withWebUser(ctx, u)))
+
+	return true
+}
+
+// handlePublicAccess handles request if user is trying to access public or root
+// pages.
+func (mw *authMiddlewareDefault) handlePublicAccess(
+	w http.ResponseWriter,
+	r *http.Request,
+	h http.Handler,
+	path string,
+) (ok bool) {
+	if isPublicResource(path) {
+		h.ServeHTTP(w, r)
+
+		return true
+	}
+
+	if path == "/" || path == "/index.html" {
+		http.Redirect(w, r, "login.html", http.StatusFound)
+
+		return true
+	}
+
+	return false
 }
 
 // needsAuthentication returns true if there are stored web users and requests

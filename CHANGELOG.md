@@ -9,14 +9,128 @@ The format is based on [*Keep a Changelog*](https://keepachangelog.com/en/1.0.0/
 <!--
 ## [v0.108.0] – TBA
 
-## [v0.107.66] - 2025-09-03 (APPROX.)
+## [v0.107.70] - 2025-11-25 (APPROX.)
 
-See also the [v0.107.66 GitHub milestone][ms-v0.107.66].
+See also the [v0.107.70 GitHub milestone][ms-v0.107.70].
 
-[ms-v0.107.66]: https://github.com/AdguardTeam/AdGuardHome/milestone/101?closed=1
+[ms-v0.107.70]: https://github.com/AdguardTeam/AdGuardHome/milestone/105?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
+
+### Fixed
+
+- Generated mobileconfig could not be installed on macOS 26.1.
+
+### Added
+
+- New field `"start_time"` in the `GET /control/status` response.
+
+<!--
+NOTE: Add new changes ABOVE THIS COMMENT.
+-->
+
+## [v0.107.69] - 2025-10-30
+
+See also the [v0.107.69 GitHub milestone][ms-v0.107.69].
+
+### Changed
+
+- Node.js 24 is now used to build the frontend.
+
+### Deprecated
+
+- Node.js 20 and 22 support.
+
+### Fixed
+
+- DHCP settings could not be saved ([#8075]).
+- DNS Rewrite edit modal did not populate with the correct values ([#8072]).
+
+### Removed
+
+- The outdated querylog anonymization script.
+
+[#8075]: https://github.com/AdguardTeam/AdGuardHome/issues/8075
+[#8072]: https://github.com/AdguardTeam/AdGuardHome/issues/8072
+
+[ms-v0.107.69]: https://github.com/AdguardTeam/AdGuardHome/milestone/104?closed=1
+
+## [v0.107.68] - 2025-10-23
+
+See also the [v0.107.68 GitHub milestone][ms-v0.107.68].
+
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.25.3][go-1.25.3].
+
+### Added
+
+- New DNS rewrite settings endpoints `GET /control/rewrite/settings` and `PUT /control/rewrite/settings/update` ([#1765]).  See `openapi/openapi.yaml` for details.
+- New fields `"groups"` and `"group_id"` added to the HTTP API (`GET /control/blocked_services/all`).  See `openapi/openapi.yaml` for the full description.
+
+### Changed
+
+- `POST /control/rewrite/add` and `PUT /control/rewrite/update` now accept the optional field "enabled" ([#1765]).  See `openapi/openapi.yaml` for details.
+
+#### Configuration changes
+
+In this release, the schema version has changed from 30 to 31.
+
+- Added a new boolean field `filtering.rewrites_enabled` to globally enable/disable DNS rewrites.
+- Added a new boolean field `enabled` for each entry in `filtering.rewrites` to toggle individual rewrites.
+
+    ```yaml
+    # BEFORE:
+    'filtering':
+      'rewrites':
+        - 'domain': test.example
+          'answer': 192.0.2.0
+      # …
+
+    # AFTER:
+    'filtering':
+      'rewrites_enabled': true
+      'rewrites':
+        - 'domain': test.example
+          'answer': 192.0.2.0
+          'enabled': true
+      # …
+    ```
+
+    To roll back this change, set `schema_version` back to `30`.
+
+[#1765]: https://github.com/AdguardTeam/AdGuardHome/issues/1765
+
+[go-1.25.3]: https://groups.google.com/g/golang-announce/c/YEyj6FUNbik
+[ms-v0.107.68]: https://github.com/AdguardTeam/AdGuardHome/milestone/103?closed=1
+
+## [v0.107.67] - 2025-09-29
+
+See also the [v0.107.67 GitHub milestone][ms-v0.107.67].
+
+### Added
+
+- The *HaGeZi's DNS Rebind Protection* filter for protecting against DNS rebinding attacks ([#102]).
+- Support for configuring the suggested default HTTP port for the installation wizard via the `ADGUARD_HOME_DEFAULT_WEB_PORT` environment variable (useful for vendors).
+
+### Changed
+
+- Optimized matching of filtering rules.
+
+### Fixed
+
+- Excessive configuration file overwrites when visiting the Web UI and a non-empty `language` is set.
+- Lowered the severity of log messages for failed deletion of old filter files ([#7964]).
+
+[#102]:  https://github.com/AdguardTeam/AdGuardHome/issues/102
+[#7964]: https://github.com/AdguardTeam/AdGuardHome/issues/7964
+
+[ms-v0.107.67]: https://github.com/AdguardTeam/AdGuardHome/milestone/102?closed=1
+
+## [v0.107.66] - 2025-09-15
+
+See also the [v0.107.66 GitHub milestone][ms-v0.107.66].
 
 ### Security
 
@@ -37,11 +151,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#7985]: https://github.com/AdguardTeam/AdGuardHome/issues/7985
 [#7987]: https://github.com/AdguardTeam/AdGuardHome/issues/7987
 
-[go-1.25.1]: https://groups.google.com/g/golang-announce/c/PtW9VW21NPs
-
-<!--
-NOTE: Add new changes ABOVE THIS COMMENT.
--->
+[go-1.25.1]:    https://groups.google.com/g/golang-announce/c/PtW9VW21NPs
+[ms-v0.107.66]: https://github.com/AdguardTeam/AdGuardHome/milestone/101?closed=1
 
 ## [v0.107.65] - 2025-08-20
 
@@ -86,7 +197,7 @@ In this release, the schema version has changed from 29 to 30.
 
 [#7923]: https://github.com/AdguardTeam/AdGuardHome/issues/7923
 
-[go-1.24.6]: https://groups.google.com/g/golang-announce/c/x5MKroML2yM
+[go-1.24.6]:    https://groups.google.com/g/golang-announce/c/x5MKroML2yM
 [ms-v0.107.65]: https://github.com/AdguardTeam/AdGuardHome/milestone/100?closed=1
 
 ## [v0.107.64] - 2025-07-28
@@ -105,7 +216,7 @@ See also the [v0.107.64 GitHub milestone][ms-v0.107.64].
 [#7856]: https://github.com/AdguardTeam/AdGuardHome/issues/7856
 [#7903]: https://github.com/AdguardTeam/AdGuardHome/issues/7903
 
-[go-1.24.5]: https://groups.google.com/g/golang-announce/c/gTNJnDXmn34
+[go-1.24.5]:    https://groups.google.com/g/golang-announce/c/gTNJnDXmn34
 [ms-v0.107.64]: https://github.com/AdguardTeam/AdGuardHome/milestone/99?closed=1
 
 ## [v0.107.63] - 2025-06-26
@@ -122,7 +233,7 @@ See also the [v0.107.63 GitHub milestone][ms-v0.107.63].
 
 - Status reported by the systemd service implementation in cases of auto-restart after a failed start.
 
-[go-1.24.4]: https://groups.google.com/g/golang-announce/c/ufZ8WpEsA3A
+[go-1.24.4]:    https://groups.google.com/g/golang-announce/c/ufZ8WpEsA3A
 [ms-v0.107.63]: https://github.com/AdguardTeam/AdGuardHome/milestone/98?closed=1
 
 ## [v0.107.62] - 2025-05-27
@@ -148,7 +259,7 @@ See also the [v0.107.62 GitHub milestone][ms-v0.107.62].
 [#2945]: https://github.com/AdguardTeam/AdGuardHome/issues/2945
 [#7801]: https://github.com/AdguardTeam/AdGuardHome/issues/7801
 
-[go-1.24.3]: https://groups.google.com/g/golang-announce/c/UZoIkUT367A
+[go-1.24.3]:    https://groups.google.com/g/golang-announce/c/UZoIkUT367A
 [ms-v0.107.62]: https://github.com/AdguardTeam/AdGuardHome/milestone/97?closed=1
 
 ## [v0.107.61] - 2025-04-22
@@ -3245,11 +3356,15 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 [ms-v0.104.2]: https://github.com/AdguardTeam/AdGuardHome/milestone/28?closed=1
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.66...HEAD
-[v0.107.66]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.65...v0.107.66
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.70...HEAD
+[v0.107.70]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.69...v0.107.70
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.65...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.69...HEAD
+[v0.107.69]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.68...v0.107.69
+[v0.107.68]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.67...v0.107.68
+[v0.107.67]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.66...v0.107.67
+[v0.107.66]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.65...v0.107.66
 [v0.107.65]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.64...v0.107.65
 [v0.107.64]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.63...v0.107.64
 [v0.107.63]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.62...v0.107.63

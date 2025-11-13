@@ -7,6 +7,7 @@ import (
 
 	"github.com/AdguardTeam/urlfilter"
 	"github.com/AdguardTeam/urlfilter/filterlist"
+	"github.com/AdguardTeam/urlfilter/rules"
 )
 
 // TextEngine is a single DNS filter based on a list of rules in text form.
@@ -35,19 +36,19 @@ type TextEngineConfig struct {
 	Rules []string
 
 	// ID is the ID to use inside a URL-filter engine.
-	ID URLFilterID
+	ID rules.ListID
 }
 
 // NewTextEngine returns a new rule-list filtering engine that uses rules
 // directly.  The engine is ready to use and should not be refreshed.
 func NewTextEngine(c *TextEngineConfig) (e *TextEngine, err error) {
 	text := strings.Join(c.Rules, "\n")
-	storage, err := filterlist.NewRuleStorage([]filterlist.RuleList{
-		&filterlist.StringRuleList{
+	storage, err := filterlist.NewRuleStorage([]filterlist.Interface{
+		filterlist.NewString(&filterlist.StringConfig{
 			RulesText:      text,
 			ID:             c.ID,
 			IgnoreCosmetic: true,
-		},
+		}),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("creating rule storage: %w", err)

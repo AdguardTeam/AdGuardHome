@@ -12,9 +12,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
-	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -110,13 +110,14 @@ func TestDNSFilter_handleFilteringSetURL(t *testing.T) {
 				confModifiedCalled = true
 			}
 			d, err := New(&Config{
-				Logger:           slogutil.NewDiscardLogger(),
+				Logger:           testLogger,
 				FilteringEnabled: true,
 				Filters:          tc.initial,
 				HTTPClient: &http.Client{
 					Timeout: 5 * time.Second,
 				},
 				ConfModifier: confModifier,
+				HTTPReg:      aghhttp.EmptyRegistrar{},
 				DataDir:      filtersDir,
 			}, nil)
 			require.NoError(t, err)
@@ -195,11 +196,13 @@ func TestDNSFilter_handleSafeBrowsingStatus(t *testing.T) {
 			}
 
 			d, err := New(&Config{
-				Logger:       slogutil.NewDiscardLogger(),
+				Logger:       testLogger,
 				ConfModifier: confModifier,
 				DataDir:      filtersDir,
-				HTTPRegister: func(_, url string, handler http.HandlerFunc) {
-					handlers[url] = handler
+				HTTPReg: &aghtest.Registrar{
+					OnRegister: func(_, url string, handler http.HandlerFunc) {
+						handlers[url] = handler
+					},
 				},
 				SafeBrowsingEnabled: tc.enabled,
 			}, nil)
@@ -282,11 +285,13 @@ func TestDNSFilter_handleParentalStatus(t *testing.T) {
 			}
 
 			d, err := New(&Config{
-				Logger:       slogutil.NewDiscardLogger(),
+				Logger:       testLogger,
 				ConfModifier: confModifier,
 				DataDir:      filtersDir,
-				HTTPRegister: func(_, url string, handler http.HandlerFunc) {
-					handlers[url] = handler
+				HTTPReg: &aghtest.Registrar{
+					OnRegister: func(_, url string, handler http.HandlerFunc) {
+						handlers[url] = handler
+					},
 				},
 				ParentalEnabled: tc.enabled,
 			}, nil)
@@ -384,7 +389,7 @@ func TestDNSFilter_HandleCheckHost(t *testing.T) {
 	}
 
 	dnsFilter, err := New(&Config{
-		Logger: slogutil.NewDiscardLogger(),
+		Logger: testLogger,
 		BlockedServices: &BlockedServices{
 			Schedule: schedule.EmptyWeekly(),
 		},

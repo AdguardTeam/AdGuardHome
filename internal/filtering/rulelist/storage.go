@@ -40,11 +40,13 @@ type StorageConfig struct {
 	CacheDir string
 
 	// AllowFilters are the filtering-rule lists used to exclude domain names
-	// from the filtering.  Each item must not be nil.
+	// from the filtering.  Each item must not be nil and must have unique IDs
+	// between AllowFilters and BlockFilters.
 	AllowFilters []*Filter
 
 	// BlockFilters are the filtering-rule lists used to block domain names.
-	// Each item must not be nil.
+	// Each item must not be nil and must have unique IDs between AllowFilters
+	// and BlockFilters.
 	BlockFilters []*Filter
 
 	// CustomRules contains custom rules of the user.  They have priority over
@@ -62,7 +64,7 @@ func NewStorage(c *StorageConfig) (s *Storage, err error) {
 	custom, err := NewTextEngine(&TextEngineConfig{
 		Name:  EngineNameCustom,
 		Rules: c.CustomRules,
-		ID:    URLFilterIDCustom,
+		ID:    IDCustom,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("creating custom engine: %w", err)

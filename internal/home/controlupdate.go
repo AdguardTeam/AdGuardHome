@@ -32,10 +32,13 @@ type temporaryError interface {
 //
 // TODO(a.garipov): Find out if this API used with a GET method by anyone.
 func (web *webAPI) handleVersionJSON(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	l := web.logger
+
 	resp := &versionResponse{}
 	if web.conf.disableUpdate {
 		resp.Disabled = true
-		aghhttp.WriteJSONResponseOK(w, r, resp)
+		aghhttp.WriteJSONResponseOK(ctx, l, w, r, resp)
 
 		return
 	}
@@ -48,29 +51,29 @@ func (web *webAPI) handleVersionJSON(w http.ResponseWriter, r *http.Request) {
 	if r.ContentLength != 0 {
 		err = json.NewDecoder(r.Body).Decode(req)
 		if err != nil {
-			aghhttp.Error(r, w, http.StatusBadRequest, "parsing request: %s", err)
+			aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "parsing request: %s", err)
 
 			return
 		}
 	}
 
-	err = web.requestVersionInfo(r.Context(), resp, req.Recheck)
+	err = web.requestVersionInfo(ctx, resp, req.Recheck)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
-		aghhttp.Error(r, w, http.StatusBadGateway, "%s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadGateway, "%s", err)
 
 		return
 	}
 
-	err = resp.setAllowedToAutoUpdate(web.tlsManager)
+	err = resp.setAllowedToAutoUpdate(ctx, l, web.tlsManager)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
-		aghhttp.Error(r, w, http.StatusInternalServerError, "%s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusInternalServerError, "%s", err)
 
 		return
 	}
 
-	aghhttp.WriteJSONResponseOK(w, r, resp)
+	aghhttp.WriteJSONResponseOK(ctx, l, w, r, resp)
 }
 
 // requestVersionInfo sets the VersionInfo field of resp if it can reach the
@@ -115,9 +118,19 @@ func (web *webAPI) requestVersionInfo(
 
 // handleUpdate performs an update to the latest available version procedure.
 func (web *webAPI) handleUpdate(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	l := web.logger
+
 	updater := web.conf.updater
 	if updater.NewVersion() == "" {
-		aghhttp.Error(r, w, http.StatusBadRequest, "/update request isn't allowed now")
+		aghhttp.ErrorAndLog(
+			ctx,
+			l,
+			r,
+			w,
+			http.StatusBadRequest,
+			"/update request isn't allowed now",
+		)
 
 		return
 	}
@@ -128,21 +141,24 @@ func (web *webAPI) handleUpdate(w http.ResponseWriter, r *http.Request) {
 	// See https://github.com/AdguardTeam/AdGuardHome/issues/4735.
 	execPath, err := os.Executable()
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "getting path: %s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusInternalServerError, "getting path: %s", err)
 
 		return
 	}
 
-	err = updater.Update(r.Context(), false)
+	err = updater.Update(ctx, false)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "%s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusInternalServerError, "%s", err)
 
 		return
 	}
 
-	aghhttp.OK(w)
-	if f, ok := w.(http.Flusher); ok {
-		f.Flush()
+	aghhttp.OK(ctx, web.logger, w)
+
+	rc := http.NewResponseController(w)
+	err = rc.Flush()
+	if err != nil {
+		web.logger.WarnContext(ctx, "flushing response", slogutil.KeyError, err)
 	}
 
 	// The background context is used because the underlying functions wrap it
@@ -164,8 +180,13 @@ type versionResponse struct {
 }
 
 // setAllowedToAutoUpdate sets CanAutoUpdate to true if AdGuard Home is actually
-// allowed to perform an automatic update by the OS.  tlsMgr must not be nil.
-func (vr *versionResponse) setAllowedToAutoUpdate(tlsMgr *tlsManager) (err error) {
+// allowed to perform an automatic update by the OS.  l and tlsMgr must not be
+// nil.
+func (vr *versionResponse) setAllowedToAutoUpdate(
+	ctx context.Context,
+	l *slog.Logger,
+	tlsMgr *tlsManager,
+) (err error) {
 	if vr.CanAutoUpdate != aghalg.NBTrue {
 		return nil
 	}
@@ -174,7 +195,7 @@ func (vr *versionResponse) setAllowedToAutoUpdate(tlsMgr *tlsManager) (err error
 	if tlsConfUsesPrivilegedPorts(tlsMgr.config()) ||
 		config.HTTPConfig.Address.Port() < 1024 ||
 		config.DNS.Port < 1024 {
-		canUpdate, err = aghnet.CanBindPrivilegedPorts()
+		canUpdate, err = aghnet.CanBindPrivilegedPorts(ctx, l)
 		if err != nil {
 			return fmt.Errorf("checking ability to bind privileged ports: %w", err)
 		}
@@ -192,7 +213,7 @@ func tlsConfUsesPrivilegedPorts(c *tlsConfigSettings) (ok bool) {
 }
 
 // finishUpdate completes an update procedure.  It is intended to be used as a
-// goroutine.
+// goroutine.  l and cmdCons must not be nil.
 func finishUpdate(
 	ctx context.Context,
 	l *slog.Logger,
@@ -207,55 +228,59 @@ func finishUpdate(
 	cleanup(ctx)
 	cleanupAlways()
 
-	var err error
 	if runtime.GOOS == "windows" {
-		if runningAsService {
-			// NOTE: We can't restart the service via "kardianos/service"
-			// package, because it kills the process first we can't start a new
-			// instance, because Windows doesn't allow it.
-			//
-			// TODO(a.garipov): Recheck the claim above.
-			var cmd executil.Command
-			cmd, err = cmdCons.New(ctx, &executil.CommandConfig{
-				Path: "cmd",
-				Args: []string{"/c", "net stop AdGuardHome & net start AdGuardHome"},
-			})
-			if err != nil {
-				panic(fmt.Errorf("constructing cmd: %w", err))
-			}
+		finalizeWindowsUpdate(ctx, l, cmdCons, execPath, runningAsService)
 
-			err = cmd.Start(ctx)
-			if err != nil {
-				panic(fmt.Errorf("restarting service: %w", err))
-			}
+		os.Exit(osutil.ExitCodeSuccess)
+	}
 
-			os.Exit(osutil.ExitCodeSuccess)
+	var err error
+	l.InfoContext(ctx, "restarting", "exec_path", execPath, "args", os.Args[1:])
+	err = syscall.Exec(execPath, os.Args, os.Environ())
+	if err != nil {
+		panic(fmt.Errorf("restarting: %w", err))
+	}
+}
+
+// finalizeWindowsUpdate completes an update procedure on windows.  l and
+// cmdCons must not be nil.
+func finalizeWindowsUpdate(ctx context.Context,
+	l *slog.Logger,
+	cmdCons executil.CommandConstructor,
+	execPath string,
+	runningAsService bool,
+) {
+	var commandConf *executil.CommandConfig
+
+	if runningAsService {
+		// NOTE: We can't restart the service via "kardianos/service" package,
+		// because it kills the process first we can't start a new instance,
+		// because Windows doesn't allow it.
+		//
+		// TODO(a.garipov): Recheck the claim above.
+		commandConf = &executil.CommandConfig{
+			Path: "cmd",
+			Args: []string{"/c", "net stop AdGuardHome & net start AdGuardHome"},
 		}
-
-		l.InfoContext(ctx, "restarting", "exec_path", execPath, "args", os.Args[1:])
-
-		var cmd executil.Command
-		cmd, err = cmdCons.New(ctx, &executil.CommandConfig{
+	} else {
+		commandConf = &executil.CommandConfig{
 			Path:   execPath,
 			Args:   os.Args[1:],
 			Stdin:  os.Stdin,
 			Stdout: os.Stdout,
 			Stderr: os.Stderr,
-		})
-		if err != nil {
-			panic(fmt.Errorf("constructing cmd: %w", err))
 		}
-
-		err = cmd.Start(ctx)
-		if err != nil {
-			panic(fmt.Errorf("restarting: %w", err))
-		}
-
-		os.Exit(osutil.ExitCodeSuccess)
 	}
 
 	l.InfoContext(ctx, "restarting", "exec_path", execPath, "args", os.Args[1:])
-	err = syscall.Exec(execPath, os.Args, os.Environ())
+
+	var cmd executil.Command
+	cmd, err := cmdCons.New(ctx, commandConf)
+	if err != nil {
+		panic(fmt.Errorf("constructing cmd: %w", err))
+	}
+
+	err = cmd.Start(ctx)
 	if err != nil {
 		panic(fmt.Errorf("restarting: %w", err))
 	}

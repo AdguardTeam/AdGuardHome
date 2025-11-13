@@ -128,6 +128,7 @@ export type DashboardData = {
     dnsPort: number;
     dnsAddresses: string[];
     dnsVersion: string;
+    dnsStartTime: number | null;
     clients: Client[];
     autoClients: AutoClient[];
     supportedTags: string[];
@@ -172,11 +173,16 @@ export type RewritesData = {
     currentRewrite?: {
         answer: string;
         domain: string;
+        enabled: boolean;
     };
     list: {
         answer: string;
         domain: string;
+        enabled: boolean;
     }[];
+    settings: {
+        enabled: boolean;
+    };
 };
 
 export type NormalizedTopClients = {
@@ -440,6 +446,7 @@ export const initialState: RootState = {
         dnsPort: STANDARD_DNS_PORT,
         dnsAddresses: [],
         dnsVersion: '',
+        dnsStartTime: null,
         clients: [],
         autoClients: [],
         supportedTags: [],
@@ -577,6 +584,7 @@ export const initialState: RootState = {
         isModalOpen: false,
         modalType: '',
         list: [],
+        settings: { enabled: false },
     },
     services: {
         processing: true,

@@ -1,5 +1,7 @@
 package configmigrate
 
+import "context"
+
 // migrateTo17 performs the following changes:
 //
 //	# BEFORE:
@@ -18,7 +20,7 @@ package configmigrate
 //	    'custom_ip': ""
 //	  # …
 //	# …
-func migrateTo17(diskConf yobj) (err error) {
+func (m *Migrator) migrateTo17(_ context.Context, diskConf yobj) (err error) {
 	diskConf["schema_version"] = 17
 
 	dns, ok, err := fieldVal[yobj](diskConf, "dns")

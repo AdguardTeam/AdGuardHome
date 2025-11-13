@@ -1,13 +1,15 @@
 package dnsforward
 
 import (
+	"context"
 	"fmt"
+	"log/slog"
 	"sync"
 
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/miekg/dns"
 )
 
@@ -58,6 +60,7 @@ type parseResult struct {
 // validator for it.  cv already contains the parsed upstreams along with errors
 // related.
 func newUpstreamConfigValidator(
+	ctx context.Context,
 	general []string,
 	fallback []string,
 	private []string,
@@ -70,15 +73,15 @@ func newUpstreamConfigValidator(
 	}
 
 	conf, err := proxy.ParseUpstreamsConfig(general, opts)
-	cv.generalParseResults = collectErrResults(general, err)
+	cv.generalParseResults = collectErrResults(ctx, opts.Logger, general, err)
 	insertConfResults(conf, cv.generalUpstreamResults)
 
 	conf, err = proxy.ParseUpstreamsConfig(fallback, opts)
-	cv.fallbackParseResults = collectErrResults(fallback, err)
+	cv.fallbackParseResults = collectErrResults(ctx, opts.Logger, fallback, err)
 	insertConfResults(conf, cv.fallbackUpstreamResults)
 
 	conf, err = proxy.ParseUpstreamsConfig(private, opts)
-	cv.privateParseResults = collectErrResults(private, err)
+	cv.privateParseResults = collectErrResults(ctx, opts.Logger, private, err)
 	insertConfResults(conf, cv.privateUpstreamResults)
 
 	return cv
@@ -86,8 +89,8 @@ func newUpstreamConfigValidator(
 
 // collectErrResults parses err and returns parsing results containing the
 // original upstream configuration line and the corresponding error.  err can be
-// nil.
-func collectErrResults(lines []string, err error) (results []*parseResult) {
+// nil.  l must not be nil.
+func collectErrResults(ctx context.Context, l *slog.Logger, lines []string, err error) (results []*parseResult) {
 	if err == nil {
 		return nil
 	}
@@ -97,7 +100,7 @@ func collectErrResults(lines []string, err error) (results []*parseResult) {
 
 	wrapper, ok := err.(errors.WrapperSlice)
 	if !ok {
-		log.Debug("dnsforward: configvalidator: unwrapping: %s", err)
+		l.DebugContext(ctx, "unwrapping", slogutil.KeyError, err)
 
 		return nil
 	}
@@ -107,7 +110,7 @@ func collectErrResults(lines []string, err error) (results []*parseResult) {
 	for i, e := range errs {
 		var parseErr *proxy.ParseError
 		if !errors.As(e, &parseErr) {
-			log.Debug("dnsforward: configvalidator: inserting unexpected error %d: %s", i, err)
+			l.DebugContext(ctx, "inserting unexpected error", "index", i, slogutil.KeyError, err)
 
 			continue
 		}
@@ -162,8 +165,8 @@ func insertListResults(ups []upstream.Upstream, results map[string]*upstreamResu
 // check tries to exchange with each successfully parsed upstream and enriches
 // the results with the healthcheck errors.  It should not be called after the
 // [upsConfValidator.close] method, since it makes no sense to check the closed
-// upstreams.
-func (cv *upstreamConfigValidator) check() {
+// upstreams.  l must not be nil.
+func (cv *upstreamConfigValidator) check(ctx context.Context, l *slog.Logger) {
 	const (
 		// testTLD is the special-use fully-qualified domain name for testing
 		// the DNS server reachability.
@@ -193,22 +196,23 @@ func (cv *upstreamConfigValidator) check() {
 	wg := &sync.WaitGroup{}
 
 	for _, res := range cv.generalUpstreamResults {
-		wg.Go(func() { checkSrv(res, commonChecker) })
+		wg.Go(func() { checkSrv(ctx, l, res, commonChecker) })
 	}
 	for _, res := range cv.fallbackUpstreamResults {
-		wg.Go(func() { checkSrv(res, commonChecker) })
+		wg.Go(func() { checkSrv(ctx, l, res, commonChecker) })
 	}
 	for _, res := range cv.privateUpstreamResults {
-		wg.Go(func() { checkSrv(res, arpaChecker) })
+		wg.Go(func() { checkSrv(ctx, l, res, arpaChecker) })
 	}
 
 	wg.Wait()
 }
 
 // checkSrv runs hc on the server from res, if any, and stores any occurred
-// error in res.  It is used to be run in a separate goroutine.
-func checkSrv(res *upstreamResult, hc *healthchecker) {
-	defer log.OnPanic(fmt.Sprintf("dnsforward: checking upstream %s", res.server.Address()))
+// error in res.  It is used to be run in a separate goroutine.  l must not be
+// nil.
+func checkSrv(ctx context.Context, l *slog.Logger, res *upstreamResult, hc *healthchecker) {
+	defer slogutil.RecoverAndLog(ctx, l)
 
 	res.err = hc.check(res.server)
 	if res.err != nil && res.isSpecific {
@@ -247,8 +251,11 @@ const (
 // status returns all the data collected during parsing, healthcheck, and
 // closing of the upstreams.  The returned map is keyed by the original upstream
 // configuration piece and contains the corresponding error or "OK" if there was
-// no error.
-func (cv *upstreamConfigValidator) status() (results map[string]string) {
+// no error.  l must not be nil.
+func (cv *upstreamConfigValidator) status(
+	ctx context.Context,
+	l *slog.Logger,
+) (results map[string]string) {
 	// Names of the upstream configuration sections for logging.
 	const (
 		generalSection  = "general"
@@ -259,30 +266,39 @@ func (cv *upstreamConfigValidator) status() (results map[string]string) {
 	results = map[string]string{}
 
 	for original, res := range cv.generalUpstreamResults {
-		upstreamResultToStatus(generalSection, string(original), res, results)
+		upstreamResultToStatus(ctx, l, generalSection, string(original), res, results)
 	}
 	for original, res := range cv.fallbackUpstreamResults {
-		upstreamResultToStatus(fallbackSection, string(original), res, results)
+		upstreamResultToStatus(ctx, l, fallbackSection, string(original), res, results)
 	}
 	for original, res := range cv.privateUpstreamResults {
-		upstreamResultToStatus(privateSection, string(original), res, results)
+		upstreamResultToStatus(ctx, l, privateSection, string(original), res, results)
 	}
 
-	parseResultToStatus(generalTextLabel, generalSection, cv.generalParseResults, results)
-	parseResultToStatus(fallbackTextLabel, fallbackSection, cv.fallbackParseResults, results)
-	parseResultToStatus(privateTextLabel, privateSection, cv.privateParseResults, results)
+	parseResultToStatus(ctx, l, generalTextLabel, generalSection, cv.generalParseResults, results)
+	parseResultToStatus(
+		ctx,
+		l,
+		fallbackTextLabel,
+		fallbackSection,
+		cv.fallbackParseResults,
+		results,
+	)
+	parseResultToStatus(ctx, l, privateTextLabel, privateSection, cv.privateParseResults, results)
 
 	return results
 }
 
 // upstreamResultToStatus puts "OK" or an error message from res into resMap.
 // section is the name of the upstream configuration section, i.e. "general",
-// "fallback", or "private", and only used for logging.
+// "fallback", or "private", and only used for logging.  l must not be nil.
 //
 // TODO(e.burkov):  Currently, the HTTP handler expects that all the results are
 // put together in a single map, which may lead to collisions, see AG-27539.
 // Improve the results compilation.
 func upstreamResultToStatus(
+	ctx context.Context,
+	l *slog.Logger,
 	section string,
 	original string,
 	res *upstreamResult,
@@ -298,21 +314,22 @@ func upstreamResultToStatus(
 	case "":
 		resMap[original] = val
 	case val:
-		log.Debug("dnsforward: duplicating %s config line %q", section, original)
+		l.DebugContext(ctx, "duplicating config line", "section", section, "address", original)
 	default:
-		log.Debug(
-			"dnsforward: warning: %s config line %q (%v) had different result %v",
-			section,
-			val,
-			original,
-			prevVal,
+		l.WarnContext(
+			ctx,
+			"config line had different result",
+			"section", section,
+			"result", val,
+			"original", original,
+			"previous", prevVal,
 		)
 	}
 }
 
 // parseResultToStatus puts parsing error messages from results into resMap.
 // section is the name of the upstream configuration section, i.e. "general",
-// "fallback", or "private", and only used for logging.
+// "fallback", or "private", and only used for logging.  l must not be nil.
 //
 // Parsing error message has the following format:
 //
@@ -321,6 +338,8 @@ func upstreamResultToStatus(
 // Where sectionTextLabel is a section text label of a localization and line is
 // a line number.
 func parseResultToStatus(
+	ctx context.Context,
+	l *slog.Logger,
 	textLabel string,
 	section string,
 	results []*parseResult,
@@ -330,7 +349,14 @@ func parseResultToStatus(
 		original := res.original
 		_, ok := resMap[original]
 		if ok {
-			log.Debug("dnsforward: duplicating %s parsing error %q", section, original)
+			l.DebugContext(
+				ctx,
+				"duplicating parsing error",
+				"section",
+				section,
+				"original",
+				original,
+			)
 
 			continue
 		}

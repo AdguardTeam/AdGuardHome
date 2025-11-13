@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/netip"
 	"testing"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/hashprefix"
@@ -17,6 +18,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// testTimeout is a common timeout for tests.
+const testTimeout = 1 * time.Second
 
 const (
 	sbBlocked = "wmconvirus.narod.ru"
@@ -45,7 +49,8 @@ func newForTest(t testing.TB, c *Config, filters []Filter) (f *DNSFilter, setts 
 	} else {
 		// It must not be nil.
 		c = &Config{
-			Logger: testLogger,
+			Logger:          testLogger,
+			RewritesEnabled: true,
 		}
 	}
 	f, err := New(c, filters)

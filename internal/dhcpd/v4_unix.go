@@ -4,6 +4,7 @@ package dhcpd
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"net"
 	"net/netip"
@@ -1299,7 +1300,7 @@ func (s *v4Server) packetHandler(conn net.PacketConn, peer net.Addr, req *dhcpv4
 }
 
 // Start starts the IPv4 DHCP server.
-func (s *v4Server) Start() (err error) {
+func (s *v4Server) Start(ctx context.Context) (err error) {
 	defer func() { err = errors.Annotate(err, "dhcpv4: %w") }()
 
 	if !s.enabled() {
@@ -1315,6 +1316,8 @@ func (s *v4Server) Start() (err error) {
 	log.Debug("dhcpv4: starting...")
 
 	dnsIPAddrs, err := aghnet.IfaceDNSIPAddrs(
+		ctx,
+		s.conf.Logger,
 		iface,
 		aghnet.IPVersion4,
 		defaultMaxAttempts,

@@ -63,17 +63,28 @@ type filterAddJSON struct {
 }
 
 func (d *DNSFilter) handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	l := d.logger
+
 	fj := filterAddJSON{}
 	err := json.NewDecoder(r.Body).Decode(&fj)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "Failed to parse request body json: %s", err)
+		aghhttp.ErrorAndLog(
+			ctx,
+			l,
+			r,
+			w,
+			http.StatusBadRequest,
+			"Failed to parse request body json: %s",
+			err,
+		)
 
 		return
 	}
 
 	err = d.validateFilterURL(fj.URL)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
@@ -81,7 +92,16 @@ func (d *DNSFilter) handleFilteringAddURL(w http.ResponseWriter, r *http.Request
 	// Check for duplicates
 	if d.filterExists(fj.URL) {
 		err = errFilterExists
-		aghhttp.Error(r, w, http.StatusBadRequest, "Filter with URL %q: %s", fj.URL, err)
+		aghhttp.ErrorAndLog(
+			ctx,
+			l,
+			r,
+			w,
+			http.StatusBadRequest,
+			"Filter with URL %q: %s",
+			fj.URL,
+			err,
+		)
 
 		return
 	}
@@ -100,7 +120,9 @@ func (d *DNSFilter) handleFilteringAddURL(w http.ResponseWriter, r *http.Request
 	// Download the filter contents
 	ok, err := d.update(&filt)
 	if err != nil {
-		aghhttp.Error(
+		aghhttp.ErrorAndLog(
+			ctx,
+			l,
 			r,
 			w,
 			http.StatusBadRequest,
@@ -113,7 +135,9 @@ func (d *DNSFilter) handleFilteringAddURL(w http.ResponseWriter, r *http.Request
 	}
 
 	if !ok {
-		aghhttp.Error(
+		aghhttp.ErrorAndLog(
+			ctx,
+			l,
 			r,
 			w,
 			http.StatusBadRequest,
@@ -128,17 +152,34 @@ func (d *DNSFilter) handleFilteringAddURL(w http.ResponseWriter, r *http.Request
 	// file and reload it to engines.
 	err = d.filterAdd(filt)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "Filter with URL %q: %s", filt.URL, err)
+		aghhttp.ErrorAndLog(
+			ctx,
+			l,
+			r,
+			w,
+			http.StatusBadRequest,
+			"Filter with URL %q: %s",
+			filt.URL,
+			err,
+		)
 
 		return
 	}
 
-	d.conf.ConfModifier.Apply(r.Context())
+	d.conf.ConfModifier.Apply(ctx)
 	d.EnableFilters(true)
 
 	_, err = fmt.Fprintf(w, "OK %d rules\n", filt.RulesCount)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "Couldn't write body: %s", err)
+		aghhttp.ErrorAndLog(
+			ctx,
+			l,
+			r,
+			w,
+			http.StatusInternalServerError,
+			"Couldn't write body: %s",
+			err,
+		)
 	}
 }
 
@@ -153,7 +194,15 @@ func (d *DNSFilter) handleFilteringRemoveURL(w http.ResponseWriter, r *http.Requ
 	req := request{}
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "failed to parse request body json: %s", err)
+		aghhttp.ErrorAndLog(
+			ctx,
+			d.logger,
+			r,
+			w,
+			http.StatusBadRequest,
+			"failed to parse request body json: %s",
+			err,
+		)
 
 		return
 	}
@@ -213,7 +262,15 @@ func (d *DNSFilter) handleFilteringRemoveURL(w http.ResponseWriter, r *http.Requ
 
 	_, err = fmt.Fprintf(w, "OK %d rules\n", deleted.RulesCount)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "couldn't write body: %s", err)
+		aghhttp.ErrorAndLog(
+			ctx,
+			d.logger,
+			r,
+			w,
+			http.StatusInternalServerError,
+			"couldn't write body: %s",
+			err,
+		)
 	}
 }
 
@@ -230,23 +287,34 @@ type filterURLReq struct {
 }
 
 func (d *DNSFilter) handleFilteringSetURL(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	l := d.logger
+
 	fj := filterURLReq{}
 	err := json.NewDecoder(r.Body).Decode(&fj)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "decoding request: %s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "decoding request: %s", err)
 
 		return
 	}
 
 	if fj.Data == nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "%s", errors.Error("data is absent"))
+		aghhttp.ErrorAndLog(
+			ctx,
+			l,
+			r,
+			w,
+			http.StatusBadRequest,
+			"%s",
+			errors.Error("data is absent"),
+		)
 
 		return
 	}
 
 	err = d.validateFilterURL(fj.Data.URL)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "invalid url: %s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "invalid url: %s", err)
 
 		return
 	}
@@ -259,12 +327,12 @@ func (d *DNSFilter) handleFilteringSetURL(w http.ResponseWriter, r *http.Request
 
 	restart, err := d.filterSetProperties(fj.URL, filt, fj.Whitelist)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
 
-	d.conf.ConfModifier.Apply(r.Context())
+	d.conf.ConfModifier.Apply(ctx)
 	if restart {
 		d.EnableFilters(true)
 	}
@@ -276,20 +344,22 @@ type filteringRulesReq struct {
 }
 
 func (d *DNSFilter) handleFilteringSetRules(w http.ResponseWriter, r *http.Request) {
-	if aghhttp.WriteTextPlainDeprecated(w, r) {
+	ctx := r.Context()
+
+	if aghhttp.WriteTextPlainDeprecated(ctx, d.logger, w, r) {
 		return
 	}
 
 	req := &filteringRulesReq{}
 	err := json.NewDecoder(r.Body).Decode(req)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "reading req: %s", err)
+		aghhttp.ErrorAndLog(ctx, d.logger, r, w, http.StatusBadRequest, "reading req: %s", err)
 
 		return
 	}
 
 	d.conf.UserRules = req.Rules
-	d.conf.ConfModifier.Apply(r.Context())
+	d.conf.ConfModifier.Apply(ctx)
 	d.EnableFilters(true)
 }
 
@@ -299,10 +369,13 @@ func (d *DNSFilter) handleFilteringRefresh(w http.ResponseWriter, r *http.Reques
 	}
 	var err error
 
+	ctx := r.Context()
+	l := d.logger
+
 	req := Req{}
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "json decode: %s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "json decode: %s", err)
 
 		return
 	}
@@ -313,7 +386,9 @@ func (d *DNSFilter) handleFilteringRefresh(w http.ResponseWriter, r *http.Reques
 	}{}
 	resp.Updated, _, ok = d.tryRefreshFilters(!req.White, req.White, true)
 	if !ok {
-		aghhttp.Error(
+		aghhttp.ErrorAndLog(
+			ctx,
+			l,
 			r,
 			w,
 			http.StatusInternalServerError,
@@ -323,16 +398,18 @@ func (d *DNSFilter) handleFilteringRefresh(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	aghhttp.WriteJSONResponseOK(w, r, resp)
+	aghhttp.WriteJSONResponseOK(ctx, l, w, r, resp)
 }
 
 type filterJSON struct {
-	URL         string               `json:"url"`
-	Name        string               `json:"name"`
-	LastUpdated string               `json:"last_updated,omitempty"`
-	ID          rulelist.URLFilterID `json:"id"`
-	RulesCount  uint32               `json:"rules_count"`
-	Enabled     bool                 `json:"enabled"`
+	URL         string `json:"url"`
+	Name        string `json:"name"`
+	LastUpdated string `json:"last_updated,omitempty"`
+
+	ID rulelist.APIID `json:"id"`
+
+	RulesCount uint64 `json:"rules_count"`
+	Enabled    bool   `json:"enabled"`
 }
 
 type filteringConfig struct {
@@ -345,11 +422,13 @@ type filteringConfig struct {
 
 func filterToJSON(f FilterYAML) filterJSON {
 	fj := filterJSON{
-		ID:         f.ID,
-		Enabled:    f.Enabled,
-		URL:        f.URL,
-		Name:       f.Name,
-		RulesCount: uint32(f.RulesCount),
+		// #nosec G115 -- The overflow is required for backwards compatibility.
+		ID:      rulelist.APIID(f.ID),
+		Enabled: f.Enabled,
+		URL:     f.URL,
+		Name:    f.Name,
+		// #nosec G115 -- The number of rules must not be negative.
+		RulesCount: uint64(f.RulesCount),
 	}
 
 	if !f.LastUpdated.IsZero() {
@@ -376,21 +455,24 @@ func (d *DNSFilter) handleFilteringStatus(w http.ResponseWriter, r *http.Request
 	resp.UserRules = d.conf.UserRules
 	d.conf.filtersMu.RUnlock()
 
-	aghhttp.WriteJSONResponseOK(w, r, resp)
+	aghhttp.WriteJSONResponseOK(r.Context(), d.logger, w, r, resp)
 }
 
 // Set filtering configuration
 func (d *DNSFilter) handleFilteringConfig(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	l := d.logger
+
 	req := filteringConfig{}
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "json decode: %s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "json decode: %s", err)
 
 		return
 	}
 
 	if !ValidateUpdateIvl(req.Interval) {
-		aghhttp.Error(r, w, http.StatusBadRequest, "Unsupported interval")
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "Unsupported interval")
 
 		return
 	}
@@ -403,13 +485,14 @@ func (d *DNSFilter) handleFilteringConfig(w http.ResponseWriter, r *http.Request
 		d.conf.FiltersUpdateIntervalHours = req.Interval
 	}()
 
-	d.conf.ConfModifier.Apply(r.Context())
+	d.conf.ConfModifier.Apply(ctx)
 	d.EnableFilters(true)
 }
 
 type checkHostRespRule struct {
-	Text         string               `json:"text"`
-	FilterListID rulelist.URLFilterID `json:"filter_list_id"`
+	Text string `json:"text"`
+
+	FilterListID rulelist.APIID `json:"filter_list_id"`
 }
 
 type checkHostResp struct {
@@ -432,16 +515,21 @@ type checkHostResp struct {
 	// FilterID is the ID of the rule's filter list.
 	//
 	// Deprecated: Use Rules[*].FilterListID.
-	FilterID rulelist.URLFilterID `json:"filter_id"`
+	FilterID rulelist.APIID `json:"filter_id"`
 }
 
 // handleCheckHost is the handler for the GET /control/filtering/check_host HTTP
 // API.
 func (d *DNSFilter) handleCheckHost(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	l := d.logger
+
 	query := r.URL.Query()
 	host := query.Get("name")
 	if host == "" {
-		aghhttp.Error(
+		aghhttp.ErrorAndLog(
+			ctx,
+			l,
 			r,
 			w,
 			http.StatusBadRequest,
@@ -455,7 +543,9 @@ func (d *DNSFilter) handleCheckHost(w http.ResponseWriter, r *http.Request) {
 	qTypeStr := query.Get("qtype")
 	qType, err := stringToDNSType(qTypeStr)
 	if err != nil {
-		aghhttp.Error(
+		aghhttp.ErrorAndLog(
+			ctx,
+			l,
 			r,
 			w,
 			http.StatusUnprocessableEntity,
@@ -482,7 +572,9 @@ func (d *DNSFilter) handleCheckHost(w http.ResponseWriter, r *http.Request) {
 
 	result, err := d.CheckHost(host, qType, setts)
 	if err != nil {
-		aghhttp.Error(
+		aghhttp.ErrorAndLog(
+			ctx,
+			l,
 			r,
 			w,
 			http.StatusInternalServerError,
@@ -515,7 +607,7 @@ func (d *DNSFilter) handleCheckHost(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	aghhttp.WriteJSONResponseOK(w, r, resp)
+	aghhttp.WriteJSONResponseOK(ctx, l, w, r, resp)
 }
 
 // stringToDNSType is a helper function that converts a string to DNS type.  If
@@ -590,7 +682,7 @@ func (d *DNSFilter) handleSafeBrowsingStatus(w http.ResponseWriter, r *http.Requ
 		Enabled: protectedBool(d.confMu, &d.conf.SafeBrowsingEnabled),
 	}
 
-	aghhttp.WriteJSONResponseOK(w, r, resp)
+	aghhttp.WriteJSONResponseOK(r.Context(), d.logger, w, r, resp)
 }
 
 // handleParentalEnable is the handler for the POST /control/parental/enable
@@ -616,15 +708,12 @@ func (d *DNSFilter) handleParentalStatus(w http.ResponseWriter, r *http.Request)
 		Enabled: protectedBool(d.confMu, &d.conf.ParentalEnabled),
 	}
 
-	aghhttp.WriteJSONResponseOK(w, r, resp)
+	aghhttp.WriteJSONResponseOK(r.Context(), d.logger, w, r, resp)
 }
 
 // RegisterFilteringHandlers - register handlers
 func (d *DNSFilter) RegisterFilteringHandlers() {
-	registerHTTP := d.conf.HTTPRegister
-	if registerHTTP == nil {
-		return
-	}
+	registerHTTP := d.conf.HTTPReg.Register
 
 	registerHTTP(http.MethodPost, "/control/safebrowsing/enable", d.handleSafeBrowsingEnable)
 	registerHTTP(http.MethodPost, "/control/safebrowsing/disable", d.handleSafeBrowsingDisable)
@@ -640,9 +729,11 @@ func (d *DNSFilter) RegisterFilteringHandlers() {
 	registerHTTP(http.MethodPut, "/control/safesearch/settings", d.handleSafeSearchSettings)
 
 	registerHTTP(http.MethodGet, "/control/rewrite/list", d.handleRewriteList)
+	registerHTTP(http.MethodGet, "/control/rewrite/settings", d.handleRewriteSettings)
 	registerHTTP(http.MethodPost, "/control/rewrite/add", d.handleRewriteAdd)
-	registerHTTP(http.MethodPut, "/control/rewrite/update", d.handleRewriteUpdate)
 	registerHTTP(http.MethodPost, "/control/rewrite/delete", d.handleRewriteDelete)
+	registerHTTP(http.MethodPut, "/control/rewrite/settings/update", d.handleRewriteSettingsUpdate)
+	registerHTTP(http.MethodPut, "/control/rewrite/update", d.handleRewriteUpdate)
 
 	registerHTTP(http.MethodGet, "/control/blocked_services/services", d.handleBlockedServicesIDs)
 	registerHTTP(http.MethodGet, "/control/blocked_services/all", d.handleBlockedServicesAll)

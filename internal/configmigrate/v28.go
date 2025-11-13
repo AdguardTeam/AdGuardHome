@@ -1,6 +1,8 @@
 package configmigrate
 
 import (
+	"context"
+
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 )
 
@@ -18,7 +20,7 @@ import (
 //	  'upstream_mode': 'parallel'
 //	  # …
 //	# …
-func migrateTo28(diskConf yobj) (err error) {
+func (m *Migrator) migrateTo28(_ context.Context, diskConf yobj) (err error) {
 	diskConf["schema_version"] = 28
 
 	dns, ok, err := fieldVal[yobj](diskConf, "dns")

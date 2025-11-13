@@ -6,7 +6,9 @@ package rulelist
 
 import (
 	"fmt"
+	"math"
 
+	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/c2h5oh/datasize"
 	"github.com/google/uuid"
 )
@@ -21,26 +23,33 @@ const DefaultRuleBufSize = 1024
 // DefaultMaxRuleListSize is the default maximum filtering-rule list size.
 const DefaultMaxRuleListSize = 64 * datasize.MB
 
-// URLFilterID is a semantic type-alias for IDs used for working with package
-// urlfilter.
-type URLFilterID = int
+// APIID is the type for the rule-list IDs used in the HTTP API.
+type APIID int64
 
-// The IDs of built-in filter lists.
+// The IDs of built-in filter lists for the HTTP API.
 //
-// NOTE: Do not change without the need for it and keep in sync with
+// NOTE:  Do not change without the need for it and keep in sync with
 // client/src/helpers/constants.ts.
+const (
+	APIIDCustom          APIID = 0
+	APIIDEtcHosts        APIID = -1
+	APIIDBlockedService  APIID = -2
+	APIIDParentalControl APIID = -3
+	APIIDSafeBrowsing    APIID = -4
+	APIIDSafeSearch      APIID = -5
+)
+
+// The IDs of built-in filter lists.  The IDs for the blocked-service and the
+// safe-search filters are chosen so that they equal to their [APIID]
+// counterparts when converted to it.
 //
-// TODO(a.garipov): Add type [URLFilterID] once it is used consistently in
-// package filtering.
+// NOTE:  Keep in sync with [APIIDCustom] etc.
 //
 // TODO(d.kolyshev): Add URLFilterIDLegacyRewrite here and to the UI.
 const (
-	URLFilterIDCustom          URLFilterID = 0
-	URLFilterIDEtcHosts        URLFilterID = -1
-	URLFilterIDBlockedService  URLFilterID = -2
-	URLFilterIDParentalControl URLFilterID = -3
-	URLFilterIDSafeBrowsing    URLFilterID = -4
-	URLFilterIDSafeSearch      URLFilterID = -5
+	IDCustom         rules.ListID = rules.ListID(APIIDCustom)
+	IDBlockedService rules.ListID = math.MaxUint64 - rules.ListID(-APIIDBlockedService) + 1
+	IDSafeSearch     rules.ListID = math.MaxUint64 - rules.ListID(-APIIDSafeSearch) + 1
 )
 
 // UID is the type for the unique IDs of filtering-rule lists.

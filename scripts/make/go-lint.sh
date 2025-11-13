@@ -172,21 +172,14 @@ run_linter gocognit --over='20' \
 	./internal/querylog/ \
 	;
 
-run_linter gocognit --over='19' \
-	./internal/home/ \
-	;
-
 run_linter gocognit --over='14' \
 	./internal/dhcpd \
-	;
-
-run_linter gocognit --over='13' \
-	./internal/aghnet/ \
 	;
 
 run_linter gocognit --over='10' \
 	./internal/aghalg/ \
 	./internal/aghhttp/ \
+	./internal/aghnet/ \
 	./internal/aghos/ \
 	./internal/aghrenameio/ \
 	./internal/aghtest/ \
@@ -198,6 +191,7 @@ run_linter gocognit --over='10' \
 	./internal/dhcpsvc \
 	./internal/dnsforward/ \
 	./internal/filtering/ \
+	./internal/home/ \
 	./internal/ipset \
 	./internal/next/ \
 	./internal/rdns/ \

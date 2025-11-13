@@ -1,6 +1,7 @@
 package configmigrate
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"strconv"
@@ -30,7 +31,7 @@ import (
 //	   - 'quic://some-upstream.com:784'
 //	  # …
 //	# …
-func migrateTo10(diskConf yobj) (err error) {
+func (m *Migrator) migrateTo10(_ context.Context, diskConf yobj) (err error) {
 	diskConf["schema_version"] = 10
 
 	dns, ok, err := fieldVal[yobj](diskConf, "dns")
