@@ -2510,10 +2510,13 @@
 
          *  `parallel`: Use parallel requests to speed up resolving by
              simultaneously querying all upstream servers.
+
+        *  `random`: Query a random upstream server for every new query.
       'enum':
       - 'fastest'
       - 'load_balancing'
       - 'parallel'
+      - 'random'
       'type': 'string'
 
     'ErrorCode':
