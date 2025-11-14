@@ -198,6 +198,8 @@
     "add_allowlist": "Add allowlist",
     "cancel_btn": "Cancel",
     "enter_name_hint": "Enter name",
+    "name_auto_fetch_hint": "Name will be fetched automatically from URL",
+    "fetching_name_from_url": "Fetching name from URL...",
     "enter_url_or_path_hint": "Enter a URL or an absolute path of the list",
     "check_updates_btn": "Check for updates",
     "new_blocklist": "New blocklist",

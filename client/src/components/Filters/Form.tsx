@@ -1,12 +1,14 @@
-import React from 'react';
-import { useForm, Controller, FormProvider } from 'react-hook-form';
+import React, { useEffect, useState, useRef } from 'react';
+import { useForm, Controller, FormProvider, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
+import { useDispatch } from 'react-redux';
 import { validatePath, validateRequiredValue } from '../../helpers/validators';
 
 import { MODAL_OPEN_TIMEOUT, MODAL_TYPE } from '../../helpers/constants';
 import filtersCatalog from '../../helpers/filters/filters';
 import { FiltersList } from './FiltersList';
 import { Input } from '../ui/Controls/Input';
+import { fetchFilterTitle } from '../../actions/filtering';
 
 type FormValues = {
     enabled: boolean;
@@ -44,6 +46,8 @@ export const Form = ({
     initialValues,
 }: Props) => {
     const { t } = useTranslation();
+    const dispatch = useDispatch();
+    const [isFetchingTitle, setIsFetchingTitle] = useState(false);
 
     const methods = useForm({
         defaultValues: {
@@ -52,7 +56,56 @@ export const Form = ({
         },
         mode: 'onBlur',
     });
-    const { handleSubmit, control } = methods;
+    const { handleSubmit, control, setValue, getValues } = methods;
+
+    // Watch URL field for changes
+    const urlValue = useWatch({ control, name: 'url' });
+    const nameValue = useWatch({ control, name: 'name' });
+    const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Auto-fetch title from URL
+    useEffect(() => {
+        // Clear any existing timer
+        if (debounceTimerRef.current) {
+            clearTimeout(debounceTimerRef.current);
+        }
+
+        // Don't fetch if:
+        // - URL is empty
+        // - Name field already has a value (user has typed something)
+        // - We're in edit mode (initialValues provided)
+        // - URL doesn't pass basic validation
+        if (!urlValue || nameValue || initialValues?.name) {
+            return;
+        }
+
+        // Basic URL validation check
+        const isValidUrl = validatePath(urlValue) === undefined;
+        if (!isValidUrl) {
+            return;
+        }
+
+        // Debounce: wait 800ms after user stops typing
+        debounceTimerRef.current = setTimeout(async () => {
+            setIsFetchingTitle(true);
+            try {
+                const title = await dispatch(fetchFilterTitle(urlValue) as any);
+                // Only set the name if it's still empty (user hasn't typed anything)
+                if (!getValues('name') && title) {
+                    setValue('name', title, { shouldValidate: false });
+                }
+            } finally {
+                setIsFetchingTitle(false);
+            }
+        }, 800);
+
+        // Cleanup on unmount
+        return () => {
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+            }
+        };
+    }, [urlValue, nameValue, dispatch, setValue, getValues, initialValues]);
 
     const openModal = (modalType: keyof typeof MODAL_TYPE, timeout = MODAL_OPEN_TIMEOUT) => {
         toggleFilteringModal(undefined);
@@ -98,7 +151,11 @@ export const Form = ({
                                             {...field}
                                             type="text"
                                             data-testid="filters_name"
-                                            placeholder={t('enter_name_hint')}
+                                            placeholder={
+                                                isFetchingTitle
+                                                    ? t('fetching_name_from_url')
+                                                    : t('name_auto_fetch_hint')
+                                            }
                                             error={fieldState.error?.message}
                                             trimOnBlur
                                         />
