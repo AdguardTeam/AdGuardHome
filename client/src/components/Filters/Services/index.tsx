@@ -16,11 +16,11 @@ import { RootState } from '../../../initialState';
 const getInitialDataForServices = (initial: any) =>
     initial
         ? initial.reduce(
-              (acc: any, service: any) => {
-                  acc.blocked_services[service] = true;
+              (acc: Record<string, boolean>, service: any) => {
+                  acc[service] = true;
                   return acc;
               },
-              { blocked_services: {} },
+              {} as Record<string, boolean>,
           )
         : initial;
 
@@ -76,6 +76,7 @@ const Services = () => {
                     <Form
                         initialValues={initialValues}
                         blockedServices={services.allServices}
+                        serviceGroups={services.allGroups}
                         processing={services.processing}
                         processingSet={services.processingSet}
                         onSubmit={handleSubmit}

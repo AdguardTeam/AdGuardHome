@@ -18,13 +18,17 @@ See also the [v0.107.70 GitHub milestone][ms-v0.107.70].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
-### Fixed
-
-- Generated mobileconfig could not be installed on macOS 26.1.
-
 ### Added
 
 - New field `"start_time"` in the `GET /control/status` response.
+
+### Changed
+
+- New blocked services UI.
+
+### Fixed
+
+- Generated mobileconfig could not be installed on macOS 26.1.
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
