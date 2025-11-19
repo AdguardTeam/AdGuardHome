@@ -18,6 +18,10 @@ See also the [v0.107.70 GitHub milestone][ms-v0.107.70].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.25.4][go-1.25.4].
+
 ### Added
 
 - New field `"start_time"` in the `GET /control/status` response.
@@ -58,6 +62,7 @@ See also the [v0.107.69 GitHub milestone][ms-v0.107.69].
 [#8075]: https://github.com/AdguardTeam/AdGuardHome/issues/8075
 [#8072]: https://github.com/AdguardTeam/AdGuardHome/issues/8072
 
+[go-1.25.4]: https://groups.google.com/g/golang-announce/c/tVVHm9gnwl8
 [ms-v0.107.69]: https://github.com/AdguardTeam/AdGuardHome/milestone/104?closed=1
 
 ## [v0.107.68] - 2025-10-23
