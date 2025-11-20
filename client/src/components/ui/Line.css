@@ -14,7 +14,3 @@
 .card-chart-bg {
     color: var(--black);
 }
-
-.card-chart-bg path[d^='M0,32'] {
-    transform: translateY(32px);
-}
