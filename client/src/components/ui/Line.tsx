@@ -46,6 +46,11 @@ const Line = ({ data, color = 'black' }: LineProps) => {
                 min: 0,
                 max: 'auto',
             }}
+            yScale={{
+                type: 'linear',
+                min: 0,
+                max: 'auto',
+            }}
             crosshairType="x"
             axisLeft={null}
             axisBottom={null}
@@ -62,7 +67,7 @@ const Line = ({ data, color = 'black' }: LineProps) => {
 
                 return dateFormat(addDays(daysAgo, x), 'D MMM YYYY');
             }}
-            yFormat={(y: number) => round(y, 2)}
+            yFormat={(y: number) => String(round(y, 2))}
             sliceTooltip={(slice) => {
                 const { xFormatted, yFormatted } = slice.slice.points[0].data;
 

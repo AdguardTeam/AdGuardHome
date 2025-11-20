@@ -20,7 +20,7 @@
     },
     "type": "module",
     "dependencies": {
-        "@nivo/line": "^0.64.0",
+        "@nivo/line": "^0.99.0",
         "axios": "^0.21.1",
         "classnames": "^2.5.1",
         "clsx": "^2.1.1",
