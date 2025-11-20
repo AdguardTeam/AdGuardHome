@@ -9,7 +9,6 @@ import { RootState } from '../initialState';
 
 declare module 'react-redux' {
     export interface DefaultRootState extends RootState {}
-    
     // Augment the Dispatch type to include thunk actions
     export type Dispatch<A extends AnyAction = AnyAction> = ThunkDispatch<RootState, unknown, A>;
 }
