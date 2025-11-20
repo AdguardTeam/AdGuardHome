@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 
 import { HashRouter, Route } from 'react-router-dom';
 import LoadingBar from 'react-redux-loading-bar';
-import { hot } from 'react-hot-loader/root';
 
 import 'react-table/react-table.css';
 import '../ui/Tabler.css';
@@ -230,4 +229,4 @@ const App = () => {
     );
 };
 
-export default hot(App);
+export default App;

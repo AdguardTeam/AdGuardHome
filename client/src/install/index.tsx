@@ -1,5 +1,4 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import { Provider } from 'react-redux';
 
 import '../components/App/index.css';
@@ -13,9 +12,11 @@ import { InstallState } from '../initialState';
 
 const store = configureStore<InstallState>(reducers, {});
 
-ReactDOM.render(
+const container = document.getElementById('root');
+const root = createRoot(container!);
+
+root.render(
     <Provider store={store}>
         <Setup />
     </Provider>,
-    document.getElementById('root'),
 );

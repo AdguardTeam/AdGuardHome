@@ -54,9 +54,9 @@ const Line = ({ data, color = 'black' }: LineProps) => {
             crosshairType="x"
             axisLeft={null}
             axisBottom={null}
-            enableGridX={null}
-            enableGridY={null}
-            enablePoints={null}
+            enableGridX={false}
+            enableGridY={false}
+            enablePoints={false}
             xFormat={(x: number) => {
                 if (timeUnits === TIME_UNITS.HOURS) {
                     const hoursAgo = msToHours(interval) - x - 1;

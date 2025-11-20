@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, forwardRef } from 'react';
 import { Trans } from 'react-i18next';
 import { useDispatch } from 'react-redux';
 import { TOAST_TIMEOUTS } from '../../helpers/constants';
@@ -12,25 +12,31 @@ interface ToastProps {
     options?: object;
 }
 
-const Toast = ({ id, message, type, options }: ToastProps) => {
+const Toast = forwardRef<HTMLDivElement, ToastProps>(({ id, message, type, options }, ref) => {
     const dispatch = useDispatch();
-    const [timerId, setTimerId] = useState(null);
+    const [timerId, setTimerId] = useState<NodeJS.Timeout | null>(null);
 
-    const clearRemoveToastTimeout = () => clearTimeout(timerId);
+    const clearRemoveToastTimeout = () => {
+        if (timerId) {
+            clearTimeout(timerId);
+        }
+    };
     const removeCurrentToast = () => dispatch(removeToast(id));
     const setRemoveToastTimeout = () => {
         const timeout = TOAST_TIMEOUTS[type];
-        const timerId = setTimeout(removeCurrentToast, timeout);
+        const newTimerId = setTimeout(removeCurrentToast, timeout);
 
-        setTimerId(timerId);
+        setTimerId(newTimerId);
     };
 
     useEffect(() => {
         setRemoveToastTimeout();
+        return () => clearRemoveToastTimeout();
     }, []);
 
     return (
         <div
+            ref={ref}
             className={`toast toast--${type}`}
             onMouseOver={clearRemoveToastTimeout}
             onMouseOut={setRemoveToastTimeout}>
@@ -54,6 +60,8 @@ const Toast = ({ id, message, type, options }: ToastProps) => {
             </button>
         </div>
     );
-};
+});
+
+Toast.displayName = 'Toast';
 
 export default Toast;

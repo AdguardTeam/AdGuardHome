@@ -320,7 +320,7 @@ const getTabs = ({ tlsAddress, httpsAddress, showDnsPrivacyNotice, serverName, p
 interface renderContentProps {
     title: string;
     list: unknown[];
-    getTitle?: (...args: unknown[]) => unknown;
+    getTitle?: (...args: unknown[]) => React.ReactNode;
 }
 
 const renderContent = ({ title, list, getTitle }: renderContentProps) => (

@@ -270,10 +270,9 @@ i18n
                 escapeValue: false,
             },
             react: {
-                wait: true,
                 bindI18n: 'languageChanged loaded',
             },
-            whitelist: availableLanguages,
+            supportedLngs: availableLanguages,
         },
         () => {
             if (!availableLanguages.includes(i18n.language)) {

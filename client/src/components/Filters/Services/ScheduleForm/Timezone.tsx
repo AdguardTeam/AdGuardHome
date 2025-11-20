@@ -1,5 +1,5 @@
 import React from 'react';
-import ct from 'countries-and-timezones';
+import * as ct from 'countries-and-timezones';
 import { useTranslation } from 'react-i18next';
 
 import { LOCAL_TIMEZONE_VALUE } from '../../../../helpers/constants';

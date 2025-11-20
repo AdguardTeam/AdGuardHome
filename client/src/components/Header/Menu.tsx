@@ -1,11 +1,11 @@
-import React, { Component } from 'react';
+import React, { useRef, useCallback } from 'react';
 
 import { NavLink } from 'react-router-dom';
 
-import enhanceWithClickOutside from 'react-click-outside';
 import classnames from 'classnames';
 import { Trans, withTranslation } from 'react-i18next';
 import { SETTINGS_URLS, FILTERS_URLS, MENU_URLS } from '../../helpers/constants';
+import { useClickOutside } from '../../hooks/useClickOutside';
 
 import Dropdown from '../ui/Dropdown';
 
@@ -89,30 +89,27 @@ interface MenuProps {
     t?: (...args: unknown[]) => string;
 }
 
-class Menu extends Component<MenuProps> {
-    handleClickOutside = () => {
-        this.props.closeMenu();
-    };
+const Menu = ({ isMenuOpen, closeMenu, pathname, t }: MenuProps) => {
+    const menuRef = useRef<HTMLDivElement>(null);
 
-    closeMenu = () => {
-        this.props.closeMenu();
-    };
+    const handleClickOutside = useCallback(() => {
+        closeMenu();
+    }, [closeMenu]);
 
-    getActiveClassForDropdown = (URLS: any) => {
-        const isActivePage = Object.values(URLS)
+    useClickOutside(menuRef, handleClickOutside);
 
-            .some((item: any) => item === this.props.pathname);
-
+    const getActiveClassForDropdown = (URLS: any) => {
+        const isActivePage = Object.values(URLS).some((item: any) => item === pathname);
         return isActivePage ? 'active' : '';
     };
 
-    getNavLink = ({ route, exact, text, order, className, icon }: any) => (
+    const getNavLink = ({ route, exact, text, order, className, icon }: any) => (
         <NavLink
             to={route}
             key={route}
             exact={exact || false}
             className={`order-${order} ${className}`}
-            onClick={this.closeMenu}>
+            onClick={closeMenu}>
             {icon && (
                 <svg className="nav-icon">
                     <use xlinkHref={`#${icon}`} />
@@ -123,14 +120,14 @@ class Menu extends Component<MenuProps> {
         </NavLink>
     );
 
-    getDropdown = ({ label, order, URLS, icon, ITEMS }: any) => (
+    const getDropdown = ({ label, order, URLS, icon, ITEMS }: any) => (
         <Dropdown
-            label={this.props.t(label)}
+            label={t?.(label) || label}
             baseClassName="dropdown"
-            controlClassName={`nav-link ${this.getActiveClassForDropdown(URLS)}`}
+            controlClassName={`nav-link ${getActiveClassForDropdown(URLS)}`}
             icon={icon}>
             {ITEMS.map((item: any) =>
-                this.getNavLink({
+                getNavLink({
                     ...item,
                     order,
                     className: 'dropdown-item',
@@ -139,49 +136,47 @@ class Menu extends Component<MenuProps> {
         </Dropdown>
     );
 
-    render() {
-        const menuClass = classnames({
-            'header__column mobile-menu': true,
+    const menuClass = classnames({
+        'header__column mobile-menu': true,
+        'mobile-menu--active': isMenuOpen,
+    });
 
-            'mobile-menu--active': this.props.isMenuOpen,
-        });
-        return (
-            <>
-                <div className={menuClass}>
-                    <ul className="nav nav-tabs border-0 flex-column flex-lg-row flex-nowrap">
-                        {MENU_ITEMS.map((item) => (
-                            <li className={`nav-item order-${item.order}`} key={item.text} onClick={this.closeMenu}>
-                                {this.getNavLink({
-                                    ...item,
-                                    className: 'nav-link',
-                                })}
-                            </li>
-                        ))}
-
-                        <li className="nav-item order-1">
-                            {this.getDropdown({
-                                order: 1,
-                                label: 'settings',
-                                icon: 'settings',
-                                URLS: SETTINGS_URLS,
-                                ITEMS: SETTINGS_ITEMS,
+    return (
+        <>
+            <div className={menuClass} ref={menuRef}>
+                <ul className="nav nav-tabs border-0 flex-column flex-lg-row flex-nowrap">
+                    {MENU_ITEMS.map((item) => (
+                        <li className={`nav-item order-${item.order}`} key={item.text} onClick={closeMenu}>
+                            {getNavLink({
+                                ...item,
+                                className: 'nav-link',
                             })}
                         </li>
+                    ))}
 
-                        <li className="nav-item order-2">
-                            {this.getDropdown({
-                                order: 2,
-                                label: 'filters',
-                                icon: 'filters',
-                                URLS: FILTERS_URLS,
-                                ITEMS: FILTERS_ITEMS,
-                            })}
-                        </li>
-                    </ul>
-                </div>
-            </>
-        );
-    }
-}
+                    <li className="nav-item order-1">
+                        {getDropdown({
+                            order: 1,
+                            label: 'settings',
+                            icon: 'settings',
+                            URLS: SETTINGS_URLS,
+                            ITEMS: SETTINGS_ITEMS,
+                        })}
+                    </li>
 
-export default withTranslation()(enhanceWithClickOutside(Menu));
+                    <li className="nav-item order-2">
+                        {getDropdown({
+                            order: 2,
+                            label: 'filters',
+                            icon: 'filters',
+                            URLS: FILTERS_URLS,
+                            ITEMS: FILTERS_ITEMS,
+                        })}
+                    </li>
+                </ul>
+            </div>
+        </>
+    );
+};
+
+export default withTranslation()(Menu);

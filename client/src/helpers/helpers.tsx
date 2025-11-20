@@ -199,7 +199,7 @@ export const getPercent = (amount: any, number: any) => {
 export const captitalizeWords = (text: any) =>
     text
         .split(/[ -_]/g)
-        .map((str: any) => str.charAt(0).toUpperCase() + str.substr(1))
+        .map((str: any) => str.charAt(0).toUpperCase() + str.substring(1))
         .join(' ');
 
 export const getInterfaceIp = (option: any) => {

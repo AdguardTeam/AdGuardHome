@@ -11,7 +11,7 @@ import Line from '../ui/Line';
 interface StatsCardProps {
     total: number;
     lineData: unknown[];
-    title: object;
+    title: React.ReactNode;
     color: string;
     percent?: number;
 }

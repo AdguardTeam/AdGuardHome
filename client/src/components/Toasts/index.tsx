@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { createRef } from 'react';
 import { useSelector, shallowEqual } from 'react-redux';
 
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
@@ -15,10 +15,11 @@ const Toasts = () => {
         <TransitionGroup className="toasts">
             {toasts.notices?.map((toast: any) => {
                 const { id } = toast;
+                const nodeRef = createRef<HTMLDivElement>();
 
                 return (
-                    <CSSTransition key={id} timeout={TOAST_TRANSITION_TIMEOUT} classNames="toast">
-                        <Toast {...toast} />
+                    <CSSTransition key={id} timeout={TOAST_TRANSITION_TIMEOUT} classNames="toast" nodeRef={nodeRef}>
+                        <Toast ref={nodeRef} {...toast} />
                     </CSSTransition>
                 );
             })}

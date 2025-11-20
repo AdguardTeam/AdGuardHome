@@ -19,7 +19,7 @@
     "settings": {
         "react": {
             "pragma": "React",
-            "version": "16.4"
+            "version": "detect"
         },
         "import/resolver": {
             "node": {
@@ -33,6 +33,7 @@
         }
     },
     "rules": {
+        "react/react-in-jsx-scope": "off",
         "@typescript-eslint/no-explicit-any": "off",
         "@typescript-eslint/no-unused-vars": [
             "error",
