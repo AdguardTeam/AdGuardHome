@@ -1,6 +1,6 @@
 import React from 'react';
-import PopperJS from 'popper.js';
-import TooltipTrigger, { TriggerTypes } from 'react-popper-tooltip';
+import type { Placement } from '@popperjs/core';
+import { usePopperTooltip, TriggerType } from 'react-popper-tooltip';
 import { useTranslation } from 'react-i18next';
 
 import { HIDE_TOOLTIP_DELAY, MEDIUM_SCREEN_SIZE, SHOW_TOOLTIP_DELAY } from '../../helpers/constants';
@@ -10,24 +10,14 @@ import './Tooltip.css';
 interface TooltipProps {
     children: React.ReactElement;
     content: string | React.ReactElement | React.ReactElement[];
-    placement?: PopperJS.Placement;
-    trigger?: TriggerTypes;
+    placement?: Placement;
+    trigger?: TriggerType;
     delayHide?: number;
     delayShow?: number;
     className?: string;
     triggerClass?: string;
-    onVisibilityChange?: (...args: unknown[]) => unknown;
+    onVisibilityChange?: (visible: boolean) => void;
     defaultTooltipShown?: boolean;
-}
-
-interface renderTooltipProps {
-    tooltipRef?: object;
-    getTooltipProps?: (...args: unknown[]) => Record<any, any>;
-}
-
-interface renderTriggerProps {
-    triggerRef?: object;
-    getTriggerProps?: (...args: unknown[]) => Record<any, any>;
 }
 
 const Tooltip = ({
@@ -55,37 +45,27 @@ const Tooltip = ({
         delayShowValue = 0;
     }
 
-    const renderTooltip = ({ tooltipRef, getTooltipProps }: renderTooltipProps) => (
-        <div
-            {...getTooltipProps({
-                ref: tooltipRef,
-                className,
-            })}>
-            {typeof content === 'string' ? t(content) : content}
-        </div>
-    );
-
-    const renderTrigger = ({ getTriggerProps, triggerRef }: renderTriggerProps) => (
-        <span
-            {...getTriggerProps({
-                ref: triggerRef,
-                className: triggerClass,
-            })}>
-            {children}
-        </span>
-    );
+    const { getTooltipProps, setTooltipRef, setTriggerRef, visible } = usePopperTooltip({
+        placement,
+        trigger: triggerValue,
+        delayHide: delayHideValue,
+        delayShow: delayShowValue,
+        onVisibleChange: onVisibilityChange,
+        defaultVisible: defaultTooltipShown,
+    });
 
     return (
-        <TooltipTrigger
-            placement={placement}
-            trigger={triggerValue}
-            delayHide={delayHideValue}
-            delayShow={delayShowValue}
-            tooltip={renderTooltip}
-            onVisibilityChange={onVisibilityChange}
-            defaultTooltipShown={defaultTooltipShown}>
-            {renderTrigger}
-        </TooltipTrigger>
+        <>
+            <span ref={setTriggerRef} className={triggerClass}>
+                {children}
+            </span>
+
+            {visible && (
+                <div ref={setTooltipRef} {...getTooltipProps({ className })}>
+                    {typeof content === 'string' ? t(content) : content}
+                </div>
+            )}
+        </>
     );
 };
 

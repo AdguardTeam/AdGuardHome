@@ -1,8 +1,8 @@
 import React from 'react';
 import { Trans } from 'react-i18next';
 import classNames from 'classnames';
-import PopperJS from 'popper.js';
-import { TriggerTypes } from 'react-popper-tooltip';
+import type { Placement } from '@popperjs/core';
+import { TriggerType } from 'react-popper-tooltip';
 
 import { processContent } from '../../../helpers/helpers';
 
@@ -13,18 +13,18 @@ import { SHOW_TOOLTIP_DELAY } from '../../../helpers/constants';
 
 interface IconTooltipProps {
     className?: string;
-    trigger?: TriggerTypes;
+    trigger?: TriggerType;
     triggerClass?: string;
     contentItemClass?: string;
     columnClass?: string;
     tooltipClass?: string;
     title?: string;
-    placement?: PopperJS.Placement;
+    placement?: Placement;
     canShowTooltip?: boolean;
     xlinkHref?: string;
     content?: React.ReactNode;
     renderContent?: React.ReactElement[];
-    onVisibilityChange?: (...args: unknown[]) => unknown;
+    onVisibilityChange?: (visible: boolean) => void;
     defaultTooltipShown?: boolean;
     delayHide?: number;
 }
