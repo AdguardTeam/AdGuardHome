@@ -42,7 +42,7 @@
         "react-modal": "^3.16.1",
         "react-popper-tooltip": "^4.4.2",
         "react-redux": "^8.1.3",
-        "react-redux-loading-bar": "^4.6.0",
+        "react-redux-loading-bar": "^5.0.8",
         "react-router-dom": "^5.2.0",
         "react-router-hash-link": "^1.2.2",
         "react-select": "^3.1.0",
