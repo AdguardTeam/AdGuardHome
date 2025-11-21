@@ -22,7 +22,7 @@
     "dependencies": {
         "@nivo/line": "^0.99.0",
         "@tanstack/react-table": "^8.20.5",
-        "axios": "^0.21.1",
+        "axios": "^1.8.3",
         "classnames": "^2.5.1",
         "clsx": "^2.1.1",
         "countries-and-timezones": "^3.6.0",
@@ -51,7 +51,6 @@
         "redux": "^4.0.5",
         "redux-actions": "^2.6.5",
         "redux-thunk": "^2.3.0",
-        "ts-migrate": "^0.1.35",
         "url-polyfill": "^1.1.12",
         "yaml": "2.8.1"
     },
