@@ -59,7 +59,7 @@ export function createColumnHelper<TData = any>(v6Column: V6ColumnDef<TData>): C
     } else if (typeof accessor === 'function') {
         column.accessorFn = accessor;
         if (!column.id) {
-            column.id = `accessor_fn_${  Math.random().toString(36).substring(7)}`;
+            column.id = `accessor_fn_${Math.random().toString(36).substring(7)}`;
         }
     }
 
@@ -74,7 +74,7 @@ export function createColumnHelper<TData = any>(v6Column: V6ColumnDef<TData>): C
                 index: info.row.index,
                 column: info.column,
             };
-            
+
             // Use createElement which handles both functional and class components
             return React.createElement(Cell as any, v6Props);
         };
