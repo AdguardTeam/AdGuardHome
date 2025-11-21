@@ -346,7 +346,7 @@ interface GuideProps {
     dnsAddresses?: unknown[];
 }
 
-export const Guide = ({ dnsAddresses }: GuideProps) => {
+export const Guide = ({ dnsAddresses = [] }: GuideProps) => {
     const { t } = useTranslation();
 
     const serverName = useSelector((state: RootState) => state.encryption?.server_name);
@@ -376,8 +376,4 @@ export const Guide = ({ dnsAddresses }: GuideProps) => {
             </Tabs>
         </div>
     );
-};
-
-Guide.defaultProps = {
-    dnsAddresses: [],
 };
