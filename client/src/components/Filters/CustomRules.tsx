@@ -5,14 +5,12 @@ import Card from '@/components/ui/Card';
 
 import PageTitle from '@/components/ui/PageTitle';
 
-import Examples from './Examples';
-
-import Check, { FilteringCheckFormValues } from './Check';
-
+import { FilteringData } from '@/initialState';
 import { getTextareaCommentsHighlight, syncScroll } from '@/helpers/highlightTextareaComments';
 import { COMMENT_LINE_DEFAULT_TOKEN } from '@/helpers/constants';
+import Check, { FilteringCheckFormValues } from './Check';
+import Examples from './Examples';
 import '../ui/texareaCommentsHighlight.css';
-import { FilteringData } from '@/initialState';
 
 interface CustomRulesProps {
     filtering: FilteringData;
@@ -84,10 +82,7 @@ class CustomRules extends Component<CustomRulesProps> {
                                 onChange={this.handleChange}
                                 onScroll={this.onScroll}
                             />
-                            {getTextareaCommentsHighlight(this.ref, userRules, [
-                                COMMENT_LINE_DEFAULT_TOKEN,
-                                '!',
-                            ])}
+                            {getTextareaCommentsHighlight(this.ref, userRules, [COMMENT_LINE_DEFAULT_TOKEN, '!'])}
                         </div>
 
                         <div className="card-actions">

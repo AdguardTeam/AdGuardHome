@@ -4,10 +4,9 @@ import { CSSTransition, TransitionGroup } from 'react-transition-group';
 import { useSelector } from '@/store/hooks';
 
 import { TOAST_TRANSITION_TIMEOUT } from '@/helpers/constants';
-
+import { RootState } from '@/initialState';
 import Toast from './Toast';
 import './Toast.css';
-import { RootState } from '@/initialState';
 
 const Toasts = () => {
     const toasts = useSelector((state: RootState) => state.toasts, shallowEqual);

@@ -1,8 +1,12 @@
 import React from 'react';
 import { ResponsiveLine } from '@nivo/line';
+// eslint-disable-next-line import/no-duplicates -- Separate imports for tree-shaking
 import addDays from 'date-fns/add_days';
+// eslint-disable-next-line import/no-duplicates -- Separate imports for tree-shaking
 import subDays from 'date-fns/sub_days';
+// eslint-disable-next-line import/no-duplicates -- Separate imports for tree-shaking
 import subHours from 'date-fns/sub_hours';
+// eslint-disable-next-line import/no-duplicates -- Separate imports for tree-shaking
 import dateFormat from 'date-fns/format';
 import round from 'lodash/round';
 import { useSelector } from '@/store/hooks';

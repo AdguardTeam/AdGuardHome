@@ -12,6 +12,7 @@ import Toasts from '@/components/Toasts';
 import Footer from '@/components/ui/Footer';
 import Icons from '@/components/ui/Icons';
 import { Logo } from '@/components/ui/svg/logo';
+import { InstallInterface, InstallState } from '@/initialState';
 import Greeting from './Greeting';
 import { ConfigType, DnsConfig, Settings, WebConfig } from './Settings';
 import { Devices } from './Devices';
@@ -21,7 +22,6 @@ import { Auth } from './Auth';
 
 import './Setup.css';
 import '../../components/ui/Tabler.css';
-import { InstallInterface, InstallState } from '@/initialState';
 
 export const Setup = () => {
     const dispatch = useDispatch();

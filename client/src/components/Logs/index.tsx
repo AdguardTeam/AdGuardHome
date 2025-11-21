@@ -13,9 +13,6 @@ import { BLOCK_ACTIONS, DEFAULT_LOGS_FILTER, MEDIUM_SCREEN_SIZE } from '@/helper
 
 import Loading from '@/components/ui/Loading';
 
-import Filters from './Filters';
-
-import Disabled from './Disabled';
 import { getFilteringStatus } from '@/actions/filtering';
 
 import { getClients } from '@/actions';
@@ -24,10 +21,12 @@ import { getAccessList } from '@/actions/access';
 import { getAllBlockedServices } from '@/actions/services';
 import { getLogsConfig, resetFilteredLogs, setFilteredLogs, toggleDetailedLogs } from '@/actions/queryLogs';
 
+import { RootState } from '@/initialState';
 import InfiniteTable from './InfiniteTable';
+import Disabled from './Disabled';
+import Filters from './Filters';
 import './Logs.css';
 
-import { RootState } from '@/initialState';
 import AnonymizerNotification from './AnonymizerNotification';
 import { BUTTON_PREFIX } from './Cells/helpers';
 
@@ -76,9 +75,7 @@ const Logs = () => {
     const dispatch = useDispatch();
     const location = useLocation();
 
-    const { response_status: response_status_url_param, search: search_url_param } = queryString.parse(
-        location.search,
-    );
+    const { response_status: response_status_url_param, search: search_url_param } = queryString.parse(location.search);
 
     const {
         enabled,
@@ -192,10 +189,7 @@ const Logs = () => {
     const renderPage = () => (
         <>
             <FormProvider {...formMethods}>
-                <Filters
-                    setIsLoading={setIsLoading}
-                    processingGetLogs={processingGetLogs}
-                />
+                <Filters setIsLoading={setIsLoading} processingGetLogs={processingGetLogs} />
             </FormProvider>
 
             <InfiniteTable

@@ -30,6 +30,7 @@ import { toggleBlocking, toggleBlockingForClient } from '@/actions';
 
 import { toggleClientBlock } from '@/actions/access';
 import { updateLogs } from '@/actions/queryLogs';
+import { RootState } from '@/initialState';
 import DateCell from './DateCell';
 
 import DomainCell from './DomainCell';
@@ -38,9 +39,7 @@ import ResponseCell from './ResponseCell';
 
 import ClientCell from './ClientCell';
 import { getBlockClientInfo, BUTTON_PREFIX } from './helpers';
-
 import '../Logs.css';
-import { RootState } from '@/initialState';
 
 interface RowProps {
     style?: object;

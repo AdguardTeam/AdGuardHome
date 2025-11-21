@@ -8,8 +8,6 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { useDispatch, useSelector } from '@/store/hooks';
 import { DHCP_DESCRIPTION_PLACEHOLDERS, STATUS_RESPONSE } from '@/helpers/constants';
 
-
-
 import Card from '@/components/ui/Card';
 
 import PageTitle from '@/components/ui/PageTitle';
@@ -26,18 +24,14 @@ import {
     toggleLeaseModal,
 } from '@/actions';
 
-import {
-    calculateDhcpPlaceholdersIpv4,
-    calculateDhcpPlaceholdersIpv6,
-    subnetMaskToBitMask,
-} from '@/helpers/helpers';
+import { calculateDhcpPlaceholdersIpv4, calculateDhcpPlaceholdersIpv6, subnetMaskToBitMask } from '@/helpers/helpers';
+import { RootState } from '@/initialState';
 import FormDHCPv4 from './FormDHCPv4';
 
 import FormDHCPv6 from './FormDHCPv6';
 
 import Interfaces from './Interfaces';
 import './index.css';
-import { RootState } from '@/initialState';
 import StaticLeases from './StaticLeases/index';
 import Leases from './Leases';
 
@@ -47,28 +41,26 @@ type IPv4FormValues = {
     range_start?: string;
     range_end?: string;
     lease_duration?: number;
-}
+};
 
 type IPv6FormValues = {
     range_start?: string;
     range_end?: string;
     lease_duration?: number;
-}
+};
 
 const getDefaultV4Values = (v4: IPv4FormValues) => {
-    const emptyForm = Object.entries(v4).every(
-        ([key, value]) => key === 'lease_duration' || value === ''
-    );
+    const emptyForm = Object.entries(v4).every(([key, value]) => key === 'lease_duration' || value === '');
 
     if (emptyForm) {
         return {
             ...v4,
             lease_duration: undefined,
-        }
+        };
     }
 
     return v4;
-}
+};
 
 export type DhcpFormValues = {
     v4?: IPv4FormValues;
