@@ -5,18 +5,16 @@ import { shallowEqual } from 'react-redux';
 import classNames from 'classnames';
 
 import { FormProvider, useForm } from 'react-hook-form';
-import { useDispatch, useSelector } from '../../../store/hooks';
-import { DHCP_DESCRIPTION_PLACEHOLDERS, STATUS_RESPONSE } from '../../../helpers/constants';
+import { useDispatch, useSelector } from '@/store/hooks';
+import { DHCP_DESCRIPTION_PLACEHOLDERS, STATUS_RESPONSE } from '@/helpers/constants';
 
-import Leases from './Leases';
 
-import StaticLeases from './StaticLeases/index';
 
-import Card from '../../ui/Card';
+import Card from '@/components/ui/Card';
 
-import PageTitle from '../../ui/PageTitle';
+import PageTitle from '@/components/ui/PageTitle';
 
-import Loading from '../../ui/Loading';
+import Loading from '@/components/ui/Loading';
 import {
     findActiveDhcp,
     getDhcpInterfaces,
@@ -26,20 +24,22 @@ import {
     resetDhcpLeases,
     toggleDhcp,
     toggleLeaseModal,
-} from '../../../actions';
+} from '@/actions';
 
+import {
+    calculateDhcpPlaceholdersIpv4,
+    calculateDhcpPlaceholdersIpv6,
+    subnetMaskToBitMask,
+} from '@/helpers/helpers';
 import FormDHCPv4 from './FormDHCPv4';
 
 import FormDHCPv6 from './FormDHCPv6';
 
 import Interfaces from './Interfaces';
-import {
-    calculateDhcpPlaceholdersIpv4,
-    calculateDhcpPlaceholdersIpv6,
-    subnetMaskToBitMask,
-} from '../../../helpers/helpers';
 import './index.css';
-import { RootState } from '../../../initialState';
+import { RootState } from '@/initialState';
+import StaticLeases from './StaticLeases/index';
+import Leases from './Leases';
 
 type IPv4FormValues = {
     gateway_ip?: string;

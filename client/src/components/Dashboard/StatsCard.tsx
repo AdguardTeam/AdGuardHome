@@ -1,12 +1,12 @@
 import React from 'react';
 
-import { STATUS_COLORS } from '../../helpers/constants';
+import { STATUS_COLORS } from '@/helpers/constants';
 
-import { formatNumber } from '../../helpers/helpers';
+import { formatNumber } from '@/helpers/helpers';
 
-import Card from '../ui/Card';
+import Card from '@/components/ui/Card';
 
-import Line from '../ui/Line';
+import Line from '@/components/ui/Line';
 
 interface StatsCardProps {
     total: number;

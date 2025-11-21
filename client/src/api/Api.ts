@@ -1,11 +1,11 @@
 import axios from 'axios';
 
-import { BASE_URL } from '../../constants';
 
-import { getPathWithQueryString } from '../helpers/helpers';
-import { QUERY_LOGS_PAGE_LIMIT, HTML_PAGES, R_PATH_LAST_PART, THEMES } from '../helpers/constants';
-import i18n from '../i18n';
-import { LANGUAGES } from '../helpers/twosky';
+import { getPathWithQueryString } from '@/helpers/helpers';
+import { QUERY_LOGS_PAGE_LIMIT, HTML_PAGES, R_PATH_LAST_PART, THEMES } from '@/helpers/constants';
+import i18n from '@/i18n';
+import { LANGUAGES } from '@/helpers/twosky';
+import { BASE_URL } from '../../constants';
 
 class Api {
     baseUrl = BASE_URL;

@@ -1,10 +1,10 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDispatch } from '../../../store/hooks';
+import { useDispatch } from '@/store/hooks';
 
+import { refreshFilteredLogs } from '@/actions/queryLogs';
+import { addSuccessToast } from '@/actions/toasts';
 import { Form } from './Form';
-import { refreshFilteredLogs } from '../../../actions/queryLogs';
-import { addSuccessToast } from '../../../actions/toasts';
 
 interface FiltersProps {
     processingGetLogs: boolean;

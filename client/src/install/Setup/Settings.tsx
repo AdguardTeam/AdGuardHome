@@ -3,10 +3,8 @@ import { useForm, Controller } from 'react-hook-form';
 import { Trans, useTranslation } from 'react-i18next';
 import i18n from 'i18next';
 
-import Controls from './Controls';
-import AddressList from './AddressList';
 
-import { getInterfaceIp } from '../../helpers/helpers';
+import { getInterfaceIp } from '@/helpers/helpers';
 import {
     ALL_INTERFACES_IP,
     ADDRESS_IN_USE_TEXT,
@@ -16,13 +14,15 @@ import {
     STANDARD_WEB_PORT,
     MAX_PORT,
     MIN_PORT,
-} from '../../helpers/constants';
+} from '@/helpers/constants';
 
-import { validateRequiredValue } from '../../helpers/validators';
-import { InstallInterface } from '../../initialState';
-import { Input } from '../../components/ui/Controls/Input';
-import { Select } from '../../components/ui/Controls/Select';
-import { toNumber } from '../../helpers/form';
+import { validateRequiredValue } from '@/helpers/validators';
+import { InstallInterface } from '@/initialState';
+import { Input } from '@/components/ui/Controls/Input';
+import { Select } from '@/components/ui/Controls/Select';
+import { toNumber } from '@/helpers/form';
+import AddressList from './AddressList';
+import Controls from './Controls';
 
 const validateInstallPort = (value: number) => {
     if (value < MIN_PORT || value > MAX_PORT) {

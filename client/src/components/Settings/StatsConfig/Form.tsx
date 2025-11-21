@@ -3,13 +3,13 @@ import { Trans, useTranslation } from 'react-i18next';
 import i18next from 'i18next';
 
 import { Controller, useForm } from 'react-hook-form';
-import { STATS_INTERVALS_DAYS, DAY, RETENTION_CUSTOM, RETENTION_RANGE } from '../../../helpers/constants';
+import { STATS_INTERVALS_DAYS, DAY, RETENTION_CUSTOM, RETENTION_RANGE } from '@/helpers/constants';
 
 import '../FormButton.css';
-import { Checkbox } from '../../ui/Controls/Checkbox';
-import { Input } from '../../ui/Controls/Input';
-import { toNumber } from '../../../helpers/form';
-import { Textarea } from '../../ui/Controls/Textarea';
+import { Checkbox } from '@/components/ui/Controls/Checkbox';
+import { Input } from '@/components/ui/Controls/Input';
+import { toNumber } from '@/helpers/form';
+import { Textarea } from '@/components/ui/Controls/Textarea';
 
 const getIntervalTitle = (interval: any) => {
     switch (interval) {

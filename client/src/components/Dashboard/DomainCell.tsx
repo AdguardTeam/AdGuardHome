@@ -1,11 +1,11 @@
 import React from 'react';
 
 import { Trans } from 'react-i18next';
-import { getSourceData, getTrackerData } from '../../helpers/trackers/trackers';
+import { getSourceData, getTrackerData } from '@/helpers/trackers/trackers';
 
-import Tooltip from '../ui/Tooltip';
+import Tooltip from '@/components/ui/Tooltip';
 
-import { captitalizeWords } from '../../helpers/helpers';
+import { captitalizeWords } from '@/helpers/helpers';
 
 const renderLabel = (value: any) => (
     <strong>

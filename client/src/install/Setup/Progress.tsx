@@ -1,7 +1,7 @@
 import React from 'react';
 import { Trans } from 'react-i18next';
 
-import { INSTALL_TOTAL_STEPS } from '../../helpers/constants';
+import { INSTALL_TOTAL_STEPS } from '@/helpers/constants';
 
 const getProgressPercent = (step: number) => (step / INSTALL_TOTAL_STEPS) * 100;
 

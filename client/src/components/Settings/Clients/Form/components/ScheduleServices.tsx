@@ -1,8 +1,8 @@
 import React from 'react';
 import { Trans } from 'react-i18next';
 import { useFormContext } from 'react-hook-form';
-import { ScheduleForm } from '../../../../Filters/Services/ScheduleForm';
-import { ClientForm } from '../types';
+import { ScheduleForm } from '@/components/Filters/Services/ScheduleForm';
+import { ClientForm } from '@/components/Settings/Clients/Form/types';
 
 export const ScheduleServices = () => {
     const { watch, setValue } = useFormContext<ClientForm>();

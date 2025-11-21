@@ -1,6 +1,6 @@
 import { handleActions } from 'redux-actions';
 
-import * as actions from '../actions/clients';
+import * as actions from '@/actions/clients';
 
 const clients = handleActions(
     {

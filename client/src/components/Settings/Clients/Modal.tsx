@@ -3,7 +3,7 @@ import { Trans, withTranslation } from 'react-i18next';
 
 import ReactModal from 'react-modal';
 
-import { MODAL_TYPE } from '../../../helpers/constants';
+import { MODAL_TYPE } from '@/helpers/constants';
 import { Form } from './Form';
 
 const normalizeIds = (initialIds?: string[]): { name: string }[] => {

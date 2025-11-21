@@ -4,26 +4,26 @@ import { Trans, useTranslation } from 'react-i18next';
 
 import { shallowEqual } from 'react-redux';
 import classNames from 'classnames';
-import { useDispatch, useSelector } from '../../store/hooks';
+import { useDispatch, useSelector } from '@/store/hooks';
 
-import Card from '../ui/Card';
-import Cell from '../ui/Cell';
-import { Table, convertColumns } from '../ui/ReactTable';
+import Card from '@/components/ui/Card';
+import Cell from '@/components/ui/Cell';
+import { Table, convertColumns } from '@/components/ui/ReactTable';
 
-import { getPercent, sortIp } from '../../helpers/helpers';
+import { getPercent, sortIp } from '@/helpers/helpers';
 import {
     BLOCK_ACTIONS,
     DASHBOARD_TABLES_DEFAULT_PAGE_SIZE,
     STATUS_COLORS,
     TABLES_MIN_ROWS,
-} from '../../helpers/constants';
-import { toggleClientBlock } from '../../actions/access';
+} from '@/helpers/constants';
+import { toggleClientBlock } from '@/actions/access';
 
-import { renderFormattedClientCell } from '../../helpers/renderFormattedClientCell';
-import { getStats } from '../../actions/stats';
+import { renderFormattedClientCell } from '@/helpers/renderFormattedClientCell';
+import { getStats } from '@/actions/stats';
 
-import IconTooltip from '../Logs/Cells/IconTooltip';
-import { RootState } from '../../initialState';
+import IconTooltip from '@/components/Logs/Cells/IconTooltip';
+import { RootState } from '@/initialState';
 
 const getClientsPercentColor = (percent: any) => {
     if (percent > 50) {

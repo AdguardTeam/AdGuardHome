@@ -1,16 +1,16 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Controller, useForm } from 'react-hook-form';
-import { useSelector } from '../../../store/hooks';
+import { useSelector } from '@/store/hooks';
 
-import Card from '../../ui/Card';
+import Card from '@/components/ui/Card';
+
+import { RootState } from '@/initialState';
+import { validateRequiredValue } from '@/helpers/validators';
+import { Input } from '@/components/ui/Controls/Input';
+import { DNS_RECORD_TYPES } from '@/helpers/constants';
+import { Select } from '@/components/ui/Controls/Select';
 import Info from './Info';
-
-import { RootState } from '../../../initialState';
-import { validateRequiredValue } from '../../../helpers/validators';
-import { Input } from '../../ui/Controls/Input';
-import { DNS_RECORD_TYPES } from '../../../helpers/constants';
-import { Select } from '../../ui/Controls/Select';
 
 export type FilteringCheckFormValues = {
     name: string;

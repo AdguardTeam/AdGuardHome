@@ -1,8 +1,8 @@
 import React from 'react';
 
+import { formatNumber } from '@/helpers/helpers';
 import LogsSearchLink from './LogsSearchLink';
 
-import { formatNumber } from '../../helpers/helpers';
 
 interface CellProps {
     value: number;

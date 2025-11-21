@@ -1,9 +1,9 @@
 import React, { useEffect, useState, forwardRef } from 'react';
 import { Trans } from 'react-i18next';
-import { useDispatch } from '../../store/hooks';
-import { TOAST_TIMEOUTS } from '../../helpers/constants';
+import { useDispatch } from '@/store/hooks';
+import { TOAST_TIMEOUTS } from '@/helpers/constants';
 
-import { removeToast } from '../../actions';
+import { removeToast } from '@/actions';
 
 interface ToastProps {
     id: string;

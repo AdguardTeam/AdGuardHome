@@ -1,6 +1,6 @@
 import { handleActions } from 'redux-actions';
 
-import * as actions from '../actions/rewrites';
+import * as actions from '@/actions/rewrites';
 
 const rewrites = handleActions(
     {

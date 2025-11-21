@@ -2,7 +2,7 @@ import React, { useState, useRef, useCallback } from 'react';
 import classnames from 'classnames';
 import { withTranslation } from 'react-i18next';
 
-import { useClickOutside } from '../../hooks/useClickOutside';
+import { useClickOutside } from '@/hooks/useClickOutside';
 
 import './Dropdown.css';
 

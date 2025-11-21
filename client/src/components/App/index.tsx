@@ -8,43 +8,43 @@ import '../ui/ReactTable.css';
 import './index.css';
 
 import { shallowEqual } from 'react-redux';
-import { useDispatch, useSelector } from '../../store/hooks';
-import Toasts from '../Toasts';
-import Footer from '../ui/Footer';
-import Status from '../ui/Status';
-import UpdateTopline from '../ui/UpdateTopline';
-import UpdateOverlay from '../ui/UpdateOverlay';
-import EncryptionTopline from '../ui/EncryptionTopline';
-import Icons from '../ui/Icons';
-import i18n from '../../i18n';
+import { useDispatch, useSelector } from '@/store/hooks';
+import Toasts from '@/components/Toasts';
+import Footer from '@/components/ui/Footer';
+import Status from '@/components/ui/Status';
+import UpdateTopline from '@/components/ui/UpdateTopline';
+import UpdateOverlay from '@/components/ui/UpdateOverlay';
+import EncryptionTopline from '@/components/ui/EncryptionTopline';
+import Icons from '@/components/ui/Icons';
+import i18n from '@/i18n';
 
-import Loading from '../ui/Loading';
-import { FILTERS_URLS, MENU_URLS, SETTINGS_URLS, THEMES } from '../../helpers/constants';
+import Loading from '@/components/ui/Loading';
+import { FILTERS_URLS, MENU_URLS, SETTINGS_URLS, THEMES } from '@/helpers/constants';
 
-import { getLogsUrlParams, setHtmlLangAttr, setUITheme } from '../../helpers/helpers';
+import { getLogsUrlParams, setHtmlLangAttr, setUITheme } from '@/helpers/helpers';
 
-import Header from '../Header';
+import Header from '@/components/Header';
 
-import { getDnsStatus, getTimerStatus } from '../../actions';
+import { getDnsStatus, getTimerStatus } from '@/actions';
 
-import Dashboard from '../../containers/Dashboard';
-import SetupGuide from '../../containers/SetupGuide';
-import Settings from '../../containers/Settings';
-import Dns from '../../containers/Dns';
-import Encryption from '../../containers/Encryption';
+import Dashboard from '@/containers/Dashboard';
+import SetupGuide from '@/containers/SetupGuide';
+import Settings from '@/containers/Settings';
+import Dns from '@/containers/Dns';
+import Encryption from '@/containers/Encryption';
 
-import Dhcp from '../Settings/Dhcp';
-import Clients from '../../containers/Clients';
-import DnsBlocklist from '../../containers/DnsBlocklist';
-import DnsAllowlist from '../../containers/DnsAllowlist';
-import DnsRewrites from '../../containers/DnsRewrites';
-import CustomRules from '../../containers/CustomRules';
+import Dhcp from '@/components/Settings/Dhcp';
+import Clients from '@/containers/Clients';
+import DnsBlocklist from '@/containers/DnsBlocklist';
+import DnsAllowlist from '@/containers/DnsAllowlist';
+import DnsRewrites from '@/containers/DnsRewrites';
+import CustomRules from '@/containers/CustomRules';
 
-import Services from '../Filters/Services';
+import Services from '@/components/Filters/Services';
 
-import Logs from '../Logs';
-import ProtectionTimer from '../ProtectionTimer';
-import { RootState } from '../../initialState';
+import Logs from '@/components/Logs';
+import ProtectionTimer from '@/components/ProtectionTimer';
+import { RootState } from '@/initialState';
 
 const ROUTES = [
     {

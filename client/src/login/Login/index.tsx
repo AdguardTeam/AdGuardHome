@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
 import { Trans } from 'react-i18next';
-import { useSelector, useDispatch } from '../../store/hooks';
+import { useSelector, useDispatch } from '@/store/hooks';
 
-import * as actionCreators from '../../actions/login';
+import * as actionCreators from '@/actions/login';
 
-import { Logo } from '../../components/ui/svg/logo';
-import Toasts from '../../components/Toasts';
-import Footer from '../../components/ui/Footer';
-import Icons from '../../components/ui/Icons';
+import { Logo } from '@/components/ui/svg/logo';
+import Toasts from '@/components/Toasts';
+import Footer from '@/components/ui/Footer';
+import Icons from '@/components/ui/Icons';
+import { LoginState } from '@/initialState';
 import Form, { LoginFormValues } from './Form';
 
 import './Login.css';
 import '../../components/ui/Tabler.css';
-import { LoginState } from '../../initialState';
 
 export const Login = () => {
     const dispatch = useDispatch();

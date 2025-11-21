@@ -1,13 +1,13 @@
 import React from 'react';
 import { Trans, withTranslation } from 'react-i18next';
 
-import { Guide } from '../ui/Guide';
+import { Guide } from '@/components/ui/Guide';
 
-import Card from '../ui/Card';
+import Card from '@/components/ui/Card';
 
-import PageTitle from '../ui/PageTitle';
+import PageTitle from '@/components/ui/PageTitle';
 import './Guide.css';
-import { DashboardData } from '../../initialState';
+import { DashboardData } from '@/initialState';
 
 interface SetupGuideProps {
     dashboard: DashboardData;

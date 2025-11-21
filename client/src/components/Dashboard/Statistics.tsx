@@ -3,10 +3,10 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { withTranslation, Trans } from 'react-i18next';
 
-import StatsCard from './StatsCard';
 
-import { getPercent, normalizeHistory } from '../../helpers/helpers';
-import { RESPONSE_FILTER } from '../../helpers/constants';
+import { getPercent, normalizeHistory } from '@/helpers/helpers';
+import { RESPONSE_FILTER } from '@/helpers/constants';
+import StatsCard from './StatsCard';
 
 const getNormalizedHistory = (data: any, interval: any, id: any) => [{ data: normalizeHistory(data), id }];
 

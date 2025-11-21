@@ -3,24 +3,24 @@
 import React, { useEffect, useMemo } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useDispatch, useSelector } from '../../../../store/hooks';
+import { useDispatch, useSelector } from '@/store/hooks';
 
 
-import { getAllBlockedServices, getBlockedServices } from '../../../../actions/services';
+import { getAllBlockedServices, getBlockedServices } from '@/actions/services';
 
-import { initSettings } from '../../../../actions';
-import { splitByNewLine, countClientsStatistics, sortIp, getService, formatNumber } from '../../../../helpers/helpers';
-import { MODAL_TYPE, LOCAL_TIMEZONE_VALUE, TABLES_MIN_ROWS } from '../../../../helpers/constants';
+import { initSettings } from '@/actions';
+import { splitByNewLine, countClientsStatistics, sortIp, getService, formatNumber } from '@/helpers/helpers';
+import { MODAL_TYPE, LOCAL_TIMEZONE_VALUE, TABLES_MIN_ROWS } from '@/helpers/constants';
 
-import Card from '../../../ui/Card';
-import CellWrap from '../../../ui/CellWrap';
-import { Table, convertColumns } from '../../../ui/ReactTable';
+import Card from '@/components/ui/Card';
+import CellWrap from '@/components/ui/CellWrap';
+import { Table, convertColumns } from '@/components/ui/ReactTable';
 
-import LogsSearchLink from '../../../ui/LogsSearchLink';
+import LogsSearchLink from '@/components/ui/LogsSearchLink';
 
-import Modal from '../Modal';
-import { LocalStorageHelper, LOCAL_STORAGE_KEYS } from '../../../../helpers/localStorageHelper';
-import { Client, NormalizedTopClients, RootState } from '../../../../initialState';
+import Modal from '@/components/Settings/Clients/Modal';
+import { LocalStorageHelper, LOCAL_STORAGE_KEYS } from '@/helpers/localStorageHelper';
+import { Client, NormalizedTopClients, RootState } from '@/initialState';
 
 interface ClientsTableProps {
     clients: Client[];

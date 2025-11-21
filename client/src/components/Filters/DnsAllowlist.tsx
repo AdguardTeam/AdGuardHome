@@ -1,15 +1,15 @@
 import React, { Component } from 'react';
 import { withTranslation } from 'react-i18next';
 
-import PageTitle from '../ui/PageTitle';
-import Card from '../ui/Card';
+import PageTitle from '@/components/ui/PageTitle';
+import Card from '@/components/ui/Card';
+import { MODAL_TYPE } from '@/helpers/constants';
+import { getCurrentFilter } from '@/helpers/helpers';
 import Modal from './Modal';
 import Actions from './Actions';
 import Table from './Table';
 
-import { MODAL_TYPE } from '../../helpers/constants';
 
-import { getCurrentFilter } from '../../helpers/helpers';
 
 interface DnsAllowlistProps {
     getFilteringStatus: (...args: unknown[]) => unknown;

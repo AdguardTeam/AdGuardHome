@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import i18next from 'i18next';
-import { useSelector } from '../../../store/hooks';
+import { useSelector } from '@/store/hooks';
 
-import { MOBILE_CONFIG_LINKS } from '../../../helpers/constants';
+import { MOBILE_CONFIG_LINKS } from '@/helpers/constants';
 
-import Tabs from '../Tabs';
+import Tabs from '@/components/ui/Tabs';
 
+import { RootState } from '@/initialState';
 import { MobileConfigForm } from './MobileConfigForm';
-import { RootState } from '../../../initialState';
 
 interface renderLiProps {
     label?: string;

@@ -2,9 +2,9 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Controller, useFormContext } from 'react-hook-form';
 import i18next from 'i18next';
-import { captitalizeWords } from '../../../../../helpers/helpers';
-import { ClientForm } from '../types';
-import { Checkbox } from '../../../../ui/Controls/Checkbox';
+import { captitalizeWords } from '@/helpers/helpers';
+import { ClientForm } from '@/components/Settings/Clients/Form/types';
+import { Checkbox } from '@/components/ui/Controls/Checkbox';
 
 type ProtectionSettings = 'use_global_settings' | 'filtering_enabled' | 'safebrowsing_enabled' | 'parental_enabled';
 

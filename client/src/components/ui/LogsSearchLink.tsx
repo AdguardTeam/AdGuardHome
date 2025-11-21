@@ -3,8 +3,8 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
-import { getLogsUrlParams } from '../../helpers/helpers';
-import { MENU_URLS } from '../../helpers/constants';
+import { getLogsUrlParams } from '@/helpers/helpers';
+import { MENU_URLS } from '@/helpers/constants';
 
 interface LogsSearchLinkProps {
     children: string | number | React.ReactElement;

@@ -1,27 +1,27 @@
 import React, { useEffect, Fragment } from 'react';
 import debounce from 'lodash/debounce';
-import { useDispatch, useSelector } from '../../store/hooks';
+import { useDispatch, useSelector } from '@/store/hooks';
 
-import * as actionCreators from '../../actions/install';
+import * as actionCreators from '@/actions/install';
 
-import { getWebAddress } from '../../helpers/helpers';
-import { INSTALL_TOTAL_STEPS, ALL_INTERFACES_IP, DEBOUNCE_TIMEOUT } from '../../helpers/constants';
+import { getWebAddress } from '@/helpers/helpers';
+import { INSTALL_TOTAL_STEPS, ALL_INTERFACES_IP, DEBOUNCE_TIMEOUT } from '@/helpers/constants';
 
-import Loading from '../../components/ui/Loading';
+import Loading from '@/components/ui/Loading';
+import Toasts from '@/components/Toasts';
+import Footer from '@/components/ui/Footer';
+import Icons from '@/components/ui/Icons';
+import { Logo } from '@/components/ui/svg/logo';
 import Greeting from './Greeting';
 import { ConfigType, DnsConfig, Settings, WebConfig } from './Settings';
 import { Devices } from './Devices';
 import { Submit } from './Submit';
 import { Progress } from './Progress';
 import { Auth } from './Auth';
-import Toasts from '../../components/Toasts';
-import Footer from '../../components/ui/Footer';
-import Icons from '../../components/ui/Icons';
-import { Logo } from '../../components/ui/svg/logo';
 
 import './Setup.css';
 import '../../components/ui/Tabler.css';
-import { InstallInterface, InstallState } from '../../initialState';
+import { InstallInterface, InstallState } from '@/initialState';
 
 export const Setup = () => {
     const dispatch = useDispatch();

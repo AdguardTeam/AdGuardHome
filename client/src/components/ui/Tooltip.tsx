@@ -3,7 +3,7 @@ import type { Placement } from '@popperjs/core';
 import { usePopperTooltip, TriggerType } from 'react-popper-tooltip';
 import { useTranslation } from 'react-i18next';
 
-import { HIDE_TOOLTIP_DELAY, MEDIUM_SCREEN_SIZE, SHOW_TOOLTIP_DELAY } from '../../helpers/constants';
+import { HIDE_TOOLTIP_DELAY, MEDIUM_SCREEN_SIZE, SHOW_TOOLTIP_DELAY } from '@/helpers/constants';
 import 'react-popper-tooltip/dist/styles.css';
 import './Tooltip.css';
 

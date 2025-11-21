@@ -1,9 +1,9 @@
 import React from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { Controller, useFormContext } from 'react-hook-form';
-import { ClientForm } from '../types';
-import { BlockedService } from '../../../../Filters/Services/Form';
-import { ServiceField } from '../../../../Filters/Services/ServiceField';
+import { ClientForm } from '@/components/Settings/Clients/Form/types';
+import { BlockedService } from '@/components/Filters/Services/Form';
+import { ServiceField } from '@/components/Filters/Services/ServiceField';
 
 type Props = {
     services: BlockedService[];

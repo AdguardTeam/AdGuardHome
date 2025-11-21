@@ -4,17 +4,17 @@ import { Controller, useForm } from 'react-hook-form';
 import i18next from 'i18next';
 import cn from 'classnames';
 
-import { getPathWithQueryString } from '../../../helpers/helpers';
-import { CLIENT_ID_LINK, MOBILE_CONFIG_LINKS, STANDARD_HTTPS_PORT } from '../../../helpers/constants';
-import { toNumber } from '../../../helpers/form';
+import { getPathWithQueryString } from '@/helpers/helpers';
+import { CLIENT_ID_LINK, MOBILE_CONFIG_LINKS, STANDARD_HTTPS_PORT } from '@/helpers/constants';
+import { toNumber } from '@/helpers/form';
 import {
     validateConfigClientId,
     validateServerName,
     validatePort,
     validateIsSafePort,
-} from '../../../helpers/validators';
-import { Input } from '../Controls/Input';
-import { Select } from '../Controls/Select';
+} from '@/helpers/validators';
+import { Input } from '@/components/ui/Controls/Input';
+import { Select } from '@/components/ui/Controls/Select';
 
 const getDownloadLink = (host: string, clientId: string, protocol: string, invalid: boolean) => {
     if (!host || invalid) {

@@ -3,12 +3,12 @@ import round from 'lodash/round';
 import { withTranslation, Trans } from 'react-i18next';
 import { TFunction } from 'i18next';
 
-import Card from '../ui/Card';
-import DomainCell from './DomainCell';
-import { Table, convertColumns } from '../ui/ReactTable';
+import Card from '@/components/ui/Card';
+import { Table, convertColumns } from '@/components/ui/ReactTable';
 
-import { DASHBOARD_TABLES_DEFAULT_PAGE_SIZE, TABLES_MIN_ROWS } from '../../helpers/constants';
-import { formatNumber } from '../../helpers/helpers';
+import { DASHBOARD_TABLES_DEFAULT_PAGE_SIZE, TABLES_MIN_ROWS } from '@/helpers/constants';
+import { formatNumber } from '@/helpers/helpers';
+import DomainCell from './DomainCell';
 
 interface TimeCellProps {
     value?: string | number;

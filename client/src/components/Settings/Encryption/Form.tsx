@@ -11,23 +11,23 @@ import {
     validatePortQuic,
     validatePortTLS,
     validatePlainDns,
-} from '../../../helpers/validators';
+} from '@/helpers/validators';
 
-import KeyStatus from './KeyStatus';
 
-import CertificateStatus from './CertificateStatus';
 import {
     DNS_OVER_QUIC_PORT,
     DNS_OVER_TLS_PORT,
     STANDARD_HTTPS_PORT,
     ENCRYPTION_SOURCE,
-} from '../../../helpers/constants';
-import { Checkbox } from '../../ui/Controls/Checkbox';
-import { Radio } from '../../ui/Controls/Radio';
-import { Input } from '../../ui/Controls/Input';
-import { Textarea } from '../../ui/Controls/Textarea';
-import { EncryptionData } from '../../../initialState';
-import { toNumber } from '../../../helpers/form';
+} from '@/helpers/constants';
+import { Checkbox } from '@/components/ui/Controls/Checkbox';
+import { Radio } from '@/components/ui/Controls/Radio';
+import { Input } from '@/components/ui/Controls/Input';
+import { Textarea } from '@/components/ui/Controls/Textarea';
+import { EncryptionData } from '@/initialState';
+import { toNumber } from '@/helpers/form';
+import CertificateStatus from './CertificateStatus';
+import KeyStatus from './KeyStatus';
 
 const certificateSourceOptions = [
     {

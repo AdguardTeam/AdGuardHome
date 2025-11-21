@@ -4,12 +4,12 @@ import classNames from 'classnames';
 import type { Placement } from '@popperjs/core';
 import { TriggerType } from 'react-popper-tooltip';
 
-import { processContent } from '../../../helpers/helpers';
+import { processContent } from '@/helpers/helpers';
 
-import Tooltip from '../../ui/Tooltip';
+import Tooltip from '@/components/ui/Tooltip';
 import 'react-popper-tooltip/dist/styles.css';
 import './IconTooltip.css';
-import { SHOW_TOOLTIP_DELAY } from '../../../helpers/constants';
+import { SHOW_TOOLTIP_DELAY } from '@/helpers/constants';
 
 interface IconTooltipProps {
     className?: string;

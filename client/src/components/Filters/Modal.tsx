@@ -3,12 +3,11 @@ import React, { Component } from 'react';
 import ReactModal from 'react-modal';
 import { withTranslation } from 'react-i18next';
 
-import { MODAL_TYPE } from '../../helpers/constants';
+import { MODAL_TYPE } from '@/helpers/constants';
+import { getMap } from '@/helpers/helpers';
 
 import { Form } from './Form';
 import '../ui/Modal.css';
-
-import { getMap } from '../../helpers/helpers';
 
 ReactModal.setAppElement('#root');
 

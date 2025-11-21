@@ -2,8 +2,8 @@ import React from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Trans, useTranslation } from 'react-i18next';
 
-import { validateAnswer, validateDomain, validateRequiredValue } from '../../../helpers/validators';
-import { Input } from '../../ui/Controls/Input';
+import { validateAnswer, validateDomain, validateRequiredValue } from '@/helpers/validators';
+import { Input } from '@/components/ui/Controls/Input';
 
 interface RewriteFormValues {
     domain: string;

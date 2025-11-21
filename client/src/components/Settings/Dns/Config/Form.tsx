@@ -3,14 +3,14 @@ import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 
 import i18next from 'i18next';
-import { validateIp, validateIpv4, validateIpv6, validateRequiredValue } from '../../../../helpers/validators';
+import { validateIp, validateIpv4, validateIpv6, validateRequiredValue } from '@/helpers/validators';
 
-import { BLOCKING_MODES, UINT32_RANGE } from '../../../../helpers/constants';
-import { Checkbox } from '../../../ui/Controls/Checkbox';
-import { Input } from '../../../ui/Controls/Input';
-import { toNumber } from '../../../../helpers/form';
-import { Textarea } from '../../../ui/Controls/Textarea';
-import { Radio } from '../../../ui/Controls/Radio';
+import { BLOCKING_MODES, UINT32_RANGE } from '@/helpers/constants';
+import { Checkbox } from '@/components/ui/Controls/Checkbox';
+import { Input } from '@/components/ui/Controls/Input';
+import { toNumber } from '@/helpers/form';
+import { Textarea } from '@/components/ui/Controls/Textarea';
+import { Radio } from '@/components/ui/Controls/Radio';
 
 const checkboxes: {
     name: 'dnssec_enabled' | 'disable_ipv6';

@@ -1,11 +1,11 @@
 import React from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { shallowEqual } from 'react-redux';
-import { useDispatch, useSelector } from '../../store/hooks';
+import { useDispatch, useSelector } from '@/store/hooks';
 
-import { getVersion } from '../../actions';
+import { getVersion } from '@/actions';
 import './Version.css';
-import { RootState } from '../../initialState';
+import { RootState } from '@/initialState';
 
 const Version = () => {
     const dispatch = useDispatch();

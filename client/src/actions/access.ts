@@ -1,10 +1,10 @@
 import { createAction } from 'redux-actions';
 import i18next from 'i18next';
 
-import apiClient from '../api/Api';
+import apiClient from '@/api/Api';
+import { splitByNewLine } from '@/helpers/helpers';
 import { addErrorToast, addSuccessToast } from './toasts';
 
-import { splitByNewLine } from '../helpers/helpers';
 
 export const getAccessListRequest = createAction('GET_ACCESS_LIST_REQUEST');
 export const getAccessListFailure = createAction('GET_ACCESS_LIST_FAILURE');

@@ -8,28 +8,28 @@ import { useLocation } from 'react-router-dom';
 import queryString from 'query-string';
 import classNames from 'classnames';
 import { FormProvider, useForm } from 'react-hook-form';
-import { useDispatch, useSelector } from '../../store/hooks';
-import { BLOCK_ACTIONS, DEFAULT_LOGS_FILTER, MEDIUM_SCREEN_SIZE } from '../../helpers/constants';
+import { useDispatch, useSelector } from '@/store/hooks';
+import { BLOCK_ACTIONS, DEFAULT_LOGS_FILTER, MEDIUM_SCREEN_SIZE } from '@/helpers/constants';
 
-import Loading from '../ui/Loading';
+import Loading from '@/components/ui/Loading';
 
 import Filters from './Filters';
 
 import Disabled from './Disabled';
-import { getFilteringStatus } from '../../actions/filtering';
+import { getFilteringStatus } from '@/actions/filtering';
 
-import { getClients } from '../../actions';
-import { getDnsConfig } from '../../actions/dnsConfig';
-import { getAccessList } from '../../actions/access';
-import { getAllBlockedServices } from '../../actions/services';
-import { getLogsConfig, resetFilteredLogs, setFilteredLogs, toggleDetailedLogs } from '../../actions/queryLogs';
+import { getClients } from '@/actions';
+import { getDnsConfig } from '@/actions/dnsConfig';
+import { getAccessList } from '@/actions/access';
+import { getAllBlockedServices } from '@/actions/services';
+import { getLogsConfig, resetFilteredLogs, setFilteredLogs, toggleDetailedLogs } from '@/actions/queryLogs';
 
 import InfiniteTable from './InfiniteTable';
 import './Logs.css';
-import { BUTTON_PREFIX } from './Cells/helpers';
 
+import { RootState } from '@/initialState';
 import AnonymizerNotification from './AnonymizerNotification';
-import { RootState } from '../../initialState';
+import { BUTTON_PREFIX } from './Cells/helpers';
 
 export type SearchFormValues = {
     search: string;

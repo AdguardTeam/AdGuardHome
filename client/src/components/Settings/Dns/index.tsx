@@ -1,22 +1,22 @@
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useDispatch, useSelector } from '../../../store/hooks';
+import { useDispatch, useSelector } from '@/store/hooks';
 
-import Upstream from './Upstream';
 
-import Access from './Access';
 
-import Config from './Config';
 
-import PageTitle from '../../ui/PageTitle';
+import PageTitle from '@/components/ui/PageTitle';
 
-import Loading from '../../ui/Loading';
+import Loading from '@/components/ui/Loading';
 
+import { getDnsConfig } from '@/actions/dnsConfig';
+import { getAccessList } from '@/actions/access';
+import { RootState } from '@/initialState';
 import CacheConfig from './Cache';
-import { getDnsConfig } from '../../../actions/dnsConfig';
-import { getAccessList } from '../../../actions/access';
-import { RootState } from '../../../initialState';
+import Config from './Config';
+import Access from './Access';
+import Upstream from './Upstream';
 
 const Dns = () => {
     const { t } = useTranslation();

@@ -2,11 +2,11 @@ import React, { useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 
-import { UINT32_RANGE } from '../../../helpers/constants';
-import { validateIpv6, validateRequiredValue } from '../../../helpers/validators';
+import { UINT32_RANGE } from '@/helpers/constants';
+import { validateIpv6, validateRequiredValue } from '@/helpers/validators';
+import { Input } from '@/components/ui/Controls/Input';
+import { toNumber } from '@/helpers/form';
 import { DhcpFormValues } from '.';
-import { Input } from '../../ui/Controls/Input';
-import { toNumber } from '../../../helpers/form';
 
 type FormDHCPv6Props = {
     processingConfig?: boolean;

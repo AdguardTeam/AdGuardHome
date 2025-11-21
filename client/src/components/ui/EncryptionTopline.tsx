@@ -2,11 +2,11 @@ import React from 'react';
 import { Trans } from 'react-i18next';
 import isAfter from 'date-fns/is_after';
 import addDays from 'date-fns/add_days';
-import { useSelector } from '../../store/hooks';
+import { useSelector } from '@/store/hooks';
 
+import { EMPTY_DATE } from '@/helpers/constants';
+import { RootState } from '@/initialState';
 import Topline from './Topline';
-import { EMPTY_DATE } from '../../helpers/constants';
-import { RootState } from '../../initialState';
 
 const EXPIRATION_ENUM = {
     VALID: 'VALID',

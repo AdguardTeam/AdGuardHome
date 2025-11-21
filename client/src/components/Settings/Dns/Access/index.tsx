@@ -1,13 +1,13 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { shallowEqual } from 'react-redux';
-import { useDispatch, useSelector } from '../../../../store/hooks';
+import { useDispatch, useSelector } from '@/store/hooks';
 
+
+import Card from '@/components/ui/Card';
+import { setAccessList } from '@/actions/access';
+import { RootState } from '@/initialState';
 import Form from './Form';
-
-import Card from '../../../ui/Card';
-import { setAccessList } from '../../../../actions/access';
-import { RootState } from '../../../../initialState';
 
 const Access = () => {
     const { t } = useTranslation();

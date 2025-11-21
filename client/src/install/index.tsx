@@ -3,12 +3,12 @@ import { Provider } from 'react-redux';
 
 import '../components/App/index.css';
 import '../components/ui/ReactTable.css';
-import configureStore from '../configureStore';
-import reducers from '../reducers/install';
+import configureStore from '@/configureStore';
+import reducers from '@/reducers/install';
 import '../i18n';
 
+import { InstallState } from '@/initialState';
 import { Setup } from './Setup';
-import { InstallState } from '../initialState';
 
 const store = configureStore<InstallState>(reducers, {});
 

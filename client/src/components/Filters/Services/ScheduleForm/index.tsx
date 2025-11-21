@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import cn from 'classnames';
 
+import { LOCAL_TIMEZONE_VALUE } from '@/helpers/constants';
 import { Modal } from './Modal';
 import { getFullDayName, getShortDayName } from './helpers';
-import { LOCAL_TIMEZONE_VALUE } from '../../../../helpers/constants';
 
 import { TimePeriod } from './TimePeriod';
 import './styles.css';

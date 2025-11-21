@@ -1,12 +1,12 @@
 import React from 'react';
 import { useForm, Controller, FormProvider } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { validatePath, validateRequiredValue } from '../../helpers/validators';
+import { validatePath, validateRequiredValue } from '@/helpers/validators';
 
-import { MODAL_OPEN_TIMEOUT, MODAL_TYPE } from '../../helpers/constants';
-import filtersCatalog from '../../helpers/filters/filters';
+import { MODAL_OPEN_TIMEOUT, MODAL_TYPE } from '@/helpers/constants';
+import filtersCatalog from '@/helpers/filters/filters';
+import { Input } from '@/components/ui/Controls/Input';
 import { FiltersList } from './FiltersList';
-import { Input } from '../ui/Controls/Input';
 
 type FormValues = {
     enabled: boolean;

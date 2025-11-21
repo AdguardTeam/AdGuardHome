@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
 import { withTranslation } from 'react-i18next';
 
-import Card from '../../ui/Card';
+import Card from '@/components/ui/Card';
 
+import { HOUR } from '@/helpers/constants';
 import { Form, FormValues } from './Form';
-import { HOUR } from '../../../helpers/constants';
 
 interface LogsConfigProps {
     interval: number;

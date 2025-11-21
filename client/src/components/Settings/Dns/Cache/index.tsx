@@ -1,15 +1,15 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { shallowEqual } from 'react-redux';
-import { useDispatch, useSelector } from '../../../../store/hooks';
+import { useDispatch, useSelector } from '@/store/hooks';
 
-import Card from '../../../ui/Card';
+import Card from '@/components/ui/Card';
 
+import { setDnsConfig } from '@/actions/dnsConfig';
+
+import { replaceEmptyStringsWithZeroes, replaceZeroWithEmptyString } from '@/helpers/helpers';
+import { RootState } from '@/initialState';
 import Form from './Form';
-import { setDnsConfig } from '../../../../actions/dnsConfig';
-
-import { replaceEmptyStringsWithZeroes, replaceZeroWithEmptyString } from '../../../../helpers/helpers';
-import { RootState } from '../../../../initialState';
 
 const CacheConfig = () => {
     const { t } = useTranslation();

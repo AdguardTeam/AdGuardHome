@@ -2,7 +2,7 @@ import React, { Dispatch, memo, SetStateAction } from 'react';
 import classNames from 'classnames';
 import { useTranslation } from 'react-i18next';
 import { shallowEqual } from 'react-redux';
-import { useDispatch, useSelector } from '../../../store/hooks';
+import { useDispatch, useSelector } from '@/store/hooks';
 
 import {
     captitalizeWords,
@@ -14,7 +14,7 @@ import {
     getBlockingClientName,
     getServiceName,
     processContent,
-} from '../../../helpers/helpers';
+} from '@/helpers/helpers';
 import {
     BLOCK_ACTIONS,
     DEFAULT_SHORT_DATE_FORMAT_OPTIONS,
@@ -23,11 +23,13 @@ import {
     LONG_TIME_FORMAT,
     QUERY_STATUS_COLORS,
     SCHEME_TO_PROTOCOL_MAP,
-} from '../../../helpers/constants';
-import { getSourceData } from '../../../helpers/trackers/trackers';
+} from '@/helpers/constants';
+import { getSourceData } from '@/helpers/trackers/trackers';
 
-import { toggleBlocking, toggleBlockingForClient } from '../../../actions';
+import { toggleBlocking, toggleBlockingForClient } from '@/actions';
 
+import { toggleClientBlock } from '@/actions/access';
+import { updateLogs } from '@/actions/queryLogs';
 import DateCell from './DateCell';
 
 import DomainCell from './DomainCell';
@@ -35,12 +37,10 @@ import DomainCell from './DomainCell';
 import ResponseCell from './ResponseCell';
 
 import ClientCell from './ClientCell';
-import { toggleClientBlock } from '../../../actions/access';
 import { getBlockClientInfo, BUTTON_PREFIX } from './helpers';
-import { updateLogs } from '../../../actions/queryLogs';
 
 import '../Logs.css';
-import { RootState } from '../../../initialState';
+import { RootState } from '@/initialState';
 
 interface RowProps {
     style?: object;

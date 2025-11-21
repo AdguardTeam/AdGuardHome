@@ -3,7 +3,7 @@ import { Trans } from 'react-i18next';
 
 import { HashLink as Link } from 'react-router-hash-link';
 
-import Card from '../ui/Card';
+import Card from '@/components/ui/Card';
 
 const Disabled = () => (
     <Fragment>

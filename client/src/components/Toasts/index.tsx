@@ -1,13 +1,13 @@
 import React, { createRef } from 'react';
 import { shallowEqual } from 'react-redux';
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
-import { useSelector } from '../../store/hooks';
+import { useSelector } from '@/store/hooks';
 
-import { TOAST_TRANSITION_TIMEOUT } from '../../helpers/constants';
+import { TOAST_TRANSITION_TIMEOUT } from '@/helpers/constants';
 
 import Toast from './Toast';
 import './Toast.css';
-import { RootState } from '../../initialState';
+import { RootState } from '@/initialState';
 
 const Toasts = () => {
     const toasts = useSelector((state: RootState) => state.toasts, shallowEqual);

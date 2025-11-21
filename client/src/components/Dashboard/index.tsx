@@ -4,24 +4,24 @@ import { HashLink as Link } from 'react-router-hash-link';
 import { Trans, useTranslation } from 'react-i18next';
 import classNames from 'classnames';
 
+import { DISABLE_PROTECTION_TIMINGS, ONE_SECOND_IN_MS, SETTINGS_URLS, TIME_UNITS } from '@/helpers/constants';
+import { msToSeconds, msToMinutes, msToHours, msToDays } from '@/helpers/helpers';
+import PageTitle from '@/components/ui/PageTitle';
+import Loading from '@/components/ui/Loading';
+import Dropdown from '@/components/ui/Dropdown';
+import { AccessData, DashboardData, StatsData } from '@/initialState';
 import Statistics from './Statistics';
 import Counters from './Counters';
 import Clients from './Clients';
 import QueriedDomains from './QueriedDomains';
 import BlockedDomains from './BlockedDomains';
-import { DISABLE_PROTECTION_TIMINGS, ONE_SECOND_IN_MS, SETTINGS_URLS, TIME_UNITS } from '../../helpers/constants';
-import { msToSeconds, msToMinutes, msToHours, msToDays } from '../../helpers/helpers';
 
-import PageTitle from '../ui/PageTitle';
 
-import Loading from '../ui/Loading';
 import './Dashboard.css';
 
-import Dropdown from '../ui/Dropdown';
 import UpstreamResponses from './UpstreamResponses';
 
 import UpstreamAvgTime from './UpstreamAvgTime';
-import { AccessData, DashboardData, StatsData } from '../../initialState';
 
 interface DashboardProps {
     dashboard: DashboardData;

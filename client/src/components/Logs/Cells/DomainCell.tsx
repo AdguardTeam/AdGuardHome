@@ -1,18 +1,18 @@
 import React from 'react';
 import classNames from 'classnames';
 import { useTranslation } from 'react-i18next';
-import { useSelector } from '../../../store/hooks';
+import { useSelector } from '@/store/hooks';
 import {
     DEFAULT_SHORT_DATE_FORMAT_OPTIONS,
     LONG_TIME_FORMAT,
     SCHEME_TO_PROTOCOL_MAP,
-} from '../../../helpers/constants';
+} from '@/helpers/constants';
 
-import { captitalizeWords, formatDateTime, formatTime } from '../../../helpers/helpers';
-import { getSourceData } from '../../../helpers/trackers/trackers';
+import { captitalizeWords, formatDateTime, formatTime } from '@/helpers/helpers';
+import { getSourceData } from '@/helpers/trackers/trackers';
 
+import { RootState } from '@/initialState';
 import IconTooltip from './IconTooltip';
-import { RootState } from '../../../initialState';
 
 interface DomainCellProps {
     answer_dnssec: boolean;

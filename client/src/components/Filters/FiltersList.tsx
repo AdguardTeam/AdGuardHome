@@ -2,7 +2,7 @@ import React from 'react';
 import classNames from 'classnames';
 import { Controller, useFormContext } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { Checkbox } from '../ui/Controls/Checkbox';
+import { Checkbox } from '@/components/ui/Controls/Checkbox';
 
 const getIconsData = (homepage: string, source: string) => [
     {

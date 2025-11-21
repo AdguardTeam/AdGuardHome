@@ -22,12 +22,17 @@
             "version": "detect"
         },
         "import/resolver": {
+            "typescript": {
+                "alwaysTryTypes": true,
+                "project": "./tsconfig.json"
+            },
             "node": {
                 "extensions": [
                     ".js",
                     ".jsx",
                     ".ts",
-                    ".tsx"
+                    ".tsx",
+                    ".json"
                 ]
             }
         }
@@ -66,7 +71,8 @@
         "import/no-extraneous-dependencies": [
             "error",
             {
-                "devDependencies": true
+                "devDependencies": true,
+                "packageDir": "./"
             }
         ],
         "import/prefer-default-export": "off",

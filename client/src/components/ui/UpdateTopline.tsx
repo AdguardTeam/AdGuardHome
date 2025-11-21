@@ -1,13 +1,13 @@
 import React from 'react';
 import { Trans } from 'react-i18next';
 import { shallowEqual } from 'react-redux';
-import { useDispatch, useSelector } from '../../store/hooks';
+import { useDispatch, useSelector } from '@/store/hooks';
 
+
+import { getUpdate } from '@/actions';
+import { MANUAL_UPDATE_LINK } from '@/helpers/constants';
+import { RootState } from '@/initialState';
 import Topline from './Topline';
-
-import { getUpdate } from '../../actions';
-import { MANUAL_UPDATE_LINK } from '../../helpers/constants';
-import { RootState } from '../../initialState';
 
 const UpdateTopline = () => {
     const { announcementUrl, newVersion, canAutoUpdate, processingUpdate } = useSelector(

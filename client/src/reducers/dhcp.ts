@@ -1,8 +1,8 @@
 import { handleActions } from 'redux-actions';
 
-import * as actions from '../actions';
+import * as actions from '@/actions';
 
-import { enrichWithConcatenatedIpAddresses } from '../helpers/helpers';
+import { enrichWithConcatenatedIpAddresses } from '@/helpers/helpers';
 
 const dhcp = handleActions(
     {

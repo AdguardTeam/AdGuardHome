@@ -1,5 +1,5 @@
 import React, { ComponentProps } from 'react';
-import Tooltip from '../../ui/Tooltip';
+import Tooltip from '@/components/ui/Tooltip';
 
 interface Props extends ComponentProps<'input'> {
     handleChange: (newValue: string) => void;

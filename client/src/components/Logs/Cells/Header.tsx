@@ -1,11 +1,11 @@
 import { useTranslation } from 'react-i18next';
 import classNames from 'classnames';
 import React from 'react';
-import { useDispatch, useSelector } from '../../../store/hooks';
-import { toggleDetailedLogs } from '../../../actions/queryLogs';
+import { useDispatch, useSelector } from '@/store/hooks';
+import { toggleDetailedLogs } from '@/actions/queryLogs';
 
+import { RootState } from '@/initialState';
 import HeaderCell from './HeaderCell';
-import { RootState } from '../../../initialState';
 
 const Header = () => {
     const { t } = useTranslation();

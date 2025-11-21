@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
 import { connect } from 'react-redux';
 
-import { ONE_SECOND_IN_MS } from '../../helpers/constants';
+import { ONE_SECOND_IN_MS } from '@/helpers/constants';
 
-import { setProtectionTimerTime, toggleProtectionSuccess } from '../../actions';
+import { setProtectionTimerTime, toggleProtectionSuccess } from '@/actions';
 
 let interval: any = null;
 

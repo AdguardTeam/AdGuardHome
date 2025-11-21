@@ -2,23 +2,23 @@ import React, { Component, Fragment } from 'react';
 import { withTranslation } from 'react-i18next';
 
 import i18next from 'i18next';
-import StatsConfig from './StatsConfig';
 
-import LogsConfig from './LogsConfig';
 
-import { FiltersConfig } from './FiltersConfig';
 
-import { Checkbox } from '../ui/Controls/Checkbox';
+import { Checkbox } from '@/components/ui/Controls/Checkbox';
 
-import Loading from '../ui/Loading';
+import Loading from '@/components/ui/Loading';
 
-import PageTitle from '../ui/PageTitle';
+import PageTitle from '@/components/ui/PageTitle';
 
-import Card from '../ui/Card';
+import Card from '@/components/ui/Card';
 
-import { getObjectKeysSorted, captitalizeWords } from '../../helpers/helpers';
+import { getObjectKeysSorted, captitalizeWords } from '@/helpers/helpers';
 import './Settings.css';
-import { SettingsData } from '../../initialState';
+import { SettingsData } from '@/initialState';
+import { FiltersConfig } from './FiltersConfig';
+import LogsConfig from './LogsConfig';
+import StatsConfig from './StatsConfig';
 
 const ORDER_KEY = 'order';
 

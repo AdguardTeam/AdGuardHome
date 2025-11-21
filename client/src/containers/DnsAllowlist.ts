@@ -9,9 +9,9 @@ import {
     refreshFilters,
     handleRulesChange,
     editFilter,
-} from '../actions/filtering';
+} from '@/actions/filtering';
 
-import DnsAllowlist from '../components/Filters/DnsAllowlist';
+import DnsAllowlist from '@/components/Filters/DnsAllowlist';
 
 const mapStateToProps = (state: any) => {
     const { filtering } = state;

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Trans, withTranslation } from 'react-i18next';
-import { COMMENT_LINE_DEFAULT_TOKEN } from '../../../../helpers/constants';
+import { COMMENT_LINE_DEFAULT_TOKEN } from '@/helpers/constants';
 
 interface ExamplesProps {
     t: (...args: unknown[]) => string;

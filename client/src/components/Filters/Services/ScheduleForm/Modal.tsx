@@ -3,13 +3,13 @@ import { useTranslation } from 'react-i18next';
 
 import ReactModal from 'react-modal';
 
+import { LOCAL_TIMEZONE_VALUE } from '@/helpers/constants';
 import { Timezone } from './Timezone';
 
 import { TimeSelect } from './TimeSelect';
 
 import { TimePeriod } from './TimePeriod';
 import { getFullDayName, getShortDayName } from './helpers';
-import { LOCAL_TIMEZONE_VALUE } from '../../../../helpers/constants';
 
 export const DAYS_OF_WEEK = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 

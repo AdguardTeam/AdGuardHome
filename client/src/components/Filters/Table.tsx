@@ -2,14 +2,14 @@ import React, { Component } from 'react';
 
 import { withTranslation, Trans } from 'react-i18next';
 
-import CellWrap from '../ui/CellWrap';
-import { Table as TableComponent, convertColumns } from '../ui/ReactTable';
-import { MODAL_TYPE } from '../../helpers/constants';
+import CellWrap from '@/components/ui/CellWrap';
+import { Table as TableComponent, convertColumns } from '@/components/ui/ReactTable';
+import { MODAL_TYPE } from '@/helpers/constants';
 
-import { formatDetailedDateTime } from '../../helpers/helpers';
+import { formatDetailedDateTime } from '@/helpers/helpers';
 
-import { isValidAbsolutePath } from '../../helpers/form';
-import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from '../../helpers/localStorageHelper';
+import { isValidAbsolutePath } from '@/helpers/form';
+import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from '@/helpers/localStorageHelper';
 
 interface TableProps {
     filters: unknown[];

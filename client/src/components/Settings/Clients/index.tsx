@@ -1,14 +1,14 @@
 import React, { Component, Fragment } from 'react';
 import { withTranslation } from 'react-i18next';
 
-import { ClientsTable } from './ClientsTable';
 
+
+import PageTitle from '@/components/ui/PageTitle';
+
+import Loading from '@/components/ui/Loading';
+import { ClientsData, DashboardData, StatsData } from '@/initialState';
 import AutoClients from './AutoClients';
-
-import PageTitle from '../../ui/PageTitle';
-
-import Loading from '../../ui/Loading';
-import { ClientsData, DashboardData, StatsData } from '../../../initialState';
+import { ClientsTable } from './ClientsTable';
 
 interface ClientsProps {
     t: (...args: unknown[]) => string;

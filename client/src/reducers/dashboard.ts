@@ -1,8 +1,8 @@
 import { handleActions } from 'redux-actions';
 
-import * as actions from '../actions';
-import { areEqualVersions } from '../helpers/version';
-import { STANDARD_DNS_PORT, STANDARD_WEB_PORT } from '../helpers/constants';
+import * as actions from '@/actions';
+import { areEqualVersions } from '@/helpers/version';
+import { STANDARD_DNS_PORT, STANDARD_WEB_PORT } from '@/helpers/constants';
 
 const dashboard = handleActions(
     {

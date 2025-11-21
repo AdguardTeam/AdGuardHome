@@ -41,6 +41,9 @@ const config = {
     resolve: {
         modules: ['node_modules'],
         extensions: ['.js', '.jsx', '.ts', '.tsx'],
+        alias: {
+            '@': path.resolve(__dirname, 'src'),
+        },
     },
     module: {
         rules: [

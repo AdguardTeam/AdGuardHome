@@ -1,10 +1,10 @@
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Trans, useTranslation } from 'react-i18next';
-import { useSelector } from '../../../store/hooks';
+import { useSelector } from '@/store/hooks';
 
-import { validateRequiredValue } from '../../../helpers/validators';
-import { RootState } from '../../../initialState';
+import { validateRequiredValue } from '@/helpers/validators';
+import { RootState } from '@/initialState';
 import { DhcpFormValues } from '.';
 
 const renderInterfaces = (interfaces: any) =>

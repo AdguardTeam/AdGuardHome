@@ -4,20 +4,20 @@ import { Trans, useTranslation } from 'react-i18next';
 
 import i18next from 'i18next';
 import clsx from 'clsx';
-import { useDispatch, useSelector } from '../../../../store/hooks';
-import { testUpstreamWithFormValues } from '../../../../actions';
-import { DNS_REQUEST_OPTIONS, UINT32_RANGE, UPSTREAM_CONFIGURATION_WIKI_LINK } from '../../../../helpers/constants';
-import { removeEmptyLines } from '../../../../helpers/helpers';
-import { getTextareaCommentsHighlight, syncScroll } from '../../../../helpers/highlightTextareaComments';
-import { RootState } from '../../../../initialState';
+import { useDispatch, useSelector } from '@/store/hooks';
+import { testUpstreamWithFormValues } from '@/actions';
+import { DNS_REQUEST_OPTIONS, UINT32_RANGE, UPSTREAM_CONFIGURATION_WIKI_LINK } from '@/helpers/constants';
+import { removeEmptyLines } from '@/helpers/helpers';
+import { getTextareaCommentsHighlight, syncScroll } from '@/helpers/highlightTextareaComments';
+import { RootState } from '@/initialState';
 import '../../../ui/texareaCommentsHighlight.css';
+import { Checkbox } from '@/components/ui/Controls/Checkbox';
+import { Textarea } from '@/components/ui/Controls/Textarea';
+import { Radio } from '@/components/ui/Controls/Radio';
+import { Input } from '@/components/ui/Controls/Input';
+import { validateRequiredValue } from '@/helpers/validators';
+import { toNumber } from '@/helpers/form';
 import Examples from './Examples';
-import { Checkbox } from '../../../ui/Controls/Checkbox';
-import { Textarea } from '../../../ui/Controls/Textarea';
-import { Radio } from '../../../ui/Controls/Radio';
-import { Input } from '../../../ui/Controls/Input';
-import { validateRequiredValue } from '../../../../helpers/validators';
-import { toNumber } from '../../../../helpers/form';
 
 const UPSTREAM_DNS_NAME = 'upstream_dns';
 

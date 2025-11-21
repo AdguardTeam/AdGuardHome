@@ -2,12 +2,12 @@ import React from 'react';
 
 import { Trans } from 'react-i18next';
 
-import { Guide } from '../../components/ui/Guide';
+import { Guide } from '@/components/ui/Guide';
 
+import { InstallInterface } from '@/initialState';
 import Controls from './Controls';
 
 import AddressList from './AddressList';
-import { InstallInterface } from '../../initialState';
 import { DnsConfig } from './Settings';
 
 type Props = {

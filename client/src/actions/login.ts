@@ -1,8 +1,8 @@
 import { createAction } from 'redux-actions';
 
-import apiClient from '../api/Api';
+import apiClient from '@/api/Api';
+import { HTML_PAGES } from '@/helpers/constants';
 import { addErrorToast } from './toasts';
-import { HTML_PAGES } from '../helpers/constants';
 
 export const processLoginRequest = createAction('PROCESS_LOGIN_REQUEST');
 export const processLoginFailure = createAction('PROCESS_LOGIN_FAILURE');

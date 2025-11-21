@@ -4,13 +4,13 @@ import { Link, useLocation } from 'react-router-dom';
 import { shallowEqual } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import classnames from 'classnames';
-import { useSelector } from '../../store/hooks';
+import { useSelector } from '@/store/hooks';
 
 import Menu from './Menu';
 
-import { Logo } from '../ui/svg/logo';
+import { Logo } from '@/components/ui/svg/logo';
 import './Header.css';
-import { RootState } from '../../initialState';
+import { RootState } from '@/initialState';
 
 const Header = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);

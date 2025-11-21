@@ -1,7 +1,7 @@
 import { createAction } from 'redux-actions';
 
-import apiClient from '../api/Api';
-import { normalizeTopStats, secondsToMilliseconds, getParamsForClientsSearch, addClientInfo } from '../helpers/helpers';
+import apiClient from '@/api/Api';
+import { normalizeTopStats, secondsToMilliseconds, getParamsForClientsSearch, addClientInfo } from '@/helpers/helpers';
 import { addErrorToast, addSuccessToast } from './toasts';
 
 export const getStatsConfigRequest = createAction('GET_STATS_CONFIG_REQUEST');

@@ -1,9 +1,9 @@
 import { handleActions } from 'redux-actions';
 import { nanoid } from 'nanoid';
 
-import { addErrorToast, addNoticeToast, addSuccessToast } from '../actions/toasts';
-import { removeToast } from '../actions';
-import { TOAST_TYPES } from '../helpers/constants';
+import { addErrorToast, addNoticeToast, addSuccessToast } from '@/actions/toasts';
+import { removeToast } from '@/actions';
+import { TOAST_TYPES } from '@/helpers/constants';
 
 const toasts = handleActions(
     {

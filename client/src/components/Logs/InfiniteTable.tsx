@@ -1,18 +1,18 @@
 import React, { Dispatch, SetStateAction, useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import throttle from 'lodash/throttle';
-import { useDispatch, useSelector } from '../../store/hooks';
+import { useDispatch, useSelector } from '@/store/hooks';
 
-import Loading from '../ui/Loading';
+import Loading from '@/components/ui/Loading';
 
-import Header from './Cells/Header';
-import { getLogs } from '../../actions/queryLogs';
+import { getLogs } from '@/actions/queryLogs';
 
+
+import { isScrolledIntoView } from '@/helpers/helpers';
+import { QUERY_LOGS_PAGE_LIMIT } from '@/helpers/constants';
+import { RootState } from '@/initialState';
 import Row from './Cells';
-
-import { isScrolledIntoView } from '../../helpers/helpers';
-import { QUERY_LOGS_PAGE_LIMIT } from '../../helpers/constants';
-import { RootState } from '../../initialState';
+import Header from './Cells/Header';
 
 interface InfiniteTableProps {
     isLoading: boolean;

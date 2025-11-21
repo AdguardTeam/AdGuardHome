@@ -2,7 +2,7 @@ import { combineReducers } from 'redux';
 
 import { handleActions } from 'redux-actions';
 
-import * as actions from '../actions/login';
+import * as actions from '@/actions/login';
 import toasts from './toasts';
 
 const login = handleActions(

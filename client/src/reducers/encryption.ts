@@ -1,6 +1,6 @@
 import { handleActions } from 'redux-actions';
 
-import * as actions from '../actions/encryption';
+import * as actions from '@/actions/encryption';
 
 const encryption = handleActions(
     {

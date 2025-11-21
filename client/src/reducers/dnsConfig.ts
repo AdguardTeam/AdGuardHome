@@ -1,7 +1,7 @@
 import { handleActions } from 'redux-actions';
 
-import * as actions from '../actions/dnsConfig';
-import { ALL_INTERFACES_IP, BLOCKING_MODES, DNS_REQUEST_OPTIONS } from '../helpers/constants';
+import * as actions from '@/actions/dnsConfig';
+import { ALL_INTERFACES_IP, BLOCKING_MODES, DNS_REQUEST_OPTIONS } from '@/helpers/constants';
 
 export const DEFAULT_BLOCKING_IPV4 = ALL_INTERFACES_IP;
 export const DEFAULT_BLOCKING_IPV6 = '::';

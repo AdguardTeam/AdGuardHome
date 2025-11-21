@@ -1,18 +1,18 @@
 import React, { Component } from 'react';
 import { Trans, withTranslation } from 'react-i18next';
 
-import Card from '../ui/Card';
+import Card from '@/components/ui/Card';
 
-import PageTitle from '../ui/PageTitle';
+import PageTitle from '@/components/ui/PageTitle';
 
 import Examples from './Examples';
 
 import Check, { FilteringCheckFormValues } from './Check';
 
-import { getTextareaCommentsHighlight, syncScroll } from '../../helpers/highlightTextareaComments';
-import { COMMENT_LINE_DEFAULT_TOKEN } from '../../helpers/constants';
+import { getTextareaCommentsHighlight, syncScroll } from '@/helpers/highlightTextareaComments';
+import { COMMENT_LINE_DEFAULT_TOKEN } from '@/helpers/constants';
 import '../ui/texareaCommentsHighlight.css';
-import { FilteringData } from '../../initialState';
+import { FilteringData } from '@/initialState';
 
 interface CustomRulesProps {
     filtering: FilteringData;

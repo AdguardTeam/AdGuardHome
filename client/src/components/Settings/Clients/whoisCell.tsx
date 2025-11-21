@@ -1,7 +1,7 @@
 import React, { Fragment } from 'react';
 
-import { normalizeWhois } from '../../../helpers/helpers';
-import { WHOIS_ICONS } from '../../../helpers/constants';
+import { normalizeWhois } from '@/helpers/helpers';
+import { WHOIS_ICONS } from '@/helpers/constants';
 
 const getFormattedWhois = (value: any, t: any) => {
     const whoisInfo = normalizeWhois(value);

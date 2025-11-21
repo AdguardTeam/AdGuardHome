@@ -13,7 +13,7 @@ import {
     msToSeconds,
     msToMinutes,
     msToHours,
-} from '../helpers/helpers';
+} from '@/helpers/helpers';
 import {
     BLOCK_ACTIONS,
     CHECK_TIMEOUT,
@@ -21,10 +21,10 @@ import {
     SETTINGS_NAMES,
     MANUAL_UPDATE_LINK,
     DISABLE_PROTECTION_TIMINGS,
-} from '../helpers/constants';
-import { areEqualVersions } from '../helpers/version';
+} from '@/helpers/constants';
+import { areEqualVersions } from '@/helpers/version';
+import apiClient from '@/api/Api';
 import { getTlsStatus } from './encryption';
-import apiClient from '../api/Api';
 import { addErrorToast, addNoticeToast, addSuccessToast } from './toasts';
 import { getFilteringStatus, setRules } from './filtering';
 

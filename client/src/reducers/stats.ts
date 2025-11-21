@@ -1,9 +1,9 @@
 import { handleActions } from 'redux-actions';
 
-import { normalizeTopClients } from '../helpers/helpers';
-import { DAY, HOUR, STATS_INTERVALS_DAYS, TIME_UNITS } from '../helpers/constants';
+import { normalizeTopClients } from '@/helpers/helpers';
+import { DAY, HOUR, STATS_INTERVALS_DAYS, TIME_UNITS } from '@/helpers/constants';
 
-import * as actions from '../actions/stats';
+import * as actions from '@/actions/stats';
 
 const defaultStats = {
     dnsQueries: [],

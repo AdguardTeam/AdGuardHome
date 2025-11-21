@@ -1,7 +1,7 @@
 import { describe, expect, test, afterEach, vi, beforeEach, it } from 'vitest';
 
-import { sortIp, countClientsStatistics, findAddressType, subnetMaskToBitMask } from '../helpers/helpers';
-import { ADDRESS_TYPES } from '../helpers/constants';
+import { sortIp, countClientsStatistics, findAddressType, subnetMaskToBitMask } from '@/helpers/helpers';
+import { ADDRESS_TYPES } from '@/helpers/constants';
 
 describe('sortIp', () => {
     describe('ipv4', () => {

@@ -1,20 +1,20 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import cn from 'classnames';
-import { useDispatch, useSelector } from '../../store/hooks';
+import { useDispatch, useSelector } from '@/store/hooks';
 
-import { REPOSITORY, PRIVACY_POLICY_LINK, THEMES } from '../../helpers/constants';
-import { LANGUAGES } from '../../helpers/twosky';
-import i18n from '../../i18n';
+import { REPOSITORY, PRIVACY_POLICY_LINK, THEMES } from '@/helpers/constants';
+import { LANGUAGES } from '@/helpers/twosky';
+import i18n from '@/i18n';
 
-import Version from './Version';
 import './Footer.css';
 import './Select.css';
 
-import { setHtmlLangAttr, setUITheme } from '../../helpers/helpers';
+import { setHtmlLangAttr, setUITheme } from '@/helpers/helpers';
 
-import { changeLanguage, changeTheme } from '../../actions';
-import { RootState } from '../../initialState';
+import { changeLanguage, changeTheme } from '@/actions';
+import { RootState } from '@/initialState';
+import Version from './Version';
 
 const linksData = [
     {

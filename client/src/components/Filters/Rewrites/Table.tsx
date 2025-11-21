@@ -1,11 +1,11 @@
 import React, { Component } from 'react';
 
 import { withTranslation } from 'react-i18next';
-import { Table as DataTable, convertColumns } from '../../ui/ReactTable';
+import { Table as DataTable, convertColumns } from '@/components/ui/ReactTable';
 
-import { sortIp } from '../../../helpers/helpers';
-import { MODAL_TYPE, TABLES_MIN_ROWS } from '../../../helpers/constants';
-import { LocalStorageHelper, LOCAL_STORAGE_KEYS } from '../../../helpers/localStorageHelper';
+import { sortIp } from '@/helpers/helpers';
+import { MODAL_TYPE, TABLES_MIN_ROWS } from '@/helpers/constants';
+import { LocalStorageHelper, LOCAL_STORAGE_KEYS } from '@/helpers/localStorageHelper';
 
 interface RewritesTableProps {
     t: (...args: unknown[]) => string;

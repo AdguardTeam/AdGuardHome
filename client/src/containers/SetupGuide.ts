@@ -1,8 +1,8 @@
 import { connect } from 'react-redux';
 
-import * as actionCreators from '../actions';
+import * as actionCreators from '@/actions';
 
-import SetupGuide from '../components/SetupGuide';
+import SetupGuide from '@/components/SetupGuide';
 
 const mapStateToProps = (state: any) => {
     const { dashboard } = state;

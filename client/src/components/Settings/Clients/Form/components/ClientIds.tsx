@@ -1,9 +1,9 @@
 import React from 'react';
 import { Controller, useFieldArray, useFormContext } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { ClientForm } from '../types';
-import { Input } from '../../../../ui/Controls/Input';
-import { validateClientId, validateRequiredValue } from '../../../../../helpers/validators';
+import { ClientForm } from '@/components/Settings/Clients/Form/types';
+import { Input } from '@/components/ui/Controls/Input';
+import { validateClientId, validateRequiredValue } from '@/helpers/validators';
 
 export const ClientIds = () => {
     const { t } = useTranslation();

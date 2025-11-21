@@ -1,8 +1,8 @@
 import React from 'react';
 
-import { getIpList, getDnsAddress, getWebAddress } from '../../helpers/helpers';
-import { ALL_INTERFACES_IP } from '../../helpers/constants';
-import { InstallInterface } from '../../initialState';
+import { getIpList, getDnsAddress, getWebAddress } from '@/helpers/helpers';
+import { ALL_INTERFACES_IP } from '@/helpers/constants';
+import { InstallInterface } from '@/initialState';
 
 interface renderItemProps {
     ip: string;

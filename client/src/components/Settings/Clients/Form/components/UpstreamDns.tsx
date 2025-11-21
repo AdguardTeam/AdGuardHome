@@ -2,13 +2,13 @@ import React from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 
 import { Controller, useFormContext } from 'react-hook-form';
-import Examples from '../../../Dns/Upstream/Examples';
-import { UINT32_RANGE } from '../../../../../helpers/constants';
-import { Textarea } from '../../../../ui/Controls/Textarea';
-import { ClientForm } from '../types';
-import { Checkbox } from '../../../../ui/Controls/Checkbox';
-import { Input } from '../../../../ui/Controls/Input';
-import { toNumber } from '../../../../../helpers/form';
+import Examples from '@/components/Settings/Dns/Upstream/Examples';
+import { UINT32_RANGE } from '@/helpers/constants';
+import { Textarea } from '@/components/ui/Controls/Textarea';
+import { ClientForm } from '@/components/Settings/Clients/Form/types';
+import { Checkbox } from '@/components/ui/Controls/Checkbox';
+import { Input } from '@/components/ui/Controls/Input';
+import { toNumber } from '@/helpers/form';
 
 export const UpstreamDns = () => {
     const { t } = useTranslation();

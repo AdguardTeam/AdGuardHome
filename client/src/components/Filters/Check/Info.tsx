@@ -4,7 +4,7 @@ import classNames from 'classnames';
 
 import i18next from 'i18next';
 import { shallowEqual } from 'react-redux';
-import { useDispatch, useSelector } from '../../../store/hooks';
+import { useDispatch, useSelector } from '@/store/hooks';
 import {
     checkFiltered,
     checkRewrite,
@@ -14,11 +14,11 @@ import {
     checkSafeBrowsing,
     checkParental,
     getRulesToFilterList,
-} from '../../../helpers/helpers';
-import { BLOCK_ACTIONS, FILTERED, FILTERED_STATUS } from '../../../helpers/constants';
+} from '@/helpers/helpers';
+import { BLOCK_ACTIONS, FILTERED, FILTERED_STATUS } from '@/helpers/constants';
 
-import { toggleBlocking } from '../../../actions';
-import { RootState } from '../../../initialState';
+import { toggleBlocking } from '@/actions';
+import { RootState } from '@/initialState';
 
 const renderBlockingButton = (isFiltered: any, domain: any) => {
     const processingRules = useSelector((state: RootState) => state.filtering.processingRules);

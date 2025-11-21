@@ -5,21 +5,21 @@ import classNames from 'classnames';
 import { useTranslation } from 'react-i18next';
 
 import { Link, useNavigate } from 'react-router-dom';
-import { useDispatch, useSelector } from '../../../store/hooks';
+import { useDispatch, useSelector } from '@/store/hooks';
 
-import { checkFiltered, getBlockingClientName } from '../../../helpers/helpers';
-import { BLOCK_ACTIONS } from '../../../helpers/constants';
+import { checkFiltered, getBlockingClientName } from '@/helpers/helpers';
+import { BLOCK_ACTIONS } from '@/helpers/constants';
 
-import { toggleBlocking, toggleBlockingForClient } from '../../../actions';
+import { toggleBlocking, toggleBlockingForClient } from '@/actions';
 
-import IconTooltip from './IconTooltip';
 
-import { renderFormattedClientCell } from '../../../helpers/renderFormattedClientCell';
-import { toggleClientBlock } from '../../../actions/access';
+import { renderFormattedClientCell } from '@/helpers/renderFormattedClientCell';
+import { toggleClientBlock } from '@/actions/access';
+import { getStats } from '@/actions/stats';
+import { updateLogs } from '@/actions/queryLogs';
+import { RootState } from '@/initialState';
 import { getBlockClientInfo } from './helpers';
-import { getStats } from '../../../actions/stats';
-import { updateLogs } from '../../../actions/queryLogs';
-import { RootState } from '../../../initialState';
+import IconTooltip from './IconTooltip';
 
 interface ClientCellProps {
     client: string;

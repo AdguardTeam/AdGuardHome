@@ -2,7 +2,7 @@ import React, { Fragment } from 'react';
 import { withTranslation, Trans } from 'react-i18next';
 import format from 'date-fns/format';
 
-import { EMPTY_DATE } from '../../../helpers/constants';
+import { EMPTY_DATE } from '@/helpers/constants';
 
 interface CertificateStatusProps {
     validChain: boolean;

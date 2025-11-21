@@ -1,18 +1,18 @@
 import React, { Component } from 'react';
 import { withTranslation } from 'react-i18next';
 
-import PageTitle from '../ui/PageTitle';
+import PageTitle from '@/components/ui/PageTitle';
 
-import Card from '../ui/Card';
-import Modal from './Modal';
-import Actions from './Actions';
+import Card from '@/components/ui/Card';
+import { MODAL_TYPE } from '@/helpers/constants';
+
+import { getCurrentFilter } from '@/helpers/helpers';
+
+import filtersCatalog from '@/helpers/filters/filters';
+import { FilteringData } from '@/initialState';
 import Table from './Table';
-import { MODAL_TYPE } from '../../helpers/constants';
-
-import { getCurrentFilter } from '../../helpers/helpers';
-
-import filtersCatalog from '../../helpers/filters/filters';
-import { FilteringData } from '../../initialState';
+import Actions from './Actions';
+import Modal from './Modal';
 
 interface DnsBlocklistProps {
     getFilteringStatus: (...args: unknown[]) => unknown;

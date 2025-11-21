@@ -1,5 +1,5 @@
 import { createAction } from 'redux-actions';
-import apiClient from '../api/Api';
+import apiClient from '@/api/Api';
 import { addErrorToast, addSuccessToast } from './toasts';
 
 export const nextStep = createAction('NEXT_STEP');

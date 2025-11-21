@@ -1,9 +1,9 @@
 import React from 'react';
 import { Trans } from 'react-i18next';
 import classnames from 'classnames';
-import { useSelector } from '../../store/hooks';
+import { useSelector } from '@/store/hooks';
 import './Overlay.css';
-import { RootState } from '../../initialState';
+import { RootState } from '@/initialState';
 
 const UpdateOverlay = () => {
     const processingUpdate = useSelector((state: RootState) => state.dashboard.processingUpdate);

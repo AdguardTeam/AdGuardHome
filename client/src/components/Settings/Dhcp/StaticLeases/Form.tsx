@@ -2,20 +2,20 @@ import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { Trans, useTranslation } from 'react-i18next';
 import { shallowEqual } from 'react-redux';
-import { useDispatch, useSelector } from '../../../../store/hooks';
+import { useDispatch, useSelector } from '@/store/hooks';
 
-import { normalizeMac } from '../../../../helpers/form';
+import { normalizeMac } from '@/helpers/form';
 import {
     validateIpv4,
     validateMac,
     validateRequiredValue,
     validateIpv4InCidr,
     validateIpGateway,
-} from '../../../../helpers/validators';
+} from '@/helpers/validators';
 
-import { toggleLeaseModal } from '../../../../actions';
-import { RootState } from '../../../../initialState';
-import { Input } from '../../../ui/Controls/Input';
+import { toggleLeaseModal } from '@/actions';
+import { RootState } from '@/initialState';
+import { Input } from '@/components/ui/Controls/Input';
 
 type Props = {
     initialValues?: {

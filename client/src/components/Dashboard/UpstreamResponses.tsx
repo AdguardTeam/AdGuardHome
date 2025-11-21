@@ -2,13 +2,13 @@ import React, { useMemo } from 'react';
 import { withTranslation, Trans } from 'react-i18next';
 import { TFunction } from 'i18next';
 
-import Card from '../ui/Card';
-import Cell from '../ui/Cell';
-import DomainCell from './DomainCell';
-import { Table, convertColumns } from '../ui/ReactTable';
+import Card from '@/components/ui/Card';
+import Cell from '@/components/ui/Cell';
+import { Table, convertColumns } from '@/components/ui/ReactTable';
 
-import { getPercent } from '../../helpers/helpers';
-import { DASHBOARD_TABLES_DEFAULT_PAGE_SIZE, STATUS_COLORS, TABLES_MIN_ROWS } from '../../helpers/constants';
+import { getPercent } from '@/helpers/helpers';
+import { DASHBOARD_TABLES_DEFAULT_PAGE_SIZE, STATUS_COLORS, TABLES_MIN_ROWS } from '@/helpers/constants';
+import DomainCell from './DomainCell';
 
 const CountCell = (totalBlocked: any) =>
     function cell(row: any) {

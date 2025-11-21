@@ -2,15 +2,15 @@ import React, { Component, Fragment } from 'react';
 import { Trans, withTranslation } from 'react-i18next';
 import cn from 'classnames';
 
-import Table from './Table';
 
+
+import Card from '@/components/ui/Card';
+
+import PageTitle from '@/components/ui/PageTitle';
+import { MODAL_TYPE } from '@/helpers/constants';
+import { RewritesData } from '@/initialState';
 import Modal from './Modal';
-
-import Card from '../../ui/Card';
-
-import PageTitle from '../../ui/PageTitle';
-import { MODAL_TYPE } from '../../../helpers/constants';
-import { RewritesData } from '../../../initialState';
+import Table from './Table';
 
 interface RewritesProps {
     t: (...args: unknown[]) => string;

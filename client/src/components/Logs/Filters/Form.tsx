@@ -6,18 +6,18 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import classNames from 'classnames';
 import { useFormContext } from 'react-hook-form';
 import queryString from 'query-string';
-import { useDispatch } from '../../../store/hooks';
+import { useDispatch } from '@/store/hooks';
 
 import {
     DEBOUNCE_FILTER_TIMEOUT,
     DEFAULT_LOGS_FILTER,
     RESPONSE_FILTER,
     RESPONSE_FILTER_QUERIES,
-} from '../../../helpers/constants';
-import { setLogsFilter } from '../../../actions/queryLogs';
-import useDebounce from '../../../helpers/useDebounce';
+} from '@/helpers/constants';
+import { setLogsFilter } from '@/actions/queryLogs';
+import useDebounce from '@/helpers/useDebounce';
 
-import { getLogsUrlParams } from '../../../helpers/helpers';
+import { getLogsUrlParams } from '@/helpers/helpers';
 
 import { SearchField } from './SearchField';
 import { SearchFormValues } from '..';

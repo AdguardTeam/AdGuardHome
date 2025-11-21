@@ -3,13 +3,13 @@ import { Trans, withTranslation } from 'react-i18next';
 
 import ReactModal from 'react-modal';
 import { shallowEqual } from 'react-redux';
-import { useDispatch, useSelector } from '../../../../store/hooks';
+import { useDispatch, useSelector } from '@/store/hooks';
 
+
+import { toggleLeaseModal } from '@/actions';
+import { MODAL_TYPE } from '@/helpers/constants';
+import { RootState } from '@/initialState';
 import { Form } from './Form';
-
-import { toggleLeaseModal } from '../../../../actions';
-import { MODAL_TYPE } from '../../../../helpers/constants';
-import { RootState } from '../../../../initialState';
 
 interface ModalProps {
     isModalOpen: boolean;

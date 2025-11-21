@@ -1,13 +1,13 @@
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { debounce } from 'lodash';
-import { DEBOUNCE_TIMEOUT, ENCRYPTION_SOURCE } from '../../../helpers/constants';
+import { DEBOUNCE_TIMEOUT, ENCRYPTION_SOURCE } from '@/helpers/constants';
 
+import Card from '@/components/ui/Card';
+import PageTitle from '@/components/ui/PageTitle';
+import Loading from '@/components/ui/Loading';
+import { EncryptionData } from '@/initialState';
 import { EncryptionFormValues, Form } from './Form';
-import Card from '../../ui/Card';
-import PageTitle from '../../ui/PageTitle';
-import Loading from '../../ui/Loading';
-import { EncryptionData } from '../../../initialState';
 
 type Props = {
     encryption: EncryptionData;

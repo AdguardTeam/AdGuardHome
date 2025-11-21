@@ -9,9 +9,9 @@ import {
     addStaticLease,
     removeStaticLease,
     resetDhcp,
-} from '../actions';
+} from '@/actions';
 
-import Dhcp from '../components/Settings/Dhcp';
+import Dhcp from '@/components/Settings/Dhcp';
 
 const mapStateToProps = (state: any) => {
     const { dhcp } = state;

@@ -1,14 +1,14 @@
 import React from 'react';
 
 import { Trans, useTranslation } from 'react-i18next';
-import { useDispatch } from '../../../../store/hooks';
-import { Table, convertColumns } from '../../../ui/ReactTable';
-import { LEASES_TABLE_DEFAULT_PAGE_SIZE, MODAL_TYPE } from '../../../../helpers/constants';
+import { useDispatch } from '@/store/hooks';
+import { Table, convertColumns } from '@/components/ui/ReactTable';
+import { LEASES_TABLE_DEFAULT_PAGE_SIZE, MODAL_TYPE } from '@/helpers/constants';
 
-import { sortIp } from '../../../../helpers/helpers';
+import { sortIp } from '@/helpers/helpers';
 
+import { addStaticLease, removeStaticLease, toggleLeaseModal, updateStaticLease } from '@/actions';
 import Modal from './Modal';
-import { addStaticLease, removeStaticLease, toggleLeaseModal, updateStaticLease } from '../../../../actions';
 
 interface cellWrapProps {
     value: string;

@@ -2,12 +2,12 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 
 import { Trans, withTranslation } from 'react-i18next';
-import { Table, convertColumns } from '../../ui/ReactTable';
-import { LEASES_TABLE_DEFAULT_PAGE_SIZE, MODAL_TYPE } from '../../../helpers/constants';
+import { Table, convertColumns } from '@/components/ui/ReactTable';
+import { LEASES_TABLE_DEFAULT_PAGE_SIZE, MODAL_TYPE } from '@/helpers/constants';
 
-import { sortIp } from '../../../helpers/helpers';
+import { sortIp } from '@/helpers/helpers';
 
-import { toggleLeaseModal } from '../../../actions';
+import { toggleLeaseModal } from '@/actions';
 
 interface LeasesProps {
     leases?: unknown[];

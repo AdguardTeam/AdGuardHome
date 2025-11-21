@@ -2,13 +2,13 @@ import React from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import i18next from 'i18next';
-import { useDispatch, useSelector } from '../../../../store/hooks';
+import { useDispatch, useSelector } from '@/store/hooks';
 
-import { clearDnsCache } from '../../../../actions/dnsConfig';
-import { CACHE_CONFIG_FIELDS, UINT32_RANGE } from '../../../../helpers/constants';
-import { replaceZeroWithEmptyString } from '../../../../helpers/helpers';
-import { RootState } from '../../../../initialState';
-import { Checkbox } from '../../../ui/Controls/Checkbox';
+import { clearDnsCache } from '@/actions/dnsConfig';
+import { CACHE_CONFIG_FIELDS, UINT32_RANGE } from '@/helpers/constants';
+import { replaceZeroWithEmptyString } from '@/helpers/helpers';
+import { RootState } from '@/initialState';
+import { Checkbox } from '@/components/ui/Controls/Checkbox';
 
 const INPUTS_FIELDS = [
     {

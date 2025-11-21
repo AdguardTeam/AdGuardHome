@@ -1,17 +1,17 @@
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useDispatch, useSelector } from '../../../store/hooks';
+import { useDispatch, useSelector } from '@/store/hooks';
 
-import { Form } from './Form';
 
-import Card from '../../ui/Card';
-import { getBlockedServices, getAllBlockedServices, updateBlockedServices } from '../../../actions/services';
+import Card from '@/components/ui/Card';
+import { getBlockedServices, getAllBlockedServices, updateBlockedServices } from '@/actions/services';
 
-import PageTitle from '../../ui/PageTitle';
+import PageTitle from '@/components/ui/PageTitle';
 
+import { RootState } from '@/initialState';
 import { ScheduleForm } from './ScheduleForm';
-import { RootState } from '../../../initialState';
+import { Form } from './Form';
 
 const getInitialDataForServices = (initial: any) =>
     initial

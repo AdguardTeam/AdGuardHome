@@ -2,9 +2,9 @@ import { combineReducers } from 'redux';
 
 import { handleActions } from 'redux-actions';
 
-import * as actions from '../actions/install';
+import * as actions from '@/actions/install';
+import { ALL_INTERFACES_IP, INSTALL_FIRST_STEP, STANDARD_DNS_PORT, STANDARD_WEB_PORT } from '@/helpers/constants';
 import toasts from './toasts';
-import { ALL_INTERFACES_IP, INSTALL_FIRST_STEP, STANDARD_DNS_PORT, STANDARD_WEB_PORT } from '../helpers/constants';
 
 const install = handleActions(
     {

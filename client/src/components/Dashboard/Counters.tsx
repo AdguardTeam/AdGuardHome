@@ -2,17 +2,17 @@ import React from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import round from 'lodash/round';
 import { shallowEqual } from 'react-redux';
-import { useSelector } from '../../store/hooks';
+import { useSelector } from '@/store/hooks';
 
-import Card from '../ui/Card';
+import Card from '@/components/ui/Card';
 
-import { formatNumber, msToDays, msToHours } from '../../helpers/helpers';
+import { formatNumber, msToDays, msToHours } from '@/helpers/helpers';
 
-import LogsSearchLink from '../ui/LogsSearchLink';
-import { RESPONSE_FILTER, TIME_UNITS } from '../../helpers/constants';
+import LogsSearchLink from '@/components/ui/LogsSearchLink';
+import { RESPONSE_FILTER, TIME_UNITS } from '@/helpers/constants';
 
-import Tooltip from '../ui/Tooltip';
-import { RootState } from '../../initialState';
+import Tooltip from '@/components/ui/Tooltip';
+import { RootState } from '@/initialState';
 
 interface RowProps {
     label: string;

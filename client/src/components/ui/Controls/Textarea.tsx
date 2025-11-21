@@ -1,6 +1,6 @@
 import React, { ComponentProps, forwardRef } from 'react';
 import clsx from 'clsx';
-import { trimLinesAndRemoveEmpty } from '../../../helpers/helpers';
+import { trimLinesAndRemoveEmpty } from '@/helpers/helpers';
 
 type Props = ComponentProps<'textarea'> & {
     className?: string;

@@ -3,10 +3,10 @@ import { Controller, useForm } from 'react-hook-form';
 import { Trans, useTranslation } from 'react-i18next';
 
 import i18next from 'i18next';
-import { toNumber } from '../../../helpers/form';
-import { DAY, FILTERS_INTERVALS_HOURS, FILTERS_RELATIVE_LINK } from '../../../helpers/constants';
-import { Checkbox } from '../../ui/Controls/Checkbox';
-import { Select } from '../../ui/Controls/Select';
+import { toNumber } from '@/helpers/form';
+import { DAY, FILTERS_INTERVALS_HOURS, FILTERS_RELATIVE_LINK } from '@/helpers/constants';
+import { Checkbox } from '@/components/ui/Controls/Checkbox';
+import { Select } from '@/components/ui/Controls/Select';
 
 const THREE_DAYS_INTERVAL = DAY * 3;
 const SEVEN_DAYS_INTERVAL = DAY * 7;

@@ -5,7 +5,7 @@
 import { useDispatch as useReduxDispatch } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { AnyAction } from 'redux';
-import { RootState } from '../initialState';
+import { RootState } from '@/initialState';
 
 // Export a hook that can be reused to resolve types
 export type AppDispatch = ThunkDispatch<RootState, unknown, AnyAction>;

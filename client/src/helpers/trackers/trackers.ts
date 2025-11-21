@@ -1,7 +1,7 @@
+import { REPOSITORY } from '@/helpers/constants';
 import whotracksmeWebsites from './whotracksme_web.json';
 
 import trackersDb from './trackers.json';
-import { REPOSITORY } from '../constants';
 
 /**
  @typedef TrackerData

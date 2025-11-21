@@ -2,8 +2,8 @@ import { createAction } from 'redux-actions';
 import { showLoading, hideLoading } from 'react-redux-loading-bar';
 import i18next from 'i18next';
 
-import { normalizeFilteringStatus, normalizeRulesTextarea } from '../helpers/helpers';
-import apiClient from '../api/Api';
+import { normalizeFilteringStatus, normalizeRulesTextarea } from '@/helpers/helpers';
+import apiClient from '@/api/Api';
 import { addErrorToast, addSuccessToast } from './toasts';
 
 export const toggleFilteringModal = createAction('FILTERING_MODAL_TOGGLE');

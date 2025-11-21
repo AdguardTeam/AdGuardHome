@@ -1,9 +1,9 @@
 import React from 'react';
-import { useSelector } from '../../../store/hooks';
+import { useSelector } from '@/store/hooks';
 
-import { formatDateTime, formatTime } from '../../../helpers/helpers';
-import { DEFAULT_SHORT_DATE_FORMAT_OPTIONS, DEFAULT_TIME_FORMAT } from '../../../helpers/constants';
-import { RootState } from '../../../initialState';
+import { formatDateTime, formatTime } from '@/helpers/helpers';
+import { DEFAULT_SHORT_DATE_FORMAT_OPTIONS, DEFAULT_TIME_FORMAT } from '@/helpers/constants';
+import { RootState } from '@/initialState';
 
 interface DateCellProps {
     time: string;

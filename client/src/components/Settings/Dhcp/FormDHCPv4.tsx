@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 
-import { UINT32_RANGE } from '../../../helpers/constants';
+import { UINT32_RANGE } from '@/helpers/constants';
 import {
     validateGatewaySubnetMask,
     validateIpForGatewaySubnetMask,
@@ -10,10 +10,10 @@ import {
     validateIpv4RangeEnd,
     validateNotInRange,
     validateRequiredValue,
-} from '../../../helpers/validators';
+} from '@/helpers/validators';
+import { Input } from '@/components/ui/Controls/Input';
+import { toNumber } from '@/helpers/form';
 import { DhcpFormValues } from '.';
-import { Input } from '../../ui/Controls/Input';
-import { toNumber } from '../../../helpers/form';
 
 type FormDHCPv4Props = {
     processingConfig?: boolean;

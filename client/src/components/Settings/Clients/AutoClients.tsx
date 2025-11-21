@@ -1,18 +1,18 @@
 import React, { Component } from 'react';
 import { withTranslation } from 'react-i18next';
 
-import Card from '../../ui/Card';
-import { Table, convertColumns } from '../../ui/ReactTable';
+import Card from '@/components/ui/Card';
+import { Table, convertColumns } from '@/components/ui/ReactTable';
 
-import CellWrap from '../../ui/CellWrap';
+import CellWrap from '@/components/ui/CellWrap';
 
+
+import LogsSearchLink from '@/components/ui/LogsSearchLink';
+
+import { sortIp, formatNumber } from '@/helpers/helpers';
+import { LocalStorageHelper, LOCAL_STORAGE_KEYS } from '@/helpers/localStorageHelper';
+import { TABLES_MIN_ROWS } from '@/helpers/constants';
 import whoisCell from './whoisCell';
-
-import LogsSearchLink from '../../ui/LogsSearchLink';
-
-import { sortIp, formatNumber } from '../../../helpers/helpers';
-import { LocalStorageHelper, LOCAL_STORAGE_KEYS } from '../../../helpers/localStorageHelper';
-import { TABLES_MIN_ROWS } from '../../../helpers/constants';
 
 const COLUMN_MIN_WIDTH = 200;
 

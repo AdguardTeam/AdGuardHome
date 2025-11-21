@@ -7,6 +7,7 @@ import i18n from 'i18next';
 import ipaddr, { IPv4, IPv6 } from 'ipaddr.js';
 import queryString from 'query-string';
 import React from 'react';
+import { DhcpInterface, InstallInterface } from '@/initialState';
 import { getTrackerData } from './trackers/trackers';
 
 import {
@@ -28,7 +29,6 @@ import {
     THEMES,
 } from './constants';
 import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from './localStorageHelper';
-import { DhcpInterface, InstallInterface } from '../initialState';
 
 /**
  * @param time {string} The time to format

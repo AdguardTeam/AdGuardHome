@@ -1,9 +1,9 @@
 import React from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Trans, useTranslation } from 'react-i18next';
+import { validatePasswordLength, validateRequiredValue } from '@/helpers/validators';
+import { Input } from '@/components/ui/Controls/Input';
 import Controls from './Controls';
-import { validatePasswordLength, validateRequiredValue } from '../../helpers/validators';
-import { Input } from '../../components/ui/Controls/Input';
 
 type AuthFormValues = {
     username: string;

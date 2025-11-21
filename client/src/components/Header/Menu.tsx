@@ -4,10 +4,10 @@ import { NavLink } from 'react-router-dom';
 
 import classnames from 'classnames';
 import { Trans, withTranslation } from 'react-i18next';
-import { SETTINGS_URLS, FILTERS_URLS, MENU_URLS } from '../../helpers/constants';
-import { useClickOutside } from '../../hooks/useClickOutside';
+import { SETTINGS_URLS, FILTERS_URLS, MENU_URLS } from '@/helpers/constants';
+import { useClickOutside } from '@/hooks/useClickOutside';
 
-import Dropdown from '../ui/Dropdown';
+import Dropdown from '@/components/ui/Dropdown';
 
 const MENU_ITEMS = [
     {
