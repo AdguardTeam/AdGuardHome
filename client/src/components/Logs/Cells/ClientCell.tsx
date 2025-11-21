@@ -4,7 +4,7 @@ import { nanoid } from 'nanoid';
 import classNames from 'classnames';
 import { useTranslation } from 'react-i18next';
 
-import { Link, useHistory } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import { checkFiltered, getBlockingClientName } from '../../../helpers/helpers';
 import { BLOCK_ACTIONS } from '../../../helpers/constants';
@@ -40,7 +40,7 @@ interface ClientCellProps {
 const ClientCell = ({ client, client_id, client_info, domain, reason }: ClientCellProps) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
-    const history = useHistory();
+    const navigate = useNavigate();
 
     const autoClients = useSelector((state: RootState) => state.dashboard.autoClients, shallowEqual);
 
@@ -146,7 +146,7 @@ const ClientCell = ({ client, client_id, client_info, domain, reason }: ClientCe
             BUTTON_OPTIONS.push({
                 name: 'add_persistent_client',
                 onClick: () => {
-                    history.push(`/#clients?clientId=${client}`);
+                    navigate(`/#clients?clientId=${client}`);
                 },
             });
         }

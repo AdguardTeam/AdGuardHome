@@ -4,7 +4,7 @@ import { Trans } from 'react-i18next';
 import Modal from 'react-modal';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 
-import { useHistory } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import queryString from 'query-string';
 import classNames from 'classnames';
 import { FormProvider, useForm } from 'react-hook-form';
@@ -73,10 +73,10 @@ const processContent = (data: any, _buttonType: string) =>
 
 const Logs = () => {
     const dispatch = useDispatch();
-    const history = useHistory();
+    const location = useLocation();
 
     const { response_status: response_status_url_param, search: search_url_param } = queryString.parse(
-        history.location.search,
+        location.search,
     );
 
     const {
@@ -178,7 +178,7 @@ const Logs = () => {
     }, []);
 
     useEffect(() => {
-        if (!history.location.search) {
+        if (!location.search) {
             (async () => {
                 setIsLoading(true);
 
@@ -186,7 +186,7 @@ const Logs = () => {
                 setIsLoading(false);
             })();
         }
-    }, [history.location.search]);
+    }, [location.search]);
 
     const renderPage = () => (
         <>

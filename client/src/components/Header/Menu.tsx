@@ -107,7 +107,7 @@ const Menu = ({ isMenuOpen, closeMenu, pathname, t }: MenuProps) => {
         <NavLink
             to={route}
             key={route}
-            exact={exact || false}
+            end={exact || false}
             className={`order-${order} ${className}`}
             onClick={closeMenu}>
             {icon && (

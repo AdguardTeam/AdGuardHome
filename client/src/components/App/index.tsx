@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 
-import { HashRouter, Route } from 'react-router-dom';
+import { HashRouter, Route, Routes } from 'react-router-dom';
 import LoadingBar from 'react-redux-loading-bar';
 
 import '../ui/Tabler.css';
@@ -48,56 +48,59 @@ import { RootState } from '../../initialState';
 const ROUTES = [
     {
         path: MENU_URLS.root,
-        component: Dashboard,
-        exact: true,
+        element: <Dashboard />,
     },
     {
-        path: [`${MENU_URLS.logs}${getLogsUrlParams(':search?', ':response_status?')}`, MENU_URLS.logs],
-        component: Logs,
+        path: `${MENU_URLS.logs}${getLogsUrlParams(':search?', ':response_status?')}`,
+        element: <Logs />,
+    },
+    {
+        path: MENU_URLS.logs,
+        element: <Logs />,
     },
     {
         path: MENU_URLS.guide,
-        component: SetupGuide,
+        element: <SetupGuide />,
     },
     {
         path: SETTINGS_URLS.settings,
-        component: Settings,
+        element: <Settings />,
     },
     {
         path: SETTINGS_URLS.dns,
-        component: Dns,
+        element: <Dns />,
     },
     {
         path: SETTINGS_URLS.encryption,
-        component: Encryption,
+        element: <Encryption />,
     },
     {
         path: SETTINGS_URLS.dhcp,
-        component: Dhcp,
+        element: <Dhcp />,
     },
     {
         path: SETTINGS_URLS.clients,
-        component: Clients,
+        element: <Clients />,
     },
     {
         path: FILTERS_URLS.dns_blocklists,
-        component: DnsBlocklist,
+        element: <DnsBlocklist />,
     },
     {
         path: FILTERS_URLS.dns_allowlists,
-        component: DnsAllowlist,
+        element: <DnsAllowlist />,
     },
     {
         path: FILTERS_URLS.dns_rewrites,
-        component: DnsRewrites,
+        element: <DnsRewrites />,
     },
     {
         path: FILTERS_URLS.custom_rules,
-        component: CustomRules,
+        element: <CustomRules />,
     },
     {
         path: FILTERS_URLS.blocked_services,
-        component: Services,
+        element: <Services />,
     },
 ];
 
@@ -183,7 +186,7 @@ const App = () => {
     };
 
     return (
-        <HashRouter hashType="noslash">
+        <HashRouter>
             {updateAvailable && (
                 <>
                     <UpdateTopline />
@@ -212,11 +215,13 @@ const App = () => {
                         </div>
                     </div>
                 )}
-                {!processing &&
-                    isCoreRunning &&
-                    ROUTES.map((route, index) => (
-                        <Route key={index} exact={route.exact} path={route.path} component={route.component} />
-                    ))}
+                {!processing && isCoreRunning && (
+                    <Routes>
+                        {ROUTES.map((route, index) => (
+                            <Route key={index} path={route.path} element={route.element} />
+                        ))}
+                    </Routes>
+                )}
             </div>
 
             <Footer />

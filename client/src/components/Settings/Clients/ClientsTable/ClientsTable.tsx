@@ -4,7 +4,7 @@ import React, { useEffect, useMemo } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { useHistory, useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { getAllBlockedServices, getBlockedServices } from '../../../../actions/services';
 
@@ -58,7 +58,7 @@ const ClientsTable = ({
     const [t] = useTranslation();
     const dispatch = useDispatch();
     const location = useLocation();
-    const history = useHistory();
+    const navigate = useNavigate();
 
     const services = useSelector((state: RootState) => state?.services);
 
@@ -126,7 +126,7 @@ const ClientsTable = ({
         }
 
         if (clientId) {
-            history.push('/#clients');
+            navigate('/#clients');
         }
     };
 
@@ -172,7 +172,7 @@ const ClientsTable = ({
         toggleClientModal();
 
         if (clientId) {
-            history.push('/#clients');
+            navigate('/#clients');
         }
     };
 

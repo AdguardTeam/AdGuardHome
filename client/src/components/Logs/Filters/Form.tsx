@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
 
-import { useHistory } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import classNames from 'classnames';
 import { useFormContext } from 'react-hook-form';
 import queryString from 'query-string';
@@ -30,7 +30,8 @@ type Props = {
 export const Form = ({ className, setIsLoading }: Props) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
-    const history = useHistory();
+    const navigate = useNavigate();
+    const location = useLocation();
 
     const { register, watch, setValue } = useFormContext<SearchFormValues>();
 
@@ -47,7 +48,7 @@ export const Form = ({ className, setIsLoading }: Props) => {
             }),
         );
 
-        history.replace(`${getLogsUrlParams(debouncedSearch, responseStatusValue)}`);
+        navigate(`${getLogsUrlParams(debouncedSearch, responseStatusValue)}`, { replace: true });
     }, [responseStatusValue, debouncedSearch]);
 
     useEffect(() => {
@@ -57,16 +58,16 @@ export const Form = ({ className, setIsLoading }: Props) => {
     }, [responseStatusValue, setValue]);
 
     useEffect(() => {
-        const { search: searchUrlParam } = queryString.parse(history.location.search);
+        const { search: searchUrlParam } = queryString.parse(location.search);
 
         if (searchUrlParam !== searchValue) {
             setValue('search', searchUrlParam ? searchUrlParam.toString() : '');
         }
-    }, [history.location.search]);
+    }, [location.search]);
 
     const onInputClear = async () => {
         setIsLoading(true);
-        history.push(getLogsUrlParams(DEFAULT_LOGS_FILTER.search, responseStatusValue));
+        navigate(getLogsUrlParams(DEFAULT_LOGS_FILTER.search, responseStatusValue));
         setIsLoading(false);
     };
 
