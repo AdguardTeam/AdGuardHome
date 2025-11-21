@@ -1,6 +1,8 @@
 import React from 'react';
 import { Trans } from 'react-i18next';
+// eslint-disable-next-line import/no-duplicates -- Separate imports for tree-shaking
 import isAfter from 'date-fns/is_after';
+// eslint-disable-next-line import/no-duplicates -- Separate imports for tree-shaking
 import addDays from 'date-fns/add_days';
 import { useSelector } from '@/store/hooks';
 

@@ -6,11 +6,10 @@ import { useTranslation } from 'react-i18next';
 import classnames from 'classnames';
 import { useSelector } from '@/store/hooks';
 
-import Menu from './Menu';
-
-import { Logo } from '@/components/ui/svg/logo';
-import './Header.css';
 import { RootState } from '@/initialState';
+import { Logo } from '@/components/ui/svg/logo';
+import Menu from './Menu';
+import './Header.css';
 
 const Header = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -60,7 +59,10 @@ const Header = () => {
                     <div className="header__column">
                         <div className="header__right">
                             {!processingProfile && name && (
-                                <a href="control/logout" className="btn btn-sm btn-outline-secondary" data-testid="sign_out">
+                                <a
+                                    href="control/logout"
+                                    className="btn btn-sm btn-outline-secondary"
+                                    data-testid="sign_out">
                                     {t('sign_out')}
                                 </a>
                             )}

@@ -1,5 +1,7 @@
 import 'url-polyfill';
+// eslint-disable-next-line import/no-duplicates -- Separate imports for tree-shaking
 import dateParse from 'date-fns/parse';
+// eslint-disable-next-line import/no-duplicates -- Separate imports for tree-shaking
 import dateFormat from 'date-fns/format';
 import round from 'lodash/round';
 import axios from 'axios';
@@ -675,9 +677,7 @@ export const formatElapsedMs = (elapsedMs: string, t: (key: string) => string) =
         return elapsedMs;
     }
 
-    const formattedValue = parsedElapsedMs < 1
-        ? parsedElapsedMs.toFixed(2)
-        : Math.floor(parsedElapsedMs).toString();
+    const formattedValue = parsedElapsedMs < 1 ? parsedElapsedMs.toFixed(2) : Math.floor(parsedElapsedMs).toString();
 
     return `${formattedValue} ${t('milliseconds_abbreviation')}`;
 };
