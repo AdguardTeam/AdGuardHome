@@ -1,6 +1,6 @@
 import React, { useEffect, Fragment } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import debounce from 'lodash/debounce';
+import { useDispatch, useSelector } from '../../store/hooks';
 
 import * as actionCreators from '../../actions/install';
 

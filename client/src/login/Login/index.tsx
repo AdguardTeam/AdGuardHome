@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
 import { Trans } from 'react-i18next';
+import { useSelector, useDispatch } from '../../store/hooks';
 
 import * as actionCreators from '../../actions/login';
 

@@ -1,10 +1,10 @@
 import React, { useRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Trans, useTranslation } from 'react-i18next';
-import { useDispatch, useSelector } from 'react-redux';
 
 import i18next from 'i18next';
 import clsx from 'clsx';
+import { useDispatch, useSelector } from '../../../../store/hooks';
 import { testUpstreamWithFormValues } from '../../../../actions';
 import { DNS_REQUEST_OPTIONS, UINT32_RANGE, UPSTREAM_CONFIGURATION_WIKI_LINK } from '../../../../helpers/constants';
 import { removeEmptyLines } from '../../../../helpers/helpers';

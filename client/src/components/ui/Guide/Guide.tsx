@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import i18next from 'i18next';
-import { useSelector } from 'react-redux';
+import { useSelector } from '../../../store/hooks';
 
 import { MOBILE_CONFIG_LINKS } from '../../../helpers/constants';
 

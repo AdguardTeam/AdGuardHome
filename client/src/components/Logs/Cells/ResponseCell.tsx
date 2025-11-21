@@ -1,7 +1,8 @@
 import { useTranslation } from 'react-i18next';
-import { shallowEqual, useSelector } from 'react-redux';
+import { shallowEqual } from 'react-redux';
 import classNames from 'classnames';
 import React from 'react';
+import { useSelector } from '../../../store/hooks';
 import { getRulesToFilterList, formatElapsedMs, getFilterNames, getServiceName } from '../../../helpers/helpers';
 import { FILTERED_STATUS, FILTERED_STATUS_TO_META_MAP } from '../../../helpers/constants';
 

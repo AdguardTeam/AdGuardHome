@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 
-import { shallowEqual, useDispatch, useSelector } from 'react-redux';
+import { shallowEqual } from 'react-redux';
 import classNames from 'classnames';
 
 import { FormProvider, useForm } from 'react-hook-form';
+import { useDispatch, useSelector } from '../../../store/hooks';
 import { DHCP_DESCRIPTION_PLACEHOLDERS, STATUS_RESPONSE } from '../../../helpers/constants';
 
 import Leases from './Leases';

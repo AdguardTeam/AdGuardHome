@@ -2,9 +2,9 @@
 /* eslint-disable react/prop-types */
 import React, { useEffect, useMemo } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
-import { useDispatch, useSelector } from 'react-redux';
-
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from '../../../../store/hooks';
+
 
 import { getAllBlockedServices, getBlockedServices } from '../../../../actions/services';
 

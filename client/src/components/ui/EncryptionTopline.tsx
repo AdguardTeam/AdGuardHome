@@ -2,7 +2,7 @@ import React from 'react';
 import { Trans } from 'react-i18next';
 import isAfter from 'date-fns/is_after';
 import addDays from 'date-fns/add_days';
-import { useSelector } from 'react-redux';
+import { useSelector } from '../../store/hooks';
 
 import Topline from './Topline';
 import { EMPTY_DATE } from '../../helpers/constants';

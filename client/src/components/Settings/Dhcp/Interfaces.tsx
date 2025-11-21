@@ -1,7 +1,7 @@
 import React from 'react';
-import { useSelector } from 'react-redux';
 import { useFormContext } from 'react-hook-form';
 import { Trans, useTranslation } from 'react-i18next';
+import { useSelector } from '../../../store/hooks';
 
 import { validateRequiredValue } from '../../../helpers/validators';
 import { RootState } from '../../../initialState';

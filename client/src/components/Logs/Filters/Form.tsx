@@ -1,12 +1,12 @@
 import React, { useEffect } from 'react';
 
 import { useTranslation } from 'react-i18next';
-import { useDispatch } from 'react-redux';
 
 import { useLocation, useNavigate } from 'react-router-dom';
 import classNames from 'classnames';
 import { useFormContext } from 'react-hook-form';
 import queryString from 'query-string';
+import { useDispatch } from '../../../store/hooks';
 
 import {
     DEBOUNCE_FILTER_TIMEOUT,

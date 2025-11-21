@@ -1,14 +1,15 @@
 /**
- * Augment react-redux to support redux-thunk actions
- * This fixes TypeScript errors when dispatching thunk actions with react-redux v8
+ * Typed hooks for Redux with thunk support
+ * Use these instead of plain `useDispatch` and `useSelector`
  */
-import 'react-redux';
+import { useDispatch as useReduxDispatch } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { AnyAction } from 'redux';
 import { RootState } from '../initialState';
 
-declare module 'react-redux' {
-    export interface DefaultRootState extends RootState {}
-    // Augment the Dispatch type to include thunk actions
-    export type Dispatch<A extends AnyAction = AnyAction> = ThunkDispatch<RootState, unknown, A>;
-}
+// Export a hook that can be reused to resolve types
+export type AppDispatch = ThunkDispatch<RootState, unknown, AnyAction>;
+
+export const useDispatch = () => useReduxDispatch<AppDispatch>();
+// For useSelector, just re-export the original to maintain flexibility
+export { useSelector } from 'react-redux';

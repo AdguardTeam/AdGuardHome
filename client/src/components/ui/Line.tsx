@@ -5,7 +5,7 @@ import subDays from 'date-fns/sub_days';
 import subHours from 'date-fns/sub_hours';
 import dateFormat from 'date-fns/format';
 import round from 'lodash/round';
-import { useSelector } from 'react-redux';
+import { useSelector } from '../../store/hooks';
 import './Line.css';
 
 import { msToDays, msToHours } from '../../helpers/helpers';

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSelector } from 'react-redux';
 import { Controller, useForm } from 'react-hook-form';
+import { useSelector } from '../../../store/hooks';
 
 import Card from '../../ui/Card';
 import Info from './Info';

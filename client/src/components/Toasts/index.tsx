@@ -1,7 +1,8 @@
 import React, { createRef } from 'react';
-import { useSelector, shallowEqual } from 'react-redux';
-
+import { shallowEqual } from 'react-redux';
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
+import { useSelector } from '../../store/hooks';
+
 import { TOAST_TRANSITION_TIMEOUT } from '../../helpers/constants';
 
 import Toast from './Toast';

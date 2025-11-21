@@ -1,9 +1,9 @@
 import React from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { useDispatch, useSelector } from 'react-redux';
-
 import i18next from 'i18next';
+import { useDispatch, useSelector } from '../../../../store/hooks';
+
 import { clearDnsCache } from '../../../../actions/dnsConfig';
 import { CACHE_CONFIG_FIELDS, UINT32_RANGE } from '../../../../helpers/constants';
 import { replaceZeroWithEmptyString } from '../../../../helpers/helpers';

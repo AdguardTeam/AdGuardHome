@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { Trans, useTranslation } from 'react-i18next';
-import { useDispatch } from 'react-redux';
+import { useDispatch } from '../../../../store/hooks';
 import { Table, convertColumns } from '../../../ui/ReactTable';
 import { LEASES_TABLE_DEFAULT_PAGE_SIZE, MODAL_TYPE } from '../../../../helpers/constants';
 

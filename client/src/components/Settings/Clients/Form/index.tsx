@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { useSelector } from 'react-redux';
 import { Trans, useTranslation } from 'react-i18next';
 import { Controller, FormProvider, useForm } from 'react-hook-form';
 import Select from 'react-select';
+import { useSelector } from '../../../../store/hooks';
 
 import Tabs from '../../../ui/Tabs';
 import { CLIENT_ID_LINK, LOCAL_TIMEZONE_VALUE } from '../../../../helpers/constants';

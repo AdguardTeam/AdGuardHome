@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
-import { useDispatch, useSelector } from 'react-redux';
 import classNames from 'classnames';
 import React from 'react';
+import { useDispatch, useSelector } from '../../../store/hooks';
 import { toggleDetailedLogs } from '../../../actions/queryLogs';
 
 import HeaderCell from './HeaderCell';

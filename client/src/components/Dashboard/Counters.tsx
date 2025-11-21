@@ -1,7 +1,8 @@
 import React from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import round from 'lodash/round';
-import { shallowEqual, useSelector } from 'react-redux';
+import { shallowEqual } from 'react-redux';
+import { useSelector } from '../../store/hooks';
 
 import Card from '../ui/Card';
 

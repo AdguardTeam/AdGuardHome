@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { shallowEqual, useDispatch, useSelector } from 'react-redux';
+import { shallowEqual } from 'react-redux';
 import { nanoid } from 'nanoid';
 import classNames from 'classnames';
 import { useTranslation } from 'react-i18next';
 
 import { Link, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from '../../../store/hooks';
 
 import { checkFiltered, getBlockingClientName } from '../../../helpers/helpers';
 import { BLOCK_ACTIONS } from '../../../helpers/constants';

@@ -64,7 +64,6 @@
         "@types/node": "^22.13.10",
         "@types/react": "^18.3.0",
         "@types/react-dom": "^18.3.0",
-        "@types/react-redux": "^7.1.33",
         "@types/redux-actions": "^2.6.5",
         "@typescript-eslint/eslint-plugin": "^7.11.0",
         "@typescript-eslint/parser": "^7.10.0",

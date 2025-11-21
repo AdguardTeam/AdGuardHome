@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 
 import { Link, useLocation } from 'react-router-dom';
-import { shallowEqual, useSelector } from 'react-redux';
+import { shallowEqual } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import classnames from 'classnames';
+import { useSelector } from '../../store/hooks';
 
 import Menu from './Menu';
 

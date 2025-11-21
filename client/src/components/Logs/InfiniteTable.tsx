@@ -1,7 +1,7 @@
 import React, { Dispatch, SetStateAction, useCallback, useEffect, useRef } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import throttle from 'lodash/throttle';
+import { useDispatch, useSelector } from '../../store/hooks';
 
 import Loading from '../ui/Loading';
 

@@ -7,7 +7,8 @@ import '../ui/Tabler.css';
 import '../ui/ReactTable.css';
 import './index.css';
 
-import { shallowEqual, useDispatch, useSelector } from 'react-redux';
+import { shallowEqual } from 'react-redux';
+import { useDispatch, useSelector } from '../../store/hooks';
 import Toasts from '../Toasts';
 import Footer from '../ui/Footer';
 import Status from '../ui/Status';

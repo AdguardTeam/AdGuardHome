@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDispatch } from 'react-redux';
+import { useDispatch } from '../../../store/hooks';
 
 import { Form } from './Form';
 import { refreshFilteredLogs } from '../../../actions/queryLogs';

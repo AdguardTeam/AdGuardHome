@@ -2,7 +2,8 @@ import React from 'react';
 import { Trans, withTranslation } from 'react-i18next';
 
 import ReactModal from 'react-modal';
-import { shallowEqual, useDispatch, useSelector } from 'react-redux';
+import { shallowEqual } from 'react-redux';
+import { useDispatch, useSelector } from '../../../../store/hooks';
 
 import { Form } from './Form';
 

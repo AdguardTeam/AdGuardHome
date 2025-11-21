@@ -2,12 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { Trans } from 'react-i18next';
 
 import Modal from 'react-modal';
-import { shallowEqual, useDispatch, useSelector } from 'react-redux';
+import { shallowEqual } from 'react-redux';
 
 import { useLocation } from 'react-router-dom';
 import queryString from 'query-string';
 import classNames from 'classnames';
 import { FormProvider, useForm } from 'react-hook-form';
+import { useDispatch, useSelector } from '../../store/hooks';
 import { BLOCK_ACTIONS, DEFAULT_LOGS_FILTER, MEDIUM_SCREEN_SIZE } from '../../helpers/constants';
 
 import Loading from '../ui/Loading';

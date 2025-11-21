@@ -2,8 +2,9 @@ import React, { useState, useMemo } from 'react';
 
 import { Trans, useTranslation } from 'react-i18next';
 
-import { shallowEqual, useDispatch, useSelector } from 'react-redux';
+import { shallowEqual } from 'react-redux';
 import classNames from 'classnames';
+import { useDispatch, useSelector } from '../../store/hooks';
 
 import Card from '../ui/Card';
 import Cell from '../ui/Cell';

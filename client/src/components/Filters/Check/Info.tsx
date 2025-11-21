@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import classNames from 'classnames';
 
 import i18next from 'i18next';
-import { shallowEqual, useDispatch, useSelector } from 'react-redux';
+import { shallowEqual } from 'react-redux';
+import { useDispatch, useSelector } from '../../../store/hooks';
 import {
     checkFiltered,
     checkRewrite,

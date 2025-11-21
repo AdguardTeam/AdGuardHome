@@ -1,6 +1,6 @@
 import React, { useEffect, useState, forwardRef } from 'react';
 import { Trans } from 'react-i18next';
-import { useDispatch } from 'react-redux';
+import { useDispatch } from '../../store/hooks';
 import { TOAST_TIMEOUTS } from '../../helpers/constants';
 
 import { removeToast } from '../../actions';
