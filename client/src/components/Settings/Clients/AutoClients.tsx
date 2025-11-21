@@ -1,10 +1,8 @@
 import React, { Component } from 'react';
 import { withTranslation } from 'react-i18next';
 
-// @ts-expect-error FIXME: update react-table
-import ReactTable from 'react-table';
-
 import Card from '../../ui/Card';
+import { Table, convertColumns } from '../../ui/ReactTable';
 
 import CellWrap from '../../ui/CellWrap';
 
@@ -85,13 +83,13 @@ class AutoClients extends Component<AutoClientsProps> {
                 title={t('auto_clients_title')}
                 subtitle={t('auto_clients_desc')}
                 bodyType="card-body box-body--settings">
-                <ReactTable
+                <Table
                     data={autoClients || []}
-                    columns={this.columns}
+                    columns={convertColumns(this.columns)}
                     defaultSorted={[
                         {
                             id: 'statistics',
-                            asc: true,
+                            desc: false,
                         },
                     ]}
                     className="-striped -highlight card-table-overflow"

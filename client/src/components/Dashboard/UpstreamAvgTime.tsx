@@ -1,14 +1,12 @@
-import React from 'react';
-
-// @ts-expect-error FIXME: update react-table
-import ReactTable from 'react-table';
+import React, { useMemo } from 'react';
 import round from 'lodash/round';
 import { withTranslation, Trans } from 'react-i18next';
-
 import { TFunction } from 'i18next';
-import Card from '../ui/Card';
 
+import Card from '../ui/Card';
 import DomainCell from './DomainCell';
+import { Table, convertColumns } from '../ui/ReactTable';
+
 import { DASHBOARD_TABLES_DEFAULT_PAGE_SIZE, TABLES_MIN_ROWS } from '../../helpers/constants';
 import { formatNumber } from '../../helpers/helpers';
 
@@ -39,14 +37,10 @@ interface UpstreamAvgTimeProps {
     t: TFunction;
 }
 
-const UpstreamAvgTime = ({ t, refreshButton, topUpstreamsAvgTime, subtitle }: UpstreamAvgTimeProps) => (
-    <Card title={t('average_upstream_response_time')} subtitle={subtitle} bodyType="card-table" refresh={refreshButton}>
-        <ReactTable
-            data={topUpstreamsAvgTime.map(({ name: domain, count }: { name: string; count: number }) => ({
-                domain,
-                count,
-            }))}
-            columns={[
+const UpstreamAvgTime = ({ t, refreshButton, topUpstreamsAvgTime, subtitle }: UpstreamAvgTimeProps) => {
+    const columns = useMemo(
+        () =>
+            convertColumns([
                 {
                     Header: <Trans>upstream</Trans>,
                     accessor: 'domain',
@@ -58,14 +52,32 @@ const UpstreamAvgTime = ({ t, refreshButton, topUpstreamsAvgTime, subtitle }: Up
                     maxWidth: 190,
                     Cell: TimeCell,
                 },
-            ]}
-            showPagination={false}
-            noDataText={t('no_upstreams_data_found')}
-            minRows={TABLES_MIN_ROWS}
-            defaultPageSize={DASHBOARD_TABLES_DEFAULT_PAGE_SIZE}
-            className="-highlight card-table-overflow--limited stats__table"
-        />
-    </Card>
-);
+            ]),
+        []
+    );
+
+    const tableData = useMemo(
+        () =>
+            topUpstreamsAvgTime.map(({ name: domain, count }: { name: string; count: number }) => ({
+                domain,
+                count,
+            })),
+        [topUpstreamsAvgTime]
+    );
+
+    return (
+        <Card title={t('average_upstream_response_time')} subtitle={subtitle} bodyType="card-table" refresh={refreshButton}>
+            <Table
+                data={tableData}
+                columns={columns}
+                showPagination={false}
+                noDataText={t('no_upstreams_data_found')}
+                minRows={TABLES_MIN_ROWS}
+                defaultPageSize={DASHBOARD_TABLES_DEFAULT_PAGE_SIZE}
+                className="-highlight card-table-overflow--limited stats__table"
+            />
+        </Card>
+    );
+};
 
 export default withTranslation()(UpstreamAvgTime);

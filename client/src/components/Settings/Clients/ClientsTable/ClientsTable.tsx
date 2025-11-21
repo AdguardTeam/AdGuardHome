@@ -1,13 +1,10 @@
 /* eslint-disable react/display-name */
 /* eslint-disable react/prop-types */
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { useHistory, useLocation } from 'react-router-dom';
-
-// @ts-expect-error FIXME: update react-table
-import ReactTable from 'react-table';
 
 import { getAllBlockedServices, getBlockedServices } from '../../../../actions/services';
 
@@ -16,8 +13,8 @@ import { splitByNewLine, countClientsStatistics, sortIp, getService, formatNumbe
 import { MODAL_TYPE, LOCAL_TIMEZONE_VALUE, TABLES_MIN_ROWS } from '../../../../helpers/constants';
 
 import Card from '../../../ui/Card';
-
 import CellWrap from '../../../ui/CellWrap';
+import { Table, convertColumns } from '../../../ui/ReactTable';
 
 import LogsSearchLink from '../../../ui/LogsSearchLink';
 
@@ -179,7 +176,7 @@ const ClientsTable = ({
         }
     };
 
-    const columns = [
+    const columns = useMemo(() => [
         {
             Header: t('table_client'),
             accessor: 'ids',
@@ -359,7 +356,7 @@ const ClientsTable = ({
                 );
             },
         },
-    ];
+    ], [t, normalizedTopClients, services.allServices, processingUpdating, processingDeleting]);
 
     const currentClientData = getClient(modalClientName, clients);
     const tagsOptions = getOptionsWithLabels(supportedTags);
@@ -367,13 +364,13 @@ const ClientsTable = ({
     return (
         <Card title={t('clients_title')} subtitle={t('clients_desc')} bodyType="card-body box-body--settings">
             <>
-                <ReactTable
+                <Table
                     data={clients || []}
-                    columns={columns}
+                    columns={convertColumns(columns)}
                     defaultSorted={[
                         {
                             id: 'statistics',
-                            asc: true,
+                            desc: false,
                         },
                     ]}
                     className="-striped -highlight card-table-overflow"

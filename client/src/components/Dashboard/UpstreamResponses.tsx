@@ -1,15 +1,11 @@
-import React from 'react';
-
-// @ts-expect-error FIXME: update react-table
-import ReactTable from 'react-table';
+import React, { useMemo } from 'react';
 import { withTranslation, Trans } from 'react-i18next';
-
 import { TFunction } from 'i18next';
+
 import Card from '../ui/Card';
-
 import Cell from '../ui/Cell';
-
 import DomainCell from './DomainCell';
+import { Table, convertColumns } from '../ui/ReactTable';
 
 import { getPercent } from '../../helpers/helpers';
 import { DASHBOARD_TABLES_DEFAULT_PAGE_SIZE, STATUS_COLORS, TABLES_MIN_ROWS } from '../../helpers/constants';
@@ -38,14 +34,10 @@ interface UpstreamResponsesProps {
     t: TFunction;
 }
 
-const UpstreamResponses = ({ t, refreshButton, topUpstreamsResponses, subtitle }: UpstreamResponsesProps) => (
-    <Card title={t('top_upstreams')} subtitle={subtitle} bodyType="card-table" refresh={refreshButton}>
-        <ReactTable
-            data={topUpstreamsResponses.map(({ name: domain, count }: { name: string; count: number }) => ({
-                domain,
-                count,
-            }))}
-            columns={[
+const UpstreamResponses = ({ t, refreshButton, topUpstreamsResponses, subtitle }: UpstreamResponsesProps) => {
+    const columns = useMemo(
+        () =>
+            convertColumns([
                 {
                     Header: <Trans>upstream</Trans>,
                     accessor: 'domain',
@@ -57,14 +49,32 @@ const UpstreamResponses = ({ t, refreshButton, topUpstreamsResponses, subtitle }
                     maxWidth: 190,
                     Cell: CountCell(getTotalUpstreamRequests(topUpstreamsResponses)),
                 },
-            ]}
-            showPagination={false}
-            noDataText={t('no_upstreams_data_found')}
-            minRows={TABLES_MIN_ROWS}
-            defaultPageSize={DASHBOARD_TABLES_DEFAULT_PAGE_SIZE}
-            className="-highlight card-table-overflow--limited stats__table"
-        />
-    </Card>
-);
+            ]),
+        [topUpstreamsResponses]
+    );
+
+    const tableData = useMemo(
+        () =>
+            topUpstreamsResponses.map(({ name: domain, count }: { name: string; count: number }) => ({
+                domain,
+                count,
+            })),
+        [topUpstreamsResponses]
+    );
+
+    return (
+        <Card title={t('top_upstreams')} subtitle={subtitle} bodyType="card-table" refresh={refreshButton}>
+            <Table
+                data={tableData}
+                columns={columns}
+                showPagination={false}
+                noDataText={t('no_upstreams_data_found')}
+                minRows={TABLES_MIN_ROWS}
+                defaultPageSize={DASHBOARD_TABLES_DEFAULT_PAGE_SIZE}
+                className="-highlight card-table-overflow--limited stats__table"
+            />
+        </Card>
+    );
+};
 
 export default withTranslation()(UpstreamResponses);

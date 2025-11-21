@@ -1,32 +1,192 @@
+/* TanStack Table v8 Styles */
+.ReactTable {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.ReactTable .rt-table {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+}
+
+.ReactTable .rt-thead {
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.ReactTable .rt-tbody {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+}
+
+.ReactTable .rt-tr {
+    flex: 1 0 auto;
+    display: inline-flex;
+}
+
 .ReactTable .rt-th,
 .ReactTable .rt-td {
     padding: 10px 15px;
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ReactTable .rt-th.-cursor-pointer {
+    cursor: pointer;
+    user-select: none;
+}
+
+.ReactTable .rt-th .rt-sort-indicator {
+    margin-left: 5px;
+    opacity: 0.6;
 }
 
 .card-table .ReactTable .rt-td {
     overflow: visible;
 }
 
+.ReactTable .rt-tr-group {
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: column;
+}
+
 .ReactTable .rt-noData {
+    display: block;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.8);
+    transition: all .3s ease;
+    z-index: 1;
+    padding: 20px;
     color: var(--rt-nodata-color);
     background-color: var(--rt-nodata-bgcolor);
 }
 
 .ReactTable .-loading {
-    color: var(--rt-nodata-color);
-    background-color: var(--rt-nodata-bgcolor);
+    display: block;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    transition: all .3s ease;
+    z-index: -1;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.ReactTable .-loading > div {
+    position: absolute;
+    display: block;
+    text-align: center;
+    width: 100%;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+    transition: all .3s cubic-bezier(.25, .46, .45, .94);
+    font-size: 15px;
+    color: rgba(0, 0, 0, 0.6);
 }
 
 .ReactTable .-loading .-loading-inner {
     color: var(--gray300);
 }
 
+.ReactTable .-pagination {
+    z-index: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    flex-wrap: wrap;
+    padding: 3px;
+    box-shadow: 0 0 15px 0 rgba(0, 0, 0, 0.1);
+    border-top: 2px solid rgba(0, 0, 0, 0.1);
+}
+
 .ReactTable .-pagination input,
 .ReactTable .-pagination select {
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: #fff;
+    padding: 5px 7px;
+    font-size: inherit;
+    border-radius: 3px;
+    font-weight: normal;
+    outline: none;
     color: var(--rt-nodata-color);
     background-color: var(--rt-nodata-bgcolor);
+}
+
+.ReactTable .-pagination .-btn {
+    appearance: none;
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    border-radius: 3px;
+    padding: 6px;
+    font-size: 1em;
+    color: rgba(0, 0, 0, 0.6);
+    background: rgba(0, 0, 0, 0.1);
+    transition: all .1s ease;
+    cursor: pointer;
+    outline: none;
+}
+
+.ReactTable .-pagination .-btn:not([disabled]):hover {
+    background: rgba(0, 0, 0, 0.3);
+    color: #fff;
+}
+
+.ReactTable .-pagination .-btn[disabled] {
+    opacity: .5;
+    cursor: default;
+}
+
+.ReactTable .-pagination .-previous,
+.ReactTable .-pagination .-next {
+    flex: 1;
+    text-align: center;
+}
+
+.ReactTable .-pagination .-center {
+    flex: 1.5;
+    text-align: center;
+    margin-bottom: 0;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-around;
+}
+
+.ReactTable .-pagination .-pageInfo {
+    display: inline-block;
+    margin: 3px 10px;
+    white-space: nowrap;
+}
+
+.ReactTable .-pagination .-pageJump {
+    display: inline-block;
+}
+
+.ReactTable .-pagination .-pageJump input {
+    width: 70px;
+    text-align: center;
+}
+
+.ReactTable .-pagination .-pageSizeOptions {
+    margin: 3px 10px;
 }
 
 [data-theme='dark'] .ReactTable .rt-table::-webkit-scrollbar-track {

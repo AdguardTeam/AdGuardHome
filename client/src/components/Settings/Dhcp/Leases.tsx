@@ -1,9 +1,8 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 
-// @ts-expect-error FIXME: update react-table
-import ReactTable from 'react-table';
 import { Trans, withTranslation } from 'react-i18next';
+import { Table, convertColumns } from '../../ui/ReactTable';
 import { LEASES_TABLE_DEFAULT_PAGE_SIZE, MODAL_TYPE } from '../../../helpers/constants';
 
 import { sortIp } from '../../../helpers/helpers';
@@ -57,9 +56,9 @@ class Leases extends Component<LeasesProps> {
     render() {
         const { leases, t } = this.props;
         return (
-            <ReactTable
+            <Table
                 data={leases || []}
-                columns={[
+                columns={convertColumns([
                     {
                         Header: 'MAC',
                         accessor: 'mac',
@@ -89,10 +88,10 @@ class Leases extends Component<LeasesProps> {
                         Header: <Trans>actions_table_header</Trans>,
                         Cell: this.makeStatic,
                     },
-                ]}
+                ])}
                 pageSize={LEASES_TABLE_DEFAULT_PAGE_SIZE}
                 showPageSizeOptions={false}
-                showPagination={leases.length > LEASES_TABLE_DEFAULT_PAGE_SIZE}
+                showPagination={leases && leases.length > LEASES_TABLE_DEFAULT_PAGE_SIZE}
                 noDataText={t('dhcp_leases_not_found')}
                 minRows={6}
                 className="-striped -highlight card-table-overflow"

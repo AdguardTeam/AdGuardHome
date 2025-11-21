@@ -3,7 +3,6 @@ import React, { useEffect } from 'react';
 import { HashRouter, Route } from 'react-router-dom';
 import LoadingBar from 'react-redux-loading-bar';
 
-import 'react-table/react-table.css';
 import '../ui/Tabler.css';
 import '../ui/ReactTable.css';
 import './index.css';

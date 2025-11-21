@@ -1,14 +1,13 @@
 import React, { Component } from 'react';
 
-// @ts-expect-error FIXME: update react-table
-import ReactTable from 'react-table';
 import { withTranslation } from 'react-i18next';
+import { Table as DataTable, convertColumns } from '../../ui/ReactTable';
 
 import { sortIp } from '../../../helpers/helpers';
 import { MODAL_TYPE, TABLES_MIN_ROWS } from '../../../helpers/constants';
 import { LocalStorageHelper, LOCAL_STORAGE_KEYS } from '../../../helpers/localStorageHelper';
 
-interface TableProps {
+interface RewritesTableProps {
     t: (...args: unknown[]) => string;
     list: unknown[];
     processing: boolean;
@@ -21,7 +20,7 @@ interface TableProps {
     toggleRewrite: (...args: unknown[]) => unknown;
 }
 
-class Table extends Component<TableProps> {
+class RewritesTable extends Component<RewritesTableProps> {
     cellWrap = ({ value }: any) => (
         <div className="logs__row o-hidden">
             <span className="logs__text" title={value}>
@@ -118,9 +117,9 @@ class Table extends Component<TableProps> {
         const { t, list, processing, processingAdd, processingDelete } = this.props;
 
         return (
-            <ReactTable
+            <DataTable
                 data={list || []}
-                columns={this.columns}
+                columns={convertColumns(this.columns)}
                 loading={processing || processingAdd || processingDelete}
                 className="-striped -highlight card-table-overflow"
                 showPagination
@@ -141,4 +140,4 @@ class Table extends Component<TableProps> {
     }
 }
 
-export default withTranslation()(Table);
+export default withTranslation()(RewritesTable);

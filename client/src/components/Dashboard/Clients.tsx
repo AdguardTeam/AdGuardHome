@@ -1,7 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 
-// @ts-expect-error FIXME: update react-table
-import ReactTable from 'react-table';
 import { Trans, useTranslation } from 'react-i18next';
 
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
@@ -9,6 +7,7 @@ import classNames from 'classnames';
 
 import Card from '../ui/Card';
 import Cell from '../ui/Cell';
+import { Table, convertColumns } from '../ui/ReactTable';
 
 import { getPercent, sortIp } from '../../helpers/helpers';
 import {
@@ -159,30 +158,42 @@ const Clients = ({ refreshButton, subtitle }: ClientsProps) => {
         shallowEqual,
     );
 
+    const columns = useMemo(
+        () =>
+            convertColumns([
+                {
+                    Header: <Trans>client_table_header</Trans>,
+                    accessor: 'ip',
+                    sortMethod: sortIp,
+                    Cell: ClientCell,
+                },
+                {
+                    Header: <Trans>requests_count</Trans>,
+                    accessor: 'count',
+                    minWidth: 180,
+                    maxWidth: 200,
+                    Cell: CountCell,
+                },
+            ]),
+        []
+    );
+
+    const tableData = useMemo(
+        () =>
+            topClients.map(({ name: ip, count, info, blocked }: any) => ({
+                ip,
+                count,
+                info,
+                blocked,
+            })),
+        [topClients]
+    );
+
     return (
         <Card title={t('top_clients')} subtitle={subtitle} bodyType="card-table" refresh={refreshButton}>
-            <ReactTable
-                data={topClients.map(({ name: ip, count, info, blocked }: any) => ({
-                    ip,
-                    count,
-                    info,
-                    blocked,
-                }))}
-                columns={[
-                    {
-                        Header: <Trans>client_table_header</Trans>,
-                        accessor: 'ip',
-                        sortMethod: sortIp,
-                        Cell: ClientCell,
-                    },
-                    {
-                        Header: <Trans>requests_count</Trans>,
-                        accessor: 'count',
-                        minWidth: 180,
-                        maxWidth: 200,
-                        Cell: CountCell,
-                    },
-                ]}
+            <Table
+                data={tableData}
+                columns={columns}
                 showPagination={false}
                 noDataText={t('no_clients_found')}
                 minRows={TABLES_MIN_ROWS}

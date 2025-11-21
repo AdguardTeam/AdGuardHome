@@ -1,10 +1,9 @@
 import React, { Component } from 'react';
 
-// @ts-expect-error FIXME: update react-table
-import ReactTable from 'react-table';
 import { withTranslation, Trans } from 'react-i18next';
 
 import CellWrap from '../ui/CellWrap';
+import { Table as TableComponent, convertColumns } from '../ui/ReactTable';
 import { MODAL_TYPE } from '../../helpers/constants';
 
 import { formatDetailedDateTime } from '../../helpers/helpers';
@@ -145,9 +144,9 @@ class Table extends Component<TableProps> {
             : LOCAL_STORAGE_KEYS.BLOCKLIST_PAGE_SIZE;
 
         return (
-            <ReactTable
+            <TableComponent
                 data={filters}
-                columns={this.columns}
+                columns={convertColumns(this.columns)}
                 showPagination
                 defaultPageSize={LocalStorageHelper.getItem(localStorageKey) || 10}
                 onPageSizeChange={(size: any) => LocalStorageHelper.setItem(localStorageKey, size)}

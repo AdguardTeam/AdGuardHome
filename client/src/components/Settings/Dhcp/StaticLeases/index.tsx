@@ -1,9 +1,8 @@
 import React from 'react';
 
-// @ts-expect-error FIXME: update react-table
-import ReactTable from 'react-table';
 import { Trans, useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
+import { Table, convertColumns } from '../../../ui/ReactTable';
 import { LEASES_TABLE_DEFAULT_PAGE_SIZE, MODAL_TYPE } from '../../../../helpers/constants';
 
 import { sortIp } from '../../../../helpers/helpers';
@@ -73,9 +72,9 @@ const StaticLeases = ({
 
     return (
         <>
-            <ReactTable
+            <Table
                 data={staticLeases || []}
-                columns={[
+                columns={convertColumns([
                     {
                         Header: 'MAC',
                         accessor: 'mac',
@@ -139,7 +138,7 @@ const StaticLeases = ({
                             );
                         },
                     },
-                ]}
+                ])}
                 pageSize={LEASES_TABLE_DEFAULT_PAGE_SIZE}
                 showPageSizeOptions={false}
                 showPagination={staticLeases.length > LEASES_TABLE_DEFAULT_PAGE_SIZE}
