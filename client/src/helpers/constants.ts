@@ -145,6 +145,7 @@ export const SETTINGS_URLS = {
     encryption: '/encryption',
     dhcp: '/dhcp',
     dns: '/dns',
+    ipset: '/ipset',
     settings: '/settings',
     clients: '/clients',
 };

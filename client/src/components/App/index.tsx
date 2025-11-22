@@ -35,6 +35,7 @@ import Dns from '../../containers/Dns';
 import Encryption from '../../containers/Encryption';
 
 import Dhcp from '../Settings/Dhcp';
+import Ipset from '../Settings/Ipset';
 import Clients from '../../containers/Clients';
 import DnsBlocklist from '../../containers/DnsBlocklist';
 import DnsAllowlist from '../../containers/DnsAllowlist';
@@ -76,6 +77,10 @@ const ROUTES = [
     {
         path: SETTINGS_URLS.dhcp,
         component: Dhcp,
+    },
+    {
+        path: SETTINGS_URLS.ipset,
+        component: Ipset,
     },
     {
         path: SETTINGS_URLS.clients,
