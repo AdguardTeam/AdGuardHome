@@ -157,9 +157,36 @@ type Config struct {
 	// The format is the same as in [IpsetList].
 	IpsetListFileName string `yaml:"ipset_file"`
 
+	// IpsetCreate contains the configuration for automatic ipset creation.
+	IpsetCreate *IpsetCreateConfig `yaml:"ipset_create"`
+
 	// BootstrapPreferIPv6, if true, instructs the bootstrapper to prefer IPv6
 	// addresses to IPv4 ones for DoH, DoQ, and DoT.
 	BootstrapPreferIPv6 bool `yaml:"bootstrap_prefer_ipv6"`
+}
+
+// IpsetCreateConfig contains configuration for automatic ipset creation.
+type IpsetCreateConfig struct {
+	// Enabled indicates whether automatic ipset creation is enabled.
+	Enabled bool `yaml:"enabled"`
+
+	// Sets is the list of ipsets to create if they don't exist.
+	Sets []IpsetSetConfig `yaml:"sets"`
+}
+
+// IpsetSetConfig contains configuration for a single ipset.
+type IpsetSetConfig struct {
+	// Name is the name of the ipset.
+	Name string `yaml:"name"`
+
+	// Type is the type of the ipset (e.g., "hash:ip", "hash:net").
+	Type string `yaml:"type"`
+
+	// Family is the IP family ("inet" for IPv4, "inet6" for IPv6).
+	Family string `yaml:"family"`
+
+	// Timeout is the timeout in seconds for entries (0 means no timeout).
+	Timeout uint32 `yaml:"timeout"`
 }
 
 // EDNSClientSubnet is the settings list for EDNS Client Subnet.

@@ -70,15 +70,28 @@ export const setDnsConfig = (config: any) => async (dispatch: any) => {
 
         await apiClient.setDnsConfig(data);
 
+        // Reload configuration from server to ensure UI reflects saved state
+        const updatedConfig = await apiClient.getDnsConfig();
+
         if (hasDnsSettings) {
             dispatch(addSuccessToast('updated_upstream_dns_toast'));
         } else {
             dispatch(addSuccessToast('config_successfully_saved'));
         }
 
-        dispatch(setDnsConfigSuccess(config));
+        dispatch(setDnsConfigSuccess(updatedConfig));
     } catch (error) {
-        dispatch(addErrorToast({ error }));
+        // Parse error message to provide better user feedback
+        const errorMessage = error instanceof Error ? error.message : String(error);
+
+        // Check if error is related to IPSet
+        if (errorMessage.includes('ipset') || errorMessage.includes('unknown ipset')) {
+            const customError = new Error(i18next.t('ipset_error_save_failed'));
+            dispatch(addErrorToast({ error: customError }));
+        } else {
+            dispatch(addErrorToast({ error }));
+        }
+
         dispatch(setDnsConfigFailure());
     }
 };
