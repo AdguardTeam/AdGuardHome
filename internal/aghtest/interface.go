@@ -113,15 +113,18 @@ func (p *AddressUpdater) UpdateAddress(
 
 // Exchanger is a fake [rdns.Exchanger] implementation for tests.
 type Exchanger struct {
-	OnExchange func(ip netip.Addr) (host string, ttl time.Duration, err error)
+	OnExchange func(ctx context.Context, ip netip.Addr) (host string, ttl time.Duration, err error)
 }
 
 // type check
 var _ rdns.Exchanger = (*Exchanger)(nil)
 
 // Exchange implements [rdns.Exchanger] interface for *Exchanger.
-func (e *Exchanger) Exchange(ip netip.Addr) (host string, ttl time.Duration, err error) {
-	return e.OnExchange(ip)
+func (e *Exchanger) Exchange(
+	ctx context.Context,
+	ip netip.Addr,
+) (host string, ttl time.Duration, err error) {
+	return e.OnExchange(ctx, ip)
 }
 
 // UpstreamMock is a fake [upstream.Upstream] implementation for tests.

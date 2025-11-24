@@ -100,11 +100,8 @@ func assertPersistentClients(tb testing.TB, clients *clientsContainer, want []*c
 	rw := httptest.NewRecorder()
 	clients.handleGetClients(rw, &http.Request{})
 
-	body, err := io.ReadAll(rw.Body)
-	require.NoError(tb, err)
-
 	clientList := &clientListJSON{}
-	err = json.Unmarshal(body, clientList)
+	err := json.NewDecoder(rw.Body).Decode(clientList)
 	require.NoError(tb, err)
 
 	var got []*client.Persistent

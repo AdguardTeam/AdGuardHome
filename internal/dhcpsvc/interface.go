@@ -4,7 +4,11 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
+	"net/netip"
+	"sync"
 	"time"
+
+	"github.com/AdguardTeam/golibs/errors"
 )
 
 // macKey contains hardware address as byte array of 6, 8, or 20 bytes.
@@ -37,8 +41,21 @@ type netInterface struct {
 	// TODO(e.burkov):  Consider removing it and using the value from context.
 	logger *slog.Logger
 
+	// indexMu protects the index, leases, and leasedOffsets.
+	indexMu *sync.RWMutex
+
+	// leasedOffsets contains offsets from conf.ipRange.start that have been
+	// leased.
+	leasedOffsets *bitSet
+
+	// index stores the DHCP leases for quick lookups.
+	index *leaseIndex
+
 	// leases is the set of DHCP leases assigned to this interface.
 	leases map[macKey]*Lease
+
+	// addrSpace is the IPv4 address space allocated for leasing.
+	addrSpace ipRange
 
 	// name is the name of the network interface.
 	name string
@@ -63,6 +80,9 @@ func (iface *netInterface) addLease(l *Lease) (err error) {
 
 	iface.leases[mk] = l
 
+	off, _ := iface.addrSpace.offset(l.IP)
+	iface.leasedOffsets.set(off, true)
+
 	return nil
 }
 
@@ -81,7 +101,7 @@ func (iface *netInterface) updateLease(l *Lease) (prev *Lease, err error) {
 }
 
 // removeLease removes an existing lease from iface.  It returns an error if
-// there is no lease equal to l.
+// there is no lease equal to l.  l must not be nil.
 func (iface *netInterface) removeLease(l *Lease) (err error) {
 	mk := macToKey(l.HWAddr)
 	_, found := iface.leases[mk]
@@ -90,6 +110,36 @@ func (iface *netInterface) removeLease(l *Lease) (err error) {
 	}
 
 	delete(iface.leases, mk)
+
+	off, _ := iface.addrSpace.offset(l.IP)
+	iface.leasedOffsets.set(off, false)
+
+	return nil
+}
+
+// nextIP generates a new free IP.
+func (iface *netInterface) nextIP() (ip netip.Addr) {
+	r := iface.addrSpace
+	ip = r.find(func(next netip.Addr) (ok bool) {
+		offset, ok := r.offset(next)
+		if !ok {
+			panic(fmt.Errorf("next: %s: %w", next, errors.ErrOutOfRange))
+		}
+
+		return !iface.leasedOffsets.isSet(offset)
+	})
+
+	return ip
+}
+
+// findExpiredLease returns the first found lease that has expired.  indexMu
+// must be locked.
+func (iface *netInterface) findExpiredLease(now time.Time) (l *Lease) {
+	for _, lease := range iface.leases {
+		if !lease.IsStatic && lease.Expiry.Before(now) {
+			return lease
+		}
+	}
 
 	return nil
 }

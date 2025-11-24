@@ -1840,7 +1840,8 @@ func TestServer_Exchange(t *testing.T) {
 				ServePlainDNS:     true,
 			})
 
-			host, ttl, eerr := srv.Exchange(tc.req)
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			host, ttl, eerr := srv.Exchange(ctx, tc.req)
 
 			require.ErrorIs(t, eerr, tc.wantErr)
 			assert.Equal(t, tc.want, host)
@@ -1863,7 +1864,8 @@ func TestServer_Exchange(t *testing.T) {
 			ServePlainDNS:     true,
 		})
 
-		host, _, eerr := srv.Exchange(localIP)
+		ctx := testutil.ContextWithTimeout(t, testTimeout)
+		host, _, eerr := srv.Exchange(ctx, localIP)
 
 		require.NoError(t, eerr)
 		assert.Empty(t, host)

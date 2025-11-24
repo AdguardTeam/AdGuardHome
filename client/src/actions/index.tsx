@@ -222,7 +222,7 @@ const checkStatus = async (handleRequestSuccess: any, handleRequestError: any, a
 };
 
 export const getUpdate = () => async (dispatch: any, getState: any) => {
-    const { dnsVersion } = getState().dashboard;
+    const { dnsVersion, dnsStartTime } = getState().dashboard;
 
     dispatch(getUpdateRequest());
     const handleRequestError = () => {
@@ -238,8 +238,9 @@ export const getUpdate = () => async (dispatch: any, getState: any) => {
 
     const handleRequestSuccess = (response: any) => {
         const responseVersion = response.data?.version;
+        const responseStartTime = response.data?.start_time;
 
-        if (dnsVersion !== responseVersion) {
+        if (dnsVersion !== responseVersion || dnsStartTime !== responseStartTime) {
             dispatch(getUpdateSuccess());
 
             window.location.reload();

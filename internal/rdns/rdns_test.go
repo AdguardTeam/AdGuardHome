@@ -1,6 +1,7 @@
 package rdns_test
 
 import (
+	"context"
 	"net/netip"
 	"testing"
 	"time"
@@ -54,7 +55,10 @@ func TestDefault_Process(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			hit := 0
-			onExchange := func(ip netip.Addr) (host string, ttl time.Duration, err error) {
+			onExchange := func(
+				_ context.Context,
+				ip netip.Addr,
+			) (host string, ttl time.Duration, err error) {
 				hit++
 
 				switch ip {
@@ -94,7 +98,10 @@ func TestDefault_Process(t *testing.T) {
 		const cacheTTL = time.Second / 2
 
 		zeroTTLExchanger := &aghtest.Exchanger{
-			OnExchange: func(ip netip.Addr) (host string, ttl time.Duration, err error) {
+			OnExchange: func(
+				_ context.Context,
+				ip netip.Addr,
+			) (host string, ttl time.Duration, err error) {
 				return revAddr1, 0, nil
 			},
 		}
@@ -109,7 +116,10 @@ func TestDefault_Process(t *testing.T) {
 		require.True(t, changed)
 		assert.Equal(t, revAddr1, got)
 
-		zeroTTLExchanger.OnExchange = func(ip netip.Addr) (host string, ttl time.Duration, err error) {
+		zeroTTLExchanger.OnExchange = func(
+			_ context.Context,
+			ip netip.Addr,
+		) (host string, ttl time.Duration, err error) {
 			return revAddr2, time.Hour, nil
 		}
 

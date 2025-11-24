@@ -131,14 +131,14 @@ type dhcpInterfaceV4 struct {
 	// clock used to get current time.
 	clock timeutil.Clock
 
+	// addrChecker checks addresses for availability.
+	addrChecker addressChecker
+
 	// gateway is the IP address of the network gateway.
 	gateway netip.Addr
 
 	// subnet is the network subnet of the interface.
 	subnet netip.Prefix
-
-	// addrSpace is the IPv4 address space allocated for leasing.
-	addrSpace ipRange
 
 	// implicitOpts are the options listed in Appendix A of RFC 2131 and
 	// initialized with default values.  It must not have intersections with
@@ -154,7 +154,7 @@ type dhcpInterfaceV4 struct {
 // newDHCPInterfaceV4 creates a new DHCP interface for IPv4 address family with
 // the given configuration.  If the interface is disabled, it returns nil.  conf
 // must be valid.
-func newDHCPInterfaceV4(
+func (srv *DHCPServer) newDHCPInterfaceV4(
 	ctx context.Context,
 	l *slog.Logger,
 	name string,
@@ -172,15 +172,20 @@ func newDHCPInterfaceV4(
 	addrSpace, _ := newIPRange(conf.RangeStart, conf.RangeEnd)
 
 	iface = &dhcpInterfaceV4{
-		gateway:   conf.GatewayIP,
-		clock:     conf.Clock,
-		subnet:    netip.PrefixFrom(conf.GatewayIP, maskLen),
-		addrSpace: addrSpace,
+		// TODO(e.burkov):  Use an ICMP implementation.
+		addrChecker: noopAddressChecker{},
+		gateway:     conf.GatewayIP,
+		clock:       conf.Clock,
+		subnet:      netip.PrefixFrom(conf.GatewayIP, maskLen),
 		common: &netInterface{
-			logger:   l,
-			leases:   map[macKey]*Lease{},
-			name:     name,
-			leaseTTL: conf.LeaseDuration,
+			logger:        l,
+			indexMu:       srv.leasesMu,
+			index:         srv.leases,
+			leases:        map[macKey]*Lease{},
+			leasedOffsets: newBitSet(),
+			name:          name,
+			addrSpace:     addrSpace,
+			leaseTTL:      conf.LeaseDuration,
 		},
 	}
 	iface.implicitOpts, iface.explicitOpts = conf.options(ctx, l)
@@ -193,8 +198,8 @@ func (iface *dhcpInterfaceV4) commitLease(ctx context.Context, l *Lease, hostnam
 	// TODO(e.burkov):  Implement.
 }
 
-// sendOffer sends a DHCPOFFER message to the client.
-func (iface *dhcpInterfaceV4) sendOffer(
+// respondOffer sends a DHCPOFFER message to the client.
+func (iface *dhcpInterfaceV4) respondOffer(
 	ctx context.Context,
 	rw responseWriter4,
 	req *layers.DHCPv4,
@@ -284,7 +289,10 @@ func (iface *dhcpInterfaceV4) buildResponse(
 	// TODO(e.burkov):  Lease should always has a hostname, investigate when
 	// it isn't the case.
 	if l.Hostname != "" {
-		resp.Options = append(resp.Options, layers.NewDHCPOption(layers.DHCPOptHostname, []byte(l.Hostname)))
+		resp.Options = append(
+			resp.Options,
+			layers.NewDHCPOption(layers.DHCPOptHostname, []byte(l.Hostname)),
+		)
 	}
 
 	return resp
@@ -296,11 +304,13 @@ func (iface *dhcpInterfaceV4) handleDiscover(
 	rw responseWriter4,
 	req *layers.DHCPv4,
 ) {
-	mac := req.ClientHWAddr
 	l := iface.common.logger
+	mac := req.ClientHWAddr
+	mk := macToKey(mac)
 
 	// Check if there's an existing lease for this MAC address.
-	mk := macToKey(mac)
+	iface.common.indexMu.Lock()
+	defer iface.common.indexMu.Unlock()
 
 	lease, hasLease := iface.common.leases[mk]
 	if hasLease {
@@ -309,16 +319,21 @@ func (iface *dhcpInterfaceV4) handleDiscover(
 			l.DebugContext(ctx, "different requested ip", "requested", reqIP, "lease", lease.IP)
 		}
 
-		iface.sendOffer(ctx, rw, req, lease)
+		iface.respondOffer(ctx, rw, req, lease)
 
 		return
 	}
 
 	// TODO(e.burkov):  Allocate a new lease.
-	lease = &Lease{}
+	lease, err := iface.allocateLease(ctx, mac)
+	if err != nil {
+		l.ErrorContext(ctx, "allocating a lease", "error", err)
+
+		return
+	}
 
 	// Send DHCPOFFER with new lease.
-	iface.sendOffer(ctx, rw, req, lease)
+	iface.respondOffer(ctx, rw, req, lease)
 }
 
 // handleSelecting handles messages of type request in SELECTING state.  req
@@ -349,6 +364,9 @@ func (iface *dhcpInterfaceV4) handleSelecting(
 	mac := req.ClientHWAddr
 	mk := macToKey(mac)
 
+	iface.common.indexMu.Lock()
+	defer iface.common.indexMu.Unlock()
+
 	lease, hasLease := iface.common.leases[mk]
 	if !hasLease {
 		l.DebugContext(ctx, "no reserved lease", "clienthwaddr", mac)
@@ -378,7 +396,6 @@ func (iface *dhcpInterfaceV4) handleInitReboot(
 	req *layers.DHCPv4,
 	reqIP netip.Addr,
 ) {
-	mac := req.ClientHWAddr
 	l := iface.common.logger
 
 	if !reqIP.Is4() {
@@ -397,7 +414,12 @@ func (iface *dhcpInterfaceV4) handleInitReboot(
 	}
 
 	// Check if the lease exists and matches.
+	mac := req.ClientHWAddr
 	mk := macToKey(mac)
+
+	iface.common.indexMu.Lock()
+	defer iface.common.indexMu.Unlock()
+
 	lease, hasLease := iface.common.leases[mk]
 	if !hasLease {
 		// If the DHCP server has no record of this client, then it MUST remain
@@ -425,7 +447,6 @@ func (iface *dhcpInterfaceV4) handleRenew(
 	rw responseWriter4,
 	req *layers.DHCPv4,
 ) {
-	mac := req.ClientHWAddr
 	l := iface.common.logger
 
 	// ciaddr MUST be filled in with client's IP address.
@@ -437,7 +458,12 @@ func (iface *dhcpInterfaceV4) handleRenew(
 	}
 
 	// Check if the lease exists and matches.
+	mac := req.ClientHWAddr
 	mk := macToKey(mac)
+
+	iface.common.indexMu.Lock()
+	defer iface.common.indexMu.Unlock()
+
 	lease, hasLease := iface.common.leases[mk]
 	if !hasLease {
 		// If the DHCP server has no record of this client, then it MUST remain
@@ -463,7 +489,7 @@ func (iface *dhcpInterfaceV4) handleRenew(
 type dhcpInterfacesV4 []*dhcpInterfaceV4
 
 // find returns the first network interface within ifaces containing ip.  It
-// returns false if there is no such interface.
+// returns false if there is no such interface.  ip must be valid.
 func (ifaces dhcpInterfacesV4) find(ip netip.Addr) (iface4 *netInterface, ok bool) {
 	i := slices.IndexFunc(ifaces, func(iface *dhcpInterfaceV4) (contains bool) {
 		return iface.subnet.Contains(ip)
@@ -476,7 +502,7 @@ func (ifaces dhcpInterfacesV4) find(ip netip.Addr) (iface4 *netInterface, ok boo
 }
 
 // findInterface returns the first DHCPv4 interface within ifaces containing
-// ip.  It returns false if there is no such interface.
+// ip.  It returns false if there is no such interface.  ip must be valid.
 func (ifaces dhcpInterfacesV4) findInterface(ip netip.Addr) (iface *dhcpInterfaceV4, ok bool) {
 	i := slices.IndexFunc(ifaces, func(iface *dhcpInterfaceV4) (contains bool) {
 		return iface.subnet.Contains(ip)
@@ -486,4 +512,67 @@ func (ifaces dhcpInterfacesV4) findInterface(ip netip.Addr) (iface *dhcpInterfac
 	}
 
 	return ifaces[i], true
+}
+
+// allocateLease allocates a new lease for the MAC address.  If there are no IP
+// addresses left, both l and err are nil.  mac must be a valid according to
+// [netutil.ValidateMAC].
+func (iface *dhcpInterfaceV4) allocateLease(
+	ctx context.Context,
+	mac net.HardwareAddr,
+) (l *Lease, err error) {
+	for {
+		l, err = iface.reserveLease(ctx, mac)
+		if err != nil {
+			return nil, fmt.Errorf("reserving a lease: %w", err)
+		}
+
+		var ok bool
+		ok, err = iface.addrChecker.IsAvailable(l.IP)
+		if err != nil {
+			return nil, fmt.Errorf("checking address availability: %w", err)
+		} else if ok {
+			return l, nil
+		}
+
+		iface.common.logger.DebugContext(ctx, "address not available", "ip", l.IP)
+		// TODO(e.burkov):  Implement blacklisting of unavailable addresses.
+	}
+}
+
+// reserveLease reserves a lease for a client by its MAC-address.  l is nil if a
+// new lease can't be allocated.  mac must be a valid according to
+// [netutil.ValidateMAC].
+func (iface *dhcpInterfaceV4) reserveLease(
+	ctx context.Context,
+	mac net.HardwareAddr,
+) (l *Lease, err error) {
+	nextIP := iface.common.nextIP()
+	if nextIP == (netip.Addr{}) {
+		l = iface.common.findExpiredLease(iface.clock.Now())
+		if l == nil {
+			return nil, nil
+		}
+
+		// TODO(e.burkov):  Move validation from index methods into server's
+		// methods and use index here.
+		delete(iface.common.leases, macToKey(l.HWAddr))
+
+		l.HWAddr = slices.Clone(mac)
+		iface.common.leases[macToKey(mac)] = l
+
+		return l, nil
+	}
+
+	l = &Lease{
+		HWAddr: slices.Clone(mac),
+		IP:     nextIP,
+	}
+
+	err = iface.common.index.add(ctx, iface.common.logger, l, iface.common)
+	if err != nil {
+		return nil, err
+	}
+
+	return l, nil
 }

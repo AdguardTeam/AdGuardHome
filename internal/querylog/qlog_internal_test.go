@@ -15,9 +15,42 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// searchCriTerm is a helper function for tests that constructs a search
+// criterion of type [ctTerm].
+func searchCriTerm(val string, isStrict bool) (c searchCriterion) {
+	return searchCriterion{
+		value:         val,
+		criterionType: ctTerm,
+		strict:        isStrict,
+	}
+}
+
 // TestQueryLog tests adding and loading (with filtering) entries from disk and
 // memory.
 func TestQueryLog(t *testing.T) {
+	hosts := []string{
+		"example.org",
+		"example.org",
+		"test.example.org",
+		"example.com",
+		"",
+	}
+
+	entries := make([]*logEntry, len(hosts))
+	for i, h := range hosts {
+		n := byte(i + 1)
+		entries[i] = &logEntry{
+			QHost:  h,
+			Answer: net.IPv4(192, 0, 2, n),
+			IP:     net.IPv4(203, 0, 113, n),
+		}
+	}
+
+	entry1, entry2, entry3, entry4 := entries[0], entries[1], entries[2], entries[3]
+
+	entryRoot := entries[4]
+	entryRootWant := &logEntry{QHost: ".", Answer: entryRoot.Answer, IP: entryRoot.IP}
+
 	l, err := newQueryLog(Config{
 		Logger:      slogutil.NewDiscardLogger(),
 		Enabled:     true,
@@ -31,7 +64,7 @@ func TestQueryLog(t *testing.T) {
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
 
 	// Add disk entries.
-	addEntry(l, "example.org", net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))
+	addEntry(l, entry1.QHost, entry1.Answer, entry1.IP)
 	// Write to disk (first file).
 	require.NoError(t, l.flushLogBuffer(ctx))
 
@@ -39,82 +72,39 @@ func TestQueryLog(t *testing.T) {
 	require.NoError(t, l.rotate(ctx))
 
 	// Add disk entries.
-	addEntry(l, "example.org", net.IPv4(1, 1, 1, 2), net.IPv4(2, 2, 2, 2))
+	addEntry(l, entry2.QHost, entry2.Answer, entry2.IP)
 	// Write to disk.
 	require.NoError(t, l.flushLogBuffer(ctx))
 
 	// Add memory entries.
-	addEntry(l, "test.example.org", net.IPv4(1, 1, 1, 3), net.IPv4(2, 2, 2, 3))
-	addEntry(l, "example.com", net.IPv4(1, 1, 1, 4), net.IPv4(2, 2, 2, 4))
-	addEntry(l, "", net.IPv4(1, 1, 1, 5), net.IPv4(2, 2, 2, 5))
-
-	type tcAssertion struct {
-		host   string
-		answer net.IP
-		client net.IP
-		num    int
-	}
+	addEntry(l, entry3.QHost, entry3.Answer, entry3.IP)
+	addEntry(l, entry4.QHost, entry4.Answer, entry4.IP)
+	addEntry(l, entryRoot.QHost, entryRoot.Answer, entryRoot.IP)
 
 	testCases := []struct {
 		name string
 		sCr  []searchCriterion
-		want []tcAssertion
+		want []*logEntry
 	}{{
 		name: "all",
 		sCr:  []searchCriterion{},
-		want: []tcAssertion{
-			{num: 0, host: ".", answer: net.IPv4(1, 1, 1, 5), client: net.IPv4(2, 2, 2, 5)},
-			{num: 1, host: "example.com", answer: net.IPv4(1, 1, 1, 4), client: net.IPv4(2, 2, 2, 4)},
-			{num: 2, host: "test.example.org", answer: net.IPv4(1, 1, 1, 3), client: net.IPv4(2, 2, 2, 3)},
-			{num: 3, host: "example.org", answer: net.IPv4(1, 1, 1, 2), client: net.IPv4(2, 2, 2, 2)},
-			{num: 4, host: "example.org", answer: net.IPv4(1, 1, 1, 1), client: net.IPv4(2, 2, 2, 1)},
-		},
+		want: []*logEntry{entryRootWant, entry4, entry3, entry2, entry1},
 	}, {
 		name: "by_domain_strict",
-		sCr: []searchCriterion{{
-			criterionType: ctTerm,
-			strict:        true,
-			value:         "TEST.example.org",
-		}},
-		want: []tcAssertion{{
-			num: 0, host: "test.example.org", answer: net.IPv4(1, 1, 1, 3), client: net.IPv4(2, 2, 2, 3),
-		}},
+		sCr:  []searchCriterion{searchCriTerm("TEST.example.org", true)},
+		want: []*logEntry{entry3},
 	}, {
 		name: "by_domain_non-strict",
-		sCr: []searchCriterion{{
-			criterionType: ctTerm,
-			strict:        false,
-			value:         "example.ORG",
-		}},
-		want: []tcAssertion{
-			{num: 0, host: "test.example.org", answer: net.IPv4(1, 1, 1, 3), client: net.IPv4(2, 2, 2, 3)},
-			{num: 1, host: "example.org", answer: net.IPv4(1, 1, 1, 2), client: net.IPv4(2, 2, 2, 2)},
-			{num: 2, host: "example.org", answer: net.IPv4(1, 1, 1, 1), client: net.IPv4(2, 2, 2, 1)},
-		},
+		sCr:  []searchCriterion{searchCriTerm("example.ORG", false)},
+		want: []*logEntry{entry3, entry2, entry1},
 	}, {
 		name: "by_client_ip_strict",
-		sCr: []searchCriterion{{
-			criterionType: ctTerm,
-			strict:        true,
-			value:         "2.2.2.2",
-		}},
-		want: []tcAssertion{{
-			num: 0, host: "example.org", answer: net.IPv4(1, 1, 1, 2), client: net.IPv4(2, 2, 2, 2),
-		}},
+		sCr:  []searchCriterion{searchCriTerm(entry2.IP.String(), true)},
+		want: []*logEntry{entry2},
 	}, {
 		name: "by_client_ip_non-strict",
-		sCr: []searchCriterion{{
-			criterionType: ctTerm,
-			strict:        false,
-			value:         "2.2.2",
-		}},
-		want: []tcAssertion{
-			{num: 0, host: ".", answer: net.IPv4(1, 1, 1, 5), client: net.IPv4(2, 2, 2, 5)},
-			{num: 1, host: "example.com", answer: net.IPv4(1, 1, 1, 4), client: net.IPv4(2, 2, 2, 4)},
-			{num: 2, host: "test.example.org", answer: net.IPv4(1, 1, 1, 3), client: net.IPv4(2, 2, 2, 3)},
-			{num: 3, host: "example.org", answer: net.IPv4(1, 1, 1, 2), client: net.IPv4(2, 2, 2, 2)},
-			{num: 4, host: "example.org", answer: net.IPv4(1, 1, 1, 1), client: net.IPv4(2, 2, 2, 1)},
-		},
+		sCr:  []searchCriterion{searchCriTerm("203.0.113", false)},
+		want: []*logEntry{entryRootWant, entry4, entry3, entry2, entry1},
 	}}
 
 	for _, tc := range testCases {
@@ -122,11 +112,11 @@ func TestQueryLog(t *testing.T) {
 			params := newSearchParams()
 			params.searchCriteria = tc.sCr
 
-			entries, _ := l.search(ctx, params)
+			entries, _ = l.search(ctx, params)
 			require.Len(t, entries, len(tc.want))
 
-			for _, want := range tc.want {
-				assertLogEntry(t, entries[want.num], want.host, want.answer, want.client)
+			for i, want := range tc.want {
+				assertLogEntry(t, entries[i], want.QHost, want.Answer, want.IP)
 			}
 		})
 	}

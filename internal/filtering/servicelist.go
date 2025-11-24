@@ -2308,6 +2308,16 @@ var blockedServices = []blockedService{{
 	},
 	GroupID: "gaming",
 }, {
+	ID:      "playstore",
+	Name:    "Google Play Store",
+	IconSVG: []byte("<svg xmlns=\"http://www.w3.org/2000/svg\" fill=\"currentColor\" viewBox=\"-3 -2 24 24\"><path d=\"M17.6 9.3 14 7.2 11 10l2.7 2.6 4-2.2.3-.6zm-4.2-2.5-4-2.3L.6 0l10 9.6zM.8 20l8.6-4.8 3.7-2.1-2.6-2.6zM0 .4v19.3l10-9.6z\"/></svg>"),
+	Rules: []string{
+		"||play-fe.googleapis.com^",
+		"||play-lh.googleusercontent.com^",
+		"||prod-lt-playstoregatewayadapter-pa.googleapis.com^",
+	},
+	GroupID: "software",
+}, {
 	ID:      "plenty_of_fish",
 	Name:    "Plenty of Fish",
 	IconSVG: []byte("<svg xmlns=\"http://www.w3.org/2000/svg\" fill=\"currentColor\" viewBox=\"-8 -3 30 30\"><path d=\"M13.96 4.88C11.3.68 7.04 1.25.22 1.25v.09c.52.2.95.59 1.21 1.08.26.47.38 1.04.38 1.72v16.44c.01.61-.11 1.21-.38 1.76-.25.5-.68.9-1.2 1.1v.09h7.13v-.09c-.5-.22-.92-.6-1.17-1.1a3.78 3.78 0 0 1-.4-1.76V16c.54.13 1.08.2 1.62.19a7.66 7.66 0 0 0 6.84-4.3c.47-.97.7-2.1.7-3.41a6.6 6.6 0 0 0-1-3.6ZM9.45 13.6a3.33 3.33 0 0 1-2.96 1.65c-.24 0-.49-.02-.73-.05V7.56l.01-4.63a3 3 0 0 0-.1-.88c1.62 0 2.43.5 3.16 1.19.74.68 1.86 2.68 1.86 5.52a9.4 9.4 0 0 1-1.24 4.85Z\"/></svg>"),

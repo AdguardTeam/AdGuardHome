@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/netip"
 	"slices"
@@ -186,7 +187,7 @@ func (s *Server) getDNSConfig(ctx context.Context) (c *jsonDNSConfig) {
 		upstreamMode = jsonUpstreamModeFastestAddr
 	}
 
-	defPTRUps, err := s.defaultLocalPTRUpstreams()
+	defPTRUps, err := s.defaultLocalPTRUpstreams(ctx)
 	if err != nil {
 		s.logger.ErrorContext(ctx, "getting local ptr upstreams", slogutil.KeyError, err)
 	}
@@ -227,8 +228,8 @@ func (s *Server) getDNSConfig(ctx context.Context) (c *jsonDNSConfig) {
 
 // defaultLocalPTRUpstreams returns the list of default local PTR resolvers
 // filtered of AdGuard Home's own DNS server addresses.  It may appear empty.
-func (s *Server) defaultLocalPTRUpstreams() (ups []string, err error) {
-	matcher, err := s.conf.ourAddrsSet()
+func (s *Server) defaultLocalPTRUpstreams(ctx context.Context) (ups []string, err error) {
+	matcher, err := s.conf.ourAddrsSet(ctx, s.logger)
 	if err != nil {
 		// Don't wrap the error because it's informative enough as is.
 		return nil, err
@@ -278,10 +279,13 @@ func (req *jsonDNSConfig) checkUpstreamMode() (err error) {
 	}
 }
 
-// validate returns an error if any field of req is invalid.
+// validate returns an error if any field of req is invalid.  l, ownAddrs,
+// sysResolvers and privateNets must not be nil.
 //
 // TODO(s.chzhen):  Parse, don't validate.
 func (req *jsonDNSConfig) validate(
+	ctx context.Context,
+	l *slog.Logger,
 	ownAddrs addrPortSet,
 	sysResolvers SystemResolvers,
 	privateNets netutil.SubnetSet,
@@ -289,7 +293,7 @@ func (req *jsonDNSConfig) validate(
 ) (err error) {
 	defer func() { err = errors.Annotate(err, "validating dns config: %w") }()
 
-	err = req.validateUpstreamDNSServers(ownAddrs, sysResolvers, privateNets)
+	err = req.validateUpstreamDNSServers(ctx, l, ownAddrs, sysResolvers, privateNets)
 	if err != nil {
 		// Don't wrap the error since it's informative enough as is.
 		return err
@@ -364,8 +368,10 @@ func (req *jsonDNSConfig) containsPrivateRDNS() (ok bool) {
 }
 
 // checkPrivateRDNS returns an error if the configuration of the private RDNS is
-// not valid.
+// not valid.  l must not be nil.
 func (req *jsonDNSConfig) checkPrivateRDNS(
+	ctx context.Context,
+	l *slog.Logger,
 	ownAddrs addrPortSet,
 	sysResolvers SystemResolvers,
 	privateNets netutil.SubnetSet,
@@ -376,9 +382,16 @@ func (req *jsonDNSConfig) checkPrivateRDNS(
 
 	addrs := cmp.Or(req.LocalPTRUpstreams, &[]string{})
 
-	uc, err := newPrivateConfig(*addrs, ownAddrs, sysResolvers, privateNets, &upstream.Options{
-		Logger: slogutil.NewDiscardLogger(),
-	})
+	uc, err := newPrivateConfig(
+		ctx,
+		l,
+		*addrs,
+		ownAddrs,
+		sysResolvers,
+		privateNets,
+		&upstream.Options{
+			Logger: slogutil.NewDiscardLogger(),
+		})
 	err = errors.WithDeferred(err, uc.Close())
 	if err != nil {
 		return fmt.Errorf("private upstream servers: %w", err)
@@ -388,7 +401,10 @@ func (req *jsonDNSConfig) checkPrivateRDNS(
 }
 
 // validateUpstreamDNSServers returns an error if any field of req is invalid.
+// l, ownAddrs, sysResolvers and privateNets must not be nil.
 func (req *jsonDNSConfig) validateUpstreamDNSServers(
+	ctx context.Context,
+	l *slog.Logger,
 	ownAddrs addrPortSet,
 	sysResolvers SystemResolvers,
 	privateNets netutil.SubnetSet,
@@ -406,7 +422,7 @@ func (req *jsonDNSConfig) validateUpstreamDNSServers(
 		}
 	}
 
-	err = req.checkPrivateRDNS(ownAddrs, sysResolvers, privateNets)
+	err = req.checkPrivateRDNS(ctx, l, ownAddrs, sysResolvers, privateNets)
 	if err != nil {
 		// Don't wrap the error since it's informative enough as is.
 		return err
@@ -533,7 +549,7 @@ func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// TODO(e.burkov):  Consider prebuilding this set on startup.
-	ourAddrs, err := s.conf.ourAddrsSet()
+	ourAddrs, err := s.conf.ourAddrsSet(ctx, s.logger)
 	if err != nil {
 		// TODO(e.burkov):  Put into openapi.
 		aghhttp.ErrorAndLog(
@@ -549,7 +565,7 @@ func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = req.validate(ourAddrs, s.sysResolvers, s.privateNets, s.conf.CacheSize)
+	err = req.validate(ctx, s.logger, ourAddrs, s.sysResolvers, s.privateNets, s.conf.CacheSize)
 	if err != nil {
 		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "%s", err)
 
@@ -684,9 +700,10 @@ type upstreamJSON struct {
 }
 
 // closeBoots closes all the provided bootstrap servers and logs errors if any.
-func closeBoots(boots []*upstream.UpstreamResolver) {
+// l must not be nil.
+func closeBoots(ctx context.Context, l *slog.Logger, boots []*upstream.UpstreamResolver) {
 	for _, c := range boots {
-		logCloserErr(c, "dnsforward: closing bootstrap %s: %s", c.Address())
+		logCloserErr(ctx, c, "closing bootstrap", l.With("address", c.Address()))
 	}
 }
 
@@ -735,13 +752,13 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
-	defer closeBoots(boots)
+	defer closeBoots(ctx, s.logger, boots)
 
-	cv := newUpstreamConfigValidator(req.Upstreams, req.FallbackDNS, req.PrivateUpstreams, opts)
-	cv.check()
+	cv := newUpstreamConfigValidator(ctx, req.Upstreams, req.FallbackDNS, req.PrivateUpstreams, opts)
+	cv.check(ctx, s.logger)
 	cv.close()
 
-	aghhttp.WriteJSONResponseOK(ctx, l, w, r, cv.status())
+	aghhttp.WriteJSONResponseOK(ctx, l, w, r, cv.status(ctx, l))
 }
 
 // handleCacheClear is the handler for the POST /control/cache_clear HTTP API.

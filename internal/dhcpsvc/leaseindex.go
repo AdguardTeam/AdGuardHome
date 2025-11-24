@@ -1,7 +1,9 @@
 package dhcpsvc
 
 import (
+	"context"
 	"fmt"
+	"log/slog"
 	"net/netip"
 	"slices"
 	"strings"
@@ -9,6 +11,9 @@ import (
 
 // leaseIndex is the set of leases indexed by their identifiers for quick
 // lookup.
+//
+// TODO(e.burkov):  Use for all lease-related operations, including
+// interface-specific ones.
 type leaseIndex struct {
 	// byAddr is a lookup shortcut for leases by their IP addresses.
 	byAddr map[netip.Addr]*Lease
@@ -17,13 +22,21 @@ type leaseIndex struct {
 	//
 	// TODO(e.burkov):  Use a slice of leases with the same hostname?
 	byName map[string]*Lease
+
+	// dbFilePath is the path to the database file containing the DHCP leases.
+	//
+	// TODO(e.burkov):  Consider extracting the database logic into a separate
+	// interface to prevent packages that only need lease data from depending on
+	// the entire index and to simplify testing.
+	dbFilePath string
 }
 
 // newLeaseIndex returns a new index for [Lease]s.
-func newLeaseIndex() *leaseIndex {
+func newLeaseIndex(dbFilePath string) (idx *leaseIndex) {
 	return &leaseIndex{
-		byAddr: map[netip.Addr]*Lease{},
-		byName: map[string]*Lease{},
+		byAddr:     map[netip.Addr]*Lease{},
+		byName:     map[string]*Lease{},
+		dbFilePath: dbFilePath,
 	}
 }
 
@@ -43,16 +56,29 @@ func (idx *leaseIndex) leaseByName(name string) (l *Lease, ok bool) {
 	return l, ok
 }
 
-// clear removes all leases from idx.
-func (idx *leaseIndex) clear() {
+// clear removes all leases from idx.  It doesn't clear interfaces' leases.
+func (idx *leaseIndex) clear(ctx context.Context, logger *slog.Logger) (err error) {
 	clear(idx.byAddr)
 	clear(idx.byName)
+
+	err = idx.dbStore(ctx, logger)
+	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
+		return err
+	}
+
+	return nil
 }
 
 // add adds l into idx and into iface.  l must be valid, iface should be
 // responsible for l's IP.  It returns an error if l duplicates at least a
 // single value of another lease.
-func (idx *leaseIndex) add(l *Lease, iface *netInterface) (err error) {
+func (idx *leaseIndex) add(
+	ctx context.Context,
+	logger *slog.Logger,
+	l *Lease,
+	iface *netInterface,
+) (err error) {
 	loweredName := strings.ToLower(l.Hostname)
 
 	if _, ok := idx.byAddr[l.IP]; ok {
@@ -69,13 +95,24 @@ func (idx *leaseIndex) add(l *Lease, iface *netInterface) (err error) {
 	idx.byAddr[l.IP] = l
 	idx.byName[loweredName] = l
 
+	err = idx.dbStore(ctx, logger)
+	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
+		return err
+	}
+
 	return nil
 }
 
 // remove removes l from idx and from iface.  l must be valid, iface should
 // contain the same lease or the lease itself.  It returns an error if the lease
 // not found.
-func (idx *leaseIndex) remove(l *Lease, iface *netInterface) (err error) {
+func (idx *leaseIndex) remove(
+	ctx context.Context,
+	logger *slog.Logger,
+	l *Lease,
+	iface *netInterface,
+) (err error) {
 	loweredName := strings.ToLower(l.Hostname)
 
 	if _, ok := idx.byAddr[l.IP]; !ok {
@@ -92,13 +129,24 @@ func (idx *leaseIndex) remove(l *Lease, iface *netInterface) (err error) {
 	delete(idx.byAddr, l.IP)
 	delete(idx.byName, loweredName)
 
+	err = idx.dbStore(ctx, logger)
+	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
+		return err
+	}
+
 	return nil
 }
 
 // update updates l in idx and in iface.  l must be valid, iface should be
 // responsible for l's IP.  It returns an error if l duplicates at least a
 // single value of another lease, except for the updated lease itself.
-func (idx *leaseIndex) update(l *Lease, iface *netInterface) (err error) {
+func (idx *leaseIndex) update(
+	ctx context.Context,
+	logger *slog.Logger,
+	l *Lease,
+	iface *netInterface,
+) (err error) {
 	loweredName := strings.ToLower(l.Hostname)
 
 	existing, ok := idx.byAddr[l.IP]
@@ -113,6 +161,12 @@ func (idx *leaseIndex) update(l *Lease, iface *netInterface) (err error) {
 
 	prev, err := iface.updateLease(l)
 	if err != nil {
+		return err
+	}
+
+	err = idx.dbStore(ctx, logger)
+	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
 		return err
 	}
 

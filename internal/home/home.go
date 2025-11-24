@@ -570,60 +570,90 @@ func isUpdateEnabled(
 	}
 }
 
-// initWeb initializes the web module.  All arguments must not be nil.
-//
-// TODO(s.chzhen):  Use a configuration structure.
-func initWeb(
-	ctx context.Context,
-	opts options,
-	clientBuildFS fs.FS,
-	upd *updater.Updater,
-	baseLogger *slog.Logger,
-	tlsMgr *tlsManager,
-	auth *auth,
-	mux *http.ServeMux,
-	confModifier agh.ConfigModifier,
-	httpReg aghhttp.Registrar,
-	workDir string,
-	confPath string,
-	isCustomUpdURL bool,
-	isFirstRun bool,
-) (web *webAPI, err error) {
-	logger := baseLogger.With(slogutil.KeyPrefix, "webapi")
+// webConfig is a configuration structure for webAPI.
+type webConfig struct {
+	// opts are used to determine if update is enabled.
+	opts options
+
+	// clientBuildFS is used for initializing client FS.  If opts.localFrontend
+	// is false, then this field must not be nil.
+	clientBuildFS fs.FS
+
+	// updater is used for handling updates.  It must not be nil.
+	updater *updater.Updater
+
+	// baseLogger is used for logging init process and for logging inside web
+	// api.  It must not be nil.
+	baseLogger *slog.Logger
+
+	// tlsManager contains the current configuration and state of TLS
+	// encryption. It must not be nil.
+	tlsManager *tlsManager
+
+	// auth stores web user information and handles authentication.  It must not
+	// be nil.
+	auth *auth
+
+	// mux is the default *http.ServeMux, the same as [globalContext.mux]. It
+	// must not be nil.
+	mux *http.ServeMux
+
+	// configModifier is used to update the global configuration.
+	configModifier agh.ConfigModifier
+
+	// httpReg registers HTTP handlers. It must not be nil.
+	httpReg aghhttp.Registrar
+
+	// workDir is a base working directory.
+	workDir string
+
+	// confPath is a config path.
+	confPath string
+
+	// isCustomUpdURL defines if updater should use custom url.
+	isCustomUpdURL bool
+
+	// isFirstRun defines if current run is the first run.
+	isFirstRun bool
+}
+
+// newWeb initializes the web module.  conf must not be nil.
+func newWeb(ctx context.Context, conf *webConfig) (web *webAPI, err error) {
+	logger := conf.baseLogger.With(slogutil.KeyPrefix, "webapi")
 
 	webPort := suggestedWebPort(ctx, logger)
 
 	var clientFS fs.FS
-	if opts.localFrontend {
+	if conf.opts.localFrontend {
 		logger.WarnContext(ctx, "using local frontend files")
 
 		clientFS = os.DirFS("build/static")
 	} else {
-		clientFS, err = fs.Sub(clientBuildFS, "build/static")
+		clientFS, err = fs.Sub(conf.clientBuildFS, "build/static")
 		if err != nil {
 			return nil, fmt.Errorf("getting embedded client subdir: %w", err)
 		}
 	}
 
-	disableUpdate := !isUpdateEnabled(ctx, baseLogger, &opts, isCustomUpdURL)
+	disableUpdate := !isUpdateEnabled(ctx, conf.baseLogger, &conf.opts, conf.isCustomUpdURL)
 
-	webConf := &webConfig{
+	webConf := &webAPIConfig{
 		CommandConstructor: executil.SystemCommandConstructor{},
-		updater:            upd,
+		updater:            conf.updater,
 		logger:             logger,
-		baseLogger:         baseLogger,
-		confModifier:       confModifier,
-		httpReg:            httpReg,
-		tlsManager:         tlsMgr,
-		auth:               auth,
-		mux:                mux,
+		baseLogger:         conf.baseLogger,
+		confModifier:       conf.configModifier,
+		httpReg:            conf.httpReg,
+		tlsManager:         conf.tlsManager,
+		auth:               conf.auth,
+		mux:                conf.mux,
 
 		clientFS: clientFS,
 
 		BindAddr: config.HTTPConfig.Address,
 
-		workDir:  workDir,
-		confPath: confPath,
+		workDir:  conf.workDir,
+		confPath: conf.confPath,
 
 		ReadTimeout:       readTimeout,
 		ReadHeaderTimeout: readHdrTimeout,
@@ -631,9 +661,9 @@ func initWeb(
 
 		defaultWebPort: webPort,
 
-		firstRun:         isFirstRun,
+		firstRun:         conf.isFirstRun,
 		disableUpdate:    disableUpdate,
-		runningAsService: opts.runningAsService,
+		runningAsService: conf.opts.runningAsService,
 		serveHTTP3:       config.DNS.ServeHTTP3,
 	}
 
@@ -695,24 +725,125 @@ func run(
 	workDir string,
 	confPath string,
 ) {
-	ls := getLogSettings(ctx, slogLogger, opts, workDir, confPath)
-
-	// Configure log level and output.
-	err := configureLogger(ls, workDir)
-	fatalOnError(err)
-
-	// Print the first message after logger is configured.
-	slogLogger.InfoContext(ctx, "starting adguard home", "version", version.Full())
-	slogLogger.DebugContext(ctx, "current working directory", "path", workDir)
-	if opts.runningAsService {
-		slogLogger.InfoContext(ctx, "adguard home is running as a service")
-	}
-
-	aghtls.Init(ctx, slogLogger.With(slogutil.KeyPrefix, "aghtls"))
+	initEnvironment(ctx, opts, slogLogger, workDir, confPath)
 
 	isFirstRun := detectFirstRun(ctx, slogLogger, workDir, confPath)
 
-	err = setupContext(ctx, slogLogger, opts, workDir, confPath, isFirstRun)
+	mw := &webMw{}
+	mux := http.NewServeMux()
+	httpReg := aghhttp.NewDefaultRegistrar(mux, mw.wrap)
+
+	confModifier, tlsMgr := initFiltering(
+		ctx,
+		slogLogger,
+		opts,
+		isFirstRun,
+		sigHdlr,
+		workDir,
+		confPath,
+		httpReg,
+	)
+
+	upd, isCustomURL := initUpdate(ctx, slogLogger, opts, tlsMgr, isFirstRun, workDir, confPath)
+
+	dataDirPath := filepath.Join(workDir, dataDir)
+	err := os.MkdirAll(dataDirPath, aghos.DefaultPermDir)
+	fatalOnError(errors.Annotate(err, "creating DNS data dir at %s: %w", dataDirPath))
+
+	auth, err := initUsers(ctx, slogLogger, workDir, opts.glinetMode)
+	fatalOnError(err)
+
+	confModifier.setAuth(auth)
+
+	conf := &webConfig{
+		clientBuildFS:  clientBuildFS,
+		updater:        upd,
+		opts:           opts,
+		baseLogger:     slogLogger,
+		tlsManager:     tlsMgr,
+		auth:           auth,
+		mux:            mux,
+		configModifier: confModifier,
+		httpReg:        httpReg,
+		workDir:        workDir,
+		confPath:       confPath,
+		isCustomUpdURL: isCustomURL,
+		isFirstRun:     isFirstRun,
+	}
+
+	web, err := newWeb(ctx, conf)
+	fatalOnError(err)
+
+	mw.set(web)
+
+	globalContext.web = web
+
+	tlsMgr.setWebAPI(web)
+	sigHdlr.addTLSManager(tlsMgr)
+
+	statsDir, querylogDir, err := checkStatsAndQuerylogDirs(config, workDir)
+	fatalOnError(err)
+
+	if !isFirstRun {
+		runDNSServer(ctx, slogLogger, tlsMgr, confModifier, statsDir, querylogDir, httpReg)
+	}
+
+	if !opts.noPermCheck {
+		checkPermissions(ctx, slogLogger, workDir, confPath, dataDirPath, statsDir, querylogDir)
+	}
+
+	web.start(ctx)
+
+	// Wait for other goroutines to complete their job.
+	<-done
+}
+
+// runDNSServer initializes and starts DNS and DHCP servers if this is not the
+// first run.  httpReg, slogLogger, tlsMgr and confModifier must not be nil.
+func runDNSServer(
+	ctx context.Context,
+	slogLogger *slog.Logger,
+	tlsMgr *tlsManager,
+	confModifier *defaultConfigModifier,
+	statsDir string,
+	querylogDir string,
+	httpReg *aghhttp.DefaultRegistrar,
+) {
+	err := initDNS(ctx, slogLogger, tlsMgr, confModifier, httpReg, statsDir, querylogDir)
+	fatalOnError(err)
+
+	tlsMgr.start(ctx)
+
+	go func() {
+		startErr := startDNSServer()
+		if startErr != nil {
+			closeDNSServer(ctx)
+			fatalOnError(startErr)
+		}
+	}()
+
+	if globalContext.dhcpServer != nil {
+		err = globalContext.dhcpServer.Start(ctx)
+		if err != nil {
+			slogLogger.ErrorContext(ctx, "starting dhcp server", slogutil.KeyError, err)
+		}
+	}
+}
+
+// initFiltering configures the core filtering and TLS subsystems.  Returns a
+// configuration modifier and the initialized TLS manager.  slogLogger, sigHdlr
+// and httpReg must not be nil.
+func initFiltering(
+	ctx context.Context,
+	slogLogger *slog.Logger,
+	opts options,
+	isFirstRun bool,
+	sigHdlr *signalHandler,
+	workDir string,
+	confPath string,
+	httpReg *aghhttp.DefaultRegistrar,
+) (confModifier *defaultConfigModifier, tlsMgr *tlsManager) {
+	err := setupContext(ctx, slogLogger, opts, workDir, confPath, isFirstRun)
 	fatalOnError(err)
 
 	err = configureOS(config)
@@ -723,23 +854,19 @@ func run(
 	// data first, but also to avoid relying on automatic Go init() function.
 	filtering.InitModule(ctx, slogLogger)
 
-	confModifier := newDefaultConfigModifier(
+	confModifier = newDefaultConfigModifier(
 		config,
 		slogLogger.With(slogutil.KeyPrefix, "config_modifier"),
 		workDir,
 		confPath,
 	)
 
-	mw := &webMw{}
-	mux := http.NewServeMux()
-	httpReg := aghhttp.NewDefaultRegistrar(mux, mw.wrap)
-
 	err = initContextClients(ctx, slogLogger, sigHdlr, confModifier, httpReg, workDir)
 	fatalOnError(err)
 
 	tlsMgrLogger := slogLogger.With(slogutil.KeyPrefix, "tls_manager")
 
-	tlsMgr, err := newTLSManager(ctx, &tlsManagerConfig{
+	tlsMgr, err = newTLSManager(ctx, &tlsManagerConfig{
 		logger:        tlsMgrLogger,
 		confModifier:  confModifier,
 		httpReg:       httpReg,
@@ -767,11 +894,32 @@ func run(
 	err = setupOpts(opts)
 	fatalOnError(err)
 
+	return confModifier, tlsMgr
+}
+
+// initUpdate configures and runs update of this application.  slogLogger and
+// tlsMgr must not be nil.
+func initUpdate(
+	ctx context.Context,
+	slogLogger *slog.Logger,
+	opts options,
+	tlsMgr *tlsManager,
+	isFirstRun bool,
+	workDir string,
+	confPath string,
+) (upd *updater.Updater, isCustomURL bool) {
 	execPath, err := os.Executable()
 	fatalOnError(errors.Annotate(err, "getting executable path: %w"))
 
 	updLogger := slogLogger.With(slogutil.KeyPrefix, "updater")
-	upd, isCustomURL := newUpdater(ctx, updLogger, config, workDir, confPath, execPath)
+	upd, isCustomURL = newUpdater(
+		ctx,
+		updLogger,
+		config,
+		workDir,
+		confPath,
+		execPath,
+	)
 
 	// TODO(e.burkov): This could be made earlier, probably as the option's
 	// effect.
@@ -787,73 +935,32 @@ func run(
 		}
 	}
 
-	dataDirPath := filepath.Join(workDir, dataDir)
-	err = os.MkdirAll(dataDirPath, aghos.DefaultPermDir)
-	fatalOnError(errors.Annotate(err, "creating DNS data dir at %s: %w", dataDirPath))
+	return upd, isCustomURL
+}
 
-	auth, err := initUsers(ctx, slogLogger, workDir, opts.glinetMode)
+// initEnvironment inits working environment.  opts and slogLogger must not be
+// nil.
+func initEnvironment(
+	ctx context.Context,
+	opts options,
+	slogLogger *slog.Logger,
+	workDir,
+	confPath string,
+) {
+	ls := getLogSettings(ctx, slogLogger, opts, workDir, confPath)
+
+	// Configure log level and output.
+	err := configureLogger(ls, workDir)
 	fatalOnError(err)
 
-	confModifier.setAuth(auth)
-
-	web, err := initWeb(
-		ctx,
-		opts,
-		clientBuildFS,
-		upd,
-		slogLogger,
-		tlsMgr,
-		auth,
-		mux,
-		confModifier,
-		httpReg,
-		workDir,
-		confPath,
-		isCustomURL,
-		isFirstRun,
-	)
-	fatalOnError(err)
-
-	mw.set(web)
-
-	globalContext.web = web
-
-	tlsMgr.setWebAPI(web)
-	sigHdlr.addTLSManager(tlsMgr)
-
-	statsDir, querylogDir, err := checkStatsAndQuerylogDirs(config, workDir)
-	fatalOnError(err)
-
-	if !isFirstRun {
-		err = initDNS(ctx, slogLogger, tlsMgr, confModifier, httpReg, statsDir, querylogDir)
-		fatalOnError(err)
-
-		tlsMgr.start(ctx)
-
-		go func() {
-			startErr := startDNSServer()
-			if startErr != nil {
-				closeDNSServer(ctx)
-				fatalOnError(startErr)
-			}
-		}()
-
-		if globalContext.dhcpServer != nil {
-			err = globalContext.dhcpServer.Start(ctx)
-			if err != nil {
-				slogLogger.ErrorContext(ctx, "starting dhcp server", slogutil.KeyError, err)
-			}
-		}
+	// Print the first message after logger is configured.
+	slogLogger.InfoContext(ctx, "starting adguard home", "version", version.Full())
+	slogLogger.DebugContext(ctx, "current working directory", "path", workDir)
+	if opts.runningAsService {
+		slogLogger.InfoContext(ctx, "adguard home is running as a service")
 	}
 
-	if !opts.noPermCheck {
-		checkPermissions(ctx, slogLogger, workDir, confPath, dataDirPath, statsDir, querylogDir)
-	}
-
-	web.start(ctx)
-
-	// Wait for other goroutines to complete their job.
-	<-done
+	aghtls.Init(ctx, slogLogger.With(slogutil.KeyPrefix, "aghtls"))
 }
 
 // newUpdater creates a new AdGuard Home updater.  l and conf must not be nil.

@@ -206,7 +206,7 @@ Optional environment:
 
 - `go run ./scripts/translations help`: print usage.
 
-- `go run ./scripts/translations download [-n <count>]`: download and save all translations. `n` is optional flag where count is a number of concurrent downloads.
+- `go run ./scripts/translations download [-n <count>]`: download and save all translations. `n` is optional flag where count is a number of concurrent downloads. Note, that it downloads locales for all configurations in the `.twosky.json` file.
 
 - `go run ./scripts/translations upload`: upload the base `en` locale.
 
@@ -227,6 +227,8 @@ Optional environment:
 - `TWOSKY_URI`: set an alternative URL for `download` or `upload`.
 
 - `TWOSKY_PROJECT_ID`: set an alternative project ID for `download` or `upload`.
+
+    Deprectated: This environment variable should not be used since the script began supporting multiple configurations.
 
 ## `companiesdb/`: Whotracks.me database converter
 

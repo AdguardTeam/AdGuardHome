@@ -43,5 +43,50 @@
       "zh-hk": "繁體中文（香港）",
       "zh-tw": "正體中文（台灣）"
     }
+  },
+  {
+    "project_id": "hostlists-registry",
+    "base_locale": "en",
+    "localizable_files": [
+      "client/src/__locales-services/services.json"
+    ],
+    "languages": {
+      "ar": "العربية",
+      "be": "Беларуская",
+      "bg": "Български",
+      "cs": "Český",
+      "da": "Dansk",
+      "de": "Deutsch",
+      "en": "English",
+      "es": "Español",
+      "fa": "فارسی",
+      "fi": "Suomi",
+      "fr": "Français",
+      "hr": "Hrvatski",
+      "hu": "Magyar",
+      "id": "Indonesian",
+      "it": "Italiano",
+      "ja": "日本語",
+      "ko": "한국어",
+      "nl": "Nederlands",
+      "no": "Norsk",
+      "pl": "Polski",
+      "pt-br": "Português (BR)",
+      "pt-pt": "Português (PT)",
+      "ro": "Română",
+      "ru": "Русский",
+      "si-lk": "සිංහල",
+      "sk": "Slovenčina",
+      "sl": "Slovenščina",
+      "sr-cs": "Srpski",
+      "sv": "Svenska",
+      "th": "ภาษาไทย",
+      "tr": "Türkçe",
+      "uk": "Українська",
+      "vi": "Tiếng Việt",
+      "zh-cn": "简体中文",
+      "zh-hk": "繁體中文（香港）",
+      "zh-tw": "正體中文（台灣）"
+    }
   }
 ]

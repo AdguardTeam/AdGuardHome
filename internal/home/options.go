@@ -2,8 +2,10 @@ package home
 
 import (
 	"fmt"
+	"iter"
 	"net/netip"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -384,41 +386,89 @@ func printHelp(exec string) {
 
 // parseCmdOpts parses the command-line arguments into options and effects.
 func parseCmdOpts(cmdName string, args []string) (o options, eff effect, err error) {
-	// Don't use range since the loop changes the loop variable.
-	argsLen := len(args)
-	for i := 0; i < len(args); i++ {
-		arg := args[i]
-		isKnown := false
-		for _, opt := range cmdLineOpts {
-			isKnown = argMatches(opt, arg)
-			if !isKnown {
-				continue
-			}
+	next, stop := iter.Pull2(slices.All(args))
+	defer stop()
 
-			if opt.updateWithValue != nil {
-				i++
-				if i >= argsLen {
-					return o, eff, fmt.Errorf("got %s without argument", arg)
-				}
-
-				o, err = opt.updateWithValue(o, args[i])
-			} else {
-				o, eff, err = updateOptsNoValue(o, eff, opt, cmdName)
-			}
-
-			if err != nil {
-				return o, eff, fmt.Errorf("applying option %s: %w", arg, err)
-			}
-
-			break
-		}
-
-		if !isKnown {
-			return o, eff, fmt.Errorf("unknown option %s", arg)
+	for i, arg, ok := next(); ok; i, arg, ok = next() {
+		o, eff, err = parseArg(cmdName, next, o, eff, arg)
+		if err != nil {
+			return o, eff, fmt.Errorf("parsing arg at index %d: %w", i, err)
 		}
 	}
 
-	return o, eff, err
+	return o, eff, nil
+}
+
+// parseArg parses command-line argument into options and effects.  next and
+// eff must not be nil.
+func parseArg(
+	cmdName string,
+	next func() (int, string, bool),
+	o options,
+	eff effect,
+	arg string,
+) (newOpt options, newEff effect, err error) {
+	opt, found := findMatchingOpt(arg)
+	if !found {
+		return o, eff, fmt.Errorf("unknown option %s", arg)
+	}
+
+	if opt.updateWithValue != nil {
+		return applyOptWithValue(opt, next, o, eff, arg)
+	}
+
+	return applyOptNoValue(opt, cmdName, o, eff, arg)
+}
+
+// applyOptNoValue applies option with no value.  eff must not be
+// nil.
+func applyOptNoValue(
+	opt cmdLineOpt,
+	cmdName string,
+	o options,
+	eff effect,
+	arg string,
+) (newOpt options, newEff effect, err error) {
+	newOpts, newEff, err := updateOptsNoValue(o, eff, opt, cmdName)
+	if err != nil {
+		return o, eff, fmt.Errorf("applying option %s: %w", arg, err)
+	}
+
+	return newOpts, newEff, nil
+}
+
+// applyOptWithValue applies argument with value.   next and eff must not
+// be nil.
+func applyOptWithValue(
+	opt cmdLineOpt,
+	next func() (int, string, bool),
+	o options,
+	eff effect,
+	arg string,
+) (newOpt options, newEff effect, err error) {
+	_, val, ok := next()
+	if !ok {
+		return o, eff, fmt.Errorf("got %s without argument", arg)
+	}
+
+	newOpts, err := opt.updateWithValue(o, val)
+	if err != nil {
+		return o, eff, fmt.Errorf("applying option %s: %w", arg, err)
+	}
+
+	return newOpts, eff, nil
+}
+
+// findMatchingOpt returns cmdLineOpt which matches the given arg.  ok indicates
+// whether the appropriate option was found.
+func findMatchingOpt(arg string) (opt cmdLineOpt, ok bool) {
+	for _, opt := range cmdLineOpts {
+		if argMatches(opt, arg) {
+			return opt, true
+		}
+	}
+
+	return cmdLineOpt{}, false
 }
 
 // argMatches returns true if arg matches command-line option opt.

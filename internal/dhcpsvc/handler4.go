@@ -76,7 +76,8 @@ func (srv *DHCPServer) handleDHCPv4(
 	return nil
 }
 
-// handleDiscover handles the DHCPv4 message of discover type.
+// handleDiscover handles the DHCPv4 message of discover type.  rw must not be
+// nil, req must be a DHCPDISCOVER message.
 func (srv *DHCPServer) handleDiscover(ctx context.Context, rw responseWriter4, req *layers.DHCPv4) {
 	// TODO(e.burkov):  Check existing leases, either allocated or offered.
 
@@ -85,7 +86,8 @@ func (srv *DHCPServer) handleDiscover(ctx context.Context, rw responseWriter4, r
 	}
 }
 
-// handleRequest handles the DHCPv4 message of request type.
+// handleRequest handles the DHCPv4 message of request type.  rw must not be
+// nil, req must be a DHCPREQUEST message.
 //
 // See https://datatracker.ietf.org/doc/html/rfc2131#section-4.3.2.
 func (srv *DHCPServer) handleRequest(ctx context.Context, rw responseWriter4, req *layers.DHCPv4) {
@@ -97,8 +99,8 @@ func (srv *DHCPServer) handleRequest(ctx context.Context, rw responseWriter4, re
 		// If the DHCPREQUEST message contains a server identifier option, the
 		// message is in response to a DHCPOFFER message.  Otherwise, the
 		// message is a request to verify or extend an existing lease.
-		iface, hasIface := srv.interfaces4.findInterface(srvID)
-		if !hasIface {
+		iface, ok := srv.interfaces4.findInterface(srvID)
+		if !ok {
 			srv.logger.DebugContext(ctx, "skipping selecting request", "serverid", srvID)
 
 			return
@@ -108,8 +110,8 @@ func (srv *DHCPServer) handleRequest(ctx context.Context, rw responseWriter4, re
 	case hasReqIP && !reqIP.IsUnspecified():
 		// Requested IP address option MUST be filled in with client's notion of
 		// its previously assigned address.
-		iface, hasIface := srv.interfaces4.findInterface(reqIP)
-		if !hasIface {
+		iface, ok := srv.interfaces4.findInterface(reqIP)
+		if !ok {
 			// If the DHCP server detects that the client is on the wrong net
 			// then the server SHOULD send a DHCPNAK message to the client.
 			srv.logger.DebugContext(ctx, "request with wrong init-reboot net", "requestedip", reqIP)
@@ -123,8 +125,8 @@ func (srv *DHCPServer) handleRequest(ctx context.Context, rw responseWriter4, re
 		// Server identifier MUST NOT be filled in, requested IP address option
 		// MUST NOT be filled in.
 		ip, _ := netip.AddrFromSlice(req.ClientIP.To4())
-		iface, hasIface := srv.interfaces4.findInterface(ip)
-		if !hasIface {
+		iface, ok := srv.interfaces4.findInterface(ip)
+		if !ok {
 			srv.logger.DebugContext(ctx, "request with wrong renew net", "clientip", ip)
 
 			return

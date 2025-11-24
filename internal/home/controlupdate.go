@@ -228,55 +228,59 @@ func finishUpdate(
 	cleanup(ctx)
 	cleanupAlways()
 
-	var err error
 	if runtime.GOOS == "windows" {
-		if runningAsService {
-			// NOTE: We can't restart the service via "kardianos/service"
-			// package, because it kills the process first we can't start a new
-			// instance, because Windows doesn't allow it.
-			//
-			// TODO(a.garipov): Recheck the claim above.
-			var cmd executil.Command
-			cmd, err = cmdCons.New(ctx, &executil.CommandConfig{
-				Path: "cmd",
-				Args: []string{"/c", "net stop AdGuardHome & net start AdGuardHome"},
-			})
-			if err != nil {
-				panic(fmt.Errorf("constructing cmd: %w", err))
-			}
+		finalizeWindowsUpdate(ctx, l, cmdCons, execPath, runningAsService)
 
-			err = cmd.Start(ctx)
-			if err != nil {
-				panic(fmt.Errorf("restarting service: %w", err))
-			}
+		os.Exit(osutil.ExitCodeSuccess)
+	}
 
-			os.Exit(osutil.ExitCodeSuccess)
+	var err error
+	l.InfoContext(ctx, "restarting", "exec_path", execPath, "args", os.Args[1:])
+	err = syscall.Exec(execPath, os.Args, os.Environ())
+	if err != nil {
+		panic(fmt.Errorf("restarting: %w", err))
+	}
+}
+
+// finalizeWindowsUpdate completes an update procedure on windows.  l and
+// cmdCons must not be nil.
+func finalizeWindowsUpdate(ctx context.Context,
+	l *slog.Logger,
+	cmdCons executil.CommandConstructor,
+	execPath string,
+	runningAsService bool,
+) {
+	var commandConf *executil.CommandConfig
+
+	if runningAsService {
+		// NOTE: We can't restart the service via "kardianos/service" package,
+		// because it kills the process first we can't start a new instance,
+		// because Windows doesn't allow it.
+		//
+		// TODO(a.garipov): Recheck the claim above.
+		commandConf = &executil.CommandConfig{
+			Path: "cmd",
+			Args: []string{"/c", "net stop AdGuardHome & net start AdGuardHome"},
 		}
-
-		l.InfoContext(ctx, "restarting", "exec_path", execPath, "args", os.Args[1:])
-
-		var cmd executil.Command
-		cmd, err = cmdCons.New(ctx, &executil.CommandConfig{
+	} else {
+		commandConf = &executil.CommandConfig{
 			Path:   execPath,
 			Args:   os.Args[1:],
 			Stdin:  os.Stdin,
 			Stdout: os.Stdout,
 			Stderr: os.Stderr,
-		})
-		if err != nil {
-			panic(fmt.Errorf("constructing cmd: %w", err))
 		}
-
-		err = cmd.Start(ctx)
-		if err != nil {
-			panic(fmt.Errorf("restarting: %w", err))
-		}
-
-		os.Exit(osutil.ExitCodeSuccess)
 	}
 
 	l.InfoContext(ctx, "restarting", "exec_path", execPath, "args", os.Args[1:])
-	err = syscall.Exec(execPath, os.Args, os.Environ())
+
+	var cmd executil.Command
+	cmd, err := cmdCons.New(ctx, commandConf)
+	if err != nil {
+		panic(fmt.Errorf("constructing cmd: %w", err))
+	}
+
+	err = cmd.Start(ctx)
 	if err != nil {
 		panic(fmt.Errorf("restarting: %w", err))
 	}
