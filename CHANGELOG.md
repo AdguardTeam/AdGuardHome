@@ -28,6 +28,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Changed
 
+- Stale records in optimistic DNS cache now have an upper age limit of 12 hours.
 - New blocked services UI.
 
 ### Fixed
