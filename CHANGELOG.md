@@ -24,9 +24,34 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Added
 
+- A new `"cache_optimistic_answer_ttl"` and `cache_optimistic_max_age` fields to the HTTP API (`GET /control/dns_info` and `POST /control/dns_config`).  See `openapi/openapi.yaml` for the full description.
+
 - New field `"start_time"` in the `GET /control/status` response.
 
 ### Changed
+
+In this release, the schema version has changed from 31 to 32.
+
+- Added a new string field `dns.cache_optimistic_answer_ttl` to set the default TTL value for expired optimistic cache responses.
+- Added a new string field `dns.cache_optimistic_max_age` to set the maximum amount of time that entries remain in the optimistic cache.
+
+    ```yaml
+    # BEFORE:
+    'dns':
+      'cache_enabled': true
+      'cache_optimistic': true
+      # …
+
+    # AFTER:
+    'dns':
+      'cache_enabled': true
+      'cache_optimistic': true
+      'cache_optimistic_answer_ttl': '30s'
+      'cache_optimistic_max_age': '12h'
+      # …
+      ```
+
+    To roll back this change, set the `schema_version` back to `31`.
 
 - New blocked services UI.
 
