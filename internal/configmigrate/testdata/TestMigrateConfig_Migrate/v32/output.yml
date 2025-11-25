@@ -20,7 +20,6 @@ dns:
   - 8.8.8.8:53
   cache_enabled: true
   cache_size: 4194304
-  cache_optimistic: true
   cache_optimistic_answer_ttl: 30s
   cache_optimistic_max_age: 12h
   edns_client_subnet:

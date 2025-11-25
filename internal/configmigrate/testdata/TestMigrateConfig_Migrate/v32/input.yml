@@ -20,7 +20,6 @@ dns:
   - 8.8.8.8:53
   cache_enabled: true
   cache_size: 4194304
-  cache_optimistic: true
   edns_client_subnet:
     enabled:    true
     use_custom: false

@@ -4,12 +4,6 @@
 
 ## v0.107.70: API changes
 
-### New fields in 'GET /control/dns_info' and 'POST /control/dns_config'
-
-- New field `"cache_optimistic_answer_ttl"` in `GET /control/dns_info` and `POST/control/dns_config`.  This setting defines default ttl for expired optimistic cache responses.
-
-- New field `"cache_optimistic_max_age"` in `GET /control/dns_info` and `POST/control/dns_config`.  This setting defines the maximum amount of time expired entries remain in optimistic cache.
-
 ### New `"start_time"` field in 'GET /control/status'
 
 - New field `"start_time"` indicates the start time of the web API server (Unix time in milliseconds).

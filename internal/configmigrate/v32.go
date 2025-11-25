@@ -27,20 +27,8 @@ func (m Migrator) migrateTo32(_ context.Context, diskConf yobj) (err error) {
 		return err
 	}
 
-	enabled, ok, err := fieldVal[bool](dnsConf, "cache_enabled")
-	if !ok {
-		return err
-	}
-
-	optimistic, ok, err := fieldVal[bool](dnsConf, "cache_optimistic")
-	if !ok {
-		return err
-	}
-
-	if enabled && optimistic {
-		dnsConf["cache_optimistic_answer_ttl"] = "30s"
-		dnsConf["cache_optimistic_max_age"] = "12h"
-	}
+	dnsConf["cache_optimistic_answer_ttl"] = "30s"
+	dnsConf["cache_optimistic_max_age"] = "12h"
 
 	return nil
 }

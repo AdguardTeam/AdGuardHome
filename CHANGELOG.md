@@ -24,8 +24,6 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Added
 
-- A new `"cache_optimistic_answer_ttl"` and `cache_optimistic_max_age` fields to the HTTP API (`GET /control/dns_info` and `POST /control/dns_config`).  See `openapi/openapi.yaml` for the full description.
-
 - New field `"start_time"` in the `GET /control/status` response.
 
 ### Changed

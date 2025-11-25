@@ -1608,16 +1608,6 @@
             the configuration file must already be greater than 0.
         'cache_optimistic':
           'type': 'boolean'
-        'cache_optimistic_answer_ttl':
-          'type': 'string'
-          'description': |
-            Sets the default TTL for expired cached responses, if
-            `cache_optimistic` is enabled.
-        'cache_optimistic_max_age':
-          'type': 'string'
-          'description': |
-            Sets the maximum time entries remain in the cache when
-            `cache_optimistic` is enabled.
         'upstream_mode':
           'type': 'string'
           'enum':

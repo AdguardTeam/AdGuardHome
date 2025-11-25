@@ -22,7 +22,6 @@ import (
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
-	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/AdguardTeam/golibs/validate"
 )
 
@@ -101,13 +100,6 @@ type jsonDNSConfig struct {
 	// CacheOptimistic defines if expired entries should be served.
 	CacheOptimistic *bool `json:"cache_optimistic"`
 
-	// CacheOptimisticAnswerTTL is the default TTL for expired cached responses.
-	CacheOptimisticAnswerTTL *timeutil.Duration `json:"cache_optimistic_answer_ttl"`
-
-	// CacheOptimisticMaxAge is the maximum time entries remain in the cache
-	// when cache is optimistic.
-	CacheOptimisticMaxAge *timeutil.Duration `json:"cache_optimistic_max_age"`
-
 	// ResolveClients defines if clients IPs should be resolved into hostnames.
 	ResolveClients *bool `json:"resolve_clients"`
 
@@ -179,8 +171,6 @@ func (s *Server) getDNSConfig(ctx context.Context) (c *jsonDNSConfig) {
 	cacheMinTTL := s.conf.CacheMinTTL
 	cacheMaxTTL := s.conf.CacheMaxTTL
 	cacheOptimistic := s.conf.CacheOptimistic
-	cacheOptimisticAnswerTTL := s.conf.CacheOptimisticAnswerTTL
-	cacheOptimisticMaxAge := s.conf.CacheOptimisticMaxAge
 	resolveClients := s.conf.AddrProcConf.UseRDNS
 	usePrivateRDNS := s.conf.UsePrivateRDNS
 	localPTRUpstreams := stringutil.CloneSliceOrEmpty(s.conf.LocalPTRResolvers)
@@ -227,8 +217,6 @@ func (s *Server) getDNSConfig(ctx context.Context) (c *jsonDNSConfig) {
 		CacheMinTTL:              &cacheMinTTL,
 		CacheMaxTTL:              &cacheMaxTTL,
 		CacheOptimistic:          &cacheOptimistic,
-		CacheOptimisticAnswerTTL: &cacheOptimisticAnswerTTL,
-		CacheOptimisticMaxAge:    &cacheOptimisticMaxAge,
 		UpstreamMode:             &upstreamMode,
 		ResolveClients:           &resolveClients,
 		UsePrivateRDNS:           &usePrivateRDNS,
@@ -680,14 +668,16 @@ func (s *Server) setConfigRestartable(dc *jsonDNSConfig) (shouldRestart bool) {
 		setIfNotNil(&s.conf.RatelimitSubnetLenIPv4, dc.RatelimitSubnetLenIPv4),
 		setIfNotNil(&s.conf.RatelimitSubnetLenIPv6, dc.RatelimitSubnetLenIPv6),
 		setIfNotNil(&s.conf.RatelimitWhitelist, dc.RatelimitWhitelist),
-		setIfNotNilAndDiffer(&s.conf.Ratelimit, dc.Ratelimit),
-		setIfNotNilAndDiffer(&s.conf.CacheOptimisticAnswerTTL, dc.CacheOptimisticAnswerTTL),
-		setIfNotNilAndDiffer(&s.conf.CacheOptimisticMaxAge, dc.CacheOptimisticMaxAge),
 	} {
 		shouldRestart = shouldRestart || hasSet
 		if shouldRestart {
 			break
 		}
+	}
+
+	if dc.Ratelimit != nil && s.conf.Ratelimit != *dc.Ratelimit {
+		s.conf.Ratelimit = *dc.Ratelimit
+		shouldRestart = true
 	}
 
 	if dc.UpstreamTimeout != nil {
@@ -699,23 +689,6 @@ func (s *Server) setConfigRestartable(dc *jsonDNSConfig) (shouldRestart bool) {
 	}
 
 	return shouldRestart
-}
-
-// setIfNotNilAndDiffer sets the value pointed at by currentPtr to the value
-// pointed at by newPtr if newPtr is not nil and pointed values are not equal.
-// currentPtr must not be nil.
-func setIfNotNilAndDiffer[T comparable](currentPtr, newPtr *T) (hasSet bool) {
-	if newPtr == nil {
-		return false
-	}
-
-	if *currentPtr == *newPtr {
-		return false
-	}
-
-	*currentPtr = *newPtr
-
-	return true
 }
 
 // upstreamJSON is a request body for handleTestUpstreamDNS endpoint.
