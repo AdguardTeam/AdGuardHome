@@ -28,7 +28,9 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Changed
 
-- Stale records in optimistic DNS cache now have an upper age limit of 12 hours.
+- Stale records in optimistic DNS cache now have an upper age limit controlled by dns.cache_optimistic_max_age.
+
+- Default TTL for stale records in optimistic DNS cache is now controlled by dns.cache_optimistic_answer_ttl.
 
 - New blocked services UI.
 
@@ -36,8 +38,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 In this release, the schema version has changed from 31 to 32.
 
-- Added a new string field `dns.cache_optimistic_answer_ttl` to set the default TTL value for expired optimistic cache responses.
-- Added a new string field `dns.cache_optimistic_max_age` to set the maximum amount of time that entries remain in the optimistic cache.
+- Added a new string fields `dns.cache_optimistic_answer_ttl` and `dns.cache_optimistic_max_age`.
 
     ```yaml
     # BEFORE:
