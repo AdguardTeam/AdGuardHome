@@ -107,6 +107,9 @@ func (idx *leaseIndex) add(
 // remove removes l from idx and from iface.  l must be valid, iface should
 // contain the same lease or the lease itself.  It returns an error if the lease
 // not found.
+//
+// TODO(e.burkov):  Consider using the iface's logger after simplifying
+// relations between index and interfaces.
 func (idx *leaseIndex) remove(
 	ctx context.Context,
 	logger *slog.Logger,
