@@ -109,7 +109,7 @@ const Form = ({ processing, initialValues, onSubmit }: Props) => {
         handleSubmit,
         watch,
         control,
-        formState: { isSubmitting, isDirty },
+        formState: { isSubmitting },
     } = useForm<FormData>({
         mode: 'onBlur',
         defaultValues: initialValues,
@@ -383,7 +383,7 @@ const Form = ({ processing, initialValues, onSubmit }: Props) => {
                 type="submit"
                 data-testid="dns_config_save"
                 className="btn btn-success btn-standard btn-large"
-                disabled={isSubmitting || !isDirty || processing}>
+                disabled={isSubmitting || processing}>
                 {t('save_btn')}
             </button>
         </form>
