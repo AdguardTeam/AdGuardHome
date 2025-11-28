@@ -607,6 +607,34 @@ func (d *DNSFilter) readerFromURL(fltURL string) (r io.ReadCloser, err error) {
 	return resp.Body, nil
 }
 
+// fetchFilterTitle downloads the beginning of a filter file from url and
+// extracts the title.  It returns an empty string if no title is found or if
+// the URL is a file path.
+func (d *DNSFilter) fetchFilterTitle(url string) (title string, err error) {
+	r, err := d.reader(url)
+	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
+		return "", err
+	}
+	defer func() { err = errors.WithDeferred(err, r.Close()) }()
+
+	// Use a limited reader to avoid downloading large files.  4KB should be
+	// enough to find the title in the header comments.
+	const maxTitleBytes = 4096
+	lr := io.LimitReader(r, maxTitleBytes)
+
+	bufPtr := d.bufPool.Get()
+	defer d.bufPool.Put(bufPtr)
+
+	p := rulelist.NewParser()
+	res, err := p.Parse(io.Discard, lr, *bufPtr)
+	if err != nil {
+		return "", fmt.Errorf("parsing filter: %w", err)
+	}
+
+	return res.Title, nil
+}
+
 // loads filter contents from the file in dataDir
 func (d *DNSFilter) load(ctx context.Context, flt *FilterYAML) (err error) {
 	fileName := flt.Path(d.conf.DataDir)
