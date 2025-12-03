@@ -9,32 +9,20 @@ The format is based on [*Keep a Changelog*](https://keepachangelog.com/en/1.0.0/
 <!--
 ## [v0.108.0] – TBA
 
-## [v0.107.70] - 2025-11-25 (APPROX.)
+## [v0.107.71] - 2025-12-17 (APPROX.)
 
-See also the [v0.107.70 GitHub milestone][ms-v0.107.70].
+See also the [v0.107.71 GitHub milestone][ms-v0.107.71].
 
-[ms-v0.107.70]: https://github.com/AdguardTeam/AdGuardHome/milestone/105?closed=1
+[ms-v0.107.71]: https://github.com/AdguardTeam/AdGuardHome/milestone/106?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
-
-### Security
-
-- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.25.5][go-1.25.5].
-
-### Added
-
-- New field `"start_time"` in the `GET /control/status` response.
 
 ### Changed
 
 - Stale records in optimistic DNS cache now have an upper age limit controlled by `dns.cache_optimistic_max_age`.  The default value is 12 hours.
 
 - TTL for stale answers from optimistic DNS cache is now controlled by `dns.cache_optimistic_answer_ttl`.  The default value is 30 seconds.
-
-- Stale records in optimistic DNS cache now have an upper age limit of 12 hours.
-
-- New blocked services UI.
 
 #### Configuration changes
 
@@ -60,15 +48,34 @@ In this release, the schema version has changed from 31 to 32.
 
     To roll back this change, set the `schema_version` back to `31`.
 
+<!--
+NOTE: Add new changes ABOVE THIS COMMENT.
+-->
+
+## [v0.107.70] - 2025-12-03
+
+See also the [v0.107.70 GitHub milestone][ms-v0.107.70].
+
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.25.5][go-1.25.5].
+
+### Added
+
+- New field `"start_time"` in the `GET /control/status` response.
+
+### Changed
+
+- Stale records in optimistic DNS cache now have an upper age limit of 12 hours.
+
+- New blocked services UI.
+
 ### Fixed
 
 - Generated mobileconfig could not be installed on macOS 26.1.
 
 [go-1.25.5]: https://groups.google.com/g/golang-announce/c/8FJoBkPddm4
-
-<!--
-NOTE: Add new changes ABOVE THIS COMMENT.
--->
+[ms-v0.107.70]: https://github.com/AdguardTeam/AdGuardHome/milestone/105?closed=1
 
 ## [v0.107.69] - 2025-10-30
 
@@ -85,6 +92,7 @@ See also the [v0.107.69 GitHub milestone][ms-v0.107.69].
 ### Fixed
 
 - DHCP settings could not be saved ([#8075]).
+
 - DNS Rewrite edit modal did not populate with the correct values ([#8072]).
 
 ### Removed
@@ -107,6 +115,7 @@ See also the [v0.107.68 GitHub milestone][ms-v0.107.68].
 ### Added
 
 - New DNS rewrite settings endpoints `GET /control/rewrite/settings` and `PUT /control/rewrite/settings/update` ([#1765]).  See `openapi/openapi.yaml` for details.
+
 - New fields `"groups"` and `"group_id"` added to the HTTP API (`GET /control/blocked_services/all`).  See `openapi/openapi.yaml` for the full description.
 
 ### Changed
@@ -118,6 +127,7 @@ See also the [v0.107.68 GitHub milestone][ms-v0.107.68].
 In this release, the schema version has changed from 30 to 31.
 
 - Added a new boolean field `filtering.rewrites_enabled` to globally enable/disable DNS rewrites.
+
 - Added a new boolean field `enabled` for each entry in `filtering.rewrites` to toggle individual rewrites.
 
     ```yaml
@@ -152,6 +162,7 @@ See also the [v0.107.67 GitHub milestone][ms-v0.107.67].
 ### Added
 
 - The *HaGeZi's DNS Rebind Protection* filter for protecting against DNS rebinding attacks ([#102]).
+
 - Support for configuring the suggested default HTTP port for the installation wizard via the `ADGUARD_HOME_DEFAULT_WEB_PORT` environment variable (useful for vendors).
 
 ### Changed
@@ -161,6 +172,7 @@ See also the [v0.107.67 GitHub milestone][ms-v0.107.67].
 ### Fixed
 
 - Excessive configuration file overwrites when visiting the Web UI and a non-empty `language` is set.
+
 - Lowered the severity of log messages for failed deletion of old filter files ([#7964]).
 
 [#102]:  https://github.com/AdguardTeam/AdGuardHome/issues/102
@@ -179,12 +191,15 @@ See also the [v0.107.66 GitHub milestone][ms-v0.107.66].
 ### Changed
 
 - Our snap package now uses the `core24` image as its base.
+
 - Outgoing HTTP requests now use the `User-Agent` header `AdGuardHome/v0.107.66` (where `v0.107.66` is the current version) instead of `Go-http-client/1.1` ([#7979]).
 
 ### Fixed
 
 - Authentication errors in the Web UI when AdGuard Home is behind a proxy that sets Basic Auth headers ([#7987]).
+
 - The HTTP API `GET /control/profile` endpoint failing when no users were configured ([#7985]).
+
 - Missing warning on the *Encryption Settings* page when using a certificate without an IP address.
 
 [#7979]: https://github.com/AdguardTeam/AdGuardHome/issues/7979
@@ -3396,11 +3411,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 [ms-v0.104.2]: https://github.com/AdguardTeam/AdGuardHome/milestone/28?closed=1
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.70...HEAD
-[v0.107.70]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.69...v0.107.70
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.71...HEAD
+[v0.107.71]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.70...v0.107.71
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.69...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.70...HEAD
+[v0.107.70]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.69...v0.107.70
 [v0.107.69]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.68...v0.107.69
 [v0.107.68]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.67...v0.107.68
 [v0.107.67]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.66...v0.107.67
