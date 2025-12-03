@@ -664,7 +664,7 @@
     "cache_enabled_desc": "Przechowuj odpowiedź DNS lokalnie.",
     "cache_size": "Rozmiar pamięci podręcznej",
     "cache_size_validation": "Rozmiar pamięci podręcznej cache musi być większy od zera, gdy jest włączona.",
-    "cache_size_desc": "Rozmiar pamięci podręcznej DNS (w bajtach). Aby wyłączyć buforowanie, ustaw na 0.",
+    "cache_size_desc": "Rozmiar pamięci podręcznej DNS (w bajtach).",
     "cache_ttl_min_override": "Nadpisz minimalną wartość TTL",
     "cache_ttl_max_override": "Nadpisz maksymalną wartość TTL",
     "enter_cache_size": "Wpisz rozmiar pamięci podręcznej (w bajtach)",

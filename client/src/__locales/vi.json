@@ -664,7 +664,7 @@
     "cache_enabled_desc": "Lưu trữ phản hồi DNS cục bộ.",
     "cache_size": "Kích thước cache",
     "cache_size_validation": "Kích thước bộ nhớ đệm phải lớn hơn 0 khi được bật.",
-    "cache_size_desc": "Kích thước bộ nhớ đệm DNS (tính bằng byte). Để vô hiệu hoá bộ nhớ đệm, hãy đặt giá trị là 0.",
+    "cache_size_desc": "Kích thước cache DNS (bytes).",
     "cache_ttl_min_override": "Ghi đè TTL tối thiểu",
     "cache_ttl_max_override": "Ghi đè TTL tối đa",
     "enter_cache_size": "Nhập kích thước bộ nhớ cache (byte)",

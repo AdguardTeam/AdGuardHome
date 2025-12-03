@@ -1,7 +1,7 @@
 'name': 'lint'
 
 'env':
-  'GO_VERSION': '1.25.4'
+  'GO_VERSION': '1.25.5'
 
 'on':
   'push':

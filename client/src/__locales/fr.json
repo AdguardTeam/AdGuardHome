@@ -664,7 +664,7 @@
     "cache_enabled_desc": "Stockez les réponses DNS localement.",
     "cache_size": "Taille du cache",
     "cache_size_validation": "La taille du cache doit être supérieure à zéro lorsqu'elle est activée.",
-    "cache_size_desc": "Taille du cache DNS (en octets). Pour désactiver la mise en cache, mettez la valeur sur 0.",
+    "cache_size_desc": "Taille du cache DNS (en octets).",
     "cache_ttl_min_override": "Remplacer le TTL minimum",
     "cache_ttl_max_override": "Remplacer le TTL maximum",
     "enter_cache_size": "Entrer la taille du cache (octets)",
