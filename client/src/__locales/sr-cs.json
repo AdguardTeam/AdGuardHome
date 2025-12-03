@@ -664,7 +664,7 @@
     "cache_enabled_desc": "Čuvajte DNS odgovore lokalno.",
     "cache_size": "Veličina predmemorije",
     "cache_size_validation": "Veličina keša mora biti veća od nule kada je omogućena.",
-    "cache_size_desc": "Veličina DNS keša (u bajtovima). Da biste onemogućili keširanje, postavite na 0.",
+    "cache_size_desc": "Veličina DNS keša (u bajtovima).",
     "cache_ttl_min_override": "Prepiši najmanji TTL",
     "cache_ttl_max_override": "Prepiši najveći TTL",
     "enter_cache_size": "Unesite veličinu predmemorije",

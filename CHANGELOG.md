@@ -27,7 +27,7 @@ See also the [v0.107.70 GitHub milestone][ms-v0.107.70].
 
 ### Security
 
-- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.25.4][go-1.25.4].
+- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.25.5][go-1.25.5].
 
 ### Added
 
@@ -42,7 +42,7 @@ See also the [v0.107.70 GitHub milestone][ms-v0.107.70].
 
 - Generated mobileconfig could not be installed on macOS 26.1.
 
-[go-1.25.4]: https://groups.google.com/g/golang-announce/c/tVVHm9gnwl8
+[go-1.25.5]: https://groups.google.com/g/golang-announce/c/8FJoBkPddm4
 [ms-v0.107.70]: https://github.com/AdguardTeam/AdGuardHome/milestone/105?closed=1
 
 ## [v0.107.69] - 2025-10-30
@@ -3371,12 +3371,11 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 [ms-v0.104.2]: https://github.com/AdguardTeam/AdGuardHome/milestone/28?closed=1
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.71...HEAD
-[v0.107.71]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.70...v0.107.71
--->
-
 [Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.70...HEAD
 [v0.107.70]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.69...v0.107.70
+-->
+
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.69...HEAD
 [v0.107.69]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.68...v0.107.69
 [v0.107.68]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.67...v0.107.68
 [v0.107.67]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.66...v0.107.67

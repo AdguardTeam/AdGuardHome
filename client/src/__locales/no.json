@@ -664,7 +664,7 @@
     "cache_enabled_desc": "Lagre DNS-svar lokalt.",
     "cache_size": "Mellomlagerstørrelse",
     "cache_size_validation": "Bufferstørrelsen må være større enn null når den er aktivert.",
-    "cache_size_desc": "DNS-cache-størrelse (i bytes). For å deaktivere caching, sett til 0.",
+    "cache_size_desc": "Størrelse på DNS-cache (i bytes).",
     "cache_ttl_min_override": "Overstyr minimumslevetiden",
     "cache_ttl_max_override": "Overstyr maksimallevetiden",
     "enter_cache_size": "Skriv inn mellomlagerstørrelse (i bytes)",

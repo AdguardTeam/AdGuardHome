@@ -664,7 +664,7 @@
     "cache_enabled_desc": "Stocați răspunsurile DNS local.",
     "cache_size": "Mărime cache",
     "cache_size_validation": "Dimensiunea memoriei cache trebuie să fie mai mare decât zero atunci când este activată.",
-    "cache_size_desc": "Mărimea cache-ului DNS (în bytes). Pentru a dezactiva caching-ul, setați la 0.",
+    "cache_size_desc": "Mărime cache DNS (în octeți).",
     "cache_ttl_min_override": "Suprascrieți minimum TTL",
     "cache_ttl_max_override": "Suprascrieți maximum TTL",
     "enter_cache_size": "Introduceți mărimea cache-ului (bytes)",
