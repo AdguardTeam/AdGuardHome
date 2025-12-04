@@ -228,7 +228,8 @@ func TestServer_clientIDFromDNSContext(t *testing.T) {
 				HTTPRequest: httpReq,
 			}
 
-			clientID, err := srv.clientIDFromDNSContext(pctx)
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			clientID, err := srv.clientIDFromDNSContext(ctx, pctx)
 			assert.Equal(t, tc.wantClientID, clientID)
 
 			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)

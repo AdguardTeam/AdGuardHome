@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agh"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/updater"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
@@ -39,10 +40,13 @@ const (
 	writeTimeout = 5 * time.Minute
 )
 
-type webConfig struct {
+// webAPIConfig is a configuration structure for webAPI.
+type webAPIConfig struct {
 	// CommandConstructor is used to run external commands.  It must not be nil.
 	CommandConstructor executil.CommandConstructor
 
+	// updater is used for updating AdGuard home.  If disableUpdate is set to
+	// false, it must not be nil.
 	updater *updater.Updater
 
 	// logger is a slog logger used in webAPI. It must not be nil.
@@ -55,6 +59,9 @@ type webConfig struct {
 	// confModifier is used to update the global configuration.
 	confModifier agh.ConfigModifier
 
+	// httpReg registers HTTP handlers.  It must not be nil.
+	httpReg aghhttp.Registrar
+
 	// tlsManager contains the current configuration and state of TLS
 	// encryption.  It must not be nil.
 	tlsManager *tlsManager
@@ -63,10 +70,21 @@ type webConfig struct {
 	// be nil.
 	auth *auth
 
+	// mux is the default *http.ServeMux, the same as [globalContext.mux].  It
+	// must not be nil.
+	mux *http.ServeMux
+
+	// clientFS is used to initialize file server.  It must not be nil.
 	clientFS fs.FS
 
 	// BindAddr is the binding address with port for plain HTTP web interface.
 	BindAddr netip.AddrPort
+
+	// workDir is the base working directory.
+	workDir string
+
+	// confPath is the configuration file path.
+	confPath string
 
 	// ReadTimeout is an option to pass to http.Server for setting an
 	// appropriate field.
@@ -80,6 +98,10 @@ type webConfig struct {
 	// appropriate field.
 	WriteTimeout time.Duration
 
+	// defaultWebPort is the suggested default HTTP port for the install wizard.
+	defaultWebPort uint16
+
+	// firstRun, if true, tells AdGuard Home to register install handlers.
 	firstRun bool
 
 	// disableUpdate, if true, tells AdGuard Home to not check for updates.
@@ -89,6 +111,7 @@ type webConfig struct {
 	// service runner.
 	runningAsService bool
 
+	// serveHTTP3, if true, tells AdGuard Home to start HTTP3 server.
 	serveHTTP3 bool
 }
 
@@ -110,13 +133,16 @@ type httpsServer struct {
 
 // webAPI is the web UI and API server.
 type webAPI struct {
-	conf *webConfig
+	conf *webAPIConfig
 
 	// confModifier is used to update the global configuration.
 	confModifier agh.ConfigModifier
 
 	// cmdCons is used to run external commands.
 	cmdCons executil.CommandConstructor
+
+	// httpReg registers HTTP handlers.
+	httpReg aghhttp.Registrar
 
 	// TODO(a.garipov): Refactor all these servers.
 	httpServer *http.Server
@@ -138,32 +164,35 @@ type webAPI struct {
 	// httpsServer is the server that handles HTTPS traffic.  If it is not nil,
 	// [Web.http3Server] must also not be nil.
 	httpsServer httpsServer
+
+	// startTime is the start time of the web API server in Unix milliseconds.
+	startTime time.Time
 }
 
 // newWebAPI creates a new instance of the web UI and API server.  conf must be
 // valid.
 //
 // TODO(a.garipov):  Return a proper error.
-func newWebAPI(ctx context.Context, conf *webConfig) (w *webAPI) {
+func newWebAPI(ctx context.Context, conf *webAPIConfig) (w *webAPI) {
 	conf.logger.InfoContext(ctx, "initializing")
 
 	w = &webAPI{
 		conf:         conf,
 		confModifier: conf.confModifier,
+		httpReg:      conf.httpReg,
 		cmdCons:      conf.CommandConstructor,
 		logger:       conf.logger,
 		baseLogger:   conf.baseLogger,
 		tlsManager:   conf.tlsManager,
 		auth:         conf.auth,
+		startTime:    time.Now(),
 	}
 
 	clientFS := http.FileServer(http.FS(conf.clientFS))
 
+	mux := conf.mux
 	// if not configured, redirect / to /install.html, otherwise redirect /install.html to /
-	globalContext.mux.Handle(
-		"/",
-		withMiddlewares(clientFS, gziphandler.GzipHandler, postInstallHandler),
-	)
+	mux.Handle("/", withMiddlewares(clientFS, gziphandler.GzipHandler, w.postInstallHandler))
 
 	// add handlers for /install paths, we only need them when we're not configured yet
 	if conf.firstRun {
@@ -172,10 +201,10 @@ func newWebAPI(ctx context.Context, conf *webConfig) (w *webAPI) {
 			"This is the first launch of AdGuard Home, redirecting everything to /install.html",
 		)
 
-		globalContext.mux.Handle("/install.html", preInstallHandler(clientFS))
+		mux.Handle("/install.html", w.preInstallHandler(clientFS))
 		w.registerInstallHandlers()
 	} else {
-		registerControlHandlers(w)
+		w.registerControlHandlers()
 	}
 
 	w.httpsServer.cond = sync.NewCond(&w.httpsServer.condLock)
@@ -238,7 +267,7 @@ func (web *webAPI) start(ctx context.Context) {
 
 		// Use an h2c handler to support unencrypted HTTP/2, e.g. for proxies.
 		hdlr := h2c.NewHandler(
-			withMiddlewares(globalContext.mux, limitRequestBody),
+			withMiddlewares(web.conf.mux, limitRequestBody),
 			&http2.Server{},
 		)
 
@@ -299,72 +328,93 @@ func (web *webAPI) close(ctx context.Context) {
 	web.logger.InfoContext(ctx, "stopped http server")
 }
 
+// tlsServerLoop implements retry logic for http server start.
 func (web *webAPI) tlsServerLoop(ctx context.Context) {
 	defer slogutil.RecoverAndExit(ctx, web.logger, osutil.ExitCodeFailure)
 
 	for {
-		web.httpsServer.cond.L.Lock()
-		if web.httpsServer.inShutdown {
-			web.httpsServer.cond.L.Unlock()
-			break
-		}
-
-		// this mechanism doesn't let us through until all conditions are met
-		for !web.httpsServer.enabled { // sleep until necessary data is supplied
-			web.httpsServer.cond.Wait()
-			if web.httpsServer.inShutdown {
-				web.httpsServer.cond.L.Unlock()
-				return
-			}
-		}
-
-		web.httpsServer.cond.L.Unlock()
-
-		var portHTTPS uint16
-		func() {
-			config.RLock()
-			defer config.RUnlock()
-
-			portHTTPS = config.TLS.PortHTTPS
-		}()
-
-		addr := netip.AddrPortFrom(web.conf.BindAddr.Addr(), portHTTPS).String()
-		logger := web.baseLogger.With(loggerKeyServer, "https")
-
-		// TODO(a.garipov):  Remove other logs like this in other code.
-		logMw := httputil.NewLogMiddleware(logger, slog.LevelDebug)
-		hdlr := logMw.Wrap(withMiddlewares(globalContext.mux, limitRequestBody))
-
-		web.httpsServer.server = &http.Server{
-			Addr:    addr,
-			Handler: web.auth.middleware().Wrap(hdlr),
-			TLSConfig: &tls.Config{
-				Certificates: []tls.Certificate{web.httpsServer.cert},
-				RootCAs:      web.tlsManager.rootCerts,
-				CipherSuites: web.tlsManager.customCipherIDs,
-				MinVersion:   tls.VersionTLS12,
-			},
-			ReadTimeout:       web.conf.ReadTimeout,
-			ReadHeaderTimeout: web.conf.ReadHeaderTimeout,
-			WriteTimeout:      web.conf.WriteTimeout,
-			ErrorLog:          slog.NewLogLogger(logger.Handler(), slog.LevelError),
-		}
-
-		printHTTPAddresses(urlutil.SchemeHTTPS, web.tlsManager)
-
-		if web.conf.serveHTTP3 {
-			go web.mustStartHTTP3(ctx, addr)
-		}
-
-		logger.InfoContext(ctx, "starting https server")
-		err := web.httpsServer.server.ListenAndServeTLS("", "")
-		if !errors.Is(err, http.ErrServerClosed) {
-			cleanupAlways()
-			panic(fmt.Errorf("https: %w", err))
+		shouldContinue := web.serveTLS(ctx)
+		if !shouldContinue {
+			return
 		}
 	}
 }
 
+// serveTLS initializes and starts the HTTPS server.  Returns true when next
+// retry is necessary.
+func (web *webAPI) serveTLS(ctx context.Context) (next bool) {
+	if !web.waitForTLSReady() {
+		return false
+	}
+
+	var portHTTPS uint16
+	func() {
+		config.RLock()
+		defer config.RUnlock()
+
+		portHTTPS = config.TLS.PortHTTPS
+	}()
+
+	addr := netip.AddrPortFrom(web.conf.BindAddr.Addr(), portHTTPS).String()
+	logger := web.baseLogger.With(loggerKeyServer, "https")
+
+	// TODO(a.garipov):  Remove other logs like this in other code.
+	logMw := httputil.NewLogMiddleware(logger, slog.LevelDebug)
+	hdlr := logMw.Wrap(withMiddlewares(web.conf.mux, limitRequestBody))
+
+	web.httpsServer.server = &http.Server{
+		Addr:    addr,
+		Handler: web.auth.middleware().Wrap(hdlr),
+		TLSConfig: &tls.Config{
+			Certificates: []tls.Certificate{web.httpsServer.cert},
+			RootCAs:      web.tlsManager.rootCerts,
+			CipherSuites: web.tlsManager.customCipherIDs,
+			MinVersion:   tls.VersionTLS12,
+		},
+		ReadTimeout:       web.conf.ReadTimeout,
+		ReadHeaderTimeout: web.conf.ReadHeaderTimeout,
+		WriteTimeout:      web.conf.WriteTimeout,
+		ErrorLog:          slog.NewLogLogger(logger.Handler(), slog.LevelError),
+	}
+
+	printHTTPAddresses(urlutil.SchemeHTTPS, web.tlsManager)
+
+	if web.conf.serveHTTP3 {
+		go web.mustStartHTTP3(ctx, addr)
+	}
+
+	logger.InfoContext(ctx, "starting https server")
+	err := web.httpsServer.server.ListenAndServeTLS("", "")
+	if !errors.Is(err, http.ErrServerClosed) {
+		cleanupAlways()
+		panic(fmt.Errorf("https: %w", err))
+	}
+
+	return true
+}
+
+// waitForTLSReady blocks until the HTTPS server is enabled or a shutdown signal
+// is received.  Returns true when server is ready.
+func (web *webAPI) waitForTLSReady() (ok bool) {
+	web.httpsServer.cond.L.Lock()
+	defer web.httpsServer.cond.L.Unlock()
+
+	if web.httpsServer.inShutdown {
+		return false
+	}
+
+	// this mechanism doesn't let us through until all conditions are met
+	for !web.httpsServer.enabled { // sleep until necessary data is supplied
+		web.httpsServer.cond.Wait()
+		if web.httpsServer.inShutdown {
+			return false
+		}
+	}
+
+	return true
+}
+
+// mustStartHTTP3 initializes and starts HTTP3 server.
 func (web *webAPI) mustStartHTTP3(ctx context.Context, address string) {
 	defer slogutil.RecoverAndExit(ctx, web.logger, osutil.ExitCodeFailure)
 
@@ -378,7 +428,7 @@ func (web *webAPI) mustStartHTTP3(ctx context.Context, address string) {
 			CipherSuites: web.tlsManager.customCipherIDs,
 			MinVersion:   tls.VersionTLS12,
 		},
-		Handler: web.auth.middleware().Wrap(withMiddlewares(globalContext.mux, limitRequestBody)),
+		Handler: web.auth.middleware().Wrap(withMiddlewares(web.conf.mux, limitRequestBody)),
 	}
 
 	web.logger.DebugContext(ctx, "starting http/3 server")

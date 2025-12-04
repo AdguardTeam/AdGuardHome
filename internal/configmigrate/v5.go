@@ -1,6 +1,7 @@
 package configmigrate
 
 import (
+	"context"
 	"fmt"
 
 	"golang.org/x/crypto/bcrypt"
@@ -20,7 +21,7 @@ import (
 //	- 'name': …
 //	  'password': <hashed>
 //	# …
-func migrateTo5(diskConf yobj) (err error) {
+func (m *Migrator) migrateTo5(_ context.Context, diskConf yobj) (err error) {
 	diskConf["schema_version"] = 5
 
 	user := yobj{}

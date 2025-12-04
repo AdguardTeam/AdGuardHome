@@ -220,7 +220,8 @@ func TestIfaceDNSIPAddrs(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			got, err := aghnet.IfaceDNSIPAddrs(tc.iface, tc.ipv, 2, 0)
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			got, err := aghnet.IfaceDNSIPAddrs(ctx, testLogger, tc.iface, tc.ipv, 2, 0)
 			require.ErrorIs(t, err, tc.wantErr)
 
 			assert.Equal(t, tc.want, got)

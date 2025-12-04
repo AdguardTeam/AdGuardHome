@@ -70,7 +70,7 @@ const Form = ({ initialValues, onSubmit, processingSet }: FormProps) => {
         control,
         handleSubmit,
         watch,
-        formState: { isSubmitting, isDirty },
+        formState: { isSubmitting },
     } = useForm<FormData>({
         mode: 'onBlur',
         defaultValues: {
@@ -133,7 +133,7 @@ const Form = ({ initialValues, onSubmit, processingSet }: FormProps) => {
                         type="submit"
                         data-testid="access_save"
                         className="btn btn-success btn-standard"
-                        disabled={isSubmitting || !isDirty || processingSet}>
+                        disabled={isSubmitting || processingSet}>
                         {t('save_config')}
                     </button>
                 </div>

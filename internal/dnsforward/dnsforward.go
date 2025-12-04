@@ -28,7 +28,6 @@ import (
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/netutil/sysresolv"
@@ -375,7 +374,10 @@ const (
 var _ rdns.Exchanger = (*Server)(nil)
 
 // Exchange implements the [rdns.Exchanger] interface for *Server.
-func (s *Server) Exchange(ip netip.Addr) (host string, ttl time.Duration, err error) {
+func (s *Server) Exchange(
+	ctx context.Context,
+	ip netip.Addr,
+) (host string, ttl time.Duration, err error) {
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()
 
@@ -420,11 +422,16 @@ func (s *Server) Exchange(ip netip.Addr) (host string, ttl time.Duration, err er
 		return "", 0, fmt.Errorf(errMsg, err)
 	}
 
-	return hostFromPTR(dctx.Res)
+	return hostFromPTR(ctx, s.logger, dctx.Res)
 }
 
-// hostFromPTR returns domain name from the PTR response or error.
-func hostFromPTR(resp *dns.Msg) (host string, ttl time.Duration, err error) {
+// hostFromPTR returns domain name from the PTR response or error.  l must not
+// be nil.
+func hostFromPTR(
+	ctx context.Context,
+	l *slog.Logger,
+	resp *dns.Msg,
+) (host string, ttl time.Duration, err error) {
 	// Distinguish between NODATA response and a failed request.
 	if resp.Rcode != dns.RcodeSuccess && resp.Rcode != dns.RcodeNameError {
 		return "", 0, fmt.Errorf(
@@ -436,7 +443,8 @@ func hostFromPTR(resp *dns.Msg) (host string, ttl time.Duration, err error) {
 
 	var ttlSec uint32
 
-	log.Debug("dnsforward: resolving ptr, received %d answers", len(resp.Answer))
+	l.DebugContext(ctx, "resolving ptr", "num_answers", len(resp.Answer))
+
 	for _, ans := range resp.Answer {
 		ptr, ok := ans.(*dns.PTR)
 		if !ok {
@@ -542,23 +550,23 @@ func (s *Server) Prepare(ctx context.Context, conf *ServerConfig) (err error) {
 }
 
 // prepareUpstreamSettings sets upstream DNS server settings.
-func (s *Server) prepareUpstreamSettings(boot upstream.Resolver) (err error) {
+func (s *Server) prepareUpstreamSettings(ctx context.Context, boot upstream.Resolver) (err error) {
 	// Load upstreams either from the file, or from the settings
 	var upstreams []string
-	upstreams, err = s.conf.loadUpstreams()
+	upstreams, err = s.conf.loadUpstreams(ctx, s.logger)
 	if err != nil {
 		return fmt.Errorf("loading upstreams: %w", err)
 	}
 
-	uc, err := newUpstreamConfig(upstreams, defaultDNS, &upstream.Options{
+	uc, err := newUpstreamConfig(ctx, s.logger, upstreams, defaultDNS, &upstream.Options{
 		Logger:       aghslog.NewForUpstream(s.baseLogger, aghslog.UpstreamTypeMain),
 		Bootstrap:    boot,
 		Timeout:      s.conf.UpstreamTimeout,
 		HTTPVersions: aghnet.UpstreamHTTPVersions(s.conf.UseHTTP3Upstreams),
 		PreferIPv6:   s.conf.BootstrapPreferIPv6,
 		// Use a customized set of RootCAs, because Go's default mechanism of
-		// loading TLS roots does not always work properly on some routers so we're
-		// loading roots manually and pass it here.
+		// loading TLS roots does not always work properly on some routers so
+		// we're loading roots manually and pass it here.
 		//
 		// See [aghtls.SystemRootCAs].
 		//
@@ -605,13 +613,13 @@ func (e *PrivateRDNSError) Unwrap() (err error) {
 // prepareLocalResolvers initializes the private RDNS upstream configuration
 // according to the server's settings.  It assumes s.serverLock is locked or the
 // Server not running.
-func (s *Server) prepareLocalResolvers() (uc *proxy.UpstreamConfig, err error) {
+func (s *Server) prepareLocalResolvers(ctx context.Context) (uc *proxy.UpstreamConfig, err error) {
 	if !s.conf.UsePrivateRDNS {
 		return nil, nil
 	}
 
 	var ownAddrs addrPortSet
-	ownAddrs, err = s.conf.ourAddrsSet()
+	ownAddrs, err = s.conf.ourAddrsSet(ctx, s.logger)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
 		return nil, err
@@ -626,7 +634,7 @@ func (s *Server) prepareLocalResolvers() (uc *proxy.UpstreamConfig, err error) {
 	}
 
 	addrs := s.conf.LocalPTRResolvers
-	uc, err = newPrivateConfig(addrs, ownAddrs, s.sysResolvers, s.privateNets, opts)
+	uc, err = newPrivateConfig(ctx, s.logger, addrs, ownAddrs, s.sysResolvers, s.privateNets, opts)
 	if err != nil {
 		return nil, fmt.Errorf("preparing resolvers: %w", err)
 	}
@@ -662,13 +670,13 @@ func (s *Server) prepareInternalDNS(ctx context.Context) (err error) {
 		return err
 	}
 
-	err = s.prepareUpstreamSettings(s.bootstrap)
+	err = s.prepareUpstreamSettings(ctx, s.bootstrap)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
 		return err
 	}
 
-	s.conf.PrivateRDNSUpstreamConfig, err = s.prepareLocalResolvers()
+	s.conf.PrivateRDNSUpstreamConfig, err = s.prepareLocalResolvers(ctx)
 	if err != nil {
 		return err
 	}
@@ -807,21 +815,21 @@ func (s *Server) stopLocked(ctx context.Context) {
 	}
 
 	for _, b := range s.bootResolvers {
-		logCloserErr(b, "dnsforward: closing bootstrap %s: %s", b.Address())
+		logCloserErr(ctx, b, "closing bootstrap", s.logger.With("address", b.Address()))
 	}
 
 	s.isRunning = false
 }
 
-// logCloserErr logs the error returned by c, if any.
-func logCloserErr(c io.Closer, format string, args ...any) {
+// logCloserErr logs the error returned by c, if any.  l and c must not be nil.
+func logCloserErr(ctx context.Context, c io.Closer, msg string, l *slog.Logger) {
 	if c == nil {
 		return
 	}
 
 	err := c.Close()
 	if err != nil {
-		log.Error(format, append(args, err)...)
+		l.ErrorContext(ctx, msg, slogutil.KeyError, err)
 	}
 }
 
@@ -860,8 +868,8 @@ func (s *Server) Reconfigure(ctx context.Context, conf *ServerConfig) error {
 
 	s.stopLocked(ctx)
 
-	// It seems that net.Listener.Close() doesn't close file descriptors right away.
-	// We wait for some time and hope that this fd will be closed.
+	// It seems that net.Listener.Close() doesn't close file descriptors right
+	// away.  We wait for some time and hope that this fd will be closed.
 	time.Sleep(100 * time.Millisecond)
 
 	if s.addrProc != nil {

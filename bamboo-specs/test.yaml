@@ -5,8 +5,8 @@
     'key': 'AHBRTSPECS'
     'name': 'AdGuard Home - Build and run tests'
 'variables':
-    'dockerFrontend': 'adguard/home-js-builder:3.1'
-    'dockerGo': 'adguard/go-builder:1.25.1--1'
+    'dockerFrontend': 'adguard/home-js-builder:4.0'
+    'dockerGo': 'adguard/go-builder:1.25.5--1'
     'channel': 'development'
 
 'stages':
@@ -88,10 +88,18 @@
 
                 set -e -f -u -x
 
+                # Do not sort the commands below, as they are arranged
+                # intentionally to keep faster commands first.
                 make \
                     GOMAXPROCS=1 \
                     VERBOSE=1 \
-                    go-deps go-tools go-lint
+                    go-deps \
+                    go-tools \
+                    md-lint \
+                    sh-lint \
+                    txt-lint \
+                    go-lint \
+                    ;
 
                 make \
                     TEST_REPORTS_DIR="./test-reports/" \
@@ -250,6 +258,6 @@
         # Set the default release channel on the release branch to beta, as we
         # may need to build a few of these.
         'variables':
-            'dockerFrontend': 'adguard/home-js-builder:3.1'
-            'dockerGo': 'adguard/go-builder:1.25.1--1'
+            'dockerFrontend': 'adguard/home-js-builder:4.0'
+            'dockerGo': 'adguard/go-builder:1.25.5--1'
             'channel': 'candidate'

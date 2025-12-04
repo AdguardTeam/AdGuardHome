@@ -48,26 +48,31 @@ func (srv *DHCPServer) serveV4(
 	return srv.handleDHCPv4(ctx, rw, typ, req)
 }
 
-// handleDHCPv4 handles the DHCPv4 message of the given type.
+// handleDHCPv4 handles the DHCPv4 message of the given type.  The DHCPDISCOVER
+// messages are handled by all interfaces concurrently, as those offer addresses
+// for the independent networks.  The DHCPREQUEST, DHCPRELEASE, and DHCPDECLINE
+// messages are handled by the server itself as it should pick the appropriate
+// interface according to the client's choice.  req must not be nil, typ should
+// be one of:
+//   - [layers.DHCPMsgTypeDiscover]
+//   - [layers.DHCPMsgTypeRequest]
+//   - [layers.DHCPMsgTypeRelease]
+//   - [layers.DHCPMsgTypeDecline]
 func (srv *DHCPServer) handleDHCPv4(
 	ctx context.Context,
 	rw responseWriter4,
 	typ layers.DHCPMsgType,
 	req *layers.DHCPv4,
 ) (err error) {
-	// Each interface should handle the DISCOVER and REQUEST messages offer and
-	// allocate the available leases.  The RELEASE and DECLINE messages should
-	// be handled by the server itself as it should remove the lease.
 	switch typ {
 	case layers.DHCPMsgTypeDiscover:
 		srv.handleDiscover(ctx, rw, req)
 	case layers.DHCPMsgTypeRequest:
 		srv.handleRequest(ctx, rw, req)
 	case layers.DHCPMsgTypeRelease:
-		// TODO(e.burkov):  Remove the lease, either allocated or offered.
+		srv.handleRelease(ctx, req)
 	case layers.DHCPMsgTypeDecline:
-		// TODO(e.burkov):  Remove the allocated lease.  RFC tells it only
-		// possible if the client found the address already in use.
+		srv.handleDecline(ctx, req)
 	default:
 		// TODO(e.burkov):  Handle DHCPINFORM.
 		return fmt.Errorf("dhcpv4: request type: %w: %v", errors.ErrBadEnumValue, typ)
@@ -76,7 +81,8 @@ func (srv *DHCPServer) handleDHCPv4(
 	return nil
 }
 
-// handleDiscover handles the DHCPv4 message of discover type.
+// handleDiscover handles the DHCPv4 message of DHCPDISCOVER type.  rw must not
+// be nil, req must be a DHCPDISCOVER message.
 func (srv *DHCPServer) handleDiscover(ctx context.Context, rw responseWriter4, req *layers.DHCPv4) {
 	// TODO(e.burkov):  Check existing leases, either allocated or offered.
 
@@ -85,7 +91,12 @@ func (srv *DHCPServer) handleDiscover(ctx context.Context, rw responseWriter4, r
 	}
 }
 
-// handleRequest handles the DHCPv4 message of request type.
+// handleRequest handles the DHCPv4 message of DHCPREQUEST type.  rw must not be
+// nil, req must be a DHCPREQUEST message.
+//
+// See https://datatracker.ietf.org/doc/html/rfc2131#section-4.3.2.
+//
+// TODO(e.burkov):  Remove allocated leases after client have chosen one.
 func (srv *DHCPServer) handleRequest(ctx context.Context, rw responseWriter4, req *layers.DHCPv4) {
 	srvID, hasSrvID := serverID4(req)
 	reqIP, hasReqIP := requestedIPv4(req)
@@ -95,8 +106,8 @@ func (srv *DHCPServer) handleRequest(ctx context.Context, rw responseWriter4, re
 		// If the DHCPREQUEST message contains a server identifier option, the
 		// message is in response to a DHCPOFFER message.  Otherwise, the
 		// message is a request to verify or extend an existing lease.
-		iface, hasIface := srv.interfaces4.findInterface(srvID)
-		if !hasIface {
+		iface, ok := srv.interfaces4.findInterface(srvID)
+		if !ok {
 			srv.logger.DebugContext(ctx, "skipping selecting request", "serverid", srvID)
 
 			return
@@ -106,9 +117,12 @@ func (srv *DHCPServer) handleRequest(ctx context.Context, rw responseWriter4, re
 	case hasReqIP && !reqIP.IsUnspecified():
 		// Requested IP address option MUST be filled in with client's notion of
 		// its previously assigned address.
-		iface, hasIface := srv.interfaces4.findInterface(reqIP)
-		if !hasIface {
-			srv.logger.DebugContext(ctx, "skipping init-reboot request", "requestedip", reqIP)
+		iface, ok := srv.interfaces4.findInterface(reqIP)
+		if !ok {
+			// If the DHCP server detects that the client is on the wrong net
+			// then the server SHOULD send a DHCPNAK message to the client.
+			srv.logger.DebugContext(ctx, "declining init-reboot request", "requestedip", reqIP)
+			iface.respondNAK(ctx, rw, req)
 
 			return
 		}
@@ -118,13 +132,47 @@ func (srv *DHCPServer) handleRequest(ctx context.Context, rw responseWriter4, re
 		// Server identifier MUST NOT be filled in, requested IP address option
 		// MUST NOT be filled in.
 		ip, _ := netip.AddrFromSlice(req.ClientIP.To4())
-		iface, hasIface := srv.interfaces4.findInterface(ip)
-		if !hasIface {
-			srv.logger.DebugContext(ctx, "skipping init-reboot request", "clientip", ip)
+		iface, ok := srv.interfaces4.findInterface(ip)
+		if !ok {
+			srv.logger.DebugContext(ctx, "skipping renew request", "clientip", ip)
 
 			return
 		}
 
-		iface.handleRenew(ctx, rw, req)
+		iface.handleRenew(ctx, rw, req, ip)
 	}
+}
+
+// handleDecline handles the DHCPv4 message of DHCPDECLINE type.  req must be a
+// DHCPDECLINE message.
+func (srv *DHCPServer) handleDecline(ctx context.Context, req *layers.DHCPv4) {
+	reqIP, hasReqIP := requestedIPv4(req)
+	if !hasReqIP {
+		srv.logger.DebugContext(ctx, "skipping decline message without requested ip")
+
+		return
+	}
+
+	iface, ok := srv.interfaces4.findInterface(reqIP)
+	if !ok {
+		srv.logger.DebugContext(ctx, "skipping decline message", "requestedip", reqIP)
+
+		return
+	}
+
+	iface.handleDecline(ctx, reqIP, req)
+}
+
+// handleRelease handles the DHCPv4 message of DHCPRELEASE type.  req must be a
+// DHCPRELEASE message.
+func (srv *DHCPServer) handleRelease(ctx context.Context, req *layers.DHCPv4) {
+	ip, _ := netip.AddrFromSlice(req.ClientIP.To4())
+	iface, ok := srv.interfaces4.findInterface(ip)
+	if !ok {
+		srv.logger.DebugContext(ctx, "skipping release message", "clientip", ip)
+
+		return
+	}
+
+	iface.handleRelease(ctx, ip, req)
 }

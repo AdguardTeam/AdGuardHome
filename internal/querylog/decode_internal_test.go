@@ -22,7 +22,7 @@ import (
 // Common constants for tests.
 const testTimeout = 1 * time.Second
 
-func TestDecodeLogEntry(t *testing.T) {
+func TestQueryLog_DecodeLogEntry_success(t *testing.T) {
 	logOutput := &bytes.Buffer{}
 	l := &queryLog{
 		logger: slog.New(slog.NewTextHandler(logOutput, &slog.HandlerOptions{
@@ -33,82 +33,94 @@ func TestDecodeLogEntry(t *testing.T) {
 
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
 
-	t.Run("success", func(t *testing.T) {
-		const ansStr = `Qz+BgAABAAEAAAAAAmFuBnlhbmRleAJydQAAAQABwAwAAQABAAAACgAEAAAAAA==`
-		const data = `{"IP":"127.0.0.1",` +
-			`"CID":"cli42",` +
-			`"T":"2020-11-25T18:55:56.519796+03:00",` +
-			`"QH":"an.yandex.ru",` +
-			`"QT":"A",` +
-			`"QC":"IN",` +
-			`"CP":"",` +
-			`"ECS":"1.2.3.0/24",` +
-			`"Answer":"` + ansStr + `",` +
-			`"Cached":true,` +
-			`"AD":true,` +
-			`"Result":{` +
-			`"IsFiltered":true,` +
-			`"Reason":3,` +
-			`"IPList":["127.0.0.2"],` +
-			`"Rules":[{"FilterListID":42,"Text":"||an.yandex.ru","IP":"127.0.0.2"},` +
-			`{"FilterListID":43,"Text":"||an2.yandex.ru","IP":"127.0.0.3"}],` +
-			`"CanonName":"example.com",` +
-			`"ServiceName":"example.org",` +
-			`"DNSRewriteResult":{"RCode":0,"Response":{"1":["127.0.0.2"]}}},` +
-			`"Upstream":"https://some.upstream",` +
-			`"Elapsed":837429}`
+	const ansStr = `Qz+BgAABAAEAAAAAAmFuBnlhbmRleAJydQAAAQABwAwAAQABAAAACgAEAAAAAA==`
+	const data = `{"IP":"127.0.0.1",` +
+		`"CID":"cli42",` +
+		`"T":"2020-11-25T18:55:56.519796+03:00",` +
+		`"QH":"an.yandex.ru",` +
+		`"QT":"A",` +
+		`"QC":"IN",` +
+		`"CP":"",` +
+		`"ECS":"1.2.3.0/24",` +
+		`"Answer":"` + ansStr + `",` +
+		`"Cached":true,` +
+		`"AD":true,` +
+		`"Result":{` +
+		`"IsFiltered":true,` +
+		`"Reason":3,` +
+		`"IPList":["127.0.0.2"],` +
+		`"Rules":[{"FilterListID":42,"Text":"||an.yandex.ru","IP":"127.0.0.2"},` +
+		`{"FilterListID":43,"Text":"||an2.yandex.ru","IP":"127.0.0.3"}],` +
+		`"CanonName":"example.com",` +
+		`"ServiceName":"example.org",` +
+		`"DNSRewriteResult":{"RCode":0,"Response":{"1":["127.0.0.2"]}}},` +
+		`"Upstream":"https://some.upstream",` +
+		`"Elapsed":837429}`
 
-		ans, err := base64.StdEncoding.DecodeString(ansStr)
-		require.NoError(t, err)
+	ans, err := base64.StdEncoding.DecodeString(ansStr)
+	require.NoError(t, err)
 
-		want := &logEntry{
-			IP:          net.IPv4(127, 0, 0, 1),
-			Time:        time.Date(2020, 11, 25, 15, 55, 56, 519796000, time.UTC),
-			QHost:       "an.yandex.ru",
-			QType:       "A",
-			QClass:      "IN",
-			ClientID:    "cli42",
-			ClientProto: "",
-			ReqECS:      "1.2.3.0/24",
-			Answer:      ans,
-			Cached:      true,
-			Result: filtering.Result{
-				DNSRewriteResult: &filtering.DNSRewriteResult{
-					RCode: dns.RcodeSuccess,
-					Response: filtering.DNSRewriteResultResponse{
-						dns.TypeA: []rules.RRValue{net.IPv4(127, 0, 0, 2)},
-					},
-				},
-				CanonName:   "example.com",
-				ServiceName: "example.org",
-				IPList:      []netip.Addr{netip.AddrFrom4([4]byte{127, 0, 0, 2})},
-				Rules: []*filtering.ResultRule{{
-					FilterListID: 42,
-					Text:         "||an.yandex.ru",
-					IP:           netip.AddrFrom4([4]byte{127, 0, 0, 2}),
-				}, {
-					FilterListID: 43,
-					Text:         "||an2.yandex.ru",
-					IP:           netip.AddrFrom4([4]byte{127, 0, 0, 3}),
-				}},
-				Reason:     filtering.FilteredBlockList,
-				IsFiltered: true,
+	result := filtering.Result{
+		DNSRewriteResult: &filtering.DNSRewriteResult{
+			RCode: dns.RcodeSuccess,
+			Response: filtering.DNSRewriteResultResponse{
+				dns.TypeA: []rules.RRValue{net.IPv4(127, 0, 0, 2)},
 			},
-			Upstream:          "https://some.upstream",
-			Elapsed:           837429,
-			AuthenticatedData: true,
-		}
+		},
+		CanonName:   "example.com",
+		ServiceName: "example.org",
+		IPList:      []netip.Addr{netip.AddrFrom4([4]byte{127, 0, 0, 2})},
+		Rules: []*filtering.ResultRule{{
+			FilterListID: 42,
+			Text:         "||an.yandex.ru",
+			IP:           netip.AddrFrom4([4]byte{127, 0, 0, 2}),
+		}, {
+			FilterListID: 43,
+			Text:         "||an2.yandex.ru",
+			IP:           netip.AddrFrom4([4]byte{127, 0, 0, 3}),
+		}},
+		Reason:     filtering.FilteredBlockList,
+		IsFiltered: true,
+	}
 
-		got := &logEntry{}
-		l.decodeLogEntry(ctx, got, data)
+	want := &logEntry{
+		IP:                net.IPv4(127, 0, 0, 1),
+		Time:              time.Date(2020, 11, 25, 15, 55, 56, 519796000, time.UTC),
+		QHost:             "an.yandex.ru",
+		QType:             "A",
+		QClass:            "IN",
+		ClientID:          "cli42",
+		ClientProto:       "",
+		ReqECS:            "1.2.3.0/24",
+		Answer:            ans,
+		Cached:            true,
+		Result:            result,
+		Upstream:          "https://some.upstream",
+		Elapsed:           837429,
+		AuthenticatedData: true,
+	}
 
-		s := logOutput.String()
-		assert.Empty(t, s)
+	got := &logEntry{}
+	l.decodeLogEntry(ctx, got, data)
 
-		// Correct for time zones.
-		got.Time = got.Time.UTC()
-		assert.Equal(t, want, got)
-	})
+	s := logOutput.String()
+	assert.Empty(t, s)
+
+	// Correct for time zones.
+	got.Time = got.Time.UTC()
+	assert.Equal(t, want, got)
+}
+
+func TestQueryLog_DecodeLogEntry(t *testing.T) {
+	logOutput := &bytes.Buffer{}
+	l := &queryLog{
+		logger: slog.New(slog.NewTextHandler(logOutput, &slog.HandlerOptions{
+			Level:       slog.LevelDebug,
+			ReplaceAttr: slogutil.RemoveTime,
+		})),
+	}
+
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
 
 	testCases := []struct {
 		name string

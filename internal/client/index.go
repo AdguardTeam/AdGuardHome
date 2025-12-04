@@ -31,6 +31,9 @@ func macToKey(mac net.HardwareAddr) (key macKey) {
 
 // index stores all information about persistent clients.
 type index struct {
+	// subnetToUID maps subnet to UID.
+	subnetToUID *aghalg.SortedMap[netip.Prefix, UID]
+
 	// nameToUID maps client name to UID.
 	nameToUID map[string]UID
 
@@ -45,18 +48,15 @@ type index struct {
 
 	// uidToClient maps UID to the persistent client.
 	uidToClient map[UID]*Persistent
-
-	// subnetToUID maps subnet to UID.
-	subnetToUID aghalg.SortedMap[netip.Prefix, UID]
 }
 
 // newIndex initializes the new instance of client index.
 func newIndex() (ci *index) {
 	return &index{
+		subnetToUID:   aghalg.NewSortedMapFunc[netip.Prefix, UID](subnetCompare),
 		nameToUID:     map[string]UID{},
 		clientIDToUID: map[ClientID]UID{},
 		ipToUID:       map[netip.Addr]UID{},
-		subnetToUID:   aghalg.NewSortedMap[netip.Prefix, UID](subnetCompare),
 		macToUID:      map[macKey]UID{},
 		uidToClient:   map[UID]*Persistent{},
 	}

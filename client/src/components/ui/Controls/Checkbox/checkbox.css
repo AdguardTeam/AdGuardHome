@@ -58,6 +58,13 @@
         0.3s ease-in-out opacity;
 }
 
+.checkbox__label--l {
+    &:before {
+        width: 30px;
+        height: 30px;
+    }
+}
+
 .checkbox__label .checkbox__label-text {
     line-height: 1.3;
 }

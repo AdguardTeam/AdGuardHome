@@ -159,6 +159,7 @@ func hostnameToHashes(host string) (hashes []hostnameHash) {
 		host = host[i+1:]
 	}
 
+	// TODO(e.burkov):  Use pools and [netutil.AppendSubdomains].
 	sub := netutil.Subdomains(host)
 
 	for _, s := range sub {

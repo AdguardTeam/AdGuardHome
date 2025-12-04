@@ -121,20 +121,28 @@ func TestQLogFile_ReadNext(t *testing.T) {
 			require.NoError(t, err)
 			require.EqualValues(t, expPos, pos)
 
-			var read int
-			var line string
-			for err == nil {
-				line, err = q.ReadNext()
-				if err == nil {
-					assert.NotEmpty(t, line)
-					read++
-				}
-			}
-
-			require.Equal(t, io.EOF, err)
-
+			read := readAllLines(t, q)
 			assert.Equal(t, tc.linesNum, read)
 		})
+	}
+}
+
+// readAllLines is a helper function that reads entries until EOF and returns
+// the number of lines read.
+func readAllLines(tb testing.TB, q *qLogFile) (n int) {
+	tb.Helper()
+
+	for {
+		line, err := q.ReadNext()
+		if err == io.EOF {
+			return n
+		}
+
+		require.NoError(tb, err)
+
+		assert.NotEmpty(tb, line)
+
+		n++
 	}
 }
 

@@ -375,7 +375,7 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                                         type="number"
                                         data-testid="install_dns_port"
                                         error={fieldState.error?.message}
-                                        placeholder={STANDARD_WEB_PORT.toString()}
+                                        placeholder={STANDARD_DNS_PORT.toString()}
                                         onChange={(e) => {
                                             const { value } = e.target;
                                             field.onChange(toNumber(value));

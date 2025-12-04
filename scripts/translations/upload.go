@@ -17,12 +17,12 @@ import (
 	"github.com/AdguardTeam/golibs/httphdr"
 )
 
-// upload base translation.
+// upload uploads the base locale file.
 func (c *twoskyClient) upload() (err error) {
 	defer func() { err = errors.Annotate(err, "upload: %w") }()
 
 	uploadURI := c.uri.JoinPath("upload")
-	basePath := filepath.Join(localesDir, defaultBaseFile)
+	basePath := filepath.Join(localesDirHome, defaultBaseFile)
 
 	formData := map[string]string{
 		"format":   "json",
@@ -64,10 +64,7 @@ func prepareMultipartMsg(
 	if err != nil {
 		return nil, "", fmt.Errorf("opening file: %w", err)
 	}
-
-	defer func() {
-		err = errors.WithDeferred(err, file.Close())
-	}()
+	defer func() { err = errors.WithDeferred(err, file.Close()) }()
 
 	h := make(textproto.MIMEHeader)
 	h.Set(httphdr.ContentType, aghhttp.HdrValApplicationJSON)

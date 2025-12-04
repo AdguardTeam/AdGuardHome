@@ -3,9 +3,11 @@
 package dhcpd
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net"
 	"net/http"
 	"net/netip"
@@ -19,7 +21,9 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/golibs/osutil/executil"
 )
 
 type v4ServerConfJSON struct {
@@ -168,12 +172,13 @@ func (s *server) handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
 	status.Leases = leasesToDynamic(leases[dynamicIdx:])
 	status.StaticLeases = leasesToStatic(leases[:dynamicIdx])
 
-	aghhttp.WriteJSONResponseOK(w, r, status)
+	aghhttp.WriteJSONResponseOK(r.Context(), s.conf.Logger, w, r, status)
 }
 
-func (s *server) enableDHCP(ifaceName string) (code int, err error) {
+func (s *server) enableDHCP(ctx context.Context, ifaceName string) (code int, err error) {
 	var hasStaticIP bool
-	hasStaticIP, err = aghnet.IfaceHasStaticIP(ifaceName)
+	cmdCons := s.conf.CommandConstructor
+	hasStaticIP, err = aghnet.IfaceHasStaticIP(ctx, cmdCons, ifaceName)
 	if err != nil {
 		if errors.Is(err, os.ErrPermission) {
 			// ErrPermission may happen here on Linux systems where AdGuard Home
@@ -202,7 +207,7 @@ func (s *server) enableDHCP(ifaceName string) (code int, err error) {
 	}
 
 	if !hasStaticIP {
-		err = aghnet.IfaceSetStaticIP(ifaceName)
+		err = aghnet.IfaceSetStaticIP(ctx, s.conf.Logger, cmdCons, ifaceName)
 		if err != nil {
 			err = fmt.Errorf("setting static ip: %w", err)
 
@@ -210,7 +215,7 @@ func (s *server) enableDHCP(ifaceName string) (code int, err error) {
 		}
 	}
 
-	err = s.Start()
+	err = s.Start(ctx)
 	if err != nil {
 		return http.StatusBadRequest, fmt.Errorf("starting dhcp server: %w", err)
 	}
@@ -239,6 +244,7 @@ func (s *server) handleDHCPSetConfigV4(
 	}
 
 	v4Conf.InterfaceName = conf.InterfaceName
+	v4Conf.Logger = s.conf.Logger.With("ip_version", "4")
 
 	// Set the default values for the fields not configurable via web API.
 	c4 := &V4ServerConf{
@@ -279,6 +285,7 @@ func (s *server) handleDHCPSetConfigV6(
 
 	enabled = v6Conf.Enabled
 	v6Conf.InterfaceName = conf.InterfaceName
+	v6Conf.Logger = s.conf.Logger.With("ip_version", "6")
 	v6Conf.notify = s.onNotify
 
 	srv6, err = v6Create(v6Conf)
@@ -309,46 +316,65 @@ func (s *server) createServers(conf *dhcpServerConfigJSON) (srv4, srv6 DHCPServe
 // handleDHCPSetConfig is the handler for the POST /control/dhcp/set_config
 // HTTP API.
 func (s *server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	l := s.conf.Logger
+
 	conf := &dhcpServerConfigJSON{}
 	conf.Enabled = aghalg.BoolToNullBool(s.conf.Enabled)
 	conf.InterfaceName = s.conf.InterfaceName
 
 	err := json.NewDecoder(r.Body).Decode(conf)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "failed to parse new dhcp config json: %s", err)
+		aghhttp.ErrorAndLog(
+			ctx,
+			l,
+			r,
+			w,
+			http.StatusBadRequest,
+			"failed to parse new dhcp config json: %s",
+			err,
+		)
 
 		return
 	}
 
 	srv4, srv6, err := s.createServers(conf)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
 
 	err = s.Stop()
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "stopping dhcp: %s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusInternalServerError, "stopping dhcp: %s", err)
 
 		return
 	}
 
 	s.setConfFromJSON(conf, srv4, srv6)
-	s.conf.ConfModifier.Apply(r.Context())
+	s.conf.ConfModifier.Apply(ctx)
 
 	err = s.dbLoad()
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "loading leases db: %s", err)
+		aghhttp.ErrorAndLog(
+			ctx,
+			l,
+			r,
+			w,
+			http.StatusInternalServerError,
+			"loading leases db: %s",
+			err,
+		)
 
 		return
 	}
 
 	if s.conf.Enabled {
 		var code int
-		code, err = s.enableDHCP(conf.InterfaceName)
+		code, err = s.enableDHCP(ctx, conf.InterfaceName)
 		if err != nil {
-			aghhttp.Error(r, w, code, "enabling dhcp: %s", err)
+			aghhttp.ErrorAndLog(ctx, l, r, w, code, "enabling dhcp: %s", err)
 		}
 	}
 }
@@ -385,11 +411,22 @@ type netInterfaceJSON struct {
 // handleDHCPInterfaces is the handler for the GET /control/dhcp/interfaces
 // HTTP API.
 func (s *server) handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	l := s.conf.Logger
+
 	resp := map[string]*netInterfaceJSON{}
 
 	ifaces, err := net.Interfaces()
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "Couldn't get interfaces: %s", err)
+		aghhttp.ErrorAndLog(
+			ctx,
+			l,
+			r,
+			w,
+			http.StatusInternalServerError,
+			"Couldn't get interfaces: %s",
+			err,
+		)
 
 		return
 	}
@@ -405,9 +442,9 @@ func (s *server) handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		jsonIface, iErr := newNetInterfaceJSON(iface)
+		jsonIface, iErr := newNetInterfaceJSON(ctx, s.conf.Logger, iface, s.conf.CommandConstructor)
 		if iErr != nil {
-			aghhttp.Error(r, w, http.StatusInternalServerError, "%s", iErr)
+			aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusInternalServerError, "%s", iErr)
 
 			return
 		}
@@ -417,11 +454,17 @@ func (s *server) handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	aghhttp.WriteJSONResponseOK(w, r, resp)
+	aghhttp.WriteJSONResponseOK(ctx, l, w, r, resp)
 }
 
 // newNetInterfaceJSON creates a JSON object from a [net.Interface] iface.
-func newNetInterfaceJSON(iface net.Interface) (out *netInterfaceJSON, err error) {
+// l and cmdCons must not be nil.
+func newNetInterfaceJSON(
+	ctx context.Context,
+	l *slog.Logger,
+	iface net.Interface,
+	cmdCons executil.CommandConstructor,
+) (out *netInterfaceJSON, err error) {
 	addrs, err := iface.Addrs()
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -473,7 +516,7 @@ func newNetInterfaceJSON(iface net.Interface) (out *netInterfaceJSON, err error)
 		return nil, nil
 	}
 
-	out.GatewayIP = aghnet.GatewayIP(iface.Name)
+	out.GatewayIP = aghnet.GatewayIP(ctx, l, cmdCons, iface.Name)
 
 	return out, nil
 }
@@ -523,21 +566,24 @@ type findActiveServerReq struct {
 //  2. check if a static IP is configured for the network interface;
 //  3. responds with the results.
 func (s *server) handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Request) {
-	if aghhttp.WriteTextPlainDeprecated(w, r) {
+	ctx := r.Context()
+	l := s.conf.Logger
+
+	if aghhttp.WriteTextPlainDeprecated(ctx, l, w, r) {
 		return
 	}
 
 	req := &findActiveServerReq{}
 	err := json.NewDecoder(r.Body).Decode(req)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "reading req: %s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "reading req: %s", err)
 
 		return
 	}
 
 	ifaceName := req.Interface
 	if ifaceName == "" {
-		aghhttp.Error(r, w, http.StatusBadRequest, "empty interface name")
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "empty interface name")
 
 		return
 	}
@@ -558,24 +604,29 @@ func (s *server) handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Reque
 		},
 	}
 
-	if isStaticIP, serr := aghnet.IfaceHasStaticIP(ifaceName); serr != nil {
+	cmdCons := s.conf.CommandConstructor
+	if isStaticIP, serr := aghnet.IfaceHasStaticIP(ctx, cmdCons, ifaceName); serr != nil {
 		result.V4.StaticIP.Static = "error"
 		result.V4.StaticIP.Error = serr.Error()
 	} else if !isStaticIP {
 		result.V4.StaticIP.Static = "no"
 		// TODO(e.burkov):  The returned IP should only be of version 4.
-		result.V4.StaticIP.IP = aghnet.GetSubnet(ifaceName).String()
+		result.V4.StaticIP.IP = aghnet.GetSubnet(ctx, s.conf.Logger, ifaceName).String()
 	}
 
-	setOtherDHCPResult(ifaceName, result)
+	s.setOtherDHCPResult(ctx, ifaceName, result)
 
-	aghhttp.WriteJSONResponseOK(w, r, result)
+	aghhttp.WriteJSONResponseOK(ctx, l, w, r, result)
 }
 
 // setOtherDHCPResult sets the results of the check for another DHCP server in
-// result.
-func setOtherDHCPResult(ifaceName string, result *dhcpSearchResult) {
-	found4, found6, err4, err6 := aghnet.CheckOtherDHCP(ifaceName)
+// result.  result must not be nil.
+func (s *server) setOtherDHCPResult(
+	ctx context.Context,
+	ifaceName string,
+	result *dhcpSearchResult,
+) {
+	found4, found6, err4, err6 := aghnet.CheckOtherDHCP(ctx, s.conf.Logger, ifaceName)
 	if err4 != nil {
 		result.V4.OtherServer.Found = "error"
 		result.V4.OtherServer.Error = err4.Error()
@@ -623,65 +674,79 @@ func (s *server) parseLease(r io.Reader) (srv DHCPServer, lease *dhcpsvc.Lease, 
 // handleDHCPAddStaticLease is the handler for the POST
 // /control/dhcp/add_static_lease HTTP API.
 func (s *server) handleDHCPAddStaticLease(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	l := s.conf.Logger
+
 	srv, lease, err := s.parseLease(r.Body)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
 
 	if err = srv.AddStaticLease(lease); err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "%s", err)
 	}
 }
 
 // handleDHCPRemoveStaticLease is the handler for the POST
 // /control/dhcp/remove_static_lease HTTP API.
 func (s *server) handleDHCPRemoveStaticLease(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	l := s.conf.Logger
+
 	srv, lease, err := s.parseLease(r.Body)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
 
 	if err = srv.RemoveStaticLease(lease); err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "%s", err)
 	}
 }
 
 // handleDHCPUpdateStaticLease is the handler for the POST
 // /control/dhcp/update_static_lease HTTP API.
 func (s *server) handleDHCPUpdateStaticLease(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	l := s.conf.Logger
+
 	srv, lease, err := s.parseLease(r.Body)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
 
 	if err = srv.UpdateStaticLease(lease); err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "%s", err)
 	}
 }
 
 func (s *server) handleReset(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	l := s.conf.Logger
+
 	err := s.Stop()
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "stopping dhcp: %s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusInternalServerError, "stopping dhcp: %s", err)
 
 		return
 	}
 
 	err = os.Remove(s.conf.dbFilePath)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
-		log.Error("dhcp: removing db: %s", err)
+		l.ErrorContext(ctx, "failed to remove database file", slogutil.KeyError, err)
 	}
 
 	s.conf = &ServerConfig{
-		ConfModifier: s.conf.ConfModifier,
+		Logger:             l,
+		CommandConstructor: s.conf.CommandConstructor,
+		ConfModifier:       s.conf.ConfModifier,
 
-		HTTPRegister: s.conf.HTTPRegister,
+		HTTPReg: s.conf.HTTPReg,
 
 		LocalDomainName: s.conf.LocalDomainName,
 
@@ -690,6 +755,7 @@ func (s *server) handleReset(w http.ResponseWriter, r *http.Request) {
 	}
 
 	v4conf := &V4ServerConf{
+		Logger:        s.conf.Logger.With("ip_version", "4"),
 		LeaseDuration: DefaultDHCPLeaseTTL,
 		ICMPTimeout:   DefaultDHCPTimeoutICMP,
 		notify:        s.onNotify,
@@ -697,36 +763,39 @@ func (s *server) handleReset(w http.ResponseWriter, r *http.Request) {
 	s.srv4, _ = v4Create(v4conf)
 
 	v6conf := V6ServerConf{
+		Logger:        s.conf.Logger.With("ip_version", "6"),
 		LeaseDuration: DefaultDHCPLeaseTTL,
 		notify:        s.onNotify,
 	}
 	s.srv6, _ = v6Create(v6conf)
 
-	s.conf.ConfModifier.Apply(r.Context())
+	s.conf.ConfModifier.Apply(ctx)
 }
 
 func (s *server) handleResetLeases(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	err := s.resetLeases()
 	if err != nil {
 		msg := "resetting leases: %s"
-		aghhttp.Error(r, w, http.StatusInternalServerError, msg, err)
+		aghhttp.ErrorAndLog(ctx, s.conf.Logger, r, w, http.StatusInternalServerError, msg, err)
 
 		return
 	}
 }
 
 func (s *server) registerHandlers() {
-	if s.conf.HTTPRegister == nil {
+	if s.conf.HTTPReg == nil {
 		return
 	}
 
-	s.conf.HTTPRegister(http.MethodGet, "/control/dhcp/status", s.handleDHCPStatus)
-	s.conf.HTTPRegister(http.MethodGet, "/control/dhcp/interfaces", s.handleDHCPInterfaces)
-	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/set_config", s.handleDHCPSetConfig)
-	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/find_active_dhcp", s.handleDHCPFindActiveServer)
-	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/add_static_lease", s.handleDHCPAddStaticLease)
-	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/remove_static_lease", s.handleDHCPRemoveStaticLease)
-	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/update_static_lease", s.handleDHCPUpdateStaticLease)
-	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/reset", s.handleReset)
-	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/reset_leases", s.handleResetLeases)
+	s.conf.HTTPReg.Register(http.MethodGet, "/control/dhcp/status", s.handleDHCPStatus)
+	s.conf.HTTPReg.Register(http.MethodGet, "/control/dhcp/interfaces", s.handleDHCPInterfaces)
+	s.conf.HTTPReg.Register(http.MethodPost, "/control/dhcp/set_config", s.handleDHCPSetConfig)
+	s.conf.HTTPReg.Register(http.MethodPost, "/control/dhcp/find_active_dhcp", s.handleDHCPFindActiveServer)
+	s.conf.HTTPReg.Register(http.MethodPost, "/control/dhcp/add_static_lease", s.handleDHCPAddStaticLease)
+	s.conf.HTTPReg.Register(http.MethodPost, "/control/dhcp/remove_static_lease", s.handleDHCPRemoveStaticLease)
+	s.conf.HTTPReg.Register(http.MethodPost, "/control/dhcp/update_static_lease", s.handleDHCPUpdateStaticLease)
+	s.conf.HTTPReg.Register(http.MethodPost, "/control/dhcp/reset", s.handleReset)
+	s.conf.HTTPReg.Register(http.MethodPost, "/control/dhcp/reset_leases", s.handleResetLeases)
 }

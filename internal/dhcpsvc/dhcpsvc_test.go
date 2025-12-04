@@ -6,6 +6,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/golibs/timeutil"
 )
 
 // testLocalTLD is a common local TLD for tests.
@@ -22,6 +23,7 @@ var testInterfaceConf = map[string]*dhcpsvc.InterfaceConfig{
 	"eth0": {
 		IPv4: &dhcpsvc.IPv4Config{
 			Enabled:       true,
+			Clock:         timeutil.SystemClock{},
 			GatewayIP:     netip.MustParseAddr("192.168.0.1"),
 			SubnetMask:    netip.MustParseAddr("255.255.255.0"),
 			RangeStart:    netip.MustParseAddr("192.168.0.2"),
@@ -39,6 +41,7 @@ var testInterfaceConf = map[string]*dhcpsvc.InterfaceConfig{
 	"eth1": {
 		IPv4: &dhcpsvc.IPv4Config{
 			Enabled:       true,
+			Clock:         timeutil.SystemClock{},
 			GatewayIP:     netip.MustParseAddr("172.16.0.1"),
 			SubnetMask:    netip.MustParseAddr("255.255.255.0"),
 			RangeStart:    netip.MustParseAddr("172.16.0.2"),

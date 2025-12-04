@@ -21,6 +21,7 @@ const dashboard = handleActions(
         [actions.dnsStatusSuccess.toString()]: (state: any, { payload }: any) => {
             const {
                 version,
+                start_time: dnsStartTime,
                 dns_port: dnsPort,
                 dns_addresses: dnsAddresses,
                 protection_enabled: protectionEnabled,
@@ -33,6 +34,7 @@ const dashboard = handleActions(
                 isCoreRunning: true,
                 processing: false,
                 dnsVersion: version,
+                dnsStartTime,
                 dnsPort,
                 dnsAddresses,
                 protectionEnabled,
@@ -183,6 +185,7 @@ const dashboard = handleActions(
         dnsPort: STANDARD_DNS_PORT,
         dnsAddresses: [],
         dnsVersion: '',
+        dnsStartTime: null,
         clients: [],
         autoClients: [],
         supportedTags: [],

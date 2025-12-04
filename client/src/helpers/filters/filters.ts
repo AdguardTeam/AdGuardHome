@@ -28,12 +28,6 @@ export default {
             "homepage": "https://badmojr.github.io/1Hosts/",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_24.txt"
         },
-        "1hosts_pro": {
-            "name": "1Hosts (Pro)",
-            "categoryId": "general",
-            "homepage": "https://badmojr.github.io/1Hosts/",
-            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_64.txt"
-        },
         "1hosts_xtra": {
             "name": "1Hosts (Xtra)",
             "categoryId": "general",
@@ -213,6 +207,12 @@ export default {
             "categoryId": "security",
             "homepage": "https://github.com/hagezi/dns-blocklists",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_55.txt"
+        },
+        "hagezi_dns_rebind_protection": {
+            "name": "HaGeZi's DNS Rebind Protection",
+            "categoryId": "security",
+            "homepage": "https://github.com/hagezi/dns-blocklists",
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_71.txt"
         },
         "hagezi_dyndns_blocklist": {
             "name": "HaGeZi's DynDNS Blocklist",

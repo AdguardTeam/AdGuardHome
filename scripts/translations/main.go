@@ -5,13 +5,11 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
 	"maps"
-	"net/url"
 	"os"
 	"path/filepath"
 	"slices"
@@ -23,18 +21,19 @@ import (
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/osutil"
 	"github.com/AdguardTeam/golibs/osutil/executil"
+	"github.com/c2h5oh/datasize"
 )
 
 // TODO(ik):  Update localesDir and srcDir to "./client_v2/src/" for new frontend migration.
+// TODO(e.burkov):  Remove the default as they should be set by configuration.
 const (
-	twoskyConfFile   = "./.twosky.json"
-	localesDir       = "./client/src/__locales"
-	defaultBaseFile  = "en.json"
-	defaultProjectID = "home"
-	srcDir           = "./client/src"
-	twoskyURI        = "https://twosky.int.agrd.dev/api/v1"
+	twoskyConfFile  = "./.twosky.json"
+	localesDirHome  = "./client/src/__locales"
+	defaultBaseFile = "en.json"
+	srcDir          = "./client/src"
+	twoskyURI       = "https://twosky.int.agrd.dev/api/v1"
 
-	readLimit     = 1 * 1024 * 1024
+	readLimit     = 1 * datasize.MB
 	uploadTimeout = 20 * time.Second
 )
 
@@ -80,26 +79,27 @@ func main() {
 
 	// TODO(ik):  Support multiple projects in .twosky.json - add PROJECT_ID env var to select between 'home' and 'home_v2'.
 	conf := errors.Must(readTwoskyConfig())
+	homeConf, servicesConf, err := readTwoskyConfig()
+	errors.Check(err)
 
 	var cli *twoskyClient
 
 	switch os.Args[1] {
 	case "summary":
-		errors.Check(summary(conf.Languages))
+		errors.Check(summary(homeConf.Languages))
 	case "download":
-		cli = errors.Must(conf.toClient())
+		cli = errors.Must(newTwoskyClient(homeConf))
+		cli.download(ctx, l)
 
-		errors.Check(cli.download(ctx, l))
+		cli = errors.Must(newTwoskyClient(servicesConf))
+		cli.download(ctx, l)
 	case "unused":
-		err := unused(ctx, l, conf.LocalizableFiles[0])
-		errors.Check(err)
+		errors.Check(unused(ctx, l, homeConf.LocalizableFiles[0]))
 	case "upload":
-		cli = errors.Must(conf.toClient())
-
+		cli = errors.Must(newTwoskyClient(homeConf))
 		errors.Check(cli.upload())
 	case "auto-add":
-		err := autoAdd(ctx, l, conf.LocalizableFiles[0])
-		errors.Check(err)
+		errors.Check(autoAdd(ctx, l, homeConf.LocalizableFiles[0]))
 	default:
 		usage("unknown command")
 	}
@@ -134,108 +134,6 @@ Commands:
 	fmt.Println(usageStr)
 
 	os.Exit(osutil.ExitCodeSuccess)
-}
-
-// twoskyConfig is the configuration structure for localization.
-type twoskyConfig struct {
-	Languages        languages `json:"languages"`
-	ProjectID        string    `json:"project_id"`
-	BaseLangcode     langCode  `json:"base_locale"`
-	LocalizableFiles []string  `json:"localizable_files"`
-}
-
-// readTwoskyConfig returns twosky configuration.
-func readTwoskyConfig() (t *twoskyConfig, err error) {
-	defer func() { err = errors.Annotate(err, "parsing twosky config: %w") }()
-
-	b, err := os.ReadFile(twoskyConfFile)
-	if err != nil {
-		// Don't wrap the error since it's informative enough as is.
-		return nil, err
-	}
-
-	var tsc []twoskyConfig
-	err = json.Unmarshal(b, &tsc)
-	if err != nil {
-		return nil, fmt.Errorf("unmarshalling %q: %w", twoskyConfFile, err)
-	}
-
-	if len(tsc) == 0 {
-		return nil, fmt.Errorf("%q is empty", twoskyConfFile)
-	}
-
-	// TODO(ik):  Currently only uses first project - modify to support project selection.
-	conf := tsc[0]
-
-	for _, lang := range conf.Languages {
-		if lang == "" {
-			return nil, errors.Error("language is empty")
-		}
-	}
-
-	if len(conf.LocalizableFiles) == 0 {
-		return nil, errors.Error("no localizable files specified")
-	}
-
-	return &conf, nil
-}
-
-// twoskyClient is the twosky client with methods for download and upload
-// translations.
-type twoskyClient struct {
-	// uri is the base URL.
-	uri *url.URL
-
-	// projectID is the name of the project.
-	projectID string
-
-	// baseLang is the base language code.
-	baseLang langCode
-
-	// langs is the list of codes of languages to download.
-	langs []langCode
-}
-
-// toClient reads values from environment variables or defaults, validates
-// them, and returns the twosky client.
-func (t *twoskyConfig) toClient() (cli *twoskyClient, err error) {
-	defer func() { err = errors.Annotate(err, "filling config: %w") }()
-
-	uriStr := cmp.Or(os.Getenv("TWOSKY_URI"), twoskyURI)
-	uri, err := url.Parse(uriStr)
-	if err != nil {
-		return nil, err
-	}
-
-	projectID := cmp.Or(os.Getenv("TWOSKY_PROJECT_ID"), defaultProjectID)
-
-	baseLang := t.BaseLangcode
-	uLangStr := os.Getenv("UPLOAD_LANGUAGE")
-	if uLangStr != "" {
-		baseLang = langCode(uLangStr)
-	}
-
-	langs := slices.Sorted(maps.Keys(t.Languages))
-
-	dlLangStr := os.Getenv("DOWNLOAD_LANGUAGES")
-	if dlLangStr == "blocker" {
-		langs = blockerLangCodes
-	} else if dlLangStr != "" {
-		var dlLangs []langCode
-		dlLangs, err = validateLanguageStr(dlLangStr, t.Languages)
-		if err != nil {
-			return nil, err
-		}
-
-		langs = dlLangs
-	}
-
-	return &twoskyClient{
-		uri:       uri,
-		projectID: projectID,
-		baseLang:  baseLang,
-		langs:     langs,
-	}, nil
 }
 
 // validateLanguageStr validates languages codes that contain in the str and
@@ -278,8 +176,11 @@ func readLocales(fn string) (loc locales, err error) {
 }
 
 // summary prints summary for translations.
+//
+// TODO(e.burkov):  Consider making it a method of [twoskyClient] and
+// calculating summary for all configurations.
 func summary(langs languages) (err error) {
-	basePath := filepath.Join(localesDir, defaultBaseFile)
+	basePath := filepath.Join(localesDirHome, defaultBaseFile)
 	baseLoc, err := readLocales(basePath)
 	if err != nil {
 		return fmt.Errorf("summary: %w", err)
@@ -287,10 +188,8 @@ func summary(langs languages) (err error) {
 
 	size := float64(len(baseLoc))
 
-	keys := slices.Sorted(maps.Keys(langs))
-
-	for _, lang := range keys {
-		name := filepath.Join(localesDir, string(lang)+".json")
+	for _, lang := range slices.Sorted(maps.Keys(langs)) {
+		name := filepath.Join(localesDirHome, string(lang)+".json")
 		if name == basePath {
 			continue
 		}
@@ -318,6 +217,9 @@ func summary(langs languages) (err error) {
 }
 
 // unused prints unused text labels.
+//
+// TODO(e.burkov):  Consider making it a method of [twoskyClient] and searching
+// unused strings for all configurations.
 func unused(ctx context.Context, l *slog.Logger, basePath string) (err error) {
 	defer func() { err = errors.Annotate(err, "unused: %w") }()
 
@@ -326,7 +228,7 @@ func unused(ctx context.Context, l *slog.Logger, basePath string) (err error) {
 		return err
 	}
 
-	locDir := filepath.Clean(localesDir)
+	locDir := filepath.Clean(localesDirHome)
 	js, err := findJS(ctx, l, locDir)
 	if err != nil {
 		return err
@@ -488,7 +390,7 @@ func changedLocales(
 ) (adds, dels []string, err error) {
 	defer func() { err = errors.Annotate(err, "getting changes: %w") }()
 
-	gitArgs := []string{"diff", "--numstat", localesDir}
+	gitArgs := []string{"diff", "--numstat", localesDirHome}
 	l.DebugContext(ctx, "executing", "cmd", gitCmd, "args", gitArgs)
 
 	// TODO(s.chzhen):  Consider streaming the output if needed.  Using

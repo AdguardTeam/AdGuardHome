@@ -1,6 +1,10 @@
 package configmigrate
 
-import "github.com/AdguardTeam/golibs/errors"
+import (
+	"context"
+
+	"github.com/AdguardTeam/golibs/errors"
+)
 
 // migrateTo26 performs the following changes:
 //
@@ -71,7 +75,7 @@ import "github.com/AdguardTeam/golibs/errors"
 //	'dns'
 //	  # …
 //	# …
-func migrateTo26(diskConf yobj) (err error) {
+func (m *Migrator) migrateTo26(_ context.Context, diskConf yobj) (err error) {
 	diskConf["schema_version"] = 26
 
 	dns, ok, err := fieldVal[yobj](diskConf, "dns")

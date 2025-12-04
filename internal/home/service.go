@@ -45,6 +45,8 @@ type program struct {
 	baseLogger    *slog.Logger
 	logger        *slog.Logger
 	sigHdlr       *signalHandler
+	workDir       string
+	confPath      string
 }
 
 // type check
@@ -56,7 +58,7 @@ func (p *program) Start(_ service.Service) (err error) {
 	args := p.opts
 	args.runningAsService = true
 
-	go run(p.ctx, p.baseLogger, args, p.clientBuildFS, p.done, p.sigHdlr)
+	go run(p.ctx, p.baseLogger, args, p.clientBuildFS, p.done, p.sigHdlr, p.workDir, p.confPath)
 
 	return nil
 }
@@ -218,6 +220,8 @@ func handleServiceControlAction(
 	signals chan os.Signal,
 	done chan struct{},
 	sigHdlr *signalHandler,
+	workDir string,
+	confPath string,
 ) {
 	// Call chooseSystem explicitly to introduce OpenBSD support for service
 	// package.  It's a noop for other GOOS values.
@@ -263,13 +267,15 @@ func handleServiceControlAction(
 		baseLogger:    l,
 		logger:        l.With(slogutil.KeyPrefix, "service"),
 		sigHdlr:       sigHdlr,
+		workDir:       workDir,
+		confPath:      confPath,
 	}, svcConfig)
 	if err != nil {
 		l.ErrorContext(ctx, "initializing service", slogutil.KeyError, err)
 		os.Exit(osutil.ExitCodeFailure)
 	}
 
-	err = handleServiceCommand(ctx, l, s, action, opts)
+	err = handleServiceCommand(ctx, l, s, action, workDir, confPath)
 	if err != nil {
 		l.ErrorContext(ctx, "handling command", slogutil.KeyError, err)
 		os.Exit(osutil.ExitCodeFailure)
@@ -289,7 +295,8 @@ func handleServiceCommand(
 	l *slog.Logger,
 	s service.Service,
 	action string,
-	opts options,
+	workDir string,
+	confPath string,
 ) (err error) {
 	switch action {
 	case "status":
@@ -299,13 +306,7 @@ func handleServiceCommand(
 			return fmt.Errorf("failed to run service: %w", err)
 		}
 	case "install":
-		if err = initWorkingDir(opts); err != nil {
-			return fmt.Errorf("failed to init working dir: %w", err)
-		}
-
-		initConfigFilename(opts)
-
-		handleServiceInstallCommand(ctx, l, s)
+		handleServiceInstallCommand(ctx, l, s, workDir, confPath)
 	case "uninstall":
 		handleServiceUninstallCommand(ctx, l, s)
 	default:
@@ -345,8 +346,15 @@ func handleServiceStatusCommand(
 	}
 }
 
-// handleServiceInstallCommand handles service "install" command.
-func handleServiceInstallCommand(ctx context.Context, l *slog.Logger, s service.Service) {
+// handleServiceInstallCommand handles the service "install" command.  l must
+// not be nil.
+func handleServiceInstallCommand(
+	ctx context.Context,
+	l *slog.Logger,
+	s service.Service,
+	workDir string,
+	confPath string,
+) {
 	err := svcAction(ctx, l, s, "install")
 	if err != nil {
 		l.ErrorContext(ctx, "executing install", slogutil.KeyError, err)
@@ -372,7 +380,7 @@ func handleServiceInstallCommand(ctx context.Context, l *slog.Logger, s service.
 	}
 	l.InfoContext(ctx, "started")
 
-	if detectFirstRun() {
+	if detectFirstRun(ctx, l, workDir, confPath) {
 		slogutil.PrintLines(ctx, l, slog.LevelInfo, "", "Almost ready!\n"+
 			"AdGuard Home is successfully installed and will automatically start on boot.\n"+
 			"There are a few more things that must be configured before you can use it.\n"+
@@ -382,16 +390,11 @@ func handleServiceInstallCommand(ctx context.Context, l *slog.Logger, s service.
 	}
 }
 
-// handleServiceUninstallCommand handles service "uninstall" command.
+// handleServiceUninstallCommand handles service "uninstall" command.  l and s
+// must not be nil.
 func handleServiceUninstallCommand(ctx context.Context, l *slog.Logger, s service.Service) {
 	if aghos.IsOpenWrt() {
-		// On OpenWrt it is important to run disable command first
-		// as it will remove the symlink
-		_, err := runInitdCommand(ctx, "disable")
-		if err != nil {
-			l.ErrorContext(ctx, "running init disable", slogutil.KeyError, err)
-			os.Exit(osutil.ExitCodeFailure)
-		}
+		handleOpenWrtUninstall(ctx, l)
 	}
 
 	if err := svcAction(ctx, l, s, "stop"); err != nil {
@@ -400,20 +403,39 @@ func handleServiceUninstallCommand(ctx context.Context, l *slog.Logger, s servic
 
 	if err := svcAction(ctx, l, s, "uninstall"); err != nil {
 		l.ErrorContext(ctx, "executing action uninstall", slogutil.KeyError, err)
+
 		os.Exit(osutil.ExitCodeFailure)
 	}
 
 	if runtime.GOOS == "darwin" {
-		// Remove log files on cleanup and log errors.
-		err := os.Remove(launchdStdoutPath)
-		if err != nil && !errors.Is(err, os.ErrNotExist) {
-			l.WarnContext(ctx, "removing stdout file", slogutil.KeyError, err)
-		}
+		handleDarwinUninstall(ctx, l)
+	}
+}
 
-		err = os.Remove(launchdStderrPath)
-		if err != nil && !errors.Is(err, os.ErrNotExist) {
-			l.WarnContext(ctx, "removing stderr file", slogutil.KeyError, err)
-		}
+// handleOpenWrtUninstall handles service "uninstall" command for OpenWrt.
+// Exits on error.  l must not be nil.
+func handleOpenWrtUninstall(ctx context.Context, l *slog.Logger) {
+	// On OpenWrt it is important to run disable command first as it will remove
+	// the symlink.
+	_, err := runInitdCommand(ctx, "disable")
+	if err != nil {
+		l.ErrorContext(ctx, "running init disable", slogutil.KeyError, err)
+		os.Exit(osutil.ExitCodeFailure)
+	}
+}
+
+// handleDarwinUninstall handles service "uninstall" command for Darwin.  l
+// must not be nil.
+func handleDarwinUninstall(ctx context.Context, l *slog.Logger) {
+	// Remove log files on cleanup and log errors.
+	err := os.Remove(launchdStdoutPath)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		l.WarnContext(ctx, "removing stdout file", slogutil.KeyError, err)
+	}
+
+	err = os.Remove(launchdStderrPath)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		l.WarnContext(ctx, "removing stderr file", slogutil.KeyError, err)
 	}
 }
 

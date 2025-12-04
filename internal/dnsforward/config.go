@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"log/slog"
 	"net"
 	"net/netip"
 	"os"
@@ -22,7 +23,6 @@ import (
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
@@ -121,6 +121,13 @@ type Config struct {
 
 	// CacheOptimistic defines if optimistic cache mechanism should be used.
 	CacheOptimistic bool `yaml:"cache_optimistic"`
+
+	// CacheOptimisticAnswerTTL is the default TTL for expired cached responses.
+	CacheOptimisticAnswerTTL timeutil.Duration `yaml:"cache_optimistic_answer_ttl"`
+
+	// CacheOptimisticMaxAge is the maximum time entries remain in the cache
+	// when cache is optimistic.
+	CacheOptimisticMaxAge timeutil.Duration `yaml:"cache_optimistic_max_age"`
 
 	// Other settings
 
@@ -270,7 +277,7 @@ type ServerConfig struct {
 	ConfModifier agh.ConfigModifier
 
 	// Register an HTTP handler
-	HTTPRegister aghhttp.RegisterFunc
+	HTTPReg aghhttp.Registrar
 
 	// LocalPTRResolvers is a slice of addresses to be used as upstreams for
 	// resolving PTR queries for local addresses.
@@ -330,6 +337,8 @@ func (s *Server) newProxyConfig(ctx context.Context) (conf *proxy.Config, err er
 		CacheMinTTL:               srvConf.CacheMinTTL,
 		CacheMaxTTL:               srvConf.CacheMaxTTL,
 		CacheOptimistic:           srvConf.CacheOptimistic,
+		CacheOptimisticAnswerTTL:  time.Duration(srvConf.CacheOptimisticAnswerTTL),
+		CacheOptimisticMaxAge:     time.Duration(srvConf.CacheOptimisticMaxAge),
 		UpstreamConfig:            srvConf.UpstreamConfig,
 		PrivateRDNSUpstreamConfig: srvConf.PrivateRDNSUpstreamConfig,
 		BeforeRequestHandler:      s,
@@ -480,8 +489,11 @@ func (s *Server) prepareIpsetListSettings(ctx context.Context) (ipsets []string,
 }
 
 // loadUpstreams parses upstream DNS servers from the configured file or from
-// the configuration itself.
-func (conf *ServerConfig) loadUpstreams() (upstreams []string, err error) {
+// the configuration itself.  l must not be nil.
+func (conf *ServerConfig) loadUpstreams(
+	ctx context.Context,
+	l *slog.Logger,
+) (upstreams []string, err error) {
 	if conf.UpstreamDNSFileName == "" {
 		return stringutil.FilterOut(conf.UpstreamDNS, aghnet.IsCommentOrEmpty), nil
 	}
@@ -494,7 +506,7 @@ func (conf *ServerConfig) loadUpstreams() (upstreams []string, err error) {
 
 	upstreams = stringutil.SplitTrimmed(string(data), "\n")
 
-	log.Debug("dnsforward: got %d upstreams in %q", len(upstreams), conf.UpstreamDNSFileName)
+	l.DebugContext(ctx, "got upstreams", "number", len(upstreams), "filename", conf.UpstreamDNSFileName)
 
 	return stringutil.FilterOut(upstreams, aghnet.IsCommentOrEmpty), nil
 }
@@ -601,16 +613,16 @@ func filterOutAddrs(upsConf *proxy.UpstreamConfig, set addrPortSet) (err error) 
 }
 
 // ourAddrsSet returns an addrPortSet that contains all the configured listening
-// addresses.
-func (conf *ServerConfig) ourAddrsSet() (m addrPortSet, err error) {
+// addresses.  l must not be nil.
+func (conf *ServerConfig) ourAddrsSet(ctx context.Context, l *slog.Logger) (m addrPortSet, err error) {
 	addrs, unspecPorts := conf.collectDNSAddrs()
 	switch {
 	case addrs.Len() == 0:
-		log.Debug("dnsforward: no listen addresses")
+		l.DebugContext(ctx, "no listen addresses")
 
 		return emptyAddrPortSet{}, nil
 	case unspecPorts.Len() == 0:
-		log.Debug("dnsforward: filtering out addresses %s", addrs)
+		l.DebugContext(ctx, "filtering out addresses", "addresses", addrs)
 
 		return addrs, nil
 	default:
@@ -621,7 +633,12 @@ func (conf *ServerConfig) ourAddrsSet() (m addrPortSet, err error) {
 			return nil, err
 		}
 
-		log.Debug("dnsforward: filtering out addresses %s on ports %d", ifaceAddrs, unspecPorts)
+		l.DebugContext(
+			ctx,
+			"filtering out addresses",
+			"addresses", ifaceAddrs,
+			"ports", unspecPorts,
+		)
 
 		return &combinedAddrPortSet{
 			ports: unspecPorts,

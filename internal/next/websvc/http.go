@@ -43,11 +43,13 @@ type HTTPAPIHTTPSettings struct {
 // handlePatchSettingsHTTP is the handler for the PATCH /api/v1/settings/http
 // HTTP API.
 func (svc *Service) handlePatchSettingsHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	req := &ReqPatchSettingsHTTP{}
 
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		aghhttp.WriteJSONResponseError(w, r, fmt.Errorf("decoding: %w", err))
+		aghhttp.WriteJSONResponseError(ctx, svc.logger, w, r, fmt.Errorf("decoding: %w", err))
 
 		return
 	}
@@ -61,7 +63,7 @@ func (svc *Service) handlePatchSettingsHTTP(w http.ResponseWriter, r *http.Reque
 	req.Timeout.Set((*aghhttp.JSONDuration)(&newConf.Timeout))
 	req.ForceHTTPS.Set(&newConf.ForceHTTPS)
 
-	aghhttp.WriteJSONResponseOK(w, r, &HTTPAPIHTTPSettings{
+	aghhttp.WriteJSONResponseOK(ctx, svc.logger, w, r, &HTTPAPIHTTPSettings{
 		Addresses:       newConf.Addresses,
 		SecureAddresses: newConf.SecureAddresses,
 		Timeout:         aghhttp.JSONDuration(newConf.Timeout),
@@ -71,7 +73,6 @@ func (svc *Service) handlePatchSettingsHTTP(w http.ResponseWriter, r *http.Reque
 	cancelUpd := func() {}
 	updCtx := context.Background()
 
-	ctx := r.Context()
 	if deadline, ok := ctx.Deadline(); ok {
 		updCtx, cancelUpd = context.WithDeadline(updCtx, deadline)
 	}

@@ -94,6 +94,7 @@ func whoisOrEmpty(r *client.Runtime) (info *whois.Info) {
 
 // handleGetClients is the handler for GET /control/clients HTTP API.
 func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	data := clientListJSON{}
 
 	clients.lock.Lock()
@@ -106,7 +107,7 @@ func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, r *http
 		return true
 	})
 
-	clients.storage.UpdateDHCP(r.Context())
+	clients.storage.UpdateDHCP(ctx)
 
 	clients.storage.RangeRuntime(func(rc *client.Runtime) (cont bool) {
 		src, host := rc.Info()
@@ -124,7 +125,7 @@ func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, r *http
 
 	data.Tags = clients.storage.AllowedTags()
 
-	aghhttp.WriteJSONResponseOK(w, r, data)
+	aghhttp.WriteJSONResponseOK(ctx, clients.logger, w, r, data)
 }
 
 // initPrev initializes the persistent client with the default or previous
@@ -327,25 +328,34 @@ func clientToJSON(c *client.Persistent) (cj *clientJSON) {
 // handleAddClient is the handler for POST /control/clients/add HTTP API.
 func (clients *clientsContainer) handleAddClient(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	l := clients.logger
 
 	cj := clientJSON{}
 	err := json.NewDecoder(r.Body).Decode(&cj)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "failed to process request body: %s", err)
+		aghhttp.ErrorAndLog(
+			ctx,
+			l,
+			r,
+			w,
+			http.StatusBadRequest,
+			"failed to process request body: %s",
+			err,
+		)
 
 		return
 	}
 
 	c, err := clients.jsonToClient(ctx, cj, nil)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
 
 	err = clients.storage.Add(ctx, c)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
@@ -356,23 +366,32 @@ func (clients *clientsContainer) handleAddClient(w http.ResponseWriter, r *http.
 // handleDelClient is the handler for POST /control/clients/delete HTTP API.
 func (clients *clientsContainer) handleDelClient(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	l := clients.logger
 
 	cj := clientJSON{}
 	err := json.NewDecoder(r.Body).Decode(&cj)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "failed to process request body: %s", err)
+		aghhttp.ErrorAndLog(
+			ctx,
+			l,
+			r,
+			w,
+			http.StatusBadRequest,
+			"failed to process request body: %s",
+			err,
+		)
 
 		return
 	}
 
 	if len(cj.Name) == 0 {
-		aghhttp.Error(r, w, http.StatusBadRequest, "client's name must be non-empty")
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "client's name must be non-empty")
 
 		return
 	}
 
 	if !clients.storage.RemoveByName(ctx, cj.Name) {
-		aghhttp.Error(r, w, http.StatusBadRequest, "Client not found")
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "Client not found")
 
 		return
 	}
@@ -391,31 +410,40 @@ type updateJSON struct {
 // TODO(s.chzhen):  Accept updated parameters instead of whole structure.
 func (clients *clientsContainer) handleUpdateClient(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	l := clients.logger
 
 	dj := updateJSON{}
 	err := json.NewDecoder(r.Body).Decode(&dj)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "failed to process request body: %s", err)
+		aghhttp.ErrorAndLog(
+			ctx,
+			l,
+			r,
+			w,
+			http.StatusBadRequest,
+			"failed to process request body: %s",
+			err,
+		)
 
 		return
 	}
 
 	if len(dj.Name) == 0 {
-		aghhttp.Error(r, w, http.StatusBadRequest, "Invalid request")
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "Invalid request")
 
 		return
 	}
 
 	c, err := clients.jsonToClient(ctx, dj.Data, nil)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
 
 	err = clients.storage.Update(ctx, dj.Name, c)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
@@ -427,6 +455,9 @@ func (clients *clientsContainer) handleUpdateClient(w http.ResponseWriter, r *ht
 //
 // Deprecated:  Remove it when migration to the new API is over.
 func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	l := clients.logger
+
 	q := r.URL.Query()
 	data := make([]map[string]*clientJSON, 0, len(q))
 	params := &client.FindParams{}
@@ -440,12 +471,7 @@ func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http
 
 		err = params.Set(idStr)
 		if err != nil {
-			clients.logger.DebugContext(
-				r.Context(),
-				"finding client",
-				"id", idStr,
-				slogutil.KeyError, err,
-			)
+			l.DebugContext(ctx, "finding client", "id", idStr, slogutil.KeyError, err)
 
 			continue
 		}
@@ -455,7 +481,7 @@ func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http
 		})
 	}
 
-	aghhttp.WriteJSONResponseOK(w, r, data)
+	aghhttp.WriteJSONResponseOK(ctx, l, w, r, data)
 }
 
 // findClient returns available information about a client by params from the
@@ -502,10 +528,21 @@ type searchClientJSON struct {
 // handleSearchClient is the handler for the POST /control/clients/search HTTP
 // API.
 func (clients *clientsContainer) handleSearchClient(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	l := clients.logger
+
 	q := searchQueryJSON{}
 	err := json.NewDecoder(r.Body).Decode(&q)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "failed to process request body: %s", err)
+		aghhttp.ErrorAndLog(
+			ctx,
+			l,
+			r,
+			w,
+			http.StatusBadRequest,
+			"failed to process request body: %s",
+			err,
+		)
 
 		return
 	}
@@ -517,12 +554,7 @@ func (clients *clientsContainer) handleSearchClient(w http.ResponseWriter, r *ht
 		idStr := c.ID
 		err = params.Set(idStr)
 		if err != nil {
-			clients.logger.DebugContext(
-				r.Context(),
-				"searching client",
-				"id", idStr,
-				slogutil.KeyError, err,
-			)
+			l.DebugContext(ctx, "searching client", "id", idStr, slogutil.KeyError, err)
 
 			continue
 		}
@@ -532,7 +564,7 @@ func (clients *clientsContainer) handleSearchClient(w http.ResponseWriter, r *ht
 		})
 	}
 
-	aghhttp.WriteJSONResponseOK(w, r, data)
+	aghhttp.WriteJSONResponseOK(ctx, l, w, r, data)
 }
 
 // findRuntime looks up the IP in runtime and temporary storages, like
@@ -576,14 +608,14 @@ func (clients *clientsContainer) findRuntime(
 	}
 }
 
-// RegisterClientsHandlers registers HTTP handlers
+// registerWebHandlers registers HTTP handlers.
 func (clients *clientsContainer) registerWebHandlers() {
-	httpRegister(http.MethodGet, "/control/clients", clients.handleGetClients)
-	httpRegister(http.MethodPost, "/control/clients/add", clients.handleAddClient)
-	httpRegister(http.MethodPost, "/control/clients/delete", clients.handleDelClient)
-	httpRegister(http.MethodPost, "/control/clients/update", clients.handleUpdateClient)
-	httpRegister(http.MethodPost, "/control/clients/search", clients.handleSearchClient)
+	clients.httpReg.Register(http.MethodGet, "/control/clients", clients.handleGetClients)
+	clients.httpReg.Register(http.MethodPost, "/control/clients/add", clients.handleAddClient)
+	clients.httpReg.Register(http.MethodPost, "/control/clients/delete", clients.handleDelClient)
+	clients.httpReg.Register(http.MethodPost, "/control/clients/update", clients.handleUpdateClient)
+	clients.httpReg.Register(http.MethodPost, "/control/clients/search", clients.handleSearchClient)
 
 	// Deprecated handler.
-	httpRegister(http.MethodGet, "/control/clients/find", clients.handleFindClient)
+	clients.httpReg.Register(http.MethodGet, "/control/clients/find", clients.handleFindClient)
 }

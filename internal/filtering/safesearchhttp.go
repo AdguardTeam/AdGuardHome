@@ -36,18 +36,19 @@ func (d *DNSFilter) handleSafeSearchStatus(w http.ResponseWriter, r *http.Reques
 		resp = d.conf.SafeSearchConf
 	}()
 
-	aghhttp.WriteJSONResponseOK(w, r, resp)
+	aghhttp.WriteJSONResponseOK(r.Context(), d.logger, w, r, resp)
 }
 
 // handleSafeSearchSettings is the handler for PUT /control/safesearch/settings
 // HTTP API.
 func (d *DNSFilter) handleSafeSearchSettings(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	l := d.logger
 
 	req := &SafeSearchConfig{}
 	err := json.NewDecoder(r.Body).Decode(req)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "reading req: %s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "reading req: %s", err)
 
 		return
 	}
@@ -55,7 +56,7 @@ func (d *DNSFilter) handleSafeSearchSettings(w http.ResponseWriter, r *http.Requ
 	conf := *req
 	err = d.safeSearch.Update(ctx, conf)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "updating: %s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "updating: %s", err)
 
 		return
 	}
@@ -69,5 +70,5 @@ func (d *DNSFilter) handleSafeSearchSettings(w http.ResponseWriter, r *http.Requ
 
 	d.conf.ConfModifier.Apply(ctx)
 
-	aghhttp.OK(w)
+	aghhttp.OK(ctx, l, w)
 }

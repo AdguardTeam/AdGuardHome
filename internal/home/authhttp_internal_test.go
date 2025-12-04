@@ -321,26 +321,18 @@ func authRequest(path string, c *http.Cookie, user, pass string) (r *http.Reques
 func TestAuth_ServeHTTP_firstRun(t *testing.T) {
 	storeGlobals(t)
 
-	globalContext.firstRun = true
-
+	mw := &webMw{}
 	mux := http.NewServeMux()
-	globalContext.mux = mux
+	httpReg := aghhttp.NewDefaultRegistrar(mux, mw.wrap)
 
-	ctx := testutil.ContextWithTimeout(t, testTimeout)
-	web, err := initWeb(
-		ctx,
-		options{},
-		nil,
-		nil,
-		testLogger,
-		nil,
-		nil,
-		agh.EmptyConfigModifier{},
-		false,
-	)
-	require.NoError(t, err)
+	web := newTestWeb(t, &webConfig{
+		mux:        mux,
+		httpReg:    httpReg,
+		isFirstRun: true,
+	})
 
 	globalContext.web = web
+	mw.set(web)
 
 	testCases := []struct {
 		name     string
@@ -484,7 +476,9 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 
 	t.Cleanup(func() { auth.close(testutil.ContextWithTimeout(t, testTimeout)) })
 
-	globalContext.mux = http.NewServeMux()
+	mw := &webMw{}
+	baseMux := http.NewServeMux()
+	httpReg := aghhttp.NewDefaultRegistrar(baseMux, mw.wrap)
 
 	tlsMgr, err := newTLSManager(testutil.ContextWithTimeout(t, testTimeout), &tlsManagerConfig{
 		logger:       testLogger,
@@ -492,26 +486,21 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	ctx := testutil.ContextWithTimeout(t, testTimeout)
-	web, err := initWeb(
-		ctx,
-		options{},
-		nil,
-		nil,
-		testLogger,
-		tlsMgr,
-		auth,
-		agh.EmptyConfigModifier{},
-		false,
-	)
+	web := newTestWeb(t, &webConfig{
+		tlsManager: tlsMgr,
+		auth:       auth,
+		mux:        baseMux,
+		httpReg:    httpReg,
+	})
 	require.NoError(t, err)
 
 	globalContext.web = web
+	mw.set(web)
 
-	mux := auth.middleware().Wrap(globalContext.mux)
+	mux := auth.middleware().Wrap(baseMux)
 
 	auth.isGLiNet = true
-	gliNetMw := auth.middleware().Wrap(globalContext.mux)
+	gliNetMw := auth.middleware().Wrap(baseMux)
 
 	loginCookie := generateAuthCookie(t, mux, userName, userPassword)
 
@@ -642,24 +631,21 @@ func TestAuth_ServeHTTP_logout(t *testing.T) {
 
 	t.Cleanup(func() { auth.close(testutil.ContextWithTimeout(t, testTimeout)) })
 
-	globalContext.mux = http.NewServeMux()
+	mw := &webMw{}
+	baseMux := http.NewServeMux()
+	httpReg := aghhttp.NewDefaultRegistrar(baseMux, mw.wrap)
 
-	ctx := testutil.ContextWithTimeout(t, testTimeout)
-	web, err := initWeb(ctx,
-		options{},
-		nil,
-		nil,
-		testLogger,
-		nil,
-		auth,
-		agh.EmptyConfigModifier{},
-		false,
-	)
+	web := newTestWeb(t, &webConfig{
+		auth:    auth,
+		mux:     baseMux,
+		httpReg: httpReg,
+	})
 	require.NoError(t, err)
 
 	globalContext.web = web
+	mw.set(web)
 
-	mux := auth.middleware().Wrap(globalContext.mux)
+	mux := auth.middleware().Wrap(baseMux)
 
 	loginCookie := generateAuthCookie(t, mux, userName, userPassword)
 

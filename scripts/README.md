@@ -6,14 +6,6 @@
 
 Run `make init` from the project root.
 
-## `querylog/`: Query Log Helpers
-
-### Usage
-
-- `npm install`: install dependencies. Run this first.
-
-- `npm run anonymize <source> <dst>`: read the query log from the `<source>` and write anonymized version to `<dst>`.
-
 ## `make/`: Makefile scripts
 
 The release channels are: `development` (the default), `edge`, `beta`, and `release`. If verbosity levels aren’t documented here, there are only two: `0`, don’t print anything, and `1`, be verbose.
@@ -214,7 +206,7 @@ Optional environment:
 
 - `go run ./scripts/translations help`: print usage.
 
-- `go run ./scripts/translations download [-n <count>]`: download and save all translations. `n` is optional flag where count is a number of concurrent downloads.
+- `go run ./scripts/translations download [-n <count>]`: download and save all translations. `n` is optional flag where count is a number of concurrent downloads. Note, that it downloads locales for all configurations in the `.twosky.json` file.
 
 - `go run ./scripts/translations upload`: upload the base `en` locale.
 
@@ -235,6 +227,8 @@ Optional environment:
 - `TWOSKY_URI`: set an alternative URL for `download` or `upload`.
 
 - `TWOSKY_PROJECT_ID`: set an alternative project ID for `download` or `upload`.
+
+    Deprectated: This environment variable should not be used since the script began supporting multiple configurations.
 
 ## `companiesdb/`: Whotracks.me database converter
 

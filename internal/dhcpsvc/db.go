@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/fs"
+	"log/slog"
 	"net"
 	"net/netip"
 	"os"
@@ -93,16 +94,21 @@ func (dl *dbLease) toInternal() (l *Lease, err error) {
 
 // dbLoad loads stored leases.  It must only be called before the service has
 // been started.
-func (srv *DHCPServer) dbLoad(ctx context.Context) (err error) {
+func (idx *leaseIndex) dbLoad(
+	ctx context.Context,
+	logger *slog.Logger,
+	ifaces4 dhcpInterfacesV4,
+	ifaces6 dhcpInterfacesV6,
+) (err error) {
 	defer func() { err = errors.Annotate(err, "loading db: %w") }()
 
-	file, err := os.Open(srv.dbFilePath)
+	file, err := os.Open(idx.dbFilePath)
 	if err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
 			return fmt.Errorf("reading db: %w", err)
 		}
 
-		srv.logger.DebugContext(ctx, "no db file found")
+		logger.DebugContext(ctx, "no db file found")
 
 		return nil
 	}
@@ -116,33 +122,38 @@ func (srv *DHCPServer) dbLoad(ctx context.Context) (err error) {
 		return fmt.Errorf("decoding db: %w", err)
 	}
 
-	srv.resetLeases()
-	srv.addDBLeases(ctx, dl.Leases)
+	idx.addDBLeases(ctx, logger, dl.Leases, ifaces4, ifaces6)
 
 	return nil
 }
 
 // addDBLeases adds leases to the server.
-func (srv *DHCPServer) addDBLeases(ctx context.Context, leases []*dbLease) {
+func (idx *leaseIndex) addDBLeases(
+	ctx context.Context,
+	logger *slog.Logger,
+	leases []*dbLease,
+	ifaces4 dhcpInterfacesV4,
+	ifaces6 dhcpInterfacesV6,
+) {
 	var v4, v6 uint
 	for i, l := range leases {
 		lease, err := l.toInternal()
 		if err != nil {
-			srv.logger.WarnContext(ctx, "converting lease", "idx", i, slogutil.KeyError, err)
+			logger.WarnContext(ctx, "converting lease", "idx", i, slogutil.KeyError, err)
 
 			continue
 		}
 
-		iface, err := srv.ifaceForAddr(l.IP)
+		iface, err := ifaceForAddr(l.IP, ifaces4, ifaces6)
 		if err != nil {
-			srv.logger.WarnContext(ctx, "searching lease iface", "idx", i, slogutil.KeyError, err)
+			logger.WarnContext(ctx, "searching lease iface", "idx", i, slogutil.KeyError, err)
 
 			continue
 		}
 
-		err = srv.leases.add(lease, iface)
+		err = idx.add(ctx, logger, lease, iface)
 		if err != nil {
-			srv.logger.WarnContext(ctx, "adding lease", "idx", i, slogutil.KeyError, err)
+			logger.WarnContext(ctx, "adding lease", "idx", i, slogutil.KeyError, err)
 
 			continue
 		}
@@ -155,27 +166,25 @@ func (srv *DHCPServer) addDBLeases(ctx context.Context, leases []*dbLease) {
 	}
 
 	// TODO(e.burkov):  Group by interface.
-	srv.logger.InfoContext(ctx, "loaded leases", "v4", v4, "v6", v6, "total", len(leases))
+	logger.InfoContext(ctx, "loaded leases", "v4", v4, "v6", v6, "total", len(leases))
 }
 
 // writeDB writes leases to the database file.  It expects the
 // [DHCPServer.leasesMu] to be locked.
-func (srv *DHCPServer) dbStore(ctx context.Context) (err error) {
+func (idx *leaseIndex) dbStore(ctx context.Context, logger *slog.Logger) (err error) {
 	defer func() { err = errors.Annotate(err, "writing db: %w") }()
 
 	dl := &dataLeases{
 		// Avoid writing null into the database file if there are no leases.
-		Leases:  make([]*dbLease, 0, srv.leases.len()),
+		Leases:  make([]*dbLease, 0, idx.len()),
 		Version: dataVersion,
 	}
 
-	srv.leases.rangeLeases(func(l *Lease) (cont bool) {
+	for l := range idx.rangeLeases {
 		lease := toDBLease(l)
 		i, _ := slices.BinarySearchFunc(dl.Leases, lease, (*dbLease).compareNames)
 		dl.Leases = slices.Insert(dl.Leases, i, lease)
-
-		return true
-	})
+	}
 
 	buf, err := json.Marshal(dl)
 	if err != nil {
@@ -183,13 +192,13 @@ func (srv *DHCPServer) dbStore(ctx context.Context) (err error) {
 		return err
 	}
 
-	err = maybe.WriteFile(srv.dbFilePath, buf, databasePerm)
+	err = maybe.WriteFile(idx.dbFilePath, buf, databasePerm)
 	if err != nil {
 		// Don't wrap the error since it's informative enough as is.
 		return err
 	}
 
-	srv.logger.InfoContext(ctx, "stored leases", "num", len(dl.Leases), "file", srv.dbFilePath)
+	logger.InfoContext(ctx, "stored leases", "num", len(dl.Leases), "file", idx.dbFilePath)
 
 	return nil
 }

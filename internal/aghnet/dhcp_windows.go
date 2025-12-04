@@ -2,9 +2,18 @@
 
 package aghnet
 
-import "github.com/AdguardTeam/AdGuardHome/internal/aghos"
+import (
+	"context"
+	"log/slog"
 
-func checkOtherDHCP(ifaceName string) (ok4, ok6 bool, err4, err6 error) {
+	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
+)
+
+func checkOtherDHCP(
+	_ context.Context,
+	_ *slog.Logger,
+	ifaceName string,
+) (ok4, ok6 bool, err4, err6 error) {
 	return false,
 		false,
 		aghos.Unsupported("CheckIfOtherDHCPServersPresentV4"),

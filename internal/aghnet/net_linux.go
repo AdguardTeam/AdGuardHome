@@ -4,15 +4,18 @@ package aghnet
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/netip"
 	"os"
 	"strings"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/golibs/osutil/executil"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/google/renameio/v2/maybe"
 	"golang.org/x/sys/unix"
@@ -21,7 +24,7 @@ import (
 // dhcpсdConf is the name of /etc/dhcpcd.conf file in the root filesystem.
 const dhcpcdConf = "etc/dhcpcd.conf"
 
-func canBindPrivilegedPorts() (can bool, err error) {
+func canBindPrivilegedPorts(ctx context.Context, l *slog.Logger) (can bool, err error) {
 	res, err := unix.PrctlRetInt(
 		unix.PR_CAP_AMBIENT,
 		unix.PR_CAP_AMBIENT_IS_SET,
@@ -33,7 +36,11 @@ func canBindPrivilegedPorts() (can bool, err error) {
 		if errors.Is(err, unix.EINVAL) {
 			// Older versions of Linux kernel do not support this.  Print a
 			// warning and check admin rights.
-			log.Info("warning: cannot check capability cap_net_bind_service: %s", err)
+			l.WarnContext(
+				ctx,
+				"checking capability cap_net_bind_service",
+				slogutil.KeyError, err,
+			)
 		} else {
 			return false, err
 		}
@@ -104,7 +111,11 @@ func (n interfaceName) ifacesStaticConfig(r io.Reader) (sub []string, cont bool,
 	return sub, true, s.Err()
 }
 
-func ifaceHasStaticIP(ifaceName string) (has bool, err error) {
+func ifaceHasStaticIP(
+	_ context.Context,
+	_ executil.CommandConstructor,
+	ifaceName string,
+) (has bool, err error) {
 	// TODO(a.garipov): Currently, this function returns the first definitive
 	// result.  So if /etc/dhcpcd.conf has and /etc/network/interfaces has no
 	// static IP configuration, it will return true.  Perhaps this is not the
@@ -148,9 +159,14 @@ func findIfaceLine(s *bufio.Scanner, name string) (ok bool) {
 }
 
 // ifaceSetStaticIP configures the system to retain its current IP on the
-// interface through dhcpcd.conf.
-func ifaceSetStaticIP(ifaceName string) (err error) {
-	ipNet := GetSubnet(ifaceName)
+// interface through dhcpcd.conf.  l and cmdCons must not be nil.
+func ifaceSetStaticIP(
+	ctx context.Context,
+	l *slog.Logger,
+	cmdCons executil.CommandConstructor,
+	ifaceName string,
+) (err error) {
+	ipNet := GetSubnet(ctx, l, ifaceName)
 	if !ipNet.Addr().IsValid() {
 		return errors.Error("can't get IP address")
 	}
@@ -160,7 +176,7 @@ func ifaceSetStaticIP(ifaceName string) (err error) {
 		return err
 	}
 
-	gatewayIP := GatewayIP(ifaceName)
+	gatewayIP := GatewayIP(ctx, l, cmdCons, ifaceName)
 	add := dhcpcdConfIface(ifaceName, ipNet, gatewayIP)
 
 	body = append(body, []byte(add)...)
