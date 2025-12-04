@@ -494,3 +494,160 @@ func TestDNSFilter_HandleCheckHost(t *testing.T) {
 		})
 	}
 }
+
+func TestDNSFilter_validateFilterURLForFetch(t *testing.T) {
+	dnsFilter, err := New(&Config{
+		FilteringEnabled:           true,
+		FiltersUpdateIntervalHours: 24,
+	}, nil)
+	require.NoError(t, err)
+	t.Cleanup(dnsFilter.Close)
+
+	testCases := []struct {
+		name    string
+		url     string
+		wantErr string
+	}{{
+		name:    "valid_http",
+		url:     "http://example.com/list",
+		wantErr: "",
+	}, {
+		name:    "valid_https",
+		url:     "https://example.com/blocklist",
+		wantErr: "",
+	}, {
+		name:    "valid_https_no_extension",
+		url:     "https://raw.githubusercontent.com/user/repo/main/hosts",
+		wantErr: "",
+	}, {
+		name:    "valid_https_with_extension",
+		url:     "https://example.com/filter.txt",
+		wantErr: "",
+	}, {
+		name:    "invalid_scheme_ftp",
+		url:     "ftp://example.com/list",
+		wantErr: "invalid url scheme",
+	}, {
+		name:    "invalid_scheme_file",
+		url:     "file:///path/to/file",
+		wantErr: "invalid url scheme",
+	}, {
+		name:    "empty_host",
+		url:     "https:///path",
+		wantErr: "empty url host",
+	}, {
+		name:    "invalid_url",
+		url:     "not a url",
+		wantErr: "invalid URI for request",
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := dnsFilter.validateFilterURLForFetch(tc.url)
+
+			if tc.wantErr == "" {
+				assert.NoError(t, err)
+			} else {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tc.wantErr)
+			}
+		})
+	}
+}
+
+func TestDNSFilter_handleFetchTitle(t *testing.T) {
+	const titleEndpoint = "/control/filtering/fetch_title"
+
+	filtersDir := t.TempDir()
+
+	// Set up test HTTP servers with different filter content.
+	var (
+		filterWithTitle    string
+		filterWithoutTitle string
+		filterHTML         string
+	)
+
+	filterWithTitle = serveFiltersLocally(t, []byte(`! Title: Test Filter
+||example.org^
+||example.com^`))
+
+	filterWithoutTitle = serveFiltersLocally(t, []byte(`||example.org^
+||example.com^`))
+
+	filterHTML = serveFiltersLocally(t, []byte(`<html><body>Not a filter</body></html>`))
+
+	handlers := map[string]http.HandlerFunc{}
+
+	confModifier := &aghtest.ConfigModifier{}
+	dnsFilter, err := New(&Config{
+		Logger:                     testLogger,
+		FilteringEnabled:           true,
+		FiltersUpdateIntervalHours: 24,
+		ConfModifier:               confModifier,
+		DataDir:                    filtersDir,
+		HTTPClient:                 http.DefaultClient,
+		HTTPReg: &aghtest.Registrar{
+			OnRegister: func(_, url string, handler http.HandlerFunc) {
+				handlers[url] = handler
+			},
+		},
+	}, nil)
+	require.NoError(t, err)
+	t.Cleanup(dnsFilter.Close)
+
+	dnsFilter.RegisterFilteringHandlers()
+	require.Contains(t, handlers, titleEndpoint)
+
+	testCases := []struct {
+		name      string
+		url       string
+		wantTitle string
+		wantCode  int
+	}{{
+		name:      "with_title",
+		url:       filterWithTitle,
+		wantTitle: "Test Filter",
+		wantCode:  http.StatusOK,
+	}, {
+		name:      "without_title",
+		url:       filterWithoutTitle,
+		wantTitle: "",
+		wantCode:  http.StatusOK,
+	}, {
+		name:      "html_content",
+		url:       filterHTML,
+		wantTitle: "",
+		wantCode:  http.StatusBadRequest,
+	}, {
+		name:      "invalid_url",
+		url:       "not-a-url",
+		wantTitle: "",
+		wantCode:  http.StatusBadRequest,
+	}, {
+		name:      "invalid_scheme",
+		url:       "ftp://example.com/list",
+		wantTitle: "",
+		wantCode:  http.StatusBadRequest,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			reqBody := filterTitleReq{URL: tc.url}
+			body, err := json.Marshal(reqBody)
+			require.NoError(t, err)
+
+			r := httptest.NewRequest(http.MethodPost, titleEndpoint, bytes.NewReader(body))
+			w := httptest.NewRecorder()
+
+			handlers[titleEndpoint].ServeHTTP(w, r)
+			assert.Equal(t, tc.wantCode, w.Code)
+
+			if tc.wantCode == http.StatusOK {
+				resp := &filterTitleResp{}
+				err = json.NewDecoder(w.Body).Decode(resp)
+				require.NoError(t, err)
+				assert.Equal(t, tc.wantTitle, resp.Title)
+			}
+		})
+	}
+}
