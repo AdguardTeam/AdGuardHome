@@ -8,7 +8,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/golibs/container"
@@ -208,23 +207,36 @@ func validateAccessSet(list *accessListJSON) (err error) {
 		return fmt.Errorf("validating blocked hosts: %w", err)
 	}
 
-	merged := allowed.Merge(disallowed)
-	err = merged.Validate()
-	if err != nil {
-		return fmt.Errorf("items in allowed and disallowed clients intersect: %w", err)
+	allowed = allowed.Intersection(allowed, disallowed)
+	if allowed.Len() == 0 {
+		return nil
 	}
 
-	return nil
+	return fmt.Errorf(
+		"items in allowed and disallowed clients intersect: %s",
+		container.MapSetToString(allowed),
+	)
 }
 
 // validateStrUniq returns an informative error if clients are not unique.
-func validateStrUniq(clients []string) (uc aghalg.UniqChecker[string], err error) {
-	uc = make(aghalg.UniqChecker[string], len(clients))
-	for _, c := range clients {
-		uc.Add(c)
+func validateStrUniq(clients []string) (m *container.MapSet[string], err error) {
+	var dup []string
+	m = container.NewMapSet[string]()
+	for _, client := range clients {
+		if m.Has(client) {
+			dup = append(dup, client)
+		}
+
+		m.Add(client)
 	}
 
-	return uc, uc.Validate()
+	if len(dup) != 0 {
+		slices.Sort(dup)
+
+		return nil, fmt.Errorf("duplicated values: %v", dup)
+	}
+
+	return m, nil
 }
 
 // handleAccessSet handles requests to the POST /control/access/set endpoint.

@@ -8,6 +8,8 @@ github.com/AdguardTeam/dnsproxy v0.78.1 h1:+/EZJI5X5qeks+s/Y4kQIMq5mBKaSW/jcYIsi
 github.com/AdguardTeam/dnsproxy v0.78.1/go.mod h1:uoOWRv2/FkZGlstG0r/+zwc1C3ypMgzeaeOCv7MTWWI=
 github.com/AdguardTeam/golibs v0.35.2 h1:GVlx/CiCz5ZXQmyvFrE3JyeGsgubE8f4rJvRshYJVVs=
 github.com/AdguardTeam/golibs v0.35.2/go.mod h1:p/l6tG7QCv+Hi5yVpv1oZInoatRGOWoyD1m+Ume+ZNY=
+github.com/AdguardTeam/golibs v0.35.3 h1:DI0ffHyL3tFZ2UBEji3Aah7IvFwM5nY5yZoGvs1bnPY=
+github.com/AdguardTeam/golibs v0.35.3/go.mod h1:9Y0yqUpwDNyHxCv4AaI42x5+qxYc7k5DWAfxtFOTn8o=
 github.com/AdguardTeam/urlfilter v0.22.1 h1:nC2x0MSNwmTsXMTPfs1Gv6GZXKmK7prlzgjCdnE4fR8=
 github.com/AdguardTeam/urlfilter v0.22.1/go.mod h1:+wUx7GApNWvFPALjNd5fTLix4PFvQF5Gprx6JDYwxfE=
 github.com/BurntSushi/toml v1.5.0 h1:W5quZX/G/csjUnuI8SUYlsHs9M38FC7znL0lIO+DvMg=
