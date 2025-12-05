@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"slices"
 	"sync"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
@@ -465,8 +466,10 @@ var config = &configuration{
 			}, {
 				Prefix: netip.MustParsePrefix("::1/128"),
 			}},
-			CacheEnabled: true,
-			CacheSize:    4 * 1024 * 1024,
+			CacheEnabled:             true,
+			CacheSize:                4 * 1024 * 1024,
+			CacheOptimisticAnswerTTL: timeutil.Duration(30 * time.Second),
+			CacheOptimisticMaxAge:    timeutil.Duration(12 * time.Hour),
 
 			EDNSClientSubnet: &dnsforward.EDNSClientSubnet{
 				CustomIP:  netip.Addr{},
