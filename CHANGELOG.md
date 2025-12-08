@@ -9,14 +9,21 @@ The format is based on [*Keep a Changelog*](https://keepachangelog.com/en/1.0.0/
 <!--
 ## [v0.108.0] – TBA
 
-## [v0.107.71] - 2025-12-17 (APPROX.)
+## [v0.107.72] - 2025-12-22 (APPROX.)
 
-See also the [v0.107.71 GitHub milestone][ms-v0.107.71].
+See also the [v0.107.72 GitHub milestone][ms-v0.107.72].
 
-[ms-v0.107.71]: https://github.com/AdguardTeam/AdGuardHome/milestone/106?closed=1
+[ms-v0.107.72]: https://github.com/AdguardTeam/AdGuardHome/milestone/107?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
+<!--
+NOTE: Add new changes ABOVE THIS COMMENT.
+-->
+
+## [v0.107.71] - 2025-12-08
+
+See also the [v0.107.71 GitHub milestone][ms-v0.107.71].
 
 ### Changed
 
@@ -48,9 +55,13 @@ In this release, the schema version has changed from 31 to 32.
 
     To roll back this change, set the `schema_version` back to `31`.
 
-<!--
-NOTE: Add new changes ABOVE THIS COMMENT.
--->
+### Fixed
+
+- Optimistic DNS cache not working ([#8148]).
+
+[#8148]: https://github.com/AdguardTeam/AdGuardHome/issues/8148
+
+[ms-v0.107.71]: https://github.com/AdguardTeam/AdGuardHome/milestone/106?closed=1
 
 ## [v0.107.70] - 2025-12-03
 
@@ -3411,11 +3422,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 [ms-v0.104.2]: https://github.com/AdguardTeam/AdGuardHome/milestone/28?closed=1
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.71...HEAD
-[v0.107.71]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.70...v0.107.71
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.72...HEAD
+[v0.107.72]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.71...v0.107.72
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.70...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.71...HEAD
+[v0.107.71]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.70...v0.107.71
 [v0.107.70]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.69...v0.107.70
 [v0.107.69]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.68...v0.107.69
 [v0.107.68]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.67...v0.107.68
