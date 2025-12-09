@@ -1,0 +1,55 @@
+.dropdown {
+    @media (min-width: 1024px) {
+        max-width: none;
+    }
+}
+
+.tooltip {
+    @media (min-width: 1024px) {
+        width: 456px;
+        max-width: none;
+    }
+}
+
+.tooltipTitle {
+    padding: 0 0 16px;
+    font-weight: var(--weight-semi-bold);
+}
+
+.tooltipItem {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 0;
+
+    &:last-child {
+        padding: 8px 0 0;
+    }
+
+    & code {
+        display: flex;
+        padding: 4px 8px;
+        align-items: center;
+        border-radius: 4px;
+        border: 1px solid var(--default-inactive-input-stroke);
+        background-color: var(--default-input-background);
+    }
+}
+
+.tooltipItemDot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    min-width: 24px;
+    height: 24px;
+
+    &:before {
+        content: "";
+        display: block;
+        width: 8px;
+        height: 8px;
+        background-color: var(--default-black-icons);
+        border-radius: 50%;
+    }
+}

@@ -3,7 +3,7 @@ import cn from 'clsx';
 
 import s from './Switch.module.pcss';
 
-type Props = {
+type Props = Omit<React.ComponentProps<'input'>, 'onChange' | 'type'> & {
     id: string;
     checked: boolean;
     disabled?: boolean;
@@ -16,7 +16,7 @@ type Props = {
 
 export const Switch = forwardRef(
     (
-        { id, checked, disabled, children, className, labelClassName, wrapperClassName, onChange }: Props,
+        { id, checked, disabled, children, className, labelClassName, wrapperClassName, onChange, ...rest }: Props,
         ref: ForwardedRef<HTMLInputElement>,
     ) => {
         const switchControls = (
@@ -29,6 +29,7 @@ export const Switch = forwardRef(
                     checked={checked}
                     disabled={disabled}
                     ref={ref}
+                    {...rest}
                 />
                 <div className={s.handler} />
                 {children && <div className={cn(s.label, labelClassName)}>{children}</div>}

@@ -16,6 +16,7 @@ export interface TableColumn<T = any> {
     header: {
         text: string;
         className?: string;
+        render?: () => ReactNode;
     };
     accessor?: keyof T | ((row: T) => any);
     render?: (value: any, row: T, index: number) => ReactNode;
@@ -66,6 +67,7 @@ export const Table = <T extends Record<string, any>>({
     defaultSort,
     onSortChange,
     getRowId = (row: T, index: number) => index,
+    className,
 }: TableProps<T>) => {
     const [state, setState] = useState<TableState>({
         currentPage: 0,
@@ -214,7 +216,7 @@ export const Table = <T extends Record<string, any>>({
     return (
         <div className={s.tableContainer}>
             <div className={s.tableMain}>
-                <div className={s.table}>
+                <div className={cn(s.table, className)}>
                     <div className={s.tableHeader}>
                         {columns.map((column) => (
                             <div
@@ -225,9 +227,13 @@ export const Table = <T extends Record<string, any>>({
                                 })}
                                 onClick={() => sortable && column.sortable && handleSort(column.key)}
                             >
-                                <span className={cn(theme.text.t3, theme.text.condenced, theme.text.semibold)}>
-                                    {column.header.text}
-                                </span>
+                                {column.header.render ? (
+                                    column.header.render()
+                                ) : (
+                                    <span className={cn(theme.text.t3, theme.text.condenced, theme.text.semibold)}>
+                                        {column.header.text}
+                                    </span>
+                                )}
 
                                 {sortable && column.sortable && (
                                     <span>

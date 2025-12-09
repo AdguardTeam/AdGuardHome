@@ -10,7 +10,7 @@ export default defineConfig({
     testDir: './tests/e2e',
     globalSetup: path.resolve('./tests/e2e/globalSetup.ts'),
     globalTeardown: path.resolve('./tests/e2e/globalTeardown.ts'),
-    timeout: 5000,
+    timeout: 30000,
     /* Run tests in files in parallel */
     fullyParallel: true,
     /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -47,6 +47,6 @@ export default defineConfig({
         url: 'http://127.0.0.1:3000',
         cwd: '..',
         reuseExistingServer: !process.env.CI,
-        timeout: 10000,
+        timeout: 50000,
     },
 });

@@ -78,7 +78,6 @@ func main() {
 	}
 
 	// TODO(ik):  Support multiple projects in .twosky.json - add PROJECT_ID env var to select between 'home' and 'home_v2'.
-	conf := errors.Must(readTwoskyConfig())
 	homeConf, servicesConf, err := readTwoskyConfig()
 	errors.Check(err)
 

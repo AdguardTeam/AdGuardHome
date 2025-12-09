@@ -525,6 +525,23 @@ class Api {
         return this.makeRequest(path, method, parameters);
     }
 
+    REWRITE_SETTINGS = { path: 'rewrite/settings', method: 'GET' };
+
+    REWRITE_SETTINGS_UPDATE = { path: 'rewrite/settings/update', method: 'PUT' };
+
+    getRewriteSettings() {
+        const { path, method } = this.REWRITE_SETTINGS;
+        return this.makeRequest(path, method);
+    }
+
+    updateRewriteSettings(config: { enabled: boolean }) {
+        const { path, method } = this.REWRITE_SETTINGS_UPDATE;
+        const parameters = {
+            data: config,
+        };
+        return this.makeRequest(path, method, parameters);
+    }
+
     // Blocked services
     BLOCKED_SERVICES_GET = { path: 'blocked_services/get', method: 'GET' };
 

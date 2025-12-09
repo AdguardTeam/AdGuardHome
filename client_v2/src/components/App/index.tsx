@@ -14,6 +14,7 @@ import { Blocklists } from 'panel/components/FilterLists/Blocklists';
 import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from 'panel/helpers/localStorageHelper';
 
 import { Allowlists } from 'panel/components/FilterLists/Allowlists';
+import { DNSRewrites } from 'panel/components/FilterLists/DNSRewrites';
 import Toasts from '../Toasts';
 import i18n from '../../i18n';
 import { THEMES } from '../../helpers/constants';
@@ -54,6 +55,11 @@ const ROUTES: RouteConfig[] = [
     {
         path: '/allowlists',
         component: Allowlists,
+        exact: true,
+    },
+    {
+        path: '/dns_rewrites',
+        component: DNSRewrites,
         exact: true,
     },
 ];

@@ -19,6 +19,8 @@ type Props = {
     cancelId?: string;
     customFooter?: ReactNode;
     wrapClassName?: string;
+    submitTestId?: string;
+    cancelTestId?: string;
 };
 
 export const ConfirmDialog = ({
@@ -34,6 +36,8 @@ export const ConfirmDialog = ({
     customFooter,
     wrapClassName,
     cancelText,
+    submitTestId,
+    cancelTestId,
 }: Props) => (
     <Dialog
         mask
@@ -48,6 +52,7 @@ export const ConfirmDialog = ({
             <div className={theme.dialog.footer}>
                 <Button
                     id={submitId}
+                    data-testid={submitTestId}
                     variant={buttonVariant}
                     size="small"
                     onClick={onConfirm}
@@ -58,6 +63,7 @@ export const ConfirmDialog = ({
 
                 <Button
                     id={cancelId}
+                    data-testid={cancelTestId}
                     variant="secondary"
                     size="small"
                     onClick={onClose}

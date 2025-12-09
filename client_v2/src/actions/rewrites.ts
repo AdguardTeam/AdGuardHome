@@ -77,3 +77,34 @@ export const deleteRewrite = (config: any) => async (dispatch: any) => {
         dispatch(deleteRewriteFailure());
     }
 };
+
+export const getRewriteSettingsRequest = createAction('GET_REWRITE_SETTINGS_REQUEST');
+export const getRewriteSettingsFailure = createAction('GET_REWRITE_SETTINGS_FAILURE');
+export const getRewriteSettingsSuccess = createAction('GET_REWRITE_SETTINGS_SUCCESS');
+
+export const getRewriteSettings = () => async (dispatch: any) => {
+    dispatch(getRewriteSettingsRequest());
+    try {
+        const data = await apiClient.getRewriteSettings();
+        dispatch(getRewriteSettingsSuccess(data));
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(getRewriteSettingsFailure());
+    }
+};
+
+export const updateRewriteSettingsRequest = createAction('UPDATE_REWRITE_SETTINGS_REQUEST');
+export const updateRewriteSettingsFailure = createAction('UPDATE_REWRITE_SETTINGS_FAILURE');
+export const updateRewriteSettingsSuccess = createAction('UPDATE_REWRITE_SETTINGS_SUCCESS');
+
+export const updateRewriteSettings = (config: { enabled: boolean }) => async (dispatch: any) => {
+    dispatch(updateRewriteSettingsRequest());
+    try {
+        await apiClient.updateRewriteSettings(config);
+        dispatch(updateRewriteSettingsSuccess(config));
+        dispatch(addSuccessToast(i18next.t('rewrite_settings_updated')));
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(updateRewriteSettingsFailure());
+    }
+};

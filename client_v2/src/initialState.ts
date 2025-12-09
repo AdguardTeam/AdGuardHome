@@ -162,16 +162,20 @@ export type RewritesData = {
     processingAdd: boolean;
     processingDelete: boolean;
     processingUpdate: boolean;
+    processingSettings: boolean;
     isModalOpen: boolean;
     modalType: string;
     currentRewrite?: {
         answer: string;
         domain: string;
+        enabled: boolean;
     };
     list: {
         answer: string;
         domain: string;
+        enabled: boolean;
     }[];
+    enabled: boolean;
 };
 
 export type NormalizedTopClients = {
@@ -580,9 +584,11 @@ export const initialState: RootState = {
         processingAdd: false,
         processingDelete: false,
         processingUpdate: false,
+        processingSettings: false,
         isModalOpen: false,
         modalType: '',
         list: [],
+        enabled: true,
     },
     services: {
         processing: true,

@@ -64,8 +64,8 @@
       "zh-cn": "简体中文",
       "zh-tw": "正體中文（台灣）"
     }
- },
- {
+  },
+  {
     "project_id": "hostlists-registry",
     "base_locale": "en",
     "localizable_files": [
