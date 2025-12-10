@@ -664,7 +664,7 @@
     "cache_enabled_desc": "DNS 응답을 로컬에 저장합니다.",
     "cache_size": "캐시 크기",
     "cache_size_validation": "활성화된 경우 캐시 크기는 0보다 커야 합니다.",
-    "cache_size_desc": "DNS 캐시 크기 (바이트).",
+    "cache_size_desc": "DNS 캐시 크기 (바이트)",
     "cache_ttl_min_override": "최소 TTL (초) 무시",
     "cache_ttl_max_override": "최대 TTL (초) 무시",
     "enter_cache_size": "캐시 크기를 입력하세요",

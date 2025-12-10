@@ -6,16 +6,18 @@ import (
 	"net/netip"
 
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 )
 
-// serveV4 handles the ethernet packet of IPv4 type.  rw and pkt must not be
-// nil.
+// serveV4 handles the ethernet packet of IPv4 type. iface and pkt must not be
+// nil.  iface and fd must not be nil.  pkt must be an IPv4 packet.
 func (srv *DHCPServer) serveV4(
 	ctx context.Context,
-	rw responseWriter4,
+	iface *dhcpInterfaceV4,
 	pkt gopacket.Packet,
+	fd *frameData,
 ) (err error) {
 	defer func() { err = errors.Annotate(err, "serving dhcpv4: %w") }()
 
@@ -42,37 +44,36 @@ func (srv *DHCPServer) serveV4(
 		// message.
 		//
 		// See https://datatracker.ietf.org/doc/html/rfc2131#section-3.
-		return fmt.Errorf("dhcpv4: message type: %w", errors.ErrNoValue)
+		return fmt.Errorf("message type: %w", errors.ErrNoValue)
 	}
 
-	return srv.handleDHCPv4(ctx, rw, typ, req)
+	return iface.handleDHCPv4(ctx, typ, req, fd)
 }
 
 // handleDHCPv4 handles the DHCPv4 message of the given type.  The DHCPDISCOVER
 // messages are handled by all interfaces concurrently, as those offer addresses
 // for the independent networks.  The DHCPREQUEST, DHCPRELEASE, and DHCPDECLINE
-// messages are handled by the server itself as it should pick the appropriate
-// interface according to the client's choice.  req must not be nil, typ should
-// be one of:
+// messages are handled by the appropriate interface according to the client's
+// choice.  req and fd must not be nil, typ should be one of:
 //   - [layers.DHCPMsgTypeDiscover]
 //   - [layers.DHCPMsgTypeRequest]
 //   - [layers.DHCPMsgTypeRelease]
 //   - [layers.DHCPMsgTypeDecline]
-func (srv *DHCPServer) handleDHCPv4(
+func (iface *dhcpInterfaceV4) handleDHCPv4(
 	ctx context.Context,
-	rw responseWriter4,
 	typ layers.DHCPMsgType,
 	req *layers.DHCPv4,
+	fd *frameData,
 ) (err error) {
 	switch typ {
 	case layers.DHCPMsgTypeDiscover:
-		srv.handleDiscover(ctx, rw, req)
+		iface.handleDiscover(ctx, req, fd)
 	case layers.DHCPMsgTypeRequest:
-		srv.handleRequest(ctx, rw, req)
+		iface.handleRequest(ctx, req, fd)
 	case layers.DHCPMsgTypeRelease:
-		srv.handleRelease(ctx, req)
+		iface.handleRelease(ctx, req)
 	case layers.DHCPMsgTypeDecline:
-		srv.handleDecline(ctx, req)
+		iface.handleDecline(ctx, req)
 	default:
 		// TODO(e.burkov):  Handle DHCPINFORM.
 		return fmt.Errorf("dhcpv4: request type: %w: %v", errors.ErrBadEnumValue, typ)
@@ -81,98 +82,334 @@ func (srv *DHCPServer) handleDHCPv4(
 	return nil
 }
 
-// handleDiscover handles the DHCPv4 message of DHCPDISCOVER type.  rw must not
-// be nil, req must be a DHCPDISCOVER message.
-func (srv *DHCPServer) handleDiscover(ctx context.Context, rw responseWriter4, req *layers.DHCPv4) {
-	// TODO(e.burkov):  Check existing leases, either allocated or offered.
-
-	for _, iface := range srv.interfaces4 {
-		go iface.handleDiscover(ctx, rw, req)
-	}
-}
-
-// handleRequest handles the DHCPv4 message of DHCPREQUEST type.  rw must not be
-// nil, req must be a DHCPREQUEST message.
+// handleRequest handles the DHCPv4 message of DHCPREQUEST type.  req must be a
+// DHCPREQUEST message.  req and fd must not be nil.
 //
 // See https://datatracker.ietf.org/doc/html/rfc2131#section-4.3.2.
 //
 // TODO(e.burkov):  Remove allocated leases after client have chosen one.
-func (srv *DHCPServer) handleRequest(ctx context.Context, rw responseWriter4, req *layers.DHCPv4) {
+func (iface *dhcpInterfaceV4) handleRequest(
+	ctx context.Context,
+	req *layers.DHCPv4,
+	fd *frameData,
+) {
 	srvID, hasSrvID := serverID4(req)
 	reqIP, hasReqIP := requestedIPv4(req)
+
+	l := iface.common.logger
 
 	switch {
 	case hasSrvID && !srvID.IsUnspecified():
 		// If the DHCPREQUEST message contains a server identifier option, the
 		// message is in response to a DHCPOFFER message.  Otherwise, the
 		// message is a request to verify or extend an existing lease.
-		iface, ok := srv.interfaces4.findInterface(srvID)
-		if !ok {
-			srv.logger.DebugContext(ctx, "skipping selecting request", "serverid", srvID)
+		if !iface.subnet.Contains(srvID) {
+			l.DebugContext(ctx, "skipping selecting request", "serverid", srvID)
 
 			return
 		}
 
-		iface.handleSelecting(ctx, rw, req, reqIP)
+		iface.handleSelecting(ctx, req, fd, reqIP)
 	case hasReqIP && !reqIP.IsUnspecified():
 		// Requested IP address option MUST be filled in with client's notion of
 		// its previously assigned address.
-		iface, ok := srv.interfaces4.findInterface(reqIP)
-		if !ok {
+		if !iface.subnet.Contains(reqIP) {
 			// If the DHCP server detects that the client is on the wrong net
 			// then the server SHOULD send a DHCPNAK message to the client.
-			srv.logger.DebugContext(ctx, "declining init-reboot request", "requestedip", reqIP)
-			iface.respondNAK(ctx, rw, req)
+			l.DebugContext(ctx, "declining init-reboot request", "requestedip", reqIP)
+			iface.respondNAK(ctx, req, fd)
 
 			return
 		}
 
-		iface.handleInitReboot(ctx, rw, req, reqIP)
+		iface.handleInitReboot(ctx, req, fd, reqIP)
 	default:
 		// Server identifier MUST NOT be filled in, requested IP address option
 		// MUST NOT be filled in.
 		ip, _ := netip.AddrFromSlice(req.ClientIP.To4())
-		iface, ok := srv.interfaces4.findInterface(ip)
-		if !ok {
-			srv.logger.DebugContext(ctx, "skipping renew request", "clientip", ip)
+		if !iface.subnet.Contains(ip) {
+			l.DebugContext(ctx, "skipping renew request", "clientip", ip)
 
 			return
 		}
 
-		iface.handleRenew(ctx, rw, req, ip)
+		iface.handleRenew(ctx, req, fd, ip)
 	}
 }
 
-// handleDecline handles the DHCPv4 message of DHCPDECLINE type.  req must be a
+// handleDiscover handles messages of type DHCPDISCOVER.  req must be a
+// DHCPDISCOVER message, fd must not be nil.
+func (iface *dhcpInterfaceV4) handleDiscover(
+	ctx context.Context,
+	req *layers.DHCPv4,
+	fd *frameData,
+) {
+	l := iface.common.logger
+	mac := req.ClientHWAddr
+	mk := macToKey(mac)
+
+	// Check if there's an existing lease for this MAC address.
+	iface.common.indexMu.Lock()
+	defer iface.common.indexMu.Unlock()
+
+	lease, hasLease := iface.common.leases[mk]
+	if hasLease {
+		reqIP, hasReqIP := requestedIPv4(req)
+		if hasReqIP && reqIP != lease.IP {
+			l.DebugContext(ctx, "different requested ip", "requested", reqIP, "lease", lease.IP)
+		}
+
+		iface.respondOffer(ctx, req, fd, lease)
+
+		return
+	}
+
+	// TODO(e.burkov):  Allocate a new lease.
+	lease, err := iface.allocateLease(ctx, mac)
+	if err != nil {
+		l.ErrorContext(ctx, "allocating a lease", "error", err)
+
+		return
+	}
+
+	// Send DHCPOFFER with new lease.
+	iface.respondOffer(ctx, req, fd, lease)
+}
+
+// handleSelecting handles messages of type DHCPREQUEST in SELECTING state.  req
+// must be a DHCPREQUEST message, reqIP must be a valid IPv4 address, fd must
+// not be nil.
+func (iface *dhcpInterfaceV4) handleSelecting(
+	ctx context.Context,
+	req *layers.DHCPv4,
+	fd *frameData,
+	reqIP netip.Addr,
+) {
+	l := iface.common.logger
+
+	if !reqIP.Is4() {
+		l.DebugContext(ctx, "bad requested address", "requestedip", reqIP)
+
+		return
+	}
+
+	ciaddr, ok := netip.AddrFromSlice(req.ClientIP)
+	if ok && !ciaddr.IsUnspecified() {
+		l.DebugContext(ctx, "non-zero ciaddr in selecting request", "ciaddr", ciaddr)
+
+		return
+	}
+
+	mac := req.ClientHWAddr
+	mk := macToKey(mac)
+
+	iface.common.indexMu.Lock()
+	defer iface.common.indexMu.Unlock()
+
+	lease, hasLease := iface.common.leases[mk]
+	if !hasLease {
+		l.DebugContext(ctx, "no reserved lease", "clienthwaddr", mac)
+		iface.respondNAK(ctx, req, fd)
+
+		return
+	}
+
+	if lease.IP != reqIP {
+		l.DebugContext(ctx, "selecting request mismatched", "requested", reqIP, "lease", lease.IP)
+		iface.respondNAK(ctx, req, fd)
+
+		return
+	}
+
+	// Commit the lease and send ACK.
+	iface.commitLease(ctx, lease, hostname4(req))
+	iface.respondACK(ctx, req, fd, lease)
+}
+
+// handleInitReboot handles messages of type DHCPREQUEST in INIT-REBOOT state.
+// req must be a DHCPREQUEST message, reqIP must be a valid IPv4 address, fd
+// must not be nil.
+func (iface *dhcpInterfaceV4) handleInitReboot(
+	ctx context.Context,
+	req *layers.DHCPv4,
+	fd *frameData,
+	reqIP netip.Addr,
+) {
+	l := iface.common.logger
+
+	if !reqIP.Is4() {
+		l.DebugContext(ctx, "bad requested address", "requestedip", reqIP)
+
+		return
+	}
+
+	// ciaddr must be zero.  The client is seeking to verify a previously
+	// allocated, cached configuration.
+	ciaddr, _ := netip.AddrFromSlice(req.ClientIP)
+	if ciaddr.IsValid() && !ciaddr.IsUnspecified() {
+		l.DebugContext(ctx, "unexpected ciaddr in init-reboot request", "ciaddr", ciaddr)
+
+		return
+	}
+
+	// Check if the lease exists and matches.
+	mac := req.ClientHWAddr
+	mk := macToKey(mac)
+
+	iface.common.indexMu.Lock()
+	defer iface.common.indexMu.Unlock()
+
+	lease, hasLease := iface.common.leases[mk]
+	if !hasLease {
+		// If the DHCP server has no record of this client, then it MUST remain
+		// silent, and MAY output a warning to the network administrator.
+		l.WarnContext(ctx, "no existing lease", "mac", mac)
+
+		return
+	}
+
+	if lease.IP != reqIP {
+		l.WarnContext(ctx, "init-reboot request mismatched", "requested", reqIP, "lease", lease.IP)
+		iface.respondNAK(ctx, req, fd)
+
+		return
+	}
+
+	// Commit the lease and send ACK.
+	iface.commitLease(ctx, lease, hostname4(req))
+	iface.respondACK(ctx, req, fd, lease)
+}
+
+// handleRenew handles messages of type DHCPREQUEST in RENEWING or REBINDING
+// state.  req must be a DHCPREQUEST message, ip should be a previously leased
+// address, fd must not be nil.
+func (iface *dhcpInterfaceV4) handleRenew(
+	ctx context.Context,
+	req *layers.DHCPv4,
+	fd *frameData,
+	ip netip.Addr,
+) {
+	l := iface.common.logger
+
+	// Check if the lease exists and matches.
+	mac := req.ClientHWAddr
+	mk := macToKey(mac)
+
+	iface.common.indexMu.Lock()
+	defer iface.common.indexMu.Unlock()
+
+	lease, hasLease := iface.common.leases[mk]
+	if !hasLease {
+		// If the DHCP server has no record of this client, then it MUST remain
+		// silent, and MAY output a warning to the network administrator.
+		l.InfoContext(ctx, "no existing lease", "mac", mac)
+
+		// TODO(e.burkov):  Investigate if we should respond with NAK.
+		return
+	}
+
+	if lease.IP != ip {
+		l.DebugContext(ctx, "renew request mismatched", "ciaddr", ip, "lease", lease.IP)
+		iface.respondNAK(ctx, req, fd)
+
+		return
+	}
+
+	// Commit the lease and send ACK.
+	iface.commitLease(ctx, lease, hostname4(req))
+	iface.respondACK(ctx, req, fd, lease)
+}
+
+// handleDecline handles messages of type DHCPDECLINE.  req must be a
 // DHCPDECLINE message.
-func (srv *DHCPServer) handleDecline(ctx context.Context, req *layers.DHCPv4) {
+//
+// TODO(e.burkov):  Log the message option, as the request should include one.
+//
+// TODO(e.burkov):  Consider DRY'ing this with [dhcpInterfaceV4.handleRelease].
+func (iface *dhcpInterfaceV4) handleDecline(ctx context.Context, req *layers.DHCPv4) {
+	l := iface.common.logger
+
 	reqIP, hasReqIP := requestedIPv4(req)
 	if !hasReqIP {
-		srv.logger.DebugContext(ctx, "skipping decline message without requested ip")
+		l.DebugContext(ctx, "skipping decline message without requested ip")
 
 		return
 	}
 
-	iface, ok := srv.interfaces4.findInterface(reqIP)
-	if !ok {
-		srv.logger.DebugContext(ctx, "skipping decline message", "requestedip", reqIP)
+	if !iface.subnet.Contains(reqIP) {
+		l.DebugContext(ctx, "skipping decline message", "requestedip", reqIP)
 
 		return
 	}
 
-	iface.handleDecline(ctx, reqIP, req)
+	// Check if the lease exists and matches.
+	mac := req.ClientHWAddr
+	mk := macToKey(mac)
+
+	iface.common.indexMu.Lock()
+	defer iface.common.indexMu.Unlock()
+
+	lease, hasLease := iface.common.leases[mk]
+	if !hasLease {
+		l.ErrorContext(ctx, "decline message for non-existing lease", "mac", mac)
+
+		return
+	}
+
+	if lease.IP != reqIP {
+		l.ErrorContext(ctx, "decline mismatch", "ip", reqIP, "lease", lease.IP)
+
+		return
+	}
+
+	l.WarnContext(ctx, "lease reported to be unavailable", "ip", lease.IP)
+
+	err := iface.common.index.remove(ctx, l, lease, iface.common)
+	if err != nil {
+		l.ErrorContext(ctx, "removing lease", slogutil.KeyError, err)
+
+		return
+	}
+
+	iface.common.blockLease(lease, iface.clock)
 }
 
-// handleRelease handles the DHCPv4 message of DHCPRELEASE type.  req must be a
+// handleRelease handles messages of type DHCPRELEASE.  req must be a
 // DHCPRELEASE message.
-func (srv *DHCPServer) handleRelease(ctx context.Context, req *layers.DHCPv4) {
+func (iface *dhcpInterfaceV4) handleRelease(ctx context.Context, req *layers.DHCPv4) {
+	l := iface.common.logger
+
 	ip, _ := netip.AddrFromSlice(req.ClientIP.To4())
-	iface, ok := srv.interfaces4.findInterface(ip)
-	if !ok {
-		srv.logger.DebugContext(ctx, "skipping release message", "clientip", ip)
+	if !iface.subnet.Contains(ip) {
+		l.DebugContext(ctx, "skipping release message", "clientip", ip)
 
 		return
 	}
 
-	iface.handleRelease(ctx, ip, req)
+	// Check if the lease exists and matches.
+	mac := req.ClientHWAddr
+	mk := macToKey(mac)
+
+	iface.common.indexMu.Lock()
+	defer iface.common.indexMu.Unlock()
+
+	lease, hasLease := iface.common.leases[mk]
+	if !hasLease {
+		l.WarnContext(ctx, "release message for non-existing lease", "mac", mac)
+
+		return
+	}
+
+	if lease.IP != ip {
+		l.WarnContext(ctx, "release mismatch", "ip", ip, "lease", lease.IP)
+
+		return
+	}
+
+	err := iface.common.index.remove(ctx, l, lease, iface.common)
+	if err != nil {
+		l.ErrorContext(ctx, "removing lease", slogutil.KeyError, err)
+
+		return
+	}
 }

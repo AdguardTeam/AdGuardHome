@@ -664,7 +664,7 @@
     "cache_enabled_desc": "Зберігати відповіді DNS локально.",
     "cache_size": "Розмір кешу",
     "cache_size_validation": "Розмір кешу має бути більшим за нуль, коли цю функцію увімкнуто.",
-    "cache_size_desc": "Розмір кешу DNS (в байтах).",
+    "cache_size_desc": "Розмір кешу DNS (у байтах).",
     "cache_ttl_min_override": "Змінити мінімальний TTL",
     "cache_ttl_max_override": "Змінити максимальний TTL",
     "enter_cache_size": "Введіть розмір кешу (байт)",
