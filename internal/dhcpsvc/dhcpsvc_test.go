@@ -1,12 +1,20 @@
 package dhcpsvc_test
 
 import (
+	"cmp"
+	"io/fs"
 	"net/netip"
+	"os"
+	"path"
+	"path/filepath"
+	"testing"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/golibs/timeutil"
+	"github.com/stretchr/testify/require"
 )
 
 // testLocalTLD is a common local TLD for tests.
@@ -15,8 +23,11 @@ const testLocalTLD = "local"
 // testTimeout is a common timeout for tests and contexts.
 const testTimeout time.Duration = 10 * time.Second
 
-// discardLog is a logger to discard test output.
-var discardLog = slogutil.NewDiscardLogger()
+// testLogger is a common logger for tests.
+var testLogger = slogutil.NewDiscardLogger()
+
+// testdata is a filesystem containing data for tests.
+var testdata = os.DirFS("testdata")
 
 // testInterfaceConf is a common set of interface configurations for tests.
 var testInterfaceConf = map[string]*dhcpsvc.InterfaceConfig{
@@ -56,4 +67,51 @@ var testInterfaceConf = map[string]*dhcpsvc.InterfaceConfig{
 			RASLAACOnly:   true,
 		},
 	},
+}
+
+// newTempDB copies the leases database file located in the testdata FS, under
+// tb.Name()/leases.json, to a temporary directory and returns the path to the
+// copied file.
+func newTempDB(tb testing.TB) (dst string) {
+	tb.Helper()
+
+	const filename = "leases.json"
+
+	data, err := fs.ReadFile(testdata, path.Join(tb.Name(), filename))
+	require.NoError(tb, err)
+
+	dst = filepath.Join(tb.TempDir(), filename)
+
+	err = os.WriteFile(dst, data, dhcpsvc.DatabasePerm)
+	require.NoError(tb, err)
+
+	return dst
+}
+
+// newTestDHCPServer creates a new DHCPServer for testing.  It uses the default
+// values of config in case it's nil or some of its fields aren't set.
+func newTestDHCPServer(t *testing.T, conf *dhcpsvc.Config) (srv *dhcpsvc.DHCPServer) {
+	t.Helper()
+
+	conf = cmp.Or(conf, &dhcpsvc.Config{
+		Enabled: true,
+	})
+	if conf.Interfaces == nil {
+		conf.Interfaces = testInterfaceConf
+	}
+	conf.NetworkDeviceManager = cmp.Or[dhcpsvc.NetworkDeviceManager](
+		conf.NetworkDeviceManager,
+		dhcpsvc.EmptyNetworkDeviceManager{},
+	)
+	conf.Logger = cmp.Or(conf.Logger, testLogger)
+	conf.LocalDomainName = cmp.Or(conf.LocalDomainName, testLocalTLD)
+	if conf.DBFilePath == "" {
+		conf.DBFilePath = filepath.Join(t.TempDir(), "leases.json")
+	}
+	conf.ICMPTimeout = cmp.Or(conf.ICMPTimeout, testTimeout)
+
+	srv, err := dhcpsvc.New(testutil.ContextWithTimeout(t, testTimeout), conf)
+	require.NoError(t, err)
+
+	return srv
 }
