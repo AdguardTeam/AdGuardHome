@@ -65,7 +65,7 @@
         "@babel/plugin-transform-runtime": "^7.24.3",
         "@babel/preset-env": "^7.24.5",
         "@babel/preset-react": "^7.24.1",
-        "@playwright/test": "1.56.0",
+        "@playwright/test": "1.50.1",
         "@types/lodash": "^4.17.4",
         "@types/node": "^22.13.10",
         "@types/react": "^17.0.80",
