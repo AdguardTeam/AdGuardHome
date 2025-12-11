@@ -10,6 +10,8 @@ github.com/AdguardTeam/golibs v0.35.3 h1:DI0ffHyL3tFZ2UBEji3Aah7IvFwM5nY5yZoGvs1
 github.com/AdguardTeam/golibs v0.35.3/go.mod h1:9Y0yqUpwDNyHxCv4AaI42x5+qxYc7k5DWAfxtFOTn8o=
 github.com/AdguardTeam/urlfilter v0.22.1 h1:nC2x0MSNwmTsXMTPfs1Gv6GZXKmK7prlzgjCdnE4fR8=
 github.com/AdguardTeam/urlfilter v0.22.1/go.mod h1:+wUx7GApNWvFPALjNd5fTLix4PFvQF5Gprx6JDYwxfE=
+github.com/AdguardTeam/urlfilter v0.22.2-0.20251211074528-26cc165b695f h1:1FimK3O9NowolOHm5PM9OrFcIRuQNLDs/NY7HyYVgrU=
+github.com/AdguardTeam/urlfilter v0.22.2-0.20251211074528-26cc165b695f/go.mod h1:Fl4eR1sOdx/1kdBRIY8JZHb91h7uab1Wxz4YzJlXTMw=
 github.com/BurntSushi/toml v1.5.0 h1:W5quZX/G/csjUnuI8SUYlsHs9M38FC7znL0lIO+DvMg=
 github.com/BurntSushi/toml v1.5.0/go.mod h1:ukJfTF/6rtPPRCnwkur4qwRxa8vTRFBF0uk2lLoLwho=
 github.com/Masterminds/semver/v3 v3.4.0 h1:Zog+i5UMtVoCU8oKka5P7i9q9HgrJeGzI9SA1Xbatp0=

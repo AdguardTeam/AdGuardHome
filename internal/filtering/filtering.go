@@ -876,11 +876,7 @@ func hostResultForOtherQType(dnsres *urlfilter.DNSResult) (res Result) {
 
 // matchHost is a low-level way to check only if host is filtered by rules,
 // skipping expensive safebrowsing and parental lookups.
-func (d *DNSFilter) matchHost(
-	host string,
-	rrtype uint16,
-	setts *Settings,
-) (res Result, err error) {
+func (d *DNSFilter) matchHost(host string, rrType uint16, setts *Settings) (res Result, err error) {
 	if !setts.FilteringEnabled {
 		return Result{}, nil
 	}
@@ -888,11 +884,11 @@ func (d *DNSFilter) matchHost(
 	ctx := context.TODO()
 
 	ufReq := &urlfilter.DNSRequest{
-		Hostname:         host,
-		SortedClientTags: setts.ClientTags,
-		ClientIP:         setts.ClientIP,
-		ClientName:       setts.ClientName,
-		DNSType:          rrtype,
+		ClientTags:        container.NewSortedSliceSet[string](setts.ClientTags...),
+		ClientIdentifiers: container.NewSortedSliceSet[string](setts.ClientName),
+		Hostname:          host,
+		ClientIP:          setts.ClientIP,
+		DNSType:           rrType,
 	}
 
 	d.engineLock.RLock()
@@ -928,7 +924,7 @@ func (d *DNSFilter) matchHost(
 		return Result{}, nil
 	}
 
-	res = d.matchHostProcessDNSResult(rrtype, dnsres)
+	res = d.matchHostProcessDNSResult(rrType, dnsres)
 	for _, r := range res.Rules {
 		d.logger.DebugContext(
 			ctx,

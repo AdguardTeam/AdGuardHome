@@ -5,7 +5,8 @@ go 1.25.5
 require (
 	github.com/AdguardTeam/dnsproxy v0.78.2
 	github.com/AdguardTeam/golibs v0.35.3
-	github.com/AdguardTeam/urlfilter v0.22.1
+	// TODO(d.kolyshev): !! Use tagged version.
+	github.com/AdguardTeam/urlfilter v0.22.2-0.20251211074528-26cc165b695f
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/ameshkov/dnscrypt/v2 v2.4.0
 	github.com/bluele/gcache v0.0.2
