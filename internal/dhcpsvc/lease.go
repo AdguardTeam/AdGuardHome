@@ -47,11 +47,11 @@ func (l *Lease) Clone() (clone *Lease) {
 	}
 }
 
-// eui48AddrLen is the length of a valid EUI-48 hardware address.
-const eui48AddrLen = 6
+// EUI48AddrLen is the length of a valid EUI-48 hardware address.
+const EUI48AddrLen = 6
 
 // blockedHardwareAddr is the hardware address used to mark a lease as blocked.
-var blockedHardwareAddr = make(net.HardwareAddr, eui48AddrLen)
+var blockedHardwareAddr = make(net.HardwareAddr, EUI48AddrLen)
 
 // IsBlocked returns true if the lease is blocked.
 func (l *Lease) IsBlocked() (blocked bool) {

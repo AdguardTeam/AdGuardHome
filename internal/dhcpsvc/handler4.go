@@ -222,7 +222,8 @@ func (iface *dhcpInterfaceV4) handleSelecting(
 	}
 
 	// Commit the lease and send ACK.
-	iface.commitLease(ctx, lease, hostname4(req))
+	lease.Hostname = hostname4(req)
+	iface.commitLease(ctx, lease)
 	iface.respondACK(ctx, req, fd, lease)
 }
 
@@ -276,7 +277,8 @@ func (iface *dhcpInterfaceV4) handleInitReboot(
 	}
 
 	// Commit the lease and send ACK.
-	iface.commitLease(ctx, lease, hostname4(req))
+	lease.Hostname = hostname4(req)
+	iface.commitLease(ctx, lease)
 	iface.respondACK(ctx, req, fd, lease)
 }
 
@@ -316,7 +318,8 @@ func (iface *dhcpInterfaceV4) handleRenew(
 	}
 
 	// Commit the lease and send ACK.
-	iface.commitLease(ctx, lease, hostname4(req))
+	lease.Hostname = hostname4(req)
+	iface.commitLease(ctx, lease)
 	iface.respondACK(ctx, req, fd, lease)
 }
 

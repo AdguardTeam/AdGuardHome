@@ -90,8 +90,8 @@ func newTempDB(tb testing.TB) (dst string) {
 
 // newTestDHCPServer creates a new DHCPServer for testing.  It uses the default
 // values of config in case it's nil or some of its fields aren't set.
-func newTestDHCPServer(t *testing.T, conf *dhcpsvc.Config) (srv *dhcpsvc.DHCPServer) {
-	t.Helper()
+func newTestDHCPServer(tb testing.TB, conf *dhcpsvc.Config) (srv *dhcpsvc.DHCPServer) {
+	tb.Helper()
 
 	conf = cmp.Or(conf, &dhcpsvc.Config{
 		Enabled: true,
@@ -106,12 +106,12 @@ func newTestDHCPServer(t *testing.T, conf *dhcpsvc.Config) (srv *dhcpsvc.DHCPSer
 	conf.Logger = cmp.Or(conf.Logger, testLogger)
 	conf.LocalDomainName = cmp.Or(conf.LocalDomainName, testLocalTLD)
 	if conf.DBFilePath == "" {
-		conf.DBFilePath = filepath.Join(t.TempDir(), "leases.json")
+		conf.DBFilePath = filepath.Join(tb.TempDir(), "leases.json")
 	}
 	conf.ICMPTimeout = cmp.Or(conf.ICMPTimeout, testTimeout)
 
-	srv, err := dhcpsvc.New(testutil.ContextWithTimeout(t, testTimeout), conf)
-	require.NoError(t, err)
+	srv, err := dhcpsvc.New(testutil.ContextWithTimeout(tb, testTimeout), conf)
+	require.NoError(tb, err)
 
 	return srv
 }
