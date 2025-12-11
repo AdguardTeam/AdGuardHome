@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/netip"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/AdguardTeam/golibs/errors"
@@ -293,10 +294,11 @@ func (iface *dhcpInterfaceV4) buildResponse(
 	resp.Options = append(
 		resp.Options,
 		layers.NewDHCPOption(layers.DHCPOptMessageType, []byte{byte(msgType)}),
+		// TODO(e.burkov):  Use network device address.
 		layers.NewDHCPOption(layers.DHCPOptServerID, iface.gateway.AsSlice()),
 	)
 
-	appendLeaseTime(resp, iface.common.leaseTTL)
+	iface.appendLeaseTime(resp, l)
 	iface.updateOptions(req, resp)
 
 	// Add hostname option if the lease has a hostname.
@@ -337,7 +339,10 @@ func (iface *dhcpInterfaceV4) allocateLease(
 	mac net.HardwareAddr,
 ) (l *Lease, err error) {
 	for {
-		l = iface.reserveLease(ctx, mac)
+		l, err = iface.reserveLease(ctx, mac)
+		if err != nil {
+			return nil, err
+		}
 
 		var ok bool
 		ok, err = iface.addrChecker.IsAvailable(l.IP)
@@ -356,59 +361,75 @@ func (iface *dhcpInterfaceV4) allocateLease(
 // reserveLease reserves a lease for a client by its MAC-address.  l is nil if a
 // new lease can't be allocated.  mac must be a valid according to
 // [netutil.ValidateMAC].  index mutex must be locked.
-//
-// TODO(e.burkov):  Use context.
-func (iface *dhcpInterfaceV4) reserveLease(_ context.Context, mac net.HardwareAddr) (l *Lease) {
+func (iface *dhcpInterfaceV4) reserveLease(
+	ctx context.Context,
+	mac net.HardwareAddr,
+) (l *Lease, err error) {
 	nextIP := iface.common.nextIP()
-	if nextIP == (netip.Addr{}) {
-		l = iface.common.findExpiredLease(iface.clock.Now())
-		if l == nil {
-			return nil
+	if nextIP != (netip.Addr{}) {
+		l = &Lease{
+			HWAddr: slices.Clone(mac),
+			IP:     nextIP,
+			Expiry: iface.clock.Now().Add(iface.common.leaseTTL),
 		}
 
-		// TODO(e.burkov):  Move validation from index methods into server's
-		// methods and use index here.
-		delete(iface.common.leases, macToKey(l.HWAddr))
-
-		l.HWAddr = slices.Clone(mac)
-		iface.common.leases[macToKey(mac)] = l
-
-		return l
+		return l, nil
 	}
 
-	l = &Lease{
-		HWAddr: slices.Clone(mac),
-		IP:     nextIP,
+	l = iface.common.findExpiredLease(iface.clock.Now())
+	if l == nil {
+		return nil, errors.Error("no addresses available to lease")
 	}
 
-	return l
+	// TODO(e.burkov):  Move validation from index methods into server's
+	// methods and use index here.
+	delete(iface.common.leases, macToKey(l.HWAddr))
+
+	l.HWAddr = slices.Clone(mac)
+	iface.common.leases[macToKey(mac)] = l
+
+	idx := iface.common.index
+
+	delete(idx.byAddr, l.IP)
+	delete(idx.byName, strings.ToLower(l.Hostname))
+
+	err = idx.dbStore(ctx, iface.common.logger)
+	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
+		return nil, err
+	}
+
+	l.Hostname = ""
+	l.Expiry = iface.clock.Now().Add(iface.common.leaseTTL)
+
+	return l, nil
 }
 
-// IPv4DefaultTTL is the default Time to Live value in seconds as recommended by
-// RFC-1700.
-//
-// See https://datatracker.ietf.org/doc/html/rfc1700.
-const IPv4DefaultTTL = 64
-
 const (
-	// ServerPort is the standard DHCP server port.
-	//
-	// TODO(e.burkov):  !! reference RFC
-	ServerPort layers.UDPPort = 67
+	// IPv4DefaultTTL is the default Time to Live value in seconds as
+	// recommended by RFC 1700.
+	IPv4DefaultTTL = 64
 
-	// ClientPort is the standard DHCP client port.
-	//
-	// TODO(e.burkov):  !! reference RFC
-	ClientPort layers.UDPPort = 68
+	// IPProtoVersion is the IP internetwork general protocol version number as
+	// defined by RFC 1700.
+	IPProtoVersion = 4
+)
+
+// Port numbers for DHCPv4.
+//
+// See RFC 2131 Section 4.1.
+const (
+	// ServerPortV4 is the standard DHCPv4 server port.
+	ServerPortV4 layers.UDPPort = 67
+
+	// ClientPortV4 is the standard DHCPv4 client port.
+	ClientPortV4 layers.UDPPort = 68
 )
 
 // respond4 sends a DHCPv4 response.  fd and resp must not be nil.
 func respond4(fd *frameData, resp *layers.DHCPv4) (err error) {
+	// TODO(e.burkov):  Use pools for buffer and layers.
 	buf := gopacket.NewSerializeBuffer()
-	opts := gopacket.SerializeOptions{
-		FixLengths:       true,
-		ComputeChecksums: true,
-	}
 
 	eth := &layers.Ethernet{
 		SrcMAC:       fd.ether.SrcMAC,
@@ -416,24 +437,26 @@ func respond4(fd *frameData, resp *layers.DHCPv4) (err error) {
 		EthernetType: layers.EthernetTypeIPv4,
 	}
 	ip := &layers.IPv4{
-		Version:  4,
-		IHL:      5,
+		Version:  IPProtoVersion,
 		TTL:      IPv4DefaultTTL,
 		SrcIP:    net.IPv4zero.To4(),
 		DstIP:    net.IPv4bcast.To4(),
 		Protocol: layers.IPProtocolUDP,
 	}
 	udp := &layers.UDP{
-		SrcPort: ServerPort,
-		DstPort: ClientPort,
+		SrcPort: ServerPortV4,
+		DstPort: ClientPortV4,
 	}
 	_ = udp.SetNetworkLayerForChecksum(ip)
 
-	all := []gopacket.SerializableLayer{eth, ip, udp, resp}
+	opts := gopacket.SerializeOptions{
+		FixLengths:       true,
+		ComputeChecksums: true,
+	}
 
-	err = gopacket.SerializeLayers(buf, opts, all...)
+	err = gopacket.SerializeLayers(buf, opts, eth, ip, udp, resp)
 	if err != nil {
-		return err
+		return fmt.Errorf("constructing dhcp v4 response: %w", err)
 	}
 
 	return fd.device.WritePacketData(buf.Bytes())

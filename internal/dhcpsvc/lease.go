@@ -6,6 +6,8 @@ import (
 	"net/netip"
 	"slices"
 	"time"
+
+	"github.com/AdguardTeam/golibs/timeutil"
 )
 
 // Lease is a DHCP lease.
@@ -56,4 +58,19 @@ var blockedHardwareAddr = make(net.HardwareAddr, EUI48AddrLen)
 // IsBlocked returns true if the lease is blocked.
 func (l *Lease) IsBlocked() (blocked bool) {
 	return bytes.Equal(l.HWAddr, blockedHardwareAddr)
+}
+
+// updateExpiry updates the lease expiry time if the current time is past the
+// expiry.  For static leases, this operation is a no-op.
+func (l *Lease) updateExpiry(clock timeutil.Clock, ttl time.Duration) {
+	if l.IsStatic {
+		return
+	}
+
+	now := clock.Now()
+	if now.Before(l.Expiry) {
+		return
+	}
+
+	l.Expiry = now.Add(ttl)
 }

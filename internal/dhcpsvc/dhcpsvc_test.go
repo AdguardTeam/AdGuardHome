@@ -23,6 +23,9 @@ const testLocalTLD = "local"
 // testTimeout is a common timeout for tests and contexts.
 const testTimeout time.Duration = 10 * time.Second
 
+// testXid is a common transaction ID for DHCPv4 tests.
+const testXid = 1
+
 // testLogger is a common logger for tests.
 var testLogger = slogutil.NewDiscardLogger()
 

@@ -159,15 +159,15 @@ func (iface *dhcpInterfaceV4) handleDiscover(
 			l.DebugContext(ctx, "different requested ip", "requested", reqIP, "lease", lease.IP)
 		}
 
+		lease.updateExpiry(iface.clock, iface.common.leaseTTL)
 		iface.respondOffer(ctx, req, fd, lease)
 
 		return
 	}
 
-	// TODO(e.burkov):  Allocate a new lease.
 	lease, err := iface.allocateLease(ctx, mac)
 	if err != nil {
-		l.ErrorContext(ctx, "allocating a lease", "error", err)
+		l.ErrorContext(ctx, "allocating a lease", slogutil.KeyError, err)
 
 		return
 	}
