@@ -223,7 +223,14 @@ func (iface *dhcpInterfaceV4) handleSelecting(
 
 	// Commit the lease and send ACK.
 	lease.Hostname = hostname4(req)
-	iface.commitLease(ctx, lease)
+	err := iface.commitLease(ctx, lease)
+	if err != nil {
+		l.ErrorContext(ctx, "selecting request failed", slogutil.KeyError, err)
+		iface.respondNAK(ctx, req, fd)
+
+		return
+	}
+
 	iface.respondACK(ctx, req, fd, lease)
 }
 
@@ -278,7 +285,14 @@ func (iface *dhcpInterfaceV4) handleInitReboot(
 
 	// Commit the lease and send ACK.
 	lease.Hostname = hostname4(req)
-	iface.commitLease(ctx, lease)
+	err := iface.commitLease(ctx, lease)
+	if err != nil {
+		l.ErrorContext(ctx, "init-reboot request failed", slogutil.KeyError, err)
+		iface.respondNAK(ctx, req, fd)
+
+		return
+	}
+
 	iface.respondACK(ctx, req, fd, lease)
 }
 
@@ -319,7 +333,14 @@ func (iface *dhcpInterfaceV4) handleRenew(
 
 	// Commit the lease and send ACK.
 	lease.Hostname = hostname4(req)
-	iface.commitLease(ctx, lease)
+	err := iface.commitLease(ctx, lease)
+	if err != nil {
+		l.ErrorContext(ctx, "renew request failed", slogutil.KeyError, err)
+		iface.respondNAK(ctx, req, fd)
+
+		return
+	}
+
 	iface.respondACK(ctx, req, fd, lease)
 }
 
