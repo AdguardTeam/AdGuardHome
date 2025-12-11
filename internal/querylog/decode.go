@@ -684,7 +684,7 @@ var resultHandlers = map[string]logEntryHandler{
 	},
 }
 
-// resultDecHandlers calls a decode handler for key if there is one.
+// resultDecHandler calls a decode handler for key if there is one.
 func (l *queryLog) resultDecHandler(
 	ctx context.Context,
 	name string,
