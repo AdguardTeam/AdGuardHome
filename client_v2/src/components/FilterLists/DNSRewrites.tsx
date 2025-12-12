@@ -8,6 +8,7 @@ import { RootState } from 'panel/initialState';
 import theme from 'panel/lib/theme';
 import { getRewritesList, updateRewrite, getRewriteSettings, updateRewriteSettings } from 'panel/actions/rewrites';
 import { Icon } from 'panel/common/ui/Icon';
+import { ConfirmDialog } from 'panel/common/ui/ConfirmDialog';
 import { openModal } from 'panel/reducers/modals';
 import { DeleteRewriteModal } from 'panel/components/FilterLists/blocks/DeleteRewriteModal';
 import { ConfigureRewritesModal } from 'panel/components/FilterLists/blocks/ConfigureRewritesModal/ConfigureRewritesModal';
@@ -40,6 +41,9 @@ export const DNSRewrites = () => {
         processingSettings,
     } = rewrites;
 
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [targetEnabled, setTargetEnabled] = useState<boolean | null>(null);
+
     useEffect(() => {
         dispatch(getRewritesList());
         dispatch(getRewriteSettings());
@@ -66,6 +70,25 @@ export const DNSRewrites = () => {
             target: rewrite,
             update: updatedRewrite,
         }));
+    };
+
+    const openGlobalToggleConfirm = (value: boolean) => {
+        setTargetEnabled(value);
+        setIsConfirmOpen(true);
+    };
+
+    const closeGlobalToggleConfirm = () => {
+        setIsConfirmOpen(false);
+        setTargetEnabled(null);
+    };
+
+    const confirmGlobalToggle = () => {
+        if (targetEnabled === null) {
+            return;
+        }
+
+        dispatch(updateRewriteSettings({ enabled: targetEnabled }));
+        closeGlobalToggleConfirm();
     };
 
     return (
@@ -97,7 +120,7 @@ export const DNSRewrites = () => {
                         deleteRewrite={openDeleteRewriteModal}
                         editRewrite={openEditRewriteModal}
                         toggleRewrite={toggleRewrite}
-                        toggleAllRewrites={(enabled: boolean) => dispatch(updateRewriteSettings({ enabled }))}
+                        toggleAllRewrites={(value: boolean) => openGlobalToggleConfirm(value)}
                     />
                 </div>
 
@@ -106,6 +129,20 @@ export const DNSRewrites = () => {
                 <ConfigureRewritesModal modalId={MODAL_TYPE.EDIT_REWRITE} rewriteToEdit={currentRewrite} />
 
                 <DeleteRewriteModal rewriteToDelete={currentRewrite} setRewriteToDelete={setCurrentRewrite} />
+
+                {isConfirmOpen && targetEnabled !== null && (
+                    <ConfirmDialog
+                        onClose={closeGlobalToggleConfirm}
+                        title={intl.getMessage(targetEnabled ? 'enable_dns_rewrites' : 'disable_dns_rewrites')}
+                        text={intl.getMessage(targetEnabled ? 'all_rewrites_enabled' : 'all_rewrites_disabled')}
+                        buttonText={intl.getMessage(targetEnabled ? 'enable' : 'disable')}
+                        cancelText={intl.getMessage('cancel')}
+                        buttonVariant={targetEnabled ? 'primary' : 'danger'}
+                        onConfirm={confirmGlobalToggle}
+                        submitTestId={targetEnabled ? 'confirm-enable-rewrites' : 'confirm-disable-rewrites'}
+                        cancelTestId="cancel-toggle-rewrites"
+                    />
+                )}
             </div>
         </div>
     );

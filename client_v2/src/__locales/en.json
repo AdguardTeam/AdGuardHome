@@ -957,5 +957,9 @@
     "rewrites_tooltip_instructions_item2": "To redirect the domain name, enter the CNAME record of the target domain",
     "rewrites_tooltip_instructions_item3": "To keep only A records, enter",
     "rewrites_tooltip_instructions_item4": "To keep only AАAA records, enter",
-    "rewrite_settings_updated": "DNS rewrite settings successfully updated"
+    "rewrite_settings_updated": "DNS rewrite settings successfully updated",
+    "all_rewrites_disabled": "All custom DNS responses will be disabled",
+    "enable_dns_rewrites": "Enable DNS rewrites",
+    "all_rewrites_enabled": "All custom DNS responses will be enabled",
+    "enable": "Enable"
 }
