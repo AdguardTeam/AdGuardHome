@@ -963,5 +963,6 @@
     "all_rewrites_enabled": "All custom DNS responses will be enabled",
     "enable": "Enable",
     "sort_asc": "Sort from A-Z",
-    "sort_desc": "Sort from Z-A"
+    "sort_desc": "Sort from Z-A",
+    "all_domains": "All domains"
 }

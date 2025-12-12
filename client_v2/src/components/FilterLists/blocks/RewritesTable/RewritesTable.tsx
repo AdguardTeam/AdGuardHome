@@ -225,6 +225,18 @@ export const RewritesTable = ({
                 <SortDropdown value={sortDirection} onChange={setSortDirection} />
             </div>
 
+            <div className={s.allDomainsMobile}>
+                {intl.getMessage('all_domains')}
+
+                <Switch
+                    id="rewrite_global_enabled_mobile"
+                    data-testid="rewrite-global-toggle-mobile"
+                    checked={enabled}
+                    onChange={() => toggleAllRewrites(!enabled)}
+                    disabled={processingSettings}
+                />
+            </div>
+
             <ReactTable<Rewrite>
                 data={sortedList}
                 className={s.tableRewrites}
