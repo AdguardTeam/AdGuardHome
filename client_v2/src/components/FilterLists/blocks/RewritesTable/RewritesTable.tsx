@@ -221,7 +221,7 @@ export const RewritesTable = ({
 
     return (
         <>
-            <div className={s.sortDropdownMobile}>
+            <div className={cn(theme.pagination.wrapper, s.sortDropdownMobile)}>
                 <SortDropdown value={sortDirection} onChange={setSortDirection} />
             </div>
 
