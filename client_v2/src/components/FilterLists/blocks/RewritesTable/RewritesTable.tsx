@@ -1,10 +1,11 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import cn from 'clsx';
 
 import intl from 'panel/common/intl';
 import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from 'panel/helpers/localStorageHelper';
 import { Table as ReactTable, TableColumn } from 'panel/common/ui/Table';
 import { Icon } from 'panel/common/ui/Icon';
+import { SortDropdown } from 'panel/common/ui/SortDropdown';
 import theme from 'panel/lib/theme';
 import { Switch } from 'panel/common/controls/Switch';
 
@@ -42,10 +43,33 @@ export const RewritesTable = ({
     toggleRewrite,
     toggleAllRewrites,
 }: Props) => {
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
     const pageSize = useMemo(
         () => LocalStorageHelper.getItem(LOCAL_STORAGE_KEYS.BLOCKLIST_PAGE_SIZE) || DEFAULT_PAGE_SIZE,
         [],
     );
+
+    const sortedList = useMemo(() => {
+        const items = [...(list || [])];
+
+        items.sort((a, b) => {
+            const aDomain = a.domain.toLowerCase();
+            const bDomain = b.domain.toLowerCase();
+
+            if (aDomain < bDomain) {
+                return sortDirection === 'asc' ? -1 : 1;
+            }
+
+            if (aDomain > bDomain) {
+                return sortDirection === 'asc' ? 1 : -1;
+            }
+
+            return 0;
+        });
+
+        return items;
+    }, [list, sortDirection]);
 
     const columns: TableColumn<Rewrite>[] = useMemo(
         () => [
@@ -196,14 +220,20 @@ export const RewritesTable = ({
     };
 
     return (
-        <ReactTable<Rewrite>
-            data={list || []}
-            className={s.tableRewrites}
-            columns={columns}
-            emptyTable={emptyTableContent()}
-            loading={processing || processingAdd || processingDelete}
-            pageSize={pageSize}
-            onPageSizeChange={handlePageSizeChange}
-        />
+        <>
+            <div className={s.sortDropdownMobile}>
+                <SortDropdown value={sortDirection} onChange={setSortDirection} />
+            </div>
+
+            <ReactTable<Rewrite>
+                data={sortedList}
+                className={s.tableRewrites}
+                columns={columns}
+                emptyTable={emptyTableContent()}
+                loading={processing || processingAdd || processingDelete}
+                pageSize={pageSize}
+                onPageSizeChange={handlePageSizeChange}
+            />
+        </>
     );
 };
