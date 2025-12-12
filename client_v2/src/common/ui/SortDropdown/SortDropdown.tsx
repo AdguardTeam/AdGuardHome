@@ -59,4 +59,4 @@ export const SortDropdown = ({ value, onChange }: Props) => {
             </span>
         </Dropdown>
     );
-} 
+};
