@@ -45,9 +45,9 @@ type ServiceEntry struct {
 //
 // TODO(s.chzhen):  Move to the client package.
 type Settings struct {
+	ClientTags *container.SortedSliceSet[string]
 	ClientName string
 	ClientIP   netip.Addr
-	ClientTags []string
 
 	ServicesRules []ServiceEntry
 
@@ -884,8 +884,8 @@ func (d *DNSFilter) matchHost(host string, rrType uint16, setts *Settings) (res 
 	ctx := context.TODO()
 
 	ufReq := &urlfilter.DNSRequest{
-		ClientTags:        container.NewSortedSliceSet[string](setts.ClientTags...),
-		ClientIdentifiers: container.NewSortedSliceSet[string](setts.ClientName),
+		ClientTags:        setts.ClientTags,
+		ClientIdentifiers: container.NewSortedSliceSet(setts.ClientName),
 		Hostname:          host,
 		ClientIP:          setts.ClientIP,
 		DNSType:           rrType,

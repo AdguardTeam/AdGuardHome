@@ -15,6 +15,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/whois"
 	"github.com/AdguardTeam/dnsproxy/proxy"
+	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/hostsfile"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
@@ -793,7 +794,7 @@ func (s *Storage) ApplyClientFiltering(id string, addr netip.Addr, setts *filter
 	}
 
 	setts.ClientName = c.Name
-	setts.ClientTags = slices.Clone(c.Tags)
+	setts.ClientTags = container.NewSortedSliceSet(slices.Clone(c.Tags)...)
 	if !c.UseOwnSettings {
 		return
 	}
