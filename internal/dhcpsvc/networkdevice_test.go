@@ -2,10 +2,13 @@ package dhcpsvc_test
 
 import (
 	"context"
+	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
+	"github.com/stretchr/testify/require"
 )
 
 // testNetworkDeviceManager is a mock implementation of the
@@ -54,4 +57,56 @@ func (nd *testNetworkDevice) WritePacketData(data []byte) (err error) {
 // *testNetworkDevice.
 func (nd *testNetworkDevice) LinkType() (lt layers.LinkType) {
 	return nd.onLinkType()
+}
+
+// newTestNetworkDeviceManager creates a network device manager for testing.  It
+// requires that device opened have a deviceName.  The device itself has a link
+// type [layers.LinkTypeEthernet].  Incoming packets are received from inCh and
+// outgoing packets are sent to outCh.
+func newTestNetworkDeviceManager(
+	tb testing.TB,
+	deviceName string,
+) (ndMgr dhcpsvc.NetworkDeviceManager, inCh chan gopacket.Packet, outCh chan []byte) {
+	tb.Helper()
+
+	inCh = make(chan gopacket.Packet)
+	outCh = make(chan []byte)
+
+	pt := testutil.PanicT{}
+
+	dev := &testNetworkDevice{
+		onReadPacketData: func() (data []byte, ci gopacket.CaptureInfo, err error) {
+			pkt, ok := testutil.RequireReceive(pt, inCh, testTimeout)
+			require.True(pt, ok)
+
+			data = pkt.Data()
+			ci = gopacket.CaptureInfo{
+				Length:        len(data),
+				CaptureLength: len(data),
+			}
+
+			return data, ci, nil
+		},
+		onLinkType: func() (lt layers.LinkType) {
+			return layers.LinkTypeEthernet
+		},
+		onWritePacketData: func(data []byte) (err error) {
+			testutil.RequireSend(pt, outCh, data, testTimeout)
+
+			return nil
+		},
+	}
+
+	ndMgr = &testNetworkDeviceManager{
+		onOpen: func(
+			_ context.Context,
+			conf *dhcpsvc.NetworkDeviceConfig,
+		) (nd dhcpsvc.NetworkDevice, err error) {
+			require.Equal(pt, deviceName, conf.Name)
+
+			return dev, nil
+		},
+	}
+
+	return ndMgr, inCh, outCh
 }

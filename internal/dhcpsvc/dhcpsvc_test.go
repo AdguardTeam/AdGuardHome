@@ -14,14 +14,22 @@ import (
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/golibs/timeutil"
+	"github.com/google/gopacket"
+	"github.com/google/gopacket/layers"
 	"github.com/stretchr/testify/require"
 )
 
 // testLocalTLD is a common local TLD for tests.
 const testLocalTLD = "local"
 
+// testIfaceName is the name of the test network interface.
+const testIfaceName = "iface0"
+
 // testTimeout is a common timeout for tests and contexts.
-const testTimeout time.Duration = 10 * time.Second
+const testTimeout = 10 * time.Second
+
+// testLeaseTTL is the lease duration used in tests.
+const testLeaseTTL = 24 * time.Hour
 
 // testXid is a common transaction ID for DHCPv4 tests.
 const testXid = 1
@@ -72,6 +80,19 @@ var testInterfaceConf = map[string]*dhcpsvc.InterfaceConfig{
 	},
 }
 
+// disabledIPv6Config is a configuration of IPv6 part of the interfaces
+// configuration that is disabled.
+var disabledIPv6Config = &dhcpsvc.IPv6Config{Enabled: false}
+
+// fullLayersStack is the complete stack of layers expected to appear in the
+// DHCP response packets.
+var fullLayersStack = []gopacket.LayerType{
+	layers.LayerTypeEthernet,
+	layers.LayerTypeIPv4,
+	layers.LayerTypeUDP,
+	layers.LayerTypeDHCPv4,
+}
+
 // newTempDB copies the leases database file located in the testdata FS, under
 // tb.Name()/leases.json, to a temporary directory and returns the path to the
 // copied file.
@@ -99,9 +120,7 @@ func newTestDHCPServer(tb testing.TB, conf *dhcpsvc.Config) (srv *dhcpsvc.DHCPSe
 	conf = cmp.Or(conf, &dhcpsvc.Config{
 		Enabled: true,
 	})
-	if conf.Interfaces == nil {
-		conf.Interfaces = testInterfaceConf
-	}
+
 	conf.NetworkDeviceManager = cmp.Or[dhcpsvc.NetworkDeviceManager](
 		conf.NetworkDeviceManager,
 		dhcpsvc.EmptyNetworkDeviceManager{},
@@ -112,6 +131,9 @@ func newTestDHCPServer(tb testing.TB, conf *dhcpsvc.Config) (srv *dhcpsvc.DHCPSe
 		conf.DBFilePath = filepath.Join(tb.TempDir(), "leases.json")
 	}
 	conf.ICMPTimeout = cmp.Or(conf.ICMPTimeout, testTimeout)
+	if conf.Interfaces == nil {
+		conf.Interfaces = testInterfaceConf
+	}
 
 	srv, err := dhcpsvc.New(testutil.ContextWithTimeout(tb, testTimeout), conf)
 	require.NoError(tb, err)

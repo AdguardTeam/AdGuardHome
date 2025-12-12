@@ -198,7 +198,7 @@ func (srv *DHCPServer) newDHCPInterfaceV4(
 	return iface
 }
 
-// commitLease writes l into database.
+// commitLease writes l into database.  l must be valid and not expired.
 func (iface *dhcpInterfaceV4) commitLease(
 	ctx context.Context,
 	l *Lease,
@@ -385,11 +385,7 @@ func (iface *dhcpInterfaceV4) reserveLease(
 	// methods and use index here.
 	delete(iface.common.leases, macToKey(l.HWAddr))
 
-	l.HWAddr = slices.Clone(mac)
-	iface.common.leases[macToKey(mac)] = l
-
 	idx := iface.common.index
-
 	delete(idx.byAddr, l.IP)
 	delete(idx.byName, strings.ToLower(l.Hostname))
 
@@ -399,8 +395,12 @@ func (iface *dhcpInterfaceV4) reserveLease(
 		return nil, err
 	}
 
+	l.HWAddr = slices.Clone(mac)
 	l.Hostname = ""
-	l.Expiry = iface.clock.Now().Add(iface.common.leaseTTL)
+	l.IsStatic = false
+	l.updateExpiry(iface.clock, iface.common.leaseTTL)
+
+	iface.common.leases[macToKey(mac)] = l
 
 	return l, nil
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/AdguardTeam/golibs/timeutil"
 )
 
+// TODO(e.burkov):  Split into several tests for each part of the configuration.
 func TestConfig_Validate(t *testing.T) {
 	validIPv4Conf := &dhcpsvc.IPv4Config{
 		Enabled:       true,
