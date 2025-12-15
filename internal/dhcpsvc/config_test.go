@@ -11,6 +11,7 @@ import (
 	"github.com/AdguardTeam/golibs/timeutil"
 )
 
+// TODO(e.burkov):  Split into several tests for each part of the configuration.
 func TestConfig_Validate(t *testing.T) {
 	validIPv4Conf := &dhcpsvc.IPv4Config{
 		Enabled:       true,
@@ -121,7 +122,7 @@ func TestConfig_Validate(t *testing.T) {
 	}, {
 		conf: &dhcpsvc.Config{
 			Enabled:         true,
-			Logger:          discardLog,
+			Logger:          testLogger,
 			LocalDomainName: testLocalTLD,
 			Interfaces: map[string]*dhcpsvc.InterfaceConfig{
 				"eth0": {
@@ -136,7 +137,7 @@ func TestConfig_Validate(t *testing.T) {
 	}, {
 		conf: &dhcpsvc.Config{
 			Enabled:         true,
-			Logger:          discardLog,
+			Logger:          testLogger,
 			LocalDomainName: testLocalTLD,
 			Interfaces: map[string]*dhcpsvc.InterfaceConfig{
 				"eth0": {
@@ -151,7 +152,7 @@ func TestConfig_Validate(t *testing.T) {
 	}, {
 		conf: &dhcpsvc.Config{
 			Enabled:         true,
-			Logger:          discardLog,
+			Logger:          testLogger,
 			LocalDomainName: testLocalTLD,
 			Interfaces: map[string]*dhcpsvc.InterfaceConfig{
 				"eth0": {
@@ -167,7 +168,7 @@ func TestConfig_Validate(t *testing.T) {
 	}, {
 		conf: &dhcpsvc.Config{
 			Enabled:         true,
-			Logger:          discardLog,
+			Logger:          testLogger,
 			LocalDomainName: testLocalTLD,
 			Interfaces: map[string]*dhcpsvc.InterfaceConfig{
 				"eth0": {

@@ -159,15 +159,15 @@ func (iface *dhcpInterfaceV4) handleDiscover(
 			l.DebugContext(ctx, "different requested ip", "requested", reqIP, "lease", lease.IP)
 		}
 
+		lease.updateExpiry(iface.clock, iface.common.leaseTTL)
 		iface.respondOffer(ctx, req, fd, lease)
 
 		return
 	}
 
-	// TODO(e.burkov):  Allocate a new lease.
 	lease, err := iface.allocateLease(ctx, mac)
 	if err != nil {
-		l.ErrorContext(ctx, "allocating a lease", "error", err)
+		l.ErrorContext(ctx, "allocating a lease", slogutil.KeyError, err)
 
 		return
 	}
@@ -222,7 +222,15 @@ func (iface *dhcpInterfaceV4) handleSelecting(
 	}
 
 	// Commit the lease and send ACK.
-	iface.commitLease(ctx, lease, hostname4(req))
+	lease.Hostname = hostname4(req)
+	err := iface.commitLease(ctx, lease)
+	if err != nil {
+		l.ErrorContext(ctx, "selecting request failed", slogutil.KeyError, err)
+		iface.respondNAK(ctx, req, fd)
+
+		return
+	}
+
 	iface.respondACK(ctx, req, fd, lease)
 }
 
@@ -276,7 +284,15 @@ func (iface *dhcpInterfaceV4) handleInitReboot(
 	}
 
 	// Commit the lease and send ACK.
-	iface.commitLease(ctx, lease, hostname4(req))
+	lease.Hostname = hostname4(req)
+	err := iface.commitLease(ctx, lease)
+	if err != nil {
+		l.ErrorContext(ctx, "init-reboot request failed", slogutil.KeyError, err)
+		iface.respondNAK(ctx, req, fd)
+
+		return
+	}
+
 	iface.respondACK(ctx, req, fd, lease)
 }
 
@@ -316,7 +332,15 @@ func (iface *dhcpInterfaceV4) handleRenew(
 	}
 
 	// Commit the lease and send ACK.
-	iface.commitLease(ctx, lease, hostname4(req))
+	lease.Hostname = hostname4(req)
+	err := iface.commitLease(ctx, lease)
+	if err != nil {
+		l.ErrorContext(ctx, "renew request failed", slogutil.KeyError, err)
+		iface.respondNAK(ctx, req, fd)
+
+		return
+	}
+
 	iface.respondACK(ctx, req, fd, lease)
 }
 

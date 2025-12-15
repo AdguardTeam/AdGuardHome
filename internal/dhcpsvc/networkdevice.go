@@ -34,7 +34,27 @@ type NetworkDeviceManager interface {
 	Open(ctx context.Context, conf *NetworkDeviceConfig) (dev NetworkDevice, err error)
 }
 
-// NetworkDevice provides reading and writing packets to a network interface.
+// EmptyNetworkDeviceManager is an empty implementation of
+// [NetworkDeviceManager].
+type EmptyNetworkDeviceManager struct{}
+
+// type check
+var _ NetworkDeviceManager = EmptyNetworkDeviceManager{}
+
+// Open implements the [NetworkDeviceManager] interface for
+// [EmptyNetworkDeviceManager].  It always returns [EmptyNetworkDevice].
+func (EmptyNetworkDeviceManager) Open(
+	_ context.Context,
+	_ *NetworkDeviceConfig,
+) (nd NetworkDevice, err error) {
+	return nil, nil
+}
+
+// NetworkDevice provides an ability of reading and writing packets to a network
+// interface.  It used to generalize implementations for different platforms and
+// to simplify testing.
+//
+// It's based on [pcap.Handle].
 type NetworkDevice interface {
 	gopacket.PacketDataSource
 
@@ -43,6 +63,31 @@ type NetworkDevice interface {
 
 	// WritePacketData writes a serialized packet to the network interface.
 	WritePacketData(data []byte) (err error)
+}
+
+// EmptyNetworkDevice is an empty implementation of NetworkDevice.
+type EmptyNetworkDevice struct{}
+
+// type check
+var _ NetworkDevice = EmptyNetworkDevice{}
+
+// ReadPacketData implements the [gopacket.PacketDataSource] interface for
+// [EmptyNetworkDevice].  It always returns no data, empty capture info and a
+// nil error.
+func (EmptyNetworkDevice) ReadPacketData() (data []byte, ci gopacket.CaptureInfo, err error) {
+	return nil, gopacket.CaptureInfo{}, nil
+}
+
+// LinkType implements the [NetworkDevice] interface for [EmptyNetworkDevice].
+// It always returns [layers.LinkTypeNull].
+func (EmptyNetworkDevice) LinkType() (lt layers.LinkType) {
+	return layers.LinkTypeNull
+}
+
+// WritePacketData implements the [NetworkDevice] interface for
+// [EmptyNetworkDevice].  It always returns nil.
+func (EmptyNetworkDevice) WritePacketData(_ []byte) (err error) {
+	return nil
 }
 
 // frameData stores the Ethernet and IPv4 layers of the incoming packet, and
