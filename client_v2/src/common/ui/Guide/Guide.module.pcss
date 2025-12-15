@@ -1,0 +1,66 @@
+.title {
+    margin-bottom: 12px;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.inlineCopiedText {
+    display: inline-flex;
+}
+
+.dhcpLink {
+    color: #67B279;
+    font-size: 16px;
+    font-weight: 400;
+    text-decoration: none;
+}
+
+.dhcpLink:hover {
+    text-decoration: underline;
+}
+
+.text {
+    line-height: 1.7;
+}
+
+.text li,
+.text p {
+    margin-bottom: 5px;
+}
+
+.text ul,
+.text ol {
+    padding-left: 25px;
+}
+
+.paragraph {
+    margin-bottom: 10px;
+}
+
+.strongNumbers {
+    counter-reset: strong-counter;
+}
+
+.strongNumbers li {
+    counter-increment: strong-counter;
+    list-style: none;
+    position: relative;
+}
+
+.strongNumbers li::before {
+    content: counter(strong-counter) ".";
+    font-weight: bold;
+    position: absolute;
+    left: -25px;
+}
+
+.dnsLink {
+    color: #67B279;
+    font-size: 14px;
+    font-weight: 400;
+    text-decoration: none;
+}
+
+.dnsLink:hover {
+    text-decoration: underline;
+}

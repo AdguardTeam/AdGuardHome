@@ -1,0 +1,31 @@
+.container {
+    position: relative;
+    display: inline-flex;
+    cursor: pointer;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    background: var(--gray-10);
+    border: 1px solid var(--gray-30);
+    border-radius: 4px;
+    transition: var(--t2) border-color, var(--t2) background-color;
+    width: fit-content;
+}
+
+.text {
+    font-size: 14px;
+    color: var(--default-main-text);
+    cursor: pointer;
+    user-select: none;
+    word-break: break-all;
+    line-height: 1.4;
+}
+
+.icon {
+    width: 20px;
+    height: 20px;
+    color: var(--default-secondary-text);
+    cursor: pointer;
+    transition: var(--t2) color, var(--t2) transform;
+    flex-shrink: 0;
+}

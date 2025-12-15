@@ -1,0 +1,19 @@
+.form {
+    margin-top: 16px;
+}
+
+.form__group {
+    margin-bottom: 20px;
+}
+
+.form__group--settings {
+    margin-bottom: 24px;
+}
+
+.form__label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: var(--mcolor);
+}

@@ -89,7 +89,7 @@ export const MobileConfigForm = ({ initialValues }: Props) => {
 
     return (
         <form onSubmit={(e) => e.preventDefault()}>
-            <div>
+            <div className="form">
                 <div className="form__group form__group--settings">
                     <div className="row">
                         <div className="col">
@@ -175,7 +175,7 @@ export const MobileConfigForm = ({ initialValues }: Props) => {
                         name="protocol"
                         control={control}
                         render={({ field }) => (
-                            <Select {...field} label={t('protocol')} data-testid="mobile_config_protocol">
+                            <Select {...field} label={t('protocol')} data-testid="mobile_config_protocol" >
                                 <option value={MOBILE_CONFIG_LINKS.DOT}>{t('dns_over_tls')}</option>
                                 <option value={MOBILE_CONFIG_LINKS.DOH}>{t('dns_over_https')}</option>
                             </Select>
