@@ -12,20 +12,33 @@
     width: fit-content;
 }
 
+[data-theme="dark"] .container {
+    background: var(--gray-80);
+    border-color: var(--gray-70);
+}
+
 .text {
     font-size: 14px;
-    color: var(--default-main-text);
+    color: var(--gray-80);
     cursor: pointer;
     user-select: none;
     word-break: break-all;
     line-height: 1.4;
 }
 
+[data-theme="dark"] .text {
+    color: var(--gray-20);
+}
+
 .icon {
     width: 20px;
     height: 20px;
-    color: var(--default-secondary-text);
+    color: var(--gray-60);
     cursor: pointer;
     transition: var(--t2) color, var(--t2) transform;
     flex-shrink: 0;
+}
+
+[data-theme="dark"] .icon {
+    color: var(--gray-50);
 }

@@ -1008,5 +1008,7 @@
     "setup_devices_dns_other_list_5": "For more implementations, see <0>DNSCrypt</0> and <1>DNS privacy</1>.",
     "setup_devices_dns_macos_desc": "On an iOS 14 or macOS Big Sur device, you can download a special mobileconfig file  that adds <strong>DNS-over-HTTPS</strong> or <strong>DNS-over-TLS</strong> servers to the DNS settings.",
     "setup_devices_dns_macos_note": "For a complete iOS and macOS configuration form with all options, please visit the <0>Setup Guide</0> page.",
-    "client_id_faq": "Clients can be identified by their ClientID. To learn more, visit the <0>AdGuard Home GitHub</0>"
+    "client_id_faq": "Clients can be identified by their ClientID. To learn more, visit the <0>AdGuard Home GitHub</0>",
+    "device_type": "Device type",
+    "setup_guide_v2": "Setup guide"
 }

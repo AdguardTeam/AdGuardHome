@@ -12,11 +12,58 @@
     }
 
     &::-webkit-scrollbar-thumb {
-        background-color: var(--default-gray-icons);
+        background-color: var(--gray-60);
         border-radius: 10px;
     }
 }
 
 .listItem {
     font-size: 16px;
+}
+
+.selectIconContainer {
+    width: 24px;
+    height: 24px;
+    margin-right: 8px;
+}
+
+.selectValueContainer {
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+}
+
+.customOption {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    transition: all var(--t2);
+    padding: 12px 18px;
+
+    &:hover,
+    &.isFocused {
+        background-color: var(--gray-10);
+    }
+
+    &.isSelected {
+        background-color: var(--gray-20);
+    }
+}
+
+/* Dark theme support */
+[data-theme="dark"] .menuList {
+    &::-webkit-scrollbar-thumb {
+        background-color: var(--gray-50);
+    }
+}
+
+[data-theme="dark"] .customOption {
+    &:hover,
+    &.isFocused {
+        background-color: var(--gray-80);
+    }
+
+    &.isSelected {
+        background-color: var(--gray-70);
+    }
 }

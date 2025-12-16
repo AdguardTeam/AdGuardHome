@@ -9,10 +9,9 @@
 }
 
 .dhcpLink {
-    color: #67B279;
+    color: var(--product-primary-50);
     font-size: 16px;
     font-weight: 400;
-    text-decoration: none;
 }
 
 .dhcpLink:hover {
@@ -37,8 +36,16 @@
     margin-bottom: 10px;
 }
 
+.guideTitle {
+    margin-bottom: 20px;
+}
+
 .strongNumbers {
     counter-reset: strong-counter;
+}
+
+.guideList {
+    margin-top: 0;
 }
 
 .strongNumbers li {
@@ -55,12 +62,25 @@
 }
 
 .dnsLink {
-    color: #67B279;
-    font-size: 14px;
+    color: var(--product-primary-50);
+    font-size: 16px;
     font-weight: 400;
-    text-decoration: none;
 }
 
 .dnsLink:hover {
     text-decoration: underline;
+}
+
+.selectorDesc {
+    margin-bottom: 4px;
+    font-size: 14px;
+    color: var(--gray-60);
+}
+
+[data-theme="dark"] .selectorDesc {
+    color: var(--gray-50);
+}
+
+.deviceSelector {
+    margin-bottom: 32px;
 }

@@ -12,7 +12,7 @@ import { RootState } from '../../../initialState';
 
 interface renderLiProps {
     label?: string;
-    components?: (JSX.Element | { key: string; href: string; target?: string; rel?: string })[];
+    components?: JSX.Element[];
 }
 
 const renderLi = ({ label, components }: renderLiProps) => (
@@ -23,6 +23,7 @@ const renderLi = ({ label, components }: renderLiProps) => (
                     return props;
                 }
                 const {
+                    // eslint-disable-next-line react/prop-types
                     href,
                     target = '_blank',
                     rel = 'noopener noreferrer',
@@ -99,7 +100,6 @@ const getDnsPrivacyList = () => [
                         href: 'https://dnscrypt.info/stamps',
                     },
                 ],
-
             },
         ],
     },
@@ -180,6 +180,7 @@ const renderDnsPrivacyList = ({ title, list }: renderDnsPrivacyListProps) => (
 
 const getTabs = ({ tlsAddress, httpsAddress, showDnsPrivacyNotice, serverName, portHttps, t }: any) => ({
     Router: {
+        // eslint-disable-next-line react/display-name
         getTitle: () => (
             <p>
                 <Trans>install_devices_router_desc</Trans>
@@ -191,6 +192,7 @@ const getTabs = ({ tlsAddress, httpsAddress, showDnsPrivacyNotice, serverName, p
             'install_devices_router_list_2',
             'install_devices_router_list_3',
 
+            // eslint-disable-next-line react/jsx-key
             <Trans
                 components={[
                     <a href="#dhcp" key="0">
@@ -266,16 +268,20 @@ const getTabs = ({ tlsAddress, httpsAddress, showDnsPrivacyNotice, serverName, p
                         )}
                         {showDnsPrivacyNotice ? (
                             <div className="tab__paragraph">
-                                {renderLi({
-                                    label: 'setup_dns_notice',
-                                    components: [
-                                        {
-                                            key: '0',
-                                            href: 'https://github.com/AdguardTeam/AdguardHome/wiki/Encryption',
-                                        },
+                                <Trans
+                                    components={[
+                                        <a
+                                            href="https://github.com/AdguardTeam/AdguardHome/wiki/Encryption"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            key="0">
+                                            link
+                                        </a>,
+
                                         <code key="1">text</code>,
-                                    ],
-                                })}
+                                    ]}>
+                                    setup_dns_notice
+                                </Trans>
                             </div>
                         ) : (
                             <>

@@ -6,18 +6,22 @@
     font-size: 32px;
     font-weight: 700;
     margin-bottom: 12px;
-    color: var(--color-text-primary);
 }
 
 .pageDesc {
     font-size: 16px;
-    color: var(--color-text-primary);
 }
 
 .dnsTitle {
-    font-size: 24px;
+    font-size: 20px;
     margin-bottom: 12px;
     margin-top: 40px;
+}
+
+@media screen and (min-width: 768px) {
+    .dnsTitle {
+        font-size: 24px;
+    }
 }
 
 .dnsSubtitle {
@@ -28,17 +32,17 @@
 
 .guidePage {
     padding: 40px 16px;
+    max-width: 632px;
 }
 
 .guideTitle {
-    margin-bottom: 16px;
+    margin-bottom: 24px;
     font-size: 24px;
     font-weight: 700;
 }
 
 .guideDesc {
     margin-bottom: 24px;
-    color: var(--color-text-secondary);
 }
 
 .marginTop {
@@ -66,22 +70,10 @@
 }
 
 .address {
-    background: var(--color-background-secondary);
     padding: 8px 12px;
     margin: 4px 0;
     border-radius: 4px;
     font-family: monospace;
-    font-size: 14px;
-    color: var(--color-text-primary);
-}
-
-.noAddresses {
-    color: var(--color-text-secondary);
-    font-style: italic;
-    margin: 12px 0;
-    padding: 8px 12px;
-    background: var(--color-background-tertiary);
-    border-radius: 4px;
     font-size: 14px;
 }
 
@@ -93,11 +85,9 @@
     font-size: 16px;
     font-weight: 600;
     margin-bottom: 16px;
-    color: var(--color-text-primary);
 }
 
 .text {
-    color: var(--color-text-secondary);
     line-height: 1.5;
 }
 
@@ -122,15 +112,21 @@
 }
 
 .text code {
-    background: var(--color-background-secondary);
     padding: 2px 4px;
     border-radius: 3px;
     font-family: monospace;
     font-size: 0.9em;
+    background-color: var(--gray-10);
+    color: var(--gray-80);
+}
+
+[data-theme="dark"] .text code {
+    background-color: var(--gray-80);
+    color: var(--gray-20);
 }
 
 .text a {
-    color: var(--color-primary);
+    color: var(--gray-70);
     text-decoration: none;
 }
 
@@ -138,22 +134,24 @@
     text-decoration: underline;
 }
 
-/* iOS and macOS Configuration Section */
 .iosConfigSection {
     margin-top: 40px;
     padding-top: 32px;
-    border-top: 1px solid var(--color-border);
 }
 
 .iosConfigDesc {
-    color: var(--color-text-secondary);
     margin-bottom: 24px;
     line-height: 1.5;
 }
 
 .mobileConfigContainer {
-    background: var(--color-background-secondary);
     padding: 24px;
     border-radius: 8px;
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--gray-30);
+    background-color: var(--gray-05);
+}
+
+[data-theme="dark"] .mobileConfigContainer {
+    border-color: var(--gray-70);
+    background-color: var(--gray-85);
 }

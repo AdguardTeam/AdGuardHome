@@ -9,15 +9,9 @@ import { MOBILE_CONFIG_LINKS } from 'panel/helpers/constants';
 import { MobileConfigForm } from 'panel/components/SetupGuide/MobileConfigForm';
 import { IconType } from '../Icons';
 
-import { Tabs } from '../Tabs';
+import { Select } from '../../controls/Select';
 import { CopiedText } from '../CopiedText';
 import s from './Guide.module.pcss';
-
-const RouterTitle = () => (
-    <p>
-        <Trans>install_devices_router_desc</Trans>
-    </p>
-);
 
 const dnsDevicesConfig = [
     {
@@ -133,14 +127,16 @@ const renderDnsDevicesList = () => (
     <>
         {dnsDevicesConfig.map((section) => (
             <div className={s.paragraph} key={section.title}>
-                <strong>
-                    {section.title.startsWith('setup_') ? (
-                        <Trans>{section.title}</Trans>
-                    ) : (
-                        section.title
-                    )}
-                </strong>
-                <ul>
+                <div className={s.guideTitle}>
+                    <strong>
+                        {section.title.startsWith('setup_') ? (
+                            <Trans>{section.title}</Trans>
+                        ) : (
+                            section.title
+                        )}
+                    </strong>
+                </div>
+                <ul className={s.guideList}>
                     {section.list.map((item, index) => (
                         <li key={item.label || index}>
                             <Trans
@@ -204,7 +200,9 @@ const getDnsSettingsContent = (dnsAddresses: any, serverName?: string, portHttps
         {renderDnsDevicesList()}
 
         <div className={s.paragraph}>
-            <strong>iOS and macOS configuration</strong>
+            <div className={s.guideTitle}>
+                <strong>iOS and macOS configuration</strong>
+            </div>
             <div className="mb-3">
                 <Trans>setup_devices_dns_macos_desc</Trans>
             </div>
@@ -233,7 +231,6 @@ const DnsPrivacyTitle = ({ serverName, portHttps, t, dnsAddresses }: any) => (
 
 const getTabs = ({ tlsAddress, httpsAddress, showDnsPrivacyNotice, serverName, portHttps, t, dnsAddresses }: any) => ({
     Router: {
-        getTitle: RouterTitle,
         title: 'Router',
         icon: 'router',
         subtitle_1: 'setup_devices_router_desc_1',
@@ -241,8 +238,8 @@ const getTabs = ({ tlsAddress, httpsAddress, showDnsPrivacyNotice, serverName, p
             {
                 label: 'setup_devices_router_list_1',
                 components: [
-                    <CopiedText key="0" text="http://192.168.0.1/" />,
-                    <CopiedText key="1" text="http://192.168.1.1/" />,
+                    <CopiedText key="0" text="http://192.168.0.1" />,
+                    <CopiedText key="1" text="http://192.168.1.1" />,
                 ],
             },
             'setup_devices_router_list_2',
@@ -424,6 +421,13 @@ export const Guide = ({ dnsAddresses }: GuideProps) => {
         dnsAddresses,
     });
 
+    const selectOptions = Object.entries(tabsData).map(([key, value]: [string, any]) => ({
+        value: key,
+        label: value.title,
+        icon: value.icon as IconType,
+    }));
+
+
     const tabs = Object.entries(tabsData).map(([key, value]: [string, any]) => ({
         id: key,
         label: value.title,
@@ -439,9 +443,27 @@ export const Guide = ({ dnsAddresses }: GuideProps) => {
         icon: value.icon as IconType,
     }));
 
+    const selectedOption = selectOptions.find(option => option.value === activeTabLabel);
+    const activeTab = tabs.find(tab => tab.id === activeTabLabel);
+
     return (
-        <div>
-            <Tabs tabs={tabs} activeTab={activeTabLabel} onTabChange={setActiveTabLabel} />
+        <div className={s.deviceSelectorContainer}>
+            <p className={s.selectorDesc}>{t('device_type')}</p>
+            <div className={s.deviceSelector}>
+                <Select
+                    options={selectOptions}
+                    value={selectedOption}
+                    onChange={(option) => setActiveTabLabel(option.value)}
+                    showIcons={true}
+                    size="responsive"
+                    height="big"
+                />
+            </div>
+            {activeTab && (
+                <div className={s.deviceContent}>
+                    {activeTab.content}
+                </div>
+            )}
         </div>
     );
 };

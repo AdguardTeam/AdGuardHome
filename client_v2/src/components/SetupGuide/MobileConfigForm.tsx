@@ -2,8 +2,9 @@ import React from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { Controller, useForm } from 'react-hook-form';
 import i18next from 'i18next';
+import cn from 'clsx';
 
-import './MobileConfigForm.css';
+import s from './MobileConfigForm.module.pcss';
 
 import { FaqTooltip } from 'panel/common/ui/FaqTooltip';
 import { getPathWithQueryString } from '../../helpers/helpers';
@@ -99,8 +100,8 @@ export const MobileConfigForm = ({ initialValues }: Props) => {
 
     return (
         <form onSubmit={(e) => e.preventDefault()}>
-            <div className="form">
-                <div className="form__group form__group--settings">
+            <div className={s.form}>
+                <div className={cn(s.formGroup, s.formGroupSettings)}>
                     <Controller
                         name="host"
                         control={control}
@@ -119,7 +120,7 @@ export const MobileConfigForm = ({ initialValues }: Props) => {
                     />
                 </div>
                 {protocol === MOBILE_CONFIG_LINKS.DOH && (
-                    <div className="form__group form__group--settings">
+                    <div className={cn(s.formGroup, s.formGroupSettings)}>
                         <Controller
                             name="port"
                             control={control}
@@ -149,8 +150,8 @@ export const MobileConfigForm = ({ initialValues }: Props) => {
                 )}
 
 
-                <div className="form__group form__group--settings">
-                    <label htmlFor="clientId" className="form__label form__label--with-desc">
+                <div className={cn(s.formGroup, s.formGroupSettings)}>
+                    <label htmlFor="clientId" className={cn(s.formLabel, s.formLabelWithDesc)}>
                         {t('client_id')}
                         <FaqTooltip
                             text={
@@ -183,8 +184,8 @@ export const MobileConfigForm = ({ initialValues }: Props) => {
                     />
                 </div>
 
-                <div className="form__group form__group--settings">
-                    <label className="form__label">
+                <div className={cn(s.formGroup, s.formGroupSettings)}>
+                    <label className={s.formLabel}>
                         {t('protocol')}
                     </label>
                     <Controller

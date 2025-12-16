@@ -24,7 +24,7 @@ export const SetupGuide = () => {
     return (
         <div className={theme.layout.container}>
             <div className={s.header}>
-                <h1 className={s.pageTitle}>{t('setup_guide')}</h1>
+                <h1 className={s.pageTitle}>{t('setup_guide_v2')}</h1>
                 <div className={s.pageDesc}>{t('setup_guide_desc')}</div>
             </div>
 
@@ -66,9 +66,6 @@ export const SetupGuide = () => {
                             </li>
                         ))}
                     </ul>
-                    {plainAddresses.length === 0 && (
-                        <p className={s.noAddresses}>{t('no_plain_dns_addresses')}</p>
-                    )}
                 </div>
             </div>
         </div>
