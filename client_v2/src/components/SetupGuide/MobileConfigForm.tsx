@@ -4,9 +4,9 @@ import { Controller, useForm } from 'react-hook-form';
 import i18next from 'i18next';
 import cn from 'clsx';
 
-import s from './MobileConfigForm.module.pcss';
-
 import { FaqTooltip } from 'panel/common/ui/FaqTooltip';
+import { Input } from 'panel/common/controls/Input';
+import { Select } from 'panel/common/controls/Select';
 import { getPathWithQueryString } from '../../helpers/helpers';
 import { CLIENT_ID_LINK, MOBILE_CONFIG_LINKS, STANDARD_HTTPS_PORT } from '../../helpers/constants';
 import { toNumber } from '../../helpers/form';
@@ -16,9 +16,9 @@ import {
     validatePort,
     validateIsSafePort,
 } from '../../helpers/validators';
-import { Input } from 'panel/common/controls/Input';
-import { Select } from 'panel/common/controls/Select';
 import { Button } from '../../common/ui/Button';
+
+import s from './MobileConfigForm.module.pcss';
 
 const getDownloadLink = (host: string, clientId: string, protocol: string, invalid: boolean) => {
     if (!host || invalid) {
