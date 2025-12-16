@@ -664,7 +664,7 @@
     "cache_enabled_desc": "Menyimpan respons DNS secara lokal.",
     "cache_size": "Ukuran cache",
     "cache_size_validation": "Ukuran cache harus lebih besar dari nol saat diaktifkan.",
-    "cache_size_desc": "Ukuran tembolok DNS (dalam byte). Untuk mematikan caching, atur ke 0.",
+    "cache_size_desc": "Ukuran cache DNS (dalam byte).",
     "cache_ttl_min_override": "Tumpuk TTL minimum",
     "cache_ttl_max_override": "Tumpuk TTL maksimum",
     "enter_cache_size": "Masukkan ukuran cache (bytes)",

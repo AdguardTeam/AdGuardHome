@@ -11,15 +11,18 @@ type Props = {
     text: ReactNode;
     menuSize?: 'small' | 'large';
     spacing?: boolean;
+    menuClassName?: string;
+    overlayClassName?: string;
 };
 
-export const FaqTooltip = ({ text, menuSize = 'small', spacing = false }: Props) => {
+export const FaqTooltip = ({ text, menuSize = 'small', spacing = false, menuClassName, overlayClassName }: Props) => {
     return (
         <Dropdown
             trigger="hover"
+            overlayClassName={overlayClassName}
             menu={
                 <div
-                    className={cn(theme.dropdown.menu, s.menu, {
+                    className={cn(theme.dropdown.menu, s.menu, menuClassName, {
                         [s.menu_large]: menuSize === 'large',
                         [s.menu_spacing]: spacing,
                     })}>

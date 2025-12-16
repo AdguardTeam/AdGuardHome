@@ -22,6 +22,7 @@ export const Button = ({
     disabled,
     leftAddon,
     rightAddon,
+    ...rest
 }: ButtonProps) => (
     <button
         id={id}
@@ -37,7 +38,8 @@ export const Button = ({
             className,
         )}
         onClick={onClick}
-        disabled={disabled}>
+        disabled={disabled}
+        {...rest}>
         <div className={s.leftAddon}>{leftAddon}</div>
         {children}
         <div className={s.rightAddon}>{rightAddon}</div>

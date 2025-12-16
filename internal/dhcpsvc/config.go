@@ -20,6 +20,12 @@ type Config struct {
 	// contain valid interface names and configurations.
 	Interfaces map[string]*InterfaceConfig
 
+	// NetworkDeviceManager is the manager of network devices.  It must not be
+	// nil.
+	//
+	// TODO(e.burkov):  Set.
+	NetworkDeviceManager NetworkDeviceManager
+
 	// Logger will be used to log the DHCP events.  It must not be nil.
 	Logger *slog.Logger
 

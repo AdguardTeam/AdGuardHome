@@ -20,13 +20,13 @@ VERBOSE.MACRO = $${VERBOSE:-0}
 
 CHANNEL = development
 # TODO(ik): Update CLIENT_DIR to client_v2 for new frontend migration
-CLIENT_DIR = client
+CLIENT_DIR = client_v2
 DEPLOY_SCRIPT_PATH = not/a/real/path
 DIST_DIR = dist
 GOAMD64 = v1
 GOPROXY = https://proxy.golang.org|direct
 GOTELEMETRY = off
-GOTOOLCHAIN = go1.25.3
+GOTOOLCHAIN = go1.25.5
 GPG_KEY = devteam@adguard.com
 GPG_KEY_PASSPHRASE = not-a-real-password
 NPM = npm

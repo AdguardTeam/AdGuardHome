@@ -9,11 +9,13 @@ import (
 	"github.com/google/gopacket/layers"
 )
 
-// serveV6 handles the ethernet packet of IPv6 type.  rw and pkt must not be
-// nil.
+// serveV6 handles the ethernet packet of IPv6 type. iface and pkt must not be
+// nil.  ctx must contain a [frameData] accessible with [frameDataFromContext].
+//
+//lint:ignore U1000 TODO(e.burkov): Use.
 func (srv *DHCPServer) serveV6(
 	ctx context.Context,
-	rw responseWriter6,
+	_ *dhcpInterfaceV6,
 	pkt gopacket.Packet,
 ) (err error) {
 	defer func() { err = errors.Annotate(err, "serving dhcpv6: %w") }()
@@ -29,13 +31,12 @@ func (srv *DHCPServer) serveV6(
 
 	// TODO(e.burkov):  Handle duplicate TransactionID.
 
-	return srv.handleDHCPv6(ctx, rw, msg.MsgType, msg)
+	return srv.handleDHCPv6(ctx, msg.MsgType, msg)
 }
 
 // handleDHCPv6 handles the DHCPv6 message of the given type.
 func (srv *DHCPServer) handleDHCPv6(
 	_ context.Context,
-	_ responseWriter6,
 	typ layers.DHCPv6MsgType,
 	_ *layers.DHCPv6,
 ) (err error) {

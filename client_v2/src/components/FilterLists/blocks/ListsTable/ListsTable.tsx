@@ -16,6 +16,7 @@ const DEFAULT_PAGE_SIZE = 10;
 export const TABLE_IDS = {
     ALLOWLISTS_TABLE: 'allowlists_table',
     BLOCKLISTS_TABLE: 'blocklists_table',
+    DNSREWRITES_TABLE: 'dnsrewrites_table',
 } as const;
 
 type TableIdsType = (typeof TABLE_IDS)[keyof typeof TABLE_IDS];

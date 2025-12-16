@@ -29,6 +29,7 @@ const services = handleActions(
         [actions.getAllBlockedServicesSuccess.toString()]: (state, { payload }: any) => ({
             ...state,
             allServices: payload.blocked_services,
+            allGroups: payload.groups,
             processingAll: false,
         }),
 
@@ -51,6 +52,7 @@ const services = handleActions(
         processingSet: false,
         list: {},
         allServices: [],
+        allGroups: [],
     },
 );
 

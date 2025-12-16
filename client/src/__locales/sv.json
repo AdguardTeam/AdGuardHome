@@ -664,7 +664,7 @@
     "cache_enabled_desc": "Lagra DNS-svar lokalt.",
     "cache_size": "Cachestorlek",
     "cache_size_validation": "Cache-storleken måste vara större än noll när den är aktiverad.",
-    "cache_size_desc": "DNS-cachestorlek (i byte). För att inaktivera cache, ställ in till 0.",
+    "cache_size_desc": "DNS cachestorlek (i byte).",
     "cache_ttl_min_override": "Åsidosätt minsta TTL",
     "cache_ttl_max_override": "Åsidosätt maximal TTL",
     "enter_cache_size": "Ange cachestorlek (byte)",

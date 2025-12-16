@@ -14,7 +14,6 @@ import (
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/netutil"
-	"github.com/google/gopacket"
 )
 
 // DHCPServer is a DHCP server for both IPv4 and IPv6 address families.
@@ -28,10 +27,8 @@ type DHCPServer struct {
 	// logger logs common DHCP events.
 	logger *slog.Logger
 
-	// packetSource is the source of DHCP packets to process.
-	//
-	// TODO(e.burkov):  Implement and set.
-	packetSource gopacket.PacketSource
+	// deviceManager is the manager of network devices.
+	deviceManager NetworkDeviceManager
 
 	// localTLD is the top-level domain name to use for resolving DHCP clients'
 	// hostnames.
@@ -70,12 +67,13 @@ func New(ctx context.Context, conf *Config) (srv *DHCPServer, err error) {
 	enabled.Store(conf.Enabled)
 
 	srv = &DHCPServer{
-		enabled:     enabled,
-		logger:      l,
-		localTLD:    conf.LocalDomainName,
-		leasesMu:    &sync.RWMutex{},
-		leases:      newLeaseIndex(conf.DBFilePath),
-		icmpTimeout: conf.ICMPTimeout,
+		enabled:       enabled,
+		logger:        l,
+		deviceManager: conf.NetworkDeviceManager,
+		localTLD:      conf.LocalDomainName,
+		leasesMu:      &sync.RWMutex{},
+		leases:        newLeaseIndex(conf.DBFilePath),
+		icmpTimeout:   conf.ICMPTimeout,
 	}
 
 	srv.interfaces4, srv.interfaces6 = srv.newInterfaces(ctx, l, conf.Interfaces)
@@ -137,13 +135,27 @@ func (srv *DHCPServer) newInterfaces(
 func (srv *DHCPServer) Start(ctx context.Context) (err error) {
 	srv.logger.DebugContext(ctx, "starting dhcp server")
 
-	// TODO(e.burkov):  Listen to configured interfaces.
+	var errs []error
+	for _, iface := range srv.interfaces4 {
+		var nd NetworkDevice
+		nd, err = srv.deviceManager.Open(ctx, &NetworkDeviceConfig{
+			Name: iface.common.name,
+		})
+		if err != nil {
+			errs = append(errs, err)
 
-	go srv.serve(context.WithoutCancel(ctx))
+			continue
+		}
 
-	return nil
+		go srv.serveEther4(context.WithoutCancel(ctx), iface, nd)
+	}
+
+	// TODO(e.burkov):  Serve EthernetTypeIPv6.
+
+	return errors.Join(errs...)
 }
 
+// Shutdown implements the [Interface] interface for *DHCPServer.
 func (srv *DHCPServer) Shutdown(ctx context.Context) (err error) {
 	srv.logger.DebugContext(ctx, "shutting down dhcp server")
 

@@ -17,33 +17,22 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/ioutil"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/syncutil"
+	"github.com/AdguardTeam/golibs/validate"
 )
 
 // download and save all translations.
-func (c *twoskyClient) download(ctx context.Context, l *slog.Logger) (err error) {
-	var numWorker int
-
-	flagSet := flag.NewFlagSet("download", flag.ExitOnError)
-	flagSet.Usage = func() {
-		usage("download command error")
-	}
-	flagSet.IntVar(&numWorker, "n", 1, "number of concurrent downloads")
-
-	err = flagSet.Parse(os.Args[2:])
+func (c *twoskyClient) download(ctx context.Context, l *slog.Logger) {
+	numWorker, err := parseDownloadArgs()
 	if err != nil {
-		// Don't wrap the error since it's informative enough as is.
-		return err
-	}
-
-	if numWorker < 1 {
-		usage("count must be positive")
+		usage(err.Error())
 	}
 
 	downloadURI := c.uri.JoinPath("download")
 
 	wg := &sync.WaitGroup{}
-	uriCh := make(chan *url.URL, len(c.langs))
+	reqCh := make(chan downloadRequest, numWorker)
 
 	dw := &downloadWorker{
 		ctx:    ctx,
@@ -52,25 +41,44 @@ func (c *twoskyClient) download(ctx context.Context, l *slog.Logger) (err error)
 		client: &http.Client{
 			Timeout: 10 * time.Second,
 		},
-		uriCh: uriCh,
+		reqCh: reqCh,
 	}
 
 	for range numWorker {
 		wg.Go(dw.run)
 	}
 
-	for _, lang := range c.langs {
-		uri := translationURL(downloadURI, defaultBaseFile, c.projectID, lang)
+	for _, baseFile := range c.localizableFiles {
+		dir, file := filepath.Split(baseFile)
 
-		uriCh <- uri
+		for _, lang := range c.langs {
+			uri := translationURL(downloadURI, file, c.projectID, lang)
+
+			reqCh <- downloadRequest{
+				uri: uri,
+				dir: dir,
+			}
+		}
 	}
 
-	close(uriCh)
+	close(reqCh)
 	wg.Wait()
 
 	printFailedLocales(ctx, l, dw.failed)
+}
 
-	return nil
+// parseDownloadArgs parses command-line arguments for the download command.
+func parseDownloadArgs() (numWorker int, err error) {
+	flagSet := flag.NewFlagSet("download", flag.ExitOnError)
+	flagSet.IntVar(&numWorker, "n", 1, "number of concurrent downloads")
+
+	err = flagSet.Parse(os.Args[2:])
+	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
+		return 0, err
+	}
+
+	return numWorker, validate.Positive("count", numWorker)
 }
 
 // printFailedLocales prints sorted list of failed downloads, if any.  l and
@@ -102,17 +110,24 @@ type downloadWorker struct {
 	l      *slog.Logger
 	failed *syncutil.Map[string, struct{}]
 	client *http.Client
-	uriCh  <-chan *url.URL
+	reqCh  <-chan downloadRequest
+}
+
+// downloadRequest is a request to download a translation.  All fields must not
+// be empty.
+type downloadRequest struct {
+	uri *url.URL
+	dir string
 }
 
 // run handles the channel of URLs, one by one.  It returns when the channel is
 // closed.  It's used to be run in a separate goroutine.
 func (w *downloadWorker) run() {
-	for uri := range w.uriCh {
-		q := uri.Query()
+	for req := range w.reqCh {
+		q := req.uri.Query()
 		code := q.Get("language")
 
-		err := saveToFile(w.ctx, w.l, w.client, uri, code)
+		err := saveToFile(w.ctx, w.l, w.client, req.uri, code, req.dir)
 		if err != nil {
 			w.l.ErrorContext(w.ctx, "download worker", slogutil.KeyError, err)
 			w.failed.Store(code, struct{}{})
@@ -128,10 +143,15 @@ func saveToFile(
 	client *http.Client,
 	uri *url.URL,
 	code string,
+	localesDir string,
 ) (err error) {
 	data, err := getTranslation(ctx, l, client, uri.String())
 	if err != nil {
 		return fmt.Errorf("getting translation %q: %s", code, err)
+	}
+
+	if data[len(data)-1] != '\n' {
+		data = append(data, '\n')
 	}
 
 	name := filepath.Join(localesDir, code+".json")
@@ -146,7 +166,8 @@ func saveToFile(
 }
 
 // getTranslation returns received translation data and error.  If err is not
-// nil, data may contain a response from server for inspection.
+// nil, data may contain a response from server for inspection.  Otherwise, the
+// data is guaranteed to be non-empty.
 func getTranslation(
 	ctx context.Context,
 	l *slog.Logger,
@@ -166,17 +187,19 @@ func getTranslation(
 		// Go on and download the body for inspection.
 	}
 
-	limitReader := ioutil.LimitReader(resp.Body, readLimit)
+	limitReader := ioutil.LimitReader(resp.Body, readLimit.Bytes())
 
 	data, readErr := io.ReadAll(limitReader)
+	if readErr != nil {
+		return nil, errors.WithDeferred(err, readErr)
+	}
 
-	return data, errors.WithDeferred(err, readErr)
+	return data, validate.NotEmptySlice("response", data)
 }
 
 // translationURL returns a new url.URL with provided query parameters.
-func translationURL(oldURL *url.URL, baseFile, projectID string, lang langCode) (uri *url.URL) {
-	uri = &url.URL{}
-	*uri = *oldURL
+func translationURL(baseURL *url.URL, baseFile, projectID string, lang langCode) (uri *url.URL) {
+	uri = netutil.CloneURL(baseURL)
 
 	q := uri.Query()
 	q.Set("format", "json")

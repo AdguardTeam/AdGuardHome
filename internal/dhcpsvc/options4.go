@@ -347,6 +347,8 @@ func hostname4(msg *layers.DHCPv4) (hostname string) {
 
 // requestedOptions returns the list of options requested in DHCPv4 message, if
 // any.
+//
+// TODO(e.burkov):  Use [iter.Seq1].
 func requestedOptions(msg *layers.DHCPv4) (opts []layers.DHCPOpt) {
 	for _, opt := range msg.Options {
 		l := len(opt.Data)

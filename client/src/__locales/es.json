@@ -664,7 +664,7 @@
     "cache_enabled_desc": "Almacena las respuestas DNS localmente.",
     "cache_size": "Tamaño de la caché",
     "cache_size_validation": "El tamaño de la cache debe ser mayor que cero cuando está habilitado.",
-    "cache_size_desc": "Tamaño de la caché DNS (en bytes). Para deshabilitar el almacenamiento en caché, establécelo en 0.",
+    "cache_size_desc": "Tamaño de la caché DNS (en bytes).",
     "cache_ttl_min_override": "Anular TTL mínimo",
     "cache_ttl_max_override": "Anular TTL máximo",
     "enter_cache_size": "Ingresa el tamaño de la caché (bytes)",

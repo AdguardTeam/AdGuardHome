@@ -664,7 +664,7 @@
     "cache_enabled_desc": "Store DNS responses locally.",
     "cache_size": "Cache size",
     "cache_size_validation": "The cache size must be greater than zero when enabled.",
-    "cache_size_desc": "DNS cache size (in bytes). To disable caching, set to 0.",
+    "cache_size_desc": "DNS cache size (in bytes).",
     "cache_ttl_min_override": "Override minimum TTL",
     "cache_ttl_max_override": "Override maximum TTL",
     "enter_cache_size": "Enter cache size (bytes)",

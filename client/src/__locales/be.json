@@ -656,7 +656,7 @@
     "blocklist": "Спіс заблакіраваных",
     "milliseconds_abbreviation": "мс",
     "cache_size": "Памер кэшу",
-    "cache_size_desc": "Памер кэшу DNS (у байтах). Нулявое значэнне азначае, што кэш будзе адключаны.",
+    "cache_size_desc": "Памер кэша DNS (у байтах).",
     "cache_ttl_min_override": "Перавызначыць мінімальны TTL",
     "cache_ttl_max_override": "Перавызначыць максімальны TTL",
     "enter_cache_size": "Увядзіце памер кэша (байты)",

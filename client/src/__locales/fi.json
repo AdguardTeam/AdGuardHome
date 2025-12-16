@@ -664,7 +664,7 @@
     "cache_enabled_desc": "Tallenna DNS-vastaukset paikallisesti.",
     "cache_size": "Välimuistin koko",
     "cache_size_validation": "Välimuistin koon on oltava suurempi kuin nolla, kun se on käytössä.",
-    "cache_size_desc": "DNS-välimuistin koko (tavuina). Voit poistaa välimuistin käytöstä asettamalla sen arvoksi 0.",
+    "cache_size_desc": "DNS-välimuistin koko (tavuina).",
     "cache_ttl_min_override": "Korvaa vähimmäis-TTL",
     "cache_ttl_max_override": "Korvaa enimmäis-TTL",
     "enter_cache_size": "Syötä välimuistin koko (tavuina)",
