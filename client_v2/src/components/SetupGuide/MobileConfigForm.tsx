@@ -2,10 +2,10 @@ import React from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { Controller, useForm } from 'react-hook-form';
 import i18next from 'i18next';
-import cn from 'classnames';
 
 import './MobileConfigForm.css';
 
+import { FaqTooltip } from 'panel/common/ui/FaqTooltip';
 import { getPathWithQueryString } from '../../helpers/helpers';
 import { CLIENT_ID_LINK, MOBILE_CONFIG_LINKS, STANDARD_HTTPS_PORT } from '../../helpers/constants';
 import { toNumber } from '../../helpers/form';
@@ -15,10 +15,9 @@ import {
     validatePort,
     validateIsSafePort,
 } from '../../helpers/validators';
-import { Input } from '../../common/controls/Input/Input';
-import { Select } from '../../common/controls/Select/Select';
+import { Input } from 'panel/common/controls/Input';
+import { Select } from 'panel/common/controls/Select';
 import { Button } from '../../common/ui/Button';
-import { FaqTooltip } from 'panel/common/ui/FaqTooltip';
 
 const getDownloadLink = (host: string, clientId: string, protocol: string, invalid: boolean) => {
     if (!host || invalid) {
