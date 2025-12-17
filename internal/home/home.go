@@ -124,7 +124,7 @@ func Main(clientBuildFS fs.FS) {
 
 	if opts.serviceControlAction != "" {
 		svcLogger := baseLogger.With(slogutil.KeyPrefix, "service")
-		handleServiceControlAction(
+		err = handleServiceControlAction(
 			ctx,
 			baseLogger,
 			svcLogger,
@@ -136,6 +136,10 @@ func Main(clientBuildFS fs.FS) {
 			workDir,
 			confPath,
 		)
+		if err != nil {
+			svcLogger.ErrorContext(ctx, "action failed", slogutil.KeyError, err)
+			os.Exit(osutil.ExitCodeFailure)
+		}
 
 		return
 	}
@@ -717,7 +721,7 @@ func fatalOnError(err error) {
 // TODO(e.burkov):  Make opts a pointer.
 func run(
 	ctx context.Context,
-	slogLogger *slog.Logger,
+	baseLogger *slog.Logger,
 	opts options,
 	clientBuildFS fs.FS,
 	done chan struct{},
@@ -725,9 +729,9 @@ func run(
 	workDir string,
 	confPath string,
 ) {
-	initEnvironment(ctx, opts, slogLogger, workDir, confPath)
+	initEnvironment(ctx, opts, baseLogger, workDir, confPath)
 
-	isFirstRun := detectFirstRun(ctx, slogLogger, workDir, confPath)
+	isFirstRun := detectFirstRun(ctx, baseLogger, workDir, confPath)
 
 	mw := &webMw{}
 	mux := http.NewServeMux()
@@ -735,7 +739,7 @@ func run(
 
 	confModifier, tlsMgr := initFiltering(
 		ctx,
-		slogLogger,
+		baseLogger,
 		opts,
 		isFirstRun,
 		sigHdlr,
@@ -744,13 +748,13 @@ func run(
 		httpReg,
 	)
 
-	upd, isCustomURL := initUpdate(ctx, slogLogger, opts, tlsMgr, isFirstRun, workDir, confPath)
+	upd, isCustomURL := initUpdate(ctx, baseLogger, opts, tlsMgr, isFirstRun, workDir, confPath)
 
 	dataDirPath := filepath.Join(workDir, dataDir)
 	err := os.MkdirAll(dataDirPath, aghos.DefaultPermDir)
 	fatalOnError(errors.Annotate(err, "creating DNS data dir at %s: %w", dataDirPath))
 
-	auth, err := initUsers(ctx, slogLogger, workDir, opts.glinetMode)
+	auth, err := initUsers(ctx, baseLogger, workDir, opts.glinetMode)
 	fatalOnError(err)
 
 	confModifier.setAuth(auth)
@@ -759,7 +763,7 @@ func run(
 		clientBuildFS:  clientBuildFS,
 		updater:        upd,
 		opts:           opts,
-		baseLogger:     slogLogger,
+		baseLogger:     baseLogger,
 		tlsManager:     tlsMgr,
 		auth:           auth,
 		mux:            mux,
@@ -785,11 +789,11 @@ func run(
 	fatalOnError(err)
 
 	if !isFirstRun {
-		runDNSServer(ctx, slogLogger, tlsMgr, confModifier, statsDir, querylogDir, httpReg)
+		runDNSServer(ctx, baseLogger, tlsMgr, confModifier, statsDir, querylogDir, httpReg)
 	}
 
 	if !opts.noPermCheck {
-		checkPermissions(ctx, slogLogger, workDir, confPath, dataDirPath, statsDir, querylogDir)
+		checkPermissions(ctx, baseLogger, workDir, confPath, dataDirPath, statsDir, querylogDir)
 	}
 
 	web.start(ctx)
@@ -897,11 +901,11 @@ func initFiltering(
 	return confModifier, tlsMgr
 }
 
-// initUpdate configures and runs update of this application.  slogLogger and
-// tlsMgr must not be nil.
+// initUpdate configures and runs update of this application.  logger and tlsMgr
+// must not be nil.
 func initUpdate(
 	ctx context.Context,
-	slogLogger *slog.Logger,
+	baseLogger *slog.Logger,
 	opts options,
 	tlsMgr *tlsManager,
 	isFirstRun bool,
@@ -911,7 +915,7 @@ func initUpdate(
 	execPath, err := os.Executable()
 	fatalOnError(errors.Annotate(err, "getting executable path: %w"))
 
-	updLogger := slogLogger.With(slogutil.KeyPrefix, "updater")
+	updLogger := baseLogger.With(slogutil.KeyPrefix, "updater")
 	upd, isCustomURL = newUpdater(
 		ctx,
 		updLogger,
@@ -923,15 +927,15 @@ func initUpdate(
 
 	// TODO(e.burkov): This could be made earlier, probably as the option's
 	// effect.
-	cmdlineUpdate(ctx, updLogger, opts, upd, tlsMgr, isFirstRun)
+	cmdlineUpdate(ctx, baseLogger, opts, upd, tlsMgr, isFirstRun)
 
 	if !isFirstRun {
 		// Save the updated config.
-		err = config.write(ctx, slogLogger, nil, nil, workDir, confPath)
+		err = config.write(ctx, baseLogger, nil, nil, workDir, confPath)
 		fatalOnError(err)
 
 		if config.HTTPConfig.Pprof.Enabled {
-			startPprof(slogLogger, config.HTTPConfig.Pprof.Port)
+			startPprof(baseLogger, config.HTTPConfig.Pprof.Port)
 		}
 	}
 
