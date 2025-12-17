@@ -11,6 +11,20 @@ import { IconType } from '../Icons';
 import { CopiedText } from '../CopiedText';
 import s from './Guide.module.pcss';
 
+type PlatformLayoutProps = {
+    serverName?: string;
+    portHttps?: number;
+    dnsAddresses?: string[];
+}
+
+type PlatformLayout = {
+    title: string;
+    icon: IconType;
+    component: React.ReactElement;
+}
+
+type PlatformLayouts = Record<string, PlatformLayout>;
+
 const RouterLayout = () => (
     <div className={s.guideContent}>
         <div className={s.title}>
@@ -277,7 +291,7 @@ const renderDnsDevicesList = () => (
     </div>
 );
 
-const getDnsSettingsContent = (dnsAddresses: any, serverName?: string, portHttps?: number) => {
+const getDnsSettingsContent = (dnsAddresses: string[] | undefined, serverName?: string, portHttps?: number) => {
     const tlsAddress = dnsAddresses?.find((addr: string) => addr.includes('tls://'));
     const httpsAddress = dnsAddresses?.find((addr: string) => addr.includes('https://'));
     const quicAddress = dnsAddresses?.find((addr: string) => addr.includes('quic://'));
@@ -339,7 +353,7 @@ const getDnsSettingsContent = (dnsAddresses: any, serverName?: string, portHttps
     );
 };
 
-const DnsPrivacyLayout = ({ serverName, portHttps, dnsAddresses }: any) => (
+const DnsPrivacyLayout = ({ serverName, portHttps, dnsAddresses }: PlatformLayoutProps) => (
     <div title={intl.getMessage('dns_privacy')}>
         <div className={s.title}>{intl.getMessage('dns_privacy')}</div>
         <div className={s.text}>
@@ -348,7 +362,7 @@ const DnsPrivacyLayout = ({ serverName, portHttps, dnsAddresses }: any) => (
     </div>
 );
 
-const getPlatformLayouts = ({ serverName, portHttps, dnsAddresses }: any) => ({
+const getPlatformLayouts = ({ serverName, portHttps, dnsAddresses }: PlatformLayoutProps): PlatformLayouts => ({
     Router: {
         title: intl.getMessage('setup_devices_router_title'),
         icon: 'router' as IconType,
@@ -389,7 +403,7 @@ const getPlatformLayouts = ({ serverName, portHttps, dnsAddresses }: any) => ({
 
 
 interface GuideProps {
-    dnsAddresses?: unknown[];
+    dnsAddresses?: string[];
 }
 
 export const Guide = ({ dnsAddresses }: GuideProps) => {
@@ -405,7 +419,7 @@ export const Guide = ({ dnsAddresses }: GuideProps) => {
         dnsAddresses,
     });
 
-    const selectOptions = Object.entries(platformLayouts).map(([key, value]: [string, any]) => ({
+    const selectOptions = Object.entries(platformLayouts).map(([key, value]: [string, PlatformLayout]) => ({
         value: key,
         label: value.title,
         icon: value.icon,
