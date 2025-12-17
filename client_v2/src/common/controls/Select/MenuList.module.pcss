@@ -12,7 +12,7 @@
     }
 
     &::-webkit-scrollbar-thumb {
-        background-color: var(--gray-60);
+        background-color: var(--default-gray-icons);
         border-radius: 10px;
     }
 }
@@ -42,28 +42,10 @@
 
     &:hover,
     &.isFocused {
-        background-color: var(--gray-10);
+        background-color: var(--hovered-dropdown-menu-background);
     }
 
     &.isSelected {
-        background-color: var(--gray-20);
-    }
-}
-
-/* Dark theme support */
-[data-theme="dark"] .menuList {
-    &::-webkit-scrollbar-thumb {
-        background-color: var(--gray-50);
-    }
-}
-
-[data-theme="dark"] .customOption {
-    &:hover,
-    &.isFocused {
-        background-color: var(--gray-80);
-    }
-
-    &.isSelected {
-        background-color: var(--gray-70);
+        background-color: var(--pressed-dropdown-menu-background);
     }
 }

@@ -4,7 +4,7 @@ import { Icon } from '../Icon';
 
 import s from './CopiedText.module.pcss';
 
-export interface CopiedTextProps {
+export type CopiedTextProps = {
     text: string;
     className?: string;
     onCopy?: (text: string) => void;

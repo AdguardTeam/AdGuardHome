@@ -9,7 +9,7 @@
 }
 
 .dhcpLink {
-    color: var(--product-primary-50);
+    color: var(--default-link);
     font-size: 16px;
     font-weight: 400;
 }
@@ -18,21 +18,21 @@
     text-decoration: underline;
 }
 
-.text {
+.guideText {
     line-height: 1.7;
 }
 
-.text li,
-.text p {
+.guideText li,
+.guideText p {
     margin-bottom: 5px;
 }
 
-.text ul,
-.text ol {
+.guideText ul,
+.guideText ol {
     padding-left: 25px;
 }
 
-.paragraph {
+.guideParagraph {
     margin-bottom: 10px;
 }
 
@@ -62,7 +62,7 @@
 }
 
 .dnsLink {
-    color: var(--product-primary-50);
+    color: var(--default-link);
     font-size: 16px;
     font-weight: 400;
 }
@@ -74,13 +74,39 @@
 .selectorDesc {
     margin-bottom: 4px;
     font-size: 14px;
-    color: var(--gray-60);
-}
-
-[data-theme="dark"] .selectorDesc {
-    color: var(--gray-50);
+    color: var(--default-description-text);
 }
 
 .deviceSelector {
     margin-bottom: 32px;
+}
+
+.deviceDnsListItem {
+    margin-top: 8px;
+}
+
+.guideBulletItem {
+    margin-bottom: 16px;
+    list-style: none;
+    position: relative;
+}
+
+.guideBulletItem::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    background-color: var(--default-description-text);
+    border-radius: 50%;
+    display: inline-block;
+    position: absolute;
+    left: -16px;
+    top: 8px;
+}
+
+.guideItemTitle {
+    display: block;
+}
+
+.guideList {
+    padding-left: 20px;
 }

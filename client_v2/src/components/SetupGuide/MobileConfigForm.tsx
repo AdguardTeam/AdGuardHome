@@ -1,12 +1,12 @@
 import React from 'react';
-import { Trans, useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import { Controller, useForm } from 'react-hook-form';
-import i18next from 'i18next';
 import cn from 'clsx';
 
 import { FaqTooltip } from 'panel/common/ui/FaqTooltip';
 import { Input } from 'panel/common/controls/Input';
 import { Select } from 'panel/common/controls/Select';
+import intl from 'panel/common/intl';
 import { getPathWithQueryString } from '../../helpers/helpers';
 import { CLIENT_ID_LINK, MOBILE_CONFIG_LINKS, STANDARD_HTTPS_PORT } from '../../helpers/constants';
 import { toNumber } from '../../helpers/form';
@@ -24,7 +24,7 @@ const getDownloadLink = (host: string, clientId: string, protocol: string, inval
     if (!host || invalid) {
         return (
             <Button variant="primary" disabled>
-                {i18next.t('download_mobileconfig')}
+                {intl.getMessage('download_mobileconfig')}
             </Button>
         );
     }
@@ -46,7 +46,7 @@ const getDownloadLink = (host: string, clientId: string, protocol: string, inval
 
     return (
         <Button variant="primary" onClick={handleDownload}>
-            {i18next.t('download_mobileconfig')}
+            {intl.getMessage('download_mobileconfig')}
         </Button>
     );
 };
@@ -155,12 +155,18 @@ export const MobileConfigForm = ({ initialValues }: Props) => {
                         {t('client_id')}
                         <FaqTooltip
                             text={
-                                <Trans
-                                    i18nKey="client_id_faq"
-                                    components={{
-                                        0: <a href={CLIENT_ID_LINK} target="_blank" rel="noopener noreferrer" />
-                                    }}
-                                />
+                                intl.getMessage('client_id_faq', {
+                                    a: (text: string) => (
+                                        <a
+                                            href={CLIENT_ID_LINK}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className={s.dnsLink}
+                                        >
+                                            {text}
+                                        </a>
+                                    ),
+                                })
                             }
                         />
                     </label>

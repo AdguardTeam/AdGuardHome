@@ -6,12 +6,11 @@ import { Guide } from 'panel/common/ui/Guide/Guide';
 
 import theme from 'panel/lib/theme';
 
-import { useTranslation } from 'react-i18next';
+import intl from 'panel/common/intl';
 import { CopiedText } from 'panel/common/ui/CopiedText/CopiedText';
 import s from './SetupGuide.module.pcss';
 
 export const SetupGuide = () => {
-    const { t } = useTranslation();
     const { dnsAddresses } = useSelector((state: RootState) => state.dashboard, shallowEqual);
 
     const encryptedAddresses = dnsAddresses.filter((address: string) =>
@@ -24,23 +23,23 @@ export const SetupGuide = () => {
     return (
         <div className={theme.layout.container}>
             <div className={s.header}>
-                <h1 className={s.pageTitle}>{t('setup_guide_v2')}</h1>
-                <div className={s.pageDesc}>{t('setup_guide_desc')}</div>
+                <h1 className={s.pageTitle}>{intl.getMessage('setup_guide_v2')}</h1>
+                <div className={s.pageDesc}>{intl.getMessage('setup_guide_desc')}</div>
             </div>
 
             <div className={s.guidePage}>
-                <h1 className={s.guideTitle}>{t('setup_guide_device_type')}</h1>
+                <h1 className={s.guideTitle}>{intl.getMessage('setup_guide_device_type')}</h1>
                 <Guide dnsAddresses={dnsAddresses} />
 
                 <div className={s.guideDesc}>
-                    <h1 className={s.dnsTitle}>{t('home_dns_addresses')}</h1>
+                    <h1 className={s.dnsTitle}>{intl.getMessage('home_dns_addresses')}</h1>
 
-                    <p>{t('home_dns_addresses_desc')}</p>
+                    <p>{intl.getMessage('home_dns_addresses_desc')}</p>
 
                     {encryptedAddresses.length > 0 && (
                         <>
                             <div className={s.dnsSubtitle}>
-                                {t('encrypted_dns_addresses')}
+                                {intl.getMessage('encrypted_dns_addresses')}
                             </div>
 
                             <ul className={s.addressList}>
@@ -55,7 +54,7 @@ export const SetupGuide = () => {
                     )}
 
                     <div className={s.dnsSubtitle}>
-                        {t('plain_dns_addresses')}
+                        {intl.getMessage('plain_dns_addresses')}
                     </div>
 
                     <ul className={s.addressList}>

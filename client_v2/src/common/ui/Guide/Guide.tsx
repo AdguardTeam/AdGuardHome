@@ -1,162 +1,280 @@
 import React, { useState } from 'react';
-import { Trans, useTranslation } from 'react-i18next';
-import i18next from 'i18next';
+import intl from 'panel/common/intl';
 import { useSelector } from 'react-redux';
 import cn from 'clsx';
 
 import { RootState } from 'panel/initialState';
 import { MOBILE_CONFIG_LINKS } from 'panel/helpers/constants';
 import { MobileConfigForm } from 'panel/components/SetupGuide/MobileConfigForm';
+import { Select } from 'panel/common/controls/Select';
 import { IconType } from '../Icons';
-
-import { Select } from '../../controls/Select';
 import { CopiedText } from '../CopiedText';
 import s from './Guide.module.pcss';
 
-const dnsDevicesConfig = [
-    {
-        title: 'Android',
-        list: [
-            {
-                label: 'setup_devices_dns_android_list_1',
-            },
-            {
-                label: 'setup_devices_dns_android_list_2',
-                components: [
-                    {
-                        key: 0,
-                        href: 'https://adguard.com/adguard-android/overview.html',
-                    },
-                ],
-            },
-            {
-                label: 'setup_devices_dns_android_list_3',
-                components: [
-                    {
-                        key: 0,
-                        href: 'https://getintra.org/',
-                    },
-                ],
-            },
-        ],
-    },
-    {
-        title: 'iOS',
-        list: [
-            {
-                label: 'setup_devices_dns_ios_list_1',
-                components: [
-                    {
-                        key: 0,
-                        href: 'https://adguard.com/adguard-ios/overview.html',
-                    },
-                ],
-            },
-            {
-                label: 'setup_devices_dns_ios_list_2',
-                components: [
-                    {
-                        key: 0,
-                        href: 'https://github.com/s-s/dnscloak',
-                    },
-                    {
-                        key: 1,
-                        href: 'https://dnscrypt.info/stamps-specifications',
-                    },
-                ],
-            },
-        ],
-    },
-    {
-        title: 'setup_dns_privacy_other_title',
-        list: [
-            {
-                label: 'setup_dns_privacy_other_1',
-                components: [
-                    {
-                        key: 0,
-                        href: 'https://github.com/AdguardTeam/AdGuardHome',
-                    },
-                ],
-            },
-            {
-                label: 'setup_dns_privacy_other_2',
-                components: [
-                    {
-                        key: 0,
-                        href: 'https://github.com/AdguardTeam/dnsproxy',
-                    },
-                ],
-            },
-            {
-                label: 'setup_dns_privacy_other_3',
-                components: [
-                    {
-                        key: 0,
-                        href: 'https://github.com/DNSCrypt/dnscrypt-proxy',
-                    },
-                ],
-            },
-            {
-                label: 'setup_dns_privacy_other_4',
-                components: [
-                    {
-                        key: 0,
-                        href: 'https://support.mozilla.org/en-US/kb/firefox-dns-over-https',
-                    },
-                ],
-            },
-            {
-                label: 'setup_devices_dns_other_list_5',
-                components: [
-                    {
-                        key: 0,
-                        href: 'https://dnscrypt.info/',
-                    },
-                    {
-                        key: 1,
-                        href: 'https://dnsprivacy.org/',
-                    },
-                ],
-            },
-        ],
-    },
-];
+const RouterLayout = () => (
+    <div className={s.guideContent}>
+        <div className={s.title}>
+            {intl.getMessage('setup_devices_router_title')}
+        </div>
+        <div className={s.guideText}>
+            <div className={s.guideguideParagraph}>
+                {intl.getMessage('setup_devices_router_desc_1')}
+            </div>
+            <ol className={cn({ [s.strongNumbers]: true })}>
+                <li className={s.guideItem}>
+                    <strong className={s.guideItemTitle}>
+                        {intl.getMessage('setup_devices_router_list_1_title')}
+                    </strong>
+                    {intl.getMessage('setup_devices_router_list_1', {
+                        code: () => <CopiedText text="http://192.168.0.1" />,
+                        code2: () => <CopiedText text="http://192.168.1.1" />,
+                    })}
+                </li>
+                <li className={s.guideItem}>
+                    <strong className={s.guideItemTitle}>
+                        {intl.getMessage('setup_devices_router_list_2_title')}
+                    </strong>
+                    {intl.getMessage('setup_devices_router_list_2')}
+                </li>
+            </ol>
+            <div className={s.guideParagraph}>
+                {intl.getMessage('setup_devices_router_desc_2', {
+                    a: (text: string) => (
+                        <a
+                            href="#dhcp"
+                            target="_blank"
+                            className={s.dnsLink}
+                        >
+                            {text}
+                        </a>
+                    ),
+                })}
+            </div>
+        </div>
+    </div>
+);
+
+const WindowsLayout = () => (
+    <div title="Windows">
+        <div className={s.title}>
+            {intl.getMessage('setup_devices_windows_title')}
+        </div>
+        <div className={s.text}>
+            <ol className={s.guideList}>
+                <li className={s.guideItem}>{intl.getMessage('setup_devices_windows_list_1')}</li>
+                <li className={s.guideItem}>{intl.getMessage('setup_devices_windows_list_2')}</li>
+                <li className={s.guideItem}>{intl.getMessage('setup_devices_windows_list_3')}</li>
+                <li className={s.guideItem}>{intl.getMessage('setup_devices_windows_list_4')}</li>
+                <li className={s.guideItem}>{intl.getMessage('setup_devices_windows_list_5')}</li>
+                <li className={s.guideItem}>{intl.getMessage('setup_devices_windows_list_6')}</li>
+            </ol>
+        </div>
+    </div>
+);
+
+const MacOSLayout = () => (
+    <div title="macOS">
+        <div className={s.title}>macOS</div>
+        <div className={s.text}>
+            <ol className={s.guideList}>
+                <li className={s.guideItem}>{intl.getMessage('setup_devices_macos_list_1')}</li>
+                <li className={s.guideItem}>{intl.getMessage('setup_devices_macos_list_2')}</li>
+                <li className={s.guideItem}>{intl.getMessage('setup_devices_macos_list_3')}</li>
+            </ol>
+        </div>
+    </div>
+);
+
+const AndroidLayout = () => (
+    <div title="Android">
+        <div className={s.title}>Android</div>
+        <div className={s.text}>
+            <ol className={s.guideList}>
+                <li className={s.guideItem}>{intl.getMessage('setup_devices_android_list_1')}</li>
+                <li className={s.guideItem}>{intl.getMessage('setup_devices_android_list_2')}</li>
+                <li className={s.guideItem}>{intl.getMessage('setup_devices_android_list_3')}</li>
+                <li className={s.guideItem}>{intl.getMessage('setup_devices_android_list_4')}</li>
+            </ol>
+        </div>
+    </div>
+);
+
+const IOSLayout = () => (
+    <div title="iOS">
+        <div className={s.title}>iOS</div>
+        <div className={s.text}>
+            <ol className={s.guideList}>
+                <li className={s.guideItem}>{intl.getMessage('setup_devices_ios_list_1')}</li>
+                <li className={s.guideItem}>{intl.getMessage('setup_devices_ios_list_2')}</li>
+                <li className={s.guideItem}>{intl.getMessage('setup_devices_ios_list_3')}</li>
+                <li className={s.guideItem}>{intl.getMessage('setup_devices_ios_list_4')}</li>
+            </ol>
+        </div>
+    </div>
+);
 
 const renderDnsDevicesList = () => (
-    <>
-        {dnsDevicesConfig.map((section) => (
-            <div className={s.paragraph} key={section.title}>
-                <div className={s.guideTitle}>
-                    <strong>
-                        {section.title.startsWith('setup_') ? (
-                            <Trans>{section.title}</Trans>
-                        ) : (
-                            section.title
-                        )}
-                    </strong>
-                </div>
-                <ul className={s.guideList}>
-                    {section.list.map((item, index) => (
-                        <li key={item.label || index}>
-                            <Trans
-                                i18nKey={item.label}
-                                components={item.components?.map((comp) => (
-                                    <a
-                                        key={comp.key}
-                                        href={comp.href}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className={s.dnsLink}
-                                    />
-                                ))}
-                            />
-                        </li>
-                    ))}
-                </ul>
+    <div className={s.deviceDnsList}>
+        <div className={s.guideParagraph}>
+            <div className={s.guideTitle}>
+                <strong>Android</strong>
             </div>
-        ))}
-    </>
+            <ul className={s.guideList}>
+                <li className={s.guideBulletItem}>{intl.getMessage('setup_devices_dns_android_list_1')}</li>
+                <li className={s.guideBulletItem}>
+                    {intl.getMessage('setup_devices_dns_android_list_2', {
+                        a: (text: string) => (
+                            <a
+                                href="https://link.adtidy.org/forward.html?action=android&from=ui&app=home"
+                                target="_blank"
+                                className={s.dnsLink}
+                                rel="noopener noreferrer"
+                            >
+                                {text}
+                            </a>
+                        ),
+                    })}
+                </li>
+                <li className={s.guideBulletItem}>
+                    {intl.getMessage('setup_devices_dns_android_list_3', {
+                        a: (text: string) => (
+                            <a
+                                href="https://getintra.org/"
+                                target="_blank"
+                                className={s.dnsLink}
+                                rel="noopener noreferrer"
+                            >
+                                {text}
+                            </a>
+                        ),
+                    })}
+                </li>
+            </ul>
+        </div>
+
+        <div className={s.guideParagraph}>
+            <div className={s.guideTitle}>
+                <strong>iOS</strong>
+            </div>
+            <ul className={s.guideList}>
+                <li className={s.guideBulletItem}>
+                    {intl.getMessage('setup_devices_dns_ios_list_1', {
+                        a: (text: string) => (
+                            <a
+                                href="https://link.adtidy.org/forward.html?action=ios&from=ui&app=home"
+                                target="_blank"
+                                className={s.dnsLink}
+                                rel="noopener noreferrer"
+                            >
+                                {text}
+                            </a>
+                        ),
+                    })}
+                </li>
+                <li className={s.guideBulletItem}>
+                    {intl.getMessage('setup_devices_dns_ios_list_2', {
+                        a: (text: string) => (
+                            <a
+                                href="https://itunes.apple.com/app/id1452162351"
+                                target="_blank"
+                                className={s.dnsLink}
+                                rel="noopener noreferrer"
+                            >
+                                {text}
+                            </a>
+                        ),
+                        b: (text: string) => (
+                            <a
+                                href="https://dnscrypt.info/stamps"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={s.dnsLink}
+                            >
+                                {text}
+                            </a>
+                        ),
+                    })}
+                </li>
+            </ul>
+        </div>
+
+        <div className={s.guideParagraph}>
+            <div className={s.guideTitle}>
+                <strong>{intl.getMessage('setup_dns_privacy_other_title')}</strong>
+            </div>
+            <ul className={s.guideList}>
+                <li className={s.guideBulletItem}>
+                    {intl.getMessage('setup_dns_privacy_other_1')}
+                </li>
+                <li className={s.guideBulletItem}>
+                    {intl.getMessage('setup_dns_privacy_other_2', {
+                        a: (text: string) => (
+                            <a
+                                href="https://github.com/AdguardTeam/dnsproxy"
+                                target="_blank"
+                                className={s.dnsLink}
+                                rel="noopener noreferrer"
+                            >
+                                {text}
+                            </a>
+                        ),
+                    })}
+                </li>
+                <li className={s.guideBulletItem}>
+                    {intl.getMessage('setup_dns_privacy_other_3', {
+                        a: (text: string) => (
+                            <a
+                                href="https://github.com/jedisct1/dnscrypt-proxy"
+                                target="_blank"
+                                className={s.dnsLink}
+                                rel="noopener noreferrer"
+                            >
+                                {text}
+                            </a>
+                        ),
+                    })}
+                </li>
+                <li className={s.guideBulletItem}>
+                    {intl.getMessage('setup_dns_privacy_other_4', {
+                        a: (text: string) => (
+                            <a
+                                href="https://support.mozilla.org/kb/firefox-dns-over-https"
+                                target="_blank"
+                                className={s.dnsLink}
+                                rel="noopener noreferrer"
+                            >
+                                {text}
+                            </a>
+                        ),
+                    })}
+                </li>
+                <li className={s.guideBulletItem}>
+                    {intl.getMessage('setup_devices_dns_other_list_5', {
+                        a: (text: string) => (
+                            <a
+                                href="https://dnscrypt.info/implementations"
+                                target="_blank"
+                                className={s.dnsLink}
+                                rel="noopener noreferrer"
+                            >
+                                {text}
+                            </a>
+                        ),
+                        b: (text: string) => (
+                            <a
+                                href="https://dnsprivacy.org/wiki/display/DP/DNS+Privacy+Clients"
+                                target="_blank"
+                                className={s.dnsLink}
+                                rel="noopener noreferrer"
+                            >
+                                {text}
+                            </a>
+                        ),
+                    })}
+                </li>
+            </ul>
+        </div>
+    </div>
 );
 
 const getDnsSettingsContent = (dnsAddresses: any, serverName?: string, portHttps?: number) => {
@@ -165,290 +283,140 @@ const getDnsSettingsContent = (dnsAddresses: any, serverName?: string, portHttps
     const quicAddress = dnsAddresses?.find((addr: string) => addr.includes('quic://'));
 
     return (
-        <>
+        <div className={s.dnsSettingsContent}>
             <ul>
                 {tlsAddress && (
-                    <li>
-                        <Trans>setup_devices_dns_list_1</Trans>
-                        <div style={{ marginTop: '8px' }}>
+                    <li className={s.deviceDnsListItem}>
+                        {intl.getMessage('setup_devices_dns_list_1')}
+                        <div>
                             <CopiedText text={tlsAddress} />
                         </div>
                     </li>
                 )}
                 {httpsAddress && (
-                    <li>
-                        <Trans>setup_devices_dns_list_2</Trans>
-                        <div style={{ marginTop: '8px' }}>
+                    <li className={s.deviceDnsListItem}>
+                        {intl.getMessage('setup_devices_dns_list_2')}
+                        <div>
                             <CopiedText text={httpsAddress} />
                         </div>
                     </li>
                 )}
                 {quicAddress && (
-                    <li>
-                        <Trans>setup_devices_dns_list_3</Trans>
-                        <div style={{ marginTop: '8px' }}>
+                    <li className={s.deviceDnsListItem}>
+                        {intl.getMessage('setup_devices_dns_list_3')}
+                        <div>
                             <CopiedText text={quicAddress} />
                         </div>
                     </li>
                 )}
             </ul>
 
-        <div className={s.paragraph}>
-            <Trans>setup_devices_dns_list_devices</Trans>
-        </div>
+            <div className={s.guideParagraph}>
+                {intl.getMessage('setup_devices_dns_list_devices')}
+            </div>
 
-        {renderDnsDevicesList()}
+            {renderDnsDevicesList()}
 
-        <div className={s.paragraph}>
-            <div className={s.guideTitle}>
-                <strong>iOS and macOS configuration</strong>
-            </div>
-            <div className="mb-3">
-                <Trans>setup_devices_dns_macos_desc</Trans>
-            </div>
-            <div className={s.mobileConfigContainer}>
-                <MobileConfigForm
-                    initialValues={{
-                        host: serverName || '',
-                        clientId: '',
-                        protocol: MOBILE_CONFIG_LINKS.DOH,
-                        port: portHttps,
-                    }}
-                />
+            <div className={s.guideParagraph}>
+                <div className={s.guideTitle}>
+                    <strong>iOS and macOS configuration</strong>
+                </div>
+                <div>
+                    {intl.getMessage('setup_devices_dns_macos_desc')}
+                </div>
+                <div className={s.mobileConfigContainer}>
+                    <MobileConfigForm
+                        initialValues={{
+                            host: serverName || '',
+                            clientId: '',
+                            protocol: MOBILE_CONFIG_LINKS.DOH,
+                            port: portHttps,
+                        }}
+                    />
+                </div>
             </div>
         </div>
-        </>
     );
 };
 
-const DnsPrivacyTitle = ({ serverName, portHttps, t, dnsAddresses }: any) => (
-    <div title={t('dns_privacy')}>
+const DnsPrivacyLayout = ({ serverName, portHttps, dnsAddresses }: any) => (
+    <div title={intl.getMessage('dns_privacy')}>
+        <div className={s.title}>{intl.getMessage('dns_privacy')}</div>
         <div className={s.text}>
             {getDnsSettingsContent(dnsAddresses, serverName, portHttps)}
         </div>
     </div>
 );
 
-const getTabs = ({ tlsAddress, httpsAddress, showDnsPrivacyNotice, serverName, portHttps, t, dnsAddresses }: any) => ({
+const getPlatformLayouts = ({ serverName, portHttps, dnsAddresses }: any) => ({
     Router: {
-        title: 'Router',
-        icon: 'router',
-        subtitle_1: 'setup_devices_router_desc_1',
-        list: [
-            {
-                label: 'setup_devices_router_list_1',
-                components: [
-                    <CopiedText key="0" text="http://192.168.0.1" />,
-                    <CopiedText key="1" text="http://192.168.1.1" />,
-                ],
-            },
-            'setup_devices_router_list_2',
-        ],
-        subtitle_2: 'setup_devices_router_desc_2',
-        subtitle_2_components: [
-            {
-                key: 0,
-                href: '/dhcp',
-            },
-        ],
-        strongNumbers: true,
+        title: intl.getMessage('setup_devices_router_title'),
+        icon: 'router' as IconType,
+        component: <RouterLayout />,
     },
     Windows: {
-        title: 'Windows',
-        icon: 'windows',
-        list: [
-            'setup_devices_windows_list_1',
-            'setup_devices_windows_list_2',
-            'setup_devices_windows_list_3',
-            'setup_devices_windows_list_4',
-            'setup_devices_windows_list_5',
-            'setup_devices_windows_list_6',
-        ],
+        title: intl.getMessage('setup_devices_windows_title'),
+        icon: 'windows' as IconType,
+        component: <WindowsLayout />,
     },
     macOS: {
-        title: 'macOS',
-        icon: 'mac',
-        list: [
-            'setup_devices_macos_list_1',
-            'setup_devices_macos_list_2',
-            'setup_devices_macos_list_3',
-        ],
+        title: intl.getMessage('setup_devices_macos_title'),
+        icon: 'mac' as IconType,
+        component: <MacOSLayout />,
     },
     Android: {
-        title: 'Android',
-        icon: 'android',
-        list: [
-            'setup_devices_android_list_1',
-            'setup_devices_android_list_2',
-            'setup_devices_android_list_3',
-            'setup_devices_android_list_4',
-        ],
+        title: intl.getMessage('setup_devices_android_title'),
+        icon: 'android' as IconType,
+        component: <AndroidLayout />,
     },
     iOS: {
-        title: 'iOS',
-        icon: 'ios',
-        list: [
-            'setup_devices_ios_list_1',
-            'setup_devices_ios_list_2',
-            'setup_devices_ios_list_3',
-            'setup_devices_ios_list_4',
-        ],
+        title: intl.getMessage('setup_devices_ios_title'),
+        icon: 'ios' as IconType,
+        component: <IOSLayout />,
     },
     dns_privacy: {
-        title: t('dns_privacy'),
-        icon: 'dns_privacy',
-        getTitle: () => (
-            <DnsPrivacyTitle
-                tlsAddress={tlsAddress}
-                httpsAddress={httpsAddress}
-                showDnsPrivacyNotice={showDnsPrivacyNotice}
+        title: intl.getMessage('dns_privacy'),
+        icon: 'dns_privacy' as IconType,
+        component: (
+            <DnsPrivacyLayout
                 serverName={serverName}
                 portHttps={portHttps}
-                t={t}
                 dnsAddresses={dnsAddresses}
             />
         ),
     },
 });
 
-interface renderContentProps {
-    title: string;
-    list?: unknown[];
-    getTitle?: (...args: unknown[]) => unknown;
-    subtitle_1?: string;
-    subtitle_2?: string;
-    subtitle_2_components?: unknown[];
-    strongNumbers?: boolean;
-}
-
-const renderContent = (
-    { title, list, getTitle, subtitle_1, subtitle_2, subtitle_2_components, strongNumbers }:
-    renderContentProps
-) => (
-    <div title={i18next.t(title)}>
-        <div className={s.title}>{i18next.t(title)}</div>
-
-        <div className={s.text}>
-            {getTitle?.()}
-            {subtitle_1 && (
-                <div className={s.paragraph}>
-                    <Trans>{subtitle_1}</Trans>
-                </div>
-            )}
-            {list && (
-                <ol className={cn({ [s.strongNumbers]: strongNumbers })}>
-                    {list.map((item: any, index: number) => (
-                        <li key={typeof item === 'string' ? item : item.label || index}>
-                            {typeof item === 'string' ? (
-                                <Trans>{item}</Trans>
-                            ) : (
-                                <Trans
-                                    components={item.components?.map((props: any) => {
-                                        if (React.isValidElement(props)) {
-                                            return props;
-                                        }
-                                        const {
-                                            href,
-                                            target = '_blank',
-                                            rel = 'noopener noreferrer',
-                                            key = '0',
-                                        } = props;
-
-                                        return (
-                                            <a href={href} target={target} rel={rel} key={key}>
-                                                link
-                                            </a>
-                                        );
-                                    })}>
-                                    {item.label}
-                                </Trans>
-                            )}
-                        </li>
-                    ))}
-                </ol>
-            )}
-            {subtitle_2 && (
-                <div className={s.paragraph}>
-                    <Trans
-                        components={subtitle_2_components?.map((props: any) => {
-                            if (React.isValidElement(props)) {
-                                return props;
-                            }
-                            const {
-                                href,
-                                target = '_self',
-                                rel = 'noopener noreferrer',
-                                key = '0',
-                            } = props;
-
-                            return (
-                                <a href={href} target={target} rel={rel} key={key} className={s.dhcpLink}>
-                                    link
-                                </a>
-                            );
-                        })}>
-                        {subtitle_2}
-                    </Trans>
-                </div>
-            )}
-        </div>
-    </div>
-);
 
 interface GuideProps {
     dnsAddresses?: unknown[];
 }
 
 export const Guide = ({ dnsAddresses }: GuideProps) => {
-    const { t } = useTranslation();
 
     const serverName = useSelector((state: RootState) => state.encryption?.server_name);
-
     const portHttps = useSelector((state: RootState) => state.encryption?.port_https);
-    const tlsAddress = dnsAddresses?.filter((item: any) => item.includes('tls://')) ?? '';
-    const httpsAddress = dnsAddresses?.filter((item: any) => item.includes('https://')) ?? '';
-    const showDnsPrivacyNotice = httpsAddress.length < 1 && tlsAddress.length < 1;
 
     const [activeTabLabel, setActiveTabLabel] = useState('Router');
 
-    const tabsData = getTabs({
-        tlsAddress,
-        httpsAddress,
-        showDnsPrivacyNotice,
+    const platformLayouts = getPlatformLayouts({
         serverName,
         portHttps,
-        t,
         dnsAddresses,
     });
 
-    const selectOptions = Object.entries(tabsData).map(([key, value]: [string, any]) => ({
+    const selectOptions = Object.entries(platformLayouts).map(([key, value]: [string, any]) => ({
         value: key,
         label: value.title,
-        icon: value.icon as IconType,
-    }));
-
-
-    const tabs = Object.entries(tabsData).map(([key, value]: [string, any]) => ({
-        id: key,
-        label: value.title,
-        content: renderContent({
-            title: value.title,
-            list: value.list,
-            getTitle: value.getTitle,
-            subtitle_1: value.subtitle_1,
-            subtitle_2: value.subtitle_2,
-            subtitle_2_components: value.subtitle_2_components,
-            strongNumbers: value.strongNumbers,
-        }),
-        icon: value.icon as IconType,
+        icon: value.icon,
     }));
 
     const selectedOption = selectOptions.find(option => option.value === activeTabLabel);
-    const activeTab = tabs.find(tab => tab.id === activeTabLabel);
+    const activeLayout = platformLayouts[activeTabLabel as keyof typeof platformLayouts];
 
     return (
         <div className={s.deviceSelectorContainer}>
-            <p className={s.selectorDesc}>{t('device_type')}</p>
+            <p className={s.selectorDesc}>{intl.getMessage('device_type')}</p>
             <div className={s.deviceSelector}>
                 <Select
                     options={selectOptions}
@@ -459,15 +427,11 @@ export const Guide = ({ dnsAddresses }: GuideProps) => {
                     height="big"
                 />
             </div>
-            {activeTab && (
+            {activeLayout && (
                 <div className={s.deviceContent}>
-                    {activeTab.content}
+                    {activeLayout.component}
                 </div>
             )}
         </div>
     );
-};
-
-Guide.defaultProps = {
-    dnsAddresses: [],
 };

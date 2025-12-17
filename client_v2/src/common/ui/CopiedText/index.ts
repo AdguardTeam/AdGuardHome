@@ -1,2 +1,1 @@
-export { CopiedText } from './CopiedText';
-export type { CopiedTextProps } from './CopiedText';
+export { CopiedText, type CopiedTextProps } from './CopiedText';
