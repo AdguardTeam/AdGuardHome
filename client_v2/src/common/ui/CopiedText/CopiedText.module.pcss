@@ -12,9 +12,28 @@
     width: fit-content;
 }
 
+.container:hover {
+    border-color: var(--default-active-input-stroke);
+    background: var(--hovered-page-background);
+}
+
+.container:focus {
+    border-color: var(--default-active-input-stroke);
+}
+
 [data-theme="dark"] .container {
-    background: var(--gray-80);
-    border-color: var(--gray-70);
+    background: var(--default-input-background);
+    border-color: var(--default-inactive-input-stroke);
+}
+
+[data-theme="dark"] .container:hover {
+    border-color: var(--default-active-input-stroke);
+    background: var(--hovered-page-background);
+}
+
+[data-theme="dark"] .container:focus-within {
+    border-color: var(--default-active-input-stroke);
+    outline-color: var(--product-primary-50);
 }
 
 .text {
@@ -27,8 +46,9 @@
 }
 
 [data-theme="dark"] .text {
-    color: var(--gray-20);
+    color: var(--default-main-text);
 }
+
 
 .icon {
     width: 20px;
@@ -37,8 +57,57 @@
     cursor: pointer;
     transition: var(--t2) color, var(--t2) transform;
     flex-shrink: 0;
+    pointer-events: none;
+}
+
+.container:hover .icon {
+    color: var(--default-main-text);
+    transform: scale(1.1);
+}
+
+.container:focus .icon {
+    color: var(--default-main-text);
+}
+
+.container:active .icon {
+    transform: scale(0.95);
+}
+
+.copied {
+    color: var(--product-primary-50) !important;
+    transform: scale(1.1) !important;
 }
 
 [data-theme="dark"] .icon {
-    color: var(--gray-50);
+    color: var(--default-gray-icons);
+}
+
+[data-theme="dark"] .container:hover .icon {
+    color: var(--default-main-text);
+}
+
+[data-theme="dark"] .container:focus .icon {
+    color: var(--default-main-text);
+}
+
+.copyTooltip {
+    background-color: var(--default-cards-background);
+    border-radius: 4px;
+    bottom: 32px;
+    color: var(--default-main-text);
+    opacity: 0;
+    padding: 8px;
+    position: absolute;
+    right: 0;
+    transition: var(--t3) opacity;
+    visibility: hidden;
+    font-size: 12px;
+    z-index: 3;
+    box-shadow: var(--main-box-shadow);
+    border: 1px solid var(--default-inactive-input-stroke);
+}
+
+.copyTooltip.visible {
+    opacity: 1;
+    visibility: visible;
 }

@@ -1017,5 +1017,6 @@
     "setup_devices_windows_title": "Windows",
     "setup_devices_macos_title": "macOS",
     "setup_devices_android_title": "Android",
-    "setup_devices_ios_title": "iOS"
+    "setup_devices_ios_title": "iOS",
+    "copied": "Copied"
 }

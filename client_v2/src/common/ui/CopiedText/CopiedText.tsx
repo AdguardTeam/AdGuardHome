@@ -1,6 +1,7 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import cn from 'clsx';
 import { Icon } from '../Icon';
+import intl from 'panel/common/intl';
 
 import s from './CopiedText.module.pcss';
 
@@ -27,8 +28,22 @@ export const CopiedText = ({
         }
     }, [text, onCopy]);
 
+    useEffect(() => {
+        if (isCopied) {
+            const timer = setTimeout(() => {
+                setIsCopied(false);
+            }, 2000);
+            return () => clearTimeout(timer);
+        }
+    }, [isCopied]);
+
     return (
-        <div className={cn(s.container, className)}>
+        <div 
+            className={cn(s.container, className)}
+            onClick={handleCopy}
+            role="button"
+            aria-label={isCopied ? intl.getMessage('copied') : intl.getMessage('copy')}
+        >
             <span
                 className={s.text}
             >
@@ -37,8 +52,10 @@ export const CopiedText = ({
             <Icon
                 icon="copy"
                 className={cn(s.icon, { [s.copied]: isCopied })}
-                onClick={handleCopy}
             />
+            <div className={cn(s.copyTooltip, { [s.visible]: isCopied })}>
+                {intl.getMessage('copied')}
+            </div>
         </div>
     );
 };
