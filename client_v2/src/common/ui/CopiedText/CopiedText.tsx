@@ -30,13 +30,13 @@ export const CopiedText = ({
 
     useEffect(() => {
         let timer: NodeJS.Timeout;
-        
+
         if (isCopied) {
             timer = setTimeout(() => {
                 setIsCopied(false);
             }, 2000);
         }
-        
+
         return () => {
             if (timer) {
                 clearTimeout(timer);
