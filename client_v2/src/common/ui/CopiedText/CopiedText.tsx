@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import cn from 'clsx';
-import { Icon } from '../Icon';
 import intl from 'panel/common/intl';
+import { Icon } from '../Icon';
 
 import s from './CopiedText.module.pcss';
 
@@ -29,16 +29,23 @@ export const CopiedText = ({
     }, [text, onCopy]);
 
     useEffect(() => {
+        let timer: NodeJS.Timeout;
+        
         if (isCopied) {
-            const timer = setTimeout(() => {
+            timer = setTimeout(() => {
                 setIsCopied(false);
             }, 2000);
-            return () => clearTimeout(timer);
         }
+        
+        return () => {
+            if (timer) {
+                clearTimeout(timer);
+            }
+        };
     }, [isCopied]);
 
     return (
-        <div 
+        <div
             className={cn(s.container, className)}
             onClick={handleCopy}
             role="button"
