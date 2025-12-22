@@ -19,8 +19,8 @@ func (a *ActionInstall) Name() (name ActionName) { return ActionNameInstall }
 // isAction implements the [Action] interface for *ActionInstall.
 func (a *ActionInstall) isAction() {}
 
-// ActionReload is the implementation of the [Action] interface.
-type ActionReload struct {
+// ActionRestart is the implementation of the [Action] interface.
+type ActionRestart struct {
 	// ServiceConf is the configuration for the service to control.
 	//
 	// TODO(e.burkov):  Get rid of github.com/kardianos/service dependency and
@@ -28,11 +28,11 @@ type ActionReload struct {
 	ServiceConf *service.Config
 }
 
-// Name implements the [Action] interface for *ActionReload.
-func (a *ActionReload) Name() (name ActionName) { return ActionNameReload }
+// Name implements the [Action] interface for *ActionRestart.
+func (a *ActionRestart) Name() (name ActionName) { return ActionNameRestart }
 
-// isAction implements the [Action] interface for *ActionReload.
-func (a *ActionReload) isAction() {}
+// isAction implements the [Action] interface for *ActionRestart.
+func (a *ActionRestart) isAction() {}
 
 // ActionStart is the implementation of the [Action] interface.
 type ActionStart struct {
