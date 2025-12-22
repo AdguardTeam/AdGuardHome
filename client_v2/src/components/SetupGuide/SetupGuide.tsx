@@ -53,18 +53,22 @@ export const SetupGuide = () => {
                         </>
                     )}
 
-                    <div className={s.dnsSubtitle}>
-                        {intl.getMessage('plain_dns_addresses')}
-                    </div>
+                    {plainAddresses.length > 0 && (
+                        <>
+                            <div className={s.dnsSubtitle}>
+                                {intl.getMessage('plain_dns_addresses')}
+                            </div>
 
-                    <ul className={s.addressList}>
-                        {plainAddresses.map((ip: string) => (
-                            <li key={ip} className={s.address}>
-                                <span className={s.bulletIcon}></span>
-                                <CopiedText text={ip} />
-                            </li>
-                        ))}
-                    </ul>
+                            <ul className={s.addressList}>
+                                {plainAddresses.map((ip: string) => (
+                                    <li key={ip} className={s.address}>
+                                        <span className={s.bulletIcon}></span>
+                                        <CopiedText text={ip} />
+                                    </li>
+                                ))}
+                            </ul>
+                        </>
+                    )}
                 </div>
             </div>
         </div>
