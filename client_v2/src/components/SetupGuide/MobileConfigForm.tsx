@@ -23,7 +23,7 @@ import s from './MobileConfigForm.module.pcss';
 const getDownloadLink = (host: string, clientId: string, protocol: string, invalid: boolean) => {
     if (!host || invalid) {
         return (
-            <Button variant="primary" disabled>
+            <Button className={s.configLink} variant="primary" disabled>
                 {intl.getMessage('download_mobileconfig')}
             </Button>
         );
