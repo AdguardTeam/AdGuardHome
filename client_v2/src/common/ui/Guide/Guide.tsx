@@ -31,7 +31,7 @@ const RouterLayout = () => (
             {intl.getMessage('setup_devices_router_title')}
         </div>
         <div className={s.guideText}>
-            <div className={s.guideguideParagraph}>
+            <div className={s.guideParagraph}>
                 {intl.getMessage('setup_devices_router_desc_1')}
             </div>
             <ol className={cn({ [s.strongNumbers]: true })}>
@@ -292,26 +292,29 @@ const renderDnsDevicesList = () => (
 );
 
 const getDnsSettingsContent = (dnsAddresses: string[] | undefined, serverName?: string, portHttps?: number) => {
-    const tlsAddress = dnsAddresses?.find((addr: string) => addr.includes('tls://'));
-    const httpsAddress = dnsAddresses?.find((addr: string) => addr.includes('https://'));
+    const tlsAddress = dnsAddresses?.filter((addr: string) => addr.includes('tls://')) ?? [];
+    const httpsAddress = dnsAddresses?.filter((addr: string) => addr.includes('https://')) ?? [];
     const quicAddress = dnsAddresses?.find((addr: string) => addr.includes('quic://'));
 
+    const showDnsPrivacyNotice = httpsAddress.length < 1 && tlsAddress.length < 1;
+
     return (
-        <div className={s.dnsSettingsContent}>
-            <ul>
-                {tlsAddress && (
-                    <li className={s.deviceDnsListItem}>
-                        {intl.getMessage('setup_devices_dns_list_1')}
+        !showDnsPrivacyNotice ? (
+            <div className={s.dnsSettingsContent}>
+                <ul>
+                    {tlsAddress.length > 0 && (
+                        <li className={s.deviceDnsListItem}>
+                            {intl.getMessage('setup_devices_dns_list_1')}
                         <div>
-                            <CopiedText text={tlsAddress} />
+                            <CopiedText text={tlsAddress[0]} />
                         </div>
                     </li>
                 )}
-                {httpsAddress && (
+                {httpsAddress.length > 0 && (
                     <li className={s.deviceDnsListItem}>
                         {intl.getMessage('setup_devices_dns_list_2')}
                         <div>
-                            <CopiedText text={httpsAddress} />
+                            <CopiedText text={httpsAddress[0]} />
                         </div>
                     </li>
                 )}
@@ -350,6 +353,22 @@ const getDnsSettingsContent = (dnsAddresses: string[] | undefined, serverName?: 
                 </div>
             </div>
         </div>
+        ) : (
+            <div className={s.guideParagraph}>
+                {intl.getMessage('setup_dns_notice_new', {
+                    a: (text: string) => (
+                        <a
+                            href="#encryption"
+                            rel="noopener noreferrer"
+                            key="a"
+                            className={s.dnsLink}
+                            >
+                            {text}
+                        </a>
+                    ),
+                })}
+            </div>
+        )
     );
 };
 
