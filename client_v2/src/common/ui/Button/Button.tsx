@@ -39,8 +39,7 @@ export const Button = ({
         )}
         onClick={onClick}
         disabled={disabled}
-        {...rest}
-    >
+        {...rest}>
         <div className={s.leftAddon}>{leftAddon}</div>
         {children}
         <div className={s.rightAddon}>{rightAddon}</div>
