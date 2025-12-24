@@ -60,14 +60,19 @@ func (m *manager) Perform(ctx context.Context, action Action) (err error) {
 	case *ActionUninstall:
 		err = m.uninstall(ctx, action)
 	default:
-		err = fmt.Errorf("action: %w: %T(%[2]v)", errors.ErrBadEnumValue, action)
+		panic(fmt.Errorf("action: %w: %T(%[2]v)", errors.ErrBadEnumValue, action))
 	}
 	if err != nil {
 		// Don't wrap the error, since it's informative enough as is.
 		return err
 	}
 
-	m.logger.DebugContext(ctx, "performed service action", "action", action.Name())
+	m.logger.DebugContext(
+		ctx,
+		"performed service action",
+		"action", action.Name(),
+		"system", service.ChosenSystem(),
+	)
 
 	return nil
 }
@@ -167,9 +172,18 @@ func (m *manager) Reload(ctx context.Context, name ServiceName) (err error) {
 
 // install installs the service in the service manager.
 func (m *manager) install(ctx context.Context, action *ActionInstall) (err error) {
-	m.logger.InfoContext(ctx, "installing service", "name", action.ServiceConf.Name)
+	m.logger.InfoContext(ctx, "installing service", "name", action.ServiceName)
 
-	s, err := service.New(emptyInterface{}, action.ServiceConf)
+	conf := &service.Config{
+		Name:             string(action.ServiceName),
+		DisplayName:      action.DisplayName,
+		Description:      action.Description,
+		WorkingDirectory: action.WorkingDirectory,
+		Arguments:        action.Arguments,
+	}
+	ConfigureServiceOptions(conf, action.Version)
+
+	s, err := service.New(emptyInterface{}, conf)
 	if err != nil {
 		return fmt.Errorf("creating service: %w", err)
 	}
@@ -183,7 +197,7 @@ func (m *manager) install(ctx context.Context, action *ActionInstall) (err error
 		// On OpenWrt it is important to run enable after the service
 		// installation.  Otherwise, the service won't start on the system
 		// startup.
-		_, err = m.runInitdCommand(ctx, action.ServiceConf.Name, "enable")
+		_, err = m.runInitdCommand(ctx, string(action.ServiceName), "enable")
 		if err != nil {
 			return fmt.Errorf("enabling service on openwrt: %w", err)
 		}
@@ -195,16 +209,18 @@ func (m *manager) install(ctx context.Context, action *ActionInstall) (err error
 // restart stops, if not yet, and starts the configured service in the service
 // manager.
 func (m *manager) restart(ctx context.Context, action *ActionRestart) (err error) {
-	m.logger.InfoContext(ctx, "restarting service", "name", action.ServiceConf.Name)
+	m.logger.InfoContext(ctx, "restarting service", "name", action.ServiceName)
 
-	s, err := service.New(emptyInterface{}, action.ServiceConf)
+	s, err := service.New(emptyInterface{}, &service.Config{
+		Name: string(action.ServiceName),
+	})
 	if err != nil {
 		return fmt.Errorf("creating service: %w", err)
 	}
 
 	err = s.Restart()
 	if err != nil && m.isUnixSystemV {
-		_, initdErr := m.runInitdCommand(ctx, action.ServiceConf.Name, "restart")
+		_, initdErr := m.runInitdCommand(ctx, string(action.ServiceName), "restart")
 		if initdErr != nil {
 			return fmt.Errorf("%w (restarting via init.d: %w)", err, initdErr)
 		}
@@ -215,21 +231,23 @@ func (m *manager) restart(ctx context.Context, action *ActionRestart) (err error
 
 // start starts the configured service in the service manager.
 func (m *manager) start(ctx context.Context, action *ActionStart) (err error) {
-	m.logger.InfoContext(ctx, "starting service", "name", action.ServiceConf.Name)
+	m.logger.InfoContext(ctx, "starting service", "name", action.ServiceName)
 
 	// Perform pre-check before starting service.
 	if err = aghos.PreCheckActionStart(); err != nil {
 		m.logger.ErrorContext(ctx, "pre-check failed", "err", err)
 	}
 
-	s, err := service.New(emptyInterface{}, action.ServiceConf)
+	s, err := service.New(emptyInterface{}, &service.Config{
+		Name: string(action.ServiceName),
+	})
 	if err != nil {
 		return fmt.Errorf("creating service: %w", err)
 	}
 
 	err = s.Start()
 	if err != nil && m.isUnixSystemV {
-		_, initdErr := m.runInitdCommand(ctx, action.ServiceConf.Name, "start")
+		_, initdErr := m.runInitdCommand(ctx, string(action.ServiceName), "start")
 		if initdErr != nil {
 			return fmt.Errorf("%w (starting via init.d: %w)", err, initdErr)
 		}
@@ -240,16 +258,20 @@ func (m *manager) start(ctx context.Context, action *ActionStart) (err error) {
 
 // stop stops the service in the service manager.
 func (m *manager) stop(ctx context.Context, action *ActionStop) (err error) {
-	m.logger.InfoContext(ctx, "stopping service", "name", action.ServiceConf.Name)
+	m.logger.InfoContext(ctx, "stopping service", "name", action.ServiceName)
 
-	s, err := service.New(emptyInterface{}, action.ServiceConf)
+	conf := &service.Config{
+		Name: string(action.ServiceName),
+	}
+
+	s, err := service.New(emptyInterface{}, conf)
 	if err != nil {
 		return fmt.Errorf("creating service: %w", err)
 	}
 
 	err = s.Stop()
 	if err != nil && m.isUnixSystemV {
-		_, initdErr := m.runInitdCommand(ctx, action.ServiceConf.Name, "stop")
+		_, initdErr := m.runInitdCommand(ctx, string(action.ServiceName), "stop")
 		if initdErr != nil {
 			return fmt.Errorf("%w (stopping via init.d: %w)", err, initdErr)
 		}
@@ -260,18 +282,20 @@ func (m *manager) stop(ctx context.Context, action *ActionStop) (err error) {
 
 // uninstall uninstalls the service from the service manager.
 func (m *manager) uninstall(ctx context.Context, action *ActionUninstall) (err error) {
-	m.logger.InfoContext(ctx, "uninstalling service", "name", action.ServiceConf.Name)
+	m.logger.InfoContext(ctx, "uninstalling service", "name", action.ServiceName)
 
 	if m.isOpenWrt {
 		// On OpenWrt it is important to run disable command first as it will
 		// remove the symlink.
-		_, err = m.runInitdCommand(ctx, action.ServiceConf.Name, "disable")
+		_, err = m.runInitdCommand(ctx, string(action.ServiceName), "disable")
 		if err != nil {
 			return fmt.Errorf("disabling service on openwrt: %w", err)
 		}
 	}
 
-	s, err := service.New(emptyInterface{}, action.ServiceConf)
+	s, err := service.New(emptyInterface{}, &service.Config{
+		Name: string(action.ServiceName),
+	})
 	if err != nil {
 		return fmt.Errorf("creating service: %w", err)
 	}

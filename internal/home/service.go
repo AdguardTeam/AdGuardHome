@@ -28,8 +28,11 @@ const svcLogPrefix = "service_manager"
 
 // program represents the program that will be launched by as a service or a
 // daemon.
+//
+// TODO(e.burkov):  Handle the run action as a direct execution instead of
+// constructing a service instance and running it.  Perhaps, deprecate the
+// action.
 type program struct {
-	// TODO(s.chzhen):  Remove this.
 	ctx           context.Context
 	clientBuildFS fs.FS
 	signals       chan os.Signal
@@ -68,6 +71,36 @@ func (p *program) Stop(_ service.Service) (err error) {
 	return nil
 }
 
+// handleRun runs p.
+func (p *program) handleRun(
+	ctx context.Context,
+	baseLogger *slog.Logger,
+	opts options,
+) (err error) {
+	pwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("getting current directory: %w", err)
+	}
+
+	args := optsToArgs(opts)
+	baseLogger.DebugContext(ctx, "using", "args", args)
+
+	svcConfig := &service.Config{
+		Name:             serviceName,
+		DisplayName:      serviceDisplayName,
+		Description:      serviceDescription,
+		WorkingDirectory: pwd,
+		Arguments:        args,
+	}
+	ossvc.ConfigureServiceOptions(svcConfig, version.Full())
+	s, err := service.New(p, svcConfig)
+	if err != nil {
+		return fmt.Errorf("initializing service: %w", err)
+	}
+
+	return s.Run()
+}
+
 // restartService restarts the service.  It returns error if the service is not
 // running.  l must not be nil.
 func restartService(ctx context.Context, baseLogger *slog.Logger) (err error) {
@@ -79,21 +112,8 @@ func restartService(ctx context.Context, baseLogger *slog.Logger) (err error) {
 		return fmt.Errorf("initializing service manager: %w", err)
 	}
 
-	pwd, err := os.Getwd()
-	if err != nil {
-		return fmt.Errorf("getting current directory: %w", err)
-	}
-
-	svcConfig := &service.Config{
-		Name:             serviceName,
-		DisplayName:      serviceDisplayName,
-		Description:      serviceDescription,
-		WorkingDirectory: pwd,
-	}
-	ossvc.ConfigureServiceOptions(svcConfig, version.Full())
-
 	act := &ossvc.ActionRestart{
-		ServiceConf: svcConfig,
+		ServiceName: serviceName,
 	}
 
 	err = svcMgr.Perform(ctx, act)
@@ -127,6 +147,30 @@ func handleServiceControlAction(
 	workDir string,
 	confPath string,
 ) (err error) {
+	actionName := opts.serviceControlAction
+	l.InfoContext(ctx, version.Full())
+	l.InfoContext(ctx, "control", "action", actionName)
+
+	if actionName == "run" {
+		runOpts := opts
+		runOpts.serviceControlAction = "run"
+
+		p := &program{
+			ctx:           ctx,
+			clientBuildFS: clientBuildFS,
+			signals:       signals,
+			done:          done,
+			opts:          runOpts,
+			baseLogger:    baseLogger,
+			logger:        baseLogger.With(slogutil.KeyPrefix, "service"),
+			sigHdlr:       sigHdlr,
+			workDir:       workDir,
+			confPath:      confPath,
+		}
+
+		return p.handleRun(ctx, baseLogger, runOpts)
+	}
+
 	svcMgr, err := ossvc.NewManager(ctx, &ossvc.ManagerConfig{
 		Logger:             baseLogger.With(slogutil.KeyPrefix, svcLogPrefix),
 		CommandConstructor: executil.SystemCommandConstructor{},
@@ -135,41 +179,17 @@ func handleServiceControlAction(
 		return fmt.Errorf("initializing service manager: %w", err)
 	}
 
-	actionName := opts.serviceControlAction
-	l.InfoContext(ctx, version.Full())
-	l.InfoContext(ctx, "control", "action", actionName)
-
 	switch actionName {
 	case "reload":
 		err = handleServiceReloadCmd(ctx, l, svcMgr)
 	case "status":
 		err = handleServiceStatusCmd(ctx, l, svcMgr)
 	default:
-		err = handleServiceCommand(
-			ctx,
-			baseLogger,
-			svcMgr,
-			opts,
-			clientBuildFS,
-			signals,
-			done,
-			sigHdlr,
-			actionName,
-			workDir,
-			confPath,
-		)
+		err = handleServiceCommand(ctx, baseLogger, svcMgr, opts, workDir, confPath)
 	}
-
 	if err != nil {
 		return fmt.Errorf("action %q: %w", actionName, err)
 	}
-
-	l.InfoContext(
-		ctx,
-		"action has been done successfully",
-		"action", actionName,
-		"system", service.ChosenSystem(),
-	)
 
 	return nil
 }
@@ -180,76 +200,37 @@ func handleServiceCommand(
 	l *slog.Logger,
 	mgr ossvc.Manager,
 	opts options,
-	clientBuildFS fs.FS,
-	signals chan os.Signal,
-	done chan struct{},
-	sigHdlr *signalHandler,
-	actionName string,
 	workDir string,
 	confPath string,
 ) (err error) {
-	pwd, err := os.Getwd()
-	if err != nil {
-		return fmt.Errorf("getting current directory: %w", err)
-	}
-
 	runOpts := opts
 	runOpts.serviceControlAction = "run"
 
 	args := optsToArgs(runOpts)
 	l.DebugContext(ctx, "using", "args", args)
 
-	svcConfig := &service.Config{
-		Name:             serviceName,
-		DisplayName:      serviceDisplayName,
-		Description:      serviceDescription,
-		WorkingDirectory: pwd,
-		Arguments:        args,
-	}
-	ossvc.ConfigureServiceOptions(svcConfig, version.Full())
-
 	var action ossvc.Action
-	switch actionName {
-	// TODO(e.burkov):  Handle the run action as a direct execution instead of
-	// constructing a service instance and running it.  Perhaps, deprecate the
-	// action.
-	case "run":
-		var s service.Service
-		s, err = service.New(&program{
-			ctx:           ctx,
-			clientBuildFS: clientBuildFS,
-			signals:       signals,
-			done:          done,
-			opts:          runOpts,
-			baseLogger:    l,
-			logger:        l.With(slogutil.KeyPrefix, "service"),
-			sigHdlr:       sigHdlr,
-			workDir:       workDir,
-			confPath:      confPath,
-		}, svcConfig)
-		if err != nil {
-			return fmt.Errorf("initializing service: %w", err)
-		}
-
-		return s.Run()
+	switch opts.serviceControlAction {
 	case "install":
-		return handleServiceInstallCmd(ctx, l, mgr, svcConfig, workDir, confPath)
+		return handleServiceInstallCmd(ctx, l, mgr, args, workDir, confPath)
 	case "uninstall":
 		action = &ossvc.ActionUninstall{
-			ServiceConf: svcConfig,
+			ServiceName: serviceName,
 		}
 	case "start":
 		action = &ossvc.ActionStart{
-			ServiceConf: svcConfig,
+			ServiceName: serviceName,
 		}
 	case "stop":
 		action = &ossvc.ActionStop{
-			ServiceConf: svcConfig,
+			ServiceName: serviceName,
 		}
 	case "restart":
 		action = &ossvc.ActionRestart{
-			ServiceConf: svcConfig,
+			ServiceName: serviceName,
 		}
+	default:
+		return fmt.Errorf("%w: %q", errors.ErrBadEnumValue, opts.serviceControlAction)
 	}
 
 	return mgr.Perform(ctx, action)
@@ -302,19 +283,29 @@ func handleServiceInstallCmd(
 	ctx context.Context,
 	l *slog.Logger,
 	mgr ossvc.Manager,
-	conf *service.Config,
+	args []string,
 	workDir string,
 	confPath string,
 ) (err error) {
+	pwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("getting current directory: %w", err)
+	}
+
 	err = mgr.Perform(ctx, &ossvc.ActionInstall{
-		ServiceConf: conf,
+		ServiceName:      serviceName,
+		DisplayName:      serviceDisplayName,
+		Description:      serviceDescription,
+		WorkingDirectory: pwd,
+		Version:          version.Full(),
+		Arguments:        args,
 	})
 	if err != nil {
 		return fmt.Errorf("installing service: %w", err)
 	}
 
 	err = mgr.Perform(ctx, &ossvc.ActionStart{
-		ServiceConf: conf,
+		ServiceName: serviceName,
 	})
 	if err != nil {
 		return fmt.Errorf("starting service: %w", err)
