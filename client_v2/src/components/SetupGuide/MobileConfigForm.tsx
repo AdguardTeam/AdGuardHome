@@ -1,5 +1,4 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { Controller, useForm } from 'react-hook-form';
 import cn from 'clsx';
 
@@ -70,7 +69,6 @@ const defaultFormValues = {
 };
 
 export const MobileConfigForm = ({ initialValues }: Props) => {
-    const { t } = useTranslation();
 
     const {
         watch,
@@ -111,8 +109,8 @@ export const MobileConfigForm = ({ initialValues }: Props) => {
                                 {...field}
                                 type="text"
                                 data-testid="mobile_config_host"
-                                label={t('dhcp_table_hostname')}
-                                placeholder={t('form_enter_hostname')}
+                                label={intl.getMessage('dhcp_table_hostname')}
+                                placeholder={intl.getMessage('form_enter_hostname')}
                                 error={!!fieldState.error}
                                 errorMessage={fieldState.error?.message}
                             />
@@ -135,8 +133,8 @@ export const MobileConfigForm = ({ initialValues }: Props) => {
                                     {...field}
                                     type="number"
                                     data-testid="mobile_config_port"
-                                    label={t('encryption_https')}
-                                    placeholder={t('encryption_https')}
+                                    label={intl.getMessage('encryption_https')}
+                                    placeholder={intl.getMessage('encryption_https')}
                                     error={!!fieldState.error}
                                     errorMessage={fieldState.error?.message}
                                     onChange={(e) => {
@@ -152,7 +150,7 @@ export const MobileConfigForm = ({ initialValues }: Props) => {
 
                 <div className={cn(s.formGroup, s.formGroupSettings)}>
                     <label htmlFor="clientId" className={cn(s.formLabel, s.formLabelWithDesc)}>
-                        {t('client_id')}
+                        {intl.getMessage('client_id')}
                         <FaqTooltip
                             text={
                                 intl.getMessage('client_id_faq', {
@@ -182,7 +180,7 @@ export const MobileConfigForm = ({ initialValues }: Props) => {
                                 {...field}
                                 type="text"
                                 data-testid="mobile_config_client_id"
-                                placeholder={t('client_id_placeholder')}
+                                placeholder={intl.getMessage('client_id_placeholder')}
                                 error={!!fieldState.error}
                                 errorMessage={fieldState.error?.message}
                             />
@@ -192,7 +190,7 @@ export const MobileConfigForm = ({ initialValues }: Props) => {
 
                 <div className={cn(s.formGroup, s.formGroupSettings)}>
                     <label className={s.formLabel}>
-                        {t('protocol')}
+                        {intl.getMessage('protocol')}
                     </label>
                     <Controller
                         name="protocol"
@@ -200,10 +198,10 @@ export const MobileConfigForm = ({ initialValues }: Props) => {
                         render={({ field }) => (
                             <Select
                                 options={[
-                                    { value: MOBILE_CONFIG_LINKS.DOT, label: t('dns_over_tls') },
-                                    { value: MOBILE_CONFIG_LINKS.DOH, label: t('dns_over_https') }
+                                    { value: MOBILE_CONFIG_LINKS.DOT, label: intl.getMessage('dns_over_tls') },
+                                    { value: MOBILE_CONFIG_LINKS.DOH, label: intl.getMessage('dns_over_https') }
                                 ]}
-                                value={{ value: field.value, label: field.value === MOBILE_CONFIG_LINKS.DOT ? t('dns_over_tls') : t('dns_over_https') }}
+                                value={{ value: field.value, label: field.value === MOBILE_CONFIG_LINKS.DOT ? intl.getMessage('dns_over_tls') : intl.getMessage('dns_over_https') }}
                                 onChange={(option) => field.onChange(option?.value)}
                                 isSearchable={false}
                                 size="responsive"

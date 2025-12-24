@@ -533,9 +533,9 @@ export const Icons = memo(() => (
                 d="M39.522 21.564a7.023 7.023 0 1 0 0-14.046 7.023 7.023 0 0 0 0 14.046ZM35.753 10.645l7.54 7.54M35.753 18.157l7.54-7.54"
             />
         </symbol>
-        <symbol id="copy" viewBox="0 0 20 20" fill="none">
-            <rect x="3.33301" y="6.6665" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M6.66699 4.5835C6.66699 3.89314 7.22664 3.3335 7.91699 3.3335H15.0003C15.9208 3.3335 16.667 4.07969 16.667 5.00016V11.6668C16.667 12.1271 16.4804 12.5437 16.1788 12.8453C16.0253 12.9989 15.842 13.1226 15.6382 13.2071C15.5385 13.2484 15.4339 13.2804 15.3255 13.3018" stroke="#7F7F7F" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <symbol id="copy" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <g fill="none" fillRule="evenodd" stroke="currentColor" strokeWidth="1.5"><rect height="12" rx="2" width="12" x="4" y="8"/><path d="m8 6.12528887v-.62528887c0-.82842712.67157288-1.5 1.5-1.5h8.5c1.1045695 0 2 .8954305 2 2v8c0 1.1045695-.8954305 2-2 2h-.265606"/>
+            </g>
         </symbol>
         <symbol id="router" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path fillRule="evenodd" clipRule="evenodd" d="M4.48705 13.316C3.11348 13.316 2 14.3645 2 15.658C2 16.9514 3.11348 18 4.48705 18H19.513C20.8865 18 22 16.9514 22 15.658C22 14.3645 20.8865 13.316 19.513 13.316H4.48705ZM19.1503 16.6338C19.7512 16.6338 20.2383 16.1751 20.2383 15.6092C20.2383 15.0433 19.7512 14.5846 19.1503 14.5846C18.5493 14.5846 18.0622 15.0433 18.0622 15.6092C18.0622 16.1751 18.5493 16.6338 19.1503 16.6338Z" fill="currentColor"/>

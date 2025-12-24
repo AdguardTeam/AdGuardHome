@@ -218,10 +218,10 @@ const renderDnsDevicesList = () => (
             </div>
             <ul className={s.guideList}>
                 <li className={s.guideBulletItem}>
-                    {intl.getMessage('setup_dns_privacy_other_1')}
+                    {intl.getMessage('setup_devices_dns_other_list_1')}
                 </li>
                 <li className={s.guideBulletItem}>
-                    {intl.getMessage('setup_dns_privacy_other_2', {
+                    {intl.getMessage('setup_devices_dns_other_list_2', {
                         a: (text: string) => (
                             <a
                                 href="https://github.com/AdguardTeam/dnsproxy"
@@ -235,7 +235,7 @@ const renderDnsDevicesList = () => (
                     })}
                 </li>
                 <li className={s.guideBulletItem}>
-                    {intl.getMessage('setup_dns_privacy_other_3', {
+                    {intl.getMessage('setup_devices_dns_other_list_3', {
                         a: (text: string) => (
                             <a
                                 href="https://github.com/jedisct1/dnscrypt-proxy"
@@ -249,7 +249,7 @@ const renderDnsDevicesList = () => (
                     })}
                 </li>
                 <li className={s.guideBulletItem}>
-                    {intl.getMessage('setup_dns_privacy_other_4', {
+                    {intl.getMessage('setup_devices_dns_other_list_4', {
                         a: (text: string) => (
                             <a
                                 href="https://support.mozilla.org/kb/firefox-dns-over-https"
@@ -299,61 +299,7 @@ const getDnsSettingsContent = (dnsAddresses: string[] | undefined, serverName?: 
     const showDnsPrivacyNotice = httpsAddress.length < 1 && tlsAddress.length < 1;
 
     return (
-        !showDnsPrivacyNotice ? (
-            <div className={s.dnsSettingsContent}>
-                <ul>
-                    {tlsAddress.length > 0 && (
-                        <li className={s.deviceDnsListItem}>
-                            {intl.getMessage('setup_devices_dns_list_1')}
-                        <div>
-                            <CopiedText text={tlsAddress[0]} />
-                        </div>
-                    </li>
-                )}
-                {httpsAddress.length > 0 && (
-                    <li className={s.deviceDnsListItem}>
-                        {intl.getMessage('setup_devices_dns_list_2')}
-                        <div>
-                            <CopiedText text={httpsAddress[0]} />
-                        </div>
-                    </li>
-                )}
-                {quicAddress && (
-                    <li className={s.deviceDnsListItem}>
-                        {intl.getMessage('setup_devices_dns_list_3')}
-                        <div>
-                            <CopiedText text={quicAddress} />
-                        </div>
-                    </li>
-                )}
-            </ul>
-
-            <div className={s.guideParagraph}>
-                {intl.getMessage('setup_devices_dns_list_devices')}
-            </div>
-
-            {renderDnsDevicesList()}
-
-            <div className={s.guideParagraph}>
-                <div className={s.guideTitle}>
-                    <strong>iOS and macOS configuration</strong>
-                </div>
-                <div>
-                    {intl.getMessage('setup_devices_dns_macos_desc')}
-                </div>
-                <div className={s.mobileConfigContainer}>
-                    <MobileConfigForm
-                        initialValues={{
-                            host: serverName || '',
-                            clientId: '',
-                            protocol: MOBILE_CONFIG_LINKS.DOH,
-                            port: portHttps,
-                        }}
-                    />
-                </div>
-            </div>
-        </div>
-        ) : (
+        showDnsPrivacyNotice ? (
             <div className={s.guideParagraph}>
                 {intl.getMessage('setup_dns_notice_new', {
                     a: (text: string) => (
@@ -362,11 +308,65 @@ const getDnsSettingsContent = (dnsAddresses: string[] | undefined, serverName?: 
                             rel="noopener noreferrer"
                             key="a"
                             className={s.dnsLink}
-                            >
+                        >
                             {text}
                         </a>
                     ),
                 })}
+            </div>
+        ) : (
+            <div className={s.dnsSettingsContent}>
+                <ul>
+                    {tlsAddress.length > 0 && (
+                        <li className={s.deviceDnsListItem}>
+                            {intl.getMessage('setup_devices_dns_list_1')}
+                            <div>
+                                <CopiedText text={tlsAddress[0]} />
+                            </div>
+                        </li>
+                    )}
+                    {httpsAddress.length > 0 && (
+                        <li className={s.deviceDnsListItem}>
+                            {intl.getMessage('setup_devices_dns_list_2')}
+                            <div>
+                                <CopiedText text={httpsAddress[0]} />
+                            </div>
+                        </li>
+                    )}
+                    {quicAddress && (
+                        <li className={s.deviceDnsListItem}>
+                            {intl.getMessage('setup_devices_dns_list_3')}
+                            <div>
+                                <CopiedText text={quicAddress} />
+                            </div>
+                        </li>
+                    )}
+                </ul>
+
+                <div className={s.guideParagraph}>
+                    {intl.getMessage('setup_devices_dns_list_devices')}
+                </div>
+
+                {renderDnsDevicesList()}
+
+                <div className={s.guideParagraph}>
+                    <div className={s.guideTitle}>
+                        <strong>iOS and macOS configuration</strong>
+                    </div>
+                    <div>
+                        {intl.getMessage('setup_devices_dns_macos_desc')}
+                    </div>
+                    <div className={s.mobileConfigContainer}>
+                        <MobileConfigForm
+                            initialValues={{
+                                host: serverName || '',
+                                clientId: '',
+                                protocol: MOBILE_CONFIG_LINKS.DOH,
+                                port: portHttps,
+                            }}
+                        />
+                    </div>
+                </div>
             </div>
         )
     );
@@ -384,32 +384,32 @@ const DnsPrivacyLayout = ({ serverName, portHttps, dnsAddresses }: PlatformLayou
 const getPlatformLayouts = ({ serverName, portHttps, dnsAddresses }: PlatformLayoutProps): PlatformLayouts => ({
     Router: {
         title: intl.getMessage('setup_devices_router_title'),
-        icon: 'router' as IconType,
+        icon: 'router',
         component: <RouterLayout />,
     },
     Windows: {
         title: intl.getMessage('setup_devices_windows_title'),
-        icon: 'windows' as IconType,
+        icon: 'windows',
         component: <WindowsLayout />,
     },
     macOS: {
         title: intl.getMessage('setup_devices_macos_title'),
-        icon: 'mac' as IconType,
+        icon: 'mac',
         component: <MacOSLayout />,
     },
     Android: {
         title: intl.getMessage('setup_devices_android_title'),
-        icon: 'android' as IconType,
+        icon: 'android',
         component: <AndroidLayout />,
     },
     iOS: {
         title: intl.getMessage('setup_devices_ios_title'),
-        icon: 'ios' as IconType,
+        icon: 'ios',
         component: <IOSLayout />,
     },
     dns_privacy: {
         title: intl.getMessage('dns_privacy'),
-        icon: 'dns_privacy' as IconType,
+        icon: 'dns_privacy',
         component: (
             <DnsPrivacyLayout
                 serverName={serverName}

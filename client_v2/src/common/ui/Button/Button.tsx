@@ -41,8 +41,8 @@ export const Button = ({
         disabled={disabled}
         {...rest}
     >
-        {leftAddon && (<div className={s.leftAddon}>{leftAddon}</div>)}
+        <div className={s.leftAddon}>{leftAddon}</div>
         {children}
-        {rightAddon && (<div className={s.rightAddon}>{rightAddon}</div>)}
+        <div className={s.rightAddon}>{rightAddon}</div>
     </button>
 );
