@@ -126,8 +126,8 @@ func (iface *dhcpInterfaceV4) handleRequest(
 	default:
 		// Server identifier MUST NOT be filled in, requested IP address option
 		// MUST NOT be filled in.
-		ip, _ := netip.AddrFromSlice(req.ClientIP.To4())
-		if !iface.subnet.Contains(ip) {
+		ip, ok := netip.AddrFromSlice(req.ClientIP.To4())
+		if !ok || !iface.subnet.Contains(ip) {
 			l.DebugContext(ctx, "skipping renew request", "clientip", ip)
 
 			return
@@ -245,16 +245,10 @@ func (iface *dhcpInterfaceV4) handleInitReboot(
 ) {
 	l := iface.common.logger
 
-	if !reqIP.Is4() {
-		l.DebugContext(ctx, "bad requested address", "requestedip", reqIP)
-
-		return
-	}
-
 	// ciaddr must be zero.  The client is seeking to verify a previously
 	// allocated, cached configuration.
-	ciaddr, _ := netip.AddrFromSlice(req.ClientIP)
-	if ciaddr.IsValid() && !ciaddr.IsUnspecified() {
+	ciaddr, ok := netip.AddrFromSlice(req.ClientIP)
+	if ok && !ciaddr.IsUnspecified() {
 		l.DebugContext(ctx, "unexpected ciaddr in init-reboot request", "ciaddr", ciaddr)
 
 		return

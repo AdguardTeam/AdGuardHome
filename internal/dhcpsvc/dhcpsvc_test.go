@@ -13,6 +13,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/testutil"
+	"github.com/AdguardTeam/golibs/testutil/faketime"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
@@ -40,27 +41,47 @@ var testLogger = slogutil.NewDiscardLogger()
 // testdata is a filesystem containing data for tests.
 var testdata = os.DirFS("testdata")
 
-// testInterfaceConf is a common set of interface configurations for tests.
-var testInterfaceConf = map[string]*dhcpsvc.InterfaceConfig{
-	"eth0": {
-		IPv4: &dhcpsvc.IPv4Config{
-			Enabled:       true,
-			Clock:         timeutil.SystemClock{},
-			GatewayIP:     netip.MustParseAddr("192.168.0.1"),
-			SubnetMask:    netip.MustParseAddr("255.255.255.0"),
-			RangeStart:    netip.MustParseAddr("192.168.0.2"),
-			RangeEnd:      netip.MustParseAddr("192.168.0.254"),
-			LeaseDuration: 1 * time.Hour,
-		},
-		IPv6: &dhcpsvc.IPv6Config{
-			Enabled:       true,
-			RangeStart:    netip.MustParseAddr("2001:db8::1"),
-			LeaseDuration: 1 * time.Hour,
-			RAAllowSLAAC:  true,
-			RASLAACOnly:   true,
-		},
+// testCurrentTime is the fixed time returned by [testClock] to ensure
+// reproducible tests.
+var testCurrentTime = time.Date(2025, 1, 1, 1, 1, 1, 0, time.UTC)
+
+// testClock is the test [timeutil.Clock] that always returns [testCurrentTime].
+var testClock = &faketime.Clock{
+	OnNow: func() (now time.Time) {
+		return testCurrentTime
 	},
-	"eth1": {
+}
+
+// testIPv4Conf is a common valid IPv4 part of the interface configuration for
+// tests.
+var testIPv4Conf = &dhcpsvc.IPv4Config{
+	Enabled:       true,
+	Clock:         timeutil.SystemClock{},
+	GatewayIP:     netip.MustParseAddr("192.168.0.1"),
+	SubnetMask:    netip.MustParseAddr("255.255.255.0"),
+	RangeStart:    netip.MustParseAddr("192.168.0.2"),
+	RangeEnd:      netip.MustParseAddr("192.168.0.254"),
+	LeaseDuration: testLeaseTTL,
+}
+
+// testIPv6Conf is a common valid IPv6 part of the interface configuration for
+// tests.
+var testIPv6Conf = &dhcpsvc.IPv6Config{
+	Enabled:       true,
+	RangeStart:    netip.MustParseAddr("2001:db8::1"),
+	LeaseDuration: testLeaseTTL,
+	RAAllowSLAAC:  true,
+	RASLAACOnly:   true,
+}
+
+// testInterfaceConf is a common valid set of interface configurations for
+// tests.
+var testInterfaceConf = map[string]*dhcpsvc.InterfaceConfig{
+	testIfaceName: {
+		IPv4: testIPv4Conf,
+		IPv6: testIPv6Conf,
+	},
+	"iface1": {
 		IPv4: &dhcpsvc.IPv4Config{
 			Enabled:       true,
 			Clock:         timeutil.SystemClock{},
@@ -106,7 +127,7 @@ func newTempDB(tb testing.TB) (dst string) {
 
 	dst = filepath.Join(tb.TempDir(), filename)
 
-	err = os.WriteFile(dst, data, dhcpsvc.DatabasePerm)
+	err = os.WriteFile(dst, data, 0o640)
 	require.NoError(tb, err)
 
 	return dst

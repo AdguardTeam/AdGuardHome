@@ -214,7 +214,7 @@ func (iface *dhcpInterfaceV4) respondOffer(
 	fd *frameData,
 	l *Lease,
 ) {
-	resp := iface.buildResponse(req, l, layers.DHCPMsgTypeOffer)
+	resp := iface.buildResponse(req, l, fd.device, layers.DHCPMsgTypeOffer)
 
 	err := respond4(fd, resp)
 	if err != nil {
@@ -233,7 +233,7 @@ func (iface *dhcpInterfaceV4) respondACK(
 	fd *frameData,
 	l *Lease,
 ) {
-	resp := iface.buildResponse(req, l, layers.DHCPMsgTypeAck)
+	resp := iface.buildResponse(req, l, fd.device, layers.DHCPMsgTypeAck)
 	if err := respond4(fd, resp); err != nil {
 		iface.common.logger.ErrorContext(ctx, "writing ack", "error", err)
 	}
@@ -280,6 +280,7 @@ func (iface *dhcpInterfaceV4) respondNAK(
 func (iface *dhcpInterfaceV4) buildResponse(
 	req *layers.DHCPv4,
 	l *Lease,
+	nd NetworkDevice,
 	msgType layers.DHCPMsgType,
 ) (resp *layers.DHCPv4) {
 	resp = &layers.DHCPv4{
@@ -294,8 +295,7 @@ func (iface *dhcpInterfaceV4) buildResponse(
 	resp.Options = append(
 		resp.Options,
 		layers.NewDHCPOption(layers.DHCPOptMessageType, []byte{byte(msgType)}),
-		// TODO(e.burkov):  Use network device address.
-		layers.NewDHCPOption(layers.DHCPOptServerID, iface.gateway.AsSlice()),
+		layers.NewDHCPOption(layers.DHCPOptServerID, nd.Addresses()[0].AsSlice()),
 	)
 
 	iface.appendLeaseTime(resp, l)

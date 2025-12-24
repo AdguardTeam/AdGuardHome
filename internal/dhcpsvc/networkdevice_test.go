@@ -2,6 +2,7 @@ package dhcpsvc_test
 
 import (
 	"context"
+	"net/netip"
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
@@ -40,6 +41,7 @@ func (ndm *testNetworkDeviceManager) Open(
 // TODO(e.burkov):  Move to aghtest.
 type testNetworkDevice struct {
 	onReadPacketData  func() (data []byte, ci gopacket.CaptureInfo, err error)
+	onAddresses       func() (ips []netip.Addr)
 	onLinkType        func() (lt layers.LinkType)
 	onWritePacketData func(data []byte) (err error)
 }
@@ -47,10 +49,16 @@ type testNetworkDevice struct {
 // type check
 var _ dhcpsvc.NetworkDevice = (*testNetworkDevice)(nil)
 
-// ReadPacketData implements the [dhcpsvc.NetworkDevice] interface for
+// ReadPacketData implements the [gopacket.PacketDataSource] interface for
 // *testNetworkDevice.
 func (nd *testNetworkDevice) ReadPacketData() (data []byte, ci gopacket.CaptureInfo, err error) {
 	return nd.onReadPacketData()
+}
+
+// Addresses implements the [dhcpsvc.NetworkDevice] interface for
+// *testNetworkDevice.
+func (nd *testNetworkDevice) Addresses() (ips []netip.Addr) {
+	return nd.onAddresses()
 }
 
 // WritePacketData implements the [dhcpsvc.NetworkDevice] interface for
@@ -72,6 +80,7 @@ func (nd *testNetworkDevice) LinkType() (lt layers.LinkType) {
 func newTestNetworkDeviceManager(
 	tb testing.TB,
 	deviceName string,
+	addr netip.Addr,
 ) (ndMgr dhcpsvc.NetworkDeviceManager, inCh chan gopacket.Packet, outCh chan []byte) {
 	tb.Helper()
 
@@ -79,6 +88,7 @@ func newTestNetworkDeviceManager(
 	outCh = make(chan []byte)
 
 	pt := testutil.PanicT{}
+	addrs := []netip.Addr{addr}
 
 	dev := &testNetworkDevice{
 		onReadPacketData: func() (data []byte, ci gopacket.CaptureInfo, err error) {
@@ -92,6 +102,9 @@ func newTestNetworkDeviceManager(
 			}
 
 			return data, ci, nil
+		},
+		onAddresses: func() (ips []netip.Addr) {
+			return addrs
 		},
 		onLinkType: func() (lt layers.LinkType) {
 			return layers.LinkTypeEthernet

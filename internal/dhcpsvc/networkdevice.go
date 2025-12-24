@@ -2,6 +2,7 @@ package dhcpsvc
 
 import (
 	"context"
+	"net/netip"
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/validate"
@@ -58,6 +59,9 @@ func (EmptyNetworkDeviceManager) Open(
 type NetworkDevice interface {
 	gopacket.PacketDataSource
 
+	// Addresses returns all IP addresses assigned to the device.
+	Addresses() (ips []netip.Addr)
+
 	// LinkType returns the link type of the network interface.
 	LinkType() (lt layers.LinkType)
 
@@ -76,6 +80,12 @@ var _ NetworkDevice = EmptyNetworkDevice{}
 // nil error.
 func (EmptyNetworkDevice) ReadPacketData() (data []byte, ci gopacket.CaptureInfo, err error) {
 	return nil, gopacket.CaptureInfo{}, nil
+}
+
+// Addresses implements the [NetworkDevice] interface for [EmptyNetworkDevice].
+// It always returns nil.
+func (EmptyNetworkDevice) Addresses() (ips []netip.Addr) {
+	return nil
 }
 
 // LinkType implements the [NetworkDevice] interface for [EmptyNetworkDevice].

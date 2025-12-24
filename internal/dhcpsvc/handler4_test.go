@@ -8,24 +8,12 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
 	"github.com/AdguardTeam/golibs/testutil"
-	"github.com/AdguardTeam/golibs/testutil/faketime"
 	"github.com/AdguardTeam/golibs/testutil/servicetest"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-// testCurrentTime is the fixed time returned by [testClock] to ensure
-// reproducible tests.
-var testCurrentTime = time.Date(2025, 1, 1, 1, 1, 1, 0, time.UTC)
-
-// testClock is the test [timeutil.Clock] that always returns [testCurrentTime].
-var testClock = &faketime.Clock{
-	OnNow: func() (now time.Time) {
-		return testCurrentTime
-	},
-}
 
 func TestDHCPServer_ServeEther4_discover(t *testing.T) {
 	t.Parallel()
@@ -57,6 +45,8 @@ func TestDHCPServer_ServeEther4_discover(t *testing.T) {
 		hwAddrExpired = net.HardwareAddr{0x3, 0x4, 0x5, 0x6, 0x7, 0x8}
 	)
 
+	ifaceAddr := netip.MustParseAddr("192.168.0.2")
+
 	// NOTE: Keep in sync with testdata.
 	dynamicLeaseExpiry := time.Date(2025, 1, 1, 10, 1, 1, 0, time.UTC)
 	dynamicLeaseTTL := dynamicLeaseExpiry.Sub(testCurrentTime)
@@ -83,7 +73,7 @@ func TestDHCPServer_ServeEther4_discover(t *testing.T) {
 		in:   newDHCPDISCOVER(t, hwAddrUnknown),
 		wantOpts: layers.DHCPOptions{
 			newOptMessageType(t, layers.DHCPMsgTypeOffer),
-			newOptServerID(t, ipv4Conf.GatewayIP),
+			newOptServerID(t, ifaceAddr),
 			newOptLeaseTime(t, testLeaseTTL),
 		},
 	}, {
@@ -91,7 +81,7 @@ func TestDHCPServer_ServeEther4_discover(t *testing.T) {
 		in:   newDHCPDISCOVER(t, hwAddrStatic),
 		wantOpts: layers.DHCPOptions{
 			newOptMessageType(t, layers.DHCPMsgTypeOffer),
-			newOptServerID(t, ipv4Conf.GatewayIP),
+			newOptServerID(t, ifaceAddr),
 			newOptLeaseTime(t, testLeaseTTL),
 			newOptHostname(t, leaseHostnameStatic),
 		},
@@ -100,7 +90,7 @@ func TestDHCPServer_ServeEther4_discover(t *testing.T) {
 		in:   newDHCPDISCOVER(t, hwAddrDynamic),
 		wantOpts: layers.DHCPOptions{
 			newOptMessageType(t, layers.DHCPMsgTypeOffer),
-			newOptServerID(t, ipv4Conf.GatewayIP),
+			newOptServerID(t, ifaceAddr),
 			newOptLeaseTime(t, dynamicLeaseTTL),
 			newOptHostname(t, leaseHostnameDynamic),
 		},
@@ -109,7 +99,7 @@ func TestDHCPServer_ServeEther4_discover(t *testing.T) {
 		in:   newDHCPDISCOVER(t, hwAddrExpired),
 		wantOpts: layers.DHCPOptions{
 			newOptMessageType(t, layers.DHCPMsgTypeOffer),
-			newOptServerID(t, ipv4Conf.GatewayIP),
+			newOptServerID(t, ifaceAddr),
 			newOptLeaseTime(t, testLeaseTTL),
 			newOptHostname(t, leaseHostnameExpired),
 		},
@@ -118,7 +108,7 @@ func TestDHCPServer_ServeEther4_discover(t *testing.T) {
 	for _, tc := range testCases {
 		req := testutil.RequireTypeAssert[*layers.DHCPv4](t, tc.in.Layer(layers.LayerTypeDHCPv4))
 
-		ndMgr, inCh, outCh := newTestNetworkDeviceManager(t, testIfaceName)
+		ndMgr, inCh, outCh := newTestNetworkDeviceManager(t, testIfaceName, ifaceAddr)
 		srv := newTestDHCPServer(t, &dhcpsvc.Config{
 			Interfaces:           ifacesConfig,
 			NetworkDeviceManager: ndMgr,
@@ -150,10 +140,12 @@ func TestDHCPServer_ServeEther4_discoverExpired(t *testing.T) {
 	// NOTE: Keep in sync with testdata.
 	hwAddrUnknown := net.HardwareAddr{0x0, 0x1, 0x2, 0x3, 0x4, 0x5}
 
+	ifaceAddr := netip.MustParseAddr("192.168.0.2")
+
 	pkt := newDHCPDISCOVER(t, hwAddrUnknown)
 	req := testutil.RequireTypeAssert[*layers.DHCPv4](t, pkt.Layer(layers.LayerTypeDHCPv4))
 
-	ndMgr, inCh, outCh := newTestNetworkDeviceManager(t, testIfaceName)
+	ndMgr, inCh, outCh := newTestNetworkDeviceManager(t, testIfaceName, ifaceAddr)
 
 	ipv4Conf := &dhcpsvc.IPv4Config{
 		Clock:         testClock,
@@ -181,12 +173,133 @@ func TestDHCPServer_ServeEther4_discoverExpired(t *testing.T) {
 
 	assertValidOffer(t, req, respData, layers.DHCPOptions{
 		newOptMessageType(t, layers.DHCPMsgTypeOffer),
-		newOptServerID(t, ipv4Conf.GatewayIP),
+		newOptServerID(t, ifaceAddr),
 		newOptLeaseTime(t, testLeaseTTL),
 	})
 }
 
-// TODO(e.burkov):  Add tests for DHCPREQUEST, DHCPRELEASE, DHCPDECLINE.
+func TestDHCPServer_ServeEther4_release(t *testing.T) {
+	t.Parallel()
+
+	// NOTE: Keep in sync with testdata.
+	leaseExpiry := time.Date(2025, 1, 1, 10, 1, 1, 0, time.UTC)
+
+	// NOTE: Keep in sync with testdata.
+	var (
+		// hwAddrSuccess is the MAC address for a lease to be released
+		// successfully.
+		hwAddrSuccess = net.HardwareAddr{0x02, 0x03, 0x04, 0x05, 0x06, 0x07}
+
+		// ipSuccess matches the lease IP.
+		ipSuccess = netip.MustParseAddr("192.168.0.102")
+
+		// ipMismatch is the IP of the lease used in the mismatch cases.
+		ipMismatch = netip.MustParseAddr("192.168.0.103")
+
+		// hwAddrMismatch is the MAC address for a lease with mismatched IP.
+		hwAddrMismatch = net.HardwareAddr{0x03, 0x04, 0x05, 0x06, 0x07, 0x08}
+
+		// ipMismatchReq is the IP requested for release, which differs from the
+		// lease IP.
+		ipMismatchReq = netip.MustParseAddr("192.168.0.104")
+
+		// hwAddrUnknown is an unknown MAC.
+		hwAddrUnknown = net.HardwareAddr{0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff}
+	)
+
+	ipv4Conf := &dhcpsvc.IPv4Config{
+		Clock:         testClock,
+		SubnetMask:    netip.MustParseAddr("255.255.255.0"),
+		GatewayIP:     netip.MustParseAddr("192.168.0.1"),
+		RangeStart:    netip.MustParseAddr("192.168.0.100"),
+		RangeEnd:      netip.MustParseAddr("192.168.0.200"),
+		LeaseDuration: testLeaseTTL,
+		Enabled:       true,
+	}
+	ifacesConfig := map[string]*dhcpsvc.InterfaceConfig{
+		testIfaceName: {IPv4: ipv4Conf, IPv6: disabledIPv6Config},
+	}
+
+	ifaceHWAddr := net.HardwareAddr{0x01, 0x02, 0x03, 0x04, 0x05, 0x06}
+	ifaceAddr := netip.MustParseAddr("192.168.0.2")
+	anotherSubnetAddr := netip.MustParseAddr("10.0.0.1")
+
+	var (
+		leaseSuccess = &dhcpsvc.Lease{
+			Expiry:   leaseExpiry,
+			IP:       ipSuccess,
+			Hostname: "success",
+			HWAddr:   hwAddrSuccess,
+			IsStatic: false,
+		}
+		leaseMismatch = &dhcpsvc.Lease{
+			Expiry:   leaseExpiry,
+			IP:       ipMismatch,
+			Hostname: "mismatch",
+			HWAddr:   hwAddrMismatch,
+			IsStatic: false,
+		}
+	)
+
+	testCases := []struct {
+		name       string
+		req        gopacket.Packet
+		wantLeases []*dhcpsvc.Lease
+	}{{
+		name: "success",
+		req:  newDHCPRELEASE(t, hwAddrSuccess, ipSuccess, ifaceHWAddr, ifaceAddr),
+		wantLeases: []*dhcpsvc.Lease{
+			leaseMismatch,
+		},
+	}, {
+		name: "not_found",
+		req:  newDHCPRELEASE(t, hwAddrUnknown, ipSuccess, ifaceHWAddr, ifaceAddr),
+		wantLeases: []*dhcpsvc.Lease{
+			leaseSuccess,
+			leaseMismatch,
+		},
+	}, {
+		name: "mismatch_ip",
+		req:  newDHCPRELEASE(t, hwAddrMismatch, ipMismatchReq, ifaceHWAddr, ifaceAddr),
+		wantLeases: []*dhcpsvc.Lease{
+			leaseSuccess,
+			leaseMismatch,
+		},
+	}, {
+		name: "bad_subnet",
+		req:  newDHCPRELEASE(t, hwAddrSuccess, anotherSubnetAddr, ifaceHWAddr, ifaceAddr),
+		wantLeases: []*dhcpsvc.Lease{
+			leaseSuccess,
+			leaseMismatch,
+		},
+	}}
+
+	for _, tc := range testCases {
+		ndMgr, inCh, _ := newTestNetworkDeviceManager(t, testIfaceName, ifaceAddr)
+		srv := newTestDHCPServer(t, &dhcpsvc.Config{
+			Interfaces:           ifacesConfig,
+			NetworkDeviceManager: ndMgr,
+			DBFilePath:           newTempDB(t),
+			Enabled:              true,
+		})
+
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			servicetest.RequireRun(t, srv, testTimeout)
+
+			testutil.RequireSend(t, inCh, tc.req, testTimeout)
+
+			// TODO(e.burkov):  Improve the test to ensure that the DHCPDISCOVER
+			// actually receives the released address.
+			assert.EventuallyWithT(t, func(ct *assert.CollectT) {
+				assert.Equal(ct, tc.wantLeases, srv.Leases())
+			}, testTimeout/2, testTimeout/20)
+		})
+	}
+}
+
+// TODO(e.burkov):  Add tests for DHCPREQUEST, DHCPDECLINE.
 
 // TODO(e.burkov):  Add tests for wrong packets.
 
@@ -221,10 +334,50 @@ func newDHCPDISCOVER(tb testing.TB, clientHWAddr net.HardwareAddr) (pkt gopacket
 		Xid:          testXid,
 		ClientHWAddr: clientHWAddr,
 		Options: layers.DHCPOptions{
-			layers.NewDHCPOption(
-				layers.DHCPOptMessageType,
-				[]byte{byte(layers.DHCPMsgTypeDiscover)},
-			),
+			newOptMessageType(tb, layers.DHCPMsgTypeDiscover),
+		},
+	}
+
+	return newTestPacket(tb, layers.LinkTypeEthernet, eth, ip, udp, dhcp)
+}
+
+// newDHCPRELEASE creates a new DHCPRELEASE packet for testing.
+func newDHCPRELEASE(
+	tb testing.TB,
+	clientHWAddr net.HardwareAddr,
+	clientIP netip.Addr,
+	serverHWAddr net.HardwareAddr,
+	serverIP netip.Addr,
+) (pkt gopacket.Packet) {
+	tb.Helper()
+
+	eth := &layers.Ethernet{
+		SrcMAC:       clientHWAddr,
+		DstMAC:       serverHWAddr,
+		EthernetType: layers.EthernetTypeIPv4,
+	}
+	ip := &layers.IPv4{
+		Version:  4,
+		TTL:      dhcpsvc.IPv4DefaultTTL,
+		SrcIP:    clientIP.AsSlice(),
+		DstIP:    serverIP.AsSlice(),
+		Protocol: layers.IPProtocolUDP,
+	}
+	udp := &layers.UDP{
+		SrcPort: dhcpsvc.ClientPortV4,
+		DstPort: dhcpsvc.ServerPortV4,
+	}
+	_ = udp.SetNetworkLayerForChecksum(ip)
+
+	dhcp := &layers.DHCPv4{
+		Operation:    layers.DHCPOpRequest,
+		HardwareType: layers.LinkTypeEthernet,
+		HardwareLen:  dhcpsvc.EUI48AddrLen,
+		Xid:          testXid,
+		ClientHWAddr: clientHWAddr,
+		ClientIP:     clientIP.AsSlice(),
+		Options: layers.DHCPOptions{
+			newOptMessageType(tb, layers.DHCPMsgTypeRelease),
 		},
 	}
 
