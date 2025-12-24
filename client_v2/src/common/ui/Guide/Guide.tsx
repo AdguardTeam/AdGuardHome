@@ -316,29 +316,26 @@ const getDnsSettingsContent = (dnsAddresses: string[] | undefined, serverName?: 
             </div>
         ) : (
             <div className={s.dnsSettingsContent}>
-                <ul>
+                <ul className={s.deviceDnsList}>
                     {tlsAddress.length > 0 && (
                         <li className={s.deviceDnsListItem}>
-                            {intl.getMessage('setup_devices_dns_list_1')}
-                            <div>
-                                <CopiedText text={tlsAddress[0]} />
-                            </div>
+                            {intl.getMessage('setup_devices_dns_list_1', {
+                                code: <CopiedText text={tlsAddress[0]} />
+                            })}
                         </li>
                     )}
                     {httpsAddress.length > 0 && (
                         <li className={s.deviceDnsListItem}>
-                            {intl.getMessage('setup_devices_dns_list_2')}
-                            <div>
-                                <CopiedText text={httpsAddress[0]} />
-                            </div>
+                            {intl.getMessage('setup_devices_dns_list_2', {
+                                code: () => <CopiedText text={httpsAddress[0]} />
+                            })}
                         </li>
                     )}
                     {quicAddress && (
                         <li className={s.deviceDnsListItem}>
-                            {intl.getMessage('setup_devices_dns_list_3')}
-                            <div>
-                                <CopiedText text={quicAddress} />
-                            </div>
+                            {intl.getMessage('setup_devices_dns_list_3', {
+                                code: () => <CopiedText text={quicAddress} />
+                            })}
                         </li>
                     )}
                 </ul>
@@ -351,7 +348,7 @@ const getDnsSettingsContent = (dnsAddresses: string[] | undefined, serverName?: 
 
                 <div className={s.guideParagraph}>
                     <div className={s.guideTitle}>
-                        <strong>iOS and macOS configuration</strong>
+                        <strong>{intl.getMessage('setup_dns_privacy_ioc_mac')}</strong>
                     </div>
                     <div>
                         {intl.getMessage('setup_devices_dns_macos_desc')}
