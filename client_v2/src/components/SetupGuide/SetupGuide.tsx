@@ -23,7 +23,7 @@ export const SetupGuide = () => {
     return (
         <div className={theme.layout.container}>
             <div className={s.header}>
-                <h1 className={s.pageTitle}>{intl.getMessage('setup_guide_v2')}</h1>
+                <h1 className={s.pageTitle}>{intl.getMessage('setup_guide')}</h1>
                 <div className={s.pageDesc}>{intl.getMessage('setup_guide_desc')}</div>
             </div>
 
