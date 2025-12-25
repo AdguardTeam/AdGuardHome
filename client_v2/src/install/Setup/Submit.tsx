@@ -4,6 +4,7 @@ import { Trans } from 'react-i18next';
 
 import Controls from './Controls';
 import { WebConfig } from './Settings';
+import intl from 'panel/common/intl';
 
 type Props = {
     webConfig: WebConfig;
@@ -11,14 +12,12 @@ type Props = {
 };
 
 export const Submit = ({ openDashboard, webConfig }: Props) => (
-    <div className="setup__step">
+    <div className="setup__end">
         <div className="setup__group">
-            <h1 className="setup__title">
-                <Trans>install_submit_title</Trans>
-            </h1>
+            <h1 className="setup__title">{intl.getMessage('install_submit_title')}</h1>
 
             <p className="setup__desc">
-                <Trans>install_submit_desc</Trans>
+                {intl.getMessage('setup_complete')}
             </p>
         </div>
 
