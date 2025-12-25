@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import { Trans } from 'react-i18next';
 
 import { Button } from 'panel/common/ui/Button';
+import intl from 'panel/common/intl';
 import * as actionCreators from '../../actions/install';
 
 interface ControlsProps {
@@ -62,7 +63,7 @@ class Controls extends Component<ControlsProps> {
                         size="small"
                         variant="primary"
                         className="setup__button">
-                        <Trans>get_started</Trans>
+                        {intl.getMessage("setup_guide_greeting_button")}
                     </Button>
                 );
             case 2:
@@ -112,8 +113,8 @@ class Controls extends Component<ControlsProps> {
 
         return (
             <div className="setup__nav">
-                {this.renderPrevButton(install.step)}
                 {this.renderNextButton(install.step)}
+                {this.renderPrevButton(install.step)}
             </div>
         );
     }

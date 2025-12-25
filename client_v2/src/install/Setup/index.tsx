@@ -2,9 +2,14 @@ import React, { useEffect, Fragment } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import debounce from 'lodash/debounce';
 
+import intl, { LocalesType } from 'panel/common/intl'; // путь подстрой под свой
+import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from 'panel/helpers/localStorageHelper';
+import s from 'panel/common/ui/Header/Header.module.pcss';
+import { Logo } from 'panel/common/ui/Sidebar';
+import { InstallInterface, InstallState, RootState } from 'panel/initialState';
 import * as actionCreators from '../../actions/install';
 
-import { getWebAddress } from '../../helpers/helpers';
+import { getWebAddress, setHtmlLangAttr } from '../../helpers/helpers';
 import { INSTALL_TOTAL_STEPS, ALL_INTERFACES_IP, DEBOUNCE_TIMEOUT } from '../../helpers/constants';
 
 import Greeting from './Greeting';
@@ -16,7 +21,10 @@ import { Auth } from './Auth';
 import Toasts from '../../components/Toasts';
 
 import './Setup.css';
-import { InstallInterface, InstallState } from '../../initialState';
+import twosky from '../../../../.twosky.json';
+const LANGUAGES = twosky[1].languages;
+import { changeLanguage as changeLanguageAction } from '../../actions';
+import { LanguageDropdown } from '../../common/ui/LanguageDropdown/LanguageDropdown';
 
 export const Setup = () => {
     const dispatch = useDispatch();
@@ -69,11 +77,28 @@ export const Setup = () => {
         }
     };
 
+    const currentLanguage =
+        useSelector((state: RootState) => (state.dashboard ? state.dashboard.language : '')) || intl.getUILanguage();
+
+    const changeLanguage = async (newLang: LocalesType) => {
+        setHtmlLangAttr(newLang);
+
+        try {
+            await dispatch(changeLanguageAction(newLang));
+            LocalStorageHelper.setItem(LOCAL_STORAGE_KEYS.LANGUAGE, newLang);
+            window.location.reload();
+        } catch (error) {
+            console.error('Failed to save language preference:', error);
+        }
+    };
+
     const renderPage = (step: number, config: ConfigType, interfaces: InstallInterface[]) => {
         switch (step) {
             case 1:
                 return <Greeting />;
             case 2:
+                return <Auth onAuthSubmit={handleFormSubmit} />;
+            case 3:
                 return (
                     <Settings
                         config={config}
@@ -84,8 +109,6 @@ export const Setup = () => {
                         handleFix={handleFix}
                     />
                 );
-            case 3:
-                return <Auth onAuthSubmit={handleFormSubmit} />;
             case 4:
                 return <Devices interfaces={interfaces} dnsConfig={dns} />;
             case 5:
@@ -102,9 +125,24 @@ export const Setup = () => {
     return (
         <>
             <div className="setup">
+
+                <div className="setup__header">
+                    <div className="setup__header-content">
+                        <div className={s.linkWrapper}>
+                            <Logo id="header" />
+                        </div>
+                        <Progress step={step} />
+                        <LanguageDropdown
+                        value={currentLanguage}
+                        languages={LANGUAGES}
+                        onChange={(lang) => changeLanguage(lang as LocalesType)}
+                        className={s.dropdown}
+                        position="bottomRight" />
+                    </div>
+                </div>
+
                 <div className="setup__container">
                     {renderPage(step, { web, dns, staticIp }, interfaces)}
-                    <Progress step={step} />
                 </div>
             </div>
 
