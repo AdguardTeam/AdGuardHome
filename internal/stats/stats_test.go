@@ -230,7 +230,7 @@ func TestShouldCount(t *testing.T) {
 		ignored2 = "ignored.to"
 	)
 	ignored := []string{ignored1, ignored2}
-	engine, err := aghnet.NewIgnoreEngine(ignored)
+	engine, err := aghnet.NewIgnoreEngine(ignored, true)
 	require.NoError(t, err)
 
 	s, err := stats.New(stats.Config{

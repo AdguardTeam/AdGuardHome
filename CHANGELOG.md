@@ -17,6 +17,44 @@ See also the [v0.107.72 GitHub milestone][ms-v0.107.72].
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
+
+### Added
+
+- New field `"ignored_enabled"` in `GetStatsConfigResponse` or `GetQueryLogConfigResponse`.  See `openapi/openapi.yaml` for details.
+
+#### Configuration changes
+
+In this release, the schema version has changed from 32 to 33.
+
+- Added a new boolean field `ignored_enabled` in querylog and statistics config.
+
+    ```yaml
+    # BEFORE:
+    'querylog':
+      # …
+      'ignored':
+      - '|.^'
+    'statistics':
+      # …
+      'ignored':
+      - '|.^'
+
+    # AFTER:
+    'querylog':
+      # …
+      'ignored':
+      - '|.^'
+      'ignored_enabled': true
+    'statistics':
+      # …
+      'ignored':
+      - '|.^'
+      'ignored_enabled': true
+      ```
+
+    To roll back this change, set the `schema_version` back to `32`.
+
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->

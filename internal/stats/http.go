@@ -94,6 +94,9 @@ type getConfigResp struct {
 	// Enabled shows if statistics are enabled.  It is an aghalg.NullBool to be
 	// able to tell when it's set without using pointers.
 	Enabled aghalg.NullBool `json:"enabled"`
+
+	// IgnoredEnabled defines if ignored list is enabled.
+	IgnoredEnabled aghalg.NullBool `json:"ignored_enabled"`
 }
 
 // handleStatsInfo is the handler for the GET /control/stats_info HTTP API.
@@ -136,9 +139,10 @@ func (s *StatsCtx) handleGetStatsConfig(w http.ResponseWriter, r *http.Request) 
 		defer s.confMu.RUnlock()
 
 		resp = &getConfigResp{
-			Ignored:  s.ignored.Values(),
-			Interval: float64(s.limit.Milliseconds()),
-			Enabled:  aghalg.BoolToNullBool(s.enabled),
+			Ignored:        s.ignored.Values(),
+			IgnoredEnabled: aghalg.BoolToNullBool(s.ignored.IsEnabled()),
+			Interval:       float64(s.limit.Milliseconds()),
+			Enabled:        aghalg.BoolToNullBool(s.enabled),
 		}
 	}()
 
@@ -188,7 +192,14 @@ func (s *StatsCtx) handlePutStatsConfig(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	engine, err := aghnet.NewIgnoreEngine(reqData.Ignored)
+	var ignoredEnabled bool
+	if reqData.IgnoredEnabled == aghalg.NBNull {
+		ignoredEnabled = len(reqData.Ignored) > 0
+	} else {
+		ignoredEnabled = reqData.IgnoredEnabled == aghalg.NBTrue
+	}
+
+	engine, err := aghnet.NewIgnoreEngine(reqData.Ignored, ignoredEnabled)
 	if err != nil {
 		aghhttp.ErrorAndLog(ctx, s.logger, r, w, http.StatusUnprocessableEntity, "ignored: %s", err)
 

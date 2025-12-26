@@ -2000,6 +2000,11 @@
           'type': 'array'
           'items':
             'type': 'string'
+        'ignored_enabled':
+          'type': 'boolean'
+          'description': >
+            If true, the host names in the `ignored` array are excluded from the
+            statistics.
     'PutStatsConfigUpdateRequest':
       '$ref': '#/components/schemas/GetStatsConfigResponse'
     'DhcpConfig':
@@ -2429,6 +2434,11 @@
           'type': 'array'
           'items':
             'type': 'string'
+        'ignored_enabled':
+          'type': 'boolean'
+          'description': >
+            If true, the host names in the `ignored` array are excluded from the
+            query log.
     'PutQueryLogConfigUpdateRequest':
       '$ref': '#/components/schemas/GetQueryLogConfigResponse'
     'ResultRule':
