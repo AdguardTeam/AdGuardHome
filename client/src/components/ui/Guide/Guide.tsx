@@ -355,6 +355,7 @@ export const Guide = ({ dnsAddresses }: GuideProps) => {
     const dnsPrivacyAvailable = useSelector((state: RootState) => state.dashboard?.dnsPrivacyAvailable);
     const tlsAddress = dnsAddresses?.filter((item: any) => item.includes('tls://')) ?? '';
     const httpsAddress = dnsAddresses?.filter((item: any) => item.includes('https://')) ?? '';
+    // When we have resolved TLS/HTTPS addresses, the guide can show the details.
     const hasDnsPrivacyAddresses = httpsAddress.length > 0 || tlsAddress.length > 0;
     const showDnsPrivacyNotice = !hasDnsPrivacyAddresses && !dnsPrivacyAvailable;
 

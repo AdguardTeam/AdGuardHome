@@ -96,7 +96,7 @@ func collectDNSAddresses(tlsMgr *tlsManager) (addrs []string, err error) {
 }
 
 // isDNSPrivacyAvailable returns true if at least one DNS privacy protocol is
-// configured to be available.  tlsMgr must not be nil.
+// configured to be available.  tlsMgr may be nil.
 func isDNSPrivacyAvailable(tlsMgr *tlsManager) (ok bool) {
 	if tlsMgr == nil {
 		return false
