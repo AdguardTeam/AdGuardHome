@@ -8,6 +8,7 @@ import { CustomDropdownIndicator } from './CustomDropdownIndicator';
 import { CustomLoadingIndicator } from './CustomLoadingIndicator';
 import { CustomLoadingMessage } from './CustomLoadingMessage';
 import { CustomOption } from './CustomOption';
+import { Icon } from '../../ui/Icon/Icon';
 
 import './Select.pcss';
 import s from './MenuList.module.pcss';
@@ -37,6 +38,37 @@ const CustomMenuList = <
 
     return (
         <div className={s.menuList} ref={scrollContainerRef}>
+            {children}
+        </div>
+    );
+};
+
+const CustomIconOption = ({ data, isSelected, selectOption, isFocused }: any) => (
+    <div
+        className={cn(s.customOption, {
+            [s.isSelected]: isSelected,
+            [s.isFocused]: isFocused
+        })}
+        onClick={() => selectOption(data)}
+    >
+        {data.icon && (
+            <div className={s.selectIconContainer}>
+                <Icon icon={data.icon} />
+            </div>
+        )}
+        <span>{data.label}</span>
+    </div>
+);
+
+const CustomIconValueContainer = ({ children, getValue, hasValue }: any) => {
+    const selectedValue = getValue()[0];
+    return (
+        <div className={s.selectValueContainer}>
+            {hasValue && selectedValue?.icon && (
+                <div className={s.selectIconContainer}>
+                    <Icon icon={selectedValue.icon} />
+                </div>
+            )}
             {children}
         </div>
     );
@@ -79,6 +111,7 @@ interface SelectProps<
     isDropdownSelect?: boolean;
     onMenuOpen?: () => void;
     onMenuClose?: () => void;
+    showIcons?: boolean;
 }
 
 export const Select = <
@@ -118,6 +151,7 @@ export const Select = <
     isDropdownSelect,
     onMenuOpen,
     onMenuClose,
+    showIcons = false,
 }: SelectProps<T, Multi, ExtendOption, Group>) => {
     const selectClass = cn(
         { 'desktop-select-always': mobile === false },
@@ -144,7 +178,8 @@ export const Select = <
     );
 
     const customComponents = {
-        ...(checkmark ? { Option: CustomOption } : {}),
+        ...(checkmark && !showIcons ? { Option: CustomOption } : {}),
+        ...(showIcons ? { Option: CustomIconOption, ValueContainer: CustomIconValueContainer } : {}),
         ...(lazyList ? { MenuList: CustomMenuList } : {}),
         ClearIndicator: CustomClearIndicator,
         DropdownIndicator: CustomDropdownIndicator,

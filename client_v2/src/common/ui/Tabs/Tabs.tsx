@@ -1,12 +1,15 @@
 import React, { ReactNode, useState } from 'react';
 import cn from 'clsx';
 
+import { Icon } from '../Icon/Icon';
+import { IconType } from '../Icons';
 import s from './Tabs.module.pcss';
 
 type TabItem = {
     id: string;
     label: string;
     content: ReactNode;
+    icon?: IconType;
 };
 
 type Props = {
@@ -44,6 +47,7 @@ export const Tabs = ({ tabs, defaultActiveTab, activeTab: controlledActiveTab, o
                             [s.button_active]: activeTab === tab.id,
                         })}
                         onClick={() => handleTabClick(tab.id)}>
+                        {tab.icon && <Icon icon={tab.icon} className={s.icon} />}
                         {tab.label}
                     </button>
                 ))}

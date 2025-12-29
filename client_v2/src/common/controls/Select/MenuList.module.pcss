@@ -20,3 +20,33 @@
 .listItem {
     font-size: 16px;
 }
+
+.selectIconContainer {
+    width: 24px;
+    height: 24px;
+    margin-right: 8px;
+    color: var(--default-gray-icons);
+}
+
+.selectValueContainer {
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+}
+
+.customOption {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    transition: all var(--t2);
+    padding: 12px 18px;
+
+    &:hover,
+    &.isFocused {
+        background-color: var(--hovered-dropdown-menu-background);
+    }
+
+    &.isSelected {
+        background-color: var(--pressed-dropdown-menu-background);
+    }
+}

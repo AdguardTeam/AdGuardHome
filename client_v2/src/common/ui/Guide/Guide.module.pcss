@@ -1,0 +1,112 @@
+.title {
+    margin-bottom: 12px;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.inlineCopiedText {
+    display: inline-flex;
+}
+
+.dhcpLink {
+    color: var(--default-link);
+    font-size: 16px;
+    font-weight: 400;
+}
+
+.dhcpLink:hover {
+    text-decoration: underline;
+}
+
+.guideText {
+    line-height: 1.7;
+}
+
+.guideText li,
+.guideText p {
+    margin-bottom: 5px;
+}
+
+.guideText ul,
+.guideText ol {
+    padding-left: 25px;
+}
+
+.guideParagraph {
+    margin-bottom: 10px;
+}
+
+.guideTitle {
+    margin-bottom: 20px;
+}
+
+.strongNumbers {
+    counter-reset: strong-counter;
+}
+
+.guideList {
+    margin-top: 0;
+}
+
+.strongNumbers li {
+    counter-increment: strong-counter;
+    list-style: none;
+    position: relative;
+}
+
+.strongNumbers li::before {
+    content: counter(strong-counter) ".";
+    font-weight: bold;
+    position: absolute;
+    left: -25px;
+}
+
+.dnsLink {
+    color: var(--default-link);
+    font-size: 16px;
+    font-weight: 400;
+}
+
+.dnsLink:hover {
+    text-decoration: underline;
+}
+
+.selectorDesc {
+    margin-bottom: 4px;
+    font-size: 14px;
+    color: var(--default-description-text);
+}
+
+.deviceSelector {
+    margin-bottom: 32px;
+}
+
+.deviceDnsListItem {
+    margin-top: 8px;
+}
+
+.guideBulletItem {
+    margin-bottom: 16px;
+    list-style: none;
+    position: relative;
+}
+
+.guideBulletItem::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    background-color: var(--default-description-text);
+    border-radius: 50%;
+    display: inline-block;
+    position: absolute;
+    left: -16px;
+    top: 8px;
+}
+
+.guideItemTitle {
+    display: block;
+}
+
+.guideList {
+    padding-left: 20px;
+}
