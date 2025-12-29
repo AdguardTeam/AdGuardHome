@@ -1,0 +1,83 @@
+.container {
+    position: relative;
+    display: inline-flex;
+    cursor: pointer;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    background: var(--default-input-background);
+    border: 1px solid var(--default-inactive-input-stroke);
+    border-radius: 4px;
+    transition: var(--t2) border-color, var(--t2) background-color;
+    width: fit-content;
+}
+
+.container {
+    &:hover {
+        border-color: var(--default-active-input-stroke);
+        background: var(--hovered-page-background);
+    }
+
+    &:hover .icon {
+        color: var(--default-main-text);
+        transform: scale(1.1);
+    }
+
+    &:focus {
+        border-color: var(--default-active-input-stroke);
+    }
+
+    &:focus .icon {
+        color: var(--default-main-text);
+    }
+
+    &:active .icon {
+        transform: scale(0.95);
+    }
+}
+
+.text {
+    font-size: 14px;
+    color: var(--default-main-text);
+    cursor: pointer;
+    user-select: none;
+    word-break: break-all;
+    line-height: 1.4;
+}
+
+.icon {
+    width: 20px;
+    height: 20px;
+    color: var(--default-gray-icons);
+    cursor: pointer;
+    transition: var(--t2) color, var(--t2) transform;
+    flex-shrink: 0;
+    pointer-events: none;
+}
+
+.copied {
+    color: var(--product-primary-50) !important;
+    transform: scale(1.1) !important;
+}
+
+.copyTooltip {
+    background-color: var(--default-cards-background);
+    border-radius: 4px;
+    bottom: 32px;
+    color: var(--default-main-text);
+    opacity: 0;
+    padding: 8px;
+    position: absolute;
+    right: 0;
+    transition: var(--t3) opacity;
+    visibility: hidden;
+    font-size: 12px;
+    z-index: 1;
+    box-shadow: var(--main-box-shadow);
+    border: 1px solid var(--default-inactive-input-stroke);
+
+    &.visible {
+        opacity: 1;
+        visibility: visible;
+    }
+}
