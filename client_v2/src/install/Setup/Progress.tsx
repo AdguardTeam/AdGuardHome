@@ -7,7 +7,9 @@ type Props = { step: number };
 export const Progress = ({ step }: Props) => (
     <div className="setup__progress">
         <div className="setup__progress-text">
-            {intl.getMessage("install_step")}
+            <div className="setup__step-message">
+                {intl.getMessage("install_step")}
+            </div>
             {step}/{INSTALL_TOTAL_STEPS}
         </div>
 

@@ -78,7 +78,7 @@
 
 .setup__list {
     padding-left: 20px;
-    margin-top: 24px;
+    margin: 24px 0;
 }
 
 .setup__group {
@@ -87,6 +87,10 @@
 
 .setup__group:last-child {
     margin-bottom: 0;
+}
+
+.setup__consent {
+    margin: 32px 0 24px;
 }
 
 .setup__progress {
@@ -200,6 +204,11 @@
     margin-top: 16px;
 }
 
+.setup__link {
+    color: var(--product-primary-50);
+    text-decoration: underline;
+}
+
 .icon-green {
     stroke: var(--product-primary-50);
     color: var(--product-primary-50);
@@ -228,4 +237,37 @@
     text-align: center;
     height: 100%;
     padding-top: 116px;
+}
+
+.setup__quote-title {
+    font-size: 24px;
+    font-style: normal;
+    font-weight: 700;
+    margin-bottom: 32px;
+    line-height: 120%;
+}
+
+.setup__quote-desc {
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 150%;
+    position: relative;
+    padding-left: 16px;
+
+    &::before {
+        content: "";
+        height: 100%;
+        position: absolute;
+        left: 0;
+        border-radius: 50%;
+        width: 4px;
+        display: block;
+        color: var(--orange-50);
+    }
+}
+
+.setup__step-message {
+    margin-right: 8px;
+    display: inline-block;
 }

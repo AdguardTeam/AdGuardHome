@@ -6,11 +6,14 @@ import intl from 'panel/common/intl';
 import { Icon } from 'panel/common/ui/Icon';
 import Controls from './Controls';
 import { validatePasswordLength, validateRequiredValue } from '../../helpers/validators';
+import { Checkbox } from 'panel/common/controls/Checkbox';
+
 
 type AuthFormValues = {
     username: string;
     password: string;
     confirm_password: string;
+    privacy_consent: boolean;
 };
 
 type Props = {
@@ -42,6 +45,7 @@ export const Auth = ({ onAuthSubmit }: Props) => {
             username: '',
             password: '',
             confirm_password: '',
+            privacy_consent: false,
         },
     });
 
@@ -141,6 +145,28 @@ export const Auth = ({ onAuthSubmit }: Props) => {
                                     errorMessage={fieldState.error?.message}
                                     autoComplete="new-password"
                                 />
+                            )}
+                        />
+                    </div>
+
+                    <div className="setup__consent">
+                        <Controller
+                            name="privacy_consent"
+                            control={control}
+                            render={({ field }) => (
+                                <Checkbox
+                                    checked={field.value}
+                                    onChange={(e) => field.onChange(e.target.checked)}
+                                    name={field.name}
+                                    onBlur={field.onBlur}
+                                >
+                                    <div>
+                                        {intl.getMessage('setup_guide_auth_privacy', {
+                                            a: (text: string) => <a className="setup__link" href="https://adguard.com/privacy-policy">{text}</a>,
+                                            b: (text: string) => <a className="setup__link" href="https://adguard.com/privacy-policy">{text}</a>,
+                                        })}
+                                    </div>
+                                </Checkbox>
                             )}
                         />
                     </div>

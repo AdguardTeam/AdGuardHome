@@ -14,6 +14,8 @@ import { INSTALL_TOTAL_STEPS, ALL_INTERFACES_IP, DEBOUNCE_TIMEOUT } from '../../
 
 import Greeting from './Greeting';
 import { ConfigType, DnsConfig, Settings, WebConfig } from './Settings';
+import { InterfaceSettings } from './InterfaceSettings'
+import { DnsSettings } from './DnsSettings'
 import { Devices } from './Devices';
 import { Submit } from './Submit';
 import { Progress } from './Progress';
@@ -100,7 +102,7 @@ export const Setup = () => {
                 return <Auth onAuthSubmit={handleFormSubmit} />;
             case 3:
                 return (
-                    <Settings
+                    <InterfaceSettings
                         config={config}
                         initialValues={config}
                         interfaces={interfaces}
@@ -110,7 +112,16 @@ export const Setup = () => {
                     />
                 );
             case 4:
-                return <Devices interfaces={interfaces} dnsConfig={dns} />;
+                return (
+                    <DnsSettings
+                        config={config}
+                        initialValues={config}
+                        interfaces={interfaces}
+                        handleSubmit={handleNextStep}
+                        validateForm={checkConfig}
+                        handleFix={handleFix}
+                    />
+                );
             case 5:
                 return <Submit openDashboard={openDashboard} webConfig={web} />;
             default:
