@@ -95,6 +95,21 @@ func collectDNSAddresses(tlsMgr *tlsManager) (addrs []string, err error) {
 	return addrs, nil
 }
 
+// isDNSPrivacyAvailable returns true if at least one DNS privacy protocol is
+// configured to be available.  tlsMgr must not be nil.
+func isDNSPrivacyAvailable(tlsMgr *tlsManager) (ok bool) {
+	if tlsMgr == nil {
+		return false
+	}
+
+	tlsConf := tlsMgr.config()
+	dohAvailable := tlsConf.PortHTTPS != 0 && (tlsConf.Enabled || tlsConf.AllowUnencryptedDoH)
+	dotAvailable := tlsConf.Enabled && tlsConf.PortDNSOverTLS != 0
+	doqAvailable := tlsConf.Enabled && tlsConf.PortDNSOverQUIC != 0
+
+	return dohAvailable || dotAvailable || doqAvailable
+}
+
 // statusResponse is a response for /control/status endpoint.
 type statusResponse struct {
 	Version  string   `json:"version"`
@@ -102,6 +117,8 @@ type statusResponse struct {
 	DNSAddrs []string `json:"dns_addresses"`
 	DNSPort  uint16   `json:"dns_port"`
 	HTTPPort uint16   `json:"http_port"`
+	// DNSPrivacyAvailable indicates whether DNS privacy features are available.
+	DNSPrivacyAvailable bool `json:"dns_privacy_available"`
 
 	// ProtectionDisabledDuration is the duration of the protection pause in
 	// milliseconds.
@@ -160,6 +177,7 @@ func (web *webAPI) handleStatus(w http.ResponseWriter, r *http.Request) {
 			DNSAddrs:                   dnsAddrs,
 			DNSPort:                    config.DNS.Port,
 			HTTPPort:                   config.HTTPConfig.Address.Port(),
+			DNSPrivacyAvailable:        isDNSPrivacyAvailable(web.tlsManager),
 			ProtectionDisabledDuration: protectionDisabledDuration,
 			StartTime:                  aghhttp.JSONTime(web.startTime),
 			ProtectionEnabled:          protEnabled,

@@ -352,9 +352,11 @@ export const Guide = ({ dnsAddresses }: GuideProps) => {
     const serverName = useSelector((state: RootState) => state.encryption?.server_name);
 
     const portHttps = useSelector((state: RootState) => state.encryption?.port_https);
+    const dnsPrivacyAvailable = useSelector((state: RootState) => state.dashboard?.dnsPrivacyAvailable);
     const tlsAddress = dnsAddresses?.filter((item: any) => item.includes('tls://')) ?? '';
     const httpsAddress = dnsAddresses?.filter((item: any) => item.includes('https://')) ?? '';
-    const showDnsPrivacyNotice = httpsAddress.length < 1 && tlsAddress.length < 1;
+    const hasDnsPrivacyAddresses = httpsAddress.length > 0 || tlsAddress.length > 0;
+    const showDnsPrivacyNotice = !hasDnsPrivacyAddresses && !dnsPrivacyAvailable;
 
     const [activeTabLabel, setActiveTabLabel] = useState('Router');
 

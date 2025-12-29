@@ -1462,6 +1462,7 @@
       - 'dns_addresses'
       - 'dns_port'
       - 'http_port'
+      - 'dns_privacy_available'
       - 'protection_enabled'
       - 'protection_disabled_until'
       - 'running'
@@ -1485,6 +1486,9 @@
           'example': 80
           'minimum': 1
           'maximum': 65535
+        'dns_privacy_available':
+          'type': 'boolean'
+          'description': 'Whether at least one DNS privacy protocol is available.'
         'protection_enabled':
           'type': 'boolean'
         'protection_disabled_duration':
