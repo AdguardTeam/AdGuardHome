@@ -239,6 +239,10 @@
     padding-top: 116px;
 }
 
+.setup__quote {
+    margin-bottom: 24px;
+}
+
 .setup__quote-title {
     font-size: 24px;
     font-style: normal;
@@ -260,14 +264,56 @@
         height: 100%;
         position: absolute;
         left: 0;
-        border-radius: 50%;
+        border-radius: 8px;
         width: 4px;
         display: block;
-        color: var(--orange-50);
+        background-color: var(--orange-50);
     }
 }
 
 .setup__step-message {
     margin-right: 8px;
     display: inline-block;
+}
+
+.setup__banner--setting-group {
+    margin-top: 16px;
+}
+
+.setup__tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.setup__tab {
+    padding: 12px 16px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    color: #666;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.setup__tab:hover {
+    color: var(--product-primary-50);
+}
+
+.setup__tab--active {
+    color: var(--product-primary-50);
+    border-bottom-color: var(--product-primary-50);
+}
+
+.setup__tab-content {
+    margin-bottom: 24px;
+}
+
+.setup__group--center {
+    padding: 48px 24px;
+    max-width: 632px;
+    margin: 0 auto;
 }

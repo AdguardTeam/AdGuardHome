@@ -4,14 +4,13 @@ import { Trans, useTranslation } from 'react-i18next';
 import i18n from 'i18next';
 
 import { Input } from 'panel/common/controls/Input';
+import { Select } from 'panel/common/controls/Select';
+import intl from 'panel/common/intl';
 import Controls from './Controls';
-import AddressList from './AddressList';
 
 import { getInterfaceIp } from '../../helpers/helpers';
 import {
     ALL_INTERFACES_IP,
-    ADDRESS_IN_USE_TEXT,
-    PORT_53_FAQ_LINK,
     STATUS_RESPONSE,
     STANDARD_DNS_PORT,
     STANDARD_WEB_PORT,
@@ -22,7 +21,6 @@ import {
 import { validateRequiredValue } from '../../helpers/validators';
 import { InstallInterface } from '../../initialState';
 import { toNumber } from '../../helpers/form';
-import intl from 'panel/common/intl';
 
 const validateInstallPort = (value: number) => {
     if (value < MIN_PORT || value > MAX_PORT) {
@@ -77,24 +75,6 @@ type Props = {
     initialValues?: object;
 };
 
-const renderInterfaces = (interfaces: InstallInterface[]) =>
-    Object.values(interfaces).map((option: InstallInterface) => {
-        const { name, ip_addresses, flags } = option;
-
-        if (option && ip_addresses?.length > 0) {
-            const ip = getInterfaceIp(option);
-            const isUp = flags?.includes('up');
-
-            return (
-                <option value={ip} key={name} disabled={!isUp}>
-                    {name} - {ip} {!isUp && `(${i18n.t('down')})`}
-                </option>
-            );
-        }
-
-        return null;
-    });
-
 export const InterfaceSettings = ({ handleSubmit, handleFix, validateForm, config, interfaces }: Props) => {
     const { t } = useTranslation();
 
@@ -127,6 +107,19 @@ export const InterfaceSettings = ({ handleSubmit, handleFix, validateForm, confi
     const webIpVal = watch('web.ip');
     const webPortVal = watch('web.port');
     const dnsIpVal = watch('dns.ip');
+
+    const webIpOptions = [
+        { value: ALL_INTERFACES_IP, label: intl.getMessage('install_settings_all_interfaces') },
+        ...(Array.isArray(interfaces) ? interfaces.map(iface => {
+            const ip = getInterfaceIp(iface);
+            const isUp = iface.flags?.includes('up');
+            return {
+                value: ip,
+                label: `${iface.name} - ${ip}${!isUp ? ` (${i18n.t('down')})` : ''}`
+            };
+        }).filter(Boolean) : []),
+    ];
+
     const dnsPortVal = watch('dns.port');
 
     useEffect(() => {
@@ -256,22 +249,25 @@ export const InterfaceSettings = ({ handleSubmit, handleFix, validateForm, confi
                 <div className="setup__right-side">
                     <div className="setup__banner">
                         <h3 className="setup__banner-title">{intl.getMessage('setup_ui_title_banner')}</h3>
-                        <div className="row">
-                            <div className="col-8">
+                        <div className="setup__banner-setting">
+                            <div className="setup__banner--setting-group">
                                 <div className="form-group">
                                     <label>
-                                        <Trans>install_settings_listen</Trans>
+                                        <Trans>network_interface</Trans>
                                     </label>
                                     <Controller
                                         name="web.ip"
                                         control={control}
                                         render={({ field }) => (
-                                            <select {...field} id="install_web_ip">
-                                                <option value={ALL_INTERFACES_IP}>
-                                                    {t('install_settings_all_interfaces')}
-                                                </option>
-                                                {renderInterfaces(interfaces)}
-                                            </select>
+                                            <Select
+                                                options={webIpOptions}
+                                                value={webIpOptions.find(option => option.value === field.value)}
+                                                onChange={(selectedOption) => field.onChange(selectedOption?.value)}
+                                                placeholder={intl.getMessage('network_interface')}
+                                                size="medium"
+                                                height="big"
+                                                id="install_web_ip"
+                                            />
                                         )}
                                     />
                                 </div>

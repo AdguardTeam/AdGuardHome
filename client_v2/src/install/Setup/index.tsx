@@ -13,10 +13,10 @@ import { getWebAddress, setHtmlLangAttr } from '../../helpers/helpers';
 import { INSTALL_TOTAL_STEPS, ALL_INTERFACES_IP, DEBOUNCE_TIMEOUT } from '../../helpers/constants';
 
 import Greeting from './Greeting';
-import { ConfigType, DnsConfig, Settings, WebConfig } from './Settings';
-import { InterfaceSettings } from './InterfaceSettings'
-import { DnsSettings } from './DnsSettings'
-import { Devices } from './Devices';
+import { ConfigType, DnsConfig, WebConfig } from './Settings';
+import { InterfaceSettings } from './InterfaceSettings';
+import { DnsSettings } from './DnsSettings';
+import { SetupGuideStep } from './SetupGuideStep';
 import { Submit } from './Submit';
 import { Progress } from './Progress';
 import { Auth } from './Auth';
@@ -24,9 +24,10 @@ import Toasts from '../../components/Toasts';
 
 import './Setup.css';
 import twosky from '../../../../.twosky.json';
-const LANGUAGES = twosky[1].languages;
 import { changeLanguage as changeLanguageAction } from '../../actions';
 import { LanguageDropdown } from '../../common/ui/LanguageDropdown/LanguageDropdown';
+
+const LANGUAGES = twosky[1].languages;
 
 export const Setup = () => {
     const dispatch = useDispatch();
@@ -74,7 +75,7 @@ export const Setup = () => {
     };
 
     const handleNextStep = () => {
-        if (step < INSTALL_TOTAL_STEPS) {
+        if (step <= INSTALL_TOTAL_STEPS) {
             dispatch(actionCreators.nextStep());
         }
     };
@@ -123,6 +124,8 @@ export const Setup = () => {
                     />
                 );
             case 5:
+                return <SetupGuideStep dnsAddresses={[]} />;
+            case 6:
                 return <Submit openDashboard={openDashboard} webConfig={web} />;
             default:
                 return false;

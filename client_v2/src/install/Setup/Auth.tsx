@@ -4,9 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { Input } from 'panel/common/controls/Input';
 import intl from 'panel/common/intl';
 import { Icon } from 'panel/common/ui/Icon';
+import { Checkbox } from 'panel/common/controls/Checkbox';
 import Controls from './Controls';
 import { validatePasswordLength, validateRequiredValue } from '../../helpers/validators';
-import { Checkbox } from 'panel/common/controls/Checkbox';
 
 
 type AuthFormValues = {
@@ -25,7 +25,11 @@ const hasLowercase = (v: string) => /[a-z]/.test(v);
 const hasUppercase = (v: string) => /[A-Z]/.test(v);
 const hasAllowedAsciiOnly = (v: string) => /^[\x20-\x7E]*$/.test(v);
 const hasNumberOrSpecial = (v: string) => /[\d\W_]/.test(v);
-const RequirementIcon = ({ ok }) => {
+type RequirementIconProps = {
+    ok: boolean;
+};
+
+const RequirementIcon = ({ ok }: RequirementIconProps) => {
     const iconName = ok ? 'check' : 'cross';
     const iconClass = ok ? 'icon-green' : 'icon-red'
 

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import cn from 'clsx';
 
@@ -48,13 +48,6 @@ export const Footer = () => {
     const isLoggedIn = profileName !== '';
     const [currentThemeLocal, setCurrentThemeLocal] = useState(THEMES.auto);
     const [themeDropdownOpen, setThemeDropdownOpen] = useState(false);
-    const [langDropdownOpen, setLangDropdownOpen] = useState(false);
-
-    const sortedLanguages = useMemo(
-        () => Object.keys(LANGUAGES).sort((a, b) => LANGUAGES[a].localeCompare(LANGUAGES[b])),
-        [LANGUAGES],
-    );
-
     const getYear = () => {
         const today = new Date();
         return today.getFullYear();

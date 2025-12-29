@@ -1,10 +1,8 @@
 import React from 'react';
 
-import { Trans } from 'react-i18next';
-
+import intl from 'panel/common/intl';
 import Controls from './Controls';
 import { WebConfig } from './Settings';
-import intl from 'panel/common/intl';
 
 type Props = {
     webConfig: WebConfig;

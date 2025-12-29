@@ -34,6 +34,8 @@ class Controls extends Component<ControlsProps> {
         switch (step) {
             case 2:
             case 3:
+            case 4:
+            case 5:
                 return (
                     <Button
                         id="install_back"
@@ -45,13 +47,16 @@ class Controls extends Component<ControlsProps> {
                         <Trans>back</Trans>
                     </Button>
                 );
+            case 6:
+                // No back button on final Submit step
+                return false;
             default:
                 return false;
         }
     }
 
     renderNextButton(step: any) {
-        const { nextStep, invalid, pristine, install, ip, port } = this.props;
+        const { nextStep, ip, port } = this.props;
 
         switch (step) {
             case 1:
@@ -68,6 +73,8 @@ class Controls extends Component<ControlsProps> {
                 );
             case 2:
             case 3:
+            case 4:
+            case 5:
                 return (
                     <Button
                         id="install_next"
@@ -75,32 +82,20 @@ class Controls extends Component<ControlsProps> {
                         size="small"
                         variant="primary"
                         className="setup__button"
-                        disabled={invalid || pristine || install.processingSubmit}>
-                        <Trans>next</Trans>
-                    </Button>
-                );
-            case 4:
-                return (
-                    <Button
-                        id="install_next"
-                        type="button"
-                        size="small"
-                        variant="primary"
-                        className="setup__button"
                         onClick={nextStep}>
                         <Trans>next</Trans>
                     </Button>
                 );
-            case 5:
+            case 6:
                 return (
                     <Button
-                        id="install_open_dashboard"
+                        id="open_dashboard"
                         type="button"
                         size="small"
                         variant="primary"
                         className="setup__button"
-                        onClick={() => this.props.openDashboard(ip, port)}>
-                        <Trans>open_dashboard</Trans>
+                        onClick={() => this.props.openDashboard && this.props.openDashboard(ip!, port!)}>
+                        {intl.getMessage("open_dashboard")}
                     </Button>
                 );
             default:

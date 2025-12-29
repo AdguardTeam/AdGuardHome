@@ -1029,6 +1029,9 @@
     "setup_guide_auth_title": "Set up password protection",
     "setup_guide_auth_subtitle": "This is required to protect the AdGuard Home admin panel from unauthorized access",
     "setup_guide_auth_privacy": "I accept the <a>Privacy policy</a> and <b>Terms and conditions</b> of AdGuard websites",
+    "setup_combined_title": "Configure DNS and Interface Settings",
+    "setup_combined_desc": "Set up your DNS server and web interface settings in one convenient location.",
+    "setup_guide_device_desc": "Choose your device type below to get specific setup instructions for configuring AdGuard Home as your DNS server.",
     "password_requirements": "Password requirements",
     "password_requirements_characters": "Minimum 8 characters",
     "password_requirements_special": "English letters, numbers, and special characters",
@@ -1041,7 +1044,9 @@
     "setup_ui_title_banner": "Web UI settings",
     "setup_dns_title":"Set the AdGuard Home DNS server address",
     "setup_dns_title_banner":"DNS server settings",
+    "network_interface": "Network interface",
     "setup_dns_desc":"Configure your router or other devices to use the following DNS server addresses:",
     "setup_dns_quote_title":"Assign a static IP address to the AdGuard Home DNS server on your local network",
-    "setup_dns_quote_desc":"To function properly, the AdGuard Home DNS server requires a static IP address on your local network. Otherwise, your router may eventually assign it a different IP address and disrupt the DNS protection"
+    "setup_dns_quote_desc":"To function properly, the AdGuard Home DNS server requires a static IP address on your local network. Otherwise, your router may eventually assign it a different IP address and disrupt the DNS protection",
+    "setup_guide_title": "Set up your devices to use AdGuard Home"
 }

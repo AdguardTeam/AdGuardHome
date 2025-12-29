@@ -246,7 +246,7 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                     <div className="col-8">
                         <div className="form-group">
                             <label>
-                                <Trans>install_settings_listen</Trans>
+                                <Trans>network_interface</Trans>
                             </label>
                             <Controller
                                 name="web.ip"
@@ -336,7 +336,7 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                     <div className="col-8">
                         <div className="form-group">
                             <label>
-                                <Trans>install_settings_listen</Trans>
+                                <Trans>network_interface</Trans>
                             </label>
                             <Controller
                                 name="dns.ip"
