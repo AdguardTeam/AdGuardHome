@@ -1017,7 +1017,7 @@
     "setup_devices_android_title": "Android",
     "setup_devices_ios_title": "iOS",
     "copied": "Copied",
-    "setup_dns_notice_new": "In order to use <strong>DNS-over-HTTPS</strong> or <strong>DNS-over-TLS</strong>, you need to <a>configure Encryption</a> in AdGuard Home settings."
+    "setup_dns_notice_new": "In order to use <strong>DNS-over-HTTPS</strong> or <strong>DNS-over-TLS</strong>, you need to <a>configure Encryption</a> in AdGuard Home settings.",
     "setup_guide_greeting_title": "Set up AdGuard Home",
     "setup_guide_greeting_desc": "This wizard will help you configure AdGuard Home:",
     "setup_guide_greeting_list_1": "Create credentials to access the admin panel",
