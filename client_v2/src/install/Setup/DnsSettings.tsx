@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
-import i18n from 'i18next';
 
 import { Input } from 'panel/common/controls/Input';
 import { Select } from 'panel/common/controls/Select';

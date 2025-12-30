@@ -1,7 +1,6 @@
 import React, { useEffect, useCallback } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import intl from 'panel/common/intl';
-import i18n from 'i18next';
 
 import { Input } from 'panel/common/controls/Input';
 import Controls from './Controls';
