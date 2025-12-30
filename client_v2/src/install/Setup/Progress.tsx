@@ -8,7 +8,7 @@ export const Progress = ({ step }: Props) => {
     if (step > INSTALL_TOTAL_STEPS) {
         return null;
     }
-    
+
     return (
         <div className="setup__progress">
             <div className="setup__progress-text">
