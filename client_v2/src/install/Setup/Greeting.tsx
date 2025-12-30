@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { withTranslation } from 'react-i18next';
 
 import intl from 'panel/common/intl';
 import Controls from './Controls';
@@ -41,5 +40,5 @@ const Greeting = () => {
     );
 };
 
-export default withTranslation()(Greeting);
+export default Greeting;
 

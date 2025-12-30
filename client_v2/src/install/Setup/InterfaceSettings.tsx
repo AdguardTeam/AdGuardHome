@@ -1,6 +1,5 @@
 import React, { useEffect, useCallback } from 'react';
 import { useForm, Controller } from 'react-hook-form';
-import { Trans, useTranslation } from 'react-i18next';
 import i18n from 'i18next';
 
 import { Input } from 'panel/common/controls/Input';
@@ -24,7 +23,7 @@ import { toNumber } from '../../helpers/form';
 
 const validateInstallPort = (value: number) => {
     if (value < MIN_PORT || value > MAX_PORT) {
-        return i18n.t('form_error_port');
+        return intl.getMessage('form_error_port');
     }
     return undefined;
 };
@@ -76,7 +75,6 @@ type Props = {
 };
 
 export const InterfaceSettings = ({ handleSubmit, handleFix, validateForm, config, interfaces }: Props) => {
-    const { t } = useTranslation();
 
     const defaultValues = {
         web: {
@@ -115,7 +113,7 @@ export const InterfaceSettings = ({ handleSubmit, handleFix, validateForm, confi
             const isUp = iface.flags?.includes('up');
             return {
                 value: ip,
-                label: `${iface.name} - ${ip}${!isUp ? ` (${i18n.t('down')})` : ''}`
+                label: `${iface.name} - ${ip}${!isUp ? ` (${intl.getMessage('down')})` : ''}`
             };
         }).filter(Boolean) : []),
     ];
@@ -177,7 +175,7 @@ export const InterfaceSettings = ({ handleSubmit, handleFix, validateForm, confi
         };
         const set_static_ip = true;
 
-        if (window.confirm(t('confirm_static_ip', { ip }))) {
+        if (window.confirm(intl.getMessage('confirm_static_ip', { ip }))) {
             handleFix(web, dns, set_static_ip);
         }
     };
@@ -191,29 +189,27 @@ export const InterfaceSettings = ({ handleSubmit, handleFix, validateForm, confi
                     return (
                         <>
                             <div className="mb-2">
-                                <Trans values={{ ip }} components={[<strong key="0">text</strong>]}>
-                                    install_static_configure
-                                </Trans>
+                                {intl.getMessage('install_static_configure', { ip }).replace('{ip}', ip)}
                             </div>
 
                             <button
                                 type="button"
                                 className="btn btn-outline-primary btn-sm"
                                 onClick={() => handleStaticIp(ip)}>
-                                <Trans>set_static_ip</Trans>
+                                {intl.getMessage('set_static_ip')}
                             </button>
                         </>
                     );
                 case STATUS_RESPONSE.ERROR:
                     return (
                         <div className="text-danger">
-                            <Trans>install_static_error</Trans>
+                            {intl.getMessage('install_static_error')}
                         </div>
                     );
                 case STATUS_RESPONSE.YES:
                     return (
                         <div className="text-success">
-                            <Trans>install_static_ok</Trans>
+                            {intl.getMessage('install_static_ok')}
                         </div>
                     );
                 default:
@@ -253,7 +249,7 @@ export const InterfaceSettings = ({ handleSubmit, handleFix, validateForm, confi
                             <div className="setup__banner--setting-group">
                                 <div className="form-group">
                                     <label>
-                                        <Trans>network_interface</Trans>
+                                        {intl.getMessage('network_interface')}
                                     </label>
                                     <Controller
                                         name="web.ip"
@@ -276,7 +272,7 @@ export const InterfaceSettings = ({ handleSubmit, handleFix, validateForm, confi
                             <div className="col-4">
                                 <div className="form-group">
                                     <label>
-                                        <Trans>install_settings_port</Trans>
+                                        {intl.getMessage('install_settings_port')}
                                     </label>
                                     <Controller
                                         name="web.port"
@@ -314,7 +310,7 @@ export const InterfaceSettings = ({ handleSubmit, handleFix, validateForm, confi
                                                 id="install_web_fix"
                                                 className="btn btn-secondary btn-sm ml-2"
                                                 onClick={() => handleAutofix('web')}>
-                                                <Trans>fix</Trans>
+                                                {intl.getMessage('fix')}
                                             </button>
                                         )}
                                     </div>

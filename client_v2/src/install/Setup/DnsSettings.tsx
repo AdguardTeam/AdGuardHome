@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
-import { Trans, useTranslation } from 'react-i18next';
 import i18n from 'i18next';
 
 import { Input } from 'panel/common/controls/Input';
@@ -26,7 +25,7 @@ import { toNumber } from '../../helpers/form';
 
 const validateInstallPort = (value: number) => {
     if (value < MIN_PORT || value > MAX_PORT) {
-        return i18n.t('form_error_port');
+        return intl.getMessage('form_error_port');
     }
     return undefined;
 };
@@ -78,7 +77,6 @@ type Props = {
 };
 
 export const DnsSettings = ({ handleSubmit, handleFix, validateForm, config, interfaces }: Props) => {
-    const { t } = useTranslation();
 
     const defaultValues = {
         web: {
@@ -203,7 +201,7 @@ export const DnsSettings = ({ handleSubmit, handleFix, validateForm, config, int
                             <div className="setup__banner--setting-group">
                                 <div className="form-group">
                                     <label>
-                                        <Trans>network_interface</Trans>
+                                        {intl.getMessage('network_interface')}
                                     </label>
                                     <Controller
                                         name="dns.ip"
@@ -226,13 +224,13 @@ export const DnsSettings = ({ handleSubmit, handleFix, validateForm, config, int
                             <div className="col-4">
                                 <div className="form-group">
                                     <label>
-                                        <Trans>install_settings_port</Trans>
+                                        {intl.getMessage('install_settings_port')}
                                     </label>
                                     <Controller
                                         name="dns.port"
                                         control={control}
                                         rules={{
-                                            required: t('form_error_required'),
+                                            required: intl.getMessage('form_error_required'),
                                             validate: {
                                                 required: validateRequiredValue,
                                                 installPort: validateInstallPort,
@@ -266,18 +264,18 @@ export const DnsSettings = ({ handleSubmit, handleFix, validateForm, config, int
                                                     id="install_dns_fix"
                                                     className="btn btn-secondary btn-sm ml-2"
                                                     onClick={() => handleAutofix('dns')}>
-                                                    <Trans>fix</Trans>
+                                                    {intl.getMessage('fix')}
                                                 </button>
                                             )}
                                         </div>
                                         {isDnsFixAvailable && (
                                             <div className="text-muted mb-2">
                                                 <p className="mb-1">
-                                                    <Trans>autofix_warning_text</Trans>
+                                                    {intl.getMessage('autofix_warning_text')}
                                                 </p>
-                                                <Trans components={[<li key="0">text</li>]}>autofix_warning_list</Trans>
+                                                {intl.getMessage('autofix_warning_list')}
                                                 <p className="mb-1">
-                                                    <Trans>autofix_warning_result</Trans>
+                                                    {intl.getMessage('autofix_warning_result')}
                                                 </p>
                                             </div>
                                         )}
@@ -286,14 +284,9 @@ export const DnsSettings = ({ handleSubmit, handleFix, validateForm, config, int
                                 {watchFields.dns?.port === STANDARD_DNS_PORT &&
                                     !isDnsFixAvailable &&
                                     dnsStatus?.includes(ADDRESS_IN_USE_TEXT) && (
-                                        <Trans
-                                            components={[
-                                                <a href={PORT_53_FAQ_LINK} key="0" target="_blank" rel="noopener noreferrer">
-                                                    link
-                                                </a>,
-                                            ]}>
-                                            port_53_faq_link
-                                        </Trans>
+                                        <a href={PORT_53_FAQ_LINK} target="_blank" rel="noopener noreferrer">
+                                            {intl.getMessage('port_53_faq_link')}
+                                        </a>
                                     )}
                             </div>
                         </div>

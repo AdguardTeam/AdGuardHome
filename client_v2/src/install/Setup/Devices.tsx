@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Trans } from 'react-i18next';
+import intl from 'panel/common/intl';
 
 import Controls from './Controls';
 
@@ -17,14 +17,14 @@ export const Devices = ({ interfaces, dnsConfig }: Props) => (
     <div className="setup__step">
         <div className="setup__group">
             <div className="setup__subtitle">
-                <Trans>install_devices_title</Trans>
+                {intl.getMessage('install_devices_title')}
             </div>
 
             <div className="setup__desc">
-                <Trans>install_devices_desc</Trans>
+                {intl.getMessage('install_devices_desc')}
 
                 <div className="mt-1">
-                    <Trans>install_devices_address</Trans>:
+                    {intl.getMessage('install_devices_address')}:
                 </div>
 
                 <div className="mt-1">

@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { useTranslation } from 'react-i18next';
 import { Input } from 'panel/common/controls/Input';
 import intl from 'panel/common/intl';
 import { Icon } from 'panel/common/ui/Icon';
@@ -37,7 +36,6 @@ const RequirementIcon = ({ ok }: RequirementIconProps) => {
 };
 
 export const Auth = ({ onAuthSubmit }: Props) => {
-    const { t } = useTranslation();
     const {
         handleSubmit,
         watch,
@@ -58,7 +56,7 @@ export const Auth = ({ onAuthSubmit }: Props) => {
 
     const validateConfirmPassword = (value: string) => {
         if (value !== password) {
-            return t('form_error_password');
+            return intl.getMessage('form_error_password');
         }
         return undefined;
     };

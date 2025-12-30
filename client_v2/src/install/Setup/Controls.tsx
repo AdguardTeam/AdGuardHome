@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { Trans } from 'react-i18next';
 
 import { Button } from 'panel/common/ui/Button';
 import intl from 'panel/common/intl';
@@ -44,7 +43,7 @@ class Controls extends Component<ControlsProps> {
                         variant="secondary"
                         className="setup__button"
                         onClick={this.props.prevStep}>
-                        <Trans>back</Trans>
+                        {intl.getMessage('back')}
                     </Button>
                 );
             case 6:
@@ -83,7 +82,7 @@ class Controls extends Component<ControlsProps> {
                         variant="primary"
                         className="setup__button"
                         onClick={nextStep}>
-                        <Trans>next</Trans>
+                        {intl.getMessage('next')}
                     </Button>
                 );
             case 6:

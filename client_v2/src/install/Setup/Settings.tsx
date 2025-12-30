@@ -1,6 +1,6 @@
 import React, { useEffect, useCallback } from 'react';
 import { useForm, Controller } from 'react-hook-form';
-import { Trans, useTranslation } from 'react-i18next';
+import intl from 'panel/common/intl';
 import i18n from 'i18next';
 
 import { Input } from 'panel/common/controls/Input';
@@ -25,7 +25,7 @@ import { toNumber } from '../../helpers/form';
 
 const validateInstallPort = (value: number) => {
     if (value < MIN_PORT || value > MAX_PORT) {
-        return i18n.t('form_error_port');
+        return intl.getMessage('form_error_port');
     }
     return undefined;
 };
@@ -86,7 +86,7 @@ const renderInterfaces = (interfaces: InstallInterface[]) =>
 
             return (
                 <option value={ip} key={name} disabled={!isUp}>
-                    {name} - {ip} {!isUp && `(${i18n.t('down')})`}
+                    {name} - {ip} {!isUp && `(${intl.getMessage('down')})`}
                 </option>
             );
         }
@@ -95,7 +95,6 @@ const renderInterfaces = (interfaces: InstallInterface[]) =>
     });
 
 export const Settings = ({ handleSubmit, handleFix, validateForm, config, interfaces }: Props) => {
-    const { t } = useTranslation();
 
     const defaultValues = {
         web: {
@@ -184,7 +183,7 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
         };
         const set_static_ip = true;
 
-        if (window.confirm(t('confirm_static_ip', { ip }))) {
+        if (window.confirm(intl.getMessage('confirm_static_ip', { ip }))) {
             handleFix(web, dns, set_static_ip);
         }
     };
@@ -198,29 +197,27 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                     return (
                         <>
                             <div className="mb-2">
-                                <Trans values={{ ip }} components={[<strong key="0">text</strong>]}>
-                                    install_static_configure
-                                </Trans>
+                                {intl.getMessage('install_static_configure', { ip }).replace('{ip}', ip)}
                             </div>
 
                             <button
                                 type="button"
                                 className="btn btn-outline-primary btn-sm"
                                 onClick={() => handleStaticIp(ip)}>
-                                <Trans>set_static_ip</Trans>
+                                {intl.getMessage('set_static_ip')}
                             </button>
                         </>
                     );
                 case STATUS_RESPONSE.ERROR:
                     return (
                         <div className="text-danger">
-                            <Trans>install_static_error</Trans>
+                            {intl.getMessage('install_static_error')}
                         </div>
                     );
                 case STATUS_RESPONSE.YES:
                     return (
                         <div className="text-success">
-                            <Trans>install_static_ok</Trans>
+                            {intl.getMessage('install_static_ok')}
                         </div>
                     );
                 default:
@@ -239,14 +236,14 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
         <form className="setup__step" onSubmit={reactHookFormSubmit(onSubmit)}>
             <div className="setup__group">
                 <div className="setup__subtitle">
-                    <Trans>install_settings_title</Trans>
+                    {intl.getMessage('install_settings_title')}
                 </div>
 
                 <div className="row">
                     <div className="col-8">
                         <div className="form-group">
                             <label>
-                                <Trans>network_interface</Trans>
+                                {intl.getMessage('network_interface')}
                             </label>
                             <Controller
                                 name="web.ip"
@@ -254,7 +251,7 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                                 render={({ field }) => (
                                     <select {...field} id="install_web_ip">
                                         <option value={ALL_INTERFACES_IP}>
-                                            {t('install_settings_all_interfaces')}
+                                            {intl.getMessage('install_settings_all_interfaces')}
                                         </option>
                                         {renderInterfaces(interfaces)}
                                     </select>
@@ -266,7 +263,7 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                     <div className="col-4">
                         <div className="form-group">
                             <label>
-                                <Trans>install_settings_port</Trans>
+                                {intl.getMessage('install_settings_port')}
                             </label>
                             <Controller
                                 name="web.port"
@@ -304,7 +301,7 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                                         id="install_web_fix"
                                         className="btn btn-secondary btn-sm ml-2"
                                         onClick={() => handleAutofix('web')}>
-                                        <Trans>fix</Trans>
+                                        {intl.getMessage('fix')}
                                     </button>
                                 )}
                             </div>
@@ -315,7 +312,7 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                 </div>
 
                 <div className="setup__desc">
-                    <Trans>install_settings_interface_link</Trans>
+                    {intl.getMessage('install_settings_interface_link')}
 
                     <div className="mt-1">
                         <AddressList
@@ -329,14 +326,14 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
 
             <div className="setup__group">
                 <div className="setup__subtitle">
-                    <Trans>install_settings_dns</Trans>
+                    {intl.getMessage('install_settings_dns')}
                 </div>
 
                 <div className="row">
                     <div className="col-8">
                         <div className="form-group">
                             <label>
-                                <Trans>network_interface</Trans>
+                                {intl.getMessage('network_interface')}
                             </label>
                             <Controller
                                 name="dns.ip"
@@ -344,7 +341,7 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                                 render={({ field }) => (
                                     <select {...field} id="install_dns_ip">
                                         <option value={ALL_INTERFACES_IP}>
-                                            {t('install_settings_all_interfaces')}
+                                            {intl.getMessage('install_settings_all_interfaces')}
                                         </option>
                                         {renderInterfaces(interfaces)}
                                     </select>
@@ -356,13 +353,13 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                     <div className="col-4">
                         <div className="form-group">
                             <label>
-                                <Trans>install_settings_port</Trans>
+                                {intl.getMessage('install_settings_port')}
                             </label>
                             <Controller
                                 name="dns.port"
                                 control={control}
                                 rules={{
-                                    required: t('form_error_required'),
+                                    required: intl.getMessage('form_error_required'),
                                     validate: {
                                         required: validateRequiredValue,
                                         installPort: validateInstallPort,
@@ -396,18 +393,18 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                                             id="install_dns_fix"
                                             className="btn btn-secondary btn-sm ml-2"
                                             onClick={() => handleAutofix('dns')}>
-                                            <Trans>fix</Trans>
+                                            {intl.getMessage('fix')}
                                         </button>
                                     )}
                                 </div>
                                 {isDnsFixAvailable && (
                                     <div className="text-muted mb-2">
                                         <p className="mb-1">
-                                            <Trans>autofix_warning_text</Trans>
+                                            {intl.getMessage('autofix_warning_text')}
                                         </p>
-                                        <Trans components={[<li key="0">text</li>]}>autofix_warning_list</Trans>
+                                        {intl.getMessage('autofix_warning_list')}
                                         <p className="mb-1">
-                                            <Trans>autofix_warning_result</Trans>
+                                            {intl.getMessage('autofix_warning_result')}
                                         </p>
                                     </div>
                                 )}
@@ -416,14 +413,9 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                         {watchFields.dns?.port === STANDARD_DNS_PORT &&
                             !isDnsFixAvailable &&
                             dnsStatus?.includes(ADDRESS_IN_USE_TEXT) && (
-                                <Trans
-                                    components={[
-                                        <a href={PORT_53_FAQ_LINK} key="0" target="_blank" rel="noopener noreferrer">
-                                            link
-                                        </a>,
-                                    ]}>
-                                    port_53_faq_link
-                                </Trans>
+                                <a href={PORT_53_FAQ_LINK} target="_blank" rel="noopener noreferrer">
+                                    {intl.getMessage('port_53_faq_link')}
+                                </a>
                             )}
 
                         <hr className="divider--small" />
@@ -431,7 +423,7 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                 </div>
 
                 <div className="setup__desc">
-                    <Trans>install_settings_dns_desc</Trans>
+                    {intl.getMessage('install_settings_dns_desc')}
 
                     <div className="mt-1">
                         <AddressList
@@ -446,11 +438,11 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
 
             <div className="setup__group">
                 <div className="setup__subtitle">
-                    <Trans>static_ip</Trans>
+                    {intl.getMessage('static_ip')}
                 </div>
 
                 <div className="mb-2">
-                    <Trans>static_ip_desc</Trans>
+                    {intl.getMessage('static_ip_desc')}
                 </div>
 
                 {getStaticIpMessage(staticIp)}
