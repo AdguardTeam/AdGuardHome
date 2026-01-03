@@ -294,7 +294,13 @@ func (web *webAPI) start(ctx context.Context) {
 			errs <- web.httpServer.ListenAndServe()
 		}()
 
-		err := <-errs
+		// Tell the service manager that we are ready to serve requests
+		err := notifyReady()
+		if err != nil {
+			logger.ErrorContext(ctx, "sending service ready notification: %v", slogutil.KeyError, err)
+		}
+
+		err = <-errs
 		if !errors.Is(err, http.ErrServerClosed) {
 			cleanupAlways()
 			panic(err)
@@ -302,6 +308,12 @@ func (web *webAPI) start(ctx context.Context) {
 
 		// We use ErrServerClosed as a sign that we need to rebind on a new
 		// address, so go back to the start of the loop.
+		//
+		// Let the service manager know that we are reloading
+		err = notifyReload()
+		if err != nil {
+			logger.ErrorContext(ctx, "sending service reload notification: %v", slogutil.KeyError, err)
+		}
 	}
 }
 
