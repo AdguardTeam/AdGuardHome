@@ -126,8 +126,8 @@ func (iface *dhcpInterfaceV4) handleRequest(
 	default:
 		// Server identifier MUST NOT be filled in, requested IP address option
 		// MUST NOT be filled in.
-		ip, ok := netip.AddrFromSlice(req.ClientIP.To4())
-		if !ok || !iface.subnet.Contains(ip) {
+		ip, _ := netip.AddrFromSlice(req.ClientIP.To4())
+		if !iface.subnet.Contains(ip) {
 			l.DebugContext(ctx, "skipping renew request", "clientip", ip)
 
 			return
@@ -247,8 +247,8 @@ func (iface *dhcpInterfaceV4) handleInitReboot(
 
 	// ciaddr must be zero.  The client is seeking to verify a previously
 	// allocated, cached configuration.
-	ciaddr, ok := netip.AddrFromSlice(req.ClientIP)
-	if ok && !ciaddr.IsUnspecified() {
+	ciaddr, _ := netip.AddrFromSlice(req.ClientIP)
+	if ciaddr.IsValid() && !ciaddr.IsUnspecified() {
 		l.DebugContext(ctx, "unexpected ciaddr in init-reboot request", "ciaddr", ciaddr)
 
 		return
@@ -277,9 +277,12 @@ func (iface *dhcpInterfaceV4) handleInitReboot(
 		return
 	}
 
-	// Commit the lease and send ACK.
-	lease.Hostname = hostname4(req)
-	err := iface.commitLease(ctx, lease)
+	// Update the lease and send ACK.
+	if newHostname := hostname4(req); newHostname != "" {
+		lease.Hostname = newHostname
+	}
+
+	err := iface.updateLease(ctx, lease)
 	if err != nil {
 		l.ErrorContext(ctx, "init-reboot request failed", slogutil.KeyError, err)
 		iface.respondNAK(ctx, req, fd)
@@ -325,9 +328,12 @@ func (iface *dhcpInterfaceV4) handleRenew(
 		return
 	}
 
-	// Commit the lease and send ACK.
-	lease.Hostname = hostname4(req)
-	err := iface.commitLease(ctx, lease)
+	// Update the lease and send ACK.
+	if newHostname := hostname4(req); newHostname != "" {
+		lease.Hostname = newHostname
+	}
+
+	err := iface.updateLease(ctx, lease)
 	if err != nil {
 		l.ErrorContext(ctx, "renew request failed", slogutil.KeyError, err)
 		iface.respondNAK(ctx, req, fd)

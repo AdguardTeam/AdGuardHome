@@ -299,9 +299,343 @@ func TestDHCPServer_ServeEther4_release(t *testing.T) {
 	}
 }
 
-// TODO(e.burkov):  Add tests for DHCPREQUEST, DHCPDECLINE.
+func TestDHCPServer_ServeEther4_request(t *testing.T) {
+	t.Parallel()
+
+	// NOTE: Keep in sync with testdata.
+	const (
+		leaseHostnameStatic = "static4"
+	)
+
+	// NOTE: Keep in sync with testdata.
+	var (
+		hwAddrUnknown = net.HardwareAddr{0x0, 0x1, 0x2, 0x3, 0x4, 0x5}
+		hwAddrStatic  = net.HardwareAddr{0x1, 0x2, 0x3, 0x4, 0x5, 0x6}
+		hwAddrDynamic = net.HardwareAddr{0x2, 0x3, 0x4, 0x5, 0x6, 0x7}
+
+		ipStatic  = netip.MustParseAddr("192.168.0.101")
+		ipDynamic = netip.MustParseAddr("192.168.0.102")
+		ipWrong   = netip.MustParseAddr("192.168.0.200")
+
+		ipOtherSubnet = netip.MustParseAddr("10.0.0.1")
+	)
+
+	// NOTE: Keep in sync with testdata.
+	dynamicLeaseExpiry := time.Date(2025, 1, 1, 10, 1, 1, 0, time.UTC)
+	dynamicLeaseTTL := dynamicLeaseExpiry.Sub(testCurrentTime)
+
+	ifaceAddr := netip.MustParseAddr("192.168.0.2")
+
+	ipv4Conf := &dhcpsvc.IPv4Config{
+		Clock:         testClock,
+		SubnetMask:    netip.MustParseAddr("255.255.255.0"),
+		GatewayIP:     netip.MustParseAddr("192.168.0.1"),
+		RangeStart:    netip.MustParseAddr("192.168.0.100"),
+		RangeEnd:      netip.MustParseAddr("192.168.0.200"),
+		LeaseDuration: testLeaseTTL,
+		Enabled:       true,
+	}
+	ifacesConfig := map[string]*dhcpsvc.InterfaceConfig{
+		testIfaceName: {
+			IPv4: ipv4Conf,
+			IPv6: disabledIPv6Config,
+		},
+	}
+
+	// TODO(e.burkov):  !! Add selecting_success test case.
+	testCases := []struct {
+		conf           *dhcpRequestConfig
+		name           string
+		wantOpts       layers.DHCPOptions
+		discoverHWAddr net.HardwareAddr
+		sendDiscover   bool
+		wantResponse   bool
+		wantACK        bool
+	}{{
+		name:           "selecting_wrong_server_id",
+		sendDiscover:   true,
+		discoverHWAddr: hwAddrStatic,
+		conf: &dhcpRequestConfig{
+			clientHWAddr: hwAddrStatic,
+			serverID:     ipOtherSubnet,
+			requestedIP:  ipStatic,
+		},
+		wantResponse: false,
+	}, {
+		name:         "selecting_no_lease",
+		sendDiscover: false,
+		conf: &dhcpRequestConfig{
+			clientHWAddr: hwAddrUnknown,
+			serverID:     ipv4Conf.GatewayIP,
+			requestedIP:  ipWrong,
+		},
+		wantResponse: true,
+		wantACK:      false,
+	}, {
+		name:           "selecting_wrong_ip",
+		sendDiscover:   true,
+		discoverHWAddr: hwAddrStatic,
+		conf: &dhcpRequestConfig{
+			clientHWAddr: hwAddrStatic,
+			serverID:     ipv4Conf.GatewayIP,
+			requestedIP:  ipWrong,
+		},
+		wantResponse: true,
+		wantACK:      false,
+	}, {
+		name:           "selecting_nonzero_ciaddr",
+		sendDiscover:   true,
+		discoverHWAddr: hwAddrStatic,
+		conf: &dhcpRequestConfig{
+			clientHWAddr: hwAddrStatic,
+			serverID:     ipv4Conf.GatewayIP,
+			requestedIP:  ipStatic,
+			clientIP:     ipStatic,
+		},
+		wantResponse: false,
+	}, {
+		name: "init_reboot_success",
+		conf: &dhcpRequestConfig{
+			clientHWAddr: hwAddrStatic,
+			requestedIP:  ipStatic,
+		},
+		wantResponse: true,
+		wantACK:      true,
+		wantOpts: layers.DHCPOptions{
+			newOptMessageType(t, layers.DHCPMsgTypeAck),
+			newOptServerID(t, ifaceAddr),
+			newOptLeaseTime(t, testLeaseTTL),
+			newOptHostname(t, leaseHostnameStatic),
+		},
+	}, {
+		name: "init_reboot_wrong_subnet",
+		conf: &dhcpRequestConfig{
+			clientHWAddr: hwAddrStatic,
+			requestedIP:  ipOtherSubnet,
+		},
+		wantResponse: true,
+		wantACK:      false,
+	}, {
+		name: "init_reboot_no_lease",
+		conf: &dhcpRequestConfig{
+			clientHWAddr: hwAddrUnknown,
+			requestedIP:  ipStatic,
+		},
+		wantResponse: false,
+	}, {
+		name: "init_reboot_wrong_ip",
+		conf: &dhcpRequestConfig{
+			clientHWAddr: hwAddrStatic,
+			requestedIP:  ipDynamic,
+		},
+		wantResponse: true,
+		wantACK:      false,
+	}, {
+		name: "init_reboot_nonzero_ciaddr",
+		conf: &dhcpRequestConfig{
+			clientHWAddr: hwAddrStatic,
+			requestedIP:  ipStatic,
+			clientIP:     ipStatic,
+		},
+		wantResponse: false,
+	}, {
+		name: "renew_success",
+		conf: &dhcpRequestConfig{
+			clientHWAddr: hwAddrDynamic,
+			clientIP:     ipDynamic,
+		},
+		wantResponse: true,
+		wantACK:      true,
+		wantOpts: layers.DHCPOptions{
+			newOptMessageType(t, layers.DHCPMsgTypeAck),
+			newOptServerID(t, ifaceAddr),
+			newOptLeaseTime(t, dynamicLeaseTTL),
+			newOptHostname(t, "dynamic4"),
+		},
+	}, {
+		name: "renew_static",
+		conf: &dhcpRequestConfig{
+			clientHWAddr: hwAddrStatic,
+			clientIP:     ipStatic,
+		},
+		wantResponse: true,
+		wantACK:      true,
+		wantOpts: layers.DHCPOptions{
+			newOptMessageType(t, layers.DHCPMsgTypeAck),
+			newOptServerID(t, ifaceAddr),
+			newOptLeaseTime(t, testLeaseTTL),
+			newOptHostname(t, leaseHostnameStatic),
+		},
+	}, {
+		name: "renew_wrong_subnet",
+		conf: &dhcpRequestConfig{
+			clientHWAddr: hwAddrStatic,
+			clientIP:     ipOtherSubnet,
+		},
+		wantResponse: false,
+	}, {
+		name: "renew_no_lease",
+		conf: &dhcpRequestConfig{
+			clientHWAddr: hwAddrUnknown,
+			clientIP:     ipStatic,
+		},
+		wantResponse: false,
+	}, {
+		name: "renew_wrong_ip",
+		conf: &dhcpRequestConfig{
+			clientHWAddr: hwAddrStatic,
+			clientIP:     ipDynamic,
+		},
+		wantResponse: true,
+		wantACK:      false,
+	}}
+
+	dbPath := newTempDB(t)
+
+	for _, tc := range testCases {
+		ndMgr, inCh, outCh := newTestNetworkDeviceManager(t, testIfaceName, ifaceAddr)
+		srv := newTestDHCPServer(t, &dhcpsvc.Config{
+			Interfaces:           ifacesConfig,
+			NetworkDeviceManager: ndMgr,
+			DBFilePath:           dbPath,
+			Enabled:              true,
+		})
+
+		// TODO(e.burkov):  !! move into test body
+		servicetest.RequireRun(t, srv, testTimeout)
+
+		if tc.sendDiscover {
+			discoverPkt := newDHCPDISCOVER(t, tc.discoverHWAddr)
+			testutil.RequireSend(t, inCh, discoverPkt, testTimeout)
+
+			_, ok := testutil.RequireReceive(t, outCh, testTimeout)
+			require.True(t, ok)
+		}
+
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			pkt := newDHCPREQUEST(t, tc.conf)
+			req := testutil.RequireTypeAssert[*layers.DHCPv4](t, pkt.Layer(layers.LayerTypeDHCPv4))
+
+			testutil.RequireSend(t, inCh, pkt, testTimeout)
+
+			if !tc.wantResponse {
+				// TODO(e.burkov):  !! assert no response
+				return
+			}
+
+			respData, ok := testutil.RequireReceive(t, outCh, testTimeout/100)
+			require.True(t, ok)
+
+			if tc.wantACK {
+				assertValidACK(t, req, respData, tc.wantOpts)
+			} else {
+				assertValidNAK(t, req, respData, ipv4Conf.GatewayIP)
+			}
+		})
+	}
+}
+
+// TODO(e.burkov):  Add tests for DHCPDECLINE.
 
 // TODO(e.burkov):  Add tests for wrong packets.
+
+// dhcpRequestConfig contains the configuration for creating a DHCPREQUEST
+// packet.
+type dhcpRequestConfig struct {
+	// serverID is the server identifier option value.  If zero, the option is
+	// not included.
+	serverID netip.Addr
+
+	// requestedIP is the requested IP address option value.  If zero, the
+	// option is not included.
+	requestedIP netip.Addr
+
+	// clientIP is the ciaddr field value.  If zero, it's set to 0.0.0.0.
+	clientIP netip.Addr
+
+	// hostname is the hostname option value.  If empty, the option is not
+	// included.
+	hostname string
+
+	// clientHWAddr is the MAC address of the client.
+	clientHWAddr net.HardwareAddr
+}
+
+// newDHCPREQUEST creates a new DHCPREQUEST packet for testing.
+func newDHCPREQUEST(tb testing.TB, conf *dhcpRequestConfig) (pkt gopacket.Packet) {
+	tb.Helper()
+
+	eth := &layers.Ethernet{
+		SrcMAC:       conf.clientHWAddr,
+		DstMAC:       net.HardwareAddr{0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
+		EthernetType: layers.EthernetTypeIPv4,
+	}
+
+	srcIP := net.IPv4zero.To4()
+	if conf.clientIP.IsValid() {
+		srcIP = conf.clientIP.AsSlice()
+	}
+
+	ip := &layers.IPv4{
+		Version:  4,
+		TTL:      dhcpsvc.IPv4DefaultTTL,
+		SrcIP:    srcIP,
+		DstIP:    net.IPv4bcast.To4(),
+		Protocol: layers.IPProtocolUDP,
+	}
+	udp := &layers.UDP{
+		SrcPort: dhcpsvc.ClientPortV4,
+		DstPort: dhcpsvc.ServerPortV4,
+	}
+	_ = udp.SetNetworkLayerForChecksum(ip)
+
+	opts := layers.DHCPOptions{
+		layers.NewDHCPOption(
+			layers.DHCPOptMessageType,
+			[]byte{byte(layers.DHCPMsgTypeRequest)},
+		),
+	}
+
+	if conf.serverID.IsValid() {
+		opts = append(opts, layers.NewDHCPOption(
+			layers.DHCPOptServerID,
+			conf.serverID.AsSlice(),
+		))
+	}
+
+	if conf.requestedIP.IsValid() {
+		opts = append(opts, layers.NewDHCPOption(
+			layers.DHCPOptRequestIP,
+			conf.requestedIP.AsSlice(),
+		))
+	}
+
+	if conf.hostname != "" {
+		opts = append(opts, layers.NewDHCPOption(
+			layers.DHCPOptHostname,
+			[]byte(conf.hostname),
+		))
+	}
+
+	ciaddr := net.IPv4zero.To4()
+	if conf.clientIP.IsValid() {
+		ciaddr = conf.clientIP.AsSlice()
+	}
+
+	dhcp := &layers.DHCPv4{
+		Operation:    layers.DHCPOpRequest,
+		HardwareType: layers.LinkTypeEthernet,
+		HardwareLen:  dhcpsvc.EUI48AddrLen,
+		Xid:          testXid,
+		ClientIP:     ciaddr,
+		ClientHWAddr: conf.clientHWAddr,
+		Options:      opts,
+	}
+
+	return newTestPacket(tb, layers.LinkTypeEthernet, eth, ip, udp, dhcp)
+}
 
 // newDHCPDISCOVER creates a new DHCPDISCOVER packet for testing.
 //
@@ -441,5 +775,54 @@ func assertValidOffer(
 	assert.Equal(tb, discover.HardwareLen, resp.HardwareLen, "hardware length")
 	assert.Equal(tb, discover.Xid, resp.Xid, "xid")
 	assert.Equal(tb, discover.ClientHWAddr, resp.ClientHWAddr, "client hardware address")
+	assert.Equal(tb, wantOpts, resp.Options, "options")
+}
+
+// assertValidACK asserts that respData contains a complete DHCPACK response
+// with the expected options, wrapped with all layers down to Ethernet.
+func assertValidACK(
+	tb testing.TB,
+	request *layers.DHCPv4,
+	respData []byte,
+	wantOpts layers.DHCPOptions,
+) {
+	tb.Helper()
+
+	resp := &layers.DHCPv4{}
+	types := requireEthernet(tb, respData, &layers.Ethernet{}, &layers.IPv4{}, &layers.UDP{}, resp)
+	require.Equal(tb, fullLayersStack, types)
+
+	assert.Equal(tb, layers.DHCPOpReply, resp.Operation, "operation")
+	assert.Equal(tb, request.HardwareType, resp.HardwareType, "hardware type")
+	assert.Equal(tb, request.HardwareLen, resp.HardwareLen, "hardware length")
+	assert.Equal(tb, request.Xid, resp.Xid, "xid")
+	assert.Equal(tb, request.ClientHWAddr, resp.ClientHWAddr, "client hardware address")
+	assert.Equal(tb, wantOpts, resp.Options, "options")
+}
+
+// assertValidNAK asserts that respData contains a complete DHCPNAK response
+// wrapped with all layers down to Ethernet.
+func assertValidNAK(
+	tb testing.TB,
+	request *layers.DHCPv4,
+	respData []byte,
+	serverIP netip.Addr,
+) {
+	tb.Helper()
+
+	resp := &layers.DHCPv4{}
+	types := requireEthernet(tb, respData, &layers.Ethernet{}, &layers.IPv4{}, &layers.UDP{}, resp)
+	require.Equal(tb, fullLayersStack, types)
+
+	assert.Equal(tb, layers.DHCPOpReply, resp.Operation, "operation")
+	assert.Equal(tb, request.HardwareType, resp.HardwareType, "hardware type")
+	assert.Equal(tb, request.HardwareLen, resp.HardwareLen, "hardware length")
+	assert.Equal(tb, request.Xid, resp.Xid, "xid")
+	assert.Equal(tb, request.ClientHWAddr, resp.ClientHWAddr, "client hardware address")
+
+	wantOpts := layers.DHCPOptions{
+		newOptMessageType(tb, layers.DHCPMsgTypeNak),
+		newOptServerID(tb, serverIP),
+	}
 	assert.Equal(tb, wantOpts, resp.Options, "options")
 }

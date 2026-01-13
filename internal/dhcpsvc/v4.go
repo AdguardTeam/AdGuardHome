@@ -206,6 +206,14 @@ func (iface *dhcpInterfaceV4) commitLease(
 	return iface.common.index.add(ctx, iface.common.logger, l, iface.common)
 }
 
+// updateLease updates l in the database.  l must be valid and not expired.
+func (iface *dhcpInterfaceV4) updateLease(
+	ctx context.Context,
+	l *Lease,
+) (err error) {
+	return iface.common.index.update(ctx, iface.common.logger, l, iface.common)
+}
+
 // respondOffer sends a DHCPOFFER message to the client.  req, fd, and l must
 // not be nil.
 func (iface *dhcpInterfaceV4) respondOffer(
