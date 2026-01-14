@@ -1,13 +1,18 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Input } from 'panel/common/controls/Input';
 import intl from 'panel/common/intl';
 import { Icon } from 'panel/common/ui/Icon';
 import { Checkbox } from 'panel/common/controls/Checkbox';
+import { PRIVACY_POLICY_LINK } from 'panel/helpers/constants'
 import Controls from './Controls';
 import { validatePasswordLength, validateRequiredValue } from '../../helpers/validators';
+import { hasMinLength, hasLowercase, hasUppercase, hasAllowedAsciiOnly, hasNumberOrSpecial } from './helpers'
+import setup from './styles.module.pcss'
 
-
+type RequirementIconProps = {
+    ok: boolean;
+};
 type AuthFormValues = {
     username: string;
     password: string;
@@ -19,20 +24,11 @@ type Props = {
     onAuthSubmit: (values: AuthFormValues) => void;
 };
 
-const hasMinLength = (v: string) => v.length >= 8;
-const hasLowercase = (v: string) => /[a-z]/.test(v);
-const hasUppercase = (v: string) => /[A-Z]/.test(v);
-const hasAllowedAsciiOnly = (v: string) => /^[\x20-\x7E]*$/.test(v);
-const hasNumberOrSpecial = (v: string) => /[\d\W_]/.test(v);
-type RequirementIconProps = {
-    ok: boolean;
-};
-
 const RequirementIcon = ({ ok }: RequirementIconProps) => {
     const iconName = ok ? 'check' : 'cross';
-    const iconClass = ok ? 'icon-green' : 'icon-red'
+    const iconColor = ok ? 'green' : 'red';
 
-    return <Icon icon={iconName} className={iconClass}/>;
+    return <Icon icon={iconName} color={iconColor} />;
 };
 
 export const Auth = ({ onAuthSubmit }: Props) => {
@@ -42,7 +38,7 @@ export const Auth = ({ onAuthSubmit }: Props) => {
         control,
         formState: { isDirty, isValid },
     } = useForm<AuthFormValues>({
-        mode: 'onBlur',
+        mode: 'onChange',
         defaultValues: {
             username: '',
             password: '',
@@ -54,6 +50,9 @@ export const Auth = ({ onAuthSubmit }: Props) => {
     const password = watch('password') ?? '';
     const confirmPassword = watch('confirm_password') ?? '';
 
+    const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+    const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
+
     const validateConfirmPassword = (value: string) => {
         if (value !== password) {
             return intl.getMessage('form_error_password');
@@ -62,29 +61,27 @@ export const Auth = ({ onAuthSubmit }: Props) => {
     };
 
     const requirements = useMemo(() => {
-        const pwd = password;
-
         return {
-            minLength: pwd.length > 0 && hasMinLength(pwd),
-            allowedChars: pwd.length > 0 && hasAllowedAsciiOnly(pwd) && hasNumberOrSpecial(pwd),
-            lowercase: pwd.length > 0 && hasLowercase(pwd),
-            uppercase: pwd.length > 0 && hasUppercase(pwd),
+            minLength: password.length > 0 && hasMinLength(password),
+            allowedChars: password.length > 0 && hasAllowedAsciiOnly(password) && hasNumberOrSpecial(password),
+            lowercase: password.length > 0 && hasLowercase(password),
+            uppercase: password.length > 0 && hasUppercase(password),
             match:
-                pwd.length > 0 &&
+                password.length > 0 &&
                 confirmPassword.length > 0 &&
-                pwd === confirmPassword,
+                password === confirmPassword,
         };
     }, [password, confirmPassword]);
 
     return (
-        <div className="setup__config-setting">
-            <form className="setup__step" onSubmit={handleSubmit(onAuthSubmit)}>
-                <div className="setup__left-side">
-                    <div className="setup__title">{intl.getMessage('setup_guide_auth_title')}</div>
+        <div className={setup.configSetting}>
+            <form className={setup.step} onSubmit={handleSubmit(onAuthSubmit)}>
+                <div className={setup.info}>
+                    <div className={setup.titleStep}>{intl.getMessage('setup_guide_auth_title')}</div>
 
-                    <p className="setup__desc">{intl.getMessage('setup_guide_auth_subtitle')}</p>
+                    <p className={setup.descStep}>{intl.getMessage('setup_guide_auth_subtitle')}</p>
 
-                    <div className="form-group">
+                    <div className={setup.input}>
                         <Controller
                             name="username"
                             control={control}
@@ -103,7 +100,7 @@ export const Auth = ({ onAuthSubmit }: Props) => {
                         />
                     </div>
 
-                    <div className="form-group">
+                    <div className={setup.input}>
                         <Controller
                             name="password"
                             control={control}
@@ -116,18 +113,44 @@ export const Auth = ({ onAuthSubmit }: Props) => {
                             render={({ field, fieldState }) => (
                                 <Input
                                     {...field}
-                                    type="password"
+                                    type={isPasswordVisible ? 'text' : 'password'}
                                     id="install_password"
                                     label={intl.getMessage('install_auth_password')}
                                     placeholder={intl.getMessage('install_auth_password_enter')}
                                     errorMessage={fieldState.error?.message}
                                     autoComplete="new-password"
+                                    suffixIcon={(
+                                        <div className={setup.inputSuffix}>
+                                            {!!field.value && (
+                                                <button
+                                                    className={setup.inputIconButton}
+                                                    type="button"
+                                                    onMouseDown={(e) => e.preventDefault()}
+                                                    onClick={() => {
+                                                        setIsPasswordVisible(false);
+                                                        field.onChange('');
+                                                    }}
+                                                >
+                                                    <Icon icon="cross" />
+                                                </button>
+                                            )}
+                                            <button
+                                                className={setup.inputIconButton}
+                                                type="button"
+                                                disabled={!field.value}
+                                                onMouseDown={(e) => e.preventDefault()}
+                                                onClick={() => setIsPasswordVisible((v) => !v)}
+                                            >
+                                                <Icon icon={isPasswordVisible ? 'eye_open' : 'eye_close'} />
+                                            </button>
+                                        </div>
+                                    )}
                                 />
                             )}
                         />
                     </div>
 
-                    <div className="form-group">
+                    <div className={setup.input}>
                         <Controller
                             name="confirm_password"
                             control={control}
@@ -140,21 +163,52 @@ export const Auth = ({ onAuthSubmit }: Props) => {
                             render={({ field, fieldState }) => (
                                 <Input
                                     {...field}
-                                    type="password"
+                                    type={isConfirmPasswordVisible ? 'text' : 'password'}
                                     id="install_confirm_password"
                                     label={intl.getMessage('install_auth_confirm')}
                                     placeholder={intl.getMessage('install_auth_confirm')}
                                     errorMessage={fieldState.error?.message}
                                     autoComplete="new-password"
+                                    suffixIcon={(
+                                        <div className={setup.inputSuffix}>
+                                            {!!field.value && (
+                                                <button
+                                                    className={setup.inputIconButton}
+                                                    type="button"
+                                                    onMouseDown={(e) => e.preventDefault()}
+                                                    onClick={() => {
+                                                        setIsConfirmPasswordVisible(false);
+                                                        field.onChange('');
+                                                    }}
+                                                >
+                                                    <Icon icon="cross" />
+                                                </button>
+                                            )}
+                                            <button
+                                                className={setup.inputIconButton}
+                                                type="button"
+                                                disabled={!field.value}
+                                                onMouseDown={(e) => e.preventDefault()}
+                                                onClick={() => setIsConfirmPasswordVisible((v) => !v)}
+                                            >
+                                                <Icon
+                                                    icon={
+                                                        isConfirmPasswordVisible ? 'eye_open' : 'eye_close'
+                                                    }
+                                                />
+                                            </button>
+                                        </div>
+                                    )}
                                 />
                             )}
                         />
                     </div>
 
-                    <div className="setup__consent">
+                    <div className={setup.consent}>
                         <Controller
                             name="privacy_consent"
                             control={control}
+                            rules={{ validate: validateRequiredValue }}
                             render={({ field }) => (
                                 <Checkbox
                                     checked={field.value}
@@ -162,10 +216,16 @@ export const Auth = ({ onAuthSubmit }: Props) => {
                                     name={field.name}
                                     onBlur={field.onBlur}
                                 >
-                                    <div>
+                                    <div className={setup.consentContent}>
                                         {intl.getMessage('setup_guide_auth_privacy', {
-                                            a: (text: string) => <a className="setup__link" href="https://adguard.com/privacy-policy">{text}</a>,
-                                            b: (text: string) => <a className="setup__link" href="https://adguard.com/privacy-policy">{text}</a>,
+                                            a: (text: string) =>
+                                                <a className={setup.link} href={PRIVACY_POLICY_LINK}>
+                                                    {text}
+                                                </a>,
+                                            b: (text: string) =>
+                                                <a className={setup.link} href={PRIVACY_POLICY_LINK}>
+                                                    {text}
+                                                </a>,
                                         })}
                                     </div>
                                 </Checkbox>
@@ -176,32 +236,32 @@ export const Auth = ({ onAuthSubmit }: Props) => {
                     <Controls isDirty={isDirty} isValid={isValid} />
                 </div>
 
-                <div className="setup__right-side">
-                    <div className="setup__banner">
-                        <h3 className="setup__banner-title">{intl.getMessage('password_requirements')}</h3>
+                <div className={setup.content}>
+                    <div className={setup.banner}>
+                        <h3 className={setup.bannerTitle}>{intl.getMessage('password_requirements')}</h3>
 
-                        <ul className="setup__banner-list">
-                            <li className="setup__banner-item">
+                        <ul className={setup.bannerList}>
+                            <li className={setup.bannerItem}>
                                 <RequirementIcon ok={requirements.minLength} />
                                 {intl.getMessage('password_requirements_characters')}
                             </li>
 
-                            <li className="setup__banner-item">
+                            <li className={setup.bannerItem}>
                                 <RequirementIcon ok={requirements.allowedChars} />
                                 {intl.getMessage('password_requirements_special')}
                             </li>
 
-                            <li className="setup__banner-item">
+                            <li className={setup.bannerItem}>
                                 <RequirementIcon ok={requirements.lowercase} />
                                 {intl.getMessage('password_requirements_lowercase')}
                             </li>
 
-                            <li className="setup__banner-item">
+                            <li className={setup.bannerItem}>
                                 <RequirementIcon ok={requirements.uppercase} />
                                 {intl.getMessage('password_requirements_uppercase')}
                             </li>
 
-                            <li className="setup__banner-item">
+                            <li className={setup.bannerItem}>
                                 <RequirementIcon ok={requirements.match} />
                                 {intl.getMessage('password_requirements_match')}
                             </li>

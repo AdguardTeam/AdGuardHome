@@ -14,20 +14,12 @@ import {
     STATUS_RESPONSE,
     STANDARD_DNS_PORT,
     STANDARD_WEB_PORT,
-    MAX_PORT,
-    MIN_PORT,
 } from '../../helpers/constants';
 
-import { validateRequiredValue } from '../../helpers/validators';
+import { validateRequiredValue, validateInstallPort } from '../../helpers/validators';
 import { InstallInterface } from '../../initialState';
 import { toNumber } from '../../helpers/form';
-
-const validateInstallPort = (value: number) => {
-    if (value < MIN_PORT || value > MAX_PORT) {
-        return intl.getMessage('form_error_port');
-    }
-    return undefined;
-};
+import setup from './styles.module.pcss'
 
 export type WebConfig = {
     ip: string;
@@ -232,9 +224,9 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
     };
 
     return (
-        <form className="setup__step" onSubmit={reactHookFormSubmit(onSubmit)}>
-            <div className="setup__group">
-                <div className="setup__subtitle">
+        <form className={setup.step} onSubmit={reactHookFormSubmit(onSubmit)}>
+            <div className={setup.group}>
+                <div className={setup.subtitle}>
                     {intl.getMessage('install_settings_title')}
                 </div>
 
@@ -305,12 +297,10 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                                 )}
                             </div>
                         )}
-
-                        <hr className="divider--small" />
                     </div>
                 </div>
 
-                <div className="setup__desc">
+                <div className={setup.desc}>
                     {intl.getMessage('install_settings_interface_link')}
 
                     <div className="mt-1">
@@ -323,8 +313,8 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                 </div>
             </div>
 
-            <div className="setup__group">
-                <div className="setup__subtitle">
+            <div className={setup.group}>
+                <div className={setup.subtitle}>
                     {intl.getMessage('install_settings_dns')}
                 </div>
 
@@ -421,7 +411,7 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                     </div>
                 </div>
 
-                <div className="setup__desc">
+                <div className={setup.desc}>
                     {intl.getMessage('install_settings_dns_desc')}
 
                     <div className="mt-1">
@@ -435,8 +425,8 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                 </div>
             </div>
 
-            <div className="setup__group">
-                <div className="setup__subtitle">
+            <div className={setup.group}>
+                <div className={setup.subtitle}>
                     {intl.getMessage('static_ip')}
                 </div>
 

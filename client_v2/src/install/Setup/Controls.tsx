@@ -4,6 +4,7 @@ import { connect } from 'react-redux';
 import { Button } from 'panel/common/ui/Button';
 import intl from 'panel/common/intl';
 import * as actionCreators from '../../actions/install';
+import setup from './styles.module.pcss'
 
 interface ControlsProps {
     install: {
@@ -41,13 +42,12 @@ class Controls extends Component<ControlsProps> {
                         type="button"
                         size="small"
                         variant="secondary"
-                        className="setup__button"
+                        className={setup.button}
                         onClick={this.props.prevStep}>
                         {intl.getMessage('back')}
                     </Button>
                 );
             case 6:
-                // No back button on final Submit step
                 return false;
             default:
                 return false;
@@ -55,7 +55,9 @@ class Controls extends Component<ControlsProps> {
     }
 
     renderNextButton(step: any) {
-        const { nextStep, ip, port } = this.props;
+        const { nextStep, ip, port, isValid, invalid } = this.props;
+
+        const isNextDisabled = invalid === true || isValid === false;
 
         switch (step) {
             case 1:
@@ -66,7 +68,7 @@ class Controls extends Component<ControlsProps> {
                         onClick={nextStep}
                         size="small"
                         variant="primary"
-                        className="setup__button">
+                        className={setup.button}>
                         {intl.getMessage("setup_guide_greeting_button")}
                     </Button>
                 );
@@ -80,8 +82,8 @@ class Controls extends Component<ControlsProps> {
                         type="submit"
                         size="small"
                         variant="primary"
-                        className="setup__button"
-                        onClick={nextStep}>
+                        className={setup.button}
+                        disabled={isNextDisabled}>
                         {intl.getMessage('next')}
                     </Button>
                 );
@@ -92,7 +94,7 @@ class Controls extends Component<ControlsProps> {
                         type="button"
                         size="small"
                         variant="primary"
-                        className="setup__button"
+                        className={setup.button}
                         onClick={() => this.props.openDashboard && this.props.openDashboard(ip!, port!)}>
                         {intl.getMessage("open_dashboard")}
                     </Button>
@@ -106,7 +108,7 @@ class Controls extends Component<ControlsProps> {
         const { install } = this.props;
 
         return (
-            <div className="setup__nav">
+            <div className={setup.nav}>
                 {this.renderNextButton(install.step)}
                 {this.renderPrevButton(install.step)}
             </div>

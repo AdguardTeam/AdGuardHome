@@ -1,39 +1,70 @@
-import React, { useEffect, Fragment } from 'react';
+import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import debounce from 'lodash/debounce';
 
-import intl, { LocalesType } from 'panel/common/intl'; // путь подстрой под свой
+import intl, { LocalesType } from 'panel/common/intl';
 import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from 'panel/helpers/localStorageHelper';
 import s from 'panel/common/ui/Header/Header.module.pcss';
 import { Logo } from 'panel/common/ui/Sidebar';
 import { InstallInterface, InstallState, RootState } from 'panel/initialState';
+import { SetupGuide } from 'panel/components/SetupGuide/SetupGuide';
 import * as actionCreators from '../../actions/install';
+import { stripZoneId } from './helpers'
 
-import { getWebAddress, setHtmlLangAttr } from '../../helpers/helpers';
+import { getInterfaceIp, getWebAddress, setHtmlLangAttr } from '../../helpers/helpers';
 import { INSTALL_TOTAL_STEPS, ALL_INTERFACES_IP, DEBOUNCE_TIMEOUT } from '../../helpers/constants';
 
 import Greeting from './Greeting';
 import { ConfigType, DnsConfig, WebConfig } from './Settings';
 import { InterfaceSettings } from './InterfaceSettings';
 import { DnsSettings } from './DnsSettings';
-import { SetupGuideStep } from './SetupGuideStep';
+import Controls from './Controls';
 import { Submit } from './Submit';
 import { Progress } from './Progress';
 import { Auth } from './Auth';
 import Toasts from '../../components/Toasts';
 
-import './Setup.css';
+import setup from './styles.module.pcss';
 import twosky from '../../../../.twosky.json';
 import { changeLanguage as changeLanguageAction } from '../../actions';
 import { LanguageDropdown } from '../../common/ui/LanguageDropdown/LanguageDropdown';
 
 const LANGUAGES = twosky[1].languages;
 
+const getDnsAddressWithPort = (ip: string, port: number) => {
+    const normalizedIp = stripZoneId(ip);
+
+    if (normalizedIp.includes(':') && !normalizedIp.includes('[')) {
+        return `[${normalizedIp}]:${port}`;
+    }
+
+    return `${normalizedIp}:${port}`;
+};
+
+const getInstallDnsAddresses = (dns: { ip: string; port: number }, interfaces: InstallInterface[]) => {
+    if (!dns?.ip || !dns?.port) {
+        return [];
+    }
+
+    if (dns.ip === ALL_INTERFACES_IP) {
+        return (interfaces || [])
+            .filter((iface: InstallInterface) => iface?.ip_addresses?.length > 0)
+            .map((iface: InstallInterface) => getInterfaceIp(iface))
+            .filter(Boolean)
+            .map((ip: string) => getDnsAddressWithPort(ip, dns.port));
+    }
+
+    return [getDnsAddressWithPort(dns.ip, dns.port)];
+};
+
 export const Setup = () => {
     const dispatch = useDispatch();
 
     const install = useSelector((state: InstallState) => state.install);
     const { processingDefault, step, web, dns, staticIp, interfaces } = install;
+    const dnsAddresses = useSelector((state: RootState) => state.dashboard?.dnsAddresses || []);
+    const installDnsAddresses = getInstallDnsAddresses(dns, interfaces);
+    const resolvedDnsAddresses = dnsAddresses.length > 0 ? dnsAddresses : installDnsAddresses;
 
     useEffect(() => {
         dispatch(actionCreators.getDefaultAddresses());
@@ -124,7 +155,11 @@ export const Setup = () => {
                     />
                 );
             case 5:
-                return <SetupGuideStep dnsAddresses={[]} />;
+                return (
+                    <>
+                        <SetupGuide dnsAddresses={resolvedDnsAddresses} isStep footer={<Controls />} />
+                    </>
+                );
             case 6:
                 return <Submit openDashboard={openDashboard} webConfig={web} />;
             default:
@@ -138,26 +173,24 @@ export const Setup = () => {
 
     return (
         <>
-            <div className="setup">
-
-                <div className="setup__header">
-                    <div className="setup__header-content">
-                        <div className={s.linkWrapper}>
+            <div className={setup.setup}>
+                <div className={setup.header}>
+                    <div className={setup.headerContent}>
+                        <div className={setup.logoWrap}>
                             <Logo id="header" />
                         </div>
                         <Progress step={step} />
                         <LanguageDropdown
-                        value={currentLanguage}
-                        languages={LANGUAGES}
-                        onChange={(lang) => changeLanguage(lang as LocalesType)}
-                        className={s.dropdown}
-                        position="bottomRight" />
+                            value={currentLanguage}
+                            languages={LANGUAGES}
+                            onChange={(lang) => changeLanguage(lang as LocalesType)}
+                            className={s.dropdown}
+                            position="bottomRight"
+                        />
                     </div>
                 </div>
 
-                <div className="setup__container">
-                    {renderPage(step, { web, dns, staticIp }, interfaces)}
-                </div>
+                <div className={setup.container}>{renderPage(step, { web, dns, staticIp }, interfaces)}</div>
             </div>
 
             <Toasts />

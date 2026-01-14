@@ -3,6 +3,7 @@ import React from 'react';
 import intl from 'panel/common/intl';
 import Controls from './Controls';
 import { WebConfig } from './Settings';
+import setup from './styles.module.pcss'
 
 type Props = {
     webConfig: WebConfig;
@@ -10,11 +11,11 @@ type Props = {
 };
 
 export const Submit = ({ openDashboard, webConfig }: Props) => (
-    <div className="setup__end">
-        <div className="setup__group">
-            <h1 className="setup__title">{intl.getMessage('install_submit_title')}</h1>
+    <div className={setup.end}>
+        <div className={setup.group}>
+            <h1 className={setup.title}>{intl.getMessage('install_submit_title')}</h1>
 
-            <p className="setup__desc">
+            <p className={setup.desc}>
                 {intl.getMessage('setup_complete')}
             </p>
         </div>

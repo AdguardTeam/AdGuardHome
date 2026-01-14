@@ -1,0 +1,330 @@
+/* Disable Auto Zoom in Input - Safari on iPhone https://stackoverflow.com/a/6394497 */
+@media screen and (max-width: 767px) {
+    input,
+    select,
+    textarea {
+        font-size: 1rem;
+    }
+}
+
+.setup {
+    min-height: calc(100vh - 345px);
+    line-height: 1.48;
+}
+
+@media screen and (min-width: 768px) {
+    .setup {
+        min-height: calc(100vh - 141px);
+    }
+}
+
+.container {
+    max-width: 1176px;
+    margin: 0 auto;
+}
+
+[data-theme='dark'] .container {
+    box-shadow: none;
+    border: 1px solid var(--card-border-color);
+}
+
+.setup__logo {
+    display: block;
+    margin: 0 auto 40px;
+    max-width: 140px;
+}
+
+[data-theme='dark'] .setup__logo {
+    filter: invert(1);
+}
+
+.step {
+    display: flex;
+    gap: 88px;
+    justify-content: center;
+}
+
+.title {
+    font-size: 40px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 120%;
+    margin-bottom: 16px;
+}
+
+.titleStep {
+    font-size: 32px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 120%;
+    margin-bottom: 16px;
+}
+
+.input {
+    margin-bottom: 16px;
+}
+
+.info {
+    max-width: 584px;
+    text-align: left;
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 150%;
+    padding-left: 48px;
+}
+
+.subtitle {
+    margin-bottom: 10px;
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.desc {
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 150%;
+
+    &Step {
+        margin-bottom: 24px;
+    }
+
+    &Adresses {
+        margin-top: 32px;
+    }
+}
+
+.list {
+    padding-left: 26px;
+    margin: 18px 0 40px;
+}
+
+.group {
+    margin-bottom: 35px;
+
+    &:last-child {
+        margin-bottom: 0;
+    }
+}
+
+.groupCenter {
+    padding: 48px 24px;
+    max-width: 632px;
+    margin: 0 auto;
+}
+
+.consent {
+    margin: 32px 0 36px;
+
+    &Content {
+        font-size: 16px;
+        font-style: normal;
+        font-weight: 400;
+        line-height: 130%;
+    }
+}
+
+.progress {
+    font-size: 14px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    &Wrap {
+        height: 6px;
+        overflow: hidden;
+        width: 464px;
+        display: flex;
+        gap: 4px;
+        background: transparent;
+    }
+
+    &Step {
+        flex: 1 1 0;
+        border-radius: 8px;
+        height: 100%;
+
+        &Green {
+            background: var(--product-primary-50);
+        }
+
+        &Grey {
+            background-color: #eaeaea;
+        }
+    }
+}
+
+.button {
+    max-width: 200px;
+}
+
+.setup__error {
+    margin: -5px 0 5px;
+}
+
+.header {
+    box-shadow: 4px 4px 8px 0 rgba(0, 0, 0, 0.10);
+    &Content {
+        display: flex;
+        height: 80px;
+        justify-content: space-between;
+        align-items: center;
+        align-self: stretch;
+        width: 100%;
+        max-width: 1176px;
+        margin: 0 auto;
+    }
+}
+
+.greeting {
+    display: flex;
+    justify-content: space-between;
+    gap: 88px;
+    padding-top: 112px;
+}
+
+.configSetting {
+    padding-top: 48px;
+}
+
+.banner {
+    display: flex;
+    width: 400px;
+    padding: 26px 16px 16px 24px;
+    flex-direction: column;
+    align-items: flex-start;
+    border-radius: 16px;
+    box-shadow: 8px 8px 24px 0 rgba(0, 0, 0, 0.10);
+
+    &List {
+        list-style: none;
+        padding: 0;
+        margin: 0
+    }
+
+    &Item {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 8px;
+        font-size: 16px;
+        font-style: normal;
+        font-weight: 400;
+        line-height: 130%;
+        margin-top: 16px;
+    }
+
+    &Title {
+        font-size: 24px;
+        font-style: normal;
+        font-weight: 700;
+        line-height: 120%;
+        margin-bottom: 8px;
+    }
+}
+
+.link {
+    color: var(--product-primary-50);
+    text-decoration: underline;
+}
+
+.nav {
+    display: flex;
+    gap: 24px;
+}
+
+.logoWrap {
+    padding: 0 0 0 16px;
+}
+
+.end {
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+    max-width: 576px;
+    align-items: center;
+    text-align: center;
+    height: 100%;
+    padding-top: 116px;
+}
+
+.quote {
+    margin-bottom: 24px;
+}
+
+.quoteTitle {
+    font-size: 24px;
+    font-style: normal;
+    font-weight: 700;
+    margin-bottom: 32px;
+    line-height: 120%;
+}
+
+.quoteDesc {
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 150%;
+    position: relative;
+    padding-left: 16px;
+
+    &::before {
+        content: "";
+        height: 100%;
+        position: absolute;
+        left: 0;
+        border-radius: 8px;
+        width: 4px;
+        display: block;
+        background-color: var(--orange-50);
+    }
+}
+
+.message {
+    margin-right: 4px;
+    display: inline-block;
+}
+
+.form {
+    margin: 16px 0;
+}
+
+.inputSuffix {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.inputIconButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--default-description-text);
+    cursor: pointer;
+
+    &:disabled {
+        opacity: 0.4;
+        cursor: default;
+    }
+}
+
+.addressList {
+    padding-left: 20px;
+
+    &Wrapper {
+        margin-bottom: 40px;
+    }
+
+    &Item {
+        margin-bottom: 16px;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
+}

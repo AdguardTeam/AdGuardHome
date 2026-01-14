@@ -18,6 +18,12 @@ const install = handleActions(
         }),
         [actions.getDefaultAddressesSuccess.toString()]: (state: any, { payload }: any) => {
             const { interfaces, version } = payload;
+            const normalizedInterfaces = Array.isArray(interfaces)
+                ? interfaces
+                : Object.entries(interfaces || {}).map(([name, iface]: any) => ({
+                    ...iface,
+                    name: iface?.name ?? name,
+                }));
             const web = { ...state.web, port: payload.web_port };
             const dns = { ...state.dns, port: payload.dns_port };
 
@@ -25,7 +31,7 @@ const install = handleActions(
                 ...state,
                 web,
                 dns,
-                interfaces,
+                interfaces: normalizedInterfaces,
                 processingDefault: false,
                 dnsVersion: version,
             };
@@ -100,7 +106,7 @@ const install = handleActions(
             ip: '',
             error: '',
         },
-        interfaces: {},
+        interfaces: [],
         dnsVersion: '',
     },
 );

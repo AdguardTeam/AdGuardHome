@@ -4,9 +4,11 @@ import { useForm, Controller } from 'react-hook-form';
 import { Input } from 'panel/common/controls/Input';
 import { Select } from 'panel/common/controls/Select';
 import intl from 'panel/common/intl';
+import setup from 'panel/install/Setup/styles.module.pcss';
 import Controls from './Controls';
 
 import AddressList from './AddressList';
+import { getInterfaceIp } from '../../helpers/helpers';
 
 import {
     ALL_INTERFACES_IP,
@@ -14,20 +16,11 @@ import {
     PORT_53_FAQ_LINK,
     STANDARD_DNS_PORT,
     STANDARD_WEB_PORT,
-    MAX_PORT,
-    MIN_PORT,
 } from '../../helpers/constants';
 
-import { validateRequiredValue } from '../../helpers/validators';
+import { validateRequiredValue, validateInstallPort } from '../../helpers/validators';
 import { InstallInterface } from '../../initialState';
 import { toNumber } from '../../helpers/form';
-
-const validateInstallPort = (value: number) => {
-    if (value < MIN_PORT || value > MAX_PORT) {
-        return intl.getMessage('form_error_port');
-    }
-    return undefined;
-};
 
 export type WebConfig = {
     ip: string;
@@ -107,12 +100,34 @@ export const DnsSettings = ({ handleSubmit, handleFix, validateForm, config, int
     const dnsIpVal = watch('dns.ip');
     const dnsPortVal = watch('dns.port');
 
+    const getInterfaceDisplayName = (iface: InstallInterface) => {
+        const zoneAddr = iface?.ip_addresses?.find((addr) => typeof addr === 'string' && addr.includes('%'));
+        const zone = zoneAddr?.split('%')[1];
+
+        return zone || iface.name;
+    };
+
     const dnsIpOptions = [
-        { value: ALL_INTERFACES_IP, label: intl.getMessage('install_settings_all_interfaces') },
-        ...(Array.isArray(interfaces) ? interfaces.map(iface => ({
-            value: iface.ip_addresses[0],
-            label: `${iface.name} - ${iface.ip_addresses[0]}`
-        })) : []),
+        {
+            value: ALL_INTERFACES_IP,
+            label: intl.getMessage('install_settings_all_interfaces'),
+            isDisabled: false,
+        },
+        ...(Array.isArray(interfaces)
+            ? interfaces
+                  .filter((iface) => iface?.ip_addresses?.length > 0)
+                  .map((iface) => {
+                      const ip = getInterfaceIp(iface);
+                      const displayName = getInterfaceDisplayName(iface);
+                      const isUp = iface.flags?.includes('up');
+
+                      return {
+                          value: ip,
+                          label: `${displayName} – ${ip}${!isUp ? ` (${intl.getMessage('down')})` : ''}`,
+                          isDisabled: !isUp,
+                      };
+                  })
+            : []),
     ];
 
     useEffect(() => {
@@ -163,15 +178,15 @@ export const DnsSettings = ({ handleSubmit, handleFix, validateForm, config, int
     };
 
     return (
-        <div className="setup__config-setting">
-            <form className="setup__step" onSubmit={reactHookFormSubmit(onSubmit)}>
-                <div className="setup__left-side">
-                    <div className="setup__subtitle">
-                        <div className="setup__title">{intl.getMessage('setup_dns_title')}</div>
+        <div className={setup.configSetting}>
+            <form className={setup.step} onSubmit={reactHookFormSubmit(onSubmit)}>
+                <div className={setup.info}>
+                    <div>
+                        <div className={setup.titleStep}>{intl.getMessage('setup_dns_title')}</div>
 
-                        <p className="setup__desc">{intl.getMessage('setup_dns_desc')}</p>
+                        <p className={setup.descAdresses}>{intl.getMessage('setup_dns_desc')}</p>
                     </div>
-                    <div className="mt-1">
+                    <div className={setup.addressListWrapper}>
                         <AddressList
                             interfaces={interfaces}
                             address={watchFields.dns?.ip}
@@ -179,80 +194,76 @@ export const DnsSettings = ({ handleSubmit, handleFix, validateForm, config, int
                             isDns={true}
                         />
                     </div>
-                    <div className="setup__quote">
-                        <div className="setup__quote-title">
+                    <div className={setup.quote}>
+                        <div className={setup.quoteTitle}>
                             {intl.getMessage('setup_dns_quote_title')}
                         </div>
-                        <div className="setup__quote-desc">
+                        <div className={setup.quoteDesc}>
                             {intl.getMessage(("setup_dns_quote_desc"))}
                         </div>
                     </div>
 
                     <Controls invalid={!isValid} />
                 </div>
-                <div className="setup__right-side">
-                    <div className="setup__banner">
-                        <div className="setup__group">
-                            <div className="setup__subtitle">
+                <div className={setup.content}>
+                    <div className={setup.banner}>
+                        <div className={setup.group}>
+                            <div className={setup.bannerTitle}>
                                 {intl.getMessage("setup_dns_title_banner")}
                             </div>
 
-                            <div className="setup__banner--setting-group">
-                                <div className="form-group">
-                                    <label>
-                                        {intl.getMessage('network_interface')}
-                                    </label>
-                                    <Controller
-                                        name="dns.ip"
-                                        control={control}
-                                        render={({ field }) => (
-                                            <Select
-                                                options={dnsIpOptions}
-                                                value={dnsIpOptions.find(option => option.value === field.value)}
-                                                onChange={(selectedOption) => field.onChange(selectedOption?.value)}
-                                                placeholder={intl.getMessage('network_interface')}
-                                                size="medium"
-                                                height="big"
-                                                id="install_dns_ip"
-                                            />
-                                        )}
-                                    />
-                                </div>
+                            <div className={setup.form}>
+                                <label>
+                                    {intl.getMessage('network_interface')}
+                                </label>
+                                <Controller
+                                    name="dns.ip"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <Select
+                                            options={dnsIpOptions}
+                                            value={dnsIpOptions.find(option => option.value === field.value)}
+                                            onChange={(selectedOption) => field.onChange(selectedOption?.value)}
+                                            placeholder={intl.getMessage('network_interface')}
+                                            size="responsive"
+                                            height="big"
+                                            id="install_dns_ip"
+                                        />
+                                    )}
+                                />
                             </div>
 
-                            <div className="col-4">
-                                <div className="form-group">
-                                    <label>
-                                        {intl.getMessage('install_settings_port')}
-                                    </label>
-                                    <Controller
-                                        name="dns.port"
-                                        control={control}
-                                        rules={{
-                                            required: intl.getMessage('form_error_required'),
-                                            validate: {
-                                                required: validateRequiredValue,
-                                                installPort: validateInstallPort,
-                                            },
-                                        }}
-                                        render={({ field, fieldState }) => (
-                                            <Input
-                                                {...field}
-                                                type="number"
-                                                id="install_dns_port"
-                                                errorMessage={fieldState.error?.message}
-                                                placeholder={STANDARD_WEB_PORT.toString()}
-                                                onChange={(e) => {
-                                                    const { value } = e.target;
-                                                    field.onChange(toNumber(value));
-                                                }}
-                                            />
-                                        )}
-                                    />
-                                </div>
+                            <div className={setup.form}>
+                                <label>
+                                    {intl.getMessage('install_settings_port')}
+                                </label>
+                                <Controller
+                                    name="dns.port"
+                                    control={control}
+                                    rules={{
+                                        required: intl.getMessage('form_error_required'),
+                                        validate: {
+                                            required: validateRequiredValue,
+                                            installPort: validateInstallPort,
+                                        },
+                                    }}
+                                    render={({ field, fieldState }) => (
+                                        <Input
+                                            {...field}
+                                            type="number"
+                                            id="install_dns_port"
+                                            errorMessage={fieldState.error?.message}
+                                            placeholder={STANDARD_WEB_PORT.toString()}
+                                            onChange={(e) => {
+                                                const { value } = e.target;
+                                                field.onChange(toNumber(value));
+                                            }}
+                                        />
+                                    )}
+                                />
                             </div>
 
-                            <div className="col-12">
+                            <div>
                                 {dnsStatus && (
                                     <>
                                         <div className="setup__error text-danger">
@@ -261,14 +272,14 @@ export const DnsSettings = ({ handleSubmit, handleFix, validateForm, config, int
                                                 <button
                                                     type="button"
                                                     id="install_dns_fix"
-                                                    className="btn btn-secondary btn-sm ml-2"
+                                                    className="btn btn-secondary"
                                                     onClick={() => handleAutofix('dns')}>
                                                     {intl.getMessage('fix')}
                                                 </button>
                                             )}
                                         </div>
                                         {isDnsFixAvailable && (
-                                            <div className="text-muted mb-2">
+                                            <div className="text-muted">
                                                 <p className="mb-1">
                                                     {intl.getMessage('autofix_warning_text')}
                                                 </p>

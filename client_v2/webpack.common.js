@@ -72,6 +72,13 @@ const config = {
                 use: 'yaml-loader',
             },
             {
+                test: /\.(svg|png|jpe?g|gif|webp|ico)$/i,
+                type: 'asset/resource',
+                generator: {
+                    filename: 'assets/[name].[contenthash][ext]',
+                },
+            },
+            {
                 test: /\.module\.pcss$/i,
                 use: [
                     {

@@ -4,7 +4,9 @@ import { useForm, Controller } from 'react-hook-form';
 import { Input } from 'panel/common/controls/Input';
 import { Select } from 'panel/common/controls/Select';
 import intl from 'panel/common/intl';
+import setup from 'panel/install/Setup/styles.module.pcss';
 import Controls from './Controls';
+import AddressList from './AddressList';
 
 import { getInterfaceIp } from '../../helpers/helpers';
 import {
@@ -12,20 +14,11 @@ import {
     STATUS_RESPONSE,
     STANDARD_DNS_PORT,
     STANDARD_WEB_PORT,
-    MAX_PORT,
-    MIN_PORT,
 } from '../../helpers/constants';
 
-import { validateRequiredValue } from '../../helpers/validators';
+import { validateRequiredValue, validateInstallPort } from '../../helpers/validators';
 import { InstallInterface } from '../../initialState';
 import { toNumber } from '../../helpers/form';
-
-const validateInstallPort = (value: number) => {
-    if (value < MIN_PORT || value > MAX_PORT) {
-        return intl.getMessage('form_error_port');
-    }
-    return undefined;
-};
 
 export type WebConfig = {
     ip: string;
@@ -105,16 +98,34 @@ export const InterfaceSettings = ({ handleSubmit, handleFix, validateForm, confi
     const webPortVal = watch('web.port');
     const dnsIpVal = watch('dns.ip');
 
+    const getInterfaceDisplayName = (iface: InstallInterface) => {
+        const zoneAddr = iface?.ip_addresses?.find((addr) => typeof addr === 'string' && addr.includes('%'));
+        const zone = zoneAddr?.split('%')[1];
+
+        return zone || iface.name;
+    };
+
     const webIpOptions = [
-        { value: ALL_INTERFACES_IP, label: intl.getMessage('install_settings_all_interfaces') },
-        ...(Array.isArray(interfaces) ? interfaces.map(iface => {
-            const ip = getInterfaceIp(iface);
-            const isUp = iface.flags?.includes('up');
-            return {
-                value: ip,
-                label: `${iface.name} - ${ip}${!isUp ? ` (${intl.getMessage('down')})` : ''}`
-            };
-        }).filter(Boolean) : []),
+        {
+            value: ALL_INTERFACES_IP,
+            label: intl.getMessage('install_settings_all_interfaces'),
+            isDisabled: false,
+        },
+        ...(Array.isArray(interfaces)
+            ? interfaces
+                  .filter((iface) => iface?.ip_addresses?.length > 0)
+                  .map((iface) => {
+                      const ip = getInterfaceIp(iface);
+                      const displayName = getInterfaceDisplayName(iface);
+                      const isUp = iface.flags?.includes('up');
+
+                      return {
+                          value: ip,
+                          label: `${displayName} – ${ip}${!isUp ? ` (${intl.getMessage('down')})` : ''}`,
+                          isDisabled: !isUp,
+                      };
+                  })
+            : []),
     ];
 
     const dnsPortVal = watch('dns.port');
@@ -224,48 +235,52 @@ export const InterfaceSettings = ({ handleSubmit, handleFix, validateForm, confi
     };
 
     return (
-        <div className="setup__config-setting">
-            <form className="setup__step" onSubmit={reactHookFormSubmit(onSubmit)}>
+        <div className={setup.configSetting}>
+            <form className={setup.step} onSubmit={reactHookFormSubmit(onSubmit)}>
 
-                <div className="setup__left-side">
-                    <div className="setup__subtitle">
-                        <div className="setup__title">{intl.getMessage('setup_ui_title')}</div>
+                <div className={setup.info}>
+                    <div>
+                        <div className={setup.titleStep}>{intl.getMessage('setup_ui_title')}</div>
 
-                        <p className="setup__desc">{intl.getMessage('setup_ui_desc')}</p>
+                        <p className={setup.descAdresses}>{intl.getMessage('setup_ui_desc')}</p>
                     </div>
 
-                    <div className="setup__group">
+                    <AddressList
+                        interfaces={interfaces}
+                        address={webIpVal || ALL_INTERFACES_IP}
+                        port={webPortVal || STANDARD_WEB_PORT}
+                    />
+
+                    <div className={setup.group}>
                         {getStaticIpMessage(staticIp)}
                     </div>
 
                     <Controls invalid={!isValid} />
                 </div>
 
-                <div className="setup__right-side">
-                    <div className="setup__banner">
-                        <h3 className="setup__banner-title">{intl.getMessage('setup_ui_title_banner')}</h3>
+                <div className={setup.content}>
+                    <div className={setup.banner}>
+                        <h3 className={setup.bannerTitle}>{intl.getMessage('setup_ui_title_banner')}</h3>
                         <div className="setup__banner-setting">
-                            <div className="setup__banner--setting-group">
-                                <div className="form-group">
-                                    <label>
-                                        {intl.getMessage('network_interface')}
-                                    </label>
-                                    <Controller
-                                        name="web.ip"
-                                        control={control}
-                                        render={({ field }) => (
-                                            <Select
-                                                options={webIpOptions}
-                                                value={webIpOptions.find(option => option.value === field.value)}
-                                                onChange={(selectedOption) => field.onChange(selectedOption?.value)}
-                                                placeholder={intl.getMessage('network_interface')}
-                                                size="medium"
-                                                height="big"
-                                                id="install_web_ip"
-                                            />
-                                        )}
-                                    />
-                                </div>
+                            <div className={setup.form}>
+                                <label>
+                                    {intl.getMessage('network_interface')}
+                                </label>
+                                <Controller
+                                    name="web.ip"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <Select
+                                            options={webIpOptions}
+                                            value={webIpOptions.find(option => option.value === field.value)}
+                                            onChange={(selectedOption) => field.onChange(selectedOption?.value)}
+                                            placeholder={intl.getMessage('network_interface')}
+                                            size="responsive"
+                                            height="big"
+                                            id="install_web_ip"
+                                        />
+                                    )}
+                                />
                             </div>
 
                             <div className="col-4">

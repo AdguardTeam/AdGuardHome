@@ -1039,14 +1039,14 @@
     "password_requirements_uppercase": "At least 1 uppercase letter",
     "password_requirements_match": "Passwords match",
     "setup_complete": "Setup is complete and AdGuard Home is ready to use",
-    "setup_ui_title": "Set the Web UI address for AdGuard Home",
+    "setup_ui_title": "Set the Web UI address\nfor AdGuard Home",
     "setup_ui_desc": "Use these addresses to access the Web user interface of AdGuard Home. If necessary, change the port",
     "setup_ui_title_banner": "Web UI settings",
     "setup_dns_title":"Set the AdGuard Home DNS server address",
     "setup_dns_title_banner":"DNS server settings",
     "network_interface": "Network interface",
     "setup_dns_desc":"Configure your router or other devices to use the following DNS server addresses:",
-    "setup_dns_quote_title":"Assign a static IP address to the AdGuard Home DNS server on your local network",
+    "setup_dns_quote_title":"Assign a static IP address\nto the AdGuard Home DNS server\non your local network",
     "setup_dns_quote_desc":"To function properly, the AdGuard Home DNS server requires a static IP address on your local network. Otherwise, your router may eventually assign it a different IP address and disrupt the DNS protection",
     "setup_guide_title": "Set up your devices to use AdGuard Home"
 }

@@ -5,6 +5,36 @@ import { Icon } from '../Icon';
 
 import s from './CopiedText.module.pcss';
 
+const copyTextToClipboard = async (text: string) => {
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        return;
+    }
+
+    if (typeof document === 'undefined') {
+        throw new Error('Clipboard is not available');
+    }
+
+    const el = document.createElement('textarea');
+    el.value = text;
+    el.setAttribute('readonly', '');
+    el.style.position = 'fixed';
+    el.style.top = '0';
+    el.style.left = '0';
+    el.style.opacity = '0';
+
+    document.body.appendChild(el);
+    el.focus();
+    el.select();
+
+    const ok = document.execCommand('copy');
+    document.body.removeChild(el);
+
+    if (!ok) {
+        throw new Error('Failed to copy text');
+    }
+};
+
 export type CopiedTextProps = {
     text: string;
     className?: string;
@@ -20,7 +50,7 @@ export const CopiedText = ({
 
     const handleCopy = useCallback(async () => {
         try {
-            await navigator.clipboard.writeText(text);
+            await copyTextToClipboard(text);
             setIsCopied(true);
             onCopy?.(text);
         } catch (error) {
