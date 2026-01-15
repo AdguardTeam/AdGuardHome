@@ -15,15 +15,14 @@ type LanguageDropdownProps = {
     sort?: boolean;
 };
 
-export const LanguageDropdown: React.FC<LanguageDropdownProps> = ({
+export const LanguageDropdown = ({
       value,
       languages,
       onChange,
       position = 'bottomRight',
       className,
       sort = true,
-
-  }) => {
+  }: LanguageDropdownProps) => {
     const [open, setOpen] = useState(false);
 
     const sortedKeys = useMemo(() => {

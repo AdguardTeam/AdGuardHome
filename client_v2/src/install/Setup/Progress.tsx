@@ -6,7 +6,10 @@ import setup from './styles.module.pcss'
 type Props = { step: number };
 
 export const Progress = ({ step }: Props) => {
-    if (step > INSTALL_TOTAL_STEPS) {
+    const totalProgressSteps = INSTALL_TOTAL_STEPS - 1;
+    const progressStep = Math.min(step, totalProgressSteps);
+
+    if (step >= INSTALL_TOTAL_STEPS) {
         return null;
     }
 
@@ -16,13 +19,19 @@ export const Progress = ({ step }: Props) => {
                 <div className={setup.message}>
                     {intl.getMessage("install_step")}
                 </div>
-                {step}/{INSTALL_TOTAL_STEPS - 1}
+                {progressStep}/{totalProgressSteps}
             </div>
 
-            <div className={setup.progressWrap} role="progressbar" aria-valuenow={step} aria-valuemin={1} aria-valuemax={INSTALL_TOTAL_STEPS}>
-                {Array.from({ length: INSTALL_TOTAL_STEPS - 1 }, (_, i) => {
+            <div
+                className={setup.progressWrap}
+                role="progressbar"
+                aria-valuenow={progressStep}
+                aria-valuemin={1}
+                aria-valuemax={totalProgressSteps}
+            >
+                {Array.from({ length: totalProgressSteps }, (_, i) => {
                     const installStep = i + 1;
-                    const isDoneOrCurrent = installStep <= step;
+                    const isDoneOrCurrent = installStep <= progressStep;
 
                     return (
                         <div

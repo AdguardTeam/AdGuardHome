@@ -121,8 +121,8 @@ class Controls extends Component<ControlsProps> {
 
         return (
             <div className={setup.nav}>
-                {this.renderPrevButton(install.step)}
                 {this.renderNextButton(install.step)}
+                {this.renderPrevButton(install.step)}
             </div>
         );
     }

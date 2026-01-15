@@ -1,19 +1,19 @@
-import React, { useEffect, useCallback } from 'react';
-import { useForm } from 'react-hook-form';
+import React, { useCallback } from 'react';
+import { Controller } from 'react-hook-form';
 
 import { Input } from 'panel/common/controls/Input';
 import { Select } from 'panel/common/controls/Select';
 import intl from 'panel/common/intl';
+import { Button } from 'panel/common/ui/Button';
 import setup from 'panel/install/Setup/styles.module.pcss';
 import Controls from './Controls';
 import AddressList from './AddressList';
-import { SetupBannerFormField } from './SetupBannerFormField';
+import { buildInterfaceOptions } from './interfaceOptions';
+import { createHandleAutofix, useInstallSettingsForm } from './useInstallSettingsForm';
 
-import { getInterfaceIp } from '../../helpers/helpers';
 import {
     ALL_INTERFACES_IP,
     STATUS_RESPONSE,
-    STANDARD_DNS_PORT,
     STANDARD_WEB_PORT,
 } from '../../helpers/constants';
 
@@ -21,41 +21,7 @@ import { validateRequiredValue, validateInstallPort } from '../../helpers/valida
 import { InstallInterface } from '../../initialState';
 import { toNumber } from '../../helpers/form';
 
-export type WebConfig = {
-    ip: string;
-    port: number;
-};
-
-export type DnsConfig = {
-    ip: string;
-    port: number;
-};
-
-export type SettingsFormValues = {
-    web: WebConfig;
-    dns: DnsConfig;
-};
-
-type StaticIpType = {
-    ip: string;
-    static: string;
-};
-
-export type ConfigType = {
-    web: {
-        ip: string;
-        port?: number;
-        status: string;
-        can_autofix: boolean;
-    };
-    dns: {
-        ip: string;
-        port?: number;
-        status: string;
-        can_autofix: boolean;
-    };
-    staticIp: StaticIpType;
-};
+import type { ConfigType, DnsConfig, SettingsFormValues, StaticIpType, WebConfig } from './types';
 
 type Props = {
     handleSubmit: (data: SettingsFormValues) => void;
@@ -69,109 +35,21 @@ type Props = {
 
 export const InterfaceSettings = ({ handleSubmit, handleFix, validateForm, config, interfaces }: Props) => {
 
-    const defaultValues = {
-        web: {
-            ip: config.web.ip || ALL_INTERFACES_IP,
-            port: config.web.port || STANDARD_WEB_PORT,
-        },
-        dns: {
-            ip: config.dns.ip || ALL_INTERFACES_IP,
-            port: config.dns.port || STANDARD_DNS_PORT,
-        },
-    };
-
     const {
         control,
-        watch,
-        handleSubmit: reactHookFormSubmit,
-        formState: { isValid },
-    } = useForm<SettingsFormValues>({
-        defaultValues,
-        mode: 'onBlur',
-    });
-
-    const watchFields = watch();
+        reactHookFormSubmit,
+        isValid,
+        watchFields,
+        webIpVal,
+        webPortVal,
+    } = useInstallSettingsForm(config, validateForm);
 
     const { status: webStatus, can_autofix: isWebFixAvailable } = config.web;
     const { staticIp } = config;
 
-    const webIpVal = watch('web.ip');
-    const webPortVal = watch('web.port');
-    const dnsIpVal = watch('dns.ip');
+    const webIpOptions = buildInterfaceOptions(interfaces);
 
-    const getInterfaceDisplayName = (iface: InstallInterface) => {
-        const zoneAddr = iface?.ip_addresses?.find((addr) => typeof addr === 'string' && addr.includes('%'));
-        const zone = zoneAddr?.split('%')[1];
-
-        return zone || iface.name;
-    };
-
-    const webIpOptions = [
-        {
-            value: ALL_INTERFACES_IP,
-            label: intl.getMessage('install_settings_all_interfaces'),
-            isDisabled: false,
-        },
-        ...(Array.isArray(interfaces)
-            ? interfaces
-                  .filter((iface) => iface?.ip_addresses?.length > 0)
-                  .map((iface) => {
-                      const ip = getInterfaceIp(iface);
-                      const displayName = getInterfaceDisplayName(iface);
-                      const isUp = iface.flags?.includes('up');
-
-                      return {
-                          value: ip,
-                          label: `${displayName} – ${ip}${!isUp ? ` (${intl.getMessage('down')})` : ''}`,
-                          isDisabled: !isUp,
-                      };
-                  })
-            : []),
-    ];
-
-    const dnsPortVal = watch('dns.port');
-
-    useEffect(() => {
-        const webPortError = validateInstallPort(webPortVal);
-        const dnsPortError = validateInstallPort(dnsPortVal);
-
-        if (webPortError || dnsPortError) {
-            return;
-        }
-
-        validateForm({
-            web: {
-                ip: webIpVal,
-                port: webPortVal,
-            },
-            dns: {
-                ip: dnsIpVal,
-                port: dnsPortVal,
-            },
-        });
-    }, [webIpVal, webPortVal, dnsIpVal, dnsPortVal]);
-
-    const handleAutofix = (type: string) => {
-        const web = {
-            ip: watchFields.web?.ip,
-            port: watchFields.web?.port,
-            autofix: false,
-        };
-        const dns = {
-            ip: watchFields.dns?.ip,
-            port: watchFields.dns?.port,
-            autofix: false,
-        };
-        const set_static_ip = false;
-
-        if (type === 'web') {
-            web.autofix = true;
-        } else {
-            dns.autofix = true;
-        }
-
-        handleFix(web, dns, set_static_ip);
-    };
+    const handleAutofix = createHandleAutofix(watchFields, handleFix);
 
     const handleStaticIp = (ip: string) => {
         const web = {
@@ -199,27 +77,29 @@ export const InterfaceSettings = ({ handleSubmit, handleFix, validateForm, confi
                 case STATUS_RESPONSE.NO:
                     return (
                         <>
-                            <div className="mb-2">
+                            <div className={setup.spacerBottom}>
                                 {intl.getMessage('install_static_configure', { ip }).replace('{ip}', ip)}
                             </div>
 
-                            <button
+                            <Button
                                 type="button"
-                                className="btn btn-outline-primary btn-sm"
+                                size="small"
+                                variant="secondary"
+                                className={setup.button}
                                 onClick={() => handleStaticIp(ip)}>
                                 {intl.getMessage('set_static_ip')}
-                            </button>
+                            </Button>
                         </>
                     );
                 case STATUS_RESPONSE.ERROR:
                     return (
-                        <div className="text-danger">
+                        <div className={setup.errorText}>
                             {intl.getMessage('install_static_error')}
                         </div>
                     );
                 case STATUS_RESPONSE.YES:
                     return (
-                        <div className="text-success">
+                        <div className={setup.successText}>
                             {intl.getMessage('install_static_ok')}
                         </div>
                     );
@@ -239,62 +119,70 @@ export const InterfaceSettings = ({ handleSubmit, handleFix, validateForm, confi
         <div className={className}>
             <h3 className={setup.bannerTitle}>{intl.getMessage('setup_ui_title_banner')}</h3>
             <div className={setup.bannerInputs}>
-                <SetupBannerFormField
-                    label={intl.getMessage('network_interface')}
-                    name="web.ip"
-                    control={control}
-                    render={({ field }) => (
-                        <Select
-                            options={webIpOptions}
-                            value={webIpOptions.find((option) => option.value === field.value)}
-                            onChange={(selectedOption) => field.onChange(selectedOption?.value)}
-                            placeholder={intl.getMessage('network_interface')}
-                            size="responsive"
-                            height="big"
-                            id="install_web_ip"
-                        />
-                    )}
-                />
+                <div className={setup.form}>
+                    <label className={setup.bannerLabel}>
+                        {intl.getMessage('network_interface')}
+                    </label>
+                    <Controller<SettingsFormValues, 'web.ip'>
+                        name="web.ip"
+                        control={control}
+                        render={({ field }) => (
+                            <Select
+                                options={webIpOptions}
+                                value={webIpOptions.find((option) => option.value === field.value)}
+                                onChange={(selectedOption) => field.onChange(selectedOption?.value)}
+                                placeholder={intl.getMessage('network_interface')}
+                                size="responsive"
+                                height="big"
+                                id="install_web_ip"
+                            />
+                        )}
+                    />
+                </div>
 
-                <SetupBannerFormField
-                    outerClassName="col-4"
-                    innerClassName="form-group"
-                    label={intl.getMessage('install_settings_port')}
-                    name="web.port"
-                    control={control}
-                    rules={{
-                        validate: {
-                            required: validateRequiredValue,
-                            installPort: validateInstallPort,
-                        },
-                    }}
-                    render={({ field, fieldState }) => (
-                        <Input
-                            {...field}
-                            type="number"
-                            id="install_web_port"
-                            placeholder={STANDARD_WEB_PORT.toString()}
-                            errorMessage={fieldState.error?.message}
-                            onChange={(e) => {
-                                const { value } = e.target;
-                                field.onChange(toNumber(value));
-                            }}
-                        />
-                    )}
-                />
+                <div className={setup.form}>
+                    <label className={setup.bannerLabel}>
+                        {intl.getMessage('install_settings_port')}
+                    </label>
+                    <Controller<SettingsFormValues, 'web.port'>
+                        name="web.port"
+                        control={control}
+                        rules={{
+                            validate: {
+                                required: validateRequiredValue,
+                                installPort: validateInstallPort,
+                            },
+                        }}
+                        render={({ field, fieldState }) => (
+                            <Input
+                                {...field}
+                                type="number"
+                                id="install_web_port"
+                                placeholder={STANDARD_WEB_PORT.toString()}
+                                errorMessage={fieldState.error?.message}
+                                onChange={(e) => {
+                                    const { value } = e.target;
+                                    field.onChange(toNumber(value));
+                                }}
+                            />
+                        )}
+                    />
+                </div>
 
-                <div className="col-12">
+                <div>
                     {webStatus && (
-                        <div className="setup__error text-danger">
+                        <div className={`${setup.setup__error} ${setup.errorRow} ${setup.errorText}`}>
                             {webStatus}
                             {isWebFixAvailable && (
-                                <button
+                                <Button
                                     type="button"
                                     id="install_web_fix"
-                                    className="btn btn-secondary btn-sm ml-2"
+                                    size="small"
+                                    variant="secondary"
+                                    className={setup.inlineButton}
                                     onClick={() => handleAutofix('web')}>
                                     {intl.getMessage('fix')}
-                                </button>
+                                </Button>
                             )}
                         </div>
                     )}

@@ -15,7 +15,7 @@ import { getInterfaceIp, getWebAddress, setHtmlLangAttr } from '../../helpers/he
 import { INSTALL_TOTAL_STEPS, ALL_INTERFACES_IP, DEBOUNCE_TIMEOUT } from '../../helpers/constants';
 
 import Greeting from './Greeting';
-import { ConfigType, DnsConfig, WebConfig } from './Settings';
+import type { ConfigType, DnsConfig, WebConfig } from './types';
 import { InterfaceSettings } from './InterfaceSettings';
 import { DnsSettings } from './DnsSettings';
 import Controls from './Controls';

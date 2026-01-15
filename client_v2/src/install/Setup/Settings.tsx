@@ -3,6 +3,7 @@ import { useForm, Controller } from 'react-hook-form';
 import intl from 'panel/common/intl';
 
 import { Input } from 'panel/common/controls/Input';
+import { Button } from 'panel/common/ui/Button';
 import Controls from './Controls';
 import AddressList from './AddressList';
 
@@ -21,41 +22,7 @@ import { InstallInterface } from '../../initialState';
 import { toNumber } from '../../helpers/form';
 import setup from './styles.module.pcss'
 
-export type WebConfig = {
-    ip: string;
-    port: number;
-};
-
-export type DnsConfig = {
-    ip: string;
-    port: number;
-};
-
-export type SettingsFormValues = {
-    web: WebConfig;
-    dns: DnsConfig;
-};
-
-type StaticIpType = {
-    ip: string;
-    static: string;
-};
-
-export type ConfigType = {
-    web: {
-        ip: string;
-        port?: number;
-        status: string;
-        can_autofix: boolean;
-    };
-    dns: {
-        ip: string;
-        port?: number;
-        status: string;
-        can_autofix: boolean;
-    };
-    staticIp: StaticIpType;
-};
+import type { ConfigType, DnsConfig, SettingsFormValues, StaticIpType, WebConfig } from './types';
 
 type Props = {
     handleSubmit: (data: SettingsFormValues) => void;
@@ -187,27 +154,29 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                 case STATUS_RESPONSE.NO:
                     return (
                         <>
-                            <div className="mb-2">
+                            <div className={setup.spacerBottom}>
                                 {intl.getMessage('install_static_configure', { ip }).replace('{ip}', ip)}
                             </div>
 
-                            <button
+                            <Button
                                 type="button"
-                                className="btn btn-outline-primary btn-sm"
+                                size="small"
+                                variant="secondary"
+                                className={setup.button}
                                 onClick={() => handleStaticIp(ip)}>
                                 {intl.getMessage('set_static_ip')}
-                            </button>
+                            </Button>
                         </>
                     );
                 case STATUS_RESPONSE.ERROR:
                     return (
-                        <div className="text-danger">
+                        <div className={setup.errorText}>
                             {intl.getMessage('install_static_error')}
                         </div>
                     );
                 case STATUS_RESPONSE.YES:
                     return (
-                        <div className="text-success">
+                        <div className={setup.successText}>
                             {intl.getMessage('install_static_ok')}
                         </div>
                     );
@@ -230,80 +199,76 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                     {intl.getMessage('install_settings_title')}
                 </div>
 
-                <div className="row">
-                    <div className="col-8">
-                        <div className="form-group">
-                            <label>
-                                {intl.getMessage('network_interface')}
-                            </label>
-                            <Controller
-                                name="web.ip"
-                                control={control}
-                                render={({ field }) => (
-                                    <select {...field} id="install_web_ip">
-                                        <option value={ALL_INTERFACES_IP}>
-                                            {intl.getMessage('install_settings_all_interfaces')}
-                                        </option>
-                                        {renderInterfaces(interfaces)}
-                                    </select>
-                                )}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="col-4">
-                        <div className="form-group">
-                            <label>
-                                {intl.getMessage('install_settings_port')}
-                            </label>
-                            <Controller
-                                name="web.port"
-                                control={control}
-                                rules={{
-                                    validate: {
-                                        required: validateRequiredValue,
-                                        installPort: validateInstallPort,
-                                    },
-                                }}
-                                render={({ field, fieldState }) => (
-                                    <Input
-                                        {...field}
-                                        type="number"
-                                        id="install_web_port"
-                                        placeholder={STANDARD_WEB_PORT.toString()}
-                                        errorMessage={fieldState.error?.message}
-                                        onChange={(e) => {
-                                            const { value } = e.target;
-                                            field.onChange(toNumber(value));
-                                        }}
-                                    />
-                                )}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="col-12">
-                        {webStatus && (
-                            <div className="setup__error text-danger">
-                                {webStatus}
-                                {isWebFixAvailable && (
-                                    <button
-                                        type="button"
-                                        id="install_web_fix"
-                                        className="btn btn-secondary btn-sm ml-2"
-                                        onClick={() => handleAutofix('web')}>
-                                        {intl.getMessage('fix')}
-                                    </button>
-                                )}
-                            </div>
+                <div className={setup.form}>
+                    <label className={setup.bannerLabel}>
+                        {intl.getMessage('network_interface')}
+                    </label>
+                    <Controller
+                        name="web.ip"
+                        control={control}
+                        render={({ field }) => (
+                            <select {...field} id="install_web_ip">
+                                <option value={ALL_INTERFACES_IP}>
+                                    {intl.getMessage('install_settings_all_interfaces')}
+                                </option>
+                                {renderInterfaces(interfaces)}
+                            </select>
                         )}
-                    </div>
+                    />
+                </div>
+
+                <div className={setup.form}>
+                    <label className={setup.bannerLabel}>
+                        {intl.getMessage('install_settings_port')}
+                    </label>
+                    <Controller
+                        name="web.port"
+                        control={control}
+                        rules={{
+                            validate: {
+                                required: validateRequiredValue,
+                                installPort: validateInstallPort,
+                            },
+                        }}
+                        render={({ field, fieldState }) => (
+                            <Input
+                                {...field}
+                                type="number"
+                                id="install_web_port"
+                                placeholder={STANDARD_WEB_PORT.toString()}
+                                errorMessage={fieldState.error?.message}
+                                onChange={(e) => {
+                                    const { value } = e.target;
+                                    field.onChange(toNumber(value));
+                                }}
+                            />
+                        )}
+                    />
+                </div>
+
+                <div>
+                    {webStatus && (
+                        <div className={`${setup.setup__error} ${setup.errorRow} ${setup.errorText}`}>
+                            {webStatus}
+                            {isWebFixAvailable && (
+                                <Button
+                                    type="button"
+                                    id="install_web_fix"
+                                    size="small"
+                                    variant="secondary"
+                                    className={setup.inlineButton}
+                                    onClick={() => handleAutofix('web')}>
+                                    {intl.getMessage('fix')}
+                                </Button>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 <div className={setup.desc}>
                     {intl.getMessage('install_settings_interface_link')}
 
-                    <div className="mt-1">
+                    <div>
                         <AddressList
                             interfaces={interfaces}
                             address={watchFields.web?.ip}
@@ -318,103 +283,97 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                     {intl.getMessage('install_settings_dns')}
                 </div>
 
-                <div className="row">
-                    <div className="col-8">
-                        <div className="form-group">
-                            <label>
-                                {intl.getMessage('network_interface')}
-                            </label>
-                            <Controller
-                                name="dns.ip"
-                                control={control}
-                                render={({ field }) => (
-                                    <select {...field} id="install_dns_ip">
-                                        <option value={ALL_INTERFACES_IP}>
-                                            {intl.getMessage('install_settings_all_interfaces')}
-                                        </option>
-                                        {renderInterfaces(interfaces)}
-                                    </select>
-                                )}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="col-4">
-                        <div className="form-group">
-                            <label>
-                                {intl.getMessage('install_settings_port')}
-                            </label>
-                            <Controller
-                                name="dns.port"
-                                control={control}
-                                rules={{
-                                    required: intl.getMessage('form_error_required'),
-                                    validate: {
-                                        required: validateRequiredValue,
-                                        installPort: validateInstallPort,
-                                    },
-                                }}
-                                render={({ field, fieldState }) => (
-                                    <Input
-                                        {...field}
-                                        type="number"
-                                        id="install_dns_port"
-                                        errorMessage={fieldState.error?.message}
-                                        placeholder={STANDARD_WEB_PORT.toString()}
-                                        onChange={(e) => {
-                                            const { value } = e.target;
-                                            field.onChange(toNumber(value));
-                                        }}
-                                    />
-                                )}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="col-12">
-                        {dnsStatus && (
-                            <>
-                                <div className="setup__error text-danger">
-                                    {dnsStatus}
-                                    {isDnsFixAvailable && (
-                                        <button
-                                            type="button"
-                                            id="install_dns_fix"
-                                            className="btn btn-secondary btn-sm ml-2"
-                                            onClick={() => handleAutofix('dns')}>
-                                            {intl.getMessage('fix')}
-                                        </button>
-                                    )}
-                                </div>
-                                {isDnsFixAvailable && (
-                                    <div className="text-muted mb-2">
-                                        <p className="mb-1">
-                                            {intl.getMessage('autofix_warning_text')}
-                                        </p>
-                                        {intl.getMessage('autofix_warning_list')}
-                                        <p className="mb-1">
-                                            {intl.getMessage('autofix_warning_result')}
-                                        </p>
-                                    </div>
-                                )}
-                            </>
+                <div className={setup.form}>
+                    <label className={setup.bannerLabel}>
+                        {intl.getMessage('network_interface')}
+                    </label>
+                    <Controller
+                        name="dns.ip"
+                        control={control}
+                        render={({ field }) => (
+                            <select {...field} id="install_dns_ip">
+                                <option value={ALL_INTERFACES_IP}>
+                                    {intl.getMessage('install_settings_all_interfaces')}
+                                </option>
+                                {renderInterfaces(interfaces)}
+                            </select>
                         )}
-                        {watchFields.dns?.port === STANDARD_DNS_PORT &&
-                            !isDnsFixAvailable &&
-                            dnsStatus?.includes(ADDRESS_IN_USE_TEXT) && (
-                                <a href={PORT_53_FAQ_LINK} target="_blank" rel="noopener noreferrer">
-                                    {intl.getMessage('port_53_faq_link')}
-                                </a>
-                            )}
+                    />
+                </div>
 
-                        <hr className="divider--small" />
-                    </div>
+                <div className={setup.form}>
+                    <label className={setup.bannerLabel}>
+                        {intl.getMessage('install_settings_port')}
+                    </label>
+                    <Controller
+                        name="dns.port"
+                        control={control}
+                        rules={{
+                            required: intl.getMessage('form_error_required'),
+                            validate: {
+                                required: validateRequiredValue,
+                                installPort: validateInstallPort,
+                            },
+                        }}
+                        render={({ field, fieldState }) => (
+                            <Input
+                                {...field}
+                                type="number"
+                                id="install_dns_port"
+                                errorMessage={fieldState.error?.message}
+                                placeholder={STANDARD_WEB_PORT.toString()}
+                                onChange={(e) => {
+                                    const { value } = e.target;
+                                    field.onChange(toNumber(value));
+                                }}
+                            />
+                        )}
+                    />
+                </div>
+
+                <div>
+                    {dnsStatus && (
+                        <>
+                            <div className={`${setup.setup__error} ${setup.errorRow} ${setup.errorText}`}>
+                                {dnsStatus}
+                                {isDnsFixAvailable && (
+                                    <Button
+                                        type="button"
+                                        id="install_dns_fix"
+                                        size="small"
+                                        variant="secondary"
+                                        className={setup.inlineButton}
+                                        onClick={() => handleAutofix('dns')}>
+                                        {intl.getMessage('fix')}
+                                    </Button>
+                                )}
+                            </div>
+                            {isDnsFixAvailable && (
+                                <div className={`${setup.mutedText} ${setup.spacerBottom}`}>
+                                    <p className={setup.compactParagraph}>
+                                        {intl.getMessage('autofix_warning_text')}
+                                    </p>
+                                    {intl.getMessage('autofix_warning_list')}
+                                    <p className={setup.compactParagraph}>
+                                        {intl.getMessage('autofix_warning_result')}
+                                    </p>
+                                </div>
+                            )}
+                        </>
+                    )}
+                    {watchFields.dns?.port === STANDARD_DNS_PORT &&
+                        !isDnsFixAvailable &&
+                        dnsStatus?.includes(ADDRESS_IN_USE_TEXT) && (
+                            <a href={PORT_53_FAQ_LINK} target="_blank" rel="noopener noreferrer">
+                                {intl.getMessage('port_53_faq_link')}
+                            </a>
+                        )}
                 </div>
 
                 <div className={setup.desc}>
                     {intl.getMessage('install_settings_dns_desc')}
 
-                    <div className="mt-1">
+                    <div>
                         <AddressList
                             interfaces={interfaces}
                             address={watchFields.dns?.ip}
@@ -430,7 +389,7 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                     {intl.getMessage('static_ip')}
                 </div>
 
-                <div className="mb-2">
+                <div className={setup.spacerBottom}>
                     {intl.getMessage('static_ip_desc')}
                 </div>
 

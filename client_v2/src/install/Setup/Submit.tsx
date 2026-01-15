@@ -5,7 +5,7 @@ import intl from 'panel/common/intl';
 import { Button } from 'panel/common/ui/Button';
 import { RootState } from 'panel/initialState';
 import Controls from './Controls';
-import { WebConfig } from './Settings';
+import type { WebConfig } from './types';
 import setup from './styles.module.pcss'
 
 type Props = {
