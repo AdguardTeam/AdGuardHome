@@ -15,10 +15,10 @@ const renderInterfaces = (interfaces: any) =>
         const [interfaceIPv4] = option?.ipv4_addresses ?? [];
         const [interfaceIPv6] = option?.ipv6_addresses ?? [];
 
-        const optionContent = [name, interfaceIPv4, interfaceIPv6].filter(Boolean).join(' - ');
+        const optionContent = [item, name, interfaceIPv4, interfaceIPv6].filter(Boolean).join(' - ');
 
         return (
-            <option value={name} key={name}>
+            <option value={item} key={item}>
                 {optionContent}
             </option>
         );

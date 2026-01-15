@@ -31,6 +31,50 @@ const RequirementIcon = ({ ok }: RequirementIconProps) => {
     return <Icon icon={iconName} color={iconColor} />;
 };
 
+type PasswordRequirementsProps = {
+    requirements: {
+        minLength: boolean;
+        allowedChars: boolean;
+        lowercase: boolean;
+        uppercase: boolean;
+        match: boolean;
+    };
+    className?: string;
+};
+
+const PasswordRequirements = ({ requirements, className }: PasswordRequirementsProps) => (
+    <div className={className}>
+        <h3 className={setup.bannerTitle}>{intl.getMessage('password_requirements')}</h3>
+
+        <ul className={setup.bannerList}>
+            <li className={setup.bannerItem}>
+                <RequirementIcon ok={requirements.minLength} />
+                {intl.getMessage('password_requirements_characters')}
+            </li>
+
+            <li className={setup.bannerItem}>
+                <RequirementIcon ok={requirements.allowedChars} />
+                {intl.getMessage('password_requirements_special')}
+            </li>
+
+            <li className={setup.bannerItem}>
+                <RequirementIcon ok={requirements.lowercase} />
+                {intl.getMessage('password_requirements_lowercase')}
+            </li>
+
+            <li className={setup.bannerItem}>
+                <RequirementIcon ok={requirements.uppercase} />
+                {intl.getMessage('password_requirements_uppercase')}
+            </li>
+
+            <li className={setup.bannerItem}>
+                <RequirementIcon ok={requirements.match} />
+                {intl.getMessage('password_requirements_match')}
+            </li>
+        </ul>
+    </div>
+);
+
 export const Auth = ({ onAuthSubmit }: Props) => {
     const {
         handleSubmit,
@@ -86,14 +130,13 @@ export const Auth = ({ onAuthSubmit }: Props) => {
                             name="username"
                             control={control}
                             rules={{ validate: validateRequiredValue }}
-                            render={({ field, fieldState }) => (
+                            render={({ field }) => (
                                 <Input
                                     {...field}
                                     type="text"
                                     id="install_username"
                                     label={intl.getMessage('install_auth_username')}
                                     placeholder={intl.getMessage('install_auth_username_enter')}
-                                    errorMessage={fieldState.error?.message}
                                     autoComplete="username"
                                 />
                             )}
@@ -110,14 +153,13 @@ export const Auth = ({ onAuthSubmit }: Props) => {
                                     passwordLength: validatePasswordLength,
                                 },
                             }}
-                            render={({ field, fieldState }) => (
+                            render={({ field }) => (
                                 <Input
                                     {...field}
                                     type={isPasswordVisible ? 'text' : 'password'}
                                     id="install_password"
                                     label={intl.getMessage('install_auth_password')}
                                     placeholder={intl.getMessage('install_auth_password_enter')}
-                                    errorMessage={fieldState.error?.message}
                                     autoComplete="new-password"
                                     suffixIcon={(
                                         <div className={setup.inputSuffix}>
@@ -149,6 +191,8 @@ export const Auth = ({ onAuthSubmit }: Props) => {
                             )}
                         />
                     </div>
+
+                    <PasswordRequirements requirements={requirements} className={setup.authRequirementsMobile} />
 
                     <div className={setup.input}>
                         <Controller
@@ -215,6 +259,7 @@ export const Auth = ({ onAuthSubmit }: Props) => {
                                     onChange={(e) => field.onChange(e.target.checked)}
                                     name={field.name}
                                     onBlur={field.onBlur}
+                                    verticalAlign="start"
                                 >
                                     <div className={setup.consentContent}>
                                         {intl.getMessage('setup_guide_auth_privacy', {
@@ -237,36 +282,7 @@ export const Auth = ({ onAuthSubmit }: Props) => {
                 </div>
 
                 <div className={setup.content}>
-                    <div className={setup.banner}>
-                        <h3 className={setup.bannerTitle}>{intl.getMessage('password_requirements')}</h3>
-
-                        <ul className={setup.bannerList}>
-                            <li className={setup.bannerItem}>
-                                <RequirementIcon ok={requirements.minLength} />
-                                {intl.getMessage('password_requirements_characters')}
-                            </li>
-
-                            <li className={setup.bannerItem}>
-                                <RequirementIcon ok={requirements.allowedChars} />
-                                {intl.getMessage('password_requirements_special')}
-                            </li>
-
-                            <li className={setup.bannerItem}>
-                                <RequirementIcon ok={requirements.lowercase} />
-                                {intl.getMessage('password_requirements_lowercase')}
-                            </li>
-
-                            <li className={setup.bannerItem}>
-                                <RequirementIcon ok={requirements.uppercase} />
-                                {intl.getMessage('password_requirements_uppercase')}
-                            </li>
-
-                            <li className={setup.bannerItem}>
-                                <RequirementIcon ok={requirements.match} />
-                                {intl.getMessage('password_requirements_match')}
-                            </li>
-                        </ul>
-                    </div>
+                    <PasswordRequirements requirements={requirements} className={`${setup.banner} ${setup.authBanner}`} />
                 </div>
             </form>
         </div>

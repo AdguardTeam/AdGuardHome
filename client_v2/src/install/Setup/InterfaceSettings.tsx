@@ -243,6 +243,80 @@ export const InterfaceSettings = ({ handleSubmit, handleFix, validateForm, confi
                         <div className={setup.titleStep}>{intl.getMessage('setup_ui_title')}</div>
 
                         <p className={setup.descAdresses}>{intl.getMessage('setup_ui_desc')}</p>
+
+                        <div className={`${setup.banner} ${setup.bannerMobile}`}>
+                            <h3 className={setup.bannerTitle}>{intl.getMessage('setup_ui_title_banner')}</h3>
+                            <div className={setup.bannerInputs}>
+                                <div className={setup.form}>
+                                    <label className={setup.bannerLabel}>
+                                        {intl.getMessage('network_interface')}
+                                    </label>
+                                    <Controller
+                                        name="web.ip"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <Select
+                                                options={webIpOptions}
+                                                value={webIpOptions.find(option => option.value === field.value)}
+                                                onChange={(selectedOption) => field.onChange(selectedOption?.value)}
+                                                placeholder={intl.getMessage('network_interface')}
+                                                size="responsive"
+                                                height="big"
+                                                id="install_web_ip"
+                                            />
+                                        )}
+                                    />
+                                </div>
+
+                                <div className="col-4">
+                                    <div className="form-group">
+                                        <label className={setup.bannerLabel}>
+                                            {intl.getMessage('install_settings_port')}
+                                        </label>
+                                        <Controller
+                                            name="web.port"
+                                            control={control}
+                                            rules={{
+                                                validate: {
+                                                    required: validateRequiredValue,
+                                                    installPort: validateInstallPort,
+                                                },
+                                            }}
+                                            render={({ field, fieldState }) => (
+                                                <Input
+                                                    {...field}
+                                                    type="number"
+                                                    id="install_web_port"
+                                                    placeholder={STANDARD_WEB_PORT.toString()}
+                                                    errorMessage={fieldState.error?.message}
+                                                    onChange={(e) => {
+                                                        const { value } = e.target;
+                                                        field.onChange(toNumber(value));
+                                                    }}
+                                                />
+                                            )}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="col-12">
+                                    {webStatus && (
+                                        <div className="setup__error text-danger">
+                                            {webStatus}
+                                            {isWebFixAvailable && (
+                                                <button
+                                                    type="button"
+                                                    id="install_web_fix"
+                                                    className="btn btn-secondary btn-sm ml-2"
+                                                    onClick={() => handleAutofix('web')}>
+                                                    {intl.getMessage('fix')}
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <AddressList
@@ -261,9 +335,9 @@ export const InterfaceSettings = ({ handleSubmit, handleFix, validateForm, confi
                 <div className={setup.content}>
                     <div className={setup.banner}>
                         <h3 className={setup.bannerTitle}>{intl.getMessage('setup_ui_title_banner')}</h3>
-                        <div className="setup__banner-setting">
+                        <div className={setup.bannerInputs}>
                             <div className={setup.form}>
-                                <label>
+                                <label className={setup.bannerLabel}>
                                     {intl.getMessage('network_interface')}
                                 </label>
                                 <Controller
@@ -285,7 +359,7 @@ export const InterfaceSettings = ({ handleSubmit, handleFix, validateForm, confi
 
                             <div className="col-4">
                                 <div className="form-group">
-                                    <label>
+                                    <label className={setup.bannerLabel}>
                                         {intl.getMessage('install_settings_port')}
                                     </label>
                                     <Controller

@@ -75,11 +75,23 @@ class Controls extends Component<ControlsProps> {
             case 2:
             case 3:
             case 4:
-            case 5:
                 return (
                     <Button
                         id="install_next"
                         type="submit"
+                        size="small"
+                        variant="primary"
+                        className={setup.button}
+                        disabled={isNextDisabled}>
+                        {intl.getMessage('next')}
+                    </Button>
+                );
+            case 5:
+                return (
+                    <Button
+                        id="install_next"
+                        type="button"
+                        onClick={nextStep}
                         size="small"
                         variant="primary"
                         className={setup.button}
@@ -109,8 +121,8 @@ class Controls extends Component<ControlsProps> {
 
         return (
             <div className={setup.nav}>
-                {this.renderNextButton(install.step)}
                 {this.renderPrevButton(install.step)}
+                {this.renderNextButton(install.step)}
             </div>
         );
     }

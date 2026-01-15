@@ -1,8 +1,8 @@
 /* Disable Auto Zoom in Input - Safari on iPhone https://stackoverflow.com/a/6394497 */
-@media screen and (max-width: 767px) {
-    input,
-    select,
-    textarea {
+input,
+select,
+textarea {
+    @media screen and (max-width: 1024px) {
         font-size: 1rem;
     }
 }
@@ -21,6 +21,7 @@
 .container {
     max-width: 1176px;
     margin: 0 auto;
+    padding-bottom: 24px;
 }
 
 [data-theme='dark'] .container {
@@ -28,13 +29,7 @@
     border: 1px solid var(--card-border-color);
 }
 
-.setup__logo {
-    display: block;
-    margin: 0 auto 40px;
-    max-width: 140px;
-}
-
-[data-theme='dark'] .setup__logo {
+[data-theme='dark'] .logo {
     filter: invert(1);
 }
 
@@ -42,6 +37,12 @@
     display: flex;
     gap: 88px;
     justify-content: center;
+    padding: 0 16px;
+
+    @media screen and (max-width: 1024px) {
+        flex-direction: column;
+        padding: 0;
+    }
 }
 
 .title {
@@ -50,6 +51,11 @@
     font-weight: 700;
     line-height: 120%;
     margin-bottom: 16px;
+
+    @media screen and (max-width: 1024px) {
+        font-size: 24px;
+        margin-bottom: 12px;
+    }
 }
 
 .titleStep {
@@ -58,10 +64,39 @@
     font-weight: 700;
     line-height: 120%;
     margin-bottom: 16px;
+
+    @media screen and (max-width: 1024px) {
+        font-size: 24px;
+        margin-bottom: 12px;
+    }
 }
 
 .input {
     margin-bottom: 16px;
+}
+
+.authRequirementsMobile {
+    display: none;
+
+    @media screen and (max-width: 1024px) {
+        display: block;
+        margin: 0 0 16px;
+
+        .bannerItem {
+            font-size: 14px;
+            margin-top: 16px;
+        }
+
+        .bannerTitle {
+            display: none;
+        }
+    }
+}
+
+.authBanner {
+    @media screen and (max-width: 1024px) {
+        display: none;
+    }
 }
 
 .info {
@@ -72,6 +107,10 @@
     font-weight: 400;
     line-height: 150%;
     padding-left: 48px;
+
+    @media screen and (max-width: 1024px) {
+        padding: 0 16px;
+    }
 }
 
 .subtitle {
@@ -86,18 +125,42 @@
     font-weight: 400;
     line-height: 150%;
 
+    @media screen and (max-width: 1024px) {
+        font-size: 16px;
+    }
+
     &Step {
         margin-bottom: 24px;
+
+        @media screen and (max-width: 1024px) {
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
     }
 
     &Adresses {
         margin-top: 32px;
+
+        @media screen and (max-width: 1024px) {
+            margin-top: 0;
+            font-size: 16px;
+        }
     }
 }
 
 .list {
     padding-left: 26px;
     margin: 18px 0 40px;
+
+    @media screen and (max-width: 1024px) {
+        margin-bottom: 24px;
+    }
+
+    &Item {
+        @media screen and (max-width: 1024px) {
+            font-size: 16px;
+        }
+    }
 }
 
 .group {
@@ -178,15 +241,70 @@
     }
 }
 
+.languageWrap {
+    display: flex;
+    align-items: center;
+}
+
+@media screen and (max-width: 1024px) {
+    .header {
+        &Content {
+            height: auto;
+            flex-wrap: wrap;
+            row-gap: 12px;
+            padding: 24px 16px;
+        }
+    }
+
+    .logoWrap {
+        order: 1;
+        padding: 0;
+    }
+
+    .languageWrap {
+        order: 2;
+        margin-left: auto;
+    }
+
+    .progress {
+        order: 3;
+        width: 100%;
+        justify-content: space-between;
+        align-items: baseline;
+    }
+
+    .progressWrap {
+        width: auto;
+        flex: 1 1 auto;
+        min-width: 0;
+        margin-top: 32px;
+    }
+}
+
 .greeting {
     display: flex;
     justify-content: space-between;
-    gap: 88px;
-    padding-top: 112px;
+    gap: 40px;
+    padding-top: 116px;
+    align-items: center;
+
+    @media screen and (max-width: 1024px) {
+        padding-top: 40px;
+    }
+
+    @media screen and (max-width: 1024px) {
+        .content {
+            display: none;
+        }
+    }
 }
 
 .configSetting {
     padding-top: 48px;
+
+    @media screen and (max-width: 1024px) {
+        padding-top: 40px;
+    }
 }
 
 .banner {
@@ -197,6 +315,13 @@
     align-items: flex-start;
     border-radius: 16px;
     box-shadow: 8px 8px 24px 0 rgba(0, 0, 0, 0.10);
+
+    @media screen and (max-width: 1024px) {
+        display: none;
+        box-shadow: none;
+        padding: 0;
+        margin-bottom: 24px;
+    }
 
     &List {
         list-style: none;
@@ -216,12 +341,46 @@
         margin-top: 16px;
     }
 
+    &Label {
+        color: var(--gray-70);
+        font-size: 14px;
+        font-style: normal;
+        font-weight: 400;
+        line-height: 130%;
+    }
+
     &Title {
         font-size: 24px;
         font-style: normal;
         font-weight: 700;
         line-height: 120%;
         margin-bottom: 8px;
+
+        @media screen and (max-width: 1024px) {
+            font-size: 20px;
+        }
+    }
+
+    &Inputs {
+        @media screen and (max-width: 1024px) {
+            width: 100%;
+        }
+    }
+}
+
+.bannerMobile {
+    display: none;
+
+    @media screen and (max-width: 1024px) {
+        display: flex;
+        width: 100%;
+        margin-top: 16px;
+    }
+}
+
+@media screen and (max-width: 1024px) {
+    .banner.bannerMobile {
+        display: flex;
     }
 }
 
@@ -233,10 +392,22 @@
 .nav {
     display: flex;
     gap: 24px;
+
+    @media screen and (max-width: 1024px) {
+        flex-direction: column-reverse;
+
+        button {
+            max-width: 100%;
+        }
+    }
 }
 
 .logoWrap {
     padding: 0 0 0 16px;
+
+    @media screen and (max-width: 1024px) {
+        padding: 0;
+    }
 }
 
 .end {
@@ -248,10 +419,23 @@
     text-align: center;
     height: 100%;
     padding-top: 116px;
+    @media screen and (max-width: 767px) {
+        padding: 48px 16px 24px;
+    }
+
+    & button {
+        @media screen and (max-width: 767px) {
+            max-width: 100%;
+        }
+    }
 }
 
 .quote {
     margin-bottom: 24px;
+}
+
+.bannerInputs {
+    width: 100%;
 }
 
 .quoteTitle {
@@ -260,6 +444,11 @@
     font-weight: 700;
     margin-bottom: 32px;
     line-height: 120%;
+
+    @media screen and (max-width: 1024px) {
+        font-size: 20px;
+        margin-bottom: 28px;
+    }
 }
 
 .quoteDesc {
@@ -279,6 +468,10 @@
         width: 4px;
         display: block;
         background-color: var(--orange-50);
+    }
+
+    @media screen and (max-width: 1024px) {
+        font-size: 16px;
     }
 }
 

@@ -61,7 +61,7 @@ export const Setup = () => {
     const dispatch = useDispatch();
 
     const install = useSelector((state: InstallState) => state.install);
-    const { processingDefault, step, web, dns, staticIp, interfaces } = install;
+    const { processingDefault, step, web, dns, staticIp, interfaces, auth } = install;
     const dnsAddresses = useSelector((state: RootState) => state.dashboard?.dnsAddresses || []);
     const installDnsAddresses = getInstallDnsAddresses(dns, interfaces);
     const resolvedDnsAddresses = dnsAddresses.length > 0 ? dnsAddresses : installDnsAddresses;
@@ -70,18 +70,26 @@ export const Setup = () => {
         dispatch(actionCreators.getDefaultAddresses());
     }, []);
 
-    const handleFormSubmit = (values: any) => {
-        const config = { ...values };
-        delete config.staticIp;
+    const handleNextStep = () => {
+        if (step <= INSTALL_TOTAL_STEPS) {
+            dispatch(actionCreators.nextStep());
+        }
+    };
+
+    const handleAuthSubmit = (values: any) => {
+        dispatch(actionCreators.setAuthData(values));
+        handleNextStep();
+    };
+
+    const handleFinalSubmit = () => {
+        const config: any = {
+            web,
+            dns,
+            ...auth,
+        };
 
         if (web.port && dns.port) {
-            dispatch(
-                actionCreators.setAllSettings({
-                    web,
-                    dns,
-                    ...config,
-                }),
-            );
+            dispatch(actionCreators.setAllSettings(config));
         }
     };
 
@@ -102,13 +110,7 @@ export const Setup = () => {
         if (ip === ALL_INTERFACES_IP) {
             address = getWebAddress(window.location.hostname, port);
         }
-        window.location.replace(address);
-    };
-
-    const handleNextStep = () => {
-        if (step <= INSTALL_TOTAL_STEPS) {
-            dispatch(actionCreators.nextStep());
-        }
+        window.location.replace(`${address}#dashboard`);
     };
 
     const currentLanguage =
@@ -131,7 +133,7 @@ export const Setup = () => {
             case 1:
                 return <Greeting />;
             case 2:
-                return <Auth onAuthSubmit={handleFormSubmit} />;
+                return <Auth onAuthSubmit={handleAuthSubmit} />;
             case 3:
                 return (
                     <InterfaceSettings
@@ -161,7 +163,13 @@ export const Setup = () => {
                     </>
                 );
             case 6:
-                return <Submit openDashboard={openDashboard} webConfig={web} />;
+                return (
+                    <Submit
+                        openDashboard={openDashboard}
+                        webConfig={web}
+                        onSubmit={handleFinalSubmit}
+                    />
+                );
             default:
                 return false;
         }
@@ -180,13 +188,15 @@ export const Setup = () => {
                             <Logo id="header" />
                         </div>
                         <Progress step={step} />
-                        <LanguageDropdown
-                            value={currentLanguage}
-                            languages={LANGUAGES}
-                            onChange={(lang) => changeLanguage(lang as LocalesType)}
-                            className={s.dropdown}
-                            position="bottomRight"
-                        />
+                        <div className={setup.languageWrap}>
+                            <LanguageDropdown
+                                value={currentLanguage}
+                                languages={LANGUAGES}
+                                onChange={(lang) => changeLanguage(lang as LocalesType)}
+                                className={s.dropdown}
+                                position="bottomRight"
+                            />
+                        </div>
                     </div>
                 </div>
 

@@ -27,7 +27,7 @@ const Greeting = () => {
 
                 <ul className={setup.list}>
                     {configureList.map((item, idx) => (
-                        <li key={idx} className="setup__item">
+                        <li key={idx} className={setup.listItem}>
                             {item}
                         </li>
                     ))}

@@ -185,6 +185,104 @@ export const DnsSettings = ({ handleSubmit, handleFix, validateForm, config, int
                         <div className={setup.titleStep}>{intl.getMessage('setup_dns_title')}</div>
 
                         <p className={setup.descAdresses}>{intl.getMessage('setup_dns_desc')}</p>
+
+                        <div className={`${setup.banner} ${setup.bannerMobile}`}>
+                            <div className={setup.bannerInputs}>
+                                <div className={setup.group}>
+                                    <div className={setup.bannerTitle}>
+                                        {intl.getMessage("setup_dns_title_banner")}
+                                    </div>
+
+                                    <div className={setup.form}>
+                                        <label className={setup.bannerLabel}>
+                                            {intl.getMessage('network_interface')}
+                                        </label>
+                                        <Controller
+                                            name="dns.ip"
+                                            control={control}
+                                            render={({ field }) => (
+                                                <Select
+                                                    options={dnsIpOptions}
+                                                    value={dnsIpOptions.find(option => option.value === field.value)}
+                                                    onChange={(selectedOption) => field.onChange(selectedOption?.value)}
+                                                    placeholder={intl.getMessage('network_interface')}
+                                                    size="responsive"
+                                                    height="big"
+                                                    id="install_dns_ip"
+                                                />
+                                            )}
+                                        />
+                                    </div>
+
+                                    <div className={setup.form}>
+                                        <label className={setup.bannerLabel}>
+                                            {intl.getMessage('install_settings_port')}
+                                        </label>
+                                        <Controller
+                                            name="dns.port"
+                                            control={control}
+                                            rules={{
+                                                required: intl.getMessage('form_error_required'),
+                                                validate: {
+                                                    required: validateRequiredValue,
+                                                    installPort: validateInstallPort,
+                                                },
+                                            }}
+                                            render={({ field, fieldState }) => (
+                                                <Input
+                                                    {...field}
+                                                    type="number"
+                                                    id="install_dns_port"
+                                                    errorMessage={fieldState.error?.message}
+                                                    placeholder={STANDARD_WEB_PORT.toString()}
+                                                    onChange={(e) => {
+                                                        const { value } = e.target;
+                                                        field.onChange(toNumber(value));
+                                                    }}
+                                                />
+                                            )}
+                                        />
+                                    </div>
+
+                                    <div>
+                                        {dnsStatus && (
+                                            <>
+                                                <div className="setup__error text-danger">
+                                                    {dnsStatus}
+                                                    {isDnsFixAvailable && (
+                                                        <button
+                                                            type="button"
+                                                            id="install_dns_fix"
+                                                            className="btn btn-secondary"
+                                                            onClick={() => handleAutofix('dns')}>
+                                                            {intl.getMessage('fix')}
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                {isDnsFixAvailable && (
+                                                    <div className="text-muted">
+                                                        <p className="mb-1">
+                                                            {intl.getMessage('autofix_warning_text')}
+                                                        </p>
+                                                        {intl.getMessage('autofix_warning_list')}
+                                                        <p className="mb-1">
+                                                            {intl.getMessage('autofix_warning_result')}
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </>
+                                        )}
+                                        {watchFields.dns?.port === STANDARD_DNS_PORT &&
+                                            !isDnsFixAvailable &&
+                                            dnsStatus?.includes(ADDRESS_IN_USE_TEXT) && (
+                                                <a href={PORT_53_FAQ_LINK} target="_blank" rel="noopener noreferrer">
+                                                    {intl.getMessage('port_53_faq_link')}
+                                                </a>
+                                            )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div className={setup.addressListWrapper}>
                         <AddressList
@@ -207,97 +305,99 @@ export const DnsSettings = ({ handleSubmit, handleFix, validateForm, config, int
                 </div>
                 <div className={setup.content}>
                     <div className={setup.banner}>
-                        <div className={setup.group}>
-                            <div className={setup.bannerTitle}>
-                                {intl.getMessage("setup_dns_title_banner")}
-                            </div>
+                        <div className={setup.bannerInputs}>
+                            <div className={setup.group}>
+                                <div className={setup.bannerTitle}>
+                                    {intl.getMessage("setup_dns_title_banner")}
+                                </div>
 
-                            <div className={setup.form}>
-                                <label>
-                                    {intl.getMessage('network_interface')}
-                                </label>
-                                <Controller
-                                    name="dns.ip"
-                                    control={control}
-                                    render={({ field }) => (
-                                        <Select
-                                            options={dnsIpOptions}
-                                            value={dnsIpOptions.find(option => option.value === field.value)}
-                                            onChange={(selectedOption) => field.onChange(selectedOption?.value)}
-                                            placeholder={intl.getMessage('network_interface')}
-                                            size="responsive"
-                                            height="big"
-                                            id="install_dns_ip"
-                                        />
-                                    )}
-                                />
-                            </div>
-
-                            <div className={setup.form}>
-                                <label>
-                                    {intl.getMessage('install_settings_port')}
-                                </label>
-                                <Controller
-                                    name="dns.port"
-                                    control={control}
-                                    rules={{
-                                        required: intl.getMessage('form_error_required'),
-                                        validate: {
-                                            required: validateRequiredValue,
-                                            installPort: validateInstallPort,
-                                        },
-                                    }}
-                                    render={({ field, fieldState }) => (
-                                        <Input
-                                            {...field}
-                                            type="number"
-                                            id="install_dns_port"
-                                            errorMessage={fieldState.error?.message}
-                                            placeholder={STANDARD_WEB_PORT.toString()}
-                                            onChange={(e) => {
-                                                const { value } = e.target;
-                                                field.onChange(toNumber(value));
-                                            }}
-                                        />
-                                    )}
-                                />
-                            </div>
-
-                            <div>
-                                {dnsStatus && (
-                                    <>
-                                        <div className="setup__error text-danger">
-                                            {dnsStatus}
-                                            {isDnsFixAvailable && (
-                                                <button
-                                                    type="button"
-                                                    id="install_dns_fix"
-                                                    className="btn btn-secondary"
-                                                    onClick={() => handleAutofix('dns')}>
-                                                    {intl.getMessage('fix')}
-                                                </button>
-                                            )}
-                                        </div>
-                                        {isDnsFixAvailable && (
-                                            <div className="text-muted">
-                                                <p className="mb-1">
-                                                    {intl.getMessage('autofix_warning_text')}
-                                                </p>
-                                                {intl.getMessage('autofix_warning_list')}
-                                                <p className="mb-1">
-                                                    {intl.getMessage('autofix_warning_result')}
-                                                </p>
-                                            </div>
+                                <div className={setup.form}>
+                                    <label className={setup.bannerLabel}>
+                                        {intl.getMessage('network_interface')}
+                                    </label>
+                                    <Controller
+                                        name="dns.ip"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <Select
+                                                options={dnsIpOptions}
+                                                value={dnsIpOptions.find(option => option.value === field.value)}
+                                                onChange={(selectedOption) => field.onChange(selectedOption?.value)}
+                                                placeholder={intl.getMessage('network_interface')}
+                                                size="responsive"
+                                                height="big"
+                                                id="install_dns_ip"
+                                            />
                                         )}
-                                    </>
-                                )}
-                                {watchFields.dns?.port === STANDARD_DNS_PORT &&
-                                    !isDnsFixAvailable &&
-                                    dnsStatus?.includes(ADDRESS_IN_USE_TEXT) && (
-                                        <a href={PORT_53_FAQ_LINK} target="_blank" rel="noopener noreferrer">
-                                            {intl.getMessage('port_53_faq_link')}
-                                        </a>
+                                    />
+                                </div>
+
+                                <div className={setup.form}>
+                                    <label className={setup.bannerLabel}>
+                                        {intl.getMessage('install_settings_port')}
+                                    </label>
+                                    <Controller
+                                        name="dns.port"
+                                        control={control}
+                                        rules={{
+                                            required: intl.getMessage('form_error_required'),
+                                            validate: {
+                                                required: validateRequiredValue,
+                                                installPort: validateInstallPort,
+                                            },
+                                        }}
+                                        render={({ field, fieldState }) => (
+                                            <Input
+                                                {...field}
+                                                type="number"
+                                                id="install_dns_port"
+                                                errorMessage={fieldState.error?.message}
+                                                placeholder={STANDARD_WEB_PORT.toString()}
+                                                onChange={(e) => {
+                                                    const { value } = e.target;
+                                                    field.onChange(toNumber(value));
+                                                }}
+                                            />
+                                        )}
+                                    />
+                                </div>
+
+                                <div>
+                                    {dnsStatus && (
+                                        <>
+                                            <div className="setup__error text-danger">
+                                                {dnsStatus}
+                                                {isDnsFixAvailable && (
+                                                    <button
+                                                        type="button"
+                                                        id="install_dns_fix"
+                                                        className="btn btn-secondary"
+                                                        onClick={() => handleAutofix('dns')}>
+                                                        {intl.getMessage('fix')}
+                                                    </button>
+                                                )}
+                                            </div>
+                                            {isDnsFixAvailable && (
+                                                <div className="text-muted">
+                                                    <p className="mb-1">
+                                                        {intl.getMessage('autofix_warning_text')}
+                                                    </p>
+                                                    {intl.getMessage('autofix_warning_list')}
+                                                    <p className="mb-1">
+                                                        {intl.getMessage('autofix_warning_result')}
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </>
                                     )}
+                                    {watchFields.dns?.port === STANDARD_DNS_PORT &&
+                                        !isDnsFixAvailable &&
+                                        dnsStatus?.includes(ADDRESS_IN_USE_TEXT) && (
+                                            <a href={PORT_53_FAQ_LINK} target="_blank" rel="noopener noreferrer">
+                                                {intl.getMessage('port_53_faq_link')}
+                                            </a>
+                                        )}
+                                </div>
                             </div>
                         </div>
                     </div>

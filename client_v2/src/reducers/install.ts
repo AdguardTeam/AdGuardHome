@@ -48,9 +48,18 @@ const install = handleActions(
             step: state.step - 1,
         }),
 
+        [actions.setAuthData.toString()]: (state: any, { payload }: any) => ({
+            ...state,
+            auth: {
+                ...state.auth,
+                ...payload,
+            },
+        }),
+
         [actions.setAllSettingsRequest.toString()]: (state: any) => ({
             ...state,
             processingSubmit: true,
+            submitted: false,
         }),
         [actions.setAllSettingsFailure.toString()]: (state: any) => ({
             ...state,
@@ -59,6 +68,7 @@ const install = handleActions(
         [actions.setAllSettingsSuccess.toString()]: (state: any) => ({
             ...state,
             processingSubmit: false,
+            submitted: true,
         }),
 
         [actions.checkConfigRequest.toString()]: (state: any) => ({
@@ -89,6 +99,12 @@ const install = handleActions(
         processingDefault: true,
         processingSubmit: false,
         processingCheck: false,
+        submitted: false,
+        auth: {
+            username: '',
+            password: '',
+            privacy_consent: false,
+        },
         web: {
             ip: ALL_INTERFACES_IP,
             port: STANDARD_WEB_PORT,

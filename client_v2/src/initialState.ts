@@ -23,6 +23,12 @@ export type InstallData = {
     processingDefault: boolean;
     processingSubmit: boolean;
     processingCheck: boolean;
+    submitted: boolean;
+    auth: {
+        username: string;
+        password: string;
+        privacy_consent: boolean;
+    };
     web: {
         ip: string;
         port: number;

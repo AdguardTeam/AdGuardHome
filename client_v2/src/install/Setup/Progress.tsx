@@ -16,11 +16,11 @@ export const Progress = ({ step }: Props) => {
                 <div className={setup.message}>
                     {intl.getMessage("install_step")}
                 </div>
-                {step}/{INSTALL_TOTAL_STEPS}
+                {step}/{INSTALL_TOTAL_STEPS - 1}
             </div>
 
             <div className={setup.progressWrap} role="progressbar" aria-valuenow={step} aria-valuemin={1} aria-valuemax={INSTALL_TOTAL_STEPS}>
-                {Array.from({ length: INSTALL_TOTAL_STEPS }, (_, i) => {
+                {Array.from({ length: INSTALL_TOTAL_STEPS - 1 }, (_, i) => {
                     const installStep = i + 1;
                     const isDoneOrCurrent = installStep <= step;
 

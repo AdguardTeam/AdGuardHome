@@ -41,7 +41,7 @@ export const SetupGuide = ({ dnsAddresses: dnsAddressesProp, isStep = false, foo
             </div>
 
             <div className={s.guidePage}>
-                <h1 className={s.guideTitle}>{intl.getMessage('setup_guide_device_type')}</h1>
+                {!isStep &&  <h1 className={s.guideTitle}>{intl.getMessage('setup_guide_device_type')}</h1>}
                 <Guide dnsAddresses={dnsAddresses} />
 
                 <div className={s.guideDesc}>
@@ -73,8 +73,8 @@ export const SetupGuide = ({ dnsAddresses: dnsAddressesProp, isStep = false, foo
                             </div>
 
                             <ul className={s.addressList}>
-                                {plainAddresses.map((ip: string) => (
-                                    <li key={ip} className={s.address}>
+                                {plainAddresses.map((ip: string, index: number) => (
+                                    <li key={`${ip}-${index}`} className={s.address}>
                                         <span className={s.bulletIcon}></span>
                                         <CopiedText text={ip} />
                                     </li>
