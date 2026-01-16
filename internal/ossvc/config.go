@@ -12,6 +12,10 @@ import (
 //
 // TODO(e.burkov):  Use [timeutil.Clock].
 func ConfigureServiceOptions(conf *service.Config, versionInfo string) {
+	if conf.Option == nil {
+		conf.Option = map[string]any{}
+	}
+
 	conf.Option["SvcInfo"] = fmt.Sprintf("%s %s", versionInfo, time.Now())
 
 	configureOSOptions(conf)

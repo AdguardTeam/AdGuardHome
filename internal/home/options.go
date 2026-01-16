@@ -36,6 +36,8 @@ type options struct {
 
 	// serviceControlAction is the service action to perform.  See
 	// [service.ControlAction] and [handleServiceControlAction].
+	//
+	// TODO(e.burkov):  Use [ossvc.ActionName].
 	serviceControlAction string
 
 	// bindHost is the address on which to serve the HTTP UI.
