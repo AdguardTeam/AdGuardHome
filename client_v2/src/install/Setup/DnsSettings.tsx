@@ -6,8 +6,8 @@ import { Select } from 'panel/common/controls/Select';
 import intl from 'panel/common/intl';
 import { Button } from 'panel/common/ui/Button';
 import styles from 'panel/install/Setup/styles.module.pcss';
-import Controls from './Controls';
 import cn from 'clsx';
+import Controls from './Controls';
 
 import AddressList from './AddressList';
 import { buildInterfaceOptions } from './interfaceOptions';

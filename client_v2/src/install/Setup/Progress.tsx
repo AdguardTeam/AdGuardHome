@@ -1,8 +1,8 @@
 import React from 'react';
 import intl from 'panel/common/intl';
+import cn from 'clsx';
 import { INSTALL_TOTAL_STEPS } from '../../helpers/constants';
 import styles from './styles.module.pcss';
-import cn from 'clsx';
 
 type Props = { step: number };
 
