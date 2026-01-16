@@ -49,15 +49,16 @@ readonly build_date
 docker_image_name="${DOCKER_IMAGE_NAME:-adguardhome-dev}"
 readonly docker_image_name
 
-# Set DOCKER_OUTPUT to 'type=image,name=adguard/adguard-home,push=true' if you
-# want (and are allowed) to push to DockerHub.
-#
 # If you want to inspect the resulting image using commands like "docker image
 # ls", change type to docker and also set docker_platforms to a single platform.
 #
 # See https://github.com/docker/buildx/issues/166.
-docker_output="${DOCKER_OUTPUT:-type=image,name=${docker_image_name},push=false}"
+docker_output="${DOCKER_OUTPUT:-type=image,name=${docker_image_name}}"
 readonly docker_output
+
+# Set DOCKER_PUSH to '1' if you want (and are allowed) to push to DockerHub.
+docker_push="${DOCKER_PUSH:-0}"
+readonly docker_push
 
 case "$channel" in
 'release')
@@ -149,3 +150,8 @@ docker_opt_tag() {
 }
 
 docker_opt_tag
+
+# Push to DockerHub, if requested.
+if [ "$docker_push" -eq 1 ]; then
+	"$sudo_cmd" docker push -a "$docker_image_name"
+fi

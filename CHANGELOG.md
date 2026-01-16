@@ -54,7 +54,6 @@ In this release, the schema version has changed from 32 to 33.
 
     To roll back this change, set the `schema_version` back to `32`.
 
-
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
