@@ -69,7 +69,7 @@ export const Dropdown = ({
     };
 
     useEffect(() => {
-        if (open) {
+        if (typeof open === 'boolean') {
             setVisible(open);
         }
 

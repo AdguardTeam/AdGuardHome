@@ -4,7 +4,7 @@ select,
 textarea {
     font-size: 1rem;
 
-    @media screen and (min-width: 1025px) {
+    @media screen and (min-width: 1024px) {
         font-size: inherit;
     }
 }
@@ -42,7 +42,7 @@ textarea {
     flex-direction: column;
     padding: 0;
 
-    @media screen and (min-width: 1025px) {
+    @media screen and (min-width: 1024px) {
         flex-direction: row;
         padding: 0 16px;
     }
@@ -55,7 +55,7 @@ textarea {
     line-height: 120%;
     margin-bottom: 12px;
 
-    @media screen and (min-width: 1025px) {
+    @media screen and (min-width: 1024px) {
         font-size: 40px;
         margin-bottom: 16px;
     }
@@ -68,7 +68,7 @@ textarea {
     line-height: 120%;
     margin-bottom: 12px;
 
-    @media screen and (min-width: 1025px) {
+    @media screen and (min-width: 1024px) {
         font-size: 32px;
         margin-bottom: 16px;
     }
@@ -91,7 +91,7 @@ textarea {
         display: none;
     }
 
-    @media screen and (min-width: 1025px) {
+    @media screen and (min-width: 1024px) {
         display: none;
     }
 }
@@ -99,7 +99,7 @@ textarea {
 .authBanner {
     display: none;
 
-    @media screen and (min-width: 1025px) {
+    @media screen and (min-width: 1024px) {
         display: block;
     }
 }
@@ -113,7 +113,7 @@ textarea {
     line-height: 150%;
     padding: 0 16px;
 
-    @media screen and (min-width: 1025px) {
+    @media screen and (min-width: 1024px) {
         padding-left: 48px;
     }
 }
@@ -130,7 +130,7 @@ textarea {
     font-weight: 400;
     line-height: 150%;
 
-    @media screen and (min-width: 1025px) {
+    @media screen and (min-width: 1024px) {
         font-size: 18px;
     }
 }
@@ -138,7 +138,7 @@ textarea {
 .descStep {
     margin-bottom: 8px;
 
-    @media screen and (min-width: 1025px) {
+    @media screen and (min-width: 1024px) {
         margin-bottom: 24px;
     }
 }
@@ -146,7 +146,7 @@ textarea {
 .descAdresses {
     margin-top: 0;
 
-    @media screen and (min-width: 1025px) {
+    @media screen and (min-width: 1024px) {
         margin-top: 32px;
     }
 }
@@ -155,7 +155,7 @@ textarea {
     padding-left: 26px;
     margin: 18px 0 24px;
 
-    @media screen and (min-width: 1025px) {
+    @media screen and (min-width: 1024px) {
         margin: 18px 0 40px;
     }
 }
@@ -163,7 +163,7 @@ textarea {
 .listItem {
     font-size: 16px;
 
-    @media screen and (min-width: 1025px) {
+    @media screen and (min-width: 1024px) {
         font-size: inherit;
     }
 }
@@ -288,7 +288,7 @@ textarea {
     row-gap: 12px;
     padding: 24px 16px;
 
-    @media screen and (min-width: 1025px) {
+    @media screen and (min-width: 1024px) {
         height: 80px;
         flex-wrap: nowrap;
         row-gap: 0;
@@ -300,7 +300,7 @@ textarea {
     order: 1;
     padding: 0;
 
-    @media screen and (min-width: 1025px) {
+    @media screen and (min-width: 1024px) {
         order: 0;
         padding: 0 0 0 16px;
     }
@@ -310,7 +310,7 @@ textarea {
     order: 2;
     margin-left: auto;
 
-    @media screen and (min-width: 1025px) {
+    @media screen and (min-width: 1024px) {
         order: 0;
         margin-left: 0;
     }
@@ -322,7 +322,7 @@ textarea {
     justify-content: space-between;
     align-items: baseline;
 
-    @media screen and (min-width: 1025px) {
+    @media screen and (min-width: 1024px) {
         order: 0;
         width: auto;
         justify-content: flex-start;
@@ -336,7 +336,7 @@ textarea {
     min-width: 0;
     margin-top: 32px;
 
-    @media screen and (min-width: 1025px) {
+    @media screen and (min-width: 1024px) {
         width: 464px;
         flex: 0 0 auto;
         min-width: auto;
@@ -355,7 +355,7 @@ textarea {
         display: none;
     }
 
-    @media screen and (min-width: 1025px) {
+    @media screen and (min-width: 1024px) {
         padding-top: 116px;
 
         .content {
@@ -367,7 +367,7 @@ textarea {
 .configSetting {
     padding-top: 40px;
 
-    @media screen and (min-width: 1025px) {
+    @media screen and (min-width: 1024px) {
         padding-top: 48px;
     }
 }
@@ -378,7 +378,7 @@ textarea {
     padding: 0;
     margin-bottom: 24px;
 
-    @media screen and (min-width: 1025px) {
+    @media screen and (min-width: 1024px) {
         display: flex;
         width: 400px;
         padding: 26px 16px 16px 24px;
@@ -390,7 +390,7 @@ textarea {
     }
 }
 
-@media screen and (min-width: 1025px) {
+@media screen and (min-width: 1024px) {
     .bannerTitle {
         font-size: 24px;
     }
@@ -442,8 +442,9 @@ textarea {
     display: flex;
     width: 100%;
     margin-top: 16px;
+    flex-direction: column;
 
-    @media screen and (min-width: 1025px) {
+    @media screen and (min-width: 1024px) {
         display: none;
     }
 }
@@ -460,9 +461,13 @@ textarea {
 
     button {
         max-width: 100%;
+
+        @media screen and (min-width: 768px) {
+            max-width: unset;
+        }
     }
 
-    @media screen and (min-width: 1025px) {
+    @media screen and (min-width: 1024px) {
         flex-direction: row;
 
         button {
@@ -485,7 +490,7 @@ textarea {
         padding: 48px 16px 24px;
     }
 
-    @media screen and (min-width: 1025px) {
+    @media screen and (min-width: 1024px) {
         padding-top: 116px;
         padding-left: 0;
         padding-right: 0;
@@ -496,7 +501,7 @@ textarea {
 .end button {
     max-width: 100%;
 
-    @media screen and (min-width: 1025px) {
+    @media screen and (min-width: 1024px) {
         max-width: unset;
     }
 }
@@ -516,7 +521,7 @@ textarea {
     margin-bottom: 28px;
     line-height: 120%;
 
-    @media screen and (min-width: 1025px) {
+    @media screen and (min-width: 1024px) {
         font-size: 24px;
         margin-bottom: 32px;
     }
@@ -530,7 +535,7 @@ textarea {
     position: relative;
     padding-left: 16px;
 
-    @media screen and (min-width: 1025px) {
+    @media screen and (min-width: 1024px) {
         font-size: 18px;
     }
 }

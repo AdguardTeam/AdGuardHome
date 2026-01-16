@@ -48,7 +48,7 @@ export const useInstallSettingsForm = (config: ConfigType, validateForm: (data: 
         control,
         watch,
         handleSubmit: reactHookFormSubmit,
-        formState: { isValid },
+        formState: { isValid, isDirty },
     } = useForm<SettingsFormValues>({
         defaultValues,
         mode: 'onBlur',
@@ -62,6 +62,10 @@ export const useInstallSettingsForm = (config: ConfigType, validateForm: (data: 
     const dnsPortVal = watch('dns.port');
 
     useEffect(() => {
+        if (!isDirty) {
+            return;
+        }
+
         const webPortError = validateInstallPort(webPortVal);
         const dnsPortError = validateInstallPort(dnsPortVal);
 
@@ -79,12 +83,13 @@ export const useInstallSettingsForm = (config: ConfigType, validateForm: (data: 
                 port: dnsPortVal,
             },
         });
-    }, [dnsIpVal, dnsPortVal, validateForm, webIpVal, webPortVal]);
+    }, [dnsIpVal, dnsPortVal, isDirty, validateForm, webIpVal, webPortVal]);
 
     return {
         control,
         reactHookFormSubmit,
         isValid,
+        isDirty,
         watchFields,
         webIpVal,
         webPortVal,

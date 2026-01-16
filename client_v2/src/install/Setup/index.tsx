@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import debounce from 'lodash/debounce';
 
@@ -84,13 +84,19 @@ export const Setup = () => {
         }
     };
 
-    const checkConfig = debounce((values) => {
-        const { web, dns } = values;
+    const checkConfig = useMemo(
+        () =>
+            debounce((values) => {
+                const { web, dns } = values;
 
-        if (values && web.port && dns.port) {
-            dispatch(actionCreators.checkConfig({ web, dns, set_static_ip: false }));
-        }
-    }, DEBOUNCE_TIMEOUT);
+                if (values && web.port && dns.port) {
+                    dispatch(actionCreators.checkConfig({ web, dns, set_static_ip: false }));
+                }
+            }, DEBOUNCE_TIMEOUT),
+        [dispatch],
+    );
+
+    useEffect(() => () => checkConfig.cancel(), [checkConfig]);
 
     const handleFix = (web: WebConfig, dns: DnsConfig, set_static_ip: boolean) => {
         dispatch(actionCreators.checkConfig({ web, dns, set_static_ip }));
