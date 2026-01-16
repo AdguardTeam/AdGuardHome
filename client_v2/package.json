@@ -25,6 +25,7 @@
         "@adguard/translate": "^1.0.2",
         "axios": "^0.19.2",
         "clsx": "^2.1.1",
+        "copy-to-clipboard": "^3.3.3",
         "countries-and-timezones": "^3.6.0",
         "date-fns": "^1.29.0",
         "i18next": "^19.6.2",

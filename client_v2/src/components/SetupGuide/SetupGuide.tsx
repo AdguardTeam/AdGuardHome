@@ -84,7 +84,7 @@ export const SetupGuide = ({ dnsAddresses: dnsAddressesProp, isStep = false, foo
                     )}
                 </div>
             </div>
-        
+
             <div className={s.footer}>
                 {footer}
             </div>
