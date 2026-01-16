@@ -4,8 +4,8 @@ import { CopiedText } from 'panel/common/ui/CopiedText/CopiedText';
 import { getInterfaceIp } from '../../helpers/helpers';
 import { ALL_INTERFACES_IP } from '../../helpers/constants';
 import { InstallInterface } from '../../initialState';
-import setup from './styles.module.pcss'
-import { stripZoneId } from './helpers'
+import styles from './styles.module.pcss';
+import { stripZoneId, getDnsAddressWithPort } from './helpers';
 
 interface renderItemProps {
     ip: string;
@@ -13,16 +13,6 @@ interface renderItemProps {
     isDns: boolean;
     interfaceName?: string;
 }
-
-const getDnsAddressWithPort = (ip: string, port: number) => {
-    const normalizedIp = stripZoneId(ip);
-
-    if (normalizedIp.includes(':') && !normalizedIp.includes('[')) {
-        return `[${normalizedIp}]:${port}`;
-    }
-
-    return `${normalizedIp}:${port}`;
-};
 
 const getWebAddressWithPort = (ip: string, port: number) => {
     const normalizedIp = stripZoneId(ip);
@@ -39,7 +29,7 @@ const renderItem = ({ ip, port, isDns }: renderItemProps) => {
     const dnsAddress = getDnsAddressWithPort(ip, port);
 
     return (
-        <li className={setup.addressListItem}
+        <li className={styles.addressListItem}
             key={ip}>
             {isDns ? <CopiedText text={dnsAddress} /> : <CopiedText text={webAddress} />}
         </li>
@@ -54,7 +44,7 @@ interface AddressListProps {
 }
 
 const AddressList = ({ address, interfaces, port, isDns }: AddressListProps) => (
-    <ul className={setup.addressList}>
+    <ul className={styles.addressList}>
         {address === ALL_INTERFACES_IP
             ? Object.values(interfaces)
                   .filter((iface: InstallInterface) => iface?.ip_addresses?.length > 0)

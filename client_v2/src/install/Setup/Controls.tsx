@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 import { Button } from 'panel/common/ui/Button';
 import intl from 'panel/common/intl';
 import * as actionCreators from '../../actions/install';
-import setup from './styles.module.pcss'
+import styles from './styles.module.pcss';
 
 interface ControlsProps {
     install: {
@@ -42,7 +42,7 @@ class Controls extends Component<ControlsProps> {
                         type="button"
                         size="small"
                         variant="secondary"
-                        className={setup.button}
+                        className={styles.button}
                         onClick={this.props.prevStep}>
                         {intl.getMessage('back')}
                     </Button>
@@ -68,7 +68,7 @@ class Controls extends Component<ControlsProps> {
                         onClick={nextStep}
                         size="small"
                         variant="primary"
-                        className={setup.button}>
+                        className={styles.button}>
                         {intl.getMessage("setup_guide_greeting_button")}
                     </Button>
                 );
@@ -81,7 +81,7 @@ class Controls extends Component<ControlsProps> {
                         type="submit"
                         size="small"
                         variant="primary"
-                        className={setup.button}
+                        className={styles.button}
                         disabled={isNextDisabled}>
                         {intl.getMessage('next')}
                     </Button>
@@ -94,7 +94,7 @@ class Controls extends Component<ControlsProps> {
                         onClick={nextStep}
                         size="small"
                         variant="primary"
-                        className={setup.button}
+                        className={styles.button}
                         disabled={isNextDisabled}>
                         {intl.getMessage('next')}
                     </Button>
@@ -106,7 +106,7 @@ class Controls extends Component<ControlsProps> {
                         type="button"
                         size="small"
                         variant="primary"
-                        className={setup.button}
+                        className={styles.button}
                         onClick={() => this.props.openDashboard && this.props.openDashboard(ip!, port!)}>
                         {intl.getMessage("open_dashboard")}
                     </Button>
@@ -120,7 +120,7 @@ class Controls extends Component<ControlsProps> {
         const { install } = this.props;
 
         return (
-            <div className={setup.nav}>
+            <div className={styles.nav}>
                 {this.renderNextButton(install.step)}
                 {this.renderPrevButton(install.step)}
             </div>

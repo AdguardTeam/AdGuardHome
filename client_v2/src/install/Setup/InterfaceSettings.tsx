@@ -5,7 +5,7 @@ import { Input } from 'panel/common/controls/Input';
 import { Select } from 'panel/common/controls/Select';
 import intl from 'panel/common/intl';
 import { Button } from 'panel/common/ui/Button';
-import setup from 'panel/install/Setup/styles.module.pcss';
+import styles from 'panel/install/Setup/styles.module.pcss';
 import Controls from './Controls';
 import AddressList from './AddressList';
 import { buildInterfaceOptions } from './interfaceOptions';
@@ -77,7 +77,7 @@ export const InterfaceSettings = ({ handleSubmit, handleFix, validateForm, confi
                 case STATUS_RESPONSE.NO:
                     return (
                         <>
-                            <div className={setup.spacerBottom}>
+                            <div className={styles.spacerBottom}>
                                 {intl.getMessage('install_static_configure', { ip }).replace('{ip}', ip)}
                             </div>
 
@@ -85,7 +85,7 @@ export const InterfaceSettings = ({ handleSubmit, handleFix, validateForm, confi
                                 type="button"
                                 size="small"
                                 variant="secondary"
-                                className={setup.button}
+                                className={styles.button}
                                 onClick={() => handleStaticIp(ip)}>
                                 {intl.getMessage('set_static_ip')}
                             </Button>
@@ -93,13 +93,13 @@ export const InterfaceSettings = ({ handleSubmit, handleFix, validateForm, confi
                     );
                 case STATUS_RESPONSE.ERROR:
                     return (
-                        <div className={setup.errorText}>
+                        <div className={styles.errorText}>
                             {intl.getMessage('install_static_error')}
                         </div>
                     );
                 case STATUS_RESPONSE.YES:
                     return (
-                        <div className={setup.successText}>
+                        <div className={styles.successText}>
                             {intl.getMessage('install_static_ok')}
                         </div>
                     );
@@ -117,10 +117,10 @@ export const InterfaceSettings = ({ handleSubmit, handleFix, validateForm, confi
 
     const WebBanner = ({ className }: { className: string }) => (
         <div className={className}>
-            <h3 className={setup.bannerTitle}>{intl.getMessage('setup_ui_title_banner')}</h3>
-            <div className={setup.bannerInputs}>
-                <div className={setup.form}>
-                    <label className={setup.bannerLabel}>
+            <h3 className={styles.bannerTitle}>{intl.getMessage('setup_ui_title_banner')}</h3>
+            <div className={styles.bannerInputs}>
+                <div className={styles.form}>
+                    <label className={styles.bannerLabel}>
                         {intl.getMessage('network_interface')}
                     </label>
                     <Controller<SettingsFormValues, 'web.ip'>
@@ -140,8 +140,8 @@ export const InterfaceSettings = ({ handleSubmit, handleFix, validateForm, confi
                     />
                 </div>
 
-                <div className={setup.form}>
-                    <label className={setup.bannerLabel}>
+                <div className={styles.form}>
+                    <label className={styles.bannerLabel}>
                         {intl.getMessage('install_settings_port')}
                     </label>
                     <Controller<SettingsFormValues, 'web.port'>
@@ -171,7 +171,7 @@ export const InterfaceSettings = ({ handleSubmit, handleFix, validateForm, confi
 
                 <div>
                     {webStatus && (
-                        <div className={`${setup.setup__error} ${setup.errorRow} ${setup.errorText}`}>
+                        <div className={`${styles.setup__error} ${styles.errorRow} ${styles.errorText}`}>
                             {webStatus}
                             {isWebFixAvailable && (
                                 <Button
@@ -179,7 +179,7 @@ export const InterfaceSettings = ({ handleSubmit, handleFix, validateForm, confi
                                     id="install_web_fix"
                                     size="small"
                                     variant="secondary"
-                                    className={setup.inlineButton}
+                                    className={styles.inlineButton}
                                     onClick={() => handleAutofix('web')}>
                                     {intl.getMessage('fix')}
                                 </Button>
@@ -192,16 +192,16 @@ export const InterfaceSettings = ({ handleSubmit, handleFix, validateForm, confi
     );
 
     return (
-        <div className={setup.configSetting}>
-            <form className={setup.step} onSubmit={reactHookFormSubmit(onSubmit)}>
+        <div className={styles.configSetting}>
+            <form className={styles.step} onSubmit={reactHookFormSubmit(onSubmit)}>
 
-                <div className={setup.info}>
+                <div className={styles.info}>
                     <div>
-                        <div className={setup.titleStep}>{intl.getMessage('setup_ui_title')}</div>
+                        <div className={styles.titleStep}>{intl.getMessage('setup_ui_title')}</div>
 
-                        <p className={setup.descAdresses}>{intl.getMessage('setup_ui_desc')}</p>
+                        <p className={styles.descAdresses}>{intl.getMessage('setup_ui_desc')}</p>
 
-                        <WebBanner className={`${setup.banner} ${setup.bannerMobile}`} />
+                        <WebBanner className={`${styles.banner} ${styles.bannerMobile}`} />
                     </div>
 
                     <AddressList
@@ -210,15 +210,15 @@ export const InterfaceSettings = ({ handleSubmit, handleFix, validateForm, confi
                         port={webPortVal || STANDARD_WEB_PORT}
                     />
 
-                    <div className={setup.group}>
+                    <div className={styles.group}>
                         {getStaticIpMessage(staticIp)}
                     </div>
 
                     <Controls invalid={!isValid} />
                 </div>
 
-                <div className={setup.content}>
-                    <WebBanner className={setup.banner} />
+                <div className={styles.content}>
+                    <WebBanner className={styles.banner} />
                 </div>
             </form>
         </div>

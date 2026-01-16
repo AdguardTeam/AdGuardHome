@@ -2,8 +2,10 @@
 input,
 select,
 textarea {
-    @media screen and (max-width: 1024px) {
-        font-size: 1rem;
+    font-size: 1rem;
+
+    @media screen and (min-width: 1025px) {
+        font-size: inherit;
     }
 }
 
@@ -37,37 +39,38 @@ textarea {
     display: flex;
     gap: 88px;
     justify-content: center;
-    padding: 0 16px;
+    flex-direction: column;
+    padding: 0;
 
-    @media screen and (max-width: 1024px) {
-        flex-direction: column;
-        padding: 0;
+    @media screen and (min-width: 1025px) {
+        flex-direction: row;
+        padding: 0 16px;
     }
 }
 
 .title {
-    font-size: 40px;
+    font-size: 24px;
     font-style: normal;
     font-weight: 700;
     line-height: 120%;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
 
-    @media screen and (max-width: 1024px) {
-        font-size: 24px;
-        margin-bottom: 12px;
+    @media screen and (min-width: 1025px) {
+        font-size: 40px;
+        margin-bottom: 16px;
     }
 }
 
 .titleStep {
-    font-size: 32px;
+    font-size: 24px;
     font-style: normal;
     font-weight: 700;
     line-height: 120%;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
 
-    @media screen and (max-width: 1024px) {
-        font-size: 24px;
-        margin-bottom: 12px;
+    @media screen and (min-width: 1025px) {
+        font-size: 32px;
+        margin-bottom: 16px;
     }
 }
 
@@ -76,26 +79,28 @@ textarea {
 }
 
 .authRequirementsMobile {
-    display: none;
+    display: block;
+    margin: 0 0 16px;
 
-    @media screen and (max-width: 1024px) {
-        display: block;
-        margin: 0 0 16px;
+    .bannerItem {
+        font-size: 14px;
+        margin-top: 16px;
+    }
 
-        .bannerItem {
-            font-size: 14px;
-            margin-top: 16px;
-        }
+    .bannerTitle {
+        display: none;
+    }
 
-        .bannerTitle {
-            display: none;
-        }
+    @media screen and (min-width: 1025px) {
+        display: none;
     }
 }
 
 .authBanner {
-    @media screen and (max-width: 1024px) {
-        display: none;
+    display: none;
+
+    @media screen and (min-width: 1025px) {
+        display: block;
     }
 }
 
@@ -106,10 +111,10 @@ textarea {
     font-style: normal;
     font-weight: 400;
     line-height: 150%;
-    padding-left: 48px;
+    padding: 0 16px;
 
-    @media screen and (max-width: 1024px) {
-        padding: 0 16px;
+    @media screen and (min-width: 1025px) {
+        padding-left: 48px;
     }
 }
 
@@ -120,55 +125,55 @@ textarea {
 }
 
 .desc {
-    font-size: 18px;
+    font-size: 16px;
     font-style: normal;
     font-weight: 400;
     line-height: 150%;
 
-    @media screen and (max-width: 1024px) {
-        font-size: 16px;
+    @media screen and (min-width: 1025px) {
+        font-size: 18px;
     }
+}
 
-    &Step {
+.descStep {
+    margin-bottom: 8px;
+
+    @media screen and (min-width: 1025px) {
         margin-bottom: 24px;
-
-        @media screen and (max-width: 1024px) {
-            font-size: 16px;
-            margin-bottom: 8px;
-        }
     }
+}
 
-    &Adresses {
+.descAdresses {
+    margin-top: 0;
+
+    @media screen and (min-width: 1025px) {
         margin-top: 32px;
-
-        @media screen and (max-width: 1024px) {
-            margin-top: 0;
-            font-size: 16px;
-        }
     }
 }
 
 .list {
     padding-left: 26px;
-    margin: 18px 0 40px;
+    margin: 18px 0 24px;
 
-    @media screen and (max-width: 1024px) {
-        margin-bottom: 24px;
+    @media screen and (min-width: 1025px) {
+        margin: 18px 0 40px;
     }
+}
 
-    &Item {
-        @media screen and (max-width: 1024px) {
-            font-size: 16px;
-        }
+.listItem {
+    font-size: 16px;
+
+    @media screen and (min-width: 1025px) {
+        font-size: inherit;
     }
 }
 
 .group {
     margin-bottom: 35px;
+}
 
-    &:last-child {
-        margin-bottom: 0;
-    }
+.group:last-child {
+    margin-bottom: 0;
 }
 
 .groupCenter {
@@ -179,13 +184,13 @@ textarea {
 
 .consent {
     margin: 32px 0 36px;
+}
 
-    &Content {
-        font-size: 16px;
-        font-style: normal;
-        font-weight: 400;
-        line-height: 130%;
-    }
+.consentContent {
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 130%;
 }
 
 .progress {
@@ -194,29 +199,29 @@ textarea {
     display: flex;
     align-items: center;
     gap: 12px;
+}
 
-    &Wrap {
-        height: 6px;
-        overflow: hidden;
-        width: 464px;
-        display: flex;
-        gap: 4px;
-        background: transparent;
-    }
+.progressWrap {
+    height: 6px;
+    overflow: hidden;
+    width: 464px;
+    display: flex;
+    gap: 4px;
+    background: transparent;
+}
 
-    &Step {
-        flex: 1 1 0;
-        border-radius: 8px;
-        height: 100%;
+.progressStep {
+    flex: 1 1 0;
+    border-radius: 8px;
+    height: 100%;
+}
 
-        &Green {
-            background: var(--product-primary-50);
-        }
+.progressStepGreen {
+    background: var(--product-primary-50);
+}
 
-        &Grey {
-            background-color: #eaeaea;
-        }
-    }
+.progressStepGrey {
+    background-color: #eaeaea;
 }
 
 .button {
@@ -259,16 +264,17 @@ textarea {
 
 .header {
     box-shadow: 4px 4px 8px 0 rgba(0, 0, 0, 0.10);
-    &Content {
-        display: flex;
-        height: 80px;
-        justify-content: space-between;
-        align-items: center;
-        align-self: stretch;
-        width: 100%;
-        max-width: 1176px;
-        margin: 0 auto;
-    }
+}
+
+.headerContent {
+    display: flex;
+    height: 80px;
+    justify-content: space-between;
+    align-items: center;
+    align-self: stretch;
+    width: 100%;
+    max-width: 1176px;
+    margin: 0 auto;
 }
 
 .languageWrap {
@@ -276,38 +282,65 @@ textarea {
     align-items: center;
 }
 
-@media screen and (max-width: 1024px) {
-    .header {
-        &Content {
-            height: auto;
-            flex-wrap: wrap;
-            row-gap: 12px;
-            padding: 24px 16px;
-        }
-    }
+.headerContent {
+    height: auto;
+    flex-wrap: wrap;
+    row-gap: 12px;
+    padding: 24px 16px;
 
-    .logoWrap {
-        order: 1;
+    @media screen and (min-width: 1025px) {
+        height: 80px;
+        flex-wrap: nowrap;
+        row-gap: 0;
         padding: 0;
     }
+}
 
-    .languageWrap {
-        order: 2;
-        margin-left: auto;
+.logoWrap {
+    order: 1;
+    padding: 0;
+
+    @media screen and (min-width: 1025px) {
+        order: 0;
+        padding: 0 0 0 16px;
     }
+}
 
-    .progress {
-        order: 3;
-        width: 100%;
-        justify-content: space-between;
-        align-items: baseline;
+.languageWrap {
+    order: 2;
+    margin-left: auto;
+
+    @media screen and (min-width: 1025px) {
+        order: 0;
+        margin-left: 0;
     }
+}
 
-    .progressWrap {
+.progress {
+    order: 3;
+    width: 100%;
+    justify-content: space-between;
+    align-items: baseline;
+
+    @media screen and (min-width: 1025px) {
+        order: 0;
         width: auto;
-        flex: 1 1 auto;
-        min-width: 0;
-        margin-top: 32px;
+        justify-content: flex-start;
+        align-items: center;
+    }
+}
+
+.progressWrap {
+    width: auto;
+    flex: 1 1 auto;
+    min-width: 0;
+    margin-top: 32px;
+
+    @media screen and (min-width: 1025px) {
+        width: 464px;
+        flex: 0 0 auto;
+        min-width: auto;
+        margin-top: 0;
     }
 }
 
@@ -315,102 +348,103 @@ textarea {
     display: flex;
     justify-content: space-between;
     gap: 40px;
-    padding-top: 116px;
+    padding-top: 40px;
     align-items: center;
 
-    @media screen and (max-width: 1024px) {
-        padding-top: 40px;
+    .content {
+        display: none;
     }
 
-    @media screen and (max-width: 1024px) {
+    @media screen and (min-width: 1025px) {
+        padding-top: 116px;
+
         .content {
-            display: none;
+            display: block;
         }
     }
 }
 
 .configSetting {
-    padding-top: 48px;
+    padding-top: 40px;
 
-    @media screen and (max-width: 1024px) {
-        padding-top: 40px;
+    @media screen and (min-width: 1025px) {
+        padding-top: 48px;
     }
 }
 
 .banner {
-    display: flex;
-    width: 400px;
-    padding: 26px 16px 16px 24px;
-    flex-direction: column;
-    align-items: flex-start;
-    border-radius: 16px;
-    box-shadow: 8px 8px 24px 0 rgba(0, 0, 0, 0.10);
+    display: none;
+    box-shadow: none;
+    padding: 0;
+    margin-bottom: 24px;
 
-    @media screen and (max-width: 1024px) {
-        display: none;
-        box-shadow: none;
-        padding: 0;
-        margin-bottom: 24px;
-    }
-
-    &List {
-        list-style: none;
-        padding: 0;
-        margin: 0
-    }
-
-    &Item {
+    @media screen and (min-width: 1025px) {
         display: flex;
-        align-items: center;
-        justify-content: flex-start;
-        gap: 8px;
-        font-size: 16px;
-        font-style: normal;
-        font-weight: 400;
-        line-height: 130%;
-        margin-top: 16px;
+        width: 400px;
+        padding: 26px 16px 16px 24px;
+        flex-direction: column;
+        align-items: flex-start;
+        border-radius: 16px;
+        box-shadow: 8px 8px 24px 0 rgba(0, 0, 0, 0.10);
+        margin-bottom: 0;
     }
+}
 
-    &Label {
-        color: var(--gray-70);
-        font-size: 14px;
-        font-style: normal;
-        font-weight: 400;
-        line-height: 130%;
-    }
-
-    &Title {
+@media screen and (min-width: 1025px) {
+    .bannerTitle {
         font-size: 24px;
-        font-style: normal;
-        font-weight: 700;
-        line-height: 120%;
-        margin-bottom: 8px;
-
-        @media screen and (max-width: 1024px) {
-            font-size: 20px;
-        }
     }
 
-    &Inputs {
-        @media screen and (max-width: 1024px) {
-            width: 100%;
-        }
+    .bannerInputs {
+        width: auto;
     }
+}
+
+.bannerList {
+    list-style: none;
+    padding: 0;
+    margin: 0
+}
+
+.bannerItem {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 130%;
+    margin-top: 16px;
+}
+
+.bannerLabel {
+    color: var(--gray-70);
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 130%;
+}
+
+.bannerTitle {
+    font-size: 24px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 120%;
+    margin-bottom: 8px;
+}
+
+.bannerInputs {
+    width: 100%;
 }
 
 .bannerMobile {
-    display: none;
+    display: flex;
+    width: 100%;
+    margin-top: 16px;
 
-    @media screen and (max-width: 1024px) {
-        display: flex;
-        width: 100%;
-        margin-top: 16px;
-    }
-}
-
-@media screen and (max-width: 1024px) {
-    .banner.bannerMobile {
-        display: flex;
+    @media screen and (min-width: 1025px) {
+        display: none;
     }
 }
 
@@ -422,21 +456,18 @@ textarea {
 .nav {
     display: flex;
     gap: 24px;
+    flex-direction: column-reverse;
 
-    @media screen and (max-width: 1024px) {
-        flex-direction: column-reverse;
+    button {
+        max-width: 100%;
+    }
+
+    @media screen and (min-width: 1025px) {
+        flex-direction: row;
 
         button {
-            max-width: 100%;
+            max-width: 200px;
         }
-    }
-}
-
-.logoWrap {
-    padding: 0 0 0 16px;
-
-    @media screen and (max-width: 1024px) {
-        padding: 0;
     }
 }
 
@@ -448,15 +479,25 @@ textarea {
     align-items: center;
     text-align: center;
     height: 100%;
-    padding-top: 116px;
-    @media screen and (max-width: 767px) {
+    padding: 48px 16px 24px;
+
+    @media screen and (min-width: 768px) {
         padding: 48px 16px 24px;
     }
 
-    & button {
-        @media screen and (max-width: 767px) {
-            max-width: 100%;
-        }
+    @media screen and (min-width: 1025px) {
+        padding-top: 116px;
+        padding-left: 0;
+        padding-right: 0;
+        padding-bottom: 0;
+    }
+}
+
+.end button {
+    max-width: 100%;
+
+    @media screen and (min-width: 1025px) {
+        max-width: unset;
     }
 }
 
@@ -469,40 +510,40 @@ textarea {
 }
 
 .quoteTitle {
-    font-size: 24px;
+    font-size: 20px;
     font-style: normal;
     font-weight: 700;
-    margin-bottom: 32px;
+    margin-bottom: 28px;
     line-height: 120%;
 
-    @media screen and (max-width: 1024px) {
-        font-size: 20px;
-        margin-bottom: 28px;
+    @media screen and (min-width: 1025px) {
+        font-size: 24px;
+        margin-bottom: 32px;
     }
 }
 
 .quoteDesc {
-    font-size: 18px;
+    font-size: 16px;
     font-style: normal;
     font-weight: 400;
     line-height: 150%;
     position: relative;
     padding-left: 16px;
 
-    &::before {
-        content: "";
-        height: 100%;
-        position: absolute;
-        left: 0;
-        border-radius: 8px;
-        width: 4px;
-        display: block;
-        background-color: var(--orange-50);
+    @media screen and (min-width: 1025px) {
+        font-size: 18px;
     }
+}
 
-    @media screen and (max-width: 1024px) {
-        font-size: 16px;
-    }
+.quoteDesc::before {
+    content: "";
+    height: 100%;
+    position: absolute;
+    left: 0;
+    border-radius: 8px;
+    width: 4px;
+    display: block;
+    background-color: var(--orange-50);
 }
 
 .message {
@@ -529,25 +570,25 @@ textarea {
     background: transparent;
     color: var(--default-description-text);
     cursor: pointer;
+}
 
-    &:disabled {
-        opacity: 0.4;
-        cursor: default;
-    }
+.inputIconButton:disabled {
+    opacity: 0.4;
+    cursor: default;
 }
 
 .addressList {
     padding-left: 20px;
+}
 
-    &Wrapper {
-        margin-bottom: 40px;
-    }
+.addressListWrapper {
+    margin-bottom: 40px;
+}
 
-    &Item {
-        margin-bottom: 16px;
+.addressListItem {
+    margin-bottom: 16px;
+}
 
-        &:last-child {
-            margin-bottom: 0;
-        }
-    }
+.addressListItem:last-child {
+    margin-bottom: 0;
 }

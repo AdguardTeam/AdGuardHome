@@ -20,7 +20,7 @@ import {
 import { validateRequiredValue, validateInstallPort } from '../../helpers/validators';
 import { InstallInterface } from '../../initialState';
 import { toNumber } from '../../helpers/form';
-import setup from './styles.module.pcss'
+import styles from './styles.module.pcss';
 
 import type { ConfigType, DnsConfig, SettingsFormValues, StaticIpType, WebConfig } from './types';
 
@@ -154,7 +154,7 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                 case STATUS_RESPONSE.NO:
                     return (
                         <>
-                            <div className={setup.spacerBottom}>
+                            <div className={styles.spacerBottom}>
                                 {intl.getMessage('install_static_configure', { ip }).replace('{ip}', ip)}
                             </div>
 
@@ -162,7 +162,7 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                                 type="button"
                                 size="small"
                                 variant="secondary"
-                                className={setup.button}
+                                className={styles.button}
                                 onClick={() => handleStaticIp(ip)}>
                                 {intl.getMessage('set_static_ip')}
                             </Button>
@@ -170,13 +170,13 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                     );
                 case STATUS_RESPONSE.ERROR:
                     return (
-                        <div className={setup.errorText}>
+                        <div className={styles.errorText}>
                             {intl.getMessage('install_static_error')}
                         </div>
                     );
                 case STATUS_RESPONSE.YES:
                     return (
-                        <div className={setup.successText}>
+                        <div className={styles.successText}>
                             {intl.getMessage('install_static_ok')}
                         </div>
                     );
@@ -193,14 +193,14 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
     };
 
     return (
-        <form className={setup.step} onSubmit={reactHookFormSubmit(onSubmit)}>
-            <div className={setup.group}>
-                <div className={setup.subtitle}>
+        <form className={styles.step} onSubmit={reactHookFormSubmit(onSubmit)}>
+            <div className={styles.group}>
+                <div className={styles.subtitle}>
                     {intl.getMessage('install_settings_title')}
                 </div>
 
-                <div className={setup.form}>
-                    <label className={setup.bannerLabel}>
+                <div className={styles.form}>
+                    <label className={styles.bannerLabel}>
                         {intl.getMessage('network_interface')}
                     </label>
                     <Controller
@@ -217,8 +217,8 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                     />
                 </div>
 
-                <div className={setup.form}>
-                    <label className={setup.bannerLabel}>
+                <div className={styles.form}>
+                    <label className={styles.bannerLabel}>
                         {intl.getMessage('install_settings_port')}
                     </label>
                     <Controller
@@ -248,7 +248,7 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
 
                 <div>
                     {webStatus && (
-                        <div className={`${setup.setup__error} ${setup.errorRow} ${setup.errorText}`}>
+                        <div className={`${styles.setup__error} ${styles.errorRow} ${styles.errorText}`}>
                             {webStatus}
                             {isWebFixAvailable && (
                                 <Button
@@ -256,7 +256,7 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                                     id="install_web_fix"
                                     size="small"
                                     variant="secondary"
-                                    className={setup.inlineButton}
+                                    className={styles.inlineButton}
                                     onClick={() => handleAutofix('web')}>
                                     {intl.getMessage('fix')}
                                 </Button>
@@ -265,7 +265,7 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                     )}
                 </div>
 
-                <div className={setup.desc}>
+                <div className={styles.desc}>
                     {intl.getMessage('install_settings_interface_link')}
 
                     <div>
@@ -278,13 +278,13 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                 </div>
             </div>
 
-            <div className={setup.group}>
-                <div className={setup.subtitle}>
+            <div className={styles.group}>
+                <div className={styles.subtitle}>
                     {intl.getMessage('install_settings_dns')}
                 </div>
 
-                <div className={setup.form}>
-                    <label className={setup.bannerLabel}>
+                <div className={styles.form}>
+                    <label className={styles.bannerLabel}>
                         {intl.getMessage('network_interface')}
                     </label>
                     <Controller
@@ -301,8 +301,8 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                     />
                 </div>
 
-                <div className={setup.form}>
-                    <label className={setup.bannerLabel}>
+                <div className={styles.form}>
+                    <label className={styles.bannerLabel}>
                         {intl.getMessage('install_settings_port')}
                     </label>
                     <Controller
@@ -334,7 +334,7 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                 <div>
                     {dnsStatus && (
                         <>
-                            <div className={`${setup.setup__error} ${setup.errorRow} ${setup.errorText}`}>
+                            <div className={`${styles.setup__error} ${styles.errorRow} ${styles.errorText}`}>
                                 {dnsStatus}
                                 {isDnsFixAvailable && (
                                     <Button
@@ -342,19 +342,19 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                                         id="install_dns_fix"
                                         size="small"
                                         variant="secondary"
-                                        className={setup.inlineButton}
+                                        className={styles.inlineButton}
                                         onClick={() => handleAutofix('dns')}>
                                         {intl.getMessage('fix')}
                                     </Button>
                                 )}
                             </div>
                             {isDnsFixAvailable && (
-                                <div className={`${setup.mutedText} ${setup.spacerBottom}`}>
-                                    <p className={setup.compactParagraph}>
+                                <div className={`${styles.mutedText} ${styles.spacerBottom}`}>
+                                    <p className={styles.compactParagraph}>
                                         {intl.getMessage('autofix_warning_text')}
                                     </p>
                                     {intl.getMessage('autofix_warning_list')}
-                                    <p className={setup.compactParagraph}>
+                                    <p className={styles.compactParagraph}>
                                         {intl.getMessage('autofix_warning_result')}
                                     </p>
                                 </div>
@@ -370,7 +370,7 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                         )}
                 </div>
 
-                <div className={setup.desc}>
+                <div className={styles.desc}>
                     {intl.getMessage('install_settings_dns_desc')}
 
                     <div>
@@ -384,12 +384,12 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                 </div>
             </div>
 
-            <div className={setup.group}>
-                <div className={setup.subtitle}>
+            <div className={styles.group}>
+                <div className={styles.subtitle}>
                     {intl.getMessage('static_ip')}
                 </div>
 
-                <div className={setup.spacerBottom}>
+                <div className={styles.spacerBottom}>
                     {intl.getMessage('static_ip_desc')}
                 </div>
 

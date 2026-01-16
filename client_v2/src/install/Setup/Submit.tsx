@@ -6,7 +6,7 @@ import { Button } from 'panel/common/ui/Button';
 import { RootState } from 'panel/initialState';
 import Controls from './Controls';
 import type { WebConfig } from './types';
-import setup from './styles.module.pcss'
+import styles from './styles.module.pcss';
 
 type Props = {
     webConfig: WebConfig;
@@ -18,11 +18,11 @@ export const Submit = ({ openDashboard, webConfig, onSubmit }: Props) => {
     const { processingSubmit, submitted } = useSelector((state: RootState) => state.install!);
 
     return (
-        <div className={setup.end}>
-            <div className={setup.group}>
-                <h1 className={setup.titleStep}>{intl.getMessage('install_submit_title')}</h1>
+        <div className={styles.end}>
+            <div className={styles.group}>
+                <h1 className={styles.titleStep}>{intl.getMessage('install_submit_title')}</h1>
 
-                <p className={setup.desc}>
+                <p className={styles.desc}>
                     {intl.getMessage('setup_complete')}
                 </p>
             </div>
@@ -33,7 +33,7 @@ export const Submit = ({ openDashboard, webConfig, onSubmit }: Props) => {
                     type="button"
                     size="small"
                     variant="primary"
-                    className={setup.button}
+                    className={styles.button}
                     disabled={processingSubmit}
                     onClick={onSubmit}
                 >

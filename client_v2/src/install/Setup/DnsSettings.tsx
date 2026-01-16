@@ -5,7 +5,7 @@ import { Input } from 'panel/common/controls/Input';
 import { Select } from 'panel/common/controls/Select';
 import intl from 'panel/common/intl';
 import { Button } from 'panel/common/ui/Button';
-import setup from 'panel/install/Setup/styles.module.pcss';
+import styles from 'panel/install/Setup/styles.module.pcss';
 import Controls from './Controls';
 
 import AddressList from './AddressList';
@@ -57,14 +57,14 @@ export const DnsSettings = ({ handleSubmit, handleFix, validateForm, config, int
 
     const DnsBanner = ({ className }: { className: string }) => (
         <div className={className}>
-            <div className={setup.bannerInputs}>
-                <div className={setup.group}>
-                    <div className={setup.bannerTitle}>
+            <div className={styles.bannerInputs}>
+                <div className={styles.group}>
+                    <div className={styles.bannerTitle}>
                         {intl.getMessage('setup_dns_title_banner')}
                     </div>
 
-                    <div className={setup.form}>
-                        <label className={setup.bannerLabel}>
+                    <div className={styles.form}>
+                        <label className={styles.bannerLabel}>
                             {intl.getMessage('network_interface')}
                         </label>
                         <Controller<SettingsFormValues, 'dns.ip'>
@@ -84,8 +84,8 @@ export const DnsSettings = ({ handleSubmit, handleFix, validateForm, config, int
                         />
                     </div>
 
-                    <div className={setup.form}>
-                        <label className={setup.bannerLabel}>
+                    <div className={styles.form}>
+                        <label className={styles.bannerLabel}>
                             {intl.getMessage('install_settings_port')}
                         </label>
                         <Controller<SettingsFormValues, 'dns.port'>
@@ -117,7 +117,7 @@ export const DnsSettings = ({ handleSubmit, handleFix, validateForm, config, int
                     <div>
                         {dnsStatus && (
                             <>
-                                <div className={`${setup.setup__error} ${setup.errorRow} ${setup.errorText}`}>
+                                <div className={`${styles.setup__error} ${styles.errorRow} ${styles.errorText}`}>
                                     {dnsStatus}
                                     {isDnsFixAvailable && (
                                         <Button
@@ -125,19 +125,19 @@ export const DnsSettings = ({ handleSubmit, handleFix, validateForm, config, int
                                             id="install_dns_fix"
                                             size="small"
                                             variant="secondary"
-                                            className={setup.inlineButton}
+                                            className={styles.inlineButton}
                                             onClick={() => handleAutofix('dns')}>
                                             {intl.getMessage('fix')}
                                         </Button>
                                     )}
                                 </div>
                                 {isDnsFixAvailable && (
-                                    <div className={setup.mutedText}>
-                                        <p className={setup.compactParagraph}>
+                                    <div className={styles.mutedText}>
+                                        <p className={styles.compactParagraph}>
                                             {intl.getMessage('autofix_warning_text')}
                                         </p>
                                         {intl.getMessage('autofix_warning_list')}
-                                        <p className={setup.compactParagraph}>
+                                        <p className={styles.compactParagraph}>
                                             {intl.getMessage('autofix_warning_result')}
                                         </p>
                                     </div>
@@ -158,17 +158,17 @@ export const DnsSettings = ({ handleSubmit, handleFix, validateForm, config, int
     );
 
     return (
-        <div className={setup.configSetting}>
-            <form className={setup.step} onSubmit={reactHookFormSubmit(onSubmit)}>
-                <div className={setup.info}>
+        <div className={styles.configSetting}>
+            <form className={styles.step} onSubmit={reactHookFormSubmit(onSubmit)}>
+                <div className={styles.info}>
                     <div>
-                        <div className={setup.titleStep}>{intl.getMessage('setup_dns_title')}</div>
+                        <div className={styles.titleStep}>{intl.getMessage('setup_dns_title')}</div>
 
-                        <p className={setup.descAdresses}>{intl.getMessage('setup_dns_desc')}</p>
+                        <p className={styles.descAdresses}>{intl.getMessage('setup_dns_desc')}</p>
 
-                        <DnsBanner className={`${setup.banner} ${setup.bannerMobile}`} />
+                        <DnsBanner className={`${styles.banner} ${styles.bannerMobile}`} />
                     </div>
-                    <div className={setup.addressListWrapper}>
+                    <div className={styles.addressListWrapper}>
                         <AddressList
                             interfaces={interfaces}
                             address={watchFields.dns?.ip}
@@ -176,19 +176,19 @@ export const DnsSettings = ({ handleSubmit, handleFix, validateForm, config, int
                             isDns={true}
                         />
                     </div>
-                    <div className={setup.quote}>
-                        <div className={setup.quoteTitle}>
+                    <div className={styles.quote}>
+                        <div className={styles.quoteTitle}>
                             {intl.getMessage('setup_dns_quote_title')}
                         </div>
-                        <div className={setup.quoteDesc}>
+                        <div className={styles.quoteDesc}>
                             {intl.getMessage(("setup_dns_quote_desc"))}
                         </div>
                     </div>
 
                     <Controls invalid={!isValid} />
                 </div>
-                <div className={setup.content}>
-                    <DnsBanner className={setup.banner} />
+                <div className={styles.content}>
+                    <DnsBanner className={styles.banner} />
                 </div>
             </form>
         </div>

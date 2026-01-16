@@ -9,7 +9,7 @@ import { Logo } from 'panel/common/ui/Sidebar';
 import { InstallInterface, InstallState, RootState } from 'panel/initialState';
 import { SetupGuide } from 'panel/components/SetupGuide/SetupGuide';
 import * as actionCreators from '../../actions/install';
-import { stripZoneId } from './helpers'
+import { stripZoneId } from './helpers';
 
 import { getInterfaceIp, getWebAddress, setHtmlLangAttr } from '../../helpers/helpers';
 import { INSTALL_TOTAL_STEPS, ALL_INTERFACES_IP, DEBOUNCE_TIMEOUT } from '../../helpers/constants';
@@ -24,7 +24,7 @@ import { Progress } from './Progress';
 import { Auth } from './Auth';
 import Toasts from '../../components/Toasts';
 
-import setup from './styles.module.pcss';
+import styles from './styles.module.pcss';
 import twosky from '../../../../.twosky.json';
 import { changeLanguage as changeLanguageAction } from '../../actions';
 import { LanguageDropdown } from '../../common/ui/LanguageDropdown/LanguageDropdown';
@@ -181,14 +181,14 @@ export const Setup = () => {
 
     return (
         <>
-            <div className={setup.setup}>
-                <div className={setup.header}>
-                    <div className={setup.headerContent}>
-                        <div className={setup.logoWrap}>
+            <div className={styles.setup}>
+                <div className={styles.header}>
+                    <div className={styles.headerContent}>
+                        <div className={styles.logoWrap}>
                             <Logo id="header" />
                         </div>
                         <Progress step={step} />
-                        <div className={setup.languageWrap}>
+                        <div className={styles.languageWrap}>
                             <LanguageDropdown
                                 value={currentLanguage}
                                 languages={LANGUAGES}
@@ -200,7 +200,7 @@ export const Setup = () => {
                     </div>
                 </div>
 
-                <div className={setup.container}>{renderPage(step, { web, dns, staticIp }, interfaces)}</div>
+                <div className={styles.container}>{renderPage(step, { web, dns, staticIp }, interfaces)}</div>
             </div>
 
             <Toasts />

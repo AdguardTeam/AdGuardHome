@@ -1,7 +1,7 @@
 import React from 'react';
-import intl from "panel/common/intl"
+import intl from 'panel/common/intl';
 import { INSTALL_TOTAL_STEPS } from '../../helpers/constants';
-import setup from './styles.module.pcss'
+import styles from './styles.module.pcss';
 
 type Props = { step: number };
 
@@ -14,16 +14,16 @@ export const Progress = ({ step }: Props) => {
     }
 
     return (
-        <div className={setup.progress}>
+        <div className={styles.progress}>
             <div>
-                <div className={setup.message}>
-                    {intl.getMessage("install_step")}
+                <div className={styles.message}>
+                    {intl.getMessage('install_step')}
                 </div>
                 {progressStep}/{totalProgressSteps}
             </div>
 
             <div
-                className={setup.progressWrap}
+                className={styles.progressWrap}
                 role="progressbar"
                 aria-valuenow={progressStep}
                 aria-valuemin={1}
@@ -36,8 +36,8 @@ export const Progress = ({ step }: Props) => {
                     return (
                         <div
                             key={installStep}
-                            className={`${setup.progressStep} ${
-                                isDoneOrCurrent ? setup.progressStepGreen : setup.progressStepGrey
+                            className={`${styles.progressStep} ${
+                                isDoneOrCurrent ? styles.progressStepGreen : styles.progressStepGrey
                             }`}
                         />
                     );

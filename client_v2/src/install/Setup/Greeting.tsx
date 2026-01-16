@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 
 import intl from 'panel/common/intl';
 import Controls from './Controls';
-import setup from './styles.module.pcss'
+import styles from './styles.module.pcss';
 
 import routerImage from '../../img/router.svg';
 
@@ -19,15 +19,15 @@ const Greeting = () => {
     );
 
     return (
-        <div className={setup.greeting}>
-            <div className={setup.info}>
-                <h1 className={setup.title}>{intl.getMessage('setup_guide_greeting_title')}</h1>
+        <div className={styles.greeting}>
+            <div className={styles.info}>
+                <h1 className={styles.title}>{intl.getMessage('setup_guide_greeting_title')}</h1>
 
-                <p className={setup.desc}>{intl.getMessage('setup_guide_greeting_desc')}</p>
+                <p className={styles.desc}>{intl.getMessage('setup_guide_greeting_desc')}</p>
 
-                <ul className={setup.list}>
+                <ul className={styles.list}>
                     {configureList.map((item, idx) => (
-                        <li key={idx} className={setup.listItem}>
+                        <li key={idx} className={styles.listItem}>
                             {item}
                         </li>
                     ))}
@@ -36,7 +36,7 @@ const Greeting = () => {
                 <Controls />
             </div>
 
-            <div className={setup.content}>
+            <div className={styles.content}>
                 <img src={routerImage} alt="Router" />
             </div>
         </div>
