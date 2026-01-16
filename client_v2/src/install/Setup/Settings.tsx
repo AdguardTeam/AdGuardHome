@@ -5,6 +5,7 @@ import intl from 'panel/common/intl';
 import { Input } from 'panel/common/controls/Input';
 import { Button } from 'panel/common/ui/Button';
 import Controls from './Controls';
+import cn from 'clsx';
 import AddressList from './AddressList';
 
 import { getInterfaceIp } from '../../helpers/helpers';
@@ -26,7 +27,7 @@ import type { ConfigType, DnsConfig, SettingsFormValues, StaticIpType, WebConfig
 
 type Props = {
     handleSubmit: (data: SettingsFormValues) => void;
-    handleChange?: (data: SettingsFormValues) => unknown;
+    handleChange?: (data: SettingsFormValues) => void;
     handleFix: (web: WebConfig, dns: DnsConfig, set_static_ip: boolean) => void;
     validateForm: (data: SettingsFormValues) => void;
     config: ConfigType;
@@ -248,7 +249,7 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
 
                 <div>
                     {webStatus && (
-                        <div className={`${styles.setup__error} ${styles.errorRow} ${styles.errorText}`}>
+                        <div className={cn(styles.setup__error, styles.errorRow, styles.errorText)}>
                             {webStatus}
                             {isWebFixAvailable && (
                                 <Button
@@ -334,7 +335,7 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                 <div>
                     {dnsStatus && (
                         <>
-                            <div className={`${styles.setup__error} ${styles.errorRow} ${styles.errorText}`}>
+                            <div className={cn(styles.setup__error, styles.errorRow, styles.errorText)}>
                                 {dnsStatus}
                                 {isDnsFixAvailable && (
                                     <Button
@@ -349,7 +350,7 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                                 )}
                             </div>
                             {isDnsFixAvailable && (
-                                <div className={`${styles.mutedText} ${styles.spacerBottom}`}>
+                                <div className={cn(styles.mutedText, styles.spacerBottom)}>
                                     <p className={styles.compactParagraph}>
                                         {intl.getMessage('autofix_warning_text')}
                                     </p>

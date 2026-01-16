@@ -7,6 +7,7 @@ import intl from 'panel/common/intl';
 import { Button } from 'panel/common/ui/Button';
 import styles from 'panel/install/Setup/styles.module.pcss';
 import Controls from './Controls';
+import cn from 'clsx';
 import AddressList from './AddressList';
 import { buildInterfaceOptions } from './interfaceOptions';
 import { createHandleAutofix, useInstallSettingsForm } from './useInstallSettingsForm';
@@ -25,7 +26,7 @@ import type { ConfigType, DnsConfig, SettingsFormValues, StaticIpType, WebConfig
 
 type Props = {
     handleSubmit: (data: SettingsFormValues) => void;
-    handleChange?: (data: SettingsFormValues) => unknown;
+    handleChange?: (data: SettingsFormValues) => void;
     handleFix: (web: WebConfig, dns: DnsConfig, set_static_ip: boolean) => void;
     validateForm: (data: SettingsFormValues) => void;
     config: ConfigType;
@@ -171,7 +172,7 @@ export const InterfaceSettings = ({ handleSubmit, handleFix, validateForm, confi
 
                 <div>
                     {webStatus && (
-                        <div className={`${styles.setup__error} ${styles.errorRow} ${styles.errorText}`}>
+                        <div className={cn(styles.setup__error, styles.errorRow, styles.errorText)}>
                             {webStatus}
                             {isWebFixAvailable && (
                                 <Button
@@ -201,7 +202,7 @@ export const InterfaceSettings = ({ handleSubmit, handleFix, validateForm, confi
 
                         <p className={styles.descAdresses}>{intl.getMessage('setup_ui_desc')}</p>
 
-                        <WebBanner className={`${styles.banner} ${styles.bannerMobile}`} />
+                        <WebBanner className={cn(styles.banner, styles.bannerMobile)} />
                     </div>
 
                     <AddressList

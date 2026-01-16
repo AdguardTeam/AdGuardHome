@@ -9,7 +9,6 @@ import { Logo } from 'panel/common/ui/Sidebar';
 import { InstallInterface, InstallState, RootState } from 'panel/initialState';
 import { SetupGuide } from 'panel/components/SetupGuide/SetupGuide';
 import * as actionCreators from '../../actions/install';
-import { stripZoneId } from './helpers';
 
 import { getInterfaceIp, getWebAddress, setHtmlLangAttr } from '../../helpers/helpers';
 import { INSTALL_TOTAL_STEPS, ALL_INTERFACES_IP, DEBOUNCE_TIMEOUT } from '../../helpers/constants';
@@ -28,18 +27,10 @@ import styles from './styles.module.pcss';
 import twosky from '../../../../.twosky.json';
 import { changeLanguage as changeLanguageAction } from '../../actions';
 import { LanguageDropdown } from '../../common/ui/LanguageDropdown/LanguageDropdown';
+import { getDnsAddressWithPort } from './helpers';
 
 const LANGUAGES = twosky[1].languages;
 
-const getDnsAddressWithPort = (ip: string, port: number) => {
-    const normalizedIp = stripZoneId(ip);
-
-    if (normalizedIp.includes(':') && !normalizedIp.includes('[')) {
-        return `[${normalizedIp}]:${port}`;
-    }
-
-    return `${normalizedIp}:${port}`;
-};
 
 const getInstallDnsAddresses = (dns: { ip: string; port: number }, interfaces: InstallInterface[]) => {
     if (!dns?.ip || !dns?.port) {

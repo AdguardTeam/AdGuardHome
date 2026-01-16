@@ -2,6 +2,7 @@ import React from 'react';
 import intl from 'panel/common/intl';
 import { INSTALL_TOTAL_STEPS } from '../../helpers/constants';
 import styles from './styles.module.pcss';
+import cn from 'clsx';
 
 type Props = { step: number };
 
@@ -36,9 +37,10 @@ export const Progress = ({ step }: Props) => {
                     return (
                         <div
                             key={installStep}
-                            className={`${styles.progressStep} ${
-                                isDoneOrCurrent ? styles.progressStepGreen : styles.progressStepGrey
-                            }`}
+                            className={cn(styles.progressStep, {
+                                [styles.progressStepGreen]: isDoneOrCurrent,
+                                [styles.progressStepGrey]: !isDoneOrCurrent,
+                            })}
                         />
                     );
                 })}

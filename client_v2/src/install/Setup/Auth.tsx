@@ -2,18 +2,15 @@ import React, { useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Input } from 'panel/common/controls/Input';
 import intl from 'panel/common/intl';
-import { Icon } from 'panel/common/ui/Icon';
 import { Checkbox } from 'panel/common/controls/Checkbox';
 import { PRIVACY_POLICY_LINK } from 'panel/helpers/constants';
 import { PasswordInput } from './PasswordInput';
 import Controls from './Controls';
 import { validatePasswordLength, validateRequiredValue } from '../../helpers/validators';
 import { hasMinLength, hasLowercase, hasUppercase, hasAllowedAsciiOnly, hasNumberOrSpecial } from './helpers';
+import { PasswordRequirements } from './PasswordRequirements';
 import styles from './styles.module.pcss';
-
-type RequirementIconProps = {
-    ok: boolean;
-};
+import cn from 'clsx';
 
 type AuthFormValues = {
     username: string;
@@ -25,57 +22,6 @@ type AuthFormValues = {
 type Props = {
     onAuthSubmit: (values: AuthFormValues) => void;
 };
-
-const RequirementIcon = ({ ok }: RequirementIconProps) => {
-    const iconName = ok ? 'check' : 'cross';
-    const iconColor = ok ? 'green' : 'red';
-
-    return <Icon icon={iconName} color={iconColor} />;
-};
-
-type PasswordRequirementsProps = {
-    requirements: {
-        minLength: boolean;
-        allowedChars: boolean;
-        lowercase: boolean;
-        uppercase: boolean;
-        match: boolean;
-    };
-    className?: string;
-};
-
-const PasswordRequirements = ({ requirements, className }: PasswordRequirementsProps) => (
-    <div className={className}>
-        <h3 className={styles.bannerTitle}>{intl.getMessage('password_requirements')}</h3>
-
-        <ul className={styles.bannerList}>
-            <li className={styles.bannerItem}>
-                <RequirementIcon ok={requirements.minLength} />
-                {intl.getMessage('password_requirements_characters')}
-            </li>
-
-            <li className={styles.bannerItem}>
-                <RequirementIcon ok={requirements.allowedChars} />
-                {intl.getMessage('password_requirements_special')}
-            </li>
-
-            <li className={styles.bannerItem}>
-                <RequirementIcon ok={requirements.lowercase} />
-                {intl.getMessage('password_requirements_lowercase')}
-            </li>
-
-            <li className={styles.bannerItem}>
-                <RequirementIcon ok={requirements.uppercase} />
-                {intl.getMessage('password_requirements_uppercase')}
-            </li>
-
-            <li className={styles.bannerItem}>
-                <RequirementIcon ok={requirements.match} />
-                {intl.getMessage('password_requirements_match')}
-            </li>
-        </ul>
-    </div>
-);
 
 export const Auth = ({ onAuthSubmit }: Props) => {
     const {
@@ -231,7 +177,7 @@ export const Auth = ({ onAuthSubmit }: Props) => {
                 </div>
 
                 <div className={styles.content}>
-                    <PasswordRequirements requirements={requirements} className={`${styles.banner} ${styles.authBanner}`} />
+                    <PasswordRequirements requirements={requirements} className={cn(styles.banner, styles.authBanner)} />
                 </div>
             </form>
         </div>

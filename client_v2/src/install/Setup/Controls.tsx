@@ -1,36 +1,34 @@
-import React, { Component } from 'react';
-import { connect } from 'react-redux';
+import React from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 
 import { Button } from 'panel/common/ui/Button';
 import intl from 'panel/common/intl';
+import { InstallState } from 'panel/initialState';
 import * as actionCreators from '../../actions/install';
 import styles from './styles.module.pcss';
 
 interface ControlsProps {
-    install: {
-        step: number;
-        processingSubmit: boolean;
-        dns: {
-            status: string;
-        };
-        web: {
-            status: string;
-        };
-    };
-    nextStep?: (...args: unknown[]) => unknown;
-    prevStep?: (...args: unknown[]) => unknown;
-    openDashboard?: (...args: unknown[]) => unknown;
-    submitting?: boolean;
     invalid?: boolean;
-    pristine?: boolean;
     ip?: string;
     port?: number;
     isDirty?: boolean;
     isValid?: boolean;
+    openDashboard?: (ip: string, port: number) => void;
 }
 
-class Controls extends Component<ControlsProps> {
-    renderPrevButton(step: any) {
+const Controls = ({ invalid, isValid, ip, port, openDashboard }: ControlsProps) => {
+    const dispatch = useDispatch();
+    const install = useSelector((state: InstallState) => state.install);
+
+    const handleNextStep = () => {
+        dispatch(actionCreators.nextStep());
+    };
+
+    const handlePrevStep = () => {
+        dispatch(actionCreators.prevStep());
+    };
+
+    const renderPrevButton = (step: number) => {
         switch (step) {
             case 2:
             case 3:
@@ -43,7 +41,7 @@ class Controls extends Component<ControlsProps> {
                         size="small"
                         variant="secondary"
                         className={styles.button}
-                        onClick={this.props.prevStep}>
+                        onClick={handlePrevStep}>
                         {intl.getMessage('back')}
                     </Button>
                 );
@@ -52,11 +50,9 @@ class Controls extends Component<ControlsProps> {
             default:
                 return false;
         }
-    }
+    };
 
-    renderNextButton(step: any) {
-        const { nextStep, ip, port, isValid, invalid } = this.props;
-
+    const renderNextButton = (step: number) => {
         const isNextDisabled = invalid === true || isValid === false;
 
         switch (step) {
@@ -65,11 +61,11 @@ class Controls extends Component<ControlsProps> {
                     <Button
                         id="install_get_started"
                         type="button"
-                        onClick={nextStep}
+                        onClick={handleNextStep}
                         size="small"
                         variant="primary"
                         className={styles.button}>
-                        {intl.getMessage("setup_guide_greeting_button")}
+                        {intl.getMessage('setup_guide_greeting_button')}
                     </Button>
                 );
             case 2:
@@ -91,7 +87,7 @@ class Controls extends Component<ControlsProps> {
                     <Button
                         id="install_next"
                         type="button"
-                        onClick={nextStep}
+                        onClick={handleNextStep}
                         size="small"
                         variant="primary"
                         className={styles.button}
@@ -107,30 +103,25 @@ class Controls extends Component<ControlsProps> {
                         size="small"
                         variant="primary"
                         className={styles.button}
-                        onClick={() => this.props.openDashboard && this.props.openDashboard(ip!, port!)}>
-                        {intl.getMessage("open_dashboard")}
+                        onClick={() => {
+                            if (openDashboard && ip && port) {
+                                openDashboard(ip, port);
+                            }
+                        }}>
+                        {intl.getMessage('open_dashboard')}
                     </Button>
                 );
             default:
                 return false;
         }
-    }
+    };
 
-    render() {
-        const { install } = this.props;
-
-        return (
-            <div className={styles.nav}>
-                {this.renderNextButton(install.step)}
-                {this.renderPrevButton(install.step)}
-            </div>
-        );
-    }
-}
-
-const mapStateToProps = (state: any) => {
-    const { install } = state;
-    return { install };
+    return (
+        <div className={styles.nav}>
+            {renderNextButton(install.step)}
+            {renderPrevButton(install.step)}
+        </div>
+    );
 };
 
-export default connect(mapStateToProps, actionCreators)(Controls);
+export default Controls;

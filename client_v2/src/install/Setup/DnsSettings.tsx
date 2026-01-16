@@ -7,6 +7,7 @@ import intl from 'panel/common/intl';
 import { Button } from 'panel/common/ui/Button';
 import styles from 'panel/install/Setup/styles.module.pcss';
 import Controls from './Controls';
+import cn from 'clsx';
 
 import AddressList from './AddressList';
 import { buildInterfaceOptions } from './interfaceOptions';
@@ -27,7 +28,7 @@ import type { ConfigType, DnsConfig, SettingsFormValues, WebConfig } from './typ
 
 type Props = {
     handleSubmit: (data: SettingsFormValues) => void;
-    handleChange?: (data: SettingsFormValues) => unknown;
+    handleChange?: (data: SettingsFormValues) => void;
     handleFix: (web: WebConfig, dns: DnsConfig, set_static_ip: boolean) => void;
     validateForm: (data: SettingsFormValues) => void;
     config: ConfigType;
@@ -117,7 +118,7 @@ export const DnsSettings = ({ handleSubmit, handleFix, validateForm, config, int
                     <div>
                         {dnsStatus && (
                             <>
-                                <div className={`${styles.setup__error} ${styles.errorRow} ${styles.errorText}`}>
+                                <div className={cn(styles.setup__error, styles.errorRow, styles.errorText)}>
                                     {dnsStatus}
                                     {isDnsFixAvailable && (
                                         <Button
@@ -166,7 +167,7 @@ export const DnsSettings = ({ handleSubmit, handleFix, validateForm, config, int
 
                         <p className={styles.descAdresses}>{intl.getMessage('setup_dns_desc')}</p>
 
-                        <DnsBanner className={`${styles.banner} ${styles.bannerMobile}`} />
+                        <DnsBanner className={cn(styles.banner, styles.bannerMobile)} />
                     </div>
                     <div className={styles.addressListWrapper}>
                         <AddressList
