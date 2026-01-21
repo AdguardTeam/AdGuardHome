@@ -2,7 +2,6 @@ package dnsforward
 
 import (
 	"cmp"
-	"context"
 	"crypto/ecdsa"
 	"crypto/rand"
 	"crypto/rsa"
@@ -24,6 +23,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
@@ -1516,21 +1516,20 @@ func TestPTRResponseFromHosts(t *testing.T) {
 	}
 
 	var eventsCalledCounter uint32
+	watcher := aghtest.NewFSWatcher()
+	watcher.OnEvents = func() (e <-chan aghos.Event) {
+		assert.Equal(t, uint32(1), atomic.AddUint32(&eventsCalledCounter, 1))
+
+		return nil
+	}
+	watcher.OnAdd = func(name string) (err error) {
+		assert.Equal(t, hostsFilename, name)
+
+		return nil
+	}
+
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
-	hc, err := aghnet.NewHostsContainer(ctx, testLogger, testFS, &aghtest.FSWatcher{
-		OnStart: func(ctx context.Context) (_ error) { panic(testutil.UnexpectedCall(ctx)) },
-		OnEvents: func() (e <-chan struct{}) {
-			assert.Equal(t, uint32(1), atomic.AddUint32(&eventsCalledCounter, 1))
-
-			return nil
-		},
-		OnAdd: func(name string) (err error) {
-			assert.Equal(t, hostsFilename, name)
-
-			return nil
-		},
-		OnShutdown: func(ctx context.Context) (err error) { panic(testutil.UnexpectedCall(ctx)) },
-	}, hostsFilename)
+	hc, err := aghnet.NewHostsContainer(ctx, testLogger, testFS, watcher, hostsFilename)
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		assert.Equal(t, uint32(1), atomic.LoadUint32(&eventsCalledCounter))
