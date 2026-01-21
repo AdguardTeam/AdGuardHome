@@ -27,7 +27,7 @@ fi
 readonly version
 
 # Allow users to use sudo.
-sudo_cmd="${SUDO:-exec}"
+sudo_cmd="${SUDO:-}"
 readonly sudo_cmd
 
 # Make sure that those are built using something like:
@@ -107,14 +107,17 @@ cp "${dist_dir}/AdGuardHome_linux_arm_7/AdGuardHome/AdGuardHome" \
 cp "${dist_dir}/AdGuardHome_linux_ppc64le/AdGuardHome/AdGuardHome" \
 	"${dist_docker}/AdGuardHome_linux_ppc64le_"
 
-# docker_opt_tag is a function that wraps the call to docker to optionally add
-# --tag flags.
-docker_opt_tag() {
-	# Unset all positional parameters of the function.
-	set --
+# docker_build_opt_tag is a function that wraps the call of docker build command
+# with optionally --tag flags.
+docker_build_opt_tag() {
+	if [ "$sudo_cmd" != '' ]; then
+		set -- "$sudo_cmd"
+	fi
 
 	# Set the initial parameters.
 	set -- \
+		"$@" \
+		docker \
 		"$debug_flags" \
 		buildx \
 		build \
@@ -145,13 +148,49 @@ docker_opt_tag() {
 		. \
 		;
 
-	# Call the docker command with the assembled parameters.
-	"$sudo_cmd" docker "$@"
+	# Call the command with the assembled parameters.
+	"$@"
 }
 
-docker_opt_tag
+docker_build_opt_tag
+
+# docker_push_opt_tag is a function that wraps the call of docker push command
+# with optionally --tag flags.
+docker_push_opt_tag() {
+	if [ "$sudo_cmd" != '' ]; then
+		set -- "$sudo_cmd"
+	fi
+
+	# Set the initial parameters.
+	set -- \
+		"$@" \
+		docker \
+		buildx \
+		imagetools \
+		create \
+		;
+
+	# Append the channel tag, if any.
+	if [ "$docker_channel_tag" != '' ]; then
+		set -- "$@" "$docker_channel_tag"
+	fi
+
+	# Append the version tag, if any.
+	if [ "$docker_version_tag" != '' ]; then
+		set -- "$@" "$docker_version_tag"
+	fi
+
+	# Append the rest.
+	set -- \
+		"$@" \
+		"$docker_image_name" \
+		;
+
+	# Call the command with the assembled parameters.
+	"$@"
+}
 
 # Push to DockerHub, if requested.
 if [ "$docker_push" -eq 1 ]; then
-	"$sudo_cmd" docker push -a "$docker_image_name"
+	docker_push_opt_tag
 fi
