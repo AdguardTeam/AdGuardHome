@@ -165,7 +165,6 @@
                     REVISION="${bamboo.repository.revision.number}" \
                     DIST_DIR='dist' \
                     DOCKER_IMAGE_NAME='adguard/adguardhome' \
-                    DOCKER_OUTPUT="type=image,name=adguard/adguardhome" \
                     DOCKER_PUSH='1' \
                     VERBOSE='1' \
                     sh ./scripts/make/build-docker.sh

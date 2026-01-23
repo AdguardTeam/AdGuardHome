@@ -49,13 +49,6 @@ readonly build_date
 docker_image_name="${DOCKER_IMAGE_NAME:-adguardhome-dev}"
 readonly docker_image_name
 
-# If you want to inspect the resulting image using commands like "docker image
-# ls", change type to docker and also set docker_platforms to a single platform.
-#
-# See https://github.com/docker/buildx/issues/166.
-docker_output="${DOCKER_OUTPUT:-type=image,name=${docker_image_name}}"
-readonly docker_output
-
 # Set DOCKER_PUSH to '1' if you want (and are allowed) to push to DockerHub.
 docker_push="${DOCKER_PUSH:-0}"
 readonly docker_push
@@ -119,15 +112,12 @@ docker_build_opt_tag() {
 		"$@" \
 		docker \
 		"$debug_flags" \
-		buildx \
 		build \
 		--build-arg BUILD_DATE="$build_date" \
 		--build-arg DIST_DIR="$dist_dir" \
 		--build-arg VCS_REF="$commit" \
 		--build-arg VERSION="$version" \
-		--output "$docker_output" \
 		--platform "$docker_platforms" \
-		--progress 'plain' \
 		;
 
 	# Append the channel tag, if any.
@@ -154,43 +144,17 @@ docker_build_opt_tag() {
 
 docker_build_opt_tag
 
-# docker_push_opt_tag is a function that wraps the call of docker push command
-# with optionally --tag flags.
-docker_push_opt_tag() {
+# maybe_sudo is a function that wraps the call of a command with sudo, if
+# requested.
+maybe_sudo() {
 	if [ "$sudo_cmd" != '' ]; then
-		set -- "$sudo_cmd"
+		"$sudo_cmd" "$@"
+	else
+		"$@"
 	fi
-
-	# Set the initial parameters.
-	set -- \
-		"$@" \
-		docker \
-		buildx \
-		imagetools \
-		create \
-		;
-
-	# Append the channel tag, if any.
-	if [ "$docker_channel_tag" != '' ]; then
-		set -- "$@" "$docker_channel_tag"
-	fi
-
-	# Append the version tag, if any.
-	if [ "$docker_version_tag" != '' ]; then
-		set -- "$@" "$docker_version_tag"
-	fi
-
-	# Append the rest.
-	set -- \
-		"$@" \
-		"$docker_image_name" \
-		;
-
-	# Call the command with the assembled parameters.
-	"$@"
 }
 
 # Push to DockerHub, if requested.
 if [ "$docker_push" -eq 1 ]; then
-	docker_push_opt_tag
+	maybe_sudo docker push -a "$docker_image_name"
 fi
