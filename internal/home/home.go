@@ -248,7 +248,10 @@ func configureOS(conf *configuration) (err error) {
 func setupHostsContainer(ctx context.Context, baseLogger *slog.Logger) (err error) {
 	l := baseLogger.With(slogutil.KeyPrefix, "hosts")
 
-	hostsWatcher, err := aghos.NewOSWritesWatcher(baseLogger.With(slogutil.KeyPrefix, "oswatcher"))
+	var hostsWatcher aghos.FSWatcher
+	hostsWatcher, err = aghos.NewOSWatcher(&aghos.OSWatcherConfig{
+		Logger: baseLogger.With(slogutil.KeyPrefix, "hosts_watcher"),
+	})
 	if err != nil {
 		l.WarnContext(
 			ctx,
