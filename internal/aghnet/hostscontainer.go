@@ -54,8 +54,9 @@ type HostsContainer struct {
 const ErrNoHostsPaths errors.Error = "no valid paths to hosts files provided"
 
 // NewHostsContainer creates a container of hosts that watches the paths with w.
-// paths shouldn't be empty, and each path should refer either a file or a
-// directory in fsys.  l, fsys, and w must be non-nil.
+// paths shouldn't be empty, and each path should be relative and refer either a
+// file or a directory in fsys.  fsys should be a filesystem mounted at the
+// operating system root.  l and w must not be nil.
 //
 // TODO(e.burkov):  Add configuration.
 //
@@ -97,6 +98,9 @@ func NewHostsContainer(
 		return nil, err
 	}
 
+	// Don't use absolute paths for watching, since those are required to be
+	// relative to the operating system root, not the current directory.  See
+	// TODO at NewHostsContainer.
 	rootDir := aghos.RootDir()
 
 	for _, p := range paths {
