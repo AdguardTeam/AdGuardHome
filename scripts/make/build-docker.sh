@@ -130,6 +130,11 @@ docker_build_opt_tag() {
 		set -- "$@" "$docker_version_tag"
 	fi
 
+	# Push to DockerHub, if requested.
+	if [ "$docker_push" -eq 1 ]; then
+		set -- "$@" "--push"
+	fi
+
 	# Append the rest.
 	set -- \
 		"$@" \
@@ -143,18 +148,3 @@ docker_build_opt_tag() {
 }
 
 docker_build_opt_tag
-
-# maybe_sudo is a function that wraps the call of a command with sudo, if
-# requested.
-maybe_sudo() {
-	if [ "$sudo_cmd" != '' ]; then
-		"$sudo_cmd" "$@"
-	else
-		"$@"
-	fi
-}
-
-# Push to DockerHub, if requested.
-if [ "$docker_push" -eq 1 ]; then
-	maybe_sudo docker push -a "$docker_image_name"
-fi
