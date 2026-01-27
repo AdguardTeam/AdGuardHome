@@ -54,6 +54,10 @@ In this release, the schema version has changed from 32 to 33.
 
     To roll back this change, set the `schema_version` back to `32`.
 
+### Fixed
+
+- Unknown blocked services from both global and client configuration now logged instead of causing server crash.
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
