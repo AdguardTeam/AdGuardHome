@@ -72,6 +72,9 @@ type Config struct {
 	Ignored *aghnet.IgnoreEngine
 
 	// Filename is the name of the database file.
+	//
+	// TODO(f.setrakov): Move the work with DB into a separate entity with
+	// interface.
 	Filename string
 
 	// Limit is an upper limit for collecting statistics.

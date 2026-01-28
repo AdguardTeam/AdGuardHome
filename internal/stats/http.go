@@ -5,13 +5,19 @@ package stats
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/timeutil"
+	"github.com/AdguardTeam/golibs/validate"
 )
+
+// queryKeyRecent is the key of the query parameter that contains the lookback
+// interval for statistics.
+const queryKeyRecent = "recent"
 
 // topAddrs is an alias for the types of the TopFoo fields of statsResponse.
 // The key is either a client's address or a requested address.
@@ -53,6 +59,32 @@ func (s *StatsCtx) handleStats(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	l := s.logger
 
+	limit := s.limit
+
+	recent := r.URL.Query().Get(queryKeyRecent)
+	if recent != "" {
+		recentMs, err := strconv.ParseInt(recent, 10, 64)
+		if err != nil {
+			aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "parsing interval: %s", err)
+
+			return
+		}
+
+		err = validate.InRange(
+			queryKeyRecent,
+			recentMs,
+			time.Hour.Milliseconds(),
+			limit.Milliseconds(),
+		)
+		if err != nil {
+			aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "%s", err)
+
+			return
+		}
+
+		limit = time.Duration(recentMs) * time.Millisecond
+	}
+
 	var (
 		resp *StatsResp
 		ok   bool
@@ -61,7 +93,7 @@ func (s *StatsCtx) handleStats(w http.ResponseWriter, r *http.Request) {
 		s.confMu.RLock()
 		defer s.confMu.RUnlock()
 
-		resp, ok = s.getData(uint32(s.limit.Hours()))
+		resp, ok = s.getData(uint32(limit.Hours()))
 	}()
 
 	l.DebugContext(ctx, "prepared data", "elapsed", time.Since(start))
