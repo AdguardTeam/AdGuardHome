@@ -1,6 +1,7 @@
 package dhcpsvc
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"log/slog"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/AdguardTeam/golibs/validate"
 	"github.com/google/gopacket"
@@ -198,12 +200,12 @@ func (srv *DHCPServer) newDHCPInterfaceV4(
 	return iface
 }
 
-// commitLease writes l into database.  l must be valid and not expired.
-func (iface *dhcpInterfaceV4) commitLease(
+// updateLease updates l in the database.  l must be valid and not expired.
+func (iface *dhcpInterfaceV4) updateLease(
 	ctx context.Context,
 	l *Lease,
 ) (err error) {
-	return iface.common.index.add(ctx, iface.common.logger, l, iface.common)
+	return iface.common.index.update(ctx, iface.common.logger, l, iface.common)
 }
 
 // respondOffer sends a DHCPOFFER message to the client.  req, fd, and l must
@@ -334,6 +336,8 @@ func (ifaces dhcpInterfacesV4) find(ip netip.Addr) (iface4 *netInterface, ok boo
 // allocateLease allocates a new lease for the MAC address.  If there are no IP
 // addresses left, both l and err are nil.  mac must be a valid according to
 // [netutil.ValidateMAC].
+//
+// TODO(e.burkov):  Pass the precalculated macKey.
 func (iface *dhcpInterfaceV4) allocateLease(
 	ctx context.Context,
 	mac net.HardwareAddr,
@@ -348,7 +352,14 @@ func (iface *dhcpInterfaceV4) allocateLease(
 		ok, err = iface.addrChecker.IsAvailable(l.IP)
 		if err != nil {
 			return nil, fmt.Errorf("checking address availability: %w", err)
-		} else if ok {
+		}
+
+		if ok {
+			iface.common.leases[macToKey(mac)] = l
+
+			off, _ := iface.common.addrSpace.offset(l.IP)
+			iface.common.leasedOffsets.set(off, true)
+
 			return l, nil
 		}
 
@@ -403,6 +414,29 @@ func (iface *dhcpInterfaceV4) reserveLease(
 	iface.common.leases[macToKey(mac)] = l
 
 	return l, nil
+}
+
+// updateAndRespond updates the lease and sends a DHCPACK or DHCPNAK response to
+// the client according to the update result.  req must be a DHCPREQUEST
+// message, lease, l, and fd must not be nil.
+func (iface *dhcpInterfaceV4) updateAndRespond(
+	ctx context.Context,
+	l *slog.Logger,
+	req *layers.DHCPv4,
+	lease *Lease,
+	fd *frameData,
+) {
+	lease.Hostname = cmp.Or(hostname4(req), lease.Hostname)
+
+	err := iface.updateLease(ctx, lease)
+	if err != nil {
+		l.ErrorContext(ctx, "init-reboot request failed", slogutil.KeyError, err)
+		iface.respondNAK(ctx, req, fd)
+
+		return
+	}
+
+	iface.respondACK(ctx, req, fd, lease)
 }
 
 const (

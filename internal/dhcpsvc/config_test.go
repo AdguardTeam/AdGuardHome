@@ -10,6 +10,9 @@ import (
 	"github.com/AdguardTeam/golibs/testutil"
 )
 
+// TODO(e.burkov):  Move string IP address representations into constants and
+// use in the tests below.
+
 func TestIPv4Config_Validate(t *testing.T) {
 	t.Parallel()
 
@@ -61,7 +64,7 @@ func TestIPv4Config_Validate(t *testing.T) {
 			LeaseDuration: testIPv4Conf.LeaseDuration,
 		},
 		wantErrMsg: "gateway ip 2001:db8::1 must be a valid ipv4" + "\n" +
-			"range start 192.168.0.2 is not within 2001:db8::1/24",
+			"range start 192.168.0.100 is not within 2001:db8::1/24",
 	}, {
 		name: "bad_subnet_mask",
 		conf: &dhcpsvc.IPv4Config{
@@ -87,7 +90,7 @@ func TestIPv4Config_Validate(t *testing.T) {
 		},
 		wantErrMsg: "range start 2001:db8::1 must be a valid ipv4" + "\n" +
 			"range start 2001:db8::1 is not within 192.168.0.1/24" + "\n" +
-			"invalid ip range: 2001:db8::1 and 192.168.0.254 must be within the same address family",
+			"invalid ip range: 2001:db8::1 and 192.168.0.200 must be within the same address family",
 	}, {
 		name: "bad_range_end",
 		conf: &dhcpsvc.IPv4Config{
@@ -101,7 +104,7 @@ func TestIPv4Config_Validate(t *testing.T) {
 		},
 		wantErrMsg: "range end 2001:db8::1 must be a valid ipv4" + "\n" +
 			"range end 2001:db8::1 is not within 192.168.0.1/24" + "\n" +
-			"invalid ip range: 192.168.0.2 and 2001:db8::1 must be within the same address family",
+			"invalid ip range: 192.168.0.100 and 2001:db8::1 must be within the same address family",
 	}}
 
 	for _, tc := range testCases {
