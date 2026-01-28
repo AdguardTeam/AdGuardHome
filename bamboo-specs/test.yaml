@@ -5,9 +5,12 @@
     'key': 'AHBRTSPECS'
     'name': 'AdGuard Home - Build and run tests'
 'variables':
+    # This variable is used to override Docker caching, for example to rerun a
+    # flaky test suite.
+    'cacheBuster': '0'
+    'channel': 'development'
     'dockerFrontend': 'adguard/home-js-builder:4.0'
     'dockerGo': 'adguard/go-builder:1.25.5--1'
-    'channel': 'development'
 
 'stages':
   - 'Tests':
@@ -60,13 +63,7 @@
     'requirements':
       - 'adg-docker': 'true'
 
-# TODO(e.burkov):  Add the linting stage for markdown docs and shell scripts.
 'Test backend':
-    'docker':
-        'image': '${bamboo.dockerGo}'
-        'volumes':
-            '${system.GO_CACHE_DIR}': '${bamboo.cacheGo}'
-            '${system.GO_PKG_CACHE_DIR}': '${bamboo.cacheGoPkg}'
     'final-tasks':
       - 'test-parser':
           # The default pattern, '**/test-reports/*.xml', works, so don't set
@@ -88,36 +85,21 @@
 
                 set -e -f -u -x
 
-                # Do not sort the commands below, as they are arranged
-                # intentionally to keep faster commands first.
-                make \
-                    GOMAXPROCS=1 \
-                    VERBOSE=1 \
-                    go-deps \
-                    go-tools \
-                    md-lint \
-                    sh-lint \
-                    txt-lint \
-                    go-lint \
-                    ;
+                docker info
 
-                make \
-                    TEST_REPORTS_DIR="./test-reports/" \
-                    VERBOSE=1 \
-                    go-test \
-                    ;
+                docker build \
+                    --build-arg "BASE_IMAGE=${bamboo_dockerGo}" \
+                    --build-arg "CACHE_BUSTER=${bamboo_cacheBuster}" \
+                    --output '.' \
+                    --progress 'plain' \
+                    --target 'tester-exporter' \
+                    -f ./docker/ci.Dockerfile \
+                    .
 
                 exit_code="$(cat ./test-reports/test-exit-code.txt)"
                 readonly exit_code
 
-                make VERBOSE=1 \
-                    go-fuzz \
-                    go-bench \
-                    ;
-
                 exit "$exit_code"
-    'requirements':
-      - 'adg-docker': 'true'
 
 'Build frontend':
     'artifacts':

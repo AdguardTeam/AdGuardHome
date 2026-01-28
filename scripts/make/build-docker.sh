@@ -139,7 +139,7 @@ docker_build_opt_tag() {
 	set -- \
 		"$@" \
 		-f \
-		./docker/Dockerfile \
+		./docker/build.Dockerfile \
 		. \
 		;
 

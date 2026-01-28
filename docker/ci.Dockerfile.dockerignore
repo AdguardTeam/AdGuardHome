@@ -1,0 +1,7 @@
+# This comment is used to simplify checking local copies of the file.  Bump this
+# number every time a significant change is made to this file.
+#
+# AdGuard-Project-Version: 2
+.git
+/bin/
+/tmp/
