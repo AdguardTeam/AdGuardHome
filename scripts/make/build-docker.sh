@@ -108,6 +108,7 @@ docker_build_opt_tag() {
 	set -- \
 		"$@" \
 		docker \
+		buildx \
 		build \
 		--build-arg BUILD_DATE="$build_date" \
 		--build-arg DIST_DIR="$dist_dir" \
