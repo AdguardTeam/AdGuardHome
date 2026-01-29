@@ -21,7 +21,7 @@ import (
 const queryKeyRecent = "recent"
 
 // millisecondsInHour contains number of milliseconds in one hour.
-const millisecondsInHour int64 = int64(time.Hour / time.Millisecond)
+const millisecondsInHour = int64(time.Hour / time.Millisecond)
 
 // topAddrs is an alias for the types of the TopFoo fields of statsResponse.
 // The key is either a client's address or a requested address.
@@ -73,8 +73,7 @@ func (s *StatsCtx) handleStats(w http.ResponseWriter, r *http.Request) {
 
 	recent := r.URL.Query().Get(queryKeyRecent)
 
-	var err error
-	limit, err = parseRecent(recent, limit)
+	limit, err := parseRecent(recent, limit)
 	if err != nil {
 		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "%s", err)
 
@@ -106,17 +105,17 @@ func parseRecent(recent string, limit time.Duration) (parsedLimit time.Duration,
 
 	recentMs, err := strconv.ParseInt(recent, 10, 64)
 	if err != nil {
-		return parsedLimit, fmt.Errorf("parsing interval: %s", err)
+		return 0, fmt.Errorf("parsing interval: %s", err)
 	}
 
 	err = validate.InRange(queryKeyRecent, recentMs, millisecondsInHour, limit.Milliseconds())
 	if err != nil {
 		// Don't wrap the error since it's already informative enough as is.
-		return parsedLimit, err
+		return 0, err
 	}
 
 	if recentMs%millisecondsInHour != 0 {
-		return parsedLimit, fmt.Errorf("%s: must be a multiple of 1 hour", queryKeyRecent)
+		return 0, fmt.Errorf("%s: must be a multiple of 1 hour", queryKeyRecent)
 	}
 
 	return time.Duration(recentMs) * time.Millisecond, nil

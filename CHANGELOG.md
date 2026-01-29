@@ -60,12 +60,6 @@ In this release, the schema version has changed from 32 to 33.
 
 - Unknown blocked services from both global and client configuration now logged instead of causing server crash.
 
-### Security
-
-- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.25.6][go-1.25.6].
-
-[go-1.25.6]: https://groups.google.com/g/golang-announce/c/Vd2tYVM8eUc
-
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
