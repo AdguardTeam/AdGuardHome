@@ -3,6 +3,7 @@ package dhcpsvc_test
 import (
 	"cmp"
 	"io/fs"
+	"net"
 	"net/netip"
 	"os"
 	"path"
@@ -19,6 +20,10 @@ import (
 	"github.com/google/gopacket/layers"
 	"github.com/stretchr/testify/require"
 )
+
+// TODO(e.burkov):  Use addresses and prefixes from [RFC 5737].
+//
+// [RFC 5737]: https://datatracker.ietf.org/doc/html/rfc5737
 
 // testLocalTLD is a common local TLD for tests.
 const testLocalTLD = "local"
@@ -52,17 +57,28 @@ var testClock = &faketime.Clock{
 	},
 }
 
-// testIPv4Conf is a common valid IPv4 part of the interface configuration for
-// tests.
-var testIPv4Conf = &dhcpsvc.IPv4Config{
-	Enabled:       true,
-	Clock:         timeutil.SystemClock{},
-	GatewayIP:     netip.MustParseAddr("192.168.0.1"),
-	SubnetMask:    netip.MustParseAddr("255.255.255.0"),
-	RangeStart:    netip.MustParseAddr("192.168.0.2"),
-	RangeEnd:      netip.MustParseAddr("192.168.0.254"),
-	LeaseDuration: testLeaseTTL,
-}
+var (
+	// testIPv4Conf is a common valid IPv4 part of the interface configuration
+	// for tests.
+	testIPv4Conf = &dhcpsvc.IPv4Config{
+		Clock:         testClock,
+		GatewayIP:     netip.MustParseAddr("192.168.0.1"),
+		SubnetMask:    netip.MustParseAddr("255.255.255.0"),
+		RangeStart:    netip.MustParseAddr("192.168.0.100"),
+		RangeEnd:      netip.MustParseAddr("192.168.0.200"),
+		LeaseDuration: testLeaseTTL,
+		Enabled:       true,
+	}
+
+	// testIfaceAddr is a common valid IPv4 address of the test network
+	// interface, compliant with [testIPv4Conf], i.e. outside of the range,
+	// within the subnet, not equal to the gateway.
+	testIfaceAddr = netip.MustParseAddr("192.168.0.2")
+
+	// testIfaceHWAddr is a common valid hardware address of the test network
+	// interface.
+	testIfaceHWAddr = net.HardwareAddr{0x01, 0x01, 0x01, 0x01, 0x01, 0x01}
+)
 
 // testIPv6Conf is a common valid IPv6 part of the interface configuration for
 // tests.
@@ -87,13 +103,13 @@ var testInterfaceConf = map[string]*dhcpsvc.InterfaceConfig{
 			Clock:         timeutil.SystemClock{},
 			GatewayIP:     netip.MustParseAddr("172.16.0.1"),
 			SubnetMask:    netip.MustParseAddr("255.255.255.0"),
-			RangeStart:    netip.MustParseAddr("172.16.0.2"),
-			RangeEnd:      netip.MustParseAddr("172.16.0.255"),
+			RangeStart:    netip.MustParseAddr("172.16.0.100"),
+			RangeEnd:      netip.MustParseAddr("172.16.0.200"),
 			LeaseDuration: 1 * time.Hour,
 		},
 		IPv6: &dhcpsvc.IPv6Config{
 			Enabled:       true,
-			RangeStart:    netip.MustParseAddr("2001:db9::1"),
+			RangeStart:    netip.MustParseAddr("2001:db9::100"),
 			LeaseDuration: 1 * time.Hour,
 			RAAllowSLAAC:  true,
 			RASLAACOnly:   true,
