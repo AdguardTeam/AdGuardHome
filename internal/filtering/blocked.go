@@ -12,7 +12,9 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
 	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/golibs/validate"
 	"github.com/AdguardTeam/urlfilter/rules"
 )
 
@@ -81,17 +83,42 @@ func (s *BlockedServices) Clone() (c *BlockedServices) {
 	}
 }
 
-// Validate returns an error if blocked services contain unknown service ID.  s
-// must not be nil.
+// FilterUnknownIDs filters out unknown service IDs within s and logs them at
+// warning level.  It does nothing if s is nil.
+func (s *BlockedServices) FilterUnknownIDs(ctx context.Context, logger *slog.Logger) {
+	if s == nil {
+		// [BlockedServices.Validate] handles this case.
+		return
+	}
+
+	s.IDs = slices.DeleteFunc(s.IDs, func(id string) (ok bool) {
+		_, isKnown := serviceRules[id]
+		if !isKnown {
+			logger.WarnContext(ctx, "filtered unknown service", "id", id)
+		}
+
+		return !isKnown
+	})
+}
+
+// type check
+var _ validate.Interface = (*BlockedServices)(nil)
+
+// Validate implements the [validate.Interface] interface for *BlockedServices.
 func (s *BlockedServices) Validate() (err error) {
+	if s == nil {
+		return errors.ErrNoValue
+	}
+
+	var errs []error
 	for _, id := range s.IDs {
 		_, ok := serviceRules[id]
 		if !ok {
-			return fmt.Errorf("unknown blocked-service %q", id)
+			errs = append(errs, fmt.Errorf("unknown blocked-service %q", id))
 		}
 	}
 
-	return nil
+	return errors.Join(errs...)
 }
 
 // ApplyBlockedServices - set blocked services settings for this DNS request

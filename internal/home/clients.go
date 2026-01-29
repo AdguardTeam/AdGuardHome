@@ -258,6 +258,7 @@ func (o *clientObject) toPersistent(
 		}
 	}
 
+	o.BlockedServices.FilterUnknownIDs(ctx, baseLogger)
 	err = o.BlockedServices.Validate()
 	if err != nil {
 		return nil, fmt.Errorf("init blocked services %q: %w", cli.Name, err)
