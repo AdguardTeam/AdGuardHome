@@ -73,7 +73,7 @@
                   VERBOSE='1' \
                   sh ./scripts/snap/download.sh
     'requirements':
-      - 'adg-docker': 'true'
+      - 'golang': true
 
 'Build packages':
     'artifact-subscriptions':
@@ -118,7 +118,7 @@
                   VERBOSE='1' \
                   sh ./scripts/snap/build.sh
     'requirements':
-      - 'adg-docker': 'true'
+      - 'golang': true
 
 'Publish to Snapstore':
     'artifact-subscriptions':
@@ -150,7 +150,7 @@
     'final-tasks':
       - 'clean'
     'requirements':
-      - 'adg-docker': 'true'
+      - 'golang': true
 
 'triggers':
     # Don't use minute values that end with a zero or a five as these are often

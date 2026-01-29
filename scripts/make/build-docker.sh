@@ -4,12 +4,9 @@ verbose="${VERBOSE:-0}"
 
 if [ "$verbose" -gt '0' ]; then
 	set -x
-	debug_flags='--debug=1'
 else
 	set +x
-	debug_flags='--debug=0'
 fi
-readonly debug_flags
 
 set -e -f -u
 
@@ -111,13 +108,13 @@ docker_build_opt_tag() {
 	set -- \
 		"$@" \
 		docker \
-		"$debug_flags" \
 		build \
 		--build-arg BUILD_DATE="$build_date" \
 		--build-arg DIST_DIR="$dist_dir" \
 		--build-arg VCS_REF="$commit" \
 		--build-arg VERSION="$version" \
 		--platform "$docker_platforms" \
+		--progress 'plain' \
 		;
 
 	# Append the channel tag, if any.
@@ -132,7 +129,7 @@ docker_build_opt_tag() {
 
 	# Push to DockerHub, if requested.
 	if [ "$docker_push" -eq 1 ]; then
-		set -- "$@" "--push"
+		set -- "$@" '--push'
 	fi
 
 	# Append the rest.

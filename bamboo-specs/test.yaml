@@ -58,7 +58,7 @@
     'final-tasks':
       - 'clean'
     'requirements':
-      - 'adg-docker': 'true'
+      - 'golang': true
 
 # TODO(e.burkov):  Add the linting stage for markdown docs and shell scripts.
 'Test backend':
@@ -117,7 +117,7 @@
 
                 exit "$exit_code"
     'requirements':
-      - 'adg-docker': 'true'
+      - 'golang': true
 
 'Build frontend':
     'artifacts':
@@ -147,7 +147,7 @@
                         VERBOSE=1\
                         js-deps js-build
     'requirements':
-      - 'adg-docker': 'true'
+      - 'golang': true
 
 'Artifact':
     'artifact-subscriptions':
@@ -194,7 +194,7 @@
                         VERBOSE=2\
                         build-release
     'requirements':
-      - 'adg-docker': 'true'
+      - 'golang': true
 
 'Test e2e':
     'artifact-subscriptions':
@@ -226,7 +226,7 @@
 
                 make VERBOSE=1 js-deps js-test-e2e
     'requirements':
-      - 'adg-docker': 'true'
+      - 'golang': true
 
 'branches':
     'create': 'for-pull-request'
