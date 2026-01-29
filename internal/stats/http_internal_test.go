@@ -210,6 +210,11 @@ func TestStatsCtx_handleStats(t *testing.T) {
 		wantCode: http.StatusBadRequest,
 		recent:   72 * time.Hour.Milliseconds(),
 	}, {
+		name:     "interval_is_not_multiple_of_hour",
+		wantErr:  "recent: must be a multiple of 1 hour\n",
+		wantCode: http.StatusBadRequest,
+		recent:   time.Hour.Milliseconds() + 1,
+	}, {
 		name:           "no_interval",
 		wantCode:       http.StatusOK,
 		wantDNSQueries: 2,

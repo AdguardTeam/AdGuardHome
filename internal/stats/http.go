@@ -4,6 +4,7 @@ package stats
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -18,6 +19,9 @@ import (
 // queryKeyRecent is the key of the query parameter that contains the lookback
 // interval for statistics.
 const queryKeyRecent = "recent"
+
+// millisecondsInHour contains number of milliseconds in one hour.
+const millisecondsInHour int64 = int64(time.Hour / time.Millisecond)
 
 // topAddrs is an alias for the types of the TopFoo fields of statsResponse.
 // The key is either a client's address or a requested address.
@@ -59,42 +63,25 @@ func (s *StatsCtx) handleStats(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	l := s.logger
 
-	limit := s.limit
-
-	recent := r.URL.Query().Get(queryKeyRecent)
-	if recent != "" {
-		recentMs, err := strconv.ParseInt(recent, 10, 64)
-		if err != nil {
-			aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "parsing interval: %s", err)
-
-			return
-		}
-
-		err = validate.InRange(
-			queryKeyRecent,
-			recentMs,
-			time.Hour.Milliseconds(),
-			limit.Milliseconds(),
-		)
-		if err != nil {
-			aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "%s", err)
-
-			return
-		}
-
-		limit = time.Duration(recentMs) * time.Millisecond
-	}
-
-	var (
-		resp *StatsResp
-		ok   bool
-	)
+	var limit time.Duration
 	func() {
 		s.confMu.RLock()
 		defer s.confMu.RUnlock()
 
-		resp, ok = s.getData(uint32(limit.Hours()))
+		limit = s.limit
 	}()
+
+	recent := r.URL.Query().Get(queryKeyRecent)
+
+	var err error
+	limit, err = parseRecent(recent, limit)
+	if err != nil {
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "%s", err)
+
+		return
+	}
+
+	resp, ok := s.getData(uint32(limit.Hours()))
 
 	l.DebugContext(ctx, "prepared data", "elapsed", time.Since(start))
 
@@ -108,6 +95,31 @@ func (s *StatsCtx) handleStats(w http.ResponseWriter, r *http.Request) {
 	}
 
 	aghhttp.WriteJSONResponseOK(ctx, l, w, r, resp)
+}
+
+// parseRecent parses and validates the value of the recent URL parameter.  If
+// the parameter is empty, the original limit is returned.
+func parseRecent(recent string, limit time.Duration) (parsedLimit time.Duration, err error) {
+	if recent == "" {
+		return limit, nil
+	}
+
+	recentMs, err := strconv.ParseInt(recent, 10, 64)
+	if err != nil {
+		return parsedLimit, fmt.Errorf("parsing interval: %s", err)
+	}
+
+	err = validate.InRange(queryKeyRecent, recentMs, millisecondsInHour, limit.Milliseconds())
+	if err != nil {
+		// Don't wrap the error since it's already informative enough as is.
+		return parsedLimit, err
+	}
+
+	if recentMs%millisecondsInHour != 0 {
+		return parsedLimit, fmt.Errorf("%s: must be a multiple of 1 hour", queryKeyRecent)
+	}
+
+	return time.Duration(recentMs) * time.Millisecond, nil
 }
 
 // configResp is the response to the GET /control/stats_info.
