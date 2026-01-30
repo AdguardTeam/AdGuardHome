@@ -105,7 +105,7 @@ func parseRecent(recent string, limit time.Duration) (parsedLimit time.Duration,
 
 	recentMs, err := strconv.ParseInt(recent, 10, 64)
 	if err != nil {
-		return 0, fmt.Errorf("parsing interval: %s", err)
+		return 0, fmt.Errorf("%s: parsing interval: %s", queryKeyRecent, err)
 	}
 
 	err = validate.InRange(queryKeyRecent, recentMs, millisecondsInHour, limit.Milliseconds())
