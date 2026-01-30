@@ -14,6 +14,7 @@ type Props = Omit<ComponentProps<'input'>, 'size'> & {
     maxLength?: number | undefined;
     error?: boolean;
     errorMessage?: string;
+    inputError?: string;
     size?: 'small' | 'medium' | 'large';
 };
 
@@ -39,6 +40,7 @@ export const Input = forwardRef<HTMLInputElement, Props>(
             disabled,
             error,
             errorMessage,
+            inputError,
             size = 'large',
             autoComplete,
             ...rest
@@ -46,6 +48,8 @@ export const Input = forwardRef<HTMLInputElement, Props>(
         ref,
     ) => {
         const [focused, setFocused] = useState(false);
+
+        const computedErrorMessage = inputError ?? errorMessage;
 
         const inputWrapperClass = cn(
             s.inputWrapper,
@@ -74,7 +78,7 @@ export const Input = forwardRef<HTMLInputElement, Props>(
                             [s.invalid]: invalid,
                             [s.focused]: focused,
                             [s.disabled]: disabled,
-                            [s.error]: error || !!errorMessage,
+                            [s.error]: error || !!computedErrorMessage,
                         },
                         className,
                     )}>
@@ -107,7 +111,7 @@ export const Input = forwardRef<HTMLInputElement, Props>(
                     />
                     {suffixIcon && suffixIcon}
                 </div>
-                {errorMessage && <div className={s.inputError}>{errorMessage}</div>}
+                {computedErrorMessage && <div className={s.inputError}>{computedErrorMessage}</div>}
             </>
         );
     },

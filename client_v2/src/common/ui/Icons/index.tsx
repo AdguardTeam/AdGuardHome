@@ -41,7 +41,9 @@ export const ICONS = {
     mac: 'mac',
     android: 'android',
     ios: 'ios',
-    dns_privacy: 'dns_privacy'
+    dns_privacy: 'dns_privacy',
+    eye_close: 'eye_close',
+    eye_open: 'eye_open'
 } as const;
 
 export type IconType = keyof typeof ICONS;
@@ -244,23 +246,10 @@ export const Icons = memo(() => (
         </symbol>
 
         <symbol id="lang" viewBox="0 0 24 24" fill="none" fillRule="evenodd" clipRule="evenodd">
-            <path
-                d="M13 14C13 14 15.5308 13.4189 17.0263 11.6741C18.5218 9.92934 19 7 19 7"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
-            <path
-                d="M3 20L7.00509 11L11 20"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
-            <path d="M4 17.5H9.5" stroke="currentColor" strokeWidth="1.5" />
-            <path d="M11.5 6.5H21.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            <path d="M16.5 6V4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M13 14s2.53-.581 4.026-2.326S19 7 19 7"/>
+            <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M20 14s-2.53-.581-4.026-2.326S14 7 14 7M3 20l4.005-9L11 20"/>
+            <path stroke="currentColor" strokeWidth="1.5" d="M4 17.5h5.5"/>
+            <path stroke="currentColor" strokeLinecap="round" strokeWidth="1.5" d="M11.5 6.5h10M16.5 6V4.5"/>
         </symbol>
 
         <symbol id="theme_auto" viewBox="0 0 24 24" fill="none" fillRule="evenodd" clipRule="evenodd">
@@ -566,6 +555,16 @@ export const Icons = memo(() => (
         </symbol>
         <symbol id="dns_privacy" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path fillRule="evenodd" clipRule="evenodd" d="M3 7.10913C4.76946 4.05983 8.064 2 11.8362 2C15.6085 2 18.9022 4.05983 20.6733 7.10913H18.639C17.7444 5.91931 16.5552 4.98311 15.1887 4.39277C15.6357 5.15063 16.007 6.07282 16.2948 7.10913H14.5006C13.8279 5.01524 12.7993 3.70304 11.8362 3.70304C10.8732 3.70304 9.84453 5.01524 9.17182 7.10913H7.37682C7.66548 6.07282 8.0376 5.15063 8.4838 4.39277C7.11787 4.9834 5.92931 5.91957 5.03514 7.10913H3ZM15.8986 11.3419C15.8986 10.395 16.6581 9.77343 17.8264 9.77343H17.8273C18.9615 9.77343 19.7483 10.3865 19.7687 11.2832H18.6311C18.6039 10.9409 18.2786 10.7024 17.8452 10.7024C17.4126 10.7024 17.1265 10.9085 17.1265 11.2304C17.1265 11.4952 17.3402 11.6502 17.8511 11.7507L18.4761 11.8716C19.4349 12.0572 19.8641 12.4906 19.8641 13.2596C19.8641 14.2703 19.0909 14.8809 17.8213 14.8809C16.5951 14.8809 15.8228 14.3027 15.8032 13.3686H16.9783C17.0081 13.7219 17.3606 13.9476 17.8716 13.9476C18.3314 13.9476 18.6464 13.7262 18.6464 13.4069C18.6464 13.1386 18.4353 12.9939 17.8818 12.8832L17.2431 12.7555C16.3567 12.5877 15.8986 12.1049 15.8986 11.3419ZM4.04497 9.89989V14.7502H6.0801C7.53791 14.7502 8.34685 13.8705 8.34685 12.2782C8.34685 10.7633 7.52428 9.89989 6.0801 9.89989H4.04497ZM9.9484 14.7501V9.90325V9.9024H10.9311L12.9509 12.6298H13.0156V9.9024H14.1847V14.7501H13.2063L11.1823 11.9954H11.1175V14.7501H9.9484ZM5.27703 10.8911H5.85777C6.63436 10.8911 7.09162 11.3986 7.09162 12.302C7.09162 13.2625 6.65735 13.7607 5.85692 13.7607H5.27703V10.8911ZM11.8362 22.4365C8.06401 22.4365 4.76948 20.3767 3.00002 17.3274H5.03515C5.92936 18.5173 7.11829 19.4535 8.48466 20.0438C8.03846 19.2859 7.66635 18.3637 7.37768 17.3274H9.17439C9.8471 19.4213 10.8757 20.7335 11.8388 20.7335C12.8019 20.7335 13.8288 19.4213 14.5015 17.3274H16.2948C16.0078 18.3637 15.6366 19.2859 15.1904 20.0438C16.556 19.453 17.7443 18.5168 18.6382 17.3274H20.6725C18.903 20.3767 15.6085 22.4365 11.8362 22.4365Z" fill="currentColor"/>
+        </symbol>
+        <symbol id="eye_close" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 10C4 10 8 14.772 12 14.772C16 14.772 20 10 20 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            <path d="M12 15V17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            <path d="M18 13V15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            <path d="M6 13V15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        </symbol>
+        <symbol id="eye_open" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+			<path fillRule="evenodd" clipRule="evenodd" d="M4 11.772C6.66667 8.59065 9.33333 7 12 7C14.6667 7 17.3333 8.59065 20 11.772C20 11.772 16 16.772 12 16.772C8 16.772 4 11.772 4 11.772Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+			<path fillRule="evenodd" clipRule="evenodd" d="M12 10C13.1046 10 14 10.8954 14 12C14 13.1046 13.1046 14 12 14C10.8954 14 10 13.1046 10 12C10 10.8954 10.8954 10 12 10Z" stroke="currentColor" strokeWidth="1.5"/>
         </symbol>
     </svg>
 ));

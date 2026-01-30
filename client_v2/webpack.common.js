@@ -17,6 +17,8 @@ const ENTRY_LOGIN = path.resolve(RESOURCES_PATH, 'src/login/index.tsx');
 const HTML_PATH = path.resolve(RESOURCES_PATH, 'public/index.html');
 const HTML_INSTALL_PATH = path.resolve(RESOURCES_PATH, 'public/install.html');
 const HTML_LOGIN_PATH = path.resolve(RESOURCES_PATH, 'public/login.html');
+const ENTRY_FORGOT_PASSWORD = path.resolve(RESOURCES_PATH, 'src/forgot_password/index.tsx');
+const HTML_FORGOT_PASSWORD_PATH = path.resolve(RESOURCES_PATH, 'public/forgot_password.html');
 const ASSETS_PATH = path.resolve(RESOURCES_PATH, 'public/assets');
 
 const PUBLIC_PATH = path.resolve(__dirname, '../build/static');
@@ -52,6 +54,7 @@ const config = {
         main: ENTRY_REACT,
         install: ENTRY_INSTALL,
         login: ENTRY_LOGIN,
+        forgot_password: ENTRY_FORGOT_PASSWORD,
     },
     output: {
         path: PUBLIC_PATH,
@@ -70,6 +73,13 @@ const config = {
                 test: /\.ya?ml$/,
                 type: 'json',
                 use: 'yaml-loader',
+            },
+            {
+                test: /\.(svg|png|jpe?g|gif|webp|ico)$/i,
+                type: 'asset/resource',
+                generator: {
+                    filename: 'assets/[name].[contenthash][ext]',
+                },
             },
             {
                 test: /\.module\.pcss$/i,
@@ -146,6 +156,13 @@ const config = {
             chunks: ['login'],
             filename: 'login.html',
             template: HTML_LOGIN_PATH,
+        }),
+        new HtmlWebpackPlugin({
+            inject: true,
+            cache: false,
+            chunks: ['forgot_password'],
+            filename: 'forgot_password.html',
+            template: HTML_FORGOT_PASSWORD_PATH,
         }),
         new MiniCssExtractPlugin({
             filename: isDev ? '[name].css' : '[name].[hash].css',

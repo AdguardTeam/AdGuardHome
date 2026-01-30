@@ -113,3 +113,25 @@
     color: var(--default-error-icon);
     margin-top: 4px;
 }
+
+.inputSuffix {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.inputIconButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--default-description-text);
+    cursor: pointer;
+}
+
+.inputIconButton:disabled {
+    opacity: 0.4;
+    cursor: default;
+}

@@ -209,18 +209,24 @@ export const captitalizeWords = (text: any) =>
         .join(' ');
 
 export const getInterfaceIp = (option: any) => {
-    const onlyIPv6 = option.ip_addresses.every((ip: any) => ip.includes(':'));
-    let [interfaceIP] = option.ip_addresses;
+    const addresses = (option?.ip_addresses ?? []).filter((ip: any) => typeof ip === 'string');
 
-    if (!onlyIPv6) {
-        option.ip_addresses.forEach((ip: any) => {
-            if (!ip.includes(':')) {
-                interfaceIP = ip;
-            }
-        });
+    const isIpv6 = (ip: string) => ip.includes(':');
+    const isIpv6LinkLocal = (ip: string) => ip.toLowerCase().startsWith('fe80:');
+    const hasZoneId = (ip: string) => ip.includes('%');
+
+    const ipv4 = addresses.find((ip: string) => !isIpv6(ip));
+    if (ipv4) {
+        return ipv4;
     }
 
-    return interfaceIP;
+    const ipv6Global = addresses.find((ip: string) => isIpv6(ip) && !isIpv6LinkLocal(ip) && !hasZoneId(ip));
+    if (ipv6Global) {
+        return ipv6Global;
+    }
+
+    const ipv6NoZone = addresses.find((ip: string) => isIpv6(ip) && !hasZoneId(ip));
+    return ipv6NoZone || addresses[0];
 };
 
 export const getIpList = (interfaces: InstallInterface[]) =>
@@ -248,6 +254,22 @@ export const getDnsAddress = (ip: any, port = 0) => {
     return address;
 };
 
+const normalizeHost = (host: string) => {
+    const isIpv6 = host.includes(':');
+    if (!isIpv6) {
+        return host;
+    }
+
+    const encodeZone = (s: string) => s.replaceAll('%', '%25');
+
+    if (host.startsWith('[') && host.endsWith(']')) {
+        const inner = host.slice(1, -1);
+        return `[${encodeZone(inner)}]`;
+    }
+
+    return `[${encodeZone(host)}]`;
+};
+
 /**
  * @param {string} ip
  * @param {number} [port]
@@ -255,17 +277,12 @@ export const getDnsAddress = (ip: any, port = 0) => {
  */
 export const getWebAddress = (ip: any, port = 0) => {
     const isStandardWebPort = port === STANDARD_WEB_PORT;
-    let address = `http://${ip}`;
+    const rawHost = String(ip);
 
-    if (port && !isStandardWebPort) {
-        if (ip.includes(':') && !ip.includes('[')) {
-            address = `http://[${ip}]:${port}`;
-        } else {
-            address = `http://${ip}:${port}`;
-        }
-    }
+    const host = normalizeHost(rawHost);
+    const portPart = port && !isStandardWebPort ? `:${port}` : '';
 
-    return address;
+    return `http://${host}${portPart}`;
 };
 
 export const checkRedirect = (url: any, attempts: number = 1) => {

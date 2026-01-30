@@ -23,6 +23,12 @@ export type InstallData = {
     processingDefault: boolean;
     processingSubmit: boolean;
     processingCheck: boolean;
+    submitted: boolean;
+    auth: {
+        username: string;
+        password: string;
+        privacy_consent: boolean;
+    };
     web: {
         ip: string;
         port: number;
@@ -408,9 +414,10 @@ export type InstallState = {
 
 export type LoginState = {
     login: {
-        processingLogin: false;
+        processingLogin: boolean;
         email: string;
         password: string;
+        error: unknown;
     };
     toasts: { notices: any[] };
 };

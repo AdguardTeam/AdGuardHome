@@ -10,8 +10,19 @@ import intl from 'panel/common/intl';
 import { CopiedText } from 'panel/common/ui/CopiedText/CopiedText';
 import s from './SetupGuide.module.pcss';
 
-export const SetupGuide = () => {
-    const { dnsAddresses } = useSelector((state: RootState) => state.dashboard, shallowEqual);
+type Props = {
+    dnsAddresses?: string[];
+    isStep?: boolean;
+    footer?: React.ReactNode;
+};
+
+export const SetupGuide = ({ dnsAddresses: dnsAddressesProp, isStep = false, footer }: Props) => {
+    const dashboardDnsAddresses = useSelector(
+        (state: RootState) => state.dashboard?.dnsAddresses || [],
+        shallowEqual,
+    );
+
+    const dnsAddresses = dnsAddressesProp ?? dashboardDnsAddresses;
 
     const encryptedAddresses = dnsAddresses.filter((address: string) =>
         address.includes('https://') || address.includes('tls://') || address.includes('quic://')
@@ -21,14 +32,16 @@ export const SetupGuide = () => {
     );
 
     return (
-        <div className={theme.layout.container}>
+        <div className={isStep ? s.stepRoot : theme.layout.container}>
             <div className={s.header}>
-                <h1 className={s.pageTitle}>{intl.getMessage('setup_guide')}</h1>
-                <div className={s.pageDesc}>{intl.getMessage('setup_guide_desc')}</div>
+                <h1 className={s.pageTitle}>
+                    {intl.getMessage(isStep ? 'setup_guide_title' : 'setup_guide')}
+                </h1>
+                {!isStep && <div className={s.pageDesc}>{intl.getMessage('setup_guide_desc')}</div>}
             </div>
 
             <div className={s.guidePage}>
-                <h1 className={s.guideTitle}>{intl.getMessage('setup_guide_device_type')}</h1>
+                {!isStep &&  <h1 className={s.guideTitle}>{intl.getMessage('setup_guide_device_type')}</h1>}
                 <Guide dnsAddresses={dnsAddresses} />
 
                 <div className={s.guideDesc}>
@@ -43,8 +56,8 @@ export const SetupGuide = () => {
                             </div>
 
                             <ul className={s.addressList}>
-                                {encryptedAddresses.map((ip: string) => (
-                                    <li key={ip} className={s.address}>
+                                {encryptedAddresses.map((ip: string, index: number) => (
+                                    <li key={`${ip}-${index}`} className={s.address}>
                                         <span className={s.bulletIcon}></span>
                                         <CopiedText text={ip} />
                                     </li>
@@ -60,8 +73,8 @@ export const SetupGuide = () => {
                             </div>
 
                             <ul className={s.addressList}>
-                                {plainAddresses.map((ip: string) => (
-                                    <li key={ip} className={s.address}>
+                                {plainAddresses.map((ip: string, index: number) => (
+                                    <li key={`${ip}-${index}`} className={s.address}>
                                         <span className={s.bulletIcon}></span>
                                         <CopiedText text={ip} />
                                     </li>
@@ -70,6 +83,10 @@ export const SetupGuide = () => {
                         </>
                     )}
                 </div>
+            </div>
+
+            <div className={s.footer}>
+                {footer}
             </div>
         </div>
     );

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import cn from 'clsx';
 
@@ -8,6 +8,7 @@ import { Icon } from 'panel/common/ui/Icon';
 import intl, { LocalesType } from 'panel/common/intl';
 
 import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from 'panel/helpers/localStorageHelper';
+import { LanguageDropdown } from '../LanguageDropdown/LanguageDropdown';
 import { REPOSITORY, PRIVACY_POLICY_LINK, THEMES } from '../../../helpers/constants';
 import { LANGUAGES } from '../../../helpers/twosky';
 import { setHtmlLangAttr, setUITheme } from '../../../helpers/helpers';
@@ -47,13 +48,6 @@ export const Footer = () => {
     const isLoggedIn = profileName !== '';
     const [currentThemeLocal, setCurrentThemeLocal] = useState(THEMES.auto);
     const [themeDropdownOpen, setThemeDropdownOpen] = useState(false);
-    const [langDropdownOpen, setLangDropdownOpen] = useState(false);
-
-    const sortedLanguages = useMemo(
-        () => Object.keys(LANGUAGES).sort((a, b) => LANGUAGES[a].localeCompare(LANGUAGES[b])),
-        [LANGUAGES],
-    );
-
     const getYear = () => {
         const today = new Date();
         return today.getFullYear();
@@ -144,36 +138,12 @@ export const Footer = () => {
                 </div>
 
                 <div className={s.column}>
-                    <Dropdown
-                        trigger="click"
-                        open={langDropdownOpen}
-                        onOpenChange={setLangDropdownOpen}
-                        menu={
-                            <div className={cn(theme.dropdown.menu, theme.dropdown.menu_lang)}>
-                                {sortedLanguages.map((lang) => (
-                                    <button
-                                        type="button"
-                                        key={lang}
-                                        className={cn(theme.dropdown.item, {
-                                            [theme.dropdown.item_active]: currentLanguage === lang,
-                                        })}
-                                        onClick={() => {
-                                            changeLanguage(lang as LocalesType);
-                                            setLangDropdownOpen(false);
-                                        }}>
-                                        {LANGUAGES[lang]}
-                                    </button>
-                                ))}
-                            </div>
-                        }
+                    <LanguageDropdown
+                        value={currentLanguage}
+                        languages={LANGUAGES}
+                        onChange={(lang) => changeLanguage(lang as LocalesType)}
                         className={s.dropdown}
-                        overlayClassName={s.langOverlay}
-                        position="bottomRight">
-                        <div className={s.dropdownTrigger}>
-                            <Icon icon="lang" className={s.icon} />
-                            <span>{LANGUAGES[currentLanguage] || LANGUAGES[intl.getUILanguage()]}</span>
-                        </div>
-                    </Dropdown>
+                        position="bottomRight" />
                 </div>
             </div>
         </footer>
