@@ -46,9 +46,9 @@ func rootDir() (dir string) {
 	// TODO(e.burkov): Use a better way if golang/go#44279 is ever resolved.
 	sysDir, err := windows.GetSystemDirectory()
 	if err != nil {
-		// Assume that C: is the safe default.
-		return "C:"
+		// Assume that C:\ is the safe default.
+		return "C:\\"
 	}
 
-	return filepath.VolumeName(sysDir)
+	return filepath.Join(filepath.VolumeName(sysDir), "\\")
 }

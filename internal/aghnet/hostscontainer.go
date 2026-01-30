@@ -112,7 +112,7 @@ func NewHostsContainer(
 				return nil, fmt.Errorf("adding path: %w", err)
 			}
 
-			l.DebugContext(ctx, "expected path does not exist", "path", p)
+			l.DebugContext(ctx, "expected path does not exist", "path", p, slogutil.KeyError, err)
 		}
 	}
 
