@@ -59,7 +59,7 @@ func TestNewHostsContainer(t *testing.T) {
 				relName, err := filepath.Rel(aghos.RootDir(), name)
 				require.NoError(t, err)
 
-				assert.Contains(t, tc.paths, relName)
+				assert.Contains(t, tc.paths, filepath.ToSlash(relName))
 
 				return nil
 			}
