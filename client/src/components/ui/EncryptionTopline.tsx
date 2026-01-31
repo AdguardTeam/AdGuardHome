@@ -33,8 +33,8 @@ const getExpirationFlags = (not_before: any, not_after: any) => {
 
     const certLifetimeHours = differenceInHours(not_after, not_before);
     const expiringThreshold = certLifetimeHours < SHORT_LIVED_HOURS ?
-     certLifetimeHours * (1 - SHORT_MIN_RATIO_VALIDITY_REMAINING) :
-     certLifetimeHours * (1 - REG_MIN_RATIO_VALIDITY_REMAINING);
+        certLifetimeHours * (1 - SHORT_MIN_RATIO_VALIDITY_REMAINING) :
+        certLifetimeHours * (1 - REG_MIN_RATIO_VALIDITY_REMAINING);
      
     const now = Date.now();
 
