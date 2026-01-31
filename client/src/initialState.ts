@@ -334,6 +334,17 @@ export type DnsConfigData = {
     cache_ttl_max?: number;
     cache_ttl_min?: number;
     cache_optimistic?: boolean;
+    ipset?: string[];
+    ipset_file?: string;
+    ipset_create?: {
+        enabled: boolean;
+        sets: Array<{
+            name: string;
+            type: string;
+            family: string;
+            timeout: number;
+        }>;
+    } | null;
 };
 
 export type FilteringData = {

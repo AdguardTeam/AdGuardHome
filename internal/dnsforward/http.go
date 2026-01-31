@@ -125,6 +125,42 @@ type jsonDNSConfig struct {
 	// systemResolvers to the front-end.  It's not a pointer to the slice since
 	// there is no need to omit it while decoding from JSON.
 	DefaultLocalPTRUpstreams []string `json:"default_local_ptr_upstreams,omitempty"`
+
+	// IPSet is the ipset configuration that allows adding IP addresses of
+	// specified domain names to an ipset list.  The format is:
+	// DOMAIN[,DOMAIN].../IPSET_NAME[,IPSET_NAME]...
+	IPSet *[]string `json:"ipset"`
+
+	// IPSetFile is the path to a file containing ipset configuration.
+	// The format is the same as IPSet.  This field takes precedence over IPSet.
+	IPSetFile *string `json:"ipset_file"`
+
+	// IPSetCreate contains configuration for automatic ipset creation.
+	IPSetCreate *jsonIpsetCreateConfig `json:"ipset_create"`
+}
+
+// jsonIpsetCreateConfig contains configuration for automatic ipset creation.
+type jsonIpsetCreateConfig struct {
+	// Enabled indicates whether automatic ipset creation is enabled.
+	Enabled bool `json:"enabled"`
+
+	// Sets is the list of ipsets to create if they don't exist.
+	Sets []jsonIpsetSetConfig `json:"sets"`
+}
+
+// jsonIpsetSetConfig contains configuration for a single ipset.
+type jsonIpsetSetConfig struct {
+	// Name is the name of the ipset.
+	Name string `json:"name"`
+
+	// Type is the type of the ipset (e.g., "hash:ip", "hash:net").
+	Type string `json:"type"`
+
+	// Family is the IP family ("inet" for IPv4, "inet6" for IPv6).
+	Family string `json:"family"`
+
+	// Timeout is the timeout in seconds for entries (0 means no timeout).
+	Timeout uint32 `json:"timeout"`
 }
 
 // jsonUpstreamMode is a enumeration of upstream modes.
@@ -174,6 +210,23 @@ func (s *Server) getDNSConfig(ctx context.Context) (c *jsonDNSConfig) {
 	resolveClients := s.conf.AddrProcConf.UseRDNS
 	usePrivateRDNS := s.conf.UsePrivateRDNS
 	localPTRUpstreams := stringutil.CloneSliceOrEmpty(s.conf.LocalPTRResolvers)
+	ipsetList := stringutil.CloneSliceOrEmpty(s.conf.IpsetList)
+	ipsetFile := s.conf.IpsetListFileName
+	var ipsetCreate *jsonIpsetCreateConfig
+	if s.conf.IpsetCreate != nil {
+		ipsetCreate = &jsonIpsetCreateConfig{
+			Enabled: s.conf.IpsetCreate.Enabled,
+			Sets:    make([]jsonIpsetSetConfig, len(s.conf.IpsetCreate.Sets)),
+		}
+		for i, set := range s.conf.IpsetCreate.Sets {
+			ipsetCreate.Sets[i] = jsonIpsetSetConfig{
+				Name:    set.Name,
+				Type:    set.Type,
+				Family:  set.Family,
+				Timeout: set.Timeout,
+			}
+		}
+	}
 
 	var upstreamMode jsonUpstreamMode
 	switch s.conf.UpstreamMode {
@@ -223,6 +276,9 @@ func (s *Server) getDNSConfig(ctx context.Context) (c *jsonDNSConfig) {
 		LocalPTRUpstreams:        &localPTRUpstreams,
 		DefaultLocalPTRUpstreams: defPTRUps,
 		DisabledUntil:            protectionDisabledUntil,
+		IPSet:                    &ipsetList,
+		IPSetFile:                &ipsetFile,
+		IPSetCreate:              ipsetCreate,
 	}
 }
 
@@ -579,8 +635,12 @@ func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
 		err = s.Reconfigure(ctx, nil)
 		if err != nil {
 			aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusInternalServerError, "%s", err)
+
+			return
 		}
 	}
+
+	aghhttp.OK(ctx, l, w)
 }
 
 // setConfig sets the server parameters.  shouldRestart is true if the server
@@ -647,6 +707,24 @@ func setIfNotNil[T any](currentPtr, newPtr *T) (hasSet bool) {
 // shouldRestart is true if the server should be restarted to apply changes.
 // s.serverLock is expected to be locked.
 //
+// ipsetSetsEqual compares two slices of IpsetSetConfig for equality.
+func ipsetSetsEqual(a, b []IpsetSetConfig) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	for i := range a {
+		if a[i].Name != b[i].Name ||
+			a[i].Type != b[i].Type ||
+			a[i].Family != b[i].Family ||
+			a[i].Timeout != b[i].Timeout {
+			return false
+		}
+	}
+
+	return true
+}
+
 // TODO(a.garipov): Some of these could probably be updated without a restart.
 // Inspect and consider refactoring.
 func (s *Server) setConfigRestartable(dc *jsonDNSConfig) (shouldRestart bool) {
@@ -668,11 +746,46 @@ func (s *Server) setConfigRestartable(dc *jsonDNSConfig) (shouldRestart bool) {
 		setIfNotNil(&s.conf.RatelimitSubnetLenIPv4, dc.RatelimitSubnetLenIPv4),
 		setIfNotNil(&s.conf.RatelimitSubnetLenIPv6, dc.RatelimitSubnetLenIPv6),
 		setIfNotNil(&s.conf.RatelimitWhitelist, dc.RatelimitWhitelist),
+		setIfNotNil(&s.conf.IpsetList, dc.IPSet),
+		setIfNotNil(&s.conf.IpsetListFileName, dc.IPSetFile),
 	} {
 		shouldRestart = shouldRestart || hasSet
 		if shouldRestart {
 			break
 		}
+	}
+
+	// Handle ipset_create configuration
+	if dc.IPSetCreate != nil {
+		if s.conf.IpsetCreate == nil {
+			s.conf.IpsetCreate = &IpsetCreateConfig{}
+		}
+
+		if s.conf.IpsetCreate.Enabled != dc.IPSetCreate.Enabled {
+			s.conf.IpsetCreate.Enabled = dc.IPSetCreate.Enabled
+			shouldRestart = true
+		}
+
+		// Convert JSON sets to config sets
+		newSets := make([]IpsetSetConfig, len(dc.IPSetCreate.Sets))
+		for i, jsonSet := range dc.IPSetCreate.Sets {
+			newSets[i] = IpsetSetConfig{
+				Name:    jsonSet.Name,
+				Type:    jsonSet.Type,
+				Family:  jsonSet.Family,
+				Timeout: jsonSet.Timeout,
+			}
+		}
+
+		// Check if sets changed
+		if !ipsetSetsEqual(s.conf.IpsetCreate.Sets, newSets) {
+			s.conf.IpsetCreate.Sets = newSets
+			shouldRestart = true
+		}
+	} else if s.conf.IpsetCreate != nil && s.conf.IpsetCreate.Enabled {
+		// IPSetCreate was disabled
+		s.conf.IpsetCreate.Enabled = false
+		shouldRestart = true
 	}
 
 	if dc.Ratelimit != nil && s.conf.Ratelimit != *dc.Ratelimit {
