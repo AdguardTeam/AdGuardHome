@@ -1,7 +1,8 @@
 import React from 'react';
 import { Trans } from 'react-i18next';
 import isAfter from 'date-fns/is_after';
-import addDays from 'date-fns/add_days';
+import addHours from 'date-fns/add_hours';
+import differenceInHours from 'date-fns/difference_in_hours';
 import { useSelector } from 'react-redux';
 
 import Topline from './Topline';
@@ -25,11 +26,19 @@ const EXPIRATION_STATE = {
     },
 };
 
-const getExpirationFlags = (not_after: any) => {
-    const DAYS_BEFORE_EXPIRATION = 5;
+const getExpirationFlags = (not_before: any, not_after: any) => {
+    const REG_MIN_RATIO_VALIDITY_REMAINING = 0.333;
+    const SHORT_MIN_RATIO_VALIDITY_REMAINING = 0.5;
+    const SHORT_LIVED_HOURS = 10 * 24;
 
+    const certLifetimeHours = differenceInHours(not_after, not_before);
+    const expiringThreshold = certLifetimeHours < SHORT_LIVED_HOURS ?
+        certLifetimeHours * (1 - SHORT_MIN_RATIO_VALIDITY_REMAINING) :
+        certLifetimeHours * (1 - REG_MIN_RATIO_VALIDITY_REMAINING);
+     
     const now = Date.now();
-    const isExpiring = isAfter(addDays(now, DAYS_BEFORE_EXPIRATION), not_after);
+
+    const isExpiring = isAfter(now, addHours(not_before, expiringThreshold));
     const isExpired = isAfter(now, not_after);
 
     return {
@@ -38,8 +47,8 @@ const getExpirationFlags = (not_after: any) => {
     };
 };
 
-const getExpirationEnumKey = (not_after: any) => {
-    const { isExpiring, isExpired } = getExpirationFlags(not_after);
+const getExpirationEnumKey = (not_before: any, not_after: any) => {
+    const { isExpiring, isExpired } = getExpirationFlags(not_before, not_after);
 
     if (isExpired) {
         return EXPIRATION_ENUM.EXPIRED;
@@ -53,13 +62,14 @@ const getExpirationEnumKey = (not_after: any) => {
 };
 
 const EncryptionTopline = () => {
+    const not_before = useSelector((state: RootState) => state.encryption.not_before);
     const not_after = useSelector((state: RootState) => state.encryption.not_after);
 
-    if (not_after === EMPTY_DATE) {
+    if (not_before === EMPTY_DATE || not_after === EMPTY_DATE) {
         return null;
     }
 
-    const expirationStateKey = getExpirationEnumKey(not_after);
+    const expirationStateKey = getExpirationEnumKey(not_before, not_after);
 
     if (expirationStateKey === EXPIRATION_ENUM.VALID) {
         return null;
