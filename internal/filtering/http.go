@@ -56,6 +56,48 @@ func (d *DNSFilter) validateFilterURL(urlStr string) (err error) {
 	return nil
 }
 
+// validateFilterURLForFetch is a more permissive validation function for the
+// fetch_title endpoint.  Since this endpoint only reads data without saving
+// it, we can be less restrictive about URL format.  This allows URLs without
+// file extensions, which are common for blocklists (e.g., "/hosts",
+// "/blocklist").
+func (d *DNSFilter) validateFilterURLForFetch(urlStr string) (err error) {
+	defer func() { err = errors.Annotate(err, "checking filter for fetch: %w") }()
+
+	if filepath.IsAbs(urlStr) {
+		urlStr = filepath.Clean(urlStr)
+		_, err = os.Stat(urlStr)
+		if err != nil {
+			// Don't wrap the error since it's informative enough as is.
+			return err
+		}
+
+		if !pathMatchesAny(d.safeFSPatterns, urlStr) {
+			return fmt.Errorf("path %q does not match safe patterns", urlStr)
+		}
+
+		return nil
+	}
+
+	u, err := url.ParseRequestURI(urlStr)
+	if err != nil {
+		// Don't wrap the error, because it's informative enough as is.
+		return err
+	}
+
+	// Only validate that it's HTTP or HTTPS, don't apply stricter rules
+	// that might reject URLs without file extensions.
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return fmt.Errorf("invalid url scheme: %q", u.Scheme)
+	}
+
+	if u.Host == "" {
+		return errors.Error("empty url host")
+	}
+
+	return nil
+}
+
 type filterAddJSON struct {
 	Name      string `json:"name"`
 	URL       string `json:"url"`
@@ -610,6 +652,69 @@ func (d *DNSFilter) handleCheckHost(w http.ResponseWriter, r *http.Request) {
 	aghhttp.WriteJSONResponseOK(ctx, l, w, r, resp)
 }
 
+// filterTitleReq is the request structure for fetching filter title.
+type filterTitleReq struct {
+	URL string `json:"url"`
+}
+
+// filterTitleResp is the response structure for fetching filter title.
+type filterTitleResp struct {
+	Title string `json:"title"`
+}
+
+// handleFetchTitle is the handler for the POST /control/filtering/fetch_title
+// HTTP API.  It downloads the beginning of the filter file and extracts the
+// title without saving the filter.
+func (d *DNSFilter) handleFetchTitle(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	l := d.logger
+
+	req := filterTitleReq{}
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		aghhttp.ErrorAndLog(
+			ctx,
+			l,
+			r,
+			w,
+			http.StatusBadRequest,
+			"failed to parse request body json: %s",
+			err,
+		)
+
+		return
+	}
+
+	err = d.validateFilterURLForFetch(req.URL)
+	if err != nil {
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "%s", err)
+
+		return
+	}
+
+	title, err := d.fetchFilterTitle(req.URL)
+	if err != nil {
+		aghhttp.ErrorAndLog(
+			ctx,
+			l,
+			r,
+			w,
+			http.StatusBadRequest,
+			"couldn't fetch filter title from URL %q: %s",
+			req.URL,
+			err,
+		)
+
+		return
+	}
+
+	resp := filterTitleResp{
+		Title: title,
+	}
+
+	aghhttp.WriteJSONResponseOK(ctx, l, w, r, resp)
+}
+
 // stringToDNSType is a helper function that converts a string to DNS type.  If
 // the string is empty, it returns the default value [dns.TypeA].
 func stringToDNSType(str string) (qtype uint16, err error) {
@@ -753,6 +858,7 @@ func (d *DNSFilter) RegisterFilteringHandlers() {
 	registerHTTP(http.MethodPost, "/control/filtering/refresh", d.handleFilteringRefresh)
 	registerHTTP(http.MethodPost, "/control/filtering/set_rules", d.handleFilteringSetRules)
 	registerHTTP(http.MethodGet, "/control/filtering/check_host", d.handleCheckHost)
+	registerHTTP(http.MethodPost, "/control/filtering/fetch_title", d.handleFetchTitle)
 }
 
 // ValidateUpdateIvl returns false if i is not a valid filters update interval.
