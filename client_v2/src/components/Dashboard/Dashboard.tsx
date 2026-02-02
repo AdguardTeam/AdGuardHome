@@ -18,7 +18,7 @@ import {
     DAY,
     STATS_INTERVALS_DAYS,
 } from 'panel/helpers/constants';
-import { msToSeconds, msToMinutes, msToHours, msToDays } from 'panel/helpers/helpers';
+import { msToSeconds, msToMinutes, msToHours } from 'panel/helpers/helpers';
 
 import { StatCards } from './blocks/StatCards';
 import { GeneralStatistics } from './blocks/GeneralStatistics';

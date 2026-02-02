@@ -108,13 +108,6 @@ export const GeneralStatistics = ({
     const parentalPercent = numDnsQueries > 0 ? (numReplacedParental / numDnsQueries) * 100 : 0;
     const safesearchPercent = numDnsQueries > 0 ? (numReplacedSafesearch / numDnsQueries) * 100 : 0;
 
-    const getIntervalDescription = () => {
-        if (timeUnits === TIME_UNITS.HOURS) {
-            return intl.getMessage('number_of_dns_query_hours', { count: msToHours(interval) });
-        }
-        return intl.getMessage('number_of_dns_query_days', { count: msToDays(interval) });
-    };
-
     const hasStats = numDnsQueries > 0;
 
     return (
