@@ -1,0 +1,406 @@
+/* Disable Auto Zoom in Input - Safari on iPhone https://stackoverflow.com/a/6394497 */
+input,
+select,
+textarea {
+    font-size: 1rem;
+
+    @media screen and (min-width: 1024px) {
+        font-size: inherit;
+    }
+}
+
+.setup {
+    min-height: calc(100vh - 345px);
+    line-height: 1.48;
+}
+
+@media screen and (min-width: 768px) {
+    .setup {
+        min-height: calc(100vh - 141px);
+    }
+}
+
+.container {
+    max-width: 1176px;
+    margin: 0 auto;
+    padding-bottom: 24px;
+}
+
+.step {
+    display: flex;
+    gap: 88px;
+    justify-content: center;
+    flex-direction: column;
+    padding: 0;
+
+    @media screen and (min-width: 1024px) {
+        flex-direction: row;
+        padding: 0 16px;
+    }
+}
+
+.title {
+    font-size: 24px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 120%;
+    margin-bottom: 12px;
+
+    @media screen and (min-width: 1024px) {
+        font-size: 40px;
+        margin-bottom: 16px;
+    }
+}
+
+.titleStep {
+    font-size: 24px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 120%;
+    margin-bottom: 12px;
+
+    @media screen and (min-width: 1024px) {
+        font-size: 32px;
+        margin-bottom: 16px;
+    }
+}
+
+.input {
+    margin-bottom: 16px;
+}
+
+.authRequirementsMobile {
+    display: block;
+    margin: 0 0 16px;
+
+    .bannerItem {
+        font-size: 14px;
+        margin-top: 16px;
+    }
+
+    .bannerTitle {
+        display: none;
+    }
+
+    @media screen and (min-width: 1024px) {
+        display: none;
+    }
+}
+
+.authBanner {
+    display: none;
+
+    @media screen and (min-width: 1024px) {
+        display: block;
+    }
+}
+
+.info {
+    max-width: 584px;
+    text-align: left;
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 150%;
+    padding: 0 16px;
+
+    @media screen and (min-width: 1024px) {
+        padding-left: 48px;
+    }
+}
+
+.subtitle {
+    margin-bottom: 10px;
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.desc {
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 150%;
+
+    @media screen and (min-width: 1024px) {
+        font-size: 18px;
+    }
+}
+
+.descStep {
+    margin-bottom: 8px;
+
+    @media screen and (min-width: 1024px) {
+        margin-bottom: 24px;
+    }
+}
+
+.descAdresses {
+    margin-top: 0;
+
+    @media screen and (min-width: 1024px) {
+        margin-top: 32px;
+    }
+}
+
+.list {
+    padding-left: 26px;
+    margin: 18px 0 24px;
+
+    @media screen and (min-width: 1024px) {
+        margin: 18px 0 40px;
+    }
+}
+
+.listItem {
+    font-size: 16px;
+
+    @media screen and (min-width: 1024px) {
+        font-size: inherit;
+    }
+}
+
+.group {
+    margin-bottom: 35px;
+}
+
+.group:last-child {
+    margin-bottom: 0;
+}
+
+.groupCenter {
+    padding: 48px 24px;
+    max-width: 632px;
+    margin: 0 auto;
+}
+
+.consent {
+    margin: 32px 0 36px;
+}
+
+.consentContent {
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 130%;
+}
+
+.button {
+    max-width: 200px;
+}
+
+.errorText {
+    color: var(--red-50);
+}
+
+.successText {
+    color: var(--product-primary-50);
+}
+
+.spacerBottom {
+    margin-bottom: 8px;
+}
+
+.greeting {
+    display: flex;
+    justify-content: space-between;
+    gap: 40px;
+    padding-top: 40px;
+    align-items: center;
+
+    .content {
+        display: none;
+    }
+
+    @media screen and (min-width: 1024px) {
+        padding-top: 116px;
+
+        .content {
+            display: block;
+        }
+    }
+}
+
+.configSetting {
+    padding-top: 40px;
+
+    @media screen and (min-width: 1024px) {
+        padding-top: 48px;
+    }
+}
+
+.banner {
+    display: none;
+    box-shadow: none;
+    padding: 0;
+    margin-bottom: 24px;
+
+    @media screen and (min-width: 1024px) {
+        display: flex;
+        width: 400px;
+        padding: 26px 16px 16px 24px;
+        flex-direction: column;
+        align-items: flex-start;
+        border-radius: 16px;
+        box-shadow: 8px 8px 24px 0 rgba(0, 0, 0, 0.10);
+        margin-bottom: 0;
+    }
+}
+
+@media screen and (min-width: 1024px) {
+    .bannerTitle {
+        font-size: 24px;
+    }
+}
+
+.bannerList {
+    list-style: none;
+    padding: 0;
+    margin: 0
+}
+
+.bannerItem {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 130%;
+    margin-top: 16px;
+}
+
+.bannerTitle {
+    font-size: 24px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 120%;
+    margin-bottom: 8px;
+}
+
+.bannerMobile {
+    display: flex;
+    width: 100%;
+    margin-top: 16px;
+    flex-direction: column;
+
+    @media screen and (min-width: 1024px) {
+        display: none;
+    }
+}
+
+.link {
+    color: var(--product-primary-50);
+    text-decoration: underline;
+}
+
+.nav {
+    display: flex;
+    gap: 24px;
+    flex-direction: column-reverse;
+
+    button {
+        max-width: 100%;
+
+        @media screen and (min-width: 768px) {
+            max-width: unset;
+        }
+    }
+
+    @media screen and (min-width: 1024px) {
+        flex-direction: row;
+
+        button {
+            max-width: 200px;
+        }
+    }
+}
+
+.end {
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+    max-width: 576px;
+    align-items: center;
+    text-align: center;
+    height: 100%;
+    padding: 48px 16px 24px;
+
+    @media screen and (min-width: 768px) {
+        padding: 48px 16px 24px;
+    }
+
+    @media screen and (min-width: 1024px) {
+        padding: 116px 0 0;
+    }
+}
+
+.end button {
+    max-width: 100%;
+
+    @media screen and (min-width: 1024px) {
+        max-width: 200px;
+    }
+}
+
+.quote {
+    margin-bottom: 24px;
+}
+
+.quoteTitle {
+    font-size: 20px;
+    font-style: normal;
+    font-weight: 700;
+    margin-bottom: 28px;
+    line-height: 120%;
+
+    @media screen and (min-width: 1024px) {
+        font-size: 24px;
+        margin-bottom: 32px;
+    }
+}
+
+.quoteDesc {
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 150%;
+    position: relative;
+    padding-left: 16px;
+
+    @media screen and (min-width: 1024px) {
+        font-size: 18px;
+    }
+}
+
+.quoteDesc::before {
+    content: "";
+    height: 100%;
+    position: absolute;
+    left: 0;
+    border-radius: 8px;
+    width: 4px;
+    display: block;
+    background-color: var(--orange-50);
+}
+
+.message {
+    margin-right: 4px;
+    display: inline-block;
+}
+
+.addressList {
+    padding-left: 20px;
+}
+
+.addressListWrapper {
+    margin-bottom: 40px;
+}
+
+.addressListItem {
+    margin-bottom: 16px;
+}
+
+.addressListItem:last-child {
+    margin-bottom: 0;
+}

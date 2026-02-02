@@ -26,7 +26,7 @@ Optional environment:
 
 - `DOCKER_IMAGE_NAME`: the name of the resulting Docker container. By default it’s `adguardhome-dev`.
 
-- `DOCKER_OUTPUT`: the `--output` parameters. By default they are `type=image,name=${DOCKER_IMAGE_NAME},push=false`.
+- `DOCKER_PUSH`: `1` to push the image to DockerHub, `0` to not push. By default it’s `0`.
 
 - `SUDO`: allow users to use `sudo` or `doas` with `docker`. By default none is used.
 

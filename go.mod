@@ -11,7 +11,9 @@ require (
 	github.com/bluele/gcache v0.0.2
 	github.com/c2h5oh/datasize v0.0.0-20231215233829-aa82cc1e6500
 	github.com/digineo/go-ipset/v2 v2.2.1
-	github.com/fsnotify/fsnotify v1.9.0
+	// TODO(e.burkov): Update to the latest version when
+	// github.com/fsnotify/fsnotify/issues/727 is fixed.
+	github.com/fsnotify/fsnotify v1.8.0
 	// TODO(e.burkov): This package is deprecated; find a new one or use our
 	// own code for that.  Perhaps, use gopacket.
 	github.com/go-ping/ping v1.2.0

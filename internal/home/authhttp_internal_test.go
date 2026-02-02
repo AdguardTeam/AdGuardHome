@@ -255,6 +255,11 @@ func TestAuthMiddlewareDefault(t *testing.T) {
 		name:     "redirect",
 		wantCode: http.StatusFound,
 	}, {
+		req:      authRequest("/forgot_password.html", cookie, "", ""),
+		wantUser: nil,
+		name:     "redirect_password",
+		wantCode: http.StatusFound,
+	}, {
 		req:      authRequest("/control/profile", cookie, "", ""),
 		wantUser: user,
 		name:     "protected",

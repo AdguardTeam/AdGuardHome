@@ -27,6 +27,7 @@ export type FormValues = {
     interval: number;
     customInterval?: number | null;
     ignored: string;
+    ignored_enabled: boolean;
 };
 
 const defaultFormValues = {
@@ -34,6 +35,7 @@ const defaultFormValues = {
     interval: DAY,
     customInterval: null,
     ignored: '',
+    ignored_enabled: true,
 };
 
 type Props = {
@@ -162,12 +164,20 @@ export const Form = ({ initialValues, processing, processingReset, onSubmit, onR
                 </div>
             </div>
 
-            <div className="form__label form__label--with-desc">
-                <Trans>ignore_domains_title</Trans>
-            </div>
-
-            <div className="form__desc form__desc--top">
-                <Trans>ignore_domains_desc_stats</Trans>
+            <div className="form__group form__group--settings">
+                <Controller
+                    name="ignored_enabled"
+                    control={control}
+                    render={({ field }) => (
+                        <Checkbox
+                            {...field}
+                            data-testid="stats_config_ignored_enabled"
+                            title={t('ignore_domains_title')}
+                            subtitle={t('ignore_domains_desc_stats')}
+                            disabled={processing}
+                        />
+                    )}
+                />
             </div>
 
             <div className="form__group form__group--settings">

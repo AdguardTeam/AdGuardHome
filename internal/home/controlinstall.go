@@ -174,7 +174,7 @@ func (req *checkConfReq) validateDNS(
 	canAutofix = checkDNSStubListener(ctx, l)
 	if canAutofix && req.DNS.Autofix {
 		if derr := disableDNSStubListener(ctx, l, cmdCons); derr != nil {
-			l.ErrorContext(ctx, "disabling DNSStubListener", slogutil.KeyError, err)
+			l.ErrorContext(ctx, "disabling DNSStubListener", slogutil.KeyError, derr)
 		}
 
 		err = aghnet.CheckPort("udp", netip.AddrPortFrom(req.DNS.IP, port))

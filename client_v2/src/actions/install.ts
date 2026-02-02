@@ -1,9 +1,12 @@
 import { createAction } from 'redux-actions';
+import intl from 'panel/common/intl';
 import { apiClient } from '../api/Api';
 import { addErrorToast, addSuccessToast } from './toasts';
 
 export const nextStep = createAction('NEXT_STEP');
 export const prevStep = createAction('PREV_STEP');
+
+export const setAuthData = createAction('SET_AUTH_DATA');
 
 export const getDefaultAddressesRequest = createAction('GET_DEFAULT_ADDRESSES_REQUEST');
 export const getDefaultAddressesFailure = createAction('GET_DEFAULT_ADDRESSES_FAILURE');
@@ -32,12 +35,10 @@ export const setAllSettings = (values: any) => async (dispatch: any) => {
 
         await apiClient.setAllSettings(config);
         dispatch(setAllSettingsSuccess());
-        dispatch(addSuccessToast('install_saved'));
-        dispatch(nextStep());
+        dispatch(addSuccessToast(intl.getMessage('install_saved')));
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(setAllSettingsFailure());
-        dispatch(prevStep());
     }
 };
 

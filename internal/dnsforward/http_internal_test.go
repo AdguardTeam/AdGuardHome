@@ -366,6 +366,11 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 		Host:   netutil.JoinHostPort(upstreamHost, hostsListener.Port()),
 	}).String()
 
+	watcher := aghtest.NewFSWatcher()
+	watcher.OnEvents = func() (e <-chan struct{}) { return nil }
+	watcher.OnAdd = func(_ string) (err error) { return nil }
+	watcher.OnShutdown = func(_ context.Context) (err error) { return nil }
+
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
 	hc, err := aghnet.NewHostsContainer(
 		ctx,
@@ -375,12 +380,7 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 				Data: []byte(hostsListener.Addr().String() + " " + upstreamHost),
 			},
 		},
-		&aghtest.FSWatcher{
-			OnStart:    func(ctx context.Context) (_ error) { panic(testutil.UnexpectedCall(ctx)) },
-			OnEvents:   func() (e <-chan struct{}) { return nil },
-			OnAdd:      func(_ string) (err error) { return nil },
-			OnShutdown: func(_ context.Context) (err error) { return nil },
-		},
+		watcher,
 		hostsFileName,
 	)
 	require.NoError(t, err)

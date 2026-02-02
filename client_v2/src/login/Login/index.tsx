@@ -1,62 +1,47 @@
-import React, { useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { Trans } from 'react-i18next';
-import cn from 'clsx';
+import React from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 
-import theme from 'panel/lib/theme';
+import intl from 'panel/common/intl';
 
+import { PublicHeader } from 'panel/common/ui/PublicHeader';
+import { Icons } from 'panel/common/ui/Icons';
+
+import s from 'panel/common/ui/Header/Header.module.pcss';
+import twosky from '../../../../.twosky.json';
 import * as actionCreators from '../../actions/login';
 import Toasts from '../../components/Toasts';
 import Form, { LoginFormValues } from './Form';
+import styles from './styles.module.pcss';
+
 import { LoginState } from '../../initialState';
 
-import './Login.css';
+const LANGUAGES = twosky[1].languages;
 
 export const Login = () => {
     const dispatch = useDispatch();
     const { processingLogin } = useSelector((state: LoginState) => state.login);
-    const [isForgotPasswordVisible, setIsForgotPasswordVisible] = useState(false);
 
     const handleSubmit = ({ username: name, password }: LoginFormValues) => {
         dispatch(actionCreators.processLogin({ name, password }));
     };
 
-    const toggleText = () => {
-        setIsForgotPasswordVisible((prev) => !prev);
-    };
-
     return (
-        <div className="login">
-            <div className="login__form">
+        <div className={styles.loginWrapper}>
+            <PublicHeader
+                languages={LANGUAGES}
+                dropdownClassName={s.dropdown}
+                dropdownPosition="bottomRight"
+            />
+            <div className={styles.login}>
+                <h1 className={styles.title}>
+                    {intl.getMessage('login')}
+                </h1>
                 <Form onSubmit={handleSubmit} processing={processingLogin} />
-
-                <div className="login__info">
-                    <button type="button" className={cn(theme.link.link, 'login__link')} onClick={toggleText}>
-                        <Trans>forgot_password</Trans>
-                    </button>
-
-                    {isForgotPasswordVisible && (
-                        <div className="login__message">
-                            <Trans
-                                components={[
-                                    <a
-                                        href="https://github.com/AdguardTeam/AdGuardHome/wiki/Configuration#password-reset"
-                                        key="0"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className={theme.link.link}
-                                    >
-                                        link
-                                    </a>,
-                                ]}>
-                                forgot_password_desc
-                            </Trans>
-                        </div>
-                    )}
-                </div>
             </div>
 
             <Toasts />
+
+            <Icons />
         </div>
     );
 };

@@ -137,6 +137,7 @@ const queryLogs = handleActions(
         isDetailed: true,
         isEntireLog: false,
         customInterval: null,
+        ignored_enabled: true,
     },
 );
 

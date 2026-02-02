@@ -17,7 +17,13 @@ export const processLogin = (values: any) => async (dispatch: any) => {
         window.location.replace(dashboardUrl);
         dispatch(processLoginSuccess());
     } catch (error) {
-        dispatch(addErrorToast({ error }));
-        dispatch(processLoginFailure());
+        const message = error instanceof Error ? error.message : String(error);
+        const isInvalidCredentials = message.includes(' | 403');
+
+        if (!isInvalidCredentials) {
+            dispatch(addErrorToast({ error }));
+        }
+
+        dispatch(processLoginFailure(isInvalidCredentials ? true : error));
     }
 };

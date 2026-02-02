@@ -49,7 +49,8 @@ export const ICONS = {
     parental: 'parental',
     search: 'search',
     time: 'time',
-    eye_opened: 'eye_opened',
+    eye_open: 'eye_open',
+    eye_close: 'eye_close',
 } as const;
 
 export type IconType = keyof typeof ICONS;
@@ -252,23 +253,10 @@ export const Icons = memo(() => (
         </symbol>
 
         <symbol id="lang" viewBox="0 0 24 24" fill="none" fillRule="evenodd" clipRule="evenodd">
-            <path
-                d="M13 14C13 14 15.5308 13.4189 17.0263 11.6741C18.5218 9.92934 19 7 19 7"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
-            <path
-                d="M3 20L7.00509 11L11 20"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
-            <path d="M4 17.5H9.5" stroke="currentColor" strokeWidth="1.5" />
-            <path d="M11.5 6.5H21.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            <path d="M16.5 6V4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M13 14s2.53-.581 4.026-2.326S19 7 19 7" />
+            <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M20 14s-2.53-.581-4.026-2.326S14 7 14 7M3 20l4.005-9L11 20" />
+            <path stroke="currentColor" strokeWidth="1.5" d="M4 17.5h5.5" />
+            <path stroke="currentColor" strokeLinecap="round" strokeWidth="1.5" d="M11.5 6.5h10M16.5 6V4.5" />
         </symbol>
 
         <symbol id="theme_auto" viewBox="0 0 24 24" fill="none" fillRule="evenodd" clipRule="evenodd">
@@ -671,6 +659,16 @@ export const Icons = memo(() => (
         >
             <path fillRule="evenodd" clipRule="evenodd" d="M4 11.772C6.66667 8.59065 9.33333 7 12 7C14.6667 7 17.3333 8.59065 20 11.772C20 11.772 16 16.772 12 16.772C8 16.772 4 11.772 4 11.772Z" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             <path fillRule="evenodd" clipRule="evenodd" d="M12 10C13.1046 10 14 10.8954 14 12C14 13.1046 13.1046 14 12 14C10.8954 14 10 13.1046 10 12C10 10.8954 10.8954 10 12 10Z" strokeWidth="1.5" />
+        </symbol>
+        <symbol id="eye_close" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 10C4 10 8 14.772 12 14.772C16 14.772 20 10 20 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            <path d="M12 15V17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            <path d="M18 13V15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            <path d="M6 13V15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        </symbol>
+        <symbol id="eye_open" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path fillRule="evenodd" clipRule="evenodd" d="M4 11.772C6.66667 8.59065 9.33333 7 12 7C14.6667 7 17.3333 8.59065 20 11.772C20 11.772 16 16.772 12 16.772C8 16.772 4 11.772 4 11.772Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path fillRule="evenodd" clipRule="evenodd" d="M12 10C13.1046 10 14 10.8954 14 12C14 13.1046 13.1046 14 12 14C10.8954 14 10 13.1046 10 12C10 10.8954 10.8954 10 12 10Z" stroke="currentColor" strokeWidth="1.5" />
         </symbol>
     </svg>
 ));

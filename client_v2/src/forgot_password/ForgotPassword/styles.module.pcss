@@ -1,0 +1,125 @@
+/* Disable Auto Zoom in Input - Safari on iPhone https://stackoverflow.com/a/6394497 */
+@media screen and (max-width: 767px) {
+    input,
+    select,
+    textarea {
+        font-size: 1rem;
+    }
+}
+
+.loginWrapper {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.login {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: stretch;
+    width: 100%;
+    max-width: 576px;
+    margin: 0 auto;
+    padding-top: 40px;
+    box-sizing: border-box;
+
+    @media screen and (min-width: 1024px) {
+        padding-top: 116px;
+
+    }
+}
+
+.formContainer {
+    width: 100%;
+    max-width: 576px;
+    padding: 48px 16px 16px;
+    box-sizing: border-box;
+}
+
+
+.listContainer {
+    padding: 0 16px;
+    width: 100%;
+    max-width: 576px;
+    box-sizing: border-box;
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 150%;
+}
+
+.info {
+    position: relative;
+    text-align: center;
+    text-decoration: none;
+    overflow: hidden;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 130%;
+}
+
+.message,
+.link {
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: 0;
+}
+
+.link {
+    margin-top: 16px;
+    border: 0;
+    background: transparent;
+}
+
+@media screen and (min-width: 992px) {
+    .message {
+        position: absolute;
+        top: 40px;
+        padding: 0 15px;
+    }
+}
+
+.group {
+    margin-bottom: 24px;
+}
+
+.footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.button {
+    max-width: 200px;
+}
+
+.title {
+    font-size: 32px;
+    padding: 0 16px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 120%;
+}
+
+.titleList {
+    margin-bottom: 32px;
+    padding: 0 16px;
+}
+
+.listDesc {
+    margin-bottom: 24px;
+}
+
+.listItem {
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 150%;
+}
+
+.list {
+    margin-bottom: 24px;
+    padding: 0 16px;
+}

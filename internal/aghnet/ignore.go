@@ -19,11 +19,15 @@ type IgnoreEngine struct {
 
 	// ignored is the list of rules for ignoring hostnames.
 	ignored []string
+
+	// enabled determines whether ignoring is enabled.
+	enabled bool
 }
 
 // NewIgnoreEngine creates a new instance of the IgnoreEngine and stores the
-// list of rules for ignoring hostnames.
-func NewIgnoreEngine(ignored []string) (e *IgnoreEngine, err error) {
+// list of rules for ignoring hostnames.  If enabled is set to false, hostnames
+// will never be ignored.
+func NewIgnoreEngine(ignored []string, enabled bool) (e *IgnoreEngine, err error) {
 	ruleLists := []filterlist.Interface{
 		filterlist.NewString(&filterlist.StringConfig{
 			RulesText:      strings.ToLower(strings.Join(ignored, "\n")),
@@ -38,12 +42,13 @@ func NewIgnoreEngine(ignored []string) (e *IgnoreEngine, err error) {
 	return &IgnoreEngine{
 		engine:  urlfilter.NewDNSEngine(ruleStorage),
 		ignored: ignored,
+		enabled: enabled,
 	}, nil
 }
 
 // Has returns true if IgnoreEngine matches the host.
 func (e *IgnoreEngine) Has(host string) (ignore bool) {
-	if e == nil {
+	if e == nil || !e.enabled {
 		return false
 	}
 
@@ -55,4 +60,9 @@ func (e *IgnoreEngine) Has(host string) (ignore bool) {
 // Values returns a copy of list of rules for ignoring hostnames.
 func (e *IgnoreEngine) Values() (ignored []string) {
 	return slices.Clone(e.ignored)
+}
+
+// IsEnabled returns true if hostnames ignoring is enabled.
+func (e *IgnoreEngine) IsEnabled() (enabled bool) {
+	return e.enabled
 }

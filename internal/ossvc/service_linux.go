@@ -235,10 +235,6 @@ func parseSystemctlShow(output io.Reader) (status service.Status, err error) {
 	return statusFromState(loadState, activeState, subState)
 }
 
-// statusRestartOnFail is a custom status value used to indicate the service's
-// state of restarting after failed start.
-const statusRestartOnFail = service.StatusStopped + 1
-
 // statusFromState returns the service status based on the systemctl state
 // property values.
 func statusFromState(loadState, activeState, subState string) (status service.Status, err error) {

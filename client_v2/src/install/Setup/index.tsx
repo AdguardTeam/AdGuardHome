@@ -1,55 +1,96 @@
-import React, { useEffect, Fragment } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import debounce from 'lodash/debounce';
 
+import { PublicHeader } from 'panel/common/ui/PublicHeader';
+import { InstallInterface, InstallState, RootState } from 'panel/initialState';
+import { SetupGuide } from 'panel/components/SetupGuide/SetupGuide';
 import * as actionCreators from '../../actions/install';
 
-import { getWebAddress } from '../../helpers/helpers';
+import { getInterfaceIp, getWebAddress } from '../../helpers/helpers';
 import { INSTALL_TOTAL_STEPS, ALL_INTERFACES_IP, DEBOUNCE_TIMEOUT } from '../../helpers/constants';
 
 import Greeting from './Greeting';
-import { ConfigType, DnsConfig, Settings, WebConfig } from './Settings';
-import { Devices } from './Devices';
+import type { ConfigType, DnsConfig, WebConfig } from './types';
+import { InterfaceSettings } from './InterfaceSettings';
+import { DnsSettings } from './DnsSettings';
+import Controls from './Controls';
 import { Submit } from './Submit';
-import { Progress } from './Progress';
+import { Progress } from './blocks/Progress';
 import { Auth } from './Auth';
 import Toasts from '../../components/Toasts';
 
-import './Setup.css';
-import { InstallInterface, InstallState } from '../../initialState';
+import styles from './styles.module.pcss';
+import twosky from '../../../../.twosky.json';
+import { getDnsAddressWithPort } from './helpers/helpers';
+
+const LANGUAGES = twosky[1].languages;
+
+const getInstallDnsAddresses = (dns: { ip: string; port: number }, interfaces: InstallInterface[]) => {
+    if (!dns?.ip || !dns?.port) {
+        return [];
+    }
+
+    if (dns.ip === ALL_INTERFACES_IP) {
+        return (interfaces || [])
+            .filter((iface: InstallInterface) => iface?.ip_addresses?.length > 0)
+            .map((iface: InstallInterface) => getInterfaceIp(iface))
+            .filter(Boolean)
+            .map((ip: string) => getDnsAddressWithPort(ip, dns.port));
+    }
+
+    return [getDnsAddressWithPort(dns.ip, dns.port)];
+};
 
 export const Setup = () => {
     const dispatch = useDispatch();
 
     const install = useSelector((state: InstallState) => state.install);
-    const { processingDefault, step, web, dns, staticIp, interfaces } = install;
+    const { processingDefault, step, web, dns, staticIp, interfaces, auth } = install;
+    const dnsAddresses = useSelector((state: RootState) => state.dashboard?.dnsAddresses || []);
+    const installDnsAddresses = getInstallDnsAddresses(dns, interfaces);
+    const resolvedDnsAddresses = dnsAddresses.length > 0 ? dnsAddresses : installDnsAddresses;
 
     useEffect(() => {
         dispatch(actionCreators.getDefaultAddresses());
     }, []);
 
-    const handleFormSubmit = (values: any) => {
-        const config = { ...values };
-        delete config.staticIp;
-
-        if (web.port && dns.port) {
-            dispatch(
-                actionCreators.setAllSettings({
-                    web,
-                    dns,
-                    ...config,
-                }),
-            );
+    const handleNextStep = () => {
+        if (step <= INSTALL_TOTAL_STEPS) {
+            dispatch(actionCreators.nextStep());
         }
     };
 
-    const checkConfig = debounce((values) => {
-        const { web, dns } = values;
+    const handleAuthSubmit = (values: any) => {
+        dispatch(actionCreators.setAuthData(values));
+        handleNextStep();
+    };
 
-        if (values && web.port && dns.port) {
-            dispatch(actionCreators.checkConfig({ web, dns, set_static_ip: false }));
+    const handleFinalSubmit = () => {
+        const config: any = {
+            web,
+            dns,
+            ...auth,
+        };
+
+        if (web.port && dns.port) {
+            dispatch(actionCreators.setAllSettings(config));
         }
-    }, DEBOUNCE_TIMEOUT);
+    };
+
+    const checkConfig = useMemo(
+        () =>
+            debounce((values) => {
+                const { web, dns } = values;
+
+                if (values && web.port && dns.port) {
+                    dispatch(actionCreators.checkConfig({ web, dns, set_static_ip: false }));
+                }
+            }, DEBOUNCE_TIMEOUT),
+        [dispatch],
+    );
+
+    useEffect(() => () => checkConfig.cancel(), [checkConfig]);
 
     const handleFix = (web: WebConfig, dns: DnsConfig, set_static_ip: boolean) => {
         dispatch(actionCreators.checkConfig({ web, dns, set_static_ip }));
@@ -60,13 +101,8 @@ export const Setup = () => {
         if (ip === ALL_INTERFACES_IP) {
             address = getWebAddress(window.location.hostname, port);
         }
-        window.location.replace(address);
-    };
 
-    const handleNextStep = () => {
-        if (step < INSTALL_TOTAL_STEPS) {
-            dispatch(actionCreators.nextStep());
-        }
+        window.location.replace(address);
     };
 
     const renderPage = (step: number, config: ConfigType, interfaces: InstallInterface[]) => {
@@ -74,8 +110,10 @@ export const Setup = () => {
             case 1:
                 return <Greeting />;
             case 2:
+                return <Auth onAuthSubmit={handleAuthSubmit} />;
+            case 3:
                 return (
-                    <Settings
+                    <InterfaceSettings
                         config={config}
                         initialValues={config}
                         interfaces={interfaces}
@@ -84,12 +122,31 @@ export const Setup = () => {
                         handleFix={handleFix}
                     />
                 );
-            case 3:
-                return <Auth onAuthSubmit={handleFormSubmit} />;
             case 4:
-                return <Devices interfaces={interfaces} dnsConfig={dns} />;
+                return (
+                    <DnsSettings
+                        config={config}
+                        initialValues={config}
+                        interfaces={interfaces}
+                        handleSubmit={handleNextStep}
+                        validateForm={checkConfig}
+                        handleFix={handleFix}
+                    />
+                );
             case 5:
-                return <Submit openDashboard={openDashboard} webConfig={web} />;
+                return (
+                    <>
+                        <SetupGuide dnsAddresses={resolvedDnsAddresses} isStep footer={<Controls />} />
+                    </>
+                );
+            case 6:
+                return (
+                    <Submit
+                        openDashboard={openDashboard}
+                        webConfig={web}
+                        onSubmit={handleFinalSubmit}
+                    />
+                );
             default:
                 return false;
         }
@@ -101,11 +158,15 @@ export const Setup = () => {
 
     return (
         <>
-            <div className="setup">
-                <div className="setup__container">
-                    {renderPage(step, { web, dns, staticIp }, interfaces)}
-                    <Progress step={step} />
-                </div>
+            <div className={styles.setup}>
+                <PublicHeader
+                    languages={LANGUAGES}
+                    dropdownClassName={styles.dropdown}
+                    dropdownPosition="bottomRight"
+                    center={<Progress step={step} />}
+                />
+
+                <div className={styles.container}>{renderPage(step, { web, dns, staticIp }, interfaces)}</div>
             </div>
 
             <Toasts />

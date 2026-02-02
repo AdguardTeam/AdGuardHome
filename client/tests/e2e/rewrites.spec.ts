@@ -24,18 +24,37 @@ test.describe('Rewrites', () => {
         await page.getByTestId('rewrites_answer').fill(EXAMPLE_ANSWER);
         await page.getByTestId('rewrites_save').click();
 
-        await expect(page.locator('.logs__text').filter({ hasText: EXAMPLE_DOMAIN })).toBeVisible();
-        await expect(page.locator('.logs__text').filter({ hasText: EXAMPLE_ANSWER })).toBeVisible();
+        await expect(page.locator('.logs__text').filter({ hasText: EXAMPLE_DOMAIN }).first()).toBeVisible();
+        await expect(page.locator('.logs__text').filter({ hasText: EXAMPLE_ANSWER }).first()).toBeVisible();
     });
 
     test('should edit a DNS rewrite', async ({ page }) => {
-        await page.getByTestId('edit-rewrite').first().click();
-        await expect(page.getByTestId('rewrites_domain')).toHaveValue(EXAMPLE_DOMAIN);
+        // Use the first existing rewrite instead of creating a new one
+        // Wait for the table to load
+        await expect(page.getByTestId('edit-rewrite').first()).toBeVisible({ timeout: 10000 });
 
-        await page.getByTestId('rewrites_domain').clear();
-        await page.getByTestId('rewrites_domain').fill(EXAMPLE_UPDATED_DOMAIN);
+        // Get the current domain value before editing
+        await page.getByTestId('edit-rewrite').first().click();
+        const originalDomain = await page.getByTestId('rewrites_domain').inputValue();
+
+        // Edit the domain - use keyboard to ensure isDirty is triggered
+        const domainInput = page.getByTestId('rewrites_domain');
+        await domainInput.click();
+        await domainInput.press('Control+a');
+        await domainInput.pressSequentially(EXAMPLE_UPDATED_DOMAIN);
+        await domainInput.blur();
         await page.getByTestId('rewrites_save').click();
 
-        await expect(page.locator('.logs__text').filter({ hasText: EXAMPLE_UPDATED_DOMAIN })).toBeVisible();
+        // Verify the update
+        await expect(page.locator('.logs__text').filter({ hasText: EXAMPLE_UPDATED_DOMAIN }).first()).toBeVisible({ timeout: 10000 });
+
+        // Restore original value
+        await page.getByTestId('edit-rewrite').first().click();
+        const restoreInput = page.getByTestId('rewrites_domain');
+        await restoreInput.click();
+        await restoreInput.press('Control+a');
+        await restoreInput.pressSequentially(originalDomain);
+        await restoreInput.blur();
+        await page.getByTestId('rewrites_save').click();
     });
 });

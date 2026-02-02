@@ -1,11 +1,8 @@
 package dhcpsvc_test
 
 import (
-	"io/fs"
 	"net"
 	"net/netip"
-	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -18,40 +15,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// testdata is a filesystem containing data for tests.
-var testdata = os.DirFS("testdata")
-
-// newTempDB copies the leases database file located in the testdata FS, under
-// tb.Name()/leases.json, to a temporary directory and returns the path to the
-// copied file.
-func newTempDB(tb testing.TB) (dst string) {
-	tb.Helper()
-
-	const filename = "leases.json"
-
-	data, err := fs.ReadFile(testdata, path.Join(tb.Name(), filename))
-	require.NoError(tb, err)
-
-	dst = filepath.Join(tb.TempDir(), filename)
-
-	err = os.WriteFile(dst, data, dhcpsvc.DatabasePerm)
-	require.NoError(tb, err)
-
-	return dst
-}
-
 func TestDHCPServer_AddLease(t *testing.T) {
-	ctx := testutil.ContextWithTimeout(t, testTimeout)
-
 	leasesPath := filepath.Join(t.TempDir(), "leases.json")
-	srv, err := dhcpsvc.New(ctx, &dhcpsvc.Config{
-		Enabled:         true,
-		Logger:          discardLog,
-		LocalDomainName: testLocalTLD,
-		Interfaces:      testInterfaceConf,
-		DBFilePath:      leasesPath,
+	srv := newTestDHCPServer(t, &dhcpsvc.Config{
+		DBFilePath: leasesPath,
+		Enabled:    true,
 	})
-	require.NoError(t, err)
 
 	const (
 		existHost = "host1"
@@ -69,6 +38,7 @@ func TestDHCPServer_AddLease(t *testing.T) {
 		ipv6MAC  = errors.Must(net.ParseMAC("02:03:04:05:06:07"))
 	)
 
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
 	require.NoError(t, srv.AddLease(ctx, &dhcpsvc.Lease{
 		Hostname: existHost,
 		IP:       existIP,
@@ -144,6 +114,7 @@ func TestDHCPServer_AddLease(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			ctx = testutil.ContextWithTimeout(t, testTimeout)
 			testutil.AssertErrorMsg(t, tc.wantErrMsg, srv.AddLease(ctx, tc.lease))
 		})
 	}
@@ -153,17 +124,11 @@ func TestDHCPServer_AddLease(t *testing.T) {
 }
 
 func TestDHCPServer_index(t *testing.T) {
-	ctx := testutil.ContextWithTimeout(t, testTimeout)
-
 	leasesPath := newTempDB(t)
-	srv, err := dhcpsvc.New(ctx, &dhcpsvc.Config{
-		Enabled:         true,
-		Logger:          discardLog,
-		LocalDomainName: testLocalTLD,
-		Interfaces:      testInterfaceConf,
-		DBFilePath:      leasesPath,
+	srv := newTestDHCPServer(t, &dhcpsvc.Config{
+		DBFilePath: leasesPath,
+		Enabled:    true,
 	})
-	require.NoError(t, err)
 
 	const (
 		host1 = "host1"
@@ -210,17 +175,11 @@ func TestDHCPServer_index(t *testing.T) {
 }
 
 func TestDHCPServer_UpdateStaticLease(t *testing.T) {
-	ctx := testutil.ContextWithTimeout(t, testTimeout)
-
 	leasesPath := newTempDB(t)
-	srv, err := dhcpsvc.New(ctx, &dhcpsvc.Config{
-		Enabled:         true,
-		Logger:          discardLog,
-		LocalDomainName: testLocalTLD,
-		Interfaces:      testInterfaceConf,
-		DBFilePath:      leasesPath,
+	srv := newTestDHCPServer(t, &dhcpsvc.Config{
+		DBFilePath: leasesPath,
+		Enabled:    true,
 	})
-	require.NoError(t, err)
 
 	const (
 		host1 = "host1"
@@ -309,6 +268,7 @@ func TestDHCPServer_UpdateStaticLease(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
 			testutil.AssertErrorMsg(t, tc.wantErrMsg, srv.UpdateStaticLease(ctx, tc.lease))
 		})
 	}
@@ -317,17 +277,11 @@ func TestDHCPServer_UpdateStaticLease(t *testing.T) {
 }
 
 func TestDHCPServer_RemoveLease(t *testing.T) {
-	ctx := testutil.ContextWithTimeout(t, testTimeout)
-
 	leasesPath := newTempDB(t)
-	srv, err := dhcpsvc.New(ctx, &dhcpsvc.Config{
-		Enabled:         true,
-		Logger:          discardLog,
-		LocalDomainName: testLocalTLD,
-		Interfaces:      testInterfaceConf,
-		DBFilePath:      leasesPath,
+	srv := newTestDHCPServer(t, &dhcpsvc.Config{
+		DBFilePath: leasesPath,
+		Enabled:    true,
 	})
-	require.NoError(t, err)
 
 	const (
 		host1 = "host1"
@@ -393,6 +347,7 @@ func TestDHCPServer_RemoveLease(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
 			testutil.AssertErrorMsg(t, tc.wantErrMsg, srv.RemoveLease(ctx, tc.lease))
 		})
 	}
@@ -403,22 +358,16 @@ func TestDHCPServer_RemoveLease(t *testing.T) {
 
 func TestDHCPServer_Reset(t *testing.T) {
 	leasesPath := newTempDB(t)
-	conf := &dhcpsvc.Config{
-		Enabled:         true,
-		Logger:          discardLog,
-		LocalDomainName: testLocalTLD,
-		Interfaces:      testInterfaceConf,
-		DBFilePath:      leasesPath,
-	}
-
-	ctx := testutil.ContextWithTimeout(t, testTimeout)
-	srv, err := dhcpsvc.New(ctx, conf)
-	require.NoError(t, err)
+	srv := newTestDHCPServer(t, &dhcpsvc.Config{
+		DBFilePath: leasesPath,
+		Enabled:    true,
+	})
 
 	const leasesNum = 4
 
 	require.Len(t, srv.Leases(), leasesNum)
 
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
 	require.NoError(t, srv.Reset(ctx))
 
 	assert.FileExists(t, leasesPath)
@@ -427,18 +376,10 @@ func TestDHCPServer_Reset(t *testing.T) {
 
 func TestServer_Leases(t *testing.T) {
 	leasesPath := newTempDB(t)
-	conf := &dhcpsvc.Config{
-		Enabled:         true,
-		Logger:          discardLog,
-		LocalDomainName: testLocalTLD,
-		Interfaces:      testInterfaceConf,
-		DBFilePath:      leasesPath,
-	}
-
-	ctx := testutil.ContextWithTimeout(t, testTimeout)
-
-	srv, err := dhcpsvc.New(ctx, conf)
-	require.NoError(t, err)
+	srv := newTestDHCPServer(t, &dhcpsvc.Config{
+		DBFilePath: leasesPath,
+		Enabled:    true,
+	})
 
 	expiry, err := time.Parse(time.RFC3339, "2042-01-02T03:04:05Z")
 	require.NoError(t, err)

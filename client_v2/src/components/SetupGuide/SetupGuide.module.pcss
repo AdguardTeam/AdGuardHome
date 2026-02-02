@@ -2,10 +2,55 @@
     padding: 0 16px;
 }
 
+.stepRoot {
+    max-width: 632px;
+    margin: 0 auto;
+    padding-top: 24px;
+    padding-bottom: 80px;
+
+    @media screen and (min-width: 1024px) {
+        padding-top: 48px;
+    }
+}
+
+.footer {
+    padding: 0;
+
+    @media screen and (min-width: 1024px) {
+        padding: 0 16px;
+    }
+}
+
+.stepRoot .guidePage {
+    padding-top: 16px;
+    padding-bottom: 24px;
+    margin: 0 auto;
+}
+
+.stepRoot .pageTitle {
+    font-size: 24px;
+
+    @media screen and (min-width: 1024px) {
+        font-size: 32px;
+    }
+}
+
+.stepRoot .nav {
+    padding: 0 16px;
+
+    @media screen and (min-width: 1024px) {
+        padding: 0;
+    }
+}
+
 .pageTitle {
-    font-size: 32px;
+    font-size: 24px;
     font-weight: 700;
     margin-bottom: 12px;
+
+    @media screen and (min-width: 1024px) {
+        font-size: 32px;
+    }
 }
 
 .pageDesc {
@@ -27,18 +72,34 @@
 .dnsSubtitle {
     margin: 24px 0 12px;
     font-weight: 700;
-    font-size: 18px;
+    font-size: 16px;
+
+    @media screen and (min-width: 768px) {
+        font-size: 18px;
+    }
 }
 
 .guidePage {
-    padding: 40px 16px;
+    padding: 24px 16px;
     max-width: 632px;
+
+    @media screen and (min-width: 768px) {
+        padding: 32px 16px;
+    }
+
+    @media screen and (min-width: 1024px) {
+        padding: 40px 16px;
+    }
 }
 
 .guideTitle {
     margin-bottom: 24px;
-    font-size: 24px;
+    font-size: 20px;
     font-weight: 700;
+
+    @media screen and (min-width: 768px) {
+        font-size: 24px;
+    }
 }
 
 .guideDesc {

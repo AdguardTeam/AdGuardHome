@@ -33,6 +33,8 @@ type RouteConfig = {
     exact: boolean;
 };
 
+const SetupGuideRoute = () => <SetupGuide />;
+
 const ROUTES: RouteConfig[] = [
     {
         path: '/dashboard',
@@ -71,7 +73,7 @@ const ROUTES: RouteConfig[] = [
     },
     {
         path: '/guide',
-        component: SetupGuide,
+        component: SetupGuideRoute,
         exact: true,
     },
 ];

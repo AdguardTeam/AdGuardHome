@@ -3,7 +3,7 @@ package ossvc
 // ActionName is the type for actions' names.  It has the following valid
 // values:
 //   - [ActionNameInstall]
-//   - [ActionNameReload]
+//   - [ActionNameRestart]
 //   - [ActionNameStart]
 //   - [ActionNameStop]
 //   - [ActionNameUninstall]
@@ -11,7 +11,7 @@ type ActionName string
 
 const (
 	ActionNameInstall   ActionName = "install"
-	ActionNameReload    ActionName = "reload"
+	ActionNameRestart   ActionName = "restart"
 	ActionNameStart     ActionName = "start"
 	ActionNameStop      ActionName = "stop"
 	ActionNameUninstall ActionName = "uninstall"

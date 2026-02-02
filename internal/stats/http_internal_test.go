@@ -3,20 +3,24 @@ package stats
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"path/filepath"
 	"testing"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
-	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
-	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+)
+
+// Common domain values for tests.
+const (
+	TestDomain1 = "example.com"
+	TestDomain2 = "example.org"
 )
 
 func TestHandleStatsConfig(t *testing.T) {
@@ -26,17 +30,6 @@ func TestHandleStatsConfig(t *testing.T) {
 		maxIvl   = 365 * timeutil.Day
 	)
 
-	conf := Config{
-		Logger:            slogutil.NewDiscardLogger(),
-		UnitID:            func() (id uint32) { return 0 },
-		ConfigModifier:    agh.EmptyConfigModifier{},
-		ShouldCountClient: func([]string) bool { return true },
-		HTTPReg:           aghhttp.EmptyRegistrar{},
-		Filename:          filepath.Join(t.TempDir(), "stats.db"),
-		Limit:             time.Hour * 24,
-		Enabled:           true,
-	}
-
 	testCases := []struct {
 		name     string
 		wantErr  string
@@ -45,27 +38,30 @@ func TestHandleStatsConfig(t *testing.T) {
 	}{{
 		name: "set_ivl_1_minIvl",
 		body: getConfigResp{
-			Enabled:  aghalg.NBTrue,
-			Interval: float64(minIvl.Milliseconds()),
-			Ignored:  []string{},
+			Enabled:        aghalg.NBTrue,
+			Interval:       float64(minIvl.Milliseconds()),
+			Ignored:        []string{},
+			IgnoredEnabled: aghalg.NBFalse,
 		},
 		wantCode: http.StatusOK,
 		wantErr:  "",
 	}, {
 		name: "small_interval",
 		body: getConfigResp{
-			Enabled:  aghalg.NBTrue,
-			Interval: float64(smallIvl.Milliseconds()),
-			Ignored:  []string{},
+			Enabled:        aghalg.NBTrue,
+			Interval:       float64(smallIvl.Milliseconds()),
+			Ignored:        []string{},
+			IgnoredEnabled: aghalg.NBFalse,
 		},
 		wantCode: http.StatusUnprocessableEntity,
 		wantErr:  "unsupported interval: less than an hour\n",
 	}, {
 		name: "big_interval",
 		body: getConfigResp{
-			Enabled:  aghalg.NBTrue,
-			Interval: float64(maxIvl.Milliseconds() + minIvl.Milliseconds()),
-			Ignored:  []string{},
+			Enabled:        aghalg.NBTrue,
+			Interval:       float64(maxIvl.Milliseconds() + minIvl.Milliseconds()),
+			Ignored:        []string{},
+			IgnoredEnabled: aghalg.NBFalse,
 		},
 		wantCode: http.StatusUnprocessableEntity,
 		wantErr:  "unsupported interval: more than a year\n",
@@ -77,15 +73,17 @@ func TestHandleStatsConfig(t *testing.T) {
 			Ignored: []string{
 				"ignor.ed",
 			},
+			IgnoredEnabled: aghalg.NBTrue,
 		},
 		wantCode: http.StatusOK,
 		wantErr:  "",
 	}, {
 		name: "enabled_is_null",
 		body: getConfigResp{
-			Enabled:  aghalg.NBNull,
-			Interval: float64(minIvl.Milliseconds()),
-			Ignored:  []string{},
+			Enabled:        aghalg.NBNull,
+			Interval:       float64(minIvl.Milliseconds()),
+			Ignored:        []string{},
+			IgnoredEnabled: aghalg.NBFalse,
 		},
 		wantCode: http.StatusUnprocessableEntity,
 		wantErr:  "enabled is null\n",
@@ -93,8 +91,7 @@ func TestHandleStatsConfig(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s, err := New(conf)
-			require.NoError(t, err)
+			s := newTestStatsCtx(t, Config{Enabled: true})
 
 			s.Start()
 			testutil.CleanupAndRequireSuccess(t, s.Close)
@@ -130,6 +127,115 @@ func TestHandleStatsConfig(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.body, ans)
+		})
+	}
+}
+
+// populateTestData is a helper that creates test entries in db.  s must not be
+// nil.
+func populateTestData(tb testing.TB, s *StatsCtx) {
+	tb.Helper()
+
+	oldUnitID := newUnitID() - 1
+	oldUnit := &unitDB{
+		NResult: make([]uint64, resultLast),
+		Domains: []countPair{{Name: TestDomain1, Count: 1}},
+		NTotal:  1,
+	}
+
+	db := s.db.Load()
+	tx, err := db.Begin(true)
+	require.NoError(tb, err)
+
+	err = s.flushUnitToDB(oldUnit, tx, uint32(oldUnitID))
+	require.NoError(tb, err)
+
+	err = finishTxn(tx, true)
+	require.NoError(tb, err)
+
+	s.Update(&Entry{
+		Client:         netutil.IPv4Localhost().String(),
+		Domain:         TestDomain2,
+		ProcessingTime: 3 * time.Minute,
+		Result:         RNotFiltered,
+	})
+}
+
+func TestStatsCtx_handleStats(t *testing.T) {
+	testCases := []struct {
+		name                  string
+		wantErr               string
+		wantTopQueriedDomains []topAddrs
+		wantDNSQueries        uint64
+		wantCode              int
+		recent                int64
+	}{{
+		name:     "short_interval",
+		wantErr:  "recent: out of range: must be no less than 3600000, got 240000\n",
+		wantCode: http.StatusBadRequest,
+		recent:   4 * time.Minute.Milliseconds(),
+	}, {
+		name:     "long_interval",
+		wantErr:  "recent: out of range: must be no greater than 86400000, got 259200000\n",
+		wantCode: http.StatusBadRequest,
+		recent:   72 * time.Hour.Milliseconds(),
+	}, {
+		name:     "interval_is_not_multiple_of_hour",
+		wantErr:  "recent: must be a multiple of 1 hour\n",
+		wantCode: http.StatusBadRequest,
+		recent:   time.Hour.Milliseconds() + 1,
+	}, {
+		name:           "no_interval",
+		wantCode:       http.StatusOK,
+		wantDNSQueries: 2,
+		wantTopQueriedDomains: []topAddrs{{
+			TestDomain1: 1,
+		}, {
+			TestDomain2: 1,
+		}},
+	}, {
+		name:           "valid_interval",
+		wantCode:       http.StatusOK,
+		wantDNSQueries: 1,
+		wantTopQueriedDomains: []topAddrs{{
+			TestDomain2: 1,
+		}},
+		recent: time.Hour.Milliseconds(),
+	}}
+
+	s := newTestStatsCtx(t, Config{
+		Enabled: true,
+	})
+
+	s.Start()
+	defer testutil.CleanupAndRequireSuccess(t, s.Close)
+
+	populateTestData(t, s)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			url := "/control/stats"
+			if tc.recent != 0 {
+				url += fmt.Sprintf("?recent=%d", tc.recent)
+			}
+
+			req := httptest.NewRequest(http.MethodGet, url, nil)
+			rw := httptest.NewRecorder()
+
+			s.handleStats(rw, req)
+			require.Equal(t, tc.wantCode, rw.Code)
+
+			if rw.Code != http.StatusOK {
+				require.Equal(t, tc.wantErr, rw.Body.String())
+
+				return
+			}
+
+			ans := StatsResp{}
+			err := json.Unmarshal(rw.Body.Bytes(), &ans)
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.wantDNSQueries, ans.NumDNSQueries)
+			assert.ElementsMatch(t, tc.wantTopQueriedDomains, ans.TopQueried)
 		})
 	}
 }
