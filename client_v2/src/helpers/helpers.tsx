@@ -532,6 +532,33 @@ export const formatNumber = (num: number): string => {
 };
 
 /**
+ * Formats a number in compact notation (e.g., 10.2K, 1.5M)
+ * @param num {number} The number to format
+ * @param decimals {number} Number of decimal places (default: 1)
+ * @returns {string} Formatted string like "10.2K", "1.5M", "2.3B"
+ */
+export const formatCompactNumber = (num: number, decimals: number = 1): string => {
+    if (num === 0) return '0';
+
+    const absNum = Math.abs(num);
+    const sign = num < 0 ? '-' : '';
+
+    if (absNum < 1000) {
+        return sign + absNum.toString();
+    }
+
+    const suffixes = ['', 'K', 'M', 'B', 'T'];
+    const tier = Math.floor(Math.log10(absNum) / 3);
+    const suffix = suffixes[Math.min(tier, suffixes.length - 1)];
+    const scale = Math.pow(10, tier * 3);
+    const scaled = absNum / scale;
+
+    const formatted = scaled.toFixed(decimals).replace(/\.0+$/, '');
+
+    return sign + formatted + suffix;
+};
+
+/**
  * @param arr {array}
  * @param key {string}
  * @param value {string}

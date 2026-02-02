@@ -23,7 +23,7 @@ export const RoutePath = {
 export type RoutePathKey = keyof typeof RoutePath;
 
 export const Paths: Record<RoutePathKey, string> = {
-    Dashboard: pathBuilder(''),
+    Dashboard: pathBuilder('dashboard'),
     Logs: pathBuilder('logs'),
     Guide: pathBuilder('guide'),
     Encryption: pathBuilder('encryption'),

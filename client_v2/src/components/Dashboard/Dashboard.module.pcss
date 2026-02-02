@@ -1,0 +1,608 @@
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+
+    @media (min-width: 1024px) {
+        padding: 0;
+    }
+}
+
+.headerLeft {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.headerRight {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.protectionMenu {
+    padding: 8px 0;
+    min-width: 200px;
+}
+
+.protectionMenuItem {
+    padding: 8px 16px;
+    color: var(--default-link);
+    cursor: pointer;
+}
+
+.protectionMenuItemRed {
+    color: var(--default-error-link);
+}
+
+.statsCards {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 0 16px;
+    margin-bottom: 24px;
+
+    @media (min-width: 768px) {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    @media (min-width: 1024px) {
+        grid-template-columns: repeat(4, 1fr);
+        padding: 0;
+    }
+}
+
+.statCard {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.statCardAds {
+    & .statCardPercent,
+    & .statCardLabel {
+        color: var(--default-error-link);
+    }
+}
+
+.statCardThreats {
+    & .statCardPercent,
+    & .statCardLabel {
+        color: var(--default-attention-link);
+    }
+}
+
+.statCardAdult {
+    & .statCardPercent,
+    & .statCardLabel {
+        color: var(--default-additional-link);
+    }
+}
+
+.statCardInner {
+    display: flex;
+    flex-direction: column;
+    border-radius: 16px;
+    border: 1px solid var(--default-item-divider);
+}
+
+.statCardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 16px 16px 0;
+}
+
+.statCardValue {
+    font-size: 28px;
+    color: var(--default-main-text);
+}
+
+.statCardChart {
+    min-height: 16px;
+    height: 60px;
+    margin-top: auto;
+}
+
+.chartTooltip {
+    background: var(--surface-primary);
+    border: 1px solid var(--default-item-divider);
+    border-radius: 8px;
+    padding: 8px 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.chartTooltipValue {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--default-main-text);
+}
+
+.chartTooltipDate {
+    font-size: 12px;
+    color: var(--default-secondary-text);
+    margin-top: 2px;
+}
+
+.statContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 0 16px;
+
+    @media (min-width: 1024px) {
+        flex-direction: row;
+        flex-wrap: wrap;
+        padding: 0;
+    }
+}
+
+.card {
+    display: flex;
+    flex-direction: column;
+    height: 374px;
+    border-radius: 16px;
+    padding: 8px 8px 0;
+    border: 1px solid var(--default-item-divider);
+
+    @media (min-width: 1024px) {
+        flex: 1;
+    }
+}
+
+.cardBlocked {
+    & .cardSubtitle {
+        color: var(--default-error-link);
+    }
+
+    & .queryCount {
+        color: var(--default-error-link);
+    }
+
+    & .queryBarFill {
+        background: var(--default-error-link);
+    }
+}
+
+.cardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 16px 24px;
+}
+
+.cardSubtitle {
+    color: var(--default-description-text);
+}
+
+.statRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0 24px;
+    padding: 8px 16px;
+    transition: background-color var(--t2);
+
+    &:hover {
+        background-color: var(--hovered-page-background);
+    }
+
+    &.dnsQueries {
+        & .tableRowIcon {
+            stroke: var(--default-gray-icons);
+        }
+    }
+
+    &.adsBlocked {
+        & .queryCount {
+            color: var(--default-error-link);
+        }
+
+        & .tableRowIcon {
+            stroke: var(--default-error-icon);
+        }
+
+        & .queryBarFill {
+            background: var(--default-error-icon);
+        }
+    }
+
+    &.threatsBlocked {
+        & .queryCount {
+            color: var(--default-attention-icon-stroke);
+        }
+
+        & .tableRowIcon {
+            stroke: var(--default-attention-icon-stroke);
+        }
+
+        & .queryBarFill {
+            background: var(--default-attention-icon-stroke);
+        }
+    }
+
+    &.adultWebsitesBlocked {
+        & .queryCount {
+            color: var(--default-product-secondary-icon-stroke);
+        }
+
+        & .tableRowIcon {
+            stroke: var(--default-product-secondary-icon-stroke);
+        }
+
+        & .queryBarFill {
+            background: var(--default-product-secondary-icon-stroke);
+        }
+    }
+
+    &.safeSearchUsed {
+        & .queryCount {
+            color: var(--default-product-icon);
+        }
+
+        & .tableRowIcon {
+            stroke: var(--default-product-icon);
+        }
+
+        & .queryBarFill {
+            background: var(--default-product-icon);
+        }
+    }
+}
+
+.statRowLeft {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.statRowIcon {
+    width: 20px;
+    height: 20px;
+    color: var(--default-secondary-text);
+}
+
+.statRowLabel {
+    font-size: 14px;
+    color: var(--default-main-text);
+}
+
+.statRowValue {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    & .queryBar {
+        min-width: 141px;
+    }
+}
+
+.statRowPercent {
+    font-size: 12px;
+    color: var(--default-secondary-text);
+    margin-left: 4px;
+}
+
+.tableHeader {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 16px 8px;
+}
+
+.sortableHeader {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.sortIcon {
+    width: 16px;
+    height: 16px;
+    transition: transform var(--t2);
+}
+
+.sortIconAsc {
+    transform: rotate(180deg);
+}
+
+.sortDash {
+    color: var(--default-gray-icons);
+    font-weight: 400;
+}
+
+.tableRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0 24px;
+    padding: 8px 16px;
+    transition: background-color var(--t2);
+}
+
+.tableRowLeft {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+}
+
+.tableRowRight {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.tableRowIcon {
+    width: 24px;
+    height: 24px;
+    stroke: var(--default-gray-icons);
+}
+
+.tableRowInfo {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    padding-left: 32px;
+}
+
+.tableRows {
+    overflow-y: auto;
+}
+
+.domainIcon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+.domainName {
+    color: var(--default-main-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.queryCount {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+
+.queryPercent {
+    font-size: 12px;
+    color: var(--default-description-text);
+}
+
+.queryBar {
+    width: 100%;
+    min-width: 102px;
+    height: 3px;
+    background: var(--default-item-divider);
+    border-radius: 2px;
+}
+
+.queryBarFill {
+    height: 100%;
+    background: var(--default-tertiary-stat);
+}
+
+.queryBarFill_blocked {
+    background: var(--red-default);
+}
+
+.queryTooltip {
+    padding: 8px 12px;
+    white-space: nowrap;
+}
+
+.queryTooltipOverlay {
+    pointer-events: none;
+}
+
+.clientRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0 24px;
+    padding: 8px 16px;
+    transition: background-color var(--t2);
+
+    &:hover {
+        background-color: var(--hovered-page-background);
+    }
+}
+
+.clientInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+}
+
+.clientIp {
+    font-size: 14px;
+    color: var(--default-main-text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.clientName {
+    color: var(--default-description-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.clientBlocked {
+    color: var(--default-error-link);
+}
+
+.clientActions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.actionButton {
+    padding: 4px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--default-secondary-text);
+    border-radius: 4px;
+    transition: background-color 0.2s;
+
+    &:hover {
+        background-color: var(--surface-secondary);
+    }
+}
+
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+}
+
+.emptyStateIcon {
+    width: 64px;
+    height: 64px;
+    color: var(--gray-60);
+}
+
+.emptyStateText {
+    max-width: 300px;
+    color: var(--default-placeholder);
+}
+
+.tooltip {
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    cursor: default;
+}
+
+.tooltipTitle {
+    margin-bottom: 8px;
+}
+
+.tooltipRow {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+
+    &:last-child {
+        margin-bottom: 0;
+    }
+}
+
+.tooltipLabel {
+    margin-right: 2px;
+}
+
+.tooltipValue {
+    font-weight: 500;
+    color: var(--default-main-text);
+}
+
+.tooltipLink {
+    color: var(--default-link);
+    text-decoration: underline;
+
+    &:hover {
+        color: var(--hovered-link);
+    }
+}
+
+.periodSelect {
+    min-width: 120px;
+}
+
+.refreshButton {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: none;
+    border: 1px solid var(--border-default);
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--default-main-text);
+    font-size: 14px;
+    transition: background-color 0.2s;
+
+    &:hover {
+        background-color: var(--hovered-secondary-button);
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+}
+
+.loader {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+}
+
+.protectionMenuWrapper {
+    cursor: pointer;
+    transition: background-color var(--t2);
+
+    &:hover {
+        background-color: var(--pressed-page-background);
+    }
+}
+
+.tableRowDot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+
+    &:before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: var(--default-gray-icons);
+    }
+}
+
+.rowDivider {
+    padding: 16px;
+
+    &:before {
+        content: "";
+        display: block;
+        width: 100%;
+        height: 1px;
+        background-color: var(--default-item-divider);
+    }
+}
+
+.statTooltip {
+    max-width: 280px;
+    padding: 16px;
+}
+
+[data-theme='dark'] .emptyStateIcon {
+    color: var(--gray-60);
+}

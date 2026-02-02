@@ -65,6 +65,8 @@
     --hovered-attention-link: var(--orange-60);
     --pressed-attention-link: var(--orange-70);
     --disabled-attention-link: var(--orange-30);
+    /* Additional link */
+    --default-additional-link: var(--product-secondary-50);
     /* Error link */
     --default-error-link: var(--red-50);
     /* Icons */
@@ -76,9 +78,12 @@
     --stroke-icons-white-icons-default: var(--gray-0);
     --stroke-icons-secondary-icon-disabled: var(--product-secondary-100);
     --stroke-icons-tertiary-icon-disabled: var(--product-tertiary-100);
+    --default-product-secondary-icon-stroke: var(--product-secondary-50);
+    --default-attention-icon-stroke: var(--orange-50);
     /* Stat */
     --default-stats-background: var(--gray-70);
     --default-red-stat: var(--red-50);
+    --default-tertiary-stat: var(--gray-60);
     /* Modal */
     --modal-iframe-overlay: #00000075;
     --modal-overlay: #00000075;

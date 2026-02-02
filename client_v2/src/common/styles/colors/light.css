@@ -16,7 +16,7 @@
     --default-main-text: var(--gray-80);
     --disabled-main-text: var(--gray-50);
     /* Description text */
-    --default-description-text: var(--gray-70);
+    --default-description-text: var(--gray-60);
     /* Forms */
     --default-labels: var(--gray-70);
     /* Input */
@@ -65,6 +65,8 @@
     --hovered-attention-link: var(--orange-60);
     --pressed-attention-link: var(--orange-70);
     --disabled-attention-link: var(--orange-30);
+    /* Additional link */
+    --default-additional-link: var(--product-secondary-50);
     /* Error link */
     --default-error-link: var(--red-50);
     /* Icons */
@@ -76,9 +78,12 @@
     --stroke-icons-white-icons-default: var(--gray-0);
     --stroke-icons-tertiary-icon-disabled: var(--product-tertiary-30);
     --stroke-icons-secondary-icon-disabled: var(--product-secondary-30);
+    --default-product-secondary-icon-stroke: var(--product-secondary-50);
+    --default-attention-icon-stroke: var(--orange-50);
     /* Stat */
     --default-stats-background: var(--gray-20);
     --default-red-stat: var(--red-50);
+    --default-tertiary-stat: var(--gray-60);
     /* Modal */
     --modal-iframe-overlay: #ffffff50;
     --modal-overlay: #00000050;

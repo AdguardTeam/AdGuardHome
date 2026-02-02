@@ -50,6 +50,7 @@
         "redux": "^4.0.5",
         "redux-actions": "^2.6.5",
         "redux-thunk": "^2.3.0",
+        "recharts": "^2.12.7",
         "url-polyfill": "^1.1.12"
     },
     "devDependencies": {
@@ -72,6 +73,7 @@
         "@types/react-redux": "^7.1.33",
         "@types/react-router-dom": "^5.3.3",
         "@types/react-table": "^7.7.20",
+        "@types/recharts": "^1.8.29",
         "@types/redux-actions": "^2.6.5",
         "@typescript-eslint/eslint-plugin": "^7.11.0",
         "@typescript-eslint/parser": "^7.10.0",
