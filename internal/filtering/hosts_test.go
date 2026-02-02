@@ -42,12 +42,10 @@ func TestDNSFilter_CheckHost_hostsContainer(t *testing.T) {
 			Data: []byte(data),
 		},
 	}
-	watcher := &aghtest.FSWatcher{
-		OnStart:    func(ctx context.Context) (_ error) { panic(testutil.UnexpectedCall(ctx)) },
-		OnEvents:   func() (e <-chan struct{}) { return nil },
-		OnAdd:      func(name string) (err error) { return nil },
-		OnShutdown: func(_ context.Context) (err error) { return nil },
-	}
+	watcher := aghtest.NewFSWatcher()
+	watcher.OnEvents = func() (e <-chan struct{}) { return nil }
+	watcher.OnAdd = func(name string) (err error) { return nil }
+	watcher.OnShutdown = func(_ context.Context) (err error) { return nil }
 
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
 	hc, err := aghnet.NewHostsContainer(ctx, testLogger, files, watcher, "hosts")

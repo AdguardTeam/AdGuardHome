@@ -288,9 +288,17 @@ func (iface *dhcpInterfaceV4) updateOptions(req, resp *layers.DHCPv4) {
 	}
 }
 
-// appendLeaseTime appends the lease time option to the response.
-func appendLeaseTime(resp *layers.DHCPv4, leaseTime time.Duration) {
-	leaseTimeData := binary.BigEndian.AppendUint32(nil, uint32(leaseTime.Seconds()))
+// appendLeaseTime appends the lease time option to the response.  lease must
+// not be nil.
+func (iface *dhcpInterfaceV4) appendLeaseTime(resp *layers.DHCPv4, lease *Lease) {
+	var dur time.Duration
+	if lease.IsStatic {
+		dur = iface.common.leaseTTL
+	} else {
+		dur = lease.Expiry.Sub(iface.clock.Now())
+	}
+
+	leaseTimeData := binary.BigEndian.AppendUint32(nil, uint32(dur.Seconds()))
 
 	resp.Options = append(
 		resp.Options,

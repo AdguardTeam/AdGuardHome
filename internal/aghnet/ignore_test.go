@@ -14,7 +14,7 @@ func TestIgnoreEngine_Has(t *testing.T) {
 		"|.^",
 	}
 
-	engine, err := aghnet.NewIgnoreEngine(hostnames)
+	engine, err := aghnet.NewIgnoreEngine(hostnames, true)
 	require.NotNil(t, engine)
 	require.NoError(t, err)
 

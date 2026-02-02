@@ -1,6 +1,7 @@
 package stats
 
 import (
+	"cmp"
 	"fmt"
 	"path/filepath"
 	"sync"
@@ -8,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/testutil"
@@ -16,20 +18,39 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// testLogger is the common logger for tests.
+var testLogger = slogutil.NewDiscardLogger()
+
+// newTestStatsCtx returns StatsCtx initialised with given values.  All empty
+// values from c will be replaced with defaults.
+func newTestStatsCtx(tb testing.TB, c Config) (s *StatsCtx) {
+	c.Logger = cmp.Or(c.Logger, testLogger)
+	c.ConfigModifier = cmp.Or[agh.ConfigModifier](c.ConfigModifier, agh.EmptyConfigModifier{})
+	c.HTTPReg = cmp.Or[aghhttp.Registrar](c.HTTPReg, aghhttp.EmptyRegistrar{})
+	c.Filename = cmp.Or(c.Filename, filepath.Join(tb.TempDir(), "./stats.db"))
+	c.Limit = cmp.Or(c.Limit, timeutil.Day)
+	if c.ShouldCountClient == nil {
+		c.ShouldCountClient = func([]string) bool { return true }
+	}
+
+	if c.UnitID == nil {
+		c.UnitID = newUnitID
+	}
+
+	var err error
+	s, err = New(c)
+	require.NoError(tb, err)
+
+	return s
+}
+
 func TestStats_races(t *testing.T) {
 	var r uint32
 	idGen := func() (id uint32) { return atomic.LoadUint32(&r) }
-	conf := Config{
-		Logger:            slogutil.NewDiscardLogger(),
-		ShouldCountClient: func([]string) bool { return true },
-		HTTPReg:           aghhttp.EmptyRegistrar{},
-		UnitID:            idGen,
-		Filename:          filepath.Join(t.TempDir(), "./stats.db"),
-		Limit:             timeutil.Day,
-	}
-
-	s, err := New(conf)
-	require.NoError(t, err)
+	s := newTestStatsCtx(t, Config{
+		UnitID:  idGen,
+		Enabled: true,
+	})
 
 	s.Start()
 	startTime := time.Now()
@@ -97,13 +118,10 @@ func TestStatsCtx_FillCollectedStats_daily(t *testing.T) {
 		timeUnits = "days"
 	)
 
-	s, err := New(Config{
-		Logger:            slogutil.NewDiscardLogger(),
-		ShouldCountClient: func([]string) bool { return true },
-		Filename:          filepath.Join(t.TempDir(), "./stats.db"),
-		Limit:             time.Hour,
+	s := newTestStatsCtx(t, Config{
+		Limit:   time.Hour,
+		Enabled: true,
 	})
-	require.NoError(t, err)
 
 	testutil.CleanupAndRequireSuccess(t, s.Close)
 
@@ -155,13 +173,10 @@ func TestStatsCtx_FillCollectedStats_daily(t *testing.T) {
 func TestStatsCtx_DataFromUnits_month(t *testing.T) {
 	const hoursInMonth = 720
 
-	s, err := New(Config{
-		Logger:            slogutil.NewDiscardLogger(),
-		ShouldCountClient: func([]string) bool { return true },
-		Filename:          filepath.Join(t.TempDir(), "./stats.db"),
-		Limit:             time.Hour,
+	s := newTestStatsCtx(t, Config{
+		Limit:   time.Hour,
+		Enabled: true,
 	})
-	require.NoError(t, err)
 
 	testutil.CleanupAndRequireSuccess(t, s.Close)
 

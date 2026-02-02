@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/netip"
+	"slices"
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
@@ -103,7 +104,7 @@ func (iface *dhcpInterfaceV4) handleRequest(
 		// If the DHCPREQUEST message contains a server identifier option, the
 		// message is in response to a DHCPOFFER message.  Otherwise, the
 		// message is a request to verify or extend an existing lease.
-		if !iface.subnet.Contains(srvID) {
+		if !slices.Contains(fd.device.Addresses(), srvID) {
 			l.DebugContext(ctx, "skipping selecting request", "serverid", srvID)
 
 			return
@@ -125,9 +126,10 @@ func (iface *dhcpInterfaceV4) handleRequest(
 		iface.handleInitReboot(ctx, req, fd, reqIP)
 	default:
 		// Server identifier MUST NOT be filled in, requested IP address option
-		// MUST NOT be filled in.
-		ip, _ := netip.AddrFromSlice(req.ClientIP.To4())
-		if !iface.subnet.Contains(ip) {
+		// MUST NOT be filled in, 'ciaddr' MUST be filled in with client's
+		// notion of its previously assigned address.
+		ip, ok := netip.AddrFromSlice(req.ClientIP.To4())
+		if !ok || !iface.subnet.Contains(ip) {
 			l.DebugContext(ctx, "skipping renew request", "clientip", ip)
 
 			return
@@ -159,15 +161,15 @@ func (iface *dhcpInterfaceV4) handleDiscover(
 			l.DebugContext(ctx, "different requested ip", "requested", reqIP, "lease", lease.IP)
 		}
 
+		lease.updateExpiry(iface.clock, iface.common.leaseTTL)
 		iface.respondOffer(ctx, req, fd, lease)
 
 		return
 	}
 
-	// TODO(e.burkov):  Allocate a new lease.
 	lease, err := iface.allocateLease(ctx, mac)
 	if err != nil {
-		l.ErrorContext(ctx, "allocating a lease", "error", err)
+		l.ErrorContext(ctx, "allocating a lease", slogutil.KeyError, err)
 
 		return
 	}
@@ -186,12 +188,6 @@ func (iface *dhcpInterfaceV4) handleSelecting(
 	reqIP netip.Addr,
 ) {
 	l := iface.common.logger
-
-	if !reqIP.Is4() {
-		l.DebugContext(ctx, "bad requested address", "requestedip", reqIP)
-
-		return
-	}
 
 	ciaddr, ok := netip.AddrFromSlice(req.ClientIP)
 	if ok && !ciaddr.IsUnspecified() {
@@ -222,7 +218,15 @@ func (iface *dhcpInterfaceV4) handleSelecting(
 	}
 
 	// Commit the lease and send ACK.
-	iface.commitLease(ctx, lease, hostname4(req))
+	lease.Hostname = hostname4(req)
+	err := iface.updateLease(ctx, lease)
+	if err != nil {
+		l.ErrorContext(ctx, "selecting request failed", slogutil.KeyError, err)
+		iface.respondNAK(ctx, req, fd)
+
+		return
+	}
+
 	iface.respondACK(ctx, req, fd, lease)
 }
 
@@ -236,12 +240,6 @@ func (iface *dhcpInterfaceV4) handleInitReboot(
 	reqIP netip.Addr,
 ) {
 	l := iface.common.logger
-
-	if !reqIP.Is4() {
-		l.DebugContext(ctx, "bad requested address", "requestedip", reqIP)
-
-		return
-	}
 
 	// ciaddr must be zero.  The client is seeking to verify a previously
 	// allocated, cached configuration.
@@ -275,9 +273,7 @@ func (iface *dhcpInterfaceV4) handleInitReboot(
 		return
 	}
 
-	// Commit the lease and send ACK.
-	iface.commitLease(ctx, lease, hostname4(req))
-	iface.respondACK(ctx, req, fd, lease)
+	iface.updateAndRespond(ctx, l, req, lease, fd)
 }
 
 // handleRenew handles messages of type DHCPREQUEST in RENEWING or REBINDING
@@ -315,9 +311,7 @@ func (iface *dhcpInterfaceV4) handleRenew(
 		return
 	}
 
-	// Commit the lease and send ACK.
-	iface.commitLease(ctx, lease, hostname4(req))
-	iface.respondACK(ctx, req, fd, lease)
+	iface.updateAndRespond(ctx, l, req, lease, fd)
 }
 
 // handleDecline handles messages of type DHCPDECLINE.  req must be a

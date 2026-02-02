@@ -17,6 +17,53 @@ See also the [v0.107.72 GitHub milestone][ms-v0.107.72].
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
+
+### Added
+
+- New query parameter `recent` in `GET /control/stats/` defines statistics lookback period in millieseconds.  See `openapi/openapi.yaml` for details.
+
+- New field `"ignored_enabled"` in `GetStatsConfigResponse` or `GetQueryLogConfigResponse`.  See `openapi/openapi.yaml` for details.
+
+### Changed
+
+- In addition to modifying the contents of a hosts file, deleting or renaming the file now also updates runtime clients and DNS filtering results.
+
+#### Configuration changes
+
+In this release, the schema version has changed from 32 to 33.
+
+- Added a new boolean field `ignored_enabled` in querylog and statistics config.
+
+    ```yaml
+    # BEFORE:
+    'querylog':
+      # …
+      'ignored':
+      - '|.^'
+    'statistics':
+      # …
+      'ignored':
+      - '|.^'
+
+    # AFTER:
+    'querylog':
+      # …
+      'ignored':
+      - '|.^'
+      'ignored_enabled': true
+    'statistics':
+      # …
+      'ignored':
+      - '|.^'
+      'ignored_enabled': true
+      ```
+
+    To roll back this change, set the `schema_version` back to `32`.
+
+### Fixed
+
+- Unknown blocked services from both global and client configuration now logged instead of causing server crash.
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->

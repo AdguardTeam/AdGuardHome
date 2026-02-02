@@ -4,12 +4,9 @@ verbose="${VERBOSE:-0}"
 
 if [ "$verbose" -gt '0' ]; then
 	set -x
-	debug_flags='--debug=1'
 else
 	set +x
-	debug_flags='--debug=0'
 fi
-readonly debug_flags
 
 set -e -f -u
 
@@ -27,7 +24,7 @@ fi
 readonly version
 
 # Allow users to use sudo.
-sudo_cmd="${SUDO:-exec}"
+sudo_cmd="${SUDO:-}"
 readonly sudo_cmd
 
 # Make sure that those are built using something like:
@@ -49,15 +46,9 @@ readonly build_date
 docker_image_name="${DOCKER_IMAGE_NAME:-adguardhome-dev}"
 readonly docker_image_name
 
-# Set DOCKER_OUTPUT to 'type=image,name=adguard/adguard-home,push=true' if you
-# want (and are allowed) to push to DockerHub.
-#
-# If you want to inspect the resulting image using commands like "docker image
-# ls", change type to docker and also set docker_platforms to a single platform.
-#
-# See https://github.com/docker/buildx/issues/166.
-docker_output="${DOCKER_OUTPUT:-type=image,name=${docker_image_name},push=false}"
-readonly docker_output
+# Set DOCKER_PUSH to '1' if you want (and are allowed) to push to DockerHub.
+docker_push="${DOCKER_PUSH:-0}"
+readonly docker_push
 
 case "$channel" in
 'release')
@@ -106,22 +97,23 @@ cp "${dist_dir}/AdGuardHome_linux_arm_7/AdGuardHome/AdGuardHome" \
 cp "${dist_dir}/AdGuardHome_linux_ppc64le/AdGuardHome/AdGuardHome" \
 	"${dist_docker}/AdGuardHome_linux_ppc64le_"
 
-# docker_opt_tag is a function that wraps the call to docker to optionally add
-# --tag flags.
-docker_opt_tag() {
-	# Unset all positional parameters of the function.
-	set --
+# docker_build_opt_tag is a function that wraps the call of docker build command
+# with optionally --tag flags.
+docker_build_opt_tag() {
+	if [ "$sudo_cmd" != '' ]; then
+		set -- "$sudo_cmd"
+	fi
 
 	# Set the initial parameters.
 	set -- \
-		"$debug_flags" \
+		"$@" \
+		docker \
 		buildx \
 		build \
 		--build-arg BUILD_DATE="$build_date" \
 		--build-arg DIST_DIR="$dist_dir" \
 		--build-arg VCS_REF="$commit" \
 		--build-arg VERSION="$version" \
-		--output "$docker_output" \
 		--platform "$docker_platforms" \
 		--progress 'plain' \
 		;
@@ -136,6 +128,11 @@ docker_opt_tag() {
 		set -- "$@" "$docker_version_tag"
 	fi
 
+	# Push to DockerHub, if requested.
+	if [ "$docker_push" -eq 1 ]; then
+		set -- "$@" '--push'
+	fi
+
 	# Append the rest.
 	set -- \
 		"$@" \
@@ -144,8 +141,8 @@ docker_opt_tag() {
 		. \
 		;
 
-	# Call the docker command with the assembled parameters.
-	"$sudo_cmd" docker "$@"
+	# Call the command with the assembled parameters.
+	"$@"
 }
 
-docker_opt_tag
+docker_build_opt_tag

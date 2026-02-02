@@ -10,7 +10,8 @@ import (
 
 // serveEther4 handles the incoming ethernet packets and dispatches them to the
 // appropriate handler.  It's used to run in a separate goroutine as it blocks
-// until packets channel is closed.  iface and nd must not be nil.
+// until packets channel is closed.  iface and nd must not be nil.  nd must have
+// at least a single address returned by its Addresses method.
 func (srv *DHCPServer) serveEther4(ctx context.Context, iface *dhcpInterfaceV4, nd NetworkDevice) {
 	defer slogutil.RecoverAndLog(ctx, srv.logger)
 

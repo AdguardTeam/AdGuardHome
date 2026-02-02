@@ -143,6 +143,7 @@ func (m *Migrator) upgradeConfigSchema(
 		29: m.migrateTo30,
 		30: m.migrateTo31,
 		31: m.migrateTo32,
+		32: m.migrateTo33,
 	}
 
 	for i, migrate := range upgrades[current:target] {

@@ -4,12 +4,14 @@ import (
 	"context"
 	"net/netip"
 	"path"
+	"path/filepath"
 	"sync/atomic"
 	"testing"
 	"testing/fstest"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/hostsfile"
@@ -54,7 +56,10 @@ func TestNewHostsContainer(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			onAdd := func(name string) (err error) {
-				assert.Contains(t, tc.paths, name)
+				relName, err := filepath.Rel(aghos.RootDir(), name)
+				require.NoError(t, err)
+
+				assert.Contains(t, tc.paths, filepath.ToSlash(relName))
 
 				return nil
 			}
@@ -69,14 +74,12 @@ func TestNewHostsContainer(t *testing.T) {
 
 			ctx := testutil.ContextWithTimeout(t, testTimeout)
 
-			hc, err := aghnet.NewHostsContainer(ctx, testLogger, testFS, &aghtest.FSWatcher{
-				OnStart: func(ctx context.Context) (_ error) {
-					panic(testutil.UnexpectedCall(ctx))
-				},
-				OnEvents:   onEvents,
-				OnAdd:      onAdd,
-				OnShutdown: func(_ context.Context) (err error) { return nil },
-			}, tc.paths...)
+			watcher := aghtest.NewFSWatcher()
+			watcher.OnEvents = onEvents
+			watcher.OnAdd = onAdd
+			watcher.OnShutdown = func(_ context.Context) (err error) { return nil }
+
+			hc, err := aghnet.NewHostsContainer(ctx, testLogger, testFS, watcher, tc.paths...)
 			if tc.wantErr != nil {
 				require.ErrorIs(t, err, tc.wantErr)
 
@@ -99,15 +102,13 @@ func TestNewHostsContainer(t *testing.T) {
 	t.Run("nil_fs", func(t *testing.T) {
 		ctx := testutil.ContextWithTimeout(t, testTimeout)
 		require.Panics(t, func() {
-			_, _ = aghnet.NewHostsContainer(ctx, testLogger, nil, &aghtest.FSWatcher{
-				OnStart: func(ctx context.Context) (_ error) {
-					panic(testutil.UnexpectedCall(ctx))
-				},
-				// Those shouldn't panic.
-				OnEvents:   func() (e <-chan struct{}) { return nil },
-				OnAdd:      func(_ string) (err error) { return nil },
-				OnShutdown: func(_ context.Context) (err error) { return nil },
-			}, p)
+			watcher := aghtest.NewFSWatcher()
+			// Those shouldn't panic.
+			watcher.OnAdd = func(_ string) (err error) { return nil }
+			watcher.OnEvents = func() (e <-chan struct{}) { return nil }
+			watcher.OnShutdown = func(_ context.Context) (err error) { return nil }
+
+			_, _ = aghnet.NewHostsContainer(ctx, testLogger, nil, watcher, p)
 		})
 	})
 
@@ -121,12 +122,9 @@ func TestNewHostsContainer(t *testing.T) {
 	t.Run("err_watcher", func(t *testing.T) {
 		const errOnAdd errors.Error = "error"
 
-		errWatcher := &aghtest.FSWatcher{
-			OnStart:    func(ctx context.Context) (_ error) { panic(testutil.UnexpectedCall(ctx)) },
-			OnEvents:   func() (_ <-chan struct{}) { panic(testutil.UnexpectedCall()) },
-			OnAdd:      func(_ string) (err error) { return errOnAdd },
-			OnShutdown: func(_ context.Context) (err error) { return nil },
-		}
+		errWatcher := aghtest.NewFSWatcher()
+		errWatcher.OnAdd = func(_ string) (err error) { return errOnAdd }
+		errWatcher.OnShutdown = func(_ context.Context) (err error) { return nil }
 
 		ctx := testutil.ContextWithTimeout(t, testTimeout)
 		hc, err := aghnet.NewHostsContainer(ctx, testLogger, testFS, errWatcher, p)
@@ -167,16 +165,14 @@ func TestHostsContainer_refresh(t *testing.T) {
 	eventsCh := make(chan event, 1)
 	t.Cleanup(func() { close(eventsCh) })
 
-	w := &aghtest.FSWatcher{
-		OnStart:  func(ctx context.Context) (_ error) { panic(testutil.UnexpectedCall(ctx)) },
-		OnEvents: func() (e <-chan event) { return eventsCh },
-		OnAdd: func(name string) (err error) {
-			assert.Equal(t, "dir", name)
+	w := aghtest.NewFSWatcher()
+	w.OnEvents = func() (e <-chan event) { return eventsCh }
+	w.OnAdd = func(name string) (err error) {
+		assert.Equal(t, filepath.Join(aghos.RootDir(), "dir"), name)
 
-			return nil
-		},
-		OnShutdown: func(_ context.Context) (err error) { return nil },
+		return nil
 	}
+	w.OnShutdown = func(_ context.Context) (err error) { return nil }
 
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
 	hc, err := aghnet.NewHostsContainer(ctx, testLogger, testFS, w, "dir")

@@ -58,22 +58,25 @@ func (conf *Config) Validate() (err error) {
 	}
 
 	errs := []error{
-		validate.NotNegative("ICMPTimeout", conf.ICMPTimeout),
+		validate.NotNegative("conf.ICMPTimeout", conf.ICMPTimeout),
+		validate.NotEmpty("conf.DBFilePath", conf.DBFilePath),
+		validate.NotNil("conf.Logger", conf.Logger),
+		validate.NotNilInterface("conf.NetworkDeviceManager", conf.NetworkDeviceManager),
 	}
 
 	err = netutil.ValidateDomainName(conf.LocalDomainName)
 	if err != nil {
-		errs = append(errs, fmt.Errorf("LocalDomainName: %w", err))
+		errs = append(errs, fmt.Errorf("conf.LocalDomainName: %w", err))
 	}
 
 	// This is a best-effort check for the file accessibility.  The file will be
 	// checked again when it is opened later.
 	if _, err = os.Stat(conf.DBFilePath); err != nil && !errors.Is(err, os.ErrNotExist) {
-		errs = append(errs, fmt.Errorf("DBFilePath %q: %w", conf.DBFilePath, err))
+		errs = append(errs, fmt.Errorf("conf.DBFilePath %q: %w", conf.DBFilePath, err))
 	}
 
 	if len(conf.Interfaces) == 0 {
-		err = fmt.Errorf("interfaces: %w", errors.ErrEmptyValue)
+		err = fmt.Errorf("conf.Interfaces: %w", errors.ErrEmptyValue)
 		errs = append(errs, err)
 
 		return errors.Join(errs...)
@@ -81,7 +84,7 @@ func (conf *Config) Validate() (err error) {
 
 	for _, iface := range slices.Sorted(maps.Keys(conf.Interfaces)) {
 		ifaceConf := conf.Interfaces[iface]
-		errs = validate.Append(errs, iface, ifaceConf)
+		errs = validate.Append(errs, "conf.Interfaces."+iface, ifaceConf)
 	}
 
 	return errors.Join(errs...)
@@ -106,7 +109,7 @@ func (ic *InterfaceConfig) Validate() (err error) {
 	}
 
 	return errors.Join(
-		errors.Annotate(ic.IPv4.Validate(), "ipv4: %w"),
-		errors.Annotate(ic.IPv6.Validate(), "ipv6: %w"),
+		errors.Annotate(ic.IPv4.Validate(), "IPv4: %w"),
+		errors.Annotate(ic.IPv6.Validate(), "IPv6: %w"),
 	)
 }

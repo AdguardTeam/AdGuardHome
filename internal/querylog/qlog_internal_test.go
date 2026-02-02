@@ -272,7 +272,7 @@ func TestQueryLogShouldLog(t *testing.T) {
 		ignoredRoot,
 	}
 
-	engine, err := aghnet.NewIgnoreEngine(ignored)
+	engine, err := aghnet.NewIgnoreEngine(ignored, true)
 	require.NoError(t, err)
 
 	findClient := func(ids []string) (c *Client, err error) {

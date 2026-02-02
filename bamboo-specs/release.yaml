@@ -69,7 +69,7 @@
                         VERBOSE=1\
                         js-deps js-build
     'requirements':
-      - 'adg-docker': 'true'
+      - 'golang': true
 
 'Make release':
     'artifact-subscriptions':
@@ -122,7 +122,7 @@
                         VERBOSE=2\
                         build-release
     'requirements':
-      - 'adg-docker': 'true'
+      - 'golang': true
 
 'Make and publish docker':
     'key': 'MPD'
@@ -165,7 +165,7 @@
                     REVISION="${bamboo.repository.revision.number}" \
                     DIST_DIR='dist' \
                     DOCKER_IMAGE_NAME='adguard/adguardhome' \
-                    DOCKER_OUTPUT="type=image,name=adguard/adguardhome,push=true" \
+                    DOCKER_PUSH='1' \
                     VERBOSE='1' \
                     sh ./scripts/make/build-docker.sh
             'environment':
@@ -173,7 +173,7 @@
     'final-tasks':
       - 'clean'
     'requirements':
-      - 'adg-docker': 'true'
+      - 'golang': true
 
 'Publish to static storage':
     'key': 'PUB'
@@ -202,7 +202,7 @@
     'final-tasks':
       - 'clean'
     'requirements':
-      - 'adg-docker': 'true'
+      - 'golang': true
 
 'Publish to GitHub Releases':
     'key': 'PTGR'
@@ -240,7 +240,7 @@
     'final-tasks':
       - 'clean'
     'requirements':
-      - 'adg-docker': 'true'
+      - 'golang': true
 
 'triggers':
     # Don't use minute values that end with a zero or a five as these are often
