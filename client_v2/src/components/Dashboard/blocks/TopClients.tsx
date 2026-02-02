@@ -128,7 +128,12 @@ export const TopClients = ({ topClients, numDnsQueries }: Props) => {
                     </div>
                 ) : (
                     <div
-                        className={cn(theme.text.t2, theme.text.condenced, s.protectionMenuItem, s.protectionMenuItemRed)}
+                        className={cn(
+                            theme.text.t2,
+                            theme.text.condenced,
+                            s.protectionMenuItem,
+                            s.protectionMenuItemRed
+                        )}
                         onClick={() => openConfirmDialog(client.name, 'block')}
                     >
                         {intl.getMessage('block_client')}
@@ -139,7 +144,6 @@ export const TopClients = ({ topClients, numDnsQueries }: Props) => {
     };
 
     const hasStats = topClients.length > 0;
-    const maxCount = hasStats ? Math.max(...topClients.map((c) => c.count)) : 1;
 
     const sortedClients = useMemo(() => {
         return [...topClients].sort((a, b) => {
@@ -180,7 +184,10 @@ export const TopClients = ({ topClients, numDnsQueries }: Props) => {
                     >
                         {intl.getMessage('table_client')}
                         {sortField === 'name' ? (
-                            <Icon icon="arrow_bottom" className={cn(s.sortIcon, sortDirection === 'asc' && s.sortIconAsc)} />
+                            <Icon
+                                icon="arrow_bottom"
+                                className={cn(s.sortIcon, sortDirection === 'asc' && s.sortIconAsc)}
+                            />
                         ) : (
                             <span className={s.sortDash}>—</span>
                         )}
@@ -191,7 +198,10 @@ export const TopClients = ({ topClients, numDnsQueries }: Props) => {
                     >
                         {intl.getMessage('queries')}
                         {sortField === 'count' ? (
-                            <Icon icon="arrow_bottom" className={cn(s.sortIcon, sortDirection === 'asc' && s.sortIconAsc)} />
+                            <Icon
+                                icon="arrow_bottom"
+                                className={cn(s.sortIcon, sortDirection === 'asc' && s.sortIconAsc)}
+                            />
                         ) : (
                             <span className={s.sortDash}>—</span>
                         )}
@@ -230,7 +240,12 @@ export const TopClients = ({ topClients, numDnsQueries }: Props) => {
                                             </div>
                                         }
                                     >
-                                        <div className={cn(theme.text.t3, theme.text.condenced, s.queryCount, s.queryCountHover)}>
+                                        <div className={cn(
+                                            theme.text.t3,
+                                            theme.text.condenced,
+                                            s.queryCount,
+                                            s.queryCountHover
+                                        )}>
                                             {formatCompactNumber(client.count)}
 
                                             <div className={cn(theme.text.t3, theme.text.condenced, s.queryPercent)}>
@@ -261,7 +276,13 @@ export const TopClients = ({ topClients, numDnsQueries }: Props) => {
 
                                 <div className={s.tableRowInfo}>
                                     {client.info?.name && (
-                                        <div className={cn(theme.text.t4, theme.text.condenced, s.clientName)}>{client.info.name}</div>
+                                        <div className={cn(
+                                            theme.text.t4,
+                                            theme.text.condenced,
+                                            s.clientName
+                                        )}>
+                                            {client.info.name}
+                                        </div>
                                     )}
                                     {isBlocked && (
                                         <div className={cn(theme.text.t4, theme.text.condenced, s.clientBlocked)}>

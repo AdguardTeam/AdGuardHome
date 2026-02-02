@@ -60,10 +60,18 @@ const PERIOD_OPTIONS = STATS_INTERVALS_DAYS.map((interval) => ({
 
 // Mock data for testing charts
 const MOCK_DATA = {
-    dnsQueries: [120, 150, 180, 200, 170, 190, 220, 250, 230, 210, 240, 280, 300, 320, 290, 310, 350, 380, 360, 340, 370, 400, 420, 390],
-    blockedFiltering: [10, 15, 12, 18, 14, 20, 25, 22, 28, 24, 30, 35, 32, 38, 34, 40, 45, 42, 48, 44, 50, 55, 52, 58],
-    replacedSafebrowsing: [2, 3, 1, 4, 2, 5, 3, 6, 4, 7, 5, 8, 6, 9, 7, 10, 8, 11, 9, 12, 10, 13, 11, 14],
-    replacedParental: [1, 2, 1, 3, 2, 4, 3, 5, 4, 6, 5, 7, 6, 8, 7, 9, 8, 10, 9, 11, 10, 12, 11, 13],
+    dnsQueries: [
+        120, 150, 180, 200, 170, 190, 220, 250, 230, 210, 240, 280, 300, 320, 290, 310, 350, 380, 360, 340, 370
+    ],
+    blockedFiltering: [
+        10, 15, 12, 18, 14, 20, 25, 22, 28, 24, 30, 35, 32, 38, 34, 40, 45, 42, 48, 44, 50, 55, 52, 58
+    ],
+    replacedSafebrowsing: [
+        2, 3, 1, 4, 2, 5, 3, 6, 4, 7, 5, 8, 6, 9, 7, 10, 8, 11, 9, 12, 10, 13, 11, 14
+    ],
+    replacedParental: [
+        1, 2, 1, 3, 2, 4, 3, 5, 4, 6, 5, 7, 6, 8, 7, 9, 8, 10, 9, 11, 10, 12, 11, 13
+    ],
     numDnsQueries: 6420,
     numBlockedFiltering: 782,
     numReplacedSafebrowsing: 156,
@@ -301,23 +309,41 @@ export const Dashboard = () => {
                     <>
                         <StatCards
                             numDnsQueries={USE_MOCK_DATA ? MOCK_DATA.numDnsQueries : (numDnsQueries || 0)}
-                            numBlockedFiltering={USE_MOCK_DATA ? MOCK_DATA.numBlockedFiltering : (numBlockedFiltering || 0)}
-                            numReplacedSafebrowsing={USE_MOCK_DATA ? MOCK_DATA.numReplacedSafebrowsing : (numReplacedSafebrowsing || 0)}
-                            numReplacedParental={USE_MOCK_DATA ? MOCK_DATA.numReplacedParental : (numReplacedParental || 0)}
+                            numBlockedFiltering={
+                                USE_MOCK_DATA ? MOCK_DATA.numBlockedFiltering : (numBlockedFiltering || 0)
+                            }
+                            numReplacedSafebrowsing={
+                                USE_MOCK_DATA ? MOCK_DATA.numReplacedSafebrowsing : (numReplacedSafebrowsing || 0)
+                            }
+                            numReplacedParental={
+                                USE_MOCK_DATA ? MOCK_DATA.numReplacedParental : (numReplacedParental || 0)
+                            }
                             dnsQueries={USE_MOCK_DATA ? MOCK_DATA.dnsQueries : (dnsQueries || [])}
                             blockedFiltering={USE_MOCK_DATA ? MOCK_DATA.blockedFiltering : (blockedFiltering || [])}
-                            replacedSafebrowsing={USE_MOCK_DATA ? MOCK_DATA.replacedSafebrowsing : (replacedSafebrowsing || [])}
+                            replacedSafebrowsing={
+                                USE_MOCK_DATA ? MOCK_DATA.replacedSafebrowsing : (replacedSafebrowsing || [])
+                            }
                             replacedParental={USE_MOCK_DATA ? MOCK_DATA.replacedParental : (replacedParental || [])}
                         />
 
                         <div className={s.statContainer}>
                             <GeneralStatistics
                                 numDnsQueries={USE_MOCK_DATA ? MOCK_DATA.numDnsQueries : (numDnsQueries || 0)}
-                                numBlockedFiltering={USE_MOCK_DATA ? MOCK_DATA.numBlockedFiltering : (numBlockedFiltering || 0)}
-                                numReplacedSafebrowsing={USE_MOCK_DATA ? MOCK_DATA.numReplacedSafebrowsing : (numReplacedSafebrowsing || 0)}
-                                numReplacedParental={USE_MOCK_DATA ? MOCK_DATA.numReplacedParental : (numReplacedParental || 0)}
-                                numReplacedSafesearch={USE_MOCK_DATA ? MOCK_DATA.numReplacedSafesearch : (numReplacedSafesearch || 0)}
-                                avgProcessingTime={USE_MOCK_DATA ? MOCK_DATA.avgProcessingTime : (avgProcessingTime || 0)}
+                                numBlockedFiltering={
+                                    USE_MOCK_DATA ? MOCK_DATA.numBlockedFiltering : (numBlockedFiltering || 0)
+                                }
+                                numReplacedSafebrowsing={
+                                    USE_MOCK_DATA ? MOCK_DATA.numReplacedSafebrowsing : (numReplacedSafebrowsing || 0)
+                                }
+                                numReplacedParental={
+                                    USE_MOCK_DATA ? MOCK_DATA.numReplacedParental : (numReplacedParental || 0)
+                                }
+                                numReplacedSafesearch={
+                                    USE_MOCK_DATA ? MOCK_DATA.numReplacedSafesearch : (numReplacedSafesearch || 0)
+                                }
+                                avgProcessingTime={
+                                    USE_MOCK_DATA ? MOCK_DATA.avgProcessingTime : (avgProcessingTime || 0)
+                                }
                                 interval={interval || DAY}
                                 timeUnits={timeUnits || 'hours'}
                             />
@@ -328,23 +354,35 @@ export const Dashboard = () => {
                             />
 
                             <TopQueriedDomains
-                                topQueriedDomains={USE_MOCK_DATA ? MOCK_DATA.topQueriedDomains : (topQueriedDomains || [])}
+                                topQueriedDomains={
+                                    USE_MOCK_DATA ? MOCK_DATA.topQueriedDomains : (topQueriedDomains || [])
+                                }
                                 numDnsQueries={USE_MOCK_DATA ? MOCK_DATA.numDnsQueries : (numDnsQueries || 0)}
                             />
 
                             <TopBlockedDomains
-                                topBlockedDomains={USE_MOCK_DATA ? MOCK_DATA.topBlockedDomains : (topBlockedDomains || [])}
-                                numBlockedFiltering={USE_MOCK_DATA ? MOCK_DATA.numBlockedFiltering : (numBlockedFiltering || 0)}
+                                topBlockedDomains={
+                                    USE_MOCK_DATA ? MOCK_DATA.topBlockedDomains : (topBlockedDomains || [])
+                                }
+                                numBlockedFiltering={
+                                    USE_MOCK_DATA ? MOCK_DATA.numBlockedFiltering : (numBlockedFiltering || 0)
+                                }
                             />
 
                             <TopUpstreams
-                                topUpstreamsResponses={USE_MOCK_DATA ? MOCK_DATA.topUpstreamsResponses : (topUpstreamsResponses || [])}
+                                topUpstreamsResponses={
+                                    USE_MOCK_DATA ? MOCK_DATA.topUpstreamsResponses : (topUpstreamsResponses || [])
+                                }
                                 numDnsQueries={USE_MOCK_DATA ? MOCK_DATA.numDnsQueries : (numDnsQueries || 0)}
                             />
 
                             <UpstreamAvgTime
-                                topUpstreamsAvgTime={USE_MOCK_DATA ? MOCK_DATA.topUpstreamsAvgTime : (topUpstreamsAvgTime || [])}
-                                avgProcessingTime={USE_MOCK_DATA ? MOCK_DATA.avgProcessingTime : (avgProcessingTime || 0)}
+                                topUpstreamsAvgTime={
+                                    USE_MOCK_DATA ? MOCK_DATA.topUpstreamsAvgTime : (topUpstreamsAvgTime || [])
+                                }
+                                avgProcessingTime={
+                                    USE_MOCK_DATA ? MOCK_DATA.avgProcessingTime : (avgProcessingTime || 0)
+                                }
                             />
                         </div>
                     </>

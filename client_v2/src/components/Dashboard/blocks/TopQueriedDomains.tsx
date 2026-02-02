@@ -5,9 +5,9 @@ import { Icon } from 'panel/common/ui/Icon';
 import { Dropdown } from 'panel/common/ui/Dropdown';
 import { formatNumber, formatCompactNumber } from 'panel/helpers/helpers';
 import { getTrackerData } from 'panel/helpers/trackers/trackers';
-import { TrackerTooltip } from './TrackerTooltip';
 import theme from 'panel/lib/theme';
 import cn from 'clsx';
+import { TrackerTooltip } from './TrackerTooltip';
 
 import s from '../Dashboard.module.pcss';
 

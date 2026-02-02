@@ -567,7 +567,7 @@ export const formatCompactNumber = (num: number, decimals: number = 1): string =
     const suffixes = ['', 'K', 'M', 'B', 'T'];
     const tier = Math.floor(Math.log10(absNum) / 3);
     const suffix = suffixes[Math.min(tier, suffixes.length - 1)];
-    const scale = Math.pow(10, tier * 3);
+    const scale = 10**(tier * 3);
     const scaled = absNum / scale;
 
     const formatted = scaled.toFixed(decimals).replace(/\.0+$/, '');
