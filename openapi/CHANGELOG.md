@@ -4,6 +4,10 @@
 
 ## v0.107.72: API changes
 
+## New `recent` query parameter in 'GET /control/stats/'
+
+- New query parameter `recent` defines the statistics lookback period in millieseconds.
+
 ### New `ignored_enabled` field in `GetStatsConfigResponse` and  `GetQueryLogConfigResponse`
 
 - The new field `ignored_enabled` indicates whether the host names in the ignored array should be ignored.  This field has been added for the following endpoints:
