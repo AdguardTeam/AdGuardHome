@@ -578,10 +578,11 @@ class Api {
 
     STATS_RESET = { path: 'stats_reset', method: 'POST' };
 
-    getStats() {
+    getStats(recent?: number) {
         const { path, method } = this.GET_STATS;
+        const config = recent ? { params: { recent } } : undefined;
 
-        return this.makeRequest(path, method);
+        return this.makeRequest(path, method, config);
     }
 
     getStatsConfig() {

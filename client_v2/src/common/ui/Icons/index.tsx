@@ -51,6 +51,7 @@ export const ICONS = {
     time: 'time',
     eye_open: 'eye_open',
     eye_close: 'eye_close',
+    check_tiny: 'check_tiny',
 } as const;
 
 export type IconType = keyof typeof ICONS;
@@ -649,17 +650,6 @@ export const Icons = memo(() => (
             <circle cx="12" cy="12" r="9" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             <path d="M16 9L12 13.5L8.5 11.5" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </symbol>
-        <symbol
-            id="eye_opened"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-        >
-            <path fillRule="evenodd" clipRule="evenodd" d="M4 11.772C6.66667 8.59065 9.33333 7 12 7C14.6667 7 17.3333 8.59065 20 11.772C20 11.772 16 16.772 12 16.772C8 16.772 4 11.772 4 11.772Z" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            <path fillRule="evenodd" clipRule="evenodd" d="M12 10C13.1046 10 14 10.8954 14 12C14 13.1046 13.1046 14 12 14C10.8954 14 10 13.1046 10 12C10 10.8954 10.8954 10 12 10Z" strokeWidth="1.5" />
-        </symbol>
         <symbol id="eye_close" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M4 10C4 10 8 14.772 12 14.772C16 14.772 20 10 20 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             <path d="M12 15V17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -669,6 +659,16 @@ export const Icons = memo(() => (
         <symbol id="eye_open" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path fillRule="evenodd" clipRule="evenodd" d="M4 11.772C6.66667 8.59065 9.33333 7 12 7C14.6667 7 17.3333 8.59065 20 11.772C20 11.772 16 16.772 12 16.772C8 16.772 4 11.772 4 11.772Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             <path fillRule="evenodd" clipRule="evenodd" d="M12 10C13.1046 10 14 10.8954 14 12C14 13.1046 13.1046 14 12 14C10.8954 14 10 13.1046 10 12C10 10.8954 10.8954 10 12 10Z" stroke="currentColor" strokeWidth="1.5" />
+        </symbol>
+        <symbol
+            id="check_tiny"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+        >
+            <path d="M5 11.7665L10.5878 17L19 8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </symbol>
     </svg>
 ));

@@ -104,7 +104,7 @@ export const TopQueriedDomains = ({ topQueriedDomains, numDnsQueries }: Props) =
                                             position="bottomLeft"
                                             noIcon
                                         >
-                                            <Icon icon="eye_opened" className={s.tableRowIcon} />
+                                            <Icon icon="eye_open" className={s.tableRowIcon} />
                                         </Dropdown>
                                     ) : (
                                         <div className={s.tableRowDot}></div>

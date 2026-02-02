@@ -31,12 +31,72 @@
 
 .protectionMenuItem {
     padding: 8px 16px;
-    color: var(--default-link);
     cursor: pointer;
 }
 
 .protectionMenuItemRed {
     color: var(--default-error-link);
+}
+
+.periodButton {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--default-main-text);
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.periodButtonIcon {
+    width: 24px;
+    height: 24px;
+    transition: transform var(--t2);
+}
+
+.periodButtonIconOpen {
+    transform: rotate(180deg);
+}
+
+.periodMenu {
+    min-width: 180px;
+}
+
+.periodMenuItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 16px;
+    cursor: pointer;
+    color: var(--default-main-text);
+    transition: background-color var(--t2);
+
+    &:hover {
+        background-color: var(--hovered-item-background);
+    }
+}
+
+.periodMenuIcon {
+    width: 24px;
+    height: 24px;
+    stroke: var(--default-product-icon);
+}
+
+.periodMenuDot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+
+    &:before {
+        content: "";
+        display: block;
+        width: 3px;
+        height: 3px;
+        border-radius: 50%;
+        background-color: var(--default-product-icon);
+    }
 }
 
 .statsCards {
@@ -129,14 +189,13 @@
 }
 
 .statContainer {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 1fr;
     gap: 24px;
     padding: 0 16px;
 
     @media (min-width: 1024px) {
-        flex-direction: row;
-        flex-wrap: wrap;
+        grid-template-columns: 1fr 1fr;
         padding: 0;
     }
 }
@@ -148,10 +207,7 @@
     border-radius: 16px;
     padding: 8px 8px 0;
     border: 1px solid var(--default-item-divider);
-
-    @media (min-width: 1024px) {
-        flex: 1;
-    }
+    overflow: hidden;
 }
 
 .cardBlocked {
@@ -343,6 +399,7 @@
     width: 24px;
     height: 24px;
     stroke: var(--default-gray-icons);
+    color: var(--default-gray-icons);
 }
 
 .tableRowInfo {
@@ -353,6 +410,7 @@
 }
 
 .tableRows {
+    height: 100%;
     overflow-y: auto;
 }
 

@@ -1098,5 +1098,8 @@
     "forgot_password_list_item_5": "Log in to the web interface with your new password.",
     "back_to_login": "Back to login",
     "login": "Log in",
-    "password_login_error": "Unrecognized password"
+    "password_login_error": "Unrecognized password",
+    "last_hour": "Last hour",
+    "last_hours": "| Last %count% hour | Last %count% hours",
+    "last_days": "| Last %count% day | Last %count% days"
 }

@@ -53,9 +53,30 @@ const DISABLE_PROTECTION_ITEMS = [
     },
 ];
 
+const getPeriodLabel = (interval: number) => {
+    const hours = interval / (60 * 60 * 1000);
+    if (hours === 1) {
+        return intl.getMessage('last_hour');
+    }
+    if (hours === 24) {
+        return intl.getPlural('last_hours', 24);
+    }
+    const days = hours / 24;
+    if (days === 7) {
+        return intl.getPlural('last_days', 7);
+    }
+    if (days === 30) {
+        return intl.getPlural('last_days', 30);
+    }
+    if (days === 90) {
+        return intl.getPlural('last_days', 90);
+    }
+    return intl.getMessage('interval_days', { count: days });
+};
+
 const PERIOD_OPTIONS = STATS_INTERVALS_DAYS.map((interval) => ({
     value: interval,
-    label: intl.getMessage('interval_days', { count: msToDays(interval) }),
+    label: getPeriodLabel(interval),
 }));
 
 // Mock data for testing charts
@@ -125,6 +146,8 @@ export const Dashboard = () => {
     const { dashboard, stats, access } = useSelector((state: RootState) => state);
     const [protectionMenuOpen, setProtectionMenuOpen] = useState(false);
     const [remainingTime, setRemainingTime] = useState<number | null>(null);
+    const [selectedPeriod, setSelectedPeriod] = useState(DAY * 7);
+    const [periodMenuOpen, setPeriodMenuOpen] = useState(false);
 
     const {
         protectionEnabled,
@@ -176,17 +199,22 @@ export const Dashboard = () => {
     } = stats || {};
 
     useEffect(() => {
-        dispatch(getStats());
+        dispatch(getStats(selectedPeriod));
         dispatch(getStatsConfig());
         dispatch(getClients());
         dispatch(getAccessList());
-    }, [dispatch]);
+    }, [dispatch, selectedPeriod]);
 
     const handleRefreshStats = () => {
-        dispatch(getStats());
+        dispatch(getStats(selectedPeriod));
         dispatch(getStatsConfig());
         dispatch(getClients());
         dispatch(getAccessList());
+    };
+
+    const handlePeriodChange = (period: number) => {
+        setSelectedPeriod(period);
+        setPeriodMenuOpen(false);
     };
 
     const handleToggleProtection = () => {
@@ -298,6 +326,44 @@ export const Dashboard = () => {
 
                             <Icon icon="refresh" color="green" />
                         </button>
+
+                        <Dropdown
+                            menu={
+                                <div className={s.periodMenu}>
+                                    {PERIOD_OPTIONS.map((option) => (
+                                        <div
+                                            key={option.value}
+                                            className={cn(
+                                                theme.text.t2,
+                                                theme.text.condenced,
+                                                s.periodMenuItem,
+                                            )}
+                                            onClick={() => handlePeriodChange(option.value)}
+                                        >
+                                            {selectedPeriod === option.value ? (
+                                                <Icon icon="check_tiny" className={s.periodMenuIcon} />
+                                            ) : (
+                                                <span className={s.periodMenuDot}></span>
+                                            )}
+                                            {option.label}
+                                        </div>
+                                    ))}
+                                </div>
+                            }
+                            trigger="click"
+                            position="bottomRight"
+                            open={periodMenuOpen}
+                            onOpenChange={setPeriodMenuOpen}
+                            noIcon
+                        >
+                            <button type="button" className={s.periodButton}>
+                                <div className={cn(theme.text.t2, theme.text.condenced)}>
+                                    {getPeriodLabel(selectedPeriod)}
+                                </div>
+
+                                <Icon icon="arrow_bottom" className={cn(s.periodButtonIcon, periodMenuOpen && s.periodButtonIconOpen)} />
+                            </button>
+                        </Dropdown>
                     </div>
                 </div>
 
