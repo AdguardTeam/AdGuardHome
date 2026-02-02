@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/netip"
 	"path"
+	"path/filepath"
 	"sync/atomic"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
@@ -53,8 +54,13 @@ type HostsContainer struct {
 const ErrNoHostsPaths errors.Error = "no valid paths to hosts files provided"
 
 // NewHostsContainer creates a container of hosts that watches the paths with w.
-// paths shouldn't be empty, and each path should refer either a file or a
-// directory in fsys.  l, fsys, and w must be non-nil.
+// paths shouldn't be empty, and each path should be relative and refer either a
+// file or a directory in fsys.  fsys should be a filesystem mounted at the
+// operating system root.  l and w must not be nil.
+//
+// TODO(e.burkov):  Add configuration.
+//
+// TODO(e.burkov):  Reconsider using fs.
 func NewHostsContainer(
 	ctx context.Context,
 	l *slog.Logger,
@@ -92,13 +98,21 @@ func NewHostsContainer(
 		return nil, err
 	}
 
+	// Don't use absolute paths for watching, since those are required to be
+	// relative to the operating system root, not the current directory.  See
+	// TODO at NewHostsContainer.
+	rootDir := aghos.RootDir()
+
 	for _, p := range paths {
-		if err = w.Add(p); err != nil {
+		p = filepath.Join(rootDir, p)
+
+		err = w.Add(p)
+		if err != nil {
 			if !errors.Is(err, fs.ErrNotExist) {
 				return nil, fmt.Errorf("adding path: %w", err)
 			}
 
-			l.DebugContext(ctx, "expected path does not exist", "path", p)
+			l.DebugContext(ctx, "expected path does not exist", "path", p, slogutil.KeyError, err)
 		}
 	}
 

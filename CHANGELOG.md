@@ -24,6 +24,10 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - New field `"ignored_enabled"` in `GetStatsConfigResponse` or `GetQueryLogConfigResponse`.  See `openapi/openapi.yaml` for details.
 
+### Changed
+
+- In addition to modifying the contents of a hosts file, deleting or renaming the file now also updates runtime clients and DNS filtering results.
+
 #### Configuration changes
 
 In this release, the schema version has changed from 32 to 33.

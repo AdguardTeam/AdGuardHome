@@ -198,3 +198,10 @@ func IsOpenWrt() (ok bool) {
 func SendShutdownSignal(c chan<- os.Signal) {
 	sendShutdownSignal(c)
 }
+
+// RootDir returns the root directory for the current OS.
+//
+// TODO(e.burkov):  Deprecate [osutil.RootDirFS] and move it there.
+func RootDir() (dir string) {
+	return rootDir()
+}

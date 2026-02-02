@@ -15,6 +15,7 @@ import (
 	"math/big"
 	"net"
 	"net/netip"
+	"path/filepath"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -1523,7 +1524,7 @@ func TestPTRResponseFromHosts(t *testing.T) {
 		return nil
 	}
 	watcher.OnAdd = func(name string) (err error) {
-		assert.Equal(t, hostsFilename, name)
+		assert.Equal(t, filepath.Join(aghos.RootDir(), hostsFilename), name)
 
 		return nil
 	}

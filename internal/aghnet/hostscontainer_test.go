@@ -4,12 +4,14 @@ import (
 	"context"
 	"net/netip"
 	"path"
+	"path/filepath"
 	"sync/atomic"
 	"testing"
 	"testing/fstest"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/hostsfile"
@@ -54,7 +56,10 @@ func TestNewHostsContainer(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			onAdd := func(name string) (err error) {
-				assert.Contains(t, tc.paths, name)
+				relName, err := filepath.Rel(aghos.RootDir(), name)
+				require.NoError(t, err)
+
+				assert.Contains(t, tc.paths, filepath.ToSlash(relName))
 
 				return nil
 			}
@@ -163,7 +168,7 @@ func TestHostsContainer_refresh(t *testing.T) {
 	w := aghtest.NewFSWatcher()
 	w.OnEvents = func() (e <-chan event) { return eventsCh }
 	w.OnAdd = func(name string) (err error) {
-		assert.Equal(t, "dir", name)
+		assert.Equal(t, filepath.Join(aghos.RootDir(), "dir"), name)
 
 		return nil
 	}
