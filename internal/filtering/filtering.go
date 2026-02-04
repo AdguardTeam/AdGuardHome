@@ -887,12 +887,13 @@ func (d *DNSFilter) matchHost(
 
 	ctx := context.TODO()
 
+	// TODO(f.setrakov): Reuse client tags and identifiers.
 	ufReq := &urlfilter.DNSRequest{
-		Hostname:         host,
-		SortedClientTags: setts.ClientTags,
-		ClientIP:         setts.ClientIP,
-		ClientName:       setts.ClientName,
-		DNSType:          rrtype,
+		Hostname:          host,
+		ClientTags:        container.NewSortedSliceSet(setts.ClientTags...),
+		ClientIP:          setts.ClientIP,
+		ClientIdentifiers: container.NewSortedSliceSet(setts.ClientName),
+		DNSType:           rrtype,
 	}
 
 	d.engineLock.RLock()

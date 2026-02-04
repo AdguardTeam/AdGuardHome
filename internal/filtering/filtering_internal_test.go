@@ -699,10 +699,10 @@ func BenchmarkSafeBrowsing(b *testing.B) {
 	// Most recent results:
 	//
 	//	goos: darwin
-	//	goarch: amd64
+	//	goarch: arm64
 	//	pkg: github.com/AdguardTeam/AdGuardHome/internal/filtering
-	//	cpu: Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz
-	//	BenchmarkSafeBrowsing-12    	  358934	      2994 ns/op	    1304 B/op	      40 allocs/op
+	//	cpu: Apple M3
+	//	BenchmarkSafeBrowsing-8   	  846363	      1280 ns/op	    1424 B/op	      41 allocs/op
 }
 
 func BenchmarkSafeBrowsing_parallel(b *testing.B) {
@@ -725,8 +725,8 @@ func BenchmarkSafeBrowsing_parallel(b *testing.B) {
 	// Most recent results:
 	//
 	//	goos: darwin
-	//	goarch: amd64
+	//	goarch: arm64
 	//	pkg: github.com/AdguardTeam/AdGuardHome/internal/filtering
-	//	cpu: Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz
-	//	BenchmarkSafeBrowsing_parallel-12    	  507327	      2382 ns/op	    1352 B/op	      42 allocs/op
+	//	cpu: Apple M3
+	//	BenchmarkSafeBrowsing_parallel-8   	 1040792	      1076 ns/op	    1472 B/op	      43 allocs/op
 }
