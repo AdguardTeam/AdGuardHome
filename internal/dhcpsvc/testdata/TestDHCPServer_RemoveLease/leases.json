@@ -2,7 +2,7 @@
     "leases": [
         {
             "expires": "",
-            "ip": "192.168.0.2",
+            "ip": "192.0.2.2",
             "hostname": "host1",
             "mac": "01:02:03:04:05:06",
             "static": true

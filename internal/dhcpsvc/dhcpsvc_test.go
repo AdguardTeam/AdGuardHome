@@ -31,6 +31,9 @@ const testLocalTLD = "local"
 // testIfaceName is the name of the test network interface.
 const testIfaceName = "iface0"
 
+// testDBLeasesFilename is the common name of a leases database file for tests.
+const testDBLeasesFilename = "leases.json"
+
 // testTimeout is a common timeout for tests and contexts.
 const testTimeout = 10 * time.Second
 
@@ -57,15 +60,63 @@ var testClock = &faketime.Clock{
 	},
 }
 
+const (
+	// testGatewayIPv4Str is the string representation of the gateway IPv4
+	// address used in tests.
+	testGatewayIPv4Str = "192.0.2.1"
+
+	// testSubnetMaskV4Str is the string representation of the subnet mask for
+	// the IPv4 interface used in tests.
+	testSubnetMaskV4Str = "255.255.255.0"
+
+	// testRangeStartV4Str is the string representation of the range start of
+	// the IPv4 interface used in tests.
+	testRangeStartV4Str = "192.0.2.100"
+
+	// testRangeEndV4Str is the string representation of the range end of the
+	// IPv4 interface used in tests.
+	testRangeEndV4Str = "192.0.2.200"
+
+	// testIfaceAddrV4Str is the string representation of the interface's IPv4
+	// address used in tests.
+	testIfaceAddrV4Str = "192.0.2.2"
+
+	// testAnotherGatewayIPv4Str is the string representation of the second
+	// gateway IPv4 address used in tests.
+	testAnotherGatewayIPv4Str = "198.51.100.1"
+
+	// testAnotherSubnetMaskV4Str is the string representation of the subnet
+	// mask for the second IPv4 interface used in tests.
+	testAnotherSubnetMaskV4Str = "255.255.255.0"
+
+	// testAnotherRangeStartV4Str is the string representation of the range
+	// start of the second IPv4 interface used in tests.
+	testAnotherRangeStartV4Str = "198.51.100.100"
+
+	// testAnotherRangeEndV4Str is the string representation of the range end
+	// of the second IPv4 interface used in tests.
+	testAnotherRangeEndV4Str = "198.51.100.200"
+)
+
+const (
+	// testRangeStartV6Str is the string representation of the range start of
+	// the IPv6 interface used in tests.
+	testRangeStartV6Str = "2001:db8::1"
+
+	// testAnotherRangeStartV6Str is the string representation of the range
+	// start of the second IPv6 interface used in tests.
+	testAnotherRangeStartV6Str = "2001:db9::1"
+)
+
 var (
 	// testIPv4Conf is a common valid IPv4 part of the interface configuration
 	// for tests.
 	testIPv4Conf = &dhcpsvc.IPv4Config{
 		Clock:         testClock,
-		GatewayIP:     netip.MustParseAddr("192.168.0.1"),
-		SubnetMask:    netip.MustParseAddr("255.255.255.0"),
-		RangeStart:    netip.MustParseAddr("192.168.0.100"),
-		RangeEnd:      netip.MustParseAddr("192.168.0.200"),
+		GatewayIP:     netip.MustParseAddr(testGatewayIPv4Str),
+		SubnetMask:    netip.MustParseAddr(testSubnetMaskV4Str),
+		RangeStart:    netip.MustParseAddr(testRangeStartV4Str),
+		RangeEnd:      netip.MustParseAddr(testRangeEndV4Str),
 		LeaseDuration: testLeaseTTL,
 		Enabled:       true,
 	}
@@ -73,7 +124,7 @@ var (
 	// testIfaceAddr is a common valid IPv4 address of the test network
 	// interface, compliant with [testIPv4Conf], i.e. outside of the range,
 	// within the subnet, not equal to the gateway.
-	testIfaceAddr = netip.MustParseAddr("192.168.0.2")
+	testIfaceAddr = netip.MustParseAddr(testIfaceAddrV4Str)
 
 	// testIfaceHWAddr is a common valid hardware address of the test network
 	// interface.
@@ -84,7 +135,7 @@ var (
 // tests.
 var testIPv6Conf = &dhcpsvc.IPv6Config{
 	Enabled:       true,
-	RangeStart:    netip.MustParseAddr("2001:db8::1"),
+	RangeStart:    netip.MustParseAddr(testRangeStartV6Str),
 	LeaseDuration: testLeaseTTL,
 	RAAllowSLAAC:  true,
 	RASLAACOnly:   true,
@@ -101,15 +152,15 @@ var testInterfaceConf = map[string]*dhcpsvc.InterfaceConfig{
 		IPv4: &dhcpsvc.IPv4Config{
 			Enabled:       true,
 			Clock:         timeutil.SystemClock{},
-			GatewayIP:     netip.MustParseAddr("172.16.0.1"),
-			SubnetMask:    netip.MustParseAddr("255.255.255.0"),
-			RangeStart:    netip.MustParseAddr("172.16.0.100"),
-			RangeEnd:      netip.MustParseAddr("172.16.0.200"),
+			GatewayIP:     netip.MustParseAddr(testAnotherGatewayIPv4Str),
+			SubnetMask:    netip.MustParseAddr(testAnotherSubnetMaskV4Str),
+			RangeStart:    netip.MustParseAddr(testAnotherRangeStartV4Str),
+			RangeEnd:      netip.MustParseAddr(testAnotherRangeEndV4Str),
 			LeaseDuration: 1 * time.Hour,
 		},
 		IPv6: &dhcpsvc.IPv6Config{
 			Enabled:       true,
-			RangeStart:    netip.MustParseAddr("2001:db9::100"),
+			RangeStart:    netip.MustParseAddr(testAnotherRangeStartV6Str),
 			LeaseDuration: 1 * time.Hour,
 			RAAllowSLAAC:  true,
 			RASLAACOnly:   true,
@@ -136,12 +187,10 @@ var fullLayersStack = []gopacket.LayerType{
 func newTempDB(tb testing.TB) (dst string) {
 	tb.Helper()
 
-	const filename = "leases.json"
-
-	data, err := fs.ReadFile(testdata, path.Join(tb.Name(), filename))
+	data, err := fs.ReadFile(testdata, path.Join(tb.Name(), testDBLeasesFilename))
 	require.NoError(tb, err)
 
-	dst = filepath.Join(tb.TempDir(), filename)
+	dst = filepath.Join(tb.TempDir(), testDBLeasesFilename)
 
 	err = os.WriteFile(dst, data, 0o640)
 	require.NoError(tb, err)

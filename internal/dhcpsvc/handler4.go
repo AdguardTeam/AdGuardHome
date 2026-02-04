@@ -358,14 +358,10 @@ func (iface *dhcpInterfaceV4) handleDecline(ctx context.Context, req *layers.DHC
 
 	l.WarnContext(ctx, "lease reported to be unavailable", "ip", lease.IP)
 
-	err := iface.common.index.remove(ctx, l, lease, iface.common)
+	err := iface.common.blockLease(ctx, lease, iface.clock)
 	if err != nil {
-		l.ErrorContext(ctx, "removing lease", slogutil.KeyError, err)
-
-		return
+		l.ErrorContext(ctx, "blocking lease", slogutil.KeyError, err)
 	}
-
-	iface.common.blockLease(lease, iface.clock)
 }
 
 // handleRelease handles messages of type DHCPRELEASE.  req must be a

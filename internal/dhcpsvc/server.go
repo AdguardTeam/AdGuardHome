@@ -175,7 +175,11 @@ func (srv *DHCPServer) Leases() (leases []*Lease) {
 	defer srv.leasesMu.RUnlock()
 
 	for l := range srv.leases.rangeLeases {
-		leases = append(leases, l)
+		if l.IsBlocked() {
+			continue
+		}
+
+		leases = append(leases, l.Clone())
 	}
 
 	return leases

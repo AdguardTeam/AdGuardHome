@@ -57,26 +57,26 @@ func TestIPv4Config_Validate(t *testing.T) {
 		conf: &dhcpsvc.IPv4Config{
 			Enabled:       true,
 			Clock:         testIPv4Conf.Clock,
-			GatewayIP:     netip.MustParseAddr("2001:db8::1"),
+			GatewayIP:     netip.MustParseAddr(testRangeStartV6Str),
 			SubnetMask:    testIPv4Conf.SubnetMask,
 			RangeStart:    testIPv4Conf.RangeStart,
 			RangeEnd:      testIPv4Conf.RangeEnd,
 			LeaseDuration: testIPv4Conf.LeaseDuration,
 		},
-		wantErrMsg: "gateway ip 2001:db8::1 must be a valid ipv4" + "\n" +
-			"range start 192.168.0.100 is not within 2001:db8::1/24",
+		wantErrMsg: "gateway ip " + testRangeStartV6Str + " must be a valid ipv4" + "\n" +
+			"range start " + testRangeStartV4Str + " is not within " + testRangeStartV6Str + "/24",
 	}, {
 		name: "bad_subnet_mask",
 		conf: &dhcpsvc.IPv4Config{
 			Enabled:       true,
 			Clock:         testIPv4Conf.Clock,
 			GatewayIP:     testIPv4Conf.GatewayIP,
-			SubnetMask:    netip.MustParseAddr("2001:db8::1"),
+			SubnetMask:    netip.MustParseAddr(testRangeStartV6Str),
 			RangeStart:    testIPv4Conf.RangeStart,
 			RangeEnd:      testIPv4Conf.RangeEnd,
 			LeaseDuration: testIPv4Conf.LeaseDuration,
 		},
-		wantErrMsg: "subnet mask 2001:db8::1 must be a valid ipv4 cidr mask",
+		wantErrMsg: "subnet mask " + testRangeStartV6Str + " must be a valid ipv4 cidr mask",
 	}, {
 		name: "bad_range_start",
 		conf: &dhcpsvc.IPv4Config{
@@ -84,13 +84,14 @@ func TestIPv4Config_Validate(t *testing.T) {
 			Clock:         testIPv4Conf.Clock,
 			GatewayIP:     testIPv4Conf.GatewayIP,
 			SubnetMask:    testIPv4Conf.SubnetMask,
-			RangeStart:    netip.MustParseAddr("2001:db8::1"),
+			RangeStart:    netip.MustParseAddr(testRangeStartV6Str),
 			RangeEnd:      testIPv4Conf.RangeEnd,
 			LeaseDuration: testIPv4Conf.LeaseDuration,
 		},
-		wantErrMsg: "range start 2001:db8::1 must be a valid ipv4" + "\n" +
-			"range start 2001:db8::1 is not within 192.168.0.1/24" + "\n" +
-			"invalid ip range: 2001:db8::1 and 192.168.0.200 must be within the same address family",
+		wantErrMsg: "range start " + testRangeStartV6Str + " must be a valid ipv4" + "\n" +
+			"range start " + testRangeStartV6Str + " is not within " +
+			testGatewayIPv4Str + "/24" + "\n" + "invalid ip range: " + testRangeStartV6Str +
+			" and " + testRangeEndV4Str + " must be within the same address family",
 	}, {
 		name: "bad_range_end",
 		conf: &dhcpsvc.IPv4Config{
@@ -99,12 +100,13 @@ func TestIPv4Config_Validate(t *testing.T) {
 			GatewayIP:     testIPv4Conf.GatewayIP,
 			SubnetMask:    testIPv4Conf.SubnetMask,
 			RangeStart:    testIPv4Conf.RangeStart,
-			RangeEnd:      netip.MustParseAddr("2001:db8::1"),
+			RangeEnd:      netip.MustParseAddr(testRangeStartV6Str),
 			LeaseDuration: testIPv4Conf.LeaseDuration,
 		},
-		wantErrMsg: "range end 2001:db8::1 must be a valid ipv4" + "\n" +
-			"range end 2001:db8::1 is not within 192.168.0.1/24" + "\n" +
-			"invalid ip range: 192.168.0.100 and 2001:db8::1 must be within the same address family",
+		wantErrMsg: "range end " + testRangeStartV6Str + " must be a valid ipv4" + "\n" +
+			"range end " + testRangeStartV6Str + " is not within " + testGatewayIPv4Str + "/24" +
+			"\n" + "invalid ip range: " + testRangeStartV4Str + " and " + testRangeStartV6Str +
+			" must be within the same address family",
 	}}
 
 	for _, tc := range testCases {
@@ -135,15 +137,15 @@ func TestIPv6Config_Validate(t *testing.T) {
 		name: "bad_range_start",
 		conf: &dhcpsvc.IPv6Config{
 			Enabled:       true,
-			RangeStart:    netip.MustParseAddr("192.168.0.1"),
+			RangeStart:    testIPv4Conf.GatewayIP,
 			LeaseDuration: 1 * time.Hour,
 		},
-		wantErrMsg: "range start 192.168.0.1 should be a valid ipv6",
+		wantErrMsg: "range start " + testGatewayIPv4Str + " should be a valid ipv6",
 	}, {
 		name: "bad_lease_duration",
 		conf: &dhcpsvc.IPv6Config{
 			Enabled:       true,
-			RangeStart:    netip.MustParseAddr("2001:db8::1"),
+			RangeStart:    netip.MustParseAddr(testRangeStartV6Str),
 			LeaseDuration: 0,
 		},
 		wantErrMsg: "lease duration 0s must be positive",
@@ -151,7 +153,7 @@ func TestIPv6Config_Validate(t *testing.T) {
 		name: "valid",
 		conf: &dhcpsvc.IPv6Config{
 			Enabled:       true,
-			RangeStart:    netip.MustParseAddr("2001:db8::1"),
+			RangeStart:    netip.MustParseAddr(testRangeStartV6Str),
 			LeaseDuration: 1 * time.Hour,
 		},
 		wantErrMsg: "",
@@ -174,7 +176,7 @@ func TestConfig_Validate(t *testing.T) {
 		NetworkDeviceManager: dhcpsvc.EmptyNetworkDeviceManager{},
 		Logger:               testLogger,
 		LocalDomainName:      testLocalTLD,
-		DBFilePath:           filepath.Join(t.TempDir(), "leases.json"),
+		DBFilePath:           filepath.Join(t.TempDir(), testDBLeasesFilename),
 		ICMPTimeout:          1 * time.Second,
 		Enabled:              true,
 	}
