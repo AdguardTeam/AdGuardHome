@@ -8,12 +8,8 @@ github.com/AdguardTeam/dnsproxy v0.78.2 h1:g+ba4vh72hAv9zIE+OPSEnu77utSKxIF6u2jN
 github.com/AdguardTeam/dnsproxy v0.78.2/go.mod h1:gwr+7Dc0e7QddQLC9JLGjL5NSKcqw0ESsNMRI5Q67Ps=
 github.com/AdguardTeam/golibs v0.35.7 h1:pTQpixUos7mALr3jqb0pigfrkiqPAX1hiYUi/yeBWiA=
 github.com/AdguardTeam/golibs v0.35.7/go.mod h1:meFdRqMtG/PLW6LD20MYAlcRbwAVowlbunHgE17xz9s=
-github.com/AdguardTeam/urlfilter v0.22.1 h1:nC2x0MSNwmTsXMTPfs1Gv6GZXKmK7prlzgjCdnE4fR8=
-github.com/AdguardTeam/urlfilter v0.22.1/go.mod h1:+wUx7GApNWvFPALjNd5fTLix4PFvQF5Gprx6JDYwxfE=
-github.com/AdguardTeam/urlfilter v0.23.0 h1:ElsnogIs90/IZkgQo7YP3sVkzmp8077R3NFSX4+WBUo=
-github.com/AdguardTeam/urlfilter v0.23.0/go.mod h1:Fl4eR1sOdx/1kdBRIY8JZHb91h7uab1Wxz4YzJlXTMw=
-github.com/BurntSushi/toml v1.5.0 h1:W5quZX/G/csjUnuI8SUYlsHs9M38FC7znL0lIO+DvMg=
-github.com/BurntSushi/toml v1.5.0/go.mod h1:ukJfTF/6rtPPRCnwkur4qwRxa8vTRFBF0uk2lLoLwho=
+github.com/AdguardTeam/urlfilter v0.23.1 h1:ifoms1xhof83+IPz96NsZt0h8knXOlL/lNP1cHjndfE=
+github.com/AdguardTeam/urlfilter v0.23.1/go.mod h1:Fl4eR1sOdx/1kdBRIY8JZHb91h7uab1Wxz4YzJlXTMw=
 github.com/BurntSushi/toml v1.6.0 h1:dRaEfpa2VI55EwlIW72hMRHdWouJeRF7TPYhI+AUQjk=
 github.com/BurntSushi/toml v1.6.0/go.mod h1:ukJfTF/6rtPPRCnwkur4qwRxa8vTRFBF0uk2lLoLwho=
 github.com/Masterminds/semver/v3 v3.4.0 h1:Zog+i5UMtVoCU8oKka5P7i9q9HgrJeGzI9SA1Xbatp0=
@@ -45,6 +41,8 @@ github.com/felixge/httpsnoop v1.0.4 h1:NFTV2Zj1bL4mc9sqWACXbQFVBBg2W3GPvqp8/ESS2
 github.com/felixge/httpsnoop v1.0.4/go.mod h1:m8KPJKqk1gH5J9DgRY2ASl2lWCfGKXixSwevea8zH2U=
 github.com/fsnotify/fsnotify v1.8.0 h1:dAwr6QBTBZIkG8roQaJjGof0pp0EeF+tNV7YBP3F/8M=
 github.com/fsnotify/fsnotify v1.8.0/go.mod h1:8jBTzvmWwFyi3Pb8djgCCO5IBqzKJ/Jwo8TRcHyHii0=
+github.com/fxamacker/cbor/v2 v2.9.0 h1:NpKPmjDBgUfBms6tr6JZkTHtfFGcMKsw3eGcmD/sapM=
+github.com/fxamacker/cbor/v2 v2.9.0/go.mod h1:vM4b+DJCtHn+zz7h3FFp/hDAI9WNWCsZj23V5ytsSxQ=
 github.com/fzipp/gocyclo v0.6.0 h1:lsblElZG7d3ALtGMx9fmxeTKZaLLpU8mET09yN4BBLo=
 github.com/fzipp/gocyclo v0.6.0/go.mod h1:rXPyn8fnlpa0R2csP/31uerbiVBugk5whMdlyaLkLoA=
 github.com/go-logr/logr v1.2.2/go.mod h1:jdQByPbusPIv2/zmleS9BjJVeZ6kBagPoEUsqbVz/1A=
@@ -179,6 +177,8 @@ github.com/u-root/uio v0.0.0-20240224005618-d2acac8f3701 h1:pyC9PaHYZFgEKFdlp3G8
 github.com/u-root/uio v0.0.0-20240224005618-d2acac8f3701/go.mod h1:P3a5rG4X7tI17Nn3aOIAYr5HbIMukwXG0urG0WuL8OA=
 github.com/uudashr/gocognit v1.2.0 h1:3BU9aMr1xbhPlvJLSydKwdLN3tEUUrzPSSM8S4hDYRA=
 github.com/uudashr/gocognit v1.2.0/go.mod h1:k/DdKPI6XBZO1q7HgoV2juESI2/Ofj9AcHPZhBBdrTU=
+github.com/x448/float16 v0.8.4 h1:qLwI1I70+NjRFUR3zs1JPUCgaCXSh3SW62uAKT1mSBM=
+github.com/x448/float16 v0.8.4/go.mod h1:14CWIYCyZA/cWjXOioeEpHeN/83MdbZDRQHoFcYsOfg=
 github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e h1:JVG44RsyaB9T2KIHavMF/ppJZNG9ZpyihvCd0w101no=
 github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e/go.mod h1:RbqR21r5mrJuqunuUZ/Dhy/avygyECGrLceyNeo4LiM=
 go.etcd.io/bbolt v1.4.3 h1:dEadXpI6G79deX5prL3QRNP6JB8UxVkqo4UPnHaNXJo=
