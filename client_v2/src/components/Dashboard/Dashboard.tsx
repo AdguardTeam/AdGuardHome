@@ -130,7 +130,6 @@ export const Dashboard = () => {
     const {
         processingStats,
         processingGetConfig,
-        interval,
         numDnsQueries,
         numBlockedFiltering,
         numReplacedSafebrowsing,
@@ -146,7 +145,6 @@ export const Dashboard = () => {
         topClients,
         topUpstreamsResponses,
         topUpstreamsAvgTime,
-        timeUnits,
     } = stats;
 
     useEffect(() => {
