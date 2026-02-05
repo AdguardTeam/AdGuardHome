@@ -1,6 +1,6 @@
 # A docker file for scripts/make/build-docker.sh.
 
-FROM alpine:3.21
+FROM alpine:3.23
 
 ARG BUILD_DATE
 ARG VERSION
@@ -30,7 +30,9 @@ ARG TARGETARCH
 ARG TARGETOS
 ARG TARGETVARIANT
 
-COPY --chown=nobody:nogroup \
+COPY \
+	--chmod=0755 \
+	--chown=nobody:nogroup \
 	./${DIST_DIR}/docker/AdGuardHome_${TARGETOS}_${TARGETARCH}_${TARGETVARIANT} \
 	/opt/adguardhome/AdGuardHome
 
