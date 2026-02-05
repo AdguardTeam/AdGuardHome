@@ -1,0 +1,38 @@
+.tooltip {
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    cursor: default;
+}
+
+.tooltipTitle {
+    margin-bottom: 8px;
+}
+
+.tooltipRow {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+
+    &:last-child {
+        margin-bottom: 0;
+    }
+}
+
+.tooltipLabel {
+    margin-right: 2px;
+}
+
+.tooltipValue {
+    font-weight: 500;
+    color: var(--default-main-text);
+}
+
+.tooltipLink {
+    color: var(--default-link);
+    text-decoration: underline;
+
+    &:hover {
+        color: var(--hovered-link);
+    }
+}

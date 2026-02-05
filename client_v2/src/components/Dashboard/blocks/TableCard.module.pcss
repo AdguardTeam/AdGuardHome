@@ -1,0 +1,166 @@
+.card {
+    display: flex;
+    flex-direction: column;
+    height: 374px;
+    border-radius: 16px;
+    padding: 8px 8px 0;
+    border: 1px solid var(--default-item-divider);
+    overflow: hidden;
+}
+
+.cardBlocked {
+    & .cardSubtitle {
+        color: var(--default-error-link);
+    }
+
+    & .queryCount {
+        color: var(--default-error-link);
+    }
+
+    & .queryBarFill {
+        background: var(--default-error-link);
+    }
+}
+
+.cardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 16px 24px;
+}
+
+.cardSubtitle {
+    color: var(--default-description-text);
+}
+
+.tableRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0 24px;
+    padding: 8px 16px;
+    transition: background-color var(--t2);
+}
+
+.tableRowLeft {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+}
+
+.tableRowRight {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.tableRowIcon {
+    width: 24px;
+    height: 24px;
+    stroke: var(--default-gray-icons);
+    color: var(--default-gray-icons);
+}
+
+.tableRows {
+    height: 100%;
+    overflow-y: auto;
+}
+
+.domainIcon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+.domainName {
+    color: var(--default-main-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.queryCount {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+
+.queryPercent {
+    font-size: 12px;
+    color: var(--default-description-text);
+}
+
+.queryBar {
+    width: 100%;
+    min-width: 102px;
+    height: 3px;
+    background: var(--default-item-divider);
+    border-radius: 2px;
+}
+
+.queryBarFill {
+    height: 100%;
+    background: var(--default-tertiary-stat);
+}
+
+.queryTooltip {
+    padding: 8px 12px;
+    white-space: nowrap;
+}
+
+.queryTooltipOverlay {
+    pointer-events: none;
+}
+
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+}
+
+.emptyStateIcon {
+    width: 64px;
+    height: 64px;
+    color: var(--gray-60);
+}
+
+.emptyStateText {
+    max-width: 300px;
+    color: var(--default-placeholder);
+}
+
+.statRowValue {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    & .queryBar {
+        min-width: 141px;
+    }
+}
+
+.tableRowDot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+
+    &:before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: var(--default-gray-icons);
+    }
+}
+
+[data-theme='dark'] .emptyStateIcon {
+    color: var(--gray-60);
+}

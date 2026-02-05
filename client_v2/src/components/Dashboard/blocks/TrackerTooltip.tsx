@@ -6,7 +6,7 @@ import { getSourceData } from 'panel/helpers/trackers/trackers';
 import theme from 'panel/lib/theme';
 import cn from 'clsx';
 
-import s from '../Dashboard.module.pcss';
+import s from './TrackerTooltip.module.pcss';
 
 export type TrackerData = {
     id: string;

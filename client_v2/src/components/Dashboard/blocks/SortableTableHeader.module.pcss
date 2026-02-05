@@ -1,0 +1,28 @@
+.tableHeader {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 16px 8px;
+}
+
+.sortableHeader {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.sortIcon {
+    width: 16px;
+    height: 16px;
+    transition: transform var(--t2);
+}
+
+.sortIconAsc {
+    transform: rotate(180deg);
+}
+
+.sortDash {
+    color: var(--default-gray-icons);
+    font-weight: 400;
+}

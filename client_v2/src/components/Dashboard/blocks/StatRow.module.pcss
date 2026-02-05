@@ -1,0 +1,153 @@
+.statRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0 24px;
+    padding: 8px 16px;
+    transition: background-color var(--t2);
+
+    &:hover {
+        background-color: var(--hovered-page-background);
+    }
+
+    &.dnsQueries {
+        & .tableRowIcon {
+            stroke: var(--default-gray-icons);
+        }
+    }
+
+    &.adsBlocked {
+        & .queryCount {
+            color: var(--default-error-link);
+        }
+
+        & .tableRowIcon {
+            stroke: var(--default-error-icon);
+        }
+
+        & .queryBarFill {
+            background: var(--default-error-icon);
+        }
+    }
+
+    &.threatsBlocked {
+        & .queryCount {
+            color: var(--default-attention-icon-stroke);
+        }
+
+        & .tableRowIcon {
+            stroke: var(--default-attention-icon-stroke);
+        }
+
+        & .queryBarFill {
+            background: var(--default-attention-icon-stroke);
+        }
+    }
+
+    &.adultWebsitesBlocked {
+        & .queryCount {
+            color: var(--default-product-secondary-icon-stroke);
+        }
+
+        & .tableRowIcon {
+            stroke: var(--default-product-secondary-icon-stroke);
+        }
+
+        & .queryBarFill {
+            background: var(--default-product-secondary-icon-stroke);
+        }
+    }
+
+    &.safeSearchUsed {
+        & .queryCount {
+            color: var(--default-product-icon);
+        }
+
+        & .tableRowIcon {
+            stroke: var(--default-product-icon);
+        }
+
+        & .queryBarFill {
+            background: var(--default-product-icon);
+        }
+    }
+}
+
+.statRowLeft {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.statRowIcon {
+    width: 20px;
+    height: 20px;
+    color: var(--default-secondary-text);
+}
+
+.statRowLabel {
+    font-size: 14px;
+    color: var(--default-main-text);
+}
+
+.statRowValue {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    & .queryBar {
+        min-width: 141px;
+    }
+}
+
+.statRowPercent {
+    font-size: 12px;
+    color: var(--default-secondary-text);
+    margin-left: 4px;
+}
+
+.tableRowIcon {
+    width: 24px;
+    height: 24px;
+    stroke: var(--default-gray-icons);
+    color: var(--default-gray-icons);
+}
+
+.queryCount {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+
+.queryPercent {
+    font-size: 12px;
+    color: var(--default-description-text);
+}
+
+.queryBar {
+    width: 100%;
+    min-width: 102px;
+    height: 3px;
+    background: var(--default-item-divider);
+    border-radius: 2px;
+}
+
+.queryBarFill {
+    height: 100%;
+    background: var(--default-tertiary-stat);
+}
+
+.queryTooltip {
+    padding: 8px 12px;
+    white-space: nowrap;
+}
+
+.queryTooltipOverlay {
+    pointer-events: none;
+}
+
+.statTooltip {
+    max-width: 280px;
+    padding: 16px;
+}

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from 'panel/initialState';
 
@@ -12,8 +12,10 @@ import { apiClient } from 'panel/api/Api';
 import { getAccessList } from 'panel/actions/access';
 import theme from 'panel/lib/theme';
 import cn from 'clsx';
+import { useSortedData } from '../hooks/useSortedData';
+import { SortableTableHeader } from './SortableTableHeader';
 
-import s from '../Dashboard.module.pcss';
+import s from './TopClients.module.pcss';
 
 type ClientInfo = {
     name: string;
@@ -33,9 +35,6 @@ type Props = {
     numDnsQueries: number;
 };
 
-type SortField = 'name' | 'count';
-type SortDirection = 'asc' | 'desc';
-
 export const TopClients = ({ topClients, numDnsQueries }: Props) => {
     const dispatch = useDispatch();
     const isMountedRef = useRef(true);
@@ -48,8 +47,8 @@ export const TopClients = ({ topClients, numDnsQueries }: Props) => {
         action: 'block' | 'unblock';
     }>({ open: false, client: '', action: 'block' });
     const [openMenuClient, setOpenMenuClient] = useState<string | null>(null);
-    const [sortField, setSortField] = useState<SortField>('count');
-    const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+
+    const { sortedData: sortedClients, sortField, sortDirection, handleSort } = useSortedData(topClients);
 
     const isClientBlocked = (clientName: string) => disallowedClientsList.includes(clientName);
 
@@ -145,25 +144,6 @@ export const TopClients = ({ topClients, numDnsQueries }: Props) => {
 
     const hasStats = topClients.length > 0;
 
-    const sortedClients = useMemo(() => {
-        return [...topClients].sort((a, b) => {
-            const modifier = sortDirection === 'asc' ? 1 : -1;
-            if (sortField === 'name') {
-                return a.name.localeCompare(b.name) * modifier;
-            }
-            return (a.count - b.count) * modifier;
-        });
-    }, [topClients, sortField, sortDirection]);
-
-    const handleSort = (field: SortField) => {
-        if (sortField === field) {
-            setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-        } else {
-            setSortField(field);
-            setSortDirection(field === 'name' ? 'asc' : 'desc');
-        }
-    };
-
     return (
         <div className={s.card}>
             <div className={s.cardHeader}>
@@ -177,41 +157,18 @@ export const TopClients = ({ topClients, numDnsQueries }: Props) => {
             </div>
 
             {hasStats && (
-                <div className={cn(theme.text.t3, theme.text.semibold, s.tableHeader)}>
-                    <span
-                        className={s.sortableHeader}
-                        onClick={() => handleSort('name')}
-                    >
-                        {intl.getMessage('table_client')}
-                        {sortField === 'name' ? (
-                            <Icon
-                                icon="arrow_bottom"
-                                className={cn(s.sortIcon, sortDirection === 'asc' && s.sortIconAsc)}
-                            />
-                        ) : (
-                            <span className={s.sortDash}>—</span>
-                        )}
-                    </span>
-                    <span
-                        className={s.sortableHeader}
-                        onClick={() => handleSort('count')}
-                    >
-                        {intl.getMessage('queries')}
-                        {sortField === 'count' ? (
-                            <Icon
-                                icon="arrow_bottom"
-                                className={cn(s.sortIcon, sortDirection === 'asc' && s.sortIconAsc)}
-                            />
-                        ) : (
-                            <span className={s.sortDash}>—</span>
-                        )}
-                    </span>
-                </div>
+                <SortableTableHeader
+                    nameLabel={intl.getMessage('table_client')}
+                    countLabel={intl.getMessage('queries')}
+                    sortField={sortField}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                />
             )}
 
             <div className={s.tableRows}>
                 {hasStats ? (
-                    sortedClients.slice(0, 10).map((client) => {
+                    sortedClients.map((client) => {
                         const percent = numDnsQueries > 0 ? (client.count / numDnsQueries) * 100 : 0;
                         const isBlocked = isClientBlocked(client.name);
 
@@ -301,29 +258,30 @@ export const TopClients = ({ topClients, numDnsQueries }: Props) => {
                     </div>
                 )}
 
-                {confirmDialog.open && (
-                    <ConfirmDialog
-                        onClose={() => setConfirmDialog({ open: false, client: '', action: 'block' })}
-                        title={intl.getMessage(
-                            confirmDialog.action === 'block' ? 'confirm_client_block_title' : 'confirm_client_unblock_title',
-                            { ip: confirmDialog.client }
-                        )}
-                        text={intl.getMessage(
-                            confirmDialog.action === 'block' ? 'confirm_client_block_desc' : 'confirm_client_unblock_desc',
-                            { ip: confirmDialog.client }
-                        )}
-                        buttonText={intl.getMessage(confirmDialog.action === 'block' ? 'block' : 'unblock')}
-                        cancelText={intl.getMessage('cancel')}
-                        buttonVariant={confirmDialog.action === 'block' ? 'danger' : 'primary'}
-                        onConfirm={() => {
-                            if (confirmDialog.action === 'block') {
-                                handleBlockClient(confirmDialog.client);
-                            } else {
-                                handleUnblockClient(confirmDialog.client);
-                            }
-                        }}
-                    />
-                )}
+                {confirmDialog.open && (() => {
+                    const isBlock = confirmDialog.action === 'block';
+                    const titleKey = isBlock ? 'confirm_client_block_title' : 'confirm_client_unblock_title';
+                    const textKey = isBlock ? 'confirm_client_block_desc' : 'confirm_client_unblock_desc';
+                    const buttonKey = isBlock ? 'block' : 'unblock';
+
+                    return (
+                        <ConfirmDialog
+                            onClose={() => setConfirmDialog({ open: false, client: '', action: 'block' })}
+                            title={intl.getMessage(titleKey, { ip: confirmDialog.client })}
+                            text={intl.getMessage(textKey, { ip: confirmDialog.client })}
+                            buttonText={intl.getMessage(buttonKey)}
+                            cancelText={intl.getMessage('cancel')}
+                            buttonVariant={isBlock ? 'danger' : 'primary'}
+                            onConfirm={() => {
+                                if (isBlock) {
+                                    handleBlockClient(confirmDialog.client);
+                                } else {
+                                    handleUnblockClient(confirmDialog.client);
+                                }
+                            }}
+                        />
+                    );
+                })()}
             </div>
         </div>
     );

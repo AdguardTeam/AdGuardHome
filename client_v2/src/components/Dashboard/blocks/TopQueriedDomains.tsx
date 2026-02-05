@@ -1,15 +1,17 @@
-import React, { useState, useMemo } from 'react';
+import React from 'react';
 
 import intl from 'panel/common/intl';
 import { Icon } from 'panel/common/ui/Icon';
+import { SortableTableHeader } from './SortableTableHeader';
 import { Dropdown } from 'panel/common/ui/Dropdown';
 import { formatNumber, formatCompactNumber } from 'panel/helpers/helpers';
 import { getTrackerData } from 'panel/helpers/trackers/trackers';
 import theme from 'panel/lib/theme';
 import cn from 'clsx';
 import { TrackerTooltip } from './TrackerTooltip';
+import { useSortedData } from '../hooks/useSortedData';
 
-import s from '../Dashboard.module.pcss';
+import s from './TableCard.module.pcss';
 
 type DomainInfo = {
     name: string;
@@ -21,33 +23,10 @@ type Props = {
     numDnsQueries: number;
 };
 
-type SortField = 'name' | 'count';
-type SortDirection = 'asc' | 'desc';
-
 export const TopQueriedDomains = ({ topQueriedDomains, numDnsQueries }: Props) => {
-    const [sortField, setSortField] = useState<SortField>('count');
-    const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+    const { sortedData: sortedDomains, sortField, sortDirection, handleSort } = useSortedData(topQueriedDomains);
 
     const hasStats = topQueriedDomains.length > 0;
-
-    const sortedDomains = useMemo(() => {
-        return [...topQueriedDomains].sort((a, b) => {
-            const modifier = sortDirection === 'asc' ? 1 : -1;
-            if (sortField === 'name') {
-                return a.name.localeCompare(b.name) * modifier;
-            }
-            return (a.count - b.count) * modifier;
-        });
-    }, [topQueriedDomains, sortField, sortDirection]);
-
-    const handleSort = (field: SortField) => {
-        if (sortField === field) {
-            setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-        } else {
-            setSortField(field);
-            setSortDirection(field === 'name' ? 'asc' : 'desc');
-        }
-    };
 
     return (
         <div className={s.card}>
@@ -62,35 +41,18 @@ export const TopQueriedDomains = ({ topQueriedDomains, numDnsQueries }: Props) =
             </div>
 
             {hasStats && (
-                <div className={cn(theme.text.t3, theme.text.semibold, s.tableHeader)}>
-                    <span
-                        className={s.sortableHeader}
-                        onClick={() => handleSort('name')}
-                    >
-                        {intl.getMessage('domain')}
-                        {sortField === 'name' ? (
-                            <Icon icon="arrow_bottom" className={cn(s.sortIcon, sortDirection === 'asc' && s.sortIconAsc)} />
-                        ) : (
-                            <span className={s.sortDash}>—</span>
-                        )}
-                    </span>
-                    <span
-                        className={s.sortableHeader}
-                        onClick={() => handleSort('count')}
-                    >
-                        {intl.getMessage('queries')}
-                        {sortField === 'count' ? (
-                            <Icon icon="arrow_bottom" className={cn(s.sortIcon, sortDirection === 'asc' && s.sortIconAsc)} />
-                        ) : (
-                            <span className={s.sortDash}>—</span>
-                        )}
-                    </span>
-                </div>
+                <SortableTableHeader
+                    nameLabel={intl.getMessage('domain')}
+                    countLabel={intl.getMessage('queries')}
+                    sortField={sortField}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                />
             )}
 
             <div className={s.tableRows}>
                 {hasStats ? (
-                    sortedDomains.slice(0, 10).map((domain) => {
+                    sortedDomains.map((domain) => {
                         const percent = numDnsQueries > 0 ? (domain.count / numDnsQueries) * 100 : 0;
                         const trackerData = getTrackerData(domain.name);
 

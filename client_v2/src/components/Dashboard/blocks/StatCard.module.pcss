@@ -1,0 +1,88 @@
+.statsCards {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 0 16px;
+    margin-bottom: 24px;
+
+    @media (min-width: 768px) {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    @media (min-width: 1024px) {
+        grid-template-columns: repeat(4, 1fr);
+        padding: 0;
+    }
+}
+
+.statCard {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.statCardAds {
+    & .statCardPercent,
+    & .statCardLabel {
+        color: var(--default-error-link);
+    }
+}
+
+.statCardThreats {
+    & .statCardPercent,
+    & .statCardLabel {
+        color: var(--default-attention-link);
+    }
+}
+
+.statCardAdult {
+    & .statCardPercent,
+    & .statCardLabel {
+        color: var(--default-additional-link);
+    }
+}
+
+.statCardInner {
+    display: flex;
+    flex-direction: column;
+    border-radius: 16px;
+    border: 1px solid var(--default-item-divider);
+}
+
+.statCardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 16px 16px 0;
+}
+
+.statCardValue {
+    font-size: 28px;
+    color: var(--default-main-text);
+}
+
+.statCardChart {
+    min-height: 16px;
+    height: 60px;
+    margin-top: auto;
+}
+
+.chartTooltip {
+    background: var(--default-cards-background);
+    border: 1px solid var(--default-link);
+    border-radius: 8px;
+    padding: 8px 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.chartTooltipValue {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--default-main-text);
+}
+
+.chartTooltipDate {
+    font-size: 12px;
+    color: var(--default-secondary-text);
+    margin-top: 2px;
+}

@@ -1,0 +1,195 @@
+.card {
+    display: flex;
+    flex-direction: column;
+    height: 374px;
+    border-radius: 16px;
+    padding: 8px 8px 0;
+    border: 1px solid var(--default-item-divider);
+    overflow: hidden;
+}
+
+.cardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 16px 24px;
+}
+
+.cardSubtitle {
+    color: var(--default-description-text);
+}
+
+.tableRows {
+    height: 100%;
+    overflow-y: auto;
+}
+
+.tableRowRight {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.tableRowIcon {
+    width: 24px;
+    height: 24px;
+    stroke: var(--default-gray-icons);
+    color: var(--default-gray-icons);
+}
+
+.tableRowInfo {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    padding-left: 32px;
+}
+
+.tableRowDot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+
+    &:before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: var(--default-gray-icons);
+    }
+}
+
+.queryCount {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+
+.queryPercent {
+    font-size: 12px;
+    color: var(--default-description-text);
+}
+
+.queryBar {
+    width: 100%;
+    min-width: 102px;
+    height: 3px;
+    background: var(--default-item-divider);
+    border-radius: 2px;
+}
+
+.queryBarFill {
+    height: 100%;
+    background: var(--default-tertiary-stat);
+}
+
+.queryTooltip {
+    padding: 8px 12px;
+    white-space: nowrap;
+}
+
+.queryTooltipOverlay {
+    pointer-events: none;
+}
+
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+}
+
+.emptyStateIcon {
+    width: 64px;
+    height: 64px;
+    color: var(--gray-60);
+}
+
+.emptyStateText {
+    max-width: 300px;
+    color: var(--default-placeholder);
+}
+
+.protectionMenu {
+    padding: 8px 0;
+    min-width: 200px;
+}
+
+.protectionMenuItem {
+    padding: 8px 16px;
+    cursor: pointer;
+    color: var(--default-link);
+}
+
+.protectionMenuItemRed {
+    color: var(--default-error-link);
+}
+
+.clientRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0 24px;
+    padding: 8px 16px;
+    transition: background-color var(--t2);
+
+    &:hover {
+        background-color: var(--hovered-page-background);
+    }
+}
+
+.clientInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+}
+
+.clientIp {
+    font-size: 14px;
+    color: var(--default-main-text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.clientName {
+    color: var(--default-description-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.clientBlocked {
+    color: var(--default-error-link);
+}
+
+.clientActions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.actionButton {
+    padding: 4px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--default-secondary-text);
+    border-radius: 4px;
+    transition: background-color 0.2s;
+
+    &:hover {
+        background-color: var(--hovered-secondary-button);
+    }
+}
+
+[data-theme='dark'] .emptyStateIcon {
+    color: var(--gray-60);
+}

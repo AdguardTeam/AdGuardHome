@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React from 'react';
 
 import intl from 'panel/common/intl';
 import { formatNumber, formatCompactNumber } from 'panel/helpers/helpers';
@@ -6,8 +6,10 @@ import theme from 'panel/lib/theme';
 import { Dropdown } from 'panel/common/ui/Dropdown';
 import cn from 'clsx';
 import { Icon } from 'panel/common/ui/Icon';
+import { SortableTableHeader } from './SortableTableHeader';
+import { useSortedData } from '../hooks/useSortedData';
 
-import s from '../Dashboard.module.pcss';
+import s from './TableCard.module.pcss';
 
 type UpstreamInfo = {
     name: string;
@@ -19,33 +21,10 @@ type Props = {
     numDnsQueries: number;
 };
 
-type SortField = 'name' | 'count';
-type SortDirection = 'asc' | 'desc';
-
 export const TopUpstreams = ({ topUpstreamsResponses, numDnsQueries }: Props) => {
-    const [sortField, setSortField] = useState<SortField>('count');
-    const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+    const { sortedData: sortedUpstreams, sortField, sortDirection, handleSort } = useSortedData(topUpstreamsResponses);
 
     const hasStats = topUpstreamsResponses.length > 0;
-
-    const sortedUpstreams = useMemo(() => {
-        return [...topUpstreamsResponses].sort((a, b) => {
-            const modifier = sortDirection === 'asc' ? 1 : -1;
-            if (sortField === 'name') {
-                return a.name.localeCompare(b.name) * modifier;
-            }
-            return (a.count - b.count) * modifier;
-        });
-    }, [topUpstreamsResponses, sortField, sortDirection]);
-
-    const handleSort = (field: SortField) => {
-        if (sortField === field) {
-            setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-        } else {
-            setSortField(field);
-            setSortDirection(field === 'name' ? 'asc' : 'desc');
-        }
-    };
 
     return (
         <div className={s.card}>
@@ -60,35 +39,18 @@ export const TopUpstreams = ({ topUpstreamsResponses, numDnsQueries }: Props) =>
             </div>
 
             {hasStats && (
-                <div className={cn(theme.text.t3, theme.text.semibold, s.tableHeader)}>
-                    <span
-                        className={s.sortableHeader}
-                        onClick={() => handleSort('name')}
-                    >
-                        {intl.getMessage('upstream')}
-                        {sortField === 'name' ? (
-                            <Icon icon="arrow_bottom" className={cn(s.sortIcon, sortDirection === 'asc' && s.sortIconAsc)} />
-                        ) : (
-                            <span className={s.sortDash}>—</span>
-                        )}
-                    </span>
-                    <span
-                        className={s.sortableHeader}
-                        onClick={() => handleSort('count')}
-                    >
-                        {intl.getMessage('queries')}
-                        {sortField === 'count' ? (
-                            <Icon icon="arrow_bottom" className={cn(s.sortIcon, sortDirection === 'asc' && s.sortIconAsc)} />
-                        ) : (
-                            <span className={s.sortDash}>—</span>
-                        )}
-                    </span>
-                </div>
+                <SortableTableHeader
+                    nameLabel={intl.getMessage('upstream')}
+                    countLabel={intl.getMessage('queries')}
+                    sortField={sortField}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                />
             )}
 
             <div className={s.tableRows}>
                 {hasStats ? (
-                    sortedUpstreams.slice(0, 10).map((upstream) => {
+                    sortedUpstreams.map((upstream) => {
                         const percent = numDnsQueries > 0
                             ? (upstream.count / numDnsQueries) * 100
                             : 0;
