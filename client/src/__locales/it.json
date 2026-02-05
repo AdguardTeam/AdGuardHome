@@ -364,7 +364,7 @@
     "install_step": "Passo",
     "install_devices_title": "Configura i tuoi dispositivi",
     "install_devices_desc": "Affinché AdGuard Home inizi a funzionare, è necessario configurare i dispositivi per utilizzarlo.",
-    "install_submit_title": "Felicitazioni!",
+    "install_submit_title": "Congratulazioni!",
     "install_submit_desc": "La procedura di configurazione è completa e ora sei pronto per iniziare ad utilizzare AdGuard Home.",
     "install_devices_router": "Router",
     "install_devices_router_desc": "Questa configurazione copre automaticamente tutti i dispositivi collegati al router di casa, non è necessario configurarli manualmente.",
