@@ -80,15 +80,15 @@ export const StatCard = ({ value, label, data, color, percentValue, cardTheme }:
                                     <stop offset="100%" stopColor={color} stopOpacity={0} />
                                 </linearGradient>
                             </defs>
+                            <Tooltip content={<CustomTooltip />} cursor={{ strokeWidth: 1, stroke: color }} />
                             <Area
                                 type="monotone"
                                 dataKey="value"
-                                stroke={color}
                                 strokeWidth={0}
                                 fill={`url(#gradient-${color})`}
                                 isAnimationActive={false}
+                                activeDot={{ r: 4, fill: color }}
                             />
-                            <Tooltip content={<CustomTooltip />} />
                         </AreaChart>
                     </ResponsiveContainer>
                 </div>

@@ -361,8 +361,6 @@ export const Dashboard = () => {
                                 avgProcessingTime={
                                     USE_MOCK_DATA ? MOCK_DATA.avgProcessingTime : (avgProcessingTime || 0)
                                 }
-                                interval={interval || DAY}
-                                timeUnits={timeUnits || 'hours'}
                             />
 
                             <TopClients
