@@ -4,7 +4,8 @@ go 1.25.5
 
 require (
 	github.com/AdguardTeam/dnsproxy v0.78.2
-	github.com/AdguardTeam/golibs v0.35.7
+	// TODO(d.kolyshev):  !! Use tagged version.
+	github.com/AdguardTeam/golibs v0.35.8-0.20260205045025-dec5386aa3ab
 	github.com/AdguardTeam/urlfilter v0.23.1
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/ameshkov/dnscrypt/v2 v2.4.0
@@ -79,7 +80,7 @@ require (
 	github.com/quic-go/qpack v0.6.0 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
-	github.com/securego/gosec/v2 v2.22.11 // indirect
+	github.com/securego/gosec/v2 v2.22.12-0.20260119173857-b579523bf6db // indirect
 	github.com/tidwall/gjson v1.18.0 // indirect
 	github.com/tidwall/match v1.2.0 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
