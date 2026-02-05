@@ -15,8 +15,6 @@ type Props = {
     numReplacedParental: number;
     numReplacedSafesearch: number;
     avgProcessingTime: number;
-    interval: number;
-    timeUnits: string;
 };
 
 export const GeneralStatistics = ({
@@ -26,8 +24,6 @@ export const GeneralStatistics = ({
     numReplacedParental,
     numReplacedSafesearch,
     avgProcessingTime,
-    interval,
-    timeUnits,
 }: Props) => {
     const blockedPercent = numDnsQueries > 0 ? (numBlockedFiltering / numDnsQueries) * 100 : 0;
     const safebrowsingPercent = numDnsQueries > 0 ? (numReplacedSafebrowsing / numDnsQueries) * 100 : 0;

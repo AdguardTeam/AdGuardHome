@@ -20,7 +20,15 @@ export type StatRowProps = {
     rowTheme: 'dnsQueries' | 'adsBlocked' | 'threatsBlocked' | 'adultWebsitesBlocked' | 'safeSearchUsed' | 'averageProcessingTime';
 };
 
-export const StatRow = ({ icon, label, value, percent, isTotal, isQueriesValue = true, tooltip, rowTheme }: StatRowProps) => (
+export const StatRow = ({
+    icon,
+    label,
+    value,
+    percent,
+    isTotal,
+    isQueriesValue = true,
+    tooltip,
+    rowTheme }: StatRowProps) => (
     <div className={cn(s.statRow, s[rowTheme])}>
         <Dropdown
             trigger="hover"

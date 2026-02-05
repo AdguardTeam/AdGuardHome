@@ -2,12 +2,12 @@ import React from 'react';
 
 import intl from 'panel/common/intl';
 import { Icon } from 'panel/common/ui/Icon';
-import { SortableTableHeader } from './SortableTableHeader';
 import { Dropdown } from 'panel/common/ui/Dropdown';
 import { formatNumber, formatCompactNumber } from 'panel/helpers/helpers';
 import { getTrackerData } from 'panel/helpers/trackers/trackers';
 import theme from 'panel/lib/theme';
 import cn from 'clsx';
+import { SortableTableHeader } from './SortableTableHeader';
 import { TrackerTooltip } from './TrackerTooltip';
 import { useSortedData } from '../hooks/useSortedData';
 
