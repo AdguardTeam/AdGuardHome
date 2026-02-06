@@ -57,6 +57,10 @@ const SETTINGS_ITEMS = [
         route: SETTINGS_URLS.dhcp,
         text: 'dhcp_settings',
     },
+    {
+        route: SETTINGS_URLS.ipset,
+        text: 'ipset_settings',
+    },
 ];
 
 const FILTERS_ITEMS = [
