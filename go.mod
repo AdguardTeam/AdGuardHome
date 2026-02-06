@@ -3,6 +3,7 @@ module github.com/AdguardTeam/AdGuardHome
 go 1.25.5
 
 require (
+	// TODO(d.kolyshev): !! Use tagged version.
 	github.com/AdguardTeam/dnsproxy v0.78.3-0.20260206042107-792b4edb20c8
 	github.com/AdguardTeam/golibs v0.35.7
 	github.com/AdguardTeam/urlfilter v0.23.1
