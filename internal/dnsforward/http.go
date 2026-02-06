@@ -140,6 +140,7 @@ const (
 	jsonUpstreamModeLoadBalance jsonUpstreamMode = "load_balance"
 	jsonUpstreamModeParallel    jsonUpstreamMode = "parallel"
 	jsonUpstreamModeFastestAddr jsonUpstreamMode = "fastest_addr"
+	jsonUpstreamModeRandom      jsonUpstreamMode = "random"
 )
 
 func (s *Server) getDNSConfig(ctx context.Context) (c *jsonDNSConfig) {
@@ -185,6 +186,8 @@ func (s *Server) getDNSConfig(ctx context.Context) (c *jsonDNSConfig) {
 		upstreamMode = jsonUpstreamModeParallel
 	case UpstreamModeFastestAddr:
 		upstreamMode = jsonUpstreamModeFastestAddr
+	case UpstreamModeRandom:
+		upstreamMode = jsonUpstreamModeRandom
 	}
 
 	defPTRUps, err := s.defaultLocalPTRUpstreams(ctx)
@@ -273,6 +276,7 @@ func (req *jsonDNSConfig) checkUpstreamMode() (err error) {
 		jsonUpstreamModeLoadBalance,
 		jsonUpstreamModeParallel,
 		jsonUpstreamModeFastestAddr:
+		jsonUpstreamModeRandom:
 		return nil
 	default:
 		return fmt.Errorf("upstream_mode: incorrect value %q", um)
@@ -625,6 +629,8 @@ func mustParseUpstreamMode(mode jsonUpstreamMode) (um UpstreamMode) {
 		return UpstreamModeParallel
 	case jsonUpstreamModeFastestAddr:
 		return UpstreamModeFastestAddr
+	case jsonUpstreamModeRandom:
+		return UpstreamModeRandom
 	default:
 		// Should never happen, since the value should be validated.
 		panic(fmt.Errorf("unexpected upstream mode: %q", mode))
