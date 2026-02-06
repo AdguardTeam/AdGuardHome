@@ -342,7 +342,7 @@ func (s *Server) newProxyConfig(ctx context.Context) (conf *proxy.Config, err er
 		UpstreamConfig:            srvConf.UpstreamConfig,
 		PrivateRDNSUpstreamConfig: srvConf.PrivateRDNSUpstreamConfig,
 		BeforeRequestHandler:      s,
-		RequestHandler:            s.handleDNSRequest,
+		RequestHandler:            s,
 		HTTPSServerName:           aghhttp.UserAgent(),
 		EnableEDNSClientSubnet:    srvConf.EDNSClientSubnet.Enabled,
 		MaxGoroutines:             srvConf.MaxGoroutines,

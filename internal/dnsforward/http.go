@@ -828,7 +828,7 @@ func (s *Server) handleSetProtection(w http.ResponseWriter, r *http.Request) {
 //	-> dnsforward.ServeHTTP
 //	-> proxy.ServeHTTP
 //	-> proxy.handleDNSRequest
-//	-> dnsforward.handleDNSRequest
+//	-> dnsforward.Handle
 func (s *Server) handleDoH(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	l := s.logger

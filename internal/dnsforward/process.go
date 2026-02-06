@@ -80,57 +80,6 @@ const (
 // See https://www.ietf.org/archive/id/draft-ietf-add-ddr-06.html.
 const ddrHostFQDN = "_dns.resolver.arpa."
 
-// handleDNSRequest filters the incoming DNS requests and writes them to the query log
-func (s *Server) handleDNSRequest(_ *proxy.Proxy, pctx *proxy.DNSContext) error {
-	// TODO(s.chzhen):  Pass context.
-	ctx := context.TODO()
-
-	dctx := &dnsContext{
-		proxyCtx:  pctx,
-		result:    &filtering.Result{},
-		startTime: time.Now(),
-	}
-
-	type modProcessFunc func(ctx context.Context, dctx *dnsContext) (rc resultCode)
-
-	// Since (*dnsforward.Server).handleDNSRequest(...) is used as
-	// proxy.(Config).RequestHandler, there is no need for additional index
-	// out of range checking in any of the following functions, because the
-	// (*proxy.Proxy).handleDNSRequest method performs it before calling the
-	// appropriate handler.
-	mods := []modProcessFunc{
-		s.processInitial,
-		s.processDDRQuery,
-		s.processDHCPHosts,
-		s.processDHCPAddrs,
-		s.processFilteringBeforeRequest,
-		s.processUpstream,
-		s.processFilteringAfterResponse,
-		s.ipset.process,
-		s.processQueryLogsAndStats,
-	}
-	for _, process := range mods {
-		r := process(ctx, dctx)
-		switch r {
-		case resultCodeSuccess:
-			// continue: call the next filter
-
-		case resultCodeFinish:
-			return nil
-
-		case resultCodeError:
-			return dctx.err
-		}
-	}
-
-	if pctx.Res != nil {
-		// Some devices require DNS message compression.
-		pctx.Res.Compress = true
-	}
-
-	return nil
-}
-
 // mozillaFQDN is the domain used to signal the Firefox browser to not use its
 // own DoH server.
 //
