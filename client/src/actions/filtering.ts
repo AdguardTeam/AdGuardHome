@@ -205,3 +205,28 @@ export const checkHost = (host: any) => async (dispatch: any) => {
         dispatch(checkHostFailure());
     }
 };
+
+export const fetchFilterTitleRequest = createAction('FETCH_FILTER_TITLE_REQUEST');
+export const fetchFilterTitleFailure = createAction('FETCH_FILTER_TITLE_FAILURE');
+export const fetchFilterTitleSuccess = createAction('FETCH_FILTER_TITLE_SUCCESS');
+
+/**
+ * Fetches the title from a filter URL without adding it to the list.
+ * @param {string} url - The URL to fetch the title from
+ * @returns {Promise<string>} - The title extracted from the filter
+ */
+export const fetchFilterTitle = (url: string) => async (dispatch: any) => {
+    dispatch(fetchFilterTitleRequest());
+    try {
+        const data = await apiClient.fetchFilterTitle(url);
+        dispatch(fetchFilterTitleSuccess(data));
+        return data.title || '';
+    } catch (error) {
+        // Silent failure for UX - fetching title is optional
+        dispatch(fetchFilterTitleFailure());
+        if (process.env.NODE_ENV === 'development') {
+            console.debug('Failed to fetch filter title:', error);
+        }
+        return '';
+    }
+};

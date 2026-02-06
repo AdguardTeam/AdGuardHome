@@ -100,6 +100,8 @@ class Api {
 
     FILTERING_CHECK_HOST = { path: 'filtering/check_host', method: 'GET' };
 
+    FILTERING_FETCH_TITLE = { path: 'filtering/fetch_title', method: 'POST' };
+
     getFilteringStatus() {
         const { path, method } = this.FILTERING_STATUS;
 
@@ -162,6 +164,15 @@ class Api {
         const url = getPathWithQueryString(path, params);
 
         return this.makeRequest(url, method);
+    }
+
+    fetchFilterTitle(url: string) {
+        const { path, method } = this.FILTERING_FETCH_TITLE;
+        const parameters = {
+            data: { url },
+        };
+
+        return this.makeRequest(path, method, parameters);
     }
 
     // Parental
