@@ -20,6 +20,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Added
 
+- The TLS certificate and key files are now being tracked for updates, which trigger a reload ([#3962]).
+
 - New query parameter `recent` in `GET /control/stats/` defines statistics lookback period in millieseconds.  See `openapi/openapi.yaml` for details.
 
 - New field `"ignored_enabled"` in `GetStatsConfigResponse` or `GetQueryLogConfigResponse`.  See `openapi/openapi.yaml` for details.
@@ -63,6 +65,8 @@ In this release, the schema version has changed from 32 to 33.
 ### Fixed
 
 - Unknown blocked services from both global and client configuration now logged instead of causing server crash.
+
+[#3962]: https://github.com/AdguardTeam/AdGuardHome/issues/3962
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

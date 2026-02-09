@@ -20,6 +20,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghuser"
 	"github.com/AdguardTeam/golibs/httphdr"
 	"github.com/AdguardTeam/golibs/testutil"
@@ -483,6 +484,7 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 	tlsMgr, err := newTLSManager(testutil.ContextWithTimeout(t, testTimeout), &tlsManagerConfig{
 		logger:       testLogger,
 		confModifier: agh.EmptyConfigModifier{},
+		manager:      aghtls.EmptyManager{},
 	})
 	require.NoError(t, err)
 

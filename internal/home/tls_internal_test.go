@@ -22,6 +22,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/golibs/testutil"
@@ -69,6 +70,7 @@ func TestValidateCertificates(t *testing.T) {
 	m, err := newTLSManager(ctx, &tlsManagerConfig{
 		logger:        testLogger,
 		confModifier:  agh.EmptyConfigModifier{},
+		manager:       aghtls.EmptyManager{},
 		servePlainDNS: false,
 	})
 	require.NoError(t, err)
@@ -328,6 +330,7 @@ func TestTLSManager_Reload(t *testing.T) {
 	m, err := newTLSManager(ctx, &tlsManagerConfig{
 		logger:       testLogger,
 		confModifier: agh.EmptyConfigModifier{},
+		manager:      aghtls.EmptyManager{},
 		tlsSettings: tlsConfigSettings{
 			Enabled:         true,
 			CertificatePath: certPath,
@@ -367,6 +370,7 @@ func TestTLSManager_HandleTLSStatus(t *testing.T) {
 	m, err := newTLSManager(ctx, &tlsManagerConfig{
 		logger:       testLogger,
 		confModifier: agh.EmptyConfigModifier{},
+		manager:      aghtls.EmptyManager{},
 		tlsSettings: tlsConfigSettings{
 			Enabled:          true,
 			CertificateChain: string(testCertChainData),
@@ -401,6 +405,7 @@ func TestValidateTLSSettings(t *testing.T) {
 	m, err := newTLSManager(ctx, &tlsManagerConfig{
 		logger:        testLogger,
 		confModifier:  agh.EmptyConfigModifier{},
+		manager:       aghtls.EmptyManager{},
 		servePlainDNS: false,
 	})
 	require.NoError(t, err)
@@ -496,6 +501,7 @@ func TestTLSManager_HandleTLSValidate(t *testing.T) {
 	m, err := newTLSManager(ctx, &tlsManagerConfig{
 		logger:       testLogger,
 		confModifier: agh.EmptyConfigModifier{},
+		manager:      aghtls.EmptyManager{},
 		tlsSettings: tlsConfigSettings{
 			Enabled:          true,
 			CertificateChain: string(testCertChainData),
@@ -585,6 +591,7 @@ func TestTLSManager_HandleTLSConfigure(t *testing.T) {
 	m, err := newTLSManager(ctx, &tlsManagerConfig{
 		logger:       testLogger,
 		confModifier: agh.EmptyConfigModifier{},
+		manager:      aghtls.EmptyManager{},
 		tlsSettings: tlsConfigSettings{
 			Enabled:         true,
 			CertificatePath: certPath,

@@ -47,8 +47,8 @@ func rootDir() (dir string) {
 	sysDir, err := windows.GetSystemDirectory()
 	if err != nil {
 		// Assume that C:\ is the safe default.
-		return "C:\\"
+		return `C:\`
 	}
 
-	return filepath.Join(filepath.VolumeName(sysDir), "\\")
+	return filepath.Join(filepath.VolumeName(sysDir), `\`)
 }
