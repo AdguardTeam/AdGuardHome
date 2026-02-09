@@ -8,15 +8,14 @@
 # This comment is used to simplify checking local copies of the script.  Bump
 # this number every time a significant change is made to this script.
 #
-# AdGuard-Project-Version: 5
+# AdGuard-Project-Version: 6
 
 # Deferred helpers
 
+# TODO(f.setrakov): Consider removing.
 not_found_msg='
 looks like a binary not found error.
-make sure you have installed the linter binaries, including using:
-
-	$ make go-tools
+make sure you have installed the linter binaries.
 '
 readonly not_found_msg
 
@@ -77,7 +76,7 @@ run_linter() (
 # find_with_ignore is a wrapper around find that does not descend into ignored
 # directories, such as ./tmp/.
 #
-# NOTE:  The arguments must contain on of -exec, -ok, or -print; see
+# NOTE:  The arguments must contain one of -exec, -ok, or -print; see
 # https://pubs.opengroup.org/onlinepubs/9799919799/utilities/find.html.
 #
 # TODO(a.garipov):  Find a way to integrate the entire gitignore, including the
