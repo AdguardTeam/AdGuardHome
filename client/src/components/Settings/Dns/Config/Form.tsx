@@ -97,6 +97,10 @@ const Form = ({ processing, initialValues, onSubmit }: Props) => {
             label: t('nxdomain'),
         },
         {
+            value: BLOCKING_MODES.noerror,
+            label: t('noerror'),
+        },
+        {
             value: BLOCKING_MODES.null_ip,
             label: t('null_ip'),
         },
@@ -110,6 +114,7 @@ const Form = ({ processing, initialValues, onSubmit }: Props) => {
         t(`blocking_mode_default`),
         t(`blocking_mode_refused`),
         t(`blocking_mode_nxdomain`),
+        t(`blocking_mode_noerror`),
         t(`blocking_mode_null_ip`),
         t(`blocking_mode_custom_ip`),
     ];
