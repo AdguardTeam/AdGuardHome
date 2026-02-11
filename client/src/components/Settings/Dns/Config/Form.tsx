@@ -63,6 +63,10 @@ const blockingModeOptions = [
         label: i18next.t('nxdomain'),
     },
     {
+        value: BLOCKING_MODES.noerror,
+        label: i18next.t('noerror'),
+    },
+    {
         value: BLOCKING_MODES.null_ip,
         label: i18next.t('null_ip'),
     },
@@ -76,6 +80,7 @@ const blockingModeDescriptions = [
     i18next.t(`blocking_mode_default`),
     i18next.t(`blocking_mode_refused`),
     i18next.t(`blocking_mode_nxdomain`),
+    i18next.t(`blocking_mode_noerror`),
     i18next.t(`blocking_mode_null_ip`),
     i18next.t(`blocking_mode_custom_ip`),
 ];
