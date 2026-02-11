@@ -7,6 +7,7 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/osutil"
@@ -14,6 +15,8 @@ import (
 
 // signalHandler processes incoming signals.  It reloads configurations of
 // stored entities on SIGHUP and performs cleanup on all other signals.
+//
+// TODO(e.burkov):  Use [service.SignalHandler] instead.
 type signalHandler struct {
 	// logger is used to log the operation of the signal handler.
 	logger *slog.Logger
@@ -26,7 +29,7 @@ type signalHandler struct {
 	clientStorage *client.Storage
 
 	// tlsManager is used to reload the TLS configuration.
-	tlsManager *tlsManager
+	tlsManager aghtls.Manager
 
 	// signals receives incoming signals.
 	signals <-chan os.Signal
@@ -59,7 +62,7 @@ func (h *signalHandler) addClientStorage(s *client.Storage) {
 }
 
 // addTLSManager stores the TLS manager.
-func (h *signalHandler) addTLSManager(m *tlsManager) {
+func (h *signalHandler) addTLSManager(m aghtls.Manager) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
@@ -90,9 +93,24 @@ func (h *signalHandler) handle(ctx context.Context) {
 		case syscall.SIGHUP:
 			h.reloadConfig(ctx)
 		default:
-			h.cleanup(ctx)
+			h.shutdown(ctx)
 		}
 	}
+}
+
+// shutdown shuts the system down.
+func (h *signalHandler) shutdown(ctx context.Context) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	if h.tlsManager != nil {
+		err := h.tlsManager.Shutdown(ctx)
+		if err != nil {
+			h.logger.ErrorContext(ctx, "shutting down tls manager", slogutil.KeyError, err)
+		}
+	}
+
+	h.cleanup(ctx)
 }
 
 // reloadConfig refreshes configurations of stored entities.
@@ -105,6 +123,9 @@ func (h *signalHandler) reloadConfig(ctx context.Context) {
 	}
 
 	if h.tlsManager != nil {
-		h.tlsManager.reload(ctx)
+		err := h.tlsManager.Refresh(ctx)
+		if err != nil {
+			h.logger.ErrorContext(ctx, "refreshing tls manager", slogutil.KeyError, err)
+		}
 	}
 }

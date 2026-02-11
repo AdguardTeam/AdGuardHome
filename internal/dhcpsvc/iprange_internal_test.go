@@ -10,49 +10,86 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewIPRange(t *testing.T) {
-	start4 := netip.MustParseAddr("0.0.0.1")
-	end4 := netip.MustParseAddr("0.0.0.3")
-	start6 := netip.MustParseAddr("1::1")
-	end6 := netip.MustParseAddr("1::3")
-	end6Large := netip.MustParseAddr("2::3")
+const (
+	// testRangeStartV4Str is the string representation of the start of the test
+	// range for IPv4.
+	testRangeStartV4Str = "192.0.2.1"
 
+	// testRangeEndV4Str is the string representation of the end of the test
+	// range for IPv4.
+	testRangeEndV4Str = "192.0.2.5"
+
+	// testRangeStartV6Str is the string representation of the start of the
+	// test range for IPv6.
+	testRangeStartV6Str = "2001:db8::1"
+
+	// testRangeEndV6Str is the string representation of the end of the test
+	// range for IPv6.
+	testRangeEndV6Str = "2001:db8::3"
+
+	// testRangeEndV6LargeStr is the string representation of the end of the
+	// test range for IPv6 that is too large.
+	testRangeEndV6LargeStr = "2001:db9::4"
+)
+
+var (
+	// testRangeStartV4 is the start of the test range for IPv4.
+	testRangeStartV4 = netip.MustParseAddr(testRangeStartV4Str)
+
+	// testRangeEndV4 is the end of the test range for IPv4.
+	testRangeEndV4 = netip.MustParseAddr(testRangeEndV4Str)
+
+	// testRangeStartV6 is the start of the test range for IPv6.
+	testRangeStartV6 = netip.MustParseAddr(testRangeStartV6Str)
+
+	// testRangeEndV6 is the end of the test range for IPv6.
+	testRangeEndV6 = netip.MustParseAddr(testRangeEndV6Str)
+
+	// testRangeEndV6Large is the end of the test range for IPv6 that is too
+	// large.
+	testRangeEndV6Large = netip.MustParseAddr(testRangeEndV6LargeStr)
+)
+
+func TestNewIPRange(t *testing.T) {
 	testCases := []struct {
 		start      netip.Addr
 		end        netip.Addr
 		name       string
 		wantErrMsg string
 	}{{
-		start:      start4,
-		end:        end4,
+		start:      testRangeStartV4,
+		end:        testRangeEndV4,
 		name:       "success_ipv4",
 		wantErrMsg: "",
 	}, {
-		start:      start6,
-		end:        end6,
+		start:      testRangeStartV6,
+		end:        testRangeEndV6,
 		name:       "success_ipv6",
 		wantErrMsg: "",
 	}, {
-		start:      end4,
-		end:        start4,
-		name:       "start_gt_end",
-		wantErrMsg: "invalid ip range: start 0.0.0.3 is greater than or equal to end 0.0.0.1",
+		start: testRangeEndV4,
+		end:   testRangeStartV4,
+		name:  "start_gt_end",
+		wantErrMsg: "invalid ip range: start " + testRangeEndV4Str +
+			" is greater than or equal to end " + testRangeStartV4Str,
 	}, {
-		start:      start4,
-		end:        start4,
-		name:       "start_eq_end",
-		wantErrMsg: "invalid ip range: start 0.0.0.1 is greater than or equal to end 0.0.0.1",
+		start: testRangeStartV4,
+		end:   testRangeStartV4,
+		name:  "start_eq_end",
+		wantErrMsg: "invalid ip range: start " + testRangeStartV4Str +
+			" is greater than or equal to end " + testRangeStartV4Str,
 	}, {
-		start: start6,
-		end:   end6Large,
+		start: testRangeStartV6,
+		end:   testRangeEndV6Large,
 		name:  "too_large",
 		wantErrMsg: "invalid ip range: range length must be within " +
 			strconv.FormatUint(maxRangeLen, 10),
 	}, {
-		start:      start4,
-		end:        end6,
-		name:       "different_family",
-		wantErrMsg: "invalid ip range: 0.0.0.1 and 1::3 must be within the same address family",
+		start: testRangeStartV4,
+		end:   testRangeEndV6,
+		name:  "different_family",
+		wantErrMsg: "invalid ip range: " + testRangeStartV4Str + " and " +
+			testRangeEndV6Str + " must be within the same address family",
 	}}
 
 	for _, tc := range testCases {
@@ -64,8 +101,7 @@ func TestNewIPRange(t *testing.T) {
 }
 
 func TestIPRange_Contains(t *testing.T) {
-	start, end := netip.MustParseAddr("0.0.0.1"), netip.MustParseAddr("0.0.0.3")
-	r, err := newIPRange(start, end)
+	r, err := newIPRange(testRangeStartV4, testRangeEndV4)
 	require.NoError(t, err)
 
 	testCases := []struct {
@@ -73,27 +109,27 @@ func TestIPRange_Contains(t *testing.T) {
 		want assert.BoolAssertionFunc
 		name string
 	}{{
-		in:   start,
+		in:   testRangeStartV4,
 		want: assert.True,
 		name: "start",
 	}, {
-		in:   end,
+		in:   testRangeEndV4,
 		want: assert.True,
 		name: "end",
 	}, {
-		in:   start.Next(),
+		in:   testRangeStartV4.Next(),
 		want: assert.True,
 		name: "within",
 	}, {
-		in:   netip.MustParseAddr("0.0.0.0"),
+		in:   testRangeStartV4.Prev(),
 		want: assert.False,
 		name: "before",
 	}, {
-		in:   netip.MustParseAddr("0.0.0.4"),
+		in:   testRangeEndV4.Next(),
 		want: assert.False,
 		name: "after",
 	}, {
-		in:   netip.MustParseAddr("::"),
+		in:   testRangeStartV6,
 		want: assert.False,
 		name: "another_family",
 	}}
@@ -106,11 +142,10 @@ func TestIPRange_Contains(t *testing.T) {
 }
 
 func TestIPRange_Find(t *testing.T) {
-	start, end := netip.MustParseAddr("0.0.0.1"), netip.MustParseAddr("0.0.0.5")
-	r, err := newIPRange(start, end)
+	r, err := newIPRange(testRangeStartV4, testRangeEndV4)
 	require.NoError(t, err)
 
-	num, ok := r.offset(end)
+	num, ok := r.offset(testRangeEndV4)
 	require.True(t, ok)
 
 	testCases := []struct {
@@ -123,7 +158,7 @@ func TestIPRange_Find(t *testing.T) {
 
 			return ipData[len(ipData)-1]%2 == 0
 		},
-		want: netip.MustParseAddr("0.0.0.2"),
+		want: testRangeStartV4.Next(),
 		name: "even",
 	}, {
 		predicate: func(ip netip.Addr) (ok bool) {
@@ -137,7 +172,7 @@ func TestIPRange_Find(t *testing.T) {
 		predicate: func(ip netip.Addr) (ok bool) {
 			return true
 		},
-		want: start,
+		want: testRangeStartV4,
 		name: "first",
 	}, {
 		predicate: func(ip netip.Addr) (ok bool) {
@@ -145,7 +180,7 @@ func TestIPRange_Find(t *testing.T) {
 
 			return off == num
 		},
-		want: end,
+		want: testRangeEndV4,
 		name: "last",
 	}}
 
@@ -158,47 +193,46 @@ func TestIPRange_Find(t *testing.T) {
 }
 
 func TestIPRange_Offset(t *testing.T) {
-	start, end := netip.MustParseAddr("0.0.0.1"), netip.MustParseAddr("0.0.0.5")
-	r, err := newIPRange(start, end)
+	r, err := newIPRange(testRangeStartV4, testRangeEndV4)
 	require.NoError(t, err)
 
 	testCases := []struct {
+		wantOK     assert.BoolAssertionFunc
 		in         netip.Addr
 		name       string
 		wantOffset uint64
-		wantOK     bool
 	}{{
-		in:         netip.MustParseAddr("0.0.0.2"),
+		wantOK:     assert.True,
+		in:         testRangeStartV4.Next(),
 		name:       "in",
 		wantOffset: 1,
-		wantOK:     true,
 	}, {
-		in:         start,
+		wantOK:     assert.True,
+		in:         testRangeStartV4,
 		name:       "in_start",
 		wantOffset: 0,
-		wantOK:     true,
 	}, {
-		in:         end,
+		wantOK:     assert.True,
+		in:         testRangeEndV4,
 		name:       "in_end",
 		wantOffset: 4,
-		wantOK:     true,
 	}, {
-		in:         netip.MustParseAddr("0.0.0.6"),
+		wantOK:     assert.False,
+		in:         testRangeEndV4.Next(),
 		name:       "out_after",
 		wantOffset: 0,
-		wantOK:     false,
 	}, {
-		in:         netip.MustParseAddr("0.0.0.0"),
+		wantOK:     assert.False,
+		in:         testRangeStartV4.Prev(),
 		name:       "out_before",
 		wantOffset: 0,
-		wantOK:     false,
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			offset, ok := r.offset(tc.in)
 			assert.Equal(t, tc.wantOffset, offset)
-			assert.Equal(t, tc.wantOK, ok)
+			tc.wantOK(t, ok)
 		})
 	}
 }

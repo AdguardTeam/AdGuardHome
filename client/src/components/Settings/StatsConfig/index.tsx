@@ -10,6 +10,7 @@ interface StatsConfigProps {
     interval: number;
     customInterval?: number;
     ignored: unknown[];
+    ignoredEnabled: boolean;
     enabled: boolean;
     processing: boolean;
     processingReset: boolean;
@@ -19,7 +20,7 @@ interface StatsConfigProps {
 }
 
 class StatsConfig extends Component<StatsConfigProps> {
-    handleFormSubmit = ({ enabled, interval, ignored, customInterval }: FormValues) => {
+    handleFormSubmit = ({ enabled, interval, ignored, ignored_enabled, customInterval }: FormValues) => {
         const { t, interval: prevInterval } = this.props;
         const newInterval = customInterval ? customInterval * HOUR : interval;
 
@@ -27,6 +28,7 @@ class StatsConfig extends Component<StatsConfigProps> {
             enabled,
             interval: newInterval,
             ignored: ignored ? ignored.split('\n') : [],
+            ignored_enabled,
         };
 
         if (config.interval < prevInterval) {
@@ -54,6 +56,7 @@ class StatsConfig extends Component<StatsConfigProps> {
             processing,
             processingReset,
             ignored,
+            ignoredEnabled,
             enabled,
         } = this.props;
 
@@ -66,6 +69,7 @@ class StatsConfig extends Component<StatsConfigProps> {
                             customInterval,
                             enabled,
                             ignored: ignored.join('\n'),
+                            ignored_enabled: ignoredEnabled,
                         }}
                         processing={processing}
                         processingReset={processingReset}

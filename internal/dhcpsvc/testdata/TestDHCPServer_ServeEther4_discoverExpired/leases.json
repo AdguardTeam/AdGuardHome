@@ -1,0 +1,12 @@
+{
+  "leases": [
+    {
+      "expires": "2025-01-01T01:01:00Z",
+      "ip": "192.0.2.100",
+      "hostname": "dynamic4",
+      "mac": "02:03:04:05:06:07",
+      "static": false
+    }
+  ],
+  "version": 1
+}

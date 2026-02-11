@@ -1,11 +1,8 @@
 package dhcpsvc_test
 
 import (
-	"io/fs"
 	"net"
 	"net/netip"
-	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -18,50 +15,24 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// testdata is a filesystem containing data for tests.
-var testdata = os.DirFS("testdata")
-
-// newTempDB copies the leases database file located in the testdata FS, under
-// tb.Name()/leases.json, to a temporary directory and returns the path to the
-// copied file.
-func newTempDB(tb testing.TB) (dst string) {
-	tb.Helper()
-
-	const filename = "leases.json"
-
-	data, err := fs.ReadFile(testdata, path.Join(tb.Name(), filename))
-	require.NoError(tb, err)
-
-	dst = filepath.Join(tb.TempDir(), filename)
-
-	err = os.WriteFile(dst, data, dhcpsvc.DatabasePerm)
-	require.NoError(tb, err)
-
-	return dst
-}
-
 func TestDHCPServer_AddLease(t *testing.T) {
-	ctx := testutil.ContextWithTimeout(t, testTimeout)
-
 	leasesPath := filepath.Join(t.TempDir(), "leases.json")
-	srv, err := dhcpsvc.New(ctx, &dhcpsvc.Config{
-		Enabled:         true,
-		Logger:          discardLog,
-		LocalDomainName: testLocalTLD,
-		Interfaces:      testInterfaceConf,
-		DBFilePath:      leasesPath,
+	srv := newTestDHCPServer(t, &dhcpsvc.Config{
+		DBFilePath: leasesPath,
+		Enabled:    true,
 	})
-	require.NoError(t, err)
 
+	// NOTE: Keep in sync with testdata.
 	const (
 		existHost = "host1"
 		newHost   = "host2"
 		ipv6Host  = "host3"
 	)
 
+	// NOTE: Keep in sync with testdata.
 	var (
-		existIP = netip.MustParseAddr("192.168.0.2")
-		newIP   = netip.MustParseAddr("192.168.0.3")
+		existIP = netip.MustParseAddr("192.0.2.2")
+		newIP   = netip.MustParseAddr("192.0.2.3")
 		newIPv6 = netip.MustParseAddr("2001:db8::2")
 
 		existMAC = errors.Must(net.ParseMAC("01:02:03:04:05:06"))
@@ -69,6 +40,7 @@ func TestDHCPServer_AddLease(t *testing.T) {
 		ipv6MAC  = errors.Must(net.ParseMAC("02:03:04:05:06:07"))
 	)
 
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
 	require.NoError(t, srv.AddLease(ctx, &dhcpsvc.Lease{
 		Hostname: existHost,
 		IP:       existIP,
@@ -144,6 +116,7 @@ func TestDHCPServer_AddLease(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			ctx = testutil.ContextWithTimeout(t, testTimeout)
 			testutil.AssertErrorMsg(t, tc.wantErrMsg, srv.AddLease(ctx, tc.lease))
 		})
 	}
@@ -153,18 +126,13 @@ func TestDHCPServer_AddLease(t *testing.T) {
 }
 
 func TestDHCPServer_index(t *testing.T) {
-	ctx := testutil.ContextWithTimeout(t, testTimeout)
-
 	leasesPath := newTempDB(t)
-	srv, err := dhcpsvc.New(ctx, &dhcpsvc.Config{
-		Enabled:         true,
-		Logger:          discardLog,
-		LocalDomainName: testLocalTLD,
-		Interfaces:      testInterfaceConf,
-		DBFilePath:      leasesPath,
+	srv := newTestDHCPServer(t, &dhcpsvc.Config{
+		DBFilePath: leasesPath,
+		Enabled:    true,
 	})
-	require.NoError(t, err)
 
+	// NOTE: Keep in sync with testdata.
 	const (
 		host1 = "host1"
 		host2 = "host2"
@@ -173,11 +141,12 @@ func TestDHCPServer_index(t *testing.T) {
 		host5 = "host5"
 	)
 
+	// NOTE: Keep in sync with testdata.
 	var (
-		ip1 = netip.MustParseAddr("192.168.0.2")
-		ip2 = netip.MustParseAddr("192.168.0.3")
-		ip3 = netip.MustParseAddr("172.16.0.3")
-		ip4 = netip.MustParseAddr("172.16.0.4")
+		ip1 = netip.MustParseAddr("192.0.2.2")
+		ip2 = netip.MustParseAddr("192.0.2.3")
+		ip3 = netip.MustParseAddr("198.51.100.3")
+		ip4 = netip.MustParseAddr("198.51.100.4")
 
 		mac1 = errors.Must(net.ParseMAC("01:02:03:04:05:06"))
 		mac2 = errors.Must(net.ParseMAC("06:05:04:03:02:01"))
@@ -210,18 +179,13 @@ func TestDHCPServer_index(t *testing.T) {
 }
 
 func TestDHCPServer_UpdateStaticLease(t *testing.T) {
-	ctx := testutil.ContextWithTimeout(t, testTimeout)
-
 	leasesPath := newTempDB(t)
-	srv, err := dhcpsvc.New(ctx, &dhcpsvc.Config{
-		Enabled:         true,
-		Logger:          discardLog,
-		LocalDomainName: testLocalTLD,
-		Interfaces:      testInterfaceConf,
-		DBFilePath:      leasesPath,
+	srv := newTestDHCPServer(t, &dhcpsvc.Config{
+		DBFilePath: leasesPath,
+		Enabled:    true,
 	})
-	require.NoError(t, err)
 
+	// NOTE: Keep in sync with testdata.
 	const (
 		host1 = "host1"
 		host2 = "host2"
@@ -231,11 +195,12 @@ func TestDHCPServer_UpdateStaticLease(t *testing.T) {
 		host6 = "host6"
 	)
 
+	// NOTE: Keep in sync with testdata.
 	var (
-		ip1 = netip.MustParseAddr("192.168.0.2")
-		ip2 = netip.MustParseAddr("192.168.0.3")
-		ip3 = netip.MustParseAddr("192.168.0.4")
-		ip4 = netip.MustParseAddr("2001:db8::3")
+		ip1 = netip.MustParseAddr("192.0.2.2")
+		ip2 = netip.MustParseAddr("192.0.2.3")
+		ip3 = netip.MustParseAddr("192.0.2.4")
+		ip4 = netip.MustParseAddr("2001:db8::2")
 
 		mac1 = errors.Must(net.ParseMAC("01:02:03:04:05:06"))
 		mac2 = errors.Must(net.ParseMAC("06:05:04:03:02:01"))
@@ -309,6 +274,7 @@ func TestDHCPServer_UpdateStaticLease(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
 			testutil.AssertErrorMsg(t, tc.wantErrMsg, srv.UpdateStaticLease(ctx, tc.lease))
 		})
 	}
@@ -317,27 +283,23 @@ func TestDHCPServer_UpdateStaticLease(t *testing.T) {
 }
 
 func TestDHCPServer_RemoveLease(t *testing.T) {
-	ctx := testutil.ContextWithTimeout(t, testTimeout)
-
 	leasesPath := newTempDB(t)
-	srv, err := dhcpsvc.New(ctx, &dhcpsvc.Config{
-		Enabled:         true,
-		Logger:          discardLog,
-		LocalDomainName: testLocalTLD,
-		Interfaces:      testInterfaceConf,
-		DBFilePath:      leasesPath,
+	srv := newTestDHCPServer(t, &dhcpsvc.Config{
+		DBFilePath: leasesPath,
+		Enabled:    true,
 	})
-	require.NoError(t, err)
 
+	// NOTE: Keep in sync with testdata.
 	const (
 		host1 = "host1"
 		host2 = "host2"
 		host3 = "host3"
 	)
 
+	// NOTE: Keep in sync with testdata.
 	var (
-		existIP = netip.MustParseAddr("192.168.0.2")
-		newIP   = netip.MustParseAddr("192.168.0.3")
+		existIP = netip.MustParseAddr("192.0.2.2")
+		newIP   = netip.MustParseAddr("192.0.2.3")
 		newIPv6 = netip.MustParseAddr("2001:db8::2")
 
 		existMAC = errors.Must(net.ParseMAC("01:02:03:04:05:06"))
@@ -393,6 +355,7 @@ func TestDHCPServer_RemoveLease(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
 			testutil.AssertErrorMsg(t, tc.wantErrMsg, srv.RemoveLease(ctx, tc.lease))
 		})
 	}
@@ -403,22 +366,16 @@ func TestDHCPServer_RemoveLease(t *testing.T) {
 
 func TestDHCPServer_Reset(t *testing.T) {
 	leasesPath := newTempDB(t)
-	conf := &dhcpsvc.Config{
-		Enabled:         true,
-		Logger:          discardLog,
-		LocalDomainName: testLocalTLD,
-		Interfaces:      testInterfaceConf,
-		DBFilePath:      leasesPath,
-	}
-
-	ctx := testutil.ContextWithTimeout(t, testTimeout)
-	srv, err := dhcpsvc.New(ctx, conf)
-	require.NoError(t, err)
+	srv := newTestDHCPServer(t, &dhcpsvc.Config{
+		DBFilePath: leasesPath,
+		Enabled:    true,
+	})
 
 	const leasesNum = 4
 
 	require.Len(t, srv.Leases(), leasesNum)
 
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
 	require.NoError(t, srv.Reset(ctx))
 
 	assert.FileExists(t, leasesPath)
@@ -427,31 +384,23 @@ func TestDHCPServer_Reset(t *testing.T) {
 
 func TestServer_Leases(t *testing.T) {
 	leasesPath := newTempDB(t)
-	conf := &dhcpsvc.Config{
-		Enabled:         true,
-		Logger:          discardLog,
-		LocalDomainName: testLocalTLD,
-		Interfaces:      testInterfaceConf,
-		DBFilePath:      leasesPath,
-	}
-
-	ctx := testutil.ContextWithTimeout(t, testTimeout)
-
-	srv, err := dhcpsvc.New(ctx, conf)
-	require.NoError(t, err)
+	srv := newTestDHCPServer(t, &dhcpsvc.Config{
+		DBFilePath: leasesPath,
+		Enabled:    true,
+	})
 
 	expiry, err := time.Parse(time.RFC3339, "2042-01-02T03:04:05Z")
 	require.NoError(t, err)
 
 	wantLeases := []*dhcpsvc.Lease{{
 		Expiry:   expiry,
-		IP:       netip.MustParseAddr("192.168.0.3"),
+		IP:       netip.MustParseAddr("192.0.2.3"),
 		Hostname: "example.host",
 		HWAddr:   errors.Must(net.ParseMAC("AA:AA:AA:AA:AA:AA")),
 		IsStatic: false,
 	}, {
 		Expiry:   time.Time{},
-		IP:       netip.MustParseAddr("192.168.0.4"),
+		IP:       netip.MustParseAddr("192.0.2.4"),
 		Hostname: "example.static.host",
 		HWAddr:   errors.Must(net.ParseMAC("BB:BB:BB:BB:BB:BB")),
 		IsStatic: true,

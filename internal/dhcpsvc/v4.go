@@ -1,15 +1,18 @@
 package dhcpsvc
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"log/slog"
 	"net"
 	"net/netip"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/AdguardTeam/golibs/validate"
 	"github.com/google/gopacket"
@@ -197,10 +200,13 @@ func (srv *DHCPServer) newDHCPInterfaceV4(
 	return iface
 }
 
-// commitLease updates the lease in database, using new hostname if it's valid.
-//
-// TODO(e.burkov):  Implement.
-func (iface *dhcpInterfaceV4) commitLease(ctx context.Context, l *Lease, hostname string) {}
+// updateLease updates l in the database.  l must be valid and not expired.
+func (iface *dhcpInterfaceV4) updateLease(
+	ctx context.Context,
+	l *Lease,
+) (err error) {
+	return iface.common.index.update(ctx, iface.common.logger, l, iface.common)
+}
 
 // respondOffer sends a DHCPOFFER message to the client.  req, fd, and l must
 // not be nil.
@@ -210,8 +216,10 @@ func (iface *dhcpInterfaceV4) respondOffer(
 	fd *frameData,
 	l *Lease,
 ) {
-	resp := iface.buildResponse(req, l, layers.DHCPMsgTypeOffer)
-	if err := respond4(fd, resp); err != nil {
+	resp := iface.buildResponse(req, l, fd.device, layers.DHCPMsgTypeOffer)
+
+	err := respond4(fd, resp)
+	if err != nil {
 		iface.common.logger.ErrorContext(ctx, "writing offer", "error", err)
 	}
 }
@@ -227,7 +235,7 @@ func (iface *dhcpInterfaceV4) respondACK(
 	fd *frameData,
 	l *Lease,
 ) {
-	resp := iface.buildResponse(req, l, layers.DHCPMsgTypeAck)
+	resp := iface.buildResponse(req, l, fd.device, layers.DHCPMsgTypeAck)
 	if err := respond4(fd, resp); err != nil {
 		iface.common.logger.ErrorContext(ctx, "writing ack", "error", err)
 	}
@@ -274,6 +282,7 @@ func (iface *dhcpInterfaceV4) respondNAK(
 func (iface *dhcpInterfaceV4) buildResponse(
 	req *layers.DHCPv4,
 	l *Lease,
+	nd NetworkDevice,
 	msgType layers.DHCPMsgType,
 ) (resp *layers.DHCPv4) {
 	resp = &layers.DHCPv4{
@@ -288,10 +297,10 @@ func (iface *dhcpInterfaceV4) buildResponse(
 	resp.Options = append(
 		resp.Options,
 		layers.NewDHCPOption(layers.DHCPOptMessageType, []byte{byte(msgType)}),
-		layers.NewDHCPOption(layers.DHCPOptServerID, iface.gateway.AsSlice()),
+		layers.NewDHCPOption(layers.DHCPOptServerID, nd.Addresses()[0].AsSlice()),
 	)
 
-	appendLeaseTime(resp, iface.common.leaseTTL)
+	iface.appendLeaseTime(resp, l)
 	iface.updateOptions(req, resp)
 
 	// Add hostname option if the lease has a hostname.
@@ -327,6 +336,8 @@ func (ifaces dhcpInterfacesV4) find(ip netip.Addr) (iface4 *netInterface, ok boo
 // allocateLease allocates a new lease for the MAC address.  If there are no IP
 // addresses left, both l and err are nil.  mac must be a valid according to
 // [netutil.ValidateMAC].
+//
+// TODO(e.burkov):  Pass the precalculated macKey.
 func (iface *dhcpInterfaceV4) allocateLease(
 	ctx context.Context,
 	mac net.HardwareAddr,
@@ -334,84 +345,155 @@ func (iface *dhcpInterfaceV4) allocateLease(
 	for {
 		l, err = iface.reserveLease(ctx, mac)
 		if err != nil {
-			return nil, fmt.Errorf("reserving a lease: %w", err)
+			return nil, err
 		}
 
 		var ok bool
 		ok, err = iface.addrChecker.IsAvailable(l.IP)
 		if err != nil {
 			return nil, fmt.Errorf("checking address availability: %w", err)
-		} else if ok {
+		}
+
+		if ok {
+			iface.common.leases[macToKey(mac)] = l
+
+			off, _ := iface.common.addrSpace.offset(l.IP)
+			iface.common.leasedOffsets.set(off, true)
+
 			return l, nil
 		}
 
 		iface.common.logger.DebugContext(ctx, "address not available", "ip", l.IP)
 
-		iface.common.blockLease(l, iface.clock)
+		err = iface.common.blockLease(ctx, l, iface.clock)
+		if err != nil {
+			return nil, fmt.Errorf("blocking unavailable address: %w", err)
+		}
 	}
 }
 
 // reserveLease reserves a lease for a client by its MAC-address.  l is nil if a
 // new lease can't be allocated.  mac must be a valid according to
-// [netutil.ValidateMAC].
+// [netutil.ValidateMAC].  index mutex must be locked.
 func (iface *dhcpInterfaceV4) reserveLease(
 	ctx context.Context,
 	mac net.HardwareAddr,
 ) (l *Lease, err error) {
-	iface.common.indexMu.Lock()
-	defer iface.common.indexMu.Unlock()
-
 	nextIP := iface.common.nextIP()
-	if nextIP == (netip.Addr{}) {
-		l = iface.common.findExpiredLease(iface.clock.Now())
-		if l == nil {
-			return nil, nil
+	if nextIP != (netip.Addr{}) {
+		l = &Lease{
+			HWAddr: slices.Clone(mac),
+			IP:     nextIP,
+			Expiry: iface.clock.Now().Add(iface.common.leaseTTL),
 		}
-
-		// TODO(e.burkov):  Move validation from index methods into server's
-		// methods and use index here.
-		delete(iface.common.leases, macToKey(l.HWAddr))
-
-		l.HWAddr = slices.Clone(mac)
-		iface.common.leases[macToKey(mac)] = l
 
 		return l, nil
 	}
 
-	l = &Lease{
-		HWAddr: slices.Clone(mac),
-		IP:     nextIP,
+	l = iface.common.findExpiredLease(iface.clock.Now())
+	if l == nil {
+		return nil, errors.Error("no addresses available to lease")
 	}
 
-	err = iface.common.index.add(ctx, iface.common.logger, l, iface.common)
+	// TODO(e.burkov):  Move validation from index methods into server's
+	// methods and use index here.
+	delete(iface.common.leases, macToKey(l.HWAddr))
+
+	idx := iface.common.index
+	delete(idx.byAddr, l.IP)
+	delete(idx.byName, strings.ToLower(l.Hostname))
+
+	err = idx.dbStore(ctx, iface.common.logger)
 	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
 		return nil, err
 	}
+
+	l.HWAddr = slices.Clone(mac)
+	l.Hostname = ""
+	l.IsStatic = false
+	l.updateExpiry(iface.clock, iface.common.leaseTTL)
+
+	iface.common.leases[macToKey(mac)] = l
 
 	return l, nil
 }
 
+// updateAndRespond updates the lease and sends a DHCPACK or DHCPNAK response to
+// the client according to the update result.  req must be a DHCPREQUEST
+// message, lease, l, and fd must not be nil.
+func (iface *dhcpInterfaceV4) updateAndRespond(
+	ctx context.Context,
+	l *slog.Logger,
+	req *layers.DHCPv4,
+	lease *Lease,
+	fd *frameData,
+) {
+	lease.Hostname = cmp.Or(hostname4(req), lease.Hostname)
+
+	err := iface.updateLease(ctx, lease)
+	if err != nil {
+		l.ErrorContext(ctx, "init-reboot request failed", slogutil.KeyError, err)
+		iface.respondNAK(ctx, req, fd)
+
+		return
+	}
+
+	iface.respondACK(ctx, req, fd, lease)
+}
+
+const (
+	// IPv4DefaultTTL is the default Time to Live value in seconds as
+	// recommended by RFC 1700.
+	IPv4DefaultTTL = 64
+
+	// IPProtoVersion is the IP internetwork general protocol version number as
+	// defined by RFC 1700.
+	IPProtoVersion = 4
+)
+
+// Port numbers for DHCPv4.
+//
+// See RFC 2131 Section 4.1.
+const (
+	// ServerPortV4 is the standard DHCPv4 server port.
+	ServerPortV4 layers.UDPPort = 67
+
+	// ClientPortV4 is the standard DHCPv4 client port.
+	ClientPortV4 layers.UDPPort = 68
+)
+
 // respond4 sends a DHCPv4 response.  fd and resp must not be nil.
 func respond4(fd *frameData, resp *layers.DHCPv4) (err error) {
+	// TODO(e.burkov):  Use pools for buffer and layers.
 	buf := gopacket.NewSerializeBuffer()
-	opts := gopacket.SerializeOptions{
-		FixLengths:       true,
-		ComputeChecksums: true,
-	}
 
 	eth := &layers.Ethernet{
 		SrcMAC:       fd.ether.SrcMAC,
 		DstMAC:       fd.ether.DstMAC,
 		EthernetType: layers.EthernetTypeIPv4,
 	}
+	ip := &layers.IPv4{
+		Version:  IPProtoVersion,
+		TTL:      IPv4DefaultTTL,
+		SrcIP:    net.IPv4zero.To4(),
+		DstIP:    net.IPv4bcast.To4(),
+		Protocol: layers.IPProtocolUDP,
+	}
+	udp := &layers.UDP{
+		SrcPort: ServerPortV4,
+		DstPort: ClientPortV4,
+	}
+	_ = udp.SetNetworkLayerForChecksum(ip)
 
-	// TODO(e.burkov):  Handle IP layer.
+	opts := gopacket.SerializeOptions{
+		FixLengths:       true,
+		ComputeChecksums: true,
+	}
 
-	all := []gopacket.SerializableLayer{eth, resp}
-
-	err = gopacket.SerializeLayers(buf, opts, all...)
+	err = gopacket.SerializeLayers(buf, opts, eth, ip, udp, resp)
 	if err != nil {
-		return err
+		return fmt.Errorf("constructing dhcp v4 response: %w", err)
 	}
 
 	return fd.device.WritePacketData(buf.Bytes())

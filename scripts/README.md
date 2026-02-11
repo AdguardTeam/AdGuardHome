@@ -26,7 +26,7 @@ Optional environment:
 
 - `DOCKER_IMAGE_NAME`: the name of the resulting Docker container. By default it’s `adguardhome-dev`.
 
-- `DOCKER_OUTPUT`: the `--output` parameters. By default they are `type=image,name=${DOCKER_IMAGE_NAME},push=false`.
+- `DOCKER_PUSH`: `1` to push the image to DockerHub, `0` to not push. By default it’s `0`.
 
 - `SUDO`: allow users to use `sudo` or `doas` with `docker`. By default none is used.
 
@@ -132,8 +132,6 @@ Optional environment:
 
 ### `go-lint.sh`: Run backend static analyzers
 
-Don’t forget to run `make go-tools` once first!
-
 Optional environment:
 
 - `EXIT_ON_ERROR`: if set to `0`, don’t exit the script after the first encountered error. The default value is `1`.
@@ -153,14 +151,6 @@ Optional environment:
 - `TIMEOUT_FLAGS`: set timeout flags for tests. The default value is `--timeout=30s`.
 
 - `VERBOSE`: verbosity level. `1` shows every command that is run and every Go package that is processed. `2` also shows subcommands. The default value is `0`, don’t be verbose.
-
-### `go-tools.sh`: Install backend tooling
-
-Installs the Go static analysis and other tools into `${PWD}/bin`. Either add `${PWD}/bin` to your `$PATH` before all other entries, or use the commands directly, or use the commands through `make` (for example, `make go-lint`).
-
-Optional environment:
-
-- `GO`: set an alternative name for the Go compiler.
 
 ### `version.sh`: Generate And Print The Current Version
 

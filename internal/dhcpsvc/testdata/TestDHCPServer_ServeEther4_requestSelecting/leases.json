@@ -1,0 +1,19 @@
+{
+  "leases": [
+    {
+      "expires": "2025-01-01T01:01:01Z",
+      "ip": "192.0.2.103",
+      "hostname": "expired4",
+      "mac": "03:04:05:06:07:08",
+      "static": false
+    },
+    {
+      "expires": "",
+      "ip": "192.0.2.101",
+      "hostname": "static4",
+      "mac": "01:02:03:04:05:06",
+      "static": true
+    }
+  ],
+  "version": 1
+}

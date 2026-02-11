@@ -4,6 +4,7 @@ package aghos
 
 import (
 	"os"
+	"path/filepath"
 
 	"golang.org/x/sys/windows"
 )
@@ -39,4 +40,15 @@ func isOpenWrt() (ok bool) {
 
 func sendShutdownSignal(c chan<- os.Signal) {
 	c <- os.Interrupt
+}
+
+func rootDir() (dir string) {
+	// TODO(e.burkov): Use a better way if golang/go#44279 is ever resolved.
+	sysDir, err := windows.GetSystemDirectory()
+	if err != nil {
+		// Assume that C:\ is the safe default.
+		return `C:\`
+	}
+
+	return filepath.Join(filepath.VolumeName(sysDir), `\`)
 }

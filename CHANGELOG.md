@@ -9,17 +9,81 @@ The format is based on [*Keep a Changelog*](https://keepachangelog.com/en/1.0.0/
 <!--
 ## [v0.108.0] – TBA
 
-## [v0.107.72] - 2025-12-22 (APPROX.)
+## [v0.107.73] - 2026-03-02 (APPROX.)
 
-See also the [v0.107.72 GitHub milestone][ms-v0.107.72].
+See also the [v0.107.73 GitHub milestone][ms-v0.107.73].
 
-[ms-v0.107.72]: https://github.com/AdguardTeam/AdGuardHome/milestone/107?closed=1
+[ms-v0.107.73]: https://github.com/AdguardTeam/AdGuardHome/milestone/108?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
+
+## [v0.107.72] - 2026-02-16
+
+See also the [v0.107.72 GitHub milestone][ms-v0.107.72].
+
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.25.7][go-1.25.7].
+
+### Added
+
+- The TLS certificate and key files are now being tracked for updates, which trigger a reload ([#3962]).
+
+- New query parameter `recent` in `GET /control/stats/` defines statistics lookback period in millieseconds.  See `openapi/openapi.yaml` for details.
+
+- New field `"ignored_enabled"` in `GetStatsConfigResponse` or `GetQueryLogConfigResponse`.  See `openapi/openapi.yaml` for details.
+
+### Changed
+
+- In addition to modifying the contents of a hosts file, deleting or renaming the file now also updates runtime clients and DNS filtering results.
+
+#### Configuration changes
+
+In this release, the schema version has changed from 32 to 33.
+
+- Added a new boolean field `ignored_enabled` in querylog and statistics config.
+
+    ```yaml
+    # BEFORE:
+    'querylog':
+      # …
+      'ignored':
+      - '|.^'
+    'statistics':
+      # …
+      'ignored':
+      - '|.^'
+
+    # AFTER:
+    'querylog':
+      # …
+      'ignored':
+      - '|.^'
+      'ignored_enabled': true
+    'statistics':
+      # …
+      'ignored':
+      - '|.^'
+      'ignored_enabled': true
+      ```
+
+    To roll back this change, set the `schema_version` back to `32`.
+
+### Fixed
+
+- Executable permissions in some Docker installations ([#8237]).
+
+- Unknown blocked services from both global and client configuration now logged instead of causing server crash.
+
+[#3962]: https://github.com/AdguardTeam/AdGuardHome/issues/3962
+[#8237]: https://github.com/AdguardTeam/AdGuardHome/issues/8237
+
+[go-1.25.7]: https://groups.google.com/g/golang-announce/c/K09ubi9FQFk
+[ms-v0.107.72]: https://github.com/AdguardTeam/AdGuardHome/milestone/107?closed=1
 
 ## [v0.107.71] - 2025-12-08
 
@@ -55,7 +119,7 @@ In this release, the schema version has changed from 31 to 32.
 
     To roll back this change, set the `schema_version` back to `31`.
 
-## Fixed
+### Fixed
 
 - Optimistic DNS cache not working ([#8148]).
 
@@ -3422,11 +3486,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 [ms-v0.104.2]: https://github.com/AdguardTeam/AdGuardHome/milestone/28?closed=1
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.72...HEAD
-[v0.107.72]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.71...v0.107.72
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.73...HEAD
+[v0.107.73]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.72...v0.107.73
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.71...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.72...HEAD
+[v0.107.72]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.71...v0.107.72
 [v0.107.71]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.70...v0.107.71
 [v0.107.70]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.69...v0.107.70
 [v0.107.69]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.68...v0.107.69

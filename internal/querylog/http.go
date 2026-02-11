@@ -50,6 +50,8 @@ type getConfigResp struct {
 	// be able to tell when it's set without using pointers.
 	Enabled aghalg.NullBool `json:"enabled"`
 
+	IgnoredEnabled aghalg.NullBool `json:"ignored_enabled"`
+
 	// AnonymizeClientIP shows if the clients' IP addresses must be anonymized.
 	// It is an aghalg.NullBool to be able to tell when it's set without using
 	// pointers.
@@ -140,6 +142,7 @@ func (l *queryLog) handleGetQueryLogConfig(w http.ResponseWriter, r *http.Reques
 			Enabled:           aghalg.BoolToNullBool(l.conf.Enabled),
 			AnonymizeClientIP: aghalg.BoolToNullBool(l.conf.AnonymizeClientIP),
 			Ignored:           l.conf.Ignored.Values(),
+			IgnoredEnabled:    aghalg.BoolToNullBool(l.conf.Ignored.IsEnabled()),
 		}
 	}()
 
@@ -232,7 +235,14 @@ func (l *queryLog) handlePutQueryLogConfig(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	engine, err := aghnet.NewIgnoreEngine(newConf.Ignored)
+	var ignoredEnabled bool
+	if newConf.IgnoredEnabled == aghalg.NBNull {
+		ignoredEnabled = len(newConf.Ignored) > 0
+	} else {
+		ignoredEnabled = newConf.IgnoredEnabled == aghalg.NBTrue
+	}
+
+	engine, err := aghnet.NewIgnoreEngine(newConf.Ignored, ignoredEnabled)
 	if err != nil {
 		aghhttp.ErrorAndLog(
 			ctx,
@@ -315,8 +325,8 @@ func (l *queryLog) applyQueryLogConfig(
 	conf.Ignored = engine
 	conf.RotationIvl = ivl
 	conf.Enabled = newConf.Enabled == aghalg.NBTrue
-
 	conf.AnonymizeClientIP = newConf.AnonymizeClientIP == aghalg.NBTrue
+
 	if conf.AnonymizeClientIP {
 		l.anonymizer.Store(AnonymizeIP)
 	} else {

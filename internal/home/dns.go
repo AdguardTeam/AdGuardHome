@@ -64,7 +64,7 @@ func initDNS(
 		ShouldCountClient: globalContext.clients.shouldCountClient,
 	}
 
-	engine, err := aghnet.NewIgnoreEngine(config.Stats.Ignored)
+	engine, err := aghnet.NewIgnoreEngine(config.Stats.Ignored, config.Stats.IgnoredEnabled)
 	if err != nil {
 		return fmt.Errorf("statistics: ignored list: %w", err)
 	}
@@ -89,7 +89,7 @@ func initDNS(
 		FileEnabled:       config.QueryLog.FileEnabled,
 	}
 
-	engine, err = aghnet.NewIgnoreEngine(config.QueryLog.Ignored)
+	engine, err = aghnet.NewIgnoreEngine(config.QueryLog.Ignored, config.QueryLog.IgnoredEnabled)
 	if err != nil {
 		return fmt.Errorf("querylog: ignored list: %w", err)
 	}
@@ -308,6 +308,8 @@ func newDNSTLSConfig(
 		return &dnsforward.TLSConfig{}, nil
 	}
 
+	// TODO(e.burkov):  Add tracking for DNSCrypt configuration file changes to
+	// the [aghtls.Manager].
 	dnsCryptConf, err := newDNSCryptConfig(conf, addrs)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.

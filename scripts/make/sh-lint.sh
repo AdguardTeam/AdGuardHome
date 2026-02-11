@@ -3,7 +3,7 @@
 # This comment is used to simplify checking local copies of the script.  Bump
 # this number every time a significant change is made to this script.
 #
-# AdGuard-Project-Version: 3
+# AdGuard-Project-Version: 4
 
 verbose="${VERBOSE:-0}"
 readonly verbose
@@ -18,7 +18,10 @@ fi
 # Source the common helpers, including not_found and run_linter.
 . ./scripts/make/helper.sh
 
-run_linter -e shfmt --binary-next-line -d -p -s \
+go="${GO:-go}"
+readonly go
+
+run_linter -e "$go" tool shfmt --binary-next-line -d -p -s \
 	./scripts/hooks/* \
 	./scripts/install.sh \
 	./scripts/make/*.sh \

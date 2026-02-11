@@ -887,12 +887,13 @@ func (d *DNSFilter) matchHost(
 
 	ctx := context.TODO()
 
+	// TODO(f.setrakov): Reuse client tags and identifiers.
 	ufReq := &urlfilter.DNSRequest{
-		Hostname:         host,
-		SortedClientTags: setts.ClientTags,
-		ClientIP:         setts.ClientIP,
-		ClientName:       setts.ClientName,
-		DNSType:          rrtype,
+		Hostname:          host,
+		ClientTags:        container.NewSortedSliceSet(setts.ClientTags...),
+		ClientIP:          setts.ClientIP,
+		ClientIdentifiers: container.NewSortedSliceSet(setts.ClientName),
+		DNSType:           rrtype,
 	}
 
 	d.engineLock.RLock()
@@ -1016,9 +1017,10 @@ func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
 	}
 
 	if d.conf.BlockedServices != nil {
+		d.conf.BlockedServices.FilterUnknownIDs(ctx, d.logger)
 		err = d.conf.BlockedServices.Validate()
 		if err != nil {
-			return nil, fmt.Errorf("filtering: %w", err)
+			return nil, fmt.Errorf("initializing blocked services: %w", err)
 		}
 	}
 
