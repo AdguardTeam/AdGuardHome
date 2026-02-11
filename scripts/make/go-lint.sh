@@ -3,7 +3,7 @@
 # This comment is used to simplify checking local copies of the script.  Bump
 # this number every time a significant change is made to this script.
 #
-# AdGuard-Project-Version: 14
+# AdGuard-Project-Version: 17
 
 verbose="${VERBOSE:-0}"
 readonly verbose
@@ -149,6 +149,9 @@ underscores() {
 	fi
 }
 
+go="${GO:-go}"
+readonly go
+
 # TODO(a.garipov): Add an analyzer to look for `fallthrough`, `goto`, and `new`?
 
 # Checks
@@ -159,7 +162,7 @@ run_linter -e method_const
 
 run_linter -e underscores
 
-run_linter -e gofumpt --extra -e -l .
+run_linter -e "$go" tool gofumpt --extra -e -l .
 
 run_linter "${GO:-go}" vet ./...
 
@@ -173,23 +176,23 @@ run_linter "${GO:-go}" vet ./...
 if [ "${IGNORE_NON_REPRODUCIBLE:-1}" -gt '0' ]; then
 	# run_linter calls set +e, so don't mind the cancelling effect of ||.
 	# shellcheck disable=SC2310
-	run_linter govulncheck work || :
+	run_linter "$go" tool govulncheck work || :
 else
-	run_linter govulncheck work
+	run_linter "$go" tool govulncheck work
 fi
 
-run_linter gocyclo --over 10 .
+run_linter "$go" tool gocyclo --over 10 .
 
 # TODO(a.garipov): Enable 10 for all.
-run_linter gocognit --over='20' \
+run_linter "$go" tool gocognit --over='20' \
 	./internal/querylog/ \
 	;
 
-run_linter gocognit --over='14' \
+run_linter "$go" tool gocognit --over='14' \
 	./internal/dhcpd \
 	;
 
-run_linter gocognit --over='10' \
+run_linter "$go" tool gocognit --over='10' \
 	./internal/aghalg/ \
 	./internal/aghhttp/ \
 	./internal/aghnet/ \
@@ -216,9 +219,9 @@ run_linter gocognit --over='10' \
 	./scripts/ \
 	;
 
-run_linter ineffassign ./...
+run_linter "$go" tool ineffassign ./...
 
-run_linter unparam ./...
+run_linter "$go" tool unparam ./...
 
 find_with_ignore \
 	-type 'f' \
@@ -231,12 +234,12 @@ find_with_ignore \
 	-o -name '*.yaml' \
 	-o -name '*.yml' \
 	')' \
-	-exec 'misspell' '--error' '{}' '+'
+	-exec "$go" 'tool' 'misspell' '--error' '{}' '+'
 
-run_linter nilness ./...
+run_linter "$go" tool nilness ./...
 
 # TODO(a.garipov): Enable for all.
-run_linter fieldalignment \
+run_linter "$go" tool fieldalignment \
 	./internal/aghalg/ \
 	./internal/aghhttp/ \
 	./internal/aghos/ \
@@ -263,11 +266,11 @@ run_linter fieldalignment \
 	./internal/whois/ \
 	;
 
-run_linter -e shadow --strict ./...
+run_linter -e "$go" tool shadow --strict ./...
 
 # TODO(a.garipov): Enable for all.
 # TODO(e.burkov):  Re-enable G115.
-run_linter gosec --exclude G115 --quiet \
+run_linter "$go" tool gosec --exclude=G115 --fmt=golint --quiet \
 	./internal/aghalg/ \
 	./internal/aghhttp/ \
 	./internal/aghnet/ \
@@ -294,7 +297,7 @@ run_linter gosec --exclude G115 --quiet \
 	./internal/whois/ \
 	;
 
-run_linter errcheck ./...
+run_linter "$go" tool errcheck ./...
 
 staticcheck_matrix='
 darwin:  GOOS=darwin
@@ -305,4 +308,4 @@ windows: GOOS=windows
 '
 readonly staticcheck_matrix
 
-printf '%s' "$staticcheck_matrix" | run_linter staticcheck --matrix ./...
+printf '%s' "$staticcheck_matrix" | run_linter "$go" tool staticcheck --matrix ./...

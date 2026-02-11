@@ -9,7 +9,7 @@ The format is based on [*Keep a Changelog*](https://keepachangelog.com/en/1.0.0/
 <!--
 ## [v0.108.0] – TBA
 
-## [v0.107.72] - 2025-12-22 (APPROX.)
+## [v0.107.72] - 2026-02-12 (APPROX.)
 
 See also the [v0.107.72 GitHub milestone][ms-v0.107.72].
 
@@ -18,7 +18,13 @@ See also the [v0.107.72 GitHub milestone][ms-v0.107.72].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.25.7][go-1.25.7].
+
 ### Added
+
+- The TLS certificate and key files are now being tracked for updates, which trigger a reload ([#3962]).
 
 - New query parameter `recent` in `GET /control/stats/` defines statistics lookback period in millieseconds.  See `openapi/openapi.yaml` for details.
 
@@ -62,7 +68,14 @@ In this release, the schema version has changed from 32 to 33.
 
 ### Fixed
 
+- Executable permissions in some Docker installations ([#8237]).
+
 - Unknown blocked services from both global and client configuration now logged instead of causing server crash.
+
+[#3962]: https://github.com/AdguardTeam/AdGuardHome/issues/3962
+[#8237]: https://github.com/AdguardTeam/AdGuardHome/issues/8237
+
+[go-1.25.7]: https://groups.google.com/g/golang-announce/c/K09ubi9FQFk
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

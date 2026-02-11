@@ -1,38 +1,38 @@
 {
-	"servicesgroup.ai.name": {
-		"message": "Штучны інтэлект"
-	},
-	"servicesgroup.cdn.name": {
-		"message": "Сеткі дастаўкі кантэнту (CDN)"
-	},
-	"servicesgroup.dating.name": {
-		"message": "Сэрвісы знаёмстваў"
-	},
-	"servicesgroup.gambling.name": {
-		"message": "Азартныя гульні і стаўкі"
-	},
-	"servicesgroup.gaming.name": {
-		"message": "Гэймінг"
-	},
-	"servicesgroup.hosting.name": {
-		"message": "Вэб-хостынг"
-	},
-	"servicesgroup.messenger.name": {
-		"message": "Сэрвісы паведамленняў"
-	},
-	"servicesgroup.privacy.name": {
-		"message": "Інструменты прыватнасці"
-	},
-	"servicesgroup.shopping.name": {
-		"message": "Крамы"
-	},
-	"servicesgroup.social_network.name": {
-		"message": "Сацыяльныя сеткі"
-	},
-	"servicesgroup.software.name": {
-		"message": "Распрацоўка праграмнага забеспячэння"
-	},
-	"servicesgroup.streaming.name": {
-		"message": "Стрымінгавыя сэрвісы"
-	}
+  "servicesgroup.ai.name": {
+    "message": "Штучны інтэлект"
+  },
+  "servicesgroup.cdn.name": {
+    "message": "Сеткі дастаўкі кантэнту (CDN)"
+  },
+  "servicesgroup.dating.name": {
+    "message": "Сэрвісы знаёмстваў"
+  },
+  "servicesgroup.gambling.name": {
+    "message": "Азартныя гульні і стаўкі"
+  },
+  "servicesgroup.gaming.name": {
+    "message": "Гэймінг"
+  },
+  "servicesgroup.hosting.name": {
+    "message": "Вэб-хостынг"
+  },
+  "servicesgroup.messenger.name": {
+    "message": "Сэрвісы паведамленняў"
+  },
+  "servicesgroup.privacy.name": {
+    "message": "Інструменты прыватнасці"
+  },
+  "servicesgroup.shopping.name": {
+    "message": "Крамы"
+  },
+  "servicesgroup.social_network.name": {
+    "message": "Сацыяльныя сеткі"
+  },
+  "servicesgroup.software.name": {
+    "message": "Распрацоўка праграмнага забеспячэння"
+  },
+  "servicesgroup.streaming.name": {
+    "message": "Стрымінгавыя сэрвісы"
+  }
 }
