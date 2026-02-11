@@ -1113,15 +1113,6 @@ https://github.com/AdguardTeam/AdGuardHome/wiki/Getting-Started#running-without-
 func checkNetworkPermissions(ctx context.Context, l *slog.Logger) {
 	l.InfoContext(ctx, "checking if adguard home has the necessary permissions")
 
-	if ok, err := aghnet.CanBindPrivilegedPorts(ctx, l); !ok || err != nil {
-		l.ErrorContext(
-			ctx,
-			"this is the first launch of adguard home; you must run it as administrator.",
-		)
-
-		os.Exit(osutil.ExitCodeFailure)
-	}
-
 	// We should check if AdGuard Home is able to bind to port 53
 	err := aghnet.CheckPort("tcp", netip.AddrPortFrom(netutil.IPv4Localhost(), defaultPortDNS))
 	if err != nil {
