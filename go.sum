@@ -6,9 +6,8 @@ cloud.google.com/go/compute/metadata v0.9.0 h1:pDUj4QMoPejqq20dK0Pg2N4yG9zIkYGdB
 cloud.google.com/go/compute/metadata v0.9.0/go.mod h1:E0bWwX5wTnLPedCKqk3pJmVgCBSM6qQI1yTBdEb3C10=
 github.com/AdguardTeam/dnsproxy v0.78.2 h1:g+ba4vh72hAv9zIE+OPSEnu77utSKxIF6u2jNhYAR7g=
 github.com/AdguardTeam/dnsproxy v0.78.2/go.mod h1:gwr+7Dc0e7QddQLC9JLGjL5NSKcqw0ESsNMRI5Q67Ps=
-github.com/AdguardTeam/golibs v0.35.7 h1:pTQpixUos7mALr3jqb0pigfrkiqPAX1hiYUi/yeBWiA=
-github.com/AdguardTeam/golibs v0.35.7/go.mod h1:meFdRqMtG/PLW6LD20MYAlcRbwAVowlbunHgE17xz9s=
-github.com/AdguardTeam/golibs v0.35.8-0.20260205045025-dec5386aa3ab/go.mod h1:kuLQ0yNRTl0Em2FmmXtSri7ZdVT7p62oojyc51RvP38=
+github.com/AdguardTeam/golibs v0.35.8-0.20260211065248-3e9d0750dcc1 h1:xCvnW1oCpj1Wkt7KDcEOdGiyZEN96qGTHuI8sXjGLSs=
+github.com/AdguardTeam/golibs v0.35.8-0.20260211065248-3e9d0750dcc1/go.mod h1:kuLQ0yNRTl0Em2FmmXtSri7ZdVT7p62oojyc51RvP38=
 github.com/AdguardTeam/urlfilter v0.23.1 h1:ifoms1xhof83+IPz96NsZt0h8knXOlL/lNP1cHjndfE=
 github.com/AdguardTeam/urlfilter v0.23.1/go.mod h1:Fl4eR1sOdx/1kdBRIY8JZHb91h7uab1Wxz4YzJlXTMw=
 github.com/BurntSushi/toml v1.6.0 h1:dRaEfpa2VI55EwlIW72hMRHdWouJeRF7TPYhI+AUQjk=
@@ -127,10 +126,10 @@ github.com/mdlayher/socket v0.5.1 h1:VZaqt6RkGkt2OE9l3GcC6nZkqD3xKeQLyfleW/uBcos
 github.com/mdlayher/socket v0.5.1/go.mod h1:TjPLHI1UgwEv5J1B5q0zTZq12A/6H7nKmtTanQE37IQ=
 github.com/miekg/dns v1.1.72 h1:vhmr+TF2A3tuoGNkLDFK9zi36F2LS+hKTRW0Uf8kbzI=
 github.com/miekg/dns v1.1.72/go.mod h1:+EuEPhdHOsfk6Wk5TT2CzssZdqkmFhf8r+aVyDEToIs=
-github.com/onsi/ginkgo/v2 v2.27.2 h1:LzwLj0b89qtIy6SSASkzlNvX6WktqurSHwkk2ipF/Ns=
-github.com/onsi/ginkgo/v2 v2.27.2/go.mod h1:ArE1D/XhNXBXCBkKOLkbsb2c81dQHCRcF5zwn/ykDRo=
-github.com/onsi/gomega v1.38.2 h1:eZCjf2xjZAqe+LeWvKb5weQ+NcPwX84kqJ0cZNxok2A=
-github.com/onsi/gomega v1.38.2/go.mod h1:W2MJcYxRGV63b418Ai34Ud0hEdTVXq9NW9+Sx6uXf3k=
+github.com/onsi/ginkgo/v2 v2.27.5 h1:ZeVgZMx2PDMdJm/+w5fE/OyG6ILo1Y3e+QX4zSR0zTE=
+github.com/onsi/ginkgo/v2 v2.27.5/go.mod h1:ArE1D/XhNXBXCBkKOLkbsb2c81dQHCRcF5zwn/ykDRo=
+github.com/onsi/gomega v1.39.0 h1:y2ROC3hKFmQZJNFeGAMeHZKkjBL65mIZcvrLQBF9k6Q=
+github.com/onsi/gomega v1.39.0/go.mod h1:ZCU1pkQcXDO5Sl9/VVEGlDyp+zm0m1cmeG5TOzLgdh4=
 github.com/openai/openai-go/v3 v3.18.0 h1:PpheJdvPgi8Ou77rJ1zsNmJTdmC7kvqDrGxbwAYq2nQ=
 github.com/openai/openai-go/v3 v3.18.0/go.mod h1:cdufnVK14cWcT9qA1rRtrXx4FTRsgbDPW7Ia7SS5cZo=
 github.com/patrickmn/go-cache v2.1.0+incompatible h1:HRMgzkcYKYpi3C8ajMPV8OFXaaRUnok+kx1WdO15EQc=
@@ -152,8 +151,7 @@ github.com/rogpeppe/go-internal v1.14.1 h1:UQB4HGPB6osV0SQTLymcB4TgvyWu6ZyliaW0t
 github.com/rogpeppe/go-internal v1.14.1/go.mod h1:MaRKkUm5W0goXpeCfT7UZI6fk/L7L7so1lCWt35ZSgc=
 github.com/santhosh-tekuri/jsonschema/v6 v6.0.2 h1:KRzFb2m7YtdldCEkzs6KqmJw4nqEVZGK7IN2kJkjTuQ=
 github.com/santhosh-tekuri/jsonschema/v6 v6.0.2/go.mod h1:JXeL+ps8p7/KNMjDQk3TCwPpBy0wYklyWTfbkIzdIFU=
-github.com/securego/gosec/v2 v2.22.11 h1:tW+weM/hCM/GX3iaCV91d5I6hqaRT2TPsFM1+USPXwg=
-github.com/securego/gosec/v2 v2.22.11/go.mod h1:KE4MW/eH0GLWztkbt4/7XpyH0zJBBnu7sYB4l6Wn7Mw=
+github.com/securego/gosec/v2 v2.22.12-0.20260119173857-b579523bf6db h1:fQHC8Or48+BBj0iC+x/8cePvvOo+UXx7BKY/bNIJfMA=
 github.com/securego/gosec/v2 v2.22.12-0.20260119173857-b579523bf6db/go.mod h1:DnzUbXmANSJq9sFQPwXaIjBuzZEIGe5Sz9xVMlIAYMs=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/objx v0.5.2 h1:xuMeJ0Sdp5ZMRXx/aWO6RZxdr3beISkG5/G/aIRr3pY=
