@@ -204,6 +204,9 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 		name:    "blocking_mode_good",
 		wantSet: "",
 	}, {
+		name:    "blocking_mode_noerror",
+		wantSet: "",
+	}, {
 		name: "blocking_mode_bad",
 		wantSet: "validating dns config: " +
 			"blocking_ipv4 must be valid ipv4 on custom_ip blocking_mode",
