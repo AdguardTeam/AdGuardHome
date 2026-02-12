@@ -499,6 +499,7 @@ func (conf *ServerConfig) loadUpstreams(
 	}
 
 	var data []byte
+	// #nosec G703 -- Trust the path explicitly given by the user.
 	data, err = os.ReadFile(conf.UpstreamDNSFileName)
 	if err != nil {
 		return nil, fmt.Errorf("reading upstream from file: %w", err)
