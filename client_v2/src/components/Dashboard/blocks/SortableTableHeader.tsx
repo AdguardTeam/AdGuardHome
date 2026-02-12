@@ -25,7 +25,8 @@ export const SortableTableHeader = ({
     onSort,
 }: Props) => (
     <div className={cn(theme.text.t3, theme.text.semibold, s.tableHeader)}>
-        <span
+        <button
+            type="button"
             className={s.sortableHeader}
             onClick={() => onSort('name')}
         >
@@ -35,8 +36,9 @@ export const SortableTableHeader = ({
             ) : (
                 <span className={s.sortDash}>—</span>
             )}
-        </span>
-        <span
+        </button>
+        <button
+            type="button"
             className={s.sortableHeader}
             onClick={() => onSort('count')}
         >
@@ -46,6 +48,6 @@ export const SortableTableHeader = ({
             ) : (
                 <span className={s.sortDash}>—</span>
             )}
-        </span>
+        </button>
     </div>
 );

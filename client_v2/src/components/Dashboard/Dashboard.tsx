@@ -15,6 +15,7 @@ import { getAccessList } from 'panel/actions/access';
 import {
     DISABLE_PROTECTION_TIMINGS,
     ONE_SECOND_IN_MS,
+    HOUR,
     DAY,
     STATS_INTERVALS_DAYS,
 } from 'panel/helpers/constants';
@@ -72,20 +73,15 @@ const getPeriodLabel = (interval: number) => {
     if (days === 90) {
         return intl.getPlural('last_days', 90);
     }
-    return intl.getMessage('interval_days', { count: days });
+    return intl.getPlural('last_days', days);
 };
-
-const PERIOD_OPTIONS = STATS_INTERVALS_DAYS.map((interval) => ({
-    value: interval,
-    label: getPeriodLabel(interval),
-}));
 
 export const Dashboard = () => {
     const dispatch = useDispatch();
     const { dashboard, stats, access } = useSelector((state: RootState) => state);
     const [protectionMenuOpen, setProtectionMenuOpen] = useState(false);
     const [remainingTime, setRemainingTime] = useState<number | null>(null);
-    const [selectedPeriod, setSelectedPeriod] = useState(DAY * 7);
+    const [selectedPeriod, setSelectedPeriod] = useState(DAY);
     const [periodMenuOpen, setPeriodMenuOpen] = useState(false);
 
     if (!dashboard || !stats) {
@@ -146,6 +142,30 @@ export const Dashboard = () => {
         topUpstreamsResponses,
         topUpstreamsAvgTime,
     } = stats;
+
+    const maxStatsInterval = stats.interval || DAY;
+    const effectiveMaxStatsInterval = maxStatsInterval >= HOUR ? maxStatsInterval : DAY;
+    const periodIntervals = React.useMemo(() => {
+        const intervals = STATS_INTERVALS_DAYS.filter((interval) => interval <= effectiveMaxStatsInterval);
+
+        if (!intervals.includes(effectiveMaxStatsInterval)) {
+            intervals.push(effectiveMaxStatsInterval);
+        }
+
+        return intervals.sort((a, b) => a - b);
+    }, [effectiveMaxStatsInterval]);
+
+    const periodOptions = React.useMemo(
+        () => periodIntervals.map((interval) => ({ value: interval, label: getPeriodLabel(interval) })),
+        [periodIntervals],
+    );
+
+    useEffect(() => {
+        const maxAvailable = periodIntervals[periodIntervals.length - 1];
+        if (maxAvailable && selectedPeriod > maxAvailable) {
+            setSelectedPeriod(maxAvailable);
+        }
+    }, [periodIntervals, selectedPeriod]);
 
     useEffect(() => {
         dispatch(getStats(selectedPeriod));
@@ -279,7 +299,7 @@ export const Dashboard = () => {
                         <Dropdown
                             menu={
                                 <div className={s.periodMenu}>
-                                    {PERIOD_OPTIONS.map((option) => (
+                                    {periodOptions.map((option) => (
                                         <div
                                             key={option.value}
                                             className={cn(
