@@ -280,7 +280,7 @@ func (m *tlsManager) reload(ctx context.Context) {
 	// The background context is used because the TLSConfigChanged wraps context
 	// with timeout on its own and shuts down the server, which handles current
 	// request.
-	m.web.tlsConfigChanged(context.Background(), tlsConfPtr)
+	m.web.tlsConfigChanged(context.Background(), m.conf)
 }
 
 // reconfigureDNSServer updates the DNS server configuration using the stored
