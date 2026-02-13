@@ -139,6 +139,8 @@ func (s *Server) genForBlockingMode(
 		return s.NewMsgNXDOMAIN(req)
 	case filtering.BlockingModeREFUSED:
 		return s.makeResponseREFUSED(req)
+	case filtering.BlockingModeNOERROR:
+		return s.NewMsgNOERROR(req)
 	default:
 		s.logger.ErrorContext(ctx, "invalid blocking mode", "mode", mode)
 
@@ -385,6 +387,14 @@ var _ proxy.MessageConstructor = (*Server)(nil)
 // *Server.
 func (s *Server) NewMsgNXDOMAIN(req *dns.Msg) (resp *dns.Msg) {
 	resp = s.reply(req, dns.RcodeNameError)
+	resp.Ns = s.genSOA(req)
+
+	return resp
+}
+
+// NewMsgNOERROR creates an empty response pretending there is no address associated with the requested name.
+func (s *Server) NewMsgNOERROR(req *dns.Msg) (resp *dns.Msg) {
+	resp = s.replyCompressed(req)
 	resp.Ns = s.genSOA(req)
 
 	return resp

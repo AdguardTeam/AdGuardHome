@@ -208,6 +208,9 @@ const (
 	// BlockingModeNXDOMAIN means respond with the NXDOMAIN code.
 	BlockingModeNXDOMAIN BlockingMode = "nxdomain"
 
+	// BlockingModeNOERROR means respond with the NOERROR code.
+	BlockingModeNOERROR BlockingMode = "noerror"
+
 	// BlockingModeREFUSED means respond with the REFUSED code.
 	BlockingModeREFUSED BlockingMode = "refused"
 )
