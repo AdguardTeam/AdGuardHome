@@ -12,6 +12,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/netutil"
 )
@@ -29,6 +30,12 @@ type DHCPServer struct {
 
 	// deviceManager is the manager of network devices.
 	deviceManager NetworkDeviceManager
+
+	// devices are the network devices opened in [DHCPServer.Start], mapped to
+	// their names.  Those are closed in [DHCPServer.Shutdown].
+	//
+	// TODO(e.burkov):  Consider storing those within interfaces.
+	devices container.KeyValues[string, NetworkDevice]
 
 	// localTLD is the top-level domain name to use for resolving DHCP clients'
 	// hostnames.
@@ -137,9 +144,11 @@ func (srv *DHCPServer) Start(ctx context.Context) (err error) {
 
 	var errs []error
 	for _, iface := range srv.interfaces4 {
-		var nd NetworkDevice
-		nd, err = srv.deviceManager.Open(ctx, &NetworkDeviceConfig{
-			Name: iface.common.name,
+		netDevName := iface.common.name
+
+		var netDev NetworkDevice
+		netDev, err = srv.deviceManager.Open(ctx, &NetworkDeviceConfig{
+			Name: netDevName,
 		})
 		if err != nil {
 			errs = append(errs, err)
@@ -147,7 +156,12 @@ func (srv *DHCPServer) Start(ctx context.Context) (err error) {
 			continue
 		}
 
-		go srv.serveEther4(context.WithoutCancel(ctx), iface, nd)
+		srv.devices = append(srv.devices, container.KeyValue[string, NetworkDevice]{
+			Key:   netDevName,
+			Value: netDev,
+		})
+
+		go srv.serveEther4(context.WithoutCancel(ctx), iface, netDev)
 	}
 
 	// TODO(e.burkov):  Serve EthernetTypeIPv6.
@@ -159,9 +173,17 @@ func (srv *DHCPServer) Start(ctx context.Context) (err error) {
 func (srv *DHCPServer) Shutdown(ctx context.Context) (err error) {
 	srv.logger.DebugContext(ctx, "shutting down dhcp server")
 
-	// TODO(e.burkov):  Close the packet source.
+	var errs []error
+	for _, kv := range srv.devices {
+		netDevName, netDev := kv.Key, kv.Value
 
-	return nil
+		err = netDev.Close()
+		if err != nil {
+			errs = append(errs, fmt.Errorf("closing device %q: %w", netDevName, err))
+		}
+	}
+
+	return errors.Join(errs...)
 }
 
 // Enabled implements the [Interface] interface for *DHCPServer.
