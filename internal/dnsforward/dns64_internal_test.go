@@ -63,7 +63,7 @@ func newRR(tb testing.TB, name string, qtype uint16, ttl uint32, val any) (rr dn
 	return rr
 }
 
-func TestServer_Handle_dns64(t *testing.T) {
+func TestServer_ServeDNS_dns64(t *testing.T) {
 	t.Parallel()
 
 	const (

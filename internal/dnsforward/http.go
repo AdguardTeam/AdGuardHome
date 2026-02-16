@@ -52,11 +52,11 @@ type jsonDNSConfig struct {
 
 	// RatelimitSubnetLenIPv4 is a subnet length for IPv4 addresses used for
 	// rate limiting requests.
-	RatelimitSubnetLenIPv4 *int `json:"ratelimit_subnet_len_ipv4"`
+	RatelimitSubnetLenIPv4 *uint `json:"ratelimit_subnet_len_ipv4"`
 
 	// RatelimitSubnetLenIPv6 is a subnet length for IPv6 addresses used for
 	// rate limiting requests.
-	RatelimitSubnetLenIPv6 *int `json:"ratelimit_subnet_len_ipv6"`
+	RatelimitSubnetLenIPv6 *uint `json:"ratelimit_subnet_len_ipv6"`
 
 	// UpstreamTimeout is an upstream timeout in seconds.
 	UpstreamTimeout *int `json:"upstream_timeout"`
@@ -519,7 +519,7 @@ func (req *jsonDNSConfig) checkUpstreamTimeout() (err error) {
 
 // checkInclusion returns an error if a ptr is not nil and points to value,
 // that not in the inclusive range between minN and maxN.
-func checkInclusion(ptr *int, minN, maxN int) (err error) {
+func checkInclusion(ptr *uint, minN, maxN uint) (err error) {
 	if ptr == nil {
 		return nil
 	}
@@ -828,7 +828,7 @@ func (s *Server) handleSetProtection(w http.ResponseWriter, r *http.Request) {
 //	-> dnsforward.ServeHTTP
 //	-> proxy.ServeHTTP
 //	-> proxy.handleDNSRequest
-//	-> dnsforward.Handle
+//	-> dnsforward.ServeDNS
 func (s *Server) handleDoH(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	l := s.logger

@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestServer_Handle(t *testing.T) {
+func TestServer_ServeDNS(t *testing.T) {
 	rules := `
 ||blocked.domain^
 @@||allowed.domain^
@@ -200,7 +200,7 @@ func TestServer_Handle(t *testing.T) {
 		}
 
 		t.Run(tc.name, func(t *testing.T) {
-			err = s.Handle(nil, dctx)
+			err = s.ServeDNS(nil, dctx)
 			require.NoError(t, err)
 			require.NotNil(t, dctx.Res)
 
@@ -213,7 +213,7 @@ func TestServer_Handle(t *testing.T) {
 // TODO(e.burkov):  Rewrite this test to use the whole server instead of just
 // testing the [Handle] method.  See comment on "from_external_for_local" test
 // case.
-func TestServer_Handle_restrictLocal(t *testing.T) {
+func TestServer_ServeDNS_restrictLocal(t *testing.T) {
 	intAddr := netip.MustParseAddr("192.168.1.1")
 	intPTRQuestion, err := netutil.IPToReversedAddr(intAddr.AsSlice())
 	require.NoError(t, err)
@@ -335,7 +335,7 @@ func TestServer_Handle_restrictLocal(t *testing.T) {
 		}
 
 		t.Run(tc.name, func(t *testing.T) {
-			err = s.Handle(s.dnsProxy, pctx)
+			err = s.ServeDNS(s.dnsProxy, pctx)
 			require.ErrorIs(t, err, tc.wantErr)
 
 			require.NotNil(t, pctx.Res)

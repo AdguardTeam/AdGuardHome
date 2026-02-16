@@ -20,6 +20,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/dnsproxy/proxy"
+	"github.com/AdguardTeam/dnsproxy/ratelimit"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/errors"
@@ -48,11 +49,11 @@ type Config struct {
 
 	// RatelimitSubnetLenIPv4 is a subnet length for IPv4 addresses used for
 	// rate limiting requests.
-	RatelimitSubnetLenIPv4 int `yaml:"ratelimit_subnet_len_ipv4"`
+	RatelimitSubnetLenIPv4 uint `yaml:"ratelimit_subnet_len_ipv4"`
 
 	// RatelimitSubnetLenIPv6 is a subnet length for IPv6 addresses used for
 	// rate limiting requests.
-	RatelimitSubnetLenIPv6 int `yaml:"ratelimit_subnet_len_ipv6"`
+	RatelimitSubnetLenIPv6 uint `yaml:"ratelimit_subnet_len_ipv6"`
 
 	// RatelimitWhitelist is the list of whitelisted client IP addresses.
 	RatelimitWhitelist []netip.Addr `yaml:"ratelimit_whitelist"`
@@ -325,13 +326,14 @@ func (s *Server) newProxyConfig(ctx context.Context) (conf *proxy.Config, err er
 	srvConf := s.conf
 	trustedPrefixes := netutil.UnembedPrefixes(srvConf.TrustedProxies)
 
+	ratelimitMw, err := prepareRatelimitMw(ctx, s.baseLogger, srvConf)
+	if err != nil {
+		return nil, fmt.Errorf("ratelimit middleware: %w", err)
+	}
+
 	conf = &proxy.Config{
 		Logger:                    s.baseLogger.With(slogutil.KeyPrefix, aghslog.PrefixDNSProxy),
 		HTTP3:                     srvConf.ServeHTTP3,
-		Ratelimit:                 int(srvConf.Ratelimit),
-		RatelimitSubnetLenIPv4:    srvConf.RatelimitSubnetLenIPv4,
-		RatelimitSubnetLenIPv6:    srvConf.RatelimitSubnetLenIPv6,
-		RatelimitWhitelist:        srvConf.RatelimitWhitelist,
 		RefuseAny:                 srvConf.RefuseAny,
 		TrustedProxies:            netutil.SliceSubnetSet(trustedPrefixes),
 		CacheMinTTL:               srvConf.CacheMinTTL,
@@ -342,7 +344,7 @@ func (s *Server) newProxyConfig(ctx context.Context) (conf *proxy.Config, err er
 		UpstreamConfig:            srvConf.UpstreamConfig,
 		PrivateRDNSUpstreamConfig: srvConf.PrivateRDNSUpstreamConfig,
 		BeforeRequestHandler:      s,
-		RequestHandler:            s,
+		RequestHandler:            ratelimitMw.Wrap(s),
 		HTTPSServerName:           aghhttp.UserAgent(),
 		EnableEDNSClientSubnet:    srvConf.EDNSClientSubnet.Enabled,
 		MaxGoroutines:             srvConf.MaxGoroutines,
@@ -393,6 +395,29 @@ func (s *Server) newProxyConfig(ctx context.Context) (conf *proxy.Config, err er
 	}
 
 	return conf, nil
+}
+
+// initRatelimitMw creates, validates and returns the ratelimit middleware.
+func prepareRatelimitMw(
+	_ context.Context,
+	l *slog.Logger,
+	conf ServerConfig,
+) (mw proxy.Middleware, err error) {
+	if conf.Ratelimit == 0 {
+		return proxy.MiddlewareFunc(proxy.PassThrough), nil
+	}
+
+	rlConf := &ratelimit.Config{
+		Logger:        l.With(slogutil.KeyPrefix, "ratelimit"),
+		Ratelimit:     uint(conf.Ratelimit),
+		SubnetLenIPv4: conf.RatelimitSubnetLenIPv4,
+		SubnetLenIPv6: conf.RatelimitSubnetLenIPv6,
+	}
+	if err = rlConf.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid configuration: %w", err)
+	}
+
+	return ratelimit.NewMiddleware(rlConf), nil
 }
 
 // prepareCacheConfig prepares the cache configuration and returns an error if

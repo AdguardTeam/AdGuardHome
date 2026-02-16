@@ -9,10 +9,10 @@ import (
 )
 
 // type check
-var _ proxy.RequestHandler = (*Server)(nil)
+var _ proxy.Handler = (*Server)(nil)
 
-// Handle implements the [proxy.RequestHandler] interface for [*Server].
-func (s *Server) Handle(_ *proxy.Proxy, pctx *proxy.DNSContext) (err error) {
+// ServeDNS implements the [proxy.Handler] interface for [*Server].
+func (s *Server) ServeDNS(_ *proxy.Proxy, pctx *proxy.DNSContext) (err error) {
 	// TODO(s.chzhen):  Pass context.
 	ctx := context.TODO()
 
@@ -24,8 +24,8 @@ func (s *Server) Handle(_ *proxy.Proxy, pctx *proxy.DNSContext) (err error) {
 
 	type modProcessFunc func(ctx context.Context, dctx *dnsContext) (rc resultCode)
 
-	// Since [*dnsforward.Server] is used as [proxy.RequestHandler], there is no
-	// need for additional index out of range checking in any of the following
+	// Since [*dnsforward.Server] is used as [proxy.Handler], there is no need
+	// for additional index out of range checking in any of the following
 	// functions, because the (*proxy.Proxy).handleDNSRequest method performs it
 	// before calling the appropriate handler.
 	mods := []modProcessFunc{
