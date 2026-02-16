@@ -3,7 +3,7 @@
 # This comment is used to simplify checking local copies of the script.  Bump
 # this number every time a significant change is made to this script.
 #
-# AdGuard-Project-Version: 6
+# AdGuard-Project-Version: 7
 
 verbose="${VERBOSE:-0}"
 readonly verbose
@@ -74,7 +74,7 @@ go_test 2>&1 \
 # Don't fail on errors in exporting, because TEST_REPORTS_DIR is generally only
 # not empty in CI, and so the exit code must be preserved to exit with it later.
 set +e
-go-junit-report \
+"${GO:-go}" tool go-junit-report \
 	--in "${test_reports_dir}/test-output.txt" \
 	--set-exit-code \
 	>"${test_reports_dir}/test-report.xml"

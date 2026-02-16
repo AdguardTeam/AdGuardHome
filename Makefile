@@ -7,7 +7,7 @@
 # This comment is used to simplify checking local copies of the Makefile.  Bump
 # this number every time a significant change is made to this Makefile.
 #
-# AdGuard-Project-Version: 10
+# AdGuard-Project-Version: 12
 
 # Don't name these macros "GO" etc., because GNU Make apparently makes them
 # exported environment variables with the literal value of "${GO:-go}" and so
@@ -25,7 +25,7 @@ DIST_DIR = dist
 GOAMD64 = v1
 GOPROXY = https://proxy.golang.org|direct
 GOTELEMETRY = off
-GOTOOLCHAIN = go1.25.5
+GOTOOLCHAIN = go1.25.7
 GPG_KEY = devteam@adguard.com
 GPG_KEY_PASSPHRASE = not-a-real-password
 NPM = npm
@@ -52,31 +52,33 @@ FRONTEND_PREBUILT = 0
 BUILD_RELEASE_DEPS_0 = deps js-build
 BUILD_RELEASE_DEPS_1 = go-deps
 
-ENV = env\
-	CHANNEL='$(CHANNEL)'\
+# TODO(f.setrakov): Remove the bin directory from the paths, as it is no longer
+# needed.
+ENV = env \
+	CHANNEL='$(CHANNEL)' \
 	DEPLOY_SCRIPT_PATH='$(DEPLOY_SCRIPT_PATH)' \
-	DIST_DIR='$(DIST_DIR)'\
-	GO="$(GO.MACRO)"\
-	GOAMD64='$(GOAMD64)'\
-	GOPROXY='$(GOPROXY)'\
-	GOTELEMETRY='$(GOTELEMETRY)'\
-	GOTOOLCHAIN='$(GOTOOLCHAIN)'\
-	GPG_KEY='$(GPG_KEY)'\
-	GPG_KEY_PASSPHRASE='$(GPG_KEY_PASSPHRASE)'\
-	NEXTAPI='$(NEXTAPI)'\
-	PATH="$${PWD}/bin:$$( "$(GO.MACRO)" env GOPATH )/bin:$${PATH}"\
-	RACE='$(RACE)'\
-	REVISION='$(REVISION)'\
-	SIGN='$(SIGN)'\
+	DIST_DIR='$(DIST_DIR)' \
+	GO="$(GO.MACRO)" \
+	GOAMD64='$(GOAMD64)' \
+	GOPROXY='$(GOPROXY)' \
+	GOTELEMETRY='$(GOTELEMETRY)' \
+	GOTOOLCHAIN='$(GOTOOLCHAIN)' \
+	GPG_KEY='$(GPG_KEY)' \
+	GPG_KEY_PASSPHRASE='$(GPG_KEY_PASSPHRASE)' \
+	NEXTAPI='$(NEXTAPI)' \
+	PATH="$${PWD}/bin:$$("$(GO.MACRO)" env GOPATH)/bin:$${PATH}" \
+	RACE='$(RACE)' \
+	REVISION="$(REVISION)" \
+	SIGN='$(SIGN)' \
 	SIGNER_API_KEY='$(SIGNER_API_KEY)' \
-	VERBOSE="$(VERBOSE.MACRO)"\
-	VERSION="$(VERSION)"\
+	VERBOSE="$(VERBOSE.MACRO)" \
+	VERSION="$(VERSION)" \
 
 # Keep the line above blank.
 
-ENV_MISC = env\
-	PATH="$${PWD}/bin:$$("$(GO.MACRO)" env GOPATH)/bin:$${PATH}"\
-	VERBOSE="$(VERBOSE.MACRO)"\
+ENV_MISC = env \
+	PATH="$${PWD}/bin:$$("$(GO.MACRO)" env GOPATH)/bin:$${PATH}" \
+	VERBOSE="$(VERBOSE.MACRO)" \
 
 # Keep the line above blank.
 
@@ -113,7 +115,7 @@ js-test:      ; $(NPM) $(NPM_FLAGS) run test
 js-test-e2e:  ; $(NPM) $(NPM_FLAGS) run test:e2e
 
 # TODO(a.garipov): Think about making RACE='1' the default for all targets.
-.PHONY: go-bench go-build go-deps go-env go-fuzz go-lint go-test go-tools go-upd-tools
+.PHONY: go-bench go-build go-deps go-env go-fuzz go-lint go-test go-upd-tools
 go-bench:     ; $(ENV)          "$(SHELL)"    ./scripts/make/go-bench.sh
 go-build:     ; $(ENV)          "$(SHELL)"    ./scripts/make/go-build.sh
 go-deps:      ; $(ENV)          "$(SHELL)"    ./scripts/make/go-deps.sh
@@ -121,11 +123,10 @@ go-env:       ; $(ENV)          "$(GO.MACRO)" env
 go-fuzz:      ; $(ENV)          "$(SHELL)"    ./scripts/make/go-fuzz.sh
 go-lint:      ; $(ENV)          "$(SHELL)"    ./scripts/make/go-lint.sh
 go-test:      ; $(ENV) RACE='1' "$(SHELL)"    ./scripts/make/go-test.sh
-go-tools:     ; $(ENV)          "$(SHELL)"    ./scripts/make/go-tools.sh
 go-upd-tools: ; $(ENV)          "$(SHELL)"    ./scripts/make/go-upd-tools.sh
 
 .PHONY: go-check
-go-check: go-tools go-lint go-test
+go-check: go-lint go-test
 
 # A quick check to make sure that all operating systems relevant to the
 # development of the project can be typechecked and built successfully.
@@ -145,7 +146,7 @@ go-os-check:
 txt-lint: ; $(ENV) "$(SHELL)" ./scripts/make/txt-lint.sh
 
 .PHONY: md-lint sh-lint
-md-lint:  ; $(ENV_MISC) "$(SHELL)" ./scripts/make/md-lint.sh
-sh-lint:  ; $(ENV_MISC) "$(SHELL)" ./scripts/make/sh-lint.sh
+md-lint: ; $(ENV_MISC) "$(SHELL)" ./scripts/make/md-lint.sh
+sh-lint: ; $(ENV_MISC) "$(SHELL)" ./scripts/make/sh-lint.sh
 
 # TODO(a.garipov):  Re-add openapi-lint.

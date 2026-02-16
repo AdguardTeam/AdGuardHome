@@ -1,10 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
-	"io"
 	"log/slog"
 	"net/http"
 	"net/url"
@@ -150,14 +151,20 @@ func saveToFile(
 		return fmt.Errorf("getting translation %q: %s", code, err)
 	}
 
-	if data[len(data)-1] != '\n' {
-		data = append(data, '\n')
+	buf := &bytes.Buffer{}
+	enc := json.NewEncoder(buf)
+	enc.SetIndent("", "  ")
+	enc.SetEscapeHTML(false)
+
+	err = enc.Encode(data)
+	if err != nil {
+		return fmt.Errorf("encoding translation %q: %w", code, err)
 	}
 
 	name := filepath.Join(localesDir, code+".json")
-	err = os.WriteFile(name, data, 0o664)
+	err = os.WriteFile(name, buf.Bytes(), 0o664)
 	if err != nil {
-		return fmt.Errorf("writing file: %s", err)
+		return fmt.Errorf("writing file: %w", err)
 	}
 
 	fmt.Println(name)
@@ -173,7 +180,7 @@ func getTranslation(
 	l *slog.Logger,
 	client *http.Client,
 	url string,
-) (data []byte, err error) {
+) (data map[string]any, err error) {
 	resp, err := client.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("requesting: %w", err)
@@ -189,12 +196,14 @@ func getTranslation(
 
 	limitReader := ioutil.LimitReader(resp.Body, readLimit.Bytes())
 
-	data, readErr := io.ReadAll(limitReader)
-	if readErr != nil {
-		return nil, errors.WithDeferred(err, readErr)
+	dec := json.NewDecoder(limitReader)
+
+	decodeErr := dec.Decode(&data)
+	if decodeErr != nil {
+		return nil, errors.WithDeferred(err, decodeErr)
 	}
 
-	return data, validate.NotEmptySlice("response", data)
+	return data, validate.NotEmpty("response", len(data))
 }
 
 // translationURL returns a new url.URL with provided query parameters.

@@ -1,7 +1,7 @@
 'name': 'lint'
 
 'env':
-  'GO_VERSION': '1.25.5'
+  'GO_VERSION': '1.25.7'
 
 'on':
   'push':
@@ -22,7 +22,7 @@
         'go-version': '${{ env.GO_VERSION }}'
     - 'name': 'run-lint'
       'run': >
-        make go-deps go-tools go-lint
+        make go-deps go-lint
 
   'eslint':
     'runs-on': 'ubuntu-latest'
