@@ -110,6 +110,8 @@ valid_json() {
 
 run_linter -e trailing_newlines
 
+run_linter -e trailing_whitespace
+
 run_linter -e valid_json
 
 go="${GO:-go}"
