@@ -6,8 +6,8 @@ cloud.google.com/go/compute/metadata v0.9.0 h1:pDUj4QMoPejqq20dK0Pg2N4yG9zIkYGdB
 cloud.google.com/go/compute/metadata v0.9.0/go.mod h1:E0bWwX5wTnLPedCKqk3pJmVgCBSM6qQI1yTBdEb3C10=
 github.com/AdguardTeam/dnsproxy v0.78.2 h1:g+ba4vh72hAv9zIE+OPSEnu77utSKxIF6u2jNhYAR7g=
 github.com/AdguardTeam/dnsproxy v0.78.2/go.mod h1:gwr+7Dc0e7QddQLC9JLGjL5NSKcqw0ESsNMRI5Q67Ps=
-github.com/AdguardTeam/golibs v0.35.7 h1:pTQpixUos7mALr3jqb0pigfrkiqPAX1hiYUi/yeBWiA=
-github.com/AdguardTeam/golibs v0.35.7/go.mod h1:meFdRqMtG/PLW6LD20MYAlcRbwAVowlbunHgE17xz9s=
+github.com/AdguardTeam/golibs v0.35.8 h1:KsyF3SWwj05Ey4GiAWU6FGD9oJTDNMp1ixVdS+Nw50M=
+github.com/AdguardTeam/golibs v0.35.8/go.mod h1:kuLQ0yNRTl0Em2FmmXtSri7ZdVT7p62oojyc51RvP38=
 github.com/AdguardTeam/urlfilter v0.23.1 h1:ifoms1xhof83+IPz96NsZt0h8knXOlL/lNP1cHjndfE=
 github.com/AdguardTeam/urlfilter v0.23.1/go.mod h1:Fl4eR1sOdx/1kdBRIY8JZHb91h7uab1Wxz4YzJlXTMw=
 github.com/BurntSushi/toml v1.6.0 h1:dRaEfpa2VI55EwlIW72hMRHdWouJeRF7TPYhI+AUQjk=
