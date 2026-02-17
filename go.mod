@@ -4,7 +4,7 @@ go 1.25.7
 
 require (
 	// TODO(d.kolyshev): !! Use tagged version.
-	github.com/AdguardTeam/dnsproxy v0.78.3-0.20260216060042-bfa1c9e769e4
+	github.com/AdguardTeam/dnsproxy v0.78.3-0.20260217020446-13774cd2ada5
 	github.com/AdguardTeam/golibs v0.35.7
 	github.com/AdguardTeam/urlfilter v0.23.1
 	github.com/NYTimes/gziphandler v1.1.1

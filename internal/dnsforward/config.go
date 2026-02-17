@@ -326,7 +326,7 @@ func (s *Server) newProxyConfig(ctx context.Context) (conf *proxy.Config, err er
 	srvConf := s.conf
 	trustedPrefixes := netutil.UnembedPrefixes(srvConf.TrustedProxies)
 
-	ratelimitMw, err := prepareRatelimitMw(ctx, s.baseLogger, srvConf)
+	ratelimitMw, err := prepareRatelimitMw(s.baseLogger, srvConf)
 	if err != nil {
 		return nil, fmt.Errorf("ratelimit middleware: %w", err)
 	}
@@ -397,9 +397,9 @@ func (s *Server) newProxyConfig(ctx context.Context) (conf *proxy.Config, err er
 	return conf, nil
 }
 
-// initRatelimitMw creates, validates and returns the ratelimit middleware.
+// initRatelimitMw creates, validates and returns the ratelimit middleware.  l
+// must not be nil, conf must be valid.
 func prepareRatelimitMw(
-	_ context.Context,
 	l *slog.Logger,
 	conf ServerConfig,
 ) (mw proxy.Middleware, err error) {
