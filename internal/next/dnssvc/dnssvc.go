@@ -71,8 +71,7 @@ func New(c *Config) (svc *Service, err error) {
 	svc = &Service{
 		logger: c.Logger,
 		proxyConf: &proxy.Config{
-			UpstreamMode: c.UpstreamMode,
-			// TODO(d.kolyshev): !! Add ratelimit?
+			UpstreamMode:   c.UpstreamMode,
 			DNS64Prefs:     c.DNS64Prefixes,
 			CacheSizeBytes: c.CacheSize,
 			CacheEnabled:   c.CacheEnabled,
@@ -268,6 +267,7 @@ func (svc *Service) Config() (c *Config) {
 		}
 	}
 
+	// TODO(d.kolyshev): Fill ratelimit.
 	c = &Config{
 		Logger:              svc.logger,
 		UpstreamMode:        svc.proxyConf.UpstreamMode,
