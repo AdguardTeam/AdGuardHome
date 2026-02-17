@@ -262,7 +262,7 @@ func (m *tlsManager) reload(ctx context.Context) {
 
 	err = m.loadTLSConfig(ctx, &tlsConf, status)
 	if err != nil {
-		m.logger.ErrorContext(ctx, "reloading", slogutil.KeyError, err)
+		m.logger.WarnContext(ctx, "reloading interrupted", slogutil.KeyError, err)
 
 		return
 	}
