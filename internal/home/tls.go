@@ -326,13 +326,13 @@ func (m *tlsManager) loadTLSConfig(
 		}
 	}()
 
-	err = loadCertificateChainData(tlsConf, status)
+	err = loadCertificateChainData(tlsConf)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
 		return err
 	}
 
-	err = loadPrivateKeyData(tlsConf, status)
+	err = loadPrivateKeyData(tlsConf)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
 		return err
@@ -351,7 +351,7 @@ func (m *tlsManager) loadTLSConfig(
 
 // loadCertificateChainData loads PEM-encoded certificates chain data to the
 // TLS configuration.
-func loadCertificateChainData(tlsConf *tlsConfigSettings, status *tlsConfigStatus) (err error) {
+func loadCertificateChainData(tlsConf *tlsConfigSettings) (err error) {
 	tlsConf.CertificateChainData = []byte(tlsConf.CertificateChain)
 	if tlsConf.CertificatePath != "" {
 		if tlsConf.CertificateChain != "" {
@@ -362,10 +362,6 @@ func loadCertificateChainData(tlsConf *tlsConfigSettings, status *tlsConfigStatu
 		if err != nil {
 			return fmt.Errorf("reading cert file: %w", err)
 		}
-
-		// Set status.ValidCert to true to signal the frontend that the
-		// certificate opens successfully while the private key can't be opened.
-		status.ValidCert = true
 	}
 
 	return nil
@@ -373,7 +369,7 @@ func loadCertificateChainData(tlsConf *tlsConfigSettings, status *tlsConfigStatu
 
 // loadPrivateKeyData loads PEM-encoded private key data to the TLS
 // configuration.
-func loadPrivateKeyData(tlsConf *tlsConfigSettings, status *tlsConfigStatus) (err error) {
+func loadPrivateKeyData(tlsConf *tlsConfigSettings) (err error) {
 	tlsConf.PrivateKeyData = []byte(tlsConf.PrivateKey)
 	if tlsConf.PrivateKeyPath != "" {
 		if tlsConf.PrivateKey != "" {
@@ -384,8 +380,6 @@ func loadPrivateKeyData(tlsConf *tlsConfigSettings, status *tlsConfigStatus) (er
 		if err != nil {
 			return fmt.Errorf("reading key file: %w", err)
 		}
-
-		status.ValidKey = true
 	}
 
 	return nil
