@@ -21,6 +21,7 @@ import (
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/golibs/netutil"
 )
 
 // Service is the AdGuard Home DNS service.  A nil *Service is a valid
@@ -63,7 +64,7 @@ func New(c *Config) (svc *Service, err error) {
 		return nil, nil
 	}
 
-	rlMw, err := prepareRatelimitMw(c.Logger, c.Ratelimit)
+	rlMw, err := newRatelimitMw(c.Logger, c.Ratelimit)
 	if err != nil {
 		return nil, fmt.Errorf("ratelimit middleware: %w", err)
 	}
@@ -118,15 +119,18 @@ func New(c *Config) (svc *Service, err error) {
 	return svc, nil
 }
 
-// initRatelimitMw creates, validates and returns the ratelimit middleware.
-func prepareRatelimitMw(l *slog.Logger, limit int) (mw proxy.Middleware, err error) {
+// newRatelimitMw returns the ratelimit middleware.  In case of invalid
+// ratelimit configuration returns an error. l must not be nil.
+func newRatelimitMw(l *slog.Logger, limit int) (mw proxy.Middleware, err error) {
 	if limit == 0 {
 		return proxy.MiddlewareFunc(proxy.PassThrough), nil
 	}
 
 	rlConf := &ratelimit.Config{
-		Logger:    l.With(slogutil.KeyPrefix, "ratelimit"),
-		Ratelimit: uint(limit),
+		Logger:        l.With(slogutil.KeyPrefix, "ratelimit"),
+		Ratelimit:     uint(limit),
+		SubnetLenIPv4: netutil.IPv4BitLen,
+		SubnetLenIPv6: netutil.IPv6BitLen,
 	}
 	if err = rlConf.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid configuration: %w", err)
