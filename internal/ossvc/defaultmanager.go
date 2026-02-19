@@ -1,15 +1,12 @@
 package ossvc
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"log/slog"
 	"os"
 	"path/filepath"
 	"runtime"
-	"strconv"
-	"syscall"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/errors"
@@ -123,51 +120,8 @@ func (m *manager) Status(ctx context.Context, name ServiceName) (status Status, 
 var _ ReloadManager = (*manager)(nil)
 
 // Reload implements the [ReloadManager] interface for *manager.
-//
-// TODO(e.burkov):  On Windows just don't implement this interface.
 func (m *manager) Reload(ctx context.Context, name ServiceName) (err error) {
-	if runtime.GOOS == "windows" {
-		return errors.ErrUnsupported
-	}
-
-	nameStr := string(name)
-
-	var pid int
-	pidFile := filepath.Join("/var", "run", nameStr+".pid")
-	data, err := os.ReadFile(pidFile)
-	if err != nil {
-		if !errors.Is(err, os.ErrNotExist) {
-			return fmt.Errorf("reading service pid file: %w", err)
-		}
-
-		pid, err = aghos.PIDByCommand(ctx, m.logger, nameStr, os.Getpid())
-		if err != nil {
-			return fmt.Errorf("finding process: %w", err)
-		}
-	} else {
-		parts := bytes.SplitN(data, []byte("\n"), 2)
-		if len(parts) == 0 {
-			return fmt.Errorf("parsing %q: %w", pidFile, errors.ErrEmptyValue)
-		}
-
-		pidStr := string(bytes.TrimSpace(parts[0]))
-		pid, err = strconv.Atoi(pidStr)
-		if err != nil {
-			return fmt.Errorf("parsing pid from %q: %w", pidFile, err)
-		}
-	}
-
-	proc, err := os.FindProcess(pid)
-	if err != nil {
-		return fmt.Errorf("finding process with pid %d: %w", pid, err)
-	}
-
-	err = proc.Signal(syscall.SIGHUP)
-	if err != nil {
-		return fmt.Errorf("sending sighup to process with pid %d: %w", pid, err)
-	}
-
-	return nil
+	return m.reload(ctx, name)
 }
 
 // install installs the service in the service manager.
@@ -364,7 +318,7 @@ func (m *manager) runInitdCommand(
 }
 
 // emptyInterface is an empty implementation of the [service.Interface], as the
-// actual implementation is onlyy needed for the [service.Service.Run] method.
+// actual implementation is only needed for the [service.Service.Run] method.
 type emptyInterface struct{}
 
 // type check
