@@ -350,7 +350,9 @@ func (m *tlsManager) loadTLSConfig(
 }
 
 // loadCertificateChainData loads PEM-encoded certificates chain data to the
-// TLS configuration.
+// TLS configuration. tlsConf must be not nil. tlsConf.CertificateChainData
+// struct field will be modified in case tlsConfig.CertificatePath is not an
+// empty string.
 func loadCertificateChainData(tlsConf *tlsConfigSettings) (err error) {
 	tlsConf.CertificateChainData = []byte(tlsConf.CertificateChain)
 	if tlsConf.CertificatePath != "" {
@@ -368,7 +370,8 @@ func loadCertificateChainData(tlsConf *tlsConfigSettings) (err error) {
 }
 
 // loadPrivateKeyData loads PEM-encoded private key data to the TLS
-// configuration.
+// configuration. tlsConf must be not nil. tlsConf.PrivateKeyData struct field
+// will be modified in case tlsConfig.PrivateKeyPath is not an empty string.
 func loadPrivateKeyData(tlsConf *tlsConfigSettings) (err error) {
 	tlsConf.PrivateKeyData = []byte(tlsConf.PrivateKey)
 	if tlsConf.PrivateKeyPath != "" {
@@ -948,6 +951,8 @@ func (m *tlsManager) validateCertificates(
 			return keyErr
 		}
 
+		// Set status.ValidKey to true to signal the frontend that the
+		// key is valid.
 		status.ValidKey = true
 	}
 
@@ -976,6 +981,9 @@ func (m *tlsManager) validateCertificate(
 	// parseErr is a non-critical parse warning.
 	var parseErr error
 	var certs []*x509.Certificate
+
+	// Set status.ValidCert to true to signal the frontend that the
+	// certificate opens successfully and certificate chain is valid.
 	certs, status.ValidCert, parseErr = m.parseCertChain(ctx, certChain)
 	if !status.ValidCert {
 		// Don't wrap the error, since it's informative enough as is.
