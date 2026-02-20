@@ -5,9 +5,12 @@
     'key': 'AHBRTSPECS'
     'name': 'AdGuard Home - Build and run tests'
 'variables':
+    # This variable is used to override Docker caching, for example to rerun a
+    # flaky test suite.
+    'cacheBuster': '0'
+    'channel': 'development'
     'dockerFrontend': 'adguard/home-js-builder:4.0'
     'dockerGo': 'adguard/go-builder:1.25.7--1'
-    'channel': 'development'
 
 'stages':
   - 'Tests':
@@ -36,10 +39,8 @@
         - 'Test e2e'
 
 'Test frontend':
-    'docker':
-        'image': '${bamboo.dockerFrontend}'
-        'volumes':
-            '${system.NPM_DIR}': '${bamboo.cacheNpm}'
+    'final-tasks':
+      - 'clean'
     'key': 'JSTEST'
     'other':
         'clean-working-dir': true
@@ -54,19 +55,18 @@
 
                 set -e -f -u -x
 
-                make VERBOSE=1 js-deps js-typecheck js-lint js-test
-    'final-tasks':
-      - 'clean'
-    'requirements':
-      - 'golang': true
+                docker info
 
-# TODO(e.burkov):  Add the linting stage for markdown docs and shell scripts.
+                docker build \
+                    --build-arg "BASE_IMAGE=${bamboo.dockerFrontend}" \
+                    --build-arg "CACHE_BUSTER=${bamboo_cacheBuster}" \
+                    --output '.' \
+                    --progress 'plain' \
+                    --target 'tester' \
+                    -f ./docker/frontend.Dockerfile \
+                    .
+
 'Test backend':
-    'docker':
-        'image': '${bamboo.dockerGo}'
-        'volumes':
-            '${system.GO_CACHE_DIR}': '${bamboo.cacheGo}'
-            '${system.GO_PKG_CACHE_DIR}': '${bamboo.cacheGoPkg}'
     'final-tasks':
       - 'test-parser':
           # The default pattern, '**/test-reports/*.xml', works, so don't set
@@ -88,35 +88,21 @@
 
                 set -e -f -u -x
 
-                # Do not sort the commands below, as they are arranged
-                # intentionally to keep faster commands first.
-                make \
-                    GOMAXPROCS=1 \
-                    VERBOSE=1 \
-                    go-deps \
-                    md-lint \
-                    sh-lint \
-                    txt-lint \
-                    go-lint \
-                    ;
+                docker info
 
-                make \
-                    TEST_REPORTS_DIR="./test-reports/" \
-                    VERBOSE=1 \
-                    go-test \
-                    ;
+                docker build \
+                    --build-arg "BASE_IMAGE=${bamboo_dockerGo}" \
+                    --build-arg "CACHE_BUSTER=${bamboo_cacheBuster}" \
+                    --output '.' \
+                    --progress 'plain' \
+                    --target 'tester-exporter' \
+                    -f ./docker/ci.Dockerfile \
+                    .
 
                 exit_code="$(cat ./test-reports/test-exit-code.txt)"
                 readonly exit_code
 
-                make VERBOSE=1 \
-                    go-fuzz \
-                    go-bench \
-                    ;
-
                 exit "$exit_code"
-    'requirements':
-      - 'golang': true
 
 'Build frontend':
     'artifacts':
@@ -124,10 +110,6 @@
         'pattern': 'build/**'
         'shared': true
         'required': true
-    'docker':
-        'image': '${bamboo.dockerFrontend}'
-        'volumes':
-            '${system.NPM_DIR}': '${bamboo.cacheNpm}'
     'key': 'BF'
     'other':
          'clean-working-dir': true
@@ -142,11 +124,16 @@
 
                 set -e -f -u -x
 
-                make\
-                        VERBOSE=1\
-                        js-deps js-build
-    'requirements':
-      - 'golang': true
+                docker info
+
+                docker build \
+                    --build-arg "BASE_IMAGE=${bamboo.dockerFrontend}" \
+                    --build-arg "CACHE_BUSTER=${bamboo_cacheBuster}" \
+                    --output '.' \
+                    --progress 'plain' \
+                    --target 'builder-exporter' \
+                    -f ./docker/frontend.Dockerfile \
+                    .
 
 'Artifact':
     'artifact-subscriptions':
@@ -164,11 +151,6 @@
         'pattern': 'dist/AdGuardHome_linux_amd64.tar.gz'
         'shared': true
         'required': true
-    'docker':
-        'image': '${bamboo.dockerGo}'
-        'volumes':
-         '${system.GO_CACHE_DIR}': '${bamboo.cacheGo}'
-         '${system.GO_PKG_CACHE_DIR}': '${bamboo.cacheGoPkg}'
     'key': 'ART'
     'other':
          'clean-working-dir': true
@@ -183,26 +165,28 @@
 
                 set -e -f -u -x
 
-                make\
-                        ARCH="amd64"\
-                        CHANNEL=${bamboo.channel}\
-                        FRONTEND_PREBUILT=1\
-                        OS="windows darwin linux"\
-                        PARALLELISM=1\
-                        SIGN=0\
-                        VERBOSE=2\
-                        build-release
-    'requirements':
-      - 'golang': true
+                docker info
+
+                docker build \
+                    --build-arg "ARCH=amd64" \
+                    --build-arg "BASE_IMAGE=${bamboo_dockerGo}" \
+                    --build-arg "BRANCH=${bamboo_planRepository_branchName}" \
+                    --build-arg "CACHE_BUSTER=${bamboo_cacheBuster}" \
+                    --build-arg "CHANNEL=${bamboo_channel}" \
+                    --build-arg "OS=windows darwin linux" \
+                    --build-arg "REVISION=${bamboo_repository_revision_number}" \
+                    --build-arg "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" \
+                    --build-arg "VERSION=${bamboo_buildNumber}" \
+                    --output '.' \
+                    --progress 'plain' \
+                    --target 'builder-exporter' \
+                    -f ./docker/ci.Dockerfile \
+                    .
 
 'Test e2e':
     'artifact-subscriptions':
       - 'artifact': 'AdGuardHome_linux_amd64'
       - 'artifact': 'AdGuardHome frontend'
-    'docker':
-        'image': '${bamboo.dockerFrontend}'
-        'volumes':
-            '${system.NPM_DIR}': '${bamboo.cacheNpm}'
     'key': 'E2ETEST'
     'other':
         'clean-working-dir': true
@@ -217,15 +201,20 @@
 
                 set -e -f -u -x
 
-                export CI=true
-
                 tar -xzf dist/AdGuardHome_linux_amd64.tar.gz -C /tmp
 
                 mv /tmp/AdGuardHome/AdGuardHome ./AdGuardHome
 
-                make VERBOSE=1 js-deps js-test-e2e
-    'requirements':
-      - 'golang': true
+                docker info
+
+                docker build \
+                    --build-arg "BASE_IMAGE=${bamboo.dockerFrontend}" \
+                    --build-arg "CACHE_BUSTER=${bamboo_cacheBuster}" \
+                    --output '.' \
+                    --progress 'plain' \
+                    --target 'e2etester' \
+                    -f ./docker/frontend.Dockerfile \
+                    .
 
 'branches':
     'create': 'for-pull-request'
