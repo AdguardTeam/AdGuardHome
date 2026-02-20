@@ -31,7 +31,7 @@ func newSlogLogger(ls *logSettings) (l *slog.Logger) {
 		lvl = slog.LevelDebug
 	}
 
-	logger := slogutil.New(&slogutil.Config{
+	l = slogutil.New(&slogutil.Config{
 		Format:       slogutil.FormatAdGuardLegacy,
 		Level:        lvl,
 		AddTimestamp: true,
@@ -44,7 +44,7 @@ func newSlogLogger(ls *logSettings) (l *slog.Logger) {
 		log.SetLevel(log.DEBUG)
 	}
 
-	return logger
+	return l
 }
 
 // configureLogger configures logger output.  ls must not be nil.
