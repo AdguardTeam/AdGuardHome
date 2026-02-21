@@ -52,7 +52,14 @@ readonly docker_push
 
 case "$channel" in
 'release')
-	docker_version_tag="--tag=${docker_image_name}:${version}"
+	V_MAJOR=$(echo "${version}" | awk -F'[. +-]' -vOFS='.' '{ print $1 }')
+	V_MINOR=$(echo "${version}" | awk -F'[. +-]' -vOFS='.' '{ print $1, $2 }')
+	V_PATCH=$(echo "${version}" | awk -F'[. +-]' -vOFS='.' '{ print $1, $2, $3 }')
+	docker_version_tag="\
+		--tag=${docker_image_name}:${version} \
+		--tag=${docker_image_name}:${V_PATCH} \
+		--tag=${docker_image_name}:${V_MINOR} \
+		--tag=${docker_image_name}:${V_MAJOR}"
 	docker_channel_tag="--tag=${docker_image_name}:latest"
 	;;
 'beta')
