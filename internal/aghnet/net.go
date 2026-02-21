@@ -392,7 +392,7 @@ func ParseBootstraps(
 	addrs []string,
 	opts *upstream.Options,
 ) (boots []*upstream.UpstreamResolver, err error) {
-	boots = make([]*upstream.UpstreamResolver, 0, len(boots))
+	boots = make([]*upstream.UpstreamResolver, 0, len(addrs))
 	for i, b := range addrs {
 		var r *upstream.UpstreamResolver
 		r, err = upstream.NewUpstreamResolver(b, opts)
