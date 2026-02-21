@@ -771,68 +771,93 @@ export const getObjectKeysSorted = <T extends Record<string, NestedObject>, K ex
 };
 
 /**
- * @param ip
- * @returns {[IPv4|IPv6, 33|129]}
+ * Helper function for IP and CIDR comparison (supports both v4 and v6). Creates an array of chunks that can be used for comparison.
+ * @param address - ip, cidr or domain name to create comparison chunks from
+ * @returns { (string | number)[] } The array of chunks to compare. Those are either bytes for IPs, or domain name parts.
  */
-const getParsedIpWithPrefixLength = (ip: any) => {
-    const MAX_PREFIX_LENGTH_V4 = 32;
-    const MAX_PREFIX_LENGTH_V6 = 128;
-
-    const parsedIp = ipaddr.parse(ip);
-    const prefixLength = parsedIp.kind() === 'ipv4' ? MAX_PREFIX_LENGTH_V4 : MAX_PREFIX_LENGTH_V6;
-
-    // Increment prefix length to always put IP after CIDR, e.g. 127.0.0.1/32, 127.0.0.1
-    return [parsedIp, prefixLength + 1];
-};
-
-/**
- * Helper function for IP and CIDR comparison (supports both v4 and v6)
- * @param item - ip or cidr
- * @returns {number[]}
- */
-const getAddressesComparisonBytes = (item: any) => {
-    // Sort ipv4 before ipv6
+const getAddressesComparisonChunks = (address: string, allowOnlyIpAddresses: boolean) => {
+    // Sort ipv4 before ipv6. Strings that are not IP addresses will be sorted after both.
     const IP_V4_COMPARISON_CODE = 0;
     const IP_V6_COMPARISON_CODE = 1;
+    const NOT_IP_ADDRESS = 2;
 
-    const [parsedIp, cidr] = ipaddr.isValid(item) ? getParsedIpWithPrefixLength(item) : ipaddr.parseCIDR(item);
+    try {
+        const [parsedIp, cidr] = ipaddr.isValid(address) ? [ ipaddr.parse(address), Number.MAX_SAFE_INTEGER ] : ipaddr.parseCIDR(address);
 
-    const [normalizedBytes, ipVersionComparisonCode] =
-        (parsedIp as IPv4 | IPv6).kind() === 'ipv4'
-            ? [(parsedIp as IPv4).toIPv4MappedAddress().parts, IP_V4_COMPARISON_CODE]
-            : [(parsedIp as IPv6).parts, IP_V6_COMPARISON_CODE];
+        const [normalizedBytes, ipVersionComparisonCode] =
+            parsedIp.kind() === 'ipv4'
+                ? [(parsedIp as IPv4).toIPv4MappedAddress().parts, IP_V4_COMPARISON_CODE]
+                : [(parsedIp as IPv6).parts, IP_V6_COMPARISON_CODE];
 
-    return [ipVersionComparisonCode, ...normalizedBytes, cidr];
+        return [ipVersionComparisonCode, ...normalizedBytes, cidr];
+    }
+    catch (e) {
+        if (allowOnlyIpAddresses) {
+            throw new Error(`Invalid address: ${address}. Only IP addresses and CIDRs are allowed.`, { cause: e });
+        }
+        
+        return [NOT_IP_ADDRESS, address];
+    }
 };
 
+const getAsElementForSorting = (item: any) => {
+    // If item is an array, take the first element for sorting
+    if (Array.isArray(item)) {
+        item = item[0];
+    }
+
+    // String is expected downstream by ipaddr.isValid and .parseCIDR, we can validate it here
+    if (typeof item !== 'string') {
+        console.warn('Expected a string. Got', item, `of type ${typeof item} instead.`);
+    }
+
+    // Make sure we always return a string
+    return "" + item;
+}
+
 /**
- * Compare function for IP and CIDR sort in ascending order (supports both v4 and v6)
- * @param a
- * @param b
- * @returns {number} -1 | 0 | 1
+ * Creates a sort function for IP addresses, CIDRs and domain names, with given restrictions.
+ * Don't use this function directly - use sortIp or sortAddress. react-table occasionally passes `true` as third parameter when it is doing reverse sorting.
+ * @param {boolean} allowOnlyIpAddresses - if true, only IP addresses and CIDRs will be compared. Invalid IP address would throw an exception, leaving the items in their original order.
+ * @returns A compare function that can be used in Array.prototype.sort() to sort IP addresses, CIDRs and domain names.
  */
-export const sortIp = (a: any, b: any) => {
+const sortFunction = (a: any, b: any, allowOnlyIpAddresses: boolean) => {
     try {
-        const comparisonBytesA = Array.isArray(a) ? getAddressesComparisonBytes(a[0]) : getAddressesComparisonBytes(a);
-        const comparisonBytesB = Array.isArray(b) ? getAddressesComparisonBytes(b[0]) : getAddressesComparisonBytes(b);
+        const comparisonChunksA = getAddressesComparisonChunks(getAsElementForSorting(a), allowOnlyIpAddresses);
+        const comparisonChunksB = getAddressesComparisonChunks(getAsElementForSorting(b), allowOnlyIpAddresses);
 
-        for (let i = 0; i < comparisonBytesA.length; i += 1) {
-            const byteA = comparisonBytesA[i];
-            const byteB = comparisonBytesB[i];
+        for (let i = 0; i < Math.min(comparisonChunksA.length, comparisonChunksB.length); i++) {
+            const byteA = comparisonChunksA[i];
+            const byteB = comparisonChunksB[i];
 
-            if (byteA === byteB) {
-                // eslint-disable-next-line no-continue
-                continue;
+            if (byteA !== byteB) {
+                return byteA > byteB ? 1 : -1;
             }
-            return byteA > byteB ? 1 : -1;
         }
 
-        return 0;
+        // If all compared chunks are equal, compare by length. Shorter array should come first.
+        return comparisonChunksA.length - comparisonChunksB.length;
     } catch (e) {
         console.warn(e);
         return 0;
     }
 };
+
+/**
+ * Compare function for IP, CIDR name sort in ascending order (supports both v4 and v6).
+ * @param a
+ * @param b
+ * @returns {number} -1 | 0 | 1
+ */
+export const sortIp = (a: any, b: any) => sortFunction(a, b, true);
+
+/**
+ * Compare function for IP, CIDR (supports both v4 and v6) and domain name sort in ascending order.
+ * @param a
+ * @param b
+ * @returns {number} -1 | 0 | 1
+ */
+export const sortAddress = (a: any, b: any) => sortFunction(a, b, false);
 
 /**
  * @param {number} filterId
