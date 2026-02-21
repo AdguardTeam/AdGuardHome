@@ -189,6 +189,7 @@ export const BLOCKING_MODES = {
     default: 'default',
     refused: 'refused',
     nxdomain: 'nxdomain',
+    noerror: 'noerror',
     null_ip: 'null_ip',
     custom_ip: 'custom_ip',
 };
