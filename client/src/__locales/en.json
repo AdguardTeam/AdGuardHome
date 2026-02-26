@@ -289,7 +289,7 @@
   "encryption_key_input": "Copy/paste your PEM-encoded private key for your certificate here.",
   "encryption_key_invalid": "This is an invalid {{type}} private key",
   "encryption_key_source_content": "Paste the private key contents",
-  "encryption_key_source_path": "Set a private key file",
+  "encryption_key_source_path": "Set a private key file path",
   "encryption_key_valid": "This is a valid {{type}} private key",
   "encryption_plain_dns_desc": "Plain DNS is enabled by default. You can disable it to force all devices to use encrypted DNS. To do this, you must enable at least one encrypted DNS protocol",
   "encryption_plain_dns_enable": "Enable plain DNS",
