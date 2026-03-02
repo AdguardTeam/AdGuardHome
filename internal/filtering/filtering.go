@@ -55,6 +55,14 @@ type Settings struct {
 	// is nil if the client does not have any blocked services.
 	BlockedServices *BlockedServices
 
+	// ClientFilterListIDs is the set of blocking filter list IDs that apply
+	// to this client.  Nil means use all global lists (default behavior).
+	ClientFilterListIDs map[rules.ListID]bool
+
+	// ClientAllowListIDs is the set of allowing filter list IDs that apply
+	// to this client.  Nil means use all global allowlists (default behavior).
+	ClientAllowListIDs map[rules.ListID]bool
+
 	ProtectionEnabled   bool
 	FilteringEnabled    bool
 	SafeSearchEnabled   bool
@@ -260,6 +268,15 @@ type DNSFilter struct {
 
 	rulesStorageAllow    *filterlist.RuleStorage
 	filteringEngineAllow *urlfilter.DNSEngine
+
+	// enabledBlockFilterIDs is the set of globally enabled blocking filter
+	// list IDs.  Used to filter out results from disabled lists when no
+	// per-client configuration is active.  Protected by engineLock.
+	enabledBlockFilterIDs map[rules.ListID]bool
+
+	// enabledAllowFilterIDs is the set of globally enabled allowing filter
+	// list IDs.  Protected by engineLock.
+	enabledAllowFilterIDs map[rules.ListID]bool
 
 	safeSearch SafeSearch
 
@@ -874,6 +891,87 @@ func hostResultForOtherQType(dnsres *urlfilter.DNSResult) (res Result) {
 	return Result{}
 }
 
+// filterDNSResultByListIDs filters dnsres in-place to only keep rules from the
+// allowed filter list IDs.  IDCustom (user rules) is always allowed when
+// keepCustom is true.  Returns true if any rules remain after filtering.
+func filterDNSResultByListIDs(
+	dnsres *urlfilter.DNSResult,
+	allowed map[rules.ListID]bool,
+	keepCustom bool,
+) (hasMatch bool) {
+	isAllowed := func(id rules.ListID) bool {
+		if keepCustom && id == rulelist.IDCustom {
+			return true
+		}
+
+		return allowed[id]
+	}
+
+	// Filter NetworkRules (includes DNS rewrites).
+	filtered := make([]*rules.NetworkRule, 0, len(dnsres.NetworkRules))
+	for _, r := range dnsres.NetworkRules {
+		if isAllowed(r.GetFilterListID()) {
+			filtered = append(filtered, r)
+		}
+	}
+	dnsres.NetworkRules = filtered
+
+	// Recompute NetworkRule (the "best" non-dnsrewrite rule).
+	if dnsres.NetworkRule != nil && !isAllowed(dnsres.NetworkRule.GetFilterListID()) {
+		dnsres.NetworkRule = nil
+		// Find replacement: whitelist (exception) rules take priority.
+		var bestBlock *rules.NetworkRule
+		for _, r := range dnsres.NetworkRules {
+			if r.DNSRewrite != nil {
+				continue
+			}
+			if r.Whitelist {
+				dnsres.NetworkRule = r
+				break
+			}
+			if bestBlock == nil {
+				bestBlock = r
+			}
+		}
+		if dnsres.NetworkRule == nil {
+			dnsres.NetworkRule = bestBlock
+		}
+	}
+
+	// Filter HostRules.
+	dnsres.HostRulesV4 = filterHostRulesByListIDs(dnsres.HostRulesV4, isAllowed)
+	dnsres.HostRulesV6 = filterHostRulesByListIDs(dnsres.HostRulesV6, isAllowed)
+
+	return dnsres.NetworkRule != nil ||
+		len(dnsres.HostRulesV4) > 0 ||
+		len(dnsres.HostRulesV6) > 0 ||
+		len(dnsres.NetworkRules) > 0
+}
+
+// filterHostRulesByListIDs filters host rules in-place, keeping only rules from
+// filter lists accepted by isAllowed.
+func filterHostRulesByListIDs(
+	hrs []*rules.HostRule,
+	isAllowed func(rules.ListID) bool,
+) []*rules.HostRule {
+	if len(hrs) == 0 {
+		return nil
+	}
+
+	filtered := make([]*rules.HostRule, 0, len(hrs))
+	for _, hr := range hrs {
+		if isAllowed(hr.GetFilterListID()) {
+			filtered = append(filtered, hr)
+		}
+	}
+
+	if len(filtered) == 0 {
+		return nil
+	}
+
+	return filtered
+}
+
 // matchHost is a low-level way to check only if host is filtered by rules,
 // skipping expensive safebrowsing and parental lookups.
 func (d *DNSFilter) matchHost(
@@ -906,6 +1004,15 @@ func (d *DNSFilter) matchHost(
 	if setts.ProtectionEnabled && d.filteringEngineAllow != nil {
 		dnsres, ok := d.filteringEngineAllow.MatchRequest(ufReq)
 		if ok {
+			if setts.ClientAllowListIDs != nil {
+				// Per-client: keep only client-assigned allowlists.
+				ok = filterDNSResultByListIDs(dnsres, setts.ClientAllowListIDs, false)
+			} else if d.enabledAllowFilterIDs != nil {
+				// Global: keep only globally enabled allowlists.
+				ok = filterDNSResultByListIDs(dnsres, d.enabledAllowFilterIDs, false)
+			}
+		}
+		if ok {
 			return d.matchHostProcessAllowList(ctx, host, dnsres)
 		}
 	}
@@ -915,6 +1022,13 @@ func (d *DNSFilter) matchHost(
 	}
 
 	dnsres, matchedEngine := d.filteringEngine.MatchRequest(ufReq)
+	if setts.ClientFilterListIDs != nil {
+		// Per-client: keep only client-assigned blocklists + user rules.
+		matchedEngine = filterDNSResultByListIDs(dnsres, setts.ClientFilterListIDs, true)
+	} else if d.enabledBlockFilterIDs != nil {
+		// Global: keep only globally enabled blocklists + user rules.
+		matchedEngine = filterDNSResultByListIDs(dnsres, d.enabledBlockFilterIDs, true)
+	}
 
 	// Check DNS rewrites first, because the API there is a bit awkward.
 	dnsRWRes := d.processDNSResultRewrites(dnsres, host)

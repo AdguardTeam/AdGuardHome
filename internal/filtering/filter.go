@@ -20,6 +20,7 @@ import (
 	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/urlfilter/rules"
 )
 
 // filterDir is the subdirectory of a data directory to store downloaded
@@ -146,17 +147,6 @@ func (d *DNSFilter) filterSetProperties(
 		shouldRestart = true
 	}
 
-	if !flt.Enabled {
-		// TODO(e.burkov):  The validation of the contents of the new URL is
-		// currently skipped if the rule list is disabled.  This makes it
-		// possible to set a bad rules source, but the validation should still
-		// kick in when the filter is enabled.  Consider changing this behavior
-		// to be stricter.
-		flt.unload()
-
-		return shouldRestart, err
-	}
-
 	if !shouldRestart {
 		return false, nil
 	}
@@ -228,11 +218,6 @@ func (d *DNSFilter) loadFilters(ctx context.Context, array []FilterYAML) {
 			filter.ID = newID
 		}
 
-		if !filter.Enabled {
-			// No need to load a filter that is not enabled
-			continue
-		}
-
 		err := d.load(ctx, filter)
 		if err != nil {
 			d.logger.ErrorContext(ctx, "loading filter", "id", filter.ID, slogutil.KeyError, err)
@@ -280,10 +265,6 @@ func (d *DNSFilter) listsToUpdate(filters *[]FilterYAML, force bool) (toUpd []Fi
 
 	for i := range *filters {
 		flt := &(*filters)[i] // otherwise we will be operating on a copy
-
-		if !flt.Enabled {
-			continue
-		}
 
 		if !force {
 			exp := flt.LastUpdated.Add(time.Duration(d.conf.FiltersUpdateIntervalHours) * time.Hour)
@@ -661,28 +642,31 @@ func (d *DNSFilter) enableFiltersLocked(ctx context.Context, async bool) {
 		Data: []byte(strings.Join(d.conf.UserRules, "\n")),
 	}
 
+	enabledBlockIDs := make(map[rules.ListID]bool, len(d.conf.Filters))
 	for _, filter := range d.conf.Filters {
-		if !filter.Enabled {
-			continue
-		}
-
 		filters = append(filters, Filter{
 			ID:       filter.ID,
 			FilePath: filter.Path(d.conf.DataDir),
 		})
+		if filter.Enabled {
+			enabledBlockIDs[filter.ID] = true
+		}
 	}
 
+	enabledAllowIDs := make(map[rules.ListID]bool, len(d.conf.WhitelistFilters))
 	var allowFilters []Filter
 	for _, filter := range d.conf.WhitelistFilters {
-		if !filter.Enabled {
-			continue
-		}
-
 		allowFilters = append(allowFilters, Filter{
 			ID:       filter.ID,
 			FilePath: filter.Path(d.conf.DataDir),
 		})
+		if filter.Enabled {
+			enabledAllowIDs[filter.ID] = true
+		}
 	}
+
+	d.enabledBlockFilterIDs = enabledBlockIDs
+	d.enabledAllowFilterIDs = enabledAllowIDs
 
 	err := d.setFilters(ctx, filters, allowFilters, async)
 	if err != nil {
