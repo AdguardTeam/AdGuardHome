@@ -20,6 +20,7 @@ import (
 	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/urlfilter/rules"
 )
 
 // filterDir is the subdirectory of a data directory to store downloaded
@@ -146,17 +147,6 @@ func (d *DNSFilter) filterSetProperties(
 		shouldRestart = true
 	}
 
-	if !flt.Enabled {
-		// TODO(e.burkov):  The validation of the contents of the new URL is
-		// currently skipped if the rule list is disabled.  This makes it
-		// possible to set a bad rules source, but the validation should still
-		// kick in when the filter is enabled.  Consider changing this behavior
-		// to be stricter.
-		flt.unload()
-
-		return shouldRestart, err
-	}
-
 	if !shouldRestart {
 		return false, nil
 	}
@@ -216,8 +206,12 @@ func (d *DNSFilter) filterAdd(flt FilterYAML) (err error) {
 	return nil
 }
 
-// Load filters from the disk
-// And if any filter has zero ID, assign a new one
+// loadFilters loads all filters from disk, including disabled ones, and assigns
+// IDs to any filter that has a zero ID.  Disabled filters are loaded so that
+// their rules count and last-updated metadata are available, and so that
+// per-client filter list assignments can reference them.  This increases memory
+// usage compared to loading only enabled filters, but is required for the
+// per-client filtering feature.
 func (d *DNSFilter) loadFilters(ctx context.Context, array []FilterYAML) {
 	for i := range array {
 		filter := &array[i] // otherwise we're operating on a copy
@@ -226,11 +220,6 @@ func (d *DNSFilter) loadFilters(ctx context.Context, array []FilterYAML) {
 			d.logger.WarnContext(ctx, "filter has no id", "idx", i, "new_id", newID)
 
 			filter.ID = newID
-		}
-
-		if !filter.Enabled {
-			// No need to load a filter that is not enabled
-			continue
 		}
 
 		err := d.load(ctx, filter)
@@ -280,10 +269,6 @@ func (d *DNSFilter) listsToUpdate(filters *[]FilterYAML, force bool) (toUpd []Fi
 
 	for i := range *filters {
 		flt := &(*filters)[i] // otherwise we will be operating on a copy
-
-		if !flt.Enabled {
-			continue
-		}
 
 		if !force {
 			exp := flt.LastUpdated.Add(time.Duration(d.conf.FiltersUpdateIntervalHours) * time.Hour)
@@ -661,28 +646,34 @@ func (d *DNSFilter) enableFiltersLocked(ctx context.Context, async bool) {
 		Data: []byte(strings.Join(d.conf.UserRules, "\n")),
 	}
 
+	enabledBlockIDs := make(map[rules.ListID]bool, len(d.conf.Filters))
 	for _, filter := range d.conf.Filters {
-		if !filter.Enabled {
-			continue
-		}
-
 		filters = append(filters, Filter{
 			ID:       filter.ID,
 			FilePath: filter.Path(d.conf.DataDir),
 		})
+		if filter.Enabled {
+			enabledBlockIDs[filter.ID] = true
+		}
 	}
 
+	enabledAllowIDs := make(map[rules.ListID]bool, len(d.conf.WhitelistFilters))
 	var allowFilters []Filter
 	for _, filter := range d.conf.WhitelistFilters {
-		if !filter.Enabled {
-			continue
-		}
-
 		allowFilters = append(allowFilters, Filter{
 			ID:       filter.ID,
 			FilePath: filter.Path(d.conf.DataDir),
 		})
+		if filter.Enabled {
+			enabledAllowIDs[filter.ID] = true
+		}
 	}
+
+	// Store the sets of globally-enabled filter IDs.  These are used in
+	// matchHost to exclude results from disabled filters for clients that use
+	// global settings (i.e. have no per-client filter list assignment).
+	d.enabledBlockFilterIDs = enabledBlockIDs
+	d.enabledAllowFilterIDs = enabledAllowIDs
 
 	err := d.setFilters(ctx, filters, allowFilters, async)
 	if err != nil {
