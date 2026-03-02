@@ -56,11 +56,24 @@ type Settings struct {
 	// is nil if the client does not have any blocked services.
 	BlockedServices *BlockedServices
 
+	// ClientFilterListIDs is the set of blocking filter list IDs of a client.
+	// It is only used when UseOwnFilterLists is true.
+	ClientFilterListIDs map[rules.ListID]bool
+
+	// ClientAllowListIDs is the set of allowing filter list IDs of a client.
+	// It is only used when UseOwnFilterLists is true.
+	ClientAllowListIDs map[rules.ListID]bool
+
 	ProtectionEnabled   bool
 	FilteringEnabled    bool
 	SafeSearchEnabled   bool
 	SafeBrowsingEnabled bool
 	ParentalEnabled     bool
+
+	// UseOwnFilterLists signals whether to use ClientFilterListIDs and
+	// ClientAllowListIDs instead of the globally enabled filter lists.  Rules
+	// from the user's own list apply either way.
+	UseOwnFilterLists bool
 
 	// ClientSafeSearch is a client configured safe search.
 	ClientSafeSearch SafeSearch
@@ -95,6 +108,12 @@ type Config struct {
 	// ClientID or client IP address, and applies it to the filtering settings.
 	// It must not be nil.
 	ApplyClientFiltering func(clientID string, cliAddr netip.Addr, setts *Settings) `yaml:"-"`
+
+	// ClientFilterListIDs returns the filter list IDs used by persistent clients
+	// that have their own filter lists.  A disabled filter list is only
+	// downloaded and loaded when it appears in one of these sets.  It may be
+	// nil.
+	ClientFilterListIDs func() (blockIDs, allowIDs map[rules.ListID]bool) `yaml:"-"`
 
 	// BlockedServices is the configuration of blocked services.
 	// Per-client settings can override this configuration.
@@ -234,6 +253,17 @@ type Stats struct {
 
 // Parameters to pass to filters-initializer goroutine
 type filtersInitializerParams struct {
+	// enabledBlockIDs and enabledAllowIDs are the sets of enabled filter list
+	// IDs, or nil when no disabled list is loaded.
+	enabledBlockIDs map[rules.ListID]bool
+	enabledAllowIDs map[rules.ListID]bool
+
+	// requiredIDs are the rule lists whose absence must fail the build instead of
+	// being skipped, so that a rebuild never quietly swaps in an engine that
+	// lacks a list the caller relies on.  A list that was already missing is not
+	// in it, since there is nothing to lose.
+	requiredIDs map[rules.ListID]bool
+
 	allowFilters []Filter
 	blockFilters []Filter
 }
@@ -266,6 +296,23 @@ type DNSFilter struct {
 	rulesStorageAllow    *filterlist.RuleStorage
 	filteringEngineAllow *urlfilter.DNSEngine
 
+	// enabledBlockFilterIDs is the set of enabled blocking filter list IDs.  It
+	// is nil unless filteringEngine holds a disabled list, in which case
+	// clients using the global lists need no match-time filtering.  It is
+	// protected by engineLock.
+	enabledBlockFilterIDs map[rules.ListID]bool
+
+	// enabledAllowFilterIDs is like enabledBlockFilterIDs, but for allowing
+	// filter lists.  It is protected by engineLock.
+	enabledAllowFilterIDs map[rules.ListID]bool
+
+	// loadedBlockIDs and loadedAllowIDs are the rule lists the engines actually
+	// hold, as opposed to those merely configured.  A rebuild requires them, so
+	// that a list that is live now cannot be lost silently.  They are protected
+	// by engineLock.
+	loadedBlockIDs map[rules.ListID]bool
+	loadedAllowIDs map[rules.ListID]bool
+
 	safeSearch SafeSearch
 
 	// safeBrowsingChecker is the safe browsing hash-prefix checker.
@@ -293,7 +340,7 @@ type DNSFilter struct {
 	done chan struct{}
 
 	// Channel for passing data to filters-initializer goroutine
-	filtersInitializerChan chan filtersInitializerParams
+	filtersInitializerChan chan *filtersInitializerParams
 	filtersInitializerLock sync.Mutex
 
 	refreshLock *sync.Mutex
@@ -358,16 +405,10 @@ func (d *DNSFilter) WriteDiskConfig(c *Config) {
 // In this case the caller must ensure that the old filter files are intact.
 func (d *DNSFilter) setFilters(
 	ctx context.Context,
-	blockFilters []Filter,
-	allowFilters []Filter,
+	params *filtersInitializerParams,
 	async bool,
 ) (err error) {
 	if async {
-		params := filtersInitializerParams{
-			allowFilters: allowFilters,
-			blockFilters: blockFilters,
-		}
-
 		d.filtersInitializerLock.Lock()
 		defer d.filtersInitializerLock.Unlock()
 
@@ -387,7 +428,7 @@ func (d *DNSFilter) setFilters(
 		return nil
 	}
 
-	return d.initFiltering(ctx, allowFilters, blockFilters)
+	return d.initFiltering(ctx, params)
 }
 
 // Close - close the object
@@ -670,30 +711,39 @@ func (d *DNSFilter) matchBlockedServicesRules(
 // Adding rule and matching against the rules
 //
 
-func newRuleStorage(filters []Filter) (rs *filterlist.RuleStorage, err error) {
+func newRuleStorage(
+	filters []Filter,
+	requiredIDs map[rules.ListID]bool,
+) (rs *filterlist.RuleStorage, loaded map[rules.ListID]bool, err error) {
 	lists := make([]filterlist.Interface, 0, len(filters))
+	loaded = make(map[rules.ListID]bool, len(filters))
 	for _, f := range filters {
 		var rl filterlist.Interface
 		var skip bool
 		rl, skip, err = ruleListFromFilter(f)
 		if skip {
+			if requiredIDs[f.ID] {
+				return nil, nil, fmt.Errorf("rule list %d: %q is missing", f.ID, f.FilePath)
+			}
+
 			continue
 		}
 
 		if err != nil {
 			// Don't wrap the error, because it's informative enough as is.
-			return nil, err
+			return nil, nil, err
 		}
 
+		loaded[f.ID] = true
 		lists = append(lists, rl)
 	}
 
 	rs, err = filterlist.NewRuleStorage(lists)
 	if err != nil {
-		return nil, fmt.Errorf("creating rule storage: %w", err)
+		return nil, nil, fmt.Errorf("creating rule storage: %w", err)
 	}
 
-	return rs, nil
+	return rs, loaded, nil
 }
 
 // ruleListFromFilter returns a rule list from a Filter.
@@ -742,14 +792,14 @@ func ruleListFromFilter(f Filter) (rl filterlist.Interface, skip bool, err error
 	return rl, false, nil
 }
 
-// Initialize urlfilter objects.
-func (d *DNSFilter) initFiltering(ctx context.Context, allowFilters, blockFilters []Filter) (err error) {
-	rulesStorage, err := newRuleStorage(blockFilters)
+// Initialize urlfilter objects.  params must not be nil.
+func (d *DNSFilter) initFiltering(ctx context.Context, params *filtersInitializerParams) (err error) {
+	rulesStorage, loadedBlock, err := newRuleStorage(params.blockFilters, params.requiredIDs)
 	if err != nil {
 		return err
 	}
 
-	rulesStorageAllow, err := newRuleStorage(allowFilters)
+	rulesStorageAllow, loadedAllow, err := newRuleStorage(params.allowFilters, params.requiredIDs)
 	if err != nil {
 		return err
 	}
@@ -766,6 +816,11 @@ func (d *DNSFilter) initFiltering(ctx context.Context, allowFilters, blockFilter
 		d.filteringEngine = filteringEngine
 		d.rulesStorageAllow = rulesStorageAllow
 		d.filteringEngineAllow = filteringEngineAllow
+
+		d.enabledBlockFilterIDs = params.enabledBlockIDs
+		d.enabledAllowFilterIDs = params.enabledAllowIDs
+		d.loadedBlockIDs = loadedBlock
+		d.loadedAllowIDs = loadedAllow
 	}()
 
 	// Make sure that the OS reclaims memory as soon as possible.
@@ -879,6 +934,92 @@ func hostResultForOtherQType(dnsres *urlfilter.DNSResult) (res Result) {
 	return Result{}
 }
 
+// keepListIDs removes from dnsres the rules that come from a filter list absent
+// from ids, and reports whether dnsres still matches.  Rules from the user's own
+// list are kept regardless when keepCustom is true.  dnsres must not be nil.
+func keepListIDs(
+	dnsres *urlfilter.DNSResult,
+	ids map[rules.ListID]bool,
+	keepCustom bool,
+) (hasMatch bool) {
+	keep := func(id rules.ListID) (ok bool) {
+		return ids[id] || keepCustom && id == rulelist.IDCustom
+	}
+
+	dnsres.NetworkRules = keepRules(dnsres.NetworkRules, keep)
+	dnsres.HostRulesV4 = keepRules(dnsres.HostRulesV4, keep)
+	dnsres.HostRulesV6 = keepRules(dnsres.HostRulesV6, keep)
+
+	// Reselect the basic rule the way [urlfilter.DNSEngine] does, so that rule
+	// priority, $badfilter, and $replace behave the same for every client.
+	dnsres.NetworkRule = rules.GetDNSBasicRule(dnsres.NetworkRules)
+
+	return dnsres.NetworkRule != nil ||
+		len(dnsres.HostRulesV4) > 0 ||
+		len(dnsres.HostRulesV6) > 0
+}
+
+// keepAllowListIDs filters dnsres by the allowing filter lists that apply to
+// setts, and reports whether it still matches.  matched is returned as is when
+// it is false or when no filtering is needed.  d.engineLock is expected to be
+// locked for reading.
+func (d *DNSFilter) keepAllowListIDs(
+	dnsres *urlfilter.DNSResult,
+	setts *Settings,
+	matched bool,
+) (hasMatch bool) {
+	if !matched {
+		return false
+	}
+
+	if setts.UseOwnFilterLists {
+		return keepListIDs(dnsres, setts.ClientAllowListIDs, false)
+	} else if d.enabledAllowFilterIDs != nil {
+		return keepListIDs(dnsres, d.enabledAllowFilterIDs, false)
+	}
+
+	return true
+}
+
+// keepBlockListIDs filters dnsres by the blocking filter lists that apply to
+// setts, and reports whether it still matches.  matched is returned as is when
+// no filtering is needed.  d.engineLock is expected to be locked for reading.
+func (d *DNSFilter) keepBlockListIDs(
+	dnsres *urlfilter.DNSResult,
+	setts *Settings,
+	matched bool,
+) (hasMatch bool) {
+	if setts.UseOwnFilterLists {
+		return keepListIDs(dnsres, setts.ClientFilterListIDs, true)
+	} else if d.enabledBlockFilterIDs != nil {
+		return keepListIDs(dnsres, d.enabledBlockFilterIDs, true)
+	}
+
+	return matched
+}
+
+// keepRules returns orig without the rules rejected by keep.  It doesn't
+// allocate if every rule is kept, which is the common case.
+func keepRules[T rules.Rule](orig []T, keep func(id rules.ListID) (ok bool)) (kept []T) {
+	for i, r := range orig {
+		if keep(r.GetFilterListID()) {
+			continue
+		}
+
+		kept = make([]T, i, len(orig)-1)
+		copy(kept, orig[:i])
+		for _, r = range orig[i+1:] {
+			if keep(r.GetFilterListID()) {
+				kept = append(kept, r)
+			}
+		}
+
+		return kept
+	}
+
+	return orig
+}
+
 // matchHost is a low-level way to check only if host is filtered by rules,
 // skipping expensive safebrowsing and parental lookups.
 func (d *DNSFilter) matchHost(
@@ -910,6 +1051,7 @@ func (d *DNSFilter) matchHost(
 
 	if setts.ProtectionEnabled && d.filteringEngineAllow != nil {
 		dnsres, ok := d.filteringEngineAllow.MatchRequest(ufReq)
+		ok = d.keepAllowListIDs(dnsres, setts, ok)
 		if ok {
 			return d.matchHostProcessAllowList(ctx, host, dnsres)
 		}
@@ -920,6 +1062,7 @@ func (d *DNSFilter) matchHost(
 	}
 
 	dnsres, matchedEngine := d.filteringEngine.MatchRequest(ufReq)
+	matchedEngine = d.keepBlockListIDs(dnsres, setts, matchedEngine)
 
 	// Check DNS rewrites first, because the API there is a bit awkward.
 	dnsRWRes := d.processDNSResultRewrites(dnsres, host)
@@ -1030,7 +1173,7 @@ func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
 	}
 
 	if blockFilters != nil {
-		err = d.initFiltering(ctx, nil, blockFilters)
+		err = d.initFiltering(ctx, &filtersInitializerParams{blockFilters: blockFilters})
 		if err != nil {
 			d.Close()
 
@@ -1045,8 +1188,9 @@ func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
 		return nil, fmt.Errorf("making filtering directory: %w", err)
 	}
 
-	d.loadFilters(ctx, d.conf.Filters)
-	d.loadFilters(ctx, d.conf.WhitelistFilters)
+	blockClientIDs, allowClientIDs := d.clientFilterListIDs()
+	d.loadFilters(ctx, d.conf.Filters, blockClientIDs)
+	d.loadFilters(ctx, d.conf.WhitelistFilters, allowClientIDs)
 
 	d.conf.Filters = deduplicateFilters(d.conf.Filters)
 	d.conf.WhitelistFilters = deduplicateFilters(d.conf.WhitelistFilters)
@@ -1075,7 +1219,7 @@ func (d *DNSFilter) validateSafeFSPatterns(patterns []string) (err error) {
 
 // Start registers web handlers and starts filters updates loop.
 func (d *DNSFilter) Start() {
-	d.filtersInitializerChan = make(chan filtersInitializerParams, 1)
+	d.filtersInitializerChan = make(chan *filtersInitializerParams, 1)
 	d.done = make(chan struct{}, 1)
 
 	d.RegisterFilteringHandlers()
@@ -1093,7 +1237,7 @@ func (d *DNSFilter) updatesLoop(ctx context.Context) {
 	for {
 		select {
 		case params := <-d.filtersInitializerChan:
-			err := d.initFiltering(ctx, params.allowFilters, params.blockFilters)
+			err := d.initFiltering(ctx, params)
 			if err != nil {
 				d.logger.ErrorContext(ctx, "initializing", slogutil.KeyError, err)
 
