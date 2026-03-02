@@ -44,6 +44,22 @@
         margin-right: 0;
         margin-left: auto;
     }
+
+    .services--half .service {
+        flex-basis: calc(99.9% * 6 / 12 - (30px - 30px * 6 / 12));
+        max-width: calc(99.9% * 6 / 12 - (30px - 30px * 6 / 12));
+        width: calc(99.9% * 6 / 12 - (30px - 30px * 6 / 12));
+    }
+
+    .services--half .service:nth-child(3n) {
+        margin-right: 30px;
+        margin-left: 0;
+    }
+
+    .services--half .service:nth-child(2n) {
+        margin-right: 0;
+        margin-left: auto;
+    }
 }
 
 .service__icon {
