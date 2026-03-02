@@ -22,6 +22,7 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/timeutil"
+	"github.com/AdguardTeam/urlfilter/rules"
 )
 
 // clientsContainer is the storage of all runtime and persistent clients.
@@ -189,6 +190,10 @@ type clientObject struct {
 	ParentalEnabled          bool `yaml:"parental_enabled"`
 	SafeBrowsingEnabled      bool `yaml:"safebrowsing_enabled"`
 	UseGlobalBlockedServices bool `yaml:"use_global_blocked_services"`
+	UseGlobalFilterLists     bool `yaml:"use_global_filter_lists"`
+
+	FilterListIDs      []rules.ListID `yaml:"filter_list_ids"`
+	AllowFilterListIDs []rules.ListID `yaml:"allow_filter_list_ids"`
 
 	IgnoreQueryLog   bool `yaml:"ignore_querylog"`
 	IgnoreStatistics bool `yaml:"ignore_statistics"`
@@ -214,6 +219,9 @@ func (o *clientObject) toPersistent(
 		SafeSearchConf:        o.SafeSearchConf,
 		SafeBrowsingEnabled:   o.SafeBrowsingEnabled,
 		UseOwnBlockedServices: !o.UseGlobalBlockedServices,
+		UseOwnFilterLists:     !o.UseGlobalFilterLists,
+		FilterListIDs:         slices.Clone(o.FilterListIDs),
+		AllowFilterListIDs:    slices.Clone(o.AllowFilterListIDs),
 		IgnoreQueryLog:        o.IgnoreQueryLog,
 		IgnoreStatistics:      o.IgnoreStatistics,
 		UpstreamsCacheEnabled: o.UpstreamsCacheEnabled,
@@ -296,6 +304,9 @@ func (clients *clientsContainer) forConfig() (objs []*clientObject) {
 			SafeSearchConf:           cli.SafeSearchConf,
 			SafeBrowsingEnabled:      cli.SafeBrowsingEnabled,
 			UseGlobalBlockedServices: !cli.UseOwnBlockedServices,
+			UseGlobalFilterLists:     !cli.UseOwnFilterLists,
+			FilterListIDs:            slices.Clone(cli.FilterListIDs),
+			AllowFilterListIDs:       slices.Clone(cli.AllowFilterListIDs),
 			IgnoreQueryLog:           cli.IgnoreQueryLog,
 			IgnoreStatistics:         cli.IgnoreStatistics,
 			UpstreamsCacheEnabled:    cli.UpstreamsCacheEnabled,

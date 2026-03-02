@@ -16,6 +16,7 @@ import (
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/google/uuid"
 )
 
@@ -118,6 +119,18 @@ type Persistent struct {
 
 	// UseOwnBlockedServices specifies whether custom services are blocked.
 	UseOwnBlockedServices bool
+
+	// UseOwnFilterLists signals whether the client has its own filter list
+	// configuration.  If false, the global filter lists are used.
+	UseOwnFilterLists bool
+
+	// FilterListIDs is the set of blocking filter list IDs assigned to this
+	// client.  Only used when UseOwnFilterLists is true.
+	FilterListIDs []rules.ListID
+
+	// AllowFilterListIDs is the set of allowing filter list IDs assigned to
+	// this client.  Only used when UseOwnFilterLists is true.
+	AllowFilterListIDs []rules.ListID
 
 	// IgnoreQueryLog specifies whether the client requests are logged.
 	IgnoreQueryLog bool
@@ -301,6 +314,8 @@ func (c *Persistent) ShallowClone() (clone *Persistent) {
 	clone.Subnets = slices.Clone(c.Subnets)
 	clone.MACs = slices.Clone(c.MACs)
 	clone.ClientIDs = slices.Clone(c.ClientIDs)
+	clone.FilterListIDs = slices.Clone(c.FilterListIDs)
+	clone.AllowFilterListIDs = slices.Clone(c.AllowFilterListIDs)
 
 	return clone
 }
