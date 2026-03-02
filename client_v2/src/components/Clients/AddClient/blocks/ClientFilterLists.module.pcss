@@ -1,0 +1,56 @@
+.containerOverride {
+    padding-top: 0;
+}
+
+.breadcrumbs {
+    padding: 0 16px;
+}
+
+.description {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--default-description-text);
+    padding: 12px 16px;
+
+    @media (min-width: 768px) {
+        padding: 16px;
+    }
+}
+
+.actions {
+    display: flex;
+    gap: 8px;
+    padding: 0 16px 8px;
+}
+
+.list {
+    display: flex;
+    flex-direction: column;
+}
+
+.row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 16px;
+    border-radius: 8px;
+
+    &:hover {
+        background-color: var(--hovered-page-background);
+    }
+}
+
+.rowContent {
+    flex: 1;
+    min-width: 0;
+}
+
+.rowTitle {
+    color: var(--default-main-text);
+    overflow-wrap: anywhere;
+}
+
+.rowDesc {
+    color: var(--default-description-text);
+}

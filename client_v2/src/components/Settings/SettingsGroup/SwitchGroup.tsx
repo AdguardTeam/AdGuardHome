@@ -15,6 +15,9 @@ type Props = {
     onChange: (e: Event) => void;
     disabled?: boolean;
     children?: JSX.Element;
+
+    /** Names the control, since the title is rendered outside the label. */
+    ariaLabel?: string;
 };
 
 export const SwitchGroup = (props: Props) => {
@@ -40,6 +43,7 @@ export const SwitchGroup = (props: Props) => {
                 <div class={s.input} onClick={(e: Event) => e.stopPropagation()}>
                     <Switch
                         id={props.id}
+                        ariaLabel={props.ariaLabel ?? props.title}
                         checked={props.checked}
                         onChange={props.onChange}
                         disabled={props.disabled}

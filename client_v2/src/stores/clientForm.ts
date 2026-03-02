@@ -38,6 +38,9 @@ const getInitialClientFormState = (): ClientFormState => ({
     upstreams: '',
     upstreams_cache_enabled: false,
     upstreams_cache_size: DEFAULT_DNS_CACHE_SIZE,
+    use_own_filter_lists: false,
+    filter_list_ids: [],
+    allow_filter_list_ids: [],
     processingSave: false,
     formErrors: {},
 });
@@ -123,6 +126,9 @@ export const buildFormPayload = (client: Client): Partial<ClientFormState> => ({
     upstreams: (client.upstreams || []).join('\n'),
     upstreams_cache_enabled: client.upstreams_cache_enabled || false,
     upstreams_cache_size: client.upstreams_cache_size || DEFAULT_DNS_CACHE_SIZE,
+    use_own_filter_lists: client.use_own_filter_lists || false,
+    filter_list_ids: client.filter_list_ids || [],
+    allow_filter_list_ids: client.allow_filter_list_ids || [],
 });
 
 export const buildClientConfig = (form: ClientFormState) => ({
@@ -144,6 +150,9 @@ export const buildClientConfig = (form: ClientFormState) => ({
         : [],
     upstreams_cache_enabled: form.upstreams_cache_enabled,
     upstreams_cache_size: form.upstreams_cache_size,
+    use_own_filter_lists: form.use_own_filter_lists,
+    filter_list_ids: form.use_own_filter_lists ? form.filter_list_ids : [],
+    allow_filter_list_ids: form.use_own_filter_lists ? form.allow_filter_list_ids : [],
 });
 
 /**

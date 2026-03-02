@@ -51,6 +51,7 @@ export const ServiceRow = (props: Props) => {
             >
                 <Switch
                     id={`service_${props.id}`}
+                    ariaLabel={props.name}
                     checked={props.checked}
                     disabled={props.disabled}
                     onChange={handleChange}

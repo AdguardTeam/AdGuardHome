@@ -12,6 +12,13 @@ type Props = Omit<JSX.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'type'
     wrapperClass?: string;
     onChange: (e: Event) => void;
     children?: JSX.Element;
+
+    /**
+     * Names the control for assistive technology.  It is needed whenever the
+     * visible title lives outside the label, since the input has no text of its
+     * own.
+     */
+    ariaLabel?: string;
     ref?: HTMLInputElement | ((el: HTMLInputElement) => void);
 };
 
@@ -31,6 +38,7 @@ export const Switch = (props: Props) => {
                 onChange={(e) => props.onChange?.(e)}
                 checked={props.checked}
                 disabled={props.disabled}
+                aria-label={props.ariaLabel}
                 ref={(el) => setRef(el)}
             />
             <div class={s.handler} />

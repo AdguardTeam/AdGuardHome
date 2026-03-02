@@ -57,8 +57,10 @@ describe('buildClientConfig', () => {
     it('returns all expected top-level keys', () => {
         const config = buildClientConfig(getInitialClientFormState());
         expect(Object.keys(config).sort()).toEqual([
+            'allow_filter_list_ids',
             'blocked_services',
             'blocked_services_schedule',
+            'filter_list_ids',
             'filtering_enabled',
             'ids',
             'ignore_querylog',
@@ -73,6 +75,33 @@ describe('buildClientConfig', () => {
             'upstreams_cache_size',
             'use_global_blocked_services',
             'use_global_settings',
+            'use_own_filter_lists',
         ]);
+    });
+
+    it('omits the filter list IDs while the client uses the global lists', () => {
+        const config = buildClientConfig({
+            ...getInitialClientFormState(),
+            use_own_filter_lists: false,
+            filter_list_ids: [1, 2],
+            allow_filter_list_ids: [10],
+        });
+
+        expect(config.use_own_filter_lists).toBe(false);
+        expect(config.filter_list_ids).toEqual([]);
+        expect(config.allow_filter_list_ids).toEqual([]);
+    });
+
+    it('sends the filter list IDs of a client that has its own lists', () => {
+        const config = buildClientConfig({
+            ...getInitialClientFormState(),
+            use_own_filter_lists: true,
+            filter_list_ids: [1, 2],
+            allow_filter_list_ids: [10],
+        });
+
+        expect(config.use_own_filter_lists).toBe(true);
+        expect(config.filter_list_ids).toEqual([1, 2]);
+        expect(config.allow_filter_list_ids).toEqual([10]);
     });
 });

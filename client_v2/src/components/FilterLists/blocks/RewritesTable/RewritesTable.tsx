@@ -81,6 +81,7 @@ export const RewritesTable = (props: Props) => {
                             <span class={theme.common.textOverflow}>{value}</span>
                             <Switch
                                 id={id}
+                                ariaLabel={domain}
                                 data-testid={`rewrite-toggle-${domain}`}
                                 checked={enabled}
                                 onChange={() => props.toggleRewrite(row)}

@@ -100,6 +100,7 @@ export const ListsTable = (props: Props) => {
                             <span class={theme.common.textOverflow}>{value}</span>
                             <Switch
                                 id={id}
+                                ariaLabel={name}
                                 checked={enabled}
                                 onChange={() => handleToggle(url, name, enabled)}
                                 disabled={props.processingConfigFilter}
