@@ -104,6 +104,9 @@ export type Client = {
     upstreams_cache_size: number;
     use_global_blocked_services: boolean;
     use_global_settings: boolean;
+    use_global_filter_lists: boolean;
+    filter_list_ids: number[];
+    allow_filter_list_ids: number[];
 };
 
 export type AutoClient = {
