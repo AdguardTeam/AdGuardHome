@@ -17,6 +17,15 @@ See also the [v0.107.73 GitHub milestone][ms-v0.107.73].
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
+
+### Fixed
+
+- Incorrect client IP logging in failed authentication attempts when using a proxy ([#8198]).
+
+- Incorrect logger behavior in case `-v` flag is added.
+
+[#8198]: https://github.com/AdguardTeam/AdGuardHome/issues/8198
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->

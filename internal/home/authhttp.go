@@ -108,12 +108,12 @@ func (web *webAPI) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var remoteIP string
+	var remoteIPStr string
 	// The real IP address of the client [realIP] cannot be used here without
 	// taking trusted proxies into account due to security issues:
 	//
 	// See https://github.com/AdguardTeam/AdGuardHome/issues/2799.
-	if remoteIP, err = netutil.SplitHost(r.RemoteAddr); err != nil {
+	if remoteIPStr, err = netutil.SplitHost(r.RemoteAddr); err != nil {
 		writeErrorWithIP(
 			r,
 			w,
@@ -127,13 +127,13 @@ func (web *webAPI) handleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if rateLimiter := web.auth.rateLimiter; rateLimiter != nil {
-		if left := rateLimiter.check(remoteIP); left > 0 {
+		if left := rateLimiter.check(remoteIPStr); left > 0 {
 			w.Header().Set(httphdr.RetryAfter, strconv.Itoa(int(left.Seconds())))
 			writeErrorWithIP(
 				r,
 				w,
 				http.StatusTooManyRequests,
-				remoteIP,
+				remoteIPStr,
 				"auth: blocked for %s",
 				left,
 			)
@@ -147,24 +147,38 @@ func (web *webAPI) handleLogin(w http.ResponseWriter, r *http.Request) {
 		web.logger.ErrorContext(
 			ctx,
 			"getting real ip",
-			"remote_ip", remoteIP,
+			"remote_ip", remoteIPStr,
 			slogutil.KeyError, err,
 		)
 	}
 
-	cookie, err := newCookie(ctx, web.auth, req, remoteIP)
+	remoteIP, err := netip.ParseAddr(remoteIPStr)
 	if err != nil {
-		logIP := remoteIP
-		if web.auth.trustedProxies.Contains(ip.Unmap()) {
-			logIP = ip.String()
-		}
+		writeErrorWithIP(
+			r,
+			w,
+			http.StatusInternalServerError,
+			r.RemoteAddr,
+			"auth: parsing remote address: %s",
+			err,
+		)
 
+		return
+	}
+
+	logIP := remoteIPStr
+	if web.auth.trustedProxies.Contains(remoteIP.Unmap()) {
+		logIP = ip.String()
+	}
+
+	cookie, err := newCookie(ctx, web.auth, req, remoteIPStr)
+	if err != nil {
 		writeErrorWithIP(r, w, http.StatusForbidden, logIP, "%s", err)
 
 		return
 	}
 
-	web.logger.InfoContext(ctx, "successful login", "user", req.Name, "ip", ip)
+	web.logger.InfoContext(ctx, "successful login", "user", req.Name, "ip", logIP)
 
 	http.SetCookie(w, cookie)
 

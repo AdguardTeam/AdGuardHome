@@ -108,6 +108,17 @@ func Main(clientBuildFS fs.FS) {
 	// TODO(a.garipov): Use slog everywhere.
 	baseLogger := newSlogLogger(ls)
 
+	// Configure log level and output.
+	err = configureLogger(ls, workDir)
+	fatalOnError(err)
+
+	// Print the first message after logger is configured.
+	baseLogger.InfoContext(ctx, "starting adguard home", "version", version.Full())
+	baseLogger.DebugContext(ctx, "current working directory", "path", workDir)
+	if opts.runningAsService {
+		baseLogger.InfoContext(ctx, "adguard home is running as a service")
+	}
+
 	done := make(chan struct{})
 
 	signals := make(chan os.Signal, 1)
@@ -732,7 +743,7 @@ func run(
 	workDir string,
 	confPath string,
 ) {
-	initEnvironment(ctx, opts, baseLogger, workDir, confPath)
+	aghtls.Init(ctx, baseLogger.With(slogutil.KeyPrefix, "aghtls"))
 
 	isFirstRun := detectFirstRun(ctx, baseLogger, workDir, confPath)
 
@@ -951,31 +962,6 @@ func initUpdate(
 	}
 
 	return upd, isCustomURL
-}
-
-// initEnvironment inits working environment.  opts and slogLogger must not be
-// nil.
-func initEnvironment(
-	ctx context.Context,
-	opts options,
-	slogLogger *slog.Logger,
-	workDir,
-	confPath string,
-) {
-	ls := getLogSettings(ctx, slogLogger, opts, workDir, confPath)
-
-	// Configure log level and output.
-	err := configureLogger(ls, workDir)
-	fatalOnError(err)
-
-	// Print the first message after logger is configured.
-	slogLogger.InfoContext(ctx, "starting adguard home", "version", version.Full())
-	slogLogger.DebugContext(ctx, "current working directory", "path", workDir)
-	if opts.runningAsService {
-		slogLogger.InfoContext(ctx, "adguard home is running as a service")
-	}
-
-	aghtls.Init(ctx, slogLogger.With(slogutil.KeyPrefix, "aghtls"))
 }
 
 // newUpdater creates a new AdGuard Home updater.  l and conf must not be nil.

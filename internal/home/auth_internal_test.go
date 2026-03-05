@@ -31,7 +31,7 @@ func TestAuth_UsersList(t *testing.T) {
 	auth, err := newAuth(testutil.ContextWithTimeout(t, testTimeout), &authConfig{
 		baseLogger:     testLogger,
 		rateLimiter:    emptyRateLimiter{},
-		trustedProxies: nil,
+		trustedProxies: testTrustedProxies,
 		dbFilename:     sessionsDB,
 		users:          nil,
 		sessionTTL:     testTimeout,

@@ -467,7 +467,7 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 	auth, err := newAuth(testutil.ContextWithTimeout(t, testTimeout), &authConfig{
 		baseLogger:     testLogger,
 		rateLimiter:    emptyRateLimiter{},
-		trustedProxies: nil,
+		trustedProxies: testTrustedProxies,
 		dbFilename:     sessionsDB,
 		users:          users,
 		sessionTTL:     testTTL * time.Second,
@@ -623,7 +623,7 @@ func TestAuth_ServeHTTP_logout(t *testing.T) {
 	auth, err := newAuth(testutil.ContextWithTimeout(t, testTimeout), &authConfig{
 		baseLogger:     testLogger,
 		rateLimiter:    emptyRateLimiter{},
-		trustedProxies: nil,
+		trustedProxies: testTrustedProxies,
 		dbFilename:     sessionsDB,
 		users:          users,
 		sessionTTL:     testTTL * time.Second,
