@@ -184,6 +184,9 @@ type httpConfig struct {
 	// Pprof defines the profiling HTTP handler.
 	Pprof *httpPprofConfig `yaml:"pprof"`
 
+	// DoH contains DNS-over-HTTPS configuration.  It is never nil.
+	DoH *httpDoHConfig `yaml:"doh"`
+
 	// Address is the address to serve the web UI on.
 	Address netip.AddrPort
 
@@ -199,6 +202,21 @@ type httpPprofConfig struct {
 
 	// Enabled defines if the profiling handler is enabled.
 	Enabled bool `yaml:"enabled"`
+}
+
+// httpDoHConfig is the block with DNS-over-HTTPS configuration.
+type httpDoHConfig struct {
+	// Routes is the list of HTTP route patterns for DoH requests.  Each route
+	// should be in the format "METHOD /path" or "METHOD /path/{param}".
+	// Default routes are:
+	//   - "GET /dns-query"
+	//   - "POST /dns-query"
+	//   - "GET /dns-query/{ClientID}"
+	//   - "POST /dns-query/{ClientID}"
+	Routes []string `yaml:"routes"`
+
+	// InsecureEnabled allows DoH queries via unencrypted HTTP.
+	InsecureEnabled bool `yaml:"insecure_enabled"`
 }
 
 // dnsConfig is a block with DNS configuration params.
@@ -455,6 +473,15 @@ var config = &configuration{
 		Pprof: &httpPprofConfig{
 			Enabled: false,
 			Port:    6060,
+		},
+		DoH: &httpDoHConfig{
+			Routes: []string{
+				"GET /dns-query",
+				"POST /dns-query",
+				"GET /dns-query/{ClientID}",
+				"POST /dns-query/{ClientID}",
+			},
+			InsecureEnabled: false,
 		},
 	},
 	DNS: dnsConfig{

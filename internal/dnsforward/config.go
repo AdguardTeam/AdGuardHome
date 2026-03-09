@@ -263,6 +263,9 @@ type ServerConfig struct {
 	TLSConf *TLSConfig
 
 	Config
+
+	// TLSAllowUnencryptedDoH defines if unencrypted DoH connections are
+	// allowed.
 	TLSAllowUnencryptedDoH bool
 
 	// UpstreamTimeout is the timeout for querying upstream servers.
