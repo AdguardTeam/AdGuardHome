@@ -10,7 +10,7 @@
     'cacheBuster': '0'
     'channel': 'development'
     'dockerFrontend': 'adguard/home-js-builder:4.0'
-    'dockerGo': 'adguard/go-builder:1.25.7--1'
+    'dockerGo': 'adguard/go-builder:1.25.7--2'
 
 'stages':
   - 'Tests':
@@ -165,6 +165,9 @@
 
                 set -e -f -u -x
 
+                version="$(env CHANNEL=${bamboo_channel} sh ./scripts/make/version.sh)"
+                readonly version
+
                 docker info
 
                 docker build \
@@ -175,8 +178,9 @@
                     --build-arg "CHANNEL=${bamboo_channel}" \
                     --build-arg "OS=windows darwin linux" \
                     --build-arg "REVISION=${bamboo_repository_revision_number}" \
+                    --build-arg "SIGN=0" \
                     --build-arg "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" \
-                    --build-arg "VERSION=${bamboo_buildNumber}" \
+                    --build-arg "VERSION=$version" \
                     --output '.' \
                     --progress 'plain' \
                     --target 'builder-exporter' \
@@ -247,5 +251,5 @@
         # may need to build a few of these.
         'variables':
             'dockerFrontend': 'adguard/home-js-builder:4.0'
-            'dockerGo': 'adguard/go-builder:1.25.7--1'
+            'dockerGo': 'adguard/go-builder:1.25.7--2'
             'channel': 'candidate'
