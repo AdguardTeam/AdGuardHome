@@ -18,6 +18,12 @@ See also the [v0.107.73 GitHub milestone][ms-v0.107.73].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Security
+
+- Authentication is now applied to requests that have been upgraded from HTTP/2 Cleartext (H2C) requests to public resources.
+
+  **NOTE:** We thank @mandreko for reporting this security issue.
+
 ### Fixed
 
 - Incorrect client IP logging in failed authentication attempts when using a proxy ([#8198]).

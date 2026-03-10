@@ -331,6 +331,8 @@ const (
 type authMiddlewareDefaultConfig struct {
 	// logger is used for logging the operation of the middleware.  It must not
 	// be nil.
+	//
+	// TODO(e.burkov):  Require a logger in request's context instead.
 	logger *slog.Logger
 
 	// rateLimiter manages the rate limiting for login attempts.
@@ -415,6 +417,8 @@ func (mw *authMiddlewareDefault) handleAuthenticatedUser(
 	}
 
 	if u == nil {
+		mw.logger.DebugContext(ctx, "no user found in request")
+
 		return false
 	}
 
