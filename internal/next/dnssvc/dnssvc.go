@@ -17,9 +17,11 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghslog"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
 	"github.com/AdguardTeam/dnsproxy/proxy"
+	"github.com/AdguardTeam/dnsproxy/ratelimit"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/golibs/netutil"
 )
 
 // Service is the AdGuard Home DNS service.  A nil *Service is a valid
@@ -62,11 +64,15 @@ func New(c *Config) (svc *Service, err error) {
 		return nil, nil
 	}
 
+	rlMw, err := newRatelimitMw(c.Logger, c.Ratelimit)
+	if err != nil {
+		return nil, fmt.Errorf("ratelimit middleware: %w", err)
+	}
+
 	svc = &Service{
 		logger: c.Logger,
 		proxyConf: &proxy.Config{
 			UpstreamMode:   c.UpstreamMode,
-			Ratelimit:      c.Ratelimit,
 			DNS64Prefs:     c.DNS64Prefixes,
 			CacheSizeBytes: c.CacheSize,
 			CacheEnabled:   c.CacheEnabled,
@@ -97,20 +103,40 @@ func New(c *Config) (svc *Service, err error) {
 		UpstreamConfig: &proxy.UpstreamConfig{
 			Upstreams: upstreams,
 		},
-		UDPListenAddr: udpAddrs(c.Addresses),
-		TCPListenAddr: tcpAddrs(c.Addresses),
-		UpstreamMode:  svc.proxyConf.UpstreamMode,
-		Ratelimit:     svc.proxyConf.Ratelimit,
-		DNS64Prefs:    svc.proxyConf.DNS64Prefs,
-		CacheEnabled:  svc.proxyConf.CacheEnabled,
-		RefuseAny:     svc.proxyConf.RefuseAny,
-		UseDNS64:      svc.proxyConf.UseDNS64,
+		UDPListenAddr:  udpAddrs(c.Addresses),
+		TCPListenAddr:  tcpAddrs(c.Addresses),
+		UpstreamMode:   svc.proxyConf.UpstreamMode,
+		RequestHandler: rlMw.Wrap(proxy.DefaultHandler{}),
+		DNS64Prefs:     svc.proxyConf.DNS64Prefs,
+		CacheEnabled:   svc.proxyConf.CacheEnabled,
+		RefuseAny:      svc.proxyConf.RefuseAny,
+		UseDNS64:       svc.proxyConf.UseDNS64,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("proxy: %w", err)
 	}
 
 	return svc, nil
+}
+
+// newRatelimitMw returns the ratelimit middleware.  In case of invalid
+// ratelimit configuration returns an error. l must not be nil.
+func newRatelimitMw(l *slog.Logger, limit int) (mw proxy.Middleware, err error) {
+	if limit == 0 {
+		return proxy.MiddlewareFunc(proxy.PassThrough), nil
+	}
+
+	rlConf := &ratelimit.Config{
+		Logger:        l.With(slogutil.KeyPrefix, "ratelimit"),
+		Ratelimit:     uint(limit),
+		SubnetLenIPv4: netutil.IPv4BitLen,
+		SubnetLenIPv6: netutil.IPv6BitLen,
+	}
+	if err = rlConf.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid configuration: %w", err)
+	}
+
+	return ratelimit.NewMiddleware(rlConf), nil
 }
 
 // addressesToUpstreams is a wrapper around [upstream.AddressToUpstream].  It
@@ -245,6 +271,7 @@ func (svc *Service) Config() (c *Config) {
 		}
 	}
 
+	// TODO(d.kolyshev): Fill ratelimit.
 	c = &Config{
 		Logger:              svc.logger,
 		UpstreamMode:        svc.proxyConf.UpstreamMode,
@@ -254,7 +281,6 @@ func (svc *Service) Config() (c *Config) {
 		DNS64Prefixes:       svc.proxyConf.DNS64Prefs,
 		UpstreamTimeout:     svc.upstreamTimeout,
 		CacheSize:           svc.proxyConf.CacheSizeBytes,
-		Ratelimit:           svc.proxyConf.Ratelimit,
 		BootstrapPreferIPv6: svc.bootstrapPreferIPv6,
 		CacheEnabled:        svc.proxyConf.CacheEnabled,
 		RefuseAny:           svc.proxyConf.RefuseAny,

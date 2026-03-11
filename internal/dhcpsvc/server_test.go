@@ -22,15 +22,17 @@ func TestDHCPServer_AddLease(t *testing.T) {
 		Enabled:    true,
 	})
 
+	// NOTE: Keep in sync with testdata.
 	const (
 		existHost = "host1"
 		newHost   = "host2"
 		ipv6Host  = "host3"
 	)
 
+	// NOTE: Keep in sync with testdata.
 	var (
-		existIP = netip.MustParseAddr("192.168.0.2")
-		newIP   = netip.MustParseAddr("192.168.0.3")
+		existIP = netip.MustParseAddr("192.0.2.2")
+		newIP   = netip.MustParseAddr("192.0.2.3")
 		newIPv6 = netip.MustParseAddr("2001:db8::2")
 
 		existMAC = errors.Must(net.ParseMAC("01:02:03:04:05:06"))
@@ -130,6 +132,7 @@ func TestDHCPServer_index(t *testing.T) {
 		Enabled:    true,
 	})
 
+	// NOTE: Keep in sync with testdata.
 	const (
 		host1 = "host1"
 		host2 = "host2"
@@ -138,11 +141,12 @@ func TestDHCPServer_index(t *testing.T) {
 		host5 = "host5"
 	)
 
+	// NOTE: Keep in sync with testdata.
 	var (
-		ip1 = netip.MustParseAddr("192.168.0.2")
-		ip2 = netip.MustParseAddr("192.168.0.3")
-		ip3 = netip.MustParseAddr("172.16.0.3")
-		ip4 = netip.MustParseAddr("172.16.0.4")
+		ip1 = netip.MustParseAddr("192.0.2.2")
+		ip2 = netip.MustParseAddr("192.0.2.3")
+		ip3 = netip.MustParseAddr("198.51.100.3")
+		ip4 = netip.MustParseAddr("198.51.100.4")
 
 		mac1 = errors.Must(net.ParseMAC("01:02:03:04:05:06"))
 		mac2 = errors.Must(net.ParseMAC("06:05:04:03:02:01"))
@@ -181,6 +185,7 @@ func TestDHCPServer_UpdateStaticLease(t *testing.T) {
 		Enabled:    true,
 	})
 
+	// NOTE: Keep in sync with testdata.
 	const (
 		host1 = "host1"
 		host2 = "host2"
@@ -190,11 +195,12 @@ func TestDHCPServer_UpdateStaticLease(t *testing.T) {
 		host6 = "host6"
 	)
 
+	// NOTE: Keep in sync with testdata.
 	var (
-		ip1 = netip.MustParseAddr("192.168.0.2")
-		ip2 = netip.MustParseAddr("192.168.0.3")
-		ip3 = netip.MustParseAddr("192.168.0.4")
-		ip4 = netip.MustParseAddr("2001:db8::3")
+		ip1 = netip.MustParseAddr("192.0.2.2")
+		ip2 = netip.MustParseAddr("192.0.2.3")
+		ip3 = netip.MustParseAddr("192.0.2.4")
+		ip4 = netip.MustParseAddr("2001:db8::2")
 
 		mac1 = errors.Must(net.ParseMAC("01:02:03:04:05:06"))
 		mac2 = errors.Must(net.ParseMAC("06:05:04:03:02:01"))
@@ -283,15 +289,17 @@ func TestDHCPServer_RemoveLease(t *testing.T) {
 		Enabled:    true,
 	})
 
+	// NOTE: Keep in sync with testdata.
 	const (
 		host1 = "host1"
 		host2 = "host2"
 		host3 = "host3"
 	)
 
+	// NOTE: Keep in sync with testdata.
 	var (
-		existIP = netip.MustParseAddr("192.168.0.2")
-		newIP   = netip.MustParseAddr("192.168.0.3")
+		existIP = netip.MustParseAddr("192.0.2.2")
+		newIP   = netip.MustParseAddr("192.0.2.3")
 		newIPv6 = netip.MustParseAddr("2001:db8::2")
 
 		existMAC = errors.Must(net.ParseMAC("01:02:03:04:05:06"))
@@ -386,13 +394,13 @@ func TestServer_Leases(t *testing.T) {
 
 	wantLeases := []*dhcpsvc.Lease{{
 		Expiry:   expiry,
-		IP:       netip.MustParseAddr("192.168.0.3"),
+		IP:       netip.MustParseAddr("192.0.2.3"),
 		Hostname: "example.host",
 		HWAddr:   errors.Must(net.ParseMAC("AA:AA:AA:AA:AA:AA")),
 		IsStatic: false,
 	}, {
 		Expiry:   time.Time{},
-		IP:       netip.MustParseAddr("192.168.0.4"),
+		IP:       netip.MustParseAddr("192.0.2.4"),
 		Hostname: "example.static.host",
 		HWAddr:   errors.Must(net.ParseMAC("BB:BB:BB:BB:BB:BB")),
 		IsStatic: true,

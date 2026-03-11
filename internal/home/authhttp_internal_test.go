@@ -20,6 +20,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghuser"
 	"github.com/AdguardTeam/golibs/httphdr"
 	"github.com/AdguardTeam/golibs/testutil"
@@ -471,7 +472,7 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 	auth, err := newAuth(testutil.ContextWithTimeout(t, testTimeout), &authConfig{
 		baseLogger:     testLogger,
 		rateLimiter:    emptyRateLimiter{},
-		trustedProxies: nil,
+		trustedProxies: testTrustedProxies,
 		dbFilename:     sessionsDB,
 		users:          users,
 		sessionTTL:     testTTL * time.Second,
@@ -488,6 +489,7 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 	tlsMgr, err := newTLSManager(testutil.ContextWithTimeout(t, testTimeout), &tlsManagerConfig{
 		logger:       testLogger,
 		confModifier: agh.EmptyConfigModifier{},
+		manager:      aghtls.EmptyManager{},
 	})
 	require.NoError(t, err)
 
@@ -626,7 +628,7 @@ func TestAuth_ServeHTTP_logout(t *testing.T) {
 	auth, err := newAuth(testutil.ContextWithTimeout(t, testTimeout), &authConfig{
 		baseLogger:     testLogger,
 		rateLimiter:    emptyRateLimiter{},
-		trustedProxies: nil,
+		trustedProxies: testTrustedProxies,
 		dbFilename:     sessionsDB,
 		users:          users,
 		sessionTTL:     testTTL * time.Second,

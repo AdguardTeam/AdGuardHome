@@ -173,23 +173,23 @@ func TestDHCPServer_ServeEther4_release(t *testing.T) {
 		hwAddrSuccess = net.HardwareAddr{0x02, 0x03, 0x04, 0x05, 0x06, 0x07}
 
 		// ipSuccess matches the lease IP.
-		ipSuccess = netip.MustParseAddr("192.168.0.102")
+		ipSuccess = netip.MustParseAddr("192.0.2.102")
 
 		// ipMismatch is the IP of the lease used in the mismatch cases.
-		ipMismatch = netip.MustParseAddr("192.168.0.103")
+		ipMismatch = netip.MustParseAddr("192.0.2.103")
 
 		// hwAddrMismatch is the MAC address for a lease with mismatched IP.
 		hwAddrMismatch = net.HardwareAddr{0x03, 0x04, 0x05, 0x06, 0x07, 0x08}
 
 		// ipMismatchReq is the IP requested for release, which differs from the
 		// lease IP.
-		ipMismatchReq = netip.MustParseAddr("192.168.0.104")
+		ipMismatchReq = netip.MustParseAddr("192.0.2.104")
 
 		// hwAddrUnknown is an unknown MAC.
 		hwAddrUnknown = net.HardwareAddr{0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff}
 	)
 
-	anotherSubnetAddr := netip.MustParseAddr("10.0.0.1")
+	anotherSubnetAddr := netip.MustParseAddr(testAnotherGatewayIPv4Str)
 
 	var (
 		leaseSuccess = &dhcpsvc.Lease{
@@ -274,10 +274,10 @@ func TestDHCPServer_ServeEther4_requestSelecting(t *testing.T) {
 		hwAddrUnknown = net.HardwareAddr{0x0, 0x1, 0x2, 0x3, 0x4, 0x5}
 		hwAddrStatic  = net.HardwareAddr{0x1, 0x2, 0x3, 0x4, 0x5, 0x6}
 
-		ipStatic = netip.MustParseAddr("192.168.0.101")
-		ipWrong  = netip.MustParseAddr("192.168.0.200")
+		ipStatic = netip.MustParseAddr("192.0.2.101")
+		ipWrong  = netip.MustParseAddr("192.0.2.200")
 
-		ipOtherSubnet = netip.MustParseAddr("10.0.0.1")
+		ipOtherSubnet = netip.MustParseAddr(testAnotherGatewayIPv4Str)
 	)
 
 	testCases := []struct {
@@ -289,7 +289,7 @@ func TestDHCPServer_ServeEther4_requestSelecting(t *testing.T) {
 	}{{
 		discover: newDHCPDISCOVER(t, hwAddrUnknown),
 		conf: &dhcpRequestConfig{
-			requestedIP:  netip.MustParseAddr("192.168.0.100"),
+			requestedIP:  testIPv4Conf.RangeStart,
 			clientHWAddr: hwAddrUnknown,
 			serverID:     testIfaceAddr,
 		},
@@ -395,10 +395,10 @@ func TestDHCPServer_ServeEther4_requestInitReboot(t *testing.T) {
 		hwAddrUnknown = net.HardwareAddr{0x0, 0x1, 0x2, 0x3, 0x4, 0x5}
 		hwAddrStatic  = net.HardwareAddr{0x1, 0x2, 0x3, 0x4, 0x5, 0x6}
 
-		ipStatic  = netip.MustParseAddr("192.168.0.101")
-		ipDynamic = netip.MustParseAddr("192.168.0.102")
+		ipStatic  = netip.MustParseAddr("192.0.2.101")
+		ipDynamic = netip.MustParseAddr("192.0.2.102")
 
-		ipOtherSubnet = netip.MustParseAddr("10.0.0.1")
+		ipOtherSubnet = netip.MustParseAddr(testAnotherGatewayIPv4Str)
 	)
 
 	testCases := []struct {
@@ -495,10 +495,10 @@ func TestDHCPServer_ServeEther4_requestRenew(t *testing.T) {
 		hwAddrStatic  = net.HardwareAddr{0x1, 0x2, 0x3, 0x4, 0x5, 0x6}
 		hwAddrDynamic = net.HardwareAddr{0x2, 0x3, 0x4, 0x5, 0x6, 0x7}
 
-		ipStatic  = netip.MustParseAddr("192.168.0.101")
-		ipDynamic = netip.MustParseAddr("192.168.0.102")
+		ipStatic  = netip.MustParseAddr("192.0.2.101")
+		ipDynamic = netip.MustParseAddr("192.0.2.102")
 
-		ipOtherSubnet = netip.MustParseAddr("10.0.0.1")
+		ipOtherSubnet = netip.MustParseAddr(testAnotherGatewayIPv4Str)
 	)
 
 	// NOTE: Keep in sync with testdata.
@@ -590,7 +590,116 @@ func TestDHCPServer_ServeEther4_requestRenew(t *testing.T) {
 	}
 }
 
-// TODO(e.burkov):  Add tests for DHCPDECLINE.
+func TestDHCPServer_ServeEther4_decline(t *testing.T) {
+	t.Parallel()
+
+	// NOTE: Keep in sync with testdata.
+	leaseExpiry := time.Date(2025, 1, 1, 10, 1, 1, 0, time.UTC)
+
+	// NOTE: Keep in sync with testdata.
+	var (
+		// hwAddrSuccess is the MAC address for a lease to be declined
+		// successfully.
+		hwAddrSuccess = net.HardwareAddr{0x02, 0x03, 0x04, 0x05, 0x06, 0x07}
+
+		// ipSuccess matches the lease IP.
+		ipSuccess = netip.MustParseAddr("192.0.2.102")
+
+		// ipMismatch is the IP of the lease used in the mismatch cases.
+		ipMismatch = netip.MustParseAddr("192.0.2.103")
+
+		// hwAddrMismatch is the MAC address for a lease with mismatched IP.
+		hwAddrMismatch = net.HardwareAddr{0x03, 0x04, 0x05, 0x06, 0x07, 0x08}
+
+		// ipMismatchReq is the IP requested for decline, which differs from
+		// the lease IP.
+		ipMismatchReq = netip.MustParseAddr("192.0.2.104")
+
+		// hwAddrUnknown is an unknown MAC.
+		hwAddrUnknown = net.HardwareAddr{0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff}
+	)
+
+	anotherSubnetAddr := netip.MustParseAddr(testAnotherGatewayIPv4Str)
+
+	var (
+		leaseSuccess = &dhcpsvc.Lease{
+			Expiry:   leaseExpiry,
+			IP:       ipSuccess,
+			Hostname: "success",
+			HWAddr:   hwAddrSuccess,
+			IsStatic: false,
+		}
+		leaseMismatch = &dhcpsvc.Lease{
+			Expiry:   leaseExpiry,
+			IP:       ipMismatch,
+			Hostname: "mismatch",
+			HWAddr:   hwAddrMismatch,
+			IsStatic: false,
+		}
+	)
+
+	testCases := []struct {
+		name       string
+		req        gopacket.Packet
+		wantLeases []*dhcpsvc.Lease
+	}{{
+		name: "success",
+		req:  newDHCPDECLINE(t, hwAddrSuccess, ipSuccess),
+		wantLeases: []*dhcpsvc.Lease{
+			leaseMismatch,
+		},
+	}, {
+		name: "not_found",
+		req:  newDHCPDECLINE(t, hwAddrUnknown, ipSuccess),
+		wantLeases: []*dhcpsvc.Lease{
+			leaseSuccess,
+			leaseMismatch,
+		},
+	}, {
+		name: "mismatch_ip",
+		req:  newDHCPDECLINE(t, hwAddrMismatch, ipMismatchReq),
+		wantLeases: []*dhcpsvc.Lease{
+			leaseSuccess,
+			leaseMismatch,
+		},
+	}, {
+		name: "bad_subnet",
+		req:  newDHCPDECLINE(t, hwAddrSuccess, anotherSubnetAddr),
+		wantLeases: []*dhcpsvc.Lease{
+			leaseSuccess,
+			leaseMismatch,
+		},
+	}, {
+		name: "no_requested_ip",
+		req:  newDHCPDECLINE(t, hwAddrSuccess, netip.Addr{}),
+		wantLeases: []*dhcpsvc.Lease{
+			leaseSuccess,
+			leaseMismatch,
+		},
+	}}
+
+	for _, tc := range testCases {
+		ndMgr, inCh, _ := newTestNetworkDeviceManager(t, testIfaceName, testIfaceAddr)
+		srv := newTestDHCPServer(t, &dhcpsvc.Config{
+			Interfaces:           testIPv4InterfacesConf,
+			NetworkDeviceManager: ndMgr,
+			DBFilePath:           newTempDB(t),
+			Enabled:              true,
+		})
+
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			servicetest.RequireRun(t, srv, testTimeout)
+
+			testutil.RequireSend(t, inCh, tc.req, testTimeout)
+
+			assert.EventuallyWithT(t, func(ct *assert.CollectT) {
+				assert.Equal(ct, tc.wantLeases, srv.Leases())
+			}, testTimeout/2, testTimeout/20)
+		})
+	}
+}
 
 // TODO(e.burkov):  Add tests for wrong packets.
 
@@ -766,6 +875,55 @@ func newDHCPRELEASE(
 		Options: layers.DHCPOptions{
 			newOptMessageType(tb, layers.DHCPMsgTypeRelease),
 		},
+	}
+
+	return newTestPacket(tb, layers.LinkTypeEthernet, eth, ip, udp, dhcp)
+}
+
+// newDHCPDECLINE creates a new DHCPDECLINE packet for testing.
+func newDHCPDECLINE(
+	tb testing.TB,
+	clientHWAddr net.HardwareAddr,
+	requestedIP netip.Addr,
+) (pkt gopacket.Packet) {
+	tb.Helper()
+
+	eth := &layers.Ethernet{
+		SrcMAC:       clientHWAddr,
+		DstMAC:       net.HardwareAddr{0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
+		EthernetType: layers.EthernetTypeIPv4,
+	}
+	ip := &layers.IPv4{
+		Version:  4,
+		TTL:      dhcpsvc.IPv4DefaultTTL,
+		SrcIP:    net.IPv4zero.To4(),
+		DstIP:    net.IPv4bcast.To4(),
+		Protocol: layers.IPProtocolUDP,
+	}
+	udp := &layers.UDP{
+		SrcPort: dhcpsvc.ClientPortV4,
+		DstPort: dhcpsvc.ServerPortV4,
+	}
+	_ = udp.SetNetworkLayerForChecksum(ip)
+
+	opts := layers.DHCPOptions{
+		newOptMessageType(tb, layers.DHCPMsgTypeDecline),
+	}
+
+	if requestedIP.IsValid() {
+		opts = append(opts, layers.NewDHCPOption(
+			layers.DHCPOptRequestIP,
+			requestedIP.AsSlice(),
+		))
+	}
+
+	dhcp := &layers.DHCPv4{
+		Operation:    layers.DHCPOpRequest,
+		HardwareType: layers.LinkTypeEthernet,
+		HardwareLen:  dhcpsvc.EUI48AddrLen,
+		Xid:          testXid,
+		ClientHWAddr: clientHWAddr,
+		Options:      opts,
 	}
 
 	return newTestPacket(tb, layers.LinkTypeEthernet, eth, ip, udp, dhcp)

@@ -2,7 +2,9 @@ package dhcpsvc_test
 
 import (
 	"context"
+	"io"
 	"net/netip"
+	"sync/atomic"
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
@@ -41,6 +43,7 @@ func (ndm *testNetworkDeviceManager) Open(
 // TODO(e.burkov):  Move to aghtest.
 type testNetworkDevice struct {
 	onReadPacketData  func() (data []byte, ci gopacket.CaptureInfo, err error)
+	onClose           func() (err error)
 	onAddresses       func() (ips []netip.Addr)
 	onLinkType        func() (lt layers.LinkType)
 	onWritePacketData func(data []byte) (err error)
@@ -53,6 +56,11 @@ var _ dhcpsvc.NetworkDevice = (*testNetworkDevice)(nil)
 // *testNetworkDevice.
 func (nd *testNetworkDevice) ReadPacketData() (data []byte, ci gopacket.CaptureInfo, err error) {
 	return nd.onReadPacketData()
+}
+
+// Close implements the [io.Closer] interface for *testNetworkDevice.
+func (nd *testNetworkDevice) Close() (err error) {
+	return nd.onClose()
 }
 
 // Addresses implements the [dhcpsvc.NetworkDevice] interface for
@@ -87,13 +95,19 @@ func newTestNetworkDeviceManager(
 	inCh = make(chan gopacket.Packet)
 	outCh = make(chan []byte)
 
+	isOpened := atomic.Bool{}
+
 	pt := testutil.PanicT{}
 	addrs := []netip.Addr{addr}
 
 	dev := &testNetworkDevice{
 		onReadPacketData: func() (data []byte, ci gopacket.CaptureInfo, err error) {
 			pkt, ok := testutil.RequireReceive(pt, inCh, testTimeout)
-			require.True(pt, ok)
+			require.Equal(pt, isOpened.Load(), ok)
+
+			if !ok {
+				return nil, gopacket.CaptureInfo{}, io.EOF
+			}
 
 			data = pkt.Data()
 			ci = gopacket.CaptureInfo{
@@ -102,6 +116,12 @@ func newTestNetworkDeviceManager(
 			}
 
 			return data, ci, nil
+		},
+		onClose: func() (err error) {
+			isOpened.Store(false)
+			close(inCh)
+
+			return nil
 		},
 		onAddresses: func() (ips []netip.Addr) {
 			return addrs
@@ -121,6 +141,7 @@ func newTestNetworkDeviceManager(
 			_ context.Context,
 			conf *dhcpsvc.NetworkDeviceConfig,
 		) (nd dhcpsvc.NetworkDevice, err error) {
+			isOpened.Store(true)
 			require.Equal(pt, deviceName, conf.Name)
 
 			return dev, nil

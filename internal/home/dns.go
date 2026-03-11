@@ -308,6 +308,8 @@ func newDNSTLSConfig(
 		return &dnsforward.TLSConfig{}, nil
 	}
 
+	// TODO(e.burkov):  Add tracking for DNSCrypt configuration file changes to
+	// the [aghtls.Manager].
 	dnsCryptConf, err := newDNSCryptConfig(conf, addrs)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.

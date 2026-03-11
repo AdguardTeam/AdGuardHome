@@ -186,6 +186,7 @@ func (f *Filter) readFromHTTP(
 		return nil, nil, fmt.Errorf("making request for http url %q: %w", urlStr, err)
 	}
 
+	// #nosec G704 -- Trust the URL explicitly given by the user.
 	resp, err := cli.Do(req)
 	if err != nil {
 		return nil, nil, fmt.Errorf("requesting from http url: %w", err)

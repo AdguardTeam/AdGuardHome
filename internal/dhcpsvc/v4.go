@@ -365,7 +365,10 @@ func (iface *dhcpInterfaceV4) allocateLease(
 
 		iface.common.logger.DebugContext(ctx, "address not available", "ip", l.IP)
 
-		iface.common.blockLease(l, iface.clock)
+		err = iface.common.blockLease(ctx, l, iface.clock)
+		if err != nil {
+			return nil, fmt.Errorf("blocking unavailable address: %w", err)
+		}
 	}
 }
 
