@@ -62,7 +62,7 @@
     "@babel/plugin-transform-runtime": "^7.24.3",
     "@babel/preset-env": "^7.24.5",
     "@babel/preset-react": "^7.24.1",
-    "@playwright/test": "1.50.1",
+    "@playwright/test": "1.56.0",
     "@storybook/addon-docs": "^9.0.18",
     "@storybook/addon-webpack5-compiler-swc": "^3.0.0",
     "@storybook/react-webpack5": "^9.0.18",
