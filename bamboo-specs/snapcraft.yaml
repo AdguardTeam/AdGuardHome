@@ -64,7 +64,7 @@
               docker info
 
               docker build \
-                  --build-arg "BASE_IMAGE=${bamboo_dockerSnap}"
+                  --build-arg "BASE_IMAGE=${bamboo_dockerSnap}" \
                   --build-arg "CACHE_BUSTER=${bamboo_cacheBuster}" \
                   --build-arg "CHANNEL=${bamboo_channel}" \
                   --build-arg "VERSION=${bamboo_buildNumber}" \
@@ -99,7 +99,7 @@
                 docker info
 
                 docker build \
-                    --build-arg "BASE_IMAGE=${bamboo_dockerSnap}"
+                    --build-arg "BASE_IMAGE=${bamboo_dockerSnap}" \
                     --build-arg "CACHE_BUSTER=${bamboo_cacheBuster}" \
                     --build-arg "SNAPCRAFT_CHANNEL=${bamboo_snapcraftChannel}" \
                     --build-arg "SNAPCRAFT_STORE_CREDENTIALS=${bamboo_snapcraftMacaroonPassword}" \
