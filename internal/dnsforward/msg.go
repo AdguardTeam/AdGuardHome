@@ -2,6 +2,7 @@ package dnsforward
 
 import (
 	"context"
+	"log/slog"
 	"net/netip"
 	"slices"
 
@@ -46,11 +47,12 @@ func ipsFromRules(resRules []*filtering.ResultRule) (ips []netip.Addr) {
 }
 
 // genDNSFilterMessage generates a filtered response to req for the filtering
-// result res.
+// result res.  l and res must not be nil.
 func (s *Server) genDNSFilterMessage(
 	ctx context.Context,
 	dctx *proxy.DNSContext,
 	res *filtering.Result,
+	l *slog.Logger,
 ) (resp *dns.Msg) {
 	req := dctx.Req
 	qt := req.Question[0].Qtype
@@ -65,9 +67,9 @@ func (s *Server) genDNSFilterMessage(
 
 	switch res.Reason {
 	case filtering.FilteredSafeBrowsing:
-		return s.genBlockedHost(ctx, req, s.dnsFilter.SafeBrowsingBlockHost(), dctx)
+		return s.genBlockedHost(ctx, req, s.dnsFilter.SafeBrowsingBlockHost(), dctx, l)
 	case filtering.FilteredParental:
-		return s.genBlockedHost(ctx, req, s.dnsFilter.ParentalBlockHost(), dctx)
+		return s.genBlockedHost(ctx, req, s.dnsFilter.ParentalBlockHost(), dctx, l)
 	case filtering.FilteredSafeSearch:
 		// If Safe Search generated the necessary IP addresses, use them.
 		// Otherwise, if there were no errors, there are no addresses for the
@@ -315,14 +317,17 @@ func (s *Server) makeResponseNullIP(ctx context.Context, req *dns.Msg) (resp *dn
 	return resp
 }
 
+// genBlockedHost generates a blocked host response.  request, d, and l must not
+// be nil.
 func (s *Server) genBlockedHost(
 	ctx context.Context,
 	request *dns.Msg,
 	newAddr string,
 	d *proxy.DNSContext,
+	l *slog.Logger,
 ) (msg *dns.Msg) {
 	if newAddr == "" {
-		s.logger.InfoContext(ctx, "block host not specified")
+		l.InfoContext(ctx, "block host not specified")
 
 		return s.NewMsgSERVFAIL(request)
 	}
@@ -345,14 +350,14 @@ func (s *Server) genBlockedHost(
 
 	prx := s.proxy()
 	if prx == nil {
-		s.logger.DebugContext(ctx, "getting current proxy", slogutil.KeyError, srvClosedErr)
+		l.DebugContext(ctx, "getting current proxy", slogutil.KeyError, srvClosedErr)
 
 		return s.NewMsgSERVFAIL(request)
 	}
 
 	err = prx.Resolve(ctx, newContext)
 	if err != nil {
-		s.logger.ErrorContext(
+		l.ErrorContext(
 			ctx,
 			"looking up replacement host",
 			"host", newAddr,
