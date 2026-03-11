@@ -9,14 +9,21 @@ The format is based on [*Keep a Changelog*](https://keepachangelog.com/en/1.0.0/
 <!--
 ## [v0.108.0] – TBA
 
-## [v0.107.73] - 2026-03-02 (APPROX.)
+## [v0.107.74] - 2026-03-24 (APPROX.)
 
-See also the [v0.107.73 GitHub milestone][ms-v0.107.73].
+See also the [v0.107.74 GitHub milestone][ms-v0.107.74].
 
-[ms-v0.107.73]: https://github.com/AdguardTeam/AdGuardHome/milestone/108?closed=1
+[ms-v0.107.74]: https://github.com/AdguardTeam/AdGuardHome/milestone/109?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
+<!--
+NOTE: Add new changes ABOVE THIS COMMENT.
+-->
+
+## [v0.107.73] - 2026-03-10
+
+See also the [v0.107.73 GitHub milestone][ms-v0.107.73].
 
 ### Security
 
@@ -24,17 +31,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
   **NOTE:** We thank @mandreko for reporting this security issue.
 
-### Fixed
-
-- Incorrect client IP logging in failed authentication attempts when using a proxy ([#8198]).
-
-- Incorrect logger behavior in case `-v` flag is added.
-
-[#8198]: https://github.com/AdguardTeam/AdGuardHome/issues/8198
-
-<!--
-NOTE: Add new changes ABOVE THIS COMMENT.
--->
+[ms-v0.107.73]: https://github.com/AdguardTeam/AdGuardHome/milestone/108?closed=1
 
 ## [v0.107.72] - 2026-02-19
 
@@ -3501,11 +3498,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 [ms-v0.104.2]: https://github.com/AdguardTeam/AdGuardHome/milestone/28?closed=1
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.73...HEAD
-[v0.107.73]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.72...v0.107.73
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.74...HEAD
+[v0.107.74]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.73...v0.107.74
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.72...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.73...HEAD
+[v0.107.73]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.72...v0.107.73
 [v0.107.72]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.71...v0.107.72
 [v0.107.71]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.70...v0.107.71
 [v0.107.70]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.69...v0.107.70
