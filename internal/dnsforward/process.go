@@ -201,7 +201,7 @@ func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
 	for _, addr := range s.conf.TLSConf.HTTPSListenAddrs {
 		values := []dns.SVCBKeyValue{
 			&dns.SVCBAlpn{Alpn: []string{"h2"}},
-			&dns.SVCBPort{Port: uint16(addr.Port)},
+			&dns.SVCBPort{Port: addr.Port()},
 			&dns.SVCBDoHPath{Template: "/dns-query{?dns}"},
 		}
 

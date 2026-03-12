@@ -222,6 +222,21 @@ func ipsToTCPAddrs(ips []netip.Addr, port uint16) (tcpAddrs []*net.TCPAddr) {
 	return tcpAddrs
 }
 
+// ipsToAddrPorts converts a slice of [netip.Addr] into a slice of
+// [netip.AddrPort] with the given port.
+func ipsToAddrPorts(ips []netip.Addr, port uint16) (addrs []netip.AddrPort) {
+	if ips == nil {
+		return nil
+	}
+
+	addrs = make([]netip.AddrPort, 0, len(ips))
+	for _, ip := range ips {
+		addrs = append(addrs, netip.AddrPortFrom(ip, port))
+	}
+
+	return addrs
+}
+
 func ipsToUDPAddrs(ips []netip.Addr, port uint16) (udpAddrs []*net.UDPAddr) {
 	if ips == nil {
 		return nil
@@ -323,7 +338,7 @@ func newDNSTLSConfig(
 	}
 
 	if conf.PortHTTPS != 0 {
-		dnsConf.HTTPSListenAddrs = ipsToTCPAddrs(addrs, conf.PortHTTPS)
+		dnsConf.HTTPSListenAddrs = ipsToAddrPorts(addrs, conf.PortHTTPS)
 	}
 
 	if conf.PortDNSOverTLS != 0 {

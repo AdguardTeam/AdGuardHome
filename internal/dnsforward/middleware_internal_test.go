@@ -15,13 +15,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Common constants for tests.
 const (
-	blockedHost      = "blockedhost.org"
-	testFQDN         = "example.org."
+	blockedHost = "blockedhost.org"
+	testFQDN    = "example.org."
+
 	dnsClientTimeout = 200 * time.Millisecond
 )
 
-func TestServer_HandleBefore_tls(t *testing.T) {
+func TestServer_middlewareTLS(t *testing.T) {
 	t.Parallel()
 
 	const clientID = "client-1"
@@ -165,7 +167,7 @@ func TestServer_HandleBefore_tls(t *testing.T) {
 	}
 }
 
-func TestServer_HandleBefore_udp(t *testing.T) {
+func TestServer_middlewareUDP(t *testing.T) {
 	t.Parallel()
 
 	const (

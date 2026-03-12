@@ -244,12 +244,16 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 		},
 	}
 
+	addrsDoH := []netip.AddrPort{netip.AddrPortFrom(netutil.IPv4Localhost(), 8044)}
+	addrsDoT := []*net.TCPAddr{{Port: 8043}}
+	addrsDoQ := []*net.UDPAddr{{Port: 8042}}
+
 	testCases := []struct {
 		name       string
 		host       string
 		want       []*dns.SVCB
 		wantRes    resultCode
-		addrsDoH   []*net.TCPAddr
+		addrsDoH   []netip.AddrPort
 		addrsDoT   []*net.TCPAddr
 		addrsDoQ   []*net.UDPAddr
 		qtype      uint16
@@ -260,14 +264,14 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 		host:       testQuestionTarget,
 		qtype:      dns.TypeSVCB,
 		ddrEnabled: true,
-		addrsDoH:   []*net.TCPAddr{{Port: 8043}},
+		addrsDoH:   addrsDoH,
 	}, {
 		name:       "pass_qtype",
 		wantRes:    resultCodeFinish,
 		host:       ddrHostFQDN,
 		qtype:      dns.TypeA,
 		ddrEnabled: true,
-		addrsDoH:   []*net.TCPAddr{{Port: 8043}},
+		addrsDoH:   addrsDoH,
 	}, {
 		name:       "pass_disabled_tls",
 		wantRes:    resultCodeFinish,
@@ -280,7 +284,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 		host:       ddrHostFQDN,
 		qtype:      dns.TypeSVCB,
 		ddrEnabled: false,
-		addrsDoH:   []*net.TCPAddr{{Port: 8043}},
+		addrsDoH:   addrsDoH,
 	}, {
 		name:       "dot",
 		wantRes:    resultCodeFinish,
@@ -288,7 +292,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 		host:       ddrHostFQDN,
 		qtype:      dns.TypeSVCB,
 		ddrEnabled: true,
-		addrsDoT:   []*net.TCPAddr{{Port: 8043}},
+		addrsDoT:   addrsDoT,
 	}, {
 		name:       "doh",
 		wantRes:    resultCodeFinish,
@@ -296,7 +300,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 		host:       ddrHostFQDN,
 		qtype:      dns.TypeSVCB,
 		ddrEnabled: true,
-		addrsDoH:   []*net.TCPAddr{{Port: 8044}},
+		addrsDoH:   addrsDoH,
 	}, {
 		name:       "doq",
 		wantRes:    resultCodeFinish,
@@ -304,7 +308,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 		host:       ddrHostFQDN,
 		qtype:      dns.TypeSVCB,
 		ddrEnabled: true,
-		addrsDoQ:   []*net.UDPAddr{{Port: 8042}},
+		addrsDoQ:   addrsDoQ,
 	}, {
 		name:       "dot_doh",
 		wantRes:    resultCodeFinish,
@@ -312,8 +316,8 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 		host:       ddrHostFQDN,
 		qtype:      dns.TypeSVCB,
 		ddrEnabled: true,
-		addrsDoT:   []*net.TCPAddr{{Port: 8043}},
-		addrsDoH:   []*net.TCPAddr{{Port: 8044}},
+		addrsDoT:   addrsDoT,
+		addrsDoH:   addrsDoH,
 	}}
 
 	_, certPem, keyPem := createServerTLSConfig(t)
