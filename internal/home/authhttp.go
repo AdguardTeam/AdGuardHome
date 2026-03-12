@@ -288,7 +288,7 @@ func (web *webAPI) registerAuthHandlers() {
 }
 
 // isPublicResource returns true if p is a path to a public resource.
-func isPublicResource(p string) (ok bool) {
+func isPublicResource(p, method string) (ok bool) {
 	isAsset, err := path.Match("/assets/*", p)
 	if err != nil {
 		// The only error that is returned from path.Match is
@@ -302,13 +302,11 @@ func isPublicResource(p string) (ok bool) {
 		panic(fmt.Errorf("bad login pattern: %w", err))
 	}
 
-	// TODO(s.chzhen):  Implement a more strict version.
-	if strings.HasPrefix(p, "/dns-query/") {
+	if isDoHRoute(p, method) {
 		return true
 	}
 
 	paths := []string{
-		"/dns-query",
 		"/control/login",
 		"/apple/doh.mobileconfig",
 		"/apple/dot.mobileconfig",
@@ -319,6 +317,22 @@ func isPublicResource(p string) (ok bool) {
 	}
 
 	return isAsset || isLogin || slices.Contains(paths, p)
+}
+
+// isDoHRoute returns true if p is a path to a DoH route.
+//
+// TODO(d.kolyshev):  Implement a more strict way.
+func isDoHRoute(p, method string) (ok bool) {
+	for _, route := range config.HTTPConfig.DoH.Routes {
+		routePath, _ := strings.CutPrefix(route, method)
+		routePath, _ = strings.CutSuffix(routePath, "{ClientID}")
+
+		if strings.HasPrefix(p, strings.TrimSpace(routePath)) {
+			return true
+		}
+	}
+
+	return false
 }
 
 const (
@@ -441,7 +455,7 @@ func (mw *authMiddlewareDefault) handlePublicAccess(
 	h http.Handler,
 	path string,
 ) (ok bool) {
-	if isPublicResource(path) {
+	if isPublicResource(path, r.Method) {
 		h.ServeHTTP(w, r)
 
 		return true
