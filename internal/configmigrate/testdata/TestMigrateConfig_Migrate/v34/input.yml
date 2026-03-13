@@ -100,6 +100,7 @@ dhcp:
     icmp_timeout_msec: 10
 schema_version: 33
 tls:
+  enabled: true
   allow_unencrypted_doh: true
 user_rules: []
 querylog:

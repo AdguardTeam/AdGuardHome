@@ -270,7 +270,7 @@ func newServerConfig(
 	fwdConf := dnsConf.Config
 	fwdConf.ClientsContainer = clientsContainer
 
-	intTLSConf, err := newDNSTLSConfig(tlsConf, hosts)
+	intTLSConf, err := newDNSTLSConfig(tlsConf, hosts, dohConf.InsecureEnabled)
 	if err != nil {
 		return nil, fmt.Errorf("constructing tls config: %w", err)
 	}
@@ -322,6 +322,7 @@ func newServerConfig(
 func newDNSTLSConfig(
 	conf *tlsConfigSettings,
 	addrs []netip.Addr,
+	allowUnencryptedDoH bool,
 ) (dnsConf *dnsforward.TLSConfig, err error) {
 	if !conf.Enabled {
 		return &dnsforward.TLSConfig{}, nil
@@ -356,7 +357,7 @@ func newDNSTLSConfig(
 	cert, err := tls.X509KeyPair(conf.CertificateChainData, conf.PrivateKeyData)
 	if err != nil {
 		err = fmt.Errorf("parsing tls key pair: %w", err)
-		if conf.AllowUnencryptedDoH || dnsCryptConf != nil {
+		if allowUnencryptedDoH || dnsCryptConf != nil {
 			// TODO(s.chzhen):  Use [slog.Logger].
 			log.Info("warning: %s", err)
 

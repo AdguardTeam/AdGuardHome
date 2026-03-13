@@ -330,12 +330,6 @@ type tlsConfigSettings struct {
 	// https://github.com/ameshkov/dnscrypt.
 	DNSCryptConfigFile string `yaml:"dnscrypt_config_file" json:"dnscrypt_config_file"`
 
-	// AllowUnencryptedDoH allows DoH queries via unencrypted HTTP (e.g. for
-	// reverse proxying).
-	//
-	// TODO(s.chzhen):  Add this option into the Web UI.
-	AllowUnencryptedDoH bool `yaml:"allow_unencrypted_doh" json:"allow_unencrypted_doh"`
-
 	// CertificateChain is the PEM-encoded certificate chain.  Must be empty if
 	// [tlsConfigSettings.CertificatePath] is provided.
 	CertificateChain string `yaml:"certificate_chain" json:"certificate_chain"`
@@ -386,7 +380,6 @@ func (c *tlsConfigSettings) clone() (clone *tlsConfigSettings) {
 // It sets the following properties because these are not accepted from the
 // frontend:
 //
-//	[tlsConfigSettings.AllowUnencryptedDoH]
 //	[tlsConfigSettings.DNSCryptConfigFile]
 //	[tlsConfigSettings.OverrideTLSCiphers]
 //	[tlsConfigSettings.PortDNSCrypt]
@@ -398,9 +391,6 @@ func (c *tlsConfigSettings) clone() (clone *tlsConfigSettings) {
 //	[tlsConfigSettings.PrivateKeyData]
 func (c *tlsConfigSettings) setPrivateFieldsAndCompare(conf *tlsConfigSettings) (equal bool) {
 	conf.OverrideTLSCiphers = slices.Clone(c.OverrideTLSCiphers)
-
-	// TODO(s.chzhen):  Remove this once the frontend supports it.
-	conf.AllowUnencryptedDoH = c.AllowUnencryptedDoH
 
 	conf.DNSCryptConfigFile = c.DNSCryptConfigFile
 	conf.PortDNSCrypt = c.PortDNSCrypt
