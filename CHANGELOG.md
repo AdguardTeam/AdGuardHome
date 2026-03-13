@@ -17,6 +17,11 @@ See also the [v0.107.74 GitHub milestone][ms-v0.107.74].
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
+
+### Fixed
+
+- Fixed clients block/unblock when moving clients between allowed and disallowed lists.
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->

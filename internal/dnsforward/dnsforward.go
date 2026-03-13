@@ -26,7 +26,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
-	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
@@ -42,11 +41,6 @@ const DefaultTimeout = 10 * time.Second
 // locally-served networks.  It is assumed that local resolvers should work much
 // faster than ordinary upstreams.
 const defaultLocalTimeout = 1 * time.Second
-
-// defaultClientIDCacheCount is the default count of items in the LRU ClientID
-// cache.  The assumption here is that there won't be more than this many
-// requests between the BeforeRequestHandler stage and the actual processing.
-const defaultClientIDCacheCount = 1024
 
 var defaultDNS = []string{
 	"https://dns10.quad9.net/dns-query",
@@ -109,10 +103,6 @@ type Server struct {
 
 	// bootstrap is the resolver for upstreams' hostnames.
 	bootstrap upstream.Resolver
-
-	// clientIDCache is a temporary storage for ClientIDs that were extracted
-	// during the BeforeRequestHandler stage.
-	clientIDCache cache.Cache
 
 	// dhcpServer is the DHCP server for accessing lease data.
 	dhcpServer DHCP
@@ -261,11 +251,7 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 		// TODO(e.burkov):  Use some case-insensitive string comparison.
 		localDomainSuffix: strings.ToLower(localDomainSuffix),
 		etcHosts:          etcHosts,
-		clientIDCache: cache.New(cache.Config{
-			EnableLRU: true,
-			MaxCount:  defaultClientIDCacheCount,
-		}),
-		anonymizer: p.Anonymizer,
+		anonymizer:        p.Anonymizer,
 		conf: ServerConfig{
 			ServePlainDNS: true,
 		},
@@ -418,7 +404,7 @@ func (s *Server) Exchange(
 	} else {
 		errMsg = "resolving an address: %w"
 	}
-	if err = s.internalProxy.Resolve(dctx); err != nil {
+	if err = s.internalProxy.Resolve(ctx, dctx); err != nil {
 		return "", 0, fmt.Errorf(errMsg, err)
 	}
 

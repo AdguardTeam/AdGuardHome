@@ -12,10 +12,9 @@ import (
 var _ proxy.Handler = (*Server)(nil)
 
 // ServeDNS implements the [proxy.Handler] interface for [*Server].
-func (s *Server) ServeDNS(_ *proxy.Proxy, pctx *proxy.DNSContext) (err error) {
-	// TODO(s.chzhen):  Pass context.
-	ctx := context.TODO()
-
+//
+// TODO(d.kolyshev):  Use logger from context.
+func (s *Server) ServeDNS(ctx context.Context, _ *proxy.Proxy, pctx *proxy.DNSContext) (err error) {
 	dctx := &dnsContext{
 		proxyCtx:  pctx,
 		result:    &filtering.Result{},
