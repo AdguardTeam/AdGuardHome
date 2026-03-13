@@ -48,6 +48,16 @@ func clientIDFromClientServerName(
 	return strings.ToLower(clientID), nil
 }
 
+const (
+	// clientIDParamName is the name of the parameter used in the pattern of the
+	// client's DNS-over-HTTPS request.
+	clientIDParamName = "ClientID"
+
+	// clientIDParamTemplate is the template for the client ID parameter in the
+	// client's DNS-over-HTTPS request.
+	clientIDParamTemplate = "{" + clientIDParamName + "}"
+)
+
 // clientIDFromDNSContextHTTPS extracts the ClientID from the pattern of the
 // client's DNS-over-HTTPS request.
 func clientIDFromDNSContextHTTPS(pctx *proxy.DNSContext) (clientID string, err error) {
@@ -56,11 +66,12 @@ func clientIDFromDNSContextHTTPS(pctx *proxy.DNSContext) (clientID string, err e
 		return "", fmt.Errorf("proxy ctx http request of proto %s is nil", pctx.Proto)
 	}
 
-	if !strings.Contains(r.Pattern, "{ClientID}") {
+	if !strings.Contains(r.Pattern, clientIDParamTemplate) {
+		// ClientID is not in the pattern.
 		return "", nil
 	}
 
-	clientID = r.PathValue("ClientID")
+	clientID = r.PathValue(clientIDParamName)
 	err = client.ValidateClientID(clientID)
 	if err != nil {
 		return "", fmt.Errorf("clientid check: %w", err)
