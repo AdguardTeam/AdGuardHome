@@ -2,7 +2,6 @@ package dnsforward
 
 import (
 	"context"
-	"encoding/binary"
 	"net"
 	"net/netip"
 	"strings"
@@ -130,9 +129,10 @@ func (s *Server) processInitial(ctx context.Context, dctx *dnsContext) (rc resul
 
 	// Get the ClientID, if any, before getting client-specific filtering
 	// settings.
-	var key [8]byte
-	binary.BigEndian.PutUint64(key[:], pctx.RequestID)
-	dctx.clientID = string(s.clientIDCache.Get(key[:]))
+	clientID, ok := clientIDFromContext(ctx)
+	if ok {
+		dctx.clientID = clientID
+	}
 
 	// Get the client-specific filtering settings.
 	dctx.protectionEnabled, _ = s.UpdatedProtectionStatus(ctx)
@@ -455,7 +455,7 @@ func (s *Server) processUpstream(ctx context.Context, dctx *dnsContext) (rc resu
 		return resultCodeError
 	}
 
-	if dctx.err = prx.Resolve(pctx); dctx.err != nil {
+	if dctx.err = prx.Resolve(ctx, pctx); dctx.err != nil {
 		return resultCodeError
 	}
 

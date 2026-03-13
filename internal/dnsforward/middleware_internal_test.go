@@ -102,23 +102,8 @@ func TestServer_middlewareTLS(t *testing.T) {
 		wantRCode:         dns.RcodeRefused,
 	}}
 
-	localAns := []dns.RR{&dns.A{
-		Hdr: dns.RR_Header{
-			Name:     testFQDN,
-			Rrtype:   dns.TypeA,
-			Class:    dns.ClassINET,
-			Ttl:      3600,
-			Rdlength: 4,
-		},
-		A: net.IP{1, 2, 3, 4},
-	}}
-	localUpsHdlr := dns.HandlerFunc(func(w dns.ResponseWriter, req *dns.Msg) {
-		resp := (&dns.Msg{}).SetReply(req)
-		resp.Answer = localAns
-
-		require.NoError(t, w.WriteMsg(resp))
-	})
-	localUpsAddr := aghtest.StartLocalhostUpstream(t, localUpsHdlr).String()
+	localAns := newTestDNSAnswer(testFQDN, net.IP{1, 2, 3, 4})
+	localUpsAddr := newTestUpstream(t, localAns)
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -130,7 +115,6 @@ func TestServer_middlewareTLS(t *testing.T) {
 			})
 
 			s.conf.UpstreamDNS = []string{localUpsAddr}
-
 			s.conf.AllowedClients = tc.allowedClients
 			s.conf.DisallowedClients = tc.disallowedClients
 			s.conf.BlockedHosts = tc.blockedHosts
@@ -140,16 +124,7 @@ func TestServer_middlewareTLS(t *testing.T) {
 
 			startDeferStop(t, s)
 
-			tlsConfig := &tls.Config{
-				InsecureSkipVerify: true,
-				ServerName:         tc.clientSrvName,
-			}
-
-			client := &dns.Client{
-				Net:       "tcp-tls",
-				TLSConfig: tlsConfig,
-				Timeout:   dnsClientTimeout,
-			}
+			client := newTestTCPClient(tc.clientSrvName)
 
 			req := createTestMessage(tc.host)
 			addr := s.dnsProxy.Addr(proxy.ProtoTLS).String()
@@ -157,11 +132,10 @@ func TestServer_middlewareTLS(t *testing.T) {
 			reply, _, err := client.Exchange(req, addr)
 			require.NoError(t, err)
 
-			assert.Equal(t, tc.wantRCode, reply.Rcode)
 			if tc.wantRCode == dns.RcodeSuccess {
-				assert.Equal(t, localAns, reply.Answer)
+				assertSuccessResponse(t, reply, localAns)
 			} else {
-				assert.Empty(t, reply.Answer)
+				assertRejectedResponse(t, reply, tc.wantRCode)
 			}
 		})
 	}
@@ -235,23 +209,8 @@ func TestServer_middlewareUDP(t *testing.T) {
 		wantTimeout:       true,
 	}}
 
-	localAns := []dns.RR{&dns.A{
-		Hdr: dns.RR_Header{
-			Name:     testFQDN,
-			Rrtype:   dns.TypeA,
-			Class:    dns.ClassINET,
-			Ttl:      3600,
-			Rdlength: 4,
-		},
-		A: net.IP{1, 2, 3, 4},
-	}}
-	localUpsHdlr := dns.HandlerFunc(func(w dns.ResponseWriter, req *dns.Msg) {
-		resp := (&dns.Msg{}).SetReply(req)
-		resp.Answer = localAns
-
-		require.NoError(t, w.WriteMsg(resp))
-	})
-	localUpsAddr := aghtest.StartLocalhostUpstream(t, localUpsHdlr).String()
+	localAns := newTestDNSAnswer(testFQDN, net.IP{1, 2, 3, 4})
+	localUpsAddr := newTestUpstream(t, localAns)
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -287,18 +246,87 @@ func TestServer_middlewareUDP(t *testing.T) {
 
 			reply, _, err := client.Exchange(req, addr)
 			if tc.wantTimeout {
-				wantErr := &net.OpError{}
-				require.ErrorAs(t, err, &wantErr)
-				assert.True(t, wantErr.Timeout())
-
-				assert.Nil(t, reply)
+				assertTimeoutError(t, err, reply)
 			} else {
 				require.NoError(t, err)
-				require.NotNil(t, reply)
 
-				assert.Equal(t, dns.RcodeSuccess, reply.Rcode)
-				assert.Equal(t, localAns, reply.Answer)
+				assertSuccessResponse(t, reply, localAns)
 			}
 		})
 	}
+}
+
+// newTestDNSAnswer creates a standard A record answer for testing.
+func newTestDNSAnswer(fqdn string, ip net.IP) (ans []dns.RR) {
+	return []dns.RR{&dns.A{
+		Hdr: dns.RR_Header{
+			Name:     fqdn,
+			Rrtype:   dns.TypeA,
+			Class:    dns.ClassINET,
+			Ttl:      3600,
+			Rdlength: 4,
+		},
+		A: ip,
+	}}
+}
+
+// newTestUpstream creates a test upstream handler and returns its address.
+func newTestUpstream(tb testing.TB, answer []dns.RR) (addr string) {
+	tb.Helper()
+
+	handler := dns.HandlerFunc(func(w dns.ResponseWriter, req *dns.Msg) {
+		resp := (&dns.Msg{}).SetReply(req)
+		resp.Answer = answer
+
+		require.NoError(testutil.PanicT{}, w.WriteMsg(resp))
+	})
+
+	return aghtest.StartLocalhostUpstream(tb, handler).String()
+}
+
+// newTestTCPClient creates a new TCP client for testing.
+func newTestTCPClient(clientSrvName string) (c *dns.Client) {
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: true,
+		ServerName:         clientSrvName,
+	}
+
+	return &dns.Client{
+		Net:       "tcp-tls",
+		TLSConfig: tlsConfig,
+		Timeout:   dnsClientTimeout,
+	}
+}
+
+// assertSuccessResponse checks that the response is successful with expected
+// answer.
+func assertSuccessResponse(tb testing.TB, reply *dns.Msg, expectedAns []dns.RR) {
+	tb.Helper()
+
+	require.NotNil(tb, reply)
+
+	assert.Equal(tb, dns.RcodeSuccess, reply.Rcode)
+	assert.Equal(tb, expectedAns, reply.Answer)
+}
+
+// assertRejectedResponse checks that the response has the expected error code
+// and no answer.
+func assertRejectedResponse(tb testing.TB, reply *dns.Msg, wantRCode int) {
+	tb.Helper()
+
+	require.NotNil(tb, reply)
+
+	assert.Equal(tb, wantRCode, reply.Rcode)
+	assert.Empty(tb, reply.Answer)
+}
+
+// assertTimeoutError checks that the error is a timeout error and reply is nil.
+func assertTimeoutError(tb testing.TB, err error, reply *dns.Msg) {
+	tb.Helper()
+
+	wantErr := &net.OpError{}
+	require.ErrorAs(tb, err, &wantErr)
+
+	assert.True(tb, wantErr.Timeout())
+	assert.Nil(tb, reply)
 }

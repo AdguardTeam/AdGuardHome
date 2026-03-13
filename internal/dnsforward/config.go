@@ -333,6 +333,8 @@ func (s *Server) newProxyConfig(ctx context.Context) (conf *proxy.Config, err er
 		return nil, fmt.Errorf("ratelimit middleware: %w", err)
 	}
 
+	logMw := newLogMiddleware(s.baseLogger, slogutil.LevelTrace)
+
 	httpConf := &proxy.HTTPConfig{
 		ServerHeader:    aghhttp.UserAgent(),
 		InsecureEnabled: s.conf.TLSAllowUnencryptedDoH,
@@ -349,7 +351,7 @@ func (s *Server) newProxyConfig(ctx context.Context) (conf *proxy.Config, err er
 		CacheOptimisticMaxAge:     time.Duration(srvConf.CacheOptimisticMaxAge),
 		UpstreamConfig:            srvConf.UpstreamConfig,
 		PrivateRDNSUpstreamConfig: srvConf.PrivateRDNSUpstreamConfig,
-		RequestHandler:            ratelimitMw.Wrap(s.Wrap(s)),
+		RequestHandler:            ratelimitMw.Wrap(logMw.Wrap(s.Wrap(s))),
 		EnableEDNSClientSubnet:    srvConf.EDNSClientSubnet.Enabled,
 		MaxGoroutines:             srvConf.MaxGoroutines,
 		UseDNS64:                  srvConf.UseDNS64,

@@ -200,7 +200,7 @@ func TestServer_ServeDNS(t *testing.T) {
 		}
 
 		t.Run(tc.name, func(t *testing.T) {
-			err = s.ServeDNS(nil, dctx)
+			err = s.ServeDNS(testutil.ContextWithTimeout(t, testTimeout), nil, dctx)
 			require.NoError(t, err)
 			require.NotNil(t, dctx.Res)
 
@@ -335,7 +335,7 @@ func TestServer_ServeDNS_restrictLocal(t *testing.T) {
 		}
 
 		t.Run(tc.name, func(t *testing.T) {
-			err = s.ServeDNS(s.dnsProxy, pctx)
+			err = s.ServeDNS(testutil.ContextWithTimeout(t, testTimeout), s.dnsProxy, pctx)
 			require.ErrorIs(t, err, tc.wantErr)
 
 			require.NotNil(t, pctx.Res)

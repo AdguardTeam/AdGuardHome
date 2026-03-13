@@ -350,7 +350,7 @@ func (s *Server) genBlockedHost(
 		return s.NewMsgSERVFAIL(request)
 	}
 
-	err = prx.Resolve(newContext)
+	err = prx.Resolve(ctx, newContext)
 	if err != nil {
 		s.logger.ErrorContext(
 			ctx,
