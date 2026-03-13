@@ -289,7 +289,7 @@
   "encryption_key_input": "Zalijepite svoj PEM-kodiran privatni ključ certifikata ovdje.",
   "encryption_key_invalid": "Ovo je nevažeći {{type}} privatni ključ",
   "encryption_key_source_content": "Zalijepi sadržaj privatnog ključa",
-  "encryption_key_source_path": "Dodajte datoteku privatnog ključa",
+  "encryption_key_source_path": "Dodajte putanju datoteke privatnog ključa",
   "encryption_key_valid": "Ovo je valjani {{type}} privatni ključ",
   "encryption_plain_dns_desc": "Obični DNS je omogućen prema zadanim postavkama. Možete ga onemogućiti kako biste prisilili sve uređaje da koriste šifrirani DNS. Da biste to učinili, morate omogućiti barem jedan kriptirani DNS protokol",
   "encryption_plain_dns_enable": "Omogući obični DNS",

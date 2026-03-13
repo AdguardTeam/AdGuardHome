@@ -18,6 +18,12 @@ See also the [v0.107.74 GitHub milestone][ms-v0.107.74].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.26.1][go-1.26.1].
+
+[go-1.26.1]: https://groups.google.com/g/golang-announce/c/EdhZqrQ98hkq
+
 ### Fixed
 
 - Fixed clients block/unblock when moving clients between allowed and disallowed lists.
