@@ -54,8 +54,9 @@ type Updater struct {
 	// TODO(a.garipov): See if all of these fields actually have to be in
 	// this struct.
 	currentExeName string // current binary executable
-	updateDir      string // "workDir/agh-update-v0.103.0"
-	packageName    string // "workDir/agh-update-v0.103.0/pkg_name.tar.gz"
+	tempDir        string // temporary update staging directory
+	updateDir      string // "tempDir/agh-update-v0.103.0"
+	packageName    string // "tempDir/agh-update-v0.103.0/pkg_name.tar.gz"
 	backupDir      string // "workDir/agh-backup"
 	backupExeName  string // "workDir/agh-backup/AdGuardHome[.exe]"
 	updateExeName  string // "workDir/agh-update-v0.103.0/AdGuardHome[.exe]"
@@ -222,7 +223,12 @@ func (u *Updater) NewVersion() (nv string) {
 
 // prepare fills all necessary fields in Updater object.
 func (u *Updater) prepare(ctx context.Context) (err error) {
-	u.updateDir = filepath.Join(u.workDir, fmt.Sprintf("agh-update-%s", u.newVersion))
+	u.tempDir, err = os.MkdirTemp("", "agh-update-*")
+	if err != nil {
+		return fmt.Errorf("creating temporary update dir: %w", err)
+	}
+
+	u.updateDir = filepath.Join(u.tempDir, fmt.Sprintf("agh-update-%s", u.newVersion))
 
 	_, pkgNameOnly := filepath.Split(u.packageURL)
 	if pkgNameOnly == "" {
@@ -383,9 +389,9 @@ func (u *Updater) replace(ctx context.Context) (err error) {
 
 // clean removes the temporary directory itself and all it's contents.
 func (u *Updater) clean(ctx context.Context) {
-	err := os.RemoveAll(u.updateDir)
+	err := os.RemoveAll(u.tempDir)
 	if err != nil {
-		u.logger.WarnContext(ctx, "removing update dir", slogutil.KeyError, err)
+		u.logger.WarnContext(ctx, "removing temp update dir", slogutil.KeyError, err)
 	}
 }
 
