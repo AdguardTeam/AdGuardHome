@@ -228,6 +228,12 @@ func (u *Updater) prepare(ctx context.Context) (err error) {
 		return fmt.Errorf("creating temporary update dir: %w", err)
 	}
 
+	defer func() {
+		if err != nil {
+			_ = os.RemoveAll(u.tempDir)
+		}
+	}()
+
 	u.updateDir = filepath.Join(u.tempDir, fmt.Sprintf("agh-update-%s", u.newVersion))
 
 	_, pkgNameOnly := filepath.Split(u.packageURL)
