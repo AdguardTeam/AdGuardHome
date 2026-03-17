@@ -2889,45 +2889,45 @@
           'type': 'string'
           'description': 'Client IP address, CIDR, MAC address, or ClientID'
     'ClientsFindResponse':
-      'type': 'array'
       'description': 'Client search results.'
       'items':
         '$ref': '#/components/schemas/ClientsFindEntry'
       'example':
       - 'cli42':
-        'name': 'Client 42'
-        'ids': ['cli42']
-        'use_global_settings': true
-        'filtering_enabled': true
-        'parental_enabled': true
-        'safebrowsing_enabled': true
-        'safesearch_enabled': true
-        'safe_search': {}
-        'use_global_blocked_services': true
-        'blocked_services': null
-        'upstreams': null
-        'whois_info': {}
-        'disallowed': false
-        'disallowed_rule': ''
-        'ignore_querylog': false
-        'ignore_statistics': false
+          'name': 'Client 42'
+          'ids': ['cli42']
+          'use_global_settings': true
+          'filtering_enabled': true
+          'parental_enabled': true
+          'safebrowsing_enabled': true
+          'safesearch_enabled': true
+          'safe_search': {}
+          'use_global_blocked_services': true
+          'blocked_services': []
+          'upstreams': []
+          'whois_info': {}
+          'disallowed': false
+          'disallowed_rule': ''
+          'ignore_querylog': false
+          'ignore_statistics': false
       - '1.2.3.4':
-        'name': 'Client 1-2-3-4'
-        'ids': ['1.2.3.4']
-        'use_global_settings': true
-        'filtering_enabled': true
-        'parental_enabled': true
-        'safebrowsing_enabled': true
-        'safesearch_enabled': true
-        'safe_search': {}
-        'use_global_blocked_services': true
-        'blocked_services': null
-        'upstreams': null
-        'whois_info': {}
-        'disallowed': false
-        'disallowed_rule': ''
-        'ignore_querylog': false
-        'ignore_statistics': false
+          'name': 'Client 1-2-3-4'
+          'ids': ['1.2.3.4']
+          'use_global_settings': true
+          'filtering_enabled': true
+          'parental_enabled': true
+          'safebrowsing_enabled': true
+          'safesearch_enabled': true
+          'safe_search': {}
+          'use_global_blocked_services': true
+          'blocked_services': []
+          'upstreams': []
+          'whois_info': {}
+          'disallowed': false
+          'disallowed_rule': ''
+          'ignore_querylog': false
+          'ignore_statistics': false
+      'type': 'array'
     'AccessListResponse':
       '$ref': '#/components/schemas/AccessList'
     'AccessSetRequest':
