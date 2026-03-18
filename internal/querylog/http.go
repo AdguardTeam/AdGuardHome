@@ -157,10 +157,23 @@ func AnonymizeIP(ip net.IP) {
 	const zeroes = "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 
 	if ip4 := ip.To4(); ip4 != nil {
-		copy(ip4[net.IPv4len-2:net.IPv4len], zeroes)
+		if isCGNAT(ip4) {
+			// Truncate Tailscale/CGNAT IPs (100.64.0.0/10) to
+			// 100.64.0.0/32 so that individual device IPs within the
+			// /16 cannot be identified.
+			copy(ip4[1:net.IPv4len], zeroes)
+			ip4[1] = 64
+		} else {
+			copy(ip4[net.IPv4len-2:net.IPv4len], zeroes)
+		}
 	} else if len(ip) == net.IPv6len {
 		copy(ip[net.IPv6len-10:net.IPv6len], zeroes)
 	}
+}
+
+// isCGNAT returns true if ip4 is within the 100.64.0.0/10 CGNAT range.
+func isCGNAT(ip4 net.IP) (ok bool) {
+	return ip4[0] == 100 && ip4[1]&0xC0 == 64
 }
 
 // handleQueryLogConfig is the handler for the POST /control/querylog_config

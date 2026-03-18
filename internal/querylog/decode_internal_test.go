@@ -289,7 +289,11 @@ func TestDecodeLogEntry_backwardCompatability(t *testing.T) {
 // It only exists in purposes of benchmark comparison, see BenchmarkAnonymizeIP.
 func anonymizeIPSlow(ip net.IP) {
 	if ip4 := ip.To4(); ip4 != nil {
-		copy(ip4[net.IPv4len-2:net.IPv4len], []byte{0, 0})
+		if ip4[0] == 100 && ip4[1]&0xC0 == 64 {
+			copy(ip4[1:net.IPv4len], []byte{64, 0, 0})
+		} else {
+			copy(ip4[net.IPv4len-2:net.IPv4len], []byte{0, 0})
+		}
 	} else if len(ip) == net.IPv6len {
 		copy(ip[net.IPv6len-10:net.IPv6len], []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
 	}
@@ -324,6 +328,14 @@ func BenchmarkAnonymizeIP(b *testing.B) {
 			0x0, 0x0, 0x0, 0x0,
 			0x0, 0x0, 0x0, 0x0,
 		},
+	}, {
+		name: "v4_cgnat",
+		ip:   net.IP{100, 100, 1, 2},
+		want: net.IP{100, 64, 0, 0},
+	}, {
+		name: "v4_cgnat_mapped",
+		ip:   net.IP{100, 127, 255, 255}.To16(),
+		want: net.IP{100, 64, 0, 0}.To16(),
 	}, {
 		name: "invalid",
 		ip:   net.IP{1, 2, 3},
