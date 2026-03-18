@@ -89,6 +89,14 @@
     @media (min-width: 768px) {
         display: none;
     }
+
+
+    & > div:first-child,
+    & > div:last-child,
+    & > div:first-child {
+        width: 0;
+        margin: 0;
+    }
 }
 
 .refreshDesktopButton {
@@ -101,13 +109,6 @@
     @media (min-width: 768px) {
         display: inline-flex;
     }
-}
-
-.refreshMobileButton > div:first-child,
-.refreshMobileButton > div:last-child,
-.refreshDesktopButton > div:first-child {
-    width: 0;
-    margin: 0;
 }
 
 .refreshMobileIcon,

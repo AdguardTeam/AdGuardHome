@@ -17,12 +17,12 @@ export const DisallowDialog = ({ ip, isAllowlistMode, onConfirm, onClose }: Prop
         <ConfirmDialog
             title={intl.getMessage('disallow_client_confirm_title')}
             text={
-                <div className={s.body}>
-                    <p>{intl.getMessage('disallow_client_confirm_text', { ip })}</p>
+                <div>
+                    <div>{intl.getMessage('disallow_client_confirm_text', { ip })}</div>
                     {isAllowlistMode && (
-                        <p className={s.note}>
+                        <div className={s.note}>
                             {intl.getMessage('disallow_client_confirm_allowlist_note', { ip })}
-                        </p>
+                        </div>
                     )}
                 </div>
             }
