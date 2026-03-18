@@ -102,9 +102,7 @@ export const InfiniteScrollTrigger = ({
     return (
         <div ref={sentinelRef} className={cn(s.loader, className, { [s.loading]: loading })}>
             {loading && (
-                <>
-                    <InlineLoader className={s.icon} />
-                </>
+                <InlineLoader className={s.icon} />
             )}
         </div>
     );

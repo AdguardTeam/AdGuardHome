@@ -4,11 +4,12 @@ import cn from 'clsx';
 import theme from 'panel/lib/theme';
 import { normalizeWhois } from 'panel/helpers/helpers';
 import { Icon } from 'panel/common/ui/Icon';
+import { WhoisInfo as WhoisInfoType } from 'panel/components/QueryLog/types';
 
 import s from './WhoisInfo.module.pcss';
 
 type Props = {
-    whois: any;
+    whois: WhoisInfoType | undefined | null;
     className?: string;
 };
 
@@ -18,25 +19,24 @@ export const WhoisInfo = ({ whois, className }: Props) => {
     }
 
     const whoisInfo = normalizeWhois(whois);
+    const entries = Object.entries(whoisInfo).filter(([, value]) => Boolean(value));
 
     return (
         <div className={cn(s.whoisInfo, theme.text.t4, className)}>
-            {Object.entries(whoisInfo)
-                .filter(([, value]) => Boolean(value))
-                .map(([key, value], index) => (
-                    <React.Fragment key={key}>
-                        <span className={s.whoisItem} title={String(value)}>
-                            {key === 'location' && <Icon icon="location" className={s.whoisIcon} />}
-                            {(key === 'orgname' || key === 'netname' || key === 'descr') && (
-                                <Icon icon="wifi" className={s.whoisIcon} />
-                            )}
-                            <span className={s.whoisText}>{value}</span>
-                        </span>
-                        {index < Object.entries(whoisInfo).filter(([, v]) => Boolean(v)).length - 1 && (
-                            <span className={s.divider} />
+            {entries.map(([key, value], index) => (
+                <React.Fragment key={key}>
+                    <span className={s.whoisItem} title={String(value)}>
+                        {key === 'location' && <Icon icon="location" className={s.whoisIcon} />}
+                        {(key === 'orgname' || key === 'netname' || key === 'descr') && (
+                            <Icon icon="wifi" className={s.whoisIcon} />
                         )}
-                    </React.Fragment>
-                ))}
+                        <span className={s.whoisText}>{value}</span>
+                    </span>
+                    {index < entries.length - 1 && (
+                        <span className={s.divider} />
+                    )}
+                </React.Fragment>
+            ))}
         </div>
     );
 };

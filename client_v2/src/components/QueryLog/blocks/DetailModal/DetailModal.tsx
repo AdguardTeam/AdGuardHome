@@ -57,7 +57,7 @@ const getSourceNode = (trackerSource?: { url?: string; name?: string }) => {
 
 export const DetailModal = ({ entry, onClose }: Props) => {
     const statusLabel = getStatusLabel(entry.reason, entry.originalResponse, false);
-    const statusClassName = getStatusClassName(s, entry.reason);
+    const statusClassName = getStatusClassName(entry.reason);
     const clientName = entry.client_info?.name || '';
     const protocol = getProtocolName(entry.client_proto);
     const responseList = formatResponses(entry.response);

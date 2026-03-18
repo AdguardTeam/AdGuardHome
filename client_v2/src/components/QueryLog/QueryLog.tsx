@@ -56,7 +56,7 @@ export const QueryLog = () => {
 
     useEffect(() => {
         dispatch(getLogsConfig());
-        dispatch(getAccessList() as any);
+        dispatch(getAccessList());
     }, [dispatch]);
 
     useEffect(() => {
@@ -116,23 +116,16 @@ export const QueryLog = () => {
         dispatch(refreshFilteredLogs());
     }, [dispatch]);
 
-    const handleBlock = useCallback(
+    const handleToggleBlock = useCallback(
         (type: string, domain: string) => {
-            dispatch(toggleBlocking(type, domain) as any);
-        },
-        [dispatch],
-    );
-
-    const handleUnblock = useCallback(
-        (type: string, domain: string) => {
-            dispatch(toggleBlocking(type, domain) as any);
+            dispatch(toggleBlocking(type, domain));
         },
         [dispatch],
     );
 
     const handleBlockClient = useCallback(
         (type: string, domain: string, client: string) => {
-            dispatch(toggleBlockingForClient(type, domain, client) as any);
+            dispatch(toggleBlockingForClient(type, domain, client));
         },
         [dispatch],
     );
@@ -143,7 +136,7 @@ export const QueryLog = () => {
 
     const handleConfirmDisallow = useCallback(() => {
         if (disallowTarget) {
-            dispatch(toggleClientBlock(disallowTarget, false, '') as any);
+            dispatch(toggleClientBlock(disallowTarget, false, ''));
             setDisallowTarget(null);
         }
     }, [dispatch, disallowTarget]);
@@ -160,9 +153,8 @@ export const QueryLog = () => {
         setSelectedEntry(null);
     }, []);
 
-    const isLoading = processingGetLogs || processingAdditionalLogs;
-    const isLoadingMore = isIncrementalLoad && isLoading;
     const isRequestInFlight = processingGetLogs || processingAdditionalLogs;
+    const isLoadingMore = isIncrementalLoad && isRequestInFlight;
 
     const handleLoadMore = useCallback(() => {
         if (isRequestInFlight || isEntireLog) {
@@ -201,7 +193,7 @@ export const QueryLog = () => {
                     onFilterChange={handleFilterChange}
                     currentSearch={currentSearch}
                     currentFilter={currentFilter}
-                    isLoading={!!isLoading}
+                    isLoading={!!isRequestInFlight}
                 />
 
                 <div className={s.desktopView}>
@@ -212,8 +204,8 @@ export const QueryLog = () => {
                         isRequestInFlight={isRequestInFlight}
                         onLoadMore={handleLoadMore}
                         onRowClick={handleRowClick}
-                        onBlock={handleBlock}
-                        onUnblock={handleUnblock}
+                        onBlock={handleToggleBlock}
+                        onUnblock={handleToggleBlock}
                         onBlockClient={handleBlockClient}
                         onDisallowClient={handleDisallowClient}
                         onSearchSelect={handleSearch}
@@ -231,13 +223,13 @@ export const QueryLog = () => {
                     ) : (
                         <>
                             <div className={s.mobileList}>
-                                {logs.map((entry: LogEntry, index: number) => (
+                                {logs.map((entry: LogEntry) => (
                                     <LogCard
-                                        key={index}
+                                        key={`${entry.time}-${entry.domain}-${entry.client}`}
                                         entry={entry}
                                         onRowClick={handleRowClick}
-                                        onBlock={handleBlock}
-                                        onUnblock={handleUnblock}
+                                        onBlock={handleToggleBlock}
+                                        onUnblock={handleToggleBlock}
                                         onBlockClient={handleBlockClient}
                                         onDisallowClient={handleDisallowClient}
                                         filters={filters}

@@ -45,7 +45,7 @@ export const LogCard = ({
     onDisallowClient,
 }: Props) => {
     const statusLabel = getStatusLabel(entry.reason, entry.originalResponse ?? [], false);
-    const statusClassName = getStatusClassName(s, entry.reason);
+    const statusClassName = getStatusClassName(entry.reason);
     const clientName = entry.client_info?.name || '';
     const proto = getProtocolName(entry.client_proto);
 

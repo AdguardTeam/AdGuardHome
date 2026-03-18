@@ -94,7 +94,7 @@ export const RequestCell = ({ row }: Props) => {
                         {row.unicodeName || row.domain}
                     </span>
                 </div>
-                <span className={cn(s.secondaryLine, s.requestDetails, theme.text.t3)}>
+                <span className={cn(s.secondaryLine, theme.text.t3)}>
                     {intl.getMessage('type_value', { value: row.type })}, {getProtocolName(row.client_proto)}
                 </span>
             </div>

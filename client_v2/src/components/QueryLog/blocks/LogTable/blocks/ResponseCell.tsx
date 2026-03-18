@@ -16,7 +16,7 @@ type Props = {
 };
 
 export const ResponseCell = ({ row, filters, services, whitelistFilters }: Props) => {
-    const statusClassName = getStatusClassName(s, row.reason);
+    const statusClassName = getStatusClassName(row.reason);
     const statusLabel = getStatusLabel(row.reason, row.originalResponse, false);
     const responseDetails = getResponseDetails({
         elapsedMs: row.elapsedMs,

@@ -1,6 +1,7 @@
 import { format as dateFormat, isValid } from 'date-fns';
 
 import intl from 'panel/common/intl';
+import theme from 'panel/lib/theme';
 import {
     FILTERED_STATUS,
     FILTERED_STATUS_TO_COLOR_MAP,
@@ -59,22 +60,14 @@ export const getStatusLabel = (
     }
 };
 
-export const getStatusColor = (
-    reason: string,
-): (typeof QUERY_STATUS_COLORS)[keyof typeof QUERY_STATUS_COLORS] | '' =>
-    FILTERED_STATUS_TO_COLOR_MAP[reason as keyof typeof FILTERED_STATUS_TO_COLOR_MAP] || '';
-
-export const getStatusClassName = (styles: Record<string, string>, reason: string): string => {
-    const statusColor = getStatusColor(reason);
-
-    if (!statusColor) {
-        return '';
-    }
-
-    const statusClassName = `status${statusColor.charAt(0).toUpperCase()}${statusColor.slice(1)}`;
-
-    return styles[statusClassName] || '';
+const STATUS_COLOR_TO_CLASS: Record<string, string> = {
+    [QUERY_STATUS_COLORS.RED]: theme.status.statusRed,
+    [QUERY_STATUS_COLORS.GREEN]: theme.status.statusGreen,
+    [QUERY_STATUS_COLORS.YELLOW]: theme.status.statusYellow,
 };
+
+export const getStatusClassName = (reason: string): string =>
+    STATUS_COLOR_TO_CLASS[FILTERED_STATUS_TO_COLOR_MAP[reason as keyof typeof FILTERED_STATUS_TO_COLOR_MAP]] || '';
 
 export const isBlockedReason = (reason: string): boolean =>
     reason.startsWith('Filtered') && reason !== 'FilteredSafeSearch';
