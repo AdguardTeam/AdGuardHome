@@ -18,6 +18,7 @@ export const RoutePath = {
     CustomRules: 'CustomRules',
     BlockedServices: 'BlockedServices',
     UserRules: 'UserRules',
+    QueryLog: 'QueryLog',
 } as const;
 
 export type RoutePathKey = keyof typeof RoutePath;
@@ -37,6 +38,7 @@ export const Paths: Record<RoutePathKey, string> = {
     CustomRules: pathBuilder('custom_rules'),
     BlockedServices: pathBuilder('blocked_services'),
     UserRules: pathBuilder('user_rules'),
+    QueryLog: pathBuilder('query_log'),
 };
 
 export type LinkParams = Partial<Record<string, string | number>>;

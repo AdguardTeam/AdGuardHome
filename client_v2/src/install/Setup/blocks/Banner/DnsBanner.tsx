@@ -8,12 +8,7 @@ import { Button } from 'panel/common/ui/Button';
 
 import cn from 'clsx';
 
-import {
-    ADDRESS_IN_USE_TEXT,
-    PORT_53_FAQ_LINK,
-    STANDARD_DNS_PORT,
-    STANDARD_WEB_PORT,
-} from 'panel/helpers/constants';
+import { ADDRESS_IN_USE_TEXT, PORT_53_FAQ_LINK, STANDARD_DNS_PORT, STANDARD_WEB_PORT } from 'panel/helpers/constants';
 
 import { validateRequiredValue, validateInstallPort } from 'panel/helpers/validators';
 import { toNumber } from 'panel/helpers/form';
@@ -49,14 +44,10 @@ export const DnsBanner = ({
     <div className={className}>
         <div className={styles.bannerInputs}>
             <div className={styles.group}>
-                <div className={styles.bannerTitle}>
-                    {intl.getMessage('setup_dns_title_banner')}
-                </div>
+                <div className={styles.bannerTitle}>{intl.getMessage('setup_dns_title_banner')}</div>
 
                 <div className={styles.form}>
-                    <label className={styles.bannerLabel}>
-                        {intl.getMessage('network_interface')}
-                    </label>
+                    <label className={styles.bannerLabel}>{intl.getMessage('network_interface')}</label>
                     <Controller<SettingsFormValues, 'dns.ip'>
                         name="dns.ip"
                         control={control}
@@ -75,9 +66,7 @@ export const DnsBanner = ({
                 </div>
 
                 <div className={styles.form}>
-                    <label className={styles.bannerLabel}>
-                        {intl.getMessage('install_settings_port')}
-                    </label>
+                    <label className={styles.bannerLabel}>{intl.getMessage('install_settings_port')}</label>
                     <Controller<SettingsFormValues, 'dns.port'>
                         name="dns.port"
                         control={control}
@@ -90,7 +79,8 @@ export const DnsBanner = ({
                         }}
                         render={({ field, fieldState }) => {
                             const isPortInUse = Boolean(dnsStatus && dnsStatus.includes(ADDRESS_IN_USE_TEXT));
-                            const errorMessage = fieldState.error?.message || (isPortInUse ? intl.getMessage('port_in_use') : undefined);
+                            const errorMessage =
+                                fieldState.error?.message || (isPortInUse ? intl.getMessage('port_in_use') : undefined);
                             return (
                                 <Input
                                     {...field}
@@ -120,16 +110,16 @@ export const DnsBanner = ({
                                         size="small"
                                         variant="primary"
                                         className={styles.inlineButton}
-                                        onClick={onAutofix}>
-                                    </Button>
+                                        onClick={onAutofix}
+                                    ></Button>
                                 )}
                             </div>
                             {isDnsFixAvailable && (
                                 <div className={styles.mutedText}>
-                                    <p className={styles.compactParagraph}>
-                                        {intl.getMessage('autofix_warning_text')}
-                                    </p>
-                                    {intl.getMessage('autofix_warning_list')}
+                                    <p className={styles.compactParagraph}>{intl.getMessage('autofix_warning_text')}</p>
+                                    {intl.getMessage('autofix_warning_list', {
+                                        p: (text: string) => <p className={styles.compactParagraph}>{text}</p>,
+                                    })}
                                     <p className={styles.compactParagraph}>
                                         {intl.getMessage('autofix_warning_result')}
                                     </p>

@@ -16,6 +16,7 @@ import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from 'panel/helpers/localStora
 import { Allowlists } from 'panel/components/FilterLists/Allowlists';
 import { DNSRewrites } from 'panel/components/FilterLists/DNSRewrites';
 import { SetupGuide } from 'panel/components/SetupGuide';
+import { QueryLog } from 'panel/components/QueryLog';
 import Toasts from '../Toasts';
 import i18n from '../../i18n';
 import { THEMES } from '../../helpers/constants';
@@ -68,6 +69,11 @@ const ROUTES: RouteConfig[] = [
     {
         path: '/guide',
         component: SetupGuideRoute,
+        exact: true,
+    },
+    {
+        path: '/logs',
+        component: QueryLog,
         exact: true,
     },
 ];

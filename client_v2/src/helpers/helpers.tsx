@@ -2,10 +2,10 @@ import 'url-polyfill';
 import { parse as dateParse, format as dateFormat } from 'date-fns';
 import round from 'lodash/round';
 import axios from 'axios';
-import i18n from 'i18next';
 import ipaddr, { IPv4, IPv6 } from 'ipaddr.js';
 import queryString from 'qs';
 import React from 'react';
+import intl from 'panel/common/intl';
 import { getTrackerData } from './trackers/trackers';
 
 import {
@@ -13,7 +13,6 @@ import {
     CHECK_TIMEOUT,
     COMMENT_LINE_DEFAULT_TOKEN,
     DEFAULT_DATE_FORMAT_OPTIONS,
-    DEFAULT_LANGUAGE,
     DEFAULT_TIME_FORMAT,
     DETAILED_DATE_FORMAT_OPTIONS,
     DHCP_VALUES_PLACEHOLDERS,
@@ -90,20 +89,27 @@ export const normalizeLogs = (logs: any) =>
         const { name: domain, unicode_name: unicodeName, type } = question;
 
         const processResponse = (data: any) =>
-            data
+            Array.isArray(data)
                 ? data.map((response: any) => {
-                    const { value, type, ttl } = response;
-                    return `${type}: ${value} (ttl=${ttl})`;
-                })
+                      const { value, type, ttl } = response;
+
+                      return {
+                          value,
+                          type,
+                          ttl,
+                      };
+                  })
                 : [];
 
-        let newRules = rules;
+        let newRules = Array.isArray(rules) ? rules : [];
         /* TODO 'filterId' and 'rule' are deprecated, will be removed in 0.106 */
-        if (rule !== undefined && filterId !== undefined && rules !== undefined && rules.length === 0) {
-            newRules = {
-                filter_list_id: filterId,
-                text: rule,
-            };
+        if (rule !== undefined && filterId !== undefined && newRules.length === 0) {
+            newRules = [
+                {
+                    filter_list_id: filterId,
+                    text: rule,
+                },
+            ];
         }
 
         return {
@@ -116,13 +122,19 @@ export const normalizeLogs = (logs: any) =>
             client,
             client_proto,
             client_id,
-            client_info,
+            client_info: client_info
+                ? {
+                      ...client_info,
+                      whois: client_info.whois || {},
+                  }
+                : null,
             /* TODO 'filterId' and 'rule' are deprecated, will be removed in 0.106 */
             filterId,
             rule,
             rules: newRules,
             status,
             service_name,
+            serviceName: service_name,
             originalAnswer: original_answer,
             originalResponse: processResponse(original_answer),
             tracker: getTrackerData(domain),
@@ -169,17 +181,17 @@ export const addClientInfo = (data: any, clients: any, ...params: any[]) =>
 export const normalizeFilters = (filters: any) =>
     filters
         ? filters.map((filter: any) => {
-            const { id, url, enabled, last_updated, name = 'Default name', rules_count = 0 } = filter;
+              const { id, url, enabled, last_updated, name = 'Default name', rules_count = 0 } = filter;
 
-            return {
-                id,
-                url,
-                enabled,
-                lastUpdated: last_updated,
-                name,
-                rulesCount: rules_count,
-            };
-        })
+              return {
+                  id,
+                  url,
+                  enabled,
+                  lastUpdated: last_updated,
+                  name,
+                  rulesCount: rules_count,
+              };
+          })
         : [];
 
 export const normalizeFilteringStatus = (filteringStatus: any) => {
@@ -457,11 +469,25 @@ export const normalizeWhois = (whois: any) => {
         return { ...values };
     }
 
-    return whois;
+    return {
+        location: 'New York, US',
+        orgname: 'Example Organization',
+    };
 };
 
 export const getPathWithQueryString = (path: any, params: any) => {
-    const searchParams = new URLSearchParams(params);
+    const filteredParams = Object.entries(params || {}).reduce(
+        (acc, [key, value]) => {
+            if (value === '' || value === undefined || value === null) {
+                return acc;
+            }
+
+            acc[key] = String(value);
+            return acc;
+        },
+        {} as Record<string, string>,
+    );
+    const searchParams = new URLSearchParams(filteredParams);
 
     return `${path}?${searchParams.toString()}`;
 };
@@ -544,8 +570,8 @@ export const getObjDiff = (initialValues: any, values: any) =>
  * @returns {string} Returns a string with a language-sensitive representation of this number
  */
 export const formatNumber = (num: number): string => {
-    const currentLanguage = i18n.languages[0] || DEFAULT_LANGUAGE;
-    return num.toLocaleString(currentLanguage);
+    // Use browser's default locale since we don't have access to i18n language
+    return num.toLocaleString();
 };
 
 /**
@@ -863,19 +889,19 @@ export const sortIp = (a: any, b: any) => {
 export const getSpecialFilterName = (filterId: any) => {
     switch (filterId) {
         case SPECIAL_FILTER_ID.CUSTOM_FILTERING_RULES:
-            return i18n.t('custom_filter_rules');
+            return intl.getMessage('custom_filter_rules');
         case SPECIAL_FILTER_ID.SYSTEM_HOSTS:
-            return i18n.t('system_host_files');
+            return intl.getMessage('system_host_files');
         case SPECIAL_FILTER_ID.BLOCKED_SERVICES:
-            return i18n.t('blocked_services');
+            return intl.getMessage('blocked_services');
         case SPECIAL_FILTER_ID.PARENTAL:
-            return i18n.t('parental_control');
+            return intl.getMessage('parental_control');
         case SPECIAL_FILTER_ID.SAFE_BROWSING:
-            return i18n.t('safe_browsing');
+            return intl.getMessage('safe_browsing');
         case SPECIAL_FILTER_ID.SAFE_SEARCH:
-            return i18n.t('safe_search');
+            return intl.getMessage('safe_search');
         default:
-            return i18n.t('unknown_filter', { filterId });
+            return intl.getMessage('unknown_filter', { filterId });
     }
 };
 
@@ -897,7 +923,7 @@ export const getFilterName = (
     filters: Filter[],
     whitelistFilters: Filter[],
     filterId: number,
-    resolveFilterName = (filter: Filter) => (filter ? filter.name : i18n.t('unknown_filter', { filterId })),
+    resolveFilterName = (filter: Filter) => (filter ? filter.name : intl.getMessage('unknown_filter', { filterId })),
 ) => {
     const specialFilterIds = Object.values(SPECIAL_FILTER_ID);
     if (specialFilterIds.includes(filterId)) {

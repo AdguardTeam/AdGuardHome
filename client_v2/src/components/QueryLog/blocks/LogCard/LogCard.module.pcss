@@ -1,0 +1,71 @@
+.card {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--default-item-divider);
+    cursor: pointer;
+    transition: background-color var(--t2);
+
+    &:hover {
+        background-color: var(--default-hover);
+    }
+}
+
+
+.icon {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    color: var(--default-product-icon);
+}
+
+.domain {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.actions {
+    flex-shrink: 0;
+}
+
+.row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    gap: 8px;
+
+    &_client {
+        flex-wrap: wrap;
+    }
+}
+
+.secondary {
+    color: var(--default-labels);
+}
+
+.clientIp {
+    color: var(--default-link);
+    cursor: pointer;
+}
+
+.clientName {
+    color: var(--default-labels);
+}
+
+.whoisItem {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-right: 8px;
+    
+    &:last-child {
+        margin-right: 0;
+    }
+}
+
+.whoisIcon {
+    width: 16px;
+    height: 16px;
+    color: var(--default-description-text);
+}

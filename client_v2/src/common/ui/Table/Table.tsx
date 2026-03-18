@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, ReactNode } from 'react';
+import React, { useState, useMemo, useCallback, ReactNode, CSSProperties } from 'react';
 import cn from 'clsx';
 
 import { Loader } from 'panel/common/ui/Loader';
@@ -45,6 +45,8 @@ export interface TableProps<T = any> {
     };
     onSortChange?: (key: string, direction: 'asc' | 'desc') => void;
     getRowId?: (row: T, index: number) => string | number;
+    onRowClick?: (row: T) => void;
+    tableRowClassName?: string;
 }
 
 export interface TableState {
@@ -68,6 +70,8 @@ export const Table = <T extends Record<string, any>>({
     onSortChange,
     getRowId = (row: T, index: number) => index,
     className,
+    onRowClick,
+    tableRowClassName,
 }: TableProps<T>) => {
     const [state, setState] = useState<TableState>({
         currentPage: 0,
@@ -139,6 +143,41 @@ export const Table = <T extends Record<string, any>>({
     }, [sortedData, pagination, state.currentPage, state.pageSize]);
 
     const totalPages = Math.ceil(sortedData.length / state.pageSize);
+
+    const tableGridTemplate = useMemo(
+        () =>
+            columns.map((column) => {
+                if (typeof column.width === 'number') {
+                    return `${column.width}px`;
+                }
+
+                if (typeof column.width === 'string') {
+                    return column.width;
+                }
+
+                if (column.fitContent) {
+                    return 'fit-content(100%)';
+                }
+
+                if (column.minWidth && column.maxWidth) {
+                    return `minmax(${column.minWidth}px, ${column.maxWidth}px)`;
+                }
+
+                if (column.minWidth) {
+                    return `minmax(${column.minWidth}px, 1fr)`;
+                }
+
+                return 'minmax(0, 1fr)';
+            }).join(' '),
+        [columns],
+    );
+
+    const tableStyle = useMemo(
+        () => ({
+            '--table-columns': tableGridTemplate,
+        }) as CSSProperties,
+        [tableGridTemplate],
+    );
 
     const handleSort = useCallback(
         (columnKey: string) => {
@@ -217,11 +256,11 @@ export const Table = <T extends Record<string, any>>({
         <div className={s.tableContainer}>
             <div className={s.tableMain}>
                 <div className={cn(s.table, className)}>
-                    <div className={s.tableHeader}>
+                    <div className={s.tableHeader} style={tableStyle}>
                         {columns.map((column) => (
                             <div
                                 key={column.key}
-                                className={cn(s.tableCell, column.header.className, {
+                                className={cn(s.tableCell, s.tableHeaderCell, column.header.className, {
                                     [s.sortable]: column.sortable,
                                     [s.fitContent]: column.fitContent,
                                 })}
@@ -255,9 +294,20 @@ export const Table = <T extends Record<string, any>>({
                                 const rowId = getRowId(row, index);
 
                                 return (
-                                    <div key={rowId} className={s.tableRow}>
+                                    <div
+                                        key={rowId}
+                                        className={cn(s.tableRow, tableRowClassName)}
+                                        style={tableStyle}
+                                        onClick={() => onRowClick?.(row)}
+                                    >
                                         {columns.map((column) => (
-                                            <div key={column.key} className={s.tableCell}>
+                                            <div
+                                                key={column.key}
+                                                className={cn(s.tableCell, s.tableBodyCell, column.className, {
+                                                    [s.fitContent]: column.fitContent,
+                                                    [s.clickableCell]: !!onRowClick,
+                                                })}
+                                            >
                                                 {renderCell(column, row, index)}
                                             </div>
                                         ))}

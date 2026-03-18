@@ -1,5 +1,4 @@
 import { createAction } from 'redux-actions';
-import i18next from 'i18next';
 import axios from 'axios';
 
 import endsWith from 'lodash/endsWith';
@@ -119,19 +118,13 @@ export const toggleProtectionSuccess = createAction('TOGGLE_PROTECTION_SUCCESS')
 const getDisabledMessage = (time: any) => {
     switch (time) {
         case DISABLE_PROTECTION_TIMINGS.HALF_MINUTE:
-            return intl.getMessage('disable_notify_for_seconds', {
-                count: msToSeconds(DISABLE_PROTECTION_TIMINGS.HALF_MINUTE),
-            });
+            return intl.getPlural('disable_notify_for_seconds', DISABLE_PROTECTION_TIMINGS.HALF_MINUTE);
         case DISABLE_PROTECTION_TIMINGS.MINUTE:
-            return intl.getMessage('disable_notify_for_minutes', {
-                count: msToMinutes(DISABLE_PROTECTION_TIMINGS.MINUTE),
-            });
+            return intl.getPlural('disable_notify_for_minutes', DISABLE_PROTECTION_TIMINGS.MINUTE);
         case DISABLE_PROTECTION_TIMINGS.TEN_MINUTES:
-            return intl.getMessage('disable_notify_for_minutes', {
-                count: msToMinutes(DISABLE_PROTECTION_TIMINGS.TEN_MINUTES),
-            });
+            return intl.getPlural('disable_notify_for_minutes', DISABLE_PROTECTION_TIMINGS.TEN_MINUTES);
         case DISABLE_PROTECTION_TIMINGS.HOUR:
-            return intl.getMessage('disable_notify_for_hours', { count: msToHours(DISABLE_PROTECTION_TIMINGS.HOUR) });
+            return intl.getPlural('disable_notify_for_hours', DISABLE_PROTECTION_TIMINGS.HOUR);
         case DISABLE_PROTECTION_TIMINGS.TOMORROW:
             return intl.getMessage('disable_notify_until_tomorrow');
         default:
@@ -394,21 +387,21 @@ export const testUpstream =
             const testMessages = Object.keys(upstreamResponse).map((key) => {
                 const message = upstreamResponse[key];
                 if (message.startsWith('WARNING:')) {
-                    dispatch(addErrorToast({ error: i18next.t('dns_test_warning_toast', { key }) }));
+                    dispatch(addErrorToast({ error: intl.getMessage('dns_test_warning_toast', { key }) }));
                 } else if (message.endsWith(': parsing error')) {
                     const info = message.substring(0, message.indexOf(':'));
                     const [sectionKey, line] = info.split(' ');
-                    const section = i18next.t(sectionKey);
+                    const section = intl.getMessage(sectionKey);
                     dispatch(
                         addErrorToast({
-                            error: i18next.t('dns_test_parsing_error_toast', {
+                            error: intl.getMessage('dns_test_parsing_error_toast', {
                                 section,
                                 line,
                             }),
                         }),
                     );
                 } else if (message !== 'OK') {
-                    dispatch(addErrorToast({ error: i18next.t('dns_test_not_ok_toast', { key }) }));
+                    dispatch(addErrorToast({ error: intl.getMessage('dns_test_not_ok_toast', { key }) }));
                 }
                 return message;
             });
@@ -563,13 +556,9 @@ export const findActiveDhcp = (selectedInterface: any) => async (dispatch: any, 
         ) {
             dispatch(addErrorToast({ error: 'dhcp_found' }));
         } else if (hasV4Interface && v4.static_ip.static === STATUS_RESPONSE.NO && v4.static_ip.ip && interface_name) {
-            const warning = i18next.t('dhcp_dynamic_ip_found', {
+            const warning = intl.getMessage('dhcp_dynamic_ip_found', {
                 interfaceName: interface_name,
                 ipAddress: v4.static_ip.ip,
-                interpolation: {
-                    prefix: '<0>{{',
-                    suffix: '}}</0>',
-                },
             });
             dispatch(addErrorToast({ error: warning }));
         } else {

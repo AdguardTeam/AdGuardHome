@@ -615,9 +615,10 @@ class Api {
 
     getQueryLog(params: any) {
         const { path, method } = this.GET_QUERY_LOG;
-        // eslint-disable-next-line no-param-reassign
-        params.limit = QUERY_LOGS_PAGE_LIMIT;
-        const url = getPathWithQueryString(path, params);
+        const url = getPathWithQueryString(path, {
+            ...params,
+            limit: QUERY_LOGS_PAGE_LIMIT,
+        });
 
         return this.makeRequest(url, method);
     }

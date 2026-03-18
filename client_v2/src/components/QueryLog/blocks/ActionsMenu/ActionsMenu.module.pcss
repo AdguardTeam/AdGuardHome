@@ -1,0 +1,51 @@
+.trigger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: none;
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--default-description-text);
+    transition: background-color 0.15s;
+}
+
+.trigger:hover {
+    background: var(--default-hover);
+}
+
+.overlay {
+    min-width: 180px;
+}
+
+.menu {
+    list-style: none;
+    margin: 0;
+    padding: 4px 0;
+    background: var(--default-dropdown-menu-background);
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.menuItem {
+    padding: 16px;
+    cursor: pointer;
+    color: var(--default-main-text);
+    transition: background-color var(--t2);
+
+    &:hover,
+    &:focus {
+        background-color: var(--hovered-dropdown-menu-background);
+    }
+
+    &:active {
+        background-color: var(--pressed-dropdown-menu-background);
+    }
+}
+
+.actionsWrapper {
+    display: flex;
+    align-items: center;
+}

@@ -1,0 +1,47 @@
+.page {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+
+    @media (min-width: 768px) {
+        gap: 32px;
+    }
+}
+
+.desktopView {
+    display: none;
+
+    @media (min-width: 768px) {
+        display: block;
+    }
+}
+
+.mobileView {
+    display: block;
+    padding: 0 16px;
+
+    @media (min-width: 768px) {
+        display: none;
+    }
+}
+
+.mobileList {
+    display: flex;
+    flex-direction: column;
+    box-shadow: 8px 8px 24px 0 rgba(0, 0, 0, 0.10);
+    border-radius: 16px;
+}
+
+.mobileLoader {
+    padding: 12px 0 0;
+}
+
+.emptyState {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 120px;
+    padding: 24px 16px;
+    text-align: center;
+}

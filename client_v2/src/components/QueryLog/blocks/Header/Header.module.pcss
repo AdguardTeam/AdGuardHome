@@ -1,0 +1,125 @@
+.header {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 0 16px;
+
+    @media (min-width: 768px) {
+        padding: 0;
+        flex-direction: row;
+        align-items: center;
+    }
+}
+
+.title {
+    padding: 0;
+
+    @media (min-width: 768px) {
+        margin-right: auto;
+        white-space: nowrap;
+    }
+}
+
+.actions {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+
+    @media (min-width: 768px) {
+        flex-direction: row;
+        flex-wrap: nowrap;
+        align-items: center;
+        width: 100%;
+    }
+}
+
+.searchWrapper {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+
+    @media (min-width: 768px) {
+        display: contents;
+    }
+}
+
+.searchField {
+    flex: 1;
+
+    @media (min-width: 768px) {
+        flex: none;
+        max-width: 320px;
+        margin-left: auto;
+    }
+}
+
+.searchIcon {
+    width: 24px;
+    height: 24px;
+    color: var(--default-gray-icons);
+}
+
+.filterField {
+    width: 100%;
+
+    @media (min-width: 768px) {
+        width: auto;
+        min-width: 120px;
+    }
+}
+
+.filterSelect {
+    width: 100%;
+    min-width: 0;
+}
+
+.refreshMobileButton,
+.refreshDesktopButton {
+    flex-shrink: 0;
+    min-width: 40px;
+    max-width: none;
+}
+
+.refreshMobileButton {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+
+    @media (min-width: 768px) {
+        display: none;
+    }
+}
+
+.refreshDesktopButton {
+    display: none;
+    width: auto;
+    height: 40px;
+    min-width: auto;
+    padding: 0 8px;
+
+    @media (min-width: 768px) {
+        display: inline-flex;
+    }
+}
+
+.refreshMobileButton > div:first-child,
+.refreshMobileButton > div:last-child,
+.refreshDesktopButton > div:first-child {
+    width: 0;
+    margin: 0;
+}
+
+.refreshMobileIcon,
+.refreshDesktopIcon {
+    width: 24px;
+    height: 24px;
+}
+
+.refreshMobileIcon {
+    color: var(--gray-0);
+}
+
+.refreshDesktopIcon {
+    color: var(--default-product-icon);
+}
