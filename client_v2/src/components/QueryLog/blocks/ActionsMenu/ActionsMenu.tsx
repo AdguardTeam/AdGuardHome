@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import cn from 'clsx';
 
 import intl from 'panel/common/intl';
