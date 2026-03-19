@@ -8,4 +8,4 @@ trackers_url='https://raw.githubusercontent.com/AdguardTeam/companiesdb/main/dis
 output='./client/src/helpers/trackers/trackers.json'
 readonly trackers_url output
 
-curl -v "$trackers_url" | jq . > "$output"
+curl -v "$trackers_url" | jq . >"$output"
