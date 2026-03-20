@@ -26,6 +26,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Status reported by the launchd service implementation in cases of scheduled service restart.
+
 - Fixed clients block/unblock when moving clients between allowed and disallowed lists.
 
 <!--
