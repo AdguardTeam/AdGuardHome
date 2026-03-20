@@ -14,6 +14,17 @@ const normalizeIds = (initialIds?: string[]): { name: string }[] => {
     return initialIds.map((id: string) => ({ name: id }));
 };
 
+const arrayToRecord = (arr: number[] | undefined): Record<number, boolean> => {
+    const record: Record<number, boolean> = {};
+    if (arr) {
+        arr.forEach((id) => {
+            record[id] = true;
+        });
+    }
+
+    return record;
+};
+
 const getInitialData = ({ initial, modalType, clientId, clientName }: any) => {
     if (initial && initial.blocked_services) {
         const { blocked_services } = initial;
@@ -26,6 +37,8 @@ const getInitialData = ({ initial, modalType, clientId, clientName }: any) => {
         return {
             ...initial,
             blocked_services: blocked,
+            filter_list_ids: arrayToRecord(initial.filter_list_ids),
+            allow_filter_list_ids: arrayToRecord(initial.allow_filter_list_ids),
             ids: normalizeIds(initial.ids),
         };
     }

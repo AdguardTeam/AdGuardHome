@@ -120,6 +120,18 @@ const ClientsTable = ({
             if (typeof values.upstreams_cache_size === 'string') {
                 config.upstreams_cache_size = 0;
             }
+
+            if (values.filter_list_ids) {
+                config.filter_list_ids = Object.keys(values.filter_list_ids)
+                    .filter((id) => values.filter_list_ids[Number(id)])
+                    .map(Number);
+            }
+
+            if (values.allow_filter_list_ids) {
+                config.allow_filter_list_ids = Object.keys(values.allow_filter_list_ids)
+                    .filter((id) => values.allow_filter_list_ids[Number(id)])
+                    .map(Number);
+            }
         }
 
         if (modalType === MODAL_TYPE.EDIT_CLIENT) {
@@ -156,6 +168,7 @@ const ClientsTable = ({
             tags: [],
             use_global_settings: true,
             use_global_blocked_services: true,
+            use_global_filter_lists: true,
             blocked_services_schedule: {
                 time_zone: LOCAL_TIMEZONE_VALUE,
             },
