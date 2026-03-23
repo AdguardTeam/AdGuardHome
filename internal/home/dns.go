@@ -259,7 +259,7 @@ func newServerConfig(
 	dnsConf *dnsConfig,
 	clientSrcConf *clientSourcesConfig,
 	tlsConf *tlsConfigSettings,
-	dohConf *httpDoHConfig,
+	dohConf *doHConfig,
 	tlsMgr *tlsManager,
 	httpReg aghhttp.Registrar,
 	clientsContainer dnsforward.ClientsContainer,

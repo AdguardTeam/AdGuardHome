@@ -181,11 +181,11 @@ type configuration struct {
 // Field ordering is important, YAML fields better not to be reordered, if it's
 // not absolutely necessary.
 type httpConfig struct {
-	// Pprof defines the profiling HTTP handler.
+	// Pprof defines the profiling HTTP handler.  It is never nil.
 	Pprof *httpPprofConfig `yaml:"pprof"`
 
 	// DoH contains DNS-over-HTTPS configuration.  It is never nil.
-	DoH *httpDoHConfig `yaml:"doh"`
+	DoH *doHConfig `yaml:"doh"`
 
 	// Address is the address to serve the web UI on.
 	Address netip.AddrPort
@@ -204,8 +204,8 @@ type httpPprofConfig struct {
 	Enabled bool `yaml:"enabled"`
 }
 
-// httpDoHConfig is the block with DNS-over-HTTPS configuration.
-type httpDoHConfig struct {
+// doHConfig is the block with DNS-over-HTTPS configuration.
+type doHConfig struct {
 	// Routes is the list of HTTP route patterns for DoH requests.  Each route
 	// should be in the format "METHOD /path" or "METHOD /path/{param}".
 	// Default routes are:
@@ -464,7 +464,7 @@ var config = &configuration{
 			Enabled: false,
 			Port:    6060,
 		},
-		DoH: &httpDoHConfig{
+		DoH: &doHConfig{
 			Routes: []string{
 				"GET /dns-query",
 				"POST /dns-query",

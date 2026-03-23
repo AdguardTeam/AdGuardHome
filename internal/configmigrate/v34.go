@@ -7,13 +7,13 @@ import "context"
 //	# BEFORE:
 //	'http':
 //	  # …
-//	  tls:
-//	    allow_unencrypted_doh: false
+//	'tls':
+//	  'enabled': true
+//	  'allow_unencrypted_doh': false
 //
 //	# AFTER:
 //	'http':
 //	  # …
-//	  'http':
 //	  'doh':
 //	    'routes':
 //	      - 'GET /dns-query'
@@ -21,7 +21,9 @@ import "context"
 //	      - 'GET /dns-query/{ClientID}'
 //	      - 'POST /dns-query/{ClientID}'
 //	  'insecure_enabled': false
-func (m *Migrator) migrateTo34(_ context.Context, diskConf yobj) (err error) {
+//	'tls':
+//	  'enabled': true
+func (m Migrator) migrateTo34(_ context.Context, diskConf yobj) (err error) {
 	diskConf["schema_version"] = 34
 
 	httpConf, ok, err := fieldVal[yobj](diskConf, "http")
