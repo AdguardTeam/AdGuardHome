@@ -127,4 +127,5 @@ find_with_ignore \
 	-o -name '*.yaml' \
 	-o -name '*.yml' \
 	')' \
-	-exec "$go" 'tool' 'misspell' '--error' '{}' '+'
+	-exec "$go" 'tool' 'misspell' '--error' '{}' '+' \
+	;

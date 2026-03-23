@@ -289,7 +289,7 @@
   "encryption_key_input": "Скопіюйте/вставте сюди свій приватний ключ кодований PEM для вашого сертифіката.",
   "encryption_key_invalid": "Недійсний {{type}} приватний ключ",
   "encryption_key_source_content": "Вставити вміст приватного ключа",
-  "encryption_key_source_path": "Вказати приватний ключ",
+  "encryption_key_source_path": "Вказати шлях до файлу приватного ключа",
   "encryption_key_valid": "Дійсний {{type}} приватний ключ",
   "encryption_plain_dns_desc": "Звичайний DNS усталено увімкнений. Ви можете вимкнути його, щоб змусити всі пристрої використовувати зашифрований DNS. Для цього необхідно увімкнути хоча б один зашифрований протокол DNS",
   "encryption_plain_dns_enable": "Увімкнути звичайний DNS",

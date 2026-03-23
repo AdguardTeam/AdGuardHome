@@ -13,8 +13,6 @@ func configureOSOptions(conf *service.Config) {
 }
 
 // openBSDScript is the source of the daemon script for OpenBSD.
-//
-//lint:ignore U1000 TODO(e.burkov): Use.
 const openBSDScript = `#!/bin/ksh
 #
 # $OpenBSD: {{ .SvcInfo }}

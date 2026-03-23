@@ -289,7 +289,7 @@
   "encryption_key_input": "Sao chép/dán khóa riêng được mã hóa PEM cho chứng chỉ của bạn tại đây.",
   "encryption_key_invalid": "Khóa riêng {{type}} không hợp lệ",
   "encryption_key_source_content": "Dán nội dung khóa riêng",
-  "encryption_key_source_path": "Đặt tệp khóa riêng",
+  "encryption_key_source_path": "Đặt đường dẫn tệp khóa riêng",
   "encryption_key_valid": "Khóa riêng {{type}} hợp lệ",
   "encryption_plain_dns_desc": "DNS đơn giản được bật theo mặc định. Bạn có thể vô hiệu hóa nó để buộc tất cả các thiết bị sử dụng DNS được mã hóa. Để thực hiện việc này, bạn phải kích hoạt ít nhất một giao thức DNS được mã hóa",
   "encryption_plain_dns_enable": "Kích hoạt DNS đơn giản",

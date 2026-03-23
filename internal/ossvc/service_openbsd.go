@@ -6,6 +6,7 @@ import (
 	"cmp"
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -34,7 +35,7 @@ const sysVersion = "openbsd-runcom"
 
 // chooseSystem checks the current system detected and substitutes it with local
 // implementation if needed.
-func chooseSystem() {
+func chooseSystem(_ context.Context, _ *slog.Logger) {
 	service.ChooseSystem(openbsdSystem{})
 }
 

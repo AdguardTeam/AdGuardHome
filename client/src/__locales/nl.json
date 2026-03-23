@@ -289,7 +289,7 @@
   "encryption_key_input": "Kopieër en plak je PEM-gecodeerde prive sleutel voor je certificaat hier.",
   "encryption_key_invalid": "Dit is een ongeldige {{type}} privésleutel",
   "encryption_key_source_content": "Inhoud privé sleutel plakken",
-  "encryption_key_source_path": "Privé sleutelbestand instellen",
+  "encryption_key_source_path": "Bestandspad voor privésleutel instellen",
   "encryption_key_valid": "Dit is een geldige {{type}} privésleutel",
   "encryption_plain_dns_desc": "Gewone DNS is standaard ingeschakeld. Je kunt het uitschakelen om alle apparaten te dwingen versleutelde DNS te gebruiken. Om dit te doen, moet je ten minste één versleuteld DNS-protocol inschakelen",
   "encryption_plain_dns_enable": "Gewone DNS inschakelen",

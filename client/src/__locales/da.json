@@ -289,7 +289,7 @@
   "encryption_key_input": "Kopiér/indsæt dine PEM-kodede private nøgle til dit certifikat hér.",
   "encryption_key_invalid": "Dette er en ugyldig {{type}} privat nøgle",
   "encryption_key_source_content": "Indsæt indholdet af den private nøgle",
-  "encryption_key_source_path": "Opsæt en private nøgle-fil",
+  "encryption_key_source_path": "Indstil en privat nøglefilsti",
   "encryption_key_valid": "Dette er en gyldig {{type}} privat nøgle",
   "encryption_plain_dns_desc": "Almindelig DNS er aktiveret som standard. Den kan deaktiveres for at tvinge alle enheder til at bruge krypteret DNS. For at gøre dette, aktivér mindst én krypteret DNS-protokol",
   "encryption_plain_dns_enable": "Aktivér almindelig DNS",

@@ -289,7 +289,7 @@
   "encryption_key_input": "Copiați/lipiți cheia dvs. privată PEM-codată pentru certificatul dvs. aici.",
   "encryption_key_invalid": "Aceasta este o cheie privată {{type}} invalidă",
   "encryption_key_source_content": "Lipiți conținutul cheii private",
-  "encryption_key_source_path": "Precizați un fișier cu cheie privată",
+  "encryption_key_source_path": "Precizați o cale către un fișier cu cheie privată",
   "encryption_key_valid": "Aceasta este o cheie privată {{type}} validă",
   "encryption_plain_dns_desc": "DNS simplu este activat în mod implicit. Îl puteți dezactiva pentru a forța toate dispozitivele să utilizeze DNS criptat. Pentru a face acest lucru, trebuie să activați cel puțin un protocol DNS criptat",
   "encryption_plain_dns_enable": "Activați DNS simplu",

@@ -289,7 +289,7 @@
   "encryption_key_input": "於此複製/貼上您的隱私增強郵件編碼之（PEM-encoded）私密金鑰供您的憑證。",
   "encryption_key_invalid": "此為無效的 {{type}} 私密金鑰",
   "encryption_key_source_content": "貼上該私密金鑰內容",
-  "encryption_key_source_path": "設定一個私密金鑰檔案",
+  "encryption_key_source_path": "設定私密金鑰檔案安裝路徑",
   "encryption_key_valid": "此為有效的 {{type}} 私密金鑰",
   "encryption_plain_dns_desc": "預設啟用一般 DNS。您可以停用它以強制所有裝置使用加密 DNS。若要這樣做，您必須啟用至少一個加密 DNS 通訊協定",
   "encryption_plain_dns_enable": "啟用一般的 DNS",
