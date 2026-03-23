@@ -30,6 +30,36 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Fixed clients block/unblock when moving clients between allowed and disallowed lists.
 
+#### Configuration changes
+
+In this release, the schema version has changed from 33 to 34.
+
+- Added a new field `doh` in `http` configuration.
+
+    ```yaml
+    # BEFORE:
+    'http':
+      # …
+    'tls':
+      # …
+      'allow_unencrypted_doh': false
+
+    # AFTER:
+    'http':
+      # …
+      'doh':
+        'insecure_enabled': false
+        'routes':
+          - 'GET /dns-query'
+          - 'POST /dns-query'
+          - 'GET /dns-query/{ClientID}'
+          - 'POST /dns-query/{ClientID}'
+    'tls':
+      # …
+    ```
+
+    To roll back this change, set the `schema_version` back to `33`.
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
