@@ -289,7 +289,7 @@
   "encryption_key_input": "Zde můžete nakopírovat/vložit soukromý klíč k certifikátu PEM.",
   "encryption_key_invalid": "Toto je neplatný {{type}} osobní klíč",
   "encryption_key_source_content": "Vložte obsahy soukromého klíče",
-  "encryption_key_source_path": "Nastavte soubor soukromého klíče",
+  "encryption_key_source_path": "Nastavte cestu k souboru soukromého klíče",
   "encryption_key_valid": "Toto je platný {{type}} osobní klíč",
   "encryption_plain_dns_desc": "Ve výchozím nastavení je povolen běžný DNS. Můžete ho zakázat, aby všechna zařízení používala šifrovaný DNS. Chcete-li to provést, musíte povolit alespoň jeden šifrovaný protokol DNS",
   "encryption_plain_dns_enable": "Povolit běžný DNS",

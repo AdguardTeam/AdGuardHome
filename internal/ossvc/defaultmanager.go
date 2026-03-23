@@ -27,10 +27,10 @@ type manager struct {
 // newManager creates a new [Manager] that uses [service.Service].
 //
 // TODO(e.burkov):  Return error.
-func newManager(_ context.Context, conf *ManagerConfig) (mgr *manager) {
+func newManager(ctx context.Context, conf *ManagerConfig) (mgr *manager) {
 	// Call chooseSystem explicitly to introduce platform-specific support for
 	// service package.  It's a noop for other GOOS values.
-	chooseSystem()
+	chooseSystem(ctx, conf.Logger)
 
 	return &manager{
 		logger:        conf.Logger,
@@ -74,8 +74,8 @@ func (m *manager) Perform(ctx context.Context, action Action) (err error) {
 	return nil
 }
 
-// statusRestartOnFail is a custom status value used to indicate the service's
-// state of restarting after failed start.
+// statusRestartOnFail is a custom status value used to indicate the
+// service's state of restarting after failed start.
 const statusRestartOnFail = service.StatusStopped + 1
 
 // Status implements the [Manager] interface for *manager.

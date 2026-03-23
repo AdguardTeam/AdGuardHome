@@ -18,7 +18,15 @@ See also the [v0.107.74 GitHub milestone][ms-v0.107.74].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.26.1][go-1.26.1].
+
+[go-1.26.1]: https://groups.google.com/g/golang-announce/c/EdhZqrQ98hkq
+
 ### Fixed
+
+- Status reported by the launchd service implementation in cases of scheduled service restart.
 
 - Fixed clients block/unblock when moving clients between allowed and disallowed lists.
 
@@ -34,7 +42,7 @@ See also the [v0.107.73 GitHub milestone][ms-v0.107.73].
 
 - Authentication is now applied to requests that have been upgraded from HTTP/2 Cleartext (H2C) requests to public resources.
 
-  **NOTE:** We thank @mandreko for reporting this security issue.
+    **NOTE:** We thank @mandreko for reporting this security issue.
 
 [ms-v0.107.73]: https://github.com/AdguardTeam/AdGuardHome/milestone/108?closed=1
 

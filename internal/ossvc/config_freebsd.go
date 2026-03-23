@@ -14,8 +14,6 @@ func configureOSOptions(conf *service.Config) {
 
 // freeBSDScript is the source of the daemon script for FreeBSD.  Keep as close
 // as possible to the https://github.com/kardianos/service/blob/18c957a3dc1120a2efe77beb401d476bade9e577/service_freebsd.go#L204.
-//
-//lint:ignore U1000 TODO(e.burkov): Use.
 const freeBSDScript = `#!/bin/sh
 # PROVIDE: {{.Name}}
 # REQUIRE: networking

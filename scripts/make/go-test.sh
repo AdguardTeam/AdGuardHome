@@ -3,7 +3,7 @@
 # This comment is used to simplify checking local copies of the script.  Bump
 # this number every time a significant change is made to this script.
 #
-# AdGuard-Project-Version: 7
+# AdGuard-Project-Version: 8
 
 verbose="${VERBOSE:-0}"
 readonly verbose
@@ -52,7 +52,8 @@ go_test() {
 		"$timeout_flags" \
 		"$v_flags" \
 		"$x_flags" \
-		./...
+		work \
+		;
 }
 
 test_reports_dir="${TEST_REPORTS_DIR:-}"

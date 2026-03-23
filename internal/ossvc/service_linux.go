@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"strings"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
@@ -16,8 +17,8 @@ import (
 )
 
 // chooseSystem checks the current system detected and substitutes it with local
-// implementation if needed.
-func chooseSystem() {
+// implementation if needed.  l must not be nil.
+func chooseSystem(ctx context.Context, l *slog.Logger) {
 	sys := service.ChosenSystem()
 	switch sys.String() {
 	case "unix-systemv":
@@ -29,12 +30,18 @@ func chooseSystem() {
 		// https://github.com/AdguardTeam/AdGuardHome/issues/4677.
 		if !aghos.IsOpenWrt() {
 			service.ChooseSystem(&sysvSystem{System: sys})
+			l.DebugContext(ctx, "using custom SysV system")
+
+			return
 		}
 	case "linux-systemd":
 		service.ChooseSystem(&systemdSystem{System: sys})
-	default:
-		// Do nothing.
+		l.DebugContext(ctx, "using custom systemd system")
+
+		return
 	}
+
+	l.DebugContext(ctx, "using default system", "system_description", sys.String())
 }
 
 // sysvSystem is a wrapper for a [service.System] that returns the custom
