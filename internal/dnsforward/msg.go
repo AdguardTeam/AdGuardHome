@@ -47,7 +47,7 @@ func ipsFromRules(resRules []*filtering.ResultRule) (ips []netip.Addr) {
 }
 
 // genDNSFilterMessage generates a filtered response to req for the filtering
-// result res.  l and res must not be nil.
+// result res.  dctx, res, and l must not be nil.
 func (s *Server) genDNSFilterMessage(
 	ctx context.Context,
 	dctx *proxy.DNSContext,

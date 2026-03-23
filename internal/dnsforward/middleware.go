@@ -94,8 +94,8 @@ func (s *Server) isBlockedHost(
 
 // clientIDFromDNSContext extracts the client's ID from the server name of the
 // client's DoT or DoQ request or the path of the client's DoH.  If the protocol
-// is not one of these, clientID is an empty string and err is nil.  l must not
-// be nil.
+// is not one of these, clientID is an empty string and err is nil.  pctx and l
+// must not be nil.
 func (s *Server) clientIDFromDNSContext(
 	ctx context.Context,
 	pctx *proxy.DNSContext,

@@ -97,8 +97,8 @@ const mozillaFQDN = "use-application-dns.net."
 const healthcheckFQDN = "healthcheck.adguardhome.test."
 
 // processInitial terminates the following processing for some requests if
-// needed and enriches dctx with some client-specific information.  l must not
-// be nil.
+// needed and enriches dctx with some client-specific information.  dctx and l
+// must not be nil.
 //
 // TODO(e.burkov):  Decompose into less general processors.
 func (s *Server) processInitial(
@@ -147,7 +147,8 @@ func (s *Server) processInitial(
 	return resultCodeSuccess
 }
 
-// processClientIP sends the client IP address to s.addrProc, if needed.
+// processClientIP sends the client IP address to s.addrProc, if needed.  l must
+// not be nil.
 func (s *Server) processClientIP(ctx context.Context, addr netip.Addr, l *slog.Logger) {
 	if !addr.IsValid() {
 		l.WarnContext(ctx, "bad client address", "addr", addr)
@@ -165,7 +166,7 @@ func (s *Server) processClientIP(ctx context.Context, addr netip.Addr, l *slog.L
 
 // processDDRQuery responds to Discovery of Designated Resolvers (DDR) SVCB
 // queries.  The response contains different types of encryption supported by
-// current user configuration.  l must not be nil.
+// current user configuration.  dctx and l must not be nil.
 //
 // See https://www.ietf.org/archive/id/draft-ietf-add-ddr-10.html.
 func (s *Server) processDDRQuery(
@@ -268,7 +269,7 @@ func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
 
 // processDHCPHosts respond to A requests if the target hostname is known to
 // the server.  It responds with a mapped IP address if the DNS64 is enabled and
-// the request is for AAAA.  l must not be nil.
+// the request is for AAAA.  dctx and l must not be nil.
 //
 // TODO(a.garipov): Adapt to AAAA as well.
 func (s *Server) processDHCPHosts(
@@ -340,7 +341,7 @@ func (s *Server) processDHCPHosts(
 }
 
 // processDHCPAddrs responds to PTR requests if the target IP is leased by the
-// DHCP server.  l must not be nil.
+// DHCP server.  dctx and l must not be nil.
 func (s *Server) processDHCPAddrs(
 	ctx context.Context,
 	dctx *dnsContext,
@@ -389,7 +390,8 @@ func (s *Server) processDHCPAddrs(
 	return resultCodeSuccess
 }
 
-// processFilteringBeforeRequest applies filtering logic.  l must not be nil.
+// processFilteringBeforeRequest applies filtering logic.  dctx and l must not
+// be nil.
 func (s *Server) processFilteringBeforeRequest(
 	ctx context.Context,
 	dctx *dnsContext,
@@ -435,7 +437,7 @@ func ipStringFromAddr(addr net.Addr) (ipStr string) {
 }
 
 // processUpstream passes request to upstream servers and handles the response.
-// l must not be nil.
+// dctx and l must not be nil.
 func (s *Server) processUpstream(
 	ctx context.Context,
 	dctx *dnsContext,
@@ -556,8 +558,8 @@ func (s *Server) dhcpHostFromRequest(q *dns.Question) (reqHost string) {
 	return reqHost[:len(reqHost)-len(s.localDomainSuffix)-1]
 }
 
-// setCustomUpstream sets custom upstream settings in pctx, if necessary.  l
-// must not be nil.
+// setCustomUpstream sets custom upstream settings in pctx, if necessary.  pctx
+// and l must not be nil.
 func (s *Server) setCustomUpstream(
 	ctx context.Context,
 	pctx *proxy.DNSContext,
@@ -583,7 +585,7 @@ func (s *Server) setCustomUpstream(
 }
 
 // Apply filtering logic after we have received response from upstream servers.
-// l must not be nil.
+// dctx and l must not be nil.
 func (s *Server) processFilteringAfterResponse(
 	ctx context.Context,
 	dctx *dnsContext,
@@ -620,7 +622,7 @@ func (s *Server) processFilteringAfterResponse(
 }
 
 // filterAfterResponse returns the result of filtering the response that wasn't
-// explicitly allowed or rewritten.
+// explicitly allowed or rewritten.  dctx and l must not be nil.
 func (s *Server) filterAfterResponse(
 	ctx context.Context,
 	dctx *dnsContext,

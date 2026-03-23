@@ -24,7 +24,7 @@ func (s *Server) clientRequestFilteringSettings(dctx *dnsContext) (setts *filter
 }
 
 // filterDNSRequest applies the dnsFilter and sets dctx.proxyCtx.Res if the
-// request was filtered.  l must not be nil.
+// request was filtered.  dctx and l must not be nil.
 func (s *Server) filterDNSRequest(
 	ctx context.Context,
 	dctx *dnsContext,
@@ -94,8 +94,8 @@ func (s *Server) checkHostRules(
 // filterDNSResponse checks each resource record of answer section of
 // dctx.proxyCtx.Res.  It sets dctx.result and dctx.origResp if at least one of
 // canonical names, IP addresses, or HTTPS RR hints in it matches the filtering
-// rules, as well as sets dctx.proxyCtx.Res to the filtered response.  l must
-// not be nil.
+// rules, as well as sets dctx.proxyCtx.Res to the filtered response.  dctx and
+// l must not be nil.
 func (s *Server) filterDNSResponse(
 	ctx context.Context,
 	dctx *dnsContext,

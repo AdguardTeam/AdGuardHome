@@ -120,8 +120,8 @@ func ipsFromAnswer(ans []dns.RR) (ip4s, ip6s []net.IP) {
 	return ip4s, ip6s
 }
 
-// process adds the resolved IP addresses to the domain's ipsets, if any.  l
-// must not be nil.
+// process adds the resolved IP addresses to the domain's ipsets, if any.  dctx
+// and l must not be nil.
 func (h *ipsetHandler) process(
 	ctx context.Context,
 	dctx *dnsContext,

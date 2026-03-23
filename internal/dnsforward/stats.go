@@ -14,7 +14,8 @@ import (
 	"github.com/miekg/dns"
 )
 
-// processQueryLogsAndStats writes stats data and logs.  l must not be nil.
+// processQueryLogsAndStats writes stats data and logs.  dctx and l must not be
+// nil.
 func (s *Server) processQueryLogsAndStats(
 	ctx context.Context,
 	dctx *dnsContext,
