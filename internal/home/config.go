@@ -206,9 +206,8 @@ type httpPprofConfig struct {
 
 // doHConfig is the block with DNS-over-HTTPS configuration.
 type doHConfig struct {
-	// Routes is the list of HTTP route patterns for DoH requests.  Each route
-	// should be in the format "METHOD /path" or "METHOD /path/{param}".
-	// Default routes are:
+	// Routes is the list of HTTP route patterns for DoH requests.  Default
+	// routes are:
 	//   - "GET /dns-query"
 	//   - "POST /dns-query"
 	//   - "GET /dns-query/{ClientID}"

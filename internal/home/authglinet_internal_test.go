@@ -14,7 +14,8 @@ import (
 )
 
 func TestAuthMiddlewareGLiNet(t *testing.T) {
-	t.Parallel()
+	storeGlobals(t)
+	globalContext.web = newTestWeb(t, &webConfig{})
 
 	const (
 		testTTL = 60 * time.Second

@@ -92,13 +92,7 @@ func (mw *authMiddlewareGLiNet) Wrap(h http.Handler) (wrapped http.Handler) {
 		ctx := r.Context()
 
 		path := r.URL.Path
-		if isPublicResource(path, r.Method) {
-			h.ServeHTTP(w, r)
-
-			return
-		}
-
-		if mw.isAuthenticated(ctx, r) {
+		if isPublicResource(path) || isDoHRoute(r) || mw.isAuthenticated(ctx, r) {
 			h.ServeHTTP(w, r)
 
 			return

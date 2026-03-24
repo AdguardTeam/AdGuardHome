@@ -167,7 +167,8 @@ func (h *testAuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func TestAuthMiddlewareDefault(t *testing.T) {
-	t.Parallel()
+	storeGlobals(t)
+	globalContext.web = newTestWeb(t, &webConfig{})
 
 	const (
 		loginStr    = "user_login"

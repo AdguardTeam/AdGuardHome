@@ -288,7 +288,7 @@ func (web *webAPI) registerAuthHandlers() {
 }
 
 // isPublicResource returns true if p is a path to a public resource.
-func isPublicResource(p, method string) (ok bool) {
+func isPublicResource(p string) (ok bool) {
 	isAsset, err := path.Match("/assets/*", p)
 	if err != nil {
 		// The only error that is returned from path.Match is
@@ -300,10 +300,6 @@ func isPublicResource(p, method string) (ok bool) {
 	if err != nil {
 		// Same as above.
 		panic(fmt.Errorf("bad login pattern: %w", err))
-	}
-
-	if isDoHRoute(p, method) {
-		return true
 	}
 
 	paths := []string{
@@ -319,20 +315,14 @@ func isPublicResource(p, method string) (ok bool) {
 	return isAsset || isLogin || slices.Contains(paths, p)
 }
 
-// isDoHRoute returns true if p is a path to a DoH route.
-//
-// TODO(d.kolyshev):  Implement a more strict way.
-func isDoHRoute(p, method string) (ok bool) {
-	for _, route := range config.HTTPConfig.DoH.Routes {
-		routePath, _ := strings.CutPrefix(route, method)
-		routePath, _ = strings.CutSuffix(routePath, "{ClientID}")
-
-		if strings.HasPrefix(p, strings.TrimSpace(routePath)) {
-			return true
-		}
+// isDoHRoute returns true if r is a request to a DoH route.  r must not be nil.
+func isDoHRoute(r *http.Request) (ok bool) {
+	_, pattern := globalContext.web.conf.mux.Handler(r)
+	if pattern == "" {
+		return false
 	}
 
-	return false
+	return slices.Contains(config.HTTPConfig.DoH.Routes, pattern)
 }
 
 const (
@@ -455,7 +445,7 @@ func (mw *authMiddlewareDefault) handlePublicAccess(
 	h http.Handler,
 	path string,
 ) (ok bool) {
-	if isPublicResource(path, r.Method) {
+	if isPublicResource(path) || isDoHRoute(r) {
 		h.ServeHTTP(w, r)
 
 		return true
