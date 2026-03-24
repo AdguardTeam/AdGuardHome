@@ -29,6 +29,13 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+const (
+	testTTL = 60
+
+	userName     = "name"
+	userPassword = "password"
+)
+
 // testSessionStorage is the mock implementation of the [aghuser.SessionStorage]
 // interface.
 type testSessionStorage struct {
@@ -170,38 +177,23 @@ func TestAuthMiddlewareDefault(t *testing.T) {
 	storeGlobals(t)
 	globalContext.web = newTestWeb(t, &webConfig{})
 
-	const (
-		loginStr    = "user_login"
-		passwordStr = "user_password"
+	const login = aghuser.Login(userName)
 
-		login = aghuser.Login(loginStr)
-	)
-
-	passwordHash, err := bcrypt.GenerateFromPassword(
-		[]byte(passwordStr),
-		bcrypt.DefaultCost,
-	)
-	require.NoError(t, err)
-
-	user := &aghuser.User{
-		Login:    login,
-		Password: aghuser.NewDefaultPassword(string(passwordHash)),
+	user := newTestUser(t, userPassword, login)
+	users := map[aghuser.Login]*aghuser.User{
+		login: user,
 	}
 
-	var token aghuser.SessionToken
-	_, _ = rand.Read(token[:])
-
-	tokenHex := hex.EncodeToString(token[:])
-
-	users := map[aghuser.Login]*aghuser.User{login: user}
 	usersDB := newTestUsersDB()
 	usersDB.onAll = func(_ context.Context) (us []*aghuser.User, err error) {
 		return slices.Collect(maps.Values(users)), nil
 	}
-
 	usersDB.onByLogin = func(_ context.Context, login aghuser.Login) (u *aghuser.User, err error) {
 		return users[login], nil
 	}
+
+	var token aghuser.SessionToken
+	_, _ = rand.Read(token[:])
 
 	sessions := map[aghuser.SessionToken]*aghuser.Session{
 		token: {
@@ -223,7 +215,7 @@ func TestAuthMiddlewareDefault(t *testing.T) {
 		users:       usersDB,
 	})
 
-	cookie := &http.Cookie{Name: sessionCookieName, Value: tokenHex}
+	cookie := &http.Cookie{Name: sessionCookieName, Value: hex.EncodeToString(token[:])}
 	invalidCookie := &http.Cookie{Name: sessionCookieName, Value: "123"}
 
 	testCases := []struct {
@@ -262,9 +254,14 @@ func TestAuthMiddlewareDefault(t *testing.T) {
 		name:     "protected",
 		wantCode: http.StatusOK,
 	}, {
-		req:      authRequest("/control/profile", invalidCookie, "", ""),
+		req:      httptest.NewRequest(http.MethodGet, "/control/profile", nil),
 		wantUser: nil,
 		name:     "no_auth_protected",
+		wantCode: http.StatusUnauthorized,
+	}, {
+		req:      authRequest("/control/profile", invalidCookie, "", ""),
+		wantUser: nil,
+		name:     "invalid_protected",
 		wantCode: http.StatusUnauthorized,
 	}, {
 		req:      httptest.NewRequest(http.MethodGet, "/control/login", nil),
@@ -272,7 +269,7 @@ func TestAuthMiddlewareDefault(t *testing.T) {
 		name:     "public",
 		wantCode: http.StatusOK,
 	}, {
-		req:      authRequest("/", nil, loginStr, passwordStr),
+		req:      authRequest("/", nil, userName, userPassword),
 		wantUser: user,
 		name:     "basic_auth",
 		wantCode: http.StatusOK,
@@ -301,6 +298,19 @@ func TestAuthMiddlewareDefault(t *testing.T) {
 			assert.Equal(t, tc.wantCode, w.Code)
 			assert.Equal(t, tc.wantUser, h.user)
 		})
+	}
+}
+
+// newTestUser creates a new test user.
+func newTestUser(t *testing.T, userPassword string, login aghuser.Login) (user *aghuser.User) {
+	t.Helper()
+
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(userPassword), bcrypt.DefaultCost)
+	require.NoError(t, err)
+
+	return &aghuser.User{
+		Login:    login,
+		Password: aghuser.NewDefaultPassword(string(passwordHash)),
 	}
 }
 
@@ -436,34 +446,17 @@ func TestAuth_ServeHTTP_firstRun(t *testing.T) {
 func TestAuth_ServeHTTP_auth(t *testing.T) {
 	storeGlobals(t)
 
-	const (
-		testTTL = 60
-
-		glTokenFileSuffix = "test"
-
-		userName     = "name"
-		userPassword = "password"
-	)
-
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(userPassword), bcrypt.DefaultCost)
 	require.NoError(t, err)
-
-	tempDir := t.TempDir()
-	glFilePrefix = tempDir + "/gl_token_"
-	glTokenFile := glFilePrefix + glTokenFileSuffix
-
-	glFileData := make([]byte, 4)
-	binary.NativeEndian.PutUint32(glFileData, uint32(time.Now().Unix()+testTTL))
-
-	err = os.WriteFile(glTokenFile, glFileData, 0o644)
-	require.NoError(t, err)
-
-	sessionsDB := filepath.Join(tempDir, "sessions.db")
 
 	users := []webUser{{
 		Name:         userName,
 		PasswordHash: string(passwordHash),
 	}}
+
+	tempDir := t.TempDir()
+	writeGLFile(t, tempDir, testTTL)
+	sessionsDB := filepath.Join(tempDir, "sessions.db")
 
 	auth, err := newAuth(testutil.ContextWithTimeout(t, testTimeout), &authConfig{
 		baseLogger:     testLogger,
@@ -561,6 +554,20 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 			assertHandlerStatusCode(t, gliNetMw, r, tc.wantCode)
 		})
 	}
+}
+
+// writeGLFile is a helper function that writes a test token file.
+func writeGLFile(t *testing.T, tempDir string, testTTL int64) {
+	t.Helper()
+
+	glFilePrefix = tempDir + "/gl_token_"
+	glTokenFile := glFilePrefix + "test"
+
+	glFileData := make([]byte, 4)
+	binary.NativeEndian.PutUint32(glFileData, uint32(time.Now().Unix()+testTTL))
+
+	err := os.WriteFile(glTokenFile, glFileData, 0o644)
+	require.NoError(t, err)
 }
 
 // generateAuthCookie is a helper function that logs in with the provided
