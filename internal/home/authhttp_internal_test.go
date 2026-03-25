@@ -224,16 +224,6 @@ func TestAuthMiddlewareDefault(t *testing.T) {
 		name     string
 		wantCode int
 	}{{
-		req:      httptest.NewRequest(http.MethodGet, "/", nil),
-		wantUser: nil,
-		name:     "no_auth_root",
-		wantCode: http.StatusFound,
-	}, {
-		req:      httptest.NewRequest(http.MethodGet, "/index.html", nil),
-		wantUser: nil,
-		name:     "no_auth",
-		wantCode: http.StatusFound,
-	}, {
 		req:      authRequest("/", invalidCookie, "", ""),
 		wantUser: nil,
 		name:     "invalid_auth",
@@ -264,11 +254,6 @@ func TestAuthMiddlewareDefault(t *testing.T) {
 		name:     "invalid_protected",
 		wantCode: http.StatusUnauthorized,
 	}, {
-		req:      httptest.NewRequest(http.MethodGet, "/control/login", nil),
-		wantUser: nil,
-		name:     "public",
-		wantCode: http.StatusOK,
-	}, {
 		req:      authRequest("/", nil, testUsername, testPassword),
 		wantUser: user,
 		name:     "basic_auth",
@@ -297,6 +282,80 @@ func TestAuthMiddlewareDefault(t *testing.T) {
 
 			assert.Equal(t, tc.wantCode, w.Code)
 			assert.Equal(t, tc.wantUser, h.user)
+		})
+	}
+}
+
+func TestAuthMiddlewareDefault_public(t *testing.T) {
+	t.Parallel()
+
+	const (
+		login = aghuser.Login(testUsername)
+
+		dohPath    = "/dns-query"
+		doHPattern = http.MethodGet + " " + dohPath
+	)
+
+	user := newTestUser(t, testPassword, login)
+	usersDB := newTestUsersDB()
+	usersDB.onAll = func(_ context.Context) (us []*aghuser.User, err error) {
+		return []*aghuser.User{user}, nil
+	}
+
+	mux := http.NewServeMux()
+	mux.Handle(doHPattern, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+
+	mw := newAuthMiddlewareDefault(&authMiddlewareDefaultConfig{
+		logger:      testLogger,
+		mux:         mux,
+		rateLimiter: emptyRateLimiter{},
+		sessions:    newTestSessionStorage(),
+		users:       usersDB,
+		doHRoutes:   []string{doHPattern},
+	})
+
+	testCases := []struct {
+		req      *http.Request
+		name     string
+		wantCode int
+	}{{
+		req:      httptest.NewRequest(http.MethodGet, "/", nil),
+		name:     "no_auth_root",
+		wantCode: http.StatusFound,
+	}, {
+		req:      httptest.NewRequest(http.MethodGet, "/index.html", nil),
+		name:     "no_auth",
+		wantCode: http.StatusFound,
+	}, {
+		req:      httptest.NewRequest(http.MethodGet, "/control/login", nil),
+		name:     "public_login",
+		wantCode: http.StatusOK,
+	}, {
+		req:      httptest.NewRequest(http.MethodGet, "/apple/doh.mobileconfig", nil),
+		name:     "public_doh_config",
+		wantCode: http.StatusOK,
+	}, {
+		req:      httptest.NewRequest(http.MethodGet, dohPath, nil),
+		name:     "public_doh",
+		wantCode: http.StatusOK,
+	}, {
+		req:      httptest.NewRequest(http.MethodPost, dohPath, nil),
+		name:     "public_doh_invalid",
+		wantCode: http.StatusUnauthorized,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			h := &testAuthHandler{}
+			wrapped := mw.Wrap(h)
+
+			w := httptest.NewRecorder()
+			wrapped.ServeHTTP(w, tc.req)
+
+			assert.Equal(t, tc.wantCode, w.Code)
+			assert.Nil(t, h.user)
 		})
 	}
 }
