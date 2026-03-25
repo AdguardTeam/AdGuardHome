@@ -174,8 +174,7 @@ func (h *testAuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func TestAuthMiddlewareDefault(t *testing.T) {
-	storeGlobals(t)
-	globalContext.web = newTestWeb(t, &webConfig{})
+	t.Parallel()
 
 	const login = aghuser.Login(testUsername)
 
@@ -210,6 +209,7 @@ func TestAuthMiddlewareDefault(t *testing.T) {
 
 	mw := newAuthMiddlewareDefault(&authMiddlewareDefaultConfig{
 		logger:      testLogger,
+		mux:         http.NewServeMux(),
 		rateLimiter: emptyRateLimiter{},
 		sessions:    ts,
 		users:       usersDB,
@@ -458,19 +458,6 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 	writeGLFile(t, tempDir, testTTL)
 	sessionsDB := filepath.Join(tempDir, "sessions.db")
 
-	auth, err := newAuth(testutil.ContextWithTimeout(t, testTimeout), &authConfig{
-		baseLogger:     testLogger,
-		rateLimiter:    emptyRateLimiter{},
-		trustedProxies: testTrustedProxies,
-		dbFilename:     sessionsDB,
-		users:          users,
-		sessionTTL:     testTTL * time.Second,
-		isGLiNet:       false,
-	})
-	require.NoError(t, err)
-
-	t.Cleanup(func() { auth.close(testutil.ContextWithTimeout(t, testTimeout)) })
-
 	mw := &webMw{}
 	baseMux := http.NewServeMux()
 	httpReg := aghhttp.NewDefaultRegistrar(baseMux, mw.wrap)
@@ -481,6 +468,20 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 		manager:      aghtls.EmptyManager{},
 	})
 	require.NoError(t, err)
+
+	auth, err := newAuth(testutil.ContextWithTimeout(t, testTimeout), &authConfig{
+		baseLogger:     testLogger,
+		mux:            baseMux,
+		rateLimiter:    emptyRateLimiter{},
+		trustedProxies: testTrustedProxies,
+		dbFilename:     sessionsDB,
+		users:          users,
+		sessionTTL:     testTTL * time.Second,
+		isGLiNet:       false,
+	})
+	require.NoError(t, err)
+
+	t.Cleanup(func() { auth.close(testutil.ContextWithTimeout(t, testTimeout)) })
 
 	web := newTestWeb(t, &webConfig{
 		tlsManager: tlsMgr,
@@ -628,8 +629,13 @@ func TestAuth_ServeHTTP_logout(t *testing.T) {
 		PasswordHash: string(passwordHash),
 	}}
 
+	mw := &webMw{}
+	baseMux := http.NewServeMux()
+	httpReg := aghhttp.NewDefaultRegistrar(baseMux, mw.wrap)
+
 	auth, err := newAuth(testutil.ContextWithTimeout(t, testTimeout), &authConfig{
 		baseLogger:     testLogger,
+		mux:            baseMux,
 		rateLimiter:    emptyRateLimiter{},
 		trustedProxies: testTrustedProxies,
 		dbFilename:     sessionsDB,
@@ -640,10 +646,6 @@ func TestAuth_ServeHTTP_logout(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Cleanup(func() { auth.close(testutil.ContextWithTimeout(t, testTimeout)) })
-
-	mw := &webMw{}
-	baseMux := http.NewServeMux()
-	httpReg := aghhttp.NewDefaultRegistrar(baseMux, mw.wrap)
 
 	web := newTestWeb(t, &webConfig{
 		auth:    auth,

@@ -14,8 +14,7 @@ import (
 )
 
 func TestAuthMiddlewareGLiNet(t *testing.T) {
-	storeGlobals(t)
-	globalContext.web = newTestWeb(t, &webConfig{})
+	t.Parallel()
 
 	const (
 		testTTL = 60 * time.Second
@@ -35,6 +34,7 @@ func TestAuthMiddlewareGLiNet(t *testing.T) {
 
 	mw := newAuthMiddlewareGLiNet(&authMiddlewareGLiNetConfig{
 		logger:          testLogger,
+		mux:             http.NewServeMux(),
 		clock:           timeutil.SystemClock{},
 		tokenFilePrefix: glFilePrefix,
 		maxTokenSize:    MaxFileSize,

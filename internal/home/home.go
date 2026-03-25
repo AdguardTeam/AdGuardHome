@@ -795,7 +795,7 @@ func run(
 	err = os.MkdirAll(dataDirPath, aghos.DefaultPermDir)
 	fatalOnError(errors.Annotate(err, "creating DNS data dir at %s: %w", dataDirPath))
 
-	auth, err := initUsers(ctx, baseLogger, workDir, opts.glinetMode)
+	auth, err := initUsers(ctx, baseLogger, workDir, mux, opts.glinetMode)
 	fatalOnError(err)
 
 	confModifier.setAuth(auth)
@@ -1044,6 +1044,7 @@ func initUsers(
 	ctx context.Context,
 	baseLogger *slog.Logger,
 	workDir string,
+	mux *http.ServeMux,
 	isGLiNet bool,
 ) (auth *auth, err error) {
 	var rateLimiter loginRateLimiter
@@ -1058,9 +1059,11 @@ func initUsers(
 	dataDirPath := filepath.Join(workDir, dataDir)
 	auth, err = newAuth(ctx, &authConfig{
 		baseLogger:     baseLogger,
+		mux:            mux,
 		rateLimiter:    rateLimiter,
 		trustedProxies: netutil.SliceSubnetSet(netutil.UnembedPrefixes(config.DNS.TrustedProxies)),
 		dbFilename:     filepath.Join(dataDirPath, sessionsDBName),
+		doHRoutes:      config.HTTPConfig.DoH.Routes,
 		users:          config.Users,
 		sessionTTL:     time.Duration(config.HTTPConfig.SessionTTL),
 		isGLiNet:       isGLiNet,
