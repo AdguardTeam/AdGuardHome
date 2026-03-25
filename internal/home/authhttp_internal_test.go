@@ -32,8 +32,8 @@ import (
 const (
 	testTTL = 60
 
-	userName     = "name"
-	userPassword = "password"
+	testUsername = "name"
+	testPassword = "password"
 )
 
 // testSessionStorage is the mock implementation of the [aghuser.SessionStorage]
@@ -177,9 +177,9 @@ func TestAuthMiddlewareDefault(t *testing.T) {
 	storeGlobals(t)
 	globalContext.web = newTestWeb(t, &webConfig{})
 
-	const login = aghuser.Login(userName)
+	const login = aghuser.Login(testUsername)
 
-	user := newTestUser(t, userPassword, login)
+	user := newTestUser(t, testPassword, login)
 	users := map[aghuser.Login]*aghuser.User{
 		login: user,
 	}
@@ -269,7 +269,7 @@ func TestAuthMiddlewareDefault(t *testing.T) {
 		name:     "public",
 		wantCode: http.StatusOK,
 	}, {
-		req:      authRequest("/", nil, userName, userPassword),
+		req:      authRequest("/", nil, testUsername, testPassword),
 		wantUser: user,
 		name:     "basic_auth",
 		wantCode: http.StatusOK,
@@ -446,11 +446,11 @@ func TestAuth_ServeHTTP_firstRun(t *testing.T) {
 func TestAuth_ServeHTTP_auth(t *testing.T) {
 	storeGlobals(t)
 
-	passwordHash, err := bcrypt.GenerateFromPassword([]byte(userPassword), bcrypt.DefaultCost)
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(testPassword), bcrypt.DefaultCost)
 	require.NoError(t, err)
 
 	users := []webUser{{
-		Name:         userName,
+		Name:         testUsername,
 		PasswordHash: string(passwordHash),
 	}}
 
@@ -498,7 +498,7 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 	auth.isGLiNet = true
 	gliNetMw := auth.middleware().Wrap(baseMux)
 
-	loginCookie := generateAuthCookie(t, mux, userName, userPassword)
+	loginCookie := generateAuthCookie(t, mux, testUsername, testPassword)
 
 	testCases := []struct {
 		name     string
@@ -543,7 +543,7 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 			assertHandlerStatusCode(t, mux, r, http.StatusUnauthorized)
 
 			r = httptest.NewRequest(tc.method, tc.path, nil)
-			r.SetBasicAuth(userName, userPassword)
+			r.SetBasicAuth(testUsername, testPassword)
 			assertHandlerStatusCode(t, mux, r, tc.wantCode)
 
 			r = httptest.NewRequest(tc.method, tc.path, nil)
