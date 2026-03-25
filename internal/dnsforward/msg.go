@@ -47,12 +47,12 @@ func ipsFromRules(resRules []*filtering.ResultRule) (ips []netip.Addr) {
 }
 
 // genDNSFilterMessage generates a filtered response to req for the filtering
-// result res.  dctx, res, and l must not be nil.
+// result res.  l, dctx, and res must not be nil.
 func (s *Server) genDNSFilterMessage(
 	ctx context.Context,
+	l *slog.Logger,
 	dctx *proxy.DNSContext,
 	res *filtering.Result,
-	l *slog.Logger,
 ) (resp *dns.Msg) {
 	req := dctx.Req
 	qt := req.Question[0].Qtype
@@ -67,9 +67,9 @@ func (s *Server) genDNSFilterMessage(
 
 	switch res.Reason {
 	case filtering.FilteredSafeBrowsing:
-		return s.genBlockedHost(ctx, req, s.dnsFilter.SafeBrowsingBlockHost(), dctx, l)
+		return s.genBlockedHost(ctx, l, req, s.dnsFilter.SafeBrowsingBlockHost(), dctx)
 	case filtering.FilteredParental:
-		return s.genBlockedHost(ctx, req, s.dnsFilter.ParentalBlockHost(), dctx, l)
+		return s.genBlockedHost(ctx, l, req, s.dnsFilter.ParentalBlockHost(), dctx)
 	case filtering.FilteredSafeSearch:
 		// If Safe Search generated the necessary IP addresses, use them.
 		// Otherwise, if there were no errors, there are no addresses for the
@@ -317,14 +317,14 @@ func (s *Server) makeResponseNullIP(ctx context.Context, req *dns.Msg) (resp *dn
 	return resp
 }
 
-// genBlockedHost generates a blocked host response.  request, d, and l must not
+// genBlockedHost generates a blocked host response.  l, request, and d must not
 // be nil.
 func (s *Server) genBlockedHost(
 	ctx context.Context,
+	l *slog.Logger,
 	request *dns.Msg,
 	newAddr string,
 	d *proxy.DNSContext,
-	l *slog.Logger,
 ) (msg *dns.Msg) {
 	if newAddr == "" {
 		l.InfoContext(ctx, "block host not specified")

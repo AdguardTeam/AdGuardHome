@@ -24,11 +24,11 @@ func (s *Server) clientRequestFilteringSettings(dctx *dnsContext) (setts *filter
 }
 
 // filterDNSRequest applies the dnsFilter and sets dctx.proxyCtx.Res if the
-// request was filtered.  dctx and l must not be nil.
+// request was filtered.  l and dctx must not be nil.
 func (s *Server) filterDNSRequest(
 	ctx context.Context,
-	dctx *dnsContext,
 	l *slog.Logger,
+	dctx *dnsContext,
 ) (res *filtering.Result, err error) {
 	pctx := dctx.proxyCtx
 	req := pctx.Req
@@ -50,7 +50,7 @@ func (s *Server) filterDNSRequest(
 		req.Question[0].Name = dns.Fqdn(res.CanonName)
 	case res.IsFiltered:
 		l.DebugContext(ctx, "host is filtered", "reason", res.Reason)
-		pctx.Res = s.genDNSFilterMessage(ctx, pctx, res, l)
+		pctx.Res = s.genDNSFilterMessage(ctx, l, pctx, res)
 	case res.Reason.In(filtering.Rewritten, filtering.FilteredSafeSearch):
 		pctx.Res = s.getCNAMEWithIPs(ctx, req, res.IPList, res.CanonName)
 	case res.Reason.In(filtering.RewrittenRule, filtering.RewrittenAutoHosts):
@@ -94,12 +94,12 @@ func (s *Server) checkHostRules(
 // filterDNSResponse checks each resource record of answer section of
 // dctx.proxyCtx.Res.  It sets dctx.result and dctx.origResp if at least one of
 // canonical names, IP addresses, or HTTPS RR hints in it matches the filtering
-// rules, as well as sets dctx.proxyCtx.Res to the filtered response.  dctx and
-// l must not be nil.
+// rules, as well as sets dctx.proxyCtx.Res to the filtered response.  l and
+// dctx must not be nil.
 func (s *Server) filterDNSResponse(
 	ctx context.Context,
-	dctx *dnsContext,
 	l *slog.Logger,
+	dctx *dnsContext,
 ) (err error) {
 	setts := dctx.setts
 	if !setts.FilteringEnabled {
@@ -140,7 +140,7 @@ func (s *Server) filterDNSResponse(
 		} else if res != nil && res.IsFiltered {
 			dctx.result = res
 			dctx.origResp = pctx.Res
-			pctx.Res = s.genDNSFilterMessage(ctx, pctx, res, l)
+			pctx.Res = s.genDNSFilterMessage(ctx, l, pctx, res)
 
 			l.DebugContext(ctx, "matched by response", "name", pctx.Req.Question[0].Name)
 

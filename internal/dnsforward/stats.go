@@ -14,12 +14,12 @@ import (
 	"github.com/miekg/dns"
 )
 
-// processQueryLogsAndStats writes stats data and logs.  dctx and l must not be
+// processQueryLogsAndStats writes stats data and logs.  l and dctx must not be
 // nil.
 func (s *Server) processQueryLogsAndStats(
 	ctx context.Context,
-	dctx *dnsContext,
 	l *slog.Logger,
+	dctx *dnsContext,
 ) (rc resultCode) {
 	l.DebugContext(ctx, "started processing querylog and stats")
 	defer l.DebugContext(ctx, "finished processing querylog and stats")

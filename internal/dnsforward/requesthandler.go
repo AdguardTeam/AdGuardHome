@@ -24,7 +24,7 @@ func (s *Server) ServeDNS(ctx context.Context, _ *proxy.Proxy, pctx *proxy.DNSCo
 
 	l := slogutil.MustLoggerFromContext(ctx)
 
-	type modProcessFunc func(ctx context.Context, dctx *dnsContext, l *slog.Logger) (rc resultCode)
+	type modProcessFunc func(ctx context.Context, l *slog.Logger, dctx *dnsContext) (rc resultCode)
 
 	// Since [*dnsforward.Server] is used as [proxy.Handler], there is no need
 	// for additional index out of range checking in any of the following
@@ -42,7 +42,7 @@ func (s *Server) ServeDNS(ctx context.Context, _ *proxy.Proxy, pctx *proxy.DNSCo
 		s.processQueryLogsAndStats,
 	}
 	for _, process := range mods {
-		r := process(ctx, dctx, l)
+		r := process(ctx, l, dctx)
 		switch r {
 		case resultCodeSuccess:
 			// continue: call the next filter

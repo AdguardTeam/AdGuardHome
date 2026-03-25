@@ -25,7 +25,7 @@ func (s *Server) Wrap(h proxy.Handler) (wrapped proxy.Handler) {
 	f := func(ctx context.Context, p *proxy.Proxy, pctx *proxy.DNSContext) (err error) {
 		l := slogutil.MustLoggerFromContext(ctx)
 
-		clientID, err := s.clientIDFromDNSContext(ctx, pctx, l)
+		clientID, err := s.clientIDFromDNSContext(ctx, l, pctx)
 		if err != nil {
 			s.logger.WarnContext(ctx, "resolving client id", slogutil.KeyError, err)
 
@@ -39,7 +39,7 @@ func (s *Server) Wrap(h proxy.Handler) (wrapped proxy.Handler) {
 			return s.serveBlockedResponse(pctx)
 		}
 
-		blocked = s.isBlockedHost(ctx, pctx.Req.Question, l)
+		blocked = s.isBlockedHost(ctx, l, pctx.Req.Question)
 		if blocked {
 			return s.serveBlockedResponse(pctx)
 		}
@@ -72,8 +72,8 @@ func (s *Server) serveBlockedResponse(pctx *proxy.DNSContext) (err error) {
 // be nil.
 func (s *Server) isBlockedHost(
 	ctx context.Context,
-	question []dns.Question,
 	l *slog.Logger,
+	question []dns.Question,
 ) (blocked bool) {
 	if len(question) != 1 {
 		return false
@@ -94,12 +94,12 @@ func (s *Server) isBlockedHost(
 
 // clientIDFromDNSContext extracts the client's ID from the server name of the
 // client's DoT or DoQ request or the path of the client's DoH.  If the protocol
-// is not one of these, clientID is an empty string and err is nil.  pctx and l
+// is not one of these, clientID is an empty string and err is nil.  l and pctx
 // must not be nil.
 func (s *Server) clientIDFromDNSContext(
 	ctx context.Context,
-	pctx *proxy.DNSContext,
 	l *slog.Logger,
+	pctx *proxy.DNSContext,
 ) (clientID string, err error) {
 	proto := pctx.Proto
 	if proto == proxy.ProtoHTTPS {

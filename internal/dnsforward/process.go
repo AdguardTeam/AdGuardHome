@@ -97,20 +97,20 @@ const mozillaFQDN = "use-application-dns.net."
 const healthcheckFQDN = "healthcheck.adguardhome.test."
 
 // processInitial terminates the following processing for some requests if
-// needed and enriches dctx with some client-specific information.  dctx and l
+// needed and enriches dctx with some client-specific information.  l and dctx
 // must not be nil.
 //
 // TODO(e.burkov):  Decompose into less general processors.
 func (s *Server) processInitial(
 	ctx context.Context,
-	dctx *dnsContext,
 	l *slog.Logger,
+	dctx *dnsContext,
 ) (rc resultCode) {
 	l.DebugContext(ctx, "started processing initial")
 	defer l.DebugContext(ctx, "finished processing initial")
 
 	pctx := dctx.proxyCtx
-	s.processClientIP(ctx, pctx.Addr.Addr(), l)
+	s.processClientIP(ctx, l, pctx.Addr.Addr())
 
 	q := pctx.Req.Question[0]
 	qt := q.Qtype
@@ -149,7 +149,7 @@ func (s *Server) processInitial(
 
 // processClientIP sends the client IP address to s.addrProc, if needed.  l must
 // not be nil.
-func (s *Server) processClientIP(ctx context.Context, addr netip.Addr, l *slog.Logger) {
+func (s *Server) processClientIP(ctx context.Context, l *slog.Logger, addr netip.Addr) {
 	if !addr.IsValid() {
 		l.WarnContext(ctx, "bad client address", "addr", addr)
 
@@ -166,13 +166,13 @@ func (s *Server) processClientIP(ctx context.Context, addr netip.Addr, l *slog.L
 
 // processDDRQuery responds to Discovery of Designated Resolvers (DDR) SVCB
 // queries.  The response contains different types of encryption supported by
-// current user configuration.  dctx and l must not be nil.
+// current user configuration.  l and dctx must not be nil.
 //
 // See https://www.ietf.org/archive/id/draft-ietf-add-ddr-10.html.
 func (s *Server) processDDRQuery(
 	ctx context.Context,
-	dctx *dnsContext,
 	l *slog.Logger,
+	dctx *dnsContext,
 ) (rc resultCode) {
 	l.DebugContext(ctx, "started processing ddr")
 	defer l.DebugContext(ctx, "finished processing ddr")
@@ -269,13 +269,13 @@ func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
 
 // processDHCPHosts respond to A requests if the target hostname is known to
 // the server.  It responds with a mapped IP address if the DNS64 is enabled and
-// the request is for AAAA.  dctx and l must not be nil.
+// the request is for AAAA.  l and dctx must not be nil.
 //
 // TODO(a.garipov): Adapt to AAAA as well.
 func (s *Server) processDHCPHosts(
 	ctx context.Context,
-	dctx *dnsContext,
 	l *slog.Logger,
+	dctx *dnsContext,
 ) (rc resultCode) {
 	l.DebugContext(ctx, "started processing dhcp hosts")
 	defer l.DebugContext(ctx, "finished processing dhcp hosts")
@@ -341,11 +341,11 @@ func (s *Server) processDHCPHosts(
 }
 
 // processDHCPAddrs responds to PTR requests if the target IP is leased by the
-// DHCP server.  dctx and l must not be nil.
+// DHCP server.  l and dctx must not be nil.
 func (s *Server) processDHCPAddrs(
 	ctx context.Context,
-	dctx *dnsContext,
 	l *slog.Logger,
+	dctx *dnsContext,
 ) (rc resultCode) {
 	l.DebugContext(ctx, "started processing dhcp addrs")
 	defer l.DebugContext(ctx, "finished processing dhcp addrs")
@@ -390,12 +390,12 @@ func (s *Server) processDHCPAddrs(
 	return resultCodeSuccess
 }
 
-// processFilteringBeforeRequest applies filtering logic.  dctx and l must not
+// processFilteringBeforeRequest applies filtering logic.  l and dctx must not
 // be nil.
 func (s *Server) processFilteringBeforeRequest(
 	ctx context.Context,
-	dctx *dnsContext,
 	l *slog.Logger,
+	dctx *dnsContext,
 ) (rc resultCode) {
 	l.DebugContext(ctx, "started processing filtering before request")
 	defer l.DebugContext(ctx, "finished processing filtering before request")
@@ -418,7 +418,7 @@ func (s *Server) processFilteringBeforeRequest(
 	defer s.serverLock.RUnlock()
 
 	var err error
-	if dctx.result, err = s.filterDNSRequest(ctx, dctx, l); err != nil {
+	if dctx.result, err = s.filterDNSRequest(ctx, l, dctx); err != nil {
 		dctx.err = err
 
 		return resultCodeError
@@ -437,11 +437,11 @@ func ipStringFromAddr(addr net.Addr) (ipStr string) {
 }
 
 // processUpstream passes request to upstream servers and handles the response.
-// dctx and l must not be nil.
+// l and dctx must not be nil.
 func (s *Server) processUpstream(
 	ctx context.Context,
-	dctx *dnsContext,
 	l *slog.Logger,
+	dctx *dnsContext,
 ) (rc resultCode) {
 	l.DebugContext(ctx, "started processing upstream")
 	defer l.DebugContext(ctx, "finished processing upstream")
@@ -469,7 +469,7 @@ func (s *Server) processUpstream(
 		return resultCodeFinish
 	}
 
-	s.setCustomUpstream(ctx, pctx, l, dctx.clientID)
+	s.setCustomUpstream(ctx, l, pctx, dctx.clientID)
 
 	reqWantsDNSSEC := s.setReqAD(req)
 
@@ -558,12 +558,12 @@ func (s *Server) dhcpHostFromRequest(q *dns.Question) (reqHost string) {
 	return reqHost[:len(reqHost)-len(s.localDomainSuffix)-1]
 }
 
-// setCustomUpstream sets custom upstream settings in pctx, if necessary.  pctx
-// and l must not be nil.
+// setCustomUpstream sets custom upstream settings in pctx, if necessary.  l and
+// pctx must not be nil.
 func (s *Server) setCustomUpstream(
 	ctx context.Context,
-	pctx *proxy.DNSContext,
 	l *slog.Logger,
+	pctx *proxy.DNSContext,
 	clientID string,
 ) {
 	if !pctx.Addr.IsValid() || s.conf.ClientsContainer == nil {
@@ -585,11 +585,11 @@ func (s *Server) setCustomUpstream(
 }
 
 // Apply filtering logic after we have received response from upstream servers.
-// dctx and l must not be nil.
+// l and dctx must not be nil.
 func (s *Server) processFilteringAfterResponse(
 	ctx context.Context,
-	dctx *dnsContext,
 	l *slog.Logger,
+	dctx *dnsContext,
 ) (rc resultCode) {
 	l.DebugContext(ctx, "started processing filtering after response")
 	defer l.DebugContext(ctx, "finished processing filtering after response")
@@ -617,16 +617,16 @@ func (s *Server) processFilteringAfterResponse(
 
 		return resultCodeSuccess
 	default:
-		return s.filterAfterResponse(ctx, dctx, l)
+		return s.filterAfterResponse(ctx, l, dctx)
 	}
 }
 
 // filterAfterResponse returns the result of filtering the response that wasn't
-// explicitly allowed or rewritten.  dctx and l must not be nil.
+// explicitly allowed or rewritten.  l and dctx must not be nil.
 func (s *Server) filterAfterResponse(
 	ctx context.Context,
-	dctx *dnsContext,
 	l *slog.Logger,
+	dctx *dnsContext,
 ) (res resultCode) {
 	// Check the response only if it's from an upstream.  Don't check the
 	// response if the protection is disabled since dnsrewrite rules aren't
@@ -635,7 +635,7 @@ func (s *Server) filterAfterResponse(
 		return resultCodeSuccess
 	}
 
-	err := s.filterDNSResponse(ctx, dctx, l)
+	err := s.filterDNSResponse(ctx, l, dctx)
 	if err != nil {
 		dctx.err = err
 
