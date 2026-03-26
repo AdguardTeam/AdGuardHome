@@ -281,6 +281,7 @@ func checkDNSStubListener(ctx context.Context, l *slog.Logger) (ok bool) {
 
 		err := executil.RunWithPeek(
 			ctx,
+			// TODO(d.kolyshev):  Do not hardcore command constructor.
 			executil.SystemCommandConstructor{},
 			agh.DefaultOutputLimit,
 			cmd.Key,
