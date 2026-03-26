@@ -92,61 +92,87 @@ func newTestNetworkDeviceManager(
 ) (ndMgr dhcpsvc.NetworkDeviceManager, inCh chan gopacket.Packet, outCh chan []byte) {
 	tb.Helper()
 
-	inCh = make(chan gopacket.Packet)
-	outCh = make(chan []byte)
+	isOpened := &atomic.Bool{}
 
-	isOpened := atomic.Bool{}
+	dev, inCh, outCh := newTestNetworkDevice(tb, addr, isOpened)
 
 	pt := testutil.PanicT{}
-	addrs := []netip.Addr{addr}
 
-	dev := &testNetworkDevice{
-		onReadPacketData: func() (data []byte, ci gopacket.CaptureInfo, err error) {
-			pkt, ok := testutil.RequireReceive(pt, inCh, testTimeout)
-			require.Equal(pt, isOpened.Load(), ok)
+	onOpen := func(
+		_ context.Context,
+		conf *dhcpsvc.NetworkDeviceConfig,
+	) (nd dhcpsvc.NetworkDevice, err error) {
+		isOpened.Store(true)
+		require.Equal(pt, deviceName, conf.Name)
 
-			if !ok {
-				return nil, gopacket.CaptureInfo{}, io.EOF
-			}
-
-			data = pkt.Data()
-			ci = gopacket.CaptureInfo{
-				Length:        len(data),
-				CaptureLength: len(data),
-			}
-
-			return data, ci, nil
-		},
-		onClose: func() (err error) {
-			isOpened.Store(false)
-			close(inCh)
-
-			return nil
-		},
-		onAddresses: func() (ips []netip.Addr) {
-			return addrs
-		},
-		onLinkType: func() (lt layers.LinkType) {
-			return layers.LinkTypeEthernet
-		},
-		onWritePacketData: func(data []byte) (err error) {
-			testutil.RequireSend(pt, outCh, data, testTimeout)
-
-			return nil
-		},
+		return dev, nil
 	}
 
 	ndMgr = &testNetworkDeviceManager{
-		onOpen: func(
-			_ context.Context,
-			conf *dhcpsvc.NetworkDeviceConfig,
-		) (nd dhcpsvc.NetworkDevice, err error) {
-			isOpened.Store(true)
-			require.Equal(pt, deviceName, conf.Name)
-
-			return dev, nil
-		},
+		onOpen: onOpen,
 	}
 
 	return ndMgr, inCh, outCh
+}
+
+// newTestNetworkDevice creates a network device for testing.  It has a link
+// type [layers.LinkTypeEthernet].  Incoming packets are received from inCh and
+// outgoing packets are sent to outCh.
+func newTestNetworkDevice(
+	tb testing.TB,
+	addr netip.Addr,
+	isOpened *atomic.Bool,
+) (nd dhcpsvc.NetworkDevice, inCh chan gopacket.Packet, outCh chan []byte) {
+	tb.Helper()
+
+	inCh = make(chan gopacket.Packet)
+	outCh = make(chan []byte)
+
+	pt := testutil.PanicT{}
+
+	onReadPacketData := func() (data []byte, ci gopacket.CaptureInfo, err error) {
+		pkt, ok := testutil.RequireReceive(pt, inCh, testTimeout)
+		require.Equal(pt, isOpened.Load(), ok)
+
+		if !ok {
+			return nil, gopacket.CaptureInfo{}, io.EOF
+		}
+
+		data = pkt.Data()
+		ci = gopacket.CaptureInfo{
+			Length:        len(data),
+			CaptureLength: len(data),
+		}
+
+		return data, ci, nil
+	}
+
+	onClose := func() (err error) {
+		isOpened.Store(false)
+		close(inCh)
+
+		return nil
+	}
+
+	onAddresses := func() (ips []netip.Addr) {
+		return []netip.Addr{addr}
+	}
+
+	onLinkType := func() (lt layers.LinkType) {
+		return layers.LinkTypeEthernet
+	}
+
+	onWritePacketData := func(data []byte) (err error) {
+		testutil.RequireSend(pt, outCh, data, testTimeout)
+
+		return nil
+	}
+
+	return &testNetworkDevice{
+		onReadPacketData:  onReadPacketData,
+		onClose:           onClose,
+		onAddresses:       onAddresses,
+		onLinkType:        onLinkType,
+		onWritePacketData: onWritePacketData,
+	}, inCh, outCh
 }

@@ -1,6 +1,7 @@
 package dhcpsvc_test
 
 import (
+	"cmp"
 	"net"
 	"net/netip"
 	"testing"
@@ -15,6 +16,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// TODO(e.burkov):  Add tests for wrong packets.
 
 // testIPv4InterfacesConf is the test interfaces configuration for the DHCPv4
 // part of the [DHCPServer].
@@ -289,9 +292,12 @@ func TestDHCPServer_ServeEther4_requestSelecting(t *testing.T) {
 	}{{
 		discover: newDHCPDISCOVER(t, hwAddrUnknown),
 		conf: &dhcpRequestConfig{
-			requestedIP:  testIPv4Conf.RangeStart,
+			options: layers.DHCPOptions{
+				layers.NewDHCPOption(layers.DHCPOptRequestIP, testIPv4Conf.RangeStart.AsSlice()),
+				layers.NewDHCPOption(layers.DHCPOptServerID, testIfaceAddr.AsSlice()),
+			},
 			clientHWAddr: hwAddrUnknown,
-			serverID:     testIfaceAddr,
+			flags:        dhcpsvc.FlagsBroadcast,
 		},
 		name: "success",
 		wantOpts: layers.DHCPOptions{
@@ -303,9 +309,12 @@ func TestDHCPServer_ServeEther4_requestSelecting(t *testing.T) {
 	}, {
 		discover: newDHCPDISCOVER(t, hwAddrStatic),
 		conf: &dhcpRequestConfig{
+			options: layers.DHCPOptions{
+				layers.NewDHCPOption(layers.DHCPOptRequestIP, ipStatic.AsSlice()),
+				layers.NewDHCPOption(layers.DHCPOptServerID, ipOtherSubnet.AsSlice()),
+			},
 			clientHWAddr: hwAddrStatic,
-			serverID:     ipOtherSubnet,
-			requestedIP:  ipStatic,
+			flags:        dhcpsvc.FlagsBroadcast,
 		},
 		name:         "wrong_server_id",
 		wantOpts:     nil,
@@ -313,9 +322,12 @@ func TestDHCPServer_ServeEther4_requestSelecting(t *testing.T) {
 	}, {
 		discover: nil,
 		conf: &dhcpRequestConfig{
+			options: layers.DHCPOptions{
+				layers.NewDHCPOption(layers.DHCPOptRequestIP, ipWrong.AsSlice()),
+				layers.NewDHCPOption(layers.DHCPOptServerID, testIfaceAddr.AsSlice()),
+			},
 			clientHWAddr: hwAddrUnknown,
-			serverID:     testIfaceAddr,
-			requestedIP:  ipWrong,
+			flags:        dhcpsvc.FlagsBroadcast,
 		},
 		name:         "no_lease",
 		wantOpts:     nil,
@@ -323,9 +335,12 @@ func TestDHCPServer_ServeEther4_requestSelecting(t *testing.T) {
 	}, {
 		discover: newDHCPDISCOVER(t, hwAddrStatic),
 		conf: &dhcpRequestConfig{
+			options: layers.DHCPOptions{
+				layers.NewDHCPOption(layers.DHCPOptRequestIP, ipWrong.AsSlice()),
+				layers.NewDHCPOption(layers.DHCPOptServerID, testIfaceAddr.AsSlice()),
+			},
 			clientHWAddr: hwAddrStatic,
-			serverID:     testIfaceAddr,
-			requestedIP:  ipWrong,
+			flags:        dhcpsvc.FlagsBroadcast,
 		},
 		name:         "wrong_ip",
 		wantOpts:     nil,
@@ -333,10 +348,13 @@ func TestDHCPServer_ServeEther4_requestSelecting(t *testing.T) {
 	}, {
 		discover: newDHCPDISCOVER(t, hwAddrStatic),
 		conf: &dhcpRequestConfig{
+			options: layers.DHCPOptions{
+				layers.NewDHCPOption(layers.DHCPOptRequestIP, ipStatic.AsSlice()),
+				layers.NewDHCPOption(layers.DHCPOptServerID, testIfaceAddr.AsSlice()),
+			},
 			clientHWAddr: hwAddrStatic,
-			serverID:     testIfaceAddr,
-			requestedIP:  ipStatic,
 			clientIP:     ipStatic,
+			flags:        dhcpsvc.FlagsBroadcast,
 		},
 		name:         "nonzero_ciaddr",
 		wantOpts:     nil,
@@ -409,8 +427,11 @@ func TestDHCPServer_ServeEther4_requestInitReboot(t *testing.T) {
 	}{{
 		name: "success",
 		conf: &dhcpRequestConfig{
+			options: layers.DHCPOptions{
+				layers.NewDHCPOption(layers.DHCPOptRequestIP, ipStatic.AsSlice()),
+			},
 			clientHWAddr: hwAddrStatic,
-			requestedIP:  ipStatic,
+			flags:        dhcpsvc.FlagsBroadcast,
 		},
 		wantResponse: layers.DHCPMsgTypeAck,
 		wantOpts: layers.DHCPOptions{
@@ -422,30 +443,51 @@ func TestDHCPServer_ServeEther4_requestInitReboot(t *testing.T) {
 	}, {
 		name: "wrong_subnet",
 		conf: &dhcpRequestConfig{
+			options: layers.DHCPOptions{
+				layers.NewDHCPOption(layers.DHCPOptRequestIP, ipOtherSubnet.AsSlice()),
+			},
 			clientHWAddr: hwAddrStatic,
-			requestedIP:  ipOtherSubnet,
+			flags:        dhcpsvc.FlagsBroadcast,
 		},
 		wantResponse: layers.DHCPMsgTypeNak,
 	}, {
 		name: "no_lease",
 		conf: &dhcpRequestConfig{
+			options: layers.DHCPOptions{
+				layers.NewDHCPOption(layers.DHCPOptRequestIP, ipStatic.AsSlice()),
+			},
 			clientHWAddr: hwAddrUnknown,
-			requestedIP:  ipStatic,
+			flags:        dhcpsvc.FlagsBroadcast,
 		},
 		wantResponse: layers.DHCPMsgTypeUnspecified,
 	}, {
 		name: "wrong_ip",
 		conf: &dhcpRequestConfig{
+			options: layers.DHCPOptions{
+				layers.NewDHCPOption(layers.DHCPOptRequestIP, ipDynamic.AsSlice()),
+			},
 			clientHWAddr: hwAddrStatic,
-			requestedIP:  ipDynamic,
+			flags:        dhcpsvc.FlagsBroadcast,
+		},
+		wantResponse: layers.DHCPMsgTypeNak,
+	}, {
+		name: "wrong_ip_no_broadcast",
+		conf: &dhcpRequestConfig{
+			options: layers.DHCPOptions{
+				layers.NewDHCPOption(layers.DHCPOptRequestIP, ipDynamic.AsSlice()),
+			},
+			clientHWAddr: hwAddrStatic,
 		},
 		wantResponse: layers.DHCPMsgTypeNak,
 	}, {
 		name: "nonzero_ciaddr",
 		conf: &dhcpRequestConfig{
+			options: layers.DHCPOptions{
+				layers.NewDHCPOption(layers.DHCPOptRequestIP, ipStatic.AsSlice()),
+			},
 			clientHWAddr: hwAddrStatic,
-			requestedIP:  ipStatic,
 			clientIP:     ipStatic,
+			flags:        dhcpsvc.FlagsBroadcast,
 		},
 		wantResponse: layers.DHCPMsgTypeUnspecified,
 	}}
@@ -515,6 +557,7 @@ func TestDHCPServer_ServeEther4_requestRenew(t *testing.T) {
 		conf: &dhcpRequestConfig{
 			clientHWAddr: hwAddrDynamic,
 			clientIP:     ipDynamic,
+			flags:        dhcpsvc.FlagsBroadcast,
 		},
 		wantResponse: layers.DHCPMsgTypeAck,
 		wantOpts: layers.DHCPOptions{
@@ -528,6 +571,7 @@ func TestDHCPServer_ServeEther4_requestRenew(t *testing.T) {
 		conf: &dhcpRequestConfig{
 			clientHWAddr: hwAddrStatic,
 			clientIP:     ipStatic,
+			flags:        dhcpsvc.FlagsBroadcast,
 		},
 		wantResponse: layers.DHCPMsgTypeAck,
 		wantOpts: layers.DHCPOptions{
@@ -541,6 +585,7 @@ func TestDHCPServer_ServeEther4_requestRenew(t *testing.T) {
 		conf: &dhcpRequestConfig{
 			clientHWAddr: hwAddrStatic,
 			clientIP:     ipOtherSubnet,
+			flags:        dhcpsvc.FlagsBroadcast,
 		},
 		wantResponse: layers.DHCPMsgTypeUnspecified,
 	}, {
@@ -548,13 +593,42 @@ func TestDHCPServer_ServeEther4_requestRenew(t *testing.T) {
 		conf: &dhcpRequestConfig{
 			clientHWAddr: hwAddrUnknown,
 			clientIP:     ipStatic,
+			flags:        dhcpsvc.FlagsBroadcast,
 		},
 		wantResponse: layers.DHCPMsgTypeUnspecified,
+	}, {
+		name: "relay_agent",
+		conf: &dhcpRequestConfig{
+			clientHWAddr: hwAddrDynamic,
+			clientIP:     ipDynamic,
+			relayAgentIP: netip.MustParseAddr("10.0.0.1"),
+		},
+		wantResponse: layers.DHCPMsgTypeAck,
+		wantOpts: layers.DHCPOptions{
+			newOptMessageType(t, layers.DHCPMsgTypeAck),
+			newOptServerID(t, testIfaceAddr),
+			newOptLeaseTime(t, dynamicLeaseTTL),
+			newOptHostname(t, "dynamic4"),
+		},
+	}, {
+		name: "ciaddr_unicast",
+		conf: &dhcpRequestConfig{
+			clientHWAddr: hwAddrDynamic,
+			clientIP:     ipDynamic,
+		},
+		wantResponse: layers.DHCPMsgTypeAck,
+		wantOpts: layers.DHCPOptions{
+			newOptMessageType(t, layers.DHCPMsgTypeAck),
+			newOptServerID(t, testIfaceAddr),
+			newOptLeaseTime(t, dynamicLeaseTTL),
+			newOptHostname(t, "dynamic4"),
+		},
 	}, {
 		name: "wrong_ip",
 		conf: &dhcpRequestConfig{
 			clientHWAddr: hwAddrStatic,
 			clientIP:     ipDynamic,
+			flags:        dhcpsvc.FlagsBroadcast,
 		},
 		wantResponse: layers.DHCPMsgTypeNak,
 	}}
@@ -701,97 +775,54 @@ func TestDHCPServer_ServeEther4_decline(t *testing.T) {
 	}
 }
 
-// TODO(e.burkov):  Add tests for wrong packets.
-
 // dhcpRequestConfig contains the configuration for creating a DHCPREQUEST
 // packet.
 type dhcpRequestConfig struct {
-	// serverID is the server identifier option value.  If zero, the option is
-	// not included.
-	serverID netip.Addr
+	// options are additional DHCP options to include in the packet, excluding
+	// the message type.
+	options layers.DHCPOptions
 
-	// requestedIP is the requested IP address option value.  If zero, the
-	// option is not included.
-	requestedIP netip.Addr
-
-	// clientIP is the ciaddr field value.  If zero, it's set to 0.0.0.0.
+	// clientIP is the ciaddr field value.  If zero, it's set to unspecified.
 	clientIP netip.Addr
 
-	// hostname is the hostname option value.  If empty, the option is not
-	// included.
-	hostname string
+	// relayAgentIP is the giaddr field value.  If zero, it's set to
+	// unspecified.
+	relayAgentIP netip.Addr
 
-	// clientHWAddr is the MAC address of the client.
+	// clientHWAddr is the MAC address of the client.  It must be set.
 	clientHWAddr net.HardwareAddr
+
+	// flags is the DHCP message flags field value.
+	flags uint16
 }
 
 // newDHCPREQUEST creates a new DHCPREQUEST packet for testing.
 func newDHCPREQUEST(tb testing.TB, conf *dhcpRequestConfig) (pkt gopacket.Packet) {
 	tb.Helper()
 
-	eth := &layers.Ethernet{
-		SrcMAC:       conf.clientHWAddr,
-		DstMAC:       net.HardwareAddr{0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
-		EthernetType: layers.EthernetTypeIPv4,
-	}
+	eth := newEthernet4Layer(tb, conf.clientHWAddr, nil)
 
-	srcIP := net.IPv4zero.To4()
-	if conf.clientIP.IsValid() {
-		srcIP = conf.clientIP.AsSlice()
-	}
+	ip, udp := newIPv4UDPLayer(
+		tb,
+		netip.AddrPortFrom(conf.clientIP, uint16(dhcpsvc.ClientPortV4)),
+		netip.AddrPort{},
+	)
 
-	ip := &layers.IPv4{
-		Version:  4,
-		TTL:      dhcpsvc.IPv4DefaultTTL,
-		SrcIP:    srcIP,
-		DstIP:    net.IPv4bcast.To4(),
-		Protocol: layers.IPProtocolUDP,
-	}
-	udp := &layers.UDP{
-		SrcPort: dhcpsvc.ClientPortV4,
-		DstPort: dhcpsvc.ServerPortV4,
-	}
-	_ = udp.SetNetworkLayerForChecksum(ip)
-
-	opts := layers.DHCPOptions{
+	opts := append(layers.DHCPOptions{
 		layers.NewDHCPOption(
 			layers.DHCPOptMessageType,
 			[]byte{byte(layers.DHCPMsgTypeRequest)},
 		),
-	}
-
-	if conf.serverID.IsValid() {
-		opts = append(opts, layers.NewDHCPOption(
-			layers.DHCPOptServerID,
-			conf.serverID.AsSlice(),
-		))
-	}
-
-	if conf.requestedIP.IsValid() {
-		opts = append(opts, layers.NewDHCPOption(
-			layers.DHCPOptRequestIP,
-			conf.requestedIP.AsSlice(),
-		))
-	}
-
-	if conf.hostname != "" {
-		opts = append(opts, layers.NewDHCPOption(
-			layers.DHCPOptHostname,
-			[]byte(conf.hostname),
-		))
-	}
-
-	ciaddr := net.IPv4zero.To4()
-	if conf.clientIP.IsValid() {
-		ciaddr = conf.clientIP.AsSlice()
-	}
+	}, conf.options...)
 
 	dhcp := &layers.DHCPv4{
 		Operation:    layers.DHCPOpRequest,
 		HardwareType: layers.LinkTypeEthernet,
-		HardwareLen:  dhcpsvc.EUI48AddrLen,
+		HardwareLen:  uint8(len(conf.clientHWAddr)),
 		Xid:          testXid,
-		ClientIP:     ciaddr,
+		Flags:        conf.flags,
+		ClientIP:     cmp.Or(conf.clientIP, netip.IPv4Unspecified()).AsSlice(),
+		RelayAgentIP: cmp.Or(conf.relayAgentIP, netip.IPv4Unspecified()).AsSlice(),
 		ClientHWAddr: conf.clientHWAddr,
 		Options:      opts,
 	}
@@ -805,23 +836,9 @@ func newDHCPREQUEST(tb testing.TB, conf *dhcpRequestConfig) (pkt gopacket.Packet
 func newDHCPDISCOVER(tb testing.TB, clientHWAddr net.HardwareAddr) (pkt gopacket.Packet) {
 	tb.Helper()
 
-	eth := &layers.Ethernet{
-		SrcMAC:       clientHWAddr,
-		DstMAC:       net.HardwareAddr{0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
-		EthernetType: layers.EthernetTypeIPv4,
-	}
-	ip := &layers.IPv4{
-		Version:  4,
-		TTL:      dhcpsvc.IPv4DefaultTTL,
-		SrcIP:    net.IPv4zero.To4(),
-		DstIP:    net.IPv4bcast.To4(),
-		Protocol: layers.IPProtocolUDP,
-	}
-	udp := &layers.UDP{
-		SrcPort: dhcpsvc.ClientPortV4,
-		DstPort: dhcpsvc.ServerPortV4,
-	}
-	_ = udp.SetNetworkLayerForChecksum(ip)
+	eth := newEthernet4Layer(tb, clientHWAddr, nil)
+
+	ip, udp := newIPv4UDPLayer(tb, netip.AddrPort{}, netip.AddrPort{})
 
 	dhcp := &layers.DHCPv4{
 		Operation:    layers.DHCPOpRequest,
@@ -847,23 +864,13 @@ func newDHCPRELEASE(
 ) (pkt gopacket.Packet) {
 	tb.Helper()
 
-	eth := &layers.Ethernet{
-		SrcMAC:       clientHWAddr,
-		DstMAC:       serverHWAddr,
-		EthernetType: layers.EthernetTypeIPv4,
-	}
-	ip := &layers.IPv4{
-		Version:  4,
-		TTL:      dhcpsvc.IPv4DefaultTTL,
-		SrcIP:    clientIP.AsSlice(),
-		DstIP:    serverIP.AsSlice(),
-		Protocol: layers.IPProtocolUDP,
-	}
-	udp := &layers.UDP{
-		SrcPort: dhcpsvc.ClientPortV4,
-		DstPort: dhcpsvc.ServerPortV4,
-	}
-	_ = udp.SetNetworkLayerForChecksum(ip)
+	eth := newEthernet4Layer(tb, clientHWAddr, serverHWAddr)
+
+	ip, udp := newIPv4UDPLayer(
+		tb,
+		netip.AddrPortFrom(clientIP, uint16(dhcpsvc.ClientPortV4)),
+		netip.AddrPortFrom(serverIP, uint16(dhcpsvc.ServerPortV4)),
+	)
 
 	dhcp := &layers.DHCPv4{
 		Operation:    layers.DHCPOpRequest,
@@ -888,23 +895,9 @@ func newDHCPDECLINE(
 ) (pkt gopacket.Packet) {
 	tb.Helper()
 
-	eth := &layers.Ethernet{
-		SrcMAC:       clientHWAddr,
-		DstMAC:       net.HardwareAddr{0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
-		EthernetType: layers.EthernetTypeIPv4,
-	}
-	ip := &layers.IPv4{
-		Version:  4,
-		TTL:      dhcpsvc.IPv4DefaultTTL,
-		SrcIP:    net.IPv4zero.To4(),
-		DstIP:    net.IPv4bcast.To4(),
-		Protocol: layers.IPProtocolUDP,
-	}
-	udp := &layers.UDP{
-		SrcPort: dhcpsvc.ClientPortV4,
-		DstPort: dhcpsvc.ServerPortV4,
-	}
-	_ = udp.SetNetworkLayerForChecksum(ip)
+	eth := newEthernet4Layer(tb, clientHWAddr, nil)
+
+	ip, udp := newIPv4UDPLayer(tb, netip.AddrPort{}, netip.AddrPort{})
 
 	opts := layers.DHCPOptions{
 		newOptMessageType(tb, layers.DHCPMsgTypeDecline),
@@ -927,6 +920,59 @@ func newDHCPDECLINE(
 	}
 
 	return newTestPacket(tb, layers.LinkTypeEthernet, eth, ip, udp, dhcp)
+}
+
+// newIPv4UDPLayer creates IPv4 and UDP layers for testing.  Invalid src is
+// replaced with an unspecified address and client DHCPv4 port, invalid dst is
+// replaced with the broadcast address and server DHCPv4 port.
+func newIPv4UDPLayer(tb testing.TB, src, dst netip.AddrPort) (ip *layers.IPv4, udp *layers.UDP) {
+	tb.Helper()
+
+	if !src.IsValid() {
+		src = netip.AddrPortFrom(netip.IPv4Unspecified(), uint16(dhcpsvc.ClientPortV4))
+	}
+
+	if !dst.IsValid() {
+		bcastAddr, ok := netip.AddrFromSlice(net.IPv4bcast)
+		require.True(tb, ok)
+
+		dst = netip.AddrPortFrom(bcastAddr, uint16(dhcpsvc.ServerPortV4))
+	}
+
+	ip = &layers.IPv4{
+		Version:  4,
+		TTL:      dhcpsvc.IPv4DefaultTTL,
+		SrcIP:    src.Addr().AsSlice(),
+		DstIP:    dst.Addr().AsSlice(),
+		Protocol: layers.IPProtocolUDP,
+	}
+	udp = &layers.UDP{
+		SrcPort: layers.UDPPort(src.Port()),
+		DstPort: layers.UDPPort(dst.Port()),
+	}
+	require.NoError(tb, udp.SetNetworkLayerForChecksum(ip))
+
+	return ip, udp
+}
+
+// newEthernet4Layer creates a new Ethernet layer for IPv4 packets.  Nil src is
+// replaced with an unspecified MAC address, nil dst is replaced with a
+// broadcast MAC address.
+func newEthernet4Layer(tb testing.TB, src, dst net.HardwareAddr) (eth *layers.Ethernet) {
+	tb.Helper()
+
+	if src == nil {
+		src = net.HardwareAddr{0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+	}
+	if dst == nil {
+		dst = net.HardwareAddr{0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
+	}
+
+	return &layers.Ethernet{
+		SrcMAC:       src,
+		DstMAC:       dst,
+		EthernetType: layers.EthernetTypeIPv4,
+	}
 }
 
 // newTestPacket creates a valid packet from ls using first as first layer
@@ -1002,9 +1048,13 @@ func assertValidACK(
 	respData, ok := testutil.RequireReceive(tb, outCh, testTimeout)
 	require.True(tb, ok)
 
+	ip := &layers.IPv4{}
+	udp := &layers.UDP{}
 	resp := &layers.DHCPv4{}
-	types := requireEthernet(tb, respData, &layers.Ethernet{}, &layers.IPv4{}, &layers.UDP{}, resp)
+	types := requireEthernet(tb, respData, &layers.Ethernet{}, ip, udp, resp)
 	require.Equal(tb, fullLayersStack, types)
+
+	assertValidResp(tb, request, resp, ip, udp)
 
 	assert.Equal(tb, layers.DHCPOpReply, resp.Operation, "operation")
 	assert.Equal(tb, request.HardwareType, resp.HardwareType, "hardware type")
@@ -1018,7 +1068,7 @@ func assertValidACK(
 // wrapped with all layers down to Ethernet.
 func assertValidNAK(
 	tb testing.TB,
-	request *layers.DHCPv4,
+	req *layers.DHCPv4,
 	outCh <-chan []byte,
 	serverIP netip.Addr,
 ) {
@@ -1027,21 +1077,46 @@ func assertValidNAK(
 	respData, ok := testutil.RequireReceive(tb, outCh, testTimeout)
 	require.True(tb, ok)
 
+	ip := &layers.IPv4{}
+	udp := &layers.UDP{}
 	resp := &layers.DHCPv4{}
-	types := requireEthernet(tb, respData, &layers.Ethernet{}, &layers.IPv4{}, &layers.UDP{}, resp)
+	types := requireEthernet(tb, respData, &layers.Ethernet{}, ip, udp, resp)
 	require.Equal(tb, fullLayersStack, types)
 
+	assertValidResp(tb, req, resp, ip, udp)
+
 	assert.Equal(tb, layers.DHCPOpReply, resp.Operation, "operation")
-	assert.Equal(tb, request.HardwareType, resp.HardwareType, "hardware type")
-	assert.Equal(tb, request.HardwareLen, resp.HardwareLen, "hardware length")
-	assert.Equal(tb, request.Xid, resp.Xid, "xid")
-	assert.Equal(tb, request.ClientHWAddr, resp.ClientHWAddr, "client hardware address")
+	assert.Equal(tb, req.HardwareType, resp.HardwareType, "hardware type")
+	assert.Equal(tb, req.HardwareLen, resp.HardwareLen, "hardware length")
+	assert.Equal(tb, req.Xid, resp.Xid, "xid")
+	assert.Equal(tb, req.ClientHWAddr, resp.ClientHWAddr, "client hardware address")
 
 	wantOpts := layers.DHCPOptions{
 		newOptMessageType(tb, layers.DHCPMsgTypeNak),
 		newOptServerID(tb, serverIP),
 	}
 	assert.Equal(tb, wantOpts, resp.Options, "options")
+}
+
+// assertValidResp asserts that the response is valid for the given request
+// according to RFC 2131.
+func assertValidResp(tb testing.TB, req, resp *layers.DHCPv4, ip *layers.IPv4, udp *layers.UDP) {
+	switch {
+	case !req.RelayAgentIP.IsUnspecified():
+		assert.Equal(tb, req.RelayAgentIP.To4(), ip.DstIP)
+		assert.Equal(tb, dhcpsvc.ServerPortV4, udp.DstPort)
+	case !req.ClientIP.IsUnspecified() && req.Flags&dhcpsvc.FlagsBroadcast == 0:
+		assert.Equal(tb, req.ClientIP.To4(), ip.DstIP)
+	case req.Flags&dhcpsvc.FlagsBroadcast != 0:
+		assert.Equal(tb, net.IPv4bcast.To4(), ip.DstIP)
+		assert.Equal(tb, dhcpsvc.ClientPortV4, udp.DstPort)
+	case !resp.YourClientIP.IsUnspecified():
+		assert.Equal(tb, resp.YourClientIP.To4(), ip.DstIP)
+		assert.Equal(tb, dhcpsvc.ClientPortV4, udp.DstPort)
+	default:
+		assert.Equal(tb, net.IPv4zero.To4(), ip.DstIP)
+		assert.Equal(tb, dhcpsvc.ClientPortV4, udp.DstPort)
+	}
 }
 
 // assertNoResponse asserts that no response is received on the channel within

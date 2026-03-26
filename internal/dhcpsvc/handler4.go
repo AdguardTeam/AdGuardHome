@@ -366,6 +366,8 @@ func (iface *dhcpInterfaceV4) handleDecline(ctx context.Context, req *layers.DHC
 
 // handleRelease handles messages of type DHCPRELEASE.  req must be a
 // DHCPRELEASE message.
+//
+// TODO(e.burkov):  Retain the lease instead of removing it completely.
 func (iface *dhcpInterfaceV4) handleRelease(ctx context.Context, req *layers.DHCPv4) {
 	l := iface.common.logger
 
