@@ -3,6 +3,7 @@
 package ossvc
 
 import (
+	"bytes"
 	"cmp"
 	"context"
 	"fmt"
@@ -16,6 +17,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/ioutil"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/osutil/executil"
 	"github.com/kardianos/service"
@@ -220,16 +222,14 @@ func (s *openbsdRunComService) configureSysStartup(enable bool) (err error) {
 	}
 
 	// TODO(s.chzhen):  Pass context.
-	ctx := context.TODO()
-	var code int
-	code, _, err = aghos.RunCommand(ctx, s.cmdCons, "rcctl", cmd, s.cfg.Name)
-	if err != nil {
-		return err
-	} else if code != 0 {
-		return fmt.Errorf("rcctl finished with code %d", code)
-	}
-
-	return nil
+	return executil.RunWithPeek(
+		context.TODO(),
+		s.cmdCons,
+		aghos.MaxCmdOutputSize,
+		"rcctl",
+		cmd,
+		s.cfg.Name,
+	)
 }
 
 // writeScript tries to write the script for the service.
@@ -323,19 +323,21 @@ func (s *openbsdRunComService) runCom(cmd string) (out string, err error) {
 		return "", err
 	}
 
+	stdoutBuf := bytes.Buffer{}
 	// TODO(s.chzhen):  Pass context.
-	ctx := context.TODO()
-
-	// TODO(e.burkov):  It's possible that os.ErrNotExist is caused by
-	// something different than the service script's non-existence.  Keep it
-	// in mind, when replace the aghos.RunCommand.
-	var outData []byte
-	_, outData, err = aghos.RunCommand(ctx, s.cmdCons, scriptPath, cmd)
+	err = executil.Run(context.TODO(), s.cmdCons, &executil.CommandConfig{
+		Stderr: &stdoutBuf,
+		Stdout: ioutil.NewTruncatedWriter(&stdoutBuf, aghos.MaxCmdOutputSize),
+		Path:   scriptPath,
+		Args:   []string{cmd},
+	})
 	if errors.Is(err, os.ErrNotExist) {
+		// TODO(e.burkov):  It's possible that os.ErrNotExist is caused by
+		// something different than the service script's non-existence.
 		return "", service.ErrNotInstalled
 	}
 
-	return string(outData), err
+	return stdoutBuf.String(), nil
 }
 
 // Status implements service.Service interface for *openbsdRunComService.

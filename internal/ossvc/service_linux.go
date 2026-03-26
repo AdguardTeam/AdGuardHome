@@ -102,10 +102,14 @@ func (svc *sysvService) Install() (err error) {
 	}
 
 	// TODO(s.chzhen):  Pass context.
-	_, _, err = aghos.RunCommand(context.TODO(), svc.cmdCons, "update-rc.d", svc.name, "defaults")
-
-	// Don't wrap an error since it's informative enough as is.
-	return err
+	return executil.RunWithPeek(
+		context.TODO(),
+		svc.cmdCons,
+		aghos.MaxCmdOutputSize,
+		"update-rc.d",
+		svc.name,
+		"defaults",
+	)
 }
 
 // Uninstall implements the [service.Service] interface for *sysvService.
@@ -118,10 +122,14 @@ func (svc *sysvService) Uninstall() (err error) {
 	}
 
 	// TODO(s.chzhen):  Pass context.
-	_, _, err = aghos.RunCommand(context.TODO(), svc.cmdCons, "update-rc.d", svc.name, "remove")
-
-	// Don't wrap an error since it's informative enough as is.
-	return err
+	return executil.RunWithPeek(
+		context.TODO(),
+		svc.cmdCons,
+		aghos.MaxCmdOutputSize,
+		"update-rc.d",
+		svc.name,
+		"remove",
+	)
 }
 
 // systemdSystem is a wrapper for a [service.System] that returns the custom

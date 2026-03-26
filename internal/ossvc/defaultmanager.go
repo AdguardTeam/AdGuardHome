@@ -91,9 +91,8 @@ func (m *manager) Status(ctx context.Context, name ServiceName) (status Status, 
 
 	svcStatus, err := s.Status()
 	if err != nil && m.isUnixSystemV {
-		var code int
-		code, err = m.runInitdCommand(ctx, string(name), "status")
-		if err != nil || code != 0 {
+		err = m.runInitdCommand(ctx, string(name), "status")
+		if err != nil {
 			// Treat an error or non-zero exit code as stopped status on Unix
 			// System V.
 			//
@@ -151,7 +150,7 @@ func (m *manager) install(ctx context.Context, action *ActionInstall) (err error
 		// On OpenWrt it is important to run enable after the service
 		// installation.  Otherwise, the service won't start on the system
 		// startup.
-		_, err = m.runInitdCommand(ctx, string(action.ServiceName), "enable")
+		err = m.runInitdCommand(ctx, string(action.ServiceName), "enable")
 		if err != nil {
 			return fmt.Errorf("enabling service on openwrt: %w", err)
 		}
@@ -174,7 +173,7 @@ func (m *manager) restart(ctx context.Context, action *ActionRestart) (err error
 
 	err = s.Restart()
 	if err != nil && m.isUnixSystemV {
-		_, initdErr := m.runInitdCommand(ctx, string(action.ServiceName), "restart")
+		initdErr := m.runInitdCommand(ctx, string(action.ServiceName), "restart")
 		if initdErr != nil {
 			return fmt.Errorf("%w (restarting via init.d: %w)", err, initdErr)
 		}
@@ -201,7 +200,7 @@ func (m *manager) start(ctx context.Context, action *ActionStart) (err error) {
 
 	err = s.Start()
 	if err != nil && m.isUnixSystemV {
-		_, initdErr := m.runInitdCommand(ctx, string(action.ServiceName), "start")
+		initdErr := m.runInitdCommand(ctx, string(action.ServiceName), "start")
 		if initdErr != nil {
 			return fmt.Errorf("%w (starting via init.d: %w)", err, initdErr)
 		}
@@ -225,7 +224,7 @@ func (m *manager) stop(ctx context.Context, action *ActionStop) (err error) {
 
 	err = s.Stop()
 	if err != nil && m.isUnixSystemV {
-		_, initdErr := m.runInitdCommand(ctx, string(action.ServiceName), "stop")
+		initdErr := m.runInitdCommand(ctx, string(action.ServiceName), "stop")
 		if initdErr != nil {
 			return fmt.Errorf("%w (stopping via init.d: %w)", err, initdErr)
 		}
@@ -241,7 +240,7 @@ func (m *manager) uninstall(ctx context.Context, action *ActionUninstall) (err e
 	if m.isOpenWrt {
 		// On OpenWrt it is important to run disable command first as it will
 		// remove the symlink.
-		_, err = m.runInitdCommand(ctx, string(action.ServiceName), "disable")
+		err = m.runInitdCommand(ctx, string(action.ServiceName), "disable")
 		if err != nil {
 			return fmt.Errorf("disabling service on openwrt: %w", err)
 		}
@@ -307,14 +306,18 @@ func (m *manager) runInitdCommand(
 	ctx context.Context,
 	serviceName string,
 	action string,
-) (code int, err error) {
+) (err error) {
 	confPath := filepath.Join("/etc", "init.d", serviceName)
 	// Pass the script and action as a single string argument.
-	//
-	// TODO(e.burkov):  Use CommandConstructor.
-	code, _, err = aghos.RunCommand(ctx, m.cmdCons, "sh", "-c", confPath, action)
-
-	return code, err
+	return executil.RunWithPeek(
+		ctx,
+		m.cmdCons,
+		aghos.MaxCmdOutputSize,
+		"sh",
+		"-c",
+		confPath,
+		action,
+	)
 }
 
 // emptyInterface is an empty implementation of the [service.Interface], as the
