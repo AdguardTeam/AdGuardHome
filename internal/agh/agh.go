@@ -11,10 +11,6 @@ import (
 	"github.com/AdguardTeam/golibs/testutil/fakeos/fakeexec"
 )
 
-// DefaultOutputLimit is the default limit of bytes for commands' standard
-// output and standard error.
-const DefaultOutputLimit = 512
-
 // ConfigModifier defines an interface for updating the global configuration.
 type ConfigModifier interface {
 	// Apply applies changes to the global configuration.
