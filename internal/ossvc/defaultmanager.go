@@ -30,7 +30,7 @@ type manager struct {
 func newManager(ctx context.Context, conf *ManagerConfig) (mgr *manager) {
 	// Call chooseSystem explicitly to introduce platform-specific support for
 	// service package.  It's a noop for other GOOS values.
-	chooseSystem(ctx, conf.Logger)
+	chooseSystem(ctx, conf.Logger, conf.CommandConstructor)
 
 	return &manager{
 		logger:        conf.Logger,

@@ -34,33 +34,37 @@ import (
 const sysVersion = "openbsd-runcom"
 
 // chooseSystem checks the current system detected and substitutes it with local
-// implementation if needed.
-func chooseSystem(_ context.Context, _ *slog.Logger) {
-	service.ChooseSystem(openbsdSystem{})
+// implementation if needed.  cmdCons must not be nil.
+func chooseSystem(_ context.Context, _ *slog.Logger, cmdCons executil.CommandConstructor) {
+	service.ChooseSystem(&openbsdSystem{
+		cmdCons: cmdCons,
+	})
 }
 
 // openbsdSystem is the service.System to be used on the OpenBSD.
-type openbsdSystem struct{}
+type openbsdSystem struct {
+	cmdCons executil.CommandConstructor
+}
 
 // String implements service.System interface for openbsdSystem.
-func (openbsdSystem) String() string {
+func (sys *openbsdSystem) String() string {
 	return sysVersion
 }
 
 // Detect implements service.System interface for openbsdSystem.
-func (openbsdSystem) Detect() (ok bool) {
+func (sys *openbsdSystem) Detect() (ok bool) {
 	return true
 }
 
 // Interactive implements service.System interface for openbsdSystem.
-func (openbsdSystem) Interactive() (ok bool) {
+func (sys *openbsdSystem) Interactive() (ok bool) {
 	return os.Getppid() != 1
 }
 
 // New implements service.System interface for openbsdSystem.
-func (openbsdSystem) New(i service.Interface, c *service.Config) (s service.Service, err error) {
+func (sys *openbsdSystem) New(i service.Interface, c *service.Config) (s service.Service, err error) {
 	return &openbsdRunComService{
-		cmdCons: executil.SystemCommandConstructor{},
+		cmdCons: sys.cmdCons,
 		i:       i,
 		cfg:     c,
 	}, nil
