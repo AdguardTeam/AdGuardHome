@@ -147,6 +147,10 @@
         'pattern': 'dist/AdGuardHome_darwin_amd64.zip'
         'shared': true
         'required': true
+      - 'name': 'AdGuardHome_darwin_arm64'
+        'pattern': 'dist/AdGuardHome_darwin_arm64.zip'
+        'shared': true
+        'required': true
       - 'name': 'AdGuardHome_linux_amd64'
         'pattern': 'dist/AdGuardHome_linux_amd64.tar.gz'
         'shared': true
@@ -171,7 +175,7 @@
                 docker info
 
                 docker build \
-                    --build-arg "ARCH=amd64" \
+                    --build-arg "ARCH=amd64 arm64" \
                     --build-arg "BASE_IMAGE=${bamboo_dockerGo}" \
                     --build-arg "BRANCH=${bamboo_planRepository_branchName}" \
                     --build-arg "CACHE_BUSTER=${bamboo_cacheBuster}" \
