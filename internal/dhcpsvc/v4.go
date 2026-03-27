@@ -218,7 +218,7 @@ func (iface *dhcpInterfaceV4) respondOffer(
 ) {
 	resp := iface.buildResponse(req, l, fd.device, layers.DHCPMsgTypeOffer)
 
-	err := respond4(fd, resp)
+	err := respond4(fd, req, resp)
 	if err != nil {
 		iface.common.logger.ErrorContext(ctx, "writing offer", "error", err)
 	}
@@ -236,7 +236,9 @@ func (iface *dhcpInterfaceV4) respondACK(
 	l *Lease,
 ) {
 	resp := iface.buildResponse(req, l, fd.device, layers.DHCPMsgTypeAck)
-	if err := respond4(fd, resp); err != nil {
+
+	err := respond4(fd, req, resp)
+	if err != nil {
 		iface.common.logger.ErrorContext(ctx, "writing ack", "error", err)
 	}
 }
@@ -256,11 +258,24 @@ func (iface *dhcpInterfaceV4) respondNAK(
 	req *layers.DHCPv4,
 	fd *frameData,
 ) {
+	// If 'giaddr' is set in the DHCPREQUEST message, the client is on a
+	// different subnet.  The server MUST set the broadcast bit in the DHCPNAK,
+	// so that the relay agent will broadcast the DHCPNAK to the client, because
+	// the client may not have a correct network address or subnet mask, and the
+	// client may not be answering ARP requests.
+	var flags uint16
+	if !isSpecified(req.RelayAgentIP) {
+		flags = FlagsBroadcast
+	}
+
 	resp := &layers.DHCPv4{
 		Operation:    layers.DHCPOpReply,
 		HardwareType: layers.LinkTypeEthernet,
 		HardwareLen:  uint8(len(req.ClientHWAddr)),
 		Xid:          req.Xid,
+		Secs:         0,
+		Flags:        flags,
+		ClientIP:     req.ClientIP,
 		RelayAgentIP: req.RelayAgentIP,
 		ClientHWAddr: req.ClientHWAddr,
 		Options: layers.DHCPOptions{
@@ -270,7 +285,8 @@ func (iface *dhcpInterfaceV4) respondNAK(
 		},
 	}
 
-	if err := respond4(fd, resp); err != nil {
+	err := respond4(fd, req, resp)
+	if err != nil {
 		iface.common.logger.ErrorContext(ctx, "writing nak", "error", err)
 	}
 }
@@ -290,6 +306,9 @@ func (iface *dhcpInterfaceV4) buildResponse(
 		HardwareType: layers.LinkTypeEthernet,
 		HardwareLen:  uint8(len(req.ClientHWAddr)),
 		Xid:          req.Xid,
+		Secs:         0,
+		Flags:        req.Flags,
+		ClientIP:     req.ClientIP,
 		ClientHWAddr: req.ClientHWAddr,
 		YourClientIP: l.IP.AsSlice(),
 	}
@@ -463,28 +482,21 @@ const (
 	ClientPortV4 layers.UDPPort = 68
 )
 
-// respond4 sends a DHCPv4 response.  fd and resp must not be nil.
-func respond4(fd *frameData, resp *layers.DHCPv4) (err error) {
+// FlagsBroadcast is the DHCPv4 message flags field with the broadcast bit set.
+const FlagsBroadcast uint16 = 1 << 15
+
+// respond4 sends a DHCPv4 response.  fd, req, and resp must not be nil.
+func respond4(fd *frameData, req, resp *layers.DHCPv4) (err error) {
 	// TODO(e.burkov):  Use pools for buffer and layers.
 	buf := gopacket.NewSerializeBuffer()
 
 	eth := &layers.Ethernet{
-		SrcMAC:       fd.ether.SrcMAC,
-		DstMAC:       fd.ether.DstMAC,
+		SrcMAC:       fd.ether.DstMAC,
+		DstMAC:       fd.ether.SrcMAC,
 		EthernetType: layers.EthernetTypeIPv4,
 	}
-	ip := &layers.IPv4{
-		Version:  IPProtoVersion,
-		TTL:      IPv4DefaultTTL,
-		SrcIP:    net.IPv4zero.To4(),
-		DstIP:    net.IPv4bcast.To4(),
-		Protocol: layers.IPProtocolUDP,
-	}
-	udp := &layers.UDP{
-		SrcPort: ServerPortV4,
-		DstPort: ClientPortV4,
-	}
-	_ = udp.SetNetworkLayerForChecksum(ip)
+
+	ip, udp := newIPv4UDPLayers(fd, req, resp)
 
 	opts := gopacket.SerializeOptions{
 		FixLengths:       true,
@@ -497,4 +509,59 @@ func respond4(fd *frameData, resp *layers.DHCPv4) (err error) {
 	}
 
 	return fd.device.WritePacketData(buf.Bytes())
+}
+
+// newIPv4UDPLayers creates new UDP and IP layers for DHCP v4 response.  fd,
+// req, and res must not be nil.
+func newIPv4UDPLayers(fd *frameData, req, resp *layers.DHCPv4) (ip *layers.IPv4, udp *layers.UDP) {
+	var dstIP net.IP
+	dstPort := ClientPortV4
+	switch {
+	case isSpecified(req.RelayAgentIP):
+		// If the 'giaddr' field in a DHCP message from a client is non-zero,
+		// the server sends any return messages to the 'DHCP server' port on the
+		// BOOTP relay agent whose address appears in 'giaddr'.
+		dstIP = req.RelayAgentIP.To4()
+		dstPort = ServerPortV4
+	case isSpecified(req.ClientIP) && resp.Flags&FlagsBroadcast == 0:
+		// If the 'giaddr' field is zero and the 'ciaddr' field is nonzero, then
+		// the server unicasts DHCPOFFER and DHCPACK messages to the address in
+		// 'ciaddr'.
+		dstIP = req.ClientIP.To4()
+	case req.Flags&FlagsBroadcast != 0:
+		// If 'giaddr' is zero and 'ciaddr' is zero, and the broadcast bit is
+		// set, then the server broadcasts DHCPOFFER and DHCPACK messages to
+		// 0xffffffff.
+		dstIP = net.IPv4bcast.To4()
+	case isSpecified(resp.YourClientIP.To4()):
+		// If the broadcast bit is not set and 'giaddr' is zero and 'ciaddr' is
+		// zero, then the server unicasts DHCPOFFER and DHCPACK messages to the
+		// client's hardware address and 'yiaddr' address.
+		dstIP = resp.YourClientIP.To4()
+	default:
+		// Unicast to the client's hardware address only.
+		dstIP = netip.IPv4Unspecified().AsSlice()
+	}
+
+	ip = &layers.IPv4{
+		Version:  IPProtoVersion,
+		TTL:      IPv4DefaultTTL,
+		SrcIP:    fd.localAddr.AsSlice(),
+		DstIP:    dstIP,
+		Protocol: layers.IPProtocolUDP,
+	}
+	udp = &layers.UDP{
+		SrcPort: ServerPortV4,
+		DstPort: dstPort,
+	}
+
+	// It only returns an error if the network layer is not an IP layer.
+	_ = udp.SetNetworkLayerForChecksum(ip)
+
+	return ip, udp
+}
+
+// isSpecified checks if the IP is not nil and not unspecified.
+func isSpecified(ip net.IP) (ok bool) {
+	return ip != nil && !ip.IsUnspecified()
 }

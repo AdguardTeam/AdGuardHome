@@ -113,7 +113,8 @@ func (EmptyNetworkDevice) WritePacketData(_ []byte) (err error) {
 // frameData stores the Ethernet and IPv4 layers of the incoming packet, and
 // the network device that the packet was received from.
 type frameData struct {
-	ether  *layers.Ethernet
-	ip     *layers.IPv4
-	device NetworkDevice
+	ether     *layers.Ethernet
+	ip        *layers.IPv4
+	device    NetworkDevice
+	localAddr netip.Addr
 }

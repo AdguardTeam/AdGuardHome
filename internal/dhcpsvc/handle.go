@@ -2,6 +2,9 @@ package dhcpsvc
 
 import (
 	"context"
+	"log/slog"
+	"net/netip"
+	"slices"
 
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/google/gopacket"
@@ -18,32 +21,60 @@ func (srv *DHCPServer) serveEther4(ctx context.Context, iface *dhcpInterfaceV4, 
 	src := gopacket.NewPacketSource(nd, nd.LinkType())
 
 	for pkt := range src.Packets() {
-		etherLayer, ok := pkt.Layer(layers.LayerTypeEthernet).(*layers.Ethernet)
-		if !ok {
-			actual := pkt.Layers()
-			srv.logger.DebugContext(ctx, "skipping non-ethernet packet", "layers", actual)
-
+		fd := newFrameData(ctx, srv.logger, pkt, nd)
+		if fd == nil {
 			continue
-		}
-
-		ipLayer, ok := pkt.Layer(layers.LayerTypeIPv4).(*layers.IPv4)
-		if !ok {
-			actual := pkt.Layers()
-			srv.logger.DebugContext(ctx, "skipping non-ipv4 packet", "layers", actual)
-
-			continue
-		}
-
-		fd := &frameData{
-			ether:  etherLayer,
-			ip:     ipLayer,
-			device: nd,
 		}
 
 		err := srv.serveV4(ctx, iface, pkt, fd)
 		if err != nil {
 			srv.logger.ErrorContext(ctx, "serving", slogutil.KeyError, err)
 		}
+	}
+}
+
+// newFrameData creates a new frameData with layers extracted from pkt.  It
+// returns nil if the packet is not an Ethernet or IPv4 packet, or if the
+// network device has no addresses.  logger, pkt, and dev must not be nil.
+func newFrameData(
+	ctx context.Context,
+	logger *slog.Logger,
+	pkt gopacket.Packet,
+	dev NetworkDevice,
+) (fd *frameData) {
+	addrs := dev.Addresses()
+	if len(addrs) == 0 {
+		logger.ErrorContext(ctx, "no addresses for network device")
+
+		return nil
+	}
+
+	etherLayer, ok := pkt.Layer(layers.LayerTypeEthernet).(*layers.Ethernet)
+	if !ok {
+		actual := pkt.Layers()
+		logger.DebugContext(ctx, "skipping non-ethernet packet", "layers", actual)
+
+		return nil
+	}
+
+	ipLayer, ok := pkt.Layer(layers.LayerTypeIPv4).(*layers.IPv4)
+	if !ok {
+		actual := pkt.Layers()
+		logger.DebugContext(ctx, "skipping non-ipv4 packet", "layers", actual)
+
+		return nil
+	}
+
+	addr, ok := netip.AddrFromSlice(ipLayer.DstIP)
+	if !ok || !slices.Contains(addrs, addr) {
+		addr = addrs[0]
+	}
+
+	return &frameData{
+		ether:     etherLayer,
+		ip:        ipLayer,
+		device:    dev,
+		localAddr: addr,
 	}
 }
 
