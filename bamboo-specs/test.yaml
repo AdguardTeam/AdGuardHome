@@ -171,7 +171,7 @@
                 docker info
 
                 docker build \
-                    --build-arg "ARCH=amd64" \
+                    --build-arg "ARCH=amd64 arm64" \
                     --build-arg "BASE_IMAGE=${bamboo_dockerGo}" \
                     --build-arg "BRANCH=${bamboo_planRepository_branchName}" \
                     --build-arg "CACHE_BUSTER=${bamboo_cacheBuster}" \
