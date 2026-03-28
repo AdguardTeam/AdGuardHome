@@ -10,7 +10,7 @@ import { RootState } from '../../../../initialState';
 import { Input } from '../../../ui/Controls/Input';
 import { validateRequiredValue } from '../../../../helpers/validators';
 import { ClientForm } from './types';
-import { BlockedServices, ClientIds, MainSettings, ScheduleServices, UpstreamDns } from './components';
+import { BlockedServices, ClientIds, FilterLists, MainSettings, ScheduleServices, UpstreamDns } from './components';
 
 import '../Service.css';
 
@@ -25,6 +25,9 @@ const defaultFormValues: ClientForm = {
     ignore_querylog: false,
     ignore_statistics: false,
     blocked_services: {},
+    use_global_filter_lists: true,
+    filter_list_ids: {},
+    allow_filter_list_ids: {},
     safe_search: { enabled: false },
     upstreams: '',
     upstreams_cache_enabled: false,
@@ -88,6 +91,10 @@ export const Form = ({
         block_services: {
             title: 'block_services',
             component: <BlockedServices services={services?.allServices} />,
+        },
+        client_filter_lists: {
+            title: 'client_filter_lists',
+            component: <FilterLists />,
         },
         schedule_services: {
             title: 'schedule_services',
