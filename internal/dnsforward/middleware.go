@@ -17,13 +17,15 @@ import (
 // type check
 var _ proxy.Middleware = (*Server)(nil)
 
-// Wrap implements the [proxy.Middleware] interface for *Server.
+// Wrap implements the [proxy.Middleware] interface for *Server.  ctx must
+// contain a logger accessible with [slogutil.LoggerFromContext].
 //
 // TODO(d.kolyshev):  Move to a dedicated package.
-// TODO(d.kolyshev):  Use logger from context.
 func (s *Server) Wrap(h proxy.Handler) (wrapped proxy.Handler) {
 	f := func(ctx context.Context, p *proxy.Proxy, pctx *proxy.DNSContext) (err error) {
-		clientID, err := s.clientIDFromDNSContext(ctx, pctx)
+		l := slogutil.MustLoggerFromContext(ctx)
+
+		clientID, err := s.clientIDFromDNSContext(ctx, l, pctx)
 		if err != nil {
 			s.logger.WarnContext(ctx, "resolving client id", slogutil.KeyError, err)
 
@@ -37,7 +39,7 @@ func (s *Server) Wrap(h proxy.Handler) (wrapped proxy.Handler) {
 			return s.serveBlockedResponse(pctx)
 		}
 
-		blocked = s.isBlockedHost(ctx, pctx.Req.Question)
+		blocked = s.isBlockedHost(ctx, l, pctx.Req.Question)
 		if blocked {
 			return s.serveBlockedResponse(pctx)
 		}
@@ -66,8 +68,13 @@ func (s *Server) serveBlockedResponse(pctx *proxy.DNSContext) (err error) {
 	return nil
 }
 
-// isBlockedHost checks if the request is in the access blocklist.
-func (s *Server) isBlockedHost(ctx context.Context, question []dns.Question) (blocked bool) {
+// isBlockedHost checks if the request is in the access blocklist.  l must not
+// be nil.
+func (s *Server) isBlockedHost(
+	ctx context.Context,
+	l *slog.Logger,
+	question []dns.Question,
+) (blocked bool) {
 	if len(question) != 1 {
 		return false
 	}
@@ -77,12 +84,7 @@ func (s *Server) isBlockedHost(ctx context.Context, question []dns.Question) (bl
 	host := aghnet.NormalizeDomain(q.Name)
 
 	if s.access.isBlockedHost(host, qt) {
-		s.logger.DebugContext(
-			ctx,
-			"request is in access blocklist",
-			"dns_type", dns.Type(qt),
-			"host", host,
-		)
+		l.DebugContext(ctx, "request is in access blocklist")
 
 		return true
 	}
@@ -92,9 +94,11 @@ func (s *Server) isBlockedHost(ctx context.Context, question []dns.Question) (bl
 
 // clientIDFromDNSContext extracts the client's ID from the server name of the
 // client's DoT or DoQ request or the path of the client's DoH.  If the protocol
-// is not one of these, clientID is an empty string and err is nil.
+// is not one of these, clientID is an empty string and err is nil.  l and pctx
+// must not be nil.
 func (s *Server) clientIDFromDNSContext(
 	ctx context.Context,
+	l *slog.Logger,
 	pctx *proxy.DNSContext,
 ) (clientID string, err error) {
 	proto := pctx.Proto
@@ -116,7 +120,7 @@ func (s *Server) clientIDFromDNSContext(
 		return "", nil
 	}
 
-	cliSrvName, err := clientServerName(ctx, s.logger, pctx, proto)
+	cliSrvName, err := clientServerName(ctx, l, pctx, proto)
 	if err != nil {
 		return "", fmt.Errorf("getting client server-name: %w", err)
 	}
@@ -135,6 +139,8 @@ func (s *Server) clientIDFromDNSContext(
 
 // logMiddleware adds a logger using [slogutil.ContextWithLogger] and logs the
 // starts and ends of queries at a given level.
+//
+// TODO(d.kolyshev):  Consider moving to dnsproxy.
 type logMiddleware struct {
 	attrPool *syncutil.Pool[[]slog.Attr]
 	logger   *slog.Logger
