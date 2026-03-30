@@ -886,6 +886,12 @@ func (s *Server) Reconfigure(ctx context.Context, conf *ServerConfig) error {
 
 // ServeHTTP is a HTTP handler method we use to provide DNS-over-HTTPS.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if !s.IsRunning() {
+		http.Error(w, "DNS server is not running", http.StatusInternalServerError)
+
+		return
+	}
+
 	if prx := s.proxy(); prx != nil {
 		prx.ServeHTTP(w, r)
 	}

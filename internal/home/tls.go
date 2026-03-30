@@ -290,6 +290,7 @@ func (m *tlsManager) reconfigureDNSServer(ctx context.Context) (err error) {
 		&config.DNS,
 		config.Clients.Sources,
 		m.conf,
+		config.HTTPConfig.DoH,
 		m,
 		m.httpReg,
 		globalContext.clients.storage,

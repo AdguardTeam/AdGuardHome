@@ -847,7 +847,6 @@ Request:
     "port_https":443,
     "port_dns_over_tls":853,
     "port_dns_over_quic":784,
-    "allow_unencrypted_doh":false,
     "certificate_chain":"...",
     "private_key":"...",
     "certificate_path":"...",

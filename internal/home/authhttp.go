@@ -302,13 +302,7 @@ func isPublicResource(p string) (ok bool) {
 		panic(fmt.Errorf("bad login pattern: %w", err))
 	}
 
-	// TODO(s.chzhen):  Implement a more strict version.
-	if strings.HasPrefix(p, "/dns-query/") {
-		return true
-	}
-
 	paths := []string{
-		"/dns-query",
 		"/control/login",
 		"/apple/doh.mobileconfig",
 		"/apple/dot.mobileconfig",
@@ -319,6 +313,16 @@ func isPublicResource(p string) (ok bool) {
 	}
 
 	return isAsset || isLogin || slices.Contains(paths, p)
+}
+
+// isDoHRoute returns true if r is a request to a DoH route.  r must not be nil.
+func (mw *authMiddlewareDefault) isDoHRoute(r *http.Request) (ok bool) {
+	_, pattern := mw.mux.Handler(r)
+	if pattern == "" {
+		return false
+	}
+
+	return slices.Contains(mw.doHRoutes, pattern)
 }
 
 const (
@@ -335,6 +339,9 @@ type authMiddlewareDefaultConfig struct {
 	// TODO(e.burkov):  Require a logger in request's context instead.
 	logger *slog.Logger
 
+	// mux is the server's multiplexer.  It must not be nil.
+	mux *http.ServeMux
+
 	// rateLimiter manages the rate limiting for login attempts.
 	rateLimiter loginRateLimiter
 
@@ -349,6 +356,9 @@ type authMiddlewareDefaultConfig struct {
 
 	// users contains web user information.  It must not be nil.
 	users aghuser.DB
+
+	// doHRoutes is a list of DoH routes for public access.
+	doHRoutes []string
 }
 
 // authMiddlewareDefault is the default authentication middleware.  It searches
@@ -356,10 +366,12 @@ type authMiddlewareDefaultConfig struct {
 // passes it with the context.
 type authMiddlewareDefault struct {
 	logger         *slog.Logger
+	mux            *http.ServeMux
 	rateLimiter    loginRateLimiter
 	trustedProxies netutil.SubnetSet
 	sessions       aghuser.SessionStorage
 	users          aghuser.DB
+	doHRoutes      []string
 }
 
 // newAuthMiddlewareDefault returns the new properly initialized
@@ -367,10 +379,12 @@ type authMiddlewareDefault struct {
 func newAuthMiddlewareDefault(c *authMiddlewareDefaultConfig) (mw *authMiddlewareDefault) {
 	return &authMiddlewareDefault{
 		logger:         c.logger,
+		mux:            c.mux,
 		rateLimiter:    c.rateLimiter,
 		trustedProxies: c.trustedProxies,
 		sessions:       c.sessions,
 		users:          c.users,
+		doHRoutes:      c.doHRoutes,
 	}
 }
 
@@ -441,7 +455,7 @@ func (mw *authMiddlewareDefault) handlePublicAccess(
 	h http.Handler,
 	path string,
 ) (ok bool) {
-	if isPublicResource(path) {
+	if isPublicResource(path) || mw.isDoHRoute(r) {
 		h.ServeHTTP(w, r)
 
 		return true
