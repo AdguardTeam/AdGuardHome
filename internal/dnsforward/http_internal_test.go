@@ -331,9 +331,11 @@ func newLocalUpstreamListener(tb testing.TB, port uint16, h dns.Handler) (real n
 		Handler:           h,
 		NotifyStartedFunc: func() { close(startCh) },
 	}
+
+	pt := testutil.NewPanicT(tb)
 	go func() {
 		err := upsSrv.ListenAndServe()
-		require.NoError(testutil.PanicT{}, err)
+		require.NoError(pt, err)
 	}()
 
 	<-startCh
@@ -345,7 +347,7 @@ func newLocalUpstreamListener(tb testing.TB, port uint16, h dns.Handler) (real n
 func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 	hdlr := dns.HandlerFunc(func(w dns.ResponseWriter, m *dns.Msg) {
 		err := w.WriteMsg(new(dns.Msg).SetReply(m))
-		require.NoError(testutil.PanicT{}, err)
+		require.NoError(testutil.NewPanicT(t), err)
 	})
 
 	ups := (&url.URL{
@@ -449,10 +451,11 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 	}
 
 	t.Run("timeout", func(t *testing.T) {
+		pt := testutil.NewPanicT(t)
 		slowHandler := dns.HandlerFunc(func(w dns.ResponseWriter, m *dns.Msg) {
 			time.Sleep(upsTimeout * 2)
 			writeErr := w.WriteMsg(new(dns.Msg).SetReply(m))
-			require.NoError(testutil.PanicT{}, writeErr)
+			require.NoError(pt, writeErr)
 		})
 		sleepyUps := (&url.URL{
 			Scheme: "tcp",

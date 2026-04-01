@@ -15,13 +15,15 @@ import (
 )
 
 func TestUpstreamConfigValidator(t *testing.T) {
+	pt := testutil.NewPanicT(t)
+
 	goodHandler := dns.HandlerFunc(func(w dns.ResponseWriter, m *dns.Msg) {
 		err := w.WriteMsg(new(dns.Msg).SetReply(m))
-		require.NoError(testutil.PanicT{}, err)
+		require.NoError(pt, err)
 	})
 	badHandler := dns.HandlerFunc(func(w dns.ResponseWriter, _ *dns.Msg) {
 		err := w.WriteMsg(new(dns.Msg))
-		require.NoError(testutil.PanicT{}, err)
+		require.NoError(pt, err)
 	})
 
 	goodUps := (&url.URL{
@@ -165,8 +167,7 @@ func TestUpstreamConfigValidator_Check_once(t *testing.T) {
 
 	reqCh := make(chan signal)
 	hdlr := dns.HandlerFunc(func(w dns.ResponseWriter, m *dns.Msg) {
-		pt := testutil.PanicT{}
-
+		pt := testutil.NewPanicT(t)
 		err := w.WriteMsg(new(dns.Msg).SetReply(m))
 		require.NoError(pt, err)
 
@@ -205,9 +206,10 @@ func TestUpstreamConfigValidator_Check_once(t *testing.T) {
 				Timeout: testTimeout,
 			})
 
+			pt := testutil.NewPanicT(t)
 			go func() {
 				cv.check(ctx, testLogger)
-				testutil.RequireSend(testutil.PanicT{}, reqCh, signal{}, testTimeout)
+				testutil.RequireSend(pt, reqCh, signal{}, testTimeout)
 			}()
 
 			// Wait for the only request to be sent.

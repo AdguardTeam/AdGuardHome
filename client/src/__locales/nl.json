@@ -587,7 +587,7 @@
   "report_an_issue": "Rapporteer een probleem",
   "request_details": "Verzoekdetails",
   "request_table_header": "Verzoek",
-  "requests_count": "Verzoek teller",
+  "requests_count": "Aantal verzoeken",
   "reset_settings": "Reset Instellingen",
   "resolve_clients_desc": "Indien ingeschakeld, zal AdGuard Home proberen om IP-adressen van apparaten te converteren in hun hostnamen door PTR-verzoeken te sturen naar overeenkomstige resolvers (privé-DNS-servers voor lokale apparaten, upstream-server voor apparaten met een openbaar IP-adres).",
   "resolve_clients_title": "Omzetten van hostnamen van clients inschakelen",

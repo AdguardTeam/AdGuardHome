@@ -231,6 +231,7 @@ func TestServer_ServeDNS_restrictLocal(t *testing.T) {
 		intPTRAnswer = "some.local-client."
 	)
 
+	pt := testutil.NewPanicT(t)
 	localUpsHdlr := dns.HandlerFunc(func(w dns.ResponseWriter, req *dns.Msg) {
 		resp := cmp.Or(
 			aghtest.MatchedResponse(req, dns.TypePTR, extPTRQuestion, extPTRAnswer),
@@ -238,7 +239,7 @@ func TestServer_ServeDNS_restrictLocal(t *testing.T) {
 			(&dns.Msg{}).SetRcode(req, dns.RcodeNameError),
 		)
 
-		require.NoError(testutil.PanicT{}, w.WriteMsg(resp))
+		require.NoError(pt, w.WriteMsg(resp))
 	})
 	localUpsAddr := aghtest.StartLocalhostUpstream(t, localUpsHdlr).String()
 

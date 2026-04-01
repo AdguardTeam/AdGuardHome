@@ -89,14 +89,14 @@ func newTestNetworkDeviceManager(
 	tb testing.TB,
 	deviceName string,
 	addr netip.Addr,
-) (ndMgr dhcpsvc.NetworkDeviceManager, inCh chan gopacket.Packet, outCh chan []byte) {
+) (ndMgr dhcpsvc.NetworkDeviceManager, inCh chan<- gopacket.Packet, outCh <-chan []byte) {
 	tb.Helper()
 
 	isOpened := &atomic.Bool{}
 
 	dev, inCh, outCh := newTestNetworkDevice(tb, addr, isOpened)
 
-	pt := testutil.PanicT{}
+	pt := testutil.NewPanicT(tb)
 
 	onOpen := func(
 		_ context.Context,
@@ -122,17 +122,17 @@ func newTestNetworkDevice(
 	tb testing.TB,
 	addr netip.Addr,
 	isOpened *atomic.Bool,
-) (nd dhcpsvc.NetworkDevice, inCh chan gopacket.Packet, outCh chan []byte) {
+) (nd dhcpsvc.NetworkDevice, inCh chan<- gopacket.Packet, outCh <-chan []byte) {
 	tb.Helper()
 
-	inCh = make(chan gopacket.Packet)
-	outCh = make(chan []byte)
+	in := make(chan gopacket.Packet)
+	out := make(chan []byte)
 
-	pt := testutil.PanicT{}
+	pt := testutil.NewPanicT(tb)
 
 	onReadPacketData := func() (data []byte, ci gopacket.CaptureInfo, err error) {
-		pkt, ok := testutil.RequireReceive(pt, inCh, testTimeout)
-		require.Equal(pt, isOpened.Load(), ok)
+		pkt, ok := testutil.RequireReceive(pt, in, testTimeout)
+		require.Equalf(pt, isOpened.Load(), ok, "RECEIVED UNEXPECTED PACKET: %v", pkt)
 
 		if !ok {
 			return nil, gopacket.CaptureInfo{}, io.EOF
@@ -149,7 +149,7 @@ func newTestNetworkDevice(
 
 	onClose := func() (err error) {
 		isOpened.Store(false)
-		close(inCh)
+		close(in)
 
 		return nil
 	}
@@ -163,7 +163,7 @@ func newTestNetworkDevice(
 	}
 
 	onWritePacketData := func(data []byte) (err error) {
-		testutil.RequireSend(pt, outCh, data, testTimeout)
+		testutil.RequireSend(pt, out, data, testTimeout)
 
 		return nil
 	}
@@ -174,5 +174,5 @@ func newTestNetworkDevice(
 		onAddresses:       onAddresses,
 		onLinkType:        onLinkType,
 		onWritePacketData: onWritePacketData,
-	}, inCh, outCh
+	}, in, out
 }

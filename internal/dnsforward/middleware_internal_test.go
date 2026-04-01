@@ -274,11 +274,13 @@ func newTestDNSAnswer(fqdn string, ip net.IP) (ans []dns.RR) {
 func newTestUpstream(tb testing.TB, answer []dns.RR) (addr string) {
 	tb.Helper()
 
+	pt := testutil.NewPanicT(tb)
+
 	handler := dns.HandlerFunc(func(w dns.ResponseWriter, req *dns.Msg) {
 		resp := (&dns.Msg{}).SetReply(req)
 		resp.Answer = answer
 
-		require.NoError(testutil.PanicT{}, w.WriteMsg(resp))
+		require.NoError(pt, w.WriteMsg(resp))
 	})
 
 	return aghtest.StartLocalhostUpstream(tb, handler).String()

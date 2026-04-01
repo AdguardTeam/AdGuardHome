@@ -4,7 +4,7 @@ go 1.26.1
 
 require (
 	github.com/AdguardTeam/dnsproxy v0.81.0
-	github.com/AdguardTeam/golibs v0.35.8
+	github.com/AdguardTeam/golibs v0.35.11
 	github.com/AdguardTeam/urlfilter v0.23.2
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/ameshkov/dnscrypt/v2 v2.4.0
@@ -21,13 +21,12 @@ require (
 	github.com/google/gopacket v1.1.19
 	github.com/google/renameio/v2 v2.0.2
 	github.com/google/uuid v1.6.0
-	github.com/insomniacslk/dhcp v0.0.0-20251020182700-175e84fbb167
+	github.com/insomniacslk/dhcp v0.0.0-20260326115832-991c7910cf36
 	github.com/kardianos/service v1.2.4
 	github.com/mdlayher/ethernet v0.0.0-20220221185849-529eae5b6118
-	github.com/mdlayher/netlink v1.8.0
+	github.com/mdlayher/netlink v1.9.0
 	github.com/mdlayher/packet v1.1.2
-	// TODO(a.garipov): This package is deprecated; find a new one or use our
-	// own code for that.  Perhaps, use gopacket.
+	// TODO(a.garipov): This package is deprecated; Use gopacket.
 	github.com/mdlayher/raw v0.1.0
 	github.com/miekg/dns v1.1.72
 	github.com/quic-go/quic-go v0.59.0
@@ -35,10 +34,10 @@ require (
 	github.com/ti-mo/netfilter v0.5.3
 	go.etcd.io/bbolt v1.4.3
 	// TODO(e.burkov): Update to the latest version and test unmarshaling
-	// structures with *time.Time.
+	// structures with *time.Time, see AGDNS-3612.
 	go.yaml.in/yaml/v4 v4.0.0-rc.3
 	golang.org/x/crypto v0.49.0
-	golang.org/x/exp v0.0.0-20260209203927-2842357ff358
+	golang.org/x/exp v0.0.0-20260312153236-7ab1446f8b90
 	golang.org/x/net v0.52.0
 	golang.org/x/sys v0.42.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
@@ -73,7 +72,7 @@ require (
 	github.com/mdlayher/socket v0.5.1 // indirect
 	github.com/openai/openai-go/v3 v3.26.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
-	github.com/pierrec/lz4/v4 v4.1.25 // indirect
+	github.com/pierrec/lz4/v4 v4.1.26 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
