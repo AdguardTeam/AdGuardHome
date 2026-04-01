@@ -24,11 +24,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 [go-1.26.1]: https://groups.google.com/g/golang-announce/c/EdhZqrQ98hkq
 
-### Fixed
-
-- Status reported by the launchd service implementation in cases of scheduled service restart.
-
-- Fixed clients block/unblock when moving clients between allowed and disallowed lists.
+### Changed
 
 #### Configuration changes
 
@@ -59,6 +55,12 @@ In this release, the schema version has changed from 33 to 34.
     ```
 
     To roll back this change, set the `schema_version` back to `33`.
+
+### Fixed
+
+- Status reported by the launchd service implementation in cases of scheduled service restart.
+
+- Fixed clients block/unblock when moving clients between allowed and disallowed lists.
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
