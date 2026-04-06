@@ -3,7 +3,7 @@
     {
       "expires": "2025-01-01T10:01:01Z",
       "ip": "192.0.2.102",
-      "hostname": "success",
+      "hostname": "dynamic",
       "mac": "02:03:04:05:06:07",
       "static": false
     },
@@ -11,7 +11,7 @@
       "expires": "2025-01-01T10:01:01Z",
       "ip": "192.0.2.103",
       "hostname": "mismatch",
-      "mac": "03:04:05:06:07:08",
+      "mac": "04:05:06:07:08:09",
       "static": false
     }
   ],

@@ -200,32 +200,39 @@ func (srv *DHCPServer) newDHCPInterfaceV4(
 	return iface
 }
 
-// updateLease updates l in the database.  l must be valid and not expired.
-func (iface *dhcpInterfaceV4) updateLease(
-	ctx context.Context,
-	l *Lease,
-) (err error) {
-	return iface.common.index.update(ctx, iface.common.logger, l, iface.common)
+// updateLease updates lease in the database.  lease must be valid and not
+// expired.
+func (iface *dhcpInterfaceV4) updateLease(ctx context.Context, lease *Lease) (err error) {
+	return iface.common.index.update(ctx, iface.common.logger, lease, iface.common)
 }
 
-// respondOffer sends a DHCPOFFER message to the client.  req, fd, and l must
-// not be nil.
+// respondOffer sends a DHCPOFFER message to the client.  idOpt is expected to
+// be the value of the DHCP option Client Identifier, nil if not present.  req,
+// fd, and lease must not be nil.
+//
+// TODO(e.burkov):  Consider merging with [respondACK].
 func (iface *dhcpInterfaceV4) respondOffer(
 	ctx context.Context,
 	req *layers.DHCPv4,
 	fd *frameData,
-	l *Lease,
+	lease *Lease,
+	idOpt []byte,
 ) {
-	resp := iface.buildResponse(req, l, fd.device, layers.DHCPMsgTypeOffer)
+	opts := newRespOptions(layers.DHCPMsgTypeOffer, fd, idOpt)
+	opts = iface.appendTimeOptions(opts, lease)
+	opts = appendHostnameOption(opts, lease.Hostname)
+	opts = iface.appendRequestedOptions(opts, req)
 
+	resp := buildResponse(req, lease.IP, net.IPv4zero, req.Flags, opts)
 	err := respond4(fd, req, resp)
 	if err != nil {
 		iface.common.logger.ErrorContext(ctx, "writing offer", "error", err)
 	}
 }
 
-// respondACK sends a DHCPACK message to the client.  req, fd, and l must not be
-// nil.
+// respondACK sends a DHCPACK message to the client.  idOpt is expected to be
+// the value of the DHCP option Client Identifier, nil if not present.  req, fd,
+// and lease must not be nil.
 //
 // TODO(e.burkov):  Implement according to RFC, answer to DHCPINFORM
 // differently, when it's supported.
@@ -233,107 +240,75 @@ func (iface *dhcpInterfaceV4) respondACK(
 	ctx context.Context,
 	req *layers.DHCPv4,
 	fd *frameData,
-	l *Lease,
+	lease *Lease,
+	idOpt []byte,
 ) {
-	resp := iface.buildResponse(req, l, fd.device, layers.DHCPMsgTypeAck)
+	opts := newRespOptions(layers.DHCPMsgTypeAck, fd, idOpt)
+	opts = iface.appendTimeOptions(opts, lease)
+	opts = iface.appendRequestedOptions(opts, req)
+	opts = appendHostnameOption(opts, lease.Hostname)
 
+	resp := buildResponse(req, lease.IP, req.ClientIP, req.Flags, opts)
 	err := respond4(fd, req, resp)
 	if err != nil {
 		iface.common.logger.ErrorContext(ctx, "writing ack", "error", err)
 	}
 }
 
-// v4OptionMessageTypeNAK is a DHCP option for DHCPNAK message type.
-var v4OptionMessageTypeNAK = layers.NewDHCPOption(
-	layers.DHCPOptMessageType,
-	[]byte{byte(layers.DHCPMsgTypeNak)},
-)
-
-// respondNAK constructs and sends a DHCPNAK message to the client.  req, fd,
-// and resp must not be nil.
+// respondNAK constructs and sends a DHCPNAK message to the client.  idOpt is
+// expected to be the value of the DHCP option Client Identifier, nil if not
+// present.  req, fd, and resp must not be nil.
 //
 // See https://datatracker.ietf.org/doc/html/rfc2131#section-4.3.1.
 func (iface *dhcpInterfaceV4) respondNAK(
 	ctx context.Context,
 	req *layers.DHCPv4,
 	fd *frameData,
+	idOpt []byte,
 ) {
+	// TODO(e.burkov):  According to RFC 2131 we should add a message.
+	opts := newRespOptions(layers.DHCPMsgTypeNak, fd, idOpt)
+
 	// If 'giaddr' is set in the DHCPREQUEST message, the client is on a
 	// different subnet.  The server MUST set the broadcast bit in the DHCPNAK,
 	// so that the relay agent will broadcast the DHCPNAK to the client, because
 	// the client may not have a correct network address or subnet mask, and the
 	// client may not be answering ARP requests.
-	var flags uint16
-	if !isSpecified(req.RelayAgentIP) {
-		flags = FlagsBroadcast
+	flags := req.Flags
+	if isSpecified(req.RelayAgentIP) {
+		flags = flags | FlagsBroadcast
 	}
 
-	resp := &layers.DHCPv4{
-		Operation:    layers.DHCPOpReply,
-		HardwareType: layers.LinkTypeEthernet,
-		HardwareLen:  uint8(len(req.ClientHWAddr)),
-		Xid:          req.Xid,
-		Secs:         0,
-		Flags:        flags,
-		ClientIP:     req.ClientIP,
-		RelayAgentIP: req.RelayAgentIP,
-		ClientHWAddr: req.ClientHWAddr,
-		Options: layers.DHCPOptions{
-			v4OptionMessageTypeNAK,
-			layers.NewDHCPOption(layers.DHCPOptServerID, iface.gateway.AsSlice()),
-			// TODO(e.burkov):  According to RFC 2131 we should add a message.
-		},
-	}
-
+	resp := buildResponse(req, netip.Addr{}, net.IPv4zero, flags, opts)
 	err := respond4(fd, req, resp)
 	if err != nil {
 		iface.common.logger.ErrorContext(ctx, "writing nak", "error", err)
 	}
 }
 
-// buildResponse builds a DHCP response message with the given message type.
-// req and l must not be nil.  msgType must be one of:
-//   - [layers.DHCPMsgTypeOffer]
-//   - [layers.DHCPMsgTypeAck]
-func (iface *dhcpInterfaceV4) buildResponse(
+// buildResponse constructs a DHCPv4 response message.  req must not be nil.
+// Note that in order to be a valid response, opts must contain some mandatory
+// options, e.g. a message type.
+func buildResponse(
 	req *layers.DHCPv4,
-	l *Lease,
-	nd NetworkDevice,
-	msgType layers.DHCPMsgType,
+	yiaddr netip.Addr,
+	ciaddr net.IP,
+	flags uint16,
+	opts layers.DHCPOptions,
 ) (resp *layers.DHCPv4) {
-	resp = &layers.DHCPv4{
+	return &layers.DHCPv4{
 		Operation:    layers.DHCPOpReply,
 		HardwareType: layers.LinkTypeEthernet,
 		HardwareLen:  uint8(len(req.ClientHWAddr)),
 		Xid:          req.Xid,
 		Secs:         0,
-		Flags:        req.Flags,
-		ClientIP:     req.ClientIP,
+		Flags:        flags,
+		ClientIP:     ciaddr,
+		RelayAgentIP: req.RelayAgentIP,
 		ClientHWAddr: req.ClientHWAddr,
-		YourClientIP: l.IP.AsSlice(),
+		YourClientIP: yiaddr.AsSlice(),
+		Options:      opts,
 	}
-
-	resp.Options = append(
-		resp.Options,
-		layers.NewDHCPOption(layers.DHCPOptMessageType, []byte{byte(msgType)}),
-		layers.NewDHCPOption(layers.DHCPOptServerID, nd.Addresses()[0].AsSlice()),
-	)
-
-	iface.appendLeaseTime(resp, l)
-	iface.updateOptions(req, resp)
-
-	// Add hostname option if the lease has a hostname.
-	//
-	// TODO(e.burkov):  Lease should always has a hostname, investigate when
-	// it isn't the case.
-	if l.Hostname != "" {
-		resp.Options = append(
-			resp.Options,
-			layers.NewDHCPOption(layers.DHCPOptHostname, []byte(l.Hostname)),
-		)
-	}
-
-	return resp
 }
 
 // dhcpInterfacesV4 is a slice of network interfaces of IPv4 address family.
@@ -353,74 +328,74 @@ func (ifaces dhcpInterfacesV4) find(ip netip.Addr) (iface4 *netInterface, ok boo
 }
 
 // allocateLease allocates a new lease for the MAC address.  If there are no IP
-// addresses left, both l and err are nil.  mac must be a valid according to
+// addresses left, both lease and err are nil.  mac must be a valid according to
 // [netutil.ValidateMAC].
 //
 // TODO(e.burkov):  Pass the precalculated macKey.
 func (iface *dhcpInterfaceV4) allocateLease(
 	ctx context.Context,
 	mac net.HardwareAddr,
-) (l *Lease, err error) {
+) (lease *Lease, err error) {
 	for {
-		l, err = iface.reserveLease(ctx, mac)
+		lease, err = iface.reserveLease(ctx, mac)
 		if err != nil {
 			return nil, err
 		}
 
 		var ok bool
-		ok, err = iface.addrChecker.IsAvailable(l.IP)
+		ok, err = iface.addrChecker.IsAvailable(lease.IP)
 		if err != nil {
 			return nil, fmt.Errorf("checking address availability: %w", err)
 		}
 
 		if ok {
-			iface.common.leases[macToKey(mac)] = l
+			iface.common.leases[macToKey(mac)] = lease
 
-			off, _ := iface.common.addrSpace.offset(l.IP)
+			off, _ := iface.common.addrSpace.offset(lease.IP)
 			iface.common.leasedOffsets.set(off, true)
 
-			return l, nil
+			return lease, nil
 		}
 
-		iface.common.logger.DebugContext(ctx, "address not available", "ip", l.IP)
+		iface.common.logger.DebugContext(ctx, "address not available", "ip", lease.IP)
 
-		err = iface.common.blockLease(ctx, l, iface.clock)
+		err = iface.common.blockLease(ctx, lease, iface.clock)
 		if err != nil {
 			return nil, fmt.Errorf("blocking unavailable address: %w", err)
 		}
 	}
 }
 
-// reserveLease reserves a lease for a client by its MAC-address.  l is nil if a
-// new lease can't be allocated.  mac must be a valid according to
+// reserveLease reserves a lease for a client by its MAC-address.  lease is nil
+// if a new lease can't be allocated.  mac must be a valid according to
 // [netutil.ValidateMAC].  index mutex must be locked.
 func (iface *dhcpInterfaceV4) reserveLease(
 	ctx context.Context,
 	mac net.HardwareAddr,
-) (l *Lease, err error) {
+) (lease *Lease, err error) {
 	nextIP := iface.common.nextIP()
 	if nextIP != (netip.Addr{}) {
-		l = &Lease{
+		lease = &Lease{
 			HWAddr: slices.Clone(mac),
 			IP:     nextIP,
 			Expiry: iface.clock.Now().Add(iface.common.leaseTTL),
 		}
 
-		return l, nil
+		return lease, nil
 	}
 
-	l = iface.common.findExpiredLease(iface.clock.Now())
-	if l == nil {
+	lease = iface.common.findExpiredLease(iface.clock.Now())
+	if lease == nil {
 		return nil, errors.Error("no addresses available to lease")
 	}
 
 	// TODO(e.burkov):  Move validation from index methods into server's
 	// methods and use index here.
-	delete(iface.common.leases, macToKey(l.HWAddr))
+	delete(iface.common.leases, macToKey(lease.HWAddr))
 
 	idx := iface.common.index
-	delete(idx.byAddr, l.IP)
-	delete(idx.byName, strings.ToLower(l.Hostname))
+	delete(idx.byAddr, lease.IP)
+	delete(idx.byName, strings.ToLower(lease.Hostname))
 
 	err = idx.dbStore(ctx, iface.common.logger)
 	if err != nil {
@@ -428,37 +403,39 @@ func (iface *dhcpInterfaceV4) reserveLease(
 		return nil, err
 	}
 
-	l.HWAddr = slices.Clone(mac)
-	l.Hostname = ""
-	l.IsStatic = false
-	l.updateExpiry(iface.clock, iface.common.leaseTTL)
+	lease.HWAddr = slices.Clone(mac)
+	lease.Hostname = ""
+	lease.IsStatic = false
+	lease.updateExpiry(iface.clock, iface.common.leaseTTL)
 
-	iface.common.leases[macToKey(mac)] = l
+	iface.common.leases[macToKey(mac)] = lease
 
-	return l, nil
+	return lease, nil
 }
 
 // updateAndRespond updates the lease and sends a DHCPACK or DHCPNAK response to
-// the client according to the update result.  req must be a DHCPREQUEST
-// message, lease, l, and fd must not be nil.
+// the client according to the update result.  idOpt is an expected to be the
+// value of the DHCP option Client Identifier, nil if not present.  req must be
+// a DHCPREQUEST message, lease, l, and fd must not be nil.
 func (iface *dhcpInterfaceV4) updateAndRespond(
 	ctx context.Context,
 	l *slog.Logger,
 	req *layers.DHCPv4,
 	lease *Lease,
 	fd *frameData,
+	idOpt []byte,
 ) {
 	lease.Hostname = cmp.Or(hostname4(req), lease.Hostname)
 
 	err := iface.updateLease(ctx, lease)
 	if err != nil {
 		l.ErrorContext(ctx, "init-reboot request failed", slogutil.KeyError, err)
-		iface.respondNAK(ctx, req, fd)
+		iface.respondNAK(ctx, req, fd, idOpt)
 
 		return
 	}
 
-	iface.respondACK(ctx, req, fd, lease)
+	iface.respondACK(ctx, req, fd, lease, idOpt)
 }
 
 const (
@@ -511,19 +488,18 @@ func respond4(fd *frameData, req, resp *layers.DHCPv4) (err error) {
 	return fd.device.WritePacketData(buf.Bytes())
 }
 
-// newIPv4UDPLayers creates new UDP and IP layers for DHCP v4 response.  fd,
-// req, and res must not be nil.
+// newIPv4UDPLayers creates new UDP and IP layers for DHCPv4 response.  fd, req,
+// and resp must not be nil.
 func newIPv4UDPLayers(fd *frameData, req, resp *layers.DHCPv4) (ip *layers.IPv4, udp *layers.UDP) {
 	var dstIP net.IP
 	dstPort := ClientPortV4
 	switch {
-	case isSpecified(req.RelayAgentIP):
+	case isSpecified(req.RelayAgentIP.To4()):
 		// If the 'giaddr' field in a DHCP message from a client is non-zero,
 		// the server sends any return messages to the 'DHCP server' port on the
 		// BOOTP relay agent whose address appears in 'giaddr'.
-		dstIP = req.RelayAgentIP.To4()
-		dstPort = ServerPortV4
-	case isSpecified(req.ClientIP) && resp.Flags&FlagsBroadcast == 0:
+		dstIP, dstPort = req.RelayAgentIP.To4(), ServerPortV4
+	case isSpecified(req.ClientIP.To4()):
 		// If the 'giaddr' field is zero and the 'ciaddr' field is nonzero, then
 		// the server unicasts DHCPOFFER and DHCPACK messages to the address in
 		// 'ciaddr'.

@@ -16,14 +16,14 @@ import (
 // macKey contains hardware address as byte array of 6, 8, or 20 bytes.
 //
 // TODO(e.burkov):  Move to aghnet or even to netutil.
+//
+// TODO(e.burkov):  Identify the client by the hardware address and the client
+// identifier from the DHCP messages.
 type macKey any
 
 // macToKey converts mac into macKey, which is used as the key for the lease
 // maps.  mac must be a valid hardware address of length 6, 8, or 20 bytes, see
 // [netutil.ValidateMAC].
-//
-// TODO(e.burkov):  Identify the client by the hardware address and the client
-// identifier from the DHCP messages.
 func macToKey(mac net.HardwareAddr) (key macKey) {
 	switch len(mac) {
 	case 6:
