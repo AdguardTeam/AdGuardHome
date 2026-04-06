@@ -34,7 +34,136 @@ const (
 
 	// testSettings is a common value of the HTTP2-Settings header for tests.
 	testSettings = "AAEAABAAAAIAAAABAAQAAP__AAUAAEAAAAgAAAAAAAMAAABkAAYAAQAA"
+
+	// testHpackMaxDynamicTableSize is the common HPACK max dynamic table size
+	// value for tests.
+	testHPACKMaxDynamicTableSize = 4096
+
+	// testTargetStreamID is a common HTTP2 stream ID for sending requests after
+	// an upgrade.
+	//
+	// NOTE: The upgrade request implicitly uses Stream ID 1, so the first
+	// client-side valid ID is 3.
+	testTargetStreamID = 3
 )
+
+// H2C upgrade headers.
+//
+// TODO(a.garipov): Add to httphdr.
+const (
+	headerConnection    = "Connection"
+	headerUpgrade       = "Upgrade"
+	headerHTTP2Settings = "HTTP2-Settings"
+)
+
+// H2C upgrade header values for tests.
+const (
+	testHeaderValueConnection = "Upgrade, HTTP2-Settings"
+	testHeaderValueUpgrade    = "h2c"
+)
+
+func TestWebAPI_H2CVulnerability(t *testing.T) {
+	password := "password"
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	require.NoError(t, err)
+
+	user := webUser{
+		Name:         "foo",
+		PasswordHash: string(passwordHash),
+		UserID:       aghuser.MustNewUserID(),
+	}
+
+	auth, err := newAuth(testutil.ContextWithTimeout(t, testTimeout), &authConfig{
+		baseLogger:     testLogger,
+		rateLimiter:    emptyRateLimiter{},
+		trustedProxies: testTrustedProxies,
+		dbFilename:     path.Join(t.TempDir(), "sessions.db"),
+		users:          []webUser{user},
+		sessionTTL:     testTimeout,
+		isGLiNet:       false,
+	})
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		ctx := testutil.ContextWithTimeout(t, testTimeout)
+		auth.close(ctx)
+	})
+
+	mux := http.NewServeMux()
+	mw := &webMw{}
+	registrar := aghhttp.NewDefaultRegistrar(mux, mw.wrap)
+	web := newTestWeb(t, &webConfig{
+		auth: auth,
+	})
+
+	// NOTE: This test requires querylog, as it accesses the '/control/querylog'
+	// handler.  Other protected handlers cannot be used for this test because
+	// they require the context to contain the user.
+	queryLog, err := querylog.New(querylog.Config{
+		Logger:         testLogger,
+		ConfigModifier: agh.EmptyConfigModifier{},
+		HTTPReg:        registrar,
+		RotationIvl:    24 * time.Hour,
+		Enabled:        false,
+	})
+	require.NoError(t, err)
+
+	mw.set(web)
+	globalContext.queryLog = queryLog
+	globalContext.web = web
+
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	err = queryLog.Start(ctx)
+	require.NoError(t, err)
+	testutil.CleanupAndRequireSuccess(t, func() (err error) {
+		shutdownCtx := testutil.ContextWithTimeout(t, testTimeout)
+
+		return queryLog.Shutdown(shutdownCtx)
+	})
+
+	port := config.HTTPConfig.Address.Port()
+	host := fmt.Sprintf("%s:%d", netutil.IPv4Localhost(), port)
+
+	go web.start(ctx)
+	t.Cleanup(func() {
+		closeCtx := testutil.ContextWithTimeout(t, testTimeout)
+		web.close(closeCtx)
+	})
+
+	waitForWebAPIReady(t, user.Name, password, host)
+	performH2CUpgradeAttack(t, host)
+}
+
+// waitForWebAPIReady waits until the [webAPI] server has started and is ready
+// to accept connections.
+func waitForWebAPIReady(tb testing.TB, username, password, host string) {
+	tb.Helper()
+
+	u := (&url.URL{
+		Scheme: urlutil.SchemeHTTP,
+		Host:   host,
+		Path:   "/control/login",
+	}).String()
+
+	body := bytes.NewBuffer(nil)
+	loginReq := loginJSON{
+		Name:     username,
+		Password: password,
+	}
+
+	encErr := json.NewEncoder(body).Encode(loginReq)
+	require.NoError(tb, encErr)
+	require.EventuallyWithT(tb, func(c *assert.CollectT) {
+		ctx := testutil.ContextWithTimeout(tb, testTimeout)
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, u, body)
+		require.NoError(c, err)
+
+		var resp *http.Response
+		resp, err = http.DefaultClient.Do(req)
+		require.NoError(c, err)
+		require.Equal(c, http.StatusOK, resp.StatusCode)
+	}, testTimeout, testTimeout/10)
+}
 
 // performH2CUpgradeAttack establishes a TCP connection to the specified host,
 // performs an HTTP2 protocol upgrade, and attempts to access a protected
@@ -62,9 +191,9 @@ func performH2CUpgradeAttack(tb testing.TB, host string) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
 	require.NoError(tb, err)
 
-	req.Header.Set("Connection", "Upgrade, HTTP2-Settings")
-	req.Header.Set("Upgrade", "h2c")
-	req.Header.Set("HTTP2-Settings", testSettings)
+	req.Header.Set(headerConnection, testHeaderValueConnection)
+	req.Header.Set(headerUpgrade, testHeaderValueUpgrade)
+	req.Header.Set(headerHTTP2Settings, testSettings)
 
 	err = req.Write(writer)
 	require.NoError(tb, err)
@@ -79,7 +208,10 @@ func performH2CUpgradeAttack(tb testing.TB, host string) {
 
 	framer := http2.NewFramer(writer, reader)
 	performH2CSettingsExchange(tb, framer, writer)
-	sendAttackH2CRequest(tb, framer, writer, host)
+	sendH2CRequest(tb, framer, host)
+	require.NoError(tb, writer.Flush())
+
+	readH2CResponse(tb, framer)
 }
 
 // performH2CSettingsExchange performs the HTTP2 settings exchange handshake. It
@@ -120,10 +252,8 @@ func performH2CSettingsExchange(tb testing.TB, framer *http2.Framer, writer *buf
 	}
 }
 
-// sendAttackH2CRequest sends a request to a protected endpoint via an
-// established H2C connection, asserting that the server will respond with
-// [http.StatusUnauthorized].
-func sendAttackH2CRequest(tb testing.TB, framer *http2.Framer, writer *bufio.Writer, host string) {
+// sendH2CRequest writes a request to a protected endpoint into the framer.
+func sendH2CRequest(tb testing.TB, framer *http2.Framer, host string) {
 	tb.Helper()
 
 	var headerBlockFragment bytes.Buffer
@@ -139,7 +269,21 @@ func sendAttackH2CRequest(tb testing.TB, framer *http2.Framer, writer *bufio.Wri
 		require.NoError(tb, enc.WriteField(h))
 	}
 
-	dec := hpack.NewDecoder(4096, func(f hpack.HeaderField) {
+	err := framer.WriteHeaders(http2.HeadersFrameParam{
+		StreamID:      testTargetStreamID,
+		BlockFragment: headerBlockFragment.Bytes(),
+		EndHeaders:    true,
+		EndStream:     true,
+	})
+	require.NoError(tb, err)
+}
+
+// readH2CResponse reads the response from an H2C connection and asserts that
+// the server responds with [http.StatusUnauthorized].
+func readH2CResponse(tb testing.TB, framer *http2.Framer) {
+	tb.Helper()
+
+	dec := hpack.NewDecoder(testHPACKMaxDynamicTableSize, func(f hpack.HeaderField) {
 		if f.Name != ":status" {
 			return
 		}
@@ -150,24 +294,11 @@ func sendAttackH2CRequest(tb testing.TB, framer *http2.Framer, writer *bufio.Wri
 		assert.Equal(tb, http.StatusUnauthorized, int(gotStatus))
 	})
 
-	// NOTE: Stream ID 1 is implicitly used by the upgrade request, so we
-	// continue sending requests starting from the first client-side valid ID.
-	targetStreamID := uint32(3)
-	err := framer.WriteHeaders(http2.HeadersFrameParam{
-		StreamID:      targetStreamID,
-		BlockFragment: headerBlockFragment.Bytes(),
-		EndHeaders:    true,
-		EndStream:     true,
-	})
-	require.NoError(tb, err)
-	require.NoError(tb, writer.Flush())
-
 	for {
-		var frame http2.Frame
-		frame, err = framer.ReadFrame()
+		frame, err := framer.ReadFrame()
 		require.NoError(tb, err)
 
-		if frame.Header().StreamID != targetStreamID {
+		if frame.Header().StreamID != testTargetStreamID {
 			continue
 		}
 
@@ -178,99 +309,4 @@ func sendAttackH2CRequest(tb testing.TB, framer *http2.Framer, writer *bufio.Wri
 
 		break
 	}
-}
-
-func TestWebAPI_H2CVulnerability(t *testing.T) {
-	password := "password"
-	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	require.NoError(t, err)
-
-	user := webUser{
-		Name:         "foo",
-		PasswordHash: string(passwordHash),
-		UserID:       aghuser.MustNewUserID(),
-	}
-
-	auth, err := newAuth(testutil.ContextWithTimeout(t, testTimeout), &authConfig{
-		baseLogger:     testLogger,
-		rateLimiter:    emptyRateLimiter{},
-		trustedProxies: testTrustedProxies,
-		dbFilename:     path.Join(t.TempDir(), "sessions.db"),
-		users:          []webUser{user},
-		sessionTTL:     testTimeout,
-		isGLiNet:       false,
-	})
-	require.NoError(t, err)
-
-	ctx := testutil.ContextWithTimeout(t, testTimeout)
-	t.Cleanup(func() { auth.close(ctx) })
-
-	mux := http.NewServeMux()
-	mw := &webMw{}
-	registrar := aghhttp.NewDefaultRegistrar(mux, mw.wrap)
-	web := newTestWeb(t, &webConfig{
-		auth: auth,
-	})
-
-	queryLog, err := querylog.New(querylog.Config{
-		Logger:         testLogger,
-		ConfigModifier: agh.EmptyConfigModifier{},
-		HTTPReg:        registrar,
-		RotationIvl:    24 * time.Hour,
-		Enabled:        false,
-	})
-	require.NoError(t, err)
-
-	mw.set(web)
-	globalContext.queryLog = queryLog
-	globalContext.web = web
-
-	err = queryLog.Start(ctx)
-	require.NoError(t, err)
-
-	testutil.CleanupAndRequireSuccess(t, func() (err error) {
-		return queryLog.Shutdown(ctx)
-	})
-
-	port := config.HTTPConfig.Address.Port()
-	host := fmt.Sprintf("%s:%d", netutil.IPv4Localhost(), port)
-
-	go web.start(ctx)
-	t.Cleanup(func() { web.close(ctx) })
-
-	waitForWebAPIReady(t, user.Name, password, host)
-	performH2CUpgradeAttack(t, host)
-}
-
-// waitForWebAPIReady waits until the [webAPI] server has started and is ready
-// to accept connections.
-func waitForWebAPIReady(tb testing.TB, username, password, host string) {
-	tb.Helper()
-
-	u := &url.URL{
-		Scheme: urlutil.SchemeHTTP,
-		Host:   host,
-		Path:   "/control/login",
-	}
-
-	body := bytes.NewBuffer(nil)
-	loginReq := loginJSON{
-		Name:     username,
-		Password: password,
-	}
-
-	err := json.NewEncoder(body).Encode(loginReq)
-	require.NoError(tb, err)
-
-	require.EventuallyWithT(tb, func(c *assert.CollectT) {
-		ctx := testutil.ContextWithTimeout(tb, testTimeout)
-		var req *http.Request
-		req, err = http.NewRequestWithContext(ctx, http.MethodPost, u.String(), body)
-		require.NoError(c, err)
-
-		var resp *http.Response
-		resp, err = http.DefaultClient.Do(req)
-		require.NoError(c, err)
-		require.Equal(c, http.StatusOK, resp.StatusCode)
-	}, testTimeout, testTimeout/10)
 }
