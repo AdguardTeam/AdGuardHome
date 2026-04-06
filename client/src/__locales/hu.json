@@ -289,7 +289,7 @@
   "encryption_key_input": "Másolja ki és illessze be ide a tanúsítványa PEM-kódolt privát kulcsát.",
   "encryption_key_invalid": "Ez egy érvénytelen {{type}} privát kulcs",
   "encryption_key_source_content": "Privát kulcs tartalmának megadása",
-  "encryption_key_source_path": "Privát kulcsfájl beállítása",
+  "encryption_key_source_path": "Privát kulcsfájl útvonalának beállítása",
   "encryption_key_valid": "Ez egy érvényes {{type}} privát kulcs",
   "encryption_plain_dns_desc": "Az egyszerű DNS alapértelmezés szerint be van kapcsolva. Kikapcsolhatja, hogy az összes eszközt kényszerítse a titkosított DNS használatára. Ehhez legalább egy titkosított DNS protokollt engedélyeznie kell",
   "encryption_plain_dns_enable": "Egyszerű DNS engedélyezése",

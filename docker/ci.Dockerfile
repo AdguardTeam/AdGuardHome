@@ -3,7 +3,7 @@
 # This comment is used to simplify checking local copies of the Dockerfile.
 # Bump this number every time a significant change is made to this Dockerfile.
 #
-# AdGuard-Project-Version: 10
+# AdGuard-Project-Version: 11
 
 # Dockerfile guidelines:
 #
@@ -28,7 +28,7 @@
 #    needed.  Keep it in sync with bamboo-specs/bamboo.yaml.
 
 # NOTE:  Keep in sync with bamboo-specs/bamboo.yaml.
-ARG BASE_IMAGE=adguard/go-builder:1.25.7--1
+ARG BASE_IMAGE=adguard/go-builder:1.26.1--1
 
 # The dependencies stage is needed to install packages and tool dependencies.
 # This is also where binaries like osslsigncode, which may be required for tests
@@ -153,11 +153,12 @@ ARG BRANCH=master
 ARG CACHE_BUSTER=0
 ARG CHANNEL=development
 ARG DEPLOY_SCRIPT_PATH=not/a/real/path
-ARG GPG_KEY_PASSPHRASE
-ARG GPG_SECRET_KEY
+ARG GPG_KEY_PASSPHRASE=not-a-real-passphrase
+ARG GPG_SECRET_KEY=""
 ARG OS=""
 ARG REVISION=0000000000000000000000000000000000000000
-ARG SIGNER_API_KEY
+ARG SIGN=0
+ARG SIGNER_API_KEY=not-a-real-key
 ARG SOURCE_DATE_EPOCH=0
 ARG VERSION=""
 ADD . /app
@@ -168,16 +169,24 @@ RUN \
 <<-'EOF'
 set -e -f -u -x
 
+# Import GPG key if provided.
+if [ "${GPG_SECRET_KEY:-}" != '' ]; then
+    echo "$GPG_SECRET_KEY" | awk '{ gsub(/\\n/, "\n"); print; }' | gpg --import --batch --yes
+fi
+
 make \
 	ARCH="${ARCH}" \
 	BRANCH="${BRANCH}" \
 	CHANNEL="${CHANNEL}" \
+	DEPLOY_SCRIPT_PATH="${DEPLOY_SCRIPT_PATH}" \
 	FRONTEND_PREBUILT=1 \
+	GPG_KEY_PASSPHRASE="${GPG_KEY_PASSPHRASE}" \
 	OS="${OS}" \
 	PARALLELISM=1 \
 	REVISION="${REVISION}" \
 	SOURCE_DATE_EPOCH="$SOURCE_DATE_EPOCH" \
-	SIGN=0 \
+	SIGN="${SIGN}" \
+	SIGNER_API_KEY="${SIGNER_API_KEY}" \
 	VERBOSE=2 \
 	VERSION="${VERSION}" \
 	build-release \

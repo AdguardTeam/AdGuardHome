@@ -3,6 +3,7 @@ package dnsforward
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net"
 	"slices"
 	"strings"
@@ -23,9 +24,10 @@ func (s *Server) clientRequestFilteringSettings(dctx *dnsContext) (setts *filter
 }
 
 // filterDNSRequest applies the dnsFilter and sets dctx.proxyCtx.Res if the
-// request was filtered.
+// request was filtered.  l and dctx must not be nil.
 func (s *Server) filterDNSRequest(
 	ctx context.Context,
+	l *slog.Logger,
 	dctx *dnsContext,
 ) (res *filtering.Result, err error) {
 	pctx := dctx.proxyCtx
@@ -47,8 +49,8 @@ func (s *Server) filterDNSRequest(
 		dctx.origQuestion = q
 		req.Question[0].Name = dns.Fqdn(res.CanonName)
 	case res.IsFiltered:
-		s.logger.DebugContext(ctx, "host is filtered", "host", host, "reason", res.Reason)
-		pctx.Res = s.genDNSFilterMessage(ctx, pctx, res)
+		l.DebugContext(ctx, "host is filtered", "reason", res.Reason)
+		pctx.Res = s.genDNSFilterMessage(ctx, l, pctx, res)
 	case res.Reason.In(filtering.Rewritten, filtering.FilteredSafeSearch):
 		pctx.Res = s.getCNAMEWithIPs(ctx, req, res.IPList, res.CanonName)
 	case res.Reason.In(filtering.RewrittenRule, filtering.RewrittenAutoHosts):
@@ -92,8 +94,13 @@ func (s *Server) checkHostRules(
 // filterDNSResponse checks each resource record of answer section of
 // dctx.proxyCtx.Res.  It sets dctx.result and dctx.origResp if at least one of
 // canonical names, IP addresses, or HTTPS RR hints in it matches the filtering
-// rules, as well as sets dctx.proxyCtx.Res to the filtered response.
-func (s *Server) filterDNSResponse(ctx context.Context, dctx *dnsContext) (err error) {
+// rules, as well as sets dctx.proxyCtx.Res to the filtered response.  l and
+// dctx must not be nil.
+func (s *Server) filterDNSResponse(
+	ctx context.Context,
+	l *slog.Logger,
+	dctx *dnsContext,
+) (err error) {
 	setts := dctx.setts
 	if !setts.FilteringEnabled {
 		return nil
@@ -126,27 +133,16 @@ func (s *Server) filterDNSResponse(ctx context.Context, dctx *dnsContext) (err e
 			continue
 		}
 
-		s.logger.DebugContext(
-			ctx,
-			"checked",
-			"dns_type", dns.Type(rrtype),
-			"host", host,
-			"name", a.Header().Name,
-		)
+		l.DebugContext(ctx, "checked", "name", a.Header().Name)
 
 		if err != nil {
 			return fmt.Errorf("filtering answer at index %d: %w", i, err)
 		} else if res != nil && res.IsFiltered {
 			dctx.result = res
 			dctx.origResp = pctx.Res
-			pctx.Res = s.genDNSFilterMessage(ctx, pctx, res)
+			pctx.Res = s.genDNSFilterMessage(ctx, l, pctx, res)
 
-			s.logger.DebugContext(
-				ctx,
-				"matched by response",
-				"name", pctx.Req.Question[0].Name,
-				"host", host,
-			)
+			l.DebugContext(ctx, "matched by response", "name", pctx.Req.Question[0].Name)
 
 			break
 		}

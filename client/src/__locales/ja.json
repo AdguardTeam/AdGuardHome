@@ -289,7 +289,7 @@
   "encryption_key_input": "ここに証明書のためのPEM形式の秘密鍵をコピー／ペーストしてください。",
   "encryption_key_invalid": "これは無効な{{type}}プライベートキーです",
   "encryption_key_source_content": "秘密鍵の内容をペーストする",
-  "encryption_key_source_path": "秘密鍵のパスを設定する",
+  "encryption_key_source_path": "秘密鍵ファイルのパスを設定",
   "encryption_key_valid": "これは有効な{{type}}プライベートキーです。",
   "encryption_plain_dns_desc": "プレーンDNSはデフォルトで有効になっています。無効にして、すべてのデバイスに暗号化された DNS の使用を強制適用できます。これを行うには、少なくとも 1 つの暗号化されたDNSプロトコルを有効にする必要があります。",
   "encryption_plain_dns_enable": "プレーンDNSを有効にする",

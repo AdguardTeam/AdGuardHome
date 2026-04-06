@@ -284,7 +284,7 @@
   "encryption_key_input": "ඔබගේ සහතිකය සඳහා PEM-කේතනය කළ පුද්ගලික යතුර පිටපත් කර මෙහි අලවන්න.",
   "encryption_key_invalid": "මෙය වලංගු නොවන {{type}} පුද්ගලික යතුරකි",
   "encryption_key_source_content": "පුද්ගලික යතු‌රෙහි අන්තර්ගත අලවන්න",
-  "encryption_key_source_path": "පුද්ගලික යතුරක ගොනුවක් සකසන්න",
+  "encryption_key_source_path": "පුද්ගලික යතුරක ගොනු මාර්ගය සකසන්න",
   "encryption_key_valid": "මෙය වලංගු {{type}} පුද්ගලික යතුරකි",
   "encryption_plain_dns_desc": "ප්ලේන් DNS ඇත්තෙන්ම සක්‍රීය වේ. ඔබට එය අබල කිරීමෙන් සියලුම උපාංගයන් සිංහලෙන් DNS භාවිතා කිරීමට හෝ කරන්න. එය සඳහා, අත්‍යාවශ්‍යය වශයෙන් මින් කිහිපයක් සක්‍රීය කළ යුතුය.",
   "encryption_plain_dns_enable": "ප්ලේන් DNS සබල කරන්න",

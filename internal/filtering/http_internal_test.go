@@ -189,10 +189,11 @@ func TestDNSFilter_handleSafeBrowsingStatus(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			pt := testutil.NewPanicT(t)
 			handlers := make(map[string]http.Handler)
 			confModifier := &aghtest.ConfigModifier{}
 			confModifier.OnApply = func(_ context.Context) {
-				testutil.RequireSend(testutil.PanicT{}, confModCh, struct{}{}, testTimeout)
+				testutil.RequireSend(pt, confModCh, struct{}{}, testTimeout)
 			}
 
 			d, err := New(&Config{
@@ -280,8 +281,9 @@ func TestDNSFilter_handleParentalStatus(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			handlers := make(map[string]http.Handler)
 			confModifier := &aghtest.ConfigModifier{}
+			pt := testutil.NewPanicT(t)
 			confModifier.OnApply = func(_ context.Context) {
-				testutil.RequireSend(testutil.PanicT{}, confModCh, struct{}{}, testTimeout)
+				testutil.RequireSend(pt, confModCh, struct{}{}, testTimeout)
 			}
 
 			d, err := New(&Config{

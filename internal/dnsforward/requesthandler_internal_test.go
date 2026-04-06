@@ -10,6 +10,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/miekg/dns"
@@ -200,7 +201,10 @@ func TestServer_ServeDNS(t *testing.T) {
 		}
 
 		t.Run(tc.name, func(t *testing.T) {
-			err = s.ServeDNS(nil, dctx)
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			ctx = slogutil.ContextWithLogger(ctx, testLogger)
+
+			err = s.ServeDNS(ctx, nil, dctx)
 			require.NoError(t, err)
 			require.NotNil(t, dctx.Res)
 
@@ -227,6 +231,7 @@ func TestServer_ServeDNS_restrictLocal(t *testing.T) {
 		intPTRAnswer = "some.local-client."
 	)
 
+	pt := testutil.NewPanicT(t)
 	localUpsHdlr := dns.HandlerFunc(func(w dns.ResponseWriter, req *dns.Msg) {
 		resp := cmp.Or(
 			aghtest.MatchedResponse(req, dns.TypePTR, extPTRQuestion, extPTRAnswer),
@@ -234,7 +239,7 @@ func TestServer_ServeDNS_restrictLocal(t *testing.T) {
 			(&dns.Msg{}).SetRcode(req, dns.RcodeNameError),
 		)
 
-		require.NoError(testutil.PanicT{}, w.WriteMsg(resp))
+		require.NoError(pt, w.WriteMsg(resp))
 	})
 	localUpsAddr := aghtest.StartLocalhostUpstream(t, localUpsHdlr).String()
 
@@ -335,7 +340,10 @@ func TestServer_ServeDNS_restrictLocal(t *testing.T) {
 		}
 
 		t.Run(tc.name, func(t *testing.T) {
-			err = s.ServeDNS(s.dnsProxy, pctx)
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			ctx = slogutil.ContextWithLogger(ctx, testLogger)
+
+			err = s.ServeDNS(ctx, s.dnsProxy, pctx)
 			require.ErrorIs(t, err, tc.wantErr)
 
 			require.NotNil(t, pctx.Res)

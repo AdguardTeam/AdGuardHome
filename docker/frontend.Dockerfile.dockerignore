@@ -4,5 +4,6 @@
 # AdGuard-Project-Version: 2
 .git
 /bin/
+/test-reports/
 /tmp/
 /client/node_modules

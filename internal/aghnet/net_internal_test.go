@@ -38,9 +38,6 @@ func substRootDirFS(tb testing.TB, fsys fs.FS) {
 	rootDirFS = fsys
 }
 
-// RunCmdFunc is the signature of aghos.RunCommand function.
-type RunCmdFunc func(cmd string, args ...string) (code int, out []byte, err error)
-
 // ifaceAddrsFunc is the signature of net.InterfaceAddrs function.
 type ifaceAddrsFunc func() (ifaces []net.Addr, err error)
 

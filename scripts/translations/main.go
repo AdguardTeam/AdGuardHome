@@ -315,16 +315,10 @@ func autoAdd(ctx context.Context, l *slog.Logger, basePath string) (err error) {
 	err = handleAdds(ctx, l, cmdCons, adds)
 	if err != nil {
 		// Don't wrap the error since it's informative enough as is.
-		return nil
+		return err
 	}
 
-	err = handleDels(ctx, l, cmdCons, dels)
-	if err != nil {
-		// Don't wrap the error since it's informative enough as is.
-		return nil
-	}
-
-	return nil
+	return handleDels(ctx, l, cmdCons, dels)
 }
 
 // gitCmd is the shell command for Git.
@@ -344,10 +338,9 @@ func handleAdds(
 	gitArgs := append([]string{"add"}, locales...)
 	l.DebugContext(ctx, "executing", "cmd", gitCmd, "args", gitArgs)
 
-	code, out, err := aghos.RunCommand(ctx, cmdCons, gitCmd, gitArgs...)
-
-	if err != nil || code != 0 {
-		return fmt.Errorf("git add exited with code %d output %q: %w", code, out, err)
+	err = executil.RunWithPeek(ctx, cmdCons, aghos.MaxCmdOutputSize, gitCmd, gitArgs...)
+	if err != nil {
+		return fmt.Errorf("git add failed: %w", err)
 	}
 
 	return nil
@@ -367,10 +360,9 @@ func handleDels(
 	gitArgs := append([]string{"restore"}, locales...)
 	l.DebugContext(ctx, "executing", "cmd", gitCmd, "args", gitArgs)
 
-	code, out, err := aghos.RunCommand(ctx, cmdCons, gitCmd, gitArgs...)
-
-	if err != nil || code != 0 {
-		return fmt.Errorf("git restore exited with code %d output %q: %w", code, out, err)
+	err = executil.RunWithPeek(ctx, cmdCons, aghos.MaxCmdOutputSize, gitCmd, gitArgs...)
+	if err != nil {
+		return fmt.Errorf("git restore failed: %w", err)
 	}
 
 	return nil

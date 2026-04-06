@@ -98,8 +98,8 @@ func collectErrResults(ctx context.Context, l *slog.Logger, lines []string, err 
 	// limit is a maximum length for upstream configuration lines.
 	const limit = 80
 
-	wrapper, ok := err.(errors.WrapperSlice)
-	if !ok {
+	wrapper, isWrapper := err.(errors.WrapperSlice)
+	if !isWrapper {
 		l.DebugContext(ctx, "unwrapping", slogutil.KeyError, err)
 
 		return nil
@@ -108,8 +108,8 @@ func collectErrResults(ctx context.Context, l *slog.Logger, lines []string, err 
 	errs := wrapper.Unwrap()
 	results = make([]*parseResult, 0, len(errs))
 	for i, e := range errs {
-		var parseErr *proxy.ParseError
-		if !errors.As(e, &parseErr) {
+		parseErr, ok := errors.AsType[*proxy.ParseError](e)
+		if !ok {
 			l.DebugContext(ctx, "inserting unexpected error", "index", i, slogutil.KeyError, err)
 
 			continue

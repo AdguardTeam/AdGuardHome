@@ -2,6 +2,7 @@ package dnsforward
 
 import (
 	"context"
+	"log/slog"
 	"net"
 	"time"
 
@@ -13,10 +14,15 @@ import (
 	"github.com/miekg/dns"
 )
 
-// Write Stats data and logs
-func (s *Server) processQueryLogsAndStats(ctx context.Context, dctx *dnsContext) (rc resultCode) {
-	s.logger.DebugContext(ctx, "started processing querylog and stats")
-	defer s.logger.DebugContext(ctx, "finished processing querylog and stats")
+// processQueryLogsAndStats writes stats data and logs.  l and dctx must not be
+// nil.
+func (s *Server) processQueryLogsAndStats(
+	ctx context.Context,
+	l *slog.Logger,
+	dctx *dnsContext,
+) (rc resultCode) {
+	l.DebugContext(ctx, "started processing querylog and stats")
+	defer l.DebugContext(ctx, "finished processing querylog and stats")
 
 	pctx := dctx.proxyCtx
 	q := pctx.Req.Question[0]
@@ -27,7 +33,7 @@ func (s *Server) processQueryLogsAndStats(ctx context.Context, dctx *dnsContext)
 	s.anonymizer.Load()(ip)
 	ipStr := net.IP(ip).String()
 
-	s.logger.DebugContext(ctx, "client ip for stats and querylog", "ip", ipStr)
+	l.DebugContext(ctx, "client ip for stats and querylog", "ip", ipStr)
 
 	ids := []string{ipStr}
 	if dctx.clientID != "" {
@@ -47,12 +53,10 @@ func (s *Server) processQueryLogsAndStats(ctx context.Context, dctx *dnsContext)
 	if s.shouldLog(host, qt, cl, ids) {
 		s.logQuery(dctx, ip, processingTime)
 	} else {
-		s.logger.DebugContext(
+		l.DebugContext(
 			ctx,
 			"not adding to querylog",
 			"dns_class", dns.Class(cl),
-			"dns_type", dns.Type(qt),
-			"host", host,
 			"ip", ipStr,
 		)
 	}
@@ -60,12 +64,10 @@ func (s *Server) processQueryLogsAndStats(ctx context.Context, dctx *dnsContext)
 	if s.shouldCountStat(host, qt, cl, ids) {
 		s.updateStats(dctx, ipStr, processingTime)
 	} else {
-		s.logger.DebugContext(
+		l.DebugContext(
 			ctx,
 			"not counting in stats",
 			"dns_class", dns.Class(cl),
-			"dns_type", dns.Type(qt),
-			"host", host,
 			"ip", ipStr,
 		)
 	}

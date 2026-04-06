@@ -6,9 +6,12 @@
     'name': 'AdGuard Home - Build and publish release'
 # Make sure to sync any changes with the branch overrides below.
 'variables':
+    # This variable is used to override Docker caching, for example to rerun a
+    # flaky test suite.
+    'cacheBuster': '0'
     'channel': 'edge'
     'dockerFrontend': 'adguard/home-js-builder:4.0'
-    'dockerGo': 'adguard/go-builder:1.25.7--1'
+    'dockerGo': 'adguard/go-builder:1.26.1--1'
 
 'stages':
   - 'Build frontend':
@@ -47,10 +50,6 @@
         'pattern': 'build/**'
         'shared': true
         'required': true
-    'docker':
-        'image': '${bamboo.dockerFrontend}'
-        'volumes':
-            '${system.NPM_DIR}': '${bamboo.cacheNpm}'
     'key': 'BF'
     'other':
         'clean-working-dir': true
@@ -60,16 +59,21 @@
       - 'script':
             'interpreter': 'SHELL'
             'scripts':
-              - |
-                #!/bin/sh
+                - |-
+                  #!/bin/sh
 
-                set -e -f -u -x
+                  set -e -f -u -x
 
-                make\
-                        VERBOSE=1\
-                        js-deps js-build
-    'requirements':
-      - 'golang': true
+                  docker info
+
+                  docker build \
+                      --build-arg "BASE_IMAGE=${bamboo.dockerFrontend}" \
+                      --build-arg "CACHE_BUSTER=${bamboo_cacheBuster}" \
+                      --output '.' \
+                      --progress 'plain' \
+                      --target 'builder-exporter' \
+                      -f ./docker/frontend.Dockerfile \
+                      .
 
 'Make release':
     'artifact-subscriptions':
@@ -80,11 +84,6 @@
         'pattern': 'dist/**'
         'shared': true
         'required': true
-    'docker':
-        'image': '${bamboo.dockerGo}'
-        'volumes':
-            '${system.GO_CACHE_DIR}': '${bamboo.cacheGo}'
-            '${system.GO_PKG_CACHE_DIR}': '${bamboo.cacheGoPkg}'
     'key': 'MR'
     'other':
         'clean-working-dir': true
@@ -107,32 +106,43 @@
                 # Explicitly checkout the revision that we need.
                 git checkout "${bamboo.repository.revision.number}"
 
-                # Run the build with the specified channel.
-                echo "${bamboo.gpgSecretKeyPart1}${bamboo.gpgSecretKeyPart2}"\
-                        | awk '{ gsub(/\\n/, "\n"); print; }'\
-                        | gpg --import --batch --yes
+                version="$(env CHANNEL=${bamboo_channel} sh ./scripts/make/version.sh)"
+                readonly version
 
-                make\
-                        CHANNEL=${bamboo.channel}\
-                        GPG_KEY_PASSPHRASE=${bamboo.gpgPassword}\
-                        DEPLOY_SCRIPT_PATH="./bamboo-deploy-publisher/deploy.sh"\
-                        SIGNER_API_KEY="${bamboo.adguardHomeWinSignerSecretApiKey}"\
-                        FRONTEND_PREBUILT=1\
-                        PARALLELISM=1\
-                        VERBOSE=2\
-                        build-release
-    'requirements':
-      - 'golang': true
+                docker info
+
+                docker build \
+                    --build-arg "BASE_IMAGE=${bamboo_dockerGo}" \
+                    --build-arg "BRANCH=${bamboo_planRepository_branchName}" \
+                    --build-arg "CACHE_BUSTER=${bamboo_cacheBuster}" \
+                    --build-arg "CHANNEL=${bamboo_channel}" \
+                    --build-arg "DEPLOY_SCRIPT_PATH=./bamboo-deploy-publisher/deploy.sh" \
+                    --build-arg "GPG_SECRET_KEY=${bamboo_gpgSecretKeyPart1}${bamboo_gpgSecretKeyPart2}" \
+                    --build-arg "GPG_KEY_PASSPHRASE=${bamboo_gpgPassword}" \
+                    --build-arg "REVISION=${bamboo_repository_revision_number}" \
+                    --build-arg "SIGN=1" \
+                    --build-arg "SIGNER_API_KEY=${bamboo_adguardHomeWinSignerSecretApiKey}" \
+                    --build-arg "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" \
+                    --build-arg "VERSION=$version" \
+                    --output '.' \
+                    --progress 'plain' \
+                    --target 'builder-exporter' \
+                    -f ./docker/ci.Dockerfile \
+                    .
 
 'Make and publish docker':
     'key': 'MPD'
     'other':
         'clean-working-dir': true
+    'final-tasks':
+      - 'clean'
     'tasks':
       - 'checkout':
             'force-clean-build': true
       - 'script':
             'interpreter': 'SHELL'
+            'environment':
+                DOCKER_CLI_EXPERIMENTAL=enabled
             'scripts':
               - |
                 #!/bin/sh
@@ -149,7 +159,8 @@
                 docker buildx inspect --bootstrap
 
                 # Login to DockerHub.
-                docker login -u="${bamboo.dockerHubUsername}" \
+                docker login \
+                    -u="${bamboo.dockerHubUsername}" \
                     -p="${bamboo.dockerHubPassword}"
 
                 # Boot the builder.
@@ -168,17 +179,13 @@
                     DOCKER_PUSH='1' \
                     VERBOSE='1' \
                     sh ./scripts/make/build-docker.sh
-            'environment':
-                DOCKER_CLI_EXPERIMENTAL=enabled
-    'final-tasks':
-      - 'clean'
-    'requirements':
-      - 'golang': true
 
 'Publish to static storage':
     'key': 'PUB'
     'other':
         'clean-working-dir': true
+    'final-tasks':
+      - 'clean'
     'tasks':
       - 'clean'
       - 'checkout':
@@ -199,15 +206,13 @@
                 export CHANNEL
 
                 ../bamboo-deploy-publisher/deploy.sh adguard-home-"$CHANNEL"
-    'final-tasks':
-      - 'clean'
-    'requirements':
-      - 'golang': true
 
 'Publish to GitHub Releases':
     'key': 'PTGR'
     'other':
         'clean-working-dir': true
+    'final-tasks':
+      - 'clean'
     'tasks':
       - 'clean'
       - 'checkout':
@@ -237,10 +242,6 @@
                 env\
                         GITHUB_TOKEN="${bamboo.githubPublicRepoPassword}"\
                         ../bamboo-deploy-publisher/deploy.sh adguard-home-github
-    'final-tasks':
-      - 'clean'
-    'requirements':
-      - 'golang': true
 
 'triggers':
     # Don't use minute values that end with a zero or a five as these are often
@@ -279,7 +280,7 @@
         'variables':
             'channel': 'beta'
             'dockerFrontend': 'adguard/home-js-builder:4.0'
-            'dockerGo': 'adguard/go-builder:1.25.7--1'
+            'dockerGo': 'adguard/go-builder:1.26.1--1'
     # release-vX.Y.Z branches are the branches from which the actual final
     # release is built.
   - '^release-v[0-9]+\.[0-9]+\.[0-9]+':
@@ -295,4 +296,4 @@
         'variables':
             'channel': 'release'
             'dockerFrontend': 'adguard/home-js-builder:4.0'
-            'dockerGo': 'adguard/go-builder:1.25.7--1'
+            'dockerGo': 'adguard/go-builder:1.26.1--1'

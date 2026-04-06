@@ -309,8 +309,8 @@ func CheckPort(network string, ipp netip.AddrPort) (err error) {
 
 // IsAddrInUse checks if err is about unsuccessful address binding.
 func IsAddrInUse(err error) (ok bool) {
-	var sysErr syscall.Errno
-	if !errors.As(err, &sysErr) {
+	sysErr, ok := errors.AsType[syscall.Errno](err)
+	if !ok {
 		return false
 	}
 

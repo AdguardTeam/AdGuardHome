@@ -289,7 +289,7 @@
   "encryption_key_input": "کپی/چسباندن کلید گواهینامه پی ای اِم کد گذاری شده در اینجا.",
   "encryption_key_invalid": "این یک کلید خصوصی {{type}} نامعتبر است",
   "encryption_key_source_content": "چسباندن محتوای کلید خصوصی",
-  "encryption_key_source_path": "تنظیم فایل کلید خصوصی",
+  "encryption_key_source_path": "تنظیم مسیر فایل کلید خصوصی",
   "encryption_key_valid": "این یک کلید خصوصی {{type}} معتبر است",
   "encryption_plain_dns_desc": "DNS ساده به طور پیش فرض فعال است. می توانید آن را غیرفعال کنید تا همه دستگاه ها مجبور شوند از DNS رمزگذاری شده استفاده کنند. برای انجام این کار، باید حداقل یک پروتکل DNS رمزگذاری شده را فعال کنید",
   "encryption_plain_dns_enable": "فعالسازی DNS ساده",

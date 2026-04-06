@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"path"
 	"strings"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
@@ -49,37 +48,30 @@ func clientIDFromClientServerName(
 	return strings.ToLower(clientID), nil
 }
 
-// clientIDFromDNSContextHTTPS extracts the ClientID from the path of the
-// client's DNS-over-HTTPS request.
+const (
+	// clientIDParamName is the name of the parameter used in the pattern of the
+	// client's DNS-over-HTTPS request.
+	clientIDParamName = "ClientID"
+
+	// clientIDParamTemplate is the template for the client ID parameter in the
+	// client's DNS-over-HTTPS request.
+	clientIDParamTemplate = "{" + clientIDParamName + "}"
+)
+
+// clientIDFromDNSContextHTTPS extracts the ClientID from the pattern of the
+// client's DNS-over-HTTPS request.  pctx must not be nil.
 func clientIDFromDNSContextHTTPS(pctx *proxy.DNSContext) (clientID string, err error) {
 	r := pctx.HTTPRequest
 	if r == nil {
-		return "", fmt.Errorf(
-			"proxy ctx http request of proto %s is nil",
-			pctx.Proto,
-		)
+		return "", fmt.Errorf("proxy ctx http request of proto %s is nil", pctx.Proto)
 	}
 
-	origPath := r.URL.Path
-	parts := strings.Split(path.Clean(origPath), "/")
-	if parts[0] == "" {
-		parts = parts[1:]
-	}
-
-	if len(parts) == 0 || parts[0] != "dns-query" {
-		return "", fmt.Errorf("clientid check: invalid path %q", origPath)
-	}
-
-	switch len(parts) {
-	case 1:
-		// Just /dns-query, no ClientID.
+	if !strings.Contains(r.Pattern, clientIDParamTemplate) {
+		// ClientID is not in the pattern.
 		return "", nil
-	case 2:
-		clientID = parts[1]
-	default:
-		return "", fmt.Errorf("clientid check: invalid path %q: extra parts", origPath)
 	}
 
+	clientID = r.PathValue(clientIDParamName)
 	err = client.ValidateClientID(clientID)
 	if err != nil {
 		return "", fmt.Errorf("clientid check: %w", err)

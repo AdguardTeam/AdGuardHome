@@ -8,7 +8,7 @@
 # This comment is used to simplify checking local copies of the script.  Bump
 # this number every time a significant change is made to this script.
 #
-# AdGuard-Project-Version: 6
+# AdGuard-Project-Version: 7
 
 # Deferred helpers
 
@@ -57,13 +57,24 @@ run_linter() (
 
 	readonly cmd
 
-	output="$("$cmd" "$@")"
+	output="$("$cmd" "$@" 2>&1)"
 	exitcode="$?"
 
 	readonly output
 
 	if [ "$output" != '' ]; then
-		echo "$output" | sed -e "s/^/${cmd}: /"
+		# Print the correct prefix for linter output.  For example, print the
+		# tool name for a "go tool" call, or "vet" for a "go vet" call.
+		prefix="$cmd"
+		if [ "$#" -ge '3' ] && [ "$1" = 'tool' ]; then
+			prefix="$2"
+		elif [ "$#" -ge '2' ] && [ "$1" = 'vet' ]; then
+			prefix="$1"
+		fi
+
+		readonly prefix
+
+		echo "$output" | sed -e "s/^/${prefix}: /"
 
 		if [ "$exitcode" -eq '0' ] && [ "$exit_on_output" -eq '1' ]; then
 			exitcode='1'

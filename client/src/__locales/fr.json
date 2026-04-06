@@ -289,7 +289,7 @@
   "encryption_key_input": "Copiez/coller votre clé privée PEM encodée pour votre certificat ici.",
   "encryption_key_invalid": "Ceci est une clé privée {{type}} invalide",
   "encryption_key_source_content": "Coller les contenus de la clef privée",
-  "encryption_key_source_path": "Définir un fichier pour la clef privée",
+  "encryption_key_source_path": "Définir le chemin d'accès au fichier de clé privée",
   "encryption_key_valid": "Ceci est une clé privée {{type}} valide",
   "encryption_plain_dns_desc": "Le DNS simple est activé par défaut. Vous pouvez le désactiver pour forcer tous les appareils à utiliser un DNS crypté. Pour faire ça, vous devez activer au moins un protocole DNS crypté",
   "encryption_plain_dns_enable": "Activer le DNS simple",

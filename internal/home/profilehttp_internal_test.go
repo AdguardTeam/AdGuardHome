@@ -59,8 +59,11 @@ func TestWeb_HandleGetProfile(t *testing.T) {
 		PasswordHash: string(passwordHash),
 	}
 
+	baseMux := http.NewServeMux()
+
 	auth, err := newAuth(testutil.ContextWithTimeout(t, testTimeout), &authConfig{
 		baseLogger:     testLogger,
+		mux:            baseMux,
 		rateLimiter:    emptyRateLimiter{},
 		trustedProxies: testTrustedProxies,
 		dbFilename:     sessionsDB,
@@ -71,8 +74,6 @@ func TestWeb_HandleGetProfile(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Cleanup(func() { auth.close(testutil.ContextWithTimeout(t, testTimeout)) })
-
-	baseMux := http.NewServeMux()
 
 	tlsMgr, err := newTLSManager(testutil.ContextWithTimeout(t, testTimeout), &tlsManagerConfig{
 		logger:       testLogger,

@@ -90,8 +90,7 @@ func (web *webAPI) requestVersionInfo(
 			return nil
 		}
 
-		var terr temporaryError
-		if errors.As(err, &terr) && terr.Temporary() {
+		if tmpErr, ok := errors.AsType[temporaryError](err); ok && tmpErr.Temporary() {
 			// Temporary network error.  This case may happen while we're
 			// restarting our DNS server.  Log and sleep for some time.
 			//

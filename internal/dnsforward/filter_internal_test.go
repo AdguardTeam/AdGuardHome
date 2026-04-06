@@ -154,7 +154,8 @@ func TestServer_filterDNSResponse(t *testing.T) {
 				},
 			}
 
-			fltErr := s.filterDNSResponse(testutil.ContextWithTimeout(t, testTimeout), dctx)
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			fltErr := s.filterDNSResponse(ctx, testLogger, dctx)
 			require.NoError(t, fltErr)
 
 			res := dctx.result

@@ -16,6 +16,9 @@ import (
 // macKey contains hardware address as byte array of 6, 8, or 20 bytes.
 //
 // TODO(e.burkov):  Move to aghnet or even to netutil.
+//
+// TODO(e.burkov):  Identify the client by the hardware address and the client
+// identifier from the DHCP messages.
 type macKey any
 
 // macToKey converts mac into macKey, which is used as the key for the lease
