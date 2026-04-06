@@ -81,7 +81,7 @@ func TestIfaceHasStaticIP(t *testing.T) {
 		}),
 		ifaceName:  "en0",
 		wantHas:    assert.False,
-		wantErrMsg: `command "networksetup" failed: running: can't get: `,
+		wantErrMsg: "running: can't get",
 	}, {
 		name: "port_bad_output",
 		cmdCons: agh.NewMultipleCommandConstructor(agh.ExternalCommand{
@@ -215,8 +215,9 @@ func TestIfaceSetStaticIP(t *testing.T) {
 			Out:  "",
 			Code: 0,
 		}),
-		fsys:       succFsys,
-		wantErrMsg: `command "networksetup" failed: running: can't set: `,
+		fsys: succFsys,
+		wantErrMsg: `networksetup failed to set dns servers: running: can't set; ` +
+			`stderr peek: ""; stdout peek: ""`,
 	}, {
 		name: "set_manual_error",
 		cmdCons: agh.NewMultipleCommandConstructor(agh.ExternalCommand{
@@ -240,8 +241,9 @@ func TestIfaceSetStaticIP(t *testing.T) {
 			Out:  "",
 			Code: 0,
 		}),
-		fsys:       succFsys,
-		wantErrMsg: `command "networksetup" failed: running: can't set: `,
+		fsys: succFsys,
+		wantErrMsg: `networksetup failed to configure dns servers: running: can't set; ` +
+			`stderr peek: ""; stdout peek: ""`,
 	}}
 
 	for _, tc := range testCases {

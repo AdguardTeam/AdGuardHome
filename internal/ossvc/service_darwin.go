@@ -18,13 +18,14 @@ import (
 	"github.com/kardianos/service"
 )
 
-// chooseSystem replaces the currently selected system with a wrapper.  l must
-// not be nil.
-func chooseSystem(_ context.Context, l *slog.Logger) {
+// chooseSystem replaces the currently selected system with a wrapper.  l and
+// cmdCons must not be nil.
+func chooseSystem(_ context.Context, l *slog.Logger, cmdCons executil.CommandConstructor) {
 	sys := service.ChosenSystem()
 	service.ChooseSystem(&darwinSystem{
-		System: sys,
-		logger: l,
+		System:  sys,
+		cmdCons: cmdCons,
+		logger:  l,
 	})
 }
 
@@ -32,7 +33,8 @@ func chooseSystem(_ context.Context, l *slog.Logger) {
 // implementation of the [service.Service] interface.
 type darwinSystem struct {
 	service.System
-	logger *slog.Logger
+	cmdCons executil.CommandConstructor
+	logger  *slog.Logger
 }
 
 // type check
@@ -51,7 +53,7 @@ func (d *darwinSystem) New(i service.Interface, c *service.Config) (s service.Se
 	return newDarwinService(&darwinServiceConfig{
 		svc:      s,
 		logger:   d.logger,
-		cmdCons:  executil.SystemCommandConstructor{},
+		cmdCons:  d.cmdCons,
 		name:     c.Name,
 		plistDir: "/Library/LaunchDaemons",
 	}), nil

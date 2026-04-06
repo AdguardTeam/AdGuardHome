@@ -3,6 +3,7 @@
 package ossvc
 
 import (
+	"bytes"
 	"cmp"
 	"context"
 	"fmt"
@@ -16,6 +17,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/ioutil"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/osutil/executil"
 	"github.com/kardianos/service"
@@ -34,33 +36,37 @@ import (
 const sysVersion = "openbsd-runcom"
 
 // chooseSystem checks the current system detected and substitutes it with local
-// implementation if needed.
-func chooseSystem(_ context.Context, _ *slog.Logger) {
-	service.ChooseSystem(openbsdSystem{})
+// implementation if needed.  cmdCons must not be nil.
+func chooseSystem(_ context.Context, _ *slog.Logger, cmdCons executil.CommandConstructor) {
+	service.ChooseSystem(&openbsdSystem{
+		cmdCons: cmdCons,
+	})
 }
 
 // openbsdSystem is the service.System to be used on the OpenBSD.
-type openbsdSystem struct{}
+type openbsdSystem struct {
+	cmdCons executil.CommandConstructor
+}
 
 // String implements service.System interface for openbsdSystem.
-func (openbsdSystem) String() string {
+func (sys *openbsdSystem) String() string {
 	return sysVersion
 }
 
 // Detect implements service.System interface for openbsdSystem.
-func (openbsdSystem) Detect() (ok bool) {
+func (sys *openbsdSystem) Detect() (ok bool) {
 	return true
 }
 
 // Interactive implements service.System interface for openbsdSystem.
-func (openbsdSystem) Interactive() (ok bool) {
+func (sys *openbsdSystem) Interactive() (ok bool) {
 	return os.Getppid() != 1
 }
 
 // New implements service.System interface for openbsdSystem.
-func (openbsdSystem) New(i service.Interface, c *service.Config) (s service.Service, err error) {
+func (sys *openbsdSystem) New(i service.Interface, c *service.Config) (s service.Service, err error) {
 	return &openbsdRunComService{
-		cmdCons: executil.SystemCommandConstructor{},
+		cmdCons: sys.cmdCons,
 		i:       i,
 		cfg:     c,
 	}, nil
@@ -216,16 +222,14 @@ func (s *openbsdRunComService) configureSysStartup(enable bool) (err error) {
 	}
 
 	// TODO(s.chzhen):  Pass context.
-	ctx := context.TODO()
-	var code int
-	code, _, err = aghos.RunCommand(ctx, s.cmdCons, "rcctl", cmd, s.cfg.Name)
-	if err != nil {
-		return err
-	} else if code != 0 {
-		return fmt.Errorf("rcctl finished with code %d", code)
-	}
-
-	return nil
+	return executil.RunWithPeek(
+		context.TODO(),
+		s.cmdCons,
+		aghos.MaxCmdOutputSize,
+		"rcctl",
+		cmd,
+		s.cfg.Name,
+	)
 }
 
 // writeScript tries to write the script for the service.
@@ -319,19 +323,25 @@ func (s *openbsdRunComService) runCom(cmd string) (out string, err error) {
 		return "", err
 	}
 
-	// TODO(s.chzhen):  Pass context.
-	ctx := context.TODO()
+	stdoutBuf := bytes.Buffer{}
+	stderrBuf := bytes.Buffer{}
 
-	// TODO(e.burkov):  It's possible that os.ErrNotExist is caused by
-	// something different than the service script's non-existence.  Keep it
-	// in mind, when replace the aghos.RunCommand.
-	var outData []byte
-	_, outData, err = aghos.RunCommand(ctx, s.cmdCons, scriptPath, cmd)
-	if errors.Is(err, os.ErrNotExist) {
+	// TODO(s.chzhen):  Pass context.
+	err = executil.Run(context.TODO(), s.cmdCons, &executil.CommandConfig{
+		Stderr: &stderrBuf,
+		Stdout: ioutil.NewTruncatedWriter(&stdoutBuf, aghos.MaxCmdOutputSize),
+		Path:   scriptPath,
+		Args:   []string{cmd},
+	})
+
+	switch {
+	case errors.Is(err, os.ErrNotExist):
 		return "", service.ErrNotInstalled
+	case err != nil:
+		return stderrBuf.String(), err
 	}
 
-	return string(outData), err
+	return stdoutBuf.String(), nil
 }
 
 // Status implements service.Service interface for *openbsdRunComService.
