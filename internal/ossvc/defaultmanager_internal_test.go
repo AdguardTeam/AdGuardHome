@@ -38,11 +38,11 @@ func TestManager_Status(t *testing.T) {
 		wantErrMessage: "",
 	}, {
 		onStatus: func() (s service.Status, err error) {
-			return service.StatusRunning, errors.Error("test")
+			return service.StatusRunning, assert.AnError
 		},
 		name:           "error",
 		wantStatus:     "",
-		wantErrMessage: "getting service status: test",
+		wantErrMessage: "getting service status: " + assert.AnError.Error(),
 	}, {
 		onStatus: func() (s service.Status, err error) {
 			return service.StatusRunning, nil
@@ -92,7 +92,7 @@ func TestManager_Status(t *testing.T) {
 func TestManager_Status_unixSystemV(t *testing.T) {
 	svc := newTestSvc(t)
 	svc.OnStatus = func() (s service.Status, err error) {
-		return service.StatusUnknown, errors.Error("test")
+		return service.StatusUnknown, assert.AnError
 	}
 
 	m := &manager{
@@ -111,7 +111,7 @@ func TestManager_Status_unixSystemV(t *testing.T) {
 		name:       "running",
 		wantStatus: StatusRunning,
 	}, {
-		cmdCons:    newTestCmdConstructor(t, "", errors.Error("test")),
+		cmdCons:    newTestCmdConstructor(t, "", assert.AnError),
 		name:       "stopped",
 		wantStatus: StatusStopped,
 	}}
@@ -125,6 +125,298 @@ func TestManager_Status_unixSystemV(t *testing.T) {
 			status, err := m.Status(ctx, testServiceName)
 			assert.NoError(t, err)
 			assert.Equal(t, tc.wantStatus, status)
+		})
+	}
+}
+
+func TestManager_Install(t *testing.T) {
+	svc := newTestSvc(t)
+
+	m := &manager{
+		logger:        testLogger,
+		cmdCons:       executil.EmptyCommandConstructor{},
+		isOpenWrt:     false,
+		isUnixSystemV: false,
+	}
+
+	testCases := []struct {
+		installErr error
+		name       string
+		wantErrMsg string
+	}{{
+		installErr: nil,
+		name:       "success",
+		wantErrMsg: "",
+	}, {
+		installErr: assert.AnError,
+		name:       "error",
+		wantErrMsg: "installing service: " + assert.AnError.Error(),
+	}}
+
+	action := &ActionInstall{ServiceName: testServiceName}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			svc.OnInstall = func() (err error) {
+				return tc.installErr
+			}
+
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			err := m.Perform(ctx, action)
+			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
+		})
+	}
+}
+
+func TestManager_Install_unixSystemV(t *testing.T) {
+	svc := newTestSvc(t)
+	svc.OnInstall = func() (err error) {
+		return nil
+	}
+
+	m := &manager{
+		logger:        testLogger,
+		cmdCons:       executil.EmptyCommandConstructor{},
+		isOpenWrt:     aghos.IsOpenWrt(),
+		isUnixSystemV: true,
+	}
+
+	testCases := []struct {
+		cmdCons    executil.CommandConstructor
+		name       string
+		wantErrMsg string
+	}{{
+		cmdCons:    newTestCmdConstructor(t, "", nil),
+		name:       "success",
+		wantErrMsg: "",
+	}, {
+		cmdCons:    newTestCmdConstructor(t, "", assert.AnError),
+		name:       "error",
+		wantErrMsg: "",
+	}}
+
+	action := &ActionInstall{ServiceName: testServiceName}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			m.cmdCons = tc.cmdCons
+
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			err := m.Perform(ctx, action)
+			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
+		})
+	}
+}
+
+func TestManager_Restart(t *testing.T) {
+	svc := newTestSvc(t)
+
+	m := &manager{
+		logger:        testLogger,
+		cmdCons:       executil.EmptyCommandConstructor{},
+		isOpenWrt:     false,
+		isUnixSystemV: false,
+	}
+
+	testCases := []struct {
+		cmdCons       executil.CommandConstructor
+		restartErr    error
+		name          string
+		wantErrMsg    string
+		isUnixSystemV bool
+	}{{
+		cmdCons:       executil.EmptyCommandConstructor{},
+		restartErr:    nil,
+		name:          "success",
+		wantErrMsg:    "",
+		isUnixSystemV: false,
+	}, {
+		cmdCons:       executil.EmptyCommandConstructor{},
+		restartErr:    assert.AnError,
+		name:          "error",
+		wantErrMsg:    assert.AnError.Error(),
+		isUnixSystemV: false,
+	}, {
+		cmdCons:       newTestCmdConstructor(t, "", nil),
+		restartErr:    assert.AnError,
+		name:          "unix_systemv_restart",
+		wantErrMsg:    assert.AnError.Error(),
+		isUnixSystemV: true,
+	}, {
+		cmdCons:    newTestCmdConstructor(t, "", errors.Error("initd_test")),
+		restartErr: assert.AnError,
+		name:       "unix_systemv_restart_error",
+		wantErrMsg: assert.AnError.Error() + ` (restarting via init.d: starting: initd_test;` +
+			` stderr peek: ""; stdout peek: "")`,
+		isUnixSystemV: true,
+	}}
+
+	action := &ActionRestart{ServiceName: testServiceName}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			m.cmdCons = tc.cmdCons
+			m.isUnixSystemV = tc.isUnixSystemV
+
+			svc.OnRestart = func() (err error) {
+				return tc.restartErr
+			}
+
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			err := m.Perform(ctx, action)
+			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
+		})
+	}
+}
+
+func TestManager_Stop(t *testing.T) {
+	svc := newTestSvc(t)
+
+	m := &manager{
+		logger:        testLogger,
+		cmdCons:       executil.EmptyCommandConstructor{},
+		isOpenWrt:     false,
+		isUnixSystemV: false,
+	}
+
+	testCases := []struct {
+		cmdCons       executil.CommandConstructor
+		stopErr       error
+		name          string
+		wantErrMsg    string
+		isUnixSystemV bool
+	}{{
+		cmdCons:       executil.EmptyCommandConstructor{},
+		stopErr:       nil,
+		name:          "success",
+		wantErrMsg:    "",
+		isUnixSystemV: false,
+	}, {
+		cmdCons:       executil.EmptyCommandConstructor{},
+		stopErr:       assert.AnError,
+		name:          "error",
+		wantErrMsg:    assert.AnError.Error(),
+		isUnixSystemV: false,
+	}, {
+		cmdCons:       newTestCmdConstructor(t, "", nil),
+		stopErr:       assert.AnError,
+		name:          "unix_systemv_stop",
+		wantErrMsg:    assert.AnError.Error(),
+		isUnixSystemV: true,
+	}, {
+		cmdCons: newTestCmdConstructor(t, "", errors.Error("initd_test")),
+		stopErr: assert.AnError,
+		name:    "unix_systemv_stop_error",
+		wantErrMsg: assert.AnError.Error() + ` (stopping via init.d: starting: initd_test;` +
+			` stderr peek: ""; stdout peek: "")`,
+		isUnixSystemV: true,
+	}}
+
+	action := &ActionStop{ServiceName: testServiceName}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			m.cmdCons = tc.cmdCons
+			m.isUnixSystemV = tc.isUnixSystemV
+
+			svc.OnStop = func() (err error) {
+				return tc.stopErr
+			}
+
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			err := m.Perform(ctx, action)
+			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
+		})
+	}
+}
+
+func TestManager_Uninstall(t *testing.T) {
+	svc := newTestSvc(t)
+
+	m := &manager{
+		logger:        testLogger,
+		cmdCons:       executil.EmptyCommandConstructor{},
+		isOpenWrt:     false,
+		isUnixSystemV: false,
+	}
+
+	testCases := []struct {
+		stopErr      error
+		uninstallErr error
+		name         string
+		wantErrMsg   string
+	}{{
+		stopErr:      nil,
+		uninstallErr: nil,
+		name:         "success",
+		wantErrMsg:   "",
+	}, {
+		stopErr:      errors.Error("stop_test"),
+		uninstallErr: assert.AnError,
+		name:         "error_stop",
+		wantErrMsg:   "uninstalling service: " + assert.AnError.Error(),
+	}, {
+		stopErr:      nil,
+		uninstallErr: assert.AnError,
+		name:         "error_uninstall",
+		wantErrMsg:   "uninstalling service: " + assert.AnError.Error(),
+	}}
+
+	action := &ActionUninstall{ServiceName: testServiceName}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			svc.OnStop = func() (err error) {
+				return tc.stopErr
+			}
+			svc.OnUninstall = func() (err error) {
+				return tc.uninstallErr
+			}
+
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			err := m.Perform(ctx, action)
+			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
+		})
+	}
+}
+
+func TestManager_Uninstall_openWrt(t *testing.T) {
+	svc := newTestSvc(t)
+	svc.OnStop = func() (err error) { return nil }
+	svc.OnUninstall = func() (err error) { return nil }
+
+	m := &manager{
+		logger:        testLogger,
+		cmdCons:       executil.EmptyCommandConstructor{},
+		isOpenWrt:     true,
+		isUnixSystemV: false,
+	}
+
+	testCases := []struct {
+		cmdCons    executil.CommandConstructor
+		name       string
+		wantErrMsg string
+	}{{
+		cmdCons:    newTestCmdConstructor(t, "", nil),
+		name:       "success",
+		wantErrMsg: "",
+	}, {
+		cmdCons: newTestCmdConstructor(t, "", assert.AnError),
+		name:    "error_disable",
+		wantErrMsg: "disabling service on openwrt: starting: " +
+			assert.AnError.Error() +
+			`; stderr peek: ""; stdout peek: ""`,
+	}}
+
+	action := &ActionUninstall{ServiceName: testServiceName}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			m.cmdCons = tc.cmdCons
+
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			err := m.Perform(ctx, action)
+			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
 		})
 	}
 }
