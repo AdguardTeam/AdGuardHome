@@ -358,7 +358,7 @@ type tlsConfigSettings struct {
 
 	// StrictSNICheck controls if the connections with SNI mismatching the
 	// certificate's ones should be rejected.
-	StrictSNICheck bool `yaml:"strict_sni_check" json:"-"`
+	StrictSNICheck bool `yaml:"strict_sni_check" json:"strict_sni_check"`
 }
 
 // clone returns a deep copy of c.
