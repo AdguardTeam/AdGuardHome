@@ -590,6 +590,8 @@ func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) 
 		req.PrivateKey = m.conf.PrivateKey
 	}
 
+	req.StrictSNICheck = m.conf.StrictSNICheck
+
 	if err = m.validateTLSSettings(req); err != nil {
 		aghhttp.ErrorAndLog(ctx, m.logger, r, w, http.StatusBadRequest, "%s", err)
 
@@ -1053,9 +1055,9 @@ func parsePrivateKey(der []byte) (key crypto.PrivateKey, typ string, err error) 
 }
 
 // unmarshalTLS handles base64-encoded certificates transparently
-func unmarshalTLS(r *http.Request) (tlsConfigSettingsExt, error) {
-	data := tlsConfigSettingsExt{}
-	err := json.NewDecoder(r.Body).Decode(&data)
+func unmarshalTLS(r *http.Request) (data tlsConfigSettingsExt, err error) {
+	data = tlsConfigSettingsExt{}
+	err = json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {
 		return data, fmt.Errorf("failed to parse new TLS config json: %w", err)
 	}
