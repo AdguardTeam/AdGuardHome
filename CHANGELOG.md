@@ -9,11 +9,11 @@ The format is based on [*Keep a Changelog*](https://keepachangelog.com/en/1.0.0/
 <!--
 ## [v0.108.0] – TBA
 
-## [v0.107.74] - 2026-03-24 (APPROX.)
+## [v0.107.75] - 2026-04-23 (APPROX.)
 
-See also the [v0.107.74 GitHub milestone][ms-v0.107.74].
+See also the [v0.107.75 GitHub milestone][ms-v0.107.75].
 
-[ms-v0.107.74]: https://github.com/AdguardTeam/AdGuardHome/milestone/109?closed=1
+[ms-v0.107.75]: https://github.com/AdguardTeam/AdGuardHome/milestone/110?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
