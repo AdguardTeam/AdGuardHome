@@ -187,56 +187,28 @@ func TestDHCPServer_ServeEther4_discoverExpired(t *testing.T) {
 func TestDHCPServer_ServeEther4_release(t *testing.T) {
 	t.Parallel()
 
-	var (
-		leaseSuccess = &dhcpsvc.Lease{
-			Expiry:   testExpiryDynamicLease,
-			IP:       testIPDynamic,
-			Hostname: "dynamic",
-			HWAddr:   testHWDynamic,
-			IsStatic: false,
-		}
-
-		ipAnother     = testIPDynamic.Next()
-		leaseMismatch = &dhcpsvc.Lease{
-			Expiry:   testExpiryDynamicLease,
-			IP:       ipAnother,
-			Hostname: "mismatch",
-			HWAddr:   testHWAnother,
-			IsStatic: false,
-		}
-	)
+	ipMismatch := testIPDynamic.Next().Next()
 
 	testCases := []struct {
-		name       string
 		req        gopacket.Packet
-		wantLeases []*dhcpsvc.Lease
+		name       string
+		wantChange bool
 	}{{
-		name: "success",
-		req:  newDHCPRELEASE(t, testHWDynamic, testIPDynamic, testIfaceHWAddr, testIfaceAddr),
-		wantLeases: []*dhcpsvc.Lease{
-			leaseMismatch,
-		},
+		req:        newDHCPRELEASE(t, testHWDynamic, testIPDynamic),
+		name:       "success",
+		wantChange: true,
 	}, {
-		name: "not_found",
-		req:  newDHCPRELEASE(t, testHWUnknown, testIPDynamic, testIfaceHWAddr, testIfaceAddr),
-		wantLeases: []*dhcpsvc.Lease{
-			leaseSuccess,
-			leaseMismatch,
-		},
+		req:        newDHCPRELEASE(t, testHWUnknown, testIPDynamic),
+		name:       "not_found",
+		wantChange: false,
 	}, {
-		name: "mismatch_ip",
-		req:  newDHCPRELEASE(t, testHWAnother, ipAnother.Next(), testIfaceHWAddr, testIfaceAddr),
-		wantLeases: []*dhcpsvc.Lease{
-			leaseSuccess,
-			leaseMismatch,
-		},
+		req:        newDHCPRELEASE(t, testHWAnother, ipMismatch),
+		name:       "mismatch_ip",
+		wantChange: false,
 	}, {
-		name: "bad_subnet",
-		req:  newDHCPRELEASE(t, testHWDynamic, testIPOtherSubnet, testIfaceHWAddr, testIfaceAddr),
-		wantLeases: []*dhcpsvc.Lease{
-			leaseSuccess,
-			leaseMismatch,
-		},
+		req:        newDHCPRELEASE(t, testHWDynamic, testIPOtherSubnet),
+		name:       "bad_subnet",
+		wantChange: false,
 	}}
 
 	for _, tc := range testCases {
@@ -254,13 +226,22 @@ func TestDHCPServer_ServeEther4_release(t *testing.T) {
 			})
 			servicetest.RequireRun(t, srv, testTimeout)
 
+			leases := srv.Leases()
+			slices.SortStableFunc(leases, dhcpsvc.CompareLeases)
+			cond := func() (ok bool) {
+				got := srv.Leases()
+				slices.SortStableFunc(got, dhcpsvc.CompareLeases)
+
+				return !assert.ObjectsAreEqual(leases, got)
+			}
+
 			testutil.RequireSend(t, inCh, tc.req, testTimeout)
 
-			// TODO(e.burkov):  Improve the test to ensure that the DHCPDISCOVER
-			// actually receives the released address.
-			assert.EventuallyWithT(t, func(ct *assert.CollectT) {
-				assert.Equal(ct, tc.wantLeases, srv.Leases())
-			}, testTimeout/2, testTimeout/20)
+			if tc.wantChange {
+				assert.Eventually(t, cond, testTimeout/2, testTimeout/20)
+			} else {
+				assert.Never(t, cond, testTimeout/2, testTimeout/20)
+			}
 		})
 	}
 }
@@ -753,17 +734,15 @@ func newDHCPRELEASE(
 	tb testing.TB,
 	clientHWAddr net.HardwareAddr,
 	clientIP netip.Addr,
-	serverHWAddr net.HardwareAddr,
-	serverIP netip.Addr,
 ) (pkt gopacket.Packet) {
 	tb.Helper()
 
-	eth := newEthernet4Layer(tb, clientHWAddr, serverHWAddr)
+	eth := newEthernet4Layer(tb, clientHWAddr, testIfaceHWAddr)
 
 	ip, udp := newIPv4UDPLayer(
 		tb,
 		netip.AddrPortFrom(clientIP, uint16(dhcpsvc.ClientPortV4)),
-		netip.AddrPortFrom(serverIP, uint16(dhcpsvc.ServerPortV4)),
+		netip.AddrPortFrom(testIfaceAddr, uint16(dhcpsvc.ServerPortV4)),
 	)
 
 	dhcp := &layers.DHCPv4{

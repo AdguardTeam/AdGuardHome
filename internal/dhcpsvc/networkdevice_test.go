@@ -132,7 +132,7 @@ func newTestNetworkDevice(
 
 	onReadPacketData := func() (data []byte, ci gopacket.CaptureInfo, err error) {
 		pkt, ok := testutil.RequireReceive(pt, in, testTimeout)
-		require.Equalf(pt, isOpened.Load(), ok, "RECEIVED UNEXPECTED PACKET: %v", pkt)
+		require.Equalf(pt, isOpened.Load(), ok, "unexpected receive: %v", pkt)
 
 		if !ok {
 			return nil, gopacket.CaptureInfo{}, io.EOF

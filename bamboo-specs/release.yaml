@@ -11,7 +11,7 @@
     'cacheBuster': '0'
     'channel': 'edge'
     'dockerFrontend': 'adguard/home-js-builder:4.0'
-    'dockerGo': 'adguard/go-builder:1.26.1--1'
+    'dockerGo': 'adguard/go-builder:1.26.2--1'
 
 'stages':
   - 'Build frontend':
@@ -280,7 +280,7 @@
         'variables':
             'channel': 'beta'
             'dockerFrontend': 'adguard/home-js-builder:4.0'
-            'dockerGo': 'adguard/go-builder:1.26.1--1'
+            'dockerGo': 'adguard/go-builder:1.26.2--1'
     # release-vX.Y.Z branches are the branches from which the actual final
     # release is built.
   - '^release-v[0-9]+\.[0-9]+\.[0-9]+':
@@ -296,4 +296,4 @@
         'variables':
             'channel': 'release'
             'dockerFrontend': 'adguard/home-js-builder:4.0'
-            'dockerGo': 'adguard/go-builder:1.26.1--1'
+            'dockerGo': 'adguard/go-builder:1.26.2--1'
