@@ -649,8 +649,8 @@ func TestSafeSearch(t *testing.T) {
 	}
 	s := createTestServer(t, filterConf, forwardConf)
 
+	pt := testutil.NewPanicT(t)
 	ups := aghtest.NewUpstreamMock(func(req *dns.Msg) (resp *dns.Msg, err error) {
-		pt := testutil.PanicT{}
 		assert.Equal(pt, googleSafeSearch, req.Question[0].Name)
 
 		return aghtest.MatchedResponse(req, dns.TypeA, googleSafeSearch, "1.2.3.4"), nil
@@ -1681,9 +1681,9 @@ func TestServer_Exchange(t *testing.T) {
 		onesIP  = netip.MustParseAddr("1.1.1.1")
 		twosIP  = netip.MustParseAddr("2.2.2.2")
 		localIP = netip.MustParseAddr("192.168.1.1")
-
-		pt = testutil.PanicT{}
 	)
+
+	pt := testutil.NewPanicT(t)
 
 	onesRevExtIPv4, err := netutil.IPToReversedAddr(onesIP.AsSlice())
 	require.NoError(t, err)

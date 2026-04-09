@@ -289,7 +289,7 @@
   "encryption_key_input": "Kopieren Sie Ihren PEM-codierten privaten Schlüssel für Ihr Zertifikat und fügen Sie ihn hier ein.",
   "encryption_key_invalid": "Das ist ein ungültiger {{type}} privater Schlüssel",
   "encryption_key_source_content": "Inhalt des privaten Schlüssels einfügen",
-  "encryption_key_source_path": "Private Schlüsseldatei festlegen",
+  "encryption_key_source_path": "Pfad für private Schlüsseldatei festlegen",
   "encryption_key_valid": "Das ist ein gültiger {{type}} privater Schlüssel",
   "encryption_plain_dns_desc": "Einfaches DNS ist standardmäßig aktiviert. Sie können es deaktivieren, um alle Geräte zu zwingen, verschlüsseltes DNS zu verwenden. Dazu müssen Sie mindestens ein verschlüsseltes DNS-Protokoll aktivieren",
   "encryption_plain_dns_enable": "Einfaches DNS aktivieren",

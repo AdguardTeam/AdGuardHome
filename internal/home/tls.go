@@ -290,6 +290,7 @@ func (m *tlsManager) reconfigureDNSServer(ctx context.Context) (err error) {
 		&config.DNS,
 		config.Clients.Sources,
 		m.conf,
+		config.HTTPConfig.DoH,
 		m,
 		m.httpReg,
 		globalContext.clients.storage,
@@ -326,13 +327,13 @@ func (m *tlsManager) loadTLSConfig(
 		}
 	}()
 
-	err = loadCertificateChainData(tlsConf, status)
+	err = loadCertificateChainData(tlsConf)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
 		return err
 	}
 
-	err = loadPrivateKeyData(tlsConf, status)
+	err = loadPrivateKeyData(tlsConf)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
 		return err
@@ -350,8 +351,10 @@ func (m *tlsManager) loadTLSConfig(
 }
 
 // loadCertificateChainData loads PEM-encoded certificates chain data to the
-// TLS configuration.
-func loadCertificateChainData(tlsConf *tlsConfigSettings, status *tlsConfigStatus) (err error) {
+// TLS configuration. tlsConf must be not nil. tlsConf.CertificateChainData
+// struct field will be modified in case tlsConfig.CertificatePath is not an
+// empty string.
+func loadCertificateChainData(tlsConf *tlsConfigSettings) (err error) {
 	tlsConf.CertificateChainData = []byte(tlsConf.CertificateChain)
 	if tlsConf.CertificatePath != "" {
 		if tlsConf.CertificateChain != "" {
@@ -362,18 +365,15 @@ func loadCertificateChainData(tlsConf *tlsConfigSettings, status *tlsConfigStatu
 		if err != nil {
 			return fmt.Errorf("reading cert file: %w", err)
 		}
-
-		// Set status.ValidCert to true to signal the frontend that the
-		// certificate opens successfully while the private key can't be opened.
-		status.ValidCert = true
 	}
 
 	return nil
 }
 
 // loadPrivateKeyData loads PEM-encoded private key data to the TLS
-// configuration.
-func loadPrivateKeyData(tlsConf *tlsConfigSettings, status *tlsConfigStatus) (err error) {
+// configuration. tlsConf must be not nil. tlsConf.PrivateKeyData struct field
+// will be modified in case tlsConfig.PrivateKeyPath is not an empty string.
+func loadPrivateKeyData(tlsConf *tlsConfigSettings) (err error) {
 	tlsConf.PrivateKeyData = []byte(tlsConf.PrivateKey)
 	if tlsConf.PrivateKeyPath != "" {
 		if tlsConf.PrivateKey != "" {
@@ -384,8 +384,6 @@ func loadPrivateKeyData(tlsConf *tlsConfigSettings, status *tlsConfigStatus) (er
 		if err != nil {
 			return fmt.Errorf("reading key file: %w", err)
 		}
-
-		status.ValidKey = true
 	}
 
 	return nil
@@ -591,6 +589,8 @@ func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) 
 	if req.PrivateKeySaved {
 		req.PrivateKey = m.conf.PrivateKey
 	}
+
+	req.StrictSNICheck = m.conf.StrictSNICheck
 
 	if err = m.validateTLSSettings(req); err != nil {
 		aghhttp.ErrorAndLog(ctx, m.logger, r, w, http.StatusBadRequest, "%s", err)
@@ -954,6 +954,8 @@ func (m *tlsManager) validateCertificates(
 			return keyErr
 		}
 
+		// Set status.ValidKey to true to signal the frontend that the
+		// key is valid.
 		status.ValidKey = true
 	}
 
@@ -982,6 +984,9 @@ func (m *tlsManager) validateCertificate(
 	// parseErr is a non-critical parse warning.
 	var parseErr error
 	var certs []*x509.Certificate
+
+	// Set status.ValidCert to true to signal the frontend that the
+	// certificate opens successfully and certificate chain is valid.
 	certs, status.ValidCert, parseErr = m.parseCertChain(ctx, certChain)
 	if !status.ValidCert {
 		// Don't wrap the error, since it's informative enough as is.
@@ -1050,9 +1055,9 @@ func parsePrivateKey(der []byte) (key crypto.PrivateKey, typ string, err error) 
 }
 
 // unmarshalTLS handles base64-encoded certificates transparently
-func unmarshalTLS(r *http.Request) (tlsConfigSettingsExt, error) {
-	data := tlsConfigSettingsExt{}
-	err := json.NewDecoder(r.Body).Decode(&data)
+func unmarshalTLS(r *http.Request) (data tlsConfigSettingsExt, err error) {
+	data = tlsConfigSettingsExt{}
+	err = json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {
 		return data, fmt.Errorf("failed to parse new TLS config json: %w", err)
 	}

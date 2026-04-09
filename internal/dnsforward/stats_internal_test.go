@@ -231,7 +231,8 @@ func TestServer_ProcessQueryLogsAndStats(t *testing.T) {
 				clientID: tc.clientID,
 			}
 
-			code := srv.processQueryLogsAndStats(testutil.ContextWithTimeout(t, testTimeout), dctx)
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			code := srv.processQueryLogsAndStats(ctx, testLogger, dctx)
 			assert.Equal(t, tc.wantCode, code)
 			assert.Equal(t, tc.wantLogProto, ql.lastParams.ClientProto)
 			assert.Equal(t, tc.wantStatClient, st.lastEntry.Client)

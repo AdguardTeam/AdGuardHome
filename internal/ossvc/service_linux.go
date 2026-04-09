@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"strings"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
@@ -16,8 +17,8 @@ import (
 )
 
 // chooseSystem checks the current system detected and substitutes it with local
-// implementation if needed.
-func chooseSystem() {
+// implementation if needed.  l and cmdCons must not be nil.
+func chooseSystem(ctx context.Context, l *slog.Logger, cmdCons executil.CommandConstructor) {
 	sys := service.ChosenSystem()
 	switch sys.String() {
 	case "unix-systemv":
@@ -28,13 +29,19 @@ func chooseSystem() {
 		// See https://github.com/AdguardTeam/AdGuardHome/issues/4480 and
 		// https://github.com/AdguardTeam/AdGuardHome/issues/4677.
 		if !aghos.IsOpenWrt() {
-			service.ChooseSystem(&sysvSystem{System: sys})
+			service.ChooseSystem(&sysvSystem{System: sys, cmdCons: cmdCons})
+			l.DebugContext(ctx, "using custom SysV system")
+
+			return
 		}
 	case "linux-systemd":
-		service.ChooseSystem(&systemdSystem{System: sys})
-	default:
-		// Do nothing.
+		service.ChooseSystem(&systemdSystem{System: sys, cmdCons: cmdCons})
+		l.DebugContext(ctx, "using custom systemd system")
+
+		return
 	}
+
+	l.DebugContext(ctx, "using default system", "system_description", sys.String())
 }
 
 // sysvSystem is a wrapper for a [service.System] that returns the custom
@@ -44,6 +51,9 @@ func chooseSystem() {
 type sysvSystem struct {
 	// System must have an unexported type *service.linuxSystemService.
 	service.System
+
+	// cmdCons is used to run external commands.  It must not be nil.
+	cmdCons executil.CommandConstructor
 }
 
 // type check
@@ -60,7 +70,7 @@ func (sys *sysvSystem) New(i service.Interface, c *service.Config) (s service.Se
 	}
 
 	return &sysvService{
-		cmdCons: executil.SystemCommandConstructor{},
+		cmdCons: sys.cmdCons,
 		Service: s,
 		name:    c.Name,
 	}, nil
@@ -92,10 +102,14 @@ func (svc *sysvService) Install() (err error) {
 	}
 
 	// TODO(s.chzhen):  Pass context.
-	_, _, err = aghos.RunCommand(context.TODO(), svc.cmdCons, "update-rc.d", svc.name, "defaults")
-
-	// Don't wrap an error since it's informative enough as is.
-	return err
+	return executil.RunWithPeek(
+		context.TODO(),
+		svc.cmdCons,
+		aghos.MaxCmdOutputSize,
+		"update-rc.d",
+		svc.name,
+		"defaults",
+	)
 }
 
 // Uninstall implements the [service.Service] interface for *sysvService.
@@ -108,10 +122,14 @@ func (svc *sysvService) Uninstall() (err error) {
 	}
 
 	// TODO(s.chzhen):  Pass context.
-	_, _, err = aghos.RunCommand(context.TODO(), svc.cmdCons, "update-rc.d", svc.name, "remove")
-
-	// Don't wrap an error since it's informative enough as is.
-	return err
+	return executil.RunWithPeek(
+		context.TODO(),
+		svc.cmdCons,
+		aghos.MaxCmdOutputSize,
+		"update-rc.d",
+		svc.name,
+		"remove",
+	)
 }
 
 // systemdSystem is a wrapper for a [service.System] that returns the custom
@@ -119,6 +137,9 @@ func (svc *sysvService) Uninstall() (err error) {
 type systemdSystem struct {
 	// System must have an unexported type *service.linuxSystemService.
 	service.System
+
+	// cmdCons is used to run external commands.  It must not be nil.
+	cmdCons executil.CommandConstructor
 }
 
 // type check
@@ -135,7 +156,7 @@ func (sys *systemdSystem) New(i service.Interface, c *service.Config) (s service
 	}
 
 	return &systemdService{
-		cmdCons:  executil.SystemCommandConstructor{},
+		cmdCons:  sys.cmdCons,
 		Service:  s,
 		unitName: fmt.Sprintf("%s.service", c.Name),
 	}, nil

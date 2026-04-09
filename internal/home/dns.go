@@ -106,7 +106,7 @@ func initDNS(
 		return err
 	}
 
-	return initDNSServer(
+	err = initDNSServer(
 		ctx,
 		globalContext.filters,
 		globalContext.stats,
@@ -118,6 +118,13 @@ func initDNS(
 		baseLogger,
 		confModifier,
 	)
+	if err != nil {
+		return fmt.Errorf("creating dns server: %w", err)
+	}
+
+	registerDoHHandlers(config.HTTPConfig.DoH.Routes)
+
+	return nil
 }
 
 // initDNSServer initializes the [context.dnsServer].  To only use the internal
@@ -164,6 +171,7 @@ func initDNSServer(
 		&config.DNS,
 		config.Clients.Sources,
 		tlsMgr.config(),
+		config.HTTPConfig.DoH,
 		tlsMgr,
 		httpReg,
 		globalContext.clients.storage,
@@ -176,13 +184,12 @@ func initDNSServer(
 	// Try to prepare the server with disabled private RDNS resolution if it
 	// failed to prepare as is.  See TODO on [dnsforward.PrivateRDNSError].
 	err = globalContext.dnsServer.Prepare(ctx, dnsConf)
-	if privRDNSErr := (&dnsforward.PrivateRDNSError{}); errors.As(err, &privRDNSErr) {
+	if _, ok := errors.AsType[*dnsforward.PrivateRDNSError](err); ok {
 		l.WarnContext(ctx, "private rdns resolution failed; disabling", slogutil.KeyError, err)
 
 		dnsConf.UsePrivateRDNS = false
 		err = globalContext.dnsServer.Prepare(ctx, dnsConf)
 	}
-
 	if err != nil {
 		return fmt.Errorf("dnsServer.Prepare: %w", err)
 	}
@@ -222,6 +229,21 @@ func ipsToTCPAddrs(ips []netip.Addr, port uint16) (tcpAddrs []*net.TCPAddr) {
 	return tcpAddrs
 }
 
+// ipsToAddrPorts converts a slice of [netip.Addr] into a slice of
+// [netip.AddrPort] with the given port.
+func ipsToAddrPorts(ips []netip.Addr, port uint16) (addrs []netip.AddrPort) {
+	if ips == nil {
+		return nil
+	}
+
+	addrs = make([]netip.AddrPort, 0, len(ips))
+	for _, ip := range ips {
+		addrs = append(addrs, netip.AddrPortFrom(ip, port))
+	}
+
+	return addrs
+}
+
 func ipsToUDPAddrs(ips []netip.Addr, port uint16) (udpAddrs []*net.UDPAddr) {
 	if ips == nil {
 		return nil
@@ -241,6 +263,7 @@ func newServerConfig(
 	dnsConf *dnsConfig,
 	clientSrcConf *clientSourcesConfig,
 	tlsConf *tlsConfigSettings,
+	dohConf *doHConfig,
 	tlsMgr *tlsManager,
 	httpReg aghhttp.Registrar,
 	clientsContainer dnsforward.ClientsContainer,
@@ -251,7 +274,7 @@ func newServerConfig(
 	fwdConf := dnsConf.Config
 	fwdConf.ClientsContainer = clientsContainer
 
-	intTLSConf, err := newDNSTLSConfig(tlsConf, hosts)
+	intTLSConf, err := newDNSTLSConfig(tlsConf, hosts, dohConf.InsecureEnabled)
 	if err != nil {
 		return nil, fmt.Errorf("constructing tls config: %w", err)
 	}
@@ -261,7 +284,7 @@ func newServerConfig(
 		TCPListenAddrs:         ipsToTCPAddrs(hosts, dnsConf.Port),
 		Config:                 fwdConf,
 		TLSConf:                intTLSConf,
-		TLSAllowUnencryptedDoH: tlsConf.AllowUnencryptedDoH,
+		TLSAllowUnencryptedDoH: dohConf.InsecureEnabled,
 		UpstreamTimeout:        time.Duration(dnsConf.UpstreamTimeout),
 		TLSv12Roots:            tlsMgr.rootCerts,
 		ConfModifier:           confModifier,
@@ -303,6 +326,7 @@ func newServerConfig(
 func newDNSTLSConfig(
 	conf *tlsConfigSettings,
 	addrs []netip.Addr,
+	allowUnencryptedDoH bool,
 ) (dnsConf *dnsforward.TLSConfig, err error) {
 	if !conf.Enabled {
 		return &dnsforward.TLSConfig{}, nil
@@ -323,7 +347,7 @@ func newDNSTLSConfig(
 	}
 
 	if conf.PortHTTPS != 0 {
-		dnsConf.HTTPSListenAddrs = ipsToTCPAddrs(addrs, conf.PortHTTPS)
+		dnsConf.HTTPSListenAddrs = ipsToAddrPorts(addrs, conf.PortHTTPS)
 	}
 
 	if conf.PortDNSOverTLS != 0 {
@@ -337,7 +361,7 @@ func newDNSTLSConfig(
 	cert, err := tls.X509KeyPair(conf.CertificateChainData, conf.PrivateKeyData)
 	if err != nil {
 		err = fmt.Errorf("parsing tls key pair: %w", err)
-		if conf.AllowUnencryptedDoH || dnsCryptConf != nil {
+		if allowUnencryptedDoH || dnsCryptConf != nil {
 			// TODO(s.chzhen):  Use [slog.Logger].
 			log.Info("warning: %s", err)
 
@@ -565,4 +589,11 @@ func checkDir(path string) (err error) {
 	}
 
 	return nil
+}
+
+// registerDoHHandlers registers DoH handlers on the given routes.
+func registerDoHHandlers(routes []string) {
+	for _, route := range routes {
+		globalContext.web.conf.mux.Handle(route, globalContext.dnsServer)
+	}
 }

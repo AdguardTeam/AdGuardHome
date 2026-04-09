@@ -49,41 +49,91 @@ export const toggleClientBlockRequest = createAction('TOGGLE_CLIENT_BLOCK_REQUES
 export const toggleClientBlockFailure = createAction('TOGGLE_CLIENT_BLOCK_FAILURE');
 export const toggleClientBlockSuccess = createAction('TOGGLE_CLIENT_BLOCK_SUCCESS');
 
-export const toggleClientBlock = (ip: any, disallowed: any, disallowed_rule: any) => async (dispatch: any) => {
-    dispatch(toggleClientBlockRequest());
-    try {
-        const accessList = await apiClient.getAccessList();
-        const blocked_hosts = accessList.blocked_hosts ?? [];
-        let allowed_clients = accessList.allowed_clients ?? [];
-        let disallowed_clients = accessList.disallowed_clients ?? [];
-
-        if (disallowed) {
-            if (!disallowed_rule) {
-                allowed_clients = allowed_clients.concat(ip);
-            } else {
-                disallowed_clients = disallowed_clients.filter((client: any) => client !== disallowed_rule);
-            }
-        } else if (allowed_clients.length > 1) {
-            allowed_clients = allowed_clients.filter((client: any) => client !== disallowed_rule);
-        } else {
-            disallowed_clients = disallowed_clients.concat(ip);
-        }
-        const values = {
-            allowed_clients,
-            blocked_hosts,
-            disallowed_clients,
-        };
-
-        await apiClient.setAccessList(values);
-        dispatch(toggleClientBlockSuccess(values));
-
-        if (disallowed) {
-            dispatch(addSuccessToast(i18next.t('client_unblocked', { ip: disallowed_rule || ip })));
-        } else {
-            dispatch(addSuccessToast(i18next.t('client_blocked', { ip })));
-        }
-    } catch (error) {
-        dispatch(addErrorToast({ error }));
-        dispatch(toggleClientBlockFailure());
-    }
+type AccessList = {
+    allowed_clients?: string[];
+    disallowed_clients?: string[];
+    blocked_hosts?: string[];
 };
+
+type AccessListValues = {
+    allowed_clients: string[];
+    disallowed_clients: string[];
+    blocked_hosts: string[];
+};
+
+type GetNextClientAccessListArgs = {
+    accessList: AccessList;
+    ip: string;
+    disallowed: boolean;
+    disallowedRule: string;
+};
+
+const addUnique = (items: string[], value: string) => (items.includes(value) ? items : items.concat(value));
+
+const removeValue = (items: string[], value: string) => items.filter((item) => item !== value);
+
+const getNextClientAccessList = ({
+    accessList,
+    ip,
+    disallowed,
+    disallowedRule,
+}: GetNextClientAccessListArgs): AccessListValues => {
+    const values = {
+        blocked_hosts: accessList.blocked_hosts ?? [],
+        allowed_clients: accessList.allowed_clients ?? [],
+        disallowed_clients: accessList.disallowed_clients ?? [],
+    };
+    const isAllowlistMode = values.allowed_clients.length > 0;
+
+    if (disallowed && isAllowlistMode) {
+        return {
+            ...values,
+            allowed_clients: addUnique(values.allowed_clients, ip),
+        };
+    }
+
+    if (disallowed) {
+        return {
+            ...values,
+            disallowed_clients: removeValue(values.disallowed_clients, disallowedRule || ip),
+        };
+    }
+
+    if (isAllowlistMode) {
+        return {
+            ...values,
+            allowed_clients: removeValue(values.allowed_clients, ip),
+        };
+    }
+
+    return {
+        ...values,
+        disallowed_clients: addUnique(values.disallowed_clients, ip),
+    };
+};
+
+export const toggleClientBlock =
+    (ip: string, disallowed: boolean, disallowed_rule: string) => async (dispatch: any) => {
+        dispatch(toggleClientBlockRequest());
+        try {
+            const accessList: AccessList = await apiClient.getAccessList();
+            const values = getNextClientAccessList({
+                accessList,
+                ip,
+                disallowed,
+                disallowedRule: disallowed_rule,
+            });
+
+            await apiClient.setAccessList(values);
+            dispatch(toggleClientBlockSuccess(values));
+
+            if (disallowed) {
+                dispatch(addSuccessToast(i18next.t('client_unblocked', { ip: disallowed_rule || ip })));
+            } else {
+                dispatch(addSuccessToast(i18next.t('client_blocked', { ip })));
+            }
+        } catch (error) {
+            dispatch(addErrorToast({ error }));
+            dispatch(toggleClientBlockFailure());
+        }
+    };

@@ -19,8 +19,6 @@ import (
 	"strings"
 
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/ioutil"
-	"github.com/AdguardTeam/golibs/osutil"
 	"github.com/AdguardTeam/golibs/osutil/executil"
 )
 
@@ -51,46 +49,6 @@ func HaveAdminRights() (bool, error) {
 // MaxCmdOutputSize is the maximum length of performed shell command output in
 // bytes.
 const MaxCmdOutputSize = 64 * 1024
-
-// RunCommand runs shell command.
-//
-// TODO(s.chzhen):  Consider removing this after addressing the current behavior
-// where a non-zero exit code is returned together with a nil error.
-func RunCommand(
-	ctx context.Context,
-	cmdCons executil.CommandConstructor,
-	command string,
-	arguments ...string,
-) (code int, output []byte, err error) {
-	stdoutBuf := bytes.Buffer{}
-	stderrBuf := bytes.Buffer{}
-
-	err = executil.Run(
-		ctx,
-		cmdCons,
-		&executil.CommandConfig{
-			Path:   command,
-			Args:   arguments,
-			Stdout: ioutil.NewTruncatedWriter(&stdoutBuf, MaxCmdOutputSize),
-			Stderr: &stderrBuf,
-		},
-	)
-
-	if err == nil {
-		return osutil.ExitCodeSuccess, stdoutBuf.Bytes(), nil
-	}
-
-	code, ok := executil.ExitCodeFromError(err)
-	if ok {
-		// Mirror the old behavior and return a nil-error on non-zero code
-		// status.
-		return code, stderrBuf.Bytes(), nil
-	}
-
-	code = osutil.ExitCodeFailure
-
-	return code, nil, fmt.Errorf("command %q failed: %w: %s", command, err, &stdoutBuf)
-}
 
 // psArgs holds the default ps arguments to avoid per-call slice allocations.
 //

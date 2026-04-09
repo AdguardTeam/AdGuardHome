@@ -289,7 +289,7 @@
   "encryption_key_input": "Copie/cole aqui a chave privada codificada em PEM para o seu certificado.",
   "encryption_key_invalid": "Esta é uma chave privada {{type}} inválida",
   "encryption_key_source_content": "Colar o conteúdo da chave privada",
-  "encryption_key_source_path": "Definir um ficheiro de chave privada",
+  "encryption_key_source_path": "Definir um caminho para o ficheiro de chave privada",
   "encryption_key_valid": "Esta é uma chave privada {{type}} válida",
   "encryption_plain_dns_desc": "O DNS simples (sem criptografia) está ativado por padrão. Pode desativá-lo para forçar todos os dispositivos a usar DNS criptografado. Para isso, deve ativar pelo menos um protocolo DNS criptografado",
   "encryption_plain_dns_enable": "Habilitar DNS simples (sem criptografia)",

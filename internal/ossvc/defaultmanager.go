@@ -1,18 +1,16 @@
 package ossvc
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"log/slog"
 	"os"
 	"path/filepath"
 	"runtime"
-	"strconv"
-	"syscall"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/osutil/executil"
 	"github.com/kardianos/service"
 )
@@ -30,10 +28,10 @@ type manager struct {
 // newManager creates a new [Manager] that uses [service.Service].
 //
 // TODO(e.burkov):  Return error.
-func newManager(_ context.Context, conf *ManagerConfig) (mgr *manager) {
+func newManager(ctx context.Context, conf *ManagerConfig) (mgr *manager) {
 	// Call chooseSystem explicitly to introduce platform-specific support for
 	// service package.  It's a noop for other GOOS values.
-	chooseSystem()
+	chooseSystem(ctx, conf.Logger, conf.CommandConstructor)
 
 	return &manager{
 		logger:        conf.Logger,
@@ -77,8 +75,8 @@ func (m *manager) Perform(ctx context.Context, action Action) (err error) {
 	return nil
 }
 
-// statusRestartOnFail is a custom status value used to indicate the service's
-// state of restarting after failed start.
+// statusRestartOnFail is a custom status value used to indicate the
+// service's state of restarting after failed start.
 const statusRestartOnFail = service.StatusStopped + 1
 
 // Status implements the [Manager] interface for *manager.
@@ -94,9 +92,12 @@ func (m *manager) Status(ctx context.Context, name ServiceName) (status Status, 
 
 	svcStatus, err := s.Status()
 	if err != nil && m.isUnixSystemV {
-		var code int
-		code, err = m.runInitdCommand(ctx, string(name), "status")
-		if err != nil || code != 0 {
+		m.logger.DebugContext(ctx, "got error from status request", slogutil.KeyError, err)
+
+		err = m.runInitdCommand(ctx, string(name), "status")
+		if err != nil {
+			m.logger.DebugContext(ctx, "got error from init.d command", slogutil.KeyError, err)
+
 			// Treat an error or non-zero exit code as stopped status on Unix
 			// System V.
 			//
@@ -123,51 +124,8 @@ func (m *manager) Status(ctx context.Context, name ServiceName) (status Status, 
 var _ ReloadManager = (*manager)(nil)
 
 // Reload implements the [ReloadManager] interface for *manager.
-//
-// TODO(e.burkov):  On Windows just don't implement this interface.
 func (m *manager) Reload(ctx context.Context, name ServiceName) (err error) {
-	if runtime.GOOS == "windows" {
-		return errors.ErrUnsupported
-	}
-
-	nameStr := string(name)
-
-	var pid int
-	pidFile := filepath.Join("/var", "run", nameStr+".pid")
-	data, err := os.ReadFile(pidFile)
-	if err != nil {
-		if !errors.Is(err, os.ErrNotExist) {
-			return fmt.Errorf("reading service pid file: %w", err)
-		}
-
-		pid, err = aghos.PIDByCommand(ctx, m.logger, nameStr, os.Getpid())
-		if err != nil {
-			return fmt.Errorf("finding process: %w", err)
-		}
-	} else {
-		parts := bytes.SplitN(data, []byte("\n"), 2)
-		if len(parts) == 0 {
-			return fmt.Errorf("parsing %q: %w", pidFile, errors.ErrEmptyValue)
-		}
-
-		pidStr := string(bytes.TrimSpace(parts[0]))
-		pid, err = strconv.Atoi(pidStr)
-		if err != nil {
-			return fmt.Errorf("parsing pid from %q: %w", pidFile, err)
-		}
-	}
-
-	proc, err := os.FindProcess(pid)
-	if err != nil {
-		return fmt.Errorf("finding process with pid %d: %w", pid, err)
-	}
-
-	err = proc.Signal(syscall.SIGHUP)
-	if err != nil {
-		return fmt.Errorf("sending sighup to process with pid %d: %w", pid, err)
-	}
-
-	return nil
+	return m.reload(ctx, name)
 }
 
 // install installs the service in the service manager.
@@ -197,7 +155,7 @@ func (m *manager) install(ctx context.Context, action *ActionInstall) (err error
 		// On OpenWrt it is important to run enable after the service
 		// installation.  Otherwise, the service won't start on the system
 		// startup.
-		_, err = m.runInitdCommand(ctx, string(action.ServiceName), "enable")
+		err = m.runInitdCommand(ctx, string(action.ServiceName), "enable")
 		if err != nil {
 			return fmt.Errorf("enabling service on openwrt: %w", err)
 		}
@@ -220,7 +178,7 @@ func (m *manager) restart(ctx context.Context, action *ActionRestart) (err error
 
 	err = s.Restart()
 	if err != nil && m.isUnixSystemV {
-		_, initdErr := m.runInitdCommand(ctx, string(action.ServiceName), "restart")
+		initdErr := m.runInitdCommand(ctx, string(action.ServiceName), "restart")
 		if initdErr != nil {
 			return fmt.Errorf("%w (restarting via init.d: %w)", err, initdErr)
 		}
@@ -247,7 +205,7 @@ func (m *manager) start(ctx context.Context, action *ActionStart) (err error) {
 
 	err = s.Start()
 	if err != nil && m.isUnixSystemV {
-		_, initdErr := m.runInitdCommand(ctx, string(action.ServiceName), "start")
+		initdErr := m.runInitdCommand(ctx, string(action.ServiceName), "start")
 		if initdErr != nil {
 			return fmt.Errorf("%w (starting via init.d: %w)", err, initdErr)
 		}
@@ -271,7 +229,7 @@ func (m *manager) stop(ctx context.Context, action *ActionStop) (err error) {
 
 	err = s.Stop()
 	if err != nil && m.isUnixSystemV {
-		_, initdErr := m.runInitdCommand(ctx, string(action.ServiceName), "stop")
+		initdErr := m.runInitdCommand(ctx, string(action.ServiceName), "stop")
 		if initdErr != nil {
 			return fmt.Errorf("%w (stopping via init.d: %w)", err, initdErr)
 		}
@@ -287,7 +245,7 @@ func (m *manager) uninstall(ctx context.Context, action *ActionUninstall) (err e
 	if m.isOpenWrt {
 		// On OpenWrt it is important to run disable command first as it will
 		// remove the symlink.
-		_, err = m.runInitdCommand(ctx, string(action.ServiceName), "disable")
+		err = m.runInitdCommand(ctx, string(action.ServiceName), "disable")
 		if err != nil {
 			return fmt.Errorf("disabling service on openwrt: %w", err)
 		}
@@ -345,26 +303,29 @@ func removeLaunchdStdLogs(ctx context.Context, logger *slog.Logger) {
 	}
 }
 
-// runInitdCommand runs init.d service command.  It returns command code or
-// error if any.
+// runInitdCommand runs init.d service command.  Returns an error if any.
 //
 // TODO(e.burkov):  Move to manager_linux.go.
 func (m *manager) runInitdCommand(
 	ctx context.Context,
 	serviceName string,
 	action string,
-) (code int, err error) {
+) (err error) {
 	confPath := filepath.Join("/etc", "init.d", serviceName)
 	// Pass the script and action as a single string argument.
-	//
-	// TODO(e.burkov):  Use CommandConstructor.
-	code, _, err = aghos.RunCommand(ctx, m.cmdCons, "sh", "-c", confPath, action)
-
-	return code, err
+	return executil.RunWithPeek(
+		ctx,
+		m.cmdCons,
+		aghos.MaxCmdOutputSize,
+		"sh",
+		"-c",
+		confPath,
+		action,
+	)
 }
 
 // emptyInterface is an empty implementation of the [service.Interface], as the
-// actual implementation is onlyy needed for the [service.Service.Run] method.
+// actual implementation is only needed for the [service.Service.Run] method.
 type emptyInterface struct{}
 
 // type check

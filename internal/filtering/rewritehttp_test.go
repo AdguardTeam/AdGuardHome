@@ -251,11 +251,12 @@ func TestDNSFilter_HandleRewriteHTTP(t *testing.T) {
 			confModCh := make(chan struct{})
 			reqCh := make(chan struct{})
 
+			pt := testutil.NewPanicT(t)
 			handlers := make(map[string]http.Handler)
 			confModifier := &aghtest.ConfigModifier{}
 			confModifier.OnApply = func(_ context.Context) {
-				require.Truef(t, tc.wantConfMod, "config modified has been fired")
-				testutil.RequireSend(testutil.PanicT{}, confModCh, struct{}{}, testTimeout)
+				require.Truef(pt, tc.wantConfMod, "config modified has been fired")
+				testutil.RequireSend(pt, confModCh, struct{}{}, testTimeout)
 			}
 
 			d, err := filtering.New(&filtering.Config{
@@ -290,7 +291,7 @@ func TestDNSFilter_HandleRewriteHTTP(t *testing.T) {
 			go func() {
 				handlers[tc.url].ServeHTTP(w, r)
 
-				testutil.RequireSend(testutil.PanicT{}, reqCh, struct{}{}, testTimeout)
+				testutil.RequireSend(pt, reqCh, struct{}{}, testTimeout)
 			}()
 
 			if tc.wantConfMod {

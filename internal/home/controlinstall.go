@@ -18,6 +18,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/errors"
@@ -171,7 +172,7 @@ func (req *checkConfReq) validateDNS(
 	}
 
 	// Try to fix automatically.
-	canAutofix = checkDNSStubListener(ctx, l)
+	canAutofix = checkDNSStubListener(ctx, l, cmdCons)
 	if canAutofix && req.DNS.Autofix {
 		if derr := disableDNSStubListener(ctx, l, cmdCons); derr != nil {
 			l.ErrorContext(ctx, "disabling DNSStubListener", slogutil.KeyError, derr)
@@ -262,8 +263,13 @@ func handleStaticIP(
 	return ipResp
 }
 
-// checkDNSStubListener returns true if DNSStubListener is active.
-func checkDNSStubListener(ctx context.Context, l *slog.Logger) (ok bool) {
+// checkDNSStubListener returns true if DNSStubListener is active.  l and
+// cmdCons must not be nil.
+func checkDNSStubListener(
+	ctx context.Context,
+	l *slog.Logger,
+	cmdCons executil.CommandConstructor,
+) (ok bool) {
 	if runtime.GOOS != "linux" {
 		return false
 	}
@@ -281,8 +287,8 @@ func checkDNSStubListener(ctx context.Context, l *slog.Logger) (ok bool) {
 
 		err := executil.RunWithPeek(
 			ctx,
-			executil.SystemCommandConstructor{},
-			agh.DefaultOutputLimit,
+			cmdCons,
+			aghos.MaxCmdOutputSize,
 			cmd.Key,
 			cmd.Value...,
 		)
@@ -339,7 +345,7 @@ func disableDNSStubListener(
 	err = executil.RunWithPeek(
 		ctx,
 		cmdCons,
-		agh.DefaultOutputLimit,
+		aghos.MaxCmdOutputSize,
 		systemctlCmd,
 		systemctlArgs...,
 	)

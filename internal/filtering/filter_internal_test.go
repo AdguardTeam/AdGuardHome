@@ -39,9 +39,9 @@ func serveHTTPLocally(tb testing.TB, h http.Handler) (urlStr string) {
 func serveFiltersLocally(tb testing.TB, fltContent []byte) (urlStr string) {
 	tb.Helper()
 
-	return serveHTTPLocally(tb, http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		pt := testutil.PanicT{}
+	pt := testutil.NewPanicT(tb)
 
+	return serveHTTPLocally(tb, http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		n, werr := w.Write(fltContent)
 		require.NoError(pt, werr)
 		require.Equal(pt, len(fltContent), n)

@@ -289,7 +289,7 @@
   "encryption_key_input": "คัดลอก/วาง PEM-encoded private key ของคุณตรงนี้",
   "encryption_key_invalid": "นี่เป็นคีย์ส่วนตัว {{type}} ที่ไม่ถูกต้อง",
   "encryption_key_source_content": "วางเนื้อหาคีย์ส่วนตัว",
-  "encryption_key_source_path": "ตั้งค่าไฟล์กุญแจส่วนตัว",
+  "encryption_key_source_path": "ตั้งค่าเส้นทางไฟล์กุญแจส่วนตัว",
   "encryption_key_valid": "นี่เป็นคีย์ส่วนตัว {{type}} ที่ถูกต้อง",
   "encryption_plain_dns_desc": "DNS แบบธรรมดาจะเปิดใช้งานตามค่าเริ่มต้น คุณสามารถปิดใช้งานเพื่อบังคับให้อุปกรณ์ทั้งหมดใช้ DNS ที่เข้ารหัสได้ หากต้องการทำเช่นนี้ คุณต้องเปิดใช้งานโปรโตคอล DNS ที่เข้ารหัสอย่างน้อยหนึ่งโปรโตคอล",
   "encryption_plain_dns_enable": "เปิดใช้งาน DNS ธรรมดา",

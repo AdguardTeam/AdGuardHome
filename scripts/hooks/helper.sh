@@ -8,7 +8,7 @@
 # This comment is used to simplify checking local copies of the script.  Bump
 # this number every time a significant change is made to this script.
 #
-# AdGuard-Project-Version: 1
+# AdGuard-Project-Version: 3
 
 # Only show interactive prompts if there a terminal is attached to stdout.
 # While this technically doesn't guarantee that reading from /dev/tty works,
@@ -80,7 +80,20 @@ lint_staged_changes() {
 		make VERBOSE="$verbose" sh-lint
 	fi
 
-	txt_diff="$(git diff --cached --name-only -- '*.md' '*.yaml' '*.yml' 'Makefile' '*.json' || :)"
+	txt_diff="$(
+		git \
+			diff \
+			--cached \
+			--name-only \
+			-- \
+			'*.json' \
+			'*.md' \
+			'*.yaml' \
+			'*.yml' \
+			'*.dockerignore' \
+			'.gitignore' \
+			'Makefile' || :
+	)"
 	readonly txt_diff
 
 	if [ "$txt_diff" != '' ]; then
@@ -90,5 +103,4 @@ lint_staged_changes() {
 	if [ "$(git diff --cached --name-only -- '*.go' '*.mod' 'Makefile' || :)" != '' ]; then
 		make VERBOSE="$verbose" go-os-check go-lint go-test
 	fi
-
 }

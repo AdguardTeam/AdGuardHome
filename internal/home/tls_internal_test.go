@@ -635,6 +635,7 @@ func TestTLSManager_HandleTLSConfigure(t *testing.T) {
 	res := &tlsConfig{
 		tlsConfigStatus: &tlsConfigStatus{},
 	}
+
 	err = json.NewDecoder(w.Body).Decode(res)
 	require.NoError(t, err)
 

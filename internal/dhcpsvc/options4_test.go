@@ -40,3 +40,10 @@ func newOptServerID(tb testing.TB, serverIP netip.Addr) (opt layers.DHCPOption) 
 
 	return layers.NewDHCPOption(layers.DHCPOptServerID, serverIP.AsSlice())
 }
+
+// newOptRequestIP creates a DHCP request IP (50) option.
+func newOptRequestIP(tb testing.TB, reqIP netip.Addr) layers.DHCPOption {
+	tb.Helper()
+
+	return layers.NewDHCPOption(layers.DHCPOptRequestIP, reqIP.AsSlice())
+}

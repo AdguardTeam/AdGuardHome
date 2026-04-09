@@ -289,7 +289,7 @@
   "encryption_key_input": "Kopier / lim inn ditt sertifikats PEM-kodede private nøkkel her.",
   "encryption_key_invalid": "Dette er en ugyldig {{type}}-type privat nøkkel",
   "encryption_key_source_content": "Lim inn innholdet til den private nøkkelen",
-  "encryption_key_source_path": "Bestem en privat nøkkelfil",
+  "encryption_key_source_path": "Bestem en privat nøkkelfilsti",
   "encryption_key_valid": "Dette er en gyldig {{type}}-type privat nøkkel",
   "encryption_plain_dns_desc": "Vanlig DNS er aktivert som standard. Du kan deaktivere dette for å tvinge alle enheter til å bruke kryptert DNS. For å gjøre dette må du aktivere minst ett kryptert DNS-protokoll",
   "encryption_plain_dns_enable": "Aktiver vanlig DNS",

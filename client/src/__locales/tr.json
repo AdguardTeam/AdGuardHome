@@ -289,7 +289,7 @@
   "encryption_key_input": "Sertifikanızın PEM biçimli özel anahtarını kopyalayıp buraya yapıştırın.",
   "encryption_key_invalid": "Bu geçersiz bir {{type}} özel anahtarıdır",
   "encryption_key_source_content": "Özel anahtar içeriğini yapıştır",
-  "encryption_key_source_path": "Özel bir anahtar dosyası belirle",
+  "encryption_key_source_path": "Özel bir anahtar dosyası yolu belirle",
   "encryption_key_valid": "Bu geçerli bir {{type}} özel anahtarıdır",
   "encryption_plain_dns_desc": "Düz DNS varsayılan olarak etkindir. Tüm cihazları şifrelenmiş DNS kullanmaya zorlamak için bunu devre dışı bırakabilirsiniz. Bunu yapmak için en az bir şifrelenmiş DNS protokolünü etkinleştirmeniz gerekir",
   "encryption_plain_dns_enable": "Düz DNS'i etkinleştir",

@@ -289,7 +289,7 @@
   "encryption_key_input": "Tutaj kopiuj/wklej klucze prywatne zakodowane w PEM do swojego certyfikatu.",
   "encryption_key_invalid": "Nieprawidłowy {{type}} klucz prywatny",
   "encryption_key_source_content": "Wklej zawartość klucza prywatnego",
-  "encryption_key_source_path": "Ustaw plik klucza prywatnego",
+  "encryption_key_source_path": "Ustaw ścieżkę pliku klucza prywatnego",
   "encryption_key_valid": "Poprawny {{type}} klucz prywatny",
   "encryption_plain_dns_desc": "Zwykły DNS jest domyślnie włączony. Możesz go wyłączyć, aby zmusić wszystkie urządzenia do korzystania z szyfrowanego DNS. Aby to zrobić, musisz włączyć co najmniej jeden szyfrowany protokół DNS",
   "encryption_plain_dns_enable": "Włącz zwykły DNS",

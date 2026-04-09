@@ -289,7 +289,7 @@
   "encryption_key_input": "Kopioi/liitä tähän varmenteesi PEM-koodattu yksityinen avain.",
   "encryption_key_invalid": "Tämä yksityinen {{type}}-avain ei kelpaa",
   "encryption_key_source_content": "Liitä yksityisen avaimen sisältö",
-  "encryption_key_source_path": "Määritä yksityisen avaimen tiedosto",
+  "encryption_key_source_path": "Määritä yksityisen avaimen tiedostopolku",
   "encryption_key_valid": "Tämä yksityinen {{type}}-avain on kelvollinen",
   "encryption_plain_dns_desc": "Tavallinen DNS on oletusarvoisesti käytössä. Voit poistaa sen käytöstä pakottaaksesi kaikki laitteet käyttämään salattua DNS:ää. Tätä varten sinun on otettava käyttöön ainakin yksi salattu DNS-protokolla.",
   "encryption_plain_dns_enable": "Käytä tavallista DNS:ää",

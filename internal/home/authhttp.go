@@ -108,12 +108,12 @@ func (web *webAPI) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var remoteIP string
+	var remoteIPStr string
 	// The real IP address of the client [realIP] cannot be used here without
 	// taking trusted proxies into account due to security issues:
 	//
 	// See https://github.com/AdguardTeam/AdGuardHome/issues/2799.
-	if remoteIP, err = netutil.SplitHost(r.RemoteAddr); err != nil {
+	if remoteIPStr, err = netutil.SplitHost(r.RemoteAddr); err != nil {
 		writeErrorWithIP(
 			r,
 			w,
@@ -127,13 +127,13 @@ func (web *webAPI) handleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if rateLimiter := web.auth.rateLimiter; rateLimiter != nil {
-		if left := rateLimiter.check(remoteIP); left > 0 {
+		if left := rateLimiter.check(remoteIPStr); left > 0 {
 			w.Header().Set(httphdr.RetryAfter, strconv.Itoa(int(left.Seconds())))
 			writeErrorWithIP(
 				r,
 				w,
 				http.StatusTooManyRequests,
-				remoteIP,
+				remoteIPStr,
 				"auth: blocked for %s",
 				left,
 			)
@@ -147,24 +147,38 @@ func (web *webAPI) handleLogin(w http.ResponseWriter, r *http.Request) {
 		web.logger.ErrorContext(
 			ctx,
 			"getting real ip",
-			"remote_ip", remoteIP,
+			"remote_ip", remoteIPStr,
 			slogutil.KeyError, err,
 		)
 	}
 
-	cookie, err := newCookie(ctx, web.auth, req, remoteIP)
+	remoteIP, err := netip.ParseAddr(remoteIPStr)
 	if err != nil {
-		logIP := remoteIP
-		if web.auth.trustedProxies.Contains(ip.Unmap()) {
-			logIP = ip.String()
-		}
+		writeErrorWithIP(
+			r,
+			w,
+			http.StatusInternalServerError,
+			r.RemoteAddr,
+			"auth: parsing remote address: %s",
+			err,
+		)
 
+		return
+	}
+
+	logIP := remoteIPStr
+	if web.auth.trustedProxies.Contains(remoteIP.Unmap()) {
+		logIP = ip.String()
+	}
+
+	cookie, err := newCookie(ctx, web.auth, req, remoteIPStr)
+	if err != nil {
 		writeErrorWithIP(r, w, http.StatusForbidden, logIP, "%s", err)
 
 		return
 	}
 
-	web.logger.InfoContext(ctx, "successful login", "user", req.Name, "ip", ip)
+	web.logger.InfoContext(ctx, "successful login", "user", req.Name, "ip", logIP)
 
 	http.SetCookie(w, cookie)
 
@@ -288,13 +302,7 @@ func isPublicResource(p string) (ok bool) {
 		panic(fmt.Errorf("bad login pattern: %w", err))
 	}
 
-	// TODO(s.chzhen):  Implement a more strict version.
-	if strings.HasPrefix(p, "/dns-query/") {
-		return true
-	}
-
 	paths := []string{
-		"/dns-query",
 		"/control/login",
 		"/apple/doh.mobileconfig",
 		"/apple/dot.mobileconfig",
@@ -305,6 +313,16 @@ func isPublicResource(p string) (ok bool) {
 	}
 
 	return isAsset || isLogin || slices.Contains(paths, p)
+}
+
+// isDoHRoute returns true if r is a request to a DoH route.  r must not be nil.
+func (mw *authMiddlewareDefault) isDoHRoute(r *http.Request) (ok bool) {
+	_, pattern := mw.mux.Handler(r)
+	if pattern == "" {
+		return false
+	}
+
+	return slices.Contains(mw.doHRoutes, pattern)
 }
 
 const (
@@ -321,6 +339,9 @@ type authMiddlewareDefaultConfig struct {
 	// TODO(e.burkov):  Require a logger in request's context instead.
 	logger *slog.Logger
 
+	// mux is the server's multiplexer.  It must not be nil.
+	mux *http.ServeMux
+
 	// rateLimiter manages the rate limiting for login attempts.
 	rateLimiter loginRateLimiter
 
@@ -335,6 +356,9 @@ type authMiddlewareDefaultConfig struct {
 
 	// users contains web user information.  It must not be nil.
 	users aghuser.DB
+
+	// doHRoutes is a list of DoH routes for public access.
+	doHRoutes []string
 }
 
 // authMiddlewareDefault is the default authentication middleware.  It searches
@@ -342,10 +366,12 @@ type authMiddlewareDefaultConfig struct {
 // passes it with the context.
 type authMiddlewareDefault struct {
 	logger         *slog.Logger
+	mux            *http.ServeMux
 	rateLimiter    loginRateLimiter
 	trustedProxies netutil.SubnetSet
 	sessions       aghuser.SessionStorage
 	users          aghuser.DB
+	doHRoutes      []string
 }
 
 // newAuthMiddlewareDefault returns the new properly initialized
@@ -353,10 +379,12 @@ type authMiddlewareDefault struct {
 func newAuthMiddlewareDefault(c *authMiddlewareDefaultConfig) (mw *authMiddlewareDefault) {
 	return &authMiddlewareDefault{
 		logger:         c.logger,
+		mux:            c.mux,
 		rateLimiter:    c.rateLimiter,
 		trustedProxies: c.trustedProxies,
 		sessions:       c.sessions,
 		users:          c.users,
+		doHRoutes:      c.doHRoutes,
 	}
 }
 
@@ -427,7 +455,7 @@ func (mw *authMiddlewareDefault) handlePublicAccess(
 	h http.Handler,
 	path string,
 ) (ok bool) {
-	if isPublicResource(path) {
+	if isPublicResource(path) || mw.isDoHRoute(r) {
 		h.ServeHTTP(w, r)
 
 		return true

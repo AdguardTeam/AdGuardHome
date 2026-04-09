@@ -87,6 +87,11 @@ type DefaultSessionStorage struct {
 	sessionTTL time.Duration
 }
 
+// dbOpenTimeout is the maximum duration to wait for opening the bbolt database.
+//
+// TODO(a.garipov):  Consider making configurable.
+const dbOpenTimeout = 1 * time.Second
+
 // NewDefaultSessionStorage returns the new properly initialized
 // *DefaultSessionStorage.
 func NewDefaultSessionStorage(
@@ -103,8 +108,10 @@ func NewDefaultSessionStorage(
 	}
 
 	dbFilename := conf.DBPath
-	// TODO(s.chzhen):  Pass logger with options.
-	ds.db, err = bbolt.Open(dbFilename, aghos.DefaultPermFile, nil)
+	ds.db, err = bbolt.Open(dbFilename, aghos.DefaultPermFile, &bbolt.Options{
+		Timeout: dbOpenTimeout,
+		Logger:  newBBoltLogger(ctx, ds.logger),
+	})
 	if err != nil {
 		ds.logger.ErrorContext(ctx, "opening db %q: %w", dbFilename, err)
 		if errors.Is(err, berrors.ErrInvalid) {
@@ -122,6 +129,20 @@ func NewDefaultSessionStorage(
 	}
 
 	return ds, nil
+}
+
+// newBBoltLogger returns a new [*bbolt.DefaultLogger] that logs messages using
+// the given [slog.Logger].  l must not be nil.
+func newBBoltLogger(ctx context.Context, l *slog.Logger) (bl *bbolt.DefaultLogger) {
+	bl = &bbolt.DefaultLogger{
+		Logger: slog.NewLogLogger(l.Handler(), slog.LevelDebug),
+	}
+
+	if l.Enabled(ctx, slog.LevelDebug) {
+		bl.EnableDebug()
+	}
+
+	return bl
 }
 
 // loadSessions loads web user sessions from the bbolt database.

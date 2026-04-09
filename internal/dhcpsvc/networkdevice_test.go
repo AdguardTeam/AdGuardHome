@@ -2,7 +2,9 @@ package dhcpsvc_test
 
 import (
 	"context"
+	"io"
 	"net/netip"
+	"sync/atomic"
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
@@ -41,6 +43,7 @@ func (ndm *testNetworkDeviceManager) Open(
 // TODO(e.burkov):  Move to aghtest.
 type testNetworkDevice struct {
 	onReadPacketData  func() (data []byte, ci gopacket.CaptureInfo, err error)
+	onClose           func() (err error)
 	onAddresses       func() (ips []netip.Addr)
 	onLinkType        func() (lt layers.LinkType)
 	onWritePacketData func(data []byte) (err error)
@@ -53,6 +56,11 @@ var _ dhcpsvc.NetworkDevice = (*testNetworkDevice)(nil)
 // *testNetworkDevice.
 func (nd *testNetworkDevice) ReadPacketData() (data []byte, ci gopacket.CaptureInfo, err error) {
 	return nd.onReadPacketData()
+}
+
+// Close implements the [io.Closer] interface for *testNetworkDevice.
+func (nd *testNetworkDevice) Close() (err error) {
+	return nd.onClose()
 }
 
 // Addresses implements the [dhcpsvc.NetworkDevice] interface for
@@ -81,51 +89,90 @@ func newTestNetworkDeviceManager(
 	tb testing.TB,
 	deviceName string,
 	addr netip.Addr,
-) (ndMgr dhcpsvc.NetworkDeviceManager, inCh chan gopacket.Packet, outCh chan []byte) {
+) (ndMgr dhcpsvc.NetworkDeviceManager, inCh chan<- gopacket.Packet, outCh <-chan []byte) {
 	tb.Helper()
 
-	inCh = make(chan gopacket.Packet)
-	outCh = make(chan []byte)
+	isOpened := &atomic.Bool{}
 
-	pt := testutil.PanicT{}
-	addrs := []netip.Addr{addr}
+	dev, inCh, outCh := newTestNetworkDevice(tb, addr, isOpened)
 
-	dev := &testNetworkDevice{
-		onReadPacketData: func() (data []byte, ci gopacket.CaptureInfo, err error) {
-			pkt, ok := testutil.RequireReceive(pt, inCh, testTimeout)
-			require.True(pt, ok)
+	pt := testutil.NewPanicT(tb)
 
-			data = pkt.Data()
-			ci = gopacket.CaptureInfo{
-				Length:        len(data),
-				CaptureLength: len(data),
-			}
+	onOpen := func(
+		_ context.Context,
+		conf *dhcpsvc.NetworkDeviceConfig,
+	) (nd dhcpsvc.NetworkDevice, err error) {
+		isOpened.Store(true)
+		require.Equal(pt, deviceName, conf.Name)
 
-			return data, ci, nil
-		},
-		onAddresses: func() (ips []netip.Addr) {
-			return addrs
-		},
-		onLinkType: func() (lt layers.LinkType) {
-			return layers.LinkTypeEthernet
-		},
-		onWritePacketData: func(data []byte) (err error) {
-			testutil.RequireSend(pt, outCh, data, testTimeout)
-
-			return nil
-		},
+		return dev, nil
 	}
 
 	ndMgr = &testNetworkDeviceManager{
-		onOpen: func(
-			_ context.Context,
-			conf *dhcpsvc.NetworkDeviceConfig,
-		) (nd dhcpsvc.NetworkDevice, err error) {
-			require.Equal(pt, deviceName, conf.Name)
-
-			return dev, nil
-		},
+		onOpen: onOpen,
 	}
 
 	return ndMgr, inCh, outCh
+}
+
+// newTestNetworkDevice creates a network device for testing.  It has a link
+// type [layers.LinkTypeEthernet].  Incoming packets are received from inCh and
+// outgoing packets are sent to outCh.
+func newTestNetworkDevice(
+	tb testing.TB,
+	addr netip.Addr,
+	isOpened *atomic.Bool,
+) (nd dhcpsvc.NetworkDevice, inCh chan<- gopacket.Packet, outCh <-chan []byte) {
+	tb.Helper()
+
+	in := make(chan gopacket.Packet)
+	out := make(chan []byte)
+
+	pt := testutil.NewPanicT(tb)
+
+	onReadPacketData := func() (data []byte, ci gopacket.CaptureInfo, err error) {
+		pkt, ok := testutil.RequireReceive(pt, in, testTimeout)
+		require.Equalf(pt, isOpened.Load(), ok, "unexpected receive: %v", pkt)
+
+		if !ok {
+			return nil, gopacket.CaptureInfo{}, io.EOF
+		}
+
+		data = pkt.Data()
+		ci = gopacket.CaptureInfo{
+			Length:        len(data),
+			CaptureLength: len(data),
+		}
+
+		return data, ci, nil
+	}
+
+	onClose := func() (err error) {
+		isOpened.Store(false)
+		close(in)
+
+		return nil
+	}
+
+	onAddresses := func() (ips []netip.Addr) {
+		return []netip.Addr{addr}
+	}
+
+	onLinkType := func() (lt layers.LinkType) {
+		return layers.LinkTypeEthernet
+	}
+
+	onWritePacketData := func(data []byte) (err error) {
+		testutil.RequireSend(pt, out, data, testTimeout)
+
+		return nil
+	}
+
+	return &testNetworkDevice{
+		onReadPacketData:  onReadPacketData,
+		onClose:           onClose,
+		onAddresses:       onAddresses,
+		onLinkType:        onLinkType,
+		onWritePacketData: onWritePacketData,
+	}, in, out
 }

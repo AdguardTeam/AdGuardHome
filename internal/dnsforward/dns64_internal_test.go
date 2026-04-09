@@ -63,7 +63,7 @@ func newRR(tb testing.TB, name string, qtype uint16, ttl uint32, val any) (rr dn
 	return rr
 }
 
-func TestServer_HandleDNSRequest_dns64(t *testing.T) {
+func TestServer_ServeDNS_dns64(t *testing.T) {
 	t.Parallel()
 
 	const (
@@ -101,7 +101,7 @@ func TestServer_HandleDNSRequest_dns64(t *testing.T) {
 	// a given question type.
 	type answerMap = map[uint16][sectionsNum][]dns.RR
 
-	pt := testutil.PanicT{}
+	pt := testutil.NewPanicT(t)
 
 	testCases := []struct {
 		name    string
