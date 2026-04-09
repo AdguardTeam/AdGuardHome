@@ -20,6 +20,7 @@ import (
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/AdguardTeam/golibs/testutil"
+	"github.com/AdguardTeam/golibs/testutil/servicetest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/bcrypt"
@@ -47,7 +48,7 @@ const (
 	testTargetStreamID = 3
 )
 
-// H2C upgrade headers.
+// h2c upgrade headers.
 //
 // TODO(a.garipov): Add to httphdr.
 const (
@@ -56,13 +57,20 @@ const (
 	headerHTTP2Settings = "HTTP2-Settings"
 )
 
-// H2C upgrade header values for tests.
+// h2c upgrade header values for tests.
 const (
 	testHeaderValueConnection = "Upgrade, HTTP2-Settings"
 	testHeaderValueUpgrade    = "h2c"
 )
 
-func TestWebAPI_H2CVulnerability(t *testing.T) {
+func TestWebAPI_h2cVulnerability(t *testing.T) {
+	storeGlobals(t)
+
+	stop := make(chan struct{})
+	t.Cleanup(func() {
+		testutil.RequireReceive(t, stop, testTimeout)
+	})
+
 	password := "password"
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	require.NoError(t, err)
@@ -112,22 +120,25 @@ func TestWebAPI_H2CVulnerability(t *testing.T) {
 	globalContext.queryLog = queryLog
 	globalContext.web = web
 
-	ctx := testutil.ContextWithTimeout(t, testTimeout)
-	err = queryLog.Start(ctx)
-	require.NoError(t, err)
+	servicetest.RequireRun(t, queryLog, testTimeout)
 	testutil.CleanupAndRequireSuccess(t, func() (err error) {
-		shutdownCtx := testutil.ContextWithTimeout(t, testTimeout)
+		ctx := testutil.ContextWithTimeout(t, testTimeout)
 
-		return queryLog.Shutdown(shutdownCtx)
+		return queryLog.Shutdown(ctx)
 	})
 
 	port := config.HTTPConfig.Address.Port()
 	host := fmt.Sprintf("%s:%d", netutil.IPv4Localhost(), port)
 
-	go web.start(ctx)
+	go func() {
+		ctx := testutil.ContextWithTimeout(t, testTimeout)
+		web.start(ctx)
+		close(stop)
+	}()
+
 	t.Cleanup(func() {
-		closeCtx := testutil.ContextWithTimeout(t, testTimeout)
-		web.close(closeCtx)
+		ctx := testutil.ContextWithTimeout(t, testTimeout)
+		web.close(ctx)
 	})
 
 	waitForWebAPIReady(t, user.Name, password, host)
@@ -215,8 +226,9 @@ func performH2CUpgradeAttack(tb testing.TB, host string) {
 }
 
 // performH2CSettingsExchange performs the HTTP2 settings exchange handshake. It
-// sends empty client settings, waits for acknowledgement, and then receives
-// the server settings and responds with acknowledgement.
+// sends empty client settings, waits for acknowledgement, and then receives the
+// server settings and responds with acknowledgement.  framer and writer must
+// not be nil.
 func performH2CSettingsExchange(tb testing.TB, framer *http2.Framer, writer *bufio.Writer) {
 	tb.Helper()
 
@@ -253,6 +265,7 @@ func performH2CSettingsExchange(tb testing.TB, framer *http2.Framer, writer *buf
 }
 
 // sendH2CRequest writes a request to a protected endpoint into the framer.
+// framer must not be nil.
 func sendH2CRequest(tb testing.TB, framer *http2.Framer, host string) {
 	tb.Helper()
 
@@ -278,7 +291,7 @@ func sendH2CRequest(tb testing.TB, framer *http2.Framer, host string) {
 	require.NoError(tb, err)
 }
 
-// readH2CResponse reads the response from an H2C connection and asserts that
+// readH2CResponse reads the response from an h2c connection and asserts that
 // the server responds with [http.StatusUnauthorized].
 func readH2CResponse(tb testing.TB, framer *http2.Framer) {
 	tb.Helper()

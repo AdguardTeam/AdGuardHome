@@ -133,39 +133,6 @@ func TestValidateCertificates(t *testing.T) {
 	})
 }
 
-// storeGlobals is a test helper function that saves global variables and
-// restores them once the test is complete.
-//
-// The global variables are:
-//   - [config]
-//   - [glFilePrefix]
-//   - [globalContext.auth]
-//   - [globalContext.clients.storage]
-//   - [globalContext.dnsServer]
-//   - [globalContext.firstRun]
-//   - [globalContext.mux]
-//   - [globalContext.web]
-//
-// TODO(s.chzhen):  Remove this once the TLS manager no longer accesses global
-// variables.  Make tests that use this helper concurrent.
-func storeGlobals(tb testing.TB) {
-	tb.Helper()
-
-	prevConfig := config
-	prefGLFilePrefix := glFilePrefix
-	storage := globalContext.clients.storage
-	dnsServer := globalContext.dnsServer
-	web := globalContext.web
-
-	tb.Cleanup(func() {
-		config = prevConfig
-		glFilePrefix = prefGLFilePrefix
-		globalContext.clients.storage = storage
-		globalContext.dnsServer = dnsServer
-		globalContext.web = web
-	})
-}
-
 // newCertWithoutIP generates a CA certificate, a leaf certificate without an IP
 // address, and the PEM-encoded leaf private key.
 func newCertWithoutIP(tb testing.TB) (
