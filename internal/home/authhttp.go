@@ -18,7 +18,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghuser"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/httphdr"
-	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/netutil/httputil"
@@ -82,18 +81,27 @@ func realIP(r *http.Request) (ip netip.Addr, err error) {
 }
 
 // writeErrorWithIP is like [aghhttp.Error], but includes the remote IP address
-// when it writes to the log.
-func writeErrorWithIP(
+// when it writes to the log.  r, w and err must not be nil.
+func (web *webAPI) writeErrorWithIP(
+	ctx context.Context,
+	err error,
 	r *http.Request,
 	w http.ResponseWriter,
 	code int,
 	remoteIP string,
-	format string,
-	args ...any,
 ) {
-	text := fmt.Sprintf(format, args...)
-	log.Error("%s %s %s: from ip %s: %s", r.Method, r.Host, r.URL, remoteIP, text)
-	http.Error(w, text, code)
+	web.logger.ErrorContext(
+		ctx,
+		"http error",
+		"host", r.Host,
+		"method", r.Method,
+		"url", r.URL,
+		"status", code,
+		"ip", remoteIP,
+		slogutil.KeyError, err,
+	)
+
+	http.Error(w, err.Error(), code)
 }
 
 // handleLogin is the handler for the POST /control/login HTTP API.
@@ -114,13 +122,13 @@ func (web *webAPI) handleLogin(w http.ResponseWriter, r *http.Request) {
 	//
 	// See https://github.com/AdguardTeam/AdGuardHome/issues/2799.
 	if remoteIPStr, err = netutil.SplitHost(r.RemoteAddr); err != nil {
-		writeErrorWithIP(
+		web.writeErrorWithIP(
+			ctx,
+			fmt.Errorf("auth: getting remote address: %w", err),
 			r,
 			w,
 			http.StatusBadRequest,
 			r.RemoteAddr,
-			"auth: getting remote address: %s",
-			err,
 		)
 
 		return
@@ -129,13 +137,13 @@ func (web *webAPI) handleLogin(w http.ResponseWriter, r *http.Request) {
 	if rateLimiter := web.auth.rateLimiter; rateLimiter != nil {
 		if left := rateLimiter.check(remoteIPStr); left > 0 {
 			w.Header().Set(httphdr.RetryAfter, strconv.Itoa(int(left.Seconds())))
-			writeErrorWithIP(
+			web.writeErrorWithIP(
+				ctx,
+				fmt.Errorf("auth: blocked for %s", left),
 				r,
 				w,
 				http.StatusTooManyRequests,
 				remoteIPStr,
-				"auth: blocked for %s",
-				left,
 			)
 
 			return
@@ -154,13 +162,13 @@ func (web *webAPI) handleLogin(w http.ResponseWriter, r *http.Request) {
 
 	remoteIP, err := netip.ParseAddr(remoteIPStr)
 	if err != nil {
-		writeErrorWithIP(
+		web.writeErrorWithIP(
+			ctx,
+			fmt.Errorf("auth: parsing remote address: %w", err),
 			r,
 			w,
 			http.StatusInternalServerError,
 			r.RemoteAddr,
-			"auth: parsing remote address: %s",
-			err,
 		)
 
 		return
@@ -173,7 +181,7 @@ func (web *webAPI) handleLogin(w http.ResponseWriter, r *http.Request) {
 
 	cookie, err := newCookie(ctx, web.auth, req, remoteIPStr)
 	if err != nil {
-		writeErrorWithIP(r, w, http.StatusForbidden, logIP, "%s", err)
+		web.writeErrorWithIP(ctx, err, r, w, http.StatusForbidden, logIP)
 
 		return
 	}
