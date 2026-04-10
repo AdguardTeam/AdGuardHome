@@ -18,7 +18,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/ioutil"
-	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/osutil/executil"
 	"github.com/kardianos/service"
 )
@@ -36,90 +35,80 @@ import (
 const sysVersion = "openbsd-runcom"
 
 // chooseSystem checks the current system detected and substitutes it with local
-// implementation if needed.  cmdCons must not be nil.
-func chooseSystem(_ context.Context, _ *slog.Logger, cmdCons executil.CommandConstructor) {
+// implementation if needed.  cmdCons and l must not be nil.
+func chooseSystem(_ context.Context, l *slog.Logger, cmdCons executil.CommandConstructor) {
 	service.ChooseSystem(&openbsdSystem{
 		cmdCons: cmdCons,
+		logger:  l,
 	})
 }
 
-// openbsdSystem is the service.System to be used on the OpenBSD.
+// openbsdSystem is an implementation of the [service.System] interface to be
+// used on the OpenBSD operating system.
 type openbsdSystem struct {
 	cmdCons executil.CommandConstructor
+	logger  *slog.Logger
 }
 
-// String implements service.System interface for openbsdSystem.
-func (sys *openbsdSystem) String() string {
+// type check
+var _ service.System = (*openbsdSystem)(nil)
+
+// String implements the [service.System] interface for *openbsdSystem.
+func (sys *openbsdSystem) String() (s string) {
 	return sysVersion
 }
 
-// Detect implements service.System interface for openbsdSystem.
+// Detect implements the [service.System] interface for *openbsdSystem.
 func (sys *openbsdSystem) Detect() (ok bool) {
 	return true
 }
 
-// Interactive implements service.System interface for openbsdSystem.
+// Interactive implements the [service.System] interface for *openbsdSystem.
 func (sys *openbsdSystem) Interactive() (ok bool) {
 	return os.Getppid() != 1
 }
 
-// New implements service.System interface for openbsdSystem.
-func (sys *openbsdSystem) New(i service.Interface, c *service.Config) (s service.Service, err error) {
+// New implements the [service.System] interface for *openbsdSystem.
+func (sys *openbsdSystem) New(
+	i service.Interface,
+	c *service.Config,
+) (s service.Service, err error) {
 	return &openbsdRunComService{
 		cmdCons: sys.cmdCons,
+		logger:  sys.logger,
 		i:       i,
 		cfg:     c,
 	}, nil
 }
 
-// openbsdRunComService is the RunCom-based service.Service to be used on the
-// OpenBSD.
+// openbsdRunComService is the RunCom-based [service.Service] interface
+// implementation to be used on the OpenBSD operating system.
 type openbsdRunComService struct {
 	cmdCons executil.CommandConstructor
 	i       service.Interface
 	cfg     *service.Config
+	logger  *slog.Logger
 }
 
-// Platform implements service.Service interface for *openbsdRunComService.
+// type check
+var _ service.Service = (*openbsdRunComService)(nil)
+
+// Platform implements the [service.Service] interface for *openbsdRunComService.
 func (*openbsdRunComService) Platform() (p string) {
 	return "openbsd"
 }
 
-// String implements service.Service interface for *openbsdRunComService.
-func (s *openbsdRunComService) String() string {
+// String implements the [service.Service] interface for *openbsdRunComService.
+func (s *openbsdRunComService) String() (str string) {
 	return cmp.Or(s.cfg.DisplayName, s.cfg.Name)
 }
 
-// getBool returns the value of the given name from kv, assuming the value is a
-// boolean.  If the value isn't found or is not of the type, the defaultValue is
-// returned.
-func getBool(kv service.KeyValue, name string, defaultValue bool) (val bool) {
-	var ok bool
-	if val, ok = kv[name].(bool); ok {
-		return val
-	}
-
-	return defaultValue
-}
-
-// getString returns the value of the given name from kv, assuming the value is
-// a string.  If the value isn't found or is not of the type, the defaultValue
-// is returned.
-func getString(kv service.KeyValue, name, defaultValue string) (val string) {
+// stringFromKV returns the value of the given name from kv, assuming the value
+// is a string.  If the value isn't found or is not of the type, the
+// defaultValue is returned.
+func stringFromKV(kv service.KeyValue, name, defaultValue string) (val string) {
 	var ok bool
 	if val, ok = kv[name].(string); ok {
-		return val
-	}
-
-	return defaultValue
-}
-
-// getFuncNiladic returns the value of the given name from kv, assuming the
-// value is a func().  If the value isn't found or is not of the type, the
-// defaultValue is returned.
-func getFuncNiladic(kv service.KeyValue, name string, defaultValue func()) (val func()) {
-	var ok bool
-	if val, ok = kv[name].(func()); ok {
 		return val
 	}
 
@@ -130,8 +119,8 @@ const (
 	// optionUserService is the UserService option name.
 	optionUserService = "UserService"
 
-	// optionUserServiceDefault is the UserService option default value.
-	optionUserServiceDefault = false
+	// optionSvcInfo is the name of the option associated with service info.
+	optionSvcInfo = "SvcInfo"
 
 	// errNoUserServiceRunCom is returned when the service uses some custom
 	// path to script.
@@ -141,7 +130,7 @@ const (
 // scriptPath returns the absolute path to the script.  It's commonly used to
 // send commands to the service.
 func (s *openbsdRunComService) scriptPath() (cp string, err error) {
-	if getBool(s.cfg.Option, optionUserService, optionUserServiceDefault) {
+	if usesCustomPath, ok := s.cfg.Option[optionUserService].(bool); ok && usesCustomPath {
 		return "", errNoUserServiceRunCom
 	}
 
@@ -178,11 +167,9 @@ func (s *openbsdRunComService) template() (t *template.Template) {
 		},
 	}
 
-	return template.Must(template.New("").Funcs(tf).Parse(getString(
-		s.cfg.Option,
-		optionRunComScript,
-		runComScript,
-	)))
+	script := stringFromKV(s.cfg.Option, optionRunComScript, runComScript)
+
+	return template.Must(template.New("").Funcs(tf).Parse(script))
 }
 
 // execPath returns the absolute path to the executable to be run as a service.
@@ -203,7 +190,7 @@ func (s *openbsdRunComService) annotate(action string, err error) (annotated err
 	return errors.Annotate(err, "%s %s %s service: %w", action, sysVersion, s.cfg.Name)
 }
 
-// Install implements service.Service interface for *openbsdRunComService.
+// Install implements the [service.Service] interface for *openbsdRunComService.
 func (s *openbsdRunComService) Install() (err error) {
 	defer func() { err = s.annotate("installing", err) }()
 
@@ -262,7 +249,7 @@ func (s *openbsdRunComService) writeScript() (err error) {
 	}{
 		Config:  s.cfg,
 		Path:    execPath,
-		SvcInfo: getString(s.cfg.Option, "SvcInfo", s.String()),
+		SvcInfo: stringFromKV(s.cfg.Option, optionSvcInfo, s.String()),
 	})
 	if err != nil {
 		return err
@@ -274,7 +261,7 @@ func (s *openbsdRunComService) writeScript() (err error) {
 	)
 }
 
-// Uninstall implements service.Service interface for *openbsdRunComService.
+// Uninstall implements the [service.Service] interface for *openbsdRunComService.
 func (s *openbsdRunComService) Uninstall() (err error) {
 	defer func() { err = s.annotate("uninstalling", err) }()
 
@@ -294,24 +281,22 @@ func (s *openbsdRunComService) Uninstall() (err error) {
 	return errors.Annotate(err, "removing rc.d script: %w")
 }
 
-// optionRunWait is the name of the option associated with function which waits
-// for the service to be stopped.
-const optionRunWait = "RunWait"
-
 // runWait is the default function to wait for service to be stopped.
 func runWait() {
 	sigChan := make(chan os.Signal, 3)
+
+	// TODO(m.kazantsev):  Replace with osutil interface.
 	signal.Notify(sigChan, syscall.SIGTERM, os.Interrupt)
 	<-sigChan
 }
 
-// Run implements service.Service interface for *openbsdRunComService.
+// Run implements the [service.Service] interface for *openbsdRunComService.
 func (s *openbsdRunComService) Run() (err error) {
 	if err = s.i.Start(s); err != nil {
 		return err
 	}
 
-	getFuncNiladic(s.cfg.Option, optionRunWait, runWait)()
+	runWait()
 
 	return s.i.Stop(s)
 }
@@ -320,6 +305,7 @@ func (s *openbsdRunComService) Run() (err error) {
 func (s *openbsdRunComService) runCom(cmd string) (out string, err error) {
 	var scriptPath string
 	if scriptPath, err = s.scriptPath(); err != nil {
+		// Don't wrap the error because it is informative as is.
 		return "", err
 	}
 
@@ -344,7 +330,7 @@ func (s *openbsdRunComService) runCom(cmd string) (out string, err error) {
 	return stdoutBuf.String(), nil
 }
 
-// Status implements service.Service interface for *openbsdRunComService.
+// Status implements the [service.Service] interface for *openbsdRunComService.
 func (s *openbsdRunComService) Status() (status service.Status, err error) {
 	defer func() { err = s.annotate("getting status of", err) }()
 
@@ -364,30 +350,31 @@ func (s *openbsdRunComService) Status() (status service.Status, err error) {
 	}
 }
 
-// Start implements service.Service interface for *openbsdRunComService.
+// Start implements the [service.Service] interface for *openbsdRunComService.
 func (s *openbsdRunComService) Start() (err error) {
 	_, err = s.runCom("start")
 
 	return s.annotate("starting", err)
 }
 
-// Stop implements service.Service interface for *openbsdRunComService.
+// Stop implements the [service.Service] interface for *openbsdRunComService.
 func (s *openbsdRunComService) Stop() (err error) {
 	_, err = s.runCom("stop")
 
 	return s.annotate("stopping", err)
 }
 
-// Restart implements service.Service interface for *openbsdRunComService.
+// Restart implements the [service.Service] interface for *openbsdRunComService.
 func (s *openbsdRunComService) Restart() (err error) {
 	if err = s.Stop(); err != nil {
+		// Don't wrap the error because it is informative as is.
 		return err
 	}
 
 	return s.Start()
 }
 
-// Logger implements service.Service interface for *openbsdRunComService.
+// Logger implements the [service.Service] interface for *openbsdRunComService.
 func (s *openbsdRunComService) Logger(errs chan<- error) (l service.Logger, err error) {
 	if service.ChosenSystem().Interactive() {
 		return service.ConsoleLogger, nil
@@ -396,58 +383,64 @@ func (s *openbsdRunComService) Logger(errs chan<- error) (l service.Logger, err 
 	return s.SystemLogger(errs)
 }
 
-// SystemLogger implements service.Service interface for *openbsdRunComService.
+// SystemLogger implements the [service.Service] interface for *openbsdRunComService.
 func (s *openbsdRunComService) SystemLogger(errs chan<- error) (l service.Logger, err error) {
-	return newSysLogger(s.cfg.Name, errs)
+	return newSysLogger(s.logger, s.cfg.Name, errs)
 }
 
-// newSysLogger returns a stub service.Logger implementation.
-func newSysLogger(_ string, _ chan<- error) (service.Logger, error) {
-	return sysLogger{}, nil
+// newSysLogger returns a the [service.Logger] interface implementation.
+func newSysLogger(l *slog.Logger, _ string, _ chan<- error) (sl service.Logger, err error) {
+	return &sysLogger{l: l}, nil
 }
 
-// sysLogger wraps calls of the logging functions understandable for service
+// sysLogger is an implementation of [service.Logger] interface that wraps calls
+// of the logging functions in a way that is understandable for service
 // interfaces.
-type sysLogger struct{}
+type sysLogger struct {
+	l *slog.Logger
+}
 
-// Error implements service.Logger interface for sysLogger.
-func (sysLogger) Error(v ...any) error {
-	log.Error("%s", fmt.Sprint(v...))
+// type check
+var _ service.Logger = (*sysLogger)(nil)
+
+// Error implements the [service.Logger] interface for sysLogger.
+func (s *sysLogger) Error(v ...any) (err error) {
+	s.l.Error(fmt.Sprint(v...))
 
 	return nil
 }
 
-// Warning implements service.Logger interface for sysLogger.
-func (sysLogger) Warning(v ...any) error {
-	log.Info("warning: %s", fmt.Sprint(v...))
+// Warning implements the [service.Logger] interface for sysLogger.
+func (s *sysLogger) Warning(v ...any) (err error) {
+	s.l.Warn(fmt.Sprint(v...))
 
 	return nil
 }
 
-// Info implements service.Logger interface for sysLogger.
-func (sysLogger) Info(v ...any) error {
-	log.Info("%s", fmt.Sprint(v...))
+// Info implements the [service.Logger] interface for sysLogger.
+func (s *sysLogger) Info(v ...any) (err error) {
+	s.l.Info(fmt.Sprint(v...))
 
 	return nil
 }
 
-// Errorf implements service.Logger interface for sysLogger.
-func (sysLogger) Errorf(format string, a ...any) error {
-	log.Error(format, a...)
+// Errorf implements the [service.Logger] interface for sysLogger.
+func (s *sysLogger) Errorf(format string, a ...any) (err error) {
+	s.l.Error(fmt.Sprintf(format, a...))
 
 	return nil
 }
 
-// Warningf implements service.Logger interface for sysLogger.
-func (sysLogger) Warningf(format string, a ...any) error {
-	log.Info("warning: %s", fmt.Sprintf(format, a...))
+// Warningf implements the [service.Logger] interface for sysLogger.
+func (s *sysLogger) Warningf(format string, a ...any) (err error) {
+	s.l.Warn(fmt.Sprintf(format, a...))
 
 	return nil
 }
 
-// Infof implements service.Logger interface for sysLogger.
-func (sysLogger) Infof(format string, a ...any) error {
-	log.Info(format, a...)
+// Infof implements the [service.Logger] interface for sysLogger.
+func (s *sysLogger) Infof(format string, a ...any) (err error) {
+	s.l.Info(fmt.Sprintf(format, a...))
 
 	return nil
 }
