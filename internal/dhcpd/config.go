@@ -281,10 +281,6 @@ type V6ServerConf struct {
 	leaseTime  time.Duration // the time during which a dynamic lease is considered valid
 	dnsIPAddrs []net.IP      // IPv6 addresses to return to DHCP clients as DNS server addresses
 
-	// skipDeprecatedLeaseRestore disables one-time restoration of deprecated
-	// prefixes from saved dynamic leases on startup.
-	skipDeprecatedLeaseRestore bool `yaml:"-" json:"-"`
-
 	// Server calls this function when leases data changes
 	notify func(uint32)
 }

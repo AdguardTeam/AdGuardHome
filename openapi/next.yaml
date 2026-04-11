@@ -2079,6 +2079,9 @@
             the prefix from the network interface and treats
             `ipv6_range_start` as a host template for the dynamic pool.
           'type': 'string'
+          'enum':
+            - 'static'
+            - 'interface'
         'ipv6_range_start':
           'description': >
             The start of the IPv6 addresses to serve to clients, or a host

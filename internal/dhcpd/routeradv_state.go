@@ -82,6 +82,99 @@ type raActiveChange struct {
 	Active  *raPrefixSnapshot
 }
 
+// raStateDigest is a lifetime-agnostic fingerprint of raState used to detect
+// changes that are not just the ordinary countdown of elapsed time.  Two
+// observations that produce equal digests describe the same kernel state and
+// should not trigger downstream reconciliation.
+type raStateDigest struct {
+	sourceAddr netip.Addr
+	rdnssAddr  netip.Addr
+	active     *trackedPrefixDigest
+	deprecated map[netip.Prefix]trackedPrefixDigest
+}
+
+// trackedPrefixDigest is the deadline-based fingerprint of one trackedPrefix.
+//
+// preferredExpired is a time-derived boolean that flips from false to true
+// exactly once during a natural countdown — the moment the prefix's preferred
+// lifetime reaches zero.  Without it, a prefix whose preferred lifetime
+// counts down while its absolute preferredUntil deadline stays put would
+// produce identical digests before and after it becomes non-renewable, so
+// downstream reconciliation (which rebuilds the v6Server renewablePrefixes
+// set) would never fire for that transition.
+type trackedPrefixDigest struct {
+	prefix            netip.Prefix
+	origin            raPrefixOrigin
+	fixedPreferredSec uint32
+	fixedValidSec     uint32
+	preferredUntil    time.Time
+	validUntil        time.Time
+	preferredExpired  bool
+}
+
+// digestTrackedPrefix returns the digest for tp at now.
+func digestTrackedPrefix(tp *trackedPrefix, now time.Time) trackedPrefixDigest {
+	preferred, _, _ := tp.remaining(now)
+
+	return trackedPrefixDigest{
+		prefix:            tp.prefix,
+		origin:            tp.origin,
+		fixedPreferredSec: tp.fixedPreferredSec,
+		fixedValidSec:     tp.fixedValidSec,
+		preferredUntil:    tp.preferredUntil,
+		validUntil:        tp.validUntil,
+		preferredExpired:  preferred == 0,
+	}
+}
+
+// digest returns the current state digest after evicting prefixes whose
+// lifetimes have already expired at now.
+func (s *raState) digest(now time.Time) (d raStateDigest) {
+	s.evictExpired(now)
+
+	d.sourceAddr = s.sourceAddr
+	d.rdnssAddr = s.rdnssAddr
+	if s.active != nil {
+		tmp := digestTrackedPrefix(s.active, now)
+		d.active = &tmp
+	}
+
+	d.deprecated = make(map[netip.Prefix]trackedPrefixDigest, len(s.deprecated))
+	for pref, tp := range s.deprecated {
+		d.deprecated[pref] = digestTrackedPrefix(tp, now)
+	}
+
+	return d
+}
+
+// sameRAStateDigest reports whether a and b describe the same state.
+func sameRAStateDigest(a, b raStateDigest) (ok bool) {
+	if a.sourceAddr != b.sourceAddr || a.rdnssAddr != b.rdnssAddr {
+		return false
+	}
+
+	if (a.active == nil) != (b.active == nil) {
+		return false
+	}
+
+	if a.active != nil && *a.active != *b.active {
+		return false
+	}
+
+	if len(a.deprecated) != len(b.deprecated) {
+		return false
+	}
+
+	for pref, digest := range a.deprecated {
+		other, ok := b.deprecated[pref]
+		if !ok || other != digest {
+			return false
+		}
+	}
+
+	return true
+}
+
 // newObservedRAState returns a new empty RA state for interface-derived
 // observations.
 func newObservedRAState() (st raState) {
@@ -122,7 +215,7 @@ func (s *raState) merge(obs raObservation, now time.Time) (change raActiveChange
 
 	switch {
 	case obs.Active != nil && s.active != nil && s.active.prefix == obs.Active.Prefix:
-		s.active = newTrackedPrefix(*obs.Active, raPrefixOriginObservedActive, now)
+		s.active = reconcileTrackedPrefix(s.active, *obs.Active, raPrefixOriginObservedActive, now)
 	case obs.Active != nil:
 		s.moveActiveToDeprecated(now)
 		s.active = newTrackedPrefix(*obs.Active, raPrefixOriginObservedActive, now)
@@ -154,18 +247,28 @@ func (s *raState) merge(obs raObservation, now time.Time) (change raActiveChange
 				continue
 			}
 
-			s.deprecated[dep.Prefix] = newTrackedPrefix(raPrefixSnapshot{
-				Prefix:       dep.Prefix,
-				PreferredSec: 0,
-				ValidSec:     valid,
-			}, raPrefixOriginDeprecated, now)
+			s.deprecated[dep.Prefix] = reconcileTrackedPrefix(
+				s.deprecated[dep.Prefix],
+				raPrefixSnapshot{
+					Prefix:       dep.Prefix,
+					PreferredSec: 0,
+					ValidSec:     valid,
+				},
+				raPrefixOriginDeprecated,
+				now,
+			)
 
 			continue
 		}
 
 		if dep.PreferredSec > 0 {
 			observedInactive[dep.Prefix] = struct{}{}
-			s.deprecated[dep.Prefix] = newTrackedPrefix(dep, raPrefixOriginObservedInactive, now)
+			s.deprecated[dep.Prefix] = reconcileTrackedPrefix(
+				s.deprecated[dep.Prefix],
+				dep,
+				raPrefixOriginObservedInactive,
+				now,
+			)
 
 			continue
 		}
@@ -180,11 +283,16 @@ func (s *raState) merge(obs raObservation, now time.Time) (change raActiveChange
 			continue
 		}
 
-		s.deprecated[dep.Prefix] = newTrackedPrefix(raPrefixSnapshot{
-			Prefix:       dep.Prefix,
-			PreferredSec: 0,
-			ValidSec:     valid,
-		}, raPrefixOriginDeprecated, now)
+		s.deprecated[dep.Prefix] = reconcileTrackedPrefix(
+			s.deprecated[dep.Prefix],
+			raPrefixSnapshot{
+				Prefix:       dep.Prefix,
+				PreferredSec: 0,
+				ValidSec:     valid,
+			},
+			raPrefixOriginDeprecated,
+			now,
+		)
 	}
 
 	for pref, tracked := range s.deprecated {
@@ -483,6 +591,48 @@ func newTrackedPrefix(
 	}
 
 	return tracked
+}
+
+// reconcileTrackedPrefix returns existing when its current countdown is
+// consistent with the freshly observed snap; otherwise it builds a new
+// tracked prefix from snap.  The consistency check tolerates a one-second
+// slack in either direction so that sub-second drift between the wall clock
+// of successive polls and the kernel's integer-second countdown does not
+// perturb the absolute deadlines and trip the state digest.
+func reconcileTrackedPrefix(
+	existing *trackedPrefix,
+	snap raPrefixSnapshot,
+	origin raPrefixOrigin,
+	now time.Time,
+) (tracked *trackedPrefix) {
+	if existing != nil && existing.prefix == snap.Prefix && existing.origin == origin {
+		preferred, valid, _ := existing.remaining(now)
+		if lifetimesConsistent(preferred, snap.PreferredSec) &&
+			lifetimesConsistent(valid, snap.ValidSec) {
+			return existing
+		}
+	}
+
+	return newTrackedPrefix(snap, origin, now)
+}
+
+// lifetimesConsistent reports whether an existing tracked-prefix remaining
+// lifetime and a freshly observed one describe the same kernel state.  Both
+// "infinity" values must match exactly, because an infinite lifetime is a
+// qualitatively different state from any finite one; finite values may differ
+// by at most one second to absorb sub-second polling jitter.
+func lifetimesConsistent(existing, observed uint32) (ok bool) {
+	if existing == observed {
+		return true
+	}
+	if existing == math.MaxUint32 || observed == math.MaxUint32 {
+		return false
+	}
+	if existing+1 == observed || observed+1 == existing {
+		return true
+	}
+
+	return false
 }
 
 // snapshot returns the current remaining lifetimes for p.

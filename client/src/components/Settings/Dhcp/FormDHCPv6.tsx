@@ -8,7 +8,7 @@ import {
     UINT32_RANGE,
 } from '../../../helpers/constants';
 import { validateIpv6, validateRequiredValue } from '../../../helpers/validators';
-import { DhcpFormValues } from '.';
+import { DhcpFormValues, hasMeaningfulV6Value, isInterfaceSLAACOnlyV6Config } from '.';
 import { Input } from '../../ui/Controls/Input';
 import { Select } from '../../ui/Controls/Select';
 import { toNumber } from '../../../helpers/form';
@@ -36,19 +36,12 @@ const FormDHCPv6 = ({ processingConfig, ipv6placeholders, interfaces, onSubmit }
     const interfaceName = watch('interface_name');
     const isInterfaceIncludesIpv6 = interfaces?.[interfaceName]?.ipv6_addresses;
     const prefixSource = watch('v6.prefix_source') ?? DHCP_V6_PREFIX_SOURCE_VALUES.STATIC;
-    const isRASLAACOnly = watch('v6.ra_slaac_only');
     const canConfigureV6 = Boolean(isInterfaceIncludesIpv6) || prefixSource === DHCP_V6_PREFIX_SOURCE_VALUES.INTERFACE;
-    const isInterfaceRASLAACOnly = (
-        prefixSource === DHCP_V6_PREFIX_SOURCE_VALUES.INTERFACE
-        && isRASLAACOnly
-    );
-    const shouldRequireRangeStart = !isInterfaceRASLAACOnly;
-    const shouldRequireLeaseDuration = !isInterfaceRASLAACOnly;
 
     const formValues = watch('v6');
-    const isEmptyConfig = !Object.entries(formValues || {}).some(
-        ([key, value]) => key !== 'prefix_source' && Boolean(value),
-    );
+    const isInterfaceRASLAACOnly = isInterfaceSLAACOnlyV6Config(formValues);
+    const isRequiredForPool = !isInterfaceRASLAACOnly;
+    const isEmptyConfig = !hasMeaningfulV6Value(formValues);
 
     const isDisabled = useMemo(() => {
         return isSubmitting || !isValid || processingConfig || !canConfigureV6 || isEmptyConfig;
@@ -99,7 +92,7 @@ const FormDHCPv6 = ({ processingConfig, ipv6placeholders, interfaces, onSubmit }
                                         validate: canConfigureV6
                                             ? {
                                                   ipv6: validateIpv6,
-                                                  required: shouldRequireRangeStart
+                                                  required: isRequiredForPool
                                                       ? validateRequiredValue
                                                       : undefined,
                                               }
@@ -157,7 +150,7 @@ const FormDHCPv6 = ({ processingConfig, ipv6placeholders, interfaces, onSubmit }
                         rules={{
                             validate: canConfigureV6
                                 ? {
-                                      required: shouldRequireLeaseDuration
+                                      required: isRequiredForPool
                                           ? validateRequiredValue
                                           : undefined,
                                   }

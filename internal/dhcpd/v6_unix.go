@@ -132,11 +132,14 @@ func (s *v6Server) ResetLeases(leases []*dhcpsvc.Lease) (err error) {
 		s.restoredDeprecated = nil
 	}
 
+	// Clear the occupancy bitmap along with the lease slice so that
+	// addresses from leases being replaced do not stay marked as used.
+	// addLease below re-marks the surviving entries via markLeaseOccupied.
 	s.leases = nil
+	s.ipAddrs = [256]byte{}
 	for _, l := range leases {
 		ip := net.IP(l.IP.AsSlice())
 		if !l.IsStatic && !s.keepInterfaceLeaseOnReset(l.IP, ip) {
-
 			log.Debug("dhcpv6: skipping a lease with IP %v: not within current IP range", l.IP)
 
 			continue
@@ -373,14 +376,6 @@ func (s *v6Server) addLease(l *dhcpsvc.Lease) {
 	log.Debug("dhcpv6: added lease %s <-> %s", l.IP, l.HWAddr)
 }
 
-// ipInCurrentPool reports whether ip belongs to the currently active pool.
-func (s *v6Server) ipInCurrentPool(ip netip.Addr) (ok bool) {
-	s.leasesLock.Lock()
-	defer s.leasesLock.Unlock()
-
-	return s.ipInCurrentPoolLocked(ip)
-}
-
 // ipInCurrentPoolLocked reports whether ip belongs to the currently active
 // pool.  s.leasesLock must be held.
 func (s *v6Server) ipInCurrentPoolLocked(ip netip.Addr) (ok bool) {
@@ -518,13 +513,6 @@ func (s *v6Server) reserveLease(mac net.HardwareAddr) *dhcpsvc.Lease {
 	return &l
 }
 
-func (s *v6Server) commitDynamicLease(l *dhcpsvc.Lease, lifetime time.Duration) {
-	l.Expiry = time.Now().Add(lifetime)
-
-	s.conf.notify(LeaseChangedDBStore)
-	s.conf.notify(LeaseChangedAdded)
-}
-
 // dnsIPAddrs returns the current DHCPv6 DNS server addresses.
 func (s *v6Server) dnsIPAddrs() (addrs []net.IP) {
 	s.dnsIPAddrsMu.RLock()
@@ -634,17 +622,6 @@ func renewableLeasePrefixes(advertised []prefixPIO) (prefixes map[netip.Prefix]s
 	return prefixes
 }
 
-// validUntilByPrefix returns the valid-lifetime deadlines for advertised /64
-// prefixes.
-func validUntilByPrefix(advertised []prefixPIO, now time.Time) (deadlines map[netip.Prefix]time.Time) {
-	deadlines = make(map[netip.Prefix]time.Time, len(advertised))
-	for _, p := range advertised {
-		deadlines[p.Prefix.Masked()] = deadlineFromRemaining(now, p.ValidSec)
-	}
-
-	return deadlines
-}
-
 // refreshDeadlineMap updates absolute prefix deadlines while preserving
 // existing deadlines when the remaining lifetime has not changed.
 func refreshDeadlineMap(
@@ -664,17 +641,6 @@ func refreshDeadlineMap(
 		}
 
 		deadlines[pref] = deadlineFromRemaining(now, target)
-	}
-
-	return deadlines
-}
-
-// preferredUntilByPrefix returns the preferred-lifetime deadlines for
-// advertised /64 prefixes.
-func preferredUntilByPrefix(advertised []prefixPIO, now time.Time) (deadlines map[netip.Prefix]time.Time) {
-	deadlines = make(map[netip.Prefix]time.Time, len(advertised))
-	for _, p := range advertised {
-		deadlines[p.Prefix.Masked()] = deadlineFromRemaining(now, p.PreferredSec)
 	}
 
 	return deadlines
@@ -790,38 +756,109 @@ func (s *v6Server) checkIA(msg *dhcpv6.Message, lease *dhcpsvc.Lease) error {
 	return nil
 }
 
-// Store lease in DB (if necessary) and return lease life time
-func (s *v6Server) commitLease(msg *dhcpv6.Message, lease *dhcpsvc.Lease) time.Duration {
-	lifetime := s.conf.leaseTime
+// commitLease computes the valid and preferred lifetimes to grant lease in a
+// reply to msg.  For Request/Renew/Rebind on renewable dynamic leases it also
+// updates lease.Expiry and enqueues a lease-change notification.  commitLease
+// acquires s.leasesLock internally; callers must not hold it.
+//
+// All of the per-prefix lookups (renewability, valid-until, preferred-until)
+// are read under a single critical section so that a concurrent observe tick
+// cannot swap the state halfway through the computation.
+func (s *v6Server) commitLease(
+	msg *dhcpv6.Message,
+	lease *dhcpsvc.Lease,
+) (lifetime, preferredLifetime time.Duration) {
+	s.leasesLock.Lock()
+	lifetime, preferredLifetime, shouldNotify := s.commitLeaseLocked(time.Now(), msg, lease)
+	s.leasesLock.Unlock()
+
+	if shouldNotify {
+		s.conf.notify(LeaseChangedDBStore)
+		s.conf.notify(LeaseChangedAdded)
+	}
+
+	return lifetime, preferredLifetime
+}
+
+// commitLeaseLocked is the locked portion of commitLease.  s.leasesLock must
+// be held.
+func (s *v6Server) commitLeaseLocked(
+	now time.Time,
+	msg *dhcpv6.Message,
+	lease *dhcpsvc.Lease,
+) (lifetime, preferredLifetime time.Duration, shouldNotify bool) {
+	leaseTime := s.conf.leaseTime
+
+	// Snapshot the prefix-tracking state that the computations below depend
+	// on so they all agree about which view of the prefix we are acting
+	// under.
+	prefix := netip.PrefixFrom(lease.IP, raObservedPrefixBits).Masked()
+	renewable := !lease.IsStatic && leasePrefixRenewable(s.renewablePrefixes, lease.IP)
+	validUntil, hasValidUntil := s.validUntilByPrefix[prefix]
+	preferredUntil, hasPreferredUntil := s.preferredUntilByPrefix[prefix]
+
+	// renewableLifetime is the lifetime we would grant a fresh lease,
+	// capped by the prefix's remaining valid lifetime when tracking data is
+	// available.
+	renewableLifetime := leaseTime
+	if hasValidUntil {
+		capped := time.Duration(remainingUntil(now, validUntil)) * time.Second
+		renewableLifetime = min(renewableLifetime, capped)
+	}
+
+	// deprecatedLifetime is the remaining lifetime we are willing to honor
+	// for an existing lease whose prefix is no longer renewable.
+	var deprecatedLifetime time.Duration
+	if hasValidUntil {
+		validForPrefix := time.Duration(remainingUntil(now, validUntil)) * time.Second
+		validForLease := max(time.Until(lease.Expiry), 0)
+		deprecatedLifetime = min(validForLease, validForPrefix)
+	}
+
+	// Default valid lifetime used for Solicit and any non-special cases.
+	lifetime = leaseTime
 
 	switch msg.Type() {
-	case dhcpv6.MessageTypeSolicit:
-		//
-
 	case dhcpv6.MessageTypeConfirm:
 		switch {
 		case lease.IsStatic:
-			lifetime = s.conf.leaseTime
-		case s.leaseIsRenewable(lease.IP):
-			lifetime = min(max(time.Until(lease.Expiry), 0), s.renewableLeaseLifetime(lease.IP))
+			lifetime = leaseTime
+		case renewable:
+			lifetime = min(max(time.Until(lease.Expiry), 0), renewableLifetime)
 		default:
-			lifetime = s.deprecatedLeaseLifetime(lease.IP, lease.Expiry)
+			lifetime = deprecatedLifetime
 		}
 
 	case dhcpv6.MessageTypeRequest,
 		dhcpv6.MessageTypeRenew,
 		dhcpv6.MessageTypeRebind:
 
-		if !lease.IsStatic {
-			if s.leaseIsRenewable(lease.IP) {
-				lifetime = s.renewableLeaseLifetime(lease.IP)
-				s.commitDynamicLease(lease, lifetime)
-			} else {
-				lifetime = s.deprecatedLeaseLifetime(lease.IP, lease.Expiry)
-			}
+		switch {
+		case lease.IsStatic:
+			lifetime = leaseTime
+		case renewable:
+			lifetime = renewableLifetime
+			lease.Expiry = now.Add(lifetime)
+			shouldNotify = true
+		default:
+			lifetime = deprecatedLifetime
 		}
 	}
-	return lifetime
+
+	// Derive preferred lifetime from the same snapshot.
+	switch {
+	case lease.IsStatic:
+		preferredLifetime = lifetime
+	case !renewable:
+		preferredLifetime = 0
+	case hasPreferredUntil:
+		preferredForPrefix := time.Duration(remainingUntil(now, preferredUntil)) * time.Second
+		preferredLifetime = min(lifetime, preferredForPrefix)
+	default:
+		preferredLifetime = lifetime
+	}
+
+	return lifetime, preferredLifetime, shouldNotify
 }
 
 // requestedIP returns the IPv6 address requested by msg, if any.
@@ -895,76 +932,6 @@ func canServeDeprecatedLease(
 	}
 }
 
-// leaseIsRenewable reports whether a dynamic lease on ip should be refreshed
-// with the full DHCP lifetime.
-func (s *v6Server) leaseIsRenewable(ip netip.Addr) (ok bool) {
-	s.leasesLock.Lock()
-	defer s.leasesLock.Unlock()
-
-	return leasePrefixRenewable(s.renewablePrefixes, ip)
-}
-
-// renewableLeaseLifetime returns the lifetime to grant to a renewable lease on
-// ip.
-func (s *v6Server) renewableLeaseLifetime(ip netip.Addr) (lifetime time.Duration) {
-	s.leasesLock.Lock()
-	defer s.leasesLock.Unlock()
-
-	pref := netip.PrefixFrom(ip, raObservedPrefixBits).Masked()
-	until, ok := s.validUntilByPrefix[pref]
-	if !ok {
-		return s.conf.leaseTime
-	}
-
-	validForPrefix := time.Duration(remainingUntil(time.Now(), until)) * time.Second
-
-	return min(s.conf.leaseTime, validForPrefix)
-}
-
-// deprecatedLeaseLifetime returns the remaining valid lifetime for a
-// non-renewable lease on ip, capped by the currently advertised prefix
-// lifetime.
-func (s *v6Server) deprecatedLeaseLifetime(ip netip.Addr, leaseExpiry time.Time) (lifetime time.Duration) {
-	s.leasesLock.Lock()
-	defer s.leasesLock.Unlock()
-
-	pref := netip.PrefixFrom(ip, raObservedPrefixBits).Masked()
-	until, ok := s.validUntilByPrefix[pref]
-	if !ok {
-		return 0
-	}
-
-	validForPrefix := time.Duration(remainingUntil(time.Now(), until)) * time.Second
-	validForLease := max(time.Until(leaseExpiry), 0)
-
-	return min(validForLease, validForPrefix)
-}
-
-// preferredLeaseLifetime returns the preferred lifetime to encode in DHCPv6
-// replies for lease.
-func (s *v6Server) preferredLeaseLifetime(lease *dhcpsvc.Lease, validLifetime time.Duration) time.Duration {
-	if !lease.IsStatic && !s.leaseIsRenewable(lease.IP) {
-		return 0
-	}
-
-	if lease.IsStatic {
-		return validLifetime
-	}
-
-	s.leasesLock.Lock()
-	defer s.leasesLock.Unlock()
-
-	pref := netip.PrefixFrom(lease.IP, raObservedPrefixBits).Masked()
-	until, ok := s.preferredUntilByPrefix[pref]
-	if !ok {
-		return validLifetime
-	}
-
-	preferredForPrefix := time.Duration(remainingUntil(time.Now(), until)) * time.Second
-
-	return min(validLifetime, preferredForPrefix)
-}
-
 // leaseNotExpired reports whether lease is still valid at the time of the
 // request.  Zero expiries are treated as not yet committed.
 func leaseNotExpired(lease *dhcpsvc.Lease) (ok bool) {
@@ -1023,8 +990,7 @@ func (s *v6Server) process(msg *dhcpv6.Message, req, resp dhcpv6.DHCPv6) bool {
 		return false
 	}
 
-	lifetime := s.commitLease(msg, lease)
-	preferredLifetime := s.preferredLeaseLifetime(lease, lifetime)
+	lifetime, preferredLifetime := s.commitLease(msg, lease)
 
 	oia := &dhcpv6.OptIANA{
 		T1: lifetime / 2,
@@ -1249,6 +1215,15 @@ func (s *v6Server) observeRAState(ctx context.Context) (obs raObservation, err e
 }
 
 // trackedPrefixChanged updates the effective DHCPv6 pool start from active.
+//
+// An active prefix whose preferred lifetime has already reached zero is
+// treated as unavailable for new leases.  If another advertised prefix still
+// has a non-zero preferred lifetime, the pool is moved there immediately;
+// otherwise the pool is set to nil so new Solicit/Request pairs cannot reserve
+// addresses on a prefix we would then have to answer with a zero-lifetime
+// Reply.  Existing leases on deprecated prefixes are still honored via the
+// deprecated-lease path in [v6Server.findUsableLease] and
+// [v6Server.commitLease].
 func (s *v6Server) trackedPrefixChanged(active *raPrefixSnapshot, advertised []prefixPIO) (err error) {
 	if !s.conf.NeedsDHCPv6Pool() {
 		s.setTrackedRangeStart(nil, advertised)
@@ -1256,13 +1231,14 @@ func (s *v6Server) trackedPrefixChanged(active *raPrefixSnapshot, advertised []p
 		return nil
 	}
 
-	if active == nil {
+	poolPrefix, ok := renewablePoolPrefix(active, advertised)
+	if !ok {
 		s.setTrackedRangeStart(nil, advertised)
 
 		return nil
 	}
 
-	ipStart, err := deriveTrackedRangeStart(s.conf.RangeStart, active.Prefix)
+	ipStart, err := deriveTrackedRangeStart(s.conf.RangeStart, poolPrefix)
 	if err != nil {
 		return err
 	}
@@ -1270,6 +1246,21 @@ func (s *v6Server) trackedPrefixChanged(active *raPrefixSnapshot, advertised []p
 	s.setTrackedRangeStart(ipStart, advertised)
 
 	return nil
+}
+
+// renewablePoolPrefix returns the prefix to use for new DHCPv6 allocations.
+func renewablePoolPrefix(active *raPrefixSnapshot, advertised []prefixPIO) (prefix netip.Prefix, ok bool) {
+	if active != nil && active.PreferredSec > 0 {
+		return active.Prefix, true
+	}
+
+	for _, pio := range advertised {
+		if pio.PreferredSec > 0 {
+			return pio.Prefix, true
+		}
+	}
+
+	return netip.Prefix{}, false
 }
 
 // setTrackedRangeStart updates the effective DHCPv6 pool start and removes
@@ -1293,12 +1284,12 @@ func (s *v6Server) setTrackedRangeStart(ipStart net.IP, advertised []prefixPIO) 
 	validUntil := refreshDeadlineMap(s.validUntilByPrefix, advertised, now, func(p prefixPIO) uint32 {
 		return p.ValidSec
 	})
+
 	s.conf.ipStart = bytes.Clone(ipStart)
 	s.advertisedPrefixes = keepPrefixes
 	s.renewablePrefixes = renewable
 	s.preferredUntilByPrefix = preferredUntil
 	s.validUntilByPrefix = validUntil
-	s.ipAddrs = [256]byte{}
 
 	activePrefix := netip.Prefix{}
 	if len(ipStart) == net.IPv6len {
@@ -1306,6 +1297,14 @@ func (s *v6Server) setTrackedRangeStart(ipStart net.IP, advertised []prefixPIO) 
 			activePrefix = netip.PrefixFrom(addr, raObservedPrefixBits).Masked()
 		}
 	}
+
+	// Always clear and rebuild the occupancy bitmap from the surviving
+	// leases.  Callers such as ResetLeases replace s.leases wholesale
+	// without touching s.ipAddrs, and an earlier version of this function
+	// that skipped the rebuild when ipStart happened to be unchanged
+	// left stale bits from dropped leases behind, which made the pool
+	// appear exhausted long after those addresses had been released.
+	s.ipAddrs = [256]byte{}
 
 	removed := 0
 	updated := false
@@ -1394,11 +1393,26 @@ func (s *v6Server) restoreDeprecatedPrefixes(now time.Time, st *raState) {
 		}
 	} else if len(observedRenewable) > 0 {
 		return
-	} else if len(st.pios(now)) == 0 {
-		return
 	}
 
 	advertised := advertisedLeasePrefixes(st.pios(now))
+	if len(advertised) == 0 {
+		return
+	}
+
+	if len(s.restoredRenewable) == 0 {
+		overlap := false
+		for pref := range advertised {
+			if _, ok := s.restoredDeprecated[pref]; ok {
+				overlap = true
+				break
+			}
+		}
+		if !overlap {
+			return
+		}
+	}
+
 	for pref, until := range s.restoredDeprecated {
 		if _, ok := advertised[pref]; ok {
 			continue
@@ -1521,17 +1535,28 @@ func (s *v6Server) Start(ctx context.Context) (err error) {
 
 		initial = newObservedRAState()
 
+		// Fail fast on initial-observation errors in interface mode.
+		// The rest of the server depends on having at least one
+		// observed prefix to bootstrap ipStart, advertisedPrefixes and
+		// the deadline maps; without them reserveLease can't allocate
+		// addresses and findUsableLease can't renew existing leases,
+		// so swallowing the error here would bring DHCPv6 up as
+		// "enabled" while silently refusing to hand out or renew
+		// anything.  Transient errors are rare compared to permanent
+		// environment misconfigurations (missing ifconfig, netlink
+		// denied, wrong interface, cancelled context) and surfacing
+		// them at Start() is how an operator notices.
 		obs, obsErr := s.observeRAState(ctx)
 		if obsErr != nil {
 			return fmt.Errorf("observing initial ipv6 prefix state: %w", obsErr)
-		} else {
-			now := time.Now()
-			initial.merge(obs, now)
-			s.restoreDeprecatedPrefixes(now, &initial)
-			if pios := initial.pios(now); len(pios) > 0 {
-				if err = s.trackedPrefixChanged(initial.activeSnapshot(now), pios); err != nil {
-					return fmt.Errorf("updating tracked range start: %w", err)
-				}
+		}
+
+		now := time.Now()
+		initial.merge(obs, now)
+		s.restoreDeprecatedPrefixes(now, &initial)
+		if pios := initial.pios(now); len(pios) > 0 {
+			if err = s.trackedPrefixChanged(initial.activeSnapshot(now), pios); err != nil {
+				return fmt.Errorf("updating tracked range start: %w", err)
 			}
 		}
 
@@ -1617,6 +1642,17 @@ func (s *v6Server) Stop() (err error) {
 func v6Create(conf V6ServerConf) (DHCPServer, error) {
 	s := &v6Server{}
 	conf.PrefixSource = conf.NormalizedPrefixSource()
+
+	// Defense in depth: clear internal runtime fields that may have been
+	// populated from a previously-running server (for example via
+	// [v6Server.WriteDiskConfig6]).  The values are (re)initialized from
+	// the user-facing configuration below and at Start() time, so letting
+	// stale values through here would allow DHCPv6 to hand out leases
+	// from an old prefix if interface mode is still waiting for its first
+	// successful observation.
+	conf.ipStart = nil
+	conf.dnsIPAddrs = nil
+	conf.leaseTime = 0
 	s.conf = conf
 
 	err := conf.ValidatePrefixSource()

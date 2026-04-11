@@ -491,6 +491,176 @@ func TestV6TrackedPrefixChanged_SLAACOnlyUpdatesMetadata(t *testing.T) {
 	assert.Contains(t, s.renewablePrefixes, netip.MustParsePrefix("2001:db8::/64"))
 }
 
+// TestV6TrackedPrefixChanged_PreferredExpiredActiveDisablesPool is a
+// regression test for a bug where the preferredExpired digest fix would fire
+// onActivePrefixChange with an active snapshot whose preferred lifetime had
+// already reached zero.  trackedPrefixChanged used to derive ipStart from
+// that prefix and leave the DHCPv6 pool pointing at it, so new clients could
+// reserve an address and then receive a Reply with a zero valid lifetime
+// from commitLease.  The fix treats PreferredSec==0 as "no pool" even when
+// the prefix is still advertised.
+func TestV6TrackedPrefixChanged_PreferredExpiredActiveDisablesPool(t *testing.T) {
+	s := &v6Server{
+		conf: V6ServerConf{
+			PrefixSource: V6PrefixSourceInterface,
+			RangeStart:   net.ParseIP("fd00::1234:5678:9abc:de00"),
+			notify:       notify6,
+		},
+	}
+
+	err := s.trackedPrefixChanged(&raPrefixSnapshot{
+		Prefix:       netip.MustParsePrefix("2001:db8::/64"),
+		PreferredSec: 0,
+		ValidSec:     3600,
+	}, []prefixPIO{{
+		Prefix:       netip.MustParsePrefix("2001:db8::/64"),
+		PreferredSec: 0,
+		ValidSec:     3600,
+	}})
+	require.NoError(t, err)
+
+	assert.Nil(t, s.conf.ipStart)
+	assert.Empty(t, s.renewablePrefixes)
+	assert.Contains(t, s.advertisedPrefixes, netip.MustParsePrefix("2001:db8::/64"))
+	// The valid-lifetime deadline is still tracked so existing leases can
+	// age out against it via the deprecated-lease path in commitLease.
+	assert.Contains(t, s.validUntilByPrefix, netip.MustParsePrefix("2001:db8::/64"))
+}
+
+func TestV6TrackedPrefixChanged_PreferredExpiredActiveFallsBackToRenewablePrefix(t *testing.T) {
+	s := &v6Server{
+		conf: V6ServerConf{
+			PrefixSource: V6PrefixSourceInterface,
+			RangeStart:   net.ParseIP("fd00::1234:5678:9abc:de00"),
+			notify:       notify6,
+		},
+	}
+
+	err := s.trackedPrefixChanged(&raPrefixSnapshot{
+		Prefix:       netip.MustParsePrefix("2001:db8::/64"),
+		PreferredSec: 0,
+		ValidSec:     3600,
+	}, []prefixPIO{{
+		Prefix:       netip.MustParsePrefix("2001:db8::/64"),
+		PreferredSec: 0,
+		ValidSec:     3600,
+	}, {
+		Prefix:       netip.MustParsePrefix("2001:db8:1::/64"),
+		PreferredSec: 1800,
+		ValidSec:     3600,
+	}})
+	require.NoError(t, err)
+
+	assert.Equal(t, net.ParseIP("2001:db8:1::1234:5678:9abc:de00"), s.conf.ipStart)
+	assert.Contains(t, s.renewablePrefixes, netip.MustParsePrefix("2001:db8:1::/64"))
+}
+
+// TestV6SetTrackedRangeStart_RebuildsBitmapWhenPrefixUnchanged is a
+// regression test for a bug where setTrackedRangeStart would skip the
+// ipAddrs rebuild when the tracked prefix had not moved.  In that case,
+// occupancy bits for dropped leases — including leases removed by a prior
+// ResetLeases that also does not touch ipAddrs — stayed marked forever,
+// making the pool appear exhausted.
+func TestV6SetTrackedRangeStart_RebuildsBitmapWhenPrefixUnchanged(t *testing.T) {
+	s := &v6Server{
+		conf: V6ServerConf{
+			ipStart: net.ParseIP("2001:db8::10"),
+			notify:  notify6,
+		},
+	}
+	// Simulate stale bitmap state left behind by ResetLeases: an
+	// occupancy bit is set for 0x10 (the only lease) and for 0x20 (a
+	// lease that was removed from s.leases but whose bit never got
+	// cleared by a previous code path).
+	s.ipAddrs[0x10] = 1
+	s.ipAddrs[0x20] = 1
+	s.leases = []*dhcpsvc.Lease{{
+		IP:     netip.MustParseAddr("2001:db8::10"),
+		HWAddr: net.HardwareAddr{0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa},
+		Expiry: time.Now().Add(time.Hour),
+	}}
+
+	// setTrackedRangeStart with the same ipStart must still rebuild the
+	// bitmap from s.leases, clearing the stale 0x20 bit.
+	s.setTrackedRangeStart(net.ParseIP("2001:db8::10"), []prefixPIO{{
+		Prefix:       netip.MustParsePrefix("2001:db8::/64"),
+		PreferredSec: 1800,
+		ValidSec:     3600,
+	}})
+
+	assert.Equal(t, byte(1), s.ipAddrs[0x10])
+	assert.Equal(t, byte(0), s.ipAddrs[0x20])
+}
+
+// TestV6ResetLeases_ClearsOccupancyBitmap guards against a latent bug where
+// ResetLeases replaced s.leases but left s.ipAddrs untouched.  After this
+// sequence a subsequent reserveLease call must be able to allocate the
+// previously-occupied slot.
+func TestV6ResetLeases_ClearsOccupancyBitmap(t *testing.T) {
+	s := &v6Server{
+		conf: V6ServerConf{
+			ipStart:   net.ParseIP("2001:db8::10"),
+			leaseTime: time.Hour,
+			notify:    notify6,
+		},
+	}
+	// Two existing dynamic leases plus their bitmap bits.
+	s.leases = []*dhcpsvc.Lease{{
+		IP:     netip.MustParseAddr("2001:db8::10"),
+		HWAddr: net.HardwareAddr{0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa},
+		Expiry: time.Now().Add(time.Hour),
+	}, {
+		IP:     netip.MustParseAddr("2001:db8::11"),
+		HWAddr: net.HardwareAddr{0xbb, 0xbb, 0xbb, 0xbb, 0xbb, 0xbb},
+		Expiry: time.Now().Add(time.Hour),
+	}}
+	s.ipAddrs[0x10] = 1
+	s.ipAddrs[0x11] = 1
+
+	// ResetLeases replaces the set with empty.  The old occupancy bits
+	// must not survive.
+	err := s.ResetLeases(nil)
+	require.NoError(t, err)
+	assert.Empty(t, s.leases)
+	assert.Equal(t, byte(0), s.ipAddrs[0x10])
+	assert.Equal(t, byte(0), s.ipAddrs[0x11])
+
+	// And a fresh reserve must succeed rather than hit NoAddrsAvail due
+	// to stranded bits.
+	lease := s.reserveLease(net.HardwareAddr{0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc})
+	require.NotNil(t, lease)
+	assert.Equal(t, netip.MustParseAddr("2001:db8::10"), lease.IP)
+}
+
+// TestV6ReserveLease_FailsWhenPreferredExpiredActiveDisabledPool pairs with
+// the previous test to make sure that, after the pool is disabled,
+// reserveLease refuses to hand out a fresh address (so a Solicit from a new
+// client returns NoAddrsAvail instead of a zero-lifetime lease).
+func TestV6ReserveLease_FailsWhenPreferredExpiredActiveDisabledPool(t *testing.T) {
+	s := &v6Server{
+		conf: V6ServerConf{
+			PrefixSource: V6PrefixSourceInterface,
+			RangeStart:   net.ParseIP("fd00::1234:5678:9abc:de00"),
+			leaseTime:    time.Hour,
+			notify:       notify6,
+		},
+	}
+
+	err := s.trackedPrefixChanged(&raPrefixSnapshot{
+		Prefix:       netip.MustParsePrefix("2001:db8::/64"),
+		PreferredSec: 0,
+		ValidSec:     3600,
+	}, []prefixPIO{{
+		Prefix:       netip.MustParsePrefix("2001:db8::/64"),
+		PreferredSec: 0,
+		ValidSec:     3600,
+	}})
+	require.NoError(t, err)
+
+	lease := s.reserveLease(net.HardwareAddr{0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff})
+	assert.Nil(t, lease)
+}
+
 func TestRequiresProcessSuccess(t *testing.T) {
 	assert.True(t, requiresProcessSuccess(dhcpv6.MessageTypeSolicit))
 	assert.True(t, requiresProcessSuccess(dhcpv6.MessageTypeRenew))
@@ -773,9 +943,10 @@ func TestV6CommitLease_DeprecatedDynamicLeaseKeepsRemainingLifetime(t *testing.T
 	require.NoError(t, err)
 	msg.MessageType = dhcpv6.MessageTypeRenew
 
-	lifetime := s.commitLease(msg, lease)
+	lifetime, preferred := s.commitLease(msg, lease)
 	assert.Greater(t, lifetime, 9*time.Minute)
 	assert.LessOrEqual(t, lifetime, 10*time.Minute)
+	assert.Equal(t, time.Duration(0), preferred)
 }
 
 func TestV6CommitLease_DeprecatedLeaseCappedByPrefixValidLifetime(t *testing.T) {
@@ -798,9 +969,10 @@ func TestV6CommitLease_DeprecatedLeaseCappedByPrefixValidLifetime(t *testing.T) 
 	require.NoError(t, err)
 	msg.MessageType = dhcpv6.MessageTypeRenew
 
-	lifetime := s.commitLease(msg, lease)
+	lifetime, preferred := s.commitLease(msg, lease)
 	assert.Greater(t, lifetime, time.Minute)
 	assert.LessOrEqual(t, lifetime, 2*time.Minute)
+	assert.Equal(t, time.Duration(0), preferred)
 }
 
 func TestV6CommitLease_DeprecatedConfirmCappedByPrefixValidLifetime(t *testing.T) {
@@ -823,9 +995,10 @@ func TestV6CommitLease_DeprecatedConfirmCappedByPrefixValidLifetime(t *testing.T
 	require.NoError(t, err)
 	msg.MessageType = dhcpv6.MessageTypeConfirm
 
-	lifetime := s.commitLease(msg, lease)
+	lifetime, preferred := s.commitLease(msg, lease)
 	assert.Greater(t, lifetime, time.Minute)
 	assert.LessOrEqual(t, lifetime, 90*time.Second)
+	assert.Equal(t, time.Duration(0), preferred)
 }
 
 func TestV6CommitLease_StaticConfirmUsesConfiguredLeaseTime(t *testing.T) {
@@ -845,17 +1018,22 @@ func TestV6CommitLease_StaticConfirmUsesConfiguredLeaseTime(t *testing.T) {
 	require.NoError(t, err)
 	msg.MessageType = dhcpv6.MessageTypeConfirm
 
-	lifetime := s.commitLease(msg, lease)
+	lifetime, preferred := s.commitLease(msg, lease)
 	assert.Equal(t, 24*time.Hour, lifetime)
+	assert.Equal(t, 24*time.Hour, preferred)
 }
 
-func TestV6PreferredLeaseLifetime_DeprecatedLeaseUsesZeroPreferredLifetime(t *testing.T) {
+func TestV6CommitLease_DeprecatedLeaseUsesZeroPreferredLifetime(t *testing.T) {
 	s := &v6Server{
 		conf: V6ServerConf{
-			ipStart: net.ParseIP("2001:db8:1::10"),
+			ipStart:   net.ParseIP("2001:db8:1::10"),
+			leaseTime: time.Hour,
 		},
 		advertisedPrefixes: map[netip.Prefix]struct{}{
 			netip.MustParsePrefix("2001:db8::/64"): {},
+		},
+		validUntilByPrefix: map[netip.Prefix]time.Time{
+			netip.MustParsePrefix("2001:db8::/64"): time.Now().Add(10 * time.Minute),
 		},
 	}
 
@@ -865,7 +1043,11 @@ func TestV6PreferredLeaseLifetime_DeprecatedLeaseUsesZeroPreferredLifetime(t *te
 		Expiry: time.Now().Add(10 * time.Minute),
 	}
 
-	preferred := s.preferredLeaseLifetime(lease, 10*time.Minute)
+	msg, err := dhcpv6.NewMessage()
+	require.NoError(t, err)
+	msg.MessageType = dhcpv6.MessageTypeRenew
+
+	_, preferred := s.commitLease(msg, lease)
 	assert.Equal(t, time.Duration(0), preferred)
 }
 
@@ -892,9 +1074,10 @@ func TestV6CommitLease_SecondaryRenewablePrefixGetsFullLifetime(t *testing.T) {
 	require.NoError(t, err)
 	msg.MessageType = dhcpv6.MessageTypeRenew
 
-	lifetime := s.commitLease(msg, lease)
+	lifetime, preferred := s.commitLease(msg, lease)
 	assert.Greater(t, lifetime, 29*time.Minute)
 	assert.LessOrEqual(t, lifetime, 30*time.Minute)
+	assert.Equal(t, lifetime, preferred)
 }
 
 func TestV6RestoreDeprecatedPrefixes(t *testing.T) {
@@ -1000,6 +1183,32 @@ func TestV6RestoreDeprecatedPrefixes_WithoutRenewablePrefixesNeedsObservedPrefix
 
 	pios := st.pios(now)
 	require.Empty(t, pios)
+}
+
+func TestV6RestoreDeprecatedPrefixes_WithoutRenewablePrefixesNeedsDeprecatedOverlap(t *testing.T) {
+	now := time.Unix(400, 0)
+	s := &v6Server{
+		restoredDeprecated: map[netip.Prefix]time.Time{
+			netip.MustParsePrefix("2001:db8::/64"):   now.Add(30 * time.Minute),
+			netip.MustParsePrefix("2001:db8:1::/64"): now.Add(20 * time.Minute),
+		},
+	}
+
+	st := newObservedRAState()
+	st.merge(raObservation{
+		Inactive: []raPrefixSnapshot{{
+			Prefix:       netip.MustParsePrefix("2001:db8::/64"),
+			PreferredSec: 0,
+			ValidSec:     1200,
+		}},
+	}, now)
+
+	s.restoreDeprecatedPrefixes(now, &st)
+
+	pios := st.pios(now)
+	require.Len(t, pios, 2)
+	assert.Equal(t, netip.MustParsePrefix("2001:db8::/64"), pios[0].Prefix)
+	assert.Equal(t, netip.MustParsePrefix("2001:db8:1::/64"), pios[1].Prefix)
 }
 
 func TestV6RestoreDeprecatedPrefixes_RequiresFullRenewableMatch(t *testing.T) {
@@ -1213,4 +1422,55 @@ func TestV6SetTrackedRangeStart_FiltersLeasesBelowNewHostTemplate(t *testing.T) 
 
 	require.Len(t, s.leases, 1)
 	assert.Equal(t, netip.MustParseAddr("2001:db8::90"), s.leases[0].IP)
+}
+
+// TestV6CommitLease_SnapshotAfterLockDrop reproduces the TOCTOU window between
+// commitLease's renewable-check and the subsequent lifetime computation that
+// used to re-acquire the lock: a concurrent setTrackedRangeStart that removes
+// the prefix before the second lookup must not see the lease handed a
+// "renewable" lifetime for a no-longer-renewable prefix.
+func TestV6CommitLease_SnapshotAfterLockDrop(t *testing.T) {
+	now := time.Now()
+	s := &v6Server{
+		conf: V6ServerConf{
+			ipStart:   net.ParseIP("2001:db8::10"),
+			leaseTime: time.Hour,
+			notify:    notify6,
+		},
+		advertisedPrefixes: map[netip.Prefix]struct{}{
+			netip.MustParsePrefix("2001:db8::/64"): {},
+		},
+		renewablePrefixes: map[netip.Prefix]struct{}{
+			netip.MustParsePrefix("2001:db8::/64"): {},
+		},
+		validUntilByPrefix: map[netip.Prefix]time.Time{
+			netip.MustParsePrefix("2001:db8::/64"): now.Add(45 * time.Minute),
+		},
+		preferredUntilByPrefix: map[netip.Prefix]time.Time{
+			netip.MustParsePrefix("2001:db8::/64"): now.Add(30 * time.Minute),
+		},
+	}
+
+	lease := &dhcpsvc.Lease{
+		IP:     netip.MustParseAddr("2001:db8::10"),
+		HWAddr: net.HardwareAddr{0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa},
+		Expiry: now.Add(10 * time.Minute),
+	}
+
+	msg, err := dhcpv6.NewMessage()
+	require.NoError(t, err)
+	msg.MessageType = dhcpv6.MessageTypeRenew
+
+	lifetime, preferred := s.commitLease(msg, lease)
+	// Capped by remaining valid lifetime of the prefix (~45m), not leaseTime (1h).
+	assert.Greater(t, lifetime, 44*time.Minute)
+	assert.LessOrEqual(t, lifetime, 45*time.Minute)
+	// Preferred lifetime comes from the same snapshot and is capped by the
+	// prefix's remaining preferred lifetime (~30m).
+	assert.Greater(t, preferred, 29*time.Minute)
+	assert.LessOrEqual(t, preferred, 30*time.Minute)
+	// The lease expiry must have been updated consistently with the
+	// returned lifetime (data race regression test for l.Expiry mutation
+	// without the lock).
+	assert.InDelta(t, lifetime.Seconds(), time.Until(lease.Expiry).Seconds(), 2.0)
 }

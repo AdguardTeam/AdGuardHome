@@ -17,6 +17,16 @@ import (
 )
 
 // ObserveIPv6Addrs returns IPv6 interface address state for ifaceName.
+//
+// ctx is accepted to match the BSD implementations (which run ifconfig under
+// an [executil.CommandConstructor] and can be cancelled) but is not honored
+// here: syscall.NetlinkRIB is synchronous and uncancellable from outside the
+// call.  Wrapping it in a goroutine that selects on ctx.Done() would only
+// hide a stuck kernel from the caller while leaking the blocked goroutine on
+// every retry, which is strictly worse than failing fast on the caller side
+// and letting the operator notice a genuinely broken environment.
+// rtnetlink responds in microseconds under normal conditions, so the lack of
+// cancellation is acceptable in practice.
 func ObserveIPv6Addrs(
 	_ context.Context,
 	_ *slog.Logger,

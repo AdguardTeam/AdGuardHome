@@ -93,24 +93,23 @@ const DEFAULT_V6_VALUES = {
     lease_duration: undefined,
 };
 
-const isInterfaceSLAACOnlyV6Config = (v6Config: IPv6FormValues) => (
-    v6Config?.prefix_source === DHCP_V6_PREFIX_SOURCE_VALUES.INTERFACE
-    && v6Config?.ra_slaac_only
-);
+export const isInterfaceSLAACOnlyV6Config = (v6Config: IPv6FormValues) =>
+    v6Config?.prefix_source === DHCP_V6_PREFIX_SOURCE_VALUES.INTERFACE && Boolean(v6Config?.ra_slaac_only);
 
-const hasMeaningfulV6Value = (v6Config: IPv6FormValues) =>
+// V6_CONFIG_METADATA_KEYS are the IPv6 form fields that describe how the rest
+// of the configuration should be interpreted, rather than being DHCPv6 inputs
+// themselves.  They do not count as "meaningful" values on their own.
+const V6_CONFIG_METADATA_KEYS = new Set(['prefix_source', 'ra_slaac_only']);
+
+export const hasMeaningfulV6Value = (v6Config: IPv6FormValues) =>
     isInterfaceSLAACOnlyV6Config(v6Config)
-    || (
-    Object.entries(v6Config || {}).some(([key, value]) => (
-        key !== 'prefix_source'
-        && key !== 'ra_slaac_only'
-        && Boolean(value)
-    )));
+    || Object.entries(v6Config || {}).some(
+        ([key, value]) => !V6_CONFIG_METADATA_KEYS.has(key) && Boolean(value),
+    );
 
 const isFilledV6Config = (v6Config: IPv6FormValues) =>
     Object.entries(v6Config || {}).every(([key, value]) => (
-        key === 'prefix_source'
-        || key === 'ra_slaac_only'
+        V6_CONFIG_METADATA_KEYS.has(key)
         || (
             (key === 'range_start' || key === 'lease_duration')
             && isInterfaceSLAACOnlyV6Config(v6Config)

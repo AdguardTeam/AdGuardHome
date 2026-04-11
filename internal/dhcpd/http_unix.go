@@ -54,26 +54,29 @@ type v6ServerConfJSON struct {
 	PrefixSource  *V6PrefixSource `json:"prefix_source"`
 }
 
+// v6JSONToServerConf returns a fresh [V6ServerConf] that holds only the
+// user-facing DHCPv6 configuration.  Fields absent from j fall back to the
+// corresponding values in cur; internal runtime state (ipStart, dnsIPAddrs,
+// leaseTime) is deliberately *not* carried over because cur is typically the
+// live server configuration returned by [v6Server.WriteDiskConfig6], and
+// reusing those stale values in a newly-created server would cause
+// interface-mode DHCPv6 to hand out leases from the previous prefix until the
+// next observation tick.
 func v6JSONToServerConf(j *v6ServerConfJSON, cur V6ServerConf) V6ServerConf {
-	if j == nil {
-		cur.PrefixSource = cur.NormalizedPrefixSource()
-
-		return cur
-	}
-
 	prefixSource := cur.NormalizedPrefixSource()
-	if j.PrefixSource != nil {
-		prefixSource = *j.PrefixSource
-	}
-
 	rangeStart := cur.RangeStart
-	if j.RangeStart != nil {
-		rangeStart = j.RangeStart.AsSlice()
-	}
-
 	leaseDuration := cur.LeaseDuration
-	if j.LeaseDuration != nil {
-		leaseDuration = *j.LeaseDuration
+
+	if j != nil {
+		if j.PrefixSource != nil {
+			prefixSource = *j.PrefixSource
+		}
+		if j.RangeStart != nil {
+			rangeStart = j.RangeStart.AsSlice()
+		}
+		if j.LeaseDuration != nil {
+			leaseDuration = *j.LeaseDuration
+		}
 	}
 
 	return V6ServerConf{

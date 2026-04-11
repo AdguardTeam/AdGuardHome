@@ -332,3 +332,140 @@ func TestRAStateMerge_DisappearingInactiveBecomesDeprecated(t *testing.T) {
 	assert.Equal(t, uint32(0), pios[1].PreferredSec)
 	assert.Equal(t, uint32(3540), pios[1].ValidSec)
 }
+
+// TestRAStateMerge_PreservesDeadlinesUnderSubSecondJitter is the regression
+// test for a bug where raState.merge would rebuild trackedPrefix deadlines
+// from "now + observed_seconds" on every observation.  When "now" advances by
+// a fractional second between polls, the absolute deadlines drifted even
+// though the kernel state was identical, which made the state digest look
+// changed and fired the v6Server reconciliation callback on every tick.
+//
+// The fix reconciles the existing tracked prefix against the fresh
+// observation: when the remaining lifetimes are consistent (allowing a
+// one-second slack), the existing pointer is kept so deadlines stay stable.
+func TestRAStateMerge_PreservesDeadlinesUnderSubSecondJitter(t *testing.T) {
+	st := newObservedRAState()
+
+	// First poll at a non-whole-second offset.
+	t1 := time.Unix(100, 500_000_000)
+	st.merge(raObservation{
+		Active: &raPrefixSnapshot{
+			Prefix:       netip.MustParsePrefix("2001:db8::/64"),
+			PreferredSec: 1800,
+			ValidSec:     3600,
+		},
+		Inactive: []raPrefixSnapshot{{
+			Prefix:       netip.MustParsePrefix("fd00::/64"),
+			PreferredSec: 600,
+			ValidSec:     2400,
+		}},
+	}, t1)
+
+	firstActive := st.active
+	firstInactive := st.deprecated[netip.MustParsePrefix("fd00::/64")]
+	require.NotNil(t, firstActive)
+	require.NotNil(t, firstInactive)
+
+	firstActivePreferredUntil := firstActive.preferredUntil
+	firstActiveValidUntil := firstActive.validUntil
+	firstInactivePreferredUntil := firstInactive.preferredUntil
+	firstInactiveValidUntil := firstInactive.validUntil
+
+	// Second poll 5.3 wall-clock seconds later.  The kernel has decremented
+	// its integer counters by 5 whole seconds so the remaining lifetimes
+	// are still consistent with the stored deadlines modulo the sub-second
+	// offset.
+	t2 := time.Unix(105, 800_000_000)
+	st.merge(raObservation{
+		Active: &raPrefixSnapshot{
+			Prefix:       netip.MustParsePrefix("2001:db8::/64"),
+			PreferredSec: 1795,
+			ValidSec:     3595,
+		},
+		Inactive: []raPrefixSnapshot{{
+			Prefix:       netip.MustParsePrefix("fd00::/64"),
+			PreferredSec: 595,
+			ValidSec:     2395,
+		}},
+	}, t2)
+
+	// Reconciliation must keep the same trackedPrefix instance and leave
+	// its deadlines untouched.
+	require.Same(t, firstActive, st.active)
+	require.Same(t, firstInactive, st.deprecated[netip.MustParsePrefix("fd00::/64")])
+	assert.Equal(t, firstActivePreferredUntil, st.active.preferredUntil)
+	assert.Equal(t, firstActiveValidUntil, st.active.validUntil)
+	assert.Equal(t, firstInactivePreferredUntil, st.deprecated[netip.MustParsePrefix("fd00::/64")].preferredUntil)
+	assert.Equal(t, firstInactiveValidUntil, st.deprecated[netip.MustParsePrefix("fd00::/64")].validUntil)
+
+	// And the full state digests must compare equal.
+	d1 := raStateDigest{
+		sourceAddr: netip.Addr{},
+		rdnssAddr:  netip.Addr{},
+		active: &trackedPrefixDigest{
+			prefix:         netip.MustParsePrefix("2001:db8::/64"),
+			origin:         raPrefixOriginObservedActive,
+			preferredUntil: firstActivePreferredUntil,
+			validUntil:     firstActiveValidUntil,
+		},
+		deprecated: map[netip.Prefix]trackedPrefixDigest{
+			netip.MustParsePrefix("fd00::/64"): {
+				prefix:         netip.MustParsePrefix("fd00::/64"),
+				origin:         raPrefixOriginObservedInactive,
+				preferredUntil: firstInactivePreferredUntil,
+				validUntil:     firstInactiveValidUntil,
+			},
+		},
+	}
+	d2 := st.digest(t2)
+	assert.True(t, sameRAStateDigest(d1, d2))
+}
+
+// TestRAStateMerge_RealLifetimeChangeStillRebuildsDeadlines ensures that the
+// slack in reconcileTrackedPrefix does not hide a real kernel state change
+// that happens to also be a steady countdown — the previous poll's deadline
+// must be replaced when the kernel report diverges by more than one second.
+func TestRAStateMerge_RealLifetimeChangeStillRebuildsDeadlines(t *testing.T) {
+	st := newObservedRAState()
+	t1 := time.Unix(100, 0)
+	st.merge(raObservation{
+		Active: &raPrefixSnapshot{
+			Prefix:       netip.MustParsePrefix("2001:db8::/64"),
+			PreferredSec: 1800,
+			ValidSec:     3600,
+		},
+	}, t1)
+
+	firstActive := st.active
+	require.NotNil(t, firstActive)
+
+	// 5 wall-clock seconds pass but the kernel reports the lifetime jumped
+	// *forward* — some upstream sent a fresh RA that extended the prefix.
+	// The trackedPrefix must be rebuilt so the new deadline takes effect.
+	t2 := time.Unix(105, 0)
+	st.merge(raObservation{
+		Active: &raPrefixSnapshot{
+			Prefix:       netip.MustParsePrefix("2001:db8::/64"),
+			PreferredSec: 3000,
+			ValidSec:     7000,
+		},
+	}, t2)
+
+	assert.NotSame(t, firstActive, st.active)
+	assert.Equal(t, t2.Add(3000*time.Second), st.active.preferredUntil)
+	assert.Equal(t, t2.Add(7000*time.Second), st.active.validUntil)
+}
+
+// TestLifetimesConsistent spot-checks the slack predicate that backs
+// reconcileTrackedPrefix.
+func TestLifetimesConsistent(t *testing.T) {
+	assert.True(t, lifetimesConsistent(1800, 1800))
+	assert.True(t, lifetimesConsistent(1800, 1799))
+	assert.True(t, lifetimesConsistent(1799, 1800))
+	assert.False(t, lifetimesConsistent(1800, 1798))
+	assert.False(t, lifetimesConsistent(1798, 1800))
+	assert.False(t, lifetimesConsistent(math.MaxUint32, 1800))
+	assert.False(t, lifetimesConsistent(1800, math.MaxUint32))
+	assert.True(t, lifetimesConsistent(math.MaxUint32, math.MaxUint32))
+	assert.True(t, lifetimesConsistent(0, 0))
+}

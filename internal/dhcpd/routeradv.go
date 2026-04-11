@@ -74,9 +74,8 @@ type raCtx struct {
 	// observation merge and before change detection.
 	onStateRefresh func(now time.Time, st *raState)
 
-	state              raState
-	lastActiveSnapshot *raPrefixSnapshot
-	lastAdvertised     []prefixPIO
+	state      raState
+	lastDigest raStateDigest
 
 	cancel func()
 	wg     sync.WaitGroup
@@ -203,9 +202,7 @@ func (ra *raCtx) sendingEnabled() (ok bool) {
 func (ra *raCtx) Init(initial raState) (err error) {
 	ra.state = initial
 	ra.conn = nil
-	now := time.Now()
-	ra.lastActiveSnapshot = clonePrefixSnapshot(initial.activeSnapshot(now))
-	ra.lastAdvertised = clonePIOs(initial.pios(now))
+	ra.lastDigest = ra.state.digest(time.Now())
 
 	if !ra.sendingEnabled() && ra.observe == nil {
 		return nil
@@ -257,18 +254,22 @@ func (ra *raCtx) ensureConn(sourceAddr netip.Addr) (err error) {
 	}
 
 	ipAndScope := sourceAddr.String() + "%" + ra.ifaceName
-	ra.conn, err = icmp.ListenPacket("ip6:ipv6-icmp", ipAndScope)
+	newConn, err := icmp.ListenPacket("ip6:ipv6-icmp", ipAndScope)
 	if err != nil {
 		return fmt.Errorf("dhcpv6 ra: icmp.ListenPacket: %w", err)
 	}
 
 	defer func() {
 		if err != nil {
-			err = errors.WithDeferred(err, ra.conn.Close())
+			// Close the new listener and make sure it is not observable
+			// through ra.conn after the error path runs.
+			err = errors.WithDeferred(err, newConn.Close())
+			ra.conn = nil
+			ra.connSourceAddr = netip.Addr{}
 		}
 	}()
 
-	con6 := ra.conn.IPv6PacketConn()
+	con6 := newConn.IPv6PacketConn()
 	if err = con6.SetHopLimit(255); err != nil {
 		return fmt.Errorf("dhcpv6 ra: SetHopLimit: %w", err)
 	}
@@ -277,6 +278,7 @@ func (ra *raCtx) ensureConn(sourceAddr netip.Addr) (err error) {
 		return fmt.Errorf("dhcpv6 ra: SetMulticastHopLimit: %w", err)
 	}
 
+	ra.conn = newConn
 	ra.connSourceAddr = sourceAddr
 
 	return nil
@@ -336,13 +338,13 @@ func (ra *raCtx) refresh(ctx context.Context) {
 	if ra.onStateRefresh != nil {
 		ra.onStateRefresh(now, &ra.state)
 	}
-	ra.syncStateChange(now, true)
+	ra.syncStateChange(now)
 }
 
 // sendPacket rebuilds and sends the current Router Advertisement packet.
 func (ra *raCtx) sendPacket() {
 	now := time.Now()
-	ra.syncStateChange(now, false)
+	ra.syncStateChange(now)
 
 	sourceAddr, rdnssAddr := ra.state.sourceAndRDNSS()
 	err := ra.ensureConn(sourceAddr)
@@ -417,62 +419,21 @@ func tickerC(t *time.Ticker) (c <-chan time.Time) {
 	return t.C
 }
 
-// syncStateChange updates the DHCPv6-facing state if the active prefix or the
-// advertised prefix set changed.  When compareLifetimes is true, preferred and
-// valid lifetime changes are treated as state changes as well.
-func (ra *raCtx) syncStateChange(now time.Time, compareLifetimes bool) {
-	active := ra.state.activeSnapshot(now)
-	advertised := ra.state.pios(now)
-	changed := !sameActivePrefix(ra.lastActiveSnapshot, active) ||
-		!sameAdvertisedPIOSet(ra.lastAdvertised, advertised, compareLifetimes)
-
-	ra.lastActiveSnapshot = clonePrefixSnapshot(active)
-	ra.lastAdvertised = clonePIOs(advertised)
+// syncStateChange notifies the DHCPv6-facing callback when the underlying RA
+// state has changed in a way that is not just the ordinary countdown of
+// elapsed time.  The comparison uses a deadline-based digest of the tracked
+// prefixes, so repeated polls that only observe the kernel counting lifetimes
+// down do not spuriously fire the callback.
+func (ra *raCtx) syncStateChange(now time.Time) {
+	digest := ra.state.digest(now)
+	changed := !sameRAStateDigest(ra.lastDigest, digest)
+	ra.lastDigest = digest
 
 	if !changed || ra.onActivePrefixChange == nil {
 		return
 	}
 
+	active := ra.state.activeSnapshot(now)
+	advertised := ra.state.pios(now)
 	ra.onActivePrefixChange(active, advertised)
-}
-
-// sameAdvertisedPIOSet reports whether a and b advertise the same set of
-// prefixes.  When compareLifetimes is true, preferred and valid lifetime
-// changes are also treated as differences.
-func sameAdvertisedPIOSet(a, b []prefixPIO, compareLifetimes bool) (ok bool) {
-	if len(a) != len(b) {
-		return false
-	}
-
-	for i := range a {
-		if a[i].Prefix != b[i].Prefix {
-			return false
-		}
-		if compareLifetimes &&
-			(a[i].PreferredSec != b[i].PreferredSec || a[i].ValidSec != b[i].ValidSec) {
-			return false
-		}
-	}
-
-	return true
-}
-
-// clonePrefixSnapshot returns a shallow clone of snap.
-func clonePrefixSnapshot(snap *raPrefixSnapshot) (cloned *raPrefixSnapshot) {
-	if snap == nil {
-		return nil
-	}
-
-	clone := *snap
-
-	return &clone
-}
-
-// clonePIOs returns a shallow clone of pios.
-func clonePIOs(pios []prefixPIO) (cloned []prefixPIO) {
-	if pios == nil {
-		return nil
-	}
-
-	return slices.Clone(pios)
 }

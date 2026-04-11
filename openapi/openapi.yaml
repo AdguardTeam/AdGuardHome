@@ -2058,6 +2058,9 @@
             interface and treats `range_start` as a host template for the
             dynamic pool.
           'type': 'string'
+          'enum':
+            - 'static'
+            - 'interface'
         'range_start':
           'description': >
             The first IPv6 address for dynamic leases, or a host template when
