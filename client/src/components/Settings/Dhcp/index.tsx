@@ -5,7 +5,7 @@ import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import classNames from 'classnames';
 
 import { FormProvider, useForm } from 'react-hook-form';
-import { DHCP_DESCRIPTION_PLACEHOLDERS, STATUS_RESPONSE } from '../../../helpers/constants';
+import { DHCP_DESCRIPTION_PLACEHOLDERS, DHCP_V6_PREFIX_SOURCE_VALUES, STATUS_RESPONSE } from '../../../helpers/constants';
 
 import Leases from './Leases';
 
@@ -49,6 +49,8 @@ type IPv4FormValues = {
 }
 
 type IPv6FormValues = {
+    prefix_source?: string;
+    ra_slaac_only?: boolean;
     range_start?: string;
     range_end?: string;
     lease_duration?: number;
@@ -84,10 +86,37 @@ const DEFAULT_V4_VALUES = {
 };
 
 const DEFAULT_V6_VALUES = {
+    prefix_source: DHCP_V6_PREFIX_SOURCE_VALUES.STATIC,
+    ra_slaac_only: false,
     range_start: '',
     range_end: '',
     lease_duration: undefined,
 };
+
+const isInterfaceSLAACOnlyV6Config = (v6Config: IPv6FormValues) => (
+    v6Config?.prefix_source === DHCP_V6_PREFIX_SOURCE_VALUES.INTERFACE
+    && v6Config?.ra_slaac_only
+);
+
+const hasMeaningfulV6Value = (v6Config: IPv6FormValues) =>
+    isInterfaceSLAACOnlyV6Config(v6Config)
+    || (
+    Object.entries(v6Config || {}).some(([key, value]) => (
+        key !== 'prefix_source'
+        && key !== 'ra_slaac_only'
+        && Boolean(value)
+    )));
+
+const isFilledV6Config = (v6Config: IPv6FormValues) =>
+    Object.entries(v6Config || {}).every(([key, value]) => (
+        key === 'prefix_source'
+        || key === 'ra_slaac_only'
+        || (
+            (key === 'range_start' || key === 'lease_duration')
+            && isInterfaceSLAACOnlyV6Config(v6Config)
+        )
+        || Boolean(value)
+    ));
 
 const Dhcp = () => {
     const { t } = useTranslation();
@@ -204,11 +233,11 @@ const Dhcp = () => {
 
     const enteredSomeV4Value = Object.values(v4).some(Boolean);
 
-    const enteredSomeV6Value = Object.values(v6).some(Boolean);
+    const enteredSomeV6Value = hasMeaningfulV6Value(v6);
     const enteredSomeValue = enteredSomeV4Value || enteredSomeV6Value || interfaceName;
 
     const getToggleDhcpButton = () => {
-        const filledConfig = interface_name && (Object.values(v4).every(Boolean) || Object.values(v6).every(Boolean));
+        const filledConfig = interface_name && (Object.values(v4).every(Boolean) || isFilledV6Config(v6));
 
         const className = classNames('btn btn-sm', {
             'btn-gray': enabled,

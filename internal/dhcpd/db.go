@@ -34,6 +34,21 @@ type dataLeases struct {
 
 	// Leases is the list containing stored DHCP leases.
 	Leases []*dbLease `json:"leases"`
+
+	// V6Meta contains persisted IPv6 prefix-tracking metadata.
+	V6Meta *dataLeasesV6Meta `json:"v6_meta,omitempty"`
+}
+
+// dataLeasesV6Meta is the persisted IPv6 prefix-tracking metadata.
+type dataLeasesV6Meta struct {
+	Deprecated []*dbDeprecatedPrefix `json:"deprecated_prefixes,omitempty"`
+	Renewable  []netip.Prefix        `json:"renewable_prefixes,omitempty"`
+}
+
+// dbDeprecatedPrefix is one persisted deprecated IPv6 prefix and its expiry.
+type dbDeprecatedPrefix struct {
+	Prefix     netip.Prefix `json:"prefix"`
+	ValidUntil string       `json:"valid_until"`
 }
 
 // dbLease is the structure of stored lease.
@@ -136,6 +151,32 @@ func (s *server) dbLoad() (err error) {
 		if err != nil {
 			return fmt.Errorf("resetting dhcpv6 leases: %w", err)
 		}
+		if dl.V6Meta != nil {
+			if srv6, ok := s.srv6.(*v6Server); ok {
+				renewable := map[netip.Prefix]struct{}{}
+				for _, pref := range dl.V6Meta.Renewable {
+					renewable[pref] = struct{}{}
+				}
+
+				deprecated := map[netip.Prefix]time.Time{}
+				for _, dp := range dl.V6Meta.Deprecated {
+					if dp == nil {
+						continue
+					}
+
+					until, parseErr := time.Parse(time.RFC3339, dp.ValidUntil)
+					if parseErr != nil {
+						log.Info("dhcp: invalid v6 deprecated prefix %s: %s", dp.Prefix, parseErr)
+
+						continue
+					}
+
+					deprecated[dp.Prefix] = until
+				}
+
+				srv6.setRestoredPrefixMeta(renewable, deprecated)
+			}
+		}
 	}
 
 	log.Info(
@@ -153,22 +194,52 @@ func (s *server) dbStore() (err error) {
 	// Use an empty slice here as opposed to nil so that it doesn't write
 	// "null" into the database file if leases are empty.
 	leases := []*dbLease{}
+	var v6Meta *dataLeasesV6Meta
 
 	for _, l := range s.srv4.getLeasesRef() {
 		leases = append(leases, fromLease(l))
 	}
 
 	if s.srv6 != nil {
-		for _, l := range s.srv6.getLeasesRef() {
-			leases = append(leases, fromLease(l))
+		if srv6, ok := s.srv6.(*v6Server); ok {
+			leases6, renewable, deprecated := srv6.dbSnapshot(time.Now())
+			for _, l := range leases6 {
+				leases = append(leases, fromLease(l))
+			}
+			if len(renewable) > 0 || len(deprecated) > 0 {
+				v6Meta = &dataLeasesV6Meta{
+					Renewable: make([]netip.Prefix, 0, len(renewable)),
+				}
+				for pref := range renewable {
+					v6Meta.Renewable = append(v6Meta.Renewable, pref)
+				}
+				slices.SortFunc(v6Meta.Renewable, prefixCompare)
+
+				if len(deprecated) > 0 {
+					v6Meta.Deprecated = make([]*dbDeprecatedPrefix, 0, len(deprecated))
+					for pref, until := range deprecated {
+						v6Meta.Deprecated = append(v6Meta.Deprecated, &dbDeprecatedPrefix{
+							Prefix:     pref,
+							ValidUntil: until.Format(time.RFC3339),
+						})
+					}
+					slices.SortFunc(v6Meta.Deprecated, func(a, b *dbDeprecatedPrefix) int {
+						return prefixCompare(a.Prefix, b.Prefix)
+					})
+				}
+			}
+		} else {
+			for _, l := range s.srv6.getLeasesRef() {
+				leases = append(leases, fromLease(l))
+			}
 		}
 	}
 
-	return writeDB(s.conf.dbFilePath, leases)
+	return writeDB(s.conf.dbFilePath, leases, v6Meta)
 }
 
 // writeDB writes leases to file at path.
-func writeDB(path string, leases []*dbLease) (err error) {
+func writeDB(path string, leases []*dbLease, v6Meta *dataLeasesV6Meta) (err error) {
 	defer func() { err = errors.Annotate(err, "writing db: %w") }()
 
 	slices.SortFunc(leases, func(a, b *dbLease) (res int) {
@@ -178,6 +249,7 @@ func writeDB(path string, leases []*dbLease) (err error) {
 	dl := &dataLeases{
 		Version: dataVersion,
 		Leases:  leases,
+		V6Meta:  v6Meta,
 	}
 
 	buf, err := json.Marshal(dl)

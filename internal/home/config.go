@@ -595,6 +595,7 @@ var config = &configuration{
 		},
 		Conf6: dhcpd.V6ServerConf{
 			LeaseDuration: dhcpd.DefaultDHCPLeaseTTL,
+			PrefixSource:  dhcpd.V6PrefixSourceStatic,
 		},
 	},
 	Clients: &clientsConfig{

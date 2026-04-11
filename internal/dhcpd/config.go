@@ -240,11 +240,26 @@ func (c *V4ServerConf) Validate() (err error) {
 	return nil
 }
 
+// V6PrefixSource is the source of the IPv6 prefix used for Router
+// Advertisements and, when DHCPv6 is enabled, the dynamic lease pool.
+type V6PrefixSource string
+
+// V6PrefixSource values.
+const (
+	V6PrefixSourceStatic    V6PrefixSource = "static"
+	V6PrefixSourceInterface V6PrefixSource = "interface"
+)
+
 // V6ServerConf - server configuration
 type V6ServerConf struct {
 	// Logger is used for logging the operation of the DHCPv6 server.  It must
 	// not be nil.
 	Logger *slog.Logger `yaml:"-" json:"-"`
+
+	// CommandConstructor is used to run external commands required to observe
+	// IPv6 interface state on platforms without a native API.  It must not be
+	// nil.
+	CommandConstructor executil.CommandConstructor `yaml:"-" json:"-"`
 
 	Enabled       bool   `yaml:"-" json:"-"`
 	InterfaceName string `yaml:"-" json:"-"`
@@ -253,15 +268,63 @@ type V6ServerConf struct {
 	// The last allowed IP address ends with 0xff byte
 	RangeStart net.IP `yaml:"range_start" json:"range_start"`
 
+	// PrefixSource defines how Router Advertisement prefixes should be chosen.
+	// If it is empty, the configured static prefix semantics are used.
+	PrefixSource V6PrefixSource `yaml:"prefix_source" json:"prefix_source"`
+
 	LeaseDuration uint32 `yaml:"lease_duration" json:"lease_duration"` // in seconds
 
-	RASLAACOnly  bool `yaml:"ra_slaac_only" json:"-"`  // send ICMPv6.RA packets without MO flags
-	RAAllowSLAAC bool `yaml:"ra_allow_slaac" json:"-"` // send ICMPv6.RA packets with MO flags
+	RASLAACOnly  bool `yaml:"ra_slaac_only" json:"ra_slaac_only"` // send ICMPv6.RA packets without MO flags
+	RAAllowSLAAC bool `yaml:"ra_allow_slaac" json:"-"`            // send ICMPv6.RA packets with MO flags
 
 	ipStart    net.IP        // starting IP address for dynamic leases
 	leaseTime  time.Duration // the time during which a dynamic lease is considered valid
 	dnsIPAddrs []net.IP      // IPv6 addresses to return to DHCP clients as DNS server addresses
 
+	// skipDeprecatedLeaseRestore disables one-time restoration of deprecated
+	// prefixes from saved dynamic leases on startup.
+	skipDeprecatedLeaseRestore bool `yaml:"-" json:"-"`
+
 	// Server calls this function when leases data changes
 	notify func(uint32)
+}
+
+// NormalizedPrefixSource returns the configured prefix source or the default
+// static mode if it is empty.
+func (c V6ServerConf) NormalizedPrefixSource() (src V6PrefixSource) {
+	if c.PrefixSource == "" {
+		return V6PrefixSourceStatic
+	}
+
+	return c.PrefixSource
+}
+
+// NeedsDHCPv6Pool reports whether DHCPv6 address allocation requires a dynamic
+// pool.
+func (c V6ServerConf) NeedsDHCPv6Pool() (ok bool) {
+	return !c.RASLAACOnly
+}
+
+// IsConfiguredForEnable reports whether c contains the minimum fields needed
+// to enable DHCPv6 and/or Router Advertisements for the selected prefix mode.
+func (c V6ServerConf) IsConfiguredForEnable() (ok bool) {
+	switch c.NormalizedPrefixSource() {
+	case V6PrefixSourceStatic:
+		return len(c.RangeStart) != 0
+	case V6PrefixSourceInterface:
+		return !c.NeedsDHCPv6Pool() || len(c.RangeStart) != 0
+	default:
+		return false
+	}
+}
+
+// ValidatePrefixSource returns an error if c contains an unknown IPv6 prefix
+// source.
+func (c V6ServerConf) ValidatePrefixSource() (err error) {
+	switch c.NormalizedPrefixSource() {
+	case V6PrefixSourceStatic, V6PrefixSourceInterface:
+		return nil
+	default:
+		return fmt.Errorf("unknown prefix source %q", c.PrefixSource)
+	}
 }

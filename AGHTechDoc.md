@@ -491,9 +491,10 @@ Response:
 			"lease_duration":60,
 		},
 		"v6":{
+			"prefix_source":"static",
 			"range_start":"...", // if empty: DHCPv6 won't be enabled
 			"lease_duration":60,
-		}
+		},
 		"leases":[
 			{"ip":"...","mac":"...","hostname":"...","expires":"..."}
 			...
@@ -570,6 +571,7 @@ Request:
 		"lease_duration":60,
 	},
 	"v6":{
+		"prefix_source":"static",
 		"range_start":"...",
 		"lease_duration":60,
 	}
@@ -757,6 +759,9 @@ Configuration:
 	Periodically send `ICMPv6.RouterAdvertisement(Flags=(Managed=false,Other=false))` packets.
 * `ra_slaac_only:false; ra_allow_slaac:true`: use option #3.
 	Periodically send `ICMPv6.RouterAdvertisement(Flags=(Managed=true,Other=true))` packets.
+
+For IPv6 prefix tracking, `prefix_source:static` keeps the current legacy behavior.
+`prefix_source:interface` derives the advertised prefix from the interface, keeps `range_start` as a host template for the dynamic pool, and deprecates the previous prefix with preferred lifetime `0` and a bounded valid lifetime when renumbering is observed.
 
 ICMPv6.RouterAdvertisement packet description:
 

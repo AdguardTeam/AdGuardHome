@@ -3,11 +3,13 @@
 package dhcpd
 
 import (
+	"math"
 	"net"
 	"net/netip"
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
 	"github.com/insomniacslk/dhcp/dhcpv6"
 	"github.com/insomniacslk/dhcp/iana"
@@ -379,4 +381,836 @@ func TestV6_FindMACbyIP(t *testing.T) {
 			require.Equal(t, tc.want, mac)
 		})
 	}
+}
+
+func TestDeriveTrackedRangeStart(t *testing.T) {
+	got, err := deriveTrackedRangeStart(
+		net.ParseIP("fd00::1234:5678:9abc:de00"),
+		netip.MustParsePrefix("2001:db8:1::/64"),
+	)
+	require.NoError(t, err)
+
+	assert.Equal(t, net.ParseIP("2001:db8:1::1234:5678:9abc:de00"), got)
+}
+
+func TestV6SetTrackedRangeStart(t *testing.T) {
+	var notified []uint32
+
+	s := &v6Server{
+		conf: V6ServerConf{
+			notify: func(flags uint32) {
+				notified = append(notified, flags)
+			},
+		},
+		leases: []*dhcpsvc.Lease{{
+			IP:     netip.MustParseAddr("2001:db8:1::10"),
+			HWAddr: net.HardwareAddr{0x10, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa},
+			Expiry: time.Now().Add(30 * time.Minute),
+		}, {
+			IP:     netip.MustParseAddr("2001:db8:2::10"),
+			HWAddr: net.HardwareAddr{0x20, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa},
+			Expiry: time.Now().Add(30 * time.Minute),
+		}, {
+			IP:       netip.MustParseAddr("2001:db8:ffff::42"),
+			HWAddr:   net.HardwareAddr{0x30, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa},
+			IsStatic: true,
+		}},
+	}
+
+	s.setTrackedRangeStart(net.ParseIP("2001:db8:1::10"), []prefixPIO{{
+		Prefix:       netip.MustParsePrefix("2001:db8:1::/64"),
+		PreferredSec: 1800,
+		ValidSec:     3600,
+	}, {
+		Prefix:       netip.MustParsePrefix("2001:db8:2::/64"),
+		PreferredSec: 1800,
+		ValidSec:     3600,
+	}})
+
+	require.Len(t, s.leases, 3)
+	assert.Empty(t, notified)
+	assert.Equal(t, byte(1), s.ipAddrs[0x10])
+	assert.Equal(t, byte(0), s.ipAddrs[0x42])
+
+	s.setTrackedRangeStart(net.ParseIP("2001:db8:1::10"), []prefixPIO{{
+		Prefix:       netip.MustParsePrefix("2001:db8:1::/64"),
+		PreferredSec: 1800,
+		ValidSec:     3600,
+	}})
+
+	require.Len(t, s.leases, 2)
+	assert.Equal(t, []uint32{LeaseChangedDBStore}, notified)
+}
+
+func TestV6Create_InterfacePrefixSource(t *testing.T) {
+	t.Run("ra_only_without_template", func(t *testing.T) {
+		srv, err := v6Create(V6ServerConf{
+			Enabled:      true,
+			PrefixSource: V6PrefixSourceInterface,
+			RASLAACOnly:  true,
+			notify:       notify6,
+		})
+		require.NoError(t, err)
+
+		s, ok := srv.(*v6Server)
+		require.True(t, ok)
+		assert.Nil(t, s.conf.ipStart)
+	})
+
+	t.Run("dhcp_pool_requires_template", func(t *testing.T) {
+		_, err := v6Create(V6ServerConf{
+			Enabled:      true,
+			PrefixSource: V6PrefixSourceInterface,
+			notify:       notify6,
+		})
+		require.Error(t, err)
+	})
+}
+
+func TestV6TrackedPrefixChanged_SLAACOnlyUpdatesMetadata(t *testing.T) {
+	s := &v6Server{
+		conf: V6ServerConf{
+			PrefixSource: V6PrefixSourceInterface,
+			RASLAACOnly:  true,
+			notify:       notify6,
+		},
+	}
+
+	err := s.trackedPrefixChanged(&raPrefixSnapshot{
+		Prefix:       netip.MustParsePrefix("2001:db8::/64"),
+		PreferredSec: 1800,
+		ValidSec:     3600,
+	}, []prefixPIO{{
+		Prefix:       netip.MustParsePrefix("2001:db8::/64"),
+		PreferredSec: 1800,
+		ValidSec:     3600,
+	}})
+	require.NoError(t, err)
+	assert.Nil(t, s.conf.ipStart)
+	assert.Contains(t, s.advertisedPrefixes, netip.MustParsePrefix("2001:db8::/64"))
+	assert.Contains(t, s.renewablePrefixes, netip.MustParsePrefix("2001:db8::/64"))
+}
+
+func TestRequiresProcessSuccess(t *testing.T) {
+	assert.True(t, requiresProcessSuccess(dhcpv6.MessageTypeSolicit))
+	assert.True(t, requiresProcessSuccess(dhcpv6.MessageTypeRenew))
+	assert.False(t, requiresProcessSuccess(dhcpv6.MessageTypeRelease))
+	assert.False(t, requiresProcessSuccess(dhcpv6.MessageTypeInformationRequest))
+}
+
+func TestReplyStatusForProcessFailure(t *testing.T) {
+	code, msg, ok := replyStatusForProcessFailure(dhcpv6.MessageTypeConfirm)
+	require.True(t, ok)
+	assert.Equal(t, iana.StatusNotOnLink, code)
+	assert.Equal(t, iana.StatusNotOnLink.String(), msg)
+
+	code, msg, ok = replyStatusForProcessFailure(dhcpv6.MessageTypeRenew)
+	require.True(t, ok)
+	assert.Equal(t, iana.StatusNoBinding, code)
+	assert.Equal(t, iana.StatusNoBinding.String(), msg)
+
+	_, _, ok = replyStatusForProcessFailure(dhcpv6.MessageTypeRelease)
+	assert.False(t, ok)
+}
+
+func TestV6Create_StaticPrefixSeedsRenewablePrefixes(t *testing.T) {
+	srv, err := v6Create(V6ServerConf{
+		Enabled:      true,
+		PrefixSource: V6PrefixSourceStatic,
+		RangeStart:   net.ParseIP("2001:db8::10"),
+		notify:       notify6,
+	})
+	require.NoError(t, err)
+
+	s, ok := srv.(*v6Server)
+	require.True(t, ok)
+	prefix := netip.MustParsePrefix("2001:db8::/64")
+	_, ok = s.renewablePrefixes[prefix]
+	assert.True(t, ok)
+	_, ok = s.advertisedPrefixes[prefix]
+	assert.True(t, ok)
+}
+
+func TestV6ResetLeases_PreservesAdvertisedInterfacePrefixes(t *testing.T) {
+	s := &v6Server{
+		conf: V6ServerConf{
+			PrefixSource: V6PrefixSourceInterface,
+			ipStart:      net.ParseIP("2001:db8:1::10"),
+		},
+		advertisedPrefixes: map[netip.Prefix]struct{}{
+			netip.MustParsePrefix("2001:db8::/64"):   {},
+			netip.MustParsePrefix("2001:db8:1::/64"): {},
+		},
+	}
+
+	err := s.ResetLeases([]*dhcpsvc.Lease{{
+		IP:     netip.MustParseAddr("2001:db8::10"),
+		HWAddr: net.HardwareAddr{0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa},
+	}, {
+		IP:     netip.MustParseAddr("2001:db8:1::10"),
+		HWAddr: net.HardwareAddr{0xbb, 0xbb, 0xbb, 0xbb, 0xbb, 0xbb},
+	}, {
+		IP:     netip.MustParseAddr("2001:db8:2::10"),
+		HWAddr: net.HardwareAddr{0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc},
+	}})
+	require.NoError(t, err)
+
+	require.Len(t, s.leases, 2)
+	assert.Contains(t, []netip.Addr{s.leases[0].IP, s.leases[1].IP}, netip.MustParseAddr("2001:db8::10"))
+	assert.Contains(t, []netip.Addr{s.leases[0].IP, s.leases[1].IP}, netip.MustParseAddr("2001:db8:1::10"))
+}
+
+func TestObservedDNSIPAddrs(t *testing.T) {
+	addrs := observedDNSIPAddrs([]aghnet.IPv6AddrState{{
+		Addr:                 netip.MustParseAddr("fe80::1"),
+		PreferredLifetimeSec: math.MaxUint32,
+		ValidLifetimeSec:     math.MaxUint32,
+	}, {
+		Addr:                 netip.MustParseAddr("2001:db8::10"),
+		PreferredLifetimeSec: 1800,
+		ValidLifetimeSec:     3600,
+	}, {
+		Addr:      netip.MustParseAddr("2001:db8::20"),
+		Tentative: true,
+	}})
+
+	require.Len(t, addrs, 2)
+	assert.Equal(t, net.ParseIP("fe80::1"), addrs[0])
+	assert.Equal(t, net.ParseIP("2001:db8::10"), addrs[1])
+}
+
+func TestObservedDNSIPAddrs_FiltersDeprecatedGlobals(t *testing.T) {
+	addrs := observedDNSIPAddrs([]aghnet.IPv6AddrState{{
+		Addr:                 netip.MustParseAddr("fe80::1"),
+		PreferredLifetimeSec: math.MaxUint32,
+		ValidLifetimeSec:     math.MaxUint32,
+	}, {
+		Addr:                 netip.MustParseAddr("2001:db8::10"),
+		PreferredLifetimeSec: 0,
+		ValidLifetimeSec:     3600,
+	}, {
+		Addr:                 netip.MustParseAddr("2001:db8::20"),
+		PreferredLifetimeSec: 1200,
+		ValidLifetimeSec:     3600,
+	}})
+
+	require.Len(t, addrs, 2)
+	assert.Equal(t, net.ParseIP("fe80::1"), addrs[0])
+	assert.Equal(t, net.ParseIP("2001:db8::20"), addrs[1])
+}
+
+func TestV6FindUsableLease_PrefersCurrentPoolWithoutRequestedDeprecatedIP(t *testing.T) {
+	mac := net.HardwareAddr{0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa}
+	s := &v6Server{
+		conf: V6ServerConf{
+			ipStart: net.ParseIP("2001:db8:1::10"),
+		},
+		advertisedPrefixes: map[netip.Prefix]struct{}{
+			netip.MustParsePrefix("2001:db8::/64"):   {},
+			netip.MustParsePrefix("2001:db8:1::/64"): {},
+		},
+		leases: []*dhcpsvc.Lease{{
+			IP:     netip.MustParseAddr("2001:db8::10"),
+			HWAddr: mac,
+		}, {
+			IP:     netip.MustParseAddr("2001:db8:1::10"),
+			HWAddr: mac,
+		}},
+	}
+
+	msg, err := dhcpv6.NewMessage()
+	require.NoError(t, err)
+	msg.MessageType = dhcpv6.MessageTypeRenew
+
+	lease := s.findUsableLease(msg, mac)
+	require.NotNil(t, lease)
+	assert.Equal(t, netip.MustParseAddr("2001:db8:1::10"), lease.IP)
+}
+
+func TestV6FindUsableLease_MatchesRequestedDeprecatedLease(t *testing.T) {
+	mac := net.HardwareAddr{0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa}
+	s := &v6Server{
+		conf: V6ServerConf{
+			ipStart: net.ParseIP("2001:db8:1::10"),
+		},
+		advertisedPrefixes: map[netip.Prefix]struct{}{
+			netip.MustParsePrefix("2001:db8::/64"):   {},
+			netip.MustParsePrefix("2001:db8:1::/64"): {},
+		},
+		leases: []*dhcpsvc.Lease{{
+			IP:     netip.MustParseAddr("2001:db8::10"),
+			HWAddr: mac,
+		}, {
+			IP:     netip.MustParseAddr("2001:db8:1::10"),
+			HWAddr: mac,
+		}},
+	}
+
+	msg, err := dhcpv6.NewMessage()
+	require.NoError(t, err)
+	msg.MessageType = dhcpv6.MessageTypeRenew
+	msg.AddOption(&dhcpv6.OptIANA{
+		Options: dhcpv6.IdentityOptions{
+			Options: []dhcpv6.Option{&dhcpv6.OptIAAddress{
+				IPv6Addr: net.ParseIP("2001:db8::10"),
+			}},
+		},
+	})
+
+	lease := s.findUsableLease(msg, mac)
+	require.NotNil(t, lease)
+	assert.Equal(t, netip.MustParseAddr("2001:db8::10"), lease.IP)
+}
+
+func TestV6FindUsableLease_MatchesRequestedDeprecatedLeaseOnRequest(t *testing.T) {
+	mac := net.HardwareAddr{0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa}
+	s := &v6Server{
+		conf: V6ServerConf{
+			ipStart: net.ParseIP("2001:db8:1::10"),
+		},
+		advertisedPrefixes: map[netip.Prefix]struct{}{
+			netip.MustParsePrefix("2001:db8::/64"):   {},
+			netip.MustParsePrefix("2001:db8:1::/64"): {},
+		},
+		leases: []*dhcpsvc.Lease{{
+			IP:     netip.MustParseAddr("2001:db8::10"),
+			HWAddr: mac,
+			Expiry: time.Now().Add(10 * time.Minute),
+		}},
+	}
+
+	msg, err := dhcpv6.NewMessage()
+	require.NoError(t, err)
+	msg.MessageType = dhcpv6.MessageTypeRequest
+	msg.AddOption(&dhcpv6.OptIANA{
+		Options: dhcpv6.IdentityOptions{
+			Options: []dhcpv6.Option{&dhcpv6.OptIAAddress{
+				IPv6Addr: net.ParseIP("2001:db8::10"),
+			}},
+		},
+	})
+
+	lease := s.findUsableLease(msg, mac)
+	require.NotNil(t, lease)
+	assert.Equal(t, netip.MustParseAddr("2001:db8::10"), lease.IP)
+}
+
+func TestV6FindUsableLease_SkipsExpiredDeprecatedLease(t *testing.T) {
+	mac := net.HardwareAddr{0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa}
+	s := &v6Server{
+		conf: V6ServerConf{
+			ipStart: net.ParseIP("2001:db8:1::10"),
+		},
+		advertisedPrefixes: map[netip.Prefix]struct{}{
+			netip.MustParsePrefix("2001:db8::/64"):   {},
+			netip.MustParsePrefix("2001:db8:1::/64"): {},
+		},
+		leases: []*dhcpsvc.Lease{{
+			IP:     netip.MustParseAddr("2001:db8::10"),
+			HWAddr: mac,
+			Expiry: time.Now().Add(-time.Minute),
+		}, {
+			IP:     netip.MustParseAddr("2001:db8:1::10"),
+			HWAddr: mac,
+			Expiry: time.Now().Add(10 * time.Minute),
+		}},
+	}
+
+	msg, err := dhcpv6.NewMessage()
+	require.NoError(t, err)
+	msg.MessageType = dhcpv6.MessageTypeRenew
+	msg.AddOption(&dhcpv6.OptIANA{
+		Options: dhcpv6.IdentityOptions{
+			Options: []dhcpv6.Option{&dhcpv6.OptIAAddress{
+				IPv6Addr: net.ParseIP("2001:db8::10"),
+			}},
+		},
+	})
+
+	lease := s.findUsableLease(msg, mac)
+	require.NotNil(t, lease)
+	assert.Equal(t, netip.MustParseAddr("2001:db8:1::10"), lease.IP)
+}
+
+func TestV6ReserveLease_PreservesDeprecatedLeaseForSameMAC(t *testing.T) {
+	mac := net.HardwareAddr{0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa}
+	s := &v6Server{
+		conf: V6ServerConf{
+			ipStart: net.ParseIP("2001:db8:1::10"),
+		},
+		leases: []*dhcpsvc.Lease{{
+			IP:     netip.MustParseAddr("2001:db8::10"),
+			HWAddr: mac,
+			Expiry: time.Now().Add(10 * time.Minute),
+		}},
+	}
+
+	lease := s.reserveLease(mac)
+	require.NotNil(t, lease)
+	assert.Equal(t, netip.MustParseAddr("2001:db8:1::10"), lease.IP)
+	require.Len(t, s.leases, 2)
+	assert.Contains(t, []netip.Addr{s.leases[0].IP, s.leases[1].IP}, netip.MustParseAddr("2001:db8::10"))
+	assert.Contains(t, []netip.Addr{s.leases[0].IP, s.leases[1].IP}, netip.MustParseAddr("2001:db8:1::10"))
+}
+
+func TestV6CommitLease_DeprecatedDynamicLeaseKeepsRemainingLifetime(t *testing.T) {
+	s := &v6Server{
+		conf: V6ServerConf{
+			ipStart:   net.ParseIP("2001:db8:1::10"),
+			leaseTime: time.Hour,
+		},
+		validUntilByPrefix: map[netip.Prefix]time.Time{
+			netip.MustParsePrefix("2001:db8::/64"): time.Now().Add(10 * time.Minute),
+		},
+	}
+
+	lease := &dhcpsvc.Lease{
+		IP:     netip.MustParseAddr("2001:db8::10"),
+		Expiry: time.Now().Add(10 * time.Minute),
+	}
+
+	msg, err := dhcpv6.NewMessage()
+	require.NoError(t, err)
+	msg.MessageType = dhcpv6.MessageTypeRenew
+
+	lifetime := s.commitLease(msg, lease)
+	assert.Greater(t, lifetime, 9*time.Minute)
+	assert.LessOrEqual(t, lifetime, 10*time.Minute)
+}
+
+func TestV6CommitLease_DeprecatedLeaseCappedByPrefixValidLifetime(t *testing.T) {
+	s := &v6Server{
+		conf: V6ServerConf{
+			ipStart:   net.ParseIP("2001:db8:1::10"),
+			leaseTime: time.Hour,
+		},
+		validUntilByPrefix: map[netip.Prefix]time.Time{
+			netip.MustParsePrefix("2001:db8::/64"): time.Now().Add(2 * time.Minute),
+		},
+	}
+
+	lease := &dhcpsvc.Lease{
+		IP:     netip.MustParseAddr("2001:db8::10"),
+		Expiry: time.Now().Add(24 * time.Hour),
+	}
+
+	msg, err := dhcpv6.NewMessage()
+	require.NoError(t, err)
+	msg.MessageType = dhcpv6.MessageTypeRenew
+
+	lifetime := s.commitLease(msg, lease)
+	assert.Greater(t, lifetime, time.Minute)
+	assert.LessOrEqual(t, lifetime, 2*time.Minute)
+}
+
+func TestV6CommitLease_DeprecatedConfirmCappedByPrefixValidLifetime(t *testing.T) {
+	s := &v6Server{
+		conf: V6ServerConf{
+			ipStart:   net.ParseIP("2001:db8:1::10"),
+			leaseTime: time.Hour,
+		},
+		validUntilByPrefix: map[netip.Prefix]time.Time{
+			netip.MustParsePrefix("2001:db8::/64"): time.Now().Add(90 * time.Second),
+		},
+	}
+
+	lease := &dhcpsvc.Lease{
+		IP:     netip.MustParseAddr("2001:db8::10"),
+		Expiry: time.Now().Add(24 * time.Hour),
+	}
+
+	msg, err := dhcpv6.NewMessage()
+	require.NoError(t, err)
+	msg.MessageType = dhcpv6.MessageTypeConfirm
+
+	lifetime := s.commitLease(msg, lease)
+	assert.Greater(t, lifetime, time.Minute)
+	assert.LessOrEqual(t, lifetime, 90*time.Second)
+}
+
+func TestV6CommitLease_StaticConfirmUsesConfiguredLeaseTime(t *testing.T) {
+	s := &v6Server{
+		conf: V6ServerConf{
+			leaseTime: 24 * time.Hour,
+		},
+	}
+
+	lease := &dhcpsvc.Lease{
+		IP:       netip.MustParseAddr("2001:db8::10"),
+		HWAddr:   net.HardwareAddr{0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa},
+		IsStatic: true,
+	}
+
+	msg, err := dhcpv6.NewMessage()
+	require.NoError(t, err)
+	msg.MessageType = dhcpv6.MessageTypeConfirm
+
+	lifetime := s.commitLease(msg, lease)
+	assert.Equal(t, 24*time.Hour, lifetime)
+}
+
+func TestV6PreferredLeaseLifetime_DeprecatedLeaseUsesZeroPreferredLifetime(t *testing.T) {
+	s := &v6Server{
+		conf: V6ServerConf{
+			ipStart: net.ParseIP("2001:db8:1::10"),
+		},
+		advertisedPrefixes: map[netip.Prefix]struct{}{
+			netip.MustParsePrefix("2001:db8::/64"): {},
+		},
+	}
+
+	lease := &dhcpsvc.Lease{
+		IP:     netip.MustParseAddr("2001:db8::10"),
+		HWAddr: net.HardwareAddr{0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa},
+		Expiry: time.Now().Add(10 * time.Minute),
+	}
+
+	preferred := s.preferredLeaseLifetime(lease, 10*time.Minute)
+	assert.Equal(t, time.Duration(0), preferred)
+}
+
+func TestV6CommitLease_SecondaryRenewablePrefixGetsFullLifetime(t *testing.T) {
+	s := &v6Server{
+		conf: V6ServerConf{
+			leaseTime: time.Hour,
+			notify:    notify6,
+		},
+		validUntilByPrefix: map[netip.Prefix]time.Time{
+			netip.MustParsePrefix("2001:db8:2::/64"): time.Now().Add(30 * time.Minute),
+		},
+		renewablePrefixes: map[netip.Prefix]struct{}{
+			netip.MustParsePrefix("2001:db8:2::/64"): {},
+		},
+	}
+
+	lease := &dhcpsvc.Lease{
+		IP:     netip.MustParseAddr("2001:db8:2::10"),
+		Expiry: time.Now().Add(10 * time.Minute),
+	}
+
+	msg, err := dhcpv6.NewMessage()
+	require.NoError(t, err)
+	msg.MessageType = dhcpv6.MessageTypeRenew
+
+	lifetime := s.commitLease(msg, lease)
+	assert.Greater(t, lifetime, 29*time.Minute)
+	assert.LessOrEqual(t, lifetime, 30*time.Minute)
+}
+
+func TestV6RestoreDeprecatedPrefixes(t *testing.T) {
+	now := time.Unix(400, 0)
+	s := &v6Server{
+		restoredRenewable: map[netip.Prefix]struct{}{
+			netip.MustParsePrefix("2001:db8:1::/64"): {},
+		},
+		restoredDeprecated: map[netip.Prefix]time.Time{
+			netip.MustParsePrefix("2001:db8::/64"): now.Add(90 * time.Minute),
+		},
+	}
+
+	st := newObservedRAState()
+	st.merge(raObservation{
+		Active: &raPrefixSnapshot{
+			Prefix:       netip.MustParsePrefix("2001:db8:1::/64"),
+			PreferredSec: 1800,
+			ValidSec:     7200,
+		},
+	}, now)
+
+	s.restoreDeprecatedPrefixes(now, &st)
+
+	pios := st.pios(now)
+	require.Len(t, pios, 2)
+	assert.Equal(t, netip.MustParsePrefix("2001:db8:1::/64"), pios[0].Prefix)
+	assert.Equal(t, netip.MustParsePrefix("2001:db8::/64"), pios[1].Prefix)
+	assert.Equal(t, uint32(0), pios[1].PreferredSec)
+	assert.Equal(t, uint32(5400), pios[1].ValidSec)
+}
+
+func TestV6RestoreDeprecatedPrefixes_IgnoresUnrelatedMetadata(t *testing.T) {
+	now := time.Unix(400, 0)
+	s := &v6Server{
+		restoredRenewable: map[netip.Prefix]struct{}{
+			netip.MustParsePrefix("2001:db8:1::/64"): {},
+		},
+		restoredDeprecated: map[netip.Prefix]time.Time{
+			netip.MustParsePrefix("2001:db8::/64"): now.Add(90 * time.Minute),
+		},
+	}
+
+	st := newObservedRAState()
+	st.merge(raObservation{
+		Active: &raPrefixSnapshot{
+			Prefix:       netip.MustParsePrefix("2001:db8:2::/64"),
+			PreferredSec: 1800,
+			ValidSec:     7200,
+		},
+	}, now)
+
+	s.restoreDeprecatedPrefixes(now, &st)
+
+	pios := st.pios(now)
+	require.Len(t, pios, 1)
+	assert.Equal(t, netip.MustParsePrefix("2001:db8:2::/64"), pios[0].Prefix)
+}
+
+func TestV6RestoreDeprecatedPrefixes_RestoresAfterDelayedOverlap(t *testing.T) {
+	now := time.Unix(400, 0)
+	s := &v6Server{
+		restoredRenewable: map[netip.Prefix]struct{}{
+			netip.MustParsePrefix("2001:db8:1::/64"): {},
+		},
+		restoredDeprecated: map[netip.Prefix]time.Time{
+			netip.MustParsePrefix("2001:db8::/64"): now.Add(90 * time.Minute),
+		},
+	}
+
+	st := newObservedRAState()
+	st.merge(raObservation{}, now)
+	s.restoreDeprecatedPrefixes(now, &st)
+	require.Empty(t, st.pios(now))
+
+	st.merge(raObservation{
+		Active: &raPrefixSnapshot{
+			Prefix:       netip.MustParsePrefix("2001:db8:1::/64"),
+			PreferredSec: 1800,
+			ValidSec:     7200,
+		},
+	}, now.Add(time.Minute))
+	s.restoreDeprecatedPrefixes(now.Add(time.Minute), &st)
+
+	pios := st.pios(now.Add(time.Minute))
+	require.Len(t, pios, 2)
+	assert.Equal(t, netip.MustParsePrefix("2001:db8:1::/64"), pios[0].Prefix)
+	assert.Equal(t, netip.MustParsePrefix("2001:db8::/64"), pios[1].Prefix)
+}
+
+func TestV6RestoreDeprecatedPrefixes_WithoutRenewablePrefixesNeedsObservedPrefixState(t *testing.T) {
+	now := time.Unix(400, 0)
+	s := &v6Server{
+		restoredDeprecated: map[netip.Prefix]time.Time{
+			netip.MustParsePrefix("2001:db8::/64"): now.Add(30 * time.Minute),
+		},
+	}
+
+	st := newObservedRAState()
+	st.merge(raObservation{}, now)
+
+	s.restoreDeprecatedPrefixes(now, &st)
+
+	pios := st.pios(now)
+	require.Empty(t, pios)
+}
+
+func TestV6RestoreDeprecatedPrefixes_RequiresFullRenewableMatch(t *testing.T) {
+	now := time.Unix(400, 0)
+	s := &v6Server{
+		restoredRenewable: map[netip.Prefix]struct{}{
+			netip.MustParsePrefix("fd00::/64"):       {},
+			netip.MustParsePrefix("2001:db8:1::/64"): {},
+		},
+		restoredDeprecated: map[netip.Prefix]time.Time{
+			netip.MustParsePrefix("2001:db8::/64"): now.Add(30 * time.Minute),
+		},
+	}
+
+	st := newObservedRAState()
+	st.merge(raObservation{
+		Active: &raPrefixSnapshot{
+			Prefix:       netip.MustParsePrefix("fd00::/64"),
+			PreferredSec: 1800,
+			ValidSec:     7200,
+		},
+	}, now)
+
+	s.restoreDeprecatedPrefixes(now, &st)
+
+	pios := st.pios(now)
+	require.Len(t, pios, 1)
+	assert.Equal(t, netip.MustParsePrefix("fd00::/64"), pios[0].Prefix)
+}
+
+func TestV6DeprecatedPrefixMeta_FallsBackToRestoredMetadata(t *testing.T) {
+	now := time.Unix(500, 0)
+	s := &v6Server{
+		conf: V6ServerConf{
+			PrefixSource: V6PrefixSourceInterface,
+		},
+		restoredRenewable: map[netip.Prefix]struct{}{
+			netip.MustParsePrefix("2001:db8:1::/64"): {},
+		},
+		restoredDeprecated: map[netip.Prefix]time.Time{
+			netip.MustParsePrefix("2001:db8::/64"): now.Add(30 * time.Minute),
+		},
+		persistRestoredMeta: true,
+	}
+
+	renewable, deprecated := s.deprecatedPrefixMeta(now)
+	assert.Equal(t, map[netip.Prefix]struct{}{
+		netip.MustParsePrefix("2001:db8:1::/64"): {},
+	}, renewable)
+	assert.Equal(t, map[netip.Prefix]time.Time{
+		netip.MustParsePrefix("2001:db8::/64"): now.Add(30 * time.Minute),
+	}, deprecated)
+}
+
+func TestV6DeprecatedPrefixMeta_DropsFallbackAfterObservation(t *testing.T) {
+	now := time.Unix(500, 0)
+	s := &v6Server{
+		conf: V6ServerConf{
+			PrefixSource: V6PrefixSourceInterface,
+		},
+		restoredRenewable: map[netip.Prefix]struct{}{
+			netip.MustParsePrefix("2001:db8:1::/64"): {},
+		},
+		restoredDeprecated: map[netip.Prefix]time.Time{
+			netip.MustParsePrefix("2001:db8::/64"): now.Add(30 * time.Minute),
+		},
+		persistRestoredMeta: true,
+	}
+
+	st := newObservedRAState()
+	st.merge(raObservation{}, now)
+	s.restoreDeprecatedPrefixes(now, &st)
+
+	renewable, deprecated := s.deprecatedPrefixMeta(now)
+	assert.Empty(t, renewable)
+	assert.Empty(t, deprecated)
+}
+
+func TestV6SetTrackedRangeStart_RefreshesValidUntilForSamePrefixes(t *testing.T) {
+	s := &v6Server{
+		conf: V6ServerConf{
+			ipStart: net.ParseIP("2001:db8:1::10"),
+		},
+		advertisedPrefixes: map[netip.Prefix]struct{}{
+			netip.MustParsePrefix("2001:db8::/64"): {},
+		},
+		renewablePrefixes: map[netip.Prefix]struct{}{},
+	}
+
+	s.setTrackedRangeStart(net.ParseIP("2001:db8:1::10"), []prefixPIO{{
+		Prefix:       netip.MustParsePrefix("2001:db8::/64"),
+		PreferredSec: 0,
+		ValidSec:     600,
+	}})
+	firstDeadline := s.validUntilByPrefix[netip.MustParsePrefix("2001:db8::/64")]
+
+	s.setTrackedRangeStart(net.ParseIP("2001:db8:1::10"), []prefixPIO{{
+		Prefix:       netip.MustParsePrefix("2001:db8::/64"),
+		PreferredSec: 0,
+		ValidSec:     120,
+	}})
+	secondDeadline := s.validUntilByPrefix[netip.MustParsePrefix("2001:db8::/64")]
+
+	assert.True(t, secondDeadline.Before(firstDeadline.Add(-4*time.Minute)))
+}
+
+func TestV6SetTrackedRangeStart_ClampsDeprecatedLeaseExpiry(t *testing.T) {
+	now := time.Now()
+	s := &v6Server{
+		conf: V6ServerConf{
+			ipStart: net.ParseIP("2001:db8:1::10"),
+			notify:  notify6,
+		},
+		leases: []*dhcpsvc.Lease{{
+			IP:     netip.MustParseAddr("2001:db8::10"),
+			HWAddr: net.HardwareAddr{0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa},
+			Expiry: now.Add(24 * time.Hour),
+		}},
+	}
+
+	s.setTrackedRangeStart(net.ParseIP("2001:db8:1::10"), []prefixPIO{{
+		Prefix:       netip.MustParsePrefix("2001:db8::/64"),
+		PreferredSec: 0,
+		ValidSec:     120,
+	}, {
+		Prefix:       netip.MustParsePrefix("2001:db8:1::/64"),
+		PreferredSec: 1800,
+		ValidSec:     3600,
+	}})
+
+	require.Len(t, s.leases, 1)
+	assert.LessOrEqual(t, time.Until(s.leases[0].Expiry), 2*time.Minute)
+	assert.Greater(t, time.Until(s.leases[0].Expiry), time.Minute)
+}
+
+func TestV6SetTrackedRangeStart_MetadataOnlyChangeNotifiesDBStore(t *testing.T) {
+	var notified []uint32
+
+	s := &v6Server{
+		conf: V6ServerConf{
+			PrefixSource: V6PrefixSourceInterface,
+			RASLAACOnly:  true,
+			notify: func(flags uint32) {
+				notified = append(notified, flags)
+			},
+		},
+	}
+
+	s.setTrackedRangeStart(nil, []prefixPIO{{
+		Prefix:       netip.MustParsePrefix("2001:db8::/64"),
+		PreferredSec: 0,
+		ValidSec:     300,
+	}})
+
+	assert.Equal(t, []uint32{LeaseChangedDBStore}, notified)
+}
+
+func TestV6SetTrackedRangeStart_ClampsExpiryWhenLifetimesShrinkInPlace(t *testing.T) {
+	now := time.Now()
+	s := &v6Server{
+		conf: V6ServerConf{
+			ipStart: net.ParseIP("2001:db8:1::10"),
+			notify:  notify6,
+		},
+		advertisedPrefixes: map[netip.Prefix]struct{}{
+			netip.MustParsePrefix("2001:db8::/64"): {},
+		},
+		renewablePrefixes: map[netip.Prefix]struct{}{
+			netip.MustParsePrefix("2001:db8::/64"): {},
+		},
+		leases: []*dhcpsvc.Lease{{
+			IP:     netip.MustParseAddr("2001:db8::10"),
+			HWAddr: net.HardwareAddr{0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa},
+			Expiry: now.Add(24 * time.Hour),
+		}},
+	}
+
+	s.setTrackedRangeStart(net.ParseIP("2001:db8:1::10"), []prefixPIO{{
+		Prefix:       netip.MustParsePrefix("2001:db8::/64"),
+		PreferredSec: 300,
+		ValidSec:     300,
+	}})
+
+	require.Len(t, s.leases, 1)
+	assert.LessOrEqual(t, time.Until(s.leases[0].Expiry), 5*time.Minute)
+	assert.Greater(t, time.Until(s.leases[0].Expiry), 4*time.Minute)
+}
+
+func TestV6SetTrackedRangeStart_FiltersLeasesBelowNewHostTemplate(t *testing.T) {
+	s := &v6Server{
+		conf: V6ServerConf{
+			ipStart: net.ParseIP("2001:db8::10"),
+			notify:  notify6,
+		},
+		leases: []*dhcpsvc.Lease{{
+			IP:     netip.MustParseAddr("2001:db8::20"),
+			HWAddr: net.HardwareAddr{0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa},
+			Expiry: time.Now().Add(time.Hour),
+		}, {
+			IP:     netip.MustParseAddr("2001:db8::90"),
+			HWAddr: net.HardwareAddr{0xbb, 0xbb, 0xbb, 0xbb, 0xbb, 0xbb},
+			Expiry: time.Now().Add(time.Hour),
+		}},
+	}
+
+	s.setTrackedRangeStart(net.ParseIP("2001:db8::80"), []prefixPIO{{
+		Prefix:       netip.MustParsePrefix("2001:db8::/64"),
+		PreferredSec: 1800,
+		ValidSec:     3600,
+	}})
+
+	require.Len(t, s.leases, 1)
+	assert.Equal(t, netip.MustParseAddr("2001:db8::90"), s.leases[0].IP)
 }

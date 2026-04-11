@@ -24,6 +24,10 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 [go-1.26.2]: https://groups.google.com/g/golang-announce/c/0uYbvbPZRWU
 
+### Added
+
+- Opt-in IPv6 prefix tracking for DHCPv6 and Router Advertisements. When enabled, AdGuard Home derives the advertised prefix from the interface and deprecates the previous prefix during renumbering.
+
 ### Changed
 
 #### Configuration changes

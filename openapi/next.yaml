@@ -2021,6 +2021,7 @@
           'ipv4_range_end': '192.168.1.101'
           'ipv4_range_start': '192.168.1.2'
           'ipv4_subnet_mask': '255.255.255.0'
+          'ipv6_prefix_source': 'static'
           'ipv6_range_start': '2001:db8::1'
           'ipv6_lease_duration': 86400000
         'required':
@@ -2037,6 +2038,7 @@
         'ipv4_range_end': '192.168.1.101'
         'ipv4_range_start': '192.168.1.2'
         'ipv4_subnet_mask': '255.255.255.0'
+        'ipv6_prefix_source': 'static'
       'properties':
         'enabled':
           'description': >
@@ -2070,9 +2072,17 @@
           'description': >
             The duration of the IPv6 lease, in milliseconds.
           'type': 'number'
+        'ipv6_prefix_source':
+          'description': >
+            The source of the IPv6 prefix.  `static` keeps
+            `ipv6_range_start` as the configured prefix.  `interface` derives
+            the prefix from the network interface and treats
+            `ipv6_range_start` as a host template for the dynamic pool.
+          'type': 'string'
         'ipv6_range_start':
           'description': >
-            The start of the IPv6 addresses to serve to clients.
+            The start of the IPv6 addresses to serve to clients, or a host
+            template when `ipv6_prefix_source` is `interface`.
           'type': 'string'
       'type': 'object'
 
