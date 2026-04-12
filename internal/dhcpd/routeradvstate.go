@@ -96,12 +96,12 @@ type raStateDigest struct {
 // trackedPrefixDigest is the deadline-based fingerprint of one trackedPrefix.
 //
 // preferredExpired is a time-derived boolean that flips from false to true
-// exactly once during a natural countdown — the moment the prefix's preferred
+// exactly once during a natural countdown, the moment the prefix's preferred
 // lifetime reaches zero.  Without it, a prefix whose preferred lifetime
 // counts down while its absolute preferredUntil deadline stays put would
 // produce identical digests before and after it becomes non-renewable, so
-// downstream reconciliation (which rebuilds the v6Server renewablePrefixes
-// set) would never fire for that transition.
+// downstream reconciliation, which rebuilds the v6Server renewablePrefixes
+// set, would never fire for that transition.
 type trackedPrefixDigest struct {
 	prefix            netip.Prefix
 	origin            raPrefixOrigin
@@ -166,8 +166,8 @@ func sameRAStateDigest(a, b raStateDigest) (ok bool) {
 	}
 
 	for pref, digest := range a.deprecated {
-		other, ok := b.deprecated[pref]
-		if !ok || other != digest {
+		other, found := b.deprecated[pref]
+		if !found || other != digest {
 			return false
 		}
 	}
@@ -196,9 +196,19 @@ func newStaticRAState(obs raObservation) (st raState) {
 	return st
 }
 
+// capDeprecatedLifetime bounds a remaining valid lifetime by the standard
+// two-hour cap used for deprecated prefixes.
+func capDeprecatedLifetime(valid uint32) (capped uint32) {
+	if valid > raDeprecatedLifetimeCapSecs || valid == math.MaxUint32 {
+		return raDeprecatedLifetimeCapSecs
+	}
+
+	return valid
+}
+
 // merge merges a fresh interface observation into s and reports whether the
 // active prefix changed.
-func (s *raState) merge(obs raObservation, now time.Time) (change raActiveChange) {
+func (s *raState) merge(obs raObservation, now time.Time) raActiveChange {
 	if s.deprecated == nil {
 		s.deprecated = map[netip.Prefix]*trackedPrefix{}
 	}
@@ -213,74 +223,83 @@ func (s *raState) merge(obs raObservation, now time.Time) (change raActiveChange
 	s.sourceAddr = obs.SourceAddr
 	s.rdnssAddr = obs.RDNSSAddr
 
-	switch {
-	case obs.Active != nil && s.active != nil && s.active.prefix == obs.Active.Prefix:
-		s.active = reconcileTrackedPrefix(s.active, *obs.Active, raPrefixOriginObservedActive, now)
-	case obs.Active != nil:
-		s.moveActiveToDeprecated(now)
-		s.active = newTrackedPrefix(*obs.Active, raPrefixOriginObservedActive, now)
-		activeChanged = prev != nil && prev.Prefix != obs.Active.Prefix
-	case obs.Active == nil:
-		s.moveActiveToDeprecated(now)
-		s.active = nil
-		activeChanged = prev != nil
-	}
+	activeChanged = s.mergeActiveObservation(obs.Active, prev, now)
 
 	if s.active != nil {
 		delete(s.deprecated, s.active.prefix)
 	}
 
-	observedInactive := map[netip.Prefix]struct{}{}
+	observedInactive := s.mergeInactiveObservations(obs.Inactive, prevActivePrefix, activeChanged, now)
 
-	for _, dep := range obs.Inactive {
-		if s.active != nil && dep.Prefix == s.active.prefix {
-			continue
-		}
-		if activeChanged && dep.Prefix == prevActivePrefix && dep.PreferredSec == 0 {
-			valid := dep.ValidSec
-			if valid > raDeprecatedLifetimeCapSecs || valid == math.MaxUint32 {
-				valid = raDeprecatedLifetimeCapSecs
-			}
-			if valid == 0 {
-				delete(s.deprecated, dep.Prefix)
+	s.deprecateMissingObservedInactivePrefixes(observedInactive, now)
 
-				continue
-			}
+	s.evictExpired(now)
 
-			s.deprecated[dep.Prefix] = reconcileTrackedPrefix(
-				s.deprecated[dep.Prefix],
-				raPrefixSnapshot{
-					Prefix:       dep.Prefix,
-					PreferredSec: 0,
-					ValidSec:     valid,
-				},
-				raPrefixOriginDeprecated,
-				now,
-			)
+	next := s.activeSnapshot(now)
+	return raActiveChange{
+		Changed: !sameActivePrefix(prev, next),
+		Active:  next,
+	}
+}
 
-			continue
-		}
+// mergeActiveObservation updates the active prefix from obs and reports
+// whether the active prefix changed.
+func (s *raState) mergeActiveObservation(
+	obs, prev *raPrefixSnapshot,
+	now time.Time,
+) (activeChanged bool) {
+	switch {
+	case obs != nil && s.active != nil && s.active.prefix == obs.Prefix:
+		s.active = reconcileTrackedPrefix(s.active, *obs, raPrefixOriginObservedActive, now)
+	case obs != nil:
+		s.moveActiveToDeprecated(now)
+		s.active = newTrackedPrefix(*obs, raPrefixOriginObservedActive, now)
+		activeChanged = prev != nil && prev.Prefix != obs.Prefix
+	default:
+		s.moveActiveToDeprecated(now)
+		s.active = nil
+		activeChanged = prev != nil
+	}
 
-		if dep.PreferredSec > 0 {
-			observedInactive[dep.Prefix] = struct{}{}
-			s.deprecated[dep.Prefix] = reconcileTrackedPrefix(
-				s.deprecated[dep.Prefix],
-				dep,
-				raPrefixOriginObservedInactive,
-				now,
-			)
+	return activeChanged
+}
 
-			continue
-		}
+// mergeInactiveObservations reconciles inactive prefix observations with the
+// tracked deprecated prefixes and returns the set of prefixes that still
+// appear as observed inactive.
+func (s *raState) mergeInactiveObservations(
+	inactive []raPrefixSnapshot,
+	prevActivePrefix netip.Prefix,
+	activeChanged bool,
+	now time.Time,
+) (observedInactive map[netip.Prefix]struct{}) {
+	observedInactive = map[netip.Prefix]struct{}{}
 
-		valid := dep.ValidSec
-		if valid > raDeprecatedLifetimeCapSecs || valid == math.MaxUint32 {
-			valid = raDeprecatedLifetimeCapSecs
-		}
+	for _, dep := range inactive {
+		s.mergeInactiveObservation(dep, prevActivePrefix, activeChanged, now, observedInactive)
+	}
+
+	return observedInactive
+}
+
+// mergeInactiveObservation reconciles one inactive prefix observation.
+func (s *raState) mergeInactiveObservation(
+	dep raPrefixSnapshot,
+	prevActivePrefix netip.Prefix,
+	activeChanged bool,
+	now time.Time,
+	observedInactive map[netip.Prefix]struct{},
+) {
+	if s.active != nil && dep.Prefix == s.active.prefix {
+		return
+	}
+
+	if activeChanged && dep.Prefix == prevActivePrefix && dep.PreferredSec == 0 {
+		valid := capDeprecatedLifetime(dep.ValidSec)
 		if valid == 0 {
 			delete(s.deprecated, dep.Prefix)
 
-			continue
+			return
 		}
 
 		s.deprecated[dep.Prefix] = reconcileTrackedPrefix(
@@ -293,8 +312,47 @@ func (s *raState) merge(obs raObservation, now time.Time) (change raActiveChange
 			raPrefixOriginDeprecated,
 			now,
 		)
+
+		return
 	}
 
+	if dep.PreferredSec > 0 {
+		observedInactive[dep.Prefix] = struct{}{}
+		s.deprecated[dep.Prefix] = reconcileTrackedPrefix(
+			s.deprecated[dep.Prefix],
+			dep,
+			raPrefixOriginObservedInactive,
+			now,
+		)
+
+		return
+	}
+
+	valid := capDeprecatedLifetime(dep.ValidSec)
+	if valid == 0 {
+		delete(s.deprecated, dep.Prefix)
+
+		return
+	}
+
+	s.deprecated[dep.Prefix] = reconcileTrackedPrefix(
+		s.deprecated[dep.Prefix],
+		raPrefixSnapshot{
+			Prefix:       dep.Prefix,
+			PreferredSec: 0,
+			ValidSec:     valid,
+		},
+		raPrefixOriginDeprecated,
+		now,
+	)
+}
+
+// deprecateMissingObservedInactivePrefixes converts any observed-inactive
+// prefixes that are no longer present into deprecated prefixes.
+func (s *raState) deprecateMissingObservedInactivePrefixes(
+	observedInactive map[netip.Prefix]struct{},
+	now time.Time,
+) {
 	for pref, tracked := range s.deprecated {
 		if tracked.origin != raPrefixOriginObservedInactive {
 			continue
@@ -304,14 +362,6 @@ func (s *raState) merge(obs raObservation, now time.Time) (change raActiveChange
 			s.deprecateTrackedPrefix(pref, tracked, now)
 		}
 	}
-
-	s.evictExpired(now)
-
-	next := s.activeSnapshot(now)
-	change.Changed = !sameActivePrefix(prev, next)
-	change.Active = next
-
-	return change
 }
 
 // deprecateTrackedPrefix converts a tracked prefix into a deprecated one using
@@ -323,9 +373,7 @@ func (s *raState) deprecateTrackedPrefix(pref netip.Prefix, tracked *trackedPref
 
 		return
 	}
-	if valid > raDeprecatedLifetimeCapSecs || valid == math.MaxUint32 {
-		valid = raDeprecatedLifetimeCapSecs
-	}
+	valid = capDeprecatedLifetime(valid)
 
 	s.deprecated[pref] = newTrackedPrefix(raPrefixSnapshot{
 		Prefix:       pref,
@@ -387,6 +435,15 @@ func buildInterfaceRAObservation(states []aghnet.IPv6AddrState) (obs raObservati
 	obs.SourceAddr = pickRASourceAddr(states)
 	obs.RDNSSAddr = obs.SourceAddr
 
+	prefixes := buildInterfaceRAPrefixSnapshots(states)
+	obs.Active, obs.Inactive = splitInterfaceRAPrefixSnapshots(prefixes)
+
+	return obs
+}
+
+// buildInterfaceRAPrefixSnapshots groups eligible interface states by prefix
+// and collapses each group into a single snapshot.
+func buildInterfaceRAPrefixSnapshots(states []aghnet.IPv6AddrState) (prefixes []raPrefixSnapshot) {
 	grouped := map[netip.Prefix][]aghnet.IPv6AddrState{}
 	for _, st := range states {
 		if !isEligibleRAPrefixState(st) {
@@ -397,7 +454,7 @@ func buildInterfaceRAObservation(states []aghnet.IPv6AddrState) (obs raObservati
 		grouped[pref] = append(grouped[pref], st)
 	}
 
-	prefixes := make([]raPrefixSnapshot, 0, len(grouped))
+	prefixes = make([]raPrefixSnapshot, 0, len(grouped))
 	for pref, group := range grouped {
 		snap, ok := collapsePrefixGroup(pref, group)
 		if !ok {
@@ -407,7 +464,40 @@ func buildInterfaceRAObservation(states []aghnet.IPv6AddrState) (obs raObservati
 		prefixes = append(prefixes, snap)
 	}
 
-	activeIdx := -1
+	return prefixes
+}
+
+// splitInterfaceRAPrefixSnapshots selects the active snapshot and sorts the
+// inactive ones.
+func splitInterfaceRAPrefixSnapshots(
+	prefixes []raPrefixSnapshot,
+) (active *raPrefixSnapshot, inactive []raPrefixSnapshot) {
+	activeIdx := selectInterfaceRAActivePrefixIndex(prefixes)
+	for i, pref := range prefixes {
+		if i == activeIdx {
+			active = &raPrefixSnapshot{
+				Prefix:       pref.Prefix,
+				PreferredSec: pref.PreferredSec,
+				ValidSec:     pref.ValidSec,
+			}
+
+			continue
+		}
+
+		inactive = append(inactive, pref)
+	}
+
+	slices.SortFunc(inactive, func(a, b raPrefixSnapshot) int {
+		return prefixCompare(a.Prefix, b.Prefix)
+	})
+
+	return active, inactive
+}
+
+// selectInterfaceRAActivePrefixIndex reports the best active prefix index in
+// prefixes, or -1 when none is suitable.
+func selectInterfaceRAActivePrefixIndex(prefixes []raPrefixSnapshot) (activeIdx int) {
+	activeIdx = -1
 	for i, pref := range prefixes {
 		if pref.PreferredSec == 0 {
 			continue
@@ -418,24 +508,7 @@ func buildInterfaceRAObservation(states []aghnet.IPv6AddrState) (obs raObservati
 		}
 	}
 
-	for i, pref := range prefixes {
-		switch {
-		case i == activeIdx:
-			obs.Active = &raPrefixSnapshot{
-				Prefix:       pref.Prefix,
-				PreferredSec: pref.PreferredSec,
-				ValidSec:     pref.ValidSec,
-			}
-		default:
-			obs.Inactive = append(obs.Inactive, pref)
-		}
-	}
-
-	slices.SortFunc(obs.Inactive, func(a, b raPrefixSnapshot) int {
-		return prefixCompare(a.Prefix, b.Prefix)
-	})
-
-	return obs
+	return activeIdx
 }
 
 // buildStaticRAObservation returns the configured static prefix observation.

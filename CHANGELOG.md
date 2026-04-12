@@ -26,7 +26,9 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Added
 
-- Opt-in IPv6 prefix tracking for DHCPv6 and Router Advertisements. When enabled, AdGuard Home derives the advertised prefix from the interface and deprecates the previous prefix during renumbering.
+- Opt-in IPv6 prefix tracking for DHCPv6 and Router Advertisements.
+  When enabled, AdGuard Home derives the advertised prefix from the
+  interface and deprecates the previous prefix during renumbering.
 
 ### Changed
 

@@ -230,14 +230,7 @@ func (ra *raCtx) Init(initial raState) (err error) {
 // Advertisements.
 func (ra *raCtx) ensureConn(sourceAddr netip.Addr) (err error) {
 	if !sourceAddr.IsValid() {
-		if ra.conn != nil {
-			err = ra.conn.Close()
-		}
-
-		ra.conn = nil
-		ra.connSourceAddr = netip.Addr{}
-
-		return err
+		return ra.closeConn()
 	}
 
 	if ra.conn != nil && ra.connSourceAddr == sourceAddr {
@@ -245,14 +238,29 @@ func (ra *raCtx) ensureConn(sourceAddr netip.Addr) (err error) {
 	}
 
 	if ra.conn != nil {
-		err = ra.conn.Close()
-		ra.conn = nil
-		ra.connSourceAddr = netip.Addr{}
-		if err != nil {
+		if err = ra.closeConn(); err != nil {
 			return fmt.Errorf("closing previous icmp listener: %w", err)
 		}
 	}
 
+	return ra.openConn(sourceAddr)
+}
+
+// closeConn closes the current ICMPv6 socket and clears the tracked source
+// address.
+func (ra *raCtx) closeConn() (err error) {
+	if ra.conn != nil {
+		err = ra.conn.Close()
+	}
+
+	ra.conn = nil
+	ra.connSourceAddr = netip.Addr{}
+
+	return err
+}
+
+// openConn opens a new ICMPv6 socket for the given source address.
+func (ra *raCtx) openConn(sourceAddr netip.Addr) (err error) {
 	ipAndScope := sourceAddr.String() + "%" + ra.ifaceName
 	newConn, err := icmp.ListenPacket("ip6:ipv6-icmp", ipAndScope)
 	if err != nil {
@@ -334,17 +342,17 @@ func (ra *raCtx) refresh(ctx context.Context) {
 	}
 
 	now := time.Now()
-	_ = ra.state.merge(obs, now)
+	change := ra.state.merge(obs, now)
 	if ra.onStateRefresh != nil {
 		ra.onStateRefresh(now, &ra.state)
 	}
-	ra.syncStateChange(now)
+	ra.syncStateChange(now, &change)
 }
 
 // sendPacket rebuilds and sends the current Router Advertisement packet.
 func (ra *raCtx) sendPacket() {
 	now := time.Now()
-	ra.syncStateChange(now)
+	ra.syncStateChange(now, nil)
 
 	sourceAddr, rdnssAddr := ra.state.sourceAndRDNSS()
 	err := ra.ensureConn(sourceAddr)
@@ -424,7 +432,7 @@ func tickerC(t *time.Ticker) (c <-chan time.Time) {
 // elapsed time.  The comparison uses a deadline-based digest of the tracked
 // prefixes, so repeated polls that only observe the kernel counting lifetimes
 // down do not spuriously fire the callback.
-func (ra *raCtx) syncStateChange(now time.Time) {
+func (ra *raCtx) syncStateChange(now time.Time, change *raActiveChange) {
 	digest := ra.state.digest(now)
 	changed := !sameRAStateDigest(ra.lastDigest, digest)
 	ra.lastDigest = digest
@@ -433,7 +441,12 @@ func (ra *raCtx) syncStateChange(now time.Time) {
 		return
 	}
 
-	active := ra.state.activeSnapshot(now)
+	var active *raPrefixSnapshot
+	if change != nil && change.Changed {
+		active = change.Active
+	} else {
+		active = ra.state.activeSnapshot(now)
+	}
 	advertised := ra.state.pios(now)
 	ra.onActivePrefixChange(active, advertised)
 }

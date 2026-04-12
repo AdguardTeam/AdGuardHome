@@ -64,7 +64,11 @@ func TestCreateICMPv6RAPacket(t *testing.T) {
 	assert.Equal(t, byte(0xc0), opt.Data[1])
 	assert.Equal(t, uint32(1800), binary.BigEndian.Uint32(opt.Data[2:6]))
 	assert.Equal(t, uint32(0), binary.BigEndian.Uint32(opt.Data[6:10]))
-	assert.Equal(t, netip.MustParsePrefix("2001:db8:abcd::/60").Masked().Addr().As16(), [16]byte(opt.Data[14:30]))
+	assert.Equal(
+		t,
+		netip.MustParsePrefix("2001:db8:abcd::/60").Masked().Addr().As16(),
+		[16]byte(opt.Data[14:30]),
+	)
 
 	opt = raPkt.Options[2]
 	require.Equal(t, layers.ICMPv6OptMTU, opt.Type)
@@ -105,7 +109,7 @@ func TestRACtxSyncStateChange_DeprecatedExpiry(t *testing.T) {
 	}
 	ra.lastDigest = ra.state.digest(now)
 
-	ra.syncStateChange(now.Add(2 * time.Second))
+	ra.syncStateChange(now.Add(2*time.Second), nil)
 
 	require.Len(t, notifications, 1)
 	require.Len(t, notifications[0], 1)
@@ -142,9 +146,9 @@ func TestRACtxSyncStateChange_StableStateDoesNotFireCallback(t *testing.T) {
 
 	// Three ticks without any new observation: only elapsed time changed,
 	// so the digest must be unchanged and the callback must not fire.
-	ra.syncStateChange(now.Add(1 * time.Second))
-	ra.syncStateChange(now.Add(3 * time.Second))
-	ra.syncStateChange(now.Add(5 * time.Second))
+	ra.syncStateChange(now.Add(1*time.Second), nil)
+	ra.syncStateChange(now.Add(3*time.Second), nil)
+	ra.syncStateChange(now.Add(5*time.Second), nil)
 
 	assert.Zero(t, fired)
 }
@@ -187,7 +191,7 @@ func TestRACtxSyncStateChange_DeprecatingPrefixTriggersCallback(t *testing.T) {
 		}},
 	}, now.Add(time.Minute))
 
-	ra.syncStateChange(now.Add(time.Minute))
+	ra.syncStateChange(now.Add(time.Minute), nil)
 
 	require.Len(t, notifications, 1)
 	require.Len(t, notifications[0], 2)
@@ -227,12 +231,12 @@ func TestRACtxSyncStateChange_PreferredExpiryTriggersCallback(t *testing.T) {
 
 	// While the preferred countdown still has time remaining no callback
 	// should fire.
-	ra.syncStateChange(now.Add(299 * time.Second))
+	ra.syncStateChange(now.Add(299*time.Second), nil)
 	assert.Empty(t, notifications)
 
 	// At the moment the preferred lifetime hits zero the callback must
 	// fire so v6Server can drop the prefix from its renewable set.
-	ra.syncStateChange(now.Add(301 * time.Second))
+	ra.syncStateChange(now.Add(301*time.Second), nil)
 	require.Len(t, notifications, 1)
 	require.Len(t, notifications[0], 1)
 	assert.Equal(t, netip.MustParsePrefix("2001:db8::/64"), notifications[0][0].Prefix)
@@ -240,8 +244,8 @@ func TestRACtxSyncStateChange_PreferredExpiryTriggersCallback(t *testing.T) {
 
 	// But subsequent ticks past the expiry must not re-fire: the state
 	// digest has settled at preferredExpired=true and stays that way.
-	ra.syncStateChange(now.Add(305 * time.Second))
-	ra.syncStateChange(now.Add(310 * time.Second))
+	ra.syncStateChange(now.Add(305*time.Second), nil)
+	ra.syncStateChange(now.Add(310*time.Second), nil)
 	assert.Len(t, notifications, 1)
 }
 
@@ -277,9 +281,9 @@ func TestRACtxSyncStateChange_PreferredExpiryOnDeprecatedEntryStillQuiescent(t *
 
 	// Several steady-state ticks across the valid countdown.  No kernel
 	// state changed, so nothing should fire.
-	ra.syncStateChange(now.Add(1 * time.Second))
-	ra.syncStateChange(now.Add(5 * time.Second))
-	ra.syncStateChange(now.Add(30 * time.Second))
+	ra.syncStateChange(now.Add(1*time.Second), nil)
+	ra.syncStateChange(now.Add(5*time.Second), nil)
+	ra.syncStateChange(now.Add(30*time.Second), nil)
 	assert.Zero(t, fired)
 }
 

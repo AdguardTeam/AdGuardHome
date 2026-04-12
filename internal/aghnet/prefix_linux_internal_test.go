@@ -5,10 +5,9 @@ package aghnet
 import (
 	"encoding/binary"
 	"net/netip"
-	"syscall"
 	"testing"
-	"unsafe"
 
+	"github.com/mdlayher/netlink"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sys/unix"
@@ -19,24 +18,22 @@ func TestParseIPv6AddrStateNetlink(t *testing.T) {
 	flags := make([]byte, 4)
 	binary.NativeEndian.PutUint32(flags, unix.IFA_F_TEMPORARY|unix.IFA_F_TENTATIVE)
 
-	cache := unix.IfaCacheinfo{
-		Prefered: 600,
-		Valid:    1200,
-	}
-	cacheBytes := *(*[unix.SizeofIfaCacheinfo]byte)(unsafe.Pointer(&cache))
+	cacheBytes := make([]byte, unix.SizeofIfaCacheinfo)
+	binary.NativeEndian.PutUint32(cacheBytes[0:4], 600)
+	binary.NativeEndian.PutUint32(cacheBytes[4:8], 1200)
 
-	state, ok, err := parseIPv6AddrStateNetlink(&syscall.IfAddrmsg{
-		Family:    syscall.AF_INET6,
+	state, ok, err := parseIPv6AddrStateNetlink(unix.IfAddrmsg{
+		Family:    unix.AF_INET6,
 		Prefixlen: 64,
-	}, []syscall.NetlinkRouteAttr{{
-		Attr:  syscall.RtAttr{Type: unix.IFA_ADDRESS},
-		Value: addr[:],
+	}, []netlink.Attribute{{
+		Type: unix.IFA_ADDRESS,
+		Data: addr[:],
 	}, {
-		Attr:  syscall.RtAttr{Type: unix.IFA_FLAGS},
-		Value: flags,
+		Type: unix.IFA_FLAGS,
+		Data: flags,
 	}, {
-		Attr:  syscall.RtAttr{Type: unix.IFA_CACHEINFO},
-		Value: cacheBytes[:],
+		Type: unix.IFA_CACHEINFO,
+		Data: cacheBytes,
 	}})
 	require.NoError(t, err)
 	require.True(t, ok)

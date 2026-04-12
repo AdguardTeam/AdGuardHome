@@ -52,41 +52,9 @@ func parseIfconfigIPv6Addr(fields []string) (state IPv6AddrState, err error) {
 	prefixBits := -1
 
 	for i := 2; i < len(fields); i++ {
-		switch strings.ToLower(fields[i]) {
-		case "prefixlen":
-			i++
-			if i >= len(fields) {
-				return IPv6AddrState{}, fmt.Errorf("missing prefixlen value in %q", strings.Join(fields, " "))
-			}
-
-			prefixBits, err = strconv.Atoi(fields[i])
-			if err != nil {
-				return IPv6AddrState{}, fmt.Errorf("parsing prefixlen %q: %w", fields[i], err)
-			}
-		case "pltime":
-			i++
-			if i >= len(fields) {
-				return IPv6AddrState{}, fmt.Errorf("missing pltime value in %q", strings.Join(fields, " "))
-			}
-
-			preferred, err = parseIPv6Lifetime(fields[i])
-			if err != nil {
-				return IPv6AddrState{}, fmt.Errorf("parsing pltime %q: %w", fields[i], err)
-			}
-		case "vltime":
-			i++
-			if i >= len(fields) {
-				return IPv6AddrState{}, fmt.Errorf("missing vltime value in %q", strings.Join(fields, " "))
-			}
-
-			valid, err = parseIPv6Lifetime(fields[i])
-			if err != nil {
-				return IPv6AddrState{}, fmt.Errorf("parsing vltime %q: %w", fields[i], err)
-			}
-		case "temporary":
-			state.Temporary = true
-		case "tentative":
-			state.Tentative = true
+		i, err = parseIfconfigIPv6AddrField(fields, i, &state, &preferred, &valid, &prefixBits)
+		if err != nil {
+			return IPv6AddrState{}, err
 		}
 	}
 
@@ -104,15 +72,86 @@ func parseIfconfigIPv6Addr(fields []string) (state IPv6AddrState, err error) {
 	}, nil
 }
 
+// parseIfconfigIPv6AddrField parses one token from an ifconfig IPv6 address
+// line.
+func parseIfconfigIPv6AddrField(
+	fields []string,
+	i int,
+	state *IPv6AddrState,
+	preferred, valid *uint32,
+	prefixBits *int,
+) (next int, err error) {
+	switch strings.ToLower(fields[i]) {
+	case "prefixlen":
+		return parseIfconfigIPv6AddrInt(fields, i, "prefixlen", func(v int) {
+			*prefixBits = v
+		})
+	case "pltime":
+		return parseIfconfigIPv6AddrLifetime(fields, i, "pltime", preferred)
+	case "vltime":
+		return parseIfconfigIPv6AddrLifetime(fields, i, "vltime", valid)
+	case "temporary":
+		state.Temporary = true
+	case "tentative":
+		state.Tentative = true
+	}
+
+	return i, nil
+}
+
+// parseIfconfigIPv6AddrInt parses one int token from an ifconfig IPv6 address
+// line.
+func parseIfconfigIPv6AddrInt(
+	fields []string,
+	i int,
+	name string,
+	set func(int),
+) (next int, err error) {
+	i++
+	if i >= len(fields) {
+		return i, fmt.Errorf("missing %s value in %q", name, strings.Join(fields, " "))
+	}
+
+	v, err := strconv.Atoi(fields[i])
+	if err != nil {
+		return i, fmt.Errorf("parsing %s %q: %w", name, fields[i], err)
+	}
+
+	set(v)
+
+	return i, nil
+}
+
+// parseIfconfigIPv6AddrLifetime parses one IPv6 lifetime token from an
+// ifconfig IPv6 address line.
+func parseIfconfigIPv6AddrLifetime(
+	fields []string,
+	i int,
+	name string,
+	lifetime *uint32,
+) (next int, err error) {
+	i++
+	if i >= len(fields) {
+		return i, fmt.Errorf("missing %s value in %q", name, strings.Join(fields, " "))
+	}
+
+	*lifetime, err = parseIPv6Lifetime(fields[i])
+	if err != nil {
+		return i, fmt.Errorf("parsing %s %q: %w", name, fields[i], err)
+	}
+
+	return i, nil
+}
+
 // parseIPv6Lifetime parses an IPv6 lifetime token from command output.
 func parseIPv6Lifetime(s string) (sec uint32, err error) {
 	switch strings.ToLower(s) {
 	case "forever", "infinity", "infinite", "infty":
 		return math.MaxUint32, nil
 	default:
-		v, err := strconv.ParseUint(s, 10, 32)
-		if err != nil {
-			return 0, err
+		v, parseErr := strconv.ParseUint(s, 10, 32)
+		if parseErr != nil {
+			return 0, parseErr
 		}
 
 		return uint32(v), nil

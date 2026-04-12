@@ -272,10 +272,14 @@ type V6ServerConf struct {
 	// If it is empty, the configured static prefix semantics are used.
 	PrefixSource V6PrefixSource `yaml:"prefix_source" json:"prefix_source"`
 
-	LeaseDuration uint32 `yaml:"lease_duration" json:"lease_duration"` // in seconds
+	// LeaseDuration is the DHCPv6 lease duration, in seconds.
+	LeaseDuration uint32 `yaml:"lease_duration" json:"lease_duration"`
 
-	RASLAACOnly  bool `yaml:"ra_slaac_only" json:"ra_slaac_only"` // send ICMPv6.RA packets without MO flags
-	RAAllowSLAAC bool `yaml:"ra_allow_slaac" json:"-"`            // send ICMPv6.RA packets with MO flags
+	// RASLAACOnly sends ICMPv6 Router Advertisements without M or O flags.
+	RASLAACOnly bool `yaml:"ra_slaac_only" json:"ra_slaac_only"`
+
+	// RAAllowSLAAC sends ICMPv6 Router Advertisements with M and O flags.
+	RAAllowSLAAC bool `yaml:"ra_allow_slaac" json:"-"`
 
 	ipStart    net.IP        // starting IP address for dynamic leases
 	leaseTime  time.Duration // the time during which a dynamic lease is considered valid

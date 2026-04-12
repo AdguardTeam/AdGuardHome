@@ -9,24 +9,19 @@ import (
 	"log/slog"
 	"net"
 	"net/netip"
-	"syscall"
-	"unsafe"
 
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/osutil/executil"
+	"github.com/mdlayher/netlink"
 	"golang.org/x/sys/unix"
 )
 
 // ObserveIPv6Addrs returns IPv6 interface address state for ifaceName.
 //
-// ctx is accepted to match the BSD implementations (which run ifconfig under
-// an [executil.CommandConstructor] and can be cancelled) but is not honored
-// here: syscall.NetlinkRIB is synchronous and uncancellable from outside the
-// call.  Wrapping it in a goroutine that selects on ctx.Done() would only
-// hide a stuck kernel from the caller while leaking the blocked goroutine on
-// every retry, which is strictly worse than failing fast on the caller side
-// and letting the operator notice a genuinely broken environment.
-// rtnetlink responds in microseconds under normal conditions, so the lack of
-// cancellation is acceptable in practice.
+// ctx is accepted to match the BSD implementations, which run ifconfig under
+// an [executil.CommandConstructor] and can be canceled.  Linux uses a netlink
+// socket instead, so we still accept ctx for API compatibility but do not
+// consult it while receiving the dump reply.
 func ObserveIPv6Addrs(
 	_ context.Context,
 	_ *slog.Logger,
@@ -38,14 +33,21 @@ func ObserveIPv6Addrs(
 		return nil, fmt.Errorf("finding interface %s: %w", ifaceName, err)
 	}
 
-	rib, err := syscall.NetlinkRIB(syscall.RTM_GETADDR, syscall.AF_INET6)
+	conn, err := netlink.Dial(unix.NETLINK_ROUTE, nil)
+	if err != nil {
+		return nil, fmt.Errorf("dialing rtnetlink: %w", err)
+	}
+	defer func() { err = errors.WithDeferred(err, conn.Close()) }()
+
+	msgs, err := conn.Execute(netlink.Message{
+		Header: netlink.Header{
+			Type:  netlink.HeaderType(unix.RTM_GETADDR),
+			Flags: netlink.Request | netlink.Dump,
+		},
+		Data: []byte{unix.AF_INET6},
+	})
 	if err != nil {
 		return nil, fmt.Errorf("querying rtnetlink addrs: %w", err)
-	}
-
-	msgs, err := syscall.ParseNetlinkMessage(rib)
-	if err != nil {
-		return nil, fmt.Errorf("parsing rtnetlink addrs: %w", err)
 	}
 
 	return parseIPv6AddrStatesNetlink(msgs, iface.Index)
@@ -53,38 +55,18 @@ func ObserveIPv6Addrs(
 
 // parseIPv6AddrStatesNetlink parses IPv6 address state from netlink messages.
 func parseIPv6AddrStatesNetlink(
-	msgs []syscall.NetlinkMessage,
+	msgs []netlink.Message,
 	ifIndex int,
 ) (states []IPv6AddrState, err error) {
-loop:
 	for _, msg := range msgs {
-		switch msg.Header.Type {
-		case syscall.NLMSG_DONE:
-			break loop
-		case syscall.RTM_NEWADDR:
-			// Go on.
-		default:
-			continue
-		}
-
-		if len(msg.Data) < syscall.SizeofIfAddrmsg {
-			return nil, fmt.Errorf("short ifaddrmsg payload")
-		}
-
-		ifam := (*syscall.IfAddrmsg)(unsafe.Pointer(&msg.Data[0]))
-		if ifam.Family != syscall.AF_INET6 || int(ifam.Index) != ifIndex {
-			continue
-		}
-
-		attrs, err := syscall.ParseNetlinkRouteAttr(&msg)
-		if err != nil {
-			return nil, fmt.Errorf("parsing route attrs: %w", err)
-		}
-
-		state, ok, err := parseIPv6AddrStateNetlink(ifam, attrs)
+		state, done, ok, err := parseIPv6AddrStateMessage(msg, ifIndex)
 		if err != nil {
 			return nil, err
-		} else if ok {
+		}
+		if done {
+			return states, nil
+		}
+		if ok {
 			states = append(states, state)
 		}
 	}
@@ -92,44 +74,53 @@ loop:
 	return states, nil
 }
 
+// parseIPv6AddrStateMessage parses one netlink message carrying IPv6 address
+// state.
+func parseIPv6AddrStateMessage(
+	msg netlink.Message,
+	ifIndex int,
+) (state IPv6AddrState, done, ok bool, err error) {
+	switch msg.Header.Type {
+	case netlink.Done:
+		return IPv6AddrState{}, true, false, nil
+	case netlink.HeaderType(unix.RTM_NEWADDR):
+		// Go on.
+	default:
+		return IPv6AddrState{}, false, false, nil
+	}
+
+	ifam, err := parseIfAddrmsg(msg.Data)
+	if err != nil {
+		return IPv6AddrState{}, false, false, err
+	}
+	if ifam.Family != unix.AF_INET6 || int(ifam.Index) != ifIndex {
+		return IPv6AddrState{}, false, false, nil
+	}
+
+	attrs, err := netlink.UnmarshalAttributes(msg.Data[unix.SizeofIfAddrmsg:])
+	if err != nil {
+		return IPv6AddrState{}, false, false, fmt.Errorf("parsing route attrs: %w", err)
+	}
+
+	state, ok, err = parseIPv6AddrStateNetlink(ifam, attrs)
+
+	return state, false, ok, err
+}
+
 // parseIPv6AddrStateNetlink parses one IPv6 address state from the netlink
 // message data.
 func parseIPv6AddrStateNetlink(
-	ifam *syscall.IfAddrmsg,
-	attrs []syscall.NetlinkRouteAttr,
+	ifam unix.IfAddrmsg,
+	attrs []netlink.Attribute,
 ) (state IPv6AddrState, ok bool, err error) {
 	var addr netip.Addr
-	var cache *unix.IfaCacheinfo
+	var cache *ipv6AddrCacheInfo
 	flags := uint32(ifam.Flags)
 
 	for _, attr := range attrs {
-		switch attr.Attr.Type {
-		case unix.IFA_LOCAL:
-			addr, err = parseIPv6AddrAttr(attr.Value)
-			if err != nil {
-				return IPv6AddrState{}, false, fmt.Errorf("parsing ifa_local: %w", err)
-			}
-		case unix.IFA_ADDRESS:
-			if addr.IsValid() {
-				continue
-			}
-
-			addr, err = parseIPv6AddrAttr(attr.Value)
-			if err != nil {
-				return IPv6AddrState{}, false, fmt.Errorf("parsing ifa_address: %w", err)
-			}
-		case unix.IFA_FLAGS:
-			if len(attr.Value) < 4 {
-				return IPv6AddrState{}, false, fmt.Errorf("short ifa_flags attribute")
-			}
-
-			flags = binary.NativeEndian.Uint32(attr.Value[:4])
-		case unix.IFA_CACHEINFO:
-			if len(attr.Value) < unix.SizeofIfaCacheinfo {
-				return IPv6AddrState{}, false, fmt.Errorf("short ifa_cacheinfo attribute")
-			}
-
-			cache = (*unix.IfaCacheinfo)(unsafe.Pointer(&attr.Value[0]))
+		addr, flags, cache, err = parseIPv6AddrStateNetlinkAttr(attr, addr, flags, cache)
+		if err != nil {
+			return IPv6AddrState{}, false, err
 		}
 	}
 
@@ -139,8 +130,8 @@ func parseIPv6AddrStateNetlink(
 
 	preferred, valid := uint32(^uint32(0)), uint32(^uint32(0))
 	if cache != nil {
-		preferred = cache.Prefered
-		valid = cache.Valid
+		preferred = cache.preferredLifetimeSec
+		valid = cache.validLifetimeSec
 	}
 
 	return IPv6AddrState{
@@ -151,6 +142,122 @@ func parseIPv6AddrStateNetlink(
 		Temporary:            flags&unix.IFA_F_TEMPORARY != 0,
 		Tentative:            flags&unix.IFA_F_TENTATIVE != 0,
 	}, true, nil
+}
+
+// parseIPv6AddrStateNetlinkAttr parses one IPv6 address attribute from a
+// netlink message.
+func parseIPv6AddrStateNetlinkAttr(
+	attr netlink.Attribute,
+	addr netip.Addr,
+	flags uint32,
+	cache *ipv6AddrCacheInfo,
+) (nextAddr netip.Addr, nextFlags uint32, nextCache *ipv6AddrCacheInfo, err error) {
+	switch attr.Type {
+	case unix.IFA_LOCAL:
+		return parseIPv6AddrStateLocalAttr(attr.Data, flags, cache)
+	case unix.IFA_ADDRESS:
+		return parseIPv6AddrStateAddressAttr(attr.Data, addr, flags, cache)
+	case unix.IFA_FLAGS:
+		return parseIPv6AddrStateFlagsAttr(attr.Data, addr, cache)
+	case unix.IFA_CACHEINFO:
+		return parseIPv6AddrStateCacheAttr(attr.Data, addr, flags)
+	default:
+		return addr, flags, cache, nil
+	}
+}
+
+// parseIPv6AddrStateLocalAttr parses an IFA_LOCAL attribute.
+func parseIPv6AddrStateLocalAttr(
+	data []byte,
+	flags uint32,
+	cache *ipv6AddrCacheInfo,
+) (addr netip.Addr, nextFlags uint32, nextCache *ipv6AddrCacheInfo, err error) {
+	addr, err = parseIPv6AddrAttr(data)
+	if err != nil {
+		return netip.Addr{}, 0, nil, fmt.Errorf("parsing ifa_local: %w", err)
+	}
+
+	return addr, flags, cache, nil
+}
+
+// parseIPv6AddrStateAddressAttr parses an IFA_ADDRESS attribute.
+func parseIPv6AddrStateAddressAttr(
+	data []byte,
+	addr netip.Addr,
+	flags uint32,
+	cache *ipv6AddrCacheInfo,
+) (nextAddr netip.Addr, nextFlags uint32, nextCache *ipv6AddrCacheInfo, err error) {
+	if addr.IsValid() {
+		return addr, flags, cache, nil
+	}
+
+	nextAddr, err = parseIPv6AddrAttr(data)
+	if err != nil {
+		return netip.Addr{}, 0, nil, fmt.Errorf("parsing ifa_address: %w", err)
+	}
+
+	return nextAddr, flags, cache, nil
+}
+
+// parseIPv6AddrStateFlagsAttr parses an IFA_FLAGS attribute.
+func parseIPv6AddrStateFlagsAttr(
+	data []byte,
+	addr netip.Addr,
+	cache *ipv6AddrCacheInfo,
+) (nextAddr netip.Addr, nextFlags uint32, nextCache *ipv6AddrCacheInfo, err error) {
+	if len(data) < 4 {
+		return netip.Addr{}, 0, nil, fmt.Errorf("short ifa_flags attribute")
+	}
+
+	return addr, binary.NativeEndian.Uint32(data[:4]), cache, nil
+}
+
+// parseIPv6AddrStateCacheAttr parses an IFA_CACHEINFO attribute.
+func parseIPv6AddrStateCacheAttr(
+	data []byte,
+	addr netip.Addr,
+	flags uint32,
+) (nextAddr netip.Addr, nextFlags uint32, nextCache *ipv6AddrCacheInfo, err error) {
+	ifaCacheInfo, err := parseIfaCacheinfo(data)
+	if err != nil {
+		return netip.Addr{}, 0, nil, err
+	}
+
+	return addr, flags, &ifaCacheInfo, nil
+}
+
+// ipv6AddrCacheInfo is the lifetime subset of Linux ifa_cacheinfo used by
+// IPv6 address observation.
+type ipv6AddrCacheInfo struct {
+	preferredLifetimeSec uint32
+	validLifetimeSec     uint32
+}
+
+// parseIfAddrmsg parses one Linux ifaddrmsg structure.
+func parseIfAddrmsg(b []byte) (ifam unix.IfAddrmsg, err error) {
+	if len(b) < unix.SizeofIfAddrmsg {
+		return unix.IfAddrmsg{}, fmt.Errorf("short ifaddrmsg payload")
+	}
+
+	return unix.IfAddrmsg{
+		Family:    b[0],
+		Prefixlen: b[1],
+		Flags:     b[2],
+		Scope:     b[3],
+		Index:     binary.NativeEndian.Uint32(b[4:8]),
+	}, nil
+}
+
+// parseIfaCacheinfo parses one Linux ifa_cacheinfo structure.
+func parseIfaCacheinfo(b []byte) (cache ipv6AddrCacheInfo, err error) {
+	if len(b) < unix.SizeofIfaCacheinfo {
+		return ipv6AddrCacheInfo{}, fmt.Errorf("short ifa_cacheinfo attribute")
+	}
+
+	return ipv6AddrCacheInfo{
+		preferredLifetimeSec: binary.NativeEndian.Uint32(b[0:4]),
+		validLifetimeSec:     binary.NativeEndian.Uint32(b[4:8]),
+	}, nil
 }
 
 // parseIPv6AddrAttr parses one IPv6 address attribute.

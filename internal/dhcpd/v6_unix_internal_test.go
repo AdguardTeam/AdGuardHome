@@ -726,8 +726,9 @@ func TestV6ResetLeases_PreservesAdvertisedInterfacePrefixes(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Len(t, s.leases, 2)
-	assert.Contains(t, []netip.Addr{s.leases[0].IP, s.leases[1].IP}, netip.MustParseAddr("2001:db8::10"))
-	assert.Contains(t, []netip.Addr{s.leases[0].IP, s.leases[1].IP}, netip.MustParseAddr("2001:db8:1::10"))
+	gotLeases := []netip.Addr{s.leases[0].IP, s.leases[1].IP}
+	assert.Contains(t, gotLeases, netip.MustParseAddr("2001:db8::10"))
+	assert.Contains(t, gotLeases, netip.MustParseAddr("2001:db8:1::10"))
 }
 
 func TestObservedDNSIPAddrs(t *testing.T) {

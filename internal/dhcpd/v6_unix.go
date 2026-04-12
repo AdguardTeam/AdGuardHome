@@ -684,7 +684,7 @@ func sameDeadlineMap(a, b map[netip.Prefix]time.Time) (ok bool) {
 	}
 
 	for pref, until := range a {
-		if other, ok := b[pref]; !ok || !other.Equal(until) {
+		if other, found := b[pref]; !found || !other.Equal(until) {
 			return false
 		}
 	}
@@ -756,6 +756,102 @@ func (s *v6Server) checkIA(msg *dhcpv6.Message, lease *dhcpsvc.Lease) error {
 	return nil
 }
 
+// leaseCommitSnapshot captures the prefix state used to compute lease
+// lifetimes while holding s.leasesLock.
+type leaseCommitSnapshot struct {
+	leaseTime          time.Duration
+	renewable          bool
+	renewableLifetime  time.Duration
+	deprecatedLifetime time.Duration
+	preferredUntil     time.Time
+	hasPreferredUntil  bool
+}
+
+// snapshotLeaseCommitState captures the prefix-tracking state that lease
+// lifetime calculations depend on.
+func (s *v6Server) snapshotLeaseCommitState(
+	now time.Time,
+	lease *dhcpsvc.Lease,
+) (snapshot leaseCommitSnapshot) {
+	prefix := netip.PrefixFrom(lease.IP, raObservedPrefixBits).Masked()
+	snapshot.leaseTime = s.conf.leaseTime
+	snapshot.renewable = !lease.IsStatic && leasePrefixRenewable(s.renewablePrefixes, lease.IP)
+	validUntil, hasValidUntil := s.validUntilByPrefix[prefix]
+	snapshot.preferredUntil, snapshot.hasPreferredUntil = s.preferredUntilByPrefix[prefix]
+
+	snapshot.renewableLifetime = snapshot.leaseTime
+	if hasValidUntil {
+		capped := time.Duration(remainingUntil(now, validUntil)) * time.Second
+		snapshot.renewableLifetime = min(snapshot.renewableLifetime, capped)
+	}
+
+	if hasValidUntil {
+		validForPrefix := time.Duration(remainingUntil(now, validUntil)) * time.Second
+		validForLease := max(time.Until(lease.Expiry), 0)
+		snapshot.deprecatedLifetime = min(validForLease, validForPrefix)
+	}
+
+	return snapshot
+}
+
+// commitLeaseLifetime returns the valid lifetime to use for msg.
+func commitLeaseLifetime(
+	now time.Time,
+	msgType dhcpv6.MessageType,
+	lease *dhcpsvc.Lease,
+	snapshot leaseCommitSnapshot,
+) (lifetime time.Duration, shouldNotify bool) {
+	switch msgType {
+	case dhcpv6.MessageTypeConfirm:
+		switch {
+		case lease.IsStatic:
+			lifetime = snapshot.leaseTime
+		case snapshot.renewable:
+			lifetime = min(max(time.Until(lease.Expiry), 0), snapshot.renewableLifetime)
+		default:
+			lifetime = snapshot.deprecatedLifetime
+		}
+	case dhcpv6.MessageTypeRequest,
+		dhcpv6.MessageTypeRenew,
+		dhcpv6.MessageTypeRebind:
+		switch {
+		case lease.IsStatic:
+			lifetime = snapshot.leaseTime
+		case snapshot.renewable:
+			lifetime = snapshot.renewableLifetime
+			lease.Expiry = now.Add(lifetime)
+			shouldNotify = true
+		default:
+			lifetime = snapshot.deprecatedLifetime
+		}
+	default:
+		lifetime = snapshot.leaseTime
+	}
+
+	return lifetime, shouldNotify
+}
+
+// commitLeasePreferredLifetime returns the preferred lifetime to use for the
+// reply.
+func commitLeasePreferredLifetime(
+	now time.Time,
+	lifetime time.Duration,
+	lease *dhcpsvc.Lease,
+	snapshot leaseCommitSnapshot,
+) (preferredLifetime time.Duration) {
+	switch {
+	case lease.IsStatic:
+		return lifetime
+	case !snapshot.renewable:
+		return 0
+	case snapshot.hasPreferredUntil:
+		preferredForPrefix := time.Duration(remainingUntil(now, snapshot.preferredUntil)) * time.Second
+		return min(lifetime, preferredForPrefix)
+	default:
+		return lifetime
+	}
+}
+
 // commitLease computes the valid and preferred lifetimes to grant lease in a
 // reply to msg.  For Request/Renew/Rebind on renewable dynamic leases it also
 // updates lease.Expiry and enqueues a lease-change notification.  commitLease
@@ -787,76 +883,9 @@ func (s *v6Server) commitLeaseLocked(
 	msg *dhcpv6.Message,
 	lease *dhcpsvc.Lease,
 ) (lifetime, preferredLifetime time.Duration, shouldNotify bool) {
-	leaseTime := s.conf.leaseTime
-
-	// Snapshot the prefix-tracking state that the computations below depend
-	// on so they all agree about which view of the prefix we are acting
-	// under.
-	prefix := netip.PrefixFrom(lease.IP, raObservedPrefixBits).Masked()
-	renewable := !lease.IsStatic && leasePrefixRenewable(s.renewablePrefixes, lease.IP)
-	validUntil, hasValidUntil := s.validUntilByPrefix[prefix]
-	preferredUntil, hasPreferredUntil := s.preferredUntilByPrefix[prefix]
-
-	// renewableLifetime is the lifetime we would grant a fresh lease,
-	// capped by the prefix's remaining valid lifetime when tracking data is
-	// available.
-	renewableLifetime := leaseTime
-	if hasValidUntil {
-		capped := time.Duration(remainingUntil(now, validUntil)) * time.Second
-		renewableLifetime = min(renewableLifetime, capped)
-	}
-
-	// deprecatedLifetime is the remaining lifetime we are willing to honor
-	// for an existing lease whose prefix is no longer renewable.
-	var deprecatedLifetime time.Duration
-	if hasValidUntil {
-		validForPrefix := time.Duration(remainingUntil(now, validUntil)) * time.Second
-		validForLease := max(time.Until(lease.Expiry), 0)
-		deprecatedLifetime = min(validForLease, validForPrefix)
-	}
-
-	// Default valid lifetime used for Solicit and any non-special cases.
-	lifetime = leaseTime
-
-	switch msg.Type() {
-	case dhcpv6.MessageTypeConfirm:
-		switch {
-		case lease.IsStatic:
-			lifetime = leaseTime
-		case renewable:
-			lifetime = min(max(time.Until(lease.Expiry), 0), renewableLifetime)
-		default:
-			lifetime = deprecatedLifetime
-		}
-
-	case dhcpv6.MessageTypeRequest,
-		dhcpv6.MessageTypeRenew,
-		dhcpv6.MessageTypeRebind:
-
-		switch {
-		case lease.IsStatic:
-			lifetime = leaseTime
-		case renewable:
-			lifetime = renewableLifetime
-			lease.Expiry = now.Add(lifetime)
-			shouldNotify = true
-		default:
-			lifetime = deprecatedLifetime
-		}
-	}
-
-	// Derive preferred lifetime from the same snapshot.
-	switch {
-	case lease.IsStatic:
-		preferredLifetime = lifetime
-	case !renewable:
-		preferredLifetime = 0
-	case hasPreferredUntil:
-		preferredForPrefix := time.Duration(remainingUntil(now, preferredUntil)) * time.Second
-		preferredLifetime = min(lifetime, preferredForPrefix)
-	default:
-		preferredLifetime = lifetime
-	}
+	snapshot := s.snapshotLeaseCommitState(now, lease)
+	lifetime, shouldNotify = commitLeaseLifetime(now, msg.Type(), lease, snapshot)
+	preferredLifetime = commitLeasePreferredLifetime(now, lifetime, lease, snapshot)
 
 	return lifetime, preferredLifetime, shouldNotify
 }
@@ -881,6 +910,34 @@ func requestedIP(msg *dhcpv6.Message) (ip netip.Addr) {
 	return addr
 }
 
+// exactRequestedLease reports whether lease matches the requested IP.
+func exactRequestedLease(reqIP netip.Addr, lease *dhcpsvc.Lease) (ok bool) {
+	return reqIP.IsValid() && lease.IP == reqIP
+}
+
+// usableRequestedDynamicLease reports whether a dynamic lease may be served
+// for the exact requested IP.
+func usableRequestedDynamicLease(
+	msgType dhcpv6.MessageType,
+	reqIP netip.Addr,
+	inCurrentPool bool,
+	advertisedPrefixes map[netip.Prefix]struct{},
+	lease *dhcpsvc.Lease,
+) (ok bool) {
+	if !exactRequestedLease(reqIP, lease) {
+		return false
+	}
+
+	return (inCurrentPool || canServeDeprecatedLease(msgType, lease.IP, advertisedPrefixes)) &&
+		leaseNotExpired(lease)
+}
+
+// usableFallbackLease reports whether lease may be reused when no exact match
+// was found.
+func (s *v6Server) usableFallbackLease(lease *dhcpsvc.Lease) (ok bool) {
+	return s.ipInCurrentPoolLocked(lease.IP) && leaseNotExpired(lease)
+}
+
 // findUsableLease returns a lease that should be served to mac for msg.
 func (s *v6Server) findUsableLease(msg *dhcpv6.Message, mac net.HardwareAddr) (lease *dhcpsvc.Lease) {
 	reqIP := requestedIP(msg)
@@ -891,27 +948,56 @@ func (s *v6Server) findUsableLease(msg *dhcpv6.Message, mac net.HardwareAddr) (l
 			continue
 		}
 
-		if l.IsStatic {
-			if reqIP.IsValid() && l.IP == reqIP {
-				return l
-			} else if lease == nil {
-				lease = l
-			}
-
-			continue
+		if usable := s.exactUsableLease(msgType, reqIP, l); usable != nil {
+			return usable
 		}
-
-		if reqIP.IsValid() && l.IP == reqIP {
-			if (s.ipInCurrentPoolLocked(l.IP) && leaseNotExpired(l)) ||
-				(canServeDeprecatedLease(msgType, l.IP, s.advertisedPrefixes) && leaseNotExpired(l)) {
-				return l
-			}
-		} else if lease == nil && s.ipInCurrentPoolLocked(l.IP) && leaseNotExpired(l) {
-			lease = l
+		if lease == nil {
+			lease = s.fallbackLease(l)
 		}
 	}
 
 	return lease
+}
+
+// exactUsableLease returns lease when the request explicitly targets it and the
+// current server state still allows serving it.
+func (s *v6Server) exactUsableLease(
+	msgType dhcpv6.MessageType,
+	reqIP netip.Addr,
+	lease *dhcpsvc.Lease,
+) (usable *dhcpsvc.Lease) {
+	if lease.IsStatic {
+		if exactRequestedLease(reqIP, lease) {
+			return lease
+		}
+
+		return nil
+	}
+
+	if usableRequestedDynamicLease(
+		msgType,
+		reqIP,
+		s.ipInCurrentPoolLocked(lease.IP),
+		s.advertisedPrefixes,
+		lease,
+	) {
+		return lease
+	}
+
+	return nil
+}
+
+// fallbackLease returns the best reusable lease candidate when no exact
+// request-target match was found.
+func (s *v6Server) fallbackLease(lease *dhcpsvc.Lease) (fallback *dhcpsvc.Lease) {
+	switch {
+	case lease.IsStatic:
+		return lease
+	case s.usableFallbackLease(lease):
+		return lease
+	default:
+		return nil
+	}
 }
 
 // canServeDeprecatedLease reports whether a deprecated dynamic lease for ip may
@@ -1028,6 +1114,43 @@ func (s *v6Server) process(msg *dhcpv6.Message, req, resp dhcpv6.DHCPv6) bool {
 	return true
 }
 
+// newPacketResponse creates the base response for msg.
+func newPacketResponse(msg *dhcpv6.Message) (resp dhcpv6.DHCPv6, err error) {
+	switch msg.Type() {
+	case dhcpv6.MessageTypeSolicit:
+		if msg.GetOneOption(dhcpv6.OptionRapidCommit) == nil {
+			return dhcpv6.NewAdvertiseFromSolicit(msg)
+		}
+
+		return dhcpv6.NewReplyFromMessage(msg)
+	case dhcpv6.MessageTypeRequest,
+		dhcpv6.MessageTypeConfirm,
+		dhcpv6.MessageTypeRenew,
+		dhcpv6.MessageTypeRebind,
+		dhcpv6.MessageTypeRelease,
+		dhcpv6.MessageTypeInformationRequest:
+		return dhcpv6.NewReplyFromMessage(msg)
+	default:
+		return nil, fmt.Errorf("message type %d not supported", msg.Type())
+	}
+}
+
+// addProcessFailureStatus appends the recoverable status code for a failed
+// lease-processing path.
+func addProcessFailureStatus(msgType dhcpv6.MessageType, resp dhcpv6.DHCPv6) (ok bool) {
+	code, text, ok := replyStatusForProcessFailure(msgType)
+	if !ok {
+		return false
+	}
+
+	resp.AddOption(&dhcpv6.OptStatusCode{
+		StatusCode:    code,
+		StatusMessage: text,
+	})
+
+	return true
+}
+
 // 1.
 // fe80::* (client) --(Solicit + ClientID+IANA())-> ff02::1:2
 // server -(Advertise + ClientID+ServerID+IANA(IAAddress)> fe80::*
@@ -1062,29 +1185,7 @@ func (s *v6Server) packetHandler(conn net.PacketConn, peer net.Addr, req dhcpv6.
 		return
 	}
 
-	var resp dhcpv6.DHCPv6
-
-	switch msg.Type() {
-	case dhcpv6.MessageTypeSolicit:
-		if msg.GetOneOption(dhcpv6.OptionRapidCommit) == nil {
-			resp, err = dhcpv6.NewAdvertiseFromSolicit(msg)
-
-			break
-		}
-
-		resp, err = dhcpv6.NewReplyFromMessage(msg)
-	case dhcpv6.MessageTypeRequest,
-		dhcpv6.MessageTypeConfirm,
-		dhcpv6.MessageTypeRenew,
-		dhcpv6.MessageTypeRebind,
-		dhcpv6.MessageTypeRelease,
-		dhcpv6.MessageTypeInformationRequest:
-		resp, err = dhcpv6.NewReplyFromMessage(msg)
-	default:
-		log.Error("dhcpv6: message type %d not supported", msg.Type())
-
-		return
-	}
+	resp, err := newPacketResponse(msg)
 	if err != nil {
 		log.Error("dhcpv6: %s", err)
 
@@ -1094,12 +1195,7 @@ func (s *v6Server) packetHandler(conn net.PacketConn, peer net.Addr, req dhcpv6.
 	resp.AddOption(dhcpv6.OptServerID(s.sid))
 
 	if !s.process(msg, req, resp) {
-		if code, text, ok := replyStatusForProcessFailure(msg.Type()); ok {
-			resp.AddOption(&dhcpv6.OptStatusCode{
-				StatusCode:    code,
-				StatusMessage: text,
-			})
-		} else if requiresProcessSuccess(msg.Type()) {
+		if !addProcessFailureStatus(msg.Type(), resp) && requiresProcessSuccess(msg.Type()) {
 			return
 		}
 	}
@@ -1218,13 +1314,16 @@ func (s *v6Server) observeRAState(ctx context.Context) (obs raObservation, err e
 //
 // An active prefix whose preferred lifetime has already reached zero is
 // treated as unavailable for new leases.  If another advertised prefix still
-// has a non-zero preferred lifetime, the pool is moved there immediately;
-// otherwise the pool is set to nil so new Solicit/Request pairs cannot reserve
-// addresses on a prefix we would then have to answer with a zero-lifetime
-// Reply.  Existing leases on deprecated prefixes are still honored via the
-// deprecated-lease path in [v6Server.findUsableLease] and
+// has a non-zero preferred lifetime, the pool is moved there immediately.
+// Otherwise, the pool is set to nil so new Solicit/Request pairs cannot
+// reserve addresses on a prefix we would then have to answer with a
+// zero-lifetime Reply.  Existing leases on deprecated prefixes are still
+// honored via the deprecated-lease path in [v6Server.findUsableLease] and
 // [v6Server.commitLease].
-func (s *v6Server) trackedPrefixChanged(active *raPrefixSnapshot, advertised []prefixPIO) (err error) {
+func (s *v6Server) trackedPrefixChanged(
+	active *raPrefixSnapshot,
+	advertised []prefixPIO,
+) (err error) {
 	if !s.conf.NeedsDHCPv6Pool() {
 		s.setTrackedRangeStart(nil, advertised)
 
@@ -1290,46 +1389,7 @@ func (s *v6Server) setTrackedRangeStart(ipStart net.IP, advertised []prefixPIO) 
 	s.renewablePrefixes = renewable
 	s.preferredUntilByPrefix = preferredUntil
 	s.validUntilByPrefix = validUntil
-
-	activePrefix := netip.Prefix{}
-	if len(ipStart) == net.IPv6len {
-		if addr, ok := netip.AddrFromSlice(ipStart); ok {
-			activePrefix = netip.PrefixFrom(addr, raObservedPrefixBits).Masked()
-		}
-	}
-
-	// Always clear and rebuild the occupancy bitmap from the surviving
-	// leases.  Callers such as ResetLeases replace s.leases wholesale
-	// without touching s.ipAddrs, and an earlier version of this function
-	// that skipped the rebuild when ipStart happened to be unchanged
-	// left stale bits from dropped leases behind, which made the pool
-	// appear exhausted long after those addresses had been released.
-	s.ipAddrs = [256]byte{}
-
-	removed := 0
-	updated := false
-	leases := s.leases[:0]
-	for _, l := range s.leases {
-		if !l.IsStatic {
-			pref := netip.PrefixFrom(l.IP, raObservedPrefixBits).Masked()
-			if !leasePrefixAdvertised(keepPrefixes, l.IP) ||
-				(activePrefix.IsValid() && pref == activePrefix && !ip6InRange(ipStart, net.IP(l.IP.AsSlice()))) {
-				removed++
-
-				continue
-			}
-
-			if until, ok := validUntil[pref]; ok && (l.Expiry.IsZero() || l.Expiry.After(until)) {
-				l.Expiry = until
-				updated = true
-			}
-		}
-
-		leases = append(leases, l)
-		s.markLeaseOccupied(l)
-	}
-
-	s.leases = leases
+	removed, updated := s.retainTrackedLeases(ipStart, keepPrefixes, validUntil)
 	newDeprecated := deprecatedMetaFrom(now, renewable, keepPrefixes, validUntil)
 	metadataChanged := (len(oldDeprecated) > 0 || len(newDeprecated) > 0) &&
 		(!samePrefixSet(oldRenewable, renewable) || !sameDeadlineMap(oldDeprecated, newDeprecated))
@@ -1373,47 +1433,48 @@ func (s *v6Server) hasStaticV6Leases() (ok bool) {
 	return false
 }
 
-// restoreDeprecatedPrefixes seeds initial deprecated prefixes from persisted
-// metadata whose renewable prefixes still match the currently observed
-// interface state.
-func (s *v6Server) restoreDeprecatedPrefixes(now time.Time, st *raState) {
-	s.leasesLock.Lock()
-	defer s.leasesLock.Unlock()
-
-	s.persistRestoredMeta = false
-
-	if len(s.restoredDeprecated) == 0 {
-		return
-	}
-
+// restoredPrefixesMatchObserved reports whether the persisted renewable
+// prefixes still match the currently observed interface state.
+func restoredPrefixesMatchObserved(
+	now time.Time,
+	st *raState,
+	restored map[netip.Prefix]struct{},
+) (ok bool) {
 	observedRenewable := renewableLeasePrefixes(st.pios(now))
-	if len(s.restoredRenewable) > 0 {
-		if !prefixSetContainsAll(observedRenewable, s.restoredRenewable) {
-			return
-		}
-	} else if len(observedRenewable) > 0 {
-		return
+	switch {
+	case len(restored) > 0:
+		return prefixSetContainsAll(observedRenewable, restored)
+	case len(observedRenewable) > 0:
+		return false
+	default:
+		return true
 	}
+}
 
-	advertised := advertisedLeasePrefixes(st.pios(now))
-	if len(advertised) == 0 {
-		return
-	}
-
-	if len(s.restoredRenewable) == 0 {
-		overlap := false
-		for pref := range advertised {
-			if _, ok := s.restoredDeprecated[pref]; ok {
-				overlap = true
-				break
-			}
-		}
-		if !overlap {
-			return
+// restoredDeprecatedPrefixOverlap reports whether any persisted deprecated
+// prefix is still advertised.
+func restoredDeprecatedPrefixOverlap(
+	advertised map[netip.Prefix]struct{},
+	restored map[netip.Prefix]time.Time,
+) (ok bool) {
+	for pref := range advertised {
+		if _, found := restored[pref]; found {
+			return true
 		}
 	}
 
-	for pref, until := range s.restoredDeprecated {
+	return false
+}
+
+// restoreDeprecatedPrefixEntries seeds the tracked state with persisted
+// deprecated prefixes that are no longer advertised.
+func restoreDeprecatedPrefixEntries(
+	st *raState,
+	now time.Time,
+	advertised map[netip.Prefix]struct{},
+	restored map[netip.Prefix]time.Time,
+) {
+	for pref, until := range restored {
 		if _, ok := advertised[pref]; ok {
 			continue
 		}
@@ -1435,6 +1496,36 @@ func (s *v6Server) restoreDeprecatedPrefixes(now time.Time, st *raState) {
 	}
 }
 
+// restoreDeprecatedPrefixes seeds initial deprecated prefixes from persisted
+// metadata whose renewable prefixes still match the currently observed
+// interface state.
+func (s *v6Server) restoreDeprecatedPrefixes(now time.Time, st *raState) {
+	s.leasesLock.Lock()
+	defer s.leasesLock.Unlock()
+
+	s.persistRestoredMeta = false
+
+	if len(s.restoredDeprecated) == 0 {
+		return
+	}
+
+	if !restoredPrefixesMatchObserved(now, st, s.restoredRenewable) {
+		return
+	}
+
+	advertised := advertisedLeasePrefixes(st.pios(now))
+	if len(advertised) == 0 {
+		return
+	}
+
+	if len(s.restoredRenewable) == 0 &&
+		!restoredDeprecatedPrefixOverlap(advertised, s.restoredDeprecated) {
+		return
+	}
+
+	restoreDeprecatedPrefixEntries(st, now, advertised, s.restoredDeprecated)
+}
+
 // setRestoredPrefixMeta stores deprecated-prefix metadata loaded from disk.
 func (s *v6Server) setRestoredPrefixMeta(
 	renewable map[netip.Prefix]struct{},
@@ -1450,7 +1541,12 @@ func (s *v6Server) setRestoredPrefixMeta(
 
 // deprecatedPrefixMeta returns persisted metadata for currently tracked
 // interface-derived prefixes.
-func (s *v6Server) deprecatedPrefixMeta(now time.Time) (renewable map[netip.Prefix]struct{}, deprecated map[netip.Prefix]time.Time) {
+func (s *v6Server) deprecatedPrefixMeta(
+	now time.Time,
+) (
+	renewable map[netip.Prefix]struct{},
+	deprecated map[netip.Prefix]time.Time,
+) {
 	s.leasesLock.Lock()
 	defer s.leasesLock.Unlock()
 
@@ -1486,98 +1582,165 @@ func (s *v6Server) deprecatedPrefixMetaLocked(now time.Time) (renewable map[neti
 	return renewable, deprecated
 }
 
-// Start starts the IPv6 DHCP server.
-func (s *v6Server) Start(ctx context.Context) (err error) {
-	defer func() { err = errors.Annotate(err, "dhcpv6: %w") }()
-
-	if !s.conf.Enabled {
-		return nil
-	}
-
-	ifaceName := s.conf.InterfaceName
-	iface, err := net.InterfaceByName(ifaceName)
-	if err != nil {
-		return fmt.Errorf("finding interface %s by name: %w", ifaceName, err)
-	}
-
-	log.Debug("dhcpv6: starting...")
-
-	ok, err := s.configureDNSIPAddrs(ctx, iface)
-	if err != nil {
-		// Don't wrap the error, because it's informative enough as is.
-		return err
-	}
-
-	if !ok {
-		if s.conf.NormalizedPrefixSource() != V6PrefixSourceInterface {
-			// No available IP addresses which may appear later.
-			return nil
-		}
-	}
-
-	var (
-		initial raState
-		observe raObserver
-	)
-
+// startPrefixSourceState initializes the RA state and callbacks for the
+// configured prefix source.
+func (s *v6Server) startPrefixSourceState(
+	ctx context.Context,
+) (initial raState, observe raObserver, err error) {
 	switch s.conf.NormalizedPrefixSource() {
 	case V6PrefixSourceStatic:
 		initial = newStaticRAState(buildStaticRAObservation(s.dnsIPAddrs(), s.conf.ipStart))
 		s.ra.onStateRefresh = nil
 		s.ra.onActivePrefixChange = nil
+		return initial, nil, nil
 	case V6PrefixSourceInterface:
-		if s.hasStaticV6Leases() {
-			s.conf.Logger.WarnContext(
-				ctx,
-				"dhcpv6: interface-derived prefix tracking does not rewrite literal static IPv6 leases",
-			)
-		}
-
-		initial = newObservedRAState()
-
-		// Fail fast on initial-observation errors in interface mode.
-		// The rest of the server depends on having at least one
-		// observed prefix to bootstrap ipStart, advertisedPrefixes and
-		// the deadline maps; without them reserveLease can't allocate
-		// addresses and findUsableLease can't renew existing leases,
-		// so swallowing the error here would bring DHCPv6 up as
-		// "enabled" while silently refusing to hand out or renew
-		// anything.  Transient errors are rare compared to permanent
-		// environment misconfigurations (missing ifconfig, netlink
-		// denied, wrong interface, cancelled context) and surfacing
-		// them at Start() is how an operator notices.
-		obs, obsErr := s.observeRAState(ctx)
-		if obsErr != nil {
-			return fmt.Errorf("observing initial ipv6 prefix state: %w", obsErr)
-		}
-
-		now := time.Now()
-		initial.merge(obs, now)
-		s.restoreDeprecatedPrefixes(now, &initial)
-		if pios := initial.pios(now); len(pios) > 0 {
-			if err = s.trackedPrefixChanged(initial.activeSnapshot(now), pios); err != nil {
-				return fmt.Errorf("updating tracked range start: %w", err)
-			}
-		}
-
-		observe = s.observeRAState
-		s.ra.onStateRefresh = func(now time.Time, st *raState) {
-			s.restoreDeprecatedPrefixes(now, st)
-		}
-		s.ra.onActivePrefixChange = func(active *raPrefixSnapshot, advertised []prefixPIO) {
-			if activeErr := s.trackedPrefixChanged(active, advertised); activeErr != nil {
-				log.Error("dhcpv6: updating tracked pool: %s", activeErr)
-			}
-		}
+		return s.startInterfacePrefixTracking(ctx)
 	default:
-		return fmt.Errorf("unsupported prefix source %q", s.conf.PrefixSource)
+		return raState{}, nil, fmt.Errorf("unsupported prefix source %q", s.conf.PrefixSource)
+	}
+}
+
+// startInterfacePrefixTracking initializes interface-derived prefix tracking.
+func (s *v6Server) startInterfacePrefixTracking(
+	ctx context.Context,
+) (initial raState, observe raObserver, err error) {
+	if s.hasStaticV6Leases() {
+		s.conf.Logger.WarnContext(
+			ctx,
+			"dhcpv6: interface-derived prefix tracking does not rewrite literal static IPv6 leases",
+		)
 	}
 
-	err = s.initRA(iface, initial, observe)
-	if err != nil {
-		return err
+	initial = newObservedRAState()
+
+	// Fail fast on initial-observation errors in interface mode.  The rest of
+	// the server depends on having at least one observed prefix to bootstrap
+	// ipStart, advertisedPrefixes and the deadline maps; without them
+	// reserveLease can't allocate addresses and findUsableLease can't renew
+	// existing leases, so swallowing the error here would bring DHCPv6 up as
+	// "enabled" while silently refusing to hand out or renew anything.
+	obs, obsErr := s.observeRAState(ctx)
+	if obsErr != nil {
+		return raState{}, nil, fmt.Errorf("observing initial ipv6 prefix state: %w", obsErr)
 	}
 
+	now := time.Now()
+	initial.merge(obs, now)
+	s.restoreDeprecatedPrefixes(now, &initial)
+	if pios := initial.pios(now); len(pios) > 0 {
+		if err = s.trackedPrefixChanged(initial.activeSnapshot(now), pios); err != nil {
+			return raState{}, nil, fmt.Errorf("updating tracked range start: %w", err)
+		}
+	}
+
+	observe = s.observeRAState
+	s.ra.onStateRefresh = func(now time.Time, st *raState) {
+		s.restoreDeprecatedPrefixes(now, st)
+	}
+	s.ra.onActivePrefixChange = func(active *raPrefixSnapshot, advertised []prefixPIO) {
+		if activeErr := s.trackedPrefixChanged(active, advertised); activeErr != nil {
+			log.Error("dhcpv6: updating tracked pool: %s", activeErr)
+		}
+	}
+
+	return initial, observe, nil
+}
+
+// activeTrackedPrefix returns the prefix for the current tracked DHCPv6 pool.
+func activeTrackedPrefix(ipStart net.IP) (prefix netip.Prefix) {
+	if len(ipStart) != net.IPv6len {
+		return netip.Prefix{}
+	}
+
+	if addr, ok := netip.AddrFromSlice(ipStart); ok {
+		return netip.PrefixFrom(addr, raObservedPrefixBits).Masked()
+	}
+
+	return netip.Prefix{}
+}
+
+// shouldKeepTrackedLease reports whether l still belongs to the active tracked
+// pool after the prefix transition.
+func shouldKeepTrackedLease(
+	ipStart net.IP,
+	activePrefix netip.Prefix,
+	keepPrefixes map[netip.Prefix]struct{},
+	l *dhcpsvc.Lease,
+) (ok bool) {
+	if !leasePrefixAdvertised(keepPrefixes, l.IP) {
+		return false
+	}
+
+	if activePrefix.IsValid() &&
+		netip.PrefixFrom(l.IP, raObservedPrefixBits).Masked() == activePrefix &&
+		!ip6InRange(ipStart, net.IP(l.IP.AsSlice())) {
+		return false
+	}
+
+	return true
+}
+
+// updateTrackedLeaseExpiry clamps l to the tracked prefix deadline when
+// needed.
+func updateTrackedLeaseExpiry(
+	validUntil map[netip.Prefix]time.Time,
+	l *dhcpsvc.Lease,
+) (updated bool) {
+	pref := netip.PrefixFrom(l.IP, raObservedPrefixBits).Masked()
+	until, ok := validUntil[pref]
+	if !ok || (!l.Expiry.IsZero() && !l.Expiry.After(until)) {
+		return false
+	}
+
+	l.Expiry = until
+
+	return true
+}
+
+// retainTrackedLeases rebuilds the in-memory lease slice for a tracked prefix
+// transition.
+func (s *v6Server) retainTrackedLeases(
+	ipStart net.IP,
+	keepPrefixes map[netip.Prefix]struct{},
+	validUntil map[netip.Prefix]time.Time,
+) (removed int, updated bool) {
+	activePrefix := activeTrackedPrefix(ipStart)
+
+	// Always clear and rebuild the occupancy bitmap from the surviving
+	// leases.
+	s.ipAddrs = [256]byte{}
+
+	leases := s.leases[:0]
+	for _, l := range s.leases {
+		if !l.IsStatic {
+			if !shouldKeepTrackedLease(ipStart, activePrefix, keepPrefixes, l) {
+				removed++
+
+				continue
+			}
+
+			if updateTrackedLeaseExpiry(validUntil, l) {
+				updated = true
+			}
+		}
+
+		leases = append(leases, l)
+		s.markLeaseOccupied(l)
+	}
+
+	s.leases = leases
+
+	return removed, updated
+}
+
+// skipStartAfterDNSConfig reports whether Start should return after the DNS
+// address lookup without initializing RA state yet.
+func skipStartAfterDNSConfig(ok bool, prefixSource V6PrefixSource) (skip bool) {
+	return !ok && prefixSource != V6PrefixSourceInterface
+}
+
+// startDHCPv6Server initializes the DHCPv6 listener after RA state is ready.
+func (s *v6Server) startDHCPv6Server(iface *net.Interface) (err error) {
 	// Don't initialize DHCPv6 server if we must force the clients to use SLAAC.
 	if !s.conf.NeedsDHCPv6Pool() {
 		log.Debug("not starting dhcpv6 server due to ra_slaac_only=true")
@@ -1614,6 +1777,46 @@ func (s *v6Server) Start(ctx context.Context) (err error) {
 	return nil
 }
 
+// Start starts the IPv6 DHCP server.
+func (s *v6Server) Start(ctx context.Context) (err error) {
+	defer func() { err = errors.Annotate(err, "dhcpv6: %w") }()
+
+	if !s.conf.Enabled {
+		return nil
+	}
+
+	ifaceName := s.conf.InterfaceName
+	iface, err := net.InterfaceByName(ifaceName)
+	if err != nil {
+		return fmt.Errorf("finding interface %s by name: %w", ifaceName, err)
+	}
+
+	log.Debug("dhcpv6: starting...")
+
+	ok, err := s.configureDNSIPAddrs(ctx, iface)
+	if err != nil {
+		// Don't wrap the error, because it's informative enough as is.
+		return err
+	}
+
+	if skipStartAfterDNSConfig(ok, s.conf.NormalizedPrefixSource()) {
+		// No available IP addresses which may appear later.
+		return nil
+	}
+
+	initial, observe, err := s.startPrefixSourceState(ctx)
+	if err != nil {
+		return err
+	}
+
+	err = s.initRA(iface, initial, observe)
+	if err != nil {
+		return err
+	}
+
+	return s.startDHCPv6Server(iface)
+}
+
 // Stop - stop server
 func (s *v6Server) Stop() (err error) {
 	err = s.ra.Close()
@@ -1636,6 +1839,52 @@ func (s *v6Server) Stop() (err error) {
 	s.srv = nil
 
 	return nil
+}
+
+// validateV6CreateRangeStart checks whether conf has the range-start value the
+// server setup needs.
+func validateV6CreateRangeStart(conf V6ServerConf) (err error) {
+	needsConfiguredRange := conf.NormalizedPrefixSource() == V6PrefixSourceStatic || conf.NeedsDHCPv6Pool()
+	if needsConfiguredRange && (conf.RangeStart == nil || conf.RangeStart.To16() == nil) {
+		return fmt.Errorf("invalid range-start IP: %s", conf.RangeStart)
+	}
+
+	if len(conf.RangeStart) != 0 && conf.RangeStart.To16() == nil {
+		return fmt.Errorf("invalid range-start IP: %s", conf.RangeStart)
+	}
+
+	return nil
+}
+
+// configureV6CreateRangeStart normalizes the configured range-start IP.
+func configureV6CreateRangeStart(conf *V6ServerConf) {
+	if len(conf.RangeStart) == 0 {
+		return
+	}
+
+	conf.RangeStart = bytes.Clone(conf.RangeStart.To16())
+}
+
+// configureV6CreateStaticPrefix seeds the tracked pool for static prefix
+// source mode.
+func (s *v6Server) configureV6CreateStaticPrefix() {
+	s.conf.ipStart = bytes.Clone(s.conf.RangeStart)
+	if addr, ok := netip.AddrFromSlice(s.conf.ipStart); ok {
+		prefix := netip.PrefixFrom(addr, raObservedPrefixBits).Masked()
+		s.advertisedPrefixes = map[netip.Prefix]struct{}{prefix: {}}
+		s.renewablePrefixes = map[netip.Prefix]struct{}{prefix: {}}
+	}
+}
+
+// configureV6CreateLeaseDuration fills in the effective lease duration.
+func (s *v6Server) configureV6CreateLeaseDuration(conf V6ServerConf) {
+	if conf.LeaseDuration == 0 {
+		s.conf.leaseTime = timeutil.Day
+		s.conf.LeaseDuration = uint32(s.conf.leaseTime.Seconds())
+		return
+	}
+
+	s.conf.leaseTime = time.Second * time.Duration(conf.LeaseDuration)
 }
 
 // Create DHCPv6 server
@@ -1664,33 +1913,16 @@ func v6Create(conf V6ServerConf) (DHCPServer, error) {
 		return s, nil
 	}
 
-	needsConfiguredRange := conf.NormalizedPrefixSource() == V6PrefixSourceStatic || conf.NeedsDHCPv6Pool()
-	if needsConfiguredRange && (conf.RangeStart == nil || conf.RangeStart.To16() == nil) {
-		return s, fmt.Errorf("dhcpv6: invalid range-start IP: %s", conf.RangeStart)
+	if err = validateV6CreateRangeStart(conf); err != nil {
+		return s, fmt.Errorf("dhcpv6: %w", err)
 	}
-	if len(conf.RangeStart) != 0 {
-		if conf.RangeStart.To16() == nil {
-			return s, fmt.Errorf("dhcpv6: invalid range-start IP: %s", conf.RangeStart)
-		}
-
-		s.conf.RangeStart = bytes.Clone(conf.RangeStart.To16())
-	}
+	configureV6CreateRangeStart(&s.conf)
 
 	if conf.NormalizedPrefixSource() == V6PrefixSourceStatic {
-		s.conf.ipStart = bytes.Clone(s.conf.RangeStart)
-		if addr, ok := netip.AddrFromSlice(s.conf.ipStart); ok {
-			prefix := netip.PrefixFrom(addr, raObservedPrefixBits).Masked()
-			s.advertisedPrefixes = map[netip.Prefix]struct{}{prefix: {}}
-			s.renewablePrefixes = map[netip.Prefix]struct{}{prefix: {}}
-		}
+		s.configureV6CreateStaticPrefix()
 	}
 
-	if conf.LeaseDuration == 0 {
-		s.conf.leaseTime = timeutil.Day
-		s.conf.LeaseDuration = uint32(s.conf.leaseTime.Seconds())
-	} else {
-		s.conf.leaseTime = time.Second * time.Duration(conf.LeaseDuration)
-	}
+	s.configureV6CreateLeaseDuration(conf)
 
 	return s, nil
 }
