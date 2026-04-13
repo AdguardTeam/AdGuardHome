@@ -15,6 +15,9 @@ export type ClientForm = {
     upstreams_cache_enabled: boolean;
     upstreams_cache_size: number;
     blocked_services: Record<string, boolean>;
+    use_global_filter_lists: boolean;
+    filter_list_ids: Record<string, boolean>;
+    allow_filter_list_ids: Record<string, boolean>;
     filtering_enabled: boolean;
     safebrowsing_enabled: boolean;
     parental_enabled: boolean;
