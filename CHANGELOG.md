@@ -58,12 +58,15 @@ In this release, the schema version has changed from 33 to 34.
 
 ### Fixed
 
+- Incorrect forwarding of root domain requests when domain-specific upstreams are configured ([#7058]).
+
 - The strict SNI check setting is not persisted when the TLS configuration is changed ([#8327]).
 
 - Status reported by the launchd service implementation in cases of scheduled service restart.
 
 - Fixed clients block/unblock when moving clients between allowed and disallowed lists.
 
+[#7058]: https://github.com/AdguardTeam/AdGuardHome/issues/7058
 [#8327]: https://github.com/AdguardTeam/AdGuardHome/issues/8327
 
 <!--
