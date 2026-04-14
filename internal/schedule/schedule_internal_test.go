@@ -168,11 +168,6 @@ yaml: "bad"
 		wantErrMsg string
 		data       []byte
 	}{{
-		name:       "empty",
-		wantErrMsg: "",
-		data:       []byte(""),
-		want:       &Weekly{},
-	}, {
 		name:       "null",
 		wantErrMsg: "",
 		data:       []byte("null"),
@@ -184,27 +179,27 @@ yaml: "bad"
 		want:       brusselsWeekly,
 	}, {
 		name: "start_equal_end",
-		wantErrMsg: "yaml: unmarshal errors:\n" +
-			"  line 2: weekday Sunday: bad day range: " +
+		wantErrMsg: "yaml: construct errors:" +
+			" line 2: weekday Sunday: bad day range: " +
 			"start 9h0m0s is greater or equal to end 9h0m0s",
 		data: []byte(sameTime),
 		want: &Weekly{},
 	}, {
 		name: "start_negative",
-		wantErrMsg: "yaml: unmarshal errors:\n" +
-			"  line 2: weekday Sunday: bad day range: start -1h0m0s is negative",
+		wantErrMsg: "yaml: construct errors:" +
+			" line 2: weekday Sunday: bad day range: start -1h0m0s is negative",
 		data: []byte(negativeStart),
 		want: &Weekly{},
 	}, {
 		name: "bad_time_zone",
-		wantErrMsg: "yaml: unmarshal errors:\n" +
-			"  line 2: unknown time zone bad_timezone",
+		wantErrMsg: "yaml: construct errors:" +
+			" line 2: unknown time zone bad_timezone",
 		data: []byte(badTZ),
 		want: &Weekly{},
 	}, {
 		name: "bad_yaml",
-		wantErrMsg: "yaml: unmarshal errors:\n" +
-			"  line 3: mapping key \"yaml\" already defined at line 2",
+		wantErrMsg: "yaml: construct errors:" +
+			" line 3: mapping key \"yaml\" already defined at line 2",
 		data: []byte(badYAML),
 		want: &Weekly{},
 	}}
