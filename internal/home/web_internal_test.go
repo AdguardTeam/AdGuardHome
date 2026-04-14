@@ -3,7 +3,6 @@ package home
 import (
 	"bufio"
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"net"
 	"net/http"
@@ -121,11 +120,6 @@ func TestWebAPI_h2cVulnerability(t *testing.T) {
 	globalContext.web = web
 
 	servicetest.RequireRun(t, queryLog, testTimeout)
-	testutil.CleanupAndRequireSuccess(t, func() (err error) {
-		ctx := testutil.ContextWithTimeout(t, testTimeout)
-
-		return queryLog.Shutdown(ctx)
-	})
 
 	port := config.HTTPConfig.Address.Port()
 	host := fmt.Sprintf("%s:%d", netutil.IPv4Localhost(), port)
@@ -141,43 +135,30 @@ func TestWebAPI_h2cVulnerability(t *testing.T) {
 		web.close(ctx)
 	})
 
-	waitForWebAPIReady(t, user.Name, password, host)
+	waitForWebAPIReady(t, host)
 	performH2CUpgradeAttack(t, host)
 }
 
 // waitForWebAPIReady waits until the [webAPI] server has started and is ready
 // to accept connections.
-func waitForWebAPIReady(tb testing.TB, username, password, host string) {
+func waitForWebAPIReady(tb testing.TB, host string) {
 	tb.Helper()
 
 	u := (&url.URL{
 		Scheme: urlutil.SchemeHTTP,
 		Host:   host,
-		Path:   "/control/login",
+		Path:   "/control/status",
 	}).String()
 
-	timeout := 10 * time.Second
-
-	loginReq := loginJSON{
-		Name:     username,
-		Password: password,
-	}
-	body, encErr := json.Marshal(loginReq)
-	require.NoError(tb, encErr)
-
-	bodyReader := bytes.NewReader(body)
 	require.EventuallyWithT(tb, func(c *assert.CollectT) {
-		bodyReader.Reset(body)
-
 		ctx := testutil.ContextWithTimeout(tb, testTimeout)
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, u, bodyReader)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
 		require.NoError(c, err)
 
-		var resp *http.Response
-		resp, err = http.DefaultClient.Do(req)
+		resp, err := http.DefaultClient.Do(req)
 		require.NoError(c, err)
-		require.Equal(c, http.StatusOK, resp.StatusCode)
-	}, timeout, timeout/10)
+		assert.Equal(c, http.StatusUnauthorized, resp.StatusCode)
+	}, testTimeout, testTimeout/10)
 }
 
 // performH2CUpgradeAttack establishes a TCP connection to the specified host,
