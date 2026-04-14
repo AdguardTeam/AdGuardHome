@@ -61,6 +61,8 @@ In this release, the schema version has changed from 33 to 34.
 
 ### Fixed
 
+- Safe Browsing and Parental Control labels on the General Settings page not updating after changing the UI language.
+
 - Incorrect forwarding of root domain requests when domain-specific upstreams are configured ([#7058]).
 
 - The strict SNI check setting is not persisted when the TLS configuration is changed ([#8327]).
