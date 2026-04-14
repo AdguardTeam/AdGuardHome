@@ -1,11 +1,22 @@
 'name': 'potential-duplicates'
+
+# Permissions are disabled for all the jobs by default, and then overridden for
+# specific jobs if needed.
+'permissions': {}
+
 'on':
     'issues':
         'types':
           - 'opened'
+
 'jobs':
     'run':
         'runs-on': 'ubuntu-latest'
+        'permissions':
+          # Required read permission to scan existing issues and write
+          # permission to mark duplicates.
+          'issues': 'write'
+
         'steps':
           - 'uses': 'wow-actions/potential-duplicates@v1'
             'with':

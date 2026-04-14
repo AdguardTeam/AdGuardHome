@@ -1,5 +1,9 @@
 'name': 'lint'
 
+# Permissions are disabled for all the jobs by default, and then overridden for
+# specific jobs if needed.
+'permissions': {}
+
 'env':
   'GO_VERSION': '1.26.2'
 
@@ -14,8 +18,12 @@
 'jobs':
   'go-lint':
     'runs-on': 'ubuntu-latest'
+    'permissions':
+      'contents': 'read'
     'steps':
     - 'uses': 'actions/checkout@v2'
+      'with':
+        'persist-credentials': false
     - 'name': 'Set up Go'
       'uses': 'actions/setup-go@v3'
       'with':
@@ -26,8 +34,12 @@
 
   'eslint':
     'runs-on': 'ubuntu-latest'
+    'permissions':
+      'contents': 'read'
     'steps':
     - 'uses': 'actions/checkout@v2'
+      'with':
+        'persist-credentials': false
     - 'name': 'Install modules'
       'run': 'npm --prefix="./client" ci'
     - 'name': 'Run ESLint'
@@ -52,6 +64,10 @@
         )
       }}
     'runs-on': 'ubuntu-latest'
+    'permissions':
+      # Required by workflow-conclusion-action to check workflow status.
+      'actions': 'read'
+      'contents': 'read'
     'steps':
     - 'name': 'Conclusion'
       'uses': 'technote-space/workflow-conclusion-action@v1'
