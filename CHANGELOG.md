@@ -20,9 +20,12 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Security
 
+- Frontend libraries has been updated to prevent the possibility of exploiting the vulnerability described in [CVE-2026-40175][cve-2026-40175].
+
 - Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.26.2][go-1.26.2].
 
-[go-1.26.2]: https://groups.google.com/g/golang-announce/c/0uYbvbPZRWU
+[cve-2026-40175]: https://nvd.nist.gov/vuln/detail/CVE-2026-40175
+[go-1.26.2]:      https://groups.google.com/g/golang-announce/c/0uYbvbPZRWU
 
 ### Changed
 
