@@ -12,13 +12,13 @@
     "message": "Азартныя гульні і стаўкі"
   },
   "servicesgroup.gaming.name": {
-    "message": "Гэймінг"
+    "message": "Гульні"
   },
   "servicesgroup.hosting.name": {
     "message": "Вэб-хостынг"
   },
   "servicesgroup.messenger.name": {
-    "message": "Сэрвісы паведамленняў"
+    "message": "Сэрвісы абмену паведамленнямі"
   },
   "servicesgroup.privacy.name": {
     "message": "Інструменты прыватнасці"
@@ -33,6 +33,6 @@
     "message": "Распрацоўка праграмнага забеспячэння"
   },
   "servicesgroup.streaming.name": {
-    "message": "Стрымінгавыя сэрвісы"
+    "message": "Сэрвісы трансляцый"
   }
 }
