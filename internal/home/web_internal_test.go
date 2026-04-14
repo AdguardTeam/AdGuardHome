@@ -150,6 +150,9 @@ func waitForWebAPIReady(tb testing.TB, host string) {
 		Path:   "/control/status",
 	}).String()
 
+	// TODO(f.setrakov): The WebAPI doesn't start up within the common test
+	// timeout, so longer a one must be used.  Investigate.
+	timeout := time.Second * 10
 	require.EventuallyWithT(tb, func(c *assert.CollectT) {
 		ctx := testutil.ContextWithTimeout(tb, testTimeout)
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
@@ -158,7 +161,7 @@ func waitForWebAPIReady(tb testing.TB, host string) {
 		resp, err := http.DefaultClient.Do(req)
 		require.NoError(c, err)
 		assert.Equal(c, http.StatusUnauthorized, resp.StatusCode)
-	}, testTimeout, testTimeout/10)
+	}, timeout, timeout/10)
 }
 
 // performH2CUpgradeAttack establishes a TCP connection to the specified host,
