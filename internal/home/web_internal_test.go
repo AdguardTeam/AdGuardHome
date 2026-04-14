@@ -156,24 +156,28 @@ func waitForWebAPIReady(tb testing.TB, username, password, host string) {
 		Path:   "/control/login",
 	}).String()
 
-	body := bytes.NewBuffer(nil)
+	timeout := 10 * time.Second
+
 	loginReq := loginJSON{
 		Name:     username,
 		Password: password,
 	}
-
-	encErr := json.NewEncoder(body).Encode(loginReq)
+	body, encErr := json.Marshal(loginReq)
 	require.NoError(tb, encErr)
+
+	bodyReader := bytes.NewReader(body)
 	require.EventuallyWithT(tb, func(c *assert.CollectT) {
+		bodyReader.Reset(body)
+
 		ctx := testutil.ContextWithTimeout(tb, testTimeout)
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, u, body)
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, u, bodyReader)
 		require.NoError(c, err)
 
 		var resp *http.Response
 		resp, err = http.DefaultClient.Do(req)
 		require.NoError(c, err)
 		require.Equal(c, http.StatusOK, resp.StatusCode)
-	}, testTimeout, testTimeout/10)
+	}, timeout, timeout/10)
 }
 
 // performH2CUpgradeAttack establishes a TCP connection to the specified host,
