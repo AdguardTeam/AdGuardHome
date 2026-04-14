@@ -15,7 +15,7 @@ import (
 func TestManager_Status(t *testing.T) {
 	const invalidSvcStatus = statusRestartOnFail + 1
 
-	svc := newTestSvc(t)
+	svc := newTestServiceWithSystem(t)
 
 	m := &manager{
 		logger:        testLogger,
@@ -90,7 +90,7 @@ func TestManager_Status(t *testing.T) {
 }
 
 func TestManager_Status_unixSystemV(t *testing.T) {
-	svc := newTestSvc(t)
+	svc := newTestServiceWithSystem(t)
 	svc.OnStatus = func() (s service.Status, err error) {
 		return service.StatusUnknown, assert.AnError
 	}
@@ -130,7 +130,7 @@ func TestManager_Status_unixSystemV(t *testing.T) {
 }
 
 func TestManager_Install(t *testing.T) {
-	svc := newTestSvc(t)
+	svc := newTestServiceWithSystem(t)
 
 	m := &manager{
 		logger:        testLogger,
@@ -169,7 +169,7 @@ func TestManager_Install(t *testing.T) {
 }
 
 func TestManager_Install_unixSystemV(t *testing.T) {
-	svc := newTestSvc(t)
+	svc := newTestServiceWithSystem(t)
 	svc.OnInstall = func() (err error) {
 		return nil
 	}
@@ -209,7 +209,7 @@ func TestManager_Install_unixSystemV(t *testing.T) {
 }
 
 func TestManager_Restart(t *testing.T) {
-	svc := newTestSvc(t)
+	svc := newTestServiceWithSystem(t)
 
 	m := &manager{
 		logger:        testLogger,
@@ -270,7 +270,7 @@ func TestManager_Restart(t *testing.T) {
 }
 
 func TestManager_Stop(t *testing.T) {
-	svc := newTestSvc(t)
+	svc := newTestServiceWithSystem(t)
 
 	m := &manager{
 		logger:        testLogger,
@@ -331,7 +331,7 @@ func TestManager_Stop(t *testing.T) {
 }
 
 func TestManager_Uninstall(t *testing.T) {
-	svc := newTestSvc(t)
+	svc := newTestServiceWithSystem(t)
 
 	m := &manager{
 		logger:        testLogger,
@@ -381,7 +381,7 @@ func TestManager_Uninstall(t *testing.T) {
 }
 
 func TestManager_Uninstall_openWrt(t *testing.T) {
-	svc := newTestSvc(t)
+	svc := newTestServiceWithSystem(t)
 	svc.OnStop = func() (err error) { return nil }
 	svc.OnUninstall = func() (err error) { return nil }
 
@@ -421,21 +421,13 @@ func TestManager_Uninstall_openWrt(t *testing.T) {
 	}
 }
 
-// newTestSvc creates a new *testService with all methods set to panic, sets it
-// in the chosen system, and returns it.  The caller can then set the desired
-// behavior of the service via overriding its methods.
-func newTestSvc(tb testing.TB) (svc *testService) {
+// newTestServiceWithSystem creates a new *testService with all methods set to
+// panic, sets it in the chosen system, and returns it.  The caller can then set
+// the desired behavior of the service via overriding its methods.
+func newTestServiceWithSystem(tb testing.TB) (svc *testService) {
 	tb.Helper()
 
-	svc = &testService{
-		OnRun:       func() (err error) { panic(testutil.UnexpectedCall()) },
-		OnStart:     func() (err error) { panic(testutil.UnexpectedCall()) },
-		OnStop:      func() (err error) { panic(testutil.UnexpectedCall()) },
-		OnRestart:   func() (err error) { panic(testutil.UnexpectedCall()) },
-		OnInstall:   func() (err error) { panic(testutil.UnexpectedCall()) },
-		OnUninstall: func() (err error) { panic(testutil.UnexpectedCall()) },
-		OnStatus:    func() (s service.Status, err error) { panic(testutil.UnexpectedCall()) },
-	}
+	svc = newTestService()
 
 	service.ChooseSystem(&testSystem{
 		OnNew: func(_ service.Interface, _ *service.Config) (s service.Service, err error) {

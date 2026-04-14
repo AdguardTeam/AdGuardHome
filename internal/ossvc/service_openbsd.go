@@ -7,6 +7,7 @@ import (
 	"cmp"
 	"context"
 	"fmt"
+	"io/fs"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -73,21 +74,25 @@ func (sys *openbsdSystem) New(
 	i service.Interface,
 	c *service.Config,
 ) (s service.Service, err error) {
+	const scriptsPath = "/etc/rc.d"
+
 	return &openbsdRunComService{
-		cmdCons: sys.cmdCons,
-		logger:  sys.logger,
-		i:       i,
-		cfg:     c,
+		cmdCons:     sys.cmdCons,
+		logger:      sys.logger,
+		i:           i,
+		cfg:         c,
+		scriptsPath: scriptsPath,
 	}, nil
 }
 
 // openbsdRunComService is the RunCom-based [service.Service] interface
 // implementation to be used on the OpenBSD operating system.
 type openbsdRunComService struct {
-	cmdCons executil.CommandConstructor
-	i       service.Interface
-	cfg     *service.Config
-	logger  *slog.Logger
+	cmdCons     executil.CommandConstructor
+	i           service.Interface
+	cfg         *service.Config
+	logger      *slog.Logger
+	scriptsPath string
 }
 
 // type check
@@ -134,9 +139,7 @@ func (s *openbsdRunComService) scriptPath() (cp string, err error) {
 		return "", errNoUserServiceRunCom
 	}
 
-	const scriptPathPref = "/etc/rc.d"
-
-	return filepath.Join(scriptPathPref, s.cfg.Name), nil
+	return filepath.Join(s.scriptsPath, s.cfg.Name), nil
 }
 
 const (
@@ -219,6 +222,11 @@ func (s *openbsdRunComService) configureSysStartup(enable bool) (err error) {
 	)
 }
 
+// scriptFileMode is the file mode for the script file.  For a script to be
+// recognized and executed by the rc(8) system, it should typically have
+// -rwxr-xr-x permissions.
+const scriptFileMode fs.FileMode = 0o755
+
 // writeScript tries to write the script for the service.
 func (s *openbsdRunComService) writeScript() (err error) {
 	var scriptPath string
@@ -236,11 +244,12 @@ func (s *openbsdRunComService) writeScript() (err error) {
 	}
 
 	t := s.template()
+	// #nosec CWE-22 -- The path is constructed from constants.
 	f, err := os.Create(scriptPath)
 	if err != nil {
 		return fmt.Errorf("creating rc.d script file: %w", err)
 	}
-	defer f.Close()
+	defer func() { err = errors.WithDeferred(err, f.Close()) }()
 
 	err = t.Execute(f, &struct {
 		*service.Config
@@ -256,7 +265,7 @@ func (s *openbsdRunComService) writeScript() (err error) {
 	}
 
 	return errors.Annotate(
-		os.Chmod(scriptPath, 0o755),
+		os.Chmod(scriptPath, scriptFileMode),
 		"changing rc.d script file permissions: %w",
 	)
 }
