@@ -151,14 +151,21 @@ func waitForWebAPIReady(tb testing.TB, host string) {
 	}).String()
 
 	// TODO(f.setrakov): The WebAPI doesn't start up within the common test
-	// timeout, so longer a one must be used.  Investigate.
+	// timeout, so a longer one must be used.  Investigate.
 	timeout := time.Second * 10
+
+	client := http.Client{
+		Timeout: testTimeout,
+		Transport: &http.Transport{
+			DisableKeepAlives: true,
+		},
+	}
 	require.EventuallyWithT(tb, func(c *assert.CollectT) {
 		ctx := testutil.ContextWithTimeout(tb, testTimeout)
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
 		require.NoError(c, err)
 
-		resp, err := http.DefaultClient.Do(req)
+		resp, err := client.Do(req)
 		require.NoError(c, err)
 		assert.Equal(c, http.StatusUnauthorized, resp.StatusCode)
 	}, timeout, timeout/10)
