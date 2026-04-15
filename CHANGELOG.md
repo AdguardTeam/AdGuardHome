@@ -9,23 +9,27 @@ The format is based on [*Keep a Changelog*](https://keepachangelog.com/en/1.0.0/
 <!--
 ## [v0.108.0] – TBA
 
-## [v0.107.74] - 2026-03-24 (APPROX.)
+## [v0.107.75] - 2026-05-01 (APPROX.)
 
-See also the [v0.107.74 GitHub milestone][ms-v0.107.74].
+See also the [v0.107.75 GitHub milestone][ms-v0.107.75].
 
-[ms-v0.107.74]: https://github.com/AdguardTeam/AdGuardHome/milestone/109?closed=1
+[ms-v0.107.75]: https://github.com/AdguardTeam/AdGuardHome/milestone/110?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
+<!--
+NOTE: Add new changes ABOVE THIS COMMENT.
+-->
+
+## [v0.107.74] - 2026-04-13
+
+See also the [v0.107.74 GitHub milestone][ms-v0.107.74].
 
 ### Security
 
 - Frontend libraries has been updated to prevent the possibility of exploiting the vulnerability described in [CVE-2026-40175][cve-2026-40175].
 
 - Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.26.2][go-1.26.2].
-
-[cve-2026-40175]: https://nvd.nist.gov/vuln/detail/CVE-2026-40175
-[go-1.26.2]:      https://groups.google.com/g/golang-announce/c/0uYbvbPZRWU
 
 ### Changed
 
@@ -72,9 +76,9 @@ In this release, the schema version has changed from 33 to 34.
 [#7058]: https://github.com/AdguardTeam/AdGuardHome/issues/7058
 [#8327]: https://github.com/AdguardTeam/AdGuardHome/issues/8327
 
-<!--
-NOTE: Add new changes ABOVE THIS COMMENT.
--->
+[cve-2026-40175]: https://nvd.nist.gov/vuln/detail/CVE-2026-40175
+[go-1.26.2]:      https://groups.google.com/g/golang-announce/c/0uYbvbPZRWU
+[ms-v0.107.74]:   https://github.com/AdguardTeam/AdGuardHome/milestone/109?closed=1
 
 ## [v0.107.73] - 2026-03-10
 
@@ -3553,11 +3557,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 [ms-v0.104.2]: https://github.com/AdguardTeam/AdGuardHome/milestone/28?closed=1
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.74...HEAD
-[v0.107.74]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.73...v0.107.74
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.75...HEAD
+[v0.107.75]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.74...v0.107.75
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.73...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.74...HEAD
+[v0.107.74]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.73...v0.107.74
 [v0.107.73]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.72...v0.107.73
 [v0.107.72]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.71...v0.107.72
 [v0.107.71]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.70...v0.107.71
