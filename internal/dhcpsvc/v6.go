@@ -2,6 +2,7 @@ package dhcpsvc
 
 import (
 	"context"
+	"encoding/binary"
 	"fmt"
 	"log/slog"
 	"net/netip"
@@ -12,6 +13,40 @@ import (
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/validate"
 	"github.com/google/gopacket/layers"
+)
+
+// Port numbers for DHCPv6.
+//
+// See RFC 9915 Section 7.2.
+const (
+	// ServerPortV6 is the standard DHCPv6 server port.
+	ServerPortV6 layers.UDPPort = 547
+
+	// ClientPortV6 is the standard DHCPv6 client port.
+	ClientPortV6 layers.UDPPort = 546
+)
+
+// HardwareTypeEthernet is the IANA hardware type number for Ethernet, used in
+// DUID-LL and DUID-LLT construction.  Its value is 1, encoded as a big-endian
+// uint16.
+//
+// See https://www.iana.org/assignments/arp-parameters/arp-parameters.xhtml#arp-parameters-2.
+//
+// TODO(e.burkov):  Use.
+var HardwareTypeEthernet []byte = binary.BigEndian.AppendUint16(nil, 1)
+
+// DHCPv6 multicast addresses.
+//
+// See RFC 9915 Section 7.1.
+var (
+	// AllDHCPRelayAgentsAndServers is the well-known IPv6 multicast address
+	// All_DHCP_Relay_Agents_and_Servers.  Clients send messages to this address
+	// to reach all servers on the local link.
+	AllDHCPRelayAgentsAndServers = netip.MustParseAddr("ff02::1:2")
+
+	// AllDHCPServers is the well-known IPv6 multicast address All_DHCP_Servers.
+	// Relay agents use this to reach all servers.
+	AllDHCPServers = netip.MustParseAddr("ff05::1:3")
 )
 
 // IPv6Config is the interface-specific configuration for DHCPv6.

@@ -19,6 +19,27 @@ import (
 	"github.com/google/gopacket/layers"
 )
 
+// Port numbers for DHCPv4.
+//
+// See RFC 2131 Section 4.1.
+const (
+	// ServerPortV4 is the standard DHCPv4 server port.
+	ServerPortV4 layers.UDPPort = 67
+
+	// ClientPortV4 is the standard DHCPv4 client port.
+	ClientPortV4 layers.UDPPort = 68
+)
+
+const (
+	// IPv4DefaultTTL is the default Time to Live value in seconds as
+	// recommended by RFC 1700.
+	IPv4DefaultTTL = 64
+
+	// IPProtoVersion is the IP internetwork general protocol version number as
+	// defined by RFC 1700.
+	IPProtoVersion = 4
+)
+
 // IPv4Config is the interface-specific configuration for DHCPv4.
 type IPv4Config struct {
 	// Clock is used to get current time.  It should not be nil.
@@ -437,27 +458,6 @@ func (iface *dhcpInterfaceV4) updateAndRespond(
 
 	iface.respondACK(ctx, req, fd, lease, idOpt)
 }
-
-const (
-	// IPv4DefaultTTL is the default Time to Live value in seconds as
-	// recommended by RFC 1700.
-	IPv4DefaultTTL = 64
-
-	// IPProtoVersion is the IP internetwork general protocol version number as
-	// defined by RFC 1700.
-	IPProtoVersion = 4
-)
-
-// Port numbers for DHCPv4.
-//
-// See RFC 2131 Section 4.1.
-const (
-	// ServerPortV4 is the standard DHCPv4 server port.
-	ServerPortV4 layers.UDPPort = 67
-
-	// ClientPortV4 is the standard DHCPv4 client port.
-	ClientPortV4 layers.UDPPort = 68
-)
 
 // FlagsBroadcast is the DHCPv4 message flags field with the broadcast bit set.
 const FlagsBroadcast uint16 = 1 << 15
