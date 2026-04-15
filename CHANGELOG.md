@@ -21,7 +21,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
 
-## [v0.107.74] - 2026-04-13
+## [v0.107.74] - 2026-04-15
 
 See also the [v0.107.74 GitHub milestone][ms-v0.107.74].
 
