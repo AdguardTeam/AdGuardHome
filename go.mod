@@ -13,7 +13,7 @@ require (
 	github.com/digineo/go-ipset/v2 v2.2.1
 	// TODO(e.burkov): Update to the latest version when
 	// github.com/fsnotify/fsnotify/issues/727 is fixed.
-	github.com/fsnotify/fsnotify v1.8.0
+	github.com/fsnotify/fsnotify v1.9.0
 	// TODO(e.burkov): This package is deprecated; find a new one or use our
 	// own code for that.  Perhaps, use gopacket.
 	github.com/go-ping/ping v1.2.0
@@ -21,10 +21,10 @@ require (
 	github.com/google/gopacket v1.1.19
 	github.com/google/renameio/v2 v2.0.2
 	github.com/google/uuid v1.6.0
-	github.com/insomniacslk/dhcp v0.0.0-20260326115832-991c7910cf36
+	github.com/insomniacslk/dhcp v0.0.0-20260407060928-11b94ed970f2
 	github.com/kardianos/service v1.2.4
 	github.com/mdlayher/ethernet v0.0.0-20220221185849-529eae5b6118
-	github.com/mdlayher/netlink v1.9.0
+	github.com/mdlayher/netlink v1.11.0
 	github.com/mdlayher/packet v1.1.2
 	// TODO(a.garipov): This package is deprecated; Use gopacket.
 	github.com/mdlayher/raw v0.1.0
@@ -33,12 +33,11 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/ti-mo/netfilter v0.5.3
 	go.etcd.io/bbolt v1.4.3
-	// TODO(e.burkov): Update to the latest version and test unmarshaling
-	// structures with *time.Time, see AGDNS-3612.
-	go.yaml.in/yaml/v4 v4.0.0-rc.3
+	// TODO(e.burkov): Update to a stable tag.
+	go.yaml.in/yaml/v4 v4.0.0-rc.4.0.20260405193028-802e24f4fbcc
 	golang.org/x/crypto v0.50.0
-	golang.org/x/exp v0.0.0-20260312153236-7ab1446f8b90
-	golang.org/x/net v0.52.0
+	golang.org/x/exp v0.0.0-20260410095643-746e56fc9e2f
+	golang.org/x/net v0.53.0
 	golang.org/x/sys v0.43.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	howett.net/plist v1.0.1
@@ -69,7 +68,7 @@ require (
 	github.com/josharian/native v1.1.0 // indirect
 	github.com/jstemmer/go-junit-report/v2 v2.1.0 // indirect
 	github.com/kisielk/errcheck v1.10.0 // indirect
-	github.com/mdlayher/socket v0.5.1 // indirect
+	github.com/mdlayher/socket v0.6.0 // indirect
 	github.com/openai/openai-go/v3 v3.31.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pierrec/lz4/v4 v4.1.26 // indirect
@@ -92,18 +91,18 @@ require (
 	go.opentelemetry.io/otel/metric v1.43.0 // indirect
 	go.opentelemetry.io/otel/trace v1.43.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/exp/typeparams v0.0.0-20260312153236-7ab1446f8b90 // indirect
+	golang.org/x/exp/typeparams v0.0.0-20260410095643-746e56fc9e2f // indirect
 	golang.org/x/mod v0.35.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
 	golang.org/x/telemetry v0.0.0-20260409153401-be6f6cb8b1fa // indirect
 	golang.org/x/term v0.42.0 // indirect
 	golang.org/x/text v0.36.0 // indirect
-	golang.org/x/tools v0.43.0 // indirect
-	golang.org/x/vuln v1.1.4 // indirect
+	golang.org/x/tools v0.44.0 // indirect
+	golang.org/x/vuln v1.2.0 // indirect
 	gonum.org/v1/gonum v0.17.0 // indirect
 	google.golang.org/api v0.275.0 // indirect
-	google.golang.org/genai v1.53.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260406210006-6f92a3bedf2d // indirect
+	google.golang.org/genai v1.54.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260414002931-afd174a4e478 // indirect
 	google.golang.org/grpc v1.80.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

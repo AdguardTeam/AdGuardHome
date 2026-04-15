@@ -181,7 +181,9 @@ else
 	run_linter "$go" tool govulncheck work
 fi
 
-run_linter "$go" tool gocyclo --over 10 .
+# TODO(e.burkov):  Improve the ignore mechanism to take the go.mod ignore
+# section into account.
+run_linter "$go" tool gocyclo --over 10 ./internal/ ./scripts/
 
 # TODO(a.garipov): Enable 10 for all.
 run_linter "$go" tool gocognit --over='20' \
