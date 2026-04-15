@@ -10,10 +10,12 @@ import (
 	"path"
 	"strconv"
 	"testing"
+	"testing/fstest"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghuser"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/golibs/netutil"
@@ -62,6 +64,44 @@ const (
 	testHeaderValueUpgrade    = "h2c"
 )
 
+// testDecoder implements HTTP2 HPACK-encoded headers decoding for tests.
+type testDecoder struct {
+	decoder *hpack.Decoder
+	status  int
+}
+
+// newTestDecoder returns a properly initialized *testDecoder.
+func newTestDecoder(tb testing.TB) (d *testDecoder) {
+	tb.Helper()
+
+	d = &testDecoder{}
+	d.decoder = hpack.NewDecoder(testHPACKMaxDynamicTableSize, func(f hpack.HeaderField) {
+		if f.Name != ":status" {
+			return
+		}
+
+		status64, err := strconv.ParseInt(f.Value, 10, 64)
+		require.NoError(tb, err)
+
+		d.status = int(status64)
+	})
+
+	return d
+}
+
+// decodeStatus decodes an HPACK-encoded header block and returns the HTTP
+// status code.
+func (d *testDecoder) decodeStatus(tb testing.TB, b []byte) (status int) {
+	tb.Helper()
+
+	d.status = 0
+
+	_, err := d.decoder.Write(b)
+	require.NoError(tb, err)
+
+	return d.status
+}
+
 func TestWebAPI_h2cVulnerability(t *testing.T) {
 	storeGlobals(t)
 
@@ -73,6 +113,13 @@ func TestWebAPI_h2cVulnerability(t *testing.T) {
 	password := "password"
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	require.NoError(t, err)
+
+	fs := fstest.MapFS{
+		"build/static/login.html": &fstest.MapFile{
+			Data: []byte("foo"),
+			Mode: aghos.DefaultPermFile,
+		},
+	}
 
 	user := webUser{
 		Name:         "foo",
@@ -100,7 +147,10 @@ func TestWebAPI_h2cVulnerability(t *testing.T) {
 	mw := &webMw{}
 	registrar := aghhttp.NewDefaultRegistrar(mux, mw.wrap)
 	web := newTestWeb(t, &webConfig{
-		auth: auth,
+		auth:          auth,
+		mux:           mux,
+		httpReg:       registrar,
+		clientBuildFS: fs,
 	})
 
 	// NOTE: This test requires querylog, as it accesses the '/control/querylog'
@@ -147,27 +197,21 @@ func waitForWebAPIReady(tb testing.TB, host string) {
 	u := (&url.URL{
 		Scheme: urlutil.SchemeHTTP,
 		Host:   host,
-		Path:   "/control/status",
+		Path:   "/login.html",
 	}).String()
 
 	// TODO(f.setrakov): The WebAPI doesn't start up within the common test
 	// timeout, so a longer one must be used.  Investigate.
 	timeout := time.Second * 10
 
-	client := http.Client{
-		Timeout: testTimeout,
-		Transport: &http.Transport{
-			DisableKeepAlives: true,
-		},
-	}
 	require.EventuallyWithT(tb, func(c *assert.CollectT) {
 		ctx := testutil.ContextWithTimeout(tb, testTimeout)
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
 		require.NoError(c, err)
 
-		resp, err := client.Do(req)
+		resp, err := http.DefaultClient.Do(req)
 		require.NoError(c, err)
-		assert.Equal(c, http.StatusUnauthorized, resp.StatusCode)
+		assert.Equal(c, http.StatusOK, resp.StatusCode)
 	}, timeout, timeout/10)
 }
 
@@ -207,24 +251,31 @@ func performH2CUpgradeAttack(tb testing.TB, host string) {
 
 	resp, err := http.ReadResponse(reader, req)
 	require.NoError(tb, err)
+	require.Equal(tb, http.StatusSwitchingProtocols, resp.StatusCode)
 	testutil.CleanupAndRequireSuccess(tb, resp.Body.Close)
 
 	_, err = writer.Write([]byte(clientPreface))
 	require.NoError(tb, err)
 
 	framer := http2.NewFramer(writer, reader)
-	performH2CSettingsExchange(tb, framer, writer)
+	decoder := newTestDecoder(tb)
+	performH2CSettingsExchange(tb, framer, writer, decoder)
 	sendH2CRequest(tb, framer, host)
 	require.NoError(tb, writer.Flush())
 
-	readH2CResponse(tb, framer)
+	readH2CResponse(tb, framer, decoder)
 }
 
 // performH2CSettingsExchange performs the HTTP2 settings exchange handshake. It
 // sends empty client settings, waits for acknowledgement, and then receives the
-// server settings and responds with acknowledgement.  framer and writer must
-// not be nil.
-func performH2CSettingsExchange(tb testing.TB, framer *http2.Framer, writer *bufio.Writer) {
+// server settings and responds with acknowledgement.  framer, writer and
+// decoder must not be nil.
+func performH2CSettingsExchange(
+	tb testing.TB,
+	framer *http2.Framer,
+	writer *bufio.Writer,
+	decoder *testDecoder,
+) {
 	tb.Helper()
 
 	err := framer.WriteSettings()
@@ -240,22 +291,25 @@ func performH2CSettingsExchange(tb testing.TB, framer *http2.Framer, writer *buf
 		frame, err = framer.ReadFrame()
 		require.NoError(tb, err)
 
-		settings, ok := frame.(*http2.SettingsFrame)
-		if !ok {
-			continue
+		switch f := frame.(type) {
+		case *http2.HeadersFrame:
+			// NOTE: The decoder must process all headers frames because the
+			// client and server share the same HPACK dynamic table.
+			// Skipping frames causes index desynchronization.
+			decoder.decodeStatus(tb, f.HeaderBlockFragment())
+		case *http2.SettingsFrame:
+			if f.IsAck() {
+				gotSettingsAck = true
+
+				continue
+			}
+
+			err = framer.WriteSettingsAck()
+			require.NoError(tb, err)
+			require.NoError(tb, writer.Flush())
+
+			gotServerSettings = true
 		}
-
-		if settings.IsAck() {
-			gotSettingsAck = true
-
-			continue
-		}
-
-		err = framer.WriteSettingsAck()
-		require.NoError(tb, err)
-		require.NoError(tb, writer.Flush())
-
-		gotServerSettings = true
 	}
 }
 
@@ -287,33 +341,29 @@ func sendH2CRequest(tb testing.TB, framer *http2.Framer, host string) {
 }
 
 // readH2CResponse reads the response from an h2c connection and asserts that
-// the server responds with [http.StatusUnauthorized].
-func readH2CResponse(tb testing.TB, framer *http2.Framer) {
+// the server responds with [http.StatusUnauthorized].  framer and decoder must
+// not be nil.
+func readH2CResponse(tb testing.TB, framer *http2.Framer, decoder *testDecoder) {
 	tb.Helper()
-
-	dec := hpack.NewDecoder(testHPACKMaxDynamicTableSize, func(f hpack.HeaderField) {
-		if f.Name != ":status" {
-			return
-		}
-
-		gotStatus, err := strconv.ParseInt(f.Value, 10, 64)
-		require.NoError(tb, err)
-
-		assert.Equal(tb, http.StatusUnauthorized, int(gotStatus))
-	})
 
 	for {
 		frame, err := framer.ReadFrame()
 		require.NoError(tb, err)
 
 		if frame.Header().StreamID != testTargetStreamID {
+			headerFrame, ok := frame.(*http2.HeadersFrame)
+			if ok {
+				decoder.decodeStatus(tb, headerFrame.HeaderBlockFragment())
+			}
+
 			continue
 		}
 
 		headerFrame := testutil.RequireTypeAssert[*http2.HeadersFrame](tb, frame)
-		_, err = dec.Write(headerFrame.HeaderBlockFragment())
-		require.NoError(tb, err)
 		require.True(tb, headerFrame.StreamEnded())
+
+		status := decoder.decodeStatus(tb, headerFrame.HeaderBlockFragment())
+		assert.Equal(tb, http.StatusUnauthorized, status)
 
 		break
 	}
