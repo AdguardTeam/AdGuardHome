@@ -1,6 +1,9 @@
 'name': 'lint'
 # Permissions are disabled for all the jobs by default, and then overridden for
-# specific jobs if needed.
+# specific jobs if needed.  This is a recommended practice for security reasons,
+# and also allows to avoid mistakes with permissions when creating new jobs.
+#
+# See https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#permissions.
 'permissions': {}
 'env':
   'GO_VERSION': '1.26.2'
@@ -19,6 +22,9 @@
     'steps':
       - 'uses': 'actions/checkout@v2'
         'with':
+          # Set to false to avoid  GITHUB_TOKEN leaking.
+          #
+          # See https://github.com/actions/checkout/issues/485#issuecomment-934422611.
           'persist-credentials': false
       - 'name': 'Set up Go'
         'uses': 'actions/setup-go@v3'
@@ -35,6 +41,9 @@
     'steps':
       - 'uses': 'actions/checkout@v2'
         'with':
+          # Set to false to avoid  GITHUB_TOKEN leaking.
+          #
+          # See https://github.com/actions/checkout/issues/485#issuecomment-934422611.
           'persist-credentials': false
       - 'name': 'Install modules'
         'run': 'npm --prefix="./client" ci'
