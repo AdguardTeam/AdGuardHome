@@ -1,122 +1,96 @@
-'name': 'build'
+name: build
 
-'env':
-  'GO_VERSION': '1.26.2'
-  'NODE_VERSION': '20'
+env:
+  GO_VERSION: 1.26.2
+  NODE_VERSION: 24
 
-'on':
-  'push':
-    'branches':
-    - '*'
-    'tags':
-    - 'v*'
-  'pull_request':
+on:
+  push:
+    tags:
+      - v*
+    branches:
+      - '*'
+  pull_request:
 
-'jobs':
-  'test':
-    'runs-on': '${{ matrix.os }}'
-    'env':
-      'GO111MODULE': 'on'
-      'GOPROXY': 'https://goproxy.cn'
-    'strategy':
-      'fail-fast': false
-      'matrix':
-        'os':
-        - 'ubuntu-latest'
-        - 'macOS-latest'
-        - 'windows-latest'
-    'steps':
-    - 'name': 'Checkout'
-      'uses': 'actions/checkout@v2'
-      'with':
-        'fetch-depth': 0
-    - 'name': 'Set up Go'
-      'uses': 'actions/setup-go@v3'
-      'with':
-        'go-version': '${{ env.GO_VERSION }}'
-    - 'name': 'Set up Node'
-      'uses': 'actions/setup-node@v1'
-      'with':
-        'node-version': '${{ env.NODE_VERSION }}'
-    - 'name': 'Set up Go modules cache'
-      'uses': 'actions/cache@v4'
-      'with':
-        'path': '~/go/pkg/mod'
-        'key': "${{ runner.os }}-go-${{ hashFiles('go.sum') }}"
-        'restore-keys': '${{ runner.os }}-go-'
-    - 'name': 'Get npm cache directory'
-      'id': 'npm-cache'
-      'run': 'echo "::set-output name=dir::$( npm config get cache )"'
-    - 'name': 'Set up npm cache'
-      'uses': 'actions/cache@v4'
-      'with':
-        'path': '${{ steps.npm-cache.outputs.dir }}'
-        'key': "${{ runner.os }}-node-${{ hashFiles('client/package-lock.json') }}"
-        'restore-keys': '${{ runner.os }}-node-'
-    - 'name': 'Run tests'
-      'shell': 'bash'
-      'run': 'make VERBOSE=1 deps test go-bench go-fuzz'
-    - 'name': 'Upload coverage'
-      'uses': 'codecov/codecov-action@v1'
-      'if': "success() && matrix.os == 'ubuntu-latest'"
-      'with':
-        'token': '${{ secrets.CODECOV_TOKEN }}'
-        'file': './coverage.txt'
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    env:
+      GO111MODULE: on
+      GOPROXY: https://goproxy.cn
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macOS-latest
+          - windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: go.sum
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+      - name: Run tests
+        shell: bash
+        run: make VERBOSE=1 deps test go-bench go-fuzz
+      - name: Upload coverage
+        uses: codecov/codecov-action@v5
+        if: success() && matrix.os == 'ubuntu-latest'
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./coverage.txt
 
-  'build-release':
-    'runs-on': 'ubuntu-latest'
-    'needs': 'test'
-    'steps':
-    - 'name': 'Checkout'
-      'uses': 'actions/checkout@v2'
-      'with':
-        'fetch-depth': 0
-    - 'name': 'Set up Go'
-      'uses': 'actions/setup-go@v3'
-      'with':
-        'go-version': '${{ env.GO_VERSION }}'
-    - 'name': 'Set up Node'
-      'uses': 'actions/setup-node@v1'
-      'with':
-        'node-version': '${{ env.NODE_VERSION }}'
-    - 'name': 'Set up Go modules cache'
-      'uses': 'actions/cache@v4'
-      'with':
-        'path': '~/go/pkg/mod'
-        'key': "${{ runner.os }}-go-${{ hashFiles('go.sum') }}"
-        'restore-keys': '${{ runner.os }}-go-'
-    - 'name': 'Get npm cache directory'
-      'id': 'npm-cache'
-      'run': 'echo "::set-output name=dir::$(npm config get cache)"'
-    - 'name': 'Set up npm cache'
-      'uses': 'actions/cache@v4'
-      'with':
-        'path': '${{ steps.npm-cache.outputs.dir }}'
-        'key': "${{ runner.os }}-node-${{ hashFiles('client/package-lock.json') }}"
-        'restore-keys': '${{ runner.os }}-node-'
-    - 'name': 'Set up Snapcraft'
-      'run': 'sudo snap install snapcraft --classic'
-    - 'name': 'Set up QEMU'
-      'uses': 'docker/setup-qemu-action@v3'
-    - 'name': 'Set up Docker Buildx'
-      'uses': 'docker/setup-buildx-action@v3'
-      'with':
-        'install': true
-    - 'name': 'Run snapshot build'
-      # Set a custom version string, since the checkout@v2 action does not seem
-      # to know about the master branch, while the version script uses it to
-      # count the number of commits within the branch.
-      'run': 'make SIGN=0 VERBOSE=1 VERSION="v0.0.0-github" build-release build-docker'
+  build-release:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: go.sum
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+      - name: Set up Snapcraft
+        run: sudo snap install snapcraft --classic
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+      - name: Run snapshot build
+        # Set a custom version string, since the checkout action does not seem
+        # to know about the master branch, while the version script uses it to
+        # count the number of commits within the branch.
+        run: make SIGN=0 VERBOSE=1 VERSION="v0.0.0-github" build-release build-docker
 
-  'notify':
-    'needs':
-    - 'build-release'
+  notify:
+    needs:
+      - build-release
     # Secrets are not passed to workflows that are triggered by a pull request
     # from a fork.
     #
     # Use always() to signal to the runner that this job must run even if the
     # previous ones failed.
-    'if':
+    if:
       ${{
         always() &&
         github.repository_owner == 'AdguardTeam' &&
@@ -125,15 +99,30 @@
           github.event.pull_request.head.repo.full_name == github.repository
         )
       }}
-    'runs-on': 'ubuntu-latest'
-    'steps':
-    - 'name': 'Conclusion'
-      'uses': 'technote-space/workflow-conclusion-action@v1'
-    - 'name': 'Send Slack notif'
-      'uses': '8398a7/action-slack@v3'
-      'with':
-        'status': '${{ env.WORKFLOW_CONCLUSION }}'
-        'fields': 'repo, message, commit, author, workflow'
-      'env':
-        'GITHUB_TOKEN': '${{ secrets.GITHUB_TOKEN }}'
-        'SLACK_WEBHOOK_URL': '${{ secrets.SLACK_WEBHOOK_URL }}'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Slack notification
+        uses: slackapi/slack-github-action@v3
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            text: "${{ needs.build-release.result == 'failure' && '❌ Build failed' || (needs.build-release.result == 'success' && '✅ Build passed' || '⚠️ Build skipped') }}"
+            attachments:
+              - color: "${{ needs.build-release.result == 'failure' && 'danger' || (needs.build-release.result == 'success' && 'good' || 'warning') }}"
+                fields:
+                  - title: "Workflow"
+                    value: "${{ github.workflow }}"
+                    short: true
+                  - title: "Repo"
+                    value: "<${{ github.server_url }}/${{ github.repository }}|${{ github.repository }}>"
+                    short: true
+                  - title: "Message"
+                    value: "${{ github.event.head_commit.message }}"
+                    short: false
+                  - title: "Commit"
+                    value: "<${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>"
+                    short: true
+                  - title: "Author"
+                    value: "${{ github.actor }}"
+                    short: true
