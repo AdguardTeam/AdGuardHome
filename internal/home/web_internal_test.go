@@ -11,17 +11,13 @@ import (
 	"strconv"
 	"testing"
 	"testing/fstest"
-	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghuser"
-	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/AdguardTeam/golibs/testutil"
-	"github.com/AdguardTeam/golibs/testutil/servicetest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/bcrypt"
@@ -111,7 +107,7 @@ func TestWebAPI_h2cVulnerability(t *testing.T) {
 	})
 
 	password := "password"
-	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
 	require.NoError(t, err)
 
 	fs := fstest.MapFS{
@@ -153,23 +149,8 @@ func TestWebAPI_h2cVulnerability(t *testing.T) {
 		clientBuildFS: fs,
 	})
 
-	// NOTE: This test requires querylog, as it accesses the '/control/querylog'
-	// handler.  Other protected handlers cannot be used for this test because
-	// they require the context to contain the user.
-	queryLog, err := querylog.New(querylog.Config{
-		Logger:         testLogger,
-		ConfigModifier: agh.EmptyConfigModifier{},
-		HTTPReg:        registrar,
-		RotationIvl:    24 * time.Hour,
-		Enabled:        false,
-	})
-	require.NoError(t, err)
-
 	mw.set(web)
-	globalContext.queryLog = queryLog
 	globalContext.web = web
-
-	servicetest.RequireRun(t, queryLog, testTimeout)
 
 	port := config.HTTPConfig.Address.Port()
 	host := fmt.Sprintf("%s:%d", netutil.IPv4Localhost(), port)
@@ -200,10 +181,6 @@ func waitForWebAPIReady(tb testing.TB, host string) {
 		Path:   "/login.html",
 	}).String()
 
-	// TODO(f.setrakov): The WebAPI doesn't start up within the common test
-	// timeout, so a longer one must be used.  Investigate.
-	timeout := time.Second * 10
-
 	require.EventuallyWithT(tb, func(c *assert.CollectT) {
 		ctx := testutil.ContextWithTimeout(tb, testTimeout)
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
@@ -212,7 +189,7 @@ func waitForWebAPIReady(tb testing.TB, host string) {
 		resp, err := http.DefaultClient.Do(req)
 		require.NoError(c, err)
 		assert.Equal(c, http.StatusOK, resp.StatusCode)
-	}, timeout, timeout/10)
+	}, testTimeout, testTimeout/10)
 }
 
 // performH2CUpgradeAttack establishes a TCP connection to the specified host,
@@ -294,8 +271,8 @@ func performH2CSettingsExchange(
 		switch f := frame.(type) {
 		case *http2.HeadersFrame:
 			// NOTE: The decoder must process all headers frames because the
-			// client and server share the same HPACK dynamic table.
-			// Skipping frames causes index desynchronization.
+			// client and server share the same HPACK dynamic table.  Skipping
+			// frames causes index desynchronization.
 			decoder.decodeStatus(tb, f.HeaderBlockFragment())
 		case *http2.SettingsFrame:
 			if f.IsAck() {
@@ -322,7 +299,7 @@ func sendH2CRequest(tb testing.TB, framer *http2.Framer, host string) {
 	enc := hpack.NewEncoder(&headerBlockFragment)
 	headers := []hpack.HeaderField{
 		{Name: ":method", Value: http.MethodGet},
-		{Name: ":path", Value: "/control/querylog"},
+		{Name: ":path", Value: "/control/status"},
 		{Name: ":scheme", Value: urlutil.SchemeHTTP},
 		{Name: ":authority", Value: host},
 	}

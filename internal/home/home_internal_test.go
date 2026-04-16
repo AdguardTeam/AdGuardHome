@@ -67,7 +67,6 @@ func newTestWeb(
 //   - [globalContext.dnsServer]
 //   - [globalContext.firstRun]
 //   - [globalContext.mux]
-//   - [globalContext.queryLog]
 //   - [globalContext.web]
 //
 // TODO(s.chzhen):  Remove this once the TLS manager no longer accesses global
@@ -80,7 +79,6 @@ func storeGlobals(tb testing.TB) {
 	storage := globalContext.clients.storage
 	dnsServer := globalContext.dnsServer
 	web := globalContext.web
-	queryLog := globalContext.queryLog
 
 	tb.Cleanup(func() {
 		config = prevConfig
@@ -88,7 +86,6 @@ func storeGlobals(tb testing.TB) {
 		globalContext.clients.storage = storage
 		globalContext.dnsServer = dnsServer
 		globalContext.web = web
-		globalContext.queryLog = queryLog
 	})
 }
 
