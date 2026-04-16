@@ -129,7 +129,7 @@
     #
     # Use always() to signal to the runner that this job must run even if the
     # previous ones failed.
-    'if': |-
+    'if': |
       ${{
         always() &&
         github.repository_owner == 'AdguardTeam' &&
