@@ -449,6 +449,16 @@ export const DHCP_VALUES_PLACEHOLDERS = {
     },
 };
 
+export const DHCP_V6_PREFIX_SOURCE_VALUES = {
+    STATIC: 'static',
+    INTERFACE: 'interface',
+} as const;
+
+export const DHCP_V6_PREFIX_SOURCE_OPTIONS = [
+    DHCP_V6_PREFIX_SOURCE_VALUES.STATIC,
+    DHCP_V6_PREFIX_SOURCE_VALUES.INTERFACE,
+] as const;
+
 export const DHCP_DESCRIPTION_PLACEHOLDERS = {
     ipv4: {
         gateway_ip: 'dhcp_form_gateway_input',

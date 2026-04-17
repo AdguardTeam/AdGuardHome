@@ -2051,7 +2051,20 @@
     'DhcpConfigV6':
       'type': 'object'
       'properties':
+        'prefix_source':
+          'description': >
+            The source of the IPv6 prefix.  `static` keeps `range_start` as the
+            configured prefix.  `interface` derives the prefix from the network
+            interface and treats `range_start` as a host template for the
+            dynamic pool.
+          'type': 'string'
+          'enum':
+            - 'static'
+            - 'interface'
         'range_start':
+          'description': >
+            The first IPv6 address for dynamic leases, or a host template when
+            `prefix_source` is `interface`.
           'type': 'string'
         'lease_duration':
           'type': 'integer'

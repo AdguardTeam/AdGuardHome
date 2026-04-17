@@ -481,28 +481,32 @@ Response:
 	200 OK
 
 	{
-		"enabled":false,
-		"interface_name":"...",
-		"v4":{
-			"gateway_ip":"...",
-			"subnet_mask":"...",
-			"range_start":"...", // if empty: DHCPv4 won't be enabled
-			"range_end":"...",
-			"lease_duration":60,
-		},
-		"v6":{
-			"range_start":"...", // if empty: DHCPv6 won't be enabled
-			"lease_duration":60,
-		}
-		"leases":[
-			{"ip":"...","mac":"...","hostname":"...","expires":"..."}
-			...
-		],
-		"static_leases":[
-			{"ip":"...","mac":"...","hostname":"..."}
-			...
-		]
-	}
+```none
+{
+	"enabled":false,
+	"interface_name":"...",
+	"v4":{
+		"gateway_ip":"...",
+		"subnet_mask":"...",
+		"range_start":"...", // if empty: DHCPv4 won't be enabled
+		"range_end":"...",
+		"lease_duration":60,
+	},
+	"v6":{
+		"prefix_source":"static",
+		"range_start":"...", // if empty: DHCPv6 won't be enabled
+		"lease_duration":60,
+	},
+	"leases":[
+		{"ip":"...","mac":"...","hostname":"...","expires":"..."}
+		...
+	],
+	"static_leases":[
+		{"ip":"...","mac":"...","hostname":"..."}
+		...
+	]
+}
+```
 
 
 ### API: Check DHCP
@@ -557,23 +561,26 @@ If `static_ip.static` is:
 
 Request:
 
-	POST /control/dhcp/set_config
+```none
+POST /control/dhcp/set_config
 
-	{
-	"enabled":true,
-	"interface_name":"vboxnet0",
-	"v4":{
-		"gateway_ip":"192.169.56.1",
-		"subnet_mask":"255.255.255.0",
-		"range_start":"192.169.56.100",
-		"range_end":"192.169.56.200", // Note: first 3 octets must match "range_start"
-		"lease_duration":60,
-	},
-	"v6":{
-		"range_start":"...",
-		"lease_duration":60,
-	}
-	}
+{
+"enabled":true,
+"interface_name":"vboxnet0",
+"v4":{
+	"gateway_ip":"192.169.56.1",
+	"subnet_mask":"255.255.255.0",
+	"range_start":"192.169.56.100",
+	"range_end":"192.169.56.200", // Note: first 3 octets must match "range_start"
+	"lease_duration":60,
+},
+"v6":{
+	"prefix_source":"static",
+	"range_start":"...",
+	"lease_duration":60,
+}
+}
+```
 
 Response:
 
@@ -757,6 +764,12 @@ Configuration:
 	Periodically send `ICMPv6.RouterAdvertisement(Flags=(Managed=false,Other=false))` packets.
 * `ra_slaac_only:false; ra_allow_slaac:true`: use option #3.
 	Periodically send `ICMPv6.RouterAdvertisement(Flags=(Managed=true,Other=true))` packets.
+
+For IPv6 prefix tracking, `prefix_source:static` keeps the current
+legacy behavior.  `prefix_source:interface` derives the advertised
+prefix from the interface, keeps `range_start` as a host template for
+the dynamic pool, and deprecates the previous prefix with preferred
+lifetime `0` and a bounded valid lifetime when renumbering is observed.
 
 ICMPv6.RouterAdvertisement packet description:
 
