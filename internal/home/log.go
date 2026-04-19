@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"os"
 	"path/filepath"
 	"runtime"
 
@@ -55,6 +56,10 @@ func configureLogger(ls *logSettings, workDir string) (err error) {
 
 	// Write logs to stdout by default.
 	if ls.File == "" {
+		if os.Getenv("ADGUARD_HOME_LOG_TO_STDOUT") != "" {
+			log.SetOutput(os.Stdout)
+		}
+
 		return nil
 	}
 
