@@ -1,20 +1,25 @@
 'name': 'build'
-
+# Permissions are disabled for all the jobs by default, and then overridden for
+# specific jobs if needed.  This is a recommended practice for security reasons,
+# and also allows to avoid mistakes with permissions when creating new jobs.
+#
+# See https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#permissions.
+'permissions': {}
 'env':
   'GO_VERSION': '1.26.2'
   'NODE_VERSION': '20'
-
 'on':
   'push':
     'branches':
-    - '*'
+      - '*'
     'tags':
-    - 'v*'
+      - 'v*'
   'pull_request':
-
 'jobs':
   'test':
     'runs-on': '${{ matrix.os }}'
+    'permissions':
+      'contents': 'read'
     'env':
       'GO111MODULE': 'on'
       'GOPROXY': 'https://goproxy.cn'
@@ -22,101 +27,109 @@
       'fail-fast': false
       'matrix':
         'os':
-        - 'ubuntu-latest'
-        - 'macOS-latest'
-        - 'windows-latest'
+          - 'ubuntu-latest'
+          - 'macOS-latest'
+          - 'windows-latest'
     'steps':
-    - 'name': 'Checkout'
-      'uses': 'actions/checkout@v2'
-      'with':
-        'fetch-depth': 0
-    - 'name': 'Set up Go'
-      'uses': 'actions/setup-go@v3'
-      'with':
-        'go-version': '${{ env.GO_VERSION }}'
-    - 'name': 'Set up Node'
-      'uses': 'actions/setup-node@v1'
-      'with':
-        'node-version': '${{ env.NODE_VERSION }}'
-    - 'name': 'Set up Go modules cache'
-      'uses': 'actions/cache@v4'
-      'with':
-        'path': '~/go/pkg/mod'
-        'key': "${{ runner.os }}-go-${{ hashFiles('go.sum') }}"
-        'restore-keys': '${{ runner.os }}-go-'
-    - 'name': 'Get npm cache directory'
-      'id': 'npm-cache'
-      'run': 'echo "::set-output name=dir::$( npm config get cache )"'
-    - 'name': 'Set up npm cache'
-      'uses': 'actions/cache@v4'
-      'with':
-        'path': '${{ steps.npm-cache.outputs.dir }}'
-        'key': "${{ runner.os }}-node-${{ hashFiles('client/package-lock.json') }}"
-        'restore-keys': '${{ runner.os }}-node-'
-    - 'name': 'Run tests'
-      'shell': 'bash'
-      'run': 'make VERBOSE=1 deps test go-bench go-fuzz'
-    - 'name': 'Upload coverage'
-      'uses': 'codecov/codecov-action@v1'
-      'if': "success() && matrix.os == 'ubuntu-latest'"
-      'with':
-        'token': '${{ secrets.CODECOV_TOKEN }}'
-        'file': './coverage.txt'
-
+      - 'name': 'Checkout'
+        'uses': 'actions/checkout@v2'
+        'with':
+          'fetch-depth': 0
+          # Set to false to avoid  GITHUB_TOKEN leaking.
+          #
+          # See https://github.com/actions/checkout/issues/485#issuecomment-934422611.
+          'persist-credentials': false
+      - 'name': 'Set up Go'
+        'uses': 'actions/setup-go@v3'
+        'with':
+          'go-version': '${{ env.GO_VERSION }}'
+      - 'name': 'Set up Node'
+        'uses': 'actions/setup-node@v1'
+        'with':
+          'node-version': '${{ env.NODE_VERSION }}'
+      - 'name': 'Set up Go modules cache'
+        'uses': 'actions/cache@v4'
+        'with':
+          'path': '~/go/pkg/mod'
+          'key': "${{ runner.os }}-go-${{ hashFiles('go.sum') }}"
+          'restore-keys': '${{ runner.os }}-go-'
+      - 'name': 'Get npm cache directory'
+        'id': 'npm-cache'
+        'run': 'echo "::set-output name=dir::$( npm config get cache )"'
+      - 'name': 'Set up npm cache'
+        'uses': 'actions/cache@v4'
+        'with':
+          'path': '${{ steps.npm-cache.outputs.dir }}'
+          'key': "${{ runner.os }}-node-${{ hashFiles('client/package-lock.json') }}"
+          'restore-keys': '${{ runner.os }}-node-'
+      - 'name': 'Run tests'
+        'shell': 'bash'
+        'run': 'make VERBOSE=1 deps test go-bench go-fuzz'
+      - 'name': 'Upload coverage'
+        'uses': 'codecov/codecov-action@v1'
+        'if': "success() && matrix.os == 'ubuntu-latest'"
+        'with':
+          'token': '${{ secrets.CODECOV_TOKEN }}'
+          'file': './coverage.txt'
   'build-release':
     'runs-on': 'ubuntu-latest'
     'needs': 'test'
+    'permissions':
+      'contents': 'read'
     'steps':
-    - 'name': 'Checkout'
-      'uses': 'actions/checkout@v2'
-      'with':
-        'fetch-depth': 0
-    - 'name': 'Set up Go'
-      'uses': 'actions/setup-go@v3'
-      'with':
-        'go-version': '${{ env.GO_VERSION }}'
-    - 'name': 'Set up Node'
-      'uses': 'actions/setup-node@v1'
-      'with':
-        'node-version': '${{ env.NODE_VERSION }}'
-    - 'name': 'Set up Go modules cache'
-      'uses': 'actions/cache@v4'
-      'with':
-        'path': '~/go/pkg/mod'
-        'key': "${{ runner.os }}-go-${{ hashFiles('go.sum') }}"
-        'restore-keys': '${{ runner.os }}-go-'
-    - 'name': 'Get npm cache directory'
-      'id': 'npm-cache'
-      'run': 'echo "::set-output name=dir::$(npm config get cache)"'
-    - 'name': 'Set up npm cache'
-      'uses': 'actions/cache@v4'
-      'with':
-        'path': '${{ steps.npm-cache.outputs.dir }}'
-        'key': "${{ runner.os }}-node-${{ hashFiles('client/package-lock.json') }}"
-        'restore-keys': '${{ runner.os }}-node-'
-    - 'name': 'Set up Snapcraft'
-      'run': 'sudo snap install snapcraft --classic'
-    - 'name': 'Set up QEMU'
-      'uses': 'docker/setup-qemu-action@v3'
-    - 'name': 'Set up Docker Buildx'
-      'uses': 'docker/setup-buildx-action@v3'
-      'with':
-        'install': true
-    - 'name': 'Run snapshot build'
-      # Set a custom version string, since the checkout@v2 action does not seem
-      # to know about the master branch, while the version script uses it to
-      # count the number of commits within the branch.
-      'run': 'make SIGN=0 VERBOSE=1 VERSION="v0.0.0-github" build-release build-docker'
-
+      - 'name': 'Checkout'
+        'uses': 'actions/checkout@v2'
+        'with':
+          'fetch-depth': 0
+          # Set to false to avoid  GITHUB_TOKEN leaking.
+          #
+          # See https://github.com/actions/checkout/issues/485#issuecomment-934422611.
+          'persist-credentials': false
+      - 'name': 'Set up Go'
+        'uses': 'actions/setup-go@v3'
+        'with':
+          'go-version': '${{ env.GO_VERSION }}'
+      - 'name': 'Set up Node'
+        'uses': 'actions/setup-node@v1'
+        'with':
+          'node-version': '${{ env.NODE_VERSION }}'
+      - 'name': 'Set up Go modules cache'
+        'uses': 'actions/cache@v4'
+        'with':
+          'path': '~/go/pkg/mod'
+          'key': "${{ runner.os }}-go-${{ hashFiles('go.sum') }}"
+          'restore-keys': '${{ runner.os }}-go-'
+      - 'name': 'Get npm cache directory'
+        'id': 'npm-cache'
+        'run': 'echo "::set-output name=dir::$(npm config get cache)"'
+      - 'name': 'Set up npm cache'
+        'uses': 'actions/cache@v4'
+        'with':
+          'path': '${{ steps.npm-cache.outputs.dir }}'
+          'key': "${{ runner.os }}-node-${{ hashFiles('client/package-lock.json') }}"
+          'restore-keys': '${{ runner.os }}-node-'
+      - 'name': 'Set up Snapcraft'
+        'run': 'sudo snap install snapcraft --classic'
+      - 'name': 'Set up QEMU'
+        'uses': 'docker/setup-qemu-action@v3'
+      - 'name': 'Set up Docker Buildx'
+        'uses': 'docker/setup-buildx-action@v3'
+        'with':
+          'install': true
+      - 'name': 'Run snapshot build'
+        # Set a custom version string, since the checkout@v2 action does not seem
+        # to know about the master branch, while the version script uses it to
+        # count the number of commits within the branch.
+        'run': 'make SIGN=0 VERBOSE=1 VERSION="v0.0.0-github" build-release build-docker'
   'notify':
     'needs':
-    - 'build-release'
+      - 'build-release'
     # Secrets are not passed to workflows that are triggered by a pull request
     # from a fork.
     #
     # Use always() to signal to the runner that this job must run even if the
     # previous ones failed.
-    'if':
+    'if': |
       ${{
         always() &&
         github.repository_owner == 'AdguardTeam' &&
@@ -126,14 +139,18 @@
         )
       }}
     'runs-on': 'ubuntu-latest'
+    'permissions':
+      # Required by workflow-conclusion-action to check workflow status.
+      'actions': 'read'
+      'contents': 'read'
     'steps':
-    - 'name': 'Conclusion'
-      'uses': 'technote-space/workflow-conclusion-action@v1'
-    - 'name': 'Send Slack notif'
-      'uses': '8398a7/action-slack@v3'
-      'with':
-        'status': '${{ env.WORKFLOW_CONCLUSION }}'
-        'fields': 'repo, message, commit, author, workflow'
-      'env':
-        'GITHUB_TOKEN': '${{ secrets.GITHUB_TOKEN }}'
-        'SLACK_WEBHOOK_URL': '${{ secrets.SLACK_WEBHOOK_URL }}'
+      - 'name': 'Conclusion'
+        'uses': 'technote-space/workflow-conclusion-action@v1'
+      - 'name': 'Send Slack notif'
+        'uses': '8398a7/action-slack@v3'
+        'with':
+          'status': '${{ env.WORKFLOW_CONCLUSION }}'
+          'fields': 'repo, message, commit, author, workflow'
+        'env':
+          'GITHUB_TOKEN': '${{ secrets.GITHUB_TOKEN }}'
+          'SLACK_WEBHOOK_URL': '${{ secrets.SLACK_WEBHOOK_URL }}'
