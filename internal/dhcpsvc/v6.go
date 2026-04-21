@@ -2,7 +2,6 @@ package dhcpsvc
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"net/netip"
 	"slices"
@@ -14,7 +13,50 @@ import (
 	"github.com/google/gopacket/layers"
 )
 
+// Port numbers for DHCPv6.
+//
+// See RFC 9915 Section 7.2.
+const (
+	// ServerPortV6 is the standard DHCPv6 server port.
+	ServerPortV6 layers.UDPPort = 547
+
+	// ClientPortV6 is the standard DHCPv6 client port.
+	ClientPortV6 layers.UDPPort = 546
+)
+
+// HardwareTypeEthernet is the IANA hardware type number for Ethernet, used in
+// DUID-LL and DUID-LLT construction.  Its value is 1, encoded as a big-endian
+// uint16.
+//
+// See https://www.iana.org/assignments/arp-parameters/arp-parameters.xhtml#arp-parameters-2.
+//
+// TODO(e.burkov):  Use.
+var HardwareTypeEthernet = []byte{0x00, 0x01}
+
+// DHCPv6 multicast addresses.
+//
+// See RFC 9915 Section 7.1.
+var (
+	// AllDHCPRelayAgentsAndServers is the well-known IPv6 multicast address
+	// All_DHCP_Relay_Agents_and_Servers.  Clients send messages to this address
+	// to reach all servers on the local link.
+	AllDHCPRelayAgentsAndServers = netip.MustParseAddr("ff02::1:2")
+
+	// AllDHCPServers is the well-known IPv6 multicast address All_DHCP_Servers.
+	// Relay agents use this to reach all servers.
+	AllDHCPServers = netip.MustParseAddr("ff05::1:3")
+)
+
+// v6PrefLen is the length of prefix to match ip against.
+//
+// TODO(e.burkov):  DHCPv6 inherits the weird behavior of legacy implementation
+// where the allocated range constrained by the first address and the first
+// address with last byte set to 0xff.  Proper prefixes should be used instead.
+const v6PrefLen = netutil.IPv6BitLen - 8
+
 // IPv6Config is the interface-specific configuration for DHCPv6.
+//
+// TODO(e.burkov):  Add RangeEnd and SubnetPrefix fields, and validate them.
 type IPv6Config struct {
 	// RangeStart is the first address in the range to assign to DHCP clients.
 	// It should be a valid IPv6 address.
@@ -52,19 +94,27 @@ func (c *IPv6Config) Validate() (err error) {
 		return nil
 	}
 
-	var errs []error
-
-	if !c.RangeStart.Is6() {
-		err = fmt.Errorf("range start %s should be a valid ipv6", c.RangeStart)
-		errs = append(errs, err)
+	errs := []error{
+		validate.Positive("lease duration", c.LeaseDuration),
 	}
 
-	if c.LeaseDuration <= 0 {
-		err = fmt.Errorf("lease duration %s must be positive", c.LeaseDuration)
-		errs = append(errs, err)
-	}
+	errs = c.validateSubnet(errs)
 
 	return errors.Join(errs...)
+}
+
+// validateSubnet validates the subnet configuration.
+//
+// TODO(e.burkov):  Use [validate].
+func (c *IPv6Config) validateSubnet(orig []error) (errs []error) {
+	errs = orig
+
+	if !c.RangeStart.Is6() {
+		err := newMustErr("range start", "be a valid ipv6", c.RangeStart)
+		errs = append(errs, err)
+	}
+
+	return errs
 }
 
 // dhcpInterfaceV6 is a DHCP interface for IPv6 address family.
@@ -73,8 +123,9 @@ type dhcpInterfaceV6 struct {
 	// server.
 	common *netInterface
 
-	// rangeStart is the first IP address in the range.
-	rangeStart netip.Addr
+	// subnetPrefix is the network prefix of the interface's IPv6 subnet.  It is
+	// used for on-link address determination.
+	subnetPrefix netip.Prefix
 
 	// implicitOpts are the DHCPv6 options listed in RFC 8415 (and others) and
 	// initialized with default values.  It must not have intersections with
@@ -84,6 +135,16 @@ type dhcpInterfaceV6 struct {
 	// explicitOpts are the user-configured options.  It must not have
 	// intersections with implicitOpts.
 	explicitOpts layers.DHCPv6Options
+
+	// t1 is the pre-computed T1 value (0.5 × LeaseDuration) per RFC 9915 §21.4.
+	// It is the time after which the client should contact the same server to
+	// extend the lease.
+	t1 time.Duration
+
+	// t2 is the pre-computed T2 value (0.8 × LeaseDuration) per RFC 9915 §21.4.
+	// It is the time after which the client may contact any server to extend
+	// the lease.
+	t2 time.Duration
 
 	// raSLAACOnly defines if DHCP should send ICMPv6.RA packets without MO
 	// flags.
@@ -108,16 +169,29 @@ func (srv *DHCPServer) newDHCPInterfaceV6(
 		return nil
 	}
 
+	// TODO(e.burkov):  Migrate the configuration to use proper range start,
+	// end, and subnet prefix.
+	rangeEndData := conf.RangeStart.As16()
+	rangeEndData[15] = 0xff
+
+	// TODO(e.burkov):  Validate the range end and subnet prefix against the
+	// range start during configuration validation.
+	addrSpace, _ := newIPRange(conf.RangeStart, netip.AddrFrom16(rangeEndData))
+
 	iface = &dhcpInterfaceV6{
-		rangeStart: conf.RangeStart,
 		common: &netInterface{
-			logger:   l,
-			leases:   map[macKey]*Lease{},
-			indexMu:  srv.leasesMu,
-			index:    srv.leases,
-			name:     name,
-			leaseTTL: conf.LeaseDuration,
+			logger:        l,
+			leases:        map[macKey]*Lease{},
+			indexMu:       srv.leasesMu,
+			index:         srv.leases,
+			name:          name,
+			addrSpace:     addrSpace,
+			leasedOffsets: newBitSet(),
+			leaseTTL:      conf.LeaseDuration,
 		},
+		subnetPrefix: netip.PrefixFrom(conf.RangeStart, v6PrefLen),
+		t1:           conf.LeaseDuration / 2,
+		t2:           conf.LeaseDuration * 4 / 5,
 		raSLAACOnly:  conf.RASLAACOnly,
 		raAllowSLAAC: conf.RAAllowSLAAC,
 	}
@@ -129,20 +203,11 @@ func (srv *DHCPServer) newDHCPInterfaceV6(
 // dhcpInterfacesV6 is a slice of network interfaces of IPv6 address family.
 type dhcpInterfacesV6 []*dhcpInterfaceV6
 
-// find returns the first network interface within ifaces containing ip.  It
-// returns false if there is no such interface.
+// find returns the first network interface within ifaces whose subnet prefix
+// contains ip.  It returns false if there is no such interface.
 func (ifaces dhcpInterfacesV6) find(ip netip.Addr) (iface6 *netInterface, ok bool) {
-	// prefLen is the length of prefix to match ip against.
-	//
-	// TODO(e.burkov):  DHCPv6 inherits the weird behavior of legacy
-	// implementation where the allocated range constrained by the first address
-	// and the first address with last byte set to 0xff.  Proper prefixes should
-	// be used instead.
-	const prefLen = netutil.IPv6BitLen - 8
-
 	i := slices.IndexFunc(ifaces, func(iface *dhcpInterfaceV6) (contains bool) {
-		return !ip.Less(iface.rangeStart) &&
-			netip.PrefixFrom(iface.rangeStart, prefLen).Contains(ip)
+		return iface.subnetPrefix.Contains(ip)
 	})
 	if i < 0 {
 		return nil, false

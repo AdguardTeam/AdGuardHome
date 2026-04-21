@@ -34,6 +34,8 @@ type dataLeases struct {
 }
 
 // dbLease is the structure of stored lease.
+//
+// TODO(e.burkov):  Migrate to add DUID and IAID fields for DHCPv6 leases.
 type dbLease struct {
 	Expiry   string     `json:"expires"`
 	IP       netip.Addr `json:"ip"`

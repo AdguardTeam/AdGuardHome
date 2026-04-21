@@ -313,7 +313,7 @@ func (iface *dhcpInterfaceV4) appendRequestedOptions(
 // newRespOptions creates the basic options for a DHCP response.  fd must not be
 // nil, mt must be a valid DHCP response message type.  idOpt is an optional
 // client identifier from the corresponding request.
-func newRespOptions(mt layers.DHCPMsgType, fd *frameData, idOpt []byte) (opts layers.DHCPOptions) {
+func newRespOptions(mt layers.DHCPMsgType, fd *frameData4, idOpt []byte) (opts layers.DHCPOptions) {
 	opts = layers.DHCPOptions{
 		msgTypeOptions4[mt],
 		layers.NewDHCPOption(layers.DHCPOptServerID, fd.localAddr.AsSlice()),
