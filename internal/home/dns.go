@@ -2,7 +2,6 @@ package home
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	"log/slog"
 	"net"
@@ -16,6 +15,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
@@ -264,7 +264,7 @@ func newServerConfig(
 	clientSrcConf *clientSourcesConfig,
 	tlsConf *tlsConfigSettings,
 	dohConf *doHConfig,
-	tlsMgr *tlsManager,
+	tlsMgr aghtls.TLSConfigProvider,
 	httpReg aghhttp.Registrar,
 	clientsContainer dnsforward.ClientsContainer,
 	confModifier agh.ConfigModifier,
@@ -274,7 +274,7 @@ func newServerConfig(
 	fwdConf := dnsConf.Config
 	fwdConf.ClientsContainer = clientsContainer
 
-	intTLSConf, err := newDNSTLSConfig(tlsConf, hosts, dohConf.InsecureEnabled)
+	intTLSConf, err := newDNSTLSConfig(tlsConf, hosts)
 	if err != nil {
 		return nil, fmt.Errorf("constructing tls config: %w", err)
 	}
@@ -286,7 +286,7 @@ func newServerConfig(
 		TLSConf:                intTLSConf,
 		TLSAllowUnencryptedDoH: dohConf.InsecureEnabled,
 		UpstreamTimeout:        time.Duration(dnsConf.UpstreamTimeout),
-		TLSv12Roots:            tlsMgr.rootCerts,
+		TLSv12Roots:            tlsMgr.RootCAs(),
 		ConfModifier:           confModifier,
 		HTTPReg:                httpReg,
 		LocalPTRResolvers:      dnsConf.PrivateRDNSResolvers,
@@ -326,7 +326,6 @@ func newServerConfig(
 func newDNSTLSConfig(
 	conf *tlsConfigSettings,
 	addrs []netip.Addr,
-	allowUnencryptedDoH bool,
 ) (dnsConf *dnsforward.TLSConfig, err error) {
 	if !conf.Enabled {
 		return &dnsforward.TLSConfig{}, nil
@@ -358,21 +357,7 @@ func newDNSTLSConfig(
 		dnsConf.QUICListenAddrs = ipsToUDPAddrs(addrs, conf.PortDNSOverQUIC)
 	}
 
-	cert, err := tls.X509KeyPair(conf.CertificateChainData, conf.PrivateKeyData)
-	if err != nil {
-		err = fmt.Errorf("parsing tls key pair: %w", err)
-		if allowUnencryptedDoH || dnsCryptConf != nil {
-			// TODO(s.chzhen):  Use [slog.Logger].
-			log.Info("warning: %s", err)
-
-			return dnsConf, nil
-		}
-
-		// Don't wrap the error, because it's already annotated.
-		return nil, err
-	}
-
-	dnsConf.Cert = &cert
+	// TODO !! How to update a cert?
 
 	return dnsConf, nil
 }

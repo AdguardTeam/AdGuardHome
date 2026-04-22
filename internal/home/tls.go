@@ -54,8 +54,12 @@ type tlsManager struct {
 	// Resolve it.
 	web *webAPI
 
-	// conf contains the TLS configuration settings.  It must not be nil.
-	conf *tlsConfigSettings
+	// tlsConf is a current TLS configuration.  It must not be nil.
+	tlsConf *tls.Config
+
+	// extTLSConf contains extended TLS configuration settings.  It must not be
+	// nil.
+	extTLSConf *tlsConfigSettings
 
 	// confModifier is used to update the global configuration.
 	confModifier agh.ConfigModifier
@@ -111,7 +115,7 @@ func newTLSManager(ctx context.Context, conf *tlsManagerConfig) (m *tlsManager, 
 		httpReg:       conf.httpReg,
 		manager:       conf.manager,
 		status:        &tlsConfigStatus{},
-		conf:          &conf.tlsSettings,
+		extTLSConf:    &conf.tlsSettings,
 		servePlainDNS: conf.servePlainDNS,
 	}
 
@@ -133,23 +137,27 @@ func newTLSManager(ctx context.Context, conf *tlsManagerConfig) (m *tlsManager, 
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	if !m.conf.Enabled {
+	if !m.extTLSConf.Enabled {
 		return m, nil
 	}
 
 	err = m.manager.Set(ctx, aghtls.TLSPair{
-		CertPath: m.conf.CertificatePath,
-		KeyPath:  m.conf.PrivateKeyPath,
+		CertPath: m.extTLSConf.CertificatePath,
+		KeyPath:  m.extTLSConf.PrivateKeyPath,
 	})
 	if err != nil {
 		m.logger.ErrorContext(ctx, "setting tls files", slogutil.KeyError, err)
 	}
 
-	err = m.loadTLSConfig(ctx, m.conf, m.status)
+	err = m.loadTLSConfig(ctx, m.extTLSConf, m.status)
 	if err != nil {
-		m.conf.Enabled = false
+		m.extTLSConf.Enabled = false
 
 		return m, err
+	}
+
+	m.tlsConf = &tls.Config{
+		GetConfigForClient: m.getConfigForClient,
 	}
 
 	m.setCertFileTime(ctx)
@@ -171,17 +179,17 @@ func (m *tlsManager) config() (conf *tlsConfigSettings) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	return m.conf.clone()
+	return m.extTLSConf.clone()
 }
 
 // setCertFileTime sets [tlsManager.certLastMod] from the certificate.  If there
 // are errors, setCertFileTime logs them.  m.mu is expected to be locked.
 func (m *tlsManager) setCertFileTime(ctx context.Context) {
-	if len(m.conf.CertificatePath) == 0 {
+	if len(m.extTLSConf.CertificatePath) == 0 {
 		return
 	}
 
-	fi, err := os.Stat(m.conf.CertificatePath)
+	fi, err := os.Stat(m.extTLSConf.CertificatePath)
 	if err != nil {
 		m.logger.ErrorContext(ctx, "looking up certificate path", slogutil.KeyError, err)
 
@@ -203,7 +211,7 @@ func (m *tlsManager) start(ctx context.Context) {
 	// The background context is used because the TLSConfigChanged wraps context
 	// with timeout on its own and shuts down the server, which handles current
 	// request.
-	m.web.tlsConfigChanged(context.Background(), m.conf)
+	m.web.tlsConfigChanged(context.Background(), m.extTLSConf)
 
 	go m.handleCertFileChange(ctx)
 }
@@ -235,7 +243,7 @@ func (m *tlsManager) reload(ctx context.Context) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	tlsConfPtr := m.conf
+	tlsConfPtr := m.extTLSConf
 
 	if !tlsConfPtr.Enabled || len(tlsConfPtr.CertificatePath) == 0 {
 		return
@@ -267,45 +275,15 @@ func (m *tlsManager) reload(ctx context.Context) {
 		return
 	}
 
-	m.conf = &tlsConf
+	m.extTLSConf = &tlsConf
 	m.status = status
 
 	m.certLastMod = fi.ModTime().UTC()
 
-	err = m.reconfigureDNSServer(ctx)
-	if err != nil {
-		m.logger.ErrorContext(ctx, "reconfiguring dns server", slogutil.KeyError, err)
-	}
-
 	// The background context is used because the TLSConfigChanged wraps context
 	// with timeout on its own and shuts down the server, which handles current
 	// request.
-	m.web.tlsConfigChanged(context.Background(), m.conf)
-}
-
-// reconfigureDNSServer updates the DNS server configuration using the stored
-// TLS settings.  m.mu is expected to be locked.
-func (m *tlsManager) reconfigureDNSServer(ctx context.Context) (err error) {
-	newConf, err := newServerConfig(
-		&config.DNS,
-		config.Clients.Sources,
-		m.conf,
-		config.HTTPConfig.DoH,
-		m,
-		m.httpReg,
-		globalContext.clients.storage,
-		m.confModifier,
-	)
-	if err != nil {
-		return fmt.Errorf("generating forwarding dns server config: %w", err)
-	}
-
-	err = globalContext.dnsServer.Reconfigure(ctx, newConf)
-	if err != nil {
-		return fmt.Errorf("starting forwarding dns server: %w", err)
-	}
-
-	return nil
+	m.web.tlsConfigChanged(context.Background(), m.extTLSConf)
 }
 
 // loadTLSConfig loads and validates the TLS configuration.  It also sets
@@ -460,7 +438,7 @@ func (m *tlsManager) handleTLSStatus(w http.ResponseWriter, r *http.Request) {
 		m.mu.Lock()
 		defer m.mu.Unlock()
 
-		tlsConf = m.conf.clone()
+		tlsConf = m.extTLSConf.clone()
 		servePlainDNS = m.servePlainDNS
 	}()
 
@@ -494,7 +472,7 @@ func (m *tlsManager) handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 	defer m.mu.Unlock()
 
 	if setts.PrivateKeySaved {
-		setts.PrivateKey = m.conf.PrivateKey
+		setts.PrivateKey = m.extTLSConf.PrivateKey
 	}
 
 	if err = m.validateTLSSettings(setts); err != nil {
@@ -525,14 +503,14 @@ func (m *tlsManager) setConfig(
 	status *tlsConfigStatus,
 	servePlain aghalg.NullBool,
 ) (restartHTTPS bool) {
-	if !m.conf.setPrivateFieldsAndCompare(&newConf) {
+	if !m.extTLSConf.setPrivateFieldsAndCompare(&newConf) {
 		m.logger.InfoContext(ctx, "config has changed, restarting https server")
 		restartHTTPS = true
 	} else {
 		m.logger.InfoContext(ctx, "config has not changed")
 	}
 
-	m.conf = &newConf
+	m.extTLSConf = &newConf
 
 	m.status = status
 
@@ -587,10 +565,10 @@ func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) 
 	defer m.mu.Unlock()
 
 	if req.PrivateKeySaved {
-		req.PrivateKey = m.conf.PrivateKey
+		req.PrivateKey = m.extTLSConf.PrivateKey
 	}
 
-	req.StrictSNICheck = m.conf.StrictSNICheck
+	req.StrictSNICheck = m.extTLSConf.StrictSNICheck
 
 	if err = m.validateTLSSettings(req); err != nil {
 		aghhttp.ErrorAndLog(ctx, m.logger, r, w, http.StatusBadRequest, "%s", err)
@@ -621,15 +599,6 @@ func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) 
 
 			config.DNS.ServePlainDNS = req.ServePlainDNS == aghalg.NBTrue
 		}()
-	}
-
-	err = m.reconfigureDNSServer(ctx)
-	if err != nil {
-		m.logger.ErrorContext(ctx, "reconfiguring dns server", slogutil.KeyError, err)
-
-		aghhttp.ErrorAndLog(ctx, m.logger, r, w, http.StatusInternalServerError, "%s", err)
-
-		return
 	}
 
 	resp := &tlsConfig{
@@ -665,7 +634,7 @@ func (m *tlsManager) validateTLSSettings(setts tlsConfigSettingsExt) (err error)
 	}
 
 	var (
-		tlsConf      tlsConfigSettings
+		extTLSConf   tlsConfigSettings
 		webAPIAddr   netip.Addr
 		webAPIPort   uint16
 		plainDNSPort uint16
@@ -675,7 +644,7 @@ func (m *tlsManager) validateTLSSettings(setts tlsConfigSettingsExt) (err error)
 		config.Lock()
 		defer config.Unlock()
 
-		tlsConf = config.TLS
+		extTLSConf = config.TLS
 		webAPIAddr = config.HTTPConfig.Address.Addr()
 		webAPIPort = config.HTTPConfig.Address.Port()
 		plainDNSPort = config.DNS.Port
@@ -695,7 +664,7 @@ func (m *tlsManager) validateTLSSettings(setts tlsConfigSettingsExt) (err error)
 	}
 
 	// Don't wrap the error because it's informative enough as is.
-	return m.checkPortAvailability(tlsConf, setts.tlsConfigSettings, webAPIAddr)
+	return m.checkPortAvailability(extTLSConf, setts.tlsConfigSettings, webAPIAddr)
 }
 
 // validatePorts validates the uniqueness of TCP and UDP ports for AdGuard Home
@@ -1118,4 +1087,37 @@ func (m *tlsManager) registerWebHandlers() {
 	m.httpReg.Register(http.MethodGet, "/control/tls/status", m.handleTLSStatus)
 	m.httpReg.Register(http.MethodPost, "/control/tls/configure", m.handleTLSConfigure)
 	m.httpReg.Register(http.MethodPost, "/control/tls/validate", m.handleTLSValidate)
+}
+
+// TLSConfig implements the [aghtls.TLSConfigProvider] interface for
+// *tlsManager.
+func (m *tlsManager) TLSConfig() (conf *tls.Config) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	conf = m.tlsConf.Clone()
+	return conf
+}
+
+// RootCAs implements the [aghtls.TLSConfigProvider] interface for *tlsManager.
+func (m *tlsManager) RootCAs() (root *x509.CertPool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	return m.tlsConf.RootCAs
+}
+
+// TODO !! Docs.
+func (m *tlsManager) getConfigForClient(cli *tls.ClientHelloInfo) (*tls.Config, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	// TODO !! What should we do with that cert? How to send it to DNS TLS Config?
+	cert, err := tls.LoadX509KeyPair(m.extTLSConf.CertificatePath, m.extTLSConf.PrivateKeyPath)
+	if err != nil {
+		return nil, nil
+	}
+	_ = cert
+
+	return nil, nil
 }
