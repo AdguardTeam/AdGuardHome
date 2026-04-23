@@ -11,7 +11,6 @@ import (
 	"net/url"
 	"slices"
 	"testing"
-	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
@@ -21,9 +20,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-// testTimeout is the common timeout for tests and contexts.
-const testTimeout = 1 * time.Second
 
 const (
 	testClientIP1 = "1.1.1.1"
