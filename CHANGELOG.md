@@ -18,9 +18,19 @@ See also the [v0.107.75 GitHub milestone][ms-v0.107.75].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Changed
+
+- Frontend API requests no longer depend on axios.
+
+- Dashboard charts use Recharts instead of Nivo.
+
 ### Fixed
 
+- Dashboard charts now correctly display lower query counts ([#6823]).
+
 - Safe Browsing and Parental Control labels on the General Settings page not updating after changing the UI language.
+
+[#6823]: https://github.com/AdguardTeam/AdGuardHome/issues/6823
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
