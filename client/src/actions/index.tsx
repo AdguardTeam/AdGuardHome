@@ -1,6 +1,5 @@
 import { createAction } from 'redux-actions';
 import i18next from 'i18next';
-import axios from 'axios';
 
 import endsWith from 'lodash/endsWith';
 import escapeRegExp from 'lodash/escapeRegExp';
@@ -23,6 +22,7 @@ import {
     DISABLE_PROTECTION_TIMINGS,
 } from '../helpers/constants';
 import { areEqualVersions } from '../helpers/version';
+import { fetchRequest } from '../api/fetch';
 import { getTlsStatus } from './encryption';
 import apiClient from '../api/Api';
 import { addErrorToast, addNoticeToast, addSuccessToast } from './toasts';
@@ -181,31 +181,32 @@ export const getUpdateRequest = createAction('GET_UPDATE_REQUEST');
 export const getUpdateFailure = createAction('GET_UPDATE_FAILURE');
 export const getUpdateSuccess = createAction('GET_UPDATE_SUCCESS');
 
-const checkStatus = async (handleRequestSuccess: any, handleRequestError: any, attempts = 60) => {
+export const checkStatus = async (handleRequestSuccess: any, handleRequestError: any, attempts = 60) => {
     let timeout;
 
     if (attempts === 0) {
         handleRequestError();
+        return;
     }
 
     const rmTimeout = (t: any) => t && clearTimeout(t);
 
     try {
-        const response = await axios.get(`${apiClient.baseUrl}/status`);
+        const response = await fetchRequest(`${apiClient.baseUrl}/status`, 'GET');
         rmTimeout(timeout);
-        if (response?.status === 200) {
-            handleRequestSuccess(response);
-            if (response.data.running === false) {
-                timeout = setTimeout(
-                    checkStatus,
-                    CHECK_TIMEOUT,
-                    handleRequestSuccess,
-                    handleRequestError,
-                    attempts - 1,
-                );
-            }
+
+        handleRequestSuccess(response);
+
+        if (response.data.running === false) {
+            timeout = setTimeout(
+                checkStatus,
+                CHECK_TIMEOUT,
+                handleRequestSuccess,
+                handleRequestError,
+                attempts - 1,
+            );
         }
-    } catch (error) {
+    } catch (_error) {
         rmTimeout(timeout);
         timeout = setTimeout(checkStatus, CHECK_TIMEOUT, handleRequestSuccess, handleRequestError, attempts - 1);
     }
