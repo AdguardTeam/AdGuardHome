@@ -24,12 +24,15 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Dashboard charts use Recharts instead of Nivo.
 
+- `enable_dnssec` in `dns` configuration now defines whether the proxy should set the DO flag in the upstream requests, the default is `true` ([#7046]).
+
 ### Fixed
 
 - Dashboard charts now correctly display lower query counts ([#6823]).
 
 - Safe Browsing and Parental Control labels on the General Settings page not updating after changing the UI language.
 
+[#7046]: https://github.com/AdguardTeam/AdGuardHome/issues/7046
 [#6823]: https://github.com/AdguardTeam/AdGuardHome/issues/6823
 
 <!--
