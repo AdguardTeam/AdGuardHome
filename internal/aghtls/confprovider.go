@@ -10,8 +10,8 @@ import (
 //
 // TODO(m.kazantsev):  Merge with the Manager interface.
 type TLSConfigProvider interface {
-	// TLSConfig returns a clone of the current TLS configuration.  conf uses
-	// GetConfigForClient for automatic updates.
+	// TLSConfig returns a clone of the current TLS configuration.  conf
+	// provides its certificates via GetConfigForClient method.
 	TLSConfig() (conf *tls.Config)
 
 	// RootCAs returns the current root CA pool.
@@ -19,20 +19,21 @@ type TLSConfigProvider interface {
 }
 
 // type check
-var _ TLSConfigProvider = (*EmptyTLSConfigProvider)(nil)
+var _ TLSConfigProvider = EmptyTLSConfigProvider{}
 
 // EmptyTLSConfigProvider is the implementation of the [TLSConfigProvider]
 // interface that does nothing.
 type EmptyTLSConfigProvider struct{}
 
 // TLSConfig implements the [TLSConfigProvider] interface for
-// *EmptyTLSConfigProvider.
-func (t *EmptyTLSConfigProvider) TLSConfig() (conf *tls.Config) {
+// *EmptyTLSConfigProvider.  It always returns nil.
+
+func (EmptyTLSConfigProvider) TLSConfig() (conf *tls.Config) {
 	return nil
 }
 
 // RootCAs implements the [TLSConfigProvider] interface for
-// *EmptyTLSConfigProvider.
-func (t *EmptyTLSConfigProvider) RootCAs() (root *x509.CertPool) {
+// *EmptyTLSConfigProvider.  It always returns nil.
+func (EmptyTLSConfigProvider) RootCAs() (root *x509.CertPool) {
 	return nil
 }

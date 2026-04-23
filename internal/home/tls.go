@@ -1107,17 +1107,19 @@ func (m *tlsManager) RootCAs() (root *x509.CertPool) {
 	return m.tlsConf.RootCAs
 }
 
-// TODO !! Docs.
+// getConfigForClient is called after a ClientInfo is received from a client.
+// It loads a cert and updates the [*tls.Config] for server.
 func (m *tlsManager) getConfigForClient(cli *tls.ClientHelloInfo) (*tls.Config, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	// TODO !! What should we do with that cert? How to send it to DNS TLS Config?
+	// TODO !! What should we do with that cert?
+	// TODO !! How to send it to DNS TLS Config?
 	cert, err := tls.LoadX509KeyPair(m.extTLSConf.CertificatePath, m.extTLSConf.PrivateKeyPath)
 	if err != nil {
-		return nil, nil
+		return nil, fmt.Errorf("loading tls certificate: %w", err)
 	}
-	_ = cert
+	m.tlsConf.Certificates = []tls.Certificate{cert}
 
-	return nil, nil
+	return m.tlsConf, nil
 }

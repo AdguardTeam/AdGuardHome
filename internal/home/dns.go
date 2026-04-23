@@ -262,9 +262,9 @@ func ipsToUDPAddrs(ips []netip.Addr, port uint16) (udpAddrs []*net.UDPAddr) {
 func newServerConfig(
 	dnsConf *dnsConfig,
 	clientSrcConf *clientSourcesConfig,
-	tlsConf *tlsConfigSettings,
+	extTLSConf *tlsConfigSettings,
 	dohConf *doHConfig,
-	tlsMgr aghtls.TLSConfigProvider,
+	tlsConfProvider aghtls.TLSConfigProvider,
 	httpReg aghhttp.Registrar,
 	clientsContainer dnsforward.ClientsContainer,
 	confModifier agh.ConfigModifier,
@@ -274,7 +274,7 @@ func newServerConfig(
 	fwdConf := dnsConf.Config
 	fwdConf.ClientsContainer = clientsContainer
 
-	intTLSConf, err := newDNSTLSConfig(tlsConf, hosts)
+	intTLSConf, err := newDNSTLSConfig(extTLSConf, hosts)
 	if err != nil {
 		return nil, fmt.Errorf("constructing tls config: %w", err)
 	}
@@ -286,7 +286,7 @@ func newServerConfig(
 		TLSConf:                intTLSConf,
 		TLSAllowUnencryptedDoH: dohConf.InsecureEnabled,
 		UpstreamTimeout:        time.Duration(dnsConf.UpstreamTimeout),
-		TLSv12Roots:            tlsMgr.RootCAs(),
+		TLSv12Roots:            tlsConfProvider.RootCAs(),
 		ConfModifier:           confModifier,
 		HTTPReg:                httpReg,
 		LocalPTRResolvers:      dnsConf.PrivateRDNSResolvers,
@@ -357,7 +357,8 @@ func newDNSTLSConfig(
 		dnsConf.QUICListenAddrs = ipsToUDPAddrs(addrs, conf.PortDNSOverQUIC)
 	}
 
-	// TODO !! How to update a cert?
+	// TODO !! Now certificate is not updated there, but where and how to update
+	// it is not clear.
 
 	return dnsConf, nil
 }
