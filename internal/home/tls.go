@@ -158,6 +158,9 @@ func newTLSManager(ctx context.Context, conf *tlsManagerConfig) (m *tlsManager, 
 
 	m.tlsConf = &tls.Config{
 		GetConfigForClient: m.getConfigForClient,
+		RootCAs:            m.rootCerts,
+		CipherSuites:       m.customCipherIDs,
+		MinVersion:         tls.VersionTLS12,
 	}
 
 	m.setCertFileTime(ctx)
@@ -285,6 +288,12 @@ func (m *tlsManager) reload(ctx context.Context) {
 	// request.
 	m.web.tlsConfigChanged(context.Background(), m.extTLSConf)
 }
+
+// TODO !! Before the latest changes, reconfigureDNSServer was called in the end of this function.
+// Now it is removed.
+//
+// 1. newServerConfig is not called anymore.
+// 2. dnsServer.Reconfigure is not called anymore.
 
 // loadTLSConfig loads and validates the TLS configuration.  It also sets
 // [tlsConfigSettings.CertificateChainData] and
@@ -1115,6 +1124,7 @@ func (m *tlsManager) getConfigForClient(cli *tls.ClientHelloInfo) (*tls.Config, 
 
 	// TODO !! What should we do with that cert?
 	// TODO !! How to send it to DNS TLS Config?
+	// TODO !! Why don't we use GetCertificate callback instead of GetConfigForClient?
 	cert, err := tls.LoadX509KeyPair(m.extTLSConf.CertificatePath, m.extTLSConf.PrivateKeyPath)
 	if err != nil {
 		return nil, fmt.Errorf("loading tls certificate: %w", err)
