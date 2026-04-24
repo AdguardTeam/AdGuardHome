@@ -111,6 +111,7 @@ func TestQueryLog_DecodeLogEntry_success(t *testing.T) {
 	assert.Equal(t, want, got)
 }
 
+// TODO(a.garipov):  Reformat.
 func TestQueryLog_DecodeLogEntry(t *testing.T) {
 	logOutput := &bytes.Buffer{}
 	l := &queryLog{
@@ -137,7 +138,8 @@ func TestQueryLog_DecodeLogEntry(t *testing.T) {
 	}, {
 		name: "bad_is_filtered",
 		log:  `{"IP":"127.0.0.1","T":"2020-11-25T18:55:56.519796+03:00","QH":"an.yandex.ru","QT":"A","QC":"IN","CP":"","Answer":"Qz+BgAABAAEAAAAAAmFuBnlhbmRleAJydQAAAQABwAwAAQABAAAACgAEAAAAAA==","Result":{"IsFiltered":trooe,"Reason":3},"Elapsed":837429}`,
-		want: `level=DEBUG msg="decoding log entry; token" err="invalid character 'o' in literal true (expecting 'u')"`,
+		want: `level=DEBUG msg="decoding result; token" err="invalid character 'o' in literal true (expecting 'u')"` + "\n" +
+			`level=DEBUG msg="decoding log entry; token" err="invalid character 'o' in literal true (expecting 'u')"`,
 	}, {
 		name: "bad_elapsed",
 		log:  `{"IP":"127.0.0.1","T":"2020-11-25T18:55:56.519796+03:00","QH":"an.yandex.ru","QT":"A","QC":"IN","CP":"","Answer":"Qz+BgAABAAEAAAAAAmFuBnlhbmRleAJydQAAAQABwAwAAQABAAAACgAEAAAAAA==","Result":{"IsFiltered":true,"Reason":3},"Elapsed":-1}`,

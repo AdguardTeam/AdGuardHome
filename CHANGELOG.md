@@ -30,10 +30,13 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Dashboard charts now correctly display lower query counts ([#6823]).
 
+- Redundant validation warnings about DHCP when it's disabled ([#8348]).
+
 - Safe Browsing and Parental Control labels on the General Settings page not updating after changing the UI language.
 
 [#7046]: https://github.com/AdguardTeam/AdGuardHome/issues/7046
 [#6823]: https://github.com/AdguardTeam/AdGuardHome/issues/6823
+[#8348]: https://github.com/AdguardTeam/AdGuardHome/issues/8348
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
