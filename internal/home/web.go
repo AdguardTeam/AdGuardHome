@@ -74,6 +74,12 @@ type webAPIConfig struct {
 	// must not be nil.
 	mux *http.ServeMux
 
+	// dohMux is the dedicated multiplexer used when a separate HTTPS admin
+	// listen address is configured (see [tlsConfigSettings.AdminListenAddr]).
+	// It contains only DoH routes and is used by the HTTPS server on
+	// [tlsConfigSettings.PortHTTPS] in that mode.  It must not be nil.
+	dohMux *http.ServeMux
+
 	// clientFS is used to initialize file server.  It must not be nil.
 	clientFS fs.FS
 
@@ -163,10 +169,35 @@ type webAPI struct {
 
 	// httpsServer is the server that handles HTTPS traffic.  If it is not nil,
 	// [Web.http3Server] must also not be nil.
+	//
+	// When [tlsConfigSettings.AdminListenAddr] is unset, this server handles
+	// both admin UI/API and DoH requests.  Otherwise, it handles DoH requests
+	// only, and admin UI/API requests are handled by [webAPI.adminHTTPSServer].
 	httpsServer httpsServer
+
+	// adminHTTPSServer is the HTTPS server that serves only the admin UI and
+	// API on [tlsConfigSettings.AdminListenAddr].  It is only started when
+	// [tlsConfigSettings.AdminListenAddr] is valid and has a non-zero port.
+	adminHTTPSServer httpsServer
 
 	// startTime is the start time of the web API server in Unix milliseconds.
 	startTime time.Time
+}
+
+// adminListenAddr returns the currently configured dedicated HTTPS admin
+// listen address, if any.  It returns the zero value if the feature is
+// disabled.
+func adminListenAddr(tlsConf *tlsConfigSettings) (addr netip.AddrPort) {
+	if tlsConf == nil {
+		return netip.AddrPort{}
+	}
+
+	a := tlsConf.AdminListenAddr
+	if !a.IsValid() || a.Port() == 0 {
+		return netip.AddrPort{}
+	}
+
+	return a
 }
 
 // newWebAPI creates a new instance of the web UI and API server.  conf must be
@@ -208,6 +239,7 @@ func newWebAPI(ctx context.Context, conf *webAPIConfig) (w *webAPI) {
 	}
 
 	w.httpsServer.cond = sync.NewCond(&w.httpsServer.condLock)
+	w.adminHTTPSServer.cond = sync.NewCond(&w.adminHTTPSServer.condLock)
 
 	return w
 }
@@ -234,10 +266,9 @@ func (web *webAPI) tlsConfigChanged(ctx context.Context, tlsConf *tlsConfigSetti
 
 	web.httpsServer.cond.L.Lock()
 	if web.httpsServer.server != nil {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, shutdownTimeout)
-		shutdownSrv(ctx, web.logger, web.httpsServer.server)
-		shutdownSrv3(ctx, web.logger, web.httpsServer.server3)
+		shutCtx, cancel := context.WithTimeout(ctx, shutdownTimeout)
+		shutdownSrv(shutCtx, web.logger, web.httpsServer.server)
+		shutdownSrv3(shutCtx, web.logger, web.httpsServer.server3)
 
 		cancel()
 	}
@@ -246,6 +277,23 @@ func (web *webAPI) tlsConfigChanged(ctx context.Context, tlsConf *tlsConfigSetti
 	web.httpsServer.cert = cert
 	web.httpsServer.cond.Broadcast()
 	web.httpsServer.cond.L.Unlock()
+
+	// The admin HTTPS server shares its cert with the DoH HTTPS server and is
+	// only enabled when a dedicated admin listen address is configured.
+	adminEnabled := enabled && adminListenAddr(tlsConf) != (netip.AddrPort{})
+
+	web.adminHTTPSServer.cond.L.Lock()
+	if web.adminHTTPSServer.server != nil {
+		shutCtx, cancel := context.WithTimeout(ctx, shutdownTimeout)
+		shutdownSrv(shutCtx, web.logger, web.adminHTTPSServer.server)
+
+		cancel()
+	}
+
+	web.adminHTTPSServer.enabled = adminEnabled
+	web.adminHTTPSServer.cert = cert
+	web.adminHTTPSServer.cond.Broadcast()
+	web.adminHTTPSServer.cond.L.Unlock()
 }
 
 // loggerKeyServer is the key used by [webAPI] to identify servers.
@@ -259,6 +307,7 @@ func (web *webAPI) start(ctx context.Context) {
 
 	// for https, we have a separate goroutine loop
 	go web.tlsServerLoop(ctx)
+	go web.adminTLSServerLoop(ctx)
 
 	// this loop is used as an ability to change listening host and/or port
 	for !web.httpsServer.inShutdown {
@@ -315,7 +364,13 @@ func (web *webAPI) close(ctx context.Context) {
 
 	web.httpsServer.cond.L.Lock()
 	web.httpsServer.inShutdown = true
+	web.httpsServer.cond.Broadcast()
 	web.httpsServer.cond.L.Unlock()
+
+	web.adminHTTPSServer.cond.L.Lock()
+	web.adminHTTPSServer.inShutdown = true
+	web.adminHTTPSServer.cond.Broadcast()
+	web.adminHTTPSServer.cond.L.Unlock()
 
 	var cancel context.CancelFunc
 	ctx, cancel = context.WithTimeout(ctx, shutdownTimeout)
@@ -323,6 +378,7 @@ func (web *webAPI) close(ctx context.Context) {
 
 	shutdownSrv(ctx, web.logger, web.httpsServer.server)
 	shutdownSrv3(ctx, web.logger, web.httpsServer.server3)
+	shutdownSrv(ctx, web.logger, web.adminHTTPSServer.server)
 	shutdownSrv(ctx, web.logger, web.httpServer)
 
 	if web.auth != nil {
@@ -351,12 +407,16 @@ func (web *webAPI) serveTLS(ctx context.Context) (next bool) {
 		return false
 	}
 
-	var portHTTPS uint16
+	var (
+		portHTTPS   uint16
+		adminListen netip.AddrPort
+	)
 	func() {
 		config.RLock()
 		defer config.RUnlock()
 
 		portHTTPS = config.TLS.PortHTTPS
+		adminListen = adminListenAddr(&config.TLS)
 	}()
 
 	addr := netip.AddrPortFrom(web.conf.BindAddr.Addr(), portHTTPS).String()
@@ -364,11 +424,21 @@ func (web *webAPI) serveTLS(ctx context.Context) (next bool) {
 
 	// TODO(a.garipov):  Remove other logs like this in other code.
 	logMw := httputil.NewLogMiddleware(logger, slog.LevelDebug)
-	hdlr := logMw.Wrap(withMiddlewares(web.conf.mux, limitRequestBody))
+
+	// When a dedicated admin HTTPS listen address is configured, this server
+	// serves DoH only and must not require web-UI authentication.  Otherwise,
+	// it continues to serve both admin UI and DoH on the same port.
+	var hdlr http.Handler
+	if adminListen != (netip.AddrPort{}) {
+		hdlr = logMw.Wrap(withMiddlewares(web.conf.dohMux, limitRequestBody))
+	} else {
+		hdlr = logMw.Wrap(withMiddlewares(web.conf.mux, limitRequestBody))
+		hdlr = web.auth.middleware().Wrap(hdlr)
+	}
 
 	web.httpsServer.server = &http.Server{
 		Addr:    addr,
-		Handler: web.auth.middleware().Wrap(hdlr),
+		Handler: hdlr,
 		TLSConfig: &tls.Config{
 			Certificates: []tls.Certificate{web.httpsServer.cert},
 			RootCAs:      web.tlsManager.rootCerts,
@@ -392,6 +462,93 @@ func (web *webAPI) serveTLS(ctx context.Context) (next bool) {
 	if !errors.Is(err, http.ErrServerClosed) {
 		cleanupAlways()
 		panic(fmt.Errorf("https: %w", err))
+	}
+
+	return true
+}
+
+// adminTLSServerLoop implements retry logic for the dedicated admin HTTPS
+// server.  The loop is a no-op while [tlsConfigSettings.AdminListenAddr] is
+// unset.
+func (web *webAPI) adminTLSServerLoop(ctx context.Context) {
+	defer slogutil.RecoverAndExit(ctx, web.logger, osutil.ExitCodeFailure)
+
+	for {
+		shouldContinue := web.serveAdminTLS(ctx)
+		if !shouldContinue {
+			return
+		}
+	}
+}
+
+// serveAdminTLS initializes and starts the dedicated admin HTTPS server on
+// [tlsConfigSettings.AdminListenAddr], if configured.  It returns true when
+// another retry is required.
+func (web *webAPI) serveAdminTLS(ctx context.Context) (next bool) {
+	if !web.waitForAdminTLSReady() {
+		return false
+	}
+
+	var adminListen netip.AddrPort
+	func() {
+		config.RLock()
+		defer config.RUnlock()
+
+		adminListen = adminListenAddr(&config.TLS)
+	}()
+
+	if adminListen == (netip.AddrPort{}) {
+		// The feature was disabled between ready-broadcast and here.  Loop
+		// back and wait again.
+		return true
+	}
+
+	logger := web.baseLogger.With(loggerKeyServer, "admin-https")
+
+	// TODO(a.garipov):  Remove other logs like this in other code.
+	logMw := httputil.NewLogMiddleware(logger, slog.LevelDebug)
+	hdlr := logMw.Wrap(withMiddlewares(web.conf.mux, limitRequestBody))
+
+	web.adminHTTPSServer.server = &http.Server{
+		Addr:    adminListen.String(),
+		Handler: web.auth.middleware().Wrap(hdlr),
+		TLSConfig: &tls.Config{
+			Certificates: []tls.Certificate{web.adminHTTPSServer.cert},
+			RootCAs:      web.tlsManager.rootCerts,
+			CipherSuites: web.tlsManager.customCipherIDs,
+			MinVersion:   tls.VersionTLS12,
+		},
+		ReadTimeout:       web.conf.ReadTimeout,
+		ReadHeaderTimeout: web.conf.ReadHeaderTimeout,
+		WriteTimeout:      web.conf.WriteTimeout,
+		ErrorLog:          slog.NewLogLogger(logger.Handler(), slog.LevelError),
+	}
+
+	logger.InfoContext(ctx, "starting admin https server", "addr", adminListen.String())
+	err := web.adminHTTPSServer.server.ListenAndServeTLS("", "")
+	if !errors.Is(err, http.ErrServerClosed) {
+		cleanupAlways()
+		panic(fmt.Errorf("admin https: %w", err))
+	}
+
+	return true
+}
+
+// waitForAdminTLSReady blocks until the admin HTTPS server is enabled or a
+// shutdown signal is received.  Returns true when the server is ready.
+func (web *webAPI) waitForAdminTLSReady() (ok bool) {
+	web.adminHTTPSServer.cond.L.Lock()
+	defer web.adminHTTPSServer.cond.L.Unlock()
+
+	if web.adminHTTPSServer.inShutdown {
+		return false
+	}
+
+	for !web.adminHTTPSServer.enabled {
+		web.adminHTTPSServer.cond.Wait()
+		if web.adminHTTPSServer.inShutdown {
+			return false
+		}
 	}
 
 	return true
@@ -422,6 +579,24 @@ func (web *webAPI) waitForTLSReady() (ok bool) {
 func (web *webAPI) mustStartHTTP3(ctx context.Context, address string) {
 	defer slogutil.RecoverAndExit(ctx, web.logger, osutil.ExitCodeFailure)
 
+	var adminListen netip.AddrPort
+	func() {
+		config.RLock()
+		defer config.RUnlock()
+
+		adminListen = adminListenAddr(&config.TLS)
+	}()
+
+	// Mirror [webAPI.serveTLS]: when a dedicated admin HTTPS listen address
+	// is configured, HTTP/3 on [tlsConfigSettings.PortHTTPS] serves DoH only
+	// and must not require web-UI authentication.
+	var hdlr http.Handler
+	if adminListen != (netip.AddrPort{}) {
+		hdlr = withMiddlewares(web.conf.dohMux, limitRequestBody)
+	} else {
+		hdlr = web.auth.middleware().Wrap(withMiddlewares(web.conf.mux, limitRequestBody))
+	}
+
 	web.httpsServer.server3 = &http3.Server{
 		// TODO(a.garipov): See if there is a way to use the error log as
 		// well as timeouts here.
@@ -432,7 +607,7 @@ func (web *webAPI) mustStartHTTP3(ctx context.Context, address string) {
 			CipherSuites: web.tlsManager.customCipherIDs,
 			MinVersion:   tls.VersionTLS12,
 		},
-		Handler: web.auth.middleware().Wrap(withMiddlewares(web.conf.mux, limitRequestBody)),
+		Handler: hdlr,
 	}
 
 	web.logger.DebugContext(ctx, "starting http/3 server")

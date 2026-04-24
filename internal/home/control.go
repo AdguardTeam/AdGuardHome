@@ -368,18 +368,7 @@ func (web *webAPI) handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (
 		return false
 	}
 
-	var (
-		forceHTTPS bool
-		serveHTTP3 bool
-		portHTTPS  uint16
-	)
-	func() {
-		config.RLock()
-		defer config.RUnlock()
-
-		serveHTTP3, portHTTPS = config.DNS.ServeHTTP3, config.TLS.PortHTTPS
-		forceHTTPS = config.TLS.ForceHTTPS && config.TLS.Enabled && config.TLS.PortHTTPS != 0
-	}()
+	forceHTTPS, serveHTTP3, portHTTPS, redirectPort := readHTTPSRedirectConfig()
 
 	respHdr := w.Header()
 
@@ -396,7 +385,7 @@ func (web *webAPI) handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (
 
 	if forceHTTPS {
 		if r.TLS == nil {
-			u := httpsURL(r.URL, host, portHTTPS)
+			u := httpsURL(r.URL, host, redirectPort)
 			http.Redirect(w, r, u.String(), http.StatusTemporaryRedirect)
 
 			return false
@@ -421,6 +410,32 @@ func (web *webAPI) handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (
 	respHdr.Set(httphdr.Vary, httphdr.Origin)
 
 	return true
+}
+
+// readHTTPSRedirectConfig reads the configuration fields used by
+// [webAPI.handleHTTPSRedirect] under a single read-lock.  redirectPort is the
+// destination port for the plain HTTP → HTTPS redirect: the dedicated admin
+// HTTPS listen address port when configured, and [tlsConfigSettings.PortHTTPS]
+// otherwise.
+func readHTTPSRedirectConfig() (forceHTTPS, serveHTTP3 bool, portHTTPS, redirectPort uint16) {
+	config.RLock()
+	defer config.RUnlock()
+
+	serveHTTP3 = config.DNS.ServeHTTP3
+	portHTTPS = config.TLS.PortHTTPS
+	redirectPort = portHTTPS
+	tlsEnabled := config.TLS.Enabled
+
+	if a := adminListenAddr(&config.TLS); a != (netip.AddrPort{}) {
+		redirectPort = a.Port()
+		forceHTTPS = config.TLS.ForceHTTPS && tlsEnabled
+
+		return forceHTTPS, serveHTTP3, portHTTPS, redirectPort
+	}
+
+	forceHTTPS = config.TLS.ForceHTTPS && tlsEnabled && portHTTPS != 0
+
+	return forceHTTPS, serveHTTP3, portHTTPS, redirectPort
 }
 
 // httpsURL returns a copy of u for redirection to the HTTPS version, taking the

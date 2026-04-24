@@ -681,11 +681,21 @@ func (m *tlsManager) validateTLSSettings(setts tlsConfigSettingsExt) (err error)
 		plainDNSPort = config.DNS.Port
 	}()
 
+	// AdminListenAddr has json:"-" and so is never present in the frontend
+	// payload setts.  Read it from the server-side tlsConf snapshot to
+	// detect conflicts when the UI changes port_https to a value equal to
+	// the YAML-configured admin listen port.
+	adminPort := tcpPort(0)
+	if adminAddr := adminListenAddr(&tlsConf); adminAddr != (netip.AddrPort{}) {
+		adminPort = tcpPort(adminAddr.Port())
+	}
+
 	err = validatePorts(
 		tcpPort(webAPIPort),
 		tcpPort(setts.PortHTTPS),
 		tcpPort(setts.PortDNSOverTLS),
 		tcpPort(setts.PortDNSCrypt),
+		adminPort,
 		udpPort(plainDNSPort),
 		udpPort(setts.PortDNSOverQUIC),
 	)
@@ -699,9 +709,10 @@ func (m *tlsManager) validateTLSSettings(setts tlsConfigSettingsExt) (err error)
 }
 
 // validatePorts validates the uniqueness of TCP and UDP ports for AdGuard Home
-// DNS protocols.
+// DNS protocols.  adminHTTPSPort is the optional dedicated admin HTTPS port
+// (see [tlsConfigSettings.AdminListenAddr]); pass 0 if unused.
 func validatePorts(
-	bindPort, dohPort, dotPort, dnscryptTCPPort tcpPort,
+	bindPort, dohPort, dotPort, dnscryptTCPPort, adminHTTPSPort tcpPort,
 	dnsPort, doqPort udpPort,
 ) (err error) {
 	tcpPorts := aghalg.UniqChecker[tcpPort]{}
@@ -713,6 +724,9 @@ func validatePorts(
 		dnscryptTCPPort,
 		tcpPort(dnsPort),
 	)
+	if adminHTTPSPort != 0 {
+		addPorts(tcpPorts, adminHTTPSPort)
+	}
 
 	err = tcpPorts.Validate()
 	if err != nil {
@@ -817,7 +831,7 @@ func (m *tlsManager) checkPortAvailability(
 	var errs []error
 	for _, v := range needBindingCheck {
 		port := v.newPort
-		if v.currPort == port {
+		if v.currPort == port || port == 0 {
 			continue
 		}
 
@@ -825,6 +839,20 @@ func (m *tlsManager) checkPortAvailability(
 		err = aghnet.CheckPort(v.network, addrPort)
 		if err != nil {
 			errs = append(errs, fmt.Errorf("port %d for %s is not available", port, v.proto))
+		}
+	}
+
+	// The dedicated admin HTTPS listener binds on its own configured IP
+	// address, which may differ from the main web API bind host, so it must
+	// be checked separately using its own [netip.AddrPort].
+	const protoAdminHTTPS = "admin HTTPS"
+	currAdmin := adminListenAddr(&currConf)
+	newAdmin := adminListenAddr(&newConf)
+	if newAdmin != (netip.AddrPort{}) && currAdmin != newAdmin {
+		if err = aghnet.CheckPort(networkTCP, newAdmin); err != nil {
+			errs = append(errs, fmt.Errorf(
+				"port %d for %s is not available", newAdmin.Port(), protoAdminHTTPS,
+			))
 		}
 	}
 
