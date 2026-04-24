@@ -49,18 +49,40 @@ func (j *v4ServerConfJSON) toServerConf() *V4ServerConf {
 }
 
 type v6ServerConfJSON struct {
-	RangeStart    netip.Addr `json:"range_start"`
-	LeaseDuration uint32     `json:"lease_duration"`
+	RangeStart    *netip.Addr     `json:"range_start"`
+	LeaseDuration *uint32         `json:"lease_duration"`
+	PrefixSource  *V6PrefixSource `json:"prefix_source"`
 }
 
-func v6JSONToServerConf(j *v6ServerConfJSON) V6ServerConf {
-	if j == nil {
-		return V6ServerConf{}
+// v6JSONToServerConf returns a fresh [V6ServerConf] that holds only the
+// user-facing DHCPv6 configuration.  Fields absent from j fall back to the
+// corresponding values in cur; internal runtime state (ipStart, dnsIPAddrs,
+// leaseTime) is deliberately *not* carried over because cur is typically the
+// live server configuration returned by [v6Server.WriteDiskConfig6], and
+// reusing those stale values in a newly-created server would cause
+// interface-mode DHCPv6 to hand out leases from the previous prefix until the
+// next observation tick.
+func v6JSONToServerConf(j *v6ServerConfJSON, cur V6ServerConf) V6ServerConf {
+	prefixSource := cur.NormalizedPrefixSource()
+	rangeStart := cur.RangeStart
+	leaseDuration := cur.LeaseDuration
+
+	if j != nil {
+		if j.PrefixSource != nil {
+			prefixSource = *j.PrefixSource
+		}
+		if j.RangeStart != nil {
+			rangeStart = j.RangeStart.AsSlice()
+		}
+		if j.LeaseDuration != nil {
+			leaseDuration = *j.LeaseDuration
+		}
 	}
 
 	return V6ServerConf{
-		RangeStart:    j.RangeStart.AsSlice(),
-		LeaseDuration: j.LeaseDuration,
+		RangeStart:    rangeStart,
+		LeaseDuration: leaseDuration,
+		PrefixSource:  prefixSource,
 	}
 }
 
@@ -270,21 +292,24 @@ func (s *server) handleDHCPSetConfigV6(
 		return nil, false, nil
 	}
 
-	v6Conf := v6JSONToServerConf(conf.V6)
-	v6Conf.Enabled = conf.Enabled == aghalg.NBTrue
-	if len(v6Conf.RangeStart) == 0 {
-		v6Conf.Enabled = false
+	currentConf := s.conf.Conf6
+	if s.srv6 != nil {
+		s.srv6.WriteDiskConfig6(&currentConf)
 	}
+
+	v6Conf := v6JSONToServerConf(conf.V6, currentConf)
 
 	// Don't overwrite the RA/SLAAC settings from the config file.
 	//
 	// TODO(a.garipov): Perhaps include them into the request to allow
 	// changing them from the HTTP API?
-	v6Conf.RASLAACOnly = s.conf.Conf6.RASLAACOnly
-	v6Conf.RAAllowSLAAC = s.conf.Conf6.RAAllowSLAAC
+	v6Conf.RASLAACOnly = currentConf.RASLAACOnly
+	v6Conf.RAAllowSLAAC = currentConf.RAAllowSLAAC
+	v6Conf.Enabled = conf.Enabled == aghalg.NBTrue && v6Conf.IsConfiguredForEnable()
 
 	enabled = v6Conf.Enabled
 	v6Conf.InterfaceName = conf.InterfaceName
+	v6Conf.CommandConstructor = s.conf.CommandConstructor
 	v6Conf.Logger = s.conf.Logger.With("ip_version", "6")
 	v6Conf.notify = s.onNotify
 
@@ -763,9 +788,11 @@ func (s *server) handleReset(w http.ResponseWriter, r *http.Request) {
 	s.srv4, _ = v4Create(v4conf)
 
 	v6conf := V6ServerConf{
-		Logger:        s.conf.Logger.With("ip_version", "6"),
-		LeaseDuration: DefaultDHCPLeaseTTL,
-		notify:        s.onNotify,
+		Logger:             s.conf.Logger.With("ip_version", "6"),
+		CommandConstructor: s.conf.CommandConstructor,
+		LeaseDuration:      DefaultDHCPLeaseTTL,
+		PrefixSource:       V6PrefixSourceStatic,
+		notify:             s.onNotify,
 	}
 	s.srv6, _ = v6Create(v6conf)
 
