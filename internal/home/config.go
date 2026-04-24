@@ -29,6 +29,7 @@ import (
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/google/renameio/v2/maybe"
 	yaml "go.yaml.in/yaml/v4"
 )
@@ -312,6 +313,18 @@ type tlsConfigSettings struct {
 	// PortHTTPS is the HTTPS port.  If 0, HTTPS will be disabled.
 	PortHTTPS uint16 `yaml:"port_https" json:"port_https,omitempty"`
 
+	// AdminListenAddr is the optional dedicated listen address (IP and port)
+	// for the HTTPS admin UI and API.  When it is valid and non-zero, a
+	// separate HTTPS server is started on this address that serves only admin
+	// UI and API requests, and the HTTPS server on [PortHTTPS] serves DNS-over-
+	// HTTPS only.  Both servers share the same TLS certificate.  When unset,
+	// admin UI and DoH continue to share the HTTPS server on [PortHTTPS].
+	//
+	// This field is intended to be configured via YAML only; it is not exposed
+	// in the web UI.  See https://github.com/AdguardTeam/AdGuardHome/issues/7424
+	// and https://github.com/AdguardTeam/AdGuardHome/issues/7598.
+	AdminListenAddr netip.AddrPort `yaml:"admin_listen_addr" json:"-"`
+
 	// PortDNSOverTLS is the DNS-over-TLS port.  If 0, DoT will be disabled.
 	PortDNSOverTLS uint16 `yaml:"port_dns_over_tls" json:"port_dns_over_tls,omitempty"`
 
@@ -382,6 +395,7 @@ func (c *tlsConfigSettings) clone() (clone *tlsConfigSettings) {
 //	[tlsConfigSettings.DNSCryptConfigFile]
 //	[tlsConfigSettings.OverrideTLSCiphers]
 //	[tlsConfigSettings.PortDNSCrypt]
+//	[tlsConfigSettings.AdminListenAddr]
 //
 // The following properties are skipped as they are set by
 // [tlsManager.loadTLSConfig]:
@@ -393,9 +407,13 @@ func (c *tlsConfigSettings) setPrivateFieldsAndCompare(conf *tlsConfigSettings) 
 
 	conf.DNSCryptConfigFile = c.DNSCryptConfigFile
 	conf.PortDNSCrypt = c.PortDNSCrypt
+	conf.AdminListenAddr = c.AdminListenAddr
 
 	// TODO(a.garipov): Define a custom comparer.
-	return cmp.Equal(c, conf)
+	//
+	// [netip.AddrPort] contains unexported fields, so it needs an explicit
+	// equality option.
+	return cmp.Equal(c, conf, cmpopts.EquateComparable(netip.AddrPort{}))
 }
 
 type queryLogConfig struct {
@@ -802,6 +820,10 @@ func validateConfig(ctx context.Context, l *slog.Logger, fileData []byte) (err e
 			tcpPort(config.TLS.PortDNSOverTLS),
 			tcpPort(config.TLS.PortDNSCrypt),
 		)
+
+		if adminAddr := adminListenAddr(&config.TLS); adminAddr != (netip.AddrPort{}) {
+			addPorts(tcpPorts, tcpPort(adminAddr.Port()))
+		}
 
 		// TODO(e.burkov):  Consider adding a udpPort with the same value when
 		// we add support for HTTP/3 for web admin interface.

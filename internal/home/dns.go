@@ -591,9 +591,26 @@ func checkDir(path string) (err error) {
 	return nil
 }
 
-// registerDoHHandlers registers DoH handlers on the given routes.
+// registerDoHHandlers registers DoH handlers on the given routes.  When a
+// dedicated HTTPS admin listen address is configured (see
+// [tlsConfigSettings.AdminListenAddr]), DoH routes are registered on the
+// dedicated DoH multiplexer instead of the shared admin multiplexer, so that
+// admin UI and API endpoints are not reachable on the DoH port and vice versa.
 func registerDoHHandlers(routes []string) {
+	var adminSet bool
+	func() {
+		config.RLock()
+		defer config.RUnlock()
+
+		adminSet = adminListenAddr(&config.TLS) != (netip.AddrPort{})
+	}()
+
+	mux := globalContext.web.conf.mux
+	if adminSet {
+		mux = globalContext.web.conf.dohMux
+	}
+
 	for _, route := range routes {
-		globalContext.web.conf.mux.Handle(route, globalContext.dnsServer)
+		mux.Handle(route, globalContext.dnsServer)
 	}
 }

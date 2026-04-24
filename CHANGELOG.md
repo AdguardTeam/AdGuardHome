@@ -18,6 +18,10 @@ See also the [v0.107.75 GitHub milestone][ms-v0.107.75].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Added
+
+- New optional `tls.admin_listen_addr` configuration setting (an `IP:port` listen address, e.g. `127.0.0.1:4443`).  When set, AdGuard Home starts a second HTTPS server on this address dedicated to the admin UI and API, while the HTTPS server on `tls.port_https` serves DNS-over-HTTPS only.  Both servers share the same TLS certificate.  When unset (the default), behavior is unchanged: one HTTPS server on `tls.port_https` serves both admin UI and DoH ([#7424], [#7598]).
+
 ### Changed
 
 - `enable_dnssec` in `dns` configuration now defines whether the proxy should set the DO flag in the upstream requests, the default is `true` ([#7046]).
@@ -30,6 +34,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 [#8348]: https://github.com/AdguardTeam/AdGuardHome/issues/8348
 [#7046]: https://github.com/AdguardTeam/AdGuardHome/issues/7046
+[#7424]: https://github.com/AdguardTeam/AdGuardHome/issues/7424
+[#7598]: https://github.com/AdguardTeam/AdGuardHome/issues/7598
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

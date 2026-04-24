@@ -544,6 +544,10 @@ func checkPorts() (err error) {
 			tcpPort(config.TLS.PortDNSCrypt),
 		)
 
+		if adminAddr := adminListenAddr(&config.TLS); adminAddr != (netip.AddrPort{}) {
+			addPorts(tcpPorts, tcpPort(adminAddr.Port()))
+		}
+
 		addPorts(udpPorts, udpPort(config.TLS.PortDNSOverQUIC))
 	}
 
@@ -617,6 +621,11 @@ type webConfig struct {
 	// must not be nil.
 	mux *http.ServeMux
 
+	// dohMux is a dedicated *http.ServeMux used only when a separate HTTPS
+	// admin listen address is configured (see
+	// [tlsConfigSettings.AdminListenAddr]).  It must not be nil.
+	dohMux *http.ServeMux
+
 	// configModifier is used to update the global configuration.
 	configModifier agh.ConfigModifier
 
@@ -666,6 +675,7 @@ func newWeb(ctx context.Context, conf *webConfig) (web *webAPI, err error) {
 		tlsManager:         conf.tlsManager,
 		auth:               conf.auth,
 		mux:                conf.mux,
+		dohMux:             conf.dohMux,
 
 		clientFS: clientFS,
 
@@ -750,6 +760,7 @@ func run(
 
 	mw := &webMw{}
 	mux := http.NewServeMux()
+	dohMux := http.NewServeMux()
 	httpReg := aghhttp.NewDefaultRegistrar(mux, mw.wrap)
 
 	err := setupContext(ctx, baseLogger, opts, workDir, confPath, isFirstRun)
@@ -809,6 +820,7 @@ func run(
 		tlsManager:     tlsMgr,
 		auth:           auth,
 		mux:            mux,
+		dohMux:         dohMux,
 		configModifier: confModifier,
 		httpReg:        httpReg,
 		workDir:        workDir,
@@ -1285,6 +1297,7 @@ func printHTTPAddresses(ctx context.Context, l *slog.Logger, proto string, tlsMg
 
 	if proto == urlutil.SchemeHTTPS && tlsConf.ServerName != "" {
 		printWebAddrs(ctx, l, proto, tlsConf.ServerName, tlsConf.PortHTTPS)
+		printAdminHTTPSAddr(ctx, l, proto, tlsConf)
 
 		return
 	}
@@ -1292,6 +1305,7 @@ func printHTTPAddresses(ctx context.Context, l *slog.Logger, proto string, tlsMg
 	bindHost := config.HTTPConfig.Address.Addr()
 	if !bindHost.IsUnspecified() {
 		printWebAddrs(ctx, l, proto, bindHost.String(), port)
+		printAdminHTTPSAddr(ctx, l, proto, tlsConf)
 
 		return
 	}
@@ -1312,6 +1326,29 @@ func printHTTPAddresses(ctx context.Context, l *slog.Logger, proto string, tlsMg
 			printWebAddrs(ctx, l, proto, addr.String(), port)
 		}
 	}
+
+	printAdminHTTPSAddr(ctx, l, proto, tlsConf)
+}
+
+// printAdminHTTPSAddr logs the configured dedicated HTTPS admin listen
+// address, if any.  It is a no-op when proto is not HTTPS or when no admin
+// listen address is configured.
+func printAdminHTTPSAddr(
+	ctx context.Context,
+	l *slog.Logger,
+	proto string,
+	tlsConf *tlsConfigSettings,
+) {
+	if proto != urlutil.SchemeHTTPS {
+		return
+	}
+
+	adminAddr := adminListenAddr(tlsConf)
+	if adminAddr == (netip.AddrPort{}) {
+		return
+	}
+
+	printWebAddrs(ctx, l, proto, adminAddr.Addr().String(), adminAddr.Port())
 }
 
 // detectFirstRun returns true if this is the first run of AdGuard Home.  l must
