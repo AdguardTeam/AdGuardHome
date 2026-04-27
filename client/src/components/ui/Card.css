@@ -116,8 +116,11 @@
     content: '%';
 }
 
-.card--full {
-    height: calc(100% - 1.5rem);
+.card--stats {
+    min-height: 120px;
+    flex: 1 1 auto;
+    margin-bottom: 4px;
+    border-radius: 4px;
 }
 
 .card-wrap {
@@ -133,7 +136,7 @@
 }
 
 @media (min-width: 992px) {
-    .dashboard .card:not(.card--full) {
+    .dashboard .card:not(.card--stats) {
         height: 360px;
     }
 }

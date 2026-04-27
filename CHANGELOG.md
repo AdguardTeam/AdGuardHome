@@ -20,16 +20,25 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Changed
 
+- Frontend API requests no longer depend on axios.
+
+- Dashboard charts use Recharts instead of Nivo.
+
 - `enable_dnssec` in `dns` configuration now defines whether the proxy should set the DO flag in the upstream requests, the default is `true` ([#7046]).
 
 ### Fixed
+
+- Translated labels on the DNS settings pages not updating after changing the UI language.
+
+- Dashboard charts now correctly display lower query counts ([#6823]).
 
 - Redundant validation warnings about DHCP when it's disabled ([#8348]).
 
 - Safe Browsing and Parental Control labels on the General Settings page not updating after changing the UI language.
 
-[#8348]: https://github.com/AdguardTeam/AdGuardHome/issues/8348
 [#7046]: https://github.com/AdguardTeam/AdGuardHome/issues/7046
+[#6823]: https://github.com/AdguardTeam/AdGuardHome/issues/6823
+[#8348]: https://github.com/AdguardTeam/AdGuardHome/issues/8348
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
