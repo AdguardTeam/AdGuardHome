@@ -10,9 +10,11 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/hashprefix"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
+	"github.com/AdguardTeam/urlfilter"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
@@ -729,4 +731,169 @@ func BenchmarkSafeBrowsing_parallel(b *testing.B) {
 	//	pkg: github.com/AdguardTeam/AdGuardHome/internal/filtering
 	//	cpu: Apple M3
 	//	BenchmarkSafeBrowsing_parallel-8   	 1040792	      1076 ns/op	    1472 B/op	      43 allocs/op
+}
+
+func TestFilterDNSResultByListIDs(t *testing.T) {
+	const (
+		listID1 rules.ListID = 1
+		listID2 rules.ListID = 2
+		listID3 rules.ListID = 3
+	)
+
+	newRule := func(tb testing.TB, text string, id rules.ListID) *rules.NetworkRule {
+		tb.Helper()
+
+		r, err := rules.NewNetworkRule(text, id)
+		require.NoError(tb, err)
+
+		return r
+	}
+
+	t.Run("allowed_list_kept", func(t *testing.T) {
+		r := newRule(t, "||example.org^", listID1)
+		dnsres := &urlfilter.DNSResult{
+			NetworkRule:  r,
+			NetworkRules: []*rules.NetworkRule{r},
+		}
+		allowed := map[rules.ListID]bool{listID1: true}
+
+		ok := filterDNSResultByListIDs(dnsres, allowed, false)
+		assert.True(t, ok)
+		assert.Equal(t, r, dnsres.NetworkRule)
+		assert.Len(t, dnsres.NetworkRules, 1)
+	})
+
+	t.Run("disallowed_list_removed", func(t *testing.T) {
+		r := newRule(t, "||example.org^", listID2)
+		dnsres := &urlfilter.DNSResult{
+			NetworkRule:  r,
+			NetworkRules: []*rules.NetworkRule{r},
+		}
+		allowed := map[rules.ListID]bool{listID1: true}
+
+		ok := filterDNSResultByListIDs(dnsres, allowed, false)
+		assert.False(t, ok)
+		assert.Nil(t, dnsres.NetworkRule)
+		assert.Empty(t, dnsres.NetworkRules)
+	})
+
+	t.Run("user_rules_always_kept", func(t *testing.T) {
+		r := newRule(t, "||example.org^", rulelist.IDCustom)
+		dnsres := &urlfilter.DNSResult{
+			NetworkRule:  r,
+			NetworkRules: []*rules.NetworkRule{r},
+		}
+		allowed := map[rules.ListID]bool{listID1: true}
+
+		ok := filterDNSResultByListIDs(dnsres, allowed, true)
+		assert.True(t, ok)
+		assert.Equal(t, r, dnsres.NetworkRule)
+	})
+
+	t.Run("user_rules_not_kept_when_flag_false", func(t *testing.T) {
+		r := newRule(t, "||example.org^", rulelist.IDCustom)
+		dnsres := &urlfilter.DNSResult{
+			NetworkRule:  r,
+			NetworkRules: []*rules.NetworkRule{r},
+		}
+		allowed := map[rules.ListID]bool{listID1: true}
+
+		ok := filterDNSResultByListIDs(dnsres, allowed, false)
+		assert.False(t, ok)
+	})
+
+	t.Run("mixed_rules", func(t *testing.T) {
+		r1 := newRule(t, "||disallowed.org^", listID2)
+		r2 := newRule(t, "||allowed.org^", listID1)
+		dnsres := &urlfilter.DNSResult{
+			NetworkRule:  r1,
+			NetworkRules: []*rules.NetworkRule{r1, r2},
+		}
+		allowed := map[rules.ListID]bool{listID1: true}
+
+		ok := filterDNSResultByListIDs(dnsres, allowed, false)
+		assert.True(t, ok)
+		assert.Equal(t, r2, dnsres.NetworkRule)
+		assert.Len(t, dnsres.NetworkRules, 1)
+		assert.Equal(t, r2, dnsres.NetworkRules[0])
+	})
+
+	t.Run("empty_result", func(t *testing.T) {
+		dnsres := &urlfilter.DNSResult{}
+		allowed := map[rules.ListID]bool{listID1: true}
+
+		ok := filterDNSResultByListIDs(dnsres, allowed, false)
+		assert.False(t, ok)
+	})
+}
+
+func TestDNSFilter_CheckHost_clientFilterLists(t *testing.T) {
+	const (
+		listID1 rules.ListID = 1
+		listID2 rules.ListID = 2
+	)
+
+	d, setts := newForTest(t, nil, []Filter{
+		{ID: listID1, Data: []byte("||blocked-by-list1.org^\n")},
+		{ID: listID2, Data: []byte("||blocked-by-list2.org^\n")},
+	})
+	t.Cleanup(d.Close)
+
+	t.Run("global_all_blocked", func(t *testing.T) {
+		// Without per-client lists, both domains should be blocked.
+		res, err := d.CheckHost("blocked-by-list1.org", dns.TypeA, setts)
+		require.NoError(t, err)
+		assert.True(t, res.IsFiltered)
+
+		res, err = d.CheckHost("blocked-by-list2.org", dns.TypeA, setts)
+		require.NoError(t, err)
+		assert.True(t, res.IsFiltered)
+	})
+
+	t.Run("per_client_only_list1", func(t *testing.T) {
+		clientSetts := *setts
+		clientSetts.ClientFilterListIDs = map[rules.ListID]bool{listID1: true}
+
+		// Blocked by assigned list1.
+		res, err := d.CheckHost("blocked-by-list1.org", dns.TypeA, &clientSetts)
+		require.NoError(t, err)
+		assert.True(t, res.IsFiltered)
+
+		// Not blocked — list2 not assigned.
+		res, err = d.CheckHost("blocked-by-list2.org", dns.TypeA, &clientSetts)
+		require.NoError(t, err)
+		assert.False(t, res.IsFiltered)
+	})
+
+	t.Run("per_client_only_list2", func(t *testing.T) {
+		clientSetts := *setts
+		clientSetts.ClientFilterListIDs = map[rules.ListID]bool{listID2: true}
+
+		// Not blocked — list1 not assigned.
+		res, err := d.CheckHost("blocked-by-list1.org", dns.TypeA, &clientSetts)
+		require.NoError(t, err)
+		assert.False(t, res.IsFiltered)
+
+		// Blocked by assigned list2.
+		res, err = d.CheckHost("blocked-by-list2.org", dns.TypeA, &clientSetts)
+		require.NoError(t, err)
+		assert.True(t, res.IsFiltered)
+	})
+
+	t.Run("user_rules_always_apply", func(t *testing.T) {
+		// Add a user rule (list ID 0 = IDCustom) that blocks a domain.
+		dUserRules, setts2 := newForTest(t, nil, []Filter{
+			{ID: rulelist.IDCustom, Data: []byte("||custom-blocked.org^\n")},
+			{ID: listID1, Data: []byte("||blocked-by-list1.org^\n")},
+		})
+		t.Cleanup(dUserRules.Close)
+
+		clientSetts := *setts2
+		clientSetts.ClientFilterListIDs = map[rules.ListID]bool{listID1: true}
+
+		// Custom rule should apply even though IDCustom is not in the map.
+		res, err := dUserRules.CheckHost("custom-blocked.org", dns.TypeA, &clientSetts)
+		require.NoError(t, err)
+		assert.True(t, res.IsFiltered)
+	})
 }
