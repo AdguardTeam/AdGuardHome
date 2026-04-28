@@ -280,10 +280,7 @@ func (q *qLogFile) SeekStart() (int64, error) {
 	}
 
 	// Place the position to the very end of file.
-	q.position = fileInfo.Size() - 1
-	if q.position < 0 {
-		q.position = 0
-	}
+	q.position = max(fileInfo.Size()-1, 0)
 
 	return q.position, nil
 }

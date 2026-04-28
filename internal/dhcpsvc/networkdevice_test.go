@@ -3,6 +3,7 @@ package dhcpsvc_test
 import (
 	"context"
 	"io"
+	"net"
 	"net/netip"
 	"sync/atomic"
 	"testing"
@@ -45,6 +46,7 @@ type testNetworkDevice struct {
 	onReadPacketData  func() (data []byte, ci gopacket.CaptureInfo, err error)
 	onClose           func() (err error)
 	onAddresses       func() (ips []netip.Addr)
+	onHardwareAddr    func() (hw net.HardwareAddr)
 	onLinkType        func() (lt layers.LinkType)
 	onWritePacketData func(data []byte) (err error)
 }
@@ -69,6 +71,12 @@ func (nd *testNetworkDevice) Addresses() (ips []netip.Addr) {
 	return nd.onAddresses()
 }
 
+// HardwareAddr implements the [dhcpsvc.NetworkDevice] interface for
+// *testNetworkDevice.
+func (nd *testNetworkDevice) HardwareAddr() (hw net.HardwareAddr) {
+	return nd.onHardwareAddr()
+}
+
 // WritePacketData implements the [dhcpsvc.NetworkDevice] interface for
 // *testNetworkDevice.
 func (nd *testNetworkDevice) WritePacketData(data []byte) (err error) {
@@ -83,8 +91,9 @@ func (nd *testNetworkDevice) LinkType() (lt layers.LinkType) {
 
 // newTestNetworkDeviceManager creates a network device manager for testing.  It
 // requires that device opened have a deviceName.  The device itself has a link
-// type [layers.LinkTypeEthernet].  Incoming packets are received from inCh and
-// outgoing packets are sent to outCh.
+// type [layers.LinkTypeEthernet] and a hardware address [testHWIface].
+// Incoming packets are received from inCh and outgoing packets are sent to
+// outCh.
 func newTestNetworkDeviceManager(
 	tb testing.TB,
 	deviceName string,
@@ -116,8 +125,9 @@ func newTestNetworkDeviceManager(
 }
 
 // newTestNetworkDevice creates a network device for testing.  It has a link
-// type [layers.LinkTypeEthernet].  Incoming packets are received from inCh and
-// outgoing packets are sent to outCh.
+// type [layers.LinkTypeEthernet] and a hardware address [testHWIface].
+// Incoming packets are received from inCh and outgoing packets are sent to
+// outCh.
 func newTestNetworkDevice(
 	tb testing.TB,
 	addr netip.Addr,
@@ -158,6 +168,10 @@ func newTestNetworkDevice(
 		return []netip.Addr{addr}
 	}
 
+	onHardwareAddr := func() (hw net.HardwareAddr) {
+		return testHWIface
+	}
+
 	onLinkType := func() (lt layers.LinkType) {
 		return layers.LinkTypeEthernet
 	}
@@ -172,6 +186,7 @@ func newTestNetworkDevice(
 		onReadPacketData:  onReadPacketData,
 		onClose:           onClose,
 		onAddresses:       onAddresses,
+		onHardwareAddr:    onHardwareAddr,
 		onLinkType:        onLinkType,
 		onWritePacketData: onWritePacketData,
 	}, in, out

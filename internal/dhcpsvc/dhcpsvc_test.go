@@ -109,6 +109,9 @@ const (
 	testAnotherRangeStartV6Str = "2001:db9::1"
 )
 
+// testHWIface is the test MAC address of a test network interface.
+var testHWIface = net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA}
+
 var (
 	// testIPv4Conf is a common valid IPv4 part of the interface configuration
 	// for tests.

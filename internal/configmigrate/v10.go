@@ -89,8 +89,8 @@ func addQUICPort(ups string, port int) (withPort string) {
 
 	var doms string
 	withPort = ups
-	if strings.HasPrefix(ups, "[/") {
-		domsAndUps := strings.Split(strings.TrimPrefix(ups, "[/"), "/]")
+	if after, ok := strings.CutPrefix(ups, "[/"); ok {
+		domsAndUps := strings.Split(after, "/]")
 		if len(domsAndUps) != 2 {
 			return ups
 		}

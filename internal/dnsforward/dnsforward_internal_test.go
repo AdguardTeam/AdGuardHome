@@ -817,6 +817,7 @@ func TestServerCustomClientUpstream(t *testing.T) {
 		Config: Config{
 			CacheSize:    defaultCacheSize,
 			UpstreamMode: UpstreamModeLoadBalance,
+			EnableDNSSEC: true,
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},

@@ -2,7 +2,6 @@ import React, { ReactNode } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Trans, useTranslation } from 'react-i18next';
 
-import i18next from 'i18next';
 import { CLIENT_ID_LINK } from '../../../../helpers/constants';
 import { removeEmptyLines, trimMultilineString } from '../../../../helpers/helpers';
 import { Textarea } from '../../../ui/Controls/Textarea';
@@ -12,46 +11,6 @@ type FormData = {
     disallowed_clients: string;
     blocked_hosts: string;
 };
-
-const fields: {
-    id: keyof FormData;
-    title: string;
-    subtitle: ReactNode;
-    normalizeOnBlur: (value: string) => string;
-}[] = [
-    {
-        id: 'allowed_clients',
-        title: i18next.t('access_allowed_title'),
-        subtitle: (
-            <Trans
-                components={{
-                    a: <a href={CLIENT_ID_LINK} target="_blank" rel="noopener noreferrer" />,
-                }}>
-                access_allowed_desc
-            </Trans>
-        ),
-        normalizeOnBlur: removeEmptyLines,
-    },
-    {
-        id: 'disallowed_clients',
-        title: i18next.t('access_disallowed_title'),
-        subtitle: (
-            <Trans
-                components={{
-                    a: <a href={CLIENT_ID_LINK} target="_blank" rel="noopener noreferrer" />,
-                }}>
-                access_disallowed_desc
-            </Trans>
-        ),
-        normalizeOnBlur: trimMultilineString,
-    },
-    {
-        id: 'blocked_hosts',
-        title: i18next.t('access_blocked_title'),
-        subtitle: i18next.t('access_blocked_desc'),
-        normalizeOnBlur: removeEmptyLines,
-    },
-];
 
 type FormProps = {
     initialValues?: {
@@ -81,6 +40,46 @@ const Form = ({ initialValues, onSubmit, processingSet }: FormProps) => {
     });
 
     const allowedClients = watch('allowed_clients');
+
+    const fields: {
+        id: keyof FormData;
+        title: string;
+        subtitle: ReactNode;
+        normalizeOnBlur: (value: string) => string;
+    }[] = [
+        {
+            id: 'allowed_clients',
+            title: t('access_allowed_title'),
+            subtitle: (
+                <Trans
+                    components={{
+                        a: <a href={CLIENT_ID_LINK} target="_blank" rel="noopener noreferrer" />,
+                    }}>
+                    access_allowed_desc
+                </Trans>
+            ),
+            normalizeOnBlur: removeEmptyLines,
+        },
+        {
+            id: 'disallowed_clients',
+            title: t('access_disallowed_title'),
+            subtitle: (
+                <Trans
+                    components={{
+                        a: <a href={CLIENT_ID_LINK} target="_blank" rel="noopener noreferrer" />,
+                    }}>
+                    access_disallowed_desc
+                </Trans>
+            ),
+            normalizeOnBlur: trimMultilineString,
+        },
+        {
+            id: 'blocked_hosts',
+            title: t('access_blocked_title'),
+            subtitle: t('access_blocked_desc'),
+            normalizeOnBlur: removeEmptyLines,
+        },
+    ];
 
     const renderField = ({
         id,

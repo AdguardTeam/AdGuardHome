@@ -46,6 +46,7 @@ export VERBOSE='1'
 
 env \
 	CHANNEL="${CHANNEL}" \
+	CACHE_BUSTER="${CACHE_BUSTER}" \
 	sh ./scripts/snap/download.sh \
 	;
 

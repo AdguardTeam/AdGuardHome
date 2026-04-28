@@ -4,10 +4,9 @@
 package aghalg
 
 import (
+	"cmp"
 	"fmt"
 	"slices"
-
-	"golang.org/x/exp/constraints"
 )
 
 // CoalesceSlice returns the first non-zero value.  It is named after function
@@ -26,7 +25,7 @@ func CoalesceSlice[E any, S []E](values ...S) (res S) {
 //
 // TODO(a.garipov): The Ordered constraint is only really necessary in Validate.
 // Consider ways of making this constraint comparable instead.
-type UniqChecker[T constraints.Ordered] map[T]int64
+type UniqChecker[T cmp.Ordered] map[T]int64
 
 // Add adds a value to the validator.  v must not be nil.
 func (uc UniqChecker[T]) Add(elems ...T) {

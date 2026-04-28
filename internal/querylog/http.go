@@ -8,7 +8,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -376,7 +375,7 @@ func (l *queryLog) parseSearchCriterion(
 			asciiVal = ""
 		}
 	case ctFilteringStatus:
-		if !slices.Contains(filteringStatusValues, val) {
+		if !filteringStatusValues.Has(val) {
 			return false, sc, fmt.Errorf("invalid value %s", val)
 		}
 	default:
