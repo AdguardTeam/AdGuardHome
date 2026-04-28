@@ -178,6 +178,9 @@ type versionResponse struct {
 	Disabled bool `json:"disabled"`
 }
 
+// maxPortNumber is the maximum port number.
+const maxPortNumber = 1024
+
 // setAllowedToAutoUpdate sets CanAutoUpdate to true if AdGuard Home is actually
 // allowed to perform an automatic update by the OS.  l and tlsMgr must not be
 // nil.
@@ -191,9 +194,9 @@ func (vr *versionResponse) setAllowedToAutoUpdate(
 	}
 
 	canUpdate := true
-	if tlsConfUsesPrivilegedPorts(tlsMgr.config()) ||
-		config.HTTPConfig.Address.Port() < 1024 ||
-		config.DNS.Port < 1024 {
+	if tlsConfUsesPrivilegedPorts(tlsMgr.extendedTLSConfig()) ||
+		config.HTTPConfig.Address.Port() < maxPortNumber ||
+		config.DNS.Port < maxPortNumber {
 		canUpdate, err = aghnet.CanBindPrivilegedPorts(ctx, l)
 		if err != nil {
 			return fmt.Errorf("checking ability to bind privileged ports: %w", err)
@@ -206,9 +209,11 @@ func (vr *versionResponse) setAllowedToAutoUpdate(
 }
 
 // tlsConfUsesPrivilegedPorts returns true if the provided TLS configuration
-// indicates that privileged ports are used.
+// indicates that privileged ports are used.  c must be valid.
 func tlsConfUsesPrivilegedPorts(c *tlsConfigSettings) (ok bool) {
-	return c.Enabled && (c.PortHTTPS < 1024 || c.PortDNSOverTLS < 1024 || c.PortDNSOverQUIC < 1024)
+	return c.Enabled && (c.PortHTTPS < maxPortNumber ||
+		c.PortDNSOverTLS < maxPortNumber ||
+		c.PortDNSOverQUIC < maxPortNumber)
 }
 
 // finishUpdate completes an update procedure.  It is intended to be used as a

@@ -146,15 +146,16 @@ func initDNSServer(
 	confModifier agh.ConfigModifier,
 ) (err error) {
 	globalContext.dnsServer, err = dnsforward.NewServer(dnsforward.DNSCreateParams{
-		Logger:      l,
-		DNSFilter:   filters,
-		Stats:       sts,
-		QueryLog:    qlog,
-		PrivateNets: parseSubnetSet(config.DNS.PrivateNets),
-		Anonymizer:  anonymizer,
-		DHCPServer:  dhcpSrv,
-		EtcHosts:    globalContext.etcHosts,
-		LocalDomain: config.DHCP.LocalDomainName,
+		Logger:            l,
+		DNSFilter:         filters,
+		Stats:             sts,
+		QueryLog:          qlog,
+		PrivateNets:       parseSubnetSet(config.DNS.PrivateNets),
+		Anonymizer:        anonymizer,
+		DHCPServer:        dhcpSrv,
+		EtcHosts:          globalContext.etcHosts,
+		LocalDomain:       config.DHCP.LocalDomainName,
+		TLSConfigProvider: tlsMgr,
 	})
 	defer func() {
 		if err != nil {
@@ -170,7 +171,7 @@ func initDNSServer(
 	dnsConf, err := newServerConfig(
 		&config.DNS,
 		config.Clients.Sources,
-		tlsMgr.config(),
+		tlsMgr.extendedTLSConfig(),
 		config.HTTPConfig.DoH,
 		tlsMgr,
 		httpReg,
@@ -212,7 +213,7 @@ func parseSubnetSet(nets []netutil.Prefix) (s netutil.SubnetSet) {
 	}
 }
 
-func isRunning() bool {
+func isRunning() (ok bool) {
 	return globalContext.dnsServer != nil && globalContext.dnsServer.IsRunning()
 }
 
@@ -357,9 +358,6 @@ func newDNSTLSConfig(
 		dnsConf.QUICListenAddrs = ipsToUDPAddrs(addrs, conf.PortDNSOverQUIC)
 	}
 
-	// TODO !! Now certificate is not updated there, but where and how to update
-	// it is not clear.
-
 	return dnsConf, nil
 }
 
@@ -412,16 +410,16 @@ type dnsEncryption struct {
 // getDNSEncryption returns the TLS encryption addresses that AdGuard Home
 // listens on.  tlsMgr must not be nil.
 func getDNSEncryption(tlsMgr *tlsManager) (de dnsEncryption) {
-	tlsConf := tlsMgr.config()
+	extTLSConf := tlsMgr.extendedTLSConfig()
 
-	if !tlsConf.Enabled || len(tlsConf.ServerName) == 0 {
+	if !extTLSConf.Enabled || len(extTLSConf.ServerName) == 0 {
 		return dnsEncryption{}
 	}
 
-	hostname := tlsConf.ServerName
-	if tlsConf.PortHTTPS != 0 {
+	hostname := extTLSConf.ServerName
+	if extTLSConf.PortHTTPS != 0 {
 		addr := hostname
-		if p := tlsConf.PortHTTPS; p != defaultPortHTTPS {
+		if p := extTLSConf.PortHTTPS; p != defaultPortHTTPS {
 			addr = netutil.JoinHostPort(addr, p)
 		}
 
@@ -432,14 +430,14 @@ func getDNSEncryption(tlsMgr *tlsManager) (de dnsEncryption) {
 		}).String()
 	}
 
-	if p := tlsConf.PortDNSOverTLS; p != 0 {
+	if p := extTLSConf.PortDNSOverTLS; p != 0 {
 		de.tls = (&url.URL{
 			Scheme: "tls",
 			Host:   netutil.JoinHostPort(hostname, p),
 		}).String()
 	}
 
-	if p := tlsConf.PortDNSOverQUIC; p != 0 {
+	if p := extTLSConf.PortDNSOverQUIC; p != 0 {
 		de.quic = (&url.URL{
 			Scheme: "quic",
 			Host:   netutil.JoinHostPort(hostname, p),

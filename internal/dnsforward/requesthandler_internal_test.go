@@ -260,7 +260,7 @@ func TestServer_ServeDNS_restrictLocal(t *testing.T) {
 		UsePrivateRDNS:    true,
 		LocalPTRResolvers: []string{localUpsAddr},
 		ServePlainDNS:     true,
-	})
+	}, &aghtest.TLSConfigProvider{})
 	startDeferStop(t, s)
 
 	testCases := []struct {

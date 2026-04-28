@@ -306,7 +306,9 @@ func TestServer_ServeDNS_dns64(t *testing.T) {
 				UsePrivateRDNS:    true,
 				LocalPTRResolvers: []string{localUpsAddr},
 				ServePlainDNS:     true,
-			})
+			},
+				&aghtest.TLSConfigProvider{},
+			)
 
 			startDeferStop(t, s)
 
@@ -346,7 +348,9 @@ func TestServer_dns64WithDisabledRDNS(t *testing.T) {
 		UsePrivateRDNS:    false,
 		LocalPTRResolvers: []string{localUpsAddr},
 		ServePlainDNS:     true,
-	})
+	},
+		&aghtest.TLSConfigProvider{},
+	)
 	startDeferStop(t, s)
 
 	mappedIPv6 := net.ParseIP("64:ff9b::102:304")

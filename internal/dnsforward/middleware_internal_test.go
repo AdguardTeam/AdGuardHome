@@ -232,7 +232,7 @@ func TestServer_middlewareUDP(t *testing.T) {
 					ClientsContainer:  EmptyClientsContainer{},
 				},
 				ServePlainDNS: true,
-			})
+			}, &aghtest.TLSConfigProvider{})
 
 			startDeferStop(t, s)
 

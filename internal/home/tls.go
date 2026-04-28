@@ -153,14 +153,21 @@ func newTLSManager(ctx context.Context, conf *tlsManagerConfig) (m *tlsManager, 
 	if err != nil {
 		m.extTLSConf.Enabled = false
 
+		// Don't wrap the error, because it's informative enough as is.
 		return m, err
 	}
 
+	cert, err := tls.X509KeyPair(m.extTLSConf.CertificateChainData, m.extTLSConf.PrivateKeyData)
+	if err != nil {
+		return nil, fmt.Errorf("loading tls certificate: %w", err)
+	}
+
 	m.tlsConf = &tls.Config{
-		GetConfigForClient: m.getConfigForClient,
-		RootCAs:            m.rootCerts,
-		CipherSuites:       m.customCipherIDs,
-		MinVersion:         tls.VersionTLS12,
+		GetCertificate: m.getCertificate,
+		RootCAs:        m.rootCerts,
+		CipherSuites:   m.customCipherIDs,
+		MinVersion:     tls.VersionTLS12,
+		Certificates:   []tls.Certificate{cert},
 	}
 
 	m.setCertFileTime(ctx)
@@ -177,8 +184,9 @@ func (m *tlsManager) setWebAPI(webAPI *webAPI) {
 	m.web = webAPI
 }
 
-// config returns a deep copy of the stored TLS configuration.
-func (m *tlsManager) config() (conf *tlsConfigSettings) {
+// extendedTLSConfig returns a deep copy of the stored extended TLS
+// configuration.
+func (m *tlsManager) extendedTLSConfig() (extTLSConf *tlsConfigSettings) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -288,12 +296,6 @@ func (m *tlsManager) reload(ctx context.Context) {
 	// request.
 	m.web.tlsConfigChanged(context.Background(), m.extTLSConf)
 }
-
-// TODO !! Before the latest changes, reconfigureDNSServer was called in the end of this function.
-// Now it is removed.
-//
-// 1. newServerConfig is not called anymore.
-// 2. dnsServer.Reconfigure is not called anymore.
 
 // loadTLSConfig loads and validates the TLS configuration.  It also sets
 // [tlsConfigSettings.CertificateChainData] and
@@ -1072,18 +1074,24 @@ func unmarshalTLS(r *http.Request) (data tlsConfigSettingsExt, err error) {
 
 // marshalTLS encodes sensitive fields and writes data as JSON.  All arguments
 // must not be nil.
+//
+// TODO !! That is really strange.  [*tlsConfig.CertificateChainData] and
+// [*tlsConfig.PrivateKey] appear to be the final place to store the data.  But
+// for some reason, [*tlsConfig.CertificateChain] and [*tlsConfig.PrivateKey]
+// were checked there, which can be empty, according to the [*tlsConfig] docs.
+// Consider thinking about it again.
 func (m *tlsManager) marshalTLS(
 	ctx context.Context,
 	w http.ResponseWriter,
 	r *http.Request,
 	data *tlsConfig,
 ) {
-	if data.CertificateChain != "" {
-		encoded := base64.StdEncoding.EncodeToString([]byte(data.CertificateChain))
+	if len(data.CertificateChainData) != 0 {
+		encoded := base64.StdEncoding.EncodeToString(data.CertificateChainData)
 		data.CertificateChain = encoded
 	}
 
-	if data.PrivateKey != "" {
+	if len(data.PrivateKeyData) != 0 {
 		data.PrivateKeySaved = true
 		data.PrivateKey = ""
 	}
@@ -1116,20 +1124,14 @@ func (m *tlsManager) RootCAs() (root *x509.CertPool) {
 	return m.tlsConf.RootCAs
 }
 
-// getConfigForClient is called after a ClientInfo is received from a client.
-// It loads a cert and updates the [*tls.Config] for server.
-func (m *tlsManager) getConfigForClient(cli *tls.ClientHelloInfo) (*tls.Config, error) {
+// getCertificate is called after a ClientInfo is received from a client.  It
+// loads a cert and returns it.
+//
+// TODO !! Consider updating the certificate.
+func (m *tlsManager) getCertificate(cli *tls.ClientHelloInfo) (*tls.Certificate, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	// TODO !! What should we do with that cert?
-	// TODO !! How to send it to DNS TLS Config?
-	// TODO !! Why don't we use GetCertificate callback instead of GetConfigForClient?
-	cert, err := tls.LoadX509KeyPair(m.extTLSConf.CertificatePath, m.extTLSConf.PrivateKeyPath)
-	if err != nil {
-		return nil, fmt.Errorf("loading tls certificate: %w", err)
-	}
-	m.tlsConf.Certificates = []tls.Certificate{cert}
-
-	return m.tlsConf, nil
+	// TODO !! Consider finding a better way to retrieve the certificate.
+	return &m.TLSConfig().Certificates[0], nil
 }

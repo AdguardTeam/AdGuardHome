@@ -4,6 +4,7 @@ import (
 	"net"
 	"testing"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/netutil"
@@ -45,7 +46,7 @@ func TestServer_FilterDNSRewrite(t *testing.T) {
 			ClientsContainer: EmptyClientsContainer{},
 		},
 		ServePlainDNS: true,
-	})
+	}, &aghtest.TLSConfigProvider{})
 
 	makeQ := func(qtype rules.RRType) (req *dns.Msg) {
 		return &dns.Msg{

@@ -738,11 +738,7 @@ func (s *Server) prepareTLS(ctx context.Context, proxyConf *proxy.Config) (err e
 		}
 	}
 
-	proxyConf.TLSConfig = &tls.Config{
-		GetCertificate: s.getCertificateForClient,
-		CipherSuites:   s.conf.TLSCiphers,
-		MinVersion:     tls.VersionTLS12,
-	}
+	proxyConf.TLSConfig = s.tlsConfigProvider.TLSConfig()
 
 	return nil
 }
@@ -777,23 +773,6 @@ func anyNameMatches(dnsNames []string, sni string) (ok bool) {
 	}
 
 	return false
-}
-
-// TODO !! How to connect it with DNS Config?
-// TODO !! How do this function relate to TLSConfigProvider and it's method GetConfigForClient?
-func (s *Server) getCertificateForClient(ch *tls.ClientHelloInfo) (*tls.Certificate, error) {
-	if s.conf.TLSConf.StrictSNICheck && !anyNameMatches(s.dnsNames, ch.ServerName) {
-		// TODO(s.chzhen):  Pass context.
-		s.logger.WarnContext(
-			context.Background(),
-			"unknown SNI in Client Hello",
-			"server_name", ch.ServerName,
-		)
-
-		return nil, fmt.Errorf("invalid SNI")
-	}
-
-	return s.conf.TLSConf.Cert, nil
 }
 
 // preparePlain prepares the plain-DNS configuration for the DNS proxy.

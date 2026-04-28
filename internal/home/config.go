@@ -883,8 +883,8 @@ func (c *configuration) write(
 	}
 
 	if tlsMgr != nil {
-		tlsConf := tlsMgr.config()
-		config.TLS = *tlsConf
+		extTLSConf := tlsMgr.extendedTLSConfig()
+		config.TLS = *extTLSConf
 	}
 
 	if globalContext.stats != nil {

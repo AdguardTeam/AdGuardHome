@@ -88,7 +88,7 @@ func TestServer_ProcessInitial(t *testing.T) {
 
 			s := createTestServer(t, &filtering.Config{
 				BlockingMode: filtering.BlockingModeDefault,
-			}, c)
+			}, c, &aghtest.TLSConfigProvider{})
 
 			var gotAddr netip.Addr
 			s.addrProc = &aghtest.AddressProcessor{
@@ -189,7 +189,7 @@ func TestServer_ProcessFilteringAfterResponse(t *testing.T) {
 
 			s := createTestServer(t, &filtering.Config{
 				BlockingMode: filtering.BlockingModeDefault,
-			}, c)
+			}, c, &aghtest.TLSConfigProvider{})
 
 			resp := newResp(dns.RcodeSuccess, tc.req, tc.respAns)
 			dctx := &dnsContext{
@@ -320,9 +320,12 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 		addrsDoH:   addrsDoH,
 	}}
 
-	_, certPem, keyPem := createServerTLSConfig(t)
+	tlsConf, certPem, keyPem := createServerTLSConfig(t)
 	cert, err := tls.X509KeyPair(certPem, keyPem)
 	require.NoError(t, err)
+
+	tlsConfProvider := &aghtest.TLSConfigProvider{}
+	tlsConfProvider.OnTLSConfig = func() (conf *tls.Config) { return tlsConf }
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -343,7 +346,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 					QUICListenAddrs:  tc.addrsDoQ,
 				},
 				ServePlainDNS: true,
-			})
+			}, tlsConfProvider)
 			// TODO(e.burkov):  Generate a certificate actually containing the
 			// IP addresses.
 			s.hasIPAddrs = true
@@ -683,6 +686,7 @@ func TestServer_ProcessUpstream_localPTR(t *testing.T) {
 				LocalPTRResolvers: []string{localUpsAddr},
 				ServePlainDNS:     true,
 			},
+			&aghtest.TLSConfigProvider{},
 		)
 		ctx := testutil.ContextWithTimeout(t, testTimeout)
 		pctx := newPrxCtx()
@@ -713,6 +717,7 @@ func TestServer_ProcessUpstream_localPTR(t *testing.T) {
 				LocalPTRResolvers: []string{localUpsAddr},
 				ServePlainDNS:     true,
 			},
+			&aghtest.TLSConfigProvider{},
 		)
 		pctx := newPrxCtx()
 

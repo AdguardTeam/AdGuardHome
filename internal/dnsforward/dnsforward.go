@@ -19,6 +19,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghslog"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
@@ -124,6 +125,10 @@ type Server struct {
 	// PTR resolving.
 	sysResolvers SystemResolvers
 
+	// tlsConfigProvider provides TLS configuration for the server.  It must not
+	// be nil.
+	tlsConfigProvider aghtls.TLSConfigProvider
+
 	// access drops disallowed clients.
 	access *accessManager
 
@@ -199,13 +204,14 @@ const defaultLocalDomainSuffix = "lan"
 
 // DNSCreateParams are parameters to create a new server.
 type DNSCreateParams struct {
-	DNSFilter   *filtering.DNSFilter
-	Stats       stats.Interface
-	QueryLog    querylog.QueryLog
-	DHCPServer  DHCP
-	PrivateNets netutil.SubnetSet
-	Anonymizer  *aghnet.IPMut
-	EtcHosts    *aghnet.HostsContainer
+	DNSFilter         *filtering.DNSFilter
+	Stats             stats.Interface
+	QueryLog          querylog.QueryLog
+	DHCPServer        DHCP
+	PrivateNets       netutil.SubnetSet
+	Anonymizer        *aghnet.IPMut
+	EtcHosts          *aghnet.HostsContainer
+	TLSConfigProvider aghtls.TLSConfigProvider
 
 	// Logger is used as a base logger.  It must not be nil.
 	Logger *slog.Logger
@@ -255,6 +261,7 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 		conf: ServerConfig{
 			ServePlainDNS: true,
 		},
+		tlsConfigProvider: p.TLSConfigProvider,
 	}
 
 	s.sysResolvers, err = sysresolv.NewSystemResolvers(nil, defaultPlainDNSPort)

@@ -48,10 +48,10 @@ func (t *customUserAgentTransport) RoundTrip(req *http.Request) (resp *http.Resp
 
 // httpClient returns a new HTTP client that uses the AdGuard Home's own DNS
 // server for resolving hostnames.  The resulting client should not be used
-// until [Context.dnsServer] is initialized.  tlsMgr must not be nil.
+// until [Context.dnsServer] is initialized.  tlsConf must not be nil.
 //
 // TODO(a.garipov, e.burkov): This is rather messy.  Refactor.
-func httpClient(tlsMgr *tlsManager) (c *http.Client) {
+func httpClient(tlsConf *tls.Config) (c *http.Client) {
 	// Do not use Context.dnsServer.DialContext directly in the struct literal
 	// below, since Context.dnsServer may be nil when this function is called.
 	dialContext := func(ctx context.Context, network, addr string) (conn net.Conn, err error) {
@@ -59,13 +59,9 @@ func httpClient(tlsMgr *tlsManager) (c *http.Client) {
 	}
 
 	tr := newCustomUserAgentTransport(&http.Transport{
-		DialContext: dialContext,
-		Proxy:       httpProxy,
-		TLSClientConfig: &tls.Config{
-			RootCAs:      tlsMgr.rootCerts,
-			CipherSuites: tlsMgr.customCipherIDs,
-			MinVersion:   tls.VersionTLS12,
-		},
+		DialContext:     dialContext,
+		Proxy:           httpProxy,
+		TLSClientConfig: tlsConf,
 	}, aghhttp.UserAgent())
 
 	return &http.Client{
