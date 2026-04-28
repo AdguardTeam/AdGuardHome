@@ -101,7 +101,7 @@ func TestServer_ServeDNS_dns64(t *testing.T) {
 	// a given question type.
 	type answerMap = map[uint16][sectionsNum][]dns.RR
 
-	pt := testutil.PanicT{}
+	pt := testutil.NewPanicT(t)
 
 	testCases := []struct {
 		name    string

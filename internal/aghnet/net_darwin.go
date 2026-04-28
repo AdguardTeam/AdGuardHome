@@ -13,8 +13,12 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/ioutil"
 	"github.com/AdguardTeam/golibs/osutil/executil"
 )
+
+// networkSetupCmd is the command to configure network settings.
+const networkSetupCmd = "networksetup"
 
 // hardwarePortInfo contains information about the current state of the internet
 // connection obtained from macOS networksetup.
@@ -72,14 +76,21 @@ func getNetworkSetupHardwareReports(
 	ctx context.Context,
 	cmdCons executil.CommandConstructor,
 ) (reports map[string]string) {
-	_, out, err := aghos.RunCommand(ctx, cmdCons, "networksetup", "-listallhardwareports")
+	stdout := bytes.Buffer{}
+	stderr := bytes.Buffer{}
+	err := executil.Run(ctx, cmdCons, &executil.CommandConfig{
+		Stderr: &stderr,
+		Stdout: ioutil.NewTruncatedWriter(&stdout, aghos.MaxCmdOutputSize),
+		Path:   networkSetupCmd,
+		Args:   []string{"-listallhardwareports"},
+	})
 	if err != nil {
 		return nil
 	}
 
 	reports = make(map[string]string)
 
-	matches := hardwareReportsReg.FindAllSubmatch(out, -1)
+	matches := hardwareReportsReg.FindAllSubmatch(stdout.Bytes(), -1)
 	for _, m := range matches {
 		reports[string(m[2])] = string(m[1])
 	}
@@ -98,11 +109,19 @@ func getHardwarePortInfo(
 	cmdCons executil.CommandConstructor,
 	hardwarePort string,
 ) (h hardwarePortInfo, err error) {
-	_, out, err := aghos.RunCommand(ctx, cmdCons, "networksetup", "-getinfo", hardwarePort)
+	stdout := bytes.Buffer{}
+	stderr := bytes.Buffer{}
+	err = executil.Run(ctx, cmdCons, &executil.CommandConfig{
+		Stderr: &stderr,
+		Stdout: ioutil.NewTruncatedWriter(&stdout, aghos.MaxCmdOutputSize),
+		Path:   networkSetupCmd,
+		Args:   []string{"-getinfo", hardwarePort},
+	})
 	if err != nil {
 		return h, err
 	}
 
+	out := stdout.Bytes()
 	match := hardwarePortReg.FindSubmatch(out)
 	if len(match) != 4 {
 		return h, errors.Error("could not find hardware port info")
@@ -140,19 +159,18 @@ func ifaceSetStaticIP(
 
 	args := append([]string{"-setdnsservers", portInfo.name}, dnsAddrs...)
 
-	// Setting DNS servers is necessary when configuring a static IP
-	code, _, err := aghos.RunCommand(ctx, cmdCons, "networksetup", args...)
+	// Setting DNS servers is necessary when configuring a static IP.
+	err = executil.RunWithPeek(ctx, cmdCons, aghos.MaxCmdOutputSize, networkSetupCmd, args...)
 	if err != nil {
-		return err
-	} else if code != 0 {
-		return fmt.Errorf("failed to set DNS servers, code=%d", code)
+		return fmt.Errorf("networksetup failed to set dns servers: %w", err)
 	}
 
-	// Actually configures hardware port to have static IP
-	code, _, err = aghos.RunCommand(
+	// Actually configures hardware port to have static IP.
+	err = executil.RunWithPeek(
 		ctx,
 		cmdCons,
-		"networksetup",
+		aghos.MaxCmdOutputSize,
+		networkSetupCmd,
 		"-setmanual",
 		portInfo.name,
 		portInfo.ip,
@@ -160,9 +178,7 @@ func ifaceSetStaticIP(
 		portInfo.gatewayIP,
 	)
 	if err != nil {
-		return err
-	} else if code != 0 {
-		return fmt.Errorf("failed to set DNS servers, code=%d", code)
+		return fmt.Errorf("networksetup failed to configure dns servers: %w", err)
 	}
 
 	return nil

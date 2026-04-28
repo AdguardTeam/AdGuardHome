@@ -199,14 +199,18 @@ func (web *webAPI) registerControlHandlers() {
 	web.httpReg.Register(http.MethodGet, "/control/profile", web.handleGetProfile)
 	web.httpReg.Register(http.MethodPut, "/control/profile/update", web.handlePutProfile)
 
+	mobileConfHandler := newMobileConfigHandler(&mobileConfigHandlerConfig{
+		logger: web.baseLogger,
+	})
+
 	// No authentication is required for DoH/DoT configuration endpoints.
 	mux.Handle(
 		"/apple/doh.mobileconfig",
-		web.postInstallHandler(http.HandlerFunc(handleMobileConfigDoH)),
+		web.postInstallHandler(http.HandlerFunc(mobileConfHandler.handleMobileConfigDoH)),
 	)
 	mux.Handle(
 		"/apple/dot.mobileconfig",
-		web.postInstallHandler(http.HandlerFunc(handleMobileConfigDoT)),
+		web.postInstallHandler(http.HandlerFunc(mobileConfHandler.handleMobileConfigDoT)),
 	)
 
 	web.registerAuthHandlers()
@@ -237,20 +241,9 @@ func (mw *webMw) set(web *webAPI) {
 //
 // TODO(s.chzhen):  Implement [httputil.Middleware].
 func (mw *webMw) wrap(method string, h http.HandlerFunc) (wrapped http.Handler) {
-	f := func(w http.ResponseWriter, r *http.Request) {
-		var handler http.Handler
-		if method == "" {
-			// The "/dns-query" handler doesn't require authentication or gzip,
-			// and it isn't restricted to a single HTTP method.
-			handler = mw.postInstallMw(h)
-		} else {
-			handler = mw.ensureMw(method, h)
-		}
-
-		handler.ServeHTTP(w, r)
-	}
-
-	return http.HandlerFunc(f)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mw.ensureMw(method, h).ServeHTTP(w, r)
+	})
 }
 
 // ensure returns a wrapped handler that verifies the request method.  It also

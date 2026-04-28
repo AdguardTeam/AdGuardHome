@@ -3,6 +3,7 @@ package dnsforward
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net"
 	"slices"
 	"strings"
@@ -23,9 +24,10 @@ func (s *Server) clientRequestFilteringSettings(dctx *dnsContext) (setts *filter
 }
 
 // filterDNSRequest applies the dnsFilter and sets dctx.proxyCtx.Res if the
-// request was filtered.
+// request was filtered.  l and dctx must not be nil.
 func (s *Server) filterDNSRequest(
 	ctx context.Context,
+	l *slog.Logger,
 	dctx *dnsContext,
 ) (res *filtering.Result, err error) {
 	pctx := dctx.proxyCtx
@@ -40,18 +42,32 @@ func (s *Server) filterDNSRequest(
 
 	// TODO(a.garipov): Make CheckHost return a pointer.
 	res = &resVal
-	switch {
-	case isRewrittenCNAME(res):
+
+	checkReason := true
+	if isRewrittenCNAME(res) {
 		// Resolve the new canonical name, not the original host name.  The
 		// original question is readded in processFilteringAfterResponse.
 		dctx.origQuestion = q
 		req.Question[0].Name = dns.Fqdn(res.CanonName)
-	case res.IsFiltered:
-		s.logger.DebugContext(ctx, "host is filtered", "host", host, "reason", res.Reason)
-		pctx.Res = s.genDNSFilterMessage(ctx, pctx, res)
-	case res.Reason.In(filtering.Rewritten, filtering.FilteredSafeSearch):
+		checkReason = false
+	} else if res.IsFiltered {
+		l.DebugContext(ctx, "host is filtered", "reason", res.Reason)
+		pctx.Res = s.genDNSFilterMessage(ctx, l, pctx, res)
+		checkReason = false
+	}
+
+	if !checkReason {
+		return res, err
+	}
+
+	switch res.Reason {
+	case
+		filtering.FilteredSafeSearch,
+		filtering.Rewritten:
 		pctx.Res = s.getCNAMEWithIPs(ctx, req, res.IPList, res.CanonName)
-	case res.Reason.In(filtering.RewrittenRule, filtering.RewrittenAutoHosts):
+	case
+		filtering.RewrittenAutoHosts,
+		filtering.RewrittenRule:
 		if err = s.filterDNSRewrite(ctx, req, res, pctx); err != nil {
 			return nil, err
 		}
@@ -63,12 +79,15 @@ func (s *Server) filterDNSRequest(
 // isRewrittenCNAME returns true if the request considered to be rewritten with
 // CNAME and has no resolved IPs.
 func isRewrittenCNAME(res *filtering.Result) (ok bool) {
-	return res.Reason.In(
+	switch res.Reason {
+	case
+		filtering.FilteredSafeSearch,
 		filtering.Rewritten,
-		filtering.RewrittenRule,
-		filtering.FilteredSafeSearch) &&
-		res.CanonName != "" &&
-		len(res.IPList) == 0
+		filtering.RewrittenRule:
+		return res.CanonName != "" && len(res.IPList) == 0
+	default:
+		return false
+	}
 }
 
 // checkHostRules checks the host against filters.  It is safe for concurrent
@@ -92,8 +111,13 @@ func (s *Server) checkHostRules(
 // filterDNSResponse checks each resource record of answer section of
 // dctx.proxyCtx.Res.  It sets dctx.result and dctx.origResp if at least one of
 // canonical names, IP addresses, or HTTPS RR hints in it matches the filtering
-// rules, as well as sets dctx.proxyCtx.Res to the filtered response.
-func (s *Server) filterDNSResponse(ctx context.Context, dctx *dnsContext) (err error) {
+// rules, as well as sets dctx.proxyCtx.Res to the filtered response.  l and
+// dctx must not be nil.
+func (s *Server) filterDNSResponse(
+	ctx context.Context,
+	l *slog.Logger,
+	dctx *dnsContext,
+) (err error) {
 	setts := dctx.setts
 	if !setts.FilteringEnabled {
 		return nil
@@ -126,27 +150,16 @@ func (s *Server) filterDNSResponse(ctx context.Context, dctx *dnsContext) (err e
 			continue
 		}
 
-		s.logger.DebugContext(
-			ctx,
-			"checked",
-			"dns_type", dns.Type(rrtype),
-			"host", host,
-			"name", a.Header().Name,
-		)
+		l.DebugContext(ctx, "checked", "name", a.Header().Name)
 
 		if err != nil {
 			return fmt.Errorf("filtering answer at index %d: %w", i, err)
 		} else if res != nil && res.IsFiltered {
 			dctx.result = res
 			dctx.origResp = pctx.Res
-			pctx.Res = s.genDNSFilterMessage(ctx, pctx, res)
+			pctx.Res = s.genDNSFilterMessage(ctx, l, pctx, res)
 
-			s.logger.DebugContext(
-				ctx,
-				"matched by response",
-				"name", pctx.Req.Question[0].Name,
-				"host", host,
-			)
+			l.DebugContext(ctx, "matched by response", "name", pctx.Req.Question[0].Name)
 
 			break
 		}
@@ -165,9 +178,12 @@ func removeIPv6Hints(rr *dns.HTTPS) {
 }
 
 // filterHTTPSRecords filters HTTPS answers information through all rule list
-// filters of the server filters.  Removes IPv6 hints if IPv6 resolving is
-// disabled.
-func (s *Server) filterHTTPSRecords(rr *dns.HTTPS, setts *filtering.Settings) (r *filtering.Result, err error) {
+// filters of the server filters.  It removes IPv6 hints if IPv6 resolving is
+// disabled.  All arguments must not be nil.
+func (s *Server) filterHTTPSRecords(
+	rr *dns.HTTPS,
+	setts *filtering.Settings,
+) (r *filtering.Result, err error) {
 	if s.conf.AAAADisabled {
 		removeIPv6Hints(rr)
 	}

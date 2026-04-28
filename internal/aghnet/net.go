@@ -11,6 +11,7 @@ import (
 	"net"
 	"net/netip"
 	"net/url"
+	"slices"
 	"strings"
 	"syscall"
 
@@ -255,10 +256,8 @@ func InterfaceByIP(ip netip.Addr) (ifaceName string) {
 	}
 
 	for _, iface := range ifaces {
-		for _, addr := range iface.Addresses {
-			if ip == addr {
-				return iface.Name
-			}
+		if slices.Contains(iface.Addresses, ip) {
+			return iface.Name
 		}
 	}
 
@@ -309,8 +308,8 @@ func CheckPort(network string, ipp netip.AddrPort) (err error) {
 
 // IsAddrInUse checks if err is about unsuccessful address binding.
 func IsAddrInUse(err error) (ok bool) {
-	var sysErr syscall.Errno
-	if !errors.As(err, &sysErr) {
+	sysErr, ok := errors.AsType[syscall.Errno](err)
+	if !ok {
 		return false
 	}
 

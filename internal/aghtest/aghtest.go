@@ -55,7 +55,7 @@ const testTimeout = 1 * time.Second
 
 // StartLocalhostUpstream is a test helper that starts a DNS server on
 // localhost.
-func StartLocalhostUpstream(tb *testing.T, h dns.Handler) (addr *url.URL) {
+func StartLocalhostUpstream(tb testing.TB, h dns.Handler) (addr *url.URL) {
 	tb.Helper()
 
 	startCh := make(chan netip.AddrPort)

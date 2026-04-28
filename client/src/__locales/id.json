@@ -289,7 +289,7 @@
   "encryption_key_input": "Salin / rekatkan kunci pribadi PEM berkode untuk sertifikat Anda di sini.",
   "encryption_key_invalid": "Ini adalah kunci pribadi {{type}} yang tidak valid",
   "encryption_key_source_content": "Tempel konten kunci pribadi",
-  "encryption_key_source_path": "Tetapkan berkas kunci pribadi",
+  "encryption_key_source_path": "Tetapkan lokasi berkas kunci pribadi",
   "encryption_key_valid": "Ini adalah kunci pribadi {{type}} yang valid",
   "encryption_plain_dns_desc": "DNS biasa diaktifkan secara standar. Anda dapat menonaktifkannya untuk memaksa semua perangkat menggunakan DNS terenkripsi. Untuk melakukan ini, Anda harus mengaktifkan setidaknya satu protokol DNS terenkripsi",
   "encryption_plain_dns_enable": "Aktifkan DNS biasa",

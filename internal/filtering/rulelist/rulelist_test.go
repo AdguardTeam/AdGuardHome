@@ -99,7 +99,7 @@ func newFilterLocations(
 		Path:   filePath,
 	}
 
-	srv := newStringHTTPServer(httpData)
+	srv := newStringHTTPServer(tb, httpData)
 	tb.Cleanup(srv.Close)
 
 	srvURL, err = url.Parse(srv.URL)
@@ -109,10 +109,12 @@ func newFilterLocations(
 }
 
 // newStringHTTPServer returns a new HTTP server that serves s.
-func newStringHTTPServer(s string) (srv *httptest.Server) {
-	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		pt := testutil.PanicT{}
+func newStringHTTPServer(tb testing.TB, s string) (srv *httptest.Server) {
+	tb.Helper()
 
+	pt := testutil.NewPanicT(tb)
+
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		_, err := io.WriteString(w, s)
 		require.NoError(pt, err)
 	}))

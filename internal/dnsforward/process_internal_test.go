@@ -104,7 +104,7 @@ func TestServer_ProcessInitial(t *testing.T) {
 				},
 			}
 
-			gotRC := s.processInitial(testutil.ContextWithTimeout(t, testTimeout), dctx)
+			gotRC := s.processInitial(testutil.ContextWithTimeout(t, testTimeout), testLogger, dctx)
 			assert.Equal(t, tc.wantRC, gotRC)
 			assert.Equal(t, testClientAddrPort.Addr(), gotAddr)
 
@@ -208,7 +208,7 @@ func TestServer_ProcessFilteringAfterResponse(t *testing.T) {
 				},
 			}
 			ctx := testutil.ContextWithTimeout(t, testTimeout)
-			gotRC := s.processFilteringAfterResponse(ctx, dctx)
+			gotRC := s.processFilteringAfterResponse(ctx, testLogger, dctx)
 			assert.Equal(t, tc.wantRC, gotRC)
 			assert.Equal(t, newResp(dns.RcodeSuccess, tc.req, tc.wantRespAns), dctx.proxyCtx.Res)
 		})
@@ -244,12 +244,16 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 		},
 	}
 
+	addrsDoH := []netip.AddrPort{netip.AddrPortFrom(netutil.IPv4Localhost(), 8044)}
+	addrsDoT := []*net.TCPAddr{{Port: 8043}}
+	addrsDoQ := []*net.UDPAddr{{Port: 8042}}
+
 	testCases := []struct {
 		name       string
 		host       string
 		want       []*dns.SVCB
 		wantRes    resultCode
-		addrsDoH   []*net.TCPAddr
+		addrsDoH   []netip.AddrPort
 		addrsDoT   []*net.TCPAddr
 		addrsDoQ   []*net.UDPAddr
 		qtype      uint16
@@ -260,14 +264,14 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 		host:       testQuestionTarget,
 		qtype:      dns.TypeSVCB,
 		ddrEnabled: true,
-		addrsDoH:   []*net.TCPAddr{{Port: 8043}},
+		addrsDoH:   addrsDoH,
 	}, {
 		name:       "pass_qtype",
 		wantRes:    resultCodeFinish,
 		host:       ddrHostFQDN,
 		qtype:      dns.TypeA,
 		ddrEnabled: true,
-		addrsDoH:   []*net.TCPAddr{{Port: 8043}},
+		addrsDoH:   addrsDoH,
 	}, {
 		name:       "pass_disabled_tls",
 		wantRes:    resultCodeFinish,
@@ -280,7 +284,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 		host:       ddrHostFQDN,
 		qtype:      dns.TypeSVCB,
 		ddrEnabled: false,
-		addrsDoH:   []*net.TCPAddr{{Port: 8043}},
+		addrsDoH:   addrsDoH,
 	}, {
 		name:       "dot",
 		wantRes:    resultCodeFinish,
@@ -288,7 +292,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 		host:       ddrHostFQDN,
 		qtype:      dns.TypeSVCB,
 		ddrEnabled: true,
-		addrsDoT:   []*net.TCPAddr{{Port: 8043}},
+		addrsDoT:   addrsDoT,
 	}, {
 		name:       "doh",
 		wantRes:    resultCodeFinish,
@@ -296,7 +300,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 		host:       ddrHostFQDN,
 		qtype:      dns.TypeSVCB,
 		ddrEnabled: true,
-		addrsDoH:   []*net.TCPAddr{{Port: 8044}},
+		addrsDoH:   addrsDoH,
 	}, {
 		name:       "doq",
 		wantRes:    resultCodeFinish,
@@ -304,7 +308,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 		host:       ddrHostFQDN,
 		qtype:      dns.TypeSVCB,
 		ddrEnabled: true,
-		addrsDoQ:   []*net.UDPAddr{{Port: 8042}},
+		addrsDoQ:   addrsDoQ,
 	}, {
 		name:       "dot_doh",
 		wantRes:    resultCodeFinish,
@@ -312,8 +316,8 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 		host:       ddrHostFQDN,
 		qtype:      dns.TypeSVCB,
 		ddrEnabled: true,
-		addrsDoT:   []*net.TCPAddr{{Port: 8043}},
-		addrsDoH:   []*net.TCPAddr{{Port: 8044}},
+		addrsDoT:   addrsDoT,
+		addrsDoH:   addrsDoH,
 	}}
 
 	_, certPem, keyPem := createServerTLSConfig(t)
@@ -352,7 +356,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 				},
 			}
 
-			res := s.processDDRQuery(testutil.ContextWithTimeout(t, testTimeout), dctx)
+			res := s.processDDRQuery(testutil.ContextWithTimeout(t, testTimeout), testLogger, dctx)
 			require.Equal(t, tc.wantRes, res)
 
 			if tc.wantRes != resultCodeFinish {
@@ -460,7 +464,7 @@ func TestServer_ProcessDHCPHosts_localRestriction(t *testing.T) {
 				},
 			}
 
-			res := s.processDHCPHosts(testutil.ContextWithTimeout(t, testTimeout), dctx)
+			res := s.processDHCPHosts(testutil.ContextWithTimeout(t, testTimeout), testLogger, dctx)
 
 			pctx := dctx.proxyCtx
 			if !tc.isLocalCli {
@@ -605,7 +609,7 @@ func TestServer_ProcessDHCPHosts(t *testing.T) {
 		}
 
 		t.Run(tc.name, func(t *testing.T) {
-			res := s.processDHCPHosts(testutil.ContextWithTimeout(t, testTimeout), dctx)
+			res := s.processDHCPHosts(testutil.ContextWithTimeout(t, testTimeout), testLogger, dctx)
 			pctx := dctx.proxyCtx
 			assert.Equal(t, tc.wantRes, res)
 			require.NoError(t, dctx.err)
@@ -640,13 +644,14 @@ func TestServer_ProcessUpstream_localPTR(t *testing.T) {
 	const locDomain = "some.local."
 	const reqAddr = "1.1.168.192.in-addr.arpa."
 
+	pt := testutil.NewPanicT(t)
 	localUpsHdlr := dns.HandlerFunc(func(w dns.ResponseWriter, req *dns.Msg) {
 		resp := cmp.Or(
 			aghtest.MatchedResponse(req, dns.TypePTR, reqAddr, locDomain),
 			(&dns.Msg{}).SetRcode(req, dns.RcodeNameError),
 		)
 
-		require.NoError(testutil.PanicT{}, w.WriteMsg(resp))
+		require.NoError(pt, w.WriteMsg(resp))
 	})
 	localUpsAddr := aghtest.StartLocalhostUpstream(t, localUpsHdlr).String()
 
@@ -681,7 +686,7 @@ func TestServer_ProcessUpstream_localPTR(t *testing.T) {
 		)
 		ctx := testutil.ContextWithTimeout(t, testTimeout)
 		pctx := newPrxCtx()
-		rc := s.processUpstream(ctx, &dnsContext{proxyCtx: pctx})
+		rc := s.processUpstream(ctx, testLogger, &dnsContext{proxyCtx: pctx})
 		require.Equal(t, resultCodeSuccess, rc)
 		require.NotEmpty(t, pctx.Res.Answer)
 		ptr := testutil.RequireTypeAssert[*dns.PTR](t, pctx.Res.Answer[0])
@@ -712,7 +717,7 @@ func TestServer_ProcessUpstream_localPTR(t *testing.T) {
 		pctx := newPrxCtx()
 
 		ctx := testutil.ContextWithTimeout(t, testTimeout)
-		rc := s.processUpstream(ctx, &dnsContext{proxyCtx: pctx})
+		rc := s.processUpstream(ctx, testLogger, &dnsContext{proxyCtx: pctx})
 		require.Equal(t, resultCodeError, rc)
 		require.Empty(t, pctx.Res.Answer)
 	})

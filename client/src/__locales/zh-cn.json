@@ -289,7 +289,7 @@
   "encryption_key_input": "将您以 PEM 格式编码的证书私钥复制粘贴到此处。",
   "encryption_key_invalid": "该 {{type}} 私钥无效",
   "encryption_key_source_content": "粘贴私钥内容",
-  "encryption_key_source_path": "设置私钥文件",
+  "encryption_key_source_path": "设置私钥文件路径",
   "encryption_key_valid": "该 {{type}} 私钥有效",
   "encryption_plain_dns_desc": "默认情况下启用无加密 DNS。用户可以禁用它，强制所有设备使用加密 DNS。为此，必须至少启用一个加密 DNS 协议",
   "encryption_plain_dns_enable": "启用无加密 DNS",

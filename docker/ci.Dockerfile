@@ -28,7 +28,7 @@
 #    needed.  Keep it in sync with bamboo-specs/bamboo.yaml.
 
 # NOTE:  Keep in sync with bamboo-specs/bamboo.yaml.
-ARG BASE_IMAGE=adguard/go-builder:1.25.7--2
+ARG BASE_IMAGE=adguard/go-builder:1.26.2--1
 
 # The dependencies stage is needed to install packages and tool dependencies.
 # This is also where binaries like osslsigncode, which may be required for tests

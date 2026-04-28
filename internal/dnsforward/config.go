@@ -140,7 +140,8 @@ type Config struct {
 	// requests.
 	AAAADisabled bool `yaml:"aaaa_disabled"`
 
-	// EnableDNSSEC, if true, set AD flag in outcoming DNS request.
+	// EnableDNSSEC defines whether the proxy should set the AD/DO bits in the
+	// upstream requests.
 	EnableDNSSEC bool `yaml:"enable_dnssec"`
 
 	// EDNSClientSubnet is the settings list for EDNS Client Subnet.
@@ -205,7 +206,7 @@ type TLSConfig struct {
 	// HTTPSListenAddrs should be the addresses AdGuard Home is listening on for
 	// DoH connections.  These addresses are announced with DDR.  Each item in
 	// the list must be non-nil.
-	HTTPSListenAddrs []*net.TCPAddr
+	HTTPSListenAddrs []netip.AddrPort
 
 	// ServerName is the hostname of the server.  Currently, it is only being
 	// used for ClientID checking and Discovery of Designated Resolvers (DDR).
@@ -263,6 +264,9 @@ type ServerConfig struct {
 	TLSConf *TLSConfig
 
 	Config
+
+	// TLSAllowUnencryptedDoH defines if unencrypted DoH connections are
+	// allowed.
 	TLSAllowUnencryptedDoH bool
 
 	// UpstreamTimeout is the timeout for querying upstream servers.
@@ -322,6 +326,8 @@ const (
 )
 
 // newProxyConfig creates and validates configuration for the main proxy.
+//
+// TODO(d.kolyshev):  Improve maintainability.
 func (s *Server) newProxyConfig(ctx context.Context) (conf *proxy.Config, err error) {
 	srvConf := s.conf
 	trustedPrefixes := netutil.UnembedPrefixes(srvConf.TrustedProxies)
@@ -331,9 +337,15 @@ func (s *Server) newProxyConfig(ctx context.Context) (conf *proxy.Config, err er
 		return nil, fmt.Errorf("ratelimit middleware: %w", err)
 	}
 
+	logMw := newLogMiddleware(s.baseLogger, slogutil.LevelTrace)
+
+	httpConf := &proxy.HTTPConfig{
+		ServerHeader:    aghhttp.UserAgent(),
+		InsecureEnabled: s.conf.TLSAllowUnencryptedDoH,
+	}
+
 	conf = &proxy.Config{
 		Logger:                    s.baseLogger.With(slogutil.KeyPrefix, aghslog.PrefixDNSProxy),
-		HTTP3:                     srvConf.ServeHTTP3,
 		RefuseAny:                 srvConf.RefuseAny,
 		TrustedProxies:            netutil.SliceSubnetSet(trustedPrefixes),
 		CacheMinTTL:               srvConf.CacheMinTTL,
@@ -343,9 +355,7 @@ func (s *Server) newProxyConfig(ctx context.Context) (conf *proxy.Config, err er
 		CacheOptimisticMaxAge:     time.Duration(srvConf.CacheOptimisticMaxAge),
 		UpstreamConfig:            srvConf.UpstreamConfig,
 		PrivateRDNSUpstreamConfig: srvConf.PrivateRDNSUpstreamConfig,
-		BeforeRequestHandler:      s,
-		RequestHandler:            ratelimitMw.Wrap(s),
-		HTTPSServerName:           aghhttp.UserAgent(),
+		RequestHandler:            ratelimitMw.Wrap(logMw.Wrap(s.Wrap(s))),
 		EnableEDNSClientSubnet:    srvConf.EDNSClientSubnet.Enabled,
 		MaxGoroutines:             srvConf.MaxGoroutines,
 		UseDNS64:                  srvConf.UseDNS64,
@@ -356,6 +366,8 @@ func (s *Server) newProxyConfig(ctx context.Context) (conf *proxy.Config, err er
 		PendingRequests: &proxy.PendingRequestsConfig{
 			Enabled: srvConf.PendingRequestsEnabled,
 		},
+		HTTPConfig:    httpConf,
+		DNSSECEnabled: srvConf.EnableDNSSEC,
 	}
 
 	if srvConf.EDNSClientSubnet.UseCustom {
@@ -798,7 +810,7 @@ func (s *Server) preparePlain(ctx context.Context, proxyConf *proxy.Config) (err
 
 	lenEncrypted := len(proxyConf.DNSCryptTCPListenAddr) +
 		len(proxyConf.DNSCryptUDPListenAddr) +
-		len(proxyConf.HTTPSListenAddr) +
+		len(proxyConf.HTTPConfig.ListenAddresses) +
 		len(proxyConf.QUICListenAddr) +
 		len(proxyConf.TLSListenAddr)
 	if lenEncrypted == 0 {

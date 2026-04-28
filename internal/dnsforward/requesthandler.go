@@ -2,27 +2,29 @@ package dnsforward
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 )
 
 // type check
 var _ proxy.Handler = (*Server)(nil)
 
-// ServeDNS implements the [proxy.Handler] interface for [*Server].
-func (s *Server) ServeDNS(_ *proxy.Proxy, pctx *proxy.DNSContext) (err error) {
-	// TODO(s.chzhen):  Pass context.
-	ctx := context.TODO()
-
+// ServeDNS implements the [proxy.Handler] interface for [*Server].  ctx must
+// contain a logger accessible with [slogutil.LoggerFromContext].
+func (s *Server) ServeDNS(ctx context.Context, _ *proxy.Proxy, pctx *proxy.DNSContext) (err error) {
 	dctx := &dnsContext{
 		proxyCtx:  pctx,
 		result:    &filtering.Result{},
 		startTime: time.Now(),
 	}
 
-	type modProcessFunc func(ctx context.Context, dctx *dnsContext) (rc resultCode)
+	l := slogutil.MustLoggerFromContext(ctx)
+
+	type modProcessFunc func(ctx context.Context, l *slog.Logger, dctx *dnsContext) (rc resultCode)
 
 	// Since [*dnsforward.Server] is used as [proxy.Handler], there is no need
 	// for additional index out of range checking in any of the following
@@ -40,7 +42,7 @@ func (s *Server) ServeDNS(_ *proxy.Proxy, pctx *proxy.DNSContext) (err error) {
 		s.processQueryLogsAndStats,
 	}
 	for _, process := range mods {
-		r := process(ctx, dctx)
+		r := process(ctx, l, dctx)
 		switch r {
 		case resultCodeSuccess:
 			// continue: call the next filter
