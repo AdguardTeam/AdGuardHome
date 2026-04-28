@@ -54,6 +54,12 @@ See also the [v0.107.74 GitHub milestone][ms-v0.107.74].
 
 - Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.26.2][go-1.26.2].
 
+### Added
+
+- Opt-in IPv6 prefix tracking for DHCPv6 and Router Advertisements.
+  When enabled, AdGuard Home derives the advertised prefix from the
+  interface and deprecates the previous prefix during renumbering.
+
 ### Changed
 
 #### Configuration changes

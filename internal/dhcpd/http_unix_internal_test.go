@@ -5,13 +5,18 @@ package dhcpd
 import (
 	"bytes"
 	"encoding/json"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/netip"
 	"testing"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agh"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
+	"github.com/AdguardTeam/golibs/osutil/executil"
 	"github.com/AdguardTeam/golibs/testutil"
+	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -24,13 +29,170 @@ func defaultResponse() *dhcpStatusResponse {
 
 	resp := &dhcpStatusResponse{
 		V4:           *conf4,
-		V6:           V6ServerConf{},
+		V6:           V6ServerConf{PrefixSource: V6PrefixSourceStatic},
 		Leases:       []*leaseDynamic{},
 		StaticLeases: []*leaseStatic{},
 		Enabled:      true,
 	}
 
 	return resp
+}
+
+func TestV6JSONToServerConf_PrefixSource(t *testing.T) {
+	current := V6ServerConf{PrefixSource: V6PrefixSourceInterface}
+	rangeStart := netip.MustParseAddr("2001:db8::42")
+	leaseDuration := uint32(1800)
+	got := v6JSONToServerConf(&v6ServerConfJSON{
+		RangeStart:    &rangeStart,
+		LeaseDuration: &leaseDuration,
+	}, current)
+
+	assert.Equal(t, V6PrefixSourceInterface, got.PrefixSource)
+	assert.Equal(t, net.ParseIP("2001:db8::42"), got.RangeStart)
+}
+
+func TestServer_HandleDHCPSetConfigV6_InterfaceRASLAACOnly(t *testing.T) {
+	s := &server{
+		conf: &ServerConfig{
+			Logger:             testLogger,
+			CommandConstructor: executil.EmptyCommandConstructor{},
+			Conf6: V6ServerConf{
+				PrefixSource: V6PrefixSourceInterface,
+				RASLAACOnly:  true,
+			},
+		},
+	}
+
+	srv6, enabled, err := s.handleDHCPSetConfigV6(&dhcpServerConfigJSON{
+		V6:            &v6ServerConfJSON{},
+		InterfaceName: "en0",
+		Enabled:       aghalg.NBTrue,
+	})
+	require.NoError(t, err)
+	assert.True(t, enabled)
+
+	srv, ok := srv6.(*v6Server)
+	require.True(t, ok)
+	assert.Equal(t, V6PrefixSourceInterface, srv.conf.PrefixSource)
+	assert.True(t, srv.conf.Enabled)
+	assert.Nil(t, srv.conf.RangeStart)
+}
+
+func TestServer_HandleDHCPSetConfigV6_PreservesLivePrefixSource(t *testing.T) {
+	currentSrv, err := v6Create(V6ServerConf{
+		Enabled:      true,
+		PrefixSource: V6PrefixSourceInterface,
+		RangeStart:   net.ParseIP("2001:db8::10"),
+		notify:       notify6,
+	})
+	require.NoError(t, err)
+
+	s := &server{
+		srv6: currentSrv,
+		conf: &ServerConfig{
+			Logger:             testLogger,
+			CommandConstructor: executil.EmptyCommandConstructor{},
+			Conf6: V6ServerConf{
+				PrefixSource: V6PrefixSourceStatic,
+				RangeStart:   net.ParseIP("2001:db8::10"),
+			},
+		},
+	}
+
+	rangeStart := netip.MustParseAddr("2001:db8::10")
+	leaseDuration := uint32(1800)
+	srv6, enabled, err := s.handleDHCPSetConfigV6(&dhcpServerConfigJSON{
+		V6: &v6ServerConfJSON{
+			RangeStart:    &rangeStart,
+			LeaseDuration: &leaseDuration,
+		},
+		InterfaceName: "en0",
+		Enabled:       aghalg.NBTrue,
+	})
+	require.NoError(t, err)
+	assert.True(t, enabled)
+
+	srv, ok := srv6.(*v6Server)
+	require.True(t, ok)
+	assert.Equal(t, V6PrefixSourceInterface, srv.conf.PrefixSource)
+}
+
+func TestV6JSONToServerConf_PreservesOmittedFields(t *testing.T) {
+	current := V6ServerConf{
+		RangeStart:    net.ParseIP("2001:db8::10"),
+		LeaseDuration: 7200,
+		PrefixSource:  V6PrefixSourceStatic,
+	}
+	prefixSource := V6PrefixSourceInterface
+
+	got := v6JSONToServerConf(&v6ServerConfJSON{
+		PrefixSource: &prefixSource,
+	}, current)
+
+	assert.Equal(t, net.ParseIP("2001:db8::10"), got.RangeStart)
+	assert.Equal(t, uint32(7200), got.LeaseDuration)
+	assert.Equal(t, V6PrefixSourceInterface, got.PrefixSource)
+}
+
+// TestV6JSONToServerConf_DropsRuntimeState is the regression test for a bug
+// where the merge flow carried live runtime state (ipStart, dnsIPAddrs,
+// leaseTime) from [v6Server.WriteDiskConfig6] into the next server.  For
+// interface mode with a transient observation failure, the new server would
+// otherwise keep serving leases and DNS from the stale prefix until the
+// observe ticker recovered.
+func TestV6JSONToServerConf_DropsRuntimeState(t *testing.T) {
+	current := V6ServerConf{
+		RangeStart:    net.ParseIP("2001:db8::10"),
+		LeaseDuration: 7200,
+		PrefixSource:  V6PrefixSourceInterface,
+
+		// Runtime-only state that a live server would copy out via
+		// WriteDiskConfig6.
+		ipStart:    net.ParseIP("2001:db8::aa"),
+		dnsIPAddrs: []net.IP{net.ParseIP("fe80::1")},
+		leaseTime:  42 * time.Second,
+	}
+
+	got := v6JSONToServerConf(nil, current)
+
+	assert.Nil(t, got.ipStart)
+	assert.Nil(t, got.dnsIPAddrs)
+	assert.Equal(t, time.Duration(0), got.leaseTime)
+	// But the user-facing fields still pass through.
+	assert.Equal(t, net.ParseIP("2001:db8::10"), got.RangeStart)
+	assert.Equal(t, uint32(7200), got.LeaseDuration)
+	assert.Equal(t, V6PrefixSourceInterface, got.PrefixSource)
+}
+
+// TestV6Create_ClearsRuntimeStateFromInputConf is the defense-in-depth
+// regression test for the same bug at the v6Create boundary: even if a caller
+// passes a V6ServerConf that still carries runtime fields, the constructed
+// server must start from a clean slate so stale lease pools and DNS data do
+// not leak across server recreations.
+func TestV6Create_ClearsRuntimeStateFromInputConf(t *testing.T) {
+	srv, err := v6Create(V6ServerConf{
+		Enabled:      true,
+		PrefixSource: V6PrefixSourceInterface,
+		RangeStart:   net.ParseIP("2001:db8::10"),
+		notify:       notify6,
+
+		// Deliberately poisoned runtime state from a "previous" server.
+		ipStart:    net.ParseIP("2001:db8:dead::beef"),
+		dnsIPAddrs: []net.IP{net.ParseIP("fe80::dead")},
+		leaseTime:  42 * time.Second,
+	})
+	require.NoError(t, err)
+
+	s, ok := srv.(*v6Server)
+	require.True(t, ok)
+
+	// Interface mode must not inherit an ipStart; Start() will derive it
+	// from the first successful observation instead.
+	assert.Nil(t, s.conf.ipStart)
+	assert.Nil(t, s.conf.dnsIPAddrs)
+	// leaseTime is always recomputed from LeaseDuration in v6Create (the
+	// default when LeaseDuration==0 is one day).
+	assert.Equal(t, timeutil.Day, s.conf.leaseTime)
 }
 
 // handleLease is the helper function that calls handler with provided static
