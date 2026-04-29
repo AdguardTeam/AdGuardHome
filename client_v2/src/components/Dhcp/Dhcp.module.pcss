@@ -1,0 +1,161 @@
+/* ── Narrow column for settings ── */
+
+.settingsColumn {
+    @media (min-width: 1024px) {
+        max-width: 632px;
+    }
+}
+
+/* ── Field groups ── */
+
+.fieldGroup {
+    margin-bottom: 20px;
+}
+
+.fieldLabel {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--default-description-text);
+}
+
+/* ── Interface info block ── */
+
+.interfaceInfo {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.interfaceInfoRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 4px;
+    line-height: 22px;
+}
+
+.interfaceInfoLabel {
+    font-weight: 600;
+    color: var(--default-main-text);
+}
+
+.interfaceInfoValue {
+    color: var(--default-main-text);
+}
+
+.interfaceInfoMore {
+    color: var(--default-product-icon);
+    cursor: pointer;
+    margin-left: 4px;
+
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+.actionLinks {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+
+.actionLink {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 20px;
+
+    &:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+}
+
+.actionLinkGreen {
+    composes: actionLink;
+    color: var(--default-product-icon);
+
+    &:hover:not(:disabled) {
+        text-decoration: underline;
+    }
+}
+
+.actionLinkOrange {
+    composes: actionLink;
+    color: var(--default-error-link, #e25b2a);
+
+    &:hover:not(:disabled) {
+        text-decoration: underline;
+    }
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.formField {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.formFieldLabel {
+    color: var(--default-description-text);
+}
+
+.rangeRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.saveButton {
+    margin-top: 4px;
+}
+
+.tableFooterButtons {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+    padding: 0 16px;
+
+    @media (min-width: 768px) {
+        padding: 0;
+    }
+}
+
+.warning {
+    padding: 12px 16px;
+    background-color: var(--default-error-background, #fff3f3);
+    border-radius: 8px;
+    color: var(--default-error-link, #d32f2f);
+    margin-bottom: 24px;
+}
+
+.loader {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+}
+
+.unavailable {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    text-align: center;
+    gap: 12px;
+}
+
+.leaseModalForm {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px 0;
+}

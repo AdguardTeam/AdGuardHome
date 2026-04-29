@@ -545,11 +545,24 @@ export const findActiveDhcp = (selectedInterface: any) => async (dispatch: any, 
 
         if (hasV4Interface && v4.static_ip.static === STATUS_RESPONSE.ERROR) {
             isStaticIPError = true;
-            dispatch(addErrorToast({ error: 'dhcp_static_ip_error' }));
+            dispatch(addErrorToast({
+                error: intl.getMessage('dhcp_static_ip_error_v2'),
+                action: {
+                    text: intl.getMessage('set_static_ip_manually_v2'),
+                    actionType: toggleLeaseModal.toString(),
+                    actionPayload: { type: 'ADD_LEASE' },
+                },
+            }));
         }
 
         if (isError) {
-            dispatch(addErrorToast({ error: 'dhcp_error' }));
+            dispatch(addErrorToast({
+                error: intl.getMessage('dhcp_error_v2'),
+                action: {
+                    text: intl.getMessage('try_again_v2'),
+                    callback: () => dispatch(findActiveDhcp(selectedInterface)),
+                },
+            }));
         }
 
         if (isStaticIPError || isError) {
@@ -561,19 +574,23 @@ export const findActiveDhcp = (selectedInterface: any) => async (dispatch: any, 
             (hasV4Interface && v4.other_server.found === STATUS_RESPONSE.YES) ||
             (hasV6Interface && v6.other_server.found === STATUS_RESPONSE.YES)
         ) {
-            dispatch(addErrorToast({ error: 'dhcp_found' }));
-        } else if (hasV4Interface && v4.static_ip.static === STATUS_RESPONSE.NO && v4.static_ip.ip && interface_name) {
-            const warning = i18next.t('dhcp_dynamic_ip_found', {
-                interfaceName: interface_name,
-                ipAddress: v4.static_ip.ip,
-                interpolation: {
-                    prefix: '<0>{{',
-                    suffix: '}}</0>',
+            dispatch(addErrorToast({
+                error: intl.getMessage('dhcp_found_v2'),
+                action: {
+                    text: intl.getMessage('try_again_v2'),
+                    callback: () => dispatch(findActiveDhcp(selectedInterface)),
                 },
-            });
-            dispatch(addErrorToast({ error: warning }));
+            }));
+        } else if (hasV4Interface && v4.static_ip.static === STATUS_RESPONSE.NO && v4.static_ip.ip && interface_name) {
+            dispatch(addErrorToast({
+                error: intl.getMessage('dhcp_dynamic_ip_found_v2'),
+                action: {
+                    text: intl.getMessage('try_again_v2'),
+                    callback: () => dispatch(findActiveDhcp(selectedInterface)),
+                },
+            }));
         } else {
-            dispatch(addSuccessToast(intl.getMessage('dhcp_not_found')));
+            dispatch(addSuccessToast(intl.getMessage('dhcp_not_found_v2')));
         }
     } catch (error) {
         dispatch(addErrorToast({ error }));
@@ -590,7 +607,7 @@ export const setDhcpConfig = (values: any) => async (dispatch: any) => {
     try {
         await apiClient.setDhcpConfig(values);
         dispatch(setDhcpConfigSuccess(values));
-        dispatch(addSuccessToast(intl.getMessage('dhcp_config_saved')));
+        dispatch(addSuccessToast(intl.getMessage('dhcp_config_saved_v2')));
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(setDhcpConfigFailure());
@@ -607,14 +624,14 @@ export const toggleDhcp = (values: any) => async (dispatch: any) => {
         ...values,
         enabled: false,
     };
-    let successMessage = intl.getMessage('disabled_dhcp');
+    let successMessage = intl.getMessage('disabled_dhcp_v2');
 
     if (!values.enabled) {
         config = {
             ...values,
             enabled: true,
         };
-        successMessage = intl.getMessage('enabled_dhcp');
+        successMessage = intl.getMessage('enabled_dhcp_v2');
     }
 
     try {
@@ -636,7 +653,7 @@ export const resetDhcp = () => async (dispatch: any) => {
     try {
         const status = await apiClient.resetDhcp();
         dispatch(resetDhcpSuccess(status));
-        dispatch(addSuccessToast(intl.getMessage('dhcp_config_saved')));
+        dispatch(addSuccessToast(intl.getMessage('dhcp_config_saved_v2')));
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(resetDhcpFailure());
@@ -652,7 +669,7 @@ export const resetDhcpLeases = () => async (dispatch: any) => {
     try {
         const status = await apiClient.resetDhcpLeases();
         dispatch(resetDhcpLeasesSuccess(status));
-        dispatch(addSuccessToast(intl.getMessage('dhcp_reset_leases_success')));
+        dispatch(addSuccessToast(intl.getMessage('dhcp_reset_leases_success_v2')));
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(resetDhcpLeasesFailure());
@@ -671,7 +688,7 @@ export const addStaticLease = (config: any) => async (dispatch: any) => {
         const name = config.hostname || config.ip;
         await apiClient.addStaticLease(config);
         dispatch(addStaticLeaseSuccess(config));
-        dispatch(addSuccessToast(intl.getMessage('dhcp_lease_added', { key: name })));
+        dispatch(addSuccessToast(intl.getMessage('dhcp_lease_added_v2', { key: name })));
         dispatch(toggleLeaseModal());
         dispatch(getDhcpStatus());
     } catch (error) {
@@ -690,7 +707,7 @@ export const removeStaticLease = (config: any) => async (dispatch: any) => {
         const name = config.hostname || config.ip;
         await apiClient.removeStaticLease(config);
         dispatch(removeStaticLeaseSuccess(config));
-        dispatch(addSuccessToast(intl.getMessage('dhcp_lease_deleted', { key: name })));
+        dispatch(addSuccessToast(intl.getMessage('dhcp_lease_deleted_v2', { key: name })));
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(removeStaticLeaseFailure());
@@ -706,7 +723,7 @@ export const updateStaticLease = (config: any) => async (dispatch: any) => {
     try {
         await apiClient.updateStaticLease(config);
         dispatch(updateStaticLeaseSuccess(config));
-        dispatch(addSuccessToast(intl.getMessage('dhcp_lease_updated', { key: config.hostname || config.ip })));
+        dispatch(addSuccessToast(intl.getMessage('dhcp_lease_updated_v2', { key: config.hostname || config.ip })));
         dispatch(toggleLeaseModal());
         dispatch(getDhcpStatus());
     } catch (error) {

@@ -11,12 +11,16 @@ const toasts = handleActions(
             const message = payload.error.toString();
             console.error(payload.error);
 
-            const errorToast = {
+            const errorToast: any = {
                 id: nanoid(),
                 message,
                 options: payload.options,
                 type: TOAST_TYPES.ERROR,
             };
+
+            if (payload.action) {
+                errorToast.action = payload.action;
+            }
 
             const newState = { ...state, notices: [...state.notices, errorToast] };
             return newState;

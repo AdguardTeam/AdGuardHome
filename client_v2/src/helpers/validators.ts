@@ -16,6 +16,7 @@ import {
     MIN_PASSWORD_LENGTH,
     R_IPV4_SUBNET,
     R_IPV6_SUBNET,
+    R_HOSTNAME,
 } from './constants';
 
 import { ip4ToInt, isValidAbsolutePath } from './form';
@@ -403,5 +404,26 @@ export const validatePlainDns = (value: any, allValues: any) => {
         return intl.getMessage('encryption_plain_dns_error');
     }
 
+    return undefined;
+};
+
+export const validateHostname = (value: any) => {
+    if (value && !R_HOSTNAME.test(value)) {
+        return intl.getMessage('form_error_hostname_format_v2');
+    }
+    return undefined;
+};
+
+export const validateIpNotDuplicate = (existingLeases: { ip: string }[], editIp?: string) => (value: any) => {
+    if (value && value !== editIp && existingLeases.some((lease) => lease.ip === value)) {
+        return intl.getMessage('form_error_ip_already_added_v2');
+    }
+    return undefined;
+};
+
+export const validateMacNotDuplicate = (existingLeases: { mac: string }[], editMac?: string) => (value: any) => {
+    if (value && value !== editMac && existingLeases.some((lease) => lease.mac === value)) {
+        return intl.getMessage('form_error_mac_already_added_v2');
+    }
     return undefined;
 };
