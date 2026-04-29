@@ -28,6 +28,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Statistics database deadlock ([#8359]).
+
 - Translated labels on the DNS settings pages not updating after changing the UI language.
 
 - Dashboard charts now correctly display lower query counts ([#6823]).

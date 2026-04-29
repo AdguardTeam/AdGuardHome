@@ -421,6 +421,8 @@ func (s *StatsCtx) flush() (cont bool, sleepFor time.Duration) {
 	s.confMu.Lock()
 	defer s.confMu.Unlock()
 
+	// NOTE:  This mutex, when combined with the database transaction, is
+	// required to be locked first.
 	s.currMu.Lock()
 	defer s.currMu.Unlock()
 
@@ -571,6 +573,11 @@ func (s *StatsCtx) loadUnits(limit uint32) (units []*unitDB, curID uint32) {
 		return nil, 0
 	}
 
+	// NOTE:  This mutex, when combined with the database transaction, is
+	// required to be locked first.
+	s.currMu.RLock()
+	defer s.currMu.RUnlock()
+
 	// Use writable transaction to ensure any ongoing writable transaction is
 	// taken into account.
 	tx, err := db.Begin(true)
@@ -579,10 +586,6 @@ func (s *StatsCtx) loadUnits(limit uint32) (units []*unitDB, curID uint32) {
 
 		return nil, 0
 	}
-
-	s.currMu.RLock()
-	defer s.currMu.RUnlock()
-
 	cur := s.curr
 
 	if cur != nil {
