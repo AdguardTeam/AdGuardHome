@@ -18,6 +18,10 @@ See also the [v0.107.75 GitHub milestone][ms-v0.107.75].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Added
+
+- New `reason` query parameter in `GET /control/querylog`.  See `openapi/openapi.yaml` for the full description.
+
 ### Changed
 
 - Frontend API requests no longer depend on axios.
@@ -25,6 +29,10 @@ NOTE: Add new changes BELOW THIS COMMENT.
 - Dashboard charts use Recharts instead of Nivo.
 
 - `enable_dnssec` in `dns` configuration now defines whether the proxy should set the DO flag in the upstream requests, the default is `true` ([#7046]).
+
+### Deprecated
+
+- Query parameter `response_status` in `GET /control/querylog` is now deprecated.  Use new `reason` query parameter instead.
 
 ### Fixed
 

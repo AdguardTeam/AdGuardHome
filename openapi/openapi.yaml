@@ -221,8 +221,13 @@
         'schema':
           'type': 'string'
       - 'name': 'response_status'
+        'deprecated': true
         'in': 'query'
-        'description': 'Filter by response status'
+        'description': >
+          Deprecated: Use 'reason' parameter instead
+          Filter by response status
+
+          NOTE: This parameter cannot be used with 'reason' parameter.
         'schema':
           'type': 'string'
           'enum':
@@ -235,6 +240,15 @@
           - 'rewritten'
           - 'safe_search'
           - 'processed'
+      - 'name': 'reason'
+        'in': 'query'
+        'description': >
+          Deprecated: Use 'reason' parameter instead
+          Filter by response status
+
+          NOTE: This parameter cannot be used with 'response_status' parameter.
+        'schema':
+          '$ref': '#/components/schemas/FilteringReason'
       'responses':
         '200':
           'description': 'OK.'
@@ -1468,6 +1482,22 @@
             '$ref': '#/components/schemas/RewriteUpdate'
       'required': true
   'schemas':
+    'FilteringReason':
+      'type': 'string'
+      'description': 'Request filtering status.'
+      'enum':
+        - 'NotFilteredNotFound'
+        - 'NotFilteredWhiteList'
+        - 'NotFilteredError'
+        - 'FilteredBlackList'
+        - 'FilteredSafeBrowsing'
+        - 'FilteredParental'
+        - 'FilteredInvalid'
+        - 'FilteredSafeSearch'
+        - 'FilteredBlockedService'
+        - 'Rewrite'
+        - 'RewriteEtcHosts'
+        - 'RewriteRule'
     'ServerStatus':
       'type': 'object'
       'description': 'AdGuard Home server status and configuration'
@@ -1794,21 +1824,7 @@
       'description': 'Check Host Result'
       'properties':
         'reason':
-          'type': 'string'
-          'description': 'Request filtering status.'
-          'enum':
-          - 'NotFilteredNotFound'
-          - 'NotFilteredWhiteList'
-          - 'NotFilteredError'
-          - 'FilteredBlackList'
-          - 'FilteredSafeBrowsing'
-          - 'FilteredParental'
-          - 'FilteredInvalid'
-          - 'FilteredSafeSearch'
-          - 'FilteredBlockedService'
-          - 'Rewrite'
-          - 'RewriteEtcHosts'
-          - 'RewriteRule'
+          '$ref': '#/components/schemas/FilteringReason'
         'filter_id':
           'deprecated': true
           'description': >
@@ -2324,21 +2340,7 @@
           'items':
             '$ref': '#/components/schemas/ResultRule'
         'reason':
-          'type': 'string'
-          'description': 'Request filtering status.'
-          'enum':
-          - 'NotFilteredNotFound'
-          - 'NotFilteredWhiteList'
-          - 'NotFilteredError'
-          - 'FilteredBlackList'
-          - 'FilteredSafeBrowsing'
-          - 'FilteredParental'
-          - 'FilteredInvalid'
-          - 'FilteredSafeSearch'
-          - 'FilteredBlockedService'
-          - 'Rewrite'
-          - 'RewriteEtcHosts'
-          - 'RewriteRule'
+          '$ref': '#/components/schemas/FilteringReason'
         'service_name':
           'type': 'string'
           'description': 'Set if reason=FilteredBlockedService'

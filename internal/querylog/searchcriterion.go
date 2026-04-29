@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strconv"
 	"strings"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 )
 
@@ -19,10 +21,16 @@ const (
 	// the client's ID or the client's name.  The domain name search
 	// supports IDNAs.
 	ctTerm criterionType = iota
+
 	// ctFilteringStatus is for searching by the filtering status.
 	//
 	// See (*searchCriterion).ctFilteringStatusCase for details.
+	//
+	// TODO(f.setrakov): Remove since migration to reason criterion is complete.
 	ctFilteringStatus
+
+	// ctReason is for searching by the filtering reason.
+	ctReason
 )
 
 const (
@@ -53,10 +61,30 @@ var filteringStatusValues = container.NewMapSet(
 	filteringStatusWhitelisted,
 )
 
+// filteringReasonValues is the set of all possible filtering reason values.
+//
+// TODO(f.setrakov): Consider drying with an equivalent map in the filtering
+// package.
+var filteringReasonValues = container.NewMapSet(
+	"NotFilteredNotFound",
+	"NotFilteredWhiteList",
+	"NotFilteredError",
+	"FilteredBlackList",
+	"FilteredSafeBrowsing",
+	"FilteredParental",
+	"FilteredInvalid",
+	"FilteredSafeSearch",
+	"FilteredBlockedService",
+	"Rewrite",
+	"RewriteEtcHosts",
+	"RewriteRule",
+)
+
 // searchCriterion is a search criterion that is used to match a record.
 type searchCriterion struct {
 	value         string
 	asciiVal      string
+	valueList     []string
 	criterionType criterionType
 	// strict, if true, means that the criterion must be applied to the whole
 	// value rather than the part of it.  That is, equality and not containment.
@@ -95,7 +123,7 @@ func ctDomainOrClientCaseNonStrict(
 
 // quickMatch quickly checks if the line matches the given search criterion.
 // It returns false if the like doesn't match.  This method is only here for
-// optimization purposes.
+// optimization purposes.  logger and findClient must not be nil.
 func (c *searchCriterion) quickMatch(
 	ctx context.Context,
 	logger *slog.Logger,
@@ -122,18 +150,42 @@ func (c *searchCriterion) quickMatch(
 		// Go on, as we currently don't do quick matches against
 		// filtering statuses.
 		return true
+	case ctReason:
+		reasonStr := readJSONValue(line, `"Reason":`)
+		if reasonStr == "" {
+			// For [filtering.NotFilteredNotFound] reason can be empty.
+			return true
+		}
+
+		reasonStr = strings.Trim(reasonStr, "},")
+		_, err := strconv.ParseInt(reasonStr, 10, 64)
+		if err != nil {
+			logger.WarnContext(
+				ctx,
+				"could't parse reason",
+				"val", reasonStr,
+				slogutil.KeyError, err,
+			)
+
+			return false
+		}
+
+		return true
 	default:
 		return true
 	}
 }
 
-// match checks if the log entry matches this search criterion.
+// match checks if the log entry matches this search criterion.  entry must not
+// be nil.
 func (c *searchCriterion) match(entry *logEntry) bool {
 	switch c.criterionType {
 	case ctTerm:
 		return c.ctDomainOrClientCase(entry)
 	case ctFilteringStatus:
 		return c.ctFilteringStatusCase(entry.Result.Reason, entry.Result.IsFiltered)
+	case ctReason:
+		return c.ctReasonCase(entry.Result.Reason)
 	}
 
 	return false
@@ -236,4 +288,15 @@ func reasonIsRuleList(r filtering.Reason) (ok bool) {
 	return r == filtering.FilteredBlockList ||
 		r == filtering.FilteredBlockedService ||
 		r == filtering.NotFilteredAllowList
+}
+
+// ctReasonCase returns true if the filtering reason matches one of the values.
+func (c *searchCriterion) ctReasonCase(reason filtering.Reason) (ok bool) {
+	for _, val := range c.valueList {
+		if val == reason.String() {
+			return true
+		}
+	}
+
+	return false
 }

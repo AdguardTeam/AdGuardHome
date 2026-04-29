@@ -2,9 +2,15 @@
 
 <!-- TODO(a.garipov): Reformat in accordance with the KeepAChangelog spec. -->
 
+## v0.107.75: API changes
+
+### New `reason` query parameter in 'GET /control/querylog'
+
+- New query parameter `reason` allows filtering query log entries by reason.  The `response_status` parameter is now deprecated.
+
 ## v0.107.72: API changes
 
-## New `recent` query parameter in 'GET /control/stats/'
+### New `recent` query parameter in 'GET /control/stats/'
 
 - New query parameter `recent` defines the statistics lookback period in millieseconds.
 
