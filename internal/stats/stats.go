@@ -257,16 +257,18 @@ func (s *StatsCtx) Close() (err error) {
 		err = errors.WithDeferred(err, cerr)
 	}()
 
+	// NOTE:  This mutex, when combined with the database transaction, is
+	// required to be locked first.
+	s.currMu.RLock()
+	defer s.currMu.RUnlock()
+
+	udb := s.curr.serialize()
+
 	tx, err := db.Begin(true)
 	if err != nil {
 		return fmt.Errorf("opening transaction: %w", err)
 	}
 	defer func() { err = errors.WithDeferred(err, finishTxn(tx, err == nil)) }()
-
-	s.currMu.RLock()
-	defer s.currMu.RUnlock()
-
-	udb := s.curr.serialize()
 
 	return s.flushUnitToDB(udb, tx, s.curr.id)
 }
