@@ -18,5 +18,7 @@ export const getDayName = (day: DayKey): string => {
             return intl.getMessage('saturday');
         case 'sun':
             return intl.getMessage('sunday');
+        default:
+            return day;
     }
 };

@@ -569,8 +569,8 @@ export const Icons = memo(() => (
         </symbol>
 
         <symbol id="search" viewBox="0 0 24 24" fill="none">
-            <circle cx="9.5" cy="9.5" r="5.5" stroke="currentColor" stroke-width="1.5"/>
-            <path d="M14 14L19 19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="9.5" cy="9.5" r="5.5" stroke="currentColor" strokeWidth="1.5"/>
+            <path d="M14 14L19 19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
         </symbol>
     </svg>
 ));
