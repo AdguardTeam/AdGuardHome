@@ -1,5 +1,3 @@
-import axios from 'axios';
-
 import type { LocalesType } from 'panel/common/intl';
 
 import { BASE_URL } from '../../constants';
@@ -21,33 +19,43 @@ class Api {
     async makeRequest(path: any, method = 'POST', config: any = {}) {
         const url = `${this.baseUrl}/${path}`;
 
-        const axiosConfig = config || {};
-        if (method !== 'GET' && axiosConfig.data) {
-            axiosConfig.headers = axiosConfig.headers || {};
-            axiosConfig.headers['Content-Type'] = axiosConfig.headers['Content-Type'] || 'application/json';
+        const fetchConfig: RequestInit = { method };
+        const headers: Record<string, string> = {};
+
+        if (method !== 'GET' && config.data) {
+            headers['Content-Type'] = config.headers?.['Content-Type'] || 'application/json';
+            fetchConfig.body = typeof config.data === 'string'
+                ? config.data
+                : JSON.stringify(config.data);
         }
 
-        try {
-            const response = await axios({
-                url,
-                method,
-                ...axiosConfig,
-            });
-            return response.data;
-        } catch (error) {
-            const errorPath = url;
+        fetchConfig.headers = headers;
 
-            if (error.response) {
+        try {
+            const response = await fetch(url, fetchConfig);
+            const text = await response.text();
+            const data = text ? (() => { try { return JSON.parse(text); } catch { return text; } })() : '';
+
+            if (!response.ok) {
+                const errorPath = url;
                 const { pathname } = document.location;
                 const shouldRedirect = pathname !== HTML_PAGES.LOGIN && pathname !== HTML_PAGES.INSTALL;
 
-                if (error.response.status === 403 && shouldRedirect) {
+                if (response.status === 403 && shouldRedirect) {
                     const loginPageUrl = window.location.href.replace(R_PATH_LAST_PART, HTML_PAGES.LOGIN);
                     window.location.replace(loginPageUrl);
                     return false;
                 }
 
-                throw new Error(`${errorPath} | ${error.response.data} | ${error.response.status}`);
+                throw new Error(`${errorPath} | ${data} | ${response.status}`);
+            }
+
+            return data;
+        } catch (error) {
+            const errorPath = url;
+
+            if (error instanceof Error && error.message.includes('|')) {
+                throw error;
             }
 
             throw new Error(`${errorPath} | ${error.message || error}`);

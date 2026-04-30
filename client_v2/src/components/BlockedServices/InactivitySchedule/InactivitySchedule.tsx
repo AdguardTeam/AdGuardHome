@@ -10,6 +10,7 @@ import { RootState } from 'panel/initialState';
 import { getBlockedServices, updateBlockedServices } from 'panel/actions/services';
 import theme from 'panel/lib/theme';
 
+import { RoutePath } from 'panel/components/Routes/Paths';
 import { ScheduleRow } from './ScheduleRow';
 import { ScheduleModal } from './ScheduleModal';
 import {
@@ -21,7 +22,6 @@ import {
 } from './helpers';
 import { getDayName } from './getDayName';
 import s from './InactivitySchedule.module.pcss';
-import { RoutePath } from 'panel/components/Routes/Paths';
 
 const timezones = ct.getAllTimezones();
 
