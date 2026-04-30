@@ -18,6 +18,12 @@ See also the [v0.107.75 GitHub milestone][ms-v0.107.75].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Security
+
+- IDs of requests received over DoH and DoQ and forwarded to plain-DNS upstreams are now set to non-zero values to improve security.
+
+    This is GHSA-xgx4-4h9w-53pv.  We thank @N0zoM1z0 for reporting this security issue.
+
 ### Changed
 
 - Frontend API requests no longer depend on axios.
