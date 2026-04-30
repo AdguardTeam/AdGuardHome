@@ -43,7 +43,8 @@ export const ICONS = {
     ios: 'ios',
     dns_privacy: 'dns_privacy',
     eye_close: 'eye_close',
-    eye_open: 'eye_open'
+    eye_open: 'eye_open',
+    search: 'search',
 } as const;
 
 export type IconType = keyof typeof ICONS;
@@ -563,8 +564,13 @@ export const Icons = memo(() => (
             <path d="M6 13V15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
         </symbol>
         <symbol id="eye_open" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-			<path fillRule="evenodd" clipRule="evenodd" d="M4 11.772C6.66667 8.59065 9.33333 7 12 7C14.6667 7 17.3333 8.59065 20 11.772C20 11.772 16 16.772 12 16.772C8 16.772 4 11.772 4 11.772Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-			<path fillRule="evenodd" clipRule="evenodd" d="M12 10C13.1046 10 14 10.8954 14 12C14 13.1046 13.1046 14 12 14C10.8954 14 10 13.1046 10 12C10 10.8954 10.8954 10 12 10Z" stroke="currentColor" strokeWidth="1.5"/>
+            <path fillRule="evenodd" clipRule="evenodd" d="M4 11.772C6.66667 8.59065 9.33333 7 12 7C14.6667 7 17.3333 8.59065 20 11.772C20 11.772 16 16.772 12 16.772C8 16.772 4 11.772 4 11.772Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path fillRule="evenodd" clipRule="evenodd" d="M12 10C13.1046 10 14 10.8954 14 12C14 13.1046 13.1046 14 12 14C10.8954 14 10 13.1046 10 12C10 10.8954 10.8954 10 12 10Z" stroke="currentColor" strokeWidth="1.5"/>
+        </symbol>
+
+        <symbol id="search" viewBox="0 0 24 24" fill="none">
+            <circle cx="9.5" cy="9.5" r="5.5" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M14 14L19 19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
         </symbol>
     </svg>
 ));

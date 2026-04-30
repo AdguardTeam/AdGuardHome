@@ -25,6 +25,8 @@ import { RootState } from '../../initialState';
 
 import s from './styles.module.pcss';
 import { DnsSettings } from '../DnsSettings';
+import { BlockedServices } from '../BlockedServices';
+import { InactivitySchedule } from '../BlockedServices/InactivitySchedule';
 
 type RouteConfig = {
     path: string;
@@ -68,6 +70,16 @@ const ROUTES: RouteConfig[] = [
     {
         path: '/guide',
         component: SetupGuideRoute,
+        exact: true,
+    },
+    {
+        path: '/blocked_services/schedule',
+        component: InactivitySchedule,
+        exact: true,
+    },
+    {
+        path: '/blocked_services',
+        component: BlockedServices,
         exact: true,
     },
 ];

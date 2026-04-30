@@ -1,0 +1,75 @@
+.content {
+    padding: 16px 24px;
+}
+
+.dayLabel {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--default-main-text);
+    margin-bottom: 24px;
+}
+
+.allDayRow {
+    margin-bottom: 16px;
+}
+
+.timeWrapper {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.timeField {
+    flex: 1;
+    min-width: 0;
+}
+
+.timeLabel {
+    display: block;
+    font-size: 14px;
+    color: var(--default-description-text);
+    margin-bottom: 8px;
+}
+
+.error {
+    font-size: 14px;
+    color: var(--default-error-icon);
+    margin-bottom: 16px;
+}
+
+.notice {
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--default-description-text);
+    margin-bottom: 8px;
+    padding-left: 16px;
+    position: relative;
+
+    &::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 3px;
+        height: 100%;
+        background-color: var(--default-attention-link);
+        border-radius: 4px;
+    }
+}
+
+.selects {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    & > * {
+        flex: 1;
+        min-width: 70px;
+    }
+}
+
+.footer {
+    display: flex;
+    gap: 12px;
+}

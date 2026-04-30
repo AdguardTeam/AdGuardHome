@@ -17,6 +17,7 @@ export const RoutePath = {
     DnsRewrites: 'DnsRewrites',
     CustomRules: 'CustomRules',
     BlockedServices: 'BlockedServices',
+    InactivitySchedule: 'InactivitySchedule',
     UserRules: 'UserRules',
 } as const;
 
@@ -36,6 +37,7 @@ export const Paths: Record<RoutePathKey, string> = {
     DnsRewrites: pathBuilder('dns_rewrites'),
     CustomRules: pathBuilder('custom_rules'),
     BlockedServices: pathBuilder('blocked_services'),
+    InactivitySchedule: pathBuilder('blocked_services/schedule'),
     UserRules: pathBuilder('user_rules'),
 };
 

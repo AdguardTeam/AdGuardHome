@@ -1,0 +1,125 @@
+.container {
+    padding-top: 0;
+}
+
+.breadcrumbs {
+    padding: 0 16px;
+}
+
+.timezoneWrapper {
+    padding: 16px;
+}
+
+.timezoneLabel {
+    font-size: 14px;
+    color: var(--default-description-text);
+    margin-bottom: 8px;
+}
+
+.scheduleList {
+    display: flex;
+    flex-direction: column;
+}
+
+.scheduleRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr 56px;
+    align-items: center;
+    min-height: 48px;
+    padding: 0 16px;
+
+    @media (min-width: 768px) {
+        grid-template-columns: 1fr 1fr 56px 56px;
+    }
+}
+
+.dayName {
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 42px;
+    color: var(--default-main-text);
+}
+
+.timeDisplay {
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 42px;
+    color: var(--default-main-text);
+}
+
+.noScheduleTextDesktop {
+    display: none;
+    font-size: 16px;
+    line-height: 42px;
+    color: var(--default-description-text);
+
+    @media (min-width: 768px) {
+        display: inline;
+    }
+}
+
+.noScheduleTextMobile {
+    display: inline;
+    font-size: 16px;
+    line-height: 42px;
+    color: var(--default-description-text);
+
+    @media (min-width: 768px) {
+        display: none;
+    }
+}
+
+.actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+}
+
+.actionButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    background: none;
+    border-radius: 4px;
+    cursor: pointer;
+    color: var(--default-gray-icons);
+    transition: background-color 0.2s;
+
+    &:hover,
+    &:focus {
+        background-color: var(--hovered-page-background);
+    }
+}
+
+.actionButtonAdd {
+    color: var(--default-link);
+}
+
+.actionButtonDelete {
+    color: var(--default-error-icon);
+}
+
+.actionsDesktop {
+    display: none;
+
+    @media (min-width: 768px) {
+        display: flex;
+    }
+}
+
+.actionsMobile {
+    display: flex;
+
+    @media (min-width: 768px) {
+        display: none;
+    }
+}
+
+.dropdownItemDanger {
+    color: var(--default-error-icon);
+}

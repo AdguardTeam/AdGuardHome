@@ -1,5 +1,6 @@
 {
     "compilerOptions": {
+        "ignoreDeprecations": "6.0",
         "target": "ESNext",
         "jsx": "react",
         "module": "ESNext",
@@ -11,7 +12,7 @@
         "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true,
         "strict": false,
-        "noImplicitAny": false,
+        "noImplicitAny": true,
         "skipLibCheck": true,
         "types": [
             "node",
