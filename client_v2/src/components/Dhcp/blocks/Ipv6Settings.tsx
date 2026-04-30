@@ -14,8 +14,8 @@ type V6Config = {
 };
 
 type Props = {
-    v6: V6Config | undefined;
-    interfaces: Record<string, any> | undefined;
+    v6?: V6Config;
+    interfaces?: Record<string, any>;
     selectedInterface: string;
     processingConfig: boolean;
     onSave: (values: V6Config) => void;

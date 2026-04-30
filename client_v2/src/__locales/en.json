@@ -1164,5 +1164,6 @@
     "form_error_ip_already_added_v2": "This IP address is already added",
     "form_error_mac_already_added_v2": "This MAC address is already added",
     "form_error_hostname_format_v2": "Use numbers, lowercase English letters, or hyphens",
-    "make_static_desc": "This action converts a dynamic address to a static one"
+    "make_static_desc": "This action converts a dynamic address to a static one",
+    "show_more_count_v2": "+ %count% more"
 }

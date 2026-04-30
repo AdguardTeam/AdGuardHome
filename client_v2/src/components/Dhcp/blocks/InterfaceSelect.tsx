@@ -13,7 +13,7 @@ type InterfaceOption = {
 };
 
 type Props = {
-    interfaces: Record<string, any> | undefined;
+    interfaces?: Record<string, any>;
     selectedInterface: string;
     enabled: boolean;
     onChange: (name: string) => void;

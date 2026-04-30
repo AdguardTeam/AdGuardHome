@@ -17,8 +17,8 @@ type V4Config = {
 };
 
 type Props = {
-    v4: V4Config | undefined;
-    interfaces: Record<string, any> | undefined;
+    v4?: V4Config;
+    interfaces?: Record<string, any>;
     selectedInterface: string;
     processingConfig: boolean;
     onSave: (values: V4Config) => void;

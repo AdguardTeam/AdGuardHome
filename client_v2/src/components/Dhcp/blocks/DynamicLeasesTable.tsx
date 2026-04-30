@@ -24,8 +24,30 @@ type Props = {
     onRefresh: () => void;
 };
 
+const pageSize = 10;
+
 export const DynamicLeasesTable = ({ leases, onEdit, onDelete, onMakeStatic, onRefresh }: Props) => {
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+
+    const handleEdit = (row: DynamicLease) => {
+        onEdit(row);
+        setOpenMenuId(null);
+    };
+
+    const handleMakeStatic = (row: DynamicLease) => {
+        onMakeStatic(row);
+        setOpenMenuId(null);
+    };
+
+    const handleRefresh = () => {
+        onRefresh();
+        setOpenMenuId(null);
+    };
+
+    const handleDelete = (row: DynamicLease) => {
+        onDelete(row);
+        setOpenMenuId(null);
+    };
 
     const columns: TableColumn<DynamicLease>[] = useMemo(
         () => [
@@ -101,25 +123,25 @@ export const DynamicLeasesTable = ({ leases, onEdit, onDelete, onMakeStatic, onR
                                             <div className={theme.dropdown.menu}>
                                                 <div
                                                     className={theme.dropdown.item}
-                                                    onClick={() => { onEdit(row); setOpenMenuId(null); }}
+                                                    onClick={() => handleEdit(row)}
                                                 >
                                                     {intl.getMessage('edit_table_action_v2')}
                                                 </div>
                                                 <div
                                                     className={theme.dropdown.item}
-                                                    onClick={() => { onMakeStatic(row); setOpenMenuId(null); }}
+                                                    onClick={() => handleMakeStatic(row)}
                                                 >
                                                     {intl.getMessage('make_static_v2')}
                                                 </div>
                                                 <div
                                                     className={theme.dropdown.item}
-                                                    onClick={() => { onRefresh(); setOpenMenuId(null); }}
+                                                    onClick={() => handleRefresh()}
                                                 >
                                                     {intl.getMessage('refresh_btn_v2')}
                                                 </div>
                                                 <div
                                                     className={cn(theme.dropdown.item, theme.dropdown.item_danger)}
-                                                    onClick={() => { onDelete(row); setOpenMenuId(null); }}
+                                                    onClick={() => handleDelete(row)}
                                                 >
                                                     {intl.getMessage('delete_table_action_v2')}
                                                 </div>
@@ -158,7 +180,7 @@ export const DynamicLeasesTable = ({ leases, onEdit, onDelete, onMakeStatic, onR
                     </div>
                 </div>
             }
-            pageSize={10}
+            pageSize={pageSize}
             getRowId={(row: DynamicLease) => `${row.mac}-${row.ip}`}
         />
     );

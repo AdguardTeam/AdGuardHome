@@ -511,6 +511,8 @@ export const findActiveDhcpRequest = createAction('FIND_ACTIVE_DHCP_REQUEST');
 export const findActiveDhcpSuccess = createAction('FIND_ACTIVE_DHCP_SUCCESS');
 export const findActiveDhcpFailure = createAction('FIND_ACTIVE_DHCP_FAILURE');
 
+export const toggleLeaseModal = createAction('TOGGLE_LEASE_MODAL');
+
 export const findActiveDhcp = (selectedInterface: any) => async (dispatch: any, getState: any) => {
     dispatch(findActiveDhcpRequest());
     try {
@@ -675,8 +677,6 @@ export const resetDhcpLeases = () => async (dispatch: any) => {
         dispatch(resetDhcpLeasesFailure());
     }
 };
-
-export const toggleLeaseModal = createAction('TOGGLE_LEASE_MODAL');
 
 export const addStaticLeaseRequest = createAction('ADD_STATIC_LEASE_REQUEST');
 export const addStaticLeaseFailure = createAction('ADD_STATIC_LEASE_FAILURE');

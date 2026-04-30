@@ -24,6 +24,8 @@ type Props = {
     onRefresh: () => void;
 };
 
+const pageSize = 10;
+
 export const StaticLeasesTable = ({
     staticLeases,
     processingDeleting,
@@ -33,6 +35,21 @@ export const StaticLeasesTable = ({
     onRefresh,
 }: Props) => {
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+
+    const handleEdit = (row: StaticLease) => {
+        onEdit(row);
+        setOpenMenuId(null);
+    };
+
+    const handleRefresh = () => {
+        onRefresh();
+        setOpenMenuId(null);
+    };
+
+    const handleDelete = (row: StaticLease) => {
+        onDelete(row);
+        setOpenMenuId(null);
+    };
 
     const columns: TableColumn<StaticLease>[] = useMemo(
         () => [
@@ -108,19 +125,19 @@ export const StaticLeasesTable = ({
                                             <div className={theme.dropdown.menu}>
                                                 <div
                                                     className={theme.dropdown.item}
-                                                    onClick={() => { onEdit(row); setOpenMenuId(null); }}
+                                                    onClick={() => handleEdit(row)}
                                                 >
                                                     {intl.getMessage('edit_table_action_v2')}
                                                 </div>
                                                 <div
                                                     className={theme.dropdown.item}
-                                                    onClick={() => { onRefresh(); setOpenMenuId(null); }}
+                                                    onClick={() => handleRefresh()}
                                                 >
                                                     {intl.getMessage('refresh_btn_v2')}
                                                 </div>
                                                 <div
                                                     className={cn(theme.dropdown.item, theme.dropdown.item_danger)}
-                                                    onClick={() => { onDelete(row); setOpenMenuId(null); }}
+                                                    onClick={() => handleDelete(row)}
                                                 >
                                                     {intl.getMessage('delete_table_action_v2')}
                                                 </div>
@@ -159,7 +176,7 @@ export const StaticLeasesTable = ({
                     </div>
                 </div>
             }
-            pageSize={10}
+            pageSize={pageSize}
             getRowId={(row: StaticLease) => `${row.mac}-${row.ip}`}
         />
     );

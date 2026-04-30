@@ -33,6 +33,32 @@ import { StaticLeaseModal } from './blocks/StaticLeaseModal';
 
 import s from './Dhcp.module.pcss';
 
+type LeaseData = {
+    mac: string;
+    ip: string;
+    hostname: string;
+};
+
+type V4Config = {
+    gateway_ip: string;
+    subnet_mask: string;
+    range_start: string;
+    range_end: string;
+    lease_duration: number;
+};
+
+type V6Config = {
+    range_start: string;
+    lease_duration: number;
+};
+
+type DhcpConfig = {
+    enabled: boolean;
+    interface_name: string;
+    v4?: V4Config;
+    v6?: V6Config;
+};
+
 const MODAL_TYPE = {
     ADD_LEASE: 'ADD_LEASE',
     EDIT_LEASE: 'EDIT_LEASE',
@@ -47,7 +73,7 @@ export const Dhcp = () => {
 
     const [confirmResetSettings, setConfirmResetSettings] = useState(false);
     const [confirmResetLeases, setConfirmResetLeases] = useState(false);
-    const [confirmDeleteLease, setConfirmDeleteLease] = useState<any>(null);
+    const [confirmDeleteLease, setConfirmDeleteLease] = useState<LeaseData | null>(null);
     const [showAllIps, setShowAllIps] = useState(false);
 
     const {
@@ -71,7 +97,7 @@ export const Dhcp = () => {
         modalType,
         leaseModalConfig,
         dhcp_available,
-    } = dhcp || {};
+    } = dhcp;
 
     useEffect(() => {
         dispatch(getDhcpStatus());
@@ -100,7 +126,7 @@ export const Dhcp = () => {
         if (enabled) {
             dispatch(toggleDhcp({ enabled }));
         } else {
-            const values: any = {
+            const values: DhcpConfig = {
                 enabled,
                 interface_name: selectedInterface,
             };
@@ -120,11 +146,11 @@ export const Dhcp = () => {
         dispatch(findActiveDhcp(selectedInterface));
     };
 
-    const handleSaveV4Config = (values: any) => {
+    const handleSaveV4Config = (values: V4Config) => {
         dispatch(setDhcpConfig({ interface_name: selectedInterface, v4: values }));
     };
 
-    const handleSaveV6Config = (values: any) => {
+    const handleSaveV6Config = (values: V6Config) => {
         dispatch(setDhcpConfig({ interface_name: selectedInterface, v6: values }));
     };
 
@@ -143,11 +169,11 @@ export const Dhcp = () => {
         dispatch(toggleLeaseModal({ type: MODAL_TYPE.ADD_LEASE }));
     };
 
-    const handleEditStaticLease = (lease: any) => {
+    const handleEditStaticLease = (lease: LeaseData) => {
         dispatch(toggleLeaseModal({ type: MODAL_TYPE.EDIT_LEASE, config: lease }));
     };
 
-    const handleDeleteStaticLease = (lease: any) => {
+    const handleDeleteStaticLease = (lease: LeaseData) => {
         setConfirmDeleteLease(lease);
     };
 
@@ -158,15 +184,15 @@ export const Dhcp = () => {
         }
     };
 
-    const handleMakeStatic = (lease: any) => {
+    const handleMakeStatic = (lease: LeaseData) => {
         dispatch(toggleLeaseModal({ type: MODAL_TYPE.MAKE_STATIC, config: lease }));
     };
 
-    const handleEditDynamicLease = (lease: any) => {
+    const handleEditDynamicLease = (lease: LeaseData) => {
         dispatch(toggleLeaseModal({ type: MODAL_TYPE.ADD_LEASE, config: lease }));
     };
 
-    const handleDeleteDynamicLease = (lease: any) => {
+    const handleDeleteDynamicLease = (lease: LeaseData) => {
         setConfirmDeleteLease(lease);
     };
 
@@ -174,7 +200,7 @@ export const Dhcp = () => {
         dispatch(getDhcpStatus());
     };
 
-    const handleLeaseModalSubmit = (data: any) => {
+    const handleLeaseModalSubmit = (data: LeaseData) => {
         if (modalType === MODAL_TYPE.EDIT_LEASE) {
             dispatch(updateStaticLease(data));
         } else {
@@ -210,10 +236,6 @@ export const Dhcp = () => {
             </div>
         );
     }
-
-    const filledConfig =
-        selectedInterface &&
-        ((v4 && Object.values(v4).every(Boolean)) || (v6 && Object.values(v6).some(Boolean)));
 
     const enteredSomeValue =
         (v4 && Object.values(v4).some(Boolean)) || (v6 && Object.values(v6).some(Boolean)) || interfaceName;
@@ -288,7 +310,7 @@ export const Dhcp = () => {
                                             className={cn(theme.text.t3, s.interfaceInfoMore)}
                                             onClick={() => setShowAllIps(true)}
                                         >
-                                            + {hiddenIpsCount} more
+                                            {intl.getMessage('show_more_count_v2', { count: hiddenIpsCount })}
                                         </span>
                                     )}
                                 </div>

@@ -8,14 +8,14 @@ import { TOAST_TIMEOUTS } from '../../helpers/constants';
 import { removeToast } from '../../actions';
 import s from './styles.module.pcss';
 
-interface ToastAction {
+type ToastAction = {
     text: string;
     actionType?: string;
     actionPayload?: any;
     callback?: () => void;
 }
 
-interface ToastProps {
+type ToastProps = {
     id: string;
     message: string;
     type: string;

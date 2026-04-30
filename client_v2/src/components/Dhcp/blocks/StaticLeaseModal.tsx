@@ -15,8 +15,6 @@ import {
     validateMacNotDuplicate,
 } from 'panel/helpers/validators';
 
-import s from '../Dhcp.module.pcss';
-
 type LeaseData = {
     mac: string;
     ip: string;
@@ -70,11 +68,15 @@ export const StaticLeaseModal = ({
 
     const isProcessing = processingAdding || processingUpdating;
 
-    const title = isMakeStatic
-        ? intl.getMessage('make_static_v2')
-        : isEdit
-            ? intl.getMessage('dhcp_edit_static_lease_v2')
-            : intl.getMessage('dhcp_new_static_lease_v2');
+    const getTitle = () => {
+        if (isMakeStatic) {
+            return intl.getMessage('make_static_v2');
+        }
+        if (isEdit) {
+            return intl.getMessage('dhcp_edit_static_lease_v2');
+        }
+        return intl.getMessage('dhcp_new_static_lease_v2');
+    };
 
     const submitLabel = isMakeStatic
         ? intl.getMessage('make_static_v2')
@@ -83,7 +85,7 @@ export const StaticLeaseModal = ({
     return (
         <Dialog
             visible={isOpen}
-            title={title}
+            title={getTitle()}
             onClose={onClose}
             wrapClassName="rc-dialog-update"
         >
@@ -102,7 +104,10 @@ export const StaticLeaseModal = ({
                                 validate: {
                                     validateRequiredValue,
                                     validateMac,
-                                    validateMacNotDuplicate: validateMacNotDuplicate(staticLeases, isEdit ? initialData?.mac : undefined),
+                                    validateMacNotDuplicate: validateMacNotDuplicate(
+                                        staticLeases,
+                                        isEdit ? initialData?.mac : undefined,
+                                    ),
                                 },
                             }}
                             render={({ field, fieldState }) => (
@@ -148,7 +153,10 @@ export const StaticLeaseModal = ({
                                 validate: {
                                     validateRequiredValue,
                                     validateIp,
-                                    validateIpNotDuplicate: validateIpNotDuplicate(staticLeases, isEdit ? initialData?.ip : undefined),
+                                    validateIpNotDuplicate: validateIpNotDuplicate(
+                                        staticLeases,
+                                        isEdit ? initialData?.ip : undefined,
+                                    ),
                                 },
                             }}
                             render={({ field, fieldState }) => (
