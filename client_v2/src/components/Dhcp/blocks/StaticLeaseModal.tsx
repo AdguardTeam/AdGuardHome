@@ -115,7 +115,7 @@ export const StaticLeaseModal = ({
                                     {...field}
                                     id="static_lease_mac"
                                     label={intl.getMessage('dhcp_table_mac_address')}
-                                    placeholder={intl.getMessage('form_enter_mac_v2')}
+                                    placeholder={intl.getMessage('form_enter_mac')}
                                     errorMessage={fieldState.error?.message}
                                     disabled={isEdit || isMakeStatic}
                                 />
@@ -137,7 +137,7 @@ export const StaticLeaseModal = ({
                                     {...field}
                                     id="static_lease_hostname"
                                     label={intl.getMessage('dhcp_table_hostname')}
-                                    placeholder={intl.getMessage('form_enter_hostname_v2')}
+                                    placeholder={intl.getMessage('form_enter_hostname')}
                                     errorMessage={fieldState.error?.message}
                                     disabled={isMakeStatic}
                                 />

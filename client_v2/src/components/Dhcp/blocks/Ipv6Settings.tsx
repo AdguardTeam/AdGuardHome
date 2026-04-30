@@ -48,12 +48,12 @@ export const Ipv6Settings = ({ v6, interfaces, selectedInterface, processingConf
             <div className={cn(theme.form.group, s.formGroup)}>
                 <div className={s.formField}>
                     <span className={cn(theme.text.t3, s.formFieldLabel)}>
-                        {intl.getMessage('dhcp_form_range_title_v2')}
+                        {intl.getMessage('dhcp_form_range_title')}
                     </span>
                     <div className={s.rangeRow}>
                         <Input
                             id="v6_range_start"
-                            placeholder={intl.getMessage('dhcp_form_range_start_v2')}
+                            placeholder={intl.getMessage('dhcp_form_range_start')}
                             value={rangeStart}
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRangeStart(e.target.value)}
                             disabled={!hasIpv6}

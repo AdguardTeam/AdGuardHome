@@ -71,7 +71,7 @@ export const Ipv4Settings = ({ v4, interfaces, selectedInterface, processingConf
 
                 <div className={s.formField}>
                     <span className={cn(theme.text.t3, s.formFieldLabel)}>
-                        {intl.getMessage('dhcp_form_range_title_v2')}
+                        {intl.getMessage('dhcp_form_range_title')}
                     </span>
                     <div className={s.rangeRow}>
                         <Input

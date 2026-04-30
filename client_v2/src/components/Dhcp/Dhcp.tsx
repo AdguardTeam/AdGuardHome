@@ -254,13 +254,13 @@ export const Dhcp = () => {
 
                 <div className={s.settingsColumn}>
                     <h2 className={cn(theme.layout.subtitle, theme.title.h5, theme.title.h4_tablet)}>
-                        {intl.getMessage('dhcp_title_v2')}
+                        {intl.getMessage('dhcp_title')}
                     </h2>
 
                     <SwitchGroup
                         id="dhcp_toggle"
-                        title={intl.getMessage('dhcp_title_v2')}
-                        description={intl.getMessage('dhcp_description_v2')}
+                        title={intl.getMessage('dhcp_title')}
+                        description={intl.getMessage('dhcp_description')}
                         checked={!!enabled}
                         onChange={handleToggleDhcp}
                         disabled={processingDhcp || processingConfig || (!enabled && !selectedInterface)}
@@ -362,7 +362,7 @@ export const Dhcp = () => {
 
                 <div className={s.settingsColumn}>
                     <h2 className={cn(theme.layout.subtitle, theme.title.h5, theme.title.h4_tablet)}>
-                        {intl.getMessage('dhcp_ipv6_settings_v2')}
+                        {intl.getMessage('dhcp_ipv6_settings')}
                     </h2>
                     <Ipv6Settings
                         v6={v6}
@@ -375,7 +375,7 @@ export const Dhcp = () => {
 
                 <div>
                     <h2 className={cn(theme.layout.subtitle, theme.title.h5, theme.title.h4_tablet)}>
-                        {intl.getMessage('dhcp_static_leases_v2')}
+                        {intl.getMessage('dhcp_static_leases')}
                     </h2>
                     <div className={theme.form.group}>
                         <StaticLeasesTable
@@ -402,7 +402,7 @@ export const Dhcp = () => {
                             onClick={() => setConfirmResetLeases(true)}
                             className={theme.form.button}
                         >
-                            {intl.getMessage('dhcp_reset_leases_v2')}
+                            {intl.getMessage('dhcp_reset_leases')}
                         </Button>
                     </div>
                 </div>
@@ -410,7 +410,7 @@ export const Dhcp = () => {
                 {enabled && (
                     <div>
                         <h2 className={cn(theme.layout.subtitle, theme.title.h5, theme.title.h4_tablet)}>
-                            {intl.getMessage('dhcp_leases_v2')}
+                            {intl.getMessage('dhcp_leases')}
                         </h2>
                         <DynamicLeasesTable
                             leases={leases || []}
@@ -439,7 +439,7 @@ export const Dhcp = () => {
                 {confirmResetSettings && (
                     <ConfirmDialog
                         title={intl.getMessage('reset_settings')}
-                        text={intl.getMessage('dhcp_reset_v2')}
+                        text={intl.getMessage('dhcp_reset')}
                         buttonText={intl.getMessage('reset_settings_confirm')}
                         cancelText={intl.getMessage('cancel')}
                         buttonVariant="danger"
@@ -450,8 +450,8 @@ export const Dhcp = () => {
 
                 {confirmResetLeases && (
                     <ConfirmDialog
-                        title={intl.getMessage('dhcp_reset_leases_v2')}
-                        text={intl.getMessage('dhcp_reset_leases_confirm_v2')}
+                        title={intl.getMessage('dhcp_reset_leases')}
+                        text={intl.getMessage('dhcp_reset_leases_confirm')}
                         buttonText={intl.getMessage('reset_settings_confirm')}
                         cancelText={intl.getMessage('cancel')}
                         buttonVariant="danger"
@@ -462,7 +462,7 @@ export const Dhcp = () => {
 
                 {confirmDeleteLease && (
                     <ConfirmDialog
-                        title={intl.getMessage('delete_confirm_v2')}
+                        title={intl.getMessage('delete_confirm')}
                         text={intl.getMessage('delete_confirm_desc', { ip: confirmDeleteLease.ip })}
                         buttonText={intl.getMessage('delete_table_action_confirm')}
                         cancelText={intl.getMessage('cancel')}
