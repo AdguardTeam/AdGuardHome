@@ -157,19 +157,6 @@ func newTLSManager(ctx context.Context, conf *tlsManagerConfig) (m *tlsManager, 
 		return m, err
 	}
 
-	cert, err := tls.X509KeyPair(m.extTLSConf.CertificateChainData, m.extTLSConf.PrivateKeyData)
-	if err != nil {
-		return nil, fmt.Errorf("loading tls certificate: %w", err)
-	}
-
-	m.tlsConf = &tls.Config{
-		GetCertificate: m.getCertificate,
-		RootCAs:        m.rootCerts,
-		CipherSuites:   m.customCipherIDs,
-		MinVersion:     tls.VersionTLS12,
-		Certificates:   []tls.Certificate{cert},
-	}
-
 	m.setCertFileTime(ctx)
 
 	return m, nil
@@ -196,7 +183,7 @@ func (m *tlsManager) extendedTLSConfig() (extTLSConf *tlsConfigSettings) {
 // setCertFileTime sets [tlsManager.certLastMod] from the certificate.  If there
 // are errors, setCertFileTime logs them.  m.mu is expected to be locked.
 func (m *tlsManager) setCertFileTime(ctx context.Context) {
-	if len(m.extTLSConf.CertificatePath) == 0 {
+	if m.extTLSConf.CertificatePath == "" {
 		return
 	}
 
@@ -335,8 +322,22 @@ func (m *tlsManager) loadTLSConfig(
 		tlsConf.PrivateKeyData,
 		tlsConf.ServerName,
 	)
+	if err != nil {
+		// Don't wrap the error, because it's informative enough as is.
+		return err
+	}
 
-	return errors.Annotate(err, "validating certificate pair: %w")
+	cert, err := tls.X509KeyPair(m.extTLSConf.CertificateChainData, m.extTLSConf.PrivateKeyData)
+
+	m.tlsConf = &tls.Config{
+		GetCertificate: m.getCertificate,
+		RootCAs:        m.rootCerts,
+		CipherSuites:   m.customCipherIDs,
+		MinVersion:     tls.VersionTLS12,
+		Certificates:   []tls.Certificate{cert},
+	}
+
+	return errors.Annotate(err, "loading certificate: %w")
 }
 
 // loadCertificateChainData loads PEM-encoded certificates chain data to the
@@ -1133,5 +1134,5 @@ func (m *tlsManager) getCertificate(cli *tls.ClientHelloInfo) (*tls.Certificate,
 	defer m.mu.Unlock()
 
 	// TODO !! Consider finding a better way to retrieve the certificate.
-	return &m.TLSConfig().Certificates[0], nil
+	return &m.tlsConf.Certificates[0], nil
 }

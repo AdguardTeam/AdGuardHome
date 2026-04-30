@@ -495,6 +495,8 @@ func TestTLSManager_HandleTLSValidate(t *testing.T) {
 //
 // TODO(m.kazantsev):  Move to golibs/testutil.
 func readFile(tb testing.TB, path string) (data []byte) {
+	tb.Helper()
+
 	file, err := os.Open(path)
 	require.NoError(tb, err)
 	defer func() {

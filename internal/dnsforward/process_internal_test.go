@@ -86,9 +86,11 @@ func TestServer_ProcessInitial(t *testing.T) {
 				ServePlainDNS: true,
 			}
 
-			s := createTestServer(t, &filtering.Config{
-				BlockingMode: filtering.BlockingModeDefault,
-			}, c, &aghtest.TLSConfigProvider{})
+			s := createTestServer(t,
+				&filtering.Config{BlockingMode: filtering.BlockingModeDefault},
+				c,
+				testTLSConfigProvider,
+			)
 
 			var gotAddr netip.Addr
 			s.addrProc = &aghtest.AddressProcessor{
@@ -187,9 +189,11 @@ func TestServer_ProcessFilteringAfterResponse(t *testing.T) {
 				ServePlainDNS: true,
 			}
 
-			s := createTestServer(t, &filtering.Config{
-				BlockingMode: filtering.BlockingModeDefault,
-			}, c, &aghtest.TLSConfigProvider{})
+			s := createTestServer(t,
+				&filtering.Config{BlockingMode: filtering.BlockingModeDefault},
+				c,
+				testTLSConfigProvider,
+			)
 
 			resp := newResp(dns.RcodeSuccess, tc.req, tc.respAns)
 			dctx := &dnsContext{
@@ -686,7 +690,7 @@ func TestServer_ProcessUpstream_localPTR(t *testing.T) {
 				LocalPTRResolvers: []string{localUpsAddr},
 				ServePlainDNS:     true,
 			},
-			&aghtest.TLSConfigProvider{},
+			testTLSConfigProvider,
 		)
 		ctx := testutil.ContextWithTimeout(t, testTimeout)
 		pctx := newPrxCtx()
@@ -717,7 +721,7 @@ func TestServer_ProcessUpstream_localPTR(t *testing.T) {
 				LocalPTRResolvers: []string{localUpsAddr},
 				ServePlainDNS:     true,
 			},
-			&aghtest.TLSConfigProvider{},
+			testTLSConfigProvider,
 		)
 		pctx := newPrxCtx()
 

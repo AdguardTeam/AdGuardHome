@@ -4,7 +4,6 @@ import (
 	"net"
 	"testing"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/urlfilter/rules"
@@ -25,7 +24,9 @@ func TestGenAnswerHTTPS_andSVCB(t *testing.T) {
 			ClientsContainer: EmptyClientsContainer{},
 		},
 		ServePlainDNS: true,
-	}, &aghtest.TLSConfigProvider{})
+	},
+		testTLSConfigProvider,
+	)
 
 	req := &dns.Msg{
 		Question: []dns.Question{{

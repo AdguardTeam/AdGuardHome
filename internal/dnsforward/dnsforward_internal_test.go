@@ -46,6 +46,8 @@ import (
 // testLogger is a logger used in tests.
 var testLogger = slogutil.NewDiscardLogger()
 
+var testTLSConfigProvider = &aghtls.EmptyTLSConfigProvider{}
+
 func TestMain(m *testing.M) {
 	testutil.DiscardLogOutput(m)
 }
@@ -411,7 +413,9 @@ func TestServer(t *testing.T) {
 			ClientsContainer: EmptyClientsContainer{},
 		},
 		ServePlainDNS: true,
-	}, &aghtest.TLSConfigProvider{})
+	},
+		testTLSConfigProvider,
+	)
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{newGoogleUpstream()}
 	startDeferStop(t, s)
 
@@ -527,7 +531,9 @@ func TestServerWithProtectionDisabled(t *testing.T) {
 			ClientsContainer: EmptyClientsContainer{},
 		},
 		ServePlainDNS: true,
-	}, &aghtest.TLSConfigProvider{})
+	},
+		testTLSConfigProvider,
+	)
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{newGoogleUpstream()}
 	startDeferStop(t, s)
 
@@ -1850,7 +1856,9 @@ func TestServer_Exchange(t *testing.T) {
 				LocalPTRResolvers: []string{localUpsAddr},
 				UsePrivateRDNS:    true,
 				ServePlainDNS:     true,
-			}, &aghtest.TLSConfigProvider{})
+			},
+				testTLSConfigProvider,
+			)
 
 			ctx := testutil.ContextWithTimeout(t, testTimeout)
 			host, ttl, eerr := srv.Exchange(ctx, tc.req)
@@ -1874,7 +1882,9 @@ func TestServer_Exchange(t *testing.T) {
 			},
 			LocalPTRResolvers: []string{},
 			ServePlainDNS:     true,
-		}, &aghtest.TLSConfigProvider{})
+		},
+			testTLSConfigProvider,
+		)
 
 		ctx := testutil.ContextWithTimeout(t, testTimeout)
 		host, _, eerr := srv.Exchange(ctx, localIP)
