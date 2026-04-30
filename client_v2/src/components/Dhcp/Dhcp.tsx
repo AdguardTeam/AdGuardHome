@@ -229,8 +229,8 @@ export const Dhcp = () => {
             <div className={theme.layout.container}>
                 <div className={theme.layout.containerIn}>
                     <div className={s.unavailable}>
-                        <h2 className={theme.title.h4}>{intl.getMessage('unavailable_dhcp_v2')}</h2>
-                        <p className={theme.text.t2}>{intl.getMessage('unavailable_dhcp_desc_v2')}</p>
+                        <h2 className={theme.title.h4}>{intl.getMessage('unavailable_dhcp')}</h2>
+                        <p className={theme.text.t2}>{intl.getMessage('unavailable_dhcp_desc')}</p>
                     </div>
                 </div>
             </div>
@@ -249,7 +249,7 @@ export const Dhcp = () => {
         <div className={theme.layout.container}>
             <div className={theme.layout.containerIn}>
                 <h1 className={cn(theme.layout.title, theme.title.h4, theme.title.h3_tablet)}>
-                    {intl.getMessage('dhcp_settings_v2')}
+                    {intl.getMessage('dhcp_settings')}
                 </h1>
 
                 <div className={s.settingsColumn}>
@@ -280,7 +280,7 @@ export const Dhcp = () => {
                             {selectedIface.gateway_ip && (
                                 <div className={s.interfaceInfoRow}>
                                     <span className={cn(theme.text.t3, s.interfaceInfoLabel)}>
-                                        {intl.getMessage('dhcp_form_gateway_input_v2')}:
+                                        {intl.getMessage('dhcp_form_gateway_input')}:
                                     </span>
                                     <span className={cn(theme.text.t3, s.interfaceInfoValue)}>
                                         {selectedIface.gateway_ip}
@@ -290,7 +290,7 @@ export const Dhcp = () => {
                             {selectedIface.hardware_address && (
                                 <div className={s.interfaceInfoRow}>
                                     <span className={cn(theme.text.t3, s.interfaceInfoLabel)}>
-                                        {intl.getMessage('dhcp_hardware_address_v2')}:
+                                        {intl.getMessage('dhcp_hardware_address')}:
                                     </span>
                                     <span className={cn(theme.text.t3, s.interfaceInfoValue)}>
                                         {selectedIface.hardware_address}
@@ -300,7 +300,7 @@ export const Dhcp = () => {
                             {allIps.length > 0 && (
                                 <div className={s.interfaceInfoRow}>
                                     <span className={cn(theme.text.t3, s.interfaceInfoLabel)}>
-                                        {intl.getMessage('dhcp_ip_addresses_v2')}:
+                                        {intl.getMessage('dhcp_ip_addresses')}:
                                     </span>
                                     <span className={cn(theme.text.t3, s.interfaceInfoValue)}>
                                         {visibleIps.join(', ')}
@@ -310,7 +310,7 @@ export const Dhcp = () => {
                                             className={cn(theme.text.t3, s.interfaceInfoMore)}
                                             onClick={() => setShowAllIps(true)}
                                         >
-                                            {intl.getMessage('show_more_count_v2', { count: hiddenIpsCount })}
+                                            {intl.getMessage('show_more_count', { count: hiddenIpsCount })}
                                         </span>
                                     )}
                                 </div>
@@ -325,7 +325,7 @@ export const Dhcp = () => {
                             onClick={handleCheckDhcp}
                             disabled={!!enabled || !selectedInterface || processingConfig || processingStatus}
                         >
-                            {intl.getMessage('check_dhcp_servers_v2')}
+                            {intl.getMessage('check_dhcp_servers')}
                         </button>
                         <button
                             type="button"
@@ -333,7 +333,7 @@ export const Dhcp = () => {
                             onClick={() => setConfirmResetSettings(true)}
                             disabled={!enteredSomeValue || processingConfig}
                         >
-                            {intl.getMessage('reset_settings_v2')}
+                            {intl.getMessage('reset_settings')}
                         </button>
                     </div>
                     </SwitchGroup>
@@ -342,7 +342,7 @@ export const Dhcp = () => {
                 {!enabled && check && (
                     (check.v4?.other_server?.found === 'yes' || check.v6?.other_server?.found === 'yes') && (
                         <div className={s.warning}>
-                            <span className={theme.text.t2}>{intl.getMessage('dhcp_warning_v2')}</span>
+                            <span className={theme.text.t2}>{intl.getMessage('dhcp_warning')}</span>
                         </div>
                     )
                 )}
@@ -394,7 +394,7 @@ export const Dhcp = () => {
                             onClick={handleAddStaticLease}
                             className={theme.form.button}
                         >
-                            {intl.getMessage('dhcp_add_static_lease_v2')}
+                            {intl.getMessage('dhcp_add_static_lease')}
                         </Button>
                         <Button
                             variant="secondary"
@@ -438,7 +438,7 @@ export const Dhcp = () => {
 
                 {confirmResetSettings && (
                     <ConfirmDialog
-                        title={intl.getMessage('reset_settings_v2')}
+                        title={intl.getMessage('reset_settings')}
                         text={intl.getMessage('dhcp_reset_v2')}
                         buttonText={intl.getMessage('reset_settings_confirm')}
                         cancelText={intl.getMessage('cancel')}

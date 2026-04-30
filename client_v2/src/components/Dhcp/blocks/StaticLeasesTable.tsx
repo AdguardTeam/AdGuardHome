@@ -90,14 +90,14 @@ export const StaticLeasesTable = ({
             {
                 key: 'hostname',
                 header: {
-                    text: intl.getMessage('dhcp_table_hostname_v2'),
+                    text: intl.getMessage('dhcp_table_hostname'),
                     className: s.headerCell,
                 },
                 accessor: 'hostname',
                 sortable: true,
                 render: (value: string) => (
                     <div className={s.cell}>
-                        <span className={s.cellLabel}>{intl.getMessage('dhcp_table_hostname_v2')}</span>
+                        <span className={s.cellLabel}>{intl.getMessage('dhcp_table_hostname')}</span>
                         <div className={s.cellValue}>
                             <span className={theme.common.textOverflow}>{value}</span>
                         </div>
@@ -117,7 +117,7 @@ export const StaticLeasesTable = ({
                     const rowId = `${row.mac}-${row.ip}`;
                     return (
                         <div className={s.cell}>
-                            <span className={s.cellLabel}>{intl.getMessage('actions_table_header_v2')}</span>
+                            <span className={s.cellLabel}>{intl.getMessage('actions_table_header')}</span>
                             <div className={s.cellValue}>
                                 <div className={s.cellActions}>
                                     <Dropdown
@@ -127,19 +127,19 @@ export const StaticLeasesTable = ({
                                                     className={theme.dropdown.item}
                                                     onClick={() => handleEdit(row)}
                                                 >
-                                                    {intl.getMessage('edit_table_action_v2')}
+                                                    {intl.getMessage('edit_table_action')}
                                                 </div>
                                                 <div
                                                     className={theme.dropdown.item}
                                                     onClick={() => handleRefresh()}
                                                 >
-                                                    {intl.getMessage('refresh_btn_v2')}
+                                                    {intl.getMessage('refresh_btn')}
                                                 </div>
                                                 <div
                                                     className={cn(theme.dropdown.item, theme.dropdown.item_danger)}
                                                     onClick={() => handleDelete(row)}
                                                 >
-                                                    {intl.getMessage('delete_table_action_v2')}
+                                                    {intl.getMessage('delete_table_action')}
                                                 </div>
                                             </div>
                                         }
@@ -172,7 +172,7 @@ export const StaticLeasesTable = ({
                 <div className={s.emptyTableContent}>
                     <Icon icon="not_found_search" color="gray" className={s.emptyTableIcon} />
                     <div className={cn(theme.text.t3, s.emptyTableDesc)}>
-                        {intl.getMessage('dhcp_static_leases_not_found_v2')}
+                        {intl.getMessage('dhcp_static_leases_not_found')}
                     </div>
                 </div>
             }

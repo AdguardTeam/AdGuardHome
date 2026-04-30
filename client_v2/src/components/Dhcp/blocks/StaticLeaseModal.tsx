@@ -70,16 +70,16 @@ export const StaticLeaseModal = ({
 
     const getTitle = () => {
         if (isMakeStatic) {
-            return intl.getMessage('make_static_v2');
+            return intl.getMessage('make_static');
         }
         if (isEdit) {
-            return intl.getMessage('dhcp_edit_static_lease_v2');
+            return intl.getMessage('dhcp_edit_static_lease');
         }
-        return intl.getMessage('dhcp_new_static_lease_v2');
+        return intl.getMessage('dhcp_new_static_lease');
     };
 
     const submitLabel = isMakeStatic
-        ? intl.getMessage('make_static_v2')
+        ? intl.getMessage('make_static')
         : intl.getMessage('save');
 
     return (
@@ -136,7 +136,7 @@ export const StaticLeaseModal = ({
                                 <Input
                                     {...field}
                                     id="static_lease_hostname"
-                                    label={intl.getMessage('dhcp_table_hostname_v2')}
+                                    label={intl.getMessage('dhcp_table_hostname')}
                                     placeholder={intl.getMessage('form_enter_hostname_v2')}
                                     errorMessage={fieldState.error?.message}
                                     disabled={isMakeStatic}
@@ -164,7 +164,7 @@ export const StaticLeaseModal = ({
                                     {...field}
                                     id="static_lease_ip"
                                     label={intl.getMessage('dhcp_table_ip_address')}
-                                    placeholder={intl.getMessage('form_enter_ip_v2')}
+                                    placeholder={intl.getMessage('form_enter_ip')}
                                     errorMessage={fieldState.error?.message}
                                 />
                             )}

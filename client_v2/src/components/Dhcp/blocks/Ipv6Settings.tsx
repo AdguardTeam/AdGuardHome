@@ -65,7 +65,7 @@ export const Ipv6Settings = ({ v6, interfaces, selectedInterface, processingConf
                     <Input
                         id="v6_lease_duration"
                         type="number"
-                        label={intl.getMessage('dhcp_form_lease_title_v2')}
+                        label={intl.getMessage('dhcp_form_lease_title')}
                         placeholder="86400"
                         value={leaseDuration}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLeaseDuration(e.target.value)}

@@ -94,7 +94,7 @@ export const Ipv4Settings = ({ v4, interfaces, selectedInterface, processingConf
                 <div className={s.formField}>
                     <Input
                         id="v4_subnet_mask"
-                        label={intl.getMessage('dhcp_form_subnet_input_v2')}
+                        label={intl.getMessage('dhcp_form_subnet_input')}
                         placeholder="255.255.255.0"
                         value={subnetMask}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSubnetMask(e.target.value)}
@@ -106,7 +106,7 @@ export const Ipv4Settings = ({ v4, interfaces, selectedInterface, processingConf
                     <Input
                         id="v4_lease_duration"
                         type="number"
-                        label={intl.getMessage('dhcp_form_lease_title_v2')}
+                        label={intl.getMessage('dhcp_form_lease_title')}
                         placeholder="86400"
                         value={leaseDuration}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLeaseDuration(e.target.value)}

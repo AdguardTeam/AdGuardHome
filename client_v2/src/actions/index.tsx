@@ -550,7 +550,7 @@ export const findActiveDhcp = (selectedInterface: any) => async (dispatch: any, 
             dispatch(addErrorToast({
                 error: intl.getMessage('dhcp_static_ip_error_v2'),
                 action: {
-                    text: intl.getMessage('set_static_ip_manually_v2'),
+                    text: intl.getMessage('set_static_ip_manually'),
                     actionType: toggleLeaseModal.toString(),
                     actionPayload: { type: 'ADD_LEASE' },
                 },
@@ -561,7 +561,7 @@ export const findActiveDhcp = (selectedInterface: any) => async (dispatch: any, 
             dispatch(addErrorToast({
                 error: intl.getMessage('dhcp_error_v2'),
                 action: {
-                    text: intl.getMessage('try_again_v2'),
+                    text: intl.getMessage('try_again'),
                     callback: () => dispatch(findActiveDhcp(selectedInterface)),
                 },
             }));
@@ -579,7 +579,7 @@ export const findActiveDhcp = (selectedInterface: any) => async (dispatch: any, 
             dispatch(addErrorToast({
                 error: intl.getMessage('dhcp_found_v2'),
                 action: {
-                    text: intl.getMessage('try_again_v2'),
+                    text: intl.getMessage('try_again'),
                     callback: () => dispatch(findActiveDhcp(selectedInterface)),
                 },
             }));
@@ -587,7 +587,7 @@ export const findActiveDhcp = (selectedInterface: any) => async (dispatch: any, 
             dispatch(addErrorToast({
                 error: intl.getMessage('dhcp_dynamic_ip_found_v2'),
                 action: {
-                    text: intl.getMessage('try_again_v2'),
+                    text: intl.getMessage('try_again'),
                     callback: () => dispatch(findActiveDhcp(selectedInterface)),
                 },
             }));
@@ -609,7 +609,7 @@ export const setDhcpConfig = (values: any) => async (dispatch: any) => {
     try {
         await apiClient.setDhcpConfig(values);
         dispatch(setDhcpConfigSuccess(values));
-        dispatch(addSuccessToast(intl.getMessage('dhcp_config_saved_v2')));
+        dispatch(addSuccessToast(intl.getMessage('dhcp_config_saved')));
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(setDhcpConfigFailure());
@@ -626,14 +626,14 @@ export const toggleDhcp = (values: any) => async (dispatch: any) => {
         ...values,
         enabled: false,
     };
-    let successMessage = intl.getMessage('disabled_dhcp_v2');
+    let successMessage = intl.getMessage('disabled_dhcp');
 
     if (!values.enabled) {
         config = {
             ...values,
             enabled: true,
         };
-        successMessage = intl.getMessage('enabled_dhcp_v2');
+        successMessage = intl.getMessage('enabled_dhcp');
     }
 
     try {
@@ -655,7 +655,7 @@ export const resetDhcp = () => async (dispatch: any) => {
     try {
         const status = await apiClient.resetDhcp();
         dispatch(resetDhcpSuccess(status));
-        dispatch(addSuccessToast(intl.getMessage('dhcp_config_saved_v2')));
+        dispatch(addSuccessToast(intl.getMessage('dhcp_config_saved')));
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(resetDhcpFailure());
@@ -671,7 +671,7 @@ export const resetDhcpLeases = () => async (dispatch: any) => {
     try {
         const status = await apiClient.resetDhcpLeases();
         dispatch(resetDhcpLeasesSuccess(status));
-        dispatch(addSuccessToast(intl.getMessage('dhcp_reset_leases_success_v2')));
+        dispatch(addSuccessToast(intl.getMessage('dhcp_reset_leases_success')));
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(resetDhcpLeasesFailure());

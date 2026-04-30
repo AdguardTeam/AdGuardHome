@@ -41,7 +41,7 @@ export const InterfaceSelect = ({ interfaces, selectedInterface, enabled, onChan
     return (
         <div>
             <span className={cn(theme.text.t3, s.fieldLabel)}>
-                {intl.getMessage('dhcp_interface_select_v2')}
+                {intl.getMessage('dhcp_interface_select')}
             </span>
             <Select
                 id="dhcp_interface"
@@ -49,7 +49,7 @@ export const InterfaceSelect = ({ interfaces, selectedInterface, enabled, onChan
                 value={selected}
                 onChange={(option: any) => onChange(option.value)}
                 isDisabled={enabled}
-                placeholder={intl.getMessage('dhcp_interface_select_v2')}
+                placeholder={intl.getMessage('dhcp_interface_select')}
                 size="responsive"
                 height="medium"
             />

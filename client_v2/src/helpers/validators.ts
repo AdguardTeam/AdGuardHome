@@ -409,21 +409,21 @@ export const validatePlainDns = (value: any, allValues: any) => {
 
 export const validateHostname = (value: any) => {
     if (value && !R_HOSTNAME.test(value)) {
-        return intl.getMessage('form_error_hostname_format_v2');
+        return intl.getMessage('form_error_hostname_format');
     }
     return undefined;
 };
 
 export const validateIpNotDuplicate = (existingLeases: { ip: string }[], editIp?: string) => (value: any) => {
     if (value && value !== editIp && existingLeases.some((lease) => lease.ip === value)) {
-        return intl.getMessage('form_error_ip_already_added_v2');
+        return intl.getMessage('form_error_ip_already_added');
     }
     return undefined;
 };
 
 export const validateMacNotDuplicate = (existingLeases: { mac: string }[], editMac?: string) => (value: any) => {
     if (value && value !== editMac && existingLeases.some((lease) => lease.mac === value)) {
-        return intl.getMessage('form_error_mac_already_added_v2');
+        return intl.getMessage('form_error_mac_already_added');
     }
     return undefined;
 };
