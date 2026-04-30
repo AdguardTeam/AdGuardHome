@@ -133,8 +133,9 @@ export const normalizeLogs = (logs: any) =>
         };
     });
 
+// TODO (ik) type will fixed in query log task
 export const normalizeHistory = (history: any) =>
-    history.map((item, idx) => ({
+    history.map((item: any, idx: number) => ({
         x: idx,
         y: item,
     }));

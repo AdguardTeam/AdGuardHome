@@ -168,7 +168,7 @@ export const ConfigureBlocklistModal = ({ modalId, filterToEdit }: Props) => {
 
                     const changedValues = Object.entries(values)?.reduce((acc: Record<string, any>, [key, value]) => {
                         if (value && key in filtersCatalog.filters) {
-                            const filterSource = filtersCatalog.filters[key].source;
+                            const filterSource = filtersCatalog.filters[key as keyof typeof filtersCatalog.filters].source;
                             // Only include if not already added
                             if (!existingFilterSources.has(filterSource)) {
                                 acc[key] = value;
@@ -178,7 +178,7 @@ export const ConfigureBlocklistModal = ({ modalId, filterToEdit }: Props) => {
                     }, {});
 
                     Object.keys(changedValues).forEach((fieldName) => {
-                        const { source, name } = filtersCatalog.filters[fieldName];
+                        const { source, name } = filtersCatalog.filters[fieldName as keyof typeof filtersCatalog.filters];
                         dispatch(addFilter(source, name));
                     });
                 }

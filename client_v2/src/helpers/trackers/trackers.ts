@@ -28,7 +28,7 @@ export const sources = {
  * @return {string}
  */
 const getWhotracksmeUrl = (trackerId: any) => {
-    const websiteId = whotracksmeWebsites.websites[trackerId];
+    const websiteId = (whotracksmeWebsites.websites as Record<string, string>)[trackerId];
     if (websiteId) {
         // Overrides links to websites.
         return `https://whotracks.me/websites/${websiteId}.html`;
@@ -95,11 +95,11 @@ export const getTrackerData = (domainName: any) => {
     // Check every subdomain
     for (let i = 0; i < parts.length; i += 1) {
         hostToCheck = parts[i] + (i > 0 ? '.' : '') + hostToCheck;
-        const trackerId = trackersDb.trackerDomains[hostToCheck];
+        const trackerId = (trackersDb.trackerDomains as Record<string, string>)[hostToCheck];
 
         if (trackerId) {
-            const trackerData = trackersDb.trackers[trackerId];
-            const categoryName = trackersDb.categories[trackerData.categoryId];
+            const trackerData = (trackersDb.trackers as Record<string, any>)[trackerId];
+            const categoryName = (trackersDb.categories as Record<string, string>)[trackerData.categoryId];
             const source = convertSource(trackerData.source);
             const sourceData = getSourceData(trackerData);
 

@@ -139,7 +139,7 @@ const getDisabledMessage = (time: any) => {
 };
 
 export const toggleProtection =
-    (status: any, time = null) =>
+    (status: any, time: number | null = null) =>
     async (dispatch: any) => {
         dispatch(toggleProtectionRequest());
         try {

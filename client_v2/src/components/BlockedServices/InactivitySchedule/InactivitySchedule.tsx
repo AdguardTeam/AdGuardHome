@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import cn from 'clsx';
-import ct from 'countries-and-timezones';
+import { getAllTimezones, Timezone } from 'countries-and-timezones';
 import intl from 'panel/common/intl';
 import { Breadcrumbs } from 'panel/common/ui/Breadcrumbs';
 import { ConfirmDialog } from 'panel/common/ui/ConfirmDialog';
@@ -23,9 +23,9 @@ import {
 import { getDayName } from './getDayName';
 import s from './InactivitySchedule.module.pcss';
 
-const timezones = ct.getAllTimezones();
+const timezones = getAllTimezones();
 
-const TIMEZONE_OPTIONS = Object.entries(timezones).map(([tz, data]) => ({
+const TIMEZONE_OPTIONS = Object.entries(timezones).map(([tz, data]: [string, Timezone]) => ({
     label: `${tz} (GMT${data.utcOffsetStr})`,
     value: tz,
 }));

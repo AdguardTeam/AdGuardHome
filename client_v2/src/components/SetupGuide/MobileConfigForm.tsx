@@ -61,7 +61,7 @@ type Props = {
     initialValues?: FormValues;
 };
 
-const defaultFormValues = {
+const defaultFormValues: FormValues = {
     host: '',
     clientId: '',
     protocol: MOBILE_CONFIG_LINKS.DOT,

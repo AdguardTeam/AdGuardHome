@@ -32,7 +32,7 @@ const linksData = [
     },
 ];
 
-const themeTranslations = {
+const themeTranslations: Record<string, string> = {
     auto: intl.getMessage('system_theme'),
     dark: intl.getMessage('dark_theme'),
     light: intl.getMessage('light_theme'),
