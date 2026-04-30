@@ -125,7 +125,7 @@ export const InactivitySchedule = () => {
                 />
             </div>
 
-            <h1 className={cn(theme.layout.title, theme.title.h4, theme.title.h3_tablet)}>{intl.getMessage('inactivity_schedule')}</h1>
+            <h1 className={cn(theme.layout.title, theme.title.h4, theme.title.h3_tablet, s.title)}>{intl.getMessage('inactivity_schedule')}</h1>
 
             <div className={s.timezoneWrapper}>
                 <div className={s.timezoneLabel}>
@@ -135,6 +135,8 @@ export const InactivitySchedule = () => {
                     options={TIMEZONE_OPTIONS}
                     value={timezoneValue}
                     onChange={handleTimezoneChange}
+                    size="responsive"
+                    height="medium"
                     isSearchable
                 />
             </div>
