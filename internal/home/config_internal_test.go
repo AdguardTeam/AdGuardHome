@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -88,4 +90,32 @@ func TestConfigFilePath(t *testing.T) {
 			assert.Equal(t, tc.want, got)
 		})
 	}
+}
+
+func TestNewServerConfig_DualStackFallback(t *testing.T) {
+	dnsConf := &dnsConfig{
+		BindHosts: nil,
+		Port:      53,
+		PendingRequests: &pendingRequests{
+			Enabled: false,
+		},
+	}
+	tlsConf := &tlsConfigSettings{}
+	dohConf := &doHConfig{}
+
+	conf, err := newServerConfig(
+		dnsConf,
+		&clientSourcesConfig{},
+		tlsConf,
+		dohConf,
+		&tlsManager{},
+		&aghtest.Registrar{},
+		nil, // clientsContainer
+		&aghtest.ConfigModifier{},
+	)
+	assert.NoError(t, err)
+
+	assert.Len(t, conf.UDPListenAddrs, 2)
+	assert.Equal(t, netutil.IPv4Localhost().String(), conf.UDPListenAddrs[0].IP.String())
+	assert.Equal(t, netutil.IPv6Localhost().String(), conf.UDPListenAddrs[1].IP.String())
 }
