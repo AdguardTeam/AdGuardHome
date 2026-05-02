@@ -457,7 +457,7 @@ var config = &configuration{
 	AuthAttempts: 5,
 	AuthBlockMin: 15,
 	HTTPConfig: httpConfig{
-		Address:    netip.AddrPortFrom(netip.IPv4Unspecified(), 3000),
+		Address:    netip.AddrPortFrom(netip.IPv6Unspecified(), 3000),
 		SessionTTL: timeutil.Duration(30 * timeutil.Day),
 		Pprof: &httpPprofConfig{
 			Enabled: false,
@@ -474,7 +474,7 @@ var config = &configuration{
 		},
 	},
 	DNS: dnsConfig{
-		BindHosts: []netip.Addr{netip.IPv4Unspecified()},
+		BindHosts: []netip.Addr{netip.IPv4Unspecified(), netip.IPv6Unspecified()},
 		Port:      defaultPortDNS,
 		Config: dnsforward.Config{
 			Ratelimit:              20,

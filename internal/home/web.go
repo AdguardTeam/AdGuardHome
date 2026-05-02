@@ -282,8 +282,13 @@ func (web *webAPI) start(ctx context.Context) {
 		hdlr = h2c.NewHandler(hdlr, &http2.Server{})
 
 		// Create a new instance, because the Web is not usable after Shutdown.
+		addrStr := web.conf.BindAddr.String()
+		if web.conf.BindAddr.Addr().IsUnspecified() {
+			addrStr = fmt.Sprintf(":%d", web.conf.BindAddr.Port())
+		}
+
 		web.httpServer = &http.Server{
-			Addr:              web.conf.BindAddr.String(),
+			Addr:              addrStr,
 			Handler:           hdlr,
 			ReadTimeout:       web.conf.ReadTimeout,
 			ReadHeaderTimeout: web.conf.ReadHeaderTimeout,
@@ -359,7 +364,14 @@ func (web *webAPI) serveTLS(ctx context.Context) (next bool) {
 		portHTTPS = config.TLS.PortHTTPS
 	}()
 
-	addr := netip.AddrPortFrom(web.conf.BindAddr.Addr(), portHTTPS).String()
+	addr := web.conf.BindAddr.Addr()
+	var addrStr string
+	if addr.IsUnspecified() {
+		addrStr = fmt.Sprintf(":%d", portHTTPS)
+	} else {
+		addrStr = netip.AddrPortFrom(addr, portHTTPS).String()
+	}
+
 	logger := web.baseLogger.With(loggerKeyServer, "https")
 
 	// TODO(a.garipov):  Remove other logs like this in other code.
@@ -367,7 +379,7 @@ func (web *webAPI) serveTLS(ctx context.Context) (next bool) {
 	hdlr := logMw.Wrap(withMiddlewares(web.conf.mux, limitRequestBody))
 
 	web.httpsServer.server = &http.Server{
-		Addr:    addr,
+		Addr:    addrStr,
 		Handler: web.auth.middleware().Wrap(hdlr),
 		TLSConfig: &tls.Config{
 			Certificates: []tls.Certificate{web.httpsServer.cert},
@@ -384,7 +396,7 @@ func (web *webAPI) serveTLS(ctx context.Context) (next bool) {
 	printHTTPAddresses(ctx, web.logger, urlutil.SchemeHTTPS, web.tlsManager)
 
 	if web.conf.serveHTTP3 {
-		go web.mustStartHTTP3(ctx, addr)
+		go web.mustStartHTTP3(ctx, addrStr)
 	}
 
 	logger.InfoContext(ctx, "starting https server")
