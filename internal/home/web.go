@@ -251,6 +251,17 @@ func (web *webAPI) tlsConfigChanged(ctx context.Context, tlsConf *tlsConfigSetti
 // loggerKeyServer is the key used by [webAPI] to identify servers.
 const loggerKeyServer = "server"
 
+// getBindAddr returns the address string for the server to listen on.  If the
+// address is unspecified, it returns the ":port" format to enable dual-stack
+// listening.
+func (web *webAPI) getBindAddr(addr netip.Addr, port uint16) (addrStr string) {
+	if addr.IsUnspecified() {
+		return netutil.JoinHostPort("", port)
+	}
+
+	return netip.AddrPortFrom(addr, port).String()
+}
+
 // start - start serving HTTP requests
 func (web *webAPI) start(ctx context.Context) {
 	defer slogutil.RecoverAndExit(ctx, web.logger, osutil.ExitCodeFailure)
@@ -282,13 +293,8 @@ func (web *webAPI) start(ctx context.Context) {
 		hdlr = h2c.NewHandler(hdlr, &http2.Server{})
 
 		// Create a new instance, because the Web is not usable after Shutdown.
-		addrStr := web.conf.BindAddr.String()
-		if web.conf.BindAddr.Addr().IsUnspecified() {
-			addrStr = fmt.Sprintf(":%d", web.conf.BindAddr.Port())
-		}
-
 		web.httpServer = &http.Server{
-			Addr:              addrStr,
+			Addr:              web.getBindAddr(web.conf.BindAddr.Addr(), web.conf.BindAddr.Port()),
 			Handler:           hdlr,
 			ReadTimeout:       web.conf.ReadTimeout,
 			ReadHeaderTimeout: web.conf.ReadHeaderTimeout,
@@ -364,14 +370,7 @@ func (web *webAPI) serveTLS(ctx context.Context) (next bool) {
 		portHTTPS = config.TLS.PortHTTPS
 	}()
 
-	addr := web.conf.BindAddr.Addr()
-	var addrStr string
-	if addr.IsUnspecified() {
-		addrStr = fmt.Sprintf(":%d", portHTTPS)
-	} else {
-		addrStr = netip.AddrPortFrom(addr, portHTTPS).String()
-	}
-
+	addrStr := web.getBindAddr(web.conf.BindAddr.Addr(), portHTTPS)
 	logger := web.baseLogger.With(loggerKeyServer, "https")
 
 	// TODO(a.garipov):  Remove other logs like this in other code.
@@ -457,7 +456,8 @@ func (web *webAPI) mustStartHTTP3(ctx context.Context, address string) {
 
 // startPprof launches the debug and profiling server on the provided port.
 func startPprof(baseLogger *slog.Logger, port uint16) {
-	addr := netip.AddrPortFrom(netutil.IPv4Localhost(), port)
+	// Use an unspecified address to support both IPv4 and IPv6 localhosts.
+	addrStr := fmt.Sprintf(":%d", port)
 
 	runtime.SetBlockProfileRate(1)
 	runtime.SetMutexProfileFraction(1)
@@ -471,10 +471,11 @@ func startPprof(baseLogger *slog.Logger, port uint16) {
 	go func() {
 		defer slogutil.RecoverAndLog(ctx, logger)
 
-		logger.InfoContext(ctx, "listening", "addr", addr)
-		err := http.ListenAndServe(addr.String(), mux)
+		logger.InfoContext(ctx, "listening", "addr", addrStr)
+		err := http.ListenAndServe(addrStr, mux)
 		if !errors.Is(err, http.ErrServerClosed) {
 			logger.ErrorContext(ctx, "shutting down", slogutil.KeyError, err)
 		}
 	}()
 }
+
