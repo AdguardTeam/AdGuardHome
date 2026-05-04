@@ -544,7 +544,14 @@ func (conf *ServerConfig) loadUpstreams(
 
 	upstreams = stringutil.SplitTrimmed(string(data), "\n")
 
-	l.DebugContext(ctx, "got upstreams", "number", len(upstreams), "filename", conf.UpstreamDNSFileName)
+	l.DebugContext(
+		ctx,
+		"got upstreams",
+		"number",
+		len(upstreams),
+		"filename",
+		conf.UpstreamDNSFileName,
+	)
 
 	return stringutil.FilterOut(upstreams, aghnet.IsCommentOrEmpty), nil
 }
@@ -652,7 +659,10 @@ func filterOutAddrs(upsConf *proxy.UpstreamConfig, set addrPortSet) (err error) 
 
 // ourAddrsSet returns an addrPortSet that contains all the configured listening
 // addresses.  l must not be nil.
-func (conf *ServerConfig) ourAddrsSet(ctx context.Context, l *slog.Logger) (m addrPortSet, err error) {
+func (conf *ServerConfig) ourAddrsSet(
+	ctx context.Context,
+	l *slog.Logger,
+) (m addrPortSet, err error) {
 	addrs, unspecPorts := conf.collectDNSAddrs()
 	switch {
 	case addrs.Len() == 0:
@@ -741,8 +751,39 @@ func (s *Server) prepareTLS(ctx context.Context, proxyConf *proxy.Config) (err e
 	}
 
 	proxyConf.TLSConfig = s.tlsConfigProvider.TLSConfig()
+	if proxyConf.TLSConfig.GetCertificate != nil {
+		proxyConf.TLSConfig.GetCertificate = s.onGetCertificate(
+			ctx,
+			proxyConf.TLSConfig.GetCertificate,
+		)
+	}
 
 	return nil
+}
+
+// onGetCertificateFunc is the type of the GetCertificate function used in
+// [*tls.Config].
+type onGetCertificateFunc func(chi *tls.ClientHelloInfo) (*tls.Certificate, error)
+
+// onGetCertificate wraps an original GetCertificate function with additional
+// SNI checks if StrictSNICheck.  origGetCert must not be nil.
+func (s *Server) onGetCertificate(
+	ctx context.Context,
+	origFn onGetCertificateFunc,
+) (fn onGetCertificateFunc) {
+	return func(chi *tls.ClientHelloInfo) (cert *tls.Certificate, err error) {
+		if s.conf.TLSConf.StrictSNICheck && !anyNameMatches(s.dnsNames, chi.ServerName) {
+			s.logger.WarnContext(
+				ctx,
+				"unknown SNI in Client Hello",
+				"server_name", chi.ServerName,
+			)
+
+			return nil, fmt.Errorf("invalid SNI")
+		}
+
+		return origFn(chi)
+	}
 }
 
 // isWildcard returns true if host is a wildcard hostname.

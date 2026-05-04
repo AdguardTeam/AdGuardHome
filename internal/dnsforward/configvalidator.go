@@ -90,7 +90,12 @@ func newUpstreamConfigValidator(
 // collectErrResults parses err and returns parsing results containing the
 // original upstream configuration line and the corresponding error.  err can be
 // nil.  l must not be nil.
-func collectErrResults(ctx context.Context, l *slog.Logger, lines []string, err error) (results []*parseResult) {
+func collectErrResults(
+	ctx context.Context,
+	l *slog.Logger,
+	lines []string,
+	err error,
+) (results []*parseResult) {
 	if err == nil {
 		return nil
 	}
