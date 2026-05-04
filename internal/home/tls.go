@@ -290,7 +290,7 @@ func (m *tlsManager) reload(ctx context.Context) {
 // set in status.WarningValidation.
 func (m *tlsManager) loadTLSConfig(
 	ctx context.Context,
-	tlsConf *tlsConfigSettings,
+	extTLSConf *tlsConfigSettings,
 	status *tlsConfigStatus,
 ) (err error) {
 	defer func() {
@@ -303,13 +303,13 @@ func (m *tlsManager) loadTLSConfig(
 		}
 	}()
 
-	err = loadCertificateChainData(tlsConf)
+	err = loadCertificateChainData(extTLSConf)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
 		return err
 	}
 
-	err = loadPrivateKeyData(tlsConf)
+	err = loadPrivateKeyData(extTLSConf)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
 		return err
@@ -318,9 +318,9 @@ func (m *tlsManager) loadTLSConfig(
 	err = m.validateCertificates(
 		ctx,
 		status,
-		tlsConf.CertificateChainData,
-		tlsConf.PrivateKeyData,
-		tlsConf.ServerName,
+		extTLSConf.CertificateChainData,
+		extTLSConf.PrivateKeyData,
+		extTLSConf.ServerName,
 	)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
@@ -1122,7 +1122,11 @@ func (m *tlsManager) RootCAs() (root *x509.CertPool) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	return m.tlsConf.RootCAs
+	if m.tlsConf != nil {
+		return m.tlsConf.RootCAs
+	}
+
+	return x509.NewCertPool()
 }
 
 // getCertificate is called after a ClientInfo is received from a client.  It
