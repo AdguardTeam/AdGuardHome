@@ -1113,6 +1113,10 @@ func (m *tlsManager) TLSConfig() (conf *tls.Config) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
+	if !m.extTLSConf.Enabled {
+		return nil
+	}
+
 	conf = m.tlsConf.Clone()
 	return conf
 }
@@ -1122,11 +1126,11 @@ func (m *tlsManager) RootCAs() (root *x509.CertPool) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	if m.tlsConf != nil {
-		return m.tlsConf.RootCAs
+	if !m.extTLSConf.Enabled {
+		return nil
 	}
 
-	return x509.NewCertPool()
+	return m.rootCerts
 }
 
 // getCertificate is called after a ClientInfo is received from a client.  It
@@ -1136,6 +1140,10 @@ func (m *tlsManager) RootCAs() (root *x509.CertPool) {
 func (m *tlsManager) getCertificate(cli *tls.ClientHelloInfo) (*tls.Certificate, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+
+	if !m.extTLSConf.Enabled {
+		return nil, nil
+	}
 
 	// TODO !! Consider finding a better way to retrieve the certificate.
 	return &m.tlsConf.Certificates[0], nil
