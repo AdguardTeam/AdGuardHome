@@ -324,9 +324,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 		addrsDoH:   addrsDoH,
 	}}
 
-	tlsConf, certPem, keyPem := createServerTLSConfig(t)
-	cert, err := tls.X509KeyPair(certPem, keyPem)
-	require.NoError(t, err)
+	tlsConf, _, _ := createServerTLSConfig(t)
 
 	tlsConfProvider := &aghtest.TLSConfigProvider{}
 	tlsConfProvider.OnTLSConfig = func() (conf *tls.Config) { return tlsConf }
@@ -344,7 +342,6 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 				},
 				TLSConf: &TLSConfig{
 					ServerName:       ddrTestDomainName,
-					Cert:             &cert,
 					TLSListenAddrs:   tc.addrsDoT,
 					HTTPSListenAddrs: tc.addrsDoH,
 					QUICListenAddrs:  tc.addrsDoQ,

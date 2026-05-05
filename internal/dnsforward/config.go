@@ -2,7 +2,6 @@ package dnsforward
 
 import (
 	"context"
-	"crypto/tls"
 	"crypto/x509"
 	"fmt"
 	"log/slog"
@@ -190,10 +189,6 @@ type TLSConfig struct {
 	// DNSCryptConf contains the configuration settings for a DNSCrypt server.
 	// It is nil if the DNSCrypt server is disabled.
 	DNSCryptConf *DNSCryptConfig
-
-	// Cert is the TLS certificate used for TLS connections.  It is nil if
-	// encryption is disabled.
-	Cert *tls.Certificate
 
 	// TLSListenAddrs are the addresses to listen on for DoT connections.  Each
 	// item in the list must be non-nil if Cert is not nil.
@@ -547,10 +542,8 @@ func (conf *ServerConfig) loadUpstreams(
 	l.DebugContext(
 		ctx,
 		"got upstreams",
-		"number",
-		len(upstreams),
-		"filename",
-		conf.UpstreamDNSFileName,
+		"number", len(upstreams),
+		"filename", conf.UpstreamDNSFileName,
 	)
 
 	return stringutil.FilterOut(upstreams, aghnet.IsCommentOrEmpty), nil
@@ -712,18 +705,20 @@ func (s *Server) prepareDNSCrypt(proxyConf *proxy.Config) {
 func (s *Server) prepareTLS(ctx context.Context, proxyConf *proxy.Config) (err error) {
 	s.prepareDNSCrypt(proxyConf)
 
-	if s.conf.TLSConf.Cert == nil {
-		return nil
-	}
-
 	if s.conf.TLSConf.TLSListenAddrs == nil && s.conf.TLSConf.QUICListenAddrs == nil {
 		return nil
 	}
 
 	proxyConf.TLSListenAddr = s.conf.TLSConf.TLSListenAddrs
 	proxyConf.QUICListenAddr = s.conf.TLSConf.QUICListenAddrs
+	proxyConf.TLSConfig = s.tlsConfigProvider.TLSConfig()
+	if proxyConf.TLSConfig == nil {
+		return nil
+	}
 
-	cert, err := x509.ParseCertificate(s.conf.TLSConf.Cert.Certificate[0])
+	tlsCert := proxyConf.TLSConfig.Certificates[0]
+
+	cert, err := x509.ParseCertificate(tlsCert.Certificate[0])
 	if err != nil {
 		return fmt.Errorf("x509.ParseCertificate(): %w", err)
 	}
@@ -750,29 +745,7 @@ func (s *Server) prepareTLS(ctx context.Context, proxyConf *proxy.Config) (err e
 		}
 	}
 
-	proxyConf.TLSConfig = s.tlsConfigProvider.TLSConfig()
-
-	s.conf.TLSConf.Cert = &proxyConf.TLSConfig.Certificates[0]
-	proxyConf.TLSConfig.GetCertificate = s.onGetCertificate
-
 	return nil
-}
-
-// Called by 'tls' package when Client Hello is received
-// If the server name (from SNI) supplied by client is incorrect - we terminate the ongoing TLS handshake.
-func (s *Server) onGetCertificate(ch *tls.ClientHelloInfo) (*tls.Certificate, error) {
-	if s.conf.TLSConf.StrictSNICheck && !anyNameMatches(s.dnsNames, ch.ServerName) {
-		// TODO(s.chzhen):  Pass context.
-		s.logger.WarnContext(
-			context.TODO(),
-			"unknown SNI in Client Hello",
-			"server_name", ch.ServerName,
-		)
-
-		return nil, fmt.Errorf("invalid SNI")
-	}
-
-	return s.conf.TLSConf.Cert, nil
 }
 
 // isWildcard returns true if host is a wildcard hostname.

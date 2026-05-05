@@ -245,7 +245,7 @@ func createTestTLS(
 ) (s *Server, confProvider aghtls.TLSConfigProvider) {
 	tb.Helper()
 
-	tlsConfig, certPem, keyPem := createServerTLSConfig(tb)
+	tlsConfig, certPem, _ := createServerTLSConfig(tb)
 
 	// Add our self-signed generated config to roots.
 	roots := x509.NewCertPool()
@@ -257,11 +257,6 @@ func createTestTLS(
 
 	tlsConfProvider.OnTLSConfig = func() (conf *tls.Config) { return tlsConfig }
 	tlsConfProvider.OnRootCAs = func() (pool *x509.CertPool) { return roots }
-
-	cert, err := tls.X509KeyPair(certPem, keyPem)
-	require.NoError(tb, err)
-
-	tlsConf.Cert = &cert
 
 	s = createTestServer(tb, &filtering.Config{
 		BlockingMode: filtering.BlockingModeDefault,
@@ -279,7 +274,7 @@ func createTestTLS(
 		tlsConfProvider,
 	)
 
-	err = s.Prepare(testutil.ContextWithTimeout(tb, testTimeout), &s.conf)
+	err := s.Prepare(testutil.ContextWithTimeout(tb, testTimeout), &s.conf)
 	require.NoErrorf(tb, err, "failed to prepare server: %s", err)
 
 	return s, tlsConfProvider
