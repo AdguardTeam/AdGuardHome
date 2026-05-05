@@ -751,39 +751,28 @@ func (s *Server) prepareTLS(ctx context.Context, proxyConf *proxy.Config) (err e
 	}
 
 	proxyConf.TLSConfig = s.tlsConfigProvider.TLSConfig()
-	if proxyConf.TLSConfig.GetCertificate != nil {
-		proxyConf.TLSConfig.GetCertificate = s.onGetCertificate(
-			ctx,
-			proxyConf.TLSConfig.GetCertificate,
-		)
-	}
+
+	s.conf.TLSConf.Cert = &proxyConf.TLSConfig.Certificates[0]
+	proxyConf.TLSConfig.GetCertificate = s.onGetCertificate
 
 	return nil
 }
 
-// onGetCertificateFunc is the type of the GetCertificate function used in
-// [*tls.Config].
-type onGetCertificateFunc func(chi *tls.ClientHelloInfo) (*tls.Certificate, error)
+// Called by 'tls' package when Client Hello is received
+// If the server name (from SNI) supplied by client is incorrect - we terminate the ongoing TLS handshake.
+func (s *Server) onGetCertificate(ch *tls.ClientHelloInfo) (*tls.Certificate, error) {
+	if s.conf.TLSConf.StrictSNICheck && !anyNameMatches(s.dnsNames, ch.ServerName) {
+		// TODO(s.chzhen):  Pass context.
+		s.logger.WarnContext(
+			context.TODO(),
+			"unknown SNI in Client Hello",
+			"server_name", ch.ServerName,
+		)
 
-// onGetCertificate wraps an original GetCertificate function with additional
-// SNI checks if StrictSNICheck.  origGetCert must not be nil.
-func (s *Server) onGetCertificate(
-	ctx context.Context,
-	origFn onGetCertificateFunc,
-) (fn onGetCertificateFunc) {
-	return func(chi *tls.ClientHelloInfo) (cert *tls.Certificate, err error) {
-		if s.conf.TLSConf.StrictSNICheck && !anyNameMatches(s.dnsNames, chi.ServerName) {
-			s.logger.WarnContext(
-				ctx,
-				"unknown SNI in Client Hello",
-				"server_name", chi.ServerName,
-			)
-
-			return nil, fmt.Errorf("invalid SNI")
-		}
-
-		return origFn(chi)
+		return nil, fmt.Errorf("invalid SNI")
 	}
+
+	return s.conf.TLSConf.Cert, nil
 }
 
 // isWildcard returns true if host is a wildcard hostname.
