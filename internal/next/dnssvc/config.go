@@ -52,6 +52,10 @@ type Config struct {
 	// CacheEnabled defines if the response cache should be used.
 	CacheEnabled bool
 
+	// DNSSECEnabled specifies if the proxy should set the DO bits in the
+	// upstream requests.
+	DNSSECEnabled bool
+
 	// RefuseAny, if true, refuses DNS queries with the type ANY.
 	RefuseAny bool
 

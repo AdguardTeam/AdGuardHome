@@ -18,13 +18,6 @@ import (
 func TestDarwinService_Status(t *testing.T) {
 	t.Parallel()
 
-	plistDir := t.TempDir()
-	plistPath := path.Join(plistDir, testServiceName+".plist")
-	file, err := os.Create(plistPath)
-	require.NoError(t, err)
-
-	testutil.CleanupAndRequireSuccess(t, file.Close)
-
 	testCases := []struct {
 		cmdErr     error
 		name       string
@@ -55,6 +48,15 @@ func TestDarwinService_Status(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			plistDir := t.TempDir()
+			plistPath := path.Join(plistDir, testServiceName+".plist")
+			file, err := os.Create(plistPath)
+			require.NoError(t, err)
+
+			testutil.CleanupAndRequireSuccess(t, file.Close)
+
 			svc := newDarwinService(&darwinServiceConfig{
 				logger:   testLogger,
 				cmdCons:  newTestCmdConstructor(t, tc.body, tc.cmdErr),

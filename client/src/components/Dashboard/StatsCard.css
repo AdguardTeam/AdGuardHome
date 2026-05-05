@@ -1,0 +1,92 @@
+.stats-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding-bottom: 12px;
+}
+
+@media (min-width: 768px) {
+    .stats-card {
+        padding-bottom: 8px;
+    }
+}
+
+.stats-card--queries {
+    --stats-card-accent: var(--mcolor);
+}
+
+.stats-card--ads {
+    --stats-card-accent: #F67247;
+}
+
+.stats-card--threats {
+    --stats-card-accent: #D58500;
+}
+
+.stats-card--adult {
+    --stats-card-accent: #A870B2;
+}
+
+.stats-card > .card {
+    flex: 1 1 auto;
+    height: auto;
+    margin-bottom: 4px;
+    border-radius: 4px;
+}
+
+.stats-card__inner {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.stats-card__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 16px 0;
+}
+
+.stats-card__value {
+    font-size: 24px;
+    line-height: 1.1;
+    color: var(--mcolor);
+}
+
+.stats-card__percent {
+    font-size: 14px;
+    line-height: 1.2;
+    color: var(--stats-card-accent);
+}
+
+.stats-card__chart {
+    height: 60px;
+    min-height: 16px;
+    margin-top: auto;
+    padding: 0 8px;
+}
+
+.stats-card__title {
+    padding: 0 4px;
+    min-height: 36px;
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--stats-card-accent);
+}
+
+.stats-card__title a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.stats-card__title a:hover,
+.stats-card__title a:focus {
+    color: inherit;
+    text-decoration: underline;
+}
+
+.stats-card__title :not(a) {
+    color: inherit;
+}

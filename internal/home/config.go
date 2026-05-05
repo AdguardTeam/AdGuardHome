@@ -494,6 +494,7 @@ var config = &configuration{
 			CacheSize:                4 * 1024 * 1024,
 			CacheOptimisticAnswerTTL: timeutil.Duration(30 * time.Second),
 			CacheOptimisticMaxAge:    timeutil.Duration(12 * time.Hour),
+			EnableDNSSEC:             true,
 
 			EDNSClientSubnet: &dnsforward.EDNSClientSubnet{
 				CustomIP:  netip.Addr{},

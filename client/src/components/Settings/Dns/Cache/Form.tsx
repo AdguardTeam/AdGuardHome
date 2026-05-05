@@ -10,27 +10,6 @@ import { replaceZeroWithEmptyString } from '../../../../helpers/helpers';
 import { RootState } from '../../../../initialState';
 import { Checkbox } from '../../../ui/Controls/Checkbox';
 
-const INPUTS_FIELDS = [
-    {
-        name: CACHE_CONFIG_FIELDS.cache_size,
-        title: i18next.t('cache_size'),
-        description: i18next.t('cache_size_desc'),
-        placeholder: i18next.t('enter_cache_size'),
-    },
-    {
-        name: CACHE_CONFIG_FIELDS.cache_ttl_min,
-        title: i18next.t('cache_ttl_min_override'),
-        description: i18next.t('cache_ttl_min_override_desc'),
-        placeholder: i18next.t('enter_cache_ttl_min_override'),
-    },
-    {
-        name: CACHE_CONFIG_FIELDS.cache_ttl_max,
-        title: i18next.t('cache_ttl_max_override'),
-        description: i18next.t('cache_ttl_max_override_desc'),
-        placeholder: i18next.t('enter_cache_ttl_max_override'),
-    },
-];
-
 type FormData = {
     cache_enabled: boolean;
     cache_size: number;
@@ -74,6 +53,27 @@ const Form = ({ initialValues, onSubmit }: CacheFormProps) => {
 
     const minExceedsMax = cache_ttl_min > 0 && cache_ttl_max > 0 && cache_ttl_min > cache_ttl_max;
     const cacheSizeZeroWhenEnabled = cache_enabled && cache_size === 0;
+
+    const INPUTS_FIELDS = [
+        {
+            name: CACHE_CONFIG_FIELDS.cache_size,
+            title: i18next.t('cache_size'),
+            description: i18next.t('cache_size_desc'),
+            placeholder: i18next.t('enter_cache_size'),
+        },
+        {
+            name: CACHE_CONFIG_FIELDS.cache_ttl_min,
+            title: i18next.t('cache_ttl_min_override'),
+            description: i18next.t('cache_ttl_min_override_desc'),
+            placeholder: i18next.t('enter_cache_ttl_min_override'),
+        },
+        {
+            name: CACHE_CONFIG_FIELDS.cache_ttl_max,
+            title: i18next.t('cache_ttl_max_override'),
+            description: i18next.t('cache_ttl_max_override_desc'),
+            placeholder: i18next.t('enter_cache_ttl_max_override'),
+        },
+    ];
 
     const handleClearCache = () => {
         if (window.confirm(t('confirm_dns_cache_clear'))) {

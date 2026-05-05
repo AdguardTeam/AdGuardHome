@@ -19,6 +19,27 @@ import (
 	"github.com/google/gopacket/layers"
 )
 
+// Port numbers for DHCPv4.
+//
+// See RFC 2131 Section 4.1.
+const (
+	// ServerPortV4 is the standard DHCPv4 server port.
+	ServerPortV4 layers.UDPPort = 67
+
+	// ClientPortV4 is the standard DHCPv4 client port.
+	ClientPortV4 layers.UDPPort = 68
+)
+
+const (
+	// IPv4DefaultTTL is the default Time to Live value in seconds as
+	// recommended by RFC 1700.
+	IPv4DefaultTTL = 64
+
+	// IPProtoVersion is the IP internetwork general protocol version number as
+	// defined by RFC 1700.
+	IPProtoVersion = 4
+)
+
 // IPv4Config is the interface-specific configuration for DHCPv4.
 type IPv4Config struct {
 	// Clock is used to get current time.  It should not be nil.
@@ -176,6 +197,8 @@ func (srv *DHCPServer) newDHCPInterfaceV4(
 	// TODO(e.burkov):  Add a helper for converting [netip.Addr] to subnet mask
 	// to [netutil].
 	maskLen, _ := net.IPMask(conf.SubnetMask.AsSlice()).Size()
+
+	// Ignore the error since it's already checked in [IPv4Config.Validate].
 	addrSpace, _ := newIPRange(conf.RangeStart, conf.RangeEnd)
 
 	iface = &dhcpInterfaceV4{
@@ -207,14 +230,14 @@ func (iface *dhcpInterfaceV4) updateLease(ctx context.Context, lease *Lease) (er
 }
 
 // respondOffer sends a DHCPOFFER message to the client.  idOpt is expected to
-// be the value of the DHCP option Client Identifier, nil if not present.  req,
-// fd, and lease must not be nil.
+// be the value of the DHCP option Client Identifier, nil if not present.  req
+// and lease must not be nil, fd must be valid
 //
 // TODO(e.burkov):  Consider merging with [respondACK].
 func (iface *dhcpInterfaceV4) respondOffer(
 	ctx context.Context,
 	req *layers.DHCPv4,
-	fd *frameData,
+	fd *frameData4,
 	lease *Lease,
 	idOpt []byte,
 ) {
@@ -231,15 +254,15 @@ func (iface *dhcpInterfaceV4) respondOffer(
 }
 
 // respondACK sends a DHCPACK message to the client.  idOpt is expected to be
-// the value of the DHCP option Client Identifier, nil if not present.  req, fd,
-// and lease must not be nil.
+// the value of the DHCP option Client Identifier, nil if not present.  req and
+// lease must not be nil, fd must be valid.
 //
 // TODO(e.burkov):  Implement according to RFC, answer to DHCPINFORM
 // differently, when it's supported.
 func (iface *dhcpInterfaceV4) respondACK(
 	ctx context.Context,
 	req *layers.DHCPv4,
-	fd *frameData,
+	fd *frameData4,
 	lease *Lease,
 	idOpt []byte,
 ) {
@@ -257,13 +280,13 @@ func (iface *dhcpInterfaceV4) respondACK(
 
 // respondNAK constructs and sends a DHCPNAK message to the client.  idOpt is
 // expected to be the value of the DHCP option Client Identifier, nil if not
-// present.  req, fd, and resp must not be nil.
+// present.  req and resp must not be nil, fd must be valid.
 //
 // See https://datatracker.ietf.org/doc/html/rfc2131#section-4.3.1.
 func (iface *dhcpInterfaceV4) respondNAK(
 	ctx context.Context,
 	req *layers.DHCPv4,
-	fd *frameData,
+	fd *frameData4,
 	idOpt []byte,
 ) {
 	// TODO(e.burkov):  According to RFC 2131 we should add a message.
@@ -416,13 +439,13 @@ func (iface *dhcpInterfaceV4) reserveLease(
 // updateAndRespond updates the lease and sends a DHCPACK or DHCPNAK response to
 // the client according to the update result.  idOpt is an expected to be the
 // value of the DHCP option Client Identifier, nil if not present.  req must be
-// a DHCPREQUEST message, lease, l, and fd must not be nil.
+// a DHCPREQUEST message, lease, and l must not be nil, fd must be valid.
 func (iface *dhcpInterfaceV4) updateAndRespond(
 	ctx context.Context,
 	l *slog.Logger,
 	req *layers.DHCPv4,
 	lease *Lease,
-	fd *frameData,
+	fd *frameData4,
 	idOpt []byte,
 ) {
 	lease.Hostname = cmp.Or(hostname4(req), lease.Hostname)
@@ -438,32 +461,12 @@ func (iface *dhcpInterfaceV4) updateAndRespond(
 	iface.respondACK(ctx, req, fd, lease, idOpt)
 }
 
-const (
-	// IPv4DefaultTTL is the default Time to Live value in seconds as
-	// recommended by RFC 1700.
-	IPv4DefaultTTL = 64
-
-	// IPProtoVersion is the IP internetwork general protocol version number as
-	// defined by RFC 1700.
-	IPProtoVersion = 4
-)
-
-// Port numbers for DHCPv4.
-//
-// See RFC 2131 Section 4.1.
-const (
-	// ServerPortV4 is the standard DHCPv4 server port.
-	ServerPortV4 layers.UDPPort = 67
-
-	// ClientPortV4 is the standard DHCPv4 client port.
-	ClientPortV4 layers.UDPPort = 68
-)
-
 // FlagsBroadcast is the DHCPv4 message flags field with the broadcast bit set.
 const FlagsBroadcast uint16 = 1 << 15
 
-// respond4 sends a DHCPv4 response.  fd, req, and resp must not be nil.
-func respond4(fd *frameData, req, resp *layers.DHCPv4) (err error) {
+// respond4 sends a DHCPv4 response.  req and resp must not be nil, fd must be
+// valid.
+func respond4(fd *frameData4, req, resp *layers.DHCPv4) (err error) {
 	// TODO(e.burkov):  Use pools for buffer and layers.
 	buf := gopacket.NewSerializeBuffer()
 
@@ -488,9 +491,9 @@ func respond4(fd *frameData, req, resp *layers.DHCPv4) (err error) {
 	return fd.device.WritePacketData(buf.Bytes())
 }
 
-// newIPv4UDPLayers creates new UDP and IP layers for DHCPv4 response.  fd, req,
-// and resp must not be nil.
-func newIPv4UDPLayers(fd *frameData, req, resp *layers.DHCPv4) (ip *layers.IPv4, udp *layers.UDP) {
+// newIPv4UDPLayers creates new UDP and IP layers for DHCPv4 response.  req and
+// resp must not be nil, fd must be valid.
+func newIPv4UDPLayers(fd *frameData4, req, resp *layers.DHCPv4) (ip *layers.IPv4, udp *layers.UDP) {
 	var dstIP net.IP
 	dstPort := ClientPortV4
 	switch {

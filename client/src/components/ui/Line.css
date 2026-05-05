@@ -1,20 +1,22 @@
 .line__tooltip {
-    padding: 2px 10px 7px;
-    line-height: 1.1;
-    color: var(--white);
-    background-color: var(--gray-3);
-    border-radius: 4px;
-    opacity: 90%;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 4px 8px;
+    border: 1px solid var(--card-border-color);
+    border-radius: 8px;
+    color: var(--mcolor);
+    background-color: var(--card-bgcolor);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-.line__tooltip-text {
-    font-size: 0.7rem;
+.line__tooltip-value {
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.2;
 }
 
-.card-chart-bg {
-    color: var(--black);
-}
-
-.card-chart-bg path[d^='M0,32'] {
-    transform: translateY(32px);
+.line__tooltip-label {
+    font-size: 12px;
+    line-height: 1.2;
 }

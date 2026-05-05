@@ -16,6 +16,8 @@ import (
 // [websvc].
 //
 // TODO(e.burkov):  Add validation method.
+//
+// TODO(e.burkov):  Migrate to add DUID and IAID fields for DHCPv6 leases.
 type Lease struct {
 	// IP is the IP address leased to the client.  It must not be empty.
 	IP netip.Addr

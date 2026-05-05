@@ -2,7 +2,6 @@ import React from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 
-import i18next from 'i18next';
 import { validateIp, validateIpv4, validateIpv6, validateRequiredValue } from '../../../../helpers/validators';
 
 import { BLOCKING_MODES, UINT32_RANGE } from '../../../../helpers/constants';
@@ -11,74 +10,6 @@ import { Input } from '../../../ui/Controls/Input';
 import { toNumber } from '../../../../helpers/form';
 import { Textarea } from '../../../ui/Controls/Textarea';
 import { Radio } from '../../../ui/Controls/Radio';
-
-const checkboxes: {
-    name: 'dnssec_enabled' | 'disable_ipv6';
-    placeholder: string;
-    subtitle: string;
-}[] = [
-    {
-        name: 'dnssec_enabled',
-        placeholder: i18next.t('dnssec_enable'),
-        subtitle: i18next.t('dnssec_enable_desc'),
-    },
-    {
-        name: 'disable_ipv6',
-        placeholder: i18next.t('disable_ipv6'),
-        subtitle: i18next.t('disable_ipv6_desc'),
-    },
-];
-
-const customIps: {
-    name: 'blocking_ipv4' | 'blocking_ipv6';
-    label: string;
-    description: string;
-    validateIp: (value: string) => string;
-}[] = [
-    {
-        name: 'blocking_ipv4',
-        label: i18next.t('blocking_ipv4'),
-        description: i18next.t('blocking_ipv4_desc'),
-        validateIp: validateIpv4,
-    },
-    {
-        name: 'blocking_ipv6',
-        label: i18next.t('blocking_ipv6'),
-        description: i18next.t('blocking_ipv6_desc'),
-        validateIp: validateIpv6,
-    },
-];
-
-const blockingModeOptions = [
-    {
-        value: BLOCKING_MODES.default,
-        label: i18next.t('default'),
-    },
-    {
-        value: BLOCKING_MODES.refused,
-        label: i18next.t('refused'),
-    },
-    {
-        value: BLOCKING_MODES.nxdomain,
-        label: i18next.t('nxdomain'),
-    },
-    {
-        value: BLOCKING_MODES.null_ip,
-        label: i18next.t('null_ip'),
-    },
-    {
-        value: BLOCKING_MODES.custom_ip,
-        label: i18next.t('custom_ip'),
-    },
-];
-
-const blockingModeDescriptions = [
-    i18next.t(`blocking_mode_default`),
-    i18next.t(`blocking_mode_refused`),
-    i18next.t(`blocking_mode_nxdomain`),
-    i18next.t(`blocking_mode_null_ip`),
-    i18next.t(`blocking_mode_custom_ip`),
-];
 
 type FormData = {
     ratelimit: number;
@@ -114,6 +45,74 @@ const Form = ({ processing, initialValues, onSubmit }: Props) => {
         mode: 'onBlur',
         defaultValues: initialValues,
     });
+
+    const checkboxes: {
+        name: 'dnssec_enabled' | 'disable_ipv6';
+        placeholder: string;
+        subtitle: string;
+    }[] = [
+        {
+            name: 'dnssec_enabled',
+            placeholder: t('dnssec_enable'),
+            subtitle: t('dnssec_enable_desc'),
+        },
+        {
+            name: 'disable_ipv6',
+            placeholder: t('disable_ipv6'),
+            subtitle: t('disable_ipv6_desc'),
+        },
+    ];
+
+    const customIps: {
+        name: 'blocking_ipv4' | 'blocking_ipv6';
+        label: string;
+        description: string;
+        validateIp: (value: string) => string;
+    }[] = [
+        {
+            name: 'blocking_ipv4',
+            label: t('blocking_ipv4'),
+            description: t('blocking_ipv4_desc'),
+            validateIp: validateIpv4,
+        },
+        {
+            name: 'blocking_ipv6',
+            label: t('blocking_ipv6'),
+            description: t('blocking_ipv6_desc'),
+            validateIp: validateIpv6,
+        },
+    ];
+
+    const blockingModeOptions = [
+        {
+            value: BLOCKING_MODES.default,
+            label: t('default'),
+        },
+        {
+            value: BLOCKING_MODES.refused,
+            label: t('refused'),
+        },
+        {
+            value: BLOCKING_MODES.nxdomain,
+            label: t('nxdomain'),
+        },
+        {
+            value: BLOCKING_MODES.null_ip,
+            label: t('null_ip'),
+        },
+        {
+            value: BLOCKING_MODES.custom_ip,
+            label: t('custom_ip'),
+        },
+    ];
+
+    const blockingModeDescriptions = [
+        t(`blocking_mode_default`),
+        t(`blocking_mode_refused`),
+        t(`blocking_mode_nxdomain`),
+        t(`blocking_mode_null_ip`),
+        t(`blocking_mode_custom_ip`),
+    ];
 
     const blocking_mode = watch('blocking_mode');
     const edns_cs_enabled = watch('edns_cs_enabled');

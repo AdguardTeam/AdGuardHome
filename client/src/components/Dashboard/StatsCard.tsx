@@ -1,34 +1,58 @@
 import React from 'react';
-
-import { STATUS_COLORS } from '../../helpers/constants';
+import cn from 'clsx';
 
 import { formatNumber } from '../../helpers/helpers';
 
 import Card from '../ui/Card';
-
 import Line from '../ui/Line';
 
-interface StatsCardProps {
+import './StatsCard.css';
+
+export const STATS_CARD_VARIANTS = {
+    QUERIES: 'queries',
+    ADS: 'ads',
+    THREATS: 'threats',
+    ADULT: 'adult',
+} as const;
+
+type StatsCardVariant = typeof STATS_CARD_VARIANTS[keyof typeof STATS_CARD_VARIANTS];
+
+const CHART_COLORS: Record<StatsCardVariant, string> = {
+    queries: '#7F7F7F',
+    ads: '#F67247',
+    threats: '#D58500',
+    adult: '#A870B2',
+};
+
+type Props = {
     total: number;
-    lineData: unknown[];
-    title: object;
-    color: string;
+    lineData: number[];
+    title: React.ReactNode;
+    variant: StatsCardVariant;
     percent?: number;
 }
 
-const StatsCard = ({ total, lineData, percent, title, color }: StatsCardProps) => (
-    <Card type="card--full" bodyType="card-wrap">
-        <div className="card-body-stats">
-            <div className={`card-value card-value-stats text-${color}`}>{formatNumber(total)}</div>
+export const StatsCard = ({ total, lineData, percent, title, variant }: Props) => {
+    const showPercent = typeof percent === 'number';
+    const accentColor = CHART_COLORS[variant];
 
-            <div className="card-title-stats">{title}</div>
+    return (
+        <div className={cn('stats-card', `stats-card--${variant}`)}>
+            <Card type="card--stats" bodyType="card-wrap">
+                <div className="stats-card__inner">
+                    <div className="stats-card__header">
+                        <div className="stats-card__value">{formatNumber(total)}</div>
+
+                        {showPercent && <div className="stats-card__percent">{Math.round(percent)}%</div>}
+                    </div>
+
+                    <div className="stats-card__chart">
+                        <Line data={lineData} color={accentColor} />
+                    </div>
+                </div>
+            </Card>
+
+            <div className="stats-card__title">{title}</div>
         </div>
-        {percent >= 0 && <div className={`card-value card-value-percent text-${color}`}>{percent}</div>}
-
-        <div className="card-chart-bg">
-            <Line data={lineData} color={STATUS_COLORS[color]} />
-        </div>
-    </Card>
-);
-
-export default StatsCard;
+    );
+};

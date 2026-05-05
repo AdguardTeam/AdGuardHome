@@ -204,9 +204,9 @@ func setupContext(
 // logIfUnsupported logs a formatted warning if the error is one of the
 // unsupported errors and returns nil.  If err is nil, logIfUnsupported returns
 // nil.  Otherwise, it returns err.
-func logIfUnsupported(msg string, err error) (outErr error) {
+func logIfUnsupported(ctx context.Context, l *slog.Logger, msg string, err error) (outErr error) {
 	if errors.Is(err, errors.ErrUnsupported) {
-		log.Debug(msg, err)
+		l.DebugContext(ctx, msg, slogutil.KeyError, err)
 
 		return nil
 	}
@@ -214,8 +214,9 @@ func logIfUnsupported(msg string, err error) (outErr error) {
 	return err
 }
 
-// configureOS sets the OS-related configuration.
-func configureOS(conf *configuration) (err error) {
+// configureOS sets the OS-related configuration.  l and conf must not be nil.
+// conf must be valid.
+func configureOS(ctx context.Context, l *slog.Logger, conf *configuration) (err error) {
 	osConf := conf.OSConfig
 	if osConf == nil {
 		return nil
@@ -223,32 +224,32 @@ func configureOS(conf *configuration) (err error) {
 
 	if osConf.Group != "" {
 		err = aghos.SetGroup(osConf.Group)
-		err = logIfUnsupported("warning: setting group", err)
+		err = logIfUnsupported(ctx, l, "warning: setting group", err)
 		if err != nil {
 			return fmt.Errorf("setting group: %w", err)
 		}
 
-		log.Info("group set to %s", osConf.Group)
+		l.InfoContext(ctx, "group set", "groupname", osConf.Group)
 	}
 
 	if osConf.User != "" {
 		err = aghos.SetUser(osConf.User)
-		err = logIfUnsupported("warning: setting user", err)
+		err = logIfUnsupported(ctx, l, "warning: setting user", err)
 		if err != nil {
 			return fmt.Errorf("setting user: %w", err)
 		}
 
-		log.Info("user set to %s", osConf.User)
+		l.InfoContext(ctx, "user set", "username", osConf.User)
 	}
 
 	if osConf.RlimitNoFile != 0 {
 		err = aghos.SetRlimit(osConf.RlimitNoFile)
-		err = logIfUnsupported("warning: setting rlimit", err)
+		err = logIfUnsupported(ctx, l, "warning: setting rlimit", err)
 		if err != nil {
 			return fmt.Errorf("setting rlimit: %w", err)
 		}
 
-		log.Info("rlimit_nofile set to %d", osConf.RlimitNoFile)
+		l.InfoContext(ctx, "rlimit_nofile set", "rlimit_nofile", osConf.RlimitNoFile)
 	}
 
 	return nil
@@ -754,7 +755,7 @@ func run(
 	err := setupContext(ctx, baseLogger, opts, workDir, confPath, isFirstRun)
 	fatalOnError(err)
 
-	err = configureOS(config)
+	err = configureOS(ctx, baseLogger, config)
 	fatalOnError(err)
 
 	// Clients package uses filtering package's static data
@@ -1254,19 +1255,24 @@ func loadCmdLineOpts() (opts options) {
 }
 
 // printWebAddrs prints addresses built from proto, addr, and an appropriate
-// port.  At least one address is printed with the value of port.  Output
-// example:
+// port.  At least one address is printed with the value of port.  l must not be
+// nil.  Output example:
 //
-//	go to http://127.0.0.1:80
-func printWebAddrs(proto, addr string, port uint16) {
-	log.Printf("go to %s://%s", proto, netutil.JoinHostPort(addr, port))
+//	2026/04/08 14:01:43.794575 56031#1 [info] serving url=http://127.0.0.1:3000
+func printWebAddrs(ctx context.Context, l *slog.Logger, proto, addr string, port uint16) {
+	u := &url.URL{
+		Scheme: proto,
+		Host:   netutil.JoinHostPort(addr, port),
+	}
+
+	l.InfoContext(ctx, "serving", "url", u.String())
 }
 
 // printHTTPAddresses prints the IP addresses which user can use to access the
 // admin interface.  proto is either schemeHTTP or schemeHTTPS.
 //
 // TODO(s.chzhen):  Implement separate functions for HTTP and HTTPS.
-func printHTTPAddresses(proto string, tlsMgr *tlsManager) {
+func printHTTPAddresses(ctx context.Context, l *slog.Logger, proto string, tlsMgr *tlsManager) {
 	var tlsConf *tlsConfigSettings
 	if tlsMgr != nil {
 		tlsConf = tlsMgr.config()
@@ -1278,32 +1284,32 @@ func printHTTPAddresses(proto string, tlsMgr *tlsManager) {
 	}
 
 	if proto == urlutil.SchemeHTTPS && tlsConf.ServerName != "" {
-		printWebAddrs(proto, tlsConf.ServerName, tlsConf.PortHTTPS)
+		printWebAddrs(ctx, l, proto, tlsConf.ServerName, tlsConf.PortHTTPS)
 
 		return
 	}
 
 	bindHost := config.HTTPConfig.Address.Addr()
 	if !bindHost.IsUnspecified() {
-		printWebAddrs(proto, bindHost.String(), port)
+		printWebAddrs(ctx, l, proto, bindHost.String(), port)
 
 		return
 	}
 
 	ifaces, err := aghnet.GetValidNetInterfacesForWeb()
 	if err != nil {
-		log.Error("web: getting iface ips: %s", err)
+		l.ErrorContext(ctx, "web: getting iface ips", slogutil.KeyError, err)
 		// That's weird, but we'll ignore it.
 		//
 		// TODO(e.burkov): Find out when it happens.
-		printWebAddrs(proto, bindHost.String(), port)
+		printWebAddrs(ctx, l, proto, bindHost.String(), port)
 
 		return
 	}
 
 	for _, iface := range ifaces {
 		for _, addr := range iface.Addresses {
-			printWebAddrs(proto, addr.String(), port)
+			printWebAddrs(ctx, l, proto, addr.String(), port)
 		}
 	}
 }

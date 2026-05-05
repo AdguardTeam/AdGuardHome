@@ -29,6 +29,7 @@ type ReqPatchSettingsDNS struct {
 	Ratelimit jsonpatch.NonRemovable[int] `json:"ratelimit"`
 
 	BootstrapPreferIPv6 jsonpatch.NonRemovable[bool] `json:"bootstrap_prefer_ipv6"`
+	DNSSECEnabled       jsonpatch.NonRemovable[bool] `json:"dnssec"`
 	RefuseAny           jsonpatch.NonRemovable[bool] `json:"refuse_any"`
 	UseDNS64            jsonpatch.NonRemovable[bool] `json:"use_dns64"`
 }
@@ -92,6 +93,7 @@ func (svc *Service) handlePatchSettingsDNS(w http.ResponseWriter, r *http.Reques
 	req.Ratelimit.Set(&newConf.Ratelimit)
 
 	req.BootstrapPreferIPv6.Set(&newConf.BootstrapPreferIPv6)
+	req.DNSSECEnabled.Set(&newConf.DNSSECEnabled)
 	req.RefuseAny.Set(&newConf.RefuseAny)
 	req.UseDNS64.Set(&newConf.UseDNS64)
 

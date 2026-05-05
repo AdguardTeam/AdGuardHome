@@ -9,17 +9,54 @@ The format is based on [*Keep a Changelog*](https://keepachangelog.com/en/1.0.0/
 <!--
 ## [v0.108.0] – TBA
 
-## [v0.107.75] - 2026-05-01 (APPROX.)
+## [v0.107.76] - 2026-06-01 (APPROX.)
 
-See also the [v0.107.75 GitHub milestone][ms-v0.107.75].
+See also the [v0.107.76 GitHub milestone][ms-v0.107.76].
 
-[ms-v0.107.75]: https://github.com/AdguardTeam/AdGuardHome/milestone/110?closed=1
+[ms-v0.107.76]: https://github.com/AdguardTeam/AdGuardHome/milestone/111?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
+
+## [v0.107.75] - 2026-05-07
+
+See also the [v0.107.75 GitHub milestone][ms-v0.107.75].
+
+### Security
+
+- IDs of requests received over DoH and DoQ and forwarded to plain-DNS upstreams are now set to non-zero values to improve security.
+
+    This is GHSA-xgx4-4h9w-53pv.  We thank @N0zoM1z0 for reporting this security issue.
+
+### Changed
+
+- Frontend API requests no longer depend on axios.
+
+- Dashboard charts use Recharts instead of Nivo.
+
+- `enable_dnssec` in `dns` configuration now defines whether the proxy should set the DO flag in the upstream requests, the default is `true` ([#7046]).
+
+### Fixed
+
+- Statistics database deadlock ([#8359]).
+
+- Translated labels on the DNS settings pages not updating after changing the UI language.
+
+- Dashboard charts now correctly display lower query counts ([#6823]).
+
+- Redundant validation warnings about DHCP when it's disabled ([#8348]).
+
+- Safe Browsing and Parental Control labels on the General Settings page not updating after changing the UI language.
+
+[#6823]: https://github.com/AdguardTeam/AdGuardHome/issues/6823
+[#7046]: https://github.com/AdguardTeam/AdGuardHome/issues/7046
+[#8348]: https://github.com/AdguardTeam/AdGuardHome/issues/8348
+[#8359]: https://github.com/AdguardTeam/AdGuardHome/issues/8359
+
+[ms-v0.107.75]: https://github.com/AdguardTeam/AdGuardHome/milestone/110?closed=1
 
 ## [v0.107.74] - 2026-04-16
 
@@ -3557,11 +3594,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 [ms-v0.104.2]: https://github.com/AdguardTeam/AdGuardHome/milestone/28?closed=1
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.75...HEAD
-[v0.107.75]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.74...v0.107.75
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.76...HEAD
+[v0.107.76]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.75...v0.107.76
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.74...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.75...HEAD
+[v0.107.75]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.74...v0.107.75
 [v0.107.74]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.73...v0.107.74
 [v0.107.73]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.72...v0.107.73
 [v0.107.72]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.71...v0.107.72

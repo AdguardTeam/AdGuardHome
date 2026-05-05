@@ -10,15 +10,20 @@ import (
 )
 
 // serveV6 handles the ethernet packet of IPv6 type. iface and pkt must not be
-// nil.  ctx must contain a [frameData] accessible with [frameDataFromContext].
+// nil.  iface and fd must be valid.  pkt must be an IPv6 packet.
 //
 //lint:ignore U1000 TODO(e.burkov): Use.
 func (srv *DHCPServer) serveV6(
 	ctx context.Context,
-	_ *dhcpInterfaceV6,
+	iface *dhcpInterfaceV6,
 	pkt gopacket.Packet,
+	fd *frameData6,
 ) (err error) {
 	defer func() { err = errors.Annotate(err, "serving dhcpv6: %w") }()
+
+	// TODO(e.burkov):  Use the iface and fd parameters.
+	_ = iface
+	_ = fd
 
 	msg, ok := pkt.Layer(layers.LayerTypeDHCPv6).(*layers.DHCPv6)
 	if !ok {

@@ -186,16 +186,13 @@ fi
 run_linter "$go" tool gocyclo --over 10 ./internal/ ./scripts/
 
 # TODO(a.garipov): Enable 10 for all.
-run_linter "$go" tool gocognit --over='20' \
-	./internal/querylog/ \
-	;
-
 run_linter "$go" tool gocognit --over='14' \
 	./internal/dhcpd \
 	;
 
 run_linter "$go" tool gocognit --over='10' \
 	./internal/aghalg/ \
+	./internal/agh/ \
 	./internal/aghhttp/ \
 	./internal/aghnet/ \
 	./internal/aghos/ \
@@ -213,6 +210,8 @@ run_linter "$go" tool gocognit --over='10' \
 	./internal/ipset \
 	./internal/next/ \
 	./internal/ossvc/ \
+	./internal/permcheck/ \
+	./internal/querylog/ \
 	./internal/rdns/ \
 	./internal/schedule/ \
 	./internal/stats/ \
