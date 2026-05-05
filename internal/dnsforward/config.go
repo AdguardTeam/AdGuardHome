@@ -2,6 +2,7 @@ package dnsforward
 
 import (
 	"context"
+	"crypto/tls"
 	"crypto/x509"
 	"fmt"
 	"log/slog"
@@ -701,6 +702,8 @@ func (s *Server) prepareDNSCrypt(proxyConf *proxy.Config) {
 	proxyConf.DNSCryptResolverCert = dnsCryptConf.ResolverCert
 }
 
+type getCertificateFunc func(chi *tls.ClientHelloInfo) (cert *tls.Certificate, err error)
+
 // prepareTLS sets up the TLS configuration for the DNS proxy.
 func (s *Server) prepareTLS(ctx context.Context, proxyConf *proxy.Config) (err error) {
 	s.prepareDNSCrypt(proxyConf)
@@ -714,6 +717,11 @@ func (s *Server) prepareTLS(ctx context.Context, proxyConf *proxy.Config) (err e
 	proxyConf.TLSConfig = s.tlsConfigProvider.TLSConfig()
 	if proxyConf.TLSConfig == nil {
 		return nil
+	}
+
+	original := proxyConf.TLSConfig.GetCertificate
+	if original != nil {
+		proxyConf.TLSConfig.GetCertificate = s.onGetCertificate(ctx, original)
 	}
 
 	tlsCert := proxyConf.TLSConfig.Certificates[0]
@@ -778,6 +786,27 @@ func anyNameMatches(dnsNames []string, sni string) (ok bool) {
 	}
 
 	return false
+}
+
+// onGetCertificate wraps the original [getCertificateFunc].  original must not
+// be nil.
+func (s *Server) onGetCertificate(
+	ctx context.Context,
+	original getCertificateFunc,
+) (wrapped getCertificateFunc) {
+	return func(chi *tls.ClientHelloInfo) (cert *tls.Certificate, err error) {
+		if s.conf.TLSConf.StrictSNICheck && !anyNameMatches(s.dnsNames, chi.ServerName) {
+			s.logger.WarnContext(
+				ctx,
+				"unknown SNI in Client Hello",
+				"server_name", chi.ServerName,
+			)
+
+			return nil, fmt.Errorf("invalid SNI")
+		}
+
+		return original(chi)
+	}
 }
 
 // preparePlain prepares the plain-DNS configuration for the DNS proxy.

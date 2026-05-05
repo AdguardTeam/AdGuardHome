@@ -46,6 +46,7 @@ import (
 // testLogger is a logger used in tests.
 var testLogger = slogutil.NewDiscardLogger()
 
+// testTLSConfigProvider is an empty TLS config provider for tests.
 var testTLSConfigProvider = &aghtls.EmptyTLSConfigProvider{}
 
 func TestMain(m *testing.M) {
@@ -604,7 +605,7 @@ func TestServerRace(t *testing.T) {
 		ConfModifier:  agh.EmptyConfigModifier{},
 		ServePlainDNS: true,
 	}
-	s := createTestServer(t, filterConf, forwardConf, aghtest.TLSConfigProvider{})
+	s := createTestServer(t, filterConf, forwardConf, testTLSConfigProvider)
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{newGoogleUpstream()}
 	startDeferStop(t, s)
 
@@ -739,9 +740,7 @@ func TestSafeSearch(t *testing.T) {
 }
 
 func TestInvalidRequest(t *testing.T) {
-	s := createTestServer(t, &filtering.Config{
-		BlockingMode: filtering.BlockingModeDefault,
-	}, ServerConfig{
+	srvConf := ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		TLSConf:        &TLSConfig{},
@@ -753,7 +752,16 @@ func TestInvalidRequest(t *testing.T) {
 			ClientsContainer: EmptyClientsContainer{},
 		},
 		ServePlainDNS: true,
-	}, aghtest.TLSConfigProvider{})
+	}
+
+	s := createTestServer(
+		t,
+		&filtering.Config{
+			BlockingMode: filtering.BlockingModeDefault,
+		},
+		srvConf,
+		testTLSConfigProvider,
+	)
 	startDeferStop(t, s)
 
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP).String()
@@ -786,10 +794,14 @@ func TestBlockedRequest(t *testing.T) {
 		},
 		ServePlainDNS: true,
 	}
-	s := createTestServer(t, &filtering.Config{
-		ProtectionEnabled: true,
-		BlockingMode:      filtering.BlockingModeDefault,
-	}, forwardConf, aghtest.TLSConfigProvider{})
+	s := createTestServer(t,
+		&filtering.Config{
+			ProtectionEnabled: true,
+			BlockingMode:      filtering.BlockingModeDefault,
+		},
+		forwardConf,
+		testTLSConfigProvider,
+	)
 	startDeferStop(t, s)
 
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP)

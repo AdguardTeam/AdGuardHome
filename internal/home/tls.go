@@ -330,10 +330,11 @@ func (m *tlsManager) loadTLSConfig(
 	cert, err := tls.X509KeyPair(m.extTLSConf.CertificateChainData, m.extTLSConf.PrivateKeyData)
 
 	m.tlsConf = &tls.Config{
-		RootCAs:      m.rootCerts,
-		CipherSuites: m.customCipherIDs,
-		MinVersion:   tls.VersionTLS12,
-		Certificates: []tls.Certificate{cert},
+		RootCAs:        m.rootCerts,
+		CipherSuites:   m.customCipherIDs,
+		MinVersion:     tls.VersionTLS12,
+		GetCertificate: m.onGetCertificate,
+		Certificates:   []tls.Certificate{cert},
 	}
 
 	return errors.Annotate(err, "loading certificate: %w")
@@ -1107,7 +1108,7 @@ func (m *tlsManager) registerWebHandlers() {
 }
 
 // TLSConfig implements the [aghtls.TLSConfigProvider] interface for
-// *tlsManager.  If tlsManager.extTLSConf.Enabled is false, nil is returned.
+// *tlsManager.  If [tlsManager.extTLSConf.Enabled] is false, nil is returned.
 func (m *tlsManager) TLSConfig() (conf *tls.Config) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -1117,18 +1118,27 @@ func (m *tlsManager) TLSConfig() (conf *tls.Config) {
 	}
 
 	conf = m.tlsConf.Clone()
+
 	return conf
 }
 
 // RootCAs implements the [aghtls.TLSConfigProvider] interface for *tlsManager.
-// If tlsManager.extTLSConf.Enabled is false, nil is returned.
 func (m *tlsManager) RootCAs() (root *x509.CertPool) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
+	return m.rootCerts
+}
+
+// onGetCertificate gets [*tls.Certificate] from [*tls.Config].  If
+// [tlsManager.extTLSConf.Enabled] is false, nil is returned.
+func (m *tlsManager) onGetCertificate(chi *tls.ClientHelloInfo) (cert *tls.Certificate, err error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	if !m.extTLSConf.Enabled {
-		return nil
+		return nil, nil
 	}
 
-	return m.rootCerts
+	return &m.tlsConf.Certificates[0], nil
 }
