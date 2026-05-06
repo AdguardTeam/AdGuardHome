@@ -1119,24 +1119,18 @@ func unmarshalTLS(r *http.Request) (data tlsConfigSettingsExt, err error) {
 
 // marshalTLS encodes sensitive fields and writes data as JSON.  All arguments
 // must not be nil.
-//
-// TODO !! That is really strange.  [*tlsConfig.CertificateChainData] and
-// [*tlsConfig.PrivateKey] appear to be the final place to store the data.  But
-// for some reason, [*tlsConfig.CertificateChain] and [*tlsConfig.PrivateKey]
-// were checked there, which can be empty, according to the [*tlsConfig] docs.
-// Consider thinking about it again.
 func (m *tlsManager) marshalTLS(
 	ctx context.Context,
 	w http.ResponseWriter,
 	r *http.Request,
 	data *tlsConfig,
 ) {
-	if len(data.CertificateChainData) != 0 {
-		encoded := base64.StdEncoding.EncodeToString(data.CertificateChainData)
+	if data.CertificateChain != "" {
+		encoded := base64.StdEncoding.EncodeToString([]byte(data.CertificateChain))
 		data.CertificateChain = encoded
 	}
 
-	if len(data.PrivateKeyData) != 0 {
+	if data.PrivateKey != "" {
 		data.PrivateKeySaved = true
 		data.PrivateKey = ""
 	}
@@ -1154,10 +1148,6 @@ func (m *tlsManager) registerWebHandlers() {
 // TLSConfig implements the [aghtls.TLSConfigProvider] interface for
 // *tlsManager.
 func (m *tlsManager) TLSConfig() (conf *tls.Config) {
-	if m.tlsConf == nil {
-		return nil
-	}
-
 	return m.tlsConf.Clone()
 }
 

@@ -61,6 +61,8 @@ func httpClient(tlsMgr *tlsManager) (c *http.Client) {
 	tr := newCustomUserAgentTransport(&http.Transport{
 		DialContext: dialContext,
 		Proxy:       httpProxy,
+		// TODO(m.kazantsev):  Do not create TLS config manually, but use
+		// [aghtls.TLSConfigProvider].
 		TLSClientConfig: &tls.Config{
 			RootCAs:      tlsMgr.rootCerts,
 			CipherSuites: tlsMgr.customCipherIDs,

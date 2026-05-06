@@ -313,14 +313,17 @@ func TestTLSManager_HandleTLSStatus(t *testing.T) {
 		err error
 	)
 
+	certChain := readFile(t, testCertificatePath)
+	privateKey := readFile(t, testPrivateKeyPath)
+
 	m, err := newTLSManager(ctx, &tlsManagerConfig{
 		logger:       testLogger,
 		confModifier: agh.EmptyConfigModifier{},
 		manager:      aghtls.EmptyManager{},
 		tlsSettings: tlsConfigSettings{
-			Enabled:         true,
-			CertificatePath: testCertificatePath,
-			PrivateKeyPath:  testPrivateKeyPath,
+			Enabled:          true,
+			CertificateChain: string(certChain),
+			PrivateKey:       string(privateKey),
 		},
 		servePlainDNS: false,
 	})
@@ -334,8 +337,7 @@ func TestTLSManager_HandleTLSStatus(t *testing.T) {
 	err = json.NewDecoder(w.Body).Decode(res)
 	require.NoError(t, err)
 
-	certChainData := readFile(t, testCertificatePath)
-	wantCertificateChain := base64.StdEncoding.EncodeToString(certChainData)
+	wantCertificateChain := base64.StdEncoding.EncodeToString(certChain)
 
 	assert.True(t, res.Enabled)
 	assert.True(t, res.PrivateKeySaved)
