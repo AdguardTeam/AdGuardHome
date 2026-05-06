@@ -254,7 +254,7 @@ func createTestTLS(
 
 	tlsConfig.RootCAs = roots
 
-	tlsConfProvider := aghtest.TLSConfigProvider{}
+	tlsConfProvider := &aghtest.TLSConfigProvider{}
 
 	tlsConfProvider.OnTLSConfig = func() (conf *tls.Config) { return tlsConfig }
 	tlsConfProvider.OnRootCAs = func() (pool *x509.CertPool) { return roots }
@@ -660,7 +660,7 @@ func TestSafeSearch(t *testing.T) {
 		},
 		ServePlainDNS: true,
 	}
-	s := createTestServer(t, filterConf, forwardConf, aghtest.TLSConfigProvider{})
+	s := createTestServer(t, filterConf, forwardConf, testTLSConfigProvider)
 
 	pt := testutil.NewPanicT(t)
 	ups := aghtest.NewUpstreamMock(func(req *dns.Msg) (resp *dns.Msg, err error) {
@@ -838,9 +838,14 @@ func TestServerCustomClientUpstream(t *testing.T) {
 		},
 		ServePlainDNS: true,
 	}
-	s := createTestServer(t, &filtering.Config{
-		BlockingMode: filtering.BlockingModeDefault,
-	}, forwardConf, aghtest.TLSConfigProvider{})
+	s := createTestServer(
+		t,
+		&filtering.Config{
+			BlockingMode: filtering.BlockingModeDefault,
+		},
+		forwardConf,
+		testTLSConfigProvider,
+	)
 
 	ups := aghtest.NewUpstreamMock(func(req *dns.Msg) (resp *dns.Msg, err error) {
 		atomic.AddUint32(&upsCalledCounter, 1)
@@ -917,7 +922,7 @@ func TestBlockCNAMEProtectionEnabled(t *testing.T) {
 			ClientsContainer: EmptyClientsContainer{},
 		},
 		ServePlainDNS: true,
-	}, aghtest.TLSConfigProvider{})
+	}, testTLSConfigProvider)
 	testUpstm := &aghtest.Upstream{
 		CName: testCNAMEs,
 		IPv4:  testIPv4,
@@ -954,10 +959,15 @@ func TestBlockCNAME(t *testing.T) {
 		},
 		ServePlainDNS: true,
 	}
-	s := createTestServer(t, &filtering.Config{
-		ProtectionEnabled: true,
-		BlockingMode:      filtering.BlockingModeDefault,
-	}, forwardConf, aghtest.TLSConfigProvider{})
+
+	s := createTestServer(t,
+		&filtering.Config{
+			ProtectionEnabled: true,
+			BlockingMode:      filtering.BlockingModeDefault,
+		},
+		forwardConf,
+		testTLSConfigProvider,
+	)
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{
 		&aghtest.Upstream{
 			CName: testCNAMEs,
@@ -1031,7 +1041,7 @@ func TestClientRulesForCNAMEMatching(t *testing.T) {
 	}
 	s := createTestServer(t, &filtering.Config{
 		BlockingMode: filtering.BlockingModeDefault,
-	}, forwardConf, aghtest.TLSConfigProvider{})
+	}, forwardConf, testTLSConfigProvider)
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{
 		&aghtest.Upstream{
 			CName: testCNAMEs,
@@ -1080,7 +1090,7 @@ func TestNullBlockedRequest(t *testing.T) {
 	s := createTestServer(t, &filtering.Config{
 		ProtectionEnabled: true,
 		BlockingMode:      filtering.BlockingModeNullIP,
-	}, forwardConf, aghtest.TLSConfigProvider{})
+	}, forwardConf, testTLSConfigProvider)
 	startDeferStop(t, s)
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
 
@@ -1221,7 +1231,7 @@ func TestBlockedByHosts(t *testing.T) {
 	s := createTestServer(t, &filtering.Config{
 		ProtectionEnabled: true,
 		BlockingMode:      filtering.BlockingModeDefault,
-	}, forwardConf, aghtest.TLSConfigProvider{})
+	}, forwardConf, testTLSConfigProvider)
 	startDeferStop(t, s)
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
 
@@ -1292,7 +1302,7 @@ func TestBlockedBySafeBrowsing(t *testing.T) {
 		},
 		ServePlainDNS: true,
 	}
-	s := createTestServer(t, filterConf, forwardConf, aghtest.TLSConfigProvider{})
+	s := createTestServer(t, filterConf, forwardConf, testTLSConfigProvider)
 	startDeferStop(t, s)
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
 

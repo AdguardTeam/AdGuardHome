@@ -192,11 +192,13 @@ type TLSConfig struct {
 	DNSCryptConf *DNSCryptConfig
 
 	// TLSListenAddrs are the addresses to listen on for DoT connections.  Each
-	// item in the list must be non-nil if Cert is not nil.
+	// item in the list must be non-nil if TLS has at least one valid
+	// certificate.
 	TLSListenAddrs []*net.TCPAddr
 
-	// QUICListenAddrs are the addresses to listen on for DoQ connections.  Each
-	// item in the list must be non-nil if Cert is not nil.
+	// QUICListenAddrs are the addresses to listen on for DoQ connections. sEach
+	// item in the list must be non-nil if TLS has at least one valid
+	// certificate.
 	QUICListenAddrs []*net.UDPAddr
 
 	// HTTPSListenAddrs should be the addresses AdGuard Home is listening on for
@@ -702,6 +704,8 @@ func (s *Server) prepareDNSCrypt(proxyConf *proxy.Config) {
 	proxyConf.DNSCryptResolverCert = dnsCryptConf.ResolverCert
 }
 
+// getCertificateFunc is a function which is called by the [tls] package after
+// the [tls.ClientHelloInfo] is received.
 type getCertificateFunc func(chi *tls.ClientHelloInfo) (cert *tls.Certificate, err error)
 
 // prepareTLS sets up the TLS configuration for the DNS proxy.
@@ -802,7 +806,7 @@ func (s *Server) onGetCertificate(
 				"server_name", chi.ServerName,
 			)
 
-			return nil, fmt.Errorf("invalid SNI")
+			return nil, errors.Error("invalid SNI")
 		}
 
 		return original(chi)

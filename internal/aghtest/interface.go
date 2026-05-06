@@ -214,10 +214,12 @@ var _ aghtls.TLSConfigProvider = (*TLSConfigProvider)(nil)
 
 // TLSConfig implements the [aghtls.TLSConfigProvider] interface for
 // *TLSConfigProvider.
-func (t TLSConfigProvider) TLSConfig() *tls.Config {
+func (t *TLSConfigProvider) TLSConfig() (conf *tls.Config) {
 	return t.OnTLSConfig()
 }
 
-func (t TLSConfigProvider) RootCAs() (pool *x509.CertPool) {
+// RootCAs implements the [aghtls.TLSConfigProvider] interface for
+// *TLSConfigProvider.
+func (t *TLSConfigProvider) RootCAs() (pool *x509.CertPool) {
 	return t.OnRootCAs()
 }
