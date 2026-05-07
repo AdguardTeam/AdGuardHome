@@ -71,7 +71,7 @@ func appendDNSAddrsWithIfaces(dst []string, src []netip.Addr) (res []string, err
 // tlsMgr must not be nil.
 func collectDNSAddresses(tlsMgr *tlsManager) (addrs []string, err error) {
 	if hosts := config.DNS.BindHosts; len(hosts) == 0 {
-		addrs = appendDNSAddrs(addrs, netutil.IPv4Localhost())
+		addrs = appendDNSAddrs(addrs, netutil.IPv4Localhost(), netutil.IPv6Localhost())
 	} else {
 		addrs, err = appendDNSAddrsWithIfaces(addrs, hosts)
 		if err != nil {
