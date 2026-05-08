@@ -228,7 +228,7 @@ export const ListsTable = ({
             );
         };
 
-        const DESC_TEXT = {
+        const DESC_TEXT: Record<string, string> = {
             [TABLE_IDS.ALLOWLISTS_TABLE]: intl.getMessage('allowlist_empty', {
                 button: (text: string) => renderButton(text),
             }),

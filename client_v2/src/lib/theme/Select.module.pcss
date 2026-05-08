@@ -54,9 +54,19 @@
         background-color: var(--hovered-dropdown-menu-background);
     }
 
-    &.selected {
+    &_selected {
         background-color: var(--pressed-dropdown-menu-background);
         color: var(--default-main-text);
+    }
+
+    &_disabled {
+        color: var(--disabled-main-text);
+        cursor: default;
+
+        &:hover,
+        &:focus {
+            background-color: transparent;
+        }
     }
 
     &_check,

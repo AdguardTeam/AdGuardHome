@@ -205,6 +205,20 @@
         &:focus {
             border-color: var(--hovered-main-button);
         }
+
+        &.select__control--is-disabled {
+            .select__value-container,
+            .select__single-value,
+            .select__placeholder {
+                color: var(--disabled-main-text);
+            }
+
+            .select__dropdown-indicator {
+                svg {
+                    color: var(--disabled-main-text);
+                }
+            }
+        }
     }
 
     .select__single-value {

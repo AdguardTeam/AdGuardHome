@@ -1,5 +1,5 @@
 import React from 'react';
-import RSelect, { GroupBase, MenuListProps, SelectComponentsConfig } from 'react-select';
+import RSelect, { GroupBase, MenuListProps, OptionProps, SelectComponentsConfig } from 'react-select';
 import cn from 'clsx';
 import { IOption } from 'panel/lib/helpers/utils';
 
@@ -84,7 +84,6 @@ interface SelectProps<
     height?: ISelectHeight;
     menuSize?: ISelectMenuSize;
     menuPosition?: 'right';
-    checkmark?: boolean;
     mobile?: boolean; // true: mobile-always, false: desktop-always, undefined: responsive
     isDisabled?: boolean;
     isMulti?: Multi;
@@ -112,6 +111,7 @@ interface SelectProps<
     onMenuOpen?: () => void;
     onMenuClose?: () => void;
     showIcons?: boolean;
+    showOptionIcon?: boolean;
 }
 
 export const Select = <
@@ -133,7 +133,6 @@ export const Select = <
     mobile,
     menuIsOpen,
     menuPosition,
-    checkmark = true,
     size,
     height,
     menuSize,
@@ -152,6 +151,7 @@ export const Select = <
     onMenuOpen,
     onMenuClose,
     showIcons = false,
+    showOptionIcon = true,
 }: SelectProps<T, Multi, ExtendOption, Group>) => {
     const selectClass = cn(
         { 'desktop-select-always': mobile === false },
@@ -177,8 +177,12 @@ export const Select = <
         className,
     );
 
+    const DefaultOption = (props: OptionProps<IOption<T> & ExtendOption, Multi, Group>) => (
+        <CustomOption {...props} showIcon={showOptionIcon} />
+    );
+
     const customComponents = {
-        ...(checkmark && !showIcons ? { Option: CustomOption } : {}),
+        ...(!showIcons ? { Option: DefaultOption } : {}),
         ...(showIcons ? { Option: CustomIconOption, ValueContainer: CustomIconValueContainer } : {}),
         ...(lazyList ? { MenuList: CustomMenuList } : {}),
         ClearIndicator: CustomClearIndicator,

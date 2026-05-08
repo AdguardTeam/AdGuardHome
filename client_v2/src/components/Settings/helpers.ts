@@ -40,5 +40,5 @@ const SAFESEARCH_TITLES = {
 } as const;
 
 export const getSafeSearchProviderTitle = (key: string) => {
-    return SAFESEARCH_TITLES[key] ?? captitalizeWords(key);
+    return SAFESEARCH_TITLES[key as keyof typeof SAFESEARCH_TITLES] ?? captitalizeWords(key);
 };

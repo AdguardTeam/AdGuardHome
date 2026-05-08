@@ -8,7 +8,7 @@ import { WHOIS_ICONS } from './constants';
 const getFormattedWhois = (whois: any) => {
     const whoisInfo = normalizeWhois(whois);
     return Object.keys(whoisInfo).map((key) => {
-        const icon = WHOIS_ICONS[key];
+        const icon = WHOIS_ICONS[key as keyof typeof WHOIS_ICONS];
         return (
             <span className="logs__whois text-muted" key={key} title={whoisInfo[key]}>
                 {icon && (

@@ -5,7 +5,23 @@ import { DAY, HOUR, STATS_INTERVALS_DAYS, TIME_UNITS } from '../helpers/constant
 
 import * as actions from '../actions/stats';
 
-const defaultStats = {
+// TODO (ik) fix any types after dashboard task
+const defaultStats: {
+    dnsQueries: any[];
+    blockedFiltering: any[];
+    replacedParental: any[];
+    replacedSafebrowsing: any[];
+    topBlockedDomains: any[];
+    topClients: any[];
+    topQueriedDomains: any[];
+    numBlockedFiltering: number;
+    numDnsQueries: number;
+    numReplacedParental: number;
+    numReplacedSafebrowsing: number;
+    numReplacedSafesearch: number;
+    avgProcessingTime: number;
+    timeUnits: string;
+} = {
     dnsQueries: [],
     blockedFiltering: [],
     replacedParental: [],
