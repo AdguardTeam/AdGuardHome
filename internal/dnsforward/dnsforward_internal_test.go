@@ -47,7 +47,7 @@ import (
 var testLogger = slogutil.NewDiscardLogger()
 
 // testTLSConfigProvider is an empty TLS config provider for tests.
-var testTLSConfigProvider = &aghtls.EmptyTLSConfigProvider{}
+var testTLSConfigProvider = aghtls.EmptyTLSConfigProvider{}
 
 func TestMain(m *testing.M) {
 	testutil.DiscardLogOutput(m)
@@ -233,10 +233,15 @@ func createServerTLSConfig(tb testing.TB) (*tls.Config, []byte, []byte) {
 	cert, err := tls.X509KeyPair(certPem, keyPem)
 	require.NoErrorf(tb, err, "failed to create certificate: %s", err)
 
+	getCert := func(chi *tls.ClientHelloInfo) (*tls.Certificate, error) {
+		return &cert, nil
+	}
+
 	return &tls.Config{
-		Certificates: []tls.Certificate{cert},
-		ServerName:   tlsServerName,
-		MinVersion:   tls.VersionTLS12,
+		GetCertificate: getCert,
+		Certificates:   []tls.Certificate{cert},
+		ServerName:     tlsServerName,
+		MinVersion:     tls.VersionTLS12,
 	}, certPem, keyPem
 }
 

@@ -178,7 +178,8 @@ type versionResponse struct {
 	Disabled bool `json:"disabled"`
 }
 
-// maxPrivilegedPort is the maximum port number.
+// maxPrivilegedPort is the maximum port number.  This only applies to Unix,
+// as on Windows, [aghnet.CanBindPrivilegedPorts] always returns `true`, `nil`
 const maxPrivilegedPort = 1024
 
 // setAllowedToAutoUpdate sets CanAutoUpdate to true if AdGuard Home is actually

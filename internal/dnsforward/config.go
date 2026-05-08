@@ -196,7 +196,7 @@ type TLSConfig struct {
 	// certificate.
 	TLSListenAddrs []*net.TCPAddr
 
-	// QUICListenAddrs are the addresses to listen on for DoQ connections. sEach
+	// QUICListenAddrs are the addresses to listen on for DoQ connections.  Each
 	// item in the list must be non-nil if TLS has at least one valid
 	// certificate.
 	QUICListenAddrs []*net.UDPAddr
@@ -704,10 +704,6 @@ func (s *Server) prepareDNSCrypt(proxyConf *proxy.Config) {
 	proxyConf.DNSCryptResolverCert = dnsCryptConf.ResolverCert
 }
 
-// getCertificateFunc is a function which is called by the [tls] package after
-// the [tls.ClientHelloInfo] is received.
-type getCertificateFunc func(chi *tls.ClientHelloInfo) (cert *tls.Certificate, err error)
-
 // prepareTLS sets up the TLS configuration for the DNS proxy.
 func (s *Server) prepareTLS(ctx context.Context, proxyConf *proxy.Config) (err error) {
 	s.prepareDNSCrypt(proxyConf)
@@ -723,10 +719,7 @@ func (s *Server) prepareTLS(ctx context.Context, proxyConf *proxy.Config) (err e
 		return nil
 	}
 
-	original := proxyConf.TLSConfig.GetCertificate
-	if original != nil {
-		proxyConf.TLSConfig.GetCertificate = s.onGetCertificate(ctx, original)
-	}
+	s.replaceGetCertificate(proxyConf.TLSConfig)
 
 	tlsCert := proxyConf.TLSConfig.Certificates[0]
 
@@ -792,16 +785,14 @@ func anyNameMatches(dnsNames []string, sni string) (ok bool) {
 	return false
 }
 
-// onGetCertificate wraps the original [getCertificateFunc].  original must not
-// be nil.
-func (s *Server) onGetCertificate(
-	ctx context.Context,
-	original getCertificateFunc,
-) (wrapped getCertificateFunc) {
-	return func(chi *tls.ClientHelloInfo) (cert *tls.Certificate, err error) {
+// replaceGetCertificate replaces the TLS.Config.GetCertificate with a wrapped
+// version of the previous one, adding a SNI check.  orig must not be nil.
+func (s *Server) replaceGetCertificate(orig *tls.Config) {
+	origGetCert := orig.GetCertificate
+
+	orig.GetCertificate = func(chi *tls.ClientHelloInfo) (cert *tls.Certificate, err error) {
 		if s.conf.TLSConf.StrictSNICheck && !anyNameMatches(s.dnsNames, chi.ServerName) {
-			s.logger.WarnContext(
-				ctx,
+			s.logger.Warn(
 				"unknown SNI in Client Hello",
 				"server_name", chi.ServerName,
 			)
@@ -809,7 +800,7 @@ func (s *Server) onGetCertificate(
 			return nil, errors.Error("invalid SNI")
 		}
 
-		return original(chi)
+		return origGetCert(chi)
 	}
 }
 

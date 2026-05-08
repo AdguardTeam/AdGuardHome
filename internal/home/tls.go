@@ -149,7 +149,8 @@ func newTLSManager(ctx context.Context, conf *tlsManagerConfig) (m *tlsManager, 
 		m.logger.ErrorContext(ctx, "setting tls files", slogutil.KeyError, err)
 	}
 
-	err = m.loadTLSConfig(ctx, m.extTLSConf, m.status)
+	var cert tls.Certificate
+	cert, err = m.loadTLSConfig(ctx, m.extTLSConf, m.status)
 	if err != nil {
 		m.extTLSConf.Enabled = false
 
@@ -157,14 +158,15 @@ func newTLSManager(ctx context.Context, conf *tlsManagerConfig) (m *tlsManager, 
 		return m, err
 	}
 
-	m.setCertFileTime(ctx)
-
 	m.tlsConf = &tls.Config{
 		RootCAs:        m.rootCerts,
 		CipherSuites:   m.customCipherIDs,
 		MinVersion:     tls.VersionTLS12,
 		GetCertificate: m.onGetCertificate,
+		Certificates:   []tls.Certificate{cert},
 	}
+
+	m.setCertFileTime(ctx)
 
 	return m, nil
 }
@@ -273,13 +275,15 @@ func (m *tlsManager) reload(ctx context.Context) {
 	tlsConf := *tlsConfPtr
 	status := &tlsConfigStatus{}
 
-	err = m.loadTLSConfig(ctx, &tlsConf, status)
+	var cert tls.Certificate
+	cert, err = m.loadTLSConfig(ctx, &tlsConf, status)
 	if err != nil {
 		m.logger.WarnContext(ctx, "reloading interrupted", slogutil.KeyError, err)
 
 		return
 	}
 
+	m.tlsConf.Certificates = []tls.Certificate{cert}
 	m.extTLSConf = &tlsConf
 	m.status = status
 
@@ -332,7 +336,7 @@ func (m *tlsManager) loadTLSConfig(
 	ctx context.Context,
 	extTLSConf *tlsConfigSettings,
 	status *tlsConfigStatus,
-) (err error) {
+) (cert tls.Certificate, err error) {
 	defer func() {
 		if err != nil {
 			status.WarningValidation = err.Error()
@@ -346,13 +350,13 @@ func (m *tlsManager) loadTLSConfig(
 	err = loadCertificateChainData(extTLSConf)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
-		return err
+		return tls.Certificate{}, err
 	}
 
 	err = loadPrivateKeyData(extTLSConf)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
-		return err
+		return tls.Certificate{}, err
 	}
 
 	err = m.validateCertificates(
@@ -364,15 +368,15 @@ func (m *tlsManager) loadTLSConfig(
 	)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
-		return err
+		return tls.Certificate{}, err
 	}
 
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	cert, err := tls.X509KeyPair(m.extTLSConf.CertificateChainData, m.extTLSConf.PrivateKeyData)
-	m.tlsConf.Certificates = []tls.Certificate{cert}
+	cert, err = tls.X509KeyPair(m.extTLSConf.CertificateChainData, m.extTLSConf.PrivateKeyData)
+	if err != nil {
+		return tls.Certificate{}, fmt.Errorf("loading certificate: %w", err)
+	}
 
-	return errors.Annotate(err, "loading certificate: %w")
+	return cert, nil
 }
 
 // loadCertificateChainData loads PEM-encoded certificates chain data to the
@@ -533,7 +537,7 @@ func (m *tlsManager) handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 	// Skip the error check, since we are only interested in the value of
 	// status.WarningValidation.
 	status := &tlsConfigStatus{}
-	_ = m.loadTLSConfig(ctx, &setts.tlsConfigSettings, status)
+	_, _ = m.loadTLSConfig(ctx, &setts.tlsConfigSettings, status)
 	resp := &tlsConfig{
 		tlsConfigSettingsExt: setts,
 		tlsConfigStatus:      status,
@@ -624,7 +628,7 @@ func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) 
 	}
 
 	status := &tlsConfigStatus{}
-	err = m.loadTLSConfig(ctx, &req.tlsConfigSettings, status)
+	_, err = m.loadTLSConfig(ctx, &req.tlsConfigSettings, status)
 	if err != nil {
 		resp := &tlsConfig{
 			tlsConfigSettingsExt: req,
