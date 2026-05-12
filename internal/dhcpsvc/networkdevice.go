@@ -128,15 +128,15 @@ func (EmptyNetworkDevice) WritePacketData(_ []byte) (err error) {
 // frameData4 stores the Ethernet and IPv4 layers of the incoming packet, as
 // well as the network device that the packet was received from and its address.
 type frameData4 struct {
+	// device is the network device that the packet was received from.  It must
+	// not be nil.
+	device NetworkDevice
+
 	// ether is the Ethernet layer of the incoming packet.  It must not be nil.
 	ether *layers.Ethernet
 
 	// ip is the IPv4 layer of the incoming packet.  It must not be nil.
 	ip *layers.IPv4
-
-	// device is the network device that the packet was received from.  It must
-	// not be nil.
-	device NetworkDevice
 
 	// localAddr is the local IP address that the packet was sent to.  It must
 	// be a valid IPv4 address assigned to the device.
@@ -146,16 +146,6 @@ type frameData4 struct {
 // frameData6 stores the Ethernet and IPv6 layers of the incoming packet, as
 // well as the network device that the packet was received from and its address.
 type frameData6 struct {
-	// ether is the Ethernet layer of the incoming packet.  It must not be nil.
-	ether *layers.Ethernet
-
-	// ip is the IPv6 layer of the incoming packet.  It must not be nil.
-	ip *layers.IPv6
-
-	// duid is the DHCPv6 DUID constructed of the network device hardware
-	// address.  It must not be nil.
-	duid *layers.DHCPv6DUID
-
 	// device is the network device that the packet was received from.  It must
 	// not be nil.
 	device NetworkDevice
@@ -163,4 +153,19 @@ type frameData6 struct {
 	// localAddr is the local IP address that the packet was sent to.  It must
 	// be a valid IPv6 address assigned to the device.
 	localAddr netip.Addr
+
+	// duid is the DHCPv6 DUID constructed of the network device hardware
+	// address.  It must not be nil.
+	duid *layers.DHCPv6DUID
+
+	// ether is the Ethernet layer of the incoming packet.  It must not be nil.
+	ether *layers.Ethernet
+
+	// ip is the IPv6 layer of the incoming packet.  It must not be nil.
+	ip *layers.IPv6
+
+	// duidData is the pre-encoded DUID-LL for this server interface.  It is
+	// used to match the Server Identifier option in incoming DHCPv6 messages.
+	// It must not be nil.
+	duidData []byte
 }

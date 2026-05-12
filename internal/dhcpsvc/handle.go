@@ -145,6 +145,7 @@ func newFrameData6(
 		ether:     etherLayer,
 		ip:        ipLayer,
 		duid:      duid,
+		duidData:  duid.Encode(),
 		device:    dev,
 		localAddr: addr,
 	}

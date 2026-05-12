@@ -208,3 +208,27 @@ func newServerDUID(mac net.HardwareAddr) (duid *layers.DHCPv6DUID) {
 		LinkLayerAddress: mac,
 	}
 }
+
+// findOption6 returns the data of the first option with the given code in
+// opts.  It returns nil and false if no such option is found.
+func findOption6(opts layers.DHCPv6Options, code layers.DHCPv6Opt) (data []byte, ok bool) {
+	for _, opt := range opts {
+		if opt.Code == code {
+			return opt.Data, true
+		}
+	}
+
+	return nil, false
+}
+
+// clientDUID6 returns the data of the Client Identifier option (option 1) of
+// msg.
+func clientDUID6(opts layers.DHCPv6Options) (duid []byte, ok bool) {
+	return findOption6(opts, layers.DHCPv6OptClientID)
+}
+
+// serverDUID6 returns the data of the Server Identifier option (option 2) of
+// msg.
+func serverDUID6(opts layers.DHCPv6Options) (duid []byte, ok bool) {
+	return findOption6(opts, layers.DHCPv6OptServerID)
+}
