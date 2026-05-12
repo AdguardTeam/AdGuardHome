@@ -371,7 +371,7 @@ func (m *tlsManager) loadTLSConfig(
 		return tls.Certificate{}, err
 	}
 
-	cert, err = tls.X509KeyPair(m.extTLSConf.CertificateChainData, m.extTLSConf.PrivateKeyData)
+	cert, err = tls.X509KeyPair(extTLSConf.CertificateChainData, extTLSConf.PrivateKeyData)
 	if err != nil {
 		return tls.Certificate{}, fmt.Errorf("loading certificate: %w", err)
 	}
@@ -1152,6 +1152,9 @@ func (m *tlsManager) registerWebHandlers() {
 // TLSConfig implements the [aghtls.TLSConfigProvider] interface for
 // *tlsManager.
 func (m *tlsManager) TLSConfig() (conf *tls.Config) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	return m.tlsConf.Clone()
 }
 
