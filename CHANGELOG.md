@@ -27,6 +27,8 @@ See also the [v0.107.75 GitHub milestone][ms-v0.107.75].
 
 ### Security
 
+- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.26.3][go-1.26.3].
+
 - IDs of requests received over DoH and DoQ and forwarded to plain-DNS upstreams are now set to non-zero values to improve security.
 
     This is GHSA-xgx4-4h9w-53pv.  We thank @N0zoM1z0 for reporting this security issue.
@@ -57,6 +59,7 @@ See also the [v0.107.75 GitHub milestone][ms-v0.107.75].
 [#8359]: https://github.com/AdguardTeam/AdGuardHome/issues/8359
 
 [ms-v0.107.75]: https://github.com/AdguardTeam/AdGuardHome/milestone/110?closed=1
+[go-1.26.3]: https://groups.google.com/g/golang-announce/c/qcCIEXso47M
 
 ## [v0.107.74] - 2026-04-16
 
