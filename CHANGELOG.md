@@ -60,7 +60,7 @@ See also the [v0.107.74 GitHub milestone][ms-v0.107.74].
 
 - Frontend libraries has been updated to prevent the possibility of exploiting the vulnerability described in [CVE-2026-40175][cve-2026-40175].
 
-- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.26.3][go-1.26.3].
+- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.26.2][go-1.26.2].
 
 ### Changed
 
@@ -108,7 +108,7 @@ In this release, the schema version has changed from 33 to 34.
 [#8327]: https://github.com/AdguardTeam/AdGuardHome/issues/8327
 
 [cve-2026-40175]: https://nvd.nist.gov/vuln/detail/CVE-2026-40175
-[go-1.26.3]:      https://groups.google.com/g/golang-announce/c/qcCIEXso47M
+[go-1.26.2]:      https://groups.google.com/g/golang-announce/c/0uYbvbPZRWU
 [ms-v0.107.74]:   https://github.com/AdguardTeam/AdGuardHome/milestone/109?closed=1
 
 ## [v0.107.73] - 2026-03-10

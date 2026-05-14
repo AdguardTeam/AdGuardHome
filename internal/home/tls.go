@@ -972,6 +972,12 @@ func (m *tlsManager) validateCertificates(
 			// Don't wrap the error, since it's informative enough as is.
 			return err
 		}
+
+		m.logger.WarnContext(
+			ctx,
+			"non-critical error while validating a certificate",
+			slogutil.KeyError, err,
+		)
 	}
 
 	// Validate the private key by parsing it.
@@ -998,7 +1004,7 @@ func (m *tlsManager) validateCertificates(
 		status.ValidPair = true
 	}
 
-	return err
+	return nil
 }
 
 // validateCertificate processes certificate data.  status must not be nil, as
@@ -1152,9 +1158,6 @@ func (m *tlsManager) registerWebHandlers() {
 // TLSConfig implements the [aghtls.TLSConfigProvider] interface for
 // *tlsManager.
 func (m *tlsManager) TLSConfig() (conf *tls.Config) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
 	return m.tlsConf.Clone()
 }
 
