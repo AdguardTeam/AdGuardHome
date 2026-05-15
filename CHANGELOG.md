@@ -18,7 +18,13 @@ See also the [v0.107.75 GitHub milestone][ms-v0.107.75].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Added
+
+- New `reason` query parameter in `GET /control/querylog`.  See `openapi/openapi.yaml` for the full description.
+
 ### Security
+
+- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.26.3][go-1.26.3].
 
 - IDs of requests received over DoH and DoQ and forwarded to plain-DNS upstreams are now set to non-zero values to improve security.
 
@@ -31,6 +37,10 @@ NOTE: Add new changes BELOW THIS COMMENT.
 - Dashboard charts use Recharts instead of Nivo.
 
 - `enable_dnssec` in `dns` configuration now defines whether the proxy should set the DO flag in the upstream requests, the default is `true` ([#7046]).
+
+### Deprecated
+
+- Query parameter `response_status` in `GET /control/querylog` is now deprecated.  Use new `reason` query parameter instead.
 
 ### Fixed
 
@@ -47,6 +57,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#7046]: https://github.com/AdguardTeam/AdGuardHome/issues/7046
 [#6823]: https://github.com/AdguardTeam/AdGuardHome/issues/6823
 [#8348]: https://github.com/AdguardTeam/AdGuardHome/issues/8348
+
+[go-1.26.3]: https://groups.google.com/g/golang-announce/c/qcCIEXso47M
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

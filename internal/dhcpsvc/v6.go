@@ -1,7 +1,9 @@
 package dhcpsvc
 
 import (
+	"bytes"
 	"context"
+	"fmt"
 	"log/slog"
 	"net/netip"
 	"slices"
@@ -156,7 +158,7 @@ type dhcpInterfaceV6 struct {
 
 // newDHCPInterfaceV6 creates a new DHCP interface for IPv6 address family with
 // the given configuration.  If the interface is disabled, it returns nil.  conf
-// must be valid.
+// must be valid.  hwAddr must not be empty.
 func (srv *DHCPServer) newDHCPInterfaceV6(
 	ctx context.Context,
 	l *slog.Logger,
@@ -244,4 +246,64 @@ func (c *IPv6Config) options(ctx context.Context, l *slog.Logger) (imp, exp laye
 // compareV6OptionCodes compares option codes of a and b.
 func compareV6OptionCodes(a, b layers.DHCPv6Option) (res int) {
 	return int(a.Code) - int(b.Code)
+}
+
+// clientIDNoServer extracts the client identifier from opts and checks that
+// there is no server identifier.  It returns an error if the client identifier
+// is not found or if the server identifier is found.
+func clientIDNoServer(opts layers.DHCPv6Options) (cliID *layers.DHCPv6DUID, err error) {
+	_, ok := serverDUID6(opts)
+	if ok {
+		return nil, fmt.Errorf("dhcpv6: server id: %w", errors.ErrUnexpectedValue)
+	}
+
+	cliIDData, ok := clientDUID6(opts)
+	if !ok {
+		return nil, fmt.Errorf("dhcpv6: client id: %w", errors.ErrNoValue)
+	}
+
+	cliID = &layers.DHCPv6DUID{}
+	err = cliID.DecodeFromBytes(cliIDData)
+	if err != nil {
+		return nil, fmt.Errorf("dhcpv6: client id: %w", err)
+	}
+
+	return cliID, nil
+}
+
+// clientIDMatchingServer extracts the client identifier from opts and checks
+// that the server identifier matches serverDUID.  It returns an error if the
+// client identifier is not found, if the server identifier is not found, or if
+// the server identifier does not match serverDUID.
+func clientIDMatchingServer(
+	opts layers.DHCPv6Options,
+	serverDUID []byte,
+) (cliID *layers.DHCPv6DUID, err error) {
+	srvID, ok := serverDUID6(opts)
+	if !ok {
+		return nil, fmt.Errorf("dhcpv6: server id: %w", errors.ErrNoValue)
+	}
+
+	// TODO(e.burkov):  Add validate.EqualFunc.
+	if !bytes.Equal(srvID, serverDUID) {
+		return nil, fmt.Errorf(
+			"dhcpv6: server id: got %v, want %v: %w",
+			srvID,
+			serverDUID,
+			errors.ErrNotEqual,
+		)
+	}
+
+	cliIDData, ok := clientDUID6(opts)
+	if !ok {
+		return nil, fmt.Errorf("dhcpv6: client id: %w", errors.ErrNoValue)
+	}
+
+	cliID = &layers.DHCPv6DUID{}
+	err = cliID.DecodeFromBytes(cliIDData)
+	if err != nil {
+		return nil, fmt.Errorf("dhcpv6: client id: %w", err)
+	}
+
+	return cliID, nil
 }
