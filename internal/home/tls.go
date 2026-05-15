@@ -275,8 +275,7 @@ func (m *tlsManager) reload(ctx context.Context) {
 	tlsConf := *tlsConfPtr
 	status := &tlsConfigStatus{}
 
-	var cert tls.Certificate
-	cert, err = m.loadTLSConfig(ctx, &tlsConf, status)
+	cert, err := m.loadTLSConfig(ctx, &tlsConf, status)
 	if err != nil {
 		m.logger.WarnContext(ctx, "reloading interrupted", slogutil.KeyError, err)
 
@@ -975,7 +974,7 @@ func (m *tlsManager) validateCertificates(
 
 		m.logger.WarnContext(
 			ctx,
-			"non-critical error while validating a certificate",
+			"error while validating a certificate",
 			slogutil.KeyError, err,
 		)
 	}
@@ -1157,6 +1156,8 @@ func (m *tlsManager) registerWebHandlers() {
 
 // TLSConfig implements the [aghtls.TLSConfigProvider] interface for
 // *tlsManager.
+// TODO(m.kazantsev):  Add locking m.mu to this method after refactoring the
+// dnsforawrd.Server usage of [*tls.Config].
 func (m *tlsManager) TLSConfig() (conf *tls.Config) {
 	return m.tlsConf.Clone()
 }
