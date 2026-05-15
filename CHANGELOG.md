@@ -24,6 +24,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Security
 
+- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.26.3][go-1.26.3].
+
 - IDs of requests received over DoH and DoQ and forwarded to plain-DNS upstreams are now set to non-zero values to improve security.
 
     This is GHSA-xgx4-4h9w-53pv.  We thank @N0zoM1z0 for reporting this security issue.
@@ -55,6 +57,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#7046]: https://github.com/AdguardTeam/AdGuardHome/issues/7046
 [#6823]: https://github.com/AdguardTeam/AdGuardHome/issues/6823
 [#8348]: https://github.com/AdguardTeam/AdGuardHome/issues/8348
+
+[go-1.26.3]: https://groups.google.com/g/golang-announce/c/qcCIEXso47M
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

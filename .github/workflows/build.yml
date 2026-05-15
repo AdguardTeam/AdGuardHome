@@ -6,7 +6,7 @@
 # See https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#permissions.
 'permissions': {}
 'env':
-  'GO_VERSION': '1.26.2'
+  'GO_VERSION': '1.26.3'
   'NODE_VERSION': '20'
 'on':
   'push':

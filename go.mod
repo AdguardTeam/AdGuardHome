@@ -1,6 +1,6 @@
 module github.com/AdguardTeam/AdGuardHome
 
-go 1.26.2
+go 1.26.3
 
 require (
 	// TODO(d.kolyshev): !! Use tagged version.
