@@ -712,12 +712,13 @@ func (s *Server) prepareTLS(ctx context.Context, proxyConf *proxy.Config) (err e
 		return nil
 	}
 
-	proxyConf.TLSListenAddr = s.conf.TLSConf.TLSListenAddrs
-	proxyConf.QUICListenAddr = s.conf.TLSConf.QUICListenAddrs
 	proxyConf.TLSConfig = s.tlsConfigProvider.TLSConfig()
 	if proxyConf.TLSConfig == nil {
 		return nil
 	}
+
+	proxyConf.TLSListenAddr = s.conf.TLSConf.TLSListenAddrs
+	proxyConf.QUICListenAddr = s.conf.TLSConf.QUICListenAddrs
 
 	s.replaceGetCertificate(proxyConf.TLSConfig)
 

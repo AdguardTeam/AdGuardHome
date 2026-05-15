@@ -149,21 +149,12 @@ func newTLSManager(ctx context.Context, conf *tlsManagerConfig) (m *tlsManager, 
 		m.logger.ErrorContext(ctx, "setting tls files", slogutil.KeyError, err)
 	}
 
-	var cert tls.Certificate
-	cert, err = m.loadTLSConfig(ctx, m.extTLSConf, m.status)
+	err = m.loadTLSConfig(ctx, m.extTLSConf, m.status)
 	if err != nil {
 		m.extTLSConf.Enabled = false
 
 		// Don't wrap the error, because it's informative enough as is.
 		return m, err
-	}
-
-	m.tlsConf = &tls.Config{
-		RootCAs:        m.rootCerts,
-		CipherSuites:   m.customCipherIDs,
-		MinVersion:     tls.VersionTLS12,
-		GetCertificate: m.onGetCertificate,
-		Certificates:   []tls.Certificate{cert},
 	}
 
 	m.setCertFileTime(ctx)
@@ -275,14 +266,13 @@ func (m *tlsManager) reload(ctx context.Context) {
 	tlsConf := *tlsConfPtr
 	status := &tlsConfigStatus{}
 
-	cert, err := m.loadTLSConfig(ctx, &tlsConf, status)
+	err = m.loadTLSConfig(ctx, &tlsConf, status)
 	if err != nil {
 		m.logger.WarnContext(ctx, "reloading interrupted", slogutil.KeyError, err)
 
 		return
 	}
 
-	m.tlsConf.Certificates = []tls.Certificate{cert}
 	m.extTLSConf = &tlsConf
 	m.status = status
 
@@ -330,12 +320,13 @@ func (m *tlsManager) reconfigureDNSServer(ctx context.Context) (err error) {
 // loadTLSConfig loads and validates the TLS configuration.  It also sets
 // [tlsConfigSettings.CertificateChainData] and
 // [tlsConfigSettings.PrivateKeyData] properties.  The returned error is also
-// set in status.WarningValidation.  All arguments must not be nil.
+// set in status.WarningValidation.  All arguments must not be nil.  m.mu is
+// expected to be locked.
 func (m *tlsManager) loadTLSConfig(
 	ctx context.Context,
 	extTLSConf *tlsConfigSettings,
 	status *tlsConfigStatus,
-) (cert tls.Certificate, err error) {
+) (err error) {
 	defer func() {
 		if err != nil {
 			status.WarningValidation = err.Error()
@@ -349,13 +340,13 @@ func (m *tlsManager) loadTLSConfig(
 	err = loadCertificateChainData(extTLSConf)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
-		return tls.Certificate{}, err
+		return err
 	}
 
 	err = loadPrivateKeyData(extTLSConf)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
-		return tls.Certificate{}, err
+		return err
 	}
 
 	err = m.validateCertificates(
@@ -367,15 +358,23 @@ func (m *tlsManager) loadTLSConfig(
 	)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
-		return tls.Certificate{}, err
+		return err
 	}
 
-	cert, err = tls.X509KeyPair(extTLSConf.CertificateChainData, extTLSConf.PrivateKeyData)
+	cert, err := tls.X509KeyPair(extTLSConf.CertificateChainData, extTLSConf.PrivateKeyData)
 	if err != nil {
-		return tls.Certificate{}, fmt.Errorf("loading certificate: %w", err)
+		return fmt.Errorf("loading certificate: %w", err)
 	}
 
-	return cert, nil
+	m.tlsConf = &tls.Config{
+		RootCAs:        m.rootCerts,
+		CipherSuites:   m.customCipherIDs,
+		MinVersion:     tls.VersionTLS12,
+		GetCertificate: m.onGetCertificate,
+		Certificates:   []tls.Certificate{cert},
+	}
+
+	return nil
 }
 
 // loadCertificateChainData loads PEM-encoded certificates chain data to the
@@ -536,7 +535,7 @@ func (m *tlsManager) handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 	// Skip the error check, since we are only interested in the value of
 	// status.WarningValidation.
 	status := &tlsConfigStatus{}
-	_, _ = m.loadTLSConfig(ctx, &setts.tlsConfigSettings, status)
+	_ = m.loadTLSConfig(ctx, &setts.tlsConfigSettings, status)
 	resp := &tlsConfig{
 		tlsConfigSettingsExt: setts,
 		tlsConfigStatus:      status,
@@ -627,7 +626,7 @@ func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) 
 	}
 
 	status := &tlsConfigStatus{}
-	_, err = m.loadTLSConfig(ctx, &req.tlsConfigSettings, status)
+	err = m.loadTLSConfig(ctx, &req.tlsConfigSettings, status)
 	if err != nil {
 		resp := &tlsConfig{
 			tlsConfigSettingsExt: req,
@@ -1155,7 +1154,8 @@ func (m *tlsManager) registerWebHandlers() {
 }
 
 // TLSConfig implements the [aghtls.TLSConfigProvider] interface for
-// *tlsManager.
+// *tlsManager.   m.mu is expected to be locked.
+//
 // TODO(m.kazantsev):  Add locking m.mu to this method after refactoring the
 // dnsforawrd.Server usage of [*tls.Config].
 func (m *tlsManager) TLSConfig() (conf *tls.Config) {
