@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,12 +16,10 @@ func newTestQLogReader(tb testing.TB, filesNum, linesNum int) (reader *qLogReade
 	tb.Helper()
 
 	testFiles := prepareTestFiles(tb, filesNum, linesNum)
-
-	logger := slogutil.NewDiscardLogger()
 	ctx := testutil.ContextWithTimeout(tb, testTimeout)
 
 	// Create the new qLogReader instance.
-	reader, err := newQLogReader(ctx, logger, testFiles)
+	reader, err := newQLogReader(ctx, testLogger, testFiles)
 	require.NoError(tb, err)
 
 	assert.NotNil(tb, reader)
