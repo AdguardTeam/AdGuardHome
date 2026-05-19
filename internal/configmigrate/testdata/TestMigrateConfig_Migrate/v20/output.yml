@@ -90,7 +90,7 @@ querylog:
   ignored: []
 statistics:
   enabled: true
-  interval: 240h
+  interval: 10d
   ignored: []
 os:
   group: ''

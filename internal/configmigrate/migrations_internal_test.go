@@ -1433,7 +1433,7 @@ func TestUpgradeSchema22to23(t *testing.T) {
 		want: yobj{
 			"http": yobj{
 				"address":     "1.2.3.4:8081",
-				"session_ttl": "720h",
+				"session_ttl": "30d",
 			},
 			"schema_version": newSchemaVer,
 		},
@@ -1447,7 +1447,7 @@ func TestUpgradeSchema22to23(t *testing.T) {
 		want: yobj{
 			"http": yobj{
 				"address":     "[2001:db8::1]:8081",
-				"session_ttl": "720h",
+				"session_ttl": "30d",
 			},
 			"schema_version": newSchemaVer,
 		},
@@ -1562,14 +1562,14 @@ func TestUpgradeSchema24to25(t *testing.T) {
 		in: yobj{
 			"http": yobj{
 				"address":     "0.0.0.0:3000",
-				"session_ttl": "720h",
+				"session_ttl": "30d",
 			},
 			"debug_pprof": true,
 		},
 		want: yobj{
 			"http": yobj{
 				"address":     "0.0.0.0:3000",
-				"session_ttl": "720h",
+				"session_ttl": "30d",
 				"pprof": yobj{
 					"enabled": true,
 					"port":    6060,
@@ -1583,14 +1583,14 @@ func TestUpgradeSchema24to25(t *testing.T) {
 		in: yobj{
 			"http": yobj{
 				"address":     "0.0.0.0:3000",
-				"session_ttl": "720h",
+				"session_ttl": "30d",
 			},
 			"debug_pprof": false,
 		},
 		want: yobj{
 			"http": yobj{
 				"address":     "0.0.0.0:3000",
-				"session_ttl": "720h",
+				"session_ttl": "30d",
 				"pprof": yobj{
 					"enabled": false,
 					"port":    6060,
@@ -1604,14 +1604,14 @@ func TestUpgradeSchema24to25(t *testing.T) {
 		in: yobj{
 			"http": yobj{
 				"address":     "0.0.0.0:3000",
-				"session_ttl": "720h",
+				"session_ttl": "30d",
 			},
 			"debug_pprof": 1,
 		},
 		want: yobj{
 			"http": yobj{
 				"address":     "0.0.0.0:3000",
-				"session_ttl": "720h",
+				"session_ttl": "30d",
 			},
 			"debug_pprof":    1,
 			"schema_version": newSchemaVer,
