@@ -9,11 +9,11 @@ The format is based on [*Keep a Changelog*](https://keepachangelog.com/en/1.0.0/
 <!--
 ## [v0.108.0] – TBA
 
-## [v0.107.75] - 2026-05-01 (APPROX.)
+## [v0.107.76] - 2026-06-01 (APPROX.)
 
-See also the [v0.107.75 GitHub milestone][ms-v0.107.75].
+See also the [v0.107.76 GitHub milestone][ms-v0.107.76].
 
-[ms-v0.107.75]: https://github.com/AdguardTeam/AdGuardHome/milestone/110?closed=1
+[ms-v0.107.76]: https://github.com/AdguardTeam/AdGuardHome/milestone/111?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
@@ -21,6 +21,18 @@ NOTE: Add new changes BELOW THIS COMMENT.
 ### Added
 
 - New `reason` query parameter in `GET /control/querylog`.  See `openapi/openapi.yaml` for the full description.
+
+### Deprecated
+
+- Query parameter `response_status` in `GET /control/querylog` is now deprecated.  Use new `reason` query parameter instead.
+
+<!--
+NOTE: Add new changes ABOVE THIS COMMENT.
+-->
+
+## [v0.107.75] - 2026-05-19
+
+See also the [v0.107.75 GitHub milestone][ms-v0.107.75].
 
 ### Security
 
@@ -38,10 +50,6 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - `enable_dnssec` in `dns` configuration now defines whether the proxy should set the DO flag in the upstream requests, the default is `true` ([#7046]).
 
-### Deprecated
-
-- Query parameter `response_status` in `GET /control/querylog` is now deprecated.  Use new `reason` query parameter instead.
-
 ### Fixed
 
 - Statistics database deadlock ([#8359]).
@@ -54,15 +62,13 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Safe Browsing and Parental Control labels on the General Settings page not updating after changing the UI language.
 
-[#7046]: https://github.com/AdguardTeam/AdGuardHome/issues/7046
 [#6823]: https://github.com/AdguardTeam/AdGuardHome/issues/6823
+[#7046]: https://github.com/AdguardTeam/AdGuardHome/issues/7046
 [#8348]: https://github.com/AdguardTeam/AdGuardHome/issues/8348
+[#8359]: https://github.com/AdguardTeam/AdGuardHome/issues/8359
 
+[ms-v0.107.75]: https://github.com/AdguardTeam/AdGuardHome/milestone/110?closed=1
 [go-1.26.3]: https://groups.google.com/g/golang-announce/c/qcCIEXso47M
-
-<!--
-NOTE: Add new changes ABOVE THIS COMMENT.
--->
 
 ## [v0.107.74] - 2026-04-16
 
@@ -3600,11 +3606,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 [ms-v0.104.2]: https://github.com/AdguardTeam/AdGuardHome/milestone/28?closed=1
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.75...HEAD
-[v0.107.75]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.74...v0.107.75
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.76...HEAD
+[v0.107.76]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.75...v0.107.76
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.74...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.75...HEAD
+[v0.107.75]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.74...v0.107.75
 [v0.107.74]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.73...v0.107.74
 [v0.107.73]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.72...v0.107.73
 [v0.107.72]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.71...v0.107.72
