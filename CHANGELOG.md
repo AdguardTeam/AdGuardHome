@@ -22,9 +22,21 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - New `reason` query parameter in `GET /control/querylog`.  See `openapi/openapi.yaml` for the full description.
 
+### Changed
+
+- Duration values in YAML configuration file now support `d` (days) units and has been updated.
+
+    **NOTE:** Any rollback to version below the `v0.107.76` should convert the values back to hours.
+
 ### Deprecated
 
 - Query parameter `response_status` in `GET /control/querylog` is now deprecated.  Use new `reason` query parameter instead.
+
+### Fixed
+
+- DNS caching with disabled DNSSEC ([#8384]).
+
+[#8384]: https://github.com/AdguardTeam/AdGuardHome/issues/8384
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
