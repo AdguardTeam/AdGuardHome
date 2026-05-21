@@ -17,15 +17,6 @@ See also the [v0.107.77 GitHub milestone][ms-v0.107.77].
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
-
-### Added
-
-- New `reason` query parameter in `GET /control/querylog`.  See `openapi/openapi.yaml` for the full description.
-
-### Deprecated
-
-- Query parameter `response_status` in `GET /control/querylog` is now deprecated.  Use new `reason` query parameter instead.
-
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
