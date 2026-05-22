@@ -54,6 +54,8 @@ See also the [v0.107.75 GitHub milestone][ms-v0.107.75].
 
 ### Security
 
+- Authorization in GLiNET mode is no longer vulnerable to path traversal attacks.
+
 - Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.26.3][go-1.26.3].
 
 - IDs of requests received over DoH and DoQ and forwarded to plain-DNS upstreams are now set to non-zero values to improve security.

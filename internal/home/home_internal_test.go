@@ -61,7 +61,6 @@ func newTestWeb(
 //
 // The global variables are:
 //   - [config]
-//   - [glFilePrefix]
 //   - [globalContext.clients.storage]
 //   - [globalContext.dnsServer]
 //   - [globalContext.web]
@@ -72,14 +71,12 @@ func storeGlobals(tb testing.TB) {
 	tb.Helper()
 
 	prevConfig := config
-	prefGLFilePrefix := glFilePrefix
 	storage := globalContext.clients.storage
 	dnsServer := globalContext.dnsServer
 	web := globalContext.web
 
 	tb.Cleanup(func() {
 		config = prevConfig
-		glFilePrefix = prefGLFilePrefix
 		globalContext.clients.storage = storage
 		globalContext.dnsServer = dnsServer
 		globalContext.web = web

@@ -33,16 +33,17 @@ const svcLogPrefix = "service_manager"
 // constructing a service instance and running it.  Perhaps, deprecate the
 // action.
 type program struct {
-	ctx           context.Context
-	clientBuildFS fs.FS
-	signals       chan os.Signal
-	done          chan struct{}
-	opts          options
-	baseLogger    *slog.Logger
-	logger        *slog.Logger
-	sigHdlr       *signalHandler
-	workDir       string
-	confPath      string
+	ctx             context.Context
+	clientBuildFS   fs.FS
+	signals         chan os.Signal
+	done            chan struct{}
+	opts            options
+	baseLogger      *slog.Logger
+	logger          *slog.Logger
+	sigHdlr         *signalHandler
+	gliNetTokenRoot *os.Root
+	workDir         string
+	confPath        string
 }
 
 // type check
@@ -54,7 +55,17 @@ func (p *program) Start(_ service.Service) (err error) {
 	args := p.opts
 	args.runningAsService = true
 
-	go run(p.ctx, p.baseLogger, args, p.clientBuildFS, p.done, p.sigHdlr, p.workDir, p.confPath)
+	go run(
+		p.ctx,
+		p.baseLogger,
+		args,
+		p.clientBuildFS,
+		p.gliNetTokenRoot,
+		p.done,
+		p.sigHdlr,
+		p.workDir,
+		p.confPath,
+	)
 
 	return nil
 }
@@ -140,6 +151,7 @@ func handleServiceControlAction(
 	ctx context.Context,
 	baseLogger *slog.Logger,
 	l *slog.Logger,
+	gliNetTokenRoot *os.Root,
 	opts options,
 	clientBuildFS fs.FS,
 	signals chan os.Signal,
@@ -167,16 +179,17 @@ func handleServiceControlAction(
 		runOpts.serviceControlAction = "run"
 
 		p := &program{
-			ctx:           ctx,
-			clientBuildFS: clientBuildFS,
-			signals:       signals,
-			done:          done,
-			opts:          runOpts,
-			baseLogger:    baseLogger,
-			logger:        baseLogger.With(slogutil.KeyPrefix, "service"),
-			sigHdlr:       sigHdlr,
-			workDir:       workDir,
-			confPath:      confPath,
+			ctx:             ctx,
+			clientBuildFS:   clientBuildFS,
+			signals:         signals,
+			done:            done,
+			opts:            runOpts,
+			baseLogger:      baseLogger,
+			logger:          baseLogger.With(slogutil.KeyPrefix, "service"),
+			sigHdlr:         sigHdlr,
+			gliNetTokenRoot: gliNetTokenRoot,
+			workDir:         workDir,
+			confPath:        confPath,
 		}
 
 		return p.handleRun(ctx, baseLogger, runOpts)
