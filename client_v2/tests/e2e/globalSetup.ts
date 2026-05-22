@@ -10,6 +10,17 @@ async function globalSetup(config: FullConfig) {
 
     try {
         await page.goto('/');
+
+        const {pathname} = new URL(page.url());
+
+        if (pathname === '/login.html' || pathname === '/') {
+            return;
+        }
+
+        if (pathname !== '/install.html') {
+            throw new Error(`Unexpected initial page during global setup: ${pathname}`);
+        }
+
         await page.locator('#install_get_started').click();
         await page.locator('#install_web_port').fill(PORT.toString());
         await page.locator('#install_next').click();

@@ -10,11 +10,7 @@ import { AddressList } from './blocks';
 import { buildInterfaceOptions } from './helpers/InterfaceOptions';
 import { createHandleAutofix, useInstallSettingsForm } from './helpers/useInstallSettingsForm';
 
-import {
-    ALL_INTERFACES_IP,
-    STATUS_RESPONSE,
-    STANDARD_WEB_PORT,
-} from '../../helpers/constants';
+import { ALL_INTERFACES_IP, STATUS_RESPONSE, STANDARD_WEB_PORT } from '../../helpers/constants';
 
 import { InstallInterface } from '../../initialState';
 
@@ -31,15 +27,10 @@ type Props = {
 };
 
 export const InterfaceSettings = ({ handleSubmit, handleFix, validateForm, config, interfaces }: Props) => {
-
-    const {
-        control,
-        reactHookFormSubmit,
-        isValid,
-        watchFields,
-        webIpVal,
-        webPortVal,
-    } = useInstallSettingsForm(config, validateForm);
+    const { control, reactHookFormSubmit, isValid, watchFields, webIpVal, webPortVal } = useInstallSettingsForm(
+        config,
+        validateForm,
+    );
 
     const { status: webStatus, can_autofix: isWebFixAvailable } = config.web;
 
@@ -76,7 +67,7 @@ export const InterfaceSettings = ({ handleSubmit, handleFix, validateForm, confi
                     return (
                         <>
                             <div className={styles.spacerBottom}>
-                                {intl.getMessage('install_static_configure', { ip }).replace('{ip}', ip)}
+                                {intl.getMessage('install_static_configure', { ip })}
                             </div>
 
                             <Button
@@ -84,23 +75,16 @@ export const InterfaceSettings = ({ handleSubmit, handleFix, validateForm, confi
                                 size="small"
                                 variant="secondary"
                                 className={styles.button}
-                                onClick={() => handleStaticIp(ip)}>
+                                onClick={() => handleStaticIp(ip)}
+                            >
                                 {intl.getMessage('set_static_ip')}
                             </Button>
                         </>
                     );
                 case STATUS_RESPONSE.ERROR:
-                    return (
-                        <div className={styles.errorText}>
-                            {intl.getMessage('install_static_error')}
-                        </div>
-                    );
+                    return <div className={styles.errorText}>{intl.getMessage('install_static_error')}</div>;
                 case STATUS_RESPONSE.YES:
-                    return (
-                        <div className={styles.successText}>
-                            {intl.getMessage('install_static_ok')}
-                        </div>
-                    );
+                    return <div className={styles.successText}>{intl.getMessage('install_static_ok')}</div>;
                 default:
                     return null;
             }
@@ -116,7 +100,6 @@ export const InterfaceSettings = ({ handleSubmit, handleFix, validateForm, confi
     return (
         <div className={styles.configSetting}>
             <form className={styles.step} onSubmit={reactHookFormSubmit(onSubmit)}>
-
                 <div className={styles.info}>
                     <div>
                         <div className={styles.titleStep}>{intl.getMessage('setup_ui_title')}</div>
@@ -139,9 +122,7 @@ export const InterfaceSettings = ({ handleSubmit, handleFix, validateForm, confi
                         port={webPortVal || STANDARD_WEB_PORT}
                     />
 
-                    <div className={styles.group}>
-                        {getStaticIpMessage(staticIp)}
-                    </div>
+                    <div className={styles.group}>{getStaticIpMessage(staticIp)}</div>
 
                     <Controls invalid={!isValid} />
                 </div>

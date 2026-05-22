@@ -1,0 +1,318 @@
+.tableContainer {
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.table {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    @media (min-width: 768px) {
+        gap: 0;
+    }
+}
+
+.tableHeader {
+    @media (min-width: 768px) {
+        border-radius: 8px;
+    }
+}
+
+.tableRow {
+    cursor: pointer;
+    transition: background-color var(--t2);
+
+    @media (min-width: 768px) {
+        border: 0;
+        background-color: transparent;
+    }
+
+    &:hover,
+    &:focus {
+        background-color: var(--page-background-additional);
+    }
+
+    &:last-child {
+        @media (min-width: 768px) {
+            border-bottom: 0;
+            border-radius: 0 0 8px 8px;
+            overflow: hidden;
+        }
+    }
+}
+
+.clickableCell {
+    cursor: pointer;
+}
+
+.emptyTableWrapper {
+    padding: 24px 16px;
+
+    @media (min-width: 768px) {
+        min-height: 400px;
+        padding: 48px 64px;
+    }
+}
+
+.emptyTableTitle {
+    width: 100%;
+
+    @media (min-width: 768px) {
+        width: 250px;
+    }
+}
+
+.initialLoader {
+    min-height: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.loadingRow {
+    padding: 12px 0 0;
+
+    @media (min-width: 768px) {
+        padding: 12px;
+    }
+}
+
+.time {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.timeCell {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.requestCell {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    overflow: hidden;
+}
+
+.requestContent {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.secondaryLine {
+    color: var(--default-description-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.date {
+    text-transform: none;
+}
+
+.requestPrimary,
+.clientPrimary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.clientSecondary {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.requestIcons {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.iconTooltipTrigger {
+    display: inline-flex;
+}
+
+.iconTooltipOverlay {
+    width: max-content;
+}
+
+.iconTooltipMenu {
+    padding: 16px;
+}
+
+.requestIcon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+.domain {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.statusCell,
+.reasonCell,
+.clientCell {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.queryDetailsTooltipButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--default-gray-icons);
+    cursor: pointer;
+    transition: color var(--t2);
+
+    &:hover,
+    &:focus {
+        color: var(--default-main-text);
+        outline: 0;
+    }
+}
+
+.queryDetailsTooltipMenu {
+    width: min(320px, calc(100vw - 32px));
+    padding: 8px 0 12px;
+}
+
+.queryDetailsTooltipContent {
+    display: flex;
+    flex-direction: column;
+}
+
+.queryDetailsTooltipSection {
+    display: flex;
+    flex-direction: column;
+}
+
+.queryDetailsTooltipTitle {
+    padding: 8px 16px;
+    color: var(--default-main-text);
+}
+
+.queryDetailsTooltipTitleSeparated {
+    padding-top: 16px;
+}
+
+.queryDetailsTooltipItem {
+    padding: 4px 16px;
+    min-height: 24px;
+    white-space: normal;
+}
+
+.queryDetailsTooltipLabel {
+    color: var(--default-main-text);
+}
+
+.queryDetailsTooltipValue {
+    color: var(--default-main-text);
+    overflow-wrap: anywhere;
+}
+
+.queryDetailsTooltipLink {
+    text-decoration: none;
+
+    &:hover,
+    &:focus {
+        text-decoration: underline;
+    }
+}
+
+.clientButtonPlain {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+
+    &:hover,
+    &:focus {
+        text-decoration: underline;
+    }
+}
+
+.clientIp {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--default-main-text);
+}
+
+.clientName {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--default-description-text);
+}
+
+.clientLocationDivider {
+    width: 1px;
+    height: 12px;
+    background-color: var(--default-item-divider);
+    flex-shrink: 0;
+}
+
+.clientLocation {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    color: var(--default-description-text);
+}
+
+.clientLocationIcon {
+    width: 16px;
+    height: 16px;
+    color: var(--default-description-text);
+    flex-shrink: 0;
+}
+
+.clientLocationText {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.whoisItem {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+}
+
+.actionsCell {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+}
+
+.loader {
+    width: 48px;
+    height: 48px;
+}

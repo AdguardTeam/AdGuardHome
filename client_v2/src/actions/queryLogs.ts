@@ -1,21 +1,81 @@
+import { Action } from 'redux';
 import { createAction } from 'redux-actions';
+import { ThunkAction, ThunkDispatch } from 'redux-thunk';
 
 import intl from 'panel/common/intl';
+import { QueryLogsData, RootState } from 'panel/initialState';
+import { filterLogsByStatus } from 'panel/components/QueryLog/helpers';
+import { LogEntry } from 'panel/components/QueryLog/types';
 import { apiClient } from '../api/Api';
 
 import { normalizeLogs } from '../helpers/helpers';
 import { DEFAULT_LOGS_FILTER, QUERY_LOGS_PAGE_LIMIT } from '../helpers/constants';
 import { addErrorToast, addSuccessToast } from './toasts';
 
-type SearchFormValues = {
+export type SearchFormValues = {
     search: string;
-    response_status: string;
+    status: string;
+    reason: string;
 };
 
-const getLogsWithParams = async (config: any) => {
+export type QueryLogConfigPayload = Pick<QueryLogsData, 'anonymize_client_ip' | 'enabled' | 'ignored'> & {
+    ignore_enabled: boolean;
+    interval: number;
+};
+
+type AppThunk<ReturnType = void> = ThunkAction<ReturnType, RootState, unknown, Action<string>>;
+type AppDispatch = ThunkDispatch<RootState, unknown, Action<string>>;
+
+type QueryLogsDataState = NonNullable<RootState['queryLogs']>;
+
+type GetLogsParams = {
+    older_than: string;
+    filter?: SearchFormValues;
+};
+
+type LogsResponse = {
+    logs: LogEntry[];
+    oldest: string;
+    older_than: string;
+    filter?: SearchFormValues;
+};
+
+type ShortPollTotal = {
+    logs: LogEntry[];
+    oldest?: string;
+};
+
+// Maps the frontend "status" broad category to backend reason value(s)
+// when the reason filter is "all" (meaning the status should drive server filtering).
+const STATUS_TO_REASON: Record<string, string | string[]> = {
+    allowed: 'NotFilteredWhiteList',
+    processed: 'NotFilteredNotFound',
+    blocked: ['FilteredBlackList', 'FilteredBlockedService', 'FilteredSafeBrowsing', 'FilteredParental'],
+    rewritten: ['Rewrite', 'RewriteEtcHosts', 'RewriteRule', 'FilteredSafeSearch'],
+};
+
+const getEffectiveReason = (filter?: SearchFormValues): string | string[] | '' => {
+    const reason = filter?.reason ?? DEFAULT_LOGS_FILTER.reason;
+    const status = filter?.status ?? DEFAULT_LOGS_FILTER.status;
+
+    // If the reason filter is already specific, use it directly
+    if (reason !== 'all') {
+        return reason;
+    }
+
+    // Map the broad status category to backend reason value(s).
+    // If no mapping exists (e.g. status is also 'all'), return '' to omit the param entirely.
+    return STATUS_TO_REASON[status] ?? '';
+};
+
+const getLogsWithParams = async (config: GetLogsParams): Promise<LogsResponse> => {
     const { older_than, filter, ...values } = config;
+    const requestFilter = {
+        search: filter?.search ?? DEFAULT_LOGS_FILTER.search,
+        reason: getEffectiveReason(filter),
+    };
     const rawLogs = await apiClient.getQueryLog({
-        ...filter,
+        ...requestFilter,
         older_than,
     });
     const { data, oldest } = rawLogs;
@@ -30,63 +90,76 @@ const getLogsWithParams = async (config: any) => {
 };
 
 export const getAdditionalLogsRequest = createAction('GET_ADDITIONAL_LOGS_REQUEST');
-export const getAdditionalLogsFailure = createAction('GET_ADDITIONAL_LOGS_FAILURE');
+export const getAdditionalLogsFailure = createAction<unknown>('GET_ADDITIONAL_LOGS_FAILURE');
 export const getAdditionalLogsSuccess = createAction('GET_ADDITIONAL_LOGS_SUCCESS');
 
-const shortPollQueryLogs = async (data: any, filter: any, dispatch: any, currentQuery?: string, total?: any) => {
+const shortPollQueryLogs = async (
+    data: LogsResponse,
+    filter: SearchFormValues | undefined,
+    dispatch: AppDispatch,
+    currentQuery?: string,
+    total?: ShortPollTotal,
+): Promise<ShortPollTotal | undefined> => {
     const { logs, oldest } = data;
-    const totalData = total || { logs };
+    const totalData = total
+        ? {
+            logs: [...total.logs, ...logs],
+            oldest,
+        }
+        : {
+            logs,
+            oldest,
+        };
+    const visibleCount = filterLogsByStatus(totalData.logs, filter?.status || DEFAULT_LOGS_FILTER.status).length;
 
     const previousQuery = filter?.search;
     const isQueryTheSame =
         typeof previousQuery === 'string' && typeof currentQuery === 'string' && previousQuery === currentQuery;
 
     const isShortPollingNeeded =
-        (logs.length < QUERY_LOGS_PAGE_LIMIT || totalData.logs.length < QUERY_LOGS_PAGE_LIMIT) &&
-        oldest !== '' &&
-        isQueryTheSame;
+        visibleCount < QUERY_LOGS_PAGE_LIMIT && oldest !== '' && isQueryTheSame;
 
-    if (isShortPollingNeeded) {
-        dispatch(getAdditionalLogsRequest());
-
-        try {
-            const additionalLogs = await getLogsWithParams({
-                older_than: oldest,
-                filter,
-            });
-            if (additionalLogs.oldest.length > 0) {
-                return await shortPollQueryLogs(additionalLogs, filter, dispatch, currentQuery, {
-                    logs: [...totalData.logs, ...additionalLogs.logs],
-                    oldest: additionalLogs.oldest,
-                });
-            }
-            dispatch(getAdditionalLogsSuccess());
-            return totalData;
-        } catch (error) {
-            dispatch(addErrorToast({ error }));
-            dispatch(getAdditionalLogsFailure(error));
-        }
+    if (!isShortPollingNeeded) {
+        dispatch(getAdditionalLogsSuccess());
+        return totalData;
     }
 
-    dispatch(getAdditionalLogsSuccess());
-    return totalData;
+    dispatch(getAdditionalLogsRequest());
+
+    try {
+        const additionalLogs = await getLogsWithParams({
+            older_than: oldest,
+            filter,
+        });
+
+        return await shortPollQueryLogs(additionalLogs, filter, dispatch, currentQuery, totalData);
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(getAdditionalLogsFailure(error));
+        return totalData;
+    }
 };
 
 export const toggleDetailedLogs = createAction('TOGGLE_DETAILED_LOGS');
 
 export const getLogsRequest = createAction('GET_LOGS_REQUEST');
-export const getLogsFailure = createAction('GET_LOGS_FAILURE');
-export const getLogsSuccess = createAction('GET_LOGS_SUCCESS');
+export const getLogsFailure = createAction<unknown>('GET_LOGS_FAILURE');
+export const getLogsSuccess = createAction<LogsResponse>('GET_LOGS_SUCCESS');
 
-export const updateLogs = () => async (dispatch: any, getState: any) => {
+export const updateLogs = (): AppThunk => async (dispatch, getState) => {
     try {
-        const { logs, oldest, older_than } = getState().queryLogs;
+        const queryLogs = getState().queryLogs as QueryLogsDataState | undefined;
+        if (!queryLogs) {
+            return;
+        }
+
+        const { logs, oldest } = queryLogs;
 
         dispatch(
             getLogsSuccess({
                 logs,
                 oldest,
-                older_than,
+                older_than: oldest,
             }),
         );
     } catch (error) {
@@ -95,10 +168,16 @@ export const updateLogs = () => async (dispatch: any, getState: any) => {
     }
 };
 
-export const getLogs = (currentQuery?: string) => async (dispatch: any, getState: any) => {
+export const getLogs = (currentQuery?: string): AppThunk<Promise<void>> => async (dispatch, getState) => {
     dispatch(getLogsRequest());
     try {
-        const { isFiltered, filter, oldest } = getState().queryLogs;
+        const queryLogs = getState().queryLogs as QueryLogsDataState | undefined;
+        if (!queryLogs) {
+            dispatch(getLogsFailure(new Error('Query logs state is unavailable')));
+            return;
+        }
+
+        const { isFiltered, filter, oldest } = queryLogs;
 
         const data = await getLogsWithParams({
             older_than: oldest,
@@ -124,16 +203,17 @@ export const setLogsFilterRequest = createAction('SET_LOGS_FILTER_REQUEST');
  *
  * @param filter
  * @param {string} filter.search
- * @param {string} filter.response_status 'QUERY' field of RESPONSE_FILTER object
+ * @param {string} filter.status 'QUERY' field of QUERY_LOG_STATUS_FILTER object
+ * @param {string} filter.reason 'QUERY' field of QUERY_LOG_REASON_FILTER object
  * @returns function
  */
 export const setLogsFilter = (filter: SearchFormValues) => setLogsFilterRequest(filter);
 
 export const setFilteredLogsRequest = createAction('SET_FILTERED_LOGS_REQUEST');
-export const setFilteredLogsFailure = createAction('SET_FILTERED_LOGS_FAILURE');
-export const setFilteredLogsSuccess = createAction('SET_FILTERED_LOGS_SUCCESS');
+export const setFilteredLogsFailure = createAction<unknown>('SET_FILTERED_LOGS_FAILURE');
+export const setFilteredLogsSuccess = createAction<LogsResponse & { filter?: SearchFormValues }>('SET_FILTERED_LOGS_SUCCESS');
 
-export const setFilteredLogs = (filter?: SearchFormValues) => async (dispatch: any) => {
+export const setFilteredLogs = (filter?: SearchFormValues): AppThunk<Promise<boolean>> => async (dispatch) => {
     dispatch(setFilteredLogsRequest());
     try {
         const data = await getLogsWithParams({
@@ -152,24 +232,42 @@ export const setFilteredLogs = (filter?: SearchFormValues) => async (dispatch: a
                 filter,
             }),
         );
+
+        return true;
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(setFilteredLogsFailure(error));
+
+        return false;
     }
 };
 
 export const resetFilteredLogs = () => setFilteredLogs(DEFAULT_LOGS_FILTER);
 
-export const refreshFilteredLogs = () => async (dispatch: any, getState: any) => {
-    const { filter } = getState().queryLogs;
-    await dispatch(setFilteredLogs(filter));
+export const refreshFilteredLogs = (): AppThunk<Promise<boolean>> => async (dispatch, getState) => {
+    const queryLogs = getState().queryLogs as QueryLogsDataState | undefined;
+    if (!queryLogs) {
+        return false;
+    }
+
+    const { filter } = queryLogs;
+    const refreshed = await dispatch(setFilteredLogs(filter));
+
+    if (refreshed) {
+        dispatch(addSuccessToast({
+            message: intl.getMessage('notify_updated'),
+            code: 'notify_updated',
+        }));
+    }
+
+    return refreshed;
 };
 
 export const clearLogsRequest = createAction('CLEAR_LOGS_REQUEST');
-export const clearLogsFailure = createAction('CLEAR_LOGS_FAILURE');
+export const clearLogsFailure = createAction<unknown>('CLEAR_LOGS_FAILURE');
 export const clearLogsSuccess = createAction('CLEAR_LOGS_SUCCESS');
 
-export const clearLogs = () => async (dispatch: any) => {
+export const clearLogs = (): AppThunk<Promise<void>> => async (dispatch) => {
     dispatch(clearLogsRequest());
     try {
         await apiClient.clearQueryLog();
@@ -183,12 +281,12 @@ export const clearLogs = () => async (dispatch: any) => {
 
 export const getLogsConfigRequest = createAction('GET_LOGS_CONFIG_REQUEST');
 export const getLogsConfigFailure = createAction('GET_LOGS_CONFIG_FAILURE');
-export const getLogsConfigSuccess = createAction('GET_LOGS_CONFIG_SUCCESS');
+export const getLogsConfigSuccess = createAction<QueryLogConfigPayload>('GET_LOGS_CONFIG_SUCCESS');
 
-export const getLogsConfig = () => async (dispatch: any) => {
+export const getLogsConfig = (): AppThunk<Promise<void>> => async (dispatch) => {
     dispatch(getLogsConfigRequest());
     try {
-        const data = await apiClient.getQueryLogConfig();
+        const data = await apiClient.getQueryLogConfig() as QueryLogConfigPayload;
         dispatch(getLogsConfigSuccess(data));
     } catch (error) {
         dispatch(addErrorToast({ error }));
@@ -198,9 +296,9 @@ export const getLogsConfig = () => async (dispatch: any) => {
 
 export const setLogsConfigRequest = createAction('SET_LOGS_CONFIG_REQUEST');
 export const setLogsConfigFailure = createAction('SET_LOGS_CONFIG_FAILURE');
-export const setLogsConfigSuccess = createAction('SET_LOGS_CONFIG_SUCCESS');
+export const setLogsConfigSuccess = createAction<QueryLogConfigPayload>('SET_LOGS_CONFIG_SUCCESS');
 
-export const setLogsConfig = (config: any) => async (dispatch: any) => {
+export const setLogsConfig = (config: QueryLogConfigPayload): AppThunk<Promise<void>> => async (dispatch) => {
     dispatch(setLogsConfigRequest());
     try {
         await apiClient.setQueryLogConfig(config);

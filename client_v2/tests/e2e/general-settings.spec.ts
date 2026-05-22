@@ -1,6 +1,46 @@
-import { test, expect } from '@playwright/test';
-import { execSync } from 'child_process';
+import { test, expect, type Locator } from '@playwright/test';
+import { execFileSync } from 'child_process';
 import { ADMIN_USERNAME, ADMIN_PASSWORD } from '../constants';
+
+const DNS_HOST = '127.0.0.1';
+const DNS_PORT = 5353;
+
+const lookupDomain = (domain: string): string => execFileSync(
+    'nslookup',
+    [`-port=${DNS_PORT}`, domain, DNS_HOST],
+    {
+        encoding: 'utf8',
+        timeout: 15_000,
+    },
+);
+
+const setToggleState = async (input: Locator, label: Locator, checked: boolean) => {
+    if ((await input.isChecked()) === checked) {
+        return;
+    }
+
+    await label.click();
+
+    if (checked) {
+        await expect(input).toBeChecked();
+    } else {
+        await expect(input).not.toBeChecked();
+    }
+};
+
+const expectLookupToChange = async (domain: string, previousResult: string) => {
+    await expect.poll(() => lookupDomain(domain), {
+        timeout: 15_000,
+        message: `Expected DNS lookup for ${domain} to change`,
+    }).not.toBe(previousResult);
+};
+
+const expectLookupToMatch = async (domain: string, expectedResult: string) => {
+    await expect.poll(() => lookupDomain(domain), {
+        timeout: 15_000,
+        message: `Expected DNS lookup for ${domain} to be restored`,
+    }).toBe(expectedResult);
+};
 
 test.describe('General Settings', () => {
     test.beforeEach(async ({ page }) => {
@@ -17,73 +57,50 @@ test.describe('General Settings', () => {
     test('should toggle browsing security feature and verify DNS changes', async ({ page }) => {
         await page.goto('/#settings');
 
-        const browsingSecurity = await page.locator('#safebrowsing');
-        const browsingSecurityLabel = await browsingSecurity.locator('xpath=following-sibling::*[1]');
+        const browsingSecurity = page.locator('#safebrowsing');
+        const browsingSecurityLabel = browsingSecurity.locator('xpath=following-sibling::*[1]');
 
         const initialState = await browsingSecurity.isChecked();
+        const initialResult = lookupDomain('totalvirus.com');
 
-        if (!initialState) {
-            await browsingSecurityLabel.click();
-            await expect(browsingSecurity).toBeChecked();
-        }
+        await setToggleState(browsingSecurity, browsingSecurityLabel, !initialState);
+        await expectLookupToChange('totalvirus.com', initialResult);
 
-        const resultEnabled = execSync('nslookup totalvirus.com 127.0.0.1').toString();
+        const toggledResult = lookupDomain('totalvirus.com');
+        expect(toggledResult).not.toBe(initialResult);
 
-        await browsingSecurityLabel.click();
-        await expect(browsingSecurity).not.toBeChecked();
-
-        const resultDisabled = execSync('nslookup totalvirus.com 127.0.0.1').toString();
-
-        expect(resultEnabled).not.toEqual(resultDisabled);
-
-        if (initialState) {
-            await browsingSecurityLabel.click();
-            await expect(browsingSecurity).toBeChecked();
-        }
+        await setToggleState(browsingSecurity, browsingSecurityLabel, initialState);
+        await expectLookupToMatch('totalvirus.com', initialResult);
     });
 
     test('should toggle parental control feature and verify DNS changes', async ({ page }) => {
         await page.goto('/#settings');
 
         const parentalControl = page.locator('#parental');
-        const parentalControlLabel = await parentalControl.locator('xpath=following-sibling::*[1]');
+        const parentalControlLabel = parentalControl.locator('xpath=following-sibling::*[1]');
 
         const initialState = await parentalControl.isChecked();
+        const initialResult = lookupDomain('pornhub.com');
 
-        if (!initialState) {
-            await parentalControlLabel.click();
-            await expect(parentalControl).toBeChecked();
-        }
+        await setToggleState(parentalControl, parentalControlLabel, !initialState);
+        await expectLookupToChange('pornhub.com', initialResult);
 
-        const resultEnabled = execSync('nslookup pornhub.com 127.0.0.1').toString();
+        const toggledResult = lookupDomain('pornhub.com');
+        expect(toggledResult).not.toBe(initialResult);
 
-        await parentalControlLabel.click();
-        await expect(parentalControl).not.toBeChecked();
-
-        const resultDisabled = execSync('nslookup pornhub.com 127.0.0.1').toString();
-
-        expect(resultEnabled).not.toEqual(resultDisabled);
-
-        if (initialState) {
-            await parentalControlLabel.click();
-            await expect(parentalControl).toBeChecked();
-        }
+        await setToggleState(parentalControl, parentalControlLabel, initialState);
+        await expectLookupToMatch('pornhub.com', initialResult);
     });
 
     test('should toggle safe search feature', async ({ page }) => {
         await page.goto('/#settings');
 
         const safeSearch = page.locator('#safesearch');
-        const safeSearchLabel = await safeSearch.locator('xpath=following-sibling::*[1]');
+        const safeSearchLabel = safeSearch.locator('xpath=following-sibling::*[1]');
 
         const initialState = await safeSearch.isChecked();
 
-        await safeSearchLabel.click();
-
-        await expect(safeSearch).not.toBeChecked({ checked: initialState });
-
-        await safeSearchLabel.click();
-
-        await expect(safeSearch).toBeChecked({ checked: initialState });
+        await setToggleState(safeSearch, safeSearchLabel, !initialState);
+        await setToggleState(safeSearch, safeSearchLabel, initialState);
     });
 });

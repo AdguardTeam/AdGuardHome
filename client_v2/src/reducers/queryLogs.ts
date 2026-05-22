@@ -21,7 +21,11 @@ const queryLogs = handleActions(
         [actions.setFilteredLogsSuccess.toString()]: (state: any, { payload }: any) => {
             const { logs, oldest, filter } = payload;
 
-            const isFiltered = filter && Object.keys(filter).some((key) => filter[key]);
+            const isFiltered =
+                !!filter &&
+                Object.entries(filter).some(
+                    ([key, value]) => value !== DEFAULT_LOGS_FILTER[key as keyof typeof DEFAULT_LOGS_FILTER],
+                );
 
             return {
                 ...state,
@@ -29,7 +33,7 @@ const queryLogs = handleActions(
                 filter,
                 isFiltered,
                 logs,
-                isEntireLog: logs.length < 1,
+                isEntireLog: oldest === '',
                 processingGetLogs: false,
             };
         },
@@ -54,7 +58,7 @@ const queryLogs = handleActions(
                 ...state,
                 oldest,
                 logs: older_than ? [...state.logs, ...logs] : logs,
-                isEntireLog: logs.length < 1,
+                isEntireLog: oldest === '',
                 processingGetLogs: false,
             };
         },
@@ -118,7 +122,6 @@ const queryLogs = handleActions(
             ...state,
             processingAdditionalLogs: false,
             processingGetLogs: false,
-            isEntireLog: true,
         }),
     },
     {

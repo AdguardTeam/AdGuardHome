@@ -112,6 +112,7 @@ interface SelectProps<
     onMenuClose?: () => void;
     showIcons?: boolean;
     showOptionIcon?: boolean;
+    optionTestIdPrefix?: string;
 }
 
 export const Select = <
@@ -152,6 +153,7 @@ export const Select = <
     onMenuClose,
     showIcons = false,
     showOptionIcon = true,
+    optionTestIdPrefix,
 }: SelectProps<T, Multi, ExtendOption, Group>) => {
     const selectClass = cn(
         { 'desktop-select-always': mobile === false },
@@ -178,7 +180,7 @@ export const Select = <
     );
 
     const DefaultOption = (props: OptionProps<IOption<T> & ExtendOption, Multi, Group>) => (
-        <CustomOption {...props} showIcon={showOptionIcon} />
+        <CustomOption {...props} showIcon={showOptionIcon} testIdPrefix={optionTestIdPrefix} />
     );
 
     const customComponents = {

@@ -1,3 +1,5 @@
+import intl from "panel/common/intl";
+
 export const R_URL_REQUIRES_PROTOCOL = /^https?:\/\/[^/\s]+(\/.*)?$/;
 
 // matches hostname or *.wildcard
@@ -228,7 +230,8 @@ export const WHOIS_ICONS = {
 
 export const DEFAULT_LOGS_FILTER = {
     search: '',
-    response_status: 'all',
+    status: 'all',
+    reason: 'all',
 };
 
 export const DEFAULT_LANGUAGE = 'en';
@@ -248,52 +251,34 @@ export const FILTERED_STATUS = {
     FILTERED_SAFE_SEARCH: 'FilteredSafeSearch',
     FILTERED_SAFE_BROWSING: 'FilteredSafeBrowsing',
     FILTERED_PARENTAL: 'FilteredParental',
+    NOT_FILTERED_ERROR: 'NotFilteredError',
+    FILTERED_INVALID: 'FilteredInvalid',
 };
 
-export const RESPONSE_FILTER = {
+export const QUERY_LOG_STATUS_FILTER = {
     ALL: {
         QUERY: 'all',
-        LABEL: 'all_queries',
-    },
-    FILTERED: {
-        QUERY: 'filtered',
-        LABEL: 'filtered',
+        LABEL: intl.getMessage('query_log_all_statuses'),
     },
     PROCESSED: {
         QUERY: 'processed',
-        LABEL: 'show_processed_responses',
+        LABEL: intl.getMessage('query_log_processed'),
+    },
+    ALLOWED: {
+        QUERY: 'allowed',
+        LABEL: intl.getMessage('query_log_allowed'),
     },
     BLOCKED: {
         QUERY: 'blocked',
-        LABEL: 'show_blocked_responses',
-    },
-    BLOCKED_SERVICES: {
-        QUERY: 'blocked_services',
-        LABEL: 'blocked_services',
-    },
-    BLOCKED_THREATS: {
-        QUERY: 'blocked_safebrowsing',
-        LABEL: 'blocked_threats',
-    },
-    BLOCKED_ADULT_WEBSITES: {
-        QUERY: 'blocked_parental',
-        LABEL: 'blocked_adult_websites',
-    },
-    ALLOWED: {
-        QUERY: 'whitelisted',
-        LABEL: 'allowed',
+        LABEL: intl.getMessage('query_log_blocked'),
     },
     REWRITTEN: {
         QUERY: 'rewritten',
-        LABEL: 'rewritten',
+        LABEL: intl.getMessage('query_log_rewritten'),
     },
-    SAFE_SEARCH: {
-        QUERY: 'safe_search',
-        LABEL: 'safe_search',
-    },
-};
+} as const;
 
-export const RESPONSE_FILTER_QUERIES = Object.values(RESPONSE_FILTER).reduce(
+export const QUERY_LOG_STATUS_FILTER_QUERIES = Object.values(QUERY_LOG_STATUS_FILTER).reduce(
     (
         acc: Record<string, string>,
         {
@@ -308,56 +293,78 @@ export const RESPONSE_FILTER_QUERIES = Object.values(RESPONSE_FILTER).reduce(
     {},
 );
 
+export const QUERY_LOG_REASON_FILTER = {
+    ALL: {
+        QUERY: 'all',
+        LABEL: intl.getMessage('query_log_all_reasons'),
+    },
+    BLOCKED_BY_FILTER: {
+        QUERY: 'FilteredBlackList',
+        LABEL: intl.getMessage('query_log_blocked_by_filter'),
+    },
+    BLOCKED_SERVICES: {
+        QUERY: 'FilteredBlockedService',
+        LABEL: intl.getMessage('query_log_blocked_services'),
+    },
+    BLOCKED_BY_THREATS: {
+        QUERY: 'FilteredSafeBrowsing',
+        LABEL: intl.getMessage('query_log_blocked_threats'),
+    },
+    BLOCKED_BY_PARENTAL_CONTROL: {
+        QUERY: 'FilteredParental',
+        LABEL: intl.getMessage('query_log_blocked_by_parental_control'),
+    },
+    DNS_REWRITES: {
+        QUERY: 'Rewrite',
+        LABEL: intl.getMessage('dns_rewrites'),
+    },
+    SAFE_SEARCH: {
+        QUERY: 'FilteredSafeSearch',
+        LABEL: intl.getMessage('query_log_safe_search'),
+    },
+} as const;
+
+export const QUERY_LOG_REASON_FILTER_QUERIES = Object.values(QUERY_LOG_REASON_FILTER).reduce(
+    (
+        acc: Record<string, string>,
+        {
+            QUERY,
+        }: {
+            QUERY: string;
+        },
+    ) => {
+        acc[QUERY] = QUERY;
+        return acc;
+    },
+    {},
+);
+
+export const RESPONSE_FILTER = QUERY_LOG_REASON_FILTER;
+
+export const RESPONSE_FILTER_QUERIES = QUERY_LOG_REASON_FILTER_QUERIES;
+
 export const QUERY_STATUS_COLORS = {
     BLUE: 'blue',
     GREEN: 'green',
     RED: 'red',
     WHITE: 'white',
     YELLOW: 'yellow',
-};
+} as const;
 
-export const FILTERED_STATUS_TO_META_MAP = {
-    [FILTERED_STATUS.NOT_FILTERED_WHITE_LIST]: {
-        LABEL: RESPONSE_FILTER.ALLOWED.LABEL,
-        COLOR: QUERY_STATUS_COLORS.GREEN,
-    },
-    [FILTERED_STATUS.NOT_FILTERED_NOT_FOUND]: {
-        LABEL: RESPONSE_FILTER.PROCESSED.LABEL,
-        COLOR: QUERY_STATUS_COLORS.WHITE,
-    },
-    [FILTERED_STATUS.FILTERED_BLOCKED_SERVICE]: {
-        LABEL: 'blocked_service',
-        COLOR: QUERY_STATUS_COLORS.RED,
-    },
-    [FILTERED_STATUS.FILTERED_SAFE_SEARCH]: {
-        LABEL: RESPONSE_FILTER.SAFE_SEARCH.LABEL,
-        COLOR: QUERY_STATUS_COLORS.YELLOW,
-    },
-    [FILTERED_STATUS.FILTERED_BLACK_LIST]: {
-        LABEL: RESPONSE_FILTER.BLOCKED.LABEL,
-        COLOR: QUERY_STATUS_COLORS.RED,
-    },
-    [FILTERED_STATUS.REWRITE]: {
-        LABEL: RESPONSE_FILTER.REWRITTEN.LABEL,
-        COLOR: QUERY_STATUS_COLORS.BLUE,
-    },
-    [FILTERED_STATUS.REWRITE_HOSTS]: {
-        LABEL: RESPONSE_FILTER.REWRITTEN.LABEL,
-        COLOR: QUERY_STATUS_COLORS.BLUE,
-    },
-    [FILTERED_STATUS.REWRITE_RULE]: {
-        LABEL: RESPONSE_FILTER.REWRITTEN.LABEL,
-        COLOR: QUERY_STATUS_COLORS.BLUE,
-    },
-    [FILTERED_STATUS.FILTERED_SAFE_BROWSING]: {
-        LABEL: RESPONSE_FILTER.BLOCKED_THREATS.LABEL,
-        COLOR: QUERY_STATUS_COLORS.YELLOW,
-    },
-    [FILTERED_STATUS.FILTERED_PARENTAL]: {
-        LABEL: RESPONSE_FILTER.BLOCKED_ADULT_WEBSITES.LABEL,
-        COLOR: QUERY_STATUS_COLORS.YELLOW,
-    },
-};
+export const FILTERED_STATUS_TO_COLOR_MAP = {
+    [FILTERED_STATUS.NOT_FILTERED_WHITE_LIST]: QUERY_STATUS_COLORS.GREEN,
+    [FILTERED_STATUS.NOT_FILTERED_NOT_FOUND]: QUERY_STATUS_COLORS.WHITE,
+    [FILTERED_STATUS.FILTERED_BLOCKED_SERVICE]: QUERY_STATUS_COLORS.RED,
+    [FILTERED_STATUS.FILTERED_SAFE_SEARCH]: QUERY_STATUS_COLORS.YELLOW,
+    [FILTERED_STATUS.FILTERED_BLACK_LIST]: QUERY_STATUS_COLORS.RED,
+    [FILTERED_STATUS.REWRITE]: QUERY_STATUS_COLORS.YELLOW,
+    [FILTERED_STATUS.REWRITE_HOSTS]: QUERY_STATUS_COLORS.YELLOW,
+    [FILTERED_STATUS.REWRITE_RULE]: QUERY_STATUS_COLORS.YELLOW,
+    [FILTERED_STATUS.FILTERED_SAFE_BROWSING]: QUERY_STATUS_COLORS.RED,
+    [FILTERED_STATUS.FILTERED_PARENTAL]: QUERY_STATUS_COLORS.RED,
+    [FILTERED_STATUS.NOT_FILTERED_ERROR]: QUERY_STATUS_COLORS.RED,
+    [FILTERED_STATUS.FILTERED_INVALID]: QUERY_STATUS_COLORS.RED,
+} as const;
 
 export const DEFAULT_TIME_FORMAT = 'HH:mm:ss';
 

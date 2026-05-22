@@ -1,29 +1,120 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { ADMIN_PASSWORD, ADMIN_USERNAME } from '../constants';
 
-const TEST_DOMAIN = 'test-example.org';
-const TEST_ANSWER = '192.168.1.100';
-const UPDATED_DOMAIN = 'updated-example.org';
-const UPDATED_ANSWER = '192.168.1.200';
+type RewriteEntry = {
+    domain: string;
+    answer: string;
+    enabled?: boolean;
+};
+
+const ADD_REWRITE: RewriteEntry = {
+    domain: 'e2e-add-example.org',
+    answer: '192.168.1.100',
+};
+const TOGGLE_REWRITE: RewriteEntry = {
+    domain: 'e2e-toggle-example.org',
+    answer: '192.168.1.101',
+    enabled: true,
+};
+const SOURCE_REWRITE: RewriteEntry = {
+    domain: 'e2e-update-source-example.org',
+    answer: '192.168.1.102',
+    enabled: true,
+};
+const UPDATED_REWRITE: RewriteEntry = {
+    domain: 'e2e-update-target-example.org',
+    answer: '192.168.1.200',
+    enabled: true,
+};
+const DELETE_REWRITE: RewriteEntry = {
+    domain: 'e2e-delete-example.org',
+    answer: '192.168.1.103',
+    enabled: true,
+};
+
+const login = async (page: Page) => {
+    await page.goto('/login.html');
+    await page.locator('#username').fill(ADMIN_USERNAME);
+    await page.locator('#password').fill(ADMIN_PASSWORD);
+    await page.locator('#sign_in').click();
+    await page.waitForURL((url) => !url.href.endsWith('/login.html'));
+};
+
+const openDnsRewritesPage = async (page: Page) => {
+    await page.goto('/#dns_rewrites');
+    await expect(page.getByRole('heading', { name: 'DNS rewrites' })).toBeVisible();
+};
+
+const listRewrites = async (page: Page): Promise<RewriteEntry[]> => {
+    const response = await page.request.get('/control/rewrite/list');
+    expect(response.ok()).toBeTruthy();
+
+    return response.json();
+};
+
+const removeRewriteIfPresent = async (page: Page, domain: string) => {
+    const rewrites = await listRewrites(page);
+
+    for (const rewrite of rewrites.filter((item) => item.domain === domain)) {
+        const response = await page.request.post('/control/rewrite/delete', {
+            data: rewrite,
+        });
+
+        expect(response.ok()).toBeTruthy();
+    }
+};
+
+const addRewriteViaApi = async (page: Page, rewrite: RewriteEntry) => {
+    await removeRewriteIfPresent(page, rewrite.domain);
+
+    const response = await page.request.post('/control/rewrite/add', {
+        data: rewrite,
+    });
+
+    expect(response.ok()).toBeTruthy();
+};
+
+const expectRewriteVisible = async (page: Page, rewrite: RewriteEntry) => {
+    await expect(page.getByText(rewrite.domain, { exact: true }).first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(rewrite.answer, { exact: true }).first()).toBeVisible({ timeout: 15_000 });
+};
+
+const toggleGlobalRewrite = async (page: Page, targetEnabled: boolean) => {
+    const globalToggleInput = page.locator('input#rewrite_global_enabled');
+    const globalToggleLabel = page.locator('label[for="rewrite_global_enabled"]');
+
+    await expect(globalToggleInput).toBeAttached();
+    await expect(globalToggleLabel).toBeVisible();
+
+    if ((await globalToggleInput.isChecked()) === targetEnabled) {
+        return;
+    }
+
+    await globalToggleLabel.click();
+
+    const confirmButton = page.getByTestId(targetEnabled ? 'confirm-enable-rewrites' : 'confirm-disable-rewrites');
+    await expect(confirmButton).toBeVisible({ timeout: 10_000 });
+    await confirmButton.click();
+
+    if (targetEnabled) {
+        await expect(globalToggleInput).toBeChecked();
+    } else {
+        await expect(globalToggleInput).not.toBeChecked();
+    }
+};
 
 test.describe('DNS Rewrites', () => {
     test.beforeEach(async ({ page }) => {
-        await page.goto('/login.html');
-        await page.locator('#username').fill(ADMIN_USERNAME);
-        await page.locator('#password').fill(ADMIN_PASSWORD);
-        await page.locator('#sign_in').click();
-        await page.waitForURL((url) => !url.href.endsWith('/login.html'));
-
-        await page.goto('/#dns_rewrites');
-        await page.waitForTimeout(1000);
+        await login(page);
     });
 
     test('should add a new DNS rewrite', async ({ page }) => {
+        await removeRewriteIfPresent(page, ADD_REWRITE.domain);
+        await openDnsRewritesPage(page);
+
         const addButton = page.getByTestId('add-rewrite');
         await expect(addButton).toBeVisible();
         await addButton.click();
-
-        await page.waitForTimeout(1000);
 
         const domainInput = page.locator('input#domain');
         const answerInput = page.locator('input#answer');
@@ -31,8 +122,8 @@ test.describe('DNS Rewrites', () => {
         await expect(domainInput).toBeVisible({ timeout: 10000 });
         await expect(answerInput).toBeVisible();
 
-        await domainInput.fill(TEST_DOMAIN);
-        await answerInput.fill(TEST_ANSWER);
+        await domainInput.fill(ADD_REWRITE.domain);
+        await answerInput.fill(ADD_REWRITE.answer);
 
         const saveButton = page.locator('button#save');
         await expect(saveButton).toBeVisible();
@@ -40,84 +131,54 @@ test.describe('DNS Rewrites', () => {
 
         await page.waitForSelector('button#save', { state: 'hidden', timeout: 5000 }).catch(() => {});
 
-        await page.waitForTimeout(3000);
-
-        const domainText = page.getByText(TEST_DOMAIN, { exact: true }).first();
-        const answerText = page.getByText(TEST_ANSWER, { exact: true }).first();
-
-        await expect(domainText).toBeVisible({ timeout: 15000 });
-        await expect(answerText).toBeVisible({ timeout: 15000 });
+        await expectRewriteVisible(page, ADD_REWRITE);
     });
 
     test('should toggle global rewrite switch in table header', async ({ page }) => {
-        await page.waitForTimeout(1000);
+        await openDnsRewritesPage(page);
 
         const globalToggleInput = page.locator('input#rewrite_global_enabled');
-        const globalToggleLabel = page.locator('label[for="rewrite_global_enabled"]');
-
         await expect(globalToggleInput).toBeAttached();
-        await expect(globalToggleLabel).toBeVisible();
 
-        const initialState = await globalToggleInput.evaluate((el: HTMLInputElement) => el.checked);
+        const initialState = await globalToggleInput.isChecked();
 
-        await globalToggleLabel.click();
-        await page.waitForTimeout(1000);
-
-        const newState = await globalToggleInput.evaluate((el: HTMLInputElement) => el.checked);
-        expect(newState).toBe(!initialState);
-
-        await globalToggleLabel.click();
-        await page.waitForTimeout(1000);
-
-        const finalState = await globalToggleInput.evaluate((el: HTMLInputElement) => el.checked);
-        expect(finalState).toBe(initialState);
+        await toggleGlobalRewrite(page, !initialState);
+        await toggleGlobalRewrite(page, initialState);
     });
 
     test('should toggle individual rewrite', async ({ page }) => {
-        await page.waitForTimeout(1000);
+        await addRewriteViaApi(page, TOGGLE_REWRITE);
+        await openDnsRewritesPage(page);
 
-        const individualToggleInput = page.locator(`input#rewrite_${TEST_DOMAIN}`);
-        const individualToggleLabel = page.locator(`label[for="rewrite_${TEST_DOMAIN}"]`);
-
-        const toggleExists = await individualToggleInput.count() > 0;
-
-        if (!toggleExists) {
-            test.skip();
-            return;
-        }
+        const toggleId = `rewrite_${TOGGLE_REWRITE.domain}`;
+        const individualToggleInput = page.locator(`input[id="${toggleId}"]`);
+        const individualToggleLabel = page.locator(`label[for="${toggleId}"]`);
 
         await expect(individualToggleInput).toBeAttached();
         await expect(individualToggleLabel).toBeVisible();
 
-        const initialState = await individualToggleInput.evaluate((el: HTMLInputElement) => el.checked);
+        const initialState = await individualToggleInput.isChecked();
 
         await individualToggleLabel.click();
-        await page.waitForTimeout(1000);
-
-        const newState = await individualToggleInput.evaluate((el: HTMLInputElement) => el.checked);
-        expect(newState).toBe(!initialState);
+        await expect(individualToggleInput).not.toBeChecked();
 
         await individualToggleLabel.click();
-        await page.waitForTimeout(1000);
-
-        const finalState = await individualToggleInput.evaluate((el: HTMLInputElement) => el.checked);
-        expect(finalState).toBe(initialState);
+        if (initialState) {
+            await expect(individualToggleInput).toBeChecked();
+        } else {
+            await expect(individualToggleInput).not.toBeChecked();
+        }
     });
 
     test('should update rewrite through ConfigureRewritesModal', async ({ page }) => {
-        await page.waitForTimeout(1000);
+        await removeRewriteIfPresent(page, UPDATED_REWRITE.domain);
+        await addRewriteViaApi(page, SOURCE_REWRITE);
+        await openDnsRewritesPage(page);
 
-        const editButton = page.getByTestId(`edit-rewrite-${TEST_DOMAIN}`);
+        const editButton = page.getByTestId(`edit-rewrite-${SOURCE_REWRITE.domain}`);
 
-        const editButtonExists = await editButton.count() > 0;
-
-        if (!editButtonExists) {
-            test.skip();
-            return;
-        }
-
+        await expect(editButton).toBeVisible({ timeout: 10_000 });
         await editButton.click();
-        await page.waitForTimeout(1000);
 
         const domainInput = page.locator('input#domain');
         const answerInput = page.locator('input#answer');
@@ -126,10 +187,10 @@ test.describe('DNS Rewrites', () => {
         await expect(answerInput).toBeVisible();
 
         await domainInput.clear();
-        await domainInput.fill(UPDATED_DOMAIN);
+        await domainInput.fill(UPDATED_REWRITE.domain);
 
         await answerInput.clear();
-        await answerInput.fill(UPDATED_ANSWER);
+        await answerInput.fill(UPDATED_REWRITE.answer);
 
         const saveButton = page.locator('button#save');
         await expect(saveButton).toBeVisible();
@@ -137,45 +198,21 @@ test.describe('DNS Rewrites', () => {
 
         await page.waitForSelector('button#save', { state: 'hidden', timeout: 5000 }).catch(() => {});
 
-        await page.waitForTimeout(3000);
-
-        const updatedDomain = page.getByText(UPDATED_DOMAIN, { exact: true }).first();
-        const updatedAnswer = page.getByText(UPDATED_ANSWER, { exact: true }).first();
-
-        await expect(updatedDomain).toBeVisible({ timeout: 15000 });
-        await expect(updatedAnswer).toBeVisible({ timeout: 15000 });
+        await expectRewriteVisible(page, UPDATED_REWRITE);
     });
 
     test('should delete rewrite', async ({ page }) => {
-        await page.waitForTimeout(1000);
+        await addRewriteViaApi(page, DELETE_REWRITE);
+        await openDnsRewritesPage(page);
 
-        const deleteButton = page.getByTestId(`delete-rewrite-${UPDATED_DOMAIN}`);
-
-        const deleteButtonExists = await deleteButton.count() > 0;
-
-        if (!deleteButtonExists) {
-            const altDeleteButton = page.getByTestId(`delete-rewrite-${TEST_DOMAIN}`);
-            const altButtonExists = await altDeleteButton.count() > 0;
-
-            if (!altButtonExists) {
-                test.skip();
-                return;
-            }
-
-            await altDeleteButton.click();
-        } else {
-            await deleteButton.click();
-        }
-
-        await page.waitForTimeout(1000);
+        const deleteButton = page.getByTestId(`delete-rewrite-${DELETE_REWRITE.domain}`);
+        await expect(deleteButton).toBeVisible({ timeout: 10_000 });
+        await deleteButton.click();
 
         const confirmButton = page.getByRole('button', { name: /remove|delete/i });
         await expect(confirmButton).toBeVisible({ timeout: 10000 });
         await confirmButton.click();
 
-        await page.waitForTimeout(3000);
-
-        const deletedDomain = page.getByText(UPDATED_DOMAIN, { exact: true });
-        await expect(deletedDomain).not.toBeVisible({ timeout: 15000 });
+        await expect(page.getByText(DELETE_REWRITE.domain, { exact: true })).not.toBeVisible({ timeout: 15_000 });
     });
 });

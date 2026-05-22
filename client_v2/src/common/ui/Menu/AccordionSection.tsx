@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import type { MouseEvent } from 'react';
 import cn from 'clsx';
 import { Icon, IconType } from 'panel/common/ui/Icon';
 import { Link } from 'panel/common/ui/Link';
@@ -32,7 +33,7 @@ export const AccordionSection = ({ title, icon, items, isActive, className }: Pr
         }
     }, []);
 
-    const toggleAccordion = (e: React.MouseEvent) => {
+    const toggleAccordion = (e: MouseEvent) => {
         e.stopPropagation();
         setIsOpen(!isOpen);
     };

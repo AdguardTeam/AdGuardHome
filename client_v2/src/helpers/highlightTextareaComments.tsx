@@ -1,13 +1,20 @@
-import React from 'react';
+import React, { type RefObject, type UIEvent } from 'react';
 import classnames from 'clsx';
+import theme from 'panel/lib/theme';
 import { COMMENT_LINE_DEFAULT_TOKEN } from './constants';
 
-const renderHighlightedLine = (line: any, idx: any, commentLineTokens = [COMMENT_LINE_DEFAULT_TOKEN]) => {
+type CommentLineTokens = string[];
+
+const renderHighlightedLine = (
+    line: string,
+    idx: number,
+    commentLineTokens: CommentLineTokens = [COMMENT_LINE_DEFAULT_TOKEN],
+) => {
     const isComment = commentLineTokens.some((token) => line.trim().startsWith(token));
 
     const lineClassName = classnames({
-        'text-gray': isComment,
-        'text-transparent': !isComment,
+        [theme.highlight.textGray]: isComment,
+        [theme.highlight.textTransparent]: !isComment,
     });
 
     return (
@@ -16,17 +23,28 @@ const renderHighlightedLine = (line: any, idx: any, commentLineTokens = [COMMENT
         </div>
     );
 };
-export const getTextareaCommentsHighlight = (ref: any, lines: any, commentLineTokens?: any, className = '') => {
-    const renderLine = (line: any, idx: any) => renderHighlightedLine(line, idx, commentLineTokens);
+
+export const getTextareaCommentsHighlight = (
+    ref: RefObject<HTMLElement>,
+    lines: string,
+    commentLineTokens: CommentLineTokens = [COMMENT_LINE_DEFAULT_TOKEN],
+    className = '',
+) => {
+    const renderLine = (line: string, idx: number) => renderHighlightedLine(line, idx, commentLineTokens);
 
     return (
-        <code className={classnames('text-output font-monospace', className)} ref={ref}>
-            {lines?.split('\n').map(renderLine)}
+        <code className={classnames(theme.highlight.textOutput, className)} ref={ref}>
+            {lines.split('\n').map(renderLine)}
         </code>
     );
 };
 
-export const syncScroll = (e: any, ref: any) => {
+export const syncScroll = (e: UIEvent<HTMLElement>, ref: RefObject<HTMLElement>) => {
+    if (!ref.current) {
+        return;
+    }
+
+    const target = e.target as HTMLElement;
     // eslint-disable-next-line no-param-reassign
-    ref.current.scrollTop = e.target.scrollTop;
+    ref.current.scrollTop = target.scrollTop;
 };

@@ -1,15 +1,34 @@
 import { defineConfig, devices } from '@playwright/test';
 
 import path from 'path';
-import { CONFIG_FILE_PATH } from './tests/constants';
+import { fileURLToPath } from 'url';
+import { ADMIN_USERNAME, CONFIG_FILE_PATH, PORT, WORK_DIR_PATH } from './tests/constants';
+
+const configDir = path.dirname(fileURLToPath(import.meta.url));
+const ADMIN_PASSWORD_HASH = '$2a$10$82RqoFQEf8GcFZwhCk4GFu.KHavhWaNajpZxCkdYsHhToNRe8ljO2';
+const DNS_PORT = 5353;
+const CONFIG_SCHEMA_VERSION = 34;
+
+const shellQuote = (value: string) => `'${value.replace(/'/g, `'\\''`)}'`;
+
+const prepareConfigScriptPath = path.resolve(configDir, './tests/e2e/prepareConfig.mjs');
+const prepareConfigEnv = [
+    `E2E_CONFIG_PATH=${shellQuote(CONFIG_FILE_PATH)}`,
+    `E2E_WORK_DIR=${shellQuote(WORK_DIR_PATH)}`,
+    `E2E_ADMIN_USERNAME=${shellQuote(ADMIN_USERNAME)}`,
+    `E2E_ADMIN_PASSWORD_HASH=${shellQuote(ADMIN_PASSWORD_HASH)}`,
+    `E2E_HTTP_PORT=${shellQuote(String(PORT))}`,
+    `E2E_DNS_PORT=${shellQuote(String(DNS_PORT))}`,
+    `E2E_SCHEMA_VERSION=${shellQuote(String(CONFIG_SCHEMA_VERSION))}`,
+].join(' ');
 
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
     testDir: './tests/e2e',
-    globalSetup: path.resolve('./tests/e2e/globalSetup.ts'),
-    globalTeardown: path.resolve('./tests/e2e/globalTeardown.ts'),
+    globalSetup: path.resolve(configDir, './tests/e2e/globalSetup.ts'),
+    globalTeardown: path.resolve(configDir, './tests/e2e/globalTeardown.ts'),
     timeout: 30000,
     /* Run tests in files in parallel */
     fullyParallel: true,
@@ -43,9 +62,9 @@ export default defineConfig({
 
     webServer: {
         stdout: process.env.CI ? 'pipe' : 'ignore',
-        command: `${!process.env.CI ? 'sudo ' : ''}./AdGuardHome --local-frontend -v -c ${CONFIG_FILE_PATH}`,
+        command: `${prepareConfigEnv} node ${shellQuote(prepareConfigScriptPath)} && ./AdGuardHome --local-frontend -v -c ${CONFIG_FILE_PATH} --work-dir ${WORK_DIR_PATH}`,
         url: 'http://127.0.0.1:3000',
-        cwd: '..',
+        cwd: path.resolve(configDir, '..'),
         reuseExistingServer: !process.env.CI,
         timeout: 50000,
     },

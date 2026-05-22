@@ -1,8 +1,5 @@
 import { createAction } from 'redux-actions';
-import i18next from 'i18next';
 
-import endsWith from 'lodash/endsWith';
-import escapeRegExp from 'lodash/escapeRegExp';
 import React from 'react';
 import { compose } from 'redux';
 import type { Dispatch } from 'redux';
@@ -11,9 +8,6 @@ import {
     splitByNewLine,
     sortClients,
     filterOutComments,
-    msToSeconds,
-    msToMinutes,
-    msToHours,
 } from '../helpers/helpers';
 import {
     BLOCK_ACTIONS,
@@ -33,6 +27,7 @@ import { getFilteringStatus, setRules } from './filtering';
 type SafeSearchConfig = Record<string, boolean> & { enabled: boolean };
 type ToggleSettingKey = keyof typeof SETTINGS_NAMES;
 type Theme = (typeof THEMES)[keyof typeof THEMES];
+type BlockAction = (typeof BLOCK_ACTIONS)[keyof typeof BLOCK_ACTIONS];
 
 export const toggleSettingStatus = createAction<{
     settingKey: ToggleSettingKey;
@@ -118,19 +113,13 @@ export const toggleProtectionSuccess = createAction('TOGGLE_PROTECTION_SUCCESS')
 const getDisabledMessage = (time: any) => {
     switch (time) {
         case DISABLE_PROTECTION_TIMINGS.HALF_MINUTE:
-            return intl.getMessage('disable_notify_for_seconds', {
-                count: msToSeconds(DISABLE_PROTECTION_TIMINGS.HALF_MINUTE),
-            });
+            return intl.getPlural('disable_notify_for_seconds', DISABLE_PROTECTION_TIMINGS.HALF_MINUTE);
         case DISABLE_PROTECTION_TIMINGS.MINUTE:
-            return intl.getMessage('disable_notify_for_minutes', {
-                count: msToMinutes(DISABLE_PROTECTION_TIMINGS.MINUTE),
-            });
+            return intl.getPlural('disable_notify_for_minutes', DISABLE_PROTECTION_TIMINGS.MINUTE);
         case DISABLE_PROTECTION_TIMINGS.TEN_MINUTES:
-            return intl.getMessage('disable_notify_for_minutes', {
-                count: msToMinutes(DISABLE_PROTECTION_TIMINGS.TEN_MINUTES),
-            });
+            return intl.getPlural('disable_notify_for_minutes', DISABLE_PROTECTION_TIMINGS.TEN_MINUTES);
         case DISABLE_PROTECTION_TIMINGS.HOUR:
-            return intl.getMessage('disable_notify_for_hours', { count: msToHours(DISABLE_PROTECTION_TIMINGS.HOUR) });
+            return intl.getPlural('disable_notify_for_hours', DISABLE_PROTECTION_TIMINGS.HOUR);
         case DISABLE_PROTECTION_TIMINGS.TOMORROW:
             return intl.getMessage('disable_notify_until_tomorrow');
         default:
@@ -394,21 +383,21 @@ export const testUpstream =
             const testMessages = Object.keys(upstreamResponse).map((key) => {
                 const message = upstreamResponse[key];
                 if (message.startsWith('WARNING:')) {
-                    dispatch(addErrorToast({ error: i18next.t('dns_test_warning_toast', { key }) }));
+                    dispatch(addErrorToast({ error: intl.getMessage('dns_test_warning_toast', { key }) }));
                 } else if (message.endsWith(': parsing error')) {
                     const info = message.substring(0, message.indexOf(':'));
                     const [sectionKey, line] = info.split(' ');
-                    const section = i18next.t(sectionKey);
+                    const section = intl.getMessage(sectionKey);
                     dispatch(
                         addErrorToast({
-                            error: i18next.t('dns_test_parsing_error_toast', {
+                            error: intl.getMessage('dns_test_parsing_error_toast', {
                                 section,
                                 line,
                             }),
                         }),
                     );
                 } else if (message !== 'OK') {
-                    dispatch(addErrorToast({ error: i18next.t('dns_test_not_ok_toast', { key }) }));
+                    dispatch(addErrorToast({ error: intl.getMessage('dns_test_not_ok_toast', { key }) }));
                 }
                 return message;
             });
@@ -563,13 +552,9 @@ export const findActiveDhcp = (selectedInterface: any) => async (dispatch: any, 
         ) {
             dispatch(addErrorToast({ error: 'dhcp_found' }));
         } else if (hasV4Interface && v4.static_ip.static === STATUS_RESPONSE.NO && v4.static_ip.ip && interface_name) {
-            const warning = i18next.t('dhcp_dynamic_ip_found', {
+            const warning = intl.getMessage('dhcp_dynamic_ip_found', {
                 interfaceName: interface_name,
                 ipAddress: v4.static_ip.ip,
-                interpolation: {
-                    prefix: '<0>{{',
-                    suffix: '}}</0>',
-                },
             });
             dispatch(addErrorToast({ error: warning }));
         } else {
@@ -718,47 +703,54 @@ export const updateStaticLease = (config: any) => async (dispatch: any) => {
 export const removeToast = createAction('REMOVE_TOAST');
 
 export const toggleBlocking =
-    (type: any, domain: any, baseRule?: string, baseUnblocking?: string) => async (dispatch: any, getState: any) => {
+    (
+        type: BlockAction,
+        domain: string,
+        baseRule?: string,
+        baseUnblocking?: string,
+        alternateUnblocking?: string,
+    ) => async (dispatch: any, getState: any) => {
         const baseBlockingRule = baseRule || `||${domain}^$important`;
         const baseUnblockingRule = baseUnblocking || `@@${baseBlockingRule}`;
         const { userRules } = getState().filtering;
 
-        const lineEnding = !endsWith(userRules, '\n') ? '\n' : '';
+        const desiredRule = type === BLOCK_ACTIONS.BLOCK ? baseBlockingRule : baseUnblockingRule;
+        const rulesToRemove = new Set([
+            type === BLOCK_ACTIONS.BLOCK ? baseUnblockingRule : baseBlockingRule,
+            alternateUnblocking,
+        ].filter(Boolean));
+        const existingRules = splitByNewLine(userRules);
+        const updatedRules = existingRules.filter((rule: string) => !rulesToRemove.has(rule));
 
-        const blockingRule = type === BLOCK_ACTIONS.BLOCK ? baseUnblockingRule : baseBlockingRule;
-        const unblockingRule = type === BLOCK_ACTIONS.BLOCK ? baseBlockingRule : baseUnblockingRule;
-        const preparedBlockingRule = new RegExp(`(^|\n)${escapeRegExp(blockingRule)}($|\n)`);
-        const preparedUnblockingRule = new RegExp(`(^|\n)${escapeRegExp(unblockingRule)}($|\n)`);
+        if (!updatedRules.includes(desiredRule)) {
+            updatedRules.push(desiredRule);
+        }
 
-        const matchPreparedBlockingRule = userRules.match(preparedBlockingRule);
-        const matchPreparedUnblockingRule = userRules.match(preparedUnblockingRule);
+        const nextRules = updatedRules.length > 0 ? `${updatedRules.join('\n')}\n` : '';
 
-        if (matchPreparedBlockingRule) {
-            await dispatch(setRules(userRules.replace(`${blockingRule}`, '')));
-            dispatch(
-                addSuccessToast(intl.getMessage('rule_removed_from_custom_filtering_toast', { rule: blockingRule })),
-            );
-        } else if (!matchPreparedUnblockingRule) {
-            await dispatch(setRules(`${userRules}${lineEnding}${unblockingRule}\n`));
-            dispatch(
-                addSuccessToast(intl.getMessage('rule_added_to_custom_filtering_toast', { rule: unblockingRule })),
-            );
-        } else if (matchPreparedUnblockingRule) {
-            dispatch(
-                addSuccessToast(intl.getMessage('rule_added_to_custom_filtering_toast', { rule: unblockingRule })),
-            );
-            return;
-        } else if (!matchPreparedBlockingRule) {
-            dispatch(
-                addSuccessToast(intl.getMessage('rule_removed_from_custom_filtering_toast', { rule: blockingRule })),
-            );
+        if (nextRules !== userRules) {
+            await dispatch(setRules(nextRules, { showToast: false }));
+        }
+
+        dispatch(addSuccessToast({
+            message: intl.getMessage('notify_user_rule_added', { rule: desiredRule }),
+            code: 'notify_user_rule_added',
+        }));
+
+        if (nextRules === userRules) {
             return;
         }
 
-        dispatch(getFilteringStatus());
+        await dispatch(getFilteringStatus());
     };
 
-export const toggleBlockingForClient = (type: any, domain: any, client: any) => {
+export const blockDomain = (domain: string, baseRule?: string, baseUnblocking?: string) =>
+    toggleBlocking(BLOCK_ACTIONS.BLOCK, domain, baseRule, baseUnblocking);
+
+export const unblockDomain = (domain: string, baseRule?: string, baseUnblocking?: string) =>
+    toggleBlocking(BLOCK_ACTIONS.UNBLOCK, domain, baseRule, baseUnblocking);
+
+export const toggleBlockingForClient = (type: BlockAction, domain: string, client: string) => {
     const escapedClientName = client
         .replace(/'/g, "\\'")
         .replace(/"/g, '\\"')
@@ -769,3 +761,6 @@ export const toggleBlockingForClient = (type: any, domain: any, client: any) => 
 
     return toggleBlocking(type, domain, baseRule, baseUnblocking);
 };
+
+export const blockDomainForClient = (domain: string, client: string) =>
+    toggleBlockingForClient(BLOCK_ACTIONS.BLOCK, domain, client);

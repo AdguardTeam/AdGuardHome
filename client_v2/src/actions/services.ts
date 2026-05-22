@@ -1,6 +1,7 @@
 import { createAction } from 'redux-actions';
+import intl from 'panel/common/intl';
 import { apiClient } from '../api/Api';
-import { addErrorToast } from './toasts';
+import { addErrorToast, addSuccessToast } from './toasts';
 
 export const getBlockedServicesRequest = createAction('GET_BLOCKED_SERVICES_REQUEST');
 export const getBlockedServicesFailure = createAction('GET_BLOCKED_SERVICES_FAILURE');
@@ -42,8 +43,32 @@ export const updateBlockedServices = (values: any) => async (dispatch: any) => {
         await apiClient.updateBlockedServices(values);
         dispatch(updateBlockedServicesSuccess());
         dispatch(getBlockedServices());
+        dispatch(addSuccessToast({
+            message: intl.getMessage('settings_notify_changes_saved'),
+            code: 'settings_notify_changes_saved',
+        }));
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(updateBlockedServicesFailure());
     }
+};
+
+export const allowBlockedService = (serviceId: string) => async (dispatch: any, getState: any) => {
+    let list = getState().services?.list;
+
+    if (!Array.isArray(list?.ids)) {
+        await dispatch(getBlockedServices());
+        list = getState().services?.list;
+    }
+
+    const currentIds = Array.isArray(list?.ids) ? list.ids : [];
+
+    if (!currentIds.includes(serviceId)) {
+        return;
+    }
+
+    await dispatch(updateBlockedServices({
+        ids: currentIds.filter((id: string) => id !== serviceId),
+        schedule: list?.schedule,
+    }));
 };

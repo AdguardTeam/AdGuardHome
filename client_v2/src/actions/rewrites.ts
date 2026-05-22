@@ -1,5 +1,5 @@
 import { createAction } from 'redux-actions';
-import i18next from 'i18next';
+import intl from 'panel/common/intl';
 import { apiClient } from '../api/Api';
 import { addErrorToast, addSuccessToast } from './toasts';
 
@@ -31,7 +31,7 @@ export const addRewrite = (config: any) => async (dispatch: any) => {
         dispatch(addRewriteSuccess(config));
         dispatch(toggleRewritesModal());
         dispatch(getRewritesList());
-        dispatch(addSuccessToast(i18next.t('rewrite_added', { key: config.domain })));
+        dispatch(addSuccessToast(intl.getMessage('rewrite_added', { key: config.domain })));
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(addRewriteFailure());
@@ -54,7 +54,7 @@ export const updateRewrite = (config: any) => async (dispatch: any) => {
         dispatch(updateRewriteSuccess());
         dispatch(toggleRewritesModal());
         dispatch(getRewritesList());
-        dispatch(addSuccessToast(i18next.t('rewrite_updated', { key: config.domain })));
+        dispatch(addSuccessToast(intl.getMessage('rewrite_updated')));
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(updateRewriteFailure());
@@ -71,7 +71,7 @@ export const deleteRewrite = (config: any) => async (dispatch: any) => {
         await apiClient.deleteRewrite(config);
         dispatch(deleteRewriteSuccess());
         dispatch(getRewritesList());
-        dispatch(addSuccessToast(i18next.t('rewrite_deleted', { key: config.domain })));
+        dispatch(addSuccessToast(intl.getMessage('rewrite_deleted', { key: config.domain })));
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(deleteRewriteFailure());
@@ -102,7 +102,7 @@ export const updateRewriteSettings = (config: { enabled: boolean }) => async (di
     try {
         await apiClient.updateRewriteSettings(config);
         dispatch(updateRewriteSettingsSuccess(config));
-        dispatch(addSuccessToast(i18next.t('rewrite_settings_updated')));
+        dispatch(addSuccessToast(intl.getMessage('rewrite_settings_updated')));
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(updateRewriteSettingsFailure());

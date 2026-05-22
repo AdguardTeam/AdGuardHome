@@ -10,6 +10,7 @@ type CustomOptionProps<
     Group extends GroupBase<OptionType>,
 > = OptionProps<OptionType, IsMulti, Group> & {
     showIcon?: boolean;
+    testIdPrefix?: string;
 };
 
 export const CustomOption = <
@@ -22,8 +23,11 @@ export const CustomOption = <
     isSelected,
     selectOption,
     showIcon = true,
+    testIdPrefix,
 }: CustomOptionProps<OptionType, IsMulti, Group>) => (
     <div
+        data-testid={testIdPrefix ? `${testIdPrefix}-${String(data.value)}` : undefined}
+        data-option-value={String(data.value)}
         className={cn(
             theme.select.option,
             theme.select.option_check,
