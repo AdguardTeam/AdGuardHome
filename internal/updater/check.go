@@ -8,11 +8,13 @@ import (
 	"maps"
 	"net/http"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/ioutil"
+	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/c2h5oh/datasize"
 	"golang.org/x/mod/semver"
 )
@@ -99,7 +101,7 @@ func (u *Updater) parseVersionResponse(ctx context.Context, data []byte) (Versio
 	info.Announcement = versionJSON["announcement"]
 	info.AnnouncementURL = versionJSON["announcement_url"]
 
-	if semver.Compare(info.NewVersion, u.version) <= 0 {
+	if !isNewerVersion(info.NewVersion, u.version, u.channel) {
 		info.NewVersion = u.version
 
 		return info, nil
@@ -116,6 +118,34 @@ func (u *Updater) parseVersionResponse(ctx context.Context, data []byte) (Versio
 	u.packageURL = packageURL
 
 	return info, nil
+}
+
+func isNewerVersion(newVersion, currentVersion, channel string) bool {
+	if semver.Compare(newVersion, currentVersion) > 0 {
+		return true
+	}
+
+	if semver.Compare(versionCore(newVersion), versionCore(currentVersion)) > 0 {
+		return true
+	}
+
+	return channel != version.ChannelRelease &&
+		versionCore(newVersion) == versionCore(currentVersion) &&
+		hasPrerelease(newVersion) &&
+		!hasPrerelease(currentVersion)
+}
+
+func versionCore(v string) string {
+	core, _, found := strings.Cut(v, "-")
+	if !found {
+		return v
+	}
+
+	return core
+}
+
+func hasPrerelease(v string) bool {
+	return strings.Contains(v, "-")
 }
 
 // downloadURL returns the download URL for current build as well as its key in
