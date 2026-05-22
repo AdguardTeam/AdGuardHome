@@ -2,6 +2,12 @@
 
 <!-- TODO(a.garipov): Reformat in accordance with the KeepAChangelog spec. -->
 
+## v0.107.76: API changes
+
+### Documentation fix for the `reason` query parameter in 'GET /control/querylog'
+
+- The `reason` query parameter documentation has been updated to reflect that this parameter is an array.
+
 ## v0.107.75: API changes
 
 ### New `reason` query parameter in 'GET /control/querylog'
