@@ -14,6 +14,7 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/ioutil"
 	"github.com/c2h5oh/datasize"
+	"golang.org/x/mod/semver"
 )
 
 // TODO(a.garipov): Make configurable.
@@ -98,12 +99,18 @@ func (u *Updater) parseVersionResponse(ctx context.Context, data []byte) (Versio
 	info.Announcement = versionJSON["announcement"]
 	info.AnnouncementURL = versionJSON["announcement_url"]
 
+	if semver.Compare(info.NewVersion, u.version) <= 0 {
+		info.NewVersion = u.version
+
+		return info, nil
+	}
+
 	packageURL, key, found := u.downloadURL(ctx, versionJSON)
 	if !found {
 		return info, fmt.Errorf("version.json: no package URL: key %q not found in object", key)
 	}
 
-	info.CanAutoUpdate = aghalg.BoolToNullBool(info.NewVersion != u.version)
+	info.CanAutoUpdate = aghalg.NBTrue
 
 	u.newVersion = info.NewVersion
 	u.packageURL = packageURL

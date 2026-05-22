@@ -155,3 +155,35 @@ func TestUpdater_VersionInfo_others(t *testing.T) {
 		assert.Equal(t, aghalg.NBTrue, info.CanAutoUpdate)
 	}
 }
+
+func TestUpdater_VersionInfo_olderVersion(t *testing.T) {
+	const jsonData = `{
+  "version": "v0.107.75",
+  "announcement": "AdGuard Home v0.107.75 is now available!",
+  "announcement_url": "https://github.com/AdguardTeam/AdGuardHome/releases/tag/v0.107.75",
+  "selfupdate_min_version": "v0.0",
+  "download_linux_amd64": "https://static.adtidy.org/adguardhome/release/AdGuardHome_linux_amd64.tar.gz"
+}`
+
+	fakeClient, fakeURL := aghtest.StartHTTPServer(t, []byte(jsonData))
+	fakeURL = fakeURL.JoinPath("adguardhome", version.ChannelRelease, "version.json")
+
+	u := updater.NewUpdater(&updater.Config{
+		Client:             fakeClient,
+		Logger:             testLogger,
+		CommandConstructor: testCmdCons,
+		Version:            "v0.107.76",
+		Channel:            version.ChannelRelease,
+		GOOS:               "linux",
+		GOARCH:             "amd64",
+		VersionCheckURL:    fakeURL,
+	})
+
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	info, err := u.VersionInfo(ctx, false)
+	require.NoError(t, err)
+
+	assert.Equal(t, "v0.107.76", info.NewVersion)
+	assert.Equal(t, aghalg.NBFalse, info.CanAutoUpdate)
+	assert.Empty(t, u.NewVersion())
+}
