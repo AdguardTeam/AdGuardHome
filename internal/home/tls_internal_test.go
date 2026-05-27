@@ -25,44 +25,18 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// TODO(s.chzhen):  Consider moving to testdata.
-var testCertChainData = []byte(`-----BEGIN CERTIFICATE-----
-MIICKzCCAZSgAwIBAgIJAMT9kPVJdM7LMA0GCSqGSIb3DQEBCwUAMC0xFDASBgNV
-BAoMC0FkR3VhcmQgTHRkMRUwEwYDVQQDDAxBZEd1YXJkIEhvbWUwHhcNMTkwMjI3
-MDkyNDIzWhcNNDYwNzE0MDkyNDIzWjAtMRQwEgYDVQQKDAtBZEd1YXJkIEx0ZDEV
-MBMGA1UEAwwMQWRHdWFyZCBIb21lMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKB
-gQCwvwUnPJiOvLcOaWmGu6Y68ksFr13nrXBcsDlhxlXy8PaohVi3XxEmt2OrVjKW
-QFw/bdV4fZ9tdWFAVRRkgeGbIZzP7YBD1Ore/O5SQ+DbCCEafvjJCcXQIrTeKFE6
-i9G3aSMHs0Pwq2LgV8U5mYotLrvyFiE8QPInJbDDMpaFYwIDAQABo1MwUTAdBgNV
-HQ4EFgQUdLUmQpEqrhn4eKO029jYd2AAZEQwHwYDVR0jBBgwFoAUdLUmQpEqrhn4
-eKO029jYd2AAZEQwDwYDVR0TAQH/BAUwAwEB/zANBgkqhkiG9w0BAQsFAAOBgQB8
-LwlXfbakf7qkVTlCNXgoY7RaJ8rJdPgOZPoCTVToEhT6u/cb1c2qp8QB0dNExDna
-b0Z+dnODTZqQOJo6z/wIXlcUrnR4cQVvytXt8lFn+26l6Y6EMI26twC/xWr+1swq
-Muj4FeWHVDerquH4yMr1jsYLD3ci+kc5sbIX6TfVxQ==
------END CERTIFICATE-----`)
-
-var testPrivateKeyData = []byte(`-----BEGIN PRIVATE KEY-----
-MIICeAIBADANBgkqhkiG9w0BAQEFAASCAmIwggJeAgEAAoGBALC/BSc8mI68tw5p
-aYa7pjrySwWvXeetcFywOWHGVfLw9qiFWLdfESa3Y6tWMpZAXD9t1Xh9n211YUBV
-FGSB4ZshnM/tgEPU6t787lJD4NsIIRp++MkJxdAitN4oUTqL0bdpIwezQ/CrYuBX
-xTmZii0uu/IWITxA8iclsMMyloVjAgMBAAECgYEAmjzoG1h27UDkIlB9BVWl95TP
-QVPLB81D267xNFDnWk1Lgr5zL/pnNjkdYjyjgpkBp1yKyE4gHV4skv5sAFWTcOCU
-QCgfPfUn/rDFcxVzAdJVWAa/CpJNaZgjTPR8NTGU+Ztod+wfBESNCP5tbnuw0GbL
-MuwdLQJGbzeJYpsNysECQQDfFHYoRNfgxHwMbX24GCoNZIgk12uDmGTA9CS5E+72
-9t3V1y4CfXxSkfhqNbd5RWrUBRLEw9BKofBS7L9NMDKDAkEAytQoIueE1vqEAaRg
-a3A1YDUekKesU5wKfKfKlXvNgB7Hwh4HuvoQS9RCvVhf/60Dvq8KSu6hSjkFRquj
-FQ5roQJBAMwKwyiCD5MfJPeZDmzcbVpiocRQ5Z4wPbffl9dRTDnIA5AciZDthlFg
-An/jMjZSMCxNl6UyFcqt5Et1EGVhuFECQQCZLXxaT+qcyHjlHJTMzuMgkz1QFbEp
-O5EX70gpeGQMPDK0QSWpaazg956njJSDbNCFM4BccrdQbJu1cW4qOsfBAkAMgZuG
-O88slmgTRHX4JGFmy3rrLiHNI2BbJSuJ++Yllz8beVzh6NfvuY+HKRCmPqoBPATU
-kXS9jgARhhiWXJrk
------END PRIVATE KEY-----`)
+// Paths to the test TLS-related data.
+const (
+	testCertificatePath = "./testdata/cert.pem"
+	testPrivateKeyPath  = "./testdata/key.pem"
+)
 
 func TestValidateCertificates(t *testing.T) {
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
@@ -92,6 +66,10 @@ func TestValidateCertificates(t *testing.T) {
 
 	t.Run("valid", func(t *testing.T) {
 		status := &tlsConfigStatus{}
+
+		testCertChainData := requireReadFile(t, testCertificatePath)
+		testPrivateKeyData := requireReadFile(t, testPrivateKeyPath)
+
 		err = m.validateCertificates(ctx, status, testCertChainData, testPrivateKeyData, "")
 		assert.Error(t, err)
 
@@ -213,7 +191,7 @@ func newCertAndKey(tb testing.TB, n int64) (certDER []byte, key *rsa.PrivateKey)
 }
 
 // writeCertAndKey is a helper function that writes certificate and key to
-// specified paths.
+// specified paths.  key must not be nil.
 func writeCertAndKey(
 	tb testing.TB,
 	certDER []byte,
@@ -310,8 +288,8 @@ func TestTLSManager_Reload(t *testing.T) {
 	web := newTestWeb(t, &webConfig{})
 	m.setWebAPI(web)
 
-	conf := m.config()
-	assertCertSerialNumber(t, conf, snBefore)
+	extTLSConf := m.extendedTLSConfig()
+	assertCertSerialNumber(t, extTLSConf, snBefore)
 
 	certDER, key = newCertAndKey(t, snAfter)
 	writeCertAndKey(t, certDER, certPath, key, keyPath)
@@ -324,8 +302,8 @@ func TestTLSManager_Reload(t *testing.T) {
 		return globalContext.dnsServer.Stop(testutil.ContextWithTimeout(t, testTimeout))
 	})
 
-	conf = m.config()
-	assertCertSerialNumber(t, conf, snAfter)
+	extTLSConf = m.extendedTLSConfig()
+	assertCertSerialNumber(t, extTLSConf, snAfter)
 }
 
 func TestTLSManager_HandleTLSStatus(t *testing.T) {
@@ -334,13 +312,16 @@ func TestTLSManager_HandleTLSStatus(t *testing.T) {
 		err error
 	)
 
+	testCertChain := requireReadFile(t, testCertificatePath)
+	testPrivateKeyData := requireReadFile(t, testPrivateKeyPath)
+
 	m, err := newTLSManager(ctx, &tlsManagerConfig{
 		logger:       testLogger,
 		confModifier: agh.EmptyConfigModifier{},
 		manager:      aghtls.EmptyManager{},
 		tlsSettings: tlsConfigSettings{
 			Enabled:          true,
-			CertificateChain: string(testCertChainData),
+			CertificateChain: string(testCertChain),
 			PrivateKey:       string(testPrivateKeyData),
 		},
 		servePlainDNS: false,
@@ -355,7 +336,7 @@ func TestTLSManager_HandleTLSStatus(t *testing.T) {
 	err = json.NewDecoder(w.Body).Decode(res)
 	require.NoError(t, err)
 
-	wantCertificateChain := base64.StdEncoding.EncodeToString(testCertChainData)
+	wantCertificateChain := base64.StdEncoding.EncodeToString(testCertChain)
 	assert.True(t, res.Enabled)
 	assert.Equal(t, wantCertificateChain, res.CertificateChain)
 	assert.True(t, res.PrivateKeySaved)
@@ -470,9 +451,9 @@ func TestTLSManager_HandleTLSValidate(t *testing.T) {
 		confModifier: agh.EmptyConfigModifier{},
 		manager:      aghtls.EmptyManager{},
 		tlsSettings: tlsConfigSettings{
-			Enabled:          true,
-			CertificateChain: string(testCertChainData),
-			PrivateKey:       string(testPrivateKeyData),
+			Enabled:         true,
+			CertificatePath: testCertificatePath,
+			PrivateKeyPath:  testPrivateKeyPath,
 		},
 		servePlainDNS: false,
 	})
@@ -483,9 +464,9 @@ func TestTLSManager_HandleTLSValidate(t *testing.T) {
 
 	setts := &tlsConfigSettingsExt{
 		tlsConfigSettings: tlsConfigSettings{
-			Enabled:          true,
-			CertificateChain: base64.StdEncoding.EncodeToString(testCertChainData),
-			PrivateKey:       base64.StdEncoding.EncodeToString(testPrivateKeyData),
+			Enabled:         true,
+			CertificatePath: testCertificatePath,
+			PrivateKeyPath:  testPrivateKeyPath,
 		},
 	}
 
@@ -499,6 +480,9 @@ func TestTLSManager_HandleTLSValidate(t *testing.T) {
 	res := &tlsConfigStatus{}
 	err = json.NewDecoder(w.Body).Decode(res)
 	require.NoError(t, err)
+
+	testCertChainData := requireReadFile(t, testCertificatePath)
+	testPrivateKeyData := requireReadFile(t, testPrivateKeyPath)
 
 	cert, err := tls.X509KeyPair(testCertChainData, testPrivateKeyData)
 	require.NoError(t, err)
@@ -541,7 +525,7 @@ func TestTLSManager_HandleTLSConfigure(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	config.DNS.BindHosts = []netip.Addr{netip.MustParseAddr("127.0.0.1")}
+	config.DNS.BindHosts = []netip.Addr{netutil.IPv4Localhost()}
 	config.DNS.Port = 0
 
 	const wantSerialNumber int64 = 1
@@ -571,16 +555,16 @@ func TestTLSManager_HandleTLSConfigure(t *testing.T) {
 	web := newTestWeb(t, &webConfig{})
 	m.setWebAPI(web)
 
-	conf := m.config()
-	assertCertSerialNumber(t, conf, wantSerialNumber)
+	extTLSConf := m.extendedTLSConfig()
+	assertCertSerialNumber(t, extTLSConf, wantSerialNumber)
 
 	// Prepare a request with the new TLS configuration.
 	setts := &tlsConfigSettingsExt{
 		tlsConfigSettings: tlsConfigSettings{
-			Enabled:          true,
-			PortHTTPS:        4433,
-			CertificateChain: base64.StdEncoding.EncodeToString(testCertChainData),
-			PrivateKey:       base64.StdEncoding.EncodeToString(testPrivateKeyData),
+			Enabled:         true,
+			PortHTTPS:       4433,
+			CertificatePath: testCertificatePath,
+			PrivateKeyPath:  testPrivateKeyPath,
 		},
 	}
 
@@ -606,6 +590,9 @@ func TestTLSManager_HandleTLSConfigure(t *testing.T) {
 	err = json.NewDecoder(w.Body).Decode(res)
 	require.NoError(t, err)
 
+	testCertChainData := requireReadFile(t, testCertificatePath)
+	testPrivateKeyData := requireReadFile(t, testPrivateKeyPath)
+
 	cert, err := tls.X509KeyPair(testCertChainData, testPrivateKeyData)
 	require.NoError(t, err)
 
@@ -628,4 +615,16 @@ func TestTLSManager_HandleTLSConfigure(t *testing.T) {
 
 		return true
 	}, testTimeout, testTimeout/10)
+}
+
+// requireReadFile reads the file at the specified path and returns its content.
+//
+// TODO(m.kazantsev):  Move to golibs/testutil.
+func requireReadFile(tb testing.TB, path string) (data []byte) {
+	tb.Helper()
+
+	data, err := os.ReadFile(path)
+	require.NoError(tb, err)
+
+	return data
 }

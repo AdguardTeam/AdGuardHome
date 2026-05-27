@@ -91,7 +91,7 @@
   "check_reason": "Grund: {{reason}}",
   "check_service": "Dienstname: {{service}}",
   "check_title": "Filterung überprüfen",
-  "check_updates_btn": "Nach Aktualisierungen suchen",
+  "check_updates_btn": "Nach Updates suchen",
   "check_updates_now": "Jetzt nach Aktualisierungen suchen",
   "choose_allowlist": "Zulassungslisten auswählen",
   "choose_blocklist": "Blocklisten auswählen",

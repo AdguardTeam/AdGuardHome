@@ -429,7 +429,7 @@ func (q *qLogFile) readProbeLine(position int64) (string, int64, int64, error) {
 
 // readJSONValue reads a JSON string in form of '"key":"value"'.  prefix must
 // be of the form '"key":"' to generate less garbage.
-func readJSONValue(s, prefix string) string {
+func readJSONValue(s, prefix string) (res string) {
 	i := strings.Index(s, prefix)
 	if i == -1 {
 		return ""
@@ -442,11 +442,34 @@ func readJSONValue(s, prefix string) string {
 	}
 
 	end := start + i
+
 	return s[start:end]
 }
 
-// readQLogTimestamp reads the timestamp field from the query log line.
-func readQLogTimestamp(ctx context.Context, logger *slog.Logger, str string) int64 {
+// readJSONNumericValue reads a string containing unquoted JSON numeric value
+// from substring of s after prefix.
+func readJSONNumericValue(s, prefix string) (res string) {
+	i := strings.Index(s, prefix)
+	if i == -1 {
+		return ""
+	}
+
+	start := i + len(prefix)
+	i = strings.IndexFunc(s[start:], func(r rune) (ok bool) {
+		return (r > '9' || r < '0') && r != '.'
+	})
+	if i == -1 {
+		return ""
+	}
+
+	end := start + i
+
+	return s[start:end]
+}
+
+// readQLogTimestamp reads the timestamp field from the query log line.  logger
+// must not be nil.
+func readQLogTimestamp(ctx context.Context, logger *slog.Logger, str string) (res int64) {
 	val := readJSONValue(str, `"T":"`)
 	if len(val) == 0 {
 		val = readJSONValue(str, `"Time":"`)

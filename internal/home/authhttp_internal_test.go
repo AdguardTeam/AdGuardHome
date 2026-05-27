@@ -517,6 +517,10 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 	writeGLFile(t, tempDir, testTTL)
 	sessionsDB := filepath.Join(tempDir, "sessions.db")
 
+	gliNetRoot, err := os.OpenRoot(tempDir)
+	require.NoError(t, err)
+	testutil.CleanupAndRequireSuccess(t, gliNetRoot.Close)
+
 	mw := &webMw{}
 	baseMux := http.NewServeMux()
 	httpReg := aghhttp.NewDefaultRegistrar(baseMux, mw.wrap)
@@ -529,14 +533,15 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 	require.NoError(t, err)
 
 	auth, err := newAuth(testutil.ContextWithTimeout(t, testTimeout), &authConfig{
-		baseLogger:     testLogger,
-		mux:            baseMux,
-		rateLimiter:    emptyRateLimiter{},
-		trustedProxies: testTrustedProxies,
-		dbFilename:     sessionsDB,
-		users:          users,
-		sessionTTL:     testTTL * time.Second,
-		isGLiNet:       false,
+		baseLogger:      testLogger,
+		mux:             baseMux,
+		rateLimiter:     emptyRateLimiter{},
+		trustedProxies:  testTrustedProxies,
+		gliNetTokenRoot: gliNetRoot,
+		dbFilename:      sessionsDB,
+		users:           users,
+		sessionTTL:      testTTL * time.Second,
+		isGLiNet:        false,
 	})
 	require.NoError(t, err)
 
@@ -620,8 +625,7 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 func writeGLFile(t *testing.T, tempDir string, testTTL int64) {
 	t.Helper()
 
-	glFilePrefix = tempDir + "/gl_token_"
-	glTokenFile := glFilePrefix + "test"
+	glTokenFile := filepath.Join(tempDir, glFilePrefix+"test")
 
 	glFileData := make([]byte, 4)
 	binary.NativeEndian.PutUint32(glFileData, uint32(time.Now().Unix()+testTTL))

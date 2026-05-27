@@ -108,8 +108,10 @@ func (ic *InterfaceConfig) Validate() (err error) {
 		return errors.ErrNoValue
 	}
 
-	return errors.Join(
-		errors.Annotate(ic.IPv4.Validate(), "IPv4: %w"),
-		errors.Annotate(ic.IPv6.Validate(), "IPv6: %w"),
-	)
+	errs := []error{
+		errors.Annotate(ic.IPv4.Validate(), "ipv4: %w"),
+		errors.Annotate(ic.IPv6.Validate(), "ipv6: %w"),
+	}
+
+	return errors.Join(errs...)
 }

@@ -226,7 +226,7 @@ func TestDecodeLogEntry_backwardCompatability(t *testing.T) {
 	)
 
 	l := &queryLog{
-		logger: slogutil.NewDiscardLogger(),
+		logger: testLogger,
 	}
 
 	ctx := testutil.ContextWithTimeout(t, testTimeout)

@@ -329,7 +329,7 @@
   "example_rewrite_wildcard": "herschrijf reacties voor alle subdomeinen van <0>example.org</0>.",
   "example_upstream_comment": "een commentaar.",
   "example_upstream_doh": "versleutelde <0>DNS-via-HTTPS</0>;",
-  "example_upstream_doh3": "versleutelde DNS-over-HTTPS met geforceerde <0>HTTP/3</0> en geen terugval naar HTTP/2 of lager;",
+  "example_upstream_doh3": "versleutelde DNS-over-HTTPS met geforceerde <0>HTTP/3</0> en geen back-up naar HTTP/2 of lager;",
   "example_upstream_doq": "versleutelde <0>DNS-via-QUIC</0>;",
   "example_upstream_dot": "versleutelde <0>DNS-via-TLS</0>;",
   "example_upstream_regular": "standaard DNS (over UDP);",
