@@ -29,6 +29,8 @@ See also the [v0.107.77 GitHub milestone][ms-v0.107.77].
 
 - Authorization in GLiNET mode is no longer vulnerable to path traversal attacks.
 
+    **NOTE:** We thank Wade Sparks III from VulnCheck for reporting this security issue.
+
 ### Added
 
 - New `reason` query parameter in `GET /control/querylog`.  See `openapi/openapi.yaml` for the full description.
