@@ -11,9 +11,7 @@ require (
 	github.com/bluele/gcache v0.0.2
 	github.com/c2h5oh/datasize v0.0.0-20231215233829-aa82cc1e6500
 	github.com/digineo/go-ipset/v2 v2.2.1
-	// TODO(e.burkov): Update to the latest version when
-	// github.com/fsnotify/fsnotify/issues/727 is fixed.
-	github.com/fsnotify/fsnotify v1.9.0
+	github.com/fsnotify/fsnotify v1.10.1
 	// TODO(e.burkov): This package is deprecated; find a new one or use our
 	// own code for that.  Perhaps, use gopacket.
 	github.com/go-ping/ping v1.2.0
@@ -35,9 +33,9 @@ require (
 	go.etcd.io/bbolt v1.4.3
 	// TODO(e.burkov): Update to a stable tag.
 	go.yaml.in/yaml/v4 v4.0.0-rc.4.0.20260405193028-802e24f4fbcc
-	golang.org/x/crypto v0.50.0
-	golang.org/x/net v0.53.0
-	golang.org/x/sys v0.43.0
+	golang.org/x/crypto v0.51.0
+	golang.org/x/net v0.55.0
+	golang.org/x/sys v0.45.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	howett.net/plist v1.0.1
 )
@@ -95,8 +93,8 @@ require (
 	golang.org/x/mod v0.35.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
 	golang.org/x/telemetry v0.0.0-20260409153401-be6f6cb8b1fa // indirect
-	golang.org/x/term v0.42.0 // indirect
-	golang.org/x/text v0.36.0 // indirect
+	golang.org/x/term v0.43.0 // indirect
+	golang.org/x/text v0.37.0 // indirect
 	golang.org/x/tools v0.44.0 // indirect
 	golang.org/x/vuln v1.2.0 // indirect
 	gonum.org/v1/gonum v0.17.0 // indirect
