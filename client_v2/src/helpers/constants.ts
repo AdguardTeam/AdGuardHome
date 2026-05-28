@@ -32,6 +32,8 @@ export const R_WIN_ABSOLUTE_PATH = /^([a-zA-Z]:)?(\\|\/)(?:[^\\/:*?"<>|\x00]+\\)
 
 export const R_CLIENT_ID = /^[a-z0-9-]{1,63}$/;
 
+export const R_HOSTNAME = /^[a-z0-9-]+$/;
+
 export const R_IPV4_SUBNET = /^([0-9]|[1-2][0-9]|3[0-2])?$/;
 
 export const R_IPV6_SUBNET = /^([0-9]|[1-9][0-9]|1[0-1][0-9]|12[0-8])?$/;
@@ -191,7 +193,7 @@ export const HOUR = 60 * 60 * 1000;
 
 export const DAY = HOUR * 24;
 
-export const STATS_INTERVALS_DAYS = [DAY, DAY * 7, DAY * 30, DAY * 90];
+export const STATS_INTERVALS_DAYS = [HOUR, DAY, DAY * 7, DAY * 30, DAY * 90];
 
 export const QUERY_LOG_INTERVALS_DAYS = [HOUR * 6, DAY, DAY * 7, DAY * 30, DAY * 90];
 
@@ -550,6 +552,8 @@ export const DISABLE_PROTECTION_TIMINGS = {
 export const LOCAL_TIMEZONE_VALUE = 'Local';
 
 export const TABLES_MIN_ROWS = 5;
+
+export const MOBILE_TABLE_MAX_ROWS = 5;
 
 export const DASHBOARD_TABLES_DEFAULT_PAGE_SIZE = 100;
 

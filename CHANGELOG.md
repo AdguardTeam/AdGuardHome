@@ -82,13 +82,16 @@ See also the [v0.107.75 GitHub milestone][ms-v0.107.75].
 
 - Safe Browsing and Parental Control labels on the General Settings page not updating after changing the UI language.
 
-[#6823]: https://github.com/AdguardTeam/AdGuardHome/issues/6823
 [#7046]: https://github.com/AdguardTeam/AdGuardHome/issues/7046
+[#6823]: https://github.com/AdguardTeam/AdGuardHome/issues/6823
 [#8348]: https://github.com/AdguardTeam/AdGuardHome/issues/8348
-[#8359]: https://github.com/AdguardTeam/AdGuardHome/issues/8359
 
+[go-1.26.3]:    https://groups.google.com/g/golang-announce/c/4JylIpReDWw
 [ms-v0.107.75]: https://github.com/AdguardTeam/AdGuardHome/milestone/110?closed=1
-[go-1.26.3]: https://groups.google.com/g/golang-announce/c/qcCIEXso47M
+
+<!--
+NOTE: Add new changes ABOVE THIS COMMENT.
+-->
 
 ## [v0.107.74] - 2026-04-16
 

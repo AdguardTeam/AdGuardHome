@@ -16,6 +16,8 @@ import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from 'panel/helpers/localStora
 import { Allowlists } from 'panel/components/FilterLists/Allowlists';
 import { DNSRewrites } from 'panel/components/FilterLists/DNSRewrites';
 import { SetupGuide } from 'panel/components/SetupGuide';
+import { Dashboard } from 'panel/components/Dashboard';
+import { Dhcp } from 'panel/components/Dhcp';
 import { QueryLog } from 'panel/components/QueryLog';
 import Toasts from '../Toasts';
 import i18n from '../../i18n';
@@ -39,6 +41,11 @@ type RouteConfig = {
 const SetupGuideRoute = () => <SetupGuide />;
 
 const ROUTES: RouteConfig[] = [
+    {
+        path: '/dashboard',
+        component: Dashboard,
+        exact: true,
+    },
     {
         path: '/settings',
         component: Settings,
@@ -67,6 +74,11 @@ const ROUTES: RouteConfig[] = [
     {
         path: '/dns_rewrites',
         component: DNSRewrites,
+        exact: true,
+    },
+    {
+        path: '/dhcp',
+        component: Dhcp,
         exact: true,
     },
     {

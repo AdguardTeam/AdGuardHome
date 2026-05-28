@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -157,6 +158,7 @@ func TestQLogFile_SeekTS_good(t *testing.T) {
 		num:  10,
 	}}
 
+	logger := slogutil.NewDiscardLogger()
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
 
 	for _, l := range linesCases {
@@ -185,11 +187,11 @@ func TestQLogFile_SeekTS_good(t *testing.T) {
 				line, err := getQLogFileLine(q, tc.line)
 				require.NoError(t, err)
 
-				ts := readQLogTimestamp(ctx, testLogger, line)
+				ts := readQLogTimestamp(ctx, logger, line)
 				assert.NotEqualValues(t, 0, ts)
 
 				// Try seeking to that line now.
-				pos, _, err := q.seekTS(ctx, testLogger, ts)
+				pos, _, err := q.seekTS(ctx, logger, ts)
 				require.NoError(t, err)
 
 				assert.NotEqualValues(t, 0, pos)
@@ -215,6 +217,7 @@ func TestQLogFile_SeekTS_bad(t *testing.T) {
 		num:  10,
 	}}
 
+	logger := slogutil.NewDiscardLogger()
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
 
 	for _, l := range linesCases {
@@ -240,13 +243,13 @@ func TestQLogFile_SeekTS_bad(t *testing.T) {
 		line, err := getQLogFileLine(q, l.num/2)
 		require.NoError(t, err)
 
-		testCases[2].ts = readQLogTimestamp(ctx, testLogger, line) - 1
+		testCases[2].ts = readQLogTimestamp(ctx, logger, line) - 1
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
 				assert.NotEqualValues(t, 0, tc.ts)
 
 				var depth int
-				_, depth, err = q.seekTS(ctx, testLogger, tc.ts)
+				_, depth, err = q.seekTS(ctx, logger, tc.ts)
 				assert.NotEmpty(t, l.num)
 				require.Error(t, err)
 
@@ -332,6 +335,7 @@ func TestQLog_Seek(t *testing.T) {
 		`{"T":"` + strV + `"}` + nl
 	timestamp, _ := time.Parse(time.RFC3339Nano, "2020-08-31T18:44:25.376690873+03:00")
 
+	logger := slogutil.NewDiscardLogger()
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
 
 	testCases := []struct {
@@ -367,7 +371,7 @@ func TestQLog_Seek(t *testing.T) {
 			q := newTestQLogFileData(t, data)
 
 			ts := timestamp.Add(time.Second * time.Duration(tc.delta)).UnixNano()
-			_, depth, err := q.seekTS(ctx, testLogger, ts)
+			_, depth, err := q.seekTS(ctx, logger, ts)
 			require.Truef(t, errors.Is(err, tc.wantErr), "%v", err)
 
 			assert.Equal(t, tc.wantDepth, depth)

@@ -16,7 +16,7 @@
 
 ## v0.107.72: API changes
 
-### New `recent` query parameter in 'GET /control/stats/'
+## New `recent` query parameter in 'GET /control/stats/'
 
 - New query parameter `recent` defines the statistics lookback period in millieseconds.
 

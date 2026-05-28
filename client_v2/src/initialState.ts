@@ -249,6 +249,8 @@ export type DhcpInterface = {
     hardware_address: string;
 };
 
+export type DhcpInterfaces = Record<string, DhcpInterface>;
+
 export type DhcpData = {
     processing: boolean;
     processingStatus: boolean;
@@ -299,7 +301,7 @@ export type DhcpData = {
     };
     modalType: string;
     dhcp_available: boolean;
-    interfaces?: DhcpInterface[];
+    interfaces?: DhcpInterfaces;
 };
 
 export type DnsConfigData = {

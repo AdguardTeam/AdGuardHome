@@ -15,7 +15,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
-	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/timeutil"
@@ -361,7 +360,6 @@ func (l *queryLog) parseSearchCriterion(
 	strict := getDoubleQuotesEnclosedValue(&val)
 
 	var asciiVal string
-	var values []string
 	switch ct {
 	case ctTerm:
 		// Decode lowercased value from punycode to make EqualFold and
@@ -380,22 +378,15 @@ func (l *queryLog) parseSearchCriterion(
 		if !filteringStatusValues.Has(val) {
 			return false, sc, fmt.Errorf("invalid value %s", val)
 		}
-	case ctReason:
-		values, err = parseReason(q, name)
-		if err != nil {
-			// Don't wrap the error, because it's informative enough as is.
-			return false, sc, err
-		}
 	default:
 		return false, sc, fmt.Errorf(
 			"invalid criterion type %v: should be one of %v",
 			ct,
-			[]criterionType{ctTerm, ctFilteringStatus, ctReason},
+			[]criterionType{ctTerm, ctFilteringStatus},
 		)
 	}
 
 	sc = searchCriterion{
-		values:        values,
 		criterionType: ct,
 		value:         val,
 		asciiVal:      asciiVal,
@@ -405,29 +396,8 @@ func (l *queryLog) parseSearchCriterion(
 	return true, sc, nil
 }
 
-// parseReason parses reason search criterion from URL parameters.
-func parseReason(q url.Values, name string) (values []string, err error) {
-	var errs []error
-	for _, val := range q[name] {
-		_, ok := filtering.ReasonByName[val]
-		if !ok {
-			errs = append(errs, fmt.Errorf("reason: %w: %q", errors.ErrBadEnumValue, val))
-
-			continue
-		}
-
-		values = append(values, val)
-	}
-
-	if len(errs) > 0 {
-		return nil, errors.Join(errs...)
-	}
-
-	return values, nil
-}
-
 // parseSearchParams parses search parameters from the HTTP request's query
-// string.  r must not be nil.
+// string.
 func (l *queryLog) parseSearchParams(
 	ctx context.Context,
 	r *http.Request,
@@ -435,11 +405,6 @@ func (l *queryLog) parseSearchParams(
 	p = newSearchParams()
 
 	q := r.URL.Query()
-	if q.Has("reason") && q.Has("response_status") {
-		return nil,
-			errors.Error(`"reason" and "response_status" criteria cannot be used together`)
-	}
-
 	olderThan := q.Get("older_than")
 	if len(olderThan) != 0 {
 		p.olderThan, err = time.Parse(time.RFC3339Nano, olderThan)
@@ -462,22 +427,6 @@ func (l *queryLog) parseSearchParams(
 		p.maxFileScanEntries = 0
 	}
 
-	err = l.parseSearchCriterions(ctx, q, p)
-	if err != nil {
-		// Don't wrap the error, because it's informative enough as is.
-		return nil, err
-	}
-
-	return p, nil
-}
-
-// parseSearchCriterions parses search criterions from the URL query parameter
-// values.  p must not be nil.
-func (l *queryLog) parseSearchCriterions(
-	ctx context.Context,
-	q url.Values,
-	p *searchParams,
-) (err error) {
 	for _, v := range []struct {
 		urlField string
 		ct       criterionType
@@ -487,16 +436,12 @@ func (l *queryLog) parseSearchCriterions(
 	}, {
 		urlField: "response_status",
 		ct:       ctFilteringStatus,
-	}, {
-		urlField: "reason",
-		ct:       ctReason,
 	}} {
 		var ok bool
 		var c searchCriterion
 		ok, c, err = l.parseSearchCriterion(ctx, q, v.urlField, v.ct)
 		if err != nil {
-			// Don't wrap the error, because it's informative enough as is.
-			return err
+			return nil, err
 		}
 
 		if ok {
@@ -504,5 +449,5 @@ func (l *queryLog) parseSearchCriterions(
 		}
 	}
 
-	return nil
+	return p, nil
 }

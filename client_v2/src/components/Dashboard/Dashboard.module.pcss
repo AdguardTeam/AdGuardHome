@@ -1,0 +1,216 @@
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    padding: 0 16px;
+    margin: 0 0 32px;
+    gap: 32px 16px;
+
+    @media (min-width: 1024px) {
+        padding: 0;
+    }
+}
+
+.headerLeft {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+
+    @media (min-width: 768px) {
+        flex-direction: row;
+        align-items: center;
+    }
+}
+
+.headerRight {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    @media (min-width: 768px) {
+        align-items: center;
+        flex-direction: row;
+    }
+}
+
+.periodSelect {
+    width: 100%;
+}
+
+.protectionMenu {
+    padding: 8px 0;
+    min-width: 200px;
+}
+
+.protectionMenuItem {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 16px;
+    cursor: pointer;
+}
+
+.protectionMenuItemRed {
+    color: var(--default-error-link);
+}
+
+.periodButton {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--default-main-text);
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.periodButtonIcon {
+    width: 24px;
+    height: 24px;
+    transition: transform var(--t2);
+}
+
+.periodButtonIconOpen {
+    transform: rotate(180deg);
+}
+
+.periodMenu {
+    min-width: 180px;
+
+    @media (min-width: 768px) {
+        min-width: 328px;
+    }
+}
+
+.periodMenuItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 16px;
+    cursor: pointer;
+    color: var(--default-main-text);
+    transition: background-color var(--t2);
+
+    &:hover {
+        background-color: var(--hovered-item-background);
+    }
+
+    &:last-child {
+        padding: 16px 16px 32px;
+    }
+}
+
+.periodMenuItemLink {
+    align-items: flex-start;
+    padding: 24px 16px;
+    border-top: 1px solid var(--default-item-divider);
+}
+
+.periodMenuIcon {
+    width: 24px;
+    height: 24px;
+    stroke: var(--default-product-icon);
+}
+
+.periodMenuDot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+
+    &:before {
+        content: "";
+        display: block;
+        width: 3px;
+        height: 3px;
+        border-radius: 50%;
+        background-color: var(--default-product-icon);
+    }
+}
+
+.statContainer {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 0 16px;
+
+    @media (min-width: 1024px) {
+        grid-template-columns: 1fr 1fr;
+        padding: 0;
+    }
+}
+
+.periodSelect {
+    min-width: 120px;
+}
+
+.refreshButton {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    background: none;
+    border: 1px solid var(--border-default);
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--default-main-text);
+    font-size: 14px;
+    transition: background-color 0.2s;
+
+    @media (min-width: 768px) {
+        justify-content: flex-start;
+        padding: 8px 12px;
+    }
+
+    &:hover {
+        background-color: var(--hovered-secondary-button);
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+}
+
+.loader {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+}
+
+.protectionMenuWrapper {
+    cursor: pointer;
+    transition: background-color var(--t2);
+
+    &:hover {
+        background-color: var(--pressed-page-background);
+    }
+}
+
+.onlyMobile {
+    @media (min-width: 768px) {
+        display: none;
+    }
+}
+
+.onlyDesktop {
+    display: none;
+
+    @media (min-width: 768px) {
+        display: flex;
+    }
+}
+
+.protectionToggle {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.cardSubtitle {
+    font-size: 14px;
+    color: var(--default-secondary-text);
+}

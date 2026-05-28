@@ -6,7 +6,7 @@
     padding: 16px;
     font-weight: var(--weight-regular);
     color: var(--default-main-text);
-    background-color: var(--page-background-additional);
+    background-color: var(--default-page-background);
     border-radius: 8px;
     box-shadow:
         2px 2px 4px 0 rgba(0, 0, 0, 0.1),
@@ -35,5 +35,21 @@
 
     &.error {
         color: var(--default-error-icon);
+    }
+}
+
+.actionLink {
+    display: inline;
+    padding: 0;
+    margin-top: 8px;
+    font: inherit;
+    color: var(--default-product-icon);
+    cursor: pointer;
+    background: none;
+    border: none;
+    text-decoration: underline;
+
+    &:hover {
+        text-decoration: none;
     }
 }

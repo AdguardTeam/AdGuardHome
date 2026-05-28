@@ -224,6 +224,7 @@ const dhcp = handleActions(
         leaseModalConfig: undefined,
         modalType: '',
         dhcp_available: false,
+        staticIpError: false,
     },
 );
 

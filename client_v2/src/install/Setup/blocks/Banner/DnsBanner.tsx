@@ -130,9 +130,9 @@ export const DnsBanner = ({
                     {dnsPortVal === STANDARD_DNS_PORT &&
                         !isDnsFixAvailable &&
                         dnsStatus?.includes(ADDRESS_IN_USE_TEXT) && (
-                            <a href={PORT_53_FAQ_LINK} target="_blank" rel="noopener noreferrer">
-                                {intl.getMessage('port_53_faq_link')}
-                            </a>
+                            <p>
+                                {intl.getMessage('port_53_faq_link', { 0: (text: string) => <a key="faq" href={PORT_53_FAQ_LINK} target="_blank" rel="noopener noreferrer">{text}</a> })}
+                            </p>
                         )}
                 </div>
             </div>

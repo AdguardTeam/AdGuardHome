@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import cn from 'clsx';
 import { shallowEqual, useDispatch, useSelector, batch } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 
 import intl from 'panel/common/intl';
 import { Checkbox } from 'panel/common/controls/Checkbox';
@@ -120,6 +121,17 @@ export const Settings = () => {
 
     const isLoading = settings.processing || stats.processingGetConfig || queryLogs.processingGetConfig;
 
+    const location = useLocation();
+
+    useEffect(() => {
+        if (!isLoading && location.hash) {
+            const el = document.querySelector(location.hash);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+    }, [isLoading, location.hash]);
+
     return (
         <div className={theme.layout.container}>
             <div className={cn(theme.layout.containerIn, theme.layout.containerIn_one_col)}>
@@ -161,7 +173,7 @@ export const Settings = () => {
                             processingClear={queryLogs.processingClear}
                         />
 
-                        <h2 className={cn(theme.layout.subtitle, theme.title.h5, theme.title.h4_tablet)}>
+                        <h2 id="stats_config" className={cn(theme.layout.subtitle, theme.title.h5, theme.title.h4_tablet)}>
                             {intl.getMessage('settings_statistics')}
                         </h2>
 

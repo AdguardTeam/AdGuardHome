@@ -40,10 +40,10 @@ export const getStatsRequest = createAction('GET_STATS_REQUEST');
 export const getStatsFailure = createAction('GET_STATS_FAILURE');
 export const getStatsSuccess = createAction('GET_STATS_SUCCESS');
 
-export const getStats = () => async (dispatch: any) => {
+export const getStats = (recent?: number) => async (dispatch: any) => {
     dispatch(getStatsRequest());
     try {
-        const stats = await apiClient.getStats();
+        const stats = await apiClient.getStats(recent);
         const normalizedTopClients = normalizeTopStats(stats.top_clients);
 
         const clientsParams = getParamsForClientsSearch(normalizedTopClients, 'name');
