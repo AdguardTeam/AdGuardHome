@@ -29,7 +29,7 @@ See also the [v0.107.77 GitHub milestone][ms-v0.107.77].
 
 - Authorization in GLiNET mode is no longer vulnerable to path traversal attacks.
 
-    **NOTE:** We thank @djnn for reporting this security issue.
+    **NOTE:** We thank @djnnvx for reporting this security issue.
 
 ### Added
 
