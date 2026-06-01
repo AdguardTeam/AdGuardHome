@@ -497,9 +497,10 @@ var config = &configuration{
 			EnableDNSSEC:             true,
 
 			EDNSClientSubnet: &dnsforward.EDNSClientSubnet{
-				CustomIP:  netip.Addr{},
-				Enabled:   false,
-				UseCustom: false,
+				CustomIP:   netip.Addr{},
+				Enabled:    false,
+				UseCustom:  false,
+				UseInStats: false,
 			},
 
 			// set default maximum concurrent queries to 300

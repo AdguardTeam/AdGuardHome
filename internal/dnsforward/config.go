@@ -181,6 +181,11 @@ type EDNSClientSubnet struct {
 
 	// UseCustom defines if CustomIP should be used.
 	UseCustom bool `yaml:"use_custom"`
+
+	// UseInStats defines if the client IP from EDNS Client Subnet should be
+	// used in statistics and query log instead of the real connection IP.
+	// Disabled by default.
+	UseInStats bool `yaml:"use_in_stats"`
 }
 
 // TLSConfig contains the TLS configuration settings for DNSCrypt,
