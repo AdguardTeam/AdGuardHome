@@ -8,14 +8,12 @@ import (
 	"net"
 	"net/netip"
 	"slices"
-	"strings"
 	"time"
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/AdguardTeam/golibs/validate"
-	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 )
 
@@ -350,92 +348,6 @@ func (ifaces dhcpInterfacesV4) find(ip netip.Addr) (iface4 *netInterface, ok boo
 	return ifaces[i].common, true
 }
 
-// allocateLease allocates a new lease for the MAC address.  If there are no IP
-// addresses left, both lease and err are nil.  mac must be a valid according to
-// [netutil.ValidateMAC].
-//
-// TODO(e.burkov):  Pass the precalculated macKey.
-func (iface *dhcpInterfaceV4) allocateLease(
-	ctx context.Context,
-	mac net.HardwareAddr,
-) (lease *Lease, err error) {
-	for {
-		lease, err = iface.reserveLease(ctx, mac)
-		if err != nil {
-			return nil, err
-		}
-
-		var ok bool
-		ok, err = iface.addrChecker.IsAvailable(lease.IP)
-		if err != nil {
-			return nil, fmt.Errorf("checking address availability: %w", err)
-		}
-
-		if ok {
-			iface.common.leases[macToKey(mac)] = lease
-
-			off, _ := iface.common.addrSpace.offset(lease.IP)
-			iface.common.leasedOffsets.set(off, true)
-
-			return lease, nil
-		}
-
-		iface.common.logger.DebugContext(ctx, "address not available", "ip", lease.IP)
-
-		err = iface.common.blockLease(ctx, lease, iface.clock)
-		if err != nil {
-			return nil, fmt.Errorf("blocking unavailable address: %w", err)
-		}
-	}
-}
-
-// reserveLease reserves a lease for a client by its MAC-address.  lease is nil
-// if a new lease can't be allocated.  mac must be a valid according to
-// [netutil.ValidateMAC].  index mutex must be locked.
-func (iface *dhcpInterfaceV4) reserveLease(
-	ctx context.Context,
-	mac net.HardwareAddr,
-) (lease *Lease, err error) {
-	nextIP := iface.common.nextIP()
-	if nextIP != (netip.Addr{}) {
-		lease = &Lease{
-			HWAddr: slices.Clone(mac),
-			IP:     nextIP,
-			Expiry: iface.clock.Now().Add(iface.common.leaseTTL),
-		}
-
-		return lease, nil
-	}
-
-	lease = iface.common.findExpiredLease(iface.clock.Now())
-	if lease == nil {
-		return nil, errors.Error("no addresses available to lease")
-	}
-
-	// TODO(e.burkov):  Move validation from index methods into server's
-	// methods and use index here.
-	delete(iface.common.leases, macToKey(lease.HWAddr))
-
-	idx := iface.common.index
-	delete(idx.byAddr, lease.IP)
-	delete(idx.byName, strings.ToLower(lease.Hostname))
-
-	err = idx.dbStore(ctx, iface.common.logger)
-	if err != nil {
-		// Don't wrap the error since it's informative enough as is.
-		return nil, err
-	}
-
-	lease.HWAddr = slices.Clone(mac)
-	lease.Hostname = ""
-	lease.IsStatic = false
-	lease.updateExpiry(iface.clock, iface.common.leaseTTL)
-
-	iface.common.leases[macToKey(mac)] = lease
-
-	return lease, nil
-}
-
 // updateAndRespond updates the lease and sends a DHCPACK or DHCPNAK response to
 // the client according to the update result.  idOpt is an expected to be the
 // value of the DHCP option Client Identifier, nil if not present.  req must be
@@ -467,9 +379,6 @@ const FlagsBroadcast uint16 = 1 << 15
 // respond4 sends a DHCPv4 response.  req and resp must not be nil, fd must be
 // valid.
 func respond4(fd *frameData4, req, resp *layers.DHCPv4) (err error) {
-	// TODO(e.burkov):  Use pools for buffer and layers.
-	buf := gopacket.NewSerializeBuffer()
-
 	eth := &layers.Ethernet{
 		SrcMAC:       fd.ether.DstMAC,
 		DstMAC:       fd.ether.SrcMAC,
@@ -478,17 +387,12 @@ func respond4(fd *frameData4, req, resp *layers.DHCPv4) (err error) {
 
 	ip, udp := newIPv4UDPLayers(fd, req, resp)
 
-	opts := gopacket.SerializeOptions{
-		FixLengths:       true,
-		ComputeChecksums: true,
-	}
-
-	err = gopacket.SerializeLayers(buf, opts, eth, ip, udp, resp)
+	err = respond(fd.device, eth, udp, ip, resp)
 	if err != nil {
-		return fmt.Errorf("constructing dhcp v4 response: %w", err)
+		return fmt.Errorf("writing dhcpv4 response: %w", err)
 	}
 
-	return fd.device.WritePacketData(buf.Bytes())
+	return nil
 }
 
 // newIPv4UDPLayers creates new UDP and IP layers for DHCPv4 response.  req and
@@ -535,7 +439,10 @@ func newIPv4UDPLayers(fd *frameData4, req, resp *layers.DHCPv4) (ip *layers.IPv4
 	}
 
 	// It only returns an error if the network layer is not an IP layer.
-	_ = udp.SetNetworkLayerForChecksum(ip)
+	err := udp.SetNetworkLayerForChecksum(ip)
+	if err != nil {
+		panic(err)
+	}
 
 	return ip, udp
 }

@@ -15,6 +15,8 @@ import (
 	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/google/gopacket"
+	"github.com/google/gopacket/layers"
 )
 
 // DHCPServer is a DHCP server for both IPv4 and IPv6 address families.
@@ -420,4 +422,34 @@ func ifaceForAddr(
 	}
 
 	return iface, nil
+}
+
+// respond constructs a response packet with eth, udp, ip and resp layers, and
+// writes it.  All arguments must not be nil, ip must be either [*layers.IPv4]
+// or [*layers.IPv6], and resp must be either [*layers.DHCPv4] or
+// [*layers.DHCPv6].  Additionally, udp's checksum must use ip.
+//
+// TODO(e.burkov):  Pool buffers.
+//
+// TODO(e.burkov):  Consider adding context.
+func respond(
+	nd NetworkDevice,
+	eth *layers.Ethernet,
+	udp *layers.UDP,
+	ip gopacket.SerializableLayer,
+	resp gopacket.SerializableLayer,
+) (err error) {
+	buf := gopacket.NewSerializeBuffer()
+
+	opts := gopacket.SerializeOptions{
+		FixLengths:       true,
+		ComputeChecksums: true,
+	}
+
+	err = gopacket.SerializeLayers(buf, opts, eth, ip, udp, resp)
+	if err != nil {
+		return fmt.Errorf("serializing layers: %w", err)
+	}
+
+	return nd.WritePacketData(buf.Bytes())
 }
