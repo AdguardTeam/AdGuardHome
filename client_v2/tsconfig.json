@@ -1,34 +1,24 @@
 {
-    "compilerOptions": {
-        "ignoreDeprecations": "5.0",
-        "target": "ESNext",
-        "jsx": "react",
-        "module": "ESNext",
-        "moduleResolution": "bundler",
-        "baseUrl": ".",
-        "ignoreDeprecations": "6.0",
-        "allowArbitraryExtensions": true,
-        "resolveJsonModule": true,
-        "allowJs": true,
-        "esModuleInterop": true,
-        "forceConsistentCasingInFileNames": true,
-        "strict": false,
-        "noImplicitAny": true,
-        "skipLibCheck": true,
-        "types": [
-            "node",
-            "react",
-            "react-dom",
-            "user-agent-data-types"
-        ],
-        "paths": {
-            "Twosky": [
-                "../.twosky.json"
-            ],
-            "panel/*": [
-                "./src/*"
-            ]
-        }
-    },
-    "include": ["src", "global.d.ts", "src/types/**/*.d.ts"]
+  "compilerOptions": {
+    "target": "ESNext",
+    "jsx": "react",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "baseUrl": ".",
+    "ignoreDeprecations": "6.0",
+    "allowArbitraryExtensions": true,
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": false,
+    "noImplicitAny": true,
+    "skipLibCheck": true,
+    "types": ["node", "react", "react-dom", "user-agent-data-types"],
+    "paths": {
+      "Twosky": ["../.twosky.json"],
+      "panel/*": ["./src/*"]
+    }
+  },
+  "include": ["src", "global.d.ts", "src/types/**/*.d.ts"]
 }

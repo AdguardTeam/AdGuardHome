@@ -14,10 +14,12 @@ type Props = {
         domain: string;
         enabled: boolean;
     };
-    setRewriteToDelete: Dispatch<SetStateAction<{ answer: string; domain: string, enabled: boolean }>>;
+    setRewriteToDelete: Dispatch<SetStateAction<{ answer: string; domain: string; enabled: boolean }>>;
+    onConfirm?: () => boolean | void | Promise<boolean | void>;
+    onClose?: () => void;
 };
 
-export const DeleteRewriteModal = ({ rewriteToDelete, setRewriteToDelete }: Props) => {
+export const DeleteRewriteModal = ({ rewriteToDelete, setRewriteToDelete, onConfirm, onClose }: Props) => {
     const dispatch = useDispatch();
     const { rewrites } = useSelector((state: RootState) => state);
 
@@ -29,10 +31,21 @@ export const DeleteRewriteModal = ({ rewriteToDelete, setRewriteToDelete }: Prop
 
     const handleDeleteClose = () => {
         setRewriteToDelete({ answer: '', domain: '', enabled: false });
+        onClose?.();
         dispatch(closeModal());
     };
 
-    const handleDeleteConfirm = () => {
+    const handleDeleteConfirm = async () => {
+        if (onConfirm) {
+            const shouldClose = await onConfirm();
+
+            if (shouldClose !== false) {
+                handleDeleteClose();
+            }
+
+            return;
+        }
+
         dispatch(deleteRewrite(rewriteToDelete));
         handleDeleteClose();
     };

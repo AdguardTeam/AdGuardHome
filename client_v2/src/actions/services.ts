@@ -1,13 +1,18 @@
 import { createAction } from 'redux-actions';
-import intl from 'panel/common/intl';
+import type { AppDispatch } from 'panel/store/types';
 import { apiClient } from '../api/Api';
-import { addErrorToast, addSuccessToast } from './toasts';
+import { addErrorToast } from './toasts';
+
+type BlockedServicesUpdate = {
+    ids: string[];
+    schedule?: unknown;
+};
 
 export const getBlockedServicesRequest = createAction('GET_BLOCKED_SERVICES_REQUEST');
 export const getBlockedServicesFailure = createAction('GET_BLOCKED_SERVICES_FAILURE');
 export const getBlockedServicesSuccess = createAction('GET_BLOCKED_SERVICES_SUCCESS');
 
-export const getBlockedServices = () => async (dispatch: any) => {
+export const getBlockedServices = () => async (dispatch: AppDispatch) => {
     dispatch(getBlockedServicesRequest());
     try {
         const data = await apiClient.getBlockedServices();
@@ -22,7 +27,7 @@ export const getAllBlockedServicesRequest = createAction('GET_ALL_BLOCKED_SERVIC
 export const getAllBlockedServicesFailure = createAction('GET_ALL_BLOCKED_SERVICES_FAILURE');
 export const getAllBlockedServicesSuccess = createAction('GET_ALL_BLOCKED_SERVICES_SUCCESS');
 
-export const getAllBlockedServices = () => async (dispatch: any) => {
+export const getAllBlockedServices = () => async (dispatch: AppDispatch) => {
     dispatch(getAllBlockedServicesRequest());
     try {
         const data = await apiClient.getAllBlockedServices();
@@ -37,38 +42,38 @@ export const updateBlockedServicesRequest = createAction('UPDATE_BLOCKED_SERVICE
 export const updateBlockedServicesFailure = createAction('UPDATE_BLOCKED_SERVICES_FAILURE');
 export const updateBlockedServicesSuccess = createAction('UPDATE_BLOCKED_SERVICES_SUCCESS');
 
-export const updateBlockedServices = (values: any) => async (dispatch: any) => {
-    dispatch(updateBlockedServicesRequest());
-    try {
-        await apiClient.updateBlockedServices(values);
-        dispatch(updateBlockedServicesSuccess());
-        dispatch(getBlockedServices());
-        dispatch(addSuccessToast({
-            message: intl.getMessage('settings_notify_changes_saved'),
-            code: 'settings_notify_changes_saved',
-        }));
-    } catch (error) {
-        dispatch(addErrorToast({ error }));
-        dispatch(updateBlockedServicesFailure());
-    }
-};
+export const updateBlockedServices =
+    (values: BlockedServicesUpdate) => async (dispatch: AppDispatch) => {
+        dispatch(updateBlockedServicesRequest());
+        try {
+            await apiClient.updateBlockedServices(values);
+            dispatch(updateBlockedServicesSuccess());
+            dispatch(getBlockedServices());
+        } catch (error) {
+            dispatch(addErrorToast({ error }));
+            dispatch(updateBlockedServicesFailure());
+        }
+    };
 
-export const allowBlockedService = (serviceId: string) => async (dispatch: any, getState: any) => {
-    let list = getState().services?.list;
+export const allowBlockedService =
+    (serviceId: string) => async (dispatch: AppDispatch, getState: any) => {
+        let list = getState().services?.list;
 
-    if (!Array.isArray(list?.ids)) {
-        await dispatch(getBlockedServices());
-        list = getState().services?.list;
-    }
+        if (!Array.isArray(list?.ids)) {
+            await dispatch(getBlockedServices());
+            list = getState().services?.list;
+        }
 
-    const currentIds = Array.isArray(list?.ids) ? list.ids : [];
+        const currentIds = Array.isArray(list?.ids) ? list.ids : [];
 
-    if (!currentIds.includes(serviceId)) {
-        return;
-    }
+        if (!currentIds.includes(serviceId)) {
+            return;
+        }
 
-    await dispatch(updateBlockedServices({
-        ids: currentIds.filter((id: string) => id !== serviceId),
-        schedule: list?.schedule,
-    }));
-};
+        await dispatch(
+            updateBlockedServices({
+                ids: currentIds.filter((id: string) => id !== serviceId),
+                schedule: list?.schedule,
+            }),
+        );
+    };

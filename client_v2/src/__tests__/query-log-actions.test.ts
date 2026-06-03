@@ -18,6 +18,11 @@ vi.mock('panel/actions/toasts', () => ({
     addSuccessToast: mocks.addSuccessToast,
     addErrorToast: vi.fn(),
     addNoticeToast: vi.fn(),
+    createUndoToast: (message: any, actionLabel: any) => ({
+        message,
+        actionLabel,
+        undoId: 'mock-undo-id',
+    }),
 }));
 
 describe('query-log block and unblock toasts', () => {
@@ -41,10 +46,9 @@ describe('query-log block and unblock toasts', () => {
         expect(mocks.addSuccessToast).toHaveBeenCalledTimes(1);
         expect(mocks.addSuccessToast).toHaveBeenCalledWith(
             expect.objectContaining({
-                code: 'notify_user_rule_added',
-                message: intl.getMessage('notify_user_rule_added', {
-                    rule: '||fresh.example^$important',
-                }),
+                message: intl.getMessage('user_rules_rule_added_to_custom_filtering_rules'),
+                actionLabel: intl.getMessage('notify_undo'),
+                undoId: 'mock-undo-id',
             }),
         );
     });
@@ -59,7 +63,11 @@ describe('query-log block and unblock toasts', () => {
         });
         expect(mocks.addSuccessToast).toHaveBeenCalledTimes(1);
         expect(mocks.addSuccessToast).toHaveBeenCalledWith(
-            expect.objectContaining({ code: 'notify_user_rule_added' }),
+            expect.objectContaining({
+                message: intl.getMessage('user_rules_rule_added_to_custom_filtering_rules'),
+                actionLabel: intl.getMessage('notify_undo'),
+                undoId: 'mock-undo-id',
+            }),
         );
     });
 });

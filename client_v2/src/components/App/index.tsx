@@ -28,9 +28,9 @@ import { RootState } from '../../initialState';
 
 import s from './styles.module.pcss';
 import { DnsSettings } from '../DnsSettings';
+import { UserRules } from '../UserRules';
 import { BlockedServices } from '../BlockedServices';
 import { InactivitySchedule } from '../BlockedServices/InactivitySchedule';
-import { UserRules } from '../UserRules';
 
 type RouteConfig = {
     path: string;
@@ -72,6 +72,11 @@ const ROUTES: RouteConfig[] = [
         exact: true,
     },
     {
+        path: '/user_rules',
+        component: UserRules,
+        exact: true,
+    },
+    {
         path: '/dns_rewrites',
         component: DNSRewrites,
         exact: true,
@@ -101,19 +106,14 @@ const ROUTES: RouteConfig[] = [
         component: BlockedServices,
         exact: true,
     },
-    {
-        path: '/user_rules',
-        component: UserRules,
-        exact: true,
-    }
 ];
 
 const App = () => {
     const dispatch = useDispatch();
-    const { language, isCoreRunning, processing, theme } = useSelector<RootState, RootState['dashboard']>(
-        (state) => state.dashboard,
-        shallowEqual,
-    );
+    const { language, isCoreRunning, processing, theme } = useSelector<
+        RootState,
+        RootState['dashboard']
+    >((state) => state.dashboard, shallowEqual);
 
     useEffect(() => {
         dispatch(getDnsStatus());
@@ -194,7 +194,12 @@ const App = () => {
                     {!processing &&
                         isCoreRunning &&
                         ROUTES.map((route, index) => (
-                            <Route key={index} exact={route.exact} path={route.path} component={route.component} />
+                            <Route
+                                key={index}
+                                exact={route.exact}
+                                path={route.path}
+                                component={route.component}
+                            />
                         ))}
                 </div>
             </div>

@@ -35,6 +35,8 @@ type ConfigureRewritesModalIdType = 'ADD_REWRITE' | 'EDIT_REWRITE';
 type Props = {
     modalId: ConfigureRewritesModalIdType;
     rewriteToEdit?: FormValues;
+    onSubmit?: (values: FormValues) => boolean | void | Promise<boolean | void>;
+    onClose?: () => void;
 };
 
 const getTitle = (modalId: ConfigureRewritesModalIdType) => {
@@ -53,7 +55,7 @@ const getButtonText = (modalId: ConfigureRewritesModalIdType) => {
     return intl.getMessage('add');
 };
 
-export const ConfigureRewritesModal = ({ modalId, rewriteToEdit }: Props) => {
+export const ConfigureRewritesModal = ({ modalId, rewriteToEdit, onSubmit, onClose }: Props) => {
     const dispatch = useDispatch();
     const { rewrites } = useSelector((state: RootState) => state);
     const { processingAdd, processingUpdate, processing } = rewrites;
@@ -74,7 +76,23 @@ export const ConfigureRewritesModal = ({ modalId, rewriteToEdit }: Props) => {
         });
     }, [rewriteToEdit, reset]);
 
+    const closeDialog = () => {
+        reset(defaultValues);
+        onClose?.();
+        dispatch(closeModal());
+    };
+
     const handleFormSubmit = async (values: FormValues) => {
+        if (onSubmit) {
+            const shouldClose = await onSubmit(values);
+
+            if (shouldClose !== false) {
+                closeDialog();
+            }
+
+            return;
+        }
+
         switch (modalId) {
             case MODAL_TYPE.ADD_REWRITE: {
                 dispatch(addRewrite({ answer: values.answer, domain: values.domain, enabled: true }));
@@ -82,10 +100,12 @@ export const ConfigureRewritesModal = ({ modalId, rewriteToEdit }: Props) => {
                 break;
             }
             case MODAL_TYPE.EDIT_REWRITE: {
-                dispatch(updateRewrite({
-                    target: rewriteToEdit,
-                    update: { answer: values.answer, domain: values.domain, enabled: values.enabled },
-                }));
+                dispatch(
+                    updateRewrite({
+                        target: rewriteToEdit,
+                        update: { answer: values.answer, domain: values.domain, enabled: values.enabled },
+                    }),
+                );
                 dispatch(closeModal());
                 break;
             }
@@ -96,8 +116,7 @@ export const ConfigureRewritesModal = ({ modalId, rewriteToEdit }: Props) => {
     };
 
     const handleCancel = () => {
-        reset(defaultValues);
-        dispatch(closeModal());
+        closeDialog();
     };
 
     return (
@@ -134,12 +153,18 @@ export const ConfigureRewritesModal = ({ modalId, rewriteToEdit }: Props) => {
                                                                     </div>
 
                                                                     {[
-                                                                        { message: 'rewrites_tooltip_examples_item1', code: 'example.org' },
-                                                                        { message: 'rewrites_tooltip_examples_item2', code: '*.example.org' },
+                                                                        {
+                                                                            message: intl.getMessage('rewrites_tooltip_examples_item1'),
+                                                                            code: 'example.org',
+                                                                        },
+                                                                        {
+                                                                            message: intl.getMessage('rewrites_tooltip_examples_item2'),
+                                                                            code: '*.example.org',
+                                                                        },
                                                                     ].map((item, index) => (
                                                                         <div key={index} className={s.tooltipItem}>
                                                                             <div className={s.tooltipItemDot}></div>
-                                                                            {intl.getMessage(item.message)}
+                                                                            {item.message}
                                                                             <code>{item.code}</code>
                                                                         </div>
                                                                     ))}
@@ -182,18 +207,30 @@ export const ConfigureRewritesModal = ({ modalId, rewriteToEdit }: Props) => {
                                                                     </div>
 
                                                                     {[
-                                                                        { message: 'rewrites_tooltip_instructions_item1' },
-                                                                        { message: 'rewrites_tooltip_instructions_item2' },
-                                                                        { message: 'rewrites_tooltip_instructions_item3', code: 'A' },
-                                                                        { message: 'rewrites_tooltip_instructions_item4', code: 'AAAA' },
+                                                                        {
+                                                                            message:
+                                                                                intl.getMessage('rewrites_tooltip_instructions_item1'),
+                                                                        },
+                                                                        {
+                                                                            message:
+                                                                                intl.getMessage('rewrites_tooltip_instructions_item2'),
+                                                                        },
+                                                                        {
+                                                                            message:
+                                                                                intl.getMessage('rewrites_tooltip_instructions_item3'),
+                                                                            code: 'A',
+                                                                        },
+                                                                        {
+                                                                            message:
+                                                                                intl.getMessage('rewrites_tooltip_instructions_item4'),
+                                                                            code: 'AAAA',
+                                                                        },
                                                                     ].map((item, index) => (
                                                                         <div key={index} className={s.tooltipItem}>
                                                                             <div className={s.tooltipItemDot}></div>
-                                                                            {intl.getMessage(item.message)}
+                                                                            {item.message}
 
-                                                                            {item.code && (
-                                                                                <code>{item.code}</code>
-                                                                            )}
+                                                                            {item.code && <code>{item.code}</code>}
                                                                         </div>
                                                                     ))}
                                                                 </>

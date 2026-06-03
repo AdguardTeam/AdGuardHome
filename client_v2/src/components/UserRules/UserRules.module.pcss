@@ -38,15 +38,28 @@
     gap: 16px;
 }
 
-.card,
-.checkResult {
+.card {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    padding: 24px;
-    border-radius: 16px;
-    background: var(--default-cards-background);
-    box-shadow: 8px 8px 24px 0 rgba(0, 0, 0, 0.1);
+
+    @media (min-width: 767px) {
+        padding: 16px 24px;
+        border-radius: 8px;
+        background: var(--default-cards-background);
+        box-shadow: 8px 8px 24px 0 rgba(0, 0, 0, 0.1);
+    }
+}
+
+.resultLoadingCard {
+    align-items: center;
+    justify-content: center;
+    min-height: 195px;
+}
+
+.resultLoaderIcon {
+    width: 48px;
+    height: 48px;
+    color: var(--default-product-icon);
 }
 
 .sectionTitle {
@@ -54,26 +67,9 @@
     padding: 24px 0 16px;
 }
 
-.formFields {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.formGroup {
-    display: flex;
-    flex-direction: column;
-}
-
-.selectField {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-}
-
-.selectLabel {
-    margin-bottom: 4px;
-    color: var(--default-description-text);
+.checkTitle {
+    margin: 0;
+    padding: 8px 0;
 }
 
 .description {
@@ -90,26 +86,25 @@
     position: relative;
 }
 
-.editorActions,
-.checkActions {
+.editorActions {
     display: flex;
     padding: 8px 0;
 }
 
+.editorTextarea {
+    resize: vertical;
+    min-height: 260px;
+    white-space: pre;
+}
+
 .editorSubmitButton {
-    width: auto;
-    min-width: 200px;
-    max-width: none;
-}
-
-.checkActions {
-    margin-top: 24px;
-}
-
-.checkSubmitButton {
     width: 100%;
-    min-width: 0;
-    max-width: none;
+
+    @media (min-width: 768px) {
+        width: auto;
+        min-width: 200px;
+        max-width: none;
+    }
 }
 
 .examplesList {
@@ -154,52 +149,6 @@
     color: var(--default-main-text);
 }
 
-.checkResult {
-    gap: 16px;
-}
-
-.checkResultHeader {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 16px;
-}
-
-.checkResultTitle {
-    margin: 0;
-}
-
-.dismissButton {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    min-width: 32px;
-    height: 32px;
-    border: 0;
-    border-radius: 999px;
-    background: transparent;
-    color: var(--default-gray-icons);
-    cursor: pointer;
-
-    &:hover,
-    &:focus {
-        background: var(--page-background-additional);
-    }
-}
-
-.checkResultTitleBlocked {
-    color: var(--status-attention);
-}
-
-.checkResultTitleRewritten {
-    color: var(--status-info);
-}
-
-.checkResultTitleAllowed {
-    color: var(--status-success);
-}
-
 .rulesWrapper {
     margin-top: 4px;
 }
@@ -230,58 +179,5 @@
             color: var(--hovered-link);
             text-decoration: underline;
         }
-    }
-}
-
-.resultItem {
-    line-height: 1.5;
-    color: var(--default-description-text);
-    word-break: break-word;
-
-    & strong {
-        font-weight: 600;
-        color: var(--default-main-text);
-    }
-
-    & span {
-        color: var(--default-description-text);
-        word-break: break-all;
-    }
-}
-
-.actionButtons {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-    margin-top: 4px;
-
-    @media (min-width: 768px) {
-        flex-direction: row;
-        flex-wrap: wrap;
-        column-gap: 16px;
-        row-gap: 8px;
-    }
-}
-
-.actionLink {
-    padding: 0;
-    border: 0;
-    background: transparent;
-    color: var(--default-link);
-    font-weight: var(--weight-regular);
-    cursor: pointer;
-    text-align: left;
-
-    &:hover,
-    &:focus {
-        color: var(--hovered-link);
-        text-decoration: underline;
-    }
-
-    &:disabled {
-        color: var(--default-description-text);
-        cursor: default;
-        text-decoration: none;
     }
 }

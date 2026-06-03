@@ -12,8 +12,9 @@ const filtering = handleActions(
             ...state,
             processingRules: false,
         }),
-        [actions.setRulesSuccess.toString()]: (state: any) => ({
+        [actions.setRulesSuccess.toString()]: (state: any, { payload }: any) => ({
             ...state,
+            ...(payload || {}),
             processingRules: false,
         }),
 
@@ -153,6 +154,7 @@ const filtering = handleActions(
         [actions.checkHostRequest.toString()]: (state: any) => ({
             ...state,
             processingCheck: true,
+            check: {},
         }),
         [actions.checkHostFailure.toString()]: (state: any) => ({
             ...state,

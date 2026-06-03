@@ -11,7 +11,7 @@ async function globalSetup(config: FullConfig) {
     try {
         await page.goto('/');
 
-        const {pathname} = new URL(page.url());
+        const { pathname } = new URL(page.url());
 
         if (pathname === '/login.html' || pathname === '/') {
             return;

@@ -1,4 +1,4 @@
-import intl from "panel/common/intl";
+import intl from 'panel/common/intl';
 
 export const R_URL_REQUIRES_PROTOCOL = /^https?:\/\/[^/\s]+(\/.*)?$/;
 
@@ -15,7 +15,8 @@ export const R_CIDR =
 
 export const R_MAC =
     /^((([a-fA-F0-9][a-fA-F0-9]+[-:]){5})([a-fA-F0-9]{2})$)|^((([a-fA-F0-9][a-fA-F0-9]+[-:]){7})([a-fA-F0-9]{2})$)|^([a-fA-F0-9][a-fA-F0-9][a-fA-F0-9][a-fA-F0-9]+[.]){2}([a-fA-F0-9]{4})$|^([a-fA-F0-9][a-fA-F0-9][a-fA-F0-9][a-fA-F0-9]+[.]){3}([a-fA-F0-9]{4})$/;
-export const R_MAC_WITHOUT_COLON = /^([a-fA-F0-9]{2}){5}([a-fA-F0-9]{2})$|^([a-fA-F0-9]{2}){7}([a-fA-F0-9]{2})$/;
+export const R_MAC_WITHOUT_COLON =
+    /^([a-fA-F0-9]{2}){5}([a-fA-F0-9]{2})$|^([a-fA-F0-9]{2}){7}([a-fA-F0-9]{2})$/;
 
 export const R_CIDR_IPV6 =
     /^s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|:)))(%.+)?s*(\/(12[0-8]|1[0-1][0-9]|[1-9][0-9]|[0-9]))$/;
@@ -27,8 +28,9 @@ export const R_PATH_LAST_PART = /\/[^/]*$/;
 // eslint-disable-next-line no-control-regex
 export const R_UNIX_ABSOLUTE_PATH = /^(\/[^/\x00]+)+$/;
 
-// eslint-disable-next-line no-control-regex
-export const R_WIN_ABSOLUTE_PATH = /^([a-zA-Z]:)?(\\|\/)(?:[^\\/:*?"<>|\x00]+\\)*[^\\/:*?"<>|\x00]*$/;
+export const R_WIN_ABSOLUTE_PATH =
+    // eslint-disable-next-line no-control-regex
+    /^([a-zA-Z]:)?(\\|\/)(?:[^\\/:*?"<>|\x00]+\\)*[^\\/:*?"<>|\x00]*$/;
 
 export const R_CLIENT_ID = /^[a-z0-9-]{1,63}$/;
 
@@ -66,16 +68,20 @@ export const STATUS_COLORS = {
 
 export const REPOSITORY = {
     URL: 'https://github.com/AdguardTeam/AdGuardHome',
-    TRACKERS_DB: 'https://github.com/AdguardTeam/AdGuardHome/tree/master/client/src/helpers/trackers/trackers.json',
+    TRACKERS_DB:
+        'https://github.com/AdguardTeam/AdGuardHome/tree/master/client/src/helpers/trackers/trackers.json',
     ISSUES: 'https://github.com/AdguardTeam/AdGuardHome/issues/new/choose',
     RELEASE_NOTES: 'https://github.com/AdguardTeam/AdGuardHome/releases',
 };
 
 export const CLIENT_ID_LINK = 'https://github.com/AdguardTeam/AdGuardHome/wiki/Clients#clientid';
-export const MANUAL_UPDATE_LINK = 'https://github.com/AdguardTeam/AdGuardHome/wiki/FAQ#manual-update';
+export const MANUAL_UPDATE_LINK =
+    'https://github.com/AdguardTeam/AdGuardHome/wiki/FAQ#manual-update';
 export const PORT_53_FAQ_LINK = 'https://github.com/AdguardTeam/AdGuardHome/wiki/FAQ#bindinuse';
-export const PRIVACY_POLICY_LINK = 'https://link.adtidy.org/forward.html?action=privacy&from=ui&app=home';
-export const TERMS_LINK = 'https://link.adtidy.org/forward.html?action=terms_and_conditions&from=ui&app=home';
+export const PRIVACY_POLICY_LINK =
+    'https://link.adtidy.org/forward.html?action=privacy&from=ui&app=home';
+export const TERMS_LINK =
+    'https://link.adtidy.org/forward.html?action=terms_and_conditions&from=ui&app=home';
 export const UPSTREAM_CONFIGURATION_WIKI_LINK =
     'https://github.com/AdguardTeam/AdGuardHome/wiki/Configuration#upstreams';
 
@@ -111,9 +117,10 @@ export const SHOW_TOOLTIP_DELAY = 200;
 export const MODAL_OPEN_TIMEOUT = 150;
 
 export const UNSAFE_PORTS = [
-    1, 7, 9, 11, 13, 15, 17, 19, 20, 21, 22, 23, 25, 37, 42, 43, 53, 77, 79, 87, 95, 101, 102, 103, 104, 109, 110, 111,
-    113, 115, 117, 119, 123, 135, 139, 143, 179, 389, 465, 512, 513, 514, 515, 526, 530, 531, 532, 540, 556, 563, 587,
-    601, 636, 993, 995, 2049, 3659, 4045, 6000, 6665, 6666, 6667, 6668, 6669,
+    1, 7, 9, 11, 13, 15, 17, 19, 20, 21, 22, 23, 25, 37, 42, 43, 53, 77, 79, 87, 95, 101, 102, 103,
+    104, 109, 110, 111, 113, 115, 117, 119, 123, 135, 139, 143, 179, 389, 465, 512, 513, 514, 515,
+    526, 530, 531, 532, 540, 556, 563, 587, 601, 636, 993, 995, 2049, 3659, 4045, 6000, 6665, 6666,
+    6667, 6668, 6669,
 ];
 
 export const ALL_INTERFACES_IP = '0.0.0.0';
@@ -175,7 +182,7 @@ export const FILTERS_URLS = {
     dns_blocklists: '/filters',
     dns_allowlists: '/dns_allowlists',
     dns_rewrites: '/dns_rewrites',
-    custom_rules: '/custom_rules',
+    user_rules: '/user_rules',
     blocked_services: '/blocked_services',
 };
 
@@ -246,6 +253,8 @@ export const FILTERED_STATUS = {
     FILTERED_BLACK_LIST: 'FilteredBlackList',
     NOT_FILTERED_WHITE_LIST: 'NotFilteredWhiteList',
     NOT_FILTERED_NOT_FOUND: 'NotFilteredNotFound',
+    NOT_FILTERED_ERROR: 'NotFilteredError',
+    FILTERED_INVALID: 'FilteredInvalid',
     FILTERED_BLOCKED_SERVICE: 'FilteredBlockedService',
     REWRITE: 'Rewrite',
     REWRITE_HOSTS: 'RewriteEtcHosts',
@@ -253,8 +262,6 @@ export const FILTERED_STATUS = {
     FILTERED_SAFE_SEARCH: 'FilteredSafeSearch',
     FILTERED_SAFE_BROWSING: 'FilteredSafeBrowsing',
     FILTERED_PARENTAL: 'FilteredParental',
-    NOT_FILTERED_ERROR: 'NotFilteredError',
-    FILTERED_INVALID: 'FilteredInvalid',
 };
 
 export const QUERY_LOG_STATUS_FILTER = {

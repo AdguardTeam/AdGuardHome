@@ -1,9 +1,18 @@
 import { createAction } from 'redux-actions';
+import type { AppDispatch } from 'panel/store/types';
 import intl from 'panel/common/intl';
 import { apiClient } from '../api/Api';
+import type { Client } from '../initialState';
 
 import { getClients } from './index';
 import { addErrorToast, addSuccessToast } from './toasts';
+
+type ClientMutationOptions = {
+    showToast?: boolean;
+    toggleModal?: boolean;
+};
+
+type ClientDeleteConfig = Pick<Client, 'name'>;
 
 export const toggleClientModal = createAction('TOGGLE_CLIENT_MODAL');
 
@@ -11,7 +20,7 @@ export const addClientRequest = createAction('ADD_CLIENT_REQUEST');
 export const addClientFailure = createAction('ADD_CLIENT_FAILURE');
 export const addClientSuccess = createAction('ADD_CLIENT_SUCCESS');
 
-export const addClient = (config: any) => async (dispatch: any) => {
+export const addClient = (config: Client) => async (dispatch: AppDispatch) => {
     dispatch(addClientRequest());
     try {
         await apiClient.addClient(config);
@@ -29,7 +38,7 @@ export const deleteClientRequest = createAction('DELETE_CLIENT_REQUEST');
 export const deleteClientFailure = createAction('DELETE_CLIENT_FAILURE');
 export const deleteClientSuccess = createAction('DELETE_CLIENT_SUCCESS');
 
-export const deleteClient = (config: any) => async (dispatch: any) => {
+export const deleteClient = (config: ClientDeleteConfig) => async (dispatch: AppDispatch) => {
     dispatch(deleteClientRequest());
     try {
         await apiClient.deleteClient(config);
@@ -46,18 +55,31 @@ export const updateClientRequest = createAction('UPDATE_CLIENT_REQUEST');
 export const updateClientFailure = createAction('UPDATE_CLIENT_FAILURE');
 export const updateClientSuccess = createAction('UPDATE_CLIENT_SUCCESS');
 
-export const updateClient = (config: any, name: any) => async (dispatch: any) => {
-    dispatch(updateClientRequest());
-    try {
-        const data = { name, data: { ...config } };
+export const updateClient =
+    (config: Client, name: string, options: ClientMutationOptions = {}) =>
+    async (dispatch: AppDispatch): Promise<boolean> => {
+        dispatch(updateClientRequest());
+        try {
+            const data = { name, data: { ...config } };
 
-        await apiClient.updateClient(data);
-        dispatch(updateClientSuccess());
-        dispatch(toggleClientModal());
-        dispatch(addSuccessToast(intl.getMessage('client_updated', { key: name })));
-        dispatch(getClients());
-    } catch (error) {
-        dispatch(addErrorToast({ error }));
-        dispatch(updateClientFailure());
-    }
-};
+            await apiClient.updateClient(data);
+            dispatch(updateClientSuccess());
+
+            if (options.toggleModal !== false) {
+                dispatch(toggleClientModal());
+            }
+
+            if (options.showToast !== false) {
+                dispatch(addSuccessToast(intl.getMessage('client_updated', { key: name })));
+            }
+
+            dispatch(getClients());
+
+            return true;
+        } catch (error) {
+            dispatch(addErrorToast({ error }));
+            dispatch(updateClientFailure());
+
+            return false;
+        }
+    };

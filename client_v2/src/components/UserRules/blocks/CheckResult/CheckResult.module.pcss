@@ -1,0 +1,104 @@
+.checkResult {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 8px 16px;
+    border-radius: 8px;
+    background: var(--default-cards-background);
+    box-shadow: 8px 8px 24px 0 rgba(0, 0, 0, 0.1);
+}
+
+.checkResultHeader {
+    padding-right: 32px;
+}
+
+.checkResultTitle {
+    margin: 0;
+    padding: 8px 0;
+}
+
+.dismissButton {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border: 0;
+    background: transparent;
+    color: var(--default-gray-icons);
+    cursor: pointer;
+}
+
+.checkResultTitleBlocked {
+    color: var(--default-error-link);
+}
+
+.checkResultTitleRewritten {
+    color: var(--default-attention-link);
+}
+
+.checkResultTitleAllowed {
+    color: var(--default-product-icon);
+}
+
+.checkResultItems {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px 0;
+}
+
+.resultItem {
+    line-height: 1.5;
+    word-break: break-word;
+
+    & strong {
+        font-weight: inherit;
+        color: var(--default-description-text);
+    }
+
+    & span {
+        color: var(--default-description-text);
+        word-break: break-all;
+    }
+}
+
+.actionButtons {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 8px 0;
+
+    @media (min-width: 768px) {
+        flex-direction: row;
+        flex-wrap: wrap;
+        column-gap: 16px;
+        row-gap: 8px;
+    }
+}
+
+.actionLink {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--default-link);
+    font-weight: var(--weight-regular);
+    cursor: pointer;
+    text-align: left;
+
+    &:hover,
+    &:focus {
+        color: var(--hovered-link);
+        text-decoration: underline;
+    }
+
+    &:disabled {
+        color: var(--default-description-text);
+        cursor: default;
+        text-decoration: none;
+    }
+}

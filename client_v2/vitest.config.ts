@@ -9,7 +9,7 @@ export default defineConfig({
     },
     resolve: {
         alias: {
-            'panel': path.resolve(__dirname, './src'),
+            panel: path.resolve(__dirname, './src'),
         },
     },
 });

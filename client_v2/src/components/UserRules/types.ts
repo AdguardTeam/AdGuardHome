@@ -34,12 +34,18 @@ export type ResultActionKind =
     | 'disable-filter'
     | 'edit-rewrite'
     | 'delete-rewrite'
+    | 'remove-rewrite-rule'
     | 'none';
+
+export type ResultAction = {
+    kind: ResultActionKind;
+    label: string;
+};
 
 export type RewriteEntry = {
     domain: string;
     answer: string;
-    enabled?: boolean;
+    enabled: boolean;
 };
 
 export type RewriteDialogState = {

@@ -43,7 +43,10 @@ export const formatTime = (time: any, options = DEFAULT_TIME_FORMAT) => {
  * @param [options] {object} Date.prototype.toLocaleString([locales[, options]]) options argument
  * @returns {string} Returns the date and time in the specified format
  */
-export const formatDateTime = (dateTime: string, options: Intl.DateTimeFormatOptions = DEFAULT_DATE_FORMAT_OPTIONS) => {
+export const formatDateTime = (
+    dateTime: string,
+    options: Intl.DateTimeFormatOptions = DEFAULT_DATE_FORMAT_OPTIONS,
+) => {
     const parsedTime = new Date(dateTime);
 
     return parsedTime.toLocaleString(navigator.language, options);
@@ -53,13 +56,15 @@ export const formatDateTime = (dateTime: string, options: Intl.DateTimeFormatOpt
  * @param dateTime {string} The date to format
  * @returns {string} Returns the date and time in the format with the full month name
  */
-export const formatDetailedDateTime = (dateTime: string) => formatDateTime(dateTime, DETAILED_DATE_FORMAT_OPTIONS);
+export const formatDetailedDateTime = (dateTime: string) =>
+    formatDateTime(dateTime, DETAILED_DATE_FORMAT_OPTIONS);
 
 /**
  * @param dateTime {string} The date to format
  * @returns {string} Returns the date and time in the format with the short month name. Example: 8 Nov, 2024, 13:15
  */
-export const formatShortDateTime = (dateTime: string) => formatDateTime(dateTime, SHORT_DATE_FORMAT_OPTIONS);
+export const formatShortDateTime = (dateTime: string) =>
+    formatDateTime(dateTime, SHORT_DATE_FORMAT_OPTIONS);
 
 export const normalizeLogs = (logs: any) =>
     logs.map((log: any) => {
@@ -181,7 +186,14 @@ export const addClientInfo = (data: any, clients: any, ...params: any[]) =>
 export const normalizeFilters = (filters: any) =>
     filters
         ? filters.map((filter: any) => {
-              const { id, url, enabled, last_updated, name = 'Default name', rules_count = 0 } = filter;
+              const {
+                  id,
+                  url,
+                  enabled,
+                  last_updated,
+                  name = 'Default name',
+                  rules_count = 0,
+              } = filter;
 
               return {
                   id,
@@ -195,7 +207,13 @@ export const normalizeFilters = (filters: any) =>
         : [];
 
 export const normalizeFilteringStatus = (filteringStatus: any) => {
-    const { enabled, filters, user_rules: userRules, interval, whitelist_filters } = filteringStatus;
+    const {
+        enabled,
+        filters,
+        user_rules: userRules,
+        interval,
+        whitelist_filters,
+    } = filteringStatus;
     const newUserRules = Array.isArray(userRules) ? userRules.join('\n') : '';
 
     return {
@@ -232,7 +250,9 @@ export const getInterfaceIp = (option: any) => {
         return ipv4;
     }
 
-    const ipv6Global = addresses.find((ip: string) => isIpv6(ip) && !isIpv6LinkLocal(ip) && !hasZoneId(ip));
+    const ipv6Global = addresses.find(
+        (ip: string) => isIpv6(ip) && !isIpv6LinkLocal(ip) && !hasZoneId(ip),
+    );
     if (ipv6Global) {
         return ipv6Global;
     }
@@ -243,7 +263,10 @@ export const getInterfaceIp = (option: any) => {
 
 export const getIpList = (interfaces: InstallInterface[]) =>
     Object.values(interfaces)
-        .reduce((acc: string[], curr: InstallInterface) => acc.concat(curr.ip_addresses), [] as string[])
+        .reduce(
+            (acc: string[], curr: InstallInterface) => acc.concat(curr.ip_addresses),
+            [] as string[],
+        )
         .sort();
 
 /**
@@ -306,7 +329,8 @@ export const checkRedirect = (url: any, attempts: number = 1) => {
     }
 
     const rmTimeout = (t: any) => t && clearTimeout(t);
-    const setRecursiveTimeout = (time: any, ...args: any[]) => setTimeout(checkRedirect, time, ...args);
+    const setRecursiveTimeout = (time: any, ...args: any[]) =>
+        setTimeout(checkRedirect, time, ...args);
 
     let timeout: any;
 
@@ -334,7 +358,12 @@ export const redirectToCurrentProtocol = (values: any, httpPort = 80) => {
 
     if (protocol !== 'https:' && enabled && force_https && port_https) {
         checkRedirect(`https://${hostname}${httpsPort}/${hash}`);
-    } else if (protocol === 'https:' && enabled && port_https && port_https !== parseInt(port, 10)) {
+    } else if (
+        protocol === 'https:' &&
+        enabled &&
+        port_https &&
+        port_https !== parseInt(port, 10)
+    ) {
         checkRedirect(`https://${hostname}${httpsPort}/${hash}`);
     } else if (protocol === 'https:' && (!enabled || !port_https)) {
         window.location.replace(`http://${hostname}:${httpPort}/${hash}`);
@@ -441,7 +470,8 @@ export const secondsToMilliseconds = (seconds: any) => {
 
 export const msToDays = (milliseconds: any) => Math.floor(milliseconds / 1000 / 60 / 60 / 24);
 
-export const normalizeRulesTextarea = (text: any) => text?.replace(/^\n/g, '').replace(/\n\s*\n/g, '\n');
+export const normalizeRulesTextarea = (text: any) =>
+    text?.replace(/^\n/g, '').replace(/\n\s*\n/g, '\n');
 
 export const normalizeWhois = (whois: any) => {
     if (Object.keys(whois).length > 0) {
@@ -524,11 +554,13 @@ export const checkRewriteHosts = (reason: any) => reason === FILTERED_STATUS.REW
 export const checkBlackList = (reason: any) => reason === FILTERED_STATUS.FILTERED_BLACK_LIST;
 export const checkWhiteList = (reason: any) => reason === FILTERED_STATUS.NOT_FILTERED_WHITE_LIST;
 // eslint-disable-next-line max-len
-export const checkNotFilteredNotFound = (reason: any) => reason === FILTERED_STATUS.NOT_FILTERED_NOT_FOUND;
+export const checkNotFilteredNotFound = (reason: any) =>
+    reason === FILTERED_STATUS.NOT_FILTERED_NOT_FOUND;
 export const checkSafeSearch = (reason: any) => reason === FILTERED_STATUS.FILTERED_SAFE_SEARCH;
 export const checkSafeBrowsing = (reason: any) => reason === FILTERED_STATUS.FILTERED_SAFE_BROWSING;
 export const checkParental = (reason: any) => reason === FILTERED_STATUS.FILTERED_PARENTAL;
-export const checkBlockedService = (reason: any) => reason === FILTERED_STATUS.FILTERED_BLOCKED_SERVICE;
+export const checkBlockedService = (reason: any) =>
+    reason === FILTERED_STATUS.FILTERED_BLOCKED_SERVICE;
 
 export const getCurrentFilter = (url: any, filters: any) => {
     const filter = filters?.find((item: any) => url === item.url);
@@ -593,7 +625,7 @@ export const formatCompactNumber = (num: number, decimals: number = 1): string =
     const suffixes = ['', 'K', 'M', 'B', 'T'];
     const tier = Math.floor(Math.log10(absNum) / 3);
     const suffix = suffixes[Math.min(tier, suffixes.length - 1)];
-    const scale = 10**(tier * 3);
+    const scale = 10 ** (tier * 3);
     const scaled = absNum / scale;
 
     const formatted = scaled.toFixed(decimals).replace(/\.0+$/, '');
@@ -752,7 +784,8 @@ export const formatElapsedMs = (elapsedMs: string, millisecondsLabel: string) =>
         return elapsedMs;
     }
 
-    const formattedValue = parsedElapsedMs < 1 ? parsedElapsedMs.toFixed(2) : Math.floor(parsedElapsedMs).toString();
+    const formattedValue =
+        parsedElapsedMs < 1 ? parsedElapsedMs.toFixed(2) : Math.floor(parsedElapsedMs).toString();
 
     return `${formattedValue} ${millisecondsLabel}`;
 };
@@ -790,7 +823,8 @@ export const setUITheme = (theme: any) => {
     let currentTheme = theme || getTheme();
 
     if (currentTheme === THEMES.auto) {
-        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const prefersDark =
+            window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
         currentTheme = prefersDark ? THEMES.dark : THEMES.light;
     }
     setTheme(currentTheme);
@@ -830,7 +864,9 @@ export const getLogsUrlParams = (search: string, status: string, reason: string)
     })}`;
 
 export const processContent = (content: any) =>
-    Array.isArray(content) ? content.filter(([, value]) => value).reduce((acc, val) => acc.concat(val), []) : content;
+    Array.isArray(content)
+        ? content.filter(([, value]) => value).reduce((acc, val) => acc.concat(val), [])
+        : content;
 
 // TODO check getObjectKeysSorted
 type NestedObject = {
@@ -838,7 +874,10 @@ type NestedObject = {
     order: number;
 };
 
-export const getObjectKeysSorted = <T extends Record<string, NestedObject>, K extends keyof NestedObject>(
+export const getObjectKeysSorted = <
+    T extends Record<string, NestedObject>,
+    K extends keyof NestedObject,
+>(
     object: T,
     sortKey: K,
 ): string[] => {
@@ -872,7 +911,9 @@ const getAddressesComparisonBytes = (item: any) => {
     const IP_V4_COMPARISON_CODE = 0;
     const IP_V6_COMPARISON_CODE = 1;
 
-    const [parsedIp, cidr] = ipaddr.isValid(item) ? getParsedIpWithPrefixLength(item) : ipaddr.parseCIDR(item);
+    const [parsedIp, cidr] = ipaddr.isValid(item)
+        ? getParsedIpWithPrefixLength(item)
+        : ipaddr.parseCIDR(item);
 
     const [normalizedBytes, ipVersionComparisonCode] =
         (parsedIp as IPv4 | IPv6).kind() === 'ipv4'
@@ -890,8 +931,12 @@ const getAddressesComparisonBytes = (item: any) => {
  */
 export const sortIp = (a: any, b: any) => {
     try {
-        const comparisonBytesA = Array.isArray(a) ? getAddressesComparisonBytes(a[0]) : getAddressesComparisonBytes(a);
-        const comparisonBytesB = Array.isArray(b) ? getAddressesComparisonBytes(b[0]) : getAddressesComparisonBytes(b);
+        const comparisonBytesA = Array.isArray(a)
+            ? getAddressesComparisonBytes(a[0])
+            : getAddressesComparisonBytes(a);
+        const comparisonBytesB = Array.isArray(b)
+            ? getAddressesComparisonBytes(b[0])
+            : getAddressesComparisonBytes(b);
 
         for (let i = 0; i < comparisonBytesA.length; i += 1) {
             const byteA = comparisonBytesA[i];
@@ -952,7 +997,8 @@ export const getFilterName = (
     filters: Filter[],
     whitelistFilters: Filter[],
     filterId: number,
-    resolveFilterName = (filter: Filter) => (filter ? filter.name : intl.getMessage('unknown_filter', { filterId })),
+    resolveFilterName = (filter: Filter) =>
+        filter ? filter.name : intl.getMessage('unknown_filter', { filterId }),
 ) => {
     const specialFilterIds = Object.values(SPECIAL_FILTER_ID);
     if (specialFilterIds.includes(filterId)) {
@@ -965,11 +1011,17 @@ export const getFilterName = (
 };
 
 export const getFilterNames = (rules: Rule[], filters: Filter[], whitelistFilters: Filter[]) =>
-    rules.map(({ filter_list_id }: any) => getFilterName(filters, whitelistFilters, filter_list_id));
+    rules.map(({ filter_list_id }: any) =>
+        getFilterName(filters, whitelistFilters, filter_list_id),
+    );
 
 export const getRuleNames = (rules: Rule[]) => rules.map(({ text }: Rule) => text);
 
-export const getFilterNameToRulesMap = (rules: Rule[], filters: Filter[], whitelistFilters: Filter[]) =>
+export const getFilterNameToRulesMap = (
+    rules: Rule[],
+    filters: Filter[],
+    whitelistFilters: Filter[],
+) =>
     rules.reduce((acc: any, { text, filter_list_id }: Rule) => {
         const filterName = getFilterName(filters, whitelistFilters, filter_list_id);
 
@@ -987,7 +1039,11 @@ export const getRulesToFilterList = (
         filter: 'filteringRules__filter',
     },
 ) => {
-    const filterNameToRulesMap: { string: string[] } = getFilterNameToRulesMap(rules, filters, whitelistFilters);
+    const filterNameToRulesMap: { string: string[] } = getFilterNameToRulesMap(
+        rules,
+        filters,
+        whitelistFilters,
+    );
 
     return (
         <dl className={classes.list}>
@@ -1124,3 +1180,8 @@ export const getServiceName = (services: any, id: any) => getService(services, i
  * @returns {string}
  */
 export const getServiceIcon = (services: any, id: any) => getService(services, id)?.icon_svg;
+
+export const delay = (ms: number): Promise<void> =>
+    new Promise((resolve) => {
+        setTimeout(resolve, ms);
+    });

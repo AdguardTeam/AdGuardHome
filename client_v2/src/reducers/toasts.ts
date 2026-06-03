@@ -10,6 +10,8 @@ type SuccessToastPayload =
     | string
     | {
           message: ReactNode;
+          actionLabel?: string;
+          undoId?: string;
           code?: string;
       };
 
@@ -41,6 +43,10 @@ const toasts = handleActions(
             const successToast = {
                 id: nanoid(),
                 message,
+                actionLabel:
+                    typeof successPayload === 'string' ? undefined : successPayload.actionLabel,
+                undoId:
+                    typeof successPayload === 'string' ? undefined : successPayload.undoId,
                 code: typeof successPayload === 'string' ? undefined : successPayload.code,
                 type: TOAST_TYPES.SUCCESS,
             };

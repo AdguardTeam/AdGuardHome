@@ -48,6 +48,10 @@ const meta: Meta<typeof Input> = {
             control: 'boolean',
             description: 'Whether the input is in an invalid state (visual styling)',
         },
+        isClearable: {
+            control: 'boolean',
+            description: 'Whether to show a built-in clear button when the input has a value',
+        },
         maxLength: {
             control: 'number',
             description: 'Maximum number of characters allowed in the input',
@@ -115,5 +119,13 @@ export const WithIcons: Story = {
         label: 'Input with icons',
         prefixIcon: <Icon icon="check" />,
         suffixIcon: <Icon icon="dot" />,
+    },
+};
+
+export const Clearable: Story = {
+    args: {
+        label: 'Clearable input',
+        value: 'Clear me',
+        isClearable: true,
     },
 };
