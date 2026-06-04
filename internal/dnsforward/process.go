@@ -447,26 +447,16 @@ func (s *Server) processUpstream(
 	defer l.DebugContext(ctx, "finished processing upstream")
 
 	pctx := dctx.proxyCtx
-	req := pctx.Req
 
 	if pctx.Res != nil {
 		// The response has already been set.
 		return resultCodeSuccess
 	} else if dctx.isDHCPHost {
-		// A DHCP client hostname query that hasn't been handled or filtered.
-		// Respond with an NXDOMAIN.
-		//
-		// TODO(a.garipov): Route such queries to a custom upstream for the
-		// local domain name if there is one.
-		name := req.Question[0].Name
-		l.DebugContext(
-			ctx,
-			"dhcp client hostname was not filtered",
-			"hostname", name[:len(name)-1],
-		)
-		pctx.Res = s.NewMsgNXDOMAIN(req)
-
-		return resultCodeFinish
+		resolveNormally := false
+		rc, resolveNormally = s.processUnresolvedDHCPHost(ctx, l, dctx)
+		if !resolveNormally {
+			return rc
+		}
 	}
 
 	s.setCustomUpstream(ctx, l, pctx, dctx.clientID)
@@ -487,6 +477,45 @@ func (s *Server) processUpstream(
 	dctx.responseAD = pctx.Res.AuthenticatedData
 
 	return resultCodeSuccess
+}
+
+// processUnresolvedDHCPHost handles local DHCP hostnames that were not resolved
+// by [*Server.processDHCPHosts].  If resolveNormally is true, the caller should
+// continue resolving the request through the usual upstream path.
+func (s *Server) processUnresolvedDHCPHost(
+	ctx context.Context,
+	l *slog.Logger,
+	dctx *dnsContext,
+) (rc resultCode, resolveNormally bool) {
+	pctx := dctx.proxyCtx
+	if dctx.origQuestion.Name != "" {
+		rc = s.processDHCPHosts(ctx, l, dctx)
+		if rc != resultCodeSuccess || pctx.Res != nil {
+			return rc, false
+		} else if !dctx.isDHCPHost {
+			return resultCodeSuccess, true
+		}
+	}
+
+	// A DHCP client hostname query that hasn't been handled or filtered.
+	// Respond with an NXDOMAIN.
+	//
+	// TODO(a.garipov): Route such queries to a custom upstream for the local
+	// domain name if there is one.
+	req := pctx.Req
+	name := req.Question[0].Name
+	l.DebugContext(
+		ctx,
+		"dhcp client hostname was not filtered",
+		"hostname", name[:len(name)-1],
+	)
+	pctx.Res = s.NewMsgNXDOMAIN(req)
+
+	if dctx.origQuestion.Name != "" {
+		return resultCodeSuccess, false
+	}
+
+	return resultCodeFinish, false
 }
 
 // dhcpHostFromRequest returns a hostname from question, if the request is for a
