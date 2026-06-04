@@ -78,30 +78,42 @@
 
     &.react-select--height-small {
         .select__control {
-            height: 40px;
+            min-height: 40px;
             font-size: 16px;
+        }
+
+        .select__control--is-multi {
+            height: auto;
         }
     }
 
     &.react-select--height-medium {
         .select__control {
-            height: 40px;
+            min-height: 40px;
             font-size: 16px;
 
             @media (min-width: 1024px) {
-                height: 48px;
+                min-height: 48px;
             }
+        }
+
+        .select__control--is-multi {
+            height: auto;
         }
     }
 
     &.react-select--height-big {
         .select__control {
-            height: 56px;
+            min-height: 56px;
             font-size: 16px;
 
             @media (min-width: 1024px) {
-                height: 56px;
+                min-height: 56px;
             }
+        }
+
+        .select__control--is-multi {
+            height: auto;
         }
     }
 
@@ -187,12 +199,15 @@
         color: var(--default-main-text);
 
         &--is-multi {
-            flex-wrap: nowrap;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 8px 12px 8px 16px;
+            overflow: visible;
         }
     }
 
     .select__control {
-        height: 40px;
+        min-height: 40px;
         border: 1px solid var(--default-item-divider);
         box-shadow: none;
         border-radius: 8px;
@@ -206,18 +221,8 @@
             border-color: var(--hovered-main-button);
         }
 
-        &.select__control--is-disabled {
-            .select__value-container,
-            .select__single-value,
-            .select__placeholder {
-                color: var(--disabled-main-text);
-            }
-
-            .select__dropdown-indicator {
-                svg {
-                    color: var(--disabled-main-text);
-                }
-            }
+        &--is-multi {
+            height: auto;
         }
     }
 

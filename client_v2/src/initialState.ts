@@ -113,11 +113,13 @@ export type Client = {
     use_global_settings: boolean;
 };
 
+export type WhoisInfo = Record<string, string>;
+
 export type AutoClient = {
     ip: string;
     name: string;
     source: string;
-    whois_info: any;
+    whois_info: WhoisInfo;
 };
 
 export type DashboardData = {
@@ -392,6 +394,79 @@ export type ModalsData = {
     modalId: ModalType | null;
 };
 
+export type ClientFormState = {
+    mode: 'add' | 'edit';
+    originalName: string;
+    name: string;
+    ids: string[];
+    tags: string[];
+    use_global_settings: boolean;
+    filtering_enabled: boolean;
+    safebrowsing_enabled: boolean;
+    parental_enabled: boolean;
+    safe_search: {
+        enabled: boolean;
+        google: boolean;
+        youtube: boolean;
+        bing: boolean;
+        duckduckgo: boolean;
+        yandex: boolean;
+        pixabay: boolean;
+    };
+    ignore_querylog: boolean;
+    ignore_statistics: boolean;
+    blocked_services: string[];
+    use_global_blocked_services: boolean;
+    blocked_services_schedule: {
+        time_zone: string;
+        sun?: { start: number; end: number };
+        mon?: { start: number; end: number };
+        tue?: { start: number; end: number };
+        wed?: { start: number; end: number };
+        thu?: { start: number; end: number };
+        fri?: { start: number; end: number };
+        sat?: { start: number; end: number };
+    };
+    upstreams: string;
+    upstreams_cache_enabled: boolean;
+    upstreams_cache_size: number;
+    processingSave: boolean;
+    formErrors: Record<string, string | string[]>;
+};
+
+export const getInitialClientFormState = (): ClientFormState => ({
+    mode: 'add',
+    originalName: '',
+    name: '',
+    ids: [''],
+    tags: [],
+    use_global_settings: false,
+    filtering_enabled: false,
+    safebrowsing_enabled: false,
+    parental_enabled: false,
+    safe_search: {
+        enabled: false,
+        google: false,
+        youtube: false,
+        bing: false,
+        duckduckgo: false,
+        yandex: false,
+        pixabay: false,
+    },
+    ignore_querylog: false,
+    ignore_statistics: false,
+    blocked_services: [],
+    use_global_blocked_services: false,
+    blocked_services_schedule: {
+        time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    },
+    upstreams: '',
+    upstreams_cache_enabled: false,
+    upstreams_cache_size: 0,
+    processingSave: false,
+    formErrors: {},
+});
+
 export type RootState = {
     access?: AccessData;
     clients?: ClientsData;
@@ -408,6 +483,7 @@ export type RootState = {
     install?: InstallData;
     toasts: { notices: any[] };
     modals: ModalsData;
+    clientForm: ClientFormState;
 };
 
 export type InstallState = {
@@ -641,4 +717,5 @@ export const initialState: RootState = {
     },
     toasts: { notices: [] },
     modals: { modalId: null },
+    clientForm: getInitialClientFormState(),
 };

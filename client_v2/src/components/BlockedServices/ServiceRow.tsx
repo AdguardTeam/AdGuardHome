@@ -1,5 +1,6 @@
 import React, { ChangeEvent } from 'react';
 import { Switch } from 'panel/common/controls/Switch';
+import { decodeSvg } from 'panel/helpers/helpers';
 
 import s from './BlockedServices.module.pcss';
 
@@ -24,13 +25,7 @@ export const ServiceRow = ({ id, name, iconSvg, checked, disabled, onChange }: P
         onChange(id, !checked);
     };
 
-    const decodedSvg = (() => {
-        try {
-            return atob(iconSvg);
-        } catch {
-            return '';
-        }
-    })();
+    const decodedSvg = decodeSvg(iconSvg);
 
     return (
         <div

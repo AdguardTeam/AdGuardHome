@@ -230,6 +230,26 @@ export const THEMES = {
     light: 'light',
 };
 
+export type SafeSearchProviderKey = 'google' | 'youtube' | 'bing' | 'duckduckgo' | 'yandex' | 'pixabay';
+
+export const SAFE_SEARCH_PROVIDER_KEYS: SafeSearchProviderKey[] = [
+    'google',
+    'youtube',
+    'bing',
+    'duckduckgo',
+    'yandex',
+    'pixabay',
+];
+
+export const SAFE_SEARCH_PROVIDERS: Record<SafeSearchProviderKey, string> = {
+    google: 'Google',
+    youtube: 'YouTube',
+    bing: 'Bing',
+    duckduckgo: 'DuckDuckGo',
+    yandex: 'Yandex',
+    pixabay: 'Pixabay',
+};
+
 export const WHOIS_ICONS = {
     location: 'location',
     orgname: 'network',

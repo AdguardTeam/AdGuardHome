@@ -19,6 +19,14 @@ export const RoutePath = {
     InactivitySchedule: 'InactivitySchedule',
     UserRules: 'UserRules',
     QueryLog: 'QueryLog',
+    ClientsAdd: 'ClientsAdd',
+    ClientsProtection: 'ClientsProtection',
+    ClientsBlockedServices: 'ClientsBlockedServices',
+    ClientsSchedule: 'ClientsSchedule',
+    ClientsEdit: 'ClientsEdit',
+    ClientsEditProtection: 'ClientsEditProtection',
+    ClientsEditBlockedServices: 'ClientsEditBlockedServices',
+    ClientsEditSchedule: 'ClientsEditSchedule',
 } as const;
 
 export type RoutePathKey = keyof typeof RoutePath;
@@ -39,6 +47,14 @@ export const Paths: Record<RoutePathKey, string> = {
     InactivitySchedule: pathBuilder('blocked_services/schedule'),
     UserRules: pathBuilder('user_rules'),
     QueryLog: pathBuilder('query_log'),
+    ClientsAdd: pathBuilder('clients/add'),
+    ClientsProtection: pathBuilder('clients/add/protection'),
+    ClientsBlockedServices: pathBuilder('clients/add/blocked_services'),
+    ClientsSchedule: pathBuilder('clients/add/blocked_services/schedule'),
+    ClientsEdit: pathBuilder('clients/edit/:clientName'),
+    ClientsEditProtection: pathBuilder('clients/edit/:clientName/protection'),
+    ClientsEditBlockedServices: pathBuilder('clients/edit/:clientName/blocked_services'),
+    ClientsEditSchedule: pathBuilder('clients/edit/:clientName/blocked_services/schedule'),
 };
 
 export type LinkParams = Partial<Record<string, string | number>>;

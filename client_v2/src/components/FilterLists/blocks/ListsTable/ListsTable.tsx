@@ -11,8 +11,6 @@ import theme from 'panel/lib/theme';
 import cn from 'clsx';
 import s from './ListsTable.module.pcss';
 
-const DEFAULT_PAGE_SIZE = 10;
-
 export const TABLE_IDS = {
     ALLOWLISTS_TABLE: 'allowlists_table',
     BLOCKLISTS_TABLE: 'blocklists_table',
@@ -47,7 +45,7 @@ export const ListsTable = ({
     toggleFilterList,
 }: Props) => {
     const pageSize = useMemo(
-        () => LocalStorageHelper.getItem(LOCAL_STORAGE_KEYS.BLOCKLIST_PAGE_SIZE) || DEFAULT_PAGE_SIZE,
+        () => LocalStorageHelper.getItem(LOCAL_STORAGE_KEYS.BLOCKLIST_PAGE_SIZE) || undefined,
         [],
     );
 

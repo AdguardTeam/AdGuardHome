@@ -14,6 +14,7 @@ import filtering from './filtering';
 import settings from './settings';
 import dashboard from './dashboard';
 import dhcp from './dhcp';
+import clientForm from './clientForm';
 
 export default combineReducers({
     settings,
@@ -30,4 +31,5 @@ export default combineReducers({
     stats,
     dnsConfig,
     modals,
+    clientForm,
 });

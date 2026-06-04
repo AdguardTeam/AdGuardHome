@@ -10,6 +10,13 @@
     }
 }
 
+.switchDisabled {
+    &:hover,
+    &:focus {
+        background-color: transparent;
+    }
+}
+
 .row {
     display: flex;
     align-items: flex-start;
@@ -28,6 +35,10 @@
 
 .title {
     color: var(--default-main-text);
+}
+
+.titleDisabled {
+    color: var(--disabled-main-text);
 }
 
 .desc {

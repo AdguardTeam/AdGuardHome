@@ -30,7 +30,12 @@ import s from './styles.module.pcss';
 import { DnsSettings } from '../DnsSettings';
 import { UserRules } from '../UserRules';
 import { BlockedServices } from '../BlockedServices';
+import { Clients } from '../Clients/Clients';
 import { InactivitySchedule } from '../BlockedServices/InactivitySchedule';
+import { AddClient } from '../Clients/AddClient';
+import { Protection } from '../Clients/AddClient/blocks/Protection/Protection';
+import { ClientBlockedServices } from '../Clients/AddClient/blocks/ClientBlockedServices';
+import { ClientSchedule } from '../Clients/AddClient/blocks/ClientSchedule';
 
 type RouteConfig = {
     path: string;
@@ -39,6 +44,12 @@ type RouteConfig = {
 };
 
 const SetupGuideRoute = () => <SetupGuide />;
+const BlockedServicesRoute = () => <BlockedServices />;
+const InactivityScheduleRoute = () => <InactivitySchedule />;
+const ClientScheduleRoute = () => <ClientSchedule />;
+const ClientBlockedServicesRoute = () => <ClientBlockedServices />;
+const ProtectionRoute = () => <Protection />;
+const AddClientRoute = () => <AddClient />;
 
 const ROUTES: RouteConfig[] = [
     {
@@ -98,12 +109,57 @@ const ROUTES: RouteConfig[] = [
     },
     {
         path: '/blocked_services/schedule',
-        component: InactivitySchedule,
+        component: InactivityScheduleRoute,
         exact: true,
     },
     {
         path: '/blocked_services',
-        component: BlockedServices,
+        component: BlockedServicesRoute,
+        exact: true,
+    },
+    {
+        path: '/clients/add/blocked_services/schedule',
+        component: ClientScheduleRoute,
+        exact: true,
+    },
+    {
+        path: '/clients/add/blocked_services',
+        component: ClientBlockedServicesRoute,
+        exact: true,
+    },
+    {
+        path: '/clients/add/protection',
+        component: ProtectionRoute,
+        exact: true,
+    },
+    {
+        path: '/clients/add',
+        component: AddClientRoute,
+        exact: true,
+    },
+    {
+        path: '/clients/edit/:clientName/blocked_services/schedule',
+        component: ClientScheduleRoute,
+        exact: true,
+    },
+    {
+        path: '/clients/edit/:clientName/blocked_services',
+        component: ClientBlockedServicesRoute,
+        exact: true,
+    },
+    {
+        path: '/clients/edit/:clientName/protection',
+        component: ProtectionRoute,
+        exact: true,
+    },
+    {
+        path: '/clients/edit/:clientName',
+        component: AddClientRoute,
+        exact: true,
+    },
+    {
+        path: '/clients',
+        component: Clients,
         exact: true,
     },
 ];

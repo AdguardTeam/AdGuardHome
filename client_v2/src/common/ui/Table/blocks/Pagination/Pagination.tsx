@@ -28,7 +28,9 @@ const generatePageNumbers = (currentPage: number, totalPages: number): (number |
     const start = Math.max(2, currentPage + 1 - delta);
     const end = Math.min(totalPages - 1, currentPage + 1 + delta);
 
-    Array.from({ length: Math.max(0, end - start + 1) }, (_, i) => start + i).forEach((page) => range.push(page));
+    Array.from({ length: Math.max(0, end - start + 1) }, (_, i) => start + i).forEach((page) =>
+        range.push(page),
+    );
 
     // Always show last page (if more than 1 page)
     if (totalPages > 1) {
@@ -68,7 +70,10 @@ export const Pagination = ({
     const canPreviousPage = currentPage > 0;
     const canNextPage = currentPage < totalPages - 1;
 
-    const pageNumbers = useMemo(() => generatePageNumbers(currentPage, totalPages), [currentPage, totalPages]);
+    const pageNumbers = useMemo(
+        () => generatePageNumbers(currentPage, totalPages),
+        [currentPage, totalPages],
+    );
 
     const limitMenu = (
         <div className={theme.dropdown.menu}>
@@ -89,8 +94,12 @@ export const Pagination = ({
         </div>
     );
 
-    return (
-        <div className={theme.pagination.wrapper}>
+    const renderPages = () => {
+        if (totalPages <= 1) {
+            return null;
+        }
+
+        return (
             <div className={theme.pagination.pagesContainer}>
                 <button
                     type="button"
@@ -98,7 +107,10 @@ export const Pagination = ({
                     disabled={!canPreviousPage}
                     className={theme.pagination.button}
                 >
-                    <Icon icon="arrow" className={cn(theme.pagination.arrow, theme.pagination.arrow_left)} />
+                    <Icon
+                        icon="arrow"
+                        className={cn(theme.pagination.arrow, theme.pagination.arrow_left)}
+                    />
                 </button>
 
                 {pageNumbers.map((pageNum, index) => {
@@ -116,7 +128,10 @@ export const Pagination = ({
                             key={pageNum}
                             type="button"
                             onClick={() => onPageChange(pageNum - 1)} // Convert 1-based to 0-based
-                            className={cn(theme.pagination.button, isCurrentPage && theme.pagination.button_active)}
+                            className={cn(
+                                theme.pagination.button,
+                                isCurrentPage && theme.pagination.button_active,
+                            )}
                         >
                             {pageNum}
                         </button>
@@ -129,9 +144,18 @@ export const Pagination = ({
                     disabled={!canNextPage}
                     className={theme.pagination.button}
                 >
-                    <Icon icon="arrow" className={cn(theme.pagination.arrow, theme.pagination.arrow_right)} />
+                    <Icon
+                        icon="arrow"
+                        className={cn(theme.pagination.arrow, theme.pagination.arrow_right)}
+                    />
                 </button>
             </div>
+        );
+    };
+
+    return (
+        <div className={theme.pagination.wrapper}>
+            {renderPages()}
 
             <Dropdown
                 trigger="click"

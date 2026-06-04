@@ -28,7 +28,7 @@
         display: grid;
         grid-template-columns: var(--table-columns);
         background-color: var(--page-background-additional);
-        border-radius: 8px 8px 0 0;
+        border-radius: 8px;
         overflow: hidden;
     }
 }
@@ -69,21 +69,25 @@
     border-radius: 8px;
     padding: 8px 16px;
     background-color: var(--default-cards-background);
-    box-shadow: 8px 8px 24px 0 #0000001a;
+    box-shadow: 8px 8px 24px 0 rgba(0, 0, 0, 0.1);
+    transition: background-color var(--t2);
 
     @media (min-width: 768px) {
         display: grid;
         grid-template-columns: var(--table-columns);
-        box-shadow: none;
         border-radius: 0;
         padding: 0;
-        background-color: var(--default-cards-background);
-        border-bottom: 1px solid var(--default-item-divider);
+        background-color: transparent;
+        box-shadow: none;
+
+        &:hover,
+        &:focus {
+            background-color: var(--page-background-additional);
+        }
     }
 
     &:last-child {
         @media (min-width: 768px) {
-            border-bottom: 0;
             border-radius: 0 0 8px 8px;
             overflow: hidden;
         }
@@ -116,4 +120,18 @@
     @media (min-width: 768px) {
         padding: 48px 64px;
     }
+}
+
+.loading {
+    flex: 1 0 auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+}
+
+.tableLoader {
+    width: 48px;
+    height: 48px;
+    color: var(--default-product-icon);
 }

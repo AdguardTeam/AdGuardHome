@@ -93,7 +93,10 @@ export const QueryLog = () => {
         const search = searchParams.get('search') || DEFAULT_LOGS_FILTER.search;
         const statusParam = searchParams.get('status') || DEFAULT_LOGS_FILTER.status;
         const reasonParam = searchParams.get('reason') || DEFAULT_LOGS_FILTER.reason;
-        const status = Object.prototype.hasOwnProperty.call(QUERY_LOG_STATUS_FILTER_QUERIES, statusParam)
+        const status = Object.prototype.hasOwnProperty.call(
+            QUERY_LOG_STATUS_FILTER_QUERIES,
+            statusParam,
+        )
             ? statusParam
             : DEFAULT_LOGS_FILTER.status;
         const reason = Object.prototype.hasOwnProperty.call(
@@ -129,7 +132,9 @@ export const QueryLog = () => {
     const currentStatus = filter?.status ?? DEFAULT_LOGS_FILTER.status;
     const currentReason = filter?.reason ?? DEFAULT_LOGS_FILTER.reason;
     const infiniteScrollResetToken = `${currentSearch}:${currentStatus}:${currentReason}`;
-    const persistentClientIds = persistentClients.flatMap((persistentClient) => persistentClient.ids ?? []);
+    const persistentClientIds = persistentClients.flatMap(
+        (persistentClient) => persistentClient.ids ?? [],
+    );
     const visibleLogs = filterLogsByStatus(logs, currentStatus);
     const emptyStateMode = getEmptyStateMode(enabled, interval);
     const hasMore = !isEntireLog;
@@ -260,12 +265,7 @@ export const QueryLog = () => {
         }
 
         if (visibleLogs.length === 0) {
-            return (
-                <EmptyState
-                    className={s.emptyState}
-                    mode={emptyStateMode}
-                />
-            );
+            return <EmptyState className={s.emptyState} mode={emptyStateMode} />;
         }
 
         return (
@@ -300,7 +300,7 @@ export const QueryLog = () => {
                 />
             </>
         );
-    }
+    };
 
     return (
         <div className={theme.layout.container}>
@@ -342,9 +342,7 @@ export const QueryLog = () => {
                     />
                 </div>
 
-                <div className={s.mobileView}>
-                    {renderMobileContent()}
-                </div>
+                <div className={s.mobileView}>{renderMobileContent()}</div>
 
                 {selectedEntry && (
                     <DetailModal

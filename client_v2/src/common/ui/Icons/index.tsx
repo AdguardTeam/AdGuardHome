@@ -56,6 +56,7 @@ export const ICONS = {
     eye_open: 'eye_open',
     eye_close: 'eye_close',
     check_tiny: 'check_tiny',
+    user: 'user',
 } as const;
 
 export type IconType = keyof typeof ICONS;
@@ -845,9 +846,7 @@ export const Icons = memo(() => (
         <symbol
             id="location"
             fill="none"
-            height="24"
             viewBox="0 0 24 24"
-            width="24"
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth="1.5"
@@ -863,10 +862,7 @@ export const Icons = memo(() => (
         <symbol
             id="connections"
             fill="none"
-            height="24"
             viewBox="0 0 24 24"
-            width="24"
-            xmlns="http://www.w3.org/2000/svg"
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth="1.5"
@@ -879,14 +875,7 @@ export const Icons = memo(() => (
             <path d="m5.5 17h13" />
         </symbol>
 
-        <symbol
-            id="adblocking"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-        >
+        <symbol id="adblocking" viewBox="0 0 24 24" fill="none">
             <path
                 fillRule="evenodd"
                 clipRule="evenodd"
@@ -897,30 +886,7 @@ export const Icons = memo(() => (
             <path d="M4 21L20 3" strokeWidth="1.5" strokeLinecap="round" />
         </symbol>
 
-        <symbol
-            id="tracking"
-            fill="none"
-            height="24"
-            viewBox="0 0 24 24"
-            width="24"
-            xmlns="http://www.w3.org/2000/svg"
-        >
-            <path
-                d="m17.3918 9.16765c.8694.69904 1.7388 1.56715 2.6082 2.60435-2.6667 3.3333-5.3333 5-8 5-.4393 0-.8786-.0453-1.318-.1357m-2.51032-1.0233c-1.0044-.6589-2.39496-1.9393-4.17168-3.841 2.66667-3.18135 5.33333-4.772 8-4.772 1.0715 0 2.143.25682 3.2145.77047m-11.2145 13.22953 16-18m-9.4142 10.4142c-.3619-.3619-.5858-.8619-.5858-1.4142 0-1.1046.8954-2 2-2 .4707 0 .9035.1626 1.2451.4348z"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="1.5"
-            />
-        </symbol>
-
-        <symbol
-            id="parental"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-        >
+        <symbol id="parental" viewBox="0 0 24 24" fill="none">
             <circle
                 cx="6.76196"
                 cy="17.2381"
@@ -952,14 +918,7 @@ export const Icons = memo(() => (
             />
         </symbol>
 
-        <symbol
-            id="time"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-        >
+        <symbol id="time" viewBox="0 0 24 24" fill="none">
             <circle
                 cx="12"
                 cy="12"
@@ -976,7 +935,7 @@ export const Icons = memo(() => (
             />
         </symbol>
 
-        <symbol id="eye_close" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <symbol id="eye_close" viewBox="0 0 24 24" fill="none">
             <path
                 d="M4 10C4 10 8 14.772 12 14.772C16 14.772 20 10 20 10"
                 stroke="currentColor"
@@ -988,7 +947,7 @@ export const Icons = memo(() => (
             <path d="M6 13V15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
         </symbol>
 
-        <symbol id="eye_open" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <symbol id="eye_open" viewBox="0 0 24 24" fill="none">
             <path
                 fillRule="evenodd"
                 clipRule="evenodd"
@@ -1006,14 +965,8 @@ export const Icons = memo(() => (
                 strokeWidth="1.5"
             />
         </symbol>
-        <symbol
-            id="check_tiny"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-        >
+
+        <symbol id="check_tiny" viewBox="0 0 24 24" fill="none">
             <path
                 d="M5 11.7665L10.5878 17L19 8"
                 strokeWidth="1.5"
@@ -1068,6 +1021,26 @@ export const Icons = memo(() => (
         <symbol id="search" viewBox="0 0 24 24" fill="none">
             <circle cx="9.5" cy="9.5" r="5.5" stroke="currentColor" strokeWidth="1.5" />
             <path d="M14 14L19 19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        </symbol>
+
+        <symbol id="user" viewBox="0 0 16 16" fill="none">
+            <circle
+                cx="7.99967"
+                cy="5.33329"
+                r="2.66667"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+            <path
+                d="M2.66699 13.3334C2.66699 11.1242 4.45785 9.33337 6.66699 9.33337H9.33366C11.5428 9.33337 13.3337 11.1242 13.3337 13.3334H2.66699Z"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeMiterlimit="16"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
         </symbol>
     </svg>
 ));

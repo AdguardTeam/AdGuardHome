@@ -4,11 +4,18 @@ import cn from 'clsx';
 import { Icon } from 'panel/common/ui/Icon';
 import theme from 'panel/lib/theme';
 
-export const CustomDropdownIndicator = <OptionType extends Record<string, any> = any, IsMulti extends boolean = false>(
+export const CustomDropdownIndicator = <
+    OptionType extends Record<string, any> = any,
+    IsMulti extends boolean = false,
+>(
     props: DropdownIndicatorProps<OptionType, IsMulti>,
 ) => {
-    const { selectProps } = props;
+    const { selectProps, hasValue } = props;
     const isMenuOpen = selectProps.menuIsOpen;
+
+    if (hasValue && selectProps.isMulti) {
+        return null;
+    }
 
     return (
         <div className={theme.select.dropdownIndicator}>

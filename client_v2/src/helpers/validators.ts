@@ -407,6 +407,54 @@ export const validatePlainDns = (value: any, allValues: any) => {
     return undefined;
 };
 
+/**
+ * Validates a single client identifier value.
+ * Returns undefined if valid, or an i18n error message string if invalid.
+ *
+ * @param value - The identifier string to validate
+ * @param allValues - All identifier values in the form (for duplicate checking)
+ * @param currentIndex - The index of this identifier in the array
+ * @param existingIds - Identifiers from all other persistent clients (for
+ *   cross-client duplicate checking, excluding the client being edited)
+ */
+export const validateIdentifier = (
+    value: string,
+    allValues: string[],
+    currentIndex: number,
+    existingIds?: string[],
+): string | undefined => {
+    const trimmed = (value || '').trim();
+
+    if (!trimmed) {
+        return intl.getMessage('form_error_required');
+    }
+
+    const isValidFormat =
+        R_IPV4.test(trimmed) ||
+        R_IPV6.test(trimmed) ||
+        R_MAC.test(trimmed) ||
+        R_CIDR.test(trimmed) ||
+        R_CIDR_IPV6.test(trimmed) ||
+        R_CLIENT_ID.test(trimmed);
+
+    if (!isValidFormat) {
+        return intl.getMessage('clients_identifier_format_error');
+    }
+
+    const duplicateIndex = allValues.findIndex(
+        (v, i) => i !== currentIndex && v.trim() === trimmed,
+    );
+    if (duplicateIndex !== -1) {
+        return intl.getMessage('clients_identifier_already_used');
+    }
+
+    if (existingIds && existingIds.includes(trimmed)) {
+        return intl.getMessage('clients_identifier_already_used');
+    }
+
+    return undefined;
+};
+
 export const validateHostname = (value: any) => {
     if (value && !R_HOSTNAME.test(value)) {
         return intl.getMessage('form_error_hostname_format');
@@ -414,16 +462,33 @@ export const validateHostname = (value: any) => {
     return undefined;
 };
 
-export const validateIpNotDuplicate = (existingLeases: { ip: string }[], editIp?: string) => (value: any) => {
-    if (value && value !== editIp && existingLeases.some((lease) => lease.ip === value)) {
-        return intl.getMessage('form_error_ip_already_added');
+// A valid upstream line contains at least one dot or colon.
+const R_COMMENT = /^\s*#/;
+const R_HAS_ADDRESS = /[.:]/;
+
+export const validateUpstreams = (value: string): string | undefined => {
+    const lines = value.split('\n');
+    for (let i = 0; i < lines.length; i += 1) {
+        const line = lines[i].trim();
+        if (line && !R_COMMENT.test(line) && !R_HAS_ADDRESS.test(line)) {
+            return intl.getMessage('form_error_upstream_format', { line: i + 1 });
+        }
     }
     return undefined;
 };
 
-export const validateMacNotDuplicate = (existingLeases: { mac: string }[], editMac?: string) => (value: any) => {
-    if (value && value !== editMac && existingLeases.some((lease) => lease.mac === value)) {
-        return intl.getMessage('form_error_mac_already_added');
-    }
-    return undefined;
-};
+export const validateIpNotDuplicate =
+    (existingLeases: { ip: string }[], editIp?: string) => (value: any) => {
+        if (value && value !== editIp && existingLeases.some((lease) => lease.ip === value)) {
+            return intl.getMessage('form_error_ip_already_added');
+        }
+        return undefined;
+    };
+
+export const validateMacNotDuplicate =
+    (existingLeases: { mac: string }[], editMac?: string) => (value: any) => {
+        if (value && value !== editMac && existingLeases.some((lease) => lease.mac === value)) {
+            return intl.getMessage('form_error_mac_already_added');
+        }
+        return undefined;
+    };

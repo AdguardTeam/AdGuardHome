@@ -12,8 +12,6 @@ import { Switch } from 'panel/common/controls/Switch';
 import { Rewrite } from '../../DNSRewrites';
 import s from '../ListsTable/ListsTable.module.pcss';
 
-const DEFAULT_PAGE_SIZE = 10;
-
 type Props = {
     list: Rewrite[];
     processing: boolean;
@@ -46,7 +44,7 @@ export const RewritesTable = ({
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
     const pageSize = useMemo(
-        () => LocalStorageHelper.getItem(LOCAL_STORAGE_KEYS.BLOCKLIST_PAGE_SIZE) || DEFAULT_PAGE_SIZE,
+        () => LocalStorageHelper.getItem(LOCAL_STORAGE_KEYS.BLOCKLIST_PAGE_SIZE) || undefined,
         [],
     );
 
