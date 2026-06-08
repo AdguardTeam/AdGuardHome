@@ -20,6 +20,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
@@ -564,6 +565,7 @@ var config = &configuration{
 		ParentalEnabled:     false,
 		SafeBrowsingEnabled: false,
 
+		MaxHTTPSize:           rulelist.DefaultMaxRuleListSize,
 		SafeBrowsingCacheSize: 1 * 1024 * 1024,
 		SafeSearchCacheSize:   1 * 1024 * 1024,
 		ParentalCacheSize:     1 * 1024 * 1024,
