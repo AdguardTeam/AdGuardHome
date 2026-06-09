@@ -285,7 +285,7 @@ func TestTLSManager_Reload(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	web := newTestWeb(t, &webConfig{})
+	web := newTestWeb(t, &webConfig{tlsManager: m})
 	m.setWebAPI(web)
 
 	extTLSConf := m.extendedTLSConfig()
@@ -328,9 +328,12 @@ func TestTLSManager_HandleTLSStatus(t *testing.T) {
 	})
 	require.NoError(t, err)
 
+	web := newTestWeb(t, &webConfig{tlsManager: m})
+	m.setWebAPI(web)
+
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "/control/tls/status", nil)
-	m.handleTLSStatus(w, r)
+	web.handleTLSStatus(w, r)
 
 	res := &tlsConfigSettingsExt{}
 	err = json.NewDecoder(w.Body).Decode(res)
@@ -358,7 +361,7 @@ func TestValidateTLSSettings(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	web := newTestWeb(t, &webConfig{})
+	web := newTestWeb(t, &webConfig{tlsManager: m})
 	m.setWebAPI(web)
 
 	tcpLn, err := net.Listen("tcp", ":0")
@@ -432,7 +435,7 @@ func TestValidateTLSSettings(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err = m.validateTLSSettings(tc.setts)
+			err = web.validateTLSSettings(tc.setts)
 			testutil.AssertErrorMsg(t, tc.wantErr, err)
 		})
 	}
@@ -459,7 +462,7 @@ func TestTLSManager_HandleTLSValidate(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	web := newTestWeb(t, &webConfig{})
+	web := newTestWeb(t, &webConfig{tlsManager: m})
 	m.setWebAPI(web)
 
 	setts := &tlsConfigSettingsExt{
@@ -475,7 +478,7 @@ func TestTLSManager_HandleTLSValidate(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodPost, "/control/tls/validate", bytes.NewReader(req))
-	m.handleTLSValidate(w, r)
+	web.handleTLSValidate(w, r)
 
 	res := &tlsConfigStatus{}
 	err = json.NewDecoder(w.Body).Decode(res)
@@ -552,7 +555,7 @@ func TestTLSManager_HandleTLSConfigure(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	web := newTestWeb(t, &webConfig{})
+	web := newTestWeb(t, &webConfig{tlsManager: m})
 	m.setWebAPI(web)
 
 	extTLSConf := m.extendedTLSConfig()
@@ -575,9 +578,9 @@ func TestTLSManager_HandleTLSConfigure(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	// Reconfigure the TLS manager.
-	m.handleTLSConfigure(w, r)
+	web.handleTLSConfigure(w, r)
 
-	// The [tlsManager.handleTLSConfigure] method will start the DNS server and
+	// The [webAPI.handleTLSConfigure] method will start the DNS server and
 	// it should be stopped after the test ends.
 	testutil.CleanupAndRequireSuccess(t, func() (err error) {
 		return globalContext.dnsServer.Stop(testutil.ContextWithTimeout(t, testTimeout))
