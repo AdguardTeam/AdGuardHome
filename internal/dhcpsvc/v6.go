@@ -360,11 +360,11 @@ func clientIDMatchingServer(
 	return cliID, nil
 }
 
-// defaultHopLimit is the default hop limit for relaying DHCPv6 response
+// IPv6DefaultHopLimit is the default hop limit for relaying DHCPv6 response
 // packets.
 //
 // See RFC 9915 Section 7.6.
-const defaultHopLimit = 8
+const IPv6DefaultHopLimit = 8
 
 // respond6 constructs and sends a DHCPv6 response to the client.
 func respond6(fd *frameData6, resp *layers.DHCPv6) (err error) {
@@ -377,7 +377,7 @@ func respond6(fd *frameData6, resp *layers.DHCPv6) (err error) {
 	ip := &layers.IPv6{
 		Version:    6,
 		NextHeader: layers.IPProtocolUDP,
-		HopLimit:   defaultHopLimit,
+		HopLimit:   IPv6DefaultHopLimit,
 		SrcIP:      fd.localAddr.AsSlice(),
 		// If the original message was received directly by the server, the
 		// server unicasts the Advertise or Reply message directly to the client
@@ -428,7 +428,7 @@ func (iface *dhcpInterfaceV6) allocateForSolicit(
 			continue
 		}
 
-		var iana iaNAOption
+		var iana IANAOption
 		err := iana.UnmarshalBinary(reqOpt.Data)
 		if err != nil {
 			// TODO(e.burkov):  Recheck the logic on malformed IA_NA options.
@@ -444,12 +444,12 @@ func (iface *dhcpInterfaceV6) allocateForSolicit(
 		// is available.
 		lease, err = iface.common.allocateLease(ctx, mac, iface.addrChecker, iface.clock)
 		if err != nil {
-			l.DebugContext(ctx, "no address available", "iaid", iana.iaid, slogutil.KeyError, err)
+			l.DebugContext(ctx, "no address available", "iaid", iana.ID, slogutil.KeyError, err)
 
 			continue
 		}
 
-		return lease, iana.iaid
+		return lease, iana.ID
 	}
 
 	return nil, 0
@@ -483,7 +483,7 @@ func (iface *dhcpInterfaceV6) newSolicitRespOpts(
 	//
 	// See RFC 9915 Section 18.3.9.
 	opts = append(opts, newPreferenceOption(0))
-	opts = append(opts, newSOLMaxRTOption(solMaxRT))
+	opts = append(opts, newSOLMaxRTOption(DefaultSolMaxRT))
 
 	if rapidCommit {
 		opts = append(opts, layers.NewDHCPv6Option(layers.DHCPv6OptRapidCommit, nil))
@@ -501,15 +501,15 @@ func (iface *dhcpInterfaceV6) iaNAFromLease(lease *Lease, iaid uint32) (iana lay
 		return newIANAWithStatus(iaid, layers.DHCPv6StatusCodeNoAddrsAvail)
 	}
 
-	return iaNAOption{
-		nested: []iaAddrOption{{
-			addr:              lease.IP,
-			preferredLifetime: iface.common.leaseTTL,
-			validLifetime:     iface.common.leaseTTL,
+	return IANAOption{
+		Nested: []IAAddrOption{{
+			Addr:              lease.IP,
+			PreferredLifetime: iface.common.leaseTTL,
+			ValidLifetime:     iface.common.leaseTTL,
 		}},
-		iaid: iaid,
-		t1:   iface.t1,
-		t2:   iface.t2,
+		ID: iaid,
+		T1: iface.t1,
+		T2: iface.t2,
 	}.Encode()
 }
 

@@ -144,6 +144,9 @@ func (srv *DHCPServer) newInterfaces(
 func (srv *DHCPServer) Start(ctx context.Context) (err error) {
 	srv.logger.DebugContext(ctx, "starting dhcp server")
 
+	// TODO(e.burkov):  Create a single device for each network interface with
+	// dual-stack support when possible.
+
 	var errs []error
 	for _, iface := range srv.interfaces4 {
 		netDevName := iface.common.name
@@ -166,7 +169,26 @@ func (srv *DHCPServer) Start(ctx context.Context) (err error) {
 		go srv.serveEther4(context.WithoutCancel(ctx), iface, netDev)
 	}
 
-	// TODO(e.burkov):  Serve EthernetTypeIPv6.
+	for _, iface := range srv.interfaces6 {
+		netDevName := iface.common.name
+
+		var netDev NetworkDevice
+		netDev, err = srv.deviceManager.Open(ctx, &NetworkDeviceConfig{
+			Name: netDevName,
+		})
+		if err != nil {
+			errs = append(errs, err)
+
+			continue
+		}
+
+		srv.devices = append(srv.devices, container.KeyValue[string, NetworkDevice]{
+			Key:   netDevName,
+			Value: netDev,
+		})
+
+		go srv.serveEther6(context.WithoutCancel(ctx), iface, netDev)
+	}
 
 	return errors.Join(errs...)
 }

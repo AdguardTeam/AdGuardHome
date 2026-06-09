@@ -110,6 +110,12 @@ func (iface *dhcpInterfaceV6) handleSolicit(
 	if err != nil {
 		l.WarnContext(ctx, "committing rapid leases", slogutil.KeyError, err)
 		isRapidCommit = false
+	} else {
+		// The server will also send a Reply in response to a Solicit with a
+		// Rapid Commit option.
+		//
+		// See RFC 9915 Section 18.3.
+		resp.MsgType = layers.DHCPv6MsgTypeReply
 	}
 
 	resp.Options = iface.newSolicitRespOpts(fd, req, cliID, iaid, lease, isRapidCommit)
