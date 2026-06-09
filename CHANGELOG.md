@@ -26,6 +26,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Security
 
+- The H2C connection establishment via HTTP/1.1 request upgrade is no longer supported.  See [RFC 9113][rfc9113].
+
 - The size of rulelists is limited. This is necessary to prevent a user's machine from becoming overloaded if the filter source misbehaves.
 
 ### Changed
@@ -37,6 +39,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 ### Fixed
 
 - Blocked services check on the Custom filtering rules page does not work properly without specifying of a client.
+
+[rfc9113]: https://datatracker.ietf.org/doc/html/rfc9113
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
