@@ -383,8 +383,7 @@ func (c *tlsConfigSettings) clone() (clone *tlsConfigSettings) {
 }
 
 // setPrivateFieldsAndCompare sets any missing properties in conf to match those
-// in c and returns true if TLS configurations are equal.  conf must not be be
-// nil.
+// in c and returns true if TLS configurations are equal.  conf must not be nil.
 // It sets the following properties because these are not accepted from the
 // frontend:
 //

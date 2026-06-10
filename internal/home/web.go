@@ -731,7 +731,7 @@ func (web *webAPI) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 
 	newTLSConf := &req.tlsConfigSettings
 
-	restartHTTPS = web.tlsManager.setConfig(ctx, *newTLSConf, status, req.ServePlainDNS)
+	restartHTTPS = web.tlsManager.setConfig(ctx, newTLSConf, status, req.ServePlainDNS)
 
 	if req.ServePlainDNS != aghalg.NBNull {
 		func() {

@@ -451,24 +451,25 @@ type tlsConfigSettingsExt struct {
 	ServePlainDNS aghalg.NullBool `yaml:"-" json:"serve_plain_dns"`
 }
 
-// setConfig updates manager TLS configuration with the given one.
+// setConfig updates manager TLS configuration with the given one.  newConf must
+// not be nil.
 func (m *tlsManager) setConfig(
 	ctx context.Context,
-	newConf tlsConfigSettings,
+	newConf *tlsConfigSettings,
 	status *tlsConfigStatus,
 	servePlain aghalg.NullBool,
 ) (restartHTTPS bool) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	if !m.extTLSConf.setPrivateFieldsAndCompare(&newConf, *status, servePlain) {
+	if !m.extTLSConf.setPrivateFieldsAndCompare(newConf, *status, servePlain) {
 		m.logger.InfoContext(ctx, "config has changed, restarting https server")
 		restartHTTPS = true
 	} else {
 		m.logger.InfoContext(ctx, "config has not changed")
 	}
 
-	m.extTLSConf = &newConf
+	m.extTLSConf = newConf
 
 	certPath, keyPath := "", ""
 	if newConf.Enabled {
