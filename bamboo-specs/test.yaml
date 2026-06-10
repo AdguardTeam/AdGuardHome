@@ -1,259 +1,259 @@
 ---
-'version': 2
-'plan':
-    'project-key': 'AGH'
-    'key': 'AHBRTSPECS'
-    'name': 'AdGuard Home - Build and run tests'
-'variables':
-    # This variable is used to override Docker caching, for example to rerun a
-    # flaky test suite.
-    'cacheBuster': '0'
-    'channel': 'development'
-    'dockerFrontend': 'adguard/home-js-builder:4.0'
-    'dockerGo': 'adguard/go-builder:1.26.2--1'
+"version": 2
+"plan":
+  "project-key": "AGH"
+  "key": "AHBRTSPECS"
+  "name": "AdGuard Home - Build and run tests"
+"variables":
+  # This variable is used to override Docker caching, for example to rerun a
+  # flaky test suite.
+  "cacheBuster": "0"
+  "channel": "development"
+  "dockerFrontend": "adguard/home-js-builder:4.0"
+  "dockerGo": "adguard/go-builder:1.26.4--1"
 
-'stages':
-  - 'Tests':
-        'manual': false
-        'final': false
-        'jobs':
-          - 'Test frontend'
-          - 'Test backend'
+"stages":
+  - "Tests":
+      "manual": false
+      "final": false
+      "jobs":
+        - "Test frontend"
+        - "Test backend"
 
-  - 'Frontend':
-        manual: false
-        final: false
-        jobs:
-          - 'Build frontend'
+  - "Frontend":
+      manual: false
+      final: false
+      jobs:
+        - "Build frontend"
 
-  - 'Artifact':
-        manual: false
-        final: false
-        jobs:
-          - 'Artifact'
+  - "Artifact":
+      manual: false
+      final: false
+      jobs:
+        - "Artifact"
 
-  - 'E2E':
+  - "E2E":
       manual: true
       final: false
       jobs:
-        - 'Test e2e'
+        - "Test e2e"
 
-'Test frontend':
-    'final-tasks':
-      - 'clean'
-    'key': 'JSTEST'
-    'other':
-        'clean-working-dir': true
-    'tasks':
-      - 'checkout':
-            'force-clean-build': true
-      - 'script':
-            'interpreter': 'SHELL'
-            'scripts':
-              - |
-                #!/bin/sh
+"Test frontend":
+  "final-tasks":
+    - "clean"
+  "key": "JSTEST"
+  "other":
+    "clean-working-dir": true
+  "tasks":
+    - "checkout":
+        "force-clean-build": true
+    - "script":
+        "interpreter": "SHELL"
+        "scripts":
+          - |
+            #!/bin/sh
 
-                set -e -f -u -x
+            set -e -f -u -x
 
-                docker info
+            docker info
 
-                docker build \
-                    --build-arg "BASE_IMAGE=${bamboo.dockerFrontend}" \
-                    --build-arg "CACHE_BUSTER=${bamboo_cacheBuster}" \
-                    --output '.' \
-                    --progress 'plain' \
-                    --target 'tester' \
-                    -f ./docker/frontend.Dockerfile \
-                    .
+            docker build \
+                --build-arg "BASE_IMAGE=${bamboo.dockerFrontend}" \
+                --build-arg "CACHE_BUSTER=${bamboo_cacheBuster}" \
+                --output '.' \
+                --progress 'plain' \
+                --target 'tester' \
+                -f ./docker/frontend.Dockerfile \
+                .
 
-'Test backend':
-    'final-tasks':
-      - 'test-parser':
-          # The default pattern, '**/test-reports/*.xml', works, so don't set
-          # the test-results property.
-          'type': 'junit'
-          'ignore-time': true
-      - 'clean'
-    'key': 'GOTEST'
-    'other':
-        'clean-working-dir': true
-    'tasks':
-      - 'checkout':
-            'force-clean-build': true
-      - 'script':
-            'interpreter': 'SHELL'
-            'scripts':
-              - |
-                #!/bin/sh
+"Test backend":
+  "final-tasks":
+    - "test-parser":
+        # The default pattern, '**/test-reports/*.xml', works, so don't set
+        # the test-results property.
+        "type": "junit"
+        "ignore-time": true
+    - "clean"
+  "key": "GOTEST"
+  "other":
+    "clean-working-dir": true
+  "tasks":
+    - "checkout":
+        "force-clean-build": true
+    - "script":
+        "interpreter": "SHELL"
+        "scripts":
+          - |
+            #!/bin/sh
 
-                set -e -f -u -x
+            set -e -f -u -x
 
-                docker info
+            docker info
 
-                docker build \
-                    --build-arg "BASE_IMAGE=${bamboo_dockerGo}" \
-                    --build-arg "CACHE_BUSTER=${bamboo_cacheBuster}" \
-                    --output '.' \
-                    --progress 'plain' \
-                    --target 'tester-exporter' \
-                    -f ./docker/ci.Dockerfile \
-                    .
+            docker build \
+                --build-arg "BASE_IMAGE=${bamboo_dockerGo}" \
+                --build-arg "CACHE_BUSTER=${bamboo_cacheBuster}" \
+                --output '.' \
+                --progress 'plain' \
+                --target 'tester-exporter' \
+                -f ./docker/ci.Dockerfile \
+                .
 
-                exit_code="$(cat ./test-reports/test-exit-code.txt)"
-                readonly exit_code
+            exit_code="$(cat ./test-reports/test-exit-code.txt)"
+            readonly exit_code
 
-                exit "$exit_code"
+            exit "$exit_code"
 
-'Build frontend':
-    'artifacts':
-      - 'name': 'AdGuardHome frontend'
-        'pattern': 'build/**'
-        'shared': true
-        'required': true
-    'key': 'BF'
-    'other':
-         'clean-working-dir': true
-    'tasks':
-      - 'checkout':
-            'force-clean-build': true
-      - 'script':
-            'interpreter': 'SHELL'
-            'scripts':
-              - |-
-                #!/bin/sh
+"Build frontend":
+  "artifacts":
+    - "name": "AdGuardHome frontend"
+      "pattern": "build/**"
+      "shared": true
+      "required": true
+  "key": "BF"
+  "other":
+    "clean-working-dir": true
+  "tasks":
+    - "checkout":
+        "force-clean-build": true
+    - "script":
+        "interpreter": "SHELL"
+        "scripts":
+          - |-
+            #!/bin/sh
 
-                set -e -f -u -x
+            set -e -f -u -x
 
-                docker info
+            docker info
 
-                docker build \
-                    --build-arg "BASE_IMAGE=${bamboo.dockerFrontend}" \
-                    --build-arg "CACHE_BUSTER=${bamboo_cacheBuster}" \
-                    --output '.' \
-                    --progress 'plain' \
-                    --target 'builder-exporter' \
-                    -f ./docker/frontend.Dockerfile \
-                    .
+            docker build \
+                --build-arg "BASE_IMAGE=${bamboo.dockerFrontend}" \
+                --build-arg "CACHE_BUSTER=${bamboo_cacheBuster}" \
+                --output '.' \
+                --progress 'plain' \
+                --target 'builder-exporter' \
+                -f ./docker/frontend.Dockerfile \
+                .
 
-'Artifact':
-    'artifact-subscriptions':
-      - 'artifact': 'AdGuardHome frontend'
-    'artifacts':
-      - 'name': 'AdGuardHome_windows_amd64'
-        'pattern': 'dist/AdGuardHome_windows_amd64.zip'
-        'shared': true
-        'required': true
-      - 'name': 'AdGuardHome_darwin_amd64'
-        'pattern': 'dist/AdGuardHome_darwin_amd64.zip'
-        'shared': true
-        'required': true
-      - 'name': 'AdGuardHome_darwin_arm64'
-        'pattern': 'dist/AdGuardHome_darwin_arm64.zip'
-        'shared': true
-        'required': true
-      - 'name': 'AdGuardHome_linux_amd64'
-        'pattern': 'dist/AdGuardHome_linux_amd64.tar.gz'
-        'shared': true
-        'required': true
-    'key': 'ART'
-    'other':
-         'clean-working-dir': true
-    'tasks':
-      - 'checkout':
-            'force-clean-build': true
-      - 'script':
-            'interpreter': 'SHELL'
-            'scripts':
-              - |-
-                #!/bin/sh
+"Artifact":
+  "artifact-subscriptions":
+    - "artifact": "AdGuardHome frontend"
+  "artifacts":
+    - "name": "AdGuardHome_windows_amd64"
+      "pattern": "dist/AdGuardHome_windows_amd64.zip"
+      "shared": true
+      "required": true
+    - "name": "AdGuardHome_darwin_amd64"
+      "pattern": "dist/AdGuardHome_darwin_amd64.zip"
+      "shared": true
+      "required": true
+    - "name": "AdGuardHome_darwin_arm64"
+      "pattern": "dist/AdGuardHome_darwin_arm64.zip"
+      "shared": true
+      "required": true
+    - "name": "AdGuardHome_linux_amd64"
+      "pattern": "dist/AdGuardHome_linux_amd64.tar.gz"
+      "shared": true
+      "required": true
+  "key": "ART"
+  "other":
+    "clean-working-dir": true
+  "tasks":
+    - "checkout":
+        "force-clean-build": true
+    - "script":
+        "interpreter": "SHELL"
+        "scripts":
+          - |-
+            #!/bin/sh
 
-                set -e -f -u -x
+            set -e -f -u -x
 
-                version="$(env CHANNEL=${bamboo_channel} sh ./scripts/make/version.sh)"
-                readonly version
+            version="$(env CHANNEL=${bamboo_channel} sh ./scripts/make/version.sh)"
+            readonly version
 
-                docker info
+            docker info
 
-                docker build \
-                    --build-arg "ARCH=amd64 arm64" \
-                    --build-arg "BASE_IMAGE=${bamboo_dockerGo}" \
-                    --build-arg "BRANCH=${bamboo_planRepository_branchName}" \
-                    --build-arg "CACHE_BUSTER=${bamboo_cacheBuster}" \
-                    --build-arg "CHANNEL=${bamboo_channel}" \
-                    --build-arg "OS=windows darwin linux" \
-                    --build-arg "REVISION=${bamboo_repository_revision_number}" \
-                    --build-arg "SIGN=0" \
-                    --build-arg "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" \
-                    --build-arg "VERSION=$version" \
-                    --output '.' \
-                    --progress 'plain' \
-                    --target 'builder-exporter' \
-                    -f ./docker/ci.Dockerfile \
-                    .
+            docker build \
+                --build-arg "ARCH=amd64 arm64" \
+                --build-arg "BASE_IMAGE=${bamboo_dockerGo}" \
+                --build-arg "BRANCH=${bamboo_planRepository_branchName}" \
+                --build-arg "CACHE_BUSTER=${bamboo_cacheBuster}" \
+                --build-arg "CHANNEL=${bamboo_channel}" \
+                --build-arg "OS=windows darwin linux" \
+                --build-arg "REVISION=${bamboo_repository_revision_number}" \
+                --build-arg "SIGN=0" \
+                --build-arg "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" \
+                --build-arg "VERSION=$version" \
+                --output '.' \
+                --progress 'plain' \
+                --target 'builder-exporter' \
+                -f ./docker/ci.Dockerfile \
+                .
 
-'Test e2e':
-    'artifact-subscriptions':
-      - 'artifact': 'AdGuardHome_linux_amd64'
-      - 'artifact': 'AdGuardHome frontend'
-    'key': 'E2ETEST'
-    'other':
-        'clean-working-dir': true
-    'tasks':
-      - 'checkout':
-            'force-clean-build': true
-      - 'script':
-            'interpreter': 'SHELL'
-            'scripts':
-              - |
-                #!/bin/sh
+"Test e2e":
+  "artifact-subscriptions":
+    - "artifact": "AdGuardHome_linux_amd64"
+    - "artifact": "AdGuardHome frontend"
+  "key": "E2ETEST"
+  "other":
+    "clean-working-dir": true
+  "tasks":
+    - "checkout":
+        "force-clean-build": true
+    - "script":
+        "interpreter": "SHELL"
+        "scripts":
+          - |
+            #!/bin/sh
 
-                set -e -f -u -x
+            set -e -f -u -x
 
-                tar -xzf dist/AdGuardHome_linux_amd64.tar.gz -C /tmp
+            tar -xzf dist/AdGuardHome_linux_amd64.tar.gz -C /tmp
 
-                mv /tmp/AdGuardHome/AdGuardHome ./AdGuardHome
+            mv /tmp/AdGuardHome/AdGuardHome ./AdGuardHome
 
-                docker info
+            docker info
 
-                docker build \
-                    --build-arg "BASE_IMAGE=${bamboo.dockerFrontend}" \
-                    --build-arg "CACHE_BUSTER=${bamboo_cacheBuster}" \
-                    --output '.' \
-                    --progress 'plain' \
-                    --target 'e2etester' \
-                    -f ./docker/frontend.Dockerfile \
-                    .
+            docker build \
+                --build-arg "BASE_IMAGE=${bamboo.dockerFrontend}" \
+                --build-arg "CACHE_BUSTER=${bamboo_cacheBuster}" \
+                --output '.' \
+                --progress 'plain' \
+                --target 'e2etester' \
+                -f ./docker/frontend.Dockerfile \
+                .
 
-'branches':
-    'create': 'for-pull-request'
-    'delete':
-        'after-deleted-days': 1
-        'after-inactive-days': 5
-    'integration':
-        'push-on-success': false
-        'merge-from': 'AdGuard Home - Build and run tests'
-    'link-to-jira': true
+"branches":
+  "create": "for-pull-request"
+  "delete":
+    "after-deleted-days": 1
+    "after-inactive-days": 5
+  "integration":
+    "push-on-success": false
+    "merge-from": "AdGuard Home - Build and run tests"
+  "link-to-jira": true
 
-'notifications':
-  - 'events':
-      - 'plan-status-changed'
-    'recipients':
-      - 'webhook':
-            'name': 'Build webhook'
-            'url': 'http://prod.jirahub.service.eu.consul/v1/webhook/bamboo'
+"notifications":
+  - "events":
+      - "plan-status-changed"
+    "recipients":
+      - "webhook":
+          "name": "Build webhook"
+          "url": "http://prod.jirahub.service.eu.consul/v1/webhook/bamboo"
 
-'labels': []
-'other':
-    'concurrent-build-plugin': 'system-default'
+"labels": []
+"other":
+  "concurrent-build-plugin": "system-default"
 
-'branch-overrides':
-    # rc-vX.Y.Z branches are the release candidate branches. They are created
-    # from the release branch and are used to build the release candidate
-    # images.
+"branch-overrides":
+  # rc-vX.Y.Z branches are the release candidate branches. They are created
+  # from the release branch and are used to build the release candidate
+  # images.
   - '^rc-v[0-9]+\.[0-9]+\.[0-9]+':
-        # Set the default release channel on the release branch to beta, as we
-        # may need to build a few of these.
-        'variables':
-            'dockerFrontend': 'adguard/home-js-builder:4.0'
-            'dockerGo': 'adguard/go-builder:1.26.2--1'
-            'channel': 'candidate'
+      # Set the default release channel on the release branch to beta, as we
+      # may need to build a few of these.
+      "variables":
+        "dockerFrontend": "adguard/home-js-builder:4.0"
+        "dockerGo": "adguard/go-builder:1.26.4--1"
+        "channel": "candidate"
