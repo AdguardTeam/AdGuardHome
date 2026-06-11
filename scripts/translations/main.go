@@ -267,6 +267,7 @@ func findUnused(fileNames []string, loc locales) (err error) {
 	knownUsed := []textLabel{
 		"blocking_mode_refused",
 		"blocking_mode_nxdomain",
+		"blocking_mode_noerror",
 		"blocking_mode_custom_ip",
 	}
 
