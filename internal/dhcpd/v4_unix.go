@@ -1417,6 +1417,15 @@ func v4Create(conf *V4ServerConf) (srv *v4Server, err error) {
 		ipIndex:    map[netip.Addr]*dhcpsvc.Lease{},
 	}
 
+	if conf != nil &&
+		!conf.Enabled &&
+		!conf.GatewayIP.IsValid() &&
+		!conf.SubnetMask.IsValid() &&
+		!conf.RangeStart.IsValid() &&
+		!conf.RangeEnd.IsValid() {
+		return s, nil
+	}
+
 	err = conf.Validate()
 	if err != nil {
 		// TODO(a.garipov): Don't use a disabled server in other places or just
