@@ -20,6 +20,7 @@ import (
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/timeutil"
+	"github.com/AdguardTeam/urlfilter/rules"
 )
 
 // allowedTags is the list of available client tags.
@@ -792,6 +793,11 @@ func (s *Storage) ApplyClientFiltering(id string, addr netip.Addr, setts *filter
 		setts.BlockedServices = c.BlockedServices.Clone()
 	}
 
+	if c.UseOwnFilterLists {
+		setts.ClientFilterListIDs = listIDsToMap(c.FilterListIDs)
+		setts.ClientAllowListIDs = listIDsToMap(c.AllowFilterListIDs)
+	}
+
 	setts.ClientName = c.Name
 	setts.ClientTags = slices.Clone(c.Tags)
 	if !c.UseOwnSettings {
@@ -803,4 +809,14 @@ func (s *Storage) ApplyClientFiltering(id string, addr netip.Addr, setts *filter
 	setts.ClientSafeSearch = c.SafeSearch
 	setts.SafeBrowsingEnabled = c.SafeBrowsingEnabled
 	setts.ParentalEnabled = c.ParentalEnabled
+}
+
+// listIDsToMap converts a slice of filter list IDs to a map for O(1) lookups.
+func listIDsToMap(ids []rules.ListID) map[rules.ListID]bool {
+	m := make(map[rules.ListID]bool, len(ids))
+	for _, id := range ids {
+		m[id] = true
+	}
+
+	return m
 }
