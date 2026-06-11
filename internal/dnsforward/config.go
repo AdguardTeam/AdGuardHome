@@ -419,11 +419,18 @@ func newRatelimitMw(
 		return proxy.MiddlewareFunc(proxy.PassThrough), nil
 	}
 
+	allowlistAddrs := make(netutil.SliceSubnetSet, 0, len(conf.RatelimitWhitelist))
+	for _, addr := range conf.RatelimitWhitelist {
+		addr = addr.Unmap()
+		allowlistAddrs = append(allowlistAddrs, netip.PrefixFrom(addr, addr.BitLen()))
+	}
+
 	rlConf := &ratelimit.Config{
-		Logger:        l.With(slogutil.KeyPrefix, "ratelimit"),
-		Ratelimit:     uint(conf.Ratelimit),
-		SubnetLenIPv4: conf.RatelimitSubnetLenIPv4,
-		SubnetLenIPv6: conf.RatelimitSubnetLenIPv6,
+		Logger:         l.With(slogutil.KeyPrefix, "ratelimit"),
+		AllowlistAddrs: allowlistAddrs,
+		Ratelimit:      uint(conf.Ratelimit),
+		SubnetLenIPv4:  conf.RatelimitSubnetLenIPv4,
+		SubnetLenIPv6:  conf.RatelimitSubnetLenIPv6,
 	}
 	if err = rlConf.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid configuration: %w", err)
