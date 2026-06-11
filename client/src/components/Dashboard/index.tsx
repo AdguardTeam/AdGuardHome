@@ -105,6 +105,10 @@ const Dashboard = ({
             disableTime: DISABLE_PROTECTION_TIMINGS.TEN_MINUTES,
         },
         {
+            text: t('disable_for_minutes', { count: msToMinutes(DISABLE_PROTECTION_TIMINGS.THIRTY_MINUTES) }),
+            disableTime: DISABLE_PROTECTION_TIMINGS.THIRTY_MINUTES,
+        },
+        {
             text: t('disable_for_hours', { count: msToHours(DISABLE_PROTECTION_TIMINGS.HOUR) }),
             disableTime: DISABLE_PROTECTION_TIMINGS.HOUR,
         },
