@@ -8,36 +8,45 @@ import { setHtmlLangAttr } from 'panel/helpers/helpers';
 import { changeLanguage as changeLanguageAction } from 'panel/actions';
 
 import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from 'panel/helpers/localStorageHelper';
+import { LANGUAGES, LANGUAGE_NAMES } from 'panel/helpers/twosky';
 import styles from './PublicHeader.module.pcss';
 
 type Props = {
-    languages: Record<string, string>;
     dropdownClassName?: string;
     dropdownPosition?: 'bottomRight' | 'bottomLeft' | 'topRight' | 'topLeft';
     center?: React.ReactNode;
+    useLocalLanguage?: boolean;
 };
 
 export const PublicHeader = ({
-    languages,
     dropdownClassName,
     dropdownPosition = 'bottomRight',
     center,
+    useLocalLanguage = false,
 }: Props) => {
     const dispatch = useDispatch();
 
     const changeLanguage = async (newLang: LocalesType) => {
-            setHtmlLangAttr(newLang);
+        setHtmlLangAttr(newLang);
 
-            try {
-                await dispatch(changeLanguageAction(newLang));
-                LocalStorageHelper.setItem(LOCAL_STORAGE_KEYS.LANGUAGE, newLang);
-                window.location.reload();
-            } catch (error) {
-                console.error('Failed to save language preference:', error);
-            }
-        };
+        if (useLocalLanguage) {
+            LocalStorageHelper.setItem(LOCAL_STORAGE_KEYS.LANGUAGE, newLang);
+            window.location.reload();
+            return;
+        }
 
-    const currentLanguage = useSelector((state: RootState) => (state.dashboard ? state.dashboard.language : '')) || intl.getUILanguage();
+        try {
+            await dispatch(changeLanguageAction(newLang));
+            LocalStorageHelper.setItem(LOCAL_STORAGE_KEYS.LANGUAGE, newLang);
+            window.location.reload();
+        } catch (error) {
+            console.error('Failed to save language preference:', error);
+        }
+    };
+
+    const currentLanguage =
+        useSelector((state: RootState) => (state.dashboard ? state.dashboard.language : '')) ||
+        intl.getUILanguage();
 
     return (
         <div className={styles.header}>
@@ -49,7 +58,8 @@ export const PublicHeader = ({
                 <div className={styles.languageWrap}>
                     <LanguageDropdown
                         value={currentLanguage}
-                        languages={languages}
+                        languages={LANGUAGES}
+                        languageNames={LANGUAGE_NAMES}
                         onChange={changeLanguage}
                         className={dropdownClassName}
                         position={dropdownPosition}

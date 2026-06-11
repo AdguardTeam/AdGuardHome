@@ -27,7 +27,8 @@ export const toFloatNumber = (value: any) => value && parseFloat(value);
  * @param value {string}
  * @returns {boolean}
  */
-export const isValidAbsolutePath = (value: any) => R_WIN_ABSOLUTE_PATH.test(value) || R_UNIX_ABSOLUTE_PATH.test(value);
+export const isValidAbsolutePath = (value: any) =>
+    R_WIN_ABSOLUTE_PATH.test(value) || R_UNIX_ABSOLUTE_PATH.test(value);
 
 /**
  * @param value {string}

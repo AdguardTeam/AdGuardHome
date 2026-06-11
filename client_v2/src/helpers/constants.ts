@@ -200,7 +200,7 @@ export const HOUR = 60 * 60 * 1000;
 
 export const DAY = HOUR * 24;
 
-export const STATS_INTERVALS_DAYS = [HOUR, DAY, DAY * 7, DAY * 30, DAY * 90];
+export const STATS_INTERVALS_DAYS = [6 * HOUR, DAY, DAY * 7, DAY * 30, DAY * 90];
 
 export const QUERY_LOG_INTERVALS_DAYS = [HOUR * 6, DAY, DAY * 7, DAY * 30, DAY * 90];
 
@@ -230,7 +230,13 @@ export const THEMES = {
     light: 'light',
 };
 
-export type SafeSearchProviderKey = 'google' | 'youtube' | 'bing' | 'duckduckgo' | 'yandex' | 'pixabay';
+export type SafeSearchProviderKey =
+    | 'google'
+    | 'youtube'
+    | 'bing'
+    | 'duckduckgo'
+    | 'yandex'
+    | 'pixabay';
 
 export const SAFE_SEARCH_PROVIDER_KEYS: SafeSearchProviderKey[] = [
     'google',

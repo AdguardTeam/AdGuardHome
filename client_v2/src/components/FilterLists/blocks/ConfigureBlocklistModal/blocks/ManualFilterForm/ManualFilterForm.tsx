@@ -1,16 +1,21 @@
 import React from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
+import cn from 'clsx';
 
 import intl from 'panel/common/intl';
 import { Input } from 'panel/common/controls/Input';
 import { validatePath, validateRequiredValue } from 'panel/helpers/validators';
 import theme from 'panel/lib/theme';
 
-export const ManualFilterForm = () => {
+type Props = {
+    className?: string;
+};
+
+export const ManualFilterForm = ({ className }: Props) => {
     const { control } = useFormContext();
 
     return (
-        <div className={theme.form.group}>
+        <div className={cn(theme.form.group, className)}>
             <div className={theme.form.input}>
                 <Controller
                     name="name"

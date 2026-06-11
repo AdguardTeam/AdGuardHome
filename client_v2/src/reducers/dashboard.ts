@@ -44,8 +44,10 @@ const dashboard = handleActions(
             return newState;
         },
         [actions.timerStatusSuccess.toString()]: (state: any, { payload }: any) => {
-            const { protection_enabled: protectionEnabled, protection_disabled_duration: protectionDisabledDuration } =
-                payload;
+            const {
+                protection_enabled: protectionEnabled,
+                protection_disabled_duration: protectionDisabledDuration,
+            } = payload;
             const newState = {
                 ...state,
                 protectionEnabled,

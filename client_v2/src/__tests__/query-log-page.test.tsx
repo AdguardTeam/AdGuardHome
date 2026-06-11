@@ -69,10 +69,16 @@ vi.mock('react-redux', () => ({
 }));
 
 vi.mock('react-router-dom', () => ({
-    useHistory: () => ({
-        push: historyPush,
-        replace: historyReplace,
-    }),
+    useNavigate: () => {
+        const nav = vi.fn((to, options) => {
+            if (options?.replace) {
+                historyReplace(to);
+            } else {
+                historyPush(to);
+            }
+        });
+        return nav;
+    },
     useLocation: () => ({
         search: '?status=all&reason=all',
     }),

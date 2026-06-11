@@ -28,7 +28,7 @@ export const ServerConfig = () => {
     } = useSelector((state: RootState) => state.dnsConfig, shallowEqual);
 
     const handleFormSubmit = (values: any) => {
-        dispatch(setDnsConfig(values));
+        dispatch(setDnsConfig(values, intl.getMessage('dns_server_configuration_saved_toast')));
     };
 
     return (

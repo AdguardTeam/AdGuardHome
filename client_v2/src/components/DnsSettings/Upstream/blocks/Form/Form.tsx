@@ -12,6 +12,7 @@ import { FaqTooltip } from 'panel/common/ui/FaqTooltip';
 import { toNumber } from 'panel/helpers/form';
 import intl from 'panel/common/intl';
 import { DNS_REQUEST_OPTIONS, UINT32_RANGE } from 'panel/helpers/constants';
+import { validateUpstreams } from 'panel/helpers/validators';
 import theme from 'panel/lib/theme';
 import { RootState } from 'panel/initialState';
 
@@ -84,9 +85,15 @@ export const Form = ({ initialValues, onSubmit }: FormProps) => {
     });
 
     const upstream_dns = watch('upstream_dns');
-    const processingTestUpstream = useSelector((state: RootState) => state.settings.processingTestUpstream);
-    const processingSetConfig = useSelector((state: RootState) => state.dnsConfig.processingSetConfig);
-    const defaultLocalPtrUpstreams = useSelector((state: RootState) => state.dnsConfig.default_local_ptr_upstreams);
+    const processingTestUpstream = useSelector(
+        (state: RootState) => state.settings.processingTestUpstream,
+    );
+    const processingSetConfig = useSelector(
+        (state: RootState) => state.dnsConfig.processingSetConfig,
+    );
+    const defaultLocalPtrUpstreams = useSelector(
+        (state: RootState) => state.dnsConfig.default_local_ptr_upstreams,
+    );
     const upstreamDnsFile = useSelector((state: RootState) => state.dnsConfig.upstream_dns_file);
 
     const handleUpstreamTest = () => {
@@ -114,7 +121,8 @@ export const Form = ({ initialValues, onSubmit }: FormProps) => {
                     <Controller
                         name="upstream_dns"
                         control={control}
-                        render={({ field }) => (
+                        rules={{ validate: (v) => (!v ? undefined : validateUpstreams(v)) }}
+                        render={({ field, fieldState }) => (
                             <>
                                 <Textarea
                                     {...field}
@@ -123,26 +131,31 @@ export const Form = ({ initialValues, onSubmit }: FormProps) => {
                                         <>
                                             {intl.getMessage('upstream_dns_addresses')}
                                             <FaqTooltip
-                                                text={intl.getMessage('upstream_dns_addresses_faq', {
-                                                    a: (text: string) => (
-                                                        <a
-                                                            href="https://github.com/AdguardTeam/AdGuardHome/wiki/Configuration#upstreams"
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className={theme.link.link}>
-                                                            {text}
-                                                        </a>
-                                                    ),
-                                                    b: (text: string) => (
-                                                        <a
-                                                            href="https://link.adtidy.org/forward.html?action=dns_kb_providers&from=ui&app=home"
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className={theme.link.link}>
-                                                            {text}
-                                                        </a>
-                                                    ),
-                                                })}
+                                                text={intl.getMessage(
+                                                    'upstream_dns_addresses_faq',
+                                                    {
+                                                        a: (text: string) => (
+                                                            <a
+                                                                href="https://github.com/AdguardTeam/AdGuardHome/wiki/Configuration#upstreams"
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className={theme.link.link}
+                                                            >
+                                                                {text}
+                                                            </a>
+                                                        ),
+                                                        b: (text: string) => (
+                                                            <a
+                                                                href="https://link.adtidy.org/forward.html?action=dns_kb_providers&from=ui&app=home"
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className={theme.link.link}
+                                                            >
+                                                                {text}
+                                                            </a>
+                                                        ),
+                                                    },
+                                                )}
                                                 menuSize="large"
                                             />
                                         </>
@@ -150,6 +163,7 @@ export const Form = ({ initialValues, onSubmit }: FormProps) => {
                                     placeholder={intl.getMessage('upstream_dns_placeholder')}
                                     disabled={!!upstreamDnsFile || processingTestUpstream}
                                     size="medium"
+                                    errorMessage={fieldState.error?.message}
                                 />
                             </>
                         )}
@@ -181,7 +195,8 @@ export const Form = ({ initialValues, onSubmit }: FormProps) => {
                     <Controller
                         name="fallback_dns"
                         control={control}
-                        render={({ field }) => (
+                        rules={{ validate: (v) => (!v ? undefined : validateUpstreams(v)) }}
+                        render={({ field, fieldState }) => (
                             <Textarea
                                 {...field}
                                 id="fallback_dns"
@@ -196,6 +211,7 @@ export const Form = ({ initialValues, onSubmit }: FormProps) => {
                                 }
                                 placeholder={intl.getMessage('ip_addresses_placeholder')}
                                 size="medium"
+                                errorMessage={fieldState.error?.message}
                             />
                         )}
                     />
@@ -205,7 +221,8 @@ export const Form = ({ initialValues, onSubmit }: FormProps) => {
                     <Controller
                         name="bootstrap_dns"
                         control={control}
-                        render={({ field }) => (
+                        rules={{ validate: (v) => (!v ? undefined : validateUpstreams(v)) }}
+                        render={({ field, fieldState }) => (
                             <Textarea
                                 {...field}
                                 id="bootstrap_dns"
@@ -221,6 +238,7 @@ export const Form = ({ initialValues, onSubmit }: FormProps) => {
                                 }
                                 placeholder={intl.getMessage('ip_addresses_placeholder')}
                                 size="medium"
+                                errorMessage={fieldState.error?.message}
                             />
                         )}
                     />
@@ -230,7 +248,8 @@ export const Form = ({ initialValues, onSubmit }: FormProps) => {
                     <Controller
                         name="local_ptr_upstreams"
                         control={control}
-                        render={({ field }) => (
+                        rules={{ validate: (v) => (!v ? undefined : validateUpstreams(v)) }}
+                        render={({ field, fieldState }) => (
                             <Textarea
                                 {...field}
                                 id="local_ptr_upstreams"
@@ -246,12 +265,16 @@ export const Form = ({ initialValues, onSubmit }: FormProps) => {
                                                             value: '192.168.1.1/24',
                                                         })}
                                                     </div>
-                                                    <div>{intl.getMessage('upstream_ptr_faq_2')}</div>
+                                                    <div>
+                                                        {intl.getMessage('upstream_ptr_faq_2')}
+                                                    </div>
                                                     {defaultLocalPtrUpstreams?.length > 0 && (
                                                         <div>
                                                             {intl.getMessage('upstream_ptr_faq_3', {
-                                                                value_1: defaultLocalPtrUpstreams[0],
-                                                                value_2: defaultLocalPtrUpstreams[1] || '',
+                                                                value_1:
+                                                                    defaultLocalPtrUpstreams[0],
+                                                                value_2:
+                                                                    defaultLocalPtrUpstreams[1],
                                                             })}
                                                         </div>
                                                     )}
@@ -264,6 +287,7 @@ export const Form = ({ initialValues, onSubmit }: FormProps) => {
                                 }
                                 placeholder={intl.getMessage('ip_addresses_placeholder')}
                                 size="medium"
+                                errorMessage={fieldState.error?.message}
                             />
                         )}
                     />
@@ -280,7 +304,8 @@ export const Form = ({ initialValues, onSubmit }: FormProps) => {
                                 checked={field.value}
                                 onChange={field.onChange}
                                 onBlur={field.onBlur}
-                                verticalAlign="start">
+                                verticalAlign="start"
+                            >
                                 <div>
                                     <div className={theme.text.t2}>
                                         {intl.getMessage('upstream_private_ptr_resolvers_title')}
@@ -305,7 +330,8 @@ export const Form = ({ initialValues, onSubmit }: FormProps) => {
                                 checked={field.value}
                                 onChange={field.onChange}
                                 onBlur={field.onBlur}
-                                verticalAlign="start">
+                                verticalAlign="start"
+                            >
                                 <div>
                                     <div className={theme.text.t2}>
                                         {intl.getMessage('upstream_enable_reverse_lookup_title')}
@@ -331,7 +357,10 @@ export const Form = ({ initialValues, onSubmit }: FormProps) => {
                                 label={
                                     <>
                                         {intl.getMessage('upstream_timeout')}
-                                        <FaqTooltip text={intl.getMessage('upstream_timeout_faq')} menuSize="large" />
+                                        <FaqTooltip
+                                            text={intl.getMessage('upstream_timeout_faq')}
+                                            menuSize="large"
+                                        />
                                     </>
                                 }
                                 placeholder={intl.getMessage('upstream_timeout_placeholder')}
@@ -354,7 +383,8 @@ export const Form = ({ initialValues, onSubmit }: FormProps) => {
                     size="small"
                     id="dns_upstream_save"
                     disabled={isSavingDisabled()}
-                    className={theme.form.button}>
+                    className={theme.form.button}
+                >
                     {intl.getMessage('apply')}
                 </Button>
 
@@ -365,7 +395,8 @@ export const Form = ({ initialValues, onSubmit }: FormProps) => {
                     id="dns_upstream_test"
                     onClick={handleUpstreamTest}
                     disabled={isTestDisabled()}
-                    className={theme.form.button}>
+                    className={theme.form.button}
+                >
                     {intl.getMessage('test_upstreams')}
                 </Button>
             </div>

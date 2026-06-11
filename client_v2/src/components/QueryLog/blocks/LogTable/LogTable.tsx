@@ -63,7 +63,6 @@ export const LogTable = ({
     persistentClientIds,
     persistentClientsLoaded,
 }: Props) => {
-
     const handleSearchSelect = useCallback(
         (value: string) => (event: MouseEvent<HTMLButtonElement>) => {
             event.stopPropagation();
@@ -78,7 +77,7 @@ export const LogTable = ({
                 key: 'time',
                 header: { text: intl.getMessage('time_table_header') },
                 render: (_value: unknown, row: LogEntry) => <TimeCell row={row} />,
-                width: 108,
+                width: 116,
                 sortable: false,
             },
             {
@@ -139,7 +138,8 @@ export const LogTable = ({
                             onAddPersistentClient={onAddPersistentClient}
                             isBlocked={isBlockedReason(row.reason)}
                             showAddPersistentClient={
-                                persistentClientsLoaded && !hasPersistentClient(row, persistentClientIds)
+                                persistentClientsLoaded &&
+                                !hasPersistentClient(row, persistentClientIds)
                             }
                             testIdPrefix="query-log-row"
                         />
@@ -169,17 +169,19 @@ export const LogTable = ({
             <Table
                 data={logs}
                 columns={columns}
-                emptyTable={(isInitialLoading || isFilterReloading) ? (
-                    <div className={s.initialLoader} data-testid="query-log-initial-loader">
-                        <Loader color="green" className={s.loader} />
-                    </div>
-                ) : (
-                    <EmptyState
-                        className={s.emptyTableWrapper}
-                        mode={emptyStateMode}
-                        messageClassName={s.emptyTableTitle}
-                    />
-                )}
+                emptyTable={
+                    isInitialLoading || isFilterReloading ? (
+                        <div className={s.initialLoader} data-testid="query-log-initial-loader">
+                            <Loader color="green" className={s.loader} />
+                        </div>
+                    ) : (
+                        <EmptyState
+                            className={s.emptyTableWrapper}
+                            mode={emptyStateMode}
+                            messageClassName={s.emptyTableTitle}
+                        />
+                    )
+                }
                 pagination={false}
                 sortable={false}
                 className={s.table}

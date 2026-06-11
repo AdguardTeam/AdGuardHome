@@ -99,7 +99,9 @@ export const getTrackerData = (domainName: any) => {
 
         if (trackerId) {
             const trackerData = (trackersDb.trackers as Record<string, any>)[trackerId];
-            const categoryName = (trackersDb.categories as Record<string, string>)[trackerData.categoryId];
+            const categoryName = (trackersDb.categories as Record<string, string>)[
+                trackerData.categoryId
+            ];
             const source = convertSource(trackerData.source);
             const sourceData = getSourceData(trackerData);
 

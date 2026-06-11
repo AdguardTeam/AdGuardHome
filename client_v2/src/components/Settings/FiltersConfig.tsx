@@ -46,7 +46,8 @@ export const FiltersConfig = ({ initialValues, processing }: Props) => {
                                 <Link
                                     to={RoutePath.DnsBlocklists}
                                     className={theme.link.link}
-                                    onClick={(e) => e.stopPropagation()}>
+                                    onClick={(e) => e.stopPropagation()}
+                                >
                                     {text}
                                 </Link>
                             ),
@@ -54,7 +55,8 @@ export const FiltersConfig = ({ initialValues, processing }: Props) => {
                                 <Link
                                     to={RoutePath.DnsAllowlists}
                                     className={theme.link.link}
-                                    onClick={(e) => e.stopPropagation()}>
+                                    onClick={(e) => e.stopPropagation()}
+                                >
                                     {text}
                                 </Link>
                             ),
@@ -62,7 +64,8 @@ export const FiltersConfig = ({ initialValues, processing }: Props) => {
                                 <Link
                                     to={RoutePath.UserRules}
                                     className={theme.link.link}
-                                    onClick={(e) => e.stopPropagation()}>
+                                    onClick={(e) => e.stopPropagation()}
+                                >
                                     {text}
                                 </Link>
                             ),

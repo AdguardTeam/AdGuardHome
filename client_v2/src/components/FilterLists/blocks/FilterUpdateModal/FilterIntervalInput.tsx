@@ -44,7 +44,11 @@ export const FilterIntervalInput = <TFormValues extends { customInterval?: numbe
             rules={{
                 validate: (value) => {
                     if (intervalValue === -1) {
-                        if (!value || value < FILTER_INTERVAL_RANGE.MIN || value > FILTER_INTERVAL_RANGE.MAX) {
+                        if (
+                            !value ||
+                            value < FILTER_INTERVAL_RANGE.MIN ||
+                            value > FILTER_INTERVAL_RANGE.MAX
+                        ) {
                             return intl.getMessage('form_error_range', {
                                 min: FILTER_INTERVAL_RANGE.MIN,
                                 max: FILTER_INTERVAL_RANGE.MAX,

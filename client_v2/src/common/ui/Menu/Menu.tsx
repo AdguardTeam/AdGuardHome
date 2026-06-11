@@ -45,16 +45,20 @@ export const Menu = ({ headerMenu }: Props) => {
         <div
             className={cn(s.menuWrapper, {
                 [s.headerMenu]: headerMenu,
-            })}>
+            })}
+        >
             <nav className={s.topMenuWrapper}>
                 <div className={s.menuLinkWrapper}>
                     <Link
                         className={cn(s.menuLink, {
                             [s.activeLink]: isActive(Paths.Dashboard, true),
                         })}
-                        to={RoutePath.Dashboard}>
+                        to={RoutePath.Dashboard}
+                    >
                         <Icon className={s.linkIcon} icon="dashboard" />
-                        <span className={theme.common.textOverflow}>{intl.getMessage('dashboard')}</span>
+                        <span className={theme.common.textOverflow}>
+                            {intl.getMessage('dashboard')}
+                        </span>
                     </Link>
                 </div>
                 <AccordionSection
@@ -72,7 +76,11 @@ export const Menu = ({ headerMenu }: Props) => {
                             path: Paths.Encryption,
                             routePath: RoutePath.Encryption,
                         },
-                        { label: intl.getMessage('clients'), path: Paths.Clients, routePath: RoutePath.Clients },
+                        {
+                            label: intl.getMessage('clients'),
+                            path: Paths.Clients,
+                            routePath: RoutePath.Clients,
+                        },
                         { label: 'DHCP', path: Paths.Dhcp, routePath: RoutePath.Dhcp },
                     ]}
                     isActive={isActive}
@@ -101,7 +109,11 @@ export const Menu = ({ headerMenu }: Props) => {
                             path: Paths.BlockedServices,
                             routePath: RoutePath.BlockedServices,
                         },
-                        { label: intl.getMessage('user_rules'), path: Paths.UserRules, routePath: RoutePath.UserRules },
+                        {
+                            label: intl.getMessage('user_rules'),
+                            path: Paths.UserRules,
+                            routePath: RoutePath.UserRules,
+                        },
                     ]}
                     isActive={isActive}
                 />
@@ -110,15 +122,21 @@ export const Menu = ({ headerMenu }: Props) => {
                         className={cn(s.menuLink, {
                             [s.activeLink]: isActive(Paths.Logs),
                         })}
-                        to={RoutePath.Logs}>
+                        to={RoutePath.Logs}
+                    >
                         <Icon className={s.linkIcon} icon="log" />
                         <span className={theme.common.textOverflow}>Logs</span>
                     </Link>
                 </div>
                 <div className={cn(s.menuLinkWrapper)}>
-                    <Link className={cn(s.menuLink, { [s.activeLink]: isActive(Paths.Guide) })} to={RoutePath.Guide}>
+                    <Link
+                        className={cn(s.menuLink, { [s.activeLink]: isActive(Paths.Guide) })}
+                        to={RoutePath.Guide}
+                    >
                         <Icon className={s.linkIcon} icon="faq" />
-                        <span className={theme.common.textOverflow}>{intl.getMessage('setup_guide')}</span>
+                        <span className={theme.common.textOverflow}>
+                            {intl.getMessage('setup_guide')}
+                        </span>
                     </Link>
                 </div>
             </nav>
@@ -129,9 +147,12 @@ export const Menu = ({ headerMenu }: Props) => {
                         target="_blank"
                         rel="noopener noreferrer"
                         className={s.menuLink}
-                        id="sign_out">
+                        id="sign_out"
+                    >
                         <Icon className={s.linkIcon} icon="logout" />
-                        <span className={theme.common.textOverflow}>{intl.getMessage('logout')}</span>
+                        <span className={theme.common.textOverflow}>
+                            {intl.getMessage('logout')}
+                        </span>
                     </a>
                 </div>
             </div>

@@ -59,14 +59,21 @@ describe('getCheckResultMeta', () => {
     it('localizes custom filtering and protection reasons through translation keys', () => {
         const customMeta = getCheckResultMeta({
             reason: FILTERED_STATUS.FILTERED_BLACK_LIST,
-            rules: [{ filter_list_id: SPECIAL_FILTER_ID.CUSTOM_FILTERING_RULES, text: '||blocked.example^' }],
+            rules: [
+                {
+                    filter_list_id: SPECIAL_FILTER_ID.CUSTOM_FILTERING_RULES,
+                    text: '||blocked.example^',
+                },
+            ],
             filters: [],
             whitelistFilters: [],
         });
 
         const safeBrowsingMeta = getCheckResultMeta({
             reason: FILTERED_STATUS.FILTERED_SAFE_BROWSING,
-            rules: [{ filter_list_id: SPECIAL_FILTER_ID.SAFE_BROWSING, text: 'adguard-malware-shavar' }],
+            rules: [
+                { filter_list_id: SPECIAL_FILTER_ID.SAFE_BROWSING, text: 'adguard-malware-shavar' },
+            ],
             filters: [],
             whitelistFilters: [],
         });
@@ -136,7 +143,10 @@ describe('getCheckResultMeta', () => {
         const customAllowedMeta = getCheckResultMeta({
             reason: FILTERED_STATUS.NOT_FILTERED_WHITE_LIST,
             rules: [
-                { filter_list_id: SPECIAL_FILTER_ID.CUSTOM_FILTERING_RULES, text: '@@||allowed.example^$important' },
+                {
+                    filter_list_id: SPECIAL_FILTER_ID.CUSTOM_FILTERING_RULES,
+                    text: '@@||allowed.example^$important',
+                },
             ],
             filters: [],
             whitelistFilters: [],

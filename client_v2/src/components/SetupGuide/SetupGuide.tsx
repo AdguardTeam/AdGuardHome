@@ -24,24 +24,32 @@ export const SetupGuide = ({ dnsAddresses: dnsAddressesProp, isStep = false, foo
 
     const dnsAddresses = dnsAddressesProp ?? dashboardDnsAddresses;
 
-    const encryptedAddresses = dnsAddresses.filter((address: string) =>
-        address.includes('https://') || address.includes('tls://') || address.includes('quic://')
+    const encryptedAddresses = dnsAddresses.filter(
+        (address: string) =>
+            address.includes('https://') ||
+            address.includes('tls://') ||
+            address.includes('quic://'),
     );
-    const plainAddresses = dnsAddresses.filter((address: string) =>
-        !address.includes('https://') && !address.includes('tls://') && !address.includes('quic://')
+    const plainAddresses = dnsAddresses.filter(
+        (address: string) =>
+            !address.includes('https://') &&
+            !address.includes('tls://') &&
+            !address.includes('quic://'),
     );
 
     return (
         <div className={isStep ? s.stepRoot : theme.layout.container}>
             <div className={s.header}>
                 <h1 className={s.pageTitle}>
-                    {intl.getMessage(isStep ? 'setup_guide_title' : 'setup_guide')}
+                    {isStep ? intl.getMessage('setup_guide_title') : intl.getMessage('setup_guide')}
                 </h1>
                 {!isStep && <div className={s.pageDesc}>{intl.getMessage('setup_guide_desc')}</div>}
             </div>
 
             <div className={s.guidePage}>
-                {!isStep &&  <h1 className={s.guideTitle}>{intl.getMessage('setup_guide_device_type')}</h1>}
+                {!isStep && (
+                    <h1 className={s.guideTitle}>{intl.getMessage('setup_guide_device_type')}</h1>
+                )}
                 <Guide dnsAddresses={dnsAddresses} />
 
                 <div className={s.guideDesc}>
@@ -85,9 +93,7 @@ export const SetupGuide = ({ dnsAddresses: dnsAddressesProp, isStep = false, foo
                 </div>
             </div>
 
-            <div className={s.footer}>
-                {footer}
-            </div>
+            <div className={s.footer}>{footer}</div>
         </div>
     );
 };

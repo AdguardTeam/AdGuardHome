@@ -28,14 +28,10 @@ export const CustomOption = <
     <div
         data-testid={testIdPrefix ? `${testIdPrefix}-${String(data.value)}` : undefined}
         data-option-value={String(data.value)}
-        className={cn(
-            theme.select.option,
-            theme.select.option_check,
-            {
-                [theme.select.option_disabled]: isDisabled,
-                [theme.select.option_selected]: isSelected,
-            },
-        )}
+        className={cn(theme.select.option, theme.select.option_check, {
+            [theme.select.option_disabled]: isDisabled,
+            [theme.select.option_selected]: isSelected,
+        })}
         onClick={isDisabled ? undefined : () => selectOption(data)}
         aria-disabled={isDisabled}
     >

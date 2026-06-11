@@ -14,19 +14,19 @@ import Greeting from './Greeting';
 import type { ConfigType, DnsConfig, WebConfig } from './types';
 import { InterfaceSettings } from './InterfaceSettings';
 import { DnsSettings } from './DnsSettings';
-import Controls from './Controls';
+import { Controls } from './Controls';
 import { Submit } from './Submit';
 import { Progress } from './blocks/Progress';
 import { Auth } from './Auth';
 import Toasts from '../../components/Toasts';
 
 import styles from './styles.module.pcss';
-import twosky from '../../../../.twosky.json';
 import { getDnsAddressWithPort } from './helpers/helpers';
 
-const LANGUAGES = twosky[1].languages;
-
-const getInstallDnsAddresses = (dns: { ip: string; port: number }, interfaces: InstallInterface[]) => {
+const getInstallDnsAddresses = (
+    dns: { ip: string; port: number },
+    interfaces: InstallInterface[],
+) => {
     if (!dns?.ip || !dns?.port) {
         return [];
     }
@@ -110,7 +110,7 @@ export const Setup = () => {
             case 1:
                 return <Greeting />;
             case 2:
-                return <Auth onAuthSubmit={handleAuthSubmit} />;
+                return <Auth onAuthSubmit={handleAuthSubmit} initialValues={auth} />;
             case 3:
                 return (
                     <InterfaceSettings
@@ -136,7 +136,11 @@ export const Setup = () => {
             case 5:
                 return (
                     <>
-                        <SetupGuide dnsAddresses={resolvedDnsAddresses} isStep footer={<Controls />} />
+                        <SetupGuide
+                            dnsAddresses={resolvedDnsAddresses}
+                            isStep
+                            footer={<Controls />}
+                        />
                     </>
                 );
             case 6:
@@ -160,13 +164,15 @@ export const Setup = () => {
         <>
             <div className={styles.setup}>
                 <PublicHeader
-                    languages={LANGUAGES}
                     dropdownClassName={styles.dropdown}
                     dropdownPosition="bottomRight"
                     center={<Progress step={step} />}
+                    useLocalLanguage={true}
                 />
 
-                <div className={styles.container}>{renderPage(step, { web, dns, staticIp }, interfaces)}</div>
+                <div className={styles.container}>
+                    {renderPage(step, { web, dns, staticIp }, interfaces)}
+                </div>
             </div>
 
             <Toasts />

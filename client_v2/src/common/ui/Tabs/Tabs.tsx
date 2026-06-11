@@ -18,10 +18,20 @@ type Props = {
     activeTab?: string;
     onTabChange?: (tabId: string) => void;
     className?: string;
+    contentClassName?: string;
 };
 
-export const Tabs = ({ tabs, defaultActiveTab, activeTab: controlledActiveTab, onTabChange, className }: Props) => {
-    const [internalActiveTab, setInternalActiveTab] = useState(defaultActiveTab || tabs[0]?.id || '');
+export const Tabs = ({
+    tabs,
+    defaultActiveTab,
+    activeTab: controlledActiveTab,
+    onTabChange,
+    className,
+    contentClassName,
+}: Props) => {
+    const [internalActiveTab, setInternalActiveTab] = useState(
+        defaultActiveTab || tabs[0]?.id || '',
+    );
 
     const activeTab = controlledActiveTab !== undefined ? controlledActiveTab : internalActiveTab;
 
@@ -46,13 +56,14 @@ export const Tabs = ({ tabs, defaultActiveTab, activeTab: controlledActiveTab, o
                         className={cn(s.button, {
                             [s.button_active]: activeTab === tab.id,
                         })}
-                        onClick={() => handleTabClick(tab.id)}>
+                        onClick={() => handleTabClick(tab.id)}
+                    >
                         {tab.icon && <Icon icon={tab.icon} className={s.icon} />}
                         {tab.label}
                     </button>
                 ))}
             </div>
-            <div className={s.content}>{activeTabContent}</div>
+            <div className={cn(s.content, contentClassName)}>{activeTabContent}</div>
         </div>
     );
 };

@@ -26,7 +26,8 @@ export const Accordion = ({ title, children, defaultOpen = false, className }: P
                 className={s.header}
                 onClick={toggleOpen}
                 aria-expanded={isOpen}
-                aria-controls="accordion-content">
+                aria-controls="accordion-content"
+            >
                 <Icon icon="arrow_bottom" className={cn(s.arrow, { [s.arrowOpen]: isOpen })} />
                 <span className={cn(s.title, theme.text.t2, theme.text.semibold)}>{title}</span>
             </button>

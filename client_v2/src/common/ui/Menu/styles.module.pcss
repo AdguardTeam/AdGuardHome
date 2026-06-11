@@ -20,6 +20,11 @@
     min-height: calc(100vh - 80px);
     padding-bottom: env(safe-area-inset-bottom);
 
+    @media (min-width: 1200px) {
+        min-height: 0;
+        flex: 1;
+    }
+
     &.headerMenu {
         min-height: 100%;
         justify-content: flex-start;
@@ -84,6 +89,10 @@
     @media (min-width: 1200px) {
         margin-bottom: 0;
     }
+}
+
+.referenceWrapper {
+    margin-top: auto;
 }
 
 .accordionHeader {

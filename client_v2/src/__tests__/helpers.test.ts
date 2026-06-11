@@ -1,6 +1,11 @@
 import { describe, expect, test, afterEach, vi, beforeEach, it } from 'vitest';
 
-import { sortIp, countClientsStatistics, findAddressType, subnetMaskToBitMask } from '../helpers/helpers';
+import {
+    sortIp,
+    countClientsStatistics,
+    findAddressType,
+    subnetMaskToBitMask,
+} from '../helpers/helpers';
 import { ADDRESS_TYPES } from '../helpers/constants';
 
 describe('sortIp', () => {
@@ -82,8 +87,16 @@ describe('sortIp', () => {
 
     describe('ipv6', () => {
         test('only long form', () => {
-            const arr = ['2001:db8:11a3:9d7:0:0:0:2', '2001:db8:11a3:9d7:0:0:0:3', '2001:db8:11a3:9d7:0:0:0:1'];
-            const sortedArr = ['2001:db8:11a3:9d7:0:0:0:1', '2001:db8:11a3:9d7:0:0:0:2', '2001:db8:11a3:9d7:0:0:0:3'];
+            const arr = [
+                '2001:db8:11a3:9d7:0:0:0:2',
+                '2001:db8:11a3:9d7:0:0:0:3',
+                '2001:db8:11a3:9d7:0:0:0:1',
+            ];
+            const sortedArr = [
+                '2001:db8:11a3:9d7:0:0:0:1',
+                '2001:db8:11a3:9d7:0:0:0:2',
+                '2001:db8:11a3:9d7:0:0:0:3',
+            ];
 
             expect(arr.sort(sortIp)).toStrictEqual(sortedArr);
         });
@@ -214,8 +227,20 @@ describe('sortIp', () => {
         });
 
         test('ipv4 and cidr ipv4', () => {
-            const arr = ['192.168.0.1/9', '192.168.0.1', '192.168.0.1/32', '192.168.0.1/7', '192.168.0.1/8'];
-            const sortedArr = ['192.168.0.1/7', '192.168.0.1/8', '192.168.0.1/9', '192.168.0.1/32', '192.168.0.1'];
+            const arr = [
+                '192.168.0.1/9',
+                '192.168.0.1',
+                '192.168.0.1/32',
+                '192.168.0.1/7',
+                '192.168.0.1/8',
+            ];
+            const sortedArr = [
+                '192.168.0.1/7',
+                '192.168.0.1/8',
+                '192.168.0.1/9',
+                '192.168.0.1/32',
+                '192.168.0.1',
+            ];
 
             expect(arr.sort(sortIp)).toStrictEqual(sortedArr);
         });

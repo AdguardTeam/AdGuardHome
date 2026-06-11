@@ -7,9 +7,15 @@ import { PRIVACY_POLICY_LINK, TERMS_LINK } from 'panel/helpers/constants';
 import cn from 'clsx';
 import { PasswordRequirements } from 'panel/install/Setup/blocks';
 import { PasswordInput } from '../../common/controls/Input/PasswordInput';
-import Controls from './Controls';
+import { Controls } from './Controls';
 import { validatePasswordLength, validateRequiredValue } from '../../helpers/validators';
-import { hasMinLength, hasLowercase, hasUppercase, hasAllowedAsciiOnly, hasNumberOrSpecial } from './helpers/helpers';
+import {
+    hasMinLength,
+    hasLowercase,
+    hasUppercase,
+    hasAllowedAsciiOnly,
+    hasNumberOrSpecial,
+} from './helpers/helpers';
 import styles from './styles.module.pcss';
 
 type AuthFormValues = {
@@ -19,11 +25,18 @@ type AuthFormValues = {
     privacy_consent: boolean;
 };
 
-type Props = {
-    onAuthSubmit: (values: AuthFormValues) => void;
+type AuthInitialValues = {
+    username?: string;
+    password?: string;
+    privacy_consent?: boolean;
 };
 
-export const Auth = ({ onAuthSubmit }: Props) => {
+type Props = {
+    onAuthSubmit: (values: AuthFormValues) => void;
+    initialValues?: AuthInitialValues;
+};
+
+export const Auth = ({ onAuthSubmit, initialValues }: Props) => {
     const {
         handleSubmit,
         watch,
@@ -32,10 +45,10 @@ export const Auth = ({ onAuthSubmit }: Props) => {
     } = useForm<AuthFormValues>({
         mode: 'onChange',
         defaultValues: {
-            username: '',
-            password: '',
-            confirm_password: '',
-            privacy_consent: false,
+            username: initialValues?.username ?? '',
+            password: initialValues?.password ?? '',
+            confirm_password: initialValues?.password ?? '',
+            privacy_consent: initialValues?.privacy_consent ?? false,
         },
     });
 
@@ -49,16 +62,38 @@ export const Auth = ({ onAuthSubmit }: Props) => {
         return undefined;
     };
 
+    const validatePasswordLowercase = (value: string) => {
+        if (value && !hasLowercase(value)) {
+            return intl.getMessage('password_requirements_lowercase');
+        }
+        return undefined;
+    };
+
+    const validatePasswordUppercase = (value: string) => {
+        if (value && !hasUppercase(value)) {
+            return intl.getMessage('password_requirements_uppercase');
+        }
+        return undefined;
+    };
+
+    const validatePasswordSpecial = (value: string) => {
+        if (value && !(hasAllowedAsciiOnly(value) && hasNumberOrSpecial(value))) {
+            return intl.getMessage('password_requirements_special');
+        }
+        return undefined;
+    };
+
     const requirements = useMemo(() => {
         return {
             minLength: password.length > 0 && hasMinLength(password),
-            allowedChars: password.length > 0 && hasAllowedAsciiOnly(password) && hasNumberOrSpecial(password),
+            allowedChars:
+                password.length > 0 &&
+                hasAllowedAsciiOnly(password) &&
+                hasNumberOrSpecial(password),
             lowercase: password.length > 0 && hasLowercase(password),
             uppercase: password.length > 0 && hasUppercase(password),
             match:
-                password.length > 0 &&
-                confirmPassword.length > 0 &&
-                password === confirmPassword,
+                password.length > 0 && confirmPassword.length > 0 && password === confirmPassword,
         };
     }, [password, confirmPassword]);
 
@@ -66,9 +101,13 @@ export const Auth = ({ onAuthSubmit }: Props) => {
         <div className={styles.configSetting}>
             <form className={styles.step} onSubmit={handleSubmit(onAuthSubmit)}>
                 <div className={styles.info}>
-                    <div className={styles.titleStep}>{intl.getMessage('setup_guide_auth_title')}</div>
+                    <div className={styles.titleStep}>
+                        {intl.getMessage('setup_guide_auth_title')}
+                    </div>
 
-                    <p className={styles.descStep}>{intl.getMessage('setup_guide_auth_subtitle')}</p>
+                    <p className={styles.descStep}>
+                        {intl.getMessage('setup_guide_auth_subtitle')}
+                    </p>
 
                     <div className={styles.input}>
                         <Controller
@@ -96,6 +135,9 @@ export const Auth = ({ onAuthSubmit }: Props) => {
                                 validate: {
                                     required: validateRequiredValue,
                                     passwordLength: validatePasswordLength,
+                                    passwordLowercase: validatePasswordLowercase,
+                                    passwordUppercase: validatePasswordUppercase,
+                                    passwordSpecial: validatePasswordSpecial,
                                 },
                             }}
                             render={({ field }) => (
@@ -114,7 +156,10 @@ export const Auth = ({ onAuthSubmit }: Props) => {
                         />
                     </div>
 
-                    <PasswordRequirements requirements={requirements} className={styles.authRequirementsMobile} />
+                    <PasswordRequirements
+                        requirements={requirements}
+                        className={styles.authRequirementsMobile}
+                    />
 
                     <div className={styles.input}>
                         <Controller
@@ -157,14 +202,19 @@ export const Auth = ({ onAuthSubmit }: Props) => {
                                 >
                                     <div className={styles.consentContent}>
                                         {intl.getMessage('setup_guide_auth_privacy', {
-                                            a: (text: string) =>
-                                                <a className={styles.link} href={PRIVACY_POLICY_LINK}>
+                                            a: (text: string) => (
+                                                <a
+                                                    className={styles.link}
+                                                    href={PRIVACY_POLICY_LINK}
+                                                >
                                                     {text}
-                                                </a>,
-                                            b: (text: string) =>
+                                                </a>
+                                            ),
+                                            b: (text: string) => (
                                                 <a className={styles.link} href={TERMS_LINK}>
                                                     {text}
-                                                </a>,
+                                                </a>
+                                            ),
                                         })}
                                     </div>
                                 </Checkbox>

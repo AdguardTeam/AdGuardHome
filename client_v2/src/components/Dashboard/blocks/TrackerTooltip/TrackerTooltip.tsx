@@ -31,7 +31,9 @@ export const TrackerTooltip = ({ trackerData }: Props) => {
             </div>
 
             <div className={s.tooltipRow}>
-                <span className={cn(theme.text.t4, s.tooltipLabel)}>{intl.getMessage('name_tooltip')}:</span>
+                <span className={cn(theme.text.t4, s.tooltipLabel)}>
+                    {intl.getMessage('name_tooltip')}:
+                </span>
                 <a
                     href={trackerData.url}
                     target="_blank"

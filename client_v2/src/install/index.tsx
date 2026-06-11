@@ -1,11 +1,11 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import { Provider } from 'react-redux';
+import { HashRouter } from 'react-router-dom';
 
 import '../index.pcss';
 import configureStore from '../configureStore';
 import reducers from '../reducers/install';
-import '../i18n';
 
 import { Setup } from './Setup';
 import { InstallState } from '../initialState';
@@ -13,10 +13,12 @@ import { Icons } from '../common/ui/Icons';
 
 const store = configureStore<InstallState>(reducers, {});
 
-ReactDOM.render(
+const root = createRoot(document.getElementById('root')!);
+root.render(
     <Provider store={store}>
-        <Setup />
-        <Icons />
+        <HashRouter>
+            <Setup />
+            <Icons />
+        </HashRouter>
     </Provider>,
-    document.getElementById('root'),
 );

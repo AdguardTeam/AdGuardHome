@@ -41,8 +41,12 @@ type Props = {
 export const TopClients = ({ topClients, numDnsQueries }: Props) => {
     const dispatch = useDispatch();
     const isMountedRef = useRef(true);
-    const disallowedClientsStr = useSelector((state: RootState) => state.access?.disallowed_clients || '');
-    const disallowedClientsList = disallowedClientsStr ? disallowedClientsStr.split('\n').filter(Boolean) : [];
+    const disallowedClientsStr = useSelector(
+        (state: RootState) => state.access?.disallowed_clients || '',
+    );
+    const disallowedClientsList = disallowedClientsStr
+        ? disallowedClientsStr.split('\n').filter(Boolean)
+        : [];
 
     const [confirmDialog, setConfirmDialog] = useState<{
         open: boolean;
@@ -52,8 +56,15 @@ export const TopClients = ({ topClients, numDnsQueries }: Props) => {
     const [openMenuClient, setOpenMenuClient] = useState<string | null>(null);
 
     const isDesktop = useIsDesktop();
-    const { sortedData: sortedClients, sortField, sortDirection, handleSort } = useSortedData(topClients);
-    const visibleClients = isDesktop ? sortedClients : sortedClients.slice(0, MOBILE_TABLE_MAX_ROWS);
+    const {
+        sortedData: sortedClients,
+        sortField,
+        sortDirection,
+        handleSort,
+    } = useSortedData(topClients);
+    const visibleClients = isDesktop
+        ? sortedClients
+        : sortedClients.slice(0, MOBILE_TABLE_MAX_ROWS);
 
     const isClientBlocked = (clientName: string) => disallowedClientsList.includes(clientName);
 
@@ -69,7 +80,13 @@ export const TopClients = ({ topClients, numDnsQueries }: Props) => {
             const disallowedClients = accessList.disallowed_clients || [];
 
             if (disallowedClients.includes(clientIp)) {
-                dispatch(addErrorToast({ error: new Error(intl.getMessage('client_already_blocked', { ip: clientIp })) }));
+                dispatch(
+                    addErrorToast({
+                        error: new Error(
+                            intl.getMessage('client_already_blocked', { ip: clientIp }),
+                        ),
+                    }),
+                );
                 if (isMountedRef.current) {
                     setConfirmDialog({ open: false, client: '', action: 'block' });
                 }
@@ -95,7 +112,7 @@ export const TopClients = ({ topClients, numDnsQueries }: Props) => {
         try {
             const accessList = await apiClient.getAccessList();
             const disallowedClients = (accessList.disallowed_clients || []).filter(
-                (c: string) => c !== clientIp
+                (c: string) => c !== clientIp,
             );
 
             await apiClient.setAccessList({
@@ -136,7 +153,7 @@ export const TopClients = ({ topClients, numDnsQueries }: Props) => {
                             theme.text.t2,
                             theme.text.condenced,
                             s.protectionMenuItem,
-                            s.protectionMenuItemRed
+                            s.protectionMenuItemRed,
                         )}
                         onClick={() => openConfirmDialog(client.name, 'block')}
                     >
@@ -152,7 +169,9 @@ export const TopClients = ({ topClients, numDnsQueries }: Props) => {
     return (
         <div className={s.card}>
             <div className={s.cardHeader}>
-                <div className={cn(theme.title.h5, s.cardTitle)}>{intl.getMessage('top_clients')}</div>
+                <div className={cn(theme.title.h5, s.cardTitle)}>
+                    {intl.getMessage('top_clients')}
+                </div>
             </div>
 
             {hasStats && (
@@ -168,16 +187,25 @@ export const TopClients = ({ topClients, numDnsQueries }: Props) => {
             <div className={s.tableRows}>
                 {hasStats ? (
                     visibleClients.map((client) => {
-                        const percent = numDnsQueries > 0 ? (client.count / numDnsQueries) * 100 : 0;
+                        const percent =
+                            numDnsQueries > 0 ? (client.count / numDnsQueries) * 100 : 0;
                         const isBlocked = isClientBlocked(client.name);
 
                         return (
                             <div key={client.name} className={s.clientRow}>
                                 <div className={s.clientInfo}>
-                                    <div className={cn(theme.text.t3, theme.text.condenced, s.clientIp)}>
+                                    <div
+                                        className={cn(
+                                            theme.text.t3,
+                                            theme.text.condenced,
+                                            s.clientIp,
+                                        )}
+                                    >
                                         {client.info ? (
                                             <Icon icon="location" className={s.tableRowIcon} />
-                                        ) : <div className={s.tableRowDot}></div>}
+                                        ) : (
+                                            <div className={s.tableRowDot}></div>
+                                        )}
 
                                         {client.name}
                                     </div>
@@ -193,19 +221,28 @@ export const TopClients = ({ topClients, numDnsQueries }: Props) => {
                                         wrapClassName={s.queryTooltipWrap}
                                         menu={
                                             <div className={s.queryTooltip}>
-                                                {formatNumber(client.count)} {intl.getMessage('queries').toLowerCase()}
+                                                {formatNumber(client.count)}{' '}
+                                                {intl.getMessage('queries').toLowerCase()}
                                             </div>
                                         }
                                     >
-                                        <div className={cn(
-                                            theme.text.t3,
-                                            theme.text.condenced,
-                                            s.queryCount,
-                                            s.queryCountHover
-                                        )}>
+                                        <div
+                                            className={cn(
+                                                theme.text.t3,
+                                                theme.text.condenced,
+                                                s.queryCount,
+                                                s.queryCountHover,
+                                            )}
+                                        >
                                             {formatCompactNumber(client.count)}
 
-                                            <div className={cn(theme.text.t3, theme.text.condenced, s.queryPercent)}>
+                                            <div
+                                                className={cn(
+                                                    theme.text.t3,
+                                                    theme.text.condenced,
+                                                    s.queryPercent,
+                                                )}
+                                            >
                                                 ({percent.toFixed(1)}%)
                                             </div>
                                         </div>
@@ -224,7 +261,9 @@ export const TopClients = ({ topClients, numDnsQueries }: Props) => {
                                         position="bottomRight"
                                         noIcon
                                         open={openMenuClient === client.name}
-                                        onOpenChange={(isOpen) => setOpenMenuClient(isOpen ? client.name : null)}
+                                        onOpenChange={(isOpen) =>
+                                            setOpenMenuClient(isOpen ? client.name : null)
+                                        }
                                     >
                                         <button type="button" className={s.actionButton}>
                                             <Icon icon="bullets" />
@@ -232,7 +271,13 @@ export const TopClients = ({ topClients, numDnsQueries }: Props) => {
                                     </Dropdown>
 
                                     {isBlocked && (
-                                        <div className={cn(theme.text.t4, theme.text.condenced, s.clientBlocked)}>
+                                        <div
+                                            className={cn(
+                                                theme.text.t4,
+                                                theme.text.condenced,
+                                                s.clientBlocked,
+                                            )}
+                                        >
                                             {intl.getMessage('blocked')}
                                         </div>
                                     )}
@@ -240,29 +285,45 @@ export const TopClients = ({ topClients, numDnsQueries }: Props) => {
 
                                 <div className={s.tableRowInfo}>
                                     {client.info?.name && (
-                                        <div className={cn(
-                                            theme.text.t4,
-                                            theme.text.condenced,
-                                            s.clientName
-                                        )}>
+                                        <div
+                                            className={cn(
+                                                theme.text.t4,
+                                                theme.text.condenced,
+                                                s.clientName,
+                                            )}
+                                        >
                                             {client.info.name}
                                         </div>
                                     )}
                                     {isBlocked && (
-                                        <div className={cn(theme.text.t4, theme.text.condenced, s.clientBlocked)}>
+                                        <div
+                                            className={cn(
+                                                theme.text.t4,
+                                                theme.text.condenced,
+                                                s.clientBlocked,
+                                            )}
+                                        >
                                             {intl.getMessage('blocked')}
                                         </div>
                                     )}
                                     <div className={s.tableRowQueriesInfo}>
-                                        <div className={cn(
-                                            theme.text.t3,
-                                            theme.text.condenced,
-                                            s.queryCount,
-                                            s.queryCountHover
-                                        )}>
+                                        <div
+                                            className={cn(
+                                                theme.text.t3,
+                                                theme.text.condenced,
+                                                s.queryCount,
+                                                s.queryCountHover,
+                                            )}
+                                        >
                                             {formatCompactNumber(client.count)}
 
-                                            <div className={cn(theme.text.t3, theme.text.condenced, s.queryPercent)}>
+                                            <div
+                                                className={cn(
+                                                    theme.text.t3,
+                                                    theme.text.condenced,
+                                                    s.queryPercent,
+                                                )}
+                                            >
                                                 ({percent.toFixed(1)}%)
                                             </div>
                                         </div>
@@ -275,9 +336,7 @@ export const TopClients = ({ topClients, numDnsQueries }: Props) => {
                                         </div>
                                     </div>
 
-                                    <div className={s.tableRowActions}>
-                                        {getClientMenu(client)}
-                                    </div>
+                                    <div className={s.tableRowActions}>{getClientMenu(client)}</div>
                                 </div>
                             </div>
                         );
@@ -286,31 +345,48 @@ export const TopClients = ({ topClients, numDnsQueries }: Props) => {
                     <EmptyState />
                 )}
 
-                {confirmDialog.open && (() => {
-                    const isBlock = confirmDialog.action === 'block';
+                {confirmDialog.open &&
+                    (() => {
+                        const isBlock = confirmDialog.action === 'block';
 
-                    return (
-                        <ConfirmDialog
-                            onClose={() => setConfirmDialog({ open: false, client: '', action: 'block' })}
-                            title={isBlock
-                                ? intl.getMessage('confirm_client_block_title', { ip: confirmDialog.client })
-                                : intl.getMessage('confirm_client_unblock_title', { ip: confirmDialog.client })}
-                            text={isBlock
-                                ? intl.getMessage('confirm_client_block_desc', { ip: confirmDialog.client })
-                                : intl.getMessage('confirm_client_unblock_desc', { ip: confirmDialog.client })}
-                            buttonText={isBlock ? intl.getMessage('block') : intl.getMessage('unblock')}
-                            cancelText={intl.getMessage('cancel')}
-                            buttonVariant={isBlock ? 'danger' : 'primary'}
-                            onConfirm={() => {
-                                if (isBlock) {
-                                    handleBlockClient(confirmDialog.client);
-                                } else {
-                                    handleUnblockClient(confirmDialog.client);
+                        return (
+                            <ConfirmDialog
+                                onClose={() =>
+                                    setConfirmDialog({ open: false, client: '', action: 'block' })
                                 }
-                            }}
-                        />
-                    );
-                })()}
+                                title={
+                                    isBlock
+                                        ? intl.getMessage('confirm_client_block_title', {
+                                              ip: confirmDialog.client,
+                                          })
+                                        : intl.getMessage('confirm_client_unblock_title', {
+                                              ip: confirmDialog.client,
+                                          })
+                                }
+                                text={
+                                    isBlock
+                                        ? intl.getMessage('confirm_client_block_desc', {
+                                              ip: confirmDialog.client,
+                                          })
+                                        : intl.getMessage('confirm_client_unblock_desc', {
+                                              ip: confirmDialog.client,
+                                          })
+                                }
+                                buttonText={
+                                    isBlock ? intl.getMessage('block') : intl.getMessage('unblock')
+                                }
+                                cancelText={intl.getMessage('cancel')}
+                                buttonVariant={isBlock ? 'danger' : 'primary'}
+                                onConfirm={() => {
+                                    if (isBlock) {
+                                        handleBlockClient(confirmDialog.client);
+                                    } else {
+                                        handleUnblockClient(confirmDialog.client);
+                                    }
+                                }}
+                            />
+                        );
+                    })()}
             </div>
         </div>
     );

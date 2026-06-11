@@ -3,7 +3,13 @@ import { Controller, useForm } from 'react-hook-form';
 import cn from 'clsx';
 
 import intl from 'panel/common/intl';
-import { validateIp, validateIpv4, validateIpv6, validateRequiredValue } from 'panel/helpers/validators';
+import {
+    validateIp,
+    validateIpPerLine,
+    validateIpv4,
+    validateIpv6,
+    validateRequiredValue,
+} from 'panel/helpers/validators';
 import { BLOCKING_MODES, UINT32_RANGE } from 'panel/helpers/constants';
 import { Checkbox } from 'panel/common/controls/Checkbox';
 import { Input } from 'panel/common/controls/Input';
@@ -146,7 +152,9 @@ export const Form = ({ processing, initialValues, onSubmit }: Props) => {
                                         />
                                     </>
                                 }
-                                placeholder={intl.getMessage('server_config_rate_limit_placeholder')}
+                                placeholder={intl.getMessage(
+                                    'server_config_rate_limit_placeholder',
+                                )}
                                 errorMessage={fieldState.error?.message}
                                 min={UINT32_RANGE.MIN}
                                 max={UINT32_RANGE.MAX}
@@ -173,12 +181,16 @@ export const Form = ({ processing, initialValues, onSubmit }: Props) => {
                                     <>
                                         {intl.getMessage('server_config_subnet_len_ipv4')}
                                         <FaqTooltip
-                                            text={intl.getMessage('server_config_subnet_len_ipv4_faq')}
+                                            text={intl.getMessage(
+                                                'server_config_subnet_len_ipv4_faq',
+                                            )}
                                             menuSize="large"
                                         />
                                     </>
                                 }
-                                placeholder={intl.getMessage('server_config_subnet_len_placeholder')}
+                                placeholder={intl.getMessage(
+                                    'server_config_subnet_len_placeholder',
+                                )}
                                 errorMessage={fieldState.error?.message}
                                 min={0}
                                 max={32}
@@ -205,12 +217,16 @@ export const Form = ({ processing, initialValues, onSubmit }: Props) => {
                                     <>
                                         {intl.getMessage('server_config_subnet_len_ipv6')}
                                         <FaqTooltip
-                                            text={intl.getMessage('server_config_subnet_len_ipv6_faq')}
+                                            text={intl.getMessage(
+                                                'server_config_subnet_len_ipv6_faq',
+                                            )}
                                             menuSize="large"
                                         />
                                     </>
                                 }
-                                placeholder={intl.getMessage('server_config_subnet_len_placeholder')}
+                                placeholder={intl.getMessage(
+                                    'server_config_subnet_len_placeholder',
+                                )}
                                 errorMessage={fieldState.error?.message}
                                 min={0}
                                 max={128}
@@ -227,6 +243,7 @@ export const Form = ({ processing, initialValues, onSubmit }: Props) => {
                     <Controller
                         name="ratelimit_whitelist"
                         control={control}
+                        rules={{ validate: validateIpPerLine }}
                         render={({ field, fieldState }) => (
                             <Textarea
                                 {...field}
@@ -235,7 +252,9 @@ export const Form = ({ processing, initialValues, onSubmit }: Props) => {
                                     <>
                                         {intl.getMessage('server_config_rate_limit_whitelist')}
                                         <FaqTooltip
-                                            text={intl.getMessage('server_config_rate_limit_whitelist_faq')}
+                                            text={intl.getMessage(
+                                                'server_config_rate_limit_whitelist_faq',
+                                            )}
                                             menuSize="large"
                                         />
                                     </>
@@ -259,10 +278,15 @@ export const Form = ({ processing, initialValues, onSubmit }: Props) => {
                                 onChange={field.onChange}
                                 onBlur={field.onBlur}
                                 data-testid="dns_config_edns_cs_enabled"
-                                verticalAlign="start">
+                                verticalAlign="start"
+                            >
                                 <div>
-                                    <div className={theme.text.t2}>{intl.getMessage('server_config_edns_enable')}</div>
-                                    <div className={theme.text.t4}>{intl.getMessage('server_config_edns_cs_desc')}</div>
+                                    <div className={theme.text.t2}>
+                                        {intl.getMessage('server_config_edns_enable')}
+                                    </div>
+                                    <div className={theme.text.t4}>
+                                        {intl.getMessage('server_config_edns_cs_desc')}
+                                    </div>
                                 </div>
                             </Checkbox>
                         )}
@@ -282,13 +306,16 @@ export const Form = ({ processing, initialValues, onSubmit }: Props) => {
                                     onBlur={field.onBlur}
                                     data-testid="dns_config_edns_use_custom_ip"
                                     disabled={!edns_cs_enabled}
-                                    verticalAlign="start">
+                                    verticalAlign="start"
+                                >
                                     <div>
                                         <div className={theme.text.t2}>
                                             {intl.getMessage('server_config_edns_use_custom_ip')}
                                         </div>
                                         <div className={theme.text.t4}>
-                                            {intl.getMessage('server_config_edns_use_custom_ip_desc')}
+                                            {intl.getMessage(
+                                                'server_config_edns_use_custom_ip_desc',
+                                            )}
                                         </div>
                                     </div>
                                 </Checkbox>
@@ -311,7 +338,9 @@ export const Form = ({ processing, initialValues, onSubmit }: Props) => {
                                     <Input
                                         {...field}
                                         data-testid="dns_config_edns_cs_custom_ip"
-                                        placeholder={intl.getMessage('enter_ip_address_placeholder')}
+                                        placeholder={intl.getMessage(
+                                            'enter_ip_address_placeholder',
+                                        )}
                                         errorMessage={fieldState.error?.message}
                                         disabled={!edns_cs_enabled}
                                     />
@@ -333,7 +362,8 @@ export const Form = ({ processing, initialValues, onSubmit }: Props) => {
                                     onChange={field.onChange}
                                     onBlur={field.onBlur}
                                     id={`dns_config_${name}`}
-                                    verticalAlign="start">
+                                    verticalAlign="start"
+                                >
                                     <div>
                                         <div className={theme.text.t2}>{placeholder}</div>
                                         <div className={theme.text.t4}>{subtitle}</div>
@@ -418,7 +448,9 @@ export const Form = ({ processing, initialValues, onSubmit }: Props) => {
                                     <>
                                         {intl.getMessage('server_config_blocking_mode_ttl')}
                                         <FaqTooltip
-                                            text={intl.getMessage('server_config_blocking_mode_ttl_faq')}
+                                            text={intl.getMessage(
+                                                'server_config_blocking_mode_ttl_faq',
+                                            )}
                                             menuSize="large"
                                         />
                                     </>
@@ -444,7 +476,8 @@ export const Form = ({ processing, initialValues, onSubmit }: Props) => {
                     variant="primary"
                     disabled={isSubmitting || processing}
                     className={theme.form.button}
-                    size="small">
+                    size="small"
+                >
                     {intl.getMessage('save')}
                 </Button>
             </div>

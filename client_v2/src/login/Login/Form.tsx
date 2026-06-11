@@ -76,7 +76,7 @@ const Form = ({ onSubmit, processing }: LoginFormProps) => {
                     <Controller
                         name="password"
                         control={control}
-                        rules={{ validate: validateRequiredValue,  }}
+                        rules={{ validate: validateRequiredValue }}
                         render={({ field, fieldState }) => (
                             <PasswordInput
                                 {...field}
@@ -91,12 +91,23 @@ const Form = ({ onSubmit, processing }: LoginFormProps) => {
                 </div>
 
                 <div className={styles.footer}>
-                    <Button className={styles.button} id="sign_in" type="submit" variant="primary" size="small" disabled={processing || !isValid}>
+                    <Button
+                        className={styles.button}
+                        id="sign_in"
+                        type="submit"
+                        variant="primary"
+                        size="small"
+                        disabled={processing || !isValid}
+                    >
                         {intl.getMessage('login')}
                     </Button>
 
                     <div className={styles.info}>
-                        <button type="button" className={cn(theme.link.link, 'link')} onClick={handleForgotPassword}>
+                        <button
+                            type="button"
+                            className={cn(theme.link.link, 'link')}
+                            onClick={handleForgotPassword}
+                        >
                             {intl.getMessage('forgot_password')}
                         </button>
                     </div>

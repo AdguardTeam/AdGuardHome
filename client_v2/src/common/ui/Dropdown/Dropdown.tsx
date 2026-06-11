@@ -105,7 +105,8 @@ export const Dropdown = ({
             visible={visible}
             onVisibleChange={onVisibleChange}
             minOverlayWidthMatchTrigger={!!minOverlayWidthMatchTrigger}
-            onOverlayClick={handleOverlayClick}>
+            onOverlayClick={handleOverlayClick}
+        >
             <div
                 className={cn(
                     className,
@@ -116,12 +117,19 @@ export const Dropdown = ({
                     },
                     visible && openClassName ? openClassName : null,
                     wrapClassName,
-                )}>
-                <div className={cn(childrenClassName, { [s.wrapper]: flexWrapper })} onClick={handleOverlayClick}>
+                )}
+            >
+                <div
+                    className={cn(childrenClassName, { [s.wrapper]: flexWrapper })}
+                    onClick={handleOverlayClick}
+                >
                     {children}
                 </div>
                 {!noIcon && (
-                    <Icon className={cn(s.arrow, iconClassName, { [s.active]: visible })} icon="arrow_bottom" />
+                    <Icon
+                        className={cn(s.arrow, iconClassName, { [s.active]: visible })}
+                        icon="arrow_bottom"
+                    />
                 )}
             </div>
         </RCDropdown>

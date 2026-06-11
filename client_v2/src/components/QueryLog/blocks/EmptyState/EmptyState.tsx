@@ -17,7 +17,9 @@ type Props = {
     messageClassName?: string;
 };
 
-const getEmptyState = (mode: EmptyStateMode): {
+const getEmptyState = (
+    mode: EmptyStateMode,
+): {
     message: ReactNode;
     variant: EmptyStateMode;
     icon: IconType;
@@ -41,11 +43,7 @@ const getEmptyState = (mode: EmptyStateMode): {
     }
 };
 
-export const EmptyState = ({
-    className,
-    mode,
-    messageClassName,
-}: Props) => {
+export const EmptyState = ({ className, mode, messageClassName }: Props) => {
     const { message, icon } = getEmptyState(mode);
 
     return (

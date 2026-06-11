@@ -46,7 +46,7 @@ export const Paths: Record<RoutePathKey, string> = {
     BlockedServices: pathBuilder('blocked_services'),
     InactivitySchedule: pathBuilder('blocked_services/schedule'),
     UserRules: pathBuilder('user_rules'),
-    QueryLog: pathBuilder('query_log'),
+    QueryLog: pathBuilder('logs'),
     ClientsAdd: pathBuilder('clients/add'),
     ClientsProtection: pathBuilder('clients/add/protection'),
     ClientsBlockedServices: pathBuilder('clients/add/blocked_services'),

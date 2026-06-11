@@ -21,6 +21,10 @@ const (
 	// configuration.
 	twoskyProjectIdxHome = iota
 
+	// twoskyProjectIdxHomeV2 is the index of the Home V2 project in the
+	// localization configuration.
+	twoskyProjectIdxHomeV2
+
 	// twoskyProjectIdxServices is the index of the Services project in the
 	// localization configuration.
 	twoskyProjectIdxServices
@@ -69,32 +73,32 @@ func (t *twoskyConfig) Validate() (err error) {
 }
 
 // readTwoskyConfig returns twosky configuration.
-func readTwoskyConfig() (home, services *twoskyConfig, err error) {
+func readTwoskyConfig() (home, homeV2, services *twoskyConfig, err error) {
 	defer func() { err = errors.Annotate(err, "parsing twosky config: %w") }()
 
 	b, err := os.ReadFile(twoskyConfFile)
 	if err != nil {
 		// Don't wrap the error since it's informative enough as is.
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	var tsc []*twoskyConfig
 	err = json.Unmarshal(b, &tsc)
 	if err != nil {
-		return nil, nil, fmt.Errorf("unmarshalling %q: %w", twoskyConfFile, err)
+		return nil, nil, nil, fmt.Errorf("unmarshalling %q: %w", twoskyConfFile, err)
 	}
 
 	err = validate.Equal("projects count", len(tsc), twoskyProjectCount)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	err = errors.Join(validate.AppendSlice(nil, "projects", tsc)...)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
-	return tsc[twoskyProjectIdxHome], tsc[twoskyProjectIdxServices], nil
+	return tsc[twoskyProjectIdxHome], tsc[twoskyProjectIdxHomeV2], tsc[twoskyProjectIdxServices], nil
 }
 
 // twoskyClient is the twosky client with methods for download and upload

@@ -6,10 +6,7 @@ import type { Filter } from 'panel/helpers/helpers';
 import { normalizeFilteringStatus, normalizeRulesTextarea } from '../helpers/helpers';
 import { apiClient } from '../api/Api';
 import { addErrorToast, addSuccessToast } from './toasts';
-
-type RulesMutationOptions = {
-    showToast?: boolean;
-};
+import { closeModal } from '../reducers/modals';
 
 type CheckHostRequest = {
     name: string;
@@ -29,7 +26,7 @@ type FilterEditConfig = FilterIdentity & {
     enabled?: boolean;
 };
 
-type FilterRemovalConfig = Pick<Filter, 'url'>;
+type FilterRemovalConfig = Pick<Filter, 'url' | 'name'>;
 
 type RefreshFiltersConfig = {
     whitelist: boolean;
@@ -59,7 +56,7 @@ export const setRulesFailure = createAction('SET_RULES_FAILURE');
 export const setRulesSuccess = createAction('SET_RULES_SUCCESS');
 
 export const setRules =
-    (rules: string, options: RulesMutationOptions = {}) =>
+    (rules: string) =>
     async (dispatch: AppDispatch): Promise<boolean> => {
         dispatch(setRulesRequest());
         try {
@@ -68,10 +65,6 @@ export const setRules =
                 rules: normalizedUserRules ? normalizedUserRules.split('\n') : [],
             };
             await apiClient.setRules(normalizedRules);
-
-            if (options.showToast !== false) {
-                dispatch(addSuccessToast(intl.getMessage('updated_custom_filtering_toast')));
-            }
 
             dispatch(
                 setRulesSuccess({
@@ -94,18 +87,88 @@ export const addFilterSuccess = createAction('ADD_FILTER_SUCCESS');
 
 export const addFilter =
     (url: FilterIdentity['url'], name: FilterIdentity['name'], whitelist = false) =>
-    async (dispatch: AppDispatch, getState: AppGetState) => {
+    async (dispatch: AppDispatch) => {
         dispatch(addFilterRequest());
         try {
             await apiClient.addFilter({ url, name, whitelist });
             dispatch(addFilterSuccess(url));
-            if (getState().filtering.isModalOpen) {
-                dispatch(toggleFilteringModal());
-            }
+            dispatch(
+                addSuccessToast({
+                    message: whitelist
+                        ? intl.getMessage('filter_added_successfully_allowlist', {
+                              value: name || url,
+                          })
+                        : intl.getMessage('filter_added_successfully', { value: name || url }),
+                }),
+            );
+            dispatch(closeModal());
             dispatch(getFilteringStatus());
         } catch (error) {
             dispatch(addErrorToast({ error }));
             dispatch(addFilterFailure());
+        }
+    };
+
+export const addFiltersBatch =
+    (filters: FilterIdentity[]) =>
+    async (dispatch: AppDispatch) => {
+        dispatch(addFilterRequest());
+        try {
+            const results = await Promise.allSettled(
+                filters.map(({ url, name }) =>
+                    apiClient.addFilter({ url, name, whitelist: false }),
+                ),
+            );
+
+            const successes: FilterIdentity[] = [];
+            const failures: Array<{ filter: FilterIdentity; error: unknown }> = [];
+
+            results.forEach((result, index) => {
+                if (result.status === 'fulfilled') {
+                    successes.push(filters[index]);
+                } else {
+                    failures.push({
+                        filter: filters[index],
+                        error: result.reason,
+                    });
+                }
+            });
+
+            if (successes.length === 1) {
+                dispatch(
+                    addSuccessToast({
+                        message: intl.getMessage('filter_added_successfully', {
+                            value: successes[0].name || successes[0].url,
+                        }),
+                    }),
+                );
+            } else if (successes.length > 1) {
+                dispatch(
+                    addSuccessToast({
+                        message: intl.getMessage('filter_added_successfully_more', {
+                            value: successes[0].name || successes[0].url,
+                            more: String(successes.length - 1),
+                        }),
+                    }),
+                );
+            }
+
+            failures.forEach(({ error }) => {
+                dispatch(addErrorToast({ error }));
+            });
+
+            if (successes.length > 0) {
+                dispatch(addFilterSuccess(successes[0].url));
+                dispatch(closeModal());
+                dispatch(getFilteringStatus());
+            } else {
+                dispatch(addFilterFailure());
+                // Modal stays open so user can retry
+            }
+        } catch (error) {
+            dispatch(addErrorToast({ error }));
+            dispatch(addFilterFailure());
+            // Modal stays open so user can retry
         }
     };
 
@@ -114,16 +177,24 @@ export const removeFilterFailure = createAction('REMOVE_FILTER_FAILURE');
 export const removeFilterSuccess = createAction('REMOVE_FILTER_SUCCESS');
 
 export const removeFilter =
-    (url: FilterRemovalConfig['url'], whitelist = false) =>
-    async (dispatch: AppDispatch, getState: AppGetState) => {
+    (filter: FilterRemovalConfig, whitelist = false) =>
+    async (dispatch: AppDispatch) => {
         dispatch(removeFilterRequest());
         try {
-            await apiClient.removeFilter({ url, whitelist });
-            dispatch(removeFilterSuccess(url));
-            if (getState().filtering.isModalOpen) {
-                dispatch(toggleFilteringModal());
-            }
-            dispatch(addSuccessToast(intl.getMessage('filter_removed_successfully')));
+            await apiClient.removeFilter({ url: filter.url, whitelist });
+            dispatch(removeFilterSuccess(filter.url));
+            dispatch(closeModal());
+            dispatch(
+                addSuccessToast({
+                    message: whitelist
+                        ? intl.getMessage('filter_removed_successfully_allowlist', {
+                              value: filter.name || filter.url,
+                          })
+                        : intl.getMessage('filter_removed_successfully', {
+                              value: filter.name || filter.url,
+                          }),
+                }),
+            );
             dispatch(getFilteringStatus());
         } catch (error) {
             dispatch(addErrorToast({ error }));

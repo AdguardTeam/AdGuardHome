@@ -20,7 +20,8 @@ export const StatusBlock = ({ variant, title, children }: Props) => (
                 [s.statusTitle_success]: variant === 'success',
                 [s.statusTitle_error]: variant === 'error',
                 [s.statusTitle_warning]: variant === 'warning',
-            })}>
+            })}
+        >
             {title}
         </div>
         {children}

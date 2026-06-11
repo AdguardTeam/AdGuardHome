@@ -7,13 +7,6 @@ import { InstallInterface } from 'panel/initialState';
 import styles from '../styles.module.pcss';
 import { stripZoneId, getDnsAddressWithPort } from '../helpers/helpers';
 
-interface renderItemProps {
-    ip: string;
-    port: number;
-    isDns: boolean;
-    interfaceName?: string;
-}
-
 const getWebAddressWithPort = (ip: string, port: number) => {
     const normalizedIp = stripZoneId(ip);
 
@@ -24,24 +17,30 @@ const getWebAddressWithPort = (ip: string, port: number) => {
     return `http://${normalizedIp}:${port}`;
 };
 
+type renderItemProps = {
+    ip: string;
+    port: number;
+    isDns: boolean;
+    interfaceName?: string;
+};
+
 const renderItem = ({ ip, port, isDns }: renderItemProps) => {
     const webAddress = getWebAddressWithPort(ip, port);
     const dnsAddress = getDnsAddressWithPort(ip, port);
 
     return (
-        <li className={styles.addressListItem}
-            key={ip}>
+        <li className={styles.addressListItem} key={ip}>
             {isDns ? <CopiedText text={dnsAddress} /> : <CopiedText text={webAddress} />}
         </li>
     );
 };
 
-interface AddressListProps {
+type AddressListProps = {
     interfaces: InstallInterface[];
     address: string;
     port: number;
     isDns?: boolean;
-}
+};
 
 export const AddressList = ({ address, interfaces, port, isDns }: AddressListProps) => (
     <ul className={styles.addressList}>
@@ -76,5 +75,3 @@ export const AddressList = ({ address, interfaces, port, isDns }: AddressListPro
               })}
     </ul>
 );
-
-export default AddressList;

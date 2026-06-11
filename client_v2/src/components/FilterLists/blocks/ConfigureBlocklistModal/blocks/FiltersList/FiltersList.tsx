@@ -11,6 +11,36 @@ import filtersCatalog from 'panel/helpers/filters/filters';
 
 import s from './FiltersList.module.pcss';
 
+const getCategoryName = (categoryId: string) => {
+    switch (categoryId) {
+        case 'general':
+            return intl.getMessage('filter_category_general');
+        case 'security':
+            return intl.getMessage('filter_category_security');
+        case 'regional':
+            return intl.getMessage('filter_category_regional');
+        case 'other':
+            return intl.getMessage('filter_category_other');
+        default:
+            return categoryId;
+    }
+};
+
+const getCategoryDesc = (categoryId: string) => {
+    switch (categoryId) {
+        case 'general':
+            return intl.getMessage('filter_category_general_desc');
+        case 'security':
+            return intl.getMessage('filter_category_security_desc');
+        case 'regional':
+            return intl.getMessage('filter_category_regional_desc');
+        case 'other':
+            return intl.getMessage('filter_category_other_desc');
+        default:
+            return categoryId;
+    }
+};
+
 type Props = {
     selectedSources?: Record<string, boolean>;
 };
@@ -22,19 +52,19 @@ export const FiltersList = ({ selectedSources }: Props) => {
     return (
         <div className={s.listWrap}>
             <div className={s.list}>
-                {Object.entries(categories).map(([categoryId, category]) => {
+                {Object.entries(categories).map(([categoryId, _category]) => {
                     const categoryFilters = Object.entries(filters)
                         .filter(([, filter]) => filter.categoryId === categoryId)
                         .map(([key, filter]) => ({ ...filter, id: key }));
 
                     return (
-                        <div key={category.name}>
+                        <div key={categoryId}>
                             <div className={s.category}>
                                 <div className={cn(theme.text.t2, s.categoryName)}>
-                                    {intl.getMessage(category.name)}
+                                    {getCategoryName(categoryId)}
                                 </div>
                                 <div className={cn(theme.text.t3, s.categoryDescription)}>
-                                    {intl.getMessage(category.description)}
+                                    {getCategoryDesc(categoryId)}
                                 </div>
                             </div>
 
@@ -54,7 +84,8 @@ export const FiltersList = ({ selectedSources }: Props) => {
                                                     onChange={onChange}
                                                     id={`filters_${id}`}
                                                     title={name}
-                                                    disabled={isSelected}>
+                                                    disabled={isSelected}
+                                                >
                                                     {name}
                                                 </Checkbox>
                                             )}
@@ -67,7 +98,8 @@ export const FiltersList = ({ selectedSources }: Props) => {
                                                         href={homepage}
                                                         className={theme.dropdown.item}
                                                         target="_blank"
-                                                        rel="noreferrer">
+                                                        rel="noreferrer"
+                                                    >
                                                         <Icon icon="link" color="green" />
                                                         {intl.getMessage('blocklist_homepage')}
                                                     </a>
@@ -75,14 +107,18 @@ export const FiltersList = ({ selectedSources }: Props) => {
                                                         href={source}
                                                         className={theme.dropdown.item}
                                                         target="_blank"
-                                                        rel="noreferrer">
+                                                        rel="noreferrer"
+                                                    >
                                                         <Icon icon="link" color="green" />
-                                                        {intl.getMessage('blocklist_contents', { value: 'txt' })}
+                                                        {intl.getMessage('blocklist_contents', {
+                                                            value: 'txt',
+                                                        })}
                                                     </a>
                                                 </div>
                                             }
                                             position="bottomRight"
-                                            noIcon>
+                                            noIcon
+                                        >
                                             <div className={s.dropdownTrigger}>
                                                 <Icon icon="bullets" color="gray" />
                                             </div>

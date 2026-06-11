@@ -1,7 +1,7 @@
 import React, { useEffect, useCallback, useState } from 'react';
 import cn from 'clsx';
 import { batch, useSelector, useDispatch } from 'react-redux';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Action } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 
@@ -25,7 +25,7 @@ import {
     QUERY_LOG_STATUS_FILTER_QUERIES,
 } from 'panel/helpers/constants';
 import { getLogsUrlParams } from 'panel/helpers/helpers';
-import { Paths } from 'panel/components/Routes/Paths';
+import { RoutePath, linkPathBuilder } from 'panel/components/Routes/Paths';
 
 import { filterLogsByStatus } from './helpers';
 import { LogEntry } from './types';
@@ -53,7 +53,7 @@ const getEmptyStateMode = (enabled: boolean, interval?: number): EmptyStateMode 
 
 export const QueryLog = () => {
     const dispatch = useDispatch<ThunkDispatch<RootState, unknown, Action<string>>>();
-    const history = useHistory();
+    const navigate = useNavigate();
     const location = useLocation();
 
     const queryLogs = useSelector((state: RootState) => state.queryLogs) ?? initialState.queryLogs;
@@ -113,14 +113,14 @@ export const QueryLog = () => {
         const nextSearch = getLogsUrlParams(search, status, reason);
 
         if (location.search !== nextSearch) {
-            history.replace(nextSearch);
+            navigate(nextSearch, { replace: true });
             return;
         }
 
         setIsIncrementalLoad(false);
         dispatch(setLogsFilter(nextFilter));
         dispatch(setFilteredLogs(nextFilter));
-    }, [history, location.search]);
+    }, [navigate, location.search]);
 
     useEffect(() => {
         if (!processingGetLogs && !processingAdditionalLogs) {
@@ -142,25 +142,29 @@ export const QueryLog = () => {
     const handleSearch = useCallback(
         (search: string) => {
             setIsIncrementalLoad(false);
-            history.replace(getLogsUrlParams(search.trim(), currentStatus, currentReason));
+            navigate(getLogsUrlParams(search.trim(), currentStatus, currentReason), {
+                replace: true,
+            });
         },
-        [currentReason, currentStatus, history],
+        [currentReason, currentStatus, navigate],
     );
 
     const handleStatusFilterChange = useCallback(
         (status: string) => {
             setIsIncrementalLoad(false);
-            history.replace(getLogsUrlParams(currentSearch, status, DEFAULT_LOGS_FILTER.reason));
+            navigate(getLogsUrlParams(currentSearch, status, DEFAULT_LOGS_FILTER.reason), {
+                replace: true,
+            });
         },
-        [currentSearch, history],
+        [currentSearch, navigate],
     );
 
     const handleReasonFilterChange = useCallback(
         (reason: string) => {
             setIsIncrementalLoad(false);
-            history.replace(getLogsUrlParams(currentSearch, currentStatus, reason));
+            navigate(getLogsUrlParams(currentSearch, currentStatus, reason), { replace: true });
         },
-        [currentSearch, currentStatus, history],
+        [currentSearch, currentStatus, navigate],
     );
 
     const handleRefresh = useCallback(() => {
@@ -202,9 +206,9 @@ export const QueryLog = () => {
 
     const handleAddPersistentClient = useCallback(
         (clientId: string) => {
-            history.push(`${Paths.Clients}?clientId=${encodeURIComponent(clientId)}`);
+            navigate(linkPathBuilder(RoutePath.ClientsAdd, undefined, { id: clientId }));
         },
-        [history],
+        [navigate],
     );
 
     const handleConfirmDisallow = useCallback(() => {

@@ -34,7 +34,12 @@ const getFormattedWhois = (whois: any) => {
  * @param {boolean} [isLogs]
  * @returns {JSXElement}
  */
-export const renderFormattedClientCell = (value: any, info: any, isDetailed = false, isLogs = false) => {
+export const renderFormattedClientCell = (
+    value: any,
+    info: any,
+    isDetailed = false,
+    isLogs = false,
+) => {
     let whoisContainer = null;
     let nameContainer = value;
 
@@ -46,7 +51,8 @@ export const renderFormattedClientCell = (value: any, info: any, isDetailed = fa
             const nameValue = (
                 <div
                     className="logs__text logs__text--link logs__text--nowrap logs__text--client"
-                    title={`${name} (${value})`}>
+                    title={`${name} (${value})`}
+                >
                     {name}&nbsp;<small>{`(${value})`}</small>
                 </div>
             );
@@ -54,13 +60,20 @@ export const renderFormattedClientCell = (value: any, info: any, isDetailed = fa
             if (!isLogs) {
                 nameContainer = nameValue;
             } else {
-                nameContainer = !whoisAvailable && isDetailed ? <small title={value}>{value}</small> : nameValue;
+                nameContainer =
+                    !whoisAvailable && isDetailed ? (
+                        <small title={value}>{value}</small>
+                    ) : (
+                        nameValue
+                    );
             }
         }
 
         if (whoisAvailable && isDetailed) {
             whoisContainer = (
-                <div className="logs__text logs__text--wrap logs__text--whois">{getFormattedWhois(whois_info)}</div>
+                <div className="logs__text logs__text--wrap logs__text--whois">
+                    {getFormattedWhois(whois_info)}
+                </div>
             );
         }
     }

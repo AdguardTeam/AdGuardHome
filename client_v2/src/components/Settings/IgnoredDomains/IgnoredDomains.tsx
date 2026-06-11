@@ -18,17 +18,27 @@ type Props = {
     setValue: UseFormSetValue<any>;
     switchId: string;
     textareaId: string;
+    description: string;
 };
 
-export const IgnoredDomains = ({ control, processing, ignoreEnabled, setValue, switchId, textareaId }: Props) => {
+export const IgnoredDomains = ({
+    control,
+    processing,
+    ignoreEnabled,
+    setValue,
+    switchId,
+    textareaId,
+    description,
+}: Props) => {
     return (
         <SwitchGroup
             id={switchId}
             title={intl.getMessage('ignore_domains_title')}
-            description={intl.getMessage('ignore_domains_desc_query')}
+            description={description}
             checked={ignoreEnabled}
             onChange={(e) => setValue('ignore_enabled', e.target.checked)}
-            disabled={processing}>
+            disabled={processing}
+        >
             <Controller
                 name="ignored"
                 control={control}
@@ -47,7 +57,9 @@ export const IgnoredDomains = ({ control, processing, ignoreEnabled, setValue, s
                                                 {intl.getMessage('settings_tooltip_domain_names')}
                                             </div>
                                             <div>
-                                                <strong>{intl.getMessage('settings_tooltip_examples')}</strong>
+                                                <strong>
+                                                    {intl.getMessage('settings_tooltip_examples')}
+                                                </strong>
                                                 <div>example.com</div>
                                                 <div>*.example.com</div>
                                                 <div>||example.com^</div>
@@ -60,7 +72,8 @@ export const IgnoredDomains = ({ control, processing, ignoreEnabled, setValue, s
                                     href="https://link.adtidy.org/forward.html?action=dns_kb_filtering_syntax&from=ui&app=home"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className={cn(s.link, theme.link.link, theme.link.noDecoration)}>
+                                    className={cn(s.link, theme.link.link, theme.link.noDecoration)}
+                                >
                                     {intl.getMessage('settings_rule_syntax')}
                                 </a>
                             </>

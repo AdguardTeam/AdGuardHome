@@ -23,7 +23,10 @@ type Props = Omit<ComponentProps<'input'>, 'size'> & {
     size?: 'small' | 'medium' | 'large';
 };
 
-const assignInputRef = (ref: React.ForwardedRef<HTMLInputElement>, node: HTMLInputElement | null) => {
+const assignInputRef = (
+    ref: React.ForwardedRef<HTMLInputElement>,
+    node: HTMLInputElement | null,
+) => {
     if (typeof ref === 'function') {
         ref(node);
         return;
@@ -35,7 +38,9 @@ const assignInputRef = (ref: React.ForwardedRef<HTMLInputElement>, node: HTMLInp
     }
 };
 
-const hasInputValue = (value: ComponentProps<'input'>['value'] | ComponentProps<'input'>['defaultValue']) => {
+const hasInputValue = (
+    value: ComponentProps<'input'>['value'] | ComponentProps<'input'>['defaultValue'],
+) => {
     if (Array.isArray(value)) {
         return value.length > 0;
     }

@@ -50,7 +50,11 @@ export const ValueContainer = <T, Multi extends boolean = true>({
 
     const renderLoader = () =>
         loading ? (
-            <Loader overlayClassName={theme.select.loaderOverlay} className={theme.select.loader} icon="loader" />
+            <Loader
+                overlayClassName={theme.select.loaderOverlay}
+                className={theme.select.loader}
+                icon="loader"
+            />
         ) : null;
 
     const renderClear = () => {
@@ -65,7 +69,8 @@ export const ValueContainer = <T, Multi extends boolean = true>({
                     e.stopPropagation();
                     onClear();
                     onClose();
-                }}>
+                }}
+            >
                 <Icon icon="cross" className={theme.select.clearIcon} />
             </div>
         );
@@ -73,7 +78,9 @@ export const ValueContainer = <T, Multi extends boolean = true>({
 
     return (
         <>
-            <span className={cn(theme.common.textOverflow, theme.select.dropdownText)}>{renderValue()}</span>
+            <span className={cn(theme.common.textOverflow, theme.select.dropdownText)}>
+                {renderValue()}
+            </span>
             {renderLoader()}
             {renderClear()}
         </>

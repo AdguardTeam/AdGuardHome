@@ -4,7 +4,11 @@ import cn from 'clsx';
 import theme from 'panel/lib/theme';
 
 import { LogEntry, Service } from 'panel/components/QueryLog/types';
-import { getResponseDetails, getStatusClassName, getStatusLabel } from 'panel/components/QueryLog/helpers';
+import {
+    getResponseDetails,
+    getStatusClassName,
+    getStatusLabel,
+} from 'panel/components/QueryLog/helpers';
 import { Filter } from 'panel/helpers/helpers';
 import s from '../LogTable.module.pcss';
 

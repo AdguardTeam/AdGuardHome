@@ -149,7 +149,11 @@ export const getCheckResultMeta = ({
     const primaryRule = getPrimaryRule(rules);
     const sourceName = getSourceName(rules, filters, whitelistFilters);
     const isCustomRule = primaryRule?.filter_list_id === SPECIAL_FILTER_ID.CUSTOM_FILTERING_RULES;
-    const sourceListType = getSourceListType(primaryRule?.filter_list_id, filters, whitelistFilters);
+    const sourceListType = getSourceListType(
+        primaryRule?.filter_list_id,
+        filters,
+        whitelistFilters,
+    );
 
     switch (reason) {
         case FILTERED_STATUS.FILTERED_BLACK_LIST:
@@ -169,9 +173,7 @@ export const getCheckResultMeta = ({
                 tone: 'allowed',
                 title: intl.getMessage('user_rules_domain_is_allowed'),
                 reason: getAllowedReason(isCustomRule, sourceName, sourceListType),
-                actions: isCustomRule
-                    ? [createAction('block')]
-                    : [createAction('disable-filter')],
+                actions: isCustomRule ? [createAction('block')] : [createAction('disable-filter')],
                 rule: primaryRule?.text,
                 source: sourceName,
                 sourceListType,

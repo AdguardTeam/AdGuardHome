@@ -105,10 +105,11 @@ export const ScheduleModal = ({ visible, currentDay, currentData, onClose, onSav
         setEndMinute(normalizedEnd.minutes);
     };
 
-    const { hours: endHoursOptions, minutes: endMinutesOptions, hasAvailableEndTime } = getEndTimeOptions(
-        { hours: startHour, minutes: startMinute },
-        endHour,
-    );
+    const {
+        hours: endHoursOptions,
+        minutes: endMinutesOptions,
+        hasAvailableEndTime,
+    } = getEndTimeOptions({ hours: startHour, minutes: startMinute }, endHour);
 
     const startMs = timeToMs(startHour, startMinute);
     const endMs = timeToMs(endHour, endMinute);
@@ -127,7 +128,13 @@ export const ScheduleModal = ({ visible, currentDay, currentData, onClose, onSav
         : intl.getMessage('inactivity_schedule_add');
 
     return (
-        <Dialog visible={visible} mask onClose={onClose} title={title} wrapClassName="rc-dialog-update">
+        <Dialog
+            visible={visible}
+            mask
+            onClose={onClose}
+            title={title}
+            wrapClassName="rc-dialog-update"
+        >
             <div className={cn(theme.dialog.body, s.content)}>
                 <div className={s.dayLabel}>{dayLabel}</div>
 
@@ -181,11 +188,7 @@ export const ScheduleModal = ({ visible, currentDay, currentData, onClose, onSav
                 </div>
 
                 <div className={s.allDayRow}>
-                    <Checkbox
-                        id="all-day-checkbox"
-                        checked={allDay}
-                        onChange={handleAllDayChange}
-                    >
+                    <Checkbox id="all-day-checkbox" checked={allDay} onChange={handleAllDayChange}>
                         {intl.getMessage('inactivity_schedule_all_day')}
                     </Checkbox>
                 </div>

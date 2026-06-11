@@ -37,18 +37,27 @@ describe('getQueryReasonKey', () => {
     test('keeps custom rules separate from blocklist rules', () => {
         expect(
             getQueryReasonKey(FILTERED_STATUS.FILTERED_BLACK_LIST, [
-                { filter_list_id: SPECIAL_FILTER_ID.CUSTOM_FILTERING_RULES, text: '||example.org^' },
+                {
+                    filter_list_id: SPECIAL_FILTER_ID.CUSTOM_FILTERING_RULES,
+                    text: '||example.org^',
+                },
             ]),
         ).toBe('custom_filtering_rules');
 
         expect(
-            getQueryReasonKey(FILTERED_STATUS.FILTERED_BLACK_LIST, [{ filter_list_id: 42, text: '||example.org^' }]),
+            getQueryReasonKey(FILTERED_STATUS.FILTERED_BLACK_LIST, [
+                { filter_list_id: 42, text: '||example.org^' },
+            ]),
         ).toBe('blocked_by_filter');
     });
 
     test('maps threat, parental, safe-search, allowlist, and rewrite reasons', () => {
-        expect(getQueryReasonKey(FILTERED_STATUS.FILTERED_SAFE_BROWSING, [])).toBe('blocked_threats');
-        expect(getQueryReasonKey(FILTERED_STATUS.FILTERED_PARENTAL, [])).toBe('blocked_by_parental_control');
+        expect(getQueryReasonKey(FILTERED_STATUS.FILTERED_SAFE_BROWSING, [])).toBe(
+            'blocked_threats',
+        );
+        expect(getQueryReasonKey(FILTERED_STATUS.FILTERED_PARENTAL, [])).toBe(
+            'blocked_by_parental_control',
+        );
         expect(getQueryReasonKey(FILTERED_STATUS.FILTERED_SAFE_SEARCH, [])).toBe('safe_search');
         expect(getQueryReasonKey(FILTERED_STATUS.NOT_FILTERED_WHITE_LIST, [])).toBe('allowlists');
         expect(getQueryReasonKey(FILTERED_STATUS.REWRITE, [])).toBe('dns_rewrites');
@@ -77,10 +86,14 @@ describe('query log label helpers', () => {
 
         expect(getQueryReasonLabel('none')).toBe('-');
         expect(getQueryReasonLabel('blocked_by_filter')).toBe('query_log_blocked_by_filter');
-        expect(getQueryReasonLabel('custom_filtering_rules')).toBe('query_log_custom_filtering_rules');
+        expect(getQueryReasonLabel('custom_filtering_rules')).toBe(
+            'query_log_custom_filtering_rules',
+        );
         expect(getQueryReasonLabel('blocked_services')).toBe('query_log_blocked_services');
         expect(getQueryReasonLabel('blocked_threats')).toBe('query_log_blocked_threats');
-        expect(getQueryReasonLabel('blocked_by_parental_control')).toBe('query_log_blocked_by_parental_control');
+        expect(getQueryReasonLabel('blocked_by_parental_control')).toBe(
+            'query_log_blocked_by_parental_control',
+        );
         expect(getQueryReasonLabel('safe_search')).toBe('query_log_safe_search');
         expect(getQueryReasonLabel('dns_rewrites')).toBe('dns_rewrites');
         expect(getQueryReasonLabel('allowlists')).toBe('allowlists');

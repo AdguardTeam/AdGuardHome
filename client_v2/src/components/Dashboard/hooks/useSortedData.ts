@@ -21,19 +21,21 @@ export const useSortedData = <T extends SortableItem>(
     data: T[],
     defaultSortField: SortField = 'count',
     defaultSortDirection: SortDirection = 'desc',
-    limit: number = DEFAULT_VISIBLE_ITEMS
+    limit: number = DEFAULT_VISIBLE_ITEMS,
 ): UseSortedDataResult<T> => {
     const [sortField, setSortField] = useState<SortField>(defaultSortField);
     const [sortDirection, setSortDirection] = useState<SortDirection>(defaultSortDirection);
 
     const sortedData = useMemo(() => {
-        return [...data].sort((a, b) => {
-            const modifier = sortDirection === 'asc' ? 1 : -1;
-            if (sortField === 'name') {
-                return a.name.localeCompare(b.name) * modifier;
-            }
-            return (a.count - b.count) * modifier;
-        }).slice(0, limit);
+        return [...data]
+            .sort((a, b) => {
+                const modifier = sortDirection === 'asc' ? 1 : -1;
+                if (sortField === 'name') {
+                    return a.name.localeCompare(b.name) * modifier;
+                }
+                return (a.count - b.count) * modifier;
+            })
+            .slice(0, limit);
     }, [data, sortField, sortDirection, limit]);
 
     const handleSort = (field: SortField) => {

@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import intl from 'panel/common/intl';
 import { Button } from 'panel/common/ui/Button';
 import { RootState } from 'panel/initialState';
-import Controls from './Controls';
+import { Controls } from './Controls';
 import type { WebConfig } from './types';
 import styles from './styles.module.pcss';
 
@@ -28,9 +28,7 @@ export const Submit = ({ openDashboard, webConfig, onSubmit }: Props) => {
             <div className={styles.group}>
                 <h1 className={styles.titleStep}>{intl.getMessage('install_submit_title')}</h1>
 
-                <p className={styles.desc}>
-                    {intl.getMessage('setup_complete')}
-                </p>
+                <p className={styles.desc}>{intl.getMessage('setup_complete')}</p>
             </div>
 
             {!submitted ? (

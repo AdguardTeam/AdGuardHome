@@ -13,7 +13,10 @@ const initialState: ModalsData = {
 
 const modals = handleActions(
     {
-        [openModal.toString()]: (state: ModalsData, { payload }: { payload: { modalId: ModalType } }) => ({
+        [openModal.toString()]: (
+            state: ModalsData,
+            { payload }: { payload: { modalId: ModalType } },
+        ) => ({
             modalId: payload.modalId,
         }),
         [closeModal.toString()]: (): ModalsData => ({

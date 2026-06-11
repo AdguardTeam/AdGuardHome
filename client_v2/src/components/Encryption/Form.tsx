@@ -3,7 +3,12 @@ import { Controller, useForm } from 'react-hook-form';
 import cn from 'clsx';
 
 import { toNumber } from 'panel/helpers/form';
-import { DNS_OVER_QUIC_PORT, DNS_OVER_TLS_PORT, STANDARD_HTTPS_PORT, ENCRYPTION_SOURCE } from 'panel/helpers/constants';
+import {
+    DNS_OVER_QUIC_PORT,
+    DNS_OVER_TLS_PORT,
+    STANDARD_HTTPS_PORT,
+    ENCRYPTION_SOURCE,
+} from 'panel/helpers/constants';
 import { EncryptionData } from 'panel/initialState';
 import {
     validateServerName,
@@ -180,6 +185,7 @@ export const Form = ({ initialValues, encryption, onSubmit, debouncedConfigValid
         reset();
         dispatch(setTlsConfig(defaultValues));
         dispatch(validateTlsConfig(defaultValues));
+        handleResetClose();
     };
 
     const validatePorts = (values: EncryptionFormValues) => {
@@ -218,7 +224,12 @@ export const Form = ({ initialValues, encryption, onSubmit, debouncedConfigValid
         if (warning_validation) {
             const isWarning = valid_key && valid_cert && valid_pair;
 
-            return <ValidationStatus type={isWarning ? 'warning' : 'error'} message={warning_validation} />;
+            return (
+                <ValidationStatus
+                    type={isWarning ? 'warning' : 'error'}
+                    message={warning_validation}
+                />
+            );
         }
 
         if (!certificateChain && !certificatePath) {
@@ -250,7 +261,8 @@ export const Form = ({ initialValues, encryption, onSubmit, debouncedConfigValid
                         title={intl.getMessage('encryption_encrypted_dns')}
                         description={intl.getMessage('encryption_encrypted_dns_desc')}
                         checked={field.value}
-                        onChange={field.onChange}>
+                        onChange={field.onChange}
+                    >
                         <div className={s.group}>
                             <div>
                                 <Controller
@@ -269,10 +281,14 @@ export const Form = ({ initialValues, encryption, onSubmit, debouncedConfigValid
                                                         text={
                                                             <>
                                                                 <div className={s.tooltipText}>
-                                                                    {intl.getMessage('encryption_server_tooltip_1')}
+                                                                    {intl.getMessage(
+                                                                        'encryption_server_tooltip_1',
+                                                                    )}
                                                                 </div>
                                                                 <div className={s.tooltipText}>
-                                                                    {intl.getMessage('encryption_server_tooltip_2')}
+                                                                    {intl.getMessage(
+                                                                        'encryption_server_tooltip_2',
+                                                                    )}
                                                                 </div>
                                                             </>
                                                         }
@@ -305,7 +321,9 @@ export const Form = ({ initialValues, encryption, onSubmit, debouncedConfigValid
                                                     {intl.getMessage('encryption_https')}
 
                                                     <FaqTooltip
-                                                        text={intl.getMessage('encryption_https_tooltip')}
+                                                        text={intl.getMessage(
+                                                            'encryption_https_tooltip',
+                                                        )}
                                                         menuSize="large"
                                                     />
                                                 </>
@@ -339,7 +357,9 @@ export const Form = ({ initialValues, encryption, onSubmit, debouncedConfigValid
                                                     {intl.getMessage('encryption_dot')}
 
                                                     <FaqTooltip
-                                                        text={intl.getMessage('encryption_dot_tooltip')}
+                                                        text={intl.getMessage(
+                                                            'encryption_dot_tooltip',
+                                                        )}
                                                         menuSize="large"
                                                     />
                                                 </>
@@ -373,7 +393,9 @@ export const Form = ({ initialValues, encryption, onSubmit, debouncedConfigValid
                                                     {intl.getMessage('encryption_doq')}
 
                                                     <FaqTooltip
-                                                        text={intl.getMessage('encryption_doq_tooltip')}
+                                                        text={intl.getMessage(
+                                                            'encryption_doq_tooltip',
+                                                        )}
                                                         menuSize="large"
                                                     />
                                                 </>
@@ -437,7 +459,12 @@ export const Form = ({ initialValues, encryption, onSubmit, debouncedConfigValid
             <p className={cn(s.description, theme.text.t2)}>
                 {intl.getMessage('encryption_certificates_desc', {
                     a: (text: string) => (
-                        <a href="https://letsencrypt.org/" target="_blank" rel="noreferrer" className={theme.link.link}>
+                        <a
+                            href="https://letsencrypt.org/"
+                            target="_blank"
+                            rel="noreferrer"
+                            className={theme.link.link}
+                        >
                             {text}
                         </a>
                     ),
@@ -537,7 +564,8 @@ export const Form = ({ initialValues, encryption, onSubmit, debouncedConfigValid
                                 onChange(checked);
                             }}
                             onBlur={handleBlur}
-                            className={s.useSavedKey}>
+                            className={s.useSavedKey}
+                        >
                             {intl.getMessage('use_saved_key')}
                         </Checkbox>
                     )}
@@ -584,7 +612,9 @@ export const Form = ({ initialValues, encryption, onSubmit, debouncedConfigValid
                     )}
                 </div>
 
-                {(privateKey || privateKeyPath) && <KeyStatus validKey={valid_key} keyType={key_type} />}
+                {(privateKey || privateKeyPath) && (
+                    <KeyStatus validKey={valid_key} keyType={key_type} />
+                )}
             </div>
 
             <div className={theme.form.buttonGroup}>
@@ -593,7 +623,8 @@ export const Form = ({ initialValues, encryption, onSubmit, debouncedConfigValid
                     variant="primary"
                     size="small"
                     disabled={isDisabled}
-                    className={theme.form.button}>
+                    className={theme.form.button}
+                >
                     {intl.getMessage('save')}
                 </Button>
 
@@ -603,7 +634,8 @@ export const Form = ({ initialValues, encryption, onSubmit, debouncedConfigValid
                     size="small"
                     disabled={isSubmitting || processingConfig}
                     onClick={handleResetOpen}
-                    className={theme.form.button}>
+                    className={theme.form.button}
+                >
                     {intl.getMessage('reset')}
                 </Button>
             </div>

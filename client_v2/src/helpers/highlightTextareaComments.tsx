@@ -30,7 +30,8 @@ export const getTextareaCommentsHighlight = (
     commentLineTokens: CommentLineTokens = [COMMENT_LINE_DEFAULT_TOKEN],
     className = '',
 ) => {
-    const renderLine = (line: string, idx: number) => renderHighlightedLine(line, idx, commentLineTokens);
+    const renderLine = (line: string, idx: number) =>
+        renderHighlightedLine(line, idx, commentLineTokens);
 
     return (
         <code className={classnames(theme.highlight.textOutput, className)} ref={ref}>

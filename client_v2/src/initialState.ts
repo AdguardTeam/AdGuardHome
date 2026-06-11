@@ -327,7 +327,7 @@ export type DnsConfigData = {
     upstream_mode: string;
     resolve_clients: boolean;
     use_private_ptr_resolvers: boolean;
-    default_local_ptr_upstreams: any[];
+    default_local_ptr_upstreams: string[];
     ratelimit_subnet_len_ipv4?: number;
     ratelimit_subnet_len_ipv6?: number;
     edns_cs_use_custom?: boolean;

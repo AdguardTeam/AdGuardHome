@@ -11,7 +11,10 @@ import { Form } from './Form';
 
 export const Access = () => {
     const dispatch = useDispatch();
-    const { processingSet, ...values } = useSelector((state: RootState) => state.access, shallowEqual);
+    const { processingSet, ...values } = useSelector(
+        (state: RootState) => state.access,
+        shallowEqual,
+    );
 
     const handleFormSubmit = (values: any) => {
         dispatch(setAccessList(values));
@@ -25,11 +28,16 @@ export const Access = () => {
                     theme.layout.subtitle_compact,
                     theme.title.h5,
                     theme.title.h4_tablet,
-                )}>
+                )}
+            >
                 {intl.getMessage('access_settings_title')}
             </h2>
 
-            <Form initialValues={values} onSubmit={handleFormSubmit} processingSet={processingSet} />
+            <Form
+                initialValues={values}
+                onSubmit={handleFormSubmit}
+                processingSet={processingSet}
+            />
         </div>
     );
 };

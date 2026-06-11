@@ -1,0 +1,3 @@
+.wrapper {
+    width: 100%;
+}

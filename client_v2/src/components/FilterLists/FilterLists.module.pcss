@@ -7,7 +7,7 @@
 .desc {
     width: 100%;
     max-width: 556px;
-    padding: 12px 16px 0;
+    padding: 16px 16px 0;
 }
 
 .button {
@@ -44,12 +44,16 @@
     }
 
     &_add {
-        padding: 8px 0;
+        padding: 8px;
         color: var(--default-link);
+    }
+}
 
-        @media (min-width: 768px) {
-            padding: 8px;
-        }
+.labelDesktop {
+    display: none;
+
+    @media (min-width: 768px) {
+        display: inline;
     }
 }
 
@@ -58,7 +62,12 @@
     flex-direction: column;
     padding: 8px 16px;
 
-    &.stretchSelf {
+    &.tableGroup {
+        padding-top: 16px;
         flex: 1 0 auto;
+
+        @media (min-width: 768px) {
+            padding-top: 32px;
+        }
     }
 }

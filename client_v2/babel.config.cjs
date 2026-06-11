@@ -8,7 +8,6 @@ module.exports = (api) => {
             '@babel/plugin-transform-object-rest-spread',
             '@babel/plugin-transform-nullish-coalescing-operator',
             '@babel/plugin-transform-optional-chaining',
-            'react-hot-loader/babel',
         ],
     };
 };

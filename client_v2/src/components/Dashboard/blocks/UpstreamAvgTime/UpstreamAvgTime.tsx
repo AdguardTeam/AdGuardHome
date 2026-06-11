@@ -23,19 +23,29 @@ type Props = {
 
 export const UpstreamAvgTime = ({ topUpstreamsAvgTime, avgProcessingTime }: Props) => {
     const isDesktop = useIsDesktop();
-    const { sortedData: sortedUpstreams, sortField, sortDirection, handleSort } = useSortedData(topUpstreamsAvgTime);
-    const visibleUpstreams = isDesktop ? sortedUpstreams : sortedUpstreams.slice(0, MOBILE_TABLE_MAX_ROWS);
+    const {
+        sortedData: sortedUpstreams,
+        sortField,
+        sortDirection,
+        handleSort,
+    } = useSortedData(topUpstreamsAvgTime);
+    const visibleUpstreams = isDesktop
+        ? sortedUpstreams
+        : sortedUpstreams.slice(0, MOBILE_TABLE_MAX_ROWS);
 
     const hasStats = topUpstreamsAvgTime.length > 0;
 
     return (
         <div className={s.card}>
             <div className={s.cardHeader}>
-                <div className={cn(theme.title.h5, s.cardTitle)}>{intl.getMessage('average_upstream_response_time')}</div>
+                <div className={cn(theme.title.h5, s.cardTitle)}>
+                    {intl.getMessage('average_upstream_response_time')}
+                </div>
 
                 {hasStats && (
                     <div className={cn(theme.text.t3, s.cardSubtitle)}>
-                        {avgProcessingTime.toFixed(0)} {intl.getMessage('milliseconds_abbreviation')}
+                        {avgProcessingTime.toFixed(0)}{' '}
+                        {intl.getMessage('milliseconds_abbreviation')}
                     </div>
                 )}
             </div>
@@ -54,12 +64,21 @@ export const UpstreamAvgTime = ({ topUpstreamsAvgTime, avgProcessingTime }: Prop
                 {hasStats ? (
                     visibleUpstreams.map((upstream) => (
                         <div key={upstream.name} className={cn(s.tableRow)}>
-                            <div className={cn(theme.text.t3, theme.text.condenced, s.tableRowLeft)}>
+                            <div
+                                className={cn(theme.text.t3, theme.text.condenced, s.tableRowLeft)}
+                            >
                                 <span className={s.domainName}>{upstream.name}</span>
                             </div>
                             <div className={s.tableRowRight}>
-                                <div className={cn(theme.text.t3, theme.text.condenced, s.queryCount)}>
-                                    {upstream.count.toFixed(0)} {intl.getMessage('milliseconds_abbreviation')}
+                                <div
+                                    className={cn(
+                                        theme.text.t3,
+                                        theme.text.condenced,
+                                        s.queryCount,
+                                    )}
+                                >
+                                    {upstream.count.toFixed(0)}{' '}
+                                    {intl.getMessage('milliseconds_abbreviation')}
                                 </div>
                             </div>
                         </div>

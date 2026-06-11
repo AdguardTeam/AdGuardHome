@@ -9,13 +9,9 @@ const ZERO_HOST = '0.0.0.0';
 const LOCALHOST = '127.0.0.1';
 const DEFAULT_PORT = 80;
 
-/**
- * Get document, or throw exception on error
- * @returns {{bind_host: string, bind_port: number}}
- */
 const importConfig = () => {
     try {
-        const doc = yaml.safeLoad(fs.readFileSync('../AdguardHome.yaml', 'utf8'));
+        const doc = yaml.load(fs.readFileSync('../AdguardHome.yaml', 'utf8'));
         const { bind_host, bind_port } = doc;
         return {
             bind_host,

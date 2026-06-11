@@ -18,7 +18,6 @@ import type { SettingsFormValues } from '../../types';
 type SelectOption = {
     value: string;
     label: string;
-    isDisabled: boolean;
 };
 
 type Props = {
@@ -42,9 +41,7 @@ export const WebBanner = ({
         <h3 className={styles.bannerTitle}>{intl.getMessage('setup_ui_title_banner')}</h3>
         <div className={styles.bannerInputs}>
             <div className={styles.form}>
-                <label className={styles.bannerLabel}>
-                    {intl.getMessage('network_interface')}
-                </label>
+                <label className={styles.bannerLabel}>{intl.getMessage('network_interface')}</label>
                 <Controller<SettingsFormValues, 'web.ip'>
                     name="web.ip"
                     control={control}
@@ -76,8 +73,12 @@ export const WebBanner = ({
                         },
                     }}
                     render={({ field, fieldState }) => {
-                        const isPortInUse = Boolean(webStatus && webStatus.includes(ADDRESS_IN_USE_TEXT));
-                        const errorMessage = fieldState.error?.message || (isPortInUse ? intl.getMessage('port_in_use') : undefined);
+                        const isPortInUse = Boolean(
+                            webStatus && webStatus.includes(ADDRESS_IN_USE_TEXT),
+                        );
+                        const errorMessage =
+                            fieldState.error?.message ||
+                            (isPortInUse ? intl.getMessage('port_in_use') : undefined);
                         return (
                             <Input
                                 {...field}
@@ -106,8 +107,8 @@ export const WebBanner = ({
                                 size="small"
                                 variant="primary"
                                 className={styles.inlineButton}
-                                onClick={onAutofix}>
-                            </Button>
+                                onClick={onAutofix}
+                            ></Button>
                         )}
                     </div>
                 )}

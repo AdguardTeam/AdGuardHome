@@ -23,7 +23,14 @@ const meta: Meta<typeof Dropdown> = {
         },
         position: {
             control: 'select',
-            options: ['bottomLeft', 'bottomCenter', 'bottomRight', 'topLeft', 'topCenter', 'topRight'],
+            options: [
+                'bottomLeft',
+                'bottomCenter',
+                'bottomRight',
+                'topLeft',
+                'topCenter',
+                'topRight',
+            ],
             description: 'Position of the dropdown overlay',
         },
         disabled: {

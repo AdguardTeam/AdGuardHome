@@ -99,9 +99,12 @@ export const StatsConfig = ({
                     buttonText={intl.getMessage('settings_yes_decrease')}
                     cancelText={intl.getMessage('cancel')}
                     title={intl.getMessage('settings_confirm_decrease_stats_rotation_interval')}
-                    text={intl.getMessage('settings_confirm_decrease_stats_rotation_interval_desc', {
-                        value: formatIntervalText(confirmConfig.interval),
-                    })}
+                    text={intl.getMessage(
+                        'settings_confirm_decrease_stats_rotation_interval_desc',
+                        {
+                            value: formatIntervalText(confirmConfig.interval),
+                        },
+                    )}
                     buttonVariant="danger"
                 />
             )}

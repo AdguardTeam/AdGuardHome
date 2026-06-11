@@ -32,8 +32,11 @@ export const Encryption = () => {
             private_key_path,
             private_key_saved,
         } = encryption;
-        const certificate_source = certificate_chain ? ENCRYPTION_SOURCE.CONTENT : ENCRYPTION_SOURCE.PATH;
-        const key_source = private_key || private_key_saved ? ENCRYPTION_SOURCE.CONTENT : ENCRYPTION_SOURCE.PATH;
+        const certificate_source = certificate_chain
+            ? ENCRYPTION_SOURCE.CONTENT
+            : ENCRYPTION_SOURCE.PATH;
+        const key_source =
+            private_key || private_key_saved ? ENCRYPTION_SOURCE.CONTENT : ENCRYPTION_SOURCE.PATH;
 
         return {
             enabled,
@@ -84,7 +87,7 @@ export const Encryption = () => {
         [getSubmitValues, setTlsConfig],
     );
 
-    const validateConfig = useCallback((values) => {
+    const validateConfig = useCallback((values: any) => {
         const submitValues = getSubmitValues(values);
 
         if (submitValues.enabled) {
@@ -92,12 +95,22 @@ export const Encryption = () => {
         }
     }, []);
 
-    const debouncedConfigValidation = useMemo(() => debounce(validateConfig, DEBOUNCE_TIMEOUT), [validateConfig]);
+    const debouncedConfigValidation = useMemo(
+        () => debounce(validateConfig, DEBOUNCE_TIMEOUT),
+        [validateConfig],
+    );
 
     return (
         <div className={theme.layout.container}>
             <div className={cn(theme.layout.containerIn, theme.layout.containerIn_one_col)}>
-                <h1 className={cn(theme.layout.title, theme.title.h4, theme.title.h3_tablet, s.title)}>
+                <h1
+                    className={cn(
+                        theme.layout.title,
+                        theme.title.h4,
+                        theme.title.h3_tablet,
+                        s.title,
+                    )}
+                >
                     {intl.getMessage('encryption_title')}
                 </h1>
 

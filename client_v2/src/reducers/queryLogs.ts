@@ -24,7 +24,8 @@ const queryLogs = handleActions(
             const isFiltered =
                 !!filter &&
                 Object.entries(filter).some(
-                    ([key, value]) => value !== DEFAULT_LOGS_FILTER[key as keyof typeof DEFAULT_LOGS_FILTER],
+                    ([key, value]) =>
+                        value !== DEFAULT_LOGS_FILTER[key as keyof typeof DEFAULT_LOGS_FILTER],
                 );
 
             return {
@@ -89,7 +90,9 @@ const queryLogs = handleActions(
             ...state,
             ...payload,
 
-            customInterval: !QUERY_LOG_INTERVALS_DAYS.includes(payload.interval) ? payload.interval / HOUR : null,
+            customInterval: !QUERY_LOG_INTERVALS_DAYS.includes(payload.interval)
+                ? payload.interval / HOUR
+                : null,
 
             processingGetConfig: false,
         }),

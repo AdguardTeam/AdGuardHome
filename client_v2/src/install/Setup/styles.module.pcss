@@ -193,7 +193,7 @@ textarea {
 }
 
 .successText {
-    color: var(--product-primary-50);
+    color: var(--default-link);
 }
 
 .spacerBottom {
@@ -241,7 +241,7 @@ textarea {
         flex-direction: column;
         align-items: flex-start;
         border-radius: 16px;
-        box-shadow: 8px 8px 24px 0 rgba(0, 0, 0, 0.10);
+        box-shadow: 8px 8px 24px 0 rgba(0, 0, 0, 0.1);
         margin-bottom: 0;
     }
 }
@@ -255,7 +255,7 @@ textarea {
 .bannerList {
     list-style: none;
     padding: 0;
-    margin: 0
+    margin: 0;
 }
 
 .bannerItem {
@@ -290,14 +290,19 @@ textarea {
 }
 
 .link {
-    color: var(--product-primary-50);
+    color: var(--default-link);
     text-decoration: underline;
+
+    &:hover,
+    &:focus {
+        text-decoration: none;
+    }
 }
 
 .nav {
     display: flex;
     gap: 24px;
-    flex-direction: column-reverse;
+    flex-direction: column;
 
     button {
         max-width: 100%;
@@ -374,7 +379,7 @@ textarea {
 }
 
 .quoteDesc::before {
-    content: "";
+    content: '';
     height: 100%;
     position: absolute;
     left: 0;

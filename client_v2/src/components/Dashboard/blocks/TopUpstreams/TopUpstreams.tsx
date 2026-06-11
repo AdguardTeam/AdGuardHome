@@ -25,15 +25,24 @@ type Props = {
 
 export const TopUpstreams = ({ topUpstreamsResponses, numDnsQueries }: Props) => {
     const isDesktop = useIsDesktop();
-    const { sortedData: sortedUpstreams, sortField, sortDirection, handleSort } = useSortedData(topUpstreamsResponses);
-    const visibleUpstreams = isDesktop ? sortedUpstreams : sortedUpstreams.slice(0, MOBILE_TABLE_MAX_ROWS);
+    const {
+        sortedData: sortedUpstreams,
+        sortField,
+        sortDirection,
+        handleSort,
+    } = useSortedData(topUpstreamsResponses);
+    const visibleUpstreams = isDesktop
+        ? sortedUpstreams
+        : sortedUpstreams.slice(0, MOBILE_TABLE_MAX_ROWS);
 
     const hasStats = topUpstreamsResponses.length > 0;
 
     return (
         <div className={s.card}>
             <div className={s.cardHeader}>
-                <div className={cn(theme.title.h5, s.cardTitle)}>{intl.getMessage('top_upstreams')}</div>
+                <div className={cn(theme.title.h5, s.cardTitle)}>
+                    {intl.getMessage('top_upstreams')}
+                </div>
             </div>
 
             {hasStats && (
@@ -49,13 +58,18 @@ export const TopUpstreams = ({ topUpstreamsResponses, numDnsQueries }: Props) =>
             <div className={s.tableRows}>
                 {hasStats ? (
                     visibleUpstreams.map((upstream) => {
-                        const percent = numDnsQueries > 0
-                            ? (upstream.count / numDnsQueries) * 100
-                            : 0;
+                        const percent =
+                            numDnsQueries > 0 ? (upstream.count / numDnsQueries) * 100 : 0;
 
                         return (
                             <div key={upstream.name} className={cn(s.tableRow, s.statRowValue)}>
-                                <div className={cn(theme.text.t3, theme.text.condenced, s.tableRowLeft)}>
+                                <div
+                                    className={cn(
+                                        theme.text.t3,
+                                        theme.text.condenced,
+                                        s.tableRowLeft,
+                                    )}
+                                >
                                     <span className={s.domainName}>{upstream.name}</span>
                                 </div>
 
@@ -68,14 +82,27 @@ export const TopUpstreams = ({ topUpstreamsResponses, numDnsQueries }: Props) =>
                                         overlayClassName={s.queryTooltipOverlay}
                                         menu={
                                             <div className={s.queryTooltip}>
-                                                {formatNumber(upstream.count)} {intl.getMessage('queries').toLowerCase()}
+                                                {formatNumber(upstream.count)}{' '}
+                                                {intl.getMessage('queries').toLowerCase()}
                                             </div>
                                         }
                                     >
-                                        <div className={cn(theme.text.t3, theme.text.condenced, s.queryCount)}>
+                                        <div
+                                            className={cn(
+                                                theme.text.t3,
+                                                theme.text.condenced,
+                                                s.queryCount,
+                                            )}
+                                        >
                                             {formatCompactNumber(upstream.count)}
 
-                                            <div className={cn(theme.text.t3, theme.text.condenced, s.queryPercent)}>
+                                            <div
+                                                className={cn(
+                                                    theme.text.t3,
+                                                    theme.text.condenced,
+                                                    s.queryPercent,
+                                                )}
+                                            >
                                                 ({percent.toFixed(2)}%)
                                             </div>
                                         </div>

@@ -32,7 +32,7 @@ export const DeleteBlocklistModal = ({ filterToDelete, setFilterToDelete }: Prop
     };
 
     const handleDeleteConfirm = () => {
-        dispatch(removeFilter(filterToDelete.url));
+        dispatch(removeFilter(filterToDelete));
         handleDeleteClose();
     };
 

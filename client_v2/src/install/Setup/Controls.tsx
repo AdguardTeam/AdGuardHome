@@ -7,16 +7,16 @@ import { InstallState } from 'panel/initialState';
 import * as actionCreators from '../../actions/install';
 import styles from './styles.module.pcss';
 
-interface ControlsProps {
+type Props = {
     invalid?: boolean;
     ip?: string;
     port?: number;
     isDirty?: boolean;
     isValid?: boolean;
     openDashboard?: (ip: string, port: number) => void;
-}
+};
 
-const Controls = ({ invalid, isValid, ip, port, openDashboard }: ControlsProps) => {
+export const Controls = ({ invalid, isValid, ip, port, openDashboard }: Props) => {
     const dispatch = useDispatch();
     const install = useSelector((state: InstallState) => state.install);
 
@@ -41,7 +41,8 @@ const Controls = ({ invalid, isValid, ip, port, openDashboard }: ControlsProps) 
                         size="small"
                         variant="secondary"
                         className={styles.button}
-                        onClick={handlePrevStep}>
+                        onClick={handlePrevStep}
+                    >
                         {intl.getMessage('back')}
                     </Button>
                 );
@@ -64,7 +65,8 @@ const Controls = ({ invalid, isValid, ip, port, openDashboard }: ControlsProps) 
                         onClick={handleNextStep}
                         size="small"
                         variant="primary"
-                        className={styles.button}>
+                        className={styles.button}
+                    >
                         {intl.getMessage('setup_guide_greeting_button')}
                     </Button>
                 );
@@ -78,7 +80,8 @@ const Controls = ({ invalid, isValid, ip, port, openDashboard }: ControlsProps) 
                         size="small"
                         variant="primary"
                         className={styles.button}
-                        disabled={isNextDisabled}>
+                        disabled={isNextDisabled}
+                    >
                         {intl.getMessage('next')}
                     </Button>
                 );
@@ -91,7 +94,8 @@ const Controls = ({ invalid, isValid, ip, port, openDashboard }: ControlsProps) 
                         size="small"
                         variant="primary"
                         className={styles.button}
-                        disabled={isNextDisabled}>
+                        disabled={isNextDisabled}
+                    >
                         {intl.getMessage('next')}
                     </Button>
                 );
@@ -107,7 +111,8 @@ const Controls = ({ invalid, isValid, ip, port, openDashboard }: ControlsProps) 
                             if (openDashboard && ip && port) {
                                 openDashboard(ip, port);
                             }
-                        }}>
+                        }}
+                    >
                         {intl.getMessage('open_dashboard')}
                     </Button>
                 );
@@ -123,5 +128,3 @@ const Controls = ({ invalid, isValid, ip, port, openDashboard }: ControlsProps) 
         </div>
     );
 };
-
-export default Controls;

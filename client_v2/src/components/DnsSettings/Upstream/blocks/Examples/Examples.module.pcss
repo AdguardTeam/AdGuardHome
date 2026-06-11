@@ -8,6 +8,7 @@
         padding: 2px 4px;
         background-color: var(--page-background-additional);
         font-family: inherit;
+        line-height: var(--lh-t3-normal);
         border: 1px solid var(--default-item-divider);
         border-radius: 4px;
     }
@@ -26,10 +27,14 @@
 }
 
 .listItem {
-    padding: 8px 16px;
+    position: relative;
+    padding: 8px 16px 8px 44px;
+    line-height: var(--lh-t1-normal);
 }
 
 .icon {
-    margin-right: 8px;
+    position: absolute;
+    top: 12px;
+    left: 16px;
     color: var(--default-black-icons);
 }

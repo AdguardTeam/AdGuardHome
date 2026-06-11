@@ -114,9 +114,6 @@ export const saveClient =
                 });
                 dispatch(updateClientSuccess());
                 dispatch(clearClientForm());
-                dispatch(
-                    addSuccessToast(intl.getMessage('client_updated', { key: clientForm.name })),
-                );
                 dispatch(getClients());
                 return true;
             } catch (error) {

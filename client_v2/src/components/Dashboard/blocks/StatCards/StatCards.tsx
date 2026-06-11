@@ -1,6 +1,8 @@
 import React from 'react';
 
 import intl from 'panel/common/intl';
+import { RoutePath } from 'panel/components/Routes/Paths';
+import { QUERY_LOG_REASON_FILTER, QUERY_LOG_STATUS_FILTER } from 'panel/helpers/constants';
 
 import s from '../StatCard/StatCard.module.pcss';
 import { StatCard, CARDS_THEME, CARDS_COLORS } from '../StatCard';
@@ -38,6 +40,7 @@ export const StatCards = ({
                 data={dnsQueries}
                 color={CARDS_COLORS.QUERIES}
                 cardTheme={CARDS_THEME.QUERIES}
+                linkTo={RoutePath.QueryLog}
             />
             <StatCard
                 value={numBlockedFiltering}
@@ -46,6 +49,8 @@ export const StatCards = ({
                 color={CARDS_COLORS.ADS}
                 percentValue={blockedPercent}
                 cardTheme={CARDS_THEME.ADS}
+                linkTo={RoutePath.QueryLog}
+                query={{ status: QUERY_LOG_STATUS_FILTER.BLOCKED.QUERY }}
             />
             <StatCard
                 value={numReplacedSafebrowsing}
@@ -54,6 +59,8 @@ export const StatCards = ({
                 color={CARDS_COLORS.THREATS}
                 percentValue={threatsPercent}
                 cardTheme={CARDS_THEME.THREATS}
+                linkTo={RoutePath.QueryLog}
+                query={{ reason: QUERY_LOG_REASON_FILTER.BLOCKED_BY_THREATS.QUERY }}
             />
             <StatCard
                 value={numReplacedParental}
@@ -62,6 +69,8 @@ export const StatCards = ({
                 color={CARDS_COLORS.ADULT}
                 percentValue={parentalPercent}
                 cardTheme={CARDS_THEME.ADULT}
+                linkTo={RoutePath.QueryLog}
+                query={{ reason: QUERY_LOG_REASON_FILTER.BLOCKED_BY_PARENTAL_CONTROL.QUERY }}
             />
         </div>
     );

@@ -29,7 +29,7 @@ export const ClientsHeader = ({ currentTitle, extraLinks = [] }: ClientsHeaderPr
     const clientPageLink = isEdit
         ? {
               path: RoutePath.ClientsEdit,
-              title: form.name || intl.getMessage('clients_edit'),
+              title: form.originalName || intl.getMessage('clients_edit'),
               props: { clientName: encodeURIComponent(form.originalName) },
           }
         : {
@@ -38,11 +38,11 @@ export const ClientsHeader = ({ currentTitle, extraLinks = [] }: ClientsHeaderPr
           };
 
     const isMainFormPage =
-        matchPath(location.pathname, { path: Paths.ClientsAdd, exact: true }) !== null ||
-        matchPath(location.pathname, { path: Paths.ClientsEdit, exact: true }) !== null;
+        matchPath(Paths.ClientsAdd, location.pathname) !== null ||
+        matchPath(Paths.ClientsEdit, location.pathname) !== null;
 
     const pageTitle =
-        isEdit && isMainFormPage ? form.name || intl.getMessage('clients_edit') : currentTitle;
+        isEdit && isMainFormPage ? form.originalName || intl.getMessage('clients_edit') : currentTitle;
 
     const parentLinks = [
         { path: RoutePath.Clients, title: intl.getMessage('client_settings') },

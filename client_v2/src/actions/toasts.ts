@@ -7,8 +7,7 @@ type UndoCallback = () => void | Promise<void>;
 const undoRegistry = new Map<string, UndoCallback>();
 
 /** Retrieve an undo callback by toast ID. Called by the Toast component. */
-export const getUndoCallback = (id: string): UndoCallback | undefined =>
-    undoRegistry.get(id);
+export const getUndoCallback = (id: string): UndoCallback | undefined => undoRegistry.get(id);
 
 /** Remove an undo callback from the registry after the toast is dismissed. */
 export const clearUndoCallback = (id: string): void => {

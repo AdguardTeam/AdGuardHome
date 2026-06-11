@@ -4,7 +4,11 @@ import cn from 'clsx';
 import intl from 'panel/common/intl';
 import { captitalizeWords } from 'panel/helpers/helpers';
 import theme from 'panel/lib/theme';
-import { formatLogDate, formatLogTimeDetailed, getProtocolName } from 'panel/components/QueryLog/helpers';
+import {
+    formatLogDate,
+    formatLogTimeDetailed,
+    getProtocolName,
+} from 'panel/components/QueryLog/helpers';
 import { LogEntry } from 'panel/components/QueryLog/types';
 
 import s from '../LogTable.module.pcss';
@@ -96,12 +100,20 @@ export const QueryDetailsTooltipContent = ({ row }: Props) => {
                                                 href={trackerSource.url}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className={cn(s.queryDetailsTooltipLink, theme.status.statusGreen)}
+                                                className={cn(
+                                                    s.queryDetailsTooltipLink,
+                                                    theme.status.statusGreen,
+                                                )}
                                             >
                                                 {content}
                                             </a>
                                         ) : (
-                                            <span className={cn(s.queryDetailsTooltipValue, theme.text.t3)}>
+                                            <span
+                                                className={cn(
+                                                    s.queryDetailsTooltipValue,
+                                                    theme.text.t3,
+                                                )}
+                                            >
                                                 {content}
                                             </span>
                                         ),

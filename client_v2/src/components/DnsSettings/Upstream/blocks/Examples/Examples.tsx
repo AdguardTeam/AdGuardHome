@@ -35,7 +35,11 @@ const examples = [
     intl.getMessage('upstream_example_upstream_dot', {
         value: 'tls://unfiltered.adguard-dns.com',
         a: (text: string) => (
-            <a href="https://en.wikipedia.org/wiki/DNS_over_TLS" target="_blank" rel="noopener noreferrer">
+            <a
+                href="https://en.wikipedia.org/wiki/DNS_over_TLS"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
                 {text}
             </a>
         ),
@@ -43,7 +47,11 @@ const examples = [
     intl.getMessage('upstream_example_upstream_doh', {
         value: 'https://unfiltered.adguard-dns.com/dns-query',
         a: (text: string) => (
-            <a href="https://en.wikipedia.org/wiki/DNS_over_HTTPS" target="_blank" rel="noopener noreferrer">
+            <a
+                href="https://en.wikipedia.org/wiki/DNS_over_HTTPS"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
                 {text}
             </a>
         ),
@@ -51,7 +59,11 @@ const examples = [
     intl.getMessage('upstream_example_upstream_doh3', {
         value: 'h3://unfiltered.adguard-dns.com/dns-query',
         a: (text: string) => (
-            <a href="https://en.wikipedia.org/wiki/HTTP/3" target="_blank" rel="noopener noreferrer">
+            <a
+                href="https://en.wikipedia.org/wiki/HTTP/3"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
                 {text}
             </a>
         ),
@@ -59,7 +71,11 @@ const examples = [
     intl.getMessage('upstream_example_upstream_doq', {
         value: 'quic://unfiltered.adguard-dns.com',
         a: (text: string) => (
-            <a href="https://datatracker.ietf.org/doc/html/rfc9250" target="_blank" rel="noopener noreferrer">
+            <a
+                href="https://datatracker.ietf.org/doc/html/rfc9250"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
                 {text}
             </a>
         ),
@@ -77,7 +93,11 @@ const examples = [
             </a>
         ),
         c: (text: string) => (
-            <a href="https://en.wikipedia.org/wiki/DNS_over_HTTPS" target="_blank" rel="noopener noreferrer">
+            <a
+                href="https://en.wikipedia.org/wiki/DNS_over_HTTPS"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
                 {text}
             </a>
         ),
@@ -88,7 +108,8 @@ const examples = [
             <a
                 href="https://github.com/AdguardTeam/AdGuardHome/wiki/Configuration#upstreams-for-domains"
                 target="_blank"
-                rel="noopener noreferrer">
+                rel="noopener noreferrer"
+            >
                 {text}
             </a>
         ),
@@ -99,7 +120,8 @@ const examples = [
             <a
                 href="https://github.com/AdguardTeam/AdGuardHome/wiki/Configuration#upstreams-for-domains"
                 target="_blank"
-                rel="noopener noreferrer">
+                rel="noopener noreferrer"
+            >
                 {text}
             </a>
         ),

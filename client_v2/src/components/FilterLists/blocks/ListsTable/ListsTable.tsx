@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { Filter, formatShortDateTime } from 'panel/helpers/helpers';
 import intl from 'panel/common/intl';
@@ -6,6 +6,7 @@ import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from 'panel/helpers/localStora
 import { Table as ReactTable, TableColumn } from 'panel/common/ui/Table';
 import { Switch } from 'panel/common/controls/Switch';
 import { Icon } from 'panel/common/ui/Icon';
+import { SortSelect } from 'panel/common/ui/SortSelect';
 import theme from 'panel/lib/theme';
 
 import cn from 'clsx';
@@ -44,35 +45,61 @@ export const ListsTable = ({
     deleteFilterList,
     toggleFilterList,
 }: Props) => {
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
     const pageSize = useMemo(
         () => LocalStorageHelper.getItem(LOCAL_STORAGE_KEYS.BLOCKLIST_PAGE_SIZE) || undefined,
         [],
     );
+
+    const sortedFilters = useMemo(() => {
+        const items = [...(filters || [])];
+
+        items.sort((a, b) => {
+            const aName = (a.name || '').toLowerCase();
+            const bName = (b.name || '').toLowerCase();
+
+            if (aName < bName) {
+                return sortDirection === 'asc' ? -1 : 1;
+            }
+
+            if (aName > bName) {
+                return sortDirection === 'asc' ? 1 : -1;
+            }
+
+            return 0;
+        });
+
+        return items;
+    }, [filters, sortDirection]);
 
     const columns: TableColumn<Filter>[] = useMemo(
         () => [
             {
                 key: 'enabled',
                 header: {
-                    text: intl.getMessage('enabled_table_header'),
+                    text: '',
                     className: s.headerCell,
                 },
                 accessor: 'enabled',
                 sortable: false,
                 fitContent: true,
+                className: s.cellNameToggleOuter,
                 render: (value: boolean, row: Filter) => {
                     const { name, url, enabled } = row;
                     const id = `filter_${url}`;
 
                     return (
                         <div className={s.cell}>
-                            <span className={s.cellLabel}>{intl.getMessage('enabled_table_header')}</span>
+                            <span className={s.cellNameLabel}>{name}</span>
 
-                            <div className={s.cellValue}>
+                            <div className={s.cellValueToggle}>
                                 <Switch
                                     id={id}
                                     checked={enabled}
-                                    onChange={() => toggleFilterList(url, { name, url, enabled: !enabled })}
+                                    onChange={() =>
+                                        toggleFilterList(url, { name, url, enabled: !enabled })
+                                    }
                                     disabled={processingConfigFilter}
                                 />
                             </div>
@@ -88,18 +115,13 @@ export const ListsTable = ({
                 },
                 accessor: 'name',
                 sortable: true,
-                render: (value: string, row: Filter) => (
+                className: s.nameDesktopOnly,
+                render: (value: string) => (
                     <div className={s.cell}>
                         <span className={s.cellLabel}>{intl.getMessage('name_label')}</span>
 
                         <div className={s.cellValue}>
                             <span className={theme.common.textOverflow}>{value}</span>
-
-                            {(row as any).checksum && (
-                                <div title={(row as any).checksum}>
-                                    {intl.getMessage('checksum_table_header')}: {(row as any).checksum}
-                                </div>
-                            )}
                         </div>
                     </div>
                 ),
@@ -125,6 +147,15 @@ export const ListsTable = ({
                             >
                                 {value}
                             </a>
+
+                            <button
+                                type="button"
+                                className={s.copyButton}
+                                onClick={() => navigator.clipboard.writeText(value)}
+                                aria-label={intl.getMessage('copy')}
+                            >
+                                <Icon icon="copy" color="green" />
+                            </button>
                         </div>
                     </div>
                 ),
@@ -160,7 +191,9 @@ export const ListsTable = ({
 
                     return (
                         <div className={s.cell}>
-                            <span className={s.cellLabel}>{intl.getMessage('last_updated_label')}</span>
+                            <span className={s.cellLabel}>
+                                {intl.getMessage('last_updated_label')}
+                            </span>
 
                             <div className={s.cellValue}>
                                 <span>{result}</span>
@@ -172,38 +205,40 @@ export const ListsTable = ({
             {
                 key: 'actions',
                 header: {
-                    text: intl.getMessage('actions_label'),
+                    text: '',
                     className: s.headerCell,
                 },
                 accessor: 'url',
                 sortable: false,
+                width: 80,
                 render: (value: string, row: Filter) => {
                     const { name, url, enabled } = row;
 
                     return (
                         <div className={s.cell}>
-                            <span className={s.cellLabel}>{intl.getMessage('actions_label')}</span>
-
-                            <div className={s.cellValue}>
-                                <div className={s.cellActions}>
-                                    <button
-                                        type="button"
-                                        onClick={() => editFilterList(url, name, enabled)}
-                                        disabled={processingConfigFilter}
-                                        className={s.action}
-                                    >
+                            <div className={s.cellActions}>
+                                <button
+                                    type="button"
+                                    onClick={() => editFilterList(url, name, enabled)}
+                                    disabled={processingConfigFilter}
+                                    className={s.editAction}
+                                >
+                                    <span className={cn(s.editActionLabel, theme.text.t2)}>
+                                        {intl.getMessage('edit_table_action')}
+                                    </span>
+                                    <span className={s.editActionIcon}>
                                         <Icon icon="edit" color="gray" />
-                                    </button>
+                                    </span>
+                                </button>
 
-                                    <button
-                                        type="button"
-                                        onClick={() => deleteFilterList(url, name)}
-                                        disabled={processingConfigFilter}
-                                        className={s.action}
-                                    >
-                                        <Icon icon="delete" color="red" />
-                                    </button>
-                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => deleteFilterList(url, name)}
+                                    disabled={processingConfigFilter}
+                                    className={s.action}
+                                >
+                                    <Icon icon="delete" color="red" />
+                                </button>
                             </div>
                         </div>
                     );
@@ -220,7 +255,11 @@ export const ListsTable = ({
     const emptyTableContent = (id: TableIdsType) => {
         const renderButton = (text: string) => {
             return (
-                <button className={cn(theme.text.t3, theme.link.link)} type="button" onClick={() => addFilterList()}>
+                <button
+                    className={cn(theme.text.t3, theme.link.link)}
+                    type="button"
+                    onClick={() => addFilterList()}
+                >
                     {text}
                 </button>
             );
@@ -247,13 +286,19 @@ export const ListsTable = ({
     };
 
     return (
-        <ReactTable<Filter>
-            data={filters}
-            className={s.table}
-            columns={columns}
-            emptyTable={emptyTableContent(tableId)}
-            pageSize={pageSize}
-            onPageSizeChange={handlePageSizeChange}
-        />
+        <>
+            <div className={cn(theme.pagination.wrapper, s.sortDropdownMobile)}>
+                <SortSelect value={sortDirection} onChange={setSortDirection} />
+            </div>
+
+            <ReactTable<Filter>
+                data={sortedFilters}
+                className={s.table}
+                columns={columns}
+                emptyTable={emptyTableContent(tableId)}
+                pageSize={pageSize}
+                onPageSizeChange={handlePageSizeChange}
+            />
+        </>
     );
 };

@@ -69,12 +69,22 @@ export const ActionsMenu = ({
     };
 
     const menu = (
-        <ul className={s.menu} role="menu" data-testid={`${testIdPrefix}-actions-menu`} data-client={client}>
+        <ul
+            className={s.menu}
+            role="menu"
+            data-testid={`${testIdPrefix}-actions-menu`}
+            data-client={client}
+        >
             <li role="none">
                 <button
                     type="button"
                     data-testid={`${testIdPrefix}-action-toggle-block`}
-                    className={cn(s.menuItem, s.menuButton, theme.text.t3, isBlocked ? s.statusGreen : s.statusRed)}
+                    className={cn(
+                        s.menuItem,
+                        s.menuButton,
+                        theme.text.t3,
+                        isBlocked ? s.statusGreen : s.statusRed,
+                    )}
                     onClick={handleBlock}
                 >
                     {isBlocked ? intl.getMessage('unblock') : intl.getMessage('block')}
@@ -127,7 +137,11 @@ export const ActionsMenu = ({
             noIcon
             overlayClassName={s.overlay}
         >
-            <button type="button" className={s.trigger} data-testid={`${testIdPrefix}-actions-trigger`}>
+            <button
+                type="button"
+                className={s.trigger}
+                data-testid={`${testIdPrefix}-actions-trigger`}
+            >
                 <Icon icon="bullets" />
             </button>
         </Dropdown>

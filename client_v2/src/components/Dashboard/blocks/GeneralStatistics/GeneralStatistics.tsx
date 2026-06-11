@@ -27,7 +27,8 @@ export const GeneralStatistics = ({
     avgProcessingTime,
 }: Props) => {
     const blockedPercent = numDnsQueries > 0 ? (numBlockedFiltering / numDnsQueries) * 100 : 0;
-    const safebrowsingPercent = numDnsQueries > 0 ? (numReplacedSafebrowsing / numDnsQueries) * 100 : 0;
+    const safebrowsingPercent =
+        numDnsQueries > 0 ? (numReplacedSafebrowsing / numDnsQueries) * 100 : 0;
     const parentalPercent = numDnsQueries > 0 ? (numReplacedParental / numDnsQueries) * 100 : 0;
     const safesearchPercent = numDnsQueries > 0 ? (numReplacedSafesearch / numDnsQueries) * 100 : 0;
 
@@ -36,7 +37,9 @@ export const GeneralStatistics = ({
     return (
         <div className={s.card}>
             <div className={s.cardHeader}>
-                <div className={cn(theme.title.h5, s.cardTitle)}>{intl.getMessage('general_statistics')}</div>
+                <div className={cn(theme.title.h5, s.cardTitle)}>
+                    {intl.getMessage('general_statistics')}
+                </div>
 
                 {hasStats && (
                     <div className={cn(theme.text.t3, s.cardSubtitle)}>
@@ -97,7 +100,9 @@ export const GeneralStatistics = ({
                     <div className={s.processingTimeRow}>
                         <StatRow
                             label={intl.getMessage('average_time_processing')}
-                            value={intl.getMessage('processing_time_ms', { value: avgProcessingTime.toFixed(0) })}
+                            value={intl.getMessage('processing_time_ms', {
+                                value: avgProcessingTime.toFixed(0),
+                            })}
                             isQueriesValue={false}
                             icon="time"
                             rowTheme="averageProcessingTime"

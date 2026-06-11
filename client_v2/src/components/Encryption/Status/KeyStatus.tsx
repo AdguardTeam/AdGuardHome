@@ -12,8 +12,16 @@ type Props = {
 export const KeyStatus = ({ validKey, keyType }: Props) => (
     <StatusBlock
         variant={validKey ? 'success' : 'error'}
-        title={validKey ? intl.getMessage('encryption_key_valid') : intl.getMessage('encryption_key_invalid')}
+        title={
+            validKey
+                ? intl.getMessage('encryption_key_valid')
+                : intl.getMessage('encryption_key_invalid')
+        }
     >
-        {keyType && <div className={s.statusText}>{intl.getMessage('encryption_key_type', { value: keyType })}</div>}
+        {keyType && (
+            <div className={s.statusText}>
+                {intl.getMessage('encryption_key_type', { value: keyType })}
+            </div>
+        )}
     </StatusBlock>
 );

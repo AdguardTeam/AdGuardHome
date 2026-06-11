@@ -51,6 +51,7 @@ export const BlockedServices = ({ clientScope, className, breadcrumbs }: Props) 
 
     const [search, setSearch] = useState('');
     const [groupFilter, setGroupFilter] = useState<string[]>([]);
+    const [togglingId, setTogglingId] = useState<string | null>(null);
 
     useEffect(() => {
         if (!clientScope) {
@@ -60,6 +61,12 @@ export const BlockedServices = ({ clientScope, className, breadcrumbs }: Props) 
             dispatch(getAllBlockedServices());
         }
     }, [dispatch, clientScope]);
+
+    useEffect(() => {
+        if (!processingSet) {
+            setTogglingId(null);
+        }
+    }, [processingSet]);
 
     const blockedSet = useMemo(() => {
         if (clientScope) {
@@ -122,6 +129,7 @@ export const BlockedServices = ({ clientScope, className, breadcrumbs }: Props) 
             dispatch(updateClientFormField({ field: 'blocked_services', value: newIds }));
             return;
         }
+        setTogglingId(serviceId);
         const currentIds = list?.ids || [];
         const newIds = checked
             ? [...currentIds, serviceId]
@@ -138,9 +146,7 @@ export const BlockedServices = ({ clientScope, className, breadcrumbs }: Props) 
     };
 
     const isInitialLoading = !allServices && (processing || processingAll);
-    const isDisabled = clientScope
-        ? clientForm.use_global_blocked_services || processingSet
-        : processingSet;
+    const isGloballyDisabled = clientScope ? clientForm.use_global_blocked_services : false;
 
     if (isInitialLoading) {
         return null;
@@ -252,7 +258,7 @@ export const BlockedServices = ({ clientScope, className, breadcrumbs }: Props) 
                                 name={service.name}
                                 iconSvg={service.icon_svg}
                                 checked={blockedSet.has(service.id)}
-                                disabled={isDisabled}
+                                disabled={isGloballyDisabled || togglingId === service.id}
                                 onChange={handleToggleService}
                             />
                         ))

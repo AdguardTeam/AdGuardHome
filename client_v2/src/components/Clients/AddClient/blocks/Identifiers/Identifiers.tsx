@@ -39,6 +39,7 @@ export const Identifiers = () => {
         setValue,
         getValues,
         trigger,
+        reset,
     } = useForm<FormValues>({
         defaultValues: {
             ids: formState.ids.map((id: string) => ({ value: id })),
@@ -62,6 +63,18 @@ export const Identifiers = () => {
         }
     }, [formErrors.ids, trigger]);
 
+    // Sync Redux → RHF when identifiers are set externally (e.g. from URL
+    // params).  Only resets if the values actually differ to avoid loops from
+    // the RHF → Redux sync path.
+    useEffect(() => {
+        const rhfValues = getValues('ids').map((item: { value: string }) => item.value);
+        if (JSON.stringify(rhfValues) !== JSON.stringify(formState.ids)) {
+            reset({
+                ids: formState.ids.map((id: string) => ({ value: id })),
+            });
+        }
+    }, [formState.ids, getValues, reset]);
+
     const syncToRedux = () => {
         const values = getValues('ids').map((item) => item.value);
         dispatch(updateClientFormField({ field: 'ids', value: values }));
@@ -70,14 +83,12 @@ export const Identifiers = () => {
     const handleAdd = () => {
         append({ value: '' });
         const values = getValues('ids').map((item) => item.value);
-        dispatch(updateClientFormField({ field: 'ids', value: [...values, ''] }));
+        dispatch(updateClientFormField({ field: 'ids', value: values }));
     };
 
     const handleRemove = (index: number) => {
         remove(index);
-        const values = getValues('ids')
-            .filter((_: { value: string }, i: number) => i !== index)
-            .map((item) => item.value);
+        const values = getValues('ids').map((item) => item.value);
         dispatch(updateClientFormField({ field: 'ids', value: values }));
     };
 

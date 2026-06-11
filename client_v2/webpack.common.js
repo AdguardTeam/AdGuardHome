@@ -4,13 +4,11 @@ import HtmlWebpackPlugin from 'html-webpack-plugin';
 import { CleanWebpackPlugin } from 'clean-webpack-plugin';
 import CopyPlugin from 'copy-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
-import * as url from 'url';
 import { BUILD_ENVS } from './constants.js';
 
-// eslint-disable-next-line no-underscore-dangle
-const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
+const __dirname = path.dirname(new URL(import.meta.url).pathname);
 
-const RESOURCES_PATH = path.resolve(__dirname);
+const RESOURCES_PATH = __dirname;
 const ENTRY_REACT = path.resolve(RESOURCES_PATH, 'src/index.tsx');
 const ENTRY_INSTALL = path.resolve(RESOURCES_PATH, 'src/install/index.tsx');
 const ENTRY_LOGIN = path.resolve(RESOURCES_PATH, 'src/login/index.tsx');
@@ -37,6 +35,8 @@ function getAliasesFromTsconfig(tsconfigPath, resourcesPath) {
                 const aliasName = alias.replace('/*', '');
                 const target = targetArr[0].replace('/*', '');
                 aliases[aliasName] = path.resolve(resourcesPath, target);
+            } else {
+                aliases[alias] = path.resolve(resourcesPath, targetArr[0]);
             }
         });
     }
@@ -92,7 +92,9 @@ const config = {
                         options: {
                             importLoaders: 1,
                             modules: {
-                                localIdentName: isDev ? '[name]__[local]--[hash:base64:5]' : '[hash:base64]',
+                                localIdentName: isDev
+                                    ? '[name]__[local]--[hash:base64:5]'
+                                    : '[hash:base64]',
                                 namedExport: false,
                                 exportLocalsConvention: 'asIs',
                             },

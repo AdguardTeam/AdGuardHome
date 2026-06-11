@@ -7,11 +7,12 @@ import type { InstallInterface } from '../../../initialState';
 type SelectOption = {
     value: string;
     label: string;
-    isDisabled: boolean;
 };
 
 const getInterfaceDisplayName = (iface: InstallInterface) => {
-    const zoneAddr = iface?.ip_addresses?.find((addr) => typeof addr === 'string' && addr.includes('%'));
+    const zoneAddr = iface?.ip_addresses?.find(
+        (addr) => typeof addr === 'string' && addr.includes('%'),
+    );
     const zone = zoneAddr?.split('%')[1];
 
     return zone || iface.name;
@@ -21,20 +22,23 @@ export const buildInterfaceOptions = (interfaces: InstallInterface[]): SelectOpt
     {
         value: ALL_INTERFACES_IP,
         label: intl.getMessage('install_settings_all_interfaces'),
-        isDisabled: false,
     },
     ...(Array.isArray(interfaces)
         ? interfaces
-              .filter((iface) => iface?.ip_addresses?.length > 0)
+              .filter((iface) => {
+                  if (!iface?.ip_addresses?.length) {
+                      return false;
+                  }
+                  const isUp = iface.flags?.includes('up');
+                  return isUp;
+              })
               .map((iface) => {
                   const ip = getInterfaceIp(iface);
                   const displayName = getInterfaceDisplayName(iface);
-                  const isUp = iface.flags?.includes('up');
 
                   return {
                       value: ip,
-                      label: `${displayName} – ${ip}${!isUp ? ` (${intl.getMessage('down')})` : ''}`,
-                      isDisabled: !isUp,
+                      label: `${displayName} – ${ip}`,
                   };
               })
         : []),

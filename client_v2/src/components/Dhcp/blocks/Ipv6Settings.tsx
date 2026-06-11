@@ -22,7 +22,13 @@ type Props = {
     onSave: (values: V6Config) => void;
 };
 
-export const Ipv6Settings = ({ v6, interfaces, selectedInterface, processingConfig, onSave }: Props) => {
+export const Ipv6Settings = ({
+    v6,
+    interfaces,
+    selectedInterface,
+    processingConfig,
+    onSave,
+}: Props) => {
     const [rangeStart, setRangeStart] = useState(v6?.range_start || '');
     const [leaseDuration, setLeaseDuration] = useState<string>(
         v6?.lease_duration ? String(v6.lease_duration) : '',
@@ -56,7 +62,9 @@ export const Ipv6Settings = ({ v6, interfaces, selectedInterface, processingConf
                             id="v6_range_start"
                             placeholder={intl.getMessage('dhcp_form_range_start')}
                             value={rangeStart}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRangeStart(e.target.value)}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                setRangeStart(e.target.value)
+                            }
                             disabled={!hasIpv6}
                         />
                     </div>
@@ -69,7 +77,9 @@ export const Ipv6Settings = ({ v6, interfaces, selectedInterface, processingConf
                         label={intl.getMessage('dhcp_form_lease_title')}
                         placeholder="86400"
                         value={leaseDuration}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLeaseDuration(e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            setLeaseDuration(e.target.value)
+                        }
                         disabled={!hasIpv6}
                     />
                 </div>

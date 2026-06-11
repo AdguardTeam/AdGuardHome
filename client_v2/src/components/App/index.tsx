@@ -1,6 +1,6 @@
 import React, { useEffect, ComponentType } from 'react';
 
-import { HashRouter, Route } from 'react-router-dom';
+import { HashRouter, Route, Routes, Navigate } from 'react-router-dom';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 
 import { Sidebar } from 'panel/common/ui/Sidebar';
@@ -8,7 +8,7 @@ import { Icons } from 'panel/common/ui/Icons';
 import { Footer } from 'panel/common/ui/Footer';
 import { Header } from 'panel/common/ui/Header';
 import { Settings } from 'panel/components/Settings';
-import { LocalesType } from 'panel/common/intl';
+import intl, { LocalesType } from 'panel/common/intl';
 import { Encryption } from 'panel/components/Encryption';
 import { Blocklists } from 'panel/components/FilterLists/Blocklists';
 import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from 'panel/helpers/localStorageHelper';
@@ -20,10 +20,9 @@ import { Dashboard } from 'panel/components/Dashboard';
 import { Dhcp } from 'panel/components/Dhcp';
 import { QueryLog } from 'panel/components/QueryLog';
 import Toasts from '../Toasts';
-import i18n from '../../i18n';
 import { THEMES } from '../../helpers/constants';
 import { setHtmlLangAttr, setUITheme } from '../../helpers/helpers';
-import { changeLanguage, getDnsStatus, getTimerStatus } from '../../actions';
+import { getDnsStatus, getTimerStatus } from '../../actions';
 import { RootState } from '../../initialState';
 
 import s from './styles.module.pcss';
@@ -40,7 +39,6 @@ import { ClientSchedule } from '../Clients/AddClient/blocks/ClientSchedule';
 type RouteConfig = {
     path: string;
     component: ComponentType;
-    exact: boolean;
 };
 
 const SetupGuideRoute = () => <SetupGuide />;
@@ -55,112 +53,90 @@ const ROUTES: RouteConfig[] = [
     {
         path: '/dashboard',
         component: Dashboard,
-        exact: true,
     },
     {
         path: '/settings',
         component: Settings,
-        exact: true,
     },
     {
         path: '/encryption',
         component: Encryption,
-        exact: true,
     },
     {
         path: '/dns',
         component: DnsSettings,
-        exact: true,
     },
     {
         path: '/blocklists',
         component: Blocklists,
-        exact: true,
     },
     {
         path: '/allowlists',
         component: Allowlists,
-        exact: true,
     },
     {
         path: '/user_rules',
         component: UserRules,
-        exact: true,
     },
     {
         path: '/dns_rewrites',
         component: DNSRewrites,
-        exact: true,
     },
     {
         path: '/dhcp',
         component: Dhcp,
-        exact: true,
     },
     {
         path: '/guide',
         component: SetupGuideRoute,
-        exact: true,
     },
     {
         path: '/logs',
         component: QueryLog,
-        exact: true,
     },
     {
         path: '/blocked_services/schedule',
         component: InactivityScheduleRoute,
-        exact: true,
     },
     {
         path: '/blocked_services',
         component: BlockedServicesRoute,
-        exact: true,
     },
     {
         path: '/clients/add/blocked_services/schedule',
         component: ClientScheduleRoute,
-        exact: true,
     },
     {
         path: '/clients/add/blocked_services',
         component: ClientBlockedServicesRoute,
-        exact: true,
     },
     {
         path: '/clients/add/protection',
         component: ProtectionRoute,
-        exact: true,
     },
     {
         path: '/clients/add',
         component: AddClientRoute,
-        exact: true,
     },
     {
         path: '/clients/edit/:clientName/blocked_services/schedule',
         component: ClientScheduleRoute,
-        exact: true,
     },
     {
         path: '/clients/edit/:clientName/blocked_services',
         component: ClientBlockedServicesRoute,
-        exact: true,
     },
     {
         path: '/clients/edit/:clientName/protection',
         component: ProtectionRoute,
-        exact: true,
     },
     {
         path: '/clients/edit/:clientName',
         component: AddClientRoute,
-        exact: true,
     },
     {
         path: '/clients',
         component: Clients,
-        exact: true,
     },
 ];
 
@@ -190,15 +166,11 @@ const App = () => {
     const setLanguage = () => {
         if (!processing) {
             if (language) {
-                i18n.changeLanguage(language);
+                intl.changeLanguage(language as LocalesType);
                 setHtmlLangAttr(language);
                 LocalStorageHelper.setItem(LOCAL_STORAGE_KEYS.LANGUAGE, language);
             }
         }
-
-        i18n.on('languageChanged', (lang: LocalesType) => {
-            dispatch(changeLanguage(lang));
-        });
     };
 
     useEffect(() => {
@@ -240,23 +212,25 @@ const App = () => {
     }, [theme]);
 
     return (
-        <HashRouter hashType="noslash">
+        <HashRouter>
             <Header />
 
             <div className={s.wrapper}>
                 <Sidebar />
 
                 <div className={s.bodyWrapper}>
-                    {!processing &&
-                        isCoreRunning &&
-                        ROUTES.map((route, index) => (
-                            <Route
-                                key={index}
-                                exact={route.exact}
-                                path={route.path}
-                                component={route.component}
-                            />
-                        ))}
+                    {!processing && isCoreRunning && (
+                        <Routes>
+                            {ROUTES.map((route) => (
+                                <Route
+                                    key={route.path}
+                                    path={route.path}
+                                    element={<route.component />}
+                                />
+                            ))}
+                            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                        </Routes>
+                    )}
                 </div>
             </div>
 

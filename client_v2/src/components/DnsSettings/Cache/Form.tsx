@@ -84,37 +84,47 @@ export const Form = ({ initialValues, onSubmit }: CacheFormProps) => {
         switch (name) {
             case CACHE_CONFIG_FIELDS.cache_size: {
                 if (cacheSizeZeroWhenEnabled) {
-                    return <div className={theme.form.error}>{intl.getMessage('cache_config_size_validation')}</div>;
+                    return (
+                        <div className={theme.form.error}>
+                            {intl.getMessage('cache_config_size_validation')}
+                        </div>
+                    );
                 }
 
                 if (cache_size > CACHE_TTL_MAX_VALUE || cache_size < 0) {
-                    return <div className={theme.form.error}>
-                        {intl.getMessage('form_value_length_common_error', {
-                            max_length: formatNumber(CACHE_TTL_MAX_VALUE),
-                        })}
-                    </div>;
+                    return (
+                        <div className={theme.form.error}>
+                            {intl.getMessage('form_value_length_common_error', {
+                                max_length: formatNumber(CACHE_TTL_MAX_VALUE),
+                            })}
+                        </div>
+                    );
                 }
 
                 break;
             }
             case CACHE_CONFIG_FIELDS.cache_ttl_min: {
                 if (cache_ttl_min > CACHE_TTL_MAX_VALUE || cache_ttl_min < 0) {
-                    return <div className={theme.form.error}>
-                        {intl.getMessage('form_value_length_common_error', {
-                            max_length: formatNumber(CACHE_TTL_MAX_VALUE),
-                        })}
-                    </div>;
+                    return (
+                        <div className={theme.form.error}>
+                            {intl.getMessage('form_value_length_common_error', {
+                                max_length: formatNumber(CACHE_TTL_MAX_VALUE),
+                            })}
+                        </div>
+                    );
                 }
 
                 break;
             }
             case CACHE_CONFIG_FIELDS.cache_ttl_max:
                 if (cache_ttl_max > CACHE_TTL_MAX_VALUE || cache_ttl_max < 0) {
-                    return <div className={theme.form.error}>
-                        {intl.getMessage('form_value_length_common_error', {
-                            max_length: formatNumber(CACHE_TTL_MAX_VALUE),
-                        })}
-                    </div>;
+                    return (
+                        <div className={theme.form.error}>
+                            {intl.getMessage('form_value_length_common_error', {
+                                max_length: formatNumber(CACHE_TTL_MAX_VALUE),
+                            })}
+                        </div>
+                    );
                 }
 
                 break;
@@ -152,10 +162,15 @@ export const Form = ({ initialValues, onSubmit }: CacheFormProps) => {
                                 onChange={field.onChange}
                                 onBlur={field.onBlur}
                                 data-testid="dns_cache_enabled"
-                                verticalAlign="start">
+                                verticalAlign="start"
+                            >
                                 <div>
-                                    <div className={theme.text.t2}>{intl.getMessage('cache_enabled')}</div>
-                                    <div className={theme.text.t4}>{intl.getMessage('cache_enabled_desc')}</div>
+                                    <div className={theme.text.t2}>
+                                        {intl.getMessage('cache_enabled')}
+                                    </div>
+                                    <div className={theme.text.t4}>
+                                        {intl.getMessage('cache_enabled_desc')}
+                                    </div>
                                 </div>
                             </Checkbox>
                         )}
@@ -182,7 +197,8 @@ export const Form = ({ initialValues, onSubmit }: CacheFormProps) => {
                                     min={0}
                                     max={UINT32_RANGE.MAX}
                                     onChange={(e) => {
-                                        const value = e.target.value === '' ? 0 : Number(e.target.value);
+                                        const value =
+                                            e.target.value === '' ? 0 : Number(e.target.value);
                                         field.onChange(value);
                                     }}
                                     value={String(field.value)}
@@ -195,7 +211,9 @@ export const Form = ({ initialValues, onSubmit }: CacheFormProps) => {
                 ))}
 
                 {minExceedsMax && (
-                    <div className={theme.form.error}>{intl.getMessage('cache_config_ttl_validation')}</div>
+                    <div className={theme.form.error}>
+                        {intl.getMessage('cache_config_ttl_validation')}
+                    </div>
                 )}
 
                 <div className={theme.form.input}>
@@ -209,9 +227,12 @@ export const Form = ({ initialValues, onSubmit }: CacheFormProps) => {
                                 onChange={field.onChange}
                                 onBlur={field.onBlur}
                                 data-testid="dns_cache_optimistic"
-                                verticalAlign="start">
+                                verticalAlign="start"
+                            >
                                 <div>
-                                    <div className={theme.text.t2}>{intl.getMessage('cache_config_optimistic')}</div>
+                                    <div className={theme.text.t2}>
+                                        {intl.getMessage('cache_config_optimistic')}
+                                    </div>
                                     <div className={theme.text.t4}>
                                         {intl.getMessage('cache_config_optimistic_desc')}
                                     </div>
@@ -228,8 +249,14 @@ export const Form = ({ initialValues, onSubmit }: CacheFormProps) => {
                     id="dns_save"
                     variant="primary"
                     size="small"
-                    disabled={isSubmitting || processingSetConfig || minExceedsMax || cacheSizeZeroWhenEnabled}
-                    className={theme.form.button}>
+                    disabled={
+                        isSubmitting ||
+                        processingSetConfig ||
+                        minExceedsMax ||
+                        cacheSizeZeroWhenEnabled
+                    }
+                    className={theme.form.button}
+                >
                     {intl.getMessage('save')}
                 </Button>
 
@@ -239,7 +266,8 @@ export const Form = ({ initialValues, onSubmit }: CacheFormProps) => {
                     variant="secondary-danger"
                     size="small"
                     onClick={handleClearCacheOpen}
-                    className={theme.form.button}>
+                    className={theme.form.button}
+                >
                     {intl.getMessage('cache_config_clear')}
                 </Button>
             </div>

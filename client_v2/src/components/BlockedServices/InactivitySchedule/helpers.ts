@@ -2,23 +2,23 @@ export const FULL_DAY_END_MS = 86340000;
 
 export const DAYS_OF_WEEK = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
 
-export type DayKey = typeof DAYS_OF_WEEK[number];
+export type DayKey = (typeof DAYS_OF_WEEK)[number];
 
 export type TimeValue = {
     hours: number;
     minutes: number;
-}
+};
 
 export type ScheduleTimeOption = {
     label: string;
     value: number;
     isDisabled?: boolean;
-}
+};
 
 export type ScheduleDayData = {
     start: number;
     end: number;
-}
+};
 
 export type ScheduleData = {
     time_zone: string;
@@ -29,7 +29,7 @@ export type ScheduleData = {
     fri?: ScheduleDayData;
     sat?: ScheduleDayData;
     sun?: ScheduleDayData;
-}
+};
 
 export const msToTime = (ms: number): TimeValue => {
     const totalMinutes = Math.floor(ms / 60000);
@@ -103,9 +103,10 @@ export const getEndTimeOptions = (
         })),
         minutes: MINUTES_OPTIONS.map((option) => ({
             ...option,
-            isDisabled: !hasAvailableEndTime
-                || selectedEndHour < start.hours
-                || (selectedEndHour === start.hours && option.value <= start.minutes),
+            isDisabled:
+                !hasAvailableEndTime ||
+                selectedEndHour < start.hours ||
+                (selectedEndHour === start.hours && option.value <= start.minutes),
         })),
     };
 };

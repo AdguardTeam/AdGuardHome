@@ -16,8 +16,14 @@ export type StatRowProps = {
     percent?: number;
     isTotal?: boolean;
     isQueriesValue?: boolean;
-    tooltip: string,
-    rowTheme: 'dnsQueries' | 'adsBlocked' | 'threatsBlocked' | 'adultWebsitesBlocked' | 'safeSearchUsed' | 'averageProcessingTime';
+    tooltip: string;
+    rowTheme:
+        | 'dnsQueries'
+        | 'adsBlocked'
+        | 'threatsBlocked'
+        | 'adultWebsitesBlocked'
+        | 'safeSearchUsed'
+        | 'averageProcessingTime';
 };
 
 export const StatRow = ({
@@ -28,7 +34,8 @@ export const StatRow = ({
     isTotal,
     isQueriesValue = true,
     tooltip,
-    rowTheme }: StatRowProps) => (
+    rowTheme,
+}: StatRowProps) => (
     <div className={cn(s.statRow, s[rowTheme])}>
         <Dropdown
             trigger="hover"
@@ -55,7 +62,8 @@ export const StatRow = ({
                     overlayClassName={s.queryTooltipOverlay}
                     menu={
                         <div className={s.queryTooltip}>
-                            {typeof value === 'number' ? formatNumber(value) : value} {intl.getMessage('queries').toLowerCase()}
+                            {typeof value === 'number' ? formatNumber(value) : value}{' '}
+                            {intl.getMessage('queries').toLowerCase()}
                         </div>
                     }
                 >
@@ -65,23 +73,22 @@ export const StatRow = ({
                         <div className={cn(theme.text.t3, theme.text.condenced, s.queryPercent)}>
                             {isTotal ? (
                                 <span>({intl.getMessage('total')})</span>
-                            ) : percent !== undefined && percent > 0 && (
-                                <span>({percent.toFixed(1)}%)</span>
+                            ) : (
+                                percent !== undefined &&
+                                percent > 0 && <span>({percent.toFixed(1)}%)</span>
                             )}
                         </div>
                     </div>
                 </Dropdown>
             ) : (
-                <div className={cn(theme.text.t3, theme.text.condenced, s.queryCount)}>
-                    {value}
-                </div>
+                <div className={cn(theme.text.t3, theme.text.condenced, s.queryCount)}>{value}</div>
             )}
 
             {isQueriesValue && (
                 <div className={s.queryBar}>
                     <div
                         className={s.queryBarFill}
-                        style={{ width: `${isTotal ? 100 : (percent || 0)}%` }}
+                        style={{ width: `${isTotal ? 100 : percent || 0}%` }}
                     />
                 </div>
             )}
@@ -91,7 +98,7 @@ export const StatRow = ({
             <div className={cn(s.queryBar, s.queryBarMobile)}>
                 <div
                     className={s.queryBarFill}
-                    style={{ width: `${isTotal ? 100 : (percent || 0)}%` }}
+                    style={{ width: `${isTotal ? 100 : percent || 0}%` }}
                 />
             </div>
         )}

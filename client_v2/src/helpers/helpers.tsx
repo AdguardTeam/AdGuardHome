@@ -1,5 +1,4 @@
-import 'url-polyfill';
-import { parse as dateParse, format as dateFormat } from 'date-fns';
+import { parseISO, format as dateFormat } from 'date-fns';
 import round from 'lodash/round';
 import ipaddr, { IPv4, IPv6 } from 'ipaddr.js';
 import queryString from 'qs';
@@ -34,7 +33,7 @@ import { DhcpInterfaces, InstallInterface } from '../initialState';
  * @returns {string} Returns the time in the format HH:mm:ss
  */
 export const formatTime = (time: any, options = DEFAULT_TIME_FORMAT) => {
-    const parsedTime = dateParse(time);
+    const parsedTime = parseISO(time);
     return dateFormat(parsedTime, options);
 };
 
@@ -47,6 +46,10 @@ export const formatDateTime = (
     dateTime: string,
     options: Intl.DateTimeFormatOptions = DEFAULT_DATE_FORMAT_OPTIONS,
 ) => {
+    if (!dateTime) {
+        return '-';
+    }
+
     const parsedTime = new Date(dateTime);
 
     return parsedTime.toLocaleString(navigator.language, options);
@@ -656,7 +659,7 @@ const isIpMatchCidr = (parsedIp: any, parsedCidr: any) => {
         const ipVersion = parsedIp.kind();
 
         return ipVersion === cidrIpVersion && parsedIp.match(parsedCidr);
-    } catch (e) {
+    } catch (_e) {
         return false;
     }
 };
@@ -716,7 +719,7 @@ export const findAddressType = (address: any) => {
         }
 
         return ADDRESS_TYPES.UNKNOWN;
-    } catch (e) {
+    } catch (_e) {
         return ADDRESS_TYPES.UNKNOWN;
     }
 };
@@ -924,12 +927,11 @@ const getAddressesComparisonBytes = (item: any) => {
 };
 
 /**
- * Compare function for IP and CIDR sort in ascending order (supports both v4 and v6)
- * @param a
- * @param b
- * @returns {number} -1 | 0 | 1
+ * Compare function for IP addresses and CIDR ranges in ascending order.
+ * Supports both IPv4 and IPv6. IPv4 addresses are sorted before IPv6.
+ * Individual IPs are sorted after their equivalent /32 (or /128) CIDR range.
  */
-export const sortIp = (a: any, b: any) => {
+export const sortIp = (a: string, b: string): number => {
     try {
         const comparisonBytesA = Array.isArray(a)
             ? getAddressesComparisonBytes(a[0])
@@ -942,11 +944,9 @@ export const sortIp = (a: any, b: any) => {
             const byteA = comparisonBytesA[i];
             const byteB = comparisonBytesB[i];
 
-            if (byteA === byteB) {
-                // eslint-disable-next-line no-continue
-                continue;
+            if (byteA !== byteB) {
+                return byteA > byteB ? 1 : -1;
             }
-            return byteA > byteB ? 1 : -1;
         }
 
         return 0;

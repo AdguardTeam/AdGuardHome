@@ -13,13 +13,9 @@ export type CopiedTextProps = {
     text: string;
     className?: string;
     onCopy?: (text: string) => void;
-}
+};
 
-export const CopiedText = ({
-    text,
-    className,
-    onCopy,
-}: CopiedTextProps) => {
+export const CopiedText = ({ text, className, onCopy }: CopiedTextProps) => {
     const dispatch = useDispatch();
     const [isCopied, setIsCopied] = useState(false);
 
@@ -62,15 +58,8 @@ export const CopiedText = ({
             role="button"
             aria-label={isCopied ? intl.getMessage('copied') : intl.getMessage('copy')}
         >
-            <span
-                className={s.text}
-            >
-                {text}
-            </span>
-            <Icon
-                icon="copy"
-                className={cn(s.icon, { [s.copied]: isCopied })}
-            />
+            <span className={s.text}>{text}</span>
+            <Icon icon="copy" className={cn(s.icon, { [s.copied]: isCopied })} />
         </div>
     );
 };

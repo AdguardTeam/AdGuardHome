@@ -48,6 +48,7 @@ export const RetentionCustomInput = <TFormValues extends { customInterval?: numb
                     <Input
                         ref={inputRef}
                         id={inputId}
+                        type="number"
                         label={inputLabel}
                         placeholder={placeholder}
                         value={field.value ?? ''}

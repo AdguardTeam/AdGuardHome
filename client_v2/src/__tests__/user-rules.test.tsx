@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor, within, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -337,10 +337,14 @@ const submitCheckForm = async (
 ) => {
     const qtype = options.qtype ?? 'A';
 
-    await user.type(screen.getByTestId('user-rules-check-hostname'), options.hostname);
+    fireEvent.change(screen.getByTestId('user-rules-check-hostname'), {
+        target: { value: options.hostname },
+    });
 
     if (options.client) {
-        await user.type(screen.getByTestId('user-rules-check-client'), options.client);
+        fireEvent.change(screen.getByTestId('user-rules-check-client'), {
+            target: { value: options.client },
+        });
     }
 
     if (qtype !== 'A') {
@@ -348,7 +352,6 @@ const submitCheckForm = async (
         await user.click(within(screen.getByRole('listbox')).getByText(qtype));
     }
 
-    await user.tab();
     await user.click(screen.getByTestId('user-rules-check-submit'));
 };
 
@@ -422,9 +425,7 @@ const resultActionScenarios = [
         name: 'allowlist filter allowed results',
         renderScenario: () => renderMatchedAllowlistResult(),
         title: 'Domain is allowed',
-        actions: [
-            ['disable-filter', 'Disable filter'],
-        ],
+        actions: [['disable-filter', 'Disable filter']],
     },
 ];
 
@@ -869,9 +870,7 @@ describe('UserRules harness', () => {
                 .querySelectorAll('[data-testid^="user-rules-result-action-"]'),
         ).map((element) => element.getAttribute('data-testid'));
 
-        expect(actionOrder).toEqual([
-            'user-rules-result-action-disable-filter',
-        ]);
+        expect(actionOrder).toEqual(['user-rules-result-action-disable-filter']);
     });
 
     settingToggleScenarios.forEach(

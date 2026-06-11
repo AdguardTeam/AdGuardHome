@@ -28,15 +28,24 @@ type Props = {
 
 export const TopQueriedDomains = ({ topQueriedDomains, numDnsQueries }: Props) => {
     const isDesktop = useIsDesktop();
-    const { sortedData: sortedDomains, sortField, sortDirection, handleSort } = useSortedData(topQueriedDomains);
-    const visibleDomains = isDesktop ? sortedDomains : sortedDomains.slice(0, MOBILE_TABLE_MAX_ROWS);
+    const {
+        sortedData: sortedDomains,
+        sortField,
+        sortDirection,
+        handleSort,
+    } = useSortedData(topQueriedDomains);
+    const visibleDomains = isDesktop
+        ? sortedDomains
+        : sortedDomains.slice(0, MOBILE_TABLE_MAX_ROWS);
 
     const hasStats = topQueriedDomains.length > 0;
 
     return (
         <div className={s.card}>
             <div className={s.cardHeader}>
-                <div className={cn(theme.title.h5, s.cardTitle)}>{intl.getMessage('stats_query_domain')}</div>
+                <div className={cn(theme.title.h5, s.cardTitle)}>
+                    {intl.getMessage('stats_query_domain')}
+                </div>
             </div>
 
             {hasStats && (
@@ -52,12 +61,19 @@ export const TopQueriedDomains = ({ topQueriedDomains, numDnsQueries }: Props) =
             <div className={s.tableRows}>
                 {hasStats ? (
                     visibleDomains.map((domain) => {
-                        const percent = numDnsQueries > 0 ? (domain.count / numDnsQueries) * 100 : 0;
+                        const percent =
+                            numDnsQueries > 0 ? (domain.count / numDnsQueries) * 100 : 0;
                         const trackerData = getTrackerData(domain.name);
 
                         return (
                             <div key={domain.name} className={cn(s.tableRow, s.statRowValue)}>
-                                <div className={cn(theme.text.t3, theme.text.condenced, s.tableRowLeft)}>
+                                <div
+                                    className={cn(
+                                        theme.text.t3,
+                                        theme.text.condenced,
+                                        s.tableRowLeft,
+                                    )}
+                                >
                                     {trackerData ? (
                                         <Dropdown
                                             menu={<TrackerTooltip trackerData={trackerData} />}
@@ -82,14 +98,27 @@ export const TopQueriedDomains = ({ topQueriedDomains, numDnsQueries }: Props) =
                                         overlayClassName={s.queryTooltipOverlay}
                                         menu={
                                             <div className={s.queryTooltip}>
-                                                {formatNumber(domain.count)} {intl.getMessage('queries').toLowerCase()}
+                                                {formatNumber(domain.count)}{' '}
+                                                {intl.getMessage('queries').toLowerCase()}
                                             </div>
                                         }
                                     >
-                                        <div className={cn(theme.text.t3, theme.text.condenced, s.queryCount)}>
+                                        <div
+                                            className={cn(
+                                                theme.text.t3,
+                                                theme.text.condenced,
+                                                s.queryCount,
+                                            )}
+                                        >
                                             {formatCompactNumber(domain.count)}
 
-                                            <div className={cn(theme.text.t3, theme.text.condenced, s.queryPercent)}>
+                                            <div
+                                                className={cn(
+                                                    theme.text.t3,
+                                                    theme.text.condenced,
+                                                    s.queryPercent,
+                                                )}
+                                            >
                                                 ({percent.toFixed(1)}%)
                                             </div>
                                         </div>

@@ -69,7 +69,6 @@ const defaultFormValues: FormValues = {
 };
 
 export const MobileConfigForm = ({ initialValues }: Props) => {
-
     const {
         watch,
         control,
@@ -94,7 +93,6 @@ export const MobileConfigForm = ({ initialValues }: Props) => {
 
         return host;
     };
-
 
     return (
         <form onSubmit={(e) => e.preventDefault()}>
@@ -147,25 +145,22 @@ export const MobileConfigForm = ({ initialValues }: Props) => {
                     </div>
                 )}
 
-
                 <div className={cn(s.formGroup, s.formGroupSettings)}>
                     <label htmlFor="clientId" className={cn(s.formLabel, s.formLabelWithDesc)}>
                         {intl.getMessage('client_id')}
                         <FaqTooltip
-                            text={
-                                intl.getMessage('client_id_faq', {
-                                    a: (text: string) => (
-                                        <a
-                                            href={CLIENT_ID_LINK}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className={s.dnsLink}
-                                        >
-                                            {text}
-                                        </a>
-                                    ),
-                                })
-                            }
+                            text={intl.getMessage('client_id_faq', {
+                                a: (text: string) => (
+                                    <a
+                                        href={CLIENT_ID_LINK}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className={s.dnsLink}
+                                    >
+                                        {text}
+                                    </a>
+                                ),
+                            })}
                         />
                     </label>
 
@@ -189,19 +184,29 @@ export const MobileConfigForm = ({ initialValues }: Props) => {
                 </div>
 
                 <div className={cn(s.formGroup, s.formGroupSettings)}>
-                    <label className={s.formLabel}>
-                        {intl.getMessage('protocol')}
-                    </label>
+                    <label className={s.formLabel}>{intl.getMessage('protocol')}</label>
                     <Controller
                         name="protocol"
                         control={control}
                         render={({ field }) => (
                             <Select
                                 options={[
-                                    { value: MOBILE_CONFIG_LINKS.DOT, label: intl.getMessage('dns_over_tls') },
-                                    { value: MOBILE_CONFIG_LINKS.DOH, label: intl.getMessage('dns_over_https') }
+                                    {
+                                        value: MOBILE_CONFIG_LINKS.DOT,
+                                        label: intl.getMessage('dns_over_tls'),
+                                    },
+                                    {
+                                        value: MOBILE_CONFIG_LINKS.DOH,
+                                        label: intl.getMessage('dns_over_https'),
+                                    },
                                 ]}
-                                value={{ value: field.value, label: field.value === MOBILE_CONFIG_LINKS.DOT ? intl.getMessage('dns_over_tls') : intl.getMessage('dns_over_https') }}
+                                value={{
+                                    value: field.value,
+                                    label:
+                                        field.value === MOBILE_CONFIG_LINKS.DOT
+                                            ? intl.getMessage('dns_over_tls')
+                                            : intl.getMessage('dns_over_https'),
+                                }}
                                 onChange={(option) => field.onChange(option?.value)}
                                 isSearchable={false}
                                 size="responsive"

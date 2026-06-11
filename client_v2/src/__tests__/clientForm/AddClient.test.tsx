@@ -49,7 +49,10 @@ describe('AddClient Main Form', () => {
 
     it('renders client name input', () => {
         render(
-            <MemoryRouter initialEntries={['/clients/add']}>
+            <MemoryRouter
+                future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+                initialEntries={['/clients/add']}
+            >
                 <AddClient />
             </MemoryRouter>,
         );
@@ -58,7 +61,10 @@ describe('AddClient Main Form', () => {
 
     it('renders identifier rows with add button', () => {
         render(
-            <MemoryRouter initialEntries={['/clients/add']}>
+            <MemoryRouter
+                future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+                initialEntries={['/clients/add']}
+            >
                 <AddClient />
             </MemoryRouter>,
         );
@@ -67,7 +73,10 @@ describe('AddClient Main Form', () => {
 
     it('renders Protection and Blocked services navigation links', () => {
         render(
-            <MemoryRouter initialEntries={['/clients/add']}>
+            <MemoryRouter
+                future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+                initialEntries={['/clients/add']}
+            >
                 <AddClient />
             </MemoryRouter>,
         );
@@ -77,7 +86,10 @@ describe('AddClient Main Form', () => {
 
     it('renders Save and Cancel buttons', () => {
         render(
-            <MemoryRouter initialEntries={['/clients/add']}>
+            <MemoryRouter
+                future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+                initialEntries={['/clients/add']}
+            >
                 <AddClient />
             </MemoryRouter>,
         );

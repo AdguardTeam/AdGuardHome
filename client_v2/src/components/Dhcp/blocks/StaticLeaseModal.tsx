@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
 import intl from 'panel/common/intl';
@@ -13,7 +13,10 @@ import {
     validateHostname,
     validateIpNotDuplicate,
     validateMacNotDuplicate,
+    validateIpv4InCidr,
+    validateIpGateway,
 } from 'panel/helpers/validators';
+import { parseSubnetMask } from 'panel/helpers/helpers';
 
 type LeaseData = {
     mac: string;
@@ -29,6 +32,7 @@ type Props = {
     processingAdding: boolean;
     processingUpdating: boolean;
     staticLeases: LeaseData[];
+    dhcpConfig?: { gatewayIp: string; subnetMask: string };
     onSubmit: (data: LeaseData) => void;
     onClose: () => void;
 };
@@ -41,6 +45,7 @@ export const StaticLeaseModal = ({
     processingAdding,
     processingUpdating,
     staticLeases,
+    dhcpConfig,
     onSubmit,
     onClose,
 }: Props) => {
@@ -68,6 +73,17 @@ export const StaticLeaseModal = ({
 
     const isProcessing = processingAdding || processingUpdating;
 
+    const cidr = useMemo(() => {
+        if (!dhcpConfig?.gatewayIp || !dhcpConfig?.subnetMask) {
+            return undefined;
+        }
+        const prefix = parseSubnetMask(dhcpConfig.subnetMask);
+        if (prefix === null) {
+            return undefined;
+        }
+        return `${dhcpConfig.gatewayIp}/${prefix}`;
+    }, [dhcpConfig]);
+
     const getTitle = () => {
         if (isMakeStatic) {
             return intl.getMessage('make_static');
@@ -78,9 +94,7 @@ export const StaticLeaseModal = ({
         return intl.getMessage('dhcp_new_static_lease');
     };
 
-    const submitLabel = isMakeStatic
-        ? intl.getMessage('make_static')
-        : intl.getMessage('save');
+    const submitLabel = isMakeStatic ? intl.getMessage('make_static') : intl.getMessage('save');
 
     return (
         <Dialog
@@ -91,9 +105,7 @@ export const StaticLeaseModal = ({
         >
             <form onSubmit={handleSubmit(onSubmit)}>
                 {isMakeStatic && (
-                    <div className={theme.dialog.body}>
-                        {intl.getMessage('make_static_desc')}
-                    </div>
+                    <div className={theme.dialog.body}>{intl.getMessage('make_static_desc')}</div>
                 )}
                 <div className={theme.form.group}>
                     <div className={theme.form.input}>
@@ -157,6 +169,20 @@ export const StaticLeaseModal = ({
                                         staticLeases,
                                         isEdit ? initialData?.ip : undefined,
                                     ),
+                                    validateIpv4InCidr: (value: string) => {
+                                        if (!cidr || !value) {
+                                            return undefined;
+                                        }
+                                        return validateIpv4InCidr(value, { cidr });
+                                    },
+                                    validateIpGateway: (value: string) => {
+                                        if (!dhcpConfig?.gatewayIp || !value) {
+                                            return undefined;
+                                        }
+                                        return validateIpGateway(value, {
+                                            gatewayIp: dhcpConfig.gatewayIp,
+                                        });
+                                    },
                                 },
                             }}
                             render={({ field, fieldState }) => (

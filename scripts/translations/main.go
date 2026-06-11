@@ -77,8 +77,7 @@ func main() {
 		usage("")
 	}
 
-	// TODO(ik):  Support multiple projects in .twosky.json - add PROJECT_ID env var to select between 'home' and 'home_v2'.
-	homeConf, servicesConf, err := readTwoskyConfig()
+	homeConf, homeV2Conf, servicesConf, err := readTwoskyConfig()
 	errors.Check(err)
 
 	var cli *twoskyClient
@@ -88,6 +87,9 @@ func main() {
 		errors.Check(summary(homeConf.Languages))
 	case "download":
 		cli = errors.Must(newTwoskyClient(homeConf))
+		cli.download(ctx, l)
+
+		cli = errors.Must(newTwoskyClient(homeV2Conf))
 		cli.download(ctx, l)
 
 		cli = errors.Must(newTwoskyClient(servicesConf))

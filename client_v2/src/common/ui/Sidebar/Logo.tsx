@@ -14,7 +14,8 @@ export const Logo = ({ id = 'sidebar' }: Props) => {
             viewBox="0 0 173 24"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
-            className={s.logo}>
+            className={s.logo}
+        >
             <path
                 fillRule="evenodd"
                 clipRule="evenodd"
@@ -78,7 +79,8 @@ export const Logo = ({ id = 'sidebar' }: Props) => {
                     y1="2"
                     x2="12"
                     y2="22"
-                    gradientUnits="userSpaceOnUse">
+                    gradientUnits="userSpaceOnUse"
+                >
                     <stop stopColor="#67B279" />
                     <stop offset="1" stopColor="#589968" />
                 </linearGradient>

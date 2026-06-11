@@ -28,7 +28,10 @@ describe('Protection Page', () => {
 
     it('renders protection toggles', () => {
         render(
-            <MemoryRouter initialEntries={['/clients/add/protection']}>
+            <MemoryRouter
+                future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+                initialEntries={['/clients/add/protection']}
+            >
                 <Protection />
             </MemoryRouter>,
         );
@@ -40,7 +43,10 @@ describe('Protection Page', () => {
 
     it('renders logs and statistics section', () => {
         render(
-            <MemoryRouter initialEntries={['/clients/add/protection']}>
+            <MemoryRouter
+                future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+                initialEntries={['/clients/add/protection']}
+            >
                 <Protection />
             </MemoryRouter>,
         );

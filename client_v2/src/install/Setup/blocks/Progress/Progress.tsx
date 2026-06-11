@@ -17,9 +17,7 @@ export const Progress = ({ step }: Props) => {
     return (
         <div className={styles.progress}>
             <div>
-                <div className={styles.message}>
-                    {intl.getMessage('install_step')}
-                </div>
+                <div className={styles.message}>{intl.getMessage('install_step')}</div>
                 {progressStep}/{totalProgressSteps}
             </div>
 

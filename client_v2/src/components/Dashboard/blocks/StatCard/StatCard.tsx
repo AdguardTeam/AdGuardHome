@@ -1,8 +1,11 @@
 import React from 'react';
 import cn from 'clsx';
 import { AreaChart, Area, ResponsiveContainer, Tooltip, TooltipProps } from 'recharts';
+import { Link } from 'panel/common/ui/Link';
+import { RoutePathKey } from 'panel/components/Routes/Paths';
 
 import { formatNumber } from 'panel/helpers/helpers';
+import intl from 'panel/common/intl';
 import theme from 'panel/lib/theme';
 
 import s from './StatCard.module.pcss';
@@ -22,7 +25,7 @@ export const CARDS_COLORS = {
 };
 
 const formatDate = (date: Date): string => {
-    return date.toLocaleDateString(navigator.language, {
+    return date.toLocaleDateString(intl.getUILanguage(), {
         day: 'numeric',
         month: 'short',
         year: 'numeric',
@@ -48,24 +51,42 @@ export type StatCardProps = {
     data: number[];
     color: string;
     percentValue?: number;
-    cardTheme: typeof CARDS_THEME[keyof typeof CARDS_THEME];
+    cardTheme: (typeof CARDS_THEME)[keyof typeof CARDS_THEME];
+    linkTo?: RoutePathKey;
+    query?: Record<string, string | number | boolean>;
 };
 
-export const StatCard = ({ value, label, data, color, percentValue, cardTheme }: StatCardProps) => {
-    const chartData = data.map((v, i) => {
+export const StatCard = ({
+    value,
+    label,
+    data,
+    color,
+    percentValue,
+    cardTheme,
+    linkTo,
+    query,
+}: StatCardProps) => {
+    // Ensure the chart has at least 2 data points so Recharts' AreaChart can
+    // render a filled area.  When there is only 1 data point (e.g., stats
+    // retention set to "Last 1 hour"), duplicate it as a flat baseline.
+    const paddedData: number[] = data.length < 2 ? [0, ...data] : data;
+
+    const chartData = paddedData.map((v, i) => {
         const date = new Date();
-        date.setDate(date.getDate() - (data.length - 1 - i));
+        date.setDate(date.getDate() - (paddedData.length - 1 - i));
         return { value: v, index: i, date: formatDate(date) };
     });
     const percent = percentValue !== undefined ? percentValue : 0;
 
     return (
-        <div className={cn(s.statCard, {
-            [s.statCardQueries]: cardTheme === CARDS_THEME.QUERIES,
-            [s.statCardAds]: cardTheme === CARDS_THEME.ADS,
-            [s.statCardThreats]: cardTheme === CARDS_THEME.THREATS,
-            [s.statCardAdult]: cardTheme === CARDS_THEME.ADULT,
-        })}>
+        <div
+            className={cn(s.statCard, {
+                [s.statCardQueries]: cardTheme === CARDS_THEME.QUERIES,
+                [s.statCardAds]: cardTheme === CARDS_THEME.ADS,
+                [s.statCardThreats]: cardTheme === CARDS_THEME.THREATS,
+                [s.statCardAdult]: cardTheme === CARDS_THEME.ADULT,
+            })}
+        >
             <div className={s.statCardInner}>
                 <div className={s.statCardHeader}>
                     <div className={s.statCardHeaderLeft}>
@@ -78,18 +99,35 @@ export const StatCard = ({ value, label, data, color, percentValue, cardTheme }:
                         </div>
                     )}
 
-                    <div className={cn(theme.text.t4, s.statCardLabel)}>{label}</div>
+                    <div className={cn(theme.text.t4, s.statCardLabel)}>
+                        {linkTo ? (
+                            <Link to={linkTo} query={query} className={s.statLabelLink}>
+                                {label}
+                            </Link>
+                        ) : (
+                            label
+                        )}
+                    </div>
                 </div>
                 <div className={s.statCardChart}>
                     <ResponsiveContainer width="100%" height="100%" minHeight={16}>
                         <AreaChart data={chartData}>
                             <defs>
-                                <linearGradient id={`gradient-${color}`} x1="0" y1="0" x2="0" y2="1">
+                                <linearGradient
+                                    id={`gradient-${color}`}
+                                    x1="0"
+                                    y1="0"
+                                    x2="0"
+                                    y2="1"
+                                >
                                     <stop offset="0%" stopColor={color} stopOpacity={0.3} />
                                     <stop offset="100%" stopColor={color} stopOpacity={0} />
                                 </linearGradient>
                             </defs>
-                            <Tooltip content={<CustomTooltip />} cursor={{ strokeWidth: 1, stroke: color }} />
+                            <Tooltip
+                                content={<CustomTooltip />}
+                                cursor={{ strokeWidth: 1, stroke: color }}
+                            />
                             <Area
                                 type="monotone"
                                 dataKey="value"
@@ -103,7 +141,15 @@ export const StatCard = ({ value, label, data, color, percentValue, cardTheme }:
                     </ResponsiveContainer>
                 </div>
             </div>
-            <div className={cn(theme.text.t3, s.statCardLabel)}>{label}</div>
+            <div className={cn(theme.text.t3, s.statCardLabel)}>
+                {linkTo ? (
+                    <Link to={linkTo} query={query} className={s.statLabelLink}>
+                        {label}
+                    </Link>
+                ) : (
+                    label
+                )}
+            </div>
         </div>
     );
 };

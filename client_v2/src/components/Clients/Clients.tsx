@@ -1,6 +1,6 @@
 import React, { useEffect, useCallback, useState } from 'react';
 import { batch, useDispatch, useSelector } from 'react-redux';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import cn from 'clsx';
 
 import intl from 'panel/common/intl';
@@ -12,7 +12,7 @@ import { initClientForm, buildFormPayload } from 'panel/actions/clientForm';
 import { getStats } from 'panel/actions/stats';
 import { getAllBlockedServices } from 'panel/actions/services';
 import { Client, RootState } from 'panel/initialState';
-import { linkPathBuilder, RoutePath } from 'panel/components/Routes/Paths';
+import { linkPathBuilder, RoutePath, Paths } from 'panel/components/Routes/Paths';
 import theme from 'panel/lib/theme';
 
 import { PersistentClientsTable } from './blocks/PersistentClientsTable';
@@ -44,23 +44,23 @@ export const Clients = () => {
         });
     }, []);
 
-    const history = useHistory();
+    const navigate = useNavigate();
 
     const handleAddClient = useCallback(() => {
         dispatch(initClientForm(null));
-        history.push('/clients/add');
-    }, [dispatch, history]);
+        navigate(Paths.ClientsAdd);
+    }, [dispatch, navigate]);
 
     const handleEditClient = useCallback(
         (client: Client) => {
             dispatch(initClientForm(buildFormPayload(client)));
-            history.push(
+            navigate(
                 linkPathBuilder(RoutePath.ClientsEdit, {
                     clientName: encodeURIComponent(client.name),
                 }),
             );
         },
-        [dispatch, history],
+        [dispatch, navigate],
     );
 
     const handleDeleteClient = (name: string) => {
@@ -107,17 +107,19 @@ export const Clients = () => {
                     <div className={s.desc}>{intl.getMessage('clients_desc')}</div>
                 </div>
 
-                <div className={cn(s.section, s.section_table)}>
-                    <PersistentClientsTable
-                        clients={clients}
-                        normalizedTopClients={normalizedTopClients}
-                        loading={isLoading}
-                        onEdit={handleEditClient}
-                        onDelete={handleDeleteClient}
-                        deleteDisabled={processingDeleting}
-                        allServices={allServices}
-                    />
-                </div>
+                {clients?.length > 0 && (
+                    <div className={cn(s.section, s.section_table)}>
+                        <PersistentClientsTable
+                            clients={clients}
+                            normalizedTopClients={normalizedTopClients}
+                            loading={isLoading}
+                            onEdit={handleEditClient}
+                            onDelete={handleDeleteClient}
+                            deleteDisabled={processingDeleting}
+                            allServices={allServices}
+                        />
+                    </div>
+                )}
 
                 <div className={s.section}>
                     <h2 className={cn(theme.title.h5, theme.title.h4_tablet, s.sectionTitle)}>
@@ -126,13 +128,15 @@ export const Clients = () => {
                     <div className={s.desc}>{intl.getMessage('auto_clients_desc')}</div>
                 </div>
 
-                <div className={cn(s.section, s.section_table)}>
-                    <RuntimeClientsTable
-                        autoClients={autoClients}
-                        normalizedTopClients={normalizedTopClients}
-                        loading={isLoading}
-                    />
-                </div>
+                {autoClients?.length > 0 && (
+                    <div className={cn(s.section, s.section_table)}>
+                        <RuntimeClientsTable
+                            autoClients={autoClients}
+                            normalizedTopClients={normalizedTopClients}
+                            loading={isLoading}
+                        />
+                    </div>
+                )}
 
                 {clientNameToDelete && (
                     <ConfirmDialog

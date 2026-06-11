@@ -16,7 +16,17 @@ type Props = Omit<React.ComponentProps<'input'>, 'onChange' | 'type'> & {
 
 export const Switch = forwardRef(
     (
-        { id, checked, disabled, children, className, labelClassName, wrapperClassName, onChange, ...rest }: Props,
+        {
+            id,
+            checked,
+            disabled,
+            children,
+            className,
+            labelClassName,
+            wrapperClassName,
+            onChange,
+            ...rest
+        }: Props,
         ref: ForwardedRef<HTMLInputElement>,
     ) => {
         const switchControls = (

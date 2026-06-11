@@ -4,10 +4,9 @@ import { BASE_URL } from '../../constants';
 
 import { getPathWithQueryString } from '../helpers/helpers';
 import { QUERY_LOGS_PAGE_LIMIT, HTML_PAGES, R_PATH_LAST_PART, THEMES } from '../helpers/constants';
-import i18n from '../i18n';
-import { LANGUAGES } from '../helpers/twosky';
+import intl from '../common/intl';
 
-type Theme = typeof THEMES[keyof typeof THEMES];
+type Theme = (typeof THEMES)[keyof typeof THEMES];
 
 class Api {
     baseUrl: string;
@@ -17,16 +16,18 @@ class Api {
     }
 
     async makeRequest(path: any, method = 'POST', config: any = {}) {
-        const url = `${this.baseUrl}/${path}`;
+        const pathWithBase = `${this.baseUrl}/${path}`;
+        const url = config.params
+            ? getPathWithQueryString(pathWithBase, config.params)
+            : pathWithBase;
 
         const fetchConfig: RequestInit = { method };
         const headers: Record<string, string> = {};
 
         if (method !== 'GET' && config.data) {
             headers['Content-Type'] = config.headers?.['Content-Type'] || 'application/json';
-            fetchConfig.body = typeof config.data === 'string'
-                ? config.data
-                : JSON.stringify(config.data);
+            fetchConfig.body =
+                typeof config.data === 'string' ? config.data : JSON.stringify(config.data);
         }
 
         fetchConfig.headers = headers;
@@ -34,15 +35,27 @@ class Api {
         try {
             const response = await fetch(url, fetchConfig);
             const text = await response.text();
-            const data = text ? (() => { try { return JSON.parse(text); } catch { return text; } })() : '';
+            const data = text
+                ? (() => {
+                      try {
+                          return JSON.parse(text);
+                      } catch {
+                          return text;
+                      }
+                  })()
+                : '';
 
             if (!response.ok) {
                 const errorPath = url;
                 const { pathname } = document.location;
-                const shouldRedirect = pathname !== HTML_PAGES.LOGIN && pathname !== HTML_PAGES.INSTALL;
+                const shouldRedirect =
+                    pathname !== HTML_PAGES.LOGIN && pathname !== HTML_PAGES.INSTALL;
 
                 if (response.status === 403 && shouldRedirect) {
-                    const loginPageUrl = window.location.href.replace(R_PATH_LAST_PART, HTML_PAGES.LOGIN);
+                    const loginPageUrl = window.location.href.replace(
+                        R_PATH_LAST_PART,
+                        HTML_PAGES.LOGIN,
+                    );
                     window.location.replace(loginPageUrl);
                     return false;
                 }
@@ -683,7 +696,7 @@ class Api {
 
     setProfile(data: any) {
         const theme = data.theme ? data.theme : THEMES.auto;
-        const defaultLanguage = i18n.language ? i18n.language : LANGUAGES.en;
+        const defaultLanguage = intl.getUILanguage() ? intl.getUILanguage() : 'en';
         const language = data.language ? data.language : defaultLanguage;
 
         const { path, method } = this.UPDATE_PROFILE;

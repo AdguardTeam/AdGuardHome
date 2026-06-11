@@ -41,17 +41,14 @@ export const ClientCell = ({ onSearchSelect, row }: Props) => {
                     </button>
                 )}
 
-                {clientName && clientLocation && (
-                    <span className={s.clientLocationDivider} />
-                )}
+                {clientName && clientLocation && <span className={s.clientLocationDivider} />}
 
                 {clientLocation && (
                     <span className={s.clientLocation} title={clientLocation}>
-                        <Icon
-                            icon="location"
-                            className={s.clientLocationIcon}
-                        />
-                        <span className={cn(s.clientLocationText, theme.text.t4)}>{clientLocation}</span>
+                        <Icon icon="location" className={s.clientLocationIcon} />
+                        <span className={cn(s.clientLocationText, theme.text.t4)}>
+                            {clientLocation}
+                        </span>
                     </span>
                 )}
             </div>

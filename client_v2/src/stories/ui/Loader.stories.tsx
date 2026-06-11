@@ -60,7 +60,8 @@ export const WithOverlay: Story = {
                 height: '200px',
                 background: '#f5f5f5',
                 border: '1px solid #ddd',
-            }}>
+            }}
+        >
             <div style={{ padding: '20px' }}>
                 <h3>Content behind overlay</h3>
                 <p>This content should be covered by the loader overlay.</p>
@@ -95,7 +96,8 @@ export const ColoredOverlay: Story = {
                 height: '200px',
                 background: '#f8f9fa',
                 border: '1px solid #dee2e6',
-            }}>
+            }}
+        >
             <div style={{ padding: '20px' }}>
                 <h3>Loading Content</h3>
                 <p>Please wait while we load your data...</p>

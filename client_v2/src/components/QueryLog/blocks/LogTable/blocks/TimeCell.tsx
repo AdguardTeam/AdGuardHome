@@ -13,7 +13,11 @@ type Props = {
 
 export const TimeCell = ({ row }: Props) => (
     <div className={s.timeCell}>
-        <span className={cn(s.time, theme.text.t3, theme.text.condenced)}>{formatLogTime(row.time)}</span>
-        <span className={cn(s.secondaryLine, s.date, theme.text.t4)}>{formatLogDate(row.time)}</span>
+        <span className={cn(s.time, theme.text.t3, theme.text.condenced)}>
+            {formatLogTime(row.time)}
+        </span>
+        <span className={cn(s.secondaryLine, s.date, theme.text.t4)}>
+            {formatLogDate(row.time)}
+        </span>
     </div>
 );

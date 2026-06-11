@@ -221,6 +221,21 @@
             border-color: var(--hovered-main-button);
         }
 
+        &--is-disabled {
+            background-color: var(--pressed-page-background);
+            cursor: default;
+
+            &:hover,
+            &:focus {
+                border-color: var(--default-item-divider);
+            }
+
+            .select__single-value,
+            .select__multi-value__label {
+                color: var(--default-description-text);
+            }
+        }
+
         &--is-multi {
             height: auto;
         }

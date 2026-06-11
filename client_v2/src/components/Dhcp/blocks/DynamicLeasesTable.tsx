@@ -26,7 +26,13 @@ type Props = {
 
 const pageSize = 7;
 
-export const DynamicLeasesTable = ({ leases, onEdit, onDelete, onMakeStatic, onRefresh }: Props) => {
+export const DynamicLeasesTable = ({
+    leases,
+    onEdit,
+    onDelete,
+    onMakeStatic,
+    onRefresh,
+}: Props) => {
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
     const handleEdit = (row: DynamicLease) => {
@@ -61,7 +67,9 @@ export const DynamicLeasesTable = ({ leases, onEdit, onDelete, onMakeStatic, onR
                 sortable: true,
                 render: (value: string) => (
                     <div className={s.cell}>
-                        <span className={s.cellLabel}>{intl.getMessage('dhcp_table_mac_address')}</span>
+                        <span className={s.cellLabel}>
+                            {intl.getMessage('dhcp_table_mac_address')}
+                        </span>
                         <div className={s.cellValue}>
                             <span className={theme.common.textOverflow}>{value}</span>
                         </div>
@@ -78,7 +86,9 @@ export const DynamicLeasesTable = ({ leases, onEdit, onDelete, onMakeStatic, onR
                 sortable: true,
                 render: (value: string) => (
                     <div className={s.cell}>
-                        <span className={s.cellLabel}>{intl.getMessage('dhcp_table_ip_address')}</span>
+                        <span className={s.cellLabel}>
+                            {intl.getMessage('dhcp_table_ip_address')}
+                        </span>
                         <div className={s.cellValue}>
                             <span>{value}</span>
                         </div>
@@ -95,7 +105,9 @@ export const DynamicLeasesTable = ({ leases, onEdit, onDelete, onMakeStatic, onR
                 sortable: true,
                 render: (value: string) => (
                     <div className={s.cell}>
-                        <span className={s.cellLabel}>{intl.getMessage('dhcp_table_hostname')}</span>
+                        <span className={s.cellLabel}>
+                            {intl.getMessage('dhcp_table_hostname')}
+                        </span>
                         <div className={s.cellValue}>
                             <span className={theme.common.textOverflow}>{value}</span>
                         </div>
@@ -115,7 +127,9 @@ export const DynamicLeasesTable = ({ leases, onEdit, onDelete, onMakeStatic, onR
                     const rowId = `${row.mac}-${row.ip}`;
                     return (
                         <div className={s.cell}>
-                            <span className={s.cellLabel}>{intl.getMessage('actions_table_header')}</span>
+                            <span className={s.cellLabel}>
+                                {intl.getMessage('actions_table_header')}
+                            </span>
                             <div className={s.cellValue}>
                                 <div className={s.cellActions}>
                                     <Dropdown
@@ -140,7 +154,10 @@ export const DynamicLeasesTable = ({ leases, onEdit, onDelete, onMakeStatic, onR
                                                     {intl.getMessage('refresh_btn')}
                                                 </div>
                                                 <div
-                                                    className={cn(theme.dropdown.item, theme.dropdown.item_danger)}
+                                                    className={cn(
+                                                        theme.dropdown.item,
+                                                        theme.dropdown.item_danger,
+                                                    )}
                                                     onClick={() => handleDelete(row)}
                                                 >
                                                     {intl.getMessage('delete_table_action')}
@@ -151,7 +168,9 @@ export const DynamicLeasesTable = ({ leases, onEdit, onDelete, onMakeStatic, onR
                                         position="bottomRight"
                                         noIcon
                                         open={openMenuId === rowId}
-                                        onOpenChange={(isOpen) => setOpenMenuId(isOpen ? rowId : null)}
+                                        onOpenChange={(isOpen) =>
+                                            setOpenMenuId(isOpen ? rowId : null)
+                                        }
                                     >
                                         <button type="button" className={s.actionButton}>
                                             <Icon icon="bullets" color="gray" />

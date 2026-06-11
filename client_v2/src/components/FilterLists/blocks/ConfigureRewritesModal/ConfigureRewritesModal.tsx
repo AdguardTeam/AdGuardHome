@@ -3,7 +3,6 @@ import React, { useEffect } from 'react';
 import intl from 'panel/common/intl';
 import { Dialog } from 'panel/common/ui/Dialog/Dialog';
 import { MODAL_TYPE } from 'panel/helpers/constants';
-import cn from 'clsx';
 
 import { ModalWrapper } from 'panel/common/ui/ModalWrapper';
 import { useDispatch, useSelector } from 'react-redux';
@@ -15,8 +14,8 @@ import { RootState } from 'panel/initialState';
 import { addRewrite, updateRewrite } from 'panel/actions/rewrites';
 import { Input } from 'panel/common/controls/Input';
 import { validateAnswer, validateDomain, validateRequiredValue } from 'panel/helpers/validators';
-import { FaqTooltip } from 'panel/common/ui/FaqTooltip';
-import s from './ConfigureRewritesModal.module.pcss';
+import { DomainFaqTooltip } from './DomainFaqTooltip';
+import { AnswerFaqTooltip } from './AnswerFaqTooltip';
 
 type FormValues = {
     answer: string;
@@ -69,15 +68,23 @@ export const ConfigureRewritesModal = ({ modalId, rewriteToEdit, onSubmit, onClo
     });
     const { handleSubmit, reset, control } = methods;
 
+    const initialValues = {
+        ...defaultValues,
+        ...rewriteToEdit,
+    };
+
     useEffect(() => {
-        reset({
-            ...defaultValues,
-            ...rewriteToEdit,
-        });
+        reset(initialValues);
     }, [rewriteToEdit, reset]);
 
     const closeDialog = () => {
         reset(defaultValues);
+        onClose?.();
+        dispatch(closeModal());
+    };
+
+    const handleCancel = () => {
+        reset(initialValues);
         onClose?.();
         dispatch(closeModal());
     };
@@ -95,7 +102,10 @@ export const ConfigureRewritesModal = ({ modalId, rewriteToEdit, onSubmit, onClo
 
         switch (modalId) {
             case MODAL_TYPE.ADD_REWRITE: {
-                dispatch(addRewrite({ answer: values.answer, domain: values.domain, enabled: true }));
+                dispatch(
+                    addRewrite({ answer: values.answer, domain: values.domain, enabled: true }),
+                );
+                reset(defaultValues);
                 dispatch(closeModal());
                 break;
             }
@@ -103,9 +113,14 @@ export const ConfigureRewritesModal = ({ modalId, rewriteToEdit, onSubmit, onClo
                 dispatch(
                     updateRewrite({
                         target: rewriteToEdit,
-                        update: { answer: values.answer, domain: values.domain, enabled: values.enabled },
+                        update: {
+                            answer: values.answer,
+                            domain: values.domain,
+                            enabled: values.enabled,
+                        },
                     }),
                 );
+                reset(defaultValues);
                 dispatch(closeModal());
                 break;
             }
@@ -113,10 +128,6 @@ export const ConfigureRewritesModal = ({ modalId, rewriteToEdit, onSubmit, onClo
                 break;
             }
         }
-    };
-
-    const handleCancel = () => {
-        closeDialog();
     };
 
     return (
@@ -141,39 +152,14 @@ export const ConfigureRewritesModal = ({ modalId, rewriteToEdit, onSubmit, onClo
                                                 data-testid="rewrite-domain-input"
                                                 label={
                                                     <>
-                                                        {intl.getMessage('upstream_examples_title')}
+                                                        {intl.getMessage('rewrite_domain')}
 
-                                                        <FaqTooltip
-                                                            overlayClassName={s.dropdown}
-                                                            menuClassName={s.tooltip}
-                                                            text={
-                                                                <>
-                                                                    <div className={cn(theme.text.t3, s.tooltipTitle)}>
-                                                                        {intl.getMessage('upstream_examples_title')}
-                                                                    </div>
-
-                                                                    {[
-                                                                        {
-                                                                            message: intl.getMessage('rewrites_tooltip_examples_item1'),
-                                                                            code: 'example.org',
-                                                                        },
-                                                                        {
-                                                                            message: intl.getMessage('rewrites_tooltip_examples_item2'),
-                                                                            code: '*.example.org',
-                                                                        },
-                                                                    ].map((item, index) => (
-                                                                        <div key={index} className={s.tooltipItem}>
-                                                                            <div className={s.tooltipItemDot}></div>
-                                                                            {item.message}
-                                                                            <code>{item.code}</code>
-                                                                        </div>
-                                                                    ))}
-                                                                </>
-                                                            }
-                                                        />
+                                                        <DomainFaqTooltip />
                                                     </>
                                                 }
-                                                placeholder={intl.getMessage('rewrite_domain_input_placeholder')}
+                                                placeholder={intl.getMessage(
+                                                    'rewrite_domain_input_placeholder',
+                                                )}
                                                 errorMessage={fieldState.error?.message}
                                             />
                                         )}
@@ -195,50 +181,14 @@ export const ConfigureRewritesModal = ({ modalId, rewriteToEdit, onSubmit, onClo
                                                 data-testid="rewrite-answer-input"
                                                 label={
                                                     <>
-                                                        {intl.getMessage('instructions')}
+                                                        {intl.getMessage('result')}
 
-                                                        <FaqTooltip
-                                                            overlayClassName={s.dropdown}
-                                                            menuClassName={s.tooltip}
-                                                            text={
-                                                                <>
-                                                                    <div className={cn(theme.text.t3, s.tooltipTitle)}>
-                                                                        {intl.getMessage('instructions')}
-                                                                    </div>
-
-                                                                    {[
-                                                                        {
-                                                                            message:
-                                                                                intl.getMessage('rewrites_tooltip_instructions_item1'),
-                                                                        },
-                                                                        {
-                                                                            message:
-                                                                                intl.getMessage('rewrites_tooltip_instructions_item2'),
-                                                                        },
-                                                                        {
-                                                                            message:
-                                                                                intl.getMessage('rewrites_tooltip_instructions_item3'),
-                                                                            code: 'A',
-                                                                        },
-                                                                        {
-                                                                            message:
-                                                                                intl.getMessage('rewrites_tooltip_instructions_item4'),
-                                                                            code: 'AAAA',
-                                                                        },
-                                                                    ].map((item, index) => (
-                                                                        <div key={index} className={s.tooltipItem}>
-                                                                            <div className={s.tooltipItemDot}></div>
-                                                                            {item.message}
-
-                                                                            {item.code && <code>{item.code}</code>}
-                                                                        </div>
-                                                                    ))}
-                                                                </>
-                                                            }
-                                                        />
+                                                        <AnswerFaqTooltip />
                                                     </>
                                                 }
-                                                placeholder={intl.getMessage('rewrites_answer_input_placeholder')}
+                                                placeholder={intl.getMessage(
+                                                    'rewrites_answer_input_placeholder',
+                                                )}
                                                 errorMessage={fieldState.error?.message}
                                             />
                                         )}

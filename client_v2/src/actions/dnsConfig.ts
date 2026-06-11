@@ -41,7 +41,7 @@ export const setDnsConfigRequest = createAction('SET_DNS_CONFIG_REQUEST');
 export const setDnsConfigFailure = createAction('SET_DNS_CONFIG_FAILURE');
 export const setDnsConfigSuccess = createAction('SET_DNS_CONFIG_SUCCESS');
 
-export const setDnsConfig = (config: any) => async (dispatch: any) => {
+export const setDnsConfig = (config: any, toastMessage?: string) => async (dispatch: any) => {
     dispatch(setDnsConfigRequest());
     try {
         const data = { ...config };
@@ -70,7 +70,9 @@ export const setDnsConfig = (config: any) => async (dispatch: any) => {
 
         await apiClient.setDnsConfig(data);
 
-        if (hasDnsSettings) {
+        if (toastMessage) {
+            dispatch(addSuccessToast({ message: toastMessage }));
+        } else if (hasDnsSettings) {
             dispatch(addSuccessToast(intl.getMessage('updated_upstream_dns_toast')));
         } else {
             dispatch(addSuccessToast(intl.getMessage('settings_notify_changes_saved')));

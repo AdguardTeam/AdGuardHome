@@ -26,7 +26,11 @@ export const RequestCell = ({ row }: Props) => {
                 trigger="hover"
                 position="bottomLeft"
                 overlayClassName={s.iconTooltipOverlay}
-                menu={<div className={cn(theme.dropdown.menu, s.iconTooltipMenu)}>{intl.getMessage('validated_with_dnssec')}</div>}
+                menu={
+                    <div className={cn(theme.dropdown.menu, s.iconTooltipMenu)}>
+                        {intl.getMessage('validated_with_dnssec')}
+                    </div>
+                }
                 childrenClassName={s.iconTooltipTrigger}
                 noIcon
             >
@@ -39,7 +43,10 @@ export const RequestCell = ({ row }: Props) => {
         <div className={s.requestCell} data-testid="query-log-request-cell">
             <div className={s.requestContent}>
                 <div className={s.requestPrimary}>
-                    <span className={cn(s.domain, theme.text.t3)} title={row.unicodeName || row.domain}>
+                    <span
+                        className={cn(s.domain, theme.text.t3)}
+                        title={row.unicodeName || row.domain}
+                    >
                         {row.unicodeName || row.domain}
                     </span>
 
@@ -48,11 +55,11 @@ export const RequestCell = ({ row }: Props) => {
                             trigger="hover"
                             position="bottomLeft"
                             overlayClassName={s.iconTooltipOverlay}
-                            menu={(
+                            menu={
                                 <div className={cn(theme.dropdown.menu, s.queryDetailsTooltipMenu)}>
                                     <QueryDetailsTooltipContent row={row} />
                                 </div>
-                            )}
+                            }
                             childrenClassName={s.iconTooltipTrigger}
                             noIcon
                         >
@@ -75,7 +82,8 @@ export const RequestCell = ({ row }: Props) => {
                     </div>
                 </div>
                 <span className={cn(s.secondaryLine, theme.text.t4)}>
-                    {intl.getMessage('type_value', { value: row.type })}, {getProtocolName(row.client_proto)}
+                    {intl.getMessage('type_value', { value: row.type })},{' '}
+                    {getProtocolName(row.client_proto)}
                 </span>
             </div>
         </div>

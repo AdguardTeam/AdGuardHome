@@ -52,7 +52,9 @@ const stats = handleActions(
             ...state,
             ...payload,
 
-            customInterval: !STATS_INTERVALS_DAYS.includes(payload.interval) ? payload.interval / HOUR : null,
+            customInterval: !STATS_INTERVALS_DAYS.includes(payload.interval)
+                ? payload.interval / HOUR
+                : null,
 
             processingGetConfig: false,
         }),

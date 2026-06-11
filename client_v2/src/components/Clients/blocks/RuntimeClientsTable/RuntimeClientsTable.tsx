@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 
 import intl from 'panel/common/intl';
+import { sortIp } from 'panel/helpers/helpers';
 import { AutoClient, NormalizedTopClients, WhoisInfo } from 'panel/initialState';
 import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from 'panel/helpers/localStorageHelper';
 import { Table as ReactTable, TableColumn } from 'panel/common/ui/Table';
@@ -36,6 +37,7 @@ export const RuntimeClientsTable = ({
                 },
                 accessor: 'ip',
                 sortable: true,
+                sortFn: sortIp,
                 render: (value: string) => (
                     <div className={s.cell}>
                         <span className={s.cellLabel}>{intl.getMessage('ip_address')}</span>

@@ -16,7 +16,15 @@ type Props = {
     children?: ReactNode;
 };
 
-export const Dialog = ({ children, className, onClose, visible, title, mask = true, wrapClassName }: Props) => {
+export const Dialog = ({
+    children,
+    className,
+    onClose,
+    visible,
+    title,
+    mask = true,
+    wrapClassName,
+}: Props) => {
     return (
         <RCDialog
             title={title}
@@ -27,7 +35,8 @@ export const Dialog = ({ children, className, onClose, visible, title, mask = tr
             closeIcon={<Icon className={theme.dialog.close} icon="cross" />}
             classNames={{
                 wrapper: wrapClassName,
-            }}>
+            }}
+        >
             {children}
         </RCDialog>
     );

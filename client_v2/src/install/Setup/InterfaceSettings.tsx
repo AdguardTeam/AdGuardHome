@@ -4,7 +4,7 @@ import intl from 'panel/common/intl';
 import { Button } from 'panel/common/ui/Button';
 import styles from 'panel/install/Setup/styles.module.pcss';
 import cn from 'clsx';
-import Controls from './Controls';
+import { Controls } from './Controls';
 import { WebBanner } from './blocks/Banner';
 import { AddressList } from './blocks';
 import { buildInterfaceOptions } from './helpers/InterfaceOptions';
@@ -26,11 +26,15 @@ type Props = {
     initialValues?: object;
 };
 
-export const InterfaceSettings = ({ handleSubmit, handleFix, validateForm, config, interfaces }: Props) => {
-    const { control, reactHookFormSubmit, isValid, watchFields, webIpVal, webPortVal } = useInstallSettingsForm(
-        config,
-        validateForm,
-    );
+export const InterfaceSettings = ({
+    handleSubmit,
+    handleFix,
+    validateForm,
+    config,
+    interfaces,
+}: Props) => {
+    const { control, reactHookFormSubmit, isValid, watchFields, webIpVal, webPortVal } =
+        useInstallSettingsForm(config, validateForm);
 
     const { status: webStatus, can_autofix: isWebFixAvailable } = config.web;
 
@@ -82,9 +86,17 @@ export const InterfaceSettings = ({ handleSubmit, handleFix, validateForm, confi
                         </>
                     );
                 case STATUS_RESPONSE.ERROR:
-                    return <div className={styles.errorText}>{intl.getMessage('install_static_error')}</div>;
+                    return (
+                        <div className={styles.errorText}>
+                            {intl.getMessage('install_static_error')}
+                        </div>
+                    );
                 case STATUS_RESPONSE.YES:
-                    return <div className={styles.successText}>{intl.getMessage('install_static_ok')}</div>;
+                    return (
+                        <div className={styles.successText}>
+                            {intl.getMessage('install_static_ok')}
+                        </div>
+                    );
                 default:
                     return null;
             }

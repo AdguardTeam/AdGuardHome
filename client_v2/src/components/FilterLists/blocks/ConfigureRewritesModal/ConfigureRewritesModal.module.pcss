@@ -17,9 +17,6 @@
 }
 
 .tooltipItem {
-    display: flex;
-    align-items: center;
-    gap: 4px;
     padding: 8px 0;
 
     &:last-child {
@@ -27,29 +24,19 @@
     }
 
     & code {
-        display: flex;
-        padding: 4px 8px;
-        align-items: center;
+        display: inline-block;
+        vertical-align: middle;
+        margin-left: 4px;
+        padding: 2px 4px;
+        background-color: var(--page-background-additional);
+        font-family: inherit;
+        line-height: var(--lh-t3-normal);
+        border: 1px solid var(--default-item-divider);
         border-radius: 4px;
-        border: 1px solid var(--default-inactive-input-stroke);
-        background-color: var(--default-input-background);
     }
 }
 
-.tooltipItemDot {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 24px;
-    min-width: 24px;
-    height: 24px;
-
-    &:before {
-        content: "";
-        display: block;
-        width: 8px;
-        height: 8px;
-        background-color: var(--default-black-icons);
-        border-radius: 50%;
-    }
+.icon {
+    margin-right: 8px;
+    color: var(--default-black-icons);
 }

@@ -77,28 +77,19 @@ describe('schedule helpers', () => {
     describe('getNormalizedEndTime', () => {
         test('keeps a valid end time unchanged', () => {
             expect(
-                getNormalizedEndTime(
-                    { hours: 10, minutes: 15 },
-                    { hours: 11, minutes: 0 },
-                ),
+                getNormalizedEndTime({ hours: 10, minutes: 15 }, { hours: 11, minutes: 0 }),
             ).toEqual({ hours: 11, minutes: 0 });
         });
 
         test('moves an invalid end time to the next available minute', () => {
             expect(
-                getNormalizedEndTime(
-                    { hours: 10, minutes: 15 },
-                    { hours: 10, minutes: 15 },
-                ),
+                getNormalizedEndTime({ hours: 10, minutes: 15 }, { hours: 10, minutes: 15 }),
             ).toEqual({ hours: 10, minutes: 16 });
         });
 
         test('returns null when no later end time exists', () => {
             expect(
-                getNormalizedEndTime(
-                    { hours: 23, minutes: 59 },
-                    { hours: 23, minutes: 59 },
-                ),
+                getNormalizedEndTime({ hours: 23, minutes: 59 }, { hours: 23, minutes: 59 }),
             ).toBeNull();
         });
     });

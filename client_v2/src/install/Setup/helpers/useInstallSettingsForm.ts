@@ -1,35 +1,43 @@
 import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { ALL_INTERFACES_IP, STANDARD_DNS_PORT, STANDARD_WEB_PORT } from '../../../helpers/constants';
+import {
+    ALL_INTERFACES_IP,
+    STANDARD_DNS_PORT,
+    STANDARD_WEB_PORT,
+} from '../../../helpers/constants';
 import { validateInstallPort } from '../../../helpers/validators';
 
 import type { DnsConfig, SettingsFormValues, WebConfig, ConfigType } from '../types';
 
 type HandleFix = (web: WebConfig, dns: DnsConfig, set_static_ip: boolean) => void;
 
-export const createHandleAutofix = (watchFields: SettingsFormValues, handleFix: HandleFix) => (type: 'web' | 'dns') => {
-    const web = {
-        ip: watchFields.web?.ip,
-        port: watchFields.web?.port,
-        autofix: false,
+export const createHandleAutofix =
+    (watchFields: SettingsFormValues, handleFix: HandleFix) => (type: 'web' | 'dns') => {
+        const web = {
+            ip: watchFields.web?.ip,
+            port: watchFields.web?.port,
+            autofix: false,
+        };
+        const dns = {
+            ip: watchFields.dns?.ip,
+            port: watchFields.dns?.port,
+            autofix: false,
+        };
+
+        if (type === 'web') {
+            web.autofix = true;
+        } else {
+            dns.autofix = true;
+        }
+
+        handleFix(web, dns, false);
     };
-    const dns = {
-        ip: watchFields.dns?.ip,
-        port: watchFields.dns?.port,
-        autofix: false,
-    };
 
-    if (type === 'web') {
-        web.autofix = true;
-    } else {
-        dns.autofix = true;
-    }
-
-    handleFix(web, dns, false);
-};
-
-export const useInstallSettingsForm = (config: ConfigType, validateForm: (data: SettingsFormValues) => void) => {
+export const useInstallSettingsForm = (
+    config: ConfigType,
+    validateForm: (data: SettingsFormValues) => void,
+) => {
     const defaultValues = useMemo(
         () => ({
             web: {

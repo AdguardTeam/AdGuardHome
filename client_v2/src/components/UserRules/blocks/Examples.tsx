@@ -18,7 +18,9 @@ const EXAMPLES = [
 
 export const Examples = () => (
     <div className={s.examplesSection}>
-        <h2 className={cn(theme.title.h6, s.sectionTitle)}>{intl.getMessage('upstream_examples_title')}</h2>
+        <h2 className={cn(theme.title.h6, s.sectionTitle)}>
+            {intl.getMessage('upstream_examples_title')}
+        </h2>
         <ul className={s.examplesList}>
             {EXAMPLES.map((example, index) => (
                 <li key={index} className={cn(theme.text.t3, s.listItem)}>

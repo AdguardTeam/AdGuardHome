@@ -14,6 +14,7 @@
         top: 0;
         width: 100%;
         max-width: 240px;
+        height: 100vh;
         padding: 16px 0;
         overflow-y: auto;
         z-index: 1;
@@ -23,6 +24,13 @@
     &::-webkit-scrollbar {
         display: none;
     }
+}
+
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
 }
 
 .logo {

@@ -62,7 +62,15 @@ export const Checkbox = forwardRef<HTMLInputElement, Props>(
                 )}
             </div>
             {children && (
-                <div className={cn(s.label, { [theme.common.textOverflow]: overflow }, labelClassName)}>{children}</div>
+                <div
+                    className={cn(
+                        s.label,
+                        { [theme.common.textOverflow]: overflow },
+                        labelClassName,
+                    )}
+                >
+                    {children}
+                </div>
             )}
         </label>
     ),

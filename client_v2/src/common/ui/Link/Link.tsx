@@ -17,7 +17,18 @@ type Props = {
     children?: ReactNode;
 };
 
-export const Link = ({ to, children, className, props, type, stop, disabled, onClick, id, query }: Props) => {
+export const Link = ({
+    to,
+    children,
+    className,
+    props,
+    type,
+    stop,
+    disabled,
+    onClick,
+    id,
+    query,
+}: Props) => {
     if (props) {
         Object.keys(props).forEach((key: string) => {
             if (!props[key]) {
@@ -55,7 +66,8 @@ export const Link = ({ to, children, className, props, type, stop, disabled, onC
             className={cn(theme.link.link, className)}
             type={type}
             to={linkPathBuilder(to, props, query)}
-            onClick={handleClick}>
+            onClick={handleClick}
+        >
             {children}
         </ReactRouterDomLink>
     );

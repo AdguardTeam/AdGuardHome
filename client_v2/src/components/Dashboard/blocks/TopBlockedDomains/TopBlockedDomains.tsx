@@ -28,19 +28,30 @@ type Props = {
 
 export const TopBlockedDomains = ({ topBlockedDomains, numBlockedFiltering }: Props) => {
     const isDesktop = useIsDesktop();
-    const { sortedData: sortedDomains, sortField, sortDirection, handleSort } = useSortedData(topBlockedDomains);
-    const visibleDomains = isDesktop ? sortedDomains : sortedDomains.slice(0, MOBILE_TABLE_MAX_ROWS);
+    const {
+        sortedData: sortedDomains,
+        sortField,
+        sortDirection,
+        handleSort,
+    } = useSortedData(topBlockedDomains);
+    const visibleDomains = isDesktop
+        ? sortedDomains
+        : sortedDomains.slice(0, MOBILE_TABLE_MAX_ROWS);
 
     const hasStats = topBlockedDomains.length > 0;
 
     return (
         <div className={cn(s.card, s.cardBlocked)}>
             <div className={s.cardHeader}>
-                <div className={cn(theme.title.h5, s.cardTitle)}>{intl.getMessage('top_blocked_domains')}</div>
+                <div className={cn(theme.title.h5, s.cardTitle)}>
+                    {intl.getMessage('top_blocked_domains')}
+                </div>
 
                 {hasStats && (
                     <div className={cn(theme.text.t3, s.cardSubtitle)}>
-                        {intl.getMessage('blocked_total', { value: formatCompactNumber(numBlockedFiltering) })}
+                        {intl.getMessage('blocked_total', {
+                            value: formatCompactNumber(numBlockedFiltering),
+                        })}
                     </div>
                 )}
             </div>
@@ -58,14 +69,21 @@ export const TopBlockedDomains = ({ topBlockedDomains, numBlockedFiltering }: Pr
             <div className={s.tableRows}>
                 {hasStats ? (
                     visibleDomains.map((domain) => {
-                        const percent = numBlockedFiltering > 0
-                            ? (domain.count / numBlockedFiltering) * 100
-                            : 0;
+                        const percent =
+                            numBlockedFiltering > 0
+                                ? (domain.count / numBlockedFiltering) * 100
+                                : 0;
                         const trackerData = getTrackerData(domain.name);
 
                         return (
                             <div key={domain.name} className={cn(s.tableRow, s.statRowValue)}>
-                                <div className={cn(theme.text.t3, theme.text.condenced, s.tableRowLeft)}>
+                                <div
+                                    className={cn(
+                                        theme.text.t3,
+                                        theme.text.condenced,
+                                        s.tableRowLeft,
+                                    )}
+                                >
                                     {trackerData ? (
                                         <Dropdown
                                             menu={<TrackerTooltip trackerData={trackerData} />}
@@ -90,14 +108,27 @@ export const TopBlockedDomains = ({ topBlockedDomains, numBlockedFiltering }: Pr
                                         overlayClassName={s.queryTooltipOverlay}
                                         menu={
                                             <div className={s.queryTooltip}>
-                                                {formatNumber(domain.count)} {intl.getMessage('queries').toLowerCase()}
+                                                {formatNumber(domain.count)}{' '}
+                                                {intl.getMessage('queries').toLowerCase()}
                                             </div>
                                         }
                                     >
-                                        <div className={cn(theme.text.t3, theme.text.condenced, s.queryCount)}>
+                                        <div
+                                            className={cn(
+                                                theme.text.t3,
+                                                theme.text.condenced,
+                                                s.queryCount,
+                                            )}
+                                        >
                                             {formatCompactNumber(domain.count)}
 
-                                            <div className={cn(theme.text.t3, theme.text.condenced, s.queryPercent)}>
+                                            <div
+                                                className={cn(
+                                                    theme.text.t3,
+                                                    theme.text.condenced,
+                                                    s.queryPercent,
+                                                )}
+                                            >
                                                 ({percent.toFixed(2)}%)
                                             </div>
                                         </div>

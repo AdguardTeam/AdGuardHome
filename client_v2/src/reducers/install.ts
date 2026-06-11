@@ -4,7 +4,12 @@ import { handleActions } from 'redux-actions';
 
 import * as actions from '../actions/install';
 import toasts from './toasts';
-import { ALL_INTERFACES_IP, INSTALL_FIRST_STEP, STANDARD_DNS_PORT, STANDARD_WEB_PORT } from '../helpers/constants';
+import {
+    ALL_INTERFACES_IP,
+    INSTALL_FIRST_STEP,
+    STANDARD_DNS_PORT,
+    STANDARD_WEB_PORT,
+} from '../helpers/constants';
 
 const install = handleActions(
     {
@@ -21,9 +26,9 @@ const install = handleActions(
             const normalizedInterfaces = Array.isArray(interfaces)
                 ? interfaces
                 : Object.entries(interfaces || {}).map(([name, iface]: any) => ({
-                    ...iface,
-                    name: iface?.name ?? name,
-                }));
+                      ...iface,
+                      name: iface?.name ?? name,
+                  }));
             const web = { ...state.web, port: payload.web_port };
             const dns = { ...state.dns, port: payload.dns_port };
 

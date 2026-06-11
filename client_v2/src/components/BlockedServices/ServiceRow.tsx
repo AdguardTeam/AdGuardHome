@@ -33,12 +33,13 @@ export const ServiceRow = ({ id, name, iconSvg, checked, disabled, onChange }: P
             onClick={handleRowClick}
             role="button"
             tabIndex={0}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleRowClick(); }}
+            onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    handleRowClick();
+                }
+            }}
         >
-            <div
-                className={s.serviceIcon}
-                dangerouslySetInnerHTML={{ __html: decodedSvg }}
-            />
+            <div className={s.serviceIcon} dangerouslySetInnerHTML={{ __html: decodedSvg }} />
             <div className={s.serviceName}>{name}</div>
             <div className={s.switchWrap} onClick={(e) => e.stopPropagation()} role="presentation">
                 <Switch

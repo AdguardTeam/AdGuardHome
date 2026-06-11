@@ -12,6 +12,10 @@ export const CustomLoadingMessage = <
     props: NoticeProps<Option, IsMulti, Group>,
 ) => (
     <components.LoadingMessage {...props}>
-        <Loader icon="loader" className={theme.select.menuLoader} overlayClassName={theme.select.menuLoaderOverlay} />
+        <Loader
+            icon="loader"
+            className={theme.select.menuLoader}
+            overlayClassName={theme.select.menuLoaderOverlay}
+        />
     </components.LoadingMessage>
 );

@@ -52,7 +52,7 @@ export const InterfaceSelect = ({ interfaces, selectedInterface, enabled, onChan
                 isDisabled={enabled}
                 placeholder={intl.getMessage('dhcp_interface_select')}
                 size="responsive"
-                height="medium"
+                height="big"
             />
         </div>
     );

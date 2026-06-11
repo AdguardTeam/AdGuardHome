@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -57,38 +57,59 @@ export const FilterUpdateModal = () => {
     const { filtering } = useSelector((state: RootState) => state);
     const { processingSetConfig, interval: currentInterval } = filtering;
 
-    const { control, handleSubmit, watch, setValue } = useForm<FormValues>({
-        defaultValues: {
-            interval: currentInterval || 24,
-            customInterval: null,
-        },
+    const PREDEFINED_INTERVALS: number[] = [
+        FILTER_INTERVALS.DISABLE,
+        FILTER_INTERVALS.HOURLY,
+        FILTER_INTERVALS.DAILY,
+        FILTER_INTERVALS.WEEKLY,
+    ];
+
+    const isCustom = currentInterval != null && !PREDEFINED_INTERVALS.includes(currentInterval);
+
+    const defaultFormValues: FormValues = {
+        interval: isCustom ? FILTER_INTERVALS.CUSTOM : (currentInterval ?? 24),
+        customInterval: isCustom ? currentInterval : null,
+    };
+
+    const { control, handleSubmit, watch, setValue, reset } = useForm<FormValues>({
+        defaultValues: defaultFormValues,
     });
+
+    useEffect(() => {
+        reset(defaultFormValues);
+    }, [currentInterval, reset]);
 
     const intervalValue = watch('interval');
 
     const onClose = () => {
+        reset(defaultFormValues);
         dispatch(closeModal());
     };
 
     const onSubmit = (data: FormValues) => {
-        const finalInterval = data.interval === FILTER_INTERVALS.CUSTOM ? data.customInterval : data.interval;
+        const finalInterval =
+            data.interval === FILTER_INTERVALS.CUSTOM ? data.customInterval : data.interval;
 
-        if (finalInterval !== null && finalInterval !== undefined) {
-            dispatch(
-                setFiltersConfig({
-                    enabled: filtering.enabled,
-                    interval: finalInterval,
-                }),
-            );
-            onClose();
+        if (finalInterval === null || finalInterval === undefined || finalInterval < 0) {
+            return;
         }
+
+        dispatch(
+            setFiltersConfig({
+                enabled: filtering.enabled,
+                interval: finalInterval,
+            }),
+        );
+        onClose();
     };
 
     return (
         <ModalWrapper id={MODAL_TYPE.FILTER_UPDATE}>
             <Dialog visible onClose={onClose} title={intl.getMessage('update_filters_title')}>
                 <form onSubmit={handleSubmit(onSubmit)}>
-                    <div className={theme.dialog.description}>{intl.getMessage('update_filters_desc')}</div>
+                    <div className={theme.dialog.description}>
+                        {intl.getMessage('update_filters_desc')}
+                    </div>
 
                     <div className={theme.form.group}>
                         <Radio

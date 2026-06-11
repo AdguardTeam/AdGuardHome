@@ -47,10 +47,14 @@ export const AccordionSection = ({ title, icon, items, isActive, className }: Pr
                 })}
                 onClick={toggleAccordion}
                 role="button"
-                tabIndex={0}>
+                tabIndex={0}
+            >
                 <Icon className={s.linkIcon} icon={icon} />
                 <span className={theme.common.textOverflow}>{title}</span>
-                <Icon className={cn(s.accordionArrow, { [s.accordionArrowOpen]: isOpen })} icon="arrow_bottom" />
+                <Icon
+                    className={cn(s.accordionArrow, { [s.accordionArrowOpen]: isOpen })}
+                    icon="arrow_bottom"
+                />
             </div>
             {isOpen && (
                 <div className={s.accordionContent}>
@@ -60,7 +64,8 @@ export const AccordionSection = ({ title, icon, items, isActive, className }: Pr
                                 className={cn(s.accordionLink, {
                                     [s.activeLink]: isActive(item.path),
                                 })}
-                                to={item.routePath}>
+                                to={item.routePath}
+                            >
                                 <span className={theme.common.textOverflow}>{item.label}</span>
                             </Link>
                         </div>

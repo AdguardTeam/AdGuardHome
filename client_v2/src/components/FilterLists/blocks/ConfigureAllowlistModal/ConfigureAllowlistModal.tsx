@@ -74,18 +74,19 @@ export const ConfigureAllowlistModal = ({ modalId, filterToEdit }: Props) => {
         switch (modalId) {
             case MODAL_TYPE.ADD_ALLOWLIST: {
                 dispatch(addFilter(values.url, values.name, true));
-                dispatch(closeModal());
                 break;
             }
             case MODAL_TYPE.EDIT_ALLOWLIST: {
-                dispatch(editFilter(values.url, values, true));
-                dispatch(closeModal());
+                dispatch(editFilter(filterToEdit!.url, values, true));
                 break;
             }
             default: {
                 break;
             }
         }
+
+        reset(defaultValues);
+        dispatch(closeModal());
     };
 
     const handleCancel = () => {
@@ -110,7 +111,9 @@ export const ConfigureAllowlistModal = ({ modalId, filterToEdit }: Props) => {
                                                 type="text"
                                                 id="filters_name"
                                                 label={intl.getMessage('name_label')}
-                                                placeholder={intl.getMessage('allowlist_placeholder_example')}
+                                                placeholder={intl.getMessage(
+                                                    'allowlist_placeholder_example',
+                                                )}
                                                 errorMessage={fieldState.error?.message}
                                             />
                                         )}
@@ -130,7 +133,9 @@ export const ConfigureAllowlistModal = ({ modalId, filterToEdit }: Props) => {
                                                 type="text"
                                                 id="filters_url"
                                                 label={intl.getMessage('blocklist_url_file_path')}
-                                                placeholder={intl.getMessage('blocklist_url_file_path')}
+                                                placeholder={intl.getMessage(
+                                                    'blocklist_url_file_path',
+                                                )}
                                                 errorMessage={fieldState.error?.message}
                                             />
                                         )}

@@ -17,7 +17,16 @@ type Props = {
     children?: ReactNode;
 };
 
-export const SwitchGroup = ({ title, description, id, className, checked, onChange, disabled, children }: Props) => {
+export const SwitchGroup = ({
+    title,
+    description,
+    id,
+    className,
+    checked,
+    onChange,
+    disabled,
+    children,
+}: Props) => {
     const inputRef = useRef<HTMLInputElement>(null);
 
     const handleRowClick = () => {
@@ -36,7 +45,13 @@ export const SwitchGroup = ({ title, description, id, className, checked, onChan
                     {description && <div className={cn(theme.text.t3, s.desc)}>{description}</div>}
                 </div>
                 <div className={s.input} onClick={(e) => e.stopPropagation()}>
-                    <Switch id={id} checked={checked} onChange={onChange} disabled={disabled} ref={inputRef} />
+                    <Switch
+                        id={id}
+                        checked={checked}
+                        onChange={onChange}
+                        disabled={disabled}
+                        ref={inputRef}
+                    />
                 </div>
             </div>
 

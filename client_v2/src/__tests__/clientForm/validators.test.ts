@@ -1,5 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { validateIdentifier, validateUpstreams } from 'panel/helpers/validators';
+import {
+    validateIdentifier,
+    validateUpstreams,
+    validateRequiredValue,
+    validateIpv4,
+    validatePort,
+    validateInstallPort,
+    validatePortTLS,
+    validatePlainDns,
+    validateIpForGatewaySubnetMask,
+    validateIpv4InCidr,
+    validatePasswordLength,
+    validateIpNotDuplicate,
+    validateIpPerLine,
+} from 'panel/helpers/validators';
 
 describe('validateIdentifier', () => {
     it('returns required error for empty string', () => {
@@ -102,5 +116,257 @@ describe('validateUpstreams', () => {
     it('skips comments and only flags real lines', () => {
         const result = validateUpstreams('# comment\nbadline\n1.1.1.1');
         expect(result).toBeTruthy();
+    });
+});
+
+describe('validateRequiredValue', () => {
+    it('returns undefined for non-empty string', () => {
+        expect(validateRequiredValue('hello')).toBeUndefined();
+    });
+
+    it('returns error for empty string', () => {
+        expect(validateRequiredValue('')).toBeTruthy();
+    });
+
+    it('returns error for whitespace-only string', () => {
+        expect(validateRequiredValue('   ')).toBeTruthy();
+    });
+
+    it('returns undefined for 0 (zero is valid)', () => {
+        expect(validateRequiredValue(0)).toBeUndefined();
+    });
+
+    it('returns error for undefined', () => {
+        expect(validateRequiredValue(undefined)).toBeTruthy();
+    });
+
+    it('returns undefined for truthy number', () => {
+        expect(validateRequiredValue(42)).toBeUndefined();
+    });
+
+    it('returns error for false', () => {
+        expect(validateRequiredValue(false)).toBeTruthy();
+    });
+});
+
+describe('validateIpv4', () => {
+    it('returns undefined for valid IPv4', () => {
+        expect(validateIpv4('192.168.1.1')).toBeUndefined();
+    });
+
+    it('returns error for invalid IPv4', () => {
+        expect(validateIpv4('999.999.999.999')).toBeTruthy();
+    });
+
+    it('returns undefined for empty string (skip)', () => {
+        expect(validateIpv4('')).toBeUndefined();
+    });
+
+    it('returns undefined for undefined (skip)', () => {
+        expect(validateIpv4(undefined)).toBeUndefined();
+    });
+});
+
+describe('validatePort', () => {
+    it('returns undefined for port in web range', () => {
+        expect(validatePort(8080)).toBeUndefined();
+    });
+
+    it('returns undefined for boundary 80', () => {
+        expect(validatePort(80)).toBeUndefined();
+    });
+
+    it('returns undefined for boundary 65535', () => {
+        expect(validatePort(65535)).toBeUndefined();
+    });
+
+    it('returns error for 0 (falls outside range 80-65535)', () => {
+        expect(validatePort(0)).toBeTruthy();
+    });
+
+    it('returns error for port below 80', () => {
+        expect(validatePort(79)).toBeTruthy();
+    });
+
+    it('returns error for port above 65535', () => {
+        expect(validatePort(65536)).toBeTruthy();
+    });
+});
+
+describe('validateInstallPort', () => {
+    it('returns undefined for valid port', () => {
+        expect(validateInstallPort(80)).toBeUndefined();
+    });
+
+    it('returns undefined for boundary 1', () => {
+        expect(validateInstallPort(1)).toBeUndefined();
+    });
+
+    it('returns undefined for boundary 65535', () => {
+        expect(validateInstallPort(65535)).toBeUndefined();
+    });
+
+    it('returns error for 0 (install requires real port)', () => {
+        expect(validateInstallPort(0)).toBeTruthy();
+    });
+
+    it('returns error for port above 65535', () => {
+        expect(validateInstallPort(65536)).toBeTruthy();
+    });
+});
+
+describe('validatePortTLS', () => {
+    it('returns undefined for 0 (disabled)', () => {
+        expect(validatePortTLS(0)).toBeUndefined();
+    });
+
+    it('returns undefined for valid TLS port', () => {
+        expect(validatePortTLS(853)).toBeUndefined();
+    });
+
+    it('returns undefined for boundary 80', () => {
+        expect(validatePortTLS(80)).toBeUndefined();
+    });
+
+    it('returns error for port below 80', () => {
+        expect(validatePortTLS(79)).toBeTruthy();
+    });
+
+    it('returns error for port above 65535', () => {
+        expect(validatePortTLS(65536)).toBeTruthy();
+    });
+});
+
+describe('validatePlainDns', () => {
+    it('returns undefined when both encryption and plain DNS are on', () => {
+        expect(validatePlainDns(true, { enabled: true })).toBeUndefined();
+    });
+
+    it('returns undefined when plain DNS is on, encryption off', () => {
+        expect(validatePlainDns(true, { enabled: false })).toBeUndefined();
+    });
+
+    it('returns undefined when encryption is on, plain DNS off', () => {
+        expect(validatePlainDns(false, { enabled: true })).toBeUndefined();
+    });
+
+    it('returns error when both are off', () => {
+        expect(validatePlainDns(false, { enabled: false })).toBeTruthy();
+    });
+});
+
+describe('validateIpForGatewaySubnetMask', () => {
+    const validContext = {
+        v4: { gateway_ip: '192.168.1.1', subnet_mask: '255.255.255.0' },
+    };
+
+    it('returns undefined for IP in subnet', () => {
+        expect(validateIpForGatewaySubnetMask('192.168.1.5', validContext)).toBeUndefined();
+    });
+
+    it('returns error for IP outside subnet', () => {
+        expect(validateIpForGatewaySubnetMask('10.0.0.1', validContext)).toBeTruthy();
+    });
+
+    it('returns undefined when context is missing', () => {
+        expect(validateIpForGatewaySubnetMask('192.168.1.5', {})).toBeUndefined();
+    });
+
+    it('returns undefined for empty value', () => {
+        expect(validateIpForGatewaySubnetMask('', validContext)).toBeUndefined();
+    });
+
+    // REGRESSION: guard must use nested allValues.v4.gateway_ip, not flat
+    it('validates IP using nested context only (no flat keys)', () => {
+        const nestedOnly = {
+            v4: { gateway_ip: '192.168.1.1', subnet_mask: '255.255.255.0' },
+        };
+        // IP outside subnet should return error even without flat keys
+        expect(validateIpForGatewaySubnetMask('10.0.0.1', nestedOnly)).toBeTruthy();
+    });
+});
+
+describe('validateIpv4InCidr', () => {
+    it('returns undefined for IP within CIDR', () => {
+        expect(validateIpv4InCidr('192.168.1.5', { cidr: '192.168.1.0/24' })).toBeUndefined();
+    });
+
+    it('returns error for IP outside CIDR', () => {
+        expect(validateIpv4InCidr('10.0.0.1', { cidr: '192.168.1.0/24' })).toBeTruthy();
+    });
+});
+
+describe('validatePasswordLength', () => {
+    it('returns true for too-short password (< 8 UTF-8 bytes)', () => {
+        expect(validatePasswordLength('short')).toBe(true);
+    });
+
+    it('returns undefined for valid password', () => {
+        expect(validatePasswordLength('longenough')).toBeUndefined();
+    });
+
+    it('returns undefined for empty string (skipped)', () => {
+        expect(validatePasswordLength('')).toBeUndefined();
+    });
+
+    it('returns undefined for undefined (skipped)', () => {
+        expect(validatePasswordLength(undefined)).toBeUndefined();
+    });
+
+    it('returns true for password exceeding 72 UTF-8 bytes', () => {
+        expect(validatePasswordLength('a'.repeat(73))).toBe(true);
+    });
+
+    it('counts UTF-8 bytes, not characters (multibyte é = 2 bytes)', () => {
+        // 'é' repeated 3 times = 6 UTF-8 bytes < 8 → too short
+        expect(validatePasswordLength('é'.repeat(3))).toBe(true);
+        // 'é' repeated 4 times = 8 UTF-8 bytes → valid
+        expect(validatePasswordLength('é'.repeat(4))).toBeUndefined();
+    });
+});
+
+describe('validateIpNotDuplicate', () => {
+    const leases = [{ ip: '192.168.1.10' }, { ip: '192.168.1.20' }];
+
+    it('returns undefined for unique IP', () => {
+        expect(validateIpNotDuplicate(leases)('192.168.1.30')).toBeUndefined();
+    });
+
+    it('returns error for duplicate IP', () => {
+        expect(validateIpNotDuplicate(leases)('192.168.1.10')).toBeTruthy();
+    });
+
+    it('ignores the edit IP (editing existing lease)', () => {
+        expect(validateIpNotDuplicate(leases, '192.168.1.10')('192.168.1.10')).toBeUndefined();
+    });
+
+    it('returns undefined for empty leases', () => {
+        expect(validateIpNotDuplicate([])('192.168.1.1')).toBeUndefined();
+    });
+
+    it('returns undefined for empty value', () => {
+        expect(validateIpNotDuplicate(leases)('')).toBeUndefined();
+    });
+});
+
+describe('validateIpPerLine', () => {
+    it('returns undefined for valid multi-line IPs', () => {
+        expect(validateIpPerLine('192.168.1.1\n10.0.0.1')).toBeUndefined();
+    });
+
+    it('returns error when a line is invalid', () => {
+        expect(validateIpPerLine('192.168.1.1\nnot-an-ip')).toBeTruthy();
+    });
+
+    it('returns undefined for empty string', () => {
+        expect(validateIpPerLine('')).toBeUndefined();
+    });
+
+    it('skips blank lines', () => {
+        expect(validateIpPerLine('\n\n')).toBeUndefined();
+    });
+
+    it('skips blank lines between valid IPs', () => {
+        expect(validateIpPerLine('192.168.1.1\n\n10.0.0.1')).toBeUndefined();
     });
 });

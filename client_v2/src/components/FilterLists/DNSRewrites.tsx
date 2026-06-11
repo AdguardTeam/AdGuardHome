@@ -6,11 +6,16 @@ import intl from 'panel/common/intl';
 import { MODAL_TYPE } from 'panel/helpers/constants';
 import { RootState } from 'panel/initialState';
 import theme from 'panel/lib/theme';
-import { getRewritesList, updateRewrite, getRewriteSettings, updateRewriteSettings } from 'panel/actions/rewrites';
-import { Icon } from 'panel/common/ui/Icon';
+import {
+    getRewritesList,
+    updateRewrite,
+    getRewriteSettings,
+    updateRewriteSettings,
+} from 'panel/actions/rewrites';
 import { ConfirmDialog } from 'panel/common/ui/ConfirmDialog';
 import { openModal } from 'panel/reducers/modals';
 import { DeleteRewriteModal } from 'panel/components/FilterLists/blocks/DeleteRewriteModal';
+import { PlusButton } from 'panel/common/ui/PlusButton';
 import { ConfigureRewritesModal } from 'panel/components/FilterLists/blocks/ConfigureRewritesModal/ConfigureRewritesModal';
 import { RewritesTable } from './blocks/RewritesTable/RewritesTable';
 
@@ -43,6 +48,16 @@ export const DNSRewrites = () => {
 
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [targetEnabled, setTargetEnabled] = useState<boolean | null>(null);
+    const [settingsLoaded, setSettingsLoaded] = useState(false);
+
+    // Only show loader during initial fetch, not on subsequent enable/disable toggles.
+    useEffect(() => {
+        if (!processingSettings && !settingsLoaded) {
+            setSettingsLoaded(true);
+        }
+    }, [processingSettings, settingsLoaded]);
+
+    const isInitialSettingsLoad = processingSettings && !settingsLoaded;
 
     useEffect(() => {
         dispatch(getRewritesList());
@@ -66,10 +81,12 @@ export const DNSRewrites = () => {
     const toggleRewrite = (rewrite: Rewrite) => {
         const updatedRewrite = { ...rewrite, enabled: !rewrite.enabled };
 
-        dispatch(updateRewrite({
-            target: rewrite,
-            update: updatedRewrite,
-        }));
+        dispatch(
+            updateRewrite({
+                target: rewrite,
+                update: updatedRewrite,
+            }),
+        );
     };
 
     const openGlobalToggleConfirm = (value: boolean) => {
@@ -91,6 +108,31 @@ export const DNSRewrites = () => {
         closeGlobalToggleConfirm();
     };
 
+    const renderTable = () => {
+        if (list.length === 0) {
+            return null;
+        }
+
+        return (
+            <div className={cn(s.group, s.tableGroup)}>
+                <RewritesTable
+                    list={list}
+                    processing={processing}
+                    processingAdd={processingAdd}
+                    processingUpdate={processingUpdate}
+                    processingDelete={processingDelete}
+                    processingSettings={isInitialSettingsLoad}
+                    enabled={enabled}
+                    addRewritesList={openAddRewiresModal}
+                    deleteRewrite={openDeleteRewriteModal}
+                    editRewrite={openEditRewriteModal}
+                    toggleRewrite={toggleRewrite}
+                    toggleAllRewrites={(value: boolean) => openGlobalToggleConfirm(value)}
+                />
+            </div>
+        );
+    };
+
     return (
         <div className={theme.layout.container}>
             <div className={theme.layout.containerIn}>
@@ -101,45 +143,47 @@ export const DNSRewrites = () => {
                 <div className={s.desc}>{intl.getMessage('dns_rewrites_desc')}</div>
 
                 <div className={s.group}>
-                    <button type="button" className={cn(s.button, s.button_add)} onClick={openAddRewiresModal} data-testid="add-rewrite">
-                        <Icon icon="plus" color="green" />
+                    <PlusButton onClick={openAddRewiresModal} testId="add-rewrite">
                         {intl.getMessage('rewrite_add')}
-                    </button>
+                    </PlusButton>
                 </div>
 
-                <div className={cn(s.group, s.stretchSelf)}>
-                    <RewritesTable
-                        list={list}
-                        processing={processing}
-                        processingAdd={processingAdd}
-                        processingUpdate={processingUpdate}
-                        processingDelete={processingDelete}
-                        processingSettings={processingSettings}
-                        enabled={enabled}
-                        addRewritesList={openAddRewiresModal}
-                        deleteRewrite={openDeleteRewriteModal}
-                        editRewrite={openEditRewriteModal}
-                        toggleRewrite={toggleRewrite}
-                        toggleAllRewrites={(value: boolean) => openGlobalToggleConfirm(value)}
-                    />
-                </div>
+                {renderTable()}
 
                 <ConfigureRewritesModal modalId={MODAL_TYPE.ADD_REWRITE} />
 
-                <ConfigureRewritesModal modalId={MODAL_TYPE.EDIT_REWRITE} rewriteToEdit={currentRewrite} />
+                <ConfigureRewritesModal
+                    modalId={MODAL_TYPE.EDIT_REWRITE}
+                    rewriteToEdit={currentRewrite}
+                />
 
-                <DeleteRewriteModal rewriteToDelete={currentRewrite} setRewriteToDelete={setCurrentRewrite} />
+                <DeleteRewriteModal
+                    rewriteToDelete={currentRewrite}
+                    setRewriteToDelete={setCurrentRewrite}
+                />
 
                 {isConfirmOpen && targetEnabled !== null && (
                     <ConfirmDialog
                         onClose={closeGlobalToggleConfirm}
-                        title={intl.getMessage(targetEnabled ? 'enable_dns_rewrites' : 'disable_dns_rewrites')}
-                        text={intl.getMessage(targetEnabled ? 'all_rewrites_enabled' : 'all_rewrites_disabled')}
-                        buttonText={intl.getMessage(targetEnabled ? 'enable' : 'disable')}
+                        title={
+                            targetEnabled
+                                ? intl.getMessage('enable_dns_rewrites')
+                                : intl.getMessage('disable_dns_rewrites')
+                        }
+                        text={
+                            targetEnabled
+                                ? intl.getMessage('all_rewrites_enabled')
+                                : intl.getMessage('all_rewrites_disabled')
+                        }
+                        buttonText={
+                            targetEnabled ? intl.getMessage('enable') : intl.getMessage('disable')
+                        }
                         cancelText={intl.getMessage('cancel')}
                         buttonVariant={targetEnabled ? 'primary' : 'danger'}
                         onConfirm={confirmGlobalToggle}
-                        submitTestId={targetEnabled ? 'confirm-enable-rewrites' : 'confirm-disable-rewrites'}
+                        submitTestId={
+                            targetEnabled ? 'confirm-enable-rewrites' : 'confirm-disable-rewrites'
+                        }
                         cancelTestId="cancel-toggle-rewrites"
                     />
                 )}

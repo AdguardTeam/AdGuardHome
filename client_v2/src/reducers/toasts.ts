@@ -45,8 +45,7 @@ const toasts = handleActions(
                 message,
                 actionLabel:
                     typeof successPayload === 'string' ? undefined : successPayload.actionLabel,
-                undoId:
-                    typeof successPayload === 'string' ? undefined : successPayload.undoId,
+                undoId: typeof successPayload === 'string' ? undefined : successPayload.undoId,
                 code: typeof successPayload === 'string' ? undefined : successPayload.code,
                 type: TOAST_TYPES.SUCCESS,
             };

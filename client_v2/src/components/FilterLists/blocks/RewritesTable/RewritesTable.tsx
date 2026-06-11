@@ -5,7 +5,7 @@ import intl from 'panel/common/intl';
 import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from 'panel/helpers/localStorageHelper';
 import { Table as ReactTable, TableColumn } from 'panel/common/ui/Table';
 import { Icon } from 'panel/common/ui/Icon';
-import { SortDropdown } from 'panel/common/ui/SortDropdown';
+import { SortSelect } from 'panel/common/ui/SortSelect';
 import theme from 'panel/lib/theme';
 import { Switch } from 'panel/common/controls/Switch';
 
@@ -89,15 +89,16 @@ export const RewritesTable = ({
                 accessor: 'enabled',
                 sortable: false,
                 fitContent: true,
+                className: s.cellNameToggleOuter,
                 render: (value: boolean, row: Rewrite) => {
                     const { domain, enabled } = row;
                     const id = `rewrite_${domain}`;
 
                     return (
                         <div className={s.cell}>
-                            <span className={s.cellLabel}>{intl.getMessage('enabled_table_header')}</span>
+                            <span className={s.cellNameLabel}>{domain}</span>
 
-                            <div className={s.cellValue}>
+                            <div className={s.cellValueToggle}>
                                 <Switch
                                     id={id}
                                     data-testid={`rewrite-toggle-${domain}`}
@@ -118,6 +119,7 @@ export const RewritesTable = ({
                 },
                 accessor: 'domain',
                 sortable: true,
+                className: s.nameDesktopOnly,
                 render: (value: string) => (
                     <div className={s.cell}>
                         <span className={s.cellLabel}>{intl.getMessage('name_label')}</span>
@@ -128,6 +130,7 @@ export const RewritesTable = ({
                     </div>
                 ),
             },
+
             {
                 key: 'answer',
                 header: {
@@ -149,10 +152,11 @@ export const RewritesTable = ({
             {
                 key: 'actions',
                 header: {
-                    text: intl.getMessage('actions_label'),
+                    text: '',
                     className: s.headerCell,
                 },
                 sortable: false,
+                width: 80,
                 render: (value: any, row: Rewrite) => {
                     const currentRewrite = {
                         answer: row.answer,
@@ -162,30 +166,31 @@ export const RewritesTable = ({
 
                     return (
                         <div className={s.cell}>
-                            <span className={s.cellLabel}>{intl.getMessage('actions_label')}</span>
-
-                            <div className={s.cellValue}>
-                                <div className={s.cellActions}>
-                                    <button
-                                        type="button"
-                                        onClick={() => editRewrite(currentRewrite)}
-                                        disabled={processingUpdate}
-                                        className={s.action}
-                                        data-testid={`edit-rewrite-${row.domain}`}
-                                    >
+                            <div className={s.cellActions}>
+                                <button
+                                    type="button"
+                                    onClick={() => editRewrite(currentRewrite)}
+                                    disabled={processingUpdate}
+                                    className={s.editAction}
+                                    data-testid={`edit-rewrite-${row.domain}`}
+                                >
+                                    <span className={cn(s.editActionLabel, theme.text.t2)}>
+                                        {intl.getMessage('edit_table_action')}
+                                    </span>
+                                    <span className={s.editActionIcon}>
                                         <Icon icon="edit" color="gray" />
-                                    </button>
+                                    </span>
+                                </button>
 
-                                    <button
-                                        type="button"
-                                        onClick={() => deleteRewrite(currentRewrite)}
-                                        disabled={processingDelete}
-                                        className={s.action}
-                                        data-testid={`delete-rewrite-${row.domain}`}
-                                    >
-                                        <Icon icon="delete" color="red" />
-                                    </button>
-                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => deleteRewrite(currentRewrite)}
+                                    disabled={processingDelete}
+                                    className={s.action}
+                                    data-testid={`delete-rewrite-${row.domain}`}
+                                >
+                                    <Icon icon="delete" color="red" />
+                                </button>
                             </div>
                         </div>
                     );
@@ -207,7 +212,11 @@ export const RewritesTable = ({
                 <div className={cn(theme.text.t3, s.emptyTableDesc)}>
                     {intl.getMessage('rewrites_empty', {
                         button: (text: string) => (
-                            <button className={cn(theme.text.t3, theme.link.link)} type="button" onClick={addRewritesList}>
+                            <button
+                                className={cn(theme.text.t3, theme.link.link)}
+                                type="button"
+                                onClick={addRewritesList}
+                            >
                                 {text}
                             </button>
                         ),
@@ -219,8 +228,14 @@ export const RewritesTable = ({
 
     return (
         <>
-            <div className={cn(theme.pagination.wrapper, s.sortDropdownMobile)}>
-                <SortDropdown value={sortDirection} onChange={setSortDirection} />
+            <div
+                className={cn(
+                    theme.pagination.wrapper,
+                    s.sortDropdownMobile,
+                    s.sortDropdownMobileRewrites,
+                )}
+            >
+                <SortSelect value={sortDirection} onChange={setSortDirection} />
             </div>
 
             <div className={s.allDomainsMobile}>

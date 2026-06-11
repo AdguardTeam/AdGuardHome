@@ -24,7 +24,9 @@ export const StatusCell = ({ row }: Props) => {
             <span className={cn(s.status, getStatusClassName(row.reason), theme.text.t3)}>
                 {getQueryStatusLabel(statusKey)}
             </span>
-            <span className={cn(s.secondaryLine, theme.text.t4)}>{getQueryStatusDetails(row.elapsedMs)}</span>
+            <span className={cn(s.secondaryLine, theme.text.t4)}>
+                {getQueryStatusDetails(row.elapsedMs)}
+            </span>
         </div>
     );
 };

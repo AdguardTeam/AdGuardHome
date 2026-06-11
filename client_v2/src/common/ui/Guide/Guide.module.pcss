@@ -55,7 +55,7 @@
 }
 
 .strongNumbers li::before {
-    content: counter(strong-counter) ".";
+    content: counter(strong-counter) '.';
     font-weight: bold;
     position: absolute;
     left: -25px;
@@ -81,32 +81,36 @@
     margin-bottom: 32px;
 }
 
+.deviceDnsListItem,
+.guideBulletItem {
+    list-style: none;
+    position: relative;
+
+    &::before {
+        content: '';
+        width: 8px;
+        height: 8px;
+        background-color: var(--default-main-text);
+        border-radius: 50%;
+        display: inline-block;
+        position: absolute;
+        left: -16px;
+        top: 8px;
+    }
+}
+
 .deviceDnsListItem {
     margin-top: 8px;
 }
 
 .guideBulletItem {
     margin-bottom: 16px;
-    list-style: none;
-    position: relative;
-}
 
-.guideBulletItem::before {
-    content: "";
-    width: 8px;
-    height: 8px;
-    background-color: var(--default-description-text);
-    border-radius: 50%;
-    display: inline-block;
-    position: absolute;
-    left: -16px;
-    top: 8px;
-}
-
-.guideItemTitle {
-    display: block;
+    .guideItemTitle {
+        display: block;
+    }
 }
 
 .guideList {
-    padding-left: 20px;
+    padding-left: 24px;
 }

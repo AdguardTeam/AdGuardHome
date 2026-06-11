@@ -48,7 +48,6 @@ export const addRewrite = (config: RewriteConfig) => async (dispatch: AppDispatc
         dispatch(addRewriteSuccess(config));
         dispatch(toggleRewritesModal());
         dispatch(getRewritesList());
-        dispatch(addSuccessToast(intl.getMessage('rewrite_added', { key: config.domain })));
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(addRewriteFailure());
@@ -77,14 +76,6 @@ export const updateRewrite =
             }
 
             dispatch(getRewritesList());
-
-            if (options.showToast !== false) {
-                dispatch(
-                    addSuccessToast(
-                        intl.getMessage('rewrite_updated', { key: config.update.domain }),
-                    ),
-                );
-            }
 
             return true;
         } catch (error) {

@@ -51,7 +51,8 @@ export const Header = () => {
             </div>
             <div
                 className={cn(s.burgerMenuMask, { [s.open]: burgerModal })}
-                onClick={(event) => closeBurgerMenu(event)}>
+                onClick={(event) => closeBurgerMenu(event)}
+            >
                 <div className={s.burgerMenu}>
                     <Menu
                         headerMenu

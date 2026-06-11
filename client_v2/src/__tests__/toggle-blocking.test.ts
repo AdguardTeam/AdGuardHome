@@ -45,9 +45,7 @@ describe('toggleBlocking', () => {
 
         await toggleBlocking(BLOCK_ACTIONS.BLOCK, 'allowed.example')(dispatch, getState as never);
 
-        expect(mocks.setRules).toHaveBeenCalledWith('||allowed.example^$important\n', {
-            showToast: false,
-        });
+        expect(mocks.setRules).toHaveBeenCalledWith('||allowed.example^$important\n');
         expect(mocks.addSuccessToast).toHaveBeenCalledWith(
             expect.objectContaining({
                 message: intl.getMessage('user_rules_rule_added_to_custom_filtering_rules'),
@@ -72,9 +70,7 @@ describe('toggleBlocking', () => {
             '@@allowed.example^$important',
         )(dispatch, getState as never);
 
-        expect(mocks.setRules).toHaveBeenCalledWith('||allowed.example^$important\n', {
-            showToast: false,
-        });
+        expect(mocks.setRules).toHaveBeenCalledWith('||allowed.example^$important\n');
         expect(mocks.getFilteringStatus).toHaveBeenCalled();
     });
 
@@ -87,9 +83,7 @@ describe('toggleBlocking', () => {
 
         await toggleBlocking(BLOCK_ACTIONS.UNBLOCK, 'blocked.example')(dispatch, getState as never);
 
-        expect(mocks.setRules).toHaveBeenCalledWith('@@||blocked.example^$important\n', {
-            showToast: false,
-        });
+        expect(mocks.setRules).toHaveBeenCalledWith('@@||blocked.example^$important\n');
         expect(mocks.addSuccessToast).toHaveBeenCalledWith(
             expect.objectContaining({
                 message: intl.getMessage('user_rules_rule_added_to_custom_filtering_rules'),

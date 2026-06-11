@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 
 import intl from 'panel/common/intl';
-import Controls from './Controls';
+import { Controls } from './Controls';
 import styles from './styles.module.pcss';
 
 import routerImage from '../../img/router.svg';
@@ -44,4 +44,3 @@ const Greeting = () => {
 };
 
 export default Greeting;
-

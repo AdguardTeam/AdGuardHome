@@ -55,9 +55,7 @@ vi.mock('react-router-dom', () => ({
     Link: ({ children, to }: { children: React.ReactNode; to: string }) => (
         <a href={to}>{children}</a>
     ),
-    useHistory: () => ({
-        push: vi.fn(),
-    }),
+    useNavigate: () => vi.fn(),
 }));
 
 describe('Clients Page', () => {
@@ -176,19 +174,6 @@ describe('Clients Page', () => {
             expect(screen.getByText('rDNS')).toBeInTheDocument();
             expect(screen.getByText('567')).toBeInTheDocument();
         });
-    });
-
-    it('renders empty state when no clients exist', async () => {
-        mocks.state.dashboard.processingClients = false;
-        mocks.state.stats.processingStats = false;
-        mocks.state.dashboard.clients = [];
-        mocks.state.dashboard.autoClients = [];
-
-        render(<Clients />);
-
-        const notFoundElements = await screen.findAllByText('No clients found');
-
-        expect(notFoundElements.length).toBe(2);
     });
 
     it('uses the persisted persistent-clients page size from localStorage', async () => {

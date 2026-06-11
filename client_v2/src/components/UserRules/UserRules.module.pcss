@@ -20,6 +20,10 @@
 
 .wrapper {
     min-width: 0;
+
+    @media (min-width: 1024px) {
+        padding-left: 16px;
+    }
 }
 
 .check {
@@ -143,9 +147,8 @@
 
 .icon {
     position: absolute;
-    top: 50%;
+    top: 8px;
     left: 0;
-    transform: translateY(-50%);
     color: var(--default-main-text);
 }
 

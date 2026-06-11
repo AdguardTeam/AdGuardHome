@@ -3,9 +3,20 @@
     color: var(--default-gray-icons);
 }
 
+.overlay_mobile {
+    @media (max-width: 767px) {
+        max-width: calc(100vw - 32px) !important;
+        overflow: visible !important;
+    }
+}
+
 .menu {
     padding: 16px;
     background-color: var(--page-background-additional);
+
+    @media (max-width: 767px) {
+        max-width: calc(100vw - 32px);
+    }
 
     @media (min-width: 768px) {
         max-width: 280px;

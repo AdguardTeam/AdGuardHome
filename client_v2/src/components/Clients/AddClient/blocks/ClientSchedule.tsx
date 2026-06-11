@@ -20,16 +20,16 @@ export const ClientSchedule = () => {
 
     return (
         <div className={cn(theme.layout.container, s.containerOverride)}>
+            <ClientsHeader
+                currentTitle={intl.getMessage('inactivity_schedule')}
+                extraLinks={[
+                    {
+                        path: blockedServicesPath as RoutePathKey,
+                        title: intl.getMessage('blocked_services'),
+                    },
+                ]}
+            />
             <div className={cn(theme.layout.containerIn, theme.layout.containerIn_one_col)}>
-                <ClientsHeader
-                    currentTitle={intl.getMessage('inactivity_schedule')}
-                    extraLinks={[
-                        {
-                            path: blockedServicesPath as RoutePathKey,
-                            title: intl.getMessage('blocked_services'),
-                        },
-                    ]}
-                />
                 <InactivitySchedule clientScope />
             </div>
         </div>

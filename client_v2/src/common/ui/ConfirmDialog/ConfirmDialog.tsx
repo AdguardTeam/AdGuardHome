@@ -45,7 +45,8 @@ export const ConfirmDialog = ({
         title={title}
         onClose={onClose}
         className={s.сonfirmDialogClass}
-        wrapClassName={cn('rc-dialog-update', wrapClassName)}>
+        wrapClassName={cn('rc-dialog-update', wrapClassName)}
+    >
         {text && <div className={theme.dialog.body}>{text}</div>}
 
         {customFooter || (
@@ -57,7 +58,8 @@ export const ConfirmDialog = ({
                     size="small"
                     onClick={onConfirm}
                     className={theme.dialog.button}
-                    disabled={submitDisabled}>
+                    disabled={submitDisabled}
+                >
                     {buttonText}
                 </Button>
 
@@ -67,7 +69,8 @@ export const ConfirmDialog = ({
                     variant="secondary"
                     size="small"
                     onClick={onClose}
-                    className={theme.dialog.button}>
+                    className={theme.dialog.button}
+                >
                     {cancelText}
                 </Button>
             </div>

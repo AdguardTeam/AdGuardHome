@@ -76,7 +76,10 @@ export const CheckForm = ({ control, handleSubmit, onSubmit, isValid, processing
                 render={({ field, fieldState }) => (
                     <div className={s.formGroup}>
                         <div className={s.selectField} data-testid="user-rules-check-qtype">
-                            <label className={cn(s.selectLabel, theme.text.t3)} htmlFor="user-rules-qtype-input">
+                            <label
+                                className={cn(s.selectLabel, theme.text.t3)}
+                                htmlFor="user-rules-qtype-input"
+                            >
                                 {intl.getMessage('user_rules_check_dns_record_type_label')}
                             </label>
 
@@ -86,14 +89,20 @@ export const CheckForm = ({ control, handleSubmit, onSubmit, isValid, processing
                                 size="responsive"
                                 height="medium"
                                 menuSize="large"
-                                placeholder={intl.getMessage('user_rules_dns_record_type_placeholder')}
+                                placeholder={intl.getMessage(
+                                    'user_rules_dns_record_type_placeholder',
+                                )}
                                 options={DNS_RECORD_TYPE_OPTIONS}
-                                value={DNS_RECORD_TYPE_OPTIONS.find((option) => option.value === field.value)}
+                                value={DNS_RECORD_TYPE_OPTIONS.find(
+                                    (option) => option.value === field.value,
+                                )}
                                 onChange={(option) => field.onChange(option?.value || '')}
                                 onBlur={field.onBlur}
                             />
 
-                            {fieldState.error && <div className={theme.form.error}>{fieldState.error.message}</div>}
+                            {fieldState.error && (
+                                <div className={theme.form.error}>{fieldState.error.message}</div>
+                            )}
                         </div>
                     </div>
                 )}

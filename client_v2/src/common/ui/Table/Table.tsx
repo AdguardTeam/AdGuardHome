@@ -22,6 +22,7 @@ export interface TableColumn<T = any> {
     accessor?: keyof T | ((row: T) => any);
     render?: (value: any, row: T, index: number) => ReactNode;
     sortable?: boolean;
+    sortFn?: (a: any, b: any) => number;
     fitContent?: boolean;
     width?: number | string;
     minWidth?: number;
@@ -124,11 +125,16 @@ export const Table = <T extends Record<string, any>>({
                 bValue = bValue.toLowerCase();
             }
 
-            let comparison = 0;
-            if (aValue < bValue) {
-                comparison = -1;
-            } else if (aValue > bValue) {
-                comparison = 1;
+            let comparison: number;
+            if (column.sortFn) {
+                comparison = column.sortFn(aValue, bValue);
+            } else {
+                comparison = 0;
+                if (aValue < bValue) {
+                    comparison = -1;
+                } else if (aValue > bValue) {
+                    comparison = 1;
+                }
             }
 
             return state.sortDirection === 'desc' ? -comparison : comparison;

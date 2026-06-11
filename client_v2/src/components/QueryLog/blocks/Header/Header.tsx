@@ -9,6 +9,7 @@ import { Button } from 'panel/common/ui/Button';
 import { Icon } from 'panel/common/ui/Icon';
 import { Select } from 'panel/common/controls/Select';
 import { FaqTooltip } from 'panel/common/ui/FaqTooltip';
+import { InlineLoader } from 'panel/common/ui/Loader';
 import { IOption } from 'panel/lib/helpers/utils';
 import {
     QUERY_LOG_REASON_FILTER,
@@ -91,8 +92,10 @@ export const Header = ({
         };
     }, []);
 
-    const selectedStatus = STATUS_OPTIONS.find((opt) => opt.value === currentStatus) || STATUS_OPTIONS[0];
-    const selectedReason = REASON_OPTIONS.find((opt) => opt.value === currentReason) || REASON_OPTIONS[0];
+    const selectedStatus =
+        STATUS_OPTIONS.find((opt) => opt.value === currentStatus) || STATUS_OPTIONS[0];
+    const selectedReason =
+        REASON_OPTIONS.find((opt) => opt.value === currentReason) || REASON_OPTIONS[0];
 
     return (
         <div className={s.header}>
@@ -111,25 +114,29 @@ export const Header = ({
                         onChange={handleSearchChange}
                         size="small"
                         prefixIcon={<Icon icon="search" className={s.searchIcon} />}
-                        suffixIcon={(
+                        suffixIcon={
                             <div className={s.searchSuffix}>
-                                {searchValue && (
-                                    <button
-                                        type="button"
-                                        className={s.searchClearButton}
-                                        data-testid="query-log-search-clear-button"
-                                        aria-label={intl.getMessage('reset')}
-                                        title={intl.getMessage('reset')}
-                                        onMouseDown={(event) => event.preventDefault()}
-                                        onClick={handleClearSearch}
-                                    >
-                                        <Icon icon="cross" className={s.searchClearIcon} />
-                                    </button>
+                                {isLoading ? (
+                                    <InlineLoader className={s.searchLoader} />
+                                ) : (
+                                    searchValue && (
+                                        <button
+                                            type="button"
+                                            className={s.searchClearButton}
+                                            data-testid="query-log-search-clear-button"
+                                            aria-label={intl.getMessage('reset')}
+                                            title={intl.getMessage('reset')}
+                                            onMouseDown={(event) => event.preventDefault()}
+                                            onClick={handleClearSearch}
+                                        >
+                                            <Icon icon="cross" className={s.searchClearIcon} />
+                                        </button>
+                                    )
                                 )}
 
                                 <FaqTooltip text={intl.getMessage('query_log_strict_search')} />
                             </div>
-                        )}
+                        }
                     />
 
                     <Button
@@ -145,16 +152,15 @@ export const Header = ({
                 </div>
 
                 <div className={s.filters}>
-                    <div
-                        className={s.filterField}
-                        data-testid="query-log-status-filter"
-                    >
+                    <div className={s.filterField} data-testid="query-log-status-filter">
                         <Select
                             size="responsive"
                             options={STATUS_OPTIONS}
                             value={selectedStatus}
                             optionTestIdPrefix="query-log-status-option"
-                            onChange={(option: IOption<string>) => onStatusFilterChange(option.value)}
+                            onChange={(option: IOption<string>) =>
+                                onStatusFilterChange(option.value)
+                            }
                             menuSize="medium"
                             menuPosition="right"
                             borderless={!isMobile}
@@ -162,16 +168,15 @@ export const Header = ({
                         />
                     </div>
 
-                    <div
-                        className={s.filterField}
-                        data-testid="query-log-reason-filter"
-                    >
+                    <div className={s.filterField} data-testid="query-log-reason-filter">
                         <Select
                             size="responsive"
                             options={REASON_OPTIONS}
                             value={selectedReason}
                             optionTestIdPrefix="query-log-reason-option"
-                            onChange={(option: IOption<string>) => onReasonFilterChange(option.value)}
+                            onChange={(option: IOption<string>) =>
+                                onReasonFilterChange(option.value)
+                            }
                             menuSize="medium"
                             menuPosition="right"
                             borderless={!isMobile}

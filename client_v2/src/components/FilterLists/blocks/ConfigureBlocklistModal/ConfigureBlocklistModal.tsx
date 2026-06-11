@@ -11,12 +11,14 @@ import theme from 'panel/lib/theme';
 import { Button } from 'panel/common/ui/Button';
 import { FormProvider, useForm } from 'react-hook-form';
 import { RootState } from 'panel/initialState';
-import { addFilter, editFilter } from 'panel/actions/filtering';
+import { addFilter, addFiltersBatch, editFilter } from 'panel/actions/filtering';
 import { Filter } from 'panel/helpers/helpers';
 import { ManualFilterForm } from 'panel/components/FilterLists/blocks/ConfigureBlocklistModal/blocks/ManualFilterForm';
 import { Tabs } from 'panel/common/ui/Tabs';
 import filtersCatalog from 'panel/helpers/filters/filters';
+import { InlineLoader } from 'panel/common/ui/Loader/InlineLoader';
 import { FiltersList } from './blocks/FiltersList';
+import s from './ConfigureBlocklistModal.module.pcss';
 
 type FormValues = {
     name: string;
@@ -41,7 +43,10 @@ type SelectedValues = {
     selectedSources: Record<string, boolean>;
 };
 
-const getSelectedValues = (filters: Filter[], catalogSourcesToIdMap: Record<string, string>): SelectedValues =>
+const getSelectedValues = (
+    filters: Filter[],
+    catalogSourcesToIdMap: Record<string, string>,
+): SelectedValues =>
     filters.reduce(
         (acc: SelectedValues, { url }: Filter) => {
             if (Object.prototype.hasOwnProperty.call(catalogSourcesToIdMap, url)) {
@@ -90,6 +95,7 @@ const getFormContent = ({
                 <Tabs
                     activeTab={activeTab}
                     onTabChange={onTabChange}
+                    contentClassName={s.content}
                     tabs={[
                         {
                             id: TAB_TYPE.LIST,
@@ -99,14 +105,14 @@ const getFormContent = ({
                         {
                             id: TAB_TYPE.MANUAL,
                             label: intl.getMessage('blocklist_add_manual'),
-                            content: <ManualFilterForm />,
+                            content: <ManualFilterForm className={s.formGroup} />,
                         },
                     ]}
                 />
             );
         }
         case MODAL_TYPE.EDIT_BLOCKLIST: {
-            return <ManualFilterForm />;
+            return <ManualFilterForm className={s.formGroup} />;
         }
         default: {
             return null;
@@ -168,35 +174,48 @@ export const ConfigureBlocklistModal = ({ modalId, filterToEdit }: Props) => {
                         filters.map((filter: Filter) => filter.url),
                     );
 
-                    const changedValues = Object.entries(values)?.reduce((acc: Record<string, any>, [key, value]) => {
-                        if (value && key in filtersCatalog.filters) {
-                            const filterSource =
-                                filtersCatalog.filters[key as keyof typeof filtersCatalog.filters].source;
-                            // Only include if not already added
-                            if (!existingFilterSources.has(filterSource)) {
-                                acc[key] = value;
+                    const changedValues = Object.entries(values)?.reduce(
+                        (acc: Record<string, any>, [key, value]) => {
+                            if (value && key in filtersCatalog.filters) {
+                                const filterSource =
+                                    filtersCatalog.filters[
+                                        key as keyof typeof filtersCatalog.filters
+                                    ].source;
+                                // Only include if not already added
+                                if (!existingFilterSources.has(filterSource)) {
+                                    acc[key] = value;
+                                }
                             }
-                        }
-                        return acc;
-                    }, {});
+                            return acc;
+                        },
+                        {},
+                    );
 
-                    Object.keys(changedValues).forEach((fieldName) => {
+                    const filtersToAdd = Object.keys(changedValues).map((fieldName) => {
                         const { source, name } =
-                            filtersCatalog.filters[fieldName as keyof typeof filtersCatalog.filters];
-                        dispatch(addFilter(source, name));
+                            filtersCatalog.filters[
+                                fieldName as keyof typeof filtersCatalog.filters
+                            ];
+                        return { url: source, name };
                     });
+                    if (filtersToAdd.length > 0) {
+                        await dispatch(addFiltersBatch(filtersToAdd));
+                    }
+                    return; // skip bottom reset/closeModal — batch action handles them
                 }
                 break;
             }
             case MODAL_TYPE.EDIT_BLOCKLIST: {
-                dispatch(editFilter(values.url, values));
-                dispatch(closeModal());
+                dispatch(editFilter(filterToEdit!.url, values));
                 break;
             }
             default: {
                 break;
             }
         }
+
+        reset(defaultValues);
+        dispatch(closeModal());
     };
 
     const handleCancel = () => {
@@ -210,6 +229,9 @@ export const ConfigureBlocklistModal = ({ modalId, filterToEdit }: Props) => {
                 <FormProvider {...methods}>
                     <form onSubmit={handleSubmit(handleFormSubmit)}>
                         <div>
+                            {modalId !== MODAL_TYPE.EDIT_BLOCKLIST && (
+                                <p className={s.desc}>{intl.getMessage('blocklists_add_desc')}</p>
+                            )}
                             {getFormContent({
                                 modalId,
                                 activeTab,
@@ -225,6 +247,7 @@ export const ConfigureBlocklistModal = ({ modalId, filterToEdit }: Props) => {
                                 variant="primary"
                                 size="small"
                                 disabled={processingAddFilter}
+                                leftAddon={processingAddFilter ? <InlineLoader /> : undefined}
                                 className={theme.dialog.button}
                             >
                                 {getButtonText(modalId)}

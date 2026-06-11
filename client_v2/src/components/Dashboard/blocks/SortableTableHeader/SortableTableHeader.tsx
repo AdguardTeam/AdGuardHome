@@ -25,23 +25,27 @@ export const SortableTableHeader = ({
     onSort,
 }: Props) => (
     <div className={cn(theme.text.t3, theme.text.semibold, s.tableHeader)}>
-        <button
-            type="button"
-            className={s.sortableHeader}
-            onClick={() => onSort('name')}
-        >
+        <button type="button" className={s.sortableHeader} onClick={() => onSort('name')}>
             {nameLabel}
 
-            <Icon icon="arrows_sort" className={cn(s.sortIcon, sortField === 'name' && sortDirection === 'asc' && s.sortIconAsc)} />
+            <Icon
+                icon="arrows_sort"
+                className={cn(
+                    s.sortIcon,
+                    sortField === 'name' && sortDirection === 'asc' && s.sortIconAsc,
+                )}
+            />
         </button>
-        <button
-            type="button"
-            className={s.sortableHeader}
-            onClick={() => onSort('count')}
-        >
+        <button type="button" className={s.sortableHeader} onClick={() => onSort('count')}>
             {countLabel}
 
-            <Icon icon="arrows_sort" className={cn(s.sortIcon, sortField === 'count' && sortDirection === 'asc' && s.sortIconAsc)} />
+            <Icon
+                icon="arrows_sort"
+                className={cn(
+                    s.sortIcon,
+                    sortField === 'count' && sortDirection === 'asc' && s.sortIconAsc,
+                )}
+            />
         </button>
     </div>
 );

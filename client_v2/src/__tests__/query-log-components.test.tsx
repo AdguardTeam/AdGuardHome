@@ -65,7 +65,9 @@ beforeEach(() => {
     const originalGetComputedStyle = window.getComputedStyle.bind(window);
     const originalGetMessage = intl.getMessage.bind(intl);
 
-    vi.spyOn(window, 'getComputedStyle').mockImplementation((element) => originalGetComputedStyle(element));
+    vi.spyOn(window, 'getComputedStyle').mockImplementation((element) =>
+        originalGetComputedStyle(element),
+    );
     vi.spyOn(intl, 'getMessage').mockImplementation((key, params) => {
         if (key === 'type_value') {
             return `type_value:${String(params?.value ?? '')}`;
@@ -100,7 +102,9 @@ describe('Query log cells', () => {
         const row = makeLogEntry();
         const ipHandler = vi.fn();
         const nameHandler = vi.fn();
-        const onSearchSelect = vi.fn((value: string) => (value === row.client ? ipHandler : nameHandler));
+        const onSearchSelect = vi.fn((value: string) =>
+            value === row.client ? ipHandler : nameHandler,
+        );
 
         render(
             <div>
@@ -132,15 +136,26 @@ describe('Query log composition components', () => {
     test('loads more immediately when the sentinel is already visible', async () => {
         const onLoadMore = vi.fn();
 
-        vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback: FrameRequestCallback) => {
-            return window.setTimeout(() => callback(0), 0);
-        });
+        vi.spyOn(window, 'requestAnimationFrame').mockImplementation(
+            (callback: FrameRequestCallback) => {
+                return window.setTimeout(() => callback(0), 0);
+            },
+        );
         vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((frameId: number) => {
             window.clearTimeout(frameId);
         });
-        vi.spyOn(HTMLDivElement.prototype, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 100, 300, 20));
+        vi.spyOn(HTMLDivElement.prototype, 'getBoundingClientRect').mockReturnValue(
+            new DOMRect(0, 100, 300, 20),
+        );
 
-        render(<InfiniteScrollTrigger hasMore loading={false} disabled={false} onLoadMore={onLoadMore} />);
+        render(
+            <InfiniteScrollTrigger
+                hasMore
+                loading={false}
+                disabled={false}
+                onLoadMore={onLoadMore}
+            />,
+        );
 
         await waitFor(() => {
             expect(onLoadMore).toHaveBeenCalledTimes(1);
@@ -150,13 +165,17 @@ describe('Query log composition components', () => {
     test('loads more again when the reset token changes while the sentinel stays visible', async () => {
         const onLoadMore = vi.fn();
 
-        vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback: FrameRequestCallback) => {
-            return window.setTimeout(() => callback(0), 0);
-        });
+        vi.spyOn(window, 'requestAnimationFrame').mockImplementation(
+            (callback: FrameRequestCallback) => {
+                return window.setTimeout(() => callback(0), 0);
+            },
+        );
         vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((frameId: number) => {
             window.clearTimeout(frameId);
         });
-        vi.spyOn(HTMLDivElement.prototype, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 100, 300, 20));
+        vi.spyOn(HTMLDivElement.prototype, 'getBoundingClientRect').mockReturnValue(
+            new DOMRect(0, 100, 300, 20),
+        );
 
         const { rerender } = render(
             <InfiniteScrollTrigger
@@ -190,16 +209,27 @@ describe('Query log composition components', () => {
     test('does not trigger load when sentinel is hidden (zero-size rect)', async () => {
         const onLoadMore = vi.fn();
 
-        vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback: FrameRequestCallback) => {
-            return window.setTimeout(() => callback(0), 0);
-        });
+        vi.spyOn(window, 'requestAnimationFrame').mockImplementation(
+            (callback: FrameRequestCallback) => {
+                return window.setTimeout(() => callback(0), 0);
+            },
+        );
         vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((frameId: number) => {
             window.clearTimeout(frameId);
         });
         // Zero width and height simulates element inside display:none container
-        vi.spyOn(HTMLDivElement.prototype, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 0, 0));
+        vi.spyOn(HTMLDivElement.prototype, 'getBoundingClientRect').mockReturnValue(
+            new DOMRect(0, 0, 0, 0),
+        );
 
-        render(<InfiniteScrollTrigger hasMore loading={false} disabled={false} onLoadMore={onLoadMore} />);
+        render(
+            <InfiniteScrollTrigger
+                hasMore
+                loading={false}
+                disabled={false}
+                onLoadMore={onLoadMore}
+            />,
+        );
 
         // Wait a tick for the rAF to fire
         await new Promise<void>((resolve) => {
@@ -212,16 +242,25 @@ describe('Query log composition components', () => {
     test('re-triggers load after disabled cycles back to false (auto-fill)', async () => {
         const onLoadMore = vi.fn();
 
-        vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback: FrameRequestCallback) => {
-            return window.setTimeout(() => callback(0), 0);
-        });
+        vi.spyOn(window, 'requestAnimationFrame').mockImplementation(
+            (callback: FrameRequestCallback) => {
+                return window.setTimeout(() => callback(0), 0);
+            },
+        );
         vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((frameId: number) => {
             window.clearTimeout(frameId);
         });
-        vi.spyOn(HTMLDivElement.prototype, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 100, 300, 20));
+        vi.spyOn(HTMLDivElement.prototype, 'getBoundingClientRect').mockReturnValue(
+            new DOMRect(0, 100, 300, 20),
+        );
 
         const { rerender } = render(
-            <InfiniteScrollTrigger hasMore loading={false} disabled={false} onLoadMore={onLoadMore} />,
+            <InfiniteScrollTrigger
+                hasMore
+                loading={false}
+                disabled={false}
+                onLoadMore={onLoadMore}
+            />,
         );
 
         await waitFor(() => {
@@ -229,13 +268,16 @@ describe('Query log composition components', () => {
         });
 
         // Simulate load in flight
-        rerender(
-            <InfiniteScrollTrigger hasMore loading disabled onLoadMore={onLoadMore} />,
-        );
+        rerender(<InfiniteScrollTrigger hasMore loading disabled onLoadMore={onLoadMore} />);
 
         // Load completes, disabled goes back to false
         rerender(
-            <InfiniteScrollTrigger hasMore loading={false} disabled={false} onLoadMore={onLoadMore} />,
+            <InfiniteScrollTrigger
+                hasMore
+                loading={false}
+                disabled={false}
+                onLoadMore={onLoadMore}
+            />,
         );
 
         await waitFor(() => {
@@ -247,9 +289,11 @@ describe('Query log composition components', () => {
         const onLoadMore = vi.fn();
         const rectMock = vi.spyOn(HTMLDivElement.prototype, 'getBoundingClientRect');
 
-        vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback: FrameRequestCallback) => {
-            return window.setTimeout(() => callback(0), 0);
-        });
+        vi.spyOn(window, 'requestAnimationFrame').mockImplementation(
+            (callback: FrameRequestCallback) => {
+                return window.setTimeout(() => callback(0), 0);
+            },
+        );
         vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((frameId: number) => {
             window.clearTimeout(frameId);
         });
@@ -257,7 +301,12 @@ describe('Query log composition components', () => {
         rectMock.mockReturnValue(new DOMRect(0, 100, 300, 20));
 
         const { rerender } = render(
-            <InfiniteScrollTrigger hasMore loading={false} disabled={false} onLoadMore={onLoadMore} />,
+            <InfiniteScrollTrigger
+                hasMore
+                loading={false}
+                disabled={false}
+                onLoadMore={onLoadMore}
+            />,
         );
 
         await waitFor(() => {
@@ -268,11 +317,14 @@ describe('Query log composition components', () => {
         rectMock.mockReturnValue(new DOMRect(0, 2000, 300, 20));
 
         // Simulate load cycle: disabled → true → false
+        rerender(<InfiniteScrollTrigger hasMore loading disabled onLoadMore={onLoadMore} />);
         rerender(
-            <InfiniteScrollTrigger hasMore loading disabled onLoadMore={onLoadMore} />,
-        );
-        rerender(
-            <InfiniteScrollTrigger hasMore loading={false} disabled={false} onLoadMore={onLoadMore} />,
+            <InfiniteScrollTrigger
+                hasMore
+                loading={false}
+                disabled={false}
+                onLoadMore={onLoadMore}
+            />,
         );
 
         // Wait for rAF to fire
@@ -300,7 +352,7 @@ describe('Query log composition components', () => {
         const services: Service[] = [];
 
         render(
-            <MemoryRouter>
+            <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
                 <QueryDetailsTooltipContent row={row} />
                 <LogCard
                     entry={row}
@@ -370,7 +422,7 @@ describe('Query log composition components', () => {
         const onAllowService = vi.fn();
 
         render(
-            <MemoryRouter>
+            <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
                 <LogCard
                     entry={errorRow}
                     filters={[]}
@@ -421,7 +473,7 @@ describe('Query log composition components', () => {
         });
 
         render(
-            <MemoryRouter>
+            <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
                 <QueryDetailsTooltipContent row={row} />
                 <DetailModal
                     entry={row}
@@ -437,7 +489,9 @@ describe('Query log composition components', () => {
         );
 
         expect(
-            screen.getAllByText((_content, node) => node?.textContent === 'Domain: streaming.example').length,
+            screen.getAllByText(
+                (_content, node) => node?.textContent === 'Domain: streaming.example',
+            ).length,
         ).toBeGreaterThan(0);
         expect(screen.getByTestId('query-log-detail-reason')).toHaveTextContent(
             'Reason: Blocked services / Amazon.com',
@@ -449,25 +503,10 @@ describe('Query log composition components', () => {
     });
 
     test('renders the detail modal with direct rich intl detail rows', () => {
-        const originalGetMessage = intl.getMessage.bind(intl);
-        const getMessageSpy = vi.spyOn(intl, 'getMessage').mockImplementation((key, params) => {
-            if (key.startsWith('query_log_detail_')) {
-                return originalGetMessage(key, params);
-            }
-
-            if (key === 'type_value') {
-                return `type_value:${String(params?.value ?? '')}`;
-            }
-
-            if (key === 'query_log_blocked_services') {
-                return 'Blocked services';
-            }
-
-            return String(key);
-        });
+        const getMessageSpy = vi.spyOn(intl, 'getMessage');
 
         render(
-            <MemoryRouter>
+            <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
                 <DetailModal
                     entry={makeLogEntry({
                         client_info: null,
@@ -491,7 +530,9 @@ describe('Query log composition components', () => {
         );
 
         expect(screen.getByTestId('query-log-detail-modal')).toBeVisible();
-        expect(screen.getByTestId('query-log-detail-domain')).toHaveTextContent('Domain: example.org');
+        expect(screen.getByTestId('query-log-detail-domain')).toHaveTextContent(
+            'Domain: example.org',
+        );
         expect(getMessageSpy).toHaveBeenCalledWith(
             'query_log_detail_domain',
             expect.objectContaining({

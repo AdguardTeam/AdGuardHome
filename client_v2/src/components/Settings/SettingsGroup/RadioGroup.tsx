@@ -42,7 +42,13 @@ export const RadioGroup = <T extends number | string | boolean>({
             </div>
 
             <div className={s.content}>
-                <Radio disabled={disabled} value={value} options={options} handleChange={onChange} name={name} />
+                <Radio
+                    disabled={disabled}
+                    value={value}
+                    options={options}
+                    handleChange={onChange}
+                    name={name}
+                />
                 {children}
             </div>
         </div>

@@ -20,7 +20,11 @@ export const Sidebar = () => {
                             </div>
                         </Link>
                     </div>
-                    <Menu rightSideDropdown accountSubMenu={accountSubMenu} setAccountSubMenu={setAccountSubMenu} />
+                    <Menu
+                        rightSideDropdown
+                        accountSubMenu={accountSubMenu}
+                        setAccountSubMenu={setAccountSubMenu}
+                    />
                 </div>
             </div>
         </div>

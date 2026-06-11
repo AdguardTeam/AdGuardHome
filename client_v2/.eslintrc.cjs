@@ -19,9 +19,9 @@ module.exports = {
     },
     settings: {
         react: {
-            pragma: 'React',
-            version: '16.4',
+            version: 'detect',
         },
+        'import/core-modules': ['Twosky'],
         'import/resolver': {
             typescript: {
                 alwaysTryTypes: true,
@@ -38,6 +38,7 @@ module.exports = {
             'error',
             {
                 argsIgnorePattern: '^_',
+                caughtErrorsIgnorePattern: '^_',
             },
         ],
         'import/extensions': 'off',

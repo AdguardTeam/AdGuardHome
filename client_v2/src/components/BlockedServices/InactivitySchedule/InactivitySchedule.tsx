@@ -21,10 +21,13 @@ import s from './InactivitySchedule.module.pcss';
 
 const timezones = getAllTimezones();
 
-const TIMEZONE_OPTIONS = Object.entries(timezones).map(([tz, data]: [string, Timezone]) => ({
-    label: `${tz} (GMT${data.utcOffsetStr})`,
-    value: tz,
-}));
+const TIMEZONE_OPTIONS = [
+    { label: `Local (${getLocalTimezone()})`, value: 'Local' },
+    ...Object.entries(timezones).map(([tz, data]: [string, Timezone]) => ({
+        label: `${tz} (GMT${data.utcOffsetStr})`,
+        value: tz,
+    })),
+];
 
 type Props = {
     clientScope?: boolean;
@@ -154,86 +157,92 @@ export const InactivitySchedule = ({ clientScope }: Props) => {
               },
           ];
 
+    const scheduleContent = (
+        <>
+            <div className={cn(s.timezoneWrapper, clientScope && s.timezoneWrapperClientScope)}>
+                <div className={s.timezoneLabel}>
+                    {intl.getMessage('inactivity_schedule_timezone')}
+                </div>
+                <Select
+                    options={TIMEZONE_OPTIONS}
+                    value={timezoneValue}
+                    onChange={handleTimezoneChange}
+                    size="responsive"
+                    height="big"
+                    isDisabled={processing}
+                    isSearchable
+                />
+            </div>
+
+            <div className={s.scheduleList}>
+                {DAYS_OF_WEEK.map((day) => (
+                    <ScheduleRow
+                        key={day}
+                        day={day}
+                        data={schedule?.[day] as ScheduleDayData | undefined}
+                        onEdit={handleEdit}
+                        onDelete={handleDelete}
+                        onAdd={handleAdd}
+                    />
+                ))}
+            </div>
+
+            {modalVisible && (
+                <ScheduleModal
+                    visible={modalVisible}
+                    currentDay={editDay}
+                    currentData={
+                        editDay
+                            ? (schedule?.[editDay] as ScheduleDayData | undefined)
+                            : undefined
+                    }
+                    onClose={handleModalClose}
+                    onSave={handleModalSave}
+                />
+            )}
+
+            {deleteDay && (
+                <ConfirmDialog
+                    title={intl.getMessage('inactivity_schedule_delete')}
+                    text={intl.getMessage('inactivity_schedule_delete_desc', {
+                        value: getDayName(deleteDay),
+                    })}
+                    buttonText={intl.getMessage('delete_btn')}
+                    cancelText={intl.getMessage('cancel_btn')}
+                    onConfirm={confirmDelete}
+                    onClose={() => setDeleteDay(null)}
+                    buttonVariant="danger"
+                />
+            )}
+        </>
+    );
+
+    if (clientScope) {
+        return scheduleContent;
+    }
+
     return (
         <div className={cn(theme.layout.container, s.container)}>
             <div className={cn(theme.layout.containerIn, theme.layout.containerIn_one_col)}>
-                {!clientScope && (
-                    <div className={s.breadcrumbs}>
-                        <Breadcrumbs
-                            parentLinks={parentLinks}
-                            currentTitle={intl.getMessage('inactivity_schedule')}
-                        />
-                    </div>
-                )}
-
-                {!clientScope && (
-                    <h1
-                        className={cn(
-                            theme.layout.title,
-                            theme.title.h4,
-                            theme.title.h3_tablet,
-                            s.title,
-                        )}
-                    >
-                        {intl.getMessage('inactivity_schedule')}
-                    </h1>
-                )}
-
-                <div className={s.timezoneWrapper}>
-                    <div className={s.timezoneLabel}>
-                        {intl.getMessage('inactivity_schedule_timezone')}
-                    </div>
-                    <Select
-                        options={TIMEZONE_OPTIONS}
-                        value={timezoneValue}
-                        onChange={handleTimezoneChange}
-                        size="responsive"
-                        height="big"
-                        isDisabled={processing}
-                        isSearchable
+                <div className={s.breadcrumbs}>
+                    <Breadcrumbs
+                        parentLinks={parentLinks}
+                        currentTitle={intl.getMessage('inactivity_schedule')}
                     />
                 </div>
 
-                <div className={s.scheduleList}>
-                    {DAYS_OF_WEEK.map((day) => (
-                        <ScheduleRow
-                            key={day}
-                            day={day}
-                            data={schedule?.[day] as ScheduleDayData | undefined}
-                            onEdit={handleEdit}
-                            onDelete={handleDelete}
-                            onAdd={handleAdd}
-                        />
-                    ))}
-                </div>
+                <h1
+                    className={cn(
+                        theme.layout.title,
+                        theme.title.h4,
+                        theme.title.h3_tablet,
+                        s.title,
+                    )}
+                >
+                    {intl.getMessage('inactivity_schedule')}
+                </h1>
 
-                {modalVisible && (
-                    <ScheduleModal
-                        visible={modalVisible}
-                        currentDay={editDay}
-                        currentData={
-                            editDay
-                                ? (schedule?.[editDay] as ScheduleDayData | undefined)
-                                : undefined
-                        }
-                        onClose={handleModalClose}
-                        onSave={handleModalSave}
-                    />
-                )}
-
-                {deleteDay && (
-                    <ConfirmDialog
-                        title={intl.getMessage('inactivity_schedule_delete')}
-                        text={intl.getMessage('inactivity_schedule_delete_desc', {
-                            value: getDayName(deleteDay),
-                        })}
-                        buttonText={intl.getMessage('delete_btn')}
-                        cancelText={intl.getMessage('cancel_btn')}
-                        onConfirm={confirmDelete}
-                        onClose={() => setDeleteDay(null)}
-                        buttonVariant="danger"
-                    />
-                )}
+                {scheduleContent}
             </div>
         </div>
     );

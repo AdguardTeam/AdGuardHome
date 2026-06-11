@@ -12,7 +12,6 @@ import {
     STATUS_RESPONSE,
     SETTINGS_NAMES,
     MANUAL_UPDATE_LINK,
-    DISABLE_PROTECTION_TIMINGS,
     THEMES,
 } from '../helpers/constants';
 import { areEqualVersions } from '../helpers/version';
@@ -20,6 +19,19 @@ import { getTlsStatus } from './encryption';
 import { apiClient } from '../api/Api';
 import { addErrorToast, addNoticeToast, addSuccessToast, createUndoToast } from './toasts';
 import { getFilteringStatus, setRules } from './filtering';
+
+const getSectionMessage = (sectionKey: string) => {
+    switch (sectionKey) {
+        case 'upstream_dns':
+            return intl.getMessage('upstream_dns');
+        case 'bootstrap_dns':
+            return intl.getMessage('bootstrap_dns');
+        case 'fallback_dns':
+            return intl.getMessage('fallback_dns');
+        default:
+            return sectionKey;
+    }
+};
 
 type SafeSearchConfig = Record<string, boolean> & { enabled: boolean };
 type ToggleSettingKey = keyof typeof SETTINGS_NAMES;
@@ -111,39 +123,12 @@ export const toggleProtectionRequest = createAction('TOGGLE_PROTECTION_REQUEST')
 export const toggleProtectionFailure = createAction('TOGGLE_PROTECTION_FAILURE');
 export const toggleProtectionSuccess = createAction('TOGGLE_PROTECTION_SUCCESS');
 
-const getDisabledMessage = (time: any) => {
-    switch (time) {
-        case DISABLE_PROTECTION_TIMINGS.HALF_MINUTE:
-            return intl.getPlural(
-                'disable_notify_for_seconds',
-                DISABLE_PROTECTION_TIMINGS.HALF_MINUTE,
-            );
-        case DISABLE_PROTECTION_TIMINGS.MINUTE:
-            return intl.getPlural('disable_notify_for_minutes', DISABLE_PROTECTION_TIMINGS.MINUTE);
-        case DISABLE_PROTECTION_TIMINGS.TEN_MINUTES:
-            return intl.getPlural(
-                'disable_notify_for_minutes',
-                DISABLE_PROTECTION_TIMINGS.TEN_MINUTES,
-            );
-        case DISABLE_PROTECTION_TIMINGS.HOUR:
-            return intl.getPlural('disable_notify_for_hours', DISABLE_PROTECTION_TIMINGS.HOUR);
-        case DISABLE_PROTECTION_TIMINGS.TOMORROW:
-            return intl.getMessage('disable_notify_until_tomorrow');
-        default:
-            return intl.getMessage('disabled_protection');
-    }
-};
-
 export const toggleProtection =
     (status: any, time: number | null = null) =>
     async (dispatch: any) => {
         dispatch(toggleProtectionRequest());
         try {
-            const successMessage = status
-                ? getDisabledMessage(time)
-                : intl.getMessage('enabled_protection');
             await apiClient.setProtection({ enabled: !status, duration: time });
-            dispatch(addSuccessToast(successMessage));
             dispatch(toggleProtectionSuccess({ disabledDuration: time }));
         } catch (error) {
             dispatch(addErrorToast({ error }));
@@ -179,7 +164,7 @@ export const getVersion =
                     dispatch(addSuccessToast(intl.getMessage('updates_version_equal')));
                 }
             }
-        } catch (error) {
+        } catch (_error) {
             dispatch(addErrorToast({ error: 'version_request_error' }));
             dispatch(getVersionFailure());
         }
@@ -214,7 +199,7 @@ const checkStatus = async (handleRequestSuccess: any, handleRequestError: any, a
                 );
             }
         }
-    } catch (error) {
+    } catch (_error) {
         rmTimeout(timeout);
         timeout = setTimeout(
             checkStatus,
@@ -254,7 +239,7 @@ export const getUpdate = () => async (dispatch: any, getState: any) => {
     try {
         await apiClient.getUpdate();
         checkStatus(handleRequestSuccess, handleRequestError);
-    } catch (error) {
+    } catch (_error) {
         handleRequestError();
     }
 };
@@ -332,7 +317,7 @@ export const getDnsStatus = () => async (dispatch: any) => {
 
     try {
         checkStatus(handleRequestSuccess, handleRequestError);
-    } catch (error) {
+    } catch (_error) {
         handleRequestError();
     }
 };
@@ -367,7 +352,7 @@ export const getTimerStatus = () => async (dispatch: any) => {
 
     try {
         checkStatus(handleRequestSuccess, handleRequestError);
-    } catch (error) {
+    } catch (_error) {
         handleRequestError();
     }
 };
@@ -409,7 +394,7 @@ export const testUpstream =
                 } else if (message.endsWith(': parsing error')) {
                     const info = message.substring(0, message.indexOf(':'));
                     const [sectionKey, line] = info.split(' ');
-                    const section = intl.getMessage(sectionKey);
+                    const section = getSectionMessage(sectionKey);
                     dispatch(
                         addErrorToast({
                             error: intl.getMessage('dns_test_parsing_error_toast', {
@@ -796,9 +781,7 @@ export const toggleBlocking =
             addedRuleMessageKey,
             intl.getMessage('notify_undo'),
             async () => {
-                const didUndo = (await dispatch(
-                    setRules(previousRules, { showToast: false }),
-                )) as boolean;
+                const didUndo = (await dispatch(setRules(previousRules))) as boolean;
 
                 if (didUndo) {
                     await dispatch(getFilteringStatus());
@@ -814,9 +797,7 @@ export const toggleBlocking =
         const updatedRules = currentRules.filter((rule: string) => !rulesToRemove.has(rule));
         updatedRules.push(desiredRule);
 
-        const didSave = (await dispatch(
-            setRules(`${updatedRules.join('\n')}\n`, { showToast: false }),
-        )) as boolean;
+        const didSave = (await dispatch(setRules(`${updatedRules.join('\n')}\n`))) as boolean;
 
         if (!didSave) {
             return false;
@@ -859,9 +840,7 @@ export const blockDomain =
             ...currentRules.filter((r: string) => r !== `@@${rule}`),
             desiredRule,
         ];
-        const didSave = (await dispatch(
-            setRules(`${updatedRules.join('\n')}\n`, { showToast: false }),
-        )) as boolean;
+        const didSave = (await dispatch(setRules(`${updatedRules.join('\n')}\n`))) as boolean;
 
         if (!didSave) {
             return false;
@@ -873,9 +852,7 @@ export const blockDomain =
                     intl.getMessage('user_rules_rule_added_to_custom_filtering_rules'),
                     intl.getMessage('notify_undo'),
                     async () => {
-                        const didUndo = (await dispatch(
-                            setRules(previousRules, { showToast: false }),
-                        )) as boolean;
+                        const didUndo = (await dispatch(setRules(previousRules))) as boolean;
 
                         if (didUndo) {
                             await dispatch(getFilteringStatus());
@@ -902,9 +879,7 @@ export const unblockDomain =
         }
 
         const updatedRules = [...currentRules.filter((r: string) => r !== rule), desiredRule];
-        const didSave = (await dispatch(
-            setRules(`${updatedRules.join('\n')}\n`, { showToast: false }),
-        )) as boolean;
+        const didSave = (await dispatch(setRules(`${updatedRules.join('\n')}\n`))) as boolean;
 
         if (!didSave) {
             return false;
@@ -916,9 +891,7 @@ export const unblockDomain =
                     intl.getMessage('user_rules_rule_added_to_custom_filtering_rules'),
                     intl.getMessage('notify_undo'),
                     async () => {
-                        const didUndo = (await dispatch(
-                            setRules(previousRules, { showToast: false }),
-                        )) as boolean;
+                        const didUndo = (await dispatch(setRules(previousRules))) as boolean;
 
                         if (didUndo) {
                             await dispatch(getFilteringStatus());

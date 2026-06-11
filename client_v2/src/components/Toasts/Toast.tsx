@@ -2,7 +2,6 @@ import React, { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { useDispatch } from 'react-redux';
 import { Icon } from 'panel/common/ui/Icon';
-import theme from 'panel/lib/theme';
 import cn from 'clsx';
 import { getUndoCallback, clearUndoCallback } from 'panel/actions/toasts';
 import { TOAST_TIMEOUTS } from '../../helpers/constants';
@@ -113,11 +112,7 @@ const Toast = ({ id, message, type, actionLabel, undoId, action, code }: ToastPr
             )}
 
             {action && !actionLabel && (
-                <button
-                    type="button"
-                    className={cn(theme.link.link, theme.link.noDecoration)}
-                    onClick={handleActionClick}
-                >
+                <button type="button" className={s.actionButton} onClick={handleActionClick}>
                     {action.text}
                 </button>
             )}
