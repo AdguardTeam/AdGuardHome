@@ -2,6 +2,12 @@
 
 <!-- TODO(a.garipov): Reformat in accordance with the KeepAChangelog spec. -->
 
+## v0.107.78: API changes
+
+### New `num_cached_queries` and `cached_queries` fields in 'GET /control/stats'
+
+- New field `num_cached_queries` contains the total number of DNS responses served from the cache, and the new field `cached_queries` contains the per-time-unit counts.
+
 ## v0.107.77: API changes
 
 ### New `reason` query parameter in 'GET /control/querylog'
