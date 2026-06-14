@@ -20,8 +20,10 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Added
 
+- Cache hit rate statistics on the dashboard, showing the number and share of DNS responses served from the cache ([#7597]).
 - Improved updater logging to give users more insight into the problem with version updating ([#8410]).
 
+[#7597]: https://github.com/AdguardTeam/AdGuardHome/issues/7597
 [#8410]: https://github.com/AdguardTeam/AdGuardHome/issues/8410
 
 ### Security
