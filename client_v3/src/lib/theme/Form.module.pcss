@@ -1,0 +1,46 @@
+.buttonGroup {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+
+    @media (min-width: 768px) {
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .button {
+        min-width: 200px;
+        max-width: 100%;
+
+        @media (min-width: 768px) {
+            width: auto;
+        }
+    }
+}
+
+.input {
+    padding: 8px 0;
+}
+
+.checkbox {
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+}
+
+.group {
+    position: relative;
+    padding: 0 16px;
+}
+
+.inner {
+    padding-left: 32px;
+}
+
+.error {
+    margin-top: 8px;
+    font-size: 14px;
+    color: var(--default-error-icon);
+}

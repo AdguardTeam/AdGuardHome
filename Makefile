@@ -19,8 +19,8 @@ GO.MACRO = $${GO:-go}
 VERBOSE.MACRO = $${VERBOSE:-0}
 
 CHANNEL = development
-# TODO(ik): Update CLIENT_DIR to client_v2 for new frontend migration
-CLIENT_DIR = client_v2
+# TODO(ik): Update CLIENT_DIR to client_v3 for new frontend migration
+CLIENT_DIR = client_v3
 DEPLOY_SCRIPT_PATH = not/a/real/path
 DIST_DIR = dist
 GOAMD64 = v1

@@ -1,0 +1,303 @@
+import { createMemo, Show, For } from 'solid-js';
+import cn from 'clsx';
+import copy from 'copy-to-clipboard';
+
+import intl from 'panel/common/intl';
+import type { Client, NormalizedTopClients } from 'panel/initialState';
+import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from 'panel/helpers/localStorageHelper';
+import { Table, type TableColumn } from 'panel/common/ui/Table';
+import { Icon } from 'panel/common/ui/Icon';
+import { Dropdown } from 'panel/common/ui/Dropdown';
+import { addSuccessToast } from 'panel/stores/toasts';
+import theme from 'panel/lib/theme';
+
+import { ServiceCell } from './ServiceCell';
+import { TagCell } from './TagCell';
+import type { WebService } from './ServiceIcons';
+
+import { TableEmptyState } from '../TableEmptyState/TableEmptyState';
+import s from './PersistentClientsTable.module.pcss';
+
+type Props = {
+    clients: Client[];
+    normalizedTopClients?: NormalizedTopClients;
+    loading?: boolean;
+    onEdit: (client: Client) => void;
+    onDelete: (name: string) => void;
+    editDisabled?: boolean;
+    deleteDisabled?: boolean;
+    allServices?: WebService[];
+};
+
+export const PersistentClientsTable = (props: Props) => {
+    const pageSize = createMemo(
+        () => LocalStorageHelper.getItem(LOCAL_STORAGE_KEYS.CLIENTS_PAGE_SIZE) || undefined,
+    );
+
+    const serviceMap = createMemo(() => {
+        const map = new Map<string, WebService>();
+        (props.allServices || []).forEach((svc) => {
+            map.set(svc.id, svc);
+        });
+        return map;
+    });
+
+    const handleCopy = (text: string) => {
+        copy(text);
+        addSuccessToast(intl.getMessage('copied'));
+    };
+
+    const columns = createMemo<TableColumn<Client>[]>(() => [
+        {
+            key: 'ids',
+            header: {
+                text: intl.getMessage('client_identifier'),
+                className: s.headerCell,
+            },
+            accessor: (row: Client) => row.ids.join(','),
+            sortable: true,
+            render: (_value: string, row: Client) => {
+                const { ids } = row;
+                const firstId = ids[0] || '';
+                const hiddenCount = ids.length - 1;
+
+                return (
+                    <div class={s.cell}>
+                        <span class={s.cellLabel}>
+                            {intl.getMessage('client_identifier')}
+                        </span>
+
+                        <div class={s.cellValue}>
+                            <div class={s.idsRow}>
+                                <span class={cn(theme.common.textOverflow, s.idsText)}>
+                                    {firstId}
+                                    <Show when={hiddenCount > 0}>,</Show>
+                                </span>
+                                <Show when={hiddenCount > 0}>
+                                    <Dropdown
+                                        trigger="hover"
+                                        noIcon
+                                        overlayClass={s.idsTooltipOverlay}
+                                        menu={
+                                            <div class={s.idsTooltip}>
+                                                <For each={ids}>
+                                                    {(id) => <span class={s.idsTooltipItem}>{id}</span>}
+                                                </For>
+                                                <button
+                                                    type="button"
+                                                    class={cn(s.copyBtn, s.copyBtnGreen, s.copyBtnTopRight)}
+                                                    onClick={() => handleCopy(ids.join(', '))}
+                                                    title={intl.getMessage('copy')}
+                                                >
+                                                    <Icon icon="copy" color="green" />
+                                                </button>
+                                            </div>
+                                        }
+                                    >
+                                        <span class={s.countLabel}>{hiddenCount}</span>
+                                    </Dropdown>
+                                </Show>
+                            </div>
+                        </div>
+                    </div>
+                );
+            },
+        },
+        {
+            key: 'name',
+            header: {
+                text: intl.getMessage('name'),
+                className: s.headerCell,
+            },
+            accessor: 'name',
+            sortable: true,
+            render: (value: string) => (
+                <div class={s.cell}>
+                    <span class={s.cellLabel}>{intl.getMessage('name')}</span>
+
+                    <div class={s.cellValue}>
+                        <Dropdown
+                            trigger="hover"
+                            noIcon
+                            overlayClass={s.nameTooltipOverlay}
+                            menu={
+                                <div class={s.nameTooltip}>
+                                    <span class={s.nameTooltipText}>{value}</span>
+                                    <button
+                                        type="button"
+                                        class={cn(s.copyBtn, s.copyBtnGreen)}
+                                        onClick={() => handleCopy(value)}
+                                        title={intl.getMessage('copy')}
+                                    >
+                                        <Icon icon="copy" color="green" />
+                                    </button>
+                                </div>
+                            }
+                            class={s.nameDropdown}
+                            childrenClass={s.nameDropdownInner}
+                        >
+                            <span class={cn(theme.common.textOverflow, s.nameTrigger)}>
+                                {value}
+                            </span>
+                        </Dropdown>
+                    </div>
+                </div>
+            ),
+        },
+        {
+            key: 'settings',
+            header: {
+                text: intl.getMessage('settings'),
+                className: s.headerCell,
+            },
+            accessor: 'use_global_settings',
+            sortable: true,
+            render: (value: boolean) => (
+                <div class={s.cell}>
+                    <span class={s.cellLabel}>{intl.getMessage('settings')}</span>
+
+                    <div class={s.cellValue}>
+                        <span>
+                            {value
+                                ? intl.getMessage('settings_global')
+                                : intl.getMessage('settings_custom')}
+                        </span>
+                        <Show when={!value}>
+                            <Icon icon="user" color="gray" class={s.userIconRight} />
+                        </Show>
+                    </div>
+                </div>
+            ),
+        },
+        {
+            key: 'blocked_services',
+            header: {
+                text: intl.getMessage('blocked_services'),
+                className: s.headerCell,
+            },
+            accessor: 'use_global_blocked_services',
+            sortable: true,
+            minWidth: 120,
+            render: (_value: boolean, row: Client) => (
+                <ServiceCell
+                    serviceIds={row.blocked_services || []}
+                    useGlobal={row.use_global_blocked_services}
+                    serviceMap={serviceMap()}
+                />
+            ),
+        },
+        {
+            key: 'upstreams',
+            header: {
+                text: intl.getMessage('upstreams'),
+                className: s.headerCell,
+            },
+            accessor: (row: Client) => row.upstreams.length > 0,
+            sortable: true,
+            render: (_value: boolean, row: Client) => (
+                <div class={s.cell}>
+                    <span class={s.cellLabel}>{intl.getMessage('upstreams')}</span>
+
+                    <div class={s.cellValue}>
+                        <span>
+                            {row.upstreams.length > 0
+                                ? intl.getMessage('settings_custom')
+                                : intl.getMessage('settings_global')}
+                        </span>
+                    </div>
+                </div>
+            ),
+        },
+        {
+            key: 'tags',
+            header: {
+                text: intl.getMessage('tags_title'),
+                className: s.headerCell,
+            },
+            accessor: 'tags',
+            sortable: false,
+            render: (value: string[]) => <TagCell tags={value} onCopy={handleCopy} />,
+        },
+        {
+            key: 'requests',
+            header: {
+                text: intl.getMessage('requests_table_header'),
+                className: s.headerCell,
+            },
+            accessor: (row: Client) => props.normalizedTopClients?.configured[row.name] || 0,
+            sortable: true,
+            render: (_value: unknown, row: Client) => (
+                <div class={s.cell}>
+                    <span class={s.cellLabel}>
+                        {intl.getMessage('requests_table_header')}
+                    </span>
+
+                    <div class={s.cellValue}>
+                        <span>
+                            {(props.normalizedTopClients?.configured[row.name] || 0).toLocaleString()}
+                        </span>
+                    </div>
+                </div>
+            ),
+        },
+        {
+            key: 'actions',
+            header: {
+                text: '',
+                className: s.headerCell,
+            },
+            sortable: false,
+            width: 80,
+            render: (_value: unknown, row: Client) => (
+                <div class={s.cell}>
+                    <span class={s.cellLabel}>
+                        {intl.getMessage('actions_table_header')}
+                    </span>
+
+                    <div class={s.cellValue}>
+                        <div class={s.cellActions}>
+                            <button
+                                type="button"
+                                onClick={() => props.onEdit(row)}
+                                disabled={props.editDisabled}
+                                class={s.action}
+                                title={intl.getMessage('edit_table_action')}
+                                data-testid="clients-edit-button"
+                            >
+                                <Icon icon="edit" color="gray" />
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => props.onDelete(row.name)}
+                                disabled={props.deleteDisabled}
+                                class={cn(s.action, s.action_danger)}
+                                title={intl.getMessage('delete_table_action')}
+                                data-testid="clients-delete-button"
+                            >
+                                <Icon icon="delete" color="red" />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            ),
+        },
+    ]);
+
+    const handlePageSizeChange = (newSize: number) => {
+        LocalStorageHelper.setItem(LOCAL_STORAGE_KEYS.CLIENTS_PAGE_SIZE, newSize);
+    };
+
+    return (
+        <Table<Client>
+            data={props.clients}
+            class={s.table}
+            columns={columns()}
+            emptyTable={<TableEmptyState />}
+            loading={props.loading}
+            pageSize={pageSize()}
+            onPageSizeChange={handlePageSizeChange}
+            getRowId={(row) => row.name}
+        />
+    );
+};
