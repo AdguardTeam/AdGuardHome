@@ -48,8 +48,6 @@ export const IgnoredDomains = ({
                         id={textareaId}
                         label={
                             <>
-                                {intl.getMessage('settings_domain_names')}
-
                                 <FaqTooltip
                                     text={
                                         <>
@@ -66,6 +64,7 @@ export const IgnoredDomains = ({
                                             </div>
                                         </>
                                     }
+                                    label={intl.getMessage('settings_domain_names')}
                                 />
 
                                 <a

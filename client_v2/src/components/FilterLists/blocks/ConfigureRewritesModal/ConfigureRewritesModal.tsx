@@ -151,11 +151,9 @@ export const ConfigureRewritesModal = ({ modalId, rewriteToEdit, onSubmit, onClo
                                                 id="domain"
                                                 data-testid="rewrite-domain-input"
                                                 label={
-                                                    <>
-                                                        {intl.getMessage('rewrite_domain')}
-
-                                                        <DomainFaqTooltip />
-                                                    </>
+                                                    <DomainFaqTooltip
+                                                        label={intl.getMessage('rewrite_domain')}
+                                                    />
                                                 }
                                                 placeholder={intl.getMessage(
                                                     'rewrite_domain_input_placeholder',
@@ -180,11 +178,9 @@ export const ConfigureRewritesModal = ({ modalId, rewriteToEdit, onSubmit, onClo
                                                 id="answer"
                                                 data-testid="rewrite-answer-input"
                                                 label={
-                                                    <>
-                                                        {intl.getMessage('result')}
-
-                                                        <AnswerFaqTooltip />
-                                                    </>
+                                                    <AnswerFaqTooltip
+                                                        label={intl.getMessage('result')}
+                                                    />
                                                 }
                                                 placeholder={intl.getMessage(
                                                     'rewrites_answer_input_placeholder',

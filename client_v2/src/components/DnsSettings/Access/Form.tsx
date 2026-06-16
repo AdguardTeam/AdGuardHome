@@ -131,14 +131,12 @@ export const Form = ({ initialValues, onSubmit, processingSet }: FormProps) => {
                             id={id}
                             data-testid={id}
                             label={
-                                <>
-                                    {title}
-                                    <FaqTooltip
-                                        text={faq}
-                                        menuSize="large"
-                                        spacing={id === 'blocked_hosts'}
-                                    />
-                                </>
+                                <FaqTooltip
+                                    text={faq}
+                                    menuSize="large"
+                                    spacing={id === 'blocked_hosts'}
+                                    label={title}
+                                />
                             }
                             errorMessage={fieldState.error?.message}
                             onBlur={(e) => {

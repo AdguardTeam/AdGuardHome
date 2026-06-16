@@ -128,37 +128,32 @@ export const Form = ({ initialValues, onSubmit }: FormProps) => {
                                     {...field}
                                     id="upstream_dns"
                                     label={
-                                        <>
-                                            {intl.getMessage('upstream_dns_addresses')}
-                                            <FaqTooltip
-                                                text={intl.getMessage(
-                                                    'upstream_dns_addresses_faq',
-                                                    {
-                                                        a: (text: string) => (
-                                                            <a
-                                                                href="https://github.com/AdguardTeam/AdGuardHome/wiki/Configuration#upstreams"
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                className={theme.link.link}
-                                                            >
-                                                                {text}
-                                                            </a>
-                                                        ),
-                                                        b: (text: string) => (
-                                                            <a
-                                                                href="https://link.adtidy.org/forward.html?action=dns_kb_providers&from=ui&app=home"
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                className={theme.link.link}
-                                                            >
-                                                                {text}
-                                                            </a>
-                                                        ),
-                                                    },
-                                                )}
-                                                menuSize="large"
-                                            />
-                                        </>
+                                        <FaqTooltip
+                                            text={intl.getMessage('upstream_dns_addresses_faq', {
+                                                a: (text: string) => (
+                                                    <a
+                                                        href="https://github.com/AdguardTeam/AdGuardHome/wiki/Configuration#upstreams"
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className={theme.link.link}
+                                                    >
+                                                        {text}
+                                                    </a>
+                                                ),
+                                                b: (text: string) => (
+                                                    <a
+                                                        href="https://link.adtidy.org/forward.html?action=dns_kb_providers&from=ui&app=home"
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className={theme.link.link}
+                                                    >
+                                                        {text}
+                                                    </a>
+                                                ),
+                                            })}
+                                            menuSize="large"
+                                            label={intl.getMessage('upstream_dns_addresses')}
+                                        />
                                     }
                                     placeholder={intl.getMessage('upstream_dns_placeholder')}
                                     disabled={!!upstreamDnsFile || processingTestUpstream}
@@ -201,13 +196,11 @@ export const Form = ({ initialValues, onSubmit }: FormProps) => {
                                 {...field}
                                 id="fallback_dns"
                                 label={
-                                    <>
-                                        {intl.getMessage('upstream_fallback_title')}
-                                        <FaqTooltip
-                                            text={intl.getMessage('upstream_fallback_title_faq')}
-                                            menuSize="large"
-                                        />
-                                    </>
+                                    <FaqTooltip
+                                        text={intl.getMessage('upstream_fallback_title_faq')}
+                                        menuSize="large"
+                                        label={intl.getMessage('upstream_fallback_title')}
+                                    />
                                 }
                                 placeholder={intl.getMessage('ip_addresses_placeholder')}
                                 size="medium"
@@ -228,13 +221,11 @@ export const Form = ({ initialValues, onSubmit }: FormProps) => {
                                 id="bootstrap_dns"
                                 data-testid="bootstrap_dns"
                                 label={
-                                    <>
-                                        {intl.getMessage('upstream_bootstrap_dns_title')}
-                                        <FaqTooltip
-                                            text={intl.getMessage('upstream_bootstrap_dns_faq')}
-                                            menuSize="large"
-                                        />
-                                    </>
+                                    <FaqTooltip
+                                        text={intl.getMessage('upstream_bootstrap_dns_faq')}
+                                        menuSize="large"
+                                        label={intl.getMessage('upstream_bootstrap_dns_title')}
+                                    />
                                 }
                                 placeholder={intl.getMessage('ip_addresses_placeholder')}
                                 size="medium"
@@ -255,35 +246,29 @@ export const Form = ({ initialValues, onSubmit }: FormProps) => {
                                 id="local_ptr_upstreams"
                                 data-testid="local_ptr_upstreams"
                                 label={
-                                    <>
-                                        {intl.getMessage('upstream_ptr')}
-                                        <FaqTooltip
-                                            text={
-                                                <>
+                                    <FaqTooltip
+                                        text={
+                                            <>
+                                                <div>
+                                                    {intl.getMessage('upstream_ptr_faq_1', {
+                                                        value: '192.168.1.1/24',
+                                                    })}
+                                                </div>
+                                                <div>{intl.getMessage('upstream_ptr_faq_2')}</div>
+                                                {defaultLocalPtrUpstreams?.length > 0 && (
                                                     <div>
-                                                        {intl.getMessage('upstream_ptr_faq_1', {
-                                                            value: '192.168.1.1/24',
+                                                        {intl.getMessage('upstream_ptr_faq_3', {
+                                                            value_1: defaultLocalPtrUpstreams[0],
+                                                            value_2: defaultLocalPtrUpstreams[1],
                                                         })}
                                                     </div>
-                                                    <div>
-                                                        {intl.getMessage('upstream_ptr_faq_2')}
-                                                    </div>
-                                                    {defaultLocalPtrUpstreams?.length > 0 && (
-                                                        <div>
-                                                            {intl.getMessage('upstream_ptr_faq_3', {
-                                                                value_1:
-                                                                    defaultLocalPtrUpstreams[0],
-                                                                value_2:
-                                                                    defaultLocalPtrUpstreams[1],
-                                                            })}
-                                                        </div>
-                                                    )}
-                                                </>
-                                            }
-                                            menuSize="large"
-                                            spacing
-                                        />
-                                    </>
+                                                )}
+                                            </>
+                                        }
+                                        menuSize="large"
+                                        spacing
+                                        label={intl.getMessage('upstream_ptr')}
+                                    />
                                 }
                                 placeholder={intl.getMessage('ip_addresses_placeholder')}
                                 size="medium"
@@ -355,13 +340,11 @@ export const Form = ({ initialValues, onSubmit }: FormProps) => {
                                 type="number"
                                 id="upstream_timeout"
                                 label={
-                                    <>
-                                        {intl.getMessage('upstream_timeout')}
-                                        <FaqTooltip
-                                            text={intl.getMessage('upstream_timeout_faq')}
-                                            menuSize="large"
-                                        />
-                                    </>
+                                    <FaqTooltip
+                                        text={intl.getMessage('upstream_timeout_faq')}
+                                        menuSize="large"
+                                        label={intl.getMessage('upstream_timeout')}
+                                    />
                                 }
                                 placeholder={intl.getMessage('upstream_timeout_placeholder')}
                                 min={1}
