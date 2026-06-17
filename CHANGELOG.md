@@ -18,12 +18,6 @@ See also the [v0.107.78 GitHub milestone][ms-v0.107.78].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
-### Added
-
-- Improved updater logging to give users more insight into the problem with version updating ([#8410]).
-
-[#8410]: https://github.com/AdguardTeam/AdGuardHome/issues/8410
-
 ### Security
 
 - Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.26.4][go-1.26.4].
@@ -31,6 +25,12 @@ NOTE: Add new changes BELOW THIS COMMENT.
 - The H2C connection establishment via HTTP/1.1 request upgrade is no longer supported.  See [RFC 9113][rfc9113].
 
 - The size of rulelists is limited.  This is necessary to prevent a user's machine from becoming overloaded if the filter source misbehaves.
+
+### Added
+
+- Improved updater logging to give users more insight into the problem with version updating ([#8410]).
+
+[#8410]: https://github.com/AdguardTeam/AdGuardHome/issues/8410
 
 ### Changed
 
@@ -42,10 +42,13 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- The parsing of the `ech` parameter in DNS rewrite rules for the HTTPS record type ([#8276]).
+
 - Blocked services check on the Custom filtering rules page does not work properly without specifying of a client.
 
-[rfc9113]:   https://datatracker.ietf.org/doc/html/rfc9113
+[#8276]:     https://github.com/AdguardTeam/AdGuardHome/issues/8276
 [go-1.26.4]: https://groups.google.com/g/golang-announce/c/tKs3rmcBcKw
+[rfc9113]:   https://datatracker.ietf.org/doc/html/rfc9113
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
