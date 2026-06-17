@@ -3,12 +3,10 @@ package home
 import (
 	"bytes"
 	"context"
-	"encoding/binary"
 	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -31,8 +29,6 @@ func TestWeb_HandleGetProfile(t *testing.T) {
 	const (
 		testTTL = 60
 
-		glTokenFileSuffix = "test"
-
 		userName     = "name"
 		userPassword = "password"
 
@@ -43,14 +39,6 @@ func TestWeb_HandleGetProfile(t *testing.T) {
 	require.NoError(t, err)
 
 	tempDir := t.TempDir()
-	glFilePrefix = tempDir + "/gl_token_"
-	glTokenFile := glFilePrefix + glTokenFileSuffix
-
-	glFileData := make([]byte, 4)
-	binary.NativeEndian.PutUint32(glFileData, uint32(time.Now().Unix()+testTTL))
-
-	err = os.WriteFile(glTokenFile, glFileData, 0o644)
-	require.NoError(t, err)
 
 	sessionsDB := filepath.Join(tempDir, "sessions.db")
 

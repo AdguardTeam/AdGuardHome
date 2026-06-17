@@ -113,7 +113,7 @@ func (iface *dhcpInterfaceV4) handleDiscover(
 		return
 	}
 
-	lease, err := iface.allocateLease(ctx, mac)
+	lease, err := iface.common.allocateLease(ctx, mac, iface.addrChecker, iface.clock)
 	if err != nil {
 		l.ErrorContext(ctx, "allocating a lease", slogutil.KeyError, err)
 

@@ -32,6 +32,7 @@ import (
 	"github.com/AdguardTeam/urlfilter"
 	"github.com/AdguardTeam/urlfilter/filterlist"
 	"github.com/AdguardTeam/urlfilter/rules"
+	"github.com/c2h5oh/datasize"
 	"github.com/miekg/dns"
 )
 
@@ -153,6 +154,10 @@ type Config struct {
 	// SafeFSPatterns are the patterns for matching which local filtering-rule
 	// files can be added.
 	SafeFSPatterns []string `yaml:"safe_fs_patterns"`
+
+	// MaxHTTPSize defines the maximum size of the HTTP body.  The value must
+	// not be equal to zero.
+	MaxHTTPSize datasize.ByteSize `yaml:"max_http_size"`
 
 	SafeBrowsingCacheSize uint `yaml:"safebrowsing_cache_size"` // (in bytes)
 	SafeSearchCacheSize   uint `yaml:"safesearch_cache_size"`   // (in bytes)

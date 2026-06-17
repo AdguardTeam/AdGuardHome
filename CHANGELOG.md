@@ -9,18 +9,92 @@ The format is based on [*Keep a Changelog*](https://keepachangelog.com/en/1.0.0/
 <!--
 ## [v0.108.0] – TBA
 
-## [v0.107.75] - 2026-05-01 (APPROX.)
+## [v0.107.78] - 2026-06-15 (APPROX.)
 
-See also the [v0.107.75 GitHub milestone][ms-v0.107.75].
+See also the [v0.107.78 GitHub milestone][ms-v0.107.78].
 
-[ms-v0.107.75]: https://github.com/AdguardTeam/AdGuardHome/milestone/110?closed=1
+[ms-v0.107.78]: https://github.com/AdguardTeam/AdGuardHome/milestone/113?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.26.4][go-1.26.4].
+
+- The H2C connection establishment via HTTP/1.1 request upgrade is no longer supported.  See [RFC 9113][rfc9113].
+
+- The size of rulelists is limited.  This is necessary to prevent a user's machine from becoming overloaded if the filter source misbehaves.
+
+### Added
+
+- Improved updater logging to give users more insight into the problem with version updating ([#8410]).
+
+[#8410]: https://github.com/AdguardTeam/AdGuardHome/issues/8410
+
+### Changed
+
+- The interval of filter updates can now be set to any number of ours between 0 and 365 days in the configuration file.
+
+#### Configuration changes
+
+- The `filtering` object of the YAML configuration now includes a new property, `max_http_size`, which defines the maximum size of the HTTP request for rulelists. To disable the limitation, set a large size, such as `1 TB`.
+
+### Fixed
+
+- The parsing of the `ech` parameter in DNS rewrite rules for the HTTPS record type ([#8276]).
+
+- Blocked services check on the Custom filtering rules page does not work properly without specifying of a client.
+
+[#8276]:     https://github.com/AdguardTeam/AdGuardHome/issues/8276
+[go-1.26.4]: https://groups.google.com/g/golang-announce/c/tKs3rmcBcKw
+[rfc9113]:   https://datatracker.ietf.org/doc/html/rfc9113
+
+<!--
+NOTE: Add new changes ABOVE THIS COMMENT.
+-->
+
+## [v0.107.77] - 2026-06-01
+
+See also the [v0.107.77 GitHub milestone][ms-v0.107.77].
+
+### Security
+
+- Authorization in GLiNET mode is no longer vulnerable to path traversal attacks.
+
+    **NOTE:** This is CVE-2026-41448. We thank @djnnvx for reporting this security issue.
+
 ### Added
 
 - New `reason` query parameter in `GET /control/querylog`.  See `openapi/openapi.yaml` for the full description.
+
+### Deprecated
+
+- Query parameter `response_status` in `GET /control/querylog` is now deprecated.  Use new `reason` query parameter instead.
+
+[ms-v0.107.77]: https://github.com/AdguardTeam/AdGuardHome/milestone/112?closed=1
+
+## [v0.107.76] - 2026-05-21
+
+See also the [v0.107.76 GitHub milestone][ms-v0.107.76].
+
+### Changed
+
+- Duration values in YAML configuration file now support `d` (days) units and has been updated.
+
+    **NOTE:** Any rollback to version below the `v0.107.76` should convert the values back to hours.
+
+### Fixed
+
+- DNS caching with disabled DNSSEC ([#8384]).
+
+[#8384]: https://github.com/AdguardTeam/AdGuardHome/issues/8384
+
+[ms-v0.107.76]: https://github.com/AdguardTeam/AdGuardHome/milestone/111?closed=1
+
+## [v0.107.75] - 2026-05-19
+
+See also the [v0.107.75 GitHub milestone][ms-v0.107.75].
 
 ### Security
 
@@ -38,10 +112,6 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - `enable_dnssec` in `dns` configuration now defines whether the proxy should set the DO flag in the upstream requests, the default is `true` ([#7046]).
 
-### Deprecated
-
-- Query parameter `response_status` in `GET /control/querylog` is now deprecated.  Use new `reason` query parameter instead.
-
 ### Fixed
 
 - Statistics database deadlock ([#8359]).
@@ -54,15 +124,13 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Safe Browsing and Parental Control labels on the General Settings page not updating after changing the UI language.
 
-[#7046]: https://github.com/AdguardTeam/AdGuardHome/issues/7046
 [#6823]: https://github.com/AdguardTeam/AdGuardHome/issues/6823
+[#7046]: https://github.com/AdguardTeam/AdGuardHome/issues/7046
 [#8348]: https://github.com/AdguardTeam/AdGuardHome/issues/8348
+[#8359]: https://github.com/AdguardTeam/AdGuardHome/issues/8359
 
+[ms-v0.107.75]: https://github.com/AdguardTeam/AdGuardHome/milestone/110?closed=1
 [go-1.26.3]: https://groups.google.com/g/golang-announce/c/qcCIEXso47M
-
-<!--
-NOTE: Add new changes ABOVE THIS COMMENT.
--->
 
 ## [v0.107.74] - 2026-04-16
 
@@ -3600,11 +3668,14 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 [ms-v0.104.2]: https://github.com/AdguardTeam/AdGuardHome/milestone/28?closed=1
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.75...HEAD
-[v0.107.75]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.74...v0.107.75
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.78...HEAD
+[v0.107.78]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.77...v0.107.78
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.74...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.77...HEAD
+[v0.107.77]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.76...v0.107.77
+[v0.107.76]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.75...v0.107.76
+[v0.107.75]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.74...v0.107.75
 [v0.107.74]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.73...v0.107.74
 [v0.107.73]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.72...v0.107.73
 [v0.107.72]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.71...v0.107.72

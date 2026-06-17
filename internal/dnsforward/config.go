@@ -805,8 +805,8 @@ func (s *Server) replaceGetCertificate(orig *tls.Config) {
 	}
 }
 
-// preparePlain prepares the plain-DNS configuration for the DNS proxy.
-// preparePlain assumes that prepareTLS has already been called.
+// preparePlain prepares the plain-DNS configuration for the DNS proxy. The
+// method assumes that prepareTLS has already been called.
 func (s *Server) preparePlain(ctx context.Context, proxyConf *proxy.Config) (err error) {
 	if s.conf.ServePlainDNS {
 		proxyConf.UDPListenAddr = s.conf.UDPListenAddrs

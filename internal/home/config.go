@@ -20,6 +20,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
@@ -300,6 +301,9 @@ type pendingRequests struct {
 // and HTTPS.  When adding new properties, update the [tlsConfigSettings.clone]
 // and [tlsConfigSettings.setPrivateFieldsAndCompare] methods as necessary.
 type tlsConfigSettings struct {
+	// Status is the current status of the configuration.
+	Status tlsConfigStatus `yaml:"-" json:"-"`
+
 	// Enabled indicates whether encryption (DoT/DoH/HTTPS) is enabled.
 	Enabled bool `yaml:"enabled" json:"enabled"`
 
@@ -359,6 +363,9 @@ type tlsConfigSettings struct {
 	// StrictSNICheck controls if the connections with SNI mismatching the
 	// certificate's ones should be rejected.
 	StrictSNICheck bool `yaml:"strict_sni_check" json:"-"`
+
+	// ServePlainDNS defines whether to serve a plain DNS.
+	ServePlainDNS bool `yaml:"-" json:"-"`
 }
 
 // clone returns a deep copy of c.
@@ -370,12 +377,13 @@ func (c *tlsConfigSettings) clone() (clone *tlsConfigSettings) {
 	clone.CertificateChainData = slices.Clone(c.CertificateChainData)
 	clone.PrivateKeyData = slices.Clone(c.PrivateKeyData)
 
+	clone.Status.DNSNames = slices.Clone(c.Status.DNSNames)
+
 	return clone
 }
 
 // setPrivateFieldsAndCompare sets any missing properties in conf to match those
-// in c and returns true if TLS configurations are equal.  conf must not be be
-// nil.
+// in c and returns true if TLS configurations are equal.  conf must not be nil.
 // It sets the following properties because these are not accepted from the
 // frontend:
 //
@@ -564,6 +572,7 @@ var config = &configuration{
 		ParentalEnabled:     false,
 		SafeBrowsingEnabled: false,
 
+		MaxHTTPSize:           rulelist.DefaultMaxRuleListSize,
 		SafeBrowsingCacheSize: 1 * 1024 * 1024,
 		SafeSearchCacheSize:   1 * 1024 * 1024,
 		ParentalCacheSize:     1 * 1024 * 1024,

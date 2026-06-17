@@ -183,7 +183,7 @@ func (idx *leaseIndex) update(
 }
 
 // rangeLeases calls f for each lease in idx in an unspecified order until f
-// returns false.
+// returns false.  It must not be called concurrently, f must not modify leases.
 func (idx *leaseIndex) rangeLeases(f func(l *Lease) (cont bool)) {
 	for _, l := range idx.byName {
 		if !f(l) {

@@ -137,7 +137,7 @@ func collectErrResults(
 }
 
 // insertConfResults parses conf and inserts the upstream result into results.
-// It can insert multiple results as well as none.
+// It can insert multiple results as well as none.  conf must not be nil.
 func insertConfResults(conf *proxy.UpstreamConfig, results map[string]*upstreamResult) {
 	insertListResults(conf.Upstreams, results, false)
 
