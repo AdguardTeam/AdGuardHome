@@ -226,6 +226,8 @@ func (iface *netInterface) allocateLease(
 // reserveLease reserves a lease for a client by its MAC-address.  lease is nil
 // if a new lease can't be allocated.  mac must be a valid according to
 // [netutil.ValidateMAC].  iface.indexMu mutex must be locked.
+//
+// TODO(e.burkov):  Pass the time moment instead of clock.
 func (iface *netInterface) reserveLease(
 	ctx context.Context,
 	mac net.HardwareAddr,
