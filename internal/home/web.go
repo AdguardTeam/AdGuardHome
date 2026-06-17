@@ -469,6 +469,8 @@ func startPprof(baseLogger *slog.Logger, port uint16) {
 }
 
 // registerTLSHandlers registers HTTP handlers for TLS configuration.
+//
+// TODO(m.kazantsev):  Consider uniting with registerControlHandlers.
 func (web *webAPI) registerTLSHandlers() {
 	web.httpReg.Register(http.MethodGet, "/control/tls/status", web.handleTLSStatus)
 	web.httpReg.Register(http.MethodPost, "/control/tls/configure", web.handleTLSConfigure)
