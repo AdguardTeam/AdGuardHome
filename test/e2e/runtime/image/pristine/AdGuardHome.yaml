@@ -8,4 +8,10 @@ dns:
 users:
   - name: admin
     password: $2b$12$aw6lk4Cdfc/b69rFQVqSrutVmh6UJ.ORxpQ10.fj685NVWmDiDO9O
+# Ship with NO subscription filters: AGH otherwise injects its default lists
+# (e.g. the 157k-rule "AdGuard DNS filter") which makes /control/filtering/refresh
+# re-download ~3.7MB from the public internet on every call — slow and a hidden
+# egress dependency. Tests add their own local blocklists as needed.
+filters: []
+whitelist_filters: []
 schema_version: 20
