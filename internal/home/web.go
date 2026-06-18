@@ -734,7 +734,12 @@ func (web *webAPI) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 	newTLSConf := &req.tlsConfigSettings
 	newTLSConf.Status = *status
 
-	restartHTTPS = web.tlsManager.setConfig(ctx, newTLSConf, req.ServePlainDNS)
+	restartHTTPS, err = web.tlsManager.setConfig(ctx, newTLSConf, req.ServePlainDNS)
+	if err != nil {
+		aghhttp.ErrorAndLog(ctx, web.logger, r, w, http.StatusInternalServerError, "%s", err)
+
+		return
+	}
 
 	err = web.reconfigureDNSServer(ctx, newTLSConf)
 	if err != nil {

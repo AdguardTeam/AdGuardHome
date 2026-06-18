@@ -455,15 +455,16 @@ func (m *tlsManager) setConfig(
 	ctx context.Context,
 	newConf *tlsConfigSettings,
 	servePlain aghalg.NullBool,
-) (restartHTTPS bool) {
+) (restartHTTPS bool, err error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	err := m.updateTLSCert(newConf)
+	err = m.updateTLSCert(newConf)
 	if err != nil {
 		m.logger.ErrorContext(ctx, "updating tls certificate", slogutil.KeyError, err)
 
-		return restartHTTPS
+		// Don't wrap the error, because it is informative enough as is.
+		return false, err
 	}
 
 	m.extTLSConf.updatePlainDNS(newConf, servePlain)
@@ -492,7 +493,7 @@ func (m *tlsManager) setConfig(
 
 	m.setCertFileTime(ctx)
 
-	return restartHTTPS
+	return restartHTTPS, nil
 }
 
 // updatePlainDNS checks the old value of [tlsConfigSettings.ServePlainDNS] in
