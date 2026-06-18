@@ -1,0 +1,8 @@
+node_modules/
+AdGuardHome_linux_amd64.tar.gz
+test-results/
+playwright-report/
+
+# The repo-root .gitignore ignores "AdGuardHome.yaml*"; the pristine image
+# config is a committed fixture, so re-include it.
+!runtime/image/pristine/AdGuardHome.yaml

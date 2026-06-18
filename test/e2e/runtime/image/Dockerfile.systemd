@@ -1,0 +1,10 @@
+FROM debian:bookworm
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      systemd systemd-sysv curl ca-certificates procps iproute2 ipset \
+    && rm -rf /var/lib/apt/lists/* \
+    && find /etc/systemd/system /lib/systemd/system \
+         -path '*.wants/*' -not -name '*systemd-tmpfiles*' -not -name '*journald*' -delete
+
+STOPSIGNAL SIGRTMIN+3
+ENTRYPOINT ["/sbin/init"]
