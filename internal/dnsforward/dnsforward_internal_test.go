@@ -261,22 +261,25 @@ func createTestTLS(
 
 	tlsConfProvider := &aghtest.TLSConfigProvider{}
 
-	tlsConfProvider.OnTLSConfig = func() (conf *tls.Config) { return tlsConfig }
+	tlsConfProvider.OnTLSConfig = func() (conf *tls.Config) { return tlsConfig.Clone() }
 	tlsConfProvider.OnRootCAs = func() (pool *x509.CertPool) { return roots }
 
-	s = createTestServer(tb, &filtering.Config{
-		BlockingMode: filtering.BlockingModeDefault,
-	}, ServerConfig{
-		UDPListenAddrs: []*net.UDPAddr{{}},
-		TCPListenAddrs: []*net.TCPAddr{{}},
-		TLSConf:        tlsConf,
-		Config: Config{
-			UpstreamMode:     UpstreamModeLoadBalance,
-			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
-			ClientsContainer: EmptyClientsContainer{},
+	s = createTestServer(
+		tb,
+		&filtering.Config{
+			BlockingMode: filtering.BlockingModeDefault,
 		},
-		ServePlainDNS: true,
-	},
+		ServerConfig{
+			UDPListenAddrs: []*net.UDPAddr{{}},
+			TCPListenAddrs: []*net.TCPAddr{{}},
+			TLSConf:        tlsConf,
+			Config: Config{
+				UpstreamMode:     UpstreamModeLoadBalance,
+				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+				ClientsContainer: EmptyClientsContainer{},
+			},
+			ServePlainDNS: true,
+		},
 		tlsConfProvider,
 	)
 
@@ -402,19 +405,22 @@ func sendTestMessages(tb testing.TB, conn *dns.Conn) {
 }
 
 func TestServer(t *testing.T) {
-	s := createTestServer(t, &filtering.Config{
-		BlockingMode: filtering.BlockingModeDefault,
-	}, ServerConfig{
-		UDPListenAddrs: []*net.UDPAddr{{}},
-		TCPListenAddrs: []*net.TCPAddr{{}},
-		TLSConf:        &TLSConfig{},
-		Config: Config{
-			UpstreamMode:     UpstreamModeLoadBalance,
-			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
-			ClientsContainer: EmptyClientsContainer{},
+	s := createTestServer(
+		t,
+		&filtering.Config{
+			BlockingMode: filtering.BlockingModeDefault,
 		},
-		ServePlainDNS: true,
-	},
+		ServerConfig{
+			UDPListenAddrs: []*net.UDPAddr{{}},
+			TCPListenAddrs: []*net.TCPAddr{{}},
+			TLSConf:        &TLSConfig{},
+			Config: Config{
+				UpstreamMode:     UpstreamModeLoadBalance,
+				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+				ClientsContainer: EmptyClientsContainer{},
+			},
+			ServePlainDNS: true,
+		},
 		testTLSConfigProvider,
 	)
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{newGoogleUpstream()}
@@ -520,19 +526,22 @@ func TestServer_Prepare_fallbacks(t *testing.T) {
 }
 
 func TestServerWithProtectionDisabled(t *testing.T) {
-	s := createTestServer(t, &filtering.Config{
-		BlockingMode: filtering.BlockingModeDefault,
-	}, ServerConfig{
-		UDPListenAddrs: []*net.UDPAddr{{}},
-		TCPListenAddrs: []*net.TCPAddr{{}},
-		TLSConf:        &TLSConfig{},
-		Config: Config{
-			UpstreamMode:     UpstreamModeLoadBalance,
-			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
-			ClientsContainer: EmptyClientsContainer{},
+	s := createTestServer(
+		t,
+		&filtering.Config{
+			BlockingMode: filtering.BlockingModeDefault,
 		},
-		ServePlainDNS: true,
-	},
+		ServerConfig{
+			UDPListenAddrs: []*net.UDPAddr{{}},
+			TCPListenAddrs: []*net.TCPAddr{{}},
+			TLSConf:        &TLSConfig{},
+			Config: Config{
+				UpstreamMode:     UpstreamModeLoadBalance,
+				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+				ClientsContainer: EmptyClientsContainer{},
+			},
+			ServePlainDNS: true,
+		},
 		testTLSConfigProvider,
 	)
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{newGoogleUpstream()}
@@ -799,7 +808,8 @@ func TestBlockedRequest(t *testing.T) {
 		},
 		ServePlainDNS: true,
 	}
-	s := createTestServer(t,
+	s := createTestServer(
+		t,
 		&filtering.Config{
 			ProtectionEnabled: true,
 			BlockingMode:      filtering.BlockingModeDefault,
@@ -913,21 +923,26 @@ var testIPv4 = map[string][]net.IP{
 }
 
 func TestBlockCNAMEProtectionEnabled(t *testing.T) {
-	s := createTestServer(t, &filtering.Config{
-		BlockingMode: filtering.BlockingModeDefault,
-	}, ServerConfig{
-		UDPListenAddrs: []*net.UDPAddr{{}},
-		TCPListenAddrs: []*net.TCPAddr{{}},
-		TLSConf:        &TLSConfig{},
-		Config: Config{
-			UpstreamMode: UpstreamModeLoadBalance,
-			EDNSClientSubnet: &EDNSClientSubnet{
-				Enabled: false,
-			},
-			ClientsContainer: EmptyClientsContainer{},
+	s := createTestServer(
+		t,
+		&filtering.Config{
+			BlockingMode: filtering.BlockingModeDefault,
 		},
-		ServePlainDNS: true,
-	}, testTLSConfigProvider)
+		ServerConfig{
+			UDPListenAddrs: []*net.UDPAddr{{}},
+			TCPListenAddrs: []*net.TCPAddr{{}},
+			TLSConf:        &TLSConfig{},
+			Config: Config{
+				UpstreamMode: UpstreamModeLoadBalance,
+				EDNSClientSubnet: &EDNSClientSubnet{
+					Enabled: false,
+				},
+				ClientsContainer: EmptyClientsContainer{},
+			},
+			ServePlainDNS: true,
+		},
+		testTLSConfigProvider,
+	)
 	testUpstm := &aghtest.Upstream{
 		CName: testCNAMEs,
 		IPv4:  testIPv4,
@@ -965,7 +980,8 @@ func TestBlockCNAME(t *testing.T) {
 		ServePlainDNS: true,
 	}
 
-	s := createTestServer(t,
+	s := createTestServer(
+		t,
 		&filtering.Config{
 			ProtectionEnabled: true,
 			BlockingMode:      filtering.BlockingModeDefault,
@@ -1044,9 +1060,14 @@ func TestClientRulesForCNAMEMatching(t *testing.T) {
 		},
 		ServePlainDNS: true,
 	}
-	s := createTestServer(t, &filtering.Config{
-		BlockingMode: filtering.BlockingModeDefault,
-	}, forwardConf, testTLSConfigProvider)
+	s := createTestServer(
+		t,
+		&filtering.Config{
+			BlockingMode: filtering.BlockingModeDefault,
+		},
+		forwardConf,
+		testTLSConfigProvider,
+	)
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{
 		&aghtest.Upstream{
 			CName: testCNAMEs,
@@ -1233,10 +1254,15 @@ func TestBlockedByHosts(t *testing.T) {
 		ServePlainDNS: true,
 	}
 
-	s := createTestServer(t, &filtering.Config{
-		ProtectionEnabled: true,
-		BlockingMode:      filtering.BlockingModeDefault,
-	}, forwardConf, testTLSConfigProvider)
+	s := createTestServer(
+		t,
+		&filtering.Config{
+			ProtectionEnabled: true,
+			BlockingMode:      filtering.BlockingModeDefault,
+		},
+		forwardConf,
+		testTLSConfigProvider,
+	)
 	startDeferStop(t, s)
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
 
@@ -1865,20 +1891,23 @@ func TestServer_Exchange(t *testing.T) {
 		localUpsAddr := aghtest.StartLocalhostUpstream(t, tc.locUpstream).String()
 
 		t.Run(tc.name, func(t *testing.T) {
-			srv := createTestServer(t, &filtering.Config{
-				BlockingMode: filtering.BlockingModeDefault,
-			}, ServerConfig{
-				TLSConf: &TLSConfig{},
-				Config: Config{
-					UpstreamDNS:      []string{upsAddr},
-					UpstreamMode:     UpstreamModeLoadBalance,
-					EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
-					ClientsContainer: EmptyClientsContainer{},
+			srv := createTestServer(
+				t,
+				&filtering.Config{
+					BlockingMode: filtering.BlockingModeDefault,
 				},
-				LocalPTRResolvers: []string{localUpsAddr},
-				UsePrivateRDNS:    true,
-				ServePlainDNS:     true,
-			},
+				ServerConfig{
+					TLSConf: &TLSConfig{},
+					Config: Config{
+						UpstreamDNS:      []string{upsAddr},
+						UpstreamMode:     UpstreamModeLoadBalance,
+						EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+						ClientsContainer: EmptyClientsContainer{},
+					},
+					LocalPTRResolvers: []string{localUpsAddr},
+					UsePrivateRDNS:    true,
+					ServePlainDNS:     true,
+				},
 				testTLSConfigProvider,
 			)
 
@@ -1892,19 +1921,22 @@ func TestServer_Exchange(t *testing.T) {
 	}
 
 	t.Run("resolving_disabled", func(t *testing.T) {
-		srv := createTestServer(t, &filtering.Config{
-			BlockingMode: filtering.BlockingModeDefault,
-		}, ServerConfig{
-			TLSConf: &TLSConfig{},
-			Config: Config{
-				UpstreamDNS:      []string{upsAddr},
-				UpstreamMode:     UpstreamModeLoadBalance,
-				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
-				ClientsContainer: EmptyClientsContainer{},
+		srv := createTestServer(
+			t,
+			&filtering.Config{
+				BlockingMode: filtering.BlockingModeDefault,
 			},
-			LocalPTRResolvers: []string{},
-			ServePlainDNS:     true,
-		},
+			ServerConfig{
+				TLSConf: &TLSConfig{},
+				Config: Config{
+					UpstreamDNS:      []string{upsAddr},
+					UpstreamMode:     UpstreamModeLoadBalance,
+					EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+					ClientsContainer: EmptyClientsContainer{},
+				},
+				LocalPTRResolvers: []string{},
+				ServePlainDNS:     true,
+			},
 			testTLSConfigProvider,
 		)
 

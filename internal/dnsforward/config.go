@@ -713,7 +713,7 @@ func (s *Server) prepareTLS(ctx context.Context, proxyConf *proxy.Config) (err e
 	}
 
 	proxyConf.TLSConfig = s.tlsConfigProvider.TLSConfig()
-	if proxyConf.TLSConfig == nil {
+	if proxyConf.TLSConfig == nil || len(proxyConf.TLSConfig.Certificates) == 0 {
 		return nil
 	}
 
@@ -789,6 +789,9 @@ func anyNameMatches(dnsNames []string, sni string) (ok bool) {
 // replaceGetCertificate replaces the TLS.Config.GetCertificate with a wrapped
 // version of the previous one, adding a SNI check.  orig must not be nil.
 func (s *Server) replaceGetCertificate(orig *tls.Config) {
+	s.serverLock.Lock()
+	defer s.serverLock.Unlock()
+
 	origGetCert := orig.GetCertificate
 
 	orig.GetCertificate = func(chi *tls.ClientHelloInfo) (cert *tls.Certificate, err error) {
@@ -801,7 +804,11 @@ func (s *Server) replaceGetCertificate(orig *tls.Config) {
 			return nil, errors.Error("invalid SNI")
 		}
 
-		return origGetCert(chi)
+		if origGetCert != nil {
+			return origGetCert(chi)
+		}
+
+		return nil, errors.Error("get certificate is not set")
 	}
 }
 

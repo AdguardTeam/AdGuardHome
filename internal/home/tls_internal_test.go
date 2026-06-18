@@ -62,7 +62,7 @@ func TestValidateCertificates(t *testing.T) {
 		testPrivateKeyData := requireReadFile(t, testPrivateKeyPath)
 
 		err = m.validateCertificates(ctx, status, testCertChainData, testPrivateKeyData, "")
-		assert.NoError(t, err)
+		assert.Error(t, err)
 
 		notBefore := time.Date(2019, 2, 27, 9, 24, 23, 0, time.UTC)
 		notAfter := time.Date(2046, 7, 14, 9, 24, 23, 0, time.UTC)
@@ -94,8 +94,7 @@ func TestValidateCertificates(t *testing.T) {
 
 		status = &tlsConfigStatus{}
 		err = m.validateCertificates(ctx, status, chainPEM, leafKeyPEM, "")
-		// Don't expect an error, as it is no longer estimated as critical.
-		assert.NoError(t, err)
+		assert.ErrorIs(t, err, errNoIPInCert)
 		assert.True(t, status.ValidCert)
 		assert.True(t, status.ValidChain)
 		assert.True(t, status.ValidKey)
