@@ -98,49 +98,59 @@ const App = () => {
     });
 
     return (
-        <HashRouter root={() => (
-            <>
-                <Header />
+        <HashRouter
+            root={(props) => (
+                <>
+                    <Header />
 
-                <div class={s.wrapper}>
-                    <Sidebar />
+                    <div class={s.wrapper}>
+                        <Sidebar />
 
-                    <div class={s.bodyWrapper}>
                         <Show when={!dashboardState.processing && dashboardState.isCoreRunning}>
-                            <Route path="/dashboard" component={Dashboard} />
-                            <Route path="/settings" component={Settings} />
-                            <Route path="/encryption" component={Encryption} />
-                            <Route path="/dns" component={DnsSettings} />
-                            <Route path="/blocklists" component={Blocklists} />
-                            <Route path="/allowlists" component={Allowlists} />
-                            <Route path="/user_rules" component={UserRules} />
-                            <Route path="/dns_rewrites" component={DNSRewrites} />
-                            <Route path="/dhcp" component={Dhcp} />
-                            <Route path="/guide" component={SetupGuideRoute} />
-                            <Route path="/logs" component={QueryLog} />
-                            <Route path="/blocked_services/schedule" component={InactivityScheduleRoute} />
-                            <Route path="/blocked_services" component={BlockedServicesRoute} />
-                            <Route path="/clients/add/blocked_services/schedule" component={ClientScheduleRoute} />
-                            <Route path="/clients/add/blocked_services" component={ClientBlockedServicesRoute} />
-                            <Route path="/clients/add/protection" component={ProtectionRoute} />
-                            <Route path="/clients/add" component={AddClientRoute} />
-                            <Route path="/clients/edit/:clientName/blocked_services/schedule" component={ClientScheduleRoute} />
-                            <Route path="/clients/edit/:clientName/blocked_services" component={ClientBlockedServicesRoute} />
-                            <Route path="/clients/edit/:clientName/protection" component={ProtectionRoute} />
-                            <Route path="/clients/edit/:clientName" component={AddClientRoute} />
-                            <Route path="/clients" component={Clients} />
-                            <Route path="/" component={() => <Navigate href="/dashboard" />} />
+                            <div class={s.bodyWrapper}>
+                                {props.children}
+                            </div>
                         </Show>
                     </div>
-                </div>
 
-                <Footer />
+                    <Footer />
 
-                <Toasts />
+                    <Toasts />
 
-                <Icons />
-            </>
-        )} />
+                    <Icons />
+                </>
+            )}
+        >
+            <Route path="/dashboard" component={Dashboard} />
+            <Route path="/settings" component={Settings} />
+            <Route path="/encryption" component={Encryption} />
+            <Route path="/dns" component={DnsSettings} />
+            <Route path="/blocklists" component={Blocklists} />
+            <Route path="/allowlists" component={Allowlists} />
+            <Route path="/user_rules" component={UserRules} />
+            <Route path="/dns_rewrites" component={DNSRewrites} />
+            <Route path="/dhcp" component={Dhcp} />
+            <Route path="/guide" component={SetupGuideRoute} />
+            <Route path="/logs" component={QueryLog} />
+            <Route path="/blocked_services/schedule" component={InactivityScheduleRoute} />
+            <Route path="/blocked_services" component={BlockedServicesRoute} />
+            <Route path="/clients/add/blocked_services/schedule" component={ClientScheduleRoute} />
+            <Route path="/clients/add/blocked_services" component={ClientBlockedServicesRoute} />
+            <Route path="/clients/add/protection" component={ProtectionRoute} />
+            <Route path="/clients/add" component={AddClientRoute} />
+            <Route
+                path="/clients/edit/:clientName/blocked_services/schedule"
+                component={ClientScheduleRoute}
+            />
+            <Route
+                path="/clients/edit/:clientName/blocked_services"
+                component={ClientBlockedServicesRoute}
+            />
+            <Route path="/clients/edit/:clientName/protection" component={ProtectionRoute} />
+            <Route path="/clients/edit/:clientName" component={AddClientRoute} />
+            <Route path="/clients" component={Clients} />
+            <Route path="/" component={() => <Navigate href="/dashboard" />} />
+        </HashRouter>
     );
 };
 
