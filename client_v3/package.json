@@ -39,7 +39,6 @@
     "lodash": "^4.17.19",
     "nanoid": "^5.1.0",
     "qs": "^6.14.0",
-    "solid-chartjs": "^1.3.0",
     "solid-js": "^1.9.0",
     "solid-transition-group": "^0.3.0"
   },

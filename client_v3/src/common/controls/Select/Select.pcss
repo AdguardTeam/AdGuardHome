@@ -5,382 +5,382 @@
  */
 
 .solid-select {
-  width: 100%;
-
-  &.solid-select-small {
-    width: 68px;
-
-    [data-scope="select"][data-part="control"],
-    [data-scope="combobox"][data-part="control"] {
-      padding-right: 0;
-    }
-  }
-
-  &.solid-select-medium {
-    width: 200px;
-  }
-
-  &.solid-select-big {
     width: 100%;
 
-    @media (min-width: 768px) {
-      width: 288px;
-    }
-  }
+    &.solid-select-small {
+        width: 68px;
 
-  &.solid-select--menu-right {
-    [data-scope="select"][data-part="content"],
-    [data-scope="combobox"][data-part="content"] {
-      @media (min-width: 1024px) {
-        right: 0;
-      }
+        [data-scope='select'][data-part='control'],
+        [data-scope='combobox'][data-part='control'] {
+            padding-right: 0;
+        }
     }
-  }
 
-  &.solid-select-responsive {
-    width: 100%;
+    &.solid-select-medium {
+        width: 200px;
+    }
+
+    &.solid-select-big {
+        width: 100%;
+
+        @media (min-width: 768px) {
+            width: 288px;
+        }
+    }
+
+    &.solid-select--menu-right {
+        [data-scope='select'][data-part='content'],
+        [data-scope='combobox'][data-part='content'] {
+            @media (min-width: 1024px) {
+                right: 0;
+            }
+        }
+    }
+
+    &.solid-select-responsive {
+        width: 100%;
+
+        @media (min-width: 1024px) {
+            width: 100%;
+        }
+    }
+
+    &.solid-select--menu-small {
+        [data-scope='select'][data-part='content'],
+        [data-scope='combobox'][data-part='content'] {
+            min-width: 137px;
+        }
+    }
+
+    &.solid-select--menu-medium {
+        [data-scope='select'][data-part='content'],
+        [data-scope='combobox'][data-part='content'] {
+            min-width: 250px;
+        }
+    }
+
+    &.solid-select--menu-big {
+        [data-scope='select'][data-part='content'],
+        [data-scope='combobox'][data-part='content'] {
+            min-width: 284px;
+
+            @media (min-width: 1024px) {
+                min-width: 344px;
+            }
+        }
+    }
+
+    &.solid-select--borderless {
+        [data-scope='select'][data-part='control'],
+        [data-scope='combobox'][data-part='control'] {
+            border: 0;
+        }
+    }
+
+    &.solid-select--adaptive-height {
+        [data-scope='select'][data-part='control'],
+        [data-scope='combobox'][data-part='control'] {
+            height: 100%;
+            min-height: 40px;
+        }
+
+        [data-scope='select'][data-part='value-text'],
+        [data-scope='combobox'][data-part='value-text'] {
+            width: 100%;
+        }
+    }
+
+    &.solid-select--height-small {
+        [data-scope='select'][data-part='control'],
+        [data-scope='combobox'][data-part='control'] {
+            min-height: 40px;
+            font-size: 16px;
+        }
+    }
+
+    &.solid-select--height-medium {
+        [data-scope='select'][data-part='control'],
+        [data-scope='combobox'][data-part='control'] {
+            min-height: 40px;
+            font-size: 16px;
+
+            @media (min-width: 1024px) {
+                min-height: 48px;
+            }
+        }
+    }
+
+    &.solid-select--height-big {
+        [data-scope='select'][data-part='control'],
+        [data-scope='combobox'][data-part='control'] {
+            min-height: 56px;
+            font-size: 16px;
+
+            @media (min-width: 1024px) {
+                min-height: 56px;
+            }
+        }
+    }
+
+    &.solid-select--height-big-mobile {
+        [data-scope='select'][data-part='control'],
+        [data-scope='combobox'][data-part='control'] {
+            height: 56px;
+            font-size: 16px;
+
+            @media (min-width: 1024px) {
+                height: 40px;
+            }
+        }
+    }
+
+    &.solid-select--dropdown {
+        [data-scope='select'][data-part='content'],
+        [data-scope='combobox'][data-part='content'] {
+            position: relative;
+            top: 0;
+            margin: 0;
+            box-shadow: none;
+            width: 100%;
+            max-width: 100%;
+            min-width: auto;
+        }
+
+        [data-scope='select'][data-part='control'],
+        [data-scope='combobox'][data-part='control'] {
+            display: none;
+        }
+    }
 
     @media (min-width: 1024px) {
-      width: 100%;
-    }
-  }
-
-  &.solid-select--menu-small {
-    [data-scope="select"][data-part="content"],
-    [data-scope="combobox"][data-part="content"] {
-      min-width: 137px;
-    }
-  }
-
-  &.solid-select--menu-medium {
-    [data-scope="select"][data-part="content"],
-    [data-scope="combobox"][data-part="content"] {
-      min-width: 250px;
-    }
-  }
-
-  &.solid-select--menu-big {
-    [data-scope="select"][data-part="content"],
-    [data-scope="combobox"][data-part="content"] {
-      min-width: 284px;
-
-      @media (min-width: 1024px) {
-        min-width: 344px;
-      }
-    }
-  }
-
-  &.solid-select--borderless {
-    [data-scope="select"][data-part="control"],
-    [data-scope="combobox"][data-part="control"] {
-      border: 0;
-    }
-  }
-
-  &.solid-select--adaptive-height {
-    [data-scope="select"][data-part="control"],
-    [data-scope="combobox"][data-part="control"] {
-      height: 100%;
-      min-height: 40px;
+        width: 240px;
     }
 
-    [data-scope="select"][data-part="value-text"],
-    [data-scope="combobox"][data-part="value-text"] {
-      width: 100%;
-    }
-  }
+    /* === Dropdown content === */
+    [data-scope='select'][data-part='content'],
+    [data-scope='combobox'][data-part='content'] {
+        color: var(--default-main-text);
+        padding: 0;
+        margin-top: 4px;
+        overflow: hidden;
+        box-shadow: 8px 8px 24px 0 rgba(0, 0, 0, 0.1);
+        background-color: var(--default-dropdown-menu-background);
+        z-index: 3;
 
-  &.solid-select--height-small {
-    [data-scope="select"][data-part="control"],
-    [data-scope="combobox"][data-part="control"] {
-      min-height: 40px;
-      font-size: 16px;
-    }
-  }
-
-  &.solid-select--height-medium {
-    [data-scope="select"][data-part="control"],
-    [data-scope="combobox"][data-part="control"] {
-      min-height: 40px;
-      font-size: 16px;
-
-      @media (min-width: 1024px) {
-        min-height: 48px;
-      }
-    }
-  }
-
-  &.solid-select--height-big {
-    [data-scope="select"][data-part="control"],
-    [data-scope="combobox"][data-part="control"] {
-      min-height: 56px;
-      font-size: 16px;
-
-      @media (min-width: 1024px) {
-        min-height: 56px;
-      }
-    }
-  }
-
-  &.solid-select--height-big-mobile {
-    [data-scope="select"][data-part="control"],
-    [data-scope="combobox"][data-part="control"] {
-      height: 56px;
-      font-size: 16px;
-
-      @media (min-width: 1024px) {
-        height: 40px;
-      }
-    }
-  }
-
-  &.solid-select--dropdown {
-    [data-scope="select"][data-part="content"],
-    [data-scope="combobox"][data-part="content"] {
-      position: relative;
-      top: 0;
-      margin: 0;
-      box-shadow: none;
-      width: 100%;
-      max-width: 100%;
-      min-width: auto;
+        @media (min-width: 1024px) {
+            left: initial;
+            right: initial;
+            width: 100%;
+        }
     }
 
-    [data-scope="select"][data-part="control"],
-    [data-scope="combobox"][data-part="control"] {
-      display: none;
-    }
-  }
+    /* === Control bar === */
+    [data-scope='select'][data-part='control'],
+    [data-scope='combobox'][data-part='control'] {
+        min-height: 40px;
+        border: 1px solid var(--default-item-divider);
+        box-shadow: none;
+        border-radius: 8px;
+        transition: border var(--t2);
+        cursor: pointer;
+        font-size: 16px;
+        background-color: var(--default-page-background);
+        display: flex;
+        align-items: center;
 
-  @media (min-width: 1024px) {
-    width: 240px;
-  }
+        &:hover,
+        &:focus-within {
+            border-color: var(--hovered-main-button);
+        }
 
-  /* === Dropdown content === */
-  [data-scope="select"][data-part="content"],
-  [data-scope="combobox"][data-part="content"] {
-    color: var(--default-main-text);
-    padding: 0;
-    margin-top: 4px;
-    overflow: hidden;
-    box-shadow: 8px 8px 24px 0 rgba(0, 0, 0, 0.1);
-    background-color: var(--default-dropdown-menu-background);
-    z-index: 3;
+        &[data-disabled] {
+            background-color: var(--pressed-page-background);
+            cursor: default;
 
-    @media (min-width: 1024px) {
-      left: initial;
-      right: initial;
-      width: 100%;
-    }
-  }
+            &:hover,
+            &:focus-within {
+                border-color: var(--default-item-divider);
+            }
 
-  /* === Control bar === */
-  [data-scope="select"][data-part="control"],
-  [data-scope="combobox"][data-part="control"] {
-    min-height: 40px;
-    border: 1px solid var(--default-item-divider);
-    box-shadow: none;
-    border-radius: 8px;
-    transition: border var(--t2);
-    cursor: pointer;
-    font-size: 16px;
-    background-color: var(--default-page-background);
-    display: flex;
-    align-items: center;
-
-    &:hover,
-    &:focus-within {
-      border-color: var(--hovered-main-button);
+            [data-scope='select'][data-part='value-text'],
+            [data-scope='combobox'][data-part='value-text'] {
+                color: var(--default-description-text);
+            }
+        }
     }
 
-    &[data-disabled] {
-      background-color: var(--pressed-page-background);
-      cursor: default;
+    /* === Trigger button === */
+    [data-scope='select'][data-part='trigger'],
+    [data-scope='combobox'][data-part='trigger'] {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        padding-left: 16px;
+        overflow: hidden;
+        min-height: inherit;
+        background: none;
+        border: none;
+        cursor: pointer;
+        text-align: left;
+        color: var(--default-main-text);
+        font-size: inherit;
 
-      &:hover,
-      &:focus-within {
-        border-color: var(--default-item-divider);
-      }
-
-      [data-scope="select"][data-part="value-text"],
-      [data-scope="combobox"][data-part="value-text"] {
-        color: var(--default-description-text);
-      }
-    }
-  }
-
-  /* === Trigger button === */
-  [data-scope="select"][data-part="trigger"],
-  [data-scope="combobox"][data-part="trigger"] {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    padding-left: 16px;
-    overflow: hidden;
-    min-height: inherit;
-    background: none;
-    border: none;
-    cursor: pointer;
-    text-align: left;
-    color: var(--default-main-text);
-    font-size: inherit;
-
-    &:focus {
-      outline: none;
-    }
-  }
-
-  /* === Value text / placeholder === */
-  [data-scope="select"][data-part="value-text"],
-  [data-scope="combobox"][data-part="value-text"] {
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    color: var(--default-main-text);
-
-    &:empty {
-      /* placeholder shown via data-placeholder-shown */
-    }
-  }
-
-  /* === Clear trigger (× button) === */
-  [data-scope="select"][data-part="clear-trigger"],
-  [data-scope="combobox"][data-part="clear-trigger"] {
-    display: flex;
-    align-items: center;
-    padding: 8px 0;
-    cursor: pointer;
-    border: none;
-    background: none;
-    color: var(--default-gray-icons);
-
-    @media (min-width: 1024px) {
-      padding: 8px;
-    }
-  }
-
-  /* === Dropdown indicator (arrow) === */
-  [data-scope="select"][data-part="indicator"],
-  [data-scope="combobox"][data-part="indicator"] {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding-right: 16px;
-    color: var(--default-gray-icons);
-    transition: transform var(--t2);
-
-    svg {
-      transform-origin: center center;
-      transition: transform var(--t2);
+        &:focus {
+            outline: none;
+        }
     }
 
-    &:focus,
-    &:hover {
-      color: var(--default-gray-icons);
+    /* === Value text / placeholder === */
+    [data-scope='select'][data-part='value-text'],
+    [data-scope='combobox'][data-part='value-text'] {
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: var(--default-main-text);
+
+        &:empty {
+            /* placeholder shown via data-placeholder-shown */
+        }
     }
 
-    &[data-state="open"] svg {
-      transform: rotate(180deg);
-    }
-  }
+    /* === Clear trigger (× button) === */
+    [data-scope='select'][data-part='clear-trigger'],
+    [data-scope='combobox'][data-part='clear-trigger'] {
+        display: flex;
+        align-items: center;
+        padding: 8px 0;
+        cursor: pointer;
+        border: none;
+        background: none;
+        color: var(--default-gray-icons);
 
-  /* === Combobox input (searchable mode) === */
-  [data-scope="combobox"][data-part="input"] {
-    flex: 1;
-    min-width: 50px;
-    border: none;
-    background: transparent;
-    font-size: inherit;
-    color: var(--default-main-text);
-    padding-left: 16px;
-    outline: none;
-
-    &::placeholder {
-      color: var(--default-description);
-    }
-  }
-
-  /* === Dropdown items === */
-  [data-scope="select"][data-part="item"],
-  [data-scope="combobox"][data-part="item"] {
-    color: var(--default-main-text);
-    transition: all var(--t2);
-    cursor: pointer;
-    padding: 12px 18px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-
-    &[data-highlighted] {
-      background-color: var(--hovered-dropdown-menu-background);
+        @media (min-width: 1024px) {
+            padding: 8px;
+        }
     }
 
-    &[data-state="checked"] {
-      background-color: var(--pressed-dropdown-menu-background);
+    /* === Dropdown indicator (arrow) === */
+    [data-scope='select'][data-part='indicator'],
+    [data-scope='combobox'][data-part='indicator'] {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding-right: 16px;
+        color: var(--default-gray-icons);
+        transition: transform var(--t2);
+
+        svg {
+            transform-origin: center center;
+            transition: transform var(--t2);
+        }
+
+        &:focus,
+        &:hover {
+            color: var(--default-gray-icons);
+        }
+
+        &[data-state='open'] svg {
+            transform: rotate(180deg);
+        }
     }
 
-    &[data-disabled] {
-      color: var(--disabled-main-text);
-      cursor: default;
+    /* === Combobox input (searchable mode) === */
+    [data-scope='combobox'][data-part='input'] {
+        flex: 1;
+        min-width: 50px;
+        border: none;
+        background: transparent;
+        font-size: inherit;
+        color: var(--default-main-text);
+        padding-left: 16px;
+        outline: none;
 
-      &[data-highlighted] {
-        background-color: transparent;
-      }
+        &::placeholder {
+            color: var(--default-description);
+        }
     }
-  }
 
-  [data-scope="select"][data-part="item-text"],
-  [data-scope="combobox"][data-part="item-text"] {
-    flex: 1;
-    font-size: 14px;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    /* === Dropdown items === */
+    [data-scope='select'][data-part='item'],
+    [data-scope='combobox'][data-part='item'] {
+        color: var(--default-main-text);
+        transition: all var(--t2);
+        cursor: pointer;
+        padding: 12px 18px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
 
-    @media (min-width: 1024px) {
-      font-size: 16px;
+        &[data-highlighted] {
+            background-color: var(--hovered-dropdown-menu-background);
+        }
+
+        &[data-state='checked'] {
+            background-color: var(--pressed-dropdown-menu-background);
+        }
+
+        &[data-disabled] {
+            color: var(--disabled-main-text);
+            cursor: default;
+
+            &[data-highlighted] {
+                background-color: transparent;
+            }
+        }
     }
-  }
 
-  /* Item indicators: always visible (check when selected, dot when not).
+    [data-scope='select'][data-part='item-text'],
+    [data-scope='combobox'][data-part='item-text'] {
+        flex: 1;
+        font-size: 14px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+
+        @media (min-width: 1024px) {
+            font-size: 16px;
+        }
+    }
+
+    /* Item indicators: always visible (check when selected, dot when not).
      Matches client_v2 CustomOption behavior. */
-  [data-scope="select"][data-part="item-indicator"],
-  [data-scope="combobox"][data-part="item-indicator"] {
-    display: flex;
-    align-items: center;
-    flex-shrink: 0;
-    color: var(--default-gray-icons);
+    [data-scope='select'][data-part='item-indicator'],
+    [data-scope='combobox'][data-part='item-indicator'] {
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
+        color: var(--default-gray-icons);
 
-    &[data-state="checked"] {
-      color: var(--default-product-icon);
-    }
-  }
-
-  /* === Item group (scrollable list container) === */
-  [data-scope="select"][data-part="item-group"],
-  [data-scope="combobox"][data-part="item-group"] {
-    padding: 0;
-    overflow-x: hidden;
-
-    &::-webkit-scrollbar {
-      width: 6px;
+        &[data-state='checked'] {
+            color: var(--default-product-icon);
+        }
     }
 
-    &::-webkit-scrollbar-track {
-      background-color: transparent;
+    /* === Item group (scrollable list container) === */
+    [data-scope='select'][data-part='item-group'],
+    [data-scope='combobox'][data-part='item-group'] {
+        padding: 0;
+        overflow-x: hidden;
+
+        &::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        &::-webkit-scrollbar-track {
+            background-color: transparent;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background-color: var(--default-gray-icons);
+            border-radius: 10px;
+        }
     }
 
-    &::-webkit-scrollbar-thumb {
-      background-color: var(--default-gray-icons);
-      border-radius: 10px;
+    /* === Multi-value pills container === */
+    .solid-select-multi-value-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 8px 12px 8px 0;
     }
-  }
-
-  /* === Multi-value pills container === */
-  .solid-select-multi-value-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    padding: 8px 12px 8px 0;
-  }
 }

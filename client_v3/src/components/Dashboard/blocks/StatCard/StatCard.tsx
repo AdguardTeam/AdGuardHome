@@ -9,18 +9,31 @@ import {
     CategoryScale,
     Tooltip,
     Filler,
+    type ScriptableContext,
 } from 'chart.js';
-import { Line } from 'solid-chartjs';
 import { Link } from 'panel/common/ui/Link';
 import { type RoutePathKey } from 'panel/components/Routes/Paths';
 
 import { formatNumber } from 'panel/helpers/helpers';
+import {
+    useChart,
+    createCursorLinePlugin,
+    createExternalTooltipHandler,
+} from 'panel/helpers/useChart';
 import intl from 'panel/common/intl';
 import theme from 'panel/lib/theme';
 
 import s from './StatCard.module.pcss';
 
-Chart.register(LineController, LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Filler);
+Chart.register(
+    LineController,
+    LineElement,
+    PointElement,
+    LinearScale,
+    CategoryScale,
+    Tooltip,
+    Filler,
+);
 
 export const CARDS_THEME = {
     QUERIES: 'queries',
@@ -73,14 +86,20 @@ export const StatCard = (props: StatCardProps) => {
                     data: data,
                     borderColor: props.color,
                     borderWidth: 1,
-                    backgroundColor: (context: any) => {
+                    backgroundColor: (context: ScriptableContext<'line'>) => {
                         const ctx = context.chart.ctx;
-                        const gradient = ctx.createLinearGradient(0, 0, 0, context.chart.height || 100);
+                        const gradient = ctx.createLinearGradient(
+                            0,
+                            0,
+                            0,
+                            context.chart.height || 100,
+                        );
                         gradient.addColorStop(0, `${props.color}4D`);
                         gradient.addColorStop(1, `${props.color}00`);
                         return gradient;
                     },
                     fill: true,
+                    clip: false as const,
                     pointRadius: 0,
                     pointHoverRadius: 4,
                     pointHoverBackgroundColor: props.color,
@@ -90,23 +109,40 @@ export const StatCard = (props: StatCardProps) => {
         };
     });
 
+    // eslint-disable-next-line solid/reactivity -- color is stable per card; plugin captures at mount
+    const cursorLinePlugin = createCursorLinePlugin(props.color);
+
+    const externalTooltipHandler = createExternalTooltipHandler(
+        () => tooltipEl,
+        (dataPoint) => {
+            const raw = dataPoint.raw as number;
+            const label = dataPoint.label || '';
+            return `<div class="${s.chartTooltipValue}">${formatNumber(raw)}</div><div class="${s.chartTooltipDate}">${label}</div>`;
+        },
+    );
+
+    let tooltipEl!: HTMLDivElement;
+    const setTooltipRef = (el: HTMLDivElement) => {
+        tooltipEl = el;
+    };
+
     const chartOptions = createMemo(() => ({
         responsive: true,
         maintainAspectRatio: false,
         animation: false as const,
+        layout: {
+            padding: { bottom: 12 },
+        },
         plugins: {
             tooltip: {
-                enabled: true,
-                callbacks: {
-                    label: (context: any) => formatNumber(context.raw),
-                    title: (items: any[]) => items[0]?.label || '',
-                },
+                enabled: false,
+                external: externalTooltipHandler,
             },
             legend: { display: false },
         },
         scales: {
             x: { display: false },
-            y: { display: false },
+            y: { display: false, min: 0 },
         },
         interaction: {
             intersect: false,
@@ -118,6 +154,9 @@ export const StatCard = (props: StatCardProps) => {
     }));
 
     const percent = () => props.percentValue ?? 0;
+
+    // eslint-disable-next-line solid/reactivity -- accessors consumed inside useChart's createEffect/onMount
+    const setCanvasRef = useChart(chartData, chartOptions, [cursorLinePlugin]);
 
     return (
         <div
@@ -141,10 +180,7 @@ export const StatCard = (props: StatCardProps) => {
                     </Show>
 
                     <div class={cn(theme.text.t4, s.statCardLabel)}>
-                        <Show
-                            when={props.linkTo}
-                            fallback={props.label}
-                        >
+                        <Show when={props.linkTo} fallback={props.label}>
                             <Link to={props.linkTo!} query={props.query} class={s.statLabelLink}>
                                 {props.label}
                             </Link>
@@ -152,14 +188,21 @@ export const StatCard = (props: StatCardProps) => {
                     </div>
                 </div>
                 <div class={s.statCardChart}>
-                    <Line data={chartData()} options={chartOptions()} />
+                    <div
+                        ref={setTooltipRef}
+                        class={s.chartTooltip}
+                        style={{
+                            position: 'fixed',
+                            'pointer-events': 'none',
+                            'z-index': '100',
+                            opacity: '0',
+                        }}
+                    />
+                    <canvas ref={setCanvasRef} />
                 </div>
             </div>
             <div class={cn(theme.text.t3, s.statCardLabel)}>
-                <Show
-                    when={props.linkTo}
-                    fallback={props.label}
-                >
+                <Show when={props.linkTo} fallback={props.label}>
                     <Link to={props.linkTo!} query={props.query} class={s.statLabelLink}>
                         {props.label}
                     </Link>
