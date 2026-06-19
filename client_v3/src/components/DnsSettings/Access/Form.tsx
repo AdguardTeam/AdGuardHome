@@ -16,49 +16,6 @@ type FormData = {
     blocked_hosts: string;
 };
 
-const fields: {
-    id: keyof FormData;
-    title: string;
-    faq: JSX.Element;
-    normalizeOnBlur: (value: string) => string;
-}[] = [
-    {
-        id: 'allowed_clients',
-        title: intl.getMessage('access_settings_allowed_title'),
-        faq: intl.getMessage('access_settings_allowed_faq', {
-            a: (text: string) => (
-                <a href={CLIENT_ID_LINK} target="_blank" rel="noopener noreferrer">
-                    {text}
-                </a>
-            ),
-        }),
-        normalizeOnBlur: removeEmptyLines,
-    },
-    {
-        id: 'disallowed_clients',
-        title: intl.getMessage('access_settings_disallowed_title'),
-        faq: intl.getMessage('access_settings_disallowed_faq', {
-            a: (text: string) => (
-                <a href={CLIENT_ID_LINK} target="_blank" rel="noopener noreferrer">
-                    {text}
-                </a>
-            ),
-        }),
-        normalizeOnBlur: trimMultilineString,
-    },
-    {
-        id: 'blocked_hosts',
-        title: intl.getMessage('access_settings_blocked_title'),
-        faq: (
-            <>
-                <div>{intl.getMessage('access_settings_blocked_faq_1')}</div>
-                <div>{intl.getMessage('access_settings_blocked_faq_2')}</div>
-            </>
-        ),
-        normalizeOnBlur: removeEmptyLines,
-    },
-];
-
 type FormProps = {
     initialValues?: {
         allowed_clients?: string;
@@ -76,34 +33,44 @@ export const Form = (props: FormProps) => {
     const [disallowedClients, setDisallowedClients] = createSignal(
         props.initialValues?.disallowed_clients || '',
     );
-    const [blockedHosts, setBlockedHosts] = createSignal(
-        props.initialValues?.blocked_hosts || '',
-    );
+    const [blockedHosts, setBlockedHosts] = createSignal(props.initialValues?.blocked_hosts || '');
 
     const [allowedClientsError, setAllowedClientsError] = createSignal('');
     const [disallowedClientsError, setDisallowedClientsError] = createSignal('');
 
     const getFieldValue = (id: keyof FormData) => {
         switch (id) {
-            case 'allowed_clients': return allowedClients();
-            case 'disallowed_clients': return disallowedClients();
-            case 'blocked_hosts': return blockedHosts();
+            case 'allowed_clients':
+                return allowedClients();
+            case 'disallowed_clients':
+                return disallowedClients();
+            case 'blocked_hosts':
+                return blockedHosts();
         }
     };
 
     const setFieldValue = (id: keyof FormData, value: string) => {
         switch (id) {
-            case 'allowed_clients': setAllowedClients(value); break;
-            case 'disallowed_clients': setDisallowedClients(value); break;
-            case 'blocked_hosts': setBlockedHosts(value); break;
+            case 'allowed_clients':
+                setAllowedClients(value);
+                break;
+            case 'disallowed_clients':
+                setDisallowedClients(value);
+                break;
+            case 'blocked_hosts':
+                setBlockedHosts(value);
+                break;
         }
     };
 
     const getFieldError = (id: keyof FormData) => {
         switch (id) {
-            case 'allowed_clients': return allowedClientsError();
-            case 'disallowed_clients': return disallowedClientsError();
-            default: return '';
+            case 'allowed_clients':
+                return allowedClientsError();
+            case 'disallowed_clients':
+                return disallowedClientsError();
+            default:
+                return '';
         }
     };
 
@@ -149,19 +116,69 @@ export const Form = (props: FormProps) => {
         });
     };
 
+    const fields = createMemo<
+        {
+            id: keyof FormData;
+            title: string;
+            faq: JSX.Element;
+            normalizeOnBlur: (value: string) => string;
+        }[]
+    >(() => [
+        {
+            id: 'allowed_clients',
+            title: intl.getMessage('access_settings_allowed_title'),
+            faq: intl.getMessage('access_settings_allowed_faq', {
+                a: (text: string) => (
+                    <a href={CLIENT_ID_LINK} target="_blank" rel="noopener noreferrer">
+                        {text}
+                    </a>
+                ),
+            }),
+            normalizeOnBlur: removeEmptyLines,
+        },
+        {
+            id: 'disallowed_clients',
+            title: intl.getMessage('access_settings_disallowed_title'),
+            faq: intl.getMessage('access_settings_disallowed_faq', {
+                a: (text: string) => (
+                    <a href={CLIENT_ID_LINK} target="_blank" rel="noopener noreferrer">
+                        {text}
+                    </a>
+                ),
+            }),
+            normalizeOnBlur: trimMultilineString,
+        },
+        {
+            id: 'blocked_hosts',
+            title: intl.getMessage('access_settings_blocked_title'),
+            faq: (
+                <>
+                    <div>{intl.getMessage('access_settings_blocked_faq_1')}</div>
+                    <div>{intl.getMessage('access_settings_blocked_faq_2')}</div>
+                </>
+            ),
+            normalizeOnBlur: removeEmptyLines,
+        },
+    ]);
+
     return (
         <form onSubmit={handleSubmit} class={theme.form.form}>
             <div class={theme.form.group}>
-                <For each={fields}>
+                <For each={fields()}>
                     {(f) => (
                         <div class={theme.form.input}>
                             <Textarea
                                 value={getFieldValue(f.id)}
-                                onChange={(e: Event) => setFieldValue(f.id, (e.target as HTMLTextAreaElement).value)}
+                                onChange={(e: Event) =>
+                                    setFieldValue(f.id, (e.target as HTMLTextAreaElement).value)
+                                }
                                 onBlur={() => {
-                                    const field = fields.find((ff) => ff.id === f.id);
+                                    const field = fields().find((ff) => ff.id === f.id);
                                     if (field) {
-                                        setFieldValue(f.id, field.normalizeOnBlur(getFieldValue(f.id)));
+                                        setFieldValue(
+                                            f.id,
+                                            field.normalizeOnBlur(getFieldValue(f.id)),
+                                        );
                                     }
                                     validateField(f.id);
                                 }}

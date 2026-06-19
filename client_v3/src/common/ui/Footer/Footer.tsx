@@ -1,4 +1,4 @@
-import { createSignal, For } from 'solid-js';
+import { createSignal, createMemo, For } from 'solid-js';
 import cn from 'clsx';
 
 import theme from 'panel/lib/theme';
@@ -16,23 +16,23 @@ import { dashboardState } from '../../../stores/dashboard';
 
 import s from './styles.module.pcss';
 
-const linksData = [
-    { href: PRIVACY_POLICY_LINK, name: intl.getMessage('privacy_policy') },
-    { href: REPOSITORY.ISSUES, name: intl.getMessage('report_an_issue') },
-    { href: REPOSITORY.RELEASE_NOTES, name: intl.getMessage('release_notes') },
-];
-
-const themeTranslations: Record<string, string> = {
-    auto: intl.getMessage('system_theme'),
-    dark: intl.getMessage('dark_theme'),
-    light: intl.getMessage('light_theme'),
-};
-
 export const Footer = () => {
     const currentTheme = () => dashboardState.theme || THEMES.auto;
     const profileName = () => dashboardState.name || '';
     const currentLanguage = () => dashboardState.language || intl.getUILanguage();
     const isLoggedIn = () => profileName() !== '';
+
+    const linksData = createMemo(() => [
+        { href: PRIVACY_POLICY_LINK, name: intl.getMessage('privacy_policy') },
+        { href: REPOSITORY.ISSUES, name: intl.getMessage('report_an_issue') },
+        { href: REPOSITORY.RELEASE_NOTES, name: intl.getMessage('release_notes') },
+    ]);
+
+    const themeTranslations = createMemo<Record<string, string>>(() => ({
+        auto: intl.getMessage('system_theme'),
+        dark: intl.getMessage('dark_theme'),
+        light: intl.getMessage('light_theme'),
+    }));
 
     const [currentThemeLocal, setCurrentThemeLocal] = createSignal(THEMES.auto);
     const [themeDropdownOpen, setThemeDropdownOpen] = createSignal(false);
@@ -73,7 +73,7 @@ export const Footer = () => {
                 <div class={s.copyright}>&copy; 2018–{getYear()} AdGuard Home</div>
 
                 <div class={s.links}>
-                    <For each={linksData}>
+                    <For each={linksData()}>
                         {({ name, href }) => (
                             <a
                                 href={href}
@@ -103,7 +103,7 @@ export const Footer = () => {
                                             })}
                                             onClick={() => onThemeChange(v)}
                                         >
-                                            {themeTranslations[v]}
+                                            {themeTranslations()[v]}
                                         </button>
                                     )}
                                 </For>
@@ -113,12 +113,13 @@ export const Footer = () => {
                         position="bottomRight"
                     >
                         <div class={s.dropdownTrigger}>
-                            <Icon
-                                icon={getThemeIcon() as any}
-                                class={s.icon}
-                            />
+                            <Icon icon={getThemeIcon() as any} class={s.icon} />
                             <span>
-                                {themeTranslations[isLoggedIn() ? currentTheme() : currentThemeLocal()]}
+                                {
+                                    themeTranslations()[
+                                        isLoggedIn() ? currentTheme() : currentThemeLocal()
+                                    ]
+                                }
                             </span>
                         </div>
                     </Dropdown>

@@ -33,28 +33,6 @@ import { KeyStatus, CertificateStatus, ValidationStatus } from './Status';
 
 import s from './styles.module.pcss';
 
-const certificateSourceOptions = [
-    {
-        text: intl.getMessage('encryption_certificates_source_path'),
-        value: ENCRYPTION_SOURCE.PATH,
-    },
-    {
-        text: intl.getMessage('encryption_certificates_source_content'),
-        value: ENCRYPTION_SOURCE.CONTENT,
-    },
-];
-
-const keySourceOptions = [
-    {
-        text: intl.getMessage('encryption_key_source_path'),
-        value: ENCRYPTION_SOURCE.PATH,
-    },
-    {
-        text: intl.getMessage('encryption_key_source_content'),
-        value: ENCRYPTION_SOURCE.CONTENT,
-    },
-];
-
 export type EncryptionFormValues = {
     enabled?: boolean;
     serve_plain_dns?: boolean;
@@ -99,25 +77,63 @@ const defaultValues = {
 export const Form = (props: Props) => {
     const iv = props.initialValues;
     const [enabled, setEnabled] = createSignal(iv.enabled ?? defaultValues.enabled);
-    const [servePlainDns, setServePlainDns] = createSignal(iv.serve_plain_dns ?? defaultValues.serve_plain_dns);
+    const [servePlainDns, setServePlainDns] = createSignal(
+        iv.serve_plain_dns ?? defaultValues.serve_plain_dns,
+    );
     const [serverName, setServerName] = createSignal(iv.server_name ?? defaultValues.server_name);
     const [forceHttps, setForceHttps] = createSignal(iv.force_https ?? defaultValues.force_https);
     const [portHttps, setPortHttps] = createSignal(iv.port_https ?? defaultValues.port_https);
-    const [portDot, setPortDot] = createSignal(iv.port_dns_over_tls ?? defaultValues.port_dns_over_tls);
-    const [portDoq, setPortDoq] = createSignal(iv.port_dns_over_quic ?? defaultValues.port_dns_over_quic);
-    const [certChain, setCertChain] = createSignal(iv.certificate_chain ?? defaultValues.certificate_chain);
+    const [portDot, setPortDot] = createSignal(
+        iv.port_dns_over_tls ?? defaultValues.port_dns_over_tls,
+    );
+    const [portDoq, setPortDoq] = createSignal(
+        iv.port_dns_over_quic ?? defaultValues.port_dns_over_quic,
+    );
+    const [certChain, setCertChain] = createSignal(
+        iv.certificate_chain ?? defaultValues.certificate_chain,
+    );
     const [privateKey, setPrivateKey] = createSignal(iv.private_key ?? defaultValues.private_key);
-    const [certPath, setCertPath] = createSignal(iv.certificate_path ?? defaultValues.certificate_path);
-    const [privateKeyPath, setPrivateKeyPath] = createSignal(iv.private_key_path ?? defaultValues.private_key_path);
-    const [certSource, setCertSource] = createSignal(iv.certificate_source ?? defaultValues.certificate_source);
+    const [certPath, setCertPath] = createSignal(
+        iv.certificate_path ?? defaultValues.certificate_path,
+    );
+    const [privateKeyPath, setPrivateKeyPath] = createSignal(
+        iv.private_key_path ?? defaultValues.private_key_path,
+    );
+    const [certSource, setCertSource] = createSignal(
+        iv.certificate_source ?? defaultValues.certificate_source,
+    );
     const [keySource, setKeySource] = createSignal(iv.key_source ?? defaultValues.key_source);
-    const [privateKeySaved, setPrivateKeySaved] = createSignal(iv.private_key_saved ?? defaultValues.private_key_saved);
+    const [privateKeySaved, setPrivateKeySaved] = createSignal(
+        iv.private_key_saved ?? defaultValues.private_key_saved,
+    );
 
     // Validation errors
     const [errors, setErrors] = createSignal<Record<string, string>>({});
     const [openConfirmReset, setOpenConfirmReset] = createSignal(false);
     const [openPlainDnsDisable, setOpenPlainDnsDisable] = createSignal(false);
     const [stagedFormValues, setStagedFormValues] = createSignal<EncryptionFormValues | null>(null);
+    const certificateSourceOptions = createMemo(() => [
+        {
+            text: intl.getMessage('encryption_certificates_source_path'),
+            value: ENCRYPTION_SOURCE.PATH,
+        },
+        {
+            text: intl.getMessage('encryption_certificates_source_content'),
+            value: ENCRYPTION_SOURCE.CONTENT,
+        },
+    ]);
+
+    const keySourceOptions = createMemo(() => [
+        {
+            text: intl.getMessage('encryption_key_source_path'),
+            value: ENCRYPTION_SOURCE.PATH,
+        },
+        {
+            text: intl.getMessage('encryption_key_source_content'),
+            value: ENCRYPTION_SOURCE.CONTENT,
+        },
+    ]);
+
     const [isSubmitting, setIsSubmitting] = createSignal(false);
 
     const enc = () => props.encryption;
@@ -152,7 +168,9 @@ export const Form = (props: Props) => {
             return hasErrors || processing;
         }
 
-        return hasErrors || processing || !enc().valid_key || !enc().valid_cert || !enc().valid_pair;
+        return (
+            hasErrors || processing || !enc().valid_key || !enc().valid_cert || !enc().valid_pair
+        );
     });
 
     const handleReset = () => {
@@ -193,28 +211,41 @@ export const Form = (props: Props) => {
 
         // Validate server name
         const serverNameErr = validateServerName(serverName());
-        if (serverNameErr) { setErrors(prev => ({ ...prev, server_name: serverNameErr })); return; }
+        if (serverNameErr) {
+            setErrors((prev) => ({ ...prev, server_name: serverNameErr }));
+            return;
+        }
 
         // Validate ports
         const portHttpsErr = validatePort(portHttps()) || validateIsSafePort(portHttps());
-        if (portHttpsErr) { setErrors(prev => ({ ...prev, port_https: portHttpsErr as string })); }
+        if (portHttpsErr) {
+            setErrors((prev) => ({ ...prev, port_https: portHttpsErr as string }));
+        }
 
         const portDotErr = validatePortTLS(portDot());
-        if (portDotErr) { setErrors(prev => ({ ...prev, port_dns_over_tls: portDotErr as string })); }
+        if (portDotErr) {
+            setErrors((prev) => ({ ...prev, port_dns_over_tls: portDotErr as string }));
+        }
 
         const portDoqErr = validatePortQuic(portDoq());
-        if (portDoqErr) { setErrors(prev => ({ ...prev, port_dns_over_quic: portDoqErr as string })); }
+        if (portDoqErr) {
+            setErrors((prev) => ({ ...prev, port_dns_over_quic: portDoqErr as string }));
+        }
 
         const validationErrors = validatePorts(data);
         if (Object.keys(validationErrors).length > 0) {
-            setErrors(prev => ({ ...prev, ...validationErrors }));
+            setErrors((prev) => ({ ...prev, ...validationErrors }));
             setIsSubmitting(false);
             return;
         }
 
         // Validate plain DNS
         const plainDnsErr = validatePlainDns(servePlainDns(), data);
-        if (plainDnsErr) { setErrors(prev => ({ ...prev, serve_plain_dns: plainDnsErr as string })); setIsSubmitting(false); return; }
+        if (plainDnsErr) {
+            setErrors((prev) => ({ ...prev, serve_plain_dns: plainDnsErr as string }));
+            setIsSubmitting(false);
+            return;
+        }
 
         setErrors({});
         setIsSubmitting(false);
@@ -270,7 +301,9 @@ export const Form = (props: Props) => {
                             type="text"
                             name="server_name"
                             value={serverName()}
-                            onChange={(e: Event) => setServerName((e.target as HTMLInputElement).value)}
+                            onChange={(e: Event) =>
+                                setServerName((e.target as HTMLInputElement).value)
+                            }
                             label={
                                 <>
                                     {intl.getMessage('encryption_server')}
@@ -279,14 +312,10 @@ export const Form = (props: Props) => {
                                         text={
                                             <>
                                                 <div class={s.tooltipText}>
-                                                    {intl.getMessage(
-                                                        'encryption_server_tooltip_1',
-                                                    )}
+                                                    {intl.getMessage('encryption_server_tooltip_1')}
                                                 </div>
                                                 <div class={s.tooltipText}>
-                                                    {intl.getMessage(
-                                                        'encryption_server_tooltip_2',
-                                                    )}
+                                                    {intl.getMessage('encryption_server_tooltip_2')}
                                                 </div>
                                             </>
                                         }
@@ -313,9 +342,7 @@ export const Form = (props: Props) => {
                                     {intl.getMessage('encryption_https')}
 
                                     <FaqTooltip
-                                        text={intl.getMessage(
-                                            'encryption_https_tooltip',
-                                        )}
+                                        text={intl.getMessage('encryption_https_tooltip')}
                                         menuSize="large"
                                     />
                                 </>
@@ -339,9 +366,7 @@ export const Form = (props: Props) => {
                                     {intl.getMessage('encryption_dot')}
 
                                     <FaqTooltip
-                                        text={intl.getMessage(
-                                            'encryption_dot_tooltip',
-                                        )}
+                                        text={intl.getMessage('encryption_dot_tooltip')}
                                         menuSize="large"
                                     />
                                 </>
@@ -365,9 +390,7 @@ export const Form = (props: Props) => {
                                     {intl.getMessage('encryption_doq')}
 
                                     <FaqTooltip
-                                        text={intl.getMessage(
-                                            'encryption_doq_tooltip',
-                                        )}
+                                        text={intl.getMessage('encryption_doq_tooltip')}
                                         menuSize="large"
                                     />
                                 </>
@@ -422,28 +445,35 @@ export const Form = (props: Props) => {
                     value={certSource()}
                     handleChange={(v: string) => setCertSource(v)}
                     name="certificate_source"
-                    options={certificateSourceOptions}
+                    options={certificateSourceOptions()}
                     disabled={!enabled()}
                 />
 
                 <div class={theme.form.input}>
-                    <Show when={certSource() === ENCRYPTION_SOURCE.CONTENT} fallback={
-                        <Input
-                            type="text"
-                            name="certificate_path"
-                            value={certPath()}
-                            onChange={(e: Event) => setCertPath((e.target as HTMLInputElement).value)}
-                            placeholder={intl.getMessage('encryption_certificate_path')}
-                            errorMessage={errors().certificate_path}
-                            disabled={!enabled()}
-                            onBlur={handleBlur}
-                            size="medium"
-                        />
-                    }>
+                    <Show
+                        when={certSource() === ENCRYPTION_SOURCE.CONTENT}
+                        fallback={
+                            <Input
+                                type="text"
+                                name="certificate_path"
+                                value={certPath()}
+                                onChange={(e: Event) =>
+                                    setCertPath((e.target as HTMLInputElement).value)
+                                }
+                                placeholder={intl.getMessage('encryption_certificate_path')}
+                                errorMessage={errors().certificate_path}
+                                disabled={!enabled()}
+                                onBlur={handleBlur}
+                                size="medium"
+                            />
+                        }
+                    >
                         <Textarea
                             name="certificate_chain"
                             value={certChain()}
-                            onChange={(e: Event) => setCertChain((e.target as HTMLTextAreaElement).value)}
+                            onChange={(e: Event) =>
+                                setCertChain((e.target as HTMLTextAreaElement).value)
+                            }
                             placeholder={intl.getMessage('encryption_certificates_input')}
                             disabled={!enabled()}
                             errorMessage={errors().certificate_chain}
@@ -465,7 +495,7 @@ export const Form = (props: Props) => {
                     value={keySource()}
                     handleChange={(v: string) => setKeySource(v)}
                     name="key_source"
-                    options={keySourceOptions}
+                    options={keySourceOptions()}
                     disabled={!enabled()}
                 />
 
@@ -487,23 +517,30 @@ export const Form = (props: Props) => {
                 </Checkbox>
 
                 <div class={theme.form.input}>
-                    <Show when={keySource() === ENCRYPTION_SOURCE.CONTENT} fallback={
-                        <Input
-                            type="text"
-                            name="private_key_path"
-                            value={privateKeyPath()}
-                            onChange={(e: Event) => setPrivateKeyPath((e.target as HTMLInputElement).value)}
-                            placeholder={intl.getMessage('encryption_private_key_path')}
-                            errorMessage={errors().private_key_path}
-                            disabled={!enabled()}
-                            onBlur={handleBlur}
-                            size="medium"
-                        />
-                    }>
+                    <Show
+                        when={keySource() === ENCRYPTION_SOURCE.CONTENT}
+                        fallback={
+                            <Input
+                                type="text"
+                                name="private_key_path"
+                                value={privateKeyPath()}
+                                onChange={(e: Event) =>
+                                    setPrivateKeyPath((e.target as HTMLInputElement).value)
+                                }
+                                placeholder={intl.getMessage('encryption_private_key_path')}
+                                errorMessage={errors().private_key_path}
+                                disabled={!enabled()}
+                                onBlur={handleBlur}
+                                size="medium"
+                            />
+                        }
+                    >
                         <Textarea
                             name="private_key"
                             value={privateKey()}
-                            onChange={(e: Event) => setPrivateKey((e.target as HTMLTextAreaElement).value)}
+                            onChange={(e: Event) =>
+                                setPrivateKey((e.target as HTMLTextAreaElement).value)
+                            }
                             placeholder={intl.getMessage('encryption_key_input')}
                             disabled={!enabled() || privateKeySaved()}
                             errorMessage={errors().private_key}

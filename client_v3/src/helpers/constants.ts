@@ -1,5 +1,3 @@
-import intl from 'panel/common/intl';
-
 export const R_URL_REQUIRES_PROTOCOL = /^https?:\/\/[^/\s]+(\/.*)?$/;
 
 // matches hostname or *.wildcard
@@ -293,23 +291,18 @@ export const FILTERED_STATUS = {
 export const QUERY_LOG_STATUS_FILTER = {
     ALL: {
         QUERY: 'all',
-        LABEL: intl.getMessage('query_log_all_statuses'),
     },
     PROCESSED: {
         QUERY: 'processed',
-        LABEL: intl.getMessage('query_log_processed'),
     },
     ALLOWED: {
         QUERY: 'allowed',
-        LABEL: intl.getMessage('query_log_allowed'),
     },
     BLOCKED: {
         QUERY: 'blocked',
-        LABEL: intl.getMessage('query_log_blocked'),
     },
     REWRITTEN: {
         QUERY: 'rewritten',
-        LABEL: intl.getMessage('query_log_rewritten'),
     },
 } as const;
 
@@ -331,31 +324,24 @@ export const QUERY_LOG_STATUS_FILTER_QUERIES = Object.values(QUERY_LOG_STATUS_FI
 export const QUERY_LOG_REASON_FILTER = {
     ALL: {
         QUERY: 'all',
-        LABEL: intl.getMessage('query_log_all_reasons'),
     },
     BLOCKED_BY_FILTER: {
         QUERY: 'FilteredBlackList',
-        LABEL: intl.getMessage('query_log_blocked_by_filter'),
     },
     BLOCKED_SERVICES: {
         QUERY: 'FilteredBlockedService',
-        LABEL: intl.getMessage('query_log_blocked_services'),
     },
     BLOCKED_BY_THREATS: {
         QUERY: 'FilteredSafeBrowsing',
-        LABEL: intl.getMessage('query_log_blocked_threats'),
     },
     BLOCKED_BY_PARENTAL_CONTROL: {
         QUERY: 'FilteredParental',
-        LABEL: intl.getMessage('query_log_blocked_by_parental_control'),
     },
     DNS_REWRITES: {
         QUERY: 'Rewrite',
-        LABEL: intl.getMessage('dns_rewrites'),
     },
     SAFE_SEARCH: {
         QUERY: 'FilteredSafeSearch',
-        LABEL: intl.getMessage('query_log_safe_search'),
     },
 } as const;
 

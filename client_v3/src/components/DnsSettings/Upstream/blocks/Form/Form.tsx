@@ -34,31 +34,6 @@ type FormProps = {
     onSubmit: (data: FormData) => void;
 };
 
-const upstreamModeOptions = [
-    {
-        text: intl.getMessage('upstream_dns_load_balancing'),
-        value: DNS_REQUEST_OPTIONS.LOAD_BALANCING,
-        description: intl.getMessage('upstream_dns_load_balancing_desc'),
-    },
-    {
-        text: intl.getMessage('upstream_dns_parallel_requests'),
-        value: DNS_REQUEST_OPTIONS.PARALLEL,
-        description: intl.getMessage('upstream_dns_parallel_requests_desc'),
-    },
-    {
-        text: intl.getMessage('upstream_dns_fastest_addr'),
-        value: DNS_REQUEST_OPTIONS.FASTEST_ADDR,
-        description: (
-            <>
-                {intl.getMessage('upstream_dns_fastest_addr_desc')}
-                <div class={cn(theme.text.t2, s.warning)}>
-                    {intl.getMessage('upstream_dns_fastest_addr_warning')}
-                </div>
-            </>
-        ),
-    },
-];
-
 export const Form = (props: FormProps) => {
     const [upstreamDns, setUpstreamDns] = createSignal(props.initialValues?.upstream_dns || '');
     const [upstreamMode, setUpstreamMode] = createSignal(
@@ -84,6 +59,31 @@ export const Form = (props: FormProps) => {
     const [bootstrapDnsError, setBootstrapDnsError] = createSignal('');
     const [localPtrError, setLocalPtrError] = createSignal('');
 
+    const upstreamModeOptions = createMemo(() => [
+        {
+            text: intl.getMessage('upstream_dns_load_balancing'),
+            value: DNS_REQUEST_OPTIONS.LOAD_BALANCING,
+            description: intl.getMessage('upstream_dns_load_balancing_desc'),
+        },
+        {
+            text: intl.getMessage('upstream_dns_parallel_requests'),
+            value: DNS_REQUEST_OPTIONS.PARALLEL,
+            description: intl.getMessage('upstream_dns_parallel_requests_desc'),
+        },
+        {
+            text: intl.getMessage('upstream_dns_fastest_addr'),
+            value: DNS_REQUEST_OPTIONS.FASTEST_ADDR,
+            description: (
+                <>
+                    {intl.getMessage('upstream_dns_fastest_addr_desc')}
+                    <div class={cn(theme.text.t2, s.warning)}>
+                        {intl.getMessage('upstream_dns_fastest_addr_warning')}
+                    </div>
+                </>
+            ),
+        },
+    ]);
+
     const handleUpstreamTest = () => {
         testUpstreamWithFormValues(
             {
@@ -97,14 +97,10 @@ export const Form = (props: FormProps) => {
     };
 
     const isSavingDisabled = createMemo(
-        () =>
-            settingsState.processingTestUpstream ||
-            dnsConfigState.processingSetConfig,
+        () => settingsState.processingTestUpstream || dnsConfigState.processingSetConfig,
     );
 
-    const isTestDisabled = createMemo(
-        () => !upstreamDns() || settingsState.processingTestUpstream,
-    );
+    const isTestDisabled = createMemo(() => !upstreamDns() || settingsState.processingTestUpstream);
 
     const validateUpstreamDns = () => {
         const err = upstreamDns() ? validateUpstreams(upstreamDns()) : undefined;
@@ -155,7 +151,9 @@ export const Form = (props: FormProps) => {
                 <div class={theme.form.input}>
                     <Textarea
                         value={upstreamDns()}
-                        onChange={(e: Event) => setUpstreamDns((e.target as HTMLTextAreaElement).value)}
+                        onChange={(e: Event) =>
+                            setUpstreamDns((e.target as HTMLTextAreaElement).value)
+                        }
                         onBlur={validateUpstreamDns}
                         id="upstream_dns"
                         label={
@@ -189,7 +187,10 @@ export const Form = (props: FormProps) => {
                             </>
                         }
                         placeholder={intl.getMessage('upstream_dns_placeholder')}
-                        disabled={!!dnsConfigState.upstream_dns_file || settingsState.processingTestUpstream}
+                        disabled={
+                            !!dnsConfigState.upstream_dns_file ||
+                            settingsState.processingTestUpstream
+                        }
                         size="medium"
                         errorMessage={upstreamDnsError()}
                     />
@@ -200,7 +201,7 @@ export const Form = (props: FormProps) => {
                         name="upstream_mode"
                         value={upstreamMode()}
                         handleChange={(v: string) => setUpstreamMode(v)}
-                        options={upstreamModeOptions}
+                        options={upstreamModeOptions()}
                         disabled={settingsState.processingTestUpstream}
                         verticalAlign="start"
                         textClass={s.radioText}
@@ -214,7 +215,9 @@ export const Form = (props: FormProps) => {
                 <div class={theme.form.input}>
                     <Textarea
                         value={fallbackDns()}
-                        onChange={(e: Event) => setFallbackDns((e.target as HTMLTextAreaElement).value)}
+                        onChange={(e: Event) =>
+                            setFallbackDns((e.target as HTMLTextAreaElement).value)
+                        }
                         onBlur={validateFallbackDns}
                         id="fallback_dns"
                         label={
@@ -235,7 +238,9 @@ export const Form = (props: FormProps) => {
                 <div class={theme.form.input}>
                     <Textarea
                         value={bootstrapDns()}
-                        onChange={(e: Event) => setBootstrapDns((e.target as HTMLTextAreaElement).value)}
+                        onChange={(e: Event) =>
+                            setBootstrapDns((e.target as HTMLTextAreaElement).value)
+                        }
                         onBlur={validateBootstrapDns}
                         id="bootstrap_dns"
                         data-testid="bootstrap_dns"
@@ -257,7 +262,9 @@ export const Form = (props: FormProps) => {
                 <div class={theme.form.input}>
                     <Textarea
                         value={localPtrUpstreams()}
-                        onChange={(e: Event) => setLocalPtrUpstreams((e.target as HTMLTextAreaElement).value)}
+                        onChange={(e: Event) =>
+                            setLocalPtrUpstreams((e.target as HTMLTextAreaElement).value)
+                        }
                         onBlur={validateLocalPtr}
                         id="local_ptr_upstreams"
                         data-testid="local_ptr_upstreams"
@@ -273,11 +280,16 @@ export const Form = (props: FormProps) => {
                                                 })}
                                             </div>
                                             <div>{intl.getMessage('upstream_ptr_faq_2')}</div>
-                                            {dnsConfigState.default_local_ptr_upstreams?.length > 0 && (
+                                            {dnsConfigState.default_local_ptr_upstreams?.length >
+                                                0 && (
                                                 <div>
                                                     {intl.getMessage('upstream_ptr_faq_3', {
-                                                        value_1: dnsConfigState.default_local_ptr_upstreams[0],
-                                                        value_2: dnsConfigState.default_local_ptr_upstreams[1],
+                                                        value_1:
+                                                            dnsConfigState
+                                                                .default_local_ptr_upstreams[0],
+                                                        value_2:
+                                                            dnsConfigState
+                                                                .default_local_ptr_upstreams[1],
                                                     })}
                                                 </div>
                                             )}
@@ -299,7 +311,9 @@ export const Form = (props: FormProps) => {
                         id="dns_use_private_ptr_resolvers"
                         name="use_private_ptr_resolvers"
                         checked={usePrivatePtrResolvers()}
-                        onChange={(e: Event) => setUsePrivatePtrResolvers((e.target as HTMLInputElement).checked)}
+                        onChange={(e: Event) =>
+                            setUsePrivatePtrResolvers((e.target as HTMLInputElement).checked)
+                        }
                         verticalAlign="start"
                     >
                         <div>
@@ -318,7 +332,9 @@ export const Form = (props: FormProps) => {
                         id="dns_resolve_clients"
                         name="resolve_clients"
                         checked={resolveClients()}
-                        onChange={(e: Event) => setResolveClients((e.target as HTMLInputElement).checked)}
+                        onChange={(e: Event) =>
+                            setResolveClients((e.target as HTMLInputElement).checked)
+                        }
                         verticalAlign="start"
                     >
                         <div>
@@ -335,7 +351,9 @@ export const Form = (props: FormProps) => {
                 <div class={theme.form.input}>
                     <Input
                         value={String(upstreamTimeout())}
-                        onChange={(e: Event) => setUpstreamTimeout(Number((e.target as HTMLInputElement).value))}
+                        onChange={(e: Event) =>
+                            setUpstreamTimeout(Number((e.target as HTMLInputElement).value))
+                        }
                         type="number"
                         id="upstream_timeout"
                         label={
