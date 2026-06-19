@@ -3,6 +3,17 @@ import { apiClient } from 'panel/api/Api';
 import { addErrorToast, addSuccessToast } from './toasts';
 import { DAY, TIME_UNITS } from 'panel/helpers/constants';
 
+/**
+ * Normalizes API top-list format `[{ "key": value }]` to `[{ name: "key", count: value }]`.
+ */
+const normalizeTopList = <T extends number>(
+    raw: Record<string, T>[],
+): { name: string; count: T }[] =>
+    raw.map((item) => {
+        const [[name, count]] = Object.entries(item);
+        return { name, count };
+    });
+
 type StatsState = {
     processingGetConfig: boolean;
     processingSetConfig: boolean;
@@ -68,9 +79,9 @@ export const getStats = async (period?: number) => {
             blockedFiltering: data.blocked_filtering || [],
             replacedParental: data.replaced_parental || [],
             replacedSafebrowsing: data.replaced_safebrowsing || [],
-            topBlockedDomains: data.top_blocked_domains || [],
-            topClients: data.top_clients || [],
-            topQueriedDomains: data.top_queried_domains || [],
+            topBlockedDomains: normalizeTopList(data.top_blocked_domains || []),
+            topClients: normalizeTopList(data.top_clients || []),
+            topQueriedDomains: normalizeTopList(data.top_queried_domains || []),
             numBlockedFiltering: data.num_blocked_filtering || 0,
             numDnsQueries: data.num_dns_queries || 0,
             numReplacedParental: data.num_replaced_parental || 0,
@@ -78,8 +89,8 @@ export const getStats = async (period?: number) => {
             numReplacedSafesearch: data.num_replaced_safesearch || 0,
             avgProcessingTime: data.avg_processing_time || 0,
             timeUnits: data.time_units || initialState.timeUnits,
-            topUpstreamsAvgTime: data.top_upstreams_avg_time || [],
-            topUpstreamsResponses: data.top_upstreams_responses || [],
+            topUpstreamsAvgTime: normalizeTopList(data.top_upstreams_avg_time || []),
+            topUpstreamsResponses: normalizeTopList(data.top_upstreams_responses || []),
             processingStats: false,
         });
     } catch (error) {
