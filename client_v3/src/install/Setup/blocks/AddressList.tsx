@@ -49,11 +49,7 @@ export const AddressList = (props: AddressListProps) => (
         <Show
             when={props.address === ALL_INTERFACES_IP}
             fallback={
-                <RenderItem
-                    ip={props.address}
-                    port={props.port}
-                    isDns={props.isDns ?? false}
-                />
+                <RenderItem ip={props.address} port={props.port} isDns={props.isDns ?? false} />
             }
         >
             <For

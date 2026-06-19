@@ -24,7 +24,12 @@ export const CertificateStatus = (props: Props) => (
                 : intl.getMessage('encryption_chain_invalid')
         }
     >
-        <Show when={props.validCert && (props.subject || props.issuer || props.notAfter || props.dnsNames)}>
+        <Show
+            when={
+                props.validCert &&
+                (props.subject || props.issuer || props.notAfter || props.dnsNames)
+            }
+        >
             <ul class={s.statusList}>
                 <Show when={props.subject}>
                     <li>{intl.getMessage('encryption_subject', { value: props.subject })}</li>
@@ -41,7 +46,9 @@ export const CertificateStatus = (props: Props) => (
                 </Show>
                 <Show when={props.dnsNames}>
                     <li>
-                        {intl.getMessage('encryption_hostnames', { value: props.dnsNames!.join(', ') })}
+                        {intl.getMessage('encryption_hostnames', {
+                            value: props.dnsNames!.join(', '),
+                        })}
                     </li>
                 </Show>
             </ul>

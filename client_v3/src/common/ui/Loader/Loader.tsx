@@ -1,4 +1,3 @@
-
 import cn from 'clsx';
 import { Icon, type IconColor, type IconType } from 'panel/common/ui/Icon';
 
@@ -15,7 +14,11 @@ type Props = {
 export const Loader = (props: Props) => (
     <div class={cn({ [s.overlayWrapper]: props.overlay }, props.overlayClass)}>
         <div class={cn({ [s.overlay]: props.overlay })}>
-            <Icon color={props.color} class={cn(s.loader, props.class)} icon={props.icon || 'loader'} />
+            <Icon
+                color={props.color}
+                class={cn(s.loader, props.class)}
+                icon={props.icon || 'loader'}
+            />
         </div>
     </div>
 );

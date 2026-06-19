@@ -143,8 +143,10 @@ export const BlockedServices = (props: Props) => {
         setSearch('');
     };
 
-    const isInitialLoading = () => !servicesState.allServices && (servicesState.processing || servicesState.processingAll);
-    const isGloballyDisabled = () => props.clientScope ? clientFormState.use_global_blocked_services : false;
+    const isInitialLoading = () =>
+        !servicesState.allServices && (servicesState.processing || servicesState.processingAll);
+    const isGloballyDisabled = () =>
+        props.clientScope ? clientFormState.use_global_blocked_services : false;
 
     const getScheduleRoute = () => {
         if (!props.clientScope) {
@@ -241,20 +243,25 @@ export const BlockedServices = (props: Props) => {
                     />
 
                     <div class={s.servicesList}>
-                        <Show when={filteredServices().length === 0} fallback={
-                            <For each={filteredServices()}>
-                                {(service) => (
-                                    <ServiceRow
-                                        id={service.id}
-                                        name={service.name}
-                                        iconSvg={service.icon_svg}
-                                        checked={blockedSet().has(service.id)}
-                                        disabled={isGloballyDisabled() || togglingId() === service.id}
-                                        onChange={handleToggleService}
-                                    />
-                                )}
-                            </For>
-                        }>
+                        <Show
+                            when={filteredServices().length === 0}
+                            fallback={
+                                <For each={filteredServices()}>
+                                    {(service) => (
+                                        <ServiceRow
+                                            id={service.id}
+                                            name={service.name}
+                                            iconSvg={service.icon_svg}
+                                            checked={blockedSet().has(service.id)}
+                                            disabled={
+                                                isGloballyDisabled() || togglingId() === service.id
+                                            }
+                                            onChange={handleToggleService}
+                                        />
+                                    )}
+                                </For>
+                            }
+                        >
                             <NothingFound />
                         </Show>
                     </div>

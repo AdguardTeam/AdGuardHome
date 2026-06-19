@@ -44,7 +44,9 @@ export const DNSRewrites = () => {
         }
     });
 
-    const isInitialSettingsLoad = createMemo(() => rewritesState.processingSettings && !settingsLoaded());
+    const isInitialSettingsLoad = createMemo(
+        () => rewritesState.processingSettings && !settingsLoaded(),
+    );
 
     onMount(() => {
         getRewritesList();

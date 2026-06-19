@@ -46,9 +46,7 @@ const Form = (props: LoginFormProps) => {
                 <div class={styles.group}>
                     <Field
                         name="username"
-                        validate={[
-                            required(intl.getMessage('form_error_required')),
-                        ]}
+                        validate={[required(intl.getMessage('form_error_required'))]}
                     >
                         {(field, fieldProps) => (
                             <Input
@@ -69,9 +67,7 @@ const Form = (props: LoginFormProps) => {
                 <div class={styles.group}>
                     <Field
                         name="password"
-                        validate={[
-                            required(intl.getMessage('form_error_required')),
-                        ]}
+                        validate={[required(intl.getMessage('form_error_required'))]}
                     >
                         {(field, fieldProps) => (
                             <PasswordInput

@@ -15,7 +15,13 @@ import { dashboardState, getClients } from 'panel/stores/dashboard';
 import { settingsState, initSettings, toggleSetting } from 'panel/stores/settings';
 import { clientsState, updateClient } from 'panel/stores/clients';
 import { servicesState, getBlockedServices, updateBlockedServices } from 'panel/stores/services';
-import { rewritesState, updateRewrite, deleteRewrite, addRewrite, getRewritesList } from 'panel/stores/rewrites';
+import {
+    rewritesState,
+    updateRewrite,
+    deleteRewrite,
+    addRewrite,
+    getRewritesList,
+} from 'panel/stores/rewrites';
 import { addSuccessToast, createUndoToast } from 'panel/stores/toasts';
 import { openModal } from 'panel/stores/modals';
 import { MODAL_TYPE, SPECIAL_FILTER_ID } from 'panel/helpers/constants';
@@ -31,7 +37,12 @@ import {
     getEffectiveClientProtectionSettings,
     getPrimaryRule,
 } from './helpers';
-import { type CheckFormValues, type CheckResultData, type ResultActionKind, type RewriteEntry } from './types';
+import {
+    type CheckFormValues,
+    type CheckResultData,
+    type ResultActionKind,
+    type RewriteEntry,
+} from './types';
 
 const EMPTY_REWRITE: RewriteEntry = {
     domain: '',
@@ -64,7 +75,9 @@ type UseUserRulesActionsResult = {
     resetCurrentRewrite: () => void;
 };
 
-export const useUserRulesActions = (params: UseUserRulesActionsParams): UseUserRulesActionsResult => {
+export const useUserRulesActions = (
+    params: UseUserRulesActionsParams,
+): UseUserRulesActionsResult => {
     const [currentRewrite, setCurrentRewrite] = createSignal<RewriteEntry>(EMPTY_REWRITE);
 
     const matchedRewrite = createMemo(() =>
@@ -150,7 +163,7 @@ export const useUserRulesActions = (params: UseUserRulesActionsParams): UseUserR
         await getClients();
     };
 
-    const handleRuleToggle = async (type: typeof BLOCK_ACTIONS[keyof typeof BLOCK_ACTIONS]) => {
+    const handleRuleToggle = async (type: (typeof BLOCK_ACTIONS)[keyof typeof BLOCK_ACTIONS]) => {
         const result = params.checkResult();
         const lastCheck = params.lastSubmittedCheck();
         if (!result?.hostname || !lastCheck) {
@@ -169,7 +182,13 @@ export const useUserRulesActions = (params: UseUserRulesActionsParams): UseUserR
             if (lastCheck.client) {
                 ok = await toggleBlockingForClient(type, result.hostname, lastCheck.client);
             } else if (matchedCustomRule) {
-                ok = await toggleBlocking(type, result.hostname, undefined, undefined, matchedCustomRule);
+                ok = await toggleBlocking(
+                    type,
+                    result.hostname,
+                    undefined,
+                    undefined,
+                    matchedCustomRule,
+                );
             } else {
                 ok = await toggleBlocking(type, result.hostname);
             }
@@ -210,7 +229,10 @@ export const useUserRulesActions = (params: UseUserRulesActionsParams): UseUserR
             message: intl.getMessage('user_rules_browsing_security_disabled'),
             undo: () =>
                 lastCheck?.client && clientSnapshot
-                    ? updateClient(clientSnapshot.name, { ...clientSnapshot, safebrowsing_enabled: true })
+                    ? updateClient(clientSnapshot.name, {
+                          ...clientSnapshot,
+                          safebrowsing_enabled: true,
+                      })
                     : toggleSetting('safebrowsing', false),
             refresh: refreshSettingsAndClients,
         });
@@ -243,7 +265,10 @@ export const useUserRulesActions = (params: UseUserRulesActionsParams): UseUserR
             message: intl.getMessage('user_rules_parental_control_disabled'),
             undo: () =>
                 lastCheck?.client && clientSnapshot
-                    ? updateClient(clientSnapshot.name, { ...clientSnapshot, parental_enabled: true })
+                    ? updateClient(clientSnapshot.name, {
+                          ...clientSnapshot,
+                          parental_enabled: true,
+                      })
                     : toggleSetting('parental', false),
             refresh: refreshSettingsAndClients,
         });
@@ -315,7 +340,9 @@ export const useUserRulesActions = (params: UseUserRulesActionsParams): UseUserR
                     { name: matchedFilter.name, url: matchedFilter.url, enabled: false },
                     isWhitelist,
                 ),
-            message: intl.getMessage('user_rules_filter_was_disabled', { value: matchedFilter.name }),
+            message: intl.getMessage('user_rules_filter_was_disabled', {
+                value: matchedFilter.name,
+            }),
             undo: () =>
                 toggleFilterStatus(
                     matchedFilter.url,
@@ -406,8 +433,7 @@ export const useUserRulesActions = (params: UseUserRulesActionsParams): UseUserR
         }
 
         return performWithUndo({
-            perform: () =>
-                deleteRewrite(targetRewrite, { showToast: false }) as Promise<boolean>,
+            perform: () => deleteRewrite(targetRewrite, { showToast: false }) as Promise<boolean>,
             message: intl.getMessage('user_rules_dns_rewrite_removed'),
             undo: async () => {
                 await addRewrite({

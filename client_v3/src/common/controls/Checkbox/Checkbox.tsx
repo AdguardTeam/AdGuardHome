@@ -26,7 +26,12 @@ export const Checkbox = (props: Props) => {
     return (
         <label
             for={props.id}
-            class={cn(s.checkbox, { [s.disabled]: props.disabled }, props.verticalAlign && s[props.verticalAlign], props.class)}
+            class={cn(
+                s.checkbox,
+                { [s.disabled]: props.disabled },
+                props.verticalAlign && s[props.verticalAlign],
+                props.class,
+            )}
             onClick={props.onClick}
         >
             <input

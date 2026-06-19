@@ -39,7 +39,9 @@ export const LanguageDropdown = (props: LanguageDropdownProps) => {
         if (!props.sort) {
             return keys;
         }
-        return keys.sort((a, b) => (props.languages[a] || '').localeCompare(props.languages[b] || ''));
+        return keys.sort((a, b) =>
+            (props.languages[a] || '').localeCompare(props.languages[b] || ''),
+        );
     });
 
     const currentLabel = () => getLanguageShortLabel(props.value);

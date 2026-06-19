@@ -1,4 +1,4 @@
-import { type JSX, createSignal, createMemo, For, Show } from 'solid-js';
+import { type JSX, createMemo, For, Show } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import cn from 'clsx';
 
@@ -57,7 +57,7 @@ export const Table = <T extends Record<string, any>>(props: TableProps<T>) => {
     const [state, setState] = createStore({
         currentPage: 0,
         pageSize: props.pageSize ?? DEFAULT_PAGE_SIZE_OPTIONS[0],
-        sortKey: props.defaultSort?.key ?? null as string | null,
+        sortKey: props.defaultSort?.key ?? (null as string | null),
         sortDirection: props.defaultSort?.direction ?? ('asc' as 'asc' | 'desc'),
     });
 
@@ -131,19 +131,20 @@ export const Table = <T extends Record<string, any>>(props: TableProps<T>) => {
                 if (typeof column.width === 'number') return `${column.width}px`;
                 if (typeof column.width === 'string') return column.width;
                 if (column.fitContent) return 'fit-content(100%)';
-                if (column.minWidth && column.maxWidth) return `minmax(${column.minWidth}px, ${column.maxWidth}px)`;
+                if (column.minWidth && column.maxWidth)
+                    return `minmax(${column.minWidth}px, ${column.maxWidth}px)`;
                 if (column.minWidth) return `minmax(${column.minWidth}px, 1fr)`;
                 return 'minmax(0, 1fr)';
             })
             .join(' '),
     );
 
-    const tableStyle = () => ({
-        '--table-columns': tableGridTemplate(),
-    } as Record<string, string>);
+    const tableStyle = () =>
+        ({
+            '--table-columns': tableGridTemplate(),
+        }) as Record<string, string>;
 
     const handleSort = (columnKey: string) => {
-        const sortable = props.sortable ?? true;
         const column = props.columns.find((col) => col.key === columnKey);
         if (!column || column.sortable === false) return;
 
@@ -212,17 +213,14 @@ export const Table = <T extends Record<string, any>>(props: TableProps<T>) => {
                         <For each={props.columns}>
                             {(column) => (
                                 <div
-                                    class={cn(
-                                        s.tableCell,
-                                        s.tableHeaderCell,
-                                        column.header.class,
-                                        {
-                                            [s.sortable]: column.sortable,
-                                            [s.fitContent]: column.fitContent,
-                                        },
-                                    )}
+                                    class={cn(s.tableCell, s.tableHeaderCell, column.header.class, {
+                                        [s.sortable]: column.sortable,
+                                        [s.fitContent]: column.fitContent,
+                                    })}
                                     onClick={() =>
-                                        (props.sortable ?? true) && column.sortable && handleSort(column.key)
+                                        (props.sortable ?? true) &&
+                                        column.sortable &&
+                                        handleSort(column.key)
                                     }
                                 >
                                     {column.header.render ? (
@@ -241,11 +239,25 @@ export const Table = <T extends Record<string, any>>(props: TableProps<T>) => {
 
                                     {(props.sortable ?? true) && column.sortable && (
                                         <span>
-                                            <Show when={state.sortKey === column.key && state.sortDirection === 'asc'}>
+                                            <Show
+                                                when={
+                                                    state.sortKey === column.key &&
+                                                    state.sortDirection === 'asc'
+                                                }
+                                            >
                                                 <Icon icon="arrow" color="gray" class={s.sortAsc} />
                                             </Show>
-                                            <Show when={state.sortKey === column.key && state.sortDirection === 'desc'}>
-                                                <Icon icon="arrow" color="gray" class={s.sortDesc} />
+                                            <Show
+                                                when={
+                                                    state.sortKey === column.key &&
+                                                    state.sortDirection === 'desc'
+                                                }
+                                            >
+                                                <Icon
+                                                    icon="arrow"
+                                                    color="gray"
+                                                    class={s.sortDesc}
+                                                />
                                             </Show>
                                         </span>
                                     )}
@@ -257,7 +269,7 @@ export const Table = <T extends Record<string, any>>(props: TableProps<T>) => {
                     <Show when={hasData()}>
                         <For each={paginatedData()}>
                             {(row, index) => {
-                                const rowId = getRowId(row, index());
+                                getRowId(row, index());
                                 return (
                                     <div
                                         class={cn(s.tableRow, props.tableRowClass)}

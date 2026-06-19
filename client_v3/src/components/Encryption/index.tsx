@@ -100,14 +100,7 @@ export const Encryption = () => {
     return (
         <div class={theme.layout.container}>
             <div class={cn(theme.layout.containerIn, theme.layout.containerIn_one_col)}>
-                <h1
-                    class={cn(
-                        theme.layout.title,
-                        theme.title.h4,
-                        theme.title.h3_tablet,
-                        s.title,
-                    )}
-                >
+                <h1 class={cn(theme.layout.title, theme.title.h4, theme.title.h3_tablet, s.title)}>
                     {intl.getMessage('encryption_title')}
                 </h1>
 

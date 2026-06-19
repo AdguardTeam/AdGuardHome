@@ -120,7 +120,10 @@ export const AddClient = () => {
     };
 
     const handleUpstreamsChange = (e: Event) => {
-        updateClientFormField({ field: 'upstreams', value: (e.target as HTMLTextAreaElement).value });
+        updateClientFormField({
+            field: 'upstreams',
+            value: (e.target as HTMLTextAreaElement).value,
+        });
     };
 
     const tagOptions = createMemo(() =>
@@ -223,13 +226,7 @@ export const AddClient = () => {
                         />
                     </div>
 
-                    <h2
-                        class={cn(
-                            theme.layout.subtitle,
-                            theme.title.h5,
-                            theme.title.h4_tablet,
-                        )}
-                    >
+                    <h2 class={cn(theme.layout.subtitle, theme.title.h5, theme.title.h4_tablet)}>
                         {intl.getMessage('settings')}
                     </h2>
 
@@ -251,13 +248,7 @@ export const AddClient = () => {
                     >
                         <div class={s.navItem}>
                             <div class={s.navItemContent}>
-                                <div
-                                    class={cn(
-                                        theme.text.t2,
-                                        theme.text.semibold,
-                                        s.navTitle,
-                                    )}
-                                >
+                                <div class={cn(theme.text.t2, theme.text.semibold, s.navTitle)}>
                                     {intl.getMessage('clients_protection')}
                                 </div>
                                 <div class={cn(theme.text.t3, s.navDesc)}>
@@ -278,13 +269,7 @@ export const AddClient = () => {
                     >
                         <div class={s.navItem}>
                             <div class={s.navItemContent}>
-                                <div
-                                    class={cn(
-                                        theme.text.t2,
-                                        theme.text.semibold,
-                                        s.navTitle,
-                                    )}
-                                >
+                                <div class={cn(theme.text.t2, theme.text.semibold, s.navTitle)}>
                                     {intl.getMessage('blocked_services')}
                                 </div>
                                 <div class={cn(theme.text.t3, s.navDesc)}>
@@ -296,14 +281,9 @@ export const AddClient = () => {
                     </Link>
 
                     <h2
-                        class={cn(
-                            theme.layout.subtitle,
-                            theme.title.h5,
-                            theme.title.h4_tablet,
-                            {
-                                [s.disabledText]: clientFormState.use_global_settings,
-                            },
-                        )}
+                        class={cn(theme.layout.subtitle, theme.title.h5, theme.title.h4_tablet, {
+                            [s.disabledText]: clientFormState.use_global_settings,
+                        })}
                     >
                         {intl.getMessage('upstream_dns_servers_title')}
                     </h2>
@@ -344,9 +324,7 @@ export const AddClient = () => {
                                         value: Number((e.target as HTMLInputElement).value) || 0,
                                     })
                                 }
-                                placeholder={intl.getMessage(
-                                    'clients_dns_cache_size_placeholder',
-                                )}
+                                placeholder={intl.getMessage('clients_dns_cache_size_placeholder')}
                                 label={intl.getMessage('clients_dns_cache_size')}
                                 size="large"
                             />

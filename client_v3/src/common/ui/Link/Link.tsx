@@ -40,11 +40,14 @@ export const Link = (linkProps: Props) => {
     };
 
     return (
-        <Show when={!linkProps.disabled} fallback={
-            <div id={linkProps.id} tabIndex={0} class={cn(linkProps.class)}>
-                {linkProps.children}
-            </div>
-        }>
+        <Show
+            when={!linkProps.disabled}
+            fallback={
+                <div id={linkProps.id} tabIndex={0} class={cn(linkProps.class)}>
+                    {linkProps.children}
+                </div>
+            }
+        >
             <A
                 id={linkProps.id}
                 class={cn(theme.link.link, linkProps.class)}

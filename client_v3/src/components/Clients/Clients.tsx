@@ -55,8 +55,8 @@ export const Clients = () => {
         handleDeleteClose();
     };
 
-    const isLoading = createMemo(() =>
-        dashboardState.processingClients || statsState.processingStats,
+    const isLoading = createMemo(
+        () => dashboardState.processingClients || statsState.processingStats,
     );
 
     return (
@@ -127,7 +127,9 @@ export const Clients = () => {
                         buttonText={intl.getMessage('remove')}
                         cancelText={intl.getMessage('cancel')}
                         title={intl.getMessage('clients_remove_title')}
-                        text={intl.getMessage('clients_remove_desc', { value: clientNameToDelete() })}
+                        text={intl.getMessage('clients_remove_desc', {
+                            value: clientNameToDelete(),
+                        })}
                         buttonVariant="danger"
                     />
                 </Show>

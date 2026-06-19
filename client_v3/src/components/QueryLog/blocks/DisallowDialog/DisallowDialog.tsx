@@ -21,7 +21,9 @@ export const DisallowDialog = (props: Props) => {
                     <div>{intl.getMessage('disallow_client_confirm_text', { ip: props.ip })}</div>
                     <Show when={props.isAllowlistMode}>
                         <div class={s.note}>
-                            {intl.getMessage('disallow_client_confirm_allowlist_note', { ip: props.ip })}
+                            {intl.getMessage('disallow_client_confirm_allowlist_note', {
+                                ip: props.ip,
+                            })}
                         </div>
                     </Show>
                 </div>

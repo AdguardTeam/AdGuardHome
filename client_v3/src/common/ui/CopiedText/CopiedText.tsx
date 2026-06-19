@@ -45,7 +45,9 @@ export const CopiedText = (props: CopiedTextProps) => {
     };
 
     // Reset timer when isCopied changes
-    createSignal(() => { if (isCopied()) resetTimer(); });
+    createSignal(() => {
+        if (isCopied()) resetTimer();
+    });
 
     onCleanup(() => {
         if (timer) {

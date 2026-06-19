@@ -58,7 +58,8 @@ export const FilterIntervalInput = (props: Props) => {
                     props.intervalValue === -1 &&
                     props.value !== null &&
                     props.value !== undefined &&
-                    (props.value < FILTER_INTERVAL_RANGE.MIN || props.value > FILTER_INTERVAL_RANGE.MAX)
+                    (props.value < FILTER_INTERVAL_RANGE.MIN ||
+                        props.value > FILTER_INTERVAL_RANGE.MAX)
                         ? intl.getMessage('form_error_range', {
                               min: FILTER_INTERVAL_RANGE.MIN,
                               max: FILTER_INTERVAL_RANGE.MAX,

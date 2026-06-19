@@ -15,7 +15,13 @@ import {
 } from 'panel/stores/queryLogs';
 import { accessState, getAccessList, toggleClientBlock } from 'panel/stores/access';
 import { dashboardState, getClients } from 'panel/stores/dashboard';
-import { filteringState, getFilteringStatus, blockDomain, unblockDomain, blockDomainForClient } from 'panel/stores/filtering';
+import {
+    filteringState,
+    getFilteringStatus,
+    blockDomain,
+    unblockDomain,
+    blockDomainForClient,
+} from 'panel/stores/filtering';
 import { servicesState, getAllBlockedServices, allowBlockedService } from 'panel/stores/services';
 import {
     DEFAULT_LOGS_FILTER,
@@ -104,28 +110,37 @@ export const QueryLog = () => {
     const currentSearch = () => queryLogsState.filter?.search ?? DEFAULT_LOGS_FILTER.search;
     const currentStatus = () => queryLogsState.filter?.status ?? DEFAULT_LOGS_FILTER.status;
     const currentReason = () => queryLogsState.filter?.reason ?? DEFAULT_LOGS_FILTER.reason;
-    const infiniteScrollResetToken = () => `${currentSearch()}:${currentStatus()}:${currentReason()}`;
-    const persistentClientIds = () => (dashboardState.clients || []).flatMap(
-        (persistentClient: any) => persistentClient.ids ?? [],
-    );
+    const infiniteScrollResetToken = () =>
+        `${currentSearch()}:${currentStatus()}:${currentReason()}`;
+    const persistentClientIds = () =>
+        (dashboardState.clients || []).flatMap(
+            (persistentClient: any) => persistentClient.ids ?? [],
+        );
     const visibleLogs = () => filterLogsByStatus(queryLogsState.logs || [], currentStatus());
     const emptyStateMode = () => getEmptyStateMode(queryLogsState.enabled, queryLogsState.interval);
     const hasMore = () => !queryLogsState.isEntireLog;
     const logs = () => queryLogsState.logs || [];
 
-    const isRequestInFlight = () => queryLogsState.processingGetLogs || queryLogsState.processingAdditionalLogs;
+    const isRequestInFlight = () =>
+        queryLogsState.processingGetLogs || queryLogsState.processingAdditionalLogs;
     const isLoadingMore = () => isIncrementalLoad() && isRequestInFlight();
-    const isInitialLoading = () => queryLogsState.processingGetLogs && logs().length === 0 && !isIncrementalLoad();
-    const isFilterReloading = () => queryLogsState.processingGetLogs && !isInitialLoading() && !isIncrementalLoad();
+    const isInitialLoading = () =>
+        queryLogsState.processingGetLogs && logs().length === 0 && !isIncrementalLoad();
+    const isFilterReloading = () =>
+        queryLogsState.processingGetLogs && !isInitialLoading() && !isIncrementalLoad();
 
     const handleSearch = (search: string) => {
         setIsIncrementalLoad(false);
-        navigate(getLogsUrlParams(search.trim(), currentStatus(), currentReason()), { replace: true });
+        navigate(getLogsUrlParams(search.trim(), currentStatus(), currentReason()), {
+            replace: true,
+        });
     };
 
     const handleStatusFilterChange = (status: string) => {
         setIsIncrementalLoad(false);
-        navigate(getLogsUrlParams(currentSearch(), status, DEFAULT_LOGS_FILTER.reason), { replace: true });
+        navigate(getLogsUrlParams(currentSearch(), status, DEFAULT_LOGS_FILTER.reason), {
+            replace: true,
+        });
     };
 
     const handleReasonFilterChange = (reason: string) => {
@@ -245,43 +260,58 @@ export const QueryLog = () => {
                 </div>
 
                 <div class={s.mobileView}>
-                    <Show when={isInitialLoading() || (isFilterReloading() && visibleLogs().length === 0)} fallback={
-                        <Show when={visibleLogs().length === 0} fallback={
-                            <>
-                                <div class={s.mobileList}>
-                                    <For each={visibleLogs()}>
-                                        {(entry) => (
-                                            <LogCard
-                                                entry={entry}
-                                                onRowClick={handleRowClick}
-                                                onBlock={handleBlockDomain}
-                                                onUnblock={handleUnblockDomain}
-                                                onBlockClient={handleBlockClient}
-                                                onDisallowClient={handleDisallowClient}
-                                                onAddPersistentClient={handleAddPersistentClient}
-                                                filters={filteringState.filters || []}
-                                                services={servicesState.allServices || []}
-                                                whitelistFilters={filteringState.whitelistFilters || []}
-                                                persistentClientIds={persistentClientIds()}
-                                                persistentClientsLoaded={!dashboardState.processingClients}
-                                            />
-                                        )}
-                                    </For>
-                                </div>
+                    <Show
+                        when={
+                            isInitialLoading() ||
+                            (isFilterReloading() && visibleLogs().length === 0)
+                        }
+                        fallback={
+                            <Show
+                                when={visibleLogs().length === 0}
+                                fallback={
+                                    <>
+                                        <div class={s.mobileList}>
+                                            <For each={visibleLogs()}>
+                                                {(entry) => (
+                                                    <LogCard
+                                                        entry={entry}
+                                                        onRowClick={handleRowClick}
+                                                        onBlock={handleBlockDomain}
+                                                        onUnblock={handleUnblockDomain}
+                                                        onBlockClient={handleBlockClient}
+                                                        onDisallowClient={handleDisallowClient}
+                                                        onAddPersistentClient={
+                                                            handleAddPersistentClient
+                                                        }
+                                                        filters={filteringState.filters || []}
+                                                        services={servicesState.allServices || []}
+                                                        whitelistFilters={
+                                                            filteringState.whitelistFilters || []
+                                                        }
+                                                        persistentClientIds={persistentClientIds()}
+                                                        persistentClientsLoaded={
+                                                            !dashboardState.processingClients
+                                                        }
+                                                    />
+                                                )}
+                                            </For>
+                                        </div>
 
-                                <InfiniteScrollTrigger
-                                    hasMore={hasMore()}
-                                    loading={isLoadingMore()}
-                                    disabled={isRequestInFlight()}
-                                    onLoadMore={handleLoadMore}
-                                    resetToken={infiniteScrollResetToken()}
-                                    class={s.mobileLoader}
-                                />
-                            </>
-                        }>
-                            <EmptyState class={s.emptyState} mode={emptyStateMode()} />
-                        </Show>
-                    }>
+                                        <InfiniteScrollTrigger
+                                            hasMore={hasMore()}
+                                            loading={isLoadingMore()}
+                                            disabled={isRequestInFlight()}
+                                            onLoadMore={handleLoadMore}
+                                            resetToken={infiniteScrollResetToken()}
+                                            class={s.mobileLoader}
+                                        />
+                                    </>
+                                }
+                            >
+                                <EmptyState class={s.emptyState} mode={emptyStateMode()} />
+                            </Show>
+                        }
+                    >
                         <div class={s.mobileInitialLoader} data-testid="query-log-initial-loader">
                             <Loader color="green" class={s.loader} />
                         </div>

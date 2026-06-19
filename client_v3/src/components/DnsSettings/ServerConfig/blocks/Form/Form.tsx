@@ -100,18 +100,36 @@ type Props = {
 
 export const Form = (props: Props) => {
     const [ratelimit, setRatelimit] = createSignal(props.initialValues?.ratelimit ?? 0);
-    const [ratelimitSubnetIpv4, setRatelimitSubnetIpv4] = createSignal(props.initialValues?.ratelimit_subnet_len_ipv4 ?? 0);
-    const [ratelimitSubnetIpv6, setRatelimitSubnetIpv6] = createSignal(props.initialValues?.ratelimit_subnet_len_ipv6 ?? 0);
-    const [ratelimitWhitelist, setRatelimitWhitelist] = createSignal(props.initialValues?.ratelimit_whitelist ?? '');
-    const [ednsCsEnabled, setEdnsCsEnabled] = createSignal(props.initialValues?.edns_cs_enabled ?? false);
-    const [ednsCsUseCustom, setEdnsCsUseCustom] = createSignal(props.initialValues?.edns_cs_use_custom ?? false);
-    const [ednsCsCustomIp, setEdnsCsCustomIp] = createSignal(props.initialValues?.edns_cs_custom_ip ?? '');
-    const [dnssecEnabled, setDnssecEnabled] = createSignal(props.initialValues?.dnssec_enabled ?? false);
+    const [ratelimitSubnetIpv4, setRatelimitSubnetIpv4] = createSignal(
+        props.initialValues?.ratelimit_subnet_len_ipv4 ?? 0,
+    );
+    const [ratelimitSubnetIpv6, setRatelimitSubnetIpv6] = createSignal(
+        props.initialValues?.ratelimit_subnet_len_ipv6 ?? 0,
+    );
+    const [ratelimitWhitelist, setRatelimitWhitelist] = createSignal(
+        props.initialValues?.ratelimit_whitelist ?? '',
+    );
+    const [ednsCsEnabled, setEdnsCsEnabled] = createSignal(
+        props.initialValues?.edns_cs_enabled ?? false,
+    );
+    const [ednsCsUseCustom, setEdnsCsUseCustom] = createSignal(
+        props.initialValues?.edns_cs_use_custom ?? false,
+    );
+    const [ednsCsCustomIp, setEdnsCsCustomIp] = createSignal(
+        props.initialValues?.edns_cs_custom_ip ?? '',
+    );
+    const [dnssecEnabled, setDnssecEnabled] = createSignal(
+        props.initialValues?.dnssec_enabled ?? false,
+    );
     const [disableIpv6, setDisableIpv6] = createSignal(props.initialValues?.disable_ipv6 ?? false);
-    const [blockingMode, setBlockingMode] = createSignal(props.initialValues?.blocking_mode ?? BLOCKING_MODES.default);
+    const [blockingMode, setBlockingMode] = createSignal(
+        props.initialValues?.blocking_mode ?? BLOCKING_MODES.default,
+    );
     const [blockingIpv4, setBlockingIpv4] = createSignal(props.initialValues?.blocking_ipv4 ?? '');
     const [blockingIpv6, setBlockingIpv6] = createSignal(props.initialValues?.blocking_ipv6 ?? '');
-    const [blockedResponseTtl, setBlockedResponseTtl] = createSignal(props.initialValues?.blocked_response_ttl ?? 0);
+    const [blockedResponseTtl, setBlockedResponseTtl] = createSignal(
+        props.initialValues?.blocked_response_ttl ?? 0,
+    );
 
     // Error signals
     const [ratelimitError, setRatelimitError] = createSignal('');
@@ -127,23 +145,37 @@ export const Form = (props: Props) => {
         setRatelimitError(validateRequiredValue(String(ratelimit())) || '');
         setSubnetIpv4Error(validateRequiredValue(String(ratelimitSubnetIpv4())) || '');
         setSubnetIpv6Error(validateRequiredValue(String(ratelimitSubnetIpv6())) || '');
-        setWhitelistError(ratelimitWhitelist() ? validateIpPerLine(ratelimitWhitelist()) || '' : '');
+        setWhitelistError(
+            ratelimitWhitelist() ? validateIpPerLine(ratelimitWhitelist()) || '' : '',
+        );
         setTtlError(validateRequiredValue(String(blockedResponseTtl())) || '');
 
         if (ednsCsUseCustom()) {
-            const err = validateRequiredValue(ednsCsCustomIp()) || validateIp(ednsCsCustomIp()) || '';
+            const err =
+                validateRequiredValue(ednsCsCustomIp()) || validateIp(ednsCsCustomIp()) || '';
             setCustomIpError(err);
         }
 
         if (blockingMode() === BLOCKING_MODES.custom_ip) {
-            setBlockingIpv4Error(validateRequiredValue(blockingIpv4()) || validateIpv4(blockingIpv4()) || '');
-            setBlockingIpv6Error(validateRequiredValue(blockingIpv6()) || validateIpv6(blockingIpv6()) || '');
+            setBlockingIpv4Error(
+                validateRequiredValue(blockingIpv4()) || validateIpv4(blockingIpv4()) || '',
+            );
+            setBlockingIpv6Error(
+                validateRequiredValue(blockingIpv6()) || validateIpv6(blockingIpv6()) || '',
+            );
         }
     };
 
-    const hasErrors = createMemo(() =>
-        ratelimitError() || subnetIpv4Error() || subnetIpv6Error() || whitelistError() ||
-        customIpError() || blockingIpv4Error() || blockingIpv6Error() || ttlError(),
+    const hasErrors = createMemo(
+        () =>
+            ratelimitError() ||
+            subnetIpv4Error() ||
+            subnetIpv6Error() ||
+            whitelistError() ||
+            customIpError() ||
+            blockingIpv4Error() ||
+            blockingIpv6Error() ||
+            ttlError(),
     );
 
     const handleSubmit = (e: Event) => {
@@ -174,14 +206,21 @@ export const Form = (props: Props) => {
                 <div class={theme.form.input}>
                     <Input
                         value={String(ratelimit())}
-                        onChange={(e: Event) => setRatelimit(Number((e.target as HTMLInputElement).value))}
-                        onBlur={() => setRatelimitError(validateRequiredValue(String(ratelimit())) || '')}
+                        onChange={(e: Event) =>
+                            setRatelimit(Number((e.target as HTMLInputElement).value))
+                        }
+                        onBlur={() =>
+                            setRatelimitError(validateRequiredValue(String(ratelimit())) || '')
+                        }
                         data-testid="dns_config_ratelimit"
                         type="number"
                         label={
                             <>
                                 {intl.getMessage('server_config_rate_limit')}
-                                <FaqTooltip text={intl.getMessage('server_config_rate_limit_faq')} menuSize="large" />
+                                <FaqTooltip
+                                    text={intl.getMessage('server_config_rate_limit_faq')}
+                                    menuSize="large"
+                                />
                             </>
                         }
                         placeholder={intl.getMessage('server_config_rate_limit_placeholder')}
@@ -194,14 +233,23 @@ export const Form = (props: Props) => {
                 <div class={theme.form.input}>
                     <Input
                         value={String(ratelimitSubnetIpv4())}
-                        onChange={(e: Event) => setRatelimitSubnetIpv4(Number((e.target as HTMLInputElement).value))}
-                        onBlur={() => setSubnetIpv4Error(validateRequiredValue(String(ratelimitSubnetIpv4())) || '')}
+                        onChange={(e: Event) =>
+                            setRatelimitSubnetIpv4(Number((e.target as HTMLInputElement).value))
+                        }
+                        onBlur={() =>
+                            setSubnetIpv4Error(
+                                validateRequiredValue(String(ratelimitSubnetIpv4())) || '',
+                            )
+                        }
                         data-testid="dns_config_subnet_ipv4"
                         type="number"
                         label={
                             <>
                                 {intl.getMessage('server_config_subnet_len_ipv4')}
-                                <FaqTooltip text={intl.getMessage('server_config_subnet_len_ipv4_faq')} menuSize="large" />
+                                <FaqTooltip
+                                    text={intl.getMessage('server_config_subnet_len_ipv4_faq')}
+                                    menuSize="large"
+                                />
                             </>
                         }
                         placeholder={intl.getMessage('server_config_subnet_len_placeholder')}
@@ -214,14 +262,23 @@ export const Form = (props: Props) => {
                 <div class={theme.form.input}>
                     <Input
                         value={String(ratelimitSubnetIpv6())}
-                        onChange={(e: Event) => setRatelimitSubnetIpv6(Number((e.target as HTMLInputElement).value))}
-                        onBlur={() => setSubnetIpv6Error(validateRequiredValue(String(ratelimitSubnetIpv6())) || '')}
+                        onChange={(e: Event) =>
+                            setRatelimitSubnetIpv6(Number((e.target as HTMLInputElement).value))
+                        }
+                        onBlur={() =>
+                            setSubnetIpv6Error(
+                                validateRequiredValue(String(ratelimitSubnetIpv6())) || '',
+                            )
+                        }
                         data-testid="dns_config_subnet_ipv6"
                         type="number"
                         label={
                             <>
                                 {intl.getMessage('server_config_subnet_len_ipv6')}
-                                <FaqTooltip text={intl.getMessage('server_config_subnet_len_ipv6_faq')} menuSize="large" />
+                                <FaqTooltip
+                                    text={intl.getMessage('server_config_subnet_len_ipv6_faq')}
+                                    menuSize="large"
+                                />
                             </>
                         }
                         placeholder={intl.getMessage('server_config_subnet_len_placeholder')}
@@ -234,13 +291,24 @@ export const Form = (props: Props) => {
                 <div class={theme.form.input}>
                     <Textarea
                         value={ratelimitWhitelist()}
-                        onChange={(e: Event) => setRatelimitWhitelist((e.target as HTMLTextAreaElement).value)}
-                        onBlur={() => setWhitelistError(ratelimitWhitelist() ? validateIpPerLine(ratelimitWhitelist()) || '' : '')}
+                        onChange={(e: Event) =>
+                            setRatelimitWhitelist((e.target as HTMLTextAreaElement).value)
+                        }
+                        onBlur={() =>
+                            setWhitelistError(
+                                ratelimitWhitelist()
+                                    ? validateIpPerLine(ratelimitWhitelist()) || ''
+                                    : '',
+                            )
+                        }
                         data-testid="dns_config_ratelimit_whitelist"
                         label={
                             <>
                                 {intl.getMessage('server_config_rate_limit_whitelist')}
-                                <FaqTooltip text={intl.getMessage('server_config_rate_limit_whitelist_faq')} menuSize="large" />
+                                <FaqTooltip
+                                    text={intl.getMessage('server_config_rate_limit_whitelist_faq')}
+                                    menuSize="large"
+                                />
                             </>
                         }
                         placeholder={intl.getMessage('ip_addresses_placeholder')}
@@ -253,13 +321,19 @@ export const Form = (props: Props) => {
                     <Checkbox
                         name="edns_cs_enabled"
                         checked={ednsCsEnabled()}
-                        onChange={(e: Event) => setEdnsCsEnabled((e.target as HTMLInputElement).checked)}
+                        onChange={(e: Event) =>
+                            setEdnsCsEnabled((e.target as HTMLInputElement).checked)
+                        }
                         data-testid="dns_config_edns_cs_enabled"
                         verticalAlign="start"
                     >
                         <div>
-                            <div class={theme.text.t2}>{intl.getMessage('server_config_edns_enable')}</div>
-                            <div class={theme.text.t4}>{intl.getMessage('server_config_edns_cs_desc')}</div>
+                            <div class={theme.text.t2}>
+                                {intl.getMessage('server_config_edns_enable')}
+                            </div>
+                            <div class={theme.text.t4}>
+                                {intl.getMessage('server_config_edns_cs_desc')}
+                            </div>
                         </div>
                     </Checkbox>
                 </div>
@@ -269,14 +343,20 @@ export const Form = (props: Props) => {
                         <Checkbox
                             name="edns_cs_use_custom"
                             checked={ednsCsUseCustom()}
-                            onChange={(e: Event) => setEdnsCsUseCustom((e.target as HTMLInputElement).checked)}
+                            onChange={(e: Event) =>
+                                setEdnsCsUseCustom((e.target as HTMLInputElement).checked)
+                            }
                             data-testid="dns_config_edns_use_custom_ip"
                             disabled={!ednsCsEnabled()}
                             verticalAlign="start"
                         >
                             <div>
-                                <div class={theme.text.t2}>{intl.getMessage('server_config_edns_use_custom_ip')}</div>
-                                <div class={theme.text.t4}>{intl.getMessage('server_config_edns_use_custom_ip_desc')}</div>
+                                <div class={theme.text.t2}>
+                                    {intl.getMessage('server_config_edns_use_custom_ip')}
+                                </div>
+                                <div class={theme.text.t4}>
+                                    {intl.getMessage('server_config_edns_use_custom_ip_desc')}
+                                </div>
                             </div>
                         </Checkbox>
                     </div>
@@ -285,10 +365,16 @@ export const Form = (props: Props) => {
                         <div class={theme.form.input}>
                             <Input
                                 value={ednsCsCustomIp()}
-                                onChange={(e: Event) => setEdnsCsCustomIp((e.target as HTMLInputElement).value)}
+                                onChange={(e: Event) =>
+                                    setEdnsCsCustomIp((e.target as HTMLInputElement).value)
+                                }
                                 onBlur={() => {
                                     if (ednsCsUseCustom()) {
-                                        setCustomIpError(validateRequiredValue(ednsCsCustomIp()) || validateIp(ednsCsCustomIp()) || '');
+                                        setCustomIpError(
+                                            validateRequiredValue(ednsCsCustomIp()) ||
+                                                validateIp(ednsCsCustomIp()) ||
+                                                '',
+                                        );
                                     }
                                 }}
                                 data-testid="dns_config_edns_cs_custom_ip"
@@ -305,7 +391,9 @@ export const Form = (props: Props) => {
                         <div class={theme.form.input}>
                             <Checkbox
                                 name={name}
-                                checked={name === 'dnssec_enabled' ? dnssecEnabled() : disableIpv6()}
+                                checked={
+                                    name === 'dnssec_enabled' ? dnssecEnabled() : disableIpv6()
+                                }
                                 onChange={(e: Event) => {
                                     const v = (e.target as HTMLInputElement).checked;
                                     if (name === 'dnssec_enabled') setDnssecEnabled(v);
@@ -346,15 +434,21 @@ export const Form = (props: Props) => {
                         {({ label, name, placeholder, faq, validateIp: validateIpFn }) => (
                             <div class={theme.form.input}>
                                 <Input
-                                    value={name === 'blocking_ipv4' ? blockingIpv4() : blockingIpv6()}
+                                    value={
+                                        name === 'blocking_ipv4' ? blockingIpv4() : blockingIpv6()
+                                    }
                                     onChange={(e: Event) => {
                                         const v = (e.target as HTMLInputElement).value;
                                         if (name === 'blocking_ipv4') setBlockingIpv4(v);
                                         else setBlockingIpv6(v);
                                     }}
                                     onBlur={() => {
-                                        const val = name === 'blocking_ipv4' ? blockingIpv4() : blockingIpv6();
-                                        const err = validateRequiredValue(val) || validateIpFn(val) || '';
+                                        const val =
+                                            name === 'blocking_ipv4'
+                                                ? blockingIpv4()
+                                                : blockingIpv6();
+                                        const err =
+                                            validateRequiredValue(val) || validateIpFn(val) || '';
                                         if (name === 'blocking_ipv4') setBlockingIpv4Error(err);
                                         else setBlockingIpv6Error(err);
                                     }}
@@ -367,7 +461,11 @@ export const Form = (props: Props) => {
                                         </>
                                     }
                                     placeholder={placeholder}
-                                    errorMessage={name === 'blocking_ipv4' ? blockingIpv4Error() : blockingIpv6Error()}
+                                    errorMessage={
+                                        name === 'blocking_ipv4'
+                                            ? blockingIpv4Error()
+                                            : blockingIpv6Error()
+                                    }
                                 />
                             </div>
                         )}
@@ -377,14 +475,21 @@ export const Form = (props: Props) => {
                 <div class={theme.form.input}>
                     <Input
                         value={String(blockedResponseTtl())}
-                        onChange={(e: Event) => setBlockedResponseTtl(Number((e.target as HTMLInputElement).value))}
-                        onBlur={() => setTtlError(validateRequiredValue(String(blockedResponseTtl())) || '')}
+                        onChange={(e: Event) =>
+                            setBlockedResponseTtl(Number((e.target as HTMLInputElement).value))
+                        }
+                        onBlur={() =>
+                            setTtlError(validateRequiredValue(String(blockedResponseTtl())) || '')
+                        }
                         data-testid="dns_config_blocked_response_ttl"
                         type="number"
                         label={
                             <>
                                 {intl.getMessage('server_config_blocking_mode_ttl')}
-                                <FaqTooltip text={intl.getMessage('server_config_blocking_mode_ttl_faq')} menuSize="large" />
+                                <FaqTooltip
+                                    text={intl.getMessage('server_config_blocking_mode_ttl_faq')}
+                                    menuSize="large"
+                                />
                             </>
                         }
                         placeholder={intl.getMessage('form_enter_blocked_response_ttl')}

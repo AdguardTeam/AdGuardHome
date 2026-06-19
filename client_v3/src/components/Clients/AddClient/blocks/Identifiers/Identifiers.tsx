@@ -104,7 +104,9 @@ export const Identifiers = () => {
                                     id={`client-identifier-${idx}`}
                                     type="text"
                                     value={value}
-                                    onChange={(e: Event) => handleChange(idx, (e.target as HTMLInputElement).value)}
+                                    onChange={(e: Event) =>
+                                        handleChange(idx, (e.target as HTMLInputElement).value)
+                                    }
                                     onBlur={() => handleBlur(idx)}
                                     placeholder={intl.getMessage('clients_identifier_format_error')}
                                     error={!!activeError()}

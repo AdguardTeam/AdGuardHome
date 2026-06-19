@@ -48,35 +48,47 @@ type CacheFormProps = {
 };
 
 export const Form = (props: CacheFormProps) => {
-    const [cacheEnabled, setCacheEnabled] = createSignal(props.initialValues?.cache_enabled || false);
+    const [cacheEnabled, setCacheEnabled] = createSignal(
+        props.initialValues?.cache_enabled || false,
+    );
     const [cacheSize, setCacheSize] = createSignal(props.initialValues?.cache_size || 0);
     const [cacheTtlMin, setCacheTtlMin] = createSignal(props.initialValues?.cache_ttl_min || 0);
     const [cacheTtlMax, setCacheTtlMax] = createSignal(props.initialValues?.cache_ttl_max || 0);
-    const [cacheOptimistic, setCacheOptimistic] = createSignal(props.initialValues?.cache_optimistic || false);
+    const [cacheOptimistic, setCacheOptimistic] = createSignal(
+        props.initialValues?.cache_optimistic || false,
+    );
     const [openConfirmClear, setOpenConfirmClear] = createSignal(false);
 
-    const minExceedsMax = createMemo(() =>
-        cacheTtlMin() > 0 && cacheTtlMax() > 0 && cacheTtlMin() > cacheTtlMax(),
+    const minExceedsMax = createMemo(
+        () => cacheTtlMin() > 0 && cacheTtlMax() > 0 && cacheTtlMin() > cacheTtlMax(),
     );
 
-    const cacheSizeZeroWhenEnabled = createMemo(() =>
-        cacheEnabled() && cacheSize() === 0,
-    );
+    const cacheSizeZeroWhenEnabled = createMemo(() => cacheEnabled() && cacheSize() === 0);
 
     const getFieldValue = (name: string): number => {
         switch (name) {
-            case CACHE_CONFIG_FIELDS.cache_size: return cacheSize();
-            case CACHE_CONFIG_FIELDS.cache_ttl_min: return cacheTtlMin();
-            case CACHE_CONFIG_FIELDS.cache_ttl_max: return cacheTtlMax();
-            default: return 0;
+            case CACHE_CONFIG_FIELDS.cache_size:
+                return cacheSize();
+            case CACHE_CONFIG_FIELDS.cache_ttl_min:
+                return cacheTtlMin();
+            case CACHE_CONFIG_FIELDS.cache_ttl_max:
+                return cacheTtlMax();
+            default:
+                return 0;
         }
     };
 
     const setFieldValue = (name: string, value: number) => {
         switch (name) {
-            case CACHE_CONFIG_FIELDS.cache_size: setCacheSize(value); break;
-            case CACHE_CONFIG_FIELDS.cache_ttl_min: setCacheTtlMin(value); break;
-            case CACHE_CONFIG_FIELDS.cache_ttl_max: setCacheTtlMax(value); break;
+            case CACHE_CONFIG_FIELDS.cache_size:
+                setCacheSize(value);
+                break;
+            case CACHE_CONFIG_FIELDS.cache_ttl_min:
+                setCacheTtlMin(value);
+                break;
+            case CACHE_CONFIG_FIELDS.cache_ttl_max:
+                setCacheTtlMax(value);
+                break;
         }
     };
 
@@ -147,17 +159,15 @@ export const Form = (props: CacheFormProps) => {
                     <Checkbox
                         name="cache_enabled"
                         checked={cacheEnabled()}
-                        onChange={(e: Event) => setCacheEnabled((e.target as HTMLInputElement).checked)}
+                        onChange={(e: Event) =>
+                            setCacheEnabled((e.target as HTMLInputElement).checked)
+                        }
                         data-testid="dns_cache_enabled"
                         verticalAlign="start"
                     >
                         <div>
-                            <div class={theme.text.t2}>
-                                {intl.getMessage('cache_enabled')}
-                            </div>
-                            <div class={theme.text.t4}>
-                                {intl.getMessage('cache_enabled_desc')}
-                            </div>
+                            <div class={theme.text.t2}>{intl.getMessage('cache_enabled')}</div>
+                            <div class={theme.text.t4}>{intl.getMessage('cache_enabled_desc')}</div>
                         </div>
                     </Checkbox>
                 </div>
@@ -198,7 +208,9 @@ export const Form = (props: CacheFormProps) => {
                     <Checkbox
                         name="cache_optimistic"
                         checked={cacheOptimistic()}
-                        onChange={(e: Event) => setCacheOptimistic((e.target as HTMLInputElement).checked)}
+                        onChange={(e: Event) =>
+                            setCacheOptimistic((e.target as HTMLInputElement).checked)
+                        }
                         data-testid="dns_cache_optimistic"
                         verticalAlign="start"
                     >

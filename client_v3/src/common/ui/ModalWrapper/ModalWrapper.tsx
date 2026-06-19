@@ -7,9 +7,5 @@ interface Props {
 }
 
 export const ModalWrapper = (props: Props) => {
-    return (
-        <Show when={modalsState.modalId === props.id}>
-            {props.children}
-        </Show>
-    );
+    return <Show when={modalsState.modalId === props.id}>{props.children}</Show>;
 };

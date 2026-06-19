@@ -4,12 +4,42 @@
 // since actions are plain async functions that call setState directly.
 // Components import store state and actions directly from store modules.
 
-import type { DashboardData, SettingsData, EncryptionData, Client,
-    AutoClient, DhcpData, DnsConfigData, FilteringData, QueryLogsData,
-    RewritesData, ServicesData, ModalsData, ClientFormState,
-    StatsData, AccessData, ClientsData, InstallData } from 'panel/initialState';
+import type {
+    DashboardData,
+    SettingsData,
+    EncryptionData,
+    Client,
+    AutoClient,
+    DhcpData,
+    DnsConfigData,
+    FilteringData,
+    QueryLogsData,
+    RewritesData,
+    ServicesData,
+    ModalsData,
+    ClientFormState,
+    StatsData,
+    AccessData,
+    ClientsData,
+    InstallData,
+} from 'panel/initialState';
 
-export type { DashboardData, SettingsData, EncryptionData, Client,
-    AutoClient, DhcpData, DnsConfigData, FilteringData, QueryLogsData,
-    RewritesData, ServicesData, ModalsData, ClientFormState,
-    StatsData, AccessData, ClientsData, InstallData };
+export type {
+    DashboardData,
+    SettingsData,
+    EncryptionData,
+    Client,
+    AutoClient,
+    DhcpData,
+    DnsConfigData,
+    FilteringData,
+    QueryLogsData,
+    RewritesData,
+    ServicesData,
+    ModalsData,
+    ClientFormState,
+    StatsData,
+    AccessData,
+    ClientsData,
+    InstallData,
+};

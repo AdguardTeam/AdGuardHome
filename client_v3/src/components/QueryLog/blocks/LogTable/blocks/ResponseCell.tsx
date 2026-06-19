@@ -1,4 +1,3 @@
-
 import cn from 'clsx';
 
 import theme from 'panel/lib/theme';
@@ -22,15 +21,16 @@ type Props = {
 export const ResponseCell = (props: Props) => {
     const statusClassName = () => getStatusClassName(props.row.reason);
     const statusLabel = () => getStatusLabel(props.row.reason, props.row.originalResponse, false);
-    const responseDetails = () => getResponseDetails({
-        elapsedMs: props.row.elapsedMs,
-        filters: props.filters,
-        reason: props.row.reason,
-        rules: props.row.rules,
-        serviceName: props.row.service_name,
-        services: props.services,
-        whitelistFilters: props.whitelistFilters,
-    });
+    const responseDetails = () =>
+        getResponseDetails({
+            elapsedMs: props.row.elapsedMs,
+            filters: props.filters,
+            reason: props.row.reason,
+            rules: props.row.rules,
+            serviceName: props.row.service_name,
+            services: props.services,
+            whitelistFilters: props.whitelistFilters,
+        });
 
     return (
         <div class={s.responseCell}>

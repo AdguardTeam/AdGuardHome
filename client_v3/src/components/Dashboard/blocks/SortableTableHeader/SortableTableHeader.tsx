@@ -1,4 +1,3 @@
-
 import cn from 'clsx';
 
 import { Icon } from 'panel/common/ui/Icon';

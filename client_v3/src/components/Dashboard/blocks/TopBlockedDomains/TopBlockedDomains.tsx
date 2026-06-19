@@ -35,9 +35,7 @@ export const TopBlockedDomains = (props: Props) => {
         handleSort,
     } = useSortedData(() => props.topBlockedDomains);
     const visibleDomains = createMemo(() =>
-        isDesktop()
-            ? sortedDomains()
-            : sortedDomains().slice(0, MOBILE_TABLE_MAX_ROWS)
+        isDesktop() ? sortedDomains() : sortedDomains().slice(0, MOBILE_TABLE_MAX_ROWS),
     );
 
     const hasStats = createMemo(() => props.topBlockedDomains.length > 0);
@@ -75,7 +73,7 @@ export const TopBlockedDomains = (props: Props) => {
                             const percent = createMemo(() =>
                                 props.numBlockedFiltering > 0
                                     ? (domain.count / props.numBlockedFiltering) * 100
-                                    : 0
+                                    : 0,
                             );
                             const trackerData = getTrackerData(domain.name);
 
@@ -88,7 +86,10 @@ export const TopBlockedDomains = (props: Props) => {
                                             s.tableRowLeft,
                                         )}
                                     >
-                                        <Show when={trackerData} fallback={<div class={s.tableRowDot}></div>}>
+                                        <Show
+                                            when={trackerData}
+                                            fallback={<div class={s.tableRowDot} />}
+                                        >
                                             <Dropdown
                                                 menu={<TrackerTooltip trackerData={trackerData!} />}
                                                 trigger="hover"

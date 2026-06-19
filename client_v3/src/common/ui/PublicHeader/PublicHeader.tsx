@@ -35,8 +35,7 @@ export const PublicHeader = (props: Props) => {
         }
     };
 
-    const currentLanguage = () =>
-        dashboardState.language || intl.getUILanguage();
+    const currentLanguage = () => dashboardState.language || intl.getUILanguage();
 
     return (
         <div class={styles.header}>

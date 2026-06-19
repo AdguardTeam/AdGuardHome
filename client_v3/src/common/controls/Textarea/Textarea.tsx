@@ -25,7 +25,12 @@ export const Textarea = (props: Props) => {
                 </label>
             </Show>
             <textarea
-                class={cn(s.textarea, props.size && s[props.size], { [s.error]: !!props.errorMessage }, props.class)}
+                class={cn(
+                    s.textarea,
+                    props.size && s[props.size],
+                    { [s.error]: !!props.errorMessage },
+                    props.class,
+                )}
                 id={props.id}
                 placeholder={props.placeholder}
                 value={props.value as string}

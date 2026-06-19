@@ -1,5 +1,3 @@
-
-
 import intl from 'panel/common/intl';
 
 import { PublicHeader } from 'panel/common/ui/PublicHeader';
@@ -26,9 +24,7 @@ export const ForgotPassword = () => {
             <div class={styles.login}>
                 <h1 class={styles.titleList}>{intl.getMessage('forgot_password')}</h1>
                 <div class={styles.listContainer}>
-                    <p class={styles.listDesc}>
-                        {intl.getMessage('forgot_password_page_desc')}
-                    </p>
+                    <p class={styles.listDesc}>{intl.getMessage('forgot_password_page_desc')}</p>
                     <p>{intl.getMessage('forgot_password_list_title')}</p>
 
                     <ol class={styles.list}>

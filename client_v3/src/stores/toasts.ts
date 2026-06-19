@@ -43,10 +43,7 @@ export const addErrorToast = (payload: { error: any }) => {
     const { error } = payload;
     const message = error instanceof Error ? error.message : String(error);
     console.error(message); // eslint-disable-line no-console
-    setState('notices', (prev) => [
-        ...prev,
-        { id: nanoid(), message, type: 'error' as const },
-    ]);
+    setState('notices', (prev) => [...prev, { id: nanoid(), message, type: 'error' as const }]);
 };
 
 export const addSuccessToast = (message: any) => {
@@ -63,10 +60,7 @@ export const addSuccessToast = (message: any) => {
 };
 
 export const addNoticeToast = (message: any) => {
-    setState('notices', (prev) => [
-        ...prev,
-        { id: nanoid(), message, type: 'notice' as const },
-    ]);
+    setState('notices', (prev) => [...prev, { id: nanoid(), message, type: 'notice' as const }]);
 };
 
 export const removeToast = (id: string) => {

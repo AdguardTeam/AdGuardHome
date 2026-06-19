@@ -1,5 +1,3 @@
-
-
 import intl from 'panel/common/intl';
 import { StatusBlock } from './StatusBlock';
 

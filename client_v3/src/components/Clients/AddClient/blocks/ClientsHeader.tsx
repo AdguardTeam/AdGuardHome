@@ -38,9 +38,8 @@ export const ClientsHeader = (props: ClientsHeaderProps) => {
 
     const isAddMatch = useMatch(() => Paths.ClientsAdd);
     const isEditMatch = useMatch(() => Paths.ClientsEdit);
-    const isMainFormPage = createMemo(() =>
-        isAddMatch() !== undefined ||
-        isEditMatch() !== undefined,
+    const isMainFormPage = createMemo(
+        () => isAddMatch() !== undefined || isEditMatch() !== undefined,
     );
 
     const pageTitle = createMemo(() =>

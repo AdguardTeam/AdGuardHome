@@ -36,32 +36,35 @@ export const ConfirmDialog = (props: Props) => (
             <div class={theme.dialog.body}>{props.text}</div>
         </Show>
 
-        <Show when={props.customFooter} fallback={
-            <div class={theme.dialog.footer}>
-                <Button
-                    id={props.submitId}
-                    data-testid={props.submitTestId}
-                    variant={props.buttonVariant ?? 'primary'}
-                    size="small"
-                    onClick={props.onConfirm}
-                    class={theme.dialog.button}
-                    disabled={props.submitDisabled ?? false}
-                >
-                    {props.buttonText}
-                </Button>
+        <Show
+            when={props.customFooter}
+            fallback={
+                <div class={theme.dialog.footer}>
+                    <Button
+                        id={props.submitId}
+                        data-testid={props.submitTestId}
+                        variant={props.buttonVariant ?? 'primary'}
+                        size="small"
+                        onClick={props.onConfirm}
+                        class={theme.dialog.button}
+                        disabled={props.submitDisabled ?? false}
+                    >
+                        {props.buttonText}
+                    </Button>
 
-                <Button
-                    id={props.cancelId}
-                    data-testid={props.cancelTestId}
-                    variant="secondary"
-                    size="small"
-                    onClick={props.onClose}
-                    class={theme.dialog.button}
-                >
-                    {props.cancelText}
-                </Button>
-            </div>
-        }>
+                    <Button
+                        id={props.cancelId}
+                        data-testid={props.cancelTestId}
+                        variant="secondary"
+                        size="small"
+                        onClick={props.onClose}
+                        class={theme.dialog.button}
+                    >
+                        {props.cancelText}
+                    </Button>
+                </div>
+            }
+        >
             {props.customFooter}
         </Show>
     </Dialog>

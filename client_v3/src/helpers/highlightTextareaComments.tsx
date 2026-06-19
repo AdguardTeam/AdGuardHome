@@ -16,11 +16,7 @@ const renderHighlightedLine = (
         [theme.highlight.textTransparent]: !isComment,
     });
 
-    return (
-        <div class={lineClassName}>
-            {line || '\n'}
-        </div>
-    );
+    return <div class={lineClassName}>{line || '\n'}</div>;
 };
 
 export const getTextareaCommentsHighlight = (

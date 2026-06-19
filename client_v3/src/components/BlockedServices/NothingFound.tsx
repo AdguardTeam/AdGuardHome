@@ -1,4 +1,3 @@
-
 import intl from 'panel/common/intl';
 import { Icon } from 'panel/common/ui/Icon';
 

@@ -63,9 +63,7 @@ export const PersistentClientsTable = (props: Props) => {
 
                 return (
                     <div class={s.cell}>
-                        <span class={s.cellLabel}>
-                            {intl.getMessage('client_identifier')}
-                        </span>
+                        <span class={s.cellLabel}>{intl.getMessage('client_identifier')}</span>
 
                         <div class={s.cellValue}>
                             <div class={s.idsRow}>
@@ -81,11 +79,17 @@ export const PersistentClientsTable = (props: Props) => {
                                         menu={
                                             <div class={s.idsTooltip}>
                                                 <For each={ids}>
-                                                    {(id) => <span class={s.idsTooltipItem}>{id}</span>}
+                                                    {(id) => (
+                                                        <span class={s.idsTooltipItem}>{id}</span>
+                                                    )}
                                                 </For>
                                                 <button
                                                     type="button"
-                                                    class={cn(s.copyBtn, s.copyBtnGreen, s.copyBtnTopRight)}
+                                                    class={cn(
+                                                        s.copyBtn,
+                                                        s.copyBtnGreen,
+                                                        s.copyBtnTopRight,
+                                                    )}
                                                     onClick={() => handleCopy(ids.join(', '))}
                                                     title={intl.getMessage('copy')}
                                                 >
@@ -228,13 +232,13 @@ export const PersistentClientsTable = (props: Props) => {
             sortable: true,
             render: (_value: unknown, row: Client) => (
                 <div class={s.cell}>
-                    <span class={s.cellLabel}>
-                        {intl.getMessage('requests_table_header')}
-                    </span>
+                    <span class={s.cellLabel}>{intl.getMessage('requests_table_header')}</span>
 
                     <div class={s.cellValue}>
                         <span>
-                            {(props.normalizedTopClients?.configured[row.name] || 0).toLocaleString()}
+                            {(
+                                props.normalizedTopClients?.configured[row.name] || 0
+                            ).toLocaleString()}
                         </span>
                     </div>
                 </div>
@@ -250,9 +254,7 @@ export const PersistentClientsTable = (props: Props) => {
             width: 80,
             render: (_value: unknown, row: Client) => (
                 <div class={s.cell}>
-                    <span class={s.cellLabel}>
-                        {intl.getMessage('actions_table_header')}
-                    </span>
+                    <span class={s.cellLabel}>{intl.getMessage('actions_table_header')}</span>
 
                     <div class={s.cellValue}>
                         <div class={s.cellActions}>

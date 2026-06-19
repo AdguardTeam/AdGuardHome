@@ -107,12 +107,7 @@ export const QueryDetailsTooltipContent = (props: Props) => {
                                             {content}
                                         </a>
                                     ) : (
-                                        <span
-                                            class={cn(
-                                                s.queryDetailsTooltipValue,
-                                                theme.text.t3,
-                                            )}
-                                        >
+                                        <span class={cn(s.queryDetailsTooltipValue, theme.text.t3)}>
                                             {content}
                                         </span>
                                     ),

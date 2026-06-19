@@ -62,21 +62,31 @@ const getStatusClassName = (tone: CheckResultTone) => {
 };
 
 export const CheckResult = (props: Props) => {
-    const meta = createMemo(() => getCheckResultMeta({
-        reason: props.checkResult.reason,
-        rules: props.checkResult.rules,
-        filters: filteringState.filters,
-        whitelistFilters: filteringState.whitelistFilters,
-    }));
+    const meta = createMemo(() =>
+        getCheckResultMeta({
+            reason: props.checkResult.reason,
+            rules: props.checkResult.rules,
+            filters: filteringState.filters,
+            whitelistFilters: filteringState.whitelistFilters,
+        }),
+    );
 
     const statusClassName = createMemo(() => getStatusClassName(meta().tone));
-    const showRewriteActions = () => props.checkResult.reason === FILTERED_STATUS.REWRITE && props.hasMatchedRewrite;
+    const showRewriteActions = () =>
+        props.checkResult.reason === FILTERED_STATUS.REWRITE && props.hasMatchedRewrite;
     const showSource = () => Boolean(meta().source);
-    const hasStandaloneResultMessage = () => props.checkResult.reason ? STANDALONE_RESULT_REASONS.has(props.checkResult.reason) : false;
-    const redirectedValue = () => props.checkResult.cname || (props.checkResult.ip_addrs && props.checkResult.ip_addrs.length > 0 ? props.checkResult.ip_addrs.join(', ') : null);
-    const normalizedServiceName = () => props.checkResult.service_name
-        ? getServiceName(servicesState.allServices, props.checkResult.service_name) || props.checkResult.service_name
-        : null;
+    const hasStandaloneResultMessage = () =>
+        props.checkResult.reason ? STANDALONE_RESULT_REASONS.has(props.checkResult.reason) : false;
+    const redirectedValue = () =>
+        props.checkResult.cname ||
+        (props.checkResult.ip_addrs && props.checkResult.ip_addrs.length > 0
+            ? props.checkResult.ip_addrs.join(', ')
+            : null);
+    const normalizedServiceName = () =>
+        props.checkResult.service_name
+            ? getServiceName(servicesState.allServices, props.checkResult.service_name) ||
+              props.checkResult.service_name
+            : null;
     const hiddenActionKindSet = () => new Set(props.hiddenActionKinds || []);
 
     const reasonContent = () => {
@@ -129,7 +139,9 @@ export const CheckResult = (props: Props) => {
 
                 <div class={s.checkResultItems}>
                     <div class={s.resultItem}>
-                        {intl.getMessage('user_rules_domain', { value: props.checkResult.hostname })}
+                        {intl.getMessage('user_rules_domain', {
+                            value: props.checkResult.hostname,
+                        })}
                     </div>
 
                     <Show when={reasonContent()}>
@@ -144,7 +156,9 @@ export const CheckResult = (props: Props) => {
 
                     <Show when={normalizedServiceName()}>
                         <div class={s.resultItem}>
-                            {intl.getMessage('user_rules_service', { service: normalizedServiceName() })}
+                            {intl.getMessage('user_rules_service', {
+                                service: normalizedServiceName(),
+                            })}
                         </div>
                     </Show>
 
@@ -174,19 +188,33 @@ export const CheckResult = (props: Props) => {
 
                     <Show when={meta().tone !== 'rewritten' && props.checkResult.cname}>
                         <div class={s.resultItem}>
-                            {intl.getMessage('user_rules_cname', { cname: props.checkResult.cname })}
+                            {intl.getMessage('user_rules_cname', {
+                                cname: props.checkResult.cname,
+                            })}
                         </div>
                     </Show>
 
-                    <Show when={meta().tone !== 'rewritten' && props.checkResult.ip_addrs && props.checkResult.ip_addrs!.length > 0}>
+                    <Show
+                        when={
+                            meta().tone !== 'rewritten' &&
+                            props.checkResult.ip_addrs &&
+                            props.checkResult.ip_addrs!.length > 0
+                        }
+                    >
                         <div class={s.resultItem}>
-                            {intl.getMessage('user_rules_ip', { ip: props.checkResult.ip_addrs!.join(', ') })}
+                            {intl.getMessage('user_rules_ip', {
+                                ip: props.checkResult.ip_addrs!.join(', '),
+                            })}
                         </div>
                     </Show>
                 </div>
 
                 <div class={s.actionButtons}>
-                    <For each={meta().actions.filter((action) => !hiddenActionKindSet().has(action.kind))}>
+                    <For
+                        each={meta().actions.filter(
+                            (action) => !hiddenActionKindSet().has(action.kind),
+                        )}
+                    >
                         {(action) => (
                             <button
                                 type="button"

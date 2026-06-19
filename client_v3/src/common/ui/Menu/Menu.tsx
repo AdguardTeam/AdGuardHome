@@ -1,4 +1,3 @@
-
 import { useLocation } from '@solidjs/router';
 import cn from 'clsx';
 import { Icon } from 'panel/common/ui/Icon';
@@ -150,9 +149,7 @@ export const Menu = (props: Props) => {
                         id="sign_out"
                     >
                         <Icon class={s.linkIcon} icon="logout" />
-                        <span class={theme.common.textOverflow}>
-                            {intl.getMessage('logout')}
-                        </span>
+                        <span class={theme.common.textOverflow}>{intl.getMessage('logout')}</span>
                     </a>
                 </div>
             </div>

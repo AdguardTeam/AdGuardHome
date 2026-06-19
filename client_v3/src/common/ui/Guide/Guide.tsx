@@ -213,38 +213,80 @@ const renderDnsDevicesList = () => (
                 <li class={s.guideBulletItem}>
                     {intl.getMessage('setup_devices_dns_other_list_1', {
                         a: (text: string) => (
-                            <a href="https://github.com/AdguardTeam/AdGuardHome" target="_blank" class={s.dnsLink} rel="noopener noreferrer">{text}</a>
+                            <a
+                                href="https://github.com/AdguardTeam/AdGuardHome"
+                                target="_blank"
+                                class={s.dnsLink}
+                                rel="noopener noreferrer"
+                            >
+                                {text}
+                            </a>
                         ),
                     })}
                 </li>
                 <li class={s.guideBulletItem}>
                     {intl.getMessage('setup_devices_dns_other_list_2', {
                         a: (text: string) => (
-                            <a href="https://github.com/AdguardTeam/dnsproxy" target="_blank" class={s.dnsLink} rel="noopener noreferrer">{text}</a>
+                            <a
+                                href="https://github.com/AdguardTeam/dnsproxy"
+                                target="_blank"
+                                class={s.dnsLink}
+                                rel="noopener noreferrer"
+                            >
+                                {text}
+                            </a>
                         ),
                     })}
                 </li>
                 <li class={s.guideBulletItem}>
                     {intl.getMessage('setup_devices_dns_other_list_3', {
                         a: (text: string) => (
-                            <a href="https://github.com/jedisct1/dnscrypt-proxy" target="_blank" class={s.dnsLink} rel="noopener noreferrer">{text}</a>
+                            <a
+                                href="https://github.com/jedisct1/dnscrypt-proxy"
+                                target="_blank"
+                                class={s.dnsLink}
+                                rel="noopener noreferrer"
+                            >
+                                {text}
+                            </a>
                         ),
                     })}
                 </li>
                 <li class={s.guideBulletItem}>
                     {intl.getMessage('setup_devices_dns_other_list_4', {
                         a: (text: string) => (
-                            <a href="https://support.mozilla.org/kb/firefox-dns-over-https" target="_blank" class={s.dnsLink} rel="noopener noreferrer">{text}</a>
+                            <a
+                                href="https://support.mozilla.org/kb/firefox-dns-over-https"
+                                target="_blank"
+                                class={s.dnsLink}
+                                rel="noopener noreferrer"
+                            >
+                                {text}
+                            </a>
                         ),
                     })}
                 </li>
                 <li class={s.guideBulletItem}>
                     {intl.getMessage('setup_devices_dns_other_list_5', {
                         a: (text: string) => (
-                            <a href="https://dnscrypt.info/implementations" target="_blank" class={s.dnsLink} rel="noopener noreferrer">{text}</a>
+                            <a
+                                href="https://dnscrypt.info/implementations"
+                                target="_blank"
+                                class={s.dnsLink}
+                                rel="noopener noreferrer"
+                            >
+                                {text}
+                            </a>
                         ),
                         b: (text: string) => (
-                            <a href="https://dnsprivacy.org/wiki/display/DP/DNS+Privacy+Clients" target="_blank" class={s.dnsLink} rel="noopener noreferrer">{text}</a>
+                            <a
+                                href="https://dnsprivacy.org/wiki/display/DP/DNS+Privacy+Clients"
+                                target="_blank"
+                                class={s.dnsLink}
+                                rel="noopener noreferrer"
+                            >
+                                {text}
+                            </a>
                         ),
                     })}
                 </li>
@@ -300,9 +342,7 @@ const getDnsSettingsContent = (
                 </Show>
             </ul>
 
-            <div class={s.guideParagraph}>
-                {intl.getMessage('setup_devices_dns_list_devices')}
-            </div>
+            <div class={s.guideParagraph}>{intl.getMessage('setup_devices_dns_list_devices')}</div>
 
             {renderDnsDevicesList()}
 
@@ -329,7 +369,9 @@ const getDnsSettingsContent = (
 const DnsPrivacyLayout = (props: PlatformLayoutProps) => (
     <div title={intl.getMessage('dns_privacy')}>
         <div class={s.title}>{intl.getMessage('dns_privacy')}</div>
-        <div class={s.text}>{getDnsSettingsContent(props.dnsAddresses, props.serverName, props.portHttps)}</div>
+        <div class={s.text}>
+            {getDnsSettingsContent(props.dnsAddresses, props.serverName, props.portHttps)}
+        </div>
     </div>
 );
 
@@ -401,8 +443,7 @@ export const Guide = (props: Props) => {
         selectOptions().find((option) => option.value === activeTabLabel()),
     );
 
-    const activeLayout = () =>
-        platformLayouts()[activeTabLabel() as keyof typeof platformLayouts];
+    const activeLayout = () => platformLayouts()[activeTabLabel() as keyof typeof platformLayouts];
 
     return (
         <div class={s.deviceSelectorContainer}>

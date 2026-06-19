@@ -91,7 +91,7 @@ export const GeneralStatistics = (props: Props) => {
                         tooltip={intl.getMessage('safe_search_used_tooltip')}
                     />
 
-                    <div class={s.rowDivider}></div>
+                    <div class={s.rowDivider} />
 
                     <div class={s.processingTimeRow}>
                         <StatRow

@@ -40,13 +40,14 @@ export const UserRules = () => {
     const [checkQtype, setCheckQtype] = createSignal(DNS_RECORD_TYPE_OPTIONS[0].value);
 
     // Derived state
-    const isActionProcessing = createMemo(() =>
-        filteringState.processingRules ||
-        filteringState.processingCheck ||
-        clientsState.processingUpdating ||
-        rewritesState.processingDelete ||
-        rewritesState.processingUpdate ||
-        servicesState.processingSet,
+    const isActionProcessing = createMemo(
+        () =>
+            filteringState.processingRules ||
+            filteringState.processingCheck ||
+            clientsState.processingUpdating ||
+            rewritesState.processingDelete ||
+            rewritesState.processingUpdate ||
+            servicesState.processingSet,
     );
 
     const {
@@ -128,8 +129,8 @@ export const UserRules = () => {
     };
 
     const showResultLoader = createMemo(() => isResultVisible() && isResultRefreshing());
-    const showResultCard = createMemo(() =>
-        isResultVisible() && !isResultRefreshing() && Boolean(filteringState.check?.hostname),
+    const showResultCard = createMemo(
+        () => isResultVisible() && !isResultRefreshing() && Boolean(filteringState.check?.hostname),
     );
 
     return (

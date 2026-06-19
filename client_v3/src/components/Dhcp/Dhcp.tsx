@@ -193,7 +193,7 @@ export const Dhcp = () => {
     };
 
     const allIps = () => selectedIface()?.ip_addresses || [];
-    const visibleIps = () => showAllIps() ? allIps() : allIps().slice(0, MAX_VISIBLE_IPS);
+    const visibleIps = () => (showAllIps() ? allIps() : allIps().slice(0, MAX_VISIBLE_IPS));
     const hiddenIpsCount = () => allIps().length - MAX_VISIBLE_IPS;
 
     const enteredSomeValue = () => {
@@ -211,8 +211,7 @@ export const Dhcp = () => {
         return (
             !dhcpState.enabled &&
             check &&
-            (check.v4?.other_server?.found === 'yes' ||
-                check.v6?.other_server?.found === 'yes')
+            (check.v4?.other_server?.found === 'yes' || check.v6?.other_server?.found === 'yes')
         );
     };
 
@@ -273,35 +272,50 @@ export const Dhcp = () => {
                                     <div class={s.interfaceInfo}>
                                         <Show when={selectedIface()?.gateway_ip}>
                                             <div class={s.interfaceInfoRow}>
-                                                <span class={cn(theme.text.t3, s.interfaceInfoLabel)}>
+                                                <span
+                                                    class={cn(theme.text.t3, s.interfaceInfoLabel)}
+                                                >
                                                     {intl.getMessage('dhcp_form_gateway_input')}:
                                                 </span>
-                                                <span class={cn(theme.text.t3, s.interfaceInfoValue)}>
+                                                <span
+                                                    class={cn(theme.text.t3, s.interfaceInfoValue)}
+                                                >
                                                     {selectedIface()?.gateway_ip}
                                                 </span>
                                             </div>
                                         </Show>
                                         <Show when={selectedIface()?.hardware_address}>
                                             <div class={s.interfaceInfoRow}>
-                                                <span class={cn(theme.text.t3, s.interfaceInfoLabel)}>
+                                                <span
+                                                    class={cn(theme.text.t3, s.interfaceInfoLabel)}
+                                                >
                                                     {intl.getMessage('dhcp_hardware_address')}:
                                                 </span>
-                                                <span class={cn(theme.text.t3, s.interfaceInfoValue)}>
+                                                <span
+                                                    class={cn(theme.text.t3, s.interfaceInfoValue)}
+                                                >
                                                     {selectedIface()?.hardware_address}
                                                 </span>
                                             </div>
                                         </Show>
                                         <Show when={allIps().length > 0}>
                                             <div class={s.interfaceInfoRow}>
-                                                <span class={cn(theme.text.t3, s.interfaceInfoLabel)}>
+                                                <span
+                                                    class={cn(theme.text.t3, s.interfaceInfoLabel)}
+                                                >
                                                     {intl.getMessage('dhcp_ip_addresses')}:
                                                 </span>
-                                                <span class={cn(theme.text.t3, s.interfaceInfoValue)}>
+                                                <span
+                                                    class={cn(theme.text.t3, s.interfaceInfoValue)}
+                                                >
                                                     {visibleIps().join(', ')}
                                                 </span>
                                                 <Show when={!showAllIps() && hiddenIpsCount() > 0}>
                                                     <span
-                                                        class={cn(theme.text.t3, s.interfaceInfoMore)}
+                                                        class={cn(
+                                                            theme.text.t3,
+                                                            s.interfaceInfoMore,
+                                                        )}
                                                         onClick={() => setShowAllIps(true)}
                                                     >
                                                         {intl.getMessage('show_more_count', {
@@ -348,7 +362,11 @@ export const Dhcp = () => {
 
                         <div class={s.settingsColumn}>
                             <h2
-                                class={cn(theme.layout.subtitle, theme.title.h5, theme.title.h4_tablet)}
+                                class={cn(
+                                    theme.layout.subtitle,
+                                    theme.title.h5,
+                                    theme.title.h4_tablet,
+                                )}
                             >
                                 {intl.getMessage('dhcp_ipv4_settings')}
                             </h2>
@@ -363,7 +381,11 @@ export const Dhcp = () => {
 
                         <div class={s.settingsColumn}>
                             <h2
-                                class={cn(theme.layout.subtitle, theme.title.h5, theme.title.h4_tablet)}
+                                class={cn(
+                                    theme.layout.subtitle,
+                                    theme.title.h5,
+                                    theme.title.h4_tablet,
+                                )}
                             >
                                 {intl.getMessage('dhcp_ipv6_settings')}
                             </h2>
@@ -378,13 +400,19 @@ export const Dhcp = () => {
 
                         <div>
                             <h2
-                                class={cn(theme.layout.subtitle, theme.title.h5, theme.title.h4_tablet)}
+                                class={cn(
+                                    theme.layout.subtitle,
+                                    theme.title.h5,
+                                    theme.title.h4_tablet,
+                                )}
                             >
                                 {intl.getMessage('dhcp_static_leases')}
                             </h2>
                             <div class={theme.form.group}>
                                 <Show
-                                    when={dhcpState.staticLeases && dhcpState.staticLeases.length > 0}
+                                    when={
+                                        dhcpState.staticLeases && dhcpState.staticLeases.length > 0
+                                    }
                                     fallback={
                                         <div class={cn(theme.text.t1, s.emptyTable)}>
                                             {intl.getMessage('static_dhcp_leases_not_found')}
@@ -427,7 +455,9 @@ export const Dhcp = () => {
                             </div>
                         </div>
 
-                        <h2 class={cn(theme.layout.subtitle, theme.title.h5, theme.title.h4_tablet)}>
+                        <h2
+                            class={cn(theme.layout.subtitle, theme.title.h5, theme.title.h4_tablet)}
+                        >
                             {intl.getMessage('dhcp_leases')}
                         </h2>
 
@@ -461,7 +491,10 @@ export const Dhcp = () => {
                                 staticLeases={dhcpState.staticLeases || []}
                                 dhcpConfig={
                                     dhcpState.v4
-                                        ? { gatewayIp: dhcpState.v4.gateway_ip, subnetMask: dhcpState.v4.subnet_mask }
+                                        ? {
+                                              gatewayIp: dhcpState.v4.gateway_ip,
+                                              subnetMask: dhcpState.v4.subnet_mask,
+                                          }
                                         : undefined
                                 }
                                 onSubmit={handleLeaseModalSubmit}
@@ -496,7 +529,9 @@ export const Dhcp = () => {
                         <Show when={confirmDeleteLease()}>
                             <ConfirmDialog
                                 title={intl.getMessage('delete_confirm')}
-                                text={intl.getMessage('delete_confirm_desc', { ip: confirmDeleteLease()?.ip })}
+                                text={intl.getMessage('delete_confirm_desc', {
+                                    ip: confirmDeleteLease()?.ip,
+                                })}
                                 buttonText={intl.getMessage('delete_table_action_confirm')}
                                 cancelText={intl.getMessage('cancel')}
                                 buttonVariant="danger"

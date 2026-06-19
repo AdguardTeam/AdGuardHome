@@ -48,7 +48,9 @@ export const Upstream = () => {
 
     const upstreamDns = createMemo(() =>
         dnsConfigState.upstream_dns_file
-            ? intl.getMessage('upstream_dns_configured_in_file', { path: dnsConfigState.upstream_dns_file })
+            ? intl.getMessage('upstream_dns_configured_in_file', {
+                  path: dnsConfigState.upstream_dns_file,
+              })
             : dnsConfigState.upstream_dns,
     );
 

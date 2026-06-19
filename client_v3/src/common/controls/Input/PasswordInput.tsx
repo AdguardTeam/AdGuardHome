@@ -5,10 +5,7 @@ import { Icon } from 'panel/common/ui/Icon';
 
 import styles from './Input.module.pcss';
 
-type Props = Omit<
-    Parameters<typeof Input>[0],
-    'type' | 'suffixIcon' | 'onChange' | 'value'
-> & {
+type Props = Omit<Parameters<typeof Input>[0], 'type' | 'suffixIcon' | 'onChange' | 'value'> & {
     value: string;
     onChange: (value: string) => void;
     ref?: HTMLInputElement | ((el: HTMLInputElement) => void);

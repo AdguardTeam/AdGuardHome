@@ -110,7 +110,8 @@ export const ScheduleModal = (props: Props) => {
         getEndTimeOptions({ hours: startHour(), minutes: startMinute() }, endHour()),
     );
 
-    const isDisabled = () => !props.currentDay || (!allDay() && !endTimeOptions().hasAvailableEndTime);
+    const isDisabled = () =>
+        !props.currentDay || (!allDay() && !endTimeOptions().hasAvailableEndTime);
 
     const handleSave = () => {
         if (isDisabled() || !props.currentDay) return;
@@ -120,9 +121,10 @@ export const ScheduleModal = (props: Props) => {
     };
 
     const dayLabel = () => getDayName(props.currentDay);
-    const title = () => props.currentData
-        ? intl.getMessage('inactivity_schedule_edit')
-        : intl.getMessage('inactivity_schedule_add');
+    const title = () =>
+        props.currentData
+            ? intl.getMessage('inactivity_schedule_edit')
+            : intl.getMessage('inactivity_schedule_add');
 
     return (
         <Dialog
@@ -185,7 +187,11 @@ export const ScheduleModal = (props: Props) => {
                 </div>
 
                 <div class={s.allDayRow}>
-                    <Checkbox id="all-day-checkbox" checked={allDay()} onChange={handleAllDayChange}>
+                    <Checkbox
+                        id="all-day-checkbox"
+                        checked={allDay()}
+                        onChange={handleAllDayChange}
+                    >
                         {intl.getMessage('inactivity_schedule_all_day')}
                     </Checkbox>
                 </div>

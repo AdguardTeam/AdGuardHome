@@ -94,10 +94,7 @@ export const blockDomain = async (domain: string): Promise<boolean> => {
         return true;
     }
 
-    const updatedRules = [
-        ...currentRules.filter((r: string) => r !== `@@${rule}`),
-        rule,
-    ];
+    const updatedRules = [...currentRules.filter((r: string) => r !== `@@${rule}`), rule];
     const didSave = await setRules(`${updatedRules.join('\n')}\n`);
 
     if (!didSave) {
@@ -140,10 +137,7 @@ export const blockDomainForClient = async (domain: string, client: string): Prom
         return true;
     }
 
-    const updatedRules = [
-        ...currentRules.filter((r: string) => r !== `@@${rule}`),
-        rule,
-    ];
+    const updatedRules = [...currentRules.filter((r: string) => r !== `@@${rule}`), rule];
     const didSave = await setRules(`${updatedRules.join('\n')}\n`);
 
     if (!didSave) {
@@ -160,7 +154,7 @@ export const BLOCK_ACTIONS = {
     UNBLOCK: 'unblock' as const,
 };
 
-export type BlockAction = typeof BLOCK_ACTIONS[keyof typeof BLOCK_ACTIONS];
+export type BlockAction = (typeof BLOCK_ACTIONS)[keyof typeof BLOCK_ACTIONS];
 
 export const toggleBlocking = async (
     type: BlockAction,
@@ -285,7 +279,9 @@ export const setFiltersConfig = async (config: any) => {
     }
 };
 
-export const checkHost = async (host: string | { name: string; client?: string; qtype?: string }): Promise<boolean> => {
+export const checkHost = async (
+    host: string | { name: string; client?: string; qtype?: string },
+): Promise<boolean> => {
     setState('processingCheck', true);
     try {
         const data = await apiClient.checkHost(host);
@@ -304,9 +300,7 @@ export const addFiltersBatch = async (
     setState('processingAddFilter', true);
     try {
         const results = await Promise.allSettled(
-            filters.map(({ url, name }) =>
-                apiClient.addFilter({ url, name, whitelist: false }),
-            ),
+            filters.map(({ url, name }) => apiClient.addFilter({ url, name, whitelist: false })),
         );
 
         const successes: Array<{ url: string; name: string }> = [];

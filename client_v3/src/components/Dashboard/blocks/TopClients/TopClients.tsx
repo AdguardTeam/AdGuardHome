@@ -38,7 +38,9 @@ type Props = {
 
 export const TopClients = (props: Props) => {
     let isMounted = true;
-    onCleanup(() => { isMounted = false; });
+    onCleanup(() => {
+        isMounted = false;
+    });
 
     const disallowedClientsList = createMemo(() => {
         const str = accessState.disallowed_clients || '';
@@ -60,9 +62,7 @@ export const TopClients = (props: Props) => {
         handleSort,
     } = useSortedData(() => props.topClients);
     const visibleClients = createMemo(() =>
-        isDesktop()
-            ? sortedClients()
-            : sortedClients().slice(0, MOBILE_TABLE_MAX_ROWS)
+        isDesktop() ? sortedClients() : sortedClients().slice(0, MOBILE_TABLE_MAX_ROWS),
     );
 
     const isClientBlocked = (clientName: string) => disallowedClientsList().includes(clientName);
@@ -74,9 +74,7 @@ export const TopClients = (props: Props) => {
 
             if (disallowedClients.includes(clientIp)) {
                 addErrorToast({
-                    error: new Error(
-                        intl.getMessage('client_already_blocked', { ip: clientIp }),
-                    ),
+                    error: new Error(intl.getMessage('client_already_blocked', { ip: clientIp })),
                 });
                 if (isMounted) {
                     setConfirmDialog({ open: false, client: '', action: 'block' });
@@ -131,19 +129,22 @@ export const TopClients = (props: Props) => {
 
         return (
             <div class={s.protectionMenu}>
-                <Show when={isBlocked} fallback={
-                    <div
-                        class={cn(
-                            theme.text.t2,
-                            theme.text.condenced,
-                            s.protectionMenuItem,
-                            s.protectionMenuItemRed,
-                        )}
-                        onClick={() => openConfirmDialog(client.name, 'block')}
-                    >
-                        {intl.getMessage('block_client')}
-                    </div>
-                }>
+                <Show
+                    when={isBlocked}
+                    fallback={
+                        <div
+                            class={cn(
+                                theme.text.t2,
+                                theme.text.condenced,
+                                s.protectionMenuItem,
+                                s.protectionMenuItemRed,
+                            )}
+                            onClick={() => openConfirmDialog(client.name, 'block')}
+                        >
+                            {intl.getMessage('block_client')}
+                        </div>
+                    }
+                >
                     <div
                         class={cn(theme.text.t2, theme.text.condenced, s.protectionMenuItem)}
                         onClick={() => openConfirmDialog(client.name, 'unblock')}
@@ -160,9 +161,7 @@ export const TopClients = (props: Props) => {
     return (
         <div class={s.card}>
             <div class={s.cardHeader}>
-                <div class={cn(theme.title.h5, s.cardTitle)}>
-                    {intl.getMessage('top_clients')}
-                </div>
+                <div class={cn(theme.title.h5, s.cardTitle)}>{intl.getMessage('top_clients')}</div>
             </div>
 
             <Show when={hasStats()}>
@@ -180,7 +179,9 @@ export const TopClients = (props: Props) => {
                     <For each={visibleClients()}>
                         {(client) => {
                             const percent = createMemo(() =>
-                                props.numDnsQueries > 0 ? (client.count / props.numDnsQueries) * 100 : 0
+                                props.numDnsQueries > 0
+                                    ? (client.count / props.numDnsQueries) * 100
+                                    : 0,
                             );
                             const isBlocked = isClientBlocked(client.name);
 
@@ -194,7 +195,10 @@ export const TopClients = (props: Props) => {
                                                 s.clientIp,
                                             )}
                                         >
-                                            <Show when={client.info} fallback={<div class={s.tableRowDot}></div>}>
+                                            <Show
+                                                when={client.info}
+                                                fallback={<div class={s.tableRowDot} />}
+                                            >
                                                 <Icon icon="location" class={s.tableRowIcon} />
                                             </Show>
 
@@ -245,91 +249,91 @@ export const TopClients = (props: Props) => {
                                                 style={{ width: `${percent()}%` }}
                                             />
                                         </div>
-                                    <Dropdown
-                                        wrapClass={s.clientActionsDropdown}
-                                        menu={getClientMenu(client)}
-                                        trigger="click"
-                                        position="bottomRight"
-                                        noIcon
-                                        open={openMenuClient() === client.name}
-                                        onOpenChange={(isOpen: boolean) =>
-                                            setOpenMenuClient(isOpen ? client.name : null)
-                                        }
-                                    >
-                                        <button type="button" class={s.actionButton}>
-                                            <Icon icon="bullets" />
-                                        </button>
-                                    </Dropdown>
+                                        <Dropdown
+                                            wrapClass={s.clientActionsDropdown}
+                                            menu={getClientMenu(client)}
+                                            trigger="click"
+                                            position="bottomRight"
+                                            noIcon
+                                            open={openMenuClient() === client.name}
+                                            onOpenChange={(isOpen: boolean) =>
+                                                setOpenMenuClient(isOpen ? client.name : null)
+                                            }
+                                        >
+                                            <button type="button" class={s.actionButton}>
+                                                <Icon icon="bullets" />
+                                            </button>
+                                        </Dropdown>
 
-                                    <Show when={isBlocked}>
-                                        <div
-                                            class={cn(
-                                                theme.text.t4,
-                                                theme.text.condenced,
-                                                s.clientBlocked,
-                                            )}
-                                        >
-                                            {intl.getMessage('blocked')}
-                                        </div>
-                                    </Show>
-                                </div>
+                                        <Show when={isBlocked}>
+                                            <div
+                                                class={cn(
+                                                    theme.text.t4,
+                                                    theme.text.condenced,
+                                                    s.clientBlocked,
+                                                )}
+                                            >
+                                                {intl.getMessage('blocked')}
+                                            </div>
+                                        </Show>
+                                    </div>
 
-                                <div class={s.tableRowInfo}>
-                                    <Show when={client.info?.name}>
-                                        <div
-                                            class={cn(
-                                                theme.text.t4,
-                                                theme.text.condenced,
-                                                s.clientName,
-                                            )}
-                                        >
-                                            {client.info!.name}
-                                        </div>
-                                    </Show>
-                                    <Show when={isBlocked}>
-                                        <div
-                                            class={cn(
-                                                theme.text.t4,
-                                                theme.text.condenced,
-                                                s.clientBlocked,
-                                            )}
-                                        >
-                                            {intl.getMessage('blocked')}
-                                        </div>
-                                    </Show>
-                                    <div class={s.tableRowQueriesInfo}>
-                                        <div
-                                            class={cn(
-                                                theme.text.t3,
-                                                theme.text.condenced,
-                                                s.queryCount,
-                                                s.queryCountHover,
-                                            )}
-                                        >
-                                            {formatCompactNumber(client.count)}
-
+                                    <div class={s.tableRowInfo}>
+                                        <Show when={client.info?.name}>
+                                            <div
+                                                class={cn(
+                                                    theme.text.t4,
+                                                    theme.text.condenced,
+                                                    s.clientName,
+                                                )}
+                                            >
+                                                {client.info!.name}
+                                            </div>
+                                        </Show>
+                                        <Show when={isBlocked}>
+                                            <div
+                                                class={cn(
+                                                    theme.text.t4,
+                                                    theme.text.condenced,
+                                                    s.clientBlocked,
+                                                )}
+                                            >
+                                                {intl.getMessage('blocked')}
+                                            </div>
+                                        </Show>
+                                        <div class={s.tableRowQueriesInfo}>
                                             <div
                                                 class={cn(
                                                     theme.text.t3,
                                                     theme.text.condenced,
-                                                    s.queryPercent,
+                                                    s.queryCount,
+                                                    s.queryCountHover,
                                                 )}
                                             >
-                                                ({percent().toFixed(1)}%)
+                                                {formatCompactNumber(client.count)}
+
+                                                <div
+                                                    class={cn(
+                                                        theme.text.t3,
+                                                        theme.text.condenced,
+                                                        s.queryPercent,
+                                                    )}
+                                                >
+                                                    ({percent().toFixed(1)}%)
+                                                </div>
+                                            </div>
+
+                                            <div class={s.queryBar}>
+                                                <div
+                                                    class={s.queryBarFill}
+                                                    style={{ width: `${percent()}%` }}
+                                                />
                                             </div>
                                         </div>
 
-                                        <div class={s.queryBar}>
-                                            <div
-                                                class={s.queryBarFill}
-                                                style={{ width: `${percent()}%` }}
-                                            />
-                                        </div>
+                                        <div class={s.tableRowActions}>{getClientMenu(client)}</div>
                                     </div>
-
-                                    <div class={s.tableRowActions}>{getClientMenu(client)}</div>
                                 </div>
-                            </div>
                             );
                         }}
                     </For>

@@ -5,7 +5,12 @@ import intl from 'panel/common/intl';
 import { MODAL_TYPE } from 'panel/helpers/constants';
 import { PageLoader } from 'panel/common/ui/Loader';
 import theme from 'panel/lib/theme';
-import { getFilteringStatus, toggleFilterStatus, refreshFilters, filteringState } from 'panel/stores/filtering';
+import {
+    getFilteringStatus,
+    toggleFilterStatus,
+    refreshFilters,
+    filteringState,
+} from 'panel/stores/filtering';
 import { Icon } from 'panel/common/ui/Icon';
 
 import { openModal } from 'panel/stores/modals';
@@ -68,78 +73,83 @@ export const Allowlists = () => {
     return (
         <div class={theme.layout.container}>
             <div class={theme.layout.containerIn}>
-                <Show when={isDataReady()} fallback={
-                    <>
-                        <div class={s.header}>
-                            <h1
-                                class={cn(
-                                    theme.layout.title,
-                                    theme.title.h4,
-                                    theme.title.h3_tablet,
-                                )}
-                            >
-                                {intl.getMessage('allowlists_title')}
-                            </h1>
+                <Show
+                    when={isDataReady()}
+                    fallback={
+                        <>
+                            <div class={s.header}>
+                                <h1
+                                    class={cn(
+                                        theme.layout.title,
+                                        theme.title.h4,
+                                        theme.title.h3_tablet,
+                                    )}
+                                >
+                                    {intl.getMessage('allowlists_title')}
+                                </h1>
 
-                            <button
-                                type="button"
-                                onClick={handleRefresh}
-                                disabled={filteringState.processingRefreshFilters}
-                                class={cn(s.button, s.button_checkUpdates)}
-                            >
-                                <Icon icon="refresh" color="green" />
-                                <span class={s.labelDesktop}>
-                                    {intl.getMessage('check_updates_btn')}
-                                </span>
-                            </button>
+                                <button
+                                    type="button"
+                                    onClick={handleRefresh}
+                                    disabled={filteringState.processingRefreshFilters}
+                                    class={cn(s.button, s.button_checkUpdates)}
+                                >
+                                    <Icon icon="refresh" color="green" />
+                                    <span class={s.labelDesktop}>
+                                        {intl.getMessage('check_updates_btn')}
+                                    </span>
+                                </button>
 
-                            <button
-                                type="button"
-                                onClick={openFilterUpdateModal}
-                                disabled={filteringState.processingRefreshFilters}
-                                class={cn(s.button, s.button_settings)}
-                            >
-                                <Icon icon="settings" color="green" />
-                            </button>
-                        </div>
-
-                        <div class={s.desc}>{intl.getMessage('allowlists_desc')}</div>
-
-                        <div class={s.group}>
-                            <PlusButton onClick={openAddAllowlistModal}>
-                                {intl.getMessage('add_allowlist')}
-                            </PlusButton>
-                        </div>
-
-                        <Show when={filteringState.whitelistFilters.length > 0}>
-                            <div class={cn(s.group, s.tableGroup)}>
-                                <ListsTable
-                                    tableId={TABLE_IDS.ALLOWLISTS_TABLE}
-                                    filters={filteringState.whitelistFilters}
-                                    processingConfigFilter={filteringState.processingConfigFilter}
-                                    editFilterList={openEditAllowlistModal}
-                                    addFilterList={openAddAllowlistModal}
-                                    toggleFilterList={toggleFilter}
-                                    deleteFilterList={openDeleteAllowlistModal}
-                                />
+                                <button
+                                    type="button"
+                                    onClick={openFilterUpdateModal}
+                                    disabled={filteringState.processingRefreshFilters}
+                                    class={cn(s.button, s.button_settings)}
+                                >
+                                    <Icon icon="settings" color="green" />
+                                </button>
                             </div>
-                        </Show>
 
-                        <ConfigureAllowlistModal modalId={MODAL_TYPE.ADD_ALLOWLIST} />
+                            <div class={s.desc}>{intl.getMessage('allowlists_desc')}</div>
 
-                        <ConfigureAllowlistModal
-                            modalId={MODAL_TYPE.EDIT_ALLOWLIST}
-                            filterToEdit={currentFilter()}
-                        />
+                            <div class={s.group}>
+                                <PlusButton onClick={openAddAllowlistModal}>
+                                    {intl.getMessage('add_allowlist')}
+                                </PlusButton>
+                            </div>
 
-                        <DeleteAllowlistModal
-                            filterToDelete={currentFilter()}
-                            setFilterToDelete={setCurrentFilter}
-                        />
+                            <Show when={filteringState.whitelistFilters.length > 0}>
+                                <div class={cn(s.group, s.tableGroup)}>
+                                    <ListsTable
+                                        tableId={TABLE_IDS.ALLOWLISTS_TABLE}
+                                        filters={filteringState.whitelistFilters}
+                                        processingConfigFilter={
+                                            filteringState.processingConfigFilter
+                                        }
+                                        editFilterList={openEditAllowlistModal}
+                                        addFilterList={openAddAllowlistModal}
+                                        toggleFilterList={toggleFilter}
+                                        deleteFilterList={openDeleteAllowlistModal}
+                                    />
+                                </div>
+                            </Show>
 
-                        <FilterUpdateModal />
-                    </>
-                }>
+                            <ConfigureAllowlistModal modalId={MODAL_TYPE.ADD_ALLOWLIST} />
+
+                            <ConfigureAllowlistModal
+                                modalId={MODAL_TYPE.EDIT_ALLOWLIST}
+                                filterToEdit={currentFilter()}
+                            />
+
+                            <DeleteAllowlistModal
+                                filterToDelete={currentFilter()}
+                                setFilterToDelete={setCurrentFilter}
+                            />
+
+                            <FilterUpdateModal />
+                        </>
+                    }
+                >
                     <PageLoader />
                 </Show>
             </div>

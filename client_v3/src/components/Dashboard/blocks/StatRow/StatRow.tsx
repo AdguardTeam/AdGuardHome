@@ -46,9 +46,14 @@ export const StatRow = (props: StatRowProps) => {
             </Dropdown>
 
             <div class={s.statRowValue}>
-                <Show when={isQueriesValue()} fallback={
-                    <div class={cn(theme.text.t3, theme.text.condenced, s.queryCount)}>{props.value}</div>
-                }>
+                <Show
+                    when={isQueriesValue()}
+                    fallback={
+                        <div class={cn(theme.text.t3, theme.text.condenced, s.queryCount)}>
+                            {props.value}
+                        </div>
+                    }
+                >
                     <Dropdown
                         trigger="hover"
                         position="top"
@@ -57,19 +62,25 @@ export const StatRow = (props: StatRowProps) => {
                         overlayClass={s.queryTooltipOverlay}
                         menu={
                             <div class={s.queryTooltip}>
-                                {typeof props.value === 'number' ? formatNumber(props.value) : props.value}{' '}
+                                {typeof props.value === 'number'
+                                    ? formatNumber(props.value)
+                                    : props.value}{' '}
                                 {intl.getMessage('queries').toLowerCase()}
                             </div>
                         }
                     >
                         <div class={cn(theme.text.t3, theme.text.condenced, s.queryCount)}>
-                            {typeof props.value === 'number' ? formatCompactNumber(props.value) : props.value}
+                            {typeof props.value === 'number'
+                                ? formatCompactNumber(props.value)
+                                : props.value}
 
                             <div class={cn(theme.text.t3, theme.text.condenced, s.queryPercent)}>
                                 <Show
                                     when={props.isTotal}
                                     fallback={
-                                        <Show when={props.percent !== undefined && props.percent! > 0}>
+                                        <Show
+                                            when={props.percent !== undefined && props.percent! > 0}
+                                        >
                                             <span>({props.percent!.toFixed(1)}%)</span>
                                         </Show>
                                     }

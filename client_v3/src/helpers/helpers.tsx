@@ -1052,16 +1052,10 @@ export const getRulesToFilterList = (
                     acc
                         .concat(
                             rulesArr.map((rule: any, i: any) => (
-                                <dd class={classes.rule}>
-                                    {rule}
-                                </dd>
+                                <dd class={classes.rule}>{rule}</dd>
                             )),
                         )
-                        .concat(
-                            <dt class={classes.filter}>
-                                {filterName}
-                            </dt>,
-                        ),
+                        .concat(<dt class={classes.filter}>{filterName}</dt>),
                 [],
             )}
         </dl>

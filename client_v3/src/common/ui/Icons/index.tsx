@@ -1,5 +1,3 @@
-
-
 import './Icons.pcss';
 
 export const ICONS = {
@@ -140,7 +138,13 @@ export const Icons = () => (
             />
         </symbol>
 
-        <symbol id="radio_on" viewBox="0 0 24 24" fill="none" fill-rule="evenodd" clip-rule="evenodd">
+        <symbol
+            id="radio_on"
+            viewBox="0 0 24 24"
+            fill="none"
+            fill-rule="evenodd"
+            clip-rule="evenodd"
+        >
             <circle
                 cx="12"
                 cy="12"
@@ -484,7 +488,12 @@ export const Icons = () => (
         </symbol>
 
         <symbol id="loader" viewBox="0 0 68 68" fill="none">
-            <g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3">
+            <g
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="3"
+            >
                 <path d="m17.8231 14.2872c.3222-.2648.6511-.5218.9863-.7708" />
                 <path d="m24.2393 10.4348c.7506-.3113 1.5192-.58768 2.3039-.82726.4025-.1229.8093-.2361 1.22-.33934" />
                 <path d="m34 8.5c14.0833 0 25.5 11.4167 25.5 25.5s-11.4167 25.5-25.5 25.5c-7.0416 0-13.4166-2.8542-18.0312-7.4688-2.3489-2.3488-4.2416-5.1538-5.534-8.2705" />
@@ -788,7 +797,7 @@ export const Icons = () => (
                     fill="currentColor"
                 />
             </mask>
-            <g mask="url(#mask0_10282_40)"></g>
+            <g mask="url(#mask0_10282_40)" />
         </symbol>
 
         <symbol id="mac" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -822,7 +831,7 @@ export const Icons = () => (
                     fill="currentColor"
                 />
             </mask>
-            <g mask="url(#mask0_10282_276)"></g>
+            <g mask="url(#mask0_10282_276)" />
         </symbol>
 
         <symbol id="ios" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1020,7 +1029,12 @@ export const Icons = () => (
 
         <symbol id="search" viewBox="0 0 24 24" fill="none">
             <circle cx="9.5" cy="9.5" r="5.5" stroke="currentColor" stroke-width="1.5" />
-            <path d="M14 14L19 19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+            <path
+                d="M14 14L19 19"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+            />
         </symbol>
 
         <symbol id="user" viewBox="0 0 16 16" fill="none">

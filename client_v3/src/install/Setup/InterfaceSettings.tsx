@@ -72,7 +72,7 @@ export const InterfaceSettings = (props: Props) => {
                             type="button"
                             size="small"
                             variant="secondary"
-                            className={styles.button}
+                            class={styles.button}
                             onClick={() => handleStaticIp(ip)}
                         >
                             {intl.getMessage('set_static_ip')}
@@ -81,16 +81,10 @@ export const InterfaceSettings = (props: Props) => {
                 );
             case STATUS_RESPONSE.ERROR:
                 return (
-                    <div class={styles.errorText}>
-                        {intl.getMessage('install_static_error')}
-                    </div>
+                    <div class={styles.errorText}>{intl.getMessage('install_static_error')}</div>
                 );
             case STATUS_RESPONSE.YES:
-                return (
-                    <div class={styles.successText}>
-                        {intl.getMessage('install_static_ok')}
-                    </div>
-                );
+                return <div class={styles.successText}>{intl.getMessage('install_static_ok')}</div>;
             default:
                 return null;
         }

@@ -32,9 +32,7 @@ export const TopUpstreams = (props: Props) => {
         handleSort,
     } = useSortedData(() => props.topUpstreamsResponses);
     const visibleUpstreams = createMemo(() =>
-        isDesktop()
-            ? sortedUpstreams()
-            : sortedUpstreams().slice(0, MOBILE_TABLE_MAX_ROWS)
+        isDesktop() ? sortedUpstreams() : sortedUpstreams().slice(0, MOBILE_TABLE_MAX_ROWS),
     );
 
     const hasStats = createMemo(() => props.topUpstreamsResponses.length > 0);
@@ -62,7 +60,9 @@ export const TopUpstreams = (props: Props) => {
                     <For each={visibleUpstreams()}>
                         {(upstream) => {
                             const percent = createMemo(() =>
-                                props.numDnsQueries > 0 ? (upstream.count / props.numDnsQueries) * 100 : 0
+                                props.numDnsQueries > 0
+                                    ? (upstream.count / props.numDnsQueries) * 100
+                                    : 0,
                             );
 
                             return (

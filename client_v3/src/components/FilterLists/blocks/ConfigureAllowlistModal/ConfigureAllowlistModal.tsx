@@ -108,9 +108,7 @@ export const ConfigureAllowlistModal = (props: Props) => {
                                     type="text"
                                     id="filters_name"
                                     label={intl.getMessage('name_label')}
-                                    placeholder={intl.getMessage(
-                                        'allowlist_placeholder_example',
-                                    )}
+                                    placeholder={intl.getMessage('allowlist_placeholder_example')}
                                     value={name()}
                                     onChange={(e) => setName((e.target as HTMLInputElement).value)}
                                 />
@@ -121,9 +119,7 @@ export const ConfigureAllowlistModal = (props: Props) => {
                                     type="text"
                                     id="filters_url"
                                     label={intl.getMessage('blocklist_url_file_path')}
-                                    placeholder={intl.getMessage(
-                                        'blocklist_url_file_path',
-                                    )}
+                                    placeholder={intl.getMessage('blocklist_url_file_path')}
                                     value={url()}
                                     onChange={(e) => setUrl((e.target as HTMLInputElement).value)}
                                     onBlur={validateAndSetErrors}

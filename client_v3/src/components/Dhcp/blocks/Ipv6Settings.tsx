@@ -32,8 +32,8 @@ export const Ipv6Settings = (props: Props) => {
         setLeaseDuration(props.v6?.lease_duration ? String(props.v6.lease_duration) : '');
     });
 
-    const hasIpv6 = createMemo(() =>
-        !!(props.interfaces && props.interfaces[props.selectedInterface]?.ipv6_addresses),
+    const hasIpv6 = createMemo(
+        () => !!(props.interfaces && props.interfaces[props.selectedInterface]?.ipv6_addresses),
     );
 
     const isEmptyConfig = createMemo(() => !rangeStart() && !leaseDuration());
@@ -58,7 +58,9 @@ export const Ipv6Settings = (props: Props) => {
                             id="v6_range_start"
                             placeholder={intl.getMessage('dhcp_form_range_start')}
                             value={rangeStart()}
-                            onChange={(e: Event) => setRangeStart((e.target as HTMLInputElement).value)}
+                            onChange={(e: Event) =>
+                                setRangeStart((e.target as HTMLInputElement).value)
+                            }
                             disabled={!hasIpv6()}
                         />
                     </div>
@@ -71,7 +73,9 @@ export const Ipv6Settings = (props: Props) => {
                         label={intl.getMessage('dhcp_form_lease_title')}
                         placeholder="86400"
                         value={leaseDuration()}
-                        onChange={(e: Event) => setLeaseDuration((e.target as HTMLInputElement).value)}
+                        onChange={(e: Event) =>
+                            setLeaseDuration((e.target as HTMLInputElement).value)
+                        }
                         disabled={!hasIpv6()}
                     />
                 </div>

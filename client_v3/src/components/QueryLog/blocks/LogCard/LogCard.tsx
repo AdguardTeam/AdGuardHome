@@ -45,22 +45,28 @@ export const LogCard = (props: Props) => {
     const proto = () => getProtocolName(props.entry.client_proto);
     const clientDetails = () => props.entry.client_info?.name || props.entry.client_id;
     const clientLocation = () => getClientLocation(props.entry.client_info?.whois);
-    const statusKey = () => getQueryStatusKey(props.entry.reason, props.entry.originalResponse ?? []);
+    const statusKey = () =>
+        getQueryStatusKey(props.entry.reason, props.entry.originalResponse ?? []);
     const reasonKey = () => getQueryReasonKey(props.entry.reason, props.entry.rules ?? []);
-    const reasonDetails = () => getQueryReasonDetails({
-        elapsedMs: props.entry.elapsedMs,
-        filters: props.filters,
-        reason: props.entry.reason,
-        rules: props.entry.rules ?? [],
-        serviceName: props.entry.service_name || props.entry.serviceName,
-        services: props.services,
-        whitelistFilters: props.whitelistFilters,
-    });
+    const reasonDetails = () =>
+        getQueryReasonDetails({
+            elapsedMs: props.entry.elapsedMs,
+            filters: props.filters,
+            reason: props.entry.reason,
+            rules: props.entry.rules ?? [],
+            serviceName: props.entry.service_name || props.entry.serviceName,
+            services: props.services,
+            whitelistFilters: props.whitelistFilters,
+        });
     const statusLabel = () => getQueryStatusLabel(statusKey());
     const reasonLabel = () => getQueryReasonLabel(reasonKey());
 
     return (
-        <div class={s.card} onClick={() => props.onRowClick(props.entry)} data-testid="query-log-card">
+        <div
+            class={s.card}
+            onClick={() => props.onRowClick(props.entry)}
+            data-testid="query-log-card"
+        >
             <div class={s.cardBody}>
                 <div class={s.cardHeader}>
                     <div class={s.titleBlock}>

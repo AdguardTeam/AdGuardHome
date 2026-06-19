@@ -31,7 +31,5 @@ export const ClientBlockedServices = () => {
         currentTitle: intl.getMessage('blocked_services'),
     }));
 
-    return (
-        <BlockedServices clientScope breadcrumbs={breadcrumbs()} class={s.containerOverride} />
-    );
+    return <BlockedServices clientScope breadcrumbs={breadcrumbs()} class={s.containerOverride} />;
 };

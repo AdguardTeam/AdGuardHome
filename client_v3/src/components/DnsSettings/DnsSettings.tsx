@@ -15,8 +15,8 @@ import { Cache } from './Cache';
 export const DnsSettings = () => {
     // upstream_dns is only defined after a successful fetch.
     const hasCachedData = createMemo(() => dnsConfigState.upstream_dns !== undefined);
-    const isDataLoading = createMemo(() =>
-        !hasCachedData() && (accessState.processing || dnsConfigState.processingGetConfig),
+    const isDataLoading = createMemo(
+        () => !hasCachedData() && (accessState.processing || dnsConfigState.processingGetConfig),
     );
 
     onMount(() => {
@@ -31,14 +31,17 @@ export const DnsSettings = () => {
                     {intl.getMessage('dns_settings')}
                 </h1>
 
-                <Show when={isDataLoading()} fallback={
-                    <>
-                        <Upstream />
-                        <ServerConfig />
-                        <Cache />
-                        <Access />
-                    </>
-                }>
+                <Show
+                    when={isDataLoading()}
+                    fallback={
+                        <>
+                            <Upstream />
+                            <ServerConfig />
+                            <Cache />
+                            <Access />
+                        </>
+                    }
+                >
                     <PageLoader />
                 </Show>
             </div>

@@ -1,4 +1,3 @@
-
 import { Switch } from 'panel/common/controls/Switch';
 import { decodeSvg } from 'panel/helpers/helpers';
 
@@ -42,7 +41,11 @@ export const ServiceRow = (props: Props) => {
         >
             <div class={s.serviceIcon} innerHTML={decodedSvg} />
             <div class={s.serviceName}>{props.name}</div>
-            <div class={s.switchWrap} onClick={(e: Event) => e.stopPropagation()} role="presentation">
+            <div
+                class={s.switchWrap}
+                onClick={(e: Event) => e.stopPropagation()}
+                role="presentation"
+            >
                 <Switch
                     id={`service_${props.id}`}
                     checked={props.checked}

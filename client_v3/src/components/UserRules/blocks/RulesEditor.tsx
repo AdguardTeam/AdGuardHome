@@ -28,9 +28,7 @@ export const RulesEditor = (props: Props) => {
     return (
         <div class={s.section}>
             <form onSubmit={handleSubmit}>
-                <p class={cn(s.description, theme.text.t2)}>
-                    {intl.getMessage('user_rules_desc')}
-                </p>
+                <p class={cn(s.description, theme.text.t2)}>{intl.getMessage('user_rules_desc')}</p>
 
                 <div class={s.textEditWrapper}>
                     <div class={s.textEditContainer}>
@@ -41,7 +39,9 @@ export const RulesEditor = (props: Props) => {
                             size="large"
                             class={s.editorTextarea}
                             value={userRules()}
-                            onChange={(e: Event) => setUserRules((e.target as HTMLTextAreaElement).value)}
+                            onChange={(e: Event) =>
+                                setUserRules((e.target as HTMLTextAreaElement).value)
+                            }
                         />
                     </div>
                 </div>

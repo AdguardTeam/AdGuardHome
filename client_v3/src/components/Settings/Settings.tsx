@@ -37,9 +37,8 @@ export const Settings = () => {
         getLogsConfig();
     });
 
-    const handleSettingToggle =
-        (key: keyof typeof SETTINGS) => (e: Event) =>
-            toggleSetting(key, !(e.target as HTMLInputElement).checked);
+    const handleSettingToggle = (key: keyof typeof SETTINGS) => (e: Event) =>
+        toggleSetting(key, !(e.target as HTMLInputElement).checked);
 
     const settingsKeys = Object.keys(SETTINGS) as Array<keyof typeof SETTINGS>;
 
@@ -96,112 +95,116 @@ export const Settings = () => {
                     {intl.getMessage('settings_general_short')}
                 </h1>
 
-                <Show when={isLoading()} fallback={
-                    <>
-                        <h2
-                            class={cn(
-                                theme.layout.subtitle,
-                                theme.title.h5,
-                                theme.title.h4_tablet,
-                            )}
-                        >
-                            {intl.getMessage('settings_filtering_and_security')}
-                        </h2>
-
-                        <FiltersConfig
-                            initialValues={{
-                                interval: filteringState.interval,
-                                enabled: filteringState.enabled,
-                            }}
-                            processing={filteringState.processingSetConfig}
-                        />
-
-                        <For each={settingsKeys}>
-                            {(key) => {
-                                const { title, subtitle } = SETTINGS[key];
-                                const enabled = () => Boolean(settingsState.settingsList?.[key]?.enabled);
-                                return (
-                                    <div>
-                                        <SwitchGroup
-                                            title={title}
-                                            description={subtitle}
-                                            id={String(key)}
-                                            checked={enabled()}
-                                            onChange={handleSettingToggle(key)}
-                                        />
-                                    </div>
-                                );
-                            }}
-                        </For>
-
-                        <Show when={safesearch()}>
-                            <SwitchGroup
-                                id="safesearch"
-                                title={intl.getMessage('settings_safe_search')}
-                                description={intl.getMessage('settings_safe_search_desc')}
-                                checked={safesearchEnabled()}
-                                onChange={onSafeSearchEnabledChange}
+                <Show
+                    when={isLoading()}
+                    fallback={
+                        <>
+                            <h2
+                                class={cn(
+                                    theme.layout.subtitle,
+                                    theme.title.h5,
+                                    theme.title.h4_tablet,
+                                )}
                             >
-                                <div>
-                                    <For each={safesearchProviders()}>
-                                        {(provider) => (
-                                            <div class={theme.form.checkbox}>
-                                                <Checkbox
-                                                    id={provider.key}
-                                                    checked={provider.value}
-                                                    disabled={!safesearchEnabled()}
-                                                    onChange={onProviderChange(provider.key)}
-                                                >
-                                                    {getSafeSearchProviderTitle(provider.key)}
-                                                </Checkbox>
-                                            </div>
-                                        )}
-                                    </For>
-                                </div>
-                            </SwitchGroup>
-                        </Show>
+                                {intl.getMessage('settings_filtering_and_security')}
+                            </h2>
 
-                        <h2
-                            class={cn(
-                                theme.layout.subtitle,
-                                theme.title.h5,
-                                theme.title.h4_tablet,
-                            )}
-                        >
-                            {intl.getMessage('query_log')}
-                        </h2>
+                            <FiltersConfig
+                                initialValues={{
+                                    interval: filteringState.interval,
+                                    enabled: filteringState.enabled,
+                                }}
+                                processing={filteringState.processingSetConfig}
+                            />
 
-                        <LogsConfig
-                            enabled={queryLogsState.enabled}
-                            ignored={queryLogsState.ignored}
-                            interval={queryLogsState.interval}
-                            customInterval={queryLogsState.customInterval}
-                            anonymize_client_ip={queryLogsState.anonymize_client_ip}
-                            processing={queryLogsState.processingSetConfig}
-                            processingClear={queryLogsState.processingClear}
-                        />
+                            <For each={settingsKeys}>
+                                {(key) => {
+                                    const { title, subtitle } = SETTINGS[key];
+                                    const enabled = () =>
+                                        Boolean(settingsState.settingsList?.[key]?.enabled);
+                                    return (
+                                        <div>
+                                            <SwitchGroup
+                                                title={title}
+                                                description={subtitle}
+                                                id={String(key)}
+                                                checked={enabled()}
+                                                onChange={handleSettingToggle(key)}
+                                            />
+                                        </div>
+                                    );
+                                }}
+                            </For>
 
-                        <h2
-                            id="stats_config"
-                            class={cn(
-                                theme.layout.subtitle,
-                                theme.title.h5,
-                                theme.title.h4_tablet,
-                            )}
-                        >
-                            {intl.getMessage('settings_statistics')}
-                        </h2>
+                            <Show when={safesearch()}>
+                                <SwitchGroup
+                                    id="safesearch"
+                                    title={intl.getMessage('settings_safe_search')}
+                                    description={intl.getMessage('settings_safe_search_desc')}
+                                    checked={safesearchEnabled()}
+                                    onChange={onSafeSearchEnabledChange}
+                                >
+                                    <div>
+                                        <For each={safesearchProviders()}>
+                                            {(provider) => (
+                                                <div class={theme.form.checkbox}>
+                                                    <Checkbox
+                                                        id={provider.key}
+                                                        checked={provider.value}
+                                                        disabled={!safesearchEnabled()}
+                                                        onChange={onProviderChange(provider.key)}
+                                                    >
+                                                        {getSafeSearchProviderTitle(provider.key)}
+                                                    </Checkbox>
+                                                </div>
+                                            )}
+                                        </For>
+                                    </div>
+                                </SwitchGroup>
+                            </Show>
 
-                        <StatsConfig
-                            interval={statsState.interval}
-                            customInterval={statsState.customInterval}
-                            ignored={statsState.ignored}
-                            enabled={statsState.enabled}
-                            processing={statsState.processingSetConfig}
-                            processingReset={statsState.processingReset}
-                        />
-                    </>
-                }>
+                            <h2
+                                class={cn(
+                                    theme.layout.subtitle,
+                                    theme.title.h5,
+                                    theme.title.h4_tablet,
+                                )}
+                            >
+                                {intl.getMessage('query_log')}
+                            </h2>
+
+                            <LogsConfig
+                                enabled={queryLogsState.enabled}
+                                ignored={queryLogsState.ignored}
+                                interval={queryLogsState.interval}
+                                customInterval={queryLogsState.customInterval}
+                                anonymize_client_ip={queryLogsState.anonymize_client_ip}
+                                processing={queryLogsState.processingSetConfig}
+                                processingClear={queryLogsState.processingClear}
+                            />
+
+                            <h2
+                                id="stats_config"
+                                class={cn(
+                                    theme.layout.subtitle,
+                                    theme.title.h5,
+                                    theme.title.h4_tablet,
+                                )}
+                            >
+                                {intl.getMessage('settings_statistics')}
+                            </h2>
+
+                            <StatsConfig
+                                interval={statsState.interval}
+                                customInterval={statsState.customInterval}
+                                ignored={statsState.ignored}
+                                enabled={statsState.enabled}
+                                processing={statsState.processingSetConfig}
+                                processingReset={statsState.processingReset}
+                            />
+                        </>
+                    }
+                >
                     <PageLoader />
                 </Show>
             </div>

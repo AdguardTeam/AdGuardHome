@@ -1,4 +1,3 @@
-
 import intl from 'panel/common/intl';
 import { Icon } from 'panel/common/ui/Icon';
 import styles from './styles.module.pcss';
@@ -8,8 +7,8 @@ type RequirementIconProps = {
 };
 
 export const RequirementIcon = (props: RequirementIconProps) => {
-    const iconName = () => props.ok ? 'check' : 'cross';
-    const iconColor = () => props.ok ? 'green' : 'red';
+    const iconName = () => (props.ok ? 'check' : 'cross');
+    const iconColor = () => (props.ok ? 'green' : 'red');
 
     return <Icon icon={iconName()} color={iconColor()} />;
 };

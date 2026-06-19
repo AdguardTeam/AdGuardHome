@@ -1,5 +1,3 @@
-
-
 import { Button } from 'panel/common/ui/Button';
 import intl from 'panel/common/intl';
 import { installState, nextStep, prevStep } from 'panel/stores/install';
@@ -35,7 +33,7 @@ export const Controls = (props: Props) => {
                         type="button"
                         size="small"
                         variant="secondary"
-                        className={styles.button}
+                        class={styles.button}
                         onClick={handlePrevStep}
                     >
                         {intl.getMessage('back')}
@@ -60,7 +58,7 @@ export const Controls = (props: Props) => {
                         onClick={handleNextStep}
                         size="small"
                         variant="primary"
-                        className={styles.button}
+                        class={styles.button}
                     >
                         {intl.getMessage('setup_guide_greeting_button')}
                     </Button>
@@ -74,7 +72,7 @@ export const Controls = (props: Props) => {
                         type="submit"
                         size="small"
                         variant="primary"
-                        className={styles.button}
+                        class={styles.button}
                         disabled={isNextDisabled}
                     >
                         {intl.getMessage('next')}
@@ -88,7 +86,7 @@ export const Controls = (props: Props) => {
                         onClick={handleNextStep}
                         size="small"
                         variant="primary"
-                        className={styles.button}
+                        class={styles.button}
                         disabled={isNextDisabled}
                     >
                         {intl.getMessage('next')}
@@ -101,7 +99,7 @@ export const Controls = (props: Props) => {
                         type="button"
                         size="small"
                         variant="primary"
-                        className={styles.button}
+                        class={styles.button}
                         onClick={() => {
                             if (props.openDashboard && props.ip && props.port) {
                                 props.openDashboard(props.ip, props.port);

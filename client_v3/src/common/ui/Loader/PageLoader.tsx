@@ -1,4 +1,3 @@
-
 import { Loader } from './Loader';
 
 import s from './Loader.module.pcss';

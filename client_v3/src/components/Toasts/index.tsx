@@ -10,11 +10,7 @@ import { toastsState } from 'panel/stores/toasts';
 const Toasts = () => {
     return (
         <div class="toasts">
-            <For each={toastsState.notices}>
-                {(toast: any) => (
-                    <Toast {...toast} />
-                )}
-            </For>
+            <For each={toastsState.notices}>{(toast: any) => <Toast {...toast} />}</For>
         </div>
     );
 };

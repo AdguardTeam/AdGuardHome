@@ -1,7 +1,7 @@
 import { createSignal, createMemo, createEffect, onCleanup, Show } from 'solid-js';
 
 import theme from 'panel/lib/theme';
-import { Loader, PageLoader } from 'panel/common/ui/Loader';
+import { PageLoader } from 'panel/common/ui/Loader';
 import { dashboardState, toggleProtection, getClients } from 'panel/stores/dashboard';
 import { statsState, getStats, getStatsConfig } from 'panel/stores/stats';
 import { accessState, getAccessList } from 'panel/stores/access';

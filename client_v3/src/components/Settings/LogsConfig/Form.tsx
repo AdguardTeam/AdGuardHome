@@ -39,7 +39,9 @@ export const Form = (props: Props) => {
         props.initialValues.customInterval ?? null,
     );
     const [ignored, setIgnored] = createSignal(props.initialValues.ignored || '');
-    const [ignoreEnabled, setIgnoreEnabled] = createSignal(props.initialValues.ignore_enabled || true);
+    const [ignoreEnabled, setIgnoreEnabled] = createSignal(
+        props.initialValues.ignore_enabled || true,
+    );
     const [isSubmitting, setIsSubmitting] = createSignal(false);
 
     // Clear customInterval when a standard interval is selected
@@ -52,7 +54,10 @@ export const Form = (props: Props) => {
     };
 
     const disableSubmit = createMemo(
-        () => isSubmitting() || props.processing || (intervalValue() === RETENTION_CUSTOM && !customInterval()),
+        () =>
+            isSubmitting() ||
+            props.processing ||
+            (intervalValue() === RETENTION_CUSTOM && !customInterval()),
     );
 
     const handleSubmit = (e: Event) => {
@@ -85,7 +90,9 @@ export const Form = (props: Props) => {
                 title={intl.getMessage('settings_anonymize_client_ip')}
                 description={intl.getMessage('settings_anonymize_client_ip_desc')}
                 checked={anonymizeClientIp()}
-                onChange={(e: Event) => setAnonymizeClientIp((e.target as HTMLInputElement).checked)}
+                onChange={(e: Event) =>
+                    setAnonymizeClientIp((e.target as HTMLInputElement).checked)
+                }
                 disabled={props.processing}
             />
 

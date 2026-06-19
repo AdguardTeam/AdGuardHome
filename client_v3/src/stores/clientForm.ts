@@ -43,7 +43,12 @@ const [state, setState] = createStore<ClientFormState>(getInitialClientFormState
 
 export const initClientForm = (client?: Partial<ClientFormState> | null) => {
     if (client) {
-        setState({ ...getInitialClientFormState(), ...client, mode: 'edit' as const, originalName: client.name || '' });
+        setState({
+            ...getInitialClientFormState(),
+            ...client,
+            mode: 'edit' as const,
+            originalName: client.name || '',
+        });
     } else {
         setState(getInitialClientFormState());
     }

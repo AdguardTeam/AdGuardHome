@@ -87,9 +87,12 @@ export const LogsConfig = (props: Props) => {
                         buttonText={intl.getMessage('settings_yes_decrease')}
                         cancelText={intl.getMessage('cancel')}
                         title={intl.getMessage('settings_confirm_decrease_log_rotation_interval')}
-                        text={intl.getMessage('settings_confirm_decrease_log_rotation_interval_desc', {
-                            value: formatIntervalText(config().interval),
-                        })}
+                        text={intl.getMessage(
+                            'settings_confirm_decrease_log_rotation_interval_desc',
+                            {
+                                value: formatIntervalText(config().interval),
+                            },
+                        )}
                         buttonVariant="danger"
                     />
                 )}

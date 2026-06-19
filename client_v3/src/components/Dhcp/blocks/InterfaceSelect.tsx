@@ -36,8 +36,8 @@ export const InterfaceSelect = (props: Props) => {
         });
     });
 
-    const selected = createMemo(() =>
-        options().find((opt) => opt.value === props.selectedInterface) || null
+    const selected = createMemo(
+        () => options().find((opt) => opt.value === props.selectedInterface) || null,
     );
 
     return (

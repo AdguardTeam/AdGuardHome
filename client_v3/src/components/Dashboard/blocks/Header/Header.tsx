@@ -130,9 +130,7 @@ export const Header = (props: Props) => {
         <div class={s.header}>
             <div class={s.headerLeft}>
                 <div class={s.titleRow}>
-                    <h1 class={cn(theme.title.h5, s.onlyMobile)}>
-                        {intl.getMessage('dashboard')}
-                    </h1>
+                    <h1 class={cn(theme.title.h5, s.onlyMobile)}>{intl.getMessage('dashboard')}</h1>
 
                     <button
                         type="button"

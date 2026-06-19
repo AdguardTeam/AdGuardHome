@@ -1,5 +1,3 @@
-
-
 import s from './styles.module.pcss';
 
 type Props = {

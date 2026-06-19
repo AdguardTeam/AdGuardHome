@@ -52,7 +52,8 @@ export const Input = (props: Props) => {
         }
     };
 
-    const showClearButton = () => Boolean(props.isClearable && !props.disabled && !props.readOnly && hasValue());
+    const showClearButton = () =>
+        Boolean(props.isClearable && !props.disabled && !props.readOnly && hasValue());
     const hasActions = () => Boolean(props.suffixIcon || showClearButton());
 
     const handleChange = (event: Event) => {

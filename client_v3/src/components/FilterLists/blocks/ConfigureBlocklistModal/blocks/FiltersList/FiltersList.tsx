@@ -104,7 +104,9 @@ export const FiltersList = (props: Props) => {
                                                                 rel="noreferrer"
                                                             >
                                                                 <Icon icon="link" color="green" />
-                                                                {intl.getMessage('blocklist_homepage')}
+                                                                {intl.getMessage(
+                                                                    'blocklist_homepage',
+                                                                )}
                                                             </a>
                                                             <a
                                                                 href={source}
@@ -113,9 +115,12 @@ export const FiltersList = (props: Props) => {
                                                                 rel="noreferrer"
                                                             >
                                                                 <Icon icon="link" color="green" />
-                                                                {intl.getMessage('blocklist_contents', {
-                                                                    value: 'txt',
-                                                                })}
+                                                                {intl.getMessage(
+                                                                    'blocklist_contents',
+                                                                    {
+                                                                        value: 'txt',
+                                                                    },
+                                                                )}
                                                             </a>
                                                         </div>
                                                     }

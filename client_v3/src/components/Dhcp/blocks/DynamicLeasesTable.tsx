@@ -60,9 +60,7 @@ export const DynamicLeasesTable = (props: Props) => {
             sortable: true,
             render: (value: string) => (
                 <div class={s.cell}>
-                    <span class={s.cellLabel}>
-                        {intl.getMessage('dhcp_table_mac_address')}
-                    </span>
+                    <span class={s.cellLabel}>{intl.getMessage('dhcp_table_mac_address')}</span>
                     <div class={s.cellValue}>
                         <span class={theme.common.textOverflow}>{value}</span>
                     </div>
@@ -79,9 +77,7 @@ export const DynamicLeasesTable = (props: Props) => {
             sortable: true,
             render: (value: string) => (
                 <div class={s.cell}>
-                    <span class={s.cellLabel}>
-                        {intl.getMessage('dhcp_table_ip_address')}
-                    </span>
+                    <span class={s.cellLabel}>{intl.getMessage('dhcp_table_ip_address')}</span>
                     <div class={s.cellValue}>
                         <span>{value}</span>
                     </div>
@@ -98,9 +94,7 @@ export const DynamicLeasesTable = (props: Props) => {
             sortable: true,
             render: (value: string) => (
                 <div class={s.cell}>
-                    <span class={s.cellLabel}>
-                        {intl.getMessage('dhcp_table_hostname')}
-                    </span>
+                    <span class={s.cellLabel}>{intl.getMessage('dhcp_table_hostname')}</span>
                     <div class={s.cellValue}>
                         <span class={theme.common.textOverflow}>{value}</span>
                     </div>
@@ -120,9 +114,7 @@ export const DynamicLeasesTable = (props: Props) => {
                 const rowId = `${row.mac}-${row.ip}`;
                 return (
                     <div class={s.cell}>
-                        <span class={s.cellLabel}>
-                            {intl.getMessage('actions_table_header')}
-                        </span>
+                        <span class={s.cellLabel}>{intl.getMessage('actions_table_header')}</span>
                         <div class={s.cellValue}>
                             <div class={s.cellActions}>
                                 <Dropdown

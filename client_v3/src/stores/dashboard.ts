@@ -82,13 +82,31 @@ const checkStatus = async (
             const data = await response.json();
             handleRequestSuccess({ status: response.status, data });
             if (data.running === false) {
-                setTimeout(checkStatus, CHECK_TIMEOUT, handleRequestSuccess, handleRequestError, attempts - 1);
+                setTimeout(
+                    checkStatus,
+                    CHECK_TIMEOUT,
+                    handleRequestSuccess,
+                    handleRequestError,
+                    attempts - 1,
+                );
             }
         } else {
-            setTimeout(checkStatus, CHECK_TIMEOUT, handleRequestSuccess, handleRequestError, attempts - 1);
+            setTimeout(
+                checkStatus,
+                CHECK_TIMEOUT,
+                handleRequestSuccess,
+                handleRequestError,
+                attempts - 1,
+            );
         }
     } catch {
-        setTimeout(checkStatus, CHECK_TIMEOUT, handleRequestSuccess, handleRequestError, attempts - 1);
+        setTimeout(
+            checkStatus,
+            CHECK_TIMEOUT,
+            handleRequestSuccess,
+            handleRequestError,
+            attempts - 1,
+        );
     }
 };
 

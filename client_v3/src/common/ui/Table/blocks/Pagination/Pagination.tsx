@@ -58,9 +58,7 @@ export const Pagination = (props: Props) => {
     const canPreviousPage = () => props.currentPage > 0;
     const canNextPage = () => props.currentPage < props.totalPages - 1;
 
-    const pageNumbers = createMemo(() =>
-        generatePageNumbers(props.currentPage, props.totalPages),
-    );
+    const pageNumbers = createMemo(() => generatePageNumbers(props.currentPage, props.totalPages));
 
     const limitMenu = (
         <div class={theme.dropdown.menu}>
@@ -104,9 +102,7 @@ export const Pagination = (props: Props) => {
                 <For each={pageNumbers()}>
                     {(pageNum) => {
                         if (pageNum === 'ellipsis') {
-                            return (
-                                <span class={theme.pagination.summary}>...</span>
-                            );
+                            return <span class={theme.pagination.summary}>...</span>;
                         }
 
                         const isCurrentPage = pageNum === props.currentPage + 1;

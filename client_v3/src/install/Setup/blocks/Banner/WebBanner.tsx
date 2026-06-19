@@ -36,7 +36,9 @@ export const WebBanner = (props: Props) => {
         if (requiredError) return requiredError;
         const portError = validateInstallPort(port);
         if (portError) return portError;
-        const isPortInUse = Boolean(props.webStatus && props.webStatus?.includes(ADDRESS_IN_USE_TEXT));
+        const isPortInUse = Boolean(
+            props.webStatus && props.webStatus?.includes(ADDRESS_IN_USE_TEXT),
+        );
         return isPortInUse ? intl.getMessage('port_in_use') : undefined;
     });
 
@@ -84,9 +86,9 @@ export const WebBanner = (props: Props) => {
                                     id="install_web_fix"
                                     size="small"
                                     variant="primary"
-                                    className={styles.inlineButton}
+                                    class={styles.inlineButton}
                                     onClick={props.onAutofix}
-                                ></Button>
+                                />
                             </Show>
                         </div>
                     </Show>

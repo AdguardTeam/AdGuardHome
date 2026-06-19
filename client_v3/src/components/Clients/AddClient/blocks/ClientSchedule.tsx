@@ -13,9 +13,7 @@ export const ClientSchedule = () => {
     const isEdit = createMemo(() => clientFormState.mode === 'edit');
 
     const blockedServicesPath = createMemo<RoutePathKey>(() =>
-        isEdit()
-            ? RoutePath.ClientsEditBlockedServices
-            : RoutePath.ClientsBlockedServices,
+        isEdit() ? RoutePath.ClientsEditBlockedServices : RoutePath.ClientsBlockedServices,
     );
 
     return (

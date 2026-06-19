@@ -1,5 +1,3 @@
-
-
 import intl from 'panel/common/intl';
 import { RoutePath } from 'panel/components/Routes/Paths';
 import { QUERY_LOG_REASON_FILTER, QUERY_LOG_STATUS_FILTER } from 'panel/helpers/constants';
@@ -19,9 +17,12 @@ type Props = {
 };
 
 export const StatCards = (props: Props) => {
-    const blockedPercent = () => props.numDnsQueries > 0 ? (props.numBlockedFiltering / props.numDnsQueries) * 100 : 0;
-    const threatsPercent = () => props.numDnsQueries > 0 ? (props.numReplacedSafebrowsing / props.numDnsQueries) * 100 : 0;
-    const parentalPercent = () => props.numDnsQueries > 0 ? (props.numReplacedParental / props.numDnsQueries) * 100 : 0;
+    const blockedPercent = () =>
+        props.numDnsQueries > 0 ? (props.numBlockedFiltering / props.numDnsQueries) * 100 : 0;
+    const threatsPercent = () =>
+        props.numDnsQueries > 0 ? (props.numReplacedSafebrowsing / props.numDnsQueries) * 100 : 0;
+    const parentalPercent = () =>
+        props.numDnsQueries > 0 ? (props.numReplacedParental / props.numDnsQueries) * 100 : 0;
 
     return (
         <div class={s.statsCards}>

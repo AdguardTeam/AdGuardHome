@@ -54,8 +54,8 @@ export const Ipv4Settings = (props: Props) => {
         setLeaseDuration(v4?.lease_duration ? String(v4.lease_duration) : '');
     });
 
-    const hasIpv4 = createMemo(() =>
-        !!(props.interfaces && props.interfaces[props.selectedInterface]?.ipv4_addresses),
+    const hasIpv4 = createMemo(
+        () => !!(props.interfaces && props.interfaces[props.selectedInterface]?.ipv4_addresses),
     );
 
     const allValues = createMemo(() => ({
@@ -68,8 +68,8 @@ export const Ipv4Settings = (props: Props) => {
         },
     }));
 
-    const isEmptyConfig = createMemo(() =>
-        !gatewayIp() && !subnetMask() && !rangeStart() && !rangeEnd() && !leaseDuration(),
+    const isEmptyConfig = createMemo(
+        () => !gatewayIp() && !subnetMask() && !rangeStart() && !rangeEnd() && !leaseDuration(),
     );
 
     const validateGatewayIp = () => {
@@ -78,7 +78,8 @@ export const Ipv4Settings = (props: Props) => {
     };
 
     const validateRangeStart = () => {
-        const err = validateIpv4(rangeStart()) || validateIpForGatewaySubnetMask(rangeStart(), allValues());
+        const err =
+            validateIpv4(rangeStart()) || validateIpForGatewaySubnetMask(rangeStart(), allValues());
         setRangeStartError(err || '');
     };
 
@@ -122,7 +123,9 @@ export const Ipv4Settings = (props: Props) => {
                     <div>
                         <Input
                             value={gatewayIp()}
-                            onChange={(e: Event) => setGatewayIp((e.target as HTMLInputElement).value)}
+                            onChange={(e: Event) =>
+                                setGatewayIp((e.target as HTMLInputElement).value)
+                            }
                             onBlur={() => {
                                 validateGatewayIp();
                                 validateRangeStart();
@@ -145,7 +148,9 @@ export const Ipv4Settings = (props: Props) => {
                         <div>
                             <Input
                                 value={rangeStart()}
-                                onChange={(e: Event) => setRangeStart((e.target as HTMLInputElement).value)}
+                                onChange={(e: Event) =>
+                                    setRangeStart((e.target as HTMLInputElement).value)
+                                }
                                 onBlur={() => {
                                     validateRangeStart();
                                     validateGatewayIp();
@@ -160,7 +165,9 @@ export const Ipv4Settings = (props: Props) => {
                         <div>
                             <Input
                                 value={rangeEnd()}
-                                onChange={(e: Event) => setRangeEnd((e.target as HTMLInputElement).value)}
+                                onChange={(e: Event) =>
+                                    setRangeEnd((e.target as HTMLInputElement).value)
+                                }
                                 onBlur={() => {
                                     validateRangeEnd();
                                     validateGatewayIp();
@@ -178,7 +185,9 @@ export const Ipv4Settings = (props: Props) => {
                     <div>
                         <Input
                             value={subnetMask()}
-                            onChange={(e: Event) => setSubnetMask((e.target as HTMLInputElement).value)}
+                            onChange={(e: Event) =>
+                                setSubnetMask((e.target as HTMLInputElement).value)
+                            }
                             onBlur={() => {
                                 validateSubnetMask();
                                 validateRangeStart();
@@ -197,7 +206,9 @@ export const Ipv4Settings = (props: Props) => {
                     <div>
                         <Input
                             value={leaseDuration()}
-                            onChange={(e: Event) => setLeaseDuration((e.target as HTMLInputElement).value)}
+                            onChange={(e: Event) =>
+                                setLeaseDuration((e.target as HTMLInputElement).value)
+                            }
                             id="v4_lease_duration"
                             inputMode="numeric"
                             label={intl.getMessage('dhcp_form_lease_title')}

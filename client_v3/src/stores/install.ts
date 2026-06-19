@@ -1,7 +1,12 @@
 import { createStore } from 'solid-js/store';
 import { apiClient } from 'panel/api/Api';
 import { addErrorToast } from './toasts';
-import { ALL_INTERFACES_IP, INSTALL_FIRST_STEP, STANDARD_DNS_PORT, STANDARD_WEB_PORT } from 'panel/helpers/constants';
+import {
+    ALL_INTERFACES_IP,
+    INSTALL_FIRST_STEP,
+    STANDARD_DNS_PORT,
+    STANDARD_WEB_PORT,
+} from 'panel/helpers/constants';
 
 type InstallState = {
     step: number;

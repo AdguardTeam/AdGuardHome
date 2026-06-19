@@ -182,9 +182,7 @@ export const ListsTable = (props: Props) => {
 
                 return (
                     <div class={s.cell}>
-                        <span class={s.cellLabel}>
-                            {intl.getMessage('last_updated_label')}
-                        </span>
+                        <span class={s.cellLabel}>{intl.getMessage('last_updated_label')}</span>
 
                         <div class={s.cellValue}>
                             <span>{result}</span>

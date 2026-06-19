@@ -28,15 +28,22 @@ export const Submit = (props: Props) => {
                 <p class={styles.desc}>{intl.getMessage('setup_complete')}</p>
             </div>
 
-            <Show when={!installState.submitted} fallback={
-                <Controls openDashboard={props.openDashboard} ip={props.webConfig.ip} port={props.webConfig.port} />
-            }>
+            <Show
+                when={!installState.submitted}
+                fallback={
+                    <Controls
+                        openDashboard={props.openDashboard}
+                        ip={props.webConfig.ip}
+                        port={props.webConfig.port}
+                    />
+                }
+            >
                 <Button
                     id="install_save"
                     type="button"
                     size="small"
                     variant="primary"
-                    className={styles.button}
+                    class={styles.button}
                     disabled={installState.processingSubmit}
                     onClick={props.onSubmit}
                 >

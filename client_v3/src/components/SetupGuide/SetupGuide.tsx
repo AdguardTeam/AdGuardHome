@@ -40,7 +40,9 @@ export const SetupGuide = (props: Props) => {
         <div class={props.isStep ? s.stepRoot : theme.layout.container}>
             <div class={s.header}>
                 <h1 class={s.pageTitle}>
-                    {props.isStep ? intl.getMessage('setup_guide_title') : intl.getMessage('setup_guide')}
+                    {props.isStep
+                        ? intl.getMessage('setup_guide_title')
+                        : intl.getMessage('setup_guide')}
                 </h1>
                 <Show when={!props.isStep}>
                     <div class={s.pageDesc}>{intl.getMessage('setup_guide_desc')}</div>
@@ -67,7 +69,7 @@ export const SetupGuide = (props: Props) => {
                             <For each={encryptedAddresses()}>
                                 {(ip) => (
                                     <li class={s.address}>
-                                        <span class={s.bulletIcon}></span>
+                                        <span class={s.bulletIcon} />
                                         <CopiedText text={ip} />
                                     </li>
                                 )}
@@ -76,15 +78,13 @@ export const SetupGuide = (props: Props) => {
                     </Show>
 
                     <Show when={plainAddresses().length > 0}>
-                        <div class={s.dnsSubtitle}>
-                            {intl.getMessage('plain_dns_addresses')}
-                        </div>
+                        <div class={s.dnsSubtitle}>{intl.getMessage('plain_dns_addresses')}</div>
 
                         <ul class={s.addressList}>
                             <For each={plainAddresses()}>
                                 {(ip) => (
                                     <li class={s.address}>
-                                        <span class={s.bulletIcon}></span>
+                                        <span class={s.bulletIcon} />
                                         <CopiedText text={ip} />
                                     </li>
                                 )}

@@ -82,7 +82,10 @@ export const StaticLeaseModal = (props: Props) => {
         const err =
             validateRequiredValue(mac()) ||
             validateMacFormat(mac()) ||
-            validateMacNotDuplicate(props.staticLeases, props.isEdit ? props.initialData?.mac : undefined)(mac());
+            validateMacNotDuplicate(
+                props.staticLeases,
+                props.isEdit ? props.initialData?.mac : undefined,
+            )(mac());
         setMacError(err || '');
     };
 
@@ -95,13 +98,20 @@ export const StaticLeaseModal = (props: Props) => {
         const err =
             validateRequiredValue(ip()) ||
             validateIp(ip()) ||
-            validateIpNotDuplicate(props.staticLeases, props.isEdit ? props.initialData?.ip : undefined)(ip()) ||
+            validateIpNotDuplicate(
+                props.staticLeases,
+                props.isEdit ? props.initialData?.ip : undefined,
+            )(ip()) ||
             (cidr() && ip() ? validateIpv4InCidr(ip(), { cidr: cidr()! }) : undefined) ||
-            (props.dhcpConfig?.gatewayIp && ip() ? validateIpGateway(ip(), { gatewayIp: props.dhcpConfig.gatewayIp }) : undefined);
+            (props.dhcpConfig?.gatewayIp && ip()
+                ? validateIpGateway(ip(), { gatewayIp: props.dhcpConfig.gatewayIp })
+                : undefined);
         setIpError(err || '');
     };
 
-    const isValid = createMemo(() => !macError() && !ipError() && !hostnameError() && mac() && ip());
+    const isValid = createMemo(
+        () => !macError() && !ipError() && !hostnameError() && mac() && ip(),
+    );
 
     const handleSubmit = (e: Event) => {
         e.preventDefault();
@@ -148,7 +158,9 @@ export const StaticLeaseModal = (props: Props) => {
                     <div class={theme.form.input}>
                         <Input
                             value={hostname()}
-                            onChange={(e: Event) => setHostname((e.target as HTMLInputElement).value)}
+                            onChange={(e: Event) =>
+                                setHostname((e.target as HTMLInputElement).value)
+                            }
                             onBlur={validateHostnameField}
                             id="static_lease_hostname"
                             label={intl.getMessage('dhcp_table_hostname')}

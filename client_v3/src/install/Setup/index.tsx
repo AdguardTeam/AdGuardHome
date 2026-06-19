@@ -61,9 +61,7 @@ export const Setup = () => {
     const auth = () => installState.auth;
     const processingDefault = () => installState.processingDefault;
 
-    const installDnsAddresses = createMemo(() =>
-        getInstallDnsAddresses(dns(), interfaces()),
-    );
+    const installDnsAddresses = createMemo(() => getInstallDnsAddresses(dns(), interfaces()));
 
     const resolvedDnsAddresses = createMemo(() => {
         const dnsAddresses = dashboardState.dnsAddresses || [];

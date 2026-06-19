@@ -13,7 +13,13 @@ import { RoutePath } from 'panel/components/Routes/Paths';
 import { buildClientBreadcrumbs } from 'panel/helpers/buildClientBreadcrumbs';
 import { ScheduleRow } from './ScheduleRow';
 import { ScheduleModal } from './ScheduleModal';
-import { type DayKey, DAYS_OF_WEEK, type ScheduleData, type ScheduleDayData, getLocalTimezone } from './helpers';
+import {
+    type DayKey,
+    DAYS_OF_WEEK,
+    type ScheduleData,
+    type ScheduleDayData,
+    getLocalTimezone,
+} from './helpers';
 import { getDayName } from './getDayName';
 import s from './InactivitySchedule.module.pcss';
 
@@ -128,112 +134,119 @@ export const InactivitySchedule = (props: Props) => {
         setEditDay(undefined);
     };
 
-    const parentLinks = () => props.clientScope
-        ? buildClientBreadcrumbs(clientFormState, [
-              clientFormState.mode === 'edit'
-                  ? {
-                        path: RoutePath.ClientsEditBlockedServices,
-                        title: intl.getMessage('blocked_services'),
-                        props: { clientName: encodeURIComponent(clientFormState.originalName) },
-                    }
-                  : {
-                        path: RoutePath.ClientsBlockedServices,
-                        title: intl.getMessage('blocked_services'),
-                    },
-          ])
-        : [
-              {
-                  path: RoutePath.BlockedServices,
-                  title: intl.getMessage('blocked_services'),
-              },
-          ];
+    const parentLinks = () =>
+        props.clientScope
+            ? buildClientBreadcrumbs(clientFormState, [
+                  clientFormState.mode === 'edit'
+                      ? {
+                            path: RoutePath.ClientsEditBlockedServices,
+                            title: intl.getMessage('blocked_services'),
+                            props: { clientName: encodeURIComponent(clientFormState.originalName) },
+                        }
+                      : {
+                            path: RoutePath.ClientsBlockedServices,
+                            title: intl.getMessage('blocked_services'),
+                        },
+              ])
+            : [
+                  {
+                      path: RoutePath.BlockedServices,
+                      title: intl.getMessage('blocked_services'),
+                  },
+              ];
 
     return (
-        <Show when={props.clientScope} fallback={
-            <div class={cn(theme.layout.container, s.container)}>
-                <div class={cn(theme.layout.containerIn, theme.layout.containerIn_one_col)}>
-                    <div class={s.breadcrumbs}>
-                        <Breadcrumbs
-                            parentLinks={parentLinks()}
-                            currentTitle={intl.getMessage('inactivity_schedule')}
-                        />
-                    </div>
-
-                    <h1
-                        class={cn(
-                            theme.layout.title,
-                            theme.title.h4,
-                            theme.title.h3_tablet,
-                            s.title,
-                        )}
-                    >
-                        {intl.getMessage('inactivity_schedule')}
-                    </h1>
-
-                    <div class={cn(s.timezoneWrapper, props.clientScope && s.timezoneWrapperClientScope)}>
-                        <div class={s.timezoneLabel}>
-                            {intl.getMessage('inactivity_schedule_timezone')}
+        <Show
+            when={props.clientScope}
+            fallback={
+                <div class={cn(theme.layout.container, s.container)}>
+                    <div class={cn(theme.layout.containerIn, theme.layout.containerIn_one_col)}>
+                        <div class={s.breadcrumbs}>
+                            <Breadcrumbs
+                                parentLinks={parentLinks()}
+                                currentTitle={intl.getMessage('inactivity_schedule')}
+                            />
                         </div>
-                        <Select
-                            options={TIMEZONE_OPTIONS}
-                            value={timezoneValue()}
-                            onChange={handleTimezoneChange}
-                            size="responsive"
-                            height="big"
-                            isDisabled={servicesState.processing}
-                            isSearchable
-                        />
-                    </div>
 
-                    <div class={s.scheduleList}>
-                        <For each={DAYS_OF_WEEK}>
-                            {(day) => (
-                                <ScheduleRow
-                                    day={day}
-                                    data={schedule()?.[day] as ScheduleDayData | undefined}
-                                    onEdit={handleEdit}
-                                    onDelete={handleDelete}
-                                    onAdd={handleAdd}
-                                />
+                        <h1
+                            class={cn(
+                                theme.layout.title,
+                                theme.title.h4,
+                                theme.title.h3_tablet,
+                                s.title,
                             )}
-                        </For>
+                        >
+                            {intl.getMessage('inactivity_schedule')}
+                        </h1>
+
+                        <div
+                            class={cn(
+                                s.timezoneWrapper,
+                                props.clientScope && s.timezoneWrapperClientScope,
+                            )}
+                        >
+                            <div class={s.timezoneLabel}>
+                                {intl.getMessage('inactivity_schedule_timezone')}
+                            </div>
+                            <Select
+                                options={TIMEZONE_OPTIONS}
+                                value={timezoneValue()}
+                                onChange={handleTimezoneChange}
+                                size="responsive"
+                                height="big"
+                                isDisabled={servicesState.processing}
+                                isSearchable
+                            />
+                        </div>
+
+                        <div class={s.scheduleList}>
+                            <For each={DAYS_OF_WEEK}>
+                                {(day) => (
+                                    <ScheduleRow
+                                        day={day}
+                                        data={schedule()?.[day] as ScheduleDayData | undefined}
+                                        onEdit={handleEdit}
+                                        onDelete={handleDelete}
+                                        onAdd={handleAdd}
+                                    />
+                                )}
+                            </For>
+                        </div>
+
+                        <Show when={modalVisible()}>
+                            <ScheduleModal
+                                visible={modalVisible()}
+                                currentDay={editDay()}
+                                currentData={
+                                    editDay()
+                                        ? (schedule()?.[editDay()!] as ScheduleDayData | undefined)
+                                        : undefined
+                                }
+                                onClose={handleModalClose}
+                                onSave={handleModalSave}
+                            />
+                        </Show>
+
+                        <Show when={deleteDay()}>
+                            <ConfirmDialog
+                                title={intl.getMessage('inactivity_schedule_delete')}
+                                text={intl.getMessage('inactivity_schedule_delete_desc', {
+                                    value: getDayName(deleteDay()!),
+                                })}
+                                buttonText={intl.getMessage('delete_btn')}
+                                cancelText={intl.getMessage('cancel_btn')}
+                                onConfirm={confirmDelete}
+                                onClose={() => setDeleteDay(null)}
+                                buttonVariant="danger"
+                            />
+                        </Show>
                     </div>
-
-                    <Show when={modalVisible()}>
-                        <ScheduleModal
-                            visible={modalVisible()}
-                            currentDay={editDay()}
-                            currentData={
-                                editDay()
-                                    ? (schedule()?.[editDay()!] as ScheduleDayData | undefined)
-                                    : undefined
-                            }
-                            onClose={handleModalClose}
-                            onSave={handleModalSave}
-                        />
-                    </Show>
-
-                    <Show when={deleteDay()}>
-                        <ConfirmDialog
-                            title={intl.getMessage('inactivity_schedule_delete')}
-                            text={intl.getMessage('inactivity_schedule_delete_desc', {
-                                value: getDayName(deleteDay()!),
-                            })}
-                            buttonText={intl.getMessage('delete_btn')}
-                            cancelText={intl.getMessage('cancel_btn')}
-                            onConfirm={confirmDelete}
-                            onClose={() => setDeleteDay(null)}
-                            buttonVariant="danger"
-                        />
-                    </Show>
                 </div>
-            </div>
-        }>
+            }
+        >
             {/* clientScope - render inline */}
             <div class={cn(s.timezoneWrapper, s.timezoneWrapperClientScope)}>
-                <div class={s.timezoneLabel}>
-                    {intl.getMessage('inactivity_schedule_timezone')}
-                </div>
+                <div class={s.timezoneLabel}>{intl.getMessage('inactivity_schedule_timezone')}</div>
                 <Select
                     options={TIMEZONE_OPTIONS}
                     value={timezoneValue()}

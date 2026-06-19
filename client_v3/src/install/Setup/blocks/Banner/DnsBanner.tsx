@@ -42,7 +42,9 @@ export const DnsBanner = (props: Props) => {
         if (requiredError) return requiredError;
         const portError = validateInstallPort(port);
         if (portError) return portError;
-        const isPortInUse = Boolean(props.dnsStatus && props.dnsStatus?.includes(ADDRESS_IN_USE_TEXT));
+        const isPortInUse = Boolean(
+            props.dnsStatus && props.dnsStatus?.includes(ADDRESS_IN_USE_TEXT),
+        );
         return isPortInUse ? intl.getMessage('port_in_use') : undefined;
     });
 
@@ -60,8 +62,12 @@ export const DnsBanner = (props: Props) => {
                         </label>
                         <Select
                             options={props.dnsIpOptions}
-                            value={props.dnsIpOptions.find((option) => option.value === props.dnsIp())}
-                            onChange={(selectedOption) => props.setDnsIp(selectedOption?.value ?? '')}
+                            value={props.dnsIpOptions.find(
+                                (option) => option.value === props.dnsIp(),
+                            )}
+                            onChange={(selectedOption) =>
+                                props.setDnsIp(selectedOption?.value ?? '')
+                            }
                             placeholder={intl.getMessage('network_interface')}
                             size="responsive"
                             height="big"
@@ -96,9 +102,9 @@ export const DnsBanner = (props: Props) => {
                                         id="install_dns_fix"
                                         size="small"
                                         variant="primary"
-                                        className={styles.inlineButton}
+                                        class={styles.inlineButton}
                                         onClick={props.onAutofix}
-                                    ></Button>
+                                    />
                                 </Show>
                             </div>
                             <Show when={props.isDnsFixAvailable}>
@@ -117,11 +123,13 @@ export const DnsBanner = (props: Props) => {
                                 </div>
                             </Show>
                         </Show>
-                        <Show when={
-                            props.dnsPort() === STANDARD_DNS_PORT &&
-                            !props.isDnsFixAvailable &&
-                            props.dnsStatus?.includes(ADDRESS_IN_USE_TEXT)
-                        }>
+                        <Show
+                            when={
+                                props.dnsPort() === STANDARD_DNS_PORT &&
+                                !props.isDnsFixAvailable &&
+                                props.dnsStatus?.includes(ADDRESS_IN_USE_TEXT)
+                            }
+                        >
                             <p>
                                 {intl.getMessage('port_53_faq_link', {
                                     a: (text: string) => (

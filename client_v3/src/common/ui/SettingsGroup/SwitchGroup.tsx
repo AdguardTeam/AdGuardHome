@@ -51,7 +51,9 @@ export const SwitchGroup = (props: Props) => {
                         checked={props.checked}
                         onChange={props.onChange}
                         disabled={props.disabled}
-                        ref={(el: HTMLInputElement) => { inputRef = el; }}
+                        ref={(el: HTMLInputElement) => {
+                            inputRef = el;
+                        }}
                     />
                 </div>
             </div>

@@ -55,21 +55,24 @@ export const ScheduleRow = (props: Props) => {
         <div class={s.scheduleRow}>
             <div class={s.dayName}>{dayName()}</div>
             <div class={s.timeDisplay}>{getTimeDisplay()}</div>
-            <Show when={isConfigured()} fallback={
-                <>
-                    <div class={cn(s.actions, s.actionsDesktop)} />
-                    <div class={s.actions}>
-                        <button
-                            type="button"
-                            class={cn(s.actionButton, s.actionButtonAdd)}
-                            onClick={() => props.onAdd(props.day)}
-                            aria-label={intl.getMessage('inactivity_schedule_add')}
-                        >
-                            <Icon icon="plus" />
-                        </button>
-                    </div>
-                </>
-            }>
+            <Show
+                when={isConfigured()}
+                fallback={
+                    <>
+                        <div class={cn(s.actions, s.actionsDesktop)} />
+                        <div class={s.actions}>
+                            <button
+                                type="button"
+                                class={cn(s.actionButton, s.actionButtonAdd)}
+                                onClick={() => props.onAdd(props.day)}
+                                aria-label={intl.getMessage('inactivity_schedule_add')}
+                            >
+                                <Icon icon="plus" />
+                            </button>
+                        </div>
+                    </>
+                }
+            >
                 <div class={cn(s.actions, s.actionsDesktop)}>
                     <button
                         type="button"

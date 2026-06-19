@@ -110,9 +110,7 @@ export const RuntimeClientsTable = (props: Props) => {
             sortable: true,
             render: (_value: unknown, row: AutoClient) => (
                 <div class={s.cell}>
-                    <span class={s.cellLabel}>
-                        {intl.getMessage('requests_table_header')}
-                    </span>
+                    <span class={s.cellLabel}>{intl.getMessage('requests_table_header')}</span>
 
                     <div class={s.cellValue}>
                         <span>

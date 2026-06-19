@@ -9,13 +9,15 @@ const mocks = vi.hoisted(() => ({
         lastSetRules = params?.rules || '';
         return Promise.resolve(undefined);
     }),
-    apiGetFilteringStatus: vi.fn(() => Promise.resolve({
-        user_rules: lastSetRules,
-        filters: [],
-        whitelist_filters: [],
-        interval: 24,
-        enabled: true,
-    })),
+    apiGetFilteringStatus: vi.fn(() =>
+        Promise.resolve({
+            user_rules: lastSetRules,
+            filters: [],
+            whitelist_filters: [],
+            interval: 24,
+            enabled: true,
+        }),
+    ),
     addSuccessToast: vi.fn(),
     addErrorToast: vi.fn(),
 }));

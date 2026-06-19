@@ -8,11 +8,16 @@ import { Icons } from '../common/ui/Icons';
 
 const root = document.getElementById('root')!;
 
-render(() => (
-    <HashRouter root={() => (
-        <>
-            <Setup />
-            <Icons />
-        </>
-    )} />
-), root);
+render(
+    () => (
+        <HashRouter
+            root={() => (
+                <>
+                    <Setup />
+                    <Icons />
+                </>
+            )}
+        />
+    ),
+    root,
+);

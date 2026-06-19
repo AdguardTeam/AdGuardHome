@@ -29,7 +29,9 @@ export const IgnoredDomains = (props: Props) => {
             title={intl.getMessage('ignore_domains_title')}
             description={props.description}
             checked={props.ignoreEnabled}
-            onChange={(e: Event) => props.onIgnoreEnabledChange((e.target as HTMLInputElement).checked)}
+            onChange={(e: Event) =>
+                props.onIgnoreEnabledChange((e.target as HTMLInputElement).checked)
+            }
             disabled={props.processing}
         >
             <Textarea
@@ -76,7 +78,9 @@ export const IgnoredDomains = (props: Props) => {
                 disabled={props.processing || !props.ignoreEnabled}
                 errorMessage={props.error}
                 onBlur={(e: Event) => {
-                    const trimmed = trimLinesAndRemoveEmpty((e.target as HTMLTextAreaElement).value);
+                    const trimmed = trimLinesAndRemoveEmpty(
+                        (e.target as HTMLTextAreaElement).value,
+                    );
                     props.onIgnoredChange(trimmed);
                 }}
             />

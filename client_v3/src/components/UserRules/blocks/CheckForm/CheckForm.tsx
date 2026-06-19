@@ -116,9 +116,7 @@ export const CheckForm = (props: Props) => {
                             size="responsive"
                             height="medium"
                             menuSize="large"
-                            placeholder={intl.getMessage(
-                                'user_rules_dns_record_type_placeholder',
-                            )}
+                            placeholder={intl.getMessage('user_rules_dns_record_type_placeholder')}
                             options={DNS_RECORD_TYPE_OPTIONS}
                             value={DNS_RECORD_TYPE_OPTIONS.find(
                                 (option) => option.value === qtype(),
@@ -126,9 +124,7 @@ export const CheckForm = (props: Props) => {
                             onChange={handleQtypeChange}
                         />
 
-                        {qtypeError() && (
-                            <div class={theme.form.error}>{qtypeError()}</div>
-                        )}
+                        {qtypeError() && <div class={theme.form.error}>{qtypeError()}</div>}
                     </div>
                 </div>
             </div>

@@ -18,9 +18,7 @@ type Props<T = string | number | boolean> = {
     ref?: HTMLDivElement | ((el: HTMLDivElement) => void);
 };
 
-export const Radio = <T extends number | string | boolean = string>(
-    props: Props<T>,
-) => {
+export const Radio = <T extends number | string | boolean = string>(props: Props<T>) => {
     const setRef = (el: HTMLDivElement) => {
         if (typeof props.ref === 'function') {
             props.ref(el);
@@ -33,7 +31,11 @@ export const Radio = <T extends number | string | boolean = string>(
                 {(o) => (
                     <label
                         for={props.name ? `${props.name}-${o.value}` : String(o.value)}
-                        class={cn(s.radio, props.class, props.verticalAlign && s[props.verticalAlign])}
+                        class={cn(
+                            s.radio,
+                            props.class,
+                            props.verticalAlign && s[props.verticalAlign],
+                        )}
                     >
                         <input
                             id={props.name ? `${props.name}-${o.value}` : String(o.value)}

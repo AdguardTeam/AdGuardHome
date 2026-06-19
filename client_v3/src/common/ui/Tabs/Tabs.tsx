@@ -37,8 +37,8 @@ export const Tabs = (props: Props) => {
         props.onTabChange?.(tabId);
     };
 
-    const activeTabContent = createMemo(() =>
-        props.tabs.find((tab) => tab.id === activeTab())?.content,
+    const activeTabContent = createMemo(
+        () => props.tabs.find((tab) => tab.id === activeTab())?.content,
     );
 
     return (

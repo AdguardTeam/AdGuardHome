@@ -13,8 +13,17 @@ export type ButtonProps = JSX.ButtonHTMLAttributes<HTMLButtonElement> & {
 
 export const Button = (props: ButtonProps) => {
     const [local, rest] = splitProps(props, [
-        'id', 'size', 'type', 'variant', 'children', 'class', 'className', 'onClick', 'disabled',
-        'leftAddon', 'rightAddon',
+        'id',
+        'size',
+        'type',
+        'variant',
+        'children',
+        'class',
+        'className',
+        'onClick',
+        'disabled',
+        'leftAddon',
+        'rightAddon',
     ]);
 
     return (

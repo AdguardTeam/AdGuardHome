@@ -156,7 +156,9 @@ export const ConfigureRewritesModal = (props: Props) => {
                                         'rewrite_domain_input_placeholder',
                                     )}
                                     value={domain()}
-                                    onChange={(e) => setDomain((e.target as HTMLInputElement).value)}
+                                    onChange={(e) =>
+                                        setDomain((e.target as HTMLInputElement).value)
+                                    }
                                     onBlur={validateAndSetErrors}
                                     errorMessage={domainError()}
                                 />
@@ -177,7 +179,9 @@ export const ConfigureRewritesModal = (props: Props) => {
                                         'rewrites_answer_input_placeholder',
                                     )}
                                     value={answer()}
-                                    onChange={(e) => setAnswer((e.target as HTMLInputElement).value)}
+                                    onChange={(e) =>
+                                        setAnswer((e.target as HTMLInputElement).value)
+                                    }
                                     onBlur={validateAndSetErrors}
                                     errorMessage={answerError()}
                                 />
@@ -192,7 +196,11 @@ export const ConfigureRewritesModal = (props: Props) => {
                             data-testid="rewrite-save-button"
                             variant="primary"
                             size="small"
-                            disabled={rewritesState.processingAdd || rewritesState.processingUpdate || rewritesState.processing}
+                            disabled={
+                                rewritesState.processingAdd ||
+                                rewritesState.processingUpdate ||
+                                rewritesState.processing
+                            }
                             class={theme.dialog.button}
                         >
                             {getButtonText(props.modalId)}
