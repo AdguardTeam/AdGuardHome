@@ -199,6 +199,10 @@ test('4189 — Query log response filter', async ({ page, agh, api }) => {
   await openQueryLog(page);
 
   const responseSelector = page.locator('select').first();
+  // The response-filter <select> is populated by a React render after the log
+  // view mounts; wait for its options to exist before selecting, otherwise
+  // selectOption flakes with "did not find some options" under load.
+  await expect(responseSelector.locator('option', { hasText: 'Filtered' })).toBeAttached({ timeout: 15_000 });
   let r = waitForQueryLogResponse(page);
   await responseSelector.selectOption({ label: 'Filtered' });
   await r;
