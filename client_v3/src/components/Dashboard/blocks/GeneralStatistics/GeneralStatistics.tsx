@@ -19,10 +19,14 @@ type Props = {
 };
 
 export const GeneralStatistics = (props: Props) => {
-    const blockedPercent = () => props.numDnsQueries > 0 ? (props.numBlockedFiltering / props.numDnsQueries) * 100 : 0;
-    const safebrowsingPercent = () => props.numDnsQueries > 0 ? (props.numReplacedSafebrowsing / props.numDnsQueries) * 100 : 0;
-    const parentalPercent = () => props.numDnsQueries > 0 ? (props.numReplacedParental / props.numDnsQueries) * 100 : 0;
-    const safesearchPercent = () => props.numDnsQueries > 0 ? (props.numReplacedSafesearch / props.numDnsQueries) * 100 : 0;
+    const blockedPercent = () =>
+        props.numDnsQueries > 0 ? (props.numBlockedFiltering / props.numDnsQueries) * 100 : 0;
+    const safebrowsingPercent = () =>
+        props.numDnsQueries > 0 ? (props.numReplacedSafebrowsing / props.numDnsQueries) * 100 : 0;
+    const parentalPercent = () =>
+        props.numDnsQueries > 0 ? (props.numReplacedParental / props.numDnsQueries) * 100 : 0;
+    const safesearchPercent = () =>
+        props.numDnsQueries > 0 ? (props.numReplacedSafesearch / props.numDnsQueries) * 100 : 0;
 
     const hasStats = () => props.numDnsQueries > 0;
 
@@ -40,10 +44,7 @@ export const GeneralStatistics = (props: Props) => {
                 </Show>
             </div>
 
-            <Show
-                when={hasStats()}
-                fallback={<EmptyState />}
-            >
+            <Show when={hasStats()} fallback={<EmptyState />}>
                 <div class={s.tableRows}>
                     <StatRow
                         label={intl.getMessage('dns_queries')}
@@ -96,7 +97,7 @@ export const GeneralStatistics = (props: Props) => {
                         <StatRow
                             label={intl.getMessage('average_time_processing')}
                             value={intl.getMessage('processing_time_ms', {
-                                value: props.avgProcessingTime.toFixed(0),
+                                value: (props.avgProcessingTime ?? 0).toFixed(0),
                             })}
                             isQueriesValue={false}
                             icon="time"

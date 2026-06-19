@@ -140,7 +140,7 @@
     }
 }
 
-.dialog :global(.rc-dialog-header) {
+.dialog :global(.dialog-header) {
     padding: 24px 56px 24px 32px;
     box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.1);
     background: var(--default-page-background);
@@ -160,12 +160,12 @@
     }
 }
 
-.dialog :global(.rc-dialog-title) {
+.dialog :global([data-part="title"]) {
     font-size: 24px;
     line-height: 1.2;
 }
 
-.dialog :global(.rc-dialog-close) {
+.dialog :global([data-part="close-trigger"]) {
     right: 24px;
     top: 24px;
     z-index: 2;
@@ -176,20 +176,8 @@
     }
 }
 
-.dialog :global(.rc-dialog-body) {
-    display: flex;
-    flex: 1 1 auto;
-    min-height: 0;
-    padding: 0;
-
-    @media (min-width: 1024px) and (min-height: 720px) {
-        display: block;
-        flex: 0 1 auto;
-        min-height: auto;
-    }
-}
-
-.dialog :global(.rc-dialog-section) {
+/* The content card carries .dialog itself — compound selector, not descendant */
+.dialog:global([data-part="content"]) {
     display: flex;
     flex-direction: column;
     max-height: min(600px, calc(100vh - 32px));
@@ -201,5 +189,19 @@
         max-height: none;
         padding: 24px 16px;
         overflow: visible;
+    }
+}
+
+/* The body is a descendant <div class="dialog-body"> */
+.dialog :global(.dialog-body) {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 0;
+
+    @media (min-width: 1024px) and (min-height: 720px) {
+        display: block;
+        flex: 0 1 auto;
+        min-height: auto;
     }
 }

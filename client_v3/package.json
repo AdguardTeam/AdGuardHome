@@ -25,8 +25,6 @@
   "dependencies": {
     "@adguard/translate": "^1.0.2",
     "@ark-ui/solid": "^5.37.1",
-    "@corvu/dialog": "^0.2.0",
-    "@corvu/popover": "^0.2.0",
     "@modular-forms/solid": "^0.25.0",
     "@solidjs/router": "^0.15.0",
     "chart.js": "^4.4.0",

@@ -30,9 +30,7 @@ export const UpstreamAvgTime = (props: Props) => {
         handleSort,
     } = useSortedData(() => props.topUpstreamsAvgTime);
     const visibleUpstreams = createMemo(() =>
-        isDesktop()
-            ? sortedUpstreams()
-            : sortedUpstreams().slice(0, MOBILE_TABLE_MAX_ROWS)
+        isDesktop() ? sortedUpstreams() : sortedUpstreams().slice(0, MOBILE_TABLE_MAX_ROWS),
     );
 
     const hasStats = createMemo(() => props.topUpstreamsAvgTime.length > 0);
@@ -46,7 +44,7 @@ export const UpstreamAvgTime = (props: Props) => {
 
                 <Show when={hasStats()}>
                     <div class={cn(theme.text.t3, s.cardSubtitle)}>
-                        {props.avgProcessingTime.toFixed(0)}{' '}
+                        {(props.avgProcessingTime ?? 0).toFixed(0)}{' '}
                         {intl.getMessage('milliseconds_abbreviation')}
                     </div>
                 </Show>
@@ -80,7 +78,7 @@ export const UpstreamAvgTime = (props: Props) => {
                                             s.queryCount,
                                         )}
                                     >
-                                        {upstream.count.toFixed(0)}{' '}
+                                        {(upstream.count ?? 0).toFixed(0)}{' '}
                                         {intl.getMessage('milliseconds_abbreviation')}
                                     </div>
                                 </div>

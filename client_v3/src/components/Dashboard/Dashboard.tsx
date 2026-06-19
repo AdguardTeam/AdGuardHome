@@ -45,11 +45,7 @@ export const Dashboard = () => {
 
     createEffect(() => {
         const protectionDisabledDuration = dashboardState.protectionDisabledDuration;
-        if (
-            protectionDisabledDuration &&
-            protectionDisabledDuration > 0 &&
-            timerRef === null
-        ) {
+        if (protectionDisabledDuration && protectionDisabledDuration > 0 && timerRef === null) {
             startCountdown(protectionDisabledDuration);
         }
     });
@@ -119,9 +115,8 @@ export const Dashboard = () => {
         setSelectedPeriod(period);
     };
 
-    const isLoading = () => statsState.processingStats || statsState.processingGetConfig || accessState.processing;
-
-    const showLoader = () => !dashboardState || !statsState;
+    const isLoading = () =>
+        statsState.processingStats || statsState.processingGetConfig || accessState.processing;
 
     return (
         <div class={theme.layout.container}>
@@ -138,11 +133,14 @@ export const Dashboard = () => {
                     onPeriodChange={handlePeriodChange}
                 />
 
-                <Show when={!isLoading()} fallback={
-                    <div class={s.loader}>
-                        <PageLoader />
-                    </div>
-                }>
+                <Show
+                    when={!isLoading()}
+                    fallback={
+                        <div class={s.loader}>
+                            <PageLoader />
+                        </div>
+                    }
+                >
                     <StatCards
                         numDnsQueries={statsState.numDnsQueries}
                         numBlockedFiltering={statsState.numBlockedFiltering}
@@ -164,7 +162,10 @@ export const Dashboard = () => {
                             avgProcessingTime={statsState.avgProcessingTime}
                         />
 
-                        <TopClients topClients={statsState.topClients} numDnsQueries={statsState.numDnsQueries} />
+                        <TopClients
+                            topClients={statsState.topClients}
+                            numDnsQueries={statsState.numDnsQueries}
+                        />
 
                         <TopQueriedDomains
                             topQueriedDomains={statsState.topQueriedDomains}
