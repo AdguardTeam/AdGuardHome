@@ -1,4 +1,4 @@
-import { Show, For } from 'solid-js';
+import { Show } from 'solid-js';
 
 import { A } from '@solidjs/router';
 

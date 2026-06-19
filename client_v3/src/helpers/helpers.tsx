@@ -2,7 +2,6 @@ import { parseISO, format as dateFormat } from 'date-fns';
 import round from 'lodash/round';
 import ipaddr, { IPv4, IPv6 } from 'ipaddr.js';
 import queryString from 'qs';
-import { For } from 'solid-js';
 import intl from 'panel/common/intl';
 import { getTrackerData } from './trackers/trackers';
 
@@ -1051,7 +1050,7 @@ export const getRulesToFilterList = (
                 (acc: any, [filterName, rulesArr]) =>
                     acc
                         .concat(
-                            rulesArr.map((rule: any, i: any) => (
+                            rulesArr.map((rule: any, _i: any) => (
                                 <dd class={classes.rule}>{rule}</dd>
                             )),
                         )

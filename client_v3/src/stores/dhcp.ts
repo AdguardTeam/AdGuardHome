@@ -1,6 +1,6 @@
-import { createStore, produce } from 'solid-js/store';
+import { createStore } from 'solid-js/store';
 import { apiClient } from 'panel/api/Api';
-import { addErrorToast, addSuccessToast } from './toasts';
+import { addErrorToast } from './toasts';
 
 type Lease = { hostname: string; ip: string; mac: string };
 

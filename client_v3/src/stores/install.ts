@@ -95,6 +95,7 @@ export const setAllSettings = async (config: any) => {
     setState({ processingSubmit: true, submitted: false });
     try {
         const { confirm_password, ...rest } = config;
+        void confirm_password;
         await apiClient.setAllSettings(rest);
         setState({ processingSubmit: false, submitted: true });
     } catch (error) {

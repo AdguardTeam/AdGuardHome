@@ -18,11 +18,6 @@ type FormValues = {
     enabled?: boolean;
 };
 
-const defaultValues: FormValues = {
-    name: '',
-    url: '',
-};
-
 type ConfigureAllowlistModalIdType = 'ADD_ALLOWLIST' | 'EDIT_ALLOWLIST';
 
 type Props = {

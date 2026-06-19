@@ -1,4 +1,4 @@
-import { createSignal, createMemo, For, Show } from 'solid-js';
+import { createSignal, createMemo, For } from 'solid-js';
 import cn from 'clsx';
 
 import { Icon } from 'panel/common/ui/Icon';

@@ -1,4 +1,4 @@
-import { createEffect, Show } from 'solid-js';
+import { createEffect } from 'solid-js';
 
 import theme from 'panel/lib/theme';
 import { Input } from 'panel/common/controls/Input';

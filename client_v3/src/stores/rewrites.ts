@@ -1,6 +1,6 @@
 import { createStore } from 'solid-js/store';
 import { apiClient } from 'panel/api/Api';
-import { addErrorToast, addSuccessToast } from './toasts';
+import { addErrorToast } from './toasts';
 
 type RewriteConfig = {
     answer: string;
@@ -90,7 +90,7 @@ export const updateRewrite = async (
 
 export const deleteRewrite = async (
     config: RewriteConfig,
-    options: { showToast?: boolean; closeModal?: boolean } = {},
+    _options: { showToast?: boolean; closeModal?: boolean } = {},
 ): Promise<boolean> => {
     setState('processingDelete', true);
     try {

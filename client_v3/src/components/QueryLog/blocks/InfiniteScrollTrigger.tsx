@@ -1,4 +1,4 @@
-import { createSignal, createEffect, onCleanup, Show } from 'solid-js';
+import { createEffect, onCleanup, Show } from 'solid-js';
 import cn from 'clsx';
 
 import { InlineLoader } from 'panel/common/ui/Loader';

@@ -1,4 +1,3 @@
-import { createMemo } from 'solid-js';
 import cn from 'clsx';
 
 import intl from 'panel/common/intl';

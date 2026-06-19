@@ -48,6 +48,7 @@ export const Settings = () => {
         const ss = safesearch();
         if (!ss) return [];
         const { enabled, ...providers } = ss;
+        void enabled;
         return Object.entries(providers).map(([key, value]) => ({ key, value: value as boolean }));
     });
 

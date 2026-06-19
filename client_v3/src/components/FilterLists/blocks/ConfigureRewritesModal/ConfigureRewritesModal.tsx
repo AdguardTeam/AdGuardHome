@@ -20,12 +20,6 @@ type FormValues = {
     enabled: boolean;
 };
 
-const defaultValues: FormValues = {
-    answer: '',
-    domain: '',
-    enabled: false,
-};
-
 type ConfigureRewritesModalIdType = 'ADD_REWRITE' | 'EDIT_REWRITE';
 
 type Props = {

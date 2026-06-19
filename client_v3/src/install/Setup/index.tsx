@@ -1,4 +1,4 @@
-import { createEffect, createMemo, onMount, onCleanup, Show, Switch, Match } from 'solid-js';
+import { createMemo, onMount, onCleanup, Show, Switch, Match } from 'solid-js';
 
 import { PublicHeader } from 'panel/common/ui/PublicHeader';
 import { SetupGuide } from 'panel/components/SetupGuide/SetupGuide';

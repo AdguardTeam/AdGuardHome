@@ -1,5 +1,4 @@
-import { type JSX, createSignal, Show, For } from 'solid-js';
-import { A } from '@solidjs/router';
+import { createSignal, Show, For } from 'solid-js';
 import cn from 'clsx';
 
 import intl from 'panel/common/intl';
@@ -11,7 +10,6 @@ import { Icon } from 'panel/common/ui/Icon';
 import { useIsMobile } from 'panel/hooks/useIsMobile';
 import { DISABLE_PROTECTION_TIMINGS, ONE_SECOND_IN_MS } from 'panel/helpers/constants';
 import { msToSeconds, msToMinutes, msToHours } from 'panel/helpers/helpers';
-import { Paths } from 'panel/components/Routes/Paths';
 
 import s from './Header.module.pcss';
 

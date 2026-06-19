@@ -23,11 +23,6 @@ type FormValues = {
     enabled?: boolean;
 };
 
-const defaultValues: FormValues = {
-    name: '',
-    url: '',
-};
-
 type ConfigureBlocklistModalIdType = 'ADD_BLOCKLIST' | 'EDIT_BLOCKLIST';
 
 type Props = {

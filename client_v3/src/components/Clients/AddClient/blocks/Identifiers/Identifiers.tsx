@@ -1,4 +1,4 @@
-import { createSignal, createMemo, createEffect, For, Show } from 'solid-js';
+import { createSignal, createMemo, createEffect, For } from 'solid-js';
 import cn from 'clsx';
 import intl from 'panel/common/intl';
 import { Input } from 'panel/common/controls/Input';

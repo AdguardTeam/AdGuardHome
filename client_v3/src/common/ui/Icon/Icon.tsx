@@ -1,4 +1,3 @@
-import { type JSX } from 'solid-js';
 import cn from 'clsx';
 import { IconType } from 'panel/common/ui/Icons';
 

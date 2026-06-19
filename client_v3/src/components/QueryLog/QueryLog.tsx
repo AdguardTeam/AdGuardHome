@@ -1,4 +1,4 @@
-import { createSignal, createEffect, createMemo, onMount, Show, For } from 'solid-js';
+import { createSignal, createEffect, onMount, Show, For } from 'solid-js';
 import cn from 'clsx';
 import { useNavigate, useLocation } from '@solidjs/router';
 
@@ -6,7 +6,6 @@ import { Loader } from 'panel/common/ui/Loader';
 import theme from 'panel/lib/theme';
 import {
     queryLogsState,
-    getLogs,
     getLogsConfig,
     setLogsFilter,
     setFilteredLogs,

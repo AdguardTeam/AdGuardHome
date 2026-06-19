@@ -1,5 +1,5 @@
-import { createEffect, Show } from 'solid-js';
-import { createForm, FormError, required, minLength, setError } from '@modular-forms/solid';
+import { createEffect } from 'solid-js';
+import { createForm, required, setError } from '@modular-forms/solid';
 import { Input } from 'panel/common/controls/Input';
 import { Button } from 'panel/common/ui/Button';
 import { HTML_PAGES } from 'panel/helpers/constants';

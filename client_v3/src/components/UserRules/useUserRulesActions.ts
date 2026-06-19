@@ -11,17 +11,11 @@ import {
     toggleBlockingForClient,
     BLOCK_ACTIONS,
 } from 'panel/stores/filtering';
-import { dashboardState, getClients } from 'panel/stores/dashboard';
-import { settingsState, initSettings, toggleSetting } from 'panel/stores/settings';
-import { clientsState, updateClient } from 'panel/stores/clients';
+import { getClients } from 'panel/stores/dashboard';
+import { initSettings, toggleSetting } from 'panel/stores/settings';
+import { updateClient } from 'panel/stores/clients';
 import { servicesState, getBlockedServices, updateBlockedServices } from 'panel/stores/services';
-import {
-    rewritesState,
-    updateRewrite,
-    deleteRewrite,
-    addRewrite,
-    getRewritesList,
-} from 'panel/stores/rewrites';
+import { updateRewrite, deleteRewrite, addRewrite, getRewritesList } from 'panel/stores/rewrites';
 import { addSuccessToast, createUndoToast } from 'panel/stores/toasts';
 import { openModal } from 'panel/stores/modals';
 import { MODAL_TYPE, SPECIAL_FILTER_ID } from 'panel/helpers/constants';

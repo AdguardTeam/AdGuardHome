@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { getInitialClientFormState } from 'panel/initialState';
 import {
     initClientForm,
     updateClientFormField,

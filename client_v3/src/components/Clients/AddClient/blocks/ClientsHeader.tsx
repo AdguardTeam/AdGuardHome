@@ -1,5 +1,5 @@
 import { createMemo } from 'solid-js';
-import { useLocation, useMatch } from '@solidjs/router';
+import { useMatch } from '@solidjs/router';
 import cn from 'clsx';
 import intl from 'panel/common/intl';
 import { Breadcrumbs } from 'panel/common/ui/Breadcrumbs';
@@ -20,7 +20,6 @@ type ClientsHeaderProps = {
 
 export const ClientsHeader = (props: ClientsHeaderProps) => {
     const extraLinks = () => props.extraLinks || [];
-    const location = useLocation();
     const isEdit = createMemo(() => clientFormState.mode === 'edit');
 
     const clientPageLink = createMemo(() =>

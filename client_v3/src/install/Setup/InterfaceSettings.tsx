@@ -1,4 +1,4 @@
-import { createMemo, Show } from 'solid-js';
+import { createMemo } from 'solid-js';
 
 import intl from 'panel/common/intl';
 import { Button } from 'panel/common/ui/Button';
@@ -14,7 +14,7 @@ import { ALL_INTERFACES_IP, STATUS_RESPONSE, STANDARD_WEB_PORT } from '../../hel
 
 import { InstallInterface } from '../../initialState';
 
-import type { ConfigType, DnsConfig, SettingsFormValues, StaticIpType, WebConfig } from './types';
+import type { ConfigType, DnsConfig, SettingsFormValues, WebConfig } from './types';
 
 type Props = {
     handleSubmit: (data: SettingsFormValues) => void;

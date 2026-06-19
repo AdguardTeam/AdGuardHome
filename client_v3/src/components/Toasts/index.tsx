@@ -1,7 +1,4 @@
 import { For } from 'solid-js';
-import { TransitionGroup } from 'solid-transition-group';
-
-import { TOAST_TRANSITION_TIMEOUT } from '../../helpers/constants';
 
 import Toast from './Toast';
 import './Toast.pcss';

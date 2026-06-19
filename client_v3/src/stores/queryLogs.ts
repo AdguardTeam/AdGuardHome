@@ -1,6 +1,6 @@
 import { createStore } from 'solid-js/store';
 import { apiClient } from 'panel/api/Api';
-import { addErrorToast, addSuccessToast } from './toasts';
+import { addErrorToast } from './toasts';
 import { DAY, DEFAULT_LOGS_FILTER } from 'panel/helpers/constants';
 
 type QueryLogsState = {
