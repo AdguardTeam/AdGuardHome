@@ -91,13 +91,98 @@ const initialLanguage: LocalesType = resolveLanguage(detectedLanguage);
 // Solid-reactive language signal
 const [lang, setLang] = createSignal<LocalesType>(initialLanguage);
 
-const TAGS_CONFIG = {
-    br: () => '<br/>',
-    strong: (children: string) => `<strong>${children}</strong>`,
-    code: (children: string) => `<code>${children}</code>`,
+/**
+ * Creates default value functions for common HTML tags.
+ * Mirrors createReactTranslator's createDefaultValues(), but returns real
+ * DOM nodes via document.createElement instead of React element descriptors.
+ *
+ * Why document.createElement and not solid-js/h or <Dynamic>:
+ * @adguard/translate is built around the React/Preact model where
+ * createElement() returns a cheap descriptor object the framework reconciles
+ * later. SolidJS has no equivalent — its JSX compiles to fine-grained template
+ * cloning, and h()/Dynamic need a reactive owner. A plain DOM node has no
+ * ownership entanglement: SolidJS just inserts and removes it
+ * (normalizeIncomingArray keeps anything with a `.nodeType` as-is), which is
+ * the most robust option for these static styling tags.
+ *
+ * `<br>` is intentionally NOT provided: the parser rejects `<br/>`/`<br>` as
+ * unbalanced tags, and void tags must be plain strings (not functions), so a
+ * `br` handler could never be invoked anyway.
+ *
+ * These are fallbacks for when a component doesn't pass a per-call handler.
+ * The library merges user-supplied values over these, with user values winning.
+ * For interactive tags (<a>, <button>), always pass a per-call JSX handler so
+ * events go through SolidJS's delegation system.
+ */
+export const createSolidDefaultValues = () => ({
+    // Inline elements
+    strong: (children: string) => {
+        const el = document.createElement('strong');
+        el.textContent = children;
+        return el;
+    },
+    code: (children: string) => {
+        const el = document.createElement('code');
+        el.textContent = children;
+        return el;
+    },
+    b: (children: string) => {
+        const el = document.createElement('b');
+        el.textContent = children;
+        return el;
+    },
+    i: (children: string) => {
+        const el = document.createElement('i');
+        el.textContent = children;
+        return el;
+    },
+    em: (children: string) => {
+        const el = document.createElement('em');
+        el.textContent = children;
+        return el;
+    },
+
+    // Block elements
+    p: (children: string) => {
+        const el = document.createElement('p');
+        el.textContent = children;
+        return el;
+    },
+});
+
+/**
+ * Custom message constructor for SolidJS.
+ * When all formatted elements are strings, join them (backward compatible).
+ * When JSX elements are present, return the array — SolidJS renders
+ * arrays of strings + JSX elements natively.
+ */
+export const solidMessageConstructor = (formatted: unknown[]): string | unknown[] => {
+    if (formatted.every((child) => typeof child === 'string')) {
+        return (formatted as string[]).join('');
+    }
+    return formatted;
 };
 
-let translator = translate.createTranslator<any>(i18n(initialLanguage), undefined, TAGS_CONFIG);
+/**
+ * Builds a @adguard/translate translator configured for SolidJS.
+ *
+ * Hand-rolled `createSolidTranslator` adapter: the library ships React/Preact
+ * factories but no Solid one, so we reuse the generic createTranslator and
+ * inject:
+ *   - solidMessageConstructor: keeps arrays of nodes intact (the default
+ *     join('') would stringify DOM/JSX nodes to "[object Object]");
+ *   - createSolidDefaultValues(): renders styling tags as real DOM nodes.
+ *
+ * See createSolidDefaultValues for why document.createElement is used.
+ */
+const createSolidTranslator = (i18nInstance: ReturnType<typeof i18n>) =>
+    translate.createTranslator<any>(
+        i18nInstance,
+        solidMessageConstructor,
+        createSolidDefaultValues(),
+    );
+
+let translator = createSolidTranslator(i18n(initialLanguage));
 
 const intl = {
     getMessage: (key: string, values?: any) => {
@@ -120,7 +205,7 @@ const intl = {
 
     changeLanguage: (newLang: LocalesType) => {
         const resolved = resolveLanguage(newLang);
-        translator = translate.createTranslator<any>(i18n(resolved), undefined, TAGS_CONFIG);
+        translator = createSolidTranslator(i18n(resolved));
         setLang(resolved);
     },
 
