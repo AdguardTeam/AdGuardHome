@@ -1,7 +1,7 @@
 const path = require('path');
 
 module.exports = {
-    plugins: ['prettier', 'solid'],
+    plugins: ['prettier', 'solid', 'import'],
     extends: [
         'prettier',
         'eslint:recommended',

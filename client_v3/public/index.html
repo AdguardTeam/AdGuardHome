@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
     <head>
         <meta charset="utf-8" />
@@ -21,24 +21,22 @@
                 min-height: 100vh;
             }
 
-            [data-theme="DARK"] .wrapper {
+            [data-theme='DARK'] .wrapper {
                 background-color: #f5f7fb;
             }
         </style>
     </head>
     <body>
-        <noscript>
-            You need to enable JavaScript to run this app.
-        </noscript>
+        <noscript> You need to enable JavaScript to run this app. </noscript>
         <div id="root"></div>
         <script>
-            (function() {
+            (function () {
                 var LOCAL_STORAGE_THEME_KEY = 'account_theme';
                 var theme = 'light';
 
                 try {
                     theme = window.localStorage.getItem(LOCAL_STORAGE_THEME_KEY);
-                } catch(e) {
+                } catch (e) {
                     console.error(e);
                 }
 

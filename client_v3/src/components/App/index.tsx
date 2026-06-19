@@ -107,9 +107,7 @@ const App = () => {
                         <Sidebar />
 
                         <Show when={!dashboardState.processing && dashboardState.isCoreRunning}>
-                            <div class={s.bodyWrapper}>
-                                {props.children}
-                            </div>
+                            <div class={s.bodyWrapper}>{props.children}</div>
                         </Show>
                     </div>
 
