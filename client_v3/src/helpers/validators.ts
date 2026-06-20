@@ -550,6 +550,9 @@ const R_HAS_ADDRESS = /[.:]/;
  * @example validateUpstreams("not-a-server")               // "Invalid upstream"
  */
 export const validateUpstreams = (value: string): string | undefined => {
+    if (!value) {
+        return undefined;
+    }
     const lines = value.split('\n');
     const invalidLines: number[] = [];
     for (let i = 0; i < lines.length; i += 1) {

@@ -170,7 +170,7 @@ export const Header = (props: Props) => {
                             onChange={(option: IOption<string>) =>
                                 props.onStatusFilterChange(option.value)
                             }
-                            menuSize="medium"
+                            menuSize="big"
                             menuPosition="right"
                             borderless={!isMobile()}
                             class={s.filterSelect}
@@ -186,7 +186,7 @@ export const Header = (props: Props) => {
                             onChange={(option: IOption<string>) =>
                                 props.onReasonFilterChange(option.value)
                             }
-                            menuSize="medium"
+                            menuSize="big"
                             menuPosition="right"
                             borderless={!isMobile()}
                             class={s.filterSelect}

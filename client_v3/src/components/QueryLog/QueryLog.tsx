@@ -74,16 +74,10 @@ export const QueryLog = () => {
         const search = searchParams.get('search') || DEFAULT_LOGS_FILTER.search;
         const statusParam = searchParams.get('status') || DEFAULT_LOGS_FILTER.status;
         const reasonParam = searchParams.get('reason') || DEFAULT_LOGS_FILTER.reason;
-        const status = Object.prototype.hasOwnProperty.call(
-            QUERY_LOG_STATUS_FILTER_QUERIES,
-            statusParam,
-        )
+        const status = Object.hasOwn(QUERY_LOG_STATUS_FILTER_QUERIES, statusParam)
             ? statusParam
             : DEFAULT_LOGS_FILTER.status;
-        const reason = Object.prototype.hasOwnProperty.call(
-            QUERY_LOG_REASON_FILTER_QUERIES,
-            reasonParam,
-        )
+        const reason = Object.hasOwn(QUERY_LOG_REASON_FILTER_QUERIES, reasonParam)
             ? reasonParam
             : DEFAULT_LOGS_FILTER.reason;
         const nextFilter = { search, status, reason };

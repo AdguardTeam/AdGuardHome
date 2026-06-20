@@ -6,6 +6,7 @@ import {
     createListCollection,
     useSelectContext,
     useSelectItemContext,
+    useComboboxItemContext,
 } from '@ark-ui/solid';
 import { Icon } from 'panel/common/ui/Icon';
 import { IOption } from 'panel/lib/helpers/utils';
@@ -89,10 +90,22 @@ const SelectMultiValueDisplay = (props: { placeholder?: string }) => {
 /**
  * Check/dot icon for the item indicator.
  * Matches client_v2 CustomOption: check when selected, dot when not.
+ * Used inside ArkSelect.Item (non-searchable Select branch).
  */
 const OptionCheckIcon = () => {
     // eslint-disable-next-line solid/reactivity
     const itemCtx = useSelectItemContext();
+    const state = itemCtx();
+    return <Icon icon={state.selected ? 'check' : 'dot'} />;
+};
+
+/**
+ * Check/dot icon for the item indicator in Combobox (searchable) mode.
+ * Same appearance as OptionCheckIcon but uses ComboboxItemContext.
+ */
+const ComboboxOptionCheckIcon = () => {
+    // eslint-disable-next-line solid/reactivity
+    const itemCtx = useComboboxItemContext();
     const state = itemCtx();
     return <Icon icon={state.selected ? 'check' : 'dot'} />;
 };
@@ -231,12 +244,15 @@ export const Select = <
                         }}
                         positioning={{
                             placement:
-                                props.menuPlacement === 'top'
-                                    ? 'top'
-                                    : props.menuPlacement === 'auto'
-                                      ? 'bottom'
-                                      : 'bottom',
+                                props.menuPosition === 'right'
+                                    ? props.menuPlacement === 'top'
+                                        ? ('top-end' as const)
+                                        : ('bottom-end' as const)
+                                    : props.menuPlacement === 'top'
+                                      ? ('top-end' as const)
+                                      : ('bottom-end' as const),
                             sameWidth: true,
+                            flip: ['bottom-end', 'top-end'],
                         }}
                     >
                         <Show when={!props.isDropdownSelect}>
@@ -366,12 +382,15 @@ export const Select = <
                     }}
                     positioning={{
                         placement:
-                            props.menuPlacement === 'top'
-                                ? 'top'
-                                : props.menuPlacement === 'auto'
-                                  ? 'bottom'
-                                  : 'bottom',
+                            props.menuPosition === 'right'
+                                ? props.menuPlacement === 'top'
+                                    ? ('top-end' as const)
+                                    : ('bottom-end' as const)
+                                : props.menuPlacement === 'top'
+                                  ? ('top-end' as const)
+                                  : ('bottom-end' as const),
                         sameWidth: true,
+                        flip: ['bottom-end', 'top-end'],
                     }}
                 >
                     <Show when={!props.isDropdownSelect}>
@@ -423,7 +442,7 @@ export const Select = <
                                                                 }
                                                             >
                                                                 <ArkCombobox.ItemIndicator>
-                                                                    <OptionCheckIcon />
+                                                                    <ComboboxOptionCheckIcon />
                                                                 </ArkCombobox.ItemIndicator>
                                                             </Show>
                                                             <Show
@@ -461,7 +480,7 @@ export const Select = <
                                                                 }
                                                             >
                                                                 <ArkCombobox.ItemIndicator>
-                                                                    <OptionCheckIcon />
+                                                                    <ComboboxOptionCheckIcon />
                                                                 </ArkCombobox.ItemIndicator>
                                                             </Show>
                                                             <Show

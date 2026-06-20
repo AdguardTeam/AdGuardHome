@@ -96,14 +96,24 @@ export const clearDnsCache = async () => {
 export const setDnsConfig = async (values: any, _toastMessage?: string) => {
     setState('processingSetConfig', true);
     try {
-        const config = {
-            ...values,
-            bootstrap_dns: splitByNewLine(values.bootstrap_dns),
-            fallback_dns: splitByNewLine(values.fallback_dns),
-            local_ptr_upstreams: splitByNewLine(values.local_ptr_upstreams),
-            upstream_dns: splitByNewLine(values.upstream_dns),
-            ratelimit_whitelist: splitByNewLine(values.ratelimit_whitelist),
-        };
+        const config = { ...values };
+
+        if (Object.hasOwn(config, 'bootstrap_dns')) {
+            config.bootstrap_dns = splitByNewLine(config.bootstrap_dns);
+        }
+        if (Object.hasOwn(config, 'fallback_dns')) {
+            config.fallback_dns = splitByNewLine(config.fallback_dns);
+        }
+        if (Object.hasOwn(config, 'local_ptr_upstreams')) {
+            config.local_ptr_upstreams = splitByNewLine(config.local_ptr_upstreams);
+        }
+        if (Object.hasOwn(config, 'upstream_dns')) {
+            config.upstream_dns = splitByNewLine(config.upstream_dns);
+        }
+        if (Object.hasOwn(config, 'ratelimit_whitelist')) {
+            config.ratelimit_whitelist = splitByNewLine(config.ratelimit_whitelist);
+        }
+
         await apiClient.setDnsConfig(config);
         setState(reconcile({ ...state, ...values, processingSetConfig: false }));
     } catch (error) {

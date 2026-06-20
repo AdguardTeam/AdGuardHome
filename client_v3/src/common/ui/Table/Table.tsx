@@ -207,116 +207,126 @@ export const Table = <T extends Record<string, any>>(props: TableProps<T>) => {
         >
             <div class={s.tableContainer}>
                 <div class={s.tableMain}>
-                <div class={cn(s.table, props.class)}>
-                    <div class={cn(s.tableHeader, props.tableHeaderClass)} style={tableStyle()}>
-                        <For each={props.columns}>
-                            {(column) => (
-                                <div
-                                    class={cn(s.tableCell, s.tableHeaderCell, column.header.class, {
-                                        [s.sortable]: column.sortable,
-                                        [s.fitContent]: column.fitContent,
-                                    })}
-                                    onClick={() =>
-                                        (props.sortable ?? true) &&
-                                        column.sortable &&
-                                        handleSort(column.key)
-                                    }
-                                >
-                                    {column.header.render ? (
-                                        column.header.render()
-                                    ) : (
-                                        <span
-                                            class={cn(
-                                                theme.text.t3,
-                                                theme.text.condenced,
-                                                theme.text.semibold,
-                                            )}
-                                        >
-                                            {column.header.text}
-                                        </span>
-                                    )}
+                    <div class={cn(s.table, props.class)}>
+                        <div class={cn(s.tableHeader, props.tableHeaderClass)} style={tableStyle()}>
+                            <For each={props.columns}>
+                                {(column) => (
+                                    <div
+                                        class={cn(
+                                            s.tableCell,
+                                            s.tableHeaderCell,
+                                            column.header.class,
+                                            {
+                                                [s.sortable]: column.sortable,
+                                                [s.fitContent]: column.fitContent,
+                                            },
+                                        )}
+                                        onClick={() =>
+                                            (props.sortable ?? true) &&
+                                            column.sortable &&
+                                            handleSort(column.key)
+                                        }
+                                    >
+                                        {column.header.render ? (
+                                            column.header.render()
+                                        ) : (
+                                            <span
+                                                class={cn(
+                                                    theme.text.t3,
+                                                    theme.text.condenced,
+                                                    theme.text.semibold,
+                                                )}
+                                            >
+                                                {column.header.text}
+                                            </span>
+                                        )}
 
-                                    {(props.sortable ?? true) && column.sortable && (
-                                        <span>
-                                            <Show
-                                                when={
-                                                    state.sortKey === column.key &&
-                                                    state.sortDirection === 'asc'
-                                                }
-                                            >
-                                                <Icon icon="arrow" color="gray" class={s.sortAsc} />
-                                            </Show>
-                                            <Show
-                                                when={
-                                                    state.sortKey === column.key &&
-                                                    state.sortDirection === 'desc'
-                                                }
-                                            >
-                                                <Icon
-                                                    icon="arrow"
-                                                    color="gray"
-                                                    class={s.sortDesc}
-                                                />
-                                            </Show>
-                                        </span>
-                                    )}
-                                </div>
-                            )}
-                        </For>
+                                        {(props.sortable ?? true) && column.sortable && (
+                                            <span>
+                                                <Show
+                                                    when={
+                                                        state.sortKey === column.key &&
+                                                        state.sortDirection === 'asc'
+                                                    }
+                                                >
+                                                    <Icon
+                                                        icon="arrow"
+                                                        color="gray"
+                                                        class={s.sortAsc}
+                                                    />
+                                                </Show>
+                                                <Show
+                                                    when={
+                                                        state.sortKey === column.key &&
+                                                        state.sortDirection === 'desc'
+                                                    }
+                                                >
+                                                    <Icon
+                                                        icon="arrow"
+                                                        color="gray"
+                                                        class={s.sortDesc}
+                                                    />
+                                                </Show>
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
+                            </For>
+                        </div>
+
+                        <Show when={hasData()}>
+                            <For each={paginatedData()}>
+                                {(row, index) => {
+                                    return (
+                                        <div
+                                            class={cn(s.tableRow, props.tableRowClass)}
+                                            style={tableStyle()}
+                                            onClick={() => props.onRowClick?.(row)}
+                                        >
+                                            <For each={props.columns}>
+                                                {(column) => (
+                                                    <div
+                                                        class={cn(
+                                                            s.tableCell,
+                                                            s.tableBodyCell,
+                                                            column.class,
+                                                            {
+                                                                [s.fitContent]: column.fitContent,
+                                                                [s.clickableCell]:
+                                                                    !!props.onRowClick,
+                                                            },
+                                                        )}
+                                                    >
+                                                        {renderCell(column, row, index())}
+                                                    </div>
+                                                )}
+                                            </For>
+                                        </div>
+                                    );
+                                }}
+                            </For>
+                        </Show>
                     </div>
 
-                    <Show when={hasData()}>
-                        <For each={paginatedData()}>
-                            {(row, index) => {
-                                return (
-                                    <div
-                                        class={cn(s.tableRow, props.tableRowClass)}
-                                        style={tableStyle()}
-                                        onClick={() => props.onRowClick?.(row)}
-                                    >
-                                        <For each={props.columns}>
-                                            {(column) => (
-                                                <div
-                                                    class={cn(
-                                                        s.tableCell,
-                                                        s.tableBodyCell,
-                                                        column.class,
-                                                        {
-                                                            [s.fitContent]: column.fitContent,
-                                                            [s.clickableCell]: !!props.onRowClick,
-                                                        },
-                                                    )}
-                                                >
-                                                    {renderCell(column, row, index())}
-                                                </div>
-                                            )}
-                                        </For>
-                                    </div>
-                                );
-                            }}
-                        </For>
+                    <Show when={!hasData()}>
+                        <div class={s.emptyTableWrapper}>{props.emptyTable}</div>
                     </Show>
                 </div>
 
-                <Show when={!hasData()}>
-                    <div class={s.emptyTableWrapper}>{props.emptyTable}</div>
+                <Show when={(props.pagination ?? true) && sortedData().length >= DEFAULT_PAGE_SIZE}>
+                    <div class={s.tablePagination}>
+                        <Pagination
+                            currentPage={state.currentPage}
+                            totalPages={totalPages()}
+                            pageSize={state.pageSize}
+                            totalItems={sortedData().length}
+                            pageSizeOptions={props.pageSizeOptions ?? DEFAULT_PAGE_SIZE_OPTIONS}
+                            onPageChange={handlePageChange}
+                            onPageSizeChange={handlePageSizeChange}
+                        />
+                    </div>
                 </Show>
             </div>
-
-            <Show when={(props.pagination ?? true) && sortedData().length >= DEFAULT_PAGE_SIZE}>
-                <div class={s.tablePagination}>
-                    <Pagination
-                        currentPage={state.currentPage}
-                        totalPages={totalPages()}
-                        pageSize={state.pageSize}
-                        totalItems={sortedData().length}
-                        pageSizeOptions={props.pageSizeOptions ?? DEFAULT_PAGE_SIZE_OPTIONS}
-                        onPageChange={handlePageChange}
-                        onPageSizeChange={handlePageSizeChange}
-                    />
-                </div>
-            </Show>
-        </div>
-    </Show>
+        </Show>
     );
 };

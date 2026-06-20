@@ -40,11 +40,18 @@ export const getAccessList = async () => {
 export const setAccessList = async (values: any) => {
     setState('processingSet', true);
     try {
-        const config = {
-            allowed_clients: splitByNewLine(values.allowed_clients),
-            disallowed_clients: splitByNewLine(values.disallowed_clients),
-            blocked_hosts: splitByNewLine(values.blocked_hosts),
-        };
+        const config = { ...values };
+
+        if (Object.hasOwn(config, 'allowed_clients')) {
+            config.allowed_clients = splitByNewLine(config.allowed_clients);
+        }
+        if (Object.hasOwn(config, 'disallowed_clients')) {
+            config.disallowed_clients = splitByNewLine(config.disallowed_clients);
+        }
+        if (Object.hasOwn(config, 'blocked_hosts')) {
+            config.blocked_hosts = splitByNewLine(config.blocked_hosts);
+        }
+
         await apiClient.setAccessList(config);
         setState({ ...values, processingSet: false });
     } catch (error) {

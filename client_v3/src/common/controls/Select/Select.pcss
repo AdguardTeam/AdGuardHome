@@ -168,8 +168,7 @@
         z-index: 3;
 
         @media (min-width: 1024px) {
-            left: initial;
-            right: initial;
+            right: 0;
             width: 100%;
         }
     }
@@ -209,9 +208,8 @@
         }
     }
 
-    /* === Trigger button === */
-    [data-scope='select'][data-part='trigger'],
-    [data-scope='combobox'][data-part='trigger'] {
+    /* === Trigger button (non-searchable Select: main button showing value) === */
+    [data-scope='select'][data-part='trigger'] {
         flex: 1;
         display: flex;
         align-items: center;
@@ -227,6 +225,28 @@
 
         &:focus {
             outline: none;
+        }
+    }
+
+    /* === Combobox trigger (searchable mode: just the arrow button) === */
+    [data-scope='combobox'][data-part='trigger'] {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 12px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: var(--default-gray-icons);
+        transition: transform var(--t2);
+
+        svg {
+            transform-origin: center center;
+            transition: transform var(--t2);
+        }
+
+        &[data-state='open'] svg {
+            transform: rotate(180deg);
         }
     }
 
@@ -260,13 +280,12 @@
         }
     }
 
-    /* === Dropdown indicator (arrow) === */
-    [data-scope='select'][data-part='indicator'],
-    [data-scope='combobox'][data-part='indicator'] {
+    /* === Dropdown indicator (non-searchable Select: arrow icon) === */
+    [data-scope='select'][data-part='indicator'] {
         display: flex;
         align-items: center;
         justify-content: center;
-        padding-right: 16px;
+        padding-right: 12px;
         color: var(--default-gray-icons);
         transition: transform var(--t2);
 
@@ -360,7 +379,9 @@
     [data-scope='select'][data-part='item-group'],
     [data-scope='combobox'][data-part='item-group'] {
         padding: 0;
+        overflow-y: auto;
         overflow-x: hidden;
+        max-height: 340px;
 
         &::-webkit-scrollbar {
             width: 6px;

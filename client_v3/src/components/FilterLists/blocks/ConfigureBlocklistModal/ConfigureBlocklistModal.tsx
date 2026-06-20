@@ -41,7 +41,7 @@ const getSelectedValues = (
 ): SelectedValues =>
     filters.reduce(
         (acc: SelectedValues, { url }: Filter) => {
-            if (Object.prototype.hasOwnProperty.call(catalogSourcesToIdMap, url)) {
+            if (Object.hasOwn(catalogSourcesToIdMap, url)) {
                 const filterId = catalogSourcesToIdMap[url];
                 acc.selectedFilterIds[filterId] = true;
                 acc.selectedSources[url] = true;
@@ -170,7 +170,7 @@ export const ConfigureBlocklistModal = (props: Props) => {
                         </Show>
                         <Show
                             when={props.modalId === MODAL_TYPE.ADD_BLOCKLIST}
-                            fallback={<ManualFilterForm className={s.formGroup} />}
+                            fallback={<ManualFilterForm class={s.formGroup} />}
                         >
                             <Tabs
                                 activeTab={activeTab()}
@@ -191,7 +191,7 @@ export const ConfigureBlocklistModal = (props: Props) => {
                                     {
                                         id: TAB_TYPE.MANUAL,
                                         label: intl.getMessage('blocklist_add_manual'),
-                                        content: <ManualFilterForm className={s.formGroup} />,
+                                        content: <ManualFilterForm class={s.formGroup} />,
                                     },
                                 ]}
                             />

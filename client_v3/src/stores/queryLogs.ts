@@ -2,6 +2,7 @@ import { createStore } from 'solid-js/store';
 import { apiClient } from 'panel/api/Api';
 import { addErrorToast } from './toasts';
 import { DAY, DEFAULT_LOGS_FILTER } from 'panel/helpers/constants';
+import { normalizeLogs } from 'panel/helpers/helpers';
 
 type QueryLogsState = {
     processingGetLogs: boolean;
@@ -48,7 +49,7 @@ export const getLogs = async (params?: any) => {
     try {
         const data = await apiClient.getQueryLog(params);
         setState({
-            logs: data.data || [],
+            logs: normalizeLogs(data.data || []),
             oldest: data.oldest || '',
             isEntireLog: data.is_entire_log || false,
             processingGetLogs: false,
@@ -64,7 +65,7 @@ export const getAdditionalLogs = async (params?: any) => {
     try {
         const data = await apiClient.getQueryLog(params);
         setState({
-            logs: [...state.logs, ...(data.data || [])],
+            logs: [...state.logs, ...normalizeLogs(data.data || [])],
             oldest: data.oldest || '',
             isEntireLog: data.is_entire_log || false,
             processingAdditionalLogs: false,

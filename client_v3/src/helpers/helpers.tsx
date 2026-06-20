@@ -92,7 +92,7 @@ export const normalizeLogs = (logs: any) =>
             ecs,
         } = log;
 
-        const { name: domain, unicode_name: unicodeName, type } = question;
+        const { name: domain, unicode_name: unicodeName, type } = question || {};
 
         const processResponse = (data: any) =>
             Array.isArray(data)
@@ -376,7 +376,12 @@ export const redirectToCurrentProtocol = (values: any, httpPort = 80) => {
  * @param {string} text
  * @returns []string
  */
-export const splitByNewLine = (text: any) => text.split('\n').filter((n: any) => n.trim());
+export const splitByNewLine = (text: any) => {
+    if (!text) {
+        return [];
+    }
+    return text.split('\n').filter((n: any) => n.trim());
+};
 
 /**
  * @param {string} text
