@@ -48,6 +48,8 @@ make \
 	VERBOSE=1 \
 	js-deps \
 	;
+# Ensure no duplicate solid-js instances from transitive deps
+npm dedupe
 EOF
 
 # The linter stage is separated from the tester stage to make catching test
