@@ -12,6 +12,11 @@ export default defineConfig({
         alias: {
             panel: path.resolve(rootDir, 'src'),
             Twosky: path.resolve(rootDir, '../.twosky.json'),
+            // Force all solid-js imports to resolve to a single instance,
+            // preventing "multiple instances of Solid" errors in CI.
+            'solid-js': path.resolve(rootDir, 'node_modules/solid-js'),
+            'solid-js/web': path.resolve(rootDir, 'node_modules/solid-js/web'),
+            'solid-js/store': path.resolve(rootDir, 'node_modules/solid-js/store'),
         },
     },
     ssr: {

@@ -3,7 +3,7 @@
 # This comment is used to simplify checking local copies of the Dockerfile.
 # Bump this number every time a significant change is made to this Dockerfile.
 #
-# AdGuard-Project-Version: 11
+# AdGuard-Project-Version: 12
 
 # Dockerfile guidelines:
 #
