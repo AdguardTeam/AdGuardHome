@@ -1,4 +1,4 @@
-import { createMemo, createEffect, onMount, For, Show } from 'solid-js';
+import { createMemo, createEffect, onMount, For, Show, untrack } from 'solid-js';
 import cn from 'clsx';
 
 import intl from 'panel/common/intl';
@@ -53,14 +53,14 @@ export const Settings = () => {
     });
 
     const onSafeSearchEnabledChange = (e: Event) => {
-        const ss = safesearch();
+        const ss = untrack(safesearch);
         if (!ss) return;
         const payload = { ...ss, enabled: (e.target as HTMLInputElement).checked };
         toggleSetting('safesearch', payload);
     };
 
     const onProviderChange = (searchKey: string) => (e: Event) => {
-        const ss = safesearch();
+        const ss = untrack(safesearch);
         if (!ss) return;
         const payload = { ...ss, [searchKey]: (e.target as HTMLInputElement).checked };
         toggleSetting('safesearch', payload);
@@ -81,9 +81,13 @@ export const Settings = () => {
         if (!isLoading()) {
             const hash = window.location.hash;
             if (hash) {
-                const el = document.querySelector(hash);
-                if (el) {
-                    el.scrollIntoView({ behavior: 'smooth' });
+                try {
+                    const el = document.querySelector(hash);
+                    if (el) {
+                        el.scrollIntoView({ behavior: 'smooth' });
+                    }
+                } catch {
+                    // Hash is not a valid CSS selector (e.g. route path like #/dashboard)
                 }
             }
         }

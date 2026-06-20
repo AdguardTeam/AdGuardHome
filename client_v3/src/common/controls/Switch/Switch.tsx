@@ -28,10 +28,10 @@ export const Switch = (props: Props) => {
                 id={props.id}
                 type="checkbox"
                 class={s.input}
-                onChange={props.onChange}
+                onChange={(e) => props.onChange?.(e)}
                 checked={props.checked}
                 disabled={props.disabled}
-                ref={setRef}
+                ref={(el) => setRef(el)}
             />
             <div class={s.handler} />
             <Show when={props.children}>

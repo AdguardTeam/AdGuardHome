@@ -1,4 +1,4 @@
-import { type JSX, createSignal, createEffect, onCleanup, Show } from 'solid-js';
+import { type JSX, createSignal, createEffect, onCleanup, Show, untrack } from 'solid-js';
 import cn from 'clsx';
 import { Icon } from 'panel/common/ui/Icon';
 import { Popover } from '@ark-ui/solid';
@@ -34,7 +34,7 @@ type Props = {
 
 export const Dropdown = (props: Props) => {
     let timer: ReturnType<typeof setTimeout> | null = null;
-    const [visible, setVisible] = createSignal(!!props.open);
+    const [visible, setVisible] = createSignal(!!untrack(() => props.open));
 
     const onVisibleChange = (details: { open: boolean }) => {
         if (props.disabled) {

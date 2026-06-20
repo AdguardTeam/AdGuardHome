@@ -1,4 +1,4 @@
-import { createSignal, createMemo, createEffect } from 'solid-js';
+import { createSignal, createMemo, createEffect, untrack } from 'solid-js';
 
 import intl from 'panel/common/intl';
 import { Dialog } from 'panel/common/ui/Dialog/Dialog';
@@ -58,10 +58,10 @@ export const FilterUpdateModal = () => {
     });
 
     const [interval, setIntervalValue] = createSignal<number>(
-        isCustom() ? FILTER_INTERVALS.CUSTOM : (filteringState.interval ?? 24),
+        untrack(() => (isCustom() ? FILTER_INTERVALS.CUSTOM : (filteringState.interval ?? 24))),
     );
     const [customInterval, setCustomInterval] = createSignal<number | null>(
-        isCustom() ? filteringState.interval : null,
+        untrack(() => (isCustom() ? filteringState.interval : null)),
     );
 
     createEffect(() => {

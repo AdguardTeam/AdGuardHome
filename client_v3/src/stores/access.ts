@@ -1,4 +1,5 @@
 import { createStore } from 'solid-js/store';
+import { untrack } from 'solid-js';
 import { apiClient } from 'panel/api/Api';
 import { addErrorToast } from './toasts';
 import { splitByNewLine } from 'panel/helpers/helpers';
@@ -86,4 +87,4 @@ export const toggleClientBlock = async (clientName: string) => {
     }
 };
 
-export const accessState = state;
+export const accessState = untrack(() => state);

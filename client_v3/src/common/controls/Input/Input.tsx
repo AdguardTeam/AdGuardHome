@@ -1,4 +1,4 @@
-import { type JSX, createSignal, createEffect, Show } from 'solid-js';
+import { type JSX, createSignal, createEffect, Show, untrack } from 'solid-js';
 import cn from 'clsx';
 import { Icon } from 'panel/common/ui/Icon';
 
@@ -37,7 +37,9 @@ const hasInputValue = (value: string | number | readonly string[] | undefined) =
 export const Input = (props: Props) => {
     let inputRef: HTMLInputElement | undefined;
     const [focused, setFocused] = createSignal(false);
-    const [hasValue, setHasValue] = createSignal(hasInputValue(props.value ?? props.defaultValue));
+    const [hasValue, setHasValue] = createSignal(
+        hasInputValue(untrack(() => props.value) ?? untrack(() => props.defaultValue)),
+    );
 
     createEffect(() => {
         if (props.value !== undefined) {
@@ -109,7 +111,7 @@ export const Input = (props: Props) => {
             >
                 {props.prefixIcon && props.prefixIcon}
                 <input
-                    ref={setInputRef}
+                    ref={(el) => setInputRef(el)}
                     accept={props.accept}
                     autofocus={props.autofocus}
                     class={cn(s.input, props.innerClass, {
@@ -117,7 +119,7 @@ export const Input = (props: Props) => {
                         [s.postfix]: hasActions(),
                     })}
                     onChange={handleChange}
-                    onInput={props.onInput}
+                    onInput={(e) => (props.onInput as any)?.(e)}
                     type={props.type}
                     id={props.id}
                     placeholder={props.placeholder}

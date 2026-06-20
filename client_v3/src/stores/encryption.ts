@@ -1,4 +1,5 @@
 import { createStore } from 'solid-js/store';
+import { untrack } from 'solid-js';
 import { apiClient } from 'panel/api/Api';
 import { addErrorToast, addSuccessToast } from './toasts';
 import { getDnsStatus } from './dashboard';
@@ -138,4 +139,4 @@ export const validateTlsConfig = async (values: any) => {
     }
 };
 
-export const encryptionState = state;
+export const encryptionState = untrack(() => state);

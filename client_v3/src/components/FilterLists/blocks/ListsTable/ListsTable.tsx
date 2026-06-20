@@ -1,4 +1,4 @@
-import { createSignal, createMemo } from 'solid-js';
+import { createSignal, createMemo, untrack } from 'solid-js';
 
 import type { Filter } from 'panel/helpers/helpers';
 import { formatShortDateTime } from 'panel/helpers/helpers';
@@ -47,6 +47,7 @@ export const ListsTable = (props: Props) => {
     const sortedFilters = createMemo(() => {
         const items = [...(props.filters || [])];
 
+        // eslint-disable-next-line solid/reactivity -- sort callback inside createMemo; reads already tracked
         items.sort((a, b) => {
             const aName = (a.name || '').toLowerCase();
             const bName = (b.name || '').toLowerCase();
@@ -89,7 +90,11 @@ export const ListsTable = (props: Props) => {
                                 id={id}
                                 checked={enabled}
                                 onChange={() =>
-                                    props.toggleFilterList(url, { name, url, enabled: !enabled })
+                                    untrack(() => props).toggleFilterList(url, {
+                                        name,
+                                        url,
+                                        enabled: !enabled,
+                                    })
                                 }
                                 disabled={props.processingConfigFilter}
                             />
@@ -208,7 +213,9 @@ export const ListsTable = (props: Props) => {
                         <div class={s.cellActions}>
                             <button
                                 type="button"
-                                onClick={() => props.editFilterList(url, name, enabled)}
+                                onClick={() =>
+                                    untrack(() => props).editFilterList(url, name, enabled)
+                                }
                                 disabled={props.processingConfigFilter}
                                 class={s.editAction}
                             >
@@ -222,7 +229,7 @@ export const ListsTable = (props: Props) => {
 
                             <button
                                 type="button"
-                                onClick={() => props.deleteFilterList(url, name)}
+                                onClick={() => untrack(() => props).deleteFilterList(url, name)}
                                 disabled={props.processingConfigFilter}
                                 class={s.action}
                             >

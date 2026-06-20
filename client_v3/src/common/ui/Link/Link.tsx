@@ -1,4 +1,4 @@
-import { type JSX, Show } from 'solid-js';
+import { type JSX, Show, untrack } from 'solid-js';
 import { A } from '@solidjs/router';
 import cn from 'clsx';
 import { LinkParams, linkPathBuilder, RoutePathKey } from 'panel/components/Routes/Paths';
@@ -18,10 +18,11 @@ type Props = {
 };
 
 export const Link = (linkProps: Props) => {
-    if (linkProps.props) {
-        Object.keys(linkProps.props).forEach((key: string) => {
-            if (!(linkProps.props as any)[key]) {
-                throw new Error(`Wrong key value: ${key} for route: ${linkProps.to}`);
+    const propsUntracked = untrack(() => linkProps);
+    if (propsUntracked.props) {
+        Object.keys(propsUntracked.props).forEach((key: string) => {
+            if (!(propsUntracked.props as any)[key]) {
+                throw new Error(`Wrong key value: ${key} for route: ${propsUntracked.to}`);
             }
         });
     }
@@ -31,30 +32,34 @@ export const Link = (linkProps: Props) => {
             window.scrollTo({ top: 0 });
         }, 100);
 
-        if (linkProps.stop) {
+        if (propsUntracked.stop) {
             e.stopPropagation();
         }
-        if (linkProps.onClick) {
-            (linkProps.onClick as any)(e);
+        if (propsUntracked.onClick) {
+            (propsUntracked.onClick as any)(e);
         }
     };
 
     return (
         <Show
-            when={!linkProps.disabled}
+            when={!propsUntracked.disabled}
             fallback={
-                <div id={linkProps.id} tabIndex={0} class={cn(linkProps.class)}>
-                    {linkProps.children}
+                <div id={propsUntracked.id} tabIndex={0} class={cn(propsUntracked.class)}>
+                    {propsUntracked.children}
                 </div>
             }
         >
             <A
-                id={linkProps.id}
-                class={cn(theme.link.link, linkProps.class)}
-                href={linkPathBuilder(linkProps.to, linkProps.props, linkProps.query)}
+                id={propsUntracked.id}
+                class={cn(theme.link.link, propsUntracked.class)}
+                href={linkPathBuilder(
+                    propsUntracked.to,
+                    propsUntracked.props,
+                    propsUntracked.query,
+                )}
                 onClick={handleClick}
             >
-                {linkProps.children}
+                {propsUntracked.children}
             </A>
         </Show>
     );

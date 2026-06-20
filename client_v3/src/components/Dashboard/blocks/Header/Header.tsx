@@ -133,7 +133,7 @@ export const Header = (props: Props) => {
                     <button
                         type="button"
                         class={cn(s.refreshButton, s.refreshMobileButton, s.onlyMobile)}
-                        onClick={props.onRefreshStats}
+                        onClick={() => props.onRefreshStats?.()}
                         disabled={props.isLoading}
                         aria-label={intl.getMessage('refresh_btn')}
                         title={intl.getMessage('refresh_btn')}
@@ -196,7 +196,7 @@ export const Header = (props: Props) => {
                 <button
                     type="button"
                     class={cn(s.refreshButton, s.refreshDesktopButton, s.onlyDesktop)}
-                    onClick={props.onRefreshStats}
+                    onClick={() => props.onRefreshStats?.()}
                     disabled={props.isLoading}
                     aria-label={intl.getMessage('refresh_btn')}
                     title={intl.getMessage('refresh_btn')}

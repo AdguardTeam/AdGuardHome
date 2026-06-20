@@ -32,15 +32,15 @@ export const Checkbox = (props: Props) => {
                 props.verticalAlign && s[props.verticalAlign],
                 props.class,
             )}
-            onClick={props.onClick}
+            onClick={(e) => (props.onClick as any)?.(e)}
         >
             <input
-                ref={setRef}
+                ref={(el) => setRef(el)}
                 id={props.id}
                 name={props.name}
                 type="checkbox"
                 class={s.input}
-                onChange={props.onChange}
+                onChange={(e) => (props.onChange as any)?.(e)}
                 checked={props.checked}
                 disabled={props.disabled}
             />

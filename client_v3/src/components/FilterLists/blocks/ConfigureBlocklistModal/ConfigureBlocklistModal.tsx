@@ -1,4 +1,4 @@
-import { createSignal, createMemo, Show } from 'solid-js';
+import { createSignal, createMemo, Show, createEffect } from 'solid-js';
 
 import intl from 'panel/common/intl';
 import { Dialog } from 'panel/common/ui/Dialog/Dialog';
@@ -86,7 +86,7 @@ export const ConfigureBlocklistModal = (props: Props) => {
     const [activeTab, setActiveTab] = createSignal(TAB_TYPE.LIST);
     const [selectedFilterIds, setSelectedFilterIds] = createSignal<Record<string, boolean>>({});
 
-    createMemo(() => {
+    createEffect(() => {
         setSelectedFilterIds(
             props.modalId === MODAL_TYPE.EDIT_BLOCKLIST && props.filterToEdit
                 ? {}

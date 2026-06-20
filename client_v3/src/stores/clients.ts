@@ -1,4 +1,5 @@
 import { createStore } from 'solid-js/store';
+import { untrack } from 'solid-js';
 import { apiClient } from 'panel/api/Api';
 import { addErrorToast } from './toasts';
 import { getClients } from './dashboard';
@@ -30,7 +31,7 @@ export const toggleClientModal = (payload?: { type?: string; name?: string }) =>
         setState({
             modalType: payload.type || '',
             modalClientName: payload.name || '',
-            isModalOpen: !state.isModalOpen,
+            isModalOpen: !untrack(() => state.isModalOpen),
         });
     } else {
         setState('isModalOpen', (prev) => !prev);
@@ -77,4 +78,4 @@ export const updateClient = async (name: string, data: any): Promise<boolean> =>
     }
 };
 
-export const clientsState = state;
+export const clientsState = untrack(() => state);

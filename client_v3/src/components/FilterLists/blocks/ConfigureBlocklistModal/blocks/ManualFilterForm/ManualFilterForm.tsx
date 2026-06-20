@@ -7,7 +7,7 @@ import { validatePath, validateRequiredValue } from 'panel/helpers/validators';
 import theme from 'panel/lib/theme';
 
 type Props = {
-    className?: string;
+    class?: string;
 };
 
 export const ManualFilterForm = (props: Props) => {
@@ -21,7 +21,7 @@ export const ManualFilterForm = (props: Props) => {
     };
 
     return (
-        <div class={cn(theme.form.group, props.className)}>
+        <div class={cn(theme.form.group, props.class)}>
             <div class={theme.form.input}>
                 <Input
                     type="text"

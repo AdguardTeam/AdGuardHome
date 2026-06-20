@@ -1,3 +1,4 @@
+import { createMemo } from 'solid-js';
 import cn from 'clsx';
 
 import theme from 'panel/lib/theme';
@@ -16,12 +17,14 @@ type Props = {
 };
 
 export const StatusCell = (props: Props) => {
-    const statusKey = getQueryStatusKey(props.row.reason, props.row.originalResponse ?? []);
+    const statusKey = createMemo(() =>
+        getQueryStatusKey(props.row.reason, props.row.originalResponse ?? []),
+    );
 
     return (
         <div class={s.statusCell}>
             <span class={cn(s.status, getStatusClassName(props.row.reason), theme.text.t3)}>
-                {getQueryStatusLabel(statusKey)}
+                {getQueryStatusLabel(statusKey())}
             </span>
             <span class={cn(s.secondaryLine, theme.text.t4)}>
                 {getQueryStatusDetails(props.row.elapsedMs)}

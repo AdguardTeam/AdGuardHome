@@ -1,4 +1,5 @@
 import { createStore } from 'solid-js/store';
+import { untrack } from 'solid-js';
 import { apiClient } from 'panel/api/Api';
 import { addErrorToast, addSuccessToast } from './toasts';
 import { splitByNewLine } from 'panel/helpers/helpers';
@@ -82,7 +83,7 @@ export const toggleSetting = async (settingKey: string, status: any) => {
     }
 };
 
-export const settingsState = state;
+export const settingsState = untrack(() => state);
 
 export const testUpstreamWithFormValues = async (
     formValues: {

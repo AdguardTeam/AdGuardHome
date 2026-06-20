@@ -41,7 +41,7 @@ export const Button = (props: ButtonProps) => {
                 local.class,
                 local.className,
             )}
-            onClick={local.onClick}
+            onClick={(e) => (local.onClick as any)?.(e)}
             disabled={local.disabled}
             {...rest}
         >

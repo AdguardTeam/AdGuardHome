@@ -1,4 +1,5 @@
 import { createStore } from 'solid-js/store';
+import { untrack } from 'solid-js';
 import { apiClient } from 'panel/api/Api';
 import { addErrorToast } from './toasts';
 
@@ -61,10 +62,10 @@ export const updateBlockedServices = async (values: { ids: string[]; schedule?: 
 };
 
 export const allowBlockedService = async (serviceId: string) => {
-    let list = state.list;
+    let list = untrack(() => state.list);
     if (!Array.isArray(list?.ids)) {
         await getBlockedServices();
-        list = state.list;
+        list = untrack(() => state.list);
     }
     const currentIds = Array.isArray(list?.ids) ? list.ids : [];
     if (!currentIds.includes(serviceId)) return;
@@ -74,4 +75,4 @@ export const allowBlockedService = async (serviceId: string) => {
     });
 };
 
-export const servicesState = state;
+export const servicesState = untrack(() => state);

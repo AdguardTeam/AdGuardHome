@@ -1,4 +1,4 @@
-import { createSignal, createMemo } from 'solid-js';
+import { createSignal, createMemo, untrack } from 'solid-js';
 
 export type SortField = 'name' | 'count';
 export type SortDirection = 'asc' | 'desc';
@@ -27,24 +27,30 @@ export const useSortedData = <T extends SortableItem>(
     const [sortDirection, setSortDirection] = createSignal<SortDirection>(defaultSortDirection);
 
     const sortedData = createMemo(() => {
-        return [...data()]
-            .sort((a, b) => {
-                const modifier = sortDirection() === 'asc' ? 1 : -1;
-                if (sortField() === 'name') {
-                    return a.name.localeCompare(b.name) * modifier;
-                }
-                return (a.count - b.count) * modifier;
-            })
-            .slice(0, limit);
+        return (
+            [...data()]
+                // eslint-disable-next-line solid/reactivity -- sort callback inside createMemo; reads already tracked
+                .sort((a, b) => {
+                    const modifier = sortDirection() === 'asc' ? 1 : -1;
+                    if (sortField() === 'name') {
+                        return a.name.localeCompare(b.name) * modifier;
+                    }
+                    return (a.count - b.count) * modifier;
+                })
+                .slice(0, limit)
+        );
     });
 
+    // eslint-disable-next-line solid/reactivity -- returned to consumers, called from JSX (tracked)
     const handleSort = (field: SortField) => {
-        if (sortField() === field) {
-            setSortDirection(sortDirection() === 'asc' ? 'desc' : 'asc');
-        } else {
-            setSortField(field);
-            setSortDirection(field === 'name' ? 'asc' : 'desc');
-        }
+        untrack(() => {
+            if (sortField() === field) {
+                setSortDirection(sortDirection() === 'asc' ? 'desc' : 'asc');
+            } else {
+                setSortField(field);
+                setSortDirection(field === 'name' ? 'asc' : 'desc');
+            }
+        });
     };
 
     return {

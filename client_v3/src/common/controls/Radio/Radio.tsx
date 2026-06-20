@@ -26,7 +26,7 @@ export const Radio = <T extends number | string | boolean = string>(props: Props
     };
 
     return (
-        <div ref={setRef} class={cn(s.wrap, props.wrapClass)}>
+        <div ref={(el) => setRef(el)} class={cn(s.wrap, props.wrapClass)}>
             <For each={props.options}>
                 {(o) => (
                     <label

@@ -1,4 +1,4 @@
-import { createEffect, onCleanup, Show } from 'solid-js';
+import { createEffect, onCleanup, Show, untrack } from 'solid-js';
 import cn from 'clsx';
 
 import { InlineLoader } from 'panel/common/ui/Loader';
@@ -23,11 +23,11 @@ export const InfiniteScrollTrigger = (props: Props) => {
     let frameRef: number | null = null;
 
     const triggerLoadMore = () => {
-        if (!props.hasMore || props.disabled || requestedRef) {
+        if (!untrack(() => props.hasMore) || untrack(() => props.disabled) || requestedRef) {
             return;
         }
         requestedRef = true;
-        props.onLoadMore();
+        untrack(() => props).onLoadMore();
     };
 
     createEffect(() => {

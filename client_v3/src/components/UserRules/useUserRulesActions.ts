@@ -1,4 +1,4 @@
-import { createSignal, createMemo } from 'solid-js';
+import { createSignal, createMemo, untrack } from 'solid-js';
 
 import intl from 'panel/common/intl';
 import {
@@ -398,13 +398,14 @@ export const useUserRulesActions = (
     };
 
     const handleRewriteUpdate = async (update: RewriteEntry) => {
-        if (!currentRewrite().domain) {
+        const rewrite = untrack(() => currentRewrite());
+        if (!rewrite.domain) {
             return false;
         }
 
         return runWithClosedResult(async () => {
             const ok = await updateRewrite(
-                { target: currentRewrite(), update },
+                { target: untrack(() => currentRewrite()), update },
                 { showToast: false, closeModal: false },
             );
 

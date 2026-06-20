@@ -1,4 +1,4 @@
-import { createSignal, createEffect } from 'solid-js';
+import { createSignal, createEffect, untrack } from 'solid-js';
 
 import intl from 'panel/common/intl';
 import { Dialog } from 'panel/common/ui/Dialog/Dialog';
@@ -42,8 +42,8 @@ const getButtonText = (modalId: ConfigureAllowlistModalIdType) => {
 };
 
 export const ConfigureAllowlistModal = (props: Props) => {
-    const [name, setName] = createSignal(props.filterToEdit?.name ?? '');
-    const [url, setUrl] = createSignal(props.filterToEdit?.url ?? '');
+    const [name, setName] = createSignal(untrack(() => props.filterToEdit?.name) ?? '');
+    const [url, setUrl] = createSignal(untrack(() => props.filterToEdit?.url) ?? '');
     const [urlError, setUrlError] = createSignal<string | undefined>();
 
     createEffect(() => {

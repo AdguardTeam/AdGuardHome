@@ -16,7 +16,7 @@ export const Icon = (props: Props) => {
     const iconClass = () => cn(s.icon, s[props.color!], props.class);
 
     return (
-        <svg class={iconClass()} onClick={props.onClick}>
+        <svg class={iconClass()} onClick={(e) => props.onClick?.(e)}>
             <use href={`#${props.icon}`} />
         </svg>
     );

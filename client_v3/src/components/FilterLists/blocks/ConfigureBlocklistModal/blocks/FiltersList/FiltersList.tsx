@@ -1,4 +1,4 @@
-import { For } from 'solid-js';
+import { For, untrack } from 'solid-js';
 import cn from 'clsx';
 
 import { Checkbox } from 'panel/common/controls/Checkbox';
@@ -49,9 +49,10 @@ type Props = {
 export const FiltersList = (props: Props) => {
     const { categories, filters } = filtersCatalog;
 
+    // eslint-disable-next-line solid/reactivity -- curried handler passed to JSX onChange (tracked)
     const handleToggle = (filterId: string) => (e: Event) => {
         const checked = (e.target as HTMLInputElement).checked;
-        props.onChange({
+        untrack(() => props).onChange({
             ...props.selectedIds,
             [filterId]: checked,
         });

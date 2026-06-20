@@ -1,4 +1,5 @@
 import { createStore } from 'solid-js/store';
+import { untrack } from 'solid-js';
 import { nanoid } from 'nanoid';
 
 type ToastNotice = {
@@ -67,4 +68,4 @@ export const removeToast = (id: string) => {
     setState('notices', (prev) => prev.filter((n) => n.id !== id));
 };
 
-export const toastsState = state;
+export const toastsState = untrack(() => state);

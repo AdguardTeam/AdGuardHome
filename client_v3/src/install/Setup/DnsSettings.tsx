@@ -1,4 +1,4 @@
-import { createMemo } from 'solid-js';
+import { createMemo, untrack } from 'solid-js';
 
 import intl from 'panel/common/intl';
 import styles from 'panel/install/Setup/styles.module.pcss';
@@ -25,14 +25,20 @@ type Props = {
 };
 
 export const DnsSettings = (props: Props) => {
-    const form = useInstallSettingsForm(props.config, props.validateForm);
+    const form = useInstallSettingsForm(
+        untrack(() => props.config),
+        untrack(() => props.validateForm),
+    );
 
     const dnsStatus = () => props.config.dns.status;
     const isDnsFixAvailable = () => props.config.dns.can_autofix;
 
     const dnsIpOptions = createMemo(() => buildInterfaceOptions(props.interfaces));
 
-    const handleAutofix = createHandleAutofix(form.watchFields, props.handleFix);
+    const handleAutofix = createHandleAutofix(
+        form.watchFields,
+        untrack(() => props.handleFix),
+    );
 
     const onSubmit = (data: SettingsFormValues) => {
         props.validateForm(data);
@@ -41,7 +47,7 @@ export const DnsSettings = (props: Props) => {
 
     return (
         <div class={styles.configSetting}>
-            <form class={styles.step} onSubmit={form.handleSubmit(onSubmit)}>
+            <form class={styles.step} onSubmit={(e) => form.handleSubmit(onSubmit)(e)}>
                 <div class={styles.info}>
                     <div>
                         <div class={styles.titleStep}>{intl.getMessage('setup_dns_title')}</div>

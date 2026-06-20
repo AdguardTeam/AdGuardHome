@@ -1,4 +1,4 @@
-import { Show, For } from 'solid-js';
+import { Show, For, createMemo } from 'solid-js';
 
 import { CopiedText } from 'panel/common/ui/CopiedText/CopiedText';
 import { getInterfaceIp } from 'panel/helpers/helpers';
@@ -25,13 +25,13 @@ type RenderItemProps = {
 };
 
 const RenderItem = (props: RenderItemProps) => {
-    const webAddress = getWebAddressWithPort(props.ip, props.port);
-    const dnsAddress = getDnsAddressWithPort(props.ip, props.port);
+    const webAddress = createMemo(() => getWebAddressWithPort(props.ip, props.port));
+    const dnsAddress = createMemo(() => getDnsAddressWithPort(props.ip, props.port));
 
     return (
         <li class={styles.addressListItem}>
-            <Show when={props.isDns} fallback={<CopiedText text={webAddress} />}>
-                <CopiedText text={dnsAddress} />
+            <Show when={props.isDns} fallback={<CopiedText text={webAddress()} />}>
+                <CopiedText text={dnsAddress()} />
             </Show>
         </li>
     );

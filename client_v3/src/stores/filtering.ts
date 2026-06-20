@@ -1,4 +1,5 @@
 import { createStore } from 'solid-js/store';
+import { untrack } from 'solid-js';
 import { apiClient } from 'panel/api/Api';
 import { addErrorToast, addSuccessToast } from './toasts';
 import type { Filter } from 'panel/helpers/helpers';
@@ -346,7 +347,7 @@ export const addFiltersBatch = async (
 
 export const toggleFilteringModal = (modalType?: string) => {
     if (modalType) {
-        setState({ isModalOpen: !state.isModalOpen, modalType });
+        setState({ isModalOpen: !untrack(() => state.isModalOpen), modalType });
     } else {
         setState('isModalOpen', (prev) => !prev);
     }
@@ -360,4 +361,4 @@ export const handleRulesChange = (rules: string) => {
     setState('userRules', rules);
 };
 
-export const filteringState = state;
+export const filteringState = untrack(() => state);

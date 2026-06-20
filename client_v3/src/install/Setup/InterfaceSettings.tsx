@@ -1,4 +1,4 @@
-import { createMemo } from 'solid-js';
+import { createMemo, untrack } from 'solid-js';
 
 import intl from 'panel/common/intl';
 import { Button } from 'panel/common/ui/Button';
@@ -27,7 +27,10 @@ type Props = {
 };
 
 export const InterfaceSettings = (props: Props) => {
-    const form = useInstallSettingsForm(props.config, props.validateForm);
+    const form = useInstallSettingsForm(
+        untrack(() => props.config),
+        untrack(() => props.validateForm),
+    );
 
     const webStatus = () => props.config.web.status;
     const isWebFixAvailable = () => props.config.web.can_autofix;
@@ -35,7 +38,10 @@ export const InterfaceSettings = (props: Props) => {
 
     const webIpOptions = createMemo(() => buildInterfaceOptions(props.interfaces));
 
-    const handleAutofix = createHandleAutofix(form.watchFields, props.handleFix);
+    const handleAutofix = createHandleAutofix(
+        form.watchFields,
+        untrack(() => props.handleFix),
+    );
 
     const handleStaticIp = (ip: string) => {
         const fields = form.watchFields();
@@ -97,7 +103,7 @@ export const InterfaceSettings = (props: Props) => {
 
     return (
         <div class={styles.configSetting}>
-            <form class={styles.step} onSubmit={form.handleSubmit(onSubmit)}>
+            <form class={styles.step} onSubmit={(e) => form.handleSubmit(onSubmit)(e)}>
                 <div class={styles.info}>
                     <div>
                         <div class={styles.titleStep}>{intl.getMessage('setup_ui_title')}</div>

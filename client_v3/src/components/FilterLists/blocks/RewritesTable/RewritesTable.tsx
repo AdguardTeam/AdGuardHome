@@ -1,4 +1,4 @@
-import { createSignal, createMemo } from 'solid-js';
+import { createSignal, createMemo, untrack } from 'solid-js';
 import cn from 'clsx';
 
 import intl from 'panel/common/intl';
@@ -37,6 +37,7 @@ export const RewritesTable = (props: Props) => {
     const sortedList = createMemo(() => {
         const items = [...(props.list || [])];
 
+        // eslint-disable-next-line solid/reactivity -- sort callback inside createMemo; reads already tracked
         items.sort((a, b) => {
             const aDomain = a.domain.toLowerCase();
             const bDomain = b.domain.toLowerCase();
@@ -153,7 +154,7 @@ export const RewritesTable = (props: Props) => {
                         <div class={s.cellActions}>
                             <button
                                 type="button"
-                                onClick={() => props.editRewrite(currentRewrite)}
+                                onClick={() => untrack(() => props).editRewrite(currentRewrite)}
                                 disabled={props.processingUpdate}
                                 class={s.editAction}
                                 data-testid={`edit-rewrite-${row.domain}`}
@@ -168,7 +169,7 @@ export const RewritesTable = (props: Props) => {
 
                             <button
                                 type="button"
-                                onClick={() => props.deleteRewrite(currentRewrite)}
+                                onClick={() => untrack(() => props).deleteRewrite(currentRewrite)}
                                 disabled={props.processingDelete}
                                 class={s.action}
                                 data-testid={`delete-rewrite-${row.domain}`}

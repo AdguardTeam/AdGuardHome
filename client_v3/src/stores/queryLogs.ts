@@ -1,4 +1,5 @@
 import { createStore } from 'solid-js/store';
+import { untrack } from 'solid-js';
 import { apiClient } from 'panel/api/Api';
 import { addErrorToast } from './toasts';
 import { DAY, DEFAULT_LOGS_FILTER } from 'panel/helpers/constants';
@@ -133,11 +134,11 @@ export const setLogsFilter = (filter: any) => {
 
 export const refreshFilteredLogs = () => {
     setState('processingGetLogs', true);
-    return getLogs(state.filter);
+    return getLogs(untrack(() => state.filter));
 };
 
 export const toggleDetailedLogs = () => {
     setState('isDetailed', (prev) => !prev);
 };
 
-export const queryLogsState = state;
+export const queryLogsState = untrack(() => state);

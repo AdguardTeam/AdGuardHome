@@ -1,4 +1,5 @@
 import { createStore, reconcile } from 'solid-js/store';
+import { untrack } from 'solid-js';
 import { apiClient } from 'panel/api/Api';
 import { addErrorToast } from './toasts';
 import { splitByNewLine } from 'panel/helpers/helpers';
@@ -115,11 +116,11 @@ export const setDnsConfig = async (values: any, _toastMessage?: string) => {
         }
 
         await apiClient.setDnsConfig(config);
-        setState(reconcile({ ...state, ...values, processingSetConfig: false }));
+        setState(reconcile({ ...untrack(() => state), ...values, processingSetConfig: false }));
     } catch (error) {
         addErrorToast({ error });
         setState('processingSetConfig', false);
     }
 };
 
-export const dnsConfigState = state;
+export const dnsConfigState = untrack(() => state);

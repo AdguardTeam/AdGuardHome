@@ -1,3 +1,4 @@
+import { createMemo } from 'solid-js';
 import { Switch } from 'panel/common/controls/Switch';
 import { decodeSvg } from 'panel/helpers/helpers';
 
@@ -25,7 +26,7 @@ export const ServiceRow = (props: Props) => {
         props.onChange(props.id, !props.checked);
     };
 
-    const decodedSvg = decodeSvg(props.iconSvg);
+    const decodedSvg = createMemo(() => decodeSvg(props.iconSvg));
 
     return (
         <div
@@ -40,7 +41,7 @@ export const ServiceRow = (props: Props) => {
             }}
         >
             {/* eslint-disable-next-line solid/no-innerhtml */}
-            <div class={s.serviceIcon} innerHTML={decodedSvg} />
+            <div class={s.serviceIcon} innerHTML={decodedSvg()} />
             <div class={s.serviceName}>{props.name}</div>
             <div
                 class={s.switchWrap}

@@ -1,4 +1,5 @@
 import { createStore } from 'solid-js/store';
+import { untrack } from 'solid-js';
 import { apiClient } from 'panel/api/Api';
 import { addErrorToast } from './toasts';
 import {
@@ -109,9 +110,9 @@ export const checkConfig = async (values: any) => {
     try {
         const data = await apiClient.checkConfig(values);
         setState({
-            web: { ...state.web, ...data.web },
-            dns: { ...state.dns, ...data.dns },
-            staticIp: { ...state.staticIp, ...data.static_ip },
+            web: { ...untrack(() => state.web), ...data.web },
+            dns: { ...untrack(() => state.dns), ...data.dns },
+            staticIp: { ...untrack(() => state.staticIp), ...data.static_ip },
             processingCheck: false,
         });
     } catch (error) {
@@ -120,4 +121,4 @@ export const checkConfig = async (values: any) => {
     }
 };
 
-export const installState = state;
+export const installState = untrack(() => state);

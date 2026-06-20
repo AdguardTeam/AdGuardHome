@@ -1,4 +1,5 @@
 import { createStore } from 'solid-js/store';
+import { untrack } from 'solid-js';
 import { STANDARD_DNS_PORT, STANDARD_WEB_PORT } from 'panel/helpers/constants';
 import { areEqualVersions } from 'panel/helpers/version';
 import { apiClient } from 'panel/api/Api';
@@ -186,7 +187,8 @@ export const getVersion = async (recheck = false) => {
     setState('processingVersion', true);
     try {
         const data = await apiClient.getGlobalVersion({ recheck_now: recheck });
-        const currentVersion = state.dnsVersion === 'undefined' ? 0 : state.dnsVersion;
+        const currentVersion =
+            untrack(() => state.dnsVersion) === 'undefined' ? 0 : untrack(() => state.dnsVersion);
         if (data && !data.disabled && !areEqualVersions(currentVersion, data.new_version)) {
             setState({
                 announcementUrl: data.announcement_url,
@@ -220,7 +222,7 @@ export const getUpdate = async () => {
     };
     const handleRequestSuccess = (response: any) => {
         const responseVersion = response.data?.version;
-        if (state.dnsVersion !== responseVersion) {
+        if (untrack(() => state.dnsVersion) !== responseVersion) {
             setState('processingUpdate', false);
             window.location.reload();
         }
@@ -236,9 +238,12 @@ export const getUpdate = async () => {
 export const toggleProtection = async (time: number | null = null) => {
     setState('processingProtection', true);
     try {
-        await apiClient.setProtection({ enabled: !state.protectionEnabled, duration: time });
+        await apiClient.setProtection({
+            enabled: !untrack(() => state.protectionEnabled),
+            duration: time,
+        });
         setState({
-            protectionEnabled: !state.protectionEnabled,
+            protectionEnabled: !untrack(() => state.protectionEnabled),
             processingProtection: false,
             protectionDisabledDuration: time,
         });
@@ -316,4 +321,4 @@ const getTlsStatusForDashboard = async () => {
     // Called from getDnsStatus after DNS is running
 };
 
-export const dashboardState = state;
+export const dashboardState = untrack(() => state);

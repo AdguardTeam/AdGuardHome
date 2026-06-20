@@ -94,30 +94,30 @@ export const Identifiers = () => {
 
             <For each={ids()}>
                 {(value, index) => {
-                    const idx = index();
-                    const activeError = createMemo(() => errors()[idx]);
+                    const idx = createMemo(() => index());
+                    const activeError = createMemo(() => errors()[idx()]);
 
                     return (
                         <div class={s.row}>
                             <div class={s.inputCell}>
                                 <Input
-                                    id={`client-identifier-${idx}`}
+                                    id={`client-identifier-${idx()}`}
                                     type="text"
                                     value={value}
                                     onChange={(e: Event) =>
-                                        handleChange(idx, (e.target as HTMLInputElement).value)
+                                        handleChange(idx(), (e.target as HTMLInputElement).value)
                                     }
-                                    onBlur={() => handleBlur(idx)}
+                                    onBlur={() => handleBlur(idx())}
                                     placeholder={intl.getMessage('clients_identifier_format_error')}
                                     error={!!activeError()}
                                     errorMessage={activeError()}
                                     size="large"
                                     suffixIcon={
-                                        idx > 0 ? (
+                                        idx() > 0 ? (
                                             <button
                                                 type="button"
                                                 class={s.removeSuffixBtn}
-                                                onClick={() => handleRemove(idx)}
+                                                onClick={() => handleRemove(idx())}
                                                 aria-label={intl.getMessage('delete_btn')}
                                             >
                                                 <Icon icon="cross" color="gray" />

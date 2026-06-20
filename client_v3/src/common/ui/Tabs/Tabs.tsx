@@ -1,4 +1,4 @@
-import { type JSX, createSignal, createMemo, For } from 'solid-js';
+import { type JSX, createSignal, createMemo, For, untrack } from 'solid-js';
 import cn from 'clsx';
 
 import { Icon } from '../Icon/Icon';
@@ -23,7 +23,7 @@ type Props = {
 
 export const Tabs = (props: Props) => {
     const [internalActiveTab, setInternalActiveTab] = createSignal(
-        props.defaultActiveTab || props.tabs[0]?.id || '',
+        untrack(() => props.defaultActiveTab || props.tabs[0]?.id || ''),
     );
 
     const activeTab = createMemo(() =>

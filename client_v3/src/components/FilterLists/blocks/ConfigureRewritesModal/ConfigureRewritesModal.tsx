@@ -1,4 +1,4 @@
-import { createSignal, createEffect } from 'solid-js';
+import { createSignal, createEffect, untrack } from 'solid-js';
 
 import intl from 'panel/common/intl';
 import { Dialog } from 'panel/common/ui/Dialog/Dialog';
@@ -46,8 +46,8 @@ const getButtonText = (modalId: ConfigureRewritesModalIdType) => {
 };
 
 export const ConfigureRewritesModal = (props: Props) => {
-    const [domain, setDomain] = createSignal(props.rewriteToEdit?.domain ?? '');
-    const [answer, setAnswer] = createSignal(props.rewriteToEdit?.answer ?? '');
+    const [domain, setDomain] = createSignal(untrack(() => props.rewriteToEdit?.domain) ?? '');
+    const [answer, setAnswer] = createSignal(untrack(() => props.rewriteToEdit?.answer) ?? '');
     const [domainError, setDomainError] = createSignal<string | undefined>();
     const [answerError, setAnswerError] = createSignal<string | undefined>();
 

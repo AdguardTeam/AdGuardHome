@@ -1,4 +1,4 @@
-import { createSignal, createMemo, For } from 'solid-js';
+import { createSignal, createMemo, For, untrack } from 'solid-js';
 import cn from 'clsx';
 
 import theme from 'panel/lib/theme';
@@ -39,6 +39,7 @@ export const LanguageDropdown = (props: LanguageDropdownProps) => {
         if (!props.sort) {
             return keys;
         }
+        // eslint-disable-next-line solid/reactivity -- sort callback inside createMemo; reads already tracked
         return keys.sort((a, b) =>
             (props.languages[a] || '').localeCompare(props.languages[b] || ''),
         );
@@ -61,7 +62,7 @@ export const LanguageDropdown = (props: LanguageDropdownProps) => {
                                     [theme.dropdown.item_active]: props.value === lang,
                                 })}
                                 onClick={async () => {
-                                    await props.onChange(lang);
+                                    await untrack(() => props.onChange)(lang);
                                     setOpen(false);
                                 }}
                             >

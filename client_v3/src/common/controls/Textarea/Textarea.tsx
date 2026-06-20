@@ -36,11 +36,11 @@ export const Textarea = (props: Props) => {
                 value={props.value as string}
                 cols={props.cols}
                 rows={props.rows}
-                onChange={props.onChange}
+                onChange={(e) => (props.onChange as any)?.(e)}
                 wrap={props.wrap}
                 maxLength={props.maxLength}
                 disabled={props.disabled}
-                ref={setRef}
+                ref={(el) => setRef(el)}
             />
             <Show when={props.errorMessage}>
                 <div class={s.errorMessage}>{props.errorMessage}</div>

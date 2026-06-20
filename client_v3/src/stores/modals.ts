@@ -1,4 +1,5 @@
 import { createStore } from 'solid-js/store';
+import { untrack } from 'solid-js';
 import { ModalType } from 'panel/helpers/constants';
 
 type ModalsState = {
@@ -19,4 +20,4 @@ export const closeModal = () => {
     setState({ modalId: null });
 };
 
-export const modalsState = state;
+export const modalsState = untrack(() => state);

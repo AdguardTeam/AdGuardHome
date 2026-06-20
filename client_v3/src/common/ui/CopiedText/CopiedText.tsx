@@ -1,4 +1,4 @@
-import { createSignal, onCleanup } from 'solid-js';
+import { createSignal, createEffect, onCleanup } from 'solid-js';
 import cn from 'clsx';
 import copy from 'copy-to-clipboard';
 import intl from 'panel/common/intl';
@@ -45,7 +45,7 @@ export const CopiedText = (props: CopiedTextProps) => {
     };
 
     // Reset timer when isCopied changes
-    createSignal(() => {
+    createEffect(() => {
         if (isCopied()) resetTimer();
     });
 

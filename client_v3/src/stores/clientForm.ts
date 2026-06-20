@@ -1,4 +1,5 @@
 import { createStore } from 'solid-js/store';
+import { untrack } from 'solid-js';
 import type { ClientFormState, Client } from 'panel/initialState';
 import { apiClient } from 'panel/api/Api';
 import intl from 'panel/common/intl';
@@ -193,4 +194,4 @@ export const saveClient = async (): Promise<boolean> => {
     }
 };
 
-export const clientFormState = state;
+export const clientFormState = untrack(() => state);

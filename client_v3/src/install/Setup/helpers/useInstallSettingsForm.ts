@@ -1,4 +1,4 @@
-import { createSignal, createEffect, createMemo } from 'solid-js';
+import { createSignal, createEffect, createMemo, untrack } from 'solid-js';
 
 import {
     ALL_INTERFACES_IP,
@@ -114,7 +114,7 @@ export const useInstallSettingsForm = (
 
     const handleSubmit = (onSubmit: (data: SettingsFormValues) => void) => (e: Event) => {
         e.preventDefault();
-        onSubmit(watchFields());
+        onSubmit(untrack(watchFields));
     };
 
     return {

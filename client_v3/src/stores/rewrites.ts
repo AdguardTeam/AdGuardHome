@@ -1,4 +1,5 @@
 import { createStore } from 'solid-js/store';
+import { untrack } from 'solid-js';
 import { apiClient } from 'panel/api/Api';
 import { addErrorToast } from './toasts';
 
@@ -127,4 +128,4 @@ export const updateRewriteSettings = async (values: any) => {
     }
 };
 
-export const rewritesState = state;
+export const rewritesState = untrack(() => state);

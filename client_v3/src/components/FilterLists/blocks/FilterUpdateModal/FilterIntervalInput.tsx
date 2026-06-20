@@ -1,4 +1,4 @@
-import { createEffect, createSignal } from 'solid-js';
+import { createEffect, createSignal, untrack } from 'solid-js';
 
 import theme from 'panel/lib/theme';
 import { Input } from 'panel/common/controls/Input';
@@ -20,7 +20,7 @@ type Props = {
 
 export const FilterIntervalInput = (props: Props) => {
     let inputRef: HTMLInputElement | undefined;
-    const [prevInterval, setPrevInterval] = createSignal(props.intervalValue);
+    const [prevInterval, setPrevInterval] = createSignal(untrack(() => props.intervalValue));
 
     createEffect(() => {
         const wasCustom = prevInterval() === -1;

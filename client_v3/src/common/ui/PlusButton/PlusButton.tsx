@@ -16,7 +16,7 @@ export const PlusButton = (props: Props) => (
     <button
         type="button"
         class={cn(s.plusButton, props.class)}
-        onClick={props.onClick}
+        onClick={(e) => (props.onClick as any)?.(e)}
         disabled={props.disabled}
         data-testid={props.testId}
     >

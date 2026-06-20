@@ -1,4 +1,5 @@
 import { createStore } from 'solid-js/store';
+import { untrack } from 'solid-js';
 import { apiClient } from 'panel/api/Api';
 import { addErrorToast } from './toasts';
 import { DAY, TIME_UNITS } from 'panel/helpers/constants';
@@ -143,4 +144,4 @@ export const resetStats = async () => {
     }
 };
 
-export const statsState = state;
+export const statsState = untrack(() => state);

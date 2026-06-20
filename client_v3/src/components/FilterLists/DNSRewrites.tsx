@@ -1,4 +1,4 @@
-import { createSignal, createMemo, Show, onMount } from 'solid-js';
+import { createSignal, createMemo, Show, onMount, createEffect } from 'solid-js';
 import cn from 'clsx';
 
 import intl from 'panel/common/intl';
@@ -38,7 +38,7 @@ export const DNSRewrites = () => {
     const [settingsLoaded, setSettingsLoaded] = createSignal(false);
 
     // Only show loader during initial fetch, not on subsequent enable/disable toggles.
-    createMemo(() => {
+    createEffect(() => {
         if (!rewritesState.processingSettings && !settingsLoaded()) {
             setSettingsLoaded(true);
         }

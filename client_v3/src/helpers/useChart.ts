@@ -9,6 +9,23 @@ import {
 } from 'chart.js';
 
 /**
+ * Clones only the array properties that Chart.js internally mutates,
+ * preserving callback functions (e.g. backgroundColor) that can't be
+ * deep-cloned. This prevents "Cannot mutate a Store directly" warnings
+ * when chart data originates from Solid reactive proxies.
+ */
+function cloneChartData(d: ChartData<'line'>): ChartData<'line'> {
+    return {
+        ...d,
+        labels: Array.isArray(d.labels) ? [...d.labels] : d.labels,
+        datasets: d.datasets.map((ds) => ({
+            ...ds,
+            data: [...ds.data],
+        })),
+    };
+}
+
+/**
  * SolidJS primitive that manages a Chart.js instance lifecycle.
  *
  * Returns a `ref` callback to attach to a `<canvas>` element.
@@ -29,7 +46,8 @@ export function useChart(
     onMount(() => {
         chart = new Chart(canvasEl, {
             type: 'line',
-            data: data(),
+            // Clone arrays to prevent Chart.js from mutating Solid reactive proxies
+            data: cloneChartData(data()),
             options: options(),
             plugins,
         });
@@ -37,7 +55,8 @@ export function useChart(
 
     createEffect(() => {
         if (!chart) return;
-        chart.data = data();
+        // Clone arrays to prevent Chart.js from mutating Solid reactive proxies
+        chart.data = cloneChartData(data());
         chart.options = options();
         chart.update('none');
     });

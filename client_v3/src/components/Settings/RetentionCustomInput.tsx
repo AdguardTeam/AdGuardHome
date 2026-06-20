@@ -1,4 +1,4 @@
-import { createEffect } from 'solid-js';
+import { createEffect, untrack } from 'solid-js';
 
 import theme from 'panel/lib/theme';
 import { Input } from 'panel/common/controls/Input';
@@ -19,7 +19,7 @@ type Props = {
 
 export const RetentionCustomInput = (props: Props) => {
     let inputRef: HTMLInputElement | undefined;
-    let prevInterval = props.intervalValue;
+    let prevInterval = untrack(() => props.intervalValue);
 
     createEffect(() => {
         const intervalValue = props.intervalValue;

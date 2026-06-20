@@ -1,4 +1,5 @@
 import { createStore } from 'solid-js/store';
+import { untrack } from 'solid-js';
 import { apiClient } from 'panel/api/Api';
 import { addErrorToast } from './toasts';
 
@@ -126,7 +127,7 @@ export const setDhcpConfig = async (values: any) => {
 };
 
 export const toggleDhcp = async (config?: any) => {
-    const newEnabled = !state.enabled;
+    const newEnabled = !untrack(() => state.enabled);
     setState('processingConfig', true);
     try {
         const payload = config ? { ...config, enabled: newEnabled } : { enabled: newEnabled };
@@ -209,4 +210,4 @@ export const updateStaticLease = async (config: { target: Lease; update: Lease }
     }
 };
 
-export const dhcpState = state;
+export const dhcpState = untrack(() => state);

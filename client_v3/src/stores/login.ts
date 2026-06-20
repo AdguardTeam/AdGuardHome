@@ -1,4 +1,5 @@
 import { createStore } from 'solid-js/store';
+import { untrack } from 'solid-js';
 import { apiClient } from 'panel/api/Api';
 import { addErrorToast } from './toasts';
 import { HTML_PAGES } from 'panel/helpers/constants';
@@ -38,4 +39,4 @@ export const processLogin = async (values: { username: string; password: string 
     }
 };
 
-export const loginState = state;
+export const loginState = untrack(() => state);

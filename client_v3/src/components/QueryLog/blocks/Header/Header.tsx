@@ -1,4 +1,4 @@
-import { createSignal, createMemo, createEffect, onCleanup, Show } from 'solid-js';
+import { createSignal, createMemo, createRenderEffect, onCleanup, Show } from 'solid-js';
 import cn from 'clsx';
 
 import intl from 'panel/common/intl';
@@ -49,7 +49,7 @@ const REASON_LABEL_KEYS: Record<string, string> = {
 };
 
 export const Header = (props: Props) => {
-    const [searchValue, setSearchValue] = createSignal(props.currentSearch);
+    const [searchValue, setSearchValue] = createSignal('');
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
     const isMobile = useIsMobile();
 
@@ -67,7 +67,7 @@ export const Header = (props: Props) => {
         })),
     );
 
-    createEffect(() => {
+    createRenderEffect(() => {
         setSearchValue(props.currentSearch);
     });
 

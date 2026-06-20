@@ -130,7 +130,7 @@ export const CheckResult = (props: Props) => {
                             class={s.dismissButton}
                             aria-label={intl.getMessage('close_result')}
                             data-testid="user-rules-result-dismiss"
-                            onClick={props.onDismiss}
+                            onClick={() => props.onDismiss?.()}
                         >
                             <Icon icon="cross" color="gray" />
                         </button>
@@ -234,7 +234,7 @@ export const CheckResult = (props: Props) => {
                             disabled={props.processingRules}
                             class={s.actionLink}
                             data-testid="user-rules-result-action-edit-rewrite"
-                            onClick={props.onEditRewrite}
+                            onClick={() => props.onEditRewrite?.()}
                         >
                             {intl.getMessage('user_rules_edit_dns_rewrite')}
                         </button>
@@ -246,7 +246,7 @@ export const CheckResult = (props: Props) => {
                             disabled={props.processingRules}
                             class={s.actionLink}
                             data-testid="user-rules-result-action-delete-rewrite"
-                            onClick={props.onDeleteRewrite}
+                            onClick={() => props.onDeleteRewrite?.()}
                         >
                             {intl.getMessage('user_rules_remove_dns_rewrite')}
                         </button>

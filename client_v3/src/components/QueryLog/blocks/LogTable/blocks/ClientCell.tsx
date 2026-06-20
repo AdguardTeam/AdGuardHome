@@ -24,7 +24,10 @@ export const ClientCell = (props: Props) => {
                     type="button"
                     class={cn(s.clientButtonPlain, s.clientIp, theme.text.t3)}
                     title={props.row.client}
-                    onClick={props.onSearchSelect(props.row.client)}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        props.onSearchSelect(props.row.client)(e);
+                    }}
                 >
                     {props.row.client}
                 </button>
@@ -35,7 +38,7 @@ export const ClientCell = (props: Props) => {
                         type="button"
                         class={cn(s.clientButtonPlain, s.clientName, theme.text.t4)}
                         title={clientName()}
-                        onClick={props.onSearchSelect(clientName())}
+                        onClick={(e) => props.onSearchSelect(clientName())(e)}
                     >
                         {clientName()}
                     </button>
