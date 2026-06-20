@@ -9,18 +9,27 @@ export default defineConfig({
     plugins: [solid()],
     resolve: {
         conditions: ['development', 'browser'],
+        // Force Vite to use a single solid-js instance across all deps,
+        // preventing "multiple instances of Solid" from @zag-js/solid, etc.
+        dedupe: ['solid-js', 'solid-js/web', 'solid-js/store'],
         alias: {
             panel: path.resolve(rootDir, 'src'),
             Twosky: path.resolve(rootDir, '../.twosky.json'),
-            // Force all solid-js imports to resolve to a single instance,
-            // preventing "multiple instances of Solid" errors in CI.
             'solid-js': path.resolve(rootDir, 'node_modules/solid-js'),
             'solid-js/web': path.resolve(rootDir, 'node_modules/solid-js/web'),
             'solid-js/store': path.resolve(rootDir, 'node_modules/solid-js/store'),
         },
     },
     ssr: {
-        noExternal: ['@solidjs/testing-library', '@solidjs/router', 'solid-js'],
+        noExternal: [
+            '@solidjs/testing-library',
+            '@solidjs/router',
+            'solid-js',
+            // Force @zag-js/* into the same module graph so they share
+            // a single solid-js instance, preventing "multiple instances
+            // of Solid" errors in CI.
+            '@zag-js/solid',
+        ],
     },
     test: {
         environment: 'jsdom',
