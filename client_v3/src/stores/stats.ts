@@ -80,7 +80,7 @@ export const getStats = async (period?: number) => {
             replacedParental: data.replaced_parental || [],
             replacedSafebrowsing: data.replaced_safebrowsing || [],
             topBlockedDomains: normalizeTopList(data.top_blocked_domains || []),
-            topClients: normalizeTopList(data.top_clients || []),
+            topClients: normalizeTopList(data.top_clients || []) as { name: string; count: number; info: any }[],
             topQueriedDomains: normalizeTopList(data.top_queried_domains || []),
             numBlockedFiltering: data.num_blocked_filtering || 0,
             numDnsQueries: data.num_dns_queries || 0,

@@ -2,7 +2,6 @@ import { Show } from 'solid-js';
 
 import intl from 'panel/common/intl';
 import theme from 'panel/lib/theme';
-import { formatCompactNumber } from 'panel/helpers/helpers';
 import cn from 'clsx';
 import { EmptyState } from '../EmptyState';
 
@@ -39,7 +38,7 @@ export const GeneralStatistics = (props: Props) => {
 
                 <Show when={hasStats()}>
                     <div class={cn(theme.text.t3, s.cardSubtitle)}>
-                        {intl.getPlural('queries_total', formatCompactNumber(props.numDnsQueries))}
+                        {intl.getPlural('queries_total', props.numDnsQueries)}
                     </div>
                 </Show>
             </div>

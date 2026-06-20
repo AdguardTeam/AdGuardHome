@@ -170,7 +170,7 @@ export const ConfigureBlocklistModal = (props: Props) => {
                         </Show>
                         <Show
                             when={props.modalId === MODAL_TYPE.ADD_BLOCKLIST}
-                            fallback={<ManualFilterForm class={s.formGroup} />}
+                            fallback={<ManualFilterForm className={s.formGroup} />}
                         >
                             <Tabs
                                 activeTab={activeTab()}
@@ -191,7 +191,7 @@ export const ConfigureBlocklistModal = (props: Props) => {
                                     {
                                         id: TAB_TYPE.MANUAL,
                                         label: intl.getMessage('blocklist_add_manual'),
-                                        content: <ManualFilterForm class={s.formGroup} />,
+                                        content: <ManualFilterForm className={s.formGroup} />,
                                     },
                                 ]}
                             />

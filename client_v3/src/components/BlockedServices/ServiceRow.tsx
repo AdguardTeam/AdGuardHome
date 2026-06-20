@@ -39,6 +39,7 @@ export const ServiceRow = (props: Props) => {
                 }
             }}
         >
+            {/* eslint-disable-next-line solid/no-innerhtml */}
             <div class={s.serviceIcon} innerHTML={decodedSvg} />
             <div class={s.serviceName}>{props.name}</div>
             <div

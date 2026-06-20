@@ -32,6 +32,7 @@ export const ServiceIcons = (props: ServiceIconsProps) => {
                 {(svcId) => {
                     const svc = props.serviceMap.get(svcId);
                     if (!svc) return null;
+                    /* eslint-disable solid/no-innerhtml */
                     return (
                         <div
                             class={s.serviceIcon}
@@ -39,6 +40,7 @@ export const ServiceIcons = (props: ServiceIconsProps) => {
                             innerHTML={decodeSvg(svc.icon_svg)}
                         />
                     );
+                    /* eslint-enable solid/no-innerhtml */
                 }}
             </For>
             <Show when={hiddenCount() > 0}>
@@ -53,6 +55,7 @@ export const ServiceIcons = (props: ServiceIconsProps) => {
                                     {(svcId) => {
                                         const svc = props.serviceMap.get(svcId);
                                         if (!svc) return null;
+                                        /* eslint-disable solid/no-innerhtml */
                                         return (
                                             <div
                                                 class={s.serviceIcon}
@@ -60,6 +63,7 @@ export const ServiceIcons = (props: ServiceIconsProps) => {
                                                 innerHTML={decodeSvg(svc.icon_svg)}
                                             />
                                         );
+                                        /* eslint-enable solid/no-innerhtml */
                                     }}
                                 </For>
                             </div>

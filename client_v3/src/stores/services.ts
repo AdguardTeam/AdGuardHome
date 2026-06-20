@@ -38,7 +38,7 @@ export const getAllBlockedServices = async () => {
     try {
         const data = await apiClient.getAllBlockedServices();
         setState({
-            allServices: data.services || [],
+            allServices: data.blocked_services || [],
             allGroups: data.groups || [],
             processingAll: false,
         });

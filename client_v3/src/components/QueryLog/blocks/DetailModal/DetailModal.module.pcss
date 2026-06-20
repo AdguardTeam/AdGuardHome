@@ -160,12 +160,12 @@
     }
 }
 
-.dialog :global([data-part="title"]) {
+.dialog :global([data-part='title']) {
     font-size: 24px;
     line-height: 1.2;
 }
 
-.dialog :global([data-part="close-trigger"]) {
+.dialog :global([data-part='close-trigger']) {
     right: 24px;
     top: 24px;
     z-index: 2;
@@ -177,7 +177,7 @@
 }
 
 /* The content card carries .dialog itself — compound selector, not descendant */
-.dialog:global([data-part="content"]) {
+.dialog:global([data-part='content']) {
     display: flex;
     flex-direction: column;
     max-height: min(600px, calc(100vh - 32px));

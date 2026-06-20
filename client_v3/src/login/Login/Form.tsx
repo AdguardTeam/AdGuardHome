@@ -70,6 +70,9 @@ const Form = (props: LoginFormProps) => {
                         validate={[required(intl.getMessage('form_error_required'))]}
                     >
                         {(field, fieldProps) => (
+                            // @ts-expect-error - PasswordInput.onChange expects (value: string) => void,
+                            // but modular-forms fieldProps provides (event: Event) => void.
+                            // PasswordInput internally wraps the native event handler.
                             <PasswordInput
                                 {...fieldProps}
                                 id="password"

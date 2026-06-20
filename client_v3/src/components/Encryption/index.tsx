@@ -1,9 +1,14 @@
-import { createMemo, Show, onCleanup } from 'solid-js';
+import { createMemo, Show, onCleanup, onMount } from 'solid-js';
 import cn from 'clsx';
 
 import { DEBOUNCE_TIMEOUT, ENCRYPTION_SOURCE } from 'panel/helpers/constants';
 import { PageLoader } from 'panel/common/ui/Loader';
-import { setTlsConfig, validateTlsConfig, encryptionState } from 'panel/stores/encryption';
+import {
+    getTlsStatus,
+    setTlsConfig,
+    validateTlsConfig,
+    encryptionState,
+} from 'panel/stores/encryption';
 import theme from 'panel/lib/theme';
 import intl from 'panel/common/intl';
 
@@ -95,6 +100,10 @@ export const Encryption = () => {
         if (debounceTimer) {
             clearTimeout(debounceTimer);
         }
+    });
+
+    onMount(() => {
+        getTlsStatus();
     });
 
     return (

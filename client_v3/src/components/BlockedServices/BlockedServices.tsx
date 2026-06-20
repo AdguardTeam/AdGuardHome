@@ -72,7 +72,7 @@ export const BlockedServices = (props: Props) => {
     const serviceGroupMap = createMemo(() => {
         const map = new Map<string, string>();
         const allServices = servicesState.allServices;
-        if (!allServices) {
+        if (!allServices || allServices.length === 0) {
             return map;
         }
         (allServices as WebService[]).forEach((service) => {
@@ -85,10 +85,10 @@ export const BlockedServices = (props: Props) => {
 
     const filteredServices = createMemo(() => {
         const allServices = servicesState.allServices;
-        if (!allServices) {
+        if (!allServices || allServices.length === 0) {
             return [];
         }
-        let filtered = allServices as WebService[];
+        let filtered = [...(allServices as WebService[])];
         const gf = groupFilter();
         if (gf.length > 0) {
             const selected = new Set(gf);
@@ -144,7 +144,8 @@ export const BlockedServices = (props: Props) => {
     };
 
     const isInitialLoading = () =>
-        !servicesState.allServices && (servicesState.processing || servicesState.processingAll);
+        (servicesState.allServices == null || servicesState.allServices.length === 0) &&
+        (servicesState.processingAll || servicesState.processing);
     const isGloballyDisabled = () =>
         props.clientScope ? clientFormState.use_global_blocked_services : false;
 
