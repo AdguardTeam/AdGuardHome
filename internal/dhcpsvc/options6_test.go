@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
-	"github.com/google/gopacket/layers"
+	"github.com/gopacket/gopacket/layers"
 )
 
 // newOptIANA creates a DHCPv6 Identity Association for Non-temporary Address

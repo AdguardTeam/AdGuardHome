@@ -8,7 +8,7 @@ import (
 	"net"
 	"net/netip"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
+	"github.com/AdguardTeam/golibs/service"
 )
 
 const (
@@ -26,7 +26,7 @@ const (
 //
 // TODO(e.burkov):  Reconsider the requirements for the leases validity.
 type Interface interface {
-	agh.ServiceWithConfig[*Config]
+	service.Interface
 
 	// Enabled returns true if DHCP provides information about clients.
 	Enabled() (ok bool)
@@ -79,16 +79,13 @@ type Interface interface {
 type Empty struct{}
 
 // type check
-var _ agh.ServiceWithConfig[*Config] = Empty{}
+var _ service.Interface = Empty{}
 
 // Start implements the [Service] interface for Empty.
 func (Empty) Start(_ context.Context) (err error) { return nil }
 
 // Shutdown implements the [Service] interface for Empty.
 func (Empty) Shutdown(_ context.Context) (err error) { return nil }
-
-// Config implements the [ServiceWithConfig] interface for Empty.
-func (Empty) Config() (conf *Config) { return nil }
 
 // type check
 var _ Interface = Empty{}

@@ -9,8 +9,8 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/testutil"
-	"github.com/google/gopacket"
-	"github.com/google/gopacket/layers"
+	"github.com/gopacket/gopacket"
+	"github.com/gopacket/gopacket/layers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -151,7 +151,7 @@ func TestDHCPServer_ServeEther6_solicit(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			ndMgr, inCh, outCh := newTestNetworkDeviceManager(t, testIfaceName, testIfaceAddrV6)
+			ndMgr, inCh, outCh := newTestNetworkDeviceManager(t, testIfaceAddrV6)
 			startTestDHCPServer(t, &dhcpsvc.Config{
 				Interfaces:           testIPv6InterfacesConf,
 				NetworkDeviceManager: ndMgr,
@@ -265,8 +265,9 @@ func newEthernetLayer(
 }
 
 // assertValidResponse6 asserts that the response received on recvCh is a valid
-// DHCPv6 response for the given request and contains the expected options.  If
-// wantOpts is nil, it asserts that no response is received.
+// DHCPv6 response for the given request and contains the expected options.  It
+// does nothing if wantOpts is nil, which should be used in case no response is
+// expected.  req and recvCh must not be nil.
 func assertValidResponse6(
 	tb testing.TB,
 	req *layers.DHCPv6,
@@ -276,8 +277,6 @@ func assertValidResponse6(
 	tb.Helper()
 
 	if wantOpts == nil {
-		assertNoResponse(tb, recvCh, testTimeout/10)
-
 		return
 	}
 
@@ -329,7 +328,7 @@ func assertValidDHCPv6(
 		if isRapidCommit {
 			assert.Equal(tb, layers.DHCPv6MsgTypeReply, resp.MsgType)
 		} else {
-			assert.Equal(tb, layers.DHCPv6MsgTypeAdverstise, resp.MsgType)
+			assert.Equal(tb, layers.DHCPv6MsgTypeAdvertise, resp.MsgType)
 		}
 	default:
 		tb.Errorf("request message type: %v: %s", errors.ErrUnexpectedValue, req.MsgType)

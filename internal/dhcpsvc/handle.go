@@ -7,8 +7,8 @@ import (
 	"slices"
 
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
-	"github.com/google/gopacket"
-	"github.com/google/gopacket/layers"
+	"github.com/gopacket/gopacket"
+	"github.com/gopacket/gopacket/layers"
 )
 
 // serveEther4 handles the incoming ethernet packets and dispatches them to the
@@ -37,8 +37,6 @@ func (srv *DHCPServer) serveEther4(ctx context.Context, iface *dhcpInterfaceV4, 
 // appropriate handler.  It's used to run in a separate goroutine as it blocks
 // until packets channel is closed.  iface and nd must not be nil.  nd must have
 // at least a single address returned by its Addresses method.
-//
-//lint:ignore U1000 TODO(e.burkov): Use.
 func (srv *DHCPServer) serveEther6(ctx context.Context, iface *dhcpInterfaceV6, nd NetworkDevice) {
 	defer slogutil.RecoverAndLog(ctx, srv.logger)
 

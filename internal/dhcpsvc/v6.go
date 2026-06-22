@@ -16,7 +16,7 @@ import (
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/AdguardTeam/golibs/validate"
-	"github.com/google/gopacket/layers"
+	"github.com/gopacket/gopacket/layers"
 )
 
 // Port numbers for DHCPv6.

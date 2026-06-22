@@ -7,8 +7,8 @@ import (
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
-	"github.com/google/gopacket"
-	"github.com/google/gopacket/layers"
+	"github.com/gopacket/gopacket"
+	"github.com/gopacket/gopacket/layers"
 )
 
 // serveV6 handles the ethernet packet of IPv6 type. iface and pkt must not be
@@ -87,7 +87,7 @@ func (iface *dhcpInterfaceV6) handleSolicit(
 	lease, iaid := iface.allocateForSolicit(ctx, fd.ether.SrcMAC, req)
 
 	resp := &layers.DHCPv6{
-		MsgType:       layers.DHCPv6MsgTypeAdverstise,
+		MsgType:       layers.DHCPv6MsgTypeAdvertise,
 		TransactionID: req.TransactionID,
 	}
 

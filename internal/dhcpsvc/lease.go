@@ -80,3 +80,9 @@ func (l *Lease) updateExpiry(clock timeutil.Clock, ttl time.Duration) {
 
 	l.Expiry = now.Add(ttl)
 }
+
+// compareLeases is a helper function that sorts a slice of leases according to
+// their IP.
+func compareLeases(a, b *Lease) (res int) {
+	return a.IP.Compare(b.IP)
+}

@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/golibs/validate"
-	"github.com/google/gopacket/layers"
+	"github.com/gopacket/gopacket/layers"
 )
 
 // iaNAMinLen is the minimum length of an IA_NA option data field, in bytes.
