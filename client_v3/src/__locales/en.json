@@ -833,5 +833,7 @@
   "clients_dont_log": "Don't log this client",
   "clients_dont_collect_stats": "Don't collect stats for this client",
   "clients": "Clients",
-  "aria_clear_input": "Clear input"
+  "aria_clear_input": "Clear input",
+  "aria_previous_page": "Previous page",
+  "aria_next_page": "Next page"
 }

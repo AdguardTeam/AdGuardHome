@@ -17,7 +17,10 @@ type Props = {
     limitButtonDescription?: string;
 };
 
-const generatePageNumbers = (currentPage: number, totalPages: number): (number | 'ellipsis')[] => {
+export const generatePageNumbers = (
+    currentPage: number,
+    totalPages: number,
+): (number | 'ellipsis')[] => {
     const delta = 2;
     const range: number[] = [];
 
@@ -89,6 +92,7 @@ export const Pagination = (props: Props) => {
             <div class={theme.pagination.pagesContainer}>
                 <button
                     type="button"
+                    aria-label={intl.getMessage('aria_previous_page')}
                     onClick={() => props.onPageChange(props.currentPage - 1)}
                     disabled={!canPreviousPage()}
                     class={theme.pagination.button}
@@ -109,11 +113,11 @@ export const Pagination = (props: Props) => {
                             <button
                                 type="button"
                                 onClick={() => props.onPageChange(pageNum - 1)}
-                                class={theme.pagination.button}
-                                classList={{
-                                    [theme.pagination.button_active]: (() =>
-                                        pageNum === props.currentPage + 1) as unknown as boolean,
-                                }}
+                                class={cn(
+                                    theme.pagination.button,
+                                    pageNum === props.currentPage + 1 &&
+                                        theme.pagination.button_active,
+                                )}
                             >
                                 {pageNum}
                             </button>
@@ -123,6 +127,7 @@ export const Pagination = (props: Props) => {
 
                 <button
                     type="button"
+                    aria-label={intl.getMessage('aria_next_page')}
                     onClick={() => props.onPageChange(props.currentPage + 1)}
                     disabled={!canNextPage()}
                     class={theme.pagination.button}
@@ -140,20 +145,22 @@ export const Pagination = (props: Props) => {
         <div class={theme.pagination.wrapper}>
             {renderPages()}
 
-            <Dropdown
-                trigger="click"
-                position="bottomRight"
-                menu={limitMenu}
-                open={limitMenuOpen()}
-                onOpenChange={setLimitMenuOpen}
-                iconClass={theme.dropdown.icon}
-                class={theme.dropdown.flexDropdownWrap}
-                wrapClass={cn(theme.dropdown.dropdown, theme.pagination.dropdownShowOnPage)}
-            >
-                <span class={theme.pagination.dropdownText}>
-                    {intl.getMessage('rows_per_page', { value: props.pageSize })}
-                </span>
-            </Dropdown>
+            <div class={theme.pagination.limitContainer}>
+                <Dropdown
+                    trigger="click"
+                    position="bottomRight"
+                    menu={limitMenu}
+                    open={limitMenuOpen()}
+                    onOpenChange={setLimitMenuOpen}
+                    iconClass={theme.dropdown.icon}
+                    class={theme.dropdown.flexDropdownWrap}
+                    wrapClass={cn(theme.dropdown.dropdown, theme.pagination.dropdownShowOnPage)}
+                >
+                    <span class={theme.pagination.dropdownText}>
+                        {intl.getMessage('rows_per_page', { value: props.pageSize })}
+                    </span>
+                </Dropdown>
+            </div>
         </div>
     );
 };

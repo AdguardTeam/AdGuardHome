@@ -835,7 +835,8 @@ export const setUITheme = (theme: any) => {
         currentTheme = prefersDark ? THEMES.dark : THEMES.light;
     }
     setTheme(currentTheme);
-    document.body.dataset.theme = currentTheme;
+    document.documentElement.dataset.theme = currentTheme;
+    document.documentElement.style.colorScheme = currentTheme;
 };
 
 /**
