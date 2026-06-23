@@ -5,6 +5,8 @@ import { areEqualVersions } from 'panel/helpers/version';
 import { apiClient } from 'panel/api/Api';
 import { LocalesType } from 'panel/common/intl';
 import { addErrorToast, addSuccessToast, addNoticeToast } from './toasts';
+import { getTlsStatus } from './encryption';
+import { updateFailedNoticeOptions } from './dashboard/noticeOptions';
 import type { Client, AutoClient } from 'panel/initialState';
 
 type DashboardState = {
@@ -67,6 +69,12 @@ const [state, setState] = createStore<DashboardState>(initialState);
 
 const CHECK_TIMEOUT = 1000;
 
+let statusTimeout: ReturnType<typeof setTimeout> | null = null;
+const rmTimeout = (t: ReturnType<typeof setTimeout> | null): null => {
+    if (t) clearTimeout(t);
+    return null;
+};
+
 const checkStatus = async (
     handleRequestSuccess: (response: any) => void,
     handleRequestError: () => void,
@@ -76,14 +84,14 @@ const checkStatus = async (
         handleRequestError();
         return;
     }
-
     try {
         const response = await fetch(`${apiClient.baseUrl}/status`);
+        statusTimeout = rmTimeout(statusTimeout);
         if (response.ok) {
             const data = await response.json();
             handleRequestSuccess({ status: response.status, data });
             if (data.running === false) {
-                setTimeout(
+                statusTimeout = setTimeout(
                     checkStatus,
                     CHECK_TIMEOUT,
                     handleRequestSuccess,
@@ -92,7 +100,7 @@ const checkStatus = async (
                 );
             }
         } else {
-            setTimeout(
+            statusTimeout = setTimeout(
                 checkStatus,
                 CHECK_TIMEOUT,
                 handleRequestSuccess,
@@ -101,7 +109,8 @@ const checkStatus = async (
             );
         }
     } catch {
-        setTimeout(
+        statusTimeout = rmTimeout(statusTimeout);
+        statusTimeout = setTimeout(
             checkStatus,
             CHECK_TIMEOUT,
             handleRequestSuccess,
@@ -139,7 +148,7 @@ export const getDnsStatus = async () => {
                 httpPort: dnsStatus.http_port,
             });
             getVersion();
-            getTlsStatusForDashboard();
+            getTlsStatus();
             getProfile();
         } else {
             setState('isCoreRunning', runningStatus);
@@ -217,7 +226,7 @@ export const getVersion = async (recheck = false) => {
 export const getUpdate = async () => {
     setState('processingUpdate', true);
     const handleRequestError = () => {
-        addNoticeToast({ error: 'update_failed' });
+        addNoticeToast({ error: 'update_failed', options: updateFailedNoticeOptions });
         setState('processingUpdate', false);
     };
     const handleRequestSuccess = (response: any) => {
@@ -313,12 +322,6 @@ export const changeTheme = async (theme: string) => {
     } catch (error) {
         addErrorToast({ error });
     }
-};
-
-// DNS status helper for other stores to call
-const getTlsStatusForDashboard = async () => {
-    // This is a placeholder - the encryption store handles TLS status
-    // Called from getDnsStatus after DNS is running
 };
 
 export const dashboardState = untrack(() => state);

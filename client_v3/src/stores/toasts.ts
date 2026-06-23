@@ -2,12 +2,22 @@ import { createStore } from 'solid-js/store';
 import { untrack } from 'solid-js';
 import { nanoid } from 'nanoid';
 
+type ToastAction = {
+    text: string;
+    actionType?: string;
+    actionPayload?: any;
+    callback?: () => void | Promise<void>;
+};
+
 type ToastNotice = {
     id: string;
     message: any;
     type: 'error' | 'success' | 'notice';
     actionLabel?: string;
     undoId?: string;
+    action?: ToastAction;
+    options?: any;
+    code?: string;
 };
 
 type ToastsState = {
@@ -40,11 +50,20 @@ export const createUndoToast = (
     return { message, actionLabel, undoId };
 };
 
-export const addErrorToast = (payload: { error: any }) => {
-    const { error } = payload;
+export const addErrorToast = (payload: { error: any; options?: any; action?: ToastAction }) => {
+    const { error, options, action } = payload;
     const message = error instanceof Error ? error.message : String(error);
     console.error(message); // eslint-disable-line no-console
-    setState('notices', (prev) => [...prev, { id: nanoid(), message, type: 'error' as const }]);
+    const notice: ToastNotice = {
+        id: nanoid(),
+        message,
+        options,
+        type: 'error' as const,
+    };
+    if (action) {
+        notice.action = action;
+    }
+    setState('notices', (prev) => [...prev, notice]);
 };
 
 export const addSuccessToast = (message: any) => {
@@ -56,12 +75,22 @@ export const addSuccessToast = (message: any) => {
     if (typeof message === 'object' && message !== null) {
         notice.actionLabel = message.actionLabel;
         notice.undoId = message.undoId;
+        notice.code = message.code;
     }
     setState('notices', (prev) => [...prev, notice]);
 };
 
-export const addNoticeToast = (message: any) => {
-    setState('notices', (prev) => [...prev, { id: nanoid(), message, type: 'notice' as const }]);
+export const addNoticeToast = (payload: { error: any; options?: any }) => {
+    const { error, options } = payload;
+    setState('notices', (prev) => [
+        ...prev,
+        {
+            id: nanoid(),
+            message: error.toString(),
+            options,
+            type: 'notice' as const,
+        },
+    ]);
 };
 
 export const removeToast = (id: string) => {

@@ -7,11 +7,7 @@ import { Button } from 'panel/common/ui/Button';
 
 import cn from 'clsx';
 
-import {
-    ADDRESS_IN_USE_TEXT,
-    PORT_53_FAQ_LINK,
-    STANDARD_DNS_PORT,
-} from 'panel/helpers/constants';
+import { ADDRESS_IN_USE_TEXT, PORT_53_FAQ_LINK, STANDARD_DNS_PORT } from 'panel/helpers/constants';
 
 import { validateRequiredValue, validateInstallPort } from 'panel/helpers/validators';
 import { toNumber } from 'panel/helpers/form';
@@ -71,6 +67,7 @@ export const DnsBanner = (props: Props) => {
                             size="responsive"
                             height="big"
                             id="install_dns_ip"
+                            isSearchable={false}
                         />
                     </div>
 

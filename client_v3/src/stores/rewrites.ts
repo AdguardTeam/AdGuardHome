@@ -1,7 +1,8 @@
 import { createStore } from 'solid-js/store';
 import { untrack } from 'solid-js';
 import { apiClient } from 'panel/api/Api';
-import { addErrorToast } from './toasts';
+import { addErrorToast, addSuccessToast } from './toasts';
+import intl from 'panel/common/intl';
 
 type RewriteConfig = {
     answer: string;
@@ -38,11 +39,16 @@ const initialState: RewritesState = {
 const [state, setState] = createStore<RewritesState>(initialState);
 
 export const toggleRewritesModal = (modalType?: string, currentRewrite?: RewriteConfig) => {
-    setState({
-        isModalOpen: !state.isModalOpen,
-        modalType: modalType || '',
-        currentRewrite: currentRewrite || {},
-    });
+    if (modalType !== undefined) {
+        setState({
+            isModalOpen: !state.isModalOpen,
+            modalType: modalType || '',
+            currentRewrite: currentRewrite || {},
+        });
+    } else {
+        setState('isModalOpen', (prev) => !prev);
+        // modalType and currentRewrite left unchanged
+    }
 };
 
 export const getRewritesList = async () => {
@@ -91,13 +97,16 @@ export const updateRewrite = async (
 
 export const deleteRewrite = async (
     config: RewriteConfig,
-    _options: { showToast?: boolean; closeModal?: boolean } = {},
+    options: { showToast?: boolean; closeModal?: boolean } = {},
 ): Promise<boolean> => {
     setState('processingDelete', true);
     try {
         await apiClient.deleteRewrite(config);
         setState('processingDelete', false);
         await getRewritesList();
+        if (options.showToast !== false) {
+            addSuccessToast(intl.getMessage('rewrite_deleted', { key: config.domain }));
+        }
         return true;
     } catch (error) {
         addErrorToast({ error });
@@ -122,6 +131,7 @@ export const updateRewriteSettings = async (values: any) => {
     try {
         await apiClient.updateRewriteSettings(values);
         setState({ ...values, processingSettings: false });
+        addSuccessToast(intl.getMessage('rewrite_settings_updated'));
     } catch (error) {
         addErrorToast({ error });
         setState('processingSettings', false);

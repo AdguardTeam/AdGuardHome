@@ -1,7 +1,8 @@
 import { createStore } from 'solid-js/store';
 import { untrack } from 'solid-js';
 import { apiClient } from 'panel/api/Api';
-import { addErrorToast } from './toasts';
+import { addErrorToast, addSuccessToast } from './toasts';
+import intl from 'panel/common/intl';
 import {
     ALL_INTERFACES_IP,
     INSTALL_FIRST_STEP,
@@ -99,6 +100,7 @@ export const setAllSettings = async (config: any) => {
         void confirm_password;
         await apiClient.setAllSettings(rest);
         setState({ processingSubmit: false, submitted: true });
+        addSuccessToast(intl.getMessage('install_saved'));
     } catch (error) {
         addErrorToast({ error });
         setState('processingSubmit', false);

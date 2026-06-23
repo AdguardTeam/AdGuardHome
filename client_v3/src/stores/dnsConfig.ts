@@ -1,8 +1,10 @@
 import { createStore, reconcile } from 'solid-js/store';
 import { untrack } from 'solid-js';
 import { apiClient } from 'panel/api/Api';
-import { addErrorToast } from './toasts';
+import { addErrorToast, addSuccessToast } from './toasts';
+import intl from 'panel/common/intl';
 import { splitByNewLine } from 'panel/helpers/helpers';
+import { DNS_REQUEST_OPTIONS } from 'panel/helpers/constants';
 
 type DnsConfigState = {
     processingGetConfig: boolean;
@@ -73,6 +75,10 @@ export const getDnsConfig = async () => {
         const data = await apiClient.getDnsConfig();
         setState({
             ...data,
+            blocking_ipv4: data.blocking_ipv4 || DEFAULT_BLOCKING_IPV4,
+            blocking_ipv6: data.blocking_ipv6 || DEFAULT_BLOCKING_IPV6,
+            upstream_mode:
+                data.upstream_mode === '' ? DNS_REQUEST_OPTIONS.LOAD_BALANCING : data.upstream_mode,
             bootstrap_dns: data.bootstrap_dns?.join('\n') || '',
             fallback_dns: data.fallback_dns?.join('\n') || '',
             local_ptr_upstreams: data.local_ptr_upstreams?.join('\n') || '',
@@ -94,29 +100,43 @@ export const clearDnsCache = async () => {
     }
 };
 
-export const setDnsConfig = async (values: any, _toastMessage?: string) => {
+export const setDnsConfig = async (values: any, toastMessage?: string) => {
     setState('processingSetConfig', true);
     try {
         const config = { ...values };
+        let hasDnsSettings = false;
 
         if (Object.hasOwn(config, 'bootstrap_dns')) {
             config.bootstrap_dns = splitByNewLine(config.bootstrap_dns);
+            hasDnsSettings = true;
         }
         if (Object.hasOwn(config, 'fallback_dns')) {
             config.fallback_dns = splitByNewLine(config.fallback_dns);
+            hasDnsSettings = true;
         }
         if (Object.hasOwn(config, 'local_ptr_upstreams')) {
             config.local_ptr_upstreams = splitByNewLine(config.local_ptr_upstreams);
+            hasDnsSettings = true;
         }
         if (Object.hasOwn(config, 'upstream_dns')) {
             config.upstream_dns = splitByNewLine(config.upstream_dns);
+            hasDnsSettings = true;
         }
         if (Object.hasOwn(config, 'ratelimit_whitelist')) {
             config.ratelimit_whitelist = splitByNewLine(config.ratelimit_whitelist);
+            hasDnsSettings = true;
         }
 
         await apiClient.setDnsConfig(config);
         setState(reconcile({ ...untrack(() => state), ...values, processingSetConfig: false }));
+
+        if (toastMessage) {
+            addSuccessToast(toastMessage);
+        } else if (hasDnsSettings) {
+            addSuccessToast(intl.getMessage('updated_upstream_dns_toast'));
+        } else {
+            addSuccessToast(intl.getMessage('settings_notify_changes_saved'));
+        }
     } catch (error) {
         addErrorToast({ error });
         setState('processingSetConfig', false);

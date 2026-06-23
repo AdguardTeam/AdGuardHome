@@ -3,6 +3,7 @@ import { untrack } from 'solid-js';
 import { apiClient } from 'panel/api/Api';
 import { addErrorToast, addSuccessToast } from './toasts';
 import type { Filter } from 'panel/helpers/helpers';
+import { normalizeFilteringStatus, normalizeRulesTextarea } from 'panel/helpers/helpers';
 import intl from 'panel/common/intl';
 
 type FilteringState = {
@@ -58,11 +59,7 @@ export const getFilteringStatus = async () => {
     try {
         const data = await apiClient.getFilteringStatus();
         setState({
-            filters: data.filters || [],
-            whitelistFilters: data.whitelist_filters || [],
-            userRules: data.user_rules || '',
-            interval: data.interval || 24,
-            enabled: data.enabled ?? true,
+            ...normalizeFilteringStatus(data),
             processingFilters: false,
         });
     } catch (error) {
@@ -74,7 +71,10 @@ export const getFilteringStatus = async () => {
 export const setRules = async (rules: string): Promise<boolean> => {
     setState('processingRules', true);
     try {
-        await apiClient.setRules({ rules });
+        const normalizedRules = {
+            rules: (normalizeRulesTextarea(rules)?.split('\n') || []).filter(Boolean),
+        };
+        await apiClient.setRules(normalizedRules);
         setState({ userRules: rules, processingRules: false });
         return true;
     } catch (error) {
@@ -213,6 +213,7 @@ export const addFilter = async (url: string, name: string, whitelist: boolean) =
         await apiClient.addFilter({ url, name, whitelist });
         setState('processingAddFilter', false);
         setState('isModalOpen', false);
+        addSuccessToast(intl.getMessage('filter_added_successfully'));
         await getFilteringStatus();
     } catch (error) {
         addErrorToast({ error });
@@ -226,6 +227,7 @@ export const removeFilter = async (url: string, whitelist: boolean) => {
         await apiClient.removeFilter({ url, whitelist });
         setState('processingRemoveFilter', false);
         setState('isModalOpen', false);
+        addSuccessToast(intl.getMessage('filter_removed_successfully'));
         await getFilteringStatus();
     } catch (error) {
         addErrorToast({ error });
@@ -250,6 +252,7 @@ export const editFilter = async (url: string, data: any, whitelist: boolean) => 
     try {
         await apiClient.setFilterUrl({ url, data, whitelist });
         setState({ processingConfigFilter: false, isModalOpen: false });
+        addSuccessToast(intl.getMessage('filter_updated'));
         await getFilteringStatus();
     } catch (error) {
         addErrorToast({ error });
@@ -260,8 +263,14 @@ export const editFilter = async (url: string, data: any, whitelist: boolean) => 
 export const refreshFilters = async (config: any) => {
     setState('processingRefreshFilters', true);
     try {
-        await apiClient.refreshFilters(config);
+        const data = await apiClient.refreshFilters(config);
         setState('processingRefreshFilters', false);
+        const updated = (data as any)?.updated || 0;
+        if (updated > 0) {
+            addSuccessToast(intl.getMessage('list_updated', { count: updated }));
+        } else {
+            addSuccessToast(intl.getMessage('all_lists_up_to_date_toast'));
+        }
         await getFilteringStatus();
     } catch (error) {
         addErrorToast({ error });
@@ -273,6 +282,15 @@ export const setFiltersConfig = async (config: any) => {
     setState('processingSetConfig', true);
     try {
         await apiClient.setFiltersConfig(config);
+        const prevEnabled = untrack(() => state.enabled);
+        const newEnabled = config.enabled;
+        if (newEnabled !== undefined && newEnabled !== prevEnabled) {
+            addSuccessToast(
+                intl.getMessage(
+                    newEnabled ? 'enabled_filtering_toast' : 'disabled_filtering_toast',
+                ),
+            );
+        }
         setState({ ...config, processingSetConfig: false });
     } catch (error) {
         addErrorToast({ error });

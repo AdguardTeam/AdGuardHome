@@ -1,19 +1,16 @@
 import { createStore } from 'solid-js/store';
 import { untrack } from 'solid-js';
 import { apiClient } from 'panel/api/Api';
-import { addErrorToast } from './toasts';
-import { DAY, TIME_UNITS } from 'panel/helpers/constants';
-
-/**
- * Normalizes API top-list format `[{ "key": value }]` to `[{ name: "key", count: value }]`.
- */
-const normalizeTopList = <T extends number>(
-    raw: Record<string, T>[],
-): { name: string; count: T }[] =>
-    raw.map((item) => {
-        const [[name, count]] = Object.entries(item);
-        return { name, count };
-    });
+import { addErrorToast, addSuccessToast } from './toasts';
+import intl from 'panel/common/intl';
+import { DAY, HOUR, STATS_INTERVALS_DAYS, TIME_UNITS } from 'panel/helpers/constants';
+import {
+    normalizeTopStats,
+    normalizeTopClients,
+    addClientInfo,
+    getParamsForClientsSearch,
+    secondsToMilliseconds,
+} from 'panel/helpers/helpers';
 
 type StatsState = {
     processingGetConfig: boolean;
@@ -28,6 +25,10 @@ type StatsState = {
     replacedSafebrowsing: number[];
     topBlockedDomains: { name: string; count: number }[];
     topClients: { name: string; count: number; info: any }[];
+    normalizedTopClients: {
+        auto: Record<string, number>;
+        configured: Record<string, number>;
+    };
     topQueriedDomains: { name: string; count: number }[];
     numBlockedFiltering: number;
     numDnsQueries: number;
@@ -55,6 +56,7 @@ const initialState: StatsState = {
     replacedSafebrowsing: [],
     topBlockedDomains: [],
     topClients: [],
+    normalizedTopClients: { auto: {}, configured: {} },
     topQueriedDomains: [],
     numBlockedFiltering: 0,
     numDnsQueries: 0,
@@ -75,27 +77,30 @@ export const getStats = async (period?: number) => {
     setState('processingStats', true);
     try {
         const data = await apiClient.getStats(period ?? 0);
+
+        const normalizedTopClientsList = normalizeTopStats(data.top_clients || []);
+        const clientsParams = getParamsForClientsSearch(normalizedTopClientsList, 'name');
+        const clients = await apiClient.searchClients(clientsParams);
+        const topClientsWithInfo = addClientInfo(normalizedTopClientsList, clients, 'name');
+
         setState({
             dnsQueries: data.dns_queries || [],
             blockedFiltering: data.blocked_filtering || [],
             replacedParental: data.replaced_parental || [],
             replacedSafebrowsing: data.replaced_safebrowsing || [],
-            topBlockedDomains: normalizeTopList(data.top_blocked_domains || []),
-            topClients: normalizeTopList(data.top_clients || []) as {
-                name: string;
-                count: number;
-                info: any;
-            }[],
-            topQueriedDomains: normalizeTopList(data.top_queried_domains || []),
+            topBlockedDomains: normalizeTopStats(data.top_blocked_domains || []),
+            topClients: topClientsWithInfo,
+            normalizedTopClients: normalizeTopClients(topClientsWithInfo),
+            topQueriedDomains: normalizeTopStats(data.top_queried_domains || []),
             numBlockedFiltering: data.num_blocked_filtering || 0,
             numDnsQueries: data.num_dns_queries || 0,
             numReplacedParental: data.num_replaced_parental || 0,
             numReplacedSafebrowsing: data.num_replaced_safebrowsing || 0,
             numReplacedSafesearch: data.num_replaced_safesearch || 0,
-            avgProcessingTime: data.avg_processing_time || 0,
+            avgProcessingTime: secondsToMilliseconds(data.avg_processing_time),
             timeUnits: data.time_units || initialState.timeUnits,
-            topUpstreamsAvgTime: normalizeTopList(data.top_upstreams_avg_time || []),
-            topUpstreamsResponses: normalizeTopList(data.top_upstreams_responses || []),
+            topUpstreamsAvgTime: normalizeTopStats(data.top_upstreams_avg_time || []),
+            topUpstreamsResponses: normalizeTopStats(data.top_upstreams_responses || []),
             processingStats: false,
         });
     } catch (error) {
@@ -111,7 +116,9 @@ export const getStatsConfig = async () => {
         setState({
             interval: data.interval || DAY,
             enabled: data.enabled ?? true,
-            customInterval: data.custom_interval || null,
+            customInterval: !STATS_INTERVALS_DAYS.includes(data.interval)
+                ? data.interval / HOUR
+                : null,
             ignored: data.ignored || [],
             processingGetConfig: false,
         });
@@ -126,6 +133,7 @@ export const setStatsConfig = async (values: any) => {
     try {
         await apiClient.setStatsConfig(values);
         setState({ ...values, processingSetConfig: false });
+        addSuccessToast(intl.getMessage('config_successfully_saved'));
     } catch (error) {
         addErrorToast({ error });
         setState('processingSetConfig', false);
@@ -137,6 +145,7 @@ export const resetStats = async () => {
     try {
         await apiClient.resetStats();
         setState('processingReset', false);
+        addSuccessToast(intl.getMessage('settings_notify_statistics_cleared'));
         await getStats();
     } catch (error) {
         addErrorToast({ error });

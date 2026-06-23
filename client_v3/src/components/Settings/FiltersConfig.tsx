@@ -1,4 +1,4 @@
-import { createSignal, createEffect } from 'solid-js';
+import { createSignal, createEffect, on } from 'solid-js';
 
 import intl from 'panel/common/intl';
 import theme from 'panel/lib/theme';
@@ -20,9 +20,11 @@ type Props = {
 export const FiltersConfig = (props: Props) => {
     const [enabled, setEnabled] = createSignal(props.initialValues.enabled);
 
-    createEffect(() => {
-        setFiltersConfig({ ...props.initialValues, enabled: enabled() });
-    });
+    createEffect(
+        on(enabled, () => {
+            setFiltersConfig({ ...props.initialValues, enabled: enabled() });
+        }),
+    );
 
     return (
         <div>

@@ -1,7 +1,10 @@
 import { createStore } from 'solid-js/store';
 import { untrack } from 'solid-js';
 import { apiClient } from 'panel/api/Api';
-import { addErrorToast } from './toasts';
+import { addErrorToast, addSuccessToast } from './toasts';
+import intl from 'panel/common/intl';
+import { STATUS_RESPONSE } from 'panel/helpers/constants';
+import { enrichWithConcatenatedIpAddresses } from 'panel/helpers/helpers';
 
 type Lease = { hostname: string; ip: string; mac: string };
 
@@ -14,6 +17,7 @@ type DhcpState = {
     processingAdding: boolean;
     processingDeleting: boolean;
     processingUpdating: boolean;
+    processingReset: boolean;
     enabled: boolean;
     interface_name: string;
     check: any;
@@ -47,6 +51,7 @@ const initialState: DhcpState = {
     processingAdding: false,
     processingDeleting: false,
     processingUpdating: false,
+    processingReset: false,
     enabled: false,
     interface_name: '',
     check: null,
@@ -68,6 +73,7 @@ const initialState: DhcpState = {
     modalType: '',
     dhcp_available: false,
     staticIpError: false,
+    interfaces: {},
 };
 
 const [state, setState] = createStore<DhcpState>(initialState);
@@ -97,7 +103,10 @@ export const getDhcpInterfaces = async () => {
     setState('processingInterfaces', true);
     try {
         const data = await apiClient.getDhcpInterfaces();
-        setState({ interfaces: data, processingInterfaces: false });
+        setState({
+            interfaces: enrichWithConcatenatedIpAddresses(data),
+            processingInterfaces: false,
+        });
     } catch (error) {
         addErrorToast({ error });
         setState('processingInterfaces', false);
@@ -107,8 +116,76 @@ export const getDhcpInterfaces = async () => {
 export const findActiveDhcp = async (interfaceName: string) => {
     setState('processingDhcp', true);
     try {
-        const data = await apiClient.findActiveDhcp(interfaceName);
+        const data = await apiClient.findActiveDhcp({ interface: interfaceName });
         setState({ check: data, processingDhcp: false });
+
+        const cur = untrack(() => state);
+        const v4 = cur.check?.v4 ?? { static_ip: {}, other_server: {} };
+        const v6 = cur.check?.v6 ?? { other_server: {} };
+        const interfaces = cur.interfaces ?? {};
+        const interfaceNameState = cur.interface_name;
+
+        let isError = false;
+        let isStaticIPError = false;
+        const hasV4 = !!interfaces[interfaceName]?.ipv4_addresses;
+        const hasV6 = !!interfaces[interfaceName]?.ipv6_addresses;
+
+        if (hasV4 && v4.other_server.found === STATUS_RESPONSE.ERROR) {
+            isError = true;
+            if (v4.other_server.error) addErrorToast({ error: v4.other_server.error });
+        }
+        if (hasV6 && v6.other_server.found === STATUS_RESPONSE.ERROR) {
+            isError = true;
+            if (v6.other_server.error) addErrorToast({ error: v6.other_server.error });
+        }
+        if (hasV4 && v4.static_ip.static === STATUS_RESPONSE.ERROR) {
+            isStaticIPError = true;
+            addErrorToast({
+                error: intl.getMessage('dhcp_static_ip_error'),
+                action: {
+                    text: intl.getMessage('set_static_ip_manually'),
+                    callback: () => toggleLeaseModal('ADD_LEASE'),
+                },
+            });
+        }
+        if (isError) {
+            addErrorToast({
+                error: intl.getMessage('dhcp_error'),
+                action: {
+                    text: intl.getMessage('try_again'),
+                    callback: () => findActiveDhcp(interfaceName),
+                },
+            });
+        }
+        if (isStaticIPError || isError) return;
+
+        if (
+            (hasV4 && v4.other_server.found === STATUS_RESPONSE.YES) ||
+            (hasV6 && v6.other_server.found === STATUS_RESPONSE.YES)
+        ) {
+            addErrorToast({
+                error: intl.getMessage('dhcp_found'),
+                action: {
+                    text: intl.getMessage('try_again'),
+                    callback: () => findActiveDhcp(interfaceName),
+                },
+            });
+        } else if (
+            hasV4 &&
+            v4.static_ip.static === STATUS_RESPONSE.NO &&
+            v4.static_ip.ip &&
+            interfaceNameState
+        ) {
+            addErrorToast({
+                error: intl.getMessage('dhcp_dynamic_ip_found'),
+                action: {
+                    text: intl.getMessage('try_again'),
+                    callback: () => findActiveDhcp(interfaceName),
+                },
+            });
+        } else {
+            addSuccessToast(intl.getMessage('dhcp_not_found'));
+        }
     } catch (error) {
         addErrorToast({ error });
         setState('processingDhcp', false);
@@ -119,7 +196,14 @@ export const setDhcpConfig = async (values: any) => {
     setState('processingConfig', true);
     try {
         await apiClient.setDhcpConfig(values);
-        setState({ ...values, processingConfig: false });
+        const cur = untrack(() => state);
+        setState({
+            v4: { ...cur.v4, ...values.v4 },
+            v6: { ...cur.v6, ...values.v6 },
+            interface_name: values.interface_name ?? cur.interface_name,
+            processingConfig: false,
+        });
+        addSuccessToast(intl.getMessage('dhcp_config_saved'));
     } catch (error) {
         addErrorToast({ error });
         setState('processingConfig', false);
@@ -127,15 +211,14 @@ export const setDhcpConfig = async (values: any) => {
 };
 
 export const toggleDhcp = async (config?: any) => {
-    const newEnabled = !untrack(() => state.enabled);
     setState('processingConfig', true);
     try {
-        const payload = config ? { ...config, enabled: newEnabled } : { enabled: newEnabled };
+        const values = config || {};
+        const enabled = !values.enabled;
+        const payload = { ...values, enabled };
         await apiClient.setDhcpConfig(payload);
-        setState({ enabled: newEnabled, processingConfig: false });
-        if (config && !newEnabled) {
-            await getDhcpStatus();
-        }
+        setState({ enabled, check: null, processingConfig: false });
+        addSuccessToast(intl.getMessage(enabled ? 'enabled_dhcp' : 'disabled_dhcp'));
     } catch (error) {
         addErrorToast({ error });
         setState('processingConfig', false);
@@ -143,24 +226,28 @@ export const toggleDhcp = async (config?: any) => {
 };
 
 export const resetDhcp = async () => {
-    setState('processingDhcp', true);
+    setState('processingReset', true);
     try {
         await apiClient.resetDhcp();
         await getDhcpStatus();
+        setState('processingReset', false);
+        addSuccessToast(intl.getMessage('dhcp_config_saved'));
     } catch (error) {
         addErrorToast({ error });
-        setState('processingDhcp', false);
+        setState('processingReset', false);
     }
 };
 
 export const resetDhcpLeases = async () => {
-    setState('processingDhcp', true);
+    setState('processingReset', true);
     try {
         await apiClient.resetDhcpLeases();
         await getDhcpStatus();
+        setState('processingReset', false);
+        addSuccessToast(intl.getMessage('dhcp_reset_leases_success'));
     } catch (error) {
         addErrorToast({ error });
-        setState('processingDhcp', false);
+        setState('processingReset', false);
     }
 };
 
@@ -175,9 +262,11 @@ export const toggleLeaseModal = (modalType?: string, leaseConfig?: Lease) => {
 export const addStaticLease = async (lease: Lease) => {
     setState('processingAdding', true);
     try {
+        const name = lease.hostname || lease.ip;
         await apiClient.addStaticLease(lease);
         setState('processingAdding', false);
         toggleLeaseModal();
+        addSuccessToast(intl.getMessage('dhcp_lease_added', { key: name }));
         await getDhcpStatus();
     } catch (error) {
         addErrorToast({ error });
@@ -188,8 +277,10 @@ export const addStaticLease = async (lease: Lease) => {
 export const removeStaticLease = async (lease: Lease) => {
     setState('processingDeleting', true);
     try {
+        const name = lease.hostname || lease.ip;
         await apiClient.removeStaticLease(lease);
         setState('processingDeleting', false);
+        addSuccessToast(intl.getMessage('dhcp_lease_deleted', { key: name }));
         await getDhcpStatus();
     } catch (error) {
         addErrorToast({ error });
@@ -203,6 +294,11 @@ export const updateStaticLease = async (config: { target: Lease; update: Lease }
         await apiClient.updateStaticLease(config);
         setState('processingUpdating', false);
         toggleLeaseModal();
+        addSuccessToast(
+            intl.getMessage('dhcp_lease_updated', {
+                key: config.update.hostname || config.update.ip,
+            }),
+        );
         await getDhcpStatus();
     } catch (error) {
         addErrorToast({ error });

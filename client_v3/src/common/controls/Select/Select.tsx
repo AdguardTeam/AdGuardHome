@@ -182,9 +182,9 @@ export const Select = <
             (props.isSearchable ?? props.options.length > SEARCH_ENABLE_LIMIT),
     );
 
-    const isDisabled = () => props.isDisabled ?? false;
-    const isMulti = () => props.isMulti ?? false;
-    const isClearable = () => props.isClearable ?? false;
+    const isDisabled = createMemo(() => props.isDisabled ?? false);
+    const isMulti = createMemo(() => props.isMulti ?? false);
+    const isClearable = createMemo(() => props.isClearable ?? false);
 
     /* ---- Build collection from options ---- */
     const collection = createMemo(() =>
@@ -226,7 +226,6 @@ export const Select = <
             fallback={
                 /* ===== Non-searchable mode: Ark UI Select ===== */
                 <div class={selectClass()} id={props.id}>
-                    {/* eslint-disable-next-line solid/reactivity */}
                     <ArkSelect.Root
                         collection={collection()}
                         value={currentValue()}
@@ -258,7 +257,6 @@ export const Select = <
                         <Show when={!props.isDropdownSelect}>
                             <ArkSelect.Control>
                                 <ArkSelect.Trigger>
-                                    {/* eslint-disable-next-line solid/reactivity */}
                                     <Show
                                         when={!isMulti()}
                                         fallback={
@@ -271,18 +269,16 @@ export const Select = <
                                             placeholder={props.placeholder as string}
                                         />
                                     </Show>
+                                    <Show when={!isMulti() || !currentValue().length}>
+                                        <ArkSelect.Indicator>
+                                            <Icon icon="arrow_bottom" />
+                                        </ArkSelect.Indicator>
+                                    </Show>
                                 </ArkSelect.Trigger>
-                                {/* eslint-disable-next-line solid/reactivity */}
                                 <Show when={isClearable() && !isMulti()}>
                                     <ArkSelect.ClearTrigger>
                                         <Icon icon="cross" />
                                     </ArkSelect.ClearTrigger>
-                                </Show>
-                                {/* eslint-disable-next-line solid/reactivity */}
-                                <Show when={!isMulti() || !currentValue().length}>
-                                    <ArkSelect.Indicator>
-                                        <Icon icon="arrow_bottom" />
-                                    </ArkSelect.Indicator>
                                 </Show>
                             </ArkSelect.Control>
                         </Show>
@@ -363,7 +359,6 @@ export const Select = <
         >
             {/* ===== Searchable (Combobox) mode: Ark UI Combobox ===== */}
             <div class={selectClass()} id={props.id}>
-                {/* eslint-disable-next-line solid/reactivity */}
                 <ArkCombobox.Root
                     collection={collection()}
                     value={currentValue()}
@@ -394,12 +389,22 @@ export const Select = <
                     }}
                 >
                     <Show when={!props.isDropdownSelect}>
-                        <ArkCombobox.Control>
+                        <ArkCombobox.Control
+                            onClick={(e: MouseEvent) => {
+                                // Click the inner input when clicking the dead zone
+                                // of the Control so openOnClick triggers the menu.
+                                if (e.target === e.currentTarget) {
+                                    const input = (e.currentTarget as HTMLElement).querySelector(
+                                        'input',
+                                    );
+                                    input?.click();
+                                }
+                            }}
+                        >
                             <ArkCombobox.Input
                                 id={props.inputId}
                                 placeholder={props.placeholder as string}
                             />
-                            {/* eslint-disable-next-line solid/reactivity */}
                             <Show when={isClearable() && currentValue().length > 0}>
                                 <ArkCombobox.ClearTrigger>
                                     <Icon icon="cross" />

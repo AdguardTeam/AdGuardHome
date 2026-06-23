@@ -173,7 +173,11 @@ export const QueryLog = () => {
     const handleConfirmDisallow = () => {
         const target = disallowTarget();
         if (target) {
-            toggleClientBlock(target);
+            const disallowedList = accessState.disallowed_clients
+                ? accessState.disallowed_clients.split('\n').filter(Boolean)
+                : [];
+            const isDisallowed = disallowedList.includes(target);
+            toggleClientBlock(target, isDisallowed, isDisallowed ? target : '');
             setDisallowTarget(null);
         }
     };

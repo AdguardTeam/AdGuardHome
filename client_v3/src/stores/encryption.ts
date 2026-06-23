@@ -114,8 +114,18 @@ export const setTlsConfig = async (values: any) => {
     setState('processingConfig', true);
     try {
         const encoded = encodeRequest(values);
+        encoded.port_https = encoded.port_https || 0;
+        encoded.port_dns_over_tls = encoded.port_dns_over_tls || 0;
+        encoded.port_dns_over_quic = encoded.port_dns_over_quic || 0;
+
         const data = await apiClient.setTlsConfig(encoded);
         const decoded = decodeResponse(data);
+
+        if (values.enabled && values.force_https && window.location.protocol === 'http:') {
+            window.location.reload();
+            return;
+        }
+
         setState({ ...decoded, processingConfig: false });
         addSuccessToast('encryption_config_saved');
         // Refresh DNS status after TLS change

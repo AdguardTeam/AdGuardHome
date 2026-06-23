@@ -1,7 +1,8 @@
 import { createStore } from 'solid-js/store';
 import { untrack } from 'solid-js';
 import { apiClient } from 'panel/api/Api';
-import { addErrorToast } from './toasts';
+import { addErrorToast, addSuccessToast } from './toasts';
+import intl from 'panel/common/intl';
 import { getClients } from './dashboard';
 
 type ClientsState = {
@@ -44,6 +45,7 @@ export const addClient = async (config: any) => {
         await apiClient.addClient(config);
         setState('processingAdding', false);
         toggleClientModal();
+        addSuccessToast(intl.getMessage('client_added'));
         await getClients();
     } catch (error) {
         addErrorToast({ error });
@@ -56,6 +58,7 @@ export const deleteClient = async (name: string) => {
     try {
         await apiClient.deleteClient({ name });
         setState('processingDeleting', false);
+        addSuccessToast(intl.getMessage('client_removed'));
         await getClients();
     } catch (error) {
         addErrorToast({ error });

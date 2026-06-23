@@ -219,7 +219,10 @@ export const Auth = (props: Props) => {
                         </Field>
                     </div>
 
-                    <Controls isDirty={authForm.dirty} isValid={!authForm.invalid && isPrivacyValid()} />
+                    <Controls
+                        isDirty={authForm.dirty}
+                        isValid={!authForm.invalid && isPrivacyValid()}
+                    />
                 </div>
 
                 <div class={styles.content}>

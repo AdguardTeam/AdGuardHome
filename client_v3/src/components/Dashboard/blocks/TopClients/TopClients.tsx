@@ -7,9 +7,8 @@ import { Icon } from 'panel/common/ui/Icon';
 import { Dropdown } from 'panel/common/ui/Dropdown';
 import { ConfirmDialog } from 'panel/common/ui/ConfirmDialog';
 import { formatNumber, formatCompactNumber } from 'panel/helpers/helpers';
-import { addErrorToast, addSuccessToast } from 'panel/stores/toasts';
-import { apiClient } from 'panel/api/Api';
-import { getAccessList, accessState } from 'panel/stores/access';
+import { addErrorToast } from 'panel/stores/toasts';
+import { accessState, toggleClientBlock } from 'panel/stores/access';
 import theme from 'panel/lib/theme';
 import cn from 'clsx';
 import { useSortedData } from '../../hooks/useSortedData';
@@ -68,52 +67,31 @@ export const TopClients = (props: Props) => {
     const isClientBlocked = (clientName: string) => disallowedClientsList().includes(clientName);
 
     const handleBlockClient = async (clientIp: string) => {
-        try {
-            const accessList = await apiClient.getAccessList();
-            const disallowedClients = accessList.disallowed_clients || [];
-
-            if (disallowedClients.includes(clientIp)) {
-                addErrorToast({
-                    error: new Error(intl.getMessage('client_already_blocked', { ip: clientIp })),
-                });
-                if (isMounted) {
-                    setConfirmDialog({ open: false, client: '', action: 'block' });
-                }
-                return;
-            }
-
-            await apiClient.setAccessList({
-                ...accessList,
-                disallowed_clients: [...disallowedClients, clientIp],
+        const disallowedList = accessState.disallowed_clients
+            ? accessState.disallowed_clients.split('\n').filter(Boolean)
+            : [];
+        const isDisallowed = disallowedList.includes(clientIp);
+        if (isDisallowed) {
+            addErrorToast({
+                error: new Error(intl.getMessage('client_already_blocked', { ip: clientIp })),
             });
-
-            addSuccessToast(intl.getMessage('client_blocked_flash'));
-            getAccessList();
-        } catch (error) {
-            addErrorToast({ error });
+            if (isMounted) {
+                setConfirmDialog({ open: false, client: '', action: 'block' });
+            }
+            return;
         }
+        await toggleClientBlock(clientIp, false, '');
         if (isMounted) {
             setConfirmDialog({ open: false, client: '', action: 'block' });
         }
     };
 
     const handleUnblockClient = async (clientIp: string) => {
-        try {
-            const accessList = await apiClient.getAccessList();
-            const disallowedClients = (accessList.disallowed_clients || []).filter(
-                (c: string) => c !== clientIp,
-            );
-
-            await apiClient.setAccessList({
-                ...accessList,
-                disallowed_clients: disallowedClients,
-            });
-
-            addSuccessToast(intl.getMessage('client_unblocked_flash'));
-            getAccessList();
-        } catch (error) {
-            addErrorToast({ error });
-        }
+        const disallowedList = accessState.disallowed_clients
+            ? accessState.disallowed_clients.split('\n').filter(Boolean)
+            : [];
+        const isDisallowed = disallowedList.includes(clientIp);
+        await toggleClientBlock(clientIp, isDisallowed, isDisallowed ? clientIp : '');
         if (isMounted) {
             setConfirmDialog({ open: false, client: '', action: 'unblock' });
         }

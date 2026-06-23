@@ -1,8 +1,9 @@
 import { createStore } from 'solid-js/store';
 import { untrack } from 'solid-js';
 import { apiClient } from 'panel/api/Api';
-import { addErrorToast } from './toasts';
+import { addErrorToast, addSuccessToast } from './toasts';
 import { splitByNewLine } from 'panel/helpers/helpers';
+import intl from 'panel/common/intl';
 
 type AccessState = {
     processing: boolean;
@@ -55,32 +56,91 @@ export const setAccessList = async (values: any) => {
 
         await apiClient.setAccessList(config);
         setState({ ...values, processingSet: false });
+        addSuccessToast(intl.getMessage('access_settings_saved_toast'));
     } catch (error) {
         addErrorToast({ error });
         setState('processingSet', false);
     }
 };
 
-export const toggleClientBlock = async (clientName: string) => {
+type AccessList = {
+    allowed_clients?: string[];
+    disallowed_clients?: string[];
+    blocked_hosts?: string[];
+};
+
+const addUnique = (items: string[], value: string) =>
+    items.includes(value) ? items : items.concat(value);
+const removeValue = (items: string[], value: string) => items.filter((i) => i !== value);
+
+const getNextClientAccessList = ({
+    accessList,
+    ip,
+    disallowed,
+    disallowedRule,
+}: {
+    accessList: AccessList;
+    ip: string;
+    disallowed: boolean;
+    disallowedRule: string;
+}) => {
+    const values = {
+        blocked_hosts: accessList.blocked_hosts ?? [],
+        allowed_clients: accessList.allowed_clients ?? [],
+        disallowed_clients: accessList.disallowed_clients ?? [],
+    };
+    const isAllowlistMode = values.allowed_clients.length > 0;
+
+    if (disallowed && isAllowlistMode) {
+        return {
+            ...values,
+            allowed_clients: addUnique(values.allowed_clients, ip),
+        };
+    }
+    if (disallowed) {
+        return {
+            ...values,
+            disallowed_clients: removeValue(values.disallowed_clients, disallowedRule || ip),
+        };
+    }
+    if (isAllowlistMode) {
+        return {
+            ...values,
+            allowed_clients: removeValue(values.allowed_clients, ip),
+        };
+    }
+    return {
+        ...values,
+        disallowed_clients: addUnique(values.disallowed_clients, ip),
+    };
+};
+
+export const toggleClientBlock = async (
+    ip: string,
+    disallowed: boolean,
+    disallowedRule: string,
+) => {
     setState('processingSet', true);
     try {
-        const accessList = await apiClient.getAccessList();
-        const isDisallowed = accessList.disallowed_clients?.includes(clientName);
-        const newDisallowed = isDisallowed
-            ? accessList.disallowed_clients.filter((c: string) => c !== clientName)
-            : [...(accessList.disallowed_clients || []), clientName];
-        const config = {
-            allowed_clients: accessList.allowed_clients || [],
-            disallowed_clients: newDisallowed,
-            blocked_hosts: accessList.blocked_hosts || [],
-        };
-        await apiClient.setAccessList(config);
+        const accessList: AccessList = await apiClient.getAccessList();
+        const values = getNextClientAccessList({
+            accessList,
+            ip,
+            disallowed,
+            disallowedRule,
+        });
+        await apiClient.setAccessList(values);
         setState({
-            allowed_clients: config.allowed_clients.join('\n'),
-            disallowed_clients: config.disallowed_clients.join('\n'),
-            blocked_hosts: config.blocked_hosts.join('\n'),
+            allowed_clients: values.allowed_clients.join('\n'),
+            disallowed_clients: values.disallowed_clients.join('\n'),
+            blocked_hosts: values.blocked_hosts.join('\n'),
             processingSet: false,
         });
+        addSuccessToast(
+            intl.getMessage(disallowed ? 'client_unblocked' : 'client_blocked', {
+                ip: disallowedRule || ip,
+            }),
+        );
     } catch (error) {
         addErrorToast({ error });
         setState('processingSet', false);
