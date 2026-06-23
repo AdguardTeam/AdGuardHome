@@ -7,6 +7,7 @@ import './Dropdown.pcss';
 import s from './Dropdown.module.pcss';
 
 const TIMEOUT_HIDE_TOOLTIP = 1000;
+const HIDE_DELAY = 200;
 
 type Props = {
     overlayClass?: string;
@@ -34,6 +35,8 @@ type Props = {
 
 export const Dropdown = (props: Props) => {
     let timer: ReturnType<typeof setTimeout> | null = null;
+    let showTimer: ReturnType<typeof setTimeout> | null = null;
+    let hideTimer: ReturnType<typeof setTimeout> | null = null;
     const [visible, setVisible] = createSignal(!!untrack(() => props.open));
 
     const onVisibleChange = (details: { open: boolean }) => {
@@ -53,9 +56,9 @@ export const Dropdown = (props: Props) => {
 
     onCleanup(() => {
         setVisible(false);
-        if (timer) {
-            clearTimeout(timer);
-        }
+        if (timer) clearTimeout(timer);
+        if (showTimer) clearTimeout(showTimer);
+        if (hideTimer) clearTimeout(hideTimer);
     });
 
     const handleOverlayClick = () => {
@@ -88,6 +91,27 @@ export const Dropdown = (props: Props) => {
                 return 'top';
             default:
                 return 'bottom-end';
+        }
+    };
+
+    const scheduleHide = () => {
+        if (showTimer) {
+            clearTimeout(showTimer);
+            showTimer = null;
+        }
+        if (hideTimer) {
+            clearTimeout(hideTimer);
+        }
+        hideTimer = setTimeout(() => onVisibleChange({ open: false }), HIDE_DELAY);
+    };
+
+    const cancelHideAndShow = () => {
+        if (hideTimer) {
+            clearTimeout(hideTimer);
+            hideTimer = null;
+        }
+        if (!visible()) {
+            onVisibleChange({ open: true });
         }
     };
 
@@ -139,8 +163,8 @@ export const Dropdown = (props: Props) => {
                             class={cn(props.childrenClass, {
                                 [s.wrapper]: props.flexWrapper,
                             })}
-                            onMouseEnter={() => onVisibleChange({ open: true })}
-                            onMouseLeave={() => onVisibleChange({ open: false })}
+                            onMouseEnter={() => cancelHideAndShow()}
+                            onMouseLeave={() => scheduleHide()}
                         >
                             {props.children}
                         </div>
@@ -160,6 +184,8 @@ export const Dropdown = (props: Props) => {
                         [s.selectOverlay]: props.isSelect,
                     })}
                     onClick={handleOverlayClick}
+                    onMouseEnter={() => cancelHideAndShow()}
+                    onMouseLeave={() => scheduleHide()}
                 >
                     {props.menu}
                 </Popover.Content>
