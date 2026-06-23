@@ -1,10 +1,5 @@
-/**
- * Select styles for @ark-ui/solid Select and Combobox components.
- * Targets [data-scope="select"] and [data-scope="combobox"] data attributes.
- * Variant classes are on the .solid-select wrapper and cascade down.
- */
-
 .solid-select {
+    position: relative;
     width: 100%;
 
     &.solid-select-small {
@@ -32,7 +27,10 @@
         [data-scope='select'][data-part='content'],
         [data-scope='combobox'][data-part='content'] {
             @media (min-width: 1024px) {
+                /* Right-anchor the dropdown so wide menus expand leftward and stay on screen. */
+                position: absolute;
                 right: 0;
+                left: auto;
             }
         }
     }
@@ -156,7 +154,6 @@
         width: 240px;
     }
 
-    /* === Dropdown content === */
     [data-scope='select'][data-part='content'],
     [data-scope='combobox'][data-part='content'] {
         color: var(--default-main-text);
@@ -168,12 +165,12 @@
         z-index: 3;
 
         @media (min-width: 1024px) {
-            right: 0;
+            left: initial;
+            right: initial;
             width: 100%;
         }
     }
 
-    /* === Control bar === */
     [data-scope='select'][data-part='control'],
     [data-scope='combobox'][data-part='control'] {
         min-height: 40px;
@@ -208,7 +205,6 @@
         }
     }
 
-    /* === Trigger button (non-searchable Select: main button showing value) === */
     [data-scope='select'][data-part='trigger'] {
         flex: 1;
         display: flex;
@@ -230,7 +226,6 @@
         }
     }
 
-    /* === Combobox trigger (searchable mode: just the arrow button) === */
     [data-scope='combobox'][data-part='trigger'] {
         display: flex;
         align-items: center;
@@ -252,7 +247,6 @@
         }
     }
 
-    /* === Value text / placeholder === */
     [data-scope='select'][data-part='value-text'],
     [data-scope='combobox'][data-part='value-text'] {
         max-width: 100%;
@@ -262,11 +256,9 @@
         color: var(--default-main-text);
 
         &:empty {
-            /* placeholder shown via data-placeholder-shown */
         }
     }
 
-    /* === Clear trigger (× button) === */
     [data-scope='select'][data-part='clear-trigger'],
     [data-scope='combobox'][data-part='clear-trigger'] {
         display: flex;
@@ -282,7 +274,6 @@
         }
     }
 
-    /* === Dropdown indicator (non-searchable Select: arrow icon) === */
     [data-scope='select'][data-part='indicator'] {
         display: flex;
         align-items: center;
@@ -307,7 +298,6 @@
         }
     }
 
-    /* === Combobox input (searchable mode) === */
     [data-scope='combobox'][data-part='input'] {
         flex: 1;
         min-width: 50px;
@@ -323,13 +313,12 @@
         }
     }
 
-    /* === Dropdown items === */
     [data-scope='select'][data-part='item'],
     [data-scope='combobox'][data-part='item'] {
         color: var(--default-main-text);
         transition: all var(--t2);
         cursor: pointer;
-        padding: 12px 18px;
+        padding: 16px 12px;
         display: flex;
         align-items: center;
         gap: 12px;
@@ -355,17 +344,11 @@
     [data-scope='select'][data-part='item-text'],
     [data-scope='combobox'][data-part='item-text'] {
         flex: 1;
-        font-size: 14px;
+        font-size: 16px;
         overflow: hidden;
         text-overflow: ellipsis;
-
-        @media (min-width: 1024px) {
-            font-size: 16px;
-        }
     }
 
-    /* Item indicators: always visible (check when selected, dot when not).
-     Matches client_v2 CustomOption behavior. */
     [data-scope='select'][data-part='item-indicator'],
     [data-scope='combobox'][data-part='item-indicator'] {
         display: flex;
@@ -378,7 +361,6 @@
         }
     }
 
-    /* === Item group (scrollable list container) === */
     [data-scope='select'][data-part='item-group'],
     [data-scope='combobox'][data-part='item-group'] {
         padding: 0;
@@ -400,11 +382,14 @@
         }
     }
 
-    /* === Multi-value pills container === */
     .solid-select-multi-value-container {
         display: flex;
         flex-wrap: wrap;
         gap: 8px;
         padding: 8px 12px 8px 0;
+    }
+
+    .solid-select-placeholder {
+        color: var(--default-description-text);
     }
 }
