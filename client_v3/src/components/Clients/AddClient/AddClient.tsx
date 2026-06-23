@@ -219,6 +219,7 @@ export const AddClient = () => {
                             options={tagOptions()}
                             value={tagValue()}
                             onChange={handleTagChange}
+                            placeholder={intl.getMessage('clients_tags')}
                             isMulti
                             size="responsive"
                             height="big"

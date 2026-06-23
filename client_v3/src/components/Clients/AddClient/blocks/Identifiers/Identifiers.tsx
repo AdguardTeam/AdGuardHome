@@ -1,4 +1,4 @@
-import { createSignal, createMemo, createEffect, For } from 'solid-js';
+import { createSignal, createMemo, createEffect, Index } from 'solid-js';
 import cn from 'clsx';
 import intl from 'panel/common/intl';
 import { Input } from 'panel/common/controls/Input';
@@ -12,19 +12,20 @@ import theme from 'panel/lib/theme';
 import s from './Identifiers.module.pcss';
 
 export const Identifiers = () => {
-    const [ids, setIds] = createSignal<string[]>([...clientFormState.ids]);
     const [errors, setErrors] = createSignal<(string | undefined)[]>([]);
 
-    // Sync from store when external changes happen
-    createEffect(() => {
-        const storeIds = clientFormState.ids;
-        const currentIds = ids();
-        if (JSON.stringify(currentIds) !== JSON.stringify(storeIds)) {
-            setIds([...storeIds]);
-        }
-    });
+    // The store (`clientFormState.ids`) is the single source of truth for the
+    // identifiers list. We bind to it directly (the same pattern the Name field
+    // uses) and update it through `updateClientFormField`.
+    //
+    // A previous implementation kept a local `ids` signal and tried to sync it
+    // with the store via a `createEffect`. In Solid, `setIds` notifies effects
+    // synchronously, so that effect ran *before* `syncToStore` had a chance to
+    // update the store, saw a mismatch and reset the local value back to the
+    // stale store value — which made typed values erase immediately and the
+    // "add identifier" button appear to do nothing.
 
-    // Sync external errors
+    // Sync external (server) errors into the local per-index error state.
     createEffect(() => {
         const formErrors = clientFormState.formErrors;
         if (Array.isArray(formErrors.ids)) {
@@ -40,34 +41,27 @@ export const Identifiers = () => {
             .flatMap((c) => c.ids);
     });
 
-    const syncToStore = () => {
-        updateClientFormField('ids', ids());
-    };
-
     const handleAdd = () => {
-        const newIds = [...ids(), ''];
-        setIds(newIds);
-        syncToStore();
+        updateClientFormField('ids', [...clientFormState.ids, '']);
     };
 
     const handleRemove = (index: number) => {
-        const newIds = ids().filter((_, i) => i !== index);
-        setIds(newIds);
+        const newIds = clientFormState.ids.filter((_, i) => i !== index);
+        updateClientFormField('ids', newIds);
         const newErrors = errors().filter((_, i) => i !== index);
         setErrors(newErrors);
-        syncToStore();
     };
 
     const handleChange = (index: number, value: string) => {
-        const newIds = [...ids()];
+        const newIds = [...clientFormState.ids];
         newIds[index] = value;
-        setIds(newIds);
-        syncToStore();
+        updateClientFormField('ids', newIds);
     };
 
     const handleBlur = (index: number) => {
-        const value = ids()[index];
-        const err = validateIdentifier(value, ids(), index, existingClientIds());
+        const ids = clientFormState.ids;
+        const value = ids[index];
+        const err = validateIdentifier(value, ids, index, existingClientIds());
         const newErrors = [...errors()];
         newErrors[index] = err || undefined;
         setErrors(newErrors);
@@ -92,32 +86,31 @@ export const Identifiers = () => {
                 })}
             </div>
 
-            <For each={ids()}>
+            <Index each={clientFormState.ids}>
                 {(value, index) => {
-                    const idx = createMemo(() => index());
-                    const activeError = createMemo(() => errors()[idx()]);
+                    const activeError = createMemo(() => errors()[index]);
 
                     return (
                         <div class={s.row}>
                             <div class={s.inputCell}>
                                 <Input
-                                    id={`client-identifier-${idx()}`}
+                                    id={`client-identifier-${index}`}
                                     type="text"
-                                    value={value}
+                                    value={value()}
                                     onChange={(e: Event) =>
-                                        handleChange(idx(), (e.target as HTMLInputElement).value)
+                                        handleChange(index, (e.target as HTMLInputElement).value)
                                     }
-                                    onBlur={() => handleBlur(idx())}
+                                    onBlur={() => handleBlur(index)}
                                     placeholder={intl.getMessage('clients_identifier_format_error')}
                                     error={!!activeError()}
                                     errorMessage={activeError()}
                                     size="large"
                                     suffixIcon={
-                                        idx() > 0 ? (
+                                        index > 0 ? (
                                             <button
                                                 type="button"
                                                 class={s.removeSuffixBtn}
-                                                onClick={() => handleRemove(idx())}
+                                                onClick={() => handleRemove(index)}
                                                 aria-label={intl.getMessage('delete_btn')}
                                             >
                                                 <Icon icon="cross" color="gray" />
@@ -129,7 +122,7 @@ export const Identifiers = () => {
                         </div>
                     );
                 }}
-            </For>
+            </Index>
 
             <button
                 type="button"
