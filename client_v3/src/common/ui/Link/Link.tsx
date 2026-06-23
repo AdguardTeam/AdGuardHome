@@ -18,48 +18,49 @@ type Props = {
 };
 
 export const Link = (linkProps: Props) => {
-    const propsUntracked = untrack(() => linkProps);
-    if (propsUntracked.props) {
-        Object.keys(propsUntracked.props).forEach((key: string) => {
-            if (!(propsUntracked.props as any)[key]) {
-                throw new Error(`Wrong key value: ${key} for route: ${propsUntracked.to}`);
-            }
-        });
-    }
+    untrack(() => {
+        if (linkProps.props) {
+            Object.keys(linkProps.props).forEach((key: string) => {
+                if (!(linkProps.props as any)[key]) {
+                    throw new Error(`Wrong key value: ${key} for route: ${linkProps.to}`);
+                }
+            });
+        }
+    });
 
     const handleClick = (e: MouseEvent) => {
         setTimeout(() => {
             window.scrollTo({ top: 0 });
         }, 100);
 
-        if (propsUntracked.stop) {
+        if (linkProps.stop) {
             e.stopPropagation();
         }
-        if (propsUntracked.onClick) {
-            (propsUntracked.onClick as any)(e);
+        if (linkProps.onClick) {
+            (linkProps.onClick as any)(e);
         }
     };
 
     return (
         <Show
-            when={!propsUntracked.disabled}
+            when={!linkProps.disabled}
             fallback={
-                <div id={propsUntracked.id} tabIndex={0} class={cn(propsUntracked.class)}>
-                    {propsUntracked.children}
+                <div id={linkProps.id} tabIndex={0} class={cn(linkProps.class)}>
+                    {linkProps.children}
                 </div>
             }
         >
             <A
-                id={propsUntracked.id}
-                class={cn(theme.link.link, propsUntracked.class)}
+                id={linkProps.id}
+                class={cn(theme.link.link, linkProps.class)}
                 href={linkPathBuilder(
-                    propsUntracked.to,
-                    propsUntracked.props,
-                    propsUntracked.query,
+                    linkProps.to,
+                    linkProps.props,
+                    linkProps.query,
                 )}
                 onClick={handleClick}
             >
-                {propsUntracked.children}
+                {linkProps.children}
             </A>
         </Show>
     );

@@ -1,4 +1,4 @@
-import { createSignal, createEffect, createMemo } from 'solid-js';
+import { createSignal, createEffect, createMemo, Show } from 'solid-js';
 
 import intl from 'panel/common/intl';
 import theme from 'panel/lib/theme';
@@ -138,9 +138,9 @@ export const StaticLeaseModal = (props: Props) => {
             wrapClass="rc-dialog-update"
         >
             <form onSubmit={handleSubmit}>
-                {props.isMakeStatic && (
+                <Show when={props.isMakeStatic}>
                     <div class={theme.dialog.body}>{intl.getMessage('make_static_desc')}</div>
-                )}
+                </Show>
                 <div class={theme.form.group}>
                     <div class={theme.form.input}>
                         <Input

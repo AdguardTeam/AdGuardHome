@@ -129,11 +129,11 @@ const SelectItemContent = <T, ExtendOption extends Record<any, any>>(props: {
                     <OptionCheckIcon />
                 </ArkSelect.ItemIndicator>
             </Show>
-            {props.showIcons && data.icon && (
+            <Show when={props.showIcons && data.icon}>
                 <div class={s.selectIconContainer}>
                     <Icon icon={data.icon} />
                 </div>
-            )}
+            </Show>
             <ArkSelect.ItemText>{data.label}</ArkSelect.ItemText>
         </>
     );

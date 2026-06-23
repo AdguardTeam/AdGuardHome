@@ -133,7 +133,7 @@ export const setStatsConfig = async (values: any) => {
     try {
         await apiClient.setStatsConfig(values);
         setState({ ...values, processingSetConfig: false });
-        addSuccessToast(intl.getMessage('config_successfully_saved'));
+        addSuccessToast(intl.getMessage('changes_saved_success'));
     } catch (error) {
         addErrorToast({ error });
         setState('processingSetConfig', false);

@@ -1,4 +1,4 @@
-import { createSignal } from 'solid-js';
+import { createSignal, Show } from 'solid-js';
 import cn from 'clsx';
 
 import intl from 'panel/common/intl';
@@ -124,7 +124,9 @@ export const CheckForm = (props: Props) => {
                             onChange={handleQtypeChange}
                         />
 
-                        {qtypeError() && <div class={theme.form.error}>{qtypeError()}</div>}
+                        <Show when={qtypeError()}>
+                            <div class={theme.form.error}>{qtypeError()}</div>
+                        </Show>
                     </div>
                 </div>
             </div>
