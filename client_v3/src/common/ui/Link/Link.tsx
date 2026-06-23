@@ -6,6 +6,7 @@ import theme from 'panel/lib/theme';
 
 type Props = {
     to: RoutePathKey;
+    hash?: string;
     props?: LinkParams;
     class?: string;
     type?: string;
@@ -57,6 +58,7 @@ export const Link = (linkProps: Props) => {
                     linkProps.to,
                     linkProps.props,
                     linkProps.query,
+                    linkProps.hash,
                 )}
                 onClick={handleClick}
             >
