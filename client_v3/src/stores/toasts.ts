@@ -16,7 +16,6 @@ type ToastNotice = {
     actionLabel?: string;
     undoId?: string;
     action?: ToastAction;
-    options?: any;
     code?: string;
 };
 
@@ -50,14 +49,13 @@ export const createUndoToast = (
     return { message, actionLabel, undoId };
 };
 
-export const addErrorToast = (payload: { error: any; options?: any; action?: ToastAction }) => {
-    const { error, options, action } = payload;
+export const addErrorToast = (payload: { error: any; action?: ToastAction }) => {
+    const { error, action } = payload;
     const message = error instanceof Error ? error.message : String(error);
     console.error(message); // eslint-disable-line no-console
     const notice: ToastNotice = {
         id: nanoid(),
         message,
-        options,
         type: 'error' as const,
     };
     if (action) {
@@ -80,14 +78,13 @@ export const addSuccessToast = (message: any) => {
     setState('notices', (prev) => [...prev, notice]);
 };
 
-export const addNoticeToast = (payload: { error: any; options?: any }) => {
-    const { error, options } = payload;
+export const addNoticeToast = (payload: { error: any }) => {
+    const { error } = payload;
     setState('notices', (prev) => [
         ...prev,
         {
             id: nanoid(),
             message: error.toString(),
-            options,
             type: 'notice' as const,
         },
     ]);

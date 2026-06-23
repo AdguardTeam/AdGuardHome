@@ -10,16 +10,14 @@ describe('Toast', () => {
         expect(getByText('hello')).toBeTruthy();
     });
 
-    it('renders interpolated options.components content', () => {
+    it('renders JSX message passed directly', () => {
         const { container } = render(() => (
             <Toast
                 id="2"
-                message="update_failed"
+                message={<span>custom content</span>}
                 type="notice"
-                options={{ components: { a: (c: string) => c } }}
             />
         ));
-        // Message rendered (not [object Object])
-        expect(container.textContent).not.toContain('[object Object]');
+        expect(container.textContent).toContain('custom content');
     });
 });

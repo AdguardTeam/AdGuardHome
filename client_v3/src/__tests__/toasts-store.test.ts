@@ -20,19 +20,11 @@ describe('toasts store', () => {
         expect(last.type).toBe('notice');
     });
 
-    it('addNoticeToast preserves options', () => {
-        const options = { components: { a: () => {} } };
-        addNoticeToast({ error: 'update_failed', options });
-        const last = toastsState.notices[toastsState.notices.length - 1];
-        expect(last.options).toEqual(options);
-    });
-
-    it('addErrorToast preserves options and action', () => {
+    it('addErrorToast preserves action', () => {
         const action = { text: 'retry', callback: () => {} };
-        addErrorToast({ error: 'boom', options: { x: 1 }, action });
+        addErrorToast({ error: 'boom', action });
         const last = toastsState.notices[toastsState.notices.length - 1];
         expect(last.message).toBe('boom');
-        expect(last.options).toEqual({ x: 1 });
         expect(last.action).toEqual(action);
         expect(last.type).toBe('error');
     });
