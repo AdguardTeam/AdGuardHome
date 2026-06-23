@@ -122,6 +122,7 @@ export const Input = (props: Props) => {
                     onInput={(e) => (props.onInput as any)?.(e)}
                     type={props.type}
                     id={props.id}
+                    name={props.name}
                     placeholder={props.placeholder}
                     value={props.value as string | number}
                     onFocus={() => setFocused(true)}

@@ -1,4 +1,4 @@
-import { createSignal } from 'solid-js';
+import { createSignal, createEffect, untrack } from 'solid-js';
 import cn from 'clsx';
 
 import intl from 'panel/common/intl';
@@ -8,12 +8,23 @@ import theme from 'panel/lib/theme';
 
 type Props = {
     class?: string;
+    initialName?: string;
+    initialUrl?: string;
 };
 
 export const ManualFilterForm = (props: Props) => {
-    const [name, setName] = createSignal('');
-    const [url, setUrl] = createSignal('');
+    const [name, setName] = createSignal(untrack(() => props.initialName) ?? '');
+    const [url, setUrl] = createSignal(untrack(() => props.initialUrl) ?? '');
     const [urlError, setUrlError] = createSignal<string | undefined>();
+
+    createEffect(() => {
+        if (props.initialName !== undefined) {
+            setName(props.initialName);
+        }
+        if (props.initialUrl !== undefined) {
+            setUrl(props.initialUrl);
+        }
+    });
 
     const handleUrlBlur = () => {
         const urlErr = validateRequiredValue(url()) || validatePath(url());

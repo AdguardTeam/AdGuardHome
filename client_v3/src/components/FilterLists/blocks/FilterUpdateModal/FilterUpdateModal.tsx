@@ -9,7 +9,7 @@ import { setFiltersConfig, filteringState } from 'panel/stores/filtering';
 import { ModalWrapper } from 'panel/common/ui/ModalWrapper';
 import { MODAL_TYPE } from 'panel/helpers/constants';
 import { closeModal } from 'panel/stores/modals';
-import { FilterIntervalInput } from './FilterIntervalInput';
+import { FilterIntervalInput, FILTER_INTERVAL_RANGE } from './FilterIntervalInput';
 
 export const FILTER_INTERVALS = {
     DISABLE: 0,
@@ -88,6 +88,15 @@ export const FilterUpdateModal = () => {
 
         if (finalInterval === null || finalInterval === undefined || finalInterval < 0) {
             return;
+        }
+
+        if (interval() === FILTER_INTERVALS.CUSTOM) {
+            if (
+                finalInterval < FILTER_INTERVAL_RANGE.MIN ||
+                finalInterval > FILTER_INTERVAL_RANGE.MAX
+            ) {
+                return;
+            }
         }
 
         setFiltersConfig({

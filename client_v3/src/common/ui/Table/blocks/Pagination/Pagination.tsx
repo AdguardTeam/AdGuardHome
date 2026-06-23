@@ -105,15 +105,15 @@ export const Pagination = (props: Props) => {
                             return <span class={theme.pagination.summary}>...</span>;
                         }
 
-                        const isCurrentPage = pageNum === props.currentPage + 1;
                         return (
                             <button
                                 type="button"
                                 onClick={() => props.onPageChange(pageNum - 1)}
-                                class={cn(
-                                    theme.pagination.button,
-                                    isCurrentPage && theme.pagination.button_active,
-                                )}
+                                class={theme.pagination.button}
+                                classList={{
+                                    [theme.pagination.button_active]: (() =>
+                                        pageNum === props.currentPage + 1) as unknown as boolean,
+                                }}
                             >
                                 {pageNum}
                             </button>

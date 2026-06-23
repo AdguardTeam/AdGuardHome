@@ -10,6 +10,7 @@ import theme from 'panel/lib/theme';
 import { Button } from 'panel/common/ui/Button';
 import { addFilter, addFiltersBatch, editFilter, filteringState } from 'panel/stores/filtering';
 import type { Filter } from 'panel/helpers/helpers';
+import { validatePath, validateRequiredValue } from 'panel/helpers/validators';
 import { ManualFilterForm } from 'panel/components/FilterLists/blocks/ConfigureBlocklistModal/blocks/ManualFilterForm';
 import { Tabs } from 'panel/common/ui/Tabs';
 import filtersCatalog from 'panel/helpers/filters/filters';
@@ -107,6 +108,11 @@ export const ConfigureBlocklistModal = (props: Props) => {
         switch (props.modalId) {
             case MODAL_TYPE.ADD_BLOCKLIST: {
                 if (values.url && values.name) {
+                    const nameErr = validateRequiredValue(values.name);
+                    const urlErr = validateRequiredValue(values.url) || validatePath(values.url);
+                    if (nameErr || urlErr) {
+                        return;
+                    }
                     addFilter(values.url, values.name, false);
                 } else {
                     const existingFilterSources = new Set(
@@ -140,7 +146,6 @@ export const ConfigureBlocklistModal = (props: Props) => {
                     if (filtersToAdd.length > 0) {
                         await addFiltersBatch(filtersToAdd);
                     }
-                    return;
                 }
                 break;
             }
@@ -170,7 +175,13 @@ export const ConfigureBlocklistModal = (props: Props) => {
                         </Show>
                         <Show
                             when={props.modalId === MODAL_TYPE.ADD_BLOCKLIST}
-                            fallback={<ManualFilterForm class={s.formGroup} />}
+                            fallback={
+                                <ManualFilterForm
+                                    class={s.formGroup}
+                                    initialName={props.filterToEdit?.name}
+                                    initialUrl={props.filterToEdit?.url}
+                                />
+                            }
                         >
                             <Tabs
                                 activeTab={activeTab()}
@@ -191,7 +202,13 @@ export const ConfigureBlocklistModal = (props: Props) => {
                                     {
                                         id: TAB_TYPE.MANUAL,
                                         label: intl.getMessage('blocklist_add_manual'),
-                                        content: <ManualFilterForm class={s.formGroup} />,
+                                        content: (
+                                            <ManualFilterForm
+                                                class={s.formGroup}
+                                                initialName={props.filterToEdit?.name}
+                                                initialUrl={props.filterToEdit?.url}
+                                            />
+                                        ),
                                     },
                                 ]}
                             />

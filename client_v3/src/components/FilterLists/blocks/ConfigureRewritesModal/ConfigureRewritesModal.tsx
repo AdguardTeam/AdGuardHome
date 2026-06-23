@@ -74,18 +74,24 @@ export const ConfigureRewritesModal = (props: Props) => {
         closeModal();
     };
 
-    const validateAndSetErrors = () => {
-        const domainErr = validateRequiredValue(domain()) || validateDomain(domain());
-        const answerErr = validateRequiredValue(answer()) || validateAnswer(answer());
-        setDomainError(domainErr || undefined);
-        setAnswerError(answerErr || undefined);
-        return !domainErr && !answerErr;
+    const validateDomainField = () => {
+        const err = validateRequiredValue(domain()) || validateDomain(domain());
+        setDomainError(err || undefined);
+        return !err;
+    };
+
+    const validateAnswerField = () => {
+        const err = validateRequiredValue(answer()) || validateAnswer(answer());
+        setAnswerError(err || undefined);
+        return !err;
     };
 
     const handleFormSubmit = async (e: Event) => {
         e.preventDefault();
 
-        if (!validateAndSetErrors()) {
+        const domainValid = validateDomainField();
+        const answerValid = validateAnswerField();
+        if (!domainValid || !answerValid) {
             return;
         }
 
@@ -153,7 +159,7 @@ export const ConfigureRewritesModal = (props: Props) => {
                                     onChange={(e) =>
                                         setDomain((e.target as HTMLInputElement).value)
                                     }
-                                    onBlur={validateAndSetErrors}
+                                    onBlur={validateDomainField}
                                     errorMessage={domainError()}
                                 />
                             </div>
@@ -176,7 +182,7 @@ export const ConfigureRewritesModal = (props: Props) => {
                                     onChange={(e) =>
                                         setAnswer((e.target as HTMLInputElement).value)
                                     }
-                                    onBlur={validateAndSetErrors}
+                                    onBlur={validateAnswerField}
                                     errorMessage={answerError()}
                                 />
                             </div>

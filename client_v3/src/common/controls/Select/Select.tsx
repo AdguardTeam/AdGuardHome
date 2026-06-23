@@ -1,4 +1,4 @@
-import { type JSX, For, Show, createMemo } from 'solid-js';
+import { type JSX, For, Show, createMemo, createSignal } from 'solid-js';
 import cn from 'clsx';
 import {
     Select as ArkSelect,
@@ -188,13 +188,24 @@ export const Select = <
     const isMulti = createMemo(() => props.isMulti ?? false);
     const isClearable = createMemo(() => props.isClearable ?? false);
 
-    /* ---- Build collection from options ---- */
+    /* ---- Combobox search input tracking ---- */
+    const [searchInput, setSearchInput] = createSignal('');
+    /** DOM ref to the Combobox <input> — used to physically clear it on open. */
+    let inputRef: HTMLInputElement | undefined;
+
+    const filteredOptions = createMemo(() => {
+        const query = searchInput().toLowerCase();
+        if (!query) return props.options;
+        return props.options.filter((opt) => String(opt.label).toLowerCase().includes(query));
+    });
+
+    /* ---- Build collection from filtered options ---- */
     const collection = createMemo(() =>
         createListCollection({
-            items: props.options as any[],
+            items: filteredOptions() as any[],
             itemToString: (item: any) => item.label,
             itemToValue: (item: any) => String(item.value),
-            isItemDisabled: (item: any) => item.disabled ?? false,
+            isItemDisabled: (item: any) => item.isDisabled ?? item.disabled ?? false,
         }),
     );
 
@@ -373,8 +384,23 @@ export const Select = <
                     openOnClick
                     autoFocus={props.autoFocus}
                     open={props.menuIsOpen}
+                    onInputValueChange={(details) => {
+                        // Only track actual user keystrokes — ignore programmatic
+                        // changes (item-select, clear-trigger, script, interact-outside)
+                        // so searchInput always reflects what the user typed.
+                        if (details.reason === 'input-change') {
+                            setSearchInput(details.inputValue);
+                        }
+                    }}
                     onOpenChange={(details) => {
                         if (details.open) {
+                            // Reset search filter and physically clear the input
+                            // so the user sees a blank field ready for fresh typing
+                            // (like react-select).
+                            setSearchInput('');
+                            if (inputRef) {
+                                inputRef.value = '';
+                            }
                             props.onMenuOpen?.();
                         } else {
                             props.onMenuClose?.();
@@ -411,6 +437,9 @@ export const Select = <
                             <ArkCombobox.Input
                                 id={props.inputId}
                                 placeholder={props.placeholder as string}
+                                ref={(el) => {
+                                    inputRef = el;
+                                }}
                             />
                             <Show when={isClearable() && currentValue().length > 0}>
                                 <ArkCombobox.ClearTrigger>
@@ -436,7 +465,7 @@ export const Select = <
                                     <Show
                                         when={props.lazyList}
                                         fallback={
-                                            <For each={props.options}>
+                                            <For each={filteredOptions()}>
                                                 {(option) => {
                                                     const data = option as any;
                                                     return (
@@ -474,7 +503,7 @@ export const Select = <
                                         }
                                     >
                                         <div class={s.menuList}>
-                                            <For each={props.options}>
+                                            <For each={filteredOptions()}>
                                                 {(option) => {
                                                     const data = option as any;
                                                     return (

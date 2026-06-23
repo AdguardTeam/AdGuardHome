@@ -428,7 +428,7 @@ export const useUserRulesActions = (
         }
 
         return performWithUndo({
-            perform: () => deleteRewrite(targetRewrite, { showToast: false }) as Promise<boolean>,
+            perform: () => deleteRewrite(targetRewrite) as Promise<boolean>,
             message: intl.getMessage('user_rules_dns_rewrite_removed'),
             undo: async () => {
                 await addRewrite({

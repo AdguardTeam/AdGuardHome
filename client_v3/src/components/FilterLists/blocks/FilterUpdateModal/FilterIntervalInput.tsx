@@ -6,7 +6,7 @@ import { toNumber } from 'panel/helpers/form';
 import intl from 'panel/common/intl';
 import { FILTER_INTERVALS } from './FilterUpdateModal';
 
-const FILTER_INTERVAL_RANGE = {
+export const FILTER_INTERVAL_RANGE = {
     MIN: 1,
     MAX: 8760,
 };

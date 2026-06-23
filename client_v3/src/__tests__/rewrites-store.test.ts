@@ -40,18 +40,13 @@ describe('deleteRewrite', () => {
             answer: '1.1.1.1',
             enabled: true,
         });
-        expect(mocks.addSuccessToast).toHaveBeenCalledWith(
-            expect.stringContaining('example.com'),
-        );
+        expect(mocks.addSuccessToast).toHaveBeenCalledWith(expect.stringContaining('example.com'));
     });
 
     it('honors showToast:false', async () => {
         mocks.deleteRewrite.mockResolvedValue(undefined);
         mocks.getRewritesList.mockResolvedValue([]);
-        await deleteRewrite(
-            { domain: 'example.com', answer: '1.1.1.1', enabled: true },
-            { showToast: false },
-        );
+        await deleteRewrite({ domain: 'example.com', answer: '1.1.1.1', enabled: true });
         expect(mocks.addSuccessToast).not.toHaveBeenCalled();
     });
 });

@@ -95,18 +95,12 @@ export const updateRewrite = async (
     }
 };
 
-export const deleteRewrite = async (
-    config: RewriteConfig,
-    options: { showToast?: boolean; closeModal?: boolean } = {},
-): Promise<boolean> => {
+export const deleteRewrite = async (config: RewriteConfig): Promise<boolean> => {
     setState('processingDelete', true);
     try {
         await apiClient.deleteRewrite(config);
         setState('processingDelete', false);
         await getRewritesList();
-        if (options.showToast !== false) {
-            addSuccessToast(intl.getMessage('rewrite_deleted', { key: config.domain }));
-        }
         return true;
     } catch (error) {
         addErrorToast({ error });
