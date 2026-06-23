@@ -585,7 +585,7 @@
   "forgot_password_list_item_5": "Log in to the web interface with your new password.",
   "login": "Log in",
   "period_notify": "To change the displayed periods, edit <i>Statistics retention</i> in <a>General settings</a>",
-  "password_login_error": "Unrecognized password",
+  "password_login_error": "Your username and password do not match",
   "last_hour": "Last hour",
   "last_hours": "| Last %count% hour | Last %count% hours",
   "last_days": "| Last %count% day | Last %count% days",

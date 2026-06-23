@@ -20,7 +20,7 @@ const initialState: LoginState = {
 
 const [state, setState] = createStore<LoginState>(initialState);
 
-export const processLogin = async (values: { username: string; password: string }) => {
+export const processLogin = async (values: { name: string; password: string }) => {
     setState({ processingLogin: true, error: null });
     try {
         await apiClient.login(values);

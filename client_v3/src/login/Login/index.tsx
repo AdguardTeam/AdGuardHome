@@ -11,7 +11,7 @@ import styles from './styles.module.pcss';
 
 export const Login = () => {
     const handleSubmit = (values: LoginFormValues) => {
-        processLogin({ username: values.username, password: values.password });
+        processLogin({ name: values.username, password: values.password });
     };
 
     return (

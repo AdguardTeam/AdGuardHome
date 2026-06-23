@@ -110,8 +110,8 @@ export const checkConfig = async (values: any) => {
     try {
         const data = await apiClient.checkConfig(values);
         setState({
-            web: { ...untrack(() => state.web), ...data.web },
-            dns: { ...untrack(() => state.dns), ...data.dns },
+            web: { ...values.web, ...data.web },
+            dns: { ...values.dns, ...data.dns },
             staticIp: { ...untrack(() => state.staticIp), ...data.static_ip },
             processingCheck: false,
         });

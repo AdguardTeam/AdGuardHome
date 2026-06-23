@@ -1,5 +1,5 @@
 import { createEffect } from 'solid-js';
-import { createForm, required, setError } from '@modular-forms/solid';
+import { createForm, required, setError, setValue } from '@modular-forms/solid';
 import { Input } from 'panel/common/controls/Input';
 import { Button } from 'panel/common/ui/Button';
 import { HTML_PAGES } from 'panel/helpers/constants';
@@ -70,9 +70,6 @@ const Form = (props: LoginFormProps) => {
                         validate={[required(intl.getMessage('form_error_required'))]}
                     >
                         {(field, fieldProps) => (
-                            // @ts-expect-error - PasswordInput.onChange expects (value: string) => void,
-                            // but modular-forms fieldProps provides (event: Event) => void.
-                            // PasswordInput internally wraps the native event handler.
                             <PasswordInput
                                 {...fieldProps}
                                 id="password"
@@ -81,6 +78,7 @@ const Form = (props: LoginFormProps) => {
                                 placeholder={intl.getMessage('password_placeholder')}
                                 inputError={field.error as string}
                                 autocomplete="current-password"
+                                onChange={(value: string) => setValue(loginForm, 'password', value)}
                             />
                         )}
                     </Field>
@@ -101,7 +99,7 @@ const Form = (props: LoginFormProps) => {
                     <div class={styles.info}>
                         <button
                             type="button"
-                            class={cn(theme.link.link, 'link')}
+                            class={cn(theme.link.link, theme.text.t2)}
                             onClick={handleForgotPassword}
                         >
                             {intl.getMessage('forgot_password')}

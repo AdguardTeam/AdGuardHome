@@ -11,7 +11,6 @@ import {
     ADDRESS_IN_USE_TEXT,
     PORT_53_FAQ_LINK,
     STANDARD_DNS_PORT,
-    STANDARD_WEB_PORT,
 } from 'panel/helpers/constants';
 
 import { validateRequiredValue, validateInstallPort } from 'panel/helpers/validators';
@@ -84,7 +83,7 @@ export const DnsBanner = (props: Props) => {
                             id="install_dns_port"
                             value={props.dnsPort()}
                             errorMessage={portError()}
-                            placeholder={STANDARD_WEB_PORT.toString()}
+                            placeholder={STANDARD_DNS_PORT.toString()}
                             onChange={(e: Event) => {
                                 const { value } = e.target as HTMLInputElement;
                                 props.setDnsPort(toNumber(value));

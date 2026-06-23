@@ -90,6 +90,10 @@ export const Auth = (props: Props) => {
         };
     });
 
+    const isPrivacyValid = createMemo(() =>
+        Boolean(getValue(authForm, 'privacy_consent') as boolean | undefined),
+    );
+
     return (
         <div class={styles.configSetting}>
             <Form class={styles.step} onSubmit={props.onAuthSubmit}>
@@ -215,7 +219,7 @@ export const Auth = (props: Props) => {
                         </Field>
                     </div>
 
-                    <Controls isDirty={authForm.dirty} isValid={!authForm.invalid} />
+                    <Controls isDirty={authForm.dirty} isValid={!authForm.invalid && isPrivacyValid()} />
                 </div>
 
                 <div class={styles.content}>
