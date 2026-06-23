@@ -1,6 +1,10 @@
 import { createMemo, createEffect, onMount, For, Show, untrack } from 'solid-js';
 import cn from 'clsx';
 
+import { SCROLL_QUERY_KEY } from 'panel/components/Routes/Paths';
+
+import { useSearchParams } from '@solidjs/router';
+
 import intl from 'panel/common/intl';
 import { Checkbox } from 'panel/common/controls/Checkbox';
 import theme from 'panel/lib/theme';
@@ -76,19 +80,20 @@ export const Settings = () => {
         );
     });
 
-    // Handle hash scroll
+    const [searchParams] = useSearchParams<{ [SCROLL_QUERY_KEY]?: string }>();
+
+    // Handle query-param-based scroll to section
     createEffect(() => {
         if (!isLoading()) {
-            const hash = window.location.hash;
-            if (hash) {
-                try {
-                    const el = document.querySelector(hash);
+            const section = searchParams[SCROLL_QUERY_KEY];
+            if (section) {
+                requestAnimationFrame(() => {
+                    const el = document.getElementById(section);
                     if (el) {
-                        el.scrollIntoView({ behavior: 'smooth' });
+                        const top = el.getBoundingClientRect().top + window.scrollY - 80;
+                        window.scrollTo({ top, behavior: 'smooth' });
                     }
-                } catch {
-                    // Hash is not a valid CSS selector (e.g. route path like #/dashboard)
-                }
+                });
             }
         }
     });

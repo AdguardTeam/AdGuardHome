@@ -31,6 +31,9 @@ export const RoutePath = {
 
 export type RoutePathKey = keyof typeof RoutePath;
 
+/** Query param key used to pass a target element ID for scroll-to-section navigation. */
+export const SCROLL_QUERY_KEY = 'section';
+
 export const Paths: Record<RoutePathKey, string> = {
     Dashboard: pathBuilder('dashboard'),
     Logs: pathBuilder('logs'),
@@ -63,6 +66,7 @@ export const linkPathBuilder = (
     route: RoutePathKey,
     params?: LinkParams,
     query?: Partial<Record<string, string | number | boolean>>,
+    hash?: string,
 ) => {
     let path = Paths[route];
     if (params) {
@@ -73,6 +77,10 @@ export const linkPathBuilder = (
 
     if (query) {
         path += `?${qs.stringify(query)}`;
+    }
+
+    if (hash) {
+        path += `#${hash}`;
     }
 
     return path;

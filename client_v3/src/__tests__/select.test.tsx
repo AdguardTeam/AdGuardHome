@@ -54,4 +54,27 @@ describe('Select', () => {
         // The indicator (arrow icon) should be inside the trigger.
         expect(indicator).toBeTruthy();
     });
+
+    it('renders menuFooter inside the dropdown content', async () => {
+        const user = userEvent.setup();
+        render(() => (
+            <Select
+                options={OPTIONS}
+                value={OPTIONS[0]}
+                onChange={() => {}}
+                menuFooter={<div data-testid="select-footer">Footer</div>}
+            />
+        ));
+
+        const trigger = document.querySelector(
+            '[data-scope="select"][data-part="trigger"]',
+        ) as HTMLElement;
+        await user.click(trigger);
+
+        const footer = document.querySelector('[data-testid="select-footer"]');
+        expect(footer).toBeTruthy();
+        expect(
+            footer?.closest('[data-scope="select"][data-part="content"]'),
+        ).toBeTruthy();
+    });
 });

@@ -75,7 +75,7 @@ export const ListsTable = (props: Props) => {
             },
             accessor: 'enabled',
             sortable: false,
-            fitContent: true,
+            width: 64,
             className: s.cellNameToggleOuter,
             render: (value: boolean, row: Filter) => {
                 const { name, url, enabled } = row;

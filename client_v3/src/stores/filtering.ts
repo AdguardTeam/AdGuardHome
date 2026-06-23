@@ -267,7 +267,7 @@ export const refreshFilters = async (config: any) => {
         setState('processingRefreshFilters', false);
         const updated = (data as any)?.updated || 0;
         if (updated > 0) {
-            addSuccessToast(intl.getMessage('list_updated', { count: updated }));
+            addSuccessToast(intl.getPlural('list_updated', updated));
         } else {
             addSuccessToast(intl.getMessage('all_lists_up_to_date_toast'));
         }

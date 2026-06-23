@@ -169,7 +169,6 @@ export const saveClient = async (): Promise<boolean> => {
             await apiClient.updateClient({ name: state.originalName, data: config });
             clearClientForm();
             await getClients();
-            addSuccessToast({ message: intl.getMessage('client_edit_success') });
             return true;
         } catch (error) {
             addErrorToast({ error });
@@ -183,7 +182,7 @@ export const saveClient = async (): Promise<boolean> => {
             await apiClient.addClient(config);
             clearClientForm();
             await getClients();
-            addSuccessToast({ message: intl.getMessage('client_add_success') });
+            addSuccessToast({ message: intl.getMessage('client_added') });
             return true;
         } catch (error) {
             addErrorToast({ error });

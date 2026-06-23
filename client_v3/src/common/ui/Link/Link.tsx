@@ -1,7 +1,12 @@
 import { type JSX, Show, untrack } from 'solid-js';
 import { A } from '@solidjs/router';
 import cn from 'clsx';
-import { LinkParams, linkPathBuilder, RoutePathKey } from 'panel/components/Routes/Paths';
+import {
+    LinkParams,
+    linkPathBuilder,
+    RoutePathKey,
+    SCROLL_QUERY_KEY,
+} from 'panel/components/Routes/Paths';
 import theme from 'panel/lib/theme';
 
 type Props = {
@@ -30,9 +35,12 @@ export const Link = (linkProps: Props) => {
     });
 
     const handleClick = (e: MouseEvent) => {
-        setTimeout(() => {
-            window.scrollTo({ top: 0 });
-        }, 100);
+        // Don't scroll to top when navigating to a specific section (scroll handled by the target page)
+        if (!linkProps.query?.[SCROLL_QUERY_KEY]) {
+            setTimeout(() => {
+                window.scrollTo({ top: 0 });
+            }, 100);
+        }
 
         if (linkProps.stop) {
             e.stopPropagation();

@@ -65,6 +65,8 @@ interface SelectProps<
     showIcons?: boolean;
     showOptionIcon?: boolean;
     optionTestIdPrefix?: string;
+    /** Optional footer rendered after the scrollable item list inside the dropdown */
+    menuFooter?: JSX.Element;
 }
 
 /**
@@ -243,15 +245,17 @@ export const Select = <
                         }}
                         positioning={{
                             placement:
-                                props.menuPosition === 'right'
-                                    ? props.menuPlacement === 'top'
-                                        ? ('top-end' as const)
-                                        : ('bottom-end' as const)
-                                    : props.menuPlacement === 'top'
-                                      ? ('top-end' as const)
-                                      : ('bottom-end' as const),
+                                props.menuPlacement === 'top'
+                                    ? ('top-start' as const)
+                                    : ('bottom-start' as const),
                             sameWidth: true,
-                            flip: ['bottom-end', 'top-end'],
+                            fitViewport: true,
+                            flip:
+                                props.menuPlacement === 'auto'
+                                    ? true
+                                    : props.menuPlacement === 'top'
+                                      ? ['top-start', 'bottom-start']
+                                      : ['bottom-start', 'top-start'],
                         }}
                     >
                         <Show when={!props.isDropdownSelect}>
@@ -350,6 +354,7 @@ export const Select = <
                                             </div>
                                         </Show>
                                     </ArkSelect.ItemGroup>
+                                    <Show when={props.menuFooter}>{props.menuFooter}</Show>
                                 </Show>
                             </ArkSelect.Content>
                         </ArkSelect.Positioner>
@@ -377,15 +382,17 @@ export const Select = <
                     }}
                     positioning={{
                         placement:
-                            props.menuPosition === 'right'
-                                ? props.menuPlacement === 'top'
-                                    ? ('top-end' as const)
-                                    : ('bottom-end' as const)
-                                : props.menuPlacement === 'top'
-                                  ? ('top-end' as const)
-                                  : ('bottom-end' as const),
+                            props.menuPlacement === 'top'
+                                ? ('top-start' as const)
+                                : ('bottom-start' as const),
                         sameWidth: true,
-                        flip: ['bottom-end', 'top-end'],
+                        fitViewport: true,
+                        flip:
+                            props.menuPlacement === 'auto'
+                                ? true
+                                : props.menuPlacement === 'top'
+                                  ? ['top-start', 'bottom-start']
+                                  : ['bottom-start', 'top-start'],
                     }}
                 >
                     <Show when={!props.isDropdownSelect}>
@@ -502,6 +509,7 @@ export const Select = <
                                                     );
                                                 }}
                                             </For>
+                                            <Show when={props.menuFooter}>{props.menuFooter}</Show>
                                         </div>
                                     </Show>
                                 </ArkCombobox.ItemGroup>

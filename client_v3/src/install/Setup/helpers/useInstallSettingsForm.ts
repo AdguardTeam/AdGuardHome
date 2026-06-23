@@ -1,10 +1,6 @@
 import { createSignal, createEffect, createMemo, untrack } from 'solid-js';
 
-import {
-    ALL_INTERFACES_IP,
-    STANDARD_DNS_PORT,
-    STANDARD_WEB_PORT,
-} from 'panel/helpers/constants';
+import { ALL_INTERFACES_IP, STANDARD_DNS_PORT, STANDARD_WEB_PORT } from 'panel/helpers/constants';
 import { validateInstallPort } from 'panel/helpers/validators';
 
 import type { DnsConfig, SettingsFormValues, WebConfig, ConfigType } from '../types';

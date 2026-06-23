@@ -7,6 +7,8 @@ import { Switch } from 'panel/common/controls/Switch';
 import { Dropdown } from 'panel/common/ui/Dropdown';
 import { Select } from 'panel/common/controls/Select';
 import { Icon } from 'panel/common/ui/Icon';
+import { Link } from 'panel/common/ui/Link';
+import { RoutePath, SCROLL_QUERY_KEY } from 'panel/components/Routes/Paths';
 import { useIsMobile } from 'panel/hooks/useIsMobile';
 import { DISABLE_PROTECTION_TIMINGS, ONE_SECOND_IN_MS } from 'panel/helpers/constants';
 import { msToSeconds, msToMinutes, msToHours } from 'panel/helpers/helpers';
@@ -124,6 +126,25 @@ export const Header = (props: Props) => {
         </div>
     );
 
+    const periodSettingsFooter = (
+        <div class={cn(s.periodSettingsFooter, theme.select.option_check)}>
+            <Icon icon="settings" class={theme.select.icon} />
+            <div class={cn(theme.text.t2, theme.text.condenced)}>
+                {intl.getMessage('period_notify', {
+                    a: (text: string) => (
+                        <Link
+                            to={RoutePath.SettingsPage}
+                            query={{ [SCROLL_QUERY_KEY]: 'stats_config' }}
+                            class={cn(theme.link.link, theme.link.noDecoration)}
+                        >
+                            {text}
+                        </Link>
+                    ),
+                })}
+            </div>
+        </div>
+    );
+
     return (
         <div class={s.header}>
             <div class={s.headerLeft}>
@@ -217,6 +238,7 @@ export const Header = (props: Props) => {
                     borderless={!isMobile()}
                     menuSize="big"
                     menuPosition="right"
+                    menuFooter={periodSettingsFooter}
                 />
             </div>
         </div>
