@@ -150,6 +150,7 @@ export const ScheduleModal = (props: Props) => {
                                 isDisabled={allDay()}
                                 height="big"
                                 size="responsive"
+                                isSearchable={false}
                             />
                             <Select
                                 options={MINUTES_OPTIONS}
@@ -158,6 +159,7 @@ export const ScheduleModal = (props: Props) => {
                                 isDisabled={allDay()}
                                 height="big"
                                 size="responsive"
+                                isSearchable={false}
                             />
                         </div>
                     </div>
@@ -173,6 +175,7 @@ export const ScheduleModal = (props: Props) => {
                                 isDisabled={allDay()}
                                 height="big"
                                 size="responsive"
+                                isSearchable={false}
                             />
                             <Select
                                 options={endTimeOptions().minutes}
@@ -181,6 +184,7 @@ export const ScheduleModal = (props: Props) => {
                                 isDisabled={allDay()}
                                 height="big"
                                 size="responsive"
+                                isSearchable={false}
                             />
                         </div>
                     </div>

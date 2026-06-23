@@ -219,7 +219,7 @@ export const BlockedServices = (props: Props) => {
                             id="blocked-services-search"
                             type="text"
                             value={search()}
-                            onChange={handleSearchChange}
+                            onInput={handleSearchChange}
                             placeholder={intl.getMessage('search_placeholder')}
                             prefixIcon={<Icon icon="search" class={s.searchIcon} color="gray" />}
                             suffixIcon={
