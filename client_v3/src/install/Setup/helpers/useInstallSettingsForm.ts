@@ -4,8 +4,8 @@ import {
     ALL_INTERFACES_IP,
     STANDARD_DNS_PORT,
     STANDARD_WEB_PORT,
-} from '../../../helpers/constants';
-import { validateInstallPort } from '../../../helpers/validators';
+} from 'panel/helpers/constants';
+import { validateInstallPort } from 'panel/helpers/validators';
 
 import type { DnsConfig, SettingsFormValues, WebConfig, ConfigType } from '../types';
 

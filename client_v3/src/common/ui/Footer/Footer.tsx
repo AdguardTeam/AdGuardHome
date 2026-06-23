@@ -8,11 +8,11 @@ import intl, { LocalesType } from 'panel/common/intl';
 
 import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from 'panel/helpers/localStorageHelper';
 import { LanguageDropdown } from '../LanguageDropdown/LanguageDropdown';
-import { REPOSITORY, PRIVACY_POLICY_LINK, THEMES } from '../../../helpers/constants';
-import { LANGUAGES, LANGUAGE_NAMES } from '../../../helpers/twosky';
-import { setHtmlLangAttr, setUITheme } from '../../../helpers/helpers';
-import { changeTheme, changeLanguage as changeLanguageAction } from '../../../stores/dashboard';
-import { dashboardState } from '../../../stores/dashboard';
+import { REPOSITORY, PRIVACY_POLICY_LINK, THEMES } from 'panel/helpers/constants';
+import { LANGUAGES, LANGUAGE_NAMES } from 'panel/helpers/twosky';
+import { setHtmlLangAttr, setUITheme } from 'panel/helpers/helpers';
+import { changeTheme, changeLanguage as changeLanguageAction } from 'panel/stores/dashboard';
+import { dashboardState } from 'panel/stores/dashboard';
 
 import s from './styles.module.pcss';
 

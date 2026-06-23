@@ -6,7 +6,7 @@ import theme from 'panel/lib/theme';
 import { RadioGroup, SwitchGroup } from 'panel/common/ui/SettingsGroup';
 
 import { getIntervalTitle, getDefaultInterval } from '../helpers';
-import { STATS_INTERVALS_DAYS, RETENTION_CUSTOM } from '../../../helpers/constants';
+import { STATS_INTERVALS_DAYS, RETENTION_CUSTOM } from 'panel/helpers/constants';
 import { IgnoredDomains } from '../IgnoredDomains';
 import { RetentionCustomInput } from '../RetentionCustomInput';
 
