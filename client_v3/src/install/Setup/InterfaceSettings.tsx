@@ -1,4 +1,4 @@
-import { createMemo, untrack } from 'solid-js';
+import { createMemo, untrack, Switch, Match } from 'solid-js';
 
 import intl from 'panel/common/intl';
 import { Button } from 'panel/common/ui/Button';
@@ -62,39 +62,7 @@ export const InterfaceSettings = (props: Props) => {
         }
     };
 
-    const getStaticIpMessage = createMemo(() => {
-        const staticIpVal = staticIp();
-        const { static: status, ip } = staticIpVal;
 
-        switch (status) {
-            case STATUS_RESPONSE.NO:
-                return (
-                    <>
-                        <div class={styles.spacerBottom}>
-                            {intl.getMessage('install_static_configure', { ip })}
-                        </div>
-
-                        <Button
-                            type="button"
-                            size="small"
-                            variant="secondary"
-                            class={styles.button}
-                            onClick={() => handleStaticIp(ip)}
-                        >
-                            {intl.getMessage('set_static_ip')}
-                        </Button>
-                    </>
-                );
-            case STATUS_RESPONSE.ERROR:
-                return (
-                    <div class={styles.errorText}>{intl.getMessage('install_static_error')}</div>
-                );
-            case STATUS_RESPONSE.YES:
-                return <div class={styles.successText}>{intl.getMessage('install_static_ok')}</div>;
-            default:
-                return null;
-        }
-    });
 
     const onSubmit = (data: SettingsFormValues) => {
         props.validateForm(data);
@@ -129,7 +97,33 @@ export const InterfaceSettings = (props: Props) => {
                         port={form.webPort() || STANDARD_WEB_PORT}
                     />
 
-                    <div class={styles.group}>{getStaticIpMessage()}</div>
+                    <div class={styles.group}>
+                        <Switch fallback={null}>
+                            <Match when={staticIp().static === STATUS_RESPONSE.NO}>
+                                <>
+                                    <div class={styles.spacerBottom}>
+                                        {intl.getMessage('install_static_configure', { ip: staticIp().ip })}
+                                    </div>
+
+                                    <Button
+                                        type="button"
+                                        size="small"
+                                        variant="secondary"
+                                        class={styles.button}
+                                        onClick={() => handleStaticIp(staticIp().ip)}
+                                    >
+                                        {intl.getMessage('set_static_ip')}
+                                    </Button>
+                                </>
+                            </Match>
+                            <Match when={staticIp().static === STATUS_RESPONSE.ERROR}>
+                                <div class={styles.errorText}>{intl.getMessage('install_static_error')}</div>
+                            </Match>
+                            <Match when={staticIp().static === STATUS_RESPONSE.YES}>
+                                <div class={styles.successText}>{intl.getMessage('install_static_ok')}</div>
+                            </Match>
+                        </Switch>
+                    </div>
 
                     <Controls invalid={!form.isValid()} />
                 </div>

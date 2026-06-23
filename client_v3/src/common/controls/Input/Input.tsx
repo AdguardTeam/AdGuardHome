@@ -109,7 +109,7 @@ export const Input = (props: Props) => {
                     },
                 )}
             >
-                {props.prefixIcon && props.prefixIcon}
+                <Show when={props.prefixIcon}>{props.prefixIcon}</Show>
                 <input
                     ref={(el) => setInputRef(el)}
                     accept={props.accept}

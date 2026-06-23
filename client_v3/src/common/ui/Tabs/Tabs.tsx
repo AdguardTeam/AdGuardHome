@@ -1,4 +1,4 @@
-import { type JSX, createSignal, createMemo, For, untrack } from 'solid-js';
+import { type JSX, createSignal, createMemo, For, Show, untrack } from 'solid-js';
 import cn from 'clsx';
 
 import { Icon } from '../Icon/Icon';
@@ -53,7 +53,9 @@ export const Tabs = (props: Props) => {
                             })}
                             onClick={() => handleTabClick(tab.id)}
                         >
-                            {tab.icon && <Icon icon={tab.icon} class={s.icon} />}
+                            <Show when={tab.icon}>
+                                <Icon icon={tab.icon} class={s.icon} />
+                            </Show>
                             {tab.label}
                         </button>
                     )}
