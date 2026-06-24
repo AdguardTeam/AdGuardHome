@@ -109,11 +109,13 @@ export const Header = (props: Props) => {
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
     const isMobile = useIsMobile();
 
-    createEffect(on(
-        () => props.currentSearch,
-        (value) => setSearchValue(value),
-        { defer: true },
-    ));
+    createEffect(
+        on(
+            () => props.currentSearch,
+            (value) => setSearchValue(value),
+            { defer: true },
+        ),
+    );
 
     const handleSearchChange = (e: Event) => {
         const value = (e.target as HTMLInputElement).value;
