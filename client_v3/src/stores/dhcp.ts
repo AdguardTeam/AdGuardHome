@@ -84,8 +84,10 @@ export const getDhcpStatus = async () => {
         const globalStatus = await apiClient.getGlobalStatus();
         if (globalStatus.dhcp_available) {
             const status = await apiClient.getDhcpStatus();
+            const { static_leases: staticLeases, ...values } = status;
             setState({
-                ...status,
+                ...values,
+                staticLeases,
                 dhcp_available: true,
                 processingStatus: false,
                 processing: false,

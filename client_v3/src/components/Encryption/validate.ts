@@ -59,11 +59,7 @@ export const validateEncryptionForm = (values: EncryptionFormValues): Record<str
     const portDoqErr = validatePortQuic(portDoq);
     if (portDoqErr) errs.port_dns_over_quic = portDoqErr as string;
 
-    if (
-        portDot &&
-        portHttps &&
-        portDot === portHttps
-    ) {
+    if (portDot && portHttps && portDot === portHttps) {
         errs.port_dns_over_tls = intl.getMessage('form_error_equal');
         errs.port_https = intl.getMessage('form_error_equal');
     }
