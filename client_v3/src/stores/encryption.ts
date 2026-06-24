@@ -141,6 +141,11 @@ export const validateTlsConfig = async (values: any) => {
     setState('processingValidate', true);
     try {
         const encoded = encodeRequest(values);
+        // Normalise empty port strings to 0 before sending to the backend,
+        // matching the behaviour in setTlsConfig.
+        encoded.port_https = encoded.port_https || 0;
+        encoded.port_dns_over_tls = encoded.port_dns_over_tls || 0;
+        encoded.port_dns_over_quic = encoded.port_dns_over_quic || 0;
         const data = await apiClient.validateTlsConfig(encoded);
         const decoded = decodeResponse(data);
         setState({ ...decoded, processingValidate: false });
@@ -148,6 +153,22 @@ export const validateTlsConfig = async (values: any) => {
         addErrorToast({ error });
         setState('processingValidate', false);
     }
+};
+
+export const resetValidationStatus = () => {
+    setState({
+        warning_validation: '',
+        valid_chain: false,
+        valid_cert: false,
+        valid_key: false,
+        valid_pair: false,
+        subject: '',
+        issuer: '',
+        key_type: '',
+        not_after: '',
+        not_before: '',
+        dns_names: null,
+    });
 };
 
 export const encryptionState = untrack(() => state);

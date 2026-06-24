@@ -44,7 +44,7 @@ export const DEFAULT_BLOCKING_IPV6 = '::';
 const BLOCKING_MODES = { default: 'default' };
 
 const initialState: DnsConfigState = {
-    processingGetConfig: false,
+    processingGetConfig: true,
     processingSetConfig: false,
     blocking_mode: BLOCKING_MODES.default,
     ratelimit: 20,

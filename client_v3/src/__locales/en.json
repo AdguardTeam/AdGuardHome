@@ -213,6 +213,8 @@
   "settings_rule_syntax": "Rule syntax",
   "form_error_required": "Please fill out this field",
   "form_value_length_common_error": "This value should be less than or equal to %max_length%",
+  "form_value_value_between_error": "This value should be between %min_value% and %max_value%",
+  "form_value_value_min_error": "This value should be %min_value% or higher",
   "save": "Save",
   "cancel": "Cancel",
   "close": "Close",

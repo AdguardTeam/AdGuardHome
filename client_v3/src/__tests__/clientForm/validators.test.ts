@@ -13,6 +13,9 @@ import {
     validatePasswordLength,
     validateIpNotDuplicate,
     validateIpPerLine,
+    validateMaxValue,
+    validateBetween,
+    validateMinValue,
 } from 'panel/helpers/validators';
 
 describe('validateIdentifier', () => {
@@ -368,5 +371,27 @@ describe('validateIpPerLine', () => {
 
     it('skips blank lines between valid IPs', () => {
         expect(validateIpPerLine('192.168.1.1\n\n10.0.0.1')).toBeUndefined();
+    });
+});
+
+describe('numeric range validators', () => {
+    it('validateMaxValue returns error when value exceeds max', () => {
+        expect(validateMaxValue(5, 4)).toBeTruthy();
+        expect(validateMaxValue(4, 4)).toBeUndefined();
+        expect(validateMaxValue(0, 4)).toBeUndefined();
+    });
+
+    it('validateBetween returns error when value is out of range', () => {
+        expect(validateBetween(-1, 0, 32)).toBeTruthy();
+        expect(validateBetween(33, 0, 32)).toBeTruthy();
+        expect(validateBetween(0, 0, 32)).toBeUndefined();
+        expect(validateBetween(32, 0, 32)).toBeUndefined();
+        expect(validateBetween(16, 0, 32)).toBeUndefined();
+    });
+
+    it('validateMinValue returns error when value is below min', () => {
+        expect(validateMinValue(0, 1)).toBeTruthy();
+        expect(validateMinValue(1, 1)).toBeUndefined();
+        expect(validateMinValue(10, 1)).toBeUndefined();
     });
 });

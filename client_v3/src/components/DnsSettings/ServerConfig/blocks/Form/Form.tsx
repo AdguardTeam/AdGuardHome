@@ -3,13 +3,21 @@ import cn from 'clsx';
 
 import intl from 'panel/common/intl';
 import {
+    validateBetween,
     validateIp,
     validateIpPerLine,
     validateIpv4,
     validateIpv6,
+    validateMaxValue,
     validateRequiredValue,
 } from 'panel/helpers/validators';
-import { BLOCKING_MODES, UINT32_RANGE } from 'panel/helpers/constants';
+import {
+    BLOCKING_MODES,
+    IPV4_SUBNET_PREFIX,
+    IPV6_SUBNET_PREFIX,
+    RATE_LIMIT,
+    UINT32_RANGE,
+} from 'panel/helpers/constants';
 import { Checkbox } from 'panel/common/controls/Checkbox';
 import { Input } from 'panel/common/controls/Input';
 import { Textarea } from 'panel/common/controls/Textarea';
@@ -142,9 +150,29 @@ export const Form = (props: Props) => {
     const [ttlError, setTtlError] = createSignal('');
 
     const validateAll = () => {
-        setRatelimitError(validateRequiredValue(String(ratelimit())) || '');
-        setSubnetIpv4Error(validateRequiredValue(String(ratelimitSubnetIpv4())) || '');
-        setSubnetIpv6Error(validateRequiredValue(String(ratelimitSubnetIpv6())) || '');
+        setRatelimitError(
+            validateRequiredValue(String(ratelimit())) ||
+                validateMaxValue(ratelimit(), RATE_LIMIT.MAX) ||
+                '',
+        );
+        setSubnetIpv4Error(
+            validateRequiredValue(String(ratelimitSubnetIpv4())) ||
+                validateBetween(
+                    ratelimitSubnetIpv4(),
+                    IPV4_SUBNET_PREFIX.MIN,
+                    IPV4_SUBNET_PREFIX.MAX,
+                ) ||
+                '',
+        );
+        setSubnetIpv6Error(
+            validateRequiredValue(String(ratelimitSubnetIpv6())) ||
+                validateBetween(
+                    ratelimitSubnetIpv6(),
+                    IPV6_SUBNET_PREFIX.MIN,
+                    IPV6_SUBNET_PREFIX.MAX,
+                ) ||
+                '',
+        );
         setWhitelistError(
             ratelimitWhitelist() ? validateIpPerLine(ratelimitWhitelist()) || '' : '',
         );
@@ -210,7 +238,11 @@ export const Form = (props: Props) => {
                             setRatelimit(Number((e.target as HTMLInputElement).value))
                         }
                         onBlur={() =>
-                            setRatelimitError(validateRequiredValue(String(ratelimit())) || '')
+                            setRatelimitError(
+                                validateRequiredValue(String(ratelimit())) ||
+                                    validateMaxValue(ratelimit(), RATE_LIMIT.MAX) ||
+                                    '',
+                            )
                         }
                         data-testid="dns_config_ratelimit"
                         type="number"
@@ -238,7 +270,13 @@ export const Form = (props: Props) => {
                         }
                         onBlur={() =>
                             setSubnetIpv4Error(
-                                validateRequiredValue(String(ratelimitSubnetIpv4())) || '',
+                                validateRequiredValue(String(ratelimitSubnetIpv4())) ||
+                                    validateBetween(
+                                        ratelimitSubnetIpv4(),
+                                        IPV4_SUBNET_PREFIX.MIN,
+                                        IPV4_SUBNET_PREFIX.MAX,
+                                    ) ||
+                                    '',
                             )
                         }
                         data-testid="dns_config_subnet_ipv4"
@@ -267,7 +305,13 @@ export const Form = (props: Props) => {
                         }
                         onBlur={() =>
                             setSubnetIpv6Error(
-                                validateRequiredValue(String(ratelimitSubnetIpv6())) || '',
+                                validateRequiredValue(String(ratelimitSubnetIpv6())) ||
+                                    validateBetween(
+                                        ratelimitSubnetIpv6(),
+                                        IPV6_SUBNET_PREFIX.MIN,
+                                        IPV6_SUBNET_PREFIX.MAX,
+                                    ) ||
+                                    '',
                             )
                         }
                         data-testid="dns_config_subnet_ipv6"

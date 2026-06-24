@@ -10,8 +10,8 @@ import { Checkbox } from 'panel/common/controls/Checkbox';
 import { Button } from 'panel/common/ui/Button';
 import { FaqTooltip } from 'panel/common/ui/FaqTooltip';
 import intl from 'panel/common/intl';
-import { DNS_REQUEST_OPTIONS, UINT32_RANGE } from 'panel/helpers/constants';
-import { validateUpstreams } from 'panel/helpers/validators';
+import { DNS_REQUEST_OPTIONS, UINT32_RANGE, UPSTREAM_TIMEOUT } from 'panel/helpers/constants';
+import { validateMinValue, validateUpstreams } from 'panel/helpers/validators';
 import theme from 'panel/lib/theme';
 
 import { Examples } from '../Examples';
@@ -58,6 +58,7 @@ export const Form = (props: FormProps) => {
     const [fallbackDnsError, setFallbackDnsError] = createSignal('');
     const [bootstrapDnsError, setBootstrapDnsError] = createSignal('');
     const [localPtrError, setLocalPtrError] = createSignal('');
+    const [upstreamTimeoutError, setUpstreamTimeoutError] = createSignal('');
 
     const upstreamModeOptions = createMemo(() => [
         {
@@ -122,14 +123,26 @@ export const Form = (props: FormProps) => {
         setLocalPtrError(err || '');
     };
 
+    const validateUpstreamTimeout = () => {
+        const err = validateMinValue(upstreamTimeout(), UPSTREAM_TIMEOUT.MIN);
+        setUpstreamTimeoutError(err || '');
+    };
+
     const handleSubmit = (e: Event) => {
         e.preventDefault();
         validateUpstreamDns();
         validateFallbackDns();
         validateBootstrapDns();
         validateLocalPtr();
+        validateUpstreamTimeout();
 
-        if (upstreamDnsError() || fallbackDnsError() || bootstrapDnsError() || localPtrError()) {
+        if (
+            upstreamDnsError() ||
+            fallbackDnsError() ||
+            bootstrapDnsError() ||
+            localPtrError() ||
+            upstreamTimeoutError()
+        ) {
             return;
         }
 
@@ -354,6 +367,7 @@ export const Form = (props: FormProps) => {
                         onChange={(e: Event) =>
                             setUpstreamTimeout(Number((e.target as HTMLInputElement).value))
                         }
+                        onBlur={validateUpstreamTimeout}
                         type="number"
                         id="upstream_timeout"
                         label={
@@ -366,7 +380,8 @@ export const Form = (props: FormProps) => {
                             </>
                         }
                         placeholder={intl.getMessage('upstream_timeout_placeholder')}
-                        min={1}
+                        errorMessage={upstreamTimeoutError()}
+                        min={UPSTREAM_TIMEOUT.MIN}
                         max={UINT32_RANGE.MAX}
                     />
                 </div>

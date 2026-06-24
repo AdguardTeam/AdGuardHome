@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { translate } from '@adguard/translate';
 import { createSolidDefaultValues, solidMessageConstructor } from '../common/intl/index';
 
@@ -122,5 +122,86 @@ describe('createSolidDefaultValues', () => {
 
         const pResult = t.getMessage('with_p');
         expect(Array.isArray(pResult)).toBe(true);
+    });
+});
+
+describe('intl.getMessage — missing placeholder fallback', () => {
+    it('returns the raw key and warns when a placeholder value is missing', () => {
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+        const t = translate.createTranslator<any>(
+            mockI18n('en'),
+            solidMessageConstructor,
+            createSolidDefaultValues(),
+        );
+
+        // Mirror the try-catch pattern from intl's getMessage
+        const safeGetMessage = (key: string, values?: any) => {
+            try {
+                return t.getMessage(key, values);
+            } catch (e) {
+                console.warn('[i18n] Missing placeholder value for key:', key, e);
+                return key;
+            }
+        };
+
+        // 'plain_only' has %name% but we pass no values → should return the key
+        const result = safeGetMessage('plain_only');
+        expect(result).toBe('plain_only');
+        expect(warnSpy).toHaveBeenCalledTimes(1);
+        expect(warnSpy.mock.calls[0][1]).toBe('plain_only');
+
+        warnSpy.mockRestore();
+    });
+
+    it('still returns formatted string when all values are provided', () => {
+        const t = translate.createTranslator<any>(
+            mockI18n('en'),
+            solidMessageConstructor,
+            createSolidDefaultValues(),
+        );
+
+        const safeGetMessage = (key: string, values?: any) => {
+            try {
+                return t.getMessage(key, values);
+            } catch {
+                return key;
+            }
+        };
+
+        const result = safeGetMessage('plain_only', { name: 'World' });
+        expect(result).toBe('Hello World');
+    });
+
+    it('returns the raw key when getPlural is missing a required placeholder', () => {
+        const mockPluralI18n = (locale: string): any => ({
+            getMessage: (key: string) => {
+                const messages: Record<string, string> = {
+                    plural_with_value: 'Found %count% results for %query%',
+                };
+                return messages[key] || '';
+            },
+            getUILanguage: () => locale,
+            getBaseMessage: (key: string) => mockPluralI18n('en').getMessage(key),
+            getBaseUILanguage: () => 'en',
+        });
+
+        const pt = translate.createTranslator<any>(
+            mockPluralI18n('en'),
+            solidMessageConstructor,
+            createSolidDefaultValues(),
+        );
+
+        const safeGetPlural = (key: string, number: number, values?: any) => {
+            try {
+                return pt.getPlural(key, number, values);
+            } catch {
+                return key;
+            }
+        };
+
+        // 'query' is missing from values → should return the key
+        const result = safeGetPlural('plural_with_value', 5);
+        expect(result).toBe('plural_with_value');
     });
 });

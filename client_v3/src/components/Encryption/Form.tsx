@@ -9,21 +9,11 @@ import {
     ENCRYPTION_SOURCE,
 } from 'panel/helpers/constants';
 import { EncryptionData } from 'panel/initialState';
-import {
-    validateServerName,
-    validateIsSafePort,
-    validatePort,
-    validatePortQuic,
-    validatePortTLS,
-    validatePlainDns,
-    validateRequiredValue,
-    validatePath,
-} from 'panel/helpers/validators';
 import { Checkbox } from 'panel/common/controls/Checkbox';
 import { Input } from 'panel/common/controls/Input';
 import { Radio } from 'panel/common/controls/Radio';
 import { Textarea } from 'panel/common/controls/Textarea';
-import { setTlsConfig, validateTlsConfig } from 'panel/stores/encryption';
+import { setTlsConfig, validateTlsConfig, resetValidationStatus } from 'panel/stores/encryption';
 import { Button } from 'panel/common/ui/Button';
 import intl from 'panel/common/intl';
 import { SwitchGroup } from 'panel/common/ui/SettingsGroup';
@@ -33,24 +23,11 @@ import { FaqTooltip } from 'panel/common/ui/FaqTooltip';
 import { ConfirmDialog } from 'panel/common/ui/ConfirmDialog';
 import { KeyStatus, CertificateStatus, ValidationStatus } from './Status';
 
+import { validateEncryptionForm, type EncryptionFormValues } from './validate';
+
 import s from './styles.module.pcss';
 
-export type EncryptionFormValues = {
-    enabled?: boolean;
-    serve_plain_dns?: boolean;
-    server_name?: string;
-    force_https?: boolean;
-    port_https?: number;
-    port_dns_over_tls?: number;
-    port_dns_over_quic?: number;
-    certificate_chain?: string;
-    private_key?: string;
-    certificate_path?: string;
-    private_key_path?: string;
-    certificate_source?: string;
-    key_source?: string;
-    private_key_saved?: boolean;
-};
+export type { EncryptionFormValues } from './validate';
 
 type Props = {
     initialValues: EncryptionFormValues;
@@ -136,8 +113,6 @@ export const Form = (props: Props) => {
         },
     ]);
 
-    const [isSubmitting, setIsSubmitting] = createSignal(false);
-
     const enc = () => props.encryption;
 
     const getFormValues = (): EncryptionFormValues => ({
@@ -157,12 +132,29 @@ export const Form = (props: Props) => {
         private_key_saved: privateKeySaved(),
     });
 
+    const clearError = (field: string) => {
+        setErrors((prev) => {
+            if (!(field in prev)) return prev;
+            const next = { ...prev };
+            delete next[field];
+            return next;
+        });
+    };
+
     const handleBlur = () => {
-        props.debouncedConfigValidation(getFormValues());
+        const values = getFormValues();
+        // Full replace: recomputes every rule, which also clears any field
+        // error that is no longer applicable.
+        const errs = validateEncryptionForm(values);
+        setErrors(errs);
+        // Do not hit the backend when client-side validation already fails —
+        // required fields missing or invalid ports are handled locally.
+        if (Object.keys(errs).length > 0) return;
+        props.debouncedConfigValidation(values);
     };
 
     const isSavingDisabled = createMemo(() => {
-        const processing = isSubmitting() || enc().processingConfig || enc().processingValidate;
+        const processing = enc().processingConfig || enc().processingValidate;
         const errs = errors();
         const hasErrors = Object.keys(errs).length > 0;
         return hasErrors || processing;
@@ -188,107 +180,17 @@ export const Form = (props: Props) => {
         setOpenConfirmReset(false);
     };
 
-    const validatePorts = (values: EncryptionFormValues) => {
-        const errs: Record<string, string> = {};
-        if (values.port_dns_over_tls && values.port_https) {
-            if (values.port_dns_over_tls === values.port_https) {
-                errs.port_dns_over_tls = intl.getMessage('form_error_equal');
-                errs.port_https = intl.getMessage('form_error_equal');
-            }
-        }
-        return errs;
-    };
-
     const onFormSubmit = (e: Event) => {
         e.preventDefault();
-        setIsSubmitting(true);
         const data = getFormValues();
 
-        // Validate server name
-        const serverNameErr = validateServerName(serverName());
-        if (serverNameErr) {
-            setErrors((prev) => ({ ...prev, server_name: serverNameErr }));
-            setIsSubmitting(false);
+        const errs = validateEncryptionForm(data);
+        if (Object.keys(errs).length > 0) {
+            setErrors(errs);
             return;
-        }
-
-        // Validate ports — collect ALL port errors first, then guard once
-        const portErrors: Record<string, string> = {};
-
-        const portHttpsErr = validatePort(portHttps()) || validateIsSafePort(portHttps());
-        if (portHttpsErr) {
-            portErrors.port_https = portHttpsErr as string;
-        }
-
-        const portDotErr = validatePortTLS(portDot());
-        if (portDotErr) {
-            portErrors.port_dns_over_tls = portDotErr as string;
-        }
-
-        const portDoqErr = validatePortQuic(portDoq());
-        if (portDoqErr) {
-            portErrors.port_dns_over_quic = portDoqErr as string;
-        }
-
-        // Also check port equality
-        const portEqualityErrors = validatePorts(data);
-        Object.assign(portErrors, portEqualityErrors);
-
-        // Single early return for ALL port errors
-        if (Object.keys(portErrors).length > 0) {
-            setErrors((prev) => ({ ...prev, ...portErrors }));
-            setIsSubmitting(false);
-            return;
-        }
-
-        // Validate plain DNS
-        const plainDnsErr = validatePlainDns(servePlainDns(), data);
-        if (plainDnsErr) {
-            setErrors((prev) => ({ ...prev, serve_plain_dns: plainDnsErr as string }));
-            setIsSubmitting(false);
-            return;
-        }
-
-        // Validate certificate/key fields when encryption is enabled
-        if (enabled()) {
-            const certKeyErrors: Record<string, string> = {};
-
-            if (certSource() === ENCRYPTION_SOURCE.CONTENT) {
-                const certErr = validateRequiredValue(certChain());
-                if (certErr) {
-                    certKeyErrors.certificate_chain = certErr;
-                }
-            } else {
-                const certPathErr = validateRequiredValue(certPath()) || validatePath(certPath());
-                if (certPathErr) {
-                    certKeyErrors.certificate_path = certPathErr;
-                }
-            }
-
-            if (!privateKeySaved()) {
-                if (keySource() === ENCRYPTION_SOURCE.CONTENT) {
-                    const keyErr = validateRequiredValue(privateKey());
-                    if (keyErr) {
-                        certKeyErrors.private_key = keyErr;
-                    }
-                } else {
-                    const keyPathErr =
-                        validateRequiredValue(privateKeyPath()) || validatePath(privateKeyPath());
-                    if (keyPathErr) {
-                        certKeyErrors.private_key_path = keyPathErr;
-                    }
-                }
-            }
-
-            if (Object.keys(certKeyErrors).length > 0) {
-                setErrors((prev) => ({ ...prev, ...certKeyErrors }));
-                setIsSubmitting(false);
-                return;
-            }
         }
 
         setErrors({});
-        setIsSubmitting(false);
 
         if (data.serve_plain_dns === false) {
             setStagedFormValues(data);
@@ -340,6 +242,7 @@ export const Form = (props: Props) => {
                         <Input
                             type="text"
                             name="server_name"
+                            data-testid="server_name"
                             value={serverName()}
                             onChange={(e: Event) =>
                                 setServerName((e.target as HTMLInputElement).value)
@@ -373,6 +276,7 @@ export const Form = (props: Props) => {
                         <Input
                             type="number"
                             name="port_https"
+                            data-testid="port_https"
                             value={portHttps()}
                             onChange={(e: Event) => {
                                 setPortHttps(toNumber((e.target as HTMLInputElement).value));
@@ -397,6 +301,7 @@ export const Form = (props: Props) => {
                         <Input
                             type="number"
                             name="port_dns_over_tls"
+                            data-testid="port_dns_over_tls"
                             value={portDot()}
                             onChange={(e: Event) => {
                                 setPortDot(toNumber((e.target as HTMLInputElement).value));
@@ -421,6 +326,7 @@ export const Form = (props: Props) => {
                         <Input
                             type="number"
                             name="port_dns_over_quic"
+                            data-testid="port_dns_over_quic"
                             value={portDoq()}
                             onChange={(e: Event) => {
                                 setPortDoq(toNumber((e.target as HTMLInputElement).value));
@@ -483,7 +389,12 @@ export const Form = (props: Props) => {
             <div class={theme.form.group}>
                 <Radio
                     value={certSource()}
-                    handleChange={(v: string) => setCertSource(v)}
+                    handleChange={(v: string) => {
+                        setCertSource(v);
+                        clearError('certificate_chain');
+                        clearError('certificate_path');
+                        resetValidationStatus();
+                    }}
                     name="certificate_source"
                     options={certificateSourceOptions()}
                     disabled={!enabled()}
@@ -496,10 +407,13 @@ export const Form = (props: Props) => {
                             <Input
                                 type="text"
                                 name="certificate_path"
+                                data-testid="certificate_path"
                                 value={certPath()}
-                                onChange={(e: Event) =>
-                                    setCertPath((e.target as HTMLInputElement).value)
-                                }
+                                onChange={(e: Event) => {
+                                    setCertPath((e.target as HTMLInputElement).value);
+                                    clearError('certificate_path');
+                                    resetValidationStatus();
+                                }}
                                 placeholder={intl.getMessage('encryption_certificate_path')}
                                 errorMessage={errors().certificate_path}
                                 disabled={!enabled()}
@@ -510,10 +424,13 @@ export const Form = (props: Props) => {
                     >
                         <Textarea
                             name="certificate_chain"
+                            data-testid="certificate_chain"
                             value={certChain()}
-                            onChange={(e: Event) =>
-                                setCertChain((e.target as HTMLTextAreaElement).value)
-                            }
+                            onChange={(e: Event) => {
+                                setCertChain((e.target as HTMLTextAreaElement).value);
+                                clearError('certificate_chain');
+                                resetValidationStatus();
+                            }}
                             placeholder={intl.getMessage('encryption_certificates_input')}
                             disabled={!enabled()}
                             errorMessage={errors().certificate_chain}
@@ -533,7 +450,12 @@ export const Form = (props: Props) => {
             <div class={theme.form.group}>
                 <Radio
                     value={keySource()}
-                    handleChange={(v: string) => setKeySource(v)}
+                    handleChange={(v: string) => {
+                        setKeySource(v);
+                        clearError('private_key');
+                        clearError('private_key_path');
+                        resetValidationStatus();
+                    }}
                     name="key_source"
                     options={keySourceOptions()}
                     disabled={!enabled()}
@@ -563,10 +485,13 @@ export const Form = (props: Props) => {
                             <Input
                                 type="text"
                                 name="private_key_path"
+                                data-testid="private_key_path"
                                 value={privateKeyPath()}
-                                onChange={(e: Event) =>
-                                    setPrivateKeyPath((e.target as HTMLInputElement).value)
-                                }
+                                onChange={(e: Event) => {
+                                    setPrivateKeyPath((e.target as HTMLInputElement).value);
+                                    clearError('private_key_path');
+                                    resetValidationStatus();
+                                }}
                                 placeholder={intl.getMessage('encryption_private_key_path')}
                                 errorMessage={errors().private_key_path}
                                 disabled={!enabled()}
@@ -577,10 +502,13 @@ export const Form = (props: Props) => {
                     >
                         <Textarea
                             name="private_key"
+                            data-testid="private_key"
                             value={privateKey()}
-                            onChange={(e: Event) =>
-                                setPrivateKey((e.target as HTMLTextAreaElement).value)
-                            }
+                            onChange={(e: Event) => {
+                                setPrivateKey((e.target as HTMLTextAreaElement).value);
+                                clearError('private_key');
+                                resetValidationStatus();
+                            }}
                             placeholder={intl.getMessage('encryption_key_input')}
                             disabled={!enabled() || privateKeySaved()}
                             errorMessage={errors().private_key}
@@ -610,7 +538,7 @@ export const Form = (props: Props) => {
                     type="button"
                     variant="secondary-danger"
                     size="small"
-                    disabled={isSubmitting() || enc().processingConfig}
+                    disabled={enc().processingConfig}
                     onClick={() => setOpenConfirmReset(true)}
                     class={theme.form.button}
                 >

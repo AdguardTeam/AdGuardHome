@@ -9,6 +9,7 @@ import { ONE_SECOND_IN_MS, HOUR, DAY, STATS_INTERVALS_DAYS } from 'panel/helpers
 
 import { Header, getPeriodLabel } from './blocks/Header/Header';
 import { StatCards } from './blocks/StatCards';
+import { EmptyState } from './blocks/EmptyState/EmptyState';
 import { GeneralStatistics } from './blocks/GeneralStatistics';
 import { TopClients } from './blocks/TopClients';
 import { TopQueriedDomains } from './blocks/TopQueriedDomains';
@@ -152,41 +153,46 @@ export const Dashboard = () => {
                         replacedParental={statsState.replacedParental}
                     />
 
-                    <div class={s.statContainer}>
-                        <GeneralStatistics
-                            numDnsQueries={statsState.numDnsQueries}
-                            numBlockedFiltering={statsState.numBlockedFiltering}
-                            numReplacedSafebrowsing={statsState.numReplacedSafebrowsing}
-                            numReplacedParental={statsState.numReplacedParental}
-                            numReplacedSafesearch={statsState.numReplacedSafesearch}
-                            avgProcessingTime={statsState.avgProcessingTime}
-                        />
+                    <Show
+                        when={statsState.enabled}
+                        fallback={<EmptyState mode="disabled" class={s.emptyState} />}
+                    >
+                        <div class={s.statContainer}>
+                            <GeneralStatistics
+                                numDnsQueries={statsState.numDnsQueries}
+                                numBlockedFiltering={statsState.numBlockedFiltering}
+                                numReplacedSafebrowsing={statsState.numReplacedSafebrowsing}
+                                numReplacedParental={statsState.numReplacedParental}
+                                numReplacedSafesearch={statsState.numReplacedSafesearch}
+                                avgProcessingTime={statsState.avgProcessingTime}
+                            />
 
-                        <TopClients
-                            topClients={statsState.topClients}
-                            numDnsQueries={statsState.numDnsQueries}
-                        />
+                            <TopClients
+                                topClients={statsState.topClients}
+                                numDnsQueries={statsState.numDnsQueries}
+                            />
 
-                        <TopQueriedDomains
-                            topQueriedDomains={statsState.topQueriedDomains}
-                            numDnsQueries={statsState.numDnsQueries}
-                        />
+                            <TopQueriedDomains
+                                topQueriedDomains={statsState.topQueriedDomains}
+                                numDnsQueries={statsState.numDnsQueries}
+                            />
 
-                        <TopBlockedDomains
-                            topBlockedDomains={statsState.topBlockedDomains}
-                            numBlockedFiltering={statsState.numBlockedFiltering}
-                        />
+                            <TopBlockedDomains
+                                topBlockedDomains={statsState.topBlockedDomains}
+                                numBlockedFiltering={statsState.numBlockedFiltering}
+                            />
 
-                        <TopUpstreams
-                            topUpstreamsResponses={statsState.topUpstreamsResponses}
-                            numDnsQueries={statsState.numDnsQueries}
-                        />
+                            <TopUpstreams
+                                topUpstreamsResponses={statsState.topUpstreamsResponses}
+                                numDnsQueries={statsState.numDnsQueries}
+                            />
 
-                        <UpstreamAvgTime
-                            topUpstreamsAvgTime={statsState.topUpstreamsAvgTime}
-                            avgProcessingTime={statsState.avgProcessingTime}
-                        />
-                    </div>
+                            <UpstreamAvgTime
+                                topUpstreamsAvgTime={statsState.topUpstreamsAvgTime}
+                                avgProcessingTime={statsState.avgProcessingTime}
+                            />
+                        </div>
+                    </Show>
                 </Show>
             </div>
         </div>

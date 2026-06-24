@@ -492,6 +492,26 @@ export const RETENTION_RANGE = {
     MAX: 365 * 24,
 };
 
+export const RATE_LIMIT = {
+    MIN: 0,
+    MAX: UINT32_RANGE.MAX,
+};
+
+export const IPV4_SUBNET_PREFIX = {
+    MIN: 0,
+    MAX: 32,
+};
+
+export const IPV6_SUBNET_PREFIX = {
+    MIN: 0,
+    MAX: 128,
+};
+
+export const UPSTREAM_TIMEOUT = {
+    MIN: 1,
+    MAX: UINT32_RANGE.MAX,
+};
+
 export const DHCP_VALUES_PLACEHOLDERS = {
     ipv4: {
         subnet_mask: '255.255.255.0',
