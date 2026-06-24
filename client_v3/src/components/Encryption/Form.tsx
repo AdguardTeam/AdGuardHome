@@ -16,6 +16,8 @@ import {
     validatePortQuic,
     validatePortTLS,
     validatePlainDns,
+    validateRequiredValue,
+    validatePath,
 } from 'panel/helpers/validators';
 import { Checkbox } from 'panel/common/controls/Checkbox';
 import { Input } from 'panel/common/controls/Input';
@@ -163,14 +165,7 @@ export const Form = (props: Props) => {
         const processing = isSubmitting() || enc().processingConfig || enc().processingValidate;
         const errs = errors();
         const hasErrors = Object.keys(errs).length > 0;
-
-        if (servePlainDns() && !enabled()) {
-            return hasErrors || processing;
-        }
-
-        return (
-            hasErrors || processing || !enc().valid_key || !enc().valid_cert || !enc().valid_pair
-        );
+        return hasErrors || processing;
     });
 
     const handleReset = () => {
@@ -213,28 +208,35 @@ export const Form = (props: Props) => {
         const serverNameErr = validateServerName(serverName());
         if (serverNameErr) {
             setErrors((prev) => ({ ...prev, server_name: serverNameErr }));
+            setIsSubmitting(false);
             return;
         }
 
-        // Validate ports
+        // Validate ports — collect ALL port errors first, then guard once
+        const portErrors: Record<string, string> = {};
+
         const portHttpsErr = validatePort(portHttps()) || validateIsSafePort(portHttps());
         if (portHttpsErr) {
-            setErrors((prev) => ({ ...prev, port_https: portHttpsErr as string }));
+            portErrors.port_https = portHttpsErr as string;
         }
 
         const portDotErr = validatePortTLS(portDot());
         if (portDotErr) {
-            setErrors((prev) => ({ ...prev, port_dns_over_tls: portDotErr as string }));
+            portErrors.port_dns_over_tls = portDotErr as string;
         }
 
         const portDoqErr = validatePortQuic(portDoq());
         if (portDoqErr) {
-            setErrors((prev) => ({ ...prev, port_dns_over_quic: portDoqErr as string }));
+            portErrors.port_dns_over_quic = portDoqErr as string;
         }
 
-        const validationErrors = validatePorts(data);
-        if (Object.keys(validationErrors).length > 0) {
-            setErrors((prev) => ({ ...prev, ...validationErrors }));
+        // Also check port equality
+        const portEqualityErrors = validatePorts(data);
+        Object.assign(portErrors, portEqualityErrors);
+
+        // Single early return for ALL port errors
+        if (Object.keys(portErrors).length > 0) {
+            setErrors((prev) => ({ ...prev, ...portErrors }));
             setIsSubmitting(false);
             return;
         }
@@ -245,6 +247,44 @@ export const Form = (props: Props) => {
             setErrors((prev) => ({ ...prev, serve_plain_dns: plainDnsErr as string }));
             setIsSubmitting(false);
             return;
+        }
+
+        // Validate certificate/key fields when encryption is enabled
+        if (enabled()) {
+            const certKeyErrors: Record<string, string> = {};
+
+            if (certSource() === ENCRYPTION_SOURCE.CONTENT) {
+                const certErr = validateRequiredValue(certChain());
+                if (certErr) {
+                    certKeyErrors.certificate_chain = certErr;
+                }
+            } else {
+                const certPathErr = validateRequiredValue(certPath()) || validatePath(certPath());
+                if (certPathErr) {
+                    certKeyErrors.certificate_path = certPathErr;
+                }
+            }
+
+            if (!privateKeySaved()) {
+                if (keySource() === ENCRYPTION_SOURCE.CONTENT) {
+                    const keyErr = validateRequiredValue(privateKey());
+                    if (keyErr) {
+                        certKeyErrors.private_key = keyErr;
+                    }
+                } else {
+                    const keyPathErr =
+                        validateRequiredValue(privateKeyPath()) || validatePath(privateKeyPath());
+                    if (keyPathErr) {
+                        certKeyErrors.private_key_path = keyPathErr;
+                    }
+                }
+            }
+
+            if (Object.keys(certKeyErrors).length > 0) {
+                setErrors((prev) => ({ ...prev, ...certKeyErrors }));
+                setIsSubmitting(false);
+                return;
+            }
         }
 
         setErrors({});

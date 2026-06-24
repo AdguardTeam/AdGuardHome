@@ -32,6 +32,7 @@ export const Textarea = (props: Props) => {
                     props.class,
                 )}
                 id={props.id}
+                name={props.name}
                 placeholder={props.placeholder}
                 value={props.value as string}
                 cols={props.cols}

@@ -26,20 +26,16 @@ import type { CheckFormValues } from './types';
 import s from './UserRules.module.pcss';
 
 export const UserRules = () => {
-    // Local signals
     const [lastSubmittedCheck, setLastSubmittedCheck] = createSignal<CheckFormValues | null>(null);
     const [isResultVisible, setIsResultVisible] = createSignal(false);
     const [isResultRefreshing, setIsResultRefreshing] = createSignal(false);
 
-    // User rules form
     const [userRulesValue, setUserRulesValue] = createSignal(filteringState.userRules || '');
 
-    // Check form
     const [checkHostname, setCheckHostname] = createSignal('');
     const [checkClient, setCheckClient] = createSignal('');
     const [checkQtype, setCheckQtype] = createSignal(DNS_RECORD_TYPE_OPTIONS[0].value);
 
-    // Derived state
     const isActionProcessing = createMemo(
         () =>
             filteringState.processingRules ||
@@ -71,7 +67,6 @@ export const UserRules = () => {
         setIsResultVisible,
     });
 
-    // Initialize data on mount
     onMount(async () => {
         await Promise.all([
             getFilteringStatus(),
@@ -83,14 +78,12 @@ export const UserRules = () => {
         ]);
     });
 
-    // Sync checkResult visibility
     createEffect(() => {
         if (filteringState.check?.hostname) {
             setIsResultVisible(true);
         }
     });
 
-    // Sync userRules from store
     createEffect(() => {
         setUserRulesValue(filteringState.userRules || '');
     });

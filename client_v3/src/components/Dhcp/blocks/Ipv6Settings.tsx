@@ -6,6 +6,7 @@ import theme from 'panel/lib/theme';
 import { Input } from 'panel/common/controls/Input';
 import { Button } from 'panel/common/ui/Button';
 import type { DhcpInterfaces } from 'panel/initialState';
+import { validateIpv6 } from 'panel/helpers/validators';
 
 import s from '../Dhcp.module.pcss';
 
@@ -26,6 +27,8 @@ export const Ipv6Settings = (props: Props) => {
     const [rangeStart, setRangeStart] = createSignal('');
     const [leaseDuration, setLeaseDuration] = createSignal('');
 
+    const [rangeStartError, setRangeStartError] = createSignal('');
+
     // Sync with props
     createEffect(() => {
         setRangeStart(props.v6?.range_start || '');
@@ -38,10 +41,21 @@ export const Ipv6Settings = (props: Props) => {
 
     const isEmptyConfig = createMemo(() => !rangeStart() && !leaseDuration());
 
+    const validateRangeStart = () => {
+        const err = validateIpv6(rangeStart());
+        setRangeStartError(err || '');
+    };
+
     const handleSubmit = (e: Event) => {
         e.preventDefault();
+        validateRangeStart();
+
+        if (rangeStartError()) {
+            return;
+        }
+
         props.onSave({
-            range_start: rangeStart(),
+            range_start: rangeStart().trim(),
             lease_duration: leaseDuration() ? Number(leaseDuration()) : 0,
         });
     };
@@ -61,6 +75,8 @@ export const Ipv6Settings = (props: Props) => {
                             onChange={(e: Event) =>
                                 setRangeStart((e.target as HTMLInputElement).value)
                             }
+                            onBlur={validateRangeStart}
+                            errorMessage={rangeStartError()}
                             disabled={!hasIpv6()}
                         />
                     </div>

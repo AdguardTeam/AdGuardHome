@@ -315,7 +315,8 @@ export const checkHost = async (
     setState('processingCheck', true);
     try {
         const data = await apiClient.checkHost(host);
-        setState({ check: data, processingCheck: false });
+        const hostname = typeof host === 'string' ? host : host.name;
+        setState({ check: { hostname, ...data }, processingCheck: false });
         return true;
     } catch (error) {
         addErrorToast({ error });

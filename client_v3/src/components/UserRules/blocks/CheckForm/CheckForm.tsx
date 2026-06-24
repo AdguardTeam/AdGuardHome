@@ -6,61 +6,55 @@ import { Input } from 'panel/common/controls/Input';
 import { Select } from 'panel/common/controls/Select';
 import { Button } from 'panel/common/ui/Button';
 import theme from 'panel/lib/theme';
-import { type CheckFormValues, DNS_RECORD_TYPE_OPTIONS } from '../../types';
+import { DNS_RECORD_TYPE_OPTIONS } from '../../types';
 
 import s from './CheckForm.module.pcss';
 
 type Props = {
-    onSubmit?: (data: CheckFormValues) => void;
-    hostname?: string;
-    client?: string;
-    qtype?: string;
-    onHostnameChange?: (value: string) => void;
-    onClientChange?: (value: string) => void;
-    onQtypeChange?: (value: string) => void;
-    handleSubmit?: () => void | Promise<void>;
+    hostname: string;
+    client: string;
+    qtype: string;
+    onHostnameChange: (value: string) => void;
+    onClientChange: (value: string) => void;
+    onQtypeChange: (value: string) => void;
+    handleSubmit: () => void | Promise<void>;
     processingCheck: boolean;
 };
 
 export const CheckForm = (props: Props) => {
-    const [hostname, setHostname] = createSignal('');
-    const [client, setClient] = createSignal('');
-    const [qtype, setQtype] = createSignal('');
-
     const [hostnameError, setHostnameError] = createSignal<string | undefined>();
     const [qtypeError, setQtypeError] = createSignal<string | undefined>();
 
-    const isValid = () => !!hostname() && !!qtype() && !hostnameError() && !qtypeError();
+    const isValid = () => !!props.hostname && !!props.qtype && !hostnameError() && !qtypeError();
 
     const handleSubmit = (e: Event) => {
         e.preventDefault();
 
-        // Validate
-        if (!hostname()) {
+        if (!props.hostname) {
             setHostnameError(intl.getMessage('form_error_required'));
             return;
         }
-        if (!qtype()) {
+        if (!props.qtype) {
             setQtypeError(intl.getMessage('form_error_required'));
             return;
         }
 
-        props.onSubmit({ hostname: hostname(), client: client(), qtype: qtype() });
+        props.handleSubmit();
     };
 
     const handleHostnameChange = (e: Event) => {
         const value = (e.target as HTMLInputElement).value;
-        setHostname(value);
+        props.onHostnameChange(value);
         setHostnameError(value ? undefined : intl.getMessage('form_error_required'));
     };
 
     const handleClientChange = (e: Event) => {
-        setClient((e.target as HTMLInputElement).value);
+        props.onClientChange((e.target as HTMLInputElement).value);
     };
 
     const handleQtypeChange = (option: { value: string } | null) => {
         const value = option?.value || '';
-        setQtype(value);
+        props.onQtypeChange(value);
         setQtypeError(value ? undefined : intl.getMessage('form_error_required'));
     };
 
@@ -75,12 +69,12 @@ export const CheckForm = (props: Props) => {
                         size="medium"
                         label={intl.getMessage('user_rules_check_hostname_label')}
                         placeholder={intl.getMessage('user_rules_check_hostname_placeholder')}
-                        value={hostname()}
+                        value={props.hostname}
                         onChange={handleHostnameChange}
                         errorMessage={hostnameError()}
                         isClearable
                         onClear={() => {
-                            setHostname('');
+                            props.onHostnameChange('');
                             setHostnameError(intl.getMessage('form_error_required'));
                         }}
                     />
@@ -94,10 +88,10 @@ export const CheckForm = (props: Props) => {
                         size="medium"
                         label={intl.getMessage('user_rules_check_client_label')}
                         placeholder={intl.getMessage('user_rules_check_client_placeholder')}
-                        value={client()}
+                        value={props.client}
                         onChange={handleClientChange}
                         isClearable
-                        onClear={() => setClient('')}
+                        onClear={() => props.onClientChange('')}
                     />
                 </div>
 
@@ -119,7 +113,7 @@ export const CheckForm = (props: Props) => {
                             placeholder={intl.getMessage('user_rules_dns_record_type_placeholder')}
                             options={DNS_RECORD_TYPE_OPTIONS}
                             value={DNS_RECORD_TYPE_OPTIONS.find(
-                                (option) => option.value === qtype(),
+                                (option) => option.value === props.qtype,
                             )}
                             onChange={handleQtypeChange}
                         />

@@ -3,6 +3,7 @@ import { untrack } from 'solid-js';
 import { apiClient } from 'panel/api/Api';
 import { addErrorToast, addSuccessToast } from './toasts';
 import { getDnsStatus } from './dashboard';
+import intl from 'panel/common/intl';
 
 type EncryptionState = {
     processing: boolean;
@@ -127,7 +128,7 @@ export const setTlsConfig = async (values: any) => {
         }
 
         setState({ ...decoded, processingConfig: false });
-        addSuccessToast('encryption_config_saved');
+        addSuccessToast(intl.getMessage('encryption_config_saved'));
         // Refresh DNS status after TLS change
         await getDnsStatus();
     } catch (error) {

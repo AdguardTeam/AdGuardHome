@@ -1,4 +1,3 @@
-import { createSignal } from 'solid-js';
 import cn from 'clsx';
 
 import theme from 'panel/lib/theme';
@@ -9,20 +8,16 @@ import { Button } from 'panel/common/ui/Button';
 import s from '../UserRules.module.pcss';
 
 type Props = {
-    initialRules?: string;
-    value?: string;
-    onChange?: (value: string) => void;
-    onSubmit?: (data: { userRules: string }) => void;
-    handleSubmit?: () => void;
+    value: string;
+    onChange: (value: string) => void;
+    handleSubmit: () => void;
     processingRules: boolean;
 };
 
 export const RulesEditor = (props: Props) => {
-    const [userRules, setUserRules] = createSignal(props.initialRules || '');
-
     const handleSubmit = (e: Event) => {
         e.preventDefault();
-        props.onSubmit({ userRules: userRules() });
+        props.handleSubmit();
     };
 
     return (
@@ -38,9 +33,9 @@ export const RulesEditor = (props: Props) => {
                             rows={12}
                             size="large"
                             class={s.editorTextarea}
-                            value={userRules()}
+                            value={props.value}
                             onChange={(e: Event) =>
-                                setUserRules((e.target as HTMLTextAreaElement).value)
+                                props.onChange((e.target as HTMLTextAreaElement).value)
                             }
                         />
                     </div>
