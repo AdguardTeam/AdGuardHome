@@ -1,4 +1,4 @@
-import { createSignal, createMemo, createRenderEffect, onCleanup, Show } from 'solid-js';
+import { createSignal, createMemo, createEffect, on, onCleanup, Show } from 'solid-js';
 import cn from 'clsx';
 
 import intl from 'panel/common/intl';
@@ -10,11 +10,7 @@ import { Select } from 'panel/common/controls/Select';
 import { FaqTooltip } from 'panel/common/ui/FaqTooltip';
 import { InlineLoader } from 'panel/common/ui/Loader';
 import { IOption } from 'panel/lib/helpers/utils';
-import {
-    QUERY_LOG_REASON_FILTER,
-    QUERY_LOG_STATUS_FILTER,
-    DEBOUNCE_FILTER_TIMEOUT,
-} from 'panel/helpers/constants';
+import { DEBOUNCE_FILTER_TIMEOUT } from 'panel/helpers/constants';
 import { useIsMobile } from 'panel/hooks/useIsMobile';
 
 import s from './Header.module.pcss';
@@ -30,46 +26,94 @@ type Props = {
     isLoading: boolean;
 };
 
-const STATUS_LABEL_KEYS: Record<string, string> = {
-    all: 'query_log_all_statuses',
-    processed: 'query_log_processed',
-    allowed: 'query_log_allowed',
-    blocked: 'query_log_blocked',
-    rewritten: 'query_log_rewritten',
-};
+const STATUS_OPTIONS = [
+    {
+        value: 'all',
+        get label() {
+            return intl.getMessage('query_log_all_statuses');
+        },
+    },
+    {
+        value: 'processed',
+        get label() {
+            return intl.getMessage('query_log_processed');
+        },
+    },
+    {
+        value: 'allowed',
+        get label() {
+            return intl.getMessage('query_log_allowed');
+        },
+    },
+    {
+        value: 'blocked',
+        get label() {
+            return intl.getMessage('query_log_blocked');
+        },
+    },
+    {
+        value: 'rewritten',
+        get label() {
+            return intl.getMessage('query_log_rewritten');
+        },
+    },
+];
 
-const REASON_LABEL_KEYS: Record<string, string> = {
-    all: 'query_log_all_reasons',
-    FilteredBlackList: 'query_log_blocked_by_filter',
-    FilteredBlockedService: 'query_log_blocked_services',
-    FilteredSafeBrowsing: 'query_log_blocked_threats',
-    FilteredParental: 'query_log_blocked_by_parental_control',
-    Rewrite: 'dns_rewrites',
-    FilteredSafeSearch: 'query_log_safe_search',
-};
+const REASON_OPTIONS = [
+    {
+        value: 'all',
+        get label() {
+            return intl.getMessage('query_log_all_reasons');
+        },
+    },
+    {
+        value: 'FilteredBlackList',
+        get label() {
+            return intl.getMessage('query_log_blocked_by_filter');
+        },
+    },
+    {
+        value: 'FilteredBlockedService',
+        get label() {
+            return intl.getMessage('query_log_blocked_services');
+        },
+    },
+    {
+        value: 'FilteredSafeBrowsing',
+        get label() {
+            return intl.getMessage('query_log_blocked_threats');
+        },
+    },
+    {
+        value: 'FilteredParental',
+        get label() {
+            return intl.getMessage('query_log_blocked_by_parental_control');
+        },
+    },
+    {
+        value: 'Rewrite',
+        get label() {
+            return intl.getMessage('dns_rewrites');
+        },
+    },
+    {
+        value: 'FilteredSafeSearch',
+        get label() {
+            return intl.getMessage('query_log_safe_search');
+        },
+    },
+];
 
 export const Header = (props: Props) => {
-    const [searchValue, setSearchValue] = createSignal('');
+    const [searchValue, setSearchValue] = createSignal(props.currentSearch);
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
     const isMobile = useIsMobile();
 
-    const statusOptions = createMemo(() =>
-        Object.values(QUERY_LOG_STATUS_FILTER).map((filter) => ({
-            value: filter.QUERY,
-            label: intl.getMessage(STATUS_LABEL_KEYS[filter.QUERY]),
-        })),
-    );
-
-    const reasonOptions = createMemo(() =>
-        Object.values(QUERY_LOG_REASON_FILTER).map((filter) => ({
-            value: filter.QUERY,
-            label: intl.getMessage(REASON_LABEL_KEYS[filter.QUERY]),
-        })),
-    );
-
-    createRenderEffect(() => {
-        setSearchValue(props.currentSearch);
-    });
+    createEffect(on(
+        () => props.currentSearch,
+        (value) => setSearchValue(value),
+        { defer: true },
+    ));
 
     const handleSearchChange = (e: Event) => {
         const value = (e.target as HTMLInputElement).value;
@@ -98,10 +142,12 @@ export const Header = (props: Props) => {
         }
     });
 
-    const selectedStatus = () =>
-        statusOptions().find((opt) => opt.value === props.currentStatus) || statusOptions()[0];
-    const selectedReason = () =>
-        reasonOptions().find((opt) => opt.value === props.currentReason) || reasonOptions()[0];
+    const selectedStatus = createMemo(
+        () => STATUS_OPTIONS.find((opt) => opt.value === props.currentStatus) || STATUS_OPTIONS[0],
+    );
+    const selectedReason = createMemo(
+        () => REASON_OPTIONS.find((opt) => opt.value === props.currentReason) || REASON_OPTIONS[0],
+    );
 
     return (
         <div class={s.header}>
@@ -117,7 +163,7 @@ export const Header = (props: Props) => {
                         class={s.searchField}
                         placeholder={intl.getMessage('domain_or_client')}
                         value={searchValue()}
-                        onChange={handleSearchChange}
+                        onInput={handleSearchChange}
                         size="small"
                         prefixIcon={<Icon icon="search" class={s.searchIcon} />}
                         suffixIcon={
@@ -164,7 +210,7 @@ export const Header = (props: Props) => {
                     <div class={s.filterField} data-testid="query-log-status-filter">
                         <Select
                             size="responsive"
-                            options={statusOptions()}
+                            options={STATUS_OPTIONS}
                             value={selectedStatus()}
                             optionTestIdPrefix="query-log-status-option"
                             onChange={(option: IOption<string>) =>
@@ -180,7 +226,7 @@ export const Header = (props: Props) => {
                     <div class={s.filterField} data-testid="query-log-reason-filter">
                         <Select
                             size="responsive"
-                            options={reasonOptions()}
+                            options={REASON_OPTIONS}
                             value={selectedReason()}
                             optionTestIdPrefix="query-log-reason-option"
                             onChange={(option: IOption<string>) =>

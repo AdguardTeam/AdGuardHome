@@ -122,6 +122,7 @@ export const buildClientConfig = (form: ClientFormState) => ({
     ids: form.ids.filter((id: string) => id.trim() !== ''),
     tags: form.tags,
     use_global_settings: form.use_global_settings,
+    use_global_blocked_services: form.use_global_settings,
     filtering_enabled: form.filtering_enabled,
     safebrowsing_enabled: form.safebrowsing_enabled,
     parental_enabled: form.parental_enabled,
@@ -129,7 +130,6 @@ export const buildClientConfig = (form: ClientFormState) => ({
     ignore_querylog: form.ignore_querylog,
     ignore_statistics: form.ignore_statistics,
     blocked_services: form.blocked_services,
-    use_global_blocked_services: form.use_global_blocked_services,
     blocked_services_schedule: form.blocked_services_schedule,
     upstreams: form.upstreams
         ? form.upstreams.split('\n').filter((line: string) => line.trim() !== '')
