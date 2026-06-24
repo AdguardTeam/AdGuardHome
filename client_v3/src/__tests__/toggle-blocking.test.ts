@@ -32,6 +32,12 @@ vi.mock('panel/api/Api', () => ({
 vi.mock('panel/stores/toasts', () => ({
     addSuccessToast: mocks.addSuccessToast,
     addErrorToast: mocks.addErrorToast,
+    createUndoToast: (message: any, actionLabel: string, onUndo: () => void | Promise<void>) => ({
+        message,
+        actionLabel,
+        undoId: 'test-undo-id',
+        onUndo,
+    }),
 }));
 
 describe('toggleBlocking', () => {

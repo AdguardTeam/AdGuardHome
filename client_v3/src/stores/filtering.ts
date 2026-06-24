@@ -1,7 +1,7 @@
 import { createStore } from 'solid-js/store';
 import { untrack } from 'solid-js';
 import { apiClient } from 'panel/api/Api';
-import { addErrorToast, addSuccessToast } from './toasts';
+import { addErrorToast, addSuccessToast, createUndoToast } from './toasts';
 import type { Filter } from 'panel/helpers/helpers';
 import { normalizeFilteringStatus, normalizeRulesTextarea } from 'panel/helpers/helpers';
 import intl from 'panel/common/intl';
@@ -102,7 +102,18 @@ export const blockDomain = async (domain: string): Promise<boolean> => {
         return false;
     }
 
-    addSuccessToast({ message: 'user_rules_rule_added_to_custom_filtering_rules' });
+    addSuccessToast(
+        createUndoToast(
+            intl.getMessage('user_rules_rule_added_to_custom_filtering_rules'),
+            intl.getMessage('notify_undo'),
+            async () => {
+                const didUndo = await setRules(previousRules);
+                if (didUndo) {
+                    await getFilteringStatus();
+                }
+            },
+        ),
+    );
     await getFilteringStatus();
     return true;
 };
@@ -124,7 +135,18 @@ export const unblockDomain = async (domain: string): Promise<boolean> => {
         return false;
     }
 
-    addSuccessToast({ message: 'user_rules_rule_added_to_custom_filtering_rules' });
+    addSuccessToast(
+        createUndoToast(
+            intl.getMessage('user_rules_rule_added_to_custom_filtering_rules'),
+            intl.getMessage('notify_undo'),
+            async () => {
+                const didUndo = await setRules(previousRules);
+                if (didUndo) {
+                    await getFilteringStatus();
+                }
+            },
+        ),
+    );
     await getFilteringStatus();
     return true;
 };
@@ -145,7 +167,18 @@ export const blockDomainForClient = async (domain: string, client: string): Prom
         return false;
     }
 
-    addSuccessToast({ message: 'user_rules_rule_added_to_custom_filtering_rules' });
+    addSuccessToast(
+        createUndoToast(
+            intl.getMessage('user_rules_rule_added_to_custom_filtering_rules'),
+            intl.getMessage('notify_undo'),
+            async () => {
+                const didUndo = await setRules(previousRules);
+                if (didUndo) {
+                    await getFilteringStatus();
+                }
+            },
+        ),
+    );
     await getFilteringStatus();
     return true;
 };
@@ -190,7 +223,18 @@ export const toggleBlocking = async (
         return false;
     }
 
-    addSuccessToast({ message: 'user_rules_rule_added_to_custom_filtering_rules' });
+    addSuccessToast(
+        createUndoToast(
+            intl.getMessage('user_rules_rule_added_to_custom_filtering_rules'),
+            intl.getMessage('notify_undo'),
+            async () => {
+                const didUndo = await setRules(previousRules);
+                if (didUndo) {
+                    await getFilteringStatus();
+                }
+            },
+        ),
+    );
     await getFilteringStatus();
     return true;
 };
@@ -293,15 +337,6 @@ export const setFiltersConfig = async (config: any) => {
     setState('processingSetConfig', true);
     try {
         await apiClient.setFiltersConfig(config);
-        const prevEnabled = untrack(() => state.enabled);
-        const newEnabled = config.enabled;
-        if (newEnabled !== undefined && newEnabled !== prevEnabled) {
-            addSuccessToast(
-                intl.getMessage(
-                    newEnabled ? 'enabled_filtering_toast' : 'disabled_filtering_toast',
-                ),
-            );
-        }
         setState({ ...config, processingSetConfig: false });
     } catch (error) {
         addErrorToast({ error });
