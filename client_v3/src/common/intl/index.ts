@@ -187,12 +187,24 @@ let translator = createSolidTranslator(i18n(initialLanguage));
 const intl = {
     getMessage: (key: string, values?: any) => {
         lang(); // track the language signal for reactivity
-        return translator.getMessage(key, values);
+        try {
+            return translator.getMessage(key, values);
+        } catch (e) {
+            // eslint-disable-next-line no-console
+            console.warn('[i18n] Missing placeholder value for key:', key, e);
+            return key;
+        }
     },
 
     getPlural: (key: string, number: number, values?: any) => {
         lang(); // track the language signal for reactivity
-        return translator.getPlural(key, number, values);
+        try {
+            return translator.getPlural(key, number, values);
+        } catch (e) {
+            // eslint-disable-next-line no-console
+            console.warn('[i18n] Missing placeholder value for plural key:', key, e);
+            return key;
+        }
     },
 
     getUILanguage: () => lang(),
