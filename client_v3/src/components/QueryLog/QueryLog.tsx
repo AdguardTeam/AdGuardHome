@@ -199,7 +199,7 @@ export const QueryLog = () => {
             return;
         }
         setIsIncrementalLoad(true);
-        getAdditionalLogs(currentSearch());
+        getAdditionalLogs();
     };
 
     const allowedClients = (): string[] => {

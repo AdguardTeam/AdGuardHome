@@ -55,55 +55,69 @@ const [state, setState] = createStore<QueryLogsState>(initialState);
 
 // ---------- Short-poll helpers (v2 parity) ----------
 
-const REASON_TO_RESPONSE_STATUS: Record<string, string> = {
-    [QUERY_LOG_REASON_FILTER.BLOCKED_BY_FILTER.QUERY]: 'blocked',
-    [QUERY_LOG_REASON_FILTER.BLOCKED_SERVICES.QUERY]: 'blocked_services',
-    [QUERY_LOG_REASON_FILTER.BLOCKED_BY_THREATS.QUERY]: 'blocked_safebrowsing',
-    [QUERY_LOG_REASON_FILTER.BLOCKED_BY_PARENTAL_CONTROL.QUERY]: 'blocked_parental',
-    [QUERY_LOG_REASON_FILTER.SAFE_SEARCH.QUERY]: 'safe_search',
-    [QUERY_LOG_REASON_FILTER.DNS_REWRITES.QUERY]: 'rewritten',
+/** Maps frontend status filter → exact backend reason strings */
+const STATUS_TO_REASONS: Record<string, string[]> = {
+    blocked: [
+        'FilteredBlackList',
+        'FilteredSafeBrowsing',
+        'FilteredParental',
+        'FilteredBlockedService',
+    ],
+    rewritten: [
+        'Rewrite',
+        'RewriteEtcHosts',
+        'RewriteRule',
+        'FilteredSafeSearch',
+    ],
+    processed: ['NotFilteredNotFound'],
+    allowed: ['NotFilteredWhiteList'],
+    error: ['NotFilteredError', 'FilteredInvalid'],
+    all: [],
 };
 
-const STATUS_TO_RESPONSE_STATUS: Record<string, string> = {
-    allowed: 'whitelisted',
-    processed: 'processed',
-    blocked: 'blocked',
-    rewritten: 'rewritten',
+/** Maps frontend reason filter query → exact backend reason strings */
+const REASON_FILTER_TO_REASONS: Record<string, string[]> = {
+    [QUERY_LOG_REASON_FILTER.BLOCKED_BY_FILTER.QUERY]: ['FilteredBlackList'],
+    [QUERY_LOG_REASON_FILTER.BLOCKED_SERVICES.QUERY]: ['FilteredBlockedService'],
+    [QUERY_LOG_REASON_FILTER.BLOCKED_BY_THREATS.QUERY]: ['FilteredSafeBrowsing'],
+    [QUERY_LOG_REASON_FILTER.BLOCKED_BY_PARENTAL_CONTROL.QUERY]: [
+        'FilteredParental',
+    ],
+    [QUERY_LOG_REASON_FILTER.SAFE_SEARCH.QUERY]: ['FilteredSafeSearch'],
+    [QUERY_LOG_REASON_FILTER.DNS_REWRITES.QUERY]: [
+        'Rewrite',
+        'RewriteEtcHosts',
+        'RewriteRule',
+    ],
 };
 
-const getEffectiveResponseStatus = (filter?: any) => {
+const getReasons = (filter?: any): string[] => {
     const reason = filter?.reason ?? DEFAULT_LOGS_FILTER.reason;
     const status = filter?.status ?? DEFAULT_LOGS_FILTER.status;
-    if (reason !== 'all') return REASON_TO_RESPONSE_STATUS[reason] ?? 'all';
-    return STATUS_TO_RESPONSE_STATUS[status] ?? 'all';
+    if (reason !== 'all') {
+        return REASON_FILTER_TO_REASONS[reason] ?? [];
+    }
+    return STATUS_TO_REASONS[status] ?? [];
 };
 
 const fetchLogsWithParams = async (olderThan: string, filter?: any) => {
-    const raw = await apiClient.getQueryLog({
+    const params: Record<string, any> = {
         search: filter?.search ?? DEFAULT_LOGS_FILTER.search,
-        response_status: getEffectiveResponseStatus(filter),
         older_than: olderThan,
-    });
+    };
+    const reasons = getReasons(filter);
+    if (reasons.length > 0) {
+        params.reason = reasons;
+    }
+    const raw = await apiClient.getQueryLog(params);
     return { logs: normalizeLogs(raw.data || []), oldest: raw.oldest || '' };
 };
 
 /** Simple stateless filter: count entries matching the status */
 const filterLogsByStatus = (logs: any[], status: string): any[] => {
     if (!status || status === 'all') return logs;
-    const statusToReason: Record<string, string[]> = {
-        processed: ['Filtered', 'NotFiltered'],
-        allowed: ['NotFilteredNotFound', 'NotFilteredWhiteList'],
-        blocked: [
-            'FilteredBlackList',
-            'FilteredBlockedService',
-            'FilteredSafeBrowsing',
-            'FilteredParental',
-            'FilteredInvalid',
-        ],
-        rewritten: ['Rewrite', 'RewriteEtcHosts', 'RewriteRule'],
-    };
-    const reasons = statusToReason[status];
-    if (!reasons) return logs;
+    const reasons = STATUS_TO_REASONS[status];
+    if (!reasons || reasons.length === 0) return logs;
     return logs.filter((log: any) => reasons.includes(log.reason));
 };
 
@@ -154,14 +168,15 @@ export const getLogs = async (currentQuery?: string) => {
     }
 };
 
-export const getAdditionalLogs = async (params?: any) => {
+export const getAdditionalLogs = async () => {
     setState('processingAdditionalLogs', true);
     try {
-        const data = await apiClient.getQueryLog(params);
+        const { filter, oldest } = untrack(() => state);
+        const data = await fetchLogsWithParams(oldest, filter);
         setState({
-            logs: [...state.logs, ...normalizeLogs(data.data || [])],
-            oldest: data.oldest || '',
-            isEntireLog: data.is_entire_log || false,
+            logs: [...state.logs, ...data.logs],
+            oldest: data.oldest,
+            isEntireLog: data.oldest === '',
             processingAdditionalLogs: false,
         });
     } catch (error) {
