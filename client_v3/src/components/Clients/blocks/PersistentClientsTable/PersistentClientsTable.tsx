@@ -54,12 +54,15 @@ export const PersistentClientsTable = (props: Props) => {
                 text: intl.getMessage('client_identifier'),
                 className: s.headerCell,
             },
-            accessor: (row: Client) => row.ids.join(','),
+            accessor: (row: Client) => row.ids.filter((id) => id.trim() !== '').join(','),
             sortable: true,
             render: (_value: string, row: Client) => {
                 const { ids } = row;
-                const firstId = ids[0] || '';
-                const hiddenCount = ids.length - 1;
+                // Filter out empty strings — the backend may return trailing empty
+                // entries that would inflate hiddenCount and cause a spurious comma.
+                const nonEmpty = ids.filter((id) => id.trim() !== '');
+                const firstId = nonEmpty[0] || '';
+                const hiddenCount = nonEmpty.length - 1;
 
                 return (
                     <div class={s.cell}>
@@ -69,7 +72,6 @@ export const PersistentClientsTable = (props: Props) => {
                             <div class={s.idsRow}>
                                 <span class={cn(theme.common.textOverflow, s.idsText)}>
                                     {firstId}
-                                    <Show when={hiddenCount > 0}>,</Show>
                                 </span>
                                 <Show when={hiddenCount > 0}>
                                     <Dropdown
@@ -78,7 +80,7 @@ export const PersistentClientsTable = (props: Props) => {
                                         overlayClass={s.idsTooltipOverlay}
                                         menu={
                                             <div class={s.idsTooltip}>
-                                                <For each={ids}>
+                                                <For each={nonEmpty}>
                                                     {(id) => (
                                                         <span class={s.idsTooltipItem}>{id}</span>
                                                     )}
@@ -90,7 +92,7 @@ export const PersistentClientsTable = (props: Props) => {
                                                         s.copyBtnGreen,
                                                         s.copyBtnTopRight,
                                                     )}
-                                                    onClick={() => handleCopy(ids.join(', '))}
+                                                    onClick={() => handleCopy(nonEmpty.join(', '))}
                                                     title={intl.getMessage('copy')}
                                                 >
                                                     <Icon icon="copy" color="green" />
@@ -218,9 +220,11 @@ export const PersistentClientsTable = (props: Props) => {
                 text: intl.getMessage('tags_title'),
                 className: s.headerCell,
             },
-            accessor: 'tags',
-            sortable: false,
-            render: (value: string[]) => <TagCell tags={value} onCopy={handleCopy} />,
+            accessor: (row: Client) => row.tags.join(','),
+            sortable: true,
+            render: (_value: string, row: Client) => (
+                <TagCell tags={row.tags} onCopy={handleCopy} />
+            ),
         },
         {
             key: 'requests',

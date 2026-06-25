@@ -13,9 +13,8 @@ describe('Identifiers', () => {
         render(() => <Identifiers />);
         const input = document.querySelector('input[type="text"]') as HTMLInputElement;
 
-        // Simulate typing + blur-commit (the Input listens to the native `change`
-        // event, which fires when the field loses focus).
-        fireEvent.change(input, { target: { value: '1.2.3.4' } });
+        // Simulate typing — fireEvent.input triggers onInput, which calls handleChange.
+        fireEvent.input(input, { target: { value: '1.2.3.4' } });
 
         expect(input.value).toBe('1.2.3.4');
         expect(clientFormState.ids).toEqual(['1.2.3.4']);
@@ -35,7 +34,7 @@ describe('Identifiers', () => {
     it('keeps existing values when adding a new row', () => {
         render(() => <Identifiers />);
         const first = document.querySelector('input[type="text"]') as HTMLInputElement;
-        fireEvent.change(first, { target: { value: '1.2.3.4' } });
+        fireEvent.input(first, { target: { value: '1.2.3.4' } });
 
         fireEvent.click(screen.getByTestId('client-form-add-identifier'));
 
@@ -63,10 +62,28 @@ describe('Identifiers', () => {
         render(() => <Identifiers />);
         const input = document.querySelector('input[type="text"]') as HTMLInputElement;
 
-        fireEvent.change(input, { target: { value: 'not-a-valid-id' } });
+        fireEvent.input(input, { target: { value: 'not-a-valid-id' } });
         fireEvent.blur(input);
 
         // The error message element is rendered by the Input when there is an error.
         expect(input.value).toBe('not-a-valid-id');
+    });
+
+    it('clears the local error when the user types in the field', () => {
+        render(() => <Identifiers />);
+        const input = document.querySelector('input[type="text"]') as HTMLInputElement;
+
+        // Trigger a validation error on blur.
+        fireEvent.input(input, { target: { value: 'bad!!!' } });
+        fireEvent.blur(input);
+
+        // Now type a valid value — fireEvent.input triggers onInput, which calls
+        // handleChange → clears the local error.
+        fireEvent.input(input, { target: { value: '1.2.3.4' } });
+
+        // The Input component only renders the error div when errorMessage is truthy.
+        // Check that the wrapper does not have the error modifier class.
+        const wrapper = input.closest('[class*="inputWrapper"]');
+        expect(wrapper?.className).not.toContain('error');
     });
 });

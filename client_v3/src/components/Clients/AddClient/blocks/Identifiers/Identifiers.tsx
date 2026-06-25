@@ -3,9 +3,11 @@ import cn from 'clsx';
 import intl from 'panel/common/intl';
 import { Input } from 'panel/common/controls/Input';
 import { Icon } from 'panel/common/ui/Icon';
-import type { Client } from 'panel/initialState';
-import { clientFormState, updateClientFormField } from 'panel/stores/clientForm';
-import { dashboardState } from 'panel/stores/dashboard';
+import {
+    clientFormState,
+    updateClientFormField,
+    computeExistingClientIds,
+} from 'panel/stores/clientForm';
 import { validateIdentifier } from 'panel/helpers/validators';
 import theme from 'panel/lib/theme';
 
@@ -30,16 +32,13 @@ export const Identifiers = () => {
         const formErrors = clientFormState.formErrors;
         if (Array.isArray(formErrors.ids)) {
             setErrors(formErrors.ids);
+        } else {
+            // Store errors were cleared — clear stale local errors too.
+            setErrors((prev) => prev.map((): undefined => undefined));
         }
     });
 
-    const existingClientIds = createMemo(() => {
-        const clients: Client[] = dashboardState.clients || [];
-        const isEdit = clientFormState.mode === 'edit';
-        return clients
-            .filter((c) => !isEdit || c.name !== clientFormState.originalName)
-            .flatMap((c) => c.ids);
-    });
+    const existingClientIds = createMemo(() => computeExistingClientIds());
 
     const handleAdd = () => {
         updateClientFormField('ids', [...clientFormState.ids, '']);
@@ -56,6 +55,12 @@ export const Identifiers = () => {
         const newIds = [...clientFormState.ids];
         newIds[index] = value;
         updateClientFormField('ids', newIds);
+        // Clear the local error for this index — re-validated on blur.
+        setErrors((prev) => {
+            const next = [...prev];
+            next[index] = undefined;
+            return next;
+        });
     };
 
     const handleBlur = (index: number) => {
@@ -98,6 +103,9 @@ export const Identifiers = () => {
                                     type="text"
                                     value={value()}
                                     onChange={(e: Event) =>
+                                        handleChange(index, (e.target as HTMLInputElement).value)
+                                    }
+                                    onInput={(e: Event) =>
                                         handleChange(index, (e.target as HTMLInputElement).value)
                                     }
                                     onBlur={() => handleBlur(index)}

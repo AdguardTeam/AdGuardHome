@@ -15,6 +15,7 @@ import {
     MAX_PASSWORD_LENGTH,
     MIN_PASSWORD_LENGTH,
     R_HOSTNAME,
+    UINT32_RANGE,
 } from './constants';
 
 import { ip4ToInt, isValidAbsolutePath } from './form';
@@ -598,10 +599,7 @@ export const validateMacNotDuplicate =
         return undefined;
     };
 
-export const validateMaxValue = (
-    value: number,
-    max: number,
-): string | undefined => {
+export const validateMaxValue = (value: number, max: number): string | undefined => {
     if (value > max) {
         return intl.getMessage('form_value_length_common_error', {
             max_length: String(max),
@@ -610,11 +608,7 @@ export const validateMaxValue = (
     return undefined;
 };
 
-export const validateBetween = (
-    value: number,
-    min: number,
-    max: number,
-): string | undefined => {
+export const validateBetween = (value: number, min: number, max: number): string | undefined => {
     if (value < min || value > max) {
         return intl.getMessage('form_value_value_between_error', {
             min_value: String(min),
@@ -624,14 +618,34 @@ export const validateBetween = (
     return undefined;
 };
 
-export const validateMinValue = (
-    value: number,
-    min: number,
-): string | undefined => {
+export const validateMinValue = (value: number, min: number): string | undefined => {
     if (value < min) {
         return intl.getMessage('form_value_value_min_error', {
             min_value: String(min),
         });
     }
     return undefined;
+};
+
+/**
+ * Validates the client DNS cache size.
+ * Callers should gate on `upstreams_cache_enabled` before invoking.
+ * Returns undefined if valid, or an i18n error message string if invalid.
+ *
+ * @param size - The cache size in bytes
+ * @param enabled - Whether per-client upstream caching is enabled
+ *
+ * @example validateCacheSize(0, true)         // error ("must be greater than zero")
+ * @example validateCacheSize(1000, true)      // undefined (valid)
+ * @example validateCacheSize(4294967296, true) // error (exceeds UINT32_MAX)
+ * @example validateCacheSize(0, false)        // undefined (no validation when disabled)
+ */
+export const validateCacheSize = (size: number, enabled: boolean): ValidationResult => {
+    if (!enabled) {
+        return undefined;
+    }
+    if (size === 0) {
+        return intl.getMessage('cache_config_size_validation');
+    }
+    return validateMaxValue(size, UINT32_RANGE.MAX);
 };

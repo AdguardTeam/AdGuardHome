@@ -23,7 +23,7 @@ import {
     setFormErrors,
 } from 'panel/stores/clientForm';
 import { dashboardState, getClients } from 'panel/stores/dashboard';
-import { validateUpstreams } from 'panel/helpers/validators';
+import { validateUpstreams, validateCacheSize } from 'panel/helpers/validators';
 import { RoutePath, Paths } from 'panel/components/Routes/Paths';
 import theme from 'panel/lib/theme';
 
@@ -126,6 +126,16 @@ export const AddClient = () => {
         });
     };
 
+    const handleCacheSizeBlur = () => {
+        if (!clientFormState.upstreams_cache_enabled) return;
+        const err = validateCacheSize(clientFormState.upstreams_cache_size, true);
+        if (err) {
+            // Merge with existing errors rather than replacing — preserves sibling
+            // errors like name and ids that were already set.
+            setFormErrors({ ...clientFormState.formErrors, upstreams_cache_size: err });
+        }
+    };
+
     const tagOptions = createMemo(() =>
         (dashboardState.supportedTags || []).map((tag: string) => ({
             label: tag,
@@ -171,6 +181,12 @@ export const AddClient = () => {
                             type="text"
                             value={clientFormState.name}
                             onChange={(e: Event) =>
+                                updateClientFormField({
+                                    field: 'name',
+                                    value: (e.target as HTMLInputElement).value,
+                                })
+                            }
+                            onInput={(e: Event) =>
                                 updateClientFormField({
                                     field: 'name',
                                     value: (e.target as HTMLInputElement).value,
@@ -319,9 +335,17 @@ export const AddClient = () => {
                                         value: Number((e.target as HTMLInputElement).value) || 0,
                                     })
                                 }
+                                onBlur={handleCacheSizeBlur}
                                 placeholder={intl.getMessage('clients_dns_cache_size_placeholder')}
                                 label={intl.getMessage('clients_dns_cache_size')}
                                 size="large"
+                                error={!!clientFormState.formErrors.upstreams_cache_size}
+                                errorMessage={
+                                    typeof clientFormState.formErrors.upstreams_cache_size ===
+                                    'string'
+                                        ? clientFormState.formErrors.upstreams_cache_size
+                                        : undefined
+                                }
                             />
                         </Show>
                     </SwitchGroup>

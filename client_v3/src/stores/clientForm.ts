@@ -3,9 +3,9 @@ import { untrack } from 'solid-js';
 import type { ClientFormState, Client } from 'panel/initialState';
 import { apiClient } from 'panel/api/Api';
 import intl from 'panel/common/intl';
-import { validateIdentifier } from 'panel/helpers/validators';
+import { validateIdentifier, validateCacheSize } from 'panel/helpers/validators';
 import { addErrorToast, addSuccessToast } from './toasts';
-import { getClients } from './dashboard';
+import { getClients, dashboardState } from './dashboard';
 
 const getInitialClientFormState = (): ClientFormState => ({
     mode: 'add',
@@ -138,6 +138,15 @@ export const buildClientConfig = (form: ClientFormState) => ({
     upstreams_cache_size: form.upstreams_cache_size,
 });
 
+/**
+ * Returns all identifier strings from other persistent clients, excluding the
+ * client currently being edited.
+ */
+export const computeExistingClientIds = (): string[] =>
+    (dashboardState.clients || [])
+        .filter((c: Client) => state.mode !== 'edit' || c.name !== state.originalName)
+        .flatMap((c: Client) => c.ids);
+
 export const saveClient = async (): Promise<boolean> => {
     const errors: Record<string, string | string[]> = {};
 
@@ -145,14 +154,27 @@ export const saveClient = async (): Promise<boolean> => {
         errors.name = intl.getMessage('form_error_required');
     }
 
+    const existingClientIds = computeExistingClientIds();
+
     const idErrors = state.ids.map((id: string, index: number) => {
         if (!id.trim()) {
             return intl.getMessage('form_error_required');
         }
-        return validateIdentifier(id, state.ids, index);
+        return validateIdentifier(id, state.ids, index, existingClientIds);
     });
     if (idErrors.some((e: string | undefined) => e !== undefined)) {
         errors.ids = idErrors as string[];
+    }
+
+    // Validate cache size when per-client cache is enabled (and not using global settings).
+    // When use_global_settings is true, upstream settings are inherited; the cache size
+    // value is still sent to the API but the backend ignores it. We skip validation to
+    // avoid false positives on stale/inherited values.
+    if (!state.use_global_settings && state.upstreams_cache_enabled) {
+        const cacheErr = validateCacheSize(state.upstreams_cache_size, true);
+        if (cacheErr) {
+            errors.upstreams_cache_size = cacheErr;
+        }
     }
 
     if (Object.keys(errors).length > 0) {

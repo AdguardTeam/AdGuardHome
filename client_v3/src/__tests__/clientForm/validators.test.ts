@@ -16,6 +16,7 @@ import {
     validateMaxValue,
     validateBetween,
     validateMinValue,
+    validateCacheSize,
 } from 'panel/helpers/validators';
 
 describe('validateIdentifier', () => {
@@ -393,5 +394,30 @@ describe('numeric range validators', () => {
         expect(validateMinValue(0, 1)).toBeTruthy();
         expect(validateMinValue(1, 1)).toBeUndefined();
         expect(validateMinValue(10, 1)).toBeUndefined();
+    });
+});
+
+describe('validateCacheSize', () => {
+    it('returns undefined when cache is disabled', () => {
+        expect(validateCacheSize(0, false)).toBeUndefined();
+        expect(validateCacheSize(999999999999, false)).toBeUndefined();
+    });
+
+    it('returns error for 0 when enabled', () => {
+        const result = validateCacheSize(0, true);
+        expect(result).toBeTruthy();
+    });
+
+    it('returns undefined for a valid size when enabled', () => {
+        expect(validateCacheSize(1000, true)).toBeUndefined();
+    });
+
+    it('returns error for value exceeding UINT32_MAX', () => {
+        const result = validateCacheSize(4294967296, true);
+        expect(result).toBeTruthy();
+    });
+
+    it('returns undefined at UINT32_MAX boundary', () => {
+        expect(validateCacheSize(4294967295, true)).toBeUndefined();
     });
 });

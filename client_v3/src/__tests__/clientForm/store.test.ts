@@ -1,9 +1,29 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi, beforeEach } from 'vitest';
+
+// vi.hoisted ensures the mock is available before module evaluation.
+const dashboardMocks = vi.hoisted(() => ({
+    getClients: vi.fn(),
+    dashboardState: { clients: [] as any[] },
+}));
+
+vi.mock('panel/stores/dashboard', async () => {
+    const actual =
+        await vi.importActual<typeof import('panel/stores/dashboard')>('panel/stores/dashboard');
+    return {
+        ...actual,
+        getClients: dashboardMocks.getClients,
+        get dashboardState() {
+            return dashboardMocks.dashboardState;
+        },
+    };
+});
+
 import {
     initClientForm,
     updateClientFormField,
     clearClientForm,
     clientFormState,
+    saveClient,
 } from 'panel/stores/clientForm';
 
 describe('clientForm store', () => {
@@ -64,5 +84,36 @@ describe('clientForm store', () => {
         clearClientForm();
         expect(clientFormState.name).toBe('');
         expect(clientFormState.mode).toBe('add');
+    });
+});
+
+describe('saveClient cross-client validation', () => {
+    beforeEach(() => {
+        clearClientForm();
+        dashboardMocks.dashboardState.clients = [];
+    });
+
+    it('rejects an identifier that already belongs to another client', async () => {
+        // Set up the mocked dashboard store to include a client with a known ID.
+        dashboardMocks.dashboardState.clients = [{ name: 'Other', ids: ['192.168.1.50'] } as any];
+
+        updateClientFormField({ field: 'name', value: 'New Client' });
+        updateClientFormField({ field: 'ids', value: ['192.168.1.50'] });
+
+        const result = await saveClient();
+        expect(result).toBe(false);
+        expect(clientFormState.formErrors.ids).toBeDefined();
+    });
+
+    it('rejects cache size of 0 when cache is enabled', async () => {
+        clearClientForm();
+        updateClientFormField({ field: 'name', value: 'Test' });
+        updateClientFormField({ field: 'ids', value: ['192.168.1.1'] });
+        updateClientFormField({ field: 'upstreams_cache_enabled', value: true });
+        updateClientFormField({ field: 'upstreams_cache_size', value: 0 });
+
+        const result = await saveClient();
+        expect(result).toBe(false);
+        expect(clientFormState.formErrors.upstreams_cache_size).toBeDefined();
     });
 });
