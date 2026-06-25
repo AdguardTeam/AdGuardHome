@@ -13,7 +13,9 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agh"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/updater"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
@@ -202,6 +204,7 @@ func newWebAPI(ctx context.Context, conf *webAPIConfig) (w *webAPI) {
 		mux.Handle("/install.html", w.preInstallHandler(clientFS))
 		w.registerInstallHandlers()
 	} else {
+		w.registerTLSHandlers()
 		w.registerControlHandlers()
 	}
 
@@ -463,4 +466,326 @@ func startPprof(baseLogger *slog.Logger, port uint16) {
 			logger.ErrorContext(ctx, "shutting down", slogutil.KeyError, err)
 		}
 	}()
+}
+
+// registerTLSHandlers registers HTTP handlers for TLS configuration.
+//
+// TODO(m.kazantsev):  Consider uniting with registerControlHandlers.
+func (web *webAPI) registerTLSHandlers() {
+	web.httpReg.Register(http.MethodGet, "/control/tls/status", web.handleTLSStatus)
+	web.httpReg.Register(http.MethodPost, "/control/tls/configure", web.handleTLSConfigure)
+	web.httpReg.Register(http.MethodPost, "/control/tls/validate", web.handleTLSValidate)
+}
+
+// handleTLSStatus is the handler for the GET /control/tls/status HTTP API.
+func (web *webAPI) handleTLSStatus(w http.ResponseWriter, r *http.Request) {
+	tlsConf := web.tlsManager.extendedTLSConfig()
+
+	data := &tlsConfig{
+		tlsConfigSettingsExt: tlsConfigSettingsExt{
+			tlsConfigSettings: *tlsConf,
+			ServePlainDNS:     aghalg.BoolToNullBool(tlsConf.ServePlainDNS),
+		},
+		tlsConfigStatus: &tlsConf.Status,
+	}
+
+	web.tlsManager.marshalTLS(r.Context(), w, r, data)
+}
+
+// handleTLSValidate is the handler for the POST /control/tls/validate HTTP API.
+func (web *webAPI) handleTLSValidate(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	setts, err := unmarshalTLS(r)
+	if err != nil {
+		// errFmt does not follow error message guidelines because it is sent
+		// directly to the frontend.
+		const errFmt = "Failed to unmarshal TLS config: %s"
+
+		aghhttp.ErrorAndLog(ctx, web.logger, r, w, http.StatusBadRequest, errFmt, err)
+
+		return
+	}
+
+	extTLSConf := web.tlsManager.extendedTLSConfig()
+
+	if setts.PrivateKeySaved {
+		setts.PrivateKey = extTLSConf.PrivateKey
+	}
+
+	if err = web.validateTLSSettings(setts); err != nil {
+		web.logger.InfoContext(ctx, "validating tls settings", slogutil.KeyError, err)
+
+		aghhttp.ErrorAndLog(ctx, web.logger, r, w, http.StatusBadRequest, "%s", err)
+
+		return
+	}
+
+	// Skip the error check, since we are only interested in the value of
+	// status.WarningValidation.
+	status := &tlsConfigStatus{}
+	_ = web.tlsManager.loadTLSConfig(ctx, &setts.tlsConfigSettings, status)
+	resp := &tlsConfig{
+		tlsConfigSettingsExt: setts,
+		tlsConfigStatus:      status,
+	}
+
+	web.tlsManager.marshalTLS(ctx, w, r, resp)
+}
+
+// validateTLSSettings returns error if the setts are not valid.
+func (web *webAPI) validateTLSSettings(setts tlsConfigSettingsExt) (err error) {
+	if !setts.Enabled {
+		if setts.ServePlainDNS == aghalg.NBFalse {
+			// TODO(a.garipov): Support full disabling of all DNS.
+			return errors.Error("plain DNS is required in case encryption protocols are disabled")
+		}
+
+		return nil
+	}
+
+	var (
+		tlsConf      tlsConfigSettings
+		webAPIAddr   netip.Addr
+		webAPIPort   uint16
+		plainDNSPort uint16
+	)
+
+	func() {
+		config.Lock()
+		defer config.Unlock()
+
+		tlsConf = config.TLS
+		webAPIAddr = config.HTTPConfig.Address.Addr()
+		webAPIPort = config.HTTPConfig.Address.Port()
+		plainDNSPort = config.DNS.Port
+	}()
+
+	err = validatePorts(
+		tcpPort(webAPIPort),
+		tcpPort(setts.PortHTTPS),
+		tcpPort(setts.PortDNSOverTLS),
+		tcpPort(setts.PortDNSCrypt),
+		udpPort(plainDNSPort),
+		udpPort(setts.PortDNSOverQUIC),
+	)
+	if err != nil {
+		// Don't wrap the error because it's informative enough as is.
+		return err
+	}
+
+	// Don't wrap the error because it's informative enough as is.
+	return checkPortAvailability(tlsConf, setts.tlsConfigSettings, webAPIAddr)
+}
+
+// checkPortAvailability checks [tlsConfigSettings.PortHTTPS],
+// [tlsConfigSettings.PortDNSOverTLS], and [tlsConfigSettings.PortDNSOverQUIC]
+// are available for use.  It checks the current configuration and, if needed,
+// attempts to bind to the port.  The function returns human-readable error
+// messages for the frontend.  This is best-effort check to prevent an "address
+// already in use" error.
+//
+// TODO(a.garipov): Adapt for HTTP/3.
+func checkPortAvailability(
+	currConf tlsConfigSettings,
+	newConf tlsConfigSettings,
+	addr netip.Addr,
+) (err error) {
+	const (
+		networkTCP = "tcp"
+		networkUDP = "udp"
+
+		protoHTTPS = "HTTPS"
+		protoDoT   = "DNS-over-TLS"
+		protoDoQ   = "DNS-over-QUIC"
+	)
+
+	needBindingCheck := []struct {
+		network  string
+		proto    string
+		currPort uint16
+		newPort  uint16
+	}{{
+		network:  networkTCP,
+		proto:    protoHTTPS,
+		currPort: currConf.PortHTTPS,
+		newPort:  newConf.PortHTTPS,
+	}, {
+		network:  networkTCP,
+		proto:    protoDoT,
+		currPort: currConf.PortDNSOverTLS,
+		newPort:  newConf.PortDNSOverTLS,
+	}, {
+		network:  networkUDP,
+		proto:    protoDoQ,
+		currPort: currConf.PortDNSOverQUIC,
+		newPort:  newConf.PortDNSOverQUIC,
+	}}
+
+	var errs []error
+	for _, v := range needBindingCheck {
+		port := v.newPort
+		if v.currPort == port {
+			continue
+		}
+
+		addrPort := netip.AddrPortFrom(addr, port)
+		err = aghnet.CheckPort(v.network, addrPort)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("port %d for %s is not available", port, v.proto))
+		}
+	}
+
+	return errors.Join(errs...)
+}
+
+// validatePorts validates the uniqueness of TCP and UDP ports for AdGuard Home
+// DNS protocols.
+func validatePorts(
+	bindPort, dohPort, dotPort, dnscryptTCPPort tcpPort,
+	dnsPort, doqPort udpPort,
+) (err error) {
+	tcpPorts := aghalg.UniqChecker[tcpPort]{}
+	addPorts(
+		tcpPorts,
+		bindPort,
+		dohPort,
+		dotPort,
+		dnscryptTCPPort,
+		tcpPort(dnsPort),
+	)
+
+	err = tcpPorts.Validate()
+	if err != nil {
+		return fmt.Errorf("validating tcp ports: %w", err)
+	}
+
+	udpPorts := aghalg.UniqChecker[udpPort]{}
+	addPorts(udpPorts, dnsPort, doqPort)
+
+	err = udpPorts.Validate()
+	if err != nil {
+		return fmt.Errorf("validating udp ports: %w", err)
+	}
+
+	return nil
+}
+
+// handleTLSConfigure is the handler for the POST /control/tls/configure HTTP
+// API.
+//
+// TODO(m.kazantsev):  Improve maintainability.
+func (web *webAPI) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	req, err := unmarshalTLS(r)
+	if err != nil {
+		aghhttp.ErrorAndLog(
+			ctx,
+			web.logger,
+			r,
+			w,
+			http.StatusBadRequest,
+			"Failed to unmarshal TLS config: %s",
+			err,
+		)
+
+		return
+	}
+
+	var restartHTTPS bool
+	defer func() {
+		if restartHTTPS {
+			web.tlsManager.confModifier.Apply(ctx)
+		}
+	}()
+
+	extTLSConf := web.tlsManager.extendedTLSConfig()
+
+	if req.PrivateKeySaved {
+		req.PrivateKey = extTLSConf.PrivateKey
+	}
+
+	req.StrictSNICheck = extTLSConf.StrictSNICheck
+
+	if err = web.validateTLSSettings(req); err != nil {
+		aghhttp.ErrorAndLog(ctx, web.logger, r, w, http.StatusBadRequest, "%s", err)
+
+		return
+	}
+
+	status := &tlsConfigStatus{}
+	err = web.tlsManager.loadTLSConfig(ctx, &req.tlsConfigSettings, status)
+	if err != nil {
+		resp := &tlsConfig{
+			tlsConfigSettingsExt: req,
+			tlsConfigStatus:      status,
+		}
+
+		web.tlsManager.marshalTLS(ctx, w, r, resp)
+
+		return
+	}
+
+	newTLSConf := &req.tlsConfigSettings
+	newTLSConf.Status = *status
+
+	restartHTTPS = web.tlsManager.setConfig(ctx, newTLSConf, req.ServePlainDNS)
+
+	err = web.reconfigureDNSServer(ctx, newTLSConf)
+	if err != nil {
+		web.logger.ErrorContext(ctx, "reconfiguring dns server", slogutil.KeyError, err)
+
+		aghhttp.ErrorAndLog(ctx, web.logger, r, w, http.StatusInternalServerError, "%s", err)
+
+		return
+	}
+
+	resp := &tlsConfig{
+		tlsConfigSettingsExt: req,
+		tlsConfigStatus:      status,
+	}
+
+	web.tlsManager.marshalTLS(ctx, w, r, resp)
+	rc := http.NewResponseController(w)
+	err = rc.Flush()
+	if err != nil {
+		web.logger.ErrorContext(ctx, "flushing response", slogutil.KeyError, err)
+	}
+
+	// The background context is used because the TLSConfigChanged wraps context
+	// with timeout on its own and shuts down the server, which handles current
+	// request.  It is also should be done in a separate goroutine due to the
+	// same reason.
+	if restartHTTPS {
+		go web.tlsConfigChanged(context.Background(), &req.tlsConfigSettings)
+	}
+}
+
+// reconfigureDNSServer updates the DNS server configuration using extTLSConf.
+// extTLSConf must not be nil.
+func (web *webAPI) reconfigureDNSServer(
+	ctx context.Context,
+	extTLSConf *tlsConfigSettings,
+) (err error) {
+	newConf, err := newServerConfig(
+		&config.DNS,
+		config.Clients.Sources,
+		extTLSConf,
+		config.HTTPConfig.DoH,
+		web.tlsManager,
+		web.httpReg,
+		globalContext.clients.storage,
+		web.tlsManager.confModifier,
+	)
+	if err != nil {
+		return fmt.Errorf("generating forwarding dns server config: %w", err)
+	}
+
+	err = globalContext.dnsServer.Reconfigure(ctx, newConf)
+	if err != nil {
+		return fmt.Errorf("starting forwarding dns server: %w", err)
+	}
+
+	return nil
 }

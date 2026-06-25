@@ -1,4 +1,5 @@
-import React, { ReactNode } from 'react';
+import React from 'react';
+import type { ReactNode } from 'react';
 import cn from 'clsx';
 
 import { Dropdown } from 'panel/common/ui/Dropdown';
@@ -15,6 +16,7 @@ type Props = {
     menuClassName?: string;
     overlayClassName?: string;
     position?: 'bottomLeft' | 'bottomRight' | 'bottom';
+    label?: ReactNode;
 };
 
 export const FaqTooltip = ({
@@ -24,11 +26,28 @@ export const FaqTooltip = ({
     menuClassName,
     overlayClassName,
     position: positionProp,
+    label,
 }: Props) => {
     const isMobile = useIsMobile();
 
-    const currentPosition = isMobile ? 'bottom' : 'bottomLeft';
-    const position = positionProp ?? currentPosition;
+    const getDefaultPosition = () => {
+        if (isMobile) {
+            return label ? 'bottomLeft' : 'bottom';
+        }
+
+        return 'bottomLeft';
+    };
+
+    const position = positionProp ?? getDefaultPosition();
+
+    const trigger = label ? (
+        <span className={s.labelTrigger}>
+            {label}
+            <Icon icon="faq" className={s.icon} />
+        </span>
+    ) : (
+        <Icon icon="faq" className={s.icon} />
+    );
 
     return (
         <Dropdown
@@ -49,7 +68,7 @@ export const FaqTooltip = ({
             noIcon
         >
             <div className={s.trigger} onPointerDown={(e) => e.stopPropagation()}>
-                <Icon icon="faq" className={s.icon} />
+                {trigger}
             </div>
         </Dropdown>
     );

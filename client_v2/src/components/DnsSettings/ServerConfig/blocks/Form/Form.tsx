@@ -144,13 +144,11 @@ export const Form = ({ processing, initialValues, onSubmit }: Props) => {
                                 data-testid="dns_config_ratelimit"
                                 type="number"
                                 label={
-                                    <>
-                                        {intl.getMessage('server_config_rate_limit')}
-                                        <FaqTooltip
-                                            text={intl.getMessage('server_config_rate_limit_faq')}
-                                            menuSize="large"
-                                        />
-                                    </>
+                                    <FaqTooltip
+                                        text={intl.getMessage('server_config_rate_limit_faq')}
+                                        menuSize="large"
+                                        label={intl.getMessage('server_config_rate_limit')}
+                                    />
                                 }
                                 placeholder={intl.getMessage(
                                     'server_config_rate_limit_placeholder',
@@ -178,15 +176,11 @@ export const Form = ({ processing, initialValues, onSubmit }: Props) => {
                                 data-testid="dns_config_subnet_ipv4"
                                 type="number"
                                 label={
-                                    <>
-                                        {intl.getMessage('server_config_subnet_len_ipv4')}
-                                        <FaqTooltip
-                                            text={intl.getMessage(
-                                                'server_config_subnet_len_ipv4_faq',
-                                            )}
-                                            menuSize="large"
-                                        />
-                                    </>
+                                    <FaqTooltip
+                                        text={intl.getMessage('server_config_subnet_len_ipv4_faq')}
+                                        menuSize="large"
+                                        label={intl.getMessage('server_config_subnet_len_ipv4')}
+                                    />
                                 }
                                 placeholder={intl.getMessage(
                                     'server_config_subnet_len_placeholder',
@@ -214,15 +208,11 @@ export const Form = ({ processing, initialValues, onSubmit }: Props) => {
                                 data-testid="dns_config_subnet_ipv6"
                                 type="number"
                                 label={
-                                    <>
-                                        {intl.getMessage('server_config_subnet_len_ipv6')}
-                                        <FaqTooltip
-                                            text={intl.getMessage(
-                                                'server_config_subnet_len_ipv6_faq',
-                                            )}
-                                            menuSize="large"
-                                        />
-                                    </>
+                                    <FaqTooltip
+                                        text={intl.getMessage('server_config_subnet_len_ipv6_faq')}
+                                        menuSize="large"
+                                        label={intl.getMessage('server_config_subnet_len_ipv6')}
+                                    />
                                 }
                                 placeholder={intl.getMessage(
                                     'server_config_subnet_len_placeholder',
@@ -249,15 +239,15 @@ export const Form = ({ processing, initialValues, onSubmit }: Props) => {
                                 {...field}
                                 data-testid="dns_config_ratelimit_whitelist"
                                 label={
-                                    <>
-                                        {intl.getMessage('server_config_rate_limit_whitelist')}
-                                        <FaqTooltip
-                                            text={intl.getMessage(
-                                                'server_config_rate_limit_whitelist_faq',
-                                            )}
-                                            menuSize="large"
-                                        />
-                                    </>
+                                    <FaqTooltip
+                                        text={intl.getMessage(
+                                            'server_config_rate_limit_whitelist_faq',
+                                        )}
+                                        menuSize="large"
+                                        label={intl.getMessage(
+                                            'server_config_rate_limit_whitelist',
+                                        )}
+                                    />
                                 }
                                 placeholder={intl.getMessage('ip_addresses_placeholder')}
                                 errorMessage={fieldState.error?.message}
@@ -419,10 +409,11 @@ export const Form = ({ processing, initialValues, onSubmit }: Props) => {
                                             data-testid={`dns_config_${name}`}
                                             type="text"
                                             label={
-                                                <>
-                                                    {label}
-                                                    <FaqTooltip text={faq} menuSize="large" />
-                                                </>
+                                                <FaqTooltip
+                                                    text={faq}
+                                                    menuSize="large"
+                                                    label={label}
+                                                />
                                             }
                                             placeholder={placeholder}
                                             errorMessage={fieldState.error?.message}
@@ -445,15 +436,13 @@ export const Form = ({ processing, initialValues, onSubmit }: Props) => {
                                 data-testid="dns_config_blocked_response_ttl"
                                 type="number"
                                 label={
-                                    <>
-                                        {intl.getMessage('server_config_blocking_mode_ttl')}
-                                        <FaqTooltip
-                                            text={intl.getMessage(
-                                                'server_config_blocking_mode_ttl_faq',
-                                            )}
-                                            menuSize="large"
-                                        />
-                                    </>
+                                    <FaqTooltip
+                                        text={intl.getMessage(
+                                            'server_config_blocking_mode_ttl_faq',
+                                        )}
+                                        menuSize="large"
+                                        label={intl.getMessage('server_config_blocking_mode_ttl')}
+                                    />
                                 }
                                 placeholder={intl.getMessage('form_enter_blocked_response_ttl')}
                                 errorMessage={fieldState.error?.message}

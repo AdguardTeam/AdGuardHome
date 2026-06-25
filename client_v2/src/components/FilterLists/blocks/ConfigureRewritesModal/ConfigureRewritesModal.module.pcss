@@ -17,10 +17,11 @@
 }
 
 .tooltipItem {
-    padding: 8px 0;
+    position: relative;
+    padding: 8px 0 8px 28px;
 
     &:last-child {
-        padding: 8px 0 0;
+        padding: 8px 0 0 28px;
     }
 
     & code {
@@ -37,6 +38,8 @@
 }
 
 .icon {
-    margin-right: 8px;
+    position: absolute;
+    top: 9px;
+    left: 0;
     color: var(--default-black-icons);
 }

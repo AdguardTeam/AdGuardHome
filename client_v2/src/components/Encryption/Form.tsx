@@ -274,27 +274,24 @@ export const Form = ({ initialValues, encryption, onSubmit, debouncedConfigValid
                                             {...field}
                                             type="text"
                                             label={
-                                                <>
-                                                    {intl.getMessage('encryption_server')}
-
-                                                    <FaqTooltip
-                                                        text={
-                                                            <>
-                                                                <div className={s.tooltipText}>
-                                                                    {intl.getMessage(
-                                                                        'encryption_server_tooltip_1',
-                                                                    )}
-                                                                </div>
-                                                                <div className={s.tooltipText}>
-                                                                    {intl.getMessage(
-                                                                        'encryption_server_tooltip_2',
-                                                                    )}
-                                                                </div>
-                                                            </>
-                                                        }
-                                                        menuSize="large"
-                                                    />
-                                                </>
+                                                <FaqTooltip
+                                                    text={
+                                                        <>
+                                                            <div className={s.tooltipText}>
+                                                                {intl.getMessage(
+                                                                    'encryption_server_tooltip_1',
+                                                                )}
+                                                            </div>
+                                                            <div className={s.tooltipText}>
+                                                                {intl.getMessage(
+                                                                    'encryption_server_tooltip_2',
+                                                                )}
+                                                            </div>
+                                                        </>
+                                                    }
+                                                    menuSize="large"
+                                                    label={intl.getMessage('encryption_server')}
+                                                />
                                             }
                                             placeholder={intl.getMessage('encryption_server_enter')}
                                             errorMessage={fieldState.error?.message}
@@ -317,16 +314,13 @@ export const Form = ({ initialValues, encryption, onSubmit, debouncedConfigValid
                                             {...field}
                                             type="number"
                                             label={
-                                                <>
-                                                    {intl.getMessage('encryption_https')}
-
-                                                    <FaqTooltip
-                                                        text={intl.getMessage(
-                                                            'encryption_https_tooltip',
-                                                        )}
-                                                        menuSize="large"
-                                                    />
-                                                </>
+                                                <FaqTooltip
+                                                    text={intl.getMessage(
+                                                        'encryption_https_tooltip',
+                                                    )}
+                                                    menuSize="large"
+                                                    label={intl.getMessage('encryption_https')}
+                                                />
                                             }
                                             placeholder={intl.getMessage('encryption_https')}
                                             errorMessage={fieldState.error?.message}
@@ -353,16 +347,11 @@ export const Form = ({ initialValues, encryption, onSubmit, debouncedConfigValid
                                             {...field}
                                             type="number"
                                             label={
-                                                <>
-                                                    {intl.getMessage('encryption_dot')}
-
-                                                    <FaqTooltip
-                                                        text={intl.getMessage(
-                                                            'encryption_dot_tooltip',
-                                                        )}
-                                                        menuSize="large"
-                                                    />
-                                                </>
+                                                <FaqTooltip
+                                                    text={intl.getMessage('encryption_dot_tooltip')}
+                                                    menuSize="large"
+                                                    label={intl.getMessage('encryption_dot')}
+                                                />
                                             }
                                             placeholder={intl.getMessage('encryption_dot')}
                                             errorMessage={fieldState.error?.message}
@@ -389,16 +378,11 @@ export const Form = ({ initialValues, encryption, onSubmit, debouncedConfigValid
                                             {...field}
                                             type="number"
                                             label={
-                                                <>
-                                                    {intl.getMessage('encryption_doq')}
-
-                                                    <FaqTooltip
-                                                        text={intl.getMessage(
-                                                            'encryption_doq_tooltip',
-                                                        )}
-                                                        menuSize="large"
-                                                    />
-                                                </>
+                                                <FaqTooltip
+                                                    text={intl.getMessage('encryption_doq_tooltip')}
+                                                    menuSize="large"
+                                                    label={intl.getMessage('encryption_doq')}
+                                                />
                                             }
                                             placeholder={intl.getMessage('encryption_doq')}
                                             errorMessage={fieldState.error?.message}

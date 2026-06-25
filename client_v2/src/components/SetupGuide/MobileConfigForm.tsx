@@ -147,7 +147,6 @@ export const MobileConfigForm = ({ initialValues }: Props) => {
 
                 <div className={cn(s.formGroup, s.formGroupSettings)}>
                     <label htmlFor="clientId" className={cn(s.formLabel, s.formLabelWithDesc)}>
-                        {intl.getMessage('client_id')}
                         <FaqTooltip
                             text={intl.getMessage('client_id_faq', {
                                 a: (text: string) => (
@@ -161,6 +160,7 @@ export const MobileConfigForm = ({ initialValues }: Props) => {
                                     </a>
                                 ),
                             })}
+                            label={intl.getMessage('client_id')}
                         />
                     </label>
 

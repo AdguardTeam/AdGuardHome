@@ -7,8 +7,8 @@ import (
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
-	"github.com/google/gopacket"
-	"github.com/google/gopacket/layers"
+	"github.com/gopacket/gopacket"
+	"github.com/gopacket/gopacket/layers"
 )
 
 // serveV6 handles the ethernet packet of IPv6 type. iface and pkt must not be
@@ -87,12 +87,11 @@ func (iface *dhcpInterfaceV6) handleSolicit(
 	lease, iaid := iface.allocateForSolicit(ctx, fd.ether.SrcMAC, req)
 
 	resp := &layers.DHCPv6{
-		MsgType:       layers.DHCPv6MsgTypeAdverstise,
+		MsgType:       layers.DHCPv6MsgTypeAdvertise,
 		TransactionID: req.TransactionID,
 	}
 
 	if lease == nil {
-		l.DebugContext(ctx, "no ia_na in solicit or no addresses available")
 		resp.Options = iface.newSolicitRespOpts(fd, req, cliID, iaid, nil, false)
 
 		return respond6(fd, resp)
@@ -110,6 +109,12 @@ func (iface *dhcpInterfaceV6) handleSolicit(
 	if err != nil {
 		l.WarnContext(ctx, "committing rapid leases", slogutil.KeyError, err)
 		isRapidCommit = false
+	} else {
+		// The server will also send a Reply in response to a Solicit with a
+		// Rapid Commit option.
+		//
+		// See RFC 9915 Section 18.3.
+		resp.MsgType = layers.DHCPv6MsgTypeReply
 	}
 
 	resp.Options = iface.newSolicitRespOpts(fd, req, cliID, iaid, lease, isRapidCommit)
