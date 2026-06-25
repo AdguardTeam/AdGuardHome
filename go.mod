@@ -16,9 +16,11 @@ require (
 	// own code for that.  Perhaps, use gopacket.
 	github.com/go-ping/ping v1.2.0
 	github.com/google/go-cmp v0.7.0
+	// TODO(e.burkov): Remove this dependency along with the dhcpd package.
 	github.com/google/gopacket v1.1.19
 	github.com/google/renameio/v2 v2.0.2
 	github.com/google/uuid v1.6.0
+	github.com/gopacket/gopacket v1.6.1
 	github.com/insomniacslk/dhcp v0.0.0-20260407060928-11b94ed970f2
 	github.com/kardianos/service v1.2.4
 	github.com/mdlayher/ethernet v0.0.0-20220221185849-529eae5b6118

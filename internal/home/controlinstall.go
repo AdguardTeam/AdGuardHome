@@ -553,6 +553,7 @@ func (web *webAPI) finalizeInstall(
 	web.conf.BindAddr = netip.AddrPortFrom(req.Web.IP, req.Web.Port)
 
 	web.registerControlHandlers()
+	web.registerTLSHandlers()
 
 	aghhttp.OK(ctx, l, w)
 

@@ -17,8 +17,9 @@ import (
 	"github.com/AdguardTeam/golibs/testutil/faketime"
 	"github.com/AdguardTeam/golibs/testutil/servicetest"
 	"github.com/AdguardTeam/golibs/timeutil"
-	"github.com/google/gopacket"
-	"github.com/google/gopacket/layers"
+	"github.com/gopacket/gopacket"
+	"github.com/gopacket/gopacket/layers"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -40,9 +41,6 @@ const testTimeout = 10 * time.Second
 
 // testLeaseTTL is the lease duration used in tests.
 const testLeaseTTL = 24 * time.Hour
-
-// testXid is a common transaction ID for DHCPv4 tests.
-const testXid = 1
 
 // testLogger is a common logger for tests.
 var testLogger = slogutil.NewDiscardLogger()
@@ -102,11 +100,15 @@ const (
 const (
 	// testRangeStartV6Str is the string representation of the range start of
 	// the IPv6 interface used in tests.
-	testRangeStartV6Str = "2001:db8::1"
+	testRangeStartV6Str = "2001:db8::2"
 
 	// testAnotherRangeStartV6Str is the string representation of the range
 	// start of the second IPv6 interface used in tests.
 	testAnotherRangeStartV6Str = "2001:db9::1"
+
+	// testIfaceAddrV6Str is the string representation of the interface's IPv6
+	// address used in tests.
+	testIfaceAddrV6Str = "2001:db8::1"
 )
 
 var (
@@ -133,10 +135,23 @@ var (
 		RASLAACOnly:   true,
 	}
 
-	// testIfaceAddr is a common valid IPv4 address of the test network
+	// disabledIPv4Conf is a configuration of IPv4 part of the interfaces
+	// configuration that is disabled.
+	disabledIPv4Conf = &dhcpsvc.IPv4Config{Enabled: false}
+
+	// disabledIPv6Conf is a configuration of IPv6 part of the interfaces
+	// configuration that is disabled.
+	disabledIPv6Conf = &dhcpsvc.IPv6Config{Enabled: false}
+
+	// testIfaceAddrV4 is a common valid IPv4 address of the test network
 	// interface, compliant with [testIPv4Conf], i.e. outside of the range,
 	// within the subnet, not equal to the gateway.
-	testIfaceAddr = netip.MustParseAddr(testIfaceAddrV4Str)
+	testIfaceAddrV4 = netip.MustParseAddr(testIfaceAddrV4Str)
+
+	// testIfaceAddrV6 is a common valid IPv6 address of the test network
+	// interface, compliant with [testIPv6Conf], i.e. outside of the range,
+	// within the subnet, not equal to the gateway.
+	testIfaceAddrV6 = netip.MustParseAddr(testIfaceAddrV6Str)
 
 	// testIfaceHWAddr is a common valid hardware address of the test network
 	// interface.
@@ -171,17 +186,42 @@ var testInterfaceConf = map[string]*dhcpsvc.InterfaceConfig{
 	},
 }
 
-// disabledIPv6Config is a configuration of IPv6 part of the interfaces
-// configuration that is disabled.
-var disabledIPv6Config = &dhcpsvc.IPv6Config{Enabled: false}
+// Hardware addresses for test cases.
+//
+// NOTE: Keep in sync with testdata.
+var (
+	// testHWUnknown is the test MAC address for an unknown client.
+	testHWUnknown = net.HardwareAddr{0x0, 0x1, 0x2, 0x3, 0x4, 0x5}
 
-// fullLayersStack is the complete stack of layers expected to appear in the
+	// testHWStatic is the test MAC address for a known static lease.
+	testHWStatic = net.HardwareAddr{0x1, 0x2, 0x3, 0x4, 0x5, 0x6}
+
+	// testHWDynamic is the test MAC address for a known dynamic lease.
+	testHWDynamic = net.HardwareAddr{0x2, 0x3, 0x4, 0x5, 0x6, 0x7}
+
+	// testHWExpired is the test MAC address for a known expired lease.
+	testHWExpired = net.HardwareAddr{0x3, 0x4, 0x5, 0x6, 0x7, 0x8}
+
+	// testHWAnother is the test MAC address for a lease with another IP.
+	testHWAnother = net.HardwareAddr{0x4, 0x5, 0x6, 0x7, 0x8, 0x9}
+)
+
+// fullLayersStack4 is the complete stack of layers expected to appear in the
 // DHCP response packets.
-var fullLayersStack = []gopacket.LayerType{
+var fullLayersStack4 = []gopacket.LayerType{
 	layers.LayerTypeEthernet,
 	layers.LayerTypeIPv4,
 	layers.LayerTypeUDP,
 	layers.LayerTypeDHCPv4,
+}
+
+// fullLayersStack6 is the complete stack of layers expected to appear in the
+// DHCPv6 response packets.
+var fullLayersStack6 = []gopacket.LayerType{
+	layers.LayerTypeEthernet,
+	layers.LayerTypeIPv6,
+	layers.LayerTypeUDP,
+	layers.LayerTypeDHCPv6,
 }
 
 // newTempDB copies the leases database file located in the testdata FS, under
@@ -234,4 +274,44 @@ func newTestDHCPServer(tb testing.TB, conf *dhcpsvc.Config) (srv *dhcpsvc.DHCPSe
 // adding a cleanup function to stop the server on test completion.
 func startTestDHCPServer(tb testing.TB, conf *dhcpsvc.Config) {
 	servicetest.RequireRun(tb, newTestDHCPServer(tb, conf), testTimeout)
+}
+
+// newTestPacket creates a valid packet from ls using first as first layer
+// decoder.
+func newTestPacket(
+	tb testing.TB,
+	first gopacket.Decoder,
+	ls ...gopacket.SerializableLayer,
+) (pkg gopacket.Packet) {
+	tb.Helper()
+
+	buf := gopacket.NewSerializeBuffer()
+
+	opts := gopacket.SerializeOptions{
+		FixLengths:       true,
+		ComputeChecksums: true,
+	}
+	err := gopacket.SerializeLayers(buf, opts, ls...)
+	require.NoError(tb, err)
+
+	return gopacket.NewPacket(buf.Bytes(), first, gopacket.Default)
+}
+
+// assertLeases asserts that the leases returned by srv are equal to orig if
+// wantChanged is false and not equal if wantChanged is true.  The assertion is
+// performed 10 times during half of [testTimeout].
+func assertLeases(tb testing.TB, orig []*dhcpsvc.Lease, srv dhcpsvc.Interface, wantChanged bool) {
+	tb.Helper()
+
+	cond := func() (ok bool) {
+		got := srv.Leases()
+
+		return !assert.ObjectsAreEqual(orig, got)
+	}
+
+	if wantChanged {
+		assert.Eventually(tb, cond, testTimeout/2, testTimeout/20)
+	} else {
+		assert.Never(tb, cond, testTimeout/2, testTimeout/20)
+	}
 }

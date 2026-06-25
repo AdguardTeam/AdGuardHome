@@ -62,7 +62,7 @@ var svcbKeyHandlers = map[string]svcbKeyHandler{
 	},
 
 	"ech": func(ctx context.Context, l *slog.Logger, valStr string) (val dns.SVCBKeyValue) {
-		ech, err := base64.StdEncoding.DecodeString(valStr)
+		ech, err := base64.RawStdEncoding.DecodeString(valStr)
 		if err != nil {
 			l.DebugContext(ctx, "can't parse svcb/https ech, ignoring", slogutil.KeyError, err)
 
