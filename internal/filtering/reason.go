@@ -1,6 +1,9 @@
 package filtering
 
-import "fmt"
+import (
+	"fmt"
+	"maps"
+)
 
 // Reason holds an enum detailing why it was filtered, allowed, or rewritten.
 type Reason uint8
@@ -53,6 +56,8 @@ const (
 	RewrittenRule
 )
 
+// reasonNames maps reason values to their string representations.
+//
 // TODO(a.garipov): Resync with actual code names or replace completely in the
 // next version of HTTP API.
 var reasonNames = []string{
@@ -71,6 +76,15 @@ var reasonNames = []string{
 	RewrittenAutoHosts: "RewriteEtcHosts",
 	RewrittenRule:      "RewriteRule",
 }
+
+// ReasonByName maps reason string names to their values.
+var ReasonByName = maps.Collect(func(yield func(string, Reason) (ok bool)) {
+	for i, name := range reasonNames {
+		if !yield(name, Reason(i)) {
+			break
+		}
+	}
+})
 
 // type check
 var _ fmt.Stringer = NotFilteredNotFound
