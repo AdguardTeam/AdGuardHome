@@ -594,7 +594,7 @@ export const validateMacNotDuplicate =
     (existingLeases: LeaseEntry[], editMac?: string): ((value?: string) => ValidationResult) =>
     (value) => {
         if (value && value !== editMac && existingLeases.some((lease) => lease.mac === value)) {
-            return intl.getMessage('form_error_mac_already_added');
+            return intl.getMessage('dhcp_mac_address_already_added');
         }
         return undefined;
     };

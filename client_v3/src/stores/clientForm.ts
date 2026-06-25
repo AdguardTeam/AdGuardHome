@@ -147,11 +147,23 @@ export const computeExistingClientIds = (): string[] =>
         .filter((c: Client) => state.mode !== 'edit' || c.name !== state.originalName)
         .flatMap((c: Client) => c.ids);
 
+export const computeExistingClientNames = (): string[] =>
+    (dashboardState.clients || [])
+        .filter((c: Client) => state.mode !== 'edit' || c.name !== state.originalName)
+        .map((c: Client) => c.name);
+
 export const saveClient = async (): Promise<boolean> => {
     const errors: Record<string, string | string[]> = {};
 
     if (!state.name.trim()) {
         errors.name = intl.getMessage('form_error_required');
+    }
+
+    if (!errors.name) {
+        const existingClientNames = computeExistingClientNames();
+        if (existingClientNames.includes(state.name.trim())) {
+            errors.name = intl.getMessage('client_name_already_exists');
+        }
     }
 
     const existingClientIds = computeExistingClientIds();

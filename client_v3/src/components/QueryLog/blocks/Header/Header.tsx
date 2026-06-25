@@ -1,4 +1,4 @@
-import { createSignal, createMemo, createEffect, on, onCleanup, Show } from 'solid-js';
+import { createSignal, createMemo, createEffect, on, onCleanup, Show, untrack } from 'solid-js';
 import cn from 'clsx';
 
 import intl from 'panel/common/intl';
@@ -105,7 +105,7 @@ const REASON_OPTIONS = [
 ];
 
 export const Header = (props: Props) => {
-    const [searchValue, setSearchValue] = createSignal(props.currentSearch);
+    const [searchValue, setSearchValue] = createSignal(untrack(() => props.currentSearch));
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
     const isMobile = useIsMobile();
 

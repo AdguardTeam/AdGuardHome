@@ -1,4 +1,4 @@
-import { createMemo, createEffect, Show, onMount } from 'solid-js';
+import { createMemo, createEffect, createSignal, Show, onMount } from 'solid-js';
 import { useNavigate, useParams, useLocation } from '@solidjs/router';
 import cn from 'clsx';
 
@@ -37,11 +37,24 @@ export const AddClient = () => {
     const params = useParams<{ clientName?: string }>();
     const location = useLocation();
 
+    const [nameError, setNameError] = createSignal<string | undefined>();
+
+    createEffect(() => {
+        const formErrors = clientFormState.formErrors;
+        setNameError(
+            typeof formErrors.name === 'string' ? formErrors.name : undefined,
+        );
+    });
+
     onMount(() => {
         getClients();
     });
 
-    // Set initial ID from query params
+    const handleNameChange = (e: Event) => {
+        const value = (e.target as HTMLInputElement).value;
+        updateClientFormField({ field: 'name', value });
+        setNameError(undefined);
+    };
     createEffect(() => {
         const searchParams = new URLSearchParams(location.search);
         const id = searchParams.get('id');
@@ -180,27 +193,13 @@ export const AddClient = () => {
                             data-testid="client-form-name"
                             type="text"
                             value={clientFormState.name}
-                            onChange={(e: Event) =>
-                                updateClientFormField({
-                                    field: 'name',
-                                    value: (e.target as HTMLInputElement).value,
-                                })
-                            }
-                            onInput={(e: Event) =>
-                                updateClientFormField({
-                                    field: 'name',
-                                    value: (e.target as HTMLInputElement).value,
-                                })
-                            }
+                            onChange={handleNameChange}
+                            onInput={handleNameChange}
                             placeholder={intl.getMessage('clients_add_default_name')}
                             label={intl.getMessage('clients_add_name')}
                             size="large"
-                            error={!!clientFormState.formErrors.name}
-                            errorMessage={
-                                typeof clientFormState.formErrors.name === 'string'
-                                    ? clientFormState.formErrors.name
-                                    : undefined
-                            }
+                            error={!!nameError()}
+                            errorMessage={nameError()}
                         />
                     </div>
 

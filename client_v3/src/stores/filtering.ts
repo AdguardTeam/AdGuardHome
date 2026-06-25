@@ -104,7 +104,7 @@ export const blockDomain = async (domain: string): Promise<boolean> => {
 
     addSuccessToast(
         createUndoToast(
-            intl.getMessage('user_rules_rule_added_to_custom_filtering_rules'),
+            intl.getMessage('user_rules_rule_added', { rule }),
             intl.getMessage('notify_undo'),
             async () => {
                 const didUndo = await setRules(previousRules);
@@ -137,7 +137,7 @@ export const unblockDomain = async (domain: string): Promise<boolean> => {
 
     addSuccessToast(
         createUndoToast(
-            intl.getMessage('user_rules_rule_added_to_custom_filtering_rules'),
+            intl.getMessage('user_rules_rule_added', { rule: desiredRule }),
             intl.getMessage('notify_undo'),
             async () => {
                 const didUndo = await setRules(previousRules);
@@ -225,7 +225,7 @@ export const toggleBlocking = async (
 
     addSuccessToast(
         createUndoToast(
-            intl.getMessage('user_rules_rule_added_to_custom_filtering_rules'),
+            intl.getMessage('user_rules_rule_added', { rule: desiredRule }),
             intl.getMessage('notify_undo'),
             async () => {
                 const didUndo = await setRules(previousRules);

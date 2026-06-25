@@ -74,7 +74,7 @@ export const RewritesTable = (props: Props) => {
             },
             accessor: 'enabled',
             sortable: false,
-            fitContent: true,
+            width: 64,
             className: s.cellNameToggleOuter,
             render: (value: boolean, row: Rewrite) => {
                 const { domain, enabled } = row;

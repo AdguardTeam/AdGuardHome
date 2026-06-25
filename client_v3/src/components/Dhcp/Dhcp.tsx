@@ -176,7 +176,7 @@ export const Dhcp = () => {
 
     const handleLeaseModalSubmit = (data: LeaseData) => {
         if (dhcpState.modalType === MODAL_TYPE.EDIT_LEASE) {
-            updateStaticLease({ target: dhcpState.leaseModalConfig!, update: data });
+            updateStaticLease(data);
         } else {
             addStaticLease(data);
         }

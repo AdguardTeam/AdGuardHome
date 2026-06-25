@@ -290,15 +290,15 @@ export const removeStaticLease = async (lease: Lease) => {
     }
 };
 
-export const updateStaticLease = async (config: { target: Lease; update: Lease }) => {
+export const updateStaticLease = async (lease: Lease) => {
     setState('processingUpdating', true);
     try {
-        await apiClient.updateStaticLease(config);
+        await apiClient.updateStaticLease(lease);
         setState('processingUpdating', false);
         toggleLeaseModal();
         addSuccessToast(
             intl.getMessage('dhcp_lease_updated', {
-                key: config.update.hostname || config.update.ip,
+                key: lease.hostname || lease.ip,
             }),
         );
         await getDhcpStatus();

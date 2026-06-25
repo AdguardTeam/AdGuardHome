@@ -11,7 +11,7 @@ import { Button } from 'panel/common/ui/Button';
 import { FaqTooltip } from 'panel/common/ui/FaqTooltip';
 import intl from 'panel/common/intl';
 import { DNS_REQUEST_OPTIONS, UINT32_RANGE, UPSTREAM_TIMEOUT } from 'panel/helpers/constants';
-import { validateMinValue, validateUpstreams } from 'panel/helpers/validators';
+import { validateMinValue, validateMaxValue, validateUpstreams } from 'panel/helpers/validators';
 import theme from 'panel/lib/theme';
 
 import { Examples } from '../Examples';
@@ -124,7 +124,9 @@ export const Form = (props: FormProps) => {
     };
 
     const validateUpstreamTimeout = () => {
-        const err = validateMinValue(upstreamTimeout(), UPSTREAM_TIMEOUT.MIN);
+        const err =
+            validateMinValue(upstreamTimeout(), UPSTREAM_TIMEOUT.MIN) ||
+            validateMaxValue(upstreamTimeout(), UPSTREAM_TIMEOUT.MAX);
         setUpstreamTimeoutError(err || '');
     };
 
