@@ -124,8 +124,6 @@ func (iface *dhcpInterfaceV6) handleSolicit(
 
 // handleRequest handles messages of type REQUEST.  req must not be nil and must
 // be a valid DHCPv6 message of type REQUEST.  fd must be valid.
-//
-// TODO(e.burkov):  Implement.  This is a stub for now.
 func (iface *dhcpInterfaceV6) handleRequest(
 	ctx context.Context,
 	fd *frameData6,
@@ -139,7 +137,53 @@ func (iface *dhcpInterfaceV6) handleRequest(
 	l := iface.common.logger
 	l.DebugContext(ctx, "handling message", "type", req.MsgType, "cli_id", cliID)
 
-	return nil
+	iface.common.indexMu.Lock()
+	defer iface.common.indexMu.Unlock()
+
+	resp := &layers.DHCPv6{
+		MsgType:       layers.DHCPv6MsgTypeReply,
+		TransactionID: req.TransactionID,
+	}
+
+	iana, ok := iface.firstIANA(ctx, req)
+	if !ok {
+		respIANA := newIANAWithStatus(0, layers.DHCPv6StatusCodeNoAddrsAvail)
+		resp.Options = iface.newRequestRespOpts(fd, req, cliID, respIANA)
+
+		return respond6(fd, resp)
+	}
+
+	reqIP, hasReqIP := iana.requestedAddr()
+	if hasReqIP && !iface.subnetPrefix.Contains(reqIP) {
+		respIANA := newIANAWithStatus(iana.ID, layers.DHCPv6StatusCodeNotOnLink)
+		resp.Options = iface.newRequestRespOpts(fd, req, cliID, respIANA)
+
+		return respond6(fd, resp)
+	}
+
+	lease, err := iface.leaseForRequest(ctx, fd.ether.SrcMAC)
+	if err != nil {
+		l.DebugContext(ctx, "no address available", "iaid", iana.ID, slogutil.KeyError, err)
+
+		respIANA := newIANAWithStatus(iana.ID, layers.DHCPv6StatusCodeNoAddrsAvail)
+		resp.Options = iface.newRequestRespOpts(fd, req, cliID, respIANA)
+
+		return respond6(fd, resp)
+	}
+
+	err = iface.commit(ctx, req, lease)
+	if err != nil {
+		l.WarnContext(ctx, "committing requested lease", slogutil.KeyError, err)
+
+		respIANA := newIANAWithStatus(iana.ID, layers.DHCPv6StatusCodeNoAddrsAvail)
+		resp.Options = iface.newRequestRespOpts(fd, req, cliID, respIANA)
+
+		return respond6(fd, resp)
+	}
+
+	resp.Options = iface.newRequestRespOpts(fd, req, cliID, iface.iaNAFromLease(lease, iana.ID))
+
+	return respond6(fd, resp)
 }
 
 // handleConfirm handles messages of type CONFIRM.  req must not be nil and must

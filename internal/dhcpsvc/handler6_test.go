@@ -167,6 +167,61 @@ func TestDHCPServer_ServeEther6_solicit(t *testing.T) {
 	}
 }
 
+func TestDHCPServer_ServeEther6_request(t *testing.T) {
+	t.Parallel()
+
+	// TODO(e.burkov):  !! Add more cases.
+	//
+	// TODO(e.burkov):  !! Send solicit before request.
+	testCases := []struct {
+		name     string
+		in       gopacket.Packet
+		wantOpts layers.DHCPv6Options
+	}{{
+		name: "success",
+		in:   newDHCPv6REQUEST(t, testHWUnknown, testIPv6Unknown),
+		wantOpts: layers.DHCPv6Options{
+			newOptServerDUID(t, testIfaceHWAddr),
+			newOptClientDUID(t, testHWUnknown),
+			newOptIANA(t, testIAID, testIPv6Conf.RangeStart),
+			newOptPreference(t, 0),
+			newOptSolMaxRT(t, dhcpsvc.DefaultSolMaxRT),
+		},
+	}, {
+		name: "not_on_link",
+		in:   newDHCPv6REQUEST(t, testHWUnknown, netip.MustParseAddr(testAnotherRangeStartV6Str)),
+		wantOpts: layers.DHCPv6Options{
+			newOptServerDUID(t, testIfaceHWAddr),
+			newOptClientDUID(t, testHWUnknown),
+			newOptIANAStatus(t, testIAID, layers.DHCPv6StatusCodeNotOnLink),
+			newOptPreference(t, 0),
+			newOptSolMaxRT(t, dhcpsvc.DefaultSolMaxRT),
+		},
+	}}
+
+	for _, tc := range testCases {
+		dbFilePath := newTempDB(t)
+		req := testutil.RequireTypeAssert[*layers.DHCPv6](t, tc.in.Layer(layers.LayerTypeDHCPv6))
+
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			ndMgr, inCh, outCh := newTestNetworkDeviceManager(t, testIfaceAddrV6)
+			startTestDHCPServer(t, &dhcpsvc.Config{
+				Interfaces:           testIPv6InterfacesConf,
+				NetworkDeviceManager: ndMgr,
+				Logger:               testLogger,
+				DBFilePath:           dbFilePath,
+				Enabled:              true,
+			})
+
+			testutil.RequireSend(t, inCh, tc.in, testTimeout)
+
+			assertValidResponse6(t, req, outCh, tc.wantOpts)
+		})
+	}
+}
+
 // newDHCPv6SOLICIT creates a new DHCPv6 SOLICIT packet for testing.
 func newDHCPv6SOLICIT(
 	tb testing.TB,
@@ -200,6 +255,31 @@ func newDHCPv6SOLICIT(
 	if rapidCommit {
 		o := layers.NewDHCPv6Option(layers.DHCPv6OptRapidCommit, nil)
 		dhcp.Options = append(dhcp.Options, o)
+	}
+
+	return newTestPacket(tb, layers.LinkTypeEthernet, eth, ip, udp, dhcp)
+}
+
+// newDHCPv6REQUEST creates a new DHCPv6 REQUEST packet for testing.
+func newDHCPv6REQUEST(tb testing.TB, mac net.HardwareAddr, reqIP netip.Addr) (pkt gopacket.Packet) {
+	tb.Helper()
+
+	eth := newEthernetLayer(tb, mac, testIfaceHWAddr, layers.EthernetTypeIPv6)
+	ip, udp := newIPv6UDPLayer(tb, netip.AddrPort{}, netip.AddrPort{})
+
+	dhcp := &layers.DHCPv6{
+		MsgType:  layers.DHCPv6MsgTypeRequest,
+		HopCount: 0,
+		// Don't specify link and peer addresses, as they are intended for relay
+		// messages.
+		LinkAddr:      nil,
+		PeerAddr:      nil,
+		TransactionID: testTransactionID,
+		Options: layers.DHCPv6Options{
+			newOptClientDUID(tb, mac),
+			newOptServerDUID(tb, testIfaceHWAddr),
+			newOptIANA(tb, testIAID, reqIP),
+		},
 	}
 
 	return newTestPacket(tb, layers.LinkTypeEthernet, eth, ip, udp, dhcp)

@@ -134,10 +134,14 @@ type dhcpInterfaceV6 struct {
 	common *netInterface
 
 	// clock is used to get the current time.
+	//
+	// TODO(e.burkov):  Move to [netInterface].
 	clock timeutil.Clock
 
 	// addrChecker checks if an address is available for leasing in current
 	// network.
+	//
+	// TODO(e.burkov):  Move to [netInterface].
 	addrChecker addressChecker
 
 	// subnetPrefix is the network prefix of the interface's IPv6 subnet.  It is
@@ -467,6 +471,39 @@ func (iface *dhcpInterfaceV6) allocateForSolicit(
 	return nil, 0
 }
 
+// firstIANA returns the first valid IA_NA option in req.  It returns false if
+// there is no such option.  req must not be nil.
+//
+// TODO(e.burkov):  Support handling several IA_NA options at a time when the
+// database will migrate, see the BUG at [Lease]'s documentation.
+func (iface *dhcpInterfaceV6) firstIANA(
+	ctx context.Context,
+	req *layers.DHCPv6,
+) (iana *IANAOption, ok bool) {
+	iana = &IANAOption{}
+	for _, reqOpt := range req.Options {
+		if reqOpt.Code != layers.DHCPv6OptIANA {
+			continue
+		}
+
+		err := iana.UnmarshalBinary(reqOpt.Data)
+		if err != nil {
+			iface.common.logger.DebugContext(
+				ctx,
+				"malformed ia_na",
+				slogutil.KeyError,
+				err,
+			)
+
+			continue
+		}
+
+		return iana, true
+	}
+
+	return nil, false
+}
+
 // newSolicitRespOpts returns the common option list for Advertise and
 // rapid-commit Reply responses to a Solicit request.  cliID must not be nil.
 func (iface *dhcpInterfaceV6) newSolicitRespOpts(
@@ -477,10 +514,8 @@ func (iface *dhcpInterfaceV6) newSolicitRespOpts(
 	lease *Lease,
 	rapidCommit bool,
 ) (opts layers.DHCPv6Options) {
-	cliIDData := cliID.Encode()
-
 	opts = append(opts, layers.NewDHCPv6Option(layers.DHCPv6OptServerID, fd.duidData))
-	opts = append(opts, layers.NewDHCPv6Option(layers.DHCPv6OptClientID, cliIDData))
+	opts = append(opts, layers.NewDHCPv6Option(layers.DHCPv6OptClientID, cliID.Encode()))
 
 	// For Solicit without IA_NA options, respond with safe Advertise with no
 	// IA_NA options and Status Code NoAddrsAvail.
@@ -504,6 +539,26 @@ func (iface *dhcpInterfaceV6) newSolicitRespOpts(
 	return iface.appendRequestedOptions(opts, req)
 }
 
+// newRequestRespOpts returns the common option list for Reply responses to a
+// Request message.  cliID must not be nil.
+func (iface *dhcpInterfaceV6) newRequestRespOpts(
+	fd *frameData6,
+	req *layers.DHCPv6,
+	cliID *layers.DHCPv6DUID,
+	iana layers.DHCPv6Option,
+) (opts layers.DHCPv6Options) {
+	opts = append(opts, layers.NewDHCPv6Option(layers.DHCPv6OptServerID, fd.duidData))
+	opts = append(opts, layers.NewDHCPv6Option(layers.DHCPv6OptClientID, cliID.Encode()))
+	opts = append(opts, iana)
+
+	// Keep the Reply option set aligned with the current Advertise response
+	// shape until the wider DHCPv6 implementation is completed.
+	opts = append(opts, newPreferenceOption(0))
+	opts = append(opts, newSOLMaxRTOption(DefaultSolMaxRT))
+
+	return iface.appendRequestedOptions(opts, req)
+}
+
 // iaNAFromLease returns an IA_NA option with a single IA Address sub-option
 // corresponding to lease and with the given iaid.  The T1 and T2 values are set
 // according to iface.t1 and iface.t2.  If lease is nil, it returns an IA_NA
@@ -523,6 +578,24 @@ func (iface *dhcpInterfaceV6) iaNAFromLease(lease *Lease, iaid uint32) (iana lay
 		T1: iface.t1,
 		T2: iface.t2,
 	}.Encode()
+}
+
+// leaseForRequest returns the lease to commit for a Request message.  It reuses
+// an already reserved lease for the client when possible, or reserves the
+// requested address if it is currently available.  reqIP may be invalid if the
+// request did not specify an IA Address.  iface.common.indexMu must be locked.
+func (iface *dhcpInterfaceV6) leaseForRequest(
+	ctx context.Context,
+	mac net.HardwareAddr,
+) (lease *Lease, err error) {
+	key := macToKey(mac)
+
+	lease, ok := iface.common.leases[key]
+	if ok {
+		return lease, nil
+	}
+
+	return iface.common.allocateLease(ctx, mac, iface.addrChecker, iface.clock)
 }
 
 // commit updates the lease allocated previously via a SOLICIT, or during

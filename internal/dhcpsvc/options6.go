@@ -119,6 +119,17 @@ func (opt IANAOption) Encode() (iaOpt layers.DHCPv6Option) {
 	return layers.NewDHCPv6Option(layers.DHCPv6OptIANA, data)
 }
 
+// requestedAddr returns the first requested address within iana, if any.
+func (opt IANAOption) requestedAddr() (addr netip.Addr, ok bool) {
+	if len(opt.Nested) == 0 {
+		return netip.Addr{}, false
+	}
+
+	addr = opt.Nested[0].Addr
+
+	return addr, addr.IsValid()
+}
+
 // iaAddrDataLen is the minimum length of an IA Address option data field, which
 // is encoded [iaAddrOption], in bytes, excluding any nested options.  It
 // consists of the IPv6 address (16 bytes) and the preferred and valid lifetimes
