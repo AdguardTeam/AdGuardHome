@@ -167,19 +167,22 @@ func TestDHCPServer_ServeEther6_solicit(t *testing.T) {
 	}
 }
 
+// TODO(e.burkov):  Add tests for REQUEST causing errors.  This would require a
+// custom implementation of the address checker at least.
 func TestDHCPServer_ServeEther6_request(t *testing.T) {
 	t.Parallel()
 
-	// TODO(e.burkov):  !! Add more cases.
-	//
-	// TODO(e.burkov):  !! Send solicit before request.
+	notOnLinkAddr := netip.MustParseAddr(testAnotherRangeStartV6Str)
+
 	testCases := []struct {
 		name     string
 		in       gopacket.Packet
+		solicit  gopacket.Packet
 		wantOpts layers.DHCPv6Options
 	}{{
-		name: "success",
-		in:   newDHCPv6REQUEST(t, testHWUnknown, testIPv6Unknown),
+		name:    "success",
+		in:      newDHCPv6REQUEST(t, testHWUnknown, testIPv6Unknown),
+		solicit: nil,
 		wantOpts: layers.DHCPv6Options{
 			newOptServerDUID(t, testIfaceHWAddr),
 			newOptClientDUID(t, testHWUnknown),
@@ -188,12 +191,56 @@ func TestDHCPServer_ServeEther6_request(t *testing.T) {
 			newOptSolMaxRT(t, dhcpsvc.DefaultSolMaxRT),
 		},
 	}, {
-		name: "not_on_link",
-		in:   newDHCPv6REQUEST(t, testHWUnknown, netip.MustParseAddr(testAnotherRangeStartV6Str)),
+		name:    "not_on_link",
+		in:      newDHCPv6REQUEST(t, testHWUnknown, notOnLinkAddr),
+		solicit: nil,
 		wantOpts: layers.DHCPv6Options{
 			newOptServerDUID(t, testIfaceHWAddr),
 			newOptClientDUID(t, testHWUnknown),
 			newOptIANAStatus(t, testIAID, layers.DHCPv6StatusCodeNotOnLink),
+			newOptPreference(t, 0),
+			newOptSolMaxRT(t, dhcpsvc.DefaultSolMaxRT),
+		},
+	}, {
+		name:    "existing_static",
+		in:      newDHCPv6REQUEST(t, testHWStatic, testIPv6Static),
+		solicit: nil,
+		wantOpts: layers.DHCPv6Options{
+			newOptServerDUID(t, testIfaceHWAddr),
+			newOptClientDUID(t, testHWStatic),
+			newOptIANA(t, testIAID, testIPv6Static),
+			newOptPreference(t, 0),
+			newOptSolMaxRT(t, dhcpsvc.DefaultSolMaxRT),
+		},
+	}, {
+		name:    "no_iana",
+		in:      newDHCPv6REQUEST(t, testHWUnknown, netip.Addr{}),
+		solicit: nil,
+		wantOpts: layers.DHCPv6Options{
+			newOptServerDUID(t, testIfaceHWAddr),
+			newOptClientDUID(t, testHWUnknown),
+			newOptPreference(t, 0),
+			newOptSolMaxRT(t, dhcpsvc.DefaultSolMaxRT),
+		},
+	}, {
+		name:    "preceding_solicit",
+		in:      newDHCPv6REQUEST(t, testHWUnknown, testIPv6Unknown),
+		solicit: newDHCPv6SOLICIT(t, testHWUnknown, testIPv6Unknown, false),
+		wantOpts: layers.DHCPv6Options{
+			newOptServerDUID(t, testIfaceHWAddr),
+			newOptClientDUID(t, testHWUnknown),
+			newOptIANA(t, testIAID, testIPv6Conf.RangeStart),
+			newOptPreference(t, 0),
+			newOptSolMaxRT(t, dhcpsvc.DefaultSolMaxRT),
+		},
+	}, {
+		name:    "preceding_solicit_rapid_commit",
+		in:      newDHCPv6REQUEST(t, testHWUnknown, testIPv6Unknown),
+		solicit: newDHCPv6SOLICIT(t, testHWUnknown, testIPv6Unknown, true),
+		wantOpts: layers.DHCPv6Options{
+			newOptServerDUID(t, testIfaceHWAddr),
+			newOptClientDUID(t, testHWUnknown),
+			newOptIANA(t, testIAID, testIPv6Conf.RangeStart),
 			newOptPreference(t, 0),
 			newOptSolMaxRT(t, dhcpsvc.DefaultSolMaxRT),
 		},
@@ -214,6 +261,13 @@ func TestDHCPServer_ServeEther6_request(t *testing.T) {
 				DBFilePath:           dbFilePath,
 				Enabled:              true,
 			})
+
+			if tc.solicit != nil {
+				testutil.RequireSend(t, inCh, tc.solicit, testTimeout)
+
+				_, ok := testutil.RequireReceive(t, outCh, testTimeout)
+				require.True(t, ok)
+			}
 
 			testutil.RequireSend(t, inCh, tc.in, testTimeout)
 
@@ -278,8 +332,11 @@ func newDHCPv6REQUEST(tb testing.TB, mac net.HardwareAddr, reqIP netip.Addr) (pk
 		Options: layers.DHCPv6Options{
 			newOptClientDUID(tb, mac),
 			newOptServerDUID(tb, testIfaceHWAddr),
-			newOptIANA(tb, testIAID, reqIP),
 		},
+	}
+
+	if reqIP.IsValid() && reqIP.Is6() {
+		dhcp.Options = append(dhcp.Options, newOptIANA(tb, testIAID, reqIP))
 	}
 
 	return newTestPacket(tb, layers.LinkTypeEthernet, eth, ip, udp, dhcp)

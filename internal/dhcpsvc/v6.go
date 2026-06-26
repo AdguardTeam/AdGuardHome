@@ -435,7 +435,7 @@ func (iface *dhcpInterfaceV6) allocateForSolicit(
 	l := iface.common.logger
 	key := macToKey(mac)
 
-	for _, reqOpt := range req.Options {
+	for i, reqOpt := range req.Options {
 		if reqOpt.Code != layers.DHCPv6OptIANA {
 			continue
 		}
@@ -444,7 +444,7 @@ func (iface *dhcpInterfaceV6) allocateForSolicit(
 		err := iana.UnmarshalBinary(reqOpt.Data)
 		if err != nil {
 			// TODO(e.burkov):  Recheck the logic on malformed IA_NA options.
-			l.DebugContext(ctx, "malformed ia_na in solicit", slogutil.KeyError, err)
+			l.DebugContext(ctx, "malformed ia_na", "idx", i, slogutil.KeyError, err)
 
 			continue
 		}
@@ -480,20 +480,17 @@ func (iface *dhcpInterfaceV6) firstIANA(
 	ctx context.Context,
 	req *layers.DHCPv6,
 ) (iana *IANAOption, ok bool) {
-	iana = &IANAOption{}
-	for _, reqOpt := range req.Options {
+	l := iface.common.logger
+
+	for i, reqOpt := range req.Options {
 		if reqOpt.Code != layers.DHCPv6OptIANA {
 			continue
 		}
 
+		iana = &IANAOption{}
 		err := iana.UnmarshalBinary(reqOpt.Data)
 		if err != nil {
-			iface.common.logger.DebugContext(
-				ctx,
-				"malformed ia_na",
-				slogutil.KeyError,
-				err,
-			)
+			l.DebugContext(ctx, "malformed ia_na", "idx", i, slogutil.KeyError, err)
 
 			continue
 		}
@@ -541,6 +538,9 @@ func (iface *dhcpInterfaceV6) newSolicitRespOpts(
 
 // newRequestRespOpts returns the common option list for Reply responses to a
 // Request message.  cliID must not be nil.
+//
+// TODO(e.burkov):  Keep the Reply option set aligned with the current Advertise
+// response shape until the wider DHCPv6 implementation is completed.
 func (iface *dhcpInterfaceV6) newRequestRespOpts(
 	fd *frameData6,
 	req *layers.DHCPv6,
@@ -549,10 +549,14 @@ func (iface *dhcpInterfaceV6) newRequestRespOpts(
 ) (opts layers.DHCPv6Options) {
 	opts = append(opts, layers.NewDHCPv6Option(layers.DHCPv6OptServerID, fd.duidData))
 	opts = append(opts, layers.NewDHCPv6Option(layers.DHCPv6OptClientID, cliID.Encode()))
-	opts = append(opts, iana)
+	if iana.Code != 0 {
+		opts = append(opts, iana)
+	}
 
-	// Keep the Reply option set aligned with the current Advertise response
-	// shape until the wider DHCPv6 implementation is completed.
+	// The server preference value MUST default to 0 unless otherwise configured
+	// by the server administrator.
+	//
+	// See RFC 9915 Section 18.3.9.
 	opts = append(opts, newPreferenceOption(0))
 	opts = append(opts, newSOLMaxRTOption(DefaultSolMaxRT))
 
@@ -580,22 +584,40 @@ func (iface *dhcpInterfaceV6) iaNAFromLease(lease *Lease, iaid uint32) (iana lay
 	}.Encode()
 }
 
-// leaseForRequest returns the lease to commit for a Request message.  It reuses
-// an already reserved lease for the client when possible, or reserves the
-// requested address if it is currently available.  reqIP may be invalid if the
-// request did not specify an IA Address.  iface.common.indexMu must be locked.
+// leaseForRequest returns the committed lease for req.  It reuses an already
+// reserved lease for the client when possible, or allocates and commits the new
+// address.  iface.common.indexMu must be locked.
+//
+// TODO(e.burkov):  Support committing several leases at a time when the
+// database will migrate, see the BUG at [Lease]'s documentation.
 func (iface *dhcpInterfaceV6) leaseForRequest(
 	ctx context.Context,
+	req *layers.DHCPv6,
 	mac net.HardwareAddr,
 ) (lease *Lease, err error) {
 	key := macToKey(mac)
+	l := iface.common.logger
 
 	lease, ok := iface.common.leases[key]
 	if ok {
 		return lease, nil
 	}
 
-	return iface.common.allocateLease(ctx, mac, iface.addrChecker, iface.clock)
+	lease, err = iface.common.allocateLease(ctx, mac, iface.addrChecker, iface.clock)
+	if err != nil {
+		l.DebugContext(ctx, "no address available", "mac", mac, slogutil.KeyError, err)
+
+		return nil, fmt.Errorf("allocating lease: %w", err)
+	}
+
+	err = iface.commit(ctx, req, lease)
+	if err != nil {
+		l.WarnContext(ctx, "committing requested lease", slogutil.KeyError, err)
+
+		return nil, fmt.Errorf("committing lease: %w", err)
+	}
+
+	return lease, nil
 }
 
 // commit updates the lease allocated previously via a SOLICIT, or during

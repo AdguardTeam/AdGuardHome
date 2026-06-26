@@ -147,8 +147,11 @@ func (iface *dhcpInterfaceV6) handleRequest(
 
 	iana, ok := iface.firstIANA(ctx, req)
 	if !ok {
-		respIANA := newIANAWithStatus(0, layers.DHCPv6StatusCodeNoAddrsAvail)
-		resp.Options = iface.newRequestRespOpts(fd, req, cliID, respIANA)
+		// In practice, the DHCPv6 REQUEST with no IA_NA options is not useful,
+		// since the standard explicitly defines the INFORMATION-REQUEST message
+		// type for that purpose.  However, there are no requirements which
+		// invalidate such messages, so the server must respond.
+		resp.Options = iface.newRequestRespOpts(fd, req, cliID, layers.DHCPv6Option{})
 
 		return respond6(fd, resp)
 	}
@@ -161,20 +164,8 @@ func (iface *dhcpInterfaceV6) handleRequest(
 		return respond6(fd, resp)
 	}
 
-	lease, err := iface.leaseForRequest(ctx, fd.ether.SrcMAC)
+	lease, err := iface.leaseForRequest(ctx, req, fd.ether.SrcMAC)
 	if err != nil {
-		l.DebugContext(ctx, "no address available", "iaid", iana.ID, slogutil.KeyError, err)
-
-		respIANA := newIANAWithStatus(iana.ID, layers.DHCPv6StatusCodeNoAddrsAvail)
-		resp.Options = iface.newRequestRespOpts(fd, req, cliID, respIANA)
-
-		return respond6(fd, resp)
-	}
-
-	err = iface.commit(ctx, req, lease)
-	if err != nil {
-		l.WarnContext(ctx, "committing requested lease", slogutil.KeyError, err)
-
 		respIANA := newIANAWithStatus(iana.ID, layers.DHCPv6StatusCodeNoAddrsAvail)
 		resp.Options = iface.newRequestRespOpts(fd, req, cliID, respIANA)
 
