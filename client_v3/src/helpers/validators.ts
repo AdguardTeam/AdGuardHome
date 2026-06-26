@@ -527,15 +527,33 @@ export const validateIdentifier = (
 };
 
 /**
- * Validates a hostname format.
+ * Regex matching a hostname that consists only of digits.
+ */
+const R_ALL_DIGITS = /^[0-9]+$/;
+
+/**
+ * Validates a hostname format.  Empty values are considered valid.
  *
  * @example validateHostname("my-router")          // undefined (valid)
  * @example validateHostname("")                   // undefined (empty = valid)
+ * @example validateHostname("123")                // "Use numbers …" (all-numeric)
+ * @example validateHostname("-")                  // "Use numbers …" (only hyphens)
+ * @example validateHostname("-host")              // "Use numbers …" (starts with hyphen)
  */
 export const validateHostname = (value?: string): ValidationResult => {
-    if (value && !R_HOSTNAME.test(value)) {
+    if (!value) {
+        return undefined;
+    }
+
+    if (
+        !R_HOSTNAME.test(value)
+        || R_ALL_DIGITS.test(value)
+        || value.startsWith('-')
+        || value.endsWith('-')
+    ) {
         return intl.getMessage('form_error_hostname_format');
     }
+
     return undefined;
 };
 
