@@ -546,10 +546,10 @@ export const validateHostname = (value?: string): ValidationResult => {
     }
 
     if (
-        !R_HOSTNAME.test(value)
-        || R_ALL_DIGITS.test(value)
-        || value.startsWith('-')
-        || value.endsWith('-')
+        !R_HOSTNAME.test(value) ||
+        R_ALL_DIGITS.test(value) ||
+        value.startsWith('-') ||
+        value.endsWith('-')
     ) {
         return intl.getMessage('form_error_hostname_format');
     }

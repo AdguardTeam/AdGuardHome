@@ -12,6 +12,7 @@ import { ADDRESS_IN_USE_TEXT, PORT_53_FAQ_LINK, STANDARD_DNS_PORT } from 'panel/
 import { validateRequiredValue, validateInstallPort } from 'panel/helpers/validators';
 import { toNumber } from 'panel/helpers/form';
 import styles from './styles.module.pcss';
+import theme from 'panel/lib/theme';
 
 type SelectOption = {
     value: string;
@@ -133,6 +134,7 @@ export const DnsBanner = (props: Props) => {
                                             href={PORT_53_FAQ_LINK}
                                             target="_blank"
                                             rel="noopener noreferrer"
+                                            class={theme.link.link}
                                         >
                                             {text}
                                         </a>
