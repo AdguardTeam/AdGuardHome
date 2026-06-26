@@ -50,7 +50,8 @@ func TestWebAPI_HandleTLSConfigure(t *testing.T) {
 				ClientsContainer: dnsforward.EmptyClientsContainer{},
 			},
 			ServePlainDNS: true,
-		})
+		},
+	)
 	require.NoError(t, err)
 
 	globalContext.clients.storage, err = client.NewStorage(ctx, &client.StorageConfig{

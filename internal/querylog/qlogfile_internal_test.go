@@ -358,7 +358,8 @@ func TestQLog_Seek(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			data := fmt.Sprintf(recs,
+			data := fmt.Sprintf(
+				recs,
 				timestamp.Add(-time.Second).Format(time.RFC3339Nano),
 				timestamp.Format(time.RFC3339Nano),
 				timestamp.Add(time.Second).Format(time.RFC3339Nano),

@@ -22,38 +22,42 @@ func TestLargestLabeled(t *testing.T) {
 		wantInstNum int
 	}{{
 		name: "success",
-		data: []byte(nl +
-			`  123     not-a-` + comm + nl +
-			`  321    ` + comm + nl,
+		data: []byte(
+			nl +
+				`  123     not-a-` + comm + nl +
+				`  321    ` + comm + nl,
 		),
 		wantPID:     321,
 		wantInstNum: 1,
 	}, {
 		name: "several",
-		data: []byte(nl +
-			`1 ` + comm + nl +
-			`5 /` + comm + nl +
-			`2 /some/path/` + comm + nl +
-			`4 ./` + comm + nl +
-			`3 ` + comm + nl +
-			`10 .` + comm + nl,
+		data: []byte(
+			nl +
+				`1 ` + comm + nl +
+				`5 /` + comm + nl +
+				`2 /some/path/` + comm + nl +
+				`4 ./` + comm + nl +
+				`3 ` + comm + nl +
+				`10 .` + comm + nl,
 		),
 		wantPID:     5,
 		wantInstNum: 5,
 	}, {
 		name: "no_any",
-		data: []byte(nl +
-			`1 ` + `not-a-` + comm + nl +
-			`2 ` + `not-a-` + comm + nl +
-			`3 ` + `not-a-` + comm + nl,
+		data: []byte(
+			nl +
+				`1 ` + `not-a-` + comm + nl +
+				`2 ` + `not-a-` + comm + nl +
+				`3 ` + `not-a-` + comm + nl,
 		),
 		wantPID:     0,
 		wantInstNum: 0,
 	}, {
 		name: "weird_input",
-		data: []byte(nl +
-			`abc  ` + comm + nl +
-			`-1   ` + comm + nl,
+		data: []byte(
+			nl +
+				`abc  ` + comm + nl +
+				`-1   ` + comm + nl,
 		),
 		wantPID:     0,
 		wantInstNum: 0,
@@ -82,10 +86,11 @@ func TestLargestLabeled(t *testing.T) {
 	})
 
 	t.Run("ignore", func(t *testing.T) {
-		r := bytes.NewReader([]byte(nl +
-			`1 ` + comm + nl +
-			`2 ` + comm + nl +
-			`3` + comm + nl,
+		r := bytes.NewReader([]byte(
+			nl +
+				`1 ` + comm + nl +
+				`2 ` + comm + nl +
+				`3` + comm + nl,
 		))
 
 		pid, instances, err := parsePSOutput(r, comm, []int{1, 3})
