@@ -22,8 +22,6 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.26.4][go-1.26.4].
 
-- The H2C connection establishment via HTTP/1.1 request upgrade is no longer supported.  See [RFC 9113][rfc9113].
-
 - The size of rulelists is limited.  This is necessary to prevent a user's machine from becoming overloaded if the filter source misbehaves.
 
 ### Added
@@ -39,6 +37,10 @@ NOTE: Add new changes BELOW THIS COMMENT.
 #### Configuration changes
 
 - The `filtering` object of the YAML configuration now includes a new property, `max_http_size`, which defines the maximum size of the HTTP request for rulelists. To disable the limitation, set a large size, such as `1 TB`.
+
+### Deprecated
+
+- The h2c connection establishment via HTTP/1.1 request upgrade is deprecated. Use the Prior Knowledge mechanism instead. See [RFC 9113][rfc9113].
 
 ### Fixed
 
