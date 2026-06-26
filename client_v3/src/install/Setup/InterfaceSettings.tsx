@@ -62,8 +62,6 @@ export const InterfaceSettings = (props: Props) => {
         }
     };
 
-
-
     const onSubmit = (data: SettingsFormValues) => {
         props.validateForm(data);
         props.handleSubmit(data);
@@ -102,7 +100,9 @@ export const InterfaceSettings = (props: Props) => {
                             <Match when={staticIp().static === STATUS_RESPONSE.NO}>
                                 <>
                                     <div class={styles.spacerBottom}>
-                                        {intl.getMessage('install_static_configure', { ip: staticIp().ip })}
+                                        {intl.getMessage('install_static_configure', {
+                                            ip: staticIp().ip,
+                                        })}
                                     </div>
 
                                     <Button
@@ -117,10 +117,14 @@ export const InterfaceSettings = (props: Props) => {
                                 </>
                             </Match>
                             <Match when={staticIp().static === STATUS_RESPONSE.ERROR}>
-                                <div class={styles.errorText}>{intl.getMessage('install_static_error')}</div>
+                                <div class={styles.errorText}>
+                                    {intl.getMessage('install_static_error')}
+                                </div>
                             </Match>
                             <Match when={staticIp().static === STATUS_RESPONSE.YES}>
-                                <div class={styles.successText}>{intl.getMessage('install_static_ok')}</div>
+                                <div class={styles.successText}>
+                                    {intl.getMessage('install_static_ok')}
+                                </div>
                             </Match>
                         </Switch>
                     </div>

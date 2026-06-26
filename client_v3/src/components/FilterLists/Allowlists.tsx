@@ -43,9 +43,7 @@ export const Allowlists = () => {
         }
     });
 
-    const isDataReady = createMemo(
-        () => filteringState.processingFilters && isInitialLoad(),
-    );
+    const isDataReady = createMemo(() => filteringState.processingFilters && isInitialLoad());
 
     const handleRefresh = () => {
         refreshFilters({ whitelist: true });

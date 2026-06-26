@@ -176,7 +176,11 @@ export const Form = (props: Props) => {
         setWhitelistError(
             ratelimitWhitelist() ? validateIpPerLine(ratelimitWhitelist()) || '' : '',
         );
-        setTtlError(validateRequiredValue(String(blockedResponseTtl())) || validateBetween(blockedResponseTtl(), UINT32_RANGE.MIN, UINT32_RANGE.MAX) || '');
+        setTtlError(
+            validateRequiredValue(String(blockedResponseTtl())) ||
+                validateBetween(blockedResponseTtl(), UINT32_RANGE.MIN, UINT32_RANGE.MAX) ||
+                '',
+        );
 
         if (ednsCsUseCustom()) {
             const err =

@@ -73,8 +73,6 @@ describe('Select', () => {
 
         const footer = document.querySelector('[data-testid="select-footer"]');
         expect(footer).toBeTruthy();
-        expect(
-            footer?.closest('[data-scope="select"][data-part="content"]'),
-        ).toBeTruthy();
+        expect(footer?.closest('[data-scope="select"][data-part="content"]')).toBeTruthy();
     });
 });

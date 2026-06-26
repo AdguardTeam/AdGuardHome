@@ -41,9 +41,7 @@ export const AddClient = () => {
 
     createEffect(() => {
         const formErrors = clientFormState.formErrors;
-        setNameError(
-            typeof formErrors.name === 'string' ? formErrors.name : undefined,
-        );
+        setNameError(typeof formErrors.name === 'string' ? formErrors.name : undefined);
     });
 
     onMount(() => {

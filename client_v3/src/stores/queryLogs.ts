@@ -63,12 +63,7 @@ const STATUS_TO_REASONS: Record<string, string[]> = {
         'FilteredParental',
         'FilteredBlockedService',
     ],
-    rewritten: [
-        'Rewrite',
-        'RewriteEtcHosts',
-        'RewriteRule',
-        'FilteredSafeSearch',
-    ],
+    rewritten: ['Rewrite', 'RewriteEtcHosts', 'RewriteRule', 'FilteredSafeSearch'],
     processed: ['NotFilteredNotFound'],
     allowed: ['NotFilteredWhiteList'],
     error: ['NotFilteredError', 'FilteredInvalid'],
@@ -80,15 +75,9 @@ const REASON_FILTER_TO_REASONS: Record<string, string[]> = {
     [QUERY_LOG_REASON_FILTER.BLOCKED_BY_FILTER.QUERY]: ['FilteredBlackList'],
     [QUERY_LOG_REASON_FILTER.BLOCKED_SERVICES.QUERY]: ['FilteredBlockedService'],
     [QUERY_LOG_REASON_FILTER.BLOCKED_BY_THREATS.QUERY]: ['FilteredSafeBrowsing'],
-    [QUERY_LOG_REASON_FILTER.BLOCKED_BY_PARENTAL_CONTROL.QUERY]: [
-        'FilteredParental',
-    ],
+    [QUERY_LOG_REASON_FILTER.BLOCKED_BY_PARENTAL_CONTROL.QUERY]: ['FilteredParental'],
     [QUERY_LOG_REASON_FILTER.SAFE_SEARCH.QUERY]: ['FilteredSafeSearch'],
-    [QUERY_LOG_REASON_FILTER.DNS_REWRITES.QUERY]: [
-        'Rewrite',
-        'RewriteEtcHosts',
-        'RewriteRule',
-    ],
+    [QUERY_LOG_REASON_FILTER.DNS_REWRITES.QUERY]: ['Rewrite', 'RewriteEtcHosts', 'RewriteRule'],
 };
 
 const getReasons = (filter?: any): string[] => {

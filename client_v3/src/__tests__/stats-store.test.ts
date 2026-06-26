@@ -41,9 +41,7 @@ describe('getStats', () => {
             clients: [{ id: '1.2.3.4' }],
         });
         // normalizedTopClients is populated (configured bucket carries info name)
-        expect(Object.keys(statsState.normalizedTopClients.auto)).toContain(
-            '1.2.3.4',
-        );
+        expect(Object.keys(statsState.normalizedTopClients.auto)).toContain('1.2.3.4');
     });
 
     it('converts avg_processing_time to milliseconds, falsy passthrough (FR-002)', async () => {

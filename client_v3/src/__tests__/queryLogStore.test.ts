@@ -18,26 +18,26 @@ describe('queryLogs store', () => {
         vi.clearAllMocks();
     });
 
-    it("getAdditionalLogs appends filtered rows using the oldest cursor and filter", async () => {
+    it('getAdditionalLogs appends filtered rows using the oldest cursor and filter', async () => {
         (apiClient.getQueryLog as any).mockReset();
 
         // Seed state: a full first page (20 rewritten) with more behind it.
         const fullPage = Array.from({ length: 20 }, () => ({
-            reason: "Rewrite",
+            reason: 'Rewrite',
             question: {},
         }));
         (apiClient.getQueryLog as any).mockResolvedValueOnce({
             data: fullPage,
-            oldest: "cur",
+            oldest: 'cur',
         });
-        await setFilteredLogs({ search: "", status: "rewritten", reason: "all" });
+        await setFilteredLogs({ search: '', status: 'rewritten', reason: 'all' });
         expect(queryLogsState.isEntireLog).toBe(false);
         expect(queryLogsState.logs).toHaveLength(20);
 
         // Load more: one extra rewritten entry, then end of log.
         (apiClient.getQueryLog as any).mockResolvedValueOnce({
-            data: [{ reason: "Rewrite", question: {} }],
-            oldest: "",
+            data: [{ reason: 'Rewrite', question: {} }],
+            oldest: '',
         });
 
         await getAdditionalLogs();
@@ -45,45 +45,45 @@ describe('queryLogs store', () => {
         // The load-more request must carry the cursor and the reason filter.
         expect(apiClient.getQueryLog).toHaveBeenLastCalledWith(
             expect.objectContaining({
-                older_than: "cur",
+                older_than: 'cur',
                 reason: expect.arrayContaining([
-                    "Rewrite",
-                    "RewriteEtcHosts",
-                    "RewriteRule",
-                    "FilteredSafeSearch",
+                    'Rewrite',
+                    'RewriteEtcHosts',
+                    'RewriteRule',
+                    'FilteredSafeSearch',
                 ]),
             }),
         );
         // Must NOT send the deprecated response_status
         const lastCall = (apiClient.getQueryLog as any).mock.calls.at(-1)[0];
-        expect(lastCall).not.toHaveProperty("response_status");
+        expect(lastCall).not.toHaveProperty('response_status');
 
         expect(queryLogsState.logs).toHaveLength(21);
         expect(queryLogsState.isEntireLog).toBe(true);
         expect(queryLogsState.processingAdditionalLogs).toBe(false);
     });
 
-    it("setFilteredLogs sends reason strings for blocked status", async () => {
+    it('setFilteredLogs sends reason strings for blocked status', async () => {
         (apiClient.getQueryLog as any).mockReset();
         (apiClient.getQueryLog as any).mockResolvedValue({
-            data: [{ reason: "FilteredBlackList", question: {} }],
-            oldest: "",
+            data: [{ reason: 'FilteredBlackList', question: {} }],
+            oldest: '',
         });
 
-        await setFilteredLogs({ search: "", status: "blocked", reason: "all" });
+        await setFilteredLogs({ search: '', status: 'blocked', reason: 'all' });
 
         const lastCall = (apiClient.getQueryLog as any).mock.calls.at(-1)[0];
         expect(apiClient.getQueryLog).toHaveBeenLastCalledWith(
             expect.objectContaining({
                 reason: expect.arrayContaining([
-                    "FilteredBlackList",
-                    "FilteredSafeBrowsing",
-                    "FilteredParental",
-                    "FilteredBlockedService",
+                    'FilteredBlackList',
+                    'FilteredSafeBrowsing',
+                    'FilteredParental',
+                    'FilteredBlockedService',
                 ]),
             }),
         );
-        expect(lastCall).not.toHaveProperty("response_status");
+        expect(lastCall).not.toHaveProperty('response_status');
     });
 
     it('does not mark the log as complete when additional loading stops', async () => {

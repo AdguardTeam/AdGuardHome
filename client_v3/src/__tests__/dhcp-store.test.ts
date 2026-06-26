@@ -23,12 +23,7 @@ vi.mock('panel/stores/toasts', () => ({
     addSuccessToast: mocks.addSuccessToast,
 }));
 
-import {
-    findActiveDhcp,
-    getDhcpInterfaces,
-    setDhcpConfig,
-    toggleDhcp,
-} from 'panel/stores/dhcp';
+import { findActiveDhcp, getDhcpInterfaces, setDhcpConfig, toggleDhcp } from 'panel/stores/dhcp';
 
 describe('findActiveDhcp', () => {
     beforeEach(() => vi.clearAllMocks());

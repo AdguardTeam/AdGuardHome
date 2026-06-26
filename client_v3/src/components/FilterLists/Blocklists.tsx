@@ -43,9 +43,7 @@ export const Blocklists = () => {
         }
     });
 
-    const isDataReady = createMemo(
-        () => filteringState.processingFilters && isInitialLoad(),
-    );
+    const isDataReady = createMemo(() => filteringState.processingFilters && isInitialLoad());
 
     const toggleFilter = (url: string, data: { name: string; url: string; enabled: boolean }) => {
         toggleFilterStatus(url, data, false);
