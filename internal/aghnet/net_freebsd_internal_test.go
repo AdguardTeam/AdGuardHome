@@ -1,4 +1,4 @@
-//go:build freebsd
+//go:build freebsd || netbsd
 
 package aghnet
 
