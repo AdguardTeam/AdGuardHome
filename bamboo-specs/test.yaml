@@ -37,6 +37,7 @@
       final: false
       jobs:
         - 'Test e2e'
+        - 'Test e2e blackbox'
 
 'Test frontend':
     'final-tasks':
@@ -223,6 +224,49 @@
                     --target 'e2etester' \
                     -f ./docker/frontend.Dockerfile \
                     .
+
+'Test e2e blackbox':
+    'artifact-subscriptions':
+      - 'artifact': 'AdGuardHome_linux_amd64'
+    'key': 'E2EBBOX'
+    'other':
+        'clean-working-dir': true
+    'tasks':
+      - 'checkout':
+            'force-clean-build': true
+      - 'script':
+            'interpreter': 'SHELL'
+            'scripts':
+              - |
+                #!/bin/sh
+
+                set -e -f -u -x
+
+                docker info
+
+                # Build the testcontainers images from the built binary artifact
+                # (skips `make`; builds the master + client images, not systemd).
+                E2E_TARBALL="$(pwd)/dist/AdGuardHome_linux_amd64.tar.gz" \
+                    SYSTEMD=0 \
+                    ./test/e2e/scripts/build-images.sh
+
+                # The suite is testcontainers-based, so it can't run inside a
+                # docker build; run Playwright in a Node container that shares the
+                # host Docker daemon (to spawn sibling containers) and host network
+                # (so mapped ports / host.docker.internal resolve). Runs the
+                # unprivileged integration + ui projects; the privileged 'install'
+                # project needs a systemd container (cgroupns=host) and is left out.
+                docker run --rm \
+                    -v /var/run/docker.sock:/var/run/docker.sock \
+                    -v "$(pwd)":/work \
+                    -w /work/test/e2e \
+                    --network 'host' \
+                    -e 'CI=1' \
+                    node:20 sh -e -c '
+                        npm ci
+                        npx playwright install --with-deps chromium
+                        npx playwright test --project=integration --project=ui
+                    '
 
 'branches':
     'create': 'for-pull-request'

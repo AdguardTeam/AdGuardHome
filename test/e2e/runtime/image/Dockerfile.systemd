@@ -1,0 +1,18 @@
+FROM debian:bookworm
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      systemd systemd-sysv curl ca-certificates procps iproute2 ipset \
+    && rm -rf /var/lib/apt/lists/* \
+    && find /etc/systemd/system /lib/systemd/system \
+         -path '*.wants/*' -not -name '*systemd-tmpfiles*' -not -name '*journald*' -delete
+
+# Bake in the locally-built AGH archive so install/service tests exercise THIS
+# build rather than a GitHub release (installAghBinary prefers it, falls back to
+# a download if absent).
+# Note: /opt (not /tmp) — the container mounts a tmpfs over /tmp at runtime,
+# which would hide a baked-in file there.
+ARG ADGUARD_ARCHIVE=AdGuardHome_linux_amd64.tar.gz
+COPY ${ADGUARD_ARCHIVE}* /opt/agh-dist/
+
+STOPSIGNAL SIGRTMIN+3
+ENTRYPOINT ["/sbin/init"]

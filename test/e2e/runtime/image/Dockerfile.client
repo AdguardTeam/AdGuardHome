@@ -1,0 +1,7 @@
+FROM debian:bookworm-slim
+ARG DNSLOOKUP_VERSION=v1.11.1
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+COPY runtime/image/client-install-tools.sh /tmp/t.sh
+RUN chmod +x /tmp/t.sh && /tmp/t.sh "${DNSLOOKUP_VERSION}"
+ENTRYPOINT ["sleep", "infinity"]

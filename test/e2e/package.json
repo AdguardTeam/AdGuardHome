@@ -1,0 +1,21 @@
+{
+  "name": "adguardhome-tests",
+  "version": "1.0.0",
+  "description": "Integration and UI tests for AdGuardHome",
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "test:integration": "playwright test --project=integration",
+    "test:ui": "playwright test --project=ui",
+    "test:install": "playwright test --project=install"
+  },
+  "dependencies": {
+    "dns-packet": "^5.6.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "testcontainers": "^10.13.0",
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0"
+  }
+}
