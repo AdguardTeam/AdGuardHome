@@ -289,7 +289,7 @@ func (web *webAPI) start(ctx context.Context) {
 		// resolved.
 		//
 		//lint:ignore SA1019 See AGDNS-4111.
-		hdlr = h2c.NewHandler(hdlr, &http2.Server{})
+		hdlr = limitRequestBody(h2c.NewHandler(hdlr, &http2.Server{}))
 
 		// Create a new instance, because the Web is not usable after Shutdown.
 		web.httpServer = &http.Server{
