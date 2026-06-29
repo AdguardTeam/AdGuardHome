@@ -256,6 +256,17 @@ func (web *webAPI) tlsConfigChanged(ctx context.Context, tlsConf *tlsConfigSetti
 // loggerKeyServer is the key used by [webAPI] to identify servers.
 const loggerKeyServer = "server"
 
+// getBindAddr returns the address string for the server to listen on.  If the
+// address is unspecified, it returns the ":port" format to enable dual-stack
+// listening.
+func (web *webAPI) getBindAddr(addr netip.Addr, port uint16) (addrStr string) {
+	if addr.IsUnspecified() {
+		return netutil.JoinHostPort("", port)
+	}
+
+	return netip.AddrPortFrom(addr, port).String()
+}
+
 // start - start serving HTTP requests
 func (web *webAPI) start(ctx context.Context) {
 	defer slogutil.RecoverAndExit(ctx, web.logger, osutil.ExitCodeFailure)
@@ -293,7 +304,7 @@ func (web *webAPI) start(ctx context.Context) {
 
 		// Create a new instance, because the Web is not usable after Shutdown.
 		web.httpServer = &http.Server{
-			Addr:              web.conf.BindAddr.String(),
+			Addr:              web.getBindAddr(web.conf.BindAddr.Addr(), web.conf.BindAddr.Port()),
 			Handler:           hdlr,
 			ReadTimeout:       web.conf.ReadTimeout,
 			ReadHeaderTimeout: web.conf.ReadHeaderTimeout,
@@ -369,7 +380,7 @@ func (web *webAPI) serveTLS(ctx context.Context) (next bool) {
 		portHTTPS = config.TLS.PortHTTPS
 	}()
 
-	addr := netip.AddrPortFrom(web.conf.BindAddr.Addr(), portHTTPS).String()
+	addrStr := web.getBindAddr(web.conf.BindAddr.Addr(), portHTTPS)
 	logger := web.baseLogger.With(loggerKeyServer, "https")
 
 	// TODO(a.garipov):  Remove other logs like this in other code.
@@ -377,7 +388,7 @@ func (web *webAPI) serveTLS(ctx context.Context) (next bool) {
 	hdlr := logMw.Wrap(withMiddlewares(web.conf.mux, limitRequestBody))
 
 	web.httpsServer.server = &http.Server{
-		Addr:    addr,
+		Addr:    addrStr,
 		Handler: web.auth.middleware().Wrap(hdlr),
 		TLSConfig: &tls.Config{
 			Certificates: []tls.Certificate{web.httpsServer.cert},
@@ -394,7 +405,7 @@ func (web *webAPI) serveTLS(ctx context.Context) (next bool) {
 	printHTTPAddresses(ctx, web.logger, urlutil.SchemeHTTPS, web.tlsManager)
 
 	if web.conf.serveHTTP3 {
-		go web.mustStartHTTP3(ctx, addr)
+		go web.mustStartHTTP3(ctx, addrStr)
 	}
 
 	logger.InfoContext(ctx, "starting https server")
@@ -453,10 +464,9 @@ func (web *webAPI) mustStartHTTP3(ctx context.Context, address string) {
 	}
 }
 
-// startPprof launches the debug and profiling server on the provided port.
+// startPprof launches the debug and profiling server on the provided port on
+// both IPv4 and IPv6 loopback addresses.
 func startPprof(baseLogger *slog.Logger, port uint16) {
-	addr := netip.AddrPortFrom(netutil.IPv4Localhost(), port)
-
 	runtime.SetBlockProfileRate(1)
 	runtime.SetMutexProfileFraction(1)
 
@@ -466,15 +476,26 @@ func startPprof(baseLogger *slog.Logger, port uint16) {
 	ctx := context.Background()
 	logger := baseLogger.With(slogutil.KeyPrefix, "pprof")
 
-	go func() {
-		defer slogutil.RecoverAndLog(ctx, logger)
+	go servePprof(ctx, logger, mux, netutil.IPv4Localhost(), port)
+	go servePprof(ctx, logger, mux, netutil.IPv6Localhost(), port)
+}
 
-		logger.InfoContext(ctx, "listening", "addr", addr)
-		err := http.ListenAndServe(addr.String(), mux)
-		if !errors.Is(err, http.ErrServerClosed) {
-			logger.ErrorContext(ctx, "shutting down", slogutil.KeyError, err)
-		}
-	}()
+// servePprof serves the pprof HTTP endpoints on the given host and port.
+func servePprof(
+	ctx context.Context,
+	logger *slog.Logger,
+	mux *http.ServeMux,
+	host netip.Addr,
+	port uint16,
+) {
+	defer slogutil.RecoverAndLog(ctx, logger)
+
+	addrStr := netip.AddrPortFrom(host, port).String()
+	logger.InfoContext(ctx, "listening", "addr", addrStr)
+	err := http.ListenAndServe(addrStr, mux)
+	if !errors.Is(err, http.ErrServerClosed) {
+		logger.ErrorContext(ctx, "shutting down", slogutil.KeyError, err)
+	}
 }
 
 // registerTLSHandlers registers HTTP handlers for TLS configuration.
