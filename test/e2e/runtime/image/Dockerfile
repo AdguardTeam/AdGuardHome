@@ -26,7 +26,25 @@ COPY ${ADGUARD_ARCHIVE}* /tmp/
 RUN chmod +x /tmp/install-agh.sh && /tmp/install-agh.sh "${ADGUARD_VERSION}"
 
 RUN mkdir -p /opt/adguardhome/conf /opt/adguardhome/work /pristine
-COPY runtime/image/pristine/AdGuardHome.yaml /pristine/AdGuardHome.yaml
+RUN cat > /pristine/AdGuardHome.yaml <<'EOF'
+http:
+  address: 0.0.0.0:3000
+dns:
+  bind_hosts:
+    - 0.0.0.0
+  port: 53
+  safesearch_enabled: false
+users:
+  - name: admin
+    password: $2b$12$aw6lk4Cdfc/b69rFQVqSrutVmh6UJ.ORxpQ10.fj685NVWmDiDO9O
+# Ship with NO subscription filters: AGH otherwise injects its default lists
+# (e.g. the 157k-rule "AdGuard DNS filter") which makes /control/filtering/refresh
+# re-download ~3.7MB from the public internet on every call — slow and a hidden
+# egress dependency. Tests add their own local blocklists as needed.
+filters: []
+whitelist_filters: []
+schema_version: 20
+EOF
 COPY runtime/image/agh-entrypoint.sh /usr/local/bin/agh-entrypoint.sh
 COPY runtime/image/agh-reset.sh /usr/local/bin/agh-reset.sh
 COPY runtime/image/agh-apply.sh /usr/local/bin/agh-apply.sh
