@@ -144,10 +144,16 @@ func (s *Server) updateStats(dctx *dnsContext, clientIP string, processingTime t
 	pctx := dctx.proxyCtx
 
 	var upstreamStats []*proxy.UpstreamStatistics
+	var cached bool
 	qs := pctx.QueryStatistics()
 	if qs != nil {
-		upstreamStats = append(upstreamStats, qs.Main()...)
+		main := qs.Main()
+		upstreamStats = append(upstreamStats, main...)
 		upstreamStats = append(upstreamStats, qs.Fallback()...)
+
+		// a single cached main statistic means the response was served from the
+		// DNS cache, same logic as [Server.logQuery].
+		cached = len(main) == 1 && main[0].IsCached
 	}
 
 	e := &stats.Entry{
@@ -155,6 +161,7 @@ func (s *Server) updateStats(dctx *dnsContext, clientIP string, processingTime t
 		Domain:         aghnet.NormalizeDomain(pctx.Req.Question[0].Name),
 		Result:         stats.RNotFiltered,
 		ProcessingTime: processingTime,
+		Cached:         cached,
 	}
 
 	if clientID := dctx.clientID; clientID != "" {
