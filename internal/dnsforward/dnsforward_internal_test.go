@@ -1146,7 +1146,8 @@ func TestBlockedCustomIP(t *testing.T) {
 	s.dnsFilter.SetBlockingMode(
 		filtering.BlockingModeCustomIP,
 		netip.AddrFrom4([4]byte{0, 0, 0, 1}),
-		netip.MustParseAddr("::1"))
+		netip.MustParseAddr("::1"),
+	)
 
 	err = s.Prepare(testutil.ContextWithTimeout(t, testTimeout), conf)
 	require.NoError(t, err)

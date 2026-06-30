@@ -21,12 +21,12 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
+	"github.com/AdguardTeam/dnscrypt"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/netutil/urlutil"
-	"github.com/ameshkov/dnscrypt/v2"
 	yaml "go.yaml.in/yaml/v4"
 )
 
@@ -404,7 +404,7 @@ func newDNSCryptConfig(
 		return nil, fmt.Errorf("decoding dnscrypt config: %w", err)
 	}
 
-	cert, err := rc.CreateCert()
+	cert, err := rc.NewCert()
 	if err != nil {
 		return nil, fmt.Errorf("creating dnscrypt cert: %w", err)
 	}

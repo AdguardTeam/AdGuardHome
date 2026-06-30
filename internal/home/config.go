@@ -330,7 +330,7 @@ type tlsConfigSettings struct {
 	// if PortDNSCrypt is not zero.
 	//
 	// See https://github.com/AdguardTeam/dnsproxy and
-	// https://github.com/ameshkov/dnscrypt.
+	// https://github.com/AdguardTeam/dnscrypt.
 	DNSCryptConfigFile string `yaml:"dnscrypt_config_file" json:"dnscrypt_config_file"`
 
 	// CertificateChain is the PEM-encoded certificate chain.  Must be empty if
