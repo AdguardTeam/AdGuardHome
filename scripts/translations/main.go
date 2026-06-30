@@ -97,7 +97,6 @@ func main() {
 // usage prints usage.  If addStr is not empty print addStr and exit with code
 // 1, otherwise exit with code 0.
 func usage(addStr string) {
-	// TODO(ik):  Add PROJECT_ID environment variable documentation when multi-project support is implemented.
 	const usageStr = `Usage: go run main.go <command> [<args>]
 Commands:
   help
