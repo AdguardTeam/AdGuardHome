@@ -6,7 +6,7 @@ import { apiClient } from 'panel/api/Api';
 import { LocalesType } from 'panel/common/intl';
 import { addErrorToast, addSuccessToast, addNoticeToast } from './toasts';
 import { getTlsStatus } from './encryption';
-import { updateFailedNoticeOptions } from './dashboard/noticeOptions';
+import { getUpdateFailedMessage } from './dashboard/noticeOptions';
 import type { Client, AutoClient } from 'panel/initialState';
 
 type DashboardState = {
@@ -226,7 +226,7 @@ export const getVersion = async (recheck = false) => {
 export const getUpdate = async () => {
     setState('processingUpdate', true);
     const handleRequestError = () => {
-        addNoticeToast({ error: 'update_failed', options: updateFailedNoticeOptions });
+        addNoticeToast(getUpdateFailedMessage());
         setState('processingUpdate', false);
     };
     const handleRequestSuccess = (response: any) => {

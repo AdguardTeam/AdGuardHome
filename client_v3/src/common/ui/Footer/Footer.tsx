@@ -1,4 +1,4 @@
-import { createSignal, createMemo, For } from 'solid-js';
+import { createSignal, createMemo, For, Show } from 'solid-js';
 import cn from 'clsx';
 
 import theme from 'panel/lib/theme';
@@ -11,7 +11,11 @@ import { LanguageDropdown } from '../LanguageDropdown/LanguageDropdown';
 import { REPOSITORY, PRIVACY_POLICY_LINK, THEMES } from 'panel/helpers/constants';
 import { LANGUAGES, LANGUAGE_NAMES } from 'panel/helpers/twosky';
 import { setHtmlLangAttr, setUITheme } from 'panel/helpers/helpers';
-import { changeTheme, changeLanguage as changeLanguageAction } from 'panel/stores/dashboard';
+import {
+    changeTheme,
+    changeLanguage as changeLanguageAction,
+    getVersion,
+} from 'panel/stores/dashboard';
 import { dashboardState } from 'panel/stores/dashboard';
 
 import s from './styles.module.pcss';
@@ -70,7 +74,36 @@ export const Footer = () => {
     return (
         <footer class={s.footer}>
             <div class={s.container}>
-                <div class={s.copyright}>&copy; 2018–{getYear()} AdGuard Home</div>
+                <div class={s.leftGroup}>
+                    <div class={s.copyright}>&copy; 2018–{getYear()} AdGuard Home</div>
+
+                    <Show when={dashboardState.dnsVersion}>
+                        <span class={s.version}>
+                            {intl.getMessage('version_number', {
+                                value: dashboardState.dnsVersion,
+                            })}
+                        </span>
+                    </Show>
+
+                    <button
+                        type="button"
+                        class={cn(s.checkUpdateBtn, {
+                            [s.checkUpdateBtn_loading]: dashboardState.processingVersion,
+                        })}
+                        aria-label={intl.getMessage('check_updates_btn')}
+                        disabled={dashboardState.processingVersion}
+                        data-testid="footer-check-updates"
+                        onClick={() => getVersion(true)}
+                    >
+                        <Icon
+                            icon={
+                                dashboardState.processingVersion
+                                    ? ('loader' as any)
+                                    : ('refresh' as any)
+                            }
+                        />
+                    </button>
+                </div>
 
                 <div class={s.links}>
                     <For each={linksData()}>

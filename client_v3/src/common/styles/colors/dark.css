@@ -119,6 +119,8 @@
     --stroke-toplines-close-icon-hovered: var(--gray-10);
     --stroke-toplines-close-icon-pressed: var(--gray-20);
     --fills-backgrounds-recent-activity: var(--product-primary-90);
+    --fills-backgrounds-recent-activity-changed: var(--orange-90);
+    --fills-backgrounds-recent-activity-blocked: var(--red-90);
     /* Switch */
     --fills-switch-on-default: var(--product-primary-50);
     --fills-switch-on-hovered: var(--product-primary-60);

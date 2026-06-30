@@ -308,6 +308,7 @@ export const editFilter = async (url: string, data: any, whitelist: boolean) => 
     try {
         await apiClient.setFilterUrl({ url, data, whitelist });
         setState({ processingConfigFilter: false, isModalOpen: false });
+        addSuccessToast(intl.getMessage('changes_saved_success'));
         await getFilteringStatus();
     } catch (error) {
         addErrorToast({ error });

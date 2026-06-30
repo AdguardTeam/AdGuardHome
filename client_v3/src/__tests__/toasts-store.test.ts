@@ -13,18 +13,11 @@ describe('toasts store', () => {
         toastsState.notices.forEach((n: any) => removeToast(n.id));
     });
 
-    it('addNoticeToast extracts error.toString() (no [object Object])', () => {
-        addNoticeToast({ error: 'update_failed' });
+    it('addNoticeToast stores the message', () => {
+        addNoticeToast('update_failed');
         const last = toastsState.notices[toastsState.notices.length - 1];
         expect(last.message).toBe('update_failed');
         expect(last.type).toBe('notice');
-    });
-
-    it('addNoticeToast preserves options', () => {
-        const options = { components: { a: () => {} } };
-        addNoticeToast({ error: 'update_failed', options });
-        const last = toastsState.notices[toastsState.notices.length - 1];
-        expect(last.options).toEqual(options);
     });
 
     it('addErrorToast preserves options and action', () => {
