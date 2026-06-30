@@ -248,7 +248,7 @@
                 # (skips `make`; builds the master + client images, not systemd).
                 E2E_TARBALL="$(pwd)/dist/AdGuardHome_linux_amd64.tar.gz" \
                     SYSTEMD=0 \
-                    ./test/e2e/scripts/build-images.sh
+                    ./client/e2e/scripts/build-images.sh
 
                 # The suite is testcontainers-based, so it can't run inside a
                 # docker build; run Playwright in a Node container that shares the
@@ -259,13 +259,13 @@
                 docker run --rm \
                     -v /var/run/docker.sock:/var/run/docker.sock \
                     -v "$(pwd)":/work \
-                    -w /work/test/e2e \
+                    -w /work/client \
                     --network 'host' \
                     -e 'CI=1' \
                     node:20 sh -e -c '
                         npm ci
                         npx playwright install --with-deps chromium
-                        npx playwright test --project=integration --project=ui
+                        npx playwright test --config e2e/playwright.config.ts --project=integration --project=ui
                     '
 
 'branches':

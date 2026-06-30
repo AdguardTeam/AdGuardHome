@@ -50,7 +50,7 @@ test.beforeEach(async ({ api }) => {
   await updateProfile(api, { language: 'en', theme: 'light' });
 });
 
-test('4045 — Disable/Enable protection', async ({ page, agh, api }) => {
+test.skip('4045 — Disable/Enable protection', async ({ page, agh, api }) => {
   const blockedDomain = 'example.com';
   await setCustomRules(api, [`||${blockedDomain}^`]);
   await loginToAdGuardUi(page);

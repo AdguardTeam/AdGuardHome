@@ -3,7 +3,7 @@
 # Build the Docker images the e2e suite needs, using a Linux/amd64 AdGuard Home
 # binary built from THIS repository (not a GitHub release).
 #
-# Run from the repository root:  ./test/e2e/scripts/build-images.sh
+# Run from the repository root:  ./client/e2e/scripts/build-images.sh
 #
 # Env:
 #   E2E_TARBALL   path to a prebuilt AdGuardHome_linux_amd64.tar.gz (skips `make`).
@@ -12,7 +12,7 @@
 set -euo pipefail
 
 repo_root="$(git rev-parse --show-toplevel)"
-e2e_dir="${repo_root}/test/e2e"
+e2e_dir="${repo_root}/client/e2e"
 archive="${e2e_dir}/AdGuardHome_linux_amd64.tar.gz"
 
 if [ -n "${E2E_TARBALL:-}" ]; then
