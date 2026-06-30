@@ -3,7 +3,7 @@
 # This comment is used to simplify checking local copies of the Dockerfile.
 # Bump this number every time a significant change is made to this Dockerfile.
 #
-# AdGuard-Project-Version: 11
+# AdGuard-Project-Version: 12
 
 # Dockerfile guidelines:
 #
@@ -38,7 +38,7 @@ ARG BASE_IMAGE=adguard/home-js-builder:4.0
 FROM "$BASE_IMAGE" AS dependencies
 ADD Makefile /app/
 ADD scripts /app/scripts
-ADD client_v2 /app/client_v2
+ADD client_v3 /app/client_v3
 WORKDIR /app
 RUN \
     --mount=type=cache,id=npm-root-cache,target=/root/.npm \

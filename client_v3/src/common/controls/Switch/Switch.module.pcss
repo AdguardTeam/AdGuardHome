@@ -1,0 +1,88 @@
+.switch {
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    gap: 8px;
+
+    &.disabled {
+        cursor: default;
+    }
+}
+
+.input {
+    display: none;
+}
+
+.label {
+    font-size: 16px;
+    font-weight: var(--weight-medium);
+    user-select: none;
+}
+
+.handler {
+    position: relative;
+    width: 40px;
+    height: 20px;
+    border-radius: 24px;
+    background-color: var(--fills-switch-off-default);
+    transition: background-color var(--t2);
+
+    &:hover,
+    &:focus {
+        background-color: var(--fills-switch-off-hovered);
+    }
+
+    &:before {
+        content: '';
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 16px;
+        height: 16px;
+        border-radius: 16px;
+        background-color: var(--fills-switch-knob);
+        transition:
+            transform var(--t2),
+            background-color var(--t2);
+    }
+}
+
+.input:checked + .handler {
+    background-color: var(--fills-switch-on-default);
+
+    &:hover,
+    &:focus {
+        background-color: var(--fills-switch-on-hovered);
+    }
+
+    &:before {
+        transform: translateX(20px);
+    }
+}
+
+.input:disabled + .handler {
+    cursor: default;
+    background-color: var(--fills-switch-off-disabled);
+
+    &:hover,
+    &:focus {
+        background-color: var(--fills-switch-off-disabled);
+    }
+
+    &:before {
+        color: var(--fills-switch-knob-disabled);
+    }
+}
+
+.input:checked:disabled + .handler {
+    background-color: var(--fills-switch-on-disabled);
+
+    &:hover,
+    &:focus {
+        background-color: var(--fills-switch-on-disabled);
+    }
+
+    &:before {
+        color: var(--fills-switch-knob-disabled);
+    }
+}

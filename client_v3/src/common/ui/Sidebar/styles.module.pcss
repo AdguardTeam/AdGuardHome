@@ -1,0 +1,61 @@
+.sidebarWrapper {
+    display: block;
+    min-width: 240px;
+
+    @media (min-width: 1200px) {
+        align-self: stretch;
+        background-color: var(--page-background-additional);
+    }
+}
+
+.sidebarContainer {
+    display: none;
+    flex-shrink: 0;
+
+    @media (min-width: 1200px) {
+        display: flex;
+        flex-direction: column;
+        position: sticky;
+        top: 0;
+        width: 100%;
+        max-width: 240px;
+        height: 100vh;
+        padding: 16px 0;
+        overflow-y: auto;
+        z-index: 1;
+        background-color: var(--page-background-additional);
+    }
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+.logo {
+    width: 160px;
+    height: 24px;
+}
+
+.linkWrapper {
+    display: flex;
+    padding: 12px 16px 32px;
+}
+
+.link {
+    text-decoration: none;
+}
+
+.logoCompany {
+    fill: var(--default-logo-color);
+}
+
+.logoProduct {
+    fill: var(--default-description-text);
+}

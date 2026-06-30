@@ -1,0 +1,212 @@
+.header {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 0 16px;
+
+    @media (min-width: 1024px) {
+        padding: 0;
+        flex-direction: row;
+        align-items: center;
+    }
+}
+
+.title {
+    padding: 0;
+
+    @media (min-width: 1024px) {
+        margin-right: auto;
+        white-space: nowrap;
+    }
+}
+
+.actions {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+
+    @media (min-width: 1024px) {
+        flex-direction: row;
+        flex-wrap: nowrap;
+        align-items: center;
+        width: 100%;
+    }
+}
+
+.filters {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+
+    @media (min-width: 768px) {
+        flex-direction: row;
+        gap: 8px;
+    }
+
+    @media (min-width: 1024px) {
+        width: auto;
+    }
+}
+
+.searchWrapper {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+
+    @media (min-width: 1024px) {
+        display: contents;
+    }
+}
+
+.searchField {
+    flex: 1;
+    overflow: visible;
+
+    @media (min-width: 1024px) {
+        flex: 1 1 220px;
+        max-width: 320px;
+        min-width: 180px;
+        margin-left: auto;
+    }
+
+    @media (min-width: 1024px) and (max-width: 1199px) {
+        max-width: 280px;
+    }
+}
+
+.searchIcon {
+    width: 24px;
+    height: 24px;
+    color: var(--default-gray-icons);
+}
+
+.searchSuffix {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.searchClearButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--default-description-text);
+    cursor: pointer;
+    transition: color var(--t2);
+
+    &:hover,
+    &:focus {
+        color: var(--default-main-text);
+        outline: 0;
+    }
+
+    &:disabled {
+        opacity: 0.4;
+        cursor: default;
+    }
+}
+
+.searchClearIcon {
+    width: 24px;
+    height: 24px;
+}
+
+.filterField {
+    width: 100%;
+    min-width: 0;
+
+    @media (min-width: 1024px) {
+        flex: 0 1 auto;
+        width: auto;
+        max-width: 100%;
+    }
+}
+
+.filterSelect {
+    width: 100%;
+    min-width: 0;
+
+    @media (min-width: 1024px) {
+        width: auto;
+        max-width: 100%;
+
+        &:global(.react-select.react-select-responsive) {
+            width: fit-content;
+            max-width: 100%;
+            min-width: 0;
+        }
+    }
+
+    & :global(.select__control) {
+        min-width: 100%;
+        max-width: 100%;
+    }
+
+    & :global(.select__value-container) {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    & :global(.select__single-value) {
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+.refreshMobileButton,
+.refreshDesktopButton {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    max-width: none;
+    padding: 0;
+
+    & > div:first-child,
+    & > div:last-child {
+        width: 0;
+        height: 0;
+        margin: 0;
+        overflow: hidden;
+    }
+}
+
+.refreshMobileButton {
+    @media (min-width: 1024px) {
+        display: none;
+    }
+}
+
+.refreshDesktopButton {
+    display: none;
+
+    @media (min-width: 1024px) {
+        display: inline-flex;
+    }
+}
+
+.refreshMobileIcon,
+.refreshDesktopIcon {
+    width: 24px;
+    height: 24px;
+}
+
+.refreshMobileIcon {
+    color: var(--gray-0);
+}
+
+.refreshDesktopIcon {
+    color: var(--default-product-icon);
+}
+
+.searchLoader {
+    color: var(--default-link);
+}

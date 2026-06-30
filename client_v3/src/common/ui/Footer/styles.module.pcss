@@ -1,0 +1,64 @@
+.footer {
+    padding: 32px 16px;
+    border-top: 1px solid var(--default-item-divider);
+
+    @media (min-width: 1024px) {
+        padding: 16px 32px;
+    }
+}
+
+.container {
+    display: flex;
+    flex-direction: column-reverse;
+    justify-content: center;
+    align-items: center;
+    gap: 24px;
+    width: 100%;
+
+    @media (min-width: 1024px) {
+        flex-direction: row;
+        gap: 24px;
+    }
+
+    @media (min-width: 1200px) {
+        gap: 40px;
+    }
+}
+
+.links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 16px;
+
+    @media (min-width: 1024px) {
+        flex-wrap: nowrap;
+        gap: 24px;
+        margin-right: auto;
+    }
+
+    @media (min-width: 1200px) {
+        gap: 40px;
+    }
+}
+
+.dropdown {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dropdownTrigger {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.icon {
+    color: var(--default-gray-icons);
+}
+
+.langOverlay {
+    max-width: 100%;
+}

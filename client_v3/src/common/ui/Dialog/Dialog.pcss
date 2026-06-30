@@ -1,0 +1,107 @@
+/* Dialog Backdrop (mask) */
+.dialog-overlay {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    background-color: rgba(19, 19, 19, 0.8);
+    height: 100%;
+    z-index: 1100;
+}
+
+/* Dialog Positioner (scroll container, centering wrapper) */
+.rc-dialog-wrap {
+    position: fixed;
+    overflow: auto;
+    top: 65px;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    padding: 0 8px;
+    z-index: 1100;
+    -webkit-overflow-scrolling: touch;
+    outline: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    @media (min-width: 1024px) {
+        top: 0;
+    }
+}
+
+/* Override for ScheduleModal/ConfirmDialog wrapClass="rc-dialog-update" */
+.rc-dialog-update {
+    top: 16px;
+
+    @media (min-width: 1024px) {
+        top: 0;
+    }
+}
+
+/* Dialog Content (the visible white card) */
+.dialog-content {
+    position: relative;
+    width: 100%;
+    margin: 0 auto;
+    max-width: 720px;
+    background-color: var(--default-page-background);
+    border: none;
+    border-radius: 16px;
+    background-clip: border-box;
+    padding: 8px 0;
+    color: var(--default-main-text);
+    text-align: left;
+
+    @media (min-width: 1024px) {
+        border-radius: 16px;
+        padding: 24px 16px;
+    }
+}
+
+/* Dialog Title */
+.dialog-title {
+    margin: 0;
+    padding: 0;
+    font-weight: var(--weight-bold);
+    font-size: 18px;
+    line-height: 21px;
+    color: var(--default-main-text);
+
+    @media (min-width: 1024px) {
+        font-size: 24px;
+        line-height: 28px;
+    }
+}
+
+/* Dialog Header (title row) */
+.dialog-header {
+    margin: 0;
+    padding: 8px 48px 8px 16px;
+}
+
+/* Dialog Close Button */
+.dialog-close-button {
+    cursor: pointer;
+    border: 0;
+    background: transparent;
+    position: absolute;
+    right: 16px;
+    top: 16px;
+    padding: 0;
+    transition: 0.3s opacity;
+}
+
+.dialog-close-button:hover {
+    opacity: 1;
+}
+
+/* Dialog Body */
+.dialog-body {
+    padding: 8px 0;
+
+    @media (min-width: 1024px) {
+        padding: 0;
+    }
+}

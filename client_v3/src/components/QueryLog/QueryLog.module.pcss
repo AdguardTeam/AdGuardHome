@@ -1,0 +1,57 @@
+.page {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+
+    @media (min-width: 768px) {
+        gap: 32px;
+    }
+}
+
+.desktopView {
+    display: none;
+
+    @media (min-width: 768px) {
+        display: block;
+        padding: 0 16px;
+    }
+
+    @media (min-width: 1024px) {
+        padding: 0;
+    }
+}
+
+.mobileView {
+    display: block;
+    padding: 0 16px;
+
+    @media (min-width: 768px) {
+        display: none;
+    }
+}
+
+.mobileList {
+    display: flex;
+    flex-direction: column;
+}
+
+.mobileLoader {
+    padding: 12px 0 0;
+}
+
+.mobileInitialLoader {
+    display: flex;
+    justify-content: center;
+    padding: 24px 0;
+}
+
+.emptyState {
+    min-height: 120px;
+    padding: 24px 16px;
+}
+
+.loader {
+    width: 48px;
+    height: 48px;
+}

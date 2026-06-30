@@ -1,0 +1,140 @@
+.statsCards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+    padding: 0 16px;
+    margin-bottom: 32px;
+
+    @media (min-width: 1024px) {
+        grid-template-columns: repeat(4, 1fr);
+        padding: 0;
+    }
+}
+
+.statCard {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.statCardAds {
+    & .statCardPercent,
+    & .statCardLabel {
+        color: var(--default-error-link);
+    }
+}
+
+.statCardThreats {
+    & .statCardPercent,
+    & .statCardLabel {
+        color: var(--default-attention-link);
+    }
+}
+
+.statCardAdult {
+    & .statCardPercent,
+    & .statCardLabel {
+        color: var(--default-additional-link);
+    }
+}
+
+.statCardInner {
+    display: flex;
+    flex-direction: column;
+    border-radius: 8px;
+    border: 1px solid var(--default-item-divider);
+}
+
+.statCardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    padding: 8px 8px 0;
+
+    @media (min-width: 768px) {
+        padding: 16px 16px 0;
+    }
+
+    & .statCardLabel {
+        display: block;
+        width: 100%;
+
+        @media (min-width: 768px) {
+            display: none;
+        }
+    }
+}
+
+.statCardHeaderLeft {
+    display: flex;
+    flex-direction: column;
+}
+
+.statCardLabel {
+    display: none;
+
+    @media (min-width: 768px) {
+        display: block;
+    }
+}
+
+.statLabelLink {
+    color: inherit;
+    text-decoration: none;
+
+    &:hover,
+    &:focus {
+        color: inherit;
+        text-decoration: underline;
+    }
+}
+
+.statCardValue {
+    font-size: 16px;
+    color: var(--default-main-text);
+    font-weight: var(--weight-bold);
+
+    @media (min-width: 768px) {
+        font-size: 28px;
+        font-weight: var(--weight-regular);
+    }
+}
+
+.statCardChart {
+    min-height: 16px;
+    height: 60px;
+    margin-top: auto;
+    padding: 0 8px;
+    overflow: hidden;
+
+    @media (min-width: 768px) {
+        padding: 0 16px;
+    }
+
+    canvas {
+        width: 100% !important;
+        height: 100% !important;
+        display: block;
+    }
+}
+
+.chartTooltip {
+    background: var(--default-cards-background);
+    border: 1px solid var(--default-item-divider);
+    border-radius: 8px;
+    padding: 8px 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.chartTooltipValue {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--default-main-text);
+}
+
+.chartTooltipDate {
+    font-size: 12px;
+    color: var(--default-secondary-text);
+    margin-top: 2px;
+}

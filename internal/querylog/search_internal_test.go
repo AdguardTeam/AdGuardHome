@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/miekg/dns"
@@ -38,7 +37,7 @@ func TestQueryLog_Search_findClient(t *testing.T) {
 	}
 
 	l, err := newQueryLog(Config{
-		Logger:            slogutil.NewDiscardLogger(),
+		Logger:            testLogger,
 		FindClient:        findClient,
 		BaseDir:           t.TempDir(),
 		RotationIvl:       timeutil.Day,
