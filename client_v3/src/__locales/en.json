@@ -400,7 +400,7 @@
   "last_updated_label": "Last updated",
   "rows_per_page": "Rows per page %value%",
   "update_filters_title": "Update filters automatically",
-  "update_filters_desc": "Set the auto-update interval for filters connected via an external link",
+  "update_filters_desc": "Sets the auto-update interval for filters. Applies to both blocklists and allowlists added via external links",
   "update_filters_disable": "Disable",
   "update_filters_interval_hourly": "Every hour",
   "update_filters_interval_daily": "Every day",
