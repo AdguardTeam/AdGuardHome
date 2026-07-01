@@ -9,6 +9,7 @@ import { Table, type TableColumn } from 'panel/common/ui/Table';
 import { Icon } from 'panel/common/ui/Icon';
 import { Dropdown } from 'panel/common/ui/Dropdown';
 import { addSuccessToast } from 'panel/stores/toasts';
+import { servicesState } from 'panel/stores/services';
 import theme from 'panel/lib/theme';
 
 import { ServiceCell } from './ServiceCell';
@@ -26,7 +27,6 @@ type Props = {
     onDelete: (name: string) => void;
     editDisabled?: boolean;
     deleteDisabled?: boolean;
-    allServices?: WebService[];
 };
 
 export const PersistentClientsTable = (props: Props) => {
@@ -36,7 +36,7 @@ export const PersistentClientsTable = (props: Props) => {
 
     const serviceMap = createMemo(() => {
         const map = new Map<string, WebService>();
-        (props.allServices || []).forEach((svc) => {
+        (servicesState.allServices || []).forEach((svc) => {
             map.set(svc.id, svc);
         });
         return map;
@@ -65,10 +65,12 @@ export const PersistentClientsTable = (props: Props) => {
                 const hiddenCount = nonEmpty.length - 1;
 
                 return (
-                    <div class={s.cell}>
-                        <span class={s.cellLabel}>{intl.getMessage('client_identifier')}</span>
+                    <div class={theme.table.cell}>
+                        <span class={theme.table.cellLabel}>
+                            {intl.getMessage('client_identifier')}
+                        </span>
 
-                        <div class={s.cellValue}>
+                        <div class={theme.table.cellValueText}>
                             <div class={s.idsRow}>
                                 <span class={cn(theme.common.textOverflow, s.idsText)}>
                                     {firstId}
@@ -118,10 +120,10 @@ export const PersistentClientsTable = (props: Props) => {
             accessor: 'name',
             sortable: true,
             render: (value: string) => (
-                <div class={s.cell}>
-                    <span class={s.cellLabel}>{intl.getMessage('name')}</span>
+                <div class={theme.table.cell}>
+                    <span class={theme.table.cellLabel}>{intl.getMessage('name')}</span>
 
-                    <div class={s.cellValue}>
+                    <div class={theme.table.cellValueText}>
                         <Dropdown
                             trigger="hover"
                             noIcon
@@ -159,11 +161,11 @@ export const PersistentClientsTable = (props: Props) => {
             accessor: 'use_global_settings',
             sortable: true,
             render: (value: boolean) => (
-                <div class={s.cell}>
-                    <span class={s.cellLabel}>{intl.getMessage('settings')}</span>
+                <div class={theme.table.cell}>
+                    <span class={theme.table.cellLabel}>{intl.getMessage('settings')}</span>
 
-                    <div class={s.cellValue}>
-                        <span>
+                    <div class={theme.table.cellValueText}>
+                        <span class={theme.common.textOverflow}>
                             {value
                                 ? intl.getMessage('settings_global')
                                 : intl.getMessage('settings_custom')}
@@ -201,11 +203,11 @@ export const PersistentClientsTable = (props: Props) => {
             accessor: (row: Client) => row.upstreams.length > 0,
             sortable: true,
             render: (_value: boolean, row: Client) => (
-                <div class={s.cell}>
-                    <span class={s.cellLabel}>{intl.getMessage('upstreams')}</span>
+                <div class={theme.table.cell}>
+                    <span class={theme.table.cellLabel}>{intl.getMessage('upstreams')}</span>
 
-                    <div class={s.cellValue}>
-                        <span>
+                    <div class={theme.table.cellValueText}>
+                        <span class={theme.common.textOverflow}>
                             {row.upstreams.length > 0
                                 ? intl.getMessage('settings_custom')
                                 : intl.getMessage('settings_global')}
@@ -235,11 +237,13 @@ export const PersistentClientsTable = (props: Props) => {
             accessor: (row: Client) => props.normalizedTopClients?.configured[row.name] || 0,
             sortable: true,
             render: (_value: unknown, row: Client) => (
-                <div class={s.cell}>
-                    <span class={s.cellLabel}>{intl.getMessage('requests_table_header')}</span>
+                <div class={theme.table.cell}>
+                    <span class={theme.table.cellLabel}>
+                        {intl.getMessage('requests_table_header')}
+                    </span>
 
-                    <div class={s.cellValue}>
-                        <span>
+                    <div class={theme.table.cellValueText}>
+                        <span class={theme.common.textOverflow}>
                             {(
                                 props.normalizedTopClients?.configured[row.name] || 0
                             ).toLocaleString()}
@@ -257,31 +261,37 @@ export const PersistentClientsTable = (props: Props) => {
             sortable: false,
             width: 80,
             render: (_value: unknown, row: Client) => (
-                <div class={s.cell}>
-                    <span class={s.cellLabel}>{intl.getMessage('actions_table_header')}</span>
-
-                    <div class={s.cellValue}>
-                        <div class={s.cellActions}>
+                <div class={theme.table.cell}>
+                    <div class={theme.table.cellValue}>
+                        <div class={theme.table.cellActions}>
                             <button
                                 type="button"
                                 onClick={() => props.onEdit(row)}
                                 disabled={props.editDisabled}
-                                class={s.action}
+                                class={theme.table.action}
                                 title={intl.getMessage('edit_table_action')}
+                                aria-label={intl.getMessage('edit_table_action')}
                                 data-testid="clients-edit-button"
                             >
                                 <Icon icon="edit" color="gray" />
+                                <span class={theme.table.actionLabel}>
+                                    {intl.getMessage('edit_table_action')}
+                                </span>
                             </button>
 
                             <button
                                 type="button"
                                 onClick={() => props.onDelete(row.name)}
                                 disabled={props.deleteDisabled}
-                                class={cn(s.action, s.action_danger)}
+                                class={cn(theme.table.action, theme.table.action_danger)}
                                 title={intl.getMessage('delete_table_action')}
+                                aria-label={intl.getMessage('delete_table_action')}
                                 data-testid="clients-delete-button"
                             >
                                 <Icon icon="delete" color="red" />
+                                <span class={theme.table.actionLabel}>
+                                    {intl.getMessage('delete_table_action')}
+                                </span>
                             </button>
                         </div>
                     </div>

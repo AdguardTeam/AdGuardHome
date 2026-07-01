@@ -42,20 +42,22 @@ export const ClientsHeader = (props: ClientsHeaderProps) => {
     );
 
     const pageTitle = createMemo(() =>
-        isEdit() && isMainFormPage()
-            ? clientFormState.originalName || intl.getMessage('clients_edit')
-            : props.currentTitle,
+        isEdit() ? intl.getMessage('clients_edit') : props.currentTitle,
+    );
+
+    const breadcrumbCurrent = createMemo(() =>
+        isEdit() && isMainFormPage() ? clientFormState.originalName : pageTitle(),
     );
 
     const parentLinks = createMemo(() => [
         { path: RoutePath.Clients, title: intl.getMessage('client_settings') },
-        ...(pageTitle() !== clientPageLink().title ? [clientPageLink()] : []),
+        ...(!isMainFormPage() ? [clientPageLink()] : []),
         ...extraLinks(),
     ]);
 
     return (
         <div class={s.headerWrapper}>
-            <Breadcrumbs parentLinks={parentLinks()} currentTitle={pageTitle()} />
+            <Breadcrumbs parentLinks={parentLinks()} currentTitle={breadcrumbCurrent()} />
             <h1
                 class={cn(
                     theme.title.h4,

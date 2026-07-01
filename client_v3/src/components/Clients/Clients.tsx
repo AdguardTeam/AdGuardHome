@@ -1,14 +1,14 @@
 import { createSignal, createMemo, Show, onMount } from 'solid-js';
-import { useNavigate } from '@solidjs/router';
+import { useNavigate, useSearchParams } from '@solidjs/router';
 import cn from 'clsx';
 
 import intl from 'panel/common/intl';
 import { ConfirmDialog } from 'panel/common/ui/ConfirmDialog';
-import { Icon } from 'panel/common/ui/Icon';
+import { Tabs } from 'panel/common/ui/Tabs';
 import { dashboardState, getClients } from 'panel/stores/dashboard';
 import { statsState, getStats } from 'panel/stores/stats';
 import { clientsState, deleteClient } from 'panel/stores/clients';
-import { servicesState, getAllBlockedServices } from 'panel/stores/services';
+import { getAllBlockedServices } from 'panel/stores/services';
 import { initClientForm, buildFormPayload } from 'panel/stores/clientForm';
 import type { Client } from 'panel/initialState';
 import { linkPathBuilder, RoutePath, Paths } from 'panel/components/Routes/Paths';
@@ -17,10 +17,26 @@ import theme from 'panel/lib/theme';
 import { PersistentClientsTable } from './blocks/PersistentClientsTable';
 import { RuntimeClientsTable } from './blocks/RuntimeClientsTable';
 import s from './Clients.module.pcss';
+import { PlusButton } from 'panel/common/ui/PlusButton';
+
+const CLIENT_TABS = {
+    PERSISTENT: 'persistent',
+    RUNTIME: 'runtime',
+} as const;
 
 export const Clients = () => {
     const navigate = useNavigate();
     const [clientNameToDelete, setClientNameToDelete] = createSignal('');
+
+    const [searchParams, setSearchParams] = useSearchParams<{ tab?: string }>();
+
+    const activeTab = createMemo(() =>
+        searchParams.tab === CLIENT_TABS.RUNTIME ? CLIENT_TABS.RUNTIME : CLIENT_TABS.PERSISTENT,
+    );
+
+    const handleTabChange = (tabId: string) => {
+        setSearchParams({ tab: tabId }, { replace: true });
+    };
 
     onMount(() => {
         getClients();
@@ -62,62 +78,67 @@ export const Clients = () => {
     return (
         <div class={theme.layout.container}>
             <div class={theme.layout.containerIn}>
-                <div class={s.header}>
-                    <h1
-                        class={cn(theme.layout.title, theme.title.h4, theme.title.h3_tablet)}
-                        data-testid="clients-title"
-                    >
-                        {intl.getMessage('clients')}
-                    </h1>
+                <h1
+                    class={cn(theme.layout.title, theme.title.h4, theme.title.h3_tablet)}
+                    data-testid="clients-title"
+                >
+                    {intl.getMessage('clients')}
+                </h1>
 
-                    <button
-                        type="button"
-                        onClick={handleAddClient}
-                        class={cn(s.button, s.button_add)}
-                        data-testid="clients-add-button"
-                    >
-                        <Icon icon="plus" color="green" />
-                        {intl.getMessage('client_add')}
-                    </button>
-                </div>
+                <Tabs
+                    activeTab={activeTab()}
+                    onTabChange={handleTabChange}
+                    class={s.tabs}
+                    variant="filled"
+                    fullWidth
+                    contentClass={s.tabContent}
+                    tabs={[
+                        {
+                            id: CLIENT_TABS.PERSISTENT,
+                            label: intl.getMessage('clients_title'),
+                            content: (
+                                <>
+                                    <div class={s.desc}>{intl.getMessage('clients_desc')}</div>
 
-                <div class={s.section}>
-                    <h2 class={cn(theme.title.h5, theme.title.h4_tablet, s.sectionTitle)}>
-                        {intl.getMessage('clients_title')}
-                    </h2>
-                    <div class={s.desc}>{intl.getMessage('clients_desc')}</div>
-                </div>
+                                    <PlusButton
+                                        onClick={handleAddClient}
+                                        data-testid="clients-add-button"
+                                    >
+                                        {intl.getMessage('client_add')}
+                                    </PlusButton>
 
-                <Show when={(dashboardState.clients || []).length > 0}>
-                    <div class={cn(s.section, s.section_table)}>
-                        <PersistentClientsTable
-                            clients={dashboardState.clients || []}
-                            normalizedTopClients={(statsState as any).normalizedTopClients}
-                            loading={isLoading()}
-                            onEdit={handleEditClient}
-                            onDelete={handleDeleteClient}
-                            deleteDisabled={clientsState.processingDeleting}
-                            allServices={servicesState.allServices || []}
-                        />
-                    </div>
-                </Show>
+                                    <div class={s.tableSection}>
+                                        <PersistentClientsTable
+                                            clients={dashboardState.clients || []}
+                                            normalizedTopClients={statsState.normalizedTopClients}
+                                            loading={isLoading()}
+                                            onEdit={handleEditClient}
+                                            onDelete={handleDeleteClient}
+                                            deleteDisabled={clientsState.processingDeleting}
+                                        />
+                                    </div>
+                                </>
+                            ),
+                        },
+                        {
+                            id: CLIENT_TABS.RUNTIME,
+                            label: intl.getMessage('auto_clients_title'),
+                            content: (
+                                <>
+                                    <div class={s.desc}>{intl.getMessage('auto_clients_desc')}</div>
 
-                <div class={s.section}>
-                    <h2 class={cn(theme.title.h5, theme.title.h4_tablet, s.sectionTitle)}>
-                        {intl.getMessage('auto_clients_title')}
-                    </h2>
-                    <div class={s.desc}>{intl.getMessage('auto_clients_desc')}</div>
-                </div>
-
-                <Show when={(dashboardState.autoClients || []).length > 0}>
-                    <div class={cn(s.section, s.section_table)}>
-                        <RuntimeClientsTable
-                            autoClients={dashboardState.autoClients || []}
-                            normalizedTopClients={(statsState as any).normalizedTopClients}
-                            loading={isLoading()}
-                        />
-                    </div>
-                </Show>
+                                    <div class={s.tableSection}>
+                                        <RuntimeClientsTable
+                                            autoClients={dashboardState.autoClients || []}
+                                            normalizedTopClients={statsState.normalizedTopClients}
+                                            loading={isLoading()}
+                                        />
+                                    </div>
+                                </>
+                            ),
+                        },
+                    ]}
+                />
 
                 <Show when={clientNameToDelete()}>
                     <ConfirmDialog

@@ -287,6 +287,9 @@ must not depend on stores or components. Helpers are pure and dependency-free.
 - **Static analysis gates**: ESLint, Prettier, and `tsc --noEmit` must pass.
   `@typescript-eslint/no-explicit-any` is off (legacy), but prefer concrete
   types for new code. Unused vars must be prefixed with `_`.
+- **Avoid non-null assertions**: Do not use the TypeScript `!` operator. Use
+  type narrowing, optional chaining, or SolidJS control-flow render props to
+  guarantee values are defined.
 - **Do not modify linter/formatter configs** without justification; they
   enforce the conventions above.
 

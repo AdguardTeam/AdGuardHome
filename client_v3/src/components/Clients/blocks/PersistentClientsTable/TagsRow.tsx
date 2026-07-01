@@ -27,30 +27,34 @@ export const TagsRow = (props: TagsRowProps) => {
                 <Show when={hiddenCount() > 0}>,</Show>
             </span>
             <Show when={hiddenCount() > 0}>
-                <Dropdown
-                    trigger="hover"
-                    noIcon
-                    overlayClass={s.tagsTooltipOverlay}
-                    menu={
-                        <div class={s.tagsTooltip}>
-                            <For each={props.tags}>
-                                {(tag) => <span class={s.tagsTooltipItem}>{tag}</span>}
-                            </For>
-                            <Show when={props.onCopy}>
-                                <button
-                                    type="button"
-                                    class={cn(s.copyBtn, s.copyBtnGreen, s.copyBtnTopRight)}
-                                    onClick={() => props.onCopy!(props.tags.join(', '))}
-                                    title={intl.getMessage('copy')}
-                                >
-                                    <Icon icon="copy" color="green" />
-                                </button>
-                            </Show>
-                        </div>
-                    }
-                >
-                    <span class={s.countLabel}>{hiddenCount()}</span>
-                </Dropdown>
+                <div class={s.countDropdown}>
+                    <Dropdown
+                        trigger="hover"
+                        noIcon
+                        overlayClass={s.tagsTooltipOverlay}
+                        menu={
+                            <div class={s.tagsTooltip}>
+                                <For each={props.tags}>
+                                    {(tag) => <span class={s.tagsTooltipItem}>{tag}</span>}
+                                </For>
+                                <Show when={props.onCopy}>
+                                    {(onCopy) => (
+                                        <button
+                                            type="button"
+                                            class={cn(s.copyBtn, s.copyBtnGreen, s.copyBtnTopRight)}
+                                            onClick={() => onCopy()(props.tags.join(', '))}
+                                            title={intl.getMessage('copy')}
+                                        >
+                                            <Icon icon="copy" color="green" />
+                                        </button>
+                                    )}
+                                </Show>
+                            </div>
+                        }
+                    >
+                        <span class={s.countLabel}>{hiddenCount()}</span>
+                    </Dropdown>
+                </div>
             </Show>
         </div>
     );
