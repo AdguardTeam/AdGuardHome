@@ -271,7 +271,7 @@ func (web *webAPI) start(ctx context.Context) {
 		errs := make(chan error, 2)
 
 		logger := web.baseLogger.With(loggerKeyServer, "plain")
-		hdlr := wrapMux(logger, web.conf.mux, web.auth)
+		hdlr := web.wrapMux(logger)
 
 		// Use an h2c handler to support unencrypted HTTP/2, e.g. for proxies.
 		//
@@ -316,16 +316,15 @@ func (web *webAPI) start(ctx context.Context) {
 	}
 }
 
-// wrapMux wraps mux with common middlewares.  l, mux and auth must not be
-// nil.
-func wrapMux(l *slog.Logger, mux *http.ServeMux, auth *auth) (h http.Handler) {
-	h = withMiddlewares(mux, limitRequestBody)
+// wrapMux wraps mux with common middlewares.  l must not be nil.
+func (web *webAPI) wrapMux(l *slog.Logger) (h http.Handler) {
+	h = withMiddlewares(web.conf.mux, limitRequestBody)
 
 	// TODO(a.garipov):  Remove other logs like this in other code.
 	logMw := httputil.NewLogMiddleware(l, slog.LevelDebug)
 	h = logMw.Wrap(h)
 
-	return auth.middleware().Wrap(h)
+	return web.auth.middleware().Wrap(h)
 }
 
 // close gracefully shuts down the HTTP servers.
@@ -381,7 +380,7 @@ func (web *webAPI) serveTLS(ctx context.Context) (next bool) {
 	addr := netip.AddrPortFrom(web.conf.BindAddr.Addr(), portHTTPS).String()
 	logger := web.baseLogger.With(loggerKeyServer, "https")
 
-	hdlr := wrapMux(logger, web.conf.mux, web.auth)
+	hdlr := web.wrapMux(logger)
 
 	web.httpsServer.server = &http.Server{
 		Addr:    addr,
@@ -440,7 +439,7 @@ func (web *webAPI) mustStartHTTP3(ctx context.Context, address string) {
 	defer slogutil.RecoverAndExit(ctx, web.logger, osutil.ExitCodeFailure)
 
 	logger := web.baseLogger.With(loggerKeyServer, "http3")
-	hdlr := wrapMux(logger, web.conf.mux, web.auth)
+	hdlr := web.wrapMux(logger)
 
 	web.httpsServer.server3 = &http3.Server{
 		// TODO(a.garipov): See if there is a way to use the error log as
