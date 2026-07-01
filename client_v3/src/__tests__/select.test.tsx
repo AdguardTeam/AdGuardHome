@@ -26,5 +26,4 @@ describe('Select', () => {
         // The indicator (arrow icon) should be inside the trigger.
         expect(indicator).toBeTruthy();
     });
-
 });

@@ -116,17 +116,21 @@ export const Clients = () => {
                                         {intl.getMessage('client_add')}
                                     </PlusButton>
 
-                                    <div class={s.tableSection}>
-                                        <PersistentClientsTable
-                                            clients={dashboardState.clients || []}
-                                            normalizedTopClients={statsState.normalizedTopClients}
-                                            loading={isLoading()}
-                                            onEdit={handleEditClient}
-                                            onDelete={handleDeleteClient}
-                                            deleteDisabled={clientsState.processingDeleting}
-                                            serviceMap={serviceMap()}
-                                        />
-                                    </div>
+                                    {dashboardState.clients?.length > 0 && (
+                                        <div class={s.tableSection}>
+                                            <PersistentClientsTable
+                                                clients={dashboardState.clients || []}
+                                                normalizedTopClients={
+                                                    statsState.normalizedTopClients
+                                                }
+                                                loading={isLoading()}
+                                                onEdit={handleEditClient}
+                                                onDelete={handleDeleteClient}
+                                                deleteDisabled={clientsState.processingDeleting}
+                                                serviceMap={serviceMap()}
+                                            />
+                                        </div>
+                                    )}
                                 </>
                             ),
                         },
@@ -137,13 +141,17 @@ export const Clients = () => {
                                 <>
                                     <div class={s.desc}>{intl.getMessage('auto_clients_desc')}</div>
 
-                                    <div class={s.tableSection}>
-                                        <RuntimeClientsTable
-                                            autoClients={dashboardState.autoClients || []}
-                                            normalizedTopClients={statsState.normalizedTopClients}
-                                            loading={isLoading()}
-                                        />
-                                    </div>
+                                    {dashboardState.autoClients?.length > 0 && (
+                                        <div class={s.tableSection}>
+                                            <RuntimeClientsTable
+                                                autoClients={dashboardState.autoClients || []}
+                                                normalizedTopClients={
+                                                    statsState.normalizedTopClients
+                                                }
+                                                loading={isLoading()}
+                                            />
+                                        </div>
+                                    )}
                                 </>
                             ),
                         },
