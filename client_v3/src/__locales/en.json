@@ -841,5 +841,12 @@
   "clients": "Clients",
   "aria_clear_input": "Clear input",
   "aria_previous_page": "Previous page",
-  "aria_next_page": "Next page"
+  "aria_next_page": "Next page",
+  "update_available": "Version %version% is available. <a>Release notes</a>",
+  "update_button": "Update",
+  "update_how_to": "How to update",
+  "tls_certificate_expiring": "Your TLS certificate is about to expire",
+  "tls_certificate_expired": "Your TLS certificate has expired",
+  "version_number": "Version %value%",
+  "update_failed": "Auto-update failed. Please <a>follow these steps</a> to update manually"
 }

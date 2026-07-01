@@ -5,6 +5,7 @@ import { Sidebar } from 'panel/common/ui/Sidebar';
 import { Icons } from 'panel/common/ui/Icons';
 import { Footer } from 'panel/common/ui/Footer';
 import { Header } from 'panel/common/ui/Header';
+import { Banners } from 'panel/common/ui/Banners';
 import { Settings } from 'panel/components/Settings';
 import intl, { LocalesType } from 'panel/common/intl';
 import { Encryption } from 'panel/components/Encryption';
@@ -102,6 +103,8 @@ const App = () => {
             root={(props) => (
                 <>
                     <Header />
+
+                    <Banners />
 
                     <div class={s.wrapper}>
                         <Sidebar />

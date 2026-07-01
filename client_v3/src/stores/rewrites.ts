@@ -68,6 +68,7 @@ export const addRewrite = async (config: RewriteConfig) => {
         await apiClient.addRewrite(config);
         setState('processingAdd', false);
         toggleRewritesModal();
+        addSuccessToast(intl.getMessage('changes_saved_success'));
         await getRewritesList();
     } catch (error) {
         addErrorToast({ error });
@@ -86,6 +87,7 @@ export const updateRewrite = async (
         if (options.closeModal !== false) {
             toggleRewritesModal();
         }
+        addSuccessToast(intl.getMessage('changes_saved_success'));
         await getRewritesList();
         return true;
     } catch (error) {

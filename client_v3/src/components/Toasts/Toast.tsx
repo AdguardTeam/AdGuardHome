@@ -1,7 +1,6 @@
 import { type JSX, onMount, onCleanup, Show } from 'solid-js';
 import { Icon } from 'panel/common/ui/Icon';
 import cn from 'clsx';
-import intl from 'panel/common/intl';
 import { getUndoCallback, clearUndoCallback } from 'panel/stores/toasts';
 import { TOAST_TIMEOUTS } from '../../helpers/constants';
 
@@ -23,9 +22,6 @@ type ToastProps = {
     undoId?: string;
     action?: ToastAction;
     code?: string;
-    options?: {
-        components?: Record<string, (children: string) => JSX.Element>;
-    };
 };
 
 const Toast = (props: ToastProps) => {
@@ -82,13 +78,6 @@ const Toast = (props: ToastProps) => {
         removeCurrentToast();
     };
 
-    const messageContent = () => {
-        if (props.options?.components) {
-            return intl.getMessage(String(props.message), props.options.components);
-        }
-        return props.message;
-    };
-
     return (
         <div
             class={s.toast}
@@ -104,7 +93,7 @@ const Toast = (props: ToastProps) => {
                     class={cn(s.icon, s[props.type])}
                 />
 
-                <div class={s.content}>{messageContent()}</div>
+                <div class={s.content}>{props.message}</div>
             </div>
 
             <Show when={props.actionLabel}>

@@ -1,4 +1,4 @@
-import { createSignal, createMemo, For } from 'solid-js';
+import { createSignal, createMemo, For, Show } from 'solid-js';
 import cn from 'clsx';
 
 import theme from 'panel/lib/theme';
@@ -11,7 +11,11 @@ import { LanguageDropdown } from '../LanguageDropdown/LanguageDropdown';
 import { REPOSITORY, PRIVACY_POLICY_LINK, THEMES } from 'panel/helpers/constants';
 import { LANGUAGES, LANGUAGE_NAMES } from 'panel/helpers/twosky';
 import { setHtmlLangAttr, setUITheme } from 'panel/helpers/helpers';
-import { changeTheme, changeLanguage as changeLanguageAction } from 'panel/stores/dashboard';
+import {
+    changeTheme,
+    changeLanguage as changeLanguageAction,
+    getVersion,
+} from 'panel/stores/dashboard';
 import { dashboardState } from 'panel/stores/dashboard';
 
 import s from './styles.module.pcss';
@@ -70,71 +74,92 @@ export const Footer = () => {
     return (
         <footer class={s.footer}>
             <div class={s.container}>
-                <div class={s.copyright}>&copy; 2018–{getYear()} AdGuard Home</div>
+                <div class={s.leftGroup}>
+                    <div class={s.copyright}>&copy; 2018–{getYear()} AdGuard Home</div>
 
-                <div class={s.links}>
-                    <For each={linksData()}>
-                        {({ name, href }) => (
-                            <a
-                                href={href}
-                                class={cn(theme.link.link, theme.link.noDecoration)}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                    <Show when={dashboardState.dnsVersion}>
+                        <div class={s.version}>
+                            {intl.getMessage('version_number', {
+                                value: dashboardState.dnsVersion,
+                            })}
+
+                            <button
+                                type="button"
+                                class={cn(s.checkUpdateBtn, {
+                                    [s.checkUpdateBtn_loading]: dashboardState.processingVersion,
+                                })}
+                                aria-label={intl.getMessage('check_updates_btn')}
+                                disabled={dashboardState.processingVersion}
+                                data-testid="footer-check-updates"
+                                onClick={() => getVersion(true)}
                             >
-                                {name}
-                            </a>
-                        )}
-                    </For>
-                </div>
-
-                <div class={s.column}>
-                    <Dropdown
-                        trigger="click"
-                        open={themeDropdownOpen()}
-                        onOpenChange={setThemeDropdownOpen}
-                        menu={
-                            <div class={theme.dropdown.menu}>
-                                <For each={Object.values(THEMES)}>
-                                    {(v) => (
-                                        <button
-                                            type="button"
-                                            class={cn(theme.dropdown.item, {
-                                                [theme.dropdown.item_active]: currentTheme() === v,
-                                            })}
-                                            onClick={() => onThemeChange(v)}
-                                        >
-                                            {themeTranslations()[v]}
-                                        </button>
-                                    )}
-                                </For>
-                            </div>
-                        }
-                        class={s.dropdown}
-                        position="bottomRight"
-                    >
-                        <div class={s.dropdownTrigger}>
-                            <Icon icon={getThemeIcon() as any} class={s.icon} />
-                            <span>
-                                {
-                                    themeTranslations()[
-                                        isLoggedIn() ? currentTheme() : currentThemeLocal()
-                                    ]
-                                }
-                            </span>
+                                <Icon
+                                    icon={dashboardState.processingVersion ? 'loader' : 'refresh'}
+                                />
+                            </button>
                         </div>
-                    </Dropdown>
+                    </Show>
+
+                    <div class={s.links}>
+                        <For each={linksData()}>
+                            {({ name, href }) => (
+                                <a
+                                    href={href}
+                                    class={cn(theme.link.link, theme.link.noDecoration)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    {name}
+                                </a>
+                            )}
+                        </For>
+                    </div>
                 </div>
 
-                <div class={s.column}>
-                    <LanguageDropdown
-                        value={currentLanguage()}
-                        languages={LANGUAGES}
-                        languageNames={LANGUAGE_NAMES}
-                        onChange={(lang: string) => changeLanguage(lang as LocalesType)}
-                        class={s.dropdown}
-                        position="bottomRight"
-                    />
-                </div>
+                <Dropdown
+                    trigger="click"
+                    open={themeDropdownOpen()}
+                    onOpenChange={setThemeDropdownOpen}
+                    menu={
+                        <div class={theme.dropdown.menu}>
+                            <For each={Object.values(THEMES)}>
+                                {(v) => (
+                                    <button
+                                        type="button"
+                                        class={cn(theme.dropdown.item, {
+                                            [theme.dropdown.item_active]: currentTheme() === v,
+                                        })}
+                                        onClick={() => onThemeChange(v)}
+                                    >
+                                        {themeTranslations()[v]}
+                                    </button>
+                                )}
+                            </For>
+                        </div>
+                    }
+                    class={s.dropdown}
+                    position="bottomRight"
+                >
+                    <div class={s.dropdownTrigger}>
+                        <Icon icon={getThemeIcon() as any} class={s.icon} />
+                        <span>
+                            {
+                                themeTranslations()[
+                                    isLoggedIn() ? currentTheme() : currentThemeLocal()
+                                ]
+                            }
+                        </span>
+                    </div>
+                </Dropdown>
+
+                <LanguageDropdown
+                    value={currentLanguage()}
+                    languages={LANGUAGES}
+                    languageNames={LANGUAGE_NAMES}
+                    onChange={(lang: string) => changeLanguage(lang as LocalesType)}
+                    class={s.dropdown}
+                    position="bottomRight"
+                />
             </div>
         </footer>
     );

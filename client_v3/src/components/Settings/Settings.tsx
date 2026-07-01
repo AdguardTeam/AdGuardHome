@@ -82,7 +82,6 @@ export const Settings = () => {
 
     const [searchParams] = useSearchParams<{ [SCROLL_QUERY_KEY]?: string }>();
 
-    // Handle query-param-based scroll to section
     createEffect(() => {
         if (!isLoading()) {
             const section = searchParams[SCROLL_QUERY_KEY];
