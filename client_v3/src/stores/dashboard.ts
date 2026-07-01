@@ -3,10 +3,10 @@ import { untrack } from 'solid-js';
 import { STANDARD_DNS_PORT, STANDARD_WEB_PORT } from 'panel/helpers/constants';
 import { areEqualVersions } from 'panel/helpers/version';
 import { apiClient } from 'panel/api/Api';
-import { LocalesType } from 'panel/common/intl';
+import intl, { LocalesType } from 'panel/common/intl';
 import { addErrorToast, addSuccessToast, addNoticeToast } from './toasts';
 import { getTlsStatus } from './encryption';
-import { updateFailedNoticeOptions } from './dashboard/noticeOptions';
+import { getUpdateFailedMessage } from './dashboard/noticeOptions';
 import type { Client, AutoClient } from 'panel/initialState';
 
 type DashboardState = {
@@ -212,9 +212,9 @@ export const getVersion = async (recheck = false) => {
         }
         if (recheck) {
             if (data && !areEqualVersions(currentVersion, data.new_version)) {
-                addSuccessToast('updates_checked');
+                addSuccessToast(intl.getMessage('updates_checked'));
             } else {
-                addSuccessToast('updates_version_equal');
+                addSuccessToast(intl.getMessage('updates_version_equal'));
             }
         }
     } catch {
@@ -226,7 +226,7 @@ export const getVersion = async (recheck = false) => {
 export const getUpdate = async () => {
     setState('processingUpdate', true);
     const handleRequestError = () => {
-        addNoticeToast({ error: 'update_failed', options: updateFailedNoticeOptions });
+        addNoticeToast(getUpdateFailedMessage());
         setState('processingUpdate', false);
     };
     const handleRequestSuccess = (response: any) => {

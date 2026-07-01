@@ -80,14 +80,12 @@ export const addSuccessToast = (message: any) => {
     setState('notices', (prev) => [...prev, notice]);
 };
 
-export const addNoticeToast = (payload: { error: any; options?: any }) => {
-    const { error, options } = payload;
+export const addNoticeToast = (message: any) => {
     setState('notices', (prev) => [
         ...prev,
         {
             id: nanoid(),
-            message: error.toString(),
-            options,
+            message,
             type: 'notice' as const,
         },
     ]);

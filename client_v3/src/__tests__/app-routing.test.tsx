@@ -35,6 +35,9 @@ vi.mock('panel/stores/dashboard', () => ({
 vi.mock('panel/common/ui/Header', () => ({
     Header: () => <div data-testid="chrome-header" />,
 }));
+vi.mock('panel/common/ui/Banners', () => ({
+    Banners: () => <div data-testid="chrome-banners" />,
+}));
 vi.mock('panel/common/ui/Sidebar', () => ({
     Sidebar: () => <div data-testid="chrome-sidebar" />,
 }));
@@ -58,5 +61,28 @@ describe('App routing', () => {
         render(() => <App />);
 
         expect(await screen.findByTestId('route-dashboard')).toBeInTheDocument();
+    });
+
+    it('mounts Banners between Header and the wrapper in the main entry', async () => {
+        window.location.hash = '#/dashboard';
+
+        render(() => <App />);
+
+        const banners = await screen.findByTestId('chrome-banners');
+        expect(banners).toBeInTheDocument();
+
+        // Verify ordering: Header → Banners → Sidebar (wrapper starts)
+        const header = screen.getByTestId('chrome-header');
+        const sidebar = screen.getByTestId('chrome-sidebar');
+
+        // Banners should be after Header in DOM
+        expect(
+            header.compareDocumentPosition(banners) & Node.DOCUMENT_POSITION_FOLLOWING,
+        ).toBeTruthy();
+
+        // Banners should be before Sidebar in DOM
+        expect(
+            banners.compareDocumentPosition(sidebar) & Node.DOCUMENT_POSITION_FOLLOWING,
+        ).toBeTruthy();
     });
 });
