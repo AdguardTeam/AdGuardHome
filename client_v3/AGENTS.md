@@ -2,24 +2,24 @@
 
 ## Table of Contents
 
-- [AGENTS.md — AdGuard Home client_v3 (SolidJS Frontend)](#agentsmd--adguard-home-client_v3-solidjs-frontend)
-    - [Table of Contents](#table-of-contents)
+- [AGENTS.md — AdGuard Home client\_v3 (SolidJS Frontend)](#agentsmd--adguard-home-client_v3-solidjs-frontend)
+  - [Table of Contents](#table-of-contents)
 - [Project Overview](#project-overview)
 - [Technical Context](#technical-context)
 - [Project Structure](#project-structure)
 - [Build And Test Commands](#build-and-test-commands)
 - [Contribution Instructions](#contribution-instructions)
 - [Code Guidelines](#code-guidelines)
-    - [System Design](#system-design)
-    - [Architecture](#architecture)
-    - [Code Quality](#code-quality)
-    - [Testing](#testing)
-    - [Dependency Management](#dependency-management)
-    - [Configuration \& Documentation](#configuration--documentation)
-    - [Markdown Formatting](#markdown-formatting)
-    - [Other](#other)
-        - [Accessibility](#accessibility)
-        - [Translations](#translations)
+  - [System Design](#system-design)
+  - [Architecture](#architecture)
+  - [Code Quality](#code-quality)
+  - [Testing](#testing)
+  - [Dependency Management](#dependency-management)
+  - [Configuration \& Documentation](#configuration--documentation)
+  - [Markdown Formatting](#markdown-formatting)
+  - [Other](#other)
+    - [Accessibility](#accessibility)
+    - [Translations](#translations)
 
 # Project Overview
 
@@ -275,6 +275,14 @@ must not depend on stores or components. Helpers are pure and dependency-free.
   derived values, `createEffect` for side effects, `onMount` for initial data
   fetches, and `onCleanup` for teardown. Do not read signals imperatively
   inside event handlers without `untrack` when needed.
+- **Memo placement in `<Tabs>` children**: Don't put a `createMemo` that reads
+  an async store inside a component rendered as `<Tabs tabs={[...]}>` content.
+  `intl.getMessage()` calls in the `tabs` array subscribe to `lang()` —
+  when it changes SolidJS swaps the child instance, disposing its memos.
+  Instead, **lift the memo to the parent** and pass the value as a prop.
+  If the child uses that prop in a `render` closure inside another
+  `createMemo` (e.g., table columns), **access the prop in the memo body**
+  so SolidJS tracks the dependency.
 - **Stores**: Module-scoped `createStore` singletons exported directly — no
   Context/Provider. Async actions set a `processing*` flag, call `apiClient`,
   then `setState`. Errors are reported via `addErrorToast`.

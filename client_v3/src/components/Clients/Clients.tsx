@@ -8,11 +8,12 @@ import { Tabs } from 'panel/common/ui/Tabs';
 import { dashboardState, getClients } from 'panel/stores/dashboard';
 import { statsState, getStats } from 'panel/stores/stats';
 import { clientsState, deleteClient } from 'panel/stores/clients';
-import { getAllBlockedServices } from 'panel/stores/services';
+import { servicesState, getAllBlockedServices } from 'panel/stores/services';
 import { initClientForm, buildFormPayload } from 'panel/stores/clientForm';
 import type { Client } from 'panel/initialState';
 import { linkPathBuilder, RoutePath, Paths } from 'panel/components/Routes/Paths';
 import theme from 'panel/lib/theme';
+import type { WebService } from './blocks/PersistentClientsTable/ServiceIcons';
 
 import { PersistentClientsTable } from './blocks/PersistentClientsTable';
 import { RuntimeClientsTable } from './blocks/RuntimeClientsTable';
@@ -75,6 +76,14 @@ export const Clients = () => {
         () => dashboardState.processingClients || statsState.processingStats,
     );
 
+    const serviceMap = createMemo(() => {
+        const map = new Map<string, WebService>();
+        (servicesState.allServices || []).forEach((svc) => {
+            map.set(svc.id, svc);
+        });
+        return map;
+    });
+
     return (
         <div class={theme.layout.container}>
             <div class={theme.layout.containerIn}>
@@ -115,6 +124,7 @@ export const Clients = () => {
                                             onEdit={handleEditClient}
                                             onDelete={handleDeleteClient}
                                             deleteDisabled={clientsState.processingDeleting}
+                                            serviceMap={serviceMap()}
                                         />
                                     </div>
                                 </>
