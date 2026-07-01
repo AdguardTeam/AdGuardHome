@@ -1,4 +1,4 @@
-import { createSignal, createMemo, untrack } from 'solid-js';
+import { createSignal, createMemo } from 'solid-js';
 import cn from 'clsx';
 
 import intl from 'panel/common/intl';
@@ -56,6 +56,14 @@ export const RewritesTable = (props: Props) => {
         return items;
     });
 
+    const handleEdit = (rewrite: Rewrite) => {
+        props.editRewrite(rewrite);
+    };
+
+    const handleDelete = (rewrite: Rewrite) => {
+        props.deleteRewrite(rewrite);
+    };
+
     const columns = createMemo<TableColumn<Rewrite>[]>(() => [
         {
             key: 'enabled',
@@ -81,7 +89,7 @@ export const RewritesTable = (props: Props) => {
                 const id = `rewrite_${domain}`;
 
                 return (
-                    <div class={s.cell}>
+                    <div class={theme.table.cell}>
                         <span class={s.cellNameLabel}>{domain}</span>
 
                         <div class={s.cellValueToggle}>
@@ -107,10 +115,10 @@ export const RewritesTable = (props: Props) => {
             sortable: true,
             className: s.nameDesktopOnly,
             render: (value: string) => (
-                <div class={s.cell}>
-                    <span class={s.cellLabel}>{intl.getMessage('name_label')}</span>
+                <div class={theme.table.cell}>
+                    <span class={theme.table.cellLabel}>{intl.getMessage('name_label')}</span>
 
-                    <div class={s.cellValue}>
+                    <div class={theme.table.cellValueText}>
                         <span class={theme.common.textOverflow}>{value}</span>
                     </div>
                 </div>
@@ -125,10 +133,10 @@ export const RewritesTable = (props: Props) => {
             accessor: 'answer',
             sortable: true,
             render: (value: string) => (
-                <div class={s.cell}>
-                    <span class={s.cellLabel}>{intl.getMessage('result')}</span>
+                <div class={theme.table.cell}>
+                    <span class={theme.table.cellLabel}>{intl.getMessage('result')}</span>
 
-                    <div class={s.cellValue}>
+                    <div class={theme.table.cellValueText}>
                         <span class={theme.common.textOverflow}>{value}</span>
                     </div>
                 </div>
@@ -150,32 +158,39 @@ export const RewritesTable = (props: Props) => {
                 };
 
                 return (
-                    <div class={s.cell}>
-                        <div class={s.cellActions}>
-                            <button
-                                type="button"
-                                onClick={() => untrack(() => props).editRewrite(currentRewrite)}
-                                disabled={props.processingUpdate}
-                                class={s.editAction}
-                                data-testid={`edit-rewrite-${row.domain}`}
-                            >
-                                <span class={cn(s.editActionLabel, theme.text.t2)}>
-                                    {intl.getMessage('edit_table_action')}
-                                </span>
-                                <span class={s.editActionIcon}>
+                    <div class={theme.table.cell}>
+                        <div class={theme.table.cellValue}>
+                            <div class={theme.table.cellActions}>
+                                <button
+                                    type="button"
+                                    onClick={() => handleEdit(currentRewrite)}
+                                    disabled={props.processingUpdate}
+                                    class={theme.table.action}
+                                    title={intl.getMessage('edit_table_action')}
+                                    aria-label={intl.getMessage('edit_table_action')}
+                                    data-testid={`edit-rewrite-${row.domain}`}
+                                >
                                     <Icon icon="edit" color="gray" />
-                                </span>
-                            </button>
+                                    <span class={theme.table.actionLabel}>
+                                        {intl.getMessage('edit_table_action')}
+                                    </span>
+                                </button>
 
-                            <button
-                                type="button"
-                                onClick={() => untrack(() => props).deleteRewrite(currentRewrite)}
-                                disabled={props.processingDelete}
-                                class={s.action}
-                                data-testid={`delete-rewrite-${row.domain}`}
-                            >
-                                <Icon icon="delete" color="red" />
-                            </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleDelete(currentRewrite)}
+                                    disabled={props.processingDelete}
+                                    class={cn(theme.table.action, theme.table.action_danger)}
+                                    title={intl.getMessage('delete_table_action')}
+                                    aria-label={intl.getMessage('delete_table_action')}
+                                    data-testid={`delete-rewrite-${row.domain}`}
+                                >
+                                    <Icon icon="delete" color="red" />
+                                    <span class={theme.table.actionLabel}>
+                                        {intl.getMessage('delete_table_action')}
+                                    </span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 );

@@ -1,4 +1,4 @@
-import { createSignal, createMemo, untrack } from 'solid-js';
+import { createSignal, createMemo } from 'solid-js';
 
 import type { Filter } from 'panel/helpers/helpers';
 import { formatShortDateTime } from 'panel/helpers/helpers';
@@ -66,6 +66,18 @@ export const ListsTable = (props: Props) => {
         return items;
     });
 
+    const handleToggle = (url: string, name: string, enabled: boolean) => {
+        props.toggleFilterList(url, { name, url, enabled: !enabled });
+    };
+
+    const handleEdit = (url: string, name: string, enabled: boolean) => {
+        props.editFilterList(url, name, enabled);
+    };
+
+    const handleDelete = (url: string, name: string) => {
+        props.deleteFilterList(url, name);
+    };
+
     const columns = createMemo<TableColumn<Filter>[]>(() => [
         {
             key: 'enabled',
@@ -82,20 +94,14 @@ export const ListsTable = (props: Props) => {
                 const id = `filter_${url}`;
 
                 return (
-                    <div class={s.cell}>
+                    <div class={theme.table.cell}>
                         <span class={s.cellNameLabel}>{name}</span>
 
                         <div class={s.cellValueToggle}>
                             <Switch
                                 id={id}
                                 checked={enabled}
-                                onChange={() =>
-                                    untrack(() => props).toggleFilterList(url, {
-                                        name,
-                                        url,
-                                        enabled: !enabled,
-                                    })
-                                }
+                                onChange={() => handleToggle(url, name, enabled)}
                                 disabled={props.processingConfigFilter}
                             />
                         </div>
@@ -113,10 +119,10 @@ export const ListsTable = (props: Props) => {
             sortable: true,
             className: s.nameDesktopOnly,
             render: (value: string) => (
-                <div class={s.cell}>
-                    <span class={s.cellLabel}>{intl.getMessage('name_label')}</span>
+                <div class={theme.table.cell}>
+                    <span class={theme.table.cellLabel}>{intl.getMessage('name_label')}</span>
 
-                    <div class={s.cellValue}>
+                    <div class={theme.table.cellValueText}>
                         <span class={theme.common.textOverflow}>{value}</span>
                     </div>
                 </div>
@@ -131,10 +137,10 @@ export const ListsTable = (props: Props) => {
             accessor: 'url',
             sortable: true,
             render: (value: string) => (
-                <div class={s.cell}>
-                    <span class={s.cellLabel}>{intl.getMessage('url_label')}</span>
+                <div class={theme.table.cell}>
+                    <span class={theme.table.cellLabel}>{intl.getMessage('url_label')}</span>
 
-                    <div class={s.cellValue}>
+                    <div class={theme.table.cellValueText}>
                         <a
                             href={value}
                             class={cn(theme.link.link, theme.common.textOverflow)}
@@ -165,10 +171,10 @@ export const ListsTable = (props: Props) => {
             accessor: 'rulesCount',
             sortable: true,
             render: (value: number) => (
-                <div class={s.cell}>
-                    <span class={s.cellLabel}>{intl.getMessage('rules_label')}</span>
+                <div class={theme.table.cell}>
+                    <span class={theme.table.cellLabel}>{intl.getMessage('rules_label')}</span>
 
-                    <div class={s.cellValue}>
+                    <div class={theme.table.cellValueText}>
                         <span>{value?.toLocaleString() || 0}</span>
                     </div>
                 </div>
@@ -186,10 +192,12 @@ export const ListsTable = (props: Props) => {
                 const result = formatShortDateTime(value);
 
                 return (
-                    <div class={s.cell}>
-                        <span class={s.cellLabel}>{intl.getMessage('last_updated_label')}</span>
+                    <div class={theme.table.cell}>
+                        <span class={theme.table.cellLabel}>
+                            {intl.getMessage('last_updated_label')}
+                        </span>
 
-                        <div class={s.cellValue}>
+                        <div class={theme.table.cellValueText}>
                             <span>{result}</span>
                         </div>
                     </div>
@@ -209,32 +217,37 @@ export const ListsTable = (props: Props) => {
                 const { name, url, enabled } = row;
 
                 return (
-                    <div class={s.cell}>
-                        <div class={s.cellActions}>
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    untrack(() => props).editFilterList(url, name, enabled)
-                                }
-                                disabled={props.processingConfigFilter}
-                                class={s.editAction}
-                            >
-                                <span class={cn(s.editActionLabel, theme.text.t2)}>
-                                    {intl.getMessage('edit_table_action')}
-                                </span>
-                                <span class={s.editActionIcon}>
+                    <div class={theme.table.cell}>
+                        <div class={theme.table.cellValue}>
+                            <div class={theme.table.cellActions}>
+                                <button
+                                    type="button"
+                                    onClick={() => handleEdit(url, name, enabled)}
+                                    disabled={props.processingConfigFilter}
+                                    class={theme.table.action}
+                                    title={intl.getMessage('edit_table_action')}
+                                    aria-label={intl.getMessage('edit_table_action')}
+                                >
                                     <Icon icon="edit" color="gray" />
-                                </span>
-                            </button>
+                                    <span class={theme.table.actionLabel}>
+                                        {intl.getMessage('edit_table_action')}
+                                    </span>
+                                </button>
 
-                            <button
-                                type="button"
-                                onClick={() => untrack(() => props).deleteFilterList(url, name)}
-                                disabled={props.processingConfigFilter}
-                                class={s.action}
-                            >
-                                <Icon icon="delete" color="red" />
-                            </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleDelete(url, name)}
+                                    disabled={props.processingConfigFilter}
+                                    class={cn(theme.table.action, theme.table.action_danger)}
+                                    title={intl.getMessage('delete_table_action')}
+                                    aria-label={intl.getMessage('delete_table_action')}
+                                >
+                                    <Icon icon="delete" color="red" />
+                                    <span class={theme.table.actionLabel}>
+                                        {intl.getMessage('delete_table_action')}
+                                    </span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 );
