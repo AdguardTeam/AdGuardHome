@@ -39,3 +39,28 @@
     padding: 12px 16px 0;
     max-width: 584px;
 }
+
+.tabs_filled {
+    .button {
+        display: block;
+        border-radius: 8px;
+        border-bottom: none;
+        padding: 8px 16px;
+        margin-bottom: 0;
+        min-width: 0;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+
+        &_active {
+            background-color: var(--page-background-additional);
+            color: var(--default-main-text);
+            border-bottom-color: transparent;
+            font-weight: var(--weight-semi-bold);
+        }
+    }
+}
+
+.content_fullWidth {
+    max-width: 100%;
+}

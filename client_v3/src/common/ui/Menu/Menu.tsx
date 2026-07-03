@@ -109,7 +109,7 @@ export const Menu = (props: Props) => {
                             routePath: RoutePath.BlockedServices,
                         },
                         {
-                            label: intl.getMessage('user_rules'),
+                            label: intl.getMessage('user_rules_title'),
                             path: Paths.UserRules,
                             routePath: RoutePath.UserRules,
                         },

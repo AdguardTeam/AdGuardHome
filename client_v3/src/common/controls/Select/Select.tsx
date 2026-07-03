@@ -1,145 +1,29 @@
 import { type JSX, For, Show, createMemo, createSignal } from 'solid-js';
 import cn from 'clsx';
-import {
-    Select as ArkSelect,
-    Combobox as ArkCombobox,
-    createListCollection,
-    useSelectContext,
-    useSelectItemContext,
-    useComboboxItemContext,
-} from '@ark-ui/solid';
+import { Select as ArkSelect, Combobox as ArkCombobox, createListCollection } from '@ark-ui/solid';
 import { Icon } from 'panel/common/ui/Icon';
-import { IOption } from 'panel/lib/helpers/utils';
+import intl from 'panel/common/intl';
 import theme from 'panel/lib/theme';
 
-import { SelectMultiValue } from './SelectMultiValue';
+import { SelectMultiValueDisplay } from './SelectMultiValueDisplay';
+import { ComboboxMultiValueDisplay } from './ComboboxMultiValueDisplay';
+import { ComboboxInputReset } from './ComboboxInputReset';
+import { SelectItemContent } from './SelectItemContent';
+import { ComboboxItemContent } from './ComboboxItemContent';
+
+import { SelectProps, SEARCH_ENABLE_LIMIT } from './types';
+import { optionToValue, filterOptions, getItemTestId } from './helpers';
 
 import './Select.pcss';
 import s from './MenuList.module.pcss';
 
-const SEARCH_ENABLE_LIMIT = 10;
-
-export type ISelectSize = 'auto' | 'small' | 'medium' | 'big' | 'big-limit' | 'responsive';
-export type ISelectHeight = 'small' | 'medium' | 'big' | 'big-mobile';
-export type ISelectMenuSize = 'small' | 'medium' | 'big' | 'large';
-export type ISelectValue<T, Multi extends boolean> = Multi extends true ? IOption<T>[] : IOption<T>;
-
-interface SelectProps<
-    T,
-    Multi extends boolean = false,
-    ExtendOption extends Record<any, any> = object,
-> {
-    size?: ISelectSize;
-    height?: ISelectHeight;
-    menuSize?: ISelectMenuSize;
-    menuPosition?: 'right';
-    mobile?: boolean;
-    isDisabled?: boolean;
-    isMulti?: Multi;
-    menuIsOpen?: boolean;
-    placeholder?: JSX.Element;
-    class?: string;
-    autoFocus?: boolean;
-    low?: boolean;
-    options: (IOption<T> & ExtendOption)[];
-    onChange: (
-        value: Multi extends true ? (IOption<T> & ExtendOption)[] : IOption<T> & ExtendOption,
-    ) => void;
-    value?: (IOption<T> & ExtendOption) | (IOption<T> & ExtendOption)[];
-    formatGroupLabel?: (group: any) => string;
-    isSearchable?: boolean;
-    id?: string;
-    inputId?: string;
-    borderless?: boolean;
-    adaptiveHeight?: boolean;
-    lazyList?: boolean;
-    closeMenuOnSelect?: boolean;
-    menuPlacement?: 'top' | 'bottom' | 'auto';
-    isClearable?: boolean;
-    onMenuScrollToBottom?: () => void;
-    isLoading?: boolean;
-    isDropdownSelect?: boolean;
-    onMenuOpen?: () => void;
-    onMenuClose?: () => void;
-    onBlur?: () => void;
-    showIcons?: boolean;
-    showOptionIcon?: boolean;
-    optionTestIdPrefix?: string;
-    /** Optional footer rendered after the scrollable item list inside the dropdown */
-    menuFooter?: JSX.Element;
-}
-
-/**
- * Multi-value display wrapper that reads selected items from Ark UI context.
- * Used inside Select.Trigger to render pill components.
- */
-const SelectMultiValueDisplay = (props: { placeholder?: string }) => {
-    const selectCtx = useSelectContext();
-
-    return (
-        <Show
-            when={selectCtx().hasSelectedItems}
-            fallback={<span class="solid-select-placeholder">{props.placeholder ?? ''}</span>}
-        >
-            <SelectMultiValue
-                items={selectCtx().selectedItems as any[]}
-                onRemove={(item) => selectCtx().clearValue(String(item.value))}
-            />
-        </Show>
-    );
-};
-
-/**
- * Check/dot icon for the item indicator.
- * Matches client_v2 CustomOption: check when selected, dot when not.
- * Used inside ArkSelect.Item (non-searchable Select branch).
- */
-const OptionCheckIcon = () => {
-    // eslint-disable-next-line solid/reactivity
-    const itemCtx = useSelectItemContext();
-    const state = itemCtx();
-    return <Icon icon={state.selected ? 'check' : 'dot'} />;
-};
-
-/**
- * Check/dot icon for the item indicator in Combobox (searchable) mode.
- * Same appearance as OptionCheckIcon but uses ComboboxItemContext.
- */
-const ComboboxOptionCheckIcon = () => {
-    // eslint-disable-next-line solid/reactivity
-    const itemCtx = useComboboxItemContext();
-    const state = itemCtx();
-    return <Icon icon={state.selected ? 'check' : 'dot'} />;
-};
-
-/**
- * Individual option item rendered inside the dropdown list.
- */
-const SelectItemContent = <T, ExtendOption extends Record<any, any>>(props: {
-    option: IOption<T> & ExtendOption;
-    isMulti?: boolean;
-    showOptionIcon?: boolean;
-    showIcons?: boolean;
-}) => {
-    // eslint-disable-next-line solid/reactivity
-    const data = props.option as any;
-
-    return (
-        <>
-            <Show when={props.showOptionIcon !== false}>
-                <ArkSelect.ItemIndicator>
-                    <OptionCheckIcon />
-                </ArkSelect.ItemIndicator>
-            </Show>
-            <Show when={props.showIcons && data.icon}>
-                <div class={s.selectIconContainer}>
-                    <Icon icon={data.icon} />
-                </div>
-            </Show>
-            <ArkSelect.ItemText>{data.label}</ArkSelect.ItemText>
-        </>
-    );
-};
+export type {
+    ISelectSize,
+    ISelectHeight,
+    ISelectMenuSize,
+    ISelectValue,
+    SelectProps,
+} from './types';
 
 export const Select = <
     T,
@@ -147,7 +31,7 @@ export const Select = <
     ExtendOption extends Record<any, any> = object,
 >(
     props: SelectProps<T, Multi, ExtendOption>,
-) => {
+): JSX.Element => {
     /* ---- Derived state ---- */
     const selectClass = createMemo(() =>
         cn(
@@ -176,62 +60,90 @@ export const Select = <
         ),
     );
 
-    // Multi-select always uses the non-searchable Select branch (see "Decisions Made"),
-    // so pills render correctly. Combobox is single-select only.
-    const isSearchable = createMemo(
-        () =>
-            !(props.isMulti ?? false) &&
-            (props.isSearchable ?? props.options.length > SEARCH_ENABLE_LIMIT),
-    );
+    const isSearchable = createMemo(() => {
+        // Explicit isSearchable prop takes precedence over defaults.
+        if (props.isSearchable !== undefined) {
+            return props.isSearchable;
+        }
+        // Default: only non-multi selects with > SEARCH_ENABLE_LIMIT options are searchable.
+        return !(props.isMulti ?? false) && props.options.length > SEARCH_ENABLE_LIMIT;
+    });
 
     const isDisabled = createMemo(() => props.isDisabled ?? false);
     const isMulti = createMemo(() => props.isMulti ?? false);
     const isClearable = createMemo(() => props.isClearable ?? false);
 
-    /* ---- Combobox search input tracking ---- */
     const [searchInput, setSearchInput] = createSignal('');
-    /** DOM ref to the Combobox <input> — used to physically clear it on open. */
+    // Label shown immediately after selection, before the async onChange round-trip
+    // updates props.value. Always overridden by props.value when available.
+    const [pendingLabel, setPendingLabel] = createSignal<string | undefined>();
+    // DOM ref for defensive input clear in multi-select (avoids onInputValueChange loop).
     let inputRef: HTMLInputElement | undefined;
 
-    const filteredOptions = createMemo(() => {
-        const query = searchInput().toLowerCase();
-        if (!query) return props.options;
-        return props.options.filter((opt) => String(opt.label).toLowerCase().includes(query));
-    });
+    const filteredOptions = createMemo(() => filterOptions(props.options, searchInput()));
 
-    /* ---- Build collection from filtered options ---- */
     const collection = createMemo(() =>
         createListCollection({
             items: filteredOptions() as any[],
             itemToString: (item: any) => item.label,
-            itemToValue: (item: any) => String(item.value),
+            itemToValue: (item: any) => optionToValue(item.value),
             isItemDisabled: (item: any) => item.isDisabled ?? item.disabled ?? false,
         }),
     );
 
-    /* ---- Compute current value as string[] for Ark UI ---- */
     const currentValue = createMemo<string[]>(() => {
         if (!props.value) return [];
         const arr = Array.isArray(props.value) ? props.value : [props.value];
-        return arr.map((v: any) => String(v.value));
+        return arr.map((v: any) => optionToValue(v.value));
     });
 
-    /* ---- onChange handler ---- */
     const handleValueChange = (details: { items: any[] }) => {
         if (isMulti()) {
             props.onChange(details.items as any);
         } else {
-            props.onChange(details.items[0] as any);
+            const item = details.items[0];
+            setPendingLabel(item?.label);
+            props.onChange(item as any);
         }
     };
 
-    /* ---- Scroll to bottom ---- */
-    const handleContentScroll = (e: Event) => {
+    // Attached to both Content and inner scroll div (scroll events don't bubble).
+    const onContentScroll = (e: Event) => {
+        if (!props.onMenuScrollToBottom) return;
         const el = e.currentTarget as HTMLElement;
         if (el.scrollHeight - el.scrollTop <= el.clientHeight + 50) {
-            props.onMenuScrollToBottom?.();
+            props.onMenuScrollToBottom();
         }
     };
+
+    const positioning = createMemo(() => ({
+        placement: (props.menuPlacement === 'top' ? 'top-start' : 'bottom-start') as
+            | 'top-start'
+            | 'bottom-start',
+        sameWidth: true,
+        fitViewport: true,
+        flip: (props.menuPlacement === 'auto'
+            ? true
+            : props.menuPlacement === 'top'
+              ? ['top-start', 'bottom-start']
+              : ['bottom-start', 'top-start']) as boolean | ('top-start' | 'bottom-start')[],
+    }));
+
+    const testId = (option: any) => getItemTestId(props.optionTestIdPrefix, option.value);
+
+    const clearAriaLabel = intl.getMessage('clear_btn');
+
+    // Reads the label from the controlled value prop (option object).
+    // Falls back to pendingLabel (set on selection) before props.value updates.
+    const singleValueLabel = createMemo(() => {
+        const value = props.value;
+        if (value) {
+            const arr = Array.isArray(value) ? value : [value];
+            const label = (arr[0] as any)?.label;
+            if (label) return label;
+        }
+        return pendingLabel() ?? '';
+    });
 
     return (
         <Show
@@ -254,30 +166,23 @@ export const Select = <
                                 props.onMenuClose?.();
                             }
                         }}
-                        positioning={{
-                            placement:
-                                props.menuPlacement === 'top'
-                                    ? ('top-start' as const)
-                                    : ('bottom-start' as const),
-                            sameWidth: true,
-                            fitViewport: true,
-                            flip:
-                                props.menuPlacement === 'auto'
-                                    ? true
-                                    : props.menuPlacement === 'top'
-                                      ? ['top-start', 'bottom-start']
-                                      : ['bottom-start', 'top-start'],
-                        }}
+                        positioning={positioning()}
                     >
                         <Show when={!props.isDropdownSelect}>
                             <ArkSelect.Control>
-                                <ArkSelect.Trigger>
+                                <ArkSelect.Trigger
+                                    ref={(el: HTMLButtonElement) => {
+                                        if (props.autoFocus) el.focus();
+                                    }}
+                                >
                                     <Show
                                         when={!isMulti()}
                                         fallback={
-                                            <SelectMultiValueDisplay
-                                                placeholder={props.placeholder as string}
-                                            />
+                                            <div class="solid-select-multi-value-container">
+                                                <SelectMultiValueDisplay
+                                                    placeholder={props.placeholder as string}
+                                                />
+                                            </div>
                                         }
                                     >
                                         <ArkSelect.ValueText
@@ -291,14 +196,14 @@ export const Select = <
                                     </Show>
                                 </ArkSelect.Trigger>
                                 <Show when={isClearable() && !isMulti()}>
-                                    <ArkSelect.ClearTrigger>
+                                    <ArkSelect.ClearTrigger aria-label={clearAriaLabel}>
                                         <Icon icon="cross" />
                                     </ArkSelect.ClearTrigger>
                                 </Show>
                             </ArkSelect.Control>
                         </Show>
                         <ArkSelect.Positioner>
-                            <ArkSelect.Content onScroll={handleContentScroll}>
+                            <ArkSelect.Content onScroll={onContentScroll}>
                                 <Show
                                     when={!props.isLoading}
                                     fallback={
@@ -312,55 +217,43 @@ export const Select = <
                                             when={props.lazyList}
                                             fallback={
                                                 <For each={props.options}>
-                                                    {(option) => {
-                                                        const data = option as any;
-                                                        return (
-                                                            <ArkSelect.Item
-                                                                item={option as any}
-                                                                data-testid={
-                                                                    props.optionTestIdPrefix
-                                                                        ? `${props.optionTestIdPrefix}-${String(data.value)}`
-                                                                        : undefined
+                                                    {(option) => (
+                                                        <ArkSelect.Item
+                                                            item={option as any}
+                                                            data-testid={testId(option)}
+                                                        >
+                                                            <SelectItemContent
+                                                                option={option as any}
+                                                                showOptionIcon={
+                                                                    props.showOptionIcon
                                                                 }
-                                                            >
-                                                                <SelectItemContent
-                                                                    option={option as any}
-                                                                    isMulti={isMulti()}
-                                                                    showOptionIcon={
-                                                                        props.showOptionIcon
-                                                                    }
-                                                                    showIcons={props.showIcons}
-                                                                />
-                                                            </ArkSelect.Item>
-                                                        );
-                                                    }}
+                                                                showIcons={props.showIcons}
+                                                            />
+                                                        </ArkSelect.Item>
+                                                    )}
                                                 </For>
                                             }
                                         >
-                                            <div class={s.menuList}>
+                                            <div
+                                                class={s.menuList}
+                                                data-part="menu-list"
+                                                onScroll={onContentScroll}
+                                            >
                                                 <For each={props.options}>
-                                                    {(option) => {
-                                                        const data = option as any;
-                                                        return (
-                                                            <ArkSelect.Item
-                                                                item={option as any}
-                                                                data-testid={
-                                                                    props.optionTestIdPrefix
-                                                                        ? `${props.optionTestIdPrefix}-${String(data.value)}`
-                                                                        : undefined
+                                                    {(option) => (
+                                                        <ArkSelect.Item
+                                                            item={option as any}
+                                                            data-testid={testId(option)}
+                                                        >
+                                                            <SelectItemContent
+                                                                option={option as any}
+                                                                showOptionIcon={
+                                                                    props.showOptionIcon
                                                                 }
-                                                            >
-                                                                <SelectItemContent
-                                                                    option={option as any}
-                                                                    isMulti={isMulti()}
-                                                                    showOptionIcon={
-                                                                        props.showOptionIcon
-                                                                    }
-                                                                    showIcons={props.showIcons}
-                                                                />
-                                                            </ArkSelect.Item>
-                                                        );
-                                                    }}
+                                                                showIcons={props.showIcons}
+                                                            />
+                                                        </ArkSelect.Item>
+                                                    )}
                                                 </For>
                                             </div>
                                         </Show>
@@ -379,53 +272,40 @@ export const Select = <
                     collection={collection()}
                     value={currentValue()}
                     onValueChange={handleValueChange}
+                    multiple={isMulti()}
                     disabled={isDisabled()}
                     closeOnSelect={props.closeMenuOnSelect ?? true}
                     openOnClick
                     autoFocus={props.autoFocus}
                     open={props.menuIsOpen}
+                    selectionBehavior="clear"
                     onInputValueChange={(details) => {
-                        // Only track actual user keystrokes — ignore programmatic
-                        // changes (item-select, clear-trigger, script, interact-outside)
-                        // so searchInput always reflects what the user typed.
                         if (details.reason === 'input-change') {
                             setSearchInput(details.inputValue);
+                        } else {
+                            // Non-typing change (select/clear/close): reset filter.
+                            setSearchInput('');
+                            if (isMulti() && inputRef) {
+                                inputRef.value = '';
+                            }
                         }
                     }}
                     onOpenChange={(details) => {
                         if (details.open) {
-                            // Reset search filter and physically clear the input
-                            // so the user sees a blank field ready for fresh typing
-                            // (like react-select).
                             setSearchInput('');
-                            if (inputRef) {
-                                inputRef.value = '';
-                            }
                             props.onMenuOpen?.();
                         } else {
+                            // Stale search cleared by ComboboxInputReset.
                             props.onMenuClose?.();
                         }
                     }}
-                    positioning={{
-                        placement:
-                            props.menuPlacement === 'top'
-                                ? ('top-start' as const)
-                                : ('bottom-start' as const),
-                        sameWidth: true,
-                        fitViewport: true,
-                        flip:
-                            props.menuPlacement === 'auto'
-                                ? true
-                                : props.menuPlacement === 'top'
-                                  ? ['top-start', 'bottom-start']
-                                  : ['bottom-start', 'top-start'],
-                    }}
+                    positioning={positioning()}
                 >
+                    <ComboboxInputReset />
                     <Show when={!props.isDropdownSelect}>
                         <ArkCombobox.Control
                             onClick={(e: MouseEvent) => {
-                                // Click the inner input when clicking the dead zone
-                                // of the Control so openOnClick triggers the menu.
+                                // Click the input when clicking the control's dead zone.
                                 if (e.target === e.currentTarget) {
                                     const input = (e.currentTarget as HTMLElement).querySelector(
                                         'input',
@@ -434,25 +314,68 @@ export const Select = <
                                 }
                             }}
                         >
-                            <ArkCombobox.Input
-                                id={props.inputId}
-                                placeholder={props.placeholder as string}
-                                ref={(el) => {
-                                    inputRef = el;
-                                }}
-                            />
-                            <Show when={isClearable() && currentValue().length > 0}>
-                                <ArkCombobox.ClearTrigger>
-                                    <Icon icon="cross" />
-                                </ArkCombobox.ClearTrigger>
+                            <Show when={isMulti()}>
+                                <div class="solid-select-multi-value-container">
+                                    <ComboboxMultiValueDisplay
+                                        placeholder={props.placeholder as string}
+                                        inputId={props.inputId}
+                                        onInputRef={(el) => {
+                                            inputRef = el;
+                                        }}
+                                    />
+                                </div>
+                                {/* Clear button shown whenever values exist. */}
+                                <Show when={currentValue().length > 0}>
+                                    <ArkCombobox.ClearTrigger aria-label={clearAriaLabel}>
+                                        <Icon icon="cross" />
+                                    </ArkCombobox.ClearTrigger>
+                                </Show>
+                                <Show when={!currentValue().length}>
+                                    <ArkCombobox.Trigger>
+                                        <Icon icon="arrow_bottom" />
+                                    </ArkCombobox.Trigger>
+                                </Show>
                             </Show>
-                            <ArkCombobox.Trigger>
-                                <Icon icon="arrow_bottom" />
-                            </ArkCombobox.Trigger>
+                            <Show when={!isMulti()}>
+                                <div class="solid-combobox-single-value-wrapper">
+                                    <Show
+                                        when={!searchInput()}
+                                        fallback={<span class="solid-combobox-single-value" />}
+                                    >
+                                        <Show
+                                            when={singleValueLabel()}
+                                            fallback={
+                                                <span class="solid-select-placeholder">
+                                                    {props.placeholder as string}
+                                                </span>
+                                            }
+                                        >
+                                            <span class="solid-combobox-single-value">
+                                                {singleValueLabel()}
+                                            </span>
+                                        </Show>
+                                    </Show>
+                                    <ArkCombobox.Input
+                                        id={props.inputId}
+                                        placeholder=""
+                                        ref={(el) => {
+                                            inputRef = el;
+                                        }}
+                                    />
+                                </div>
+                                <Show when={isClearable() && currentValue().length > 0}>
+                                    <ArkCombobox.ClearTrigger aria-label={clearAriaLabel}>
+                                        <Icon icon="cross" />
+                                    </ArkCombobox.ClearTrigger>
+                                </Show>
+                                <ArkCombobox.Trigger>
+                                    <Icon icon="arrow_bottom" />
+                                </ArkCombobox.Trigger>
+                            </Show>
                         </ArkCombobox.Control>
                     </Show>
                     <ArkCombobox.Positioner>
-                        <ArkCombobox.Content onScroll={handleContentScroll}>
+                        <ArkCombobox.Content onScroll={onContentScroll}>
                             <Show
                                 when={!props.isLoading}
                                 fallback={
@@ -466,82 +389,47 @@ export const Select = <
                                         when={props.lazyList}
                                         fallback={
                                             <For each={filteredOptions()}>
-                                                {(option) => {
-                                                    const data = option as any;
-                                                    return (
-                                                        <ArkCombobox.Item
-                                                            item={option as any}
-                                                            data-testid={
-                                                                props.optionTestIdPrefix
-                                                                    ? `${props.optionTestIdPrefix}-${String(data.value)}`
-                                                                    : undefined
-                                                            }
-                                                        >
-                                                            <Show
-                                                                when={
-                                                                    props.showOptionIcon !== false
-                                                                }
-                                                            >
-                                                                <ArkCombobox.ItemIndicator>
-                                                                    <ComboboxOptionCheckIcon />
-                                                                </ArkCombobox.ItemIndicator>
-                                                            </Show>
-                                                            <Show
-                                                                when={props.showIcons && data.icon}
-                                                            >
-                                                                <div class={s.selectIconContainer}>
-                                                                    <Icon icon={data.icon} />
-                                                                </div>
-                                                            </Show>
-                                                            <ArkCombobox.ItemText>
-                                                                {data.label}
-                                                            </ArkCombobox.ItemText>
-                                                        </ArkCombobox.Item>
-                                                    );
-                                                }}
+                                                {(option) => (
+                                                    <ArkCombobox.Item
+                                                        item={option as any}
+                                                        data-testid={testId(option)}
+                                                    >
+                                                        <ComboboxItemContent
+                                                            option={option as any}
+                                                            showOptionIcon={props.showOptionIcon}
+                                                            showIcons={props.showIcons}
+                                                        />
+                                                    </ArkCombobox.Item>
+                                                )}
                                             </For>
                                         }
                                     >
-                                        <div class={s.menuList}>
+                                        <div
+                                            class={s.menuList}
+                                            data-part="menu-list"
+                                            onScroll={onContentScroll}
+                                        >
                                             <For each={filteredOptions()}>
-                                                {(option) => {
-                                                    const data = option as any;
-                                                    return (
-                                                        <ArkCombobox.Item
-                                                            item={option as any}
-                                                            data-testid={
-                                                                props.optionTestIdPrefix
-                                                                    ? `${props.optionTestIdPrefix}-${String(data.value)}`
-                                                                    : undefined
-                                                            }
-                                                        >
-                                                            <Show
-                                                                when={
-                                                                    props.showOptionIcon !== false
-                                                                }
-                                                            >
-                                                                <ArkCombobox.ItemIndicator>
-                                                                    <ComboboxOptionCheckIcon />
-                                                                </ArkCombobox.ItemIndicator>
-                                                            </Show>
-                                                            <Show
-                                                                when={props.showIcons && data.icon}
-                                                            >
-                                                                <div class={s.selectIconContainer}>
-                                                                    <Icon icon={data.icon} />
-                                                                </div>
-                                                            </Show>
-                                                            <ArkCombobox.ItemText>
-                                                                {data.label}
-                                                            </ArkCombobox.ItemText>
-                                                        </ArkCombobox.Item>
-                                                    );
-                                                }}
+                                                {(option) => (
+                                                    <ArkCombobox.Item
+                                                        item={option as any}
+                                                        data-testid={testId(option)}
+                                                    >
+                                                        <ComboboxItemContent
+                                                            option={option as any}
+                                                            showOptionIcon={props.showOptionIcon}
+                                                            showIcons={props.showIcons}
+                                                        />
+                                                    </ArkCombobox.Item>
+                                                )}
                                             </For>
-                                            <Show when={props.menuFooter}>{props.menuFooter}</Show>
                                         </div>
                                     </Show>
                                 </ArkCombobox.ItemGroup>
+                                <Show when={props.menuFooter}>{props.menuFooter}</Show>
+                                <ArkCombobox.Empty>
+                                    {intl.getMessage('nothing_found')}
+                                </ArkCombobox.Empty>
                             </Show>
                         </ArkCombobox.Content>
                     </ArkCombobox.Positioner>

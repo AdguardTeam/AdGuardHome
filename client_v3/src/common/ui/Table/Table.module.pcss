@@ -80,8 +80,8 @@
         background-color: transparent;
         box-shadow: none;
 
-        &:hover,
-        &:focus {
+        &:hover:not(:has([data-table-action]:hover)),
+        &:focus:not(:has([data-table-action]:focus-visible)) {
             background-color: var(--page-background-additional);
         }
     }

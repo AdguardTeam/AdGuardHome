@@ -1,10 +1,9 @@
 import { Show } from 'solid-js';
 
 import intl from 'panel/common/intl';
+import theme from 'panel/lib/theme';
 
 import { ServiceIcons, type WebService } from './ServiceIcons';
-
-import s from './PersistentClientsTable.module.pcss';
 
 type ServiceCellProps = {
     serviceIds: string[];
@@ -14,9 +13,9 @@ type ServiceCellProps = {
 
 export const ServiceCell = (props: ServiceCellProps) => {
     return (
-        <div class={s.cell}>
-            <span class={s.cellLabel}>{intl.getMessage('blocked_services')}</span>
-            <div class={s.cellValue}>
+        <div class={theme.table.cell}>
+            <span class={theme.table.cellLabel}>{intl.getMessage('blocked_services')}</span>
+            <div class={theme.table.cellValueText}>
                 <Show
                     when={props.useGlobal}
                     fallback={

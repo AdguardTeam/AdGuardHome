@@ -19,6 +19,8 @@ type Props = {
     onTabChange?: (tabId: string) => void;
     class?: string;
     contentClass?: string;
+    fullWidth?: boolean;
+    variant?: 'default' | 'filled';
 };
 
 export const Tabs = (props: Props) => {
@@ -42,7 +44,11 @@ export const Tabs = (props: Props) => {
     );
 
     return (
-        <div class={cn(s.tabs, props.class)}>
+        <div
+            class={cn(s.tabs, props.class, {
+                [s.tabs_filled]: props.variant === 'filled',
+            })}
+        >
             <div class={s.nav}>
                 <For each={props.tabs}>
                     {(tab) => (
@@ -61,7 +67,13 @@ export const Tabs = (props: Props) => {
                     )}
                 </For>
             </div>
-            <div class={cn(s.content, props.contentClass)}>{activeTabContent()}</div>
+            <div
+                class={cn(s.content, props.contentClass, {
+                    [s.content_fullWidth]: props.fullWidth,
+                })}
+            >
+                {activeTabContent()}
+            </div>
         </div>
     );
 };

@@ -171,6 +171,13 @@
         }
     }
 
+    [data-scope='combobox'][data-part='empty'] {
+        padding: 16px 12px;
+        color: var(--default-description-text);
+        font-size: 16px;
+        text-align: center;
+    }
+
     [data-scope='select'][data-part='control'],
     [data-scope='combobox'][data-part='control'] {
         min-height: 40px;
@@ -274,6 +281,10 @@
         }
     }
 
+    &.solid-select--multi [data-scope='combobox'][data-part='clear-trigger'] {
+        padding-right: 12px;
+    }
+
     [data-scope='select'][data-part='indicator'] {
         display: flex;
         align-items: center;
@@ -300,7 +311,7 @@
 
     [data-scope='combobox'][data-part='input'] {
         flex: 1;
-        min-width: 50px;
+        min-width: 80px;
         border: none;
         background: transparent;
         font-size: inherit;
@@ -386,7 +397,80 @@
         display: flex;
         flex-wrap: wrap;
         gap: 8px;
+        flex: 1;
+        min-width: 0;
         padding: 8px 12px 8px 0;
+
+        [data-scope='combobox'][data-part='input'] {
+            flex: 1 1 80px;
+            min-width: 80px;
+            max-width: 100%;
+            border: none;
+            background: transparent;
+            font-size: inherit;
+            color: var(--default-main-text);
+            padding: 6px 0;
+            margin: 0;
+            outline: none;
+
+            &::placeholder {
+                color: var(--default-description-text);
+            }
+        }
+    }
+
+    [data-scope='combobox'][data-part='control'] .solid-select-multi-value-container {
+        padding-left: 16px;
+    }
+
+    /* Single-select: value overlay + input share a grid cell. */
+    .solid-combobox-single-value-wrapper {
+        position: relative;
+        display: grid;
+        flex: 1;
+        min-width: 0;
+        align-items: center;
+
+        .solid-combobox-single-value,
+        .solid-select-placeholder,
+        [data-scope='combobox'][data-part='input'] {
+            grid-column: 1;
+            grid-row: 1;
+        }
+
+        .solid-combobox-single-value,
+        .solid-select-placeholder {
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            padding: 0 16px;
+            pointer-events: none;
+        }
+
+        .solid-combobox-single-value {
+            color: var(--default-main-text);
+        }
+
+        .solid-select-placeholder {
+            color: var(--default-description-text);
+        }
+
+        [data-scope='combobox'][data-part='input'] {
+            width: 100%;
+            min-width: 0;
+            border: none;
+            background: transparent;
+            font-size: inherit;
+            color: var(--default-main-text);
+            padding: 0 16px;
+            outline: none;
+
+            /* Placeholder shown by the overlay, not the input. */
+            &::placeholder {
+                color: transparent;
+            }
+        }
     }
 
     .solid-select-placeholder {

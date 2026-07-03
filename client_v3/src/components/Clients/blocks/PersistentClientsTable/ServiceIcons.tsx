@@ -28,50 +28,54 @@ export const ServiceIcons = (props: ServiceIconsProps) => {
 
     return (
         <div class={s.servicesIcons}>
-            <For each={visibleIds()}>
-                {(svcId) => {
-                    const svc = props.serviceMap.get(svcId);
-                    if (!svc) return null;
-                    /* eslint-disable solid/no-innerhtml */
-                    return (
-                        <div
-                            class={s.serviceIcon}
-                            title={svc.name}
-                            innerHTML={decodeSvg(svc.icon_svg)}
-                        />
-                    );
-                    /* eslint-enable solid/no-innerhtml */
-                }}
-            </For>
+            <div class={s.servicesIconsList}>
+                <For each={visibleIds()}>
+                    {(svcId) => {
+                        const svc = props.serviceMap.get(svcId);
+                        if (!svc) return null;
+                        /* eslint-disable solid/no-innerhtml */
+                        return (
+                            <div
+                                class={s.serviceIcon}
+                                title={svc.name}
+                                innerHTML={decodeSvg(svc.icon_svg)}
+                            />
+                        );
+                        /* eslint-enable solid/no-innerhtml */
+                    }}
+                </For>
+            </div>
             <Show when={hiddenCount() > 0}>
-                <Dropdown
-                    trigger="hover"
-                    noIcon
-                    overlayClass={s.servicesTooltipOverlay}
-                    menu={
-                        <div class={s.servicesTooltip}>
-                            <div class={s.servicesTooltipGrid}>
-                                <For each={props.serviceIds}>
-                                    {(svcId) => {
-                                        const svc = props.serviceMap.get(svcId);
-                                        if (!svc) return null;
-                                        /* eslint-disable solid/no-innerhtml */
-                                        return (
-                                            <div
-                                                class={s.serviceIcon}
-                                                title={svc.name}
-                                                innerHTML={decodeSvg(svc.icon_svg)}
-                                            />
-                                        );
-                                        /* eslint-enable solid/no-innerhtml */
-                                    }}
-                                </For>
+                <div class={s.countDropdown}>
+                    <Dropdown
+                        trigger="hover"
+                        noIcon
+                        overlayClass={s.servicesTooltipOverlay}
+                        menu={
+                            <div class={s.servicesTooltip}>
+                                <div class={s.servicesTooltipGrid}>
+                                    <For each={props.serviceIds}>
+                                        {(svcId) => {
+                                            const svc = props.serviceMap.get(svcId);
+                                            if (!svc) return null;
+                                            /* eslint-disable solid/no-innerhtml */
+                                            return (
+                                                <div
+                                                    class={s.serviceIcon}
+                                                    title={svc.name}
+                                                    innerHTML={decodeSvg(svc.icon_svg)}
+                                                />
+                                            );
+                                            /* eslint-enable solid/no-innerhtml */
+                                        }}
+                                    </For>
+                                </div>
                             </div>
-                        </div>
-                    }
-                >
-                    <span class={s.countLabel}>{hiddenCount()}</span>
-                </Dropdown>
+                        }
+                    >
+                        <span class={s.countLabel}>{hiddenCount()}</span>
+                    </Dropdown>
+                </div>
             </Show>
         </div>
     );

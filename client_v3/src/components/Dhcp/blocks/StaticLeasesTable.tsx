@@ -54,9 +54,11 @@ export const StaticLeasesTable = (props: Props) => {
             accessor: 'mac',
             sortable: true,
             render: (value: string) => (
-                <div class={s.cell}>
-                    <span class={s.cellLabel}>{intl.getMessage('dhcp_table_mac_address')}</span>
-                    <div class={s.cellValue}>
+                <div class={theme.table.cell}>
+                    <span class={theme.table.cellLabel}>
+                        {intl.getMessage('dhcp_table_mac_address')}
+                    </span>
+                    <div class={theme.table.cellValueText}>
                         <span class={theme.common.textOverflow}>{value}</span>
                     </div>
                 </div>
@@ -71,9 +73,11 @@ export const StaticLeasesTable = (props: Props) => {
             accessor: 'ip',
             sortable: true,
             render: (value: string) => (
-                <div class={s.cell}>
-                    <span class={s.cellLabel}>{intl.getMessage('dhcp_table_ip_address')}</span>
-                    <div class={s.cellValue}>
+                <div class={theme.table.cell}>
+                    <span class={theme.table.cellLabel}>
+                        {intl.getMessage('dhcp_table_ip_address')}
+                    </span>
+                    <div class={theme.table.cellValueText}>
                         <span>{value}</span>
                     </div>
                 </div>
@@ -88,9 +92,11 @@ export const StaticLeasesTable = (props: Props) => {
             accessor: 'hostname',
             sortable: true,
             render: (value: string) => (
-                <div class={s.cell}>
-                    <span class={s.cellLabel}>{intl.getMessage('dhcp_table_hostname')}</span>
-                    <div class={s.cellValue}>
+                <div class={theme.table.cell}>
+                    <span class={theme.table.cellLabel}>
+                        {intl.getMessage('dhcp_table_hostname')}
+                    </span>
+                    <div class={theme.table.cellValueText}>
                         <span class={theme.common.textOverflow}>{value}</span>
                     </div>
                 </div>
@@ -105,13 +111,61 @@ export const StaticLeasesTable = (props: Props) => {
             accessor: 'mac',
             sortable: false,
             fitContent: true,
-            render: (_value: any, row: StaticLease) => {
+            render: (_value: unknown, row: StaticLease) => {
                 const rowId = `${row.mac}-${row.ip}`;
                 return (
-                    <div class={s.cell}>
-                        <span class={s.cellLabel}>{intl.getMessage('actions_table_header')}</span>
-                        <div class={s.cellValue}>
-                            <div class={s.cellActions}>
+                    <div class={theme.table.cell}>
+                        <div class={theme.table.cellValue}>
+                            <div class={cn(theme.table.cellActions, s.mobileActions)}>
+                                <button
+                                    type="button"
+                                    onClick={() => props.onEdit(row)}
+                                    disabled={props.processingUpdating}
+                                    class={theme.table.action}
+                                    title={intl.getMessage('edit_table_action')}
+                                    aria-label={intl.getMessage('edit_table_action')}
+                                    data-testid="static-lease-edit-button"
+                                    data-table-action
+                                >
+                                    <Icon icon="edit" color="gray" />
+                                    <span class={theme.table.actionLabel}>
+                                        {intl.getMessage('edit_table_action')}
+                                    </span>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => props.onRefresh()}
+                                    class={theme.table.action}
+                                    title={intl.getMessage('refresh_btn')}
+                                    aria-label={intl.getMessage('refresh_btn')}
+                                    data-testid="static-lease-refresh-button"
+                                    data-table-action
+                                >
+                                    <Icon icon="refresh" color="gray" />
+                                    <span class={theme.table.actionLabel}>
+                                        {intl.getMessage('refresh_btn')}
+                                    </span>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => props.onDelete(row)}
+                                    disabled={props.processingDeleting}
+                                    class={cn(theme.table.action, theme.table.action_danger)}
+                                    title={intl.getMessage('delete_table_action')}
+                                    aria-label={intl.getMessage('delete_table_action')}
+                                    data-testid="static-lease-delete-button"
+                                    data-table-action
+                                >
+                                    <Icon icon="delete" color="red" />
+                                    <span class={theme.table.actionLabel}>
+                                        {intl.getMessage('delete_table_action')}
+                                    </span>
+                                </button>
+                            </div>
+
+                            <div class={s.desktopActions}>
                                 <Dropdown
                                     menu={
                                         <div class={theme.dropdown.menu}>
@@ -146,7 +200,11 @@ export const StaticLeasesTable = (props: Props) => {
                                         setOpenMenuId(isOpen ? rowId : null)
                                     }
                                 >
-                                    <button type="button" class={s.actionButton}>
+                                    <button
+                                        type="button"
+                                        class={s.actionButton}
+                                        data-testid="static-lease-actions-dropdown"
+                                    >
                                         <Icon icon="bullets" color="gray" />
                                     </button>
                                 </Dropdown>

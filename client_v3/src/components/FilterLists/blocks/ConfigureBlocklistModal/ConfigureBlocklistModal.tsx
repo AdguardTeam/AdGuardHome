@@ -8,7 +8,13 @@ import { ModalWrapper } from 'panel/common/ui/ModalWrapper';
 import { closeModal } from 'panel/stores/modals';
 import theme from 'panel/lib/theme';
 import { Button } from 'panel/common/ui/Button';
-import { addFilter, addFiltersBatch, editFilter, filteringState } from 'panel/stores/filtering';
+import {
+    addFilter,
+    addFiltersBatch,
+    editFilter,
+    removeFilter,
+    filteringState,
+} from 'panel/stores/filtering';
 import type { Filter } from 'panel/helpers/helpers';
 import { validatePath, validateRequiredValue } from 'panel/helpers/validators';
 import { ManualFilterForm } from 'panel/components/FilterLists/blocks/ConfigureBlocklistModal/blocks/ManualFilterForm';
@@ -146,6 +152,20 @@ export const ConfigureBlocklistModal = (props: Props) => {
                     if (filtersToAdd.length > 0) {
                         await addFiltersBatch(filtersToAdd);
                     }
+
+                    const initialSelected = selectedValues().selectedFilterIds;
+                    const currentIds = selectedFilterIds();
+                    const filtersToRemove = Object.entries(initialSelected)
+                        .filter(([id, wasSelected]) => wasSelected && !currentIds[id])
+                        .map(([id]) => {
+                            const { source } =
+                                filtersCatalog.filters[id as keyof typeof filtersCatalog.filters];
+                            return source;
+                        });
+
+                    for (const url of filtersToRemove) {
+                        await removeFilter(url, false);
+                    }
                 }
                 break;
             }
@@ -196,6 +216,7 @@ export const ConfigureBlocklistModal = (props: Props) => {
                                                 selectedSources={selectedValues().selectedSources}
                                                 selectedIds={selectedFilterIds()}
                                                 onChange={setSelectedFilterIds}
+                                                disabled={filteringState.processingAddFilter}
                                             />
                                         ),
                                     },

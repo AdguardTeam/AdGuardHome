@@ -38,10 +38,16 @@ export const AddClient = () => {
     const location = useLocation();
 
     const [nameError, setNameError] = createSignal<string | undefined>();
+    const [cacheSizeError, setCacheSizeError] = createSignal<string | undefined>();
 
     createEffect(() => {
         const formErrors = clientFormState.formErrors;
         setNameError(typeof formErrors.name === 'string' ? formErrors.name : undefined);
+        setCacheSizeError(
+            typeof formErrors.upstreams_cache_size === 'string'
+                ? formErrors.upstreams_cache_size
+                : undefined,
+        );
     });
 
     onMount(() => {
@@ -137,12 +143,17 @@ export const AddClient = () => {
         });
     };
 
+    const handleCacheSizeChange = (e: Event) => {
+        const value = Number((e.target as HTMLInputElement).value) || 0;
+        updateClientFormField({ field: 'upstreams_cache_size', value });
+        setCacheSizeError(undefined);
+    };
+
     const handleCacheSizeBlur = () => {
         if (!clientFormState.upstreams_cache_enabled) return;
         const err = validateCacheSize(clientFormState.upstreams_cache_size, true);
+        setCacheSizeError(err);
         if (err) {
-            // Merge with existing errors rather than replacing — preserves sibling
-            // errors like name and ids that were already set.
             setFormErrors({ ...clientFormState.formErrors, upstreams_cache_size: err });
         }
     };
@@ -193,7 +204,7 @@ export const AddClient = () => {
                             value={clientFormState.name}
                             onChange={handleNameChange}
                             onInput={handleNameChange}
-                            placeholder={intl.getMessage('clients_add_default_name')}
+                            placeholder={intl.getMessage('clients_add_placeholder')}
                             label={intl.getMessage('clients_add_name')}
                             size="large"
                             error={!!nameError()}
@@ -226,11 +237,12 @@ export const AddClient = () => {
                             options={tagOptions()}
                             value={tagValue()}
                             onChange={handleTagChange}
-                            placeholder={intl.getMessage('clients_tags')}
+                            placeholder={intl.getMessage('clients_tags_placeholder')}
                             isMulti
                             size="responsive"
                             height="big"
                             closeMenuOnSelect={false}
+                            isSearchable
                         />
                     </div>
 
@@ -321,30 +333,21 @@ export const AddClient = () => {
                         onChange={handleUpstreamsCacheEnabled}
                         disabled={clientFormState.use_global_settings}
                     >
-                        <Show when={clientFormState.upstreams_cache_enabled}>
+                        {clientFormState.upstreams_cache_enabled && (
                             <Input
                                 id="dns-cache-size"
-                                type="text"
+                                type="number"
                                 value={String(clientFormState.upstreams_cache_size)}
-                                onChange={(e: Event) =>
-                                    updateClientFormField({
-                                        field: 'upstreams_cache_size',
-                                        value: Number((e.target as HTMLInputElement).value) || 0,
-                                    })
-                                }
+                                onChange={handleCacheSizeChange}
+                                onInput={handleCacheSizeChange}
                                 onBlur={handleCacheSizeBlur}
                                 placeholder={intl.getMessage('clients_dns_cache_size_placeholder')}
                                 label={intl.getMessage('clients_dns_cache_size')}
                                 size="large"
-                                error={!!clientFormState.formErrors.upstreams_cache_size}
-                                errorMessage={
-                                    typeof clientFormState.formErrors.upstreams_cache_size ===
-                                    'string'
-                                        ? clientFormState.formErrors.upstreams_cache_size
-                                        : undefined
-                                }
+                                error={!!cacheSizeError()}
+                                errorMessage={cacheSizeError()}
                             />
-                        </Show>
+                        )}
                     </SwitchGroup>
 
                     <div class={s.actions}>

@@ -1,6 +1,7 @@
 import {
     BLOCKING_MODES,
     DAY,
+    DEFAULT_DNS_CACHE_SIZE,
     DEFAULT_LOGS_FILTER,
     ModalType,
     STANDARD_DNS_PORT,
@@ -462,7 +463,7 @@ export const getInitialClientFormState = (): ClientFormState => ({
     },
     upstreams: '',
     upstreams_cache_enabled: false,
-    upstreams_cache_size: 0,
+    upstreams_cache_size: DEFAULT_DNS_CACHE_SIZE,
     processingSave: false,
     formErrors: {},
 });

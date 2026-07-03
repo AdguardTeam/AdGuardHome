@@ -14,26 +14,24 @@ interface SelectMultiValueProps {
 }
 
 export const SelectMultiValue = (props: SelectMultiValueProps) => (
-    <div class="solid-select-multi-value-container">
-        <For each={props.items}>
-            {(item) => (
-                <div class={s.pill}>
-                    <span class={s.label}>{item.label}</span>
-                    <button
-                        type="button"
-                        class={s.removeBtn}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            props.onRemove(item);
-                        }}
-                        aria-label={intl.getMessage('remove_tag', {
-                            value: item.label,
-                        })}
-                    >
-                        <Icon icon="cross" color="gray" />
-                    </button>
-                </div>
-            )}
-        </For>
-    </div>
+    <For each={props.items}>
+        {(item) => (
+            <div class={s.pill}>
+                <span class={s.label}>{item.label}</span>
+                <button
+                    type="button"
+                    class={s.removeBtn}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        props.onRemove(item);
+                    }}
+                    aria-label={intl.getMessage('remove_tag', {
+                        value: item.label,
+                    })}
+                >
+                    <Icon icon="cross" color="gray" />
+                </button>
+            </div>
+        )}
+    </For>
 );

@@ -1,14 +1,7 @@
-.header {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px;
-}
-
 .desc {
     width: 100%;
     max-width: 632px;
-    padding: 12px 0 0;
+    padding: 16px 0;
 }
 
 .button {
@@ -41,7 +34,7 @@
     }
 
     &_add {
-        margin-left: auto;
+        margin-top: 8px;
         padding: 8px 16px;
         color: var(--default-link);
 
@@ -51,20 +44,14 @@
     }
 }
 
-.section {
-    display: flex;
-    flex-direction: column;
-    padding: 0 16px;
-
-    &_table {
-        padding-top: 24px;
-    }
+.tabs {
+    padding: 24px 16px 0;
 }
 
-.sectionTitle {
-    padding-top: 24px;
+.tabContent {
+    padding: 16px 0 0 0;
+}
 
-    @media (min-width: 768px) {
-        padding-top: 40px;
-    }
+.tableSection {
+    padding-top: 16px;
 }

@@ -270,21 +270,49 @@ test.describe('Clients', () => {
         await login(page);
         await page.goto('/#clients');
 
-        // Page heading
+        // Page heading + Add button (Add button now lives inside the Persistent tab)
         await expect(page.getByTestId('clients-title')).toBeVisible();
         await expect(page.getByTestId('clients-add-button')).toBeVisible();
 
-        // Persistent clients section heading
-        await expect(page.getByText('Persistent clients')).toBeVisible();
+        // Both tab labels are always visible in the tab nav
+        await expect(
+            page.getByRole('button', { name: 'Persistent clients', exact: true }),
+        ).toBeVisible();
+        await expect(
+            page.getByRole('button', { name: 'Runtime clients', exact: true }),
+        ).toBeVisible();
 
-        // Mock clients should appear in the table
-        await expect(page.getByText('Office Desktop')).toBeVisible({ timeout: 10_000 });
+        // Persistent clients are shown by default
+        await expect(page.getByText('Office Desktop')).toBeVisible({
+            timeout: 10_000,
+        });
         await expect(page.getByText('192.168.0.100')).toBeVisible();
         await expect(page.getByText('Living Room TV')).toBeVisible();
 
-        // Runtime clients section heading
-        await expect(page.getByText('Runtime clients')).toBeVisible();
+        // Runtime client data is NOT visible until the Runtime tab is active
+        await expect(page.getByText('192.168.0.200')).not.toBeVisible();
+
+        // Switch to the Runtime clients tab
+        await page.getByRole('button', { name: 'Runtime clients', exact: true }).click();
+
+        // Now runtime client data is visible
         await expect(page.getByText('192.168.0.200')).toBeVisible();
+    });
+
+    test('persists the active tab in the URL query string', async ({ page }) => {
+        await setupClientsMocks(page);
+        await login(page);
+
+        // Deep link to the Runtime tab
+        await page.goto('/#clients?tab=runtime');
+        await expect(page.getByText('192.168.0.200')).toBeVisible({
+            timeout: 10_000,
+        });
+
+        // Switch back to Persistent — URL should update
+        await page.getByRole('button', { name: 'Persistent clients', exact: true }).click();
+        await expect(page).toHaveURL(/#clients(\?tab=persistent)?$/);
+        await expect(page.getByText('Office Desktop')).toBeVisible();
     });
 
     test('adds a new persistent client', async ({ page }) => {

@@ -3,6 +3,11 @@
  * (side-effect) stylesheet, so a bare [data-part="..."] would also match the
  * already-migrated Select ([data-scope="select"]) and any future Ark UI widget.
  */
+[data-scope='popover'][data-part='anchor'] {
+    min-width: 0;
+    overflow: hidden;
+}
+
 [data-scope='popover'][data-part='positioner'] {
     z-index: 1504;
 }

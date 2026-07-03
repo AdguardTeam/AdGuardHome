@@ -487,6 +487,12 @@ export const UINT32_RANGE = {
     MAX: 4294967295,
 };
 
+/**
+ * Default DNS cache size (4 MiB), matching the backend default
+ * (`internal/home/config.go`, `CacheSize: 4 * 1024 * 1024`).
+ */
+export const DEFAULT_DNS_CACHE_SIZE = 4 * 1024 * 1024;
+
 export const RETENTION_RANGE = {
     MIN: 1,
     MAX: 365 * 24,

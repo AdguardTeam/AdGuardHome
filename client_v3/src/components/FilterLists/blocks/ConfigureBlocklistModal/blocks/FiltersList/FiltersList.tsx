@@ -44,6 +44,7 @@ type Props = {
     selectedSources?: Record<string, boolean>;
     selectedIds: Record<string, boolean>;
     onChange: (ids: Record<string, boolean>) => void;
+    disabled?: boolean;
 };
 
 export const FiltersList = (props: Props) => {
@@ -81,8 +82,6 @@ export const FiltersList = (props: Props) => {
                                 <For each={categoryFilters}>
                                     {(filter) => {
                                         const { homepage, source, name, id } = filter;
-                                        const isSelected = props.selectedSources?.[source] || false;
-
                                         return (
                                             <div class={s.filter}>
                                                 <Checkbox
@@ -90,7 +89,7 @@ export const FiltersList = (props: Props) => {
                                                     onChange={handleToggle(id)}
                                                     id={`filters_${id}`}
                                                     title={name}
-                                                    disabled={isSelected}
+                                                    disabled={props.disabled}
                                                 >
                                                     {name}
                                                 </Checkbox>

@@ -1,0 +1,167 @@
+.cell {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 0;
+
+    @media (min-width: 768px) {
+        flex-wrap: nowrap;
+        align-items: center;
+        padding: 0;
+    }
+}
+
+.cellLabel {
+    flex-shrink: 0;
+    color: var(--default-main-text);
+
+    @media (min-width: 768px) {
+        display: none;
+    }
+}
+
+.cellValue {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-end;
+    text-align: right;
+    color: var(--default-description-text);
+    word-break: break-word;
+    overflow: hidden;
+
+    @media (min-width: 768px) {
+        text-align: left;
+        justify-content: flex-start;
+        align-items: center;
+        color: var(--default-main-text);
+    }
+}
+
+/* For text-only cells that need 2-line truncation on mobile.
+   Separate from .cellValue because line-clamp requires
+   display: -webkit-box, which conflicts with display: flex. */
+.cellValueClamped {
+    min-width: 0;
+    flex: 1;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    text-align: right;
+    color: var(--default-description-text);
+    word-break: break-word;
+
+    @media (min-width: 768px) {
+        display: block;
+        -webkit-line-clamp: unset;
+        overflow: visible;
+        text-align: left;
+        color: var(--default-main-text);
+    }
+}
+
+/* For plain-text cells. On mobile the value stays on the label line while it
+   fits; when it is too long it drops to the next line as a single truncated
+   line instead of wrapping into many lines next to the label. */
+.cellValueText {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-end;
+    text-align: right;
+    color: var(--default-description-text);
+    overflow: hidden;
+
+    @media (max-width: 767px) {
+        flex: 0 1 min-content;
+        min-width: 0;
+        max-width: 100%;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        justify-content: flex-start;
+        text-align: left;
+    }
+
+    @media (min-width: 768px) {
+        text-align: left;
+        justify-content: flex-start;
+        align-items: center;
+        color: var(--default-main-text);
+    }
+}
+
+.cellValueText > * {
+    max-width: 100%;
+}
+
+.cellActions {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+
+    @media (min-width: 768px) {
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+        width: auto;
+        justify-content: flex-end;
+    }
+}
+
+.action {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 0;
+    outline: 0;
+    padding: 0;
+    cursor: pointer;
+    background: none;
+    transition: background-color var(--t2);
+    color: var(--default-gray-icons);
+    border-radius: 4px;
+
+    &:disabled {
+        cursor: default;
+        color: var(--disabled-secondary-button-stroke);
+    }
+
+    @media (min-width: 768px) {
+        width: 24px;
+        height: 24px;
+        min-height: unset;
+        justify-content: center;
+        gap: 0;
+    }
+
+    &:hover,
+    &:focus {
+        background-color: var(--hovered-page-background);
+    }
+
+    &:active {
+        background-color: var(--pressed-page-background);
+    }
+}
+
+.action_danger {
+    color: var(--default-error-link);
+}
+
+.actionLabel {
+    font-size: 14px;
+    line-height: 1.4;
+
+    @media (min-width: 768px) {
+        display: none;
+    }
+}

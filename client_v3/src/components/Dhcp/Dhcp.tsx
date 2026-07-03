@@ -472,6 +472,8 @@ export const Dhcp = () => {
                             >
                                 <DynamicLeasesTable
                                     leases={dhcpState.leases || []}
+                                    processingUpdating={!!dhcpState.processingUpdating}
+                                    processingDeleting={!!dhcpState.processingDeleting}
                                     onEdit={handleEditDynamicLease}
                                     onDelete={handleDeleteDynamicLease}
                                     onMakeStatic={handleMakeStatic}
