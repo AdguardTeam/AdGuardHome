@@ -192,7 +192,11 @@ func newWebAPI(ctx context.Context, conf *webAPIConfig) (w *webAPI) {
 
 	mux := conf.mux
 	// if not configured, redirect / to /install.html, otherwise redirect /install.html to /
-	mux.Handle("/", withMiddlewares(clientFS, gziphandler.GzipHandler, w.postInstallHandler))
+	mux.Handle("/", httputil.Wrap(
+		clientFS,
+		httputil.MiddlewareFunc(w.postInstallHandler),
+		httputil.MiddlewareFunc(gziphandler.GzipHandler),
+	))
 
 	// add handlers for /install paths, we only need them when we're not configured yet
 	if conf.firstRun {
@@ -305,7 +309,7 @@ func (web *webAPI) start(ctx context.Context) {
 
 // wrapMux wraps mux with common middlewares.  l must not be nil.
 func (web *webAPI) wrapMux(l *slog.Logger) (h http.Handler) {
-	h = withMiddlewares(web.conf.mux, limitRequestBody)
+	h = httputil.Wrap(web.conf.mux, httputil.MiddlewareFunc(limitRequestBody))
 
 	// TODO(a.garipov):  Remove other logs like this in other code.
 	logMw := httputil.NewLogMiddleware(l, slog.LevelDebug)
