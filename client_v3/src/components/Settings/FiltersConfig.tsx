@@ -5,7 +5,7 @@ import theme from 'panel/lib/theme';
 import { RoutePath } from 'panel/components/Routes/Paths';
 import { Link } from 'panel/common/ui/Link';
 import { setFiltersConfig } from 'panel/stores/filtering';
-import { SwitchGroup } from 'panel/common/ui/SettingsGroup';
+import { SettingRow } from 'panel/common/ui/SettingRow';
 
 export type FormValues = {
     enabled: boolean;
@@ -26,43 +26,41 @@ export const FiltersConfig = (props: Props) => {
     });
 
     return (
-        <div>
-            <SwitchGroup
-                title={intl.getMessage('settings_filter_requests')}
-                description={intl.getMessage('settings_filter_requests_desc', {
-                    a: (text: string) => (
-                        <Link
-                            to={RoutePath.DnsBlocklists}
-                            class={theme.link.link}
-                            onClick={(e: Event) => e.stopPropagation()}
-                        >
-                            {text}
-                        </Link>
-                    ),
-                    b: (text: string) => (
-                        <Link
-                            to={RoutePath.DnsAllowlists}
-                            class={theme.link.link}
-                            onClick={(e: Event) => e.stopPropagation()}
-                        >
-                            {text}
-                        </Link>
-                    ),
-                    c: (text: string) => (
-                        <Link
-                            to={RoutePath.UserRules}
-                            class={theme.link.link}
-                            onClick={(e: Event) => e.stopPropagation()}
-                        >
-                            {text}
-                        </Link>
-                    ),
-                })}
-                disabled={props.processing}
-                onChange={(e: Event) => setEnabled((e.target as HTMLInputElement).checked)}
-                id="filters_enabled"
-                checked={enabled()}
-            />
-        </div>
+        <SettingRow
+            variant="switch"
+            id="filtering_enabled"
+            title={intl.getMessage('settings_filter_requests')}
+            description={intl.getMessage('settings_filter_requests_desc', {
+                a: (text: string) => (
+                    <Link
+                        to={RoutePath.DnsBlocklists}
+                        class={theme.link.link}
+                        onClick={(e: Event) => e.stopPropagation()}
+                    >
+                        {text}
+                    </Link>
+                ),
+                b: (text: string) => (
+                    <Link
+                        to={RoutePath.DnsAllowlists}
+                        class={theme.link.link}
+                        onClick={(e: Event) => e.stopPropagation()}
+                    >
+                        {text}
+                    </Link>
+                ),
+                c: (text: string) => (
+                    <Link
+                        to={RoutePath.UserRules}
+                        class={theme.link.link}
+                        onClick={(e: Event) => e.stopPropagation()}
+                    >
+                        {text}
+                    </Link>
+                ),
+            })}
+            checked={enabled()}
+            onChange={(v) => setEnabled(v)}
+        />
     );
 };

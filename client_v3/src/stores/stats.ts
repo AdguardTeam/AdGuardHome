@@ -41,6 +41,7 @@ type StatsState = {
     topUpstreamsAvgTime: { name: string; count: number }[];
     topUpstreamsResponses: { name: string; count: number }[];
     ignored: string[];
+    ignored_enabled: boolean;
 };
 
 const initialState: StatsState = {
@@ -69,6 +70,7 @@ const initialState: StatsState = {
     topUpstreamsAvgTime: [],
     topUpstreamsResponses: [],
     ignored: [],
+    ignored_enabled: false,
 };
 
 const [state, setState] = createStore<StatsState>(initialState);
@@ -120,6 +122,7 @@ export const getStatsConfig = async () => {
                 ? data.interval / HOUR
                 : null,
             ignored: data.ignored || [],
+            ignored_enabled: data.ignored_enabled ?? false,
             processingGetConfig: false,
         });
     } catch (error) {
@@ -128,15 +131,16 @@ export const getStatsConfig = async () => {
     }
 };
 
-export const setStatsConfig = async (values: any) => {
+export const setStatsConfig = async (values: any): Promise<boolean> => {
     setState('processingSetConfig', true);
     try {
         await apiClient.setStatsConfig(values);
         setState({ ...values, processingSetConfig: false });
-        addSuccessToast(intl.getMessage('changes_saved_success'));
+        return true;
     } catch (error) {
         addErrorToast({ error });
         setState('processingSetConfig', false);
+        return false;
     }
 };
 

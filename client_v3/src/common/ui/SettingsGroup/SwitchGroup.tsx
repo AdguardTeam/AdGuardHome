@@ -29,7 +29,7 @@ export const SwitchGroup = (props: Props) => {
     };
 
     return (
-        <div class={cn(s.switch, props.disabled && s.switchDisabled, props.class)}>
+        <div class={cn(s.switch, { [s.switchDisabled]: props.disabled }, props.class)}>
             <div class={s.row} onClick={handleRowClick}>
                 <div class={s.text}>
                     <div

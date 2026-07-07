@@ -968,7 +968,7 @@ export const sortIp = (a: string, b: string): number => {
 export const getSpecialFilterName = (filterId: any) => {
     switch (filterId) {
         case SPECIAL_FILTER_ID.CUSTOM_FILTERING_RULES:
-            return intl.getMessage('custom_filter_rules');
+            return intl.getMessage('custom_rules');
         case SPECIAL_FILTER_ID.SYSTEM_HOSTS:
             return intl.getMessage('system_host_files');
         case SPECIAL_FILTER_ID.BLOCKED_SERVICES:

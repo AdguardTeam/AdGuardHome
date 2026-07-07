@@ -1,0 +1,1 @@
+export { ConfigDialog } from './ConfigDialog';

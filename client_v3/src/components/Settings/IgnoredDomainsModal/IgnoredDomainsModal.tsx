@@ -1,49 +1,63 @@
+import { createSignal, createEffect, on } from 'solid-js';
 import cn from 'clsx';
 
+import { ConfigDialog } from 'panel/common/ui/ConfigDialog';
 import { Textarea } from 'panel/common/controls/Textarea';
-import intl from 'panel/common/intl';
-import { trimLinesAndRemoveEmpty } from 'panel/helpers/helpers';
-import theme from 'panel/lib/theme';
-import { SwitchGroup } from 'panel/common/ui/SettingsGroup';
-
 import { FaqTooltip } from 'panel/common/ui/FaqTooltip';
-import s from './styles.module.pcss';
+import intl from 'panel/common/intl';
+import theme from 'panel/lib/theme';
+import { trimLinesAndRemoveEmpty } from 'panel/helpers/helpers';
+
+import s from './IgnoredDomainsModal.module.pcss';
 
 type Props = {
-    ignoredValue: string;
-    onIgnoredChange: (value: string) => void;
+    open: boolean;
+    title: string;
+    ignored: string[];
     processing: boolean;
-    ignoreEnabled: boolean;
-    onIgnoreEnabledChange: (checked: boolean) => void;
-    switchId: string;
-    textareaId: string;
-    description: string;
-    error?: string;
+    onClose: () => void;
+    onSave: (ignored: string[]) => void;
 };
 
-export const IgnoredDomains = (props: Props) => {
+export const IgnoredDomainsModal = (props: Props) => {
+    const [value, setValue] = createSignal('');
+
+    createEffect(
+        on(
+            () => props.open,
+            (open) => {
+                if (!open) return;
+                setValue(props.ignored.join('\n'));
+            },
+        ),
+    );
+
+    const handleSave = () => {
+        const trimmed = trimLinesAndRemoveEmpty(value());
+        const ignoredArray = trimmed.split('\n').filter(Boolean);
+        props.onSave(ignoredArray);
+    };
+
     return (
-        <SwitchGroup
-            id={props.switchId}
-            title={intl.getMessage('ignore_domains_title')}
-            description={props.description}
-            checked={props.ignoreEnabled}
-            onChange={(e: Event) =>
-                props.onIgnoreEnabledChange((e.target as HTMLInputElement).checked)
-            }
-            disabled={props.processing}
+        <ConfigDialog
+            open={props.open}
+            title={props.title}
+            onClose={props.onClose}
+            onSubmit={handleSave}
+            processing={props.processing}
         >
             <Textarea
-                id={props.textareaId}
-                value={props.ignoredValue}
-                onChange={(e: Event) => {
-                    const { value } = e.target as HTMLTextAreaElement;
-                    props.onIgnoredChange(value);
+                value={value()}
+                onChange={(e: Event) => setValue((e.target as HTMLTextAreaElement).value)}
+                onBlur={(e: Event) => {
+                    const trimmed = trimLinesAndRemoveEmpty(
+                        (e.target as HTMLTextAreaElement).value,
+                    );
+                    setValue(trimmed);
                 }}
                 label={
                     <>
                         {intl.getMessage('settings_domain_names')}
-
                         <FaqTooltip
                             text={
                                 <>
@@ -61,7 +75,6 @@ export const IgnoredDomains = (props: Props) => {
                                 </>
                             }
                         />
-
                         <a
                             href="https://link.adtidy.org/forward.html?action=dns_kb_filtering_syntax&from=ui&app=home"
                             target="_blank"
@@ -74,15 +87,8 @@ export const IgnoredDomains = (props: Props) => {
                 }
                 placeholder={`example.com\n*.example.com\n||example.com^`}
                 size="large"
-                disabled={props.processing || !props.ignoreEnabled}
-                errorMessage={props.error}
-                onBlur={(e: Event) => {
-                    const trimmed = trimLinesAndRemoveEmpty(
-                        (e.target as HTMLTextAreaElement).value,
-                    );
-                    props.onIgnoredChange(trimmed);
-                }}
+                disabled={props.processing}
             />
-        </SwitchGroup>
+        </ConfigDialog>
     );
 };

@@ -29,6 +29,27 @@ export const getDefaultInterval = (customInterval?: number, interval?: number) =
     return interval || DAY;
 };
 
+export const resolveInterval = (interval: number, customInterval?: number | null): number => {
+    if (customInterval) {
+        return customInterval >= HOUR ? customInterval : customInterval * HOUR;
+    }
+
+    return interval;
+};
+
+export const getRetentionSummary = (intervalMs: number) => {
+    if (intervalMs === 6 * HOUR) {
+        return intl.getPlural('last_hours', 6);
+    }
+    if (intervalMs === DAY) {
+        return intl.getPlural('last_hours', 24);
+    }
+    if (intervalMs % DAY === 0) {
+        return intl.getPlural('last_days', intervalMs / DAY);
+    }
+    return intl.getPlural('last_hours', Math.floor(intervalMs / HOUR));
+};
+
 const SAFESEARCH_TITLES = {
     bing: 'Bing',
     duckduckgo: 'DuckDuckGo',

@@ -30,6 +30,7 @@ type QueryLogsState = {
     isEntireLog: boolean;
     customInterval: number | null;
     ignored: string[];
+    ignored_enabled: boolean;
 };
 
 const initialState: QueryLogsState = {
@@ -49,6 +50,7 @@ const initialState: QueryLogsState = {
     isEntireLog: false,
     customInterval: null,
     ignored: [],
+    ignored_enabled: false,
 };
 
 const [state, setState] = createStore<QueryLogsState>(initialState);
@@ -203,6 +205,7 @@ export const getLogsConfig = async () => {
                 ? data.interval / HOUR
                 : null,
             ignored: data.ignored || [],
+            ignored_enabled: data.ignored_enabled ?? false,
             processingGetConfig: false,
         });
     } catch (error) {
@@ -211,15 +214,16 @@ export const getLogsConfig = async () => {
     }
 };
 
-export const setLogsConfig = async (values: any) => {
+export const setLogsConfig = async (values: any): Promise<boolean> => {
     setState('processingSetConfig', true);
     try {
         await apiClient.setQueryLogConfig(values);
         setState({ ...values, processingSetConfig: false });
-        addSuccessToast(intl.getMessage('settings_notify_changes_saved'));
+        return true;
     } catch (error) {
         addErrorToast({ error });
         setState('processingSetConfig', false);
+        return false;
     }
 };
 
