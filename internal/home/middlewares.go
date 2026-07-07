@@ -8,22 +8,6 @@ import (
 	"github.com/c2h5oh/datasize"
 )
 
-// middlerware is a wrapper function signature.
-type middleware func(http.Handler) http.Handler
-
-// withMiddlewares consequently wraps h with all the middlewares.
-//
-// TODO(e.burkov):  Use [httputil.Wrap].
-func withMiddlewares(h http.Handler, middlewares ...middleware) (wrapped http.Handler) {
-	wrapped = h
-
-	for _, mw := range middlewares {
-		wrapped = mw(wrapped)
-	}
-
-	return wrapped
-}
-
 const (
 	// defaultReqBodySzLim is the default maximum request body size.
 	defaultReqBodySzLim datasize.ByteSize = 64 * datasize.KB

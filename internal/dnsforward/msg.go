@@ -428,6 +428,12 @@ func (s *Server) NewMsgNODATA(req *dns.Msg) (resp *dns.Msg) {
 	return resp
 }
 
+// NewMsgFORMERR implements the [proxy.MessageConstructor] interface for
+// *Server.
+func (s *Server) NewMsgFORMERR(req *dns.Msg) (resp *dns.Msg) {
+	return s.reply(req, dns.RcodeFormatError)
+}
+
 func (s *Server) genSOA(req *dns.Msg) []dns.RR {
 	zone := ""
 	if len(req.Question) > 0 {

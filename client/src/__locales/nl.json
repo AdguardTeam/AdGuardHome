@@ -208,7 +208,7 @@
   "disabled_protection": "Bescherming uitgeschakeld",
   "disabled_safe_browsing_toast": "Veilig browsen uitgeschakeld",
   "disabled_safe_search_toast": "Uitgeschakeld Veilig zoeken",
-  "disallow_this_client": "Toepassing/systeem niet toelaten",
+  "disallow_this_client": "Deze cliënt niet toelaten",
   "dns_addresses": "DNS adressen",
   "dns_allowlists": "DNS-toelatingslijsten",
   "dns_allowlists_desc": "Domeinen van DNS-toelatingslijsten zijn toegestaan, zelfs als ze op een van de blokkeerlijsten staan.",

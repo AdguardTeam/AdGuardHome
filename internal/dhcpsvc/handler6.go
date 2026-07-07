@@ -6,8 +6,9 @@ import (
 	"fmt"
 
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/google/gopacket"
-	"github.com/google/gopacket/layers"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/gopacket/gopacket"
+	"github.com/gopacket/gopacket/layers"
 )
 
 // serveV6 handles the ethernet packet of IPv6 type. iface and pkt must not be
@@ -67,11 +68,9 @@ func (iface *dhcpInterfaceV6) handleDHCPv6(
 
 // handleSolicit handles messages of type SOLICIT.  req must not be nil and must
 // be a valid DHCPv6 message of type SOLICIT.  fd must be valid.
-//
-// TODO(e.burkov):  Implement.  This is a stub for now.
 func (iface *dhcpInterfaceV6) handleSolicit(
 	ctx context.Context,
-	_ *frameData6,
+	fd *frameData6,
 	req *layers.DHCPv6,
 ) (err error) {
 	cliID, err := clientIDNoServer(req.Options)
@@ -82,7 +81,45 @@ func (iface *dhcpInterfaceV6) handleSolicit(
 	l := iface.common.logger
 	l.DebugContext(ctx, "handling message", "type", req.MsgType, "cli_id", cliID)
 
-	return nil
+	iface.common.indexMu.Lock()
+	defer iface.common.indexMu.Unlock()
+
+	lease, iaid := iface.allocateForSolicit(ctx, fd.ether.SrcMAC, req)
+
+	resp := &layers.DHCPv6{
+		MsgType:       layers.DHCPv6MsgTypeAdvertise,
+		TransactionID: req.TransactionID,
+	}
+
+	if lease == nil {
+		resp.Options = iface.newSolicitRespOpts(fd, req, cliID, iaid, nil, false)
+
+		return respond6(fd, resp)
+	}
+
+	_, isRapidCommit := findOption6(req.Options, layers.DHCPv6OptRapidCommit)
+
+	if !isRapidCommit {
+		resp.Options = iface.newSolicitRespOpts(fd, req, cliID, iaid, lease, false)
+
+		return respond6(fd, resp)
+	}
+
+	err = iface.commit(ctx, req, lease)
+	if err != nil {
+		l.WarnContext(ctx, "committing rapid leases", slogutil.KeyError, err)
+		isRapidCommit = false
+	} else {
+		// The server will also send a Reply in response to a Solicit with a
+		// Rapid Commit option.
+		//
+		// See RFC 9915 Section 18.3.
+		resp.MsgType = layers.DHCPv6MsgTypeReply
+	}
+
+	resp.Options = iface.newSolicitRespOpts(fd, req, cliID, iaid, lease, isRapidCommit)
+
+	return respond6(fd, resp)
 }
 
 // handleRequest handles messages of type REQUEST.  req must not be nil and must

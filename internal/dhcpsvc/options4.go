@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/golibs/netutil"
-	"github.com/google/gopacket/layers"
+	"github.com/gopacket/gopacket/layers"
 )
 
 // msgTypeOptions4 contains preallocated DHCPv4 message type options mapped by
@@ -276,7 +276,7 @@ func (iface *dhcpInterfaceV4) appendRequestedOptions(
 	// Requirements Document, the server MUST include the default value for that
 	// parameter.
 	optWithCode := layers.DHCPOption{}
-	for _, code := range requestedOptions(req) {
+	for _, code := range requestedOptions4(req) {
 		optWithCode.Type = code
 		i, has := slices.BinarySearchFunc(iface.implicitOpts, optWithCode, compareV4OptionCodes)
 		if has {
@@ -422,11 +422,11 @@ func clientIdentifier4(msg *layers.DHCPv4) (id []byte) {
 	return nil
 }
 
-// requestedOptions returns the list of options requested in DHCPv4 message, if
+// requestedOptions4 returns the list of options requested in DHCPv4 message, if
 // any.
 //
-// TODO(e.burkov):  Use [iter.Seq1].
-func requestedOptions(msg *layers.DHCPv4) (opts []layers.DHCPOpt) {
+// TODO(e.burkov):  Use [iter.Seq].
+func requestedOptions4(msg *layers.DHCPv4) (opts []layers.DHCPOpt) {
 	for _, opt := range msg.Options {
 		l := len(opt.Data)
 		if opt.Type != layers.DHCPOptParamsRequest || l == 0 {

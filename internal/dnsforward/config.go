@@ -19,6 +19,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghslog"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
+	"github.com/AdguardTeam/dnscrypt"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/ratelimit"
 	"github.com/AdguardTeam/dnsproxy/upstream"
@@ -29,7 +30,6 @@ import (
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/AdguardTeam/golibs/validate"
-	"github.com/ameshkov/dnscrypt/v2"
 )
 
 // Config represents the DNS filtering configuration of AdGuard Home.  The zero
@@ -221,7 +221,7 @@ type TLSConfig struct {
 type DNSCryptConfig struct {
 	// ResolverCert is the certificate used for DNSCrypt connections.  It is not
 	// nil if there is at least one UDP or TCP address present.
-	ResolverCert *dnscrypt.Cert
+	ResolverCert *dnscrypt.Certificate
 
 	// UDPListenAddrs are the addresses to listen on for DNSCrypt UDP
 	// connections.
@@ -395,7 +395,8 @@ func (s *Server) newProxyConfig(ctx context.Context) (conf *proxy.Config, err er
 		return nil, fmt.Errorf("validating plain: %w", err)
 	}
 
-	conf, err = prepareCacheConfig(conf,
+	conf, err = prepareCacheConfig(
+		conf,
 		srvConf.CacheEnabled,
 		srvConf.CacheSize,
 		srvConf.CacheMinTTL,

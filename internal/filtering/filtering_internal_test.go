@@ -608,7 +608,8 @@ func applyClientSettings(setts *Settings) {
 }
 
 func TestClientSettings(t *testing.T) {
-	d, setts := newForTest(t,
+	d, setts := newForTest(
+		t,
 		&Config{
 			ParentalEnabled:        true,
 			SafeBrowsingEnabled:    false,

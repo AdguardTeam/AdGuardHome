@@ -13,6 +13,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/ioutil"
+	"github.com/AdguardTeam/golibs/validate"
 	"github.com/c2h5oh/datasize"
 )
 
@@ -42,6 +43,8 @@ func (u *Updater) VersionInfo(ctx context.Context, forceRecheck bool) (vi Versio
 	now := time.Now()
 	recheckTime := u.prevCheckTime.Add(versionCheckPeriod)
 	if !forceRecheck && now.Before(recheckTime) {
+		u.logger.DebugContext(ctx, "version info recheck is not required yet")
+
 		return u.prevCheckResult, u.prevCheckError
 	}
 
@@ -55,9 +58,17 @@ func (u *Updater) VersionInfo(ctx context.Context, forceRecheck bool) (vi Versio
 
 	resp, err := u.client.Do(req)
 	if err != nil {
-		return VersionInfo{}, fmt.Errorf("requesting %s: %w", vcu, err)
+		return VersionInfo{}, fmt.Errorf("sending http request to %s: %w", vcu, err)
 	}
 	defer func() { err = errors.WithDeferred(err, resp.Body.Close()) }()
+
+	if resp.StatusCode != http.StatusOK {
+		return VersionInfo{}, fmt.Errorf(
+			"got status code %d, want %d",
+			resp.StatusCode,
+			http.StatusOK,
+		)
+	}
 
 	r := ioutil.LimitReader(resp.Body, maxVersionRespSize.Bytes())
 
@@ -74,7 +85,12 @@ func (u *Updater) VersionInfo(ctx context.Context, forceRecheck bool) (vi Versio
 	return u.prevCheckResult, u.prevCheckError
 }
 
-func (u *Updater) parseVersionResponse(ctx context.Context, data []byte) (VersionInfo, error) {
+// parseVersionResponse parses version-related data and unmarshals it into the
+// [VersionInfo] structure.
+func (u *Updater) parseVersionResponse(
+	ctx context.Context,
+	data []byte,
+) (vi VersionInfo, err error) {
 	info := VersionInfo{
 		CanAutoUpdate: aghalg.NBFalse,
 	}
@@ -83,14 +99,15 @@ func (u *Updater) parseVersionResponse(ctx context.Context, data []byte) (Versio
 		"announcement":     "",
 		"announcement_url": "",
 	}
-	err := json.Unmarshal(data, &versionJSON)
+	err = json.Unmarshal(data, &versionJSON)
 	if err != nil {
 		return info, fmt.Errorf("version.json: %w", err)
 	}
 
 	for k, v := range versionJSON {
-		if v == "" {
-			return info, fmt.Errorf("version.json: bad data: value for key %q is empty", k)
+		err = validate.NotEmpty("version_json_value", v)
+		if err != nil {
+			return info, fmt.Errorf("bad value for %q key: %w", k, err)
 		}
 	}
 
@@ -100,10 +117,26 @@ func (u *Updater) parseVersionResponse(ctx context.Context, data []byte) (Versio
 
 	packageURL, key, found := u.downloadURL(ctx, versionJSON)
 	if !found {
-		return info, fmt.Errorf("version.json: no package URL: key %q not found in object", key)
+		return info, fmt.Errorf("version.json: bad key %q: %w", key, errors.ErrNoValue)
 	}
 
-	info.CanAutoUpdate = aghalg.BoolToNullBool(info.NewVersion != u.version)
+	isNewVersion := info.NewVersion != u.version
+	if isNewVersion {
+		u.logger.InfoContext(
+			ctx,
+			"a new version is available",
+			"current_version", u.version,
+			"new_version", info.NewVersion,
+		)
+	} else {
+		u.logger.DebugContext(
+			ctx,
+			"the current version is up-to-date",
+			"current_version", u.version,
+		)
+	}
+
+	info.CanAutoUpdate = aghalg.BoolToNullBool(isNewVersion)
 
 	u.newVersion = info.NewVersion
 	u.packageURL = packageURL

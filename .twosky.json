@@ -42,6 +42,10 @@
       "zh-cn": "简体中文",
       "zh-hk": "繁體中文（香港）",
       "zh-tw": "正體中文（台灣）"
+    },
+    "metadata": {
+      "locales_dir": "./client/src/__locales",
+      "sources_dir": "./client/src"
     }
   },
   {
@@ -87,6 +91,10 @@
       "zh-cn": "简体中文",
       "zh-hk": "繁體中文（香港）",
       "zh-tw": "正體中文（台灣）"
+    },
+    "metadata": {
+      "locales_dir": "./client/src/__locales-services",
+      "sources_dir": "./client/src"
     }
   }
 ]

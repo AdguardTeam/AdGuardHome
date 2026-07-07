@@ -495,7 +495,8 @@ func setupDNSFilteringConf(
 	// default.
 	if conf.SafeBrowsingBlockHost == "" {
 		host := defaultSafeBrowsingBlockHost
-		baseLogger.WarnContext(ctx,
+		baseLogger.WarnContext(
+			ctx,
 			"empty blocking host; set default",
 			"service", sbService,
 			"host", host,
@@ -523,7 +524,8 @@ func setupDNSFilteringConf(
 	// default.
 	if conf.ParentalBlockHost == "" {
 		host := defaultParentalBlockHost
-		baseLogger.WarnContext(ctx,
+		baseLogger.WarnContext(
+			ctx,
 			"empty blocking host; set default",
 			"service", pcService,
 			"host", host,

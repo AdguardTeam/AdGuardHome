@@ -134,9 +134,19 @@ func TestIPv6Config_Validate(t *testing.T) {
 		conf:       &dhcpsvc.IPv6Config{Enabled: false},
 		wantErrMsg: "",
 	}, {
+		name: "nil_clock",
+		conf: &dhcpsvc.IPv6Config{
+			Enabled:       true,
+			Clock:         nil,
+			RangeStart:    testIPv6Conf.RangeStart,
+			LeaseDuration: testIPv6Conf.LeaseDuration,
+		},
+		wantErrMsg: "clock: no value",
+	}, {
 		name: "bad_range_start",
 		conf: &dhcpsvc.IPv6Config{
 			Enabled:       true,
+			Clock:         testIPv6Conf.Clock,
 			RangeStart:    testIPv4Conf.GatewayIP,
 			LeaseDuration: 1 * time.Hour,
 		},
@@ -145,6 +155,7 @@ func TestIPv6Config_Validate(t *testing.T) {
 		name: "bad_lease_duration",
 		conf: &dhcpsvc.IPv6Config{
 			Enabled:       true,
+			Clock:         testIPv6Conf.Clock,
 			RangeStart:    netip.MustParseAddr(testRangeStartV6Str),
 			LeaseDuration: 0,
 		},
@@ -153,6 +164,7 @@ func TestIPv6Config_Validate(t *testing.T) {
 		name: "valid",
 		conf: &dhcpsvc.IPv6Config{
 			Enabled:       true,
+			Clock:         testIPv6Conf.Clock,
 			RangeStart:    netip.MustParseAddr(testRangeStartV6Str),
 			LeaseDuration: 1 * time.Hour,
 		},
