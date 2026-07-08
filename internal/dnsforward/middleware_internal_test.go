@@ -216,23 +216,27 @@ func TestServer_middlewareUDP(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			s := createTestServer(t, &filtering.Config{
-				BlockingMode: filtering.BlockingModeDefault,
-			}, ServerConfig{
-				UDPListenAddrs: []*net.UDPAddr{{}},
-				TCPListenAddrs: []*net.TCPAddr{{}},
-				TLSConf:        &TLSConfig{},
-				Config: Config{
-					AllowedClients:    tc.allowedClients,
-					DisallowedClients: tc.disallowedClients,
-					BlockedHosts:      tc.blockedHosts,
-					UpstreamDNS:       []string{localUpsAddr},
-					UpstreamMode:      UpstreamModeLoadBalance,
-					EDNSClientSubnet:  &EDNSClientSubnet{Enabled: false},
-					ClientsContainer:  EmptyClientsContainer{},
+			s := createTestServer(
+				t,
+				&filtering.Config{
+					BlockingMode: filtering.BlockingModeDefault,
 				},
-				ServePlainDNS: true,
-			})
+				ServerConfig{
+					UDPListenAddrs: []*net.UDPAddr{{}},
+					TCPListenAddrs: []*net.TCPAddr{{}},
+					TLSConf:        &TLSConfig{},
+					Config: Config{
+						AllowedClients:    tc.allowedClients,
+						DisallowedClients: tc.disallowedClients,
+						BlockedHosts:      tc.blockedHosts,
+						UpstreamDNS:       []string{localUpsAddr},
+						UpstreamMode:      UpstreamModeLoadBalance,
+						EDNSClientSubnet:  &EDNSClientSubnet{Enabled: false},
+						ClientsContainer:  EmptyClientsContainer{},
+					},
+					ServePlainDNS: true,
+				},
+			)
 
 			startDeferStop(t, s)
 

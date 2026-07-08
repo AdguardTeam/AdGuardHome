@@ -212,7 +212,7 @@ func (vr *versionResponse) setAllowedToAutoUpdate(
 }
 
 // tlsConfUsesPrivilegedPorts returns true if the provided TLS configuration
-// indicates that privileged ports are used.  c must be valid
+// indicates that privileged ports are used.  c must be valid.
 func tlsConfUsesPrivilegedPorts(c *tlsConfigSettings) (ok bool) {
 	return c.Enabled && (c.PortHTTPS < maxPrivilegedPort ||
 		c.PortDNSOverTLS < maxPrivilegedPort ||
