@@ -54,11 +54,9 @@ See also the [v0.107.78 GitHub milestone][ms-v0.107.78].
 
 - Improved updater logging to give users more insight into the problem with version updating ([#8410]).
 
-[#8410]: https://github.com/AdguardTeam/AdGuardHome/issues/8410
-
 ### Changed
 
-- The interval of filter updates can now be set to any number of ours between 0 and 365 days in the configuration file.
+- The interval of filter updates can now be set to any number of hours between `0` and `8760` (365 days) in the configuration file.
 
 #### Configuration changes
 
@@ -72,11 +70,13 @@ See also the [v0.107.78 GitHub milestone][ms-v0.107.78].
 
 - Blocked services check on the Custom filtering rules page does not work properly without specifying of a client.
 
-[#7955]:        https://github.com/AdguardTeam/AdGuardHome/issues/7955
-[#8276]:        https://github.com/AdguardTeam/AdGuardHome/issues/8276
-[go-1.26.4]:    https://groups.google.com/g/golang-announce/c/tKs3rmcBcKw
+[#7955]:     https://github.com/AdguardTeam/AdGuardHome/issues/7955
+[#8276]:     https://github.com/AdguardTeam/AdGuardHome/issues/8276
+[#8410]:     https://github.com/AdguardTeam/AdGuardHome/issues/8410
+[go-1.26.4]: https://groups.google.com/g/golang-announce/c/tKs3rmcBcKw
+[rfc9113]:   https://datatracker.ietf.org/doc/html/rfc9113
+
 [ms-v0.107.78]: https://github.com/AdguardTeam/AdGuardHome/milestone/113?closed=1
-[rfc9113]:      https://datatracker.ietf.org/doc/html/rfc9113
 
 ## [v0.107.77] - 2026-06-01
 
