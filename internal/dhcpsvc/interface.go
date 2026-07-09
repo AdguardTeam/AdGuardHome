@@ -79,7 +79,7 @@ func (iface *netInterface) reset() {
 }
 
 // addLease inserts the given lease into iface.  It returns an error if the
-// lease can't be inserted.
+// lease can't be inserted.  l must not be nil.  iface.indexMu must be locked.
 func (iface *netInterface) addLease(l *Lease) (err error) {
 	mk := macToKey(l.HWAddr)
 	_, found := iface.leases[mk]
@@ -96,7 +96,8 @@ func (iface *netInterface) addLease(l *Lease) (err error) {
 }
 
 // updateLease replaces an existing lease within iface with the given one.  It
-// returns an error if there is no lease with such hardware address.
+// returns an error if there is no lease with such hardware address.  l must not
+// be nil.  iface.indexMu must be locked.
 func (iface *netInterface) updateLease(l *Lease) (prev *Lease, err error) {
 	mk := macToKey(l.HWAddr)
 	prev, found := iface.leases[mk]
@@ -110,7 +111,8 @@ func (iface *netInterface) updateLease(l *Lease) (prev *Lease, err error) {
 }
 
 // removeLease removes an existing lease from iface.  It returns an error if
-// there is no lease equal to l.  l must not be nil.
+// there is no lease equal to l.  l must not be nil.  iface.indexMu must be
+// locked.
 func (iface *netInterface) removeLease(l *Lease) (err error) {
 	mk := macToKey(l.HWAddr)
 	_, found := iface.leases[mk]

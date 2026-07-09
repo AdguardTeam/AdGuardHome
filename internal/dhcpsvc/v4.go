@@ -157,6 +157,8 @@ type dhcpInterfaceV4 struct {
 	clock timeutil.Clock
 
 	// addrChecker checks addresses for availability.
+	//
+	// TODO(e.burkov):  Move to [netInterface].
 	addrChecker addressChecker
 
 	// gateway is the IP address of the network gateway.
