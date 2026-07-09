@@ -44,7 +44,7 @@ See also the [v0.107.78 GitHub milestone][ms-v0.107.78].
 
 - The H2C connection establishment via HTTP/1.1 request upgrade is no longer supported.  See [RFC 9113][rfc9113].
 
-- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.26.4][go-1.26.4].
+- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.26.5][go-1.26.5].
 
 - The size of rulelists is limited.  This is necessary to prevent a user's machine from becoming overloaded if the filter source misbehaves.
 
@@ -73,7 +73,7 @@ See also the [v0.107.78 GitHub milestone][ms-v0.107.78].
 [#7955]:     https://github.com/AdguardTeam/AdGuardHome/issues/7955
 [#8276]:     https://github.com/AdguardTeam/AdGuardHome/issues/8276
 [#8410]:     https://github.com/AdguardTeam/AdGuardHome/issues/8410
-[go-1.26.4]: https://groups.google.com/g/golang-announce/c/tKs3rmcBcKw
+[go-1.26.5]: https://groups.google.com/g/golang-announce/c/OrmQE_Yp5Sc
 [rfc9113]:   https://datatracker.ietf.org/doc/html/rfc9113
 
 [ms-v0.107.78]: https://github.com/AdguardTeam/AdGuardHome/milestone/113?closed=1
