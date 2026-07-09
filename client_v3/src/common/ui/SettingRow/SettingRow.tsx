@@ -12,18 +12,20 @@ type SettingRowVariant = 'switch' | 'link' | 'switch-link';
 type Props = {
     id: string;
     title: string;
+    titleClass?: string;
     description?: string | JSX.Element;
+    descriptionClass?: string;
     value?: string;
     variant: SettingRowVariant;
     checked?: boolean;
     disabled?: boolean;
-    titleClass?: string;
     onChange?: (checked: boolean) => void;
     onClick?: () => void;
     class?: string;
     children?: JSX.Element;
     divider?: boolean;
     align?: 'top' | 'center';
+    largeTitle?: boolean;
 };
 
 export const SettingRow = (props: Props) => {
@@ -119,7 +121,9 @@ export const SettingRow = (props: Props) => {
                     </div>
                     <Show when={props.description}>
                         <div
-                            class={cn(s.desc, theme.text.t3, { [s.descDisabled]: props.disabled })}
+                            class={cn(s.desc, props.descriptionClass, theme.text.t3, {
+                                [s.descDisabled]: props.disabled,
+                            })}
                         >
                             {props.description}
                         </div>
@@ -137,7 +141,10 @@ export const SettingRow = (props: Props) => {
                 <Show when={isSwitchLink() && props.divider}>
                     <div class={s.divider} />
                 </Show>
-                <div class={s.input} onClick={handleInputClick}>
+                <div
+                    class={cn(s.input, props.largeTitle && s.largeTitle)}
+                    onClick={handleInputClick}
+                >
                     <Show when={isSwitchVariant()}>
                         <Switch
                             id={props.id}

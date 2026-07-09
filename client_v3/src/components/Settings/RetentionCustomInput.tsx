@@ -2,7 +2,7 @@ import { createEffect, untrack } from 'solid-js';
 
 import theme from 'panel/lib/theme';
 import { Input } from 'panel/common/controls/Input';
-import { RETENTION_CUSTOM, RETENTION_RANGE } from 'panel/helpers/constants';
+import { RETENTION_CUSTOM } from 'panel/helpers/constants';
 import { toNumber } from 'panel/helpers/form';
 
 type Props = {
@@ -48,8 +48,8 @@ export const RetentionCustomInput = (props: Props) => {
                 }}
                 disabled={props.processing || props.intervals.includes(props.intervalValue)}
                 error={!!props.error}
-                min={RETENTION_RANGE.MIN}
-                max={RETENTION_RANGE.MAX}
+                errorMessage={props.error}
+                size="large"
             />
         </div>
     );

@@ -14,12 +14,7 @@ import { RoutePath } from 'panel/components/Routes/Paths';
 import { buildClientBreadcrumbs } from 'panel/helpers/buildClientBreadcrumbs';
 import { ScheduleRow } from './ScheduleRow';
 import { ScheduleModal } from './ScheduleModal';
-import {
-    type DayKey,
-    DAYS_OF_WEEK,
-    type ScheduleData,
-    type ScheduleDayData,
-} from './helpers';
+import { type DayKey, DAYS_OF_WEEK, type ScheduleData, type ScheduleDayData } from './helpers';
 import { getDayName } from './getDayName';
 import s from './InactivitySchedule.module.pcss';
 

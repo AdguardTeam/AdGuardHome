@@ -10,6 +10,7 @@ type Props = {
     children: JSX.Element;
     defaultOpen?: boolean;
     class?: string;
+    compact?: boolean;
 };
 
 export const Accordion = (props: Props) => {
@@ -23,7 +24,7 @@ export const Accordion = (props: Props) => {
         <div class={cn(s.accordion, props.class)}>
             <button
                 type="button"
-                class={s.header}
+                class={cn(s.header, { [s.compact]: props.compact })}
                 onClick={toggleOpen}
                 aria-expanded={isOpen()}
                 aria-controls="accordion-content"

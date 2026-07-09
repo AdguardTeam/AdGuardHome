@@ -76,9 +76,9 @@ export const Dropdown = (props: Props) => {
     // to plain `bottom`/`top` (ignoring left/right), so mapping `bottomRight` ->
     // `bottom-end` is an intentional behavior change that honors the `position`
     // prop. `flip` keeps the popover on-screen near viewport edges.
-    // eslint-disable-next-line solid/reactivity
     const placement = () => {
-        switch (props.position) {
+        const position = untrack(() => props.position);
+        switch (position) {
             case 'topRight':
                 return 'top-end';
             case 'topLeft':

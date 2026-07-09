@@ -13,7 +13,6 @@ import {
     validatePasswordLength,
     validateIpNotDuplicate,
     validateIpPerLine,
-    validateMaxValue,
     validateBetween,
     validateMinValue,
     validateCacheSize,
@@ -109,17 +108,52 @@ describe('validateUpstreams', () => {
 
     it('returns error for a line without dot or colon', () => {
         const result = validateUpstreams('not-a-valid-upstream');
-        expect(result).toBeTruthy();
+        expect(result).toBe('Invalid format');
     });
 
     it('returns error on the correct line number for mixed content', () => {
         const result = validateUpstreams('1.1.1.1\nbadline\ntls://ok.com');
-        expect(result).toBeTruthy();
+        expect(result).toBe('Invalid format on line 2');
     });
 
     it('skips comments and only flags real lines', () => {
         const result = validateUpstreams('# comment\nbadline\n1.1.1.1');
-        expect(result).toBeTruthy();
+        expect(result).toBe('Invalid format on line 2');
+    });
+
+    it('returns "Invalid format" for single invalid line with trailing newline', () => {
+        const result = validateUpstreams('badline\n');
+        expect(result).toBe('Invalid format');
+    });
+
+    it('returns "Invalid format" for single invalid line with leading newline', () => {
+        const result = validateUpstreams('\nbadline');
+        expect(result).toBe('Invalid format');
+    });
+
+    it('returns "Invalid format on lines 1, 2" when both invalid', () => {
+        const result = validateUpstreams('bad1\nbad2');
+        expect(result).toBe('Invalid format on lines 1, 2');
+    });
+
+    it('returns "Invalid format on line 2" when second line invalid in multi-content', () => {
+        const result = validateUpstreams('1.1.1.1\nbad');
+        expect(result).toBe('Invalid format on line 2');
+    });
+
+    it('handles blank line between two invalid lines', () => {
+        const result = validateUpstreams('bad1\n\nbad2');
+        expect(result).toBe('Invalid format on lines 1, 3');
+    });
+
+    it('returns "Invalid format" for comment-then-invalid (one content line)', () => {
+        const result = validateUpstreams('# comment\nbadline');
+        expect(result).toBe('Invalid format');
+    });
+
+    it('returns "Invalid format" for invalid-then-comment (one content line)', () => {
+        const result = validateUpstreams('badline\n# comment');
+        expect(result).toBe('Invalid format');
     });
 });
 
@@ -376,12 +410,6 @@ describe('validateIpPerLine', () => {
 });
 
 describe('numeric range validators', () => {
-    it('validateMaxValue returns error when value exceeds max', () => {
-        expect(validateMaxValue(5, 4)).toBeTruthy();
-        expect(validateMaxValue(4, 4)).toBeUndefined();
-        expect(validateMaxValue(0, 4)).toBeUndefined();
-    });
-
     it('validateBetween returns error when value is out of range', () => {
         expect(validateBetween(-1, 0, 32)).toBeTruthy();
         expect(validateBetween(33, 0, 32)).toBeTruthy();

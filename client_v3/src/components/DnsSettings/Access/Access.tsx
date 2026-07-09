@@ -1,33 +1,79 @@
+import { createMemo } from 'solid-js';
 import cn from 'clsx';
 
-import { accessState, setAccessList } from 'panel/stores/access';
+import { accessState } from 'panel/stores/access';
 import intl from 'panel/common/intl';
+import { SettingRow } from 'panel/common/ui/SettingRow';
+import { useDialogOpen } from 'panel/hooks/useField';
+import { getListSummary } from '../helpers';
 import theme from 'panel/lib/theme';
 
-import { Form } from './Form';
+import { AllowedClientsDialog } from './blocks/AllowedClientsDialog';
+import { DisallowedClientsDialog } from './blocks/DisallowedClientsDialog';
+import { DisallowedDomainsDialog } from './blocks/DisallowedDomainsDialog';
 
 export const Access = () => {
-    const handleFormSubmit = (values: any) => {
-        setAccessList(values);
-    };
+    const allowedDialog = useDialogOpen();
+    const disallowedClientsDialog = useDialogOpen();
+    const disallowedDomainsDialog = useDialogOpen();
+
+    const allowedClientsOn = createMemo(() => accessState.allowed_clients.trim().length > 0);
+    const processing = () => accessState.processingSet;
+
+    const allowedClientsValue = createMemo(() => getListSummary(accessState.allowed_clients));
+    const disallowedClientsValue = createMemo(() => getListSummary(accessState.disallowed_clients));
+    const disallowedDomainsValue = createMemo(() => getListSummary(accessState.blocked_hosts));
 
     return (
         <div>
-            <h2
-                class={cn(
-                    theme.layout.subtitle,
-                    theme.layout.subtitle_compact,
-                    theme.title.h5,
-                    theme.title.h4_tablet,
-                )}
-            >
-                {intl.getMessage('access_settings_title')}
+            <h2 class={cn(theme.layout.subtitle, theme.title.h5, theme.title.h4_tablet)}>
+                {intl.getMessage('dns_access_settings_title')}
             </h2>
 
-            <Form
-                initialValues={accessState}
-                onSubmit={handleFormSubmit}
-                processingSet={accessState.processingSet}
+            <SettingRow
+                variant="link"
+                id="allowed_clients"
+                title={intl.getMessage('dns_allowed_clients')}
+                description={intl.getMessage('dns_allowed_clients_desc')}
+                value={allowedClientsValue()}
+                onClick={allowedDialog.openDialog}
+            />
+
+            <SettingRow
+                variant="link"
+                id="disallowed_clients"
+                title={intl.getMessage('dns_disallowed_clients')}
+                description={intl.getMessage('dns_disallowed_clients_desc')}
+                value={disallowedClientsValue()}
+                disabled={allowedClientsOn()}
+                onClick={disallowedClientsDialog.openDialog}
+            />
+
+            <SettingRow
+                variant="link"
+                id="disallowed_domains"
+                title={intl.getMessage('dns_disallowed_domains')}
+                description={intl.getMessage('dns_disallowed_domains_desc')}
+                value={disallowedDomainsValue()}
+                onClick={disallowedDomainsDialog.openDialog}
+            />
+
+            <AllowedClientsDialog
+                open={allowedDialog.open}
+                onClose={allowedDialog.closeDialog}
+                processing={processing()}
+            />
+
+            <DisallowedClientsDialog
+                open={disallowedClientsDialog.open}
+                onClose={disallowedClientsDialog.closeDialog}
+                processing={processing()}
+            />
+
+            <DisallowedDomainsDialog
+                open={disallowedDomainsDialog.open}
+                onClose={disallowedDomainsDialog.closeDialog}
+                processing={processing()}
             />
         </div>
     );

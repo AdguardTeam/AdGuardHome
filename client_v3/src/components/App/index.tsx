@@ -25,6 +25,7 @@ import { getDnsStatus, getTimerStatus, dashboardState } from '../../stores/dashb
 
 import s from './styles.module.pcss';
 import { DnsSettings } from '../DnsSettings';
+import { PrivateReverse } from '../DnsSettings/PrivateReverse';
 import { UserRules } from '../UserRules';
 import { BlockedServices } from '../BlockedServices';
 import { Clients } from '../Clients/Clients';
@@ -126,6 +127,7 @@ const App = () => {
             <Route path="/settings" component={Settings} />
             <Route path="/encryption" component={Encryption} />
             <Route path="/dns" component={DnsSettings} />
+            <Route path="/dns/private-reverse" component={PrivateReverse} />
             <Route path="/blocklists" component={Blocklists} />
             <Route path="/allowlists" component={Allowlists} />
             <Route path="/user_rules" component={UserRules} />

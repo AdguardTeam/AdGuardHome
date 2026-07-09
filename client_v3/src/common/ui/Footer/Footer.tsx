@@ -116,50 +116,54 @@ export const Footer = () => {
                     </div>
                 </div>
 
-                <Dropdown
-                    trigger="click"
-                    open={themeDropdownOpen()}
-                    onOpenChange={setThemeDropdownOpen}
-                    menu={
-                        <div class={theme.dropdown.menu}>
-                            <For each={Object.values(THEMES)}>
-                                {(v) => (
-                                    <button
-                                        type="button"
-                                        class={cn(theme.dropdown.item, {
-                                            [theme.dropdown.item_active]: currentTheme() === v,
-                                        })}
-                                        onClick={() => onThemeChange(v)}
-                                    >
-                                        {themeTranslations()[v]}
-                                    </button>
-                                )}
-                            </For>
+                <div class={s.dropdownWrapper}>
+                    <Dropdown
+                        trigger="click"
+                        open={themeDropdownOpen()}
+                        onOpenChange={setThemeDropdownOpen}
+                        menu={
+                            <div class={theme.dropdown.menu}>
+                                <For each={Object.values(THEMES)}>
+                                    {(v) => (
+                                        <button
+                                            type="button"
+                                            class={cn(theme.dropdown.item, {
+                                                [theme.dropdown.item_active]: currentTheme() === v,
+                                            })}
+                                            onClick={() => onThemeChange(v)}
+                                        >
+                                            {themeTranslations()[v]}
+                                        </button>
+                                    )}
+                                </For>
+                            </div>
+                        }
+                        class={s.dropdown}
+                        position="bottomRight"
+                    >
+                        <div class={s.dropdownTrigger}>
+                            <Icon icon={getThemeIcon()} class={s.icon} />
+                            <span>
+                                {
+                                    themeTranslations()[
+                                        isLoggedIn() ? currentTheme() : currentThemeLocal()
+                                    ]
+                                }
+                            </span>
                         </div>
-                    }
-                    class={s.dropdown}
-                    position="bottomRight"
-                >
-                    <div class={s.dropdownTrigger}>
-                        <Icon icon={getThemeIcon() as any} class={s.icon} />
-                        <span>
-                            {
-                                themeTranslations()[
-                                    isLoggedIn() ? currentTheme() : currentThemeLocal()
-                                ]
-                            }
-                        </span>
-                    </div>
-                </Dropdown>
+                    </Dropdown>
+                </div>
 
-                <LanguageDropdown
-                    value={currentLanguage()}
-                    languages={LANGUAGES}
-                    languageNames={LANGUAGE_NAMES}
-                    onChange={(lang: string) => changeLanguage(lang as LocalesType)}
-                    class={s.dropdown}
-                    position="bottomRight"
-                />
+                <div class={s.dropdownWrapper}>
+                    <LanguageDropdown
+                        value={currentLanguage()}
+                        languages={LANGUAGES}
+                        languageNames={LANGUAGE_NAMES}
+                        onChange={(lang: string) => changeLanguage(lang as LocalesType)}
+                        class={s.dropdown}
+                        position="bottomRight"
+                    />
+                </div>
             </div>
         </footer>
     );

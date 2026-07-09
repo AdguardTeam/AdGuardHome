@@ -56,7 +56,7 @@ export const setAccessList = async (values: any) => {
 
         await apiClient.setAccessList(config);
         setState({ ...values, processingSet: false });
-        addSuccessToast(intl.getMessage('access_settings_saved_toast'));
+        addSuccessToast(intl.getMessage('settings_notify_changes_saved'));
     } catch (error) {
         addErrorToast({ error });
         setState('processingSet', false);
@@ -137,9 +137,9 @@ export const toggleClientBlock = async (
             processingSet: false,
         });
         addSuccessToast(
-            intl.getMessage(disallowed ? 'client_unblocked' : 'client_blocked', {
-                ip: disallowedRule || ip,
-            }),
+            disallowed
+                ? intl.getMessage('client_unblocked_flash')
+                : intl.getMessage('client_blocked_flash'),
         );
     } catch (error) {
         addErrorToast({ error });

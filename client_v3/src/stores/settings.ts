@@ -122,7 +122,7 @@ export const testUpstreamWithFormValues = async (
                 addErrorToast({
                     error: intl.getMessage('dns_test_parsing_error_toast', {
                         section: sectionKey,
-                        line,
+                        number: line,
                     }),
                 });
             } else if (message !== 'OK') {

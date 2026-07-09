@@ -66,6 +66,14 @@
 
 .desc {
     color: var(--default-description-text);
+
+    p {
+        margin: 0;
+    }
+
+    p + p {
+        margin-top: 12px;
+    }
 }
 
 .descDisabled {
@@ -93,6 +101,10 @@
     align-items: flex-start;
     gap: 12px;
     align-self: stretch;
+
+    &.largeTitle {
+        padding-top: 16px;
+    }
 }
 
 .link {

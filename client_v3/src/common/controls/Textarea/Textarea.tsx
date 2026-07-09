@@ -38,6 +38,7 @@ export const Textarea = (props: Props) => {
                 cols={props.cols}
                 rows={props.rows}
                 onChange={(e) => (props.onChange as any)?.(e)}
+                onBlur={(e) => (props.onBlur as any)?.(e)}
                 wrap={props.wrap}
                 maxLength={props.maxLength}
                 disabled={props.disabled}

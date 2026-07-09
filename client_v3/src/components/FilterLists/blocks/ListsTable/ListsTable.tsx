@@ -47,17 +47,17 @@ export const ListsTable = (props: Props) => {
     const sortedFilters = createMemo(() => {
         const items = [...(props.filters || [])];
 
-        // eslint-disable-next-line solid/reactivity -- sort callback inside createMemo; reads already tracked
+        const direction = sortDirection();
         items.sort((a, b) => {
             const aName = (a.name || '').toLowerCase();
             const bName = (b.name || '').toLowerCase();
 
             if (aName < bName) {
-                return sortDirection() === 'asc' ? -1 : 1;
+                return direction === 'asc' ? -1 : 1;
             }
 
             if (aName > bName) {
-                return sortDirection() === 'asc' ? 1 : -1;
+                return direction === 'asc' ? 1 : -1;
             }
 
             return 0;

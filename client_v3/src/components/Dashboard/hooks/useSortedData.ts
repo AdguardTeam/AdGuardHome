@@ -27,21 +27,19 @@ export const useSortedData = <T extends SortableItem>(
     const [sortDirection, setSortDirection] = createSignal<SortDirection>(defaultSortDirection);
 
     const sortedData = createMemo(() => {
-        return (
-            [...data()]
-                // eslint-disable-next-line solid/reactivity -- sort callback inside createMemo; reads already tracked
-                .sort((a, b) => {
-                    const modifier = sortDirection() === 'asc' ? 1 : -1;
-                    if (sortField() === 'name') {
-                        return a.name.localeCompare(b.name) * modifier;
-                    }
-                    return (a.count - b.count) * modifier;
-                })
-                .slice(0, limit)
-        );
+        const direction = sortDirection();
+        const field = sortField();
+        return [...data()]
+            .sort((a, b) => {
+                const modifier = direction === 'asc' ? 1 : -1;
+                if (field === 'name') {
+                    return a.name.localeCompare(b.name) * modifier;
+                }
+                return (a.count - b.count) * modifier;
+            })
+            .slice(0, limit);
     });
 
-    // eslint-disable-next-line solid/reactivity -- returned to consumers, called from JSX (tracked)
     const handleSort = (field: SortField) => {
         untrack(() => {
             if (sortField() === field) {

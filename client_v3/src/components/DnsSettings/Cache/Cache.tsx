@@ -1,33 +1,135 @@
+import { createSignal, createMemo, Show } from 'solid-js';
 import cn from 'clsx';
 
-import { dnsConfigState, setDnsConfig } from 'panel/stores/dnsConfig';
-import { replaceEmptyStringsWithZeroes, replaceZeroWithEmptyString } from 'panel/helpers/helpers';
+import {
+    dnsConfigState,
+    clearDnsCache,
+    toggleCacheEnabled,
+    toggleOptimisticCaching,
+} from 'panel/stores/dnsConfig';
 import intl from 'panel/common/intl';
+import { Button } from 'panel/common/ui/Button';
+import { SettingRow } from 'panel/common/ui/SettingRow';
+import { ConfirmDialog } from 'panel/common/ui/ConfirmDialog';
+import { useDialogOpen } from 'panel/hooks/useField';
+import { getCacheSizeSummary, getTtlSummary } from '../helpers';
 import theme from 'panel/lib/theme';
 
-import { Form } from './Form';
+import s from './Cache.module.pcss';
+import { CacheInputDialog } from './blocks/CacheInputDialog';
 
 export const Cache = () => {
-    const handleFormSubmit = (values: any) => {
-        const completedFields = replaceEmptyStringsWithZeroes(values);
-        setDnsConfig(completedFields, intl.getMessage('dns_cache_configuration_saved_toast'));
-    };
+    const [showClearConfirm, setShowClearConfirm] = createSignal(false);
+
+    const cacheSizeDialog = useDialogOpen();
+    const minTtlDialog = useDialogOpen();
+    const maxTtlDialog = useDialogOpen();
+
+    const cacheSizeValue = createMemo(() => getCacheSizeSummary(dnsConfigState.cache_size));
+    const minTtlValue = createMemo(() => getTtlSummary(dnsConfigState.cache_ttl_min));
+    const maxTtlValue = createMemo(() => getTtlSummary(dnsConfigState.cache_ttl_max));
+
+    const processing = () => dnsConfigState.processingSetConfig;
 
     return (
-        <div>
-            <h2 class={cn(theme.layout.subtitle, theme.title.h5, theme.title.h4_tablet)}>
-                {intl.getMessage('dns_cache_config')}
-            </h2>
+        <div class={s.section}>
+            <SettingRow
+                variant="switch"
+                id="cache_enabled"
+                title={intl.getMessage('dns_cache_title')}
+                titleClass={cn(theme.title.h5, theme.title.h4_tablet, theme.text.bold, s.title)}
+                descriptionClass={s.description}
+                align="center"
+                description={intl.getMessage('dns_cache_desc')}
+                checked={!!dnsConfigState.cache_enabled}
+                onChange={() => toggleCacheEnabled()}
+            />
 
-            <Form
-                initialValues={{
-                    cache_enabled: dnsConfigState.cache_enabled,
-                    cache_size: replaceZeroWithEmptyString(dnsConfigState.cache_size),
-                    cache_ttl_max: replaceZeroWithEmptyString(dnsConfigState.cache_ttl_max),
-                    cache_ttl_min: replaceZeroWithEmptyString(dnsConfigState.cache_ttl_min),
-                    cache_optimistic: dnsConfigState.cache_optimistic,
-                }}
-                onSubmit={handleFormSubmit}
+            <SettingRow
+                variant="link"
+                id="cache_size"
+                title={intl.getMessage('dns_cache_size')}
+                description={intl.getMessage('dns_cache_size_desc')}
+                value={cacheSizeValue()}
+                disabled={!dnsConfigState.cache_enabled}
+                onClick={cacheSizeDialog.openDialog}
+            />
+
+            <SettingRow
+                variant="link"
+                id="override_min_ttl"
+                title={intl.getMessage('dns_override_min_ttl')}
+                description={intl.getMessage('dns_override_min_ttl_desc')}
+                value={minTtlValue()}
+                disabled={!dnsConfigState.cache_enabled}
+                onClick={minTtlDialog.openDialog}
+            />
+
+            <SettingRow
+                variant="link"
+                id="override_max_ttl"
+                title={intl.getMessage('dns_override_max_ttl')}
+                description={intl.getMessage('dns_override_max_ttl_desc')}
+                value={maxTtlValue()}
+                disabled={!dnsConfigState.cache_enabled}
+                onClick={maxTtlDialog.openDialog}
+            />
+
+            <SettingRow
+                variant="switch"
+                id="optimistic_caching"
+                title={intl.getMessage('dns_optimistic_caching')}
+                description={intl.getMessage('dns_optimistic_caching_desc')}
+                checked={!!dnsConfigState.cache_optimistic}
+                disabled={!dnsConfigState.cache_enabled}
+                onChange={() => toggleOptimisticCaching()}
+            />
+
+            <div class={theme.form.actionRow}>
+                <Button
+                    variant="secondary-danger"
+                    onClick={() => setShowClearConfirm(true)}
+                    class={theme.form.actionButton}
+                    compact
+                >
+                    {intl.getMessage('dns_clear_cache')}
+                </Button>
+            </div>
+
+            <Show when={showClearConfirm()}>
+                <ConfirmDialog
+                    title={intl.getMessage('dns_clear_cache_title')}
+                    text={intl.getMessage('dns_clear_cache_desc')}
+                    buttonText={intl.getMessage('dns_clear_cache_confirm')}
+                    cancelText={intl.getMessage('cancel')}
+                    buttonVariant="danger"
+                    onClose={() => setShowClearConfirm(false)}
+                    onConfirm={() => {
+                        clearDnsCache();
+                        setShowClearConfirm(false);
+                    }}
+                />
+            </Show>
+
+            <CacheInputDialog
+                configKey="cache_size"
+                open={cacheSizeDialog.open}
+                onClose={cacheSizeDialog.closeDialog}
+                processing={processing()}
+            />
+
+            <CacheInputDialog
+                configKey="cache_ttl_min"
+                open={minTtlDialog.open}
+                onClose={minTtlDialog.closeDialog}
+                processing={processing()}
+            />
+
+            <CacheInputDialog
+                configKey="cache_ttl_max"
+                open={maxTtlDialog.open}
+                onClose={maxTtlDialog.closeDialog}
+                processing={processing()}
             />
         </div>
     );

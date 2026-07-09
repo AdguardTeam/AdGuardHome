@@ -42,6 +42,7 @@
     width: 100%;
     margin: 0 auto;
     max-width: 720px;
+    max-height: calc(100vh - 32px);
     background-color: var(--default-page-background);
     border: none;
     border-radius: 16px;
@@ -49,6 +50,7 @@
     padding: 8px 0;
     color: var(--default-main-text);
     text-align: left;
+    overflow: auto;
 
     @media (min-width: 1024px) {
         border-radius: 16px;
@@ -68,6 +70,7 @@
 .dialog-header {
     margin: 0;
     padding: 8px 48px 8px 16px;
+    flex-shrink: 0;
 }
 
 .dialog-close-button {

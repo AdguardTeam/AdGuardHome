@@ -39,10 +39,8 @@ export const LanguageDropdown = (props: LanguageDropdownProps) => {
         if (!props.sort) {
             return keys;
         }
-        // eslint-disable-next-line solid/reactivity -- sort callback inside createMemo; reads already tracked
-        return keys.sort((a, b) =>
-            (props.languages[a] || '').localeCompare(props.languages[b] || ''),
-        );
+        const languages = props.languages;
+        return keys.sort((a, b) => (languages[a] || '').localeCompare(languages[b] || ''));
     });
 
     const currentLabel = () => getLanguageShortLabel(props.value);

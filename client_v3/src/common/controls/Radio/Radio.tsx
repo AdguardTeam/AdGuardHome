@@ -16,6 +16,7 @@ type Props<T = string | number | boolean> = {
     textClass?: string;
     verticalAlign?: 'center' | 'start' | 'end';
     ref?: HTMLDivElement | ((el: HTMLDivElement) => void);
+    inModal?: boolean;
 };
 
 export const Radio = <T extends number | string | boolean = string>(props: Props<T>) => {
@@ -35,6 +36,9 @@ export const Radio = <T extends number | string | boolean = string>(props: Props
                             s.radio,
                             props.class,
                             props.verticalAlign && s[props.verticalAlign],
+                            {
+                                [s.modal]: props.inModal,
+                            },
                         )}
                     >
                         <input
@@ -52,7 +56,7 @@ export const Radio = <T extends number | string | boolean = string>(props: Props
                                 class={cn(s.icon, { [s.active]: props.value === o.value })}
                             />
                         </div>
-                        <div class={cn(s.text, props.textClass)}>
+                        <div class={s.text}>
                             <div>{o.text}</div>
                             <Show when={o.description}>
                                 <div class={cn(theme.text.t4, s.description)}>{o.description}</div>

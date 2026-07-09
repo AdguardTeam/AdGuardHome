@@ -261,23 +261,79 @@ export const validateIp = (value?: string): ValidationResult => {
 };
 
 /**
+ * Generic per-line validator. Splits input by newlines, skips empty lines
+ * (and optionally comment lines via `isContent`), then validates each
+ * content line with `isValid`. Returns an appropriate i18n error message
+ * based on how many content lines exist and how many are invalid.
+ *
+ * Message logic:
+ * - 0 invalid  → undefined (valid)
+ * - 1 content line, 1 invalid → generic "Invalid format"
+ * - Multiple content lines, 1 invalid → "Invalid format on line N"
+ * - Multiple invalid → "Invalid format on lines N, M, ..."
+ *
+ * @param value    - The textarea content
+ * @param isValid  - Returns true if the line is valid
+ * @param isContent - Returns true if the line should be validated
+ *                   (defaults to all non-empty lines)
+ */
+const validatePerLine = (
+    value: string,
+    isValid: (line: string) => boolean,
+    isContent: (line: string) => boolean = () => true,
+): string | undefined => {
+    if (!value) return undefined;
+    const lines = value.split('\n');
+    const invalidLines: number[] = [];
+    let contentLineCount = 0;
+
+    for (let i = 0; i < lines.length; i += 1) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        if (!isContent(line)) continue;
+
+        contentLineCount += 1;
+        if (!isValid(line)) {
+            invalidLines.push(i + 1);
+        }
+    }
+
+    if (invalidLines.length === 0) return undefined;
+    if (invalidLines.length === 1 && contentLineCount === 1) {
+        return intl.getMessage('form_error_format');
+    }
+    if (invalidLines.length === 1) {
+        return intl.getMessage('form_error_format_line', { line: invalidLines[0] });
+    }
+    return intl.getMessage('form_error_format_lines', {
+        lines: invalidLines.join(', '),
+    });
+};
+
+/**
  * Validates that each non-empty line is a valid IP address.
  *
  * @example validateIpPerLine("192.168.1.1\n10.0.0.1")  // undefined (valid)
  * @example validateIpPerLine("bad")                      // "Invalid IP address"
  */
-export const validateIpPerLine = (value: string): string | undefined => {
-    if (!value) return undefined;
-    const lines = value.split('\n');
-    for (let i = 0; i < lines.length; i += 1) {
-        const line = lines[i].trim();
-        if (line) {
-            const error = validateIp(line);
-            if (error) return error;
-        }
-    }
-    return undefined;
-};
+export const validateIpPerLine = (value: string): string | undefined =>
+    validatePerLine(value, (line) => validateIp(line) === undefined);
+
+/**
+ * Validates that each non-empty line is a valid access client entry:
+ * an IP address, CIDR range, or ClientID.
+ *
+ * @example validateClientsPerLine("192.168.1.1")            // undefined (valid)
+ * @example validateClientsPerLine("my-client-id")           // undefined (valid)
+ * @example validateClientsPerLine("bad entry!")             // "Invalid format"
+ */
+export const validateClientsPerLine = (value: string): string | undefined =>
+    validatePerLine(value, (line) =>
+        R_IPV4.test(line) ||
+        R_IPV6.test(line) ||
+        R_CIDR.test(line) ||
+        R_CIDR_IPV6.test(line) ||
+        R_CLIENT_ID.test(line));
 
 /**
  * Validates a MAC address format.
@@ -561,6 +617,9 @@ export const validateHostname = (value?: string): ValidationResult => {
 const R_COMMENT = /^\s*#/;
 const R_HAS_ADDRESS = /[.:]/;
 
+// A valid blocked_hosts entry contains at least one dot.
+const R_HAS_DOT = /[.]/;
+
 /**
  * Validates upstream server lines. Each line must contain a dot or colon.
  *
@@ -568,31 +627,29 @@ const R_HAS_ADDRESS = /[.:]/;
  * @example validateUpstreams("# comment\n1.1.1.1")        // undefined (comments ok)
  * @example validateUpstreams("not-a-server")               // "Invalid upstream"
  */
-export const validateUpstreams = (value: string): string | undefined => {
-    if (!value) {
-        return undefined;
-    }
-    const lines = value.split('\n');
-    const invalidLines: number[] = [];
-    for (let i = 0; i < lines.length; i += 1) {
-        const line = lines[i].trim();
-        if (line && !R_COMMENT.test(line) && !R_HAS_ADDRESS.test(line)) {
-            invalidLines.push(i + 1);
-        }
-    }
+export const validateUpstreams = (value: string): string | undefined =>
+    validatePerLine(
+        value,
+        (line) => R_HAS_ADDRESS.test(line),
+        (line) => !R_COMMENT.test(line),
+    );
 
-    if (invalidLines.length === 0) {
-        return undefined;
-    }
-
-    if (invalidLines.length === 1) {
-        return intl.getMessage('form_error_upstream_format', { line: invalidLines[0] });
-    }
-
-    return intl.getMessage('form_error_upstream_format_multi', {
-        lines: invalidLines.join(', '),
-    });
-};
+/**
+ * Validates that each non-empty, non-comment line in a blocked_hosts
+ * entry contains a dot (domain, wildcard, or AdGuard URL filter rule).
+ *
+ * @example validateDomainsPerLine("example.org")              // undefined (valid)
+ * @example validateDomainsPerLine("*.example.org")            // undefined (valid)
+ * @example validateDomainsPerLine("||example.org^")           // undefined (valid)
+ * @example validateDomainsPerLine("# comment")               // undefined (comments ok)
+ * @example validateDomainsPerLine("notadomain")              // "Invalid format"
+ */
+export const validateDomainsPerLine = (value: string): string | undefined =>
+    validatePerLine(
+        value,
+        (line) => R_HAS_DOT.test(line),
+        (line) => !R_COMMENT.test(line),
+    );
 
 interface LeaseEntry {
     ip: string;
@@ -617,20 +674,11 @@ export const validateMacNotDuplicate =
         return undefined;
     };
 
-export const validateMaxValue = (value: number, max: number): string | undefined => {
-    if (value > max) {
-        return intl.getMessage('form_value_length_common_error', {
-            max_length: String(max),
-        });
-    }
-    return undefined;
-};
-
 export const validateBetween = (value: number, min: number, max: number): string | undefined => {
     if (value < min || value > max) {
-        return intl.getMessage('form_value_value_between_error', {
-            min_value: String(min),
-            max_value: String(max),
+        return intl.getMessage('form_value_value_from_error', {
+            min_value: min.toLocaleString(),
+            max_value: max.toLocaleString(),
         });
     }
     return undefined;
@@ -639,7 +687,7 @@ export const validateBetween = (value: number, min: number, max: number): string
 export const validateMinValue = (value: number, min: number): string | undefined => {
     if (value < min) {
         return intl.getMessage('form_value_value_min_error', {
-            min_value: String(min),
+            min_value: min.toLocaleString(),
         });
     }
     return undefined;
@@ -665,5 +713,5 @@ export const validateCacheSize = (size: number, enabled: boolean): ValidationRes
     if (size === 0) {
         return intl.getMessage('cache_config_size_validation');
     }
-    return validateMaxValue(size, UINT32_RANGE.MAX);
+    return validateBetween(size, 1, UINT32_RANGE.MAX);
 };

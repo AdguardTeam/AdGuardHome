@@ -1,58 +1,47 @@
 import { createMemo } from 'solid-js';
+import { useNavigate } from '@solidjs/router';
 import cn from 'clsx';
 
 import intl from 'panel/common/intl';
-import { dnsConfigState, setDnsConfig } from 'panel/stores/dnsConfig';
+import { dnsConfigState, togglePrivatePtrResolvers } from 'panel/stores/dnsConfig';
+import { settingsState, testUpstreamWithFormValues } from 'panel/stores/settings';
+import { Button } from 'panel/common/ui/Button';
+import { SettingRow } from 'panel/common/ui/SettingRow';
+import { useDialogOpen } from 'panel/hooks/useField';
+import { getUpstreamModeSummary, getUpstreamServersSummary, getTtlSummary } from '../helpers';
 import theme from 'panel/lib/theme';
 
-import { Form } from './blocks/Form';
-
-type UpstreamFormData = {
-    upstream_dns: string;
-    upstream_mode: string;
-    fallback_dns: string;
-    bootstrap_dns: string;
-    local_ptr_upstreams: string;
-    use_private_ptr_resolvers: boolean;
-    resolve_clients: boolean;
-    upstream_timeout: number;
-};
+import { UpstreamModeDialog } from './blocks/UpstreamModeDialog';
+import { ServerAddressesDialog } from './blocks/ServerAddressesDialog';
+import { FallbackDnsDialog } from './blocks/FallbackDnsDialog';
+import { BootstrapDnsDialog } from './blocks/BootstrapDnsDialog';
+import { TimeoutDialog } from './blocks/TimeoutDialog';
+import { Paths } from 'panel/components/Routes/Paths';
 
 export const Upstream = () => {
-    const handleSubmit = (values: UpstreamFormData) => {
-        const {
-            fallback_dns,
-            bootstrap_dns,
-            upstream_dns,
-            upstream_mode,
-            resolve_clients,
-            local_ptr_upstreams,
-            use_private_ptr_resolvers,
-            upstream_timeout,
-        } = values;
+    const navigate = useNavigate();
 
-        const upstreamDnsFile = dnsConfigState.upstream_dns_file;
-        const dnsConfig = {
-            fallback_dns,
-            bootstrap_dns,
-            upstream_mode,
-            resolve_clients,
-            local_ptr_upstreams,
-            use_private_ptr_resolvers,
-            upstream_timeout,
-            ...(upstreamDnsFile ? null : { upstream_dns }),
-        };
+    const upstreamModeDialog = useDialogOpen();
+    const serverAddressesDialog = useDialogOpen();
+    const fallbackDialog = useDialogOpen();
+    const bootstrapDialog = useDialogOpen();
+    const timeoutDialog = useDialogOpen();
 
-        setDnsConfig(dnsConfig);
-    };
-
-    const upstreamDns = createMemo(() =>
-        dnsConfigState.upstream_dns_file
-            ? intl.getMessage('upstream_dns_configured_in_file', {
-                  path: dnsConfigState.upstream_dns_file,
-              })
-            : dnsConfigState.upstream_dns,
+    const upstreamModeValue = createMemo(() =>
+        getUpstreamModeSummary(dnsConfigState.upstream_mode),
     );
+    const serverAddressesValue = createMemo(() =>
+        getUpstreamServersSummary(dnsConfigState.upstream_dns, dnsConfigState.upstream_dns_file),
+    );
+    const fallbackServersValue = createMemo(() =>
+        getUpstreamServersSummary(dnsConfigState.fallback_dns),
+    );
+    const bootstrapServersValue = createMemo(() =>
+        getUpstreamServersSummary(dnsConfigState.bootstrap_dns),
+    );
+    const timeoutValue = createMemo(() => getTtlSummary(dnsConfigState.upstream_timeout));
+
+    const processing = () => dnsConfigState.processingSetConfig;
 
     return (
         <div>
@@ -60,18 +49,113 @@ export const Upstream = () => {
                 {intl.getMessage('upstream_dns')}
             </h2>
 
-            <Form
-                initialValues={{
-                    upstream_dns: upstreamDns(),
-                    fallback_dns: dnsConfigState.fallback_dns,
-                    bootstrap_dns: dnsConfigState.bootstrap_dns,
-                    upstream_mode: dnsConfigState.upstream_mode,
-                    resolve_clients: dnsConfigState.resolve_clients,
-                    local_ptr_upstreams: dnsConfigState.local_ptr_upstreams,
-                    use_private_ptr_resolvers: dnsConfigState.use_private_ptr_resolvers,
-                    upstream_timeout: dnsConfigState.upstream_timeout,
-                }}
-                onSubmit={handleSubmit}
+            <SettingRow
+                variant="link"
+                id="upstream_mode"
+                title={intl.getMessage('dns_upstream_mode')}
+                description={intl.getMessage('dns_upstream_mode_desc')}
+                value={upstreamModeValue()}
+                onClick={upstreamModeDialog.openDialog}
+            />
+
+            <SettingRow
+                variant="link"
+                id="server_addresses"
+                title={intl.getMessage('dns_server_addresses')}
+                description={intl.getMessage('dns_server_addresses_desc')}
+                value={serverAddressesValue()}
+                onClick={serverAddressesDialog.openDialog}
+            />
+
+            <SettingRow
+                variant="link"
+                id="fallback_servers"
+                title={intl.getMessage('dns_fallback_servers')}
+                description={intl.getMessage('dns_fallback_dns_desc')}
+                value={fallbackServersValue()}
+                onClick={fallbackDialog.openDialog}
+            />
+
+            <SettingRow
+                variant="link"
+                id="bootstrap_servers"
+                title={intl.getMessage('dns_bootstrap_servers')}
+                description={intl.getMessage('dns_bootstrap_dns_desc')}
+                value={bootstrapServersValue()}
+                onClick={bootstrapDialog.openDialog}
+            />
+
+            <SettingRow
+                variant="link"
+                id="upstream_timeout"
+                title={intl.getMessage('dns_upstream_timeout')}
+                description={intl.getMessage('dns_upstream_timeout_desc')}
+                value={timeoutValue()}
+                onClick={timeoutDialog.openDialog}
+            />
+
+            <SettingRow
+                variant="switch-link"
+                id="private_reverse"
+                title={intl.getMessage('dns_private_reverse_resolvers')}
+                description={
+                    <>
+                        <p>{intl.getMessage('dns_private_reverse_resolvers_desc')}</p>
+                        <p>{intl.getMessage('dns_private_reverse_resolvers_disabled_desc')}</p>
+                    </>
+                }
+                checked={dnsConfigState.use_private_ptr_resolvers}
+                onChange={() => togglePrivatePtrResolvers()}
+                onClick={() => navigate(Paths.DnsPrivateReverse)}
+                divider
+            />
+
+            <div class={theme.form.actionRow}>
+                <Button
+                    variant="secondary"
+                    disabled={settingsState.processingTestUpstream}
+                    onClick={() =>
+                        testUpstreamWithFormValues(
+                            {
+                                bootstrap_dns: dnsConfigState.bootstrap_dns,
+                                upstream_dns: dnsConfigState.upstream_dns,
+                                local_ptr_upstreams: dnsConfigState.local_ptr_upstreams,
+                                fallback_dns: dnsConfigState.fallback_dns,
+                            },
+                            dnsConfigState.upstream_dns_file,
+                        )
+                    }
+                    class={theme.form.actionButton}
+                    compact
+                >
+                    {intl.getMessage('dns_test_upstreams')}
+                </Button>
+            </div>
+
+            <UpstreamModeDialog
+                open={upstreamModeDialog.open}
+                onClose={upstreamModeDialog.closeDialog}
+                processing={processing()}
+            />
+            <ServerAddressesDialog
+                open={serverAddressesDialog.open}
+                onClose={serverAddressesDialog.closeDialog}
+                processing={processing()}
+            />
+            <FallbackDnsDialog
+                open={fallbackDialog.open}
+                onClose={fallbackDialog.closeDialog}
+                processing={processing()}
+            />
+            <BootstrapDnsDialog
+                open={bootstrapDialog.open}
+                onClose={bootstrapDialog.closeDialog}
+                processing={processing()}
+            />
+            <TimeoutDialog
+                open={timeoutDialog.open}
+                onClose={timeoutDialog.closeDialog}
+                processing={processing()}
             />
         </div>
     );

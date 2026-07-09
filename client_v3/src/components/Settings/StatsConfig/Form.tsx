@@ -1,10 +1,11 @@
-import { createSignal, createEffect } from 'solid-js';
+import { createSignal, createEffect, createMemo } from 'solid-js';
 
 import intl from 'panel/common/intl';
 import { RadioGroup } from 'panel/common/ui/SettingsGroup';
 
 import { getIntervalTitle, getDefaultInterval } from '../helpers';
-import { STATS_INTERVALS_DAYS, RETENTION_CUSTOM } from 'panel/helpers/constants';
+import { STATS_INTERVALS_DAYS, RETENTION_CUSTOM, RETENTION_RANGE } from 'panel/helpers/constants';
+import { validateBetween } from 'panel/helpers/validators';
 import { RetentionCustomInput } from '../RetentionCustomInput';
 
 export type FormValues = {
@@ -16,6 +17,7 @@ type Props = {
     initialValues: Partial<FormValues>;
     processing: boolean;
     onValuesChange: (values: FormValues) => void;
+    submitted?: boolean;
 };
 
 export const Form = (props: Props) => {
@@ -34,6 +36,18 @@ export const Form = (props: Props) => {
             setCustomInterval(null);
         }
     };
+
+    // Validate customInterval when Custom is selected
+    const customIntervalError = createMemo(() => {
+        const val = customInterval();
+        if (intervalValue() !== RETENTION_CUSTOM) {
+            return undefined;
+        }
+        if (val == null) {
+            return props.submitted ? intl.getMessage('form_error_required') : undefined;
+        }
+        return validateBetween(val, RETENTION_RANGE.MIN, RETENTION_RANGE.MAX);
+    });
 
     // Notify parent of value changes for dirty tracking
     createEffect(() => {
@@ -68,6 +82,7 @@ export const Form = (props: Props) => {
                     inputId="stats_config_custom_interval"
                     inputLabel={intl.getMessage('settings_statistics_retention_hours')}
                     placeholder={intl.getMessage('settings_rotation_placeholder')}
+                    error={customIntervalError()}
                 />
             </RadioGroup>
         </>

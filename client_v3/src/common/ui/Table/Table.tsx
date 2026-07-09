@@ -1,4 +1,4 @@
-import { type JSX, createMemo, For, Show } from 'solid-js';
+import { type JSX, createMemo, For, Show, untrack } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import cn from 'clsx';
 
@@ -56,8 +56,7 @@ export interface TableProps<T = any> {
 export const Table = <T extends Record<string, any>>(props: TableProps<T>) => {
     const [state, setState] = createStore({
         currentPage: 0,
-        // eslint-disable-next-line solid/reactivity -- one-time initial value from props
-        pageSize: props.pageSize ?? DEFAULT_PAGE_SIZE_OPTIONS[0],
+        pageSize: untrack(() => props.pageSize) ?? DEFAULT_PAGE_SIZE_OPTIONS[0],
         sortKey: props.defaultSort?.key ?? (null as string | null),
         sortDirection: props.defaultSort?.direction ?? ('asc' as 'asc' | 'desc'),
     });

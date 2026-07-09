@@ -5,14 +5,9 @@
 }
 
 .body {
-    max-height: 600px;
     overflow-y: auto;
     border: none;
     padding: 0 16px;
-
-    @media (max-width: 1023px) {
-        max-height: 70vh;
-    }
 }
 
 .footer {
@@ -29,5 +24,12 @@
 
 .description {
     padding: 8px 16px;
-    color: var(--default-description-text);
+
+    p {
+        margin: 0;
+    }
+
+    p + p {
+        margin-top: 12px;
+    }
 }

@@ -1,4 +1,4 @@
-import { createMemo, Show } from 'solid-js';
+import { createMemo, Show, untrack } from 'solid-js';
 
 import intl from 'panel/common/intl';
 import { Loader } from 'panel/common/ui/Loader';
@@ -40,12 +40,10 @@ type Props = {
 };
 
 export const LogTable = (props: Props) => {
-    /* eslint-disable solid/reactivity -- curried handler, called from JSX (tracked) */
     const handleSearchSelect = (value: string) => (event: MouseEvent) => {
         event.stopPropagation();
-        props.onSearchSelect(value);
+        untrack(() => props.onSearchSelect(value));
     };
-    /* eslint-enable solid/reactivity */
 
     const columns = createMemo<TableColumn<LogEntry>[]>(() => [
         {
@@ -120,7 +118,7 @@ export const LogTable = (props: Props) => {
                     />
                 </div>
             ),
-            width: 40,
+            width: 48,
             sortable: false,
         },
     ]);

@@ -220,6 +220,11 @@ export const BLOCKING_MODES = {
     custom_ip: 'custom_ip',
 };
 
+export const EDNS_MODES = {
+    default: 'default',
+    custom: 'custom',
+};
+
 // Note that translation strings contain these modes (theme_CONSTANT)
 // i.e. theme_auto, theme_light.
 export const THEMES = {
@@ -506,12 +511,19 @@ export const RATE_LIMIT = {
 export const IPV4_SUBNET_PREFIX = {
     MIN: 0,
     MAX: 32,
+    DEFAULT: 24,
 };
 
 export const IPV6_SUBNET_PREFIX = {
     MIN: 0,
     MAX: 128,
+    DEFAULT: 56,
 };
+
+export const IP_VERSION = {
+    V4: 'IPv4',
+    V6: 'IPv6',
+} as const;
 
 export const UPSTREAM_TIMEOUT = {
     MIN: 1,

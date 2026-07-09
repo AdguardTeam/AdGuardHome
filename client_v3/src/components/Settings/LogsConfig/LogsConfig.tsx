@@ -8,6 +8,8 @@ import { setLogsConfig, queryLogsState } from 'panel/stores/queryLogs';
 
 import { Form, FormValues } from './Form';
 import { addSuccessToast } from 'panel/stores/toasts';
+import { RETENTION_CUSTOM, RETENTION_RANGE } from 'panel/helpers/constants';
+import { validateBetween } from 'panel/helpers/validators';
 
 export type LogsConfigPayload = {
     interval: number;
@@ -28,11 +30,14 @@ export const LogsConfig = (props: Props) => {
     });
     const [confirmConfig, setConfirmConfig] = createSignal<LogsConfigPayload | null>(null);
 
+    const [submitted, setSubmitted] = createSignal(false);
+
     createEffect(
         on(
             () => props.modalOpen,
             (open) => {
                 if (!open) return;
+                setSubmitted(false);
                 setFormValues({
                     interval: props.interval,
                     customInterval: props.customInterval,
@@ -42,11 +47,22 @@ export const LogsConfig = (props: Props) => {
     );
 
     const handleFormChange = (values: FormValues) => {
+        setSubmitted(false);
         setFormValues(values);
     };
 
     const handleSave = () => {
         const values = formValues();
+
+        // Validate custom interval when Custom is selected
+        if (values.interval === RETENTION_CUSTOM) {
+            const val = values.customInterval;
+            if (val == null || validateBetween(val, RETENTION_RANGE.MIN, RETENTION_RANGE.MAX)) {
+                setSubmitted(true);
+                return;
+            }
+        }
+
         const newInterval = resolveInterval(values.interval, values.customInterval);
 
         // If decreasing retention, show confirmation
@@ -100,6 +116,7 @@ export const LogsConfig = (props: Props) => {
                     }}
                     processing={props.processing}
                     onValuesChange={handleFormChange}
+                    submitted={submitted()}
                 />
             </ConfigDialog>
 

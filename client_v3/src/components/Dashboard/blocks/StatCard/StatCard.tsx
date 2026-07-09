@@ -1,4 +1,4 @@
-import { createMemo, Show } from 'solid-js';
+import { createMemo, Show, untrack } from 'solid-js';
 import cn from 'clsx';
 import {
     Chart,
@@ -109,8 +109,7 @@ export const StatCard = (props: StatCardProps) => {
         };
     });
 
-    // eslint-disable-next-line solid/reactivity -- color is stable per card; plugin captures at mount
-    const cursorLinePlugin = createCursorLinePlugin(props.color);
+    const cursorLinePlugin = createCursorLinePlugin(untrack(() => props.color));
 
     const externalTooltipHandler = createExternalTooltipHandler(
         () => tooltipEl,
@@ -155,8 +154,7 @@ export const StatCard = (props: StatCardProps) => {
 
     const percent = () => props.percentValue ?? 0;
 
-    // eslint-disable-next-line solid/reactivity -- accessors consumed inside useChart's createEffect/onMount
-    const setCanvasRef = useChart(chartData, chartOptions, [cursorLinePlugin]);
+    const setCanvasRef = untrack(() => useChart(chartData, chartOptions, [cursorLinePlugin]));
 
     return (
         <div

@@ -1,4 +1,4 @@
-import { type JSX } from 'solid-js';
+import { type JSX, Show } from 'solid-js';
 import cn from 'clsx';
 
 import { Dialog } from 'panel/common/ui/Dialog';
@@ -17,7 +17,9 @@ type Props = {
     class?: string;
     children?: JSX.Element;
     footer?: JSX.Element;
-    description?: string;
+    description?: string | JSX.Element;
+    hideSubmit?: boolean;
+    buttonText?: string;
 };
 
 export const ConfigDialog = (props: Props) => {
@@ -37,15 +39,17 @@ export const ConfigDialog = (props: Props) => {
             </fieldset>
             <div class={s.footer}>
                 {props.footer}
-                <Button
-                    variant="primary"
-                    class={s.saveButton}
-                    disabled={isDisabled()}
-                    data-testid="config-dialog-save"
-                    onClick={props.onSubmit}
-                >
-                    {intl.getMessage('save')}
-                </Button>
+                <Show when={!props.hideSubmit}>
+                    <Button
+                        variant="primary"
+                        class={s.saveButton}
+                        disabled={isDisabled()}
+                        data-testid="config-dialog-save"
+                        onClick={props.onSubmit}
+                    >
+                        {props.buttonText || intl.getMessage('save')}
+                    </Button>
+                </Show>
             </div>
         </Dialog>
     );

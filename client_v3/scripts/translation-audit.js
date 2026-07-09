@@ -1,49 +1,48 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import jscodeshift from 'jscodeshift';
-
-const j = jscodeshift.withParser('tsx');
+import ts from 'typescript';
 
 const SOURCE_EXTENSIONS = new Set(['.ts', '.tsx']);
 const TRANSLATION_METHODS = new Set(['getMessage', 'getPlural']);
 
-const isIntlMethod = (callee) =>
-    callee?.type === 'MemberExpression'
-    && !callee.computed
-    && callee.object?.type === 'Identifier'
-    && callee.object.name === 'intl'
-    && callee.property?.type === 'Identifier'
-    && TRANSLATION_METHODS.has(callee.property.name);
+const isIntlMethod = (node) => {
+    if (!ts.isPropertyAccessExpression(node)) {
+        return false;
+    }
 
-const getLiteralKey = (argument) => {
-    if (!argument) {
+    return (
+        ts.isIdentifier(node.expression) &&
+        node.expression.text === 'intl' &&
+        ts.isIdentifier(node.name) &&
+        TRANSLATION_METHODS.has(node.name.text)
+    );
+};
+
+const getLiteralKey = (node) => {
+    if (!node) {
         return null;
     }
 
-    if (argument.type === 'StringLiteral') {
-        return argument.value;
+    if (ts.isStringLiteral(node)) {
+        return node.text;
     }
 
-    if (argument.type === 'Literal' && typeof argument.value === 'string') {
-        return argument.value;
+    if (ts.isNoSubstitutionTemplateLiteral(node)) {
+        return node.text;
     }
 
-    if (argument.type === 'TemplateLiteral' && argument.expressions.length === 0) {
-        return argument.quasis[0]?.value.cooked ?? '';
-    }
-
-    if (argument.type === 'ParenthesizedExpression') {
-        return getLiteralKey(argument.expression);
+    if (ts.isParenthesizedExpression(node)) {
+        return getLiteralKey(node.expression);
     }
 
     return null;
 };
 
 const sortByFileAndLine = (left, right) =>
-    left.filePath.localeCompare(right.filePath)
-    || left.line - right.line
-    || left.method.localeCompare(right.method);
+    left.filePath.localeCompare(right.filePath) ||
+    left.line - right.line ||
+    left.method.localeCompare(right.method);
 
 const toRelativePath = (filePath, rootDir) => {
     if (!rootDir) {
@@ -55,38 +54,38 @@ const toRelativePath = (filePath, rootDir) => {
     return relativePath === '' ? '.' : relativePath;
 };
 
-const formatNodeSource = (node) => j(node).toSource({ quote: 'single' });
+const formatNodeSource = (node, sourceFile) => sourceFile.text.slice(node.pos, node.end);
 
 export const collectTranslationUsageFromSource = (source, filePath) => {
     const staticKeys = [];
     const dynamicUsages = [];
 
-    j(source)
-        .find(j.CallExpression)
-        .forEach((callPath) => {
-            const { node } = callPath;
+    const sourceFile = ts.createSourceFile(filePath, source, ts.ScriptTarget.Latest, true);
 
-            if (!isIntlMethod(node.callee)) {
-                return;
-            }
-
-            const method = node.callee.property.name;
-            const line = node.loc?.start?.line ?? 0;
+    const visit = (node) => {
+        if (ts.isCallExpression(node) && isIntlMethod(node.expression)) {
+            const method = node.expression.name.text;
+            const pos = sourceFile.getLineAndCharacterOfPosition(node.pos);
+            const line = pos.line + 1;
             const key = getLiteralKey(node.arguments[0]);
 
             if (key !== null) {
                 staticKeys.push({ filePath, key, line, method });
-
-                return;
+            } else {
+                dynamicUsages.push({
+                    expression: formatNodeSource(node, sourceFile),
+                    filePath,
+                    line,
+                    method,
+                });
             }
+        }
 
-            dynamicUsages.push({
-                expression: formatNodeSource(node),
-                filePath,
-                line,
-                method,
-            });
-        });
+        // Always recurse into children to find nested intl.getMessage() calls
+        ts.forEachChild(node, visit);
+    };
+
+    ts.forEachChild(sourceFile, visit);
 
     return {
         dynamicUsages: dynamicUsages.sort(sortByFileAndLine),
@@ -97,7 +96,9 @@ export const collectTranslationUsageFromSource = (source, filePath) => {
 export const auditTranslations = ({ localeMessages, usage }) => {
     const localeKeys = Object.keys(localeMessages);
     const usedStaticKeySet = new Set(usage.staticKeys.map((entry) => entry.key));
-    const missingKeys = [...usedStaticKeySet].filter((key) => !Object.hasOwn(localeMessages, key)).sort();
+    const missingKeys = [...usedStaticKeySet]
+        .filter((key) => !Object.hasOwn(localeMessages, key))
+        .sort();
     const unusedKeys = localeKeys.filter((key) => !usedStaticKeySet.has(key)).sort();
 
     return {
@@ -151,7 +152,9 @@ export const formatAuditReport = (report, { rootDir } = {}) => {
     } else {
         lines.push('Dynamic translation usages:');
         report.dynamicUsages.forEach((entry) => {
-            lines.push(`- ${toRelativePath(entry.filePath, rootDir)}:${entry.line} ${entry.expression}`);
+            lines.push(
+                `- ${toRelativePath(entry.filePath, rootDir)}:${entry.line} ${entry.expression}`,
+            );
         });
     }
 

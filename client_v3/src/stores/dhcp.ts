@@ -220,7 +220,9 @@ export const toggleDhcp = async (config?: any) => {
         const payload = { ...values, enabled };
         await apiClient.setDhcpConfig(payload);
         setState({ enabled, check: null, processingConfig: false });
-        addSuccessToast(intl.getMessage(enabled ? 'enabled_dhcp' : 'disabled_dhcp'));
+        addSuccessToast(
+            enabled ? intl.getMessage('enabled_dhcp') : intl.getMessage('disabled_dhcp'),
+        );
     } catch (error) {
         addErrorToast({ error });
         setState('processingConfig', false);

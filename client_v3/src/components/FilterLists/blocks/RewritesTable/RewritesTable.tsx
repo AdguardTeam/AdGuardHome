@@ -37,17 +37,17 @@ export const RewritesTable = (props: Props) => {
     const sortedList = createMemo(() => {
         const items = [...(props.list || [])];
 
-        // eslint-disable-next-line solid/reactivity -- sort callback inside createMemo; reads already tracked
+        const direction = sortDirection();
         items.sort((a, b) => {
             const aDomain = a.domain.toLowerCase();
             const bDomain = b.domain.toLowerCase();
 
             if (aDomain < bDomain) {
-                return sortDirection() === 'asc' ? -1 : 1;
+                return direction === 'asc' ? -1 : 1;
             }
 
             if (aDomain > bDomain) {
-                return sortDirection() === 'asc' ? 1 : -1;
+                return direction === 'asc' ? 1 : -1;
             }
 
             return 0;

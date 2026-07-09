@@ -100,40 +100,76 @@ export const clearDnsCache = async () => {
     }
 };
 
-export const setDnsConfig = async (values: any, toastMessage?: string) => {
+/**
+ * Toggles `use_private_ptr_resolvers`.
+ * Called from the Private Reverse page's header switch.
+ * NOT called from the main DNS settings page.
+ */
+export const togglePrivatePtrResolvers = () => {
+    setDnsConfig({ use_private_ptr_resolvers: !state.use_private_ptr_resolvers }, { silent: true });
+};
+
+/** Toggles `resolve_clients`. Used by PrivateReverse page switch. */
+export const toggleResolveClients = () => {
+    setDnsConfig({ resolve_clients: !state.resolve_clients }, { silent: true });
+};
+
+/** Toggles `dnssec_enabled`. Used by ServerConfig Section 2, Row 7. */
+export const toggleDnssecEnabled = () => {
+    setDnsConfig({ dnssec_enabled: !state.dnssec_enabled }, { silent: true });
+};
+
+/** Toggles `disable_ipv6` (inverted in UI). Used by ServerConfig Section 2, Row 8. */
+export const toggleDisableIPv6 = () => {
+    setDnsConfig({ disable_ipv6: !state.disable_ipv6 }, { silent: true });
+};
+
+/** Toggles `cache_enabled`. Used by Cache Section 3 header switch. */
+export const toggleCacheEnabled = () => {
+    setDnsConfig({ cache_enabled: !state.cache_enabled }, { silent: true });
+};
+
+/** Toggles `cache_optimistic`. Used by Cache Section 3, Row 4. */
+export const toggleOptimisticCaching = () => {
+    setDnsConfig({ cache_optimistic: !state.cache_optimistic }, { silent: true });
+};
+
+/** Toggles `edns_cs_enabled`. Used by ServerConfig Section 2, Row 6 switch-link. */
+export const toggleEdnsCsEnabled = () => {
+    setDnsConfig({ edns_cs_enabled: !state.edns_cs_enabled }, { silent: true });
+};
+
+export const setDnsConfig = async (
+    values: any,
+    opts?: { toastMessage?: string; silent?: boolean },
+) => {
     setState('processingSetConfig', true);
     try {
         const config = { ...values };
-        let hasDnsSettings = false;
 
         if (Object.hasOwn(config, 'bootstrap_dns')) {
             config.bootstrap_dns = splitByNewLine(config.bootstrap_dns);
-            hasDnsSettings = true;
         }
         if (Object.hasOwn(config, 'fallback_dns')) {
             config.fallback_dns = splitByNewLine(config.fallback_dns);
-            hasDnsSettings = true;
         }
         if (Object.hasOwn(config, 'local_ptr_upstreams')) {
             config.local_ptr_upstreams = splitByNewLine(config.local_ptr_upstreams);
-            hasDnsSettings = true;
         }
         if (Object.hasOwn(config, 'upstream_dns')) {
             config.upstream_dns = splitByNewLine(config.upstream_dns);
-            hasDnsSettings = true;
         }
         if (Object.hasOwn(config, 'ratelimit_whitelist')) {
             config.ratelimit_whitelist = splitByNewLine(config.ratelimit_whitelist);
-            hasDnsSettings = true;
         }
 
         await apiClient.setDnsConfig(config);
         setState(reconcile({ ...untrack(() => state), ...values, processingSetConfig: false }));
 
-        if (toastMessage) {
-            addSuccessToast(toastMessage);
-        } else if (hasDnsSettings) {
-            addSuccessToast(intl.getMessage('updated_upstream_dns_toast'));
+        if (opts?.silent) {
+            // Toggle switches — no toast needed
+        } else if (opts?.toastMessage) {
+            addSuccessToast(opts.toastMessage);
         } else {
             addSuccessToast(intl.getMessage('settings_notify_changes_saved'));
         }
