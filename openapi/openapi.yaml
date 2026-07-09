@@ -1925,6 +1925,10 @@
           'type': 'integer'
           'description': 'Total number of DNS queries'
           'example': 123
+        'num_cached_queries':
+          'type': 'integer'
+          'description': 'Number of responses served from the DNS cache'
+          'example': 40
         'num_blocked_filtering':
           'type': 'integer'
           'description': 'Number of requests blocked by filtering rules'
@@ -1976,6 +1980,10 @@
           'items':
             'type': 'integer'
         'blocked_filtering':
+          'type': 'array'
+          'items':
+            'type': 'integer'
+        'cached_queries':
           'type': 'array'
           'items':
             'type': 'integer'
