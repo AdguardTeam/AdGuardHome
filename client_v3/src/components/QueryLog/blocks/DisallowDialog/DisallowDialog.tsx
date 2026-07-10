@@ -28,9 +28,9 @@ export const DisallowDialog = (props: Props) => {
                     </Show>
                 </div>
             }
-            buttonText={intl.getMessage('yes')}
+            buttonText={intl.getMessage('yes_disallow')}
             cancelText={intl.getMessage('cancel')}
-            buttonVariant="primary"
+            buttonVariant="danger"
             submitTestId="query-log-disallow-confirm"
             cancelTestId="query-log-disallow-cancel"
             onConfirm={props.onConfirm}

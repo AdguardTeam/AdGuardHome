@@ -1,4 +1,4 @@
-import { createSignal, createEffect, Show, on } from 'solid-js';
+import { createSignal, createEffect, Show, on, createMemo } from 'solid-js';
 
 import { ConfirmDialog } from 'panel/common/ui/ConfirmDialog';
 import { ConfigDialog } from 'panel/common/ui/ConfigDialog';
@@ -32,6 +32,14 @@ export const StatsConfig = (props: Props) => {
     const [confirmConfig, setConfirmConfig] = createSignal<StatsConfigPayload | null>(null);
 
     const [submitted, setSubmitted] = createSignal(false);
+
+    const hasCustomIntervalError = createMemo(() => {
+        const values = formValues();
+        if (values.interval !== RETENTION_CUSTOM) return false;
+        const val = values.customInterval;
+        if (val == null) return true;
+        return !!validateBetween(val, RETENTION_RANGE.MIN, RETENTION_RANGE.MAX);
+    });
 
     createEffect(
         on(
@@ -107,6 +115,7 @@ export const StatsConfig = (props: Props) => {
                 onClose={props.onModalClose}
                 onSubmit={handleSave}
                 processing={props.processing}
+                submitDisabled={hasCustomIntervalError()}
             >
                 <Form
                     initialValues={{
@@ -115,7 +124,7 @@ export const StatsConfig = (props: Props) => {
                     }}
                     processing={props.processing}
                     onValuesChange={handleFormChange}
-                    submitted={submitted()}
+                    submitted={submitted() || hasCustomIntervalError()}
                 />
             </ConfigDialog>
 

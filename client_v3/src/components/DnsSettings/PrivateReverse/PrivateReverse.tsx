@@ -10,7 +10,7 @@ import intl from 'panel/common/intl';
 import { Breadcrumbs } from 'panel/common/ui/Breadcrumbs';
 import { SettingRow } from 'panel/common/ui/SettingRow';
 import { RoutePath } from 'panel/components/Routes/Paths';
-import { useDialogOpen } from 'panel/hooks/useField';
+import { useDialog } from 'panel/hooks/useDialog';
 import { PrivateReverseServersDialog } from '../Upstream/blocks/PrivateReverseServersDialog';
 import { getUpstreamServersSummary } from '../helpers';
 import theme from 'panel/lib/theme';
@@ -18,7 +18,7 @@ import theme from 'panel/lib/theme';
 import s from './PrivateReverse.module.pcss';
 
 export const PrivateReverse = () => {
-    const serversDialog = useDialogOpen();
+    const serversDialog = useDialog();
 
     const processing = () => dnsConfigState.processingSetConfig;
 

@@ -12,6 +12,7 @@ import {
     rewritesState,
 } from 'panel/stores/rewrites';
 import { ConfirmDialog } from 'panel/common/ui/ConfirmDialog';
+import { SettingRow } from 'panel/common/ui/SettingRow';
 import { openModal } from 'panel/stores/modals';
 import { DeleteRewriteModal } from 'panel/components/FilterLists/blocks/DeleteRewriteModal';
 import { PlusButton } from 'panel/common/ui/PlusButton';
@@ -96,15 +97,23 @@ export const DNSRewrites = () => {
     };
 
     return (
-        <div class={theme.layout.container}>
+        <div class={cn(theme.layout.container, s.dnsRewritesContainer)}>
             <div class={theme.layout.containerIn}>
-                <h1 class={cn(theme.layout.title, theme.title.h4, theme.title.h3_tablet)}>
-                    {intl.getMessage('dns_rewrites')}
-                </h1>
+                <SettingRow
+                    variant="switch"
+                    id="rewrite_global_enabled"
+                    title={intl.getMessage('dns_rewrites')}
+                    titleClass={cn(theme.title.h4, theme.title.h3_tablet)}
+                    description={intl.getMessage('dns_rewrites_desc')}
+                    descriptionClass={s.settingRowDesc}
+                    checked={rewritesState.enabled}
+                    disabled={isInitialSettingsLoad()}
+                    onChange={(value: boolean) => openGlobalToggleConfirm(value)}
+                    align="center"
+                    class={s.dnsRewritesSettingRow}
+                />
 
-                <div class={s.desc}>{intl.getMessage('dns_rewrites_desc')}</div>
-
-                <div class={s.group}>
+                <div class={cn(s.group, s.buttonGroup)}>
                     <PlusButton onClick={openAddRewiresModal} testId="add-rewrite">
                         {intl.getMessage('rewrite_add')}
                     </PlusButton>
@@ -118,13 +127,10 @@ export const DNSRewrites = () => {
                             processingAdd={rewritesState.processingAdd}
                             processingUpdate={rewritesState.processingUpdate}
                             processingDelete={rewritesState.processingDelete}
-                            processingSettings={isInitialSettingsLoad()}
-                            enabled={rewritesState.enabled}
                             addRewritesList={openAddRewiresModal}
                             deleteRewrite={openDeleteRewriteModal}
                             editRewrite={openEditRewriteModal}
                             toggleRewrite={toggleRewrite}
-                            toggleAllRewrites={(value: boolean) => openGlobalToggleConfirm(value)}
                         />
                     </div>
                 </Show>
@@ -155,7 +161,9 @@ export const DNSRewrites = () => {
                                 : intl.getMessage('all_rewrites_disabled')
                         }
                         buttonText={
-                            targetEnabled() ? intl.getMessage('enable') : intl.getMessage('disable')
+                            targetEnabled()
+                                ? intl.getMessage('enable')
+                                : intl.getMessage('yes_disable')
                         }
                         cancelText={intl.getMessage('cancel')}
                         buttonVariant={targetEnabled() ? 'primary' : 'danger'}

@@ -44,7 +44,7 @@ export const DisallowedDomainsDialog = (props: Props) => {
             <div class={theme.form.input}>
                 <Textarea
                     value={field.value()}
-                    onChange={(e: Event) => field.setValue((e.target as HTMLTextAreaElement).value)}
+                    onChange={(e) => field.setValue(e.target.value)}
                     onBlur={() => field.validate()}
                     id="blocked_hosts"
                     label={intl.getMessage('dns_disallowed_domains_label')}

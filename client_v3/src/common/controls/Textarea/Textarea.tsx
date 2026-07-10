@@ -3,11 +3,18 @@ import cn from 'clsx';
 
 import s from './styles.module.pcss';
 
-type Props = JSX.TextareaHTMLAttributes<HTMLTextAreaElement> & {
+type TextareaChangeEvent = Event & {
+    currentTarget: HTMLTextAreaElement;
+    target: HTMLTextAreaElement;
+};
+
+type Props = Omit<JSX.TextareaHTMLAttributes<HTMLTextAreaElement>, 'onChange' | 'onBlur'> & {
     label?: JSX.Element;
     size?: 'small' | 'medium' | 'large';
     errorMessage?: string;
     ref?: HTMLTextAreaElement | ((el: HTMLTextAreaElement) => void);
+    onChange?: (event: TextareaChangeEvent) => void;
+    onBlur?: (event: FocusEvent) => void;
 };
 
 export const Textarea = (props: Props) => {
@@ -15,6 +22,14 @@ export const Textarea = (props: Props) => {
         if (typeof props.ref === 'function') {
             props.ref(el);
         }
+    };
+
+    const handleChange = (e: TextareaChangeEvent) => {
+        props.onChange?.(e);
+    };
+
+    const handleBlur = (e: FocusEvent) => {
+        props.onBlur?.(e);
     };
 
     return (
@@ -37,8 +52,8 @@ export const Textarea = (props: Props) => {
                 value={props.value as string}
                 cols={props.cols}
                 rows={props.rows}
-                onChange={(e) => (props.onChange as any)?.(e)}
-                onBlur={(e) => (props.onBlur as any)?.(e)}
+                onChange={handleChange}
+                onBlur={handleBlur}
                 wrap={props.wrap}
                 maxLength={props.maxLength}
                 disabled={props.disabled}

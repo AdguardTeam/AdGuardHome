@@ -4,7 +4,7 @@ import cn from 'clsx';
 import { accessState } from 'panel/stores/access';
 import intl from 'panel/common/intl';
 import { SettingRow } from 'panel/common/ui/SettingRow';
-import { useDialogOpen } from 'panel/hooks/useField';
+import { useDialog } from 'panel/hooks/useDialog';
 import { getListSummary } from '../helpers';
 import theme from 'panel/lib/theme';
 
@@ -13,9 +13,9 @@ import { DisallowedClientsDialog } from './blocks/DisallowedClientsDialog';
 import { DisallowedDomainsDialog } from './blocks/DisallowedDomainsDialog';
 
 export const Access = () => {
-    const allowedDialog = useDialogOpen();
-    const disallowedClientsDialog = useDialogOpen();
-    const disallowedDomainsDialog = useDialogOpen();
+    const allowedDialog = useDialog();
+    const disallowedClientsDialog = useDialog();
+    const disallowedDomainsDialog = useDialog();
 
     const allowedClientsOn = createMemo(() => accessState.allowed_clients.trim().length > 0);
     const processing = () => accessState.processingSet;

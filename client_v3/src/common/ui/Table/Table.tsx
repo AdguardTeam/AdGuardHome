@@ -34,7 +34,7 @@ export interface TableColumn<T = any> {
 export interface TableProps<T = any> {
     data: T[];
     columns: TableColumn<T>[];
-    emptyTable: JSX.Element;
+    emptyTable?: JSX.Element;
     loading?: boolean;
     class?: string;
     pagination?: boolean;
@@ -307,7 +307,7 @@ export const Table = <T extends Record<string, any>>(props: TableProps<T>) => {
                         </Show>
                     </div>
 
-                    <Show when={!hasData()}>
+                    <Show when={!hasData() && props.emptyTable}>
                         <div class={s.emptyTableWrapper}>{props.emptyTable}</div>
                     </Show>
                 </div>

@@ -328,12 +328,15 @@ export const validateIpPerLine = (value: string): string | undefined =>
  * @example validateClientsPerLine("bad entry!")             // "Invalid format"
  */
 export const validateClientsPerLine = (value: string): string | undefined =>
-    validatePerLine(value, (line) =>
-        R_IPV4.test(line) ||
-        R_IPV6.test(line) ||
-        R_CIDR.test(line) ||
-        R_CIDR_IPV6.test(line) ||
-        R_CLIENT_ID.test(line));
+    validatePerLine(
+        value,
+        (line) =>
+            R_IPV4.test(line) ||
+            R_IPV6.test(line) ||
+            R_CIDR.test(line) ||
+            R_CIDR_IPV6.test(line) ||
+            R_CLIENT_ID.test(line),
+    );
 
 /**
  * Validates a MAC address format.
@@ -436,6 +439,56 @@ export const validateAnswer = (value?: string): ValidationResult => {
 };
 
 /**
+ * Validates that a DNS rewrite with the given domain doesn't already exist.
+ * When editing, the `currentDomain` is excluded from the duplicate check.
+ *
+ * @example validateRewriteNotExists("example.com", [{ domain: "example.com" }])
+ *          // "This DNS rewrite already exists"
+ * @example validateRewriteNotExists("example.com", [{ domain: "example.com" }], "example.com")
+ *          // undefined (editing the same rewrite)
+ */
+export const validateRewriteNotExists = (
+    domain: string,
+    existingList: Array<{ domain: string }>,
+    currentDomain?: string,
+): ValidationResult => {
+    if (!domain) {
+        return undefined;
+    }
+
+    const isDuplicate = existingList.some(
+        (item) =>
+            item.domain.toLowerCase() === domain.toLowerCase() && item.domain !== currentDomain,
+    );
+
+    if (isDuplicate) {
+        return intl.getMessage('dns_rewrite_exists');
+    }
+
+    return undefined;
+};
+
+/**
+ * Validates that the domain and answer are not the same value.
+ *
+ * @example validateRewriteNotSame("example.com", "example.com")
+ *          // "You can't rewrite to the same domain or wildcard"
+ * @example validateRewriteNotSame("example.com", "192.168.1.1")
+ *          // undefined (valid)
+ */
+export const validateRewriteNotSame = (domain: string, answer: string): ValidationResult => {
+    if (!domain || !answer) {
+        return undefined;
+    }
+
+    if (domain.toLowerCase() === answer.toLowerCase()) {
+        return intl.getMessage('dns_rewrite_same');
+    }
+
+    return undefined;
+};
+
+/**
  * Validates an absolute file path or URL format.
  *
  * @example validatePath("/usr/local/bin")      // undefined (valid)
@@ -444,6 +497,22 @@ export const validateAnswer = (value?: string): ValidationResult => {
 export const validatePath = (value?: string): ValidationResult => {
     if (value && !isValidAbsolutePath(value) && !R_URL_REQUIRES_PROTOCOL.test(value)) {
         return intl.getMessage('form_error_url_format');
+    }
+    return undefined;
+};
+
+const R_PEM_CONTENT =
+    /^(-----BEGIN [A-Z0-9 ]+-----[ \t]*[\r\n]+[A-Za-z0-9+/= \t\r\n]+-----END [A-Z0-9 ]+-----[ \t\r\n]*)+$/;
+
+/**
+ * Validates that a value looks like PEM-encoded content.
+ *
+ * @example validatePemContent("-----BEGIN CERTIFICATE-----\nabc\n-----END CERTIFICATE-----")  // undefined (valid)
+ * @example validatePemContent("not pem content")                                           // "Invalid data"
+ */
+export const validatePemContent = (value?: string): ValidationResult => {
+    if (value && !R_PEM_CONTENT.test(value.trim())) {
+        return intl.getMessage('encryption_invalid_data');
     }
     return undefined;
 };

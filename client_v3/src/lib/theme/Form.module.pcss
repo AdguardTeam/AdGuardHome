@@ -53,3 +53,36 @@
         min-width: 200px;
     }
 }
+
+.action {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    border: 0;
+    outline: 0;
+    padding: 0;
+    cursor: pointer;
+    background: none;
+    transition: background-color var(--t2);
+    color: var(--default-gray-icons);
+    border-radius: 4px;
+
+    &:disabled {
+        cursor: default;
+        color: var(--disabled-secondary-button-stroke);
+    }
+
+    &:hover,
+    &:focus {
+        background-color: var(--hovered-page-background);
+    }
+
+    &:active {
+        background-color: var(--pressed-page-background);
+    }
+
+    &_danger {
+        color: var(--default-error-link);
+    }
+}

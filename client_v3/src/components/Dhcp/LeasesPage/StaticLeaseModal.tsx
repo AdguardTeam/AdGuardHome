@@ -95,17 +95,19 @@ export const StaticLeaseModal = (props: Props) => {
     };
 
     const validateIpField = () => {
+        const val = ip();
+        const cidrVal = cidr();
+        const gatewayIp = props.dhcpConfig?.gatewayIp;
+
         const err =
-            validateRequiredValue(ip()) ||
-            validateIp(ip()) ||
+            validateRequiredValue(val) ||
+            validateIp(val) ||
             validateIpNotDuplicate(
                 props.staticLeases,
                 props.isEdit ? props.initialData?.ip : undefined,
-            )(ip()) ||
-            (cidr() && ip() ? validateIpv4InCidr(ip(), { cidr: cidr()! }) : undefined) ||
-            (props.dhcpConfig?.gatewayIp && ip()
-                ? validateIpGateway(ip(), { gatewayIp: props.dhcpConfig.gatewayIp })
-                : undefined);
+            )(val) ||
+            (cidrVal && validateIpv4InCidr(val, { cidr: cidrVal })) ||
+            (gatewayIp && validateIpGateway(val, { gatewayIp }));
         setIpError(err || '');
     };
 
@@ -152,6 +154,7 @@ export const StaticLeaseModal = (props: Props) => {
                             placeholder={intl.getMessage('form_enter_mac')}
                             errorMessage={macError()}
                             disabled={props.isEdit || props.isMakeStatic}
+                            size="large"
                         />
                     </div>
 
@@ -167,6 +170,7 @@ export const StaticLeaseModal = (props: Props) => {
                             placeholder={intl.getMessage('form_enter_hostname')}
                             errorMessage={hostnameError()}
                             disabled={props.isMakeStatic}
+                            size="large"
                         />
                     </div>
 
@@ -179,6 +183,7 @@ export const StaticLeaseModal = (props: Props) => {
                             label={intl.getMessage('dhcp_table_ip_address')}
                             placeholder={intl.getMessage('form_enter_ip')}
                             errorMessage={ipError()}
+                            size="large"
                         />
                     </div>
                 </div>

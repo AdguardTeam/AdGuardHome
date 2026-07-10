@@ -5,6 +5,11 @@ import { Icon } from 'panel/common/ui/Icon';
 import intl from 'panel/common/intl';
 import s from './Input.module.pcss';
 
+type InputChangeEvent = Event & {
+    currentTarget: HTMLInputElement;
+    target: HTMLInputElement;
+};
+
 type Props = Omit<JSX.InputHTMLAttributes<HTMLInputElement>, 'size' | 'onChange' | 'onBlur'> & {
     label?: JSX.Element;
     class?: string;
@@ -22,7 +27,7 @@ type Props = Omit<JSX.InputHTMLAttributes<HTMLInputElement>, 'size' | 'onChange'
     size?: 'small' | 'medium' | 'large';
     value?: string | number | readonly string[];
     defaultValue?: string;
-    onChange?: (event: Event) => void;
+    onChange?: (event: InputChangeEvent) => void;
     onBlur?: (event: FocusEvent) => void;
     ref?: HTMLInputElement | ((el: HTMLInputElement) => void);
 };
@@ -58,7 +63,7 @@ export const Input = (props: Props) => {
         Boolean(props.isClearable && !props.disabled && !props.readOnly && hasValue());
     const hasActions = () => Boolean(props.suffixIcon || showClearButton());
 
-    const handleChange = (event: Event) => {
+    const handleChange = (event: InputChangeEvent) => {
         setHasValue((event.currentTarget as HTMLInputElement).value.length > 0);
         props.onChange?.(event);
     };
@@ -74,7 +79,7 @@ export const Input = (props: Props) => {
         props.onChange?.({
             target: inputRef,
             currentTarget: inputRef,
-        } as unknown as Event);
+        } as unknown as InputChangeEvent);
 
         setHasValue(false);
         props.onClear?.();

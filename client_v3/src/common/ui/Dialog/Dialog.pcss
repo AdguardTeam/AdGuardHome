@@ -47,15 +47,19 @@
     border: none;
     border-radius: 16px;
     background-clip: border-box;
-    padding: 8px 0;
+    padding: 16px 0;
     color: var(--default-main-text);
     text-align: left;
     overflow: auto;
 
-    @media (min-width: 1024px) {
+    @media (min-width: 768px) {
         border-radius: 16px;
         padding: 24px 16px;
     }
+}
+
+.dialog-content-no-overflow {
+    overflow: visible;
 }
 
 .dialog-title {

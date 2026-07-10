@@ -22,7 +22,7 @@ const getEmptyState = (mode: EmptyStateMode) => {
                 a: (text: string) => (
                     <Link
                         to={RoutePath.SettingsPage}
-                        query={{ [SCROLL_QUERY_KEY]: 'stats_config' }}
+                        query={{ [SCROLL_QUERY_KEY]: 'statistics' }}
                     >
                         {text}
                     </Link>

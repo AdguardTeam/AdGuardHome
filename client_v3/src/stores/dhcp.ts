@@ -3,10 +3,12 @@ import { untrack } from 'solid-js';
 import { apiClient } from 'panel/api/Api';
 import { addErrorToast, addSuccessToast } from './toasts';
 import intl from 'panel/common/intl';
-import { STATUS_RESPONSE } from 'panel/helpers/constants';
+import { SETTINGS_URLS, STATUS_RESPONSE } from 'panel/helpers/constants';
 import { enrichWithConcatenatedIpAddresses } from 'panel/helpers/helpers';
 
 type Lease = { hostname: string; ip: string; mac: string };
+
+export type LeaseModalType = 'ADD_LEASE' | 'EDIT_LEASE' | 'MAKE_STATIC';
 
 type DhcpState = {
     processing: boolean;
@@ -36,7 +38,7 @@ type DhcpState = {
     staticLeases: Lease[];
     isModalOpen: boolean;
     leaseModalConfig: Lease | undefined;
-    modalType: string;
+    modalType: LeaseModalType | '';
     dhcp_available: boolean;
     staticIpError: boolean;
     interfaces?: Record<string, any>;
@@ -115,7 +117,7 @@ export const getDhcpInterfaces = async () => {
     }
 };
 
-export const findActiveDhcp = async (interfaceName: string) => {
+export const findActiveDhcp = async (interfaceName: string, navigate?: (path: string) => void) => {
     setState('processingDhcp', true);
     try {
         const data = await apiClient.findActiveDhcp({ interface: interfaceName });
@@ -146,7 +148,7 @@ export const findActiveDhcp = async (interfaceName: string) => {
                 error: intl.getMessage('dhcp_static_ip_error'),
                 action: {
                     text: intl.getMessage('set_static_ip_manually'),
-                    callback: () => toggleLeaseModal('ADD_LEASE'),
+                    callback: () => navigate?.(SETTINGS_URLS.dhcpLeases),
                 },
             });
         }
@@ -155,7 +157,7 @@ export const findActiveDhcp = async (interfaceName: string) => {
                 error: intl.getMessage('dhcp_error'),
                 action: {
                     text: intl.getMessage('try_again'),
-                    callback: () => findActiveDhcp(interfaceName),
+                    callback: () => findActiveDhcp(interfaceName, navigate),
                 },
             });
         }
@@ -169,7 +171,7 @@ export const findActiveDhcp = async (interfaceName: string) => {
                 error: intl.getMessage('dhcp_found'),
                 action: {
                     text: intl.getMessage('try_again'),
-                    callback: () => findActiveDhcp(interfaceName),
+                    callback: () => findActiveDhcp(interfaceName, navigate),
                 },
             });
         } else if (
@@ -179,10 +181,13 @@ export const findActiveDhcp = async (interfaceName: string) => {
             interfaceNameState
         ) {
             addErrorToast({
-                error: intl.getMessage('dhcp_dynamic_ip_found'),
+                error: intl.getMessage('dhcp_dynamic_ip_found', {
+                    interface_name: interfaceName,
+                    ip: v4.static_ip.ip,
+                }),
                 action: {
                     text: intl.getMessage('try_again'),
-                    callback: () => findActiveDhcp(interfaceName),
+                    callback: () => findActiveDhcp(interfaceName, navigate),
                 },
             });
         } else {
@@ -220,9 +225,6 @@ export const toggleDhcp = async (config?: any) => {
         const payload = { ...values, enabled };
         await apiClient.setDhcpConfig(payload);
         setState({ enabled, check: null, processingConfig: false });
-        addSuccessToast(
-            enabled ? intl.getMessage('enabled_dhcp') : intl.getMessage('disabled_dhcp'),
-        );
     } catch (error) {
         addErrorToast({ error });
         setState('processingConfig', false);
@@ -255,7 +257,7 @@ export const resetDhcpLeases = async () => {
     }
 };
 
-export const toggleLeaseModal = (modalType?: string, leaseConfig?: Lease) => {
+export const toggleLeaseModal = (modalType?: LeaseModalType, leaseConfig?: Lease) => {
     setState({
         isModalOpen: !state.isModalOpen,
         modalType: modalType || '',

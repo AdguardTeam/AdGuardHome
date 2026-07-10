@@ -86,6 +86,7 @@ export const DnsBanner = (props: Props) => {
                                 const { value } = e.target as HTMLInputElement;
                                 props.setDnsPort(toNumber(value));
                             }}
+                            size="large"
                         />
                     </div>
 

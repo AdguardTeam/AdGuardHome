@@ -2,6 +2,7 @@ import { createSignal, createEffect, createMemo, Show, onMount } from 'solid-js'
 import cn from 'clsx';
 
 import intl from 'panel/common/intl';
+import { addSuccessToast } from 'panel/stores/toasts';
 import { filteringState, checkHost, getFilteringStatus, setRules } from 'panel/stores/filtering';
 import { settingsState, initSettings } from 'panel/stores/settings';
 import { dashboardState, getClients } from 'panel/stores/dashboard';
@@ -99,8 +100,11 @@ export const UserRules = () => {
         }
     };
 
-    const onRulesSubmit = () => {
-        setRules(userRulesValue());
+    const onRulesSubmit = async () => {
+        const ok = await setRules(userRulesValue());
+        if (ok) {
+            addSuccessToast(intl.getMessage('changes_saved_success'));
+        }
     };
 
     const onCheckSubmit = async () => {

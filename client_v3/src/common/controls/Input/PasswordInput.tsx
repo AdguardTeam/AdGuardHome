@@ -19,7 +19,7 @@ export const PasswordInput = (props: Props) => {
             {...props}
             ref={props.ref}
             value={props.value}
-            onChange={(e: Event) => props.onChange((e.target as HTMLInputElement).value)}
+            onChange={(e) => props.onChange(e.target.value)}
             type={isPasswordVisible() ? 'text' : 'password'}
             suffixIcon={
                 <div class={styles.inputSuffix}>

@@ -47,7 +47,9 @@ export const WebBanner = (props: Props) => {
             <h3 class={styles.bannerTitle}>{intl.getMessage('setup_ui_title_banner')}</h3>
             <div class={styles.bannerInputs}>
                 <div class={styles.form}>
-                    <label class={styles.bannerLabel}>{intl.getMessage('network_interface')}</label>
+                    <label for="install_web_ip" class={styles.bannerLabel}>
+                        {intl.getMessage('network_interface')}
+                    </label>
                     <Select
                         options={props.webIpOptions}
                         value={props.webIpOptions.find((option) => option.value === props.webIp())}
@@ -60,7 +62,7 @@ export const WebBanner = (props: Props) => {
                 </div>
 
                 <div class={styles.form}>
-                    <label class={styles.bannerLabel}>
+                    <label for="install_web_port" class={styles.bannerLabel}>
                         {intl.getMessage('install_settings_port')}
                     </label>
                     <Input
@@ -73,6 +75,7 @@ export const WebBanner = (props: Props) => {
                             const { value } = e.target as HTMLInputElement;
                             props.setWebPort(toNumber(value));
                         }}
+                        size="large"
                     />
                 </div>
 

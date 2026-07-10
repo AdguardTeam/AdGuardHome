@@ -39,6 +39,7 @@ export const AddClient = () => {
 
     const [nameError, setNameError] = createSignal<string | undefined>();
     const [cacheSizeError, setCacheSizeError] = createSignal<string | undefined>();
+    const [upstreamsError, setUpstreamsError] = createSignal<string | undefined>();
 
     createEffect(() => {
         const formErrors = clientFormState.formErrors;
@@ -47,6 +48,9 @@ export const AddClient = () => {
             typeof formErrors.upstreams_cache_size === 'string'
                 ? formErrors.upstreams_cache_size
                 : undefined,
+        );
+        setUpstreamsError(
+            typeof formErrors.upstreams === 'string' ? formErrors.upstreams : undefined,
         );
     });
 
@@ -106,7 +110,7 @@ export const AddClient = () => {
     const handleSave = async () => {
         const err = validateUpstreams(clientFormState.upstreams);
         if (err) {
-            setFormErrors({ upstreams: err });
+            setFormErrors({ ...clientFormState.formErrors, upstreams: err });
             return;
         }
         const result = await saveClient();
@@ -132,7 +136,7 @@ export const AddClient = () => {
     const handleUpstreamsBlur = () => {
         const err = validateUpstreams(clientFormState.upstreams);
         if (err) {
-            setFormErrors({ upstreams: err });
+            setFormErrors({ ...clientFormState.formErrors, upstreams: err });
         }
     };
 
@@ -141,6 +145,7 @@ export const AddClient = () => {
             field: 'upstreams',
             value: (e.target as HTMLTextAreaElement).value,
         });
+        setUpstreamsError(undefined);
     };
 
     const handleCacheSizeChange = (e: Event) => {
@@ -318,11 +323,7 @@ export const AddClient = () => {
                             label={intl.getMessage('clients_upstreams_desc')}
                             rows={4}
                             disabled={clientFormState.use_global_settings}
-                            errorMessage={
-                                typeof clientFormState.formErrors.upstreams === 'string'
-                                    ? clientFormState.formErrors.upstreams
-                                    : undefined
-                            }
+                            errorMessage={upstreamsError()}
                         />
                     </div>
 

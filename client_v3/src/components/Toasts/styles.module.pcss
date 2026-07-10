@@ -19,7 +19,7 @@
 
 .messageRow {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 8px;
     width: 100%;
 }
@@ -64,6 +64,10 @@
 
     &.error {
         color: var(--default-error-icon);
+    }
+
+    &.warning {
+        color: var(--default-attention-icon);
     }
 }
 

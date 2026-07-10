@@ -29,8 +29,8 @@ export const useSortedData = <T extends SortableItem>(
     const sortedData = createMemo(() => {
         const direction = sortDirection();
         const field = sortField();
-        return [...data()]
-            .sort((a, b) => {
+        return data()
+            .toSorted((a, b) => {
                 const modifier = direction === 'asc' ? 1 : -1;
                 if (field === 'name') {
                     return a.name.localeCompare(b.name) * modifier;

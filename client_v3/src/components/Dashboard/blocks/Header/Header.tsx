@@ -134,7 +134,7 @@ export const Header = (props: Props) => {
                     a: (text: string) => (
                         <Link
                             to={RoutePath.SettingsPage}
-                            query={{ [SCROLL_QUERY_KEY]: 'stats_config' }}
+                            query={{ [SCROLL_QUERY_KEY]: 'statistics' }}
                             class={cn(theme.link.link, theme.link.noDecoration)}
                         >
                             {text}

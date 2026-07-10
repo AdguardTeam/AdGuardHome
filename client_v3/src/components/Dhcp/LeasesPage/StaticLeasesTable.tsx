@@ -24,8 +24,6 @@ type Props = {
     onRefresh: () => void;
 };
 
-const pageSize = 7;
-
 export const StaticLeasesTable = (props: Props) => {
     const [openMenuId, setOpenMenuId] = createSignal<string | null>(null);
 
@@ -110,7 +108,7 @@ export const StaticLeasesTable = (props: Props) => {
             },
             accessor: 'mac',
             sortable: false,
-            fitContent: true,
+            width: 48,
             render: (_value: unknown, row: StaticLease) => {
                 const rowId = `${row.mac}-${row.ip}`;
                 return (
@@ -202,8 +200,9 @@ export const StaticLeasesTable = (props: Props) => {
                                 >
                                     <button
                                         type="button"
-                                        class={s.actionButton}
+                                        class={cn(theme.table.action, s.actionButton)}
                                         data-testid="static-lease-actions-dropdown"
+                                        data-table-action
                                     >
                                         <Icon icon="bullets" color="gray" />
                                     </button>
@@ -221,15 +220,6 @@ export const StaticLeasesTable = (props: Props) => {
             data={props.staticLeases}
             class={s.staticTable}
             columns={columns()}
-            emptyTable={
-                <div class={s.emptyTableContent}>
-                    <Icon icon="not_found_search" color="gray" class={s.emptyTableIcon} />
-                    <div class={cn(theme.text.t3, s.emptyTableDesc)}>
-                        {intl.getMessage('dhcp_static_leases_not_found')}
-                    </div>
-                </div>
-            }
-            pageSize={pageSize}
             getRowId={(row: StaticLease) => `${row.mac}-${row.ip}`}
         />
     );

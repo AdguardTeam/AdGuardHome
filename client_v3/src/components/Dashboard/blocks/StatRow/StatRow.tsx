@@ -54,42 +54,49 @@ export const StatRow = (props: StatRowProps) => {
                         </div>
                     }
                 >
-                    <Dropdown
-                        trigger="hover"
-                        position="top"
-                        noIcon
-                        disableAnimation
-                        overlayClass={s.queryTooltipOverlay}
-                        menu={
-                            <div class={s.queryTooltip}>
+                    <div class={s.dropdownWrapper}>
+                        <Dropdown
+                            trigger="hover"
+                            position="top"
+                            noIcon
+                            disableAnimation
+                            overlayClass={s.queryTooltipOverlay}
+                            menu={
+                                <div class={s.queryTooltip}>
+                                    {typeof props.value === 'number'
+                                        ? formatNumber(props.value)
+                                        : props.value}{' '}
+                                    {intl.getMessage('queries').toLowerCase()}
+                                </div>
+                            }
+                        >
+                            <div class={cn(theme.text.t3, theme.text.condenced, s.queryCount)}>
                                 {typeof props.value === 'number'
-                                    ? formatNumber(props.value)
-                                    : props.value}{' '}
-                                {intl.getMessage('queries').toLowerCase()}
-                            </div>
-                        }
-                    >
-                        <div class={cn(theme.text.t3, theme.text.condenced, s.queryCount)}>
-                            {typeof props.value === 'number'
-                                ? formatCompactNumber(props.value)
-                                : props.value}
+                                    ? formatCompactNumber(props.value)
+                                    : props.value}
 
-                            <div class={cn(theme.text.t3, theme.text.condenced, s.queryPercent)}>
-                                <Show
-                                    when={props.isTotal}
-                                    fallback={
-                                        <Show
-                                            when={props.percent !== undefined && props.percent! > 0}
-                                        >
-                                            <span>({props.percent!.toFixed(1)}%)</span>
-                                        </Show>
-                                    }
+                                <div
+                                    class={cn(theme.text.t3, theme.text.condenced, s.queryPercent)}
                                 >
-                                    <span>({intl.getMessage('total')})</span>
-                                </Show>
+                                    <Show
+                                        when={props.isTotal}
+                                        fallback={
+                                            <Show
+                                                when={
+                                                    props.percent !== undefined &&
+                                                    props.percent! > 0
+                                                }
+                                            >
+                                                <span>({props.percent!.toFixed(1)}%)</span>
+                                            </Show>
+                                        }
+                                    >
+                                        <span>({intl.getMessage('total')})</span>
+                                    </Show>
+                                </div>
                             </div>
-                        </div>
-                    </Dropdown>
+                        </Dropdown>
+                    </div>
                 </Show>
 
                 <Show when={isQueriesValue()}>

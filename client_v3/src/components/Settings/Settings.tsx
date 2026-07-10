@@ -234,6 +234,7 @@ export const Settings = () => {
                                             enabled: v,
                                         })
                                     }
+                                    inputClassName={s.queryLogSwitch}
                                 />
 
                                 <SettingRow

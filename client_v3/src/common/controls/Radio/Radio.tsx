@@ -11,7 +11,7 @@ type Props<T = string | number | boolean> = {
     disabled?: boolean;
     handleChange: (e: T) => void;
     value: T;
-    options: { text: string; value: T; description?: JSX.Element }[];
+    options: { text: string; value: T; description?: JSX.Element; disabled?: boolean }[];
     name?: string;
     textClass?: string;
     verticalAlign?: 'center' | 'start' | 'end';
@@ -48,7 +48,7 @@ export const Radio = <T extends number | string | boolean = string>(props: Props
                             name={props.name}
                             onChange={() => props.handleChange(o.value)}
                             checked={props.value === o.value}
-                            disabled={props.disabled}
+                            disabled={props.disabled || o.disabled}
                         />
                         <div class={s.handler}>
                             <Icon
@@ -56,7 +56,7 @@ export const Radio = <T extends number | string | boolean = string>(props: Props
                                 class={cn(s.icon, { [s.active]: props.value === o.value })}
                             />
                         </div>
-                        <div class={s.text}>
+                        <div class={cn(s.text, { [s.disabled]: o.disabled }, props.textClass)}>
                             <div>{o.text}</div>
                             <Show when={o.description}>
                                 <div class={cn(theme.text.t4, s.description)}>{o.description}</div>

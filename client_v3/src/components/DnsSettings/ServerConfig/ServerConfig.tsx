@@ -12,7 +12,7 @@ import { SettingRow } from 'panel/common/ui/SettingRow';
 import { getRateLimitSummary, getBlockingModeSummary, getUpstreamServersSummary } from '../helpers';
 import theme from 'panel/lib/theme';
 import { IP_VERSION, IPV4_SUBNET_PREFIX, IPV6_SUBNET_PREFIX } from 'panel/helpers/constants';
-import { useDialogOpen } from 'panel/hooks/useField';
+import { useDialog } from 'panel/hooks/useDialog';
 
 import { RateLimitDialog } from './blocks/RateLimitDialog';
 import { SubnetPrefixV4Dialog } from './blocks/SubnetPrefixV4Dialog';
@@ -22,12 +22,12 @@ import { RateLimitAllowlistDialog } from './blocks/RateLimitAllowlistDialog';
 import { EdnsDialog } from './blocks/EdnsDialog';
 
 export const ServerConfig = () => {
-    const rateLimitDialog = useDialogOpen();
-    const subnetV4Dialog = useDialogOpen();
-    const subnetV6Dialog = useDialogOpen();
-    const blockingModeDialog = useDialogOpen();
-    const allowlistDialog = useDialogOpen();
-    const ednsDialog = useDialogOpen();
+    const rateLimitDialog = useDialog();
+    const subnetV4Dialog = useDialog();
+    const subnetV6Dialog = useDialog();
+    const blockingModeDialog = useDialog();
+    const allowlistDialog = useDialog();
+    const ednsDialog = useDialog();
 
     const rateLimitValue = createMemo(() => getRateLimitSummary(dnsConfigState.ratelimit));
     const blockingModeValue = createMemo(() =>

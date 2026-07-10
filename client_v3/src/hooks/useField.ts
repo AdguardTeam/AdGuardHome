@@ -88,29 +88,3 @@ export function useField<T>(
         submitIfValid,
     };
 }
-
-/**
- * Return type of the useDialogOpen hook.
- */
-type UseDialogOpenResult = {
-    /** Reactive accessor for the dialog open state. */
-    open: Accessor<boolean>;
-    /** Opens the dialog. */
-    openDialog: () => void;
-    /** Closes the dialog. */
-    closeDialog: () => void;
-};
-
-/**
- * Convenience hook for dialog open/close state.
- * Returns `open` signal, `openDialog`, and `closeDialog` helpers.
- */
-export function useDialogOpen(): UseDialogOpenResult {
-    const [open, setOpen] = createSignal(false);
-
-    return {
-        open,
-        openDialog: () => setOpen(true),
-        closeDialog: () => setOpen(false),
-    };
-}

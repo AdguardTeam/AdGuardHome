@@ -18,13 +18,10 @@ type Props = {
     processingAdd: boolean;
     processingDelete: boolean;
     processingUpdate: boolean;
-    processingSettings: boolean;
-    enabled: boolean;
     addRewritesList: () => void;
     deleteRewrite: (rewrite: Rewrite) => void;
     editRewrite: (rewrite: Rewrite) => void;
     toggleRewrite: (rewrite: Rewrite) => void;
-    toggleAllRewrites: (enabled: boolean) => void;
 };
 
 export const RewritesTable = (props: Props) => {
@@ -66,33 +63,21 @@ export const RewritesTable = (props: Props) => {
 
     const columns = createMemo<TableColumn<Rewrite>[]>(() => [
         {
-            key: 'enabled',
+            key: 'domain',
             header: {
-                text: '',
+                text: intl.getMessage('domain'),
                 className: s.headerCell,
-                render: () => (
-                    <Switch
-                        id="rewrite_global_enabled"
-                        data-testid="rewrite-global-toggle"
-                        checked={props.enabled}
-                        onChange={() => props.toggleAllRewrites(!props.enabled)}
-                        disabled={props.processingSettings}
-                    />
-                ),
             },
-            accessor: 'enabled',
-            sortable: false,
-            width: 64,
-            className: s.cellNameToggleOuter,
-            render: (value: boolean, row: Rewrite) => {
+            accessor: 'domain',
+            sortable: true,
+            render: (value: string, row: Rewrite) => {
                 const { domain, enabled } = row;
                 const id = `rewrite_${domain}`;
 
                 return (
                     <div class={theme.table.cell}>
-                        <span class={s.cellNameLabel}>{domain}</span>
-
-                        <div class={s.cellValueToggle}>
+                        <div class={cn(theme.table.cellValueText, s.domainCellValue)}>
+                            <span class={theme.common.textOverflow}>{value}</span>
                             <Switch
                                 id={id}
                                 data-testid={`rewrite-toggle-${domain}`}
@@ -106,25 +91,6 @@ export const RewritesTable = (props: Props) => {
             },
         },
         {
-            key: 'domain',
-            header: {
-                text: intl.getMessage('domain'),
-                className: s.headerCell,
-            },
-            accessor: 'domain',
-            sortable: true,
-            className: s.nameDesktopOnly,
-            render: (value: string) => (
-                <div class={theme.table.cell}>
-                    <span class={theme.table.cellLabel}>{intl.getMessage('name_label')}</span>
-
-                    <div class={theme.table.cellValueText}>
-                        <span class={theme.common.textOverflow}>{value}</span>
-                    </div>
-                </div>
-            ),
-        },
-        {
             key: 'answer',
             header: {
                 text: intl.getMessage('result'),
@@ -134,8 +100,6 @@ export const RewritesTable = (props: Props) => {
             sortable: true,
             render: (value: string) => (
                 <div class={theme.table.cell}>
-                    <span class={theme.table.cellLabel}>{intl.getMessage('result')}</span>
-
                     <div class={theme.table.cellValueText}>
                         <span class={theme.common.textOverflow}>{value}</span>
                     </div>
@@ -236,18 +200,6 @@ export const RewritesTable = (props: Props) => {
                 )}
             >
                 <SortSelect value={sortDirection()} onChange={setSortDirection} />
-            </div>
-
-            <div class={s.allDomainsMobile}>
-                {intl.getMessage('all_domains')}
-
-                <Switch
-                    id="rewrite_global_enabled_mobile"
-                    data-testid="rewrite-global-toggle-mobile"
-                    checked={props.enabled}
-                    onChange={() => props.toggleAllRewrites(!props.enabled)}
-                    disabled={props.processingSettings}
-                />
             </div>
 
             <Table<Rewrite>

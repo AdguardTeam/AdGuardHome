@@ -171,6 +171,7 @@ export const MENU_URLS = {
 export const SETTINGS_URLS = {
     encryption: '/encryption',
     dhcp: '/dhcp',
+    dhcpLeases: '/dhcp/leases',
     dns: '/dns',
     settings: '/settings',
     clients: '/clients',
@@ -187,6 +188,7 @@ export const FILTERS_URLS = {
 export const ENCRYPTION_SOURCE = {
     PATH: 'path',
     CONTENT: 'content',
+    SAVED: 'saved',
 };
 
 export const FILTERED = 'Filtered';
@@ -563,6 +565,7 @@ export const TOAST_TYPES = {
     SUCCESS: 'success',
     ERROR: 'error',
     NOTICE: 'notice',
+    WARNING: 'warning',
 };
 
 export const SUCCESS_TOAST_TIMEOUT = 5000;
@@ -574,6 +577,7 @@ export const TOAST_TIMEOUTS = {
     [TOAST_TYPES.SUCCESS]: SUCCESS_TOAST_TIMEOUT,
     [TOAST_TYPES.ERROR]: FAILURE_TOAST_TIMEOUT,
     [TOAST_TYPES.NOTICE]: FAILURE_TOAST_TIMEOUT,
+    [TOAST_TYPES.WARNING]: FAILURE_TOAST_TIMEOUT,
 };
 
 export const ADDRESS_TYPES = {

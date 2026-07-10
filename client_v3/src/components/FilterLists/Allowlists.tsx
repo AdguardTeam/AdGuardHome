@@ -113,7 +113,7 @@ export const Allowlists = () => {
 
                             <div class={s.desc}>{intl.getMessage('allowlists_desc')}</div>
 
-                            <div class={s.group}>
+                            <div class={cn(s.group, s.buttonGroup)}>
                                 <PlusButton onClick={openAddAllowlistModal}>
                                     {intl.getMessage('add_allowlist')}
                                 </PlusButton>

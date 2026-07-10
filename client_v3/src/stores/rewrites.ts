@@ -102,6 +102,7 @@ export const deleteRewrite = async (config: RewriteConfig): Promise<boolean> => 
     try {
         await apiClient.deleteRewrite(config);
         setState('processingDelete', false);
+        addSuccessToast(intl.getMessage('dns_rewrite_removed'));
         await getRewritesList();
         return true;
     } catch (error) {
@@ -127,7 +128,6 @@ export const updateRewriteSettings = async (values: any) => {
     try {
         await apiClient.updateRewriteSettings(values);
         setState({ ...values, processingSettings: false });
-        addSuccessToast(intl.getMessage('rewrite_settings_updated'));
     } catch (error) {
         addErrorToast({ error });
         setState('processingSettings', false);

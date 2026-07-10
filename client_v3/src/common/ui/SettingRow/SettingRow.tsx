@@ -26,6 +26,7 @@ type Props = {
     divider?: boolean;
     align?: 'top' | 'center';
     largeTitle?: boolean;
+    inputClassName?: string;
 };
 
 export const SettingRow = (props: Props) => {
@@ -142,7 +143,7 @@ export const SettingRow = (props: Props) => {
                     <div class={s.divider} />
                 </Show>
                 <div
-                    class={cn(s.input, props.largeTitle && s.largeTitle)}
+                    class={cn(s.input, props.inputClassName, props.largeTitle && s.largeTitle)}
                     onClick={handleInputClick}
                 >
                     <Show when={isSwitchVariant()}>

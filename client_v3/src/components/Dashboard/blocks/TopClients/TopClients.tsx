@@ -185,41 +185,43 @@ export const TopClients = (props: Props) => {
                                     </div>
 
                                     <div class={s.tableRowRight}>
-                                        <Dropdown
-                                            trigger="hover"
-                                            position="top"
-                                            noIcon
-                                            disableAnimation
-                                            overlayClass={s.queryTooltipOverlay}
-                                            wrapClass={s.queryTooltipWrap}
-                                            menu={
-                                                <div class={s.queryTooltip}>
-                                                    {formatNumber(client.count)}{' '}
-                                                    {intl.getMessage('queries').toLowerCase()}
-                                                </div>
-                                            }
-                                        >
-                                            <div
-                                                class={cn(
-                                                    theme.text.t3,
-                                                    theme.text.condenced,
-                                                    s.queryCount,
-                                                    s.queryCountHover,
-                                                )}
+                                        <div class={s.dropdowWrapper}>
+                                            <Dropdown
+                                                trigger="hover"
+                                                position="top"
+                                                noIcon
+                                                disableAnimation
+                                                overlayClass={s.queryTooltipOverlay}
+                                                wrapClass={s.queryTooltipWrap}
+                                                menu={
+                                                    <div class={s.queryTooltip}>
+                                                        {formatNumber(client.count)}{' '}
+                                                        {intl.getMessage('queries').toLowerCase()}
+                                                    </div>
+                                                }
                                             >
-                                                {formatCompactNumber(client.count)}
-
                                                 <div
                                                     class={cn(
                                                         theme.text.t3,
                                                         theme.text.condenced,
-                                                        s.queryPercent,
+                                                        s.queryCount,
+                                                        s.queryCountHover,
                                                     )}
                                                 >
-                                                    ({percent().toFixed(1)}%)
+                                                    {formatCompactNumber(client.count)}
+
+                                                    <div
+                                                        class={cn(
+                                                            theme.text.t3,
+                                                            theme.text.condenced,
+                                                            s.queryPercent,
+                                                        )}
+                                                    >
+                                                        ({percent().toFixed(1)}%)
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </Dropdown>
+                                            </Dropdown>
+                                        </div>
 
                                         <div class={s.queryBar}>
                                             <div

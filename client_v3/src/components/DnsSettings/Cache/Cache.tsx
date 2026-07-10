@@ -11,7 +11,7 @@ import intl from 'panel/common/intl';
 import { Button } from 'panel/common/ui/Button';
 import { SettingRow } from 'panel/common/ui/SettingRow';
 import { ConfirmDialog } from 'panel/common/ui/ConfirmDialog';
-import { useDialogOpen } from 'panel/hooks/useField';
+import { useDialog } from 'panel/hooks/useDialog';
 import { getCacheSizeSummary, getTtlSummary } from '../helpers';
 import theme from 'panel/lib/theme';
 
@@ -21,9 +21,9 @@ import { CacheInputDialog } from './blocks/CacheInputDialog';
 export const Cache = () => {
     const [showClearConfirm, setShowClearConfirm] = createSignal(false);
 
-    const cacheSizeDialog = useDialogOpen();
-    const minTtlDialog = useDialogOpen();
-    const maxTtlDialog = useDialogOpen();
+    const cacheSizeDialog = useDialog();
+    const minTtlDialog = useDialog();
+    const maxTtlDialog = useDialog();
 
     const cacheSizeValue = createMemo(() => getCacheSizeSummary(dnsConfigState.cache_size));
     const minTtlValue = createMemo(() => getTtlSummary(dnsConfigState.cache_ttl_min));

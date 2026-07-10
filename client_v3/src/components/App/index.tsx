@@ -17,6 +17,7 @@ import { DNSRewrites } from 'panel/components/FilterLists/DNSRewrites';
 import { SetupGuide } from 'panel/components/SetupGuide';
 import { Dashboard } from 'panel/components/Dashboard';
 import { Dhcp } from 'panel/components/Dhcp';
+import { LeasesPage } from 'panel/components/Dhcp/LeasesPage';
 import { QueryLog } from 'panel/components/QueryLog';
 import Toasts from '../Toasts';
 import { THEMES } from '../../helpers/constants';
@@ -133,6 +134,7 @@ const App = () => {
             <Route path="/user_rules" component={UserRules} />
             <Route path="/dns_rewrites" component={DNSRewrites} />
             <Route path="/dhcp" component={Dhcp} />
+            <Route path="/dhcp/leases" component={LeasesPage} />
             <Route path="/guide" component={SetupGuideRoute} />
             <Route path="/logs" component={QueryLog} />
             <Route path="/blocked_services/schedule" component={InactivityScheduleRoute} />

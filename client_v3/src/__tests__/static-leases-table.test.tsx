@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, fireEvent } from '@solidjs/testing-library';
-import { StaticLeasesTable } from 'panel/components/Dhcp/blocks/StaticLeasesTable';
+import { StaticLeasesTable } from 'panel/components/Dhcp/LeasesPage/StaticLeasesTable';
 
 const LEASES = [{ mac: 'AA:BB:CC:DD:EE:FF', ip: '192.168.1.100', hostname: 'host1' }];
 

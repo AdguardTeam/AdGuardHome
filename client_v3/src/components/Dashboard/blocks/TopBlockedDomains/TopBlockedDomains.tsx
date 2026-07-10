@@ -103,39 +103,41 @@ export const TopBlockedDomains = (props: Props) => {
                                     </div>
 
                                     <div class={s.tableRowRight}>
-                                        <Dropdown
-                                            trigger="hover"
-                                            position="top"
-                                            noIcon
-                                            disableAnimation
-                                            overlayClass={s.queryTooltipOverlay}
-                                            menu={
-                                                <div class={s.queryTooltip}>
-                                                    {formatNumber(domain.count)}{' '}
-                                                    {intl.getMessage('queries').toLowerCase()}
-                                                </div>
-                                            }
-                                        >
-                                            <div
-                                                class={cn(
-                                                    theme.text.t3,
-                                                    theme.text.condenced,
-                                                    s.queryCount,
-                                                )}
+                                        <div class={s.dropdowWrapper}>
+                                            <Dropdown
+                                                trigger="hover"
+                                                position="top"
+                                                noIcon
+                                                disableAnimation
+                                                overlayClass={s.queryTooltipOverlay}
+                                                menu={
+                                                    <div class={s.queryTooltip}>
+                                                        {formatNumber(domain.count)}{' '}
+                                                        {intl.getMessage('queries').toLowerCase()}
+                                                    </div>
+                                                }
                                             >
-                                                {formatCompactNumber(domain.count)}
-
                                                 <div
                                                     class={cn(
                                                         theme.text.t3,
                                                         theme.text.condenced,
-                                                        s.queryPercent,
+                                                        s.queryCount,
                                                     )}
                                                 >
-                                                    ({percent().toFixed(2)}%)
+                                                    {formatCompactNumber(domain.count)}
+
+                                                    <div
+                                                        class={cn(
+                                                            theme.text.t3,
+                                                            theme.text.condenced,
+                                                            s.queryPercent,
+                                                        )}
+                                                    >
+                                                        ({percent().toFixed(2)}%)
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </Dropdown>
+                                            </Dropdown>
+                                        </div>
 
                                         <div class={s.queryBar}>
                                             <div

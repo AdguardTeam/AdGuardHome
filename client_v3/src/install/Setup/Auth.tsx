@@ -114,6 +114,7 @@ export const Auth = (props: Props) => {
                                     autocomplete="username"
                                     value={(field.value as string) ?? ''}
                                     errorMessage={field.error as string}
+                                    size="large"
                                 />
                             )}
                         </Field>
@@ -146,6 +147,7 @@ export const Auth = (props: Props) => {
                                         })
                                     }
                                     errorMessage={field.error as string}
+                                    size="large"
                                 />
                             )}
                         </Field>
@@ -175,6 +177,7 @@ export const Auth = (props: Props) => {
                                         })
                                     }
                                     errorMessage={field.error as string}
+                                    size="large"
                                 />
                             )}
                         </Field>

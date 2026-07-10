@@ -113,7 +113,7 @@ export const Blocklists = () => {
 
                             <div class={s.desc}>{intl.getMessage('blocklists_desc')}</div>
 
-                            <div class={s.group}>
+                            <div class={cn(s.group, s.buttonGroup)}>
                                 <PlusButton onClick={openAddBlocklistModal}>
                                     {intl.getMessage('add_blocklist')}
                                 </PlusButton>

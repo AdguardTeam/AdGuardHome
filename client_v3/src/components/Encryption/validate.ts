@@ -9,6 +9,7 @@ import {
     validatePlainDns,
     validateRequiredValue,
     validatePath,
+    validatePemContent,
 } from 'panel/helpers/validators';
 
 export type EncryptionFormValues = {
@@ -28,6 +29,74 @@ export type EncryptionFormValues = {
     private_key_saved?: boolean;
 };
 
+const validateCertPath = (value?: string): string | undefined => {
+    if (value && validatePath(value)) {
+        return intl.getMessage('encryption_unable_read_cert');
+    }
+    return undefined;
+};
+
+const validateKeyPath = (value?: string): string | undefined => {
+    if (value && validatePath(value)) {
+        return intl.getMessage('encryption_unable_read_key');
+    }
+    return undefined;
+};
+
+/**
+ * Validates only the certificate fields (chain or path).
+ * Used by step 1 of the Add TLS Certificate modal.
+ */
+export const validateCertFields = (values: EncryptionFormValues): Record<string, string> => {
+    const errs: Record<string, string> = {};
+
+    if (values.certificate_source === ENCRYPTION_SOURCE.CONTENT) {
+        const certErr =
+            validateRequiredValue(values.certificate_chain) ||
+            validatePemContent(values.certificate_chain);
+        if (certErr) errs.certificate_chain = certErr;
+    } else {
+        const certPathErr =
+            validateRequiredValue(values.certificate_path) ||
+            validateCertPath(values.certificate_path);
+        if (certPathErr) errs.certificate_path = certPathErr;
+    }
+
+    return errs;
+};
+
+/**
+ * Validates only the private key fields (key or path).
+ * Used by step 2 of the Add TLS Certificate modal.
+ */
+export const validateKeyFields = (values: EncryptionFormValues): Record<string, string> => {
+    const errs: Record<string, string> = {};
+
+    if (values.private_key_saved) return errs;
+
+    if (values.key_source === ENCRYPTION_SOURCE.CONTENT) {
+        const keyErr =
+            validateRequiredValue(values.private_key) || validatePemContent(values.private_key);
+        if (keyErr) errs.private_key = keyErr;
+    } else if (values.key_source === ENCRYPTION_SOURCE.PATH) {
+        const keyPathErr =
+            validateRequiredValue(values.private_key_path) ||
+            validateKeyPath(values.private_key_path);
+        if (keyPathErr) errs.private_key_path = keyPathErr;
+    }
+
+    return errs;
+};
+
+/**
+ * Validates certificate and private key fields together.
+ */
+export const validateCertKeyFields = (values: EncryptionFormValues): Record<string, string> => {
+    const errs: Record<string, string> = {};
+    Object.assign(errs, validateCertFields(values), validateKeyFields(values));
+    return errs;
+};
+
 /**
  * Runs all client-side validation for the encryption form and returns a map of
  * field name -> error message. An empty object means the form is valid.
@@ -37,6 +106,9 @@ export type EncryptionFormValues = {
  */
 export const validateEncryptionForm = (values: EncryptionFormValues): Record<string, string> => {
     const errs: Record<string, string> = {};
+
+    // Delegate cert/key validation to the shared helper.
+    Object.assign(errs, validateCertKeyFields(values));
 
     // Server name — optional, format only.
     const serverNameErr = validateServerName(values.server_name);
@@ -67,32 +139,6 @@ export const validateEncryptionForm = (values: EncryptionFormValues): Record<str
     // Plain DNS must be served when encryption is disabled.
     const plainDnsErr = validatePlainDns(values.serve_plain_dns ?? false, values);
     if (plainDnsErr) errs.serve_plain_dns = plainDnsErr as string;
-
-    // When encryption is enabled, a certificate and a private key are required
-    // before the backend validate request is meaningful.
-    if (values.enabled) {
-        if (values.certificate_source === ENCRYPTION_SOURCE.CONTENT) {
-            const certErr = validateRequiredValue(values.certificate_chain);
-            if (certErr) errs.certificate_chain = certErr;
-        } else {
-            const certPathErr =
-                validateRequiredValue(values.certificate_path) ||
-                validatePath(values.certificate_path);
-            if (certPathErr) errs.certificate_path = certPathErr;
-        }
-
-        if (!values.private_key_saved) {
-            if (values.key_source === ENCRYPTION_SOURCE.CONTENT) {
-                const keyErr = validateRequiredValue(values.private_key);
-                if (keyErr) errs.private_key = keyErr;
-            } else {
-                const keyPathErr =
-                    validateRequiredValue(values.private_key_path) ||
-                    validatePath(values.private_key_path);
-                if (keyPathErr) errs.private_key_path = keyPathErr;
-            }
-        }
-    }
 
     return errs;
 };

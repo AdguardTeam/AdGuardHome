@@ -10,12 +10,13 @@ type Props = {
     onClick: () => void;
     disabled?: boolean;
     testId?: string;
+    weight?: 'normal' | 'semi' | 'bold';
 };
 
 export const PlusButton = (props: Props) => (
     <button
         type="button"
-        class={cn(s.plusButton, props.class)}
+        class={cn(s.plusButton, { [s[props.weight]]: props.weight }, props.class)}
         onClick={(e) => (props.onClick as any)?.(e)}
         disabled={props.disabled}
         data-testid={props.testId}

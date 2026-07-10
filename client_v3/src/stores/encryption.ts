@@ -2,7 +2,6 @@ import { createStore } from 'solid-js/store';
 import { untrack } from 'solid-js';
 import { apiClient } from 'panel/api/Api';
 import { addErrorToast, addSuccessToast } from './toasts';
-import { getDnsStatus } from './dashboard';
 import intl from 'panel/common/intl';
 
 type EncryptionState = {
@@ -74,7 +73,7 @@ const initialState: EncryptionState = {
 const [state, setState] = createStore<EncryptionState>(initialState);
 
 const decodeResponse = (data: any) => {
-    const fields = ['certificate_chain', 'private_key', 'server_name'];
+    const fields = ['certificate_chain', 'private_key'];
     const decoded = { ...data };
     fields.forEach((field) => {
         if (decoded[field]) {
@@ -111,10 +110,28 @@ export const getTlsStatus = async () => {
     }
 };
 
-export const setTlsConfig = async (values: any) => {
+export const setTlsConfig = async (values: any, opts?: { silent?: boolean }) => {
     setState('processingConfig', true);
     try {
-        const encoded = encodeRequest(values);
+        // Merge: start with all store values, then override with caller's
+        // defined values (empty strings / false are intentional overrides).
+        const fullValues = {
+            enabled: state.enabled,
+            serve_plain_dns: state.serve_plain_dns,
+            server_name: state.server_name,
+            force_https: state.force_https,
+            port_https: state.port_https || 0,
+            port_dns_over_tls: state.port_dns_over_tls || 0,
+            port_dns_over_quic: state.port_dns_over_quic || 0,
+            certificate_chain: state.certificate_chain,
+            private_key: state.private_key,
+            certificate_path: state.certificate_path,
+            private_key_path: state.private_key_path,
+            private_key_saved: state.private_key_saved,
+            ...Object.fromEntries(Object.entries(values).filter(([, v]) => v !== undefined)),
+        };
+
+        const encoded = encodeRequest(fullValues);
         encoded.port_https = encoded.port_https || 0;
         encoded.port_dns_over_tls = encoded.port_dns_over_tls || 0;
         encoded.port_dns_over_quic = encoded.port_dns_over_quic || 0;
@@ -122,15 +139,15 @@ export const setTlsConfig = async (values: any) => {
         const data = await apiClient.setTlsConfig(encoded);
         const decoded = decodeResponse(data);
 
-        if (values.enabled && values.force_https && window.location.protocol === 'http:') {
+        if (fullValues.enabled && fullValues.force_https && window.location.protocol === 'http:') {
             window.location.reload();
             return;
         }
 
         setState({ ...decoded, processingConfig: false });
-        addSuccessToast(intl.getMessage('encryption_config_saved'));
-        // Refresh DNS status after TLS change
-        await getDnsStatus();
+        if (!opts?.silent) {
+            addSuccessToast(intl.getMessage('settings_notify_changes_saved'));
+        }
     } catch (error) {
         addErrorToast({ error });
         setState('processingConfig', false);
@@ -168,6 +185,22 @@ export const resetValidationStatus = () => {
         not_after: '',
         not_before: '',
         dns_names: null,
+    });
+};
+
+/**
+ * Optimistically clears cert and key fields in the local store so
+ * consumers reacting to certificate_chain / certificate_path
+ * (e.g. certConfigured()) flip synchronously, avoiding a flash of
+ * stale validation status while the async delete API call is in flight.
+ */
+export const clearCertOptimistically = () => {
+    setState({
+        certificate_chain: '',
+        private_key: '',
+        certificate_path: '',
+        private_key_path: '',
+        private_key_saved: false,
     });
 };
 

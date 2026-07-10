@@ -1,6 +1,11 @@
 import { describe, it, expect } from 'vitest';
 
-import { validateEncryptionForm } from 'panel/components/Encryption/validate';
+import {
+    validateCertFields,
+    validateKeyFields,
+    validateCertKeyFields,
+    validateEncryptionForm,
+} from 'panel/components/Encryption/validate';
 import { ENCRYPTION_SOURCE } from 'panel/helpers/constants';
 
 const valid = {
@@ -52,7 +57,7 @@ describe('validateEncryptionForm', () => {
         expect(ok.private_key).toBeUndefined();
     });
 
-    it('does NOT require cert/key when encryption is disabled', () => {
+    it('validates cert/key fields even when encryption is disabled', () => {
         const errs = validateEncryptionForm({
             ...valid,
             enabled: false,
@@ -60,8 +65,8 @@ describe('validateEncryptionForm', () => {
             certificate_chain: '',
             private_key: '',
         });
-        expect(errs.certificate_chain).toBeUndefined();
-        expect(errs.private_key).toBeUndefined();
+        expect(errs.certificate_chain).toBeTruthy();
+        expect(errs.private_key).toBeTruthy();
     });
 
     it('flags an out-of-range https port', () => {
@@ -121,5 +126,169 @@ describe('validateEncryptionForm', () => {
             server_name: 'not valid!',
         });
         expect(errs.server_name).toBeTruthy();
+    });
+});
+
+describe('validateCertFields', () => {
+    it('returns no errors for a valid cert chain', () => {
+        expect(validateCertFields(valid)).toEqual({});
+    });
+
+    it('returns no errors for a valid cert path', () => {
+        const errs = validateCertFields({
+            ...valid,
+            certificate_source: ENCRYPTION_SOURCE.PATH,
+            certificate_path: '/etc/ssl/cert.pem',
+            certificate_chain: '',
+        });
+        expect(errs).toEqual({});
+    });
+
+    it('requires certificate_chain when source is CONTENT', () => {
+        const errs = validateCertFields({ ...valid, certificate_chain: '' });
+        expect(errs.certificate_chain).toBeTruthy();
+    });
+
+    it('requires certificate_path when source is PATH', () => {
+        const errs = validateCertFields({
+            ...valid,
+            certificate_source: ENCRYPTION_SOURCE.PATH,
+            certificate_path: '',
+            certificate_chain: '',
+        });
+        expect(errs.certificate_path).toBeTruthy();
+    });
+
+    it('validates cert fields even when encryption is disabled', () => {
+        const errs = validateCertFields({
+            ...valid,
+            enabled: false,
+            certificate_chain: '',
+        });
+        expect(errs.certificate_chain).toBeTruthy();
+    });
+});
+
+describe('validateKeyFields', () => {
+    it('returns no errors for a valid private key', () => {
+        expect(validateKeyFields(valid)).toEqual({});
+    });
+
+    it('returns no errors for a valid key path', () => {
+        const errs = validateKeyFields({
+            ...valid,
+            key_source: ENCRYPTION_SOURCE.PATH,
+            private_key_path: '/etc/ssl/key.pem',
+            private_key: '',
+        });
+        expect(errs).toEqual({});
+    });
+
+    it('requires private_key when source is CONTENT', () => {
+        const errs = validateKeyFields({ ...valid, private_key: '' });
+        expect(errs.private_key).toBeTruthy();
+    });
+
+    it('requires private_key_path when source is PATH', () => {
+        const errs = validateKeyFields({
+            ...valid,
+            key_source: ENCRYPTION_SOURCE.PATH,
+            private_key_path: '',
+            private_key: '',
+        });
+        expect(errs.private_key_path).toBeTruthy();
+    });
+
+    it('returns no errors when private_key_saved is true', () => {
+        const errs = validateKeyFields({
+            ...valid,
+            private_key: '',
+            private_key_saved: true,
+        });
+        expect(errs).toEqual({});
+    });
+
+    it('validates key fields even when encryption is disabled', () => {
+        const errs = validateKeyFields({
+            ...valid,
+            enabled: false,
+            private_key: '',
+        });
+        expect(errs.private_key).toBeTruthy();
+    });
+
+    it('rejects non-PEM cert content', () => {
+        const errs = validateCertFields({
+            ...valid,
+            certificate_chain: 'not a pem certificate',
+        });
+        expect(errs.certificate_chain).toBeTruthy();
+    });
+
+    it('rejects non-PEM key content', () => {
+        const errs = validateKeyFields({
+            ...valid,
+            private_key: 'not a pem key',
+        });
+        expect(errs.private_key).toBeTruthy();
+    });
+
+    it('rejects invalid cert path', () => {
+        const errs = validateCertFields({
+            ...valid,
+            certificate_source: ENCRYPTION_SOURCE.PATH,
+            certificate_path: 'relative/path/no/leading/slash',
+            certificate_chain: '',
+        });
+        expect(errs.certificate_path).toBeTruthy();
+    });
+
+    it('rejects invalid key path', () => {
+        const errs = validateKeyFields({
+            ...valid,
+            key_source: ENCRYPTION_SOURCE.PATH,
+            private_key_path: 'relative/path/no/leading/slash',
+            private_key: '',
+        });
+        expect(errs.private_key_path).toBeTruthy();
+    });
+});
+
+describe('validateCertKeyFields', () => {
+    it('returns no errors when both cert and key are valid', () => {
+        expect(validateCertKeyFields(valid)).toEqual({});
+    });
+
+    it('returns only cert errors when cert is invalid but key is valid', () => {
+        const errs = validateCertKeyFields({ ...valid, certificate_chain: '' });
+        expect(errs.certificate_chain).toBeTruthy();
+        expect(errs.private_key).toBeUndefined();
+    });
+
+    it('returns only key errors when key is invalid but cert is valid', () => {
+        const errs = validateCertKeyFields({ ...valid, private_key: '' });
+        expect(errs.certificate_chain).toBeUndefined();
+        expect(errs.private_key).toBeTruthy();
+    });
+
+    it('returns both cert and key errors when both are invalid', () => {
+        const errs = validateCertKeyFields({
+            ...valid,
+            certificate_chain: '',
+            private_key: '',
+        });
+        expect(errs.certificate_chain).toBeTruthy();
+        expect(errs.private_key).toBeTruthy();
+    });
+
+    it('validates cert/key fields even when encryption is disabled', () => {
+        const errs = validateCertKeyFields({
+            ...valid,
+            enabled: false,
+            certificate_chain: '',
+            private_key: '',
+        });
+        expect(errs.certificate_chain).toBeTruthy();
+        expect(errs.private_key).toBeTruthy();
     });
 });

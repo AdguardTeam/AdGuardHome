@@ -16,6 +16,8 @@ import {
     validateBetween,
     validateMinValue,
     validateCacheSize,
+    validateRewriteNotExists,
+    validateRewriteNotSame,
 } from 'panel/helpers/validators';
 
 describe('validateIdentifier', () => {
@@ -447,5 +449,70 @@ describe('validateCacheSize', () => {
 
     it('returns undefined at UINT32_MAX boundary', () => {
         expect(validateCacheSize(4294967295, true)).toBeUndefined();
+    });
+});
+
+describe('validateRewriteNotExists', () => {
+    it('returns undefined for a non-existing domain', () => {
+        const result = validateRewriteNotExists('new.example.com', [
+            { domain: 'existing.example.com' },
+        ]);
+        expect(result).toBeUndefined();
+    });
+
+    it('returns error for a domain that already exists', () => {
+        const result = validateRewriteNotExists('example.com', [{ domain: 'example.com' }]);
+        expect(result).toBeTruthy();
+    });
+
+    it('returns undefined when editing the same rewrite', () => {
+        const result = validateRewriteNotExists(
+            'example.com',
+            [{ domain: 'example.com' }],
+            'example.com',
+        );
+        expect(result).toBeUndefined();
+    });
+
+    it('returns error when editing and changing to an existing other domain', () => {
+        const result = validateRewriteNotExists(
+            'other.example.com',
+            [{ domain: 'example.com' }, { domain: 'other.example.com' }],
+            'example.com',
+        );
+        expect(result).toBeTruthy();
+    });
+
+    it('returns undefined for an empty domain', () => {
+        const result = validateRewriteNotExists('', [{ domain: 'example.com' }]);
+        expect(result).toBeUndefined();
+    });
+
+    it('case-insensitive duplicate check', () => {
+        const result = validateRewriteNotExists('Example.COM', [{ domain: 'example.com' }]);
+        expect(result).toBeTruthy();
+    });
+});
+
+describe('validateRewriteNotSame', () => {
+    it('returns undefined when domain and answer differ', () => {
+        const result = validateRewriteNotSame('example.com', '192.168.1.1');
+        expect(result).toBeUndefined();
+    });
+
+    it('returns error when domain equals answer', () => {
+        const result = validateRewriteNotSame('example.com', 'example.com');
+        expect(result).toBeTruthy();
+    });
+
+    it('returns error case-insensitively', () => {
+        const result = validateRewriteNotSame('Example.COM', 'example.com');
+        expect(result).toBeTruthy();
+    });
+
+    it('returns undefined for empty values', () => {
+        expect(validateRewriteNotSame('', 'example.com')).toBeUndefined();
+        expect(validateRewriteNotSame('example.com', '')).toBeUndefined();
+        expect(validateRewriteNotSame('', '')).toBeUndefined();
     });
 });

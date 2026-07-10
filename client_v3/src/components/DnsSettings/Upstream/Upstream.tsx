@@ -7,7 +7,7 @@ import { dnsConfigState, togglePrivatePtrResolvers } from 'panel/stores/dnsConfi
 import { settingsState, testUpstreamWithFormValues } from 'panel/stores/settings';
 import { Button } from 'panel/common/ui/Button';
 import { SettingRow } from 'panel/common/ui/SettingRow';
-import { useDialogOpen } from 'panel/hooks/useField';
+import { useDialog } from 'panel/hooks/useDialog';
 import { getUpstreamModeSummary, getUpstreamServersSummary, getTtlSummary } from '../helpers';
 import theme from 'panel/lib/theme';
 
@@ -21,11 +21,11 @@ import { Paths } from 'panel/components/Routes/Paths';
 export const Upstream = () => {
     const navigate = useNavigate();
 
-    const upstreamModeDialog = useDialogOpen();
-    const serverAddressesDialog = useDialogOpen();
-    const fallbackDialog = useDialogOpen();
-    const bootstrapDialog = useDialogOpen();
-    const timeoutDialog = useDialogOpen();
+    const upstreamModeDialog = useDialog();
+    const serverAddressesDialog = useDialog();
+    const fallbackDialog = useDialog();
+    const bootstrapDialog = useDialog();
+    const timeoutDialog = useDialog();
 
     const upstreamModeValue = createMemo(() =>
         getUpstreamModeSummary(dnsConfigState.upstream_mode),

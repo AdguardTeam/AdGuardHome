@@ -17,7 +17,7 @@ type Props = {
     class?: string;
     children?: JSX.Element;
     footer?: JSX.Element;
-    description?: string | JSX.Element;
+    description?: JSX.Element;
     hideSubmit?: boolean;
     buttonText?: string;
 };

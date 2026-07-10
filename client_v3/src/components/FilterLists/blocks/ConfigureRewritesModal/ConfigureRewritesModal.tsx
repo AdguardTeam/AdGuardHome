@@ -10,7 +10,13 @@ import theme from 'panel/lib/theme';
 import { Button } from 'panel/common/ui/Button';
 import { addRewrite, updateRewrite, rewritesState } from 'panel/stores/rewrites';
 import { Input } from 'panel/common/controls/Input';
-import { validateAnswer, validateDomain, validateRequiredValue } from 'panel/helpers/validators';
+import {
+    validateAnswer,
+    validateDomain,
+    validateRequiredValue,
+    validateRewriteNotExists,
+    validateRewriteNotSame,
+} from 'panel/helpers/validators';
 import { DomainFaqTooltip } from './DomainFaqTooltip';
 import { AnswerFaqTooltip } from './AnswerFaqTooltip';
 
@@ -81,10 +87,16 @@ export const ConfigureRewritesModal = (props: Props) => {
     };
 
     const validateAnswerField = () => {
-        const err = validateRequiredValue(answer()) || validateAnswer(answer());
+        const err =
+            validateRequiredValue(answer()) ||
+            validateAnswer(answer()) ||
+            validateRewriteNotSame(domain(), answer()) ||
+            validateRewriteNotExists(domain(), rewritesState.list, props.rewriteToEdit?.domain);
         setAnswerError(err || undefined);
         return !err;
     };
+
+    const hasErrors = () => !!domainError() || !!answerError();
 
     const handleFormSubmit = async (e: Event) => {
         e.preventDefault();
@@ -137,7 +149,12 @@ export const ConfigureRewritesModal = (props: Props) => {
 
     return (
         <ModalWrapper id={props.modalId}>
-            <Dialog visible onClose={handleCancel} title={getTitle(props.modalId)}>
+            <Dialog
+                visible
+                onClose={handleCancel}
+                title={getTitle(props.modalId)}
+                noOverflowContent
+            >
                 <form onSubmit={handleFormSubmit}>
                     <div>
                         <div class={theme.form.group}>
@@ -156,11 +173,13 @@ export const ConfigureRewritesModal = (props: Props) => {
                                         'rewrite_domain_input_placeholder',
                                     )}
                                     value={domain()}
-                                    onChange={(e) =>
-                                        setDomain((e.target as HTMLInputElement).value)
-                                    }
+                                    onChange={(e) => {
+                                        setDomain((e.target as HTMLInputElement).value);
+                                        setDomainError(undefined);
+                                    }}
                                     onBlur={validateDomainField}
                                     errorMessage={domainError()}
+                                    size="large"
                                 />
                             </div>
 
@@ -179,11 +198,13 @@ export const ConfigureRewritesModal = (props: Props) => {
                                         'rewrites_answer_input_placeholder',
                                     )}
                                     value={answer()}
-                                    onChange={(e) =>
-                                        setAnswer((e.target as HTMLInputElement).value)
-                                    }
+                                    onChange={(e) => {
+                                        setAnswer((e.target as HTMLInputElement).value);
+                                        setAnswerError(undefined);
+                                    }}
                                     onBlur={validateAnswerField}
                                     errorMessage={answerError()}
+                                    size="large"
                                 />
                             </div>
                         </div>
@@ -199,7 +220,8 @@ export const ConfigureRewritesModal = (props: Props) => {
                             disabled={
                                 rewritesState.processingAdd ||
                                 rewritesState.processingUpdate ||
-                                rewritesState.processing
+                                rewritesState.processing ||
+                                hasErrors()
                             }
                             class={theme.dialog.button}
                         >

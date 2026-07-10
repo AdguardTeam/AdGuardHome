@@ -5,18 +5,33 @@ import { nanoid } from 'nanoid';
 type ToastAction = {
     text: string;
     actionType?: string;
-    actionPayload?: any;
-    callback?: () => void | Promise<void>;
+    actionPayload?: unknown;
+    callback?: () => void;
+};
+
+/** Payload accepted by addSuccessToast. */
+type SuccessToastPayload = string | {
+    message: string;
+    code?: string;
+    actionLabel?: string;
+    undoId?: string;
+};
+
+/** Payload accepted by addErrorToast / addWarningToast. */
+type ErrorToastPayload = {
+    error: unknown;
+    options?: Record<string, unknown>;
+    action?: ToastAction;
 };
 
 type ToastNotice = {
     id: string;
-    message: any;
-    type: 'error' | 'success' | 'notice';
+    message: string;
+    type: 'error' | 'success' | 'notice' | 'warning';
     actionLabel?: string;
     undoId?: string;
     action?: ToastAction;
-    options?: any;
+    options?: Record<string, unknown>;
     code?: string;
 };
 
@@ -41,16 +56,16 @@ export const clearUndoCallback = (id: string): void => {
 };
 
 export const createUndoToast = (
-    message: any,
+    message: string,
     actionLabel: string,
     onUndo: UndoCallback,
-): { message: any; actionLabel: string; undoId: string } => {
+): { message: string; actionLabel: string; undoId: string } => {
     const undoId = nanoid();
     undoRegistry.set(undoId, onUndo);
     return { message, actionLabel, undoId };
 };
 
-export const addErrorToast = (payload: { error: any; options?: any; action?: ToastAction }) => {
+export const addErrorToast = (payload: ErrorToastPayload) => {
     const { error, options, action } = payload;
     const message = error instanceof Error ? error.message : String(error);
     console.error(message); // eslint-disable-line no-console
@@ -66,13 +81,13 @@ export const addErrorToast = (payload: { error: any; options?: any; action?: Toa
     setState('notices', (prev) => [...prev, notice]);
 };
 
-export const addSuccessToast = (message: any) => {
+export const addSuccessToast = (message: SuccessToastPayload) => {
     const notice: ToastNotice = {
         id: nanoid(),
         type: 'success',
-        message: typeof message === 'string' ? message : message?.message || message,
+        message: typeof message === 'string' ? message : message.message,
     };
-    if (typeof message === 'object' && message !== null) {
+    if (typeof message === 'object') {
         notice.actionLabel = message.actionLabel;
         notice.undoId = message.undoId;
         notice.code = message.code;
@@ -80,7 +95,22 @@ export const addSuccessToast = (message: any) => {
     setState('notices', (prev) => [...prev, notice]);
 };
 
-export const addNoticeToast = (message: any) => {
+export const addWarningToast = (payload: ErrorToastPayload) => {
+    const { error, options, action } = payload;
+    const message = error instanceof Error ? error.message : String(error);
+    const notice: ToastNotice = {
+        id: nanoid(),
+        message,
+        options,
+        type: 'warning' as const,
+    };
+    if (action) {
+        notice.action = action;
+    }
+    setState('notices', (prev) => [...prev, notice]);
+};
+
+export const addNoticeToast = (message: string) => {
     setState('notices', (prev) => [
         ...prev,
         {
