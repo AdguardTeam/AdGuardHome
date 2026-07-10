@@ -60,8 +60,9 @@ type languages map[langCode]string
 // textlabel is a text label of localization.
 type textLabel string
 
-// locales is a map, where key is text label and value is translation.
-type locales map[textLabel]string
+// locales is a map, where key is a text label and the value is either a string
+// or an object.
+type locales map[textLabel]any
 
 func main() {
 	ctx := context.Background()

@@ -52,7 +52,7 @@
     "project_id": "hostlists-registry",
     "base_locale": "en",
     "localizable_files": [
-      "client/src/__locales-services/services.json"
+      "client/src/__locales-services/en.json"
     ],
     "languages": {
       "ar": "العربية",
