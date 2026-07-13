@@ -350,11 +350,12 @@ export const validateMac = (value?: string): ValidationResult => {
 };
 
 /**
- * Validates a port number is within the standard web range (80–65535).
+ * Validates a port number is within the valid range (0–65535).
+ * Port 0 means "disabled".
  *
  * @example validatePort(8080)      // undefined (valid)
- * @example validatePort(80)        // undefined (valid)
- * @example validatePort(79)        // "Enter port number in the range of 80-65535"
+ * @example validatePort(0)         // undefined (valid, disabled)
+ * @example validatePort(-1)        // "Enter port number in the range of 0-65535"
  */
 export const validatePort = (value?: number): ValidationResult => {
     if ((value || value === 0) && (value < 0 || value > MAX_PORT)) {
