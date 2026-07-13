@@ -125,7 +125,7 @@ export const LogsConfig = (props: Props) => {
                     }}
                     processing={props.processing}
                     onValuesChange={handleFormChange}
-                    submitted={submitted() || hasCustomIntervalError()}
+                    submitted={submitted()}
                 />
             </ConfigDialog>
 

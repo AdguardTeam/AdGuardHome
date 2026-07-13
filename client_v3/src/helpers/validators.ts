@@ -359,7 +359,10 @@ export const validateMac = (value?: string): ValidationResult => {
  */
 export const validatePort = (value?: number): ValidationResult => {
     if ((value || value === 0) && (value < 0 || value > MAX_PORT)) {
-        return intl.getMessage('form_error_port_range');
+        return intl.getMessage('form_error_port_range', {
+            min: 0,
+            max: MAX_PORT,
+        });
     }
     return undefined;
 };
@@ -387,7 +390,10 @@ export const validateInstallPort = (value?: number): ValidationResult => {
  */
 export const validatePortTLS = (value?: number): ValidationResult => {
     if ((value || value === 0) && (value < 0 || value > MAX_PORT)) {
-        return intl.getMessage('form_error_port_range');
+        return intl.getMessage('form_error_port_range', {
+            min: 0,
+            max: MAX_PORT,
+        });
     }
     return undefined;
 };

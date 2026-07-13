@@ -9,11 +9,13 @@
         border-radius: 8px;
     }
 
-    @media (hover: hover) {
-        &:hover,
-        &:focus {
-            background-color: var(--page-background-additional);
-        }
+    &:hover,
+    &:focus-visible {
+        background-color: var(--page-background-additional);
+    }
+
+    &:active {
+        background-color: transparent;
     }
 }
 

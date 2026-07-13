@@ -38,8 +38,7 @@ export const RetentionCustomInput = (props: Props) => {
             <Input
                 ref={inputRef}
                 id={props.inputId}
-                type="text"
-                inputMode="numeric"
+                type="number"
                 label={props.inputLabel}
                 placeholder={props.placeholder}
                 value={props.value ?? ''}
