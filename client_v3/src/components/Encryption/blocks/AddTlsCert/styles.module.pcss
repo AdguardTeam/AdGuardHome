@@ -10,8 +10,21 @@
 
 .footer {
     display: flex;
+    flex-wrap: wrap;
     gap: 16px;
-    justify-content: flex-end;
+    width: 100%;
+
+    & button {
+        width: 100%;
+    }
+
+    @media (min-width: 768px) {
+        flex-wrap: nowrap;
+
+        & button {
+            width: auto;
+        }
+    }
 }
 
 .hiddenFileInput {

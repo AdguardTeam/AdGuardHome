@@ -70,7 +70,7 @@ export const TlsCertSection = () => {
                 <span class={s.certTitle}>{intl.getMessage('tls_certificate')}</span>
                 <button
                     type="button"
-                    class={theme.table.action}
+                    class={theme.form.action}
                     onClick={removeCert}
                     aria-label={intl.getMessage('encryption_certificates')}
                 >
