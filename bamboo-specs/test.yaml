@@ -33,7 +33,7 @@
           - 'Artifact'
 
   - 'E2E':
-      manual: true
+      manual: false
       final: false
       jobs:
         - 'Test e2e'
