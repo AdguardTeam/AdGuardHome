@@ -49,7 +49,7 @@ export const Form = (props: Props) => {
         if (intervalValue() !== RETENTION_CUSTOM) {
             return undefined;
         }
-        if (val == null) {
+        if (!val) {
             return (props.submitted || touched())
                 ? intl.getMessage('form_error_required')
                 : undefined;
