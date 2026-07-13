@@ -1,5 +1,3 @@
-import intl from 'panel/common/intl';
-
 export const R_URL_REQUIRES_PROTOCOL = /^https?:\/\/[^/\s]+(\/.*)?$/;
 
 // matches hostname or *.wildcard
@@ -173,6 +171,7 @@ export const MENU_URLS = {
 export const SETTINGS_URLS = {
     encryption: '/encryption',
     dhcp: '/dhcp',
+    dhcpLeases: '/dhcp/leases',
     dns: '/dns',
     settings: '/settings',
     clients: '/clients',
@@ -189,6 +188,7 @@ export const FILTERS_URLS = {
 export const ENCRYPTION_SOURCE = {
     PATH: 'path',
     CONTENT: 'content',
+    SAVED: 'saved',
 };
 
 export const FILTERED = 'Filtered';
@@ -220,6 +220,11 @@ export const BLOCKING_MODES = {
     nxdomain: 'nxdomain',
     null_ip: 'null_ip',
     custom_ip: 'custom_ip',
+};
+
+export const EDNS_MODES = {
+    default: 'default',
+    custom: 'custom',
 };
 
 // Note that translation strings contain these modes (theme_CONSTANT)
@@ -293,23 +298,18 @@ export const FILTERED_STATUS = {
 export const QUERY_LOG_STATUS_FILTER = {
     ALL: {
         QUERY: 'all',
-        LABEL: intl.getMessage('query_log_all_statuses'),
     },
     PROCESSED: {
         QUERY: 'processed',
-        LABEL: intl.getMessage('query_log_processed'),
     },
     ALLOWED: {
         QUERY: 'allowed',
-        LABEL: intl.getMessage('query_log_allowed'),
     },
     BLOCKED: {
         QUERY: 'blocked',
-        LABEL: intl.getMessage('query_log_blocked'),
     },
     REWRITTEN: {
         QUERY: 'rewritten',
-        LABEL: intl.getMessage('query_log_rewritten'),
     },
 } as const;
 
@@ -331,31 +331,24 @@ export const QUERY_LOG_STATUS_FILTER_QUERIES = Object.values(QUERY_LOG_STATUS_FI
 export const QUERY_LOG_REASON_FILTER = {
     ALL: {
         QUERY: 'all',
-        LABEL: intl.getMessage('query_log_all_reasons'),
     },
     BLOCKED_BY_FILTER: {
         QUERY: 'FilteredBlackList',
-        LABEL: intl.getMessage('query_log_blocked_by_filter'),
     },
     BLOCKED_SERVICES: {
         QUERY: 'FilteredBlockedService',
-        LABEL: intl.getMessage('query_log_blocked_services'),
     },
     BLOCKED_BY_THREATS: {
         QUERY: 'FilteredSafeBrowsing',
-        LABEL: intl.getMessage('query_log_blocked_threats'),
     },
     BLOCKED_BY_PARENTAL_CONTROL: {
         QUERY: 'FilteredParental',
-        LABEL: intl.getMessage('query_log_blocked_by_parental_control'),
     },
     DNS_REWRITES: {
         QUERY: 'Rewrite',
-        LABEL: intl.getMessage('dns_rewrites'),
     },
     SAFE_SEARCH: {
         QUERY: 'FilteredSafeSearch',
-        LABEL: intl.getMessage('query_log_safe_search'),
     },
 } as const;
 
@@ -501,9 +494,42 @@ export const UINT32_RANGE = {
     MAX: 4294967295,
 };
 
+/**
+ * Default DNS cache size (4 MiB), matching the backend default
+ * (`internal/home/config.go`, `CacheSize: 4 * 1024 * 1024`).
+ */
+export const DEFAULT_DNS_CACHE_SIZE = 4 * 1024 * 1024;
+
 export const RETENTION_RANGE = {
     MIN: 1,
     MAX: 365 * 24,
+};
+
+export const RATE_LIMIT = {
+    MIN: 0,
+    MAX: UINT32_RANGE.MAX,
+};
+
+export const IPV4_SUBNET_PREFIX = {
+    MIN: 0,
+    MAX: 32,
+    DEFAULT: 24,
+};
+
+export const IPV6_SUBNET_PREFIX = {
+    MIN: 0,
+    MAX: 128,
+    DEFAULT: 56,
+};
+
+export const IP_VERSION = {
+    V4: 'IPv4',
+    V6: 'IPv6',
+} as const;
+
+export const UPSTREAM_TIMEOUT = {
+    MIN: 1,
+    MAX: UINT32_RANGE.MAX,
 };
 
 export const DHCP_VALUES_PLACEHOLDERS = {
@@ -539,6 +565,7 @@ export const TOAST_TYPES = {
     SUCCESS: 'success',
     ERROR: 'error',
     NOTICE: 'notice',
+    WARNING: 'warning',
 };
 
 export const SUCCESS_TOAST_TIMEOUT = 5000;
@@ -550,6 +577,7 @@ export const TOAST_TIMEOUTS = {
     [TOAST_TYPES.SUCCESS]: SUCCESS_TOAST_TIMEOUT,
     [TOAST_TYPES.ERROR]: FAILURE_TOAST_TIMEOUT,
     [TOAST_TYPES.NOTICE]: FAILURE_TOAST_TIMEOUT,
+    [TOAST_TYPES.WARNING]: FAILURE_TOAST_TIMEOUT,
 };
 
 export const ADDRESS_TYPES = {

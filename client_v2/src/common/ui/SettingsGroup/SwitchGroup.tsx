@@ -1,4 +1,4 @@
-import React, { ReactNode, useRef } from 'react';
+import { type JSX, Show } from 'solid-js';
 import cn from 'clsx';
 
 import { Switch } from 'panel/common/controls/Switch';
@@ -10,60 +10,57 @@ type Props = {
     title: string;
     description?: string;
     id: string;
-    className?: string;
+    class?: string;
     checked: boolean;
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    onChange: (e: Event) => void;
     disabled?: boolean;
-    children?: ReactNode;
+    children?: JSX.Element;
 };
 
-export const SwitchGroup = ({
-    title,
-    description,
-    id,
-    className,
-    checked,
-    onChange,
-    disabled,
-    children,
-}: Props) => {
-    const inputRef = useRef<HTMLInputElement>(null);
+export const SwitchGroup = (props: Props) => {
+    let inputRef: HTMLInputElement | undefined;
 
     const handleRowClick = () => {
-        if (disabled || !inputRef.current) {
+        if (props.disabled || !inputRef) {
             return;
         }
 
-        inputRef.current?.click();
+        inputRef?.click();
     };
 
     return (
-        <div className={cn(s.switch, disabled && s.switchDisabled, className)}>
-            <div className={s.row} onClick={handleRowClick}>
-                <div className={s.text}>
+        <div class={cn(s.switch, { [s.switchDisabled]: props.disabled }, props.class)}>
+            <div class={s.row} onClick={handleRowClick}>
+                <div class={s.text}>
                     <div
-                        className={cn(
+                        class={cn(
                             theme.text.t2,
                             theme.text.semibold,
-                            disabled ? s.titleDisabled : s.title,
+                            props.disabled ? s.titleDisabled : s.title,
                         )}
                     >
-                        {title}
+                        {props.title}
                     </div>
-                    {description && <div className={cn(theme.text.t3, s.desc)}>{description}</div>}
+                    <Show when={props.description}>
+                        <div class={cn(theme.text.t3, s.desc)}>{props.description}</div>
+                    </Show>
                 </div>
-                <div className={s.input} onClick={(e) => e.stopPropagation()}>
+                <div class={s.input} onClick={(e: MouseEvent) => e.stopPropagation()}>
                     <Switch
-                        id={id}
-                        checked={checked}
-                        onChange={onChange}
-                        disabled={disabled}
-                        ref={inputRef}
+                        id={props.id}
+                        checked={props.checked}
+                        onChange={props.onChange}
+                        disabled={props.disabled}
+                        ref={(el: HTMLInputElement) => {
+                            inputRef = el;
+                        }}
                     />
                 </div>
             </div>
 
-            {children && <div className={s.content}>{children}</div>}
+            <Show when={props.children}>
+                <div class={s.content}>{props.children}</div>
+            </Show>
         </div>
     );
 };

@@ -7,5 +7,5 @@
 /test-reports/
 /tmp/
 /client/node_modules
-/client_v3/node_modules
+/client_v2/node_modules
 AdGuardHome.yaml

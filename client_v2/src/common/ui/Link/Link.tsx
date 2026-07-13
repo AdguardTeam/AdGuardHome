@@ -1,74 +1,77 @@
-import React, { MouseEvent, MouseEventHandler, ReactNode } from 'react';
-import { Link as ReactRouterDomLink, LinkProps as LProps } from 'react-router-dom';
+import { type JSX, Show, untrack } from 'solid-js';
+import { A } from '@solidjs/router';
 import cn from 'clsx';
-import { LinkParams, linkPathBuilder, RoutePathKey } from 'panel/components/Routes/Paths';
+import {
+    LinkParams,
+    linkPathBuilder,
+    RoutePathKey,
+    SCROLL_QUERY_KEY,
+} from 'panel/components/Routes/Paths';
 import theme from 'panel/lib/theme';
 
 type Props = {
     to: RoutePathKey;
+    hash?: string;
     props?: LinkParams;
-    className?: string;
-    type?: LProps['type'];
+    class?: string;
+    type?: string;
     stop?: boolean;
     disabled?: boolean;
-    onClick?: MouseEventHandler;
+    onClick?: JSX.EventHandler<HTMLAnchorElement, MouseEvent>;
     id?: string;
     query?: Record<string, string | number | boolean>;
-    children?: ReactNode;
+    children?: JSX.Element;
 };
 
-export const Link = ({
-    to,
-    children,
-    className,
-    props,
-    type,
-    stop,
-    disabled,
-    onClick,
-    id,
-    query,
-}: Props) => {
-    if (props) {
-        Object.keys(props).forEach((key: string) => {
-            if (!props[key]) {
-                throw new Error(`Wrong key value: ${key} for route: ${to}`);
-            }
-        });
-    }
+export const Link = (linkProps: Props) => {
+    untrack(() => {
+        if (linkProps.props) {
+            Object.keys(linkProps.props).forEach((key: string) => {
+                if (!(linkProps.props as any)[key]) {
+                    throw new Error(`Wrong key value: ${key} for route: ${linkProps.to}`);
+                }
+            });
+        }
+    });
 
     const handleClick = (e: MouseEvent) => {
-        // setTimeout fixes bug in safari
-        // not scrolling to top
-        setTimeout(() => {
-            window.scrollTo({ top: 0 });
-        }, 100);
+        // Don't scroll to top when navigating to a specific section (scroll handled by the target page)
+        if (!linkProps.query?.[SCROLL_QUERY_KEY]) {
+            setTimeout(() => {
+                window.scrollTo({ top: 0 });
+            }, 100);
+        }
 
-        if (stop) {
+        if (linkProps.stop) {
             e.stopPropagation();
         }
-        if (onClick) {
-            onClick(e);
+        if (linkProps.onClick) {
+            (linkProps.onClick as any)(e);
         }
     };
 
-    if (disabled) {
-        return (
-            <div id={id} tabIndex={0} className={cn(className)}>
-                {children}
-            </div>
-        );
-    }
-
     return (
-        <ReactRouterDomLink
-            id={id}
-            className={cn(theme.link.link, className)}
-            type={type}
-            to={linkPathBuilder(to, props, query)}
-            onClick={handleClick}
+        <Show
+            when={!linkProps.disabled}
+            fallback={
+                <div id={linkProps.id} tabIndex={0} class={cn(linkProps.class)}>
+                    {linkProps.children}
+                </div>
+            }
         >
-            {children}
-        </ReactRouterDomLink>
+            <A
+                id={linkProps.id}
+                class={cn(theme.link.link, linkProps.class)}
+                href={linkPathBuilder(
+                    linkProps.to,
+                    linkProps.props,
+                    linkProps.query,
+                    linkProps.hash,
+                )}
+                onClick={handleClick}
+            >
+                {linkProps.children}
+            </A>
+        </Show>
     );
 };

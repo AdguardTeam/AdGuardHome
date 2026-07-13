@@ -1,8 +1,8 @@
-import React from 'react';
+import { For } from 'solid-js';
 import cn from 'clsx';
 import { Icon } from 'panel/common/ui/Icon';
 import { Link } from 'panel/common/ui/Link';
-import { RoutePathKey } from 'panel/components/Routes/Paths';
+import { type RoutePathKey } from 'panel/components/Routes/Paths';
 import theme from 'panel/lib/theme';
 
 import s from './styles.module.pcss';
@@ -18,26 +18,28 @@ type Props = {
     currentTitle: string;
 };
 
-export const Breadcrumbs = ({ parentLinks, currentTitle }: Props) => (
-    <div className={s.wrapper}>
-        {parentLinks.map(({ path, title, props }) => (
-            <div key={path} className={s.link}>
-                <Link
-                    to={path}
-                    className={cn(
-                        theme.link.link,
-                        theme.link.noDecoration,
-                        theme.common.textOverflow,
-                    )}
-                    props={props}
-                >
-                    {title}
-                </Link>
-                <Icon icon="arrow_bottom" className={s.arrow} />
-            </div>
-        ))}
-        <div className={cn(theme.common.textOverflow, s.current)} title={currentTitle}>
-            {currentTitle}
+export const Breadcrumbs = (props: Props) => (
+    <div class={s.wrapper}>
+        <For each={props.parentLinks}>
+            {({ path, title, props: linkProps }) => (
+                <div class={s.link}>
+                    <Link
+                        to={path}
+                        class={cn(
+                            theme.link.link,
+                            theme.link.noDecoration,
+                            theme.common.textOverflow,
+                        )}
+                        props={linkProps}
+                    >
+                        {title}
+                    </Link>
+                    <Icon icon="arrow_bottom" class={s.arrow} />
+                </div>
+            )}
+        </For>
+        <div class={cn(theme.common.textOverflow, s.current)} title={props.currentTitle}>
+            {props.currentTitle}
         </div>
     </div>
 );

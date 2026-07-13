@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
 
-import { ADMIN_USERNAME, ADMIN_PASSWORD } from '../constants';
+import { login } from '../helpers/login';
 
 const MOCK_QUERY_LOG_CONFIG = {
     anonymize_client_ip: false,
@@ -391,28 +391,6 @@ const createPaginatedRows = (count: number, offset = 0): QueryLogApiEntry[] =>
         };
     });
 
-async function login(page: Page) {
-    let lastError: unknown;
-
-    for (let attempt = 0; attempt < 3; attempt += 1) {
-        await page.goto('/login.html', { waitUntil: 'domcontentloaded' });
-
-        try {
-            await page.locator('#username').waitFor({ state: 'visible', timeout: 5000 });
-            await page.locator('#username').fill(ADMIN_USERNAME);
-            await page.locator('#password').fill(ADMIN_PASSWORD);
-            await page.locator('#sign_in').click();
-            await page.waitForURL((url) => !url.href.endsWith('/login.html'));
-
-            return;
-        } catch (error) {
-            lastError = error;
-        }
-    }
-
-    throw lastError;
-}
-
 async function setupQueryLogMocks(
     page: Page,
     {
@@ -560,7 +538,7 @@ async function selectFilterOption(
 ) {
     const filter = page.getByTestId(filterTestId);
 
-    await filter.locator('.select__control').click();
+    await filter.locator('[data-part="control"]').click();
     await expect(page.getByTestId(`${optionPrefix}-${optionValue}`)).toBeVisible();
     await page.getByTestId(`${optionPrefix}-${optionValue}`).click();
 }

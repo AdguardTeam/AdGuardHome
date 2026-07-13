@@ -9,17 +9,17 @@ import { BUILD_ENVS } from './constants.js';
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 
 const RESOURCES_PATH = __dirname;
-const ENTRY_REACT = path.resolve(RESOURCES_PATH, 'src/index.tsx');
+const ENTRY_MAIN = path.resolve(RESOURCES_PATH, 'src/index.tsx');
 const ENTRY_INSTALL = path.resolve(RESOURCES_PATH, 'src/install/index.tsx');
 const ENTRY_LOGIN = path.resolve(RESOURCES_PATH, 'src/login/index.tsx');
+const ENTRY_FORGOT_PASSWORD = path.resolve(RESOURCES_PATH, 'src/forgot_password/index.tsx');
 const HTML_PATH = path.resolve(RESOURCES_PATH, 'public/index.html');
 const HTML_INSTALL_PATH = path.resolve(RESOURCES_PATH, 'public/install.html');
 const HTML_LOGIN_PATH = path.resolve(RESOURCES_PATH, 'public/login.html');
-const ENTRY_FORGOT_PASSWORD = path.resolve(RESOURCES_PATH, 'src/forgot_password/index.tsx');
 const HTML_FORGOT_PASSWORD_PATH = path.resolve(RESOURCES_PATH, 'public/forgot_password.html');
 const ASSETS_PATH = path.resolve(RESOURCES_PATH, 'public/assets');
 
-const PUBLIC_PATH = path.resolve(__dirname, '../build/static');
+const PUBLIC_PATH = path.resolve(RESOURCES_PATH, '../build/static');
 const PUBLIC_ASSETS_PATH = path.resolve(PUBLIC_PATH, 'assets');
 
 const BUILD_ENV = BUILD_ENVS[process.env.BUILD_ENV];
@@ -51,7 +51,7 @@ const config = {
     target: 'web',
     context: RESOURCES_PATH,
     entry: {
-        main: ENTRY_REACT,
+        main: ENTRY_MAIN,
         install: ENTRY_INSTALL,
         login: ENTRY_LOGIN,
         forgot_password: ENTRY_FORGOT_PASSWORD,
@@ -128,7 +128,7 @@ const config = {
                 test: /\.tsx?$/,
                 exclude: /node_modules/,
                 use: {
-                    loader: 'ts-loader',
+                    loader: 'babel-loader',
                 },
             },
         ],

@@ -1,1 +1,0 @@
-export { SortSelect } from './SortSelect';

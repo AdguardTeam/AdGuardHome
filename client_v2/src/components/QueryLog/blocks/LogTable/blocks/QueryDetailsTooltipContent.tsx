@@ -1,4 +1,4 @@
-import React from 'react';
+import { Show } from 'solid-js';
 import cn from 'clsx';
 
 import intl from 'panel/common/intl';
@@ -17,112 +17,105 @@ type Props = {
     row: LogEntry;
 };
 
-const renderValue = (value: React.ReactNode) => (
-    <span className={cn(s.queryDetailsTooltipValue, theme.text.t3)}>{value}</span>
+const renderValue = (value: any) => (
+    <span class={cn(s.queryDetailsTooltipValue, theme.text.t3)}>{value}</span>
 );
 
-export const QueryDetailsTooltipContent = ({ row }: Props) => {
-    const trackerSource = row.tracker?.sourceData;
-    const displayDomain = row.unicodeName || row.domain;
+export const QueryDetailsTooltipContent = (props: Props) => {
+    const trackerSource = () => props.row.tracker?.sourceData;
+    const displayDomain = () => props.row.unicodeName || props.row.domain;
 
     return (
-        <div className={s.queryDetailsTooltipContent} onClick={(e) => e.stopPropagation()}>
-            <div className={cn(s.queryDetailsTooltipTitle, theme.text.t2, theme.text.semibold)}>
+        <div class={s.queryDetailsTooltipContent} onClick={(e) => e.stopPropagation()}>
+            <div class={cn(s.queryDetailsTooltipTitle, theme.text.t2, theme.text.semibold)}>
                 {intl.getMessage('query_details')}
             </div>
 
-            <div className={s.queryDetailsTooltipSection}>
-                <div className={s.queryDetailsTooltipItem}>
+            <div class={s.queryDetailsTooltipSection}>
+                <div class={s.queryDetailsTooltipItem}>
                     {intl.getMessage('query_log_detail_time', {
-                        value: formatLogTimeDetailed(row.time),
+                        value: formatLogTimeDetailed(props.row.time),
                         span: renderValue,
                     })}
                 </div>
-                <div className={s.queryDetailsTooltipItem}>
+                <div class={s.queryDetailsTooltipItem}>
                     {intl.getMessage('query_log_detail_date', {
-                        value: formatLogDate(row.time),
+                        value: formatLogDate(props.row.time),
                         span: renderValue,
                     })}
                 </div>
-                <div className={s.queryDetailsTooltipItem}>
+                <div class={s.queryDetailsTooltipItem}>
                     {intl.getMessage('query_log_detail_domain', {
-                        value: displayDomain,
+                        value: displayDomain(),
                         span: renderValue,
                     })}
                 </div>
-                <div className={s.queryDetailsTooltipItem}>
+                <div class={s.queryDetailsTooltipItem}>
                     {intl.getMessage('query_log_detail_type', {
-                        value: row.type,
+                        value: props.row.type,
                         span: renderValue,
                     })}
                 </div>
-                <div className={s.queryDetailsTooltipItem}>
+                <div class={s.queryDetailsTooltipItem}>
                     {intl.getMessage('query_log_detail_protocol', {
-                        value: getProtocolName(row.client_proto),
+                        value: getProtocolName(props.row.client_proto),
                         span: renderValue,
                     })}
                 </div>
             </div>
 
-            {row.tracker && (
-                <>
-                    <div
-                        className={cn(
-                            s.queryDetailsTooltipTitle,
-                            s.queryDetailsTooltipTitleSeparated,
-                            theme.text.t2,
-                            theme.text.semibold,
-                        )}
-                    >
-                        {intl.getMessage('known_tracker')}
-                    </div>
+            <Show when={props.row.tracker}>
+                <div
+                    class={cn(
+                        s.queryDetailsTooltipTitle,
+                        s.queryDetailsTooltipTitleSeparated,
+                        theme.text.t2,
+                        theme.text.semibold,
+                    )}
+                >
+                    {intl.getMessage('known_tracker')}
+                </div>
 
-                    <div className={s.queryDetailsTooltipSection}>
-                        <div className={s.queryDetailsTooltipItem}>
-                            {intl.getMessage('query_log_detail_name', {
-                                value: row.tracker.name,
-                                span: renderValue,
-                            })}
-                        </div>
-                        <div className={s.queryDetailsTooltipItem}>
-                            {intl.getMessage('query_log_detail_category', {
-                                value: captitalizeWords(row.tracker.category),
-                                span: renderValue,
-                            })}
-                        </div>
-                        {trackerSource?.name && (
-                            <div className={s.queryDetailsTooltipItem}>
-                                {intl.getMessage('query_log_detail_source', {
-                                    value: trackerSource.name,
-                                    span: (content: React.ReactNode) =>
-                                        trackerSource.url ? (
-                                            <a
-                                                href={trackerSource.url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className={cn(
-                                                    s.queryDetailsTooltipLink,
-                                                    theme.status.statusGreen,
-                                                )}
-                                            >
-                                                {content}
-                                            </a>
-                                        ) : (
-                                            <span
-                                                className={cn(
-                                                    s.queryDetailsTooltipValue,
-                                                    theme.text.t3,
-                                                )}
-                                            >
-                                                {content}
-                                            </span>
-                                        ),
-                                })}
-                            </div>
-                        )}
+                <div class={s.queryDetailsTooltipSection}>
+                    <div class={s.queryDetailsTooltipItem}>
+                        {intl.getMessage('query_log_detail_name', {
+                            value: props.row.tracker!.name,
+                            span: renderValue,
+                        })}
                     </div>
-                </>
-            )}
+                    <div class={s.queryDetailsTooltipItem}>
+                        {intl.getMessage('query_log_detail_category', {
+                            value: captitalizeWords(props.row.tracker!.category),
+                            span: renderValue,
+                        })}
+                    </div>
+                    <Show when={trackerSource()?.name}>
+                        <div class={s.queryDetailsTooltipItem}>
+                            {intl.getMessage('query_log_detail_source', {
+                                value: trackerSource()!.name,
+                                span: (content: any) =>
+                                    trackerSource()!.url ? (
+                                        <a
+                                            href={trackerSource()!.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            class={cn(
+                                                s.queryDetailsTooltipLink,
+                                                theme.status.statusGreen,
+                                            )}
+                                        >
+                                            {content}
+                                        </a>
+                                    ) : (
+                                        <span class={cn(s.queryDetailsTooltipValue, theme.text.t3)}>
+                                            {content}
+                                        </span>
+                                    ),
+                            })}
+                        </div>
+                    </Show>
+                </div>
+            </Show>
         </div>
     );
 };

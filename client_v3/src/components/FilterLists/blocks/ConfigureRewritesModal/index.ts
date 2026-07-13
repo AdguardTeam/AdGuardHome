@@ -1,1 +1,0 @@
-export { ConfigureRewritesModal } from './ConfigureRewritesModal';

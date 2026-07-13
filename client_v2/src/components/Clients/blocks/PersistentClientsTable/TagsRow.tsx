@@ -1,4 +1,4 @@
-import React from 'react';
+import { createMemo, Show, For } from 'solid-js';
 import cn from 'clsx';
 
 import intl from 'panel/common/intl';
@@ -15,44 +15,47 @@ type TagsRowProps = {
     onCopy?: (text: string) => void;
 };
 
-export const TagsRow = ({ tags, maxVisible = MAX_VISIBLE_TAGS, onCopy }: TagsRowProps) => {
-    const visible = tags.slice(0, maxVisible);
-    const hiddenCount = tags.length - maxVisible;
+export const TagsRow = (props: TagsRowProps) => {
+    const maxVisible = () => props.maxVisible ?? MAX_VISIBLE_TAGS;
+    const visible = createMemo(() => props.tags.slice(0, maxVisible()));
+    const hiddenCount = createMemo(() => props.tags.length - maxVisible());
 
     return (
-        <div className={s.tagsRow}>
-            <span className={s.tagsText}>
-                {visible.join(', ')}
-                {hiddenCount > 0 && ','}
+        <div class={s.tagsRow}>
+            <span class={s.tagsText}>
+                {visible().join(', ')}
+                <Show when={hiddenCount() > 0}>,</Show>
             </span>
-            {hiddenCount > 0 && (
-                <Dropdown
-                    trigger="hover"
-                    noIcon
-                    overlayClassName={s.tagsTooltipOverlay}
-                    menu={
-                        <div className={s.tagsTooltip}>
-                            {tags.map((tag) => (
-                                <span key={tag} className={s.tagsTooltipItem}>
-                                    {tag}
-                                </span>
-                            ))}
-                            {onCopy && (
-                                <button
-                                    type="button"
-                                    className={cn(s.copyBtn, s.copyBtnGreen, s.copyBtnTopRight)}
-                                    onClick={() => onCopy(tags.join(', '))}
-                                    title={intl.getMessage('copy')}
-                                >
-                                    <Icon icon="copy" color="green" />
-                                </button>
-                            )}
-                        </div>
-                    }
-                >
-                    <span className={s.countLabel}>{hiddenCount}</span>
-                </Dropdown>
-            )}
+            <Show when={hiddenCount() > 0}>
+                <div class={s.countDropdown}>
+                    <Dropdown
+                        trigger="hover"
+                        noIcon
+                        overlayClass={s.tagsTooltipOverlay}
+                        menu={
+                            <div class={s.tagsTooltip}>
+                                <For each={props.tags}>
+                                    {(tag) => <span class={s.tagsTooltipItem}>{tag}</span>}
+                                </For>
+                                <Show when={props.onCopy}>
+                                    {(onCopy) => (
+                                        <button
+                                            type="button"
+                                            class={cn(s.copyBtn, s.copyBtnGreen, s.copyBtnTopRight)}
+                                            onClick={() => onCopy()(props.tags.join(', '))}
+                                            title={intl.getMessage('copy')}
+                                        >
+                                            <Icon icon="copy" color="green" />
+                                        </button>
+                                    )}
+                                </Show>
+                            </div>
+                        }
+                    >
+                        <span class={s.countLabel}>{hiddenCount()}</span>
+                    </Dropdown>
+                </div>
+            </Show>
         </div>
     );
 };

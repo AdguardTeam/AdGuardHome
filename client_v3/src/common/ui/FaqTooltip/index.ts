@@ -1,1 +1,0 @@
-export { FaqTooltip } from './FaqTooltip';

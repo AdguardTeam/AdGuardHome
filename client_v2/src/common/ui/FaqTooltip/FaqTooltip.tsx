@@ -1,5 +1,4 @@
-import React from 'react';
-import type { ReactNode } from 'react';
+import { type JSX } from 'solid-js';
 import cn from 'clsx';
 
 import { Dropdown } from 'panel/common/ui/Dropdown';
@@ -10,65 +9,40 @@ import { Icon } from 'panel/common/ui/Icon';
 import s from './styles.module.pcss';
 
 type Props = {
-    text: ReactNode;
+    text: JSX.Element;
     menuSize?: 'small' | 'large';
     spacing?: boolean;
-    menuClassName?: string;
-    overlayClassName?: string;
+    menuClass?: string;
+    overlayClass?: string;
     position?: 'bottomLeft' | 'bottomRight' | 'bottom';
-    label?: ReactNode;
 };
 
-export const FaqTooltip = ({
-    text,
-    menuSize = 'small',
-    spacing = false,
-    menuClassName,
-    overlayClassName,
-    position: positionProp,
-    label,
-}: Props) => {
+export const FaqTooltip = (props: Props) => {
     const isMobile = useIsMobile();
 
-    const getDefaultPosition = () => {
-        if (isMobile) {
-            return label ? 'bottomLeft' : 'bottom';
-        }
-
-        return 'bottomLeft';
-    };
-
-    const position = positionProp ?? getDefaultPosition();
-
-    const trigger = label ? (
-        <span className={s.labelTrigger}>
-            {label}
-            <Icon icon="faq" className={s.icon} />
-        </span>
-    ) : (
-        <Icon icon="faq" className={s.icon} />
-    );
+    const currentPosition = () => (isMobile() ? 'bottom' : 'bottomLeft');
+    const position = () => props.position ?? currentPosition();
 
     return (
         <Dropdown
-            trigger={isMobile ? 'click' : 'hover'}
-            overlayClassName={cn(s.overlay_mobile, overlayClassName)}
+            trigger={isMobile() ? 'click' : 'hover'}
+            overlayClass={cn(s.overlay_mobile, props.overlayClass)}
             menu={
                 <div
-                    className={cn(theme.dropdown.menu, s.menu, menuClassName, {
-                        [s.menu_large]: menuSize === 'large',
-                        [s.menu_spacing]: spacing,
+                    class={cn(theme.dropdown.menu, s.menu, props.menuClass, {
+                        [s.menu_large]: props.menuSize === 'large',
+                        [s.menu_spacing]: props.spacing,
                     })}
                 >
-                    {text}
+                    {props.text}
                 </div>
             }
-            className={s.dropdown}
-            position={position}
+            class={s.dropdown}
+            position={position() as any}
             noIcon
         >
-            <div className={s.trigger} onPointerDown={(e) => e.stopPropagation()}>
-                {trigger}
+            <div class={s.trigger} onPointerDown={(e: PointerEvent) => e.stopPropagation()}>
+                <Icon icon="faq" class={s.icon} />
             </div>
         </Dropdown>
     );

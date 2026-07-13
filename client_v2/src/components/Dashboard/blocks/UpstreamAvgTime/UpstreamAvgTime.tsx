@@ -1,4 +1,4 @@
-import React from 'react';
+import { Show, For, createMemo } from 'solid-js';
 
 import { useIsDesktop } from 'panel/helpers/useMediaQuery';
 import { MOBILE_TABLE_MAX_ROWS } from 'panel/helpers/constants';
@@ -21,71 +21,71 @@ type Props = {
     avgProcessingTime: number;
 };
 
-export const UpstreamAvgTime = ({ topUpstreamsAvgTime, avgProcessingTime }: Props) => {
+export const UpstreamAvgTime = (props: Props) => {
     const isDesktop = useIsDesktop();
     const {
         sortedData: sortedUpstreams,
         sortField,
         sortDirection,
         handleSort,
-    } = useSortedData(topUpstreamsAvgTime);
-    const visibleUpstreams = isDesktop
-        ? sortedUpstreams
-        : sortedUpstreams.slice(0, MOBILE_TABLE_MAX_ROWS);
+    } = useSortedData(() => props.topUpstreamsAvgTime);
+    const visibleUpstreams = createMemo(() =>
+        isDesktop() ? sortedUpstreams() : sortedUpstreams().slice(0, MOBILE_TABLE_MAX_ROWS),
+    );
 
-    const hasStats = topUpstreamsAvgTime.length > 0;
+    const hasStats = createMemo(() => props.topUpstreamsAvgTime.length > 0);
 
     return (
-        <div className={s.card}>
-            <div className={s.cardHeader}>
-                <div className={cn(theme.title.h5, s.cardTitle)}>
+        <div class={s.card}>
+            <div class={s.cardHeader}>
+                <div class={cn(theme.title.h5, s.cardTitle)}>
                     {intl.getMessage('average_upstream_response_time')}
                 </div>
 
-                {hasStats && (
-                    <div className={cn(theme.text.t3, s.cardSubtitle)}>
-                        {avgProcessingTime.toFixed(0)}{' '}
+                <Show when={hasStats()}>
+                    <div class={cn(theme.text.t3, s.cardSubtitle)}>
+                        {(props.avgProcessingTime ?? 0).toFixed(0)}{' '}
                         {intl.getMessage('milliseconds_abbreviation')}
                     </div>
-                )}
+                </Show>
             </div>
 
-            {hasStats && (
+            <Show when={hasStats()}>
                 <SortableTableHeader
                     nameLabel={intl.getMessage('upstream')}
                     countLabel={intl.getMessage('response_time')}
-                    sortField={sortField}
-                    sortDirection={sortDirection}
+                    sortField={sortField()}
+                    sortDirection={sortDirection()}
                     onSort={handleSort}
                 />
-            )}
+            </Show>
 
-            <div className={s.tableRows}>
-                {hasStats ? (
-                    visibleUpstreams.map((upstream) => (
-                        <div key={upstream.name} className={cn(s.tableRow)}>
-                            <div
-                                className={cn(theme.text.t3, theme.text.condenced, s.tableRowLeft)}
-                            >
-                                <span className={s.domainName}>{upstream.name}</span>
-                            </div>
-                            <div className={s.tableRowRight}>
+            <div class={s.tableRows}>
+                <Show when={hasStats()} fallback={<EmptyState />}>
+                    <For each={visibleUpstreams()}>
+                        {(upstream) => (
+                            <div class={cn(s.tableRow)}>
                                 <div
-                                    className={cn(
-                                        theme.text.t3,
-                                        theme.text.condenced,
-                                        s.queryCount,
-                                    )}
+                                    class={cn(theme.text.t3, theme.text.condenced, s.tableRowLeft)}
                                 >
-                                    {upstream.count.toFixed(0)}{' '}
-                                    {intl.getMessage('milliseconds_abbreviation')}
+                                    <span class={s.domainName}>{upstream.name}</span>
+                                </div>
+                                <div class={s.tableRowRight}>
+                                    <div
+                                        class={cn(
+                                            theme.text.t3,
+                                            theme.text.condenced,
+                                            s.queryCount,
+                                        )}
+                                    >
+                                        {(upstream.count ?? 0).toFixed(0)}{' '}
+                                        {intl.getMessage('milliseconds_abbreviation')}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))
-                ) : (
-                    <EmptyState />
-                )}
+                        )}
+                    </For>
+                </Show>
             </div>
         </div>
     );

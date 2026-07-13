@@ -1,5 +1,3 @@
-import React from 'react';
-
 import intl from 'panel/common/intl';
 import { StatusBlock } from './StatusBlock';
 
@@ -10,8 +8,8 @@ type Props = {
     message: string;
 };
 
-export const ValidationStatus = ({ type, message }: Props) => (
-    <StatusBlock variant={type} title={intl.getMessage('encryption_certificate_has_issues')}>
-        <div className={s.statusText}>{message}</div>
+export const ValidationStatus = (props: Props) => (
+    <StatusBlock variant={props.type} title={intl.getMessage('encryption_certificate_has_issues')}>
+        <div class={s.statusText}>{props.message}</div>
     </StatusBlock>
 );

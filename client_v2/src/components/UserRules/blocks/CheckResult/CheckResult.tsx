@@ -1,16 +1,16 @@
-import React from 'react';
+import { createMemo, Show, For } from 'solid-js';
 import cn from 'clsx';
-import { useSelector } from 'react-redux';
 
 import intl from 'panel/common/intl';
 import theme from 'panel/lib/theme';
 import { Icon } from 'panel/common/ui/Icon';
+import { filteringState } from 'panel/stores/filtering';
+import { servicesState } from 'panel/stores/services';
 import { FILTERED_STATUS } from 'panel/helpers/constants';
 import { getServiceName } from 'panel/helpers/helpers';
-import { RootState } from 'panel/initialState';
 
 import { getCheckResultMeta } from '../../checkResultHelpers';
-import { CheckResultData, ResultActionKind } from '../../types';
+import { type CheckResultData, type ResultActionKind } from '../../types';
 
 import s from './CheckResult.module.pcss';
 
@@ -61,183 +61,198 @@ const getStatusClassName = (tone: CheckResultTone) => {
     return '';
 };
 
-export const CheckResult = ({
-    checkResult,
-    processingRules,
-    onDismiss,
-    onAction,
-    onEditRewrite,
-    onDeleteRewrite,
-    hasMatchedRewrite = false,
-    hiddenActionKinds = [],
-}: Props) => {
-    const filters = useSelector((state: RootState) => state.filtering.filters);
-    const whitelistFilters = useSelector((state: RootState) => state.filtering.whitelistFilters);
-    const allServices = useSelector((state: RootState) => state.services.allServices);
+export const CheckResult = (props: Props) => {
+    const meta = createMemo(() =>
+        getCheckResultMeta({
+            reason: props.checkResult.reason,
+            rules: props.checkResult.rules,
+            filters: filteringState.filters,
+            whitelistFilters: filteringState.whitelistFilters,
+        }),
+    );
 
-    const { hostname, reason, rules, service_name, cname, ip_addrs } = checkResult;
+    const statusClassName = createMemo(() => getStatusClassName(meta().tone));
+    const showRewriteActions = () =>
+        props.checkResult.reason === FILTERED_STATUS.REWRITE && props.hasMatchedRewrite;
+    const showSource = () => Boolean(meta().source);
+    const hasStandaloneResultMessage = () =>
+        props.checkResult.reason ? STANDALONE_RESULT_REASONS.has(props.checkResult.reason) : false;
+    const redirectedValue = () =>
+        props.checkResult.cname ||
+        (props.checkResult.ip_addrs && props.checkResult.ip_addrs.length > 0
+            ? props.checkResult.ip_addrs.join(', ')
+            : null);
+    const normalizedServiceName = () =>
+        props.checkResult.service_name
+            ? getServiceName(servicesState.allServices, props.checkResult.service_name) ||
+              props.checkResult.service_name
+            : null;
+    const hiddenActionKindSet = () => new Set(props.hiddenActionKinds || []);
 
-    if (!hostname) {
-        return null;
-    }
-
-    const meta = getCheckResultMeta({ reason, rules, filters, whitelistFilters });
-    const statusClassName = getStatusClassName(meta.tone);
-    const showRewriteActions = reason === FILTERED_STATUS.REWRITE && hasMatchedRewrite;
-    const showSource = Boolean(meta.source);
-    const hasStandaloneResultMessage = reason ? STANDALONE_RESULT_REASONS.has(reason) : false;
-    const redirectedValue = cname || (ip_addrs && ip_addrs.length > 0 ? ip_addrs.join(', ') : null);
-    const normalizedServiceName = service_name
-        ? getServiceName(allServices, service_name) || service_name
-        : null;
-    const hiddenActionKindSet = new Set(hiddenActionKinds);
-
-    const getReasonContent = () => {
-        if (hasStandaloneResultMessage) {
-            return meta.reason;
+    const reasonContent = () => {
+        if (hasStandaloneResultMessage()) {
+            return meta().reason;
         }
 
-        if (meta.tone === 'rewritten') {
-            if (reason === FILTERED_STATUS.REWRITE_RULE) {
-                return intl.getMessage('user_rules_reason', { reason: meta.reason });
+        if (meta().tone === 'rewritten') {
+            if (props.checkResult.reason === FILTERED_STATUS.REWRITE_RULE) {
+                return intl.getMessage('user_rules_reason', { reason: meta().reason });
             }
-
-            return intl.getMessage('user_rules_status', { reason: meta.reason });
+            return intl.getMessage('user_rules_status', { reason: meta().reason });
         }
 
-        if (meta.reason) {
-            return intl.getMessage('user_rules_reason', { reason: meta.reason });
+        if (meta().reason) {
+            return intl.getMessage('user_rules_reason', { reason: meta().reason });
         }
 
         return null;
     };
 
-    const reasonContent = getReasonContent();
-
     return (
-        <div className={cn(s.checkResult, theme.text.t3)} data-testid="user-rules-result-card">
-            <div className={s.checkResultHeader}>
-                <h3
-                    className={cn(
-                        s.checkResultTitle,
-                        theme.text.t3,
-                        theme.text.semibold,
-                        statusClassName,
-                    )}
-                    data-testid="user-rules-result-title"
-                >
-                    {meta.title}
-                </h3>
-
-                {onDismiss && (
-                    <button
-                        type="button"
-                        className={s.dismissButton}
-                        aria-label={intl.getMessage('close_result')}
-                        data-testid="user-rules-result-dismiss"
-                        onClick={onDismiss}
+        <Show when={props.checkResult.hostname}>
+            <div class={cn(s.checkResult, theme.text.t3)} data-testid="user-rules-result-card">
+                <div class={s.checkResultHeader}>
+                    <h3
+                        class={cn(
+                            s.checkResultTitle,
+                            theme.text.t3,
+                            theme.text.semibold,
+                            statusClassName(),
+                        )}
+                        data-testid="user-rules-result-title"
                     >
-                        <Icon icon="cross" color="gray" />
-                    </button>
-                )}
-            </div>
+                        {meta().title}
+                    </h3>
 
-            <div className={s.checkResultItems}>
-                <div className={s.resultItem}>
-                    {intl.getMessage('user_rules_domain', { value: hostname })}
+                    <Show when={props.onDismiss}>
+                        <button
+                            type="button"
+                            class={s.dismissButton}
+                            aria-label={intl.getMessage('close_result')}
+                            data-testid="user-rules-result-dismiss"
+                            onClick={() => props.onDismiss?.()}
+                        >
+                            <Icon icon="cross" color="gray" />
+                        </button>
+                    </Show>
                 </div>
 
-                {reasonContent && <div className={s.resultItem}>{reasonContent}</div>}
-
-                {showSource && meta.source && (
-                    <div className={s.resultItem}>
-                        {renderSourceLabel(meta.source, meta.sourceListType)}
+                <div class={s.checkResultItems}>
+                    <div class={s.resultItem}>
+                        {intl.getMessage('user_rules_domain', {
+                            value: props.checkResult.hostname,
+                        })}
                     </div>
-                )}
 
-                {normalizedServiceName && (
-                    <div className={s.resultItem}>
-                        {intl.getMessage('user_rules_service', { service: normalizedServiceName })}
-                    </div>
-                )}
+                    <Show when={reasonContent()}>
+                        <div class={s.resultItem}>{reasonContent()}</div>
+                    </Show>
 
-                {meta.tone !== 'rewritten' && meta.rule && (
-                    <div className={s.resultItem}>
-                        {intl.getMessage('user_rules_rule', { rule: meta.rule })}
-                    </div>
-                )}
+                    <Show when={showSource() && meta().source}>
+                        <div class={s.resultItem}>
+                            {renderSourceLabel(meta().source!, meta().sourceListType)}
+                        </div>
+                    </Show>
 
-                {meta.tone === 'rewritten' && redirectedValue && (
-                    <div className={s.resultItem}>
-                        {reason === FILTERED_STATUS.FILTERED_SAFE_SEARCH
-                            ? intl.getMessage('user_rules_redirected_to', {
-                                  value: redirectedValue,
-                              })
-                            : intl.getMessage('user_rules_rewritten_to', {
-                                  value: redirectedValue,
-                              })}
-                    </div>
-                )}
+                    <Show when={normalizedServiceName()}>
+                        <div class={s.resultItem}>
+                            {intl.getMessage('user_rules_service', {
+                                service: normalizedServiceName(),
+                            })}
+                        </div>
+                    </Show>
 
-                {meta.tone === 'rewritten' && meta.rule && (
-                    <div className={s.resultItem}>
-                        {intl.getMessage('user_rules_rule', { rule: meta.rule })}
-                    </div>
-                )}
+                    <Show when={meta().tone !== 'rewritten' && meta().rule}>
+                        <div class={s.resultItem}>
+                            {intl.getMessage('user_rules_rule', { rule: meta().rule })}
+                        </div>
+                    </Show>
 
-                {meta.tone !== 'rewritten' && cname && (
-                    <div className={s.resultItem}>
-                        {intl.getMessage('user_rules_cname', { cname })}
-                    </div>
-                )}
+                    <Show when={meta().tone === 'rewritten' && redirectedValue()}>
+                        <div class={s.resultItem}>
+                            {props.checkResult.reason === FILTERED_STATUS.FILTERED_SAFE_SEARCH
+                                ? intl.getMessage('user_rules_redirected_to', {
+                                      value: redirectedValue(),
+                                  })
+                                : intl.getMessage('user_rules_rewritten_to', {
+                                      value: redirectedValue(),
+                                  })}
+                        </div>
+                    </Show>
 
-                {meta.tone !== 'rewritten' && ip_addrs && ip_addrs.length > 0 && (
-                    <div className={s.resultItem}>
-                        {intl.getMessage('user_rules_ip', { ip: ip_addrs.join(', ') })}
-                    </div>
-                )}
-            </div>
+                    <Show when={meta().tone === 'rewritten' && meta().rule}>
+                        <div class={s.resultItem}>
+                            {intl.getMessage('user_rules_rule', { rule: meta().rule })}
+                        </div>
+                    </Show>
 
-            <div className={s.actionButtons}>
-                {meta.actions
-                    .filter((action) => !hiddenActionKindSet.has(action.kind))
-                    .map((action) => (
+                    <Show when={meta().tone !== 'rewritten' && props.checkResult.cname}>
+                        <div class={s.resultItem}>
+                            {intl.getMessage('user_rules_cname', {
+                                cname: props.checkResult.cname,
+                            })}
+                        </div>
+                    </Show>
+
+                    <Show
+                        when={
+                            meta().tone !== 'rewritten' &&
+                            props.checkResult.ip_addrs &&
+                            props.checkResult.ip_addrs!.length > 0
+                        }
+                    >
+                        <div class={s.resultItem}>
+                            {intl.getMessage('user_rules_ip', {
+                                ip: props.checkResult.ip_addrs!.join(', '),
+                            })}
+                        </div>
+                    </Show>
+                </div>
+
+                <div class={s.actionButtons}>
+                    <For
+                        each={meta().actions.filter(
+                            (action) => !hiddenActionKindSet().has(action.kind),
+                        )}
+                    >
+                        {(action) => (
+                            <button
+                                type="button"
+                                disabled={props.processingRules}
+                                class={s.actionLink}
+                                data-testid={`user-rules-result-action-${action.kind}`}
+                                onClick={() => props.onAction(action.kind)}
+                            >
+                                {action.label}
+                            </button>
+                        )}
+                    </For>
+
+                    <Show when={showRewriteActions()}>
                         <button
-                            key={action.kind}
                             type="button"
-                            disabled={processingRules}
-                            className={s.actionLink}
-                            data-testid={`user-rules-result-action-${action.kind}`}
-                            onClick={() => onAction(action.kind)}
+                            disabled={props.processingRules}
+                            class={s.actionLink}
+                            data-testid="user-rules-result-action-edit-rewrite"
+                            onClick={() => props.onEditRewrite?.()}
                         >
-                            {action.label}
+                            {intl.getMessage('user_rules_edit_dns_rewrite')}
                         </button>
-                    ))}
+                    </Show>
 
-                {showRewriteActions && (
-                    <button
-                        type="button"
-                        disabled={processingRules}
-                        className={s.actionLink}
-                        data-testid="user-rules-result-action-edit-rewrite"
-                        onClick={onEditRewrite}
-                    >
-                        {intl.getMessage('user_rules_edit_dns_rewrite')}
-                    </button>
-                )}
-
-                {showRewriteActions && (
-                    <button
-                        type="button"
-                        disabled={processingRules}
-                        className={s.actionLink}
-                        data-testid="user-rules-result-action-delete-rewrite"
-                        onClick={onDeleteRewrite}
-                    >
-                        {intl.getMessage('user_rules_remove_dns_rewrite')}
-                    </button>
-                )}
+                    <Show when={showRewriteActions()}>
+                        <button
+                            type="button"
+                            disabled={props.processingRules}
+                            class={s.actionLink}
+                            data-testid="user-rules-result-action-delete-rewrite"
+                            onClick={() => props.onDeleteRewrite?.()}
+                        >
+                            {intl.getMessage('user_rules_remove_dns_rewrite')}
+                        </button>
+                    </Show>
+                </div>
             </div>
-        </div>
+        </Show>
     );
 };

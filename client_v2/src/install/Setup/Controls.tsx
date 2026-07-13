@@ -1,10 +1,6 @@
-import React from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-
 import { Button } from 'panel/common/ui/Button';
 import intl from 'panel/common/intl';
-import { InstallState } from 'panel/initialState';
-import * as actionCreators from '../../actions/install';
+import { installState, nextStep, prevStep } from 'panel/stores/install';
 import styles from './styles.module.pcss';
 
 type Props = {
@@ -16,16 +12,13 @@ type Props = {
     openDashboard?: (ip: string, port: number) => void;
 };
 
-export const Controls = ({ invalid, isValid, ip, port, openDashboard }: Props) => {
-    const dispatch = useDispatch();
-    const install = useSelector((state: InstallState) => state.install);
-
+export const Controls = (props: Props) => {
     const handleNextStep = () => {
-        dispatch(actionCreators.nextStep());
+        nextStep();
     };
 
     const handlePrevStep = () => {
-        dispatch(actionCreators.prevStep());
+        prevStep();
     };
 
     const renderPrevButton = (step: number) => {
@@ -40,7 +33,7 @@ export const Controls = ({ invalid, isValid, ip, port, openDashboard }: Props) =
                         type="button"
                         size="small"
                         variant="secondary"
-                        className={styles.button}
+                        class={styles.button}
                         onClick={handlePrevStep}
                     >
                         {intl.getMessage('back')}
@@ -54,7 +47,7 @@ export const Controls = ({ invalid, isValid, ip, port, openDashboard }: Props) =
     };
 
     const renderNextButton = (step: number) => {
-        const isNextDisabled = invalid === true || isValid === false;
+        const isNextDisabled = props.invalid === true || props.isValid === false;
 
         switch (step) {
             case 1:
@@ -65,7 +58,7 @@ export const Controls = ({ invalid, isValid, ip, port, openDashboard }: Props) =
                         onClick={handleNextStep}
                         size="small"
                         variant="primary"
-                        className={styles.button}
+                        class={styles.button}
                     >
                         {intl.getMessage('setup_guide_greeting_button')}
                     </Button>
@@ -79,7 +72,7 @@ export const Controls = ({ invalid, isValid, ip, port, openDashboard }: Props) =
                         type="submit"
                         size="small"
                         variant="primary"
-                        className={styles.button}
+                        class={styles.button}
                         disabled={isNextDisabled}
                     >
                         {intl.getMessage('next')}
@@ -93,7 +86,7 @@ export const Controls = ({ invalid, isValid, ip, port, openDashboard }: Props) =
                         onClick={handleNextStep}
                         size="small"
                         variant="primary"
-                        className={styles.button}
+                        class={styles.button}
                         disabled={isNextDisabled}
                     >
                         {intl.getMessage('next')}
@@ -106,10 +99,10 @@ export const Controls = ({ invalid, isValid, ip, port, openDashboard }: Props) =
                         type="button"
                         size="small"
                         variant="primary"
-                        className={styles.button}
+                        class={styles.button}
                         onClick={() => {
-                            if (openDashboard && ip && port) {
-                                openDashboard(ip, port);
+                            if (props.openDashboard && props.ip && props.port) {
+                                props.openDashboard(props.ip, props.port);
                             }
                         }}
                     >
@@ -122,9 +115,9 @@ export const Controls = ({ invalid, isValid, ip, port, openDashboard }: Props) =
     };
 
     return (
-        <div className={styles.nav}>
-            {renderNextButton(install.step)}
-            {renderPrevButton(install.step)}
+        <div class={styles.nav}>
+            {renderNextButton(installState.step)}
+            {renderPrevButton(installState.step)}
         </div>
     );
 };

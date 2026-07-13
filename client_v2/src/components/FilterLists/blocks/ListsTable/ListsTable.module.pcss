@@ -6,38 +6,6 @@
     }
 }
 
-.cell {
-    width: 100%;
-    min-height: 42px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-}
-
-.cellLabel {
-    width: 100%;
-
-    @media (min-width: 768px) {
-        display: none;
-    }
-}
-
-.cellValue {
-    width: 100%;
-    min-width: 0;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 8px;
-    text-align: right;
-
-    @media (min-width: 768px) {
-        text-align: left;
-        justify-content: initial;
-    }
-}
-
 .copyButton {
     display: flex;
     align-items: center;
@@ -51,18 +19,6 @@
 
     @media (min-width: 768px) {
         display: none;
-    }
-}
-
-.cellActions {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 8px;
-
-    @media (max-width: 767px) {
-        justify-content: space-between;
     }
 }
 
@@ -82,62 +38,6 @@
     color: var(--default-description-text);
 }
 
-.action {
-    width: 24px;
-    height: 24px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border: 0;
-    outline: 0;
-    cursor: pointer;
-    background: none;
-    color: var(--default-gray-icons);
-
-    &_danger {
-        color: var(--red);
-    }
-}
-
-.editAction {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 0;
-    outline: 0;
-    cursor: pointer;
-    background: none;
-    color: var(--default-link);
-    padding: 0;
-    gap: 0;
-
-    &:hover {
-        text-decoration: underline;
-    }
-
-    @media (min-width: 768px) {
-        width: 24px;
-        height: 24px;
-        color: var(--default-gray-icons);
-    }
-}
-
-.editActionLabel {
-    display: inline;
-
-    @media (min-width: 768px) {
-        display: none;
-    }
-}
-
-.editActionIcon {
-    display: none;
-
-    @media (min-width: 768px) {
-        display: flex;
-    }
-}
-
 .cellNameToggleOuter {
     @media (max-width: 767px) {
         width: 100% !important;
@@ -153,7 +53,6 @@
 .cellNameLabel {
     flex: 1;
     min-width: 0;
-    padding-top: 8px;
     text-align: left;
     word-break: break-word;
     overflow: hidden;
@@ -171,7 +70,22 @@
 
 .tableRewrites {
     @media (min-width: 768px) {
-        grid-template-columns: 1fr 3fr 5fr 80px;
+        grid-template-columns: 3fr 5fr 80px;
+    }
+}
+
+.domainCellValue {
+    justify-content: space-between;
+    align-items: center;
+    flex: 1;
+    white-space: normal;
+
+    @media (min-width: 768px) {
+        flex-direction: row-reverse;
+        justify-content: flex-start;
+        gap: 8px;
+        flex: initial;
+        white-space: nowrap;
     }
 }
 
@@ -183,19 +97,6 @@
     }
 
     &.sortDropdownMobileRewrites {
-        padding: 0;
-    }
-}
-
-.allDomainsMobile {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-weight: var(--weight-semi-bold);
-    gap: 16px;
-    padding: 24px 0;
-
-    @media (min-width: 768px) {
-        display: none;
+        padding-bottom: 24px;
     }
 }

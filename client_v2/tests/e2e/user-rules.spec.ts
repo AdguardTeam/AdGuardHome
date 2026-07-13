@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 
-import { ADMIN_PASSWORD, ADMIN_USERNAME } from '../constants';
+import { login } from '../helpers/login';
 
 type FilterList = {
     enabled: boolean;
@@ -199,42 +199,6 @@ const buildDefaultCheckHostResponse = ({
     };
 };
 
-async function login(page: Page) {
-    const attemptLogin = async () => {
-        await page.goto('/login.html', { waitUntil: 'domcontentloaded' });
-        await page.locator('#username').waitFor({ state: 'visible', timeout: 5000 });
-        await page.locator('#username').fill(ADMIN_USERNAME);
-        await page.locator('#password').fill(ADMIN_PASSWORD);
-        await page.locator('#sign_in').click();
-        await page.waitForURL((url) => !url.href.endsWith('/login.html'));
-    };
-
-    let lastError: unknown;
-
-    try {
-        await attemptLogin();
-        return;
-    } catch (error) {
-        lastError = error;
-    }
-
-    try {
-        await attemptLogin();
-        return;
-    } catch (error) {
-        lastError = error;
-    }
-
-    try {
-        await attemptLogin();
-        return;
-    } catch (error) {
-        lastError = error;
-    }
-
-    throw lastError;
-}
-
 async function setupUserRulesMocks(
     page: Page,
     {
@@ -414,12 +378,12 @@ async function openUserRules(page: Page, options?: UserRulesSetupOptions) {
 }
 
 async function selectDnsRecordType(page: Page, value: string) {
-    const control = page.getByTestId('user-rules-check-qtype').locator('.select__control');
+    const control = page.getByTestId('user-rules-check-qtype').locator('[data-part="control"]');
 
     await control.scrollIntoViewIfNeeded();
     await control.click();
-    await expect(page.locator('.select__menu')).toBeVisible();
-    await page.locator('.select__menu').getByText(value, { exact: true }).click();
+    await expect(page.locator('[data-part="content"]')).toBeVisible();
+    await page.locator('[data-part="content"]').getByText(value, { exact: true }).click();
     await page.keyboard.press('Tab');
 }
 

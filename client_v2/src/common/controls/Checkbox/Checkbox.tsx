@@ -1,79 +1,76 @@
-import React, { ComponentProps, ForwardedRef, forwardRef, MouseEvent, ReactNode } from 'react';
+import { type JSX, Show } from 'solid-js';
 import cn from 'clsx';
 import theme from 'panel/lib/theme';
 import { Icon } from 'panel/common/ui/Icon';
 
 import s from './Checkbox.module.pcss';
 
-type Props = ComponentProps<'input'> & {
-    className?: string;
-    labelClassName?: string;
+type Props = JSX.InputHTMLAttributes<HTMLInputElement> & {
+    class?: string;
+    labelClass?: string;
     overflow?: boolean;
-    onClick?: (e: MouseEvent<HTMLElement>) => void;
-    children?: ReactNode;
+    onClick?: (e: MouseEvent) => void;
+    children?: JSX.Element;
     plusStyle?: boolean;
     verticalAlign?: 'center' | 'start' | 'end';
+    ref?: HTMLInputElement | ((el: HTMLInputElement) => void);
 };
 
-export const Checkbox = forwardRef<HTMLInputElement, Props>(
-    (
-        {
-            checked,
-            children,
-            className,
-            labelClassName,
-            disabled,
-            onChange,
-            id,
-            name,
-            overflow,
-            onClick,
-            plusStyle,
-            verticalAlign,
-        }: Props,
-        ref: ForwardedRef<HTMLInputElement>,
-    ) => (
+export const Checkbox = (props: Props) => {
+    const setRef = (el: HTMLInputElement) => {
+        if (typeof props.ref === 'function') {
+            props.ref(el);
+        }
+    };
+
+    return (
         <label
-            htmlFor={id}
-            className={cn(s.checkbox, { [s.disabled]: disabled }, s[verticalAlign], className)}
-            onClick={onClick}
+            for={props.id}
+            class={cn(
+                s.checkbox,
+                { [s.disabled]: props.disabled },
+                props.verticalAlign && s[props.verticalAlign],
+                props.class,
+            )}
+            onClick={(e) => (props.onClick as any)?.(e)}
         >
             <input
-                ref={ref}
-                id={id}
-                name={name}
+                ref={(el) => setRef(el)}
+                id={props.id}
+                name={props.name}
                 type="checkbox"
-                className={s.input}
-                onChange={onChange}
-                checked={checked}
-                disabled={disabled}
+                class={s.input}
+                onChange={(e) => (props.onChange as any)?.(e)}
+                checked={props.checked}
+                disabled={props.disabled}
             />
-            <div className={s.handler}>
-                {plusStyle ? (
+            <div class={s.handler}>
+                <Show
+                    when={props.plusStyle}
+                    fallback={
+                        <Icon
+                            icon={(props.checked ? 'checkbox_on' : 'checkbox_off') as any}
+                            class={cn(s.icon, { [s.active]: props.checked })}
+                        />
+                    }
+                >
                     <Icon
-                        icon={checked ? 'checkbox_minus' : 'checkbox_plus'}
-                        className={cn(s.icon, { [s.active]: checked })}
+                        icon={(props.checked ? 'checkbox_minus' : 'checkbox_plus') as any}
+                        class={cn(s.icon, { [s.active]: props.checked })}
                     />
-                ) : (
-                    <Icon
-                        icon={checked ? 'checkbox_on' : 'checkbox_off'}
-                        className={cn(s.icon, { [s.active]: checked })}
-                    />
-                )}
+                </Show>
             </div>
-            {children && (
+            <Show when={props.children}>
                 <div
-                    className={cn(
+                    class={cn(
                         s.label,
-                        { [theme.common.textOverflow]: overflow },
-                        labelClassName,
+                        { [theme.common.textOverflow]: props.overflow },
+                        props.labelClass,
                     )}
                 >
-                    {children}
+                    {props.children}
                 </div>
-            )}
+            </Show>
         </label>
-    ),
-);
-
-Checkbox.displayName = 'Checkbox';
+    );
+};

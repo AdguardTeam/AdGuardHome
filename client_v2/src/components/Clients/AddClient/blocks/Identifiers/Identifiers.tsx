@@ -1,111 +1,83 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
-import { useFieldArray, useForm } from 'react-hook-form';
-import { useDispatch, useSelector } from 'react-redux';
+import { createSignal, createMemo, createEffect, Index } from 'solid-js';
 import cn from 'clsx';
 import intl from 'panel/common/intl';
 import { Input } from 'panel/common/controls/Input';
 import { Icon } from 'panel/common/ui/Icon';
-import { RootState, Client } from 'panel/initialState';
-import { updateClientFormField } from 'panel/actions/clientForm';
+import {
+    clientFormState,
+    updateClientFormField,
+    computeExistingClientIds,
+} from 'panel/stores/clientForm';
 import { validateIdentifier } from 'panel/helpers/validators';
 import theme from 'panel/lib/theme';
 
 import s from './Identifiers.module.pcss';
 
-type FormValues = {
-    ids: { value: string }[];
-};
-
 export const Identifiers = () => {
-    const dispatch = useDispatch();
-    const formState = useSelector((state: RootState) => state.clientForm);
-    const dashboard = useSelector((state: RootState) => state.dashboard);
-    const { formErrors } = formState;
+    const [errors, setErrors] = createSignal<(string | undefined)[]>([]);
 
-    // Collect all identifiers from existing persistent clients, excluding the
-    // client currently being edited (if any).
-    const existingClientIds = useMemo(() => {
-        const clients: Client[] = dashboard?.clients || [];
-        const isEdit = formState.mode === 'edit';
-        return clients
-            .filter((c) => !isEdit || c.name !== formState.originalName)
-            .flatMap((c) => c.ids);
-    }, [dashboard?.clients, formState.mode, formState.originalName]);
+    // The store (`clientFormState.ids`) is the single source of truth for the
+    // identifiers list. We bind to it directly (the same pattern the Name field
+    // uses) and update it through `updateClientFormField`.
+    //
+    // A previous implementation kept a local `ids` signal and tried to sync it
+    // with the store via a `createEffect`. In Solid, `setIds` notifies effects
+    // synchronously, so that effect ran *before* `syncToStore` had a chance to
+    // update the store, saw a mismatch and reset the local value back to the
+    // stale store value — which made typed values erase immediately and the
+    // "add identifier" button appear to do nothing.
 
-    const {
-        control,
-        register,
-        formState: rhfState,
-        setValue,
-        getValues,
-        trigger,
-        reset,
-    } = useForm<FormValues>({
-        defaultValues: {
-            ids: formState.ids.map((id: string) => ({ value: id })),
-        },
-        mode: 'onBlur',
-    });
-
-    const { fields, append, remove } = useFieldArray({
-        control,
-        name: 'ids',
-    });
-
-    // Sync Redux → RHF when external errors arrive (e.g. from saveClient)
-    useEffect(() => {
+    // Sync external (server) errors into the local per-index error state.
+    createEffect(() => {
+        const formErrors = clientFormState.formErrors;
         if (Array.isArray(formErrors.ids)) {
-            formErrors.ids.forEach((err: string | undefined, idx: number) => {
-                if (err) {
-                    trigger(`ids.${idx}.value`);
-                }
-            });
+            setErrors(formErrors.ids);
+        } else {
+            // Store errors were cleared — clear stale local errors too.
+            setErrors((prev) => prev.map((): undefined => undefined));
         }
-    }, [formErrors.ids, trigger]);
+    });
 
-    // Sync Redux → RHF when identifiers are set externally (e.g. from URL
-    // params).  Only resets if the values actually differ to avoid loops from
-    // the RHF → Redux sync path.
-    useEffect(() => {
-        const rhfValues = getValues('ids').map((item: { value: string }) => item.value);
-        if (JSON.stringify(rhfValues) !== JSON.stringify(formState.ids)) {
-            reset({
-                ids: formState.ids.map((id: string) => ({ value: id })),
-            });
-        }
-    }, [formState.ids, getValues, reset]);
-
-    const syncToRedux = () => {
-        const values = getValues('ids').map((item) => item.value);
-        dispatch(updateClientFormField({ field: 'ids', value: values }));
-    };
+    const existingClientIds = createMemo(() => computeExistingClientIds());
 
     const handleAdd = () => {
-        append({ value: '' });
-        const values = getValues('ids').map((item) => item.value);
-        dispatch(updateClientFormField({ field: 'ids', value: values }));
+        updateClientFormField('ids', [...clientFormState.ids, '']);
     };
 
     const handleRemove = (index: number) => {
-        remove(index);
-        const values = getValues('ids').map((item) => item.value);
-        dispatch(updateClientFormField({ field: 'ids', value: values }));
+        const newIds = clientFormState.ids.filter((_, i) => i !== index);
+        updateClientFormField('ids', newIds);
+        const newErrors = errors().filter((_, i) => i !== index);
+        setErrors(newErrors);
     };
 
-    const handleValidate = useCallback(
-        (value: string, index: number) => {
-            const allValues = getValues('ids').map((item) => item.value);
-            return validateIdentifier(value, allValues, index, existingClientIds) || true;
-        },
-        [getValues, existingClientIds],
-    );
+    const handleChange = (index: number, value: string) => {
+        const newIds = [...clientFormState.ids];
+        newIds[index] = value;
+        updateClientFormField('ids', newIds);
+        // Clear the local error for this index — re-validated on blur.
+        setErrors((prev) => {
+            const next = [...prev];
+            next[index] = undefined;
+            return next;
+        });
+    };
+
+    const handleBlur = (index: number) => {
+        const ids = clientFormState.ids;
+        const value = ids[index];
+        const err = validateIdentifier(value, ids, index, existingClientIds());
+        const newErrors = [...errors()];
+        newErrors[index] = err || undefined;
+        setErrors(newErrors);
+    };
 
     return (
-        <div className={s.wrapper}>
-            <div className={cn(theme.text.t2, theme.text.semibold, s.label)}>
+        <div class={s.wrapper}>
+            <div class={cn(theme.text.t2, theme.text.semibold, s.label)}>
                 {intl.getMessage('clients_identifiers')}
             </div>
-            <div className={cn(theme.text.t3, s.desc)}>
+            <div class={cn(theme.text.t3, s.desc)}>
                 {intl.getMessage('clients_identifiers_desc', {
                     a: (text: string) => (
                         <a
@@ -119,50 +91,50 @@ export const Identifiers = () => {
                 })}
             </div>
 
-            {fields.map((field, index) => {
-                const saveError = Array.isArray(formErrors.ids) ? formErrors.ids[index] : undefined;
-                const rhfError = rhfState.errors.ids?.[index]?.value?.message;
-                const activeError = saveError || rhfError;
+            <Index each={clientFormState.ids}>
+                {(value, index) => {
+                    const activeError = createMemo(() => errors()[index]);
 
-                const suffixBtn =
-                    index > 0 ? (
-                        <button
-                            type="button"
-                            className={s.removeSuffixBtn}
-                            onClick={() => handleRemove(index)}
-                            aria-label={intl.getMessage('delete_btn')}
-                        >
-                            <Icon icon="cross" color="gray" />
-                        </button>
-                    ) : undefined;
-
-                return (
-                    <div key={field.id} className={s.row}>
-                        <div className={s.inputCell}>
-                            <Input
-                                id={`client-identifier-${index}`}
-                                type="text"
-                                {...register(`ids.${index}.value`, {
-                                    validate: (value: string) => handleValidate(value, index),
-                                    onBlur: () => syncToRedux(),
-                                })}
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                    setValue(`ids.${index}.value`, e.target.value);
-                                    syncToRedux();
-                                }}
-                                placeholder={intl.getMessage('clients_identifier_format_error')}
-                                error={!!activeError}
-                                errorMessage={activeError}
-                                size="large"
-                                suffixIcon={suffixBtn}
-                            />
+                    return (
+                        <div class={s.row}>
+                            <div class={s.inputCell}>
+                                <Input
+                                    id={`client-identifier-${index}`}
+                                    type="text"
+                                    value={value()}
+                                    onChange={(e: Event) =>
+                                        handleChange(index, (e.target as HTMLInputElement).value)
+                                    }
+                                    onInput={(e: Event) =>
+                                        handleChange(index, (e.target as HTMLInputElement).value)
+                                    }
+                                    onBlur={() => handleBlur(index)}
+                                    placeholder={intl.getMessage('clients_identifier_format_error')}
+                                    error={!!activeError()}
+                                    errorMessage={activeError()}
+                                    size="large"
+                                    suffixIcon={
+                                        index > 0 ? (
+                                            <button
+                                                type="button"
+                                                class={s.removeSuffixBtn}
+                                                onClick={() => handleRemove(index)}
+                                                aria-label={intl.getMessage('delete_btn')}
+                                            >
+                                                <Icon icon="cross" color="gray" />
+                                            </button>
+                                        ) : undefined
+                                    }
+                                />
+                            </div>
                         </div>
-                    </div>
-                );
-            })}
+                    );
+                }}
+            </Index>
+
             <button
                 type="button"
-                className={s.addButton}
+                class={s.addButton}
                 onClick={handleAdd}
                 data-testid="client-form-add-identifier"
             >

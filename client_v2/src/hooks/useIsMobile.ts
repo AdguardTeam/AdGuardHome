@@ -1,15 +1,15 @@
-import { useEffect, useState } from 'react';
+import { createSignal, onMount, onCleanup } from 'solid-js';
 
 const MIN_SMALL_BREAKPOINT = '(min-width: 1024px)';
 
 /**
  * Hook to detect if viewport is mobile or desktop
- * @returns true if mobile (below min-small breakpoint), false if desktop
+ * @returns accessor function that returns true if mobile (below min-small breakpoint), false if desktop
  */
 export function useIsMobile() {
-    const [isMobile, setIsMobile] = useState(true);
+    const [isMobile, setIsMobile] = createSignal(true);
 
-    useEffect(() => {
+    onMount(() => {
         const mediaQuery = window.matchMedia(MIN_SMALL_BREAKPOINT);
 
         const handleMediaChange = (e: MediaQueryListEvent | MediaQueryList) => {
@@ -20,10 +20,10 @@ export function useIsMobile() {
 
         mediaQuery.addEventListener('change', handleMediaChange);
 
-        return () => {
+        onCleanup(() => {
             mediaQuery.removeEventListener('change', handleMediaChange);
-        };
-    }, []);
+        });
+    });
 
     return isMobile;
 }

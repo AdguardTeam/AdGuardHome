@@ -1,1 +1,0 @@
-export { UpstreamAvgTime } from './UpstreamAvgTime';

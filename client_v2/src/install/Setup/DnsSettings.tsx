@@ -1,4 +1,4 @@
-import React from 'react';
+import { createMemo, untrack } from 'solid-js';
 
 import intl from 'panel/common/intl';
 import styles from 'panel/install/Setup/styles.module.pcss';
@@ -24,75 +24,77 @@ type Props = {
     initialValues?: object;
 };
 
-export const DnsSettings = ({
-    handleSubmit,
-    handleFix,
-    validateForm,
-    config,
-    interfaces,
-}: Props) => {
-    const { control, reactHookFormSubmit, isValid, watchFields } = useInstallSettingsForm(
-        config,
-        validateForm,
+export const DnsSettings = (props: Props) => {
+    const form = useInstallSettingsForm(
+        untrack(() => props.config),
+        untrack(() => props.validateForm),
     );
 
-    const { status: dnsStatus, can_autofix: isDnsFixAvailable } = config.dns;
+    const dnsStatus = () => props.config.dns.status;
+    const isDnsFixAvailable = () => props.config.dns.can_autofix;
 
-    const dnsIpOptions = buildInterfaceOptions(interfaces);
+    const dnsIpOptions = createMemo(() => buildInterfaceOptions(props.interfaces));
 
-    const handleAutofix = createHandleAutofix(watchFields, handleFix);
+    const handleAutofix = createHandleAutofix(
+        form.watchFields,
+        untrack(() => props.handleFix),
+    );
 
     const onSubmit = (data: SettingsFormValues) => {
-        validateForm(data);
-        handleSubmit(data);
+        props.validateForm(data);
+        props.handleSubmit(data);
     };
 
     return (
-        <div className={styles.configSetting}>
-            <form className={styles.step} onSubmit={reactHookFormSubmit(onSubmit)}>
-                <div className={styles.info}>
+        <div class={styles.configSetting}>
+            <form class={styles.step} onSubmit={(e) => form.handleSubmit(onSubmit)(e)}>
+                <div class={styles.info}>
                     <div>
-                        <div className={styles.titleStep}>{intl.getMessage('setup_dns_title')}</div>
+                        <div class={styles.titleStep}>{intl.getMessage('setup_dns_title')}</div>
 
-                        <p className={styles.descAdresses}>{intl.getMessage('setup_dns_desc')}</p>
+                        <p class={styles.descAdresses}>{intl.getMessage('setup_dns_desc')}</p>
 
                         <DnsBanner
-                            className={cn(styles.banner, styles.bannerMobile)}
-                            control={control}
-                            dnsIpOptions={dnsIpOptions}
-                            dnsStatus={dnsStatus}
-                            isDnsFixAvailable={isDnsFixAvailable}
-                            dnsPortVal={watchFields.dns?.port}
+                            class={cn(styles.banner, styles.bannerMobile)}
+                            dnsIp={form.dnsIp}
+                            dnsPort={form.dnsPort}
+                            setDnsIp={form.setDnsIp}
+                            setDnsPort={form.setDnsPort}
+                            dnsIpOptions={dnsIpOptions()}
+                            dnsStatus={dnsStatus()}
+                            isDnsFixAvailable={isDnsFixAvailable()}
                             onAutofix={() => handleAutofix('dns')}
                         />
                     </div>
-                    <div className={styles.addressListWrapper}>
+                    <div class={styles.addressListWrapper}>
                         <AddressList
-                            interfaces={interfaces}
-                            address={watchFields.dns?.ip}
-                            port={watchFields.dns?.port}
+                            interfaces={props.interfaces}
+                            address={form.dnsIp()}
+                            port={form.dnsPort()}
                             isDns={true}
                         />
                     </div>
-                    <div className={styles.quote}>
-                        <div className={styles.quoteTitle}>
+                    <div class={styles.quote}>
+                        <div class={styles.quoteTitle}>
                             {intl.getMessage('setup_dns_quote_title')}
                         </div>
-                        <div className={styles.quoteDesc}>
+                        <div class={styles.quoteDesc}>
                             {intl.getMessage('setup_dns_quote_desc')}
                         </div>
                     </div>
 
-                    <Controls invalid={!isValid} />
+                    <Controls invalid={!form.isValid()} />
                 </div>
-                <div className={styles.content}>
+                <div class={styles.content}>
                     <DnsBanner
-                        className={styles.banner}
-                        control={control}
-                        dnsIpOptions={dnsIpOptions}
-                        dnsStatus={dnsStatus}
-                        isDnsFixAvailable={isDnsFixAvailable}
-                        dnsPortVal={watchFields.dns?.port}
+                        class={styles.banner}
+                        dnsIp={form.dnsIp}
+                        dnsPort={form.dnsPort}
+                        setDnsIp={form.setDnsIp}
+                        setDnsPort={form.setDnsPort}
+                        dnsIpOptions={dnsIpOptions()}
+                        dnsStatus={dnsStatus()}
+                        isDnsFixAvailable={isDnsFixAvailable()}
                         onAutofix={() => handleAutofix('dns')}
                     />
                 </div>

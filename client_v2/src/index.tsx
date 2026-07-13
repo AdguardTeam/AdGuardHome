@@ -1,19 +1,10 @@
-import React from 'react';
-import { createRoot } from 'react-dom/client';
-import { Provider } from 'react-redux';
-import configureStore from './configureStore';
-import reducers from './reducers';
+import { render } from 'solid-js/web';
 
 import App from './components/App';
-import { RootState, initialState } from './initialState';
 
 import './index.pcss';
 
-const store = configureStore<RootState>(reducers, initialState);
+const root = document.getElementById('root')!;
+root.innerHTML = '';
 
-const root = createRoot(document.getElementById('root')!);
-root.render(
-    <Provider store={store}>
-        <App />
-    </Provider>,
-);
+render(() => <App />, root);

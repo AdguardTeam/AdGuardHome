@@ -1,6 +1,7 @@
 import { test, expect, type Locator } from '@playwright/test';
 import { execFileSync } from 'child_process';
-import { ADMIN_USERNAME, ADMIN_PASSWORD } from '../constants';
+
+import { login } from '../helpers/login';
 
 const DNS_HOST = '127.0.0.1';
 const DNS_PORT = 5353;
@@ -44,14 +45,7 @@ const expectLookupToMatch = async (domain: string, expectedResult: string) => {
 
 test.describe('General Settings', () => {
     test.beforeEach(async ({ page }) => {
-        await page.goto('/login.html');
-        await page.locator('#username').click();
-        await page.locator('#username').fill(ADMIN_USERNAME);
-        await page.locator('#password').click();
-        await page.locator('#password').fill(ADMIN_PASSWORD);
-        await page.keyboard.press('Tab');
-        await page.locator('#sign_in').click();
-        await page.waitForURL((url) => !url.href.endsWith('/login.html'));
+        await login(page);
     });
 
     test('should toggle browsing security feature and verify DNS changes', async ({ page }) => {

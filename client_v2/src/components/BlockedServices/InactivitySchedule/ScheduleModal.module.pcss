@@ -50,7 +50,7 @@
     position: relative;
 
     &::before {
-        content: "";
+        content: '';
         position: absolute;
         top: 0;
         left: 0;
@@ -65,4 +65,10 @@
     display: flex;
     align-items: center;
     gap: 8px;
+}
+
+.selects :global(.solid-select) {
+    width: 100%;
+    flex: 1;
+    min-width: 0;
 }

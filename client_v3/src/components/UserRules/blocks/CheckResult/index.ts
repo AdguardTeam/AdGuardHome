@@ -1,1 +1,0 @@
-export { CheckResult } from './CheckResult';

@@ -1,18 +1,22 @@
-import React, { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
+import { createSignal, createMemo, Show, createEffect } from 'solid-js';
 
 import intl from 'panel/common/intl';
 import { Dialog } from 'panel/common/ui/Dialog/Dialog';
 import { MODAL_TYPE, TAB_TYPE } from 'panel/helpers/constants';
 
 import { ModalWrapper } from 'panel/common/ui/ModalWrapper';
-import { useDispatch, useSelector } from 'react-redux';
-import { closeModal } from 'panel/reducers/modals';
+import { closeModal } from 'panel/stores/modals';
 import theme from 'panel/lib/theme';
 import { Button } from 'panel/common/ui/Button';
-import { FormProvider, useForm } from 'react-hook-form';
-import { RootState } from 'panel/initialState';
-import { addFilter, addFiltersBatch, editFilter } from 'panel/actions/filtering';
-import { Filter } from 'panel/helpers/helpers';
+import {
+    addFilter,
+    addFiltersBatch,
+    editFilter,
+    removeFilter,
+    filteringState,
+} from 'panel/stores/filtering';
+import type { Filter } from 'panel/helpers/helpers';
+import { validatePath, validateRequiredValue } from 'panel/helpers/validators';
 import { ManualFilterForm } from 'panel/components/FilterLists/blocks/ConfigureBlocklistModal/blocks/ManualFilterForm';
 import { Tabs } from 'panel/common/ui/Tabs';
 import filtersCatalog from 'panel/helpers/filters/filters';
@@ -24,11 +28,6 @@ type FormValues = {
     name: string;
     url: string;
     enabled?: boolean;
-};
-
-const defaultValues: FormValues = {
-    name: '',
-    url: '',
 };
 
 type ConfigureBlocklistModalIdType = 'ADD_BLOCKLIST' | 'EDIT_BLOCKLIST';
@@ -49,7 +48,7 @@ const getSelectedValues = (
 ): SelectedValues =>
     filters.reduce(
         (acc: SelectedValues, { url }: Filter) => {
-            if (Object.prototype.hasOwnProperty.call(catalogSourcesToIdMap, url)) {
+            if (Object.hasOwn(catalogSourcesToIdMap, url)) {
                 const filterId = catalogSourcesToIdMap[url];
                 acc.selectedFilterIds[filterId] = true;
                 acc.selectedSources[url] = true;
@@ -78,110 +77,62 @@ const getButtonText = (modalId: ConfigureBlocklistModalIdType) => {
     return intl.getMessage('add');
 };
 
-const getFormContent = ({
-    modalId,
-    activeTab,
-    onTabChange,
-    selectedSources,
-}: {
-    modalId: ConfigureBlocklistModalIdType;
-    activeTab: string;
-    onTabChange: Dispatch<SetStateAction<string>>;
-    selectedSources?: Record<string, boolean>;
-}) => {
-    switch (modalId) {
-        case MODAL_TYPE.ADD_BLOCKLIST: {
-            return (
-                <Tabs
-                    activeTab={activeTab}
-                    onTabChange={onTabChange}
-                    contentClassName={s.content}
-                    tabs={[
-                        {
-                            id: TAB_TYPE.LIST,
-                            label: intl.getMessage('blocklist_add_from_list'),
-                            content: <FiltersList selectedSources={selectedSources} />,
-                        },
-                        {
-                            id: TAB_TYPE.MANUAL,
-                            label: intl.getMessage('blocklist_add_manual'),
-                            content: <ManualFilterForm className={s.formGroup} />,
-                        },
-                    ]}
-                />
-            );
-        }
-        case MODAL_TYPE.EDIT_BLOCKLIST: {
-            return <ManualFilterForm className={s.formGroup} />;
-        }
-        default: {
-            return null;
-        }
-    }
-};
-
-export const ConfigureBlocklistModal = ({ modalId, filterToEdit }: Props) => {
-    const dispatch = useDispatch();
-    const { filtering } = useSelector((state: RootState) => state);
-    const { processingAddFilter, filters } = filtering;
-
-    const catalogSourcesToIdMap = useMemo(() => {
+export const ConfigureBlocklistModal = (props: Props) => {
+    const catalogSourcesToIdMap = createMemo(() => {
         const map: Record<string, string> = {};
         Object.entries(filtersCatalog.filters).forEach(([filterId, filterData]) => {
             map[filterData.source] = filterId;
         });
         return map;
-    }, []);
+    });
 
-    const { selectedFilterIds, selectedSources } = useMemo(
-        () => getSelectedValues(filters, catalogSourcesToIdMap),
-        [filters, catalogSourcesToIdMap],
+    const selectedValues = createMemo(() =>
+        getSelectedValues(filteringState.filters, catalogSourcesToIdMap()),
     );
 
-    const initialValues = useMemo(() => {
-        if (modalId === MODAL_TYPE.EDIT_BLOCKLIST && filterToEdit) {
-            return { ...defaultValues, ...filterToEdit };
-        }
-        if (modalId === MODAL_TYPE.ADD_BLOCKLIST) {
-            return { ...defaultValues, ...selectedFilterIds };
-        }
-        return defaultValues;
-    }, [modalId, filterToEdit, selectedFilterIds]);
+    const [activeTab, setActiveTab] = createSignal(TAB_TYPE.LIST);
+    const [selectedFilterIds, setSelectedFilterIds] = createSignal<Record<string, boolean>>({});
 
-    const methods = useForm({
-        defaultValues: {
-            ...initialValues,
-        },
-        mode: 'onBlur',
+    createEffect(() => {
+        setSelectedFilterIds(
+            props.modalId === MODAL_TYPE.EDIT_BLOCKLIST && props.filterToEdit
+                ? {}
+                : selectedValues().selectedFilterIds,
+        );
     });
-    const { handleSubmit, reset } = methods;
 
-    const [activeTab, setActiveTab] = useState(TAB_TYPE.LIST);
+    const handleFormSubmit = async (e: Event) => {
+        e.preventDefault();
 
-    useEffect(() => {
-        reset(initialValues);
-    }, [initialValues, reset]);
+        const form = e.target as HTMLFormElement;
+        const formData = new FormData(form);
+        const values: FormValues = {
+            name: (formData.get('name') as string) || '',
+            url: (formData.get('url') as string) || '',
+        };
 
-    const handleFormSubmit = async (values: FormValues) => {
-        switch (modalId) {
+        switch (props.modalId) {
             case MODAL_TYPE.ADD_BLOCKLIST: {
                 if (values.url && values.name) {
-                    // Manual filter form submission
-                    dispatch(addFilter(values.url, values.name));
+                    const nameErr = validateRequiredValue(values.name);
+                    const urlErr = validateRequiredValue(values.url) || validatePath(values.url);
+                    if (nameErr || urlErr) {
+                        return;
+                    }
+                    addFilter(values.url, values.name, false);
                 } else {
-                    // Filter list selection submission
                     const existingFilterSources = new Set(
-                        filters.map((filter: Filter) => filter.url),
+                        filteringState.filters.map((filter: Filter) => filter.url),
                     );
 
-                    const changedValues = Object.entries(values)?.reduce(
+                    const ids = selectedFilterIds();
+                    const changedValues = Object.entries(ids)?.reduce(
                         (acc: Record<string, any>, [key, value]) => {
                             if (value && key in filtersCatalog.filters) {
                                 const filterSource =
                                     filtersCatalog.filters[
                                         key as keyof typeof filtersCatalog.filters
                                     ].source;
-                                // Only include if not already added
                                 if (!existingFilterSources.has(filterSource)) {
                                     acc[key] = value;
                                 }
@@ -199,14 +150,27 @@ export const ConfigureBlocklistModal = ({ modalId, filterToEdit }: Props) => {
                         return { url: source, name };
                     });
                     if (filtersToAdd.length > 0) {
-                        await dispatch(addFiltersBatch(filtersToAdd));
+                        await addFiltersBatch(filtersToAdd);
                     }
-                    return; // skip bottom reset/closeModal — batch action handles them
+
+                    const initialSelected = selectedValues().selectedFilterIds;
+                    const currentIds = selectedFilterIds();
+                    const filtersToRemove = Object.entries(initialSelected)
+                        .filter(([id, wasSelected]) => wasSelected && !currentIds[id])
+                        .map(([id]) => {
+                            const { source } =
+                                filtersCatalog.filters[id as keyof typeof filtersCatalog.filters];
+                            return source;
+                        });
+
+                    for (const url of filtersToRemove) {
+                        await removeFilter(url, false);
+                    }
                 }
                 break;
             }
             case MODAL_TYPE.EDIT_BLOCKLIST: {
-                dispatch(editFilter(filterToEdit!.url, values));
+                editFilter(props.filterToEdit!.url, values, false);
                 break;
             }
             default: {
@@ -214,58 +178,91 @@ export const ConfigureBlocklistModal = ({ modalId, filterToEdit }: Props) => {
             }
         }
 
-        reset(defaultValues);
-        dispatch(closeModal());
+        closeModal();
     };
 
     const handleCancel = () => {
-        reset(initialValues);
-        dispatch(closeModal());
+        closeModal();
     };
 
     return (
-        <ModalWrapper id={modalId}>
-            <Dialog visible onClose={handleCancel} title={getTitle(modalId)}>
-                <FormProvider {...methods}>
-                    <form onSubmit={handleSubmit(handleFormSubmit)}>
-                        <div>
-                            {modalId !== MODAL_TYPE.EDIT_BLOCKLIST && (
-                                <p className={s.desc}>{intl.getMessage('blocklists_add_desc')}</p>
-                            )}
-                            {getFormContent({
-                                modalId,
-                                activeTab,
-                                onTabChange: setActiveTab,
-                                selectedSources,
-                            })}
-                        </div>
+        <ModalWrapper id={props.modalId}>
+            <Dialog visible onClose={handleCancel} title={getTitle(props.modalId)}>
+                <form onSubmit={handleFormSubmit}>
+                    <div>
+                        <Show when={props.modalId !== MODAL_TYPE.EDIT_BLOCKLIST}>
+                            <p class={s.desc}>{intl.getMessage('blocklists_add_desc')}</p>
+                        </Show>
+                        <Show
+                            when={props.modalId === MODAL_TYPE.ADD_BLOCKLIST}
+                            fallback={
+                                <ManualFilterForm
+                                    class={s.formGroup}
+                                    initialName={props.filterToEdit?.name}
+                                    initialUrl={props.filterToEdit?.url}
+                                />
+                            }
+                        >
+                            <Tabs
+                                activeTab={activeTab()}
+                                onTabChange={setActiveTab}
+                                contentClass={s.content}
+                                tabs={[
+                                    {
+                                        id: TAB_TYPE.LIST,
+                                        label: intl.getMessage('blocklist_add_from_list'),
+                                        content: (
+                                            <FiltersList
+                                                selectedSources={selectedValues().selectedSources}
+                                                selectedIds={selectedFilterIds()}
+                                                onChange={setSelectedFilterIds}
+                                                disabled={filteringState.processingAddFilter}
+                                            />
+                                        ),
+                                    },
+                                    {
+                                        id: TAB_TYPE.MANUAL,
+                                        label: intl.getMessage('blocklist_add_manual'),
+                                        content: (
+                                            <ManualFilterForm
+                                                class={s.formGroup}
+                                                initialName={props.filterToEdit?.name}
+                                                initialUrl={props.filterToEdit?.url}
+                                            />
+                                        ),
+                                    },
+                                ]}
+                            />
+                        </Show>
+                    </div>
 
-                        <div className={theme.dialog.footer}>
-                            <Button
-                                type="submit"
-                                id="filters_save"
-                                variant="primary"
-                                size="small"
-                                disabled={processingAddFilter}
-                                leftAddon={processingAddFilter ? <InlineLoader /> : undefined}
-                                className={theme.dialog.button}
-                            >
-                                {getButtonText(modalId)}
-                            </Button>
+                    <div class={theme.dialog.footer}>
+                        <Button
+                            type="submit"
+                            id="filters_save"
+                            variant="primary"
+                            size="small"
+                            disabled={filteringState.processingAddFilter}
+                            leftAddon={
+                                filteringState.processingAddFilter ? <InlineLoader /> : undefined
+                            }
+                            class={theme.dialog.button}
+                        >
+                            {getButtonText(props.modalId)}
+                        </Button>
 
-                            <Button
-                                type="button"
-                                id="filters_cancel"
-                                variant="secondary"
-                                size="small"
-                                onClick={handleCancel}
-                                className={theme.dialog.button}
-                            >
-                                {intl.getMessage('cancel')}
-                            </Button>
-                        </div>
-                    </form>
-                </FormProvider>
+                        <Button
+                            type="button"
+                            id="filters_cancel"
+                            variant="secondary"
+                            size="small"
+                            onClick={handleCancel}
+                            class={theme.dialog.button}
+                        >
+                            {intl.getMessage('cancel')}
+                        </Button>
+                    </div>
+                </form>
             </Dialog>
         </ModalWrapper>
     );

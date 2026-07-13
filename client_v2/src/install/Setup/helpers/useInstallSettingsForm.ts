@@ -1,27 +1,23 @@
-import { useEffect, useMemo } from 'react';
-import { useForm } from 'react-hook-form';
+import { createSignal, createEffect, createMemo, untrack } from 'solid-js';
 
-import {
-    ALL_INTERFACES_IP,
-    STANDARD_DNS_PORT,
-    STANDARD_WEB_PORT,
-} from '../../../helpers/constants';
-import { validateInstallPort } from '../../../helpers/validators';
+import { ALL_INTERFACES_IP, STANDARD_DNS_PORT, STANDARD_WEB_PORT } from 'panel/helpers/constants';
+import { validateInstallPort } from 'panel/helpers/validators';
 
 import type { DnsConfig, SettingsFormValues, WebConfig, ConfigType } from '../types';
 
 type HandleFix = (web: WebConfig, dns: DnsConfig, set_static_ip: boolean) => void;
 
 export const createHandleAutofix =
-    (watchFields: SettingsFormValues, handleFix: HandleFix) => (type: 'web' | 'dns') => {
+    (getFields: () => SettingsFormValues, handleFix: HandleFix) => (type: 'web' | 'dns') => {
+        const fields = getFields();
         const web = {
-            ip: watchFields.web?.ip,
-            port: watchFields.web?.port,
+            ip: fields.web?.ip,
+            port: fields.web?.port,
             autofix: false,
         };
         const dns = {
-            ip: watchFields.dns?.ip,
-            port: watchFields.dns?.port,
+            ip: fields.dns?.ip,
+            port: fields.dns?.port,
             autofix: false,
         };
 
@@ -38,41 +34,54 @@ export const useInstallSettingsForm = (
     config: ConfigType,
     validateForm: (data: SettingsFormValues) => void,
 ) => {
-    const defaultValues = useMemo(
-        () => ({
-            web: {
-                ip: config.web.ip || ALL_INTERFACES_IP,
-                port: config.web.port || STANDARD_WEB_PORT,
-            },
-            dns: {
-                ip: config.dns.ip || ALL_INTERFACES_IP,
-                port: config.dns.port || STANDARD_DNS_PORT,
-            },
-        }),
-        [config.dns.ip, config.dns.port, config.web.ip, config.web.port],
-    );
+    const [webIp, setWebIp] = createSignal(config.web.ip || ALL_INTERFACES_IP);
+    const [webPort, setWebPort] = createSignal(config.web.port || STANDARD_WEB_PORT);
+    const [dnsIp, setDnsIp] = createSignal(config.dns.ip || ALL_INTERFACES_IP);
+    const [dnsPort, setDnsPort] = createSignal(config.dns.port || STANDARD_DNS_PORT);
+    const [isDirty, setIsDirty] = createSignal(false);
 
-    const {
-        control,
-        watch,
-        handleSubmit: reactHookFormSubmit,
-        formState: { isValid, isDirty },
-    } = useForm<SettingsFormValues>({
-        defaultValues,
-        mode: 'onBlur',
-    });
+    const watchFields = createMemo<SettingsFormValues>(() => ({
+        web: {
+            ip: webIp(),
+            port: webPort(),
+        },
+        dns: {
+            ip: dnsIp(),
+            port: dnsPort(),
+        },
+    }));
 
-    const watchFields = watch();
+    // Track changes to mark form as dirty
+    const handleWebIpChange = (value: string) => {
+        setWebIp(value);
+        setIsDirty(true);
+    };
 
-    const webIpVal = watch('web.ip');
-    const webPortVal = watch('web.port');
-    const dnsIpVal = watch('dns.ip');
-    const dnsPortVal = watch('dns.port');
+    const handleWebPortChange = (value: number) => {
+        setWebPort(value);
+        setIsDirty(true);
+    };
 
-    useEffect(() => {
-        if (!isDirty) {
+    const handleDnsIpChange = (value: string) => {
+        setDnsIp(value);
+        setIsDirty(true);
+    };
+
+    const handleDnsPortChange = (value: number) => {
+        setDnsPort(value);
+        setIsDirty(true);
+    };
+
+    // Validate and call validateForm when values change
+    createEffect(() => {
+        if (!isDirty()) {
             return;
         }
+
+        const webPortVal = webPort();
+        const dnsPortVal = dnsPort();
+        const webIpVal = webIp();
+        const dnsIpVal = dnsIp();
 
         const webPortError = validateInstallPort(webPortVal);
         const dnsPortError = validateInstallPort(dnsPortVal);
@@ -91,17 +100,31 @@ export const useInstallSettingsForm = (
                 port: dnsPortVal,
             },
         });
-    }, [dnsIpVal, dnsPortVal, isDirty, validateForm, webIpVal, webPortVal]);
+    });
+
+    const isValid = createMemo(() => {
+        const webPortVal = webPort();
+        const dnsPortVal = dnsPort();
+        return !validateInstallPort(webPortVal) && !validateInstallPort(dnsPortVal);
+    });
+
+    const handleSubmit = (onSubmit: (data: SettingsFormValues) => void) => (e: Event) => {
+        e.preventDefault();
+        onSubmit(untrack(watchFields));
+    };
 
     return {
-        control,
-        reactHookFormSubmit,
+        webIp,
+        webPort,
+        dnsIp,
+        dnsPort,
+        setWebIp: handleWebIpChange,
+        setWebPort: handleWebPortChange,
+        setDnsIp: handleDnsIpChange,
+        setDnsPort: handleDnsPortChange,
+        handleSubmit,
         isValid,
         isDirty,
         watchFields,
-        webIpVal,
-        webPortVal,
-        dnsIpVal,
-        dnsPortVal,
     };
 };

@@ -1,9 +1,8 @@
-export type { ISelectSize, ISelectValue } from './Select';
+export type {
+    ISelectSize,
+    ISelectHeight,
+    ISelectMenuSize,
+    ISelectValue,
+    SelectProps,
+} from './types';
 export { Select } from './Select';
-export { CustomMultiValue } from './CustomMultiValue';
-export { CustomOption } from './CustomOption';
-export { CustomClearIndicator } from './CustomClearIndicator';
-export { CustomDropdownIndicator } from './CustomDropdownIndicator';
-export { CustomLoadingIndicator } from './CustomLoadingIndicator';
-export { CustomLoadingMessage } from './CustomLoadingMessage';
-export { CustomValueContainer } from './CustomValueContainer';

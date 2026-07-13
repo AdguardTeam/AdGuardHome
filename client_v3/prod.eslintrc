@@ -1,6 +1,0 @@
-{
-    "rules": {
-        // disallow the use of debugger
-        "no-debugger": "error",
-    }
-}

@@ -1,4 +1,4 @@
-import React, { ReactNode, useState } from 'react';
+import { type JSX, createSignal, Show } from 'solid-js';
 import cn from 'clsx';
 
 import { Icon } from 'panel/common/ui/Icon';
@@ -6,33 +6,36 @@ import theme from 'panel/lib/theme';
 import s from './Accordion.module.pcss';
 
 type Props = {
-    title: ReactNode;
-    children: ReactNode;
+    title: JSX.Element;
+    children: JSX.Element;
     defaultOpen?: boolean;
-    className?: string;
+    class?: string;
+    compact?: boolean;
 };
 
-export const Accordion = ({ title, children, defaultOpen = false, className }: Props) => {
-    const [isOpen, setIsOpen] = useState(defaultOpen);
+export const Accordion = (props: Props) => {
+    const [isOpen, setIsOpen] = createSignal(props.defaultOpen ?? false);
 
     const toggleOpen = () => {
-        setIsOpen(!isOpen);
+        setIsOpen(!isOpen());
     };
 
     return (
-        <div className={cn(s.accordion, className)}>
+        <div class={cn(s.accordion, props.class)}>
             <button
                 type="button"
-                className={s.header}
+                class={cn(s.header, { [s.compact]: props.compact })}
                 onClick={toggleOpen}
-                aria-expanded={isOpen}
+                aria-expanded={isOpen()}
                 aria-controls="accordion-content"
             >
-                <Icon icon="arrow_bottom" className={cn(s.arrow, { [s.arrowOpen]: isOpen })} />
-                <span className={cn(s.title, theme.text.t2, theme.text.semibold)}>{title}</span>
+                <Icon icon="arrow_bottom" class={cn(s.arrow, { [s.arrowOpen]: isOpen() })} />
+                <span class={cn(s.title, theme.text.t2, theme.text.semibold)}>{props.title}</span>
             </button>
 
-            {isOpen && <div id="accordion-content">{children}</div>}
+            <Show when={isOpen()}>
+                <div id="accordion-content">{props.children}</div>
+            </Show>
         </div>
     );
 };

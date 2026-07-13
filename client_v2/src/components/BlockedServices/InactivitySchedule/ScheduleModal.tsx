@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { createSignal, createMemo, createEffect } from 'solid-js';
 import cn from 'clsx';
 import intl from 'panel/common/intl';
 import { Dialog } from 'panel/common/ui/Dialog';
@@ -8,11 +8,11 @@ import { Checkbox } from 'panel/common/controls/Checkbox';
 import theme from 'panel/lib/theme';
 
 import {
-    DayKey,
+    type DayKey,
     FULL_DAY_END_MS,
     HOURS_OPTIONS,
     MINUTES_OPTIONS,
-    ScheduleDayData,
+    type ScheduleDayData,
     getEndTimeOptions,
     getNormalizedEndTime,
     isFullDay,
@@ -30,15 +30,16 @@ type Props = {
     onSave: (day: DayKey, start: number, end: number) => void;
 };
 
-export const ScheduleModal = ({ visible, currentDay, currentData, onClose, onSave }: Props) => {
-    const [startHour, setStartHour] = useState(0);
-    const [startMinute, setStartMinute] = useState(0);
-    const [endHour, setEndHour] = useState(23);
-    const [endMinute, setEndMinute] = useState(59);
-    const [allDay, setAllDay] = useState(false);
+export const ScheduleModal = (props: Props) => {
+    const [startHour, setStartHour] = createSignal(0);
+    const [startMinute, setStartMinute] = createSignal(0);
+    const [endHour, setEndHour] = createSignal(23);
+    const [endMinute, setEndMinute] = createSignal(59);
+    const [allDay, setAllDay] = createSignal(false);
 
-    useEffect(() => {
-        if (!currentData) {
+    createEffect(() => {
+        const data = props.currentData;
+        if (!data) {
             setAllDay(false);
             setStartHour(0);
             setStartMinute(0);
@@ -47,9 +48,9 @@ export const ScheduleModal = ({ visible, currentDay, currentData, onClose, onSav
             return;
         }
 
-        const isFullDayData = isFullDay(currentData.start, currentData.end);
-        const start = msToTime(currentData.start);
-        const end = msToTime(currentData.end);
+        const isFullDayData = isFullDay(data.start, data.end);
+        const start = msToTime(data.start);
+        const end = msToTime(data.end);
         const normalizedEnd = getNormalizedEndTime(start, end) ?? end;
 
         setAllDay(isFullDayData);
@@ -57,10 +58,10 @@ export const ScheduleModal = ({ visible, currentDay, currentData, onClose, onSav
         setStartMinute(start.minutes);
         setEndHour(normalizedEnd.hours);
         setEndMinute(normalizedEnd.minutes);
-    }, [currentData]);
+    });
 
-    const handleAllDayChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { checked } = e.target;
+    const handleAllDayChange = (e: Event) => {
+        const checked = (e.target as HTMLInputElement).checked;
         setAllDay(checked);
         if (checked) {
             setStartHour(0);
@@ -74,13 +75,13 @@ export const ScheduleModal = ({ visible, currentDay, currentData, onClose, onSav
         setStartHour(nextStartHour);
         setStartMinute(nextStartMinute);
 
-        if (allDay) {
+        if (allDay()) {
             return;
         }
 
         const normalizedEnd = getNormalizedEndTime(
             { hours: nextStartHour, minutes: nextStartMinute },
-            { hours: endHour, minutes: endMinute },
+            { hours: endHour(), minutes: endMinute() },
         );
 
         if (!normalizedEnd) {
@@ -93,7 +94,7 @@ export const ScheduleModal = ({ visible, currentDay, currentData, onClose, onSav
 
     const applyEndTime = (nextEndHour: number, nextEndMinute: number) => {
         const normalizedEnd = getNormalizedEndTime(
-            { hours: startHour, minutes: startMinute },
+            { hours: startHour(), minutes: startMinute() },
             { hours: nextEndHour, minutes: nextEndMinute },
         );
 
@@ -105,114 +106,120 @@ export const ScheduleModal = ({ visible, currentDay, currentData, onClose, onSav
         setEndMinute(normalizedEnd.minutes);
     };
 
-    const {
-        hours: endHoursOptions,
-        minutes: endMinutesOptions,
-        hasAvailableEndTime,
-    } = getEndTimeOptions({ hours: startHour, minutes: startMinute }, endHour);
+    const endTimeOptions = createMemo(() =>
+        getEndTimeOptions({ hours: startHour(), minutes: startMinute() }, endHour()),
+    );
 
-    const startMs = timeToMs(startHour, startMinute);
-    const endMs = timeToMs(endHour, endMinute);
-    const isDisabled = !currentDay || (!allDay && !hasAvailableEndTime);
+    const isDisabled = () =>
+        !props.currentDay || (!allDay() && !endTimeOptions().hasAvailableEndTime);
 
     const handleSave = () => {
-        if (isDisabled || !currentDay) return;
-        const saveStart = allDay ? 0 : startMs;
-        const saveEnd = allDay ? FULL_DAY_END_MS : endMs;
-        onSave(currentDay, saveStart, saveEnd);
+        if (isDisabled() || !props.currentDay) return;
+        const saveStart = allDay() ? 0 : timeToMs(startHour(), startMinute());
+        const saveEnd = allDay() ? FULL_DAY_END_MS : timeToMs(endHour(), endMinute());
+        props.onSave(props.currentDay, saveStart, saveEnd);
     };
 
-    const dayLabel = getDayName(currentDay);
-    const title = currentData
-        ? intl.getMessage('inactivity_schedule_edit')
-        : intl.getMessage('inactivity_schedule_add');
+    const dayLabel = () => getDayName(props.currentDay);
+    const title = () =>
+        props.currentData
+            ? intl.getMessage('inactivity_schedule_edit')
+            : intl.getMessage('inactivity_schedule_add');
 
     return (
         <Dialog
-            visible={visible}
+            visible={props.visible}
             mask
-            onClose={onClose}
-            title={title}
-            wrapClassName="rc-dialog-update"
+            onClose={props.onClose}
+            title={title()}
+            wrapClass="rc-dialog-update"
         >
-            <div className={cn(theme.dialog.body, s.content)}>
-                <div className={s.dayLabel}>{dayLabel}</div>
+            <div class={cn(theme.dialog.body, s.content)}>
+                <div class={s.dayLabel}>{dayLabel()}</div>
 
-                <div className={s.timeWrapper}>
-                    <div className={s.timeField}>
-                        <span className={s.timeLabel}>
+                <div class={s.timeWrapper}>
+                    <div class={s.timeField}>
+                        <span class={s.timeLabel}>
                             {intl.getMessage('inactivity_schedule_time_from')}
                         </span>
-                        <div className={s.selects}>
+                        <div class={s.selects}>
                             <Select
                                 options={HOURS_OPTIONS}
-                                value={HOURS_OPTIONS[startHour]}
-                                onChange={(opt) => applyStartTime(opt.value, startMinute)}
-                                isDisabled={allDay}
+                                value={HOURS_OPTIONS[startHour()]}
+                                onChange={(opt) => applyStartTime(opt.value, startMinute())}
+                                isDisabled={allDay()}
                                 height="big"
                                 size="responsive"
+                                isSearchable={false}
                             />
                             <Select
                                 options={MINUTES_OPTIONS}
-                                value={MINUTES_OPTIONS[startMinute]}
-                                onChange={(opt) => applyStartTime(startHour, opt.value)}
-                                isDisabled={allDay}
+                                value={MINUTES_OPTIONS[startMinute()]}
+                                onChange={(opt) => applyStartTime(startHour(), opt.value)}
+                                isDisabled={allDay()}
                                 height="big"
                                 size="responsive"
+                                isSearchable={false}
                             />
                         </div>
                     </div>
-                    <div className={s.timeField}>
-                        <span className={s.timeLabel}>
+                    <div class={s.timeField}>
+                        <span class={s.timeLabel}>
                             {intl.getMessage('inactivity_schedule_time_to')}
                         </span>
-                        <div className={s.selects}>
+                        <div class={s.selects}>
                             <Select
-                                options={endHoursOptions}
-                                value={HOURS_OPTIONS[endHour]}
-                                onChange={(opt) => applyEndTime(opt.value, endMinute)}
-                                isDisabled={allDay}
+                                options={endTimeOptions().hours}
+                                value={HOURS_OPTIONS[endHour()]}
+                                onChange={(opt) => applyEndTime(opt.value, endMinute())}
+                                isDisabled={allDay()}
                                 height="big"
                                 size="responsive"
+                                isSearchable={false}
                             />
                             <Select
-                                options={endMinutesOptions}
-                                value={MINUTES_OPTIONS[endMinute]}
-                                onChange={(opt) => applyEndTime(endHour, opt.value)}
-                                isDisabled={allDay}
+                                options={endTimeOptions().minutes}
+                                value={MINUTES_OPTIONS[endMinute()]}
+                                onChange={(opt) => applyEndTime(endHour(), opt.value)}
+                                isDisabled={allDay()}
                                 height="big"
                                 size="responsive"
+                                isSearchable={false}
                             />
                         </div>
                     </div>
                 </div>
 
-                <div className={s.allDayRow}>
-                    <Checkbox id="all-day-checkbox" checked={allDay} onChange={handleAllDayChange}>
+                <div class={s.allDayRow}>
+                    <Checkbox
+                        id="all-day-checkbox"
+                        checked={allDay()}
+                        onChange={handleAllDayChange}
+                    >
                         {intl.getMessage('inactivity_schedule_all_day')}
                     </Checkbox>
                 </div>
 
-                <div className={cn(s.notice, theme.text.t2, theme.text.t1_tablet)}>
+                <div class={cn(s.notice, theme.text.t2, theme.text.t1_tablet)}>
                     {intl.getMessage('inactivity_schedule_replace_desc')}
                 </div>
             </div>
 
-            <div className={theme.dialog.footer}>
+            <div class={theme.dialog.footer}>
                 <Button
                     variant="primary"
                     size="small"
                     onClick={handleSave}
-                    disabled={isDisabled}
-                    className={theme.dialog.button}
+                    disabled={isDisabled()}
+                    class={theme.dialog.button}
                 >
                     {intl.getMessage('save_btn')}
                 </Button>
                 <Button
                     variant="secondary"
                     size="small"
-                    onClick={onClose}
-                    className={theme.dialog.button}
+                    onClick={props.onClose}
+                    class={theme.dialog.button}
                 >
                     {intl.getMessage('cancel_btn')}
                 </Button>

@@ -1,4 +1,3 @@
-import React from 'react';
 import cn from 'clsx';
 
 import { Icon } from 'panel/common/ui/Icon';
@@ -17,33 +16,27 @@ type Props = {
     onSort: (field: SortField) => void;
 };
 
-export const SortableTableHeader = ({
-    nameLabel,
-    countLabel,
-    sortField,
-    sortDirection,
-    onSort,
-}: Props) => (
-    <div className={cn(theme.text.t3, theme.text.semibold, s.tableHeader)}>
-        <button type="button" className={s.sortableHeader} onClick={() => onSort('name')}>
-            {nameLabel}
+export const SortableTableHeader = (props: Props) => (
+    <div class={cn(theme.text.t3, theme.text.semibold, s.tableHeader)}>
+        <button type="button" class={s.sortableHeader} onClick={() => props.onSort('name')}>
+            {props.nameLabel}
 
             <Icon
                 icon="arrows_sort"
-                className={cn(
+                class={cn(
                     s.sortIcon,
-                    sortField === 'name' && sortDirection === 'asc' && s.sortIconAsc,
+                    props.sortField === 'name' && props.sortDirection === 'asc' && s.sortIconAsc,
                 )}
             />
         </button>
-        <button type="button" className={s.sortableHeader} onClick={() => onSort('count')}>
-            {countLabel}
+        <button type="button" class={s.sortableHeader} onClick={() => props.onSort('count')}>
+            {props.countLabel}
 
             <Icon
                 icon="arrows_sort"
-                className={cn(
+                class={cn(
                     s.sortIcon,
-                    sortField === 'count' && sortDirection === 'asc' && s.sortIconAsc,
+                    props.sortField === 'count' && props.sortDirection === 'asc' && s.sortIconAsc,
                 )}
             />
         </button>

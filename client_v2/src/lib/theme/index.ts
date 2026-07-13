@@ -2,6 +2,7 @@ import common from './Common.module.pcss';
 import dialog from './Dialog.module.pcss';
 import layout from './Layout.module.pcss';
 import link from './Link.module.pcss';
+import table from './Table.module.pcss';
 import title from './Title.module.pcss';
 import text from './Text.module.pcss';
 import dropdown from './Dropdown.module.pcss';
@@ -16,6 +17,7 @@ const theme = {
     common,
     layout,
     dialog,
+    table,
     title,
     text,
     dropdown,

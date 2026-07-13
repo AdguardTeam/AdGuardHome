@@ -1,4 +1,4 @@
-import React, { MouseEvent } from 'react';
+import { Show } from 'solid-js';
 import cn from 'clsx';
 
 import { Icon } from 'panel/common/ui/Icon';
@@ -9,48 +9,53 @@ import { LogEntry } from 'panel/components/QueryLog/types';
 import s from '../LogTable.module.pcss';
 
 type Props = {
-    onSearchSelect: (value: string) => (event: MouseEvent<HTMLButtonElement>) => void;
+    onSearchSelect: (value: string) => (event: MouseEvent) => void;
     row: LogEntry;
 };
 
-export const ClientCell = ({ onSearchSelect, row }: Props) => {
-    const clientName = row.client_info?.name || '';
-    const clientLocation = getClientLocation(row.client_info?.whois);
+export const ClientCell = (props: Props) => {
+    const clientName = () => props.row.client_info?.name || '';
+    const clientLocation = () => getClientLocation(props.row.client_info?.whois);
 
     return (
-        <div className={s.clientCell} data-testid="query-log-client-cell">
-            <div className={s.clientPrimary}>
+        <div class={s.clientCell} data-testid="query-log-client-cell">
+            <div class={s.clientPrimary}>
                 <button
                     type="button"
-                    className={cn(s.clientButtonPlain, s.clientIp, theme.text.t3)}
-                    title={row.client}
-                    onClick={onSearchSelect(row.client)}
+                    class={cn(s.clientButtonPlain, s.clientIp, theme.text.t3)}
+                    title={props.row.client}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        props.onSearchSelect(props.row.client)(e);
+                    }}
                 >
-                    {row.client}
+                    {props.row.client}
                 </button>
             </div>
-            <div className={s.clientSecondary}>
-                {clientName && (
+            <div class={s.clientSecondary}>
+                <Show when={clientName()}>
                     <button
                         type="button"
-                        className={cn(s.clientButtonPlain, s.clientName, theme.text.t4)}
-                        title={clientName}
-                        onClick={onSearchSelect(clientName)}
+                        class={cn(s.clientButtonPlain, s.clientName, theme.text.t4)}
+                        title={clientName()}
+                        onClick={(e) => props.onSearchSelect(clientName())(e)}
                     >
-                        {clientName}
+                        {clientName()}
                     </button>
-                )}
+                </Show>
 
-                {clientName && clientLocation && <span className={s.clientLocationDivider} />}
+                <Show when={clientName() && clientLocation()}>
+                    <span class={s.clientLocationDivider} />
+                </Show>
 
-                {clientLocation && (
-                    <span className={s.clientLocation} title={clientLocation}>
-                        <Icon icon="location" className={s.clientLocationIcon} />
-                        <span className={cn(s.clientLocationText, theme.text.t4)}>
-                            {clientLocation}
+                <Show when={clientLocation()}>
+                    <span class={s.clientLocation} title={clientLocation()}>
+                        <Icon icon="location" class={s.clientLocationIcon} />
+                        <span class={cn(s.clientLocationText, theme.text.t4)}>
+                            {clientLocation()}
                         </span>
                     </span>
-                )}
+                </Show>
             </div>
         </div>
     );

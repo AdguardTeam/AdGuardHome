@@ -1,10 +1,7 @@
-import React, { useEffect } from 'react';
+import { Show, onMount } from 'solid-js';
 
-import { useDispatch, useSelector } from 'react-redux';
-
-import { getDnsConfig } from 'panel/actions/dnsConfig';
-import { getAccessList } from 'panel/actions/access';
-import { RootState } from 'panel/initialState';
+import { dnsConfigState, getDnsConfig } from 'panel/stores/dnsConfig';
+import { accessState, getAccessList } from 'panel/stores/access';
 import intl from 'panel/common/intl';
 import cn from 'clsx';
 
@@ -16,41 +13,27 @@ import { ServerConfig } from './ServerConfig';
 import { Cache } from './Cache';
 
 export const DnsSettings = () => {
-    const dispatch = useDispatch();
-    const { processingGetConfig, upstream_dns: upstreamDns } = useSelector(
-        (state: RootState) => state.dnsConfig,
-    );
-    const processing = useSelector((state: RootState) => state.access.processing);
-
-    // upstream_dns is only defined after a successful fetch.
-    const hasCachedData = upstreamDns !== undefined;
-    const isDataLoading = !hasCachedData && (processing || processingGetConfig);
-
-    useEffect(() => {
-        dispatch(getAccessList());
-        dispatch(getDnsConfig());
-    }, []);
+    onMount(() => {
+        getAccessList();
+        getDnsConfig();
+    });
 
     return (
-        <div className={theme.layout.container}>
-            <div className={cn(theme.layout.containerIn, theme.layout.containerIn_one_col)}>
-                <h1 className={cn(theme.layout.title, theme.title.h4, theme.title.h3_tablet)}>
+        <div class={theme.layout.container}>
+            <div class={cn(theme.layout.containerIn, theme.layout.containerIn_one_col)}>
+                <h1 class={cn(theme.layout.title, theme.title.h4, theme.title.h3_tablet)}>
                     {intl.getMessage('dns_settings')}
                 </h1>
 
-                {isDataLoading ? (
-                    <PageLoader />
-                ) : (
-                    <>
-                        <Upstream />
-
-                        <ServerConfig />
-
-                        <Cache />
-
-                        <Access />
-                    </>
-                )}
+                <Show
+                    when={!(dnsConfigState.processingGetConfig || accessState.processing)}
+                    fallback={<PageLoader />}
+                >
+                    <Upstream />
+                    <ServerConfig />
+                    <Cache />
+                    <Access />
+                </Show>
             </div>
         </div>
     );

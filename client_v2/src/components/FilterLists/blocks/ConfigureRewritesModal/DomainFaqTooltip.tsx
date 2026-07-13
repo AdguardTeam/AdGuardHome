@@ -1,5 +1,4 @@
-import React from 'react';
-import type { ReactNode } from 'react';
+import { For } from 'solid-js';
 import cn from 'clsx';
 
 import intl from 'panel/common/intl';
@@ -19,29 +18,26 @@ const items = [
     },
 ];
 
-type Props = {
-    label?: ReactNode;
-};
-
-export const DomainFaqTooltip = ({ label }: Props) => {
+export const DomainFaqTooltip = () => {
     return (
         <FaqTooltip
-            overlayClassName={s.dropdown}
-            menuClassName={s.tooltip}
-            label={label}
+            overlayClass={s.dropdown}
+            menuClass={s.tooltip}
             text={
                 <>
-                    <div className={cn(theme.text.t3, s.tooltipTitle)}>
+                    <div class={cn(theme.text.t3, s.tooltipTitle)}>
                         {intl.getMessage('upstream_examples_title')}
                     </div>
 
-                    {items.map((item, index) => (
-                        <div key={index} className={s.tooltipItem}>
-                            <Icon icon="label" className={s.icon} />
-                            {item.message}
-                            <code>{item.code}</code>
-                        </div>
-                    ))}
+                    <For each={items}>
+                        {(item) => (
+                            <div class={s.tooltipItem}>
+                                <Icon icon="label" class={s.icon} />
+                                {item.message}
+                                <code>{item.code}</code>
+                            </div>
+                        )}
+                    </For>
                 </>
             }
         />

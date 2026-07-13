@@ -1,4 +1,3 @@
-import React, { type RefObject, type UIEvent } from 'react';
 import classnames from 'clsx';
 import theme from 'panel/lib/theme';
 import { COMMENT_LINE_DEFAULT_TOKEN } from './constants';
@@ -17,15 +16,11 @@ const renderHighlightedLine = (
         [theme.highlight.textTransparent]: !isComment,
     });
 
-    return (
-        <div className={lineClassName} key={idx}>
-            {line || '\n'}
-        </div>
-    );
+    return <div class={lineClassName}>{line || '\n'}</div>;
 };
 
 export const getTextareaCommentsHighlight = (
-    ref: RefObject<HTMLElement>,
+    ref: HTMLElement | undefined,
     lines: string,
     commentLineTokens: CommentLineTokens = [COMMENT_LINE_DEFAULT_TOKEN],
     className = '',
@@ -34,18 +29,18 @@ export const getTextareaCommentsHighlight = (
         renderHighlightedLine(line, idx, commentLineTokens);
 
     return (
-        <code className={classnames(theme.highlight.textOutput, className)} ref={ref}>
+        <code class={classnames(theme.highlight.textOutput, className)} ref={ref}>
             {lines.split('\n').map(renderLine)}
         </code>
     );
 };
 
-export const syncScroll = (e: UIEvent<HTMLElement>, ref: RefObject<HTMLElement>) => {
-    if (!ref.current) {
+export const syncScroll = (e: UIEvent, ref: HTMLElement | undefined) => {
+    if (!ref) {
         return;
     }
 
     const target = e.target as HTMLElement;
     // eslint-disable-next-line no-param-reassign
-    ref.current.scrollTop = target.scrollTop;
+    ref.scrollTop = target.scrollTop;
 };

@@ -1,21 +1,24 @@
-import React from 'react';
 import cn from 'clsx';
-import { Icon, IconColor, IconType } from 'panel/common/ui/Icon';
+import { Icon, type IconColor, type IconType } from 'panel/common/ui/Icon';
 
 import s from './Loader.module.pcss';
 
 type Props = {
     color?: IconColor;
-    className?: string;
+    class?: string;
     overlay?: boolean;
-    overlayClassName?: string;
+    overlayClass?: string;
     icon?: IconType;
 };
 
-export const Loader = ({ color, className, overlay, overlayClassName, icon = 'loader' }: Props) => (
-    <div className={cn({ [s.overlayWrapper]: overlay }, overlayClassName)}>
-        <div className={cn({ [s.overlay]: overlay })}>
-            <Icon color={color} className={cn(s.loader, className)} icon={icon} />
+export const Loader = (props: Props) => (
+    <div class={cn({ [s.overlayWrapper]: props.overlay }, props.overlayClass)}>
+        <div class={cn({ [s.overlay]: props.overlay })}>
+            <Icon
+                color={props.color}
+                class={cn(s.loader, props.class)}
+                icon={props.icon || 'loader'}
+            />
         </div>
     </div>
 );

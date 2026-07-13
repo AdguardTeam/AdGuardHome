@@ -1,1 +1,0 @@
-export { DeleteAllowlistModal } from './DeleteAllowlistModal';

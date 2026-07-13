@@ -1,17 +1,17 @@
-import { useState, useEffect } from 'react';
+import { createSignal, createEffect, onCleanup } from 'solid-js';
 
 const useDebounce = (value: any, delay: any) => {
-    const [debouncedValue, setDebouncedValue] = useState(value);
+    const [debouncedValue, setDebouncedValue] = createSignal(value);
 
-    useEffect(() => {
+    createEffect(() => {
         const handler = setTimeout(() => {
             setDebouncedValue(value);
         }, delay);
 
-        return () => {
+        onCleanup(() => {
             clearTimeout(handler);
-        };
-    }, [value, delay]);
+        });
+    });
 
     return [debouncedValue, setDebouncedValue];
 };

@@ -1,24 +1,27 @@
-import React, { useEffect, useCallback, useState } from 'react';
+import { createSignal, createEffect, onMount, Show, For } from 'solid-js';
 import cn from 'clsx';
-import { batch, useSelector, useDispatch } from 'react-redux';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Action } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
+import { useNavigate, useLocation } from '@solidjs/router';
 
 import { Loader } from 'panel/common/ui/Loader';
-import { initialState, RootState } from 'panel/initialState';
 import theme from 'panel/lib/theme';
 import {
-    getLogs,
+    queryLogsState,
+    getLogsConfig,
     setLogsFilter,
     setFilteredLogs,
     refreshFilteredLogs,
-    getLogsConfig,
-} from 'panel/actions/queryLogs';
-import { blockDomain, blockDomainForClient, getClients, unblockDomain } from 'panel/actions';
-import { toggleClientBlock, getAccessList } from 'panel/actions/access';
-import { getFilteringStatus } from 'panel/actions/filtering';
-import { allowBlockedService, getAllBlockedServices } from 'panel/actions/services';
+    getAdditionalLogs,
+} from 'panel/stores/queryLogs';
+import { accessState, getAccessList, toggleClientBlock } from 'panel/stores/access';
+import { dashboardState, getClients } from 'panel/stores/dashboard';
+import {
+    filteringState,
+    getFilteringStatus,
+    blockDomain,
+    unblockDomain,
+    blockDomainForClient,
+} from 'panel/stores/filtering';
+import { servicesState, getAllBlockedServices, allowBlockedService } from 'panel/stores/services';
 import {
     DEFAULT_LOGS_FILTER,
     QUERY_LOG_REASON_FILTER_QUERIES,
@@ -43,73 +46,41 @@ const getEmptyStateMode = (enabled: boolean, interval?: number): EmptyStateMode 
     if (!enabled) {
         return 'disabled';
     }
-
     if (interval === 0) {
         return 'rotation-disabled';
     }
-
     return 'default';
 };
 
 export const QueryLog = () => {
-    const dispatch = useDispatch<ThunkDispatch<RootState, unknown, Action<string>>>();
     const navigate = useNavigate();
     const location = useLocation();
 
-    const queryLogs = useSelector((state: RootState) => state.queryLogs) ?? initialState.queryLogs;
-    const access = useSelector((state: RootState) => state.access);
-    const persistentClients = useSelector((state: RootState) => state.dashboard.clients);
-    const processingClients = useSelector((state: RootState) => state.dashboard.processingClients);
-    const filters = useSelector((state: RootState) => state.filtering.filters);
-    const whitelistFilters = useSelector((state: RootState) => state.filtering.whitelistFilters);
-    const services = useSelector((state: RootState) => state.services?.allServices ?? []);
+    const [selectedEntry, setSelectedEntry] = createSignal<LogEntry | null>(null);
+    const [disallowTarget, setDisallowTarget] = createSignal<string | null>(null);
+    const [isIncrementalLoad, setIsIncrementalLoad] = createSignal(false);
 
-    const {
-        logs = [],
-        processingGetLogs,
-        processingAdditionalLogs,
-        filter,
-        isEntireLog,
-        enabled,
-        interval,
-    } = queryLogs;
+    onMount(() => {
+        getLogsConfig();
+        getAccessList();
+        getClients();
+        getFilteringStatus();
+        getAllBlockedServices();
+    });
 
-    const [selectedEntry, setSelectedEntry] = useState<LogEntry | null>(null);
-    const [disallowTarget, setDisallowTarget] = useState<string | null>(null);
-    const [isIncrementalLoad, setIsIncrementalLoad] = useState(false);
-
-    useEffect(() => {
-        batch(() => {
-            dispatch(getLogsConfig());
-            dispatch(getAccessList());
-            dispatch(getClients());
-            dispatch(getFilteringStatus());
-            dispatch(getAllBlockedServices());
-        });
-    }, [dispatch]);
-
-    useEffect(() => {
+    // Watch location.search for filter changes
+    createEffect(() => {
         const searchParams = new URLSearchParams(location.search);
         const search = searchParams.get('search') || DEFAULT_LOGS_FILTER.search;
         const statusParam = searchParams.get('status') || DEFAULT_LOGS_FILTER.status;
         const reasonParam = searchParams.get('reason') || DEFAULT_LOGS_FILTER.reason;
-        const status = Object.prototype.hasOwnProperty.call(
-            QUERY_LOG_STATUS_FILTER_QUERIES,
-            statusParam,
-        )
+        const status = Object.hasOwn(QUERY_LOG_STATUS_FILTER_QUERIES, statusParam)
             ? statusParam
             : DEFAULT_LOGS_FILTER.status;
-        const reason = Object.prototype.hasOwnProperty.call(
-            QUERY_LOG_REASON_FILTER_QUERIES,
-            reasonParam,
-        )
+        const reason = Object.hasOwn(QUERY_LOG_REASON_FILTER_QUERIES, reasonParam)
             ? reasonParam
             : DEFAULT_LOGS_FILTER.reason;
-        const nextFilter = {
-            search,
-            status,
-            reason,
-        };
+        const nextFilter = { search, status, reason };
         const nextSearch = getLogsUrlParams(search, status, reason);
 
         if (location.search !== nextSearch) {
@@ -118,134 +89,121 @@ export const QueryLog = () => {
         }
 
         setIsIncrementalLoad(false);
-        dispatch(setLogsFilter(nextFilter));
-        dispatch(setFilteredLogs(nextFilter));
-    }, [navigate, location.search]);
+        setLogsFilter(nextFilter);
+        setFilteredLogs(nextFilter);
+    });
 
-    useEffect(() => {
-        if (!processingGetLogs && !processingAdditionalLogs) {
+    // Reset incremental load when processing finishes
+    createEffect(() => {
+        if (!queryLogsState.processingGetLogs && !queryLogsState.processingAdditionalLogs) {
             setIsIncrementalLoad(false);
         }
-    }, [processingAdditionalLogs, processingGetLogs]);
+    });
 
-    const currentSearch = filter?.search ?? DEFAULT_LOGS_FILTER.search;
-    const currentStatus = filter?.status ?? DEFAULT_LOGS_FILTER.status;
-    const currentReason = filter?.reason ?? DEFAULT_LOGS_FILTER.reason;
-    const infiniteScrollResetToken = `${currentSearch}:${currentStatus}:${currentReason}`;
-    const persistentClientIds = persistentClients.flatMap(
-        (persistentClient) => persistentClient.ids ?? [],
-    );
-    const visibleLogs = filterLogsByStatus(logs, currentStatus);
-    const emptyStateMode = getEmptyStateMode(enabled, interval);
-    const hasMore = !isEntireLog;
+    const currentSearch = () => queryLogsState.filter?.search ?? DEFAULT_LOGS_FILTER.search;
+    const currentStatus = () => queryLogsState.filter?.status ?? DEFAULT_LOGS_FILTER.status;
+    const currentReason = () => queryLogsState.filter?.reason ?? DEFAULT_LOGS_FILTER.reason;
+    const infiniteScrollResetToken = () =>
+        `${currentSearch()}:${currentStatus()}:${currentReason()}`;
+    const persistentClientIds = () =>
+        (dashboardState.clients || []).flatMap(
+            (persistentClient: any) => persistentClient.ids ?? [],
+        );
+    const visibleLogs = () => filterLogsByStatus(queryLogsState.logs || [], currentStatus());
+    const emptyStateMode = () => getEmptyStateMode(queryLogsState.enabled, queryLogsState.interval);
+    const hasMore = () => !queryLogsState.isEntireLog;
+    const logs = () => queryLogsState.logs || [];
 
-    const handleSearch = useCallback(
-        (search: string) => {
-            setIsIncrementalLoad(false);
-            navigate(getLogsUrlParams(search.trim(), currentStatus, currentReason), {
-                replace: true,
-            });
-        },
-        [currentReason, currentStatus, navigate],
-    );
+    const isRequestInFlight = () =>
+        queryLogsState.processingGetLogs || queryLogsState.processingAdditionalLogs;
+    const isLoadingMore = () => isIncrementalLoad() && isRequestInFlight();
+    const isInitialLoading = () =>
+        queryLogsState.processingGetLogs && logs().length === 0 && !isIncrementalLoad();
+    const isFilterReloading = () =>
+        queryLogsState.processingGetLogs && !isInitialLoading() && !isIncrementalLoad();
 
-    const handleStatusFilterChange = useCallback(
-        (status: string) => {
-            setIsIncrementalLoad(false);
-            navigate(getLogsUrlParams(currentSearch, status, DEFAULT_LOGS_FILTER.reason), {
-                replace: true,
-            });
-        },
-        [currentSearch, navigate],
-    );
-
-    const handleReasonFilterChange = useCallback(
-        (reason: string) => {
-            setIsIncrementalLoad(false);
-            navigate(getLogsUrlParams(currentSearch, currentStatus, reason), { replace: true });
-        },
-        [currentSearch, currentStatus, navigate],
-    );
-
-    const handleRefresh = useCallback(() => {
+    const handleSearch = (search: string) => {
         setIsIncrementalLoad(false);
-        dispatch(refreshFilteredLogs());
-    }, [dispatch]);
+        navigate(getLogsUrlParams(search.trim(), currentStatus(), currentReason()), {
+            replace: true,
+        });
+    };
 
-    const handleBlockDomain = useCallback(
-        (domain: string) => {
-            dispatch(blockDomain(domain));
-        },
-        [dispatch],
-    );
+    const handleStatusFilterChange = (status: string) => {
+        setIsIncrementalLoad(false);
+        navigate(getLogsUrlParams(currentSearch(), status, DEFAULT_LOGS_FILTER.reason), {
+            replace: true,
+        });
+    };
 
-    const handleUnblockDomain = useCallback(
-        (domain: string) => {
-            dispatch(unblockDomain(domain));
-        },
-        [dispatch],
-    );
+    const handleReasonFilterChange = (reason: string) => {
+        setIsIncrementalLoad(false);
+        navigate(getLogsUrlParams(currentSearch(), currentStatus(), reason), { replace: true });
+    };
 
-    const handleAllowService = useCallback(
-        (serviceId: string) => {
-            dispatch(allowBlockedService(serviceId));
-        },
-        [dispatch],
-    );
+    const handleRefresh = () => {
+        setIsIncrementalLoad(false);
+        refreshFilteredLogs();
+    };
 
-    const handleBlockClient = useCallback(
-        (domain: string, client: string) => {
-            dispatch(blockDomainForClient(domain, client));
-        },
-        [dispatch],
-    );
+    const handleBlockDomain = (domain: string) => {
+        blockDomain(domain);
+    };
 
-    const handleDisallowClient = useCallback((ip: string) => {
+    const handleUnblockDomain = (domain: string) => {
+        unblockDomain(domain);
+    };
+
+    const handleAllowService = (serviceId: string) => {
+        allowBlockedService(serviceId);
+    };
+
+    const handleBlockClient = (domain: string, client: string) => {
+        blockDomainForClient(domain, client);
+    };
+
+    const handleDisallowClient = (ip: string) => {
         setDisallowTarget(ip);
-    }, []);
+    };
 
-    const handleAddPersistentClient = useCallback(
-        (clientId: string) => {
-            navigate(linkPathBuilder(RoutePath.ClientsAdd, undefined, { id: clientId }));
-        },
-        [navigate],
-    );
+    const handleAddPersistentClient = (clientId: string) => {
+        navigate(linkPathBuilder(RoutePath.ClientsAdd, undefined, { id: clientId }));
+    };
 
-    const handleConfirmDisallow = useCallback(() => {
-        if (disallowTarget) {
-            dispatch(toggleClientBlock(disallowTarget, false, ''));
+    const handleConfirmDisallow = () => {
+        const target = disallowTarget();
+        if (target) {
+            const disallowedList = accessState.disallowed_clients
+                ? accessState.disallowed_clients.split('\n').filter(Boolean)
+                : [];
+            const isDisallowed = disallowedList.includes(target);
+            toggleClientBlock(target, isDisallowed, isDisallowed ? target : '');
             setDisallowTarget(null);
         }
-    }, [dispatch, disallowTarget]);
+    };
 
-    const handleCloseDisallow = useCallback(() => {
+    const handleCloseDisallow = () => {
         setDisallowTarget(null);
-    }, []);
+    };
 
-    const handleRowClick = useCallback((entry: LogEntry) => {
+    const handleRowClick = (entry: LogEntry) => {
         setSelectedEntry(entry);
-    }, []);
+    };
 
-    const handleCloseDetail = useCallback(() => {
+    const handleCloseDetail = () => {
         setSelectedEntry(null);
-    }, []);
+    };
 
-    const isRequestInFlight = processingGetLogs || processingAdditionalLogs;
-    const isLoadingMore = isIncrementalLoad && isRequestInFlight;
-    const isInitialLoading = processingGetLogs && logs.length === 0 && !isIncrementalLoad;
-    const isFilterReloading = processingGetLogs && !isInitialLoading && !isIncrementalLoad;
-
-    const handleLoadMore = useCallback(() => {
-        if (isRequestInFlight || isEntireLog) {
+    const handleLoadMore = () => {
+        if (isRequestInFlight() || queryLogsState.isEntireLog) {
             return;
         }
-
         setIsIncrementalLoad(true);
-        dispatch(getLogs(currentSearch));
-    }, [currentSearch, dispatch, isEntireLog, isRequestInFlight]);
+        getAdditionalLogs();
+    };
 
-    const getAllowedClients = (): string[] => {
-        const raw = access?.allowed_clients;
+    const allowedClients = (): string[] => {
+        const raw = accessState?.allowed_clients;
         if (!raw) {
             return [];
         }
@@ -253,83 +211,35 @@ export const QueryLog = () => {
             return raw.split('\n').filter(Boolean);
         }
         if (Array.isArray(raw)) {
-            return raw;
+            return raw as string[];
         }
         return [];
     };
-    const allowedClients = getAllowedClients();
-
-    const renderMobileContent = () => {
-        if (isInitialLoading || (isFilterReloading && visibleLogs.length === 0)) {
-            return (
-                <div className={s.mobileInitialLoader} data-testid="query-log-initial-loader">
-                    <Loader color="green" className={s.loader} />
-                </div>
-            );
-        }
-
-        if (visibleLogs.length === 0) {
-            return <EmptyState className={s.emptyState} mode={emptyStateMode} />;
-        }
-
-        return (
-            <>
-                <div className={s.mobileList}>
-                    {visibleLogs.map((entry: LogEntry) => (
-                        <LogCard
-                            key={`${entry.time}-${entry.domain}-${entry.client}`}
-                            entry={entry}
-                            onRowClick={handleRowClick}
-                            onBlock={handleBlockDomain}
-                            onUnblock={handleUnblockDomain}
-                            onBlockClient={handleBlockClient}
-                            onDisallowClient={handleDisallowClient}
-                            onAddPersistentClient={handleAddPersistentClient}
-                            filters={filters}
-                            services={services}
-                            whitelistFilters={whitelistFilters}
-                            persistentClientIds={persistentClientIds}
-                            persistentClientsLoaded={!processingClients}
-                        />
-                    ))}
-                </div>
-
-                <InfiniteScrollTrigger
-                    hasMore={hasMore}
-                    loading={isLoadingMore}
-                    disabled={isRequestInFlight}
-                    onLoadMore={handleLoadMore}
-                    resetToken={infiniteScrollResetToken}
-                    className={s.mobileLoader}
-                />
-            </>
-        );
-    };
 
     return (
-        <div className={theme.layout.container}>
-            <div className={cn(theme.layout.containerIn, s.page)}>
+        <div class={theme.layout.container}>
+            <div class={cn(theme.layout.containerIn, s.page)}>
                 <Header
                     onSearch={handleSearch}
                     onRefresh={handleRefresh}
                     onStatusFilterChange={handleStatusFilterChange}
                     onReasonFilterChange={handleReasonFilterChange}
-                    currentSearch={currentSearch}
-                    currentStatus={currentStatus}
-                    currentReason={currentReason}
-                    isLoading={!!isRequestInFlight}
+                    currentSearch={currentSearch()}
+                    currentStatus={currentStatus()}
+                    currentReason={currentReason()}
+                    isLoading={!!isRequestInFlight()}
                 />
 
-                <div className={s.desktopView}>
+                <div class={s.desktopView}>
                     <LogTable
-                        logs={visibleLogs}
-                        emptyStateMode={emptyStateMode}
-                        hasMore={hasMore}
-                        isLoadingMore={isLoadingMore}
-                        isRequestInFlight={isRequestInFlight}
-                        isInitialLoading={isInitialLoading}
-                        isFilterReloading={isFilterReloading}
-                        infiniteScrollResetToken={infiniteScrollResetToken}
+                        logs={visibleLogs()}
+                        emptyStateMode={emptyStateMode()}
+                        hasMore={hasMore()}
+                        isLoadingMore={isLoadingMore()}
+                        isRequestInFlight={isRequestInFlight()}
+                        isInitialLoading={isInitialLoading()}
+                        isFilterReloading={isFilterReloading()}
+                        infiniteScrollResetToken={infiniteScrollResetToken()}
                         onLoadMore={handleLoadMore}
                         onRowClick={handleRowClick}
                         onBlock={handleBlockDomain}
@@ -338,37 +248,94 @@ export const QueryLog = () => {
                         onDisallowClient={handleDisallowClient}
                         onAddPersistentClient={handleAddPersistentClient}
                         onSearchSelect={handleSearch}
-                        filters={filters}
-                        services={services}
-                        whitelistFilters={whitelistFilters}
-                        persistentClientIds={persistentClientIds}
-                        persistentClientsLoaded={!processingClients}
+                        filters={filteringState.filters || []}
+                        services={servicesState.allServices || []}
+                        whitelistFilters={filteringState.whitelistFilters || []}
+                        persistentClientIds={persistentClientIds()}
+                        persistentClientsLoaded={!dashboardState.processingClients}
                     />
                 </div>
 
-                <div className={s.mobileView}>{renderMobileContent()}</div>
+                <div class={s.mobileView}>
+                    <Show
+                        when={
+                            isInitialLoading() ||
+                            (isFilterReloading() && visibleLogs().length === 0)
+                        }
+                        fallback={
+                            <Show
+                                when={visibleLogs().length === 0}
+                                fallback={
+                                    <>
+                                        <div class={s.mobileList}>
+                                            <For each={visibleLogs()}>
+                                                {(entry) => (
+                                                    <LogCard
+                                                        entry={entry}
+                                                        onRowClick={handleRowClick}
+                                                        onBlock={handleBlockDomain}
+                                                        onUnblock={handleUnblockDomain}
+                                                        onBlockClient={handleBlockClient}
+                                                        onDisallowClient={handleDisallowClient}
+                                                        onAddPersistentClient={
+                                                            handleAddPersistentClient
+                                                        }
+                                                        filters={filteringState.filters || []}
+                                                        services={servicesState.allServices || []}
+                                                        whitelistFilters={
+                                                            filteringState.whitelistFilters || []
+                                                        }
+                                                        persistentClientIds={persistentClientIds()}
+                                                        persistentClientsLoaded={
+                                                            !dashboardState.processingClients
+                                                        }
+                                                    />
+                                                )}
+                                            </For>
+                                        </div>
 
-                {selectedEntry && (
+                                        <InfiniteScrollTrigger
+                                            hasMore={hasMore()}
+                                            loading={isLoadingMore()}
+                                            disabled={isRequestInFlight()}
+                                            onLoadMore={handleLoadMore}
+                                            resetToken={infiniteScrollResetToken()}
+                                            class={s.mobileLoader}
+                                        />
+                                    </>
+                                }
+                            >
+                                <EmptyState class={s.emptyState} mode={emptyStateMode()} />
+                            </Show>
+                        }
+                    >
+                        <div class={s.mobileInitialLoader} data-testid="query-log-initial-loader">
+                            <Loader color="green" class={s.loader} />
+                        </div>
+                    </Show>
+                </div>
+
+                <Show when={selectedEntry()}>
                     <DetailModal
-                        entry={selectedEntry}
-                        filters={filters}
-                        services={services}
-                        whitelistFilters={whitelistFilters}
+                        entry={selectedEntry()!}
+                        filters={filteringState.filters || []}
+                        services={servicesState.allServices || []}
+                        whitelistFilters={filteringState.whitelistFilters || []}
                         onClose={handleCloseDetail}
                         onBlock={handleBlockDomain}
                         onAddToAllowlist={handleUnblockDomain}
                         onAllowService={handleAllowService}
                     />
-                )}
+                </Show>
 
-                {disallowTarget && (
+                <Show when={disallowTarget()}>
                     <DisallowDialog
-                        ip={disallowTarget}
-                        isAllowlistMode={allowedClients.length > 0}
+                        ip={disallowTarget()!}
+                        isAllowlistMode={allowedClients().length > 0}
                         onConfirm={handleConfirmDisallow}
                         onClose={handleCloseDisallow}
                     />
-                )}
+                </Show>
             </div>
         </div>
     );

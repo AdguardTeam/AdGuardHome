@@ -1,4 +1,4 @@
-import React, { useState, useCallback, ReactNode } from 'react';
+import { createSignal, Show, For } from 'solid-js';
 import cn from 'clsx';
 
 import intl from 'panel/common/intl';
@@ -7,11 +7,11 @@ import { Switch } from 'panel/common/controls/Switch';
 import { Dropdown } from 'panel/common/ui/Dropdown';
 import { Select } from 'panel/common/controls/Select';
 import { Icon } from 'panel/common/ui/Icon';
-import { Link } from 'react-router-dom';
+import { Link } from 'panel/common/ui/Link';
+import { RoutePath, SCROLL_QUERY_KEY } from 'panel/components/Routes/Paths';
 import { useIsMobile } from 'panel/hooks/useIsMobile';
 import { DISABLE_PROTECTION_TIMINGS, ONE_SECOND_IN_MS } from 'panel/helpers/constants';
 import { msToSeconds, msToMinutes, msToHours } from 'panel/helpers/helpers';
-import { Paths } from 'panel/components/Routes/Paths';
 
 import s from './Header.module.pcss';
 
@@ -30,15 +30,9 @@ export const getPeriodLabel = (interval: number) => {
     }
     const days = hours / 24;
     if (Number.isInteger(days)) {
-        if (days === 7) {
-            return intl.getPlural('last_days', 7);
-        }
-        if (days === 30) {
-            return intl.getPlural('last_days', 30);
-        }
-        if (days === 90) {
-            return intl.getPlural('last_days', 90);
-        }
+        if (days === 7) return intl.getPlural('last_days', 7);
+        if (days === 30) return intl.getPlural('last_days', 30);
+        if (days === 90) return intl.getPlural('last_days', 90);
         return intl.getPlural('last_days', days);
     }
     return intl.getPlural('last_hours', Math.floor(hours));
@@ -67,9 +61,7 @@ const getDisableText = (key: string, time: number) => {
 };
 
 const getRemainingTimeText = (milliseconds: number) => {
-    if (!milliseconds) {
-        return '';
-    }
+    if (!milliseconds) return '';
 
     const date = new Date(milliseconds);
     const hh = date.getUTCHours();
@@ -92,69 +84,58 @@ type Props = {
     onPeriodChange: (period: number) => void;
 };
 
-export const Header = ({
-    protectionEnabled,
-    processingProtection,
-    remainingTime,
-    selectedPeriod,
-    periodOptions,
-    isLoading,
-    onToggleProtection,
-    onRefreshStats,
-    onPeriodChange,
-}: Props) => {
-    const [protectionMenuOpen, setProtectionMenuOpen] = useState(false);
-    const [selectedDisableTime, setSelectedDisableTime] = useState<number | null>(null);
+export const Header = (props: Props) => {
+    const [protectionMenuOpen, setProtectionMenuOpen] = createSignal(false);
+    const [selectedDisableTime, setSelectedDisableTime] = createSignal<number | null>(null);
     const isMobile = useIsMobile();
 
     const handleToggleProtection = () => {
-        onToggleProtection(protectionEnabled);
+        props.onToggleProtection(props.protectionEnabled);
     };
 
     const handleDisableProtection = (time: number) => {
         const duration = time - ONE_SECOND_IN_MS;
         setSelectedDisableTime(time);
-        onToggleProtection(protectionEnabled, duration);
+        props.onToggleProtection(props.protectionEnabled, duration);
         setProtectionMenuOpen(false);
     };
 
     const protectionMenu = (
-        <div className={s.protectionMenu}>
-            {DISABLE_PROTECTION_ITEMS.map((item) => (
-                <div
-                    key={item.key}
-                    className={cn(
-                        theme.select.option,
-                        theme.select.option_check,
-                        theme.text.t2,
-                        theme.text.condenced,
-                    )}
-                    onMouseDown={() => handleDisableProtection(item.time)}
-                >
-                    {selectedDisableTime === item.time && remainingTime ? (
-                        <Icon icon="check_tiny" className={theme.select.icon} />
-                    ) : (
-                        <Icon icon="dot" className={theme.select.icon} />
-                    )}
-                    {getDisableText(item.key, item.time)}
-                </div>
-            ))}
+        <div class={s.protectionMenu}>
+            <For each={DISABLE_PROTECTION_ITEMS}>
+                {(item) => (
+                    <div
+                        class={cn(
+                            theme.select.option,
+                            theme.select.option_check,
+                            theme.text.t2,
+                            theme.text.condenced,
+                        )}
+                        onMouseDown={() => handleDisableProtection(item.time)}
+                    >
+                        <Show
+                            when={selectedDisableTime() === item.time && props.remainingTime}
+                            fallback={<Icon icon="dot" class={theme.select.icon} />}
+                        >
+                            <Icon icon="check_tiny" class={theme.select.icon} />
+                        </Show>
+                        {getDisableText(item.key, item.time)}
+                    </div>
+                )}
+            </For>
         </div>
     );
 
     const periodSettingsFooter = (
-        <div className={cn(s.periodSettingsFooter, theme.select.option_check)}>
-            <Icon icon="settings" className={theme.select.icon} />
-            <div className={cn(theme.text.t2, theme.text.condenced)}>
+        <div class={cn(s.periodSettingsFooter, theme.select.option_check)}>
+            <Icon icon="settings" class={theme.select.icon} />
+            <div class={cn(theme.text.t2, theme.text.condenced)}>
                 {intl.getMessage('period_notify', {
                     a: (text: string) => (
                         <Link
-                            key="a"
-                            to={{
-                                pathname: Paths.SettingsPage,
-                                hash: '#stats_config',
-                            }}
-                            className={cn(theme.link.link, theme.link.noDecoration)}
+                            to={RoutePath.SettingsPage}
+                            query={{ [SCROLL_QUERY_KEY]: 'statistics' }}
+                            class={cn(theme.link.link, theme.link.noDecoration)}
                         >
                             {text}
                         </Link>
@@ -164,29 +145,17 @@ export const Header = ({
         </div>
     );
 
-    const periodSelectMenuList = useCallback(
-        ({ children }: { children: ReactNode }) => (
-            <div>
-                {children}
-                {periodSettingsFooter}
-            </div>
-        ),
-        [],
-    );
-
     return (
-        <div className={s.header}>
-            <div className={s.headerLeft}>
-                <div className={s.titleRow}>
-                    <h1 className={cn(theme.title.h5, s.onlyMobile)}>
-                        {intl.getMessage('dashboard')}
-                    </h1>
+        <div class={s.header}>
+            <div class={s.headerLeft}>
+                <div class={s.titleRow}>
+                    <h1 class={cn(theme.title.h5, s.onlyMobile)}>{intl.getMessage('dashboard')}</h1>
 
                     <button
                         type="button"
-                        className={cn(s.refreshButton, s.refreshMobileButton, s.onlyMobile)}
-                        onClick={onRefreshStats}
-                        disabled={isLoading}
+                        class={cn(s.refreshButton, s.refreshMobileButton, s.onlyMobile)}
+                        onClick={() => props.onRefreshStats?.()}
+                        disabled={props.isLoading}
                         aria-label={intl.getMessage('refresh_btn')}
                         title={intl.getMessage('refresh_btn')}
                     >
@@ -194,21 +163,21 @@ export const Header = ({
                     </button>
                 </div>
 
-                <h1 className={cn(theme.title.h3_tablet, s.onlyDesktop)}>
+                <h1 class={cn(theme.title.h3_tablet, s.onlyDesktop)}>
                     {intl.getMessage('protection')}
                 </h1>
 
-                <div className={s.toggleRow}>
-                    <div className={s.protectionToggle}>
+                <div class={s.toggleRow}>
+                    <div class={s.protectionToggle}>
                         <Switch
                             id="protection_toggle"
                             data-testid="protection-toggle"
-                            checked={!!protectionEnabled}
+                            checked={!!props.protectionEnabled}
                             onChange={handleToggleProtection}
-                            disabled={processingProtection}
+                            disabled={props.processingProtection}
                         />
 
-                        <div className={cn(theme.text.t2, s.onlyMobile)}>
+                        <div class={cn(theme.text.t2, s.onlyMobile)}>
                             {intl.getMessage('protection')}
                         </div>
                     </div>
@@ -217,39 +186,39 @@ export const Header = ({
                         menu={protectionMenu}
                         trigger="click"
                         position="bottomLeft"
-                        open={protectionMenuOpen}
+                        open={protectionMenuOpen()}
                         onOpenChange={setProtectionMenuOpen}
-                        wrapClassName={s.protectionMenuWrapper}
-                        disabled={!protectionEnabled}
+                        wrapClass={s.protectionMenuWrapper}
+                        disabled={!props.protectionEnabled}
                         noIcon
                         disableAnimation
                     >
                         <button
                             type="button"
-                            className={s.dropdownTrigger}
+                            class={s.dropdownTrigger}
                             aria-label={intl.getMessage('disable_protection_btn')}
-                            disabled={!protectionEnabled}
+                            disabled={!props.protectionEnabled}
                         >
                             <Icon icon="bullets" />
                         </button>
                     </Dropdown>
                 </div>
 
-                {remainingTime && remainingTime > 0 && (
-                    <span className={s.cardSubtitle}>
+                <Show when={props.remainingTime && props.remainingTime > 0}>
+                    <span class={s.cardSubtitle}>
                         {intl.getMessage('resume_protection_timer', {
-                            time: getRemainingTimeText(remainingTime),
+                            time: getRemainingTimeText(props.remainingTime!),
                         })}
                     </span>
-                )}
+                </Show>
             </div>
 
-            <div className={s.headerRight}>
+            <div class={s.headerRight}>
                 <button
                     type="button"
-                    className={cn(s.refreshButton, s.refreshDesktopButton, s.onlyDesktop)}
-                    onClick={onRefreshStats}
-                    disabled={isLoading}
+                    class={cn(s.refreshButton, s.refreshDesktopButton, s.onlyDesktop)}
+                    onClick={() => props.onRefreshStats?.()}
+                    disabled={props.isLoading}
                     aria-label={intl.getMessage('refresh_btn')}
                     title={intl.getMessage('refresh_btn')}
                 >
@@ -258,20 +227,18 @@ export const Header = ({
                 </button>
             </div>
 
-            <div className={s.periodSelect}>
+            <div class={s.periodSelect}>
                 <Select<number>
-                    options={periodOptions}
-                    value={periodOptions.find((o) => o.value === selectedPeriod)}
-                    onChange={(option) => onPeriodChange(option.value)}
+                    options={props.periodOptions}
+                    value={props.periodOptions.find((o) => o.value === props.selectedPeriod)}
+                    onChange={(option: any) => props.onPeriodChange(option.value)}
                     size="responsive"
                     height="big"
                     isSearchable={false}
-                    borderless={!isMobile}
+                    borderless={!isMobile()}
                     menuSize="big"
                     menuPosition="right"
-                    components={{
-                        MenuList: periodSelectMenuList,
-                    }}
+                    menuFooter={periodSettingsFooter}
                 />
             </div>
         </div>

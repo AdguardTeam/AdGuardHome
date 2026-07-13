@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import { type JSX } from 'solid-js';
 import cn from 'clsx';
 
 import theme from 'panel/lib/theme';
@@ -9,21 +9,21 @@ export type StatusVariant = 'success' | 'error' | 'warning';
 
 type Props = {
     variant: StatusVariant;
-    title: ReactNode;
-    children?: ReactNode;
+    title: JSX.Element;
+    children?: JSX.Element;
 };
 
-export const StatusBlock = ({ variant, title, children }: Props) => (
-    <div className={cn(s.status, theme.text.t3)}>
+export const StatusBlock = (props: Props) => (
+    <div class={cn(s.status, theme.text.t3)}>
         <div
-            className={cn(s.statusTitle, {
-                [s.statusTitle_success]: variant === 'success',
-                [s.statusTitle_error]: variant === 'error',
-                [s.statusTitle_warning]: variant === 'warning',
+            class={cn(s.statusTitle, {
+                [s.statusTitle_success]: props.variant === 'success',
+                [s.statusTitle_error]: props.variant === 'error',
+                [s.statusTitle_warning]: props.variant === 'warning',
             })}
         >
-            {title}
+            {props.title}
         </div>
-        {children}
+        {props.children}
     </div>
 );

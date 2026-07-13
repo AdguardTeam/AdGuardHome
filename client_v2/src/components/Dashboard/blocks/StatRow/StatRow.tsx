@@ -1,7 +1,7 @@
-import React from 'react';
+import { Show } from 'solid-js';
 
 import intl from 'panel/common/intl';
-import { Icon, IconType } from 'panel/common/ui/Icon';
+import { Icon, type IconType } from 'panel/common/ui/Icon';
 import theme from 'panel/lib/theme';
 import { Dropdown } from 'panel/common/ui/Dropdown';
 import cn from 'clsx';
@@ -26,81 +26,97 @@ export type StatRowProps = {
         | 'averageProcessingTime';
 };
 
-export const StatRow = ({
-    icon,
-    label,
-    value,
-    percent,
-    isTotal,
-    isQueriesValue = true,
-    tooltip,
-    rowTheme,
-}: StatRowProps) => (
-    <div className={cn(s.statRow, s[rowTheme])}>
-        <Dropdown
-            trigger="hover"
-            position="bottomLeft"
-            noIcon
-            disableAnimation
-            overlayClassName={s.queryTooltipOverlay}
-            menu={<div className={s.statTooltip}>{tooltip}</div>}
-        >
-            <div className={cn(theme.text.t3, theme.text.condenced, s.statRowLeft)}>
-                {<Icon icon={icon} className={s.tableRowIcon} />}
+export const StatRow = (props: StatRowProps) => {
+    const isQueriesValue = () => props.isQueriesValue !== false;
 
-                {label}
-            </div>
-        </Dropdown>
+    return (
+        <div class={cn(s.statRow, s[props.rowTheme])}>
+            <Dropdown
+                trigger="hover"
+                position="bottomLeft"
+                noIcon
+                disableAnimation
+                overlayClass={s.queryTooltipOverlay}
+                menu={<div class={s.statTooltip}>{props.tooltip}</div>}
+            >
+                <div class={cn(theme.text.t3, theme.text.condenced, s.statRowLeft)}>
+                    <Icon icon={props.icon} class={s.tableRowIcon} />
+                    {props.label}
+                </div>
+            </Dropdown>
 
-        <div className={s.statRowValue}>
-            {isQueriesValue ? (
-                <Dropdown
-                    trigger="hover"
-                    position="top"
-                    noIcon
-                    disableAnimation
-                    overlayClassName={s.queryTooltipOverlay}
-                    menu={
-                        <div className={s.queryTooltip}>
-                            {typeof value === 'number' ? formatNumber(value) : value}{' '}
-                            {intl.getMessage('queries').toLowerCase()}
+            <div class={s.statRowValue}>
+                <Show
+                    when={isQueriesValue()}
+                    fallback={
+                        <div class={cn(theme.text.t3, theme.text.condenced, s.queryCount)}>
+                            {props.value}
                         </div>
                     }
                 >
-                    <div className={cn(theme.text.t3, theme.text.condenced, s.queryCount)}>
-                        {typeof value === 'number' ? formatCompactNumber(value) : value}
+                    <div class={s.dropdownWrapper}>
+                        <Dropdown
+                            trigger="hover"
+                            position="top"
+                            noIcon
+                            disableAnimation
+                            overlayClass={s.queryTooltipOverlay}
+                            menu={
+                                <div class={s.queryTooltip}>
+                                    {typeof props.value === 'number'
+                                        ? formatNumber(props.value)
+                                        : props.value}{' '}
+                                    {intl.getMessage('queries').toLowerCase()}
+                                </div>
+                            }
+                        >
+                            <div class={cn(theme.text.t3, theme.text.condenced, s.queryCount)}>
+                                {typeof props.value === 'number'
+                                    ? formatCompactNumber(props.value)
+                                    : props.value}
 
-                        <div className={cn(theme.text.t3, theme.text.condenced, s.queryPercent)}>
-                            {isTotal ? (
-                                <span>({intl.getMessage('total')})</span>
-                            ) : (
-                                percent !== undefined &&
-                                percent > 0 && <span>({percent.toFixed(1)}%)</span>
-                            )}
-                        </div>
+                                <div
+                                    class={cn(theme.text.t3, theme.text.condenced, s.queryPercent)}
+                                >
+                                    <Show
+                                        when={props.isTotal}
+                                        fallback={
+                                            <Show
+                                                when={
+                                                    props.percent !== undefined &&
+                                                    props.percent! > 0
+                                                }
+                                            >
+                                                <span>({props.percent!.toFixed(1)}%)</span>
+                                            </Show>
+                                        }
+                                    >
+                                        <span>({intl.getMessage('total')})</span>
+                                    </Show>
+                                </div>
+                            </div>
+                        </Dropdown>
                     </div>
-                </Dropdown>
-            ) : (
-                <div className={cn(theme.text.t3, theme.text.condenced, s.queryCount)}>{value}</div>
-            )}
+                </Show>
 
-            {isQueriesValue && (
-                <div className={s.queryBar}>
+                <Show when={isQueriesValue()}>
+                    <div class={s.queryBar}>
+                        <div
+                            class={s.queryBarFill}
+                            style={{ width: `${props.isTotal ? 100 : props.percent || 0}%` }}
+                        />
+                    </div>
+                </Show>
+            </div>
+
+            <Show when={isQueriesValue()}>
+                <div class={cn(s.queryBar, s.queryBarMobile)}>
                     <div
-                        className={s.queryBarFill}
-                        style={{ width: `${isTotal ? 100 : percent || 0}%` }}
+                        class={s.queryBarFill}
+                        style={{ width: `${props.isTotal ? 100 : props.percent || 0}%` }}
                     />
                 </div>
-            )}
+            </Show>
         </div>
-
-        {isQueriesValue && (
-            <div className={cn(s.queryBar, s.queryBarMobile)}>
-                <div
-                    className={s.queryBarFill}
-                    style={{ width: `${isTotal ? 100 : percent || 0}%` }}
-                />
-            </div>
-        )}
-    </div>
-);
+    );
+};

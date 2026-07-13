@@ -1,4 +1,4 @@
-import React from 'react';
+import { Show, For, createMemo } from 'solid-js';
 
 import { useIsDesktop } from 'panel/helpers/useMediaQuery';
 import { MOBILE_TABLE_MAX_ROWS } from 'panel/helpers/constants';
@@ -23,111 +23,116 @@ type Props = {
     numDnsQueries: number;
 };
 
-export const TopUpstreams = ({ topUpstreamsResponses, numDnsQueries }: Props) => {
+export const TopUpstreams = (props: Props) => {
     const isDesktop = useIsDesktop();
     const {
         sortedData: sortedUpstreams,
         sortField,
         sortDirection,
         handleSort,
-    } = useSortedData(topUpstreamsResponses);
-    const visibleUpstreams = isDesktop
-        ? sortedUpstreams
-        : sortedUpstreams.slice(0, MOBILE_TABLE_MAX_ROWS);
+    } = useSortedData(() => props.topUpstreamsResponses);
+    const visibleUpstreams = createMemo(() =>
+        isDesktop() ? sortedUpstreams() : sortedUpstreams().slice(0, MOBILE_TABLE_MAX_ROWS),
+    );
 
-    const hasStats = topUpstreamsResponses.length > 0;
+    const hasStats = createMemo(() => props.topUpstreamsResponses.length > 0);
 
     return (
-        <div className={s.card}>
-            <div className={s.cardHeader}>
-                <div className={cn(theme.title.h5, s.cardTitle)}>
+        <div class={s.card}>
+            <div class={s.cardHeader}>
+                <div class={cn(theme.title.h5, s.cardTitle)}>
                     {intl.getMessage('top_upstreams')}
                 </div>
             </div>
 
-            {hasStats && (
+            <Show when={hasStats()}>
                 <SortableTableHeader
                     nameLabel={intl.getMessage('upstream')}
                     countLabel={intl.getMessage('queries')}
-                    sortField={sortField}
-                    sortDirection={sortDirection}
+                    sortField={sortField()}
+                    sortDirection={sortDirection()}
                     onSort={handleSort}
                 />
-            )}
+            </Show>
 
-            <div className={s.tableRows}>
-                {hasStats ? (
-                    visibleUpstreams.map((upstream) => {
-                        const percent =
-                            numDnsQueries > 0 ? (upstream.count / numDnsQueries) * 100 : 0;
+            <div class={s.tableRows}>
+                <Show when={hasStats()} fallback={<EmptyState />}>
+                    <For each={visibleUpstreams()}>
+                        {(upstream) => {
+                            const percent = createMemo(() =>
+                                props.numDnsQueries > 0
+                                    ? (upstream.count / props.numDnsQueries) * 100
+                                    : 0,
+                            );
 
-                        return (
-                            <div key={upstream.name} className={cn(s.tableRow, s.statRowValue)}>
-                                <div
-                                    className={cn(
-                                        theme.text.t3,
-                                        theme.text.condenced,
-                                        s.tableRowLeft,
-                                    )}
-                                >
-                                    <span className={s.domainName}>{upstream.name}</span>
-                                </div>
-
-                                <div className={s.tableRowRight}>
-                                    <Dropdown
-                                        trigger="hover"
-                                        position="top"
-                                        noIcon
-                                        disableAnimation
-                                        overlayClassName={s.queryTooltipOverlay}
-                                        menu={
-                                            <div className={s.queryTooltip}>
-                                                {formatNumber(upstream.count)}{' '}
-                                                {intl.getMessage('queries').toLowerCase()}
-                                            </div>
-                                        }
+                            return (
+                                <div class={cn(s.tableRow, s.statRowValue)}>
+                                    <div
+                                        class={cn(
+                                            theme.text.t3,
+                                            theme.text.condenced,
+                                            s.tableRowLeft,
+                                        )}
                                     >
-                                        <div
-                                            className={cn(
-                                                theme.text.t3,
-                                                theme.text.condenced,
-                                                s.queryCount,
-                                            )}
-                                        >
-                                            {formatCompactNumber(upstream.count)}
+                                        <span class={s.domainName}>{upstream.name}</span>
+                                    </div>
 
-                                            <div
-                                                className={cn(
-                                                    theme.text.t3,
-                                                    theme.text.condenced,
-                                                    s.queryPercent,
-                                                )}
+                                    <div class={s.tableRowRight}>
+                                        <div class={s.dropdowWrapper}>
+                                            <Dropdown
+                                                trigger="hover"
+                                                position="top"
+                                                noIcon
+                                                disableAnimation
+                                                overlayClass={s.queryTooltipOverlay}
+                                                menu={
+                                                    <div class={s.queryTooltip}>
+                                                        {formatNumber(upstream.count)}{' '}
+                                                        {intl.getMessage('queries').toLowerCase()}
+                                                    </div>
+                                                }
                                             >
-                                                ({percent.toFixed(2)}%)
-                                            </div>
-                                        </div>
-                                    </Dropdown>
+                                                <div
+                                                    class={cn(
+                                                        theme.text.t3,
+                                                        theme.text.condenced,
+                                                        s.queryCount,
+                                                    )}
+                                                >
+                                                    {formatCompactNumber(upstream.count)}
 
-                                    <div className={s.queryBar}>
+                                                    <div
+                                                        class={cn(
+                                                            theme.text.t3,
+                                                            theme.text.condenced,
+                                                            s.queryPercent,
+                                                        )}
+                                                    >
+                                                        ({percent().toFixed(2)}%)
+                                                    </div>
+                                                </div>
+                                            </Dropdown>
+                                        </div>
+
+                                        <div class={s.queryBar}>
+                                            <div
+                                                class={cn(s.queryBarFill)}
+                                                style={{ width: `${percent()}%` }}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div class={s.queryBar}>
                                         <div
-                                            className={s.queryBarFill}
-                                            style={{ width: `${percent}%` }}
+                                            class={s.queryBarFill}
+                                            style={{ width: `${percent()}%` }}
                                         />
                                     </div>
                                 </div>
-
-                                <div className={s.queryBar}>
-                                    <div
-                                        className={s.queryBarFill}
-                                        style={{ width: `${percent}%` }}
-                                    />
-                                </div>
-                            </div>
-                        );
-                    })
-                ) : (
-                    <EmptyState />
-                )}
+                            );
+                        }}
+                    </For>
+                </Show>
             </div>
         </div>
     );

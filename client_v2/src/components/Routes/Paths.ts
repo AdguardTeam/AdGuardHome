@@ -10,6 +10,7 @@ export const RoutePath = {
     Encryption: 'Encryption',
     Dhcp: 'Dhcp',
     Dns: 'Dns',
+    DnsPrivateReverse: 'DnsPrivateReverse',
     SettingsPage: 'SettingsPage',
     Clients: 'Clients',
     DnsBlocklists: 'DnsBlocklists',
@@ -31,6 +32,9 @@ export const RoutePath = {
 
 export type RoutePathKey = keyof typeof RoutePath;
 
+/** Query param key used to pass a target element ID for scroll-to-section navigation. */
+export const SCROLL_QUERY_KEY = 'section';
+
 export const Paths: Record<RoutePathKey, string> = {
     Dashboard: pathBuilder('dashboard'),
     Logs: pathBuilder('logs'),
@@ -38,6 +42,7 @@ export const Paths: Record<RoutePathKey, string> = {
     Encryption: pathBuilder('encryption'),
     Dhcp: pathBuilder('dhcp'),
     Dns: pathBuilder('dns'),
+    DnsPrivateReverse: pathBuilder('dns/private-reverse'),
     SettingsPage: pathBuilder('settings'),
     Clients: pathBuilder('clients'),
     DnsBlocklists: pathBuilder('blocklists'),
@@ -63,6 +68,7 @@ export const linkPathBuilder = (
     route: RoutePathKey,
     params?: LinkParams,
     query?: Partial<Record<string, string | number | boolean>>,
+    hash?: string,
 ) => {
     let path = Paths[route];
     if (params) {
@@ -73,6 +79,10 @@ export const linkPathBuilder = (
 
     if (query) {
         path += `?${qs.stringify(query)}`;
+    }
+
+    if (hash) {
+        path += `#${hash}`;
     }
 
     return path;

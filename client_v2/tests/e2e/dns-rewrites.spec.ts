@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
-import { ADMIN_PASSWORD, ADMIN_USERNAME } from '../constants';
+
+import { login } from '../helpers/login';
 
 type RewriteEntry = {
     domain: string;
@@ -32,17 +33,10 @@ const DELETE_REWRITE: RewriteEntry = {
     enabled: true,
 };
 
-const login = async (page: Page) => {
-    await page.goto('/login.html');
-    await page.locator('#username').fill(ADMIN_USERNAME);
-    await page.locator('#password').fill(ADMIN_PASSWORD);
-    await page.locator('#sign_in').click();
-    await page.waitForURL((url) => !url.href.endsWith('/login.html'));
-};
 
 const openDnsRewritesPage = async (page: Page) => {
     await page.goto('/#dns_rewrites');
-    await expect(page.getByRole('heading', { name: 'DNS rewrites' })).toBeVisible();
+    await expect(page.getByText('DNS rewrites', { exact: true })).toBeVisible();
 };
 
 const listRewrites = async (page: Page): Promise<RewriteEntry[]> => {

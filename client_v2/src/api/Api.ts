@@ -1,6 +1,6 @@
 import type { LocalesType } from 'panel/common/intl';
 
-import { BASE_URL } from '../../constants';
+const BASE_URL = 'control';
 
 import { getPathWithQueryString } from '../helpers/helpers';
 import { QUERY_LOGS_PAGE_LIMIT, HTML_PAGES, R_PATH_LAST_PART, THEMES } from '../helpers/constants';

@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import type { MouseEvent } from 'react';
+import { createSignal, createEffect, Show, For } from 'solid-js';
 import cn from 'clsx';
-import { Icon, IconType } from 'panel/common/ui/Icon';
+import { Icon, type IconType } from 'panel/common/ui/Icon';
 import { Link } from 'panel/common/ui/Link';
-import { RoutePathKey } from 'panel/components/Routes/Paths';
+import { type RoutePathKey } from 'panel/components/Routes/Paths';
 import theme from 'panel/lib/theme';
 
 import s from './styles.module.pcss';
@@ -19,59 +18,61 @@ type Props = {
     icon: IconType;
     items: AccordionItem[];
     isActive: (path: string | string[], full?: boolean) => boolean;
-    className?: string;
+    class?: string;
 };
 
-export const AccordionSection = ({ title, icon, items, isActive, className }: Props) => {
-    const [isOpen, setIsOpen] = useState(false);
+export const AccordionSection = (props: Props) => {
+    const [isOpen, setIsOpen] = createSignal(false);
 
-    const isAnyItemActive = items.some((item) => isActive(item.path));
+    const isAnyItemActive = () => props.items.some((item) => props.isActive(item.path));
 
-    useEffect(() => {
-        if (!isOpen && isAnyItemActive) {
+    createEffect(() => {
+        if (!isOpen() && isAnyItemActive()) {
             setIsOpen(true);
         }
-    }, []);
+    });
 
     const toggleAccordion = (e: MouseEvent) => {
         e.stopPropagation();
-        setIsOpen(!isOpen);
+        setIsOpen(!isOpen());
     };
 
     return (
-        <div className={cn(s.menuLinkWrapper, className)}>
+        <div class={cn(s.menuLinkWrapper, props.class)}>
             <div
-                className={cn(s.menuLink, s.accordionHeader, {
-                    [s.activeLink]: isAnyItemActive,
-                    [s.accordionOpen]: isOpen,
+                class={cn(s.menuLink, s.accordionHeader, {
+                    [s.activeLink]: isAnyItemActive(),
+                    [s.accordionOpen]: isOpen(),
                 })}
                 onClick={toggleAccordion}
                 role="button"
                 tabIndex={0}
             >
-                <Icon className={s.linkIcon} icon={icon} />
-                <span className={theme.common.textOverflow}>{title}</span>
+                <Icon class={s.linkIcon} icon={props.icon} />
+                <span class={theme.common.textOverflow}>{props.title}</span>
                 <Icon
-                    className={cn(s.accordionArrow, { [s.accordionArrowOpen]: isOpen })}
+                    class={cn(s.accordionArrow, { [s.accordionArrowOpen]: isOpen() })}
                     icon="arrow_bottom"
                 />
             </div>
-            {isOpen && (
-                <div className={s.accordionContent}>
-                    {items.map((item) => (
-                        <div key={item.path} className={s.accordionItem}>
-                            <Link
-                                className={cn(s.accordionLink, {
-                                    [s.activeLink]: isActive(item.path),
-                                })}
-                                to={item.routePath}
-                            >
-                                <span className={theme.common.textOverflow}>{item.label}</span>
-                            </Link>
-                        </div>
-                    ))}
+            <Show when={isOpen()}>
+                <div class={s.accordionContent}>
+                    <For each={props.items}>
+                        {(item) => (
+                            <div class={s.accordionItem}>
+                                <Link
+                                    class={cn(s.accordionLink, {
+                                        [s.activeLink]: props.isActive(item.path),
+                                    })}
+                                    to={item.routePath}
+                                >
+                                    <span class={theme.common.textOverflow}>{item.label}</span>
+                                </Link>
+                            </div>
+                        )}
+                    </For>
                 </div>
-            )}
+            </Show>
         </div>
     );
 };

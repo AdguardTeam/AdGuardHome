@@ -1,1 +1,0 @@
-export { LogsConfig } from './LogsConfig';

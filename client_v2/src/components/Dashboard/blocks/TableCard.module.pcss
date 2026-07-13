@@ -117,6 +117,11 @@
     align-items: center;
     gap: 4px;
     white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.dropdownWrapper {
+    flex-shrink: 0;
 }
 
 .queryPercent {
@@ -169,11 +174,10 @@
     height: 24px;
 
     &:before {
-        content: "";
+        content: '';
         width: 8px;
         height: 8px;
         border-radius: 50%;
         background-color: var(--default-gray-icons);
     }
 }
-

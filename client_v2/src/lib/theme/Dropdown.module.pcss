@@ -57,7 +57,7 @@
     outline: 0;
 
     &:hover,
-    &:focus {
+    &:focus-visible {
         background-color: var(--hovered-dropdown-menu-background);
         outline: 0;
     }
@@ -76,5 +76,9 @@
 
     &_active {
         font-weight: var(--weight-semi-bold);
+    }
+
+    &_large {
+        padding: 16px;
     }
 }

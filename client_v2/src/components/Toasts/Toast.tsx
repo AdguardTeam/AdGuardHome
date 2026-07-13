@@ -1,12 +1,10 @@
-import React, { useEffect, useRef } from 'react';
-import type { ReactNode } from 'react';
-import { useDispatch } from 'react-redux';
+import { type JSX, onMount, onCleanup, Show } from 'solid-js';
 import { Icon } from 'panel/common/ui/Icon';
 import cn from 'clsx';
-import { getUndoCallback, clearUndoCallback } from 'panel/actions/toasts';
+import { getUndoCallback, clearUndoCallback } from 'panel/stores/toasts';
 import { TOAST_TIMEOUTS } from '../../helpers/constants';
 
-import { removeToast } from '../../actions';
+import { removeToast } from 'panel/stores/toasts';
 import s from './styles.module.pcss';
 
 type ToastAction = {
@@ -18,7 +16,7 @@ type ToastAction = {
 
 type ToastProps = {
     id: string;
-    message: ReactNode;
+    message: JSX.Element;
     type: string;
     actionLabel?: string;
     undoId?: string;
@@ -26,28 +24,28 @@ type ToastProps = {
     code?: string;
 };
 
-const Toast = ({ id, message, type, actionLabel, undoId, action, code }: ToastProps) => {
-    const dispatch = useDispatch();
-    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+const Toast = (props: ToastProps) => {
+    let timerRef: ReturnType<typeof setTimeout> | null = null;
 
-    const removeCurrentToast = () => dispatch(removeToast(id));
+    const removeCurrentToast = () => removeToast(props.id);
     const setRemoveToastTimeout = () => {
-        const timeout = TOAST_TIMEOUTS[type];
-        timerRef.current = setTimeout(removeCurrentToast, timeout);
+        const timeout = TOAST_TIMEOUTS[props.type];
+        timerRef = setTimeout(removeCurrentToast, timeout);
     };
 
-    useEffect(() => {
+    onMount(() => {
         setRemoveToastTimeout();
-        return () => {
-            if (timerRef.current) {
-                clearTimeout(timerRef.current);
-            }
-        };
-    }, []);
+    });
+
+    onCleanup(() => {
+        if (timerRef) {
+            clearTimeout(timerRef);
+        }
+    });
 
     const clearRemoveToastTimeout = () => {
-        if (timerRef.current) {
-            clearTimeout(timerRef.current);
+        if (timerRef) {
+            clearTimeout(timerRef);
         }
     };
 
@@ -59,11 +57,11 @@ const Toast = ({ id, message, type, actionLabel, undoId, action, code }: ToastPr
     const handleAction = async () => {
         clearRemoveToastTimeout();
 
-        if (undoId) {
-            const onUndo = getUndoCallback(undoId);
+        if (props.undoId) {
+            const onUndo = getUndoCallback(props.undoId);
             if (onUndo) {
                 await onUndo();
-                clearUndoCallback(undoId);
+                clearUndoCallback(props.undoId);
             }
         }
 
@@ -71,51 +69,49 @@ const Toast = ({ id, message, type, actionLabel, undoId, action, code }: ToastPr
     };
 
     const handleActionClick = () => {
-        if (action) {
-            if (action.callback) {
-                action.callback();
-            } else if (action.actionType) {
-                dispatch({ type: action.actionType, payload: action.actionPayload });
+        if (props.action) {
+            if (props.action.callback) {
+                props.action.callback();
             }
-
-            removeCurrentToast();
         }
+
+        removeCurrentToast();
     };
 
     return (
         <div
-            className={s.toast}
+            class={s.toast}
             data-testid="toast"
-            data-toast-type={type}
-            data-toast-code={code}
+            data-toast-type={props.type}
+            data-toast-code={props.code}
             onMouseOver={clearRemoveToastTimeout}
             onMouseOut={resetRemoveToastTimeout}
         >
-            <div className={s.messageRow}>
+            <div class={s.messageRow}>
                 <Icon
-                    icon={type === 'success' ? 'check' : 'attention'}
-                    className={cn(s.icon, s[type])}
+                    icon={(props.type === 'success' ? 'check' : 'attention') as any}
+                    class={cn(s.icon, s[props.type])}
                 />
 
-                <div className={s.content}>{message}</div>
+                <div class={s.content}>{props.message}</div>
             </div>
 
-            {actionLabel && (
+            <Show when={props.actionLabel}>
                 <button
                     type="button"
-                    className={s.actionButton}
+                    class={s.actionButton}
                     data-testid="toast-action"
                     onClick={handleAction}
                 >
-                    {actionLabel}
+                    {props.actionLabel}
                 </button>
-            )}
+            </Show>
 
-            {action && !actionLabel && (
-                <button type="button" className={s.actionButton} onClick={handleActionClick}>
-                    {action.text}
+            <Show when={props.action && !props.actionLabel}>
+                <button type="button" class={s.actionButton} onClick={handleActionClick}>
+                    {props.action!.text}
                 </button>
-            )}
+            </Show>
         </div>
     );
 };

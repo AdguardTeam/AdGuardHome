@@ -17,7 +17,7 @@
     --default-main-text: var(--gray-80);
     --disabled-main-text: var(--gray-50);
     /* Description text */
-    --default-description-text: var(--gray-60);
+    --default-description-text: var(--gray-70);
     /* Forms */
     --default-labels: var(--gray-70);
     /* Input */
@@ -119,6 +119,8 @@
     --stroke-toplines-close-icon-hovered: var(--gray-10);
     --stroke-toplines-close-icon-pressed: var(--gray-20);
     --fills-backgrounds-recent-activity: var(--product-primary-10);
+    --fills-backgrounds-recent-activity-changed: var(--orange-10);
+    --fills-backgrounds-recent-activity-blocked: var(--red-10);
     /* Switch */
     --fills-switch-on-default: var(--product-primary-50);
     --fills-switch-on-hovered: var(--product-primary-60);

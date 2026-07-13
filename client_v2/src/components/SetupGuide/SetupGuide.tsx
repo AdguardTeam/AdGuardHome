@@ -1,7 +1,6 @@
-import React from 'react';
-import { shallowEqual, useSelector } from 'react-redux';
+import { createMemo, Show, For, type JSX } from 'solid-js';
 
-import { RootState } from 'panel/initialState';
+import { dashboardState } from 'panel/stores/dashboard';
 import { Guide } from 'panel/common/ui/Guide/Guide';
 
 import theme from 'panel/lib/theme';
@@ -13,87 +12,89 @@ import s from './SetupGuide.module.pcss';
 type Props = {
     dnsAddresses?: string[];
     isStep?: boolean;
-    footer?: React.ReactNode;
+    footer?: JSX.Element;
 };
 
-export const SetupGuide = ({ dnsAddresses: dnsAddressesProp, isStep = false, footer }: Props) => {
-    const dashboardDnsAddresses = useSelector(
-        (state: RootState) => state.dashboard?.dnsAddresses || [],
-        shallowEqual,
+export const SetupGuide = (props: Props) => {
+    const dnsAddresses = createMemo(() => props.dnsAddresses ?? dashboardState.dnsAddresses ?? []);
+
+    const encryptedAddresses = createMemo(() =>
+        dnsAddresses().filter(
+            (address: string) =>
+                address.includes('https://') ||
+                address.includes('tls://') ||
+                address.includes('quic://'),
+        ),
     );
 
-    const dnsAddresses = dnsAddressesProp ?? dashboardDnsAddresses;
-
-    const encryptedAddresses = dnsAddresses.filter(
-        (address: string) =>
-            address.includes('https://') ||
-            address.includes('tls://') ||
-            address.includes('quic://'),
-    );
-    const plainAddresses = dnsAddresses.filter(
-        (address: string) =>
-            !address.includes('https://') &&
-            !address.includes('tls://') &&
-            !address.includes('quic://'),
+    const plainAddresses = createMemo(() =>
+        dnsAddresses().filter(
+            (address: string) =>
+                !address.includes('https://') &&
+                !address.includes('tls://') &&
+                !address.includes('quic://'),
+        ),
     );
 
     return (
-        <div className={isStep ? s.stepRoot : theme.layout.container}>
-            <div className={s.header}>
-                <h1 className={s.pageTitle}>
-                    {isStep ? intl.getMessage('setup_guide_title') : intl.getMessage('setup_guide')}
+        <div class={props.isStep ? s.stepRoot : theme.layout.container}>
+            <div class={s.header}>
+                <h1 class={s.pageTitle}>
+                    {props.isStep
+                        ? intl.getMessage('setup_guide_title')
+                        : intl.getMessage('setup_guide')}
                 </h1>
-                {!isStep && <div className={s.pageDesc}>{intl.getMessage('setup_guide_desc')}</div>}
+                <Show when={!props.isStep}>
+                    <div class={s.pageDesc}>{intl.getMessage('setup_guide_desc')}</div>
+                </Show>
             </div>
 
-            <div className={s.guidePage}>
-                {!isStep && (
-                    <h1 className={s.guideTitle}>{intl.getMessage('setup_guide_device_type')}</h1>
-                )}
-                <Guide dnsAddresses={dnsAddresses} />
+            <div class={s.guidePage}>
+                <Show when={!props.isStep}>
+                    <h1 class={s.guideTitle}>{intl.getMessage('setup_guide_device_type')}</h1>
+                </Show>
+                <Guide dnsAddresses={dnsAddresses()} />
 
-                <div className={s.guideDesc}>
-                    <h1 className={s.dnsTitle}>{intl.getMessage('home_dns_addresses')}</h1>
+                <div class={s.guideDesc}>
+                    <h1 class={s.dnsTitle}>{intl.getMessage('home_dns_addresses')}</h1>
 
                     <p>{intl.getMessage('home_dns_addresses_desc')}</p>
 
-                    {encryptedAddresses.length > 0 && (
-                        <>
-                            <div className={s.dnsSubtitle}>
-                                {intl.getMessage('encrypted_dns_addresses')}
-                            </div>
+                    <Show when={encryptedAddresses().length > 0}>
+                        <div class={s.dnsSubtitle}>
+                            {intl.getMessage('encrypted_dns_addresses')}
+                        </div>
 
-                            <ul className={s.addressList}>
-                                {encryptedAddresses.map((ip: string, index: number) => (
-                                    <li key={`${ip}-${index}`} className={s.address}>
-                                        <span className={s.bulletIcon}></span>
+                        <ul class={s.addressList}>
+                            <For each={encryptedAddresses()}>
+                                {(ip) => (
+                                    <li class={s.address}>
+                                        <span class={s.bulletIcon} />
                                         <CopiedText text={ip} />
                                     </li>
-                                ))}
-                            </ul>
-                        </>
-                    )}
+                                )}
+                            </For>
+                        </ul>
+                    </Show>
 
-                    {plainAddresses.length > 0 && (
-                        <>
-                            <div className={s.dnsSubtitle}>
-                                {intl.getMessage('plain_dns_addresses')}
-                            </div>
+                    <Show when={plainAddresses().length > 0}>
+                        <div class={s.dnsSubtitle}>{intl.getMessage('plain_dns_addresses')}</div>
 
-                            <ul className={s.addressList}>
-                                {plainAddresses.map((ip: string, index: number) => (
-                                    <li key={`${ip}-${index}`} className={s.address}>
-                                        <span className={s.bulletIcon}></span>
+                        <ul class={s.addressList}>
+                            <For each={plainAddresses()}>
+                                {(ip) => (
+                                    <li class={s.address}>
+                                        <span class={s.bulletIcon} />
                                         <CopiedText text={ip} />
                                     </li>
-                                ))}
-                            </ul>
-                        </>
-                    )}
+                                )}
+                            </For>
+                        </ul>
+                    </Show>
                 </div>
             </div>
 
-            <div className={s.footer}>{footer}</div>
+            <div class={s.footer}>{props.footer}</div>
         </div>
     );
 };

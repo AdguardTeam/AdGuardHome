@@ -1,1 +1,0 @@
-export { Dialog } from './Dialog';

@@ -1,5 +1,6 @@
 import { test, expect, Page } from '@playwright/test';
-import { ADMIN_USERNAME, ADMIN_PASSWORD } from '../constants';
+
+import { login } from '../helpers/login';
 
 const MOCK_ALL_SERVICES = {
     blocked_services: [
@@ -29,14 +30,6 @@ const MOCK_BLOCKED_SERVICES = {
         wed: { start: 0, end: 86340000 },
     },
 };
-
-async function login(page: Page) {
-    await page.goto('/login.html');
-    await page.locator('#username').fill(ADMIN_USERNAME);
-    await page.locator('#password').fill(ADMIN_PASSWORD);
-    await page.locator('#sign_in').click();
-    await page.waitForURL((url) => !url.href.endsWith('/login.html'));
-}
 
 async function setupMocks(page: Page) {
     await page.route('**/control/blocked_services/all', (route) => {
@@ -69,7 +62,7 @@ test.describe('Blocked Services Page', () => {
         await login(page);
         await setupMocks(page);
         await page.goto('/#blocked_services');
-        await page.waitForTimeout(1000);
+        await expect(page.locator('h1')).toBeVisible();
     });
 
     test('should display page title and description', async ({ page }) => {
@@ -139,10 +132,9 @@ test.describe('Blocked Services Page', () => {
         // Toggle WhatsApp ON
         const whatsappLabel = page.locator('label[for="service_whatsapp"]');
         await whatsappLabel.click();
-        await page.waitForTimeout(1000);
 
         // Verify the API was called with correct payload
-        expect(updatePayload).not.toBeNull();
+        await expect.poll(() => updatePayload).not.toBeNull();
         expect(updatePayload.ids).toContain('whatsapp');
         expect(updatePayload.ids).toContain('telegram');
         expect(updatePayload.ids).toContain('steam');
@@ -156,13 +148,8 @@ test.describe('Blocked Services Page', () => {
 
         // Type "tel" to filter
         await searchInput.fill('tel');
-        await page.waitForTimeout(300);
 
-        // Telegram should be visible
-        const telegramToggle = page.locator('input#service_telegram');
-        await expect(telegramToggle).toBeAttached();
-
-        // Steam should NOT be visible
+        // Steam should NOT be visible (filtered by search)
         const steamToggle = page.locator('input#service_steam');
         await expect(steamToggle).not.toBeAttached();
     });
@@ -170,7 +157,6 @@ test.describe('Blocked Services Page', () => {
     test('should show nothing found when search has no results', async ({ page }) => {
         const searchInput = page.locator('input#blocked-services-search');
         await searchInput.fill('zzzznonexistent');
-        await page.waitForTimeout(300);
 
         // Should show "Nothing found" or similar message
         const nothingFound = page.getByText(/nothing found/i);
@@ -180,88 +166,78 @@ test.describe('Blocked Services Page', () => {
     test('should clear search when clear button is clicked', async ({ page }) => {
         const searchInput = page.locator('input#blocked-services-search');
         await searchInput.fill('tel');
-        await page.waitForTimeout(300);
 
-        // Click the clear button (the × button that appears)
-        const clearButton = page.locator('button[aria-label]').filter({ has: page.locator('svg') }).first();
-        if (await clearButton.isVisible()) {
-            await clearButton.click();
-            await page.waitForTimeout(300);
+        // Clear by filling empty string
+        await searchInput.fill('');
+        await page.keyboard.press('Enter');
 
-            // All services should be visible again
-            const allServices = page.locator('[class*="serviceRow"]');
-            await expect(allServices).toHaveCount(8);
-        }
+        // All services should be visible again
+        const allServices = page.locator('[class*="serviceRow"]');
+        await expect(allServices).toHaveCount(8);
     });
 
     test('should filter services by group tag', async ({ page }) => {
         // Click the "Gaming" group button
         const gamingButton = page.locator('button[aria-pressed]').filter({ hasText: /gaming/i });
 
-        if (await gamingButton.isVisible()) {
-            await gamingButton.click();
-            await page.waitForTimeout(300);
+        await expect(gamingButton).toBeVisible();
+        await gamingButton.click();
 
-            // Should only show gaming services (steam, epic_games)
-            const steamToggle = page.locator('input#service_steam');
-            await expect(steamToggle).toBeAttached();
+        // Should only show gaming services (steam, epic_games)
+        const steamToggle = page.locator('input#service_steam');
+        await expect(steamToggle).toBeAttached();
 
-            const epicToggle = page.locator('input#service_epic_games');
-            await expect(epicToggle).toBeAttached();
+        const epicToggle = page.locator('input#service_epic_games');
+        await expect(epicToggle).toBeAttached();
 
-            // Non-gaming services should not be visible
-            const telegramToggle = page.locator('input#service_telegram');
-            await expect(telegramToggle).not.toBeAttached();
-        }
+        // Non-gaming services should not be visible
+        const telegramToggle = page.locator('input#service_telegram');
+        await expect(telegramToggle).not.toBeAttached();
     });
 
     test('should deactivate group filter when clicked again', async ({ page }) => {
         const gamingButton = page.locator('button[aria-pressed]').filter({ hasText: /gaming/i });
 
-        if (await gamingButton.isVisible()) {
-            // Activate filter
-            await gamingButton.click();
-            await page.waitForTimeout(300);
+        await expect(gamingButton).toBeVisible();
 
-            // Deactivate filter
-            await gamingButton.click();
-            await page.waitForTimeout(300);
+        // Activate filter
+        await gamingButton.click();
 
-            // All services should be visible
-            const telegramToggle = page.locator('input#service_telegram');
-            await expect(telegramToggle).toBeAttached();
-        }
+        // Deactivate filter
+        await gamingButton.click();
+
+        // All services should be visible
+        const telegramToggle = page.locator('input#service_telegram');
+        await expect(telegramToggle).toBeAttached();
     });
 
     test('should combine search and group filter', async ({ page }) => {
         const gamingButton = page.locator('button[aria-pressed]').filter({ hasText: /gaming/i });
 
-        if (await gamingButton.isVisible()) {
-            await gamingButton.click();
-            await page.waitForTimeout(300);
+        await expect(gamingButton).toBeVisible();
+        await gamingButton.click();
 
-            const searchInput = page.locator('input#blocked-services-search');
-            await searchInput.fill('steam');
-            await page.waitForTimeout(300);
+        const searchInput = page.locator('input#blocked-services-search');
+        await searchInput.fill('steam');
 
-            // Only steam should be visible (matches search + gaming filter)
-            const steamToggle = page.locator('input#service_steam');
-            await expect(steamToggle).toBeAttached();
+        // Only steam should be visible (matches search + gaming filter)
+        const steamToggle = page.locator('input#service_steam');
+        await expect(steamToggle).toBeAttached();
 
-            const epicToggle = page.locator('input#service_epic_games');
-            await expect(epicToggle).not.toBeAttached();
-        }
+        const epicToggle = page.locator('input#service_epic_games');
+        await expect(epicToggle).not.toBeAttached();
     });
 
     test('should navigate to inactivity schedule page', async ({ page }) => {
         const navItem = page.locator('a[href*="blocked_services/schedule"]');
         await navItem.click();
-        await page.waitForTimeout(500);
 
         // Should be on schedule page
         await expect(page).toHaveURL(/#blocked_services\/schedule/);
     });
 
+    // TODO: Check if the component actually disables switches during API calls.
+    // If not, this test should use test.fixme instead.
     test('should disable switches during API processing', async ({ page }) => {
         // Make update slow
         await page.route('**/control/blocked_services/update', (route) => {
@@ -276,11 +252,12 @@ test.describe('Blocked Services Page', () => {
 
         // Toggle a service
         const whatsappLabel = page.locator('label[for="service_whatsapp"]');
+        const telegramInput = page.locator('input#service_telegram');
+
         await whatsappLabel.click();
 
-        // Check that other switches become disabled during request
-        // (processingSet = true disables all switches)
-        await page.waitForTimeout(200);
+        // During the ongoing 2-second API call, other switches should be disabled
+        await expect(telegramInput).toBeDisabled();
     });
 });
 
@@ -289,7 +266,7 @@ test.describe('Inactivity Schedule Page', () => {
         await login(page);
         await setupMocks(page);
         await page.goto('/#blocked_services/schedule');
-        await page.waitForTimeout(1000);
+        await expect(page.locator('h1')).toBeVisible();
     });
 
     test('should display page title', async ({ page }) => {
@@ -305,7 +282,6 @@ test.describe('Inactivity Schedule Page', () => {
     test('should navigate back via breadcrumbs', async ({ page }) => {
         const breadcrumb = page.locator('a').filter({ hasText: /blocked services/i });
         await breadcrumb.click();
-        await page.waitForTimeout(500);
 
         await expect(page).toHaveURL(/#blocked_services$/);
     });
@@ -364,7 +340,6 @@ test.describe('Inactivity Schedule Page', () => {
         const tuesdayRow = page.locator('[class*="scheduleRow"]').nth(1);
         const addButton = tuesdayRow.locator('button');
         await addButton.click();
-        await page.waitForTimeout(500);
 
         // Modal should be visible
         const modal = page.locator('.rc-dialog-update');
@@ -376,7 +351,6 @@ test.describe('Inactivity Schedule Page', () => {
         const mondayRow = page.locator('[class*="scheduleRow"]').first();
         const editButton = mondayRow.locator('button').first();
         await editButton.click();
-        await page.waitForTimeout(500);
 
         // Modal should be visible
         const modal = page.locator('.rc-dialog-update');
@@ -388,7 +362,6 @@ test.describe('Inactivity Schedule Page', () => {
         const mondayRow = page.locator('[class*="scheduleRow"]').first();
         const deleteButton = mondayRow.locator('button').nth(1);
         await deleteButton.click();
-        await page.waitForTimeout(500);
 
         // Confirmation dialog should appear
         const confirmDialog = page.locator('.rc-dialog-update');
@@ -411,22 +384,19 @@ test.describe('Inactivity Schedule Page', () => {
         const mondayRow = page.locator('[class*="scheduleRow"]').first();
         const deleteButton = mondayRow.locator('button').nth(1);
         await deleteButton.click();
-        await page.waitForTimeout(500);
 
         // Confirm deletion
         const confirmButton = page.locator('.rc-dialog-update button').filter({ hasText: /delete/i });
-        if (await confirmButton.isVisible()) {
-            await confirmButton.click();
-            await page.waitForTimeout(1000);
+        await expect(confirmButton).toBeVisible();
+        await confirmButton.click();
 
-            // Verify API was called without Monday schedule
-            expect(updatePayload).not.toBeNull();
-            expect(updatePayload.schedule.mon).toBeUndefined();
-            // Wednesday should still be present
-            expect(updatePayload.schedule.wed).toBeDefined();
-            // Blocked IDs should be preserved
-            expect(updatePayload.ids).toEqual(['telegram', 'steam']);
-        }
+        // Verify API was called without Monday schedule
+        await expect.poll(() => updatePayload).not.toBeNull();
+        expect(updatePayload.schedule.mon).toBeUndefined();
+        // Wednesday should still be present
+        expect(updatePayload.schedule.wed).toBeDefined();
+        // Blocked IDs should be preserved
+        expect(updatePayload.ids).toEqual(['telegram', 'steam']);
     });
 
     test('should cancel deletion when cancel is clicked', async ({ page }) => {
@@ -441,17 +411,14 @@ test.describe('Inactivity Schedule Page', () => {
         const mondayRow = page.locator('[class*="scheduleRow"]').first();
         const deleteButton = mondayRow.locator('button').nth(1);
         await deleteButton.click();
-        await page.waitForTimeout(500);
 
         // Cancel deletion
         const cancelButton = page.locator('.rc-dialog-update button').filter({ hasText: /cancel/i });
-        if (await cancelButton.isVisible()) {
-            await cancelButton.click();
-            await page.waitForTimeout(500);
+        await expect(cancelButton).toBeVisible();
+        await cancelButton.click();
 
-            // No API call should have been made
-            expect(updateCalled).toBe(false);
-        }
+        // No API call should have been made
+        expect(updateCalled).toBe(false);
     });
 
     test('should save schedule entry from modal', async ({ page }) => {
@@ -470,25 +437,23 @@ test.describe('Inactivity Schedule Page', () => {
         const tuesdayRow = page.locator('[class*="scheduleRow"]').nth(1);
         const addButton = tuesdayRow.locator('button');
         await addButton.click();
-        await page.waitForTimeout(500);
 
         // Modal should be visible - click Save (default values are 00:00 to 23:59)
         const saveButton = page.locator('.rc-dialog-update button').filter({ hasText: /save/i });
-        if (await saveButton.isVisible() && await saveButton.isEnabled()) {
-            await saveButton.click();
-            await page.waitForTimeout(1000);
+        await expect(saveButton).toBeVisible();
+        await expect(saveButton).toBeEnabled();
+        await saveButton.click();
 
-            // Verify API was called with Tuesday schedule
-            expect(updatePayload).not.toBeNull();
-            expect(updatePayload.schedule.tue).toBeDefined();
-            expect(updatePayload.schedule.tue.start).toBeDefined();
-            expect(updatePayload.schedule.tue.end).toBeDefined();
-            // Existing schedules preserved
-            expect(updatePayload.schedule.mon).toBeDefined();
-            expect(updatePayload.schedule.wed).toBeDefined();
-            // IDs preserved
-            expect(updatePayload.ids).toEqual(['telegram', 'steam']);
-        }
+        // Verify API was called with Tuesday schedule
+        await expect.poll(() => updatePayload).not.toBeNull();
+        expect(updatePayload.schedule.tue).toBeDefined();
+        expect(updatePayload.schedule.tue.start).toBeDefined();
+        expect(updatePayload.schedule.tue.end).toBeDefined();
+        // Existing schedules preserved
+        expect(updatePayload.schedule.mon).toBeDefined();
+        expect(updatePayload.schedule.wed).toBeDefined();
+        // IDs preserved
+        expect(updatePayload.ids).toEqual(['telegram', 'steam']);
     });
 
     test('should update timezone via selector', async ({ page }) => {
@@ -507,23 +472,19 @@ test.describe('Inactivity Schedule Page', () => {
         const timezoneWrapper = page.locator('[class*="timezoneWrapper"]');
         const selectInput = timezoneWrapper.locator('input');
 
-        if (await selectInput.isVisible()) {
-            await selectInput.fill('America/New_York');
-            await page.waitForTimeout(500);
+        await expect(selectInput).toBeVisible();
+        await selectInput.fill('America/New_York');
 
-            // Click the option
-            const option = page.getByText('America/New_York', { exact: true }).first();
-            if (await option.isVisible()) {
-                await option.click();
-                await page.waitForTimeout(1000);
+        // Click the option
+        const option = page.getByText('America/New_York', { exact: true }).first();
+        await expect(option).toBeVisible();
+        await option.click();
 
-                expect(updatePayload).not.toBeNull();
-                expect(updatePayload.schedule.time_zone).toBe('America/New_York');
-                // Existing schedules preserved
-                expect(updatePayload.schedule.mon).toBeDefined();
-                expect(updatePayload.ids).toEqual(['telegram', 'steam']);
-            }
-        }
+        await expect.poll(() => updatePayload).not.toBeNull();
+        expect(updatePayload.schedule.time_zone).toBe('America/New_York');
+        // Existing schedules preserved
+        expect(updatePayload.schedule.mon).toBeDefined();
+        expect(updatePayload.ids).toEqual(['telegram', 'steam']);
     });
 });
 
@@ -546,15 +507,14 @@ test.describe('Blocked Services - Schedule Integration', () => {
         });
 
         await page.goto('/#blocked_services');
-        await page.waitForTimeout(1000);
+        await expect(page.locator('h1')).toBeVisible();
 
         // Toggle WhatsApp ON
         const whatsappLabel = page.locator('label[for="service_whatsapp"]');
         await whatsappLabel.click();
-        await page.waitForTimeout(1000);
 
         // Schedule should be preserved in the update payload
-        expect(updatePayload).not.toBeNull();
+        await expect.poll(() => updatePayload).not.toBeNull();
         expect(updatePayload.schedule).toBeDefined();
         expect(updatePayload.schedule.time_zone).toBe('Europe/London');
         expect(updatePayload.schedule.mon).toBeDefined();
@@ -573,40 +533,35 @@ test.describe('Blocked Services - Schedule Integration', () => {
         });
 
         await page.goto('/#blocked_services/schedule');
-        await page.waitForTimeout(1000);
+        await expect(page.locator('h1')).toBeVisible();
 
         // Delete Monday schedule
         const mondayRow = page.locator('[class*="scheduleRow"]').first();
         const deleteButton = mondayRow.locator('button').nth(1);
         await deleteButton.click();
-        await page.waitForTimeout(500);
 
         const confirmButton = page.locator('.rc-dialog-update button').filter({ hasText: /delete/i });
-        if (await confirmButton.isVisible()) {
-            await confirmButton.click();
-            await page.waitForTimeout(1000);
+        await expect(confirmButton).toBeVisible();
+        await confirmButton.click();
 
-            // Blocked service IDs should be preserved
-            expect(updatePayload).not.toBeNull();
-            expect(updatePayload.ids).toEqual(['telegram', 'steam']);
-        }
+        // Blocked service IDs should be preserved
+        await expect.poll(() => updatePayload).not.toBeNull();
+        expect(updatePayload.ids).toEqual(['telegram', 'steam']);
     });
 
     test('should navigate from blocked services to schedule and back', async ({ page }) => {
         await page.goto('/#blocked_services');
-        await page.waitForTimeout(1000);
+        await expect(page.locator('h1')).toBeVisible();
 
         // Navigate to schedule
         const navItem = page.locator('a[href*="blocked_services/schedule"]');
         await navItem.click();
-        await page.waitForTimeout(500);
 
         await expect(page).toHaveURL(/#blocked_services\/schedule/);
 
         // Navigate back via breadcrumbs
         const breadcrumb = page.locator('a').filter({ hasText: /blocked services/i });
         await breadcrumb.click();
-        await page.waitForTimeout(500);
 
         await expect(page).toHaveURL(/#blocked_services$/);
     });

@@ -1,30 +1,26 @@
-import { useMemo, useState } from 'react';
-import type { Dispatch, SetStateAction } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { createSignal, createMemo, untrack } from 'solid-js';
 
 import intl from 'panel/common/intl';
 import {
-    getClients,
-    initSettings,
-    toggleBlocking,
-    toggleBlockingForClient,
-    toggleSetting,
-} from 'panel/actions';
-import { updateClient } from 'panel/actions/clients';
-import {
+    filteringState,
     checkHost,
     getFilteringStatus,
     setRules,
     toggleFilterStatus,
-} from 'panel/actions/filtering';
-import { updateRewrite, deleteRewrite, addRewrite, getRewritesList } from 'panel/actions/rewrites';
-import { getBlockedServices, updateBlockedServices } from 'panel/actions/services';
-import { addSuccessToast, createUndoToast } from 'panel/actions/toasts';
-import { BLOCK_ACTIONS, MODAL_TYPE, SPECIAL_FILTER_ID } from 'panel/helpers/constants';
+    toggleBlocking,
+    toggleBlockingForClient,
+    BLOCK_ACTIONS,
+} from 'panel/stores/filtering';
+import { getClients } from 'panel/stores/dashboard';
+import { initSettings, toggleSetting } from 'panel/stores/settings';
+import { updateClient } from 'panel/stores/clients';
+import { servicesState, getBlockedServices, updateBlockedServices } from 'panel/stores/services';
+import { updateRewrite, deleteRewrite, addRewrite, getRewritesList } from 'panel/stores/rewrites';
+import { addSuccessToast, createUndoToast } from 'panel/stores/toasts';
+import { openModal } from 'panel/stores/modals';
+import { MODAL_TYPE, SPECIAL_FILTER_ID } from 'panel/helpers/constants';
 import { delay, splitByNewLine } from 'panel/helpers/helpers';
-import { Client, RootState } from 'panel/initialState';
-import { openModal } from 'panel/reducers/modals';
-import type { AppDispatch } from 'panel/store/types';
+import type { Client } from 'panel/initialState';
 
 import {
     CLIENT_SCOPED_ACTIONS,
@@ -35,7 +31,12 @@ import {
     getEffectiveClientProtectionSettings,
     getPrimaryRule,
 } from './helpers';
-import { CheckFormValues, CheckResultData, ResultActionKind, RewriteEntry } from './types';
+import {
+    type CheckFormValues,
+    type CheckResultData,
+    type ResultActionKind,
+    type RewriteEntry,
+} from './types';
 
 const EMPTY_REWRITE: RewriteEntry = {
     domain: '',
@@ -46,23 +47,20 @@ const EMPTY_REWRITE: RewriteEntry = {
 const RECHECK_DELAY_MS = 500;
 
 type UseUserRulesActionsParams = {
-    checkResult: CheckResultData | null;
-    filters: RootState['filtering']['filters'];
-    whitelistFilters: RootState['filtering']['whitelistFilters'];
-    filteringEnabled: boolean;
-    settingsList?: RootState['settings']['settingsList'];
-    persistentClients: Client[];
-    rewritesList: RootState['rewrites']['list'];
-    services: RootState['services'];
-    lastSubmittedCheck: CheckFormValues | null;
-    setIsResultVisible: Dispatch<SetStateAction<boolean>>;
+    checkResult: () => CheckResultData | null;
+    filteringEnabled: () => boolean;
+    settingsList?: () => any;
+    persistentClients: () => Client[];
+    rewritesList: () => any;
+    lastSubmittedCheck: () => CheckFormValues | null;
+    setIsResultVisible: (visible: boolean) => void;
 };
 
 type UseUserRulesActionsResult = {
-    currentRewrite: RewriteEntry;
-    setCurrentRewrite: Dispatch<SetStateAction<RewriteEntry>>;
-    matchedRewrite: RewriteEntry | null;
-    hiddenActionKinds: ResultActionKind[];
+    currentRewrite: () => RewriteEntry;
+    setCurrentRewrite: (value: RewriteEntry | ((prev: RewriteEntry) => RewriteEntry)) => void;
+    matchedRewrite: () => RewriteEntry | null;
+    hiddenActionKinds: () => ResultActionKind[];
     handleAction: (action: ResultActionKind) => Promise<void>;
     handleRewriteUpdate: (update: RewriteEntry) => Promise<boolean>;
     handleRewriteDelete: () => Promise<boolean>;
@@ -71,106 +69,82 @@ type UseUserRulesActionsResult = {
     resetCurrentRewrite: () => void;
 };
 
-export const useUserRulesActions = ({
-    checkResult,
-    filters,
-    whitelistFilters,
-    filteringEnabled,
-    settingsList,
-    persistentClients,
-    rewritesList,
-    services,
-    lastSubmittedCheck,
-    setIsResultVisible,
-}: UseUserRulesActionsParams): UseUserRulesActionsResult => {
-    const dispatch = useDispatch<AppDispatch>();
-    const userRules = useSelector((state: RootState) => state.filtering.userRules);
-    const [currentRewrite, setCurrentRewrite] = useState<RewriteEntry>(EMPTY_REWRITE);
+export const useUserRulesActions = (
+    params: UseUserRulesActionsParams,
+): UseUserRulesActionsResult => {
+    const [currentRewrite, setCurrentRewrite] = createSignal<RewriteEntry>(EMPTY_REWRITE);
 
-    const matchedRewrite = useMemo(
-        () => findMatchedRewrite(rewritesList, checkResult),
-        [rewritesList, checkResult],
+    const matchedRewrite = createMemo(() =>
+        findMatchedRewrite(params.rewritesList(), params.checkResult()),
     );
 
-    const resolvedClient = useMemo(
-        () => findPersistentClient(persistentClients, lastSubmittedCheck?.client),
-        [persistentClients, lastSubmittedCheck?.client],
+    const resolvedClient = createMemo(() =>
+        findPersistentClient(params.persistentClients(), params.lastSubmittedCheck()?.client),
     );
 
-    const hiddenActionKinds = useMemo(() => {
-        if (!lastSubmittedCheck?.client || resolvedClient) {
+    const hiddenActionKinds = createMemo(() => {
+        if (!params.lastSubmittedCheck()?.client || resolvedClient()) {
             return [];
         }
-
         return CLIENT_SCOPED_ACTIONS;
-    }, [resolvedClient, lastSubmittedCheck?.client]);
+    });
 
     const runWithClosedResult = async <T>(callback: () => Promise<T>): Promise<T> => {
-        setIsResultVisible(false);
-
+        params.setIsResultVisible(false);
         return callback();
     };
 
     const recheckCurrentTarget = async () => {
-        if (!lastSubmittedCheck) {
+        const lastCheck = params.lastSubmittedCheck();
+        if (!lastCheck) {
             return;
         }
 
         await delay(RECHECK_DELAY_MS);
 
-        await dispatch(
-            checkHost({
-                name: lastSubmittedCheck.hostname,
-                client: lastSubmittedCheck.client || undefined,
-                qtype: lastSubmittedCheck.qtype || undefined,
-            }),
-        );
+        await checkHost({
+            name: lastCheck.hostname,
+            client: lastCheck.client || undefined,
+            qtype: lastCheck.qtype || undefined,
+        });
 
-        setIsResultVisible(true);
+        params.setIsResultVisible(true);
     };
 
     const updateResolvedClient = async (transform: (client: Client) => Client | null) => {
-        if (!resolvedClient) {
+        const client = resolvedClient();
+        if (!client) {
             return false;
         }
 
-        const updatedClient = transform(resolvedClient);
-
+        const updatedClient = transform(client);
         if (!updatedClient) {
             return false;
         }
 
-        return dispatch(
-            updateClient(updatedClient, resolvedClient.name, {
-                showToast: false,
-                toggleModal: false,
-            }),
-        );
+        return updateClient(client.name, updatedClient);
     };
 
-    const performWithUndo = async (params: {
+    const performWithUndo = async (p: {
         perform: () => Promise<boolean | undefined | void>;
         message: string;
         undo: () => Promise<boolean | undefined | void>;
         refresh: () => Promise<void>;
     }) => {
         return runWithClosedResult(async () => {
-            const ok = await params.perform();
+            const ok = await p.perform();
 
             if (ok === false) {
                 return false;
             }
 
-            dispatch(
-                addSuccessToast(
-                    createUndoToast(params.message, intl.getMessage('notify_undo'), async () => {
-                        const didUndo = await params.undo();
-
-                        if (didUndo) {
-                            await params.refresh();
-                        }
-                    }),
-                ),
+            addSuccessToast(
+                createUndoToast(p.message, intl.getMessage('notify_undo'), async () => {
+                    const didUndo = await p.undo();
+                    if (didUndo) {
+                        await p.refresh();
+                    }
+                }),
             );
             await recheckCurrentTarget();
 
@@ -179,68 +153,65 @@ export const useUserRulesActions = ({
     };
 
     const refreshSettingsAndClients = async () => {
-        await dispatch(initSettings());
-        await dispatch(getClients());
+        await initSettings();
+        await getClients();
     };
 
     const handleRuleToggle = async (type: (typeof BLOCK_ACTIONS)[keyof typeof BLOCK_ACTIONS]) => {
-        if (!checkResult?.hostname || !lastSubmittedCheck) {
+        const result = params.checkResult();
+        const lastCheck = params.lastSubmittedCheck();
+        if (!result?.hostname || !lastCheck) {
             return;
         }
 
-        const primaryRule = getPrimaryRule(checkResult);
+        const primaryRule = getPrimaryRule(result);
         const matchedCustomRule =
-            !lastSubmittedCheck.client &&
+            !lastCheck.client &&
             primaryRule?.filter_list_id === SPECIAL_FILTER_ID.CUSTOM_FILTERING_RULES
                 ? primaryRule.text
                 : undefined;
 
-        let action;
-
-        if (lastSubmittedCheck.client) {
-            action = toggleBlockingForClient(type, checkResult.hostname, lastSubmittedCheck.client);
-        } else if (matchedCustomRule) {
-            action = toggleBlocking(
-                type,
-                checkResult.hostname,
-                undefined,
-                undefined,
-                matchedCustomRule,
-            );
-        } else {
-            action = toggleBlocking(type, checkResult.hostname);
-        }
-
         await runWithClosedResult(async () => {
-            const ok = await dispatch(action);
+            let ok: boolean | undefined;
+            if (lastCheck.client) {
+                ok = await toggleBlockingForClient(type, result.hostname, lastCheck.client);
+            } else if (matchedCustomRule) {
+                ok = await toggleBlocking(
+                    type,
+                    result.hostname,
+                    undefined,
+                    undefined,
+                    matchedCustomRule,
+                );
+            } else {
+                ok = await toggleBlocking(type, result.hostname);
+            }
 
             if (ok === false) {
                 return false;
             }
 
             await recheckCurrentTarget();
-
             return true;
         });
     };
 
     const handleDisableSafeBrowsing = async () => {
-        const clientSnapshot = resolvedClient;
+        const clientSnapshot = resolvedClient();
+        const filteringEnabled = params.filteringEnabled();
+        const settingsList = params.settingsList?.();
+        const lastCheck = params.lastSubmittedCheck();
 
         await performWithUndo({
             perform: () =>
-                lastSubmittedCheck?.client
+                lastCheck?.client
                     ? updateResolvedClient((client) => {
                           const effectiveSettings = getEffectiveClientProtectionSettings({
                               client,
                               globalFilteringEnabled: filteringEnabled,
                               settingsList,
                           });
-
-                          if (!effectiveSettings) {
-                              return null;
-                          }
-
+                          if (!effectiveSettings) return null;
                           return {
                               ...client,
                               ...effectiveSettings,
@@ -248,39 +219,35 @@ export const useUserRulesActions = ({
                               safebrowsing_enabled: false,
                           };
                       })
-                    : dispatch(toggleSetting('safebrowsing', true)),
+                    : toggleSetting('safebrowsing', true),
             message: intl.getMessage('user_rules_browsing_security_disabled'),
             undo: () =>
-                lastSubmittedCheck?.client && clientSnapshot
-                    ? dispatch(
-                          updateClient(
-                              { ...clientSnapshot, safebrowsing_enabled: true },
-                              clientSnapshot.name,
-                              { showToast: false, toggleModal: false },
-                          ),
-                      )
-                    : dispatch(toggleSetting('safebrowsing', false)),
+                lastCheck?.client && clientSnapshot
+                    ? updateClient(clientSnapshot.name, {
+                          ...clientSnapshot,
+                          safebrowsing_enabled: true,
+                      })
+                    : toggleSetting('safebrowsing', false),
             refresh: refreshSettingsAndClients,
         });
     };
 
     const handleDisableParental = async () => {
-        const clientSnapshot = resolvedClient;
+        const clientSnapshot = resolvedClient();
+        const filteringEnabled = params.filteringEnabled();
+        const settingsList = params.settingsList?.();
+        const lastCheck = params.lastSubmittedCheck();
 
         await performWithUndo({
             perform: () =>
-                lastSubmittedCheck?.client
+                lastCheck?.client
                     ? updateResolvedClient((client) => {
                           const effectiveSettings = getEffectiveClientProtectionSettings({
                               client,
                               globalFilteringEnabled: filteringEnabled,
                               settingsList,
                           });
-
-                          if (!effectiveSettings) {
-                              return null;
-                          }
-
+                          if (!effectiveSettings) return null;
                           return {
                               ...client,
                               ...effectiveSettings,
@@ -288,50 +255,41 @@ export const useUserRulesActions = ({
                               parental_enabled: false,
                           };
                       })
-                    : dispatch(toggleSetting('parental', true)),
+                    : toggleSetting('parental', true),
             message: intl.getMessage('user_rules_parental_control_disabled'),
             undo: () =>
-                lastSubmittedCheck?.client && clientSnapshot
-                    ? dispatch(
-                          updateClient(
-                              { ...clientSnapshot, parental_enabled: true },
-                              clientSnapshot.name,
-                              { showToast: false, toggleModal: false },
-                          ),
-                      )
-                    : dispatch(toggleSetting('parental', false)),
+                lastCheck?.client && clientSnapshot
+                    ? updateClient(clientSnapshot.name, {
+                          ...clientSnapshot,
+                          parental_enabled: true,
+                      })
+                    : toggleSetting('parental', false),
             refresh: refreshSettingsAndClients,
         });
     };
 
     const handleDisableSafeSearch = async () => {
-        const currentSafeSearch = settingsList?.safesearch;
+        const currentSafeSearch = params.settingsList?.()?.safesearch;
+        const lastCheck = params.lastSubmittedCheck();
+        const clientSnapshot = resolvedClient();
+        const filteringEnabled = params.filteringEnabled();
+        const settingsList = params.settingsList?.();
 
-        if (!lastSubmittedCheck?.client && !currentSafeSearch) {
+        if (!lastCheck?.client && !currentSafeSearch) {
             return;
         }
 
-        const clientSnapshot = resolvedClient;
-
         await performWithUndo({
             perform: () =>
-                lastSubmittedCheck?.client
+                lastCheck?.client
                     ? updateResolvedClient((client) => {
                           const effectiveSettings = getEffectiveClientProtectionSettings({
                               client,
                               globalFilteringEnabled: filteringEnabled,
                               settingsList,
                           });
-
-                          if (!effectiveSettings) {
-                              return null;
-                          }
-
-                          const safeSearch = {
-                              ...effectiveSettings.safe_search,
-                              enabled: false,
-                          };
-
+                          if (!effectiveSettings) return null;
+                          const safeSearch = { ...effectiveSettings.safe_search, enabled: false };
                           return {
                               ...client,
                               ...effectiveSettings,
@@ -340,153 +298,122 @@ export const useUserRulesActions = ({
                               safesearch_enabled: safeSearch.enabled,
                           };
                       })
-                    : dispatch(
-                          toggleSetting('safesearch', { ...currentSafeSearch, enabled: false }),
-                      ),
+                    : toggleSetting('safesearch', { ...currentSafeSearch, enabled: false }),
             message: intl.getMessage('user_rules_safe_search_disabled'),
             undo: () =>
-                lastSubmittedCheck?.client && clientSnapshot
-                    ? dispatch(
-                          updateClient(
-                              {
-                                  ...clientSnapshot,
-                                  safe_search: { ...clientSnapshot.safe_search, enabled: true },
-                                  safesearch_enabled: true,
-                              },
-                              clientSnapshot.name,
-                              { showToast: false, toggleModal: false },
-                          ),
-                      )
-                    : dispatch(
-                          toggleSetting('safesearch', { ...currentSafeSearch, enabled: true }),
-                      ),
+                lastCheck?.client && clientSnapshot
+                    ? updateClient(clientSnapshot.name, {
+                          ...clientSnapshot,
+                          safe_search: { ...clientSnapshot.safe_search, enabled: true },
+                          safesearch_enabled: true,
+                      })
+                    : toggleSetting('safesearch', { ...currentSafeSearch, enabled: true }),
             refresh: refreshSettingsAndClients,
         });
     };
 
     const handleDisableFilter = async () => {
-        const filterId = getPrimaryRule(checkResult)?.filter_list_id;
-        if (filterId === undefined) {
-            return;
-        }
+        const result = params.checkResult();
+        const filterId = getPrimaryRule(result)?.filter_list_id;
+        if (filterId === undefined) return;
+
+        const filters = filteringState.filters;
+        const whitelistFilters = filteringState.whitelistFilters;
 
         const matchedFilter =
-            filters.find((filter) => filter.id === filterId) ??
-            whitelistFilters.find((filter) => filter.id === filterId);
-        if (!matchedFilter) {
-            return;
-        }
+            filters.find((filter: any) => filter.id === filterId) ??
+            whitelistFilters.find((filter: any) => filter.id === filterId);
+        if (!matchedFilter) return;
 
-        const isWhitelist = whitelistFilters.some((filter) => filter.id === filterId);
+        const isWhitelist = whitelistFilters.some((filter: any) => filter.id === filterId);
 
         await performWithUndo({
             perform: () =>
-                dispatch(
-                    toggleFilterStatus(
-                        matchedFilter.url,
-                        { name: matchedFilter.name, url: matchedFilter.url, enabled: false },
-                        isWhitelist,
-                    ),
+                toggleFilterStatus(
+                    matchedFilter.url,
+                    { name: matchedFilter.name, url: matchedFilter.url, enabled: false },
+                    isWhitelist,
                 ),
             message: intl.getMessage('user_rules_filter_was_disabled', {
                 value: matchedFilter.name,
             }),
             undo: () =>
-                dispatch(
-                    toggleFilterStatus(
-                        matchedFilter.url,
-                        { name: matchedFilter.name, url: matchedFilter.url, enabled: true },
-                        isWhitelist,
-                    ),
+                toggleFilterStatus(
+                    matchedFilter.url,
+                    { name: matchedFilter.name, url: matchedFilter.url, enabled: true },
+                    isWhitelist,
                 ),
             refresh: () => recheckCurrentTarget(),
         });
     };
 
     const handleAllowBlockedService = async () => {
-        const matchedService = findMatchedBlockedService(services.allServices, checkResult);
+        const result = params.checkResult();
+        const matchedService = findMatchedBlockedService(servicesState.allServices, result);
+        if (!matchedService) return;
 
-        if (!matchedService) {
-            return;
-        }
-
-        const previousBlockedServiceIds = [...(services.list.ids || [])];
-        const clientSnapshot = resolvedClient;
+        const previousBlockedServiceIds = [...(servicesState.list?.ids || [])];
+        const clientSnapshot = resolvedClient();
 
         await performWithUndo({
             perform: () =>
-                resolvedClient
+                resolvedClient()
                     ? updateResolvedClient((client) => {
                           const effectiveBlockedServices = getEffectiveBlockedServices(
                               client,
-                              services.list,
+                              servicesState.list,
                           );
-
-                          if (!effectiveBlockedServices) {
-                              return null;
-                          }
-
+                          if (!effectiveBlockedServices) return null;
                           return {
                               ...client,
                               ...effectiveBlockedServices,
                               use_global_blocked_services: false,
                               blocked_services: effectiveBlockedServices.blocked_services.filter(
-                                  (id) => id !== matchedService.id,
+                                  (id: string) => id !== matchedService.id,
                               ),
                           };
                       })
-                    : dispatch(
-                          updateBlockedServices({
-                              ...services.list,
-                              ids: (services.list.ids || []).filter(
-                                  (id: string) => id !== matchedService.id,
-                              ),
-                          }),
-                      ),
+                    : updateBlockedServices({
+                          ...servicesState.list,
+                          ids: (servicesState.list?.ids || []).filter(
+                              (id: string) => id !== matchedService.id,
+                          ),
+                      }),
             message: intl.getMessage('user_rules_service_allowed', { value: matchedService.name }),
             undo: () =>
                 clientSnapshot
-                    ? dispatch(
-                          updateClient(
-                              {
-                                  ...clientSnapshot,
-                                  blocked_services: [...previousBlockedServiceIds],
-                              },
-                              clientSnapshot.name,
-                              { showToast: false, toggleModal: false },
-                          ),
-                      )
-                    : dispatch(
-                          updateBlockedServices({
-                              ...services.list,
-                              ids: previousBlockedServiceIds,
-                          }),
-                      ),
+                    ? updateClient(clientSnapshot.name, {
+                          ...clientSnapshot,
+                          blocked_services: [...previousBlockedServiceIds],
+                      })
+                    : updateBlockedServices({
+                          ...servicesState.list,
+                          ids: previousBlockedServiceIds,
+                      }),
             refresh: async () => {
-                await dispatch(getBlockedServices());
-                await dispatch(getClients());
+                await getBlockedServices();
+                await getClients();
             },
         });
     };
 
     const handleRewriteUpdate = async (update: RewriteEntry) => {
-        if (!currentRewrite.domain) {
+        const rewrite = untrack(() => currentRewrite());
+        if (!rewrite.domain) {
             return false;
         }
 
         return runWithClosedResult(async () => {
-            const ok = await dispatch(
-                updateRewrite(
-                    { target: currentRewrite, update },
-                    { showToast: false, closeModal: false },
-                ),
+            const ok = await updateRewrite(
+                { target: untrack(() => currentRewrite()), update },
+                { showToast: false, closeModal: false },
             );
 
             if (!ok) {
                 return false;
             }
 
-            dispatch(addSuccessToast(intl.getMessage('settings_notify_changes_saved')));
+            addSuccessToast(intl.getMessage('settings_notify_changes_saved'));
             await recheckCurrentTarget();
 
             return true;
@@ -494,29 +421,25 @@ export const useUserRulesActions = ({
     };
 
     const handleRewriteDelete = async (rewrite?: RewriteEntry) => {
-        const targetRewrite = rewrite || currentRewrite;
+        const targetRewrite = rewrite || currentRewrite();
 
         if (!targetRewrite.domain) {
             return false;
         }
 
         return performWithUndo({
-            perform: () =>
-                dispatch(deleteRewrite(targetRewrite, { showToast: false })) as Promise<boolean>,
+            perform: () => deleteRewrite(targetRewrite) as Promise<boolean>,
             message: intl.getMessage('user_rules_dns_rewrite_removed'),
             undo: async () => {
-                await dispatch(
-                    addRewrite({
-                        domain: targetRewrite.domain,
-                        answer: targetRewrite.answer,
-                        enabled: targetRewrite.enabled,
-                    }),
-                );
-
+                await addRewrite({
+                    domain: targetRewrite.domain,
+                    answer: targetRewrite.answer,
+                    enabled: targetRewrite.enabled,
+                });
                 return true;
             },
             refresh: async () => {
-                await dispatch(getRewritesList());
+                await getRewritesList();
             },
         });
     };
@@ -526,43 +449,37 @@ export const useUserRulesActions = ({
     };
 
     const openEditRewriteModal = () => {
-        if (!matchedRewrite) {
-            return;
-        }
-
-        setCurrentRewrite(matchedRewrite);
-        dispatch(openModal(MODAL_TYPE.EDIT_REWRITE));
+        const matched = matchedRewrite();
+        if (!matched) return;
+        setCurrentRewrite(matched);
+        openModal(MODAL_TYPE.EDIT_REWRITE);
     };
 
     const openDeleteRewriteModal = () => {
-        if (!matchedRewrite) {
-            return;
-        }
-
-        handleRewriteDelete(matchedRewrite);
+        const matched = matchedRewrite();
+        if (!matched) return;
+        handleRewriteDelete(matched);
     };
 
     const handleRemoveRewriteRule = async () => {
-        const primaryRule = getPrimaryRule(checkResult);
+        const result = params.checkResult();
+        const primaryRule = getPrimaryRule(result);
 
-        if (!primaryRule?.text) {
-            return;
-        }
+        if (!primaryRule?.text) return;
 
         const ruleToRemove = primaryRule.text;
-        const originalRules = userRules || '';
+        const originalRules = filteringState.userRules || '';
 
         await performWithUndo({
             perform: () => {
-                const currentRules = splitByNewLine(userRules || '');
+                const currentRules = splitByNewLine(filteringState.userRules || '');
                 const updatedRules = currentRules.filter((rule: string) => rule !== ruleToRemove);
-
-                return dispatch(setRules(`${updatedRules.join('\n')}\n`)) as Promise<boolean>;
+                return setRules(`${updatedRules.join('\n')}\n`);
             },
             message: intl.getMessage('user_rules_rule_removed'),
-            undo: () => dispatch(setRules(originalRules)) as Promise<boolean>,
+            undo: () => setRules(originalRules),
             refresh: async () => {
-                await dispatch(getFilteringStatus());
+                await getFilteringStatus();
             },
         });
     };

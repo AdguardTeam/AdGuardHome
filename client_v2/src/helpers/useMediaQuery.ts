@@ -1,19 +1,19 @@
-import { useState, useEffect } from 'react';
+import { createSignal, onMount, onCleanup } from 'solid-js';
 
 const MOBILE_BREAKPOINT = 768;
 
-export const useMediaQuery = (query: string): boolean => {
-    const [matches, setMatches] = useState(() => window.matchMedia(query).matches);
+export const useMediaQuery = (query: string): (() => boolean) => {
+    const [matches, setMatches] = createSignal(window.matchMedia(query).matches);
 
-    useEffect(() => {
+    onMount(() => {
         const mediaQuery = window.matchMedia(query);
         const handler = (event: MediaQueryListEvent) => setMatches(event.matches);
 
         mediaQuery.addEventListener('change', handler);
         setMatches(mediaQuery.matches);
 
-        return () => mediaQuery.removeEventListener('change', handler);
-    }, [query]);
+        onCleanup(() => mediaQuery.removeEventListener('change', handler));
+    });
 
     return matches;
 };

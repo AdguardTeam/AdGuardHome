@@ -1,28 +1,28 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { createSignal, createMemo, onMount, Show, For } from 'solid-js';
+import { getAllTimezones, type Timezone } from 'countries-and-timezones';
 import cn from 'clsx';
-import { getAllTimezones, Timezone } from 'countries-and-timezones';
 import intl from 'panel/common/intl';
 import { Breadcrumbs } from 'panel/common/ui/Breadcrumbs';
 import { ConfirmDialog } from 'panel/common/ui/ConfirmDialog';
+import { PageLoader } from 'panel/common/ui/Loader';
 import { Select } from 'panel/common/controls/Select';
-import { RootState } from 'panel/initialState';
-import { updateClientFormField } from 'panel/actions/clientForm';
-import { getBlockedServices, updateBlockedServices } from 'panel/actions/services';
+import { updateClientFormField, clientFormState } from 'panel/stores/clientForm';
+import { getBlockedServices, updateBlockedServices, servicesState } from 'panel/stores/services';
 import theme from 'panel/lib/theme';
 
 import { RoutePath } from 'panel/components/Routes/Paths';
 import { buildClientBreadcrumbs } from 'panel/helpers/buildClientBreadcrumbs';
 import { ScheduleRow } from './ScheduleRow';
 import { ScheduleModal } from './ScheduleModal';
-import { DayKey, DAYS_OF_WEEK, ScheduleData, ScheduleDayData, getLocalTimezone } from './helpers';
+import { type DayKey, DAYS_OF_WEEK, type ScheduleData, type ScheduleDayData } from './helpers';
 import { getDayName } from './getDayName';
 import s from './InactivitySchedule.module.pcss';
 
 const timezones = getAllTimezones();
 
 const TIMEZONE_OPTIONS = [
-    { label: `Local (${getLocalTimezone()})`, value: 'Local' },
+    { label: 'Local', value: 'Local' },
+    { label: 'UTC (GMT+00:00)', value: 'UTC' },
     ...Object.entries(timezones).map(([tz, data]: [string, Timezone]) => ({
         label: `${tz} (GMT${data.utcOffsetStr})`,
         value: tz,
@@ -33,49 +33,52 @@ type Props = {
     clientScope?: boolean;
 };
 
-export const InactivitySchedule = ({ clientScope }: Props) => {
-    const dispatch = useDispatch();
-    const services = useSelector((state: RootState) => state.services);
-    const clientForm = useSelector((state: RootState) => state.clientForm);
-    const { list, processing } = services;
+export const InactivitySchedule = (props: Props) => {
+    const [modalVisible, setModalVisible] = createSignal(false);
+    const [editDay, setEditDay] = createSignal<DayKey | undefined>();
+    const [deleteDay, setDeleteDay] = createSignal<DayKey | null>(null);
 
-    const [modalVisible, setModalVisible] = useState(false);
-    const [editDay, setEditDay] = useState<DayKey | undefined>();
-    const [deleteDay, setDeleteDay] = useState<DayKey | null>(null);
-
-    useEffect(() => {
-        if (!clientScope && !list?.ids) {
-            dispatch(getBlockedServices());
+    onMount(() => {
+        if (!props.clientScope && !servicesState.list?.ids) {
+            getBlockedServices();
         }
-    }, [dispatch, clientScope, list]);
+    });
 
-    const schedule: ScheduleData | undefined = clientScope
-        ? (clientForm.blocked_services_schedule as unknown as ScheduleData)
-        : list?.schedule;
-    const currentTimezone = schedule?.time_zone || getLocalTimezone();
+    const schedule = createMemo<ScheduleData | undefined>(() => {
+        return props.clientScope
+            ? (clientFormState.blocked_services_schedule as unknown as ScheduleData)
+            : servicesState.list?.schedule;
+    });
 
-    const timezoneValue = useMemo(() => {
+    const currentTimezone = () => schedule()?.time_zone;
+
+    const timezoneValue = createMemo(() => {
+        const tz = currentTimezone();
+        if (!tz) return undefined;
         return (
-            TIMEZONE_OPTIONS.find((opt) => opt.value === currentTimezone) || {
-                label: currentTimezone,
-                value: currentTimezone,
+            TIMEZONE_OPTIONS.find((opt) => opt.value === tz) || {
+                label: tz,
+                value: tz,
             }
         );
-    }, [currentTimezone]);
+    });
+
+    const isLoading = createMemo(() => {
+        if (props.clientScope) return false;
+        return servicesState.processing && !servicesState.list?.ids;
+    });
 
     const handleTimezoneChange = (option: { value: string }) => {
         if (!option) {
             return;
         }
-        const newSchedule = clientScope
-            ? { ...clientForm.blocked_services_schedule, time_zone: option.value }
-            : { ...schedule, time_zone: option.value };
-        if (clientScope) {
-            dispatch(
-                updateClientFormField({ field: 'blocked_services_schedule', value: newSchedule }),
-            );
+        const newSchedule = props.clientScope
+            ? { ...(clientFormState.blocked_services_schedule as any), time_zone: option.value }
+            : { ...schedule(), time_zone: option.value };
+        if (props.clientScope) {
+            updateClientFormField('blocked_services_schedule', newSchedule, true);
         } else {
-            dispatch(updateBlockedServices({ ids: list?.ids || [], schedule: newSchedule }));
+            updateBlockedServices({ ids: servicesState.list?.ids || [], schedule: newSchedule });
         }
     };
 
@@ -94,39 +97,36 @@ export const InactivitySchedule = ({ clientScope }: Props) => {
     };
 
     const confirmDelete = () => {
-        if (!deleteDay) {
+        const dayToDelete = deleteDay();
+        if (!dayToDelete) {
             return;
         }
-        const newSchedule: Record<string, unknown> = { time_zone: currentTimezone };
+        const newSchedule: Record<string, unknown> = { time_zone: currentTimezone() };
         DAYS_OF_WEEK.forEach((d) => {
-            if (d !== deleteDay && schedule?.[d]) {
-                newSchedule[d] = schedule[d];
+            if (d !== dayToDelete && schedule()?.[d]) {
+                newSchedule[d] = schedule()![d];
             }
         });
-        if (clientScope) {
-            dispatch(
-                updateClientFormField({ field: 'blocked_services_schedule', value: newSchedule }),
-            );
+        if (props.clientScope) {
+            updateClientFormField('blocked_services_schedule', newSchedule, true);
         } else {
-            dispatch(updateBlockedServices({ ids: list?.ids || [], schedule: newSchedule }));
+            updateBlockedServices({ ids: servicesState.list?.ids || [], schedule: newSchedule });
         }
         setDeleteDay(null);
     };
 
     const handleModalSave = (day: DayKey, start: number, end: number) => {
-        const newSchedule: Record<string, unknown> = { time_zone: currentTimezone };
+        const newSchedule: Record<string, unknown> = { time_zone: currentTimezone() };
         DAYS_OF_WEEK.forEach((d) => {
-            if (schedule?.[d]) {
-                newSchedule[d] = schedule[d];
+            if (schedule()?.[d]) {
+                newSchedule[d] = schedule()![d];
             }
         });
         newSchedule[day] = { start, end };
-        if (clientScope) {
-            dispatch(
-                updateClientFormField({ field: 'blocked_services_schedule', value: newSchedule }),
-            );
+        if (props.clientScope) {
+            updateClientFormField('blocked_services_schedule', newSchedule, true);
         } else {
-            dispatch(updateBlockedServices({ ids: list?.ids || [], schedule: newSchedule }));
+            updateBlockedServices({ ids: servicesState.list?.ids || [], schedule: newSchedule });
         }
         setModalVisible(false);
         setEditDay(undefined);
@@ -137,75 +137,175 @@ export const InactivitySchedule = ({ clientScope }: Props) => {
         setEditDay(undefined);
     };
 
-    const parentLinks = clientScope
-        ? buildClientBreadcrumbs(clientForm, [
-              clientForm.mode === 'edit'
-                  ? {
-                        path: RoutePath.ClientsEditBlockedServices,
-                        title: intl.getMessage('blocked_services'),
-                        props: { clientName: encodeURIComponent(clientForm.originalName) },
-                    }
-                  : {
-                        path: RoutePath.ClientsBlockedServices,
-                        title: intl.getMessage('blocked_services'),
-                    },
-          ])
-        : [
-              {
-                  path: RoutePath.BlockedServices,
-                  title: intl.getMessage('blocked_services'),
-              },
-          ];
+    const parentLinks = () =>
+        props.clientScope
+            ? buildClientBreadcrumbs(clientFormState, [
+                  clientFormState.mode === 'edit'
+                      ? {
+                            path: RoutePath.ClientsEditBlockedServices,
+                            title: intl.getMessage('blocked_services'),
+                            props: { clientName: encodeURIComponent(clientFormState.originalName) },
+                        }
+                      : {
+                            path: RoutePath.ClientsBlockedServices,
+                            title: intl.getMessage('blocked_services'),
+                        },
+              ])
+            : [
+                  {
+                      path: RoutePath.BlockedServices,
+                      title: intl.getMessage('blocked_services'),
+                  },
+              ];
 
-    const scheduleContent = (
-        <>
-            <div className={cn(s.timezoneWrapper, clientScope && s.timezoneWrapperClientScope)}>
-                <div className={s.timezoneLabel}>
-                    {intl.getMessage('inactivity_schedule_timezone')}
-                </div>
+    return (
+        <Show
+            when={props.clientScope}
+            fallback={
+                <Show
+                    when={!isLoading()}
+                    fallback={
+                        <div class={cn(theme.layout.container, s.container)}>
+                            <PageLoader />
+                        </div>
+                    }
+                >
+                    <div class={cn(theme.layout.container, s.container)}>
+                        <div class={cn(theme.layout.containerIn, theme.layout.containerIn_one_col)}>
+                            <div class={s.breadcrumbs} data-testid="inactivity-schedule-breadcrumbs">
+                                <Breadcrumbs
+                                    parentLinks={parentLinks()}
+                                    currentTitle={intl.getMessage('inactivity_schedule')}
+                                />
+                            </div>
+
+                            <h1
+                                class={cn(
+                                    theme.layout.title,
+                                    theme.title.h4,
+                                    theme.title.h3_tablet,
+                                    s.title,
+                                )}
+                                data-testid="inactivity-schedule-title"
+                            >
+                                {intl.getMessage('inactivity_schedule')}
+                            </h1>
+
+                            <div
+                                class={cn(
+                                    s.timezoneWrapper,
+                                    props.clientScope && s.timezoneWrapperClientScope,
+                                )}
+                                data-testid="inactivity-schedule-timezone"
+                            >
+                                <div class={s.timezoneLabel}>
+                                    {intl.getMessage('inactivity_schedule_timezone')}
+                                </div>
+                                <Select
+                                    options={TIMEZONE_OPTIONS}
+                                    value={timezoneValue()}
+                                    onChange={handleTimezoneChange}
+                                    size="responsive"
+                                    height="big"
+                                    isSearchable
+                                />
+                            </div>
+
+                            <div class={s.scheduleList} data-testid="inactivity-schedule-list">
+                                <For each={DAYS_OF_WEEK}>
+                                    {(day) => (
+                                        <ScheduleRow
+                                            day={day}
+                                            data={schedule()?.[day] as ScheduleDayData | undefined}
+                                            onEdit={handleEdit}
+                                            onDelete={handleDelete}
+                                            onAdd={handleAdd}
+                                        />
+                                    )}
+                                </For>
+                            </div>
+
+                            <Show when={modalVisible()}>
+                                <ScheduleModal
+                                    visible={modalVisible()}
+                                    currentDay={editDay()}
+                                    currentData={
+                                        editDay()
+                                            ? (schedule()?.[editDay()!] as
+                                                  | ScheduleDayData
+                                                  | undefined)
+                                            : undefined
+                                    }
+                                    onClose={handleModalClose}
+                                    onSave={handleModalSave}
+                                />
+                            </Show>
+
+                            <Show when={deleteDay()}>
+                                <ConfirmDialog
+                                    title={intl.getMessage('inactivity_schedule_delete')}
+                                    text={intl.getMessage('inactivity_schedule_delete_desc', {
+                                        value: getDayName(deleteDay()!),
+                                    })}
+                                    buttonText={intl.getMessage('delete_btn')}
+                                    cancelText={intl.getMessage('cancel_btn')}
+                                    onConfirm={confirmDelete}
+                                    onClose={() => setDeleteDay(null)}
+                                    buttonVariant="danger"
+                                />
+                            </Show>
+                        </div>
+                    </div>
+                </Show>
+            }
+        >
+            {/* clientScope - render inline */}
+            <div class={cn(s.timezoneWrapper, s.timezoneWrapperClientScope)} data-testid="inactivity-schedule-timezone">
+                <div class={s.timezoneLabel}>{intl.getMessage('inactivity_schedule_timezone')}</div>
                 <Select
                     options={TIMEZONE_OPTIONS}
-                    value={timezoneValue}
+                    value={timezoneValue()}
                     onChange={handleTimezoneChange}
                     size="responsive"
                     height="big"
-                    isDisabled={processing}
+                    isDisabled={clientFormState.processingSave}
                     isSearchable
                 />
             </div>
 
-            <div className={s.scheduleList}>
-                {DAYS_OF_WEEK.map((day) => (
-                    <ScheduleRow
-                        key={day}
-                        day={day}
-                        data={schedule?.[day] as ScheduleDayData | undefined}
-                        onEdit={handleEdit}
-                        onDelete={handleDelete}
-                        onAdd={handleAdd}
-                    />
-                ))}
+            <div class={s.scheduleList} data-testid="inactivity-schedule-list">
+                <For each={DAYS_OF_WEEK}>
+                    {(day) => (
+                        <ScheduleRow
+                            day={day}
+                            data={schedule()?.[day] as ScheduleDayData | undefined}
+                            onEdit={handleEdit}
+                            onDelete={handleDelete}
+                            onAdd={handleAdd}
+                        />
+                    )}
+                </For>
             </div>
 
-            {modalVisible && (
+            <Show when={modalVisible()}>
                 <ScheduleModal
-                    visible={modalVisible}
-                    currentDay={editDay}
+                    visible={modalVisible()}
+                    currentDay={editDay()}
                     currentData={
-                        editDay
-                            ? (schedule?.[editDay] as ScheduleDayData | undefined)
+                        editDay()
+                            ? (schedule()?.[editDay()!] as ScheduleDayData | undefined)
                             : undefined
                     }
                     onClose={handleModalClose}
                     onSave={handleModalSave}
                 />
-            )}
+            </Show>
 
-            {deleteDay && (
+            <Show when={deleteDay()}>
                 <ConfirmDialog
                     title={intl.getMessage('inactivity_schedule_delete')}
                     text={intl.getMessage('inactivity_schedule_delete_desc', {
-                        value: getDayName(deleteDay),
+                        value: getDayName(deleteDay()!),
                     })}
                     buttonText={intl.getMessage('delete_btn')}
                     cancelText={intl.getMessage('cancel_btn')}
@@ -213,37 +313,7 @@ export const InactivitySchedule = ({ clientScope }: Props) => {
                     onClose={() => setDeleteDay(null)}
                     buttonVariant="danger"
                 />
-            )}
-        </>
-    );
-
-    if (clientScope) {
-        return scheduleContent;
-    }
-
-    return (
-        <div className={cn(theme.layout.container, s.container)}>
-            <div className={cn(theme.layout.containerIn, theme.layout.containerIn_one_col)}>
-                <div className={s.breadcrumbs}>
-                    <Breadcrumbs
-                        parentLinks={parentLinks}
-                        currentTitle={intl.getMessage('inactivity_schedule')}
-                    />
-                </div>
-
-                <h1
-                    className={cn(
-                        theme.layout.title,
-                        theme.title.h4,
-                        theme.title.h3_tablet,
-                        s.title,
-                    )}
-                >
-                    {intl.getMessage('inactivity_schedule')}
-                </h1>
-
-                {scheduleContent}
-            </div>
-        </div>
+            </Show>
+        </Show>
     );
 };

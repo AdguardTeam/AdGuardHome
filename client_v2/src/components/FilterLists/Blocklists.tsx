@@ -1,14 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import { createSignal, createMemo, createEffect, Show, onMount } from 'solid-js';
 import cn from 'clsx';
 
 import intl from 'panel/common/intl';
 import { MODAL_TYPE } from 'panel/helpers/constants';
-import { RootState } from 'panel/initialState';
 import theme from 'panel/lib/theme';
-import { getFilteringStatus, toggleFilterStatus, refreshFilters } from 'panel/actions/filtering';
+import {
+    getFilteringStatus,
+    toggleFilterStatus,
+    refreshFilters,
+    filteringState,
+} from 'panel/stores/filtering';
 import { Icon } from 'panel/common/ui/Icon';
-import { openModal } from 'panel/reducers/modals';
+import { openModal } from 'panel/stores/modals';
 import { DeleteBlocklistModal } from 'panel/components/FilterLists/blocks/DeleteBlocklistModal';
 import { ConfigureBlocklistModal } from 'panel/components/FilterLists/blocks/ConfigureBlocklistModal';
 import { PageLoader } from 'panel/common/ui/Loader';
@@ -19,9 +22,7 @@ import { FilterUpdateModal } from './blocks/FilterUpdateModal';
 import s from './FilterLists.module.pcss';
 
 export const Blocklists = () => {
-    const dispatch = useDispatch();
-    const { filtering } = useSelector((state: RootState) => state);
-    const [currentFilter, setCurrentFilter] = useState<{
+    const [currentFilter, setCurrentFilter] = createSignal<{
         url: string;
         name: string;
         enabled?: boolean;
@@ -30,124 +31,128 @@ export const Blocklists = () => {
         name: '',
     });
 
-    const { filters, processingRefreshFilters, processingConfigFilter, processingFilters } =
-        filtering;
+    const [isInitialLoad, setIsInitialLoad] = createSignal(true);
 
-    const [isInitialLoad, setIsInitialLoad] = useState(true);
+    onMount(() => {
+        getFilteringStatus();
+    });
 
-    useEffect(() => {
-        dispatch(getFilteringStatus());
-    }, [dispatch]);
-
-    useEffect(() => {
-        if (!processingFilters && isInitialLoad) {
+    createEffect(() => {
+        if (!filteringState.processingFilters && isInitialLoad()) {
             setIsInitialLoad(false);
         }
-    }, [processingFilters, isInitialLoad]);
+    });
+
+    const isDataReady = createMemo(() => filteringState.processingFilters && isInitialLoad());
 
     const toggleFilter = (url: string, data: { name: string; url: string; enabled: boolean }) => {
-        dispatch(toggleFilterStatus(url, data));
+        toggleFilterStatus(url, data, false);
     };
 
     const handleRefresh = () => {
-        dispatch(refreshFilters({ whitelist: false }));
+        refreshFilters({ whitelist: false });
     };
 
     const openFilterUpdateModal = () => {
-        dispatch(openModal(MODAL_TYPE.FILTER_UPDATE));
+        openModal(MODAL_TYPE.FILTER_UPDATE);
     };
 
     const openAddBlocklistModal = () => {
-        dispatch(openModal(MODAL_TYPE.ADD_BLOCKLIST));
+        openModal(MODAL_TYPE.ADD_BLOCKLIST);
     };
 
     const openEditBlocklistModal = (url: string, name: string, enabled: boolean) => {
         setCurrentFilter({ url, name, enabled });
-        dispatch(openModal(MODAL_TYPE.EDIT_BLOCKLIST));
+        openModal(MODAL_TYPE.EDIT_BLOCKLIST);
     };
 
     const openDeleteBlocklistModal = (url: string, name: string) => {
         setCurrentFilter({ url, name });
-        dispatch(openModal(MODAL_TYPE.DELETE_BLOCKLIST));
+        openModal(MODAL_TYPE.DELETE_BLOCKLIST);
     };
 
     return (
-        <div className={theme.layout.container}>
-            <div className={theme.layout.containerIn}>
-                {processingFilters && isInitialLoad ? (
-                    <PageLoader />
-                ) : (
-                    <>
-                        <div className={s.header}>
-                            <h1
-                                className={cn(
-                                    theme.layout.title,
-                                    theme.title.h4,
-                                    theme.title.h3_tablet,
-                                )}
-                            >
-                                {intl.getMessage('blocklists_title')}
-                            </h1>
+        <div class={theme.layout.container}>
+            <div class={theme.layout.containerIn}>
+                <Show
+                    when={isDataReady()}
+                    fallback={
+                        <>
+                            <div class={s.header}>
+                                <h1
+                                    class={cn(
+                                        theme.layout.title,
+                                        theme.title.h4,
+                                        theme.title.h3_tablet,
+                                    )}
+                                >
+                                    {intl.getMessage('blocklists_title')}
+                                </h1>
 
-                            <button
-                                type="button"
-                                onClick={handleRefresh}
-                                disabled={processingRefreshFilters}
-                                className={cn(s.button, s.button_checkUpdates)}
-                            >
-                                <Icon icon="refresh" color="green" />
-                                <span className={s.labelDesktop}>
-                                    {intl.getMessage('check_updates_btn')}
-                                </span>
-                            </button>
+                                <button
+                                    type="button"
+                                    onClick={handleRefresh}
+                                    disabled={filteringState.processingRefreshFilters}
+                                    class={cn(s.button, s.button_checkUpdates)}
+                                >
+                                    <Icon icon="refresh" color="green" />
+                                    <span class={s.labelDesktop}>
+                                        {intl.getMessage('check_updates_btn')}
+                                    </span>
+                                </button>
 
-                            <button
-                                type="button"
-                                onClick={openFilterUpdateModal}
-                                disabled={processingRefreshFilters}
-                                className={cn(s.button, s.button_settings)}
-                            >
-                                <Icon icon="settings" color="green" />
-                            </button>
-                        </div>
-
-                        <div className={s.desc}>{intl.getMessage('blocklists_desc')}</div>
-
-                        <div className={s.group}>
-                            <PlusButton onClick={openAddBlocklistModal}>
-                                {intl.getMessage('add_blocklist')}
-                            </PlusButton>
-                        </div>
-
-                        {filters.length > 0 && (
-                            <div className={cn(s.group, s.tableGroup)}>
-                                <ListsTable
-                                    tableId={TABLE_IDS.BLOCKLISTS_TABLE}
-                                    filters={filters}
-                                    processingConfigFilter={processingConfigFilter}
-                                    toggleFilterList={toggleFilter}
-                                    addFilterList={openAddBlocklistModal}
-                                    editFilterList={openEditBlocklistModal}
-                                    deleteFilterList={openDeleteBlocklistModal}
-                                />
+                                <button
+                                    type="button"
+                                    onClick={openFilterUpdateModal}
+                                    disabled={filteringState.processingRefreshFilters}
+                                    class={cn(s.button, s.button_settings)}
+                                >
+                                    <Icon icon="settings" color="green" />
+                                </button>
                             </div>
-                        )}
 
-                        <ConfigureBlocklistModal modalId={MODAL_TYPE.ADD_BLOCKLIST} />
+                            <div class={s.desc}>{intl.getMessage('blocklists_desc')}</div>
 
-                        <ConfigureBlocklistModal
-                            modalId={MODAL_TYPE.EDIT_BLOCKLIST}
-                            filterToEdit={currentFilter}
-                        />
+                            <div class={cn(s.group, s.buttonGroup)}>
+                                <PlusButton onClick={openAddBlocklistModal}>
+                                    {intl.getMessage('add_blocklist')}
+                                </PlusButton>
+                            </div>
 
-                        <DeleteBlocklistModal
-                            filterToDelete={currentFilter}
-                            setFilterToDelete={setCurrentFilter}
-                        />
+                            <Show when={filteringState.filters.length > 0}>
+                                <div class={cn(s.group, s.tableGroup)}>
+                                    <ListsTable
+                                        tableId={TABLE_IDS.BLOCKLISTS_TABLE}
+                                        filters={filteringState.filters}
+                                        processingConfigFilter={
+                                            filteringState.processingConfigFilter
+                                        }
+                                        toggleFilterList={toggleFilter}
+                                        addFilterList={openAddBlocklistModal}
+                                        editFilterList={openEditBlocklistModal}
+                                        deleteFilterList={openDeleteBlocklistModal}
+                                    />
+                                </div>
+                            </Show>
 
-                        <FilterUpdateModal />
-                    </>
-                )}
+                            <ConfigureBlocklistModal modalId={MODAL_TYPE.ADD_BLOCKLIST} />
+
+                            <ConfigureBlocklistModal
+                                modalId={MODAL_TYPE.EDIT_BLOCKLIST}
+                                filterToEdit={currentFilter()}
+                            />
+
+                            <DeleteBlocklistModal
+                                filterToDelete={currentFilter()}
+                                setFilterToDelete={setCurrentFilter}
+                            />
+
+                            <FilterUpdateModal />
+                        </>
+                    }
+                >
+                    <PageLoader />
+                </Show>
             </div>
         </div>
     );

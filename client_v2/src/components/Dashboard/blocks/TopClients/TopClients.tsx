@@ -1,6 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from 'panel/initialState';
+import { Show, For, createSignal, createMemo, onCleanup } from 'solid-js';
 import { useIsDesktop } from 'panel/helpers/useMediaQuery';
 import { MOBILE_TABLE_MAX_ROWS } from 'panel/helpers/constants';
 
@@ -9,9 +7,8 @@ import { Icon } from 'panel/common/ui/Icon';
 import { Dropdown } from 'panel/common/ui/Dropdown';
 import { ConfirmDialog } from 'panel/common/ui/ConfirmDialog';
 import { formatNumber, formatCompactNumber } from 'panel/helpers/helpers';
-import { addErrorToast, addSuccessToast } from 'panel/actions/toasts';
-import { apiClient } from 'panel/api/Api';
-import { getAccessList } from 'panel/actions/access';
+import { addErrorToast } from 'panel/stores/toasts';
+import { accessState, toggleClientBlock } from 'panel/stores/access';
 import theme from 'panel/lib/theme';
 import cn from 'clsx';
 import { useSortedData } from '../../hooks/useSortedData';
@@ -38,22 +35,23 @@ type Props = {
     numDnsQueries: number;
 };
 
-export const TopClients = ({ topClients, numDnsQueries }: Props) => {
-    const dispatch = useDispatch();
-    const isMountedRef = useRef(true);
-    const disallowedClientsStr = useSelector(
-        (state: RootState) => state.access?.disallowed_clients || '',
-    );
-    const disallowedClientsList = disallowedClientsStr
-        ? disallowedClientsStr.split('\n').filter(Boolean)
-        : [];
+export const TopClients = (props: Props) => {
+    let isMounted = true;
+    onCleanup(() => {
+        isMounted = false;
+    });
 
-    const [confirmDialog, setConfirmDialog] = useState<{
+    const disallowedClientsList = createMemo(() => {
+        const str = accessState.disallowed_clients || '';
+        return str ? str.split('\n').filter(Boolean) : [];
+    });
+
+    const [confirmDialog, setConfirmDialog] = createSignal<{
         open: boolean;
         client: string;
         action: 'block' | 'unblock';
     }>({ open: false, client: '', action: 'block' });
-    const [openMenuClient, setOpenMenuClient] = useState<string | null>(null);
+    const [openMenuClient, setOpenMenuClient] = createSignal<string | null>(null);
 
     const isDesktop = useIsDesktop();
     const {
@@ -61,71 +59,40 @@ export const TopClients = ({ topClients, numDnsQueries }: Props) => {
         sortField,
         sortDirection,
         handleSort,
-    } = useSortedData(topClients);
-    const visibleClients = isDesktop
-        ? sortedClients
-        : sortedClients.slice(0, MOBILE_TABLE_MAX_ROWS);
+    } = useSortedData(() => props.topClients);
+    const visibleClients = createMemo(() =>
+        isDesktop() ? sortedClients() : sortedClients().slice(0, MOBILE_TABLE_MAX_ROWS),
+    );
 
-    const isClientBlocked = (clientName: string) => disallowedClientsList.includes(clientName);
-
-    useEffect(() => {
-        return () => {
-            isMountedRef.current = false;
-        };
-    }, []);
+    const isClientBlocked = (clientName: string) => disallowedClientsList().includes(clientName);
 
     const handleBlockClient = async (clientIp: string) => {
-        try {
-            const accessList = await apiClient.getAccessList();
-            const disallowedClients = accessList.disallowed_clients || [];
-
-            if (disallowedClients.includes(clientIp)) {
-                dispatch(
-                    addErrorToast({
-                        error: new Error(
-                            intl.getMessage('client_already_blocked', { ip: clientIp }),
-                        ),
-                    }),
-                );
-                if (isMountedRef.current) {
-                    setConfirmDialog({ open: false, client: '', action: 'block' });
-                }
-                return;
-            }
-
-            await apiClient.setAccessList({
-                ...accessList,
-                disallowed_clients: [...disallowedClients, clientIp],
+        const disallowedList = accessState.disallowed_clients
+            ? accessState.disallowed_clients.split('\n').filter(Boolean)
+            : [];
+        const isDisallowed = disallowedList.includes(clientIp);
+        if (isDisallowed) {
+            addErrorToast({
+                error: new Error(intl.getMessage('client_already_blocked', { ip: clientIp })),
             });
-
-            dispatch(addSuccessToast(intl.getMessage('client_blocked_flash')));
-            dispatch(getAccessList());
-        } catch (error) {
-            dispatch(addErrorToast({ error }));
+            if (isMounted) {
+                setConfirmDialog({ open: false, client: '', action: 'block' });
+            }
+            return;
         }
-        if (isMountedRef.current) {
+        await toggleClientBlock(clientIp, false, '');
+        if (isMounted) {
             setConfirmDialog({ open: false, client: '', action: 'block' });
         }
     };
 
     const handleUnblockClient = async (clientIp: string) => {
-        try {
-            const accessList = await apiClient.getAccessList();
-            const disallowedClients = (accessList.disallowed_clients || []).filter(
-                (c: string) => c !== clientIp,
-            );
-
-            await apiClient.setAccessList({
-                ...accessList,
-                disallowed_clients: disallowedClients,
-            });
-
-            dispatch(addSuccessToast(intl.getMessage('client_unblocked_flash')));
-            dispatch(getAccessList());
-        } catch (error) {
-            dispatch(addErrorToast({ error }));
-        }
-        if (isMountedRef.current) {
+        const disallowedList = accessState.disallowed_clients
+            ? accessState.disallowed_clients.split('\n').filter(Boolean)
+            : [];
+        const isDisallowed = disallowedList.includes(clientIp);
+        await toggleClientBlock(clientIp, isDisallowed, isDisallowed ? clientIp : '');
+        if (isMounted) {
             setConfirmDialog({ open: false, client: '', action: 'unblock' });
         }
     };
@@ -139,215 +106,223 @@ export const TopClients = ({ topClients, numDnsQueries }: Props) => {
         const isBlocked = isClientBlocked(client.name);
 
         return (
-            <div className={s.protectionMenu}>
-                {isBlocked ? (
+            <div class={s.protectionMenu}>
+                <Show
+                    when={isBlocked}
+                    fallback={
+                        <div
+                            class={cn(
+                                theme.text.t2,
+                                theme.text.condenced,
+                                s.protectionMenuItem,
+                                s.protectionMenuItemRed,
+                            )}
+                            onClick={() => openConfirmDialog(client.name, 'block')}
+                        >
+                            {intl.getMessage('block_client')}
+                        </div>
+                    }
+                >
                     <div
-                        className={cn(theme.text.t2, theme.text.condenced, s.protectionMenuItem)}
+                        class={cn(theme.text.t2, theme.text.condenced, s.protectionMenuItem)}
                         onClick={() => openConfirmDialog(client.name, 'unblock')}
                     >
                         {intl.getMessage('unblock_client')}
                     </div>
-                ) : (
-                    <div
-                        className={cn(
-                            theme.text.t2,
-                            theme.text.condenced,
-                            s.protectionMenuItem,
-                            s.protectionMenuItemRed,
-                        )}
-                        onClick={() => openConfirmDialog(client.name, 'block')}
-                    >
-                        {intl.getMessage('block_client')}
-                    </div>
-                )}
+                </Show>
             </div>
         );
     };
 
-    const hasStats = topClients.length > 0;
+    const hasStats = createMemo(() => props.topClients.length > 0);
 
     return (
-        <div className={s.card}>
-            <div className={s.cardHeader}>
-                <div className={cn(theme.title.h5, s.cardTitle)}>
-                    {intl.getMessage('top_clients')}
-                </div>
+        <div class={s.card}>
+            <div class={s.cardHeader}>
+                <div class={cn(theme.title.h5, s.cardTitle)}>{intl.getMessage('top_clients')}</div>
             </div>
 
-            {hasStats && (
+            <Show when={hasStats()}>
                 <SortableTableHeader
                     nameLabel={intl.getMessage('table_client')}
                     countLabel={intl.getMessage('queries')}
-                    sortField={sortField}
-                    sortDirection={sortDirection}
+                    sortField={sortField()}
+                    sortDirection={sortDirection()}
                     onSort={handleSort}
                 />
-            )}
+            </Show>
 
-            <div className={s.tableRows}>
-                {hasStats ? (
-                    visibleClients.map((client) => {
-                        const percent =
-                            numDnsQueries > 0 ? (client.count / numDnsQueries) * 100 : 0;
-                        const isBlocked = isClientBlocked(client.name);
+            <div class={s.tableRows}>
+                <Show when={hasStats()} fallback={<EmptyState />}>
+                    <For each={visibleClients()}>
+                        {(client) => {
+                            const percent = createMemo(() =>
+                                props.numDnsQueries > 0
+                                    ? (client.count / props.numDnsQueries) * 100
+                                    : 0,
+                            );
+                            const isBlocked = isClientBlocked(client.name);
 
-                        return (
-                            <div key={client.name} className={s.clientRow}>
-                                <div className={s.clientInfo}>
-                                    <div
-                                        className={cn(
-                                            theme.text.t3,
-                                            theme.text.condenced,
-                                            s.clientIp,
-                                        )}
-                                    >
-                                        {client.info ? (
-                                            <Icon icon="location" className={s.tableRowIcon} />
-                                        ) : (
-                                            <div className={s.tableRowDot}></div>
-                                        )}
-
-                                        {client.name}
-                                    </div>
-                                </div>
-
-                                <div className={s.tableRowRight}>
-                                    <Dropdown
-                                        trigger="hover"
-                                        position="top"
-                                        noIcon
-                                        disableAnimation
-                                        overlayClassName={s.queryTooltipOverlay}
-                                        wrapClassName={s.queryTooltipWrap}
-                                        menu={
-                                            <div className={s.queryTooltip}>
-                                                {formatNumber(client.count)}{' '}
-                                                {intl.getMessage('queries').toLowerCase()}
-                                            </div>
-                                        }
-                                    >
+                            return (
+                                <div class={s.clientRow}>
+                                    <div class={s.clientInfo}>
                                         <div
-                                            className={cn(
+                                            class={cn(
                                                 theme.text.t3,
                                                 theme.text.condenced,
-                                                s.queryCount,
-                                                s.queryCountHover,
+                                                s.clientIp,
                                             )}
                                         >
-                                            {formatCompactNumber(client.count)}
-
-                                            <div
-                                                className={cn(
-                                                    theme.text.t3,
-                                                    theme.text.condenced,
-                                                    s.queryPercent,
-                                                )}
+                                            <Show
+                                                when={client.info}
+                                                fallback={<div class={s.tableRowDot} />}
                                             >
-                                                ({percent.toFixed(1)}%)
-                                            </div>
-                                        </div>
-                                    </Dropdown>
+                                                <Icon icon="location" class={s.tableRowIcon} />
+                                            </Show>
 
-                                    <div className={s.queryBar}>
-                                        <div
-                                            className={s.queryBarFill}
-                                            style={{ width: `${percent}%` }}
-                                        />
+                                            {client.name}
+                                        </div>
                                     </div>
-                                    <Dropdown
-                                        wrapClassName={s.clientActionsDropdown}
-                                        menu={getClientMenu(client)}
-                                        trigger="click"
-                                        position="bottomRight"
-                                        noIcon
-                                        open={openMenuClient === client.name}
-                                        onOpenChange={(isOpen) =>
-                                            setOpenMenuClient(isOpen ? client.name : null)
-                                        }
-                                    >
-                                        <button type="button" className={s.actionButton}>
-                                            <Icon icon="bullets" />
-                                        </button>
-                                    </Dropdown>
 
-                                    {isBlocked && (
-                                        <div
-                                            className={cn(
-                                                theme.text.t4,
-                                                theme.text.condenced,
-                                                s.clientBlocked,
-                                            )}
-                                        >
-                                            {intl.getMessage('blocked')}
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className={s.tableRowInfo}>
-                                    {client.info?.name && (
-                                        <div
-                                            className={cn(
-                                                theme.text.t4,
-                                                theme.text.condenced,
-                                                s.clientName,
-                                            )}
-                                        >
-                                            {client.info.name}
-                                        </div>
-                                    )}
-                                    {isBlocked && (
-                                        <div
-                                            className={cn(
-                                                theme.text.t4,
-                                                theme.text.condenced,
-                                                s.clientBlocked,
-                                            )}
-                                        >
-                                            {intl.getMessage('blocked')}
-                                        </div>
-                                    )}
-                                    <div className={s.tableRowQueriesInfo}>
-                                        <div
-                                            className={cn(
-                                                theme.text.t3,
-                                                theme.text.condenced,
-                                                s.queryCount,
-                                                s.queryCountHover,
-                                            )}
-                                        >
-                                            {formatCompactNumber(client.count)}
-
-                                            <div
-                                                className={cn(
-                                                    theme.text.t3,
-                                                    theme.text.condenced,
-                                                    s.queryPercent,
-                                                )}
+                                    <div class={s.tableRowRight}>
+                                        <div class={s.dropdowWrapper}>
+                                            <Dropdown
+                                                trigger="hover"
+                                                position="top"
+                                                noIcon
+                                                disableAnimation
+                                                overlayClass={s.queryTooltipOverlay}
+                                                wrapClass={s.queryTooltipWrap}
+                                                menu={
+                                                    <div class={s.queryTooltip}>
+                                                        {formatNumber(client.count)}{' '}
+                                                        {intl.getMessage('queries').toLowerCase()}
+                                                    </div>
+                                                }
                                             >
-                                                ({percent.toFixed(1)}%)
-                                            </div>
+                                                <div
+                                                    class={cn(
+                                                        theme.text.t3,
+                                                        theme.text.condenced,
+                                                        s.queryCount,
+                                                        s.queryCountHover,
+                                                    )}
+                                                >
+                                                    {formatCompactNumber(client.count)}
+
+                                                    <div
+                                                        class={cn(
+                                                            theme.text.t3,
+                                                            theme.text.condenced,
+                                                            s.queryPercent,
+                                                        )}
+                                                    >
+                                                        ({percent().toFixed(1)}%)
+                                                    </div>
+                                                </div>
+                                            </Dropdown>
                                         </div>
 
-                                        <div className={s.queryBar}>
+                                        <div class={s.queryBar}>
                                             <div
-                                                className={s.queryBarFill}
-                                                style={{ width: `${percent}%` }}
+                                                class={s.queryBarFill}
+                                                style={{ width: `${percent()}%` }}
                                             />
                                         </div>
+                                        <Dropdown
+                                            wrapClass={s.clientActionsDropdown}
+                                            menu={getClientMenu(client)}
+                                            trigger="click"
+                                            position="bottomRight"
+                                            noIcon
+                                            open={openMenuClient() === client.name}
+                                            onOpenChange={(isOpen: boolean) =>
+                                                setOpenMenuClient(isOpen ? client.name : null)
+                                            }
+                                        >
+                                            <button type="button" class={s.actionButton}>
+                                                <Icon icon="bullets" />
+                                            </button>
+                                        </Dropdown>
+
+                                        <Show when={isBlocked}>
+                                            <div
+                                                class={cn(
+                                                    theme.text.t4,
+                                                    theme.text.condenced,
+                                                    s.clientBlocked,
+                                                )}
+                                            >
+                                                {intl.getMessage('blocked')}
+                                            </div>
+                                        </Show>
                                     </div>
 
-                                    <div className={s.tableRowActions}>{getClientMenu(client)}</div>
-                                </div>
-                            </div>
-                        );
-                    })
-                ) : (
-                    <EmptyState />
-                )}
+                                    <div class={s.tableRowInfo}>
+                                        <Show when={client.info?.name}>
+                                            <div
+                                                class={cn(
+                                                    theme.text.t4,
+                                                    theme.text.condenced,
+                                                    s.clientName,
+                                                )}
+                                            >
+                                                {client.info!.name}
+                                            </div>
+                                        </Show>
+                                        <Show when={isBlocked}>
+                                            <div
+                                                class={cn(
+                                                    theme.text.t4,
+                                                    theme.text.condenced,
+                                                    s.clientBlocked,
+                                                )}
+                                            >
+                                                {intl.getMessage('blocked')}
+                                            </div>
+                                        </Show>
+                                        <div class={s.tableRowQueriesInfo}>
+                                            <div
+                                                class={cn(
+                                                    theme.text.t3,
+                                                    theme.text.condenced,
+                                                    s.queryCount,
+                                                    s.queryCountHover,
+                                                )}
+                                            >
+                                                {formatCompactNumber(client.count)}
 
-                {confirmDialog.open &&
-                    (() => {
-                        const isBlock = confirmDialog.action === 'block';
+                                                <div
+                                                    class={cn(
+                                                        theme.text.t3,
+                                                        theme.text.condenced,
+                                                        s.queryPercent,
+                                                    )}
+                                                >
+                                                    ({percent().toFixed(1)}%)
+                                                </div>
+                                            </div>
+
+                                            <div class={s.queryBar}>
+                                                <div
+                                                    class={s.queryBarFill}
+                                                    style={{ width: `${percent()}%` }}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div class={s.tableRowActions}>{getClientMenu(client)}</div>
+                                    </div>
+                                </div>
+                            );
+                        }}
+                    </For>
+                </Show>
+
+                <Show when={confirmDialog().open}>
+                    {(() => {
+                        const dialog = confirmDialog();
+                        const isBlock = dialog.action === 'block';
 
                         return (
                             <ConfirmDialog
@@ -357,19 +332,19 @@ export const TopClients = ({ topClients, numDnsQueries }: Props) => {
                                 title={
                                     isBlock
                                         ? intl.getMessage('confirm_client_block_title', {
-                                              ip: confirmDialog.client,
+                                              ip: dialog.client,
                                           })
                                         : intl.getMessage('confirm_client_unblock_title', {
-                                              ip: confirmDialog.client,
+                                              ip: dialog.client,
                                           })
                                 }
                                 text={
                                     isBlock
                                         ? intl.getMessage('confirm_client_block_desc', {
-                                              ip: confirmDialog.client,
+                                              ip: dialog.client,
                                           })
                                         : intl.getMessage('confirm_client_unblock_desc', {
-                                              ip: confirmDialog.client,
+                                              ip: dialog.client,
                                           })
                                 }
                                 buttonText={
@@ -379,14 +354,15 @@ export const TopClients = ({ topClients, numDnsQueries }: Props) => {
                                 buttonVariant={isBlock ? 'danger' : 'primary'}
                                 onConfirm={() => {
                                     if (isBlock) {
-                                        handleBlockClient(confirmDialog.client);
+                                        handleBlockClient(dialog.client);
                                     } else {
-                                        handleUnblockClient(confirmDialog.client);
+                                        handleUnblockClient(dialog.client);
                                     }
                                 }}
                             />
                         );
                     })()}
+                </Show>
             </div>
         </div>
     );

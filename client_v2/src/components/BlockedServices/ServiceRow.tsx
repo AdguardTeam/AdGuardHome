@@ -1,4 +1,4 @@
-import React, { ChangeEvent } from 'react';
+import { createMemo } from 'solid-js';
 import { Switch } from 'panel/common/controls/Switch';
 import { decodeSvg } from 'panel/helpers/helpers';
 
@@ -13,39 +13,46 @@ type Props = {
     onChange: (id: string, checked: boolean) => void;
 };
 
-export const ServiceRow = ({ id, name, iconSvg, checked, disabled, onChange }: Props) => {
-    const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-        onChange(id, e.target.checked);
+export const ServiceRow = (props: Props) => {
+    const handleChange = (e: Event) => {
+        const target = e.target as HTMLInputElement;
+        props.onChange(props.id, target.checked);
     };
 
     const handleRowClick = () => {
-        if (disabled) {
+        if (props.disabled) {
             return;
         }
-        onChange(id, !checked);
+        props.onChange(props.id, !props.checked);
     };
 
-    const decodedSvg = decodeSvg(iconSvg);
+    const decodedSvg = createMemo(() => decodeSvg(props.iconSvg));
 
     return (
         <div
-            className={s.serviceRow}
+            class={s.serviceRow}
             onClick={handleRowClick}
             role="button"
             tabIndex={0}
-            onKeyDown={(e) => {
+            data-testid={`blocked-service-row-${props.id}`}
+            onKeyDown={(e: KeyboardEvent) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                     handleRowClick();
                 }
             }}
         >
-            <div className={s.serviceIcon} dangerouslySetInnerHTML={{ __html: decodedSvg }} />
-            <div className={s.serviceName}>{name}</div>
-            <div className={s.switchWrap} onClick={(e) => e.stopPropagation()} role="presentation">
+            {/* eslint-disable-next-line solid/no-innerhtml */}
+            <div class={s.serviceIcon} innerHTML={decodedSvg()} />
+            <div class={s.serviceName}>{props.name}</div>
+            <div
+                class={s.switchWrap}
+                onClick={(e: Event) => e.stopPropagation()}
+                role="presentation"
+            >
                 <Switch
-                    id={`service_${id}`}
-                    checked={checked}
-                    disabled={disabled}
+                    id={`service_${props.id}`}
+                    checked={props.checked}
+                    disabled={props.disabled}
                     onChange={handleChange}
                 />
             </div>

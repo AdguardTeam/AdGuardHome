@@ -1,7 +1,5 @@
-import React from 'react';
-import { Controller, useForm } from 'react-hook-form';
-import { useSelector } from 'react-redux';
-import { validateRequiredValue } from 'panel/helpers/validators';
+import { createEffect } from 'solid-js';
+import { createForm, required, setError, setValue } from '@modular-forms/solid';
 import { Input } from 'panel/common/controls/Input';
 import { Button } from 'panel/common/ui/Button';
 import { HTML_PAGES } from 'panel/helpers/constants';
@@ -10,6 +8,7 @@ import cn from 'clsx';
 
 import theme from 'panel/lib/theme';
 import { PasswordInput } from 'panel/common/controls/Input/PasswordInput';
+import { loginState } from 'panel/stores/login';
 import styles from './styles.module.pcss';
 
 export type LoginFormValues = {
@@ -19,93 +18,88 @@ export type LoginFormValues = {
 
 type LoginFormProps = {
     onSubmit: (data: LoginFormValues) => void;
-    processing: boolean;
 };
 
-const Form = ({ onSubmit, processing }: LoginFormProps) => {
-    const loginError = useSelector((state: any) => state.login?.error);
-    const {
-        handleSubmit,
-        control,
-        setError,
-        formState: { isValid },
-    } = useForm<LoginFormValues>({
-        mode: 'onChange',
-        defaultValues: {
-            username: '',
-            password: '',
-        },
+const Form = (props: LoginFormProps) => {
+    const [loginForm, { Form, Field }] = createForm<LoginFormValues>({
+        validateOn: 'input',
     });
 
-    React.useEffect(() => {
-        if (!loginError) {
-            return;
+    createEffect(() => {
+        if (loginState.error) {
+            setError(loginForm, 'password', intl.getMessage('password_login_error'));
         }
+    });
 
-        setError('password', { type: 'server', message: intl.getMessage('password_login_error') });
-    }, [loginError, setError]);
+    const handleSubmit = (values: LoginFormValues) => {
+        props.onSubmit(values);
+    };
 
+    // TODO: replace with link
     const handleForgotPassword = () => {
         window.location.assign(HTML_PAGES.FORGOT_PASSWORD);
     };
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="card">
-            <div className={styles.formContainer}>
-                <div className={styles.group}>
-                    <Controller
+        <Form onSubmit={handleSubmit} class="card">
+            <div class={styles.formContainer}>
+                <div class={styles.group}>
+                    <Field
                         name="username"
-                        control={control}
-                        rules={{ validate: validateRequiredValue }}
-                        render={({ field, fieldState }) => (
+                        validate={[required(intl.getMessage('form_error_required'))]}
+                    >
+                        {(field, fieldProps) => (
                             <Input
-                                {...field}
+                                {...fieldProps}
                                 id="username"
                                 type="text"
+                                value={(field.value as string) || ''}
                                 label={intl.getMessage('username_label')}
                                 placeholder={intl.getMessage('username_placeholder')}
-                                errorMessage={fieldState.error?.message}
-                                autoComplete="username"
-                                autoCapitalize="none"
+                                errorMessage={field.error as string}
+                                autocomplete="username"
+                                autocapitalize="none"
                             />
                         )}
-                    />
+                    </Field>
                 </div>
 
-                <div className={styles.group}>
-                    <Controller
+                <div class={styles.group}>
+                    <Field
                         name="password"
-                        control={control}
-                        rules={{ validate: validateRequiredValue }}
-                        render={({ field, fieldState }) => (
+                        validate={[required(intl.getMessage('form_error_required'))]}
+                    >
+                        {(field, fieldProps) => (
                             <PasswordInput
-                                {...field}
+                                {...fieldProps}
                                 id="password"
+                                value={(field.value as string) || ''}
                                 label={intl.getMessage('password_label')}
                                 placeholder={intl.getMessage('password_placeholder')}
-                                inputError={fieldState.error?.message}
-                                autoComplete="current-password"
+                                inputError={field.error as string}
+                                autocomplete="current-password"
+                                onChange={(value: string) => setValue(loginForm, 'password', value)}
                             />
                         )}
-                    />
+                    </Field>
                 </div>
 
-                <div className={styles.footer}>
+                <div class={styles.footer}>
                     <Button
-                        className={styles.button}
+                        class={styles.button}
                         id="sign_in"
                         type="submit"
                         variant="primary"
                         size="small"
-                        disabled={processing || !isValid}
+                        disabled={loginState.processingLogin}
                     >
                         {intl.getMessage('login')}
                     </Button>
 
-                    <div className={styles.info}>
+                    <div class={styles.info}>
                         <button
                             type="button"
-                            className={cn(theme.link.link, 'link')}
+                            class={cn(theme.link.link, theme.text.t2)}
                             onClick={handleForgotPassword}
                         >
                             {intl.getMessage('forgot_password')}
@@ -113,7 +107,7 @@ const Form = ({ onSubmit, processing }: LoginFormProps) => {
                     </div>
                 </div>
             </div>
-        </form>
+        </Form>
     );
 };
 

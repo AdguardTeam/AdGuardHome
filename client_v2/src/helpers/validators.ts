@@ -5,21 +5,20 @@ import {
     R_CIDR_IPV6,
     R_HOST,
     R_IPV4,
-    R_IPV6,
     R_MAC,
     R_URL_REQUIRES_PROTOCOL,
-    STANDARD_WEB_PORT,
     UNSAFE_PORTS,
     R_CLIENT_ID,
     R_DOMAIN,
     MAX_PASSWORD_LENGTH,
     MIN_PASSWORD_LENGTH,
     R_HOSTNAME,
+    UINT32_RANGE,
 } from './constants';
 
 import { ip4ToInt, isValidAbsolutePath } from './form';
 
-import { isIpInCidr, parseSubnetMask } from './helpers';
+import { isIpInCidr, isValidIpv6, parseSubnetMask } from './helpers';
 
 /** Return type for all validators: `undefined` means valid, string is the i18n error message. */
 type ValidationResult = string | undefined;
@@ -239,7 +238,7 @@ export const validateServerName = (value?: string): ValidationResult => {
  * @example validateIpv6("not-an-ip")               // "Invalid IPv6 address"
  */
 export const validateIpv6 = (value?: string): ValidationResult => {
-    if (value && !R_IPV6.test(value)) {
+    if (value && !isValidIpv6(value)) {
         return intl.getMessage('form_error_ip6_format');
     }
     return undefined;
@@ -253,10 +252,60 @@ export const validateIpv6 = (value?: string): ValidationResult => {
  * @example validateIp("bad")             // "Invalid IP address"
  */
 export const validateIp = (value?: string): ValidationResult => {
-    if (value && !R_IPV4.test(value) && !R_IPV6.test(value)) {
+    if (value && !R_IPV4.test(value) && !isValidIpv6(value)) {
         return intl.getMessage('form_error_ip_format');
     }
     return undefined;
+};
+
+/**
+ * Generic per-line validator. Splits input by newlines, skips empty lines
+ * (and optionally comment lines via `isContent`), then validates each
+ * content line with `isValid`. Returns an appropriate i18n error message
+ * based on how many content lines exist and how many are invalid.
+ *
+ * Message logic:
+ * - 0 invalid  → undefined (valid)
+ * - 1 content line, 1 invalid → generic "Invalid format"
+ * - Multiple content lines, 1 invalid → "Invalid format on line N"
+ * - Multiple invalid → "Invalid format on lines N, M, ..."
+ *
+ * @param value    - The textarea content
+ * @param isValid  - Returns true if the line is valid
+ * @param isContent - Returns true if the line should be validated
+ *                   (defaults to all non-empty lines)
+ */
+const validatePerLine = (
+    value: string,
+    isValid: (line: string) => boolean,
+    isContent: (line: string) => boolean = () => true,
+): string | undefined => {
+    if (!value) return undefined;
+    const lines = value.split('\n');
+    const invalidLines: number[] = [];
+    let contentLineCount = 0;
+
+    for (let i = 0; i < lines.length; i += 1) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        if (!isContent(line)) continue;
+
+        contentLineCount += 1;
+        if (!isValid(line)) {
+            invalidLines.push(i + 1);
+        }
+    }
+
+    if (invalidLines.length === 0) return undefined;
+    if (invalidLines.length === 1 && contentLineCount === 1) {
+        return intl.getMessage('form_error_format');
+    }
+    if (invalidLines.length === 1) {
+        return intl.getMessage('form_error_format_line', { line: invalidLines[0] });
+    }
+    return intl.getMessage('form_error_format_lines', {
+        lines: invalidLines.join(', '),
+    });
 };
 
 /**
@@ -265,18 +314,27 @@ export const validateIp = (value?: string): ValidationResult => {
  * @example validateIpPerLine("192.168.1.1\n10.0.0.1")  // undefined (valid)
  * @example validateIpPerLine("bad")                      // "Invalid IP address"
  */
-export const validateIpPerLine = (value: string): string | undefined => {
-    if (!value) return undefined;
-    const lines = value.split('\n');
-    for (let i = 0; i < lines.length; i += 1) {
-        const line = lines[i].trim();
-        if (line) {
-            const error = validateIp(line);
-            if (error) return error;
-        }
-    }
-    return undefined;
-};
+export const validateIpPerLine = (value: string): string | undefined =>
+    validatePerLine(value, (line) => validateIp(line) === undefined);
+
+/**
+ * Validates that each non-empty line is a valid access client entry:
+ * an IP address, CIDR range, or ClientID.
+ *
+ * @example validateClientsPerLine("192.168.1.1")            // undefined (valid)
+ * @example validateClientsPerLine("my-client-id")           // undefined (valid)
+ * @example validateClientsPerLine("bad entry!")             // "Invalid format"
+ */
+export const validateClientsPerLine = (value: string): string | undefined =>
+    validatePerLine(
+        value,
+        (line) =>
+            R_IPV4.test(line) ||
+            isValidIpv6(line) ||
+            R_CIDR.test(line) ||
+            R_CIDR_IPV6.test(line) ||
+            R_CLIENT_ID.test(line),
+    );
 
 /**
  * Validates a MAC address format.
@@ -292,15 +350,19 @@ export const validateMac = (value?: string): ValidationResult => {
 };
 
 /**
- * Validates a port number is within the standard web range (80–65535).
+ * Validates a port number is within the valid range (0–65535).
+ * Port 0 means "disabled".
  *
  * @example validatePort(8080)      // undefined (valid)
- * @example validatePort(80)        // undefined (valid)
- * @example validatePort(79)        // "Enter port number in the range of 80-65535"
+ * @example validatePort(0)         // undefined (valid, disabled)
+ * @example validatePort(-1)        // "Enter port number in the range of 0-65535"
  */
 export const validatePort = (value?: number): ValidationResult => {
-    if ((value || value === 0) && (value < STANDARD_WEB_PORT || value > MAX_PORT)) {
-        return intl.getMessage('form_error_port_range');
+    if ((value || value === 0) && (value < 0 || value > MAX_PORT)) {
+        return intl.getMessage('form_error_port_range', {
+            min: 0,
+            max: MAX_PORT,
+        });
     }
     return undefined;
 };
@@ -327,11 +389,11 @@ export const validateInstallPort = (value?: number): ValidationResult => {
  * @example validatePortTLS(79)        // "Enter port number in the range of 80-65535"
  */
 export const validatePortTLS = (value?: number): ValidationResult => {
-    if (value === 0) {
-        return undefined;
-    }
-    if (value && (value < STANDARD_WEB_PORT || value > MAX_PORT)) {
-        return intl.getMessage('form_error_port_range');
+    if ((value || value === 0) && (value < 0 || value > MAX_PORT)) {
+        return intl.getMessage('form_error_port_range', {
+            min: 0,
+            max: MAX_PORT,
+        });
     }
     return undefined;
 };
@@ -372,9 +434,59 @@ export const validateDomain = (value?: string): ValidationResult => {
  * @example validateAnswer("bad")              // "Invalid answer"
  */
 export const validateAnswer = (value?: string): ValidationResult => {
-    if (value && !R_IPV4.test(value) && !R_IPV6.test(value) && !R_HOST.test(value)) {
+    if (value && !R_IPV4.test(value) && !isValidIpv6(value) && !R_HOST.test(value)) {
         return intl.getMessage('form_error_answer_format');
     }
+    return undefined;
+};
+
+/**
+ * Validates that a DNS rewrite with the given domain doesn't already exist.
+ * When editing, the `currentDomain` is excluded from the duplicate check.
+ *
+ * @example validateRewriteNotExists("example.com", [{ domain: "example.com" }])
+ *          // "This DNS rewrite already exists"
+ * @example validateRewriteNotExists("example.com", [{ domain: "example.com" }], "example.com")
+ *          // undefined (editing the same rewrite)
+ */
+export const validateRewriteNotExists = (
+    domain: string,
+    existingList: Array<{ domain: string }>,
+    currentDomain?: string,
+): ValidationResult => {
+    if (!domain) {
+        return undefined;
+    }
+
+    const isDuplicate = existingList.some(
+        (item) =>
+            item.domain.toLowerCase() === domain.toLowerCase() && item.domain !== currentDomain,
+    );
+
+    if (isDuplicate) {
+        return intl.getMessage('dns_rewrite_exists');
+    }
+
+    return undefined;
+};
+
+/**
+ * Validates that the domain and answer are not the same value.
+ *
+ * @example validateRewriteNotSame("example.com", "example.com")
+ *          // "You can't rewrite to the same domain or wildcard"
+ * @example validateRewriteNotSame("example.com", "192.168.1.1")
+ *          // undefined (valid)
+ */
+export const validateRewriteNotSame = (domain: string, answer: string): ValidationResult => {
+    if (!domain || !answer) {
+        return undefined;
+    }
+
+    if (domain.toLowerCase() === answer.toLowerCase()) {
+        return intl.getMessage('dns_rewrite_same');
+    }
+
     return undefined;
 };
 
@@ -387,6 +499,22 @@ export const validateAnswer = (value?: string): ValidationResult => {
 export const validatePath = (value?: string): ValidationResult => {
     if (value && !isValidAbsolutePath(value) && !R_URL_REQUIRES_PROTOCOL.test(value)) {
         return intl.getMessage('form_error_url_format');
+    }
+    return undefined;
+};
+
+const R_PEM_CONTENT =
+    /^(-----BEGIN [A-Z0-9 ]+-----[ \t]*[\r\n]+[A-Za-z0-9+/= \t\r\n]+-----END [A-Z0-9 ]+-----[ \t\r\n]*)+$/;
+
+/**
+ * Validates that a value looks like PEM-encoded content.
+ *
+ * @example validatePemContent("-----BEGIN CERTIFICATE-----\nabc\n-----END CERTIFICATE-----")  // undefined (valid)
+ * @example validatePemContent("not pem content")                                           // "Invalid data"
+ */
+export const validatePemContent = (value?: string): ValidationResult => {
+    if (value && !R_PEM_CONTENT.test(value.trim())) {
+        return intl.getMessage('encryption_invalid_data');
     }
     return undefined;
 };
@@ -501,7 +629,7 @@ export const validateIdentifier = (
 
     const isValidFormat =
         R_IPV4.test(trimmed) ||
-        R_IPV6.test(trimmed) ||
+        isValidIpv6(trimmed) ||
         R_MAC.test(trimmed) ||
         R_CIDR.test(trimmed) ||
         R_CIDR_IPV6.test(trimmed) ||
@@ -526,21 +654,42 @@ export const validateIdentifier = (
 };
 
 /**
- * Validates a hostname format.
+ * Regex matching a hostname that consists only of digits.
+ */
+const R_ALL_DIGITS = /^[0-9]+$/;
+
+/**
+ * Validates a hostname format.  Empty values are considered valid.
  *
  * @example validateHostname("my-router")          // undefined (valid)
  * @example validateHostname("")                   // undefined (empty = valid)
+ * @example validateHostname("123")                // "Use numbers …" (all-numeric)
+ * @example validateHostname("-")                  // "Use numbers …" (only hyphens)
+ * @example validateHostname("-host")              // "Use numbers …" (starts with hyphen)
  */
 export const validateHostname = (value?: string): ValidationResult => {
-    if (value && !R_HOSTNAME.test(value)) {
+    if (!value) {
+        return undefined;
+    }
+
+    if (
+        !R_HOSTNAME.test(value) ||
+        R_ALL_DIGITS.test(value) ||
+        value.startsWith('-') ||
+        value.endsWith('-')
+    ) {
         return intl.getMessage('form_error_hostname_format');
     }
+
     return undefined;
 };
 
 // A valid upstream line contains at least one dot or colon.
-const R_COMMENT = /^\s*#/;
+const R_COMMENT = /^\s*[#!]/;
 const R_HAS_ADDRESS = /[.:]/;
+
+// A valid blocked_hosts entry contains at least one dot.
+const R_HAS_DOT = /[.]/;
 
 /**
  * Validates upstream server lines. Each line must contain a dot or colon.
@@ -549,28 +698,29 @@ const R_HAS_ADDRESS = /[.:]/;
  * @example validateUpstreams("# comment\n1.1.1.1")        // undefined (comments ok)
  * @example validateUpstreams("not-a-server")               // "Invalid upstream"
  */
-export const validateUpstreams = (value: string): string | undefined => {
-    const lines = value.split('\n');
-    const invalidLines: number[] = [];
-    for (let i = 0; i < lines.length; i += 1) {
-        const line = lines[i].trim();
-        if (line && !R_COMMENT.test(line) && !R_HAS_ADDRESS.test(line)) {
-            invalidLines.push(i + 1);
-        }
-    }
+export const validateUpstreams = (value: string): string | undefined =>
+    validatePerLine(
+        value,
+        (line) => R_HAS_ADDRESS.test(line),
+        (line) => !R_COMMENT.test(line),
+    );
 
-    if (invalidLines.length === 0) {
-        return undefined;
-    }
-
-    if (invalidLines.length === 1) {
-        return intl.getMessage('form_error_upstream_format', { line: invalidLines[0] });
-    }
-
-    return intl.getMessage('form_error_upstream_format_multi', {
-        lines: invalidLines.join(', '),
-    });
-};
+/**
+ * Validates that each non-empty, non-comment line in a blocked_hosts
+ * entry contains a dot (domain, wildcard, or AdGuard URL filter rule).
+ *
+ * @example validateDomainsPerLine("example.org")              // undefined (valid)
+ * @example validateDomainsPerLine("*.example.org")            // undefined (valid)
+ * @example validateDomainsPerLine("||example.org^")           // undefined (valid)
+ * @example validateDomainsPerLine("# comment")               // undefined (comments ok)
+ * @example validateDomainsPerLine("notadomain")              // "Invalid format"
+ */
+export const validateDomainsPerLine = (value: string): string | undefined =>
+    validatePerLine(
+        value,
+        (line) => R_HAS_DOT.test(line),
+        (line) => !R_COMMENT.test(line),
+    );
 
 interface LeaseEntry {
     ip: string;
@@ -590,7 +740,70 @@ export const validateMacNotDuplicate =
     (existingLeases: LeaseEntry[], editMac?: string): ((value?: string) => ValidationResult) =>
     (value) => {
         if (value && value !== editMac && existingLeases.some((lease) => lease.mac === value)) {
-            return intl.getMessage('form_error_mac_already_added');
+            return intl.getMessage('dhcp_mac_address_already_added');
         }
         return undefined;
     };
+
+export const validateBetween = (value: number, min: number, max: number): string | undefined => {
+    if (value < min || value > max) {
+        return intl.getMessage('form_value_value_from_error', {
+            min_value: min.toLocaleString(),
+            max_value: max.toLocaleString(),
+        });
+    }
+    return undefined;
+};
+
+/**
+ * Validates a DHCP lease duration in seconds.
+ * Min: 1 (0 is not a valid lease duration; backend uses uint32, 0 = use default).
+ * Max: UINT32_MAX (4294967295).
+ * Returns undefined if valid, error message string if invalid.
+ *
+ * @example validateLeaseTime(undefined)   // "Field is required"
+ * @example validateLeaseTime(0)           // "Value must be between 1 and 4,294,967,295"
+ * @example validateLeaseTime(86400)       // undefined (valid)
+ */
+export const validateLeaseTime = (value?: number | string): ValidationResult => {
+    if (value === undefined || value === '') {
+        return intl.getMessage('form_error_required');
+    }
+    const num = typeof value === 'string' ? Number(value) : value;
+    if (Number.isNaN(num)) {
+        return intl.getMessage('form_error_required');
+    }
+    return validateBetween(num, 1, UINT32_RANGE.MAX);
+};
+
+export const validateMinValue = (value: number, min: number): string | undefined => {
+    if (value < min) {
+        return intl.getMessage('form_value_value_min_error', {
+            min_value: min.toLocaleString(),
+        });
+    }
+    return undefined;
+};
+
+/**
+ * Validates the client DNS cache size.
+ * Callers should gate on `upstreams_cache_enabled` before invoking.
+ * Returns undefined if valid, or an i18n error message string if invalid.
+ *
+ * @param size - The cache size in bytes
+ * @param enabled - Whether per-client upstream caching is enabled
+ *
+ * @example validateCacheSize(0, true)         // error ("must be greater than zero")
+ * @example validateCacheSize(1000, true)      // undefined (valid)
+ * @example validateCacheSize(4294967296, true) // error (exceeds UINT32_MAX)
+ * @example validateCacheSize(0, false)        // undefined (no validation when disabled)
+ */
+export const validateCacheSize = (size: number, enabled: boolean): ValidationResult => {
+    if (!enabled) {
+        return undefined;
+    }
+    if (size === 0) {
+        return intl.getMessage('cache_config_size_validation');
+    }
+    return validateBetween(size, 1, UINT32_RANGE.MAX);
+};

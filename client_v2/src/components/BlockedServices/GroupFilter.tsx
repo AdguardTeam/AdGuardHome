@@ -1,4 +1,4 @@
-import React from 'react';
+import { Show, For } from 'solid-js';
 import cn from 'clsx';
 import intl from 'panel/common/intl';
 
@@ -51,26 +51,26 @@ const getGroupName = (id: string): string => {
     }
 };
 
-export const GroupFilter = ({ groups, activeGroups, onToggleGroup }: Props) => {
-    if (groups.length === 0) {
-        return null;
-    }
-
+export const GroupFilter = (props: Props) => {
     return (
-        <div className={s.groups}>
-            {groups.map((group) => (
-                <button
-                    key={group.id}
-                    type="button"
-                    onClick={() => onToggleGroup(group.id)}
-                    aria-pressed={activeGroups.includes(group.id)}
-                    className={cn(s.groupButton, {
-                        [s.groupButtonActive]: activeGroups.includes(group.id),
-                    })}
-                >
-                    {getGroupName(group.id)}
-                </button>
-            ))}
-        </div>
+        <Show when={props.groups.length > 0}>
+            <div class={s.groups}>
+                <For each={props.groups}>
+                    {(group) => (
+                        <button
+                            type="button"
+                            onClick={() => props.onToggleGroup(group.id)}
+                            aria-pressed={props.activeGroups.includes(group.id)}
+                            data-testid={`blocked-services-group-${group.id}`}
+                            class={cn(s.groupButton, {
+                                [s.groupButtonActive]: props.activeGroups.includes(group.id),
+                            })}
+                        >
+                            {getGroupName(group.id)}
+                        </button>
+                    )}
+                </For>
+            </div>
+        </Show>
     );
 };

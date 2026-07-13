@@ -1,159 +1,94 @@
-import React, { useEffect } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { createSignal, createEffect, createMemo } from 'solid-js';
 
 import intl from 'panel/common/intl';
-import { Button } from 'panel/common/ui/Button';
-import theme from 'panel/lib/theme';
-import { QUERY_LOG_INTERVALS_DAYS, RETENTION_CUSTOM } from 'panel/helpers/constants';
+import {
+    QUERY_LOG_INTERVALS_DAYS,
+    RETENTION_CUSTOM,
+    RETENTION_RANGE,
+} from 'panel/helpers/constants';
+import { validateBetween } from 'panel/helpers/validators';
 
-import { RadioGroup, SwitchGroup } from 'panel/common/ui/SettingsGroup';
-import { IgnoredDomains } from '../IgnoredDomains';
+import { RadioGroup } from 'panel/common/ui/SettingsGroup';
 import { getIntervalTitle, getDefaultInterval } from '../helpers';
 import { RetentionCustomInput } from '../RetentionCustomInput';
 
 export type FormValues = {
-    enabled: boolean;
-    anonymize_client_ip: boolean;
     interval: number;
     customInterval?: number | null;
-    ignored: string;
-    ignore_enabled: boolean;
 };
 
 type Props = {
     initialValues: Partial<FormValues>;
     processing: boolean;
-    processingReset: boolean;
-    onSubmit: (values: FormValues) => void;
-    onReset: () => void;
+    onValuesChange: (values: FormValues) => void;
+    submitted?: boolean;
 };
 
-export const Form = ({ initialValues, processing, processingReset, onSubmit, onReset }: Props) => {
-    const {
-        handleSubmit,
-        watch,
-        setValue,
-        control,
-        formState: { isSubmitting },
-    } = useForm<FormValues>({
-        mode: 'onBlur',
-        defaultValues: {
-            enabled: initialValues.enabled || false,
-            anonymize_client_ip: initialValues.anonymize_client_ip || false,
-            interval: getDefaultInterval(initialValues.customInterval, initialValues.interval),
-            customInterval: initialValues.customInterval ?? undefined,
-            ignored: initialValues.ignored || '',
-            ignore_enabled: initialValues.ignore_enabled || true,
-        },
-    });
+export const Form = (props: Props) => {
+    const [intervalValue, setIntervalValue] = createSignal(
+        getDefaultInterval(props.initialValues.customInterval, props.initialValues.interval),
+    );
+    const [customInterval, setCustomInterval] = createSignal<number | null>(
+        props.initialValues.customInterval ?? null,
+    );
 
-    const intervalValue = watch('interval');
-    const customIntervalValue = watch('customInterval');
-    const ignoreEnabled = watch('ignore_enabled');
-
-    useEffect(() => {
-        if (QUERY_LOG_INTERVALS_DAYS.includes(intervalValue)) {
-            setValue('customInterval', undefined);
+    // Clear customInterval when a standard interval is selected
+    const handleIntervalChange = (val: number) => {
+        const numVal = Number(val);
+        setIntervalValue(numVal);
+        if (QUERY_LOG_INTERVALS_DAYS.includes(numVal)) {
+            setCustomInterval(null);
         }
-    }, [intervalValue]);
-
-    const onSubmitForm = (data: FormValues) => {
-        onSubmit(data);
     };
 
-    const disableSubmit =
-        isSubmitting || processing || (intervalValue === RETENTION_CUSTOM && !customIntervalValue);
+    // Validate customInterval when Custom is selected
+    const customIntervalError = createMemo(() => {
+        const val = customInterval();
+        if (intervalValue() !== RETENTION_CUSTOM) {
+            return undefined;
+        }
+        if (val == null) {
+            return props.submitted ? intl.getMessage('form_error_required') : undefined;
+        }
+        return validateBetween(val, RETENTION_RANGE.MIN, RETENTION_RANGE.MAX);
+    });
+
+    // Notify parent of value changes for dirty tracking
+    createEffect(() => {
+        const values: FormValues = {
+            interval: intervalValue(),
+            customInterval: customInterval(),
+        };
+        props.onValuesChange(values);
+    });
 
     return (
-        <form onSubmit={handleSubmit(onSubmitForm)}>
-            <Controller
-                name="enabled"
-                control={control}
-                render={({ field }) => (
-                    <SwitchGroup
-                        id="logs_enabled"
-                        title={intl.getMessage('settings_log_dns_requests')}
-                        checked={field.value}
-                        onChange={field.onChange}
-                        disabled={processing}
-                    />
-                )}
-            />
-
-            <Controller
-                name="anonymize_client_ip"
-                control={control}
-                render={({ field }) => (
-                    <SwitchGroup
-                        id="logs_anonymize_client_ip"
-                        title={intl.getMessage('settings_anonymize_client_ip')}
-                        description={intl.getMessage('settings_anonymize_client_ip_desc')}
-                        checked={field.value}
-                        onChange={field.onChange}
-                        disabled={processing}
-                    />
-                )}
-            />
-
+        <>
             <RadioGroup
-                title={intl.getMessage('query_log_retention')}
-                disabled={processing}
-                value={intervalValue}
-                onChange={(val) => setValue('interval', Number(val))}
+                disabled={props.processing}
+                value={intervalValue()}
+                onChange={handleIntervalChange}
                 name="logs-interval"
                 options={[
-                    { text: getIntervalTitle(RETENTION_CUSTOM), value: RETENTION_CUSTOM },
                     ...QUERY_LOG_INTERVALS_DAYS.map((interval) => ({
                         text: getIntervalTitle(interval),
                         value: interval,
                     })),
+                    { text: getIntervalTitle(RETENTION_CUSTOM), value: RETENTION_CUSTOM },
                 ]}
             >
                 <RetentionCustomInput
-                    control={control}
-                    processing={processing}
-                    intervalValue={intervalValue}
+                    value={customInterval()}
+                    onChange={setCustomInterval}
+                    processing={props.processing}
+                    intervalValue={intervalValue()}
                     intervals={QUERY_LOG_INTERVALS_DAYS}
                     inputId="logs_config_custom_interval"
                     inputLabel={intl.getMessage('settings_log_rotation_hours')}
                     placeholder={intl.getMessage('settings_rotation_placeholder')}
+                    error={customIntervalError()}
                 />
             </RadioGroup>
-
-            <IgnoredDomains
-                control={control}
-                processing={processing}
-                ignoreEnabled={ignoreEnabled}
-                setValue={setValue}
-                switchId="logs_config_ignored_enabled"
-                textareaId="logs_config_ignored"
-                description={intl.getMessage('ignore_domains_desc_log')}
-            />
-
-            <div className={theme.form.buttonGroup}>
-                <Button
-                    type="submit"
-                    id="logs_config_save"
-                    variant="primary"
-                    size="small"
-                    disabled={disableSubmit}
-                    className={theme.form.button}
-                >
-                    {intl.getMessage('save')}
-                </Button>
-
-                <Button
-                    type="button"
-                    id="logs_config_clear"
-                    variant="secondary"
-                    size="small"
-                    onClick={onReset}
-                    disabled={processingReset}
-                    className={theme.form.button}
-                >
-                    {intl.getMessage('clear_query_log')}
-                </Button>
-            </div>
-        </form>
+        </>
     );
 };

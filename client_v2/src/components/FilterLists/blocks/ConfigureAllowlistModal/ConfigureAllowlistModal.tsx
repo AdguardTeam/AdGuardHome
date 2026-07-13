@@ -1,17 +1,14 @@
-import React, { useEffect } from 'react';
+import { createSignal, createEffect, untrack } from 'solid-js';
 
 import intl from 'panel/common/intl';
 import { Dialog } from 'panel/common/ui/Dialog/Dialog';
 import { MODAL_TYPE } from 'panel/helpers/constants';
 
 import { ModalWrapper } from 'panel/common/ui/ModalWrapper';
-import { useDispatch, useSelector } from 'react-redux';
-import { closeModal } from 'panel/reducers/modals';
+import { closeModal } from 'panel/stores/modals';
 import theme from 'panel/lib/theme';
 import { Button } from 'panel/common/ui/Button';
-import { Controller, FormProvider, useForm } from 'react-hook-form';
-import { RootState } from 'panel/initialState';
-import { addFilter, editFilter } from 'panel/actions/filtering';
+import { addFilter, editFilter, filteringState } from 'panel/stores/filtering';
 import { Input } from 'panel/common/controls/Input';
 import { validatePath, validateRequiredValue } from 'panel/helpers/validators';
 
@@ -19,11 +16,6 @@ type FormValues = {
     name: string;
     url: string;
     enabled?: boolean;
-};
-
-const defaultValues: FormValues = {
-    name: '',
-    url: '',
 };
 
 type ConfigureAllowlistModalIdType = 'ADD_ALLOWLIST' | 'EDIT_ALLOWLIST';
@@ -49,35 +41,38 @@ const getButtonText = (modalId: ConfigureAllowlistModalIdType) => {
     return intl.getMessage('add');
 };
 
-export const ConfigureAllowlistModal = ({ modalId, filterToEdit }: Props) => {
-    const dispatch = useDispatch();
-    const { filtering } = useSelector((state: RootState) => state);
-    const { processingAddFilter } = filtering;
+export const ConfigureAllowlistModal = (props: Props) => {
+    const [name, setName] = createSignal(untrack(() => props.filterToEdit?.name) ?? '');
+    const [url, setUrl] = createSignal(untrack(() => props.filterToEdit?.url) ?? '');
+    const [urlError, setUrlError] = createSignal<string | undefined>();
 
-    const methods = useForm({
-        defaultValues: {
-            ...defaultValues,
-            ...filterToEdit,
-        },
-        mode: 'onBlur',
+    createEffect(() => {
+        setName(props.filterToEdit?.name ?? '');
+        setUrl(props.filterToEdit?.url ?? '');
     });
-    const { handleSubmit, reset, control } = methods;
 
-    useEffect(() => {
-        reset({
-            ...defaultValues,
-            ...filterToEdit,
-        });
-    }, [filterToEdit, reset]);
+    const validateAndSetErrors = () => {
+        const urlErr = validateRequiredValue(url()) || validatePath(url());
+        setUrlError(urlErr || undefined);
+        return !urlErr;
+    };
 
-    const handleFormSubmit = async (values: FormValues) => {
-        switch (modalId) {
+    const handleFormSubmit = async (e: Event) => {
+        e.preventDefault();
+
+        if (!validateAndSetErrors()) {
+            return;
+        }
+
+        const values: FormValues = { name: name(), url: url() };
+
+        switch (props.modalId) {
             case MODAL_TYPE.ADD_ALLOWLIST: {
-                dispatch(addFilter(values.url, values.name, true));
+                addFilter(values.url, values.name, true);
                 break;
             }
             case MODAL_TYPE.EDIT_ALLOWLIST: {
-                dispatch(editFilter(filterToEdit!.url, values, true));
+                editFilter(props.filterToEdit!.url, values, true);
                 break;
             }
             default: {
@@ -85,90 +80,74 @@ export const ConfigureAllowlistModal = ({ modalId, filterToEdit }: Props) => {
             }
         }
 
-        reset(defaultValues);
-        dispatch(closeModal());
+        setName('');
+        setUrl('');
+        closeModal();
     };
 
     const handleCancel = () => {
-        reset(defaultValues);
-        dispatch(closeModal());
+        setName('');
+        setUrl('');
+        setUrlError(undefined);
+        closeModal();
     };
 
     return (
-        <ModalWrapper id={modalId}>
-            <Dialog visible onClose={handleCancel} title={getTitle(modalId)}>
-                <FormProvider {...methods}>
-                    <form onSubmit={handleSubmit(handleFormSubmit)}>
-                        <div>
-                            <div className={theme.form.group}>
-                                <div className={theme.form.input}>
-                                    <Controller
-                                        name="name"
-                                        control={control}
-                                        render={({ field, fieldState }) => (
-                                            <Input
-                                                {...field}
-                                                type="text"
-                                                id="filters_name"
-                                                label={intl.getMessage('name_label')}
-                                                placeholder={intl.getMessage(
-                                                    'allowlist_placeholder_example',
-                                                )}
-                                                errorMessage={fieldState.error?.message}
-                                            />
-                                        )}
-                                    />
-                                </div>
+        <ModalWrapper id={props.modalId}>
+            <Dialog visible onClose={handleCancel} title={getTitle(props.modalId)}>
+                <form onSubmit={handleFormSubmit}>
+                    <div>
+                        <div class={theme.form.group}>
+                            <div class={theme.form.input}>
+                                <Input
+                                    type="text"
+                                    id="filters_name"
+                                    label={intl.getMessage('name_label')}
+                                    placeholder={intl.getMessage('allowlist_placeholder_example')}
+                                    value={name()}
+                                    onChange={(e) => setName((e.target as HTMLInputElement).value)}
+                                />
+                            </div>
 
-                                <div className={theme.form.input}>
-                                    <Controller
-                                        name="url"
-                                        control={control}
-                                        rules={{
-                                            validate: { validateRequiredValue, validatePath },
-                                        }}
-                                        render={({ field, fieldState }) => (
-                                            <Input
-                                                {...field}
-                                                type="text"
-                                                id="filters_url"
-                                                label={intl.getMessage('blocklist_url_file_path')}
-                                                placeholder={intl.getMessage(
-                                                    'blocklist_url_file_path',
-                                                )}
-                                                errorMessage={fieldState.error?.message}
-                                            />
-                                        )}
-                                    />
-                                </div>
+                            <div class={theme.form.input}>
+                                <Input
+                                    type="text"
+                                    id="filters_url"
+                                    label={intl.getMessage('blocklist_url_file_path')}
+                                    placeholder={intl.getMessage('blocklist_url_file_path')}
+                                    value={url()}
+                                    onChange={(e) => setUrl((e.target as HTMLInputElement).value)}
+                                    onBlur={validateAndSetErrors}
+                                    errorMessage={urlError()}
+                                />
                             </div>
                         </div>
+                    </div>
 
-                        <div className={theme.dialog.footer}>
-                            <Button
-                                type="submit"
-                                id="filters_save"
-                                variant="primary"
-                                size="small"
-                                disabled={processingAddFilter}
-                                className={theme.dialog.button}
-                            >
-                                {getButtonText(modalId)}
-                            </Button>
+                    <div class={theme.dialog.footer}>
+                        <Button
+                            type="submit"
+                            id="filters_save"
+                            variant="primary"
+                            size="small"
+                            disabled={filteringState.processingAddFilter}
+                            class={theme.dialog.button}
+                        >
+                            {getButtonText(props.modalId)}
+                        </Button>
 
-                            <Button
-                                type="button"
-                                id="filters_cancel"
-                                variant="secondary"
-                                size="small"
-                                onClick={handleCancel}
-                                className={theme.dialog.button}
-                            >
-                                {intl.getMessage('cancel')}
-                            </Button>
-                        </div>
-                    </form>
-                </FormProvider>
+                        <Button
+                            type="button"
+                            id="filters_cancel"
+                            variant="secondary"
+                            size="small"
+                            onClick={handleCancel}
+                            class={theme.dialog.button}
+                        >
+                            {intl.getMessage('cancel')}
+                        </Button>
+                    </div>
+                </form>
             </Dialog>
         </ModalWrapper>
     );

@@ -1,18 +1,11 @@
-import React, { ReactNode } from 'react';
-import { useSelector } from 'react-redux';
-import { RootState } from 'panel/initialState';
+import { type JSX, Show } from 'solid-js';
+import { modalsState } from 'panel/stores/modals';
 
 interface Props {
     id: string;
-    children: ReactNode;
+    children: JSX.Element;
 }
 
-export const ModalWrapper = ({ id, children }: Props) => {
-    const modalId = useSelector((state: RootState) => state.modals.modalId);
-
-    if (modalId !== id) {
-        return null;
-    }
-
-    return <>{children}</>;
+export const ModalWrapper = (props: Props) => {
+    return <Show when={modalsState.modalId === props.id}>{props.children}</Show>;
 };

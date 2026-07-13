@@ -1,28 +1,14 @@
-import React from 'react';
-import { useSelector, shallowEqual } from 'react-redux';
-
-import { CSSTransition, TransitionGroup } from 'react-transition-group';
-import { TOAST_TRANSITION_TIMEOUT } from '../../helpers/constants';
+import { For } from 'solid-js';
 
 import Toast from './Toast';
 import './Toast.pcss';
-import { RootState } from '../../initialState';
+import { toastsState } from 'panel/stores/toasts';
 
 const Toasts = () => {
-    const toasts = useSelector((state: RootState) => state.toasts, shallowEqual);
-
     return (
-        <TransitionGroup className="toasts">
-            {toasts.notices?.map((toast: any) => {
-                const { id } = toast;
-
-                return (
-                    <CSSTransition key={id} timeout={TOAST_TRANSITION_TIMEOUT} classNames="toast">
-                        <Toast {...toast} />
-                    </CSSTransition>
-                );
-            })}
-        </TransitionGroup>
+        <div class="toasts">
+            <For each={toastsState.notices}>{(toast: any) => <Toast {...toast} />}</For>
+        </div>
     );
 };
 

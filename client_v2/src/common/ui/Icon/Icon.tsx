@@ -1,4 +1,3 @@
-import React, { MouseEvent } from 'react';
 import cn from 'clsx';
 import { IconType } from 'panel/common/ui/Icons';
 
@@ -9,16 +8,16 @@ export type IconColor = 'green' | 'gray' | 'red' | 'black';
 type Props = {
     icon: IconType;
     color?: IconColor;
-    className?: string;
+    class?: string;
     onClick?: (e: MouseEvent) => void;
 };
 
-export const Icon = ({ icon, color, className, onClick }: Props) => {
-    const iconClass = cn(s.icon, s[color], className);
+export const Icon = (props: Props) => {
+    const iconClass = () => cn(s.icon, s[props.color!], props.class);
 
     return (
-        <svg className={iconClass} onClick={onClick}>
-            <use xlinkHref={`#${icon}`} />
+        <svg class={iconClass()} onClick={(e) => props.onClick?.(e)}>
+            <use href={`#${props.icon}`} />
         </svg>
     );
 };

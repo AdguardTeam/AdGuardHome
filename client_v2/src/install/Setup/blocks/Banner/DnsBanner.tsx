@@ -1,5 +1,4 @@
-import React from 'react';
-import { Controller, type Control } from 'react-hook-form';
+import { createMemo, Show } from 'solid-js';
 
 import { Input } from 'panel/common/controls/Input';
 import { Select } from 'panel/common/controls/Select';
@@ -8,18 +7,12 @@ import { Button } from 'panel/common/ui/Button';
 
 import cn from 'clsx';
 
-import {
-    ADDRESS_IN_USE_TEXT,
-    PORT_53_FAQ_LINK,
-    STANDARD_DNS_PORT,
-    STANDARD_WEB_PORT,
-} from 'panel/helpers/constants';
+import { ADDRESS_IN_USE_TEXT, PORT_53_FAQ_LINK, STANDARD_DNS_PORT } from 'panel/helpers/constants';
 
 import { validateRequiredValue, validateInstallPort } from 'panel/helpers/validators';
 import { toNumber } from 'panel/helpers/form';
 import styles from './styles.module.pcss';
-
-import type { SettingsFormValues } from '../../types';
+import theme from 'panel/lib/theme';
 
 type SelectOption = {
     value: string;
@@ -27,145 +20,132 @@ type SelectOption = {
 };
 
 type Props = {
-    className: string;
-    control: Control<SettingsFormValues>;
+    class: string;
+    dnsIp: () => string;
+    dnsPort: () => number;
+    setDnsIp: (value: string) => void;
+    setDnsPort: (value: number) => void;
     dnsIpOptions: SelectOption[];
     dnsStatus?: string;
     isDnsFixAvailable: boolean;
-    dnsPortVal?: number;
     onAutofix: () => void;
 };
 
-export const DnsBanner = ({
-    className,
-    control,
-    dnsIpOptions,
-    dnsStatus,
-    isDnsFixAvailable,
-    dnsPortVal,
-    onAutofix,
-}: Props) => (
-    <div className={className}>
-        <div className={styles.bannerInputs}>
-            <div className={styles.group}>
-                <div className={styles.bannerTitle}>
-                    {intl.getMessage('setup_dns_title_banner')}
-                </div>
+export const DnsBanner = (props: Props) => {
+    const portError = createMemo(() => {
+        const port = props.dnsPort();
+        const requiredError = validateRequiredValue(port);
+        if (requiredError) return requiredError;
+        const portError = validateInstallPort(port);
+        if (portError) return portError;
+        const isPortInUse = Boolean(
+            props.dnsStatus && props.dnsStatus?.includes(ADDRESS_IN_USE_TEXT),
+        );
+        return isPortInUse ? intl.getMessage('port_in_use') : undefined;
+    });
 
-                <div className={styles.form}>
-                    <label className={styles.bannerLabel}>
-                        {intl.getMessage('network_interface')}
-                    </label>
-                    <Controller<SettingsFormValues, 'dns.ip'>
-                        name="dns.ip"
-                        control={control}
-                        render={({ field }) => (
-                            <Select
-                                options={dnsIpOptions}
-                                value={dnsIpOptions.find((option) => option.value === field.value)}
-                                onChange={(selectedOption) => field.onChange(selectedOption?.value)}
-                                placeholder={intl.getMessage('network_interface')}
-                                size="responsive"
-                                height="big"
-                                id="install_dns_ip"
-                            />
-                        )}
-                    />
-                </div>
+    return (
+        <div class={props.class}>
+            <div class={styles.bannerInputs}>
+                <div class={styles.group}>
+                    <div class={styles.bannerTitle}>
+                        {intl.getMessage('setup_dns_title_banner')}
+                    </div>
 
-                <div className={styles.form}>
-                    <label className={styles.bannerLabel}>
-                        {intl.getMessage('install_settings_port')}
-                    </label>
-                    <Controller<SettingsFormValues, 'dns.port'>
-                        name="dns.port"
-                        control={control}
-                        rules={{
-                            required: intl.getMessage('form_error_required'),
-                            validate: {
-                                required: validateRequiredValue,
-                                installPort: validateInstallPort,
-                            },
-                        }}
-                        render={({ field, fieldState }) => {
-                            const isPortInUse = Boolean(
-                                dnsStatus && dnsStatus.includes(ADDRESS_IN_USE_TEXT),
-                            );
-                            const errorMessage =
-                                fieldState.error?.message ||
-                                (isPortInUse ? intl.getMessage('port_in_use') : undefined);
-                            return (
-                                <Input
-                                    {...field}
-                                    type="number"
-                                    id="install_dns_port"
-                                    errorMessage={errorMessage}
-                                    placeholder={STANDARD_WEB_PORT.toString()}
-                                    onChange={(e) => {
-                                        const { value } = e.target;
-                                        field.onChange(toNumber(value));
-                                    }}
-                                />
-                            );
-                        }}
-                    />
-                </div>
+                    <div class={styles.form}>
+                        <label class={styles.bannerLabel}>
+                            {intl.getMessage('network_interface')}
+                        </label>
+                        <Select
+                            options={props.dnsIpOptions}
+                            value={props.dnsIpOptions.find(
+                                (option) => option.value === props.dnsIp(),
+                            )}
+                            onChange={(selectedOption) =>
+                                props.setDnsIp(selectedOption?.value ?? '')
+                            }
+                            placeholder={intl.getMessage('network_interface')}
+                            size="responsive"
+                            height="big"
+                            id="install_dns_ip"
+                            isSearchable={false}
+                        />
+                    </div>
 
-                <div>
-                    {dnsStatus && (
-                        <>
-                            <div
-                                className={cn(styles.setupError, styles.errorRow, styles.errorText)}
-                            >
-                                {dnsStatus}
-                                {isDnsFixAvailable && (
+                    <div class={styles.form}>
+                        <label class={styles.bannerLabel}>
+                            {intl.getMessage('install_settings_port')}
+                        </label>
+                        <Input
+                            type="number"
+                            id="install_dns_port"
+                            value={props.dnsPort()}
+                            errorMessage={portError()}
+                            placeholder={STANDARD_DNS_PORT.toString()}
+                            onChange={(e: Event) => {
+                                const { value } = e.target as HTMLInputElement;
+                                props.setDnsPort(toNumber(value));
+                            }}
+                            size="large"
+                        />
+                    </div>
+
+                    <div>
+                        <Show when={props.dnsStatus}>
+                            <div class={cn(styles.setupError, styles.errorRow, styles.errorText)}>
+                                {props.dnsStatus}
+                                <Show when={props.isDnsFixAvailable}>
                                     <Button
                                         type="button"
                                         id="install_dns_fix"
                                         size="small"
                                         variant="primary"
-                                        className={styles.inlineButton}
-                                        onClick={onAutofix}
-                                    ></Button>
-                                )}
+                                        class={styles.inlineButton}
+                                        onClick={props.onAutofix}
+                                    />
+                                </Show>
                             </div>
-                            {isDnsFixAvailable && (
-                                <div className={styles.mutedText}>
-                                    <p className={styles.compactParagraph}>
+                            <Show when={props.isDnsFixAvailable}>
+                                <div class={styles.mutedText}>
+                                    <p class={styles.compactParagraph}>
                                         {intl.getMessage('autofix_warning_text')}
                                     </p>
                                     {intl.getMessage('autofix_warning_list', {
                                         p: (text: string) => (
-                                            <p className={styles.compactParagraph}>{text}</p>
+                                            <p class={styles.compactParagraph}>{text}</p>
                                         ),
                                     })}
-                                    <p className={styles.compactParagraph}>
+                                    <p class={styles.compactParagraph}>
                                         {intl.getMessage('autofix_warning_result')}
                                     </p>
                                 </div>
-                            )}
-                        </>
-                    )}
-                    {dnsPortVal === STANDARD_DNS_PORT &&
-                        !isDnsFixAvailable &&
-                        dnsStatus?.includes(ADDRESS_IN_USE_TEXT) && (
+                            </Show>
+                        </Show>
+                        <Show
+                            when={
+                                props.dnsPort() === STANDARD_DNS_PORT &&
+                                !props.isDnsFixAvailable &&
+                                props.dnsStatus?.includes(ADDRESS_IN_USE_TEXT)
+                            }
+                        >
                             <p>
                                 {intl.getMessage('port_53_faq_link', {
                                     a: (text: string) => (
                                         <a
-                                            key="faq"
                                             href={PORT_53_FAQ_LINK}
                                             target="_blank"
                                             rel="noopener noreferrer"
+                                            class={theme.link.link}
                                         >
                                             {text}
                                         </a>
                                     ),
                                 })}
                             </p>
-                        )}
+                        </Show>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-);
+    );
+};

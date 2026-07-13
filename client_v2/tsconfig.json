@@ -1,10 +1,12 @@
 {
   "compilerOptions": {
     "target": "ESNext",
-    "jsx": "react",
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js",
     "module": "ESNext",
     "moduleResolution": "bundler",
     "baseUrl": ".",
+    "ignoreDeprecations": "5.0",
     "allowArbitraryExtensions": true,
     "resolveJsonModule": true,
     "allowJs": true,
@@ -13,7 +15,7 @@
     "strict": false,
     "noImplicitAny": true,
     "skipLibCheck": true,
-    "types": ["node", "react", "react-dom", "user-agent-data-types"],
+    "types": ["node"],
     "paths": {
       "Twosky": ["../.twosky.json"],
       "panel/*": ["./src/*"]

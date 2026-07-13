@@ -1,1 +1,0 @@
-export { RewritesTable } from './RewritesTable';

@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import { type JSX, Show } from 'solid-js';
 import cn from 'clsx';
 
 import { Radio } from 'panel/common/controls/Radio';
@@ -8,48 +8,44 @@ import s from './styles.module.pcss';
 
 type Option<T> = { text: string; value: T };
 
-type Props<T> = {
-    title: string;
+type Props<T = string | number | boolean> = {
+    title?: string;
     description?: string;
     disabled?: boolean;
     value: T;
     options: Option<T>[];
     onChange: (value: T) => void;
-    className?: string;
-    children?: ReactNode;
+    class?: string;
+    children?: JSX.Element;
     name?: string;
 };
 
-export const RadioGroup = <T extends number | string | boolean>({
-    title,
-    description,
-    disabled,
-    value,
-    options,
-    onChange,
-    className,
-    children,
-    name,
-}: Props<T>) => {
+export const RadioGroup = <T extends number | string | boolean>(props: Props<T>) => {
     return (
-        <div className={cn(s.switch, className)}>
-            <div className={s.row}>
-                <div className={s.text}>
-                    <div className={cn(s.title, theme.text.t2, theme.text.semibold)}>{title}</div>
-                    {description && <div className={cn(s.desc, theme.text.t3)}>{description}</div>}
+        <div class={cn(s.radio, props.class)}>
+            <Show when={props.title}>
+                <div class={s.row}>
+                    <div class={s.text}>
+                        <div class={cn(s.title, theme.text.t2, theme.text.semibold)}>
+                            {props.title}
+                        </div>
+                        <Show when={props.description}>
+                            <div class={cn(s.desc, theme.text.t3)}>{props.description}</div>
+                        </Show>
+                    </div>
+                    <div class={s.input} />
                 </div>
-                <div className={s.input} />
-            </div>
+            </Show>
 
-            <div className={s.content}>
+            <div class={s.content}>
                 <Radio
-                    disabled={disabled}
-                    value={value}
-                    options={options}
-                    handleChange={onChange}
-                    name={name}
+                    disabled={props.disabled}
+                    value={props.value as any}
+                    options={props.options as any}
+                    handleChange={props.onChange as any}
+                    name={props.name}
                 />
-                {children}
+                {props.children}
             </div>
         </div>
     );

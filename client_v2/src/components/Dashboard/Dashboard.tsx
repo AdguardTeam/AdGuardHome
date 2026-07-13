@@ -1,16 +1,15 @@
-import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import { createSignal, createMemo, createEffect, onCleanup, Show } from 'solid-js';
 
 import theme from 'panel/lib/theme';
-import { RootState } from 'panel/initialState';
-import { Loader, PageLoader } from 'panel/common/ui/Loader';
-import { toggleProtection, getClients } from 'panel/actions';
-import { getStats, getStatsConfig } from 'panel/actions/stats';
-import { getAccessList } from 'panel/actions/access';
+import { PageLoader } from 'panel/common/ui/Loader';
+import { dashboardState, toggleProtection, getClients } from 'panel/stores/dashboard';
+import { statsState, getStats, getStatsConfig } from 'panel/stores/stats';
+import { accessState, getAccessList } from 'panel/stores/access';
 import { ONE_SECOND_IN_MS, HOUR, DAY, STATS_INTERVALS_DAYS } from 'panel/helpers/constants';
 
 import { Header, getPeriodLabel } from './blocks/Header/Header';
 import { StatCards } from './blocks/StatCards';
+import { EmptyState } from './blocks/EmptyState/EmptyState';
 import { GeneralStatistics } from './blocks/GeneralStatistics';
 import { TopClients } from './blocks/TopClients';
 import { TopQueriedDomains } from './blocks/TopQueriedDomains';
@@ -21,218 +20,180 @@ import { UpstreamAvgTime } from './blocks/UpstreamAvgTime';
 import s from './Dashboard.module.pcss';
 
 export const Dashboard = () => {
-    const dispatch = useDispatch();
-    const { dashboard, stats, access } = useSelector((state: RootState) => state);
-    const [remainingTime, setRemainingTime] = useState<number | null>(null);
-    const [selectedPeriod, setSelectedPeriod] = useState(DAY);
-    const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const [remainingTime, setRemainingTime] = createSignal<number | null>(null);
+    const [selectedPeriod, setSelectedPeriod] = createSignal(DAY);
+    let timerRef: ReturnType<typeof setInterval> | null = null;
 
-    const protectionDisabledDuration = dashboard?.protectionDisabledDuration;
-
-    const startCountdown = useCallback(
-        (duration: number) => {
-            if (timerRef.current) {
-                clearInterval(timerRef.current);
+    const startCountdown = (duration: number) => {
+        if (timerRef) {
+            clearInterval(timerRef);
+        }
+        setRemainingTime(duration);
+        timerRef = setInterval(() => {
+            const prev = remainingTime();
+            if (prev !== null && prev > ONE_SECOND_IN_MS) {
+                setRemainingTime(prev - ONE_SECOND_IN_MS);
+            } else {
+                if (timerRef) {
+                    clearInterval(timerRef);
+                    timerRef = null;
+                }
+                toggleProtection(null);
+                setRemainingTime(null);
             }
-            setRemainingTime(duration);
-            timerRef.current = setInterval(() => {
-                setRemainingTime((prev) => {
-                    if (prev !== null && prev > ONE_SECOND_IN_MS) {
-                        return prev - ONE_SECOND_IN_MS;
-                    }
-                    if (timerRef.current) {
-                        clearInterval(timerRef.current);
-                        timerRef.current = null;
-                    }
-                    dispatch(toggleProtection(false));
-                    return null;
-                });
-            }, ONE_SECOND_IN_MS);
-        },
-        [dispatch],
-    );
+        }, ONE_SECOND_IN_MS);
+    };
 
-    useEffect(() => {
-        if (
-            protectionDisabledDuration &&
-            protectionDisabledDuration > 0 &&
-            timerRef.current === null
-        ) {
+    createEffect(() => {
+        const protectionDisabledDuration = dashboardState.protectionDisabledDuration;
+        if (protectionDisabledDuration && protectionDisabledDuration > 0 && timerRef === null) {
             startCountdown(protectionDisabledDuration);
         }
-    }, [protectionDisabledDuration, startCountdown]);
+    });
 
-    useEffect(
-        () => () => {
-            if (timerRef.current) {
-                clearInterval(timerRef.current);
-            }
-        },
-        [],
-    );
+    onCleanup(() => {
+        if (timerRef) {
+            clearInterval(timerRef);
+        }
+    });
 
-    const maxStatsInterval = stats?.interval || DAY;
-    const effectiveMaxStatsInterval = maxStatsInterval >= HOUR ? maxStatsInterval : DAY;
-    const periodIntervals = useMemo(() => {
+    const effectiveMaxStatsInterval = createMemo(() => {
+        const maxStatsInterval = statsState.interval || DAY;
+        return maxStatsInterval >= HOUR ? maxStatsInterval : DAY;
+    });
+
+    const periodIntervals = createMemo(() => {
         const intervals = STATS_INTERVALS_DAYS.filter(
-            (interval) => interval <= effectiveMaxStatsInterval,
+            (interval) => interval <= effectiveMaxStatsInterval(),
         );
 
-        if (!intervals.includes(effectiveMaxStatsInterval)) {
-            intervals.push(effectiveMaxStatsInterval);
+        if (!intervals.includes(effectiveMaxStatsInterval())) {
+            intervals.push(effectiveMaxStatsInterval());
         }
 
         return intervals.sort((a, b) => a - b);
-    }, [effectiveMaxStatsInterval]);
+    });
 
-    const periodOptions = useMemo(
-        () =>
-            periodIntervals.map((interval) => ({
-                value: interval,
-                label: getPeriodLabel(interval),
-            })),
-        [periodIntervals],
+    const periodOptions = createMemo(() =>
+        periodIntervals().map((interval) => ({
+            value: interval,
+            label: getPeriodLabel(interval),
+        })),
     );
 
-    useEffect(() => {
-        const maxAvailable = periodIntervals[periodIntervals.length - 1];
-        if (maxAvailable && selectedPeriod > maxAvailable) {
+    createEffect(() => {
+        const maxAvailable = periodIntervals()[periodIntervals().length - 1];
+        if (maxAvailable && selectedPeriod() > maxAvailable) {
             setSelectedPeriod(maxAvailable);
         }
-    }, [periodIntervals, selectedPeriod]);
+    });
 
-    useEffect(() => {
-        dispatch(getStats(selectedPeriod));
-        dispatch(getStatsConfig());
-        dispatch(getClients());
-        dispatch(getAccessList());
-    }, [dispatch, selectedPeriod]);
-
-    if (!dashboard || !stats) {
-        return (
-            <div className={theme.layout.container}>
-                <div className={theme.layout.containerIn}>
-                    <div className={s.loader}>
-                        <Loader />
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    const { protectionEnabled, processingProtection } = dashboard;
-
-    const {
-        processingStats,
-        processingGetConfig,
-        numDnsQueries,
-        numBlockedFiltering,
-        numReplacedSafebrowsing,
-        numReplacedParental,
-        numReplacedSafesearch,
-        avgProcessingTime,
-        dnsQueries,
-        blockedFiltering,
-        replacedSafebrowsing,
-        replacedParental,
-        topQueriedDomains,
-        topBlockedDomains,
-        topClients,
-        topUpstreamsResponses,
-        topUpstreamsAvgTime,
-    } = stats;
+    createEffect(() => {
+        const period = selectedPeriod();
+        getStats(period);
+        getStatsConfig();
+        getClients();
+        getAccessList();
+    });
 
     const handleRefreshStats = () => {
-        dispatch(getStats(selectedPeriod));
-        dispatch(getStatsConfig());
-        dispatch(getClients());
-        dispatch(getAccessList());
+        getStats(selectedPeriod());
+        getStatsConfig();
+        getClients();
+        getAccessList();
     };
 
-    const handleToggleProtection = useCallback(
-        (enabled: boolean, duration?: number) => {
-            if (!enabled && timerRef.current) {
-                clearInterval(timerRef.current);
-                timerRef.current = null;
-                setRemainingTime(null);
-            }
-            dispatch(toggleProtection(enabled, duration));
-        },
-        [dispatch],
-    );
+    const handleToggleProtection = (enabled: boolean, duration?: number) => {
+        if (!enabled && timerRef) {
+            clearInterval(timerRef);
+            timerRef = null;
+            setRemainingTime(null);
+        }
+        toggleProtection(enabled ? duration : null);
+    };
 
     const handlePeriodChange = (period: number) => {
         setSelectedPeriod(period);
     };
 
-    const isLoading = processingStats || processingGetConfig || access?.processing;
+    const isLoading = () =>
+        statsState.processingStats || statsState.processingGetConfig || accessState.processing;
 
     return (
-        <div className={theme.layout.container}>
-            <div className={theme.layout.containerIn}>
+        <div class={theme.layout.container}>
+            <div class={theme.layout.containerIn}>
                 <Header
-                    protectionEnabled={!!protectionEnabled}
-                    processingProtection={processingProtection}
-                    remainingTime={remainingTime}
-                    selectedPeriod={selectedPeriod}
-                    periodOptions={periodOptions}
-                    isLoading={isLoading}
+                    protectionEnabled={!!dashboardState.protectionEnabled}
+                    processingProtection={dashboardState.processingProtection}
+                    remainingTime={remainingTime()}
+                    selectedPeriod={selectedPeriod()}
+                    periodOptions={periodOptions()}
+                    isLoading={isLoading()}
                     onToggleProtection={handleToggleProtection}
                     onRefreshStats={handleRefreshStats}
                     onPeriodChange={handlePeriodChange}
                 />
 
-                {isLoading ? (
-                    <div className={s.loader}>
-                        <PageLoader />
-                    </div>
-                ) : (
-                    <>
-                        <StatCards
-                            numDnsQueries={numDnsQueries}
-                            numBlockedFiltering={numBlockedFiltering}
-                            numReplacedSafebrowsing={numReplacedSafebrowsing}
-                            numReplacedParental={numReplacedParental}
-                            dnsQueries={dnsQueries}
-                            blockedFiltering={blockedFiltering}
-                            replacedSafebrowsing={replacedSafebrowsing}
-                            replacedParental={replacedParental}
-                        />
+                <Show
+                    when={!isLoading()}
+                    fallback={
+                        <div class={s.loader}>
+                            <PageLoader />
+                        </div>
+                    }
+                >
+                    <StatCards
+                        numDnsQueries={statsState.numDnsQueries}
+                        numBlockedFiltering={statsState.numBlockedFiltering}
+                        numReplacedSafebrowsing={statsState.numReplacedSafebrowsing}
+                        numReplacedParental={statsState.numReplacedParental}
+                        dnsQueries={statsState.dnsQueries}
+                        blockedFiltering={statsState.blockedFiltering}
+                        replacedSafebrowsing={statsState.replacedSafebrowsing}
+                        replacedParental={statsState.replacedParental}
+                    />
 
-                        <div className={s.statContainer}>
+                    <Show
+                        when={statsState.enabled}
+                        fallback={<EmptyState mode="disabled" class={s.emptyState} />}
+                    >
+                        <div class={s.statContainer}>
                             <GeneralStatistics
-                                numDnsQueries={numDnsQueries}
-                                numBlockedFiltering={numBlockedFiltering}
-                                numReplacedSafebrowsing={numReplacedSafebrowsing}
-                                numReplacedParental={numReplacedParental}
-                                numReplacedSafesearch={numReplacedSafesearch}
-                                avgProcessingTime={avgProcessingTime}
+                                numDnsQueries={statsState.numDnsQueries}
+                                numBlockedFiltering={statsState.numBlockedFiltering}
+                                numReplacedSafebrowsing={statsState.numReplacedSafebrowsing}
+                                numReplacedParental={statsState.numReplacedParental}
+                                numReplacedSafesearch={statsState.numReplacedSafesearch}
+                                avgProcessingTime={statsState.avgProcessingTime}
                             />
 
-                            <TopClients topClients={topClients} numDnsQueries={numDnsQueries} />
+                            <TopClients
+                                topClients={statsState.topClients}
+                                numDnsQueries={statsState.numDnsQueries}
+                            />
 
                             <TopQueriedDomains
-                                topQueriedDomains={topQueriedDomains}
-                                numDnsQueries={numDnsQueries}
+                                topQueriedDomains={statsState.topQueriedDomains}
+                                numDnsQueries={statsState.numDnsQueries}
                             />
 
                             <TopBlockedDomains
-                                topBlockedDomains={topBlockedDomains}
-                                numBlockedFiltering={numBlockedFiltering}
+                                topBlockedDomains={statsState.topBlockedDomains}
+                                numBlockedFiltering={statsState.numBlockedFiltering}
                             />
 
                             <TopUpstreams
-                                topUpstreamsResponses={topUpstreamsResponses}
-                                numDnsQueries={numDnsQueries}
+                                topUpstreamsResponses={statsState.topUpstreamsResponses}
+                                numDnsQueries={statsState.numDnsQueries}
                             />
 
                             <UpstreamAvgTime
-                                topUpstreamsAvgTime={topUpstreamsAvgTime}
-                                avgProcessingTime={avgProcessingTime}
+                                topUpstreamsAvgTime={statsState.topUpstreamsAvgTime}
+                                avgProcessingTime={statsState.avgProcessingTime}
                             />
                         </div>
-                    </>
-                )}
+                    </Show>
+                </Show>
             </div>
         </div>
     );

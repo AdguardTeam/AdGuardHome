@@ -1,15 +1,15 @@
-import React, { useMemo, useState } from 'react';
+import { createSignal, createMemo } from 'solid-js';
 import cn from 'clsx';
 
 import intl from 'panel/common/intl';
 import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from 'panel/helpers/localStorageHelper';
-import { Table as ReactTable, TableColumn } from 'panel/common/ui/Table';
+import { Table, type TableColumn } from 'panel/common/ui/Table';
 import { Icon } from 'panel/common/ui/Icon';
 import { SortSelect } from 'panel/common/ui/SortSelect';
 import theme from 'panel/lib/theme';
 import { Switch } from 'panel/common/controls/Switch';
 
-import { Rewrite } from '../../DNSRewrites';
+import type { Rewrite } from '../../DNSRewrites';
 import s from '../ListsTable/ListsTable.module.pcss';
 
 type Props = {
@@ -18,187 +18,151 @@ type Props = {
     processingAdd: boolean;
     processingDelete: boolean;
     processingUpdate: boolean;
-    processingSettings: boolean;
-    enabled: boolean;
     addRewritesList: () => void;
     deleteRewrite: (rewrite: Rewrite) => void;
     editRewrite: (rewrite: Rewrite) => void;
     toggleRewrite: (rewrite: Rewrite) => void;
-    toggleAllRewrites: (enabled: boolean) => void;
 };
 
-export const RewritesTable = ({
-    list,
-    processing,
-    processingAdd,
-    processingDelete,
-    processingUpdate,
-    processingSettings,
-    enabled,
-    addRewritesList,
-    deleteRewrite,
-    editRewrite,
-    toggleRewrite,
-    toggleAllRewrites,
-}: Props) => {
-    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+export const RewritesTable = (props: Props) => {
+    const [sortDirection, setSortDirection] = createSignal<'asc' | 'desc'>('asc');
 
-    const pageSize = useMemo(
+    const pageSize = createMemo(
         () => LocalStorageHelper.getItem(LOCAL_STORAGE_KEYS.BLOCKLIST_PAGE_SIZE) || undefined,
-        [],
     );
 
-    const sortedList = useMemo(() => {
-        const items = [...(list || [])];
+    const sortedList = createMemo(() => {
+        const items = [...(props.list || [])];
 
+        const direction = sortDirection();
         items.sort((a, b) => {
             const aDomain = a.domain.toLowerCase();
             const bDomain = b.domain.toLowerCase();
 
             if (aDomain < bDomain) {
-                return sortDirection === 'asc' ? -1 : 1;
+                return direction === 'asc' ? -1 : 1;
             }
 
             if (aDomain > bDomain) {
-                return sortDirection === 'asc' ? 1 : -1;
+                return direction === 'asc' ? 1 : -1;
             }
 
             return 0;
         });
 
         return items;
-    }, [list, sortDirection]);
+    });
 
-    const columns: TableColumn<Rewrite>[] = useMemo(
-        () => [
-            {
-                key: 'enabled',
-                header: {
-                    text: '',
-                    className: s.headerCell,
-                    render: () => (
-                        <Switch
-                            id="rewrite_global_enabled"
-                            data-testid="rewrite-global-toggle"
-                            checked={enabled}
-                            onChange={() => toggleAllRewrites(!enabled)}
-                            disabled={processingSettings}
-                        />
-                    ),
-                },
-                accessor: 'enabled',
-                sortable: false,
-                fitContent: true,
-                className: s.cellNameToggleOuter,
-                render: (value: boolean, row: Rewrite) => {
-                    const { domain, enabled } = row;
-                    const id = `rewrite_${domain}`;
+    const handleEdit = (rewrite: Rewrite) => {
+        props.editRewrite(rewrite);
+    };
 
-                    return (
-                        <div className={s.cell}>
-                            <span className={s.cellNameLabel}>{domain}</span>
+    const handleDelete = (rewrite: Rewrite) => {
+        props.deleteRewrite(rewrite);
+    };
 
-                            <div className={s.cellValueToggle}>
-                                <Switch
-                                    id={id}
-                                    data-testid={`rewrite-toggle-${domain}`}
-                                    checked={enabled}
-                                    onChange={() => toggleRewrite(row)}
-                                    disabled={processingUpdate}
-                                />
-                            </div>
-                        </div>
-                    );
-                },
+    const columns = createMemo<TableColumn<Rewrite>[]>(() => [
+        {
+            key: 'domain',
+            header: {
+                text: intl.getMessage('domain'),
+                className: s.headerCell,
             },
-            {
-                key: 'domain',
-                header: {
-                    text: intl.getMessage('domain'),
-                    className: s.headerCell,
-                },
-                accessor: 'domain',
-                sortable: true,
-                className: s.nameDesktopOnly,
-                render: (value: string) => (
-                    <div className={s.cell}>
-                        <span className={s.cellLabel}>{intl.getMessage('name_label')}</span>
+            accessor: 'domain',
+            sortable: true,
+            render: (value: string, row: Rewrite) => {
+                const { domain, enabled } = row;
+                const id = `rewrite_${domain}`;
 
-                        <div className={s.cellValue}>
-                            <span className={theme.common.textOverflow}>{value}</span>
+                return (
+                    <div class={theme.table.cell}>
+                        <div class={cn(theme.table.cellValueText, s.domainCellValue)}>
+                            <span class={theme.common.textOverflow}>{value}</span>
+                            <Switch
+                                id={id}
+                                data-testid={`rewrite-toggle-${domain}`}
+                                checked={enabled}
+                                onChange={() => props.toggleRewrite(row)}
+                                disabled={props.processingUpdate}
+                            />
                         </div>
                     </div>
-                ),
+                );
             },
-
-            {
-                key: 'answer',
-                header: {
-                    text: intl.getMessage('result'),
-                    className: s.headerCell,
-                },
-                accessor: 'answer',
-                sortable: true,
-                render: (value: string) => (
-                    <div className={s.cell}>
-                        <span className={s.cellLabel}>{intl.getMessage('result')}</span>
-
-                        <div className={s.cellValue}>
-                            <span className={theme.common.textOverflow}>{value}</span>
-                        </div>
+        },
+        {
+            key: 'answer',
+            header: {
+                text: intl.getMessage('result'),
+                className: s.headerCell,
+            },
+            accessor: 'answer',
+            sortable: true,
+            render: (value: string) => (
+                <div class={theme.table.cell}>
+                    <div class={theme.table.cellValueText}>
+                        <span class={theme.common.textOverflow}>{value}</span>
                     </div>
-                ),
+                </div>
+            ),
+        },
+        {
+            key: 'actions',
+            header: {
+                text: '',
+                className: s.headerCell,
             },
-            {
-                key: 'actions',
-                header: {
-                    text: '',
-                    className: s.headerCell,
-                },
-                sortable: false,
-                width: 80,
-                render: (value: any, row: Rewrite) => {
-                    const currentRewrite = {
-                        answer: row.answer,
-                        domain: row.domain,
-                        enabled: row.enabled,
-                    };
+            sortable: false,
+            width: 80,
+            render: (value: any, row: Rewrite) => {
+                const currentRewrite = {
+                    answer: row.answer,
+                    domain: row.domain,
+                    enabled: row.enabled,
+                };
 
-                    return (
-                        <div className={s.cell}>
-                            <div className={s.cellActions}>
+                return (
+                    <div class={theme.table.cell}>
+                        <div class={theme.table.cellValue}>
+                            <div class={theme.table.cellActions}>
                                 <button
                                     type="button"
-                                    onClick={() => editRewrite(currentRewrite)}
-                                    disabled={processingUpdate}
-                                    className={s.editAction}
+                                    onClick={() => handleEdit(currentRewrite)}
+                                    disabled={props.processingUpdate}
+                                    class={theme.table.action}
+                                    title={intl.getMessage('edit_table_action')}
+                                    aria-label={intl.getMessage('edit_table_action')}
                                     data-testid={`edit-rewrite-${row.domain}`}
+                                    data-table-action
                                 >
-                                    <span className={cn(s.editActionLabel, theme.text.t2)}>
+                                    <Icon icon="edit" color="gray" />
+                                    <span class={theme.table.actionLabel}>
                                         {intl.getMessage('edit_table_action')}
                                     </span>
-                                    <span className={s.editActionIcon}>
-                                        <Icon icon="edit" color="gray" />
-                                    </span>
                                 </button>
 
                                 <button
                                     type="button"
-                                    onClick={() => deleteRewrite(currentRewrite)}
-                                    disabled={processingDelete}
-                                    className={s.action}
+                                    onClick={() => handleDelete(currentRewrite)}
+                                    disabled={props.processingDelete}
+                                    class={cn(theme.table.action, theme.table.action_danger)}
+                                    title={intl.getMessage('delete_table_action')}
+                                    aria-label={intl.getMessage('delete_table_action')}
                                     data-testid={`delete-rewrite-${row.domain}`}
+                                    data-table-action
                                 >
                                     <Icon icon="delete" color="red" />
+                                    <span class={theme.table.actionLabel}>
+                                        {intl.getMessage('delete_table_action')}
+                                    </span>
                                 </button>
                             </div>
                         </div>
-                    );
-                },
+                    </div>
+                );
             },
-        ],
-        [processingDelete, processingUpdate, processingSettings, enabled, toggleAllRewrites],
-    );
+        },
+    ]);
 
     const handlePageSizeChange = (newSize: number) => {
         LocalStorageHelper.setItem(LOCAL_STORAGE_KEYS.BLOCKLIST_PAGE_SIZE, newSize);
@@ -206,16 +170,16 @@ export const RewritesTable = ({
 
     const emptyTableContent = () => {
         return (
-            <div className={s.emptyTableContent}>
-                <Icon icon="not_found_search" color="gray" className={s.emptyTableIcon} />
+            <div class={s.emptyTableContent}>
+                <Icon icon="not_found_search" color="gray" class={s.emptyTableIcon} />
 
-                <div className={cn(theme.text.t3, s.emptyTableDesc)}>
+                <div class={cn(theme.text.t3, s.emptyTableDesc)}>
                     {intl.getMessage('rewrites_empty', {
                         button: (text: string) => (
                             <button
-                                className={cn(theme.text.t3, theme.link.link)}
+                                class={cn(theme.text.t3, theme.link.link)}
                                 type="button"
-                                onClick={addRewritesList}
+                                onClick={() => props.addRewritesList()}
                             >
                                 {text}
                             </button>
@@ -229,34 +193,22 @@ export const RewritesTable = ({
     return (
         <>
             <div
-                className={cn(
+                class={cn(
                     theme.pagination.wrapper,
                     s.sortDropdownMobile,
                     s.sortDropdownMobileRewrites,
                 )}
             >
-                <SortSelect value={sortDirection} onChange={setSortDirection} />
+                <SortSelect value={sortDirection()} onChange={setSortDirection} />
             </div>
 
-            <div className={s.allDomainsMobile}>
-                {intl.getMessage('all_domains')}
-
-                <Switch
-                    id="rewrite_global_enabled_mobile"
-                    data-testid="rewrite-global-toggle-mobile"
-                    checked={enabled}
-                    onChange={() => toggleAllRewrites(!enabled)}
-                    disabled={processingSettings}
-                />
-            </div>
-
-            <ReactTable<Rewrite>
-                data={sortedList}
-                className={s.tableRewrites}
-                columns={columns}
+            <Table<Rewrite>
+                data={sortedList()}
+                class={s.tableRewrites}
+                columns={columns()}
                 emptyTable={emptyTableContent()}
-                loading={processing || processingAdd || processingDelete}
-                pageSize={pageSize}
+                loading={props.processing || props.processingAdd || props.processingDelete}
+                pageSize={pageSize()}
                 onPageSizeChange={handlePageSizeChange}
             />
         </>

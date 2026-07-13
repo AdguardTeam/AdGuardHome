@@ -1,65 +1,69 @@
-import * as React from 'react';
-import { useState, useCallback, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
+import { createSignal, createEffect, onCleanup } from 'solid-js';
 import cn from 'clsx';
 import copy from 'copy-to-clipboard';
 import intl from 'panel/common/intl';
-import { addSuccessToast } from 'panel/actions/toasts';
+import { addSuccessToast } from 'panel/stores/toasts';
 import { Icon } from '../Icon';
 
 import s from './CopiedText.module.pcss';
 
 export type CopiedTextProps = {
     text: string;
-    className?: string;
+    class?: string;
     onCopy?: (text: string) => void;
 };
 
-export const CopiedText = ({ text, className, onCopy }: CopiedTextProps) => {
-    const dispatch = useDispatch();
-    const [isCopied, setIsCopied] = useState(false);
+export const CopiedText = (props: CopiedTextProps) => {
+    const [isCopied, setIsCopied] = createSignal(false);
+    let timer: ReturnType<typeof setTimeout> | undefined;
 
-    const handleCopy = useCallback(async () => {
+    const handleCopy = async () => {
         try {
-            const ok = copy(text);
+            const ok = copy(props.text);
 
             if (!ok) {
                 throw new Error('Failed to copy text');
             }
 
             setIsCopied(true);
-            dispatch(addSuccessToast(intl.getMessage('copied')));
-            onCopy?.(text);
+            addSuccessToast(intl.getMessage('copied'));
+            props.onCopy?.(props.text);
         } catch (error) {
             console.error('Failed to copy text:', error);
         }
-    }, [dispatch, text, onCopy]);
+    };
 
-    useEffect(() => {
-        let timer: NodeJS.Timeout;
-
-        if (isCopied) {
+    const resetTimer = () => {
+        if (timer) {
+            clearTimeout(timer);
+        }
+        if (isCopied()) {
             timer = setTimeout(() => {
                 setIsCopied(false);
             }, 2000);
         }
+    };
 
-        return () => {
-            if (timer) {
-                clearTimeout(timer);
-            }
-        };
-    }, [isCopied]);
+    // Reset timer when isCopied changes
+    createEffect(() => {
+        if (isCopied()) resetTimer();
+    });
+
+    onCleanup(() => {
+        if (timer) {
+            clearTimeout(timer);
+        }
+    });
 
     return (
         <div
-            className={cn(s.container, className)}
+            class={cn(s.container, props.class)}
             onClick={handleCopy}
             role="button"
-            aria-label={isCopied ? intl.getMessage('copied') : intl.getMessage('copy')}
+            aria-label={isCopied() ? intl.getMessage('copied') : intl.getMessage('copy')}
         >
-            <span className={s.text}>{text}</span>
-            <Icon icon="copy" className={cn(s.icon, { [s.copied]: isCopied })} />
+            <span class={s.text}>{props.text}</span>
+            <Icon icon="copy" class={cn(s.icon, { [s.copied]: isCopied() })} />
         </div>
     );
 };

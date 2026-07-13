@@ -1,4 +1,4 @@
-import React from 'react';
+import { Show, For } from 'solid-js';
 import cn from 'clsx';
 
 import intl from 'panel/common/intl';
@@ -57,205 +57,199 @@ const formatResponses = (responses: ResponseEntry[] = []) =>
         })
         .filter(Boolean);
 
-const hasValue = (value: React.ReactNode) =>
+const hasValue = (value: any) =>
     value !== undefined && value !== null && value !== '' && value !== false;
 
-export const DetailModal = ({
-    entry,
-    filters,
-    services,
-    whitelistFilters,
-    onClose,
-    onBlock,
-    onAddToAllowlist,
-    onAllowService,
-}: Props) => {
-    const statusKey = getQueryStatusKey(entry.reason, entry.originalResponse ?? []);
-    const reasonKey = getQueryReasonKey(entry.reason, entry.rules ?? []);
-    const isBlocked = isBlockedReason(entry.reason);
-    const isBlockedService = checkBlockedService(entry.reason);
-    const isSafeSearch = entry.reason === FILTERED_STATUS.FILTERED_SAFE_SEARCH;
-    const isRewrite =
-        entry.reason === FILTERED_STATUS.REWRITE ||
-        entry.reason === FILTERED_STATUS.REWRITE_HOSTS ||
-        entry.reason === FILTERED_STATUS.REWRITE_RULE;
-    const showBlock = !isBlocked && !isRewrite && !isSafeSearch;
-    const showAllowlist = isBlocked || isSafeSearch;
-    const reasonDetails = getQueryReasonDetails({
-        elapsedMs: entry.elapsedMs,
-        filters,
-        reason: entry.reason,
-        rules: entry.rules ?? [],
-        serviceName: entry.service_name || entry.serviceName,
-        services,
-        whitelistFilters,
-    });
-    const statusClassName = getStatusClassName(entry.reason);
-    const clientName = entry.client_info?.name || '';
-    const protocol = getProtocolName(entry.client_proto);
-    const responseList = formatResponses(entry.response);
-    const originalResponseList = formatResponses(entry.originalResponse);
-    const trackerSource = entry.tracker?.sourceData;
-    const country = entry.client_info?.whois?.country;
-    const network = entry.client_info?.whois?.orgname;
-    const serviceId = entry.serviceName || entry.service_name;
-    const serviceName = serviceId ? getServiceName(services, serviceId) || serviceId : '';
-    const reasonValue = reasonDetails
-        ? `${getQueryReasonLabel(reasonKey)} / ${reasonDetails}`
-        : getQueryReasonLabel(reasonKey);
-    const rowClassName = cn(s.row, theme.text.t3);
-    const labelClassName = cn(s.label, theme.text.semibold);
-    const renderValue = (content: React.ReactNode) => <span className={s.value}>{content}</span>;
-    const renderListValue = (content: React.ReactNode) => (
-        <div className={cn(s.value, s.responseList)}>{content}</div>
+export const DetailModal = (props: Props) => {
+    const statusKey = () =>
+        getQueryStatusKey(props.entry.reason, props.entry.originalResponse ?? []);
+    const reasonKey = () => getQueryReasonKey(props.entry.reason, props.entry.rules ?? []);
+    const isBlocked = () => isBlockedReason(props.entry.reason);
+    const isBlockedService = () => checkBlockedService(props.entry.reason);
+    const isSafeSearch = () => props.entry.reason === FILTERED_STATUS.FILTERED_SAFE_SEARCH;
+    const isRewrite = () =>
+        props.entry.reason === FILTERED_STATUS.REWRITE ||
+        props.entry.reason === FILTERED_STATUS.REWRITE_HOSTS ||
+        props.entry.reason === FILTERED_STATUS.REWRITE_RULE;
+    const showBlock = () => !isBlocked() && !isRewrite() && !isSafeSearch();
+    const showAllowlist = () => isBlocked() || isSafeSearch();
+    const reasonDetails = () =>
+        getQueryReasonDetails({
+            elapsedMs: props.entry.elapsedMs,
+            filters: props.filters,
+            reason: props.entry.reason,
+            rules: props.entry.rules ?? [],
+            serviceName: props.entry.service_name || props.entry.serviceName,
+            services: props.services,
+            whitelistFilters: props.whitelistFilters,
+        });
+    const statusClassName = () => getStatusClassName(props.entry.reason);
+    const clientName = () => props.entry.client_info?.name || '';
+    const protocol = () => getProtocolName(props.entry.client_proto);
+    const responseList = () => formatResponses(props.entry.response);
+    const originalResponseList = () => formatResponses(props.entry.originalResponse);
+    const trackerSource = () => props.entry.tracker?.sourceData;
+    const country = () => props.entry.client_info?.whois?.country;
+    const network = () => props.entry.client_info?.whois?.orgname;
+    const serviceId = () => props.entry.serviceName || props.entry.service_name;
+    const serviceName = () =>
+        serviceId() ? getServiceName(props.services, serviceId()!) || serviceId() : '';
+    const reasonValue = () =>
+        reasonDetails()
+            ? `${getQueryReasonLabel(reasonKey())} / ${reasonDetails()}`
+            : getQueryReasonLabel(reasonKey());
+    const rowClassName = () => cn(s.row, theme.text.t3);
+    const labelClassName = () => cn(s.label, theme.text.semibold);
+    const renderValue = (content: any) => <span class={s.value}>{content}</span>;
+    const renderListValue = (content: any) => (
+        <div class={cn(s.value, s.responseList)}>{content}</div>
     );
-    const renderStatusValue = (content: React.ReactNode) => (
-        <span className={cn(s.value, s.statusValue, theme.text.semibold, statusClassName)}>
+    const renderStatusValue = (content: any) => (
+        <span class={cn(s.value, s.statusValue, theme.text.semibold, statusClassName())}>
             {content}
         </span>
     );
 
     const handleBlock = () => {
-        onBlock(entry.domain);
-        onClose();
+        props.onBlock(props.entry.domain);
+        props.onClose();
     };
 
     const handleAddToAllowlist = () => {
-        onAddToAllowlist(entry.domain);
-        onClose();
+        props.onAddToAllowlist(props.entry.domain);
+        props.onClose();
     };
 
     const handleAllowService = () => {
-        if (!serviceId) {
+        if (!serviceId()) {
             return;
         }
-
-        onAllowService(serviceId);
-        onClose();
+        props.onAllowService(serviceId()!);
+        props.onClose();
     };
 
     return (
         <Dialog
             visible
-            onClose={onClose}
+            onClose={props.onClose}
             title={
                 <span data-testid="query-log-detail-title">{intl.getMessage('query_details')}</span>
             }
-            className={s.dialog}
-            wrapClassName={s.wrap}
+            class={s.dialog}
+            wrapClass={s.wrap}
         >
-            <div className={s.content} data-testid="query-log-detail-modal">
-                <div className={s.scrollArea} data-testid="query-log-detail-scroll-area">
-                    <div className={s.section}>
-                        {entry.answer_dnssec && (
-                            <div className={cn(s.row, theme.text.t3, theme.text.semibold)}>
+            <div class={s.content} data-testid="query-log-detail-modal">
+                <div class={s.scrollArea} data-testid="query-log-detail-scroll-area">
+                    <div class={s.section}>
+                        <Show when={props.entry.answer_dnssec}>
+                            <div class={cn(s.row, theme.text.t3, theme.text.semibold)}>
                                 {intl.getMessage('validated_with_dnssec')}
                             </div>
-                        )}
+                        </Show>
                         <div
-                            className={rowClassName}
+                            class={rowClassName()}
                             data-testid="query-log-detail-time"
                             data-field="time"
                         >
                             {intl.getMessage('query_log_detail_time', {
-                                value: formatLogTimeDetailed(entry.time),
+                                value: formatLogTimeDetailed(props.entry.time),
                                 span: renderValue,
                             })}
                         </div>
                         <div
-                            className={rowClassName}
+                            class={rowClassName()}
                             data-testid="query-log-detail-date"
                             data-field="date"
                         >
                             {intl.getMessage('query_log_detail_date', {
-                                value: formatLogDate(entry.time),
+                                value: formatLogDate(props.entry.time),
                                 span: renderValue,
                             })}
                         </div>
                         <div
-                            className={rowClassName}
+                            class={rowClassName()}
                             data-testid="query-log-detail-domain"
                             data-field="domain"
                         >
                             {intl.getMessage('query_log_detail_domain', {
-                                value: entry.unicodeName || entry.domain,
+                                value: props.entry.unicodeName || props.entry.domain,
                                 span: renderValue,
                             })}
                         </div>
-                        {hasValue(entry.ecs) && (
+                        <Show when={hasValue(props.entry.ecs)}>
                             <div
-                                className={rowClassName}
+                                class={rowClassName()}
                                 data-testid="query-log-detail-ecs"
                                 data-field="ecs"
                             >
                                 {intl.getMessage('query_log_detail_ecs', {
-                                    value: entry.ecs,
+                                    value: props.entry.ecs,
                                     span: renderValue,
                                 })}
                             </div>
-                        )}
+                        </Show>
                         <div
-                            className={rowClassName}
+                            class={rowClassName()}
                             data-testid="query-log-detail-type"
                             data-field="type"
                         >
                             {intl.getMessage('query_log_detail_type', {
-                                value: entry.type,
+                                value: props.entry.type,
                                 span: renderValue,
                             })}
                         </div>
                         <div
-                            className={rowClassName}
+                            class={rowClassName()}
                             data-testid="query-log-detail-protocol"
                             data-field="protocol"
                         >
                             {intl.getMessage('query_log_detail_protocol', {
-                                value: protocol,
+                                value: protocol(),
                                 span: renderValue,
                             })}
                         </div>
                     </div>
 
-                    {entry.tracker && (
-                        <div className={s.section}>
-                            <h3 className={cn(s.sectionTitle, theme.title.h6)}>
+                    <Show when={props.entry.tracker}>
+                        <div class={s.section}>
+                            <h3 class={cn(s.sectionTitle, theme.title.h6)}>
                                 {intl.getMessage('known_tracker')}
                             </h3>
                             <div
-                                className={rowClassName}
+                                class={rowClassName()}
                                 data-testid="query-log-detail-tracker-name"
                                 data-field="tracker-name"
                             >
                                 {intl.getMessage('query_log_detail_name', {
-                                    value: entry.tracker.name,
+                                    value: props.entry.tracker!.name,
                                     span: renderValue,
                                 })}
                             </div>
                             <div
-                                className={rowClassName}
+                                class={rowClassName()}
                                 data-testid="query-log-detail-tracker-category"
                                 data-field="tracker-category"
                             >
                                 {intl.getMessage('query_log_detail_category', {
-                                    value: entry.tracker.category,
+                                    value: props.entry.tracker!.category,
                                     span: renderValue,
                                 })}
                             </div>
-                            {trackerSource?.name && (
+                            <Show when={trackerSource()?.name}>
                                 <div
-                                    className={rowClassName}
+                                    class={rowClassName()}
                                     data-testid="query-log-detail-tracker-source"
                                     data-field="tracker-source"
                                 >
                                     {intl.getMessage('query_log_detail_source', {
-                                        value: trackerSource.name,
-                                        span: (content: React.ReactNode) =>
-                                            trackerSource.url ? (
+                                        value: trackerSource()!.name,
+                                        span: (content: any) =>
+                                            trackerSource()!.url ? (
                                                 <a
-                                                    href={trackerSource.url}
+                                                    href={trackerSource()!.url}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className={cn(s.link, s.value)}
+                                                    class={cn(s.link, s.value)}
                                                 >
                                                     {content}
                                                 </a>
@@ -264,271 +258,264 @@ export const DetailModal = ({
                                             ),
                                     })}
                                 </div>
-                            )}
+                            </Show>
                         </div>
-                    )}
+                    </Show>
 
-                    <div className={s.section}>
-                        <h3 className={cn(s.sectionTitle, theme.title.h6)}>
+                    <div class={s.section}>
+                        <h3 class={cn(s.sectionTitle, theme.title.h6)}>
                             {intl.getMessage('response_details')}
                         </h3>
                         <div
-                            className={rowClassName}
+                            class={rowClassName()}
                             data-testid="query-log-detail-status"
                             data-field="status"
                         >
                             {intl.getMessage('query_log_detail_status', {
-                                value: getQueryStatusLabel(statusKey),
+                                value: getQueryStatusLabel(statusKey()),
                                 span: renderStatusValue,
                             })}
                         </div>
-                        {reasonKey !== 'none' && (
+                        <Show when={reasonKey() !== 'none'}>
                             <div
-                                className={rowClassName}
+                                class={rowClassName()}
                                 data-testid="query-log-detail-reason"
                                 data-field="reason"
                             >
-                                <span className={labelClassName}>
+                                <span class={labelClassName()}>
                                     {intl.getMessage('query_log_detail_reason')}
                                 </span>{' '}
-                                {renderValue(reasonValue)}
+                                {renderValue(reasonValue())}
                             </div>
-                        )}
+                        </Show>
                         <div
-                            className={rowClassName}
+                            class={rowClassName()}
                             data-testid="query-log-detail-cached"
                             data-field="cached"
                         >
                             {intl.getMessage('query_log_detail_served_from_cache', {
-                                value: entry.cached
+                                value: props.entry.cached
                                     ? intl.getMessage('yes')
                                     : intl.getMessage('no'),
                                 span: renderValue,
                             })}
                         </div>
-                        {hasValue(entry.upstream) && (
+                        <Show when={hasValue(props.entry.upstream)}>
                             <div
-                                className={rowClassName}
+                                class={rowClassName()}
                                 data-testid="query-log-detail-dns-server"
                                 data-field="dns-server"
                             >
                                 {intl.getMessage('query_log_detail_dns_server', {
-                                    value: entry.upstream,
+                                    value: props.entry.upstream,
                                     span: renderValue,
                                 })}
                             </div>
-                        )}
-                        {hasValue(entry.elapsedMs) && (
+                        </Show>
+                        <Show when={hasValue(props.entry.elapsedMs)}>
                             <div
-                                className={rowClassName}
+                                class={rowClassName()}
                                 data-testid="query-log-detail-elapsed"
                                 data-field="elapsed"
                             >
                                 {intl.getMessage('query_log_detail_elapsed', {
                                     value: formatElapsedMs(
-                                        entry.elapsedMs,
+                                        props.entry.elapsedMs,
                                         intl.getMessage('milliseconds_abbreviation'),
                                     ),
                                     span: renderValue,
                                 })}
                             </div>
-                        )}
-                        {hasValue(entry.status) && (
+                        </Show>
+                        <Show when={hasValue(props.entry.status)}>
                             <div
-                                className={rowClassName}
+                                class={rowClassName()}
                                 data-testid="query-log-detail-response-code"
                                 data-field="response-code"
                             >
                                 {intl.getMessage('query_log_detail_response_code', {
-                                    value: entry.status,
+                                    value: props.entry.status,
                                     span: renderValue,
                                 })}
                             </div>
-                        )}
-                        {responseList.length > 0 && (
+                        </Show>
+                        <Show when={responseList().length > 0}>
                             <div
-                                className={rowClassName}
+                                class={rowClassName()}
                                 data-testid="query-log-detail-response"
                                 data-field="response"
                             >
-                                <span className={labelClassName}>
+                                <span class={labelClassName()}>
                                     {intl.getMessage('query_log_detail_response')}
                                 </span>{' '}
                                 {renderListValue(
-                                    responseList.map((response, index) => (
-                                        <div key={index} className={theme.text.t3}>
-                                            {response}
-                                        </div>
-                                    )),
+                                    <For each={responseList()}>
+                                        {(response) => <div class={theme.text.t3}>{response}</div>}
+                                    </For>,
                                 )}
                             </div>
-                        )}
-                        {hasValue(serviceName) && (
+                        </Show>
+                        <Show when={hasValue(serviceName())}>
                             <div
-                                className={rowClassName}
+                                class={rowClassName()}
                                 data-testid="query-log-detail-service-name"
                                 data-field="service-name"
                             >
                                 {intl.getMessage('query_log_detail_service_name', {
-                                    value: serviceName,
+                                    value: serviceName(),
                                     span: renderValue,
                                 })}
                             </div>
-                        )}
-                        {(entry.rules?.length || hasValue(entry.rule)) && (
+                        </Show>
+                        <Show when={props.entry.rules?.length || hasValue(props.entry.rule)}>
                             <div
-                                className={rowClassName}
+                                class={rowClassName()}
                                 data-testid="query-log-detail-rules"
                                 data-field="rules"
                             >
-                                <span className={labelClassName}>
+                                <span class={labelClassName()}>
                                     {intl.getMessage('query_log_detail_rules')}
                                 </span>{' '}
-                                {entry.rules?.length
+                                {props.entry.rules?.length
                                     ? renderListValue(
-                                          entry.rules.map((rule, index) => (
-                                              <div
-                                                  key={`${rule.text}-${index}`}
-                                                  className={theme.text.t3}
-                                              >
-                                                  {rule.text}
-                                              </div>
-                                          )),
+                                          <For each={props.entry.rules}>
+                                              {(rule) => (
+                                                  <div class={theme.text.t3}>{rule.text}</div>
+                                              )}
+                                          </For>,
                                       )
-                                    : renderValue(entry.rule)}
+                                    : renderValue(props.entry.rule)}
                             </div>
-                        )}
-                        {originalResponseList.length > 0 && (
+                        </Show>
+                        <Show when={originalResponseList().length > 0}>
                             <div
-                                className={rowClassName}
+                                class={rowClassName()}
                                 data-testid="query-log-detail-original-response"
                                 data-field="original-response"
                             >
-                                <span className={labelClassName}>
+                                <span class={labelClassName()}>
                                     {intl.getMessage('query_log_detail_original_response')}
                                 </span>{' '}
                                 {renderListValue(
-                                    originalResponseList.map((response, index) => (
-                                        <div key={index} className={theme.text.t3}>
-                                            {response}
-                                        </div>
-                                    )),
+                                    <For each={originalResponseList()}>
+                                        {(response) => <div class={theme.text.t3}>{response}</div>}
+                                    </For>,
                                 )}
                             </div>
-                        )}
+                        </Show>
                     </div>
 
-                    <div className={s.section}>
-                        <h3 className={cn(s.sectionTitle, theme.title.h6)}>
+                    <div class={s.section}>
+                        <h3 class={cn(s.sectionTitle, theme.title.h6)}>
                             {intl.getMessage('client_details')}
                         </h3>
-                        {hasValue(entry.client) && (
+                        <Show when={hasValue(props.entry.client)}>
                             <div
-                                className={rowClassName}
+                                class={rowClassName()}
                                 data-testid="query-log-detail-client-address"
                                 data-field="client-address"
                             >
                                 {intl.getMessage('query_log_detail_address', {
-                                    value: entry.client,
+                                    value: props.entry.client,
                                     span: renderValue,
                                 })}
                             </div>
-                        )}
-                        {hasValue(clientName || entry.client_id) && (
+                        </Show>
+                        <Show when={hasValue(clientName() || props.entry.client_id)}>
                             <div
-                                className={rowClassName}
+                                class={rowClassName()}
                                 data-testid="query-log-detail-client-name"
                                 data-field="client-name"
                             >
                                 {intl.getMessage('query_log_detail_name', {
-                                    value: clientName || entry.client_id,
+                                    value: clientName() || props.entry.client_id,
                                     span: renderValue,
                                 })}
                             </div>
-                        )}
-                        {hasValue(country) && (
+                        </Show>
+                        <Show when={hasValue(country())}>
                             <div
-                                className={rowClassName}
+                                class={rowClassName()}
                                 data-testid="query-log-detail-client-country"
                                 data-field="client-country"
                             >
                                 {intl.getMessage('query_log_detail_country', {
-                                    value: country,
+                                    value: country(),
                                     span: renderValue,
                                 })}
                             </div>
-                        )}
-                        {hasValue(network) && (
+                        </Show>
+                        <Show when={hasValue(network())}>
                             <div
-                                className={rowClassName}
+                                class={rowClassName()}
                                 data-testid="query-log-detail-client-network"
                                 data-field="client-network"
                             >
                                 {intl.getMessage('query_log_detail_network', {
-                                    value: network,
+                                    value: network(),
                                     span: renderValue,
                                 })}
                             </div>
-                        )}
+                        </Show>
                     </div>
                 </div>
 
-                <div className={s.actionFooter} data-testid="query-log-detail-action-footer">
-                    {showBlock && (
+                <div class={s.actionFooter} data-testid="query-log-detail-action-footer">
+                    <Show when={showBlock()}>
                         <Button
                             data-testid="query-log-detail-action-block"
                             data-action="block"
                             type="button"
                             variant="danger"
                             size="small"
-                            className={s.actionButton}
+                            class={s.actionButton}
                             onClick={handleBlock}
                         >
                             {intl.getMessage('block')}
                         </Button>
-                    )}
+                    </Show>
 
-                    {showAllowlist && (
+                    <Show when={showAllowlist()}>
                         <Button
                             data-testid="query-log-detail-action-allowlist"
                             data-action="allowlist"
                             type="button"
                             variant="primary"
                             size="small"
-                            className={s.actionButton}
+                            class={s.actionButton}
                             onClick={handleAddToAllowlist}
                         >
                             {intl.getMessage('add_to_allowlist')}
                         </Button>
-                    )}
+                    </Show>
 
-                    {isBlockedService && serviceId && (
+                    <Show when={isBlockedService() && serviceId()}>
                         <Button
                             data-testid="query-log-detail-action-allow-service"
                             data-action="allow-service"
                             type="button"
                             variant="secondary"
                             size="small"
-                            className={s.actionButton}
+                            class={s.actionButton}
                             onClick={handleAllowService}
                         >
                             {intl.getMessage('allow_service')}
                         </Button>
-                    )}
+                    </Show>
 
-                    {!showBlock && !showAllowlist && (
+                    <Show when={!showBlock() && !showAllowlist()}>
                         <Button
                             data-testid="query-log-detail-action-close"
                             data-action="close"
                             type="button"
                             variant="primary"
                             size="small"
-                            className={s.actionButton}
-                            onClick={onClose}
+                            class={s.actionButton}
+                            onClick={props.onClose}
                         >
                             {intl.getMessage('close')}
                         </Button>
-                    )}
+                    </Show>
                 </div>
             </div>
         </Dialog>

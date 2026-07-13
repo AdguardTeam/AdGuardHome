@@ -1,8 +1,8 @@
 import intl from 'panel/common/intl';
 
-import { getInterfaceIp } from '../../../helpers/helpers';
-import { ALL_INTERFACES_IP } from '../../../helpers/constants';
-import type { InstallInterface } from '../../../initialState';
+import { getInterfaceIp } from 'panel/helpers/helpers';
+import { ALL_INTERFACES_IP } from 'panel/helpers/constants';
+import type { InstallInterface } from 'panel/initialState';
 
 type SelectOption = {
     value: string;

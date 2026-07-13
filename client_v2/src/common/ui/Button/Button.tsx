@@ -1,48 +1,55 @@
-import React, { ComponentProps, ReactNode } from 'react';
+import { type JSX, splitProps, Show } from 'solid-js';
 import cn from 'clsx';
 
 import s from './Button.module.pcss';
 
-export type ButtonProps = ComponentProps<'button'> & {
-    size?: 'small' | 'medium' | 'big';
+export type ButtonProps = JSX.ButtonHTMLAttributes<HTMLButtonElement> & {
+    size?: 'very-small' | 'small' | 'medium' | 'big';
     variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'secondary-danger';
-    children?: ReactNode;
-    leftAddon?: ReactNode;
-    rightAddon?: ReactNode;
+    leftAddon?: JSX.Element;
+    rightAddon?: JSX.Element;
+    compact?: boolean;
+    className?: string;
 };
 
-export const Button = ({
-    id,
-    size = 'medium',
-    type = 'button',
-    variant = 'primary',
-    children,
-    className,
-    onClick,
-    disabled,
-    leftAddon,
-    rightAddon,
-    ...rest
-}: ButtonProps) => (
-    <button
-        id={id}
-        type={type}
-        className={cn(
-            s.button,
-            s[variant],
-            {
-                [s.height_s]: size === 'small',
-                [s.height_m]: size === 'medium',
-                [s.height_l]: size === 'big',
-            },
-            className,
-        )}
-        onClick={onClick}
-        disabled={disabled}
-        {...rest}
-    >
-        <div className={s.leftAddon}>{leftAddon}</div>
-        {children}
-        <div className={s.rightAddon}>{rightAddon}</div>
-    </button>
-);
+export const Button = (props: ButtonProps) => {
+    const [local, rest] = splitProps(props, [
+        'variant',
+        'size',
+        'class',
+        'className',
+        'children',
+        'disabled',
+        'leftAddon',
+        'rightAddon',
+        'compact',
+    ]);
+
+    return (
+        <button
+            {...rest}
+            type={props.type || 'button'}
+            disabled={local.disabled}
+            class={cn(
+                s.button,
+                s[local.variant || 'primary'],
+                {
+                    [s.height_xs]: local.size === 'very-small',
+                    [s.height_s]: local.size === 'small',
+                    [s.height_m]: local.size === 'medium',
+                    [s.height_l]: local.size === 'big',
+                },
+                local.class,
+                local.className,
+            )}
+        >
+            <Show when={local.leftAddon || !local.compact}>
+                <div class={s.leftAddon}>{local.leftAddon}</div>
+            </Show>
+            {local.children}
+            <Show when={local.rightAddon || !local.compact}>
+                <div class={s.rightAddon}>{local.rightAddon}</div>
+            </Show>
+        </button>
+    );
+};

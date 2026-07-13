@@ -1,9 +1,10 @@
-import React, { useMemo, useState } from 'react';
+import { createSignal, createMemo } from 'solid-js';
 
-import { Filter, formatShortDateTime } from 'panel/helpers/helpers';
+import type { Filter } from 'panel/helpers/helpers';
+import { formatShortDateTime } from 'panel/helpers/helpers';
 import intl from 'panel/common/intl';
 import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from 'panel/helpers/localStorageHelper';
-import { Table as ReactTable, TableColumn } from 'panel/common/ui/Table';
+import { Table, type TableColumn } from 'panel/common/ui/Table';
 import { Switch } from 'panel/common/controls/Switch';
 import { Icon } from 'panel/common/ui/Icon';
 import { SortSelect } from 'panel/common/ui/SortSelect';
@@ -36,217 +37,225 @@ type Props = {
     deleteFilterList: (url: string, name: string) => void;
 };
 
-export const ListsTable = ({
-    tableId,
-    filters,
-    processingConfigFilter,
-    addFilterList,
-    editFilterList,
-    deleteFilterList,
-    toggleFilterList,
-}: Props) => {
-    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+export const ListsTable = (props: Props) => {
+    const [sortDirection, setSortDirection] = createSignal<'asc' | 'desc'>('asc');
 
-    const pageSize = useMemo(
+    const pageSize = createMemo(
         () => LocalStorageHelper.getItem(LOCAL_STORAGE_KEYS.BLOCKLIST_PAGE_SIZE) || undefined,
-        [],
     );
 
-    const sortedFilters = useMemo(() => {
-        const items = [...(filters || [])];
+    const sortedFilters = createMemo(() => {
+        const items = [...(props.filters || [])];
 
+        const direction = sortDirection();
         items.sort((a, b) => {
             const aName = (a.name || '').toLowerCase();
             const bName = (b.name || '').toLowerCase();
 
             if (aName < bName) {
-                return sortDirection === 'asc' ? -1 : 1;
+                return direction === 'asc' ? -1 : 1;
             }
 
             if (aName > bName) {
-                return sortDirection === 'asc' ? 1 : -1;
+                return direction === 'asc' ? 1 : -1;
             }
 
             return 0;
         });
 
         return items;
-    }, [filters, sortDirection]);
+    });
 
-    const columns: TableColumn<Filter>[] = useMemo(
-        () => [
-            {
-                key: 'enabled',
-                header: {
-                    text: '',
-                    className: s.headerCell,
-                },
-                accessor: 'enabled',
-                sortable: false,
-                fitContent: true,
-                className: s.cellNameToggleOuter,
-                render: (value: boolean, row: Filter) => {
-                    const { name, url, enabled } = row;
-                    const id = `filter_${url}`;
+    const handleToggle = (url: string, name: string, enabled: boolean) => {
+        props.toggleFilterList(url, { name, url, enabled: !enabled });
+    };
 
-                    return (
-                        <div className={s.cell}>
-                            <span className={s.cellNameLabel}>{name}</span>
+    const handleEdit = (url: string, name: string, enabled: boolean) => {
+        props.editFilterList(url, name, enabled);
+    };
 
-                            <div className={s.cellValueToggle}>
-                                <Switch
-                                    id={id}
-                                    checked={enabled}
-                                    onChange={() =>
-                                        toggleFilterList(url, { name, url, enabled: !enabled })
-                                    }
-                                    disabled={processingConfigFilter}
-                                />
-                            </div>
-                        </div>
-                    );
-                },
+    const handleDelete = (url: string, name: string) => {
+        props.deleteFilterList(url, name);
+    };
+
+    const columns = createMemo<TableColumn<Filter>[]>(() => [
+        {
+            key: 'enabled',
+            header: {
+                text: '',
+                className: s.headerCell,
             },
-            {
-                key: 'name',
-                header: {
-                    text: intl.getMessage('name_label'),
-                    className: s.headerCell,
-                },
-                accessor: 'name',
-                sortable: true,
-                className: s.nameDesktopOnly,
-                render: (value: string) => (
-                    <div className={s.cell}>
-                        <span className={s.cellLabel}>{intl.getMessage('name_label')}</span>
+            accessor: 'enabled',
+            sortable: false,
+            width: 64,
+            className: s.cellNameToggleOuter,
+            render: (value: boolean, row: Filter) => {
+                const { name, url, enabled } = row;
+                const id = `filter_${url}`;
 
-                        <div className={s.cellValue}>
-                            <span className={theme.common.textOverflow}>{value}</span>
+                return (
+                    <div class={theme.table.cell}>
+                        <span class={s.cellNameLabel}>{name}</span>
+
+                        <div class={s.cellValueToggle}>
+                            <Switch
+                                id={id}
+                                checked={enabled}
+                                onChange={() => handleToggle(url, name, enabled)}
+                                disabled={props.processingConfigFilter}
+                            />
                         </div>
                     </div>
-                ),
+                );
             },
-            {
-                key: 'url',
-                header: {
-                    text: intl.getMessage('url_label'),
-                    className: s.headerCell,
-                },
-                accessor: 'url',
-                sortable: true,
-                render: (value: string) => (
-                    <div className={s.cell}>
-                        <span className={s.cellLabel}>{intl.getMessage('url_label')}</span>
+        },
+        {
+            key: 'name',
+            header: {
+                text: intl.getMessage('name_label'),
+                className: s.headerCell,
+            },
+            accessor: 'name',
+            sortable: true,
+            className: s.nameDesktopOnly,
+            render: (value: string) => (
+                <div class={theme.table.cell}>
+                    <span class={theme.table.cellLabel}>{intl.getMessage('name_label')}</span>
 
-                        <div className={s.cellValue}>
-                            <a
-                                href={value}
-                                className={cn(theme.link.link, theme.common.textOverflow)}
-                                target="_blank"
-                                rel="noopener noreferrer nofollow"
-                            >
-                                {value}
-                            </a>
+                    <div class={theme.table.cellValueText}>
+                        <span class={theme.common.textOverflow}>{value}</span>
+                    </div>
+                </div>
+            ),
+        },
+        {
+            key: 'url',
+            header: {
+                text: intl.getMessage('url_label'),
+                className: s.headerCell,
+            },
+            accessor: 'url',
+            sortable: true,
+            render: (value: string) => (
+                <div class={theme.table.cell}>
+                    <span class={theme.table.cellLabel}>{intl.getMessage('url_label')}</span>
 
-                            <button
-                                type="button"
-                                className={s.copyButton}
-                                onClick={() => navigator.clipboard.writeText(value)}
-                                aria-label={intl.getMessage('copy')}
-                            >
-                                <Icon icon="copy" color="green" />
-                            </button>
+                    <div class={theme.table.cellValueText}>
+                        <a
+                            href={value}
+                            class={cn(theme.link.link, theme.common.textOverflow)}
+                            target="_blank"
+                            rel="noopener noreferrer nofollow"
+                        >
+                            {value}
+                        </a>
+
+                        <button
+                            type="button"
+                            class={s.copyButton}
+                            onClick={() => navigator.clipboard.writeText(value)}
+                            aria-label={intl.getMessage('copy')}
+                        >
+                            <Icon icon="copy" color="green" />
+                        </button>
+                    </div>
+                </div>
+            ),
+        },
+        {
+            key: 'rulesCount',
+            header: {
+                text: intl.getMessage('rules_label'),
+                className: s.headerCell,
+            },
+            accessor: 'rulesCount',
+            sortable: true,
+            render: (value: number) => (
+                <div class={theme.table.cell}>
+                    <span class={theme.table.cellLabel}>{intl.getMessage('rules_label')}</span>
+
+                    <div class={theme.table.cellValueText}>
+                        <span>{value?.toLocaleString() || 0}</span>
+                    </div>
+                </div>
+            ),
+        },
+        {
+            key: 'lastUpdated',
+            header: {
+                text: intl.getMessage('last_updated_label'),
+                className: s.headerCell,
+            },
+            accessor: 'lastUpdated',
+            sortable: true,
+            render: (value: string) => {
+                const result = formatShortDateTime(value);
+
+                return (
+                    <div class={theme.table.cell}>
+                        <span class={theme.table.cellLabel}>
+                            {intl.getMessage('last_updated_label')}
+                        </span>
+
+                        <div class={theme.table.cellValueText}>
+                            <span>{result}</span>
                         </div>
                     </div>
-                ),
+                );
             },
-            {
-                key: 'rulesCount',
-                header: {
-                    text: intl.getMessage('rules_label'),
-                    className: s.headerCell,
-                },
-                accessor: 'rulesCount',
-                sortable: true,
-                render: (value: number) => (
-                    <div className={s.cell}>
-                        <span className={s.cellLabel}>{intl.getMessage('rules_label')}</span>
-
-                        <div className={s.cellValue}>
-                            <span>{value?.toLocaleString() || 0}</span>
-                        </div>
-                    </div>
-                ),
+        },
+        {
+            key: 'actions',
+            header: {
+                text: '',
+                className: s.headerCell,
             },
-            {
-                key: 'lastUpdated',
-                header: {
-                    text: intl.getMessage('last_updated_label'),
-                    className: s.headerCell,
-                },
-                accessor: 'lastUpdated',
-                sortable: true,
-                render: (value: string) => {
-                    const result = formatShortDateTime(value);
+            accessor: 'url',
+            sortable: false,
+            width: 80,
+            render: (value: string, row: Filter) => {
+                const { name, url, enabled } = row;
 
-                    return (
-                        <div className={s.cell}>
-                            <span className={s.cellLabel}>
-                                {intl.getMessage('last_updated_label')}
-                            </span>
-
-                            <div className={s.cellValue}>
-                                <span>{result}</span>
-                            </div>
-                        </div>
-                    );
-                },
-            },
-            {
-                key: 'actions',
-                header: {
-                    text: '',
-                    className: s.headerCell,
-                },
-                accessor: 'url',
-                sortable: false,
-                width: 80,
-                render: (value: string, row: Filter) => {
-                    const { name, url, enabled } = row;
-
-                    return (
-                        <div className={s.cell}>
-                            <div className={s.cellActions}>
+                return (
+                    <div class={theme.table.cell}>
+                        <div class={theme.table.cellValue}>
+                            <div class={theme.table.cellActions}>
                                 <button
                                     type="button"
-                                    onClick={() => editFilterList(url, name, enabled)}
-                                    disabled={processingConfigFilter}
-                                    className={s.editAction}
+                                    onClick={() => handleEdit(url, name, enabled)}
+                                    disabled={props.processingConfigFilter}
+                                    class={theme.table.action}
+                                    title={intl.getMessage('edit_table_action')}
+                                    aria-label={intl.getMessage('edit_table_action')}
+                                    data-table-action
                                 >
-                                    <span className={cn(s.editActionLabel, theme.text.t2)}>
+                                    <Icon icon="edit" color="gray" />
+                                    <span class={theme.table.actionLabel}>
                                         {intl.getMessage('edit_table_action')}
                                     </span>
-                                    <span className={s.editActionIcon}>
-                                        <Icon icon="edit" color="gray" />
-                                    </span>
                                 </button>
 
                                 <button
                                     type="button"
-                                    onClick={() => deleteFilterList(url, name)}
-                                    disabled={processingConfigFilter}
-                                    className={s.action}
+                                    onClick={() => handleDelete(url, name)}
+                                    disabled={props.processingConfigFilter}
+                                    class={cn(theme.table.action, theme.table.action_danger)}
+                                    title={intl.getMessage('delete_table_action')}
+                                    aria-label={intl.getMessage('delete_table_action')}
+                                    data-table-action
                                 >
                                     <Icon icon="delete" color="red" />
+                                    <span class={theme.table.actionLabel}>
+                                        {intl.getMessage('delete_table_action')}
+                                    </span>
                                 </button>
                             </div>
                         </div>
-                    );
-                },
+                    </div>
+                );
             },
-        ],
-        [processingConfigFilter, toggleFilterList, editFilterList, deleteFilterList],
-    );
+        },
+    ]);
 
     const handlePageSizeChange = (newSize: number) => {
         LocalStorageHelper.setItem(LOCAL_STORAGE_KEYS.BLOCKLIST_PAGE_SIZE, newSize);
@@ -256,9 +265,9 @@ export const ListsTable = ({
         const renderButton = (text: string) => {
             return (
                 <button
-                    className={cn(theme.text.t3, theme.link.link)}
+                    class={cn(theme.text.t3, theme.link.link)}
                     type="button"
-                    onClick={() => addFilterList()}
+                    onClick={() => props.addFilterList()}
                 >
                     {text}
                 </button>
@@ -277,26 +286,26 @@ export const ListsTable = ({
         const emptyText = DESC_TEXT[id];
 
         return (
-            <div className={s.emptyTableContent}>
-                <Icon icon="not_found_search" color="gray" className={s.emptyTableIcon} />
+            <div class={s.emptyTableContent}>
+                <Icon icon="not_found_search" color="gray" class={s.emptyTableIcon} />
 
-                <div className={cn(theme.text.t3, s.emptyTableDesc)}>{emptyText}</div>
+                <div class={cn(theme.text.t3, s.emptyTableDesc)}>{emptyText}</div>
             </div>
         );
     };
 
     return (
         <>
-            <div className={cn(theme.pagination.wrapper, s.sortDropdownMobile)}>
-                <SortSelect value={sortDirection} onChange={setSortDirection} />
+            <div class={cn(theme.pagination.wrapper, s.sortDropdownMobile)}>
+                <SortSelect value={sortDirection()} onChange={setSortDirection} />
             </div>
 
-            <ReactTable<Filter>
-                data={sortedFilters}
-                className={s.table}
-                columns={columns}
-                emptyTable={emptyTableContent(tableId)}
-                pageSize={pageSize}
+            <Table<Filter>
+                data={sortedFilters()}
+                class={s.table}
+                columns={columns()}
+                emptyTable={emptyTableContent(props.tableId)}
+                pageSize={pageSize()}
                 onPageSizeChange={handlePageSizeChange}
             />
         </>

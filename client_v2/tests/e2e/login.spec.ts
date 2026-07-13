@@ -1,16 +1,10 @@
 import { test } from '@playwright/test';
-import { ADMIN_PASSWORD, ADMIN_USERNAME } from '../constants';
+
+import { login } from '../helpers/login';
 
 
 test.describe('Login', () => {
     test('should successfully log in with valid credentials', async ({ page }) => {
-        await page.goto('/login.html');
-        await page.locator('#username').click();
-        await page.locator('#username').fill(ADMIN_USERNAME);
-        await page.locator('#password').click();
-        await page.locator('#password').fill(ADMIN_PASSWORD);
-        await page.keyboard.press('Tab');
-        await page.locator('#sign_in').click();
-        await page.waitForURL((url) => !url.href.endsWith('/login.html'));
+        await login(page);
     });
 });

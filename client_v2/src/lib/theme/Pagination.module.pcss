@@ -7,6 +7,7 @@
 
     @media (min-width: 768px) {
         flex-direction: row;
+        justify-content: space-between;
         padding: 16px 0;
     }
 
@@ -32,6 +33,15 @@
     display: flex;
     align-items: center;
     gap: 8px;
+}
+
+.limitContainer {
+    width: 100%;
+
+    @media (min-width: 768px) {
+        width: auto;
+        margin-left: auto;
+    }
 }
 
 .arrow {

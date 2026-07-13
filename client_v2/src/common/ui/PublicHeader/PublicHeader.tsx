@@ -1,42 +1,33 @@
-import React from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { type JSX } from 'solid-js';
 import { Logo } from 'panel/common/ui/Sidebar';
-import { RootState } from 'panel/initialState';
-import intl, { LocalesType } from 'panel/common/intl';
+import intl, { type LocalesType } from 'panel/common/intl';
 import { LanguageDropdown } from 'panel/common/ui/LanguageDropdown/LanguageDropdown';
 import { setHtmlLangAttr } from 'panel/helpers/helpers';
-import { changeLanguage as changeLanguageAction } from 'panel/actions';
+import { changeLanguage as changeLanguageAction, dashboardState } from 'panel/stores/dashboard';
 
 import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from 'panel/helpers/localStorageHelper';
 import { LANGUAGES, LANGUAGE_NAMES } from 'panel/helpers/twosky';
 import styles from './PublicHeader.module.pcss';
 
 type Props = {
-    dropdownClassName?: string;
+    dropdownClass?: string;
     dropdownPosition?: 'bottomRight' | 'bottomLeft' | 'topRight' | 'topLeft';
-    center?: React.ReactNode;
+    center?: JSX.Element;
     useLocalLanguage?: boolean;
 };
 
-export const PublicHeader = ({
-    dropdownClassName,
-    dropdownPosition = 'bottomRight',
-    center,
-    useLocalLanguage = false,
-}: Props) => {
-    const dispatch = useDispatch();
-
+export const PublicHeader = (props: Props) => {
     const changeLanguage = async (newLang: LocalesType) => {
         setHtmlLangAttr(newLang);
 
-        if (useLocalLanguage) {
+        if (props.useLocalLanguage) {
             LocalStorageHelper.setItem(LOCAL_STORAGE_KEYS.LANGUAGE, newLang);
             window.location.reload();
             return;
         }
 
         try {
-            await dispatch(changeLanguageAction(newLang));
+            await changeLanguageAction(newLang);
             LocalStorageHelper.setItem(LOCAL_STORAGE_KEYS.LANGUAGE, newLang);
             window.location.reload();
         } catch (error) {
@@ -44,25 +35,23 @@ export const PublicHeader = ({
         }
     };
 
-    const currentLanguage =
-        useSelector((state: RootState) => (state.dashboard ? state.dashboard.language : '')) ||
-        intl.getUILanguage();
+    const currentLanguage = () => dashboardState.language || intl.getUILanguage();
 
     return (
-        <div className={styles.header}>
-            <div className={styles.headerContent}>
-                <div className={styles.logoWrap}>
+        <div class={styles.header}>
+            <div class={styles.headerContent}>
+                <div class={styles.logoWrap}>
                     <Logo id="header" />
                 </div>
-                {center}
-                <div className={styles.languageWrap}>
+                {props.center}
+                <div class={styles.languageWrap}>
                     <LanguageDropdown
-                        value={currentLanguage}
+                        value={currentLanguage()}
                         languages={LANGUAGES}
                         languageNames={LANGUAGE_NAMES}
                         onChange={changeLanguage}
-                        className={dropdownClassName}
-                        position={dropdownPosition}
+                        class={props.dropdownClass}
+                        position={props.dropdownPosition ?? 'bottomRight'}
                     />
                 </div>
             </div>

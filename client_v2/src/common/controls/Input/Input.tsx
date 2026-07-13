@@ -1,17 +1,21 @@
-import React, { forwardRef, useEffect, useRef, useState } from 'react';
-import type { ComponentProps, ChangeEvent, ReactNode } from 'react';
+import { type JSX, createSignal, createEffect, Show, untrack } from 'solid-js';
 import cn from 'clsx';
 import { Icon } from 'panel/common/ui/Icon';
 
 import intl from 'panel/common/intl';
 import s from './Input.module.pcss';
 
-type Props = Omit<ComponentProps<'input'>, 'size'> & {
-    label?: ReactNode;
-    className?: string;
-    innerClassName?: string;
-    prefixIcon?: ReactNode;
-    suffixIcon?: ReactNode;
+type InputChangeEvent = Event & {
+    currentTarget: HTMLInputElement;
+    target: HTMLInputElement;
+};
+
+type Props = Omit<JSX.InputHTMLAttributes<HTMLInputElement>, 'size' | 'onChange' | 'onBlur'> & {
+    label?: JSX.Element;
+    class?: string;
+    innerClass?: string;
+    prefixIcon?: JSX.Element;
+    suffixIcon?: JSX.Element;
     borderless?: boolean;
     invalid?: boolean;
     maxLength?: number;
@@ -21,188 +25,154 @@ type Props = Omit<ComponentProps<'input'>, 'size'> & {
     onClear?: () => void;
     inputError?: string;
     size?: 'small' | 'medium' | 'large';
+    value?: string | number | readonly string[];
+    defaultValue?: string;
+    onChange?: (event: InputChangeEvent) => void;
+    onBlur?: (event: FocusEvent) => void;
+    ref?: HTMLInputElement | ((el: HTMLInputElement) => void);
+    onKeyDown?: (e: KeyboardEvent) => void;
 };
 
-const assignInputRef = (
-    ref: React.ForwardedRef<HTMLInputElement>,
-    node: HTMLInputElement | null,
-) => {
-    if (typeof ref === 'function') {
-        ref(node);
-        return;
-    }
-
-    if (ref) {
-        const mutableRef = ref;
-        mutableRef.current = node;
-    }
-};
-
-const hasInputValue = (
-    value: ComponentProps<'input'>['value'] | ComponentProps<'input'>['defaultValue'],
-) => {
+const hasInputValue = (value: string | number | readonly string[] | undefined) => {
     if (Array.isArray(value)) {
         return value.length > 0;
     }
-
     return String(value ?? '').length > 0;
 };
 
-export const Input = forwardRef<HTMLInputElement, Props>(
-    (
-        {
-            id,
-            accept,
-            label,
-            placeholder,
-            type,
-            onChange,
-            onBlur,
-            value,
-            className,
-            innerClassName,
-            prefixIcon,
-            suffixIcon,
-            borderless,
-            invalid,
-            autoFocus,
-            maxLength,
-            disabled,
-            error,
-            errorMessage,
-            isClearable,
-            onClear,
-            inputError,
-            size = 'large',
-            autoComplete,
-            ...rest
-        },
-        ref,
-    ) => {
-        const [focused, setFocused] = useState(false);
-        const inputRef = useRef<HTMLInputElement | null>(null);
-        const [hasValue, setHasValue] = useState(() => hasInputValue(value ?? rest.defaultValue));
+export const Input = (props: Props) => {
+    let inputRef: HTMLInputElement | undefined;
+    const [focused, setFocused] = createSignal(false);
+    const [hasValue, setHasValue] = createSignal(
+        hasInputValue(untrack(() => props.value) ?? untrack(() => props.defaultValue)),
+    );
 
-        useEffect(() => {
-            if (value !== undefined) {
-                setHasValue(hasInputValue(value));
-            }
-        }, [value]);
+    createEffect(() => {
+        if (props.value !== undefined) {
+            setHasValue(hasInputValue(props.value));
+        }
+    });
 
-        const setInputRef = (node: HTMLInputElement | null) => {
-            inputRef.current = node;
-            assignInputRef(ref, node);
-        };
+    const setInputRef = (el: HTMLInputElement) => {
+        inputRef = el;
+        if (typeof props.ref === 'function') {
+            props.ref(el);
+        }
+    };
 
-        const showClearButton = Boolean(isClearable && !disabled && !rest.readOnly && hasValue);
-        const hasActions = Boolean(suffixIcon || showClearButton);
+    const showClearButton = () =>
+        Boolean(props.isClearable && !props.disabled && !props.readOnly && hasValue());
+    const hasActions = () => Boolean(props.suffixIcon || showClearButton());
 
-        const handleChange: ComponentProps<'input'>['onChange'] = (event) => {
-            setHasValue(event.currentTarget.value.length > 0);
-            onChange?.(event);
-        };
+    const handleChange = (event: InputChangeEvent) => {
+        setHasValue((event.currentTarget as HTMLInputElement).value.length > 0);
+        props.onChange?.(event);
+    };
 
-        const handleClear = () => {
-            const node = inputRef.current;
-            if (!node) {
-                onClear?.();
-                setHasValue(false);
-                return;
-            }
-
-            node.value = '';
-            onChange?.({
-                target: node,
-                currentTarget: node,
-            } as ChangeEvent<HTMLInputElement>);
-
+    const handleClear = () => {
+        if (!inputRef) {
+            props.onClear?.();
             setHasValue(false);
-            onClear?.();
-        };
+            return;
+        }
 
-        const computedErrorMessage = inputError ?? errorMessage;
+        inputRef.value = '';
+        props.onChange?.({
+            target: inputRef,
+            currentTarget: inputRef,
+        } as unknown as InputChangeEvent);
 
-        const inputWrapperClass = cn(
-            s.inputWrapper,
-            {
-                [s.borderless]: borderless,
-                [s.small]: size === 'small',
-                [s.medium]: size === 'medium',
-                [s.large]: size === 'large',
-            },
-            className,
-        );
+        setHasValue(false);
+        props.onClear?.();
+    };
 
-        return (
-            <>
-                {label && (
-                    <label className={s.inputLabel} htmlFor={id}>
-                        {label}
-                    </label>
+    const handleKeyDown = (e: KeyboardEvent) => {
+        // Prevent minus key entry in number inputs to avoid negative values
+        if (props.type === 'number' && e.key === '-') {
+            e.preventDefault();
+        }
+        // Forward to any external onKeyDown handler
+        props.onKeyDown?.(e);
+    };
+
+    const computedErrorMessage = () => props.inputError ?? props.errorMessage;
+
+    return (
+        <>
+            <Show when={props.label}>
+                <label class={s.inputLabel} for={props.id}>
+                    {props.label}
+                </label>
+            </Show>
+            <div
+                class={cn(
+                    s.inputWrapper,
+                    {
+                        [s.borderless]: props.borderless,
+                        [s.small]: props.size === 'small',
+                        [s.medium]: props.size === 'medium',
+                        [s.large]: props.size === 'large',
+                    },
+                    props.class,
+                    {
+                        [s.prefix]: props.prefixIcon,
+                        [s.suffix]: hasActions(),
+                        [s.invalid]: props.invalid,
+                        [s.focused]: focused(),
+                        [s.disabled]: props.disabled,
+                        [s.error]: props.error || !!computedErrorMessage(),
+                    },
                 )}
-                <div
-                    className={cn(
-                        inputWrapperClass,
-                        {
-                            [s.prefix]: prefixIcon,
-                            [s.suffix]: hasActions,
-                            [s.invalid]: invalid,
-                            [s.focused]: focused,
-                            [s.disabled]: disabled,
-                            [s.error]: error || !!computedErrorMessage,
-                        },
-                        className,
-                    )}
-                >
-                    {prefixIcon && prefixIcon}
-                    <input
-                        ref={setInputRef}
-                        accept={accept}
-                        autoFocus={autoFocus}
-                        className={cn(s.input, innerClassName, {
-                            [s.prefix]: prefixIcon,
-                            [s.postfix]: hasActions,
-                        })}
-                        onChange={handleChange}
-                        type={type}
-                        id={id}
-                        placeholder={placeholder}
-                        value={value}
-                        onFocus={() => setFocused(true)}
-                        onBlur={(e) => {
-                            if (onBlur) {
-                                onBlur(e);
-                            }
-
-                            setFocused(false);
-                        }}
-                        maxLength={maxLength}
-                        disabled={disabled}
-                        autoComplete={autoComplete}
-                        {...rest}
-                    />
-                    {hasActions && (
-                        <div className={s.actions}>
-                            {showClearButton && (
-                                <button
-                                    type="button"
-                                    className={s.clearButton}
-                                    aria-label={intl.getMessage('aria_clear_input')}
-                                    data-testid="input-clear-button"
-                                    onMouseDown={(event) => event.preventDefault()}
-                                    onClick={handleClear}
-                                >
-                                    <Icon icon="cross" />
-                                </button>
-                            )}
-                            {suffixIcon && <div className={s.suffixIcon}>{suffixIcon}</div>}
-                        </div>
-                    )}
-                </div>
-                {computedErrorMessage && <div className={s.inputError}>{computedErrorMessage}</div>}
-            </>
-        );
-    },
-);
-
-Input.displayName = 'Input';
+            >
+                <Show when={props.prefixIcon}>{props.prefixIcon}</Show>
+                <input
+                    ref={(el) => setInputRef(el)}
+                    accept={props.accept}
+                    autofocus={props.autofocus}
+                    class={cn(s.input, props.innerClass, {
+                        [s.prefix]: props.prefixIcon,
+                        [s.postfix]: hasActions(),
+                    })}
+                    onChange={handleChange}
+                    onInput={(e) => (props.onInput as any)?.(e)}
+                    onKeyDown={handleKeyDown}
+                    type={props.type}
+                    id={props.id}
+                    name={props.name}
+                    placeholder={props.placeholder}
+                    value={props.value as string | number}
+                    onFocus={() => setFocused(true)}
+                    onBlur={(e) => {
+                        props.onBlur?.(e);
+                        setFocused(false);
+                    }}
+                    maxLength={props.maxLength}
+                    disabled={props.disabled}
+                    autocomplete={props.autocomplete}
+                />
+                <Show when={hasActions()}>
+                    <div class={s.actions}>
+                        <Show when={showClearButton()}>
+                            <button
+                                type="button"
+                                class={s.clearButton}
+                                aria-label={intl.getMessage('aria_clear_input')}
+                                data-testid="input-clear-button"
+                                onMouseDown={(event) => event.preventDefault()}
+                                onClick={handleClear}
+                            >
+                                <Icon icon="cross" />
+                            </button>
+                        </Show>
+                        <Show when={props.suffixIcon}>
+                            <div class={s.suffixIcon}>{props.suffixIcon}</div>
+                        </Show>
+                    </div>
+                </Show>
+            </div>
+            <Show when={computedErrorMessage()}>
+                <div class={s.inputError}>{computedErrorMessage()}</div>
+            </Show>
+        </>
+    );
+};

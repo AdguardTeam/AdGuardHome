@@ -1,13 +1,11 @@
-import React, { useEffect } from 'react';
-import { Controller, useForm } from 'react-hook-form';
-import { useDispatch } from 'react-redux';
+import { createSignal, createEffect } from 'solid-js';
 
 import intl from 'panel/common/intl';
 import theme from 'panel/lib/theme';
 import { RoutePath } from 'panel/components/Routes/Paths';
 import { Link } from 'panel/common/ui/Link';
-import { setFiltersConfig } from 'panel/actions/filtering';
-import { SwitchGroup } from 'panel/common/ui/SettingsGroup';
+import { setFiltersConfig } from 'panel/stores/filtering';
+import { SettingRow } from 'panel/common/ui/SettingRow';
 
 export type FormValues = {
     enabled: boolean;
@@ -19,64 +17,50 @@ type Props = {
     processing: boolean;
 };
 
-export const FiltersConfig = ({ initialValues, processing }: Props) => {
-    const dispatch = useDispatch();
+export const FiltersConfig = (props: Props) => {
+    const [enabled, setEnabled] = createSignal(props.initialValues.enabled);
 
-    const { watch, control, setValue } = useForm({
-        mode: 'onBlur',
-        defaultValues: initialValues,
+    createEffect(() => {
+        const initial = props.initialValues;
+        setFiltersConfig({ ...initial, enabled: enabled() });
     });
 
-    const enabled = watch('enabled');
-
-    useEffect(() => {
-        dispatch(setFiltersConfig({ ...initialValues, enabled }));
-    }, [enabled]);
-
     return (
-        <div>
-            <Controller
-                name="enabled"
-                control={control}
-                render={() => (
-                    <SwitchGroup
-                        title={intl.getMessage('settings_filter_requests')}
-                        description={intl.getMessage('settings_filter_requests_desc', {
-                            a: (text: string) => (
-                                <Link
-                                    to={RoutePath.DnsBlocklists}
-                                    className={theme.link.link}
-                                    onClick={(e) => e.stopPropagation()}
-                                >
-                                    {text}
-                                </Link>
-                            ),
-                            b: (text: string) => (
-                                <Link
-                                    to={RoutePath.DnsAllowlists}
-                                    className={theme.link.link}
-                                    onClick={(e) => e.stopPropagation()}
-                                >
-                                    {text}
-                                </Link>
-                            ),
-                            c: (text: string) => (
-                                <Link
-                                    to={RoutePath.UserRules}
-                                    className={theme.link.link}
-                                    onClick={(e) => e.stopPropagation()}
-                                >
-                                    {text}
-                                </Link>
-                            ),
-                        })}
-                        disabled={processing}
-                        onChange={(e) => setValue('enabled', e.target.checked)}
-                        id="filters_enabled"
-                        checked={enabled}
-                    />
-                )}
-            />
-        </div>
+        <SettingRow
+            variant="switch"
+            id="filtering_enabled"
+            title={intl.getMessage('settings_filter_requests')}
+            description={intl.getMessage('settings_filter_requests_desc', {
+                a: (text: string) => (
+                    <Link
+                        to={RoutePath.DnsBlocklists}
+                        class={theme.link.link}
+                        onClick={(e: Event) => e.stopPropagation()}
+                    >
+                        {text}
+                    </Link>
+                ),
+                b: (text: string) => (
+                    <Link
+                        to={RoutePath.DnsAllowlists}
+                        class={theme.link.link}
+                        onClick={(e: Event) => e.stopPropagation()}
+                    >
+                        {text}
+                    </Link>
+                ),
+                c: (text: string) => (
+                    <Link
+                        to={RoutePath.UserRules}
+                        class={theme.link.link}
+                        onClick={(e: Event) => e.stopPropagation()}
+                    >
+                        {text}
+                    </Link>
+                ),
+            })}
+            checked={enabled()}
+            onChange={(v) => setEnabled(v)}
+        />
     );
 };

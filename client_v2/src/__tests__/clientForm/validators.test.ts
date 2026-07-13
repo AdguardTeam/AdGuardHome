@@ -13,6 +13,12 @@ import {
     validatePasswordLength,
     validateIpNotDuplicate,
     validateIpPerLine,
+    validateBetween,
+    validateMinValue,
+    validateCacheSize,
+    validateRewriteNotExists,
+    validateRewriteNotSame,
+    validateLeaseTime,
 } from 'panel/helpers/validators';
 
 describe('validateIdentifier', () => {
@@ -105,17 +111,52 @@ describe('validateUpstreams', () => {
 
     it('returns error for a line without dot or colon', () => {
         const result = validateUpstreams('not-a-valid-upstream');
-        expect(result).toBeTruthy();
+        expect(result).toBe('Invalid format');
     });
 
     it('returns error on the correct line number for mixed content', () => {
         const result = validateUpstreams('1.1.1.1\nbadline\ntls://ok.com');
-        expect(result).toBeTruthy();
+        expect(result).toBe('Invalid format on line 2');
     });
 
     it('skips comments and only flags real lines', () => {
         const result = validateUpstreams('# comment\nbadline\n1.1.1.1');
-        expect(result).toBeTruthy();
+        expect(result).toBe('Invalid format on line 2');
+    });
+
+    it('returns "Invalid format" for single invalid line with trailing newline', () => {
+        const result = validateUpstreams('badline\n');
+        expect(result).toBe('Invalid format');
+    });
+
+    it('returns "Invalid format" for single invalid line with leading newline', () => {
+        const result = validateUpstreams('\nbadline');
+        expect(result).toBe('Invalid format');
+    });
+
+    it('returns "Invalid format on lines 1, 2" when both invalid', () => {
+        const result = validateUpstreams('bad1\nbad2');
+        expect(result).toBe('Invalid format on lines 1, 2');
+    });
+
+    it('returns "Invalid format on line 2" when second line invalid in multi-content', () => {
+        const result = validateUpstreams('1.1.1.1\nbad');
+        expect(result).toBe('Invalid format on line 2');
+    });
+
+    it('handles blank line between two invalid lines', () => {
+        const result = validateUpstreams('bad1\n\nbad2');
+        expect(result).toBe('Invalid format on lines 1, 3');
+    });
+
+    it('returns "Invalid format" for comment-then-invalid (one content line)', () => {
+        const result = validateUpstreams('# comment\nbadline');
+        expect(result).toBe('Invalid format');
+    });
+
+    it('returns "Invalid format" for invalid-then-comment (one content line)', () => {
+        const result = validateUpstreams('badline\n# comment');
+        expect(result).toBe('Invalid format');
     });
 });
 
@@ -172,6 +213,14 @@ describe('validatePort', () => {
         expect(validatePort(8080)).toBeUndefined();
     });
 
+    it('returns undefined for boundary 0 (disabled)', () => {
+        expect(validatePort(0)).toBeUndefined();
+    });
+
+    it('returns undefined for boundary 1', () => {
+        expect(validatePort(1)).toBeUndefined();
+    });
+
     it('returns undefined for boundary 80', () => {
         expect(validatePort(80)).toBeUndefined();
     });
@@ -180,16 +229,16 @@ describe('validatePort', () => {
         expect(validatePort(65535)).toBeUndefined();
     });
 
-    it('returns error for 0 (falls outside range 80-65535)', () => {
-        expect(validatePort(0)).toBeTruthy();
-    });
-
-    it('returns error for port below 80', () => {
-        expect(validatePort(79)).toBeTruthy();
-    });
-
     it('returns error for port above 65535', () => {
         expect(validatePort(65536)).toBeTruthy();
+    });
+
+    it('returns error for negative port', () => {
+        expect(validatePort(-1)).toBeTruthy();
+    });
+
+    it('returns undefined for undefined (no value)', () => {
+        expect(validatePort(undefined)).toBeUndefined();
     });
 });
 
@@ -220,6 +269,10 @@ describe('validatePortTLS', () => {
         expect(validatePortTLS(0)).toBeUndefined();
     });
 
+    it('returns undefined for 1', () => {
+        expect(validatePortTLS(1)).toBeUndefined();
+    });
+
     it('returns undefined for valid TLS port', () => {
         expect(validatePortTLS(853)).toBeUndefined();
     });
@@ -228,12 +281,16 @@ describe('validatePortTLS', () => {
         expect(validatePortTLS(80)).toBeUndefined();
     });
 
-    it('returns error for port below 80', () => {
-        expect(validatePortTLS(79)).toBeTruthy();
+    it('returns undefined for boundary 65535', () => {
+        expect(validatePortTLS(65535)).toBeUndefined();
     });
 
     it('returns error for port above 65535', () => {
         expect(validatePortTLS(65536)).toBeTruthy();
+    });
+
+    it('returns undefined for undefined', () => {
+        expect(validatePortTLS(undefined)).toBeUndefined();
     });
 });
 
@@ -368,5 +425,159 @@ describe('validateIpPerLine', () => {
 
     it('skips blank lines between valid IPs', () => {
         expect(validateIpPerLine('192.168.1.1\n\n10.0.0.1')).toBeUndefined();
+    });
+});
+
+describe('numeric range validators', () => {
+    it('validateBetween returns error when value is out of range', () => {
+        expect(validateBetween(-1, 0, 32)).toBeTruthy();
+        expect(validateBetween(33, 0, 32)).toBeTruthy();
+        expect(validateBetween(0, 0, 32)).toBeUndefined();
+        expect(validateBetween(32, 0, 32)).toBeUndefined();
+        expect(validateBetween(16, 0, 32)).toBeUndefined();
+    });
+
+    it('validateMinValue returns error when value is below min', () => {
+        expect(validateMinValue(0, 1)).toBeTruthy();
+        expect(validateMinValue(1, 1)).toBeUndefined();
+        expect(validateMinValue(10, 1)).toBeUndefined();
+    });
+});
+
+describe('validateCacheSize', () => {
+    it('returns undefined when cache is disabled', () => {
+        expect(validateCacheSize(0, false)).toBeUndefined();
+        expect(validateCacheSize(999999999999, false)).toBeUndefined();
+    });
+
+    it('returns error for 0 when enabled', () => {
+        const result = validateCacheSize(0, true);
+        expect(result).toBeTruthy();
+    });
+
+    it('returns undefined for a valid size when enabled', () => {
+        expect(validateCacheSize(1000, true)).toBeUndefined();
+    });
+
+    it('returns error for value exceeding UINT32_MAX', () => {
+        const result = validateCacheSize(4294967296, true);
+        expect(result).toBeTruthy();
+    });
+
+    it('returns undefined at UINT32_MAX boundary', () => {
+        expect(validateCacheSize(4294967295, true)).toBeUndefined();
+    });
+});
+
+describe('validateRewriteNotExists', () => {
+    it('returns undefined for a non-existing domain', () => {
+        const result = validateRewriteNotExists('new.example.com', [
+            { domain: 'existing.example.com' },
+        ]);
+        expect(result).toBeUndefined();
+    });
+
+    it('returns error for a domain that already exists', () => {
+        const result = validateRewriteNotExists('example.com', [{ domain: 'example.com' }]);
+        expect(result).toBeTruthy();
+    });
+
+    it('returns undefined when editing the same rewrite', () => {
+        const result = validateRewriteNotExists(
+            'example.com',
+            [{ domain: 'example.com' }],
+            'example.com',
+        );
+        expect(result).toBeUndefined();
+    });
+
+    it('returns error when editing and changing to an existing other domain', () => {
+        const result = validateRewriteNotExists(
+            'other.example.com',
+            [{ domain: 'example.com' }, { domain: 'other.example.com' }],
+            'example.com',
+        );
+        expect(result).toBeTruthy();
+    });
+
+    it('returns undefined for an empty domain', () => {
+        const result = validateRewriteNotExists('', [{ domain: 'example.com' }]);
+        expect(result).toBeUndefined();
+    });
+
+    it('case-insensitive duplicate check', () => {
+        const result = validateRewriteNotExists('Example.COM', [{ domain: 'example.com' }]);
+        expect(result).toBeTruthy();
+    });
+});
+
+describe('validateRewriteNotSame', () => {
+    it('returns undefined when domain and answer differ', () => {
+        const result = validateRewriteNotSame('example.com', '192.168.1.1');
+        expect(result).toBeUndefined();
+    });
+
+    it('returns error when domain equals answer', () => {
+        const result = validateRewriteNotSame('example.com', 'example.com');
+        expect(result).toBeTruthy();
+    });
+
+    it('returns error case-insensitively', () => {
+        const result = validateRewriteNotSame('Example.COM', 'example.com');
+        expect(result).toBeTruthy();
+    });
+
+    it('returns undefined for empty values', () => {
+        expect(validateRewriteNotSame('', 'example.com')).toBeUndefined();
+        expect(validateRewriteNotSame('example.com', '')).toBeUndefined();
+        expect(validateRewriteNotSame('', '')).toBeUndefined();
+    });
+});
+
+describe('validateUpstreams with bang comments', () => {
+    it('accepts lines starting with !', () => {
+        expect(validateUpstreams('! comment line\n8.8.8.8')).toBeUndefined();
+    });
+
+    it('accepts only comment lines (!)', () => {
+        expect(validateUpstreams('! first\n! second')).toBeUndefined();
+    });
+
+    it('still accepts # comments', () => {
+        expect(validateUpstreams('# comment\n8.8.8.8')).toBeUndefined();
+    });
+
+    it('rejects invalid non-comment lines alongside comments', () => {
+        expect(validateUpstreams('! good\ninvalidline')).toBeTruthy();
+    });
+});
+
+describe('validateLeaseTime', () => {
+    it('accepts 1 (minimum)', () => {
+        expect(validateLeaseTime(1)).toBeUndefined();
+    });
+
+    it('rejects 0', () => {
+        expect(validateLeaseTime(0)).toBeTruthy();
+    });
+
+    it('accepts UINT32_MAX (4294967295)', () => {
+        expect(validateLeaseTime(4294967295)).toBeUndefined();
+    });
+
+    it('rejects UINT32_MAX + 1 (4294967296)', () => {
+        expect(validateLeaseTime(4294967296)).toBeTruthy();
+    });
+
+    it('rejects empty string', () => {
+        expect(validateLeaseTime('')).toBeTruthy();
+    });
+
+    it('rejects undefined', () => {
+        expect(validateLeaseTime(undefined)).toBeTruthy();
+    });
+
+    it('rejects NaN', () => {
+        expect(validateLeaseTime(NaN)).toBeTruthy();
     });
 });

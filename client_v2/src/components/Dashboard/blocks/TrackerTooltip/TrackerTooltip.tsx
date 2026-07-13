@@ -1,4 +1,4 @@
-import React from 'react';
+import { Show } from 'solid-js';
 
 import intl from 'panel/common/intl';
 import { captitalizeWords } from 'panel/helpers/helpers';
@@ -21,55 +21,54 @@ type Props = {
     trackerData: TrackerData;
 };
 
-export const TrackerTooltip = ({ trackerData }: Props) => {
-    const sourceData = getSourceData(trackerData);
+export const TrackerTooltip = (props: Props) => {
+    const sourceData = () => getSourceData(props.trackerData);
 
     return (
-        <div className={s.tooltip}>
-            <div className={cn(theme.text.t3, s.tooltipTitle)}>
+        <div class={s.tooltip}>
+            <div class={cn(theme.text.t3, s.tooltipTitle)}>
                 {intl.getMessage('found_in_known_domains')}
             </div>
 
-            <div className={s.tooltipRow}>
-                <span className={cn(theme.text.t4, s.tooltipLabel)}>
+            <div class={s.tooltipRow}>
+                <span class={cn(theme.text.t4, s.tooltipLabel)}>
                     {intl.getMessage('name_tooltip')}:
                 </span>
                 <a
-                    href={trackerData.url}
+                    href={props.trackerData.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={cn(theme.text.t4, s.tooltipLink)}
+                    class={cn(theme.text.t4, s.tooltipLink)}
                 >
-                    {trackerData.name}
+                    {props.trackerData.name}
                 </a>
             </div>
 
-            <div className={s.tooltipRow}>
-                <span className={cn(theme.text.t4, s.tooltipLabel)}>
+            <div class={s.tooltipRow}>
+                <span class={cn(theme.text.t4, s.tooltipLabel)}>
                     {intl.getMessage('category_tooltip')}:
                 </span>
 
-                <span className={cn(theme.text.t4, theme.text.semibold, s.tooltipValue)}>
-                    {captitalizeWords(trackerData.category)}
+                <span class={cn(theme.text.t4, theme.text.semibold, s.tooltipValue)}>
+                    {captitalizeWords(props.trackerData.category)}
                 </span>
             </div>
 
-            {sourceData && (
-                <div className={s.tooltipRow}>
-                    <span className={cn(theme.text.t4, s.tooltipLabel)}>
+            <Show when={sourceData()}>
+                <div class={s.tooltipRow}>
+                    <span class={cn(theme.text.t4, s.tooltipLabel)}>
                         {intl.getMessage('source_tooltip')}:
                     </span>
-
                     <a
-                        href={sourceData.url}
+                        href={sourceData()!.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className={cn(theme.text.t4, s.tooltipLink)}
+                        class={cn(theme.text.t4, s.tooltipLink)}
                     >
-                        {sourceData.name}
+                        {sourceData()!.name}
                     </a>
                 </div>
-            )}
+            </Show>
         </div>
     );
 };

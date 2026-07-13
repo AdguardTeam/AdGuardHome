@@ -1,10 +1,9 @@
-import React, { ReactNode } from 'react';
 import cn from 'clsx';
 
 import intl from 'panel/common/intl';
 import { Icon, IconType } from 'panel/common/ui/Icon';
 import { Link } from 'panel/common/ui/Link';
-import { RoutePath } from 'panel/components/Routes/Paths';
+import { RoutePath, SCROLL_QUERY_KEY } from 'panel/components/Routes/Paths';
 
 import theme from 'panel/lib/theme';
 import s from './EmptyState.module.pcss';
@@ -12,47 +11,46 @@ import s from './EmptyState.module.pcss';
 export type EmptyStateMode = 'default' | 'disabled' | 'rotation-disabled';
 
 type Props = {
-    className?: string;
+    class?: string;
     mode: EmptyStateMode;
-    messageClassName?: string;
+    messageClass?: string;
 };
 
-const getEmptyState = (
-    mode: EmptyStateMode,
-): {
-    message: ReactNode;
-    variant: EmptyStateMode;
-    icon: IconType;
-} => {
+const getEmptyState = (mode: EmptyStateMode) => {
     switch (mode) {
         case 'disabled':
         case 'rotation-disabled':
             return {
-                message: intl.getMessage('query_log_nothing_available_rotation', {
-                    a: (text: string) => <Link to={RoutePath.SettingsPage}>{text}</Link>,
-                }),
-                variant: 'rotation-disabled',
-                icon: 'settings_info',
+                message: (
+                    <>
+                        {intl.getMessage('query_log_nothing_available_rotation')}
+                        <div class={s.enableLinkWrap}>
+                            <Link to={RoutePath.SettingsPage} query={{ [SCROLL_QUERY_KEY]: 'query-log' }}>{intl.getMessage('enable')}</Link>
+                        </div>
+                    </>
+                ),
+                variant: 'rotation-disabled' as const,
+                icon: 'settings_info' as IconType,
             };
         default:
             return {
                 message: intl.getMessage('query_log_nothing_available'),
-                variant: 'default',
-                icon: 'not_found_search',
+                variant: 'default' as const,
+                icon: 'not_found_search' as IconType,
             };
     }
 };
 
-export const EmptyState = ({ className, mode, messageClassName }: Props) => {
-    const { message, icon } = getEmptyState(mode);
+export const EmptyState = (props: Props) => {
+    const state = () => getEmptyState(props.mode);
 
     return (
-        <div className={cn(s.root, className)} data-testid="query-log-empty-state">
-            <div className={s.iconWrap}>
-                <Icon icon={icon} color="gray" className={s.icon} />
+        <div class={cn(s.root, props.class)} data-testid="query-log-empty-state">
+            <div class={s.iconWrap}>
+                <Icon icon={state().icon} color="gray" class={s.icon} />
             </div>
 
-            <div className={cn(s.message, theme.text.t2, messageClassName)}>{message}</div>
+            <div class={cn(s.message, theme.text.t2, props.messageClass)}>{state().message}</div>
         </div>
     );
 };

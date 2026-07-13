@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import { createSignal, createMemo, For, untrack } from 'solid-js';
 import cn from 'clsx';
 
 import theme from 'panel/lib/theme';
@@ -13,7 +13,7 @@ type LanguageDropdownProps = {
     languageNames?: Record<string, string>;
     onChange: (lang: string) => void | Promise<void>;
     position?: 'bottomRight' | 'bottomLeft' | 'topRight' | 'topLeft';
-    className?: string;
+    class?: string;
     sort?: boolean;
 };
 
@@ -31,62 +31,56 @@ const getLanguageShortLabel = (lang: string) => {
     return base.slice(0, 2).toLocaleUpperCase();
 };
 
-export const LanguageDropdown = ({
-    value,
-    languages,
-    languageNames,
-    onChange,
-    position = 'bottomRight',
-    className,
-    sort = true,
-}: LanguageDropdownProps) => {
-    const [open, setOpen] = useState(false);
+export const LanguageDropdown = (props: LanguageDropdownProps) => {
+    const [open, setOpen] = createSignal(false);
 
-    const sortedKeys = useMemo(() => {
-        const keys = Object.keys(languages);
-        if (!sort) {
+    const sortedKeys = createMemo(() => {
+        const keys = Object.keys(props.languages);
+        if (!props.sort) {
             return keys;
         }
+        const languages = props.languages;
         return keys.sort((a, b) => (languages[a] || '').localeCompare(languages[b] || ''));
-    }, [languages, sort]);
+    });
 
-    const currentLabel = getLanguageShortLabel(value);
+    const currentLabel = () => getLanguageShortLabel(props.value);
 
     return (
         <Dropdown
             trigger="click"
-            open={open}
+            open={open()}
             onOpenChange={setOpen}
             menu={
-                <div className={cn(theme.dropdown.menu, theme.dropdown.menu_lang)}>
-                    {sortedKeys.map((lang) => (
-                        <button
-                            type="button"
-                            key={lang}
-                            className={cn(theme.dropdown.item, {
-                                [theme.dropdown.item_active]: value === lang,
-                            })}
-                            onClick={async () => {
-                                await onChange(lang);
-                                setOpen(false);
-                            }}
-                        >
-                            {languageNames?.[lang] || getLanguageShortLabel(lang)}
-                        </button>
-                    ))}
+                <div class={cn(theme.dropdown.menu, theme.dropdown.menu_lang)}>
+                    <For each={sortedKeys()}>
+                        {(lang) => (
+                            <button
+                                type="button"
+                                class={cn(theme.dropdown.item, {
+                                    [theme.dropdown.item_active]: props.value === lang,
+                                })}
+                                onClick={async () => {
+                                    await untrack(() => props.onChange)(lang);
+                                    setOpen(false);
+                                }}
+                            >
+                                {props.languageNames?.[lang] || getLanguageShortLabel(lang)}
+                            </button>
+                        )}
+                    </For>
                 </div>
             }
-            className={className}
-            overlayClassName={s.langOverlay}
-            position={position}
+            class={props.class}
+            overlayClass={s.langOverlay}
+            position={props.position ?? 'bottomRight'}
         >
             <button
                 type="button"
-                className={cn(s.langButton, className)}
+                class={cn(s.langButton, props.class)}
                 aria-label={intl.getMessage('language')}
             >
                 <Icon icon="lang" />
-                <span className={s.langLabel}>{currentLabel}</span>
+                <span class={s.langLabel}>{currentLabel()}</span>
             </button>
         </Dropdown>
     );

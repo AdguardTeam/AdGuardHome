@@ -1,145 +1,90 @@
-import React, { useEffect } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { createSignal, createEffect, createMemo } from 'solid-js';
 
-import { Button } from 'panel/common/ui/Button';
 import intl from 'panel/common/intl';
-import theme from 'panel/lib/theme';
-import { RadioGroup, SwitchGroup } from 'panel/common/ui/SettingsGroup';
+import { RadioGroup } from 'panel/common/ui/SettingsGroup';
 
 import { getIntervalTitle, getDefaultInterval } from '../helpers';
-import { STATS_INTERVALS_DAYS, RETENTION_CUSTOM } from '../../../helpers/constants';
-import { IgnoredDomains } from '../IgnoredDomains';
+import { STATS_INTERVALS_DAYS, RETENTION_CUSTOM, RETENTION_RANGE } from 'panel/helpers/constants';
+import { validateBetween } from 'panel/helpers/validators';
 import { RetentionCustomInput } from '../RetentionCustomInput';
 
 export type FormValues = {
-    enabled: boolean;
     interval: number;
     customInterval?: number | null;
-    ignored: string;
-    ignore_enabled: boolean;
 };
 
 type Props = {
-    initialValues: FormValues;
+    initialValues: Partial<FormValues>;
     processing: boolean;
-    processingReset: boolean;
-    onSubmit: (values: FormValues) => void;
-    onReset: () => void;
+    onValuesChange: (values: FormValues) => void;
+    submitted?: boolean;
 };
 
-export const Form = ({ initialValues, processing, processingReset, onSubmit, onReset }: Props) => {
-    const {
-        handleSubmit,
-        watch,
-        setValue,
-        control,
-        formState: { isSubmitting },
-    } = useForm<FormValues>({
-        mode: 'onBlur',
-        defaultValues: {
-            enabled: initialValues.enabled || false,
-            interval: getDefaultInterval(initialValues.customInterval, initialValues.interval),
-            customInterval: initialValues.customInterval ?? undefined,
-            ignored: initialValues.ignored || '',
-            ignore_enabled: initialValues.ignore_enabled || true,
-        },
-    });
+export const Form = (props: Props) => {
+    const [intervalValue, setIntervalValue] = createSignal(
+        getDefaultInterval(props.initialValues.customInterval, props.initialValues.interval),
+    );
+    const [customInterval, setCustomInterval] = createSignal<number | null>(
+        props.initialValues.customInterval ?? null,
+    );
 
-    const intervalValue = watch('interval');
-    const customIntervalValue = watch('customInterval');
-    const ignoreEnabled = watch('ignore_enabled');
-
-    useEffect(() => {
-        if (STATS_INTERVALS_DAYS.includes(intervalValue)) {
-            setValue('customInterval', null);
+    // Clear customInterval when a standard interval is selected
+    const handleIntervalChange = (val: number) => {
+        const numVal = Number(val);
+        setIntervalValue(numVal);
+        if (STATS_INTERVALS_DAYS.includes(numVal)) {
+            setCustomInterval(null);
         }
-    }, [intervalValue]);
-
-    // Focus is handled inside RetentionCustomInput
-
-    const onSubmitForm = (data: FormValues) => {
-        onSubmit(data);
     };
 
-    const disableSubmit =
-        isSubmitting || processing || (intervalValue === RETENTION_CUSTOM && !customIntervalValue);
+    // Validate customInterval when Custom is selected
+    const customIntervalError = createMemo(() => {
+        const val = customInterval();
+        if (intervalValue() !== RETENTION_CUSTOM) {
+            return undefined;
+        }
+        if (val == null) {
+            return props.submitted ? intl.getMessage('form_error_required') : undefined;
+        }
+        return validateBetween(val, RETENTION_RANGE.MIN, RETENTION_RANGE.MAX);
+    });
+
+    // Notify parent of value changes for dirty tracking
+    createEffect(() => {
+        const values: FormValues = {
+            interval: intervalValue(),
+            customInterval: customInterval(),
+        };
+        props.onValuesChange(values);
+    });
 
     return (
-        <form onSubmit={handleSubmit(onSubmitForm)}>
-            <Controller
-                name="enabled"
-                control={control}
-                render={({ field }) => (
-                    <SwitchGroup
-                        checked={field.value}
-                        onChange={field.onChange}
-                        id="stats_config_enabled"
-                        title={intl.getMessage('settings_statistics')}
-                        description={intl.getMessage('settings_statistics_desc')}
-                        disabled={processing}
-                    />
-                )}
-            />
-
+        <>
             <RadioGroup
-                title={intl.getMessage('settings_statistics_retention')}
-                disabled={processing}
-                value={intervalValue}
-                onChange={(val) => setValue('interval', Number(val))}
+                disabled={props.processing}
+                value={intervalValue()}
+                onChange={handleIntervalChange}
                 name="stats-interval"
                 options={[
-                    { text: getIntervalTitle(RETENTION_CUSTOM), value: RETENTION_CUSTOM },
                     ...STATS_INTERVALS_DAYS.map((interval) => ({
                         text: getIntervalTitle(interval),
                         value: interval,
                     })),
+                    { text: getIntervalTitle(RETENTION_CUSTOM), value: RETENTION_CUSTOM },
                 ]}
             >
                 <RetentionCustomInput
-                    control={control}
-                    processing={processing}
-                    intervalValue={intervalValue}
+                    value={customInterval()}
+                    onChange={setCustomInterval}
+                    processing={props.processing}
+                    intervalValue={intervalValue()}
                     intervals={STATS_INTERVALS_DAYS}
                     inputId="stats_config_custom_interval"
                     inputLabel={intl.getMessage('settings_statistics_retention_hours')}
                     placeholder={intl.getMessage('settings_rotation_placeholder')}
+                    error={customIntervalError()}
                 />
             </RadioGroup>
-
-            <IgnoredDomains
-                control={control}
-                processing={processing}
-                ignoreEnabled={ignoreEnabled}
-                setValue={setValue}
-                switchId="stats_config_ignored_enabled"
-                textareaId="stats_config_ignored"
-                description={intl.getMessage('ignore_domains_desc_stats')}
-            />
-
-            <div className={theme.form.buttonGroup}>
-                <Button
-                    type="submit"
-                    id="stats_config_save"
-                    variant="primary"
-                    size="small"
-                    disabled={disableSubmit}
-                    className={theme.form.button}
-                >
-                    {intl.getMessage('save')}
-                </Button>
-
-                <Button
-                    type="button"
-                    id="stats_config_clear"
-                    onClick={onReset}
-                    variant="secondary"
-                    size="small"
-                    disabled={processingReset}
-                    className={theme.form.button}
-                >
-                    {intl.getMessage('settings_statistics_clear')}
-                </Button>
-            </div>
-        </form>
+        </>
     );
 };

@@ -1,12 +1,11 @@
-import React, { useEffect, ComponentType } from 'react';
-
-import { HashRouter, Route, Routes, Navigate } from 'react-router-dom';
-import { shallowEqual, useDispatch, useSelector } from 'react-redux';
+import { createEffect, onMount, onCleanup, Show } from 'solid-js';
+import { HashRouter, Route, Navigate } from '@solidjs/router';
 
 import { Sidebar } from 'panel/common/ui/Sidebar';
 import { Icons } from 'panel/common/ui/Icons';
 import { Footer } from 'panel/common/ui/Footer';
 import { Header } from 'panel/common/ui/Header';
+import { Banners } from 'panel/common/ui/Banners';
 import { Settings } from 'panel/components/Settings';
 import intl, { LocalesType } from 'panel/common/intl';
 import { Encryption } from 'panel/components/Encryption';
@@ -18,15 +17,16 @@ import { DNSRewrites } from 'panel/components/FilterLists/DNSRewrites';
 import { SetupGuide } from 'panel/components/SetupGuide';
 import { Dashboard } from 'panel/components/Dashboard';
 import { Dhcp } from 'panel/components/Dhcp';
+import { LeasesPage } from 'panel/components/Dhcp/LeasesPage';
 import { QueryLog } from 'panel/components/QueryLog';
 import Toasts from '../Toasts';
 import { THEMES } from '../../helpers/constants';
 import { setHtmlLangAttr, setUITheme } from '../../helpers/helpers';
-import { getDnsStatus, getTimerStatus } from '../../actions';
-import { RootState } from '../../initialState';
+import { getDnsStatus, getTimerStatus, dashboardState } from '../../stores/dashboard';
 
 import s from './styles.module.pcss';
 import { DnsSettings } from '../DnsSettings';
+import { PrivateReverse } from '../DnsSettings/PrivateReverse';
 import { UserRules } from '../UserRules';
 import { BlockedServices } from '../BlockedServices';
 import { Clients } from '../Clients/Clients';
@@ -36,11 +36,6 @@ import { Protection } from '../Clients/AddClient/blocks/Protection/Protection';
 import { ClientBlockedServices } from '../Clients/AddClient/blocks/ClientBlockedServices';
 import { ClientSchedule } from '../Clients/AddClient/blocks/ClientSchedule';
 
-type RouteConfig = {
-    path: string;
-    component: ComponentType;
-};
-
 const SetupGuideRoute = () => <SetupGuide />;
 const BlockedServicesRoute = () => <BlockedServices />;
 const InactivityScheduleRoute = () => <InactivitySchedule />;
@@ -49,196 +44,117 @@ const ClientBlockedServicesRoute = () => <ClientBlockedServices />;
 const ProtectionRoute = () => <Protection />;
 const AddClientRoute = () => <AddClient />;
 
-const ROUTES: RouteConfig[] = [
-    {
-        path: '/dashboard',
-        component: Dashboard,
-    },
-    {
-        path: '/settings',
-        component: Settings,
-    },
-    {
-        path: '/encryption',
-        component: Encryption,
-    },
-    {
-        path: '/dns',
-        component: DnsSettings,
-    },
-    {
-        path: '/blocklists',
-        component: Blocklists,
-    },
-    {
-        path: '/allowlists',
-        component: Allowlists,
-    },
-    {
-        path: '/user_rules',
-        component: UserRules,
-    },
-    {
-        path: '/dns_rewrites',
-        component: DNSRewrites,
-    },
-    {
-        path: '/dhcp',
-        component: Dhcp,
-    },
-    {
-        path: '/guide',
-        component: SetupGuideRoute,
-    },
-    {
-        path: '/logs',
-        component: QueryLog,
-    },
-    {
-        path: '/blocked_services/schedule',
-        component: InactivityScheduleRoute,
-    },
-    {
-        path: '/blocked_services',
-        component: BlockedServicesRoute,
-    },
-    {
-        path: '/clients/add/blocked_services/schedule',
-        component: ClientScheduleRoute,
-    },
-    {
-        path: '/clients/add/blocked_services',
-        component: ClientBlockedServicesRoute,
-    },
-    {
-        path: '/clients/add/protection',
-        component: ProtectionRoute,
-    },
-    {
-        path: '/clients/add',
-        component: AddClientRoute,
-    },
-    {
-        path: '/clients/edit/:clientName/blocked_services/schedule',
-        component: ClientScheduleRoute,
-    },
-    {
-        path: '/clients/edit/:clientName/blocked_services',
-        component: ClientBlockedServicesRoute,
-    },
-    {
-        path: '/clients/edit/:clientName/protection',
-        component: ProtectionRoute,
-    },
-    {
-        path: '/clients/edit/:clientName',
-        component: AddClientRoute,
-    },
-    {
-        path: '/clients',
-        component: Clients,
-    },
-];
-
 const App = () => {
-    const dispatch = useDispatch();
-    const { language, isCoreRunning, processing, theme } = useSelector<
-        RootState,
-        RootState['dashboard']
-    >((state) => state.dashboard, shallowEqual);
-
-    useEffect(() => {
-        dispatch(getDnsStatus());
+    onMount(() => {
+        getDnsStatus();
 
         const handleVisibilityChange = () => {
             if (document.visibilityState === 'visible') {
-                dispatch(getTimerStatus());
+                getTimerStatus();
             }
         };
 
         document.addEventListener('visibilitychange', handleVisibilityChange);
 
-        return () => {
+        onCleanup(() => {
             document.removeEventListener('visibilitychange', handleVisibilityChange);
-        };
-    }, []);
+        });
+    });
 
-    const setLanguage = () => {
-        if (!processing) {
-            if (language) {
-                intl.changeLanguage(language as LocalesType);
-                setHtmlLangAttr(language);
-                LocalStorageHelper.setItem(LOCAL_STORAGE_KEYS.LANGUAGE, language);
-            }
+    // React to language changes
+    createEffect(() => {
+        const language = dashboardState.language;
+        const processing = dashboardState.processing;
+        if (!processing && language) {
+            intl.changeLanguage(language as LocalesType);
+            setHtmlLangAttr(language);
+            LocalStorageHelper.setItem(LOCAL_STORAGE_KEYS.LANGUAGE, language);
         }
-    };
+    });
 
-    useEffect(() => {
-        setLanguage();
-    }, [language]);
+    // React to theme changes
+    createEffect(() => {
+        const theme = dashboardState.theme;
 
-    const handleAutoTheme = (e: any, accountTheme: any) => {
-        if (accountTheme !== THEMES.auto) {
-            return;
-        }
+        if (!theme) return;
 
-        if (e.matches) {
-            setUITheme(THEMES.dark);
-        } else {
-            setUITheme(THEMES.light);
-        }
-    };
-
-    useEffect(() => {
         if (theme !== THEMES.auto) {
             setUITheme(theme);
-
             return;
         }
 
         const colorSchemeMedia = window.matchMedia('(prefers-color-scheme: dark)');
         setUITheme(theme);
 
-        if (colorSchemeMedia.addEventListener !== undefined) {
-            colorSchemeMedia.addEventListener('change', (e) => {
-                handleAutoTheme(e, theme);
-            });
-        } else {
-            // Deprecated addListener for older versions of Safari.
-            colorSchemeMedia.addListener((e) => {
-                handleAutoTheme(e, theme);
-            });
-        }
-    }, [theme]);
+        const handleChange = (e: MediaQueryListEvent) => {
+            if (e.matches) {
+                setUITheme(THEMES.dark);
+            } else {
+                setUITheme(THEMES.light);
+            }
+        };
+
+        colorSchemeMedia.addEventListener('change', handleChange);
+        onCleanup(() => {
+            colorSchemeMedia.removeEventListener('change', handleChange);
+        });
+    });
 
     return (
-        <HashRouter>
-            <Header />
+        <HashRouter
+            root={(props) => (
+                <>
+                    <Header />
 
-            <div className={s.wrapper}>
-                <Sidebar />
+                    <Banners />
 
-                <div className={s.bodyWrapper}>
-                    {!processing && isCoreRunning && (
-                        <Routes>
-                            {ROUTES.map((route) => (
-                                <Route
-                                    key={route.path}
-                                    path={route.path}
-                                    element={<route.component />}
-                                />
-                            ))}
-                            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                        </Routes>
-                    )}
-                </div>
-            </div>
+                    <div class={s.wrapper}>
+                        <Sidebar />
 
-            <Footer />
+                        <Show when={!dashboardState.processing && dashboardState.isCoreRunning}>
+                            <div class={s.bodyWrapper}>{props.children}</div>
+                        </Show>
+                    </div>
 
-            <Toasts />
+                    <Footer />
 
-            <Icons />
+                    <Toasts />
+
+                    <Icons />
+                </>
+            )}
+        >
+            <Route path="/dashboard" component={Dashboard} />
+            <Route path="/settings" component={Settings} />
+            <Route path="/encryption" component={Encryption} />
+            <Route path="/dns" component={DnsSettings} />
+            <Route path="/dns/private-reverse" component={PrivateReverse} />
+            <Route path="/blocklists" component={Blocklists} />
+            <Route path="/allowlists" component={Allowlists} />
+            <Route path="/user_rules" component={UserRules} />
+            <Route path="/dns_rewrites" component={DNSRewrites} />
+            <Route path="/dhcp" component={Dhcp} />
+            <Route path="/dhcp/leases" component={LeasesPage} />
+            <Route path="/guide" component={SetupGuideRoute} />
+            <Route path="/logs" component={QueryLog} />
+            <Route path="/blocked_services/schedule" component={InactivityScheduleRoute} />
+            <Route path="/blocked_services" component={BlockedServicesRoute} />
+            <Route path="/clients/add/blocked_services/schedule" component={ClientScheduleRoute} />
+            <Route path="/clients/add/blocked_services" component={ClientBlockedServicesRoute} />
+            <Route path="/clients/add/protection" component={ProtectionRoute} />
+            <Route path="/clients/add" component={AddClientRoute} />
+            <Route
+                path="/clients/edit/:clientName/blocked_services/schedule"
+                component={ClientScheduleRoute}
+            />
+            <Route
+                path="/clients/edit/:clientName/blocked_services"
+                component={ClientBlockedServicesRoute}
+            />
+            <Route path="/clients/edit/:clientName/protection" component={ProtectionRoute} />
+            <Route path="/clients/edit/:clientName" component={AddClientRoute} />
+            <Route path="/clients" component={Clients} />
+            <Route path="/" component={() => <Navigate href="/dashboard" />} />
         </HashRouter>
     );
 };

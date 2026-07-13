@@ -1,4 +1,4 @@
-import React from 'react';
+import { Show } from 'solid-js';
 import cn from 'clsx';
 
 import theme from 'panel/lib/theme';
@@ -40,160 +40,147 @@ type Props = {
     persistentClientsLoaded: boolean;
 };
 
-export const LogCard = ({
-    entry,
-    filters,
-    services,
-    whitelistFilters,
-    onRowClick,
-    onBlock,
-    onUnblock,
-    onBlockClient,
-    onDisallowClient,
-    onAddPersistentClient,
-    persistentClientIds,
-    persistentClientsLoaded,
-}: Props) => {
-    const displayDomain = entry.unicodeName || entry.domain;
-    const proto = getProtocolName(entry.client_proto);
-    const clientDetails = entry.client_info?.name || entry.client_id;
-    const clientLocation = getClientLocation(entry.client_info?.whois);
-    const statusKey = getQueryStatusKey(entry.reason, entry.originalResponse ?? []);
-    const reasonKey = getQueryReasonKey(entry.reason, entry.rules ?? []);
-    const reasonDetails = getQueryReasonDetails({
-        elapsedMs: entry.elapsedMs,
-        filters,
-        reason: entry.reason,
-        rules: entry.rules ?? [],
-        serviceName: entry.service_name || entry.serviceName,
-        services,
-        whitelistFilters,
-    });
-    const statusLabel = getQueryStatusLabel(statusKey);
-    const reasonLabel = getQueryReasonLabel(reasonKey);
+export const LogCard = (props: Props) => {
+    const displayDomain = () => props.entry.unicodeName || props.entry.domain;
+    const proto = () => getProtocolName(props.entry.client_proto);
+    const clientDetails = () => props.entry.client_info?.name || props.entry.client_id;
+    const clientLocation = () => getClientLocation(props.entry.client_info?.whois);
+    const statusKey = () =>
+        getQueryStatusKey(props.entry.reason, props.entry.originalResponse ?? []);
+    const reasonKey = () => getQueryReasonKey(props.entry.reason, props.entry.rules ?? []);
+    const reasonDetails = () =>
+        getQueryReasonDetails({
+            elapsedMs: props.entry.elapsedMs,
+            filters: props.filters,
+            reason: props.entry.reason,
+            rules: props.entry.rules ?? [],
+            serviceName: props.entry.service_name || props.entry.serviceName,
+            services: props.services,
+            whitelistFilters: props.whitelistFilters,
+        });
+    const statusLabel = () => getQueryStatusLabel(statusKey());
+    const reasonLabel = () => getQueryReasonLabel(reasonKey());
 
     return (
-        <div className={s.card} onClick={() => onRowClick(entry)} data-testid="query-log-card">
-            <div className={s.cardBody}>
-                <div className={s.cardHeader}>
-                    <div className={s.titleBlock}>
-                        <div className={s.titleRow}>
+        <div
+            class={s.card}
+            onClick={() => props.onRowClick(props.entry)}
+            data-testid="query-log-card"
+        >
+            <div class={s.cardBody}>
+                <div class={s.cardHeader}>
+                    <div class={s.titleBlock}>
+                        <div class={s.titleRow}>
                             <span
-                                className={cn(
+                                class={cn(
                                     s.domain,
                                     theme.text.t3,
                                     theme.text.condenced,
                                     theme.text.semibold,
                                 )}
-                                title={displayDomain}
+                                title={displayDomain()}
                             >
-                                {displayDomain}
+                                {displayDomain()}
                             </span>
 
-                            <div className={s.iconsRow}>
-                                <span className={s.iconWrapper} aria-hidden="true">
+                            <div class={s.iconsRow}>
+                                <span class={s.iconWrapper} aria-hidden="true">
                                     <Icon
                                         icon="tracking"
-                                        color={entry.tracker ? 'green' : 'gray'}
-                                        className={s.icon}
+                                        color={props.entry.tracker ? 'green' : 'gray'}
+                                        class={s.icon}
                                     />
                                 </span>
 
-                                {entry.answer_dnssec && (
-                                    <span className={s.iconWrapper} aria-hidden="true">
-                                        <Icon icon="lock" color="green" className={s.icon} />
+                                <Show when={props.entry.answer_dnssec}>
+                                    <span class={s.iconWrapper} aria-hidden="true">
+                                        <Icon icon="lock" color="green" class={s.icon} />
                                     </span>
-                                )}
+                                </Show>
                             </div>
                         </div>
 
-                        <span className={cn(s.typeLine, theme.text.t4, theme.text.condenced)}>
-                            {intl.getMessage('type_value', { value: entry.type })}, {proto}
+                        <span class={cn(s.typeLine, theme.text.t4, theme.text.condenced)}>
+                            {intl.getMessage('type_value', { value: props.entry.type })}, {proto()}
                         </span>
                     </div>
 
-                    <div className={s.actions} onClick={(e) => e.stopPropagation()}>
+                    <div class={s.actions} onClick={(e) => e.stopPropagation()}>
                         <ActionsMenu
-                            domain={entry.domain}
-                            client={entry.client}
-                            clientId={entry.client_id || entry.client}
-                            onBlock={onBlock}
-                            onUnblock={onUnblock}
-                            onBlockClient={onBlockClient}
-                            onDisallowClient={() => onDisallowClient(entry.client)}
-                            onAddPersistentClient={onAddPersistentClient}
-                            isBlocked={isBlockedReason(entry.reason)}
+                            domain={props.entry.domain}
+                            client={props.entry.client}
+                            clientId={props.entry.client_id || props.entry.client}
+                            onBlock={props.onBlock}
+                            onUnblock={props.onUnblock}
+                            onBlockClient={props.onBlockClient}
+                            onDisallowClient={() => props.onDisallowClient(props.entry.client)}
+                            onAddPersistentClient={props.onAddPersistentClient}
+                            isBlocked={isBlockedReason(props.entry.reason)}
                             showAddPersistentClient={
-                                persistentClientsLoaded &&
-                                !hasPersistentClient(entry, persistentClientIds)
+                                props.persistentClientsLoaded &&
+                                !hasPersistentClient(props.entry, props.persistentClientIds)
                             }
                             testIdPrefix="query-log-card"
                         />
                     </div>
                 </div>
 
-                <div className={s.fieldGrid}>
-                    <span className={cn(s.fieldLabel, theme.text.t4, theme.text.condenced)}>
+                <div class={s.fieldGrid}>
+                    <span class={cn(s.fieldLabel, theme.text.t4, theme.text.condenced)}>
                         {intl.getMessage('time_table_header')}
                     </span>
-                    <span className={cn(s.fieldValue, theme.text.t4, theme.text.condenced)}>
-                        {formatLogDate(entry.time)}, {formatLogTime(entry.time)}
+                    <span class={cn(s.fieldValue, theme.text.t4, theme.text.condenced)}>
+                        {formatLogDate(props.entry.time)}, {formatLogTime(props.entry.time)}
                     </span>
 
-                    <span className={cn(s.fieldLabel, theme.text.t4, theme.text.condenced)}>
+                    <span class={cn(s.fieldLabel, theme.text.t4, theme.text.condenced)}>
                         {intl.getMessage('status_table_header')}
                     </span>
                     <span
-                        className={cn(
+                        class={cn(
                             s.status,
                             theme.text.t4,
                             theme.text.condenced,
-                            getStatusClassName(entry.reason),
+                            getStatusClassName(props.entry.reason),
                         )}
                     >
-                        {statusLabel}
+                        {statusLabel()}
                     </span>
 
-                    {reasonKey !== 'none' && (
-                        <>
-                            <span className={cn(s.fieldLabel, theme.text.t4, theme.text.condenced)}>
-                                {intl.getMessage('reason_table_header')}
-                            </span>
-                            <span className={cn(s.fieldValue, theme.text.t4, theme.text.condenced)}>
-                                {reasonLabel}
-                                {reasonDetails ? ` / ${reasonDetails}` : ''}
-                            </span>
-                        </>
-                    )}
+                    <Show when={reasonKey() !== 'none'}>
+                        <span class={cn(s.fieldLabel, theme.text.t4, theme.text.condenced)}>
+                            {intl.getMessage('reason_table_header')}
+                        </span>
+                        <span class={cn(s.fieldValue, theme.text.t4, theme.text.condenced)}>
+                            {reasonLabel()}
+                            {reasonDetails() ? ` / ${reasonDetails()}` : ''}
+                        </span>
+                    </Show>
 
-                    <span className={cn(s.fieldLabel, theme.text.t4, theme.text.condenced)}>
+                    <span class={cn(s.fieldLabel, theme.text.t4, theme.text.condenced)}>
                         {intl.getMessage('client_ip')}
                     </span>
-                    <span className={cn(s.fieldValue, theme.text.t4, theme.text.condenced)}>
-                        {entry.client}
+                    <span class={cn(s.fieldValue, theme.text.t4, theme.text.condenced)}>
+                        {props.entry.client}
                     </span>
 
-                    {clientDetails && (
-                        <>
-                            <span className={cn(s.fieldLabel, theme.text.t4, theme.text.condenced)}>
-                                {intl.getMessage('client_details')}
-                            </span>
-                            <span className={cn(s.fieldValue, theme.text.t4, theme.text.condenced)}>
-                                {clientDetails}
-                            </span>
-                        </>
-                    )}
+                    <Show when={clientDetails()}>
+                        <span class={cn(s.fieldLabel, theme.text.t4, theme.text.condenced)}>
+                            {intl.getMessage('client_details')}
+                        </span>
+                        <span class={cn(s.fieldValue, theme.text.t4, theme.text.condenced)}>
+                            {clientDetails()}
+                        </span>
+                    </Show>
 
-                    {clientLocation && (
-                        <>
-                            <span className={cn(s.fieldLabel, theme.text.t4, theme.text.condenced)}>
-                                {intl.getMessage('client_location')}
-                            </span>
-                            <span className={cn(s.fieldValue, theme.text.t4, theme.text.condenced)}>
-                                {clientLocation}
-                            </span>
-                        </>
-                    )}
+                    <Show when={clientLocation()}>
+                        <span class={cn(s.fieldLabel, theme.text.t4, theme.text.condenced)}>
+                            {intl.getMessage('client_location')}
+                        </span>
+                        <span class={cn(s.fieldValue, theme.text.t4, theme.text.condenced)}>
+                            {clientLocation()}
+                        </span>
+                    </Show>
                 </div>
             </div>
         </div>

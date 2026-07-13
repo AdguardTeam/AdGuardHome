@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
     <head>
         <meta charset="utf-8" />
@@ -11,11 +11,19 @@
         <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
         <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
         <title>Setup AdGuard Home</title>
+        <meta name="color-scheme" content="light dark" />
+        <script>
+            (function () {
+                var prefersDark =
+                    window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var theme = prefersDark ? 'dark' : 'light';
+                document.documentElement.dataset.theme = theme;
+                document.documentElement.style.colorScheme = theme;
+            })();
+        </script>
     </head>
     <body>
-        <noscript>
-            You need to enable JavaScript to run this app.
-        </noscript>
+        <noscript> You need to enable JavaScript to run this app. </noscript>
         <div id="root"></div>
     </body>
 </html>

@@ -1,18 +1,15 @@
-import React, { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { useDispatch, useSelector } from 'react-redux';
+import { createSignal, createMemo, createEffect, untrack } from 'solid-js';
 
 import intl from 'panel/common/intl';
 import { Dialog } from 'panel/common/ui/Dialog/Dialog';
 import { Button } from 'panel/common/ui/Button';
 import { Radio } from 'panel/common/controls/Radio';
 import theme from 'panel/lib/theme';
-import { setFiltersConfig } from 'panel/actions/filtering';
-import { RootState } from 'panel/initialState';
+import { setFiltersConfig, filteringState } from 'panel/stores/filtering';
 import { ModalWrapper } from 'panel/common/ui/ModalWrapper';
 import { MODAL_TYPE } from 'panel/helpers/constants';
-import { closeModal } from 'panel/reducers/modals';
-import { FilterIntervalInput } from './FilterIntervalInput';
+import { closeModal } from 'panel/stores/modals';
+import { FilterIntervalInput, FILTER_INTERVAL_RANGE } from './FilterIntervalInput';
 
 export const FILTER_INTERVALS = {
     DISABLE: 0,
@@ -47,16 +44,7 @@ const RADIO_OPTIONS = [
     { text: getIntervalTitle(FILTER_INTERVALS.CUSTOM), value: FILTER_INTERVALS.CUSTOM },
 ];
 
-type FormValues = {
-    interval: number;
-    customInterval?: number | null;
-};
-
 export const FilterUpdateModal = () => {
-    const dispatch = useDispatch();
-    const { filtering } = useSelector((state: RootState) => state);
-    const { processingSetConfig, interval: currentInterval } = filtering;
-
     const PREDEFINED_INTERVALS: number[] = [
         FILTER_INTERVALS.DISABLE,
         FILTER_INTERVALS.HOURLY,
@@ -64,76 +52,92 @@ export const FilterUpdateModal = () => {
         FILTER_INTERVALS.WEEKLY,
     ];
 
-    const isCustom = currentInterval != null && !PREDEFINED_INTERVALS.includes(currentInterval);
-
-    const defaultFormValues: FormValues = {
-        interval: isCustom ? FILTER_INTERVALS.CUSTOM : (currentInterval ?? 24),
-        customInterval: isCustom ? currentInterval : null,
-    };
-
-    const { control, handleSubmit, watch, setValue, reset } = useForm<FormValues>({
-        defaultValues: defaultFormValues,
+    const isCustom = createMemo(() => {
+        const currentInterval = filteringState.interval;
+        return currentInterval != null && !PREDEFINED_INTERVALS.includes(currentInterval);
     });
 
-    useEffect(() => {
-        reset(defaultFormValues);
-    }, [currentInterval, reset]);
+    const [interval, setIntervalValue] = createSignal<number>(
+        untrack(() => (isCustom() ? FILTER_INTERVALS.CUSTOM : (filteringState.interval ?? 24))),
+    );
+    const [customInterval, setCustomInterval] = createSignal<number | null>(
+        untrack(() => (isCustom() ? filteringState.interval : null)),
+    );
 
-    const intervalValue = watch('interval');
+    createEffect(() => {
+        const currentInterval = filteringState.interval;
+        const custom = currentInterval != null && !PREDEFINED_INTERVALS.includes(currentInterval);
+        setIntervalValue(custom ? FILTER_INTERVALS.CUSTOM : (currentInterval ?? 24));
+        setCustomInterval(custom ? currentInterval : null);
+    });
+
+    const intervalValue = createMemo(() => interval());
 
     const onClose = () => {
-        reset(defaultFormValues);
-        dispatch(closeModal());
+        const currentInterval = filteringState.interval;
+        const custom = currentInterval != null && !PREDEFINED_INTERVALS.includes(currentInterval);
+        setIntervalValue(custom ? FILTER_INTERVALS.CUSTOM : (currentInterval ?? 24));
+        setCustomInterval(custom ? currentInterval : null);
+        closeModal();
     };
 
-    const onSubmit = (data: FormValues) => {
+    const onSubmit = (e: Event) => {
+        e.preventDefault();
         const finalInterval =
-            data.interval === FILTER_INTERVALS.CUSTOM ? data.customInterval : data.interval;
+            interval() === FILTER_INTERVALS.CUSTOM ? customInterval() : interval();
 
         if (finalInterval === null || finalInterval === undefined || finalInterval < 0) {
             return;
         }
 
-        dispatch(
-            setFiltersConfig({
-                enabled: filtering.enabled,
-                interval: finalInterval,
-            }),
-        );
+        if (interval() === FILTER_INTERVALS.CUSTOM) {
+            if (
+                finalInterval < FILTER_INTERVAL_RANGE.MIN ||
+                finalInterval > FILTER_INTERVAL_RANGE.MAX
+            ) {
+                return;
+            }
+        }
+
+        setFiltersConfig({
+            enabled: filteringState.enabled,
+            interval: finalInterval,
+        });
         onClose();
     };
 
     return (
         <ModalWrapper id={MODAL_TYPE.FILTER_UPDATE}>
             <Dialog visible onClose={onClose} title={intl.getMessage('update_filters_title')}>
-                <form onSubmit={handleSubmit(onSubmit)}>
-                    <div className={theme.dialog.description}>
+                <form onSubmit={onSubmit}>
+                    <div class={theme.dialog.description}>
                         {intl.getMessage('update_filters_desc')}
                     </div>
 
-                    <div className={theme.form.group}>
+                    <div class={theme.form.group}>
                         <Radio
                             name="interval"
-                            value={intervalValue}
+                            value={intervalValue()}
                             options={RADIO_OPTIONS}
-                            handleChange={(value) => setValue('interval', value)}
-                            disabled={processingSetConfig}
+                            handleChange={(value: number) => setIntervalValue(value)}
+                            disabled={filteringState.processingSetConfig}
                         />
 
                         <FilterIntervalInput
-                            control={control}
-                            processing={processingSetConfig}
-                            intervalValue={intervalValue}
+                            value={customInterval()}
+                            onChange={(value) => setCustomInterval(value)}
+                            processing={filteringState.processingSetConfig}
+                            intervalValue={intervalValue()}
                         />
                     </div>
 
-                    <div className={theme.dialog.footer}>
+                    <div class={theme.dialog.footer}>
                         <Button
                             type="submit"
                             variant="primary"
                             size="small"
-                            disabled={processingSetConfig}
-                            className={theme.dialog.button}
+                            disabled={filteringState.processingSetConfig}
+                            class={theme.dialog.button}
                         >
                             {intl.getMessage('save')}
                         </Button>
@@ -143,7 +147,7 @@ export const FilterUpdateModal = () => {
                             variant="secondary"
                             size="small"
                             onClick={onClose}
-                            className={theme.dialog.button}
+                            class={theme.dialog.button}
                         >
                             {intl.getMessage('cancel')}
                         </Button>

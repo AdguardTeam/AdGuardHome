@@ -1,8 +1,7 @@
-import React from 'react';
+import { Show } from 'solid-js';
 
 import intl from 'panel/common/intl';
 import theme from 'panel/lib/theme';
-import { formatCompactNumber } from 'panel/helpers/helpers';
 import cn from 'clsx';
 import { EmptyState } from '../EmptyState';
 
@@ -18,41 +17,37 @@ type Props = {
     avgProcessingTime: number;
 };
 
-export const GeneralStatistics = ({
-    numDnsQueries,
-    numBlockedFiltering,
-    numReplacedSafebrowsing,
-    numReplacedParental,
-    numReplacedSafesearch,
-    avgProcessingTime,
-}: Props) => {
-    const blockedPercent = numDnsQueries > 0 ? (numBlockedFiltering / numDnsQueries) * 100 : 0;
-    const safebrowsingPercent =
-        numDnsQueries > 0 ? (numReplacedSafebrowsing / numDnsQueries) * 100 : 0;
-    const parentalPercent = numDnsQueries > 0 ? (numReplacedParental / numDnsQueries) * 100 : 0;
-    const safesearchPercent = numDnsQueries > 0 ? (numReplacedSafesearch / numDnsQueries) * 100 : 0;
+export const GeneralStatistics = (props: Props) => {
+    const blockedPercent = () =>
+        props.numDnsQueries > 0 ? (props.numBlockedFiltering / props.numDnsQueries) * 100 : 0;
+    const safebrowsingPercent = () =>
+        props.numDnsQueries > 0 ? (props.numReplacedSafebrowsing / props.numDnsQueries) * 100 : 0;
+    const parentalPercent = () =>
+        props.numDnsQueries > 0 ? (props.numReplacedParental / props.numDnsQueries) * 100 : 0;
+    const safesearchPercent = () =>
+        props.numDnsQueries > 0 ? (props.numReplacedSafesearch / props.numDnsQueries) * 100 : 0;
 
-    const hasStats = numDnsQueries > 0;
+    const hasStats = () => props.numDnsQueries > 0;
 
     return (
-        <div className={s.card}>
-            <div className={s.cardHeader}>
-                <div className={cn(theme.title.h5, s.cardTitle)}>
+        <div class={s.card}>
+            <div class={s.cardHeader}>
+                <div class={cn(theme.title.h5, s.cardTitle)}>
                     {intl.getMessage('general_statistics')}
                 </div>
 
-                {hasStats && (
-                    <div className={cn(theme.text.t3, s.cardSubtitle)}>
-                        {intl.getPlural('queries_total', formatCompactNumber(numDnsQueries))}
+                <Show when={hasStats()}>
+                    <div class={cn(theme.text.t3, s.cardSubtitle)}>
+                        {intl.getPlural('queries_total', props.numDnsQueries)}
                     </div>
-                )}
+                </Show>
             </div>
 
-            {hasStats ? (
-                <div className={s.tableRows}>
+            <Show when={hasStats()} fallback={<EmptyState />}>
+                <div class={s.tableRows}>
                     <StatRow
                         label={intl.getMessage('dns_queries')}
-                        value={numDnsQueries}
+                        value={props.numDnsQueries}
                         icon="connections"
                         rowTheme="dnsQueries"
                         tooltip={intl.getMessage('dns_queries_tooltip')}
@@ -61,8 +56,8 @@ export const GeneralStatistics = ({
 
                     <StatRow
                         label={intl.getMessage('ads_blocked')}
-                        value={numBlockedFiltering}
-                        percent={blockedPercent}
+                        value={props.numBlockedFiltering}
+                        percent={blockedPercent()}
                         icon="adblocking"
                         rowTheme="adsBlocked"
                         tooltip={intl.getMessage('ads_blocked_tooltip')}
@@ -70,8 +65,8 @@ export const GeneralStatistics = ({
 
                     <StatRow
                         label={intl.getMessage('threats_blocked')}
-                        value={numReplacedSafebrowsing}
-                        percent={safebrowsingPercent}
+                        value={props.numReplacedSafebrowsing}
+                        percent={safebrowsingPercent()}
                         icon="tracking"
                         rowTheme="threatsBlocked"
                         tooltip={intl.getMessage('threats_blocked_tooltip')}
@@ -79,8 +74,8 @@ export const GeneralStatistics = ({
 
                     <StatRow
                         label={intl.getMessage('adult_websites_blocked')}
-                        value={numReplacedParental}
-                        percent={parentalPercent}
+                        value={props.numReplacedParental}
+                        percent={parentalPercent()}
                         icon="parental"
                         rowTheme="adultWebsitesBlocked"
                         tooltip={intl.getMessage('adult_websites_blocked_tooltip')}
@@ -88,20 +83,20 @@ export const GeneralStatistics = ({
 
                     <StatRow
                         label={intl.getMessage('safe_search_used')}
-                        value={numReplacedSafesearch}
-                        percent={safesearchPercent}
+                        value={props.numReplacedSafesearch}
+                        percent={safesearchPercent()}
                         icon="search"
                         rowTheme="safeSearchUsed"
                         tooltip={intl.getMessage('safe_search_used_tooltip')}
                     />
 
-                    <div className={s.rowDivider}></div>
+                    <div class={s.rowDivider} />
 
-                    <div className={s.processingTimeRow}>
+                    <div class={s.processingTimeRow}>
                         <StatRow
                             label={intl.getMessage('average_time_processing')}
                             value={intl.getMessage('processing_time_ms', {
-                                value: avgProcessingTime.toFixed(0),
+                                value: (props.avgProcessingTime ?? 0).toFixed(0),
                             })}
                             isQueriesValue={false}
                             icon="time"
@@ -110,9 +105,7 @@ export const GeneralStatistics = ({
                         />
                     </div>
                 </div>
-            ) : (
-                <EmptyState />
-            )}
+            </Show>
         </div>
     );
 };

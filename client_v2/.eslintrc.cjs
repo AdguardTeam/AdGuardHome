@@ -1,26 +1,20 @@
 const path = require('path');
 
 module.exports = {
-    plugins: ['prettier'],
+    plugins: ['prettier', 'solid', 'import'],
     extends: [
-        'airbnb-base',
         'prettier',
         'eslint:recommended',
-        'plugin:react/recommended',
         'plugin:@typescript-eslint/recommended',
-        'plugin:storybook/recommended',
+        'plugin:solid/typescript',
     ],
     parser: '@typescript-eslint/parser',
     env: {
-        jest: true,
         node: true,
         browser: true,
         commonjs: true,
     },
     settings: {
-        react: {
-            version: 'detect',
-        },
         'import/core-modules': ['Twosky'],
         'import/resolver': {
             typescript: {

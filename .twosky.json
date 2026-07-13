@@ -52,7 +52,7 @@
     "project_id": "home_v2",
     "base_locale": "en",
     "localizable_files": [
-      "client_v3/src/__locales/en.json"
+      "client_v2/src/__locales/en.json"
     ],
     "languages": {
       "ar": "العربية",
@@ -93,8 +93,8 @@
       "zh-tw": "正體中文（台灣）"
     },
     "metadata": {
-      "locales_dir": "./client_v3/src/__locales",
-      "sources_dir": "./client_v3/src"
+      "locales_dir": "./client_v2/src/__locales",
+      "sources_dir": "./client_v2/src"
     }
   },
   {

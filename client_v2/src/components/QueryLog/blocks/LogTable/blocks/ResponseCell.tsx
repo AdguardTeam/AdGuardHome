@@ -1,4 +1,3 @@
-import React from 'react';
 import cn from 'clsx';
 
 import theme from 'panel/lib/theme';
@@ -19,24 +18,25 @@ type Props = {
     whitelistFilters: Filter[];
 };
 
-export const ResponseCell = ({ row, filters, services, whitelistFilters }: Props) => {
-    const statusClassName = getStatusClassName(row.reason);
-    const statusLabel = getStatusLabel(row.reason, row.originalResponse, false);
-    const responseDetails = getResponseDetails({
-        elapsedMs: row.elapsedMs,
-        filters,
-        reason: row.reason,
-        rules: row.rules,
-        serviceName: row.service_name,
-        services,
-        whitelistFilters,
-    });
+export const ResponseCell = (props: Props) => {
+    const statusClassName = () => getStatusClassName(props.row.reason);
+    const statusLabel = () => getStatusLabel(props.row.reason, props.row.originalResponse, false);
+    const responseDetails = () =>
+        getResponseDetails({
+            elapsedMs: props.row.elapsedMs,
+            filters: props.filters,
+            reason: props.row.reason,
+            rules: props.row.rules,
+            serviceName: props.row.service_name,
+            services: props.services,
+            whitelistFilters: props.whitelistFilters,
+        });
 
     return (
-        <div className={s.responseCell}>
-            <span className={cn(s.status, statusClassName, theme.text.t3)}>{statusLabel}</span>
-            <span className={cn(s.secondaryLine, theme.text.t4)} title={responseDetails}>
-                {responseDetails}
+        <div class={s.responseCell}>
+            <span class={cn(s.status, statusClassName(), theme.text.t3)}>{statusLabel()}</span>
+            <span class={cn(s.secondaryLine, theme.text.t4)} title={responseDetails()}>
+                {responseDetails()}
             </span>
         </div>
     );

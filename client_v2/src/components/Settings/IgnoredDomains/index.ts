@@ -1,1 +1,0 @@
-export { IgnoredDomains } from './IgnoredDomains';

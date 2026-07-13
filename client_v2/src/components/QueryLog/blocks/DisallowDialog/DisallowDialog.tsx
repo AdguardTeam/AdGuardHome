@@ -1,4 +1,4 @@
-import React from 'react';
+import { Show } from 'solid-js';
 
 import intl from 'panel/common/intl';
 import { ConfirmDialog } from 'panel/common/ui/ConfirmDialog';
@@ -12,27 +12,29 @@ type Props = {
     onClose: () => void;
 };
 
-export const DisallowDialog = ({ ip, isAllowlistMode, onConfirm, onClose }: Props) => {
+export const DisallowDialog = (props: Props) => {
     return (
         <ConfirmDialog
             title={intl.getMessage('disallow_client_confirm_title')}
             text={
                 <div>
-                    <div>{intl.getMessage('disallow_client_confirm_text', { ip })}</div>
-                    {isAllowlistMode && (
-                        <div className={s.note}>
-                            {intl.getMessage('disallow_client_confirm_allowlist_note', { ip })}
+                    <div>{intl.getMessage('disallow_client_confirm_text', { ip: props.ip })}</div>
+                    <Show when={props.isAllowlistMode}>
+                        <div class={s.note}>
+                            {intl.getMessage('disallow_client_confirm_allowlist_note', {
+                                ip: props.ip,
+                            })}
                         </div>
-                    )}
+                    </Show>
                 </div>
             }
-            buttonText={intl.getMessage('yes')}
+            buttonText={intl.getMessage('yes_disallow')}
             cancelText={intl.getMessage('cancel')}
-            buttonVariant="primary"
+            buttonVariant="danger"
             submitTestId="query-log-disallow-confirm"
             cancelTestId="query-log-disallow-cancel"
-            onConfirm={onConfirm}
-            onClose={onClose}
+            onConfirm={props.onConfirm}
+            onClose={props.onClose}
         />
     );
 };

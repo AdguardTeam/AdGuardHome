@@ -1,4 +1,3 @@
-import React from 'react';
 import cn from 'clsx';
 
 import theme from 'panel/lib/theme';
@@ -11,13 +10,13 @@ type Props = {
     row: LogEntry;
 };
 
-export const TimeCell = ({ row }: Props) => (
-    <div className={s.timeCell}>
-        <span className={cn(s.time, theme.text.t3, theme.text.condenced)}>
-            {formatLogTime(row.time)}
+export const TimeCell = (props: Props) => (
+    <div class={s.timeCell}>
+        <span class={cn(s.time, theme.text.t3, theme.text.condenced)}>
+            {formatLogTime(props.row.time)}
         </span>
-        <span className={cn(s.secondaryLine, s.date, theme.text.t4)}>
-            {formatLogDate(row.time)}
+        <span class={cn(s.secondaryLine, s.date, theme.text.t4)}>
+            {formatLogDate(props.row.time)}
         </span>
     </div>
 );

@@ -106,9 +106,16 @@
     height: 60px;
     margin-top: auto;
     padding: 0 8px;
+    overflow: hidden;
 
     @media (min-width: 768px) {
         padding: 0 16px;
+    }
+
+    canvas {
+        width: 100% !important;
+        height: 100% !important;
+        display: block;
     }
 }
 

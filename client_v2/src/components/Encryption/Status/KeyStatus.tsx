@@ -1,4 +1,4 @@
-import React from 'react';
+import { Show } from 'solid-js';
 import intl from 'panel/common/intl';
 import { StatusBlock } from './StatusBlock';
 
@@ -9,19 +9,19 @@ type Props = {
     keyType?: string;
 };
 
-export const KeyStatus = ({ validKey, keyType }: Props) => (
+export const KeyStatus = (props: Props) => (
     <StatusBlock
-        variant={validKey ? 'success' : 'error'}
+        variant={props.validKey ? 'success' : 'error'}
         title={
-            validKey
+            props.validKey
                 ? intl.getMessage('encryption_key_valid')
                 : intl.getMessage('encryption_key_invalid')
         }
     >
-        {keyType && (
-            <div className={s.statusText}>
-                {intl.getMessage('encryption_key_type', { value: keyType })}
+        <Show when={props.keyType}>
+            <div class={s.statusText}>
+                {intl.getMessage('encryption_key_type', { value: props.keyType })}
             </div>
-        )}
+        </Show>
     </StatusBlock>
 );

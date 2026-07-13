@@ -1,5 +1,4 @@
-import React from 'react';
-import { Controller, useFormContext } from 'react-hook-form';
+import { For, untrack } from 'solid-js';
 import cn from 'clsx';
 
 import { Checkbox } from 'panel/common/controls/Checkbox';
@@ -43,92 +42,104 @@ const getCategoryDesc = (categoryId: string) => {
 
 type Props = {
     selectedSources?: Record<string, boolean>;
+    selectedIds: Record<string, boolean>;
+    onChange: (ids: Record<string, boolean>) => void;
+    disabled?: boolean;
 };
 
-export const FiltersList = ({ selectedSources }: Props) => {
-    const { control } = useFormContext();
+export const FiltersList = (props: Props) => {
     const { categories, filters } = filtersCatalog;
 
+    const handleToggle = (filterId: string) => (e: Event) => {
+        untrack(() => {
+            const checked = (e.target as HTMLInputElement).checked;
+            props.onChange({
+                ...props.selectedIds,
+                [filterId]: checked,
+            });
+        });
+    };
+
     return (
-        <div className={s.listWrap}>
-            <div className={s.list}>
-                {Object.entries(categories).map(([categoryId, _category]) => {
-                    const categoryFilters = Object.entries(filters)
-                        .filter(([, filter]) => filter.categoryId === categoryId)
-                        .map(([key, filter]) => ({ ...filter, id: key }));
+        <div class={s.listWrap}>
+            <div class={s.list}>
+                <For each={Object.entries(categories)}>
+                    {([categoryId]) => {
+                        const categoryFilters = Object.entries(filters)
+                            .filter(([, filter]) => filter.categoryId === categoryId)
+                            .map(([key, filter]) => ({ ...filter, id: key }));
 
-                    return (
-                        <div key={categoryId}>
-                            <div className={s.category}>
-                                <div className={cn(theme.text.t2, s.categoryName)}>
-                                    {getCategoryName(categoryId)}
+                        return (
+                            <div>
+                                <div class={s.category}>
+                                    <div class={cn(theme.text.t2, s.categoryName)}>
+                                        {getCategoryName(categoryId)}
+                                    </div>
+                                    <div class={cn(theme.text.t3, s.categoryDescription)}>
+                                        {getCategoryDesc(categoryId)}
+                                    </div>
                                 </div>
-                                <div className={cn(theme.text.t3, s.categoryDescription)}>
-                                    {getCategoryDesc(categoryId)}
-                                </div>
-                            </div>
 
-                            {categoryFilters.map((filter) => {
-                                const { homepage, source, name, id } = filter;
-                                const isSelected = selectedSources?.[source] || false;
-
-                                return (
-                                    <div key={name} className={s.filter}>
-                                        <Controller
-                                            name={id}
-                                            control={control}
-                                            render={({ field: { value, onChange, ...field } }) => (
+                                <For each={categoryFilters}>
+                                    {(filter) => {
+                                        const { homepage, source, name, id } = filter;
+                                        return (
+                                            <div class={s.filter}>
                                                 <Checkbox
-                                                    {...field}
-                                                    checked={!!value}
-                                                    onChange={onChange}
+                                                    checked={!!props.selectedIds[id]}
+                                                    onChange={handleToggle(id)}
                                                     id={`filters_${id}`}
                                                     title={name}
-                                                    disabled={isSelected}
+                                                    disabled={props.disabled}
                                                 >
                                                     {name}
                                                 </Checkbox>
-                                            )}
-                                        />
-                                        <Dropdown
-                                            trigger="click"
-                                            menu={
-                                                <div className={theme.dropdown.menu}>
-                                                    <a
-                                                        href={homepage}
-                                                        className={theme.dropdown.item}
-                                                        target="_blank"
-                                                        rel="noreferrer"
-                                                    >
-                                                        <Icon icon="link" color="green" />
-                                                        {intl.getMessage('blocklist_homepage')}
-                                                    </a>
-                                                    <a
-                                                        href={source}
-                                                        className={theme.dropdown.item}
-                                                        target="_blank"
-                                                        rel="noreferrer"
-                                                    >
-                                                        <Icon icon="link" color="green" />
-                                                        {intl.getMessage('blocklist_contents', {
-                                                            value: 'txt',
-                                                        })}
-                                                    </a>
-                                                </div>
-                                            }
-                                            position="bottomRight"
-                                            noIcon
-                                        >
-                                            <div className={s.dropdownTrigger}>
-                                                <Icon icon="bullets" color="gray" />
+                                                <Dropdown
+                                                    trigger="click"
+                                                    menu={
+                                                        <div class={theme.dropdown.menu}>
+                                                            <a
+                                                                href={homepage}
+                                                                class={theme.dropdown.item}
+                                                                target="_blank"
+                                                                rel="noreferrer"
+                                                            >
+                                                                <Icon icon="link" color="green" />
+                                                                {intl.getMessage(
+                                                                    'blocklist_homepage',
+                                                                )}
+                                                            </a>
+                                                            <a
+                                                                href={source}
+                                                                class={theme.dropdown.item}
+                                                                target="_blank"
+                                                                rel="noreferrer"
+                                                            >
+                                                                <Icon icon="link" color="green" />
+                                                                {intl.getMessage(
+                                                                    'blocklist_contents',
+                                                                    {
+                                                                        value: 'txt',
+                                                                    },
+                                                                )}
+                                                            </a>
+                                                        </div>
+                                                    }
+                                                    position="bottomRight"
+                                                    noIcon
+                                                >
+                                                    <div class={s.dropdownTrigger}>
+                                                        <Icon icon="bullets" color="gray" />
+                                                    </div>
+                                                </Dropdown>
                                             </div>
-                                        </Dropdown>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    );
-                })}
+                                        );
+                                    }}
+                                </For>
+                            </div>
+                        );
+                    }}
+                </For>
             </div>
         </div>
     );

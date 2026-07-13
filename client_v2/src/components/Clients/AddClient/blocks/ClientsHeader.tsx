@@ -1,19 +1,16 @@
-import React from 'react';
-import { useSelector } from 'react-redux';
-import { useLocation, matchPath } from 'react-router-dom';
+import { createMemo } from 'solid-js';
+import { useMatch } from '@solidjs/router';
 import cn from 'clsx';
 import intl from 'panel/common/intl';
 import { Breadcrumbs } from 'panel/common/ui/Breadcrumbs';
-import { RootState } from 'panel/initialState';
-import { Paths, RoutePath, RoutePathKey } from 'panel/components/Routes/Paths';
+import { clientFormState } from 'panel/stores/clientForm';
+import { Paths, RoutePath, type RoutePathKey } from 'panel/components/Routes/Paths';
 import theme from 'panel/lib/theme';
 
 import s from './ClientsHeader.module.pcss';
 
 type ClientsHeaderProps = {
-    /** The page after "Add client" / "Edit client" in breadcrumbs. Omit for the main form. */
     currentTitle: string;
-    /** Additional breadcrumb segments between the client page and the current page. */
     extraLinks?: {
         path: RoutePathKey;
         title: string;
@@ -21,48 +18,56 @@ type ClientsHeaderProps = {
     }[];
 };
 
-export const ClientsHeader = ({ currentTitle, extraLinks = [] }: ClientsHeaderProps) => {
-    const form = useSelector((state: RootState) => state.clientForm);
-    const location = useLocation();
-    const isEdit = form.mode === 'edit';
+export const ClientsHeader = (props: ClientsHeaderProps) => {
+    const extraLinks = () => props.extraLinks || [];
+    const isEdit = createMemo(() => clientFormState.mode === 'edit');
 
-    const clientPageLink = isEdit
-        ? {
-              path: RoutePath.ClientsEdit,
-              title: form.originalName || intl.getMessage('clients_edit'),
-              props: { clientName: encodeURIComponent(form.originalName) },
-          }
-        : {
-              path: RoutePath.ClientsAdd,
-              title: intl.getMessage('clients_add'),
-          };
+    const clientPageLink = createMemo(() =>
+        isEdit()
+            ? {
+                  path: RoutePath.ClientsEdit,
+                  title: clientFormState.originalName || intl.getMessage('clients_edit'),
+                  props: { clientName: encodeURIComponent(clientFormState.originalName) },
+              }
+            : {
+                  path: RoutePath.ClientsAdd,
+                  title: intl.getMessage('clients_add'),
+              },
+    );
 
-    const isMainFormPage =
-        matchPath(Paths.ClientsAdd, location.pathname) !== null ||
-        matchPath(Paths.ClientsEdit, location.pathname) !== null;
+    const isAddMatch = useMatch(() => Paths.ClientsAdd);
+    const isEditMatch = useMatch(() => Paths.ClientsEdit);
+    const isMainFormPage = createMemo(
+        () => isAddMatch() !== undefined || isEditMatch() !== undefined,
+    );
 
-    const pageTitle =
-        isEdit && isMainFormPage ? form.originalName || intl.getMessage('clients_edit') : currentTitle;
+    const pageTitle = createMemo(() =>
+        isEdit() ? intl.getMessage('clients_edit') : props.currentTitle,
+    );
 
-    const parentLinks = [
+    const breadcrumbCurrent = createMemo(() =>
+        isEdit() && isMainFormPage() ? clientFormState.originalName : pageTitle(),
+    );
+
+    const parentLinks = createMemo(() => [
         { path: RoutePath.Clients, title: intl.getMessage('client_settings') },
-        ...(pageTitle !== clientPageLink.title ? [clientPageLink] : []),
-        ...extraLinks,
-    ];
+        ...(!isMainFormPage() ? [clientPageLink()] : []),
+        ...extraLinks(),
+    ]);
 
     return (
-        <div className={s.headerWrapper}>
-            <Breadcrumbs parentLinks={parentLinks} currentTitle={pageTitle} />
+        <div class={s.headerWrapper}>
+            <Breadcrumbs parentLinks={parentLinks()} currentTitle={breadcrumbCurrent()} />
             <h1
-                className={cn(
+                class={cn(
                     theme.title.h4,
                     theme.title.h3_tablet,
                     theme.common.textOverflow,
                     s.title,
                 )}
-                title={pageTitle}
+                title={pageTitle()}
             >
-                {pageTitle}
+                {pageTitle()}
             </h1>
         </div>
     );

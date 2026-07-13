@@ -1,4 +1,3 @@
-import React from 'react';
 import cn from 'clsx';
 
 import theme from 'panel/lib/theme';
@@ -19,25 +18,26 @@ type Props = {
     whitelistFilters: Filter[];
 };
 
-export const ReasonCell = ({ row, filters, services, whitelistFilters }: Props) => {
-    const rules = row.rules ?? [];
-    const reasonKey = getQueryReasonKey(row.reason, rules);
-    const reasonDetails = getQueryReasonDetails({
-        elapsedMs: row.elapsedMs,
-        filters,
-        reason: row.reason,
-        rules,
-        serviceName: row.service_name || row.serviceName,
-        services,
-        whitelistFilters,
-    });
-    const reasonLabel = getQueryReasonLabel(reasonKey);
+export const ReasonCell = (props: Props) => {
+    const rules = () => props.row.rules ?? [];
+    const reasonKey = () => getQueryReasonKey(props.row.reason, rules());
+    const reasonDetails = () =>
+        getQueryReasonDetails({
+            elapsedMs: props.row.elapsedMs,
+            filters: props.filters,
+            reason: props.row.reason,
+            rules: rules(),
+            serviceName: props.row.service_name || props.row.serviceName,
+            services: props.services,
+            whitelistFilters: props.whitelistFilters,
+        });
+    const reasonLabel = () => getQueryReasonLabel(reasonKey());
 
     return (
-        <div className={s.reasonCell}>
-            <span className={cn(theme.text.t3, s.reasonLabel)}>{reasonLabel}</span>
-            <span className={cn(s.secondaryLine, theme.text.t4)} title={reasonDetails || undefined}>
-                {reasonDetails}
+        <div class={s.reasonCell}>
+            <span class={cn(theme.text.t3, s.reasonLabel)}>{reasonLabel()}</span>
+            <span class={cn(s.secondaryLine, theme.text.t4)} title={reasonDetails() || undefined}>
+                {reasonDetails()}
             </span>
         </div>
     );

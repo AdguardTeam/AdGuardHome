@@ -1,9 +1,8 @@
-import React, { useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import { createEffect, Show } from 'solid-js';
 
 import intl from 'panel/common/intl';
 import { Button } from 'panel/common/ui/Button';
-import { RootState } from 'panel/initialState';
+import { installState } from 'panel/stores/install';
 import { Controls } from './Controls';
 import type { WebConfig } from './types';
 import styles from './styles.module.pcss';
@@ -14,38 +13,43 @@ type Props = {
     onSubmit: () => void;
 };
 
-export const Submit = ({ openDashboard, webConfig, onSubmit }: Props) => {
-    const { processingSubmit, submitted } = useSelector((state: RootState) => state.install!);
-
-    useEffect(() => {
-        if (submitted) {
-            openDashboard(webConfig.ip, webConfig.port);
+export const Submit = (props: Props) => {
+    createEffect(() => {
+        if (installState.submitted) {
+            props.openDashboard(props.webConfig.ip, props.webConfig.port);
         }
-    }, [submitted, openDashboard, webConfig.ip, webConfig.port]);
+    });
 
     return (
-        <div className={styles.end}>
-            <div className={styles.group}>
-                <h1 className={styles.titleStep}>{intl.getMessage('install_submit_title')}</h1>
+        <div class={styles.end}>
+            <div class={styles.group}>
+                <h1 class={styles.titleStep}>{intl.getMessage('install_submit_title')}</h1>
 
-                <p className={styles.desc}>{intl.getMessage('setup_complete')}</p>
+                <p class={styles.desc}>{intl.getMessage('setup_complete')}</p>
             </div>
 
-            {!submitted ? (
+            <Show
+                when={!installState.submitted}
+                fallback={
+                    <Controls
+                        openDashboard={props.openDashboard}
+                        ip={props.webConfig.ip}
+                        port={props.webConfig.port}
+                    />
+                }
+            >
                 <Button
                     id="install_save"
                     type="button"
                     size="small"
                     variant="primary"
-                    className={styles.button}
-                    disabled={processingSubmit}
-                    onClick={onSubmit}
+                    class={styles.button}
+                    disabled={installState.processingSubmit}
+                    onClick={props.onSubmit}
                 >
                     {intl.getMessage('open_dashboard')}
                 </Button>
-            ) : (
-                <Controls openDashboard={openDashboard} ip={webConfig.ip} port={webConfig.port} />
-            )}
+            </Show>
         </div>
     );
 };

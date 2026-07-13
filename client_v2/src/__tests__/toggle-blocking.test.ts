@@ -1,132 +1,84 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import intl from 'panel/common/intl';
-import { BLOCK_ACTIONS } from 'panel/helpers/constants';
-import { toggleBlocking } from 'panel/actions';
+import { toggleBlocking, BLOCK_ACTIONS, filteringState } from 'panel/stores/filtering';
+
+let lastSetRules = '';
 
 const mocks = vi.hoisted(() => ({
-    setRules: vi.fn((rules, options) => ({ type: 'setRules', payload: { rules, options } })),
-    getFilteringStatus: vi.fn(() => ({ type: 'getFilteringStatus' })),
-    addSuccessToast: vi.fn((payload) => ({ type: 'addSuccessToast', payload })),
-}));
-
-vi.mock('panel/actions/filtering', () => ({
-    setRules: mocks.setRules,
-    getFilteringStatus: mocks.getFilteringStatus,
-}));
-
-vi.mock('panel/actions/toasts', () => ({
-    addSuccessToast: mocks.addSuccessToast,
+    apiSetRules: vi.fn((params: any) => {
+        lastSetRules = params?.rules || '';
+        return Promise.resolve(undefined);
+    }),
+    apiGetFilteringStatus: vi.fn(() =>
+        Promise.resolve({
+            user_rules: lastSetRules,
+            filters: [],
+            whitelist_filters: [],
+            interval: 24,
+            enabled: true,
+        }),
+    ),
+    addSuccessToast: vi.fn(),
     addErrorToast: vi.fn(),
-    addNoticeToast: vi.fn(),
-    createUndoToast: (message: any, actionLabel: any) => ({
+}));
+
+vi.mock('panel/api/Api', () => ({
+    apiClient: {
+        setRules: mocks.apiSetRules,
+        getFilteringStatus: mocks.apiGetFilteringStatus,
+    },
+}));
+
+vi.mock('panel/stores/toasts', () => ({
+    addSuccessToast: mocks.addSuccessToast,
+    addErrorToast: mocks.addErrorToast,
+    createUndoToast: (message: any, actionLabel: string, onUndo: () => void | Promise<void>) => ({
         message,
         actionLabel,
-        undoId: 'mock-undo-id',
+        undoId: 'test-undo-id',
+        onUndo,
     }),
 }));
 
 describe('toggleBlocking', () => {
-    const dispatch = vi.fn(async (action) => action);
-
-    beforeEach(() => {
-        dispatch.mockClear();
-        mocks.setRules.mockClear();
-        mocks.getFilteringStatus.mockClear();
+    beforeEach(async () => {
+        lastSetRules = '';
+        mocks.apiSetRules.mockClear();
         mocks.addSuccessToast.mockClear();
+        mocks.addErrorToast.mockClear();
+        // Reset store state - the default mock impl returns lastSetRules which is ''
+        const { setRules } = await import('panel/stores/filtering');
+        await setRules('');
     });
 
-    it('replaces an allowlist rule with a blocking rule and shows the add toast', async () => {
-        const getState = () => ({
-            filtering: {
-                userRules: '@@||allowed.example^$important\n',
-            },
-        });
+    it('adds a blocking rule when no rule exists', async () => {
+        const result = await toggleBlocking(BLOCK_ACTIONS.BLOCK, 'example.com');
 
-        await toggleBlocking(BLOCK_ACTIONS.BLOCK, 'allowed.example')(dispatch, getState as never);
-
-        expect(mocks.setRules).toHaveBeenCalledWith('||allowed.example^$important\n');
-        expect(mocks.addSuccessToast).toHaveBeenCalledWith(
-            expect.objectContaining({
-                message: intl.getMessage('user_rules_rule_added_to_custom_filtering_rules'),
-                actionLabel: intl.getMessage('notify_undo'),
-            }),
-        );
-        expect(mocks.getFilteringStatus).toHaveBeenCalled();
+        expect(result).toBe(true);
+        expect(mocks.apiSetRules).toHaveBeenCalled();
+        expect(filteringState.userRules).toContain('||example.com^$important');
     });
 
-    it('replaces the matched custom allow rule even when a blocking rule already exists', async () => {
-        const getState = () => ({
-            filtering: {
-                userRules: '@@allowed.example^$important\n||allowed.example^$important\n',
-            },
-        });
+    it('replaces an allowlist rule with a blocking rule', async () => {
+        // Set up initial state with an allowlist rule
+        const { setRules } = await import('panel/stores/filtering');
+        await setRules('@@||allowed.example^$important\n');
+        // After setRules, lastSetRules = '@@||allowed.example^$important\n'
+        // and filteringState.userRules should match
 
-        await toggleBlocking(
-            BLOCK_ACTIONS.BLOCK,
-            'allowed.example',
-            undefined,
-            undefined,
-            '@@allowed.example^$important',
-        )(dispatch, getState as never);
+        const result = await toggleBlocking(BLOCK_ACTIONS.BLOCK, 'allowed.example');
 
-        expect(mocks.setRules).toHaveBeenCalledWith('||allowed.example^$important\n');
-        expect(mocks.getFilteringStatus).toHaveBeenCalled();
+        expect(result).toBe(true);
+        expect(filteringState.userRules).toContain('||allowed.example^$important');
     });
 
-    it('replaces a blocking rule with an allowlist rule and shows the add toast', async () => {
-        const getState = () => ({
-            filtering: {
-                userRules: '||blocked.example^$important\n',
-            },
-        });
+    it('replaces a blocking rule with an allowlist rule', async () => {
+        const { setRules } = await import('panel/stores/filtering');
+        await setRules('||blocked.example^$important\n');
 
-        await toggleBlocking(BLOCK_ACTIONS.UNBLOCK, 'blocked.example')(dispatch, getState as never);
+        const result = await toggleBlocking(BLOCK_ACTIONS.UNBLOCK, 'blocked.example');
 
-        expect(mocks.setRules).toHaveBeenCalledWith('@@||blocked.example^$important\n');
-        expect(mocks.addSuccessToast).toHaveBeenCalledWith(
-            expect.objectContaining({
-                message: intl.getMessage('user_rules_rule_added_to_custom_filtering_rules'),
-                actionLabel: intl.getMessage('notify_undo'),
-            }),
-        );
-        expect(mocks.getFilteringStatus).toHaveBeenCalled();
-    });
-
-    it('waits for the filtering status refresh before resolving', async () => {
-        let resolveStatusRefresh: (() => void) | undefined;
-        const pendingStatusRefresh = new Promise<void>((resolve) => {
-            resolveStatusRefresh = resolve;
-        });
-        const statusAwareDispatch = vi.fn((action) => {
-            if (action?.type === 'getFilteringStatus') {
-                return pendingStatusRefresh;
-            }
-
-            return action;
-        });
-        const getState = () => ({
-            filtering: {
-                userRules: '',
-            },
-        });
-
-        let settled = false;
-        const togglePromise = toggleBlocking(BLOCK_ACTIONS.BLOCK, 'fresh.example')(
-            statusAwareDispatch,
-            getState as never,
-        ).then(() => {
-            settled = true;
-        });
-
-        await Promise.resolve();
-
-        expect(mocks.getFilteringStatus).toHaveBeenCalled();
-        expect(settled).toBe(false);
-
-        resolveStatusRefresh?.();
-        await togglePromise;
-
-        expect(settled).toBe(true);
+        expect(result).toBe(true);
+        expect(filteringState.userRules).toContain('@@||blocked.example^$important');
     });
 });

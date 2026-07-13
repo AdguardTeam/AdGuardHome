@@ -1,4 +1,4 @@
-import React from 'react';
+import { Show } from 'solid-js';
 import cn from 'clsx';
 
 import intl from 'panel/common/intl';
@@ -15,75 +15,67 @@ type Props = {
     row: LogEntry;
 };
 
-export const RequestCell = ({ row }: Props) => {
-    const renderDnsSec = () => {
-        if (!row.answer_dnssec) {
-            return null;
-        }
-
-        return (
-            <Dropdown
-                trigger="hover"
-                position="bottomLeft"
-                overlayClassName={s.iconTooltipOverlay}
-                menu={
-                    <div className={cn(theme.dropdown.menu, s.iconTooltipMenu)}>
-                        {intl.getMessage('validated_with_dnssec')}
-                    </div>
-                }
-                childrenClassName={s.iconTooltipTrigger}
-                noIcon
-            >
-                <Icon icon="lock" color="green" className={s.requestIcon} />
-            </Dropdown>
-        );
-    };
-
+export const RequestCell = (props: Props) => {
     return (
-        <div className={s.requestCell} data-testid="query-log-request-cell">
-            <div className={s.requestContent}>
-                <div className={s.requestPrimary}>
+        <div class={s.requestCell} data-testid="query-log-request-cell">
+            <div class={s.requestContent}>
+                <div class={s.requestPrimary}>
                     <span
-                        className={cn(s.domain, theme.text.t3)}
-                        title={row.unicodeName || row.domain}
+                        class={cn(s.domain, theme.text.t3)}
+                        title={props.row.unicodeName || props.row.domain}
                     >
-                        {row.unicodeName || row.domain}
+                        {props.row.unicodeName || props.row.domain}
                     </span>
 
-                    <div className={s.requestIcons}>
+                    <div class={s.requestIcons}>
                         <Dropdown
                             trigger="hover"
                             position="bottomLeft"
-                            overlayClassName={s.iconTooltipOverlay}
+                            overlayClass={s.iconTooltipOverlay}
                             menu={
-                                <div className={cn(theme.dropdown.menu, s.queryDetailsTooltipMenu)}>
-                                    <QueryDetailsTooltipContent row={row} />
+                                <div class={cn(theme.dropdown.menu, s.queryDetailsTooltipMenu)}>
+                                    <QueryDetailsTooltipContent row={props.row} />
                                 </div>
                             }
-                            childrenClassName={s.iconTooltipTrigger}
+                            childrenClass={s.iconTooltipTrigger}
                             noIcon
                         >
                             <button
                                 type="button"
-                                className={s.queryDetailsTooltipButton}
+                                class={s.queryDetailsTooltipButton}
                                 aria-label={intl.getMessage('query_details')}
                                 title={intl.getMessage('query_details')}
                                 onClick={(event) => event.stopPropagation()}
                             >
                                 <Icon
                                     icon="tracking"
-                                    color={row.tracker ? 'green' : 'gray'}
-                                    className={s.requestIcon}
+                                    color={props.row.tracker ? 'green' : 'gray'}
+                                    class={s.requestIcon}
                                 />
                             </button>
                         </Dropdown>
 
-                        {renderDnsSec()}
+                        <Show when={props.row.answer_dnssec}>
+                            <Dropdown
+                                trigger="hover"
+                                position="bottomLeft"
+                                overlayClass={s.iconTooltipOverlay}
+                                menu={
+                                    <div class={cn(theme.dropdown.menu, s.iconTooltipMenu)}>
+                                        {intl.getMessage('validated_with_dnssec')}
+                                    </div>
+                                }
+                                childrenClass={s.iconTooltipTrigger}
+                                noIcon
+                            >
+                                <Icon icon="lock" color="green" class={s.requestIcon} />
+                            </Dropdown>
+                        </Show>
                     </div>
                 </div>
-                <span className={cn(s.secondaryLine, theme.text.t4)}>
-                    {intl.getMessage('type_value', { value: row.type })},{' '}
-                    {getProtocolName(row.client_proto)}
+                <span class={cn(s.secondaryLine, theme.text.t4)}>
+                    {intl.getMessage('type_value', { value: props.row.type })},{' '}
+                    {getProtocolName(props.row.client_proto)}
                 </span>
             </div>
         </div>

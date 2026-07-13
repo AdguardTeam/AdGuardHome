@@ -21,16 +21,27 @@ async function globalSetup(config: FullConfig) {
             throw new Error(`Unexpected initial page during global setup: ${pathname}`);
         }
 
+        // Step 1: Greeting
         await page.locator('#install_get_started').click();
-        await page.locator('#install_web_port').fill(PORT.toString());
-        await page.locator('#install_next').click();
+
+        // Step 2: Auth
         await page.locator('#install_username').fill(ADMIN_USERNAME);
         await page.locator('#install_password').fill(ADMIN_PASSWORD);
-        await page.locator('#install_confirm_password').click();
         await page.locator('#install_confirm_password').fill(ADMIN_PASSWORD);
         await page.locator('#install_next').click();
+
+        // Step 3: Interface settings
+        await page.locator('#install_web_port').fill(PORT.toString());
         await page.locator('#install_next').click();
-        await page.locator('#install_open_dashboard').click();
+
+        // Step 4: DNS settings
+        await page.locator('#install_next').click();
+
+        // Step 5: Setup guide
+        await page.locator('#install_next').click();
+
+        // Step 6: Submit — open dashboard
+        await page.locator('#open_dashboard').click();
         await page.waitForURL((url) => !url.href.endsWith('/install.html'));
     } catch (error) {
         console.error('Error during global setup:', error);

@@ -22,6 +22,33 @@
     &.end {
         align-items: flex-end;
     }
+
+    &.modal {
+        align-items: flex-start;
+
+        .text {
+            max-width: 100%;
+            font-weight: var(--weight-bold);
+        }
+
+        .description {
+            font-size: var(--fs-text-t3);
+            line-height: var(--lh-t3-normal);
+            font-weight: var(--weight-regular);
+
+            p {
+                margin-bottom: 8px;
+
+                &:last-child {
+                    margin-bottom: 0;
+                }
+            }
+        }
+
+        @media (min-width: 768px) {
+            padding: 16px 0;
+        }
+    }
 }
 
 .input {
@@ -31,6 +58,14 @@
 .text {
     max-width: 250px;
     flex: 1;
+
+    &.fullWidth {
+        max-width: 100%;
+    }
+
+    &.disabled {
+        color: var(--disabled-main-text);
+    }
 }
 
 .description {

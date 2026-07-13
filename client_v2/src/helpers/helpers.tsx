@@ -2,7 +2,6 @@ import { parseISO, format as dateFormat } from 'date-fns';
 import round from 'lodash/round';
 import ipaddr, { IPv4, IPv6 } from 'ipaddr.js';
 import queryString from 'qs';
-import React from 'react';
 import intl from 'panel/common/intl';
 import { getTrackerData } from './trackers/trackers';
 
@@ -93,7 +92,7 @@ export const normalizeLogs = (logs: any) =>
             ecs,
         } = log;
 
-        const { name: domain, unicode_name: unicodeName, type } = question;
+        const { name: domain, unicode_name: unicodeName, type } = question || {};
 
         const processResponse = (data: any) =>
             Array.isArray(data)
@@ -377,7 +376,12 @@ export const redirectToCurrentProtocol = (values: any, httpPort = 80) => {
  * @param {string} text
  * @returns []string
  */
-export const splitByNewLine = (text: any) => text.split('\n').filter((n: any) => n.trim());
+export const splitByNewLine = (text: any) => {
+    if (!text) {
+        return [];
+    }
+    return text.split('\n').filter((n: any) => n.trim());
+};
 
 /**
  * @param {string} text
@@ -677,6 +681,19 @@ export const isIpInCidr = (ip: any, cidr: any) => {
 };
 
 /**
+ * Validates an IPv6 address using ipaddr.js, including zone IDs (e.g., fe80::1%eth0).
+ * @param value - The string to validate.
+ * @returns true if the value is a valid IPv6 address.
+ */
+export const isValidIpv6 = (value: string): boolean => {
+    try {
+        return ipaddr.IPv6.isValid(value);
+    } catch (_e) {
+        return false;
+    }
+};
+
+/**
  *
  * @param {string} subnetMask
  * @returns {IPv4 | null}
@@ -831,7 +848,8 @@ export const setUITheme = (theme: any) => {
         currentTheme = prefersDark ? THEMES.dark : THEMES.light;
     }
     setTheme(currentTheme);
-    document.body.dataset.theme = currentTheme;
+    document.documentElement.dataset.theme = currentTheme;
+    document.documentElement.style.colorScheme = currentTheme;
 };
 
 /**
@@ -963,7 +981,7 @@ export const sortIp = (a: string, b: string): number => {
 export const getSpecialFilterName = (filterId: any) => {
     switch (filterId) {
         case SPECIAL_FILTER_ID.CUSTOM_FILTERING_RULES:
-            return intl.getMessage('custom_filter_rules');
+            return intl.getMessage('custom_rules');
         case SPECIAL_FILTER_ID.SYSTEM_HOSTS:
             return intl.getMessage('system_host_files');
         case SPECIAL_FILTER_ID.BLOCKED_SERVICES:
@@ -1046,22 +1064,16 @@ export const getRulesToFilterList = (
     );
 
     return (
-        <dl className={classes.list}>
+        <dl class={classes.list}>
             {Object.entries(filterNameToRulesMap).reduce(
                 (acc: any, [filterName, rulesArr]) =>
                     acc
                         .concat(
-                            rulesArr.map((rule: any, i: any) => (
-                                <dd key={i} className={classes.rule}>
-                                    {rule}
-                                </dd>
+                            rulesArr.map((rule: any, _i: any) => (
+                                <dd class={classes.rule}>{rule}</dd>
                             )),
                         )
-                        .concat(
-                            <dt className={classes.filter} key={classes.filter}>
-                                {filterName}
-                            </dt>,
-                        ),
+                        .concat(<dt class={classes.filter}>{filterName}</dt>),
                 [],
             )}
         </dl>
@@ -1185,10 +1197,14 @@ export const getServiceIcon = (services: any, id: any) => getService(services, i
  * Decodes a base64-encoded SVG string. Returns an empty string on failure.
  */
 export const decodeSvg = (iconSvg: string): string => {
+    if (!iconSvg) {
+        return '';
+    }
+    // Try base64 decode first; fall back to raw SVG if that fails.
     try {
         return atob(iconSvg);
     } catch {
-        return '';
+        return iconSvg;
     }
 };
 

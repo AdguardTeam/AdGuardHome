@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import { createEffect, onCleanup, Show, untrack } from 'solid-js';
 import cn from 'clsx';
 
 import { InlineLoader } from 'panel/common/ui/Loader';
@@ -11,59 +11,57 @@ type Props = {
     disabled: boolean;
     onLoadMore: () => void;
     resetToken?: string;
-    className?: string;
+    class?: string;
 };
 
 const VIEWPORT_OFFSET = 200;
 
-export const InfiniteScrollTrigger = ({
-    hasMore,
-    loading,
-    disabled,
-    onLoadMore,
-    resetToken,
-    className,
-}: Props) => {
-    const sentinelRef = useRef<HTMLDivElement | null>(null);
-    const requestedRef = useRef(false);
-    const wasNearEndRef = useRef(false);
-    const frameRef = useRef<number | null>(null);
+export const InfiniteScrollTrigger = (props: Props) => {
+    let sentinelEl: HTMLDivElement | undefined;
+    let requestedRef = false;
+    let wasNearEndRef = false;
+    let frameRef: number | null = null;
 
-    const triggerLoadMore = useCallback(() => {
-        if (!hasMore || disabled || requestedRef.current) {
+    const triggerLoadMore = () => {
+        if (!untrack(() => props.hasMore) || untrack(() => props.disabled) || requestedRef) {
             return;
         }
+        requestedRef = true;
+        untrack(() => props).onLoadMore();
+    };
 
-        requestedRef.current = true;
-        onLoadMore();
-    }, [disabled, hasMore, onLoadMore]);
-
-    useEffect(() => {
-        if (!disabled) {
-            requestedRef.current = false;
-            wasNearEndRef.current = false;
+    createEffect(() => {
+        if (!props.disabled) {
+            requestedRef = false;
+            wasNearEndRef = false;
         }
-    }, [disabled]);
+    });
 
-    useEffect(() => {
-        if (!hasMore) {
-            requestedRef.current = false;
+    createEffect(() => {
+        if (!props.hasMore) {
+            requestedRef = false;
         }
-    }, [hasMore]);
+    });
 
-    useEffect(() => {
-        requestedRef.current = false;
-        wasNearEndRef.current = false;
-    }, [resetToken]);
+    createEffect(() => {
+        // Track resetToken to trigger re-read
+        void props.resetToken;
+        requestedRef = false;
+        wasNearEndRef = false;
+    });
 
-    useEffect(() => {
+    createEffect(() => {
+        // Track dependencies
+        void props.disabled;
+        void props.hasMore;
+        void props.resetToken;
+
         const isNearEnd = () => {
-            const node = sentinelRef.current;
-            if (!node) {
+            if (!sentinelEl) {
                 return false;
             }
 
-            const rect = node.getBoundingClientRect();
+            const rect = sentinelEl.getBoundingClientRect();
 
             // Ignore hidden elements (e.g. inside display:none containers)
             if (rect.width === 0 && rect.height === 0) {
@@ -76,29 +74,28 @@ export const InfiniteScrollTrigger = ({
         const maybeLoadMore = () => {
             const nearEnd = isNearEnd();
 
-            if (nearEnd && !wasNearEndRef.current) {
+            if (nearEnd && !wasNearEndRef) {
                 triggerLoadMore();
             }
 
-            wasNearEndRef.current = nearEnd;
+            wasNearEndRef = nearEnd;
         };
 
         const scheduleMaybeLoadMore = () => {
-            if (frameRef.current !== null) {
+            if (frameRef !== null) {
                 return;
             }
 
-            frameRef.current = window.requestAnimationFrame(() => {
-                frameRef.current = null;
+            frameRef = window.requestAnimationFrame(() => {
+                frameRef = null;
                 maybeLoadMore();
             });
         };
 
         const handleScroll = () => {
             if (window.scrollY <= 0) {
-                wasNearEndRef.current = false;
+                wasNearEndRef = false;
             }
-
             scheduleMaybeLoadMore();
         };
 
@@ -111,27 +108,27 @@ export const InfiniteScrollTrigger = ({
         window.addEventListener('scroll', handleScroll, { passive: true });
         window.addEventListener('resize', handleResize);
 
-        return () => {
-            if (frameRef.current !== null) {
-                window.cancelAnimationFrame(frameRef.current);
-                frameRef.current = null;
+        onCleanup(() => {
+            if (frameRef !== null) {
+                window.cancelAnimationFrame(frameRef);
+                frameRef = null;
             }
             window.removeEventListener('scroll', handleScroll);
             window.removeEventListener('resize', handleResize);
-        };
-    }, [disabled, hasMore, resetToken, triggerLoadMore]);
-
-    if (!hasMore && !loading) {
-        return null;
-    }
+        });
+    });
 
     return (
-        <div
-            ref={sentinelRef}
-            data-testid="query-log-infinite-scroll-trigger"
-            className={cn(s.loader, className, { [s.loading]: loading })}
-        >
-            {loading && <InlineLoader className={s.icon} />}
-        </div>
+        <Show when={props.hasMore || props.loading}>
+            <div
+                ref={sentinelEl}
+                data-testid="query-log-infinite-scroll-trigger"
+                class={cn(s.loader, props.class, { [s.loading]: props.loading })}
+            >
+                <Show when={props.loading}>
+                    <InlineLoader class={s.icon} />
+                </Show>
+            </div>
+        </Show>
     );
 };

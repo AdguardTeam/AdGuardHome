@@ -1,4 +1,4 @@
-import React, { MouseEvent, useState } from 'react';
+import { createSignal } from 'solid-js';
 import cn from 'clsx';
 import { Icon } from 'panel/common/ui/Icon';
 import { Link } from 'panel/common/ui/Link';
@@ -12,10 +12,10 @@ import { Logo } from '../Sidebar/Logo';
 const BURGER_MENU_ID = 'linksMenu';
 
 export const Header = () => {
-    const [burgerModal, setBurgerModal] = useState(false);
-    const [accountSubMenu, setAccountSubMenu] = useState(false);
+    const [burgerModal, setBurgerModal] = createSignal(false);
+    const [accountSubMenu, setAccountSubMenu] = createSignal(false);
 
-    const closeBurgerMenu = (event: MouseEvent<HTMLDivElement>) => {
+    const closeBurgerMenu = (event: any) => {
         const target = event.target as HTMLDivElement;
 
         if (!target.closest(`#${BURGER_MENU_ID}`)) {
@@ -36,27 +36,27 @@ export const Header = () => {
     };
 
     return (
-        <div className={s.header} id="header">
-            <div className={s.container}>
-                <div className={s.logoWrap}>
-                    <div className={theme.layout.mobileOnlyWrapper}>
-                        <Icon onClick={openBurgerMenu} className={s.burgerIcon} icon="butter" />
+        <div class={s.header} id="header">
+            <div class={s.container}>
+                <div class={s.logoWrap}>
+                    <div class={theme.layout.mobileOnlyWrapper}>
+                        <Icon onClick={openBurgerMenu} class={s.burgerIcon} icon="butter" />
                     </div>
-                    <Link to={RoutePath.Dashboard} className={s.link}>
-                        <div className={s.linkWrapper}>
+                    <Link to={RoutePath.Dashboard} class={s.link}>
+                        <div class={s.linkWrapper}>
                             <Logo id="header" />
                         </div>
                     </Link>
                 </div>
             </div>
             <div
-                className={cn(s.burgerMenuMask, { [s.open]: burgerModal })}
-                onClick={(event) => closeBurgerMenu(event)}
+                class={cn(s.burgerMenuMask, { [s.open]: burgerModal() })}
+                onClick={(event: any) => closeBurgerMenu(event)}
             >
-                <div className={s.burgerMenu}>
+                <div class={s.burgerMenu}>
                     <Menu
                         headerMenu
-                        accountSubMenu={accountSubMenu}
+                        accountSubMenu={accountSubMenu()}
                         setAccountSubMenu={setAccountSubMenu}
                         burgerMenuId={BURGER_MENU_ID}
                         closeSubMenu={closeSubMenu}

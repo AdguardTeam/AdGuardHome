@@ -1,14 +1,39 @@
-import React from 'react';
+import { createMemo, Show, untrack } from 'solid-js';
 import cn from 'clsx';
-import { AreaChart, Area, ResponsiveContainer, Tooltip, TooltipProps } from 'recharts';
+import {
+    Chart,
+    LineController,
+    LineElement,
+    PointElement,
+    LinearScale,
+    CategoryScale,
+    Tooltip,
+    Filler,
+    type ScriptableContext,
+} from 'chart.js';
 import { Link } from 'panel/common/ui/Link';
-import { RoutePathKey } from 'panel/components/Routes/Paths';
+import { type RoutePathKey } from 'panel/components/Routes/Paths';
 
 import { formatNumber } from 'panel/helpers/helpers';
+import {
+    useChart,
+    createCursorLinePlugin,
+    createExternalTooltipHandler,
+} from 'panel/helpers/useChart';
 import intl from 'panel/common/intl';
 import theme from 'panel/lib/theme';
 
 import s from './StatCard.module.pcss';
+
+Chart.register(
+    LineController,
+    LineElement,
+    PointElement,
+    LinearScale,
+    CategoryScale,
+    Tooltip,
+    Filler,
+);
 
 export const CARDS_THEME = {
     QUERIES: 'queries',
@@ -32,19 +57,6 @@ const formatDate = (date: Date): string => {
     });
 };
 
-const CustomTooltip = ({ active, payload }: TooltipProps<number, string>) => {
-    if (active && payload && payload.length > 0) {
-        const data = payload[0].payload;
-        return (
-            <div className={s.chartTooltip}>
-                <div className={s.chartTooltipValue}>{formatNumber(data.value)}</div>
-                <div className={s.chartTooltipDate}>{data.date}</div>
-            </div>
-        );
-    }
-    return null;
-};
-
 export type StatCardProps = {
     value: number;
     label: string;
@@ -56,99 +68,143 @@ export type StatCardProps = {
     query?: Record<string, string | number | boolean>;
 };
 
-export const StatCard = ({
-    value,
-    label,
-    data,
-    color,
-    percentValue,
-    cardTheme,
-    linkTo,
-    query,
-}: StatCardProps) => {
-    // Ensure the chart has at least 2 data points so Recharts' AreaChart can
-    // render a filled area.  When there is only 1 data point (e.g., stats
-    // retention set to "Last 1 hour"), duplicate it as a flat baseline.
-    const paddedData: number[] = data.length < 2 ? [0, ...data] : data;
+export const StatCard = (props: StatCardProps) => {
+    // Ensure the chart has at least 2 data points
+    const paddedData = () => (props.data.length < 2 ? [0, ...props.data] : props.data);
 
-    const chartData = paddedData.map((v, i) => {
-        const date = new Date();
-        date.setDate(date.getDate() - (paddedData.length - 1 - i));
-        return { value: v, index: i, date: formatDate(date) };
+    const chartData = createMemo(() => {
+        const data = paddedData();
+        const labels = data.map((_, i) => {
+            const date = new Date();
+            date.setDate(date.getDate() - (data.length - 1 - i));
+            return formatDate(date);
+        });
+        return {
+            labels,
+            datasets: [
+                {
+                    data: data,
+                    borderColor: props.color,
+                    borderWidth: 1,
+                    backgroundColor: (context: ScriptableContext<'line'>) => {
+                        const ctx = context.chart.ctx;
+                        const gradient = ctx.createLinearGradient(
+                            0,
+                            0,
+                            0,
+                            context.chart.height || 100,
+                        );
+                        gradient.addColorStop(0, `${props.color}4D`);
+                        gradient.addColorStop(1, `${props.color}00`);
+                        return gradient;
+                    },
+                    fill: true,
+                    clip: false as const,
+                    pointRadius: 0,
+                    pointHoverRadius: 4,
+                    pointHoverBackgroundColor: props.color,
+                    tension: 0.4,
+                },
+            ],
+        };
     });
-    const percent = percentValue !== undefined ? percentValue : 0;
+
+    const cursorLinePlugin = createCursorLinePlugin(untrack(() => props.color));
+
+    const externalTooltipHandler = createExternalTooltipHandler(
+        () => tooltipEl,
+        (dataPoint) => {
+            const raw = dataPoint.raw as number;
+            const label = dataPoint.label || '';
+            return `<div class="${s.chartTooltipValue}">${formatNumber(raw)}</div><div class="${s.chartTooltipDate}">${label}</div>`;
+        },
+    );
+
+    let tooltipEl!: HTMLDivElement;
+    const setTooltipRef = (el: HTMLDivElement) => {
+        tooltipEl = el;
+    };
+
+    const chartOptions = createMemo(() => ({
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: false as const,
+        layout: {
+            padding: { bottom: 12 },
+        },
+        plugins: {
+            tooltip: {
+                enabled: false,
+                external: externalTooltipHandler,
+            },
+            legend: { display: false },
+        },
+        scales: {
+            x: { display: false },
+            y: { display: false, min: 0 },
+        },
+        interaction: {
+            intersect: false,
+            mode: 'index' as const,
+        },
+        elements: {
+            line: { tension: 0.4 },
+        },
+    }));
+
+    const percent = () => props.percentValue ?? 0;
+
+    const setCanvasRef = untrack(() => useChart(chartData, chartOptions, [cursorLinePlugin]));
 
     return (
         <div
-            className={cn(s.statCard, {
-                [s.statCardQueries]: cardTheme === CARDS_THEME.QUERIES,
-                [s.statCardAds]: cardTheme === CARDS_THEME.ADS,
-                [s.statCardThreats]: cardTheme === CARDS_THEME.THREATS,
-                [s.statCardAdult]: cardTheme === CARDS_THEME.ADULT,
+            class={cn(s.statCard, {
+                [s.statCardQueries]: props.cardTheme === CARDS_THEME.QUERIES,
+                [s.statCardAds]: props.cardTheme === CARDS_THEME.ADS,
+                [s.statCardThreats]: props.cardTheme === CARDS_THEME.THREATS,
+                [s.statCardAdult]: props.cardTheme === CARDS_THEME.ADULT,
             })}
         >
-            <div className={s.statCardInner}>
-                <div className={s.statCardHeader}>
-                    <div className={s.statCardHeaderLeft}>
-                        <div className={s.statCardValue}>{formatNumber(value)}</div>
+            <div class={s.statCardInner}>
+                <div class={s.statCardHeader}>
+                    <div class={s.statCardHeaderLeft}>
+                        <div class={s.statCardValue}>{formatNumber(props.value)}</div>
                     </div>
 
-                    {cardTheme !== CARDS_THEME.QUERIES && (
-                        <div className={cn(theme.text.t3, theme.text.t2_tablet, s.statCardPercent)}>
-                            {percent.toFixed(0)}%
+                    <Show when={props.cardTheme !== CARDS_THEME.QUERIES}>
+                        <div class={cn(theme.text.t3, theme.text.t2_tablet, s.statCardPercent)}>
+                            {percent().toFixed(0)}%
                         </div>
-                    )}
+                    </Show>
 
-                    <div className={cn(theme.text.t4, s.statCardLabel)}>
-                        {linkTo ? (
-                            <Link to={linkTo} query={query} className={s.statLabelLink}>
-                                {label}
+                    <div class={cn(theme.text.t4, s.statCardLabel)}>
+                        <Show when={props.linkTo} fallback={props.label}>
+                            <Link to={props.linkTo!} query={props.query} class={s.statLabelLink}>
+                                {props.label}
                             </Link>
-                        ) : (
-                            label
-                        )}
+                        </Show>
                     </div>
                 </div>
-                <div className={s.statCardChart}>
-                    <ResponsiveContainer width="100%" height="100%" minHeight={16}>
-                        <AreaChart data={chartData}>
-                            <defs>
-                                <linearGradient
-                                    id={`gradient-${color}`}
-                                    x1="0"
-                                    y1="0"
-                                    x2="0"
-                                    y2="1"
-                                >
-                                    <stop offset="0%" stopColor={color} stopOpacity={0.3} />
-                                    <stop offset="100%" stopColor={color} stopOpacity={0} />
-                                </linearGradient>
-                            </defs>
-                            <Tooltip
-                                content={<CustomTooltip />}
-                                cursor={{ strokeWidth: 1, stroke: color }}
-                            />
-                            <Area
-                                type="monotone"
-                                dataKey="value"
-                                strokeWidth={1}
-                                stroke={color}
-                                fill={`url(#gradient-${color})`}
-                                isAnimationActive={false}
-                                activeDot={{ r: 4, fill: color }}
-                            />
-                        </AreaChart>
-                    </ResponsiveContainer>
+                <div class={s.statCardChart}>
+                    <div
+                        ref={setTooltipRef}
+                        class={s.chartTooltip}
+                        style={{
+                            position: 'fixed',
+                            'pointer-events': 'none',
+                            'z-index': '100',
+                            opacity: '0',
+                        }}
+                    />
+                    <canvas ref={setCanvasRef} />
                 </div>
             </div>
-            <div className={cn(theme.text.t3, s.statCardLabel)}>
-                {linkTo ? (
-                    <Link to={linkTo} query={query} className={s.statLabelLink}>
-                        {label}
+            <div class={cn(theme.text.t3, s.statCardLabel)}>
+                <Show when={props.linkTo} fallback={props.label}>
+                    <Link to={props.linkTo!} query={props.query} class={s.statLabelLink}>
+                        {props.label}
                     </Link>
-                ) : (
-                    label
-                )}
+                </Show>
             </div>
         </div>
     );

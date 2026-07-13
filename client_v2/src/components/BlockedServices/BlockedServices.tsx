@@ -1,18 +1,17 @@
-import React, { ChangeEvent, useEffect, useMemo, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { createSignal, createEffect, createMemo, onMount, Show, For } from 'solid-js';
 import cn from 'clsx';
 import intl from 'panel/common/intl';
 import { Input } from 'panel/common/controls/Input';
 import { Icon } from 'panel/common/ui/Icon';
 import { Link } from 'panel/common/ui/Link';
-import { RootState } from 'panel/initialState';
-import { updateClientFormField } from 'panel/actions/clientForm';
+import { updateClientFormField, clientFormState } from 'panel/stores/clientForm';
 import theme from 'panel/lib/theme';
 import {
     getBlockedServices,
     getAllBlockedServices,
     updateBlockedServices,
-} from 'panel/actions/services';
+    servicesState,
+} from 'panel/stores/services';
 
 import { Breadcrumbs } from 'panel/common/ui/Breadcrumbs';
 import { GroupFilter } from './GroupFilter';
@@ -20,7 +19,7 @@ import { ServiceRow } from './ServiceRow';
 import { NothingFound } from './NothingFound';
 
 import s from './BlockedServices.module.pcss';
-import { RoutePath, RoutePathKey } from '../Routes/Paths';
+import { RoutePath, type RoutePathKey } from '../Routes/Paths';
 
 type WebService = {
     id: string;
@@ -32,7 +31,7 @@ type WebService = {
 
 type Props = {
     clientScope?: boolean;
-    className?: string;
+    class?: string;
     breadcrumbs?: {
         parentLinks: {
             path: RoutePathKey;
@@ -43,64 +42,63 @@ type Props = {
     };
 };
 
-export const BlockedServices = ({ clientScope, className, breadcrumbs }: Props) => {
-    const dispatch = useDispatch();
-    const services = useSelector((state: RootState) => state.services);
-    const clientForm = useSelector((state: RootState) => state.clientForm);
-    const { processing, processingAll, processingSet, list, allServices, allGroups } = services;
+export const BlockedServices = (props: Props) => {
+    const [search, setSearch] = createSignal('');
+    const [groupFilter, setGroupFilter] = createSignal<string[]>([]);
+    const [togglingId, setTogglingId] = createSignal<string | null>(null);
 
-    const [search, setSearch] = useState('');
-    const [groupFilter, setGroupFilter] = useState<string[]>([]);
-    const [togglingId, setTogglingId] = useState<string | null>(null);
-
-    useEffect(() => {
-        if (!clientScope) {
-            dispatch(getBlockedServices());
-            dispatch(getAllBlockedServices());
+    onMount(() => {
+        if (!props.clientScope) {
+            getBlockedServices();
+            getAllBlockedServices();
         } else {
-            dispatch(getAllBlockedServices());
+            getAllBlockedServices();
         }
-    }, [dispatch, clientScope]);
+    });
 
-    useEffect(() => {
-        if (!processingSet) {
+    createEffect(() => {
+        if (!servicesState.processingSet) {
             setTogglingId(null);
         }
-    }, [processingSet]);
+    });
 
-    const blockedSet = useMemo(() => {
-        if (clientScope) {
-            return new Set<string>(clientForm.blocked_services || []);
+    const blockedSet = createMemo(() => {
+        if (props.clientScope) {
+            return new Set<string>(clientFormState.blocked_services || []);
         }
-        return new Set<string>(list?.ids || []);
-    }, [clientScope, list, clientForm.blocked_services]);
+        return new Set<string>(servicesState.list?.ids || []);
+    });
 
-    const serviceGroupMap = useMemo(() => {
+    const serviceGroupMap = createMemo(() => {
         const map = new Map<string, string>();
-        if (!allServices) {
+        const allServices = servicesState.allServices;
+        if (!allServices || allServices.length === 0) {
             return map;
         }
-        allServices.forEach((service: WebService) => {
+        (allServices as WebService[]).forEach((service) => {
             if (service.group_id) {
                 map.set(service.id, service.group_id);
             }
         });
         return map;
-    }, [allServices]);
+    });
 
-    const filteredServices = useMemo(() => {
-        if (!allServices) {
+    const filteredServices = createMemo(() => {
+        const allServices = servicesState.allServices;
+        if (!allServices || allServices.length === 0) {
             return [];
         }
-        let filtered = allServices as WebService[];
-        if (groupFilter.length > 0) {
-            const selected = new Set(groupFilter);
+        let filtered = [...(allServices as WebService[])];
+        const gf = groupFilter();
+        if (gf.length > 0) {
+            const selected = new Set(gf);
+            const sgMap = serviceGroupMap();
             filtered = filtered.filter((service) => {
-                const groupId = serviceGroupMap.get(service.id);
+                const groupId = sgMap.get(service.id);
                 return groupId && selected.has(groupId);
             });
         }
-        const term = search.trim().toLowerCase();
+        const term = search().trim().toLowerCase();
         if (term) {
             filtered = filtered.filter(
                 (service) =>
@@ -110,7 +108,7 @@ export const BlockedServices = ({ clientScope, className, breadcrumbs }: Props) 
         }
         filtered.sort((a, b) => a.name.localeCompare(b.name));
         return filtered;
-    }, [allServices, search, groupFilter, serviceGroupMap]);
+    });
 
     const handleToggleGroup = (groupId: string) => {
         setGroupFilter((current) =>
@@ -121,79 +119,79 @@ export const BlockedServices = ({ clientScope, className, breadcrumbs }: Props) 
     };
 
     const handleToggleService = (serviceId: string, checked: boolean) => {
-        if (clientScope) {
-            const currentIds: string[] = clientForm.blocked_services || [];
+        if (props.clientScope) {
+            const currentIds: string[] = clientFormState.blocked_services || [];
             const newIds = checked
                 ? [...currentIds, serviceId]
                 : currentIds.filter((id: string) => id !== serviceId);
-            dispatch(updateClientFormField({ field: 'blocked_services', value: newIds }));
+            updateClientFormField('blocked_services', newIds);
             return;
         }
         setTogglingId(serviceId);
-        const currentIds = list?.ids || [];
+        const currentIds = servicesState.list?.ids || [];
         const newIds = checked
             ? [...currentIds, serviceId]
             : currentIds.filter((id: string) => id !== serviceId);
-        dispatch(updateBlockedServices({ ids: newIds, schedule: list?.schedule }));
+        updateBlockedServices({ ids: newIds, schedule: servicesState.list?.schedule });
     };
 
-    const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
-        setSearch(e.target.value);
+    const handleSearchChange = (e: Event) => {
+        setSearch((e.target as HTMLInputElement).value);
     };
 
     const handleSearchClear = () => {
         setSearch('');
     };
 
-    const isInitialLoading = !allServices && (processing || processingAll);
-    const isGloballyDisabled = clientScope ? clientForm.use_global_blocked_services : false;
-
-    if (isInitialLoading) {
-        return null;
-    }
+    const isInitialLoading = () =>
+        (servicesState.allServices == null || servicesState.allServices.length === 0) &&
+        (servicesState.processingAll || servicesState.processing);
+    const isGloballyDisabled = () =>
+        props.clientScope ? clientFormState.use_global_blocked_services : false;
 
     const getScheduleRoute = () => {
-        if (!clientScope) {
+        if (!props.clientScope) {
             return RoutePath.InactivitySchedule;
         }
-        return clientForm.mode === 'edit'
+        return clientFormState.mode === 'edit'
             ? RoutePath.ClientsEditSchedule
             : RoutePath.ClientsSchedule;
     };
 
-    const scheduleRouteProps =
-        clientScope && clientForm.mode === 'edit'
-            ? { clientName: encodeURIComponent(clientForm.originalName) }
+    const scheduleRouteProps = () =>
+        props.clientScope && clientFormState.mode === 'edit'
+            ? { clientName: encodeURIComponent(clientFormState.originalName) }
             : undefined;
 
     return (
-        <div className={cn(theme.layout.container, className)}>
-            <div className={cn(theme.layout.containerIn, theme.layout.containerIn_one_col)}>
-                {!clientScope && !breadcrumbs && (
-                    <div className={s.header}>
-                        <h1
-                            className={cn(
-                                theme.layout.title,
-                                theme.title.h4,
-                                theme.title.h3_tablet,
-                            )}
-                        >
-                            {intl.getMessage('blocked_services')}
-                        </h1>
-                        <p className={s.description}>{intl.getMessage('blocked_services_desc')}</p>
-                    </div>
-                )}
+        <Show when={!isInitialLoading()}>
+            <div class={cn(theme.layout.container, props.class)}>
+                <div class={cn(theme.layout.containerIn, theme.layout.containerIn_one_col)}>
+                    <Show when={!props.clientScope && !props.breadcrumbs}>
+                        <div class={s.header}>
+                            <h1
+                                class={cn(
+                                    theme.layout.title,
+                                    theme.title.h4,
+                                    theme.title.h3_tablet,
+                                )}
+                                data-testid="blocked-services-title"
+                            >
+                                {intl.getMessage('blocked_services')}
+                            </h1>
+                            <p class={s.description}>{intl.getMessage('blocked_services_desc')}</p>
+                        </div>
+                    </Show>
 
-                {breadcrumbs && (
-                    <>
-                        <div className={s.breadcrumbs}>
+                    <Show when={props.breadcrumbs}>
+                        <div class={s.breadcrumbs}>
                             <Breadcrumbs
-                                parentLinks={breadcrumbs.parentLinks}
-                                currentTitle={breadcrumbs.currentTitle}
+                                parentLinks={props.breadcrumbs!.parentLinks}
+                                currentTitle={props.breadcrumbs!.currentTitle}
                             />
                         </div>
                         <h1
-                            className={cn(
+                            class={cn(
                                 theme.layout.title,
                                 theme.title.h4,
                                 theme.title.h3_tablet,
@@ -202,69 +200,78 @@ export const BlockedServices = ({ clientScope, className, breadcrumbs }: Props) 
                         >
                             {intl.getMessage('blocked_services')}
                         </h1>
-                        <p className={s.description}>{intl.getMessage('blocked_services_desc')}</p>
-                    </>
-                )}
+                        <p class={s.description}>{intl.getMessage('blocked_services_desc')}</p>
+                    </Show>
 
-                <Link to={getScheduleRoute()} props={scheduleRouteProps} className={s.navItem}>
-                    <div className={s.navItemContent}>
-                        <div className={s.navItemTitle}>
-                            {intl.getMessage('inactivity_schedule')}
+                    <Link to={getScheduleRoute()} props={scheduleRouteProps()} class={s.navItem} data-testid="blocked-services-schedule-link">
+                        <div class={s.navItemContent}>
+                            <div class={s.navItemTitle}>
+                                {intl.getMessage('inactivity_schedule')}
+                            </div>
+                            <div class={s.navItemDesc}>
+                                {intl.getMessage('inactivity_schedule_desc')}
+                            </div>
                         </div>
-                        <div className={s.navItemDesc}>
-                            {intl.getMessage('inactivity_schedule_desc')}
-                        </div>
+                        <Icon icon="arrow" color="gray" />
+                    </Link>
+
+                    <div class={s.search}>
+                        <Input
+                            id="blocked-services-search"
+                            data-testid="blocked-services-search"
+                            type="text"
+                            value={search()}
+                            onInput={handleSearchChange}
+                            placeholder={intl.getMessage('search_placeholder')}
+                            prefixIcon={<Icon icon="search" class={s.searchIcon} color="gray" />}
+                            suffixIcon={
+                                <Show when={search()}>
+                                    <button
+                                        type="button"
+                                        onClick={handleSearchClear}
+                                        class={s.clearButton}
+                                        aria-label={intl.getMessage('clear_btn')}
+                                        data-testid="blocked-services-search-clear"
+                                    >
+                                        <Icon icon="cross" color="gray" />
+                                    </button>
+                                </Show>
+                            }
+                        />
                     </div>
-                    <Icon icon="arrow" color="gray" />
-                </Link>
 
-                <div className={s.search}>
-                    <Input
-                        id="blocked-services-search"
-                        type="text"
-                        value={search}
-                        onChange={handleSearchChange}
-                        placeholder={intl.getMessage('search_placeholder')}
-                        prefixIcon={<Icon icon="search" className={s.searchIcon} color="gray" />}
-                        suffixIcon={
-                            search ? (
-                                <button
-                                    type="button"
-                                    onClick={handleSearchClear}
-                                    className={s.clearButton}
-                                    aria-label={intl.getMessage('clear_btn')}
-                                >
-                                    <Icon icon="cross" color="gray" />
-                                </button>
-                            ) : undefined
-                        }
+                    <GroupFilter
+                        groups={servicesState.allGroups || []}
+                        activeGroups={groupFilter()}
+                        onToggleGroup={handleToggleGroup}
+                        data-testid="blocked-services-groups"
                     />
-                </div>
 
-                <GroupFilter
-                    groups={allGroups || []}
-                    activeGroups={groupFilter}
-                    onToggleGroup={handleToggleGroup}
-                />
-
-                <div className={s.servicesList}>
-                    {filteredServices.length === 0 ? (
-                        <NothingFound />
-                    ) : (
-                        filteredServices.map((service: WebService) => (
-                            <ServiceRow
-                                key={service.id}
-                                id={service.id}
-                                name={service.name}
-                                iconSvg={service.icon_svg}
-                                checked={blockedSet.has(service.id)}
-                                disabled={isGloballyDisabled || togglingId === service.id}
-                                onChange={handleToggleService}
-                            />
-                        ))
-                    )}
+                    <div class={s.servicesList} data-testid="blocked-services-list">
+                        <Show
+                            when={filteredServices().length === 0}
+                            fallback={
+                                <For each={filteredServices()}>
+                                    {(service) => (
+                                        <ServiceRow
+                                            id={service.id}
+                                            name={service.name}
+                                            iconSvg={service.icon_svg}
+                                            checked={blockedSet().has(service.id)}
+                                            disabled={
+                                                isGloballyDisabled() || togglingId() === service.id
+                                            }
+                                            onChange={handleToggleService}
+                                        />
+                                    )}
+                                </For>
+                            }
+                        >
+                            <NothingFound />
+                        </Show>
+                    </div>
                 </div>
             </div>
-        </div>
+        </Show>
     );
 };

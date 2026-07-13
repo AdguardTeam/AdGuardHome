@@ -1,5 +1,4 @@
-import React from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from '@solidjs/router';
 import cn from 'clsx';
 import { Icon } from 'panel/common/ui/Icon';
 import { Link } from 'panel/common/ui/Link';
@@ -20,7 +19,7 @@ type Props = {
     headerMenu?: boolean;
 };
 
-export const Menu = ({ headerMenu }: Props) => {
+export const Menu = (props: Props) => {
     const location = useLocation();
 
     const isActive = (path: string | string[], full = false) => {
@@ -43,20 +42,20 @@ export const Menu = ({ headerMenu }: Props) => {
 
     return (
         <div
-            className={cn(s.menuWrapper, {
-                [s.headerMenu]: headerMenu,
+            class={cn(s.menuWrapper, {
+                [s.headerMenu]: props.headerMenu,
             })}
         >
-            <nav className={s.topMenuWrapper}>
-                <div className={s.menuLinkWrapper}>
+            <nav class={s.topMenuWrapper}>
+                <div class={s.menuLinkWrapper}>
                     <Link
-                        className={cn(s.menuLink, {
+                        class={cn(s.menuLink, {
                             [s.activeLink]: isActive(Paths.Dashboard, true),
                         })}
                         to={RoutePath.Dashboard}
                     >
-                        <Icon className={s.linkIcon} icon="dashboard" />
-                        <span className={theme.common.textOverflow}>
+                        <Icon class={s.linkIcon} icon="dashboard" />
+                        <span class={theme.common.textOverflow}>
                             {intl.getMessage('dashboard')}
                         </span>
                     </Link>
@@ -72,7 +71,7 @@ export const Menu = ({ headerMenu }: Props) => {
                         },
                         { label: 'DNS', path: Paths.Dns, routePath: RoutePath.Dns },
                         {
-                            label: intl.getMessage('encryption_title'),
+                            label: intl.getMessage('protocols'),
                             path: Paths.Encryption,
                             routePath: RoutePath.Encryption,
                         },
@@ -110,49 +109,47 @@ export const Menu = ({ headerMenu }: Props) => {
                             routePath: RoutePath.BlockedServices,
                         },
                         {
-                            label: intl.getMessage('user_rules'),
+                            label: intl.getMessage('user_rules_title'),
                             path: Paths.UserRules,
                             routePath: RoutePath.UserRules,
                         },
                     ]}
                     isActive={isActive}
                 />
-                <div className={cn(s.menuLinkWrapper)}>
+                <div class={cn(s.menuLinkWrapper)}>
                     <Link
-                        className={cn(s.menuLink, {
+                        class={cn(s.menuLink, {
                             [s.activeLink]: isActive(Paths.Logs),
                         })}
                         to={RoutePath.Logs}
                     >
-                        <Icon className={s.linkIcon} icon="log" />
-                        <span className={theme.common.textOverflow}>Logs</span>
+                        <Icon class={s.linkIcon} icon="log" />
+                        <span class={theme.common.textOverflow}>Logs</span>
                     </Link>
                 </div>
-                <div className={cn(s.menuLinkWrapper)}>
+                <div class={cn(s.menuLinkWrapper)}>
                     <Link
-                        className={cn(s.menuLink, { [s.activeLink]: isActive(Paths.Guide) })}
+                        class={cn(s.menuLink, { [s.activeLink]: isActive(Paths.Guide) })}
                         to={RoutePath.Guide}
                     >
-                        <Icon className={s.linkIcon} icon="faq" />
-                        <span className={theme.common.textOverflow}>
+                        <Icon class={s.linkIcon} icon="faq" />
+                        <span class={theme.common.textOverflow}>
                             {intl.getMessage('setup_guide')}
                         </span>
                     </Link>
                 </div>
             </nav>
-            <div className={s.referenceWrapper}>
-                <div className={cn(s.menuLinkWrapper)}>
+            <div class={s.referenceWrapper}>
+                <div class={cn(s.menuLinkWrapper)}>
                     <a
                         href={apiClient.getLogoutUrl()}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className={s.menuLink}
+                        class={s.menuLink}
                         id="sign_out"
                     >
-                        <Icon className={s.linkIcon} icon="logout" />
-                        <span className={theme.common.textOverflow}>
-                            {intl.getMessage('logout')}
-                        </span>
+                        <Icon class={s.linkIcon} icon="logout" />
+                        <span class={theme.common.textOverflow}>{intl.getMessage('logout')}</span>
                     </a>
                 </div>
             </div>

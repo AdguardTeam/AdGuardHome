@@ -1,1 +1,0 @@
-export { DisallowDialog } from './DisallowDialog';

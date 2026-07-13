@@ -1,5 +1,3 @@
-import React from 'react';
-import { Controller, UseFormHandleSubmit, Control } from 'react-hook-form';
 import cn from 'clsx';
 
 import theme from 'panel/lib/theme';
@@ -9,51 +7,47 @@ import { Button } from 'panel/common/ui/Button';
 
 import s from '../UserRules.module.pcss';
 
-type UserRulesFormValues = {
-    userRules: string;
-};
-
 type Props = {
-    control: Control<UserRulesFormValues>;
-    handleSubmit: UseFormHandleSubmit<UserRulesFormValues>;
-    onSubmit: (data: UserRulesFormValues) => void;
+    value: string;
+    onChange: (value: string) => void;
+    handleSubmit: () => void;
     processingRules: boolean;
 };
 
-export const RulesEditor = ({ control, handleSubmit, onSubmit, processingRules }: Props) => {
-    return (
-        <div className={s.section}>
-            <form onSubmit={handleSubmit(onSubmit)}>
-                <p className={cn(s.description, theme.text.t2)}>
-                    {intl.getMessage('user_rules_desc')}
-                </p>
+export const RulesEditor = (props: Props) => {
+    const handleSubmit = (e: Event) => {
+        e.preventDefault();
+        props.handleSubmit();
+    };
 
-                <div className={s.textEditWrapper}>
-                    <div className={s.textEditContainer}>
-                        <Controller
-                            name="userRules"
-                            control={control}
-                            render={({ field }) => (
-                                <Textarea
-                                    {...field}
-                                    data-testid="user-rules-editor-textarea"
-                                    placeholder={`# ${intl.getMessage('user_rules_placeholder')}\n\n@@||example.org`}
-                                    rows={12}
-                                    size="large"
-                                    className={s.editorTextarea}
-                                />
-                            )}
+    return (
+        <div class={s.section}>
+            <form onSubmit={handleSubmit}>
+                <p class={cn(s.description, theme.text.t2)}>{intl.getMessage('user_rules_desc')}</p>
+
+                <div class={s.textEditWrapper}>
+                    <div class={s.textEditContainer}>
+                        <Textarea
+                            data-testid="user-rules-editor-textarea"
+                            placeholder={`# ${intl.getMessage('user_rules_placeholder')}\n\n@@||example.org`}
+                            rows={12}
+                            size="large"
+                            class={s.editorTextarea}
+                            value={props.value}
+                            onChange={(e: Event) =>
+                                props.onChange((e.target as HTMLTextAreaElement).value)
+                            }
                         />
                     </div>
                 </div>
 
-                <div className={s.editorActions}>
+                <div class={s.editorActions}>
                     <Button
                         type="submit"
                         variant="primary"
                         size="small"
-                        disabled={processingRules}
-                        className={s.editorSubmitButton}
+                        disabled={props.processingRules}
+                        class={s.editorSubmitButton}
                         data-testid="user-rules-editor-save"
                     >
                         {intl.getMessage('save')}

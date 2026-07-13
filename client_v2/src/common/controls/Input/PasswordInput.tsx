@@ -1,59 +1,53 @@
-import React, { forwardRef, useState } from 'react';
+import { createSignal, Show } from 'solid-js';
 
 import { Input } from 'panel/common/controls/Input/index';
 import { Icon } from 'panel/common/ui/Icon';
 
 import styles from './Input.module.pcss';
 
-type Props = Omit<
-    React.ComponentProps<typeof Input>,
-    'type' | 'suffixIcon' | 'onChange' | 'value'
-> & {
+type Props = Omit<Parameters<typeof Input>[0], 'type' | 'suffixIcon' | 'onChange' | 'value'> & {
     value: string;
     onChange: (value: string) => void;
+    ref?: HTMLInputElement | ((el: HTMLInputElement) => void);
 };
 
-export const PasswordInput = forwardRef<HTMLInputElement, Props>(
-    ({ value, onChange, ...props }, ref) => {
-        const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+export const PasswordInput = (props: Props) => {
+    const [isPasswordVisible, setIsPasswordVisible] = createSignal(false);
 
-        return (
-            <Input
-                {...props}
-                ref={ref}
-                value={value}
-                onChange={(e) => onChange(e.target.value)}
-                type={isPasswordVisible ? 'text' : 'password'}
-                suffixIcon={
-                    <div className={styles.inputSuffix}>
-                        {!!value && (
-                            <button
-                                className={styles.inputIconButton}
-                                tabIndex={-1}
-                                type="button"
-                                onMouseDown={(e) => e.preventDefault()}
-                                onClick={() => {
-                                    setIsPasswordVisible(false);
-                                    onChange('');
-                                }}
-                            >
-                                <Icon icon="cross" />
-                            </button>
-                        )}
+    return (
+        <Input
+            {...props}
+            ref={props.ref}
+            value={props.value}
+            onChange={(e) => props.onChange(e.target.value)}
+            type={isPasswordVisible() ? 'text' : 'password'}
+            suffixIcon={
+                <div class={styles.inputSuffix}>
+                    <Show when={!!props.value}>
                         <button
-                            className={styles.inputIconButton}
+                            class={styles.inputIconButton}
                             tabIndex={-1}
                             type="button"
-                            onMouseDown={(e) => e.preventDefault()}
-                            onClick={() => setIsPasswordVisible((v) => !v)}
+                            onMouseDown={(e: MouseEvent) => e.preventDefault()}
+                            onClick={() => {
+                                setIsPasswordVisible(false);
+                                props.onChange('');
+                            }}
                         >
-                            <Icon icon={isPasswordVisible ? 'eye_open' : 'eye_close'} />
+                            <Icon icon="cross" />
                         </button>
-                    </div>
-                }
-            />
-        );
-    },
-);
-
-PasswordInput.displayName = 'PasswordInput';
+                    </Show>
+                    <button
+                        class={styles.inputIconButton}
+                        tabIndex={-1}
+                        type="button"
+                        onMouseDown={(e: MouseEvent) => e.preventDefault()}
+                        onClick={() => setIsPasswordVisible((v) => !v)}
+                    >
+                        <Icon icon={(isPasswordVisible() ? 'eye_open' : 'eye_close') as any} />
+                    </button>
+                </div>
+            }
+        />
+    );
+};

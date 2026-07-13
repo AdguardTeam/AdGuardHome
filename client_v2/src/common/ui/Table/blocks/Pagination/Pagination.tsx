@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import { createSignal, createMemo, For } from 'solid-js';
 import cn from 'clsx';
 
 import { Icon } from 'panel/common/ui/Icon';
@@ -17,14 +17,15 @@ type Props = {
     limitButtonDescription?: string;
 };
 
-const generatePageNumbers = (currentPage: number, totalPages: number): (number | 'ellipsis')[] => {
-    const delta = 2; // Number of pages to show around current page
+export const generatePageNumbers = (
+    currentPage: number,
+    totalPages: number,
+): (number | 'ellipsis')[] => {
+    const delta = 2;
     const range: number[] = [];
 
-    // Always show first page
     range.push(1);
 
-    // Add pages around current page
     const start = Math.max(2, currentPage + 1 - delta);
     const end = Math.min(totalPages - 1, currentPage + 1 + delta);
 
@@ -32,15 +33,12 @@ const generatePageNumbers = (currentPage: number, totalPages: number): (number |
         range.push(page),
     );
 
-    // Always show last page (if more than 1 page)
     if (totalPages > 1) {
         range.push(totalPages);
     }
 
-    // Remove duplicates and sort
     const uniqueRange = [...new Set(range)].sort((a, b) => a - b);
 
-    // Add ellipsis where needed
     const rangeWithDots: (number | 'ellipsis')[] = [];
     uniqueRange.forEach((page, index) => {
         if (index > 0) {
@@ -57,96 +55,86 @@ const generatePageNumbers = (currentPage: number, totalPages: number): (number |
     return rangeWithDots;
 };
 
-export const Pagination = ({
-    currentPage,
-    totalPages,
-    pageSize,
-    pageSizeOptions,
-    onPageChange,
-    onPageSizeChange,
-}: Props) => {
-    const [limitMenuOpen, setLimitMenuOpen] = useState(false);
+export const Pagination = (props: Props) => {
+    const [limitMenuOpen, setLimitMenuOpen] = createSignal(false);
 
-    const canPreviousPage = currentPage > 0;
-    const canNextPage = currentPage < totalPages - 1;
+    const canPreviousPage = () => props.currentPage > 0;
+    const canNextPage = () => props.currentPage < props.totalPages - 1;
 
-    const pageNumbers = useMemo(
-        () => generatePageNumbers(currentPage, totalPages),
-        [currentPage, totalPages],
-    );
+    const pageNumbers = createMemo(() => generatePageNumbers(props.currentPage, props.totalPages));
 
     const limitMenu = (
-        <div className={theme.dropdown.menu}>
-            {pageSizeOptions.map((size) => (
-                <div
-                    key={size}
-                    className={cn(theme.dropdown.item, {
-                        [theme.dropdown.item_active]: pageSize === size,
-                    })}
-                    onClick={() => {
-                        onPageSizeChange(size);
-                        setLimitMenuOpen(false);
-                    }}
-                >
-                    {intl.getMessage('rows_per_page', { value: size })}
-                </div>
-            ))}
+        <div class={theme.dropdown.menu}>
+            <For each={props.pageSizeOptions}>
+                {(size) => (
+                    <div
+                        class={cn(theme.dropdown.item, {
+                            [theme.dropdown.item_active]: props.pageSize === size,
+                        })}
+                        onClick={() => {
+                            props.onPageSizeChange(size);
+                            setLimitMenuOpen(false);
+                        }}
+                    >
+                        {intl.getMessage('rows_per_page', { value: size })}
+                    </div>
+                )}
+            </For>
         </div>
     );
 
     const renderPages = () => {
-        if (totalPages <= 1) {
+        if (props.totalPages <= 1) {
             return null;
         }
 
         return (
-            <div className={theme.pagination.pagesContainer}>
+            <div class={theme.pagination.pagesContainer}>
                 <button
                     type="button"
-                    onClick={() => onPageChange(currentPage - 1)}
-                    disabled={!canPreviousPage}
-                    className={theme.pagination.button}
+                    aria-label={intl.getMessage('aria_previous_page')}
+                    onClick={() => props.onPageChange(props.currentPage - 1)}
+                    disabled={!canPreviousPage()}
+                    class={theme.pagination.button}
                 >
                     <Icon
                         icon="arrow"
-                        className={cn(theme.pagination.arrow, theme.pagination.arrow_left)}
+                        class={cn(theme.pagination.arrow, theme.pagination.arrow_left)}
                     />
                 </button>
 
-                {pageNumbers.map((pageNum, index) => {
-                    if (pageNum === 'ellipsis') {
-                        return (
-                            <span key={`ellipsis-${index}`} className={theme.pagination.summary}>
-                                ...
-                            </span>
-                        );
-                    }
+                <For each={pageNumbers()}>
+                    {(pageNum) => {
+                        if (pageNum === 'ellipsis') {
+                            return <span class={theme.pagination.summary}>...</span>;
+                        }
 
-                    const isCurrentPage = pageNum === currentPage + 1; // Convert 0-based to 1-based
-                    return (
-                        <button
-                            key={pageNum}
-                            type="button"
-                            onClick={() => onPageChange(pageNum - 1)} // Convert 1-based to 0-based
-                            className={cn(
-                                theme.pagination.button,
-                                isCurrentPage && theme.pagination.button_active,
-                            )}
-                        >
-                            {pageNum}
-                        </button>
-                    );
-                })}
+                        return (
+                            <button
+                                type="button"
+                                onClick={() => props.onPageChange(pageNum - 1)}
+                                class={cn(
+                                    theme.pagination.button,
+                                    pageNum === props.currentPage + 1 &&
+                                        theme.pagination.button_active,
+                                )}
+                            >
+                                {pageNum}
+                            </button>
+                        );
+                    }}
+                </For>
 
                 <button
                     type="button"
-                    onClick={() => onPageChange(currentPage + 1)}
-                    disabled={!canNextPage}
-                    className={theme.pagination.button}
+                    aria-label={intl.getMessage('aria_next_page')}
+                    onClick={() => props.onPageChange(props.currentPage + 1)}
+                    disabled={!canNextPage()}
+                    class={theme.pagination.button}
                 >
                     <Icon
                         icon="arrow"
-                        className={cn(theme.pagination.arrow, theme.pagination.arrow_right)}
+                        class={cn(theme.pagination.arrow, theme.pagination.arrow_right)}
                     />
                 </button>
             </div>
@@ -154,23 +142,25 @@ export const Pagination = ({
     };
 
     return (
-        <div className={theme.pagination.wrapper}>
+        <div class={theme.pagination.wrapper}>
             {renderPages()}
 
-            <Dropdown
-                trigger="click"
-                position="bottomRight"
-                menu={limitMenu}
-                open={limitMenuOpen}
-                onOpenChange={setLimitMenuOpen}
-                iconClassName={theme.dropdown.icon}
-                className={theme.dropdown.flexDropdownWrap}
-                wrapClassName={cn(theme.dropdown.dropdown, theme.pagination.dropdownShowOnPage)}
-            >
-                <span className={theme.pagination.dropdownText}>
-                    {intl.getMessage('rows_per_page', { value: pageSize })}
-                </span>
-            </Dropdown>
+            <div class={theme.pagination.limitContainer}>
+                <Dropdown
+                    trigger="click"
+                    position="bottomRight"
+                    menu={limitMenu}
+                    open={limitMenuOpen()}
+                    onOpenChange={setLimitMenuOpen}
+                    iconClass={theme.dropdown.icon}
+                    class={theme.dropdown.flexDropdownWrap}
+                    wrapClass={cn(theme.dropdown.dropdown, theme.pagination.dropdownShowOnPage)}
+                >
+                    <span class={theme.pagination.dropdownText}>
+                        {intl.getMessage('rows_per_page', { value: props.pageSize })}
+                    </span>
+                </Dropdown>
+            </div>
         </div>
     );
 };

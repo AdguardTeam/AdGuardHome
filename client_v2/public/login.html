@@ -8,18 +8,22 @@
         <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
         <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
         <title>Login</title>
+        <meta name="color-scheme" content="light dark" />
+        <script>
+            (function () {
+                var prefersDark =
+                    window.matchMedia &&
+                    window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var theme = prefersDark ? 'dark' : 'light';
+                document.documentElement.dataset.theme = theme;
+                document.documentElement.style.colorScheme = theme;
+            })();
+        </script>
     </head>
     <body>
         <noscript>
             You need to enable JavaScript to run this app.
         </noscript>
         <div id="root"></div>
-        <script>
-            (function () {
-                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-                var currentTheme = prefersDark ? 'dark' : 'light';
-                document.body.dataset.theme = currentTheme;
-            })();
-        </script>
     </body>
 </html>

@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { createMemo } from 'solid-js';
+import { createForm, setValue, getValue } from '@modular-forms/solid';
 import { Input } from 'panel/common/controls/Input';
 import intl from 'panel/common/intl';
 import { Checkbox } from 'panel/common/controls/Checkbox';
@@ -36,27 +36,22 @@ type Props = {
     initialValues?: AuthInitialValues;
 };
 
-export const Auth = ({ onAuthSubmit, initialValues }: Props) => {
-    const {
-        handleSubmit,
-        watch,
-        control,
-        formState: { isDirty, isValid },
-    } = useForm<AuthFormValues>({
-        mode: 'onChange',
-        defaultValues: {
-            username: initialValues?.username ?? '',
-            password: initialValues?.password ?? '',
-            confirm_password: initialValues?.password ?? '',
-            privacy_consent: initialValues?.privacy_consent ?? false,
+export const Auth = (props: Props) => {
+    const [authForm, { Form, Field }] = createForm<AuthFormValues>({
+        initialValues: {
+            username: props.initialValues?.username ?? '',
+            password: props.initialValues?.password ?? '',
+            confirm_password: props.initialValues?.password ?? '',
+            privacy_consent: props.initialValues?.privacy_consent ?? false,
         },
+        validateOn: 'change',
     });
 
-    const password = watch('password') ?? '';
-    const confirmPassword = watch('confirm_password') ?? '';
+    const password = () => (getValue(authForm, 'password') as string) ?? '';
+    const confirmPassword = () => (getValue(authForm, 'confirm_password') as string) ?? '';
 
     const validateConfirmPassword = (value: string) => {
-        if (value !== password) {
+        if (value !== password()) {
             return intl.getMessage('form_error_password');
         }
         return undefined;
@@ -83,135 +78,140 @@ export const Auth = ({ onAuthSubmit, initialValues }: Props) => {
         return undefined;
     };
 
-    const requirements = useMemo(() => {
+    const requirements = createMemo(() => {
+        const pwd = password();
+        const confirmPwd = confirmPassword();
         return {
-            minLength: password.length > 0 && hasMinLength(password),
-            allowedChars:
-                password.length > 0 &&
-                hasAllowedAsciiOnly(password) &&
-                hasNumberOrSpecial(password),
-            lowercase: password.length > 0 && hasLowercase(password),
-            uppercase: password.length > 0 && hasUppercase(password),
-            match:
-                password.length > 0 && confirmPassword.length > 0 && password === confirmPassword,
+            minLength: pwd.length > 0 && hasMinLength(pwd),
+            allowedChars: pwd.length > 0 && hasAllowedAsciiOnly(pwd) && hasNumberOrSpecial(pwd),
+            lowercase: pwd.length > 0 && hasLowercase(pwd),
+            uppercase: pwd.length > 0 && hasUppercase(pwd),
+            match: pwd.length > 0 && confirmPwd.length > 0 && pwd === confirmPwd,
         };
-    }, [password, confirmPassword]);
+    });
+
+    const isPrivacyValid = createMemo(() =>
+        Boolean(getValue(authForm, 'privacy_consent') as boolean | undefined),
+    );
 
     return (
-        <div className={styles.configSetting}>
-            <form className={styles.step} onSubmit={handleSubmit(onAuthSubmit)}>
-                <div className={styles.info}>
-                    <div className={styles.titleStep}>
-                        {intl.getMessage('setup_guide_auth_title')}
-                    </div>
+        <div class={styles.configSetting}>
+            <Form class={styles.step} onSubmit={props.onAuthSubmit}>
+                <div class={styles.info}>
+                    <div class={styles.titleStep}>{intl.getMessage('setup_guide_auth_title')}</div>
 
-                    <p className={styles.descStep}>
-                        {intl.getMessage('setup_guide_auth_subtitle')}
-                    </p>
+                    <p class={styles.descStep}>{intl.getMessage('setup_guide_auth_subtitle')}</p>
 
-                    <div className={styles.input}>
-                        <Controller
-                            name="username"
-                            control={control}
-                            rules={{ validate: validateRequiredValue }}
-                            render={({ field }) => (
+                    <div class={styles.input}>
+                        <Field name="username" validate={validateRequiredValue}>
+                            {(field, props) => (
                                 <Input
-                                    {...field}
+                                    {...props}
                                     type="text"
                                     id="install_username"
                                     label={intl.getMessage('install_auth_username')}
                                     placeholder={intl.getMessage('install_auth_username_enter')}
-                                    autoComplete="username"
+                                    autocomplete="username"
+                                    value={(field.value as string) ?? ''}
+                                    errorMessage={field.error as string}
+                                    size="large"
                                 />
                             )}
-                        />
+                        </Field>
                     </div>
 
-                    <div className={styles.input}>
-                        <Controller
+                    <div class={styles.input}>
+                        <Field
                             name="password"
-                            control={control}
-                            rules={{
-                                validate: {
-                                    required: validateRequiredValue,
-                                    passwordLength: validatePasswordLength,
-                                    passwordLowercase: validatePasswordLowercase,
-                                    passwordUppercase: validatePasswordUppercase,
-                                    passwordSpecial: validatePasswordSpecial,
-                                },
-                            }}
-                            render={({ field }) => (
+                            validate={
+                                [
+                                    validateRequiredValue,
+                                    validatePasswordLength,
+                                    validatePasswordLowercase,
+                                    validatePasswordUppercase,
+                                    validatePasswordSpecial,
+                                ] as any
+                            }
+                        >
+                            {(field, props) => (
                                 <PasswordInput
+                                    {...props}
                                     id="install_password"
                                     label={intl.getMessage('install_auth_password')}
                                     placeholder={intl.getMessage('install_auth_password_enter')}
-                                    autoComplete="new-password"
-                                    value={field.value ?? ''}
-                                    onChange={(value) => field.onChange(value)}
-                                    name={field.name}
-                                    onBlur={field.onBlur}
-                                    ref={field.ref}
+                                    autocomplete="new-password"
+                                    value={(field.value as string) ?? ''}
+                                    onChange={(value) =>
+                                        setValue(authForm, 'password', value, {
+                                            shouldValidate: true,
+                                        })
+                                    }
+                                    errorMessage={field.error as string}
+                                    size="large"
                                 />
                             )}
-                        />
+                        </Field>
                     </div>
 
                     <PasswordRequirements
-                        requirements={requirements}
-                        className={styles.authRequirementsMobile}
+                        requirements={requirements()}
+                        class={styles.authRequirementsMobile}
                     />
 
-                    <div className={styles.input}>
-                        <Controller
+                    <div class={styles.input}>
+                        <Field
                             name="confirm_password"
-                            control={control}
-                            rules={{
-                                validate: {
-                                    required: validateRequiredValue,
-                                    confirmPassword: validateConfirmPassword,
-                                },
-                            }}
-                            render={({ field }) => (
+                            validate={[validateRequiredValue, validateConfirmPassword] as any}
+                        >
+                            {(field, props) => (
                                 <PasswordInput
+                                    {...props}
                                     id="install_confirm_password"
                                     label={intl.getMessage('install_auth_confirm')}
                                     placeholder={intl.getMessage('install_auth_confirm')}
-                                    autoComplete="new-password"
-                                    value={field.value ?? ''}
-                                    onChange={(value) => field.onChange(value)}
-                                    name={field.name}
-                                    onBlur={field.onBlur}
-                                    ref={field.ref}
+                                    autocomplete="new-password"
+                                    value={(field.value as string) ?? ''}
+                                    onChange={(value) =>
+                                        setValue(authForm, 'confirm_password', value, {
+                                            shouldValidate: true,
+                                        })
+                                    }
+                                    errorMessage={field.error as string}
+                                    size="large"
                                 />
                             )}
-                        />
+                        </Field>
                     </div>
 
-                    <div className={styles.consent}>
-                        <Controller
+                    <div class={styles.consent}>
+                        <Field
                             name="privacy_consent"
-                            control={control}
-                            rules={{ validate: validateRequiredValue }}
-                            render={({ field }) => (
+                            type="boolean"
+                            validate={validateRequiredValue as any}
+                        >
+                            {(field, props) => (
                                 <Checkbox
-                                    checked={field.value}
-                                    onChange={(e) => field.onChange(e.target.checked)}
-                                    name={field.name}
-                                    onBlur={field.onBlur}
+                                    {...props}
+                                    checked={(field.value as boolean) ?? false}
+                                    onChange={(e: Event) =>
+                                        setValue(
+                                            authForm,
+                                            'privacy_consent',
+                                            (e.target as HTMLInputElement).checked,
+                                            { shouldValidate: true },
+                                        )
+                                    }
                                     verticalAlign="start"
                                 >
-                                    <div className={styles.consentContent}>
+                                    <div class={styles.consentContent}>
                                         {intl.getMessage('setup_guide_auth_privacy', {
                                             a: (text: string) => (
-                                                <a
-                                                    className={styles.link}
-                                                    href={PRIVACY_POLICY_LINK}
-                                                >
+                                                <a class={styles.link} href={PRIVACY_POLICY_LINK}>
                                                     {text}
                                                 </a>
                                             ),
                                             b: (text: string) => (
-                                                <a className={styles.link} href={TERMS_LINK}>
+                                                <a class={styles.link} href={TERMS_LINK}>
                                                     {text}
                                                 </a>
                                             ),
@@ -219,19 +219,19 @@ export const Auth = ({ onAuthSubmit, initialValues }: Props) => {
                                     </div>
                                 </Checkbox>
                             )}
-                        />
+                        </Field>
                     </div>
 
-                    <Controls isDirty={isDirty} isValid={isValid} />
+                    <Controls isDirty={authForm.dirty} isValid={isPrivacyValid()} />
                 </div>
 
-                <div className={styles.content}>
+                <div class={styles.content}>
                     <PasswordRequirements
-                        requirements={requirements}
-                        className={cn(styles.banner, styles.authBanner)}
+                        requirements={requirements()}
+                        class={cn(styles.banner, styles.authBanner)}
                     />
                 </div>
-            </form>
+            </Form>
         </div>
     );
 };

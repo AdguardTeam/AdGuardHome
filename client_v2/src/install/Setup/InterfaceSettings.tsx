@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { createMemo, untrack, Switch, Match } from 'solid-js';
 
 import intl from 'panel/common/intl';
 import { Button } from 'panel/common/ui/Button';
@@ -14,7 +14,7 @@ import { ALL_INTERFACES_IP, STATUS_RESPONSE, STANDARD_WEB_PORT } from '../../hel
 
 import { InstallInterface } from '../../initialState';
 
-import type { ConfigType, DnsConfig, SettingsFormValues, StaticIpType, WebConfig } from './types';
+import type { ConfigType, DnsConfig, SettingsFormValues, WebConfig } from './types';
 
 type Props = {
     handleSubmit: (data: SettingsFormValues) => void;
@@ -26,126 +26,122 @@ type Props = {
     initialValues?: object;
 };
 
-export const InterfaceSettings = ({
-    handleSubmit,
-    handleFix,
-    validateForm,
-    config,
-    interfaces,
-}: Props) => {
-    const { control, reactHookFormSubmit, isValid, watchFields, webIpVal, webPortVal } =
-        useInstallSettingsForm(config, validateForm);
+export const InterfaceSettings = (props: Props) => {
+    const form = useInstallSettingsForm(
+        untrack(() => props.config),
+        untrack(() => props.validateForm),
+    );
 
-    const { status: webStatus, can_autofix: isWebFixAvailable } = config.web;
+    const webStatus = () => props.config.web.status;
+    const isWebFixAvailable = () => props.config.web.can_autofix;
+    const staticIp = () => props.config.staticIp;
 
-    const { staticIp } = config;
+    const webIpOptions = createMemo(() => buildInterfaceOptions(props.interfaces));
 
-    const webIpOptions = buildInterfaceOptions(interfaces);
-
-    const handleAutofix = createHandleAutofix(watchFields, handleFix);
+    const handleAutofix = createHandleAutofix(
+        form.watchFields,
+        untrack(() => props.handleFix),
+    );
 
     const handleStaticIp = (ip: string) => {
+        const fields = form.watchFields();
         const web = {
-            ip: watchFields.web?.ip,
-            port: watchFields.web?.port,
+            ip: fields.web?.ip,
+            port: fields.web?.port,
             autofix: false,
         };
         const dns = {
-            ip: watchFields.dns?.ip,
-            port: watchFields.dns?.port,
+            ip: fields.dns?.ip,
+            port: fields.dns?.port,
             autofix: false,
         };
         const set_static_ip = true;
 
         if (window.confirm(intl.getMessage('confirm_static_ip', { ip }))) {
-            handleFix(web, dns, set_static_ip);
+            props.handleFix(web, dns, set_static_ip);
         }
     };
 
-    const getStaticIpMessage = useCallback(
-        (staticIp: StaticIpType) => {
-            const { static: status, ip } = staticIp;
-
-            switch (status) {
-                case STATUS_RESPONSE.NO:
-                    return (
-                        <>
-                            <div className={styles.spacerBottom}>
-                                {intl.getMessage('install_static_configure', { ip })}
-                            </div>
-
-                            <Button
-                                type="button"
-                                size="small"
-                                variant="secondary"
-                                className={styles.button}
-                                onClick={() => handleStaticIp(ip)}
-                            >
-                                {intl.getMessage('set_static_ip')}
-                            </Button>
-                        </>
-                    );
-                case STATUS_RESPONSE.ERROR:
-                    return (
-                        <div className={styles.errorText}>
-                            {intl.getMessage('install_static_error')}
-                        </div>
-                    );
-                case STATUS_RESPONSE.YES:
-                    return (
-                        <div className={styles.successText}>
-                            {intl.getMessage('install_static_ok')}
-                        </div>
-                    );
-                default:
-                    return null;
-            }
-        },
-        [handleStaticIp],
-    );
-
     const onSubmit = (data: SettingsFormValues) => {
-        validateForm(data);
-        handleSubmit(data);
+        props.validateForm(data);
+        props.handleSubmit(data);
     };
 
     return (
-        <div className={styles.configSetting}>
-            <form className={styles.step} onSubmit={reactHookFormSubmit(onSubmit)}>
-                <div className={styles.info}>
+        <div class={styles.configSetting}>
+            <form class={styles.step} onSubmit={(e) => form.handleSubmit(onSubmit)(e)}>
+                <div class={styles.info}>
                     <div>
-                        <div className={styles.titleStep}>{intl.getMessage('setup_ui_title')}</div>
+                        <div class={styles.titleStep}>{intl.getMessage('setup_ui_title')}</div>
 
-                        <p className={styles.descAdresses}>{intl.getMessage('setup_ui_desc')}</p>
+                        <p class={styles.descAdresses}>{intl.getMessage('setup_ui_desc')}</p>
 
                         <WebBanner
-                            className={cn(styles.banner, styles.bannerMobile)}
-                            control={control}
-                            webIpOptions={webIpOptions}
-                            webStatus={webStatus}
-                            isWebFixAvailable={isWebFixAvailable}
+                            class={cn(styles.banner, styles.bannerMobile)}
+                            webIp={form.webIp}
+                            webPort={form.webPort}
+                            setWebIp={form.setWebIp}
+                            setWebPort={form.setWebPort}
+                            webIpOptions={webIpOptions()}
+                            webStatus={webStatus()}
+                            isWebFixAvailable={isWebFixAvailable()}
                             onAutofix={() => handleAutofix('web')}
                         />
                     </div>
 
                     <AddressList
-                        interfaces={interfaces}
-                        address={webIpVal || ALL_INTERFACES_IP}
-                        port={webPortVal || STANDARD_WEB_PORT}
+                        interfaces={props.interfaces}
+                        address={form.webIp() || ALL_INTERFACES_IP}
+                        port={form.webPort() || STANDARD_WEB_PORT}
                     />
 
-                    <div className={styles.group}>{getStaticIpMessage(staticIp)}</div>
+                    <div class={styles.group}>
+                        <Switch fallback={null}>
+                            <Match when={staticIp().static === STATUS_RESPONSE.NO}>
+                                <>
+                                    <div class={styles.spacerBottom}>
+                                        {intl.getMessage('install_static_configure', {
+                                            ip: staticIp().ip,
+                                        })}
+                                    </div>
 
-                    <Controls invalid={!isValid} />
+                                    <Button
+                                        type="button"
+                                        size="small"
+                                        variant="secondary"
+                                        class={styles.button}
+                                        onClick={() => handleStaticIp(staticIp().ip)}
+                                    >
+                                        {intl.getMessage('set_static_ip')}
+                                    </Button>
+                                </>
+                            </Match>
+                            <Match when={staticIp().static === STATUS_RESPONSE.ERROR}>
+                                <div class={styles.errorText}>
+                                    {intl.getMessage('install_static_error')}
+                                </div>
+                            </Match>
+                            <Match when={staticIp().static === STATUS_RESPONSE.YES}>
+                                <div class={styles.successText}>
+                                    {intl.getMessage('install_static_ok')}
+                                </div>
+                            </Match>
+                        </Switch>
+                    </div>
+
+                    <Controls invalid={!form.isValid()} />
                 </div>
 
-                <div className={styles.content}>
+                <div class={styles.content}>
                     <WebBanner
-                        className={styles.banner}
-                        control={control}
-                        webIpOptions={webIpOptions}
-                        webStatus={webStatus}
-                        isWebFixAvailable={isWebFixAvailable}
+                        class={styles.banner}
+                        webIp={form.webIp}
+                        webPort={form.webPort}
+                        setWebIp={form.setWebIp}
+                        setWebPort={form.setWebPort}
+                        webIpOptions={webIpOptions()}
+                        webStatus={webStatus()}
+                        isWebFixAvailable={isWebFixAvailable()}
                         onAutofix={() => handleAutofix('web')}
                     />
                 </div>

@@ -1,4 +1,4 @@
-import React from 'react';
+import { For } from 'solid-js';
 import cn from 'clsx';
 
 import theme from 'panel/lib/theme';
@@ -17,21 +17,23 @@ const EXAMPLES = [
 ];
 
 export const Examples = () => (
-    <div className={s.examplesSection}>
-        <h2 className={cn(theme.title.h6, s.sectionTitle)}>
+    <div class={s.examplesSection}>
+        <h2 class={cn(theme.title.h6, s.sectionTitle)}>
             {intl.getMessage('upstream_examples_title')}
         </h2>
-        <ul className={s.examplesList}>
-            {EXAMPLES.map((example, index) => (
-                <li key={index} className={cn(theme.text.t3, s.listItem)}>
-                    <Icon icon="label" className={s.icon} />
+        <ul class={s.examplesList}>
+            <For each={EXAMPLES}>
+                {(example) => (
+                    <li class={cn(theme.text.t3, s.listItem)}>
+                        <Icon icon="label" class={s.icon} />
 
-                    {example}
-                </li>
-            ))}
+                        {example}
+                    </li>
+                )}
+            </For>
         </ul>
 
-        <p className={cn(s.learnMore, theme.text.t2)}>
+        <p class={cn(s.learnMore, theme.text.t2)}>
             {intl.getMessage('user_rules_learn_more', {
                 a: (text: string) => (
                     <a
