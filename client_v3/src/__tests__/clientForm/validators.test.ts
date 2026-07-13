@@ -18,6 +18,7 @@ import {
     validateCacheSize,
     validateRewriteNotExists,
     validateRewriteNotSame,
+    validateLeaseTime,
 } from 'panel/helpers/validators';
 
 describe('validateIdentifier', () => {
@@ -212,6 +213,14 @@ describe('validatePort', () => {
         expect(validatePort(8080)).toBeUndefined();
     });
 
+    it('returns undefined for boundary 0 (disabled)', () => {
+        expect(validatePort(0)).toBeUndefined();
+    });
+
+    it('returns undefined for boundary 1', () => {
+        expect(validatePort(1)).toBeUndefined();
+    });
+
     it('returns undefined for boundary 80', () => {
         expect(validatePort(80)).toBeUndefined();
     });
@@ -220,16 +229,16 @@ describe('validatePort', () => {
         expect(validatePort(65535)).toBeUndefined();
     });
 
-    it('returns error for 0 (falls outside range 80-65535)', () => {
-        expect(validatePort(0)).toBeTruthy();
-    });
-
-    it('returns error for port below 80', () => {
-        expect(validatePort(79)).toBeTruthy();
-    });
-
     it('returns error for port above 65535', () => {
         expect(validatePort(65536)).toBeTruthy();
+    });
+
+    it('returns error for negative port', () => {
+        expect(validatePort(-1)).toBeTruthy();
+    });
+
+    it('returns undefined for undefined (no value)', () => {
+        expect(validatePort(undefined)).toBeUndefined();
     });
 });
 
@@ -260,6 +269,10 @@ describe('validatePortTLS', () => {
         expect(validatePortTLS(0)).toBeUndefined();
     });
 
+    it('returns undefined for 1', () => {
+        expect(validatePortTLS(1)).toBeUndefined();
+    });
+
     it('returns undefined for valid TLS port', () => {
         expect(validatePortTLS(853)).toBeUndefined();
     });
@@ -268,12 +281,16 @@ describe('validatePortTLS', () => {
         expect(validatePortTLS(80)).toBeUndefined();
     });
 
-    it('returns error for port below 80', () => {
-        expect(validatePortTLS(79)).toBeTruthy();
+    it('returns undefined for boundary 65535', () => {
+        expect(validatePortTLS(65535)).toBeUndefined();
     });
 
     it('returns error for port above 65535', () => {
         expect(validatePortTLS(65536)).toBeTruthy();
+    });
+
+    it('returns undefined for undefined', () => {
+        expect(validatePortTLS(undefined)).toBeUndefined();
     });
 });
 
@@ -514,5 +531,53 @@ describe('validateRewriteNotSame', () => {
         expect(validateRewriteNotSame('', 'example.com')).toBeUndefined();
         expect(validateRewriteNotSame('example.com', '')).toBeUndefined();
         expect(validateRewriteNotSame('', '')).toBeUndefined();
+    });
+});
+
+describe('validateUpstreams with bang comments', () => {
+    it('accepts lines starting with !', () => {
+        expect(validateUpstreams('! comment line\n8.8.8.8')).toBeUndefined();
+    });
+
+    it('accepts only comment lines (!)', () => {
+        expect(validateUpstreams('! first\n! second')).toBeUndefined();
+    });
+
+    it('still accepts # comments', () => {
+        expect(validateUpstreams('# comment\n8.8.8.8')).toBeUndefined();
+    });
+
+    it('rejects invalid non-comment lines alongside comments', () => {
+        expect(validateUpstreams('! good\ninvalidline')).toBeTruthy();
+    });
+});
+
+describe('validateLeaseTime', () => {
+    it('accepts 1 (minimum)', () => {
+        expect(validateLeaseTime(1)).toBeUndefined();
+    });
+
+    it('rejects 0', () => {
+        expect(validateLeaseTime(0)).toBeTruthy();
+    });
+
+    it('accepts UINT32_MAX (4294967295)', () => {
+        expect(validateLeaseTime(4294967295)).toBeUndefined();
+    });
+
+    it('rejects UINT32_MAX + 1 (4294967296)', () => {
+        expect(validateLeaseTime(4294967296)).toBeTruthy();
+    });
+
+    it('rejects empty string', () => {
+        expect(validateLeaseTime('')).toBeTruthy();
+    });
+
+    it('rejects undefined', () => {
+        expect(validateLeaseTime(undefined)).toBeTruthy();
+    });
+
+    it('rejects NaN', () => {
+        expect(validateLeaseTime(NaN)).toBeTruthy();
     });
 });

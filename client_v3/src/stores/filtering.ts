@@ -258,11 +258,13 @@ export const addFilter = async (url: string, name: string, whitelist: boolean) =
         setState('processingAddFilter', false);
         setState('isModalOpen', false);
         if (whitelist) {
-            addSuccessToast(
-                intl.getMessage('filter_added_successfully_allowlist', { value: name }),
-            );
+            addSuccessToast({
+                message: intl.getMessage('filter_added_successfully_allowlist', { value: name }),
+            });
         } else {
-            addSuccessToast(intl.getMessage('filter_added_successfully', { value: name }));
+            addSuccessToast({
+                message: intl.getMessage('filter_added_successfully', { value: name }),
+            });
         }
         await getFilteringStatus();
     } catch (error) {
@@ -271,18 +273,20 @@ export const addFilter = async (url: string, name: string, whitelist: boolean) =
     }
 };
 
-export const removeFilter = async (url: string, whitelist: boolean) => {
+export const removeFilter = async (url: string, whitelist: boolean, name?: string) => {
     setState('processingRemoveFilter', true);
     try {
         await apiClient.removeFilter({ url, whitelist });
         setState('processingRemoveFilter', false);
         setState('isModalOpen', false);
         if (whitelist) {
-            addSuccessToast(
-                intl.getMessage('filter_removed_successfully_allowlist', { value: url }),
-            );
+            addSuccessToast({
+                message: intl.getMessage('filter_removed_successfully_allowlist', { value: name }),
+            });
         } else {
-            addSuccessToast(intl.getMessage('filter_removed_successfully', { value: url }));
+            addSuccessToast({
+                message: intl.getMessage('filter_removed_successfully', { value: name }),
+            });
         }
         await getFilteringStatus();
     } catch (error) {

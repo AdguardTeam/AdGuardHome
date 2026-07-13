@@ -69,7 +69,6 @@ export const EdnsDialog = (props: Props) => {
             onClose={props.onClose}
             onSubmit={handleSubmit}
             processing={props.processing}
-            submitDisabled={!!(ednsCsUseCustom() && ednsCsCustomIp.error())}
         >
             <div class={theme.form.input}>
                 <Radio

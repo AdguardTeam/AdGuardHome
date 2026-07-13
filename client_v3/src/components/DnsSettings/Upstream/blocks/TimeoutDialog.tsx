@@ -39,7 +39,6 @@ export const TimeoutDialog = (props: Props) => {
                 });
             }}
             processing={props.processing}
-            submitDisabled={!!field.error()}
         >
             <div class={theme.form.input}>
                 <Input

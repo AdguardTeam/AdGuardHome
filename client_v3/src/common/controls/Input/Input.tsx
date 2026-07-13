@@ -30,6 +30,7 @@ type Props = Omit<JSX.InputHTMLAttributes<HTMLInputElement>, 'size' | 'onChange'
     onChange?: (event: InputChangeEvent) => void;
     onBlur?: (event: FocusEvent) => void;
     ref?: HTMLInputElement | ((el: HTMLInputElement) => void);
+    onKeyDown?: (e: KeyboardEvent) => void;
 };
 
 const hasInputValue = (value: string | number | readonly string[] | undefined) => {
@@ -85,6 +86,15 @@ export const Input = (props: Props) => {
         props.onClear?.();
     };
 
+    const handleKeyDown = (e: KeyboardEvent) => {
+        // Prevent minus key entry in number inputs to avoid negative values
+        if (props.type === 'number' && e.key === '-') {
+            e.preventDefault();
+        }
+        // Forward to any external onKeyDown handler
+        props.onKeyDown?.(e);
+    };
+
     const computedErrorMessage = () => props.inputError ?? props.errorMessage;
 
     return (
@@ -125,6 +135,7 @@ export const Input = (props: Props) => {
                     })}
                     onChange={handleChange}
                     onInput={(e) => (props.onInput as any)?.(e)}
+                    onKeyDown={handleKeyDown}
                     type={props.type}
                     id={props.id}
                     name={props.name}

@@ -16,6 +16,7 @@ import {
     validateIpGateway,
 } from 'panel/helpers/validators';
 import { parseSubnetMask } from 'panel/helpers/helpers';
+import { normalizeMac } from 'panel/helpers/form';
 
 type LeaseData = {
     mac: string;
@@ -126,7 +127,7 @@ export const StaticLeaseModal = (props: Props) => {
         }
 
         props.onSubmit({
-            mac: mac().trim(),
+            mac: normalizeMac(mac().trim()),
             ip: ip().trim(),
             hostname: hostname().trim(),
         });
@@ -148,7 +149,11 @@ export const StaticLeaseModal = (props: Props) => {
                         <Input
                             value={mac()}
                             onChange={(e: Event) => setMac((e.target as HTMLInputElement).value)}
-                            onBlur={validateMac}
+                            onBlur={() => {
+                                const normalized = normalizeMac(mac().trim());
+                                setMac(normalized);
+                                validateMac();
+                            }}
                             id="static_lease_mac"
                             label={intl.getMessage('dhcp_table_mac_address')}
                             placeholder={intl.getMessage('form_enter_mac')}

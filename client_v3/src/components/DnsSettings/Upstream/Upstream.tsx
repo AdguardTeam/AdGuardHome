@@ -86,15 +86,6 @@ export const Upstream = () => {
             />
 
             <SettingRow
-                variant="link"
-                id="upstream_timeout"
-                title={intl.getMessage('dns_upstream_timeout')}
-                description={intl.getMessage('dns_upstream_timeout_desc')}
-                value={timeoutValue()}
-                onClick={timeoutDialog.openDialog}
-            />
-
-            <SettingRow
                 variant="switch-link"
                 id="private_reverse"
                 title={intl.getMessage('dns_private_reverse_resolvers')}
@@ -108,6 +99,15 @@ export const Upstream = () => {
                 onChange={() => togglePrivatePtrResolvers()}
                 onClick={() => navigate(Paths.DnsPrivateReverse)}
                 divider
+            />
+
+            <SettingRow
+                variant="link"
+                id="upstream_timeout"
+                title={intl.getMessage('dns_upstream_timeout')}
+                description={intl.getMessage('dns_upstream_timeout_desc')}
+                value={timeoutValue()}
+                onClick={timeoutDialog.openDialog}
             />
 
             <div class={theme.form.actionRow}>

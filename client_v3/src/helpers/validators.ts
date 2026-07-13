@@ -5,10 +5,8 @@ import {
     R_CIDR_IPV6,
     R_HOST,
     R_IPV4,
-    R_IPV6,
     R_MAC,
     R_URL_REQUIRES_PROTOCOL,
-    STANDARD_WEB_PORT,
     UNSAFE_PORTS,
     R_CLIENT_ID,
     R_DOMAIN,
@@ -20,7 +18,7 @@ import {
 
 import { ip4ToInt, isValidAbsolutePath } from './form';
 
-import { isIpInCidr, parseSubnetMask } from './helpers';
+import { isIpInCidr, isValidIpv6, parseSubnetMask } from './helpers';
 
 /** Return type for all validators: `undefined` means valid, string is the i18n error message. */
 type ValidationResult = string | undefined;
@@ -240,7 +238,7 @@ export const validateServerName = (value?: string): ValidationResult => {
  * @example validateIpv6("not-an-ip")               // "Invalid IPv6 address"
  */
 export const validateIpv6 = (value?: string): ValidationResult => {
-    if (value && !R_IPV6.test(value)) {
+    if (value && !isValidIpv6(value)) {
         return intl.getMessage('form_error_ip6_format');
     }
     return undefined;
@@ -254,7 +252,7 @@ export const validateIpv6 = (value?: string): ValidationResult => {
  * @example validateIp("bad")             // "Invalid IP address"
  */
 export const validateIp = (value?: string): ValidationResult => {
-    if (value && !R_IPV4.test(value) && !R_IPV6.test(value)) {
+    if (value && !R_IPV4.test(value) && !isValidIpv6(value)) {
         return intl.getMessage('form_error_ip_format');
     }
     return undefined;
@@ -332,7 +330,7 @@ export const validateClientsPerLine = (value: string): string | undefined =>
         value,
         (line) =>
             R_IPV4.test(line) ||
-            R_IPV6.test(line) ||
+            isValidIpv6(line) ||
             R_CIDR.test(line) ||
             R_CIDR_IPV6.test(line) ||
             R_CLIENT_ID.test(line),
@@ -359,7 +357,7 @@ export const validateMac = (value?: string): ValidationResult => {
  * @example validatePort(79)        // "Enter port number in the range of 80-65535"
  */
 export const validatePort = (value?: number): ValidationResult => {
-    if ((value || value === 0) && (value < STANDARD_WEB_PORT || value > MAX_PORT)) {
+    if ((value || value === 0) && (value < 0 || value > MAX_PORT)) {
         return intl.getMessage('form_error_port_range');
     }
     return undefined;
@@ -387,10 +385,7 @@ export const validateInstallPort = (value?: number): ValidationResult => {
  * @example validatePortTLS(79)        // "Enter port number in the range of 80-65535"
  */
 export const validatePortTLS = (value?: number): ValidationResult => {
-    if (value === 0) {
-        return undefined;
-    }
-    if (value && (value < STANDARD_WEB_PORT || value > MAX_PORT)) {
+    if ((value || value === 0) && (value < 0 || value > MAX_PORT)) {
         return intl.getMessage('form_error_port_range');
     }
     return undefined;
@@ -432,7 +427,7 @@ export const validateDomain = (value?: string): ValidationResult => {
  * @example validateAnswer("bad")              // "Invalid answer"
  */
 export const validateAnswer = (value?: string): ValidationResult => {
-    if (value && !R_IPV4.test(value) && !R_IPV6.test(value) && !R_HOST.test(value)) {
+    if (value && !R_IPV4.test(value) && !isValidIpv6(value) && !R_HOST.test(value)) {
         return intl.getMessage('form_error_answer_format');
     }
     return undefined;
@@ -627,7 +622,7 @@ export const validateIdentifier = (
 
     const isValidFormat =
         R_IPV4.test(trimmed) ||
-        R_IPV6.test(trimmed) ||
+        isValidIpv6(trimmed) ||
         R_MAC.test(trimmed) ||
         R_CIDR.test(trimmed) ||
         R_CIDR_IPV6.test(trimmed) ||
@@ -683,7 +678,7 @@ export const validateHostname = (value?: string): ValidationResult => {
 };
 
 // A valid upstream line contains at least one dot or colon.
-const R_COMMENT = /^\s*#/;
+const R_COMMENT = /^\s*[#!]/;
 const R_HAS_ADDRESS = /[.:]/;
 
 // A valid blocked_hosts entry contains at least one dot.
@@ -751,6 +746,27 @@ export const validateBetween = (value: number, min: number, max: number): string
         });
     }
     return undefined;
+};
+
+/**
+ * Validates a DHCP lease duration in seconds.
+ * Min: 1 (0 is not a valid lease duration; backend uses uint32, 0 = use default).
+ * Max: UINT32_MAX (4294967295).
+ * Returns undefined if valid, error message string if invalid.
+ *
+ * @example validateLeaseTime(undefined)   // "Field is required"
+ * @example validateLeaseTime(0)           // "Value must be between 1 and 4,294,967,295"
+ * @example validateLeaseTime(86400)       // undefined (valid)
+ */
+export const validateLeaseTime = (value?: number | string): ValidationResult => {
+    if (value === undefined || value === '') {
+        return intl.getMessage('form_error_required');
+    }
+    const num = typeof value === 'string' ? Number(value) : value;
+    if (Number.isNaN(num)) {
+        return intl.getMessage('form_error_required');
+    }
+    return validateBetween(num, 1, UINT32_RANGE.MAX);
 };
 
 export const validateMinValue = (value: number, min: number): string | undefined => {

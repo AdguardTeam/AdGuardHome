@@ -91,7 +91,7 @@ const Form = (props: LoginFormProps) => {
                         type="submit"
                         variant="primary"
                         size="small"
-                        disabled={loginState.processingLogin || loginForm.invalid}
+                        disabled={loginState.processingLogin}
                     >
                         {intl.getMessage('login')}
                     </Button>

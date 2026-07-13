@@ -681,6 +681,19 @@ export const isIpInCidr = (ip: any, cidr: any) => {
 };
 
 /**
+ * Validates an IPv6 address using ipaddr.js, including zone IDs (e.g., fe80::1%eth0).
+ * @param value - The string to validate.
+ * @returns true if the value is a valid IPv6 address.
+ */
+export const isValidIpv6 = (value: string): boolean => {
+    try {
+        return ipaddr.IPv6.isValid(value);
+    } catch (_e) {
+        return false;
+    }
+};
+
+/**
  *
  * @param {string} subnetMask
  * @returns {IPv4 | null}

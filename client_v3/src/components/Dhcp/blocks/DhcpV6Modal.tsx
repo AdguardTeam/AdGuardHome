@@ -6,7 +6,7 @@ import theme from 'panel/lib/theme';
 import { ConfigDialog } from 'panel/common/ui/ConfigDialog';
 import { Input } from 'panel/common/controls/Input';
 import { dhcpState } from 'panel/stores/dhcp';
-import { validateIpv6 } from 'panel/helpers/validators';
+import { validateIpv6, validateLeaseTime } from 'panel/helpers/validators';
 
 export type V6Config = {
     range_start: string;
@@ -24,6 +24,7 @@ export const DhcpV6Modal = (props: Props) => {
     const [rangeStart, setRangeStart] = createSignal('');
     const [leaseDuration, setLeaseDuration] = createSignal('');
     const [rangeStartError, setRangeStartError] = createSignal('');
+    const [leaseDurationError, setLeaseDurationError] = createSignal('');
 
     createEffect(() => {
         if (props.open) {
@@ -31,6 +32,7 @@ export const DhcpV6Modal = (props: Props) => {
             setRangeStart(v6?.range_start || '');
             setLeaseDuration(v6?.lease_duration ? String(v6.lease_duration) : '');
             setRangeStartError('');
+            setLeaseDurationError('');
         }
     });
 
@@ -49,9 +51,15 @@ export const DhcpV6Modal = (props: Props) => {
         setRangeStartError(err || '');
     };
 
+    const validateLeaseDuration = () => {
+        const err = validateLeaseTime(leaseDuration());
+        setLeaseDurationError(err || '');
+    };
+
     const handleSave = () => {
         validateRangeStart();
-        if (rangeStartError()) {
+        validateLeaseDuration();
+        if (rangeStartError() || leaseDurationError()) {
             return;
         }
         props.onSave({
@@ -89,6 +97,8 @@ export const DhcpV6Modal = (props: Props) => {
                     placeholder="86400"
                     value={leaseDuration()}
                     onChange={(e: Event) => setLeaseDuration((e.target as HTMLInputElement).value)}
+                    onBlur={() => validateLeaseDuration()}
+                    inputError={leaseDurationError()}
                 />
             </div>
         </ConfigDialog>

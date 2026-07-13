@@ -13,6 +13,7 @@ import {
     validateNotInRange,
     validateGatewaySubnetMask,
     validateIpForGatewaySubnetMask,
+    validateLeaseTime,
 } from 'panel/helpers/validators';
 import s from './DhcpV4Modal.module.pcss';
 
@@ -41,6 +42,7 @@ export const DhcpV4Modal = (props: Props) => {
     const [subnetMaskError, setSubnetMaskError] = createSignal('');
     const [rangeStartError, setRangeStartError] = createSignal('');
     const [rangeEndError, setRangeEndError] = createSignal('');
+    const [leaseDurationError, setLeaseDurationError] = createSignal('');
 
     createEffect(() => {
         if (props.open) {
@@ -54,6 +56,7 @@ export const DhcpV4Modal = (props: Props) => {
             setSubnetMaskError('');
             setRangeStartError('');
             setRangeEndError('');
+            setLeaseDurationError('');
         }
     });
 
@@ -119,12 +122,24 @@ export const DhcpV4Modal = (props: Props) => {
         validateRangeEnd();
     };
 
+    const validateLeaseDuration = () => {
+        const err = validateLeaseTime(leaseDuration());
+        setLeaseDurationError(err || '');
+    };
+
     const handleSave = () => {
         validateGatewayIp();
         validateSubnetMask();
         validateRangeStart();
         validateRangeEnd();
-        if (gatewayIpError() || subnetMaskError() || rangeStartError() || rangeEndError()) {
+        validateLeaseDuration();
+        if (
+            gatewayIpError() ||
+            subnetMaskError() ||
+            rangeStartError() ||
+            rangeEndError() ||
+            leaseDurationError()
+        ) {
             return;
         }
         props.onSave({
@@ -210,12 +225,14 @@ export const DhcpV4Modal = (props: Props) => {
                 <Input
                     value={leaseDuration()}
                     onChange={(e: Event) => setLeaseDuration((e.target as HTMLInputElement).value)}
+                    onBlur={() => validateLeaseDuration()}
                     id="v4_lease_duration"
                     inputMode="numeric"
                     label={intl.getMessage('dhcp_form_lease_title')}
                     placeholder="86400"
                     disabled={!hasIpv4()}
                     size="large"
+                    inputError={leaseDurationError()}
                 />
             </div>
         </ConfigDialog>

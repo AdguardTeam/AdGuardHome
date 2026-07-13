@@ -5,7 +5,7 @@ import { ConfigDialog } from 'panel/common/ui/ConfigDialog';
 import { Textarea } from 'panel/common/controls/Textarea';
 import { validateUpstreams } from 'panel/helpers/validators';
 import { useField } from 'panel/hooks/useField';
-import { Examples } from './Examples';
+
 import theme from 'panel/lib/theme';
 
 type Props = {
@@ -39,7 +39,6 @@ export const BootstrapDnsDialog = (props: Props) => {
                 });
             }}
             processing={props.processing}
-            submitDisabled={!!field.error()}
         >
             <div class={theme.form.input}>
                 <Textarea
@@ -53,7 +52,6 @@ export const BootstrapDnsDialog = (props: Props) => {
                     size="medium"
                 />
             </div>
-            <Examples />
         </ConfigDialog>
     );
 };

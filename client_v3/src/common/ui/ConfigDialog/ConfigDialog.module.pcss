@@ -17,9 +17,13 @@
 }
 
 .saveButton {
-    width: auto;
+    width: 100%;
     max-width: none;
     min-width: 200px;
+
+    @media (min-width: 768px) {
+        width: auto;
+    }
 }
 
 .description {

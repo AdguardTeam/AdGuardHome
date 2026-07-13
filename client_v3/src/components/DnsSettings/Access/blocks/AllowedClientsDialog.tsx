@@ -52,7 +52,6 @@ export const AllowedClientsDialog = (props: Props) => {
                 });
             }}
             processing={props.processing}
-            submitDisabled={!!field.error()}
         >
             <div class={theme.form.input}>
                 <Textarea

@@ -167,6 +167,12 @@ export const AddTlsCertModal = (props: Props) => {
         resetValidationStatus();
     };
 
+    const validateCertOnBlur = () => {
+        const values = buildValues();
+        const errs = validateCertFields(values);
+        setErrors((prev) => ({ ...prev, ...errs }));
+    };
+
     const handleCertChainChange = (e: Event) => {
         setCertChain((e.target as HTMLTextAreaElement).value);
         clearError('certificate_chain');
@@ -190,6 +196,12 @@ export const AddTlsCertModal = (props: Props) => {
         setPrivateKeyPath((e.target as HTMLInputElement).value);
         clearError('private_key_path');
         resetValidationStatus();
+    };
+
+    const validateKeyOnBlur = () => {
+        const values = buildValues();
+        const errs = validateCertKeyFields(values);
+        setErrors((prev) => ({ ...prev, ...errs }));
     };
 
     const handleKeyChange = (e: Event) => {
@@ -251,6 +263,7 @@ export const AddTlsCertModal = (props: Props) => {
                                     name="certificate_path"
                                     value={certPath()}
                                     onChange={handleCertPathChange}
+                                    onBlur={validateCertOnBlur}
                                     placeholder={intl.getMessage('path_to_file_placeholder')}
                                     errorMessage={error('certificate_path')}
                                     label={intl.getMessage('tls_cert_path_label')}
@@ -268,6 +281,7 @@ export const AddTlsCertModal = (props: Props) => {
                                 name="certificate_chain"
                                 value={certChain()}
                                 onChange={handleCertChainChange}
+                                onBlur={validateCertOnBlur}
                                 placeholder={intl.getMessage('encryption_certificates_input')}
                                 errorMessage={error('certificate_chain')}
                                 size="large"
@@ -295,6 +309,7 @@ export const AddTlsCertModal = (props: Props) => {
                                     name="private_key_path"
                                     value={privateKeyPath()}
                                     onChange={handleKeyPathChange}
+                                    onBlur={validateKeyOnBlur}
                                     placeholder={intl.getMessage('path_to_file_placeholder')}
                                     errorMessage={error('private_key_path')}
                                     label={intl.getMessage('tls_key_path_label')}
@@ -312,6 +327,7 @@ export const AddTlsCertModal = (props: Props) => {
                                 name="private_key"
                                 value={privateKey()}
                                 onChange={handleKeyChange}
+                                onBlur={validateKeyOnBlur}
                                 placeholder={intl.getMessage('encryption_key_input')}
                                 errorMessage={error('private_key')}
                                 disabled={privateKeySaved()}

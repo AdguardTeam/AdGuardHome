@@ -40,7 +40,6 @@ export const SubnetPrefixV4Dialog = (props: Props) => {
                 });
             }}
             processing={props.processing}
-            submitDisabled={!!field.error()}
         >
             <div class={theme.form.input}>
                 <Input

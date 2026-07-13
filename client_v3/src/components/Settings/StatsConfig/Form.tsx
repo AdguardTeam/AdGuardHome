@@ -66,11 +66,11 @@ export const Form = (props: Props) => {
                 onChange={handleIntervalChange}
                 name="stats-interval"
                 options={[
-                    { text: getIntervalTitle(RETENTION_CUSTOM), value: RETENTION_CUSTOM },
                     ...STATS_INTERVALS_DAYS.map((interval) => ({
                         text: getIntervalTitle(interval),
                         value: interval,
                     })),
+                    { text: getIntervalTitle(RETENTION_CUSTOM), value: RETENTION_CUSTOM },
                 ]}
             >
                 <RetentionCustomInput

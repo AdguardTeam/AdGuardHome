@@ -2,12 +2,18 @@
     width: 100%;
     padding: 8px 16px;
     transition: background-color var(--t2);
-    border-radius: 8px;
+    border-radius: 0;
     outline: none;
 
-    &:hover,
-    &:focus {
-        background-color: var(--page-background-additional);
+    @media (min-width: 1024px) {
+        border-radius: 8px;
+    }
+
+    @media (hover: hover) {
+        &:hover,
+        &:focus {
+            background-color: var(--page-background-additional);
+        }
     }
 }
 

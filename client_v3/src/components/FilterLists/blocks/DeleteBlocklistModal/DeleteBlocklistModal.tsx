@@ -22,7 +22,7 @@ export const DeleteBlocklistModal = (props: Props) => {
     };
 
     const handleDeleteConfirm = () => {
-        removeFilter(props.filterToDelete.url, false);
+        removeFilter(props.filterToDelete.url, false, props.filterToDelete.name);
         handleDeleteClose();
     };
 

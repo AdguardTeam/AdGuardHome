@@ -77,13 +77,6 @@ export const BlockingModeDialog = (props: Props) => {
         props.onClose();
     };
 
-    const submitDisabled = () => {
-        if (blockingMode() === BLOCKING_MODES.custom_ip) {
-            return !!(blockingIpv4.error() || blockingIpv6.error() || ttl.error());
-        }
-        return !!ttl.error();
-    };
-
     return (
         <ConfigDialog
             open={props.open()}
@@ -92,7 +85,6 @@ export const BlockingModeDialog = (props: Props) => {
             onClose={props.onClose}
             onSubmit={handleSubmit}
             processing={props.processing}
-            submitDisabled={submitDisabled()}
         >
             <Radio
                 name="blocking_mode"

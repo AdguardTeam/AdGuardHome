@@ -99,14 +99,14 @@ describe('validateEncryptionForm', () => {
         expect(errs.port_dns_over_tls).toBeTruthy();
     });
 
-    it('flags empty-string ports as invalid (coerces to 0)', () => {
+    it('allows empty-string ports (coerces to 0, valid as disabled)', () => {
         // Before the store loads, ports may be empty strings.
-        // Number('') || 0 → 0, which fails validatePort (0 < 80).
+        // Number('') || 0 → 0, which is now valid (0 = disabled port).
         const errs = validateEncryptionForm({
             ...valid,
             port_https: '' as any,
         });
-        expect(errs.port_https).toBeTruthy();
+        expect(errs.port_https).toBeUndefined();
     });
 
     it('requires plain DNS when encryption is disabled', () => {

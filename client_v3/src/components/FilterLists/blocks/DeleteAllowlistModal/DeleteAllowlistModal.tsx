@@ -22,7 +22,7 @@ export const DeleteAllowlistModal = (props: Props) => {
     };
 
     const handleDeleteConfirm = () => {
-        removeFilter(props.filterToDelete.url, true);
+        removeFilter(props.filterToDelete.url, true, props.filterToDelete.name);
         handleDeleteClose();
     };
 

@@ -53,6 +53,15 @@ export const ServerConfig = () => {
 
             <SettingRow
                 variant="link"
+                id="ratelimit_allowlist"
+                title={intl.getMessage('dns_rate_limit_allowlist')}
+                description={intl.getMessage('dns_rate_limit_allowlist_desc')}
+                value={getUpstreamServersSummary(dnsConfigState.ratelimit_whitelist)}
+                onClick={allowlistDialog.openDialog}
+            />
+
+            <SettingRow
+                variant="link"
                 id="subnet_ipv4"
                 title={intl.getMessage('dns_subnet_prefix', { value: IP_VERSION.V4 })}
                 description={intl.getMessage('dns_subnet_prefix_desc', { value: IP_VERSION.V4 })}
@@ -80,15 +89,6 @@ export const ServerConfig = () => {
                 description={intl.getMessage('dns_blocking_mode_desc')}
                 value={blockingModeValue()}
                 onClick={blockingModeDialog.openDialog}
-            />
-
-            <SettingRow
-                variant="link"
-                id="ratelimit_allowlist"
-                title={intl.getMessage('dns_rate_limit_allowlist')}
-                description={intl.getMessage('dns_rate_limit_allowlist_desc')}
-                value={getUpstreamServersSummary(dnsConfigState.ratelimit_whitelist)}
-                onClick={allowlistDialog.openDialog}
             />
 
             <SettingRow

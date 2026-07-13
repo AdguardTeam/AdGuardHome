@@ -31,13 +31,26 @@ export const isValidAbsolutePath = (value: any) =>
     R_WIN_ABSOLUTE_PATH.test(value) || R_UNIX_ABSOLUTE_PATH.test(value);
 
 /**
- * @param value {string}
- * @returns {*|string}
+ * Normalizes a MAC address to colon-separated uppercase format.
+ * Handles bare hex (12 or 16 chars), dash-separated, and colon-separated formats.
+ *
+ * @example normalizeMac("aabbccddeeff")   // "AA:BB:CC:DD:EE:FF"
+ * @example normalizeMac("AA-BB-CC-DD-EE-FF") // "AA:BB:CC:DD:EE:FF"
+ * @example normalizeMac("aa:bb:cc:dd:ee:ff") // "AA:BB:CC:DD:EE:FF"
  */
 export const normalizeMac = (value: any) => {
-    if (value && R_MAC_WITHOUT_COLON.test(value)) {
-        return value.match(/.{2}/g).join(':');
+    if (!value || typeof value !== 'string') return value;
+
+    // Handle separator-less bare hex (12 or 16 chars)
+    if (R_MAC_WITHOUT_COLON.test(value)) {
+        return value.match(/.{2}/g).join(':').toUpperCase();
     }
 
-    return value;
+    // Handle dash-separated MACs
+    if (value.includes('-')) {
+        return value.replace(/-/g, ':').toUpperCase();
+    }
+
+    // Already colon-separated or other format — just uppercase
+    return value.toUpperCase();
 };

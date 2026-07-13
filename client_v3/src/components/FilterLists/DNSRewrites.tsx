@@ -111,6 +111,7 @@ export const DNSRewrites = () => {
                     onChange={(value: boolean) => openGlobalToggleConfirm(value)}
                     align="center"
                     class={s.dnsRewritesSettingRow}
+                    inputClass={s.dnsRewritesSettingRowInput}
                 />
 
                 <div class={cn(s.group, s.buttonGroup)}>

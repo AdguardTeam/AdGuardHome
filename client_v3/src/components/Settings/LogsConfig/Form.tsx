@@ -1,7 +1,11 @@
 import { createSignal, createEffect, createMemo } from 'solid-js';
 
 import intl from 'panel/common/intl';
-import { QUERY_LOG_INTERVALS_DAYS, RETENTION_CUSTOM, RETENTION_RANGE } from 'panel/helpers/constants';
+import {
+    QUERY_LOG_INTERVALS_DAYS,
+    RETENTION_CUSTOM,
+    RETENTION_RANGE,
+} from 'panel/helpers/constants';
 import { validateBetween } from 'panel/helpers/validators';
 
 import { RadioGroup } from 'panel/common/ui/SettingsGroup';
@@ -66,11 +70,11 @@ export const Form = (props: Props) => {
                 onChange={handleIntervalChange}
                 name="logs-interval"
                 options={[
-                    { text: getIntervalTitle(RETENTION_CUSTOM), value: RETENTION_CUSTOM },
                     ...QUERY_LOG_INTERVALS_DAYS.map((interval) => ({
                         text: getIntervalTitle(interval),
                         value: interval,
                     })),
+                    { text: getIntervalTitle(RETENTION_CUSTOM), value: RETENTION_CUSTOM },
                 ]}
             >
                 <RetentionCustomInput
