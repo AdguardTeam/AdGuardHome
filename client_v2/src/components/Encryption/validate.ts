@@ -3,8 +3,6 @@ import { ENCRYPTION_SOURCE } from 'panel/helpers/constants';
 import {
     validateServerName,
     validatePort,
-    validatePortTLS,
-    validatePortQuic,
     validateIsSafePort,
     validatePlainDns,
     validateRequiredValue,
@@ -125,10 +123,10 @@ export const validateEncryptionForm = (values: EncryptionFormValues): Record<str
     const portHttpsErr = validatePort(portHttps) || validateIsSafePort(portHttps);
     if (portHttpsErr) errs.port_https = portHttpsErr as string;
 
-    const portDotErr = validatePortTLS(portDot);
+    const portDotErr = validatePort(portDot);
     if (portDotErr) errs.port_dns_over_tls = portDotErr as string;
 
-    const portDoqErr = validatePortQuic(portDoq);
+    const portDoqErr = validatePort(portDoq);
     if (portDoqErr) errs.port_dns_over_quic = portDoqErr as string;
 
     if (portDot && portHttps && portDot === portHttps) {

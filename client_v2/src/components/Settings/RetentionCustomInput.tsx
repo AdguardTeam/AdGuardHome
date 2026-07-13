@@ -8,6 +8,7 @@ import { toNumber } from 'panel/helpers/form';
 type Props = {
     value: number | null | undefined;
     onChange: (value: number | null) => void;
+    onBlur?: () => void;
     processing: boolean;
     intervalValue: number;
     intervals: number[];
@@ -46,6 +47,7 @@ export const RetentionCustomInput = (props: Props) => {
                     const { value } = e.target as HTMLInputElement;
                     props.onChange(toNumber(value));
                 }}
+                onBlur={() => props.onBlur?.()}
                 disabled={props.processing || props.intervals.includes(props.intervalValue)}
                 error={!!props.error}
                 errorMessage={props.error}

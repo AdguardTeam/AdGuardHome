@@ -382,25 +382,6 @@ export const validateInstallPort = (value?: number): ValidationResult => {
 };
 
 /**
- * Validates a TLS port number. 0 = disabled (valid).
- *
- * @example validatePortTLS(0)         // undefined (valid, disabled)
- * @example validatePortTLS(853)       // undefined (valid)
- * @example validatePortTLS(79)        // "Enter port number in the range of 80-65535"
- */
-export const validatePortTLS = (value?: number): ValidationResult => {
-    if ((value || value === 0) && (value < 0 || value > MAX_PORT)) {
-        return intl.getMessage('form_error_port_range', {
-            min: 0,
-            max: MAX_PORT,
-        });
-    }
-    return undefined;
-};
-
-export const validatePortQuic = validatePortTLS; // inherits type
-
-/**
  * Checks a port against the unsafe ports list.
  *
  * @example validateIsSafePort(443)     // undefined (safe)

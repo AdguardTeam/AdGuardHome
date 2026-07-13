@@ -6,7 +6,6 @@ import {
     validateIpv4,
     validatePort,
     validateInstallPort,
-    validatePortTLS,
     validatePlainDns,
     validateIpForGatewaySubnetMask,
     validateIpv4InCidr,
@@ -261,36 +260,6 @@ describe('validateInstallPort', () => {
 
     it('returns error for port above 65535', () => {
         expect(validateInstallPort(65536)).toBeTruthy();
-    });
-});
-
-describe('validatePortTLS', () => {
-    it('returns undefined for 0 (disabled)', () => {
-        expect(validatePortTLS(0)).toBeUndefined();
-    });
-
-    it('returns undefined for 1', () => {
-        expect(validatePortTLS(1)).toBeUndefined();
-    });
-
-    it('returns undefined for valid TLS port', () => {
-        expect(validatePortTLS(853)).toBeUndefined();
-    });
-
-    it('returns undefined for boundary 80', () => {
-        expect(validatePortTLS(80)).toBeUndefined();
-    });
-
-    it('returns undefined for boundary 65535', () => {
-        expect(validatePortTLS(65535)).toBeUndefined();
-    });
-
-    it('returns error for port above 65535', () => {
-        expect(validatePortTLS(65536)).toBeTruthy();
-    });
-
-    it('returns undefined for undefined', () => {
-        expect(validatePortTLS(undefined)).toBeUndefined();
     });
 });
 

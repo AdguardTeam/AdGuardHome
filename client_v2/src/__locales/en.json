@@ -106,7 +106,7 @@
   "encryption_unable_read_cert": "Unable to read certificate file",
   "encryption_unable_read_key": "Unable to read private key file",
   "encryption_key_cert_mismatch": "Private key does not match certificate",
-  "form_error_port_range": "Enter port number in the range of 80-65535",
+  "form_error_port_range": "Enter port number in the range of %min%-%max%",
   "form_error_port_unsafe": "Unsafe port",
   "form_error_equal": "Must not be equal",
   "form_error_password": "Password mismatch",

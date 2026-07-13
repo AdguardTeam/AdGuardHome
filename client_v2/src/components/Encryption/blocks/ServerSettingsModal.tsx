@@ -5,13 +5,7 @@ import { FaqTooltip } from 'panel/common/ui/FaqTooltip';
 import intl from 'panel/common/intl';
 import { encryptionState, setTlsConfig } from 'panel/stores/encryption';
 import { toNumber } from 'panel/helpers/form';
-import {
-    validateServerName,
-    validatePort,
-    validatePortTLS,
-    validatePortQuic,
-    validateIsSafePort,
-} from 'panel/helpers/validators';
+import { validateServerName, validatePort, validateIsSafePort } from 'panel/helpers/validators';
 import s from '../styles.module.pcss';
 import theme from 'panel/lib/theme';
 
@@ -104,7 +98,7 @@ export const ServerSettingsModal = (props: Props) => {
     };
 
     const handlePortDotBlur = () => {
-        const err = validatePortTLS(portDot());
+        const err = validatePort(portDot());
         setErrors((prev) => {
             const next = { ...prev };
             if (err) {
@@ -117,7 +111,7 @@ export const ServerSettingsModal = (props: Props) => {
     };
 
     const handlePortDoqBlur = () => {
-        const err = validatePortQuic(portDoq());
+        const err = validatePort(portDoq());
         setErrors((prev) => {
             const next = { ...prev };
             if (err) {

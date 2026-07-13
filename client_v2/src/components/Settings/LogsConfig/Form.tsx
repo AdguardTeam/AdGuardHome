@@ -31,6 +31,7 @@ export const Form = (props: Props) => {
     const [customInterval, setCustomInterval] = createSignal<number | null>(
         props.initialValues.customInterval ?? null,
     );
+    const [touched, setTouched] = createSignal(false);
 
     // Clear customInterval when a standard interval is selected
     const handleIntervalChange = (val: number) => {
@@ -38,6 +39,7 @@ export const Form = (props: Props) => {
         setIntervalValue(numVal);
         if (QUERY_LOG_INTERVALS_DAYS.includes(numVal)) {
             setCustomInterval(null);
+            setTouched(false);
         }
     };
 
@@ -48,7 +50,9 @@ export const Form = (props: Props) => {
             return undefined;
         }
         if (val == null) {
-            return props.submitted ? intl.getMessage('form_error_required') : undefined;
+            return (props.submitted || touched())
+                ? intl.getMessage('form_error_required')
+                : undefined;
         }
         return validateBetween(val, RETENTION_RANGE.MIN, RETENTION_RANGE.MAX);
     });
@@ -80,6 +84,7 @@ export const Form = (props: Props) => {
                 <RetentionCustomInput
                     value={customInterval()}
                     onChange={setCustomInterval}
+                    onBlur={() => setTouched(true)}
                     processing={props.processing}
                     intervalValue={intervalValue()}
                     intervals={QUERY_LOG_INTERVALS_DAYS}
