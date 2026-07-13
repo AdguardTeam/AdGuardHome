@@ -12,6 +12,30 @@ import (
 	"github.com/gopacket/gopacket/layers"
 )
 
+// serveEther4 handles the incoming ethernet packets and dispatches them to the
+// appropriate handler.  It's used to run in a separate goroutine as it blocks
+// until packets channel is closed.  iface and nd must not be nil.  nd must have
+// at least a single address returned by its Addresses method.
+func (srv *DHCPServer) serveEther4(ctx context.Context, iface *dhcpInterfaceV4, nd NetworkDevice) {
+	defer slogutil.RecoverAndLog(ctx, srv.logger)
+
+	src := gopacket.NewPacketSource(nd, nd.LinkType())
+
+	for pkt := range src.Packets() {
+		fd, err := newFrameData4(pkt, nd)
+		if err != nil {
+			srv.logger.DebugContext(ctx, "parsing frame data", slogutil.KeyError, err)
+
+			continue
+		}
+
+		err = srv.serveV4(ctx, iface, pkt, fd)
+		if err != nil {
+			srv.logger.ErrorContext(ctx, "serving", slogutil.KeyError, err)
+		}
+	}
+}
+
 // serveV4 handles the ethernet packet of IPv4 type.  iface must not be nil, fd
 // must be valid, pkt must be an IPv4 packet.
 func (srv *DHCPServer) serveV4(

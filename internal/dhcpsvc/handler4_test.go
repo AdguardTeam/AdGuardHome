@@ -226,10 +226,11 @@ func TestDHCPServer_ServeEther4_requestSelecting(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		discover gopacket.Packet
-		request  gopacket.Packet
-		name     string
-		wantOpts layers.DHCPOptions
+		discover   gopacket.Packet
+		request    gopacket.Packet
+		name       string
+		wantOpts   layers.DHCPOptions
+		wantChange bool
 	}{{
 		discover: newDHCPDISCOVER(t, testHWUnknown),
 		request: newDHCPREQUEST(t, &dhcpRequestConfig{
@@ -246,6 +247,7 @@ func TestDHCPServer_ServeEther4_requestSelecting(t *testing.T) {
 			newOptServerID(t, testIfaceAddrV4),
 			newOptLeaseTime(t, testLeaseTTL),
 		},
+		wantChange: true,
 	}, {
 		discover: newDHCPDISCOVER(t, testHWStatic),
 		request: newDHCPREQUEST(t, &dhcpRequestConfig{
@@ -256,8 +258,9 @@ func TestDHCPServer_ServeEther4_requestSelecting(t *testing.T) {
 			clientHWAddr: testHWStatic,
 			flags:        dhcpsvc.FlagsBroadcast,
 		}),
-		name:     "wrong_server_id",
-		wantOpts: nil,
+		name:       "wrong_server_id",
+		wantOpts:   nil,
+		wantChange: false,
 	}, {
 		discover: nil,
 		request: newDHCPREQUEST(t, &dhcpRequestConfig{
@@ -273,6 +276,7 @@ func TestDHCPServer_ServeEther4_requestSelecting(t *testing.T) {
 			newOptMessageType(t, layers.DHCPMsgTypeNak),
 			newOptServerID(t, testIfaceAddrV4),
 		},
+		wantChange: false,
 	}, {
 		discover: newDHCPDISCOVER(t, testHWStatic),
 		request: newDHCPREQUEST(t, &dhcpRequestConfig{
@@ -288,6 +292,7 @@ func TestDHCPServer_ServeEther4_requestSelecting(t *testing.T) {
 			newOptMessageType(t, layers.DHCPMsgTypeNak),
 			newOptServerID(t, testIfaceAddrV4),
 		},
+		wantChange: false,
 	}, {
 		discover: newDHCPDISCOVER(t, testHWStatic),
 		request: newDHCPREQUEST(t, &dhcpRequestConfig{
@@ -299,8 +304,9 @@ func TestDHCPServer_ServeEther4_requestSelecting(t *testing.T) {
 			clientIP:     testIPv4Static,
 			flags:        dhcpsvc.FlagsBroadcast,
 		}),
-		name:     "nonzero_ciaddr",
-		wantOpts: nil,
+		name:       "nonzero_ciaddr",
+		wantOpts:   nil,
+		wantChange: false,
 	}}
 
 	for _, tc := range testCases {
@@ -310,13 +316,14 @@ func TestDHCPServer_ServeEther4_requestSelecting(t *testing.T) {
 			t.Parallel()
 
 			ndMgr, dev, inCh, outCh := newTestNetworkDeviceAndManager(t, testIfaceAddrV4)
-			startTestDHCPServer(t, &dhcpsvc.Config{
+			srv := newTestDHCPServer(t, &dhcpsvc.Config{
 				Logger:               slogutil.NewDiscardLogger(),
 				Interfaces:           testIPv4InterfacesConf,
 				NetworkDeviceManager: ndMgr,
 				DBFilePath:           dbFilePath,
 				Enabled:              true,
 			})
+			servicetest.RequireRun(t, srv, testTimeout)
 
 			if tc.discover != nil {
 				testutil.RequireSend(t, inCh, tc.discover, testTimeout)
@@ -325,6 +332,8 @@ func TestDHCPServer_ServeEther4_requestSelecting(t *testing.T) {
 				require.True(t, ok)
 			}
 
+			leases := srv.Leases()
+
 			if tc.wantOpts == nil {
 				dev.onWritePacketData = unexpectedWritePacketData
 			}
@@ -332,6 +341,7 @@ func TestDHCPServer_ServeEther4_requestSelecting(t *testing.T) {
 			testutil.RequireSend(t, inCh, tc.request, testTimeout)
 
 			assertValidResponse4(t, dhcpv4FromPacket(t, tc.request), outCh, tc.wantOpts)
+			assertLeases(t, leases, srv, tc.wantChange)
 		})
 	}
 }
@@ -418,16 +428,20 @@ func TestDHCPServer_ServeEther4_requestInitReboot(t *testing.T) {
 				dev.onWritePacketData = unexpectedWritePacketData
 			}
 
-			startTestDHCPServer(t, &dhcpsvc.Config{
+			srv := newTestDHCPServer(t, &dhcpsvc.Config{
 				Interfaces:           testIPv4InterfacesConf,
 				NetworkDeviceManager: ndMgr,
 				DBFilePath:           dbFilePath,
 				Enabled:              true,
 			})
+			servicetest.RequireRun(t, srv, testTimeout)
+
+			leases := srv.Leases()
 
 			testutil.RequireSend(t, inCh, tc.req, testTimeout)
 
 			assertValidResponse4(t, dhcpv4FromPacket(t, tc.req), outCh, tc.wantOpts)
+			assertLeases(t, leases, srv, false)
 		})
 	}
 }
@@ -499,16 +513,20 @@ func TestDHCPServer_ServeEther4_requestRenewSuccess(t *testing.T) {
 			t.Parallel()
 
 			ndMgr, inCh, outCh := newTestNetworkDeviceManager(t, testIfaceAddrV4)
-			startTestDHCPServer(t, &dhcpsvc.Config{
+			srv := newTestDHCPServer(t, &dhcpsvc.Config{
 				Interfaces:           testIPv4InterfacesConf,
 				NetworkDeviceManager: ndMgr,
 				DBFilePath:           dbFilePath,
 				Enabled:              true,
 			})
+			servicetest.RequireRun(t, srv, testTimeout)
+
+			leases := srv.Leases()
 
 			testutil.RequireSend(t, inCh, tc.req, testTimeout)
 
 			assertValidResponse4(t, dhcpv4FromPacket(t, tc.req), outCh, tc.wantOpts)
+			assertLeases(t, leases, srv, false)
 		})
 	}
 }

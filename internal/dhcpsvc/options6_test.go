@@ -34,6 +34,46 @@ func newOptIANA(tb testing.TB, iaid uint32, reqIP netip.Addr) (opt layers.DHCPv6
 	return iana.Encode()
 }
 
+// newOptIANAStatus creates a DHCPv6 IA_NA (3) option carrying only a nested
+// Status Code option.
+func newOptIANAStatus(
+	tb testing.TB,
+	iaid uint32,
+	status layers.DHCPv6StatusCode,
+) (opt layers.DHCPv6Option) {
+	tb.Helper()
+
+	const (
+		// statusOptLen is the length of the nested status code option:
+		//   code (2) + length (2) + status (2) = 6 bytes.
+		statusOptLen = 6
+
+		// iaNAMinLen is the minimum length of the IA_NA option:
+		//   IAID (4) + T1 (4) + T2 (4) = 12 bytes.
+		iaNAMinLen = 12
+
+		// iaNAStatusLen is the length of the IA_NA option with a nested status
+		// code option.
+		iaNAStatusLen = iaNAMinLen + statusOptLen
+	)
+
+	data := make([]byte, 0, iaNAStatusLen)
+
+	data = binary.BigEndian.AppendUint32(data, iaid)
+	// T1 and T2 are set to zero.
+	data = binary.BigEndian.AppendUint32(data, 0)
+	data = binary.BigEndian.AppendUint32(data, 0)
+
+	// Nested Status Code option.
+	data = binary.BigEndian.AppendUint16(data, uint16(layers.DHCPv6OptStatusCode))
+
+	// The length of the Status Code option data is 2 bytes.
+	data = binary.BigEndian.AppendUint16(data, 2)
+	data = binary.BigEndian.AppendUint16(data, uint16(status))
+
+	return layers.NewDHCPv6Option(layers.DHCPv6OptIANA, data)
+}
+
 // newOptPreference creates a DHCPv6 Preference (7) option with the specified
 // preference value.
 func newOptPreference(tb testing.TB, pref uint8) (opt layers.DHCPv6Option) {

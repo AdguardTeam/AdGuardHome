@@ -290,23 +290,27 @@ func TestServer_ServeDNS_dns64(t *testing.T) {
 			// reused right after stop, due to a data race in [proxy.Proxy.Init]
 			// method when setting an OOB size.  As a temporary workaround,
 			// recreate the whole server for each test case.
-			s := createTestServer(t, &filtering.Config{
-				BlockingMode: filtering.BlockingModeDefault,
-			}, ServerConfig{
-				UDPListenAddrs: []*net.UDPAddr{{}},
-				TCPListenAddrs: []*net.TCPAddr{{}},
-				UseDNS64:       true,
-				TLSConf:        &TLSConfig{},
-				Config: Config{
-					UpstreamMode:     UpstreamModeLoadBalance,
-					EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
-					ClientsContainer: EmptyClientsContainer{},
-					UpstreamDNS:      []string{upsAddr},
+			s := createTestServer(
+				t,
+				&filtering.Config{
+					BlockingMode: filtering.BlockingModeDefault,
 				},
-				UsePrivateRDNS:    true,
-				LocalPTRResolvers: []string{localUpsAddr},
-				ServePlainDNS:     true,
-			})
+				ServerConfig{
+					UDPListenAddrs: []*net.UDPAddr{{}},
+					TCPListenAddrs: []*net.TCPAddr{{}},
+					UseDNS64:       true,
+					TLSConf:        &TLSConfig{},
+					Config: Config{
+						UpstreamMode:     UpstreamModeLoadBalance,
+						EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+						ClientsContainer: EmptyClientsContainer{},
+						UpstreamDNS:      []string{upsAddr},
+					},
+					UsePrivateRDNS:    true,
+					LocalPTRResolvers: []string{localUpsAddr},
+					ServePlainDNS:     true,
+				},
+			)
 
 			startDeferStop(t, s)
 
@@ -330,23 +334,27 @@ func TestServer_dns64WithDisabledRDNS(t *testing.T) {
 	upsAddr := aghtest.StartLocalhostUpstream(t, panicHdlr).String()
 	localUpsAddr := aghtest.StartLocalhostUpstream(t, panicHdlr).String()
 
-	s := createTestServer(t, &filtering.Config{
-		BlockingMode: filtering.BlockingModeDefault,
-	}, ServerConfig{
-		UDPListenAddrs: []*net.UDPAddr{{}},
-		TCPListenAddrs: []*net.TCPAddr{{}},
-		UseDNS64:       true,
-		TLSConf:        &TLSConfig{},
-		Config: Config{
-			UpstreamMode:     UpstreamModeLoadBalance,
-			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
-			ClientsContainer: EmptyClientsContainer{},
-			UpstreamDNS:      []string{upsAddr},
+	s := createTestServer(
+		t,
+		&filtering.Config{
+			BlockingMode: filtering.BlockingModeDefault,
 		},
-		UsePrivateRDNS:    false,
-		LocalPTRResolvers: []string{localUpsAddr},
-		ServePlainDNS:     true,
-	})
+		ServerConfig{
+			UDPListenAddrs: []*net.UDPAddr{{}},
+			TCPListenAddrs: []*net.TCPAddr{{}},
+			UseDNS64:       true,
+			TLSConf:        &TLSConfig{},
+			Config: Config{
+				UpstreamMode:     UpstreamModeLoadBalance,
+				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+				ClientsContainer: EmptyClientsContainer{},
+				UpstreamDNS:      []string{upsAddr},
+			},
+			UsePrivateRDNS:    false,
+			LocalPTRResolvers: []string{localUpsAddr},
+			ServePlainDNS:     true,
+		},
+	)
 	startDeferStop(t, s)
 
 	mappedIPv6 := net.ParseIP("64:ff9b::102:304")

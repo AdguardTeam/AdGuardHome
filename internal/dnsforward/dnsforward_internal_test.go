@@ -245,19 +245,23 @@ func createTestTLS(tb testing.TB, tlsConf *TLSConfig) (s *Server, certPem []byte
 
 	tlsConf.Cert = &cert
 
-	s = createTestServer(tb, &filtering.Config{
-		BlockingMode: filtering.BlockingModeDefault,
-	}, ServerConfig{
-		UDPListenAddrs: []*net.UDPAddr{{}},
-		TCPListenAddrs: []*net.TCPAddr{{}},
-		TLSConf:        tlsConf,
-		Config: Config{
-			UpstreamMode:     UpstreamModeLoadBalance,
-			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
-			ClientsContainer: EmptyClientsContainer{},
+	s = createTestServer(
+		tb,
+		&filtering.Config{
+			BlockingMode: filtering.BlockingModeDefault,
 		},
-		ServePlainDNS: true,
-	})
+		ServerConfig{
+			UDPListenAddrs: []*net.UDPAddr{{}},
+			TCPListenAddrs: []*net.TCPAddr{{}},
+			TLSConf:        tlsConf,
+			Config: Config{
+				UpstreamMode:     UpstreamModeLoadBalance,
+				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+				ClientsContainer: EmptyClientsContainer{},
+			},
+			ServePlainDNS: true,
+		},
+	)
 
 	err = s.Prepare(testutil.ContextWithTimeout(tb, testTimeout), &s.conf)
 	require.NoErrorf(tb, err, "failed to prepare server: %s", err)
@@ -381,19 +385,23 @@ func sendTestMessages(tb testing.TB, conn *dns.Conn) {
 }
 
 func TestServer(t *testing.T) {
-	s := createTestServer(t, &filtering.Config{
-		BlockingMode: filtering.BlockingModeDefault,
-	}, ServerConfig{
-		UDPListenAddrs: []*net.UDPAddr{{}},
-		TCPListenAddrs: []*net.TCPAddr{{}},
-		TLSConf:        &TLSConfig{},
-		Config: Config{
-			UpstreamMode:     UpstreamModeLoadBalance,
-			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
-			ClientsContainer: EmptyClientsContainer{},
+	s := createTestServer(
+		t,
+		&filtering.Config{
+			BlockingMode: filtering.BlockingModeDefault,
 		},
-		ServePlainDNS: true,
-	})
+		ServerConfig{
+			UDPListenAddrs: []*net.UDPAddr{{}},
+			TCPListenAddrs: []*net.TCPAddr{{}},
+			TLSConf:        &TLSConfig{},
+			Config: Config{
+				UpstreamMode:     UpstreamModeLoadBalance,
+				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+				ClientsContainer: EmptyClientsContainer{},
+			},
+			ServePlainDNS: true,
+		},
+	)
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{newGoogleUpstream()}
 	startDeferStop(t, s)
 
@@ -497,19 +505,24 @@ func TestServer_Prepare_fallbacks(t *testing.T) {
 }
 
 func TestServerWithProtectionDisabled(t *testing.T) {
-	s := createTestServer(t, &filtering.Config{
-		BlockingMode: filtering.BlockingModeDefault,
-	}, ServerConfig{
-		UDPListenAddrs: []*net.UDPAddr{{}},
-		TCPListenAddrs: []*net.TCPAddr{{}},
-		TLSConf:        &TLSConfig{},
-		Config: Config{
-			UpstreamMode:     UpstreamModeLoadBalance,
-			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
-			ClientsContainer: EmptyClientsContainer{},
+	s := createTestServer(
+		t,
+		&filtering.Config{
+			BlockingMode: filtering.BlockingModeDefault,
 		},
-		ServePlainDNS: true,
-	})
+		ServerConfig{
+			UDPListenAddrs: []*net.UDPAddr{{}},
+			TCPListenAddrs: []*net.TCPAddr{{}},
+			TLSConf:        &TLSConfig{},
+			Config: Config{
+				UpstreamMode:     UpstreamModeLoadBalance,
+				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+				ClientsContainer: EmptyClientsContainer{},
+			},
+			ServePlainDNS: true,
+		},
+	)
+
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{newGoogleUpstream()}
 	startDeferStop(t, s)
 
@@ -727,21 +740,23 @@ func TestSafeSearch(t *testing.T) {
 }
 
 func TestInvalidRequest(t *testing.T) {
-	s := createTestServer(t, &filtering.Config{
-		BlockingMode: filtering.BlockingModeDefault,
-	}, ServerConfig{
-		UDPListenAddrs: []*net.UDPAddr{{}},
-		TCPListenAddrs: []*net.TCPAddr{{}},
-		TLSConf:        &TLSConfig{},
-		Config: Config{
-			UpstreamMode: UpstreamModeLoadBalance,
-			EDNSClientSubnet: &EDNSClientSubnet{
-				Enabled: false,
-			},
-			ClientsContainer: EmptyClientsContainer{},
+	s := createTestServer(
+		t,
+		&filtering.Config{
+			BlockingMode: filtering.BlockingModeDefault,
 		},
-		ServePlainDNS: true,
-	})
+		ServerConfig{
+			UDPListenAddrs: []*net.UDPAddr{{}},
+			TCPListenAddrs: []*net.TCPAddr{{}},
+			TLSConf:        &TLSConfig{},
+			Config: Config{
+				UpstreamMode:     UpstreamModeLoadBalance,
+				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+				ClientsContainer: EmptyClientsContainer{},
+			},
+			ServePlainDNS: true,
+		},
+	)
 	startDeferStop(t, s)
 
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP).String()
@@ -774,10 +789,14 @@ func TestBlockedRequest(t *testing.T) {
 		},
 		ServePlainDNS: true,
 	}
-	s := createTestServer(t, &filtering.Config{
-		ProtectionEnabled: true,
-		BlockingMode:      filtering.BlockingModeDefault,
-	}, forwardConf)
+	s := createTestServer(
+		t,
+		&filtering.Config{
+			ProtectionEnabled: true,
+			BlockingMode:      filtering.BlockingModeDefault,
+		},
+		forwardConf,
+	)
 	startDeferStop(t, s)
 
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
@@ -814,9 +833,11 @@ func TestServerCustomClientUpstream(t *testing.T) {
 		},
 		ServePlainDNS: true,
 	}
-	s := createTestServer(t, &filtering.Config{
-		BlockingMode: filtering.BlockingModeDefault,
-	}, forwardConf)
+	s := createTestServer(
+		t,
+		&filtering.Config{BlockingMode: filtering.BlockingModeDefault},
+		forwardConf,
+	)
 
 	ups := aghtest.NewUpstreamMock(func(req *dns.Msg) (resp *dns.Msg, err error) {
 		atomic.AddUint32(&upsCalledCounter, 1)
@@ -879,21 +900,23 @@ var testIPv4 = map[string][]net.IP{
 }
 
 func TestBlockCNAMEProtectionEnabled(t *testing.T) {
-	s := createTestServer(t, &filtering.Config{
-		BlockingMode: filtering.BlockingModeDefault,
-	}, ServerConfig{
-		UDPListenAddrs: []*net.UDPAddr{{}},
-		TCPListenAddrs: []*net.TCPAddr{{}},
-		TLSConf:        &TLSConfig{},
-		Config: Config{
-			UpstreamMode: UpstreamModeLoadBalance,
-			EDNSClientSubnet: &EDNSClientSubnet{
-				Enabled: false,
-			},
-			ClientsContainer: EmptyClientsContainer{},
+	s := createTestServer(
+		t,
+		&filtering.Config{
+			BlockingMode: filtering.BlockingModeDefault,
 		},
-		ServePlainDNS: true,
-	})
+		ServerConfig{
+			UDPListenAddrs: []*net.UDPAddr{{}},
+			TCPListenAddrs: []*net.TCPAddr{{}},
+			TLSConf:        &TLSConfig{},
+			Config: Config{
+				UpstreamMode:     UpstreamModeLoadBalance,
+				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+				ClientsContainer: EmptyClientsContainer{},
+			},
+			ServePlainDNS: true,
+		},
+	)
 	testUpstm := &aghtest.Upstream{
 		CName: testCNAMEs,
 		IPv4:  testIPv4,
@@ -930,10 +953,11 @@ func TestBlockCNAME(t *testing.T) {
 		},
 		ServePlainDNS: true,
 	}
-	s := createTestServer(t, &filtering.Config{
-		ProtectionEnabled: true,
-		BlockingMode:      filtering.BlockingModeDefault,
-	}, forwardConf)
+	s := createTestServer(
+		t,
+		&filtering.Config{ProtectionEnabled: true, BlockingMode: filtering.BlockingModeDefault},
+		forwardConf,
+	)
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{
 		&aghtest.Upstream{
 			CName: testCNAMEs,
@@ -1005,9 +1029,11 @@ func TestClientRulesForCNAMEMatching(t *testing.T) {
 		},
 		ServePlainDNS: true,
 	}
-	s := createTestServer(t, &filtering.Config{
-		BlockingMode: filtering.BlockingModeDefault,
-	}, forwardConf)
+	s := createTestServer(
+		t,
+		&filtering.Config{BlockingMode: filtering.BlockingModeDefault},
+		forwardConf,
+	)
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{
 		&aghtest.Upstream{
 			CName: testCNAMEs,
@@ -1053,10 +1079,11 @@ func TestNullBlockedRequest(t *testing.T) {
 		},
 		ServePlainDNS: true,
 	}
-	s := createTestServer(t, &filtering.Config{
-		ProtectionEnabled: true,
-		BlockingMode:      filtering.BlockingModeNullIP,
-	}, forwardConf)
+	s := createTestServer(
+		t,
+		&filtering.Config{ProtectionEnabled: true, BlockingMode: filtering.BlockingModeNullIP},
+		forwardConf,
+	)
 	startDeferStop(t, s)
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
 
@@ -1195,10 +1222,11 @@ func TestBlockedByHosts(t *testing.T) {
 		ServePlainDNS: true,
 	}
 
-	s := createTestServer(t, &filtering.Config{
-		ProtectionEnabled: true,
-		BlockingMode:      filtering.BlockingModeDefault,
-	}, forwardConf)
+	s := createTestServer(
+		t,
+		&filtering.Config{ProtectionEnabled: true, BlockingMode: filtering.BlockingModeDefault},
+		forwardConf,
+	)
 	startDeferStop(t, s)
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
 
@@ -1827,20 +1855,24 @@ func TestServer_Exchange(t *testing.T) {
 		localUpsAddr := aghtest.StartLocalhostUpstream(t, tc.locUpstream).String()
 
 		t.Run(tc.name, func(t *testing.T) {
-			srv := createTestServer(t, &filtering.Config{
-				BlockingMode: filtering.BlockingModeDefault,
-			}, ServerConfig{
-				TLSConf: &TLSConfig{},
-				Config: Config{
-					UpstreamDNS:      []string{upsAddr},
-					UpstreamMode:     UpstreamModeLoadBalance,
-					EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
-					ClientsContainer: EmptyClientsContainer{},
+			srv := createTestServer(
+				t,
+				&filtering.Config{
+					BlockingMode: filtering.BlockingModeDefault,
 				},
-				LocalPTRResolvers: []string{localUpsAddr},
-				UsePrivateRDNS:    true,
-				ServePlainDNS:     true,
-			})
+				ServerConfig{
+					TLSConf: &TLSConfig{},
+					Config: Config{
+						UpstreamDNS:      []string{upsAddr},
+						UpstreamMode:     UpstreamModeLoadBalance,
+						EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+						ClientsContainer: EmptyClientsContainer{},
+					},
+					LocalPTRResolvers: []string{localUpsAddr},
+					UsePrivateRDNS:    true,
+					ServePlainDNS:     true,
+				},
+			)
 
 			ctx := testutil.ContextWithTimeout(t, testTimeout)
 			host, ttl, eerr := srv.Exchange(ctx, tc.req)
@@ -1852,19 +1884,23 @@ func TestServer_Exchange(t *testing.T) {
 	}
 
 	t.Run("resolving_disabled", func(t *testing.T) {
-		srv := createTestServer(t, &filtering.Config{
-			BlockingMode: filtering.BlockingModeDefault,
-		}, ServerConfig{
-			TLSConf: &TLSConfig{},
-			Config: Config{
-				UpstreamDNS:      []string{upsAddr},
-				UpstreamMode:     UpstreamModeLoadBalance,
-				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
-				ClientsContainer: EmptyClientsContainer{},
+		srv := createTestServer(
+			t,
+			&filtering.Config{
+				BlockingMode: filtering.BlockingModeDefault,
 			},
-			LocalPTRResolvers: []string{},
-			ServePlainDNS:     true,
-		})
+			ServerConfig{
+				TLSConf: &TLSConfig{},
+				Config: Config{
+					UpstreamDNS:      []string{upsAddr},
+					UpstreamMode:     UpstreamModeLoadBalance,
+					EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+					ClientsContainer: EmptyClientsContainer{},
+				},
+				LocalPTRResolvers: []string{},
+				ServePlainDNS:     true,
+			},
+		)
 
 		ctx := testutil.ContextWithTimeout(t, testTimeout)
 		host, _, eerr := srv.Exchange(ctx, localIP)
