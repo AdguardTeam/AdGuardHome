@@ -82,6 +82,7 @@ export const ServerAddressesDialog = (props: Props) => {
                         placeholder={intl.getMessage('dns_server_addresses_placeholder')}
                         errorMessage={field.error()}
                         size="medium"
+                        highlightComments
                     />
                 </div>
                 <Examples />

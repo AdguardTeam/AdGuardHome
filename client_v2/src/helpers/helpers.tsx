@@ -1172,6 +1172,8 @@ export const getBlockingClientName = (clients: any, ip: any) => {
 export const filterOutComments = (lines: any) =>
     lines.filter((line: any) => !line.startsWith(COMMENT_LINE_DEFAULT_TOKEN));
 
+export const isCommentLine = (line: string) => /^\s*[#!]/.test(line);
+
 /**
  * @param {array} services
  * @param {string} id

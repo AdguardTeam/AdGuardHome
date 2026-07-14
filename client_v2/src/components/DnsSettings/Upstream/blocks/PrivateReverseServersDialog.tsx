@@ -57,6 +57,7 @@ export const PrivateReverseServersDialog = (props: Props) => {
                     placeholder={intl.getMessage('dns_private_reverse_servers_placeholder')}
                     errorMessage={field.error()}
                     size="medium"
+                    highlightComments
                 />
             </div>
             <Examples />

@@ -63,6 +63,7 @@ export const FallbackDnsDialog = (props: Props) => {
                     placeholder={intl.getMessage('dns_fallback_dns_placeholder')}
                     errorMessage={field.error()}
                     size="medium"
+                    highlightComments
                 />
             </div>
             <Examples />

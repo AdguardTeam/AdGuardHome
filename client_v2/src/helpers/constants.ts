@@ -595,6 +595,7 @@ export const CACHE_CONFIG_FIELDS = {
 
 export const isFirefox = navigator.userAgent.indexOf('Firefox') !== -1;
 export const COMMENT_LINE_DEFAULT_TOKEN = '#';
+export const COMMENT_LINE_TOKENS = ['#', '!'];
 
 export const MOBILE_CONFIG_LINKS = {
     DOT: 'apple/dot.mobileconfig',

@@ -37,6 +37,7 @@ export const RulesEditor = (props: Props) => {
                             onChange={(e: Event) =>
                                 props.onChange((e.target as HTMLTextAreaElement).value)
                             }
+                            highlightComments
                         />
                     </div>
                 </div>

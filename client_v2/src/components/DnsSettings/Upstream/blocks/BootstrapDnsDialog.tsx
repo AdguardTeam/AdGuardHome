@@ -50,6 +50,7 @@ export const BootstrapDnsDialog = (props: Props) => {
                     placeholder={intl.getMessage('dns_bootstrap_dns_placeholder')}
                     errorMessage={field.error()}
                     size="medium"
+                    highlightComments
                 />
             </div>
         </ConfigDialog>
