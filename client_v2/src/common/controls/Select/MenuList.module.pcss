@@ -1,0 +1,25 @@
+.menuList {
+    overflow-y: auto;
+    width: 100%;
+    max-height: 340px;
+
+    &::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background-color: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background-color: var(--default-gray-icons);
+        border-radius: 10px;
+    }
+}
+
+.selectIconContainer {
+    width: 24px;
+    height: 24px;
+    margin-right: 8px;
+    color: var(--default-gray-icons);
+}

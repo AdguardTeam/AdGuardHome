@@ -1,0 +1,102 @@
+.headerCell {
+    @media (min-width: 768px) {
+        width: 100%;
+        min-height: 42px;
+        padding: 0 12px;
+    }
+}
+
+.copyButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    outline: 0;
+    cursor: pointer;
+    background: none;
+    padding: 0;
+    flex-shrink: 0;
+
+    @media (min-width: 768px) {
+        display: none;
+    }
+}
+
+.emptyTableContent {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.emptyTableIcon {
+    width: 64px;
+    height: 64px;
+}
+
+.emptyTableDesc {
+    color: var(--default-description-text);
+}
+
+.cellNameToggleOuter {
+    @media (max-width: 767px) {
+        width: 100% !important;
+        min-width: 100%;
+    }
+}
+
+.cellValueToggle {
+    width: auto;
+    flex-shrink: 0;
+}
+
+.cellNameLabel {
+    flex: 1;
+    min-width: 0;
+    text-align: left;
+    word-break: break-word;
+    overflow: hidden;
+
+    @media (min-width: 768px) {
+        display: none;
+    }
+}
+
+.nameDesktopOnly {
+    @media (max-width: 767px) {
+        display: none;
+    }
+}
+
+.tableRewrites {
+    @media (min-width: 768px) {
+        grid-template-columns: 3fr 5fr 80px;
+    }
+}
+
+.domainCellValue {
+    justify-content: space-between;
+    align-items: center;
+    flex: 1;
+    white-space: normal;
+
+    @media (min-width: 768px) {
+        flex-direction: row-reverse;
+        justify-content: flex-start;
+        gap: 8px;
+        flex: initial;
+        white-space: nowrap;
+    }
+}
+
+.sortDropdownMobile {
+    padding: 0 0 16px;
+
+    @media (min-width: 768px) {
+        display: none;
+    }
+
+    &.sortDropdownMobileRewrites {
+        padding-bottom: 24px;
+    }
+}

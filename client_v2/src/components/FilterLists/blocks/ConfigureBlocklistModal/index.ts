@@ -1,0 +1,1 @@
+export { ConfigureBlocklistModal } from './ConfigureBlocklistModal';

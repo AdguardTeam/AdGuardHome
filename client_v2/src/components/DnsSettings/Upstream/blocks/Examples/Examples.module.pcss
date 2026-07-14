@@ -1,0 +1,40 @@
+.list {
+    margin: 0;
+    padding: 0;
+
+    code {
+        display: inline-block;
+        vertical-align: middle;
+        padding: 2px 4px;
+        background-color: var(--page-background-additional);
+        font-family: inherit;
+        line-height: var(--lh-t3-normal);
+        border: 1px solid var(--default-item-divider);
+        border-radius: 4px;
+    }
+
+    a {
+        color: var(--default-link);
+        transition: color var(--t2);
+        text-decoration: underline;
+
+        &:hover,
+        &:focus {
+            color: var(--hovered-link);
+            text-decoration: none;
+        }
+    }
+}
+
+.listItem {
+    position: relative;
+    padding: 8px 16px 8px 24px;
+    line-height: var(--lh-t1-normal);
+}
+
+.icon {
+    position: absolute;
+    top: 12px;
+    left: 0;
+    color: var(--default-black-icons);
+}

@@ -1,0 +1,207 @@
+.wrap {
+    top: 16px;
+
+    @media (min-width: 1024px) {
+        top: 0;
+    }
+}
+
+.dialog {
+    width: min(720px, calc(100vw - 16px));
+
+    @media (min-width: 1024px) {
+        width: min(90vw, 600px);
+    }
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 0;
+
+    @media (min-width: 1024px) and (min-height: 900px) {
+        flex: 0 1 auto;
+    }
+}
+
+.scrollArea {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-bottom: 16px;
+    -webkit-overflow-scrolling: touch;
+
+    @media (min-width: 1024px) and (min-height: 900px) {
+        flex: 0 1 auto;
+        overflow-y: visible;
+        overscroll-behavior: auto;
+        padding-bottom: 0;
+        -webkit-overflow-scrolling: auto;
+    }
+}
+
+.section {
+    padding: 0 32px;
+
+    @media (min-width: 1024px) and (min-height: 900px) {
+        padding: 0;
+    }
+}
+
+.statusValue {
+    display: inline;
+}
+
+.detailHint {
+    color: var(--default-description-text);
+}
+
+.sectionTitle {
+    padding: 16px 0 8px;
+
+    @media (min-width: 1024px) and (min-height: 900px) {
+        padding: 16px 16px 8px 16px;
+    }
+}
+
+.row {
+    display: flex;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 8px 0;
+    font-weight: var(--weight-semi-bold);
+
+    @media (min-width: 1024px) and (min-height: 900px) {
+        padding: 8px 16px;
+    }
+}
+
+.row strong,
+.label {
+    font-weight: var(--weight-semi-bold);
+}
+
+.value {
+    min-width: 0;
+    word-break: break-all;
+    font-weight: var(--weight-regular);
+}
+
+.responseList {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    &:has(> :nth-child(2)) {
+        flex-basis: 100%;
+    }
+}
+
+.link {
+    color: var(--default-link);
+}
+
+.actionFooter {
+    display: flex;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+    gap: 16px;
+    padding: 16px 32px 24px;
+    background: var(--default-page-background);
+    border-radius: 8px 8px 16px 16px;
+    box-shadow: 0 -8px 16px 0 rgba(0, 0, 0, 0.1);
+    position: relative;
+    z-index: 1;
+
+    @media (min-width: 1024px) and (min-height: 900px) {
+        flex-shrink: 1;
+        padding: 16px;
+        background: transparent;
+        border-radius: 0;
+        box-shadow: none;
+        position: static;
+        z-index: auto;
+    }
+}
+
+.actionButton {
+    flex: 1 1 200px;
+    min-width: 0;
+
+    @media (min-width: 1024px) {
+        flex: 0 0 auto;
+        width: auto;
+        min-width: 200px;
+        max-width: none;
+    }
+}
+
+.dialog :global(.dialog-header) {
+    padding: 24px 56px 24px 32px;
+    box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.1);
+    background: var(--default-page-background);
+    border-radius: 16px 16px 8px 8px;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+
+    @media (min-width: 1024px) and (min-height: 900px) {
+        padding: 8px 48px 8px 16px;
+        box-shadow: none;
+        background: transparent;
+        border-radius: 0;
+        flex-shrink: 1;
+        position: static;
+        z-index: auto;
+    }
+}
+
+.dialog :global([data-part='title']) {
+    font-size: 24px;
+    line-height: 1.2;
+}
+
+.dialog :global([data-part='close-trigger']) {
+    right: 24px;
+    top: 24px;
+    z-index: 2;
+
+    @media (min-width: 1024px) and (min-height: 900px) {
+        right: 16px;
+        top: 16px;
+    }
+}
+
+/* The content card carries .dialog itself — compound selector, not descendant */
+.dialog:global([data-part='content']) {
+    display: flex;
+    flex-direction: column;
+    max-height: min(600px, calc(100vh - 32px));
+    padding: 0;
+    overflow: hidden;
+
+    @media (min-width: 1024px) and (min-height: 900px) {
+        display: block;
+        max-height: none;
+        padding: 24px 16px;
+        overflow: visible;
+    }
+}
+
+/* The body is a descendant <div class="dialog-body"> */
+.dialog :global(.dialog-body) {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 0;
+
+    @media (min-width: 1024px) and (min-height: 900px) {
+        display: block;
+        flex: 0 1 auto;
+        min-height: auto;
+    }
+}

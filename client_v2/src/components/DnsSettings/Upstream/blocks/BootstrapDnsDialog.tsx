@@ -1,0 +1,57 @@
+import { untrack, type Accessor } from 'solid-js';
+import { dnsConfigState, setDnsConfig } from 'panel/stores/dnsConfig';
+import intl from 'panel/common/intl';
+import { ConfigDialog } from 'panel/common/ui/ConfigDialog';
+import { Textarea } from 'panel/common/controls/Textarea';
+import { validateUpstreams } from 'panel/helpers/validators';
+import { useField } from 'panel/hooks/useField';
+
+import theme from 'panel/lib/theme';
+
+type Props = {
+    open: Accessor<boolean>;
+    onClose: () => void;
+    processing: boolean;
+};
+
+export const BootstrapDnsDialog = (props: Props) => {
+    const field = useField<string>(
+        () => props.open(),
+        () => dnsConfigState.bootstrap_dns,
+        { validate: (v) => (v ? validateUpstreams(v) || '' : '') },
+    );
+
+    return (
+        <ConfigDialog
+            open={props.open()}
+            title={intl.getMessage('dns_bootstrap_dns_title')}
+            description={
+                <>
+                    <p>{intl.getMessage('dns_bootstrap_dns_desc')}</p>
+                    <p>{intl.getMessage('dns_bootstrap_dns_desc_2')}</p>
+                </>
+            }
+            onClose={props.onClose}
+            onSubmit={() => {
+                field.submitIfValid((v) => {
+                    setDnsConfig({ bootstrap_dns: v });
+                    untrack(() => props.onClose());
+                });
+            }}
+            processing={props.processing}
+        >
+            <div class={theme.form.input}>
+                <Textarea
+                    value={field.value()}
+                    onChange={(e: Event) => field.setValue((e.target as HTMLTextAreaElement).value)}
+                    onBlur={() => field.validate()}
+                    id="bootstrap_dns"
+                    label={intl.getMessage('dns_bootstrap_dns_label')}
+                    placeholder={intl.getMessage('dns_bootstrap_dns_placeholder')}
+                    errorMessage={field.error()}
+                    size="medium"
+                />
+            </div>
+        </ConfigDialog>
+    );
+};

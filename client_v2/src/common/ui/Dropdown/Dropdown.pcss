@@ -1,0 +1,21 @@
+/*
+ * Scope every selector to [data-scope="popover"]. Dropdown.pcss is a global
+ * (side-effect) stylesheet, so a bare [data-part="..."] would also match the
+ * already-migrated Select ([data-scope="select"]) and any future Ark UI widget.
+ */
+[data-scope='popover'][data-part='anchor'] {
+    min-width: 0;
+    overflow: hidden;
+}
+
+[data-scope='popover'][data-part='positioner'] {
+    z-index: 1504;
+}
+
+[data-scope='popover'][data-part='content'] {
+    border-radius: 8px;
+    box-shadow:
+        0 8px 18px -6px var(--dropdown-box-shadow),
+        0 12px 42px -4px var(--dropdown-box-shadow);
+    outline: none;
+}

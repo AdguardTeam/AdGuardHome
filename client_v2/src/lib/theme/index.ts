@@ -1,0 +1,31 @@
+import common from './Common.module.pcss';
+import dialog from './Dialog.module.pcss';
+import layout from './Layout.module.pcss';
+import link from './Link.module.pcss';
+import table from './Table.module.pcss';
+import title from './Title.module.pcss';
+import text from './Text.module.pcss';
+import dropdown from './Dropdown.module.pcss';
+import select from './Select.module.pcss';
+import form from './Form.module.pcss';
+import pagination from './Pagination.module.pcss';
+import status from './Status.module.pcss';
+import highlight from './Highlight.module.pcss';
+
+const theme = {
+    link,
+    common,
+    layout,
+    dialog,
+    table,
+    title,
+    text,
+    dropdown,
+    select,
+    form,
+    pagination,
+    status,
+    highlight,
+};
+
+export default theme;

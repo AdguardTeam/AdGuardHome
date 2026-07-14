@@ -1,0 +1,1 @@
+export { TopQueriedDomains } from './TopQueriedDomains';

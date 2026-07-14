@@ -1,0 +1,45 @@
+.dropdown {
+    @media (min-width: 1024px) {
+        max-width: none;
+    }
+}
+
+.tooltip {
+    @media (min-width: 1024px) {
+        width: 456px;
+        max-width: none;
+    }
+}
+
+.tooltipTitle {
+    padding: 0 0 16px;
+    font-weight: var(--weight-semi-bold);
+}
+
+.tooltipItem {
+    position: relative;
+    padding: 8px 0 8px 32px;
+
+    &:last-child {
+        padding: 8px 0 0 32px;
+    }
+
+    & code {
+        display: inline-block;
+        vertical-align: middle;
+        margin-left: 4px;
+        padding: 2px 4px;
+        background-color: var(--page-background-additional);
+        font-family: inherit;
+        line-height: var(--lh-t3-normal);
+        border: 1px solid var(--default-item-divider);
+        border-radius: 4px;
+    }
+}
+
+.icon {
+    position: absolute;
+    top: 8px;
+    left: 0;
+    color: var(--default-black-icons);
+}

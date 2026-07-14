@@ -1,0 +1,32 @@
+.tableHeader {
+    display: none;
+    justify-content: space-between;
+    padding: 0 16px 8px;
+
+    @media (min-width: 768px) {
+        display: flex;
+    }
+}
+
+.sortableHeader {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    user-select: none;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+}
+
+.sortIcon {
+    width: 16px;
+    height: 16px;
+    transition: transform var(--t2);
+}
+
+.sortIconAsc {
+    transform: rotate(180deg);
+}

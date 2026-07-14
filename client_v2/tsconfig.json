@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "baseUrl": ".",
+    "ignoreDeprecations": "5.0",
+    "allowArbitraryExtensions": true,
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": false,
+    "noImplicitAny": true,
+    "skipLibCheck": true,
+    "types": ["node"],
+    "paths": {
+      "Twosky": ["../.twosky.json"],
+      "panel/*": ["./src/*"]
+    }
+  },
+  "include": ["src", "global.d.ts", "src/types/**/*.d.ts"]
+}

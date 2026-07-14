@@ -1,0 +1,40 @@
+.browseLink {
+    color: var(--default-link);
+    cursor: pointer;
+    margin-left: auto;
+    border: none;
+    background: transparent;
+    font-size: var(--fs-text-t2);
+    line-height: var(--lh-t2-normal);
+}
+
+.footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    width: 100%;
+
+    & button {
+        width: 100%;
+    }
+
+    @media (min-width: 768px) {
+        flex-wrap: nowrap;
+
+        & button {
+            width: auto;
+        }
+    }
+}
+
+.hiddenFileInput {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}

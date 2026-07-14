@@ -1,0 +1,57 @@
+.desc {
+    width: 100%;
+    max-width: 632px;
+    padding: 16px 0;
+}
+
+.button {
+    width: fit-content;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    font-size: 16px;
+    color: var(--default-main-text);
+    border-radius: 8px;
+    transition: var(--t2) background-color;
+    border: 0;
+    background: none;
+    cursor: pointer;
+
+    &:hover,
+    &:focus {
+        background: var(--hovered-secondary-button);
+    }
+
+    &:active {
+        background: var(--pressed-secondary-button);
+    }
+
+    &:disabled {
+        background: var(--disabled-secondary-button);
+        color: var(--disabled-secondary-button-stroke);
+        cursor: default;
+    }
+
+    &_add {
+        margin-top: 8px;
+        padding: 8px 16px;
+        color: var(--default-link);
+
+        @media (min-width: 768px) {
+            padding: 8px;
+        }
+    }
+}
+
+.tabs {
+    padding: 24px 16px 0;
+}
+
+.tabContent {
+    padding: 16px 0 0 0;
+}
+
+.tableSection {
+    padding-top: 16px;
+}

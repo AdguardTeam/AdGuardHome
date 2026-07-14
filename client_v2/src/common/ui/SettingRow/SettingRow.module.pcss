@@ -1,0 +1,142 @@
+.switch {
+    width: 100%;
+    padding: 8px 16px;
+    transition: background-color var(--t2);
+    border-radius: 0;
+    outline: none;
+
+    @media (min-width: 1024px) {
+        border-radius: 8px;
+    }
+
+    &:hover,
+    &:focus-visible {
+        background-color: var(--page-background-additional);
+    }
+
+    &:active {
+        background-color: transparent;
+    }
+}
+
+.switchDisabled {
+    cursor: default;
+
+    &:hover,
+    &:focus {
+        background-color: transparent;
+    }
+
+    .title,
+    .desc,
+    .value {
+        color: var(--disabled-main-text);
+    }
+
+    .row {
+        cursor: default;
+    }
+}
+
+.row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    cursor: pointer;
+
+    &.rowCenter {
+        align-items: center;
+    }
+}
+
+.divider {
+    margin: 8px 8px 8px auto;
+    width: 1px;
+    align-self: stretch;
+    background-color: var(--default-item-divider);
+    flex-shrink: 0;
+}
+
+.text {
+    padding: 8px 0;
+}
+
+.title {
+    margin-bottom: 4px;
+    font-weight: var(--weight-semi-bold);
+    color: var(--default-main-text);
+}
+
+.titleDisabled {
+    color: var(--disabled-main-text);
+}
+
+.desc {
+    color: var(--default-description-text);
+
+    p {
+        margin: 0;
+    }
+
+    p + p {
+        margin-top: 12px;
+    }
+}
+
+.descDisabled {
+    color: var(--disabled-main-text);
+}
+
+.value {
+    margin-top: 8px;
+    font-weight: var(--weight-semi-bold);
+    color: var(--default-description-text);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.valueDisabled {
+    color: var(--disabled-main-text);
+}
+
+.input {
+    padding: 8px 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    align-self: stretch;
+
+    &.largeTitle {
+        padding-top: 16px;
+    }
+}
+
+.link {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--default-gray-icons);
+    cursor: pointer;
+    white-space: nowrap;
+    border: none;
+    background: none;
+    padding: 0;
+    font-size: inherit;
+
+    &:disabled {
+        cursor: default;
+        opacity: 0.5;
+    }
+}
+
+.arrow {
+    color: var(--default-description-text);
+}
+
+.content {
+    padding: 8px 0;
+}

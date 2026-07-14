@@ -1,0 +1,282 @@
+.card {
+    display: flex;
+    flex-direction: column;
+    border-radius: 16px;
+    padding: 8px 0 0;
+    border: 1px solid var(--default-item-divider);
+    overflow: hidden;
+
+    @media (min-width: 768px) {
+        max-height: 374px;
+        padding: 8px 8px 0;
+    }
+}
+
+.cardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px 24px;
+
+    @media (min-width: 768px) {
+        padding: 16px 16px 24px;
+    }
+}
+
+.cardSubtitle {
+    color: var(--default-description-text);
+}
+
+.tableRows {
+    height: 100%;
+    overflow-y: auto;
+}
+
+.tableRowRight {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    & .clientBlocked {
+        display: block;
+
+        @media (min-width: 768px) {
+            display: none;
+        }
+    }
+}
+
+.tableRowIcon {
+    width: 24px;
+    height: 24px;
+    stroke: var(--default-gray-icons);
+    color: var(--default-gray-icons);
+}
+
+.tableRowInfo {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    margin: 8px 0 0;
+
+    @media (min-width: 768px) {
+        margin: 0;
+        padding-left: 32px;
+    }
+}
+
+.tableRowDot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+
+    &:before {
+        content: '';
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: var(--default-gray-icons);
+    }
+}
+
+.queryCount {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+
+.dropdownWrapper {
+    flex-shrink: 0;
+}
+
+.queryPercent {
+    font-size: 12px;
+    color: var(--default-description-text);
+}
+
+.queryBar {
+    display: none;
+    width: 100%;
+    min-width: 102px;
+    height: 3px;
+    background: var(--default-item-divider);
+    border-radius: 2px;
+
+    @media (min-width: 768px) {
+        display: block;
+    }
+}
+
+.queryBarFill {
+    height: 100%;
+    background: var(--default-tertiary-stat);
+}
+
+.queryTooltip {
+    padding: 8px 12px;
+    white-space: nowrap;
+}
+
+.queryTooltipOverlay {
+    pointer-events: none;
+}
+
+.protectionMenu {
+    padding: 8px 0;
+    min-width: 200px;
+}
+
+.protectionMenuItem {
+    padding: 8px 16px;
+    cursor: pointer;
+    color: var(--default-link);
+}
+
+.protectionMenuItemRed {
+    color: var(--default-error-link);
+}
+
+.clientRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0 24px;
+    padding: 16px 24px 24px;
+    transition: background-color var(--t2);
+    border-bottom: 1px solid var(--default-item-divider);
+
+    @media (min-width: 768px) {
+        padding: 8px 16px;
+        border: none;
+    }
+
+    &:hover {
+        background-color: var(--hovered-page-background);
+    }
+
+    &:last-child {
+        border: none;
+    }
+}
+
+.clientInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+}
+
+.clientIp {
+    font-size: 14px;
+    color: var(--default-main-text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.clientName {
+    color: var(--default-description-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.clientBlocked {
+    display: none;
+    color: var(--default-error-link);
+
+    @media (min-width: 768px) {
+        display: block;
+    }
+}
+
+.clientActions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.actionButton {
+    padding: 4px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--default-secondary-text);
+    border-radius: 4px;
+    transition: background-color 0.2s;
+
+    &:hover {
+        background-color: var(--hovered-secondary-button);
+    }
+}
+
+.clientActionsDropdown {
+    display: none;
+
+    @media (min-width: 768px) {
+        display: block;
+    }
+}
+
+.tableRowQueriesInfo {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 16px 0 0;
+
+    @media (min-width: 768px) {
+        display: none;
+    }
+
+    & .queryBar {
+        display: block;
+        flex: 3;
+    }
+
+    & .queryPercent {
+        font-size: 14px;
+    }
+
+    & .queryCount {
+        flex: 1;
+    }
+}
+
+.tableRowActions {
+    margin: 16px 0 0;
+
+    @media (min-width: 768px) {
+        display: none;
+    }
+
+    & .protectionMenu {
+        padding: 0;
+
+        & .protectionMenuItem {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 40px;
+            padding: 0 24px;
+            border: 1px solid var(--default-link);
+            border-radius: 8px;
+
+            &.protectionMenuItemRed {
+                border-color: var(--default-error-link);
+            }
+        }
+    }
+}
+
+.queryTooltipWrap {
+    display: none;
+
+    @media (min-width: 768px) {
+        display: block;
+    }
+}

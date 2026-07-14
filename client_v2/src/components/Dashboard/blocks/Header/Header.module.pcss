@@ -1,0 +1,209 @@
+.header {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 0 16px;
+    margin: 0 0 32px;
+
+    @media (min-width: 1024px) {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 32px 16px;
+        padding: 0;
+    }
+}
+
+.headerLeft {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    @media (min-width: 768px) {
+        flex-direction: row;
+        align-items: center;
+    }
+
+    @media (min-width: 1024px) {
+        flex: 1;
+    }
+}
+
+.headerRight {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    @media (min-width: 768px) {
+        align-items: center;
+        flex-direction: row;
+    }
+}
+
+.toggleRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+
+    @media (min-width: 768px) {
+        position: relative;
+        top: 2px;
+        margin-left: 8px;
+    }
+}
+
+.periodSelect {
+    width: 100%;
+    min-width: 0;
+
+    @media (min-width: 768px) {
+        width: auto;
+        max-width: 100%;
+
+        &:global(.react-select.react-select-responsive) {
+            width: fit-content;
+            max-width: 100%;
+            min-width: 0;
+        }
+    }
+
+    & :global(.select__control) {
+        min-width: 100%;
+        max-width: 100%;
+    }
+
+    & :global(.select__value-container) {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    & :global(.select__single-value) {
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+.protectionMenu {
+    padding: 8px 0;
+    min-width: 200px;
+}
+
+.periodSettingsFooter {
+    align-items: flex-start;
+    padding: 24px 16px;
+    border-top: 1px solid var(--default-item-divider);
+}
+
+.titleRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+
+    @media (min-width: 768px) {
+        display: none;
+    }
+}
+
+.refreshButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px;
+    font-size: 16px;
+    color: var(--default-main-text);
+    border: 0;
+    background: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: var(--t2) background-color;
+
+    &:hover,
+    &:focus {
+        background: var(--hovered-secondary-button);
+    }
+
+    &:active {
+        background: var(--pressed-secondary-button);
+    }
+
+    &:disabled {
+        background: var(--disabled-secondary-button);
+        color: var(--disabled-secondary-button-stroke);
+        cursor: default;
+    }
+
+    & svg {
+        width: 24px;
+        height: 24px;
+        flex-shrink: 0;
+    }
+}
+
+.refreshDesktopButton {
+    width: fit-content;
+}
+
+.refreshMobileButton {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+}
+
+.dropdownTrigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    background: none;
+    border: 0;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--default-secondary-text);
+    transition: var(--t2) background-color;
+
+    &:hover,
+    &:focus {
+        background: var(--hovered-secondary-button);
+    }
+
+    &:active {
+        background: var(--pressed-secondary-button);
+    }
+
+    &:disabled {
+        background: var(--disabled-secondary-button);
+        color: var(--disabled-secondary-button-stroke);
+        cursor: default;
+    }
+}
+
+.onlyMobile {
+    @media (min-width: 768px) {
+        display: none;
+    }
+}
+
+.onlyDesktop {
+    display: none;
+
+    @media (min-width: 768px) {
+        display: flex;
+    }
+}
+
+.protectionToggle {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.cardSubtitle {
+    font-size: 14px;
+    color: var(--default-secondary-text);
+}
