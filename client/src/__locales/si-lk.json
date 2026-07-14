@@ -397,7 +397,7 @@
   "form_error_ip_format": "අ.ජා.කෙ. (IP) ලිපිනය වලංගු නොවේ",
   "form_error_mac_format": "මා.ප්‍ර.පා. ලිපිනය වලංගු නොවේ",
   "form_error_password": "මුරපදය නොගැළපේ",
-  "form_error_password_length": "මුරපදය අකුරු {{min}} සහ {{value}} ක් අතර විය යුතුය",
+  "form_error_password_length": "මුරපදය අකුරු {{min}} සහ {{max}} ක් අතර විය යුතුය",
   "form_error_port": "වලංගු තොටක අගයක් යොදන්න",
   "form_error_port_range": "80-65535 පරාසය හි තොටක අගයක් ඇතුල් කරන්න",
   "form_error_port_unsafe": "මෙය අනාරක්‍ෂිත තොටකි",

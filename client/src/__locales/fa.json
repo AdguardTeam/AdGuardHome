@@ -481,7 +481,7 @@
   "install_welcome_title": "به AdGuard Home خوش آمدید!",
   "interval_24_hour": "24 ساعت",
   "interval_6_hour": "6 ساعت",
-  "interval_days": "{{value}} روز",
+  "interval_days": "{{count}} روز",
   "interval_days_plural": "{{count}} روز",
   "interval_hours": "{{count}} ساعت",
   "interval_hours_plural": "{{count}} ساعت",

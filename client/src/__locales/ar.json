@@ -370,7 +370,7 @@
   "filters_enable": "تفعيل الفلاتر",
   "filters_interval": "الفاصل الزمني لتحديث الفلاتر",
   "fix": "يصلح",
-  "for_last_days": "لآخر {{value}} يوم",
+  "for_last_days": "لآخر {{count}} يوم",
   "for_last_days_plural": "لآخر {{count}} ايام",
   "for_last_hours": "لآخر {{count}} ساعة",
   "for_last_hours_plural": "لآخر {{count}} ساعة",

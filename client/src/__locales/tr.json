@@ -26,7 +26,7 @@
   "apply_btn": "Uygula",
   "auto_clients_desc": "AdGuard Home'u kullanan veya kullanabilecek cihazların IP adresleri hakkında bilgiler. Bu bilgiler, ana bilgisayar dosyaları, ters DNS sorguları ve çeşitli diğer kaynaklardan toplanmaktadır.",
   "auto_clients_title": "Bilinen istemciler",
-  "autofix_warning_list": "Şu görevleri gerçekleştirir: <0>Sistem DNSStubListener'ı devre dışı bırakır</0> <0>DNS sunucu adresini 127.0.0.1 olarak ayarlar</0> <0>/etc/resolv.conf'un sembolik bağlantı hedefini /run/systemd/resolve/resolv.conf ile değiştirir<0> <0>DNSStubListener'ı durdurur (systemd-resolved hizmeti yeniden yükler)</0>",
+  "autofix_warning_list": "Şu görevleri gerçekleştirir: <0>Sistem DNSStubListener'ı devre dışı bırakır</0> <0>DNS sunucu adresini 127.0.0.1 olarak ayarlar</0> <0>/etc/resolv.conf'un sembolik bağlantı hedefini /run/systemd/resolve/resolv.conf ile değiştirir</0> <0>DNSStubListener'ı durdurur (systemd-resolved hizmeti yeniden yükler)</0>",
   "autofix_warning_result": "Sonuç olarak, sisteminizden gelen tüm DNS istekleri varsayılan olarak AdGuard Home tarafından işlenecektir.",
   "autofix_warning_text": "\"Düzelt\" öğesine tıklarsanız, AdGuard Home, sisteminizi AdGuard Home DNS sunucusunu kullanacak şekilde yapılandıracaktır.",
   "average_processing_time": "Ortalama işlem süresi",

@@ -445,7 +445,7 @@
   "install_devices_ios_list_1": "Войдите в меню настроек устройства.",
   "install_devices_ios_list_2": "Выберите пункт «Wi-Fi» (для мобильных сетей ручная настройка DNS невозможна).",
   "install_devices_ios_list_3": "Нажмите на название сети, к которой устройство подключено в данный момент.",
-  "install_devices_ios_list_4": "В поле «DNS» введите введите адреса AdGuard Home.",
+  "install_devices_ios_list_4": "В поле «DNS» введите адреса AdGuard Home.",
   "install_devices_macos_list_1": "Кликните на иконку Apple и перейдите в «Системные настройки».",
   "install_devices_macos_list_2": "Кликните на иконку «Сеть».",
   "install_devices_macos_list_3": "Выберите первое подключение в списке и нажмите кнопку «Дополнительно».",
