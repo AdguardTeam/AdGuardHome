@@ -156,14 +156,14 @@ func TestDNSFilter_HandleRewriteHTTP(t *testing.T) {
 		method: http.MethodPost,
 		reqData: rewriteJSON{
 			Domain:  addDomain,
-			Answer:  "invalid_domain",
+			Answer:  invalidDomain,
 			Enabled: aghalg.NBTrue,
 		},
 		wantConfMod: false,
 		wantStatus:  http.StatusBadRequest,
-		wantBody: `normalizing: invalid CNAME target "invalid_domain": bad domain name ` +
-			`"invalid_domain": bad top-level domain name label "invalid_domain": bad top-level ` +
-			`domain name label rune '_'` + "\n",
+		wantBody: `normalizing: invalid CNAME target "` + invalidDomain + `": bad domain name ` +
+			`"` + invalidDomain + `": bad top-level domain name label "` + invalidDomain +
+			`": bad top-level domain name label rune '_'` + "\n",
 		wantList: testRewrites,
 	}, {
 		name:        "delete",
