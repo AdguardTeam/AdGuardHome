@@ -162,7 +162,6 @@ export const CLIENT_ID = {
     IP: 'ip',
 };
 
-
 export const ENCRYPTION_SOURCE = {
     PATH: 'path',
     CONTENT: 'content',
