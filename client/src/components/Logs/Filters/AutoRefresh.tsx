@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { LOGS_AUTO_REFRESH_INTERVAL_MS } from '../../../helpers/constants';
+import { LOGS_AUTO_REFRESH_DEFAULT_INTERVAL_MS } from '../../../helpers/constants';
 import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from '../../../helpers/localStorageHelper';
 
 type Props = {
@@ -12,6 +12,12 @@ const AutoRefresh = ({ refreshLogs }: Props) => {
 
     const [isAutoRefreshEnabled, setIsAutoRefreshEnabled] = useState<boolean>(
         () => !!LocalStorageHelper.getItem(LOCAL_STORAGE_KEYS.LOGS_AUTO_REFRESH_ENABLED),
+    );
+
+    const [intervalMs] = useState<number>(
+        () =>
+            Number(LocalStorageHelper.getItem(LOCAL_STORAGE_KEYS.LOGS_AUTO_REFRESH_INTERVAL_MS)) ||
+            LOGS_AUTO_REFRESH_DEFAULT_INTERVAL_MS,
     );
 
     const toggleAutoRefresh = () => {
@@ -29,12 +35,12 @@ const AutoRefresh = ({ refreshLogs }: Props) => {
 
         const interval = setInterval(() => {
             refreshLogs(true);
-        }, LOGS_AUTO_REFRESH_INTERVAL_MS);
+        }, intervalMs);
 
         return () => {
             clearInterval(interval);
         };
-    }, [isAutoRefreshEnabled]);
+    }, [isAutoRefreshEnabled, intervalMs]);
 
     return (
         <label className="custom-switch logs__auto-refresh" title={t('auto_refresh')}>

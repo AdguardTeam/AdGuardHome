@@ -6,6 +6,7 @@ export const LOCAL_STORAGE_KEYS = {
     REWRITES_PAGE_SIZE: 'rewrites_page_size',
     AUTO_CLIENTS_PAGE_SIZE: 'auto_clients_page_size',
     LOGS_AUTO_REFRESH_ENABLED: 'logs_auto_refresh_enabled',
+    LOGS_AUTO_REFRESH_INTERVAL_MS: 'logs_auto_refresh_interval_ms',
 };
 
 export const LocalStorageHelper = {
