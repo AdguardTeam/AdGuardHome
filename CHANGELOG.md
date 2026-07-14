@@ -68,6 +68,8 @@ See also the [v0.107.78 GitHub milestone][ms-v0.107.78].
 
 - The parsing of the `ech` parameter in DNS rewrite rules for the HTTPS record type ([#8276]).
 
+- Validation of the `answer` field in DNS rewrite rules in case it is represented as CNAME.
+
 - Blocked services check on the Custom filtering rules page does not work properly without specifying of a client.
 
 [#7955]:     https://github.com/AdguardTeam/AdGuardHome/issues/7955

@@ -50,6 +50,7 @@ const (
 	decodeUpdateErrorMsg = decodeMsg + " filtering.rewriteUpdateJSON\n"
 )
 
+// TODO(m.kazantsev):  Improve maintainability.
 func TestDNSFilter_HandleRewriteHTTP(t *testing.T) {
 	t.Parallel()
 
@@ -66,6 +67,7 @@ func TestDNSFilter_HandleRewriteHTTP(t *testing.T) {
 		updAnswer      = "upd.rewrite"
 		invDomain      = "inv.local"
 		invAnswer      = "inv.rewrite"
+		invalidDomain  = "invalid_domain"
 	)
 
 	testRewrites := []*rewriteJSON{
@@ -148,6 +150,21 @@ func TestDNSFilter_HandleRewriteHTTP(t *testing.T) {
 		wantStatus:  http.StatusBadRequest,
 		wantBody:    decodeErrorMsg,
 		wantList:    testRewrites,
+	}, {
+		name:   "add_error_invalid_cname",
+		url:    addURL,
+		method: http.MethodPost,
+		reqData: rewriteJSON{
+			Domain:  addDomain,
+			Answer:  "invalid_domain",
+			Enabled: aghalg.NBTrue,
+		},
+		wantConfMod: false,
+		wantStatus:  http.StatusBadRequest,
+		wantBody: `normalizing: invalid CNAME target "invalid_domain": bad domain name ` +
+			`"invalid_domain": bad top-level domain name label "invalid_domain": bad top-level ` +
+			`domain name label rune '_'` + "\n",
+		wantList: testRewrites,
 	}, {
 		name:        "delete",
 		url:         deleteURL,
