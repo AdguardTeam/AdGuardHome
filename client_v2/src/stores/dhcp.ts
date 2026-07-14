@@ -3,7 +3,8 @@ import { untrack } from 'solid-js';
 import { apiClient } from 'panel/api/Api';
 import { addErrorToast, addSuccessToast } from './toasts';
 import intl from 'panel/common/intl';
-import { SETTINGS_URLS, STATUS_RESPONSE } from 'panel/helpers/constants';
+import { STATUS_RESPONSE } from 'panel/helpers/constants';
+import { Paths } from 'panel/components/Routes/Paths';
 import { enrichWithConcatenatedIpAddresses } from 'panel/helpers/helpers';
 
 type Lease = { hostname: string; ip: string; mac: string };
@@ -148,7 +149,7 @@ export const findActiveDhcp = async (interfaceName: string, navigate?: (path: st
                 error: intl.getMessage('dhcp_static_ip_error'),
                 action: {
                     text: intl.getMessage('set_static_ip_manually'),
-                    callback: () => navigate?.(SETTINGS_URLS.dhcpLeases),
+                    callback: () => navigate?.(Paths.DhcpLeases),
                 },
             });
         }

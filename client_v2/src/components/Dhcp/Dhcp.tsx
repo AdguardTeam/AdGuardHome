@@ -10,7 +10,7 @@ import { ConfirmDialog } from 'panel/common/ui/ConfirmDialog';
 import intl from 'panel/common/intl';
 import theme from 'panel/lib/theme';
 import { useDialog } from 'panel/hooks/useDialog';
-import { SETTINGS_URLS } from 'panel/helpers/constants';
+import { Paths } from 'panel/components/Routes/Paths';
 import {
     dhcpState,
     getDhcpStatus,
@@ -189,7 +189,7 @@ export const Dhcp = () => {
                                 id="dhcp_leases_link"
                                 variant="link"
                                 title={intl.getMessage('dhcp_leases_title')}
-                                onClick={() => navigate(SETTINGS_URLS.dhcpLeases)}
+                                onClick={() => navigate(Paths.DhcpLeases)}
                             />
                         </div>
 

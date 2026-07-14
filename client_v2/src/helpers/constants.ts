@@ -162,28 +162,6 @@ export const CLIENT_ID = {
     IP: 'ip',
 };
 
-export const MENU_URLS = {
-    root: '/',
-    logs: '/logs',
-    guide: '/guide',
-};
-
-export const SETTINGS_URLS = {
-    encryption: '/encryption',
-    dhcp: '/dhcp',
-    dhcpLeases: '/dhcp/leases',
-    dns: '/dns',
-    settings: '/settings',
-    clients: '/clients',
-};
-
-export const FILTERS_URLS = {
-    dns_blocklists: '/filters',
-    dns_allowlists: '/dns_allowlists',
-    dns_rewrites: '/dns_rewrites',
-    user_rules: '/user_rules',
-    blocked_services: '/blocked_services',
-};
 
 export const ENCRYPTION_SOURCE = {
     PATH: 'path',

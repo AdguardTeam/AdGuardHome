@@ -35,6 +35,7 @@ import { AddClient } from '../Clients/AddClient';
 import { Protection } from '../Clients/AddClient/blocks/Protection/Protection';
 import { ClientBlockedServices } from '../Clients/AddClient/blocks/ClientBlockedServices';
 import { ClientSchedule } from '../Clients/AddClient/blocks/ClientSchedule';
+import { Paths } from '../Routes/Paths';
 
 const SetupGuideRoute = () => <SetupGuide />;
 const BlockedServicesRoute = () => <BlockedServices />;
@@ -124,36 +125,30 @@ const App = () => {
                 </>
             )}
         >
-            <Route path="/dashboard" component={Dashboard} />
-            <Route path="/settings" component={Settings} />
-            <Route path="/encryption" component={Encryption} />
-            <Route path="/dns" component={DnsSettings} />
-            <Route path="/dns/private-reverse" component={PrivateReverse} />
-            <Route path="/blocklists" component={Blocklists} />
-            <Route path="/allowlists" component={Allowlists} />
-            <Route path="/user_rules" component={UserRules} />
-            <Route path="/dns_rewrites" component={DNSRewrites} />
-            <Route path="/dhcp" component={Dhcp} />
-            <Route path="/dhcp/leases" component={LeasesPage} />
-            <Route path="/guide" component={SetupGuideRoute} />
-            <Route path="/logs" component={QueryLog} />
-            <Route path="/blocked_services/schedule" component={InactivityScheduleRoute} />
-            <Route path="/blocked_services" component={BlockedServicesRoute} />
-            <Route path="/clients/add/blocked_services/schedule" component={ClientScheduleRoute} />
-            <Route path="/clients/add/blocked_services" component={ClientBlockedServicesRoute} />
-            <Route path="/clients/add/protection" component={ProtectionRoute} />
-            <Route path="/clients/add" component={AddClientRoute} />
-            <Route
-                path="/clients/edit/:clientName/blocked_services/schedule"
-                component={ClientScheduleRoute}
-            />
-            <Route
-                path="/clients/edit/:clientName/blocked_services"
-                component={ClientBlockedServicesRoute}
-            />
-            <Route path="/clients/edit/:clientName/protection" component={ProtectionRoute} />
-            <Route path="/clients/edit/:clientName" component={AddClientRoute} />
-            <Route path="/clients" component={Clients} />
+            <Route path={Paths.Dashboard} component={Dashboard} />
+            <Route path={Paths.SettingsPage} component={Settings} />
+            <Route path={Paths.Encryption} component={Encryption} />
+            <Route path={Paths.Dns} component={DnsSettings} />
+            <Route path={Paths.DnsPrivateReverse} component={PrivateReverse} />
+            <Route path={Paths.DnsBlocklists} component={Blocklists} />
+            <Route path={Paths.DnsAllowlists} component={Allowlists} />
+            <Route path={Paths.CustomRules} component={UserRules} />
+            <Route path={Paths.DnsRewrites} component={DNSRewrites} />
+            <Route path={Paths.Dhcp} component={Dhcp} />
+            <Route path={Paths.DhcpLeases} component={LeasesPage} />
+            <Route path={Paths.Guide} component={SetupGuideRoute} />
+            <Route path={Paths.Logs} component={QueryLog} />
+            <Route path={Paths.InactivitySchedule} component={InactivityScheduleRoute} />
+            <Route path={Paths.BlockedServices} component={BlockedServicesRoute} />
+            <Route path={Paths.ClientsSchedule} component={ClientScheduleRoute} />
+            <Route path={Paths.ClientsBlockedServices} component={ClientBlockedServicesRoute} />
+            <Route path={Paths.ClientsProtection} component={ProtectionRoute} />
+            <Route path={Paths.ClientsAdd} component={AddClientRoute} />
+            <Route path={Paths.ClientsEditSchedule} component={ClientScheduleRoute} />
+            <Route path={Paths.ClientsEditBlockedServices} component={ClientBlockedServicesRoute} />
+            <Route path={Paths.ClientsEditProtection} component={ProtectionRoute} />
+            <Route path={Paths.ClientsEdit} component={AddClientRoute} />
+            <Route path={Paths.Clients} component={Clients} />
             <Route path="/" component={() => <Navigate href="/dashboard" />} />
         </HashRouter>
     );

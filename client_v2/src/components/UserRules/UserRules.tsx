@@ -11,7 +11,7 @@ import { servicesState, getBlockedServices, getAllBlockedServices } from 'panel/
 import { rewritesState, getRewritesList } from 'panel/stores/rewrites';
 import { MODAL_TYPE } from 'panel/helpers/constants';
 import theme from 'panel/lib/theme';
-import { Loader } from 'panel/common/ui/Loader';
+import { Loader, PageLoader } from 'panel/common/ui/Loader';
 import { ConfigureRewritesModal } from 'panel/components/FilterLists/blocks/ConfigureRewritesModal/ConfigureRewritesModal';
 import { DeleteRewriteModal } from 'panel/components/FilterLists/blocks/DeleteRewriteModal';
 
@@ -30,6 +30,8 @@ export const UserRules = () => {
     const [lastSubmittedCheck, setLastSubmittedCheck] = createSignal<CheckFormValues | null>(null);
     const [isResultVisible, setIsResultVisible] = createSignal(false);
     const [isResultRefreshing, setIsResultRefreshing] = createSignal(false);
+    // Skip loader if store already has data (SPA revisit, no page reload).
+    const [isLoaded, setIsLoaded] = createSignal(filteringState.filters.length > 0);
 
     const [userRulesValue, setUserRulesValue] = createSignal(filteringState.userRules || '');
 
@@ -77,6 +79,7 @@ export const UserRules = () => {
             getBlockedServices(),
             getAllBlockedServices(),
         ]);
+        setIsLoaded(true);
     });
 
     createEffect(() => {
@@ -131,7 +134,7 @@ export const UserRules = () => {
     );
 
     return (
-        <>
+        <Show when={isLoaded()} fallback={<PageLoader />}>
             <div class={theme.layout.container}>
                 <div class={s.container}>
                     <div class={s.wrapper}>
@@ -205,6 +208,6 @@ export const UserRules = () => {
                 setRewriteToDelete={setCurrentRewrite}
                 onConfirm={handleRewriteDelete}
             />
-        </>
+        </Show>
     );
 };
