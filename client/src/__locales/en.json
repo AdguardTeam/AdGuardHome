@@ -26,6 +26,7 @@
   "apply_btn": "Apply",
   "auto_clients_desc": "Information about IP addresses of devices that are using or may use AdGuard Home. This information is gathered from several sources, including hosts files, reverse DNS, etc.",
   "auto_clients_title": "Runtime clients",
+  "auto_refresh": "Auto refresh",
   "autofix_warning_list": "It will perform these tasks: <0>Deactivate system DNSStubListener</0> <0>Set DNS server address to 127.0.0.1</0> <0>Replace symbolic link target of /etc/resolv.conf with /run/systemd/resolve/resolv.conf</0> <0>Stop DNSStubListener (reload systemd-resolved service)</0>",
   "autofix_warning_result": "As a result all DNS requests from your system will be processed by AdGuard Home by default.",
   "autofix_warning_text": "If you click \"Fix\", AdGuard Home will configure your system to use AdGuard Home DNS server.",
