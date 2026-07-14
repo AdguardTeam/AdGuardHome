@@ -40,6 +40,9 @@ const (
 	writeTimeout = 5 * time.Minute
 )
 
+// unit is a convenience alias for an empty struct.
+type unit = struct{}
+
 // webAPIConfig is a configuration structure for webAPI.
 type webAPIConfig struct {
 	// CommandConstructor is used to run external commands.  It must not be nil.
@@ -117,18 +120,82 @@ type webAPIConfig struct {
 
 // httpsServer contains the data for the HTTPS server.
 type httpsServer struct {
+	// logger is used for logging the operation of the server.  It must not be
+	// nil.
+	logger *slog.Logger
+
 	// server is the pre-HTTP/3 HTTPS server.
 	server *http.Server
+
 	// server3 is the HTTP/3 HTTPS server.  If it is not nil,
 	// [httpsServer.server] must also be non-nil.
 	server3 *http3.Server
 
-	// TODO(a.garipov): Why is there a *sync.Cond here?  Remove.
-	cond       *sync.Cond
-	condLock   sync.Mutex
-	cert       tls.Certificate
-	inShutdown bool
-	enabled    bool
+	// mu protects cert, enabled, and shutdown.  It must not be nil.
+	mu *sync.Mutex
+
+	// reconfigured wakes the TLS server loop waiting in [waitForTLSReady]
+	// whenever cert, enabled, or shutdown changes.
+	reconfigured chan unit
+
+	// cert is the certificate used by server and server3.
+	cert tls.Certificate
+
+	// shutdown is true when this httpsServer is shutting down.
+	shutdown bool
+
+	// enabled is true when this httpsServer is ready to use.
+	enabled bool
+}
+
+// notifyReconfigured notifies the loop waiting in [waitForTLSReady].
+func (srv *httpsServer) notifyReconfigured(ctx context.Context) {
+	select {
+	case srv.reconfigured <- unit{}:
+	default:
+		srv.logger.WarnContext(ctx, "reconfigured channel is full")
+	}
+}
+
+// inShutdown reports whether the server is in shutdown process.
+func (srv *httpsServer) inShutdown() (ok bool) {
+	srv.mu.Lock()
+	defer srv.mu.Unlock()
+
+	return srv.shutdown
+}
+
+// certificate returns a cert used by the server.  cert must not be modified.
+func (srv *httpsServer) certificate() (cert tls.Certificate) {
+	srv.mu.Lock()
+	defer srv.mu.Unlock()
+
+	return srv.cert
+}
+
+// waitForTLSReady blocks until the server is enabled or a shutdown signal is
+// received.  Returns true when server is ready.  Must be run with one goroutine
+// only.
+func (srv *httpsServer) waitForTLSReady() (ok bool) {
+	for {
+		// Wait until necessary data is supplied or a shutdown is requested.
+		<-srv.reconfigured
+
+		srv.mu.Lock()
+
+		switch {
+		case srv.shutdown:
+			srv.mu.Unlock()
+
+			return false
+		case srv.enabled:
+			srv.mu.Unlock()
+
+			return true
+		default:
+			srv.mu.Unlock()
+		}
+	}
 }
 
 // webAPI is the web UI and API server.
@@ -163,6 +230,8 @@ type webAPI struct {
 
 	// httpsServer is the server that handles HTTPS traffic.  If it is not nil,
 	// [Web.http3Server] must also not be nil.
+	//
+	// TODO(d.kolyshev):  Make it a pointer.
 	httpsServer httpsServer
 
 	// startTime is the start time of the web API server in Unix milliseconds.
@@ -212,7 +281,9 @@ func newWebAPI(ctx context.Context, conf *webAPIConfig) (w *webAPI) {
 		w.registerControlHandlers()
 	}
 
-	w.httpsServer.cond = sync.NewCond(&w.httpsServer.condLock)
+	w.httpsServer.logger = conf.baseLogger.With(slogutil.KeyPrefix, "https_server")
+	w.httpsServer.mu = &sync.Mutex{}
+	w.httpsServer.reconfigured = make(chan unit, 1)
 
 	return w
 }
@@ -237,7 +308,7 @@ func (web *webAPI) tlsConfigChanged(ctx context.Context, tlsConf *tlsConfigSetti
 		}
 	}
 
-	web.httpsServer.cond.L.Lock()
+	// TODO(d.kolyshev):  Consider protecting server with mu.
 	if web.httpsServer.server != nil {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, shutdownTimeout)
@@ -247,26 +318,31 @@ func (web *webAPI) tlsConfigChanged(ctx context.Context, tlsConf *tlsConfigSetti
 		cancel()
 	}
 
-	web.httpsServer.enabled = enabled
-	web.httpsServer.cert = cert
-	web.httpsServer.cond.Broadcast()
-	web.httpsServer.cond.L.Unlock()
+	func() {
+		web.httpsServer.mu.Lock()
+		defer web.httpsServer.mu.Unlock()
+
+		web.httpsServer.enabled = enabled
+		web.httpsServer.cert = cert
+	}()
+
+	web.httpsServer.notifyReconfigured(ctx)
 }
 
 // loggerKeyServer is the key used by [webAPI] to identify servers.
 const loggerKeyServer = "server"
 
-// start - start serving HTTP requests
+// start starts serving HTTP requests.
 func (web *webAPI) start(ctx context.Context) {
 	defer slogutil.RecoverAndExit(ctx, web.logger, osutil.ExitCodeFailure)
 
 	web.logger.InfoContext(ctx, "AdGuard Home is available at the following addresses:")
 
-	// for https, we have a separate goroutine loop
+	// For https, we have a separate goroutine loop.
 	go web.tlsServerLoop(ctx)
 
-	// this loop is used as an ability to change listening host and/or port
-	for !web.httpsServer.inShutdown {
+	// This loop is used as an ability to change listening host and/or port.
+	for !web.httpsServer.inShutdown() {
 		printHTTPAddresses(ctx, web.logger, urlutil.SchemeHTTP, web.tlsManager)
 		errs := make(chan error, 2)
 
@@ -322,9 +398,14 @@ func (web *webAPI) wrapMux(l *slog.Logger) (h http.Handler) {
 func (web *webAPI) close(ctx context.Context) {
 	web.logger.InfoContext(ctx, "stopping http server")
 
-	web.httpsServer.cond.L.Lock()
-	web.httpsServer.inShutdown = true
-	web.httpsServer.cond.L.Unlock()
+	func() {
+		web.httpsServer.mu.Lock()
+		defer web.httpsServer.mu.Unlock()
+
+		web.httpsServer.shutdown = true
+	}()
+
+	web.httpsServer.notifyReconfigured(ctx)
 
 	var cancel context.CancelFunc
 	ctx, cancel = context.WithTimeout(ctx, shutdownTimeout)
@@ -356,7 +437,7 @@ func (web *webAPI) tlsServerLoop(ctx context.Context) {
 // serveTLS initializes and starts the HTTPS server.  Returns true when next
 // retry is necessary.
 func (web *webAPI) serveTLS(ctx context.Context) (next bool) {
-	if !web.waitForTLSReady() {
+	if !web.httpsServer.waitForTLSReady() {
 		return false
 	}
 
@@ -377,7 +458,7 @@ func (web *webAPI) serveTLS(ctx context.Context) (next bool) {
 		Addr:    addr,
 		Handler: hdlr,
 		TLSConfig: &tls.Config{
-			Certificates: []tls.Certificate{web.httpsServer.cert},
+			Certificates: []tls.Certificate{web.httpsServer.certificate()},
 			RootCAs:      web.tlsManager.rootCerts,
 			CipherSuites: web.tlsManager.customCipherIDs,
 			MinVersion:   tls.VersionTLS12,
@@ -404,27 +485,6 @@ func (web *webAPI) serveTLS(ctx context.Context) (next bool) {
 	return true
 }
 
-// waitForTLSReady blocks until the HTTPS server is enabled or a shutdown signal
-// is received.  Returns true when server is ready.
-func (web *webAPI) waitForTLSReady() (ok bool) {
-	web.httpsServer.cond.L.Lock()
-	defer web.httpsServer.cond.L.Unlock()
-
-	if web.httpsServer.inShutdown {
-		return false
-	}
-
-	// this mechanism doesn't let us through until all conditions are met
-	for !web.httpsServer.enabled { // sleep until necessary data is supplied
-		web.httpsServer.cond.Wait()
-		if web.httpsServer.inShutdown {
-			return false
-		}
-	}
-
-	return true
-}
-
 // mustStartHTTP3 initializes and starts HTTP3 server.
 func (web *webAPI) mustStartHTTP3(ctx context.Context, address string) {
 	defer slogutil.RecoverAndExit(ctx, web.logger, osutil.ExitCodeFailure)
@@ -437,7 +497,7 @@ func (web *webAPI) mustStartHTTP3(ctx context.Context, address string) {
 		// well as timeouts here.
 		Addr: address,
 		TLSConfig: &tls.Config{
-			Certificates: []tls.Certificate{web.httpsServer.cert},
+			Certificates: []tls.Certificate{web.httpsServer.certificate()},
 			RootCAs:      web.tlsManager.rootCerts,
 			CipherSuites: web.tlsManager.customCipherIDs,
 			MinVersion:   tls.VersionTLS12,

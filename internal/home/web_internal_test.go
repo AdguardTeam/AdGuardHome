@@ -137,13 +137,8 @@ func TestWebAPI_HandleTLSConfigure(t *testing.T) {
 	assert.Equal(t, wantIssuer, res.tlsConfigStatus.Issuer)
 
 	// Assert that the Web API's TLS configuration has been updated.
-	//
-	// TODO(s.chzhen):  Remove when [httpsServer.cond] is removed.
 	assert.Eventually(t, func() bool {
-		web.httpsServer.condLock.Lock()
-		defer web.httpsServer.condLock.Unlock()
-
-		cert = web.httpsServer.cert
+		cert = web.httpsServer.certificate()
 		if cert.Leaf == nil {
 			return false
 		}
