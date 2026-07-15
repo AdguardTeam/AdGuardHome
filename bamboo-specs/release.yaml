@@ -10,6 +10,7 @@
     # flaky test suite.
     'cacheBuster': '0'
     'channel': 'edge'
+    'clientDir': 'client'
     'dockerFrontend': 'adguard/home-js-builder:4.0'
     'dockerGo': 'adguard/go-builder:1.26.5--1'
 
@@ -67,8 +68,9 @@
                   docker info
 
                   docker build \
-                      --build-arg "BASE_IMAGE=${bamboo.dockerFrontend}" \
+                      --build-arg "BASE_IMAGE=${bamboo_dockerFrontend}" \
                       --build-arg "CACHE_BUSTER=${bamboo_cacheBuster}" \
+                      --build-arg "CLIENT_DIR=${bamboo_clientDir}" \
                       --output '.' \
                       --progress 'plain' \
                       --target 'builder-exporter' \
@@ -104,7 +106,7 @@
                 set -e -f -u -x
 
                 # Explicitly checkout the revision that we need.
-                git checkout "${bamboo.repository.revision.number}"
+                git checkout "${bamboo_repository_revision_number}"
 
                 version="$(env CHANNEL=${bamboo_channel} sh ./scripts/make/version.sh)"
                 readonly version
@@ -160,8 +162,8 @@
 
                 # Login to DockerHub.
                 docker login \
-                    -u="${bamboo.dockerHubUsername}" \
-                    -p="${bamboo.dockerHubPassword}"
+                    -u="${bamboo_dockerHubUsername}" \
+                    -p="${bamboo_dockerHubPassword}"
 
                 # Boot the builder.
                 docker buildx inspect --bootstrap
@@ -172,8 +174,8 @@
 
                 # Prepare and push the build.
                 env \
-                    CHANNEL="${bamboo.channel}" \
-                    REVISION="${bamboo.repository.revision.number}" \
+                    CHANNEL="${bamboo_channel}" \
+                    REVISION="${bamboo_repository_revision_number}" \
                     DIST_DIR='dist' \
                     DOCKER_IMAGE_NAME='adguard/adguardhome' \
                     DOCKER_PUSH='1' \
@@ -202,7 +204,7 @@
 
                 cd ./dist/
 
-                CHANNEL="${bamboo.channel}"
+                CHANNEL="${bamboo_channel}"
                 export CHANNEL
 
                 ../bamboo-deploy-publisher/deploy.sh adguard-home-"$CHANNEL"
@@ -227,7 +229,7 @@
 
                 set -e -f -u -x
 
-                channel="${bamboo.channel}"
+                channel="${bamboo_channel}"
                 readonly channel
 
                 if [ "$channel" != 'release' ] && [ "${channel}" != 'beta' ]
@@ -240,7 +242,7 @@
                 cd ./dist/
 
                 env\
-                        GITHUB_TOKEN="${bamboo.githubPublicRepoPassword}"\
+                        GITHUB_TOKEN="${bamboo_githubPublicRepoPassword}"\
                         ../bamboo-deploy-publisher/deploy.sh adguard-home-github
 
 'triggers':
@@ -279,6 +281,7 @@
         # need to build a few of these.
         'variables':
             'channel': 'beta'
+            'clientDir': 'client'
             'dockerFrontend': 'adguard/home-js-builder:4.0'
             'dockerGo': 'adguard/go-builder:1.26.5--1'
     # release-vX.Y.Z branches are the branches from which the actual final
@@ -295,5 +298,6 @@
         # are the ones that actually get released.
         'variables':
             'channel': 'release'
+            'clientDir': 'client'
             'dockerFrontend': 'adguard/home-js-builder:4.0'
             'dockerGo': 'adguard/go-builder:1.26.5--1'
