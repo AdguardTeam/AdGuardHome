@@ -24,7 +24,6 @@ export default defineConfig({
         noExternal: [
             '@solidjs/testing-library',
             '@solidjs/router',
-            'solid-js',
             // Force @zag-js/* into the same module graph so they share
             // a single solid-js instance, preventing "multiple instances
             // of Solid" errors in CI.
