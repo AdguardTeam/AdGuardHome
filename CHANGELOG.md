@@ -18,6 +18,10 @@ See also the [v0.107.79 GitHub milestone][ms-v0.107.79].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Added
+
+- The user is able to remove the static lease's hostname via the HTTP API.
+
 ### Fixed
 
 - Blocked requests without an EDNS(0) OPT record ([#8183]).
