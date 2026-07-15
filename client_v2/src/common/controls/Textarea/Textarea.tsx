@@ -4,6 +4,8 @@ import cn from 'clsx';
 import s from './styles.module.pcss';
 import { TextareaHighlight } from './TextareaHighlight';
 
+import type { CommentLineToken } from 'panel/helpers/constants';
+
 type TextareaChangeEvent = Event & {
     currentTarget: HTMLTextAreaElement;
     target: HTMLTextAreaElement;
@@ -17,6 +19,7 @@ type Props = Omit<
     size?: 'small' | 'medium' | 'large';
     errorMessage?: string;
     highlightComments?: boolean;
+    commentPrefixes?: readonly CommentLineToken[];
     ref?: HTMLTextAreaElement | ((el: HTMLTextAreaElement) => void);
     onChange?: (event: TextareaChangeEvent) => void;
     onInput?: (event: TextareaChangeEvent) => void;
@@ -97,7 +100,11 @@ export const Textarea = (props: Props) => {
                     ref={(el) => setRef(el)}
                 />
                 <Show when={highlightEnabled()}>
-                    <TextareaHighlight value={currentValue} scrollTop={scrollTop} />
+                    <TextareaHighlight
+                        value={currentValue}
+                        scrollTop={scrollTop}
+                        commentPrefixes={props.commentPrefixes}
+                    />
                 </Show>
             </div>
             <Show when={props.errorMessage}>

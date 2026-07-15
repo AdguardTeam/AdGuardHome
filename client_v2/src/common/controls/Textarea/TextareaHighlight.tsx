@@ -1,7 +1,7 @@
-import { For, type Accessor, createEffect } from 'solid-js';
+import { For, type Accessor, createEffect, createMemo } from 'solid-js';
 import cn from 'clsx';
 
-import { isCommentLine } from 'panel/helpers/helpers';
+import { COMMENT_LINE_DEFAULT_TOKEN, type CommentLineToken } from 'panel/helpers/constants';
 
 import s from './styles.module.pcss';
 
@@ -9,11 +9,20 @@ type Props = {
     value: Accessor<string>;
     scrollTop: Accessor<number>;
     class?: string;
+    /** Comment line prefixes to highlight. Defaults to {@link COMMENT_LINE_DEFAULT_TOKEN}. */
+    commentPrefixes?: readonly CommentLineToken[];
 };
 
 export const TextareaHighlight = (props: Props) => {
     const lines = () => (props.value() || '').split('\n');
     let ref: HTMLDivElement | undefined;
+
+    const prefixes = createMemo(() => props.commentPrefixes || [COMMENT_LINE_DEFAULT_TOKEN]);
+
+    const isComment = (line: string) => {
+        const trimmed = line.trimStart();
+        return prefixes().some((p) => trimmed.startsWith(p));
+    };
 
     createEffect(() => {
         const el = ref;
@@ -36,7 +45,7 @@ export const TextareaHighlight = (props: Props) => {
                         {index() > 0 && '\n'}
                         <span
                             class={cn({
-                                [s.commentLine]: isCommentLine(line),
+                                [s.commentLine]: isComment(line),
                             })}
                         >
                             {line || ' '}

@@ -665,8 +665,10 @@ export const validateHostname = (value?: string): ValidationResult => {
     return undefined;
 };
 
-// A valid upstream line contains at least one dot or colon.
-const R_COMMENT = /^\s*[#!]/;
+// A valid upstream or blocked_hosts line contains at least one dot or colon.
+// Only # is a valid comment prefix for upstreams / blocked_hosts.
+const R_UPSTREAM_COMMENT = /^\s*#/;
+const R_BANG_PREFIX = /^\s*!/;
 const R_HAS_ADDRESS = /[.:]/;
 
 // A valid blocked_hosts entry contains at least one dot.
@@ -677,13 +679,14 @@ const R_HAS_DOT = /[.]/;
  *
  * @example validateUpstreams("https://dns.example.com")    // undefined (valid)
  * @example validateUpstreams("# comment\n1.1.1.1")        // undefined (comments ok)
- * @example validateUpstreams("not-a-server")               // "Invalid upstream"
+ * @example validateUpstreams("! https://dns.example.com")  // error (! not supported)
+ * @example validateUpstreams("not-a-server")               // error (no dot or colon)
  */
 export const validateUpstreams = (value: string): string | undefined =>
     validatePerLine(
         value,
-        (line) => R_HAS_ADDRESS.test(line),
-        (line) => !R_COMMENT.test(line),
+        (line) => R_HAS_ADDRESS.test(line) && !R_BANG_PREFIX.test(line),
+        (line) => !R_UPSTREAM_COMMENT.test(line),
     );
 
 /**
@@ -694,13 +697,14 @@ export const validateUpstreams = (value: string): string | undefined =>
  * @example validateDomainsPerLine("*.example.org")            // undefined (valid)
  * @example validateDomainsPerLine("||example.org^")           // undefined (valid)
  * @example validateDomainsPerLine("# comment")               // undefined (comments ok)
- * @example validateDomainsPerLine("notadomain")              // "Invalid format"
+ * @example validateDomainsPerLine("! ||example.org^")         // error (! not supported)
+ * @example validateDomainsPerLine("notadomain")              // error (no dot)
  */
 export const validateDomainsPerLine = (value: string): string | undefined =>
     validatePerLine(
         value,
-        (line) => R_HAS_DOT.test(line),
-        (line) => !R_COMMENT.test(line),
+        (line) => R_HAS_DOT.test(line) && !R_BANG_PREFIX.test(line),
+        (line) => !R_UPSTREAM_COMMENT.test(line),
     );
 
 interface LeaseEntry {

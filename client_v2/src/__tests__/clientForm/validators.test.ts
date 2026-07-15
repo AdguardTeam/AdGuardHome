@@ -503,20 +503,28 @@ describe('validateRewriteNotSame', () => {
     });
 });
 
-describe('validateUpstreams with bang comments', () => {
-    it('accepts lines starting with !', () => {
-        expect(validateUpstreams('! comment line\n8.8.8.8')).toBeUndefined();
+describe('validateUpstreams with bang prefix', () => {
+    it('rejects lines starting with ! as invalid upstreams', () => {
+        expect(validateUpstreams('! comment line\n8.8.8.8')).toBeTruthy();
     });
 
-    it('accepts only comment lines (!)', () => {
-        expect(validateUpstreams('! first\n! second')).toBeUndefined();
+    it('rejects only ! lines as invalid', () => {
+        expect(validateUpstreams('! first\n! second')).toBeTruthy();
+    });
+
+    it('rejects !-prefixed URLs that would otherwise pass address check', () => {
+        expect(validateUpstreams('! https://dns10.quad9.net/dns-query')).toBeTruthy();
+    });
+
+    it('rejects !-prefixed upstream with dot in comment', () => {
+        expect(validateUpstreams('! dns.example.com:53')).toBeTruthy();
     });
 
     it('still accepts # comments', () => {
         expect(validateUpstreams('# comment\n8.8.8.8')).toBeUndefined();
     });
 
-    it('rejects invalid non-comment lines alongside comments', () => {
+    it('rejects ! and invalid non-comment lines', () => {
         expect(validateUpstreams('! good\ninvalidline')).toBeTruthy();
     });
 });
