@@ -204,7 +204,6 @@ func (m *Registrar) Register(method, path string, h http.HandlerFunc) {
 
 // TLSConfigProvider is a fake [aghtls.TLSConfigProvider] implementation for
 // tests.
-// TODO(m.kazantsev):  Use in tests.
 type TLSConfigProvider struct {
 	OnTLSConfig func() (conf *tls.Config)
 	OnRootCAs   func() (cert *x509.CertPool)

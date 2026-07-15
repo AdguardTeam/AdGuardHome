@@ -19,6 +19,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghslog"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
@@ -124,6 +125,10 @@ type Server struct {
 	// PTR resolving.
 	sysResolvers SystemResolvers
 
+	// tlsConfigProvider provides TLS configuration for the server.  It must not
+	// be nil.
+	tlsConfigProvider aghtls.TLSConfigProvider
+
 	// access drops disallowed clients.
 	access *accessManager
 
@@ -169,10 +174,6 @@ type Server struct {
 	// [upstream.Resolver] interface.
 	bootResolvers []*upstream.UpstreamResolver
 
-	// dnsNames are the DNS names from certificate (SAN) or CN value from
-	// Subject.
-	dnsNames []string
-
 	// conf is the current configuration of the server.
 	conf ServerConfig
 
@@ -185,10 +186,6 @@ type Server struct {
 
 	// isRunning is true if the DNS server is running.
 	isRunning bool
-
-	// hasIPAddrs is set during the certificate parsing and is true if the
-	// configured certificate contains at least a single IP address.
-	hasIPAddrs bool
 }
 
 // defaultLocalDomainSuffix is the default suffix used to detect internal hosts
@@ -206,6 +203,10 @@ type DNSCreateParams struct {
 	PrivateNets netutil.SubnetSet
 	Anonymizer  *aghnet.IPMut
 	EtcHosts    *aghnet.HostsContainer
+
+	// TLSConfigProvider provides a TLS configuration for the server.  It must
+	// not be nil.
+	TLSConfigProvider aghtls.TLSConfigProvider
 
 	// Logger is used as a base logger.  It must not be nil.
 	Logger *slog.Logger
@@ -255,6 +256,7 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 		conf: ServerConfig{
 			ServePlainDNS: true,
 		},
+		tlsConfigProvider: p.TLSConfigProvider,
 	}
 
 	s.sysResolvers, err = sysresolv.NewSystemResolvers(nil, defaultPlainDNSPort)
@@ -478,8 +480,9 @@ func (s *Server) startLocked(ctx context.Context) error {
 	return err
 }
 
-// Prepare initializes parameters of s using data from conf.  conf must not be
-// nil.
+// Prepare initialises parameters of s using data from conf.  It can be called
+// from outside of the package only while the initialization. conf must be
+// non-nil and valid.
 func (s *Server) Prepare(ctx context.Context, conf *ServerConfig) (err error) {
 	s.conf = *conf
 

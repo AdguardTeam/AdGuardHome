@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/netutil"
@@ -41,10 +42,11 @@ func TestServer_filterDNSResponse(t *testing.T) {
 	f.SetEnabled(true)
 
 	s, err := NewServer(DNSCreateParams{
-		DHCPServer:  &testDHCP{},
-		DNSFilter:   f,
-		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
-		Logger:      testLogger,
+		DHCPServer:        &testDHCP{},
+		DNSFilter:         f,
+		PrivateNets:       netutil.SubnetSetFunc(netutil.IsLocallyServed),
+		Logger:            testLogger,
+		TLSConfigProvider: aghtls.EmptyTLSConfigProvider{},
 	})
 	require.NoError(t, err)
 

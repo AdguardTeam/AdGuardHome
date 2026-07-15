@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/netutil"
@@ -226,7 +227,14 @@ func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
 		resp.Answer = append(resp.Answer, ans)
 	}
 
-	if s.hasIPAddrs {
+	hasIPAddrs := false
+
+	tlsConf := s.tlsConfigProvider.TLSConfig()
+	if tlsConf != nil && len(tlsConf.Certificates) != 0 {
+		hasIPAddrs = aghtls.CertificateHasIP(tlsConf.Certificates[0].Leaf)
+	}
+
+	if hasIPAddrs {
 		// Only add DNS-over-TLS resolvers in case the certificate contains IP
 		// addresses.
 		//

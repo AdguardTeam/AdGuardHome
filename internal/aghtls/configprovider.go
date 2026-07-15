@@ -9,7 +9,6 @@ import (
 // must be safe for concurrent use.
 //
 // TODO(m.kazantsev):  Merge with the Manager interface.
-// TODO(m.kazantsev):  Add at least one real implementation.
 type TLSConfigProvider interface {
 	// TLSConfig returns a clone of the current TLS configuration.  conf
 	// provides its certificates via GetConfigForClient method.

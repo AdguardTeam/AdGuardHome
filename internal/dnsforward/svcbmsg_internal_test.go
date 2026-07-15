@@ -28,6 +28,7 @@ func TestGenAnswerHTTPS_andSVCB(t *testing.T) {
 			},
 			ServePlainDNS: true,
 		},
+		testTLSConfigProvider,
 	)
 
 	req := &dns.Msg{

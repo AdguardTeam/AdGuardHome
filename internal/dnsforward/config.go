@@ -17,7 +17,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghslog"
-	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/dnscrypt"
 	"github.com/AdguardTeam/dnsproxy/proxy"
@@ -191,16 +190,14 @@ type TLSConfig struct {
 	// It is nil if the DNSCrypt server is disabled.
 	DNSCryptConf *DNSCryptConfig
 
-	// Cert is the TLS certificate used for TLS connections.  It is nil if
-	// encryption is disabled.
-	Cert *tls.Certificate
-
 	// TLSListenAddrs are the addresses to listen on for DoT connections.  Each
-	// item in the list must be non-nil if Cert is not nil.
+	// item in the list must be non-nil if TLS has at least one valid
+	// certificate.
 	TLSListenAddrs []*net.TCPAddr
 
 	// QUICListenAddrs are the addresses to listen on for DoQ connections.  Each
-	// item in the list must be non-nil if Cert is not nil.
+	// item in the list must be non-nil if TLS has at least one valid
+	// certificate.
 	QUICListenAddrs []*net.UDPAddr
 
 	// HTTPSListenAddrs should be the addresses AdGuard Home is listening on for
@@ -326,6 +323,7 @@ const (
 )
 
 // newProxyConfig creates and validates configuration for the main proxy.
+// s.serverLock must be locked.
 //
 // TODO(d.kolyshev):  Improve maintainability.
 func (s *Server) newProxyConfig(ctx context.Context) (conf *proxy.Config, err error) {
@@ -385,10 +383,7 @@ func (s *Server) newProxyConfig(ctx context.Context) (conf *proxy.Config, err er
 		return nil, fmt.Errorf("bogus_nxdomain: %w", err)
 	}
 
-	err = s.prepareTLS(ctx, conf)
-	if err != nil {
-		return nil, fmt.Errorf("validating tls: %w", err)
-	}
+	s.prepareTLS(ctx, conf)
 
 	err = s.preparePlain(ctx, conf)
 	if err != nil {
@@ -707,55 +702,26 @@ func (s *Server) prepareDNSCrypt(proxyConf *proxy.Config) {
 	proxyConf.DNSCryptResolverCert = dnsCryptConf.ResolverCert
 }
 
-// prepareTLS sets up the TLS configuration for the DNS proxy.
-func (s *Server) prepareTLS(ctx context.Context, proxyConf *proxy.Config) (err error) {
+// prepareTLS sets up the TLS configuration for the DNS proxy.  s.serverLock
+// must be locked.  proxyConf must be non-nil and valid.
+func (s *Server) prepareTLS(ctx context.Context, proxyConf *proxy.Config) {
 	s.prepareDNSCrypt(proxyConf)
 
-	if s.conf.TLSConf.Cert == nil {
-		return nil
-	}
-
 	if s.conf.TLSConf.TLSListenAddrs == nil && s.conf.TLSConf.QUICListenAddrs == nil {
-		return nil
+		return
 	}
 
 	proxyConf.TLSListenAddr = s.conf.TLSConf.TLSListenAddrs
 	proxyConf.QUICListenAddr = s.conf.TLSConf.QUICListenAddrs
 
-	cert, err := x509.ParseCertificate(s.conf.TLSConf.Cert.Certificate[0])
-	if err != nil {
-		return fmt.Errorf("x509.ParseCertificate(): %w", err)
+	proxyConf.TLSConfig = s.tlsConfigProvider.TLSConfig()
+	if proxyConf.TLSConfig == nil || len(proxyConf.TLSConfig.Certificates) == 0 {
+		s.logger.WarnContext(ctx, "tls configuration is not set or has no certificates")
+
+		return
 	}
 
-	s.hasIPAddrs = aghtls.CertificateHasIP(cert)
-
-	if s.conf.TLSConf.StrictSNICheck {
-		if len(cert.DNSNames) != 0 {
-			s.dnsNames = cert.DNSNames
-			s.logger.DebugContext(
-				ctx,
-				"using certificate's SAN as DNS names",
-				"dns_names", cert.DNSNames,
-			)
-			slices.Sort(s.dnsNames)
-		} else {
-			s.dnsNames = []string{cert.Subject.CommonName}
-			s.logger.DebugContext(
-				ctx,
-				"using certificate's CN as DNS name",
-				"common_name",
-				cert.Subject.CommonName,
-			)
-		}
-	}
-
-	proxyConf.TLSConfig = &tls.Config{
-		GetCertificate: s.onGetCertificate,
-		CipherSuites:   s.conf.TLSCiphers,
-		MinVersion:     tls.VersionTLS12,
-	}
-
-	return nil
+	s.replaceGetCertificate(proxyConf.TLSConfig)
 }
 
 // isWildcard returns true if host is a wildcard hostname.
@@ -790,22 +756,38 @@ func anyNameMatches(dnsNames []string, sni string) (ok bool) {
 	return false
 }
 
-// onGetCertificate is called by [tls] package when Client Hello is received. If
-// the server name (from SNI) supplied by client is incorrect - we terminate the
-// ongoing TLS handshake.
-func (s *Server) onGetCertificate(ch *tls.ClientHelloInfo) (*tls.Certificate, error) {
-	if s.conf.TLSConf.StrictSNICheck && !anyNameMatches(s.dnsNames, ch.ServerName) {
-		// TODO(s.chzhen):  Pass context.
-		s.logger.WarnContext(
-			context.TODO(),
-			"unknown SNI in Client Hello",
-			"server_name", ch.ServerName,
-		)
+// replaceGetCertificate replaces the TLS.Config.GetCertificate with a wrapped
+// version of the previous one, adding a SNI check.  orig must not be nil.
+func (s *Server) replaceGetCertificate(orig *tls.Config) {
+	origGetCert := orig.GetCertificate
 
-		return nil, fmt.Errorf("invalid SNI")
+	orig.GetCertificate = func(chi *tls.ClientHelloInfo) (cert *tls.Certificate, err error) {
+		if len(orig.Certificates) == 0 {
+			return nil, errors.Error("tls certificate is not set")
+		}
+
+		tlsCert := orig.Certificates[0]
+
+		if tlsCert.Leaf == nil {
+			return nil, errors.Error("error while parsing tls certificate: leaf is nil")
+		}
+
+		dnsNames := tlsCert.Leaf.DNSNames
+		if s.conf.TLSConf.StrictSNICheck && !anyNameMatches(dnsNames, chi.ServerName) {
+			s.logger.Warn(
+				"unknown sni in client hello",
+				"server_name", chi.ServerName,
+			)
+
+			return nil, errors.Error("invalid sni")
+		}
+
+		if origGetCert != nil {
+			return origGetCert(chi)
+		}
+
+		return nil, errors.Error("get certificate is not set")
 	}
-
-	return s.conf.TLSConf.Cert, nil
 }
 
 // preparePlain prepares the plain-DNS configuration for the DNS proxy. The
