@@ -88,6 +88,7 @@ export const IgnoredDomainsModal = (props: Props) => {
                 placeholder={`example.com\n*.example.com\n||example.com^`}
                 size="large"
                 disabled={props.processing}
+                highlightComments
             />
         </ConfigDialog>
     );
