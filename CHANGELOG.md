@@ -24,6 +24,10 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - The user is able to remove the static lease's hostname via the HTTP API.
 
+### Changed
+
+- The `edge` channel has been switched to the new UI and versioning scheme.
+
 ### Fixed
 
 - Blocked requests without an EDNS(0) OPT record ([#8183]).
