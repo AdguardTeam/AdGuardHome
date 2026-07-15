@@ -9,6 +9,7 @@
     # flaky test suite.
     'cacheBuster': '0'
     'channel': 'development'
+    'clientDir': 'client'
     'dockerFrontend': 'adguard/home-js-builder:4.0'
     'dockerGo': 'adguard/go-builder:1.26.5--1'
 
@@ -58,8 +59,9 @@
                 docker info
 
                 docker build \
-                    --build-arg "BASE_IMAGE=${bamboo.dockerFrontend}" \
+                    --build-arg "BASE_IMAGE=${bamboo_dockerFrontend}" \
                     --build-arg "CACHE_BUSTER=${bamboo_cacheBuster}" \
+                    --build-arg "CLIENT_DIR=${bamboo_clientDir}" \
                     --output '.' \
                     --progress 'plain' \
                     --target 'tester' \
@@ -127,8 +129,9 @@
                 docker info
 
                 docker build \
-                    --build-arg "BASE_IMAGE=${bamboo.dockerFrontend}" \
+                    --build-arg "BASE_IMAGE=${bamboo_dockerFrontend}" \
                     --build-arg "CACHE_BUSTER=${bamboo_cacheBuster}" \
+                    --build-arg "CLIENT_DIR=${bamboo_clientDir}" \
                     --output '.' \
                     --progress 'plain' \
                     --target 'builder-exporter' \
@@ -216,8 +219,9 @@
                 docker info
 
                 docker build \
-                    --build-arg "BASE_IMAGE=${bamboo.dockerFrontend}" \
+                    --build-arg "BASE_IMAGE=${bamboo_dockerFrontend}" \
                     --build-arg "CACHE_BUSTER=${bamboo_cacheBuster}" \
+                    --build-arg "CLIENT_DIR=${bamboo_clientDir}" \
                     --output '.' \
                     --progress 'plain' \
                     --target 'e2etester' \
@@ -254,6 +258,7 @@
         # Set the default release channel on the release branch to beta, as we
         # may need to build a few of these.
         'variables':
+            'channel': 'candidate'
+            'clientDir': 'client'
             'dockerFrontend': 'adguard/home-js-builder:4.0'
             'dockerGo': 'adguard/go-builder:1.26.5--1'
-            'channel': 'candidate'
