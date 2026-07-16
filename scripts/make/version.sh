@@ -85,6 +85,19 @@ case "$channel" in
 	version="v0.0.0-dev.${commit_number}+$(git rev-parse --short HEAD)"
 	;;
 'edge')
+	# TODO(a.garipov):  Remove this and use edge_todo below instead once v1.0.0
+	# is out.
+
+	# Temporarily, use the last v0.108.0 beta as the starting point for the
+	# v1.0.0 alpha (edge, nightly) releases.
+	num_commits="$(git rev-list --count "v0.108.0-b.89..HEAD")"
+	readonly num_commits
+
+	version="v1.0.0-a.${num_commits}+$(git rev-parse --short HEAD)"
+	;;
+'edge_todo')
+	# TODO(a.garipov):  Use this again once v1.0.0 is out.
+
 	# last_minor_zero is the last new minor release.
 	last_minor_zero="$(get_last_minor_zero)"
 	readonly last_minor_zero

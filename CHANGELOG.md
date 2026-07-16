@@ -18,6 +18,22 @@ See also the [v0.107.79 GitHub milestone][ms-v0.107.79].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Added
+
+- New property `"language"` in `POST /control/install/check_config` and `POST /control/install/configure` HTTP APIs.
+
+- The user is able to remove the static lease's hostname via the HTTP API.
+
+### Changed
+
+- The `edge` channel has been switched to the new UI and versioning scheme.
+
+### Fixed
+
+- Blocked requests without an EDNS(0) OPT record ([#8183]).
+
+[#8183]: https://github.com/AdguardTeam/AdGuardHome/issues/8183
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
@@ -61,8 +77,6 @@ See also the [v0.107.78 GitHub milestone][ms-v0.107.78].
 #### Configuration changes
 
 - The `filtering` object of the YAML configuration now includes a new property, `max_http_size`, which defines the maximum size of the HTTP request for rulelists. To disable the limitation, set a large size, such as `1 TB`.
-
-### Fixed
 
 - Invalid AA flag in DNS responses ([#7955]).
 

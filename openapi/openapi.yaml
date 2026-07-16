@@ -1,4 +1,4 @@
-'openapi': '3.0.3'
+'openapi': '3.2.0'
 'info':
   'title': 'AdGuard Home'
   'description': >
@@ -1543,8 +1543,7 @@
           'type': 'string'
           'example': 'v0.123.4'
         'language':
-          'type': 'string'
-          'example': 'en'
+          '$ref': '#/components/schemas/Lang'
         'start_time':
           'type': 'number'
           'format': 'double'
@@ -2685,7 +2684,7 @@
         'name':
           'type': 'string'
         'language':
-          'type': 'string'
+          '$ref': '#/components/schemas/Lang'
         'theme':
           'type': 'string'
           'description': 'Interface theme'
@@ -3159,11 +3158,13 @@
       'properties':
         'dns':
           '$ref': '#/components/schemas/CheckConfigRequestInfo'
-        'web':
-          '$ref': '#/components/schemas/CheckConfigRequestInfo'
+        'language':
+          '$ref': '#/components/schemas/Lang'
         'set_static_ip':
           'type': 'boolean'
           'example': false
+        'web':
+          '$ref': '#/components/schemas/CheckConfigRequestInfo'
     'CheckConfigRequestInfo':
       'type': 'object'
       'properties':
@@ -3181,15 +3182,18 @@
       'type': 'object'
       'required':
       - 'dns'
-      - 'web'
+      - 'language'
       - 'static_ip'
+      - 'web'
       'properties':
         'dns':
           '$ref': '#/components/schemas/CheckConfigResponseInfo'
-        'web':
+        'language':
           '$ref': '#/components/schemas/CheckConfigResponseInfo'
         'static_ip':
           '$ref': '#/components/schemas/CheckConfigStaticIpInfo'
+        'web':
+          '$ref': '#/components/schemas/CheckConfigResponseInfo'
     'CheckConfigResponseInfo':
       'type': 'object'
       'required':
@@ -3231,21 +3235,23 @@
       'required':
       - 'dns'
       - 'web'
-      - 'username'
       - 'password'
+      - 'username'
       'properties':
         'dns':
           '$ref': '#/components/schemas/AddressInfo'
         'web':
           '$ref': '#/components/schemas/AddressInfo'
-        'username':
-          'type': 'string'
-          'description': 'Basic auth username'
-          'example': 'admin'
+        'language':
+          '$ref': '#/components/schemas/Lang'
         'password':
-          'type': 'string'
           'description': 'Basic auth password'
           'example': 'password'
+          'type': 'string'
+        'username':
+          'description': 'Basic auth username'
+          'example': 'admin'
+          'type': 'string'
     'Login':
       'type': 'object'
       'description': 'Login request data'
@@ -3267,11 +3273,52 @@
       'description': 'Language settings object.'
       'properties':
         'language':
-          'description': 'The current language or the language to set.'
-          'type': 'string'
+          '$ref': '#/components/schemas/Lang'
       'required':
       - 'language'
       'type': 'object'
+    'Lang':
+      'description': >
+        Language code.
+      # Hold the enum in sync with .twosky.json.
+      'enum':
+      - 'ar'
+      - 'be'
+      - 'bg'
+      - 'cs'
+      - 'da'
+      - 'de'
+      - 'en'
+      - 'es'
+      - 'fa'
+      - 'fi'
+      - 'fr'
+      - 'hr'
+      - 'hu'
+      - 'id'
+      - 'it'
+      - 'ja'
+      - 'ko'
+      - 'nl'
+      - 'no'
+      - 'pl'
+      - 'pt-br'
+      - 'pt-pt'
+      - 'ro'
+      - 'ru'
+      - 'si-lk'
+      - 'sk'
+      - 'sl'
+      - 'sr-cs'
+      - 'sv'
+      - 'th'
+      - 'tr'
+      - 'uk'
+      - 'vi'
+      - 'zh-cn'
+      - 'zh-hk'
+      - 'zh-tw'
+      'type': 'string'
   'securitySchemes':
     'basicAuth':
       'type': 'http'
