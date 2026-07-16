@@ -47,7 +47,6 @@ export const LanguageDropdown = (props: LanguageDropdownProps) => {
 
     return (
         <Dropdown
-            trigger="click"
             open={open()}
             onOpenChange={setOpen}
             menu={

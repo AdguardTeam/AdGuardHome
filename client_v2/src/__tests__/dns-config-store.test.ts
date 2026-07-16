@@ -26,7 +26,7 @@ import { getDnsConfig, dnsConfigState, toggleResolveClients } from 'panel/stores
 describe('getDnsConfig', () => {
     beforeEach(() => vi.clearAllMocks());
 
-    it('defaults null blocking IPs and empty upstream_mode (FR-012)', async () => {
+    it('defaults null blocking IPs and empty upstream_mode', async () => {
         mocks.getDnsConfig.mockResolvedValue({
             blocking_ipv4: null,
             blocking_ipv6: null,
@@ -42,7 +42,7 @@ describe('getDnsConfig', () => {
 describe('toggleResolveClients', () => {
     beforeEach(() => vi.clearAllMocks());
 
-    it('toggles resolve_clients and persists (FR-032)', async () => {
+    it('toggles resolve_clients and persists', async () => {
         mocks.setDnsConfig.mockResolvedValue({});
 
         const before = dnsConfigState.resolve_clients;
@@ -54,7 +54,7 @@ describe('toggleResolveClients', () => {
         expect(dnsConfigState.resolve_clients).toBe(before);
     });
 
-    it('calls apiClient.setDnsConfig with inverted value (FR-032)', async () => {
+    it('calls apiClient.setDnsConfig with inverted value', async () => {
         mocks.setDnsConfig.mockResolvedValue({});
 
         const before = dnsConfigState.resolve_clients;

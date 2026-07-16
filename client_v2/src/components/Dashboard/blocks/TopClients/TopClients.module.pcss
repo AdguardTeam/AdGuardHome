@@ -116,6 +116,8 @@
 }
 
 .queryTooltip {
+    font-size: var(--fs-text-t3);
+    line-height: var(--lh-t3-normal);
     padding: 8px 12px;
     white-space: nowrap;
 }
@@ -148,13 +150,15 @@
     padding: 16px 24px 24px;
     transition: background-color var(--t2);
     border-bottom: 1px solid var(--default-item-divider);
+    border-radius: 4px;
 
     @media (min-width: 768px) {
         padding: 8px 16px;
         border: none;
     }
 
-    &:hover {
+    &:hover,
+    &:focus {
         background-color: var(--hovered-page-background);
     }
 
@@ -202,15 +206,16 @@
 }
 
 .actionButton {
-    padding: 4px;
+    padding: 0;
     background: none;
     border: none;
     cursor: pointer;
-    color: var(--default-secondary-text);
+    color: var(--default-description-text);
     border-radius: 4px;
     transition: background-color 0.2s;
 
-    &:hover {
+    &:hover,
+    &:focus {
         background-color: var(--hovered-secondary-button);
     }
 }

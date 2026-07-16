@@ -53,8 +53,12 @@ export const ScheduleRow = (props: Props) => {
 
     return (
         <div class={s.scheduleRow} data-testid={`schedule-row-${props.day}`}>
-            <div class={s.dayName} data-testid={`schedule-row-${props.day}-day`}>{dayName()}</div>
-            <div class={s.timeDisplay} data-testid={`schedule-row-${props.day}-time`}>{getTimeDisplay()}</div>
+            <div class={s.dayName} data-testid={`schedule-row-${props.day}-day`}>
+                {dayName()}
+            </div>
+            <div class={s.timeDisplay} data-testid={`schedule-row-${props.day}-time`}>
+                {getTimeDisplay()}
+            </div>
             <Show
                 when={isConfigured()}
                 fallback={
@@ -98,7 +102,6 @@ export const ScheduleRow = (props: Props) => {
                 </div>
                 <div class={cn(s.actions, s.actionsMobile)}>
                     <Dropdown
-                        trigger="click"
                         position="bottomRight"
                         noIcon
                         open={dropdownOpen()}

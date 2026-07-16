@@ -4,6 +4,7 @@ import { MOBILE_TABLE_MAX_ROWS } from 'panel/helpers/constants';
 
 import intl from 'panel/common/intl';
 import { Icon } from 'panel/common/ui/Icon';
+import { Tooltip } from 'panel/common/ui/Tooltip';
 import { Dropdown } from 'panel/common/ui/Dropdown';
 import { ConfirmDialog } from 'panel/common/ui/ConfirmDialog';
 import { formatNumber, formatCompactNumber } from 'panel/helpers/helpers';
@@ -186,14 +187,10 @@ export const TopClients = (props: Props) => {
 
                                     <div class={s.tableRowRight}>
                                         <div class={s.dropdowWrapper}>
-                                            <Dropdown
-                                                trigger="hover"
+                                            <Tooltip
                                                 position="top"
-                                                noIcon
-                                                disableAnimation
                                                 overlayClass={s.queryTooltipOverlay}
-                                                wrapClass={s.queryTooltipWrap}
-                                                menu={
+                                                content={
                                                     <div class={s.queryTooltip}>
                                                         {formatNumber(client.count)}{' '}
                                                         {intl.getMessage('queries').toLowerCase()}
@@ -220,7 +217,7 @@ export const TopClients = (props: Props) => {
                                                         ({percent().toFixed(1)}%)
                                                     </div>
                                                 </div>
-                                            </Dropdown>
+                                            </Tooltip>
                                         </div>
 
                                         <div class={s.queryBar}>
@@ -229,21 +226,23 @@ export const TopClients = (props: Props) => {
                                                 style={{ width: `${percent()}%` }}
                                             />
                                         </div>
-                                        <Dropdown
-                                            wrapClass={s.clientActionsDropdown}
-                                            menu={getClientMenu(client)}
-                                            trigger="click"
-                                            position="bottomRight"
-                                            noIcon
-                                            open={openMenuClient() === client.name}
-                                            onOpenChange={(isOpen: boolean) =>
-                                                setOpenMenuClient(isOpen ? client.name : null)
-                                            }
-                                        >
-                                            <button type="button" class={s.actionButton}>
-                                                <Icon icon="bullets" />
-                                            </button>
-                                        </Dropdown>
+
+                                        <div class={s.dropdownWrapper}>
+                                            <Dropdown
+                                                wrapClass={s.clientActionsDropdown}
+                                                menu={getClientMenu(client)}
+                                                position="bottomRight"
+                                                noIcon
+                                                open={openMenuClient() === client.name}
+                                                onOpenChange={(isOpen: boolean) =>
+                                                    setOpenMenuClient(isOpen ? client.name : null)
+                                                }
+                                            >
+                                                <button type="button" class={s.actionButton}>
+                                                    <Icon icon="bullets" />
+                                                </button>
+                                            </Dropdown>
+                                        </div>
 
                                         <Show when={isBlocked}>
                                             <div

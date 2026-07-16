@@ -4,7 +4,6 @@ import { accessState, setAccessList } from 'panel/stores/access';
 import intl from 'panel/common/intl';
 import { ConfigDialog } from 'panel/common/ui/ConfigDialog';
 import { Textarea } from 'panel/common/controls/Textarea';
-import { validateDomainsPerLine } from 'panel/helpers/validators';
 import { useField } from 'panel/hooks/useField';
 import theme from 'panel/lib/theme';
 
@@ -18,7 +17,6 @@ export const DisallowedDomainsDialog = (props: Props) => {
     const field = useField<string>(
         () => props.open(),
         () => accessState.blocked_hosts,
-        { validate: (v) => (v ? validateDomainsPerLine(v) || '' : '') },
     );
 
     return (

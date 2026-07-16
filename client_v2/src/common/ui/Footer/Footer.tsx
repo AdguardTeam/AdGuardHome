@@ -83,20 +83,25 @@ export const Footer = () => {
                                 value: dashboardState.dnsVersion,
                             })}
 
-                            <button
-                                type="button"
-                                class={cn(s.checkUpdateBtn, {
-                                    [s.checkUpdateBtn_loading]: dashboardState.processingVersion,
-                                })}
-                                aria-label={intl.getMessage('check_updates_btn')}
-                                disabled={dashboardState.processingVersion}
-                                data-testid="footer-check-updates"
-                                onClick={() => getVersion(true)}
-                            >
-                                <Icon
-                                    icon={dashboardState.processingVersion ? 'loader' : 'refresh'}
-                                />
-                            </button>
+                            <Show when={dashboardState.checkUpdateFlag}>
+                                <button
+                                    type="button"
+                                    class={cn(s.checkUpdateBtn, {
+                                        [s.checkUpdateBtn_loading]:
+                                            dashboardState.processingVersion,
+                                    })}
+                                    aria-label={intl.getMessage('check_updates_btn')}
+                                    disabled={dashboardState.processingVersion}
+                                    data-testid="footer-check-updates"
+                                    onClick={() => getVersion(true)}
+                                >
+                                    <Icon
+                                        icon={
+                                            dashboardState.processingVersion ? 'loader' : 'refresh'
+                                        }
+                                    />
+                                </button>
+                            </Show>
                         </div>
                     </Show>
 
@@ -118,7 +123,6 @@ export const Footer = () => {
 
                 <div class={s.dropdownWrapper}>
                     <Dropdown
-                        trigger="click"
                         open={themeDropdownOpen()}
                         onOpenChange={setThemeDropdownOpen}
                         menu={

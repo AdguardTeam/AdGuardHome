@@ -95,7 +95,6 @@ export const FiltersList = (props: Props) => {
                                                     {name}
                                                 </Checkbox>
                                                 <Dropdown
-                                                    trigger="click"
                                                     menu={
                                                         <div class={theme.dropdown.menu}>
                                                             <a

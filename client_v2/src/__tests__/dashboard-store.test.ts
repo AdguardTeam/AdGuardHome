@@ -29,7 +29,7 @@ import { getDnsStatus } from 'panel/stores/dashboard';
 describe('getDnsStatus', () => {
     beforeEach(() => vi.clearAllMocks());
 
-    it('fetches TLS status when the core is running (FR-005)', async () => {
+    it('fetches TLS status when the core is running', async () => {
         mocks.getGlobalVersion.mockResolvedValue({
             disabled: true,
             new_version: 'x',

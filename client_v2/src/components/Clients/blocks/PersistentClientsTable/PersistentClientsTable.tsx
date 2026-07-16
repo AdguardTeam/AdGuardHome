@@ -7,7 +7,7 @@ import type { Client, NormalizedTopClients } from 'panel/initialState';
 import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from 'panel/helpers/localStorageHelper';
 import { Table, type TableColumn } from 'panel/common/ui/Table';
 import { Icon } from 'panel/common/ui/Icon';
-import { Dropdown } from 'panel/common/ui/Dropdown';
+import { Tooltip } from 'panel/common/ui/Tooltip';
 import { addSuccessToast } from 'panel/stores/toasts';
 import theme from 'panel/lib/theme';
 
@@ -73,11 +73,9 @@ export const PersistentClientsTable = (props: Props) => {
                                         {firstId}
                                     </span>
                                     <Show when={hiddenCount > 0}>
-                                        <Dropdown
-                                            trigger="hover"
-                                            noIcon
+                                        <Tooltip
                                             overlayClass={s.idsTooltipOverlay}
-                                            menu={
+                                            content={
                                                 <div class={s.idsTooltip}>
                                                     <For each={nonEmpty}>
                                                         {(id) => (
@@ -104,7 +102,7 @@ export const PersistentClientsTable = (props: Props) => {
                                             }
                                         >
                                             <span class={s.countLabel}>{hiddenCount}</span>
-                                        </Dropdown>
+                                        </Tooltip>
                                     </Show>
                                 </div>
                             </div>
@@ -125,11 +123,9 @@ export const PersistentClientsTable = (props: Props) => {
                         <span class={theme.table.cellLabel}>{intl.getMessage('name')}</span>
 
                         <div class={theme.table.cellValueText}>
-                            <Dropdown
-                                trigger="hover"
-                                noIcon
+                            <Tooltip
                                 overlayClass={s.nameTooltipOverlay}
-                                menu={
+                                content={
                                     <div class={s.nameTooltip}>
                                         <span class={s.nameTooltipText}>{value}</span>
                                         <button
@@ -142,13 +138,12 @@ export const PersistentClientsTable = (props: Props) => {
                                         </button>
                                     </div>
                                 }
-                                class={s.nameDropdown}
-                                childrenClass={s.nameDropdownInner}
+                                class={s.nameDropdownInner}
                             >
                                 <span class={cn(theme.common.textOverflow, s.nameTrigger)}>
                                     {value}
                                 </span>
-                            </Dropdown>
+                            </Tooltip>
                         </div>
                     </div>
                 ),

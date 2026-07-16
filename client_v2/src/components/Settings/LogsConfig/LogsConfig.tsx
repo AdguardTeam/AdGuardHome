@@ -3,7 +3,11 @@ import { createSignal, createEffect, Show, on } from 'solid-js';
 import { ConfirmDialog } from 'panel/common/ui/ConfirmDialog';
 import { ConfigDialog } from 'panel/common/ui/ConfigDialog';
 import intl from 'panel/common/intl';
-import { formatIntervalText, resolveInterval } from 'panel/components/Settings/helpers';
+import {
+    formatIntervalText,
+    resolveInterval,
+    buildQueryLogConfig,
+} from 'panel/components/Settings/helpers';
 import { setLogsConfig, queryLogsState } from 'panel/stores/queryLogs';
 
 import { Form, FormValues } from './Form';
@@ -70,14 +74,7 @@ export const LogsConfig = (props: Props) => {
             setConfirmConfig({ interval: newInterval });
         } else {
             // Save with all required fields from current state
-            setLogsConfig({
-                enabled: queryLogsState.enabled,
-                anonymize_client_ip: queryLogsState.anonymize_client_ip,
-                ignored: queryLogsState.ignored,
-                ignored_enabled: queryLogsState.ignored_enabled,
-                interval: newInterval,
-                customInterval: values.customInterval,
-            });
+            setLogsConfig(buildQueryLogConfig(queryLogsState, { interval: newInterval }));
             addSuccessToast(intl.getMessage('changes_saved_success'));
             props.onModalClose();
         }
@@ -86,14 +83,7 @@ export const LogsConfig = (props: Props) => {
     const handleConfirmDecrease = () => {
         const config = confirmConfig();
         if (config) {
-            setLogsConfig({
-                enabled: queryLogsState.enabled,
-                anonymize_client_ip: queryLogsState.anonymize_client_ip,
-                ignored: queryLogsState.ignored,
-                ignored_enabled: queryLogsState.ignored_enabled,
-                interval: config.interval,
-                customInterval: formValues().customInterval,
-            });
+            setLogsConfig(buildQueryLogConfig(queryLogsState, { interval: config.interval }));
             addSuccessToast(intl.getMessage('changes_saved_success'));
             props.onModalClose();
         }

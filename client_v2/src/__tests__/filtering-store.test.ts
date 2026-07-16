@@ -31,7 +31,7 @@ vi.mock('panel/stores/toasts', () => ({
 describe('getFilteringStatus', () => {
     beforeEach(() => vi.clearAllMocks());
 
-    it('normalizes filters to camelCase and joins user_rules array (FR-003)', async () => {
+    it('normalizes filters to camelCase and joins user_rules array', async () => {
         mocks.apiGetFilteringStatus.mockResolvedValue({
             enabled: true,
             interval: 24,
@@ -68,7 +68,7 @@ describe('setRules', () => {
         vi.clearAllMocks();
     });
 
-    it('sends user_rules as a string array (FR-021)', async () => {
+    it('sends user_rules as a string array', async () => {
         const result = await setRules('||fresh.example^\n');
 
         expect(mocks.apiSetRules).toHaveBeenCalledWith({

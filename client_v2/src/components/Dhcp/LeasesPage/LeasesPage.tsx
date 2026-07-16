@@ -108,7 +108,6 @@ export const LeasesPage = () => {
                     </h1>
                     <div class={s.headerActions}>
                         <Dropdown
-                            trigger="click"
                             position="bottomRight"
                             noIcon
                             open={menuOpen()}

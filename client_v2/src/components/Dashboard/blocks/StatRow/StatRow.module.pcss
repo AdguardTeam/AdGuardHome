@@ -5,6 +5,7 @@
     flex-wrap: wrap;
     gap: 0 24px;
     padding: 16px;
+    min-height: 40px;
     transition: background-color var(--t2);
 
     @media (min-width: 768px) {
@@ -14,17 +15,14 @@
 
     &.dnsQueries {
         & .tableRowIcon {
-            stroke: var(--default-gray-icons);
+            color: var(--default-gray-icons);
         }
     }
 
     &.adsBlocked {
-        & .queryCount {
-            color: var(--default-error-link);
-        }
-
+        & .queryCount,
         & .tableRowIcon {
-            stroke: var(--default-error-icon);
+            color: var(--default-error-icon);
         }
 
         & .queryBarFill {
@@ -33,12 +31,9 @@
     }
 
     &.threatsBlocked {
-        & .queryCount {
-            color: var(--default-attention-icon-stroke);
-        }
-
+        & .queryCount,
         & .tableRowIcon {
-            stroke: var(--default-attention-icon-stroke);
+            color: var(--default-attention-icon-stroke);
         }
 
         & .queryBarFill {
@@ -47,12 +42,9 @@
     }
 
     &.adultWebsitesBlocked {
-        & .queryCount {
-            color: var(--default-product-secondary-icon-stroke);
-        }
-
+        & .queryCount,
         & .tableRowIcon {
-            stroke: var(--default-product-secondary-icon-stroke);
+            color: var(--default-product-secondary-icon-stroke);
         }
 
         & .queryBarFill {
@@ -61,18 +53,21 @@
     }
 
     &.safeSearchUsed {
-        & .queryCount {
-            color: var(--default-product-icon);
-        }
-
+        & .queryCount,
         & .tableRowIcon {
-            stroke: var(--default-product-icon);
+            color: var(--default-product-icon);
         }
 
         & .queryBarFill {
             background: var(--default-product-icon);
         }
     }
+}
+
+.statRowDropdown {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
 }
 
 .statRowLeft {
@@ -84,7 +79,7 @@
 .statRowIcon {
     width: 20px;
     height: 20px;
-    color: var(--default-secondary-text);
+    color: var(--default-description-text);
 }
 
 .statRowLabel {
@@ -104,7 +99,7 @@
 
 .statRowPercent {
     font-size: 12px;
-    color: var(--default-secondary-text);
+    color: var(--default-description-text);
     margin-left: 4px;
 }
 
@@ -159,6 +154,8 @@
 }
 
 .queryTooltip {
+    font-size: var(--fs-text-t3);
+    line-height: var(--lh-t3-normal);
     padding: 8px 12px;
     white-space: nowrap;
 }

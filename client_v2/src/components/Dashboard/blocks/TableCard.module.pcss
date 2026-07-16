@@ -46,10 +46,17 @@
     flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
+    min-height: 40px;
     gap: 0 24px;
     padding: 16px 24px 24px;
     transition: background-color var(--t2);
+    border-radius: 8px;
     border-bottom: 1px solid var(--default-item-divider);
+
+    &:hover,
+    &:focus {
+        background-color: var(--hovered-page-background);
+    }
 
     @media (min-width: 768px) {
         padding: 8px 16px;
@@ -148,6 +155,8 @@
 }
 
 .queryTooltip {
+    font-size: var(--fs-text-t3);
+    line-height: var(--lh-t3-normal);
     padding: 8px 12px;
     white-space: nowrap;
 }

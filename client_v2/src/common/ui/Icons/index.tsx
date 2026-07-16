@@ -872,6 +872,7 @@ export const Icons = () => (
             id="connections"
             fill="none"
             viewBox="0 0 24 24"
+            stroke="currentColor"
             stroke-linecap="round"
             stroke-linejoin="round"
             stroke-width="1.5"
@@ -884,7 +885,7 @@ export const Icons = () => (
             <path d="m5.5 17h13" />
         </symbol>
 
-        <symbol id="adblocking" viewBox="0 0 24 24" fill="none">
+        <symbol id="adblocking" viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path
                 fill-rule="evenodd"
                 clip-rule="evenodd"
@@ -895,7 +896,7 @@ export const Icons = () => (
             <path d="M4 21L20 3" stroke-width="1.5" stroke-linecap="round" />
         </symbol>
 
-        <symbol id="parental" viewBox="0 0 24 24" fill="none">
+        <symbol id="parental" viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <circle
                 cx="6.76196"
                 cy="17.2381"
@@ -927,7 +928,7 @@ export const Icons = () => (
             />
         </symbol>
 
-        <symbol id="time" viewBox="0 0 24 24" fill="none">
+        <symbol id="time" viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <circle
                 cx="12"
                 cy="12"

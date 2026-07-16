@@ -2,7 +2,7 @@ import { Show } from 'solid-js';
 import cn from 'clsx';
 
 import intl from 'panel/common/intl';
-import { Dropdown } from 'panel/common/ui/Dropdown';
+import { Tooltip } from 'panel/common/ui/Tooltip';
 import theme from 'panel/lib/theme';
 import { Icon } from 'panel/common/ui/Icon';
 import { getProtocolName } from 'panel/components/QueryLog/helpers';
@@ -28,17 +28,15 @@ export const RequestCell = (props: Props) => {
                     </span>
 
                     <div class={s.requestIcons}>
-                        <Dropdown
-                            trigger="hover"
+                        <Tooltip
                             position="bottomLeft"
                             overlayClass={s.iconTooltipOverlay}
-                            menu={
+                            content={
                                 <div class={cn(theme.dropdown.menu, s.queryDetailsTooltipMenu)}>
                                     <QueryDetailsTooltipContent row={props.row} />
                                 </div>
                             }
-                            childrenClass={s.iconTooltipTrigger}
-                            noIcon
+                            class={s.iconTooltipTrigger}
                         >
                             <button
                                 type="button"
@@ -53,23 +51,21 @@ export const RequestCell = (props: Props) => {
                                     class={s.requestIcon}
                                 />
                             </button>
-                        </Dropdown>
+                        </Tooltip>
 
                         <Show when={props.row.answer_dnssec}>
-                            <Dropdown
-                                trigger="hover"
+                            <Tooltip
                                 position="bottomLeft"
                                 overlayClass={s.iconTooltipOverlay}
-                                menu={
+                                content={
                                     <div class={cn(theme.dropdown.menu, s.iconTooltipMenu)}>
                                         {intl.getMessage('validated_with_dnssec')}
                                     </div>
                                 }
-                                childrenClass={s.iconTooltipTrigger}
-                                noIcon
+                                class={s.iconTooltipTrigger}
                             >
                                 <Icon icon="lock" color="green" class={s.requestIcon} />
-                            </Dropdown>
+                            </Tooltip>
                         </Show>
                     </div>
                 </div>

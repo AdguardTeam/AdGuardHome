@@ -30,7 +30,6 @@ type Props = Omit<
 };
 
 export const Textarea = (props: Props) => {
-    const [scrollTop, setScrollTop] = createSignal(0);
     const [currentValue, setCurrentValue] = createSignal('');
 
     // Sync from external prop changes (e.g. dialog open/close resets);
@@ -41,6 +40,16 @@ export const Textarea = (props: Props) => {
     });
 
     const highlightEnabled = () => !!props.highlightComments;
+
+    // Convert rows to CSS height for the shared scroll container.
+    // line-height: 1.3 * font-size: 16px = 20.8px per row.
+    // Add 34px for overlay padding (16px × 2) + scrollArea border (1px × 2).
+    const LINE_HEIGHT_PX = 20.8;
+    const CHROME_PX = 34;
+    const scrollAreaStyle = (): JSX.CSSProperties | undefined => {
+        if (!highlightEnabled() || props.rows == null) return undefined;
+        return { height: `${Number(props.rows) * LINE_HEIGHT_PX + CHROME_PX}px` };
+    };
 
     const setRef = (el: HTMLTextAreaElement) => {
         if (typeof props.ref === 'function') {
@@ -64,7 +73,6 @@ export const Textarea = (props: Props) => {
     const handleScroll = (
         e: Event & { currentTarget: HTMLTextAreaElement; target: HTMLTextAreaElement },
     ) => {
-        setScrollTop(e.target.scrollTop);
         props.onScroll?.(e);
     };
 
@@ -75,38 +83,63 @@ export const Textarea = (props: Props) => {
                     {props.label}
                 </label>
             </Show>
-            <div class={s.textareaContainer}>
-                <textarea
-                    class={cn(
-                        s.textarea,
-                        props.size && s[props.size],
-                        { [s.error]: !!props.errorMessage },
-                        { [s.transparentText]: highlightEnabled() },
-                        props.class,
-                    )}
-                    id={props.id}
-                    name={props.name}
-                    placeholder={props.placeholder}
-                    value={props.value as string}
-                    cols={props.cols}
-                    rows={props.rows}
-                    onChange={handleChange}
-                    onInput={handleInput}
-                    onBlur={handleBlur}
-                    onScroll={handleScroll}
-                    wrap={props.wrap}
-                    maxLength={props.maxLength}
-                    disabled={props.disabled}
-                    ref={(el) => setRef(el)}
-                />
-                <Show when={highlightEnabled()}>
-                    <TextareaHighlight
-                        value={currentValue}
-                        scrollTop={scrollTop}
-                        commentPrefixes={props.commentPrefixes}
+            <Show
+                when={highlightEnabled()}
+                fallback={
+                    <textarea
+                        class={cn(
+                            s.textarea,
+                            props.size && s[props.size],
+                            { [s.error]: !!props.errorMessage },
+                            props.class,
+                        )}
+                        id={props.id}
+                        name={props.name}
+                        placeholder={props.placeholder}
+                        value={props.value as string}
+                        cols={props.cols}
+                        rows={props.rows}
+                        onChange={handleChange}
+                        onInput={handleInput}
+                        onBlur={handleBlur}
+                        onScroll={handleScroll}
+                        wrap={props.wrap}
+                        maxLength={props.maxLength}
+                        disabled={props.disabled}
+                        ref={(el: HTMLTextAreaElement) => setRef(el)}
                     />
-                </Show>
-            </div>
+                }
+            >
+                <div
+                    class={cn(s.scrollArea, props.size && s[props.size], {
+                        [s.error]: !!props.errorMessage,
+                    })}
+                    style={scrollAreaStyle()}
+                >
+                    <div class={s.contentWrapper}>
+                        <TextareaHighlight
+                            value={currentValue}
+                            commentPrefixes={props.commentPrefixes}
+                        />
+                        <textarea
+                            class={cn(s.transparentText, props.class)}
+                            id={props.id}
+                            name={props.name}
+                            placeholder={props.placeholder}
+                            value={props.value as string}
+                            cols={props.cols}
+                            onChange={handleChange}
+                            onInput={handleInput}
+                            onBlur={handleBlur}
+                            onScroll={handleScroll}
+                            wrap={props.wrap}
+                            maxLength={props.maxLength}
+                            disabled={props.disabled}
+                            ref={(el: HTMLTextAreaElement) => setRef(el)}
+                        />
+                    </div>
+                </div>
+            </Show>
             <Show when={props.errorMessage}>
                 <div class={s.errorMessage}>{props.errorMessage}</div>
             </Show>

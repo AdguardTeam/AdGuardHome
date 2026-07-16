@@ -101,7 +101,12 @@ export const getStats = async (period?: number) => {
             numReplacedSafesearch: data.num_replaced_safesearch || 0,
             avgProcessingTime: secondsToMilliseconds(data.avg_processing_time),
             timeUnits: data.time_units || initialState.timeUnits,
-            topUpstreamsAvgTime: normalizeTopStats(data.top_upstreams_avg_time || []),
+            topUpstreamsAvgTime: normalizeTopStats(data.top_upstreams_avg_time || []).map(
+                (item: { name: string; count: number }) => ({
+                    ...item,
+                    count: secondsToMilliseconds(item.count),
+                }),
+            ),
             topUpstreamsResponses: normalizeTopStats(data.top_upstreams_responses || []),
             processingStats: false,
         });

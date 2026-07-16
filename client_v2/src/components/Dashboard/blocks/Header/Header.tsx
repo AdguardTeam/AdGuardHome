@@ -185,14 +185,12 @@ export const Header = (props: Props) => {
 
                     <Dropdown
                         menu={protectionMenu}
-                        trigger="click"
                         position="bottomLeft"
                         open={protectionMenuOpen()}
                         onOpenChange={setProtectionMenuOpen}
                         wrapClass={s.protectionMenuWrapper}
                         disabled={!props.protectionEnabled}
                         noIcon
-                        disableAnimation
                     >
                         <button
                             type="button"

@@ -3,7 +3,11 @@ import { createSignal, createEffect, Show, on } from 'solid-js';
 import { ConfirmDialog } from 'panel/common/ui/ConfirmDialog';
 import { ConfigDialog } from 'panel/common/ui/ConfigDialog';
 import intl from 'panel/common/intl';
-import { formatIntervalText, resolveInterval } from 'panel/components/Settings/helpers';
+import {
+    formatIntervalText,
+    resolveInterval,
+    buildStatsConfig,
+} from 'panel/components/Settings/helpers';
 
 import { setStatsConfig, statsState } from 'panel/stores/stats';
 
@@ -71,13 +75,7 @@ export const StatsConfig = (props: Props) => {
             setConfirmConfig({ interval: newInterval });
         } else {
             // Save with all required fields from current state
-            setStatsConfig({
-                enabled: statsState.enabled,
-                ignored: statsState.ignored,
-                ignored_enabled: statsState.ignored_enabled,
-                interval: newInterval,
-                customInterval: values.customInterval,
-            });
+            setStatsConfig(buildStatsConfig(statsState, { interval: newInterval }));
             addSuccessToast(intl.getMessage('changes_saved_success'));
             props.onModalClose();
         }
@@ -86,13 +84,7 @@ export const StatsConfig = (props: Props) => {
     const handleConfirmDecrease = () => {
         const config = confirmConfig();
         if (config) {
-            setStatsConfig({
-                enabled: statsState.enabled,
-                ignored: statsState.ignored,
-                ignored_enabled: statsState.ignored_enabled,
-                interval: config.interval,
-                customInterval: formValues().customInterval,
-            });
+            setStatsConfig(buildStatsConfig(statsState, { interval: config.interval }));
             addSuccessToast(intl.getMessage('changes_saved_success'));
             props.onModalClose();
         }

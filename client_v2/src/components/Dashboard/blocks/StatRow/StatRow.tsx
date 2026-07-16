@@ -3,7 +3,7 @@ import { Show } from 'solid-js';
 import intl from 'panel/common/intl';
 import { Icon, type IconType } from 'panel/common/ui/Icon';
 import theme from 'panel/lib/theme';
-import { Dropdown } from 'panel/common/ui/Dropdown';
+import { Tooltip } from 'panel/common/ui/Tooltip';
 import cn from 'clsx';
 import { formatCompactNumber, formatNumber } from 'panel/helpers/helpers';
 
@@ -31,19 +31,18 @@ export const StatRow = (props: StatRowProps) => {
 
     return (
         <div class={cn(s.statRow, s[props.rowTheme])}>
-            <Dropdown
-                trigger="hover"
-                position="bottomLeft"
-                noIcon
-                disableAnimation
-                overlayClass={s.queryTooltipOverlay}
-                menu={<div class={s.statTooltip}>{props.tooltip}</div>}
-            >
-                <div class={cn(theme.text.t3, theme.text.condenced, s.statRowLeft)}>
-                    <Icon icon={props.icon} class={s.tableRowIcon} />
-                    {props.label}
-                </div>
-            </Dropdown>
+            <div class={s.statRowDropdown}>
+                <Tooltip
+                    position="bottomLeft"
+                    overlayClass={s.queryTooltipOverlay}
+                    content={<div class={cn(theme.text.t3, s.statTooltip)}>{props.tooltip}</div>}
+                >
+                    <div class={cn(theme.text.t3, theme.text.condenced, s.statRowLeft)}>
+                        <Icon icon={props.icon} class={s.tableRowIcon} />
+                        {props.label}
+                    </div>
+                </Tooltip>
+            </div>
 
             <div class={s.statRowValue}>
                 <Show
@@ -55,13 +54,10 @@ export const StatRow = (props: StatRowProps) => {
                     }
                 >
                     <div class={s.dropdownWrapper}>
-                        <Dropdown
-                            trigger="hover"
+                        <Tooltip
                             position="top"
-                            noIcon
-                            disableAnimation
                             overlayClass={s.queryTooltipOverlay}
-                            menu={
+                            content={
                                 <div class={s.queryTooltip}>
                                     {typeof props.value === 'number'
                                         ? formatNumber(props.value)
@@ -95,7 +91,7 @@ export const StatRow = (props: StatRowProps) => {
                                     </Show>
                                 </div>
                             </div>
-                        </Dropdown>
+                        </Tooltip>
                     </div>
                 </Show>
 
