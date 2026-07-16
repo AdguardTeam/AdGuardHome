@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
-	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
@@ -67,7 +66,7 @@ func TestServer_ServeDNS(t *testing.T) {
 		DNSFilter:         f,
 		PrivateNets:       netutil.SubnetSetFunc(netutil.IsLocallyServed),
 		Logger:            testLogger,
-		TLSConfigProvider: aghtls.EmptyTLSConfigProvider{},
+		TLSConfigProvider: testTLSConfigProvider,
 	})
 	require.NoError(t, err)
 

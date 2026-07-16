@@ -227,6 +227,31 @@ func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
 		resp.Answer = append(resp.Answer, ans)
 	}
 
+	s.appendDoTResolvers(req, resp, domainName)
+
+	for _, addr := range s.dnsProxy.QUICListenAddr {
+		values := []dns.SVCBKeyValue{
+			&dns.SVCBAlpn{Alpn: []string{"doq"}},
+			&dns.SVCBPort{Port: uint16(addr.Port)},
+		}
+
+		ans := &dns.SVCB{
+			Hdr:      s.hdr(req, dns.TypeSVCB),
+			Priority: 1,
+			Target:   domainName,
+			Value:    values,
+		}
+
+		resp.Answer = append(resp.Answer, ans)
+	}
+
+	return resp
+}
+
+// appendDoTResolvers appends DNS-over-TLS SVCB resolver entries to resp if the
+// server's TLS certificate contains IP addresses.  req and resp must not be
+// nil.
+func (s *Server) appendDoTResolvers(req, resp *dns.Msg, domainName string) {
 	hasIPAddrs := false
 
 	tlsConf := s.tlsConfigProvider.TLSConfig()
@@ -255,24 +280,6 @@ func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
 			resp.Answer = append(resp.Answer, ans)
 		}
 	}
-
-	for _, addr := range s.dnsProxy.QUICListenAddr {
-		values := []dns.SVCBKeyValue{
-			&dns.SVCBAlpn{Alpn: []string{"doq"}},
-			&dns.SVCBPort{Port: uint16(addr.Port)},
-		}
-
-		ans := &dns.SVCB{
-			Hdr:      s.hdr(req, dns.TypeSVCB),
-			Priority: 1,
-			Target:   domainName,
-			Value:    values,
-		}
-
-		resp.Answer = append(resp.Answer, ans)
-	}
-
-	return resp
 }
 
 // processDHCPHosts respond to A requests if the target hostname is known to

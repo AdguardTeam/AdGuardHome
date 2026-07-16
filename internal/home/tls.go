@@ -35,11 +35,16 @@ type tlsManager struct {
 	// logger is used for logging the operation of the TLS Manager.
 	logger *slog.Logger
 
-	// mu protects certLastMod, tlsConf, extTLSConf.
+	// mu protects certLastMod, tlsCert, tlsConf, extTLSConf.
 	mu *sync.Mutex
 
 	// certLastMod is the last modification time of the certificate file.
 	certLastMod time.Time
+
+	// tlsCert is a current TLS certificate.  It may be nil.
+	//
+	// TODO(m.kazantsev):  Consider a better approach to store the certificate.
+	tlsCert *tls.Certificate
 
 	// tlsConf is a current TLS configuration.  It may be nil.
 	tlsConf *tls.Config
@@ -165,9 +170,9 @@ func newTLSManager(ctx context.Context, conf *tlsManagerConfig) (m *tlsManager, 
 		CipherSuites:   m.customCipherIDs,
 		MinVersion:     tls.VersionTLS12,
 		GetCertificate: m.onGetCertificate,
-		Certificates:   []tls.Certificate{cert},
 	}
 
+	m.tlsCert = &cert
 	m.setCertFileTime(ctx)
 
 	return m, nil
@@ -880,18 +885,14 @@ func (m *tlsManager) onGetCertificate(chi *tls.ClientHelloInfo) (cert *tls.Certi
 		return nil, nil
 	}
 
-	if len(m.tlsConf.Certificates) == 0 {
-		return nil, nil
-	}
-
-	tlsCert := m.tlsConf.Certificates[0]
+	tlsCert := *m.tlsCert
 
 	return &tlsCert, nil
 }
 
 // updateTLSCert loads and updates a TLS certificate for m.tlsConf.  If
 // m.tlsConf is nil, it will be initialized.  extTLSConf must not be nil.  m.mu
-// is expected to be locked.
+// must be locked.
 func (m *tlsManager) updateTLSCert(extTLSConf *tlsConfigSettings) (err error) {
 	if len(extTLSConf.CertificateChainData) == 0 || len(extTLSConf.PrivateKeyData) == 0 {
 		return nil
@@ -913,7 +914,7 @@ func (m *tlsManager) updateTLSCert(extTLSConf *tlsConfigSettings) (err error) {
 		}
 	}
 
-	m.tlsConf.Certificates = []tls.Certificate{cert}
+	m.tlsCert = &cert
 
 	return nil
 }

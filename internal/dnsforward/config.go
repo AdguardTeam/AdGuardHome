@@ -721,7 +721,9 @@ func (s *Server) prepareTLS(ctx context.Context, proxyConf *proxy.Config) {
 		return
 	}
 
-	s.replaceGetCertificate(proxyConf.TLSConfig)
+	if s.conf.TLSConf.StrictSNICheck && proxyConf.TLSConfig.GetCertificate != nil {
+		s.replaceGetCertificate(proxyConf.TLSConfig)
+	}
 }
 
 // isWildcard returns true if host is a wildcard hostname.
@@ -757,36 +759,27 @@ func anyNameMatches(dnsNames []string, sni string) (ok bool) {
 }
 
 // replaceGetCertificate replaces the TLS.Config.GetCertificate with a wrapped
-// version of the previous one, adding a SNI check.  orig must not be nil.
+// version of the previous one, adding a SNI check.  It must be called only once
+// for each instance of orig.  orig must not be nil and orig.GetCertificate must
+// be populated.
+//
+// TODO(m.kazantsev):  Consider moving this method to aghtls.
 func (s *Server) replaceGetCertificate(orig *tls.Config) {
 	origGetCert := orig.GetCertificate
 
 	orig.GetCertificate = func(chi *tls.ClientHelloInfo) (cert *tls.Certificate, err error) {
-		if len(orig.Certificates) == 0 {
+		cert, _ = origGetCert(chi)
+		if cert == nil || cert.Leaf == nil {
 			return nil, errors.Error("tls certificate is not set")
 		}
 
-		tlsCert := orig.Certificates[0]
+		if !anyNameMatches(cert.Leaf.DNSNames, chi.ServerName) {
+			s.logger.Warn("unknown sni in client hello", "server_name", chi.ServerName)
 
-		if tlsCert.Leaf == nil {
-			return nil, errors.Error("error while parsing tls certificate: leaf is nil")
+			return nil, fmt.Errorf("invalid sni: %s", chi.ServerName)
 		}
 
-		dnsNames := tlsCert.Leaf.DNSNames
-		if s.conf.TLSConf.StrictSNICheck && !anyNameMatches(dnsNames, chi.ServerName) {
-			s.logger.Warn(
-				"unknown sni in client hello",
-				"server_name", chi.ServerName,
-			)
-
-			return nil, errors.Error("invalid sni")
-		}
-
-		if origGetCert != nil {
-			return origGetCert(chi)
-		}
-
-		return nil, errors.Error("get certificate is not set")
+		return cert, nil
 	}
 }
 
