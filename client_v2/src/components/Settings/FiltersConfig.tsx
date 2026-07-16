@@ -51,7 +51,7 @@ export const FiltersConfig = (props: Props) => {
                 ),
                 c: (text: string) => (
                     <Link
-                        to={RoutePath.UserRules}
+                        to={RoutePath.CustomRules}
                         class={theme.link.link}
                         onClick={(e: Event) => e.stopPropagation()}
                     >

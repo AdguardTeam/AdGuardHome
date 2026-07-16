@@ -62,7 +62,6 @@
                     --build-arg "BASE_IMAGE=${bamboo_dockerFrontend}" \
                     --build-arg "CACHE_BUSTER=${bamboo_cacheBuster}" \
                     --build-arg "CLIENT_DIR=${bamboo_clientDir}" \
-                    --output '.' \
                     --progress 'plain' \
                     --target 'tester' \
                     -f ./docker/frontend.Dockerfile \
@@ -222,7 +221,6 @@
                     --build-arg "BASE_IMAGE=${bamboo_dockerFrontend}" \
                     --build-arg "CACHE_BUSTER=${bamboo_cacheBuster}" \
                     --build-arg "CLIENT_DIR=${bamboo_clientDir}" \
-                    --output '.' \
                     --progress 'plain' \
                     --target 'e2etester' \
                     -f ./docker/frontend.Dockerfile \

@@ -44,6 +44,14 @@ describe('validateDomainsPerLine', () => {
         expect(validateDomainsPerLine('# this is a comment')).toBeUndefined();
     });
 
+    it('rejects !-prefixed filter rule that would otherwise pass dot check', () => {
+        expect(validateDomainsPerLine('! ||example.org^')).toBeTruthy();
+    });
+
+    it('rejects only ! lines as invalid', () => {
+        expect(validateDomainsPerLine('! first\n! second')).toBeTruthy();
+    });
+
     it('returns undefined for mixed valid lines with comments', () => {
         expect(
             validateDomainsPerLine('# comment\nexample.org\n||ads.example.org^'),

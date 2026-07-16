@@ -324,6 +324,7 @@ export const AddClient = () => {
                             rows={4}
                             disabled={clientFormState.use_global_settings}
                             errorMessage={upstreamsError()}
+                            highlightComments
                         />
                     </div>
 

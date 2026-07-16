@@ -4,6 +4,7 @@ import theme from 'panel/lib/theme';
 import intl from 'panel/common/intl';
 import { Textarea } from 'panel/common/controls/Textarea';
 import { Button } from 'panel/common/ui/Button';
+import { COMMENT_LINE_TOKENS } from 'panel/helpers/constants';
 
 import s from '../UserRules.module.pcss';
 
@@ -37,6 +38,8 @@ export const RulesEditor = (props: Props) => {
                             onChange={(e: Event) =>
                                 props.onChange((e.target as HTMLTextAreaElement).value)
                             }
+                            highlightComments
+                            commentPrefixes={COMMENT_LINE_TOKENS}
                         />
                     </div>
                 </div>

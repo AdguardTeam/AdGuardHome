@@ -110,8 +110,8 @@ export const Menu = (props: Props) => {
                         },
                         {
                             label: intl.getMessage('user_rules_title'),
-                            path: Paths.UserRules,
-                            routePath: RoutePath.UserRules,
+                            path: Paths.CustomRules,
+                            routePath: RoutePath.CustomRules,
                         },
                     ]}
                     isActive={isActive}

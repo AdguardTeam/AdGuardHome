@@ -9,6 +9,7 @@ import theme from 'panel/lib/theme';
 import { trimLinesAndRemoveEmpty } from 'panel/helpers/helpers';
 
 import s from './IgnoredDomainsModal.module.pcss';
+import { COMMENT_LINE_TOKENS } from 'panel/helpers/constants';
 
 type Props = {
     open: boolean;
@@ -88,6 +89,8 @@ export const IgnoredDomainsModal = (props: Props) => {
                 placeholder={`example.com\n*.example.com\n||example.com^`}
                 size="large"
                 disabled={props.processing}
+                commentPrefixes={COMMENT_LINE_TOKENS}
+                highlightComments
             />
         </ConfigDialog>
     );

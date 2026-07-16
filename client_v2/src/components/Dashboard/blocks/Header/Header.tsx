@@ -110,6 +110,7 @@ export const Header = (props: Props) => {
                             theme.select.option_check,
                             theme.text.t2,
                             theme.text.condenced,
+                            s.protectionMenuItem,
                         )}
                         onMouseDown={() => handleDisableProtection(item.time)}
                     >

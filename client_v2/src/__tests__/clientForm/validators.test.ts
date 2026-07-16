@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
     validateIdentifier,
     validateUpstreams,
+    validateBootstrapDns,
     validateRequiredValue,
     validateIpv4,
     validatePort,
@@ -503,21 +504,67 @@ describe('validateRewriteNotSame', () => {
     });
 });
 
-describe('validateUpstreams with bang comments', () => {
-    it('accepts lines starting with !', () => {
-        expect(validateUpstreams('! comment line\n8.8.8.8')).toBeUndefined();
+describe('validateUpstreams with bang prefix', () => {
+    it('rejects lines starting with ! as invalid upstreams', () => {
+        expect(validateUpstreams('! comment line\n8.8.8.8')).toBeTruthy();
     });
 
-    it('accepts only comment lines (!)', () => {
-        expect(validateUpstreams('! first\n! second')).toBeUndefined();
+    it('rejects only ! lines as invalid', () => {
+        expect(validateUpstreams('! first\n! second')).toBeTruthy();
+    });
+
+    it('rejects !-prefixed URLs that would otherwise pass address check', () => {
+        expect(validateUpstreams('! https://dns10.quad9.net/dns-query')).toBeTruthy();
+    });
+
+    it('rejects !-prefixed upstream with dot in comment', () => {
+        expect(validateUpstreams('! dns.example.com:53')).toBeTruthy();
     });
 
     it('still accepts # comments', () => {
         expect(validateUpstreams('# comment\n8.8.8.8')).toBeUndefined();
     });
 
-    it('rejects invalid non-comment lines alongside comments', () => {
+    it('rejects ! and invalid non-comment lines', () => {
         expect(validateUpstreams('! good\ninvalidline')).toBeTruthy();
+    });
+});
+
+describe('validateBootstrapDns', () => {
+    it('returns undefined for empty value', () => {
+        expect(validateBootstrapDns('')).toBeUndefined();
+    });
+
+    it('returns undefined for valid IP', () => {
+        expect(validateBootstrapDns('8.8.8.8')).toBeUndefined();
+    });
+
+    it('returns undefined for valid upstream URL', () => {
+        expect(validateBootstrapDns('https://dns.example.com/dns-query')).toBeUndefined();
+    });
+
+    it('rejects # comment lines (no comment support)', () => {
+        expect(validateBootstrapDns('# comment\n8.8.8.8')).toBeTruthy();
+    });
+
+    it('rejects #-prefixed URLs that would otherwise pass address check', () => {
+        expect(validateBootstrapDns('# https://dns.example.com')).toBeTruthy();
+    });
+
+    it('rejects only # lines', () => {
+        expect(validateBootstrapDns('# first\n# second')).toBeTruthy();
+    });
+
+    it('rejects !-prefixed lines', () => {
+        expect(validateBootstrapDns('! https://dns.example.com')).toBeTruthy();
+    });
+
+    it('rejects lines without dot or colon', () => {
+        expect(validateBootstrapDns('not-a-server')).toBe('Invalid format');
+    });
+
+    it('returns line-numbered error for mixed valid and # comment', () => {
+        expect(validateBootstrapDns('8.8.8.8\n# comment')).toBe('Invalid format on line 2');
     });
 });
 
