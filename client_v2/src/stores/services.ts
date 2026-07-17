@@ -1,6 +1,10 @@
 import { createStore } from 'solid-js/store';
 import { untrack } from 'solid-js';
-import { apiClient } from 'panel/api/Api';
+import {
+    blockedServicesSchedule,
+    blockedServicesAll,
+    blockedServicesScheduleUpdate,
+} from 'panel/api/generated';
 import { addErrorToast } from './toasts';
 
 type ServicesState = {
@@ -26,7 +30,7 @@ const [state, setState] = createStore<ServicesState>(initialState);
 export const getBlockedServices = async () => {
     setState('processing', true);
     try {
-        const data = await apiClient.getBlockedServices();
+        const data = await blockedServicesSchedule();
         setState({ list: data, processing: false });
     } catch (error) {
         addErrorToast({ error });
@@ -37,7 +41,7 @@ export const getBlockedServices = async () => {
 export const getAllBlockedServices = async () => {
     setState('processingAll', true);
     try {
-        const data = await apiClient.getAllBlockedServices();
+        const data = await blockedServicesAll();
         setState({
             allServices: data.blocked_services || [],
             allGroups: data.groups || [],
@@ -52,7 +56,7 @@ export const getAllBlockedServices = async () => {
 export const updateBlockedServices = async (values: { ids: string[]; schedule?: unknown }) => {
     setState('processingSet', true);
     try {
-        await apiClient.updateBlockedServices(values);
+        await blockedServicesScheduleUpdate(values);
         setState('processingSet', false);
         await getBlockedServices();
     } catch (error) {

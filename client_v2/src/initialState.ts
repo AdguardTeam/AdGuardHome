@@ -10,6 +10,7 @@ import {
 } from './helpers/constants';
 import { DEFAULT_BLOCKING_IPV4, DEFAULT_BLOCKING_IPV6 } from './stores/dnsConfig';
 import { Filter } from './helpers/helpers';
+import { SafeSearchConfig } from './api/model/safeSearchConfig';
 
 export type InstallInterface = {
     flags: string;
@@ -103,7 +104,7 @@ export type Client = {
     ignore_statistics: boolean;
     name: string;
     parental_enabled: boolean;
-    safe_search: Record<string, boolean>;
+    safe_search: SafeSearchConfig;
     safebrowsing_enabled: boolean;
     safesearch_enabled: boolean;
     tags: string[];

@@ -1,6 +1,6 @@
 import { createStore } from 'solid-js/store';
 import { untrack } from 'solid-js';
-import { apiClient } from 'panel/api/Api';
+import { tlsStatus, tlsConfigure, tlsValidate } from 'panel/api/generated';
 import { addErrorToast, addSuccessToast } from './toasts';
 import intl from 'panel/common/intl';
 
@@ -101,7 +101,7 @@ const encodeRequest = (values: any) => {
 export const getTlsStatus = async () => {
     setState('processing', true);
     try {
-        const data = await apiClient.getTlsStatus();
+        const data = await tlsStatus();
         const decoded = decodeResponse(data);
         setState({ ...decoded, processing: false });
     } catch (error) {
@@ -136,7 +136,7 @@ export const setTlsConfig = async (values: any, opts?: { silent?: boolean }) => 
         encoded.port_dns_over_tls = encoded.port_dns_over_tls || 0;
         encoded.port_dns_over_quic = encoded.port_dns_over_quic || 0;
 
-        const data = await apiClient.setTlsConfig(encoded);
+        const data = await tlsConfigure(encoded);
         const decoded = decodeResponse(data);
 
         if (fullValues.enabled && fullValues.force_https && window.location.protocol === 'http:') {
@@ -163,7 +163,7 @@ export const validateTlsConfig = async (values: any) => {
         encoded.port_https = encoded.port_https || 0;
         encoded.port_dns_over_tls = encoded.port_dns_over_tls || 0;
         encoded.port_dns_over_quic = encoded.port_dns_over_quic || 0;
-        const data = await apiClient.validateTlsConfig(encoded);
+        const data = await tlsValidate(encoded);
         const decoded = decodeResponse(data);
         setState({ ...decoded, processingValidate: false });
     } catch (error) {

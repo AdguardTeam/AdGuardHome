@@ -1,6 +1,6 @@
 import { createStore } from 'solid-js/store';
 import { untrack } from 'solid-js';
-import { apiClient } from 'panel/api/Api';
+import { queryLog, querylogClear, getQueryLogConfig, putQueryLogConfig } from 'panel/api/generated';
 import { addErrorToast, addSuccessToast } from './toasts';
 import intl from 'panel/common/intl';
 import {
@@ -100,7 +100,7 @@ const fetchLogsWithParams = async (olderThan: string, filter?: any) => {
     if (reasons.length > 0) {
         params.reason = reasons;
     }
-    const raw = await apiClient.getQueryLog(params);
+    const raw = await queryLog(params);
     return { logs: normalizeLogs(raw.data || []), oldest: raw.oldest || '' };
 };
 
@@ -179,7 +179,7 @@ export const getAdditionalLogs = async () => {
 export const clearLogs = async () => {
     setState('processingClear', true);
     try {
-        await apiClient.clearQueryLog();
+        await querylogClear();
         setState({
             logs: [],
             oldest: '',
@@ -196,7 +196,7 @@ export const clearLogs = async () => {
 export const getLogsConfig = async () => {
     setState('processingGetConfig', true);
     try {
-        const data = await apiClient.getQueryLogConfig();
+        const data = await getQueryLogConfig();
         setState({
             interval: data.interval || DAY,
             enabled: data.enabled ?? true,
@@ -217,7 +217,7 @@ export const getLogsConfig = async () => {
 export const setLogsConfig = async (values: any): Promise<boolean> => {
     setState('processingSetConfig', true);
     try {
-        await apiClient.setQueryLogConfig(values);
+        await putQueryLogConfig(values);
         setState({ ...values, processingSetConfig: false });
         return true;
     } catch (error) {

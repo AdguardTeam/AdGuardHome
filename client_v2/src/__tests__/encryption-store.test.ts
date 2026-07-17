@@ -1,18 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
-    setTlsConfig: vi.fn(),
-    validateTlsConfig: vi.fn(),
+    tlsConfigure: vi.fn(),
+    tlsValidate: vi.fn(),
     addErrorToast: vi.fn(),
     addSuccessToast: vi.fn(),
 }));
 
-vi.mock('panel/api/Api', () => ({
-    apiClient: {
-        setTlsConfig: mocks.setTlsConfig,
-        validateTlsConfig: mocks.validateTlsConfig,
-        getGlobalStatus: vi.fn(),
-    },
+vi.mock('panel/api/generated', () => ({
+        tlsConfigure: mocks.tlsConfigure,
+        tlsValidate: mocks.tlsValidate,
+        status: vi.fn(),
 }));
 vi.mock('panel/stores/toasts', () => ({
     addErrorToast: mocks.addErrorToast,
@@ -31,7 +29,7 @@ describe('setTlsConfig', () => {
     beforeEach(() => vi.clearAllMocks());
 
     it('defaults empty ports to 0 (FR-013)', async () => {
-        mocks.setTlsConfig.mockImplementation(async (v: any) => ({
+        mocks.tlsConfigure.mockImplementation(async (v: any) => ({
             ...v,
             certificate_chain: '',
             private_key: '',
@@ -43,14 +41,14 @@ describe('setTlsConfig', () => {
             port_dns_over_tls: '',
             port_dns_over_quic: '',
         });
-        const sent = mocks.setTlsConfig.mock.calls[0][0];
+        const sent = mocks.tlsConfigure.mock.calls[0][0];
         expect(sent.port_https).toBe(0);
         expect(sent.port_dns_over_tls).toBe(0);
         expect(sent.port_dns_over_quic).toBe(0);
     });
 
     it('clears validation status fields when resetValidationStatus is called', async () => {
-        mocks.validateTlsConfig.mockResolvedValue({
+        mocks.tlsValidate.mockResolvedValue({
             valid_chain: true,
             valid_cert: true,
             valid_key: true,
@@ -94,7 +92,7 @@ describe('setTlsConfig', () => {
             value: { protocol: 'http:', reload: reloadFn },
             writable: true,
         });
-        mocks.setTlsConfig.mockImplementation(async (v: any) => ({
+        mocks.tlsConfigure.mockImplementation(async (v: any) => ({
             ...v,
             certificate_chain: '',
             private_key: '',

@@ -12,7 +12,7 @@ const HIDE_DELAY = 200;
 type Props = {
     overlayClass?: string;
     menu: JSX.Element;
-    position?: 'bottomRight' | 'bottomLeft' | 'topRight' | 'topLeft' | 'top';
+    position?: 'bottomRight' | 'bottomLeft' | 'topRight' | 'topLeft' | 'top' | 'bottom';
     trigger: 'click' | 'hover';
     noIcon?: true;
     iconClass?: string;

@@ -67,4 +67,13 @@ module.exports = {
             },
         ],
     },
+    overrides: [
+        {
+            // Orval-generated files — max-len is controlled by prettier
+            files: ['src/api/generated.ts', 'src/api/model/**/*.ts'],
+            rules: {
+                'max-len': 'off',
+            },
+        },
+    ],
 };

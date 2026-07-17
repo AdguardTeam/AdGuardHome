@@ -1,6 +1,6 @@
 import { createStore } from 'solid-js/store';
 import { untrack } from 'solid-js';
-import { apiClient } from 'panel/api/Api';
+import { accessList, accessSet } from 'panel/api/generated';
 import { addErrorToast, addSuccessToast } from './toasts';
 import { splitByNewLine } from 'panel/helpers/helpers';
 import intl from 'panel/common/intl';
@@ -26,7 +26,7 @@ const [state, setState] = createStore<AccessState>(initialState);
 export const getAccessList = async () => {
     setState('processing', true);
     try {
-        const data = await apiClient.getAccessList();
+        const data = await accessList();
         setState({
             allowed_clients: data.allowed_clients?.join('\n') || '',
             disallowed_clients: data.disallowed_clients?.join('\n') || '',
@@ -54,7 +54,7 @@ export const setAccessList = async (values: any) => {
             config.blocked_hosts = splitByNewLine(config.blocked_hosts);
         }
 
-        await apiClient.setAccessList(config);
+        await accessSet(config);
         setState({ ...values, processingSet: false });
         addSuccessToast(intl.getMessage('settings_notify_changes_saved'));
     } catch (error) {
@@ -122,14 +122,14 @@ export const toggleClientBlock = async (
 ) => {
     setState('processingSet', true);
     try {
-        const accessList: AccessList = await apiClient.getAccessList();
+        const accessListData = await accessList();
         const values = getNextClientAccessList({
-            accessList,
+            accessList: accessListData,
             ip,
             disallowed,
             disallowedRule,
         });
-        await apiClient.setAccessList(values);
+        await accessSet(values);
         setState({
             allowed_clients: values.allowed_clients.join('\n'),
             disallowed_clients: values.disallowed_clients.join('\n'),

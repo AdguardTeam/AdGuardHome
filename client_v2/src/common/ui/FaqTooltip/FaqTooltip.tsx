@@ -38,7 +38,7 @@ export const FaqTooltip = (props: Props) => {
                 </div>
             }
             class={s.dropdown}
-            position={position() as any}
+            position={position()}
             noIcon
         >
             <div class={s.trigger} onPointerDown={(e: PointerEvent) => e.stopPropagation()}>

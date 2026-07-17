@@ -1,6 +1,6 @@
 import { createStore, reconcile } from 'solid-js/store';
 import { untrack } from 'solid-js';
-import { apiClient } from 'panel/api/Api';
+import { dnsInfo, dnsConfig, cacheClear } from 'panel/api/generated';
 import { addErrorToast, addSuccessToast } from './toasts';
 import intl from 'panel/common/intl';
 import { splitByNewLine } from 'panel/helpers/helpers';
@@ -72,7 +72,7 @@ const [state, setState] = createStore<DnsConfigState>(initialState);
 export const getDnsConfig = async () => {
     setState('processingGetConfig', true);
     try {
-        const data = await apiClient.getDnsConfig();
+        const data = await dnsInfo();
         setState({
             ...data,
             blocking_ipv4: data.blocking_ipv4 || DEFAULT_BLOCKING_IPV4,
@@ -94,7 +94,7 @@ export const getDnsConfig = async () => {
 
 export const clearDnsCache = async () => {
     try {
-        await apiClient.clearCache();
+        await cacheClear();
     } catch (error) {
         addErrorToast({ error });
     }
@@ -163,7 +163,7 @@ export const setDnsConfig = async (
             config.ratelimit_whitelist = splitByNewLine(config.ratelimit_whitelist);
         }
 
-        await apiClient.setDnsConfig(config);
+        await dnsConfig(config);
         setState(reconcile({ ...untrack(() => state), ...values, processingSetConfig: false }));
 
         if (opts?.silent) {

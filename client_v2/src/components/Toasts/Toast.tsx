@@ -89,7 +89,7 @@ const Toast = (props: ToastProps) => {
         >
             <div class={s.messageRow}>
                 <Icon
-                    icon={(props.type === 'success' ? 'check' : 'attention') as any}
+                    icon={props.type === 'success' ? 'check' : 'attention'}
                     class={cn(s.icon, s[props.type])}
                 />
 

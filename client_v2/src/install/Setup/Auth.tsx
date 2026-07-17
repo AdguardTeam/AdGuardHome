@@ -18,6 +18,13 @@ import {
 } from './helpers/helpers';
 import styles from './styles.module.pcss';
 
+const validateRequiredString = (value: string | undefined) => validateRequiredValue(value);
+const validateRequiredBoolean = (value: boolean | undefined) => validateRequiredValue(value);
+const validatePasswordLengthMsg = (value: string | undefined) => {
+    const result = validatePasswordLength(value);
+    return result === true ? intl.getMessage('password_requirements_characters') : result;
+};
+
 type AuthFormValues = {
     username: string;
     password: string;
@@ -123,15 +130,13 @@ export const Auth = (props: Props) => {
                     <div class={styles.input}>
                         <Field
                             name="password"
-                            validate={
-                                [
-                                    validateRequiredValue,
-                                    validatePasswordLength,
-                                    validatePasswordLowercase,
-                                    validatePasswordUppercase,
-                                    validatePasswordSpecial,
-                                ] as any
-                            }
+                            validate={[
+                                validateRequiredString,
+                                validatePasswordLengthMsg,
+                                validatePasswordLowercase,
+                                validatePasswordUppercase,
+                                validatePasswordSpecial,
+                            ]}
                         >
                             {(field, props) => (
                                 <PasswordInput
@@ -161,7 +166,7 @@ export const Auth = (props: Props) => {
                     <div class={styles.input}>
                         <Field
                             name="confirm_password"
-                            validate={[validateRequiredValue, validateConfirmPassword] as any}
+                            validate={[validateRequiredString, validateConfirmPassword]}
                         >
                             {(field, props) => (
                                 <PasswordInput
@@ -187,7 +192,7 @@ export const Auth = (props: Props) => {
                         <Field
                             name="privacy_consent"
                             type="boolean"
-                            validate={validateRequiredValue as any}
+                            validate={validateRequiredBoolean}
                         >
                             {(field, props) => (
                                 <Checkbox

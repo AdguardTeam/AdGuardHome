@@ -5,7 +5,7 @@ import { Link } from 'panel/common/ui/Link';
 import { Paths, RoutePath } from 'panel/components/Routes/Paths';
 import theme from 'panel/lib/theme';
 import intl from 'panel/common/intl';
-import { apiClient } from 'panel/api/Api';
+import { getLogoutUrl } from 'panel/api/generated';
 import { AccordionSection } from './AccordionSection';
 
 import s from './styles.module.pcss';
@@ -142,7 +142,7 @@ export const Menu = (props: Props) => {
             <div class={s.referenceWrapper}>
                 <div class={cn(s.menuLinkWrapper)}>
                     <a
-                        href={apiClient.getLogoutUrl()}
+                        href={getLogoutUrl()}
                         target="_blank"
                         rel="noopener noreferrer"
                         class={s.menuLink}

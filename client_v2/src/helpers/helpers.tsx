@@ -25,6 +25,7 @@ import {
 } from './constants';
 import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from './localStorageHelper';
 import { DhcpInterfaces, InstallInterface } from '../initialState';
+import type { NetInterfaces } from '../api/model/netInterfaces';
 
 /**
  * @param time {string} The time to format
@@ -539,7 +540,7 @@ export const getParamsForClientsSearch = (data: any, param: any, additionalParam
     });
 
     return {
-        clients: Array.from(clients).map((id) => ({ id })),
+        clients: Array.from(clients).map((id) => ({ id: id as string })),
     };
 };
 
@@ -1128,16 +1129,14 @@ export const calculateDhcpPlaceholdersIpv6 = () => {
  * @returns interfaces Interfaces enriched with ip_addresses property
  */
 
-export const enrichWithConcatenatedIpAddresses = (interfaces: DhcpInterfaces) =>
-    Object.entries(interfaces)
+export const enrichWithConcatenatedIpAddresses = (interfaces: NetInterfaces): DhcpInterfaces =>
+    Object.entries(interfaces).reduce((acc: DhcpInterfaces, [k, v]) => {
+        const ipv4_addresses = v.ipv4_addresses ?? [];
+        const ipv6_addresses = v.ipv6_addresses ?? [];
 
-        .reduce((acc: DhcpInterfaces, [k, v]) => {
-            const ipv4_addresses = v.ipv4_addresses ?? [];
-            const ipv6_addresses = v.ipv6_addresses ?? [];
-
-            acc[k].ip_addresses = ipv4_addresses.concat(ipv6_addresses);
-            return acc;
-        }, interfaces);
+        acc[k] = { ...v, ip_addresses: ipv4_addresses.concat(ipv6_addresses) };
+        return acc;
+    }, {});
 
 export const isScrolledIntoView = (el: any) => {
     const rect = el.getBoundingClientRect();

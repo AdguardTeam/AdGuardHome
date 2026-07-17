@@ -2,10 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock the API client before importing the store.
 const mockLogin = vi.fn().mockResolvedValue(undefined);
-vi.mock('panel/api/Api', () => ({
-    apiClient: {
+vi.mock('panel/api/generated', () => ({
         login: (...args: unknown[]) => mockLogin(...args),
-    },
 }));
 
 // Mock addErrorToast so it does not depend on other stores.

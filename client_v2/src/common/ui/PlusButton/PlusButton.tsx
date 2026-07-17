@@ -7,7 +7,7 @@ import s from './PlusButton.module.pcss';
 type Props = {
     children: JSX.Element;
     class?: string;
-    onClick: () => void;
+    onClick: (e: MouseEvent) => void;
     disabled?: boolean;
     testId?: string;
     weight?: 'normal' | 'semi' | 'bold';
@@ -17,7 +17,7 @@ export const PlusButton = (props: Props) => (
     <button
         type="button"
         class={cn(s.plusButton, { [s[props.weight]]: props.weight }, props.class)}
-        onClick={(e) => (props.onClick as any)?.(e)}
+        onClick={(e) => props.onClick?.(e)}
         disabled={props.disabled}
         data-testid={props.testId}
     >

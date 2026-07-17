@@ -2,7 +2,20 @@ import { createStore } from 'solid-js/store';
 import { untrack } from 'solid-js';
 import { STANDARD_DNS_PORT, STANDARD_WEB_PORT } from 'panel/helpers/constants';
 import { areEqualVersions } from 'panel/helpers/version';
-import { apiClient } from 'panel/api/Api';
+import {
+    getStatusUrl,
+    getVersionJson,
+    beginUpdate,
+    setProtection,
+    clientsStatus,
+    getProfile,
+    updateProfile,
+} from 'panel/api/generated';
+import { customFetch } from 'panel/api/customFetch';
+import type { ServerStatus } from 'panel/api/model/serverStatus';
+import type { VersionInfo } from 'panel/api/model/versionInfo';
+import type { Clients } from 'panel/api/model/clients';
+import type { ProfileInfo } from 'panel/api/model/profileInfo';
 import intl, { LocalesType } from 'panel/common/intl';
 import { addErrorToast, addSuccessToast, addNoticeToast } from './toasts';
 import { getTlsStatus } from './encryption';
@@ -76,7 +89,7 @@ const rmTimeout = (t: ReturnType<typeof setTimeout> | null): null => {
 };
 
 const checkStatus = async (
-    handleRequestSuccess: (response: any) => void,
+    handleRequestSuccess: (response: { status: number; data: ServerStatus }) => void,
     handleRequestError: () => void,
     attempts = 60,
 ): Promise<void> => {
@@ -85,21 +98,13 @@ const checkStatus = async (
         return;
     }
     try {
-        const response = await fetch(`${apiClient.baseUrl}/status`);
+        const data = await customFetch<ServerStatus>(getStatusUrl(), {
+            method: 'GET',
+            skipAuthRedirect: true,
+        });
         statusTimeout = rmTimeout(statusTimeout);
-        if (response.ok) {
-            const data = await response.json();
-            handleRequestSuccess({ status: response.status, data });
-            if (data.running === false) {
-                statusTimeout = setTimeout(
-                    checkStatus,
-                    CHECK_TIMEOUT,
-                    handleRequestSuccess,
-                    handleRequestError,
-                    attempts - 1,
-                );
-            }
-        } else {
+        handleRequestSuccess({ status: 200, data });
+        if (data.running === false) {
             statusTimeout = setTimeout(
                 checkStatus,
                 CHECK_TIMEOUT,
@@ -195,7 +200,7 @@ export const getTimerStatus = async () => {
 export const getVersion = async (recheck = false) => {
     setState('processingVersion', true);
     try {
-        const data = await apiClient.getGlobalVersion({ recheck_now: recheck });
+        const data: VersionInfo = await getVersionJson({ recheck_now: recheck });
         const currentVersion =
             untrack(() => state.dnsVersion) === 'undefined' ? 0 : untrack(() => state.dnsVersion);
         if (data && !data.disabled && !areEqualVersions(currentVersion, data.new_version)) {
@@ -237,7 +242,7 @@ export const getUpdate = async () => {
         }
     };
     try {
-        await apiClient.getUpdate();
+        await beginUpdate();
         checkStatus(handleRequestSuccess, handleRequestError);
     } catch {
         handleRequestError();
@@ -247,9 +252,9 @@ export const getUpdate = async () => {
 export const toggleProtection = async (time: number | null = null) => {
     setState('processingProtection', true);
     try {
-        await apiClient.setProtection({
+        await setProtection({
             enabled: !untrack(() => state.protectionEnabled),
-            duration: time,
+            duration: time ?? undefined,
         });
         setState({
             protectionEnabled: !untrack(() => state.protectionEnabled),
@@ -278,7 +283,7 @@ const sortClients = (clients: any[]) => {
 export const getClients = async () => {
     setState('processingClients', true);
     try {
-        const data = await apiClient.getClients();
+        const data: Clients = await clientsStatus();
         setState({
             clients: sortClients(data.clients || []),
             autoClients: sortClients(data.auto_clients || []),
@@ -291,10 +296,10 @@ export const getClients = async () => {
     }
 };
 
-export const getProfile = async () => {
+export const getProfileData = async () => {
     setState('processingProfile', true);
     try {
-        const profile = await apiClient.getProfile();
+        const profile: ProfileInfo = await getProfile();
         setState({
             name: profile.name,
             theme: profile.theme,
@@ -308,7 +313,9 @@ export const getProfile = async () => {
 
 export const changeLanguage = async (lang: LocalesType) => {
     try {
-        await apiClient.changeLanguage({ language: lang });
+        const profile = await getProfile();
+        profile.language = lang as ProfileInfo['language'];
+        await updateProfile(profile);
         setState('language', lang);
     } catch (error) {
         addErrorToast({ error });
@@ -317,7 +324,9 @@ export const changeLanguage = async (lang: LocalesType) => {
 
 export const changeTheme = async (theme: string) => {
     try {
-        await apiClient.changeTheme({ theme });
+        const profile = await getProfile();
+        profile.theme = theme as ProfileInfo['theme'];
+        await updateProfile(profile);
         setState('theme', theme);
     } catch (error) {
         addErrorToast({ error });

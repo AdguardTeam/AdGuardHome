@@ -44,7 +44,7 @@ export const PasswordInput = (props: Props) => {
                         onMouseDown={(e: MouseEvent) => e.preventDefault()}
                         onClick={() => setIsPasswordVisible((v) => !v)}
                     >
-                        <Icon icon={(isPasswordVisible() ? 'eye_open' : 'eye_close') as any} />
+                        <Icon icon={isPasswordVisible() ? 'eye_open' : 'eye_close'} />
                     </button>
                 </div>
             }

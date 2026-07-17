@@ -1,17 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
-    getDnsConfig: vi.fn(),
-    setDnsConfig: vi.fn(),
+    dnsInfo: vi.fn(),
+    dnsConfig: vi.fn(),
     addErrorToast: vi.fn(),
     addSuccessToast: vi.fn(),
 }));
 
-vi.mock('panel/api/Api', () => ({
-    apiClient: {
-        getDnsConfig: mocks.getDnsConfig,
-        setDnsConfig: mocks.setDnsConfig,
-    },
+vi.mock('panel/api/generated', () => ({
+        dnsInfo: mocks.dnsInfo,
+        dnsConfig: mocks.dnsConfig,
 }));
 vi.mock('panel/stores/toasts', () => ({
     addErrorToast: mocks.addErrorToast,
@@ -27,7 +25,7 @@ describe('getDnsConfig', () => {
     beforeEach(() => vi.clearAllMocks());
 
     it('defaults null blocking IPs and empty upstream_mode (FR-012)', async () => {
-        mocks.getDnsConfig.mockResolvedValue({
+        mocks.dnsInfo.mockResolvedValue({
             blocking_ipv4: null,
             blocking_ipv6: null,
             upstream_mode: '',
@@ -43,7 +41,7 @@ describe('toggleResolveClients', () => {
     beforeEach(() => vi.clearAllMocks());
 
     it('toggles resolve_clients and persists (FR-032)', async () => {
-        mocks.setDnsConfig.mockResolvedValue({});
+        mocks.dnsConfig.mockResolvedValue({});
 
         const before = dnsConfigState.resolve_clients;
         await toggleResolveClients();
@@ -54,12 +52,12 @@ describe('toggleResolveClients', () => {
         expect(dnsConfigState.resolve_clients).toBe(before);
     });
 
-    it('calls apiClient.setDnsConfig with inverted value (FR-032)', async () => {
-        mocks.setDnsConfig.mockResolvedValue({});
+    it('calls dnsConfig with inverted value (FR-032)', async () => {
+        mocks.dnsConfig.mockResolvedValue({});
 
         const before = dnsConfigState.resolve_clients;
         await toggleResolveClients();
-        expect(mocks.setDnsConfig).toHaveBeenCalledWith({
+        expect(mocks.dnsConfig).toHaveBeenCalledWith({
             resolve_clients: !before,
         });
     });

@@ -1,6 +1,12 @@
 import { createStore } from 'solid-js/store';
 import { untrack } from 'solid-js';
-import { apiClient } from 'panel/api/Api';
+import {
+    stats,
+    getStatsConfig as fetchStatsConfig,
+    putStatsConfig,
+    statsReset,
+    clientsSearch,
+} from 'panel/api/generated';
 import { addErrorToast, addSuccessToast } from './toasts';
 import intl from 'panel/common/intl';
 import { DAY, HOUR, STATS_INTERVALS_DAYS, TIME_UNITS } from 'panel/helpers/constants';
@@ -78,11 +84,11 @@ const [state, setState] = createStore<StatsState>(initialState);
 export const getStats = async (period?: number) => {
     setState('processingStats', true);
     try {
-        const data = await apiClient.getStats(period ?? 0);
+        const data = await stats(period != null ? { recent: period } : undefined);
 
         const normalizedTopClientsList = normalizeTopStats(data.top_clients || []);
         const clientsParams = getParamsForClientsSearch(normalizedTopClientsList, 'name');
-        const clients = await apiClient.searchClients(clientsParams);
+        const clients = await clientsSearch(clientsParams);
         const topClientsWithInfo = addClientInfo(normalizedTopClientsList, clients, 'name');
 
         setState({
@@ -114,7 +120,7 @@ export const getStats = async (period?: number) => {
 export const getStatsConfig = async () => {
     setState('processingGetConfig', true);
     try {
-        const data = await apiClient.getStatsConfig();
+        const data = await fetchStatsConfig();
         setState({
             interval: data.interval || DAY,
             enabled: data.enabled ?? true,
@@ -134,7 +140,7 @@ export const getStatsConfig = async () => {
 export const setStatsConfig = async (values: any): Promise<boolean> => {
     setState('processingSetConfig', true);
     try {
-        await apiClient.setStatsConfig(values);
+        await putStatsConfig(values);
         setState({ ...values, processingSetConfig: false });
         return true;
     } catch (error) {
@@ -147,7 +153,7 @@ export const setStatsConfig = async (values: any): Promise<boolean> => {
 export const resetStats = async () => {
     setState('processingReset', true);
     try {
-        await apiClient.resetStats();
+        await statsReset();
         setState('processingReset', false);
         addSuccessToast(intl.getMessage('settings_notify_statistics_cleared'));
         await getStats();

@@ -1,6 +1,6 @@
 import { createStore } from 'solid-js/store';
 import { untrack } from 'solid-js';
-import { apiClient } from 'panel/api/Api';
+import { login } from 'panel/api/generated';
 import { addErrorToast } from './toasts';
 import { HTML_PAGES } from 'panel/helpers/constants';
 
@@ -23,7 +23,7 @@ const [state, setState] = createStore<LoginState>(initialState);
 export const processLogin = async (values: { name: string; password: string }) => {
     setState({ processingLogin: true, error: null });
     try {
-        await apiClient.login(values);
+        await login(values);
         const dashboardUrl =
             window.location.origin +
             window.location.pathname.replace(HTML_PAGES.LOGIN, HTML_PAGES.MAIN);

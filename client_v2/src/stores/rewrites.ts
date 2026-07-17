@@ -1,6 +1,13 @@
 import { createStore } from 'solid-js/store';
 import { untrack } from 'solid-js';
-import { apiClient } from 'panel/api/Api';
+import {
+    rewriteList,
+    rewriteAdd,
+    rewriteUpdate,
+    rewriteDelete,
+    rewriteSettingsGet,
+    rewriteSettingsUpdate,
+} from 'panel/api/generated';
 import { addErrorToast, addSuccessToast } from './toasts';
 import intl from 'panel/common/intl';
 
@@ -54,8 +61,8 @@ export const toggleRewritesModal = (modalType?: string, currentRewrite?: Rewrite
 export const getRewritesList = async () => {
     setState('processing', true);
     try {
-        const data = await apiClient.getRewritesList();
-        setState({ list: data || [], processing: false });
+        const data = await rewriteList();
+        setState({ list: (data || []) as RewriteConfig[], processing: false });
     } catch (error) {
         addErrorToast({ error });
         setState('processing', false);
@@ -65,7 +72,7 @@ export const getRewritesList = async () => {
 export const addRewrite = async (config: RewriteConfig) => {
     setState('processingAdd', true);
     try {
-        await apiClient.addRewrite(config);
+        await rewriteAdd(config);
         setState('processingAdd', false);
         toggleRewritesModal();
         addSuccessToast(intl.getMessage('changes_saved_success'));
@@ -82,7 +89,7 @@ export const updateRewrite = async (
 ): Promise<boolean> => {
     setState('processingUpdate', true);
     try {
-        await apiClient.updateRewrite(config);
+        await rewriteUpdate(config);
         setState('processingUpdate', false);
         if (options.closeModal !== false) {
             toggleRewritesModal();
@@ -100,7 +107,7 @@ export const updateRewrite = async (
 export const deleteRewrite = async (config: RewriteConfig): Promise<boolean> => {
     setState('processingDelete', true);
     try {
-        await apiClient.deleteRewrite(config);
+        await rewriteDelete(config);
         setState('processingDelete', false);
         addSuccessToast(intl.getMessage('dns_rewrite_removed'));
         await getRewritesList();
@@ -115,7 +122,7 @@ export const deleteRewrite = async (config: RewriteConfig): Promise<boolean> => 
 export const getRewriteSettings = async () => {
     setState('processingSettings', true);
     try {
-        const data = await apiClient.getRewriteSettings();
+        const data = await rewriteSettingsGet();
         setState({ enabled: data.enabled ?? true, processingSettings: false });
     } catch (error) {
         addErrorToast({ error });
@@ -126,7 +133,7 @@ export const getRewriteSettings = async () => {
 export const updateRewriteSettings = async (values: any) => {
     setState('processingSettings', true);
     try {
-        await apiClient.updateRewriteSettings(values);
+        await rewriteSettingsUpdate(values);
         setState({ ...values, processingSettings: false });
     } catch (error) {
         addErrorToast({ error });

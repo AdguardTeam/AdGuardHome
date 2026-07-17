@@ -1,6 +1,17 @@
 import { createStore } from 'solid-js/store';
 import { untrack } from 'solid-js';
-import { apiClient } from 'panel/api/Api';
+import {
+    status,
+    dhcpStatus,
+    dhcpInterfaces,
+    checkActiveDhcp,
+    dhcpSetConfig,
+    dhcpReset,
+    dhcpResetLeases,
+    dhcpAddStaticLease,
+    dhcpRemoveStaticLease,
+    dhcpUpdateStaticLease,
+} from 'panel/api/generated';
 import { addErrorToast, addSuccessToast } from './toasts';
 import intl from 'panel/common/intl';
 import { STATUS_RESPONSE } from 'panel/helpers/constants';
@@ -84,13 +95,30 @@ const [state, setState] = createStore<DhcpState>(initialState);
 export const getDhcpStatus = async () => {
     setState('processingStatus', true);
     try {
-        const globalStatus = await apiClient.getGlobalStatus();
+        const globalStatus = await status();
         if (globalStatus.dhcp_available) {
-            const status = await apiClient.getDhcpStatus();
-            const { static_leases: staticLeases, ...values } = status;
+            const statusData = await dhcpStatus();
+            const { static_leases: staticLeases, ...values } = statusData;
             setState({
-                ...values,
-                staticLeases,
+                enabled: values.enabled ?? false,
+                interface_name: values.interface_name ?? '',
+                v4: {
+                    gateway_ip: values.v4?.gateway_ip ?? '',
+                    subnet_mask: values.v4?.subnet_mask ?? '',
+                    range_start: values.v4?.range_start ?? '',
+                    range_end: values.v4?.range_end ?? '',
+                    lease_duration: values.v4?.lease_duration ?? 0,
+                },
+                v6: {
+                    range_start: values.v6?.range_start ?? '',
+                    lease_duration: values.v6?.lease_duration ?? 0,
+                },
+                leases: values.leases.map((l) => ({ hostname: l.hostname, ip: l.ip, mac: l.mac })),
+                staticLeases: (staticLeases ?? []).map((l) => ({
+                    hostname: l.hostname,
+                    ip: l.ip,
+                    mac: l.mac,
+                })),
                 dhcp_available: true,
                 processingStatus: false,
                 processing: false,
@@ -107,7 +135,7 @@ export const getDhcpStatus = async () => {
 export const getDhcpInterfaces = async () => {
     setState('processingInterfaces', true);
     try {
-        const data = await apiClient.getDhcpInterfaces();
+        const data = await dhcpInterfaces();
         setState({
             interfaces: enrichWithConcatenatedIpAddresses(data),
             processingInterfaces: false,
@@ -121,7 +149,7 @@ export const getDhcpInterfaces = async () => {
 export const findActiveDhcp = async (interfaceName: string, navigate?: (path: string) => void) => {
     setState('processingDhcp', true);
     try {
-        const data = await apiClient.findActiveDhcp({ interface: interfaceName });
+        const data = await checkActiveDhcp({ interface: interfaceName });
         setState({ check: data, processingDhcp: false });
 
         const cur = untrack(() => state);
@@ -203,7 +231,7 @@ export const findActiveDhcp = async (interfaceName: string, navigate?: (path: st
 export const setDhcpConfig = async (values: any) => {
     setState('processingConfig', true);
     try {
-        await apiClient.setDhcpConfig(values);
+        await dhcpSetConfig(values);
         const cur = untrack(() => state);
         setState({
             v4: { ...cur.v4, ...values.v4 },
@@ -224,7 +252,7 @@ export const toggleDhcp = async (config?: any) => {
         const values = config || {};
         const enabled = !values.enabled;
         const payload = { ...values, enabled };
-        await apiClient.setDhcpConfig(payload);
+        await dhcpSetConfig(payload);
         setState({ enabled, check: null, processingConfig: false });
     } catch (error) {
         addErrorToast({ error });
@@ -235,7 +263,7 @@ export const toggleDhcp = async (config?: any) => {
 export const resetDhcp = async () => {
     setState('processingReset', true);
     try {
-        await apiClient.resetDhcp();
+        await dhcpReset();
         await getDhcpStatus();
         setState('processingReset', false);
         addSuccessToast(intl.getMessage('dhcp_config_saved'));
@@ -248,7 +276,7 @@ export const resetDhcp = async () => {
 export const resetDhcpLeases = async () => {
     setState('processingReset', true);
     try {
-        await apiClient.resetDhcpLeases();
+        await dhcpResetLeases();
         await getDhcpStatus();
         setState('processingReset', false);
         addSuccessToast(intl.getMessage('dhcp_reset_leases_success'));
@@ -270,7 +298,7 @@ export const addStaticLease = async (lease: Lease) => {
     setState('processingAdding', true);
     try {
         const name = lease.hostname || lease.ip;
-        await apiClient.addStaticLease(lease);
+        await dhcpAddStaticLease(lease);
         setState('processingAdding', false);
         toggleLeaseModal();
         addSuccessToast(intl.getMessage('dhcp_lease_added', { key: name }));
@@ -285,7 +313,7 @@ export const removeStaticLease = async (lease: Lease) => {
     setState('processingDeleting', true);
     try {
         const name = lease.hostname || lease.ip;
-        await apiClient.removeStaticLease(lease);
+        await dhcpRemoveStaticLease(lease);
         setState('processingDeleting', false);
         addSuccessToast(intl.getMessage('dhcp_lease_deleted', { key: name }));
         await getDhcpStatus();
@@ -298,7 +326,7 @@ export const removeStaticLease = async (lease: Lease) => {
 export const updateStaticLease = async (lease: Lease) => {
     setState('processingUpdating', true);
     try {
-        await apiClient.updateStaticLease(lease);
+        await dhcpUpdateStaticLease(lease);
         setState('processingUpdating', false);
         toggleLeaseModal();
         addSuccessToast(

@@ -73,7 +73,7 @@ export const InactivitySchedule = (props: Props) => {
             return;
         }
         const newSchedule = props.clientScope
-            ? { ...(clientFormState.blocked_services_schedule as any), time_zone: option.value }
+            ? { ...clientFormState.blocked_services_schedule, time_zone: option.value }
             : { ...schedule(), time_zone: option.value };
         if (props.clientScope) {
             updateClientFormField('blocked_services_schedule', newSchedule, true);
@@ -172,7 +172,10 @@ export const InactivitySchedule = (props: Props) => {
                 >
                     <div class={cn(theme.layout.container, s.container)}>
                         <div class={cn(theme.layout.containerIn, theme.layout.containerIn_one_col)}>
-                            <div class={s.breadcrumbs} data-testid="inactivity-schedule-breadcrumbs">
+                            <div
+                                class={s.breadcrumbs}
+                                data-testid="inactivity-schedule-breadcrumbs"
+                            >
                                 <Breadcrumbs
                                     parentLinks={parentLinks()}
                                     currentTitle={intl.getMessage('inactivity_schedule')}
@@ -260,7 +263,10 @@ export const InactivitySchedule = (props: Props) => {
             }
         >
             {/* clientScope - render inline */}
-            <div class={cn(s.timezoneWrapper, s.timezoneWrapperClientScope)} data-testid="inactivity-schedule-timezone">
+            <div
+                class={cn(s.timezoneWrapper, s.timezoneWrapperClientScope)}
+                data-testid="inactivity-schedule-timezone"
+            >
                 <div class={s.timezoneLabel}>{intl.getMessage('inactivity_schedule_timezone')}</div>
                 <Select
                     options={TIMEZONE_OPTIONS}

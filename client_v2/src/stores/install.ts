@@ -1,6 +1,6 @@
 import { createStore } from 'solid-js/store';
 import { untrack } from 'solid-js';
-import { apiClient } from 'panel/api/Api';
+import { installGetAddresses, installConfigure, installCheckConfig } from 'panel/api/generated';
 import { addErrorToast, addSuccessToast } from './toasts';
 import intl from 'panel/common/intl';
 import {
@@ -61,7 +61,7 @@ const [state, setState] = createStore<InstallState>(initialState);
 export const getDefaultAddresses = async () => {
     setState('processingDefault', true);
     try {
-        const data = await apiClient.getDefaultAddresses();
+        const data = await installGetAddresses();
         const normalizedInterfaces = Array.isArray(data.interfaces)
             ? data.interfaces
             : Object.entries(data.interfaces || {}).map(([name, iface]: any) => ({
@@ -98,7 +98,7 @@ export const setAllSettings = async (config: any) => {
     try {
         const { confirm_password, ...rest } = config;
         void confirm_password;
-        await apiClient.setAllSettings(rest);
+        await installConfigure(rest);
         setState({ processingSubmit: false, submitted: true });
         addSuccessToast(intl.getMessage('install_saved'));
     } catch (error) {
@@ -110,7 +110,7 @@ export const setAllSettings = async (config: any) => {
 export const checkConfig = async (values: any) => {
     setState('processingCheck', true);
     try {
-        const data = await apiClient.checkConfig(values);
+        const data = await installCheckConfig(values);
         setState({
             web: { ...values.web, ...data.web },
             dns: { ...values.dns, ...data.dns },

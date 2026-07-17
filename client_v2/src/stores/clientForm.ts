@@ -1,7 +1,7 @@
 import { createStore, reconcile } from 'solid-js/store';
 import { untrack } from 'solid-js';
 import type { ClientFormState, Client } from 'panel/initialState';
-import { apiClient } from 'panel/api/Api';
+import { clientsUpdate, clientsAdd } from 'panel/api/generated';
 import intl from 'panel/common/intl';
 import { validateIdentifier, validateCacheSize } from 'panel/helpers/validators';
 import { DEFAULT_DNS_CACHE_SIZE } from 'panel/helpers/constants';
@@ -63,7 +63,7 @@ export const updateClientFormField = (
 ) => {
     const field = typeof fieldOrObj === 'string' ? fieldOrObj : fieldOrObj.field;
     const value = typeof fieldOrObj === 'string' ? maybeValue : fieldOrObj.value;
-    setState(field as any, replace ? reconcile(value) : value);
+    setState(field as keyof ClientFormState, replace ? reconcile(value) : value);
     // Clear the error for this field
     if (state.formErrors[field as string]) {
         setState('formErrors', (prev) => {
@@ -98,7 +98,7 @@ export const buildFormPayload = (client: Client): Partial<ClientFormState> => ({
     filtering_enabled: client.filtering_enabled || false,
     safebrowsing_enabled: client.safebrowsing_enabled || false,
     parental_enabled: client.parental_enabled || false,
-    safe_search: (client.safe_search as any) || {
+    safe_search: (client.safe_search || {
         enabled: false,
         google: false,
         youtube: false,
@@ -106,7 +106,7 @@ export const buildFormPayload = (client: Client): Partial<ClientFormState> => ({
         duckduckgo: false,
         yandex: false,
         pixabay: false,
-    },
+    }) as ClientFormState['safe_search'],
     ignore_querylog: client.ignore_querylog || false,
     ignore_statistics: client.ignore_statistics || false,
     blocked_services: client.blocked_services || [],
@@ -202,7 +202,7 @@ export const saveClient = async (): Promise<boolean> => {
     if (state.mode === 'edit') {
         setProcessingSave(true);
         try {
-            await apiClient.updateClient({ name: state.originalName, data: config });
+            await clientsUpdate({ name: state.originalName, data: config });
             clearClientForm();
             await getClients();
             return true;
@@ -215,7 +215,7 @@ export const saveClient = async (): Promise<boolean> => {
     } else {
         setProcessingSave(true);
         try {
-            await apiClient.addClient(config);
+            await clientsAdd(config);
             clearClientForm();
             await getClients();
             addSuccessToast({ message: intl.getMessage('client_added') });

@@ -22,7 +22,7 @@ const getLanguageShortLabel = (lang: string) => {
 
     const base = (() => {
         if (typeof Intl !== 'undefined' && 'Locale' in Intl) {
-            return new (Intl as any).Locale(l).language || '';
+            return new Intl.Locale(l).language || '';
         }
 
         return l.split('-')[0] || '';

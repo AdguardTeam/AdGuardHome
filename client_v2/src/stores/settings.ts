@@ -1,6 +1,16 @@
 import { createStore } from 'solid-js/store';
 import { untrack } from 'solid-js';
-import { apiClient } from 'panel/api/Api';
+import {
+    safebrowsingStatus,
+    safebrowsingEnable,
+    safebrowsingDisable,
+    parentalStatus,
+    parentalEnable,
+    parentalDisable,
+    safesearchStatus,
+    safesearchSettings,
+    testUpstreamDNS,
+} from 'panel/api/generated';
 import { addErrorToast, addSuccessToast } from './toasts';
 import { splitByNewLine } from 'panel/helpers/helpers';
 import intl from 'panel/common/intl';
@@ -32,16 +42,13 @@ const [state, setState] = createStore<SettingsState>(initialState);
 export const initSettings = async () => {
     setState('processing', true);
     try {
-        const [safebrowsingStatus, parentalStatus, safesearchStatus] = await Promise.all([
-            apiClient.getSafebrowsingStatus(),
-            apiClient.getParentalStatus(),
-            apiClient.getSafesearchStatus(),
-        ]);
+        const [safebrowsingStatusData, parentalStatusData, safesearchStatusData] =
+            await Promise.all([safebrowsingStatus(), parentalStatus(), safesearchStatus()]);
         setState({
             settingsList: {
-                safebrowsing: { enabled: safebrowsingStatus.enabled },
-                parental: { enabled: parentalStatus.enabled },
-                safesearch: { ...safesearchStatus },
+                safebrowsing: { enabled: safebrowsingStatusData.enabled },
+                parental: { enabled: parentalStatusData.enable },
+                safesearch: { ...safesearchStatusData },
             },
             processing: false,
         });
@@ -56,22 +63,22 @@ export const toggleSetting = async (settingKey: string, status: any) => {
         switch (settingKey) {
             case 'safebrowsing':
                 if (status) {
-                    await apiClient.disableSafebrowsing();
+                    await safebrowsingDisable();
                 } else {
-                    await apiClient.enableSafebrowsing();
+                    await safebrowsingEnable();
                 }
                 setState('settingsList', 'safebrowsing', 'enabled', !status);
                 return true;
             case 'parental':
                 if (status) {
-                    await apiClient.disableParentalControl();
+                    await parentalDisable();
                 } else {
-                    await apiClient.enableParentalControl();
+                    await parentalEnable();
                 }
                 setState('settingsList', 'parental', 'enabled', !status);
                 return true;
             case 'safesearch':
-                await apiClient.updateSafesearch(status);
+                await safesearchSettings(status);
                 setState('settingsList', 'safesearch', status);
                 return true;
             default:
@@ -109,7 +116,7 @@ export const testUpstreamWithFormValues = async (
             ...(upstreamDnsFile ? null : { upstream_dns: removeComments(upstream_dns) }),
         };
 
-        const upstreamResponse = await apiClient.testUpstream(config);
+        const upstreamResponse = await testUpstreamDNS(config);
         const testMessages = Object.keys(upstreamResponse).map((key) => {
             const message = upstreamResponse[key];
             if (message.startsWith('WARNING:')) {

@@ -1,6 +1,6 @@
 import { createStore } from 'solid-js/store';
 import { untrack } from 'solid-js';
-import { apiClient } from 'panel/api/Api';
+import { clientsAdd, clientsDelete, clientsUpdate } from 'panel/api/generated';
 import { addErrorToast, addSuccessToast } from './toasts';
 import intl from 'panel/common/intl';
 import { getClients } from './dashboard';
@@ -42,7 +42,7 @@ export const toggleClientModal = (payload?: { type?: string; name?: string }) =>
 export const addClient = async (config: any) => {
     setState('processingAdding', true);
     try {
-        await apiClient.addClient(config);
+        await clientsAdd(config);
         setState('processingAdding', false);
         toggleClientModal();
         addSuccessToast(intl.getMessage('client_added'));
@@ -56,7 +56,7 @@ export const addClient = async (config: any) => {
 export const deleteClient = async (name: string) => {
     setState('processingDeleting', true);
     try {
-        await apiClient.deleteClient({ name });
+        await clientsDelete({ name });
         setState('processingDeleting', false);
         addSuccessToast(intl.getMessage('client_removed'));
         await getClients();
@@ -69,7 +69,7 @@ export const deleteClient = async (name: string) => {
 export const updateClient = async (name: string, data: any): Promise<boolean> => {
     setState('processingUpdating', true);
     try {
-        await apiClient.updateClient({ name, data });
+        await clientsUpdate({ name, data });
         setState('processingUpdating', false);
         toggleClientModal();
         await getClients();
