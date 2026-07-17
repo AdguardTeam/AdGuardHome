@@ -36,21 +36,8 @@ const Filters = ({ setIsLoading }: FiltersProps) => {
 
     return (
         <div className="page-header page-header--logs">
-            <h1 className="page-title page-title--large">
-                {t('query_log')}
-
-                <button
-                    type="button"
-                    className="btn btn-icon--green logs__refresh"
-                    title={t('refresh_btn')}
-                    onClick={() => refreshLogs()}>
-                    <svg className="icons icon--24">
-                        <use xlinkHref="#update" />
-                    </svg>
-                </button>
-
-                <AutoRefresh refreshLogs={refreshLogs} />
-            </h1>
+            <h1 className="page-title page-title--large">{t('query_log')}</h1>
+            <AutoRefresh refreshLogs={refreshLogs} />
             <Form setIsLoading={setIsLoading} />
         </div>
     );
