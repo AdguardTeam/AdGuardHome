@@ -171,6 +171,12 @@
 
                 set -e -f -u -x
 
+                # The version.sh script queries the current state of the git
+                # repository, so we must explicitly checkout the revision that
+                # triggered the build to prevent race conditions when the master
+                # branch changes while this build is running.
+                git checkout "${bamboo_repository_revision_number}"
+
                 version="$(env CHANNEL=${bamboo_channel} sh ./scripts/make/version.sh)"
                 readonly version
 
