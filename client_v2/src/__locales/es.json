@@ -478,7 +478,7 @@
   "protection": "Protección",
   "protocol": "Protocolo",
   "queries": "Consultas",
-  "queries_total": "| %count% consulta en total | %count% consultas en total",
+  "queries_total": "| %value% consulta en total | %value% consultas en total",
   "query_details": "Detalles de la consulta",
   "query_log": "Registro de consultas",
   "query_log_all_reasons": "Todos los motivos",

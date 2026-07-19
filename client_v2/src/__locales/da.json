@@ -478,7 +478,7 @@
   "protection": "Beskyttelse",
   "protocol": "Protokol",
   "queries": "Forespørgsler",
-  "queries_total": "| %count% forespørgsel i alt | %count% forespørgsler i alt",
+  "queries_total": "| %value% forespørgsel i alt | %value% forespørgsler i alt",
   "query_details": "Forespørgselsdetaljer",
   "query_log": "Forespørgselslog",
   "query_log_all_reasons": "Alle årsager",

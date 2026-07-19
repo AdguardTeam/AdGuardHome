@@ -478,7 +478,7 @@
   "protection": "防护",
   "protocol": "协议",
   "queries": "查询",
-  "queries_total": "共 %count% 条查询 | 共 %count% 条查询",
+  "queries_total": "共 %value% 条查询 | 共 %value% 条查询",
   "query_details": "查询详情",
   "query_log": "查询日志",
   "query_log_all_reasons": "全部原因",

@@ -478,7 +478,7 @@
   "protection": "Protezione",
   "protocol": "Protocollo",
   "queries": "Richieste",
-  "queries_total": "| %count% richiesta totale | %count% richieste totali",
+  "queries_total": "| %value% richiesta totale | %value% richieste totali",
   "query_details": "Dettagli della richiesta",
   "query_log": "Registro richieste",
   "query_log_all_reasons": "Tutti i motivi",
