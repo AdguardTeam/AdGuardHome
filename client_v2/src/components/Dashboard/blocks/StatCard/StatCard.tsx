@@ -130,7 +130,7 @@ export const StatCard = (props: StatCardProps) => {
         maintainAspectRatio: false,
         animation: false as const,
         layout: {
-            padding: { bottom: 12 },
+            padding: { top: 6, bottom: 12 },
         },
         plugins: {
             tooltip: {
@@ -179,23 +179,14 @@ export const StatCard = (props: StatCardProps) => {
 
                     <div class={cn(theme.text.t4, s.statCardLabel)}>
                         <Show when={props.linkTo} fallback={props.label}>
-                            <Link to={props.linkTo!} query={props.query} class={s.statLabelLink}>
+                            <Link to={props.linkTo} query={props.query} class={s.statLabelLink}>
                                 {props.label}
                             </Link>
                         </Show>
                     </div>
                 </div>
                 <div class={s.statCardChart}>
-                    <div
-                        ref={setTooltipRef}
-                        class={s.chartTooltip}
-                        style={{
-                            position: 'fixed',
-                            'pointer-events': 'none',
-                            'z-index': '100',
-                            opacity: '0',
-                        }}
-                    />
+                    <div ref={setTooltipRef} class={s.chartTooltip} />
                     <canvas ref={setCanvasRef} />
                 </div>
             </div>

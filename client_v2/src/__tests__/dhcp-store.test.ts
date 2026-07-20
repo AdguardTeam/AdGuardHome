@@ -80,7 +80,7 @@ describe('setDhcpConfig', () => {
         mocks.setDhcpConfig.mockResolvedValue(undefined);
     });
 
-    it('shows dhcp_config_saved toast (FR-010)', async () => {
+    it('shows dhcp_config_saved toast', async () => {
         await setDhcpConfig({
             v4: { range_start: 'a', range_end: 'b' },
             interface_name: 'eth0',
@@ -95,7 +95,7 @@ describe('toggleDhcp', () => {
         mocks.setDhcpConfig.mockResolvedValue(undefined);
     });
 
-    it('computes enabled from passed config, not current state (FR-011)', async () => {
+    it('computes enabled from passed config, not current state', async () => {
         await toggleDhcp({ enabled: false, interface_name: 'eth0' });
         expect(mocks.setDhcpConfig).toHaveBeenCalledWith(
             expect.objectContaining({ enabled: true }),

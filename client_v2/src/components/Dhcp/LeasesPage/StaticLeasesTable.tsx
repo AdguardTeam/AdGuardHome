@@ -190,7 +190,6 @@ export const StaticLeasesTable = (props: Props) => {
                                             </div>
                                         </div>
                                     }
-                                    trigger="click"
                                     position="bottomRight"
                                     noIcon
                                     open={openMenuId() === rowId}

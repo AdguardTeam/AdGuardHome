@@ -21,7 +21,6 @@ export const ServerSettingsModal = (props: Props) => {
     const [portDoq, setPortDoq] = createSignal(0);
     const [errors, setErrors] = createSignal<Record<string, string>>({});
 
-    // Reset local state when modal opens
     createEffect(
         on(
             () => props.open,
@@ -47,8 +46,6 @@ export const ServerSettingsModal = (props: Props) => {
 
     const hasErrors = () => Object.values(errors()).some(Boolean);
 
-    // --- Change handlers ---
-
     const handleServerNameChange = (e: Event) => {
         setServerName((e.target as HTMLInputElement).value);
         clearError('server_name');
@@ -68,8 +65,6 @@ export const ServerSettingsModal = (props: Props) => {
         setPortDoq(toNumber((e.target as HTMLInputElement).value));
         clearError('port_dns_over_quic');
     };
-
-    // --- Blur validators ---
 
     const handleServerNameBlur = () => {
         const err = validateServerName(serverName());

@@ -8,6 +8,7 @@ const mockDashboardState = {
     theme: 'light',
     language: 'en',
     name: '',
+    checkUpdateFlag: true,
 };
 
 vi.mock('panel/stores/dashboard', () => ({
@@ -59,6 +60,7 @@ describe('Footer', () => {
         vi.clearAllMocks();
         mockDashboardState.dnsVersion = '';
         mockDashboardState.processingVersion = true;
+        mockDashboardState.checkUpdateFlag = true;
     });
 
     it('hides version badge when dnsVersion is empty', () => {
@@ -117,5 +119,17 @@ describe('Footer', () => {
 
         const button = screen.getByTestId('footer-check-updates');
         expect(button.getAttribute('aria-label')).toBe('Check for updates');
+    });
+
+    it('hides check-updates button when checkUpdateFlag is false (Docker/Snap)', () => {
+        mockDashboardState.dnsVersion = 'v1.0.0';
+        mockDashboardState.processingVersion = false;
+        mockDashboardState.checkUpdateFlag = false;
+
+        render(() => <Footer />);
+
+        expect(screen.queryByTestId('footer-check-updates')).not.toBeInTheDocument();
+        // Version text is still visible
+        expect(screen.getByText('Version v1.0.0')).toBeInTheDocument();
     });
 });

@@ -690,24 +690,6 @@ export const validateUpstreams = (value: string): string | undefined =>
     );
 
 /**
- * Validates bootstrap DNS server lines. Unlike {@link validateUpstreams},
- * comments are NOT allowed here (`#`-prefixed lines are rejected) because
- * the backend does not filter comments from bootstrap DNS entries.
- * Each line must contain a dot or colon.
- *
- * @example validateBootstrapDns("8.8.8.8")                  // undefined (valid)
- * @example validateBootstrapDns("# comment\n8.8.8.8")        // error (# not supported)
- * @example validateBootstrapDns("! https://dns.example.com") // error (! not supported)
- * @example validateBootstrapDns("not-a-server")              // error (no dot or colon)
- */
-export const validateBootstrapDns = (value: string): string | undefined =>
-    validatePerLine(
-        value,
-        (line) =>
-            R_HAS_ADDRESS.test(line) && !R_BANG_PREFIX.test(line) && !R_UPSTREAM_COMMENT.test(line),
-    );
-
-/**
  * Validates that each non-empty, non-comment line in a blocked_hosts
  * entry contains a dot (domain, wildcard, or AdGuard URL filter rule).
  *

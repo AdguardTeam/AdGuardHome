@@ -1,4 +1,4 @@
-import { createSignal, createEffect, createMemo, untrack } from 'solid-js';
+import { createSignal, createEffect, createMemo, untrack, onMount } from 'solid-js';
 
 import { ALL_INTERFACES_IP, STANDARD_DNS_PORT, STANDARD_WEB_PORT } from 'panel/helpers/constants';
 import { validateInstallPort } from 'panel/helpers/validators';
@@ -72,12 +72,7 @@ export const useInstallSettingsForm = (
         setIsDirty(true);
     };
 
-    // Validate and call validateForm when values change
-    createEffect(() => {
-        if (!isDirty()) {
-            return;
-        }
-
+    const runValidation = () => {
         const webPortVal = webPort();
         const dnsPortVal = dnsPort();
         const webIpVal = webIp();
@@ -91,15 +86,18 @@ export const useInstallSettingsForm = (
         }
 
         validateForm({
-            web: {
-                ip: webIpVal,
-                port: webPortVal,
-            },
-            dns: {
-                ip: dnsIpVal,
-                port: dnsPortVal,
-            },
+            web: { ip: webIpVal, port: webPortVal },
+            dns: { ip: dnsIpVal, port: dnsPortVal },
         });
+    };
+
+    onMount(runValidation);
+
+    createEffect(() => {
+        if (!isDirty()) {
+            return;
+        }
+        runValidation();
     });
 
     const isValid = createMemo(() => {

@@ -5,7 +5,7 @@ import { MOBILE_TABLE_MAX_ROWS } from 'panel/helpers/constants';
 import intl from 'panel/common/intl';
 import { formatNumber, formatCompactNumber } from 'panel/helpers/helpers';
 import theme from 'panel/lib/theme';
-import { Dropdown } from 'panel/common/ui/Dropdown';
+import { Tooltip } from 'panel/common/ui/Tooltip';
 import cn from 'clsx';
 import { SortableTableHeader } from '../SortableTableHeader';
 import { EmptyState } from '../EmptyState';
@@ -79,16 +79,14 @@ export const TopUpstreams = (props: Props) => {
 
                                     <div class={s.tableRowRight}>
                                         <div class={s.dropdowWrapper}>
-                                            <Dropdown
-                                                trigger="hover"
+                                            <Tooltip
                                                 position="top"
-                                                noIcon
-                                                disableAnimation
                                                 overlayClass={s.queryTooltipOverlay}
-                                                menu={
+                                                content={
                                                     <div class={s.queryTooltip}>
-                                                        {formatNumber(upstream.count)}{' '}
-                                                        {intl.getMessage('queries').toLowerCase()}
+                                                        {intl.getMessage('queries_tooltip', {
+                                                            value: formatNumber(upstream.count),
+                                                        })}
                                                     </div>
                                                 }
                                             >
@@ -111,7 +109,7 @@ export const TopUpstreams = (props: Props) => {
                                                         ({percent().toFixed(2)}%)
                                                     </div>
                                                 </div>
-                                            </Dropdown>
+                                            </Tooltip>
                                         </div>
 
                                         <div class={s.queryBar}>

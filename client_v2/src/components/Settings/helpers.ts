@@ -63,3 +63,49 @@ const SAFESEARCH_TITLES = {
 export const getSafeSearchProviderTitle = (key: string) => {
     return SAFESEARCH_TITLES[key as keyof typeof SAFESEARCH_TITLES] ?? captitalizeWords(key);
 };
+
+export type QueryLogConfig = {
+    enabled: boolean;
+    anonymize_client_ip: boolean;
+    interval: number;
+    ignored: string[];
+    ignored_enabled: boolean;
+};
+
+export type StatsConfig = {
+    enabled: boolean;
+    interval: number;
+    ignored: string[];
+    ignored_enabled: boolean;
+};
+
+/**
+ * Builds a backend-ready query-log config payload from the queryLogs store
+ * (or any object with the required fields), applying optional overrides.
+ */
+export const buildQueryLogConfig = (
+    state: QueryLogConfig,
+    overrides?: Partial<QueryLogConfig>,
+): QueryLogConfig => ({
+    enabled: state.enabled,
+    anonymize_client_ip: state.anonymize_client_ip,
+    interval: state.interval,
+    ignored: state.ignored,
+    ignored_enabled: state.ignored_enabled,
+    ...overrides,
+});
+
+/**
+ * Builds a backend-ready stats config payload from the stats store,
+ * applying optional overrides. Strips runtime-only fields.
+ */
+export const buildStatsConfig = (
+    state: StatsConfig,
+    overrides?: Partial<StatsConfig>,
+): StatsConfig => ({
+    enabled: state.enabled,
+    interval: state.interval,
+    ignored: state.ignored,
+    ignored_enabled: state.ignored_enabled,
+    ...overrides,
+});

@@ -1,8 +1,7 @@
 import { type JSX } from 'solid-js';
 import cn from 'clsx';
 
-import { Dropdown } from 'panel/common/ui/Dropdown';
-import { useIsMobile } from 'panel/hooks/useIsMobile';
+import { Tooltip } from 'panel/common/ui/Tooltip';
 import theme from 'panel/lib/theme';
 import { Icon } from 'panel/common/ui/Icon';
 
@@ -18,16 +17,12 @@ type Props = {
 };
 
 export const FaqTooltip = (props: Props) => {
-    const isMobile = useIsMobile();
-
-    const currentPosition = () => (isMobile() ? 'bottom' : 'bottomLeft');
-    const position = () => props.position ?? currentPosition();
+    const position = () => props.position ?? 'bottomLeft';
 
     return (
-        <Dropdown
-            trigger={isMobile() ? 'click' : 'hover'}
+        <Tooltip
             overlayClass={cn(s.overlay_mobile, props.overlayClass)}
-            menu={
+            content={
                 <div
                     class={cn(theme.dropdown.menu, s.menu, props.menuClass, {
                         [s.menu_large]: props.menuSize === 'large',
@@ -39,11 +34,10 @@ export const FaqTooltip = (props: Props) => {
             }
             class={s.dropdown}
             position={position() as any}
-            noIcon
         >
             <div class={s.trigger} onPointerDown={(e: PointerEvent) => e.stopPropagation()}>
                 <Icon icon="faq" class={s.icon} />
             </div>
-        </Dropdown>
+        </Tooltip>
     );
 };

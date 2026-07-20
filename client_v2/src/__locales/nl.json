@@ -604,7 +604,7 @@
   "protocol": "Protocol",
   "protocols": "Protocollen",
   "queries": "Zoekopdrachten",
-  "queries_total": "| %count% zoekopdracht totaal | %count% zoekopdrachten totaal",
+  "queries_total": "| %value% zoekopdracht totaal | %value% zoekopdrachten totaal",
   "query_details": "Details van de zoekopdracht",
   "query_log": "Zoekopdrachtlogboek",
   "query_log_all_reasons": "Alle redenen",

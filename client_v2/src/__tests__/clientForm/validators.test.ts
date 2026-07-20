@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
     validateIdentifier,
     validateUpstreams,
-    validateBootstrapDns,
     validateRequiredValue,
     validateIpv4,
     validatePort,
@@ -527,44 +526,6 @@ describe('validateUpstreams with bang prefix', () => {
 
     it('rejects ! and invalid non-comment lines', () => {
         expect(validateUpstreams('! good\ninvalidline')).toBeTruthy();
-    });
-});
-
-describe('validateBootstrapDns', () => {
-    it('returns undefined for empty value', () => {
-        expect(validateBootstrapDns('')).toBeUndefined();
-    });
-
-    it('returns undefined for valid IP', () => {
-        expect(validateBootstrapDns('8.8.8.8')).toBeUndefined();
-    });
-
-    it('returns undefined for valid upstream URL', () => {
-        expect(validateBootstrapDns('https://dns.example.com/dns-query')).toBeUndefined();
-    });
-
-    it('rejects # comment lines (no comment support)', () => {
-        expect(validateBootstrapDns('# comment\n8.8.8.8')).toBeTruthy();
-    });
-
-    it('rejects #-prefixed URLs that would otherwise pass address check', () => {
-        expect(validateBootstrapDns('# https://dns.example.com')).toBeTruthy();
-    });
-
-    it('rejects only # lines', () => {
-        expect(validateBootstrapDns('# first\n# second')).toBeTruthy();
-    });
-
-    it('rejects !-prefixed lines', () => {
-        expect(validateBootstrapDns('! https://dns.example.com')).toBeTruthy();
-    });
-
-    it('rejects lines without dot or colon', () => {
-        expect(validateBootstrapDns('not-a-server')).toBe('Invalid format');
-    });
-
-    it('returns line-numbered error for mixed valid and # comment', () => {
-        expect(validateBootstrapDns('8.8.8.8\n# comment')).toBe('Invalid format on line 2');
     });
 });
 

@@ -218,7 +218,6 @@ export const DynamicLeasesTable = (props: Props) => {
                                             </div>
                                         </div>
                                     }
-                                    trigger="click"
                                     position="bottomRight"
                                     noIcon
                                     open={openMenuId() === rowId}

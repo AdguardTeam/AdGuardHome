@@ -478,7 +478,7 @@
   "protection": "防護",
   "protocol": "協定",
   "queries": "查詢",
-  "queries_total": "共 %count% 條查詢 | 共 %count% 條查詢",
+  "queries_total": "共 %value% 條查詢 | 共 %value% 條查詢",
   "query_details": "查詢詳細資料",
   "query_log": "查詢紀錄",
   "query_log_all_reasons": "全部原因",

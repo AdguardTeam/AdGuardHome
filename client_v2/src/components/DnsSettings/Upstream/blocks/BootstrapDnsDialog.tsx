@@ -3,7 +3,7 @@ import { dnsConfigState, setDnsConfig } from 'panel/stores/dnsConfig';
 import intl from 'panel/common/intl';
 import { ConfigDialog } from 'panel/common/ui/ConfigDialog';
 import { Textarea } from 'panel/common/controls/Textarea';
-import { validateBootstrapDns } from 'panel/helpers/validators';
+import { validateUpstreams } from 'panel/helpers/validators';
 import { useField } from 'panel/hooks/useField';
 
 import theme from 'panel/lib/theme';
@@ -18,7 +18,7 @@ export const BootstrapDnsDialog = (props: Props) => {
     const field = useField<string>(
         () => props.open(),
         () => dnsConfigState.bootstrap_dns,
-        { validate: (v) => (v ? validateBootstrapDns(v) || '' : '') },
+        { validate: (v) => (v ? validateUpstreams(v) || '' : '') },
     );
 
     return (
@@ -28,7 +28,6 @@ export const BootstrapDnsDialog = (props: Props) => {
             description={
                 <>
                     <p>{intl.getMessage('dns_bootstrap_dns_desc')}</p>
-                    <p>{intl.getMessage('dns_bootstrap_dns_desc_2')}</p>
                 </>
             }
             onClose={props.onClose}
@@ -50,6 +49,7 @@ export const BootstrapDnsDialog = (props: Props) => {
                     placeholder={intl.getMessage('dns_bootstrap_dns_placeholder')}
                     errorMessage={field.error()}
                     size="medium"
+                    highlightComments
                 />
             </div>
         </ConfigDialog>
