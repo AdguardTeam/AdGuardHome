@@ -768,9 +768,11 @@ func (s *Server) replaceGetCertificate(orig *tls.Config) {
 	origGetCert := orig.GetCertificate
 
 	orig.GetCertificate = func(chi *tls.ClientHelloInfo) (cert *tls.Certificate, err error) {
-		// Ignore the error from the original GetCertificate, since the current
-		// implementation of the method always returns nil.
-		cert, _ = origGetCert(chi)
+		cert, err = origGetCert(chi)
+		if err != nil {
+			// Don't wrap the error, because it is informative enough as is.
+			return nil, err
+		}
 		if cert == nil || cert.Leaf == nil {
 			return nil, errors.Error("tls certificate is not set")
 		}
