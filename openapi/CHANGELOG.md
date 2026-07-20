@@ -4,6 +4,8 @@
 
 ## v0.107.79: API changes
 
+- Field `bootstrap_dns` in `POST /control/dns_config` now accepts comments.  A comment must start with the `#` symbol.
+
 ### Setting the UI language through the install API
 
 - New property `"language"` in `POST /control/install/check_config` and `POST /control/install/configure` HTTP APIs defines the language to use once AdGuard Home is installed.

@@ -1557,7 +1557,8 @@
           'type': 'array'
           'description': >
             Bootstrap servers, port is optional after colon.  Empty value will
-            reset it to default values.
+            reset it to default values.  Comments are allowed, a comment line
+            starts with a `#` symbol.
           'items':
             'type': 'string'
           'example':
@@ -1567,7 +1568,8 @@
           'type': 'array'
           'description': >
             Upstream servers, port is optional after colon.  Empty value will
-            reset it to default values.
+            reset it to default values.  Comments are allowed, a comment line
+            starts with a `#` symbol.
           'items':
             'type': 'string'
           'example':
@@ -1577,7 +1579,8 @@
           'type': 'array'
           'description': >
             List of fallback DNS servers used when upstream DNS servers are not
-            responding.  Empty value will clear the list.
+            responding.  Empty value will clear the list.  Comments are allowed,
+            a comment line starts with a `#` symbol.
           'items':
             'type': 'string'
           'example':
@@ -1670,7 +1673,8 @@
           'type': 'array'
           'description': >
             Upstream servers, port is optional after colon.  Empty value will
-            reset it to default values.
+            reset it to default values.  Comments are allowed, a comment line
+            starts with a `#` symbol.
           'items':
             'type': 'string'
           'example':
