@@ -4,6 +4,7 @@ import { MOBILE_TABLE_MAX_ROWS } from 'panel/helpers/constants';
 
 import intl from 'panel/common/intl';
 import { Icon } from 'panel/common/ui/Icon';
+import { Tooltip } from 'panel/common/ui/Tooltip';
 import { Dropdown } from 'panel/common/ui/Dropdown';
 import { ConfirmDialog } from 'panel/common/ui/ConfirmDialog';
 import { formatNumber, formatCompactNumber } from 'panel/helpers/helpers';
@@ -124,7 +125,12 @@ export const TopClients = (props: Props) => {
                     }
                 >
                     <div
-                        class={cn(theme.text.t2, theme.text.condenced, s.protectionMenuItem)}
+                        class={cn(
+                            theme.text.t2,
+                            theme.text.condenced,
+                            theme.dropdown.item,
+                            s.protectionMenuItem,
+                        )}
                         onClick={() => openConfirmDialog(client.name, 'unblock')}
                     >
                         {intl.getMessage('unblock_client')}
@@ -185,65 +191,68 @@ export const TopClients = (props: Props) => {
                                     </div>
 
                                     <div class={s.tableRowRight}>
-                                        <div class={s.dropdowWrapper}>
-                                            <Dropdown
-                                                trigger="hover"
-                                                position="top"
-                                                noIcon
-                                                disableAnimation
-                                                overlayClass={s.queryTooltipOverlay}
-                                                wrapClass={s.queryTooltipWrap}
-                                                menu={
-                                                    <div class={s.queryTooltip}>
-                                                        {formatNumber(client.count)}{' '}
-                                                        {intl.getMessage('queries').toLowerCase()}
-                                                    </div>
-                                                }
-                                            >
-                                                <div
-                                                    class={cn(
-                                                        theme.text.t3,
-                                                        theme.text.condenced,
-                                                        s.queryCount,
-                                                        s.queryCountHover,
-                                                    )}
+                                        <Show when={isDesktop()}>
+                                            <div class={s.dropdowWrapper}>
+                                                <Tooltip
+                                                    position="top"
+                                                    overlayClass={s.queryTooltipOverlay}
+                                                    content={
+                                                        <div class={s.queryTooltip}>
+                                                            {intl.getMessage('queries_tooltip', {
+                                                                value: formatNumber(client.count),
+                                                            })}
+                                                        </div>
+                                                    }
                                                 >
-                                                    {formatCompactNumber(client.count)}
-
                                                     <div
                                                         class={cn(
                                                             theme.text.t3,
                                                             theme.text.condenced,
-                                                            s.queryPercent,
+                                                            s.queryCount,
+                                                            s.queryCountHover,
                                                         )}
                                                     >
-                                                        ({percent().toFixed(1)}%)
+                                                        {formatCompactNumber(client.count)}
+
+                                                        <div
+                                                            class={cn(
+                                                                theme.text.t3,
+                                                                theme.text.condenced,
+                                                                s.queryPercent,
+                                                            )}
+                                                        >
+                                                            ({percent().toFixed(1)}%)
+                                                        </div>
                                                     </div>
-                                                </div>
+                                                </Tooltip>
+                                            </div>
+                                        </Show>
+
+                                        <Show when={isDesktop()}>
+                                            <div class={s.queryBar}>
+                                                <div
+                                                    class={s.queryBarFill}
+                                                    style={{ width: `${percent()}%` }}
+                                                />
+                                            </div>
+                                        </Show>
+
+                                        <div class={s.dropdownWrapper}>
+                                            <Dropdown
+                                                wrapClass={s.clientActionsDropdown}
+                                                menu={getClientMenu(client)}
+                                                position="bottomRight"
+                                                noIcon
+                                                open={openMenuClient() === client.name}
+                                                onOpenChange={(isOpen: boolean) =>
+                                                    setOpenMenuClient(isOpen ? client.name : null)
+                                                }
+                                            >
+                                                <button type="button" class={s.actionButton}>
+                                                    <Icon icon="bullets" />
+                                                </button>
                                             </Dropdown>
                                         </div>
-
-                                        <div class={s.queryBar}>
-                                            <div
-                                                class={s.queryBarFill}
-                                                style={{ width: `${percent()}%` }}
-                                            />
-                                        </div>
-                                        <Dropdown
-                                            wrapClass={s.clientActionsDropdown}
-                                            menu={getClientMenu(client)}
-                                            trigger="click"
-                                            position="bottomRight"
-                                            noIcon
-                                            open={openMenuClient() === client.name}
-                                            onOpenChange={(isOpen: boolean) =>
-                                                setOpenMenuClient(isOpen ? client.name : null)
-                                            }
-                                        >
-                                            <button type="button" class={s.actionButton}>
-                                                <Icon icon="bullets" />
-                                            </button>
-                                        </Dropdown>
 
                                         <Show when={isBlocked}>
                                             <div
@@ -267,7 +276,7 @@ export const TopClients = (props: Props) => {
                                                     s.clientName,
                                                 )}
                                             >
-                                                {client.info!.name}
+                                                {client.info.name}
                                             </div>
                                         </Show>
                                         <Show when={isBlocked}>

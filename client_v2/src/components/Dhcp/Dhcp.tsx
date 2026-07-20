@@ -132,7 +132,6 @@ export const Dhcp = () => {
                                 {intl.getMessage('dhcp')}
                             </h1>
                             <Dropdown
-                                trigger="click"
                                 position="bottomRight"
                                 noIcon
                                 open={menuOpen()}

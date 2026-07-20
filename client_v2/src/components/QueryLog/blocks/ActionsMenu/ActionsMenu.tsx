@@ -113,7 +113,6 @@ export const ActionsMenu = (props: Props) => {
 
     return (
         <Dropdown
-            trigger="click"
             menu={menu}
             open={open()}
             onOpenChange={setOpen}

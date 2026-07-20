@@ -44,12 +44,13 @@ type program struct {
 	gliNetTokenRoot *os.Root
 	workDir         string
 	confPath        string
+	pidFilePath     string
 }
 
 // type check
 var _ service.Interface = (*program)(nil)
 
-// Start implements service.Interface interface for *program.
+// Start implements [service.Interface] interface for *program.
 func (p *program) Start(_ service.Service) (err error) {
 	// Start should not block.  Do the actual work async.
 	args := p.opts
@@ -65,6 +66,7 @@ func (p *program) Start(_ service.Service) (err error) {
 		p.sigHdlr,
 		p.workDir,
 		p.confPath,
+		p.pidFilePath,
 	)
 
 	return nil
@@ -159,6 +161,7 @@ func handleServiceControlAction(
 	sigHdlr *signalHandler,
 	workDir string,
 	confPath string,
+	pidFilePath string,
 ) (err error) {
 	actionName := opts.serviceControlAction
 	l.InfoContext(ctx, version.Full())
@@ -190,6 +193,7 @@ func handleServiceControlAction(
 			gliNetTokenRoot: gliNetTokenRoot,
 			workDir:         workDir,
 			confPath:        confPath,
+			pidFilePath:     pidFilePath,
 		}
 
 		return p.handleRun(ctx, baseLogger, runOpts)

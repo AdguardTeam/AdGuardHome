@@ -478,7 +478,7 @@
   "protection": "Ochrana",
   "protocol": "Protokol",
   "queries": "Dopyty",
-  "queries_total": "| %count% celkový počet dopytov | %count% celkový počet dopytov",
+  "queries_total": "| %value% celkový počet dopytov | %value% celkový počet dopytov",
   "query_details": "Podrobnosti dopytu",
   "query_log": "Denník dopytov",
   "query_log_all_reasons": "Všetky dôvody",

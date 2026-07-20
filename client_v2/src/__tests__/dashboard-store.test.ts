@@ -10,11 +10,12 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('panel/api/generated', () => ({
-        baseUrl: 'http://x',
-        getVersionJson: mocks.getVersionJson,
-        getProfile: mocks.getProfile,
-        beginUpdate: vi.fn(),
-        tlsStatus: mocks.tlsStatus,
+    baseUrl: 'http://x',
+    getStatusUrl: () => 'control/status',
+    getVersionJson: mocks.getVersionJson,
+    getProfile: mocks.getProfile,
+    beginUpdate: vi.fn(),
+    tlsStatus: mocks.tlsStatus,
 }));
 vi.mock('panel/stores/toasts', () => ({
     addErrorToast: mocks.addErrorToast,
@@ -27,7 +28,7 @@ import { getDnsStatus } from 'panel/stores/dashboard';
 describe('getDnsStatus', () => {
     beforeEach(() => vi.clearAllMocks());
 
-    it('fetches TLS status when the core is running (FR-005)', async () => {
+    it('fetches TLS status when the core is running', async () => {
         mocks.getVersionJson.mockResolvedValue({
             disabled: true,
             new_version: 'x',

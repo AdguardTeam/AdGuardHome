@@ -7,6 +7,7 @@ import { EmptyState } from '../EmptyState';
 
 import s from './GeneralStatistics.module.pcss';
 import { StatRow } from '../StatRow';
+import { formatCompactNumber } from 'panel/helpers/helpers';
 
 type Props = {
     numDnsQueries: number;
@@ -38,7 +39,9 @@ export const GeneralStatistics = (props: Props) => {
 
                 <Show when={hasStats()}>
                     <div class={cn(theme.text.t3, s.cardSubtitle)}>
-                        {intl.getPlural('queries_total', props.numDnsQueries)}
+                        {intl.getPlural('queries_total', props.numDnsQueries, {
+                            value: formatCompactNumber(props.numDnsQueries),
+                        })}
                     </div>
                 </Show>
             </div>

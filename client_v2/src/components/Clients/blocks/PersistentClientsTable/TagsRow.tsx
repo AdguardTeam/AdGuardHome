@@ -2,7 +2,7 @@ import { createMemo, Show, For } from 'solid-js';
 import cn from 'clsx';
 
 import intl from 'panel/common/intl';
-import { Dropdown } from 'panel/common/ui/Dropdown';
+import { Tooltip } from 'panel/common/ui/Tooltip';
 import { Icon } from 'panel/common/ui/Icon';
 
 import s from './PersistentClientsTable.module.pcss';
@@ -28,11 +28,9 @@ export const TagsRow = (props: TagsRowProps) => {
             </span>
             <Show when={hiddenCount() > 0}>
                 <div class={s.countDropdown}>
-                    <Dropdown
-                        trigger="hover"
-                        noIcon
+                    <Tooltip
                         overlayClass={s.tagsTooltipOverlay}
-                        menu={
+                        content={
                             <div class={s.tagsTooltip}>
                                 <For each={props.tags}>
                                     {(tag) => <span class={s.tagsTooltipItem}>{tag}</span>}
@@ -53,7 +51,7 @@ export const TagsRow = (props: TagsRowProps) => {
                         }
                     >
                         <span class={s.countLabel}>{hiddenCount()}</span>
-                    </Dropdown>
+                    </Tooltip>
                 </div>
             </Show>
         </div>

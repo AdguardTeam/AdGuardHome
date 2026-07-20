@@ -20,6 +20,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Added
 
+- Bootstrap servers configuration now supports comments.
+
 - New property `"language"` in `POST /control/install/check_config` and `POST /control/install/configure` HTTP APIs.
 
 - The user is able to remove the static lease's hostname via the HTTP API.

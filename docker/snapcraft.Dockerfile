@@ -67,7 +67,6 @@ COPY --from=builder /app/AdGuardHome_i386.snap /AdGuardHome_i386.snap
 FROM "$BASE_IMAGE" AS publisher
 ARG CACHE_BUSTER=0
 ARG SNAPCRAFT_CHANNEL=0
-ARG SNAPCRAFT_STORE_CREDENTIALS=0
 ARG VERSION=""
 ADD snap /app/snap
 ADD scripts /app/scripts
@@ -77,12 +76,12 @@ ADD AdGuardHome_armhf.snap /app/AdGuardHome_armhf.snap
 ADD AdGuardHome_i386.snap /app/AdGuardHome_i386.snap
 WORKDIR /app
 RUN \
+    --mount=type=secret,id=SNAPCRAFT_STORE_CREDENTIALS,env=SNAPCRAFT_STORE_CREDENTIALS \
 <<-'EOF'
 set -e -f -u -x
 
 env \
 	SNAPCRAFT_CHANNEL="${SNAPCRAFT_CHANNEL}" \
-	SNAPCRAFT_STORE_CREDENTIALS="${SNAPCRAFT_STORE_CREDENTIALS}" \
 	VERBOSE='1' \
 	sh ./scripts/snap/upload.sh
 EOF

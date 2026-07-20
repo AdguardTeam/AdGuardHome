@@ -2,6 +2,8 @@ import { createStore } from 'solid-js/store';
 import { untrack } from 'solid-js';
 import { tlsStatus, tlsConfigure, tlsValidate } from 'panel/api/generated';
 import { addErrorToast, addSuccessToast } from './toasts';
+import { dashboardState } from './dashboard';
+import { redirectToCurrentProtocol } from '../helpers/helpers';
 import intl from 'panel/common/intl';
 
 type EncryptionState = {
@@ -139,10 +141,7 @@ export const setTlsConfig = async (values: any, opts?: { silent?: boolean }) => 
         const data = await tlsConfigure(encoded);
         const decoded = decodeResponse(data);
 
-        if (fullValues.enabled && fullValues.force_https && window.location.protocol === 'http:') {
-            window.location.reload();
-            return;
-        }
+        redirectToCurrentProtocol(fullValues, dashboardState.httpPort);
 
         setState({ ...decoded, processingConfig: false });
         if (!opts?.silent) {

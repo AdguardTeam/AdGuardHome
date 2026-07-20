@@ -153,12 +153,9 @@ ARG BRANCH=master
 ARG CACHE_BUSTER=0
 ARG CHANNEL=development
 ARG DEPLOY_SCRIPT_PATH=not/a/real/path
-ARG GPG_KEY_PASSPHRASE=not-a-real-passphrase
-ARG GPG_SECRET_KEY=""
 ARG OS=""
 ARG REVISION=0000000000000000000000000000000000000000
 ARG SIGN=0
-ARG SIGNER_API_KEY=not-a-real-key
 ARG SOURCE_DATE_EPOCH=0
 ARG VERSION=""
 ADD . /app
@@ -166,6 +163,9 @@ WORKDIR /app
 RUN \
 	--mount=type=cache,id=gocache,target=/root/.cache/go-build \
 	--mount=type=cache,id=gopath,target=/go \
+	--mount=type=secret,id=GPG_KEY_PASSPHRASE,env=GPG_KEY_PASSPHRASE \
+	--mount=type=secret,id=GPG_SECRET_KEY,env=GPG_SECRET_KEY \
+	--mount=type=secret,id=SIGNER_API_KEY,env=SIGNER_API_KEY \
 <<-'EOF'
 set -e -f -u -x
 

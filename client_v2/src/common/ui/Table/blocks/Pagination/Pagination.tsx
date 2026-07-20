@@ -147,7 +147,6 @@ export const Pagination = (props: Props) => {
 
             <div class={theme.pagination.limitContainer}>
                 <Dropdown
-                    trigger="click"
                     position="bottomRight"
                     menu={limitMenu}
                     open={limitMenuOpen()}

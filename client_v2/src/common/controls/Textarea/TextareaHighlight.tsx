@@ -1,4 +1,4 @@
-import { For, type Accessor, createEffect, createMemo } from 'solid-js';
+import { For, type Accessor, createMemo } from 'solid-js';
 import cn from 'clsx';
 
 import { COMMENT_LINE_DEFAULT_TOKEN, type CommentLineToken } from 'panel/helpers/constants';
@@ -7,7 +7,6 @@ import s from './styles.module.pcss';
 
 type Props = {
     value: Accessor<string>;
-    scrollTop: Accessor<number>;
     class?: string;
     /** Comment line prefixes to highlight. Defaults to {@link COMMENT_LINE_DEFAULT_TOKEN}. */
     commentPrefixes?: readonly CommentLineToken[];
@@ -15,7 +14,6 @@ type Props = {
 
 export const TextareaHighlight = (props: Props) => {
     const lines = () => (props.value() || '').split('\n');
-    let ref: HTMLDivElement | undefined;
 
     const prefixes = createMemo(() => props.commentPrefixes || [COMMENT_LINE_DEFAULT_TOKEN]);
 
@@ -24,21 +22,8 @@ export const TextareaHighlight = (props: Props) => {
         return prefixes().some((p) => trimmed.startsWith(p));
     };
 
-    createEffect(() => {
-        const el = ref;
-        if (el) {
-            el.scrollTop = props.scrollTop();
-        }
-    });
-
     return (
-        <div
-            ref={(el) => {
-                ref = el;
-            }}
-            class={cn(s.overlay, props.class)}
-            aria-hidden="true"
-        >
+        <div class={cn(s.overlay, props.class)} aria-hidden="true">
             <For each={lines()}>
                 {(line, index) => (
                     <>
@@ -46,6 +31,7 @@ export const TextareaHighlight = (props: Props) => {
                         <span
                             class={cn({
                                 [s.commentLine]: isComment(line),
+                                [s.overlayNonComment]: !isComment(line),
                             })}
                         >
                             {line || ' '}

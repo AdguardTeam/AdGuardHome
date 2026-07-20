@@ -521,21 +521,6 @@ export const DHCP_VALUES_PLACEHOLDERS = {
     },
 };
 
-export const DHCP_DESCRIPTION_PLACEHOLDERS = {
-    ipv4: {
-        gateway_ip: 'dhcp_form_gateway_input',
-        subnet_mask: 'dhcp_form_subnet_input',
-        range_start: 'dhcp_form_range_start',
-        range_end: 'dhcp_form_range_end',
-        lease_duration: 'dhcp_form_lease_input',
-    },
-    ipv6: {
-        range_start: 'dhcp_form_range_start',
-        range_end: 'dhcp_form_range_end',
-        lease_duration: 'dhcp_form_lease_input',
-    },
-};
-
 export const TOAST_TRANSITION_TIMEOUT = 500;
 
 export const TOAST_TYPES = {

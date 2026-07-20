@@ -1,6 +1,6 @@
 import { createMemo, Show, For } from 'solid-js';
 
-import { Dropdown } from 'panel/common/ui/Dropdown';
+import { Tooltip } from 'panel/common/ui/Tooltip';
 import { decodeSvg } from 'panel/helpers/helpers';
 
 import s from './PersistentClientsTable.module.pcss';
@@ -47,11 +47,9 @@ export const ServiceIcons = (props: ServiceIconsProps) => {
             </div>
             <Show when={hiddenCount() > 0}>
                 <div class={s.countDropdown}>
-                    <Dropdown
-                        trigger="hover"
-                        noIcon
+                    <Tooltip
                         overlayClass={s.servicesTooltipOverlay}
-                        menu={
+                        content={
                             <div class={s.servicesTooltip}>
                                 <div class={s.servicesTooltipGrid}>
                                     <For each={props.serviceIds}>
@@ -74,7 +72,7 @@ export const ServiceIcons = (props: ServiceIconsProps) => {
                         }
                     >
                         <span class={s.countLabel}>{hiddenCount()}</span>
-                    </Dropdown>
+                    </Tooltip>
                 </div>
             </Show>
         </div>

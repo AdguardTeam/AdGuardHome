@@ -1,0 +1,17 @@
+[data-scope='tooltip'][data-part='trigger'] {
+    display: inline-flex;
+    min-width: 0;
+    overflow: hidden;
+}
+
+[data-scope='tooltip'][data-part='positioner'] {
+    z-index: 1504;
+}
+
+[data-scope='tooltip'][data-part='content'] {
+    border-radius: 8px;
+    box-shadow:
+        0 8px 18px -6px var(--dropdown-box-shadow),
+        0 12px 42px -4px var(--dropdown-box-shadow);
+    outline: none;
+}

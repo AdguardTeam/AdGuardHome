@@ -120,6 +120,10 @@
 }
 
 .chartTooltip {
+    position: fixed;
+    pointer-events: none;
+    z-index: 100;
+    opacity: 0;
     background: var(--default-cards-background);
     border: 1px solid var(--default-item-divider);
     border-radius: 8px;
@@ -135,6 +139,6 @@
 
 .chartTooltipDate {
     font-size: 12px;
-    color: var(--default-secondary-text);
+    color: var(--default-description-text);
     margin-top: 2px;
 }

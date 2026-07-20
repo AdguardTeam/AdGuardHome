@@ -4,7 +4,7 @@ import { useIsDesktop } from 'panel/helpers/useMediaQuery';
 import { MOBILE_TABLE_MAX_ROWS } from 'panel/helpers/constants';
 import intl from 'panel/common/intl';
 import { Icon } from 'panel/common/ui/Icon';
-import { Dropdown } from 'panel/common/ui/Dropdown';
+import { Tooltip } from 'panel/common/ui/Tooltip';
 import { formatNumber, formatCompactNumber } from 'panel/helpers/helpers';
 import { getTrackerData } from 'panel/helpers/trackers/trackers';
 import theme from 'panel/lib/theme';
@@ -82,30 +82,28 @@ export const TopQueriedDomains = (props: Props) => {
                                             when={trackerData}
                                             fallback={<div class={s.tableRowDot} />}
                                         >
-                                            <Dropdown
-                                                menu={<TrackerTooltip trackerData={trackerData!} />}
-                                                trigger="hover"
+                                            <Tooltip
+                                                content={
+                                                    <TrackerTooltip trackerData={trackerData!} />
+                                                }
                                                 position="bottomLeft"
-                                                noIcon
                                             >
                                                 <Icon icon="eye_open" class={s.tableRowIcon} />
-                                            </Dropdown>
+                                            </Tooltip>
                                         </Show>
                                         <span class={s.domainName}>{domain.name}</span>
                                     </div>
 
                                     <div class={s.tableRowRight}>
                                         <div class={s.dropdowWrapper}>
-                                            <Dropdown
-                                                trigger="hover"
+                                            <Tooltip
                                                 position="top"
-                                                noIcon
-                                                disableAnimation
                                                 overlayClass={s.queryTooltipOverlay}
-                                                menu={
+                                                content={
                                                     <div class={s.queryTooltip}>
-                                                        {formatNumber(domain.count)}{' '}
-                                                        {intl.getMessage('queries').toLowerCase()}
+                                                        {intl.getMessage('queries_tooltip', {
+                                                            value: formatNumber(domain.count),
+                                                        })}
                                                     </div>
                                                 }
                                             >
@@ -128,7 +126,7 @@ export const TopQueriedDomains = (props: Props) => {
                                                         ({percent().toFixed(1)}%)
                                                     </div>
                                                 </div>
-                                            </Dropdown>
+                                            </Tooltip>
                                         </div>
 
                                         <div class={s.queryBar}>

@@ -172,7 +172,6 @@ export const Encryption = () => {
                         {intl.getMessage('dns_protocols_title')}
                     </h1>
                     <Dropdown
-                        trigger="click"
                         position="bottomRight"
                         noIcon
                         open={menuOpen()}

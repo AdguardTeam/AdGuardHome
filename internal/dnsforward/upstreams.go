@@ -29,6 +29,8 @@ func newBootstrap(
 	etcHosts upstream.Resolver,
 	opts *upstream.Options,
 ) (r upstream.Resolver, boots []*upstream.UpstreamResolver, err error) {
+	addrs = stringutil.FilterOut(addrs, aghnet.IsCommentOrEmpty)
+
 	if len(addrs) == 0 {
 		addrs = defaultBootstrap
 	}
