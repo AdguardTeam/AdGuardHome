@@ -480,7 +480,7 @@ func (s *Server) startLocked(ctx context.Context) error {
 	return err
 }
 
-// Prepare initialises parameters of s using data from conf.  It can be called
+// Prepare initializes parameters of s using data from conf.  It can be called
 // from outside of the package and without acquired s.serverLock only while the
 // initialization. conf must be non-nil and valid.
 func (s *Server) Prepare(ctx context.Context, conf *ServerConfig) (err error) {

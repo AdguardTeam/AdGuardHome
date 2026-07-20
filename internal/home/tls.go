@@ -41,7 +41,8 @@ type tlsManager struct {
 	// certLastMod is the last modification time of the certificate file.
 	certLastMod time.Time
 
-	// tlsCert is a current TLS certificate.  It may be nil.
+	// tlsCert is the current TLS certificate.  tlsCert must not be stored in
+	// [tls.Config.Certificates], as it violates its documentation.
 	//
 	// TODO(m.kazantsev):  Consider a better approach to store the certificate.
 	tlsCert *tls.Certificate
@@ -883,6 +884,11 @@ func (m *tlsManager) onGetCertificate(chi *tls.ClientHelloInfo) (cert *tls.Certi
 
 	if !m.extTLSConf.Enabled || m.tlsConf == nil {
 		return nil, nil
+	}
+
+	err = chi.SupportsCertificate(m.tlsCert)
+	if err != nil {
+		return nil, fmt.Errorf("client hello does not support certificate: %w", err)
 	}
 
 	tlsCert := *m.tlsCert

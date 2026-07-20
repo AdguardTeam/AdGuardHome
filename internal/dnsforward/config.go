@@ -768,12 +768,21 @@ func (s *Server) replaceGetCertificate(orig *tls.Config) {
 	origGetCert := orig.GetCertificate
 
 	orig.GetCertificate = func(chi *tls.ClientHelloInfo) (cert *tls.Certificate, err error) {
+		// Ignore the error from the original GetCertificate, since the current
+		// implementation of the method always returns nil.
 		cert, _ = origGetCert(chi)
 		if cert == nil || cert.Leaf == nil {
 			return nil, errors.Error("tls certificate is not set")
 		}
 
-		if !anyNameMatches(cert.Leaf.DNSNames, chi.ServerName) {
+		var dnsNames []string
+		if len(cert.Leaf.DNSNames) == 0 {
+			dnsNames = []string{cert.Leaf.Subject.CommonName}
+		} else {
+			dnsNames = cert.Leaf.DNSNames
+		}
+
+		if !anyNameMatches(dnsNames, chi.ServerName) {
 			s.logger.Warn("unknown sni in client hello", "server_name", chi.ServerName)
 
 			return nil, fmt.Errorf("invalid sni: %s", chi.ServerName)
