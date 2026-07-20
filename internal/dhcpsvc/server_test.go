@@ -1,6 +1,7 @@
 package dhcpsvc_test
 
 import (
+	"context"
 	"net"
 	"net/netip"
 	"path/filepath"
@@ -16,10 +17,17 @@ import (
 )
 
 func TestDHCPServer_AddLease(t *testing.T) {
+	t.Parallel()
+
+	// TODO(e.burkov):  Use a mock.
 	leasesPath := filepath.Join(t.TempDir(), "leases.json")
+	db := dhcpsvc.NewJSONDatabase(&dhcpsvc.JSONDatabaseConfig{
+		Logger:   testLogger,
+		FilePath: leasesPath,
+	})
 	srv := newTestDHCPServer(t, &dhcpsvc.Config{
-		DBFilePath: leasesPath,
-		Enabled:    true,
+		Database: db,
+		Enabled:  true,
 	})
 
 	// NOTE: Keep in sync with testdata.
@@ -122,14 +130,16 @@ func TestDHCPServer_AddLease(t *testing.T) {
 	}
 
 	assert.NotEmpty(t, srv.Leases())
-	assert.FileExists(t, leasesPath)
 }
 
 func TestDHCPServer_index(t *testing.T) {
-	leasesPath := newTempDB(t)
+	t.Parallel()
+
+	// TODO(e.burkov):  Use a mock.
+	db := newTestDatabase(t)
 	srv := newTestDHCPServer(t, &dhcpsvc.Config{
-		DBFilePath: leasesPath,
-		Enabled:    true,
+		Database: db,
+		Enabled:  true,
 	})
 
 	// NOTE: Keep in sync with testdata.
@@ -179,10 +189,17 @@ func TestDHCPServer_index(t *testing.T) {
 }
 
 func TestDHCPServer_UpdateStaticLease(t *testing.T) {
-	leasesPath := newTempDB(t)
+	t.Parallel()
+
+	// TODO(e.burkov):  Use a mock.
+	db := newTestDatabase(t)
+	db.onStore = func(ctx context.Context, leases []*dhcpsvc.Lease) (err error) {
+		return nil
+	}
+
 	srv := newTestDHCPServer(t, &dhcpsvc.Config{
-		DBFilePath: leasesPath,
-		Enabled:    true,
+		Database: db,
+		Enabled:  true,
 	})
 
 	// NOTE: Keep in sync with testdata.
@@ -273,20 +290,26 @@ func TestDHCPServer_UpdateStaticLease(t *testing.T) {
 	}}
 
 	for _, tc := range testCases {
+		// TODO(e.burkov):  Make parallel.
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := testutil.ContextWithTimeout(t, testTimeout)
 			testutil.AssertErrorMsg(t, tc.wantErrMsg, srv.UpdateStaticLease(ctx, tc.lease))
 		})
 	}
-
-	assert.FileExists(t, leasesPath)
 }
 
 func TestDHCPServer_RemoveLease(t *testing.T) {
-	leasesPath := newTempDB(t)
+	t.Parallel()
+
+	// TODO(e.burkov):  Use a mock.
+	db := newTestDatabase(t)
+	db.onStore = func(ctx context.Context, leases []*dhcpsvc.Lease) (err error) {
+		return nil
+	}
+
 	srv := newTestDHCPServer(t, &dhcpsvc.Config{
-		DBFilePath: leasesPath,
-		Enabled:    true,
+		Database: db,
+		Enabled:  true,
 	})
 
 	// NOTE: Keep in sync with testdata.
@@ -360,15 +383,21 @@ func TestDHCPServer_RemoveLease(t *testing.T) {
 		})
 	}
 
-	assert.FileExists(t, leasesPath)
 	assert.Empty(t, srv.Leases())
 }
 
 func TestDHCPServer_Reset(t *testing.T) {
-	leasesPath := newTempDB(t)
+	// TODO(e.burkov):  Use a mock.
+	db := newTestDatabase(t)
+	db.onStore = func(ctx context.Context, leases []*dhcpsvc.Lease) (err error) {
+		assert.Empty(t, leases)
+
+		return nil
+	}
+
 	srv := newTestDHCPServer(t, &dhcpsvc.Config{
-		DBFilePath: leasesPath,
-		Enabled:    true,
+		Database: db,
+		Enabled:  true,
 	})
 
 	const leasesNum = 4
@@ -378,15 +407,15 @@ func TestDHCPServer_Reset(t *testing.T) {
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
 	require.NoError(t, srv.Reset(ctx))
 
-	assert.FileExists(t, leasesPath)
 	assert.Empty(t, srv.Leases())
 }
 
 func TestServer_Leases(t *testing.T) {
-	leasesPath := newTempDB(t)
+	// TODO(e.burkov):  Use a mock.
+	db := newTestDatabase(t)
 	srv := newTestDHCPServer(t, &dhcpsvc.Config{
-		DBFilePath: leasesPath,
-		Enabled:    true,
+		Database: db,
+		Enabled:  true,
 	})
 
 	expiry, err := time.Parse(time.RFC3339, "2042-01-02T03:04:05Z")

@@ -21,6 +21,8 @@ func (srv *DHCPServer) serveEther4(ctx context.Context, iface *dhcpInterfaceV4, 
 
 	src := gopacket.NewPacketSource(nd, nd.LinkType())
 
+	// TODO(e.burkov):  Use [gopacket.PacketSource.PacketsCtx] and cancel
+	// context on shutdown.
 	for pkt := range src.Packets() {
 		fd, err := newFrameData4(pkt, nd)
 		if err != nil {
@@ -427,7 +429,7 @@ func (iface *dhcpInterfaceV4) handleRelease(ctx context.Context, req *layers.DHC
 		return
 	}
 
-	err := iface.common.index.remove(ctx, l, lease, iface.common)
+	err := iface.common.index.remove(ctx, lease, iface.common)
 	if err != nil {
 		l.ErrorContext(ctx, "removing lease", slogutil.KeyError, err)
 

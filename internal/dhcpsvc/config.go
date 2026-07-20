@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log/slog"
 	"maps"
-	"os"
 	"slices"
 	"time"
 
@@ -15,6 +14,9 @@ import (
 
 // Config is the configuration for the DHCP service.
 type Config struct {
+	// Database is the storage for DHCP leases.  It must not be nil.
+	Database Database
+
 	// Interfaces stores configurations of DHCP server specific for the network
 	// interface identified by its name.  It must not be empty and must only
 	// contain valid interface names and configurations.
@@ -32,10 +34,6 @@ type Config struct {
 	// LocalDomainName is the top-level domain name to use for resolving DHCP
 	// clients' hostnames.  It must be a valid domain name.
 	LocalDomainName string
-
-	// DBFilePath is the path to the database file containing the DHCP leases.
-	// It must not be empty.
-	DBFilePath string
 
 	// ICMPTimeout is the timeout for checking another DHCP server's presence.
 	// It must be non-negative.  If it is zero, the check will be skipped.
@@ -59,7 +57,7 @@ func (conf *Config) Validate() (err error) {
 
 	errs := []error{
 		validate.NotNegative("conf.ICMPTimeout", conf.ICMPTimeout),
-		validate.NotEmpty("conf.DBFilePath", conf.DBFilePath),
+		validate.NotNilInterface("conf.Database", conf.Database),
 		validate.NotNil("conf.Logger", conf.Logger),
 		validate.NotNilInterface("conf.NetworkDeviceManager", conf.NetworkDeviceManager),
 	}
@@ -67,12 +65,6 @@ func (conf *Config) Validate() (err error) {
 	err = netutil.ValidateDomainName(conf.LocalDomainName)
 	if err != nil {
 		errs = append(errs, fmt.Errorf("conf.LocalDomainName: %w", err))
-	}
-
-	// This is a best-effort check for the file accessibility.  The file will be
-	// checked again when it is opened later.
-	if _, err = os.Stat(conf.DBFilePath); err != nil && !errors.Is(err, os.ErrNotExist) {
-		errs = append(errs, fmt.Errorf("conf.DBFilePath %q: %w", conf.DBFilePath, err))
 	}
 
 	if len(conf.Interfaces) == 0 {

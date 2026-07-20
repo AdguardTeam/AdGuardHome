@@ -655,7 +655,7 @@ func (iface *dhcpInterfaceV6) commit(
 		l.DebugContext(ctx, "updated lease expiry", "expires", lease.Expiry, "ip", lease.IP)
 	}
 
-	err = iface.common.index.update(ctx, iface.common.logger, lease, iface.common)
+	err = iface.common.index.update(ctx, lease, iface.common)
 	if err != nil {
 		rmErr := iface.common.removeLease(lease)
 		err = errors.WithDeferred(err, rmErr)

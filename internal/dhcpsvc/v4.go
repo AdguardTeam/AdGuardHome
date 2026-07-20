@@ -225,8 +225,10 @@ func (srv *DHCPServer) newDHCPInterfaceV4(
 
 // updateLease updates lease in the database.  lease must be valid and not
 // expired.
+//
+// TODO(e.burkov):  Consider simplifying this wrapping.
 func (iface *dhcpInterfaceV4) updateLease(ctx context.Context, lease *Lease) (err error) {
-	return iface.common.index.update(ctx, iface.common.logger, lease, iface.common)
+	return iface.common.index.update(ctx, lease, iface.common)
 }
 
 // respondOffer sends a DHCPOFFER message to the client.  idOpt is expected to
