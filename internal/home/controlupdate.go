@@ -172,6 +172,7 @@ func (web *webAPI) handleUpdate(w http.ResponseWriter, r *http.Request) {
 		execPath,
 		web.pidFilePath,
 		web.conf.runningAsService,
+		web.hc,
 	)
 }
 
@@ -229,12 +230,13 @@ func finishUpdate(
 	execPath string,
 	pidFilePath string,
 	runningAsService bool,
+	hc *aghnet.HostsContainer,
 ) {
 	defer slogutil.RecoverAndExit(ctx, l, osutil.ExitCodeFailure)
 
 	l.InfoContext(ctx, "stopping all tasks")
 
-	cleanup(ctx, l)
+	cleanup(ctx, l, hc)
 	cleanupAlways(ctx, l, pidFilePath)
 
 	if runtime.GOOS == "windows" {

@@ -479,7 +479,7 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	web.finalizeInstall(ctx, w, r, req, restartHTTP)
+	web.finalizeInstall(ctx, w, r, req, restartHTTP, web.hc)
 }
 
 // finalizeInstall completes first-run setup by applying user-provided settings.
@@ -490,6 +490,7 @@ func (web *webAPI) finalizeInstall(
 	r *http.Request,
 	req *applyConfigReq,
 	restartHTTP bool,
+	hc *aghnet.HostsContainer,
 ) {
 	l := web.logger
 
@@ -536,6 +537,7 @@ func (web *webAPI) finalizeInstall(
 		web.confModifier,
 		web.httpReg,
 		web.conf.workDir,
+		hc,
 	)
 	if err != nil {
 		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusInternalServerError, "%s", err)
@@ -641,13 +643,14 @@ func startMods(
 	confModifier agh.ConfigModifier,
 	httpReg aghhttp.Registrar,
 	workDir string,
+	hc *aghnet.HostsContainer,
 ) (err error) {
 	statsDir, querylogDir, err := checkStatsAndQuerylogDirs(config, workDir)
 	if err != nil {
 		return err
 	}
 
-	err = initDNS(ctx, baseLogger, tlsMgr, confModifier, httpReg, statsDir, querylogDir)
+	err = initDNS(ctx, baseLogger, tlsMgr, confModifier, httpReg, statsDir, querylogDir, hc)
 	if err != nil {
 		return err
 	}

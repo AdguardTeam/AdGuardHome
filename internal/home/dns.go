@@ -51,6 +51,7 @@ func initDNS(
 	httpReg aghhttp.Registrar,
 	statsDir string,
 	querylogDir string,
+	hc *aghnet.HostsContainer,
 ) (err error) {
 	anonymizer := config.anonymizer()
 
@@ -117,6 +118,7 @@ func initDNS(
 		tlsMgr,
 		baseLogger,
 		confModifier,
+		hc,
 	)
 	if err != nil {
 		return fmt.Errorf("creating dns server: %w", err)
@@ -144,6 +146,7 @@ func initDNSServer(
 	tlsMgr *tlsManager,
 	l *slog.Logger,
 	confModifier agh.ConfigModifier,
+	etcHosts *aghnet.HostsContainer,
 ) (err error) {
 	globalContext.dnsServer, err = dnsforward.NewServer(dnsforward.DNSCreateParams{
 		Logger:      l,
@@ -153,7 +156,7 @@ func initDNSServer(
 		PrivateNets: parseSubnetSet(config.DNS.PrivateNets),
 		Anonymizer:  anonymizer,
 		DHCPServer:  dhcpSrv,
-		EtcHosts:    globalContext.etcHosts,
+		EtcHosts:    etcHosts,
 		LocalDomain: config.DHCP.LocalDomainName,
 	})
 	defer func() {
