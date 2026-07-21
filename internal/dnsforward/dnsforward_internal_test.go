@@ -264,6 +264,7 @@ func createTestTLS(
 
 	tlsConfProvider.OnTLSConfig = func() (conf *tls.Config) { return tlsConfig.Clone() }
 	tlsConfProvider.OnRootCAs = func() (pool *x509.CertPool) { return roots }
+	tlsConfProvider.OnHasIPAddrs = func() (ok bool) { return true }
 
 	s = createTestServer(
 		tb,

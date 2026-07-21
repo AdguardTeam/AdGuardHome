@@ -330,6 +330,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 
 	tlsConfProvider := &aghtest.TLSConfigProvider{}
 	tlsConfProvider.OnTLSConfig = func() (conf *tls.Config) { return tlsConf }
+	tlsConfProvider.OnHasIPAddrs = func() (ok bool) { return true }
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {

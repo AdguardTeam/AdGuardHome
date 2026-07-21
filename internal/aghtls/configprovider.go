@@ -16,6 +16,10 @@ type TLSConfigProvider interface {
 
 	// RootCAs returns the current root CA pool.
 	RootCAs() (root *x509.CertPool)
+
+	// HasIPAddrs returns true if the current TLS configuration has at least one
+	// certificate with an IP address in its SAN extension.
+	HasIPAddrs() (ok bool)
 }
 
 // type check
@@ -35,4 +39,10 @@ func (EmptyTLSConfigProvider) TLSConfig() (conf *tls.Config) {
 // EmptyTLSConfigProvider.  It always returns nil.
 func (EmptyTLSConfigProvider) RootCAs() (root *x509.CertPool) {
 	return nil
+}
+
+// HasIPAddrs implements the [TLSConfigProvider] interface for
+// EmptyTLSConfigProvider.  It always returns false.
+func (EmptyTLSConfigProvider) HasIPAddrs() (ok bool) {
+	return false
 }

@@ -876,6 +876,20 @@ func (m *tlsManager) RootCAs() (root *x509.CertPool) {
 	return m.rootCerts
 }
 
+// HasIPAddrs implements the [aghtls.TLSConfigProvider] interface for
+// *tlsManager.  It returns true if the current TLS configuration has at least
+// one certificate with an IP address in its SAN extension.
+func (m *tlsManager) HasIPAddrs() (ok bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if m.tlsCert == nil || m.tlsCert.Leaf == nil {
+		return false
+	}
+
+	return aghtls.CertificateHasIP(m.tlsCert.Leaf)
+}
+
 // onGetCertificate gets [*tls.Certificate] from [*tls.Config].  If
 // [tlsManager.extTLSConf.Enabled] is false, nil is returned.
 func (m *tlsManager) onGetCertificate(chi *tls.ClientHelloInfo) (cert *tls.Certificate, err error) {

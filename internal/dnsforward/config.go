@@ -715,8 +715,8 @@ func (s *Server) prepareTLS(ctx context.Context, proxyConf *proxy.Config) {
 	proxyConf.QUICListenAddr = s.conf.TLSConf.QUICListenAddrs
 
 	proxyConf.TLSConfig = s.tlsConfigProvider.TLSConfig()
-	if proxyConf.TLSConfig == nil || len(proxyConf.TLSConfig.Certificates) == 0 {
-		s.logger.WarnContext(ctx, "tls configuration is not set or has no certificates")
+	if proxyConf.TLSConfig == nil {
+		s.logger.WarnContext(ctx, "tls configuration is not set")
 
 		return
 	}
