@@ -208,7 +208,7 @@
   "dns_blocking_mode_title": "Blocking mode",
   "dns_blocking_mode_ttl_label": "Blocked response TTL, in seconds",
   "dns_blocking_mode_ttl_placeholder": "Enter TTL",
-  "dns_bootstrap_dns_desc": "Sets the DNS servers used to resolve DoH/DoT upstream resolver hostnames",
+  "dns_bootstrap_dns_desc": "Sets the DNS servers used to resolve the hostnames of DoH/DoT upstream resolvers",
   "dns_bootstrap_dns_label": "Bootstrap DNS servers, one per line",
   "dns_bootstrap_dns_placeholder": "IP addresses",
   "dns_bootstrap_dns_title": "Bootstrap DNS servers",
