@@ -11,10 +11,12 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/safesearch"
 	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
 	"github.com/AdguardTeam/AdGuardHome/internal/whois"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/urlfilter/rules"
 )
 
 // clientJSON is a common structure used by several handlers to deal with
@@ -56,6 +58,10 @@ type clientJSON struct {
 	SafeSearchEnabled        bool `json:"safesearch_enabled"`
 	UseGlobalBlockedServices bool `json:"use_global_blocked_services"`
 	UseGlobalSettings        bool `json:"use_global_settings"`
+	UseGlobalFilterLists     bool `json:"use_global_filter_lists"`
+
+	FilterListIDs      []int64 `json:"filter_list_ids"`
+	AllowFilterListIDs []int64 `json:"allow_filter_list_ids"`
 
 	IgnoreQueryLog   aghalg.NullBool `json:"ignore_querylog"`
 	IgnoreStatistics aghalg.NullBool `json:"ignore_statistics"`
@@ -210,6 +216,9 @@ func (clients *clientsContainer) jsonToClient(
 	c.ParentalEnabled = cj.ParentalEnabled
 	c.SafeBrowsingEnabled = cj.SafeBrowsingEnabled
 	c.UseOwnBlockedServices = !cj.UseGlobalBlockedServices
+	c.UseOwnFilterLists = !cj.UseGlobalFilterLists
+	c.FilterListIDs = apiIDsToListIDs(cj.FilterListIDs)
+	c.AllowFilterListIDs = apiIDsToListIDs(cj.AllowFilterListIDs)
 
 	if c.SafeSearchConf.Enabled {
 		logger := clients.baseLogger.With(
@@ -311,6 +320,9 @@ func clientToJSON(c *client.Persistent) (cj *clientJSON) {
 		SafeBrowsingEnabled: c.SafeBrowsingEnabled,
 
 		UseGlobalBlockedServices: !c.UseOwnBlockedServices,
+		UseGlobalFilterLists:     !c.UseOwnFilterLists,
+		FilterListIDs:            listIDsToAPIIDs(c.FilterListIDs),
+		AllowFilterListIDs:       listIDsToAPIIDs(c.AllowFilterListIDs),
 
 		Schedule:        c.BlockedServices.Schedule,
 		BlockedServices: c.BlockedServices.IDs,
@@ -606,6 +618,36 @@ func (clients *clientsContainer) findRuntime(
 		Disallowed:     &disallowed,
 		DisallowedRule: disallowedRule,
 	}
+}
+
+// listIDsToAPIIDs converts a slice of rules.ListID to a slice of int64 API
+// IDs.
+func listIDsToAPIIDs(ids []rules.ListID) []int64 {
+	if len(ids) == 0 {
+		return nil
+	}
+
+	apiIDs := make([]int64, len(ids))
+	for i, id := range ids {
+		apiIDs[i] = int64(rulelist.APIID(id))
+	}
+
+	return apiIDs
+}
+
+// apiIDsToListIDs converts a slice of int64 API IDs to a slice of
+// rules.ListID.
+func apiIDsToListIDs(apiIDs []int64) []rules.ListID {
+	if len(apiIDs) == 0 {
+		return nil
+	}
+
+	ids := make([]rules.ListID, len(apiIDs))
+	for i, id := range apiIDs {
+		ids[i] = rules.ListID(id)
+	}
+
+	return ids
 }
 
 // registerWebHandlers registers HTTP handlers.

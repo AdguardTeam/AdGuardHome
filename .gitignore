@@ -44,3 +44,4 @@ node_modules/
 tmp/
 
 !/build/gitkeep
+AdGuardHome_*
