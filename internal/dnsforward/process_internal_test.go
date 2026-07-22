@@ -508,6 +508,101 @@ func TestServer_ProcessDHCPHosts_localRestriction(t *testing.T) {
 	}
 }
 
+func TestServer_ProcessDHCPHosts_rewrittenCNAME(t *testing.T) {
+	const (
+		localDomainSuffix = "lan"
+		dhcpClient        = "example"
+		originalHost      = "service.example.lan"
+	)
+
+	knownIP := netip.MustParseAddr("1.2.3.4")
+	dhcp := &testDHCP{
+		OnEnabled: func() (_ bool) { return true },
+		OnIPByHost: func(host string) (ip netip.Addr) {
+			if host == dhcpClient {
+				ip = knownIP
+			}
+
+			return ip
+		},
+		OnHostByIP: func(ip netip.Addr) (_ string) { panic(testutil.UnexpectedCall(ip)) },
+	}
+
+	f, err := filtering.New(&filtering.Config{
+		Logger:       testLogger,
+		BlockingMode: filtering.BlockingModeDefault,
+	}, []filtering.Filter{{
+		ID:   0,
+		Data: []byte("|service.example.lan^$dnsrewrite=example.lan"),
+	}})
+	require.NoError(t, err)
+	f.SetEnabled(true)
+
+	s, err := NewServer(DNSCreateParams{
+		DHCPServer:  dhcp,
+		DNSFilter:   f,
+		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
+		Logger:      testLogger,
+		LocalDomain: localDomainSuffix,
+	})
+	require.NoError(t, err)
+	err = s.Prepare(testutil.ContextWithTimeout(t, testTimeout), &ServerConfig{
+		TLSConf: &TLSConfig{},
+		Config: Config{
+			UpstreamMode:     UpstreamModeLoadBalance,
+			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+			ClientsContainer: EmptyClientsContainer{},
+		},
+		ServePlainDNS: true,
+	})
+	require.NoError(t, err)
+
+	req := (&dns.Msg{}).SetQuestion(dns.Fqdn(originalHost), dns.TypeA)
+	dctx := &dnsContext{
+		proxyCtx: &proxy.DNSContext{
+			Req:             req,
+			Addr:            testClientAddrPort,
+			IsPrivateClient: true,
+		},
+		setts: &filtering.Settings{
+			FilteringEnabled:  true,
+			ProtectionEnabled: true,
+		},
+		protectionEnabled: true,
+	}
+
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+
+	assert.Equal(t, resultCodeSuccess, s.processDHCPHosts(ctx, testLogger, dctx))
+	require.Nil(t, dctx.proxyCtx.Res)
+	assert.True(t, dctx.isDHCPHost)
+
+	assert.Equal(t, resultCodeSuccess, s.processFilteringBeforeRequest(ctx, testLogger, dctx))
+	require.Nil(t, dctx.proxyCtx.Res)
+	require.Equal(t, dns.Fqdn(originalHost), dctx.origQuestion.Name)
+	require.Equal(t, dns.Fqdn(dhcpClient+"."+localDomainSuffix), req.Question[0].Name)
+
+	assert.Equal(t, resultCodeSuccess, s.processUpstream(ctx, testLogger, dctx))
+	require.NotNil(t, dctx.proxyCtx.Res)
+
+	assert.Equal(t, resultCodeSuccess, s.processFilteringAfterResponse(ctx, testLogger, dctx))
+
+	resp := dctx.proxyCtx.Res
+	require.NotNil(t, resp)
+	require.Len(t, resp.Question, 1)
+	assert.Equal(t, dns.Fqdn(originalHost), resp.Question[0].Name)
+
+	require.Len(t, resp.Answer, 2)
+
+	cname := testutil.RequireTypeAssert[*dns.CNAME](t, resp.Answer[0])
+	assert.Equal(t, dns.Fqdn(originalHost), cname.Hdr.Name)
+	assert.Equal(t, dns.Fqdn(dhcpClient+"."+localDomainSuffix), cname.Target)
+
+	a := testutil.RequireTypeAssert[*dns.A](t, resp.Answer[1])
+	assert.Equal(t, dns.Fqdn(dhcpClient+"."+localDomainSuffix), a.Hdr.Name)
+	assert.Equal(t, net.IP(knownIP.AsSlice()), net.IP(a.A))
+}
+
 func TestServer_ProcessDHCPHosts(t *testing.T) {
 	const (
 		localTLD  = "lan"
