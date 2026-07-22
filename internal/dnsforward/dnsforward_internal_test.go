@@ -240,7 +240,6 @@ func createServerTLSConfig(tb testing.TB) (*tls.Config, []byte, []byte) {
 
 	return &tls.Config{
 		GetCertificate: getCert,
-		Certificates:   []tls.Certificate{cert},
 		ServerName:     tlsServerName,
 		MinVersion:     tls.VersionTLS12,
 	}, certPem, keyPem

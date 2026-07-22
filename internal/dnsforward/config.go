@@ -785,9 +785,13 @@ func (s *Server) replaceGetCertificate(orig *tls.Config) {
 		}
 
 		if !anyNameMatches(dnsNames, chi.ServerName) {
-			s.logger.Warn("unknown sni in client hello", "server_name", chi.ServerName)
+			s.logger.WarnContext(
+				chi.Context(),
+				"unknown sni in client hello",
+				"server_name", chi.ServerName,
+			)
 
-			return nil, fmt.Errorf("invalid sni: %s", chi.ServerName)
+			return nil, errors.Error("unknown sni in client hello")
 		}
 
 		return cert, nil
