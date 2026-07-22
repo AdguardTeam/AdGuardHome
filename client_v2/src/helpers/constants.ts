@@ -1,4 +1,4 @@
-import type { DNSConfigBlockingMode } from 'panel/api/model';
+import type { DNSConfigBlockingMode, SafeSearchConfig } from 'panel/api/model';
 
 export const R_URL_REQUIRES_PROTOCOL = /^https?:\/\/[^/\s]+(\/.*)?$/;
 
@@ -169,22 +169,7 @@ export const THEMES = {
     light: 'light',
 };
 
-export type SafeSearchProviderKey =
-    | 'google'
-    | 'youtube'
-    | 'bing'
-    | 'duckduckgo'
-    | 'yandex'
-    | 'pixabay';
-
-export const SAFE_SEARCH_PROVIDER_KEYS: SafeSearchProviderKey[] = [
-    'google',
-    'youtube',
-    'bing',
-    'duckduckgo',
-    'yandex',
-    'pixabay',
-];
+export type SafeSearchProviderKey = Exclude<keyof SafeSearchConfig, 'enabled'>;
 
 export const SAFE_SEARCH_PROVIDERS: Record<SafeSearchProviderKey, string> = {
     google: 'Google',
@@ -193,7 +178,12 @@ export const SAFE_SEARCH_PROVIDERS: Record<SafeSearchProviderKey, string> = {
     duckduckgo: 'DuckDuckGo',
     yandex: 'Yandex',
     pixabay: 'Pixabay',
+    ecosia: 'Ecosia',
 };
+
+export const SAFE_SEARCH_PROVIDER_KEYS = Object.keys(
+    SAFE_SEARCH_PROVIDERS,
+) as SafeSearchProviderKey[];
 
 export const WHOIS_ICONS = {
     location: 'location',
