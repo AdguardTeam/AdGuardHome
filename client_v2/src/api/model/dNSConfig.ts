@@ -19,13 +19,13 @@ export interface DNSConfig {
      * @minimum 0
      * @maximum 32
      */
-    ratelimit_subnet_subnet_len_ipv4?: number;
+    ratelimit_subnet_len_ipv4?: number;
     /**
      * Length of the subnet mask for IPv6 addresses.
      * @minimum 0
      * @maximum 128
      */
-    ratelimit_subnet_subnet_len_ipv6?: number;
+    ratelimit_subnet_len_ipv6?: number;
     /** List of IP addresses excluded from rate limiting. */
     ratelimit_whitelist?: string[];
     blocking_mode?: DNSConfigBlockingMode;

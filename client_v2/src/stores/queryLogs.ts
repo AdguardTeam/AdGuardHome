@@ -10,8 +10,10 @@ import {
     QUERY_LOGS_PAGE_LIMIT,
     QUERY_LOG_INTERVALS_DAYS,
     QUERY_LOG_REASON_FILTER,
+    type QueryLogFilter,
 } from 'panel/helpers/constants';
-import { normalizeLogs } from 'panel/helpers/helpers';
+import { normalizeLogs, type NormalizedQueryLogItem } from 'panel/helpers/helpers';
+import type { GetQueryLogConfigResponse } from 'panel/api/model/getQueryLogConfigResponse';
 
 type QueryLogsState = {
     processingGetLogs: boolean;
@@ -20,10 +22,10 @@ type QueryLogsState = {
     processingSetConfig: boolean;
     processingAdditionalLogs: boolean;
     interval: number;
-    logs: any[];
+    logs: NormalizedQueryLogItem[];
     enabled: boolean;
     oldest: string;
-    filter: any;
+    filter: QueryLogFilter;
     isFiltered: boolean;
     anonymize_client_ip: boolean;
     isDetailed: boolean;
@@ -82,7 +84,7 @@ const REASON_FILTER_TO_REASONS: Record<string, string[]> = {
     [QUERY_LOG_REASON_FILTER.DNS_REWRITES.QUERY]: ['Rewrite', 'RewriteEtcHosts', 'RewriteRule'],
 };
 
-const getReasons = (filter?: any): string[] => {
+const getReasons = (filter?: QueryLogFilter): string[] => {
     const reason = filter?.reason ?? DEFAULT_LOGS_FILTER.reason;
     const status = filter?.status ?? DEFAULT_LOGS_FILTER.status;
     if (reason !== 'all') {
@@ -91,10 +93,11 @@ const getReasons = (filter?: any): string[] => {
     return STATUS_TO_REASONS[status] ?? [];
 };
 
-const fetchLogsWithParams = async (olderThan: string, filter?: any) => {
-    const params: Record<string, any> = {
+const fetchLogsWithParams = async (olderThan: string, filter?: QueryLogFilter) => {
+    const params: Record<string, string | string[] | number | undefined> = {
         search: filter?.search ?? DEFAULT_LOGS_FILTER.search,
         older_than: olderThan,
+        limit: QUERY_LOGS_PAGE_LIMIT,
     };
     const reasons = getReasons(filter);
     if (reasons.length > 0) {
@@ -105,18 +108,21 @@ const fetchLogsWithParams = async (olderThan: string, filter?: any) => {
 };
 
 /** Simple stateless filter: count entries matching the status */
-const filterLogsByStatus = (logs: any[], status: string): any[] => {
+const filterLogsByStatus = (
+    logs: NormalizedQueryLogItem[],
+    status: string,
+): NormalizedQueryLogItem[] => {
     if (!status || status === 'all') return logs;
     const reasons = STATUS_TO_REASONS[status];
     if (!reasons || reasons.length === 0) return logs;
-    return logs.filter((log: any) => reasons.includes(log.reason));
+    return logs.filter((log) => reasons.includes(log.reason ?? ''));
 };
 
 const shortPollQueryLogs = async (
-    data: { logs: any[]; oldest: string },
-    filter: any,
-    total?: { logs: any[]; oldest: string },
-): Promise<{ logs: any[]; oldest: string }> => {
+    data: { logs: NormalizedQueryLogItem[]; oldest: string },
+    filter: QueryLogFilter,
+    total?: { logs: NormalizedQueryLogItem[]; oldest: string },
+): Promise<{ logs: NormalizedQueryLogItem[]; oldest: string }> => {
     const totalData = total
         ? { logs: [...total.logs, ...data.logs], oldest: data.oldest }
         : { logs: data.logs, oldest: data.oldest };
@@ -214,7 +220,7 @@ export const getLogsConfig = async () => {
     }
 };
 
-export const setLogsConfig = async (values: any): Promise<boolean> => {
+export const setLogsConfig = async (values: GetQueryLogConfigResponse): Promise<boolean> => {
     setState('processingSetConfig', true);
     try {
         await putQueryLogConfig(values);
@@ -227,7 +233,7 @@ export const setLogsConfig = async (values: any): Promise<boolean> => {
     }
 };
 
-export const setFilteredLogs = async (filter?: any): Promise<boolean> => {
+export const setFilteredLogs = async (filter?: QueryLogFilter): Promise<boolean> => {
     setState({
         filter: filter ?? DEFAULT_LOGS_FILTER,
         isFiltered: true,
@@ -251,7 +257,7 @@ export const setFilteredLogs = async (filter?: any): Promise<boolean> => {
     }
 };
 
-export const setLogsFilter = (filter: any) => {
+export const setLogsFilter = (filter: QueryLogFilter): void => {
     setState({ filter });
 };
 

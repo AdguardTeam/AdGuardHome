@@ -17,6 +17,10 @@ import intl from 'panel/common/intl';
 import { STATUS_RESPONSE } from 'panel/helpers/constants';
 import { Paths } from 'panel/components/Routes/Paths';
 import { enrichWithConcatenatedIpAddresses } from 'panel/helpers/helpers';
+import type { DhcpStaticLease } from 'panel/api/model/dhcpStaticLease';
+import type { DhcpSearchResult } from 'panel/api/model/dhcpSearchResult';
+import type { DhcpInterfaces } from 'panel/initialState';
+import type { DhcpConfig } from 'panel/api/model/dhcpConfig';
 
 type Lease = { hostname: string; ip: string; mac: string };
 
@@ -34,7 +38,7 @@ type DhcpState = {
     processingReset: boolean;
     enabled: boolean;
     interface_name: string;
-    check: any;
+    check: DhcpSearchResult | null;
     v4: {
         gateway_ip: string;
         subnet_mask: string;
@@ -47,13 +51,13 @@ type DhcpState = {
         lease_duration: number;
     };
     leases: Lease[];
-    staticLeases: Lease[];
+    staticLeases: DhcpStaticLease[];
     isModalOpen: boolean;
     leaseModalConfig: Lease | undefined;
     modalType: LeaseModalType | '';
     dhcp_available: boolean;
     staticIpError: boolean;
-    interfaces?: Record<string, any>;
+    interfaces?: DhcpInterfaces;
 };
 
 const initialState: DhcpState = {
@@ -228,7 +232,7 @@ export const findActiveDhcp = async (interfaceName: string, navigate?: (path: st
     }
 };
 
-export const setDhcpConfig = async (values: any) => {
+export const setDhcpConfig = async (values: DhcpConfig) => {
     setState('processingConfig', true);
     try {
         await dhcpSetConfig(values);
@@ -246,7 +250,7 @@ export const setDhcpConfig = async (values: any) => {
     }
 };
 
-export const toggleDhcp = async (config?: any) => {
+export const toggleDhcp = async (config?: DhcpConfig) => {
     setState('processingConfig', true);
     try {
         const values = config || {};

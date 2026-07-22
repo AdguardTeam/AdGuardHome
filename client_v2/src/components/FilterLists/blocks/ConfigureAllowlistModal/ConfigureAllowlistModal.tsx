@@ -9,6 +9,7 @@ import { closeModal } from 'panel/stores/modals';
 import theme from 'panel/lib/theme';
 import { Button } from 'panel/common/ui/Button';
 import { addFilter, editFilter, filteringState } from 'panel/stores/filtering';
+import type { FilterSetUrlData } from 'panel/api/model/filterSetUrlData';
 import { Input } from 'panel/common/controls/Input';
 import { validatePath, validateRequiredValue } from 'panel/helpers/validators';
 
@@ -72,7 +73,7 @@ export const ConfigureAllowlistModal = (props: Props) => {
                 break;
             }
             case MODAL_TYPE.EDIT_ALLOWLIST: {
-                editFilter(props.filterToEdit!.url, values, true);
+                editFilter(props.filterToEdit!.url, values as FilterSetUrlData, true);
                 break;
             }
             default: {

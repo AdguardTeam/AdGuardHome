@@ -14,6 +14,10 @@ import { addErrorToast, addSuccessToast, createUndoToast } from './toasts';
 import type { Filter } from 'panel/helpers/helpers';
 import { normalizeFilteringStatus, normalizeRulesTextarea } from 'panel/helpers/helpers';
 import intl from 'panel/common/intl';
+import type { FilterCheckHostResponse } from 'panel/api/model/filterCheckHostResponse';
+import type { FilterSetUrlData } from 'panel/api/model/filterSetUrlData';
+import type { FilterRefreshRequest } from 'panel/api/model/filterRefreshRequest';
+import type { FilterConfig } from 'panel/api/model/filterConfig';
 
 type FilteringState = {
     isModalOpen: boolean;
@@ -29,13 +33,13 @@ type FilteringState = {
     isFilterRemoved: boolean;
     isFilterEdited: boolean;
     filters: Filter[];
-    whitelistFilters: any[];
+    whitelistFilters: Filter[];
     userRules: string;
     interval: number;
     enabled: boolean;
     modalType: string;
     modalFilterUrl: string;
-    check: any;
+    check: (FilterCheckHostResponse & { hostname?: string }) | Record<string, never>;
 };
 
 const initialState: FilteringState = {
@@ -304,7 +308,11 @@ export const removeFilter = async (url: string, whitelist: boolean, name?: strin
     }
 };
 
-export const toggleFilterStatus = async (url: string, data: any, whitelist: boolean) => {
+export const toggleFilterStatus = async (
+    url: string,
+    data: FilterSetUrlData,
+    whitelist: boolean,
+) => {
     setState('processingConfigFilter', true);
     try {
         await filteringSetURL({ url, data, whitelist });
@@ -316,7 +324,7 @@ export const toggleFilterStatus = async (url: string, data: any, whitelist: bool
     }
 };
 
-export const editFilter = async (url: string, data: any, whitelist: boolean) => {
+export const editFilter = async (url: string, data: FilterSetUrlData, whitelist: boolean) => {
     setState('processingConfigFilter', true);
     try {
         await filteringSetURL({ url, data, whitelist });
@@ -329,7 +337,7 @@ export const editFilter = async (url: string, data: any, whitelist: boolean) => 
     }
 };
 
-export const refreshFilters = async (config: any) => {
+export const refreshFilters = async (config: FilterRefreshRequest) => {
     setState('processingRefreshFilters', true);
     try {
         const data = await filteringRefresh(config);
@@ -347,7 +355,7 @@ export const refreshFilters = async (config: any) => {
     }
 };
 
-export const setFiltersConfig = async (config: any) => {
+export const setFiltersConfig = async (config: FilterConfig) => {
     setState('processingSetConfig', true);
     try {
         await filteringConfig(config);
@@ -365,7 +373,10 @@ export const checkHost = async (
     try {
         const data = await filteringCheckHost(typeof host === 'string' ? { name: host } : host);
         const hostname = typeof host === 'string' ? host : host.name;
-        setState({ check: { hostname, ...data }, processingCheck: false });
+        setState({
+            check: { hostname, ...data },
+            processingCheck: false,
+        });
         return true;
     } catch (error) {
         addErrorToast({ error });

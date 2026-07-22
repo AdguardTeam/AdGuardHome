@@ -113,4 +113,34 @@ describe('queryLogs store', () => {
         expect(queryLog).toHaveBeenCalledTimes(2);
         expect(queryLogsState.processingGetLogs).toBe(false);
     });
+
+    it('always sends limit=20 to prevent loading all records at once', async () => {
+        (queryLog as any).mockReset();
+        (queryLog as any)
+            .mockResolvedValueOnce({
+                data: Array.from({ length: 20 }, () => ({ reason: 'Rewrite', question: {} })),
+                oldest: 'cursor1',
+            })
+            .mockResolvedValueOnce({
+                data: [{ reason: 'Rewrite', question: {} }],
+                oldest: '',
+            });
+
+        await setFilteredLogs({ search: '', status: 'rewritten', reason: 'all' });
+
+        for (const call of (queryLog as any).mock.calls) {
+            expect(call[0]).toHaveProperty('limit', 20);
+        }
+        expect(queryLog).not.toHaveBeenCalledWith(expect.not.objectContaining({ limit: 20 }));
+
+        (queryLog as any).mockReset();
+        (queryLog as any).mockResolvedValueOnce({
+            data: [{ reason: 'Rewrite', question: {} }],
+            oldest: '',
+        });
+
+        await getAdditionalLogs();
+
+        expect(queryLog).toHaveBeenCalledWith(expect.objectContaining({ limit: 20 }));
+    });
 });

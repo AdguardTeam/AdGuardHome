@@ -17,6 +17,8 @@ import {
     getParamsForClientsSearch,
     secondsToMilliseconds,
 } from 'panel/helpers/helpers';
+import type { GetStatsConfigResponse } from 'panel/api/model/getStatsConfigResponse';
+import type { ClientFindSubEntry } from 'panel/api/model/clientFindSubEntry';
 
 type StatsState = {
     processingGetConfig: boolean;
@@ -30,7 +32,7 @@ type StatsState = {
     replacedParental: number[];
     replacedSafebrowsing: number[];
     topBlockedDomains: { name: string; count: number }[];
-    topClients: { name: string; count: number; info: any }[];
+    topClients: { name: string; count: number; info: ClientFindSubEntry }[];
     normalizedTopClients: {
         auto: Record<string, number>;
         configured: Record<string, number>;
@@ -142,7 +144,7 @@ export const getStatsConfig = async () => {
     }
 };
 
-export const setStatsConfig = async (values: any): Promise<boolean> => {
+export const setStatsConfig = async (values: GetStatsConfigResponse): Promise<boolean> => {
     setState('processingSetConfig', true);
     try {
         await putStatsConfig(values);

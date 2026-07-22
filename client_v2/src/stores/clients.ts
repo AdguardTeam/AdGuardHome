@@ -4,6 +4,7 @@ import { clientsAdd, clientsDelete, clientsUpdate } from 'panel/api/generated';
 import { addErrorToast, addSuccessToast } from './toasts';
 import intl from 'panel/common/intl';
 import { getClients } from './dashboard';
+import type { Client } from 'panel/api/model/client';
 
 type ClientsState = {
     processing: boolean;
@@ -39,7 +40,7 @@ export const toggleClientModal = (payload?: { type?: string; name?: string }) =>
     }
 };
 
-export const addClient = async (config: any) => {
+export const addClient = async (config: Client) => {
     setState('processingAdding', true);
     try {
         await clientsAdd(config);
@@ -66,7 +67,7 @@ export const deleteClient = async (name: string) => {
     }
 };
 
-export const updateClient = async (name: string, data: any): Promise<boolean> => {
+export const updateClient = async (name: string, data: Client): Promise<boolean> => {
     setState('processingUpdating', true);
     try {
         await clientsUpdate({ name, data });

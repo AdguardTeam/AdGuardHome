@@ -5,38 +5,25 @@ import { addErrorToast, addSuccessToast } from './toasts';
 import { dashboardState } from './dashboard';
 import { redirectToCurrentProtocol } from '../helpers/helpers';
 import intl from 'panel/common/intl';
+import type { TlsConfig } from 'panel/api/model/tlsConfig';
+import type { TlsConfigBody } from 'panel/api/model/tlsConfigBody';
 
-type EncryptionState = {
+type EncryptionState = Partial<
+    Omit<TlsConfig, 'port_https' | 'port_dns_over_tls' | 'port_dns_over_quic' | 'dns_names'>
+> & {
     processing: boolean;
     processingConfig: boolean;
     processingValidate: boolean;
-    enabled: boolean;
-    serve_plain_dns: boolean;
-    dns_names: any;
-    force_https: boolean;
-    issuer: string;
-    key_type: string;
-    not_after: string;
-    not_before: string;
-    port_dns_over_tls: any;
-    port_dns_over_quic: any;
-    port_https: any;
-    port_dnscrypt: any;
-    subject: string;
-    valid_chain: boolean;
-    valid_key: boolean;
-    valid_cert: boolean;
-    valid_pair: boolean;
     status_cert: string;
     status_key: string;
-    certificate_chain: string;
-    private_key: string;
-    server_name: string;
-    warning_validation: string;
-    certificate_path: string;
-    private_key_path: string;
-    private_key_saved: boolean;
     allow_unencrypted_doh: boolean;
+    // All four port fields: number from API, string from form input (initialized as ''):
+    port_https: number | string;
+    port_dns_over_tls: number | string;
+    port_dns_over_quic: number | string;
+    port_dnscrypt: number | string;
+    // Store initializes as null, API returns string[]:
+    dns_names: string[] | null;
 };
 
 const initialState: EncryptionState = {
@@ -48,7 +35,7 @@ const initialState: EncryptionState = {
     dns_names: null,
     force_https: false,
     issuer: '',
-    key_type: '',
+    key_type: 'RSA',
     not_after: '',
     not_before: '',
     port_dns_over_tls: '',
@@ -74,13 +61,14 @@ const initialState: EncryptionState = {
 
 const [state, setState] = createStore<EncryptionState>(initialState);
 
-const decodeResponse = (data: any) => {
-    const fields = ['certificate_chain', 'private_key'];
-    const decoded = { ...data };
+const decodeResponse = (data: TlsConfig): TlsConfig => {
+    const decoded: TlsConfig = { ...data };
+    const fields = ['certificate_chain', 'private_key'] as const;
     fields.forEach((field) => {
-        if (decoded[field]) {
+        const value = decoded[field];
+        if (typeof value === 'string') {
             try {
-                decoded[field] = atob(decoded[field]);
+                decoded[field] = atob(value);
             } catch {
                 // keep as is
             }
@@ -89,12 +77,12 @@ const decodeResponse = (data: any) => {
     return decoded;
 };
 
-const encodeRequest = (values: any) => {
-    const encoded = { ...values };
-    if (encoded.certificate_chain) {
+const encodeRequest = (values: TlsConfig): TlsConfig => {
+    const encoded: TlsConfig = { ...values };
+    if (typeof encoded.certificate_chain === 'string') {
         encoded.certificate_chain = btoa(encoded.certificate_chain);
     }
-    if (encoded.private_key) {
+    if (typeof encoded.private_key === 'string') {
         encoded.private_key = btoa(encoded.private_key);
     }
     return encoded;
@@ -112,25 +100,27 @@ export const getTlsStatus = async () => {
     }
 };
 
-export const setTlsConfig = async (values: any, opts?: { silent?: boolean }) => {
+export const setTlsConfig = async (values: TlsConfigBody, opts?: { silent?: boolean }) => {
     setState('processingConfig', true);
     try {
         // Merge: start with all store values, then override with caller's
         // defined values (empty strings / false are intentional overrides).
-        const fullValues = {
+        const fullValues: TlsConfig = {
             enabled: state.enabled,
             serve_plain_dns: state.serve_plain_dns,
             server_name: state.server_name,
             force_https: state.force_https,
-            port_https: state.port_https || 0,
-            port_dns_over_tls: state.port_dns_over_tls || 0,
-            port_dns_over_quic: state.port_dns_over_quic || 0,
+            port_https: Number(state.port_https) || 0,
+            port_dns_over_tls: Number(state.port_dns_over_tls) || 0,
+            port_dns_over_quic: Number(state.port_dns_over_quic) || 0,
             certificate_chain: state.certificate_chain,
             private_key: state.private_key,
             certificate_path: state.certificate_path,
             private_key_path: state.private_key_path,
             private_key_saved: state.private_key_saved,
-            ...Object.fromEntries(Object.entries(values).filter(([, v]) => v !== undefined)),
+            ...Object.fromEntries(
+                Object.entries(values).filter(([, v]) => v !== undefined),
+            ),
         };
 
         const encoded = encodeRequest(fullValues);
@@ -153,7 +143,7 @@ export const setTlsConfig = async (values: any, opts?: { silent?: boolean }) => 
     }
 };
 
-export const validateTlsConfig = async (values: any) => {
+export const validateTlsConfig = async (values: TlsConfigBody) => {
     setState('processingValidate', true);
     try {
         const encoded = encodeRequest(values);
@@ -180,7 +170,7 @@ export const resetValidationStatus = () => {
         valid_pair: false,
         subject: '',
         issuer: '',
-        key_type: '',
+        key_type: undefined,
         not_after: '',
         not_before: '',
         dns_names: null,

@@ -41,7 +41,8 @@ export const ListsTable = (props: Props) => {
     const [sortDirection, setSortDirection] = createSignal<'asc' | 'desc'>('asc');
 
     const pageSize = createMemo(
-        () => LocalStorageHelper.getItem(LOCAL_STORAGE_KEYS.BLOCKLIST_PAGE_SIZE) || undefined,
+        () =>
+            LocalStorageHelper.getItem<number>(LOCAL_STORAGE_KEYS.BLOCKLIST_PAGE_SIZE) || undefined,
     );
 
     const sortedFilters = createMemo(() => {
@@ -93,9 +94,7 @@ export const ListsTable = (props: Props) => {
 
                 return (
                     <div class={theme.table.cell}>
-                        <span class={theme.table.cellLabel}>
-                            {intl.getMessage('name_label')}
-                        </span>
+                        <span class={theme.table.cellLabel}>{intl.getMessage('name_label')}</span>
 
                         <div class={cn(theme.table.cellValueText, s.domainCellValue)}>
                             <span class={theme.common.textOverflow}>{value}</span>

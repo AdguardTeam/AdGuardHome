@@ -31,7 +31,7 @@ import { getLogsUrlParams } from 'panel/helpers/helpers';
 import { RoutePath, linkPathBuilder } from 'panel/components/Routes/Paths';
 
 import { filterLogsByStatus } from './helpers';
-import { LogEntry } from './types';
+import { LogEntry, ResponseEntry } from './types';
 import { Header } from './blocks/Header';
 import { EmptyState, type EmptyStateMode } from './blocks/EmptyState/EmptyState';
 import { LogTable } from './blocks/LogTable';
@@ -109,7 +109,11 @@ export const QueryLog = () => {
         (dashboardState.clients || []).flatMap(
             (persistentClient: any) => persistentClient.ids ?? [],
         );
-    const visibleLogs = () => filterLogsByStatus(queryLogsState.logs || [], currentStatus());
+    const visibleLogs = () =>
+        filterLogsByStatus(
+            (queryLogsState.logs || []) as { reason: string; originalResponse?: ResponseEntry[] }[],
+            currentStatus(),
+        );
     const emptyStateMode = () => getEmptyStateMode(queryLogsState.enabled, queryLogsState.interval);
     const hasMore = () => !queryLogsState.isEntireLog;
     const logs = () => queryLogsState.logs || [];
@@ -232,7 +236,7 @@ export const QueryLog = () => {
 
                 <div class={s.desktopView}>
                     <LogTable
-                        logs={visibleLogs()}
+                        logs={visibleLogs() as LogEntry[]}
                         emptyStateMode={emptyStateMode()}
                         hasMore={hasMore()}
                         isLoadingMore={isLoadingMore()}
@@ -271,7 +275,7 @@ export const QueryLog = () => {
                                             <For each={visibleLogs()}>
                                                 {(entry) => (
                                                     <LogCard
-                                                        entry={entry}
+                                                        entry={entry as LogEntry}
                                                         onRowClick={handleRowClick}
                                                         onBlock={handleBlockDomain}
                                                         onUnblock={handleUnblockDomain}

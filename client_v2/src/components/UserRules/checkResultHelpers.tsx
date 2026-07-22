@@ -1,6 +1,7 @@
 import intl from 'panel/common/intl';
 import { FILTERED_STATUS, SPECIAL_FILTER_ID } from 'panel/helpers/constants';
 import { checkFiltered, getFilterName, type Filter } from 'panel/helpers/helpers';
+import type { FilteringReason } from 'panel/api/model/filteringReason';
 
 import { CheckResultData, ResultAction, ResultActionKind } from './types';
 
@@ -244,7 +245,7 @@ export const getCheckResultMeta = ({
                 source: intl.getMessage('system_host_files'),
             };
         default: {
-            const isFilteredReason = reason ? checkFiltered(reason) : false;
+            const isFilteredReason = reason ? checkFiltered(reason as FilteringReason) : false;
 
             return {
                 tone: isFilteredReason ? 'blocked' : 'processed',

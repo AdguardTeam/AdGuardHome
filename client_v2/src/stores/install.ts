@@ -3,6 +3,10 @@ import { untrack } from 'solid-js';
 import { installGetAddresses, installConfigure, installCheckConfig } from 'panel/api/generated';
 import { addErrorToast, addSuccessToast } from './toasts';
 import intl from 'panel/common/intl';
+import type { InstallInterface } from '../initialState';
+import type { NetInterface } from 'panel/api/model/netInterface';
+import type { InitialConfiguration } from 'panel/api/model/initialConfiguration';
+import type { CheckConfigRequest } from 'panel/api/model/checkConfigRequest';
 import {
     ALL_INTERFACES_IP,
     INSTALL_FIRST_STEP,
@@ -38,7 +42,7 @@ type InstallState = {
         ip: string;
         error: string;
     };
-    interfaces: any[];
+    interfaces: InstallInterface[];
     dnsVersion: string;
 };
 
@@ -64,10 +68,15 @@ export const getDefaultAddresses = async () => {
         const data = await installGetAddresses();
         const normalizedInterfaces = Array.isArray(data.interfaces)
             ? data.interfaces
-            : Object.entries(data.interfaces || {}).map(([name, iface]: any) => ({
-                  ...iface,
-                  name: iface?.name ?? name,
-              }));
+            : Object.entries(data.interfaces || {}).map(
+                  ([name, iface]: [string, NetInterface]) => ({
+                      flags: iface.flags,
+                      hardware_address: iface.hardware_address,
+                      ip_addresses: [...iface.ipv4_addresses, ...iface.ipv6_addresses],
+                      mtu: 0,
+                      name: iface.name || name,
+                  }),
+              );
         setState({
             web: { ...state.web, port: data.web_port },
             dns: { ...state.dns, port: data.dns_port },
@@ -93,7 +102,9 @@ export const setAuthData = (auth: Partial<InstallState['auth']>) => {
     setState('auth', (prev) => ({ ...prev, ...auth }));
 };
 
-export const setAllSettings = async (config: any) => {
+export const setAllSettings = async (
+    config: InitialConfiguration & { confirm_password: string },
+) => {
     setState({ processingSubmit: true, submitted: false });
     try {
         const { confirm_password, ...rest } = config;
@@ -107,13 +118,21 @@ export const setAllSettings = async (config: any) => {
     }
 };
 
-export const checkConfig = async (values: any) => {
+export const checkConfig = async (values: CheckConfigRequest) => {
     setState('processingCheck', true);
     try {
         const data = await installCheckConfig(values);
         setState({
-            web: { ...values.web, ...data.web },
-            dns: { ...values.dns, ...data.dns },
+            web: {
+                ip: values.web?.ip ?? '',
+                port: values.web?.port ?? 0,
+                ...data.web,
+            },
+            dns: {
+                ip: values.dns?.ip ?? '',
+                port: values.dns?.port ?? 0,
+                ...data.dns,
+            },
             staticIp: { ...untrack(() => state.staticIp), ...data.static_ip },
             processingCheck: false,
         });

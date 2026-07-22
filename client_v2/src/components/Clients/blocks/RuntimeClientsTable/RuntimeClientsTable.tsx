@@ -19,7 +19,9 @@ type Props = {
 
 export const RuntimeClientsTable = (props: Props) => {
     const pageSize = createMemo(
-        () => LocalStorageHelper.getItem(LOCAL_STORAGE_KEYS.AUTO_CLIENTS_PAGE_SIZE) || undefined,
+        () =>
+            LocalStorageHelper.getItem<number>(LOCAL_STORAGE_KEYS.AUTO_CLIENTS_PAGE_SIZE) ||
+            undefined,
     );
 
     const columns = createMemo<TableColumn<AutoClient>[]>(() => [

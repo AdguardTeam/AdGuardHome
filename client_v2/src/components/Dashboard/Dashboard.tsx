@@ -168,7 +168,7 @@ export const Dashboard = () => {
                             />
 
                             <TopClients
-                                topClients={statsState.topClients}
+                                topClients={statsState.topClients as any[]}
                                 numDnsQueries={statsState.numDnsQueries}
                             />
 

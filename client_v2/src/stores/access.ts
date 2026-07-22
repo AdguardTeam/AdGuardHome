@@ -4,6 +4,7 @@ import { accessList, accessSet } from 'panel/api/generated';
 import { addErrorToast, addSuccessToast } from './toasts';
 import { splitByNewLine } from 'panel/helpers/helpers';
 import intl from 'panel/common/intl';
+import type { AccessList } from 'panel/api/model/accessList';
 
 type AccessState = {
     processing: boolean;
@@ -39,20 +40,27 @@ export const getAccessList = async () => {
     }
 };
 
-export const setAccessList = async (values: any) => {
+export const setAccessList = async (values: {
+    allowed_clients?: string;
+    disallowed_clients?: string;
+    blocked_hosts?: string;
+}) => {
     setState('processingSet', true);
     try {
-        const config = { ...values };
-
-        if (Object.hasOwn(config, 'allowed_clients')) {
-            config.allowed_clients = splitByNewLine(config.allowed_clients);
-        }
-        if (Object.hasOwn(config, 'disallowed_clients')) {
-            config.disallowed_clients = splitByNewLine(config.disallowed_clients);
-        }
-        if (Object.hasOwn(config, 'blocked_hosts')) {
-            config.blocked_hosts = splitByNewLine(config.blocked_hosts);
-        }
+        const config: AccessList = {
+            allowed_clients:
+                values.allowed_clients !== undefined
+                    ? splitByNewLine(values.allowed_clients)
+                    : undefined,
+            disallowed_clients:
+                values.disallowed_clients !== undefined
+                    ? splitByNewLine(values.disallowed_clients)
+                    : undefined,
+            blocked_hosts:
+                values.blocked_hosts !== undefined
+                    ? splitByNewLine(values.blocked_hosts)
+                    : undefined,
+        };
 
         await accessSet(config);
         setState({ ...values, processingSet: false });
@@ -61,12 +69,6 @@ export const setAccessList = async (values: any) => {
         addErrorToast({ error });
         setState('processingSet', false);
     }
-};
-
-type AccessList = {
-    allowed_clients?: string[];
-    disallowed_clients?: string[];
-    blocked_hosts?: string[];
 };
 
 const addUnique = (items: string[], value: string) =>

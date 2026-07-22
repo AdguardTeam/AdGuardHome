@@ -1,6 +1,6 @@
 import { createSignal } from 'solid-js';
 
-import { I18nInterface, translate } from '@adguard/translate';
+import { I18nInterface, Locale, translate } from '@adguard/translate';
 import { BASE_LOCALE } from 'panel/helpers/twosky';
 
 import en from 'panel/__locales/en.json';
@@ -38,6 +38,19 @@ const LOCALES = {
 
 const messages: LocalesTypes = LOCALES;
 
+/**
+ * Converts a hyphenated twosky locale code to the underscore format that
+ * {@link https://github.com/AdguardTeam/translate @adguard/translate}
+ * expects for plural-form lookups (e.g. pt-br → pt_br).
+ */
+const toTranslateLocale = (code: string): Locale => {
+    // zh-hk / sr-cs → parent locale
+    if (code === 'zh-hk') return 'zh' as Locale;
+    if (code === 'sr-cs') return 'sr' as Locale;
+
+    return code.replace(/-/g, '_') as Locale;
+};
+
 const resolveLanguage = (lng: string): LocalesType => {
     const l = lng.toLowerCase();
 
@@ -74,7 +87,7 @@ export const i18n = (lang: LocalesType) => {
     const resolved = resolveLanguage(lang);
     return {
         getMessage: (key: string) => messages[resolved]?.[key] || '',
-        getUILanguage: () => resolved,
+        getUILanguage: () => toTranslateLocale(resolved),
         getBaseMessage: (key: string) => messages.en![key] || key,
         getBaseUILanguage: () => BASE_LOCALE as LocalesType,
     };
@@ -82,7 +95,7 @@ export const i18n = (lang: LocalesType) => {
 
 const detectedLanguage = ((typeof window !== 'undefined' &&
     typeof localStorage !== 'undefined' &&
-    LocalStorageHelper.getItem(LOCAL_STORAGE_KEYS.LANGUAGE)) ||
+    LocalStorageHelper.getItem<string>(LOCAL_STORAGE_KEYS.LANGUAGE)) ||
     (typeof navigator !== 'undefined' && (navigator.language as string)) ||
     BASE_LOCALE) as LocalesType;
 

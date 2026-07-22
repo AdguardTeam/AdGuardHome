@@ -5,8 +5,10 @@ import { R_MAC_WITHOUT_COLON, R_UNIX_ABSOLUTE_PATH, R_WIN_ABSOLUTE_PATH } from '
  * @param {string} ip
  * @returns {*}
  */
-export const ip4ToInt = (ip: any) => {
-    const intIp = ip.split('.').reduce((int: any, oct: any) => int * 256 + parseInt(oct, 10), 0);
+export const ip4ToInt = (ip: string): number => {
+    const intIp = ip
+        .split('.')
+        .reduce((int: number, oct: string) => int * 256 + parseInt(oct, 10), 0);
     return Number.isNaN(intIp) ? 0 : intIp;
 };
 
@@ -14,20 +16,20 @@ export const ip4ToInt = (ip: any) => {
  * @param value {string}
  * @returns {*|number}
  */
-export const toNumber = (value: any) => value && parseInt(value, 10);
+export const toNumber = (value: string): number | undefined => value && parseInt(value, 10);
 
 /**
  * @param value {string}
  * @returns {*|number}
  */
 
-export const toFloatNumber = (value: any) => value && parseFloat(value);
+export const toFloatNumber = (value: string): number | undefined => value && parseFloat(value);
 
 /**
  * @param value {string}
  * @returns {boolean}
  */
-export const isValidAbsolutePath = (value: any) =>
+export const isValidAbsolutePath = (value: string): boolean =>
     R_WIN_ABSOLUTE_PATH.test(value) || R_UNIX_ABSOLUTE_PATH.test(value);
 
 /**
@@ -38,7 +40,7 @@ export const isValidAbsolutePath = (value: any) =>
  * @example normalizeMac("AA-BB-CC-DD-EE-FF") // "AA:BB:CC:DD:EE:FF"
  * @example normalizeMac("aa:bb:cc:dd:ee:ff") // "AA:BB:CC:DD:EE:FF"
  */
-export const normalizeMac = (value: any) => {
+export const normalizeMac = (value: string): string => {
     if (!value || typeof value !== 'string') return value;
 
     // Handle separator-less bare hex (12 or 16 chars)

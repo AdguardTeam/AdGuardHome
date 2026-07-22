@@ -123,7 +123,7 @@ export const DNSRewrites = () => {
                 <Show when={rewritesState.list.length > 0}>
                     <div class={cn(s.group, s.tableGroup)}>
                         <RewritesTable
-                            list={rewritesState.list}
+                            list={rewritesState.list as Rewrite[]}
                             processing={rewritesState.processing}
                             processingAdd={rewritesState.processingAdd}
                             processingUpdate={rewritesState.processingUpdate}

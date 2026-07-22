@@ -44,9 +44,9 @@ describe('setTlsConfig', () => {
         await setTlsConfig({
             certificate_chain: '',
             private_key: '',
-            port_https: '',
-            port_dns_over_tls: '',
-            port_dns_over_quic: '',
+            port_https: 0,
+            port_dns_over_tls: 0,
+            port_dns_over_quic: 0,
         });
         const sent = mocks.tlsConfigure.mock.calls[0][0];
         expect(sent.port_https).toBe(0);
@@ -89,7 +89,7 @@ describe('setTlsConfig', () => {
         expect(encryptionState.warning_validation).toBe('');
         expect(encryptionState.subject).toBe('');
         expect(encryptionState.issuer).toBe('');
-        expect(encryptionState.key_type).toBe('');
+        expect(encryptionState.key_type).toBeUndefined();
         expect(encryptionState.dns_names).toBeNull();
     });
 

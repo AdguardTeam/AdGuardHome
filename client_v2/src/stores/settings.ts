@@ -14,6 +14,8 @@ import {
 import { addErrorToast, addSuccessToast } from './toasts';
 import { splitByNewLine } from 'panel/helpers/helpers';
 import intl from 'panel/common/intl';
+import type { SafeSearchConfig } from 'panel/api/model/safeSearchConfig';
+import type { UpstreamsConfig } from 'panel/api/model/upstreamsConfig';
 
 type SettingsState = {
     processing: boolean;
@@ -22,7 +24,7 @@ type SettingsState = {
     settingsList: {
         parental: { enabled: boolean };
         safebrowsing: { enabled: boolean };
-        safesearch: Record<string, boolean>;
+        safesearch: SafeSearchConfig;
     };
 };
 
@@ -47,7 +49,7 @@ export const initSettings = async () => {
         setState({
             settingsList: {
                 safebrowsing: { enabled: safebrowsingStatusData.enabled },
-                parental: { enabled: parentalStatusData.enable },
+                parental: { enabled: parentalStatusData.enabled },
                 safesearch: { ...safesearchStatusData },
             },
             processing: false,
@@ -58,7 +60,18 @@ export const initSettings = async () => {
     }
 };
 
-export const toggleSetting = async (settingKey: string, status: any) => {
+export async function toggleSetting(
+    settingKey: 'safesearch',
+    status: SafeSearchConfig,
+): Promise<boolean>;
+export async function toggleSetting(
+    settingKey: 'safebrowsing' | 'parental',
+    status: boolean,
+): Promise<boolean>;
+export async function toggleSetting(
+    settingKey: string,
+    status: boolean | SafeSearchConfig,
+): Promise<boolean> {
     try {
         switch (settingKey) {
             case 'safebrowsing':
@@ -78,8 +91,8 @@ export const toggleSetting = async (settingKey: string, status: any) => {
                 setState('settingsList', 'parental', 'enabled', !status);
                 return true;
             case 'safesearch':
-                await safesearchSettings(status);
-                setState('settingsList', 'safesearch', status);
+                await safesearchSettings(status as SafeSearchConfig);
+                setState('settingsList', 'safesearch', status as SafeSearchConfig);
                 return true;
             default:
                 return false;
@@ -88,7 +101,7 @@ export const toggleSetting = async (settingKey: string, status: any) => {
         addErrorToast({ error });
         return false;
     }
-};
+}
 
 export const settingsState = untrack(() => state);
 
@@ -109,7 +122,7 @@ export const testUpstreamWithFormValues = async (
             lines.filter((line) => !line.startsWith('#') && !line.startsWith('!'));
         const removeComments = (text: string) => filterOutComments(splitByNewLine(text));
 
-        const config: any = {
+        const config: UpstreamsConfig = {
             bootstrap_dns: splitByNewLine(bootstrap_dns),
             private_upstream: splitByNewLine(local_ptr_upstreams),
             fallback_dns: splitByNewLine(fallback_dns),

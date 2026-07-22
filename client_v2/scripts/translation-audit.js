@@ -1,10 +1,59 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+import { validator } from '@adguard/translate';
 import ts from 'typescript';
 
 const SOURCE_EXTENSIONS = new Set(['.ts', '.tsx']);
 const TRANSLATION_METHODS = new Set(['getMessage', 'getPlural']);
+
+/**
+ * Loads the locale-to-underscore map from .twosky.json in the repo root.
+ * Returns a Map where keys are hyphenated locale codes (e.g. "pt-br") and
+ * values are @adguard/translate locale codes (e.g. "pt_br"), or `null` for
+ * unsupported locales.
+ *
+ * @param {string} repoRoot - Path to the repository root (contains .twosky.json).
+ * @returns {Promise<Map<string, string|null>>}
+ */
+export const loadTwoskyLocales = async (repoRoot) => {
+    const twoskyPath = path.join(repoRoot, '.twosky.json');
+    const raw = await fs.readFile(twoskyPath, 'utf8');
+    const projects = JSON.parse(raw);
+
+    const homeV2 = projects.find((p) => p.project_id === 'home_v2');
+    if (!homeV2) {
+        throw new Error('home_v2 project not found in .twosky.json');
+    }
+
+    /**
+     * Converts a hyphenated twosky locale code to @adguard/translate format.
+     * Most become underscore (pt-br → pt_br).  Special cases for locales that
+     * the library handles under a parent code, or doesn't handle at all.
+     */
+    const toTranslateLocale = (code) => {
+        // Sinhala not in @adguard/translate plural rules table
+        if (code === 'si-lk') {
+            return null;
+        }
+        // Hong Kong & Serbian Cyrillic → parent locale
+        if (code === 'zh-hk') {
+            return 'zh';
+        }
+        if (code === 'sr-cs') {
+            return 'sr';
+        }
+
+        return code.replace(/-/g, '_');
+    };
+
+    const map = new Map();
+    for (const code of Object.keys(homeV2.languages)) {
+        map.set(code, toTranslateLocale(code));
+    }
+
+    return map;
+};
 
 const isIntlMethod = (node) => {
     if (!ts.isPropertyAccessExpression(node)) {
@@ -215,4 +264,81 @@ export const collectTranslationUsageFromFiles = async (filePaths) => {
     usage.dynamicUsages.sort(sortByFileAndLine);
 
     return usage;
+};
+
+/**
+ * Validates plural forms in all locale files against the @adguard/translate
+ * library's plural rules (CLDR-based). Returns an array of errors grouped by
+ * locale file and key.
+ *
+ * @param {string} localesDir - Path to __locales directory
+ * @param {{write?: (chunk: string) => void}} [options]
+ * @returns {Promise<Array<{file: string, key: string, value: string}>>}
+ */
+export const validatePlurals = async (localesDir, supportedLocales) => {
+    const errors = [];
+    const entries = await fs.readdir(localesDir, { withFileTypes: true });
+
+    for (const entry of entries) {
+        if (!entry.isFile() || !entry.name.endsWith('.json')) {
+            continue;
+        }
+
+        const localeName = entry.name.replace(/\.json$/, '');
+        const localeCode = supportedLocales.get(localeName);
+
+        // `undefined` means not in twosky list; `null` means unsupported
+        if (localeCode === undefined || localeCode === null) {
+            continue;
+        }
+
+        const localePath = path.join(localesDir, entry.name);
+        const messages = await loadLocaleMessages(localePath);
+
+        for (const [key, value] of Object.entries(messages)) {
+            // Only validate strings that START with "|" (plural form separator).
+            // Strings containing "||" (like filter rule examples) are not plurals.
+            if (typeof value !== 'string' || !value.trimStart().startsWith('|')) {
+                continue;
+            }
+
+            if (!validator.isPluralFormValid(value, localeCode, key)) {
+                errors.push({ file: entry.name, key, value });
+            }
+        }
+    }
+
+    return errors;
+};
+
+/**
+ * Formats the plural validation report.
+ *
+ * @param {Array<{file: string, key: string, value: string}>} errors
+ * @returns {string}
+ */
+export const formatPluralReport = (errors) => {
+    if (errors.length === 0) {
+        return 'Plural form validation: all locales passed';
+    }
+
+    const byFile = new Map();
+    for (const err of errors) {
+        const list = byFile.get(err.file) || [];
+        list.push(err);
+        byFile.set(err.file, list);
+    }
+
+    const lines = [`Plural form errors: ${errors.length} keys`];
+
+    for (const [file, errs] of byFile) {
+        lines.push(`\n  ${file}:`);
+        for (const { key, value } of errs) {
+            const pipeCount = (value.match(/\|/g) || []).length;
+            lines.push(`    ${key} (${pipeCount} pipes)`);
+            lines.push(`      "${value.slice(0, 80)}${value.length > 80 ? '…' : ''}"`);
+        }
+    }
+
+    return lines.join('\n');
 };

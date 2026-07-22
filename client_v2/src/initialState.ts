@@ -9,8 +9,29 @@ import {
     TIME_UNITS,
 } from './helpers/constants';
 import { DEFAULT_BLOCKING_IPV4, DEFAULT_BLOCKING_IPV6 } from './stores/dnsConfig';
-import { Filter } from './helpers/helpers';
-import { SafeSearchConfig } from './api/model/safeSearchConfig';
+import { Filter, type NormalizedQueryLogItem } from './helpers/helpers';
+import type { WhoisInfo } from './api/model/whoisInfo';
+import type { ClientAuto as AutoClient } from './api/model/clientAuto';
+import type { Client } from './api/model/client';
+import type { NetInterface } from './api/model/netInterface';
+import type { NetInterfaces } from './api/model/netInterfaces';
+import type { TlsConfig } from './api/model/tlsConfig';
+import type { TlsConfigKeyType } from './api/model/tlsConfigKeyType';
+import type { DnsInfo200 } from './api/model/dnsInfo200';
+import type { DNSConfigBlockingMode, DNSConfigUpstreamMode } from './api/model';
+import type { FilterStatus } from './api/model/filterStatus';
+import type { DhcpStaticLease } from './api/model/dhcpStaticLease';
+import type { DhcpSearchResult } from './api/model/dhcpSearchResult';
+import type { Stats } from './api/model/stats';
+import type { GetStatsConfigResponse } from './api/model/getStatsConfigResponse';
+import type { GetQueryLogConfigResponse } from './api/model/getQueryLogConfigResponse';
+import type { RewriteEntry } from './api/model/rewriteEntry';
+import type { RewriteSettings } from './api/model/rewriteSettings';
+import type { BlockedServicesSchedule } from './api/model/blockedServicesSchedule';
+import type { BlockedService } from './api/model/blockedService';
+import type { ServiceGroup } from './api/model/serviceGroup';
+import type { QueryLogFilter } from './helpers/constants';
+import type { ToastNotice } from './stores/toasts';
 
 export type InstallInterface = {
     flags: string;
@@ -52,77 +73,26 @@ export type InstallData = {
     dnsVersion: string;
 };
 
-export type EncryptionData = {
+export type EncryptionData = Partial<
+    Omit<TlsConfig, 'port_https' | 'port_dns_over_tls' | 'port_dns_over_quic' | 'dns_names'>
+> & {
+    // UI-only fields NOT in API model:
     processing: boolean;
     processingConfig: boolean;
     processingValidate: boolean;
-    enabled: boolean;
-    serve_plain_dns: boolean;
-    dns_names: any;
-    force_https: boolean;
-    issuer: string;
-    key_type: string;
-    not_after: string;
-    not_before: string;
-    port_dns_over_tls?: number;
-    port_dns_over_quic?: number;
-    port_https?: number;
-    port_dnscrypt?: number;
-    subject: string;
-    valid_chain: boolean;
-    valid_key: boolean;
-    valid_cert: boolean;
-    valid_pair: boolean;
-    status_cert: string;
-    status_key: string;
-    private_key: string;
-    server_name: string;
-    warning_validation: string;
-    certificate_chain: string;
-    certificate_path: string;
-    private_key_path: string;
-    private_key_saved: boolean;
-    allow_unencrypted_doh?: boolean;
-    dnscrypt_config_file?: string;
+    status_cert: string; // UI concatenation
+    status_key: string; // UI concatenation
+    allow_unencrypted_doh: boolean;
+    // Port fields: number from API, string from form input (initialized as ''):
+    port_https: number | string;
+    port_dns_over_tls: number | string;
+    port_dns_over_quic: number | string;
+    port_dnscrypt: number | string;
+    // Store initializes as null, API returns string[]:
+    dns_names: string[] | null;
 };
 
-export type Client = {
-    blocked_services: string[];
-    blocked_services_schedule: {
-        sun?: { start: number; end: number };
-        mon?: { start: number; end: number };
-        tue?: { start: number; end: number };
-        wed?: { start: number; end: number };
-        thu?: { start: number; end: number };
-        fri?: { start: number; end: number };
-        sat?: { start: number; end: number };
-        time_zone: string;
-    };
-    filtering_enabled: boolean;
-    ids: string[];
-    ignore_querylog: boolean;
-    ignore_statistics: boolean;
-    name: string;
-    parental_enabled: boolean;
-    safe_search: SafeSearchConfig;
-    safebrowsing_enabled: boolean;
-    safesearch_enabled: boolean;
-    tags: string[];
-    upstreams: string[];
-    upstreams_cache_enabled: boolean;
-    upstreams_cache_size: number;
-    use_global_blocked_services: boolean;
-    use_global_settings: boolean;
-};
-
-export type WhoisInfo = Record<string, string>;
-
-export type AutoClient = {
-    ip: string;
-    name: string;
-    source: string;
-    whois_info: WhoisInfo;
-};
+export { type WhoisInfo, type AutoClient, type Client };
 
 export type DashboardData = {
     processing: boolean;
@@ -132,7 +102,7 @@ export type DashboardData = {
     processingUpdate: boolean;
     processingProfile: boolean;
     protectionEnabled: boolean;
-    protectionDisabledDuration: any;
+    protectionDisabledDuration: number | null;
     protectionCountdownActive: boolean;
     processingProtection: boolean;
     httpPort: number;
@@ -167,7 +137,7 @@ export type SettingsData = {
     };
 };
 
-export type RewritesData = {
+export type RewritesData = RewriteSettings & {
     processing: boolean;
     processingAdd: boolean;
     processingDelete: boolean;
@@ -175,17 +145,8 @@ export type RewritesData = {
     processingSettings: boolean;
     isModalOpen: boolean;
     modalType: string;
-    currentRewrite?: {
-        answer: string;
-        domain: string;
-        enabled: boolean;
-    };
-    list: {
-        answer: string;
-        domain: string;
-        enabled: boolean;
-    }[];
-    enabled: boolean;
+    currentRewrite?: RewriteEntry;
+    list: RewriteEntry[];
 };
 
 export type NormalizedTopClients = {
@@ -193,37 +154,31 @@ export type NormalizedTopClients = {
     configured: Record<string, number>;
 };
 
-export type StatsData = {
-    processingGetConfig: boolean;
-    processingSetConfig: boolean;
-    processingStats: boolean;
-    processingReset: boolean;
-    interval: number;
-    customInterval?: number;
-    dnsQueries: number[];
-    blockedFiltering: number[];
-    replacedParental: number[];
-    replacedSafebrowsing: number[];
-    topBlockedDomains: { name: string; count: number }[];
-    topClients: {
-        name: string;
-        count: number;
-        info: any;
-    }[];
-    normalizedTopClients?: NormalizedTopClients;
-    topQueriedDomains: { name: string; count: number }[];
-    numBlockedFiltering: number;
-    numDnsQueries: number;
-    numReplacedParental: number;
-    numReplacedSafebrowsing: number;
-    numReplacedSafesearch: number;
-    avgProcessingTime: number;
-    timeUnits: string;
-    enabled: boolean;
-    topUpstreamsAvgTime: { name: string; count: number }[];
-    topUpstreamsResponses: { name: string; count: number }[];
-    ignored: string[];
-};
+export type StatsData = Omit<
+    Stats,
+    | 'top_queried_domains'
+    | 'top_clients'
+    | 'top_blocked_domains'
+    | 'top_upstreams_responses'
+    | 'top_upstreams_avg_time'
+    | 'time_units'
+> &
+    Omit<GetStatsConfigResponse, 'interval'> & {
+        processingGetConfig: boolean;
+        processingSetConfig: boolean;
+        processingStats: boolean;
+        processingReset: boolean;
+        interval: number;
+        customInterval?: number | null;
+        // Normalized top stats (from normalizeTopStats):
+        topBlockedDomains: { name: string; count: number }[];
+        topClients: { name: string; count: number; info: string }[]; // info is string!
+        topQueriedDomains: { name: string; count: number }[];
+        topUpstreamsAvgTime: { name: string; count: number }[];
+        topUpstreamsResponses: { name: string; count: number }[];
+        normalizedTopClients?: NormalizedTopClients;
+        timeUnits: string;
+    };
 
 export type ClientsData = {
     processing: boolean;
@@ -243,16 +198,7 @@ export type AccessData = {
     blocked_hosts: string;
 };
 
-export type DhcpInterface = {
-    name: string;
-    flags: string;
-    gateway_ip: string;
-    ip_addresses: string[];
-    ipv4_addresses: string[];
-    ipv6_addresses: string[];
-    hardware_address: string;
-};
-
+export type DhcpInterface = NetInterface & { ip_addresses: string[] };
 export type DhcpInterfaces = Record<string, DhcpInterface>;
 
 export type DhcpData = {
@@ -266,16 +212,9 @@ export type DhcpData = {
     processingUpdating: boolean;
     enabled: boolean;
     interface_name: string;
-    check?: {
-        v4?: {
-            other_server?: { found: string; error?: string };
-            static_ip?: { static: string; ip: string };
-        };
-        v6?: {
-            other_server?: { found: string; error?: string };
-            static_ip?: { static: string; ip: string };
-        };
-    };
+    // Use generated DhcpSearchResult:
+    check: DhcpSearchResult | null;
+    // Keep inline v4/v6 (required — always present after init):
     v4: {
         gateway_ip: string;
         subnet_mask: string;
@@ -287,61 +226,43 @@ export type DhcpData = {
         range_start: string;
         lease_duration: number;
     };
-    leases: {
-        hostname: string;
-        ip: string;
-        mac: string;
-    }[];
-    staticLeases: {
-        hostname: string;
-        ip: string;
-        mac: string;
-    }[];
+    // UI-normalized leases (flat without expires):
+    leases: { hostname: string; ip: string; mac: string }[];
+    staticLeases: DhcpStaticLease[];
     isModalOpen: boolean;
-    leaseModalConfig?: {
-        hostname: string;
-        ip: string;
-        mac: string;
-    };
+    leaseModalConfig?: { hostname: string; ip: string; mac: string };
     modalType: string;
     dhcp_available: boolean;
-    interfaces?: DhcpInterfaces;
+    interfaces?: NetInterfaces;
 };
 
-export type DnsConfigData = {
+export type DnsConfigData = Omit<
+    DnsInfo200,
+    | 'upstream_dns'
+    | 'fallback_dns'
+    | 'bootstrap_dns'
+    | 'local_ptr_upstreams'
+    | 'ratelimit_whitelist'
+    | 'blocking_mode'
+    | 'upstream_mode'
+    | 'protection_enabled'
+    | 'protection_disabled_until'
+> & {
+    // UI-only processing flags:
     processingGetConfig: boolean;
     processingSetConfig: boolean;
-    blocking_mode: string;
-    ratelimit: number;
-    blocking_ipv4: string;
-    blocking_ipv6: string;
-    blocked_response_ttl: number;
-    upstream_timeout: number;
-    edns_cs_enabled: boolean;
-    disable_ipv6: boolean;
-    dnssec_enabled: boolean;
-    upstream_dns_file: string;
+    // Normalized fields (string[] → newline-joined string):
+    blocking_mode: DNSConfigBlockingMode;
+    upstream_mode: DNSConfigUpstreamMode;
     upstream_dns: string;
     fallback_dns: string;
     bootstrap_dns: string;
     local_ptr_upstreams: string;
     ratelimit_whitelist: string;
-    upstream_mode: string;
-    resolve_clients: boolean;
-    use_private_ptr_resolvers: boolean;
-    default_local_ptr_upstreams: string[];
-    ratelimit_subnet_len_ipv4?: number;
-    ratelimit_subnet_len_ipv6?: number;
-    edns_cs_use_custom?: boolean;
-    edns_cs_custom_ip?: string;
-    cache_size?: number;
-    cache_ttl_max?: number;
-    cache_ttl_min?: number;
-    cache_optimistic?: boolean;
-    cache_enabled?: boolean;
 };
 
-export type FilteringData = {
+export type FilteringData = Omit<FilterStatus, 'filters' | 'whitelist_filters' | 'user_rules'> & {
+    // UI-only fields:
     isModalOpen: boolean;
     processingFilters: boolean;
     processingRules: boolean;
@@ -354,42 +275,37 @@ export type FilteringData = {
     isFilterAdded: boolean;
     isFilterRemoved: boolean;
     isFilterEdited: boolean;
-    filters: Filter[];
-    whitelistFilters: any[];
-    userRules: string;
-    interval: number;
-    enabled: boolean;
     modalType: string;
     modalFilterUrl: string;
-    check: any;
+    check: Record<string, unknown> | Record<string, never>;
+    // Normalized fields (camelCase from normalizeFilteringStatus):
+    filters: Filter[];
+    whitelistFilters: Filter[]; // Note: whitelist (no underscore) — matches store
+    userRules: string;
 };
 
-export type QueryLogsData = {
+export type QueryLogsData = Omit<GetQueryLogConfigResponse, 'interval'> & {
     processingGetLogs: boolean;
     processingClear: boolean;
     processingGetConfig: boolean;
     processingSetConfig: boolean;
     processingAdditionalLogs: boolean;
-    interval: any;
-    logs: any[];
-    enabled: boolean;
+    interval: number;
+    customInterval: number | null;
+    logs: NormalizedQueryLogItem[];
     oldest: string;
-    filter: any;
+    filter: QueryLogFilter;
     isFiltered: boolean;
-    anonymize_client_ip: boolean;
     isDetailed: boolean;
     isEntireLog: boolean;
-    customInterval: any;
-    ignored: string[];
 };
 
-export type ServicesData = {
+export type ServicesData = BlockedServicesSchedule & {
     processing: boolean;
     processingAll: boolean;
     processingSet: boolean;
-    list: any;
-    allServices: any[];
-    allGroups: any[];
+    allServices: BlockedService[];
+    allGroups: ServiceGroup[];
 };
 
 export type ModalsData = {
@@ -414,6 +330,7 @@ export type ClientFormState = {
         duckduckgo: boolean;
         yandex: boolean;
         pixabay: boolean;
+        ecosia: boolean;
     };
     ignore_querylog: boolean;
     ignore_statistics: boolean;
@@ -454,6 +371,7 @@ export const getInitialClientFormState = (): ClientFormState => ({
         duckduckgo: false,
         yandex: false,
         pixabay: false,
+        ecosia: false,
     },
     ignore_querylog: false,
     ignore_statistics: false,
@@ -483,14 +401,14 @@ export type RootState = {
     settings?: SettingsData;
     stats?: StatsData;
     install?: InstallData;
-    toasts: { notices: any[] };
+    toasts: { notices: ToastNotice[] };
     modals: ModalsData;
     clientForm: ClientFormState;
 };
 
 export type InstallState = {
     install: InstallData;
-    toasts: { notices: any[] };
+    toasts: { notices: ToastNotice[] };
 };
 
 export type LoginState = {
@@ -500,7 +418,7 @@ export type LoginState = {
         password: string;
         error: unknown;
     };
-    toasts: { notices: any[] };
+    toasts: { notices: ToastNotice[] };
 };
 
 export const initialState: RootState = {
@@ -609,7 +527,7 @@ export const initialState: RootState = {
         dns_names: null,
         force_https: false,
         issuer: '',
-        key_type: '',
+        key_type: '' as TlsConfigKeyType,
         not_after: '',
         not_before: '',
         subject: '',
@@ -619,6 +537,7 @@ export const initialState: RootState = {
         valid_pair: false,
         status_cert: '',
         status_key: '',
+        allow_unencrypted_doh: false,
         certificate_chain: '',
         private_key: '',
         server_name: '',
@@ -626,6 +545,10 @@ export const initialState: RootState = {
         certificate_path: '',
         private_key_path: '',
         private_key_saved: false,
+        port_https: '',
+        port_dns_over_tls: '',
+        port_dns_over_quic: '',
+        port_dnscrypt: '',
     },
     filtering: {
         isModalOpen: false,
@@ -682,10 +605,9 @@ export const initialState: RootState = {
         processing: true,
         processingAll: true,
         processingSet: false,
-        list: {},
         allServices: [],
         allGroups: [],
-    },
+    } as ServicesData,
     settings: {
         processing: true,
         processingTestUpstream: false,
@@ -698,19 +620,19 @@ export const initialState: RootState = {
         processingReset: false,
         interval: DAY,
         customInterval: null,
-        dnsQueries: [],
-        blockedFiltering: [],
-        replacedParental: [],
-        replacedSafebrowsing: [],
+        dns_queries: [],
+        blocked_filtering: [],
+        replaced_parental: [],
+        replaced_safebrowsing: [],
         topBlockedDomains: [],
         topClients: [],
         topQueriedDomains: [],
-        numBlockedFiltering: 0,
-        numDnsQueries: 0,
-        numReplacedParental: 0,
-        numReplacedSafebrowsing: 0,
-        numReplacedSafesearch: 0,
-        avgProcessingTime: 0,
+        num_blocked_filtering: 0,
+        num_dns_queries: 0,
+        num_replaced_parental: 0,
+        num_replaced_safebrowsing: 0,
+        num_replaced_safesearch: 0,
+        avg_processing_time: 0,
         timeUnits: TIME_UNITS.HOURS,
         enabled: true,
         topUpstreamsAvgTime: [],

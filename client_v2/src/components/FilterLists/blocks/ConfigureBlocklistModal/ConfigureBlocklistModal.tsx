@@ -16,6 +16,7 @@ import {
     filteringState,
 } from 'panel/stores/filtering';
 import type { Filter } from 'panel/helpers/helpers';
+import type { FilterSetUrlData } from 'panel/api/model/filterSetUrlData';
 import { validatePath, validateRequiredValue } from 'panel/helpers/validators';
 import { ManualFilterForm } from 'panel/components/FilterLists/blocks/ConfigureBlocklistModal/blocks/ManualFilterForm';
 import { Tabs } from 'panel/common/ui/Tabs';
@@ -170,7 +171,7 @@ export const ConfigureBlocklistModal = (props: Props) => {
                 break;
             }
             case MODAL_TYPE.EDIT_BLOCKLIST: {
-                editFilter(props.filterToEdit!.url, values, false);
+                editFilter(props.filterToEdit!.url, values as FilterSetUrlData, false);
                 break;
             }
             default: {

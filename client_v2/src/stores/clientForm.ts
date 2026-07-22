@@ -26,6 +26,7 @@ const getInitialClientFormState = (): ClientFormState => ({
         duckduckgo: false,
         yandex: false,
         pixabay: false,
+        ecosia: false,
     },
     ignore_querylog: false,
     ignore_statistics: false,
@@ -57,18 +58,20 @@ export const initClientForm = (client?: Partial<ClientFormState> | null) => {
 };
 
 export const updateClientFormField = (
-    fieldOrObj: keyof ClientFormState | { field: keyof ClientFormState; value: any },
-    maybeValue?: any,
+    fieldOrObj:
+        | keyof ClientFormState
+        | { field: keyof ClientFormState; value: ClientFormState[keyof ClientFormState] },
+    maybeValue?: ClientFormState[keyof ClientFormState],
     replace?: boolean,
 ) => {
     const field = typeof fieldOrObj === 'string' ? fieldOrObj : fieldOrObj.field;
     const value = typeof fieldOrObj === 'string' ? maybeValue : fieldOrObj.value;
-    setState(field as keyof ClientFormState, replace ? reconcile(value) : value);
+    setState(field, replace ? reconcile(value) : value);
     // Clear the error for this field
-    if (state.formErrors[field as string]) {
+    if (typeof field === 'string' && state.formErrors[field]) {
         setState('formErrors', (prev) => {
             const next = { ...prev };
-            delete next[field as string];
+            delete next[field];
             return next;
         });
     }
@@ -98,21 +101,24 @@ export const buildFormPayload = (client: Client): Partial<ClientFormState> => ({
     filtering_enabled: client.filtering_enabled || false,
     safebrowsing_enabled: client.safebrowsing_enabled || false,
     parental_enabled: client.parental_enabled || false,
-    safe_search: (client.safe_search || {
-        enabled: false,
-        google: false,
-        youtube: false,
-        bing: false,
-        duckduckgo: false,
-        yandex: false,
-        pixabay: false,
-    }) as ClientFormState['safe_search'],
+    safe_search: {
+        enabled: client.safe_search?.enabled ?? false,
+        google: client.safe_search?.google ?? false,
+        youtube: client.safe_search?.youtube ?? false,
+        bing: client.safe_search?.bing ?? false,
+        duckduckgo: client.safe_search?.duckduckgo ?? false,
+        yandex: client.safe_search?.yandex ?? false,
+        pixabay: client.safe_search?.pixabay ?? false,
+        ecosia: client.safe_search?.ecosia ?? false,
+    },
     ignore_querylog: client.ignore_querylog || false,
     ignore_statistics: client.ignore_statistics || false,
     blocked_services: client.blocked_services || [],
     use_global_blocked_services: client.use_global_blocked_services || false,
-    blocked_services_schedule: client.blocked_services_schedule || {
-        time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    blocked_services_schedule: {
+        time_zone:
+            client.blocked_services_schedule?.time_zone ??
+            Intl.DateTimeFormat().resolvedOptions().timeZone,
     },
     upstreams: (client.upstreams || []).join('\n'),
     upstreams_cache_enabled: client.upstreams_cache_enabled || false,
@@ -170,14 +176,15 @@ export const saveClient = async (): Promise<boolean> => {
 
     const existingClientIds = computeExistingClientIds();
 
-    const idErrors = state.ids.map((id: string, index: number) => {
+    const idErrors: (string | undefined)[] = state.ids.map((id: string, index: number) => {
         if (!id.trim()) {
             return intl.getMessage('form_error_required');
         }
         return validateIdentifier(id, state.ids, index, existingClientIds);
     });
-    if (idErrors.some((e: string | undefined) => e !== undefined)) {
-        errors.ids = idErrors as string[];
+    const filteredErrors = idErrors.filter((e): e is string => e !== undefined);
+    if (filteredErrors.length > 0) {
+        errors.ids = filteredErrors;
     }
 
     // Validate cache size when per-client cache is enabled (and not using global settings).

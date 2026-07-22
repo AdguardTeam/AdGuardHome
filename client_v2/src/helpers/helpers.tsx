@@ -1,5 +1,3 @@
-import { parseISO, format as dateFormat } from 'date-fns';
-import round from 'lodash/round';
 import ipaddr, { IPv4, IPv6 } from 'ipaddr.js';
 import queryString from 'qs';
 import intl from 'panel/common/intl';
@@ -10,13 +8,11 @@ import {
     CHECK_TIMEOUT,
     COMMENT_LINE_DEFAULT_TOKEN,
     DEFAULT_DATE_FORMAT_OPTIONS,
-    DEFAULT_TIME_FORMAT,
     DETAILED_DATE_FORMAT_OPTIONS,
     DHCP_VALUES_PLACEHOLDERS,
     FILTERED,
     FILTERED_STATUS,
     R_CLIENT_ID,
-    STANDARD_DNS_PORT,
     STANDARD_HTTPS_PORT,
     STANDARD_WEB_PORT,
     SPECIAL_FILTER_ID,
@@ -24,17 +20,51 @@ import {
     SHORT_DATE_FORMAT_OPTIONS,
 } from './constants';
 import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from './localStorageHelper';
-import { DhcpInterfaces, InstallInterface } from '../initialState';
-import type { NetInterfaces } from '../api/model/netInterfaces';
+import { DhcpInterfaces } from '../initialState';
+import type { NetInterfaces } from 'panel/api/model/netInterfaces';
+import type { DnsAnswer } from 'panel/api/model/dnsAnswer';
+import type { ResultRule } from 'panel/api/model/resultRule';
+import type { FilteringReason } from 'panel/api/model/filteringReason';
+import type { FilterStatus } from 'panel/api/model/filterStatus';
+import type { TopArrayEntry } from 'panel/api/model/topArrayEntry';
+import type { ClientsFindEntry } from 'panel/api/model/clientsFindEntry';
+import type { ClientFindSubEntry } from 'panel/api/model/clientFindSubEntry';
+import type { QueryLogItemClient } from 'panel/api/model/queryLogItemClient';
+import type { QueryLogItemClientWhois } from 'panel/api/model/queryLogItemClientWhois';
+import type { QueryLogItemClientProto } from 'panel/api/model/queryLogItemClientProto';
+import type { QueryLogItem } from 'panel/api/model/queryLogItem';
 
-/**
- * @param time {string} The time to format
- * @param options {string}
- * @returns {string} Returns the time in the format HH:mm:ss
- */
-export const formatTime = (time: any, options = DEFAULT_TIME_FORMAT) => {
-    const parsedTime = parseISO(time);
-    return dateFormat(parsedTime, options);
+export type NormalizedDnsResponse = {
+    value?: string;
+    type?: string;
+    ttl?: number;
+};
+
+export type NormalizedQueryLogItem = {
+    time: string;
+    domain: string;
+    unicodeName: string;
+    type: string;
+    response: NormalizedDnsResponse[];
+    reason?: FilteringReason;
+    client: string;
+    client_proto?: QueryLogItemClientProto;
+    client_id?: string;
+    client_info: QueryLogItemClient | null;
+    filterId?: number; // @deprecated
+    rule?: string; // @deprecated
+    rules: ResultRule[];
+    status?: string;
+    service_name?: string;
+    serviceName?: string;
+    originalAnswer?: DnsAnswer[];
+    originalResponse: NormalizedDnsResponse[];
+    tracker: Record<string, unknown> | null;
+    answer_dnssec?: boolean;
+    elapsedMs?: string;
+    upstream?: string;
+    cached?: boolean;
+    ecs?: string;
 };
 
 /**
@@ -69,8 +99,8 @@ export const formatDetailedDateTime = (dateTime: string) =>
 export const formatShortDateTime = (dateTime: string) =>
     formatDateTime(dateTime, SHORT_DATE_FORMAT_OPTIONS);
 
-export const normalizeLogs = (logs: any) =>
-    logs.map((log: any) => {
+export const normalizeLogs = (logs: QueryLogItem[]): NormalizedQueryLogItem[] =>
+    logs.map((log) => {
         const {
             answer,
             answer_dnssec,
@@ -95,9 +125,9 @@ export const normalizeLogs = (logs: any) =>
 
         const { name: domain, unicode_name: unicodeName, type } = question || {};
 
-        const processResponse = (data: any) =>
+        const processResponse = (data: DnsAnswer[] | undefined): NormalizedDnsResponse[] =>
             Array.isArray(data)
-                ? data.map((response: any) => {
+                ? data.map((response: DnsAnswer) => {
                       const { value, type, ttl } = response;
 
                       return {
@@ -153,28 +183,25 @@ export const normalizeLogs = (logs: any) =>
         };
     });
 
-// TODO (ik) type will fixed in query log task
-export const normalizeHistory = (history: any) =>
-    history.map((item: any, idx: number) => ({
-        x: idx,
-        y: item,
-    }));
-
-export const normalizeTopStats = (stats: any) =>
-    stats.map((item: any) => ({
+export const normalizeTopStats = (stats: TopArrayEntry[]): TopStat[] =>
+    stats.map((item: TopArrayEntry) => ({
         name: Object.keys(item)[0],
 
-        count: Object.values(item)[0],
+        count: Object.values(item)[0] as number,
     }));
 
-export const addClientInfo = (data: any, clients: any, ...params: any[]) =>
-    data.map((row: any) => {
-        let info = '';
+export const addClientInfo = (
+    data: TopStat[],
+    clients: ClientsFindEntry[],
+    ...params: string[]
+): (TopStat & { info: ClientFindSubEntry })[] =>
+    data.map((row: TopStat) => {
+        let info: ClientFindSubEntry | null = null;
         params.find((param) => {
-            const id = row[param];
+            const id = row[param as keyof TopStat];
             if (id) {
-                const client = clients.find((item: any) => item[id]) || '';
-                info = client?.[id] ?? '';
+                const clientData = clients.find((item: ClientsFindEntry) => item[String(id)]);
+                info = clientData?.[String(id)] ?? null;
             }
 
             return info;
@@ -182,13 +209,13 @@ export const addClientInfo = (data: any, clients: any, ...params: any[]) =>
 
         return {
             ...row,
-            info,
+            info: info ?? {},
         };
     });
 
-export const normalizeFilters = (filters: any) =>
+export const normalizeFilters = (filters: FilterStatus['filters']) =>
     filters
-        ? filters.map((filter: any) => {
+        ? filters.map((filter) => {
               const {
                   id,
                   url,
@@ -209,7 +236,15 @@ export const normalizeFilters = (filters: any) =>
           })
         : [];
 
-export const normalizeFilteringStatus = (filteringStatus: any) => {
+export const normalizeFilteringStatus = (
+    filteringStatus: FilterStatus,
+): {
+    enabled: boolean | undefined;
+    userRules: string;
+    filters: Filter[];
+    whitelistFilters: Filter[];
+    interval: number | undefined;
+} => {
     const {
         enabled,
         filters,
@@ -228,21 +263,20 @@ export const normalizeFilteringStatus = (filteringStatus: any) => {
     };
 };
 
-export const getPercent = (amount: any, number: any) => {
-    if (amount > 0 && number > 0) {
-        return round(100 / (amount / number), 2);
-    }
-    return 0;
-};
-
-export const captitalizeWords = (text: any) =>
+export const captitalizeWords = (text: string): string =>
     text
         .split(/[ -_]/g)
-        .map((str: any) => str.charAt(0).toUpperCase() + str.substr(1))
+        .map((str: string) => str.charAt(0).toUpperCase() + str.substr(1))
         .join(' ');
 
-export const getInterfaceIp = (option: any) => {
-    const addresses = (option?.ip_addresses ?? []).filter((ip: any) => typeof ip === 'string');
+type InterfaceWithIpAddresses = { ip_addresses?: string[] };
+
+type TopStat = { name: string; count: number };
+
+type ServiceEntry = { id: string; name: string };
+
+export const getInterfaceIp = (option: InterfaceWithIpAddresses): string | undefined => {
+    const addresses = (option?.ip_addresses ?? []).filter((ip: string) => typeof ip === 'string');
 
     const isIpv6 = (ip: string) => ip.includes(':');
     const isIpv6LinkLocal = (ip: string) => ip.toLowerCase().startsWith('fe80:');
@@ -262,34 +296,6 @@ export const getInterfaceIp = (option: any) => {
 
     const ipv6NoZone = addresses.find((ip: string) => isIpv6(ip) && !hasZoneId(ip));
     return ipv6NoZone || addresses[0];
-};
-
-export const getIpList = (interfaces: InstallInterface[]) =>
-    Object.values(interfaces)
-        .reduce(
-            (acc: string[], curr: InstallInterface) => acc.concat(curr.ip_addresses),
-            [] as string[],
-        )
-        .sort();
-
-/**
- * @param {string} ip
- * @param {number} [port]
- * @returns {string}
- */
-export const getDnsAddress = (ip: any, port = 0) => {
-    const isStandardDnsPort = port === STANDARD_DNS_PORT;
-    let address = ip;
-
-    if (port) {
-        if (ip.includes(':') && !isStandardDnsPort) {
-            address = `[${ip}]:${port}`;
-        } else if (!isStandardDnsPort) {
-            address = `${ip}:${port}`;
-        }
-    }
-
-    return address;
 };
 
 const normalizeHost = (host: string) => {
@@ -313,7 +319,7 @@ const normalizeHost = (host: string) => {
  * @param {number} [port]
  * @returns {string}
  */
-export const getWebAddress = (ip: any, port = 0) => {
+export const getWebAddress = (ip: string, port: number = 0): string => {
     const isStandardWebPort = port === STANDARD_WEB_PORT;
     const rawHost = String(ip);
 
@@ -323,7 +329,7 @@ export const getWebAddress = (ip: any, port = 0) => {
     return `http://${host}${portPart}`;
 };
 
-export const checkRedirect = (url: any, attempts: number = 1) => {
+export const checkRedirect = (url: string, attempts: number = 1): boolean => {
     let count = attempts || 1;
 
     if (count > 10) {
@@ -331,11 +337,13 @@ export const checkRedirect = (url: any, attempts: number = 1) => {
         return false;
     }
 
-    const rmTimeout = (t: any) => t && clearTimeout(t);
-    const setRecursiveTimeout = (time: any, ...args: any[]) =>
-        setTimeout(checkRedirect, time, ...args);
+    const rmTimeout = (t: ReturnType<typeof setTimeout> | undefined) => t && clearTimeout(t);
+    const setRecursiveTimeout = (
+        time: number,
+        ...args: [string, number]
+    ): ReturnType<typeof setTimeout> => setTimeout(checkRedirect, time, ...args);
 
-    let timeout: any;
+    let timeout: ReturnType<typeof setTimeout> | undefined;
 
     fetch(url)
         .then((response) => {
@@ -354,7 +362,13 @@ export const checkRedirect = (url: any, attempts: number = 1) => {
     return false;
 };
 
-export const redirectToCurrentProtocol = (values: any, httpPort = 80) => {
+type RedirectValues = {
+    enabled?: boolean;
+    force_https?: boolean;
+    port_https?: number;
+};
+
+export const redirectToCurrentProtocol = (values: RedirectValues, httpPort = 80) => {
     const { protocol, hostname, hash, port } = window.location;
     const { enabled, force_https, port_https } = values;
     const httpsPort = port_https !== STANDARD_HTTPS_PORT ? `:${port_https}` : '';
@@ -377,36 +391,21 @@ export const redirectToCurrentProtocol = (values: any, httpPort = 80) => {
  * @param {string} text
  * @returns []string
  */
-export const splitByNewLine = (text: any) => {
+export const splitByNewLine = (text: string | undefined | null): string[] => {
     if (!text) {
         return [];
     }
-    return text.split('\n').filter((n: any) => n.trim());
+    return text.split('\n').filter((n: string) => n.trim());
 };
-
-/**
- * @param {string} text
- * @returns {string}
- */
-export const trimMultilineString = (text: any) =>
-    splitByNewLine(text)
-        .map((line: any) => line.trim())
-        .join('\n');
-
-/**
- * @param {string} text
- * @returns {string}
- */
-export const removeEmptyLines = (text: any) => splitByNewLine(text).join('\n');
 
 /**
  * @param {string} input
  * @returns {string}
  */
-export const trimLinesAndRemoveEmpty = (input: any) =>
+export const trimLinesAndRemoveEmpty = (input: string): string =>
     input
         .split('\n')
-        .map((line: any) => line.trim())
+        .map((line: string) => line.trim())
         .filter(Boolean)
         .join('\n');
 
@@ -422,9 +421,14 @@ export const trimLinesAndRemoveEmpty = (input: any) =>
  * @returns {Object.<string, number>} normalizedTopClients.auto - auto clients
  * @returns {Object.<string, number>} normalizedTopClients.configured - configured clients
  */
-export const normalizeTopClients = (topClients: any) =>
+export const normalizeTopClients = (
+    topClients: (TopStat & { info: ClientFindSubEntry })[],
+): { auto: Record<string, number>; configured: Record<string, number> } =>
     topClients.reduce(
-        (acc: any, clientObj: any) => {
+        (
+            acc: { auto: Record<string, number>; configured: Record<string, number> },
+            clientObj: TopStat & { info: ClientFindSubEntry },
+        ) => {
             const {
                 name,
                 count,
@@ -440,35 +444,14 @@ export const normalizeTopClients = (topClients: any) =>
         },
     );
 
-export const sortClients = (clients: any) => {
-    const compare = (a: any, b: any) => {
-        const nameA = a.name.toUpperCase();
-        const nameB = b.name.toUpperCase();
+export const msToSeconds = (milliseconds: number): number => Math.floor(milliseconds / 1000);
 
-        if (nameA > nameB) {
-            return 1;
-        }
-        if (nameA < nameB) {
-            return -1;
-        }
+export const msToMinutes = (milliseconds: number): number => Math.floor(milliseconds / 1000 / 60);
 
-        return 0;
-    };
+export const msToHours = (milliseconds: number): number =>
+    Math.floor(milliseconds / 1000 / 60 / 60);
 
-    return clients.sort(compare);
-};
-
-export const toggleAllServices = (services: any, change: any, isSelected: any) => {
-    services.forEach((service: any) => change(`blocked_services.${service.id}`, isSelected));
-};
-
-export const msToSeconds = (milliseconds: any) => Math.floor(milliseconds / 1000);
-
-export const msToMinutes = (milliseconds: any) => Math.floor(milliseconds / 1000 / 60);
-
-export const msToHours = (milliseconds: any) => Math.floor(milliseconds / 1000 / 60 / 60);
-
-export const secondsToMilliseconds = (seconds: any) => {
+export const secondsToMilliseconds = (seconds: number): number => {
     if (seconds) {
         return seconds * 1000;
     }
@@ -476,12 +459,12 @@ export const secondsToMilliseconds = (seconds: any) => {
     return seconds;
 };
 
-export const msToDays = (milliseconds: any) => Math.floor(milliseconds / 1000 / 60 / 60 / 24);
-
-export const normalizeRulesTextarea = (text: any) =>
+export const normalizeRulesTextarea = (text: string): string | undefined =>
     text?.replace(/^\n/g, '').replace(/\n\s*\n/g, '\n');
 
-export const normalizeWhois = (whois: any) => {
+export const normalizeWhois = (
+    whois: QueryLogItemClientWhois,
+): Partial<QueryLogItemClientWhois> & { location?: string } => {
     if (Object.keys(whois).length > 0) {
         const { city, country, ...values } = whois;
         let location = country || '';
@@ -508,7 +491,10 @@ export const normalizeWhois = (whois: any) => {
     };
 };
 
-export const getPathWithQueryString = (path: any, params: any) => {
+export const getPathWithQueryString = (
+    path: string,
+    params: Record<string, string | string[] | undefined | null> | undefined,
+): string => {
     const searchParams = new URLSearchParams();
 
     Object.entries(params || {}).forEach(([key, value]) => {
@@ -530,12 +516,16 @@ export const getPathWithQueryString = (path: any, params: any) => {
     return `${path}?${searchParams.toString()}`;
 };
 
-export const getParamsForClientsSearch = (data: any, param: any, additionalParam?: any) => {
-    const clients = new Set();
-    data.forEach((e: any) => {
-        clients.add(e[param]);
-        if (e[additionalParam]) {
-            clients.add(e[additionalParam]);
+export const getParamsForClientsSearch = (
+    data: Record<string, unknown>[],
+    param: string,
+    additionalParam?: string,
+): { clients: { id: string }[] } => {
+    const clients = new Set<string | number>();
+    data.forEach((e: Record<string, unknown>) => {
+        clients.add(e[param] as string | number);
+        if (e[additionalParam as string]) {
+            clients.add(e[additionalParam as string] as string | number);
         }
     });
 
@@ -544,66 +534,9 @@ export const getParamsForClientsSearch = (data: any, param: any, additionalParam
     };
 };
 
-/**
- * Creates onBlur handler that can normalize input if normalization function is specified
- *
- * @param {Object} event
- * @param {Object} event.target
- * @param {string} event.target.value
- * @param {Object} input
- * @param {function} input.onBlur
- * @param {function} [normalizeOnBlur]
- * @returns {function}
- */
-
-export const checkFiltered = (reason: any) => reason.indexOf(FILTERED) === 0;
-export const checkRewrite = (reason: any) => reason === FILTERED_STATUS.REWRITE;
-export const checkRewriteHosts = (reason: any) => reason === FILTERED_STATUS.REWRITE_HOSTS;
-export const checkBlackList = (reason: any) => reason === FILTERED_STATUS.FILTERED_BLACK_LIST;
-export const checkWhiteList = (reason: any) => reason === FILTERED_STATUS.NOT_FILTERED_WHITE_LIST;
-// eslint-disable-next-line max-len
-export const checkNotFilteredNotFound = (reason: any) =>
-    reason === FILTERED_STATUS.NOT_FILTERED_NOT_FOUND;
-export const checkSafeSearch = (reason: any) => reason === FILTERED_STATUS.FILTERED_SAFE_SEARCH;
-export const checkSafeBrowsing = (reason: any) => reason === FILTERED_STATUS.FILTERED_SAFE_BROWSING;
-export const checkParental = (reason: any) => reason === FILTERED_STATUS.FILTERED_PARENTAL;
-export const checkBlockedService = (reason: any) =>
+export const checkFiltered = (reason: FilteringReason): boolean => reason.indexOf(FILTERED) === 0;
+export const checkBlockedService = (reason: FilteringReason): boolean =>
     reason === FILTERED_STATUS.FILTERED_BLOCKED_SERVICE;
-
-export const getCurrentFilter = (url: any, filters: any) => {
-    const filter = filters?.find((item: any) => url === item.url);
-
-    if (filter) {
-        const { enabled, name, url } = filter;
-        return {
-            enabled,
-            name,
-            url,
-        };
-    }
-
-    return {
-        enabled: true,
-        name: '',
-        url: '',
-    };
-};
-
-/**
- * @param {object} initialValues
- * @param {object} values
- * @returns {object} Returns different values of objects
- */
-
-export const getObjDiff = (initialValues: any, values: any) =>
-    Object.entries(values)
-
-        .reduce((acc: any, [key, value]) => {
-            if (value !== initialValues[key]) {
-                acc[key] = value;
-            }
-            return acc;
-        }, {});
 
 /**
  * @param num {number} to format
@@ -642,23 +575,11 @@ export const formatCompactNumber = (num: number, decimals: number = 1): string =
 };
 
 /**
- * @param arr {array}
- * @param key {string}
- * @param value {string}
- * @returns {object}
- */
-export const getMap = (arr: any, key: any, value: any) =>
-    arr.reduce((acc: any, curr: any) => {
-        acc[curr[key]] = curr[value];
-        return acc;
-    }, {});
-
-/**
  * @param parsedIp {object} ipaddr.js IPv4 or IPv6 object
  * @param parsedCidr {array} ipaddr.js CIDR array
  * @returns {boolean}
  */
-const isIpMatchCidr = (parsedIp: any, parsedCidr: any) => {
+const isIpMatchCidr = (parsedIp: IPv4 | IPv6, parsedCidr: [IPv4 | IPv6, number]): boolean => {
     try {
         const cidrIpVersion = parsedCidr[0].kind();
         const ipVersion = parsedIp.kind();
@@ -669,7 +590,7 @@ const isIpMatchCidr = (parsedIp: any, parsedCidr: any) => {
     }
 };
 
-export const isIpInCidr = (ip: any, cidr: any) => {
+export const isIpInCidr = (ip: string, cidr: string): boolean => {
     try {
         const parsedIp = ipaddr.parse(ip);
         const parsedCidr = ipaddr.parseCIDR(cidr);
@@ -699,7 +620,7 @@ export const isValidIpv6 = (value: string): boolean => {
  * @param {string} subnetMask
  * @returns {IPv4 | null}
  */
-export const parseSubnetMask = (subnetMask: any) => {
+export const parseSubnetMask = (subnetMask: string): number | null => {
     try {
         return ipaddr.parse(subnetMask).prefixLengthFromSubnetMask();
     } catch (e) {
@@ -713,8 +634,10 @@ export const parseSubnetMask = (subnetMask: any) => {
  * @param {string} subnetMask
  * @returns {*}
  */
-export const subnetMaskToBitMask = (subnetMask: any) =>
-    subnetMask.split('.').reduce((acc: any, cur: any) => acc - Math.log2(256 - Number(cur)), 32);
+export const subnetMaskToBitMask = (subnetMask: string): number =>
+    subnetMask
+        .split('.')
+        .reduce((acc: number, cur: string) => acc - Math.log2(256 - Number(cur)), 32);
 
 /**
  *
@@ -722,7 +645,7 @@ export const subnetMaskToBitMask = (subnetMask: any) =>
  * @returns {'IP' | 'CIDR' | 'CLIENT_ID' | 'UNKNOWN'}
  *
  */
-export const findAddressType = (address: any) => {
+export const findAddressType = (address: string): string => {
     try {
         const cidrMaybe = address.includes('/');
 
@@ -746,9 +669,11 @@ export const findAddressType = (address: any) => {
  * @param ids {string[]}
  * @returns {Object}
  */
-export const separateIpsAndCidrs = (ids: any) =>
+export const separateIpsAndCidrs = (
+    ids: string[],
+): { ips: string[]; cidrs: string[]; clientIds: string[] } =>
     ids.reduce(
-        (acc: any, curr: any) => {
+        (acc: { ips: string[]; cidrs: string[]; clientIds: string[] }, curr: string) => {
             const addressType = findAddressType(curr);
 
             if (addressType === ADDRESS_TYPES.IP) {
@@ -765,25 +690,28 @@ export const separateIpsAndCidrs = (ids: any) =>
         { ips: [], cidrs: [], clientIds: [] },
     );
 
-export const countClientsStatistics = (ids: any, autoClients: any) => {
+export const countClientsStatistics = (
+    ids: string[],
+    autoClients: Record<string, number>,
+): number => {
     const { ips, cidrs, clientIds } = separateIpsAndCidrs(ids);
 
-    const ipsCount = ips.reduce((acc: any, curr: any) => {
+    const ipsCount = ips.reduce((acc: number, curr: string) => {
         const count = autoClients[curr] || 0;
         return acc + count;
     }, 0);
 
-    const clientIdsCount = clientIds.reduce((acc: any, curr: any) => {
+    const clientIdsCount = clientIds.reduce((acc: number, curr: string) => {
         const count = autoClients[curr] || 0;
         return acc + count;
     }, 0);
 
-    const cidrsCount = Object.entries(autoClients).reduce((acc: any, curr: any) => {
+    const cidrsCount = Object.entries(autoClients).reduce((acc: number, curr: [string, number]) => {
         const [id, count] = curr;
         if (!ipaddr.isValid(id)) {
             return acc;
         }
-        if (cidrs.some((cidr: any) => isIpInCidr(id, cidr))) {
+        if (cidrs.some((cidr: string) => isIpInCidr(id, cidr))) {
             // eslint-disable-next-line no-param-reassign
             acc += count;
         }
@@ -814,7 +742,7 @@ export const formatElapsedMs = (elapsedMs: string, millisecondsLabel: string) =>
 /**
  * @param language {string}
  */
-export const setHtmlLangAttr = (language: any) => {
+export const setHtmlLangAttr = (language: string): void => {
     window.document.documentElement.lang = language;
 };
 
@@ -823,7 +751,7 @@ export const setHtmlLangAttr = (language: any) => {
  *
  * @param {string} theme
  */
-export const setTheme = (theme: any) => {
+export const setTheme = (theme: string): void => {
     LocalStorageHelper.setItem(LOCAL_STORAGE_KEYS.THEME, theme);
 };
 
@@ -833,14 +761,15 @@ export const setTheme = (theme: any) => {
  * @returns {string}
  */
 
-export const getTheme = () => LocalStorageHelper.getItem(LOCAL_STORAGE_KEYS.THEME) || THEMES.light;
+export const getTheme = () =>
+    LocalStorageHelper.getItem<string>(LOCAL_STORAGE_KEYS.THEME) || THEMES.light;
 
 /**
  * Sets UI theme.
  *
  * @param theme
  */
-export const setUITheme = (theme: any) => {
+export const setUITheme = (theme?: string): void => {
     let currentTheme = theme || getTheme();
 
     if (currentTheme === THEMES.auto) {
@@ -852,25 +781,6 @@ export const setUITheme = (theme: any) => {
     document.documentElement.dataset.theme = currentTheme;
     document.documentElement.style.colorScheme = currentTheme;
 };
-
-/**
- * @param values {object}
- * @returns {object}
- */
-
-export const replaceEmptyStringsWithZeroes = (values: any) =>
-    Object.entries(values)
-
-        .reduce((acc: any, [key, value]) => {
-            acc[key] = value === '' ? 0 : value;
-            return acc;
-        }, {});
-
-/**
- * @param value {number || string}
- * @returns {string}
- */
-export const replaceZeroWithEmptyString = (value: any) => (parseInt(value, 10) === 0 ? '' : value);
 
 /**
  * @param {string} search
@@ -885,34 +795,11 @@ export const getLogsUrlParams = (search: string, status: string, reason: string)
         reason: reason || undefined,
     })}`;
 
-export const processContent = (content: any) =>
-    Array.isArray(content)
-        ? content.filter(([, value]) => value).reduce((acc, val) => acc.concat(val), [])
-        : content;
-
-// TODO check getObjectKeysSorted
-type NestedObject = {
-    [key: string]: any;
-    order: number;
-};
-
-export const getObjectKeysSorted = <
-    T extends Record<string, NestedObject>,
-    K extends keyof NestedObject,
->(
-    object: T,
-    sortKey: K,
-): string[] => {
-    return Object.entries(object)
-        .sort(([, a], [, b]) => (a[sortKey] as number) - (b[sortKey] as number))
-        .map(([key]) => key);
-};
-
 /**
  * @param ip
  * @returns {[IPv4|IPv6, 33|129]}
  */
-const getParsedIpWithPrefixLength = (ip: any) => {
+const getParsedIpWithPrefixLength = (ip: string): [IPv4 | IPv6, number] => {
     const MAX_PREFIX_LENGTH_V4 = 32;
     const MAX_PREFIX_LENGTH_V6 = 128;
 
@@ -928,7 +815,7 @@ const getParsedIpWithPrefixLength = (ip: any) => {
  * @param item - ip or cidr
  * @returns {number[]}
  */
-const getAddressesComparisonBytes = (item: any) => {
+const getAddressesComparisonBytes = (item: string): number[] => {
     // Sort ipv4 before ipv6
     const IP_V4_COMPARISON_CODE = 0;
     const IP_V6_COMPARISON_CODE = 1;
@@ -979,7 +866,7 @@ export const sortIp = (a: string, b: string): number => {
  * @param {number} filterId
  * @returns {string}
  */
-export const getSpecialFilterName = (filterId: any) => {
+export const getSpecialFilterName = (filterId: number): string => {
     switch (filterId) {
         case SPECIAL_FILTER_ID.CUSTOM_FILTERING_RULES:
             return intl.getMessage('custom_rules');
@@ -1030,96 +917,9 @@ export const getFilterName = (
 };
 
 export const getFilterNames = (rules: Rule[], filters: Filter[], whitelistFilters: Filter[]) =>
-    rules.map(({ filter_list_id }: any) =>
+    rules.map(({ filter_list_id }: Rule) =>
         getFilterName(filters, whitelistFilters, filter_list_id),
     );
-
-export const getRuleNames = (rules: Rule[]) => rules.map(({ text }: Rule) => text);
-
-export const getFilterNameToRulesMap = (
-    rules: Rule[],
-    filters: Filter[],
-    whitelistFilters: Filter[],
-) =>
-    rules.reduce((acc: any, { text, filter_list_id }: Rule) => {
-        const filterName = getFilterName(filters, whitelistFilters, filter_list_id);
-
-        acc[filterName] = (acc[filterName] || []).concat(text);
-        return acc;
-    }, {});
-
-export const getRulesToFilterList = (
-    rules: Rule[],
-    filters: Filter[],
-    whitelistFilters: Filter[],
-    classes = {
-        list: 'filteringRules',
-        rule: 'filteringRules__rule font-monospace',
-        filter: 'filteringRules__filter',
-    },
-) => {
-    const filterNameToRulesMap: { string: string[] } = getFilterNameToRulesMap(
-        rules,
-        filters,
-        whitelistFilters,
-    );
-
-    return (
-        <dl class={classes.list}>
-            {Object.entries(filterNameToRulesMap).reduce(
-                (acc: any, [filterName, rulesArr]) =>
-                    acc
-                        .concat(
-                            rulesArr.map((rule: any, _i: any) => (
-                                <dd class={classes.rule}>{rule}</dd>
-                            )),
-                        )
-                        .concat(<dt class={classes.filter}>{filterName}</dt>),
-                [],
-            )}
-        </dl>
-    );
-};
-
-/**
- * @param ip {string}
- * @param gateway_ip {string}
- * @returns {{range_end: string, subnet_mask: string, range_start: string,
- * lease_duration: string, gateway_ip: string}}
- */
-export const calculateDhcpPlaceholdersIpv4 = (ip: string, gateway_ip: string) => {
-    const LAST_OCTET_IDX = 3;
-    const LAST_OCTET_RANGE_START = 100;
-    const LAST_OCTET_RANGE_END = 200;
-
-    const addr = ipaddr.parse(ip) as IPv4;
-
-    addr.octets[LAST_OCTET_IDX] = LAST_OCTET_RANGE_START;
-    const range_start = addr.toString();
-
-    addr.octets[LAST_OCTET_IDX] = LAST_OCTET_RANGE_END;
-    const range_end = addr.toString();
-
-    const { subnet_mask, lease_duration } = DHCP_VALUES_PLACEHOLDERS.ipv4;
-
-    return {
-        gateway_ip: gateway_ip || ip,
-        subnet_mask,
-        range_start,
-        range_end,
-        lease_duration,
-    };
-};
-
-export const calculateDhcpPlaceholdersIpv6 = () => {
-    const { range_start, range_end, lease_duration } = DHCP_VALUES_PLACEHOLDERS.ipv6;
-
-    return {
-        range_start,
-        range_end,
-        lease_duration,
-    };
-};
 
 /**
  * Add ip_addresses property - concatenated ipv4_addresses and ipv6_addresses for every interface
@@ -1138,61 +938,73 @@ export const enrichWithConcatenatedIpAddresses = (interfaces: NetInterfaces): Dh
         return acc;
     }, {});
 
-export const isScrolledIntoView = (el: any) => {
-    const rect = el.getBoundingClientRect();
-    const elemTop = rect.top;
-    const elemBottom = rect.bottom;
-
-    return elemTop < window.innerHeight && elemBottom >= 0;
-};
-
-/**
- * If this is a manually created client, return its name.
- * If this is a "runtime" client, return it's IP address.
- * @param clients {Array.<object>}
- * @param ip {string}
- * @returns {string}
- */
-export const getBlockingClientName = (clients: any, ip: any) => {
-    for (let i = 0; i < clients.length; i += 1) {
-        const client = clients[i];
-
-        if (client.ids.includes(ip)) {
-            return client.name;
-        }
-    }
-    return ip;
-};
-
 /**
  * @param {string[]} lines
  * @returns {string[]}
  */
-export const filterOutComments = (lines: any) =>
-    lines.filter((line: any) => !line.startsWith(COMMENT_LINE_DEFAULT_TOKEN));
+export const filterOutComments = (lines: string[]): string[] =>
+    lines.filter((line: string) => !line.startsWith(COMMENT_LINE_DEFAULT_TOKEN));
 
-export const isCommentLine = (line: string) => /^\s*[#!]/.test(line);
+/**
+ * Computes DHCP v4 placeholder values from the interface IP address.
+ * Replaces the last octet with 100 for range_start and 200 for range_end.
+ * @param ip - The interface's IPv4 address (e.g. "192.168.1.1")
+ * @param gatewayIp - The interface's gateway IP (falls back to `ip` if empty)
+ * @returns Pre-filled v4 config values
+ */
+export const calculateDhcpPlaceholdersIpv4 = (ip: string, gatewayIp: string) => {
+    const LAST_OCTET_IDX = 3;
+    const LAST_OCTET_RANGE_START = 100;
+    const LAST_OCTET_RANGE_END = 200;
+
+    const addr = ipaddr.parse(ip) as IPv4;
+
+    addr.octets[LAST_OCTET_IDX] = LAST_OCTET_RANGE_START;
+    const range_start = addr.toString();
+
+    addr.octets[LAST_OCTET_IDX] = LAST_OCTET_RANGE_END;
+    const range_end = addr.toString();
+
+    const { subnet_mask, lease_duration } = DHCP_VALUES_PLACEHOLDERS.ipv4;
+
+    return {
+        gateway_ip: gatewayIp || ip,
+        subnet_mask,
+        range_start,
+        range_end,
+        lease_duration,
+    };
+};
+
+/**
+ * Computes DHCP v6 placeholder values (static defaults).
+ * @returns Pre-filled v6 config values
+ */
+export const calculateDhcpPlaceholdersIpv6 = () => {
+    const { range_start, range_end, lease_duration } = DHCP_VALUES_PLACEHOLDERS.ipv6;
+
+    return {
+        range_start,
+        range_end,
+        lease_duration,
+    };
+};
 
 /**
  * @param {array} services
  * @param {string} id
  * @returns {string}
  */
-export const getService = (services: any, id: any) => services.find((s: any) => s.id === id);
+export const getService = (services: ServiceEntry[], id: string): ServiceEntry | undefined =>
+    services.find((s: ServiceEntry) => s.id === id);
 
 /**
  * @param {array} services
  * @param {string} id
  * @returns {string}
  */
-export const getServiceName = (services: any, id: any) => getService(services, id)?.name;
-
-/**
- * @param {array} services
- * @param {string} id
- * @returns {string}
- */
-export const getServiceIcon = (services: any, id: any) => getService(services, id)?.icon_svg;
+export const getServiceName = (services: ServiceEntry[], id: string): string | undefined =>
+    getService(services, id)?.name;
 
 /**
  * Decodes a base64-encoded SVG string. Returns an empty string on failure.

@@ -1,4 +1,4 @@
 export type ParentalStatus200 = {
-    enable?: boolean;
+    enabled?: boolean;
     sensitivity?: number;
 };

@@ -8,6 +8,7 @@ import { useField } from 'panel/hooks/useField';
 import { Examples } from './Examples';
 import { ServerAddressesFileDialog } from './ServerAddressesFileDialog';
 import theme from 'panel/lib/theme';
+import { UPSTREAM_CONFIGURATION_WIKI_LINK } from 'panel/helpers/constants';
 
 type Props = {
     open: Accessor<boolean>;
@@ -39,7 +40,7 @@ export const ServerAddressesDialog = (props: Props) => {
                             {intl.getMessage('dns_server_addresses_desc_2', {
                                 a: (text: string) => (
                                     <a
-                                        href="https://github.com/AdguardTeam/AdGuardHome/wiki/Configuration#upstreams"
+                                        href={UPSTREAM_CONFIGURATION_WIKI_LINK}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         class={theme.link.link}

@@ -1,6 +1,6 @@
 import { type JSX } from 'solid-js';
 import { Logo } from 'panel/common/ui/Sidebar';
-import intl, { type LocalesType } from 'panel/common/intl';
+import intl from 'panel/common/intl';
 import { LanguageDropdown } from 'panel/common/ui/LanguageDropdown/LanguageDropdown';
 import { setHtmlLangAttr } from 'panel/helpers/helpers';
 import { changeLanguage as changeLanguageAction, dashboardState } from 'panel/stores/dashboard';
@@ -8,6 +8,7 @@ import { changeLanguage as changeLanguageAction, dashboardState } from 'panel/st
 import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from 'panel/helpers/localStorageHelper';
 import { LANGUAGES, LANGUAGE_NAMES } from 'panel/helpers/twosky';
 import styles from './PublicHeader.module.pcss';
+import { Lang } from 'panel/api/model/lang';
 
 type Props = {
     dropdownClass?: string;
@@ -17,7 +18,7 @@ type Props = {
 };
 
 export const PublicHeader = (props: Props) => {
-    const changeLanguage = async (newLang: LocalesType) => {
+    const changeLanguage = async (newLang: Lang) => {
         setHtmlLangAttr(newLang);
 
         if (props.useLocalLanguage) {
@@ -49,7 +50,7 @@ export const PublicHeader = (props: Props) => {
                         value={currentLanguage()}
                         languages={LANGUAGES}
                         languageNames={LANGUAGE_NAMES}
-                        onChange={changeLanguage}
+                        onChange={(lang: Lang) => changeLanguage(lang)}
                         class={props.dropdownClass}
                         position={props.dropdownPosition ?? 'bottomRight'}
                     />

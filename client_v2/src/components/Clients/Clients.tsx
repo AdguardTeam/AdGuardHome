@@ -54,7 +54,7 @@ export const Clients = () => {
         initClientForm(buildFormPayload(client));
         navigate(
             linkPathBuilder(RoutePath.ClientsEdit, {
-                clientName: encodeURIComponent(client.name),
+                clientName: encodeURIComponent(client.name ?? ''),
             }),
         );
     };
@@ -79,7 +79,7 @@ export const Clients = () => {
     const serviceMap = createMemo(() => {
         const map = new Map<string, WebService>();
         (servicesState.allServices || []).forEach((svc) => {
-            map.set(svc.id, svc);
+            map.set(svc.id, svc as WebService);
         });
         return map;
     });

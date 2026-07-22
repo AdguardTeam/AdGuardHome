@@ -28,7 +28,8 @@ export const RewritesTable = (props: Props) => {
     const [sortDirection, setSortDirection] = createSignal<'asc' | 'desc'>('asc');
 
     const pageSize = createMemo(
-        () => LocalStorageHelper.getItem(LOCAL_STORAGE_KEYS.BLOCKLIST_PAGE_SIZE) || undefined,
+        () =>
+            LocalStorageHelper.getItem<number>(LOCAL_STORAGE_KEYS.BLOCKLIST_PAGE_SIZE) || undefined,
     );
 
     const sortedList = createMemo(() => {

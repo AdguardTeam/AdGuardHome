@@ -865,7 +865,7 @@
               'schema':
                 'type': 'object'
                 'properties':
-                  'enable':
+                  'enabled':
                     'type': 'boolean'
                   'sensitivity':
                     'type': 'integer'
@@ -1508,6 +1508,9 @@
       - 'dns_port'
       - 'http_port'
       - 'protection_enabled'
+      # TODO: 'protection_disabled_until' in required does not match the property name
+      # 'protection_disabled_duration' below.  Check which name the
+      # backend actually uses and align them.
       - 'protection_disabled_until'
       - 'running'
       - 'version'
@@ -1592,13 +1595,13 @@
           'type': 'boolean'
         'ratelimit':
           'type': 'integer'
-        'ratelimit_subnet_subnet_len_ipv4':
+        'ratelimit_subnet_len_ipv4':
           'description': 'Length of the subnet mask for IPv4 addresses.'
           'type': 'integer'
           'default': 24
           'minimum': 0
           'maximum': 32
-        'ratelimit_subnet_subnet_len_ipv6':
+        'ratelimit_subnet_len_ipv6':
           'description': 'Length of the subnet mask for IPv6 addresses.'
           'type': 'integer'
           'default': 56
@@ -2118,6 +2121,8 @@
     'DhcpStatus':
       'type': 'object'
       'description': 'Built-in DHCP server configuration and status'
+      # TODO: 'config' in required does not exist as a property.  The backend returns a flat object
+      # (no 'config' wrapper).  Remove 'config' from required.
       'required':
       - 'config'
       - 'leases'
@@ -2594,6 +2599,14 @@
           'example': true
           'description': >
             Set to true if plain DNS is allowed for incoming requests.
+        'port_dnscrypt':
+          'type': 'integer'
+          'format': 'uint16'
+          'example': 5443
+          'description': 'DNS-over-HTTPS port. If 0, DNSCrypt will be disabled.'
+        'dnscrypt_config_file':
+          'type': 'string'
+          'description': 'Path to the DNSCrypt configuration file.'
     'NetInterface':
       'type': 'object'
       'description': 'Network interface info'

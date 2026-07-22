@@ -7,6 +7,7 @@ import theme from 'panel/lib/theme';
 import { ConfigDialog } from 'panel/common/ui/ConfigDialog';
 import { Input } from 'panel/common/controls/Input';
 import { dhcpState } from 'panel/stores/dhcp';
+import { calculateDhcpPlaceholdersIpv4 } from 'panel/helpers/helpers';
 import {
     validateIpv4,
     validateIpv4RangeEnd,
@@ -58,6 +59,21 @@ export const DhcpV4Modal = (props: Props) => {
             setRangeEndError('');
             setLeaseDurationError('');
         }
+    });
+
+    const v4Placeholders = createMemo(() => {
+        const iface = dhcpState.interfaces?.[props.selectedInterface()];
+        const firstIpv4 = iface?.ipv4_addresses?.[0];
+        if (firstIpv4) {
+            return calculateDhcpPlaceholdersIpv4(firstIpv4, iface.gateway_ip);
+        }
+        return {
+            gateway_ip: '192.168.1.1',
+            subnet_mask: '255.255.255.0',
+            range_start: '192.168.1.100',
+            range_end: '192.168.1.200',
+            lease_duration: '86400',
+        };
     });
 
     const hasIpv4 = createMemo(
@@ -167,7 +183,7 @@ export const DhcpV4Modal = (props: Props) => {
                     onBlur={onGatewayBlur}
                     id="v4_gateway_ip"
                     label={intl.getMessage('dhcp_form_gateway_address')}
-                    placeholder="192.168.1.1"
+                    placeholder={v4Placeholders().gateway_ip}
                     disabled={!hasIpv4()}
                     errorMessage={gatewayIpError()}
                     size="large"
@@ -186,7 +202,7 @@ export const DhcpV4Modal = (props: Props) => {
                             }
                             onBlur={onRangeStartBlur}
                             id="v4_range_start"
-                            placeholder="192.168.1.2"
+                            placeholder={v4Placeholders().range_start}
                             disabled={!hasIpv4()}
                             errorMessage={rangeStartError()}
                             size="large"
@@ -200,7 +216,7 @@ export const DhcpV4Modal = (props: Props) => {
                             }
                             onBlur={onRangeEndBlur}
                             id="v4_range_end"
-                            placeholder="192.168.1.254"
+                            placeholder={v4Placeholders().range_end}
                             disabled={!hasIpv4()}
                             errorMessage={rangeEndError()}
                             size="large"
@@ -215,7 +231,7 @@ export const DhcpV4Modal = (props: Props) => {
                     onBlur={onSubnetBlur}
                     id="v4_subnet_mask"
                     label={intl.getMessage('dhcp_form_subnet_input')}
-                    placeholder="255.255.255.0"
+                    placeholder={v4Placeholders().subnet_mask}
                     disabled={!hasIpv4()}
                     errorMessage={subnetMaskError()}
                     size="large"
@@ -229,7 +245,7 @@ export const DhcpV4Modal = (props: Props) => {
                     id="v4_lease_duration"
                     inputMode="numeric"
                     label={intl.getMessage('dhcp_form_lease_title')}
-                    placeholder="86400"
+                    placeholder={v4Placeholders().lease_duration}
                     disabled={!hasIpv4()}
                     size="large"
                     inputError={leaseDurationError()}

@@ -28,6 +28,7 @@ export const BootstrapDnsDialog = (props: Props) => {
             description={
                 <>
                     <p>{intl.getMessage('dns_bootstrap_dns_desc')}</p>
+                    <p>{intl.getMessage('dns_bootstrap_dns_desc_2')}</p>
                 </>
             }
             onClose={props.onClose}

@@ -16,11 +16,13 @@ import type { ServerStatus } from 'panel/api/model/serverStatus';
 import type { VersionInfo } from 'panel/api/model/versionInfo';
 import type { Clients } from 'panel/api/model/clients';
 import type { ProfileInfo } from 'panel/api/model/profileInfo';
-import intl, { LocalesType } from 'panel/common/intl';
+import intl from 'panel/common/intl';
 import { addErrorToast, addSuccessToast, addNoticeToast } from './toasts';
 import { getTlsStatus } from './encryption';
 import { getUpdateFailedMessage } from './dashboard/noticeOptions';
 import type { Client, AutoClient } from 'panel/initialState';
+import type { Client as ClientModel } from 'panel/api/model/client';
+import type { ClientAuto } from 'panel/api/model/clientAuto';
 
 type DashboardState = {
     processing: boolean;
@@ -134,7 +136,7 @@ export const getDnsStatus = async () => {
         window.location.reload();
     };
 
-    const handleRequestSuccess = (response: any) => {
+    const handleRequestSuccess = (response: { status: number; data: ServerStatus }) => {
         const dnsStatus = response.data;
         if (dnsStatus.protection_disabled_duration === 0) {
             dnsStatus.protection_disabled_duration = null;
@@ -174,7 +176,7 @@ export const getTimerStatus = async () => {
         window.location.reload();
     };
 
-    const handleRequestSuccess = (response: any) => {
+    const handleRequestSuccess = (response: { status: number; data: ServerStatus }) => {
         const dnsStatus = response.data;
         if (dnsStatus.protection_disabled_duration === 0) {
             dnsStatus.protection_disabled_duration = null;
@@ -202,7 +204,7 @@ export const getVersion = async (recheck = false) => {
     try {
         const data: VersionInfo = await getVersionJson({ recheck_now: recheck });
         const currentVersion =
-            untrack(() => state.dnsVersion) === 'undefined' ? 0 : untrack(() => state.dnsVersion);
+            untrack(() => state.dnsVersion) === 'undefined' ? '' : untrack(() => state.dnsVersion);
         if (data && !data.disabled && !areEqualVersions(currentVersion, data.new_version)) {
             setState({
                 announcementUrl: data.announcement_url,
@@ -234,7 +236,7 @@ export const getUpdate = async () => {
         addNoticeToast(getUpdateFailedMessage());
         setState('processingUpdate', false);
     };
-    const handleRequestSuccess = (response: any) => {
+    const handleRequestSuccess = (response: { status: number; data: ServerStatus }) => {
         const responseVersion = response.data?.version;
         if (untrack(() => state.dnsVersion) !== responseVersion) {
             setState('processingUpdate', false);
@@ -271,11 +273,11 @@ export const setDisableDurationTime = (timeToEnableProtection: number) => {
     setState('protectionDisabledDuration', timeToEnableProtection);
 };
 
-const sortClients = (clients: any[]) => {
+const sortClients = (clients: (ClientModel | ClientAuto)[]) => {
     if (!Array.isArray(clients)) return [];
     return [...clients].sort((a, b) => {
-        const nameA = (a.name || a.ip || '').toString().toLowerCase();
-        const nameB = (b.name || b.ip || '').toString().toLowerCase();
+        const nameA = (a.name || ('ip' in a ? a.ip : '') || '').toString().toLowerCase();
+        const nameB = (b.name || ('ip' in b ? b.ip : '') || '').toString().toLowerCase();
         return nameA.localeCompare(nameB);
     });
 };
@@ -311,10 +313,10 @@ export const getProfileData = async () => {
     }
 };
 
-export const changeLanguage = async (lang: LocalesType) => {
+export const changeLanguage = async (lang: ProfileInfo['language']) => {
     try {
         const profile = await getProfile();
-        profile.language = lang as ProfileInfo['language'];
+        profile.language = lang;
         await updateProfile(profile);
         setState('language', lang);
     } catch (error) {
@@ -322,10 +324,10 @@ export const changeLanguage = async (lang: LocalesType) => {
     }
 };
 
-export const changeTheme = async (theme: string) => {
+export const changeTheme = async (theme: ProfileInfo['theme']) => {
     try {
         const profile = await getProfile();
-        profile.theme = theme as ProfileInfo['theme'];
+        profile.theme = theme;
         await updateProfile(profile);
         setState('theme', theme);
     } catch (error) {

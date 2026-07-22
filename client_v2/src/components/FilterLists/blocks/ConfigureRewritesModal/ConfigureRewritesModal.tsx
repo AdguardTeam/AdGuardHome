@@ -91,7 +91,11 @@ export const ConfigureRewritesModal = (props: Props) => {
             validateRequiredValue(answer()) ||
             validateAnswer(answer()) ||
             validateRewriteNotSame(domain(), answer()) ||
-            validateRewriteNotExists(domain(), rewritesState.list, props.rewriteToEdit?.domain);
+            validateRewriteNotExists(
+                domain(),
+                rewritesState.list as { domain: string }[],
+                props.rewriteToEdit?.domain,
+            );
         setAnswerError(err || undefined);
         return !err;
     };

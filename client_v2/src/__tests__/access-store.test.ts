@@ -16,7 +16,7 @@ vi.mock('panel/stores/toasts', () => ({
     addErrorToast: mocks.addErrorToast,
 }));
 
-import { toggleClientBlock } from 'panel/stores/access';
+import { toggleClientBlock, setAccessList } from 'panel/stores/access';
 
 describe('toggleClientBlock', () => {
     beforeEach(() => vi.clearAllMocks());
@@ -74,6 +74,41 @@ describe('toggleClientBlock', () => {
             allowed_clients: [],
             disallowed_clients: [],
             blocked_hosts: [],
+        });
+    });
+});
+
+describe('setAccessList', () => {
+    beforeEach(() => vi.clearAllMocks());
+
+    it('splits newline-delimited strings into arrays', async () => {
+        await setAccessList({
+            allowed_clients: '1.1.1.1\n2.2.2.2',
+            disallowed_clients: '3.3.3.3',
+            blocked_hosts: 'badhost.com\nevil.com',
+        });
+        expect(mocks.accessSet).toHaveBeenCalledWith({
+            allowed_clients: ['1.1.1.1', '2.2.2.2'],
+            disallowed_clients: ['3.3.3.3'],
+            blocked_hosts: ['badhost.com', 'evil.com'],
+        });
+    });
+
+    it('handles single values correctly', async () => {
+        await setAccessList({ allowed_clients: '1.1.1.1' });
+        expect(mocks.accessSet).toHaveBeenCalledWith({
+            allowed_clients: ['1.1.1.1'],
+            disallowed_clients: undefined,
+            blocked_hosts: undefined,
+        });
+    });
+
+    it('handles empty values', async () => {
+        await setAccessList({ allowed_clients: '' });
+        expect(mocks.accessSet).toHaveBeenCalledWith({
+            allowed_clients: [],
+            disallowed_clients: undefined,
+            blocked_hosts: undefined,
         });
     });
 });

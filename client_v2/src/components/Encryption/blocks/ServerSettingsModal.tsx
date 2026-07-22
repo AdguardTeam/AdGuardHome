@@ -27,9 +27,9 @@ export const ServerSettingsModal = (props: Props) => {
             (open) => {
                 if (open) {
                     setServerName(encryptionState.server_name || '');
-                    setPortHttps(encryptionState.port_https || 0);
-                    setPortDot(encryptionState.port_dns_over_tls || 0);
-                    setPortDoq(encryptionState.port_dns_over_quic || 0);
+                    setPortHttps(Number(encryptionState.port_https) || 0);
+                    setPortDot(Number(encryptionState.port_dns_over_tls) || 0);
+                    setPortDoq(Number(encryptionState.port_dns_over_quic) || 0);
                     setErrors({});
                 }
             },

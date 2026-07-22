@@ -6,14 +6,17 @@ import {
     blockedServicesScheduleUpdate,
 } from 'panel/api/generated';
 import { addErrorToast } from './toasts';
+import type { BlockedServicesSchedule } from 'panel/api/model/blockedServicesSchedule';
+import type { BlockedService } from 'panel/api/model/blockedService';
+import type { ServiceGroup } from 'panel/api/model/serviceGroup';
 
 type ServicesState = {
     processing: boolean;
     processingAll: boolean;
     processingSet: boolean;
-    list: any;
-    allServices: any[];
-    allGroups: any[];
+    list: BlockedServicesSchedule;
+    allServices: BlockedService[];
+    allGroups: ServiceGroup[];
 };
 
 const initialState: ServicesState = {
@@ -53,7 +56,7 @@ export const getAllBlockedServices = async () => {
     }
 };
 
-export const updateBlockedServices = async (values: { ids: string[]; schedule?: unknown }) => {
+export const updateBlockedServices = async (values: BlockedServicesSchedule) => {
     setState('processingSet', true);
     try {
         await blockedServicesScheduleUpdate(values);

@@ -1,7 +1,8 @@
 import { DNS_REQUEST_OPTIONS, BLOCKING_MODES, EDNS_MODES } from 'panel/helpers/constants';
 import intl from 'panel/common/intl';
+import type { DNSConfigBlockingMode, DNSConfigUpstreamMode } from 'panel/api/model';
 
-export const getUpstreamModeSummary = (mode: string): string => {
+export const getUpstreamModeSummary = (mode: DNSConfigUpstreamMode): string => {
     switch (mode) {
         case DNS_REQUEST_OPTIONS.PARALLEL:
             return intl.getMessage('upstream_dns_parallel_requests');
@@ -27,7 +28,7 @@ export const getRateLimitSummary = (ratelimit: number): string => {
     return intl.getMessage('dns_rate_limit_value', { value: ratelimit });
 };
 
-export const getBlockingModeSummary = (mode: string): string => {
+export const getBlockingModeSummary = (mode: DNSConfigBlockingMode): string => {
     switch (mode) {
         case BLOCKING_MODES.refused:
             return 'REFUSED';

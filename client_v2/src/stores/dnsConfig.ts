@@ -4,12 +4,13 @@ import { dnsInfo, dnsConfig, cacheClear } from 'panel/api/generated';
 import { addErrorToast, addSuccessToast } from './toasts';
 import intl from 'panel/common/intl';
 import { splitByNewLine } from 'panel/helpers/helpers';
-import { DNS_REQUEST_OPTIONS } from 'panel/helpers/constants';
+import { DNS_REQUEST_OPTIONS, BLOCKING_MODES } from 'panel/helpers/constants';
+import type { DNSConfig, DNSConfigBlockingMode, DNSConfigUpstreamMode } from 'panel/api/model';
 
 type DnsConfigState = {
     processingGetConfig: boolean;
     processingSetConfig: boolean;
-    blocking_mode: string;
+    blocking_mode: DNSConfigBlockingMode;
     ratelimit: number;
     blocking_ipv4: string;
     blocking_ipv6: string;
@@ -24,7 +25,7 @@ type DnsConfigState = {
     bootstrap_dns: string;
     local_ptr_upstreams: string;
     ratelimit_whitelist: string;
-    upstream_mode: string;
+    upstream_mode: DNSConfigUpstreamMode;
     resolve_clients: boolean;
     use_private_ptr_resolvers: boolean;
     default_local_ptr_upstreams: string[];
@@ -41,7 +42,6 @@ type DnsConfigState = {
 
 export const DEFAULT_BLOCKING_IPV4 = '0.0.0.0';
 export const DEFAULT_BLOCKING_IPV6 = '::';
-const BLOCKING_MODES = { default: 'default' };
 
 const initialState: DnsConfigState = {
     processingGetConfig: true,
@@ -139,29 +139,41 @@ export const toggleEdnsCsEnabled = () => {
     setDnsConfig({ edns_cs_enabled: !state.edns_cs_enabled }, { silent: true });
 };
 
+/**
+ * Splits a newline-delimited string into an array.
+ * Returns `undefined` when the field wasn't provided (so the backend keeps
+ * the existing value), as opposed to `[]` (which clears it).
+ */
+const splitLines = (value: string | undefined): string[] | undefined =>
+    value !== undefined ? splitByNewLine(value) : undefined;
+
 export const setDnsConfig = async (
-    values: any,
+    values: Partial<DnsConfigState>,
     opts?: { toastMessage?: string; silent?: boolean },
 ) => {
     setState('processingSetConfig', true);
     try {
-        const config = { ...values };
+        const {
+            bootstrap_dns,
+            fallback_dns,
+            local_ptr_upstreams,
+            upstream_dns,
+            ratelimit_whitelist,
+            // Strip UI-only fields that are NOT part of DNSConfig
+            processingGetConfig: _processingGetConfig,
+            processingSetConfig: _processingSetConfig,
+            default_local_ptr_upstreams: _defaultLocalPtrUpstreams,
+            ...rest
+        } = values;
 
-        if (Object.hasOwn(config, 'bootstrap_dns')) {
-            config.bootstrap_dns = splitByNewLine(config.bootstrap_dns);
-        }
-        if (Object.hasOwn(config, 'fallback_dns')) {
-            config.fallback_dns = splitByNewLine(config.fallback_dns);
-        }
-        if (Object.hasOwn(config, 'local_ptr_upstreams')) {
-            config.local_ptr_upstreams = splitByNewLine(config.local_ptr_upstreams);
-        }
-        if (Object.hasOwn(config, 'upstream_dns')) {
-            config.upstream_dns = splitByNewLine(config.upstream_dns);
-        }
-        if (Object.hasOwn(config, 'ratelimit_whitelist')) {
-            config.ratelimit_whitelist = splitByNewLine(config.ratelimit_whitelist);
-        }
+        const config: DNSConfig = {
+            ...rest,
+            bootstrap_dns: splitLines(bootstrap_dns),
+            fallback_dns: splitLines(fallback_dns),
+            local_ptr_upstreams: splitLines(local_ptr_upstreams),
+            upstream_dns: splitLines(upstream_dns),
+            ratelimit_whitelist: splitLines(ratelimit_whitelist),
+        };
 
         await dnsConfig(config);
         setState(reconcile({ ...untrack(() => state), ...values, processingSetConfig: false }));

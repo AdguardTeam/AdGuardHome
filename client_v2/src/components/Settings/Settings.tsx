@@ -61,7 +61,7 @@ export const Settings = () => {
         const ss = safesearch();
         if (!ss) return '';
         const selected = Object.keys(SAFE_SEARCH_PROVIDERS)
-            .filter((key) => ss[key])
+            .filter((key) => (ss as Record<string, boolean>)[key])
             .map(getSafeSearchProviderTitle);
         return selected.join(', ');
     });
@@ -214,7 +214,9 @@ export const Settings = () => {
                             <SafeSearchModal
                                 open={safesearchProvidersOpen()}
                                 onClose={() => setSafesearchProvidersOpen(false)}
-                                providers={settingsState.settingsList.safesearch}
+                                providers={
+                                    settingsState.settingsList.safesearch as Record<string, boolean>
+                                }
                                 enabled={safesearchEnabled()}
                                 processing={safesearchProcessing()}
                                 onSave={handleSafeSearchSave}

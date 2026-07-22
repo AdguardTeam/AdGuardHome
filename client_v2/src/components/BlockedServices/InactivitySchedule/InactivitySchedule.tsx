@@ -7,6 +7,7 @@ import { ConfirmDialog } from 'panel/common/ui/ConfirmDialog';
 import { PageLoader } from 'panel/common/ui/Loader';
 import { Select } from 'panel/common/controls/Select';
 import { updateClientFormField, clientFormState } from 'panel/stores/clientForm';
+import type { ClientFormState } from 'panel/initialState';
 import { getBlockedServices, updateBlockedServices, servicesState } from 'panel/stores/services';
 import theme from 'panel/lib/theme';
 
@@ -47,7 +48,7 @@ export const InactivitySchedule = (props: Props) => {
     const schedule = createMemo<ScheduleData | undefined>(() => {
         return props.clientScope
             ? (clientFormState.blocked_services_schedule as unknown as ScheduleData)
-            : servicesState.list?.schedule;
+            : (servicesState.list?.schedule as ScheduleData | undefined);
     });
 
     const currentTimezone = () => schedule()?.time_zone;
@@ -108,7 +109,11 @@ export const InactivitySchedule = (props: Props) => {
             }
         });
         if (props.clientScope) {
-            updateClientFormField('blocked_services_schedule', newSchedule, true);
+            updateClientFormField(
+                'blocked_services_schedule',
+                newSchedule as ClientFormState['blocked_services_schedule'],
+                true,
+            );
         } else {
             updateBlockedServices({ ids: servicesState.list?.ids || [], schedule: newSchedule });
         }
@@ -124,7 +129,11 @@ export const InactivitySchedule = (props: Props) => {
         });
         newSchedule[day] = { start, end };
         if (props.clientScope) {
-            updateClientFormField('blocked_services_schedule', newSchedule, true);
+            updateClientFormField(
+                'blocked_services_schedule',
+                newSchedule as ClientFormState['blocked_services_schedule'],
+                true,
+            );
         } else {
             updateBlockedServices({ ids: servicesState.list?.ids || [], schedule: newSchedule });
         }
