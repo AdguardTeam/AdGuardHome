@@ -1017,6 +1017,122 @@ func TestStorage_FindLoose(t *testing.T) {
 	}
 }
 
+func TestStorage_NDP(t *testing.T) {
+	const prsCliName = "ndp-client"
+
+	var (
+		// IPv6 address that is NOT in the DHCP lease table.
+		cliIPv6 = netip.MustParseAddr("2001:db8::1")
+
+		// MAC that the NDP table maps the IPv6 address to.
+		cliMAC = errors.Must(net.ParseMAC("AA:BB:CC:DD:EE:FF"))
+
+		// An IPv4 address that is not known via any mechanism.
+		unknownIPv4 = netip.MustParseAddr("10.0.0.99")
+
+		// An IPv6 address that is not in the NDP table.
+		unknownIPv6 = netip.MustParseAddr("2001:db8::dead")
+	)
+
+	ndpOutput := []byte(
+		"2001:db8::1 dev eth0 lladdr aa:bb:cc:dd:ee:ff REACHABLE\n" +
+			"fe80::1 dev eth0 lladdr 11:22:33:44:55:66 STALE\n",
+	)
+
+	dhcp := &testDHCP{
+		OnLeases: func() (ls []*dhcpsvc.Lease) { return nil },
+		OnHostBy: func(_ netip.Addr) (host string) { return "" },
+		OnMACBy:  func(_ netip.Addr) (mac net.HardwareAddr) { return nil },
+	}
+
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	storage, err := client.NewStorage(ctx, &client.StorageConfig{
+		BaseLogger:             testLogger,
+		Logger:                 testLogger,
+		DHCP:                   dhcp,
+		NDPData:                func() ([]byte, error) { return ndpOutput, nil },
+		ARPClientsUpdatePeriod: testTimeout / 10,
+	})
+	require.NoError(t, err)
+
+	// Add a persistent client identified by MAC address.
+	err = storage.Add(ctx, &client.Persistent{
+		Name: prsCliName,
+		UID:  client.MustNewUID(),
+		MACs: []net.HardwareAddr{cliMAC},
+	})
+	require.NoError(t, err)
+
+	// Trigger NDP cache population.
+	storage.ReloadARP(ctx)
+
+	t.Run("find_by_ipv6", func(t *testing.T) {
+		params := &client.FindParams{}
+		err = params.Set(cliIPv6.String())
+		require.NoError(t, err)
+
+		p, ok := storage.Find(params)
+		require.True(t, ok)
+
+		assert.Equal(t, prsCliName, p.Name)
+	})
+
+	t.Run("find_loose_by_ipv6", func(t *testing.T) {
+		p, ok := storage.FindLoose(cliIPv6, "nonexistent-id")
+		require.True(t, ok)
+
+		assert.Equal(t, prsCliName, p.Name)
+	})
+
+	t.Run("ipv4_not_in_ndp", func(t *testing.T) {
+		params := &client.FindParams{}
+		err = params.Set(unknownIPv4.String())
+		require.NoError(t, err)
+
+		_, ok := storage.Find(params)
+		assert.False(t, ok)
+	})
+
+	t.Run("unknown_ipv6_not_found", func(t *testing.T) {
+		params := &client.FindParams{}
+		err = params.Set(unknownIPv6.String())
+		require.NoError(t, err)
+
+		_, ok := storage.Find(params)
+		assert.False(t, ok)
+	})
+
+	t.Run("ndp_error_graceful", func(t *testing.T) {
+		ctx2 := testutil.ContextWithTimeout(t, testTimeout)
+		errStorage, err2 := client.NewStorage(ctx2, &client.StorageConfig{
+			BaseLogger: testLogger,
+			Logger:     testLogger,
+			DHCP:       dhcp,
+			NDPData: func() ([]byte, error) {
+				return nil, errors.Error("no ip command")
+			},
+			ARPClientsUpdatePeriod: testTimeout / 10,
+		})
+		require.NoError(t, err2)
+
+		err2 = errStorage.Add(ctx2, &client.Persistent{
+			Name: prsCliName,
+			UID:  client.MustNewUID(),
+			MACs: []net.HardwareAddr{cliMAC},
+		})
+		require.NoError(t, err2)
+
+		errStorage.ReloadARP(ctx2)
+
+		params := &client.FindParams{}
+		err2 = params.Set(cliIPv6.String())
+		require.NoError(t, err2)
+
+		_, ok := errStorage.Find(params)
+		assert.False(t, ok)
+	})
+}
+
 func TestStorage_Update(t *testing.T) {
 	const (
 		clientName          = "client_name"
