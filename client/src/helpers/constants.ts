@@ -213,6 +213,7 @@ export const WHOIS_ICONS = {
 export const DEFAULT_LOGS_FILTER = {
     search: '',
     response_status: 'all',
+    exclude: '',
 };
 
 export const DEFAULT_LANGUAGE = 'en';
