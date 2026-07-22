@@ -89,3 +89,29 @@
     opacity: 0.5;
     cursor: pointer;
 }
+
+.service__schedule-btn {
+    margin-left: 8px;
+    padding: 4px;
+    border: none;
+    background: transparent;
+    color: #6c757d;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.service__schedule-btn:hover {
+    background-color: #e9ecef;
+    color: #495057;
+}
+
+.service__schedule-btn--active {
+    color: #cd201f;
+}
+
+.service__schedule-btn--active:hover {
+    background-color: rgba(205, 32, 31, 0.1);
+}
