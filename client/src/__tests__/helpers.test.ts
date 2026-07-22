@@ -1,9 +1,9 @@
 import { describe, expect, test, afterEach, vi, beforeEach, it } from 'vitest';
 
-import { sortIp, countClientsStatistics, findAddressType, subnetMaskToBitMask } from '../helpers/helpers';
+import { sortIp, countClientsStatistics, findAddressType, subnetMaskToBitMask, sortAddress } from '../helpers/helpers';
 import { ADDRESS_TYPES } from '../helpers/constants';
 
-describe('sortIp', () => {
+function testBaseSortFunction(sortIp: (a: string, b: string) => number) {
     describe('ipv4', () => {
         test('one octet differ', () => {
             const arr = ['127.0.2.0', '127.0.3.0', '127.0.1.0'];
@@ -257,43 +257,6 @@ describe('sortIp', () => {
         });
     });
 
-    describe('invalid input', () => {
-        const originalWarn = console.warn;
-
-        beforeEach(() => {
-            console.warn = vi.fn();
-        });
-
-        afterEach(() => {
-            expect(console.warn).toHaveBeenCalled();
-            console.warn = originalWarn;
-        });
-
-        test('invalid strings', () => {
-            const arr = ['invalid ip', 'invalid cidr'];
-
-            expect(arr.sort(sortIp)).toStrictEqual(arr);
-        });
-
-        test('invalid ip', () => {
-            const arr = ['127.0.0.2.', '.127.0.0.1.', '.2001:db8:11a3:9d7:0:0:0:0'];
-
-            expect(arr.sort(sortIp)).toStrictEqual(arr);
-        });
-
-        test('invalid cidr', () => {
-            const arr = ['127.0.0.2/33', '2001:db8:11a3:9d7:0:0:0:0/129'];
-
-            expect(arr.sort(sortIp)).toStrictEqual(arr);
-        });
-
-        test('valid and invalid ip', () => {
-            const arr = ['127.0.0.4.', '127.0.0.1', '.127.0.0.3', '127.0.0.2'];
-
-            expect(arr.sort(sortIp)).toStrictEqual(arr);
-        });
-    });
-
     describe('mixed', () => {
         test('ipv4, ipv6 in short and long forms and cidr', () => {
             const arr = [
@@ -346,7 +309,165 @@ describe('sortIp', () => {
             expect(arr.sort(sortIp)).toStrictEqual(sortedArr);
         });
     });
-});
+}
+
+describe('sortIp', () => {
+    testBaseSortFunction(sortIp);
+
+    describe('invalid input', () => {
+        const originalWarn = console.warn;
+
+        beforeEach(() => {
+            console.warn = vi.fn();
+        });
+
+        afterEach(() => {
+            expect(console.warn).toHaveBeenCalled();
+            console.warn = originalWarn;
+        });
+
+        test('invalid strings', () => {
+            const arr = ['invalid ip', 'invalid cidr'];
+
+            expect(arr.sort(sortIp)).toStrictEqual(arr);
+        });
+
+        test('invalid ip', () => {
+            const arr = ['127.0.0.2.', '.127.0.0.1.', '.2001:db8:11a3:9d7:0:0:0:0'];
+
+            expect(arr.sort(sortIp)).toStrictEqual(arr);
+        });
+
+        test('invalid cidr', () => {
+            const arr = ['127.0.0.2/33', '2001:db8:11a3:9d7:0:0:0:0/129'];
+
+            expect(arr.sort(sortIp)).toStrictEqual(arr);
+        });
+
+        test('valid and invalid ip', () => {
+            const arr = ['127.0.0.4.', '127.0.0.1', '.127.0.0.3', '127.0.0.2'];
+
+            expect(arr.sort(sortIp)).toStrictEqual(arr);
+        });
+    });
+})
+
+describe('sortAddress', () => {
+    testBaseSortFunction(sortAddress);
+
+    describe('domain_names_sorting', () => {
+        test('widcard before other names', () => {
+            const arr = [
+                'home.fritz.box', 
+                '*.home.fritz.box', 
+                'adguard-home.fritz.box'
+            ]
+
+            const sortedArr = [
+                '*.home.fritz.box', 
+                'adguard-home.fritz.box', 
+                'home.fritz.box'
+            ];
+
+            expect(arr.sort(sortAddress)).toStrictEqual(sortedArr);
+        })
+
+        test('only non-ip strings', () => {
+            const arr = [
+                'fritz.box', 
+                'adguard-home.fritz.box', 
+                'foo.bar',
+                'example.com',
+                'my.router.local',
+                'office.lan',
+                'server.example.org',
+                'mail.google.com',
+                'desktop.home',
+                'printer.office.lan',
+                'web.internal',
+                'host123.domain.net',
+                'api.service.company',
+            ];
+            
+            const sortedArr = [
+                'adguard-home.fritz.box',
+                'api.service.company',
+                'desktop.home',
+                'example.com',
+                'foo.bar',
+                'fritz.box',
+                'host123.domain.net',
+                'mail.google.com',
+                'my.router.local',
+                'office.lan',
+                'printer.office.lan',
+                'server.example.org',
+                'web.internal',
+            ];
+
+            expect(arr.sort(sortAddress)).toStrictEqual(sortedArr);
+        });
+
+        test('ipv4, ipv6 in short and long forms and cidr, and a few domain names', () => {
+            const arr = [
+                '2001:db8:11a3:9d7:0:0:0:1/32',
+                '192.168.1.2',
+                '127.0.0.2',
+                'foo.bar',
+                '2001:db8:11a3:9d7::1/128',
+                '2001:db8:11a3:9d7:0:0:0:1',
+                '127.0.0.1/12',
+                'fritz.box',
+                'adguard-home.fritz.box',
+                '192.168.1.1',
+                '2001:db8::/32',
+                '2001:db8:11a3:9d7::1/24',
+                '192.168.1.2/12',
+                '2001:db7::/32',
+                '127.0.0.1',
+                '2001:db8:11a3:9d7:0:0:0:2',
+                '192.168.1.1/24',
+                '2001:db7::/64',
+                '2001:db7::',
+                '2001:db8::',
+                '2001:db8:11a3:9d7:0:0:0:1/128',
+                '192.168.1.1/12',
+                '127.0.0.1/32',
+                '*.home.fritz.net',
+                '::1',
+            ];
+            const sortedArr = [
+                '127.0.0.1/12',
+                '127.0.0.1/32',
+                '127.0.0.1',
+                '127.0.0.2',
+                '192.168.1.1/12',
+                '192.168.1.1/24',
+                '192.168.1.1',
+                '192.168.1.2/12',
+                '192.168.1.2',
+                '::1',
+                '2001:db7::/32',
+                '2001:db7::/64',
+                '2001:db7::',
+                '2001:db8::/32',
+                '2001:db8::',
+                '2001:db8:11a3:9d7::1/24',
+                '2001:db8:11a3:9d7:0:0:0:1/32',
+                '2001:db8:11a3:9d7::1/128',
+                '2001:db8:11a3:9d7:0:0:0:1/128',
+                '2001:db8:11a3:9d7:0:0:0:1',
+                '2001:db8:11a3:9d7:0:0:0:2',
+                '*.home.fritz.net',
+                'adguard-home.fritz.box',
+                'foo.bar',
+                'fritz.box',
+            ];
+
+            expect(arr.sort(sortAddress)).toStrictEqual(sortedArr);
+        });
+    });
+})
 
 describe('findAddressType', () => {
     it('should return IP type for IP addresses', () => {
