@@ -2,6 +2,7 @@ package dhcpsvc_test
 
 import (
 	"cmp"
+	"context"
 	"io/fs"
 	"net"
 	"net/netip"
@@ -19,7 +20,6 @@ import (
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/gopacket/gopacket"
 	"github.com/gopacket/gopacket/layers"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -206,6 +206,20 @@ var (
 	testHWAnother = net.HardwareAddr{0x4, 0x5, 0x6, 0x7, 0x8, 0x9}
 )
 
+// Time-related variables for test cases.
+//
+// NOTE: Keep in sync with testdata.
+var (
+	// testExpiryDynamicLease is the test expiry time for a dynamic lease.
+	testExpiryDynamicLease = time.Date(2025, 1, 1, 10, 1, 1, 0, time.UTC)
+
+	// testTTLDynamicLease is the test TTL for the dynamic lease.
+	testTTLDynamicLease = testExpiryDynamicLease.Sub(testCurrentTime)
+
+	// TODO(e.burkov):  Add a default lease expiry time, according to
+	// [testCurrentTime].
+)
+
 // fullLayersStack4 is the complete stack of layers expected to appear in the
 // DHCP response packets.
 var fullLayersStack4 = []gopacket.LayerType{
@@ -224,21 +238,65 @@ var fullLayersStack6 = []gopacket.LayerType{
 	layers.LayerTypeDHCPv6,
 }
 
-// newTempDB copies the leases database file located in the testdata FS, under
-// tb.Name()/leases.json, to a temporary directory and returns the path to the
-// copied file.
-func newTempDB(tb testing.TB) (dst string) {
+// testDatabase is a mock implementation of the [dhcpsvc.Database] interface for
+// tests.
+type testDatabase struct {
+	onLoad  func(ctx context.Context) (leases []*dhcpsvc.Lease, err error)
+	onStore func(ctx context.Context, leases []*dhcpsvc.Lease) (err error)
+}
+
+// type check
+var _ dhcpsvc.Database = (*testDatabase)(nil)
+
+// Load implements the [dhcpsvc.Database] interface for *testDatabase.
+func (db *testDatabase) Load(ctx context.Context) (leases []*dhcpsvc.Lease, err error) {
+	return db.onLoad(ctx)
+}
+
+// Store implements the [dhcpsvc.Database] interface for *testDatabase.
+func (db *testDatabase) Store(ctx context.Context, leases []*dhcpsvc.Lease) (err error) {
+	return db.onStore(ctx, leases)
+}
+
+// newTestDatabase copies the leases database file located in the testdata FS,
+// under tb.Name()/leases.json, to a temporary directory and constructs a
+// [*testDatabase] that properly loads the leases from that file.
+//
+// TODO(e.burkov):  Move leases from testdata to the literals in tests, and
+// improve this helper.
+func newTestDatabase(tb testing.TB) (db *testDatabase) {
 	tb.Helper()
 
 	data, err := fs.ReadFile(testdata, path.Join(tb.Name(), testDBLeasesFilename))
 	require.NoError(tb, err)
 
-	dst = filepath.Join(tb.TempDir(), testDBLeasesFilename)
+	dst := filepath.Join(tb.TempDir(), testDBLeasesFilename)
+	require.NoError(tb, os.WriteFile(dst, data, dhcpsvc.JSONDatabasePerm))
 
-	err = os.WriteFile(dst, data, 0o640)
-	require.NoError(tb, err)
+	jsonDB := dhcpsvc.NewJSONDatabase(&dhcpsvc.JSONDatabaseConfig{
+		Logger:   testLogger,
+		FilePath: dst,
+	})
 
-	return dst
+	db = newPanicDatabase(tb)
+	db.onLoad = jsonDB.Load
+
+	return db
+}
+
+// newPanicDatabase returns a *testDatabase that panics on any call to its
+// methods.
+func newPanicDatabase(tb testing.TB) (db *testDatabase) {
+	tb.Helper()
+
+	return &testDatabase{
+		onLoad: func(ctx context.Context) (leases []*dhcpsvc.Lease, err error) {
+			panic(testutil.UnexpectedCall(ctx))
+		},
+		onStore: func(ctx context.Context, leases []*dhcpsvc.Lease) (err error) {
+			panic(testutil.UnexpectedCall(ctx, leases))
+		},
+	}
 }
 
 // newTestDHCPServer creates a new DHCPServer for testing.  It uses the default
@@ -256,9 +314,7 @@ func newTestDHCPServer(tb testing.TB, conf *dhcpsvc.Config) (srv *dhcpsvc.DHCPSe
 	)
 	conf.Logger = cmp.Or(conf.Logger, testLogger)
 	conf.LocalDomainName = cmp.Or(conf.LocalDomainName, testLocalTLD)
-	if conf.DBFilePath == "" {
-		conf.DBFilePath = filepath.Join(tb.TempDir(), "leases.json")
-	}
+	conf.Database = cmp.Or[dhcpsvc.Database](conf.Database, dhcpsvc.EmptyDatabase{})
 	conf.ICMPTimeout = cmp.Or(conf.ICMPTimeout, testTimeout)
 	if conf.Interfaces == nil {
 		conf.Interfaces = testInterfaceConf
@@ -295,30 +351,4 @@ func newTestPacket(
 	require.NoError(tb, err)
 
 	return gopacket.NewPacket(buf.Bytes(), first, gopacket.Default)
-}
-
-// assertLeases asserts that the leases returned by srv are equal to orig if
-// wantChanged is false and not equal if wantChanged is true.  The assertion is
-// performed 10 times during half of [testTimeout].
-//
-// TODO(e.burkov):  Replace the lease storage with interface and test properly.
-func assertLeases(tb testing.TB, orig []*dhcpsvc.Lease, srv dhcpsvc.Interface, wantChanged bool) {
-	tb.Helper()
-
-	// TODO(e.burkov):  The tests using this helper are taking too long to fit
-	// into CI timeout.  Given that the tests are passed locally, skip them for
-	// now and resolve the TODO above as soon as possible.
-	tb.SkipNow()
-
-	cond := func() (ok bool) {
-		got := srv.Leases()
-
-		return !assert.ObjectsAreEqual(orig, got)
-	}
-
-	if wantChanged {
-		assert.Eventually(tb, cond, testTimeout/2, testTimeout/20)
-	} else {
-		assert.Never(tb, cond, testTimeout/2, testTimeout/20)
-	}
 }

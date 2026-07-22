@@ -146,7 +146,7 @@ func (iface *netInterface) blockLease(
 	l.Expiry = clock.Now().Add(iface.leaseTTL)
 	l.IsStatic = false
 
-	err = iface.index.dbStore(ctx, iface.logger)
+	err = iface.index.dbStore(ctx)
 	if err != nil {
 		return fmt.Errorf("storing index: %w", err)
 	}
@@ -252,7 +252,7 @@ func (iface *netInterface) reserveLease(
 		return nil, errors.Error("no addresses available to lease")
 	}
 
-	err = iface.index.remove(ctx, iface.logger, lease, iface)
+	err = iface.index.remove(ctx, lease, iface)
 	if err != nil {
 		// TODO(e.burkov):  Reconsider the severity of this error, it actually
 		// seems impossible to get the error about the existing lease from the

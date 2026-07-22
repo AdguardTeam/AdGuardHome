@@ -7,6 +7,8 @@ import (
 	"net/netip"
 	"slices"
 	"strings"
+
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 )
 
 // leaseIndex is the set of leases indexed by their identifiers for quick
@@ -23,20 +25,16 @@ type leaseIndex struct {
 	// TODO(e.burkov):  Use a slice of leases with the same hostname?
 	byName map[string]*Lease
 
-	// dbFilePath is the path to the database file containing the DHCP leases.
-	//
-	// TODO(e.burkov):  Consider extracting the database logic into a separate
-	// interface to prevent packages that only need lease data from depending on
-	// the entire index and to simplify testing.
-	dbFilePath string
+	// database is the leases storage.
+	database Database
 }
 
 // newLeaseIndex returns a new index for [Lease]s.
-func newLeaseIndex(dbFilePath string) (idx *leaseIndex) {
+func newLeaseIndex(db Database) (idx *leaseIndex) {
 	return &leaseIndex{
-		byAddr:     map[netip.Addr]*Lease{},
-		byName:     map[string]*Lease{},
-		dbFilePath: dbFilePath,
+		byAddr:   map[netip.Addr]*Lease{},
+		byName:   map[string]*Lease{},
+		database: db,
 	}
 }
 
@@ -57,11 +55,11 @@ func (idx *leaseIndex) leaseByName(name string) (l *Lease, ok bool) {
 }
 
 // clear removes all leases from idx.  It doesn't clear interfaces' leases.
-func (idx *leaseIndex) clear(ctx context.Context, logger *slog.Logger) (err error) {
+func (idx *leaseIndex) clear(ctx context.Context) (err error) {
 	clear(idx.byAddr)
 	clear(idx.byName)
 
-	err = idx.dbStore(ctx, logger)
+	err = idx.dbStore(ctx)
 	if err != nil {
 		// Don't wrap the error since it's informative enough as is.
 		return err
@@ -72,13 +70,11 @@ func (idx *leaseIndex) clear(ctx context.Context, logger *slog.Logger) (err erro
 
 // add adds l into idx and into iface.  l must be valid, iface should be
 // responsible for l's IP.  It returns an error if l duplicates at least a
-// single value of another lease.
-func (idx *leaseIndex) add(
-	ctx context.Context,
-	logger *slog.Logger,
-	l *Lease,
-	iface *netInterface,
-) (err error) {
+// single value of another lease.  It doesn't store the leases into the
+// database, it's caller's responsibility to do so.
+//
+// TODO(e.burkov):  Support empty hostnames.
+func (idx *leaseIndex) add(l *Lease, iface *netInterface) (err error) {
 	loweredName := strings.ToLower(l.Hostname)
 
 	if _, ok := idx.byAddr[l.IP]; ok {
@@ -95,12 +91,6 @@ func (idx *leaseIndex) add(
 	idx.byAddr[l.IP] = l
 	idx.byName[loweredName] = l
 
-	err = idx.dbStore(ctx, logger)
-	if err != nil {
-		// Don't wrap the error since it's informative enough as is.
-		return err
-	}
-
 	return nil
 }
 
@@ -112,7 +102,6 @@ func (idx *leaseIndex) add(
 // relations between index and interfaces.
 func (idx *leaseIndex) remove(
 	ctx context.Context,
-	logger *slog.Logger,
 	l *Lease,
 	iface *netInterface,
 ) (err error) {
@@ -132,7 +121,7 @@ func (idx *leaseIndex) remove(
 	delete(idx.byAddr, l.IP)
 	delete(idx.byName, loweredName)
 
-	err = idx.dbStore(ctx, logger)
+	err = idx.dbStore(ctx)
 	if err != nil {
 		// Don't wrap the error since it's informative enough as is.
 		return err
@@ -144,9 +133,10 @@ func (idx *leaseIndex) remove(
 // update updates l in idx and in iface.  l must be valid, iface should be
 // responsible for l's IP.  It returns an error if l duplicates at least a
 // single value of another lease, except for the updated lease itself.
+//
+// TODO(e.burkov):  Support empty hostnames.
 func (idx *leaseIndex) update(
 	ctx context.Context,
-	logger *slog.Logger,
 	l *Lease,
 	iface *netInterface,
 ) (err error) {
@@ -173,7 +163,7 @@ func (idx *leaseIndex) update(
 	idx.byAddr[l.IP] = l
 	idx.byName[loweredName] = l
 
-	return idx.dbStore(ctx, logger)
+	return idx.dbStore(ctx)
 }
 
 // rangeLeases calls f for each lease in idx in an unspecified order until f
@@ -186,7 +176,72 @@ func (idx *leaseIndex) rangeLeases(f func(l *Lease) (cont bool)) {
 	}
 }
 
-// len returns the number of leases in idx.
-func (idx *leaseIndex) len() (l uint) {
-	return uint(len(idx.byAddr))
+// dbLoad loads stored leases.  It must only be called before the service has
+// been started.
+func (idx *leaseIndex) dbLoad(
+	ctx context.Context,
+	logger *slog.Logger,
+	ifaces4 dhcpInterfacesV4,
+	ifaces6 dhcpInterfacesV6,
+) (err error) {
+	leases, err := idx.database.Load(ctx)
+	if err != nil {
+		return fmt.Errorf("loading leases: %w", err)
+	}
+
+	idx.addDBLeases(ctx, logger, leases, ifaces4, ifaces6)
+
+	return nil
+}
+
+// addDBLeases adds leases to the server.  logger must not be nil.
+func (idx *leaseIndex) addDBLeases(
+	ctx context.Context,
+	logger *slog.Logger,
+	leases []*Lease,
+	ifaces4 dhcpInterfacesV4,
+	ifaces6 dhcpInterfacesV6,
+) {
+	var v4, v6 uint
+	for i, l := range leases {
+		iface, err := ifaceForAddr(l.IP, ifaces4, ifaces6)
+		if err != nil {
+			logger.WarnContext(ctx, "searching lease iface", "idx", i, slogutil.KeyError, err)
+
+			continue
+		}
+
+		err = idx.add(l, iface)
+		if err != nil {
+			logger.WarnContext(ctx, "adding lease", "idx", i, slogutil.KeyError, err)
+
+			continue
+		}
+
+		if l.IP.Is4() {
+			v4++
+		} else {
+			v6++
+		}
+	}
+
+	// TODO(e.burkov):  Group by interface.
+	logger.InfoContext(ctx, "loaded leases", "v4", v4, "v6", v6, "total", len(leases))
+}
+
+// dbStore writes leases to the database file.  The [DHCPServer.leasesMu] must
+// be locked.
+func (idx *leaseIndex) dbStore(ctx context.Context) (err error) {
+	leases := make([]*Lease, 0, len(idx.byAddr))
+	for _, l := range idx.byAddr {
+		leases = append(leases, l)
+	}
+
+	err = idx.database.Store(ctx, leases)
+	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
+		return err
+	}
+
+	return nil
 }

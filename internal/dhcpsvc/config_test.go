@@ -2,7 +2,6 @@ package dhcpsvc_test
 
 import (
 	"net/netip"
-	"path/filepath"
 	"testing"
 	"time"
 
@@ -188,7 +187,7 @@ func TestConfig_Validate(t *testing.T) {
 		NetworkDeviceManager: dhcpsvc.EmptyNetworkDeviceManager{},
 		Logger:               testLogger,
 		LocalDomainName:      testLocalTLD,
-		DBFilePath:           filepath.Join(t.TempDir(), testDBLeasesFilename),
+		Database:             dhcpsvc.EmptyDatabase{},
 		ICMPTimeout:          1 * time.Second,
 		Enabled:              true,
 	}
@@ -216,7 +215,7 @@ func TestConfig_Validate(t *testing.T) {
 			NetworkDeviceManager: valid.NetworkDeviceManager,
 			Logger:               valid.Logger,
 			LocalDomainName:      valid.LocalDomainName,
-			DBFilePath:           valid.DBFilePath,
+			Database:             valid.Database,
 			ICMPTimeout:          -1 * time.Second,
 			Enabled:              valid.Enabled,
 		},
@@ -228,11 +227,11 @@ func TestConfig_Validate(t *testing.T) {
 			NetworkDeviceManager: valid.NetworkDeviceManager,
 			Logger:               valid.Logger,
 			LocalDomainName:      valid.LocalDomainName,
-			DBFilePath:           "",
+			Database:             nil,
 			ICMPTimeout:          valid.ICMPTimeout,
 			Enabled:              valid.Enabled,
 		},
-		wantErrMsg: "conf.DBFilePath: empty value",
+		wantErrMsg: "conf.Database: no value",
 	}, {
 		name: "no_interfaces",
 		conf: &dhcpsvc.Config{
@@ -240,7 +239,7 @@ func TestConfig_Validate(t *testing.T) {
 			NetworkDeviceManager: valid.NetworkDeviceManager,
 			Logger:               valid.Logger,
 			LocalDomainName:      valid.LocalDomainName,
-			DBFilePath:           valid.DBFilePath,
+			Database:             valid.Database,
 			ICMPTimeout:          valid.ICMPTimeout,
 			Enabled:              valid.Enabled,
 		},
@@ -252,7 +251,7 @@ func TestConfig_Validate(t *testing.T) {
 			NetworkDeviceManager: nil,
 			Logger:               valid.Logger,
 			LocalDomainName:      valid.LocalDomainName,
-			DBFilePath:           valid.DBFilePath,
+			Database:             valid.Database,
 			ICMPTimeout:          valid.ICMPTimeout,
 			Enabled:              valid.Enabled,
 		},
@@ -264,7 +263,7 @@ func TestConfig_Validate(t *testing.T) {
 			NetworkDeviceManager: valid.NetworkDeviceManager,
 			Logger:               nil,
 			LocalDomainName:      valid.LocalDomainName,
-			DBFilePath:           valid.DBFilePath,
+			Database:             valid.Database,
 			ICMPTimeout:          valid.ICMPTimeout,
 			Enabled:              valid.Enabled,
 		},

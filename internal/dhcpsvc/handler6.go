@@ -21,6 +21,8 @@ func (srv *DHCPServer) serveEther6(ctx context.Context, iface *dhcpInterfaceV6, 
 	src := gopacket.NewPacketSource(nd, nd.LinkType())
 	srvDUID := newServerDUID(nd.HardwareAddr())
 
+	// TODO(e.burkov):  Use [gopacket.PacketSource.PacketsCtx] and cancel
+	// context on shutdown.
 	for pkt := range src.Packets() {
 		fd, err := newFrameData6(pkt, nd, srvDUID)
 		if err != nil {
