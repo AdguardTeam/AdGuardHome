@@ -883,5 +883,6 @@
   "yes_disable": "Yes, disable",
   "yes_disallow": "Yes, disallow",
   "yes_remove": "Yes, remove",
-  "yes_reset": "Yes, reset"
+  "yes_reset": "Yes, reset",
+  "logs": "Logs"
 }
