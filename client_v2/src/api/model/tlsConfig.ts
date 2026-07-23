@@ -50,4 +50,8 @@ export interface TlsConfig {
     valid_pair?: boolean;
     /** Set to true if plain DNS is allowed for incoming requests. */
     serve_plain_dns?: boolean;
+    /** DNS-over-HTTPS port. If 0, DNSCrypt will be disabled. */
+    port_dnscrypt?: number;
+    /** Path to the DNSCrypt configuration file. */
+    dnscrypt_config_file?: string;
 }

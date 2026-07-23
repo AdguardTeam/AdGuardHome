@@ -514,7 +514,7 @@
           'content':
             'application/json':
               'schema':
-                '$ref': '#/components/schemas/NetInterfaces'
+                '$ref': '#/components/schemas/DHCPNetInterfaces'
         '500':
           'content':
             'application/json':
@@ -2150,6 +2150,13 @@
       'additionalProperties':
         '$ref': '#/components/schemas/NetInterface'
 
+    'DHCPNetInterfaces':
+      'type': 'object'
+      'description': >
+        DHCP network interfaces dictionary, keys are interface names.
+      'additionalProperties':
+        '$ref': '#/components/schemas/DHCPNetInterface'
+
     'DhcpFindActiveReq':
       'description': >
         Request for checking for other DHCP servers in the network.
@@ -2610,6 +2617,40 @@
     'NetInterface':
       'type': 'object'
       'description': 'Network interface info'
+      'required':
+      - 'flags'
+      - 'hardware_address'
+      - 'ip_addresses'
+      - 'mtu'
+      - 'name'
+      'properties':
+        'flags':
+          'type': 'string'
+          'description': >
+            Flags could be any combination of the following values, divided by
+            the "|" character: "up", "broadcast", "loopback", "pointtopoint" and
+            "multicast".
+          'example': 'up|broadcast|multicast'
+        'hardware_address':
+          'type': 'string'
+          'example': '52:54:00:11:09:ba'
+        'ip_addresses':
+          'type': 'array'
+          'description': >
+            The addresses of the interface.
+          'items':
+            'type': 'string'
+        'mtu':
+          'type': 'integer'
+          'description': 'MTU value of the interface.'
+          'example': 1500
+        'name':
+          'type': 'string'
+          'example': 'eth0'
+
+    'DHCPNetInterface':
+      'type': 'object'
+      'description': 'DHCP network interface info'
       'required':
       - 'flags'
       - 'gateway_ip'

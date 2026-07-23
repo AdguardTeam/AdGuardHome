@@ -14,6 +14,7 @@ import type {
     ClientsFindParams,
     ClientsFindResponse,
     ClientsSearchRequest,
+    DHCPNetInterfaces,
     DNSConfig,
     DhcpConfig,
     DhcpFindActiveReq,
@@ -36,7 +37,6 @@ import type {
     Login,
     MobileConfigDoHParams,
     MobileConfigDoTParams,
-    NetInterfaces,
     ParentalStatus200,
     ProfileInfo,
     QueryLog,
@@ -509,8 +509,8 @@ export const getDhcpInterfacesUrl = () => {
 /**
  * @summary Gets the available interfaces
  */
-export const dhcpInterfaces = async (options?: RequestInit): Promise<NetInterfaces> => {
-    return customFetch<NetInterfaces>(getDhcpInterfacesUrl(), {
+export const dhcpInterfaces = async (options?: RequestInit): Promise<DHCPNetInterfaces> => {
+    return customFetch<DHCPNetInterfaces>(getDhcpInterfacesUrl(), {
         ...options,
         method: 'GET',
     });

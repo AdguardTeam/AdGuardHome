@@ -33,6 +33,8 @@ export * from './dhcpConfigV4';
 export * from './dhcpConfigV6';
 export * from './dhcpFindActiveReq';
 export * from './dhcpLease';
+export * from './dHCPNetInterface';
+export * from './dHCPNetInterfaces';
 export * from './dhcpSearchResult';
 export * from './dhcpSearchResultOtherServer';
 export * from './dhcpSearchResultOtherServerFound';

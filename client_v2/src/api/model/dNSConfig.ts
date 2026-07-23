@@ -5,11 +5,11 @@ import type { DNSConfigUpstreamMode } from './dNSConfigUpstreamMode';
  * DNS server configuration
  */
 export interface DNSConfig {
-    /** Bootstrap servers, port is optional after colon.  Empty value will reset it to default values. */
+    /** Bootstrap servers, port is optional after colon.  Empty value will reset it to default values.  Comments are allowed, a comment line starts with a `#` symbol. */
     bootstrap_dns?: string[];
-    /** Upstream servers, port is optional after colon.  Empty value will reset it to default values. */
+    /** Upstream servers, port is optional after colon.  Empty value will reset it to default values.  Comments are allowed, a comment line starts with a `#` symbol. */
     upstream_dns?: string[];
-    /** List of fallback DNS servers used when upstream DNS servers are not responding.  Empty value will clear the list. */
+    /** List of fallback DNS servers used when upstream DNS servers are not responding.  Empty value will clear the list.  Comments are allowed, a comment line starts with a `#` symbol. */
     fallback_dns?: string[];
     upstream_dns_file?: string;
     protection_enabled?: boolean;
@@ -59,7 +59,7 @@ export interface DNSConfig {
     upstream_mode?: DNSConfigUpstreamMode;
     use_private_ptr_resolvers?: boolean;
     resolve_clients?: boolean;
-    /** Upstream servers, port is optional after colon.  Empty value will reset it to default values. */
+    /** Upstream servers, port is optional after colon.  Empty value will reset it to default values.  Comments are allowed, a comment line starts with a `#` symbol. */
     local_ptr_upstreams?: string[];
     /**
      * The number of seconds to wait for a response from the upstream server
