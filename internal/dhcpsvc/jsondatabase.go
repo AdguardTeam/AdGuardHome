@@ -1,6 +1,7 @@
 package dhcpsvc
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -62,7 +63,7 @@ func (jl *jsonLease) compareNames(other *jsonLease) (res int) {
 	return strings.Compare(jl.Hostname, other.Hostname)
 }
 
-// toJSONLease converts *Lease to *jsonLease.
+// toJSONLease converts *Lease to *jsonLease.  l must not be nil.
 func toJSONLease(l *Lease) (jl *jsonLease) {
 	var expiryStr string
 	if !l.IsStatic {
@@ -208,7 +209,12 @@ func (db *JSONDatabase) Store(ctx context.Context, leases []*Lease) (err error) 
 		dl.Leases = slices.Insert(dl.Leases, i, lease)
 	}
 
-	buf, err := json.Marshal(dl)
+	// TODO(e.burkov):  Consider pooling buffers.
+	buf := &bytes.Buffer{}
+	enc := json.NewEncoder(buf)
+	enc.SetIndent("", "  ")
+
+	err = enc.Encode(dl)
 	if err != nil {
 		// Don't wrap the error since it's informative enough as is.
 		return err
@@ -217,7 +223,7 @@ func (db *JSONDatabase) Store(ctx context.Context, leases []*Lease) (err error) 
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
-	err = maybe.WriteFile(db.filePath, buf, jsonDatabasePerm)
+	err = maybe.WriteFile(db.filePath, buf.Bytes(), jsonDatabasePerm)
 	if err != nil {
 		// Don't wrap the error since it's informative enough as is.
 		return err

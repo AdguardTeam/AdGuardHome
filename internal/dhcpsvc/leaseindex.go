@@ -211,7 +211,7 @@ func (idx *leaseIndex) addDBLeases(
 			continue
 		}
 
-		err = idx.add(l, iface)
+		err = idx.add(l.Clone(), iface)
 		if err != nil {
 			logger.WarnContext(ctx, "adding lease", "idx", i, slogutil.KeyError, err)
 

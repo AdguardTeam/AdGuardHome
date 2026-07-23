@@ -75,7 +75,7 @@ const config = {
                 use: 'yaml-loader',
             },
             {
-                test: /\.(svg|png|jpe?g|gif|webp|ico)$/i,
+                test: /\.(svg|png|jpe?g|gif|webp|ico|woff2?)$/i,
                 type: 'asset/resource',
                 generator: {
                     filename: 'assets/[name].[contenthash][ext]',

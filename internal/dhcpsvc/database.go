@@ -7,11 +7,16 @@ import (
 // Database is the interface for storing DHCP leases.
 type Database interface {
 	// Load loads leases from the database.  If err is not nil, leases must be
-	// nil.  It must be safe for concurrent use.
+	// nil.  Leases must not be modified.
+	//
+	// Implementations must document the sorting order, if the one is defined.
+	// It must be safe for concurrent use.
 	Load(ctx context.Context) (leases []*Lease, err error)
 
-	// Store stores leases to the database.  leases must be valid.  It must be
-	// safe for concurrent use.
+	// Store stores leases to the database.  leases must not be nil and all its
+	// elements must be valid.  leases must not be modified until Store returns.
+	//
+	// It must be safe for concurrent use.
 	Store(ctx context.Context, leases []*Lease) (err error)
 }
 

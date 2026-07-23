@@ -2,11 +2,12 @@
 @import './common/styles/colors/light.css';
 @import './common/styles/colors/dark.css';
 @import './common/styles/colors/adg.css';
+@import './common/styles/fonts.css';
 
 :root {
     --font-family-monospace: Monaco, Menlo, 'Ubuntu Mono', Consolas, source-code-pro, monospace;
-    --font-family-system:
-        -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    --font-family-base:
+        Rubik, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
 }
 
 *,
@@ -18,7 +19,7 @@
 body {
     margin: 0;
     padding: 0;
-    font-family: var(--font-family-system);
+    font-family: var(--font-family-base);
     font-weight: var(--weight-regular);
     color: var(--default-main-text);
     line-height: 1.4;
@@ -39,7 +40,7 @@ button,
 input,
 textarea,
 select {
-    font-family: var(--font-family-system);
+    font-family: var(--font-family-base);
 }
 
 h1,

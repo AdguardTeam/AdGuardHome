@@ -44,6 +44,7 @@ trailing_newlines() (
 		-o -name '*.svg' \
 		-o -name '*.tar.gz' \
 		-o -name '*.test' \
+		-o -name '*.woff2' \
 		-o -name '*.zip' \
 		-o -name 'AdGuardHome' \
 		-o -name 'adguard-home' \
@@ -71,6 +72,7 @@ trailing_whitespace() {
 		-o -name '*.svg' \
 		-o -name '*.tar.gz' \
 		-o -name '*.test' \
+		-o -name '*.woff2' \
 		-o -name '*.zip' \
 		-o -name 'AdGuardHome' \
 		-o -name 'adguard-home' \
