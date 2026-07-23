@@ -72,7 +72,10 @@ export const getDefaultAddresses = async () => {
                   ([name, iface]: [string, NetInterface]) => ({
                       flags: iface.flags,
                       hardware_address: iface.hardware_address,
-                      ip_addresses: [...iface.ipv4_addresses, ...iface.ipv6_addresses],
+                      ip_addresses: [
+                          ...(iface.ipv4_addresses || []),
+                          ...(iface.ipv6_addresses || []),
+                      ],
                       mtu: 0,
                       name: iface.name || name,
                   }),
