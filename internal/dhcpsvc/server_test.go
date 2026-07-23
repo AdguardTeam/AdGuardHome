@@ -2,15 +2,12 @@ package dhcpsvc_test
 
 import (
 	"context"
-	"net"
 	"net/netip"
-	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
-	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -19,171 +16,135 @@ import (
 func TestDHCPServer_AddLease(t *testing.T) {
 	t.Parallel()
 
-	// TODO(e.burkov):  Use a mock.
-	leasesPath := filepath.Join(t.TempDir(), "leases.json")
-	db := dhcpsvc.NewJSONDatabase(&dhcpsvc.JSONDatabaseConfig{
-		Logger:   testLogger,
-		FilePath: leasesPath,
-	})
-	srv := newTestDHCPServer(t, &dhcpsvc.Config{
-		Database: db,
-		Enabled:  true,
-	})
-
-	// NOTE: Keep in sync with testdata.
-	const (
-		existHost = "host1"
-		newHost   = "host2"
-		ipv6Host  = "host3"
-	)
-
-	// NOTE: Keep in sync with testdata.
-	var (
-		existIP = netip.MustParseAddr("192.0.2.2")
-		newIP   = netip.MustParseAddr("192.0.2.3")
-		newIPv6 = netip.MustParseAddr("2001:db8::2")
-
-		existMAC = errors.Must(net.ParseMAC("01:02:03:04:05:06"))
-		newMAC   = errors.Must(net.ParseMAC("06:05:04:03:02:01"))
-		ipv6MAC  = errors.Must(net.ParseMAC("02:03:04:05:06:07"))
-	)
-
-	ctx := testutil.ContextWithTimeout(t, testTimeout)
-	require.NoError(t, srv.AddLease(ctx, &dhcpsvc.Lease{
-		Hostname: existHost,
-		IP:       existIP,
-		HWAddr:   existMAC,
-		IsStatic: true,
-	}))
-
 	testCases := []struct {
 		name       string
-		lease      *dhcpsvc.Lease
+		want       *dhcpsvc.Lease
 		wantErrMsg string
 	}{{
 		name: "outside_range",
-		lease: &dhcpsvc.Lease{
-			Hostname: newHost,
+		want: &dhcpsvc.Lease{
+			Hostname: testLease4HostnameUnknown,
 			IP:       netip.MustParseAddr("1.2.3.4"),
-			HWAddr:   newMAC,
+			HWAddr:   testHWUnknown,
 		},
 		wantErrMsg: "adding lease: no interface for ip 1.2.3.4",
 	}, {
 		name: "duplicate_ip",
-		lease: &dhcpsvc.Lease{
-			Hostname: newHost,
-			IP:       existIP,
-			HWAddr:   newMAC,
+		want: &dhcpsvc.Lease{
+			Hostname: testLease4HostnameUnknown,
+			IP:       testIPv4Static,
+			HWAddr:   testHWUnknown,
 		},
-		wantErrMsg: "adding lease: lease for ip " + existIP.String() +
+		wantErrMsg: "adding lease: lease for ip " + testIPv4Static.String() +
 			" already exists",
 	}, {
 		name: "duplicate_hostname",
-		lease: &dhcpsvc.Lease{
-			Hostname: existHost,
-			IP:       newIP,
-			HWAddr:   newMAC,
+		want: &dhcpsvc.Lease{
+			Hostname: testLease4HostnameStatic,
+			IP:       testIPv4Unknown,
+			HWAddr:   testHWUnknown,
 		},
-		wantErrMsg: "adding lease: lease for hostname " + existHost +
+		wantErrMsg: "adding lease: lease for hostname " + testLease4HostnameStatic +
 			" already exists",
 	}, {
 		name: "duplicate_hostname_case",
-		lease: &dhcpsvc.Lease{
-			Hostname: strings.ToUpper(existHost),
-			IP:       newIP,
-			HWAddr:   newMAC,
+		want: &dhcpsvc.Lease{
+			Hostname: strings.ToUpper(testLease4HostnameStatic),
+			IP:       testIPv4Unknown,
+			HWAddr:   testHWUnknown,
 		},
 		wantErrMsg: "adding lease: lease for hostname " +
-			strings.ToUpper(existHost) + " already exists",
+			strings.ToUpper(testLease4HostnameStatic) + " already exists",
 	}, {
 		name: "duplicate_mac",
-		lease: &dhcpsvc.Lease{
-			Hostname: newHost,
-			IP:       newIP,
-			HWAddr:   existMAC,
+		want: &dhcpsvc.Lease{
+			Hostname: testLease4HostnameUnknown,
+			IP:       testIPv4Unknown,
+			HWAddr:   testHWStatic,
 		},
-		wantErrMsg: "adding lease: lease for mac " + existMAC.String() +
+		wantErrMsg: "adding lease: lease for mac " + testHWStatic.String() +
 			" already exists",
 	}, {
 		name: "valid",
-		lease: &dhcpsvc.Lease{
-			Hostname: newHost,
-			IP:       newIP,
-			HWAddr:   newMAC,
+		want: &dhcpsvc.Lease{
+			Hostname: testLease4HostnameUnknown,
+			IP:       testIPv4Unknown,
+			HWAddr:   testHWUnknown,
 		},
 		wantErrMsg: "",
 	}, {
 		name: "valid_v6",
-		lease: &dhcpsvc.Lease{
-			Hostname: ipv6Host,
-			IP:       newIPv6,
-			HWAddr:   ipv6MAC,
+		want: &dhcpsvc.Lease{
+			Hostname: testLease6HostnameUnknown,
+			IP:       testIPv6Unknown,
+			HWAddr:   testHWUnknown,
 		},
 		wantErrMsg: "",
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ctx = testutil.ContextWithTimeout(t, testTimeout)
-			testutil.AssertErrorMsg(t, tc.wantErrMsg, srv.AddLease(ctx, tc.lease))
+			t.Parallel()
+
+			onStore := func(ctx context.Context, leases []*dhcpsvc.Lease) (err error) {
+				assert.Contains(t, leases, tc.want)
+
+				return nil
+			}
+
+			db := newTestDatabase(t, testLeases)
+			if tc.wantErrMsg == "" {
+				db.onStore = onStore
+			}
+
+			srv := newTestDHCPServer(t, &dhcpsvc.Config{
+				Database: db,
+				Enabled:  true,
+			})
+
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+
+			err := srv.AddLease(ctx, tc.want)
+			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
 		})
 	}
-
-	assert.NotEmpty(t, srv.Leases())
 }
 
 func TestDHCPServer_index(t *testing.T) {
 	t.Parallel()
 
-	// TODO(e.burkov):  Use a mock.
-	db := newTestDatabase(t)
 	srv := newTestDHCPServer(t, &dhcpsvc.Config{
-		Database: db,
+		Database: newTestDatabase(t, testLeases),
 		Enabled:  true,
 	})
 
-	// NOTE: Keep in sync with testdata.
-	const (
-		host1 = "host1"
-		host2 = "host2"
-		host3 = "host3"
-		host4 = "host4"
-		host5 = "host5"
-	)
-
-	// NOTE: Keep in sync with testdata.
-	var (
-		ip1 = netip.MustParseAddr("192.0.2.2")
-		ip2 = netip.MustParseAddr("192.0.2.3")
-		ip3 = netip.MustParseAddr("198.51.100.3")
-		ip4 = netip.MustParseAddr("198.51.100.4")
-
-		mac1 = errors.Must(net.ParseMAC("01:02:03:04:05:06"))
-		mac2 = errors.Must(net.ParseMAC("06:05:04:03:02:01"))
-		mac3 = errors.Must(net.ParseMAC("02:03:04:05:06:07"))
-	)
-
 	t.Run("ip_idx", func(t *testing.T) {
-		assert.Equal(t, ip1, srv.IPByHost(host1))
-		assert.Equal(t, ip2, srv.IPByHost(host2))
-		assert.Equal(t, ip3, srv.IPByHost(host3))
-		assert.Equal(t, ip4, srv.IPByHost(host4))
-		assert.Zero(t, srv.IPByHost(host5))
+		t.Parallel()
+
+		assert.Equal(t, testIPv4Static, srv.IPByHost(testLease4HostnameStatic))
+		assert.Equal(t, testIPv4Dynamic, srv.IPByHost(testLease4HostnameDynamic))
+		// TODO(e.burkov):  Consider treating expired leases as non-existent.
+		assert.Equal(t, testIPv4Expired, srv.IPByHost(testLease4HostnameExpired))
+		assert.Zero(t, srv.IPByHost(testLease4HostnameUnknown))
 	})
 
 	t.Run("name_idx", func(t *testing.T) {
-		assert.Equal(t, host1, srv.HostByIP(ip1))
-		assert.Equal(t, host2, srv.HostByIP(ip2))
-		assert.Equal(t, host3, srv.HostByIP(ip3))
-		assert.Equal(t, host4, srv.HostByIP(ip4))
+		t.Parallel()
+
+		assert.Equal(t, testLease4HostnameStatic, srv.HostByIP(testIPv4Static))
+		assert.Equal(t, testLease4HostnameDynamic, srv.HostByIP(testIPv4Dynamic))
+		assert.Equal(t, testLease4HostnameExpired, srv.HostByIP(testIPv4Expired))
+		assert.Zero(t, srv.HostByIP(testIPv4Unknown))
 		assert.Zero(t, srv.HostByIP(netip.Addr{}))
 	})
 
 	t.Run("mac_idx", func(t *testing.T) {
-		assert.Equal(t, mac1, srv.MACByIP(ip1))
-		assert.Equal(t, mac2, srv.MACByIP(ip2))
-		assert.Equal(t, mac3, srv.MACByIP(ip3))
-		assert.Equal(t, mac1, srv.MACByIP(ip4))
+		t.Parallel()
+
+		assert.Equal(t, testHWStatic, srv.MACByIP(testIPv4Static))
+		assert.Equal(t, testHWDynamic, srv.MACByIP(testIPv4Dynamic))
+		assert.Equal(t, testHWExpired, srv.MACByIP(testIPv4Expired))
+		assert.Zero(t, srv.MACByIP(testIPv4Unknown))
 		assert.Zero(t, srv.MACByIP(netip.Addr{}))
 	})
 }
@@ -191,39 +152,6 @@ func TestDHCPServer_index(t *testing.T) {
 func TestDHCPServer_UpdateStaticLease(t *testing.T) {
 	t.Parallel()
 
-	// TODO(e.burkov):  Use a mock.
-	db := newTestDatabase(t)
-	db.onStore = func(ctx context.Context, leases []*dhcpsvc.Lease) (err error) {
-		return nil
-	}
-
-	srv := newTestDHCPServer(t, &dhcpsvc.Config{
-		Database: db,
-		Enabled:  true,
-	})
-
-	// NOTE: Keep in sync with testdata.
-	const (
-		host1 = "host1"
-		host2 = "host2"
-		host3 = "host3"
-		host4 = "host4"
-		host5 = "host5"
-		host6 = "host6"
-	)
-
-	// NOTE: Keep in sync with testdata.
-	var (
-		ip1 = netip.MustParseAddr("192.0.2.2")
-		ip2 = netip.MustParseAddr("192.0.2.3")
-		ip3 = netip.MustParseAddr("192.0.2.4")
-		ip4 = netip.MustParseAddr("2001:db8::2")
-
-		mac1 = errors.Must(net.ParseMAC("01:02:03:04:05:06"))
-		mac2 = errors.Must(net.ParseMAC("06:05:04:03:02:01"))
-		mac3 = errors.Must(net.ParseMAC("06:05:04:03:02:02"))
-	)
-
 	testCases := []struct {
 		name       string
 		lease      *dhcpsvc.Lease
@@ -231,67 +159,99 @@ func TestDHCPServer_UpdateStaticLease(t *testing.T) {
 	}{{
 		name: "outside_range",
 		lease: &dhcpsvc.Lease{
-			Hostname: host1,
-			IP:       netip.MustParseAddr("1.2.3.4"),
-			HWAddr:   mac1,
+			IP:       testIPv4Conf.RangeEnd.Next(),
+			Expiry:   time.Time{},
+			Hostname: testLease4HostnameStatic,
+			HWAddr:   testHWStatic,
+			IsStatic: true,
 		},
-		wantErrMsg: "updating static lease: no interface for ip 1.2.3.4",
+		wantErrMsg: "updating static lease: no interface for ip " +
+			testIPv4Conf.RangeEnd.Next().String(),
 	}, {
 		name: "not_found",
 		lease: &dhcpsvc.Lease{
-			Hostname: host3,
-			IP:       ip3,
-			HWAddr:   mac2,
+			IP:       testIPv4Unknown,
+			Expiry:   time.Time{},
+			Hostname: testLease4HostnameUnknown,
+			HWAddr:   testHWUnknown,
+			IsStatic: true,
 		},
-		wantErrMsg: "updating static lease: no lease for mac " + mac2.String(),
+		wantErrMsg: "updating static lease: no lease for mac " + testHWUnknown.String(),
 	}, {
 		name: "duplicate_ip",
 		lease: &dhcpsvc.Lease{
-			Hostname: host1,
-			IP:       ip2,
-			HWAddr:   mac1,
+			IP:       testIPv4Dynamic,
+			Expiry:   time.Time{},
+			Hostname: testLease4HostnameStatic,
+			HWAddr:   testHWStatic,
+			IsStatic: true,
 		},
-		wantErrMsg: "updating static lease: lease for ip " + ip2.String() +
+		wantErrMsg: "updating static lease: lease for ip " + testIPv4Dynamic.String() +
 			" already exists",
 	}, {
 		name: "duplicate_hostname",
 		lease: &dhcpsvc.Lease{
-			Hostname: host2,
-			IP:       ip1,
-			HWAddr:   mac1,
+			IP:       testIPv4Unknown,
+			Expiry:   time.Time{},
+			Hostname: testLease4HostnameDynamic,
+			HWAddr:   testHWStatic,
+			IsStatic: true,
 		},
-		wantErrMsg: "updating static lease: lease for hostname " + host2 +
+		wantErrMsg: "updating static lease: lease for hostname " + testLease4HostnameDynamic +
 			" already exists",
 	}, {
 		name: "duplicate_hostname_case",
 		lease: &dhcpsvc.Lease{
-			Hostname: strings.ToUpper(host2),
-			IP:       ip1,
-			HWAddr:   mac1,
+			IP:       testIPv4Unknown,
+			Expiry:   time.Time{},
+			Hostname: strings.ToUpper(testLease4HostnameDynamic),
+			HWAddr:   testHWStatic,
+			IsStatic: true,
 		},
 		wantErrMsg: "updating static lease: lease for hostname " +
-			strings.ToUpper(host2) + " already exists",
+			strings.ToUpper(testLease4HostnameDynamic) + " already exists",
 	}, {
 		name: "valid",
 		lease: &dhcpsvc.Lease{
-			Hostname: host3,
-			IP:       ip3,
-			HWAddr:   mac1,
+			IP:       testIPv4Unknown,
+			Expiry:   time.Time{},
+			Hostname: testLease4HostnameStatic,
+			HWAddr:   testHWStatic,
+			IsStatic: true,
 		},
 		wantErrMsg: "",
 	}, {
 		name: "valid_v6",
 		lease: &dhcpsvc.Lease{
-			Hostname: host6,
-			IP:       ip4,
-			HWAddr:   mac3,
+			IP:       testIPv6Unknown,
+			Expiry:   time.Time{},
+			Hostname: testLease6HostnameUnknown,
+			HWAddr:   testHWStatic,
+			IsStatic: true,
 		},
 		wantErrMsg: "",
 	}}
 
 	for _, tc := range testCases {
-		// TODO(e.burkov):  Make parallel.
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			onStore := func(ctx context.Context, leases []*dhcpsvc.Lease) (err error) {
+				assert.Contains(t, leases, tc.lease)
+
+				return nil
+			}
+
+			db := newTestDatabase(t, testLeases)
+			if tc.wantErrMsg == "" {
+				db.onStore = onStore
+			}
+
+			srv := newTestDHCPServer(t, &dhcpsvc.Config{
+				Database: db,
+				Enabled:  true,
+			})
+
 			ctx := testutil.ContextWithTimeout(t, testTimeout)
 			testutil.AssertErrorMsg(t, tc.wantErrMsg, srv.UpdateStaticLease(ctx, tc.lease))
 		})
@@ -301,95 +261,85 @@ func TestDHCPServer_UpdateStaticLease(t *testing.T) {
 func TestDHCPServer_RemoveLease(t *testing.T) {
 	t.Parallel()
 
-	// TODO(e.burkov):  Use a mock.
-	db := newTestDatabase(t)
-	db.onStore = func(ctx context.Context, leases []*dhcpsvc.Lease) (err error) {
-		return nil
-	}
-
-	srv := newTestDHCPServer(t, &dhcpsvc.Config{
-		Database: db,
-		Enabled:  true,
-	})
-
-	// NOTE: Keep in sync with testdata.
-	const (
-		host1 = "host1"
-		host2 = "host2"
-		host3 = "host3"
-	)
-
-	// NOTE: Keep in sync with testdata.
-	var (
-		existIP = netip.MustParseAddr("192.0.2.2")
-		newIP   = netip.MustParseAddr("192.0.2.3")
-		newIPv6 = netip.MustParseAddr("2001:db8::2")
-
-		existMAC = errors.Must(net.ParseMAC("01:02:03:04:05:06"))
-		newMAC   = errors.Must(net.ParseMAC("02:03:04:05:06:07"))
-		ipv6MAC  = errors.Must(net.ParseMAC("06:05:04:03:02:01"))
-	)
-
 	testCases := []struct {
 		name       string
-		lease      *dhcpsvc.Lease
+		want       *dhcpsvc.Lease
 		wantErrMsg string
 	}{{
 		name: "not_found_mac",
-		lease: &dhcpsvc.Lease{
-			Hostname: host1,
-			IP:       existIP,
-			HWAddr:   newMAC,
+		want: &dhcpsvc.Lease{
+			Hostname: testLease4HostnameStatic,
+			IP:       testIPv4Static,
+			HWAddr:   testHWUnknown,
 		},
-		wantErrMsg: "removing lease: no lease for mac " + newMAC.String(),
+		wantErrMsg: "removing lease: no lease for mac " + testHWUnknown.String(),
 	}, {
 		name: "not_found_ip",
-		lease: &dhcpsvc.Lease{
-			Hostname: host1,
-			IP:       newIP,
-			HWAddr:   existMAC,
+		want: &dhcpsvc.Lease{
+			Hostname: testLease4HostnameStatic,
+			IP:       testIPv4Unknown,
+			HWAddr:   testHWStatic,
 		},
-		wantErrMsg: "removing lease: no lease for ip " + newIP.String(),
+		wantErrMsg: "removing lease: no lease for ip " + testIPv4Unknown.String(),
 	}, {
 		name: "not_found_host",
-		lease: &dhcpsvc.Lease{
-			Hostname: host2,
-			IP:       existIP,
-			HWAddr:   existMAC,
+		want: &dhcpsvc.Lease{
+			Hostname: testLease4HostnameUnknown,
+			IP:       testIPv4Static,
+			HWAddr:   testHWStatic,
 		},
-		wantErrMsg: "removing lease: no lease for hostname " + host2,
+		wantErrMsg: "removing lease: no lease for hostname " + testLease4HostnameUnknown,
 	}, {
 		name: "valid",
-		lease: &dhcpsvc.Lease{
-			Hostname: host1,
-			IP:       existIP,
-			HWAddr:   existMAC,
+		want: &dhcpsvc.Lease{
+			Hostname: testLease4HostnameStatic,
+			IP:       testIPv4Static,
+			HWAddr:   testHWStatic,
 		},
 		wantErrMsg: "",
 	}, {
 		name: "valid_v6",
-		lease: &dhcpsvc.Lease{
-			Hostname: host3,
-			IP:       newIPv6,
-			HWAddr:   ipv6MAC,
+		want: &dhcpsvc.Lease{
+			Hostname: testLease6HostnameStatic,
+			IP:       testIPv6Static,
+			HWAddr:   testHWStatic,
 		},
 		wantErrMsg: "",
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			onStore := func(ctx context.Context, leases []*dhcpsvc.Lease) (err error) {
+				assert.NotContains(t, leases, tc.want)
+
+				return nil
+			}
+
+			db := newTestDatabase(t, testLeases)
+			if tc.wantErrMsg == "" {
+				db.onStore = onStore
+			}
+
+			srv := newTestDHCPServer(t, &dhcpsvc.Config{
+				Database: db,
+				Enabled:  true,
+			})
+
 			ctx := testutil.ContextWithTimeout(t, testTimeout)
-			testutil.AssertErrorMsg(t, tc.wantErrMsg, srv.RemoveLease(ctx, tc.lease))
+
+			err := srv.RemoveLease(ctx, tc.want)
+			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
 		})
 	}
-
-	assert.Empty(t, srv.Leases())
 }
 
 func TestDHCPServer_Reset(t *testing.T) {
-	// TODO(e.burkov):  Use a mock.
-	db := newTestDatabase(t)
-	db.onStore = func(ctx context.Context, leases []*dhcpsvc.Lease) (err error) {
+	t.Parallel()
+
+	db := newTestDatabase(t, testLeases)
+	db.onStore = func(_ context.Context, leases []*dhcpsvc.Lease) (err error) {
 		assert.Empty(t, leases)
 
 		return nil
@@ -400,9 +350,7 @@ func TestDHCPServer_Reset(t *testing.T) {
 		Enabled:  true,
 	})
 
-	const leasesNum = 4
-
-	require.Len(t, srv.Leases(), leasesNum)
+	require.ElementsMatch(t, srv.Leases(), testLeases)
 
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
 	require.NoError(t, srv.Reset(ctx))
@@ -411,28 +359,12 @@ func TestDHCPServer_Reset(t *testing.T) {
 }
 
 func TestServer_Leases(t *testing.T) {
-	// TODO(e.burkov):  Use a mock.
-	db := newTestDatabase(t)
+	t.Parallel()
+
 	srv := newTestDHCPServer(t, &dhcpsvc.Config{
-		Database: db,
+		Database: newTestDatabase(t, testLeases),
 		Enabled:  true,
 	})
 
-	expiry, err := time.Parse(time.RFC3339, "2042-01-02T03:04:05Z")
-	require.NoError(t, err)
-
-	wantLeases := []*dhcpsvc.Lease{{
-		Expiry:   expiry,
-		IP:       netip.MustParseAddr("192.0.2.3"),
-		Hostname: "example.host",
-		HWAddr:   errors.Must(net.ParseMAC("AA:AA:AA:AA:AA:AA")),
-		IsStatic: false,
-	}, {
-		Expiry:   time.Time{},
-		IP:       netip.MustParseAddr("192.0.2.4"),
-		Hostname: "example.static.host",
-		HWAddr:   errors.Must(net.ParseMAC("BB:BB:BB:BB:BB:BB")),
-		IsStatic: true,
-	}}
-	assert.ElementsMatch(t, wantLeases, srv.Leases())
+	assert.ElementsMatch(t, testLeases, srv.Leases())
 }

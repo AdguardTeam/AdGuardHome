@@ -1,6 +1,7 @@
 package dhcpsvc
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"net/netip"
@@ -303,7 +304,17 @@ func (iface *dhcpInterfaceV4) handleInitReboot(
 		return
 	}
 
-	iface.updateAndRespond(ctx, l, req, lease, fd, idOpt)
+	lease.Hostname = cmp.Or(hostname4(req), lease.Hostname)
+
+	err := iface.updateLease(ctx, lease)
+	if err != nil {
+		l.ErrorContext(ctx, "init-reboot request failed", slogutil.KeyError, err)
+		iface.respondNAK(ctx, req, fd, idOpt)
+
+		return
+	}
+
+	iface.respondACK(ctx, req, fd, lease, idOpt)
 }
 
 // handleRenew handles messages of type DHCPREQUEST in RENEWING or REBINDING
@@ -342,7 +353,18 @@ func (iface *dhcpInterfaceV4) handleRenew(
 		return
 	}
 
-	iface.updateAndRespond(ctx, l, req, lease, fd, idOpt)
+	lease.Hostname = cmp.Or(hostname4(req), lease.Hostname)
+
+	err := iface.updateLease(ctx, lease)
+	if err != nil {
+		l.ErrorContext(ctx, "renew request failed", slogutil.KeyError, err)
+
+		iface.respondNAK(ctx, req, fd, idOpt)
+
+		return
+	}
+
+	iface.respondACK(ctx, req, fd, lease, idOpt)
 }
 
 // handleDecline handles messages of type DHCPDECLINE.  req must be a

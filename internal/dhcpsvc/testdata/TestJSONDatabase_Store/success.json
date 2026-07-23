@@ -1,0 +1,47 @@
+{
+  "leases": [
+    {
+      "expires": "2025-01-02T01:01:01Z",
+      "ip": "192.0.2.102",
+      "hostname": "dynamic4",
+      "mac": "02:03:04:05:06:07",
+      "static": false
+    },
+    {
+      "expires": "2025-01-02T01:01:01Z",
+      "ip": "2001:db8::66",
+      "hostname": "dynamic6",
+      "mac": "02:03:04:05:06:07",
+      "static": false
+    },
+    {
+      "expires": "2025-01-01T00:01:01Z",
+      "ip": "192.0.2.103",
+      "hostname": "expired4",
+      "mac": "03:04:05:06:07:08",
+      "static": false
+    },
+    {
+      "expires": "2025-01-01T00:01:01Z",
+      "ip": "2001:db8::67",
+      "hostname": "expired6",
+      "mac": "03:04:05:06:07:08",
+      "static": false
+    },
+    {
+      "expires": "",
+      "ip": "192.0.2.101",
+      "hostname": "static4",
+      "mac": "01:02:03:04:05:06",
+      "static": true
+    },
+    {
+      "expires": "",
+      "ip": "2001:db8::65",
+      "hostname": "static6",
+      "mac": "01:02:03:04:05:06",
+      "static": true
+    }
+  ],
+  "version": 1
+}

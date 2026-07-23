@@ -3,12 +3,9 @@ package dhcpsvc_test
 import (
 	"cmp"
 	"context"
-	"io/fs"
 	"net"
 	"net/netip"
-	"os"
-	"path"
-	"path/filepath"
+	"slices"
 	"testing"
 	"time"
 
@@ -33,9 +30,6 @@ const testLocalTLD = "local"
 // testIfaceName is the name of the test network interface.
 const testIfaceName = "iface0"
 
-// testDBLeasesFilename is the common name of a leases database file for tests.
-const testDBLeasesFilename = "leases.json"
-
 // testTimeout is a common timeout for tests and contexts.
 const testTimeout = 10 * time.Second
 
@@ -44,9 +38,6 @@ const testLeaseTTL = 24 * time.Hour
 
 // testLogger is a common logger for tests.
 var testLogger = slogutil.NewDiscardLogger()
-
-// testdata is a filesystem containing data for tests.
-var testdata = os.DirFS("testdata")
 
 // testCurrentTime is the fixed time returned by [testClock] to ensure
 // reproducible tests.
@@ -58,6 +49,40 @@ var testClock = &faketime.Clock{
 		return testCurrentTime
 	},
 }
+
+// Lease hostnames for test cases.
+//
+// NOTE: Keep in sync with testdata.
+const (
+	// testLease4HostnameUnknown is the test hostname for an unknown DHCPv4
+	// lease.
+	testLease4HostnameUnknown = "unknown4"
+
+	// testLease4HostnameStatic is the test hostname for a static DHCPv4 lease.
+	testLease4HostnameStatic = "static4"
+
+	// testLease4HostnameDynamic is the test hostname for a dynamic DHCPv4
+	// lease.
+	testLease4HostnameDynamic = "dynamic4"
+
+	// testLease4HostnameExpired is the test hostname for an expired DHCPv4
+	// lease.
+	testLease4HostnameExpired = "expired4"
+
+	// testLease6HostnameUnknown is the test hostname for an unknown DHCPv6
+	// lease.
+	testLease6HostnameUnknown = "unknown6"
+
+	// testLease6HostnameStatic is the test hostname for a static DHCPv6 lease.
+	testLease6HostnameStatic = "static6"
+
+	// testLease6HostnameDynamic is the test hostname for a dynamic DHCPv6 lease.
+	testLease6HostnameDynamic = "dynamic6"
+
+	// testLease6HostnameExpired is the test hostname for an expired DHCPv6
+	// lease.
+	testLease6HostnameExpired = "expired6"
+)
 
 const (
 	// testGatewayIPv4Str is the string representation of the gateway IPv4
@@ -173,13 +198,13 @@ var testInterfaceConf = map[string]*dhcpsvc.InterfaceConfig{
 			SubnetMask:    netip.MustParseAddr(testAnotherSubnetMaskV4Str),
 			RangeStart:    netip.MustParseAddr(testAnotherRangeStartV4Str),
 			RangeEnd:      netip.MustParseAddr(testAnotherRangeEndV4Str),
-			LeaseDuration: 1 * time.Hour,
+			LeaseDuration: testLeaseTTL,
 		},
 		IPv6: &dhcpsvc.IPv6Config{
 			Enabled:       true,
 			Clock:         timeutil.SystemClock{},
 			RangeStart:    netip.MustParseAddr(testAnotherRangeStartV6Str),
-			LeaseDuration: 1 * time.Hour,
+			LeaseDuration: testLeaseTTL,
 			RAAllowSLAAC:  true,
 			RASLAACOnly:   true,
 		},
@@ -206,18 +231,126 @@ var (
 	testHWAnother = net.HardwareAddr{0x4, 0x5, 0x6, 0x7, 0x8, 0x9}
 )
 
+// IPv4 addresses for tests.
+//
+// NOTE: Keep in sync with testdata.
+var (
+	// testIPv4Unknown is the test IP address for an unknown client.
+	testIPv4Unknown = netip.MustParseAddr("192.0.2.142")
+
+	// testIPv4Static is the test IP address for a known static lease.
+	testIPv4Static = netip.MustParseAddr("192.0.2.101")
+
+	// testIPv4Dynamic is the test IP address for a known dynamic lease.
+	testIPv4Dynamic = netip.MustParseAddr("192.0.2.102")
+
+	// testIPv4Expired is the test IP address for a known expired lease.
+	testIPv4Expired = netip.MustParseAddr("192.0.2.103")
+
+	// testIPv4OtherSubnet is the test IP address for a client on another
+	// subnet.
+	testIPv4OtherSubnet = netip.MustParseAddr(testAnotherGatewayIPv4Str)
+
+	// testIPv4RelayAgent is the test IP address of the relay agent.
+	testIPv4RelayAgent = netip.MustParseAddr("10.0.0.1")
+)
+
+// IPv6 addresses for tests.
+//
+// NOTE: Keep in sync with testdata.
+var (
+	// testIPv6Unknown is the test IP address for an unknown client.
+	testIPv6Unknown = netip.MustParseAddr("2001:db8::64")
+
+	// testIPv6Dynamic is the test IP address for a known dynamic lease.
+	testIPv6Dynamic = netip.MustParseAddr("2001:db8::66")
+
+	// testIPv6Expired is the test IP address for a known expired lease.
+	testIPv6Expired = netip.MustParseAddr("2001:db8::67")
+
+	// testIPv6Static is the test IP address for a known static lease.
+	testIPv6Static = netip.MustParseAddr("2001:db8::65")
+)
+
 // Time-related variables for test cases.
 //
 // NOTE: Keep in sync with testdata.
 var (
-	// testExpiryDynamicLease is the test expiry time for a dynamic lease.
-	testExpiryDynamicLease = time.Date(2025, 1, 1, 10, 1, 1, 0, time.UTC)
+	// testExpiryDynamicLease is the test expiry time for a dynamic lease, not
+	// yet expired according to [testClock].
+	testExpiryDynamicLease = testCurrentTime.Add(testLeaseTTL)
 
-	// testTTLDynamicLease is the test TTL for the dynamic lease.
-	testTTLDynamicLease = testExpiryDynamicLease.Sub(testCurrentTime)
+	// testExpiryExpiredLease is the test expiry time for an expired lease
+	// according to [testClock].
+	testExpiryExpiredLease = testCurrentTime.Add(-time.Hour)
+)
 
-	// TODO(e.burkov):  Add a default lease expiry time, according to
-	// [testCurrentTime].
+var (
+	// testLease4Dynamic is a common valid dynamic DHCPv4 lease for tests.
+	testLease4Dynamic = &dhcpsvc.Lease{
+		IP:       testIPv4Dynamic,
+		HWAddr:   testHWDynamic,
+		Expiry:   testExpiryDynamicLease,
+		Hostname: testLease4HostnameDynamic,
+		IsStatic: false,
+	}
+
+	// testLease4Static is a common valid static DHCPv4 lease for tests.
+	testLease4Static = &dhcpsvc.Lease{
+		IP:       testIPv4Static,
+		HWAddr:   testHWStatic,
+		Expiry:   time.Time{},
+		Hostname: testLease4HostnameStatic,
+		IsStatic: true,
+	}
+
+	// testLease4Expired is a common expired DHCPv4 lease for tests.
+	testLease4Expired = &dhcpsvc.Lease{
+		IP:       testIPv4Expired,
+		HWAddr:   testHWExpired,
+		Expiry:   testExpiryExpiredLease,
+		Hostname: testLease4HostnameExpired,
+		IsStatic: false,
+	}
+
+	// testLease6Dynamic is a common valid dynamic DHCPv6 lease for tests.
+	testLease6Dynamic = &dhcpsvc.Lease{
+		IP:       testIPv6Dynamic,
+		HWAddr:   testHWDynamic,
+		Expiry:   testExpiryDynamicLease,
+		Hostname: testLease6HostnameDynamic,
+		IsStatic: false,
+	}
+
+	// testLease6Static is a common valid static DHCPv6 lease for tests.
+	testLease6Static = &dhcpsvc.Lease{
+		IP:       testIPv6Static,
+		HWAddr:   testHWStatic,
+		Expiry:   time.Time{},
+		Hostname: testLease6HostnameStatic,
+		IsStatic: true,
+	}
+
+	// testLease6Expired is a common expired DHCPv6 lease for tests.
+	testLease6Expired = &dhcpsvc.Lease{
+		IP:       testIPv6Expired,
+		HWAddr:   testHWExpired,
+		Expiry:   testExpiryExpiredLease,
+		Hostname: testLease6HostnameExpired,
+		IsStatic: false,
+	}
+
+	// testLeases4 is a common set of leases for tests, containing only IPv4
+	// leases.
+	testLeases4 = []*dhcpsvc.Lease{testLease4Dynamic, testLease4Expired, testLease4Static}
+
+	// testLeases6 is a common set of leases for tests, containing only IPv6
+	// leases.
+	testLeases6 = []*dhcpsvc.Lease{testLease6Dynamic, testLease6Expired, testLease6Static}
+
+	// testLeases is a set of leases for tests, containing both IPv4 and IPv6
+	// leases.
+	testLeases = slices.Concat(testLeases4, testLeases6)
 )
 
 // fullLayersStack4 is the complete stack of layers expected to appear in the
@@ -240,6 +373,8 @@ var fullLayersStack6 = []gopacket.LayerType{
 
 // testDatabase is a mock implementation of the [dhcpsvc.Database] interface for
 // tests.
+//
+// TODO(e.burkov):  Consider moving to aghtest.
 type testDatabase struct {
 	onLoad  func(ctx context.Context) (leases []*dhcpsvc.Lease, err error)
 	onStore func(ctx context.Context, leases []*dhcpsvc.Lease) (err error)
@@ -258,45 +393,27 @@ func (db *testDatabase) Store(ctx context.Context, leases []*dhcpsvc.Lease) (err
 	return db.onStore(ctx, leases)
 }
 
-// newTestDatabase copies the leases database file located in the testdata FS,
-// under tb.Name()/leases.json, to a temporary directory and constructs a
-// [*testDatabase] that properly loads the leases from that file.
-//
-// TODO(e.burkov):  Move leases from testdata to the literals in tests, and
-// improve this helper.
-func newTestDatabase(tb testing.TB) (db *testDatabase) {
+// newTestDatabase creates a new *testDatabase for testing.  If initial is not
+// nil, db.Load is set to return it.  By default, db.Store panics on any call.
+func newTestDatabase(tb testing.TB, initial []*dhcpsvc.Lease) (db *testDatabase) {
 	tb.Helper()
 
-	data, err := fs.ReadFile(testdata, path.Join(tb.Name(), testDBLeasesFilename))
-	require.NoError(tb, err)
-
-	dst := filepath.Join(tb.TempDir(), testDBLeasesFilename)
-	require.NoError(tb, os.WriteFile(dst, data, dhcpsvc.JSONDatabasePerm))
-
-	jsonDB := dhcpsvc.NewJSONDatabase(&dhcpsvc.JSONDatabaseConfig{
-		Logger:   testLogger,
-		FilePath: dst,
-	})
-
-	db = newPanicDatabase(tb)
-	db.onLoad = jsonDB.Load
-
-	return db
-}
-
-// newPanicDatabase returns a *testDatabase that panics on any call to its
-// methods.
-func newPanicDatabase(tb testing.TB) (db *testDatabase) {
-	tb.Helper()
-
-	return &testDatabase{
-		onLoad: func(ctx context.Context) (leases []*dhcpsvc.Lease, err error) {
+	db = &testDatabase{
+		onLoad: func(ctx context.Context) (_ []*dhcpsvc.Lease, _ error) {
 			panic(testutil.UnexpectedCall(ctx))
 		},
-		onStore: func(ctx context.Context, leases []*dhcpsvc.Lease) (err error) {
+		onStore: func(ctx context.Context, leases []*dhcpsvc.Lease) (_ error) {
 			panic(testutil.UnexpectedCall(ctx, leases))
 		},
 	}
+
+	if initial != nil {
+		db.onLoad = func(ctx context.Context) (leases []*dhcpsvc.Lease, err error) {
+			return initial, nil
+		}
+	}
+
+	return db
 }
 
 // newTestDHCPServer creates a new DHCPServer for testing.  It uses the default
