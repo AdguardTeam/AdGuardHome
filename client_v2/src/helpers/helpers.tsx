@@ -2,6 +2,7 @@ import ipaddr, { IPv4, IPv6 } from 'ipaddr.js';
 import queryString from 'qs';
 import intl from 'panel/common/intl';
 import { getTrackerData } from './trackers/trackers';
+import type { TrackerData } from './trackers/trackers';
 
 import {
     ADDRESS_TYPES,
@@ -57,7 +58,7 @@ export type NormalizedQueryLogItem = {
     serviceName?: string;
     originalAnswer?: DnsAnswer[];
     originalResponse: NormalizedDnsResponse[];
-    tracker: Record<string, unknown> | null;
+    tracker: TrackerData | null;
     answer_dnssec?: boolean;
     elapsedMs?: string;
     upstream?: string;
@@ -893,8 +894,8 @@ export type Filter = {
 };
 
 export type Rule = {
-    filter_list_id: number;
-    text: string;
+    filter_list_id?: number;
+    text?: string;
 };
 
 export const getFilterName = (
@@ -915,9 +916,11 @@ export const getFilterName = (
 };
 
 export const getFilterNames = (rules: Rule[], filters: Filter[], whitelistFilters: Filter[]) =>
-    rules.map(({ filter_list_id }: Rule) =>
-        getFilterName(filters, whitelistFilters, filter_list_id),
-    );
+    rules
+        .filter((r): r is Required<Rule> => r.filter_list_id != null)
+        .map(({ filter_list_id }) =>
+            getFilterName(filters, whitelistFilters, filter_list_id),
+        );
 
 /**
  * @param {string[]} lines

@@ -9,9 +9,9 @@ import { deleteRewrite, rewritesState } from 'panel/stores/rewrites';
 
 type Props = {
     rewriteToDelete: {
-        answer: string;
-        domain: string;
-        enabled: boolean;
+        answer?: string;
+        domain?: string;
+        enabled?: boolean;
     };
     setRewriteToDelete: (value: { answer: string; domain: string; enabled: boolean }) => void;
     onConfirm?: () => boolean | void | Promise<boolean | void>;

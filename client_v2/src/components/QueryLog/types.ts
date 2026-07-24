@@ -1,7 +1,7 @@
 import type { FilteringReason } from 'panel/api/model/filteringReason';
 
 export type ResponseEntry = {
-    value: string;
+    value?: string;
     type?: string;
     ttl?: number;
 };

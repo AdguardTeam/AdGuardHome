@@ -4,13 +4,13 @@ import cn from 'clsx';
 import { Icon } from 'panel/common/ui/Icon';
 import theme from 'panel/lib/theme';
 import { getClientLocation } from 'panel/components/QueryLog/helpers';
-import { LogEntry } from 'panel/components/QueryLog/types';
+import type { NormalizedQueryLogItem } from 'panel/helpers/helpers';
 
 import s from '../LogTable.module.pcss';
 
 type Props = {
     onSearchSelect: (value: string) => (event: MouseEvent) => void;
-    row: LogEntry;
+    row: NormalizedQueryLogItem;
 };
 
 export const ClientCell = (props: Props) => {

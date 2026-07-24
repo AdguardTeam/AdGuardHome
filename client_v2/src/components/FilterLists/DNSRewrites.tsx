@@ -21,11 +21,9 @@ import { RewritesTable } from './blocks/RewritesTable/RewritesTable';
 
 import s from './FilterLists.module.pcss';
 
-export type Rewrite = {
-    answer: string;
-    domain: string;
-    enabled: boolean;
-};
+import type { RewriteEntry } from 'panel/api/model/rewriteEntry';
+
+export type Rewrite = RewriteEntry & { enabled?: boolean };
 
 export const DNSRewrites = () => {
     const [currentRewrite, setCurrentRewrite] = createSignal<Rewrite>({
@@ -123,7 +121,7 @@ export const DNSRewrites = () => {
                 <Show when={rewritesState.list.length > 0}>
                     <div class={cn(s.group, s.tableGroup)}>
                         <RewritesTable
-                            list={rewritesState.list as Rewrite[]}
+                            list={rewritesState.list}
                             processing={rewritesState.processing}
                             processingAdd={rewritesState.processingAdd}
                             processingUpdate={rewritesState.processingUpdate}

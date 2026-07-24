@@ -9,6 +9,8 @@ const mocks = vi.hoisted(() => ({
         interface_name: '',
         processingDhcp: false,
         processingConfig: false,
+        v4: { gateway_ip: '', subnet_mask: '', range_start: '', range_end: '', lease_duration: 0 },
+        v6: { range_start: '', lease_duration: 0 },
     },
 }));
 
@@ -28,18 +30,51 @@ describe('DhcpToggle', () => {
             interface_name: 'eth0',
             processingDhcp: false,
             processingConfig: false,
+            v4: { gateway_ip: '', subnet_mask: '', range_start: '', range_end: '', lease_duration: 0 },
+            v6: { range_start: '', lease_duration: 0 },
         };
         const { container } = render(() => <DhcpToggle selectedInterface={() => 'eth0'} />);
         const input = container.querySelector('#dhcp_enabled') as HTMLInputElement;
         expect(input.checked).toBe(true);
     });
 
-    it('calls toggleDhcp with enabled:false + interface_name when toggled ON + calls onToggleOn', () => {
+    it('when toggled ON without v4 config, reverts UI and calls onToggleOn without toggleDhcp', () => {
         mocks.dhcpState = {
             enabled: false,
             interface_name: 'eth0',
             processingDhcp: false,
             processingConfig: false,
+            v4: { gateway_ip: '', subnet_mask: '', range_start: '', range_end: '', lease_duration: 0 },
+            v6: { range_start: '', lease_duration: 0 },
+        };
+        const onToggleOn = vi.fn();
+        const { container } = render(() => (
+            <DhcpToggle selectedInterface={() => 'eth0'} onToggleOn={onToggleOn} />
+        ));
+        const input = container.querySelector('#dhcp_enabled') as HTMLInputElement;
+        fireEvent.change(input, { target: { checked: true } });
+        // Shadow signal reverts — the switch should appear unchecked.
+        expect(input.checked).toBe(false);
+        // Backend must NOT be called — config is not yet filled.
+        expect(mocks.toggleDhcp).not.toHaveBeenCalled();
+        // Config modal should open so the user can fill v4 settings.
+        expect(onToggleOn).toHaveBeenCalledOnce();
+    });
+
+    it('when toggled ON with existing v4 config, calls toggleDhcp without onToggleOn', () => {
+        mocks.dhcpState = {
+            enabled: false,
+            interface_name: 'eth0',
+            processingDhcp: false,
+            processingConfig: false,
+            v4: {
+                gateway_ip: '192.168.1.1',
+                subnet_mask: '255.255.255.0',
+                range_start: '192.168.1.50',
+                range_end: '192.168.1.100',
+                lease_duration: 86400,
+            },
+            v6: { range_start: '', lease_duration: 0 },
         };
         const onToggleOn = vi.fn();
         const { container } = render(() => (
@@ -51,9 +86,11 @@ describe('DhcpToggle', () => {
             expect.objectContaining({
                 enabled: false,
                 interface_name: 'eth0',
+                v4: expect.objectContaining({ gateway_ip: '192.168.1.1' }),
             }),
         );
-        expect(onToggleOn).toHaveBeenCalledOnce();
+        // v4 is configured — no need to open the config modal.
+        expect(onToggleOn).not.toHaveBeenCalled();
     });
 
     it('calls toggleDhcp with enabled:true when toggled OFF, does NOT call onToggleOn', () => {
@@ -62,6 +99,8 @@ describe('DhcpToggle', () => {
             interface_name: 'eth0',
             processingDhcp: false,
             processingConfig: false,
+            v4: { gateway_ip: '', subnet_mask: '', range_start: '', range_end: '', lease_duration: 0 },
+            v6: { range_start: '', lease_duration: 0 },
         };
         const onToggleOn = vi.fn();
         const { container } = render(() => (
@@ -79,6 +118,8 @@ describe('DhcpToggle', () => {
             interface_name: '',
             processingConfig: true,
             processingDhcp: false,
+            v4: { gateway_ip: '', subnet_mask: '', range_start: '', range_end: '', lease_duration: 0 },
+            v6: { range_start: '', lease_duration: 0 },
         };
         const { container } = render(() => <DhcpToggle selectedInterface={() => ''} />);
         const input = container.querySelector('#dhcp_enabled') as HTMLInputElement;

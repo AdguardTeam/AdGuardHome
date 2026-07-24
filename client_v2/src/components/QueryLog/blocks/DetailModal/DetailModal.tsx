@@ -25,12 +25,13 @@ import {
     formatLogTimeDetailed,
     formatLogDate,
 } from '../../helpers';
-import { LogEntry, ResponseEntry, Service } from '../../types';
+import type { NormalizedQueryLogItem } from 'panel/helpers/helpers';
+import { Service } from '../../types';
 
 import s from './DetailModal.module.pcss';
 
 type Props = {
-    entry: LogEntry;
+    entry: NormalizedQueryLogItem;
     filters: Filter[];
     services: Service[];
     whitelistFilters: Filter[];
@@ -40,7 +41,7 @@ type Props = {
     onAllowService: (serviceId: string) => void;
 };
 
-const formatResponses = (responses: ResponseEntry[] = []) =>
+const formatResponses = (responses: { value?: string; type?: string; ttl?: number }[] = []) =>
     responses
         .map(({ type, value, ttl }) => {
             if (!value) {
@@ -89,6 +90,8 @@ export const DetailModal = (props: Props) => {
     const responseList = () => formatResponses(props.entry.response);
     const originalResponseList = () => formatResponses(props.entry.originalResponse);
     const trackerSource = () => props.entry.tracker?.sourceData;
+    const trackerName = () => props.entry.tracker?.name;
+    const trackerCategory = () => props.entry.tracker?.category;
     const country = () => props.entry.client_info?.whois?.country;
     const network = () => props.entry.client_info?.whois?.orgname;
     const serviceId = () => props.entry.serviceName || props.entry.service_name;
@@ -121,10 +124,11 @@ export const DetailModal = (props: Props) => {
     };
 
     const handleAllowService = () => {
-        if (!serviceId()) {
+        const sid = serviceId();
+        if (!sid) {
             return;
         }
-        props.onAllowService(serviceId()!);
+        props.onAllowService(sid);
         props.onClose();
     };
 
@@ -215,49 +219,63 @@ export const DetailModal = (props: Props) => {
                             <h3 class={cn(s.sectionTitle, theme.title.h6)}>
                                 {intl.getMessage('known_tracker')}
                             </h3>
-                            <div
-                                class={rowClassName()}
-                                data-testid="query-log-detail-tracker-name"
-                                data-field="tracker-name"
-                            >
-                                {intl.getMessage('query_log_detail_name', {
-                                    value: props.entry.tracker!.name,
-                                    span: renderValue,
-                                })}
-                            </div>
-                            <div
-                                class={rowClassName()}
-                                data-testid="query-log-detail-tracker-category"
-                                data-field="tracker-category"
-                            >
-                                {intl.getMessage('query_log_detail_category', {
-                                    value: props.entry.tracker!.category,
-                                    span: renderValue,
-                                })}
-                            </div>
-                            <Show when={trackerSource()?.name}>
-                                <div
-                                    class={rowClassName()}
-                                    data-testid="query-log-detail-tracker-source"
-                                    data-field="tracker-source"
-                                >
-                                    {intl.getMessage('query_log_detail_source', {
-                                        value: trackerSource()!.name,
-                                        span: (content: any) =>
-                                            trackerSource()!.url ? (
-                                                <a
-                                                    href={trackerSource()!.url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    class={cn(s.link, s.value)}
-                                                >
-                                                    {content}
-                                                </a>
-                                            ) : (
-                                                renderValue(content)
-                                            ),
-                                    })}
-                                </div>
+                            <Show when={trackerName()}>
+                                {(name) => (
+                                    <div
+                                        class={rowClassName()}
+                                        data-testid="query-log-detail-tracker-name"
+                                        data-field="tracker-name"
+                                    >
+                                        {intl.getMessage('query_log_detail_name', {
+                                            value: name(),
+                                            span: renderValue,
+                                        })}
+                                    </div>
+                                )}
+                            </Show>
+                            <Show when={trackerCategory()}>
+                                {(category) => (
+                                    <div
+                                        class={rowClassName()}
+                                        data-testid="query-log-detail-tracker-category"
+                                        data-field="tracker-category"
+                                    >
+                                        {intl.getMessage('query_log_detail_category', {
+                                            value: category(),
+                                            span: renderValue,
+                                        })}
+                                    </div>
+                                )}
+                            </Show>
+                            <Show when={trackerSource()}>
+                                {(source) => (
+                                    <Show when={source()?.name}>
+                                        {(name) => (
+                                            <div
+                                                class={rowClassName()}
+                                                data-testid="query-log-detail-tracker-source"
+                                                data-field="tracker-source"
+                                            >
+                                                {intl.getMessage('query_log_detail_source', {
+                                                    value: name(),
+                                                    span: (content: any) =>
+                                                        source()?.url ? (
+                                                            <a
+                                                                href={source()?.url}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                class={cn(s.link, s.value)}
+                                                            >
+                                                                {content}
+                                                            </a>
+                                                        ) : (
+                                                            renderValue(content)
+                                                        ),
+                                                })}
+                                            </div>
+                                        )}
+                                    </Show>
+                                )}
                             </Show>
                         </div>
                     </Show>

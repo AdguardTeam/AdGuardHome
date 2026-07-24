@@ -7,12 +7,12 @@ import theme from 'panel/lib/theme';
 import { Icon } from 'panel/common/ui/Icon';
 import { getProtocolName } from 'panel/components/QueryLog/helpers';
 import { QueryDetailsTooltipContent } from 'panel/components/QueryLog/blocks/LogTable/blocks/QueryDetailsTooltipContent';
-import { LogEntry } from 'panel/components/QueryLog/types';
+import type { NormalizedQueryLogItem } from 'panel/helpers/helpers';
 
 import s from '../LogTable.module.pcss';
 
 type Props = {
-    row: LogEntry;
+    row: NormalizedQueryLogItem;
 };
 
 export const RequestCell = (props: Props) => {

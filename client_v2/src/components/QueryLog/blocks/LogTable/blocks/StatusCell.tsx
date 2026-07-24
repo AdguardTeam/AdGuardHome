@@ -2,7 +2,7 @@ import { createMemo } from 'solid-js';
 import cn from 'clsx';
 
 import theme from 'panel/lib/theme';
-import { LogEntry } from 'panel/components/QueryLog/types';
+import type { NormalizedQueryLogItem } from 'panel/helpers/helpers';
 import {
     getQueryStatusLabel,
     getQueryStatusDetails,
@@ -13,7 +13,7 @@ import {
 import s from '../LogTable.module.pcss';
 
 type Props = {
-    row: LogEntry;
+    row: NormalizedQueryLogItem;
 };
 
 export const StatusCell = (props: Props) => {

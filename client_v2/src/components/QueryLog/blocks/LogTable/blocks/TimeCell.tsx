@@ -1,13 +1,13 @@
 import cn from 'clsx';
 
 import theme from 'panel/lib/theme';
-import { LogEntry } from 'panel/components/QueryLog/types';
+import type { NormalizedQueryLogItem } from 'panel/helpers/helpers';
 import { formatLogDate, formatLogTime } from 'panel/components/QueryLog/helpers';
 
 import s from '../LogTable.module.pcss';
 
 type Props = {
-    row: LogEntry;
+    row: NormalizedQueryLogItem;
 };
 
 export const TimeCell = (props: Props) => (

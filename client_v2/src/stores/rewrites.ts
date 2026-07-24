@@ -22,7 +22,7 @@ type RewritesState = {
     isModalOpen: boolean;
     modalType: string;
     currentRewrite: RewriteEntry;
-    list: RewriteEntry[];
+    list: (RewriteEntry & { enabled?: boolean })[];
     enabled: boolean;
 };
 

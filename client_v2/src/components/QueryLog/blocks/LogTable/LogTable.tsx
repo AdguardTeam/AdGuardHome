@@ -4,7 +4,8 @@ import intl from 'panel/common/intl';
 import { Loader } from 'panel/common/ui/Loader';
 import { Table, TableColumn } from 'panel/common/ui/Table/Table';
 
-import { LogEntry, Service } from 'panel/components/QueryLog/types';
+import type { NormalizedQueryLogItem } from 'panel/helpers/helpers';
+import { Service } from 'panel/components/QueryLog/types';
 import { hasPersistentClient, isBlockedReason } from 'panel/components/QueryLog/helpers';
 
 import { Filter } from 'panel/helpers/helpers';
@@ -16,7 +17,7 @@ import s from './LogTable.module.pcss';
 import { ActionsMenu } from '../ActionsMenu';
 
 type Props = {
-    logs: LogEntry[];
+    logs: NormalizedQueryLogItem[];
     emptyStateMode: EmptyStateMode;
     hasMore: boolean;
     isLoadingMore: boolean;
@@ -25,7 +26,7 @@ type Props = {
     isFilterReloading: boolean;
     infiniteScrollResetToken: string;
     onLoadMore: () => void;
-    onRowClick: (entry: LogEntry) => void;
+    onRowClick: (entry: NormalizedQueryLogItem) => void;
     onBlock: (domain: string) => void;
     onUnblock: (domain: string) => void;
     onBlockClient: (domain: string, client: string) => void;
@@ -45,31 +46,31 @@ export const LogTable = (props: Props) => {
         untrack(() => props.onSearchSelect(value));
     };
 
-    const columns = createMemo<TableColumn<LogEntry>[]>(() => [
+    const columns = createMemo<TableColumn<NormalizedQueryLogItem>[]>(() => [
         {
             key: 'time',
             header: { text: intl.getMessage('time_table_header') },
-            render: (_value: unknown, row: LogEntry) => <TimeCell row={row} />,
+            render: (_value: unknown, row: NormalizedQueryLogItem) => <TimeCell row={row} />,
             width: 116,
             sortable: false,
         },
         {
             key: 'domain',
             header: { text: intl.getMessage('request_table_header') },
-            render: (_value: unknown, row: LogEntry) => <RequestCell row={row} />,
+            render: (_value: unknown, row: NormalizedQueryLogItem) => <RequestCell row={row} />,
             sortable: false,
         },
         {
             key: 'status',
             header: { text: intl.getMessage('status_table_header') },
-            render: (_value: unknown, row: LogEntry) => <StatusCell row={row} />,
+            render: (_value: unknown, row: NormalizedQueryLogItem) => <StatusCell row={row} />,
             width: 'minmax(108px, 0.7fr)',
             sortable: false,
         },
         {
             key: 'reason',
             header: { text: intl.getMessage('reason_table_header') },
-            render: (_value: unknown, row: LogEntry) => {
+            render: (_value: unknown, row: NormalizedQueryLogItem) => {
                 return (
                     <ReasonCell
                         row={row}
@@ -85,7 +86,7 @@ export const LogTable = (props: Props) => {
         {
             key: 'client',
             header: { text: intl.getMessage('client_table_header') },
-            render: (_value: unknown, row: LogEntry) => (
+            render: (_value: unknown, row: NormalizedQueryLogItem) => (
                 <ClientCell onSearchSelect={handleSearchSelect} row={row} />
             ),
             sortable: false,
@@ -93,7 +94,7 @@ export const LogTable = (props: Props) => {
         {
             key: 'actions',
             header: { text: '', render: () => null },
-            render: (_value: unknown, row: LogEntry) => (
+            render: (_value: unknown, row: NormalizedQueryLogItem) => (
                 <div
                     class={s.actionsCell}
                     data-testid="query-log-actions-cell"

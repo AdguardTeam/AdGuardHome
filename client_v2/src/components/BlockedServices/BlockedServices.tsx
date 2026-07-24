@@ -147,7 +147,7 @@ export const BlockedServices = (props: Props) => {
         (servicesState.allServices == null || servicesState.allServices.length === 0) &&
         (servicesState.processingAll || servicesState.processing);
     const isGloballyDisabled = () =>
-        props.clientScope ? clientFormState.use_global_blocked_services : false;
+        props.clientScope ? clientFormState.use_global_settings : false;
 
     const getScheduleRoute = () => {
         if (!props.clientScope) {
@@ -203,7 +203,12 @@ export const BlockedServices = (props: Props) => {
                         <p class={s.description}>{intl.getMessage('blocked_services_desc')}</p>
                     </Show>
 
-                    <Link to={getScheduleRoute()} props={scheduleRouteProps()} class={s.navItem} data-testid="blocked-services-schedule-link">
+                    <Link
+                        to={getScheduleRoute()}
+                        props={scheduleRouteProps()}
+                        class={s.navItem}
+                        data-testid="blocked-services-schedule-link"
+                    >
                         <div class={s.navItemContent}>
                             <div class={s.navItemTitle}>
                                 {intl.getMessage('inactivity_schedule')}

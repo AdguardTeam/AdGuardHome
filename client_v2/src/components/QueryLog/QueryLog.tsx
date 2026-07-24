@@ -31,7 +31,7 @@ import { getLogsUrlParams } from 'panel/helpers/helpers';
 import { RoutePath, linkPathBuilder } from 'panel/components/Routes/Paths';
 
 import { filterLogsByStatus } from './helpers';
-import { LogEntry, ResponseEntry } from './types';
+import type { NormalizedQueryLogItem } from 'panel/helpers/helpers';
 import { Header } from './blocks/Header';
 import { EmptyState, type EmptyStateMode } from './blocks/EmptyState/EmptyState';
 import { LogTable } from './blocks/LogTable';
@@ -56,7 +56,7 @@ export const QueryLog = () => {
     const navigate = useNavigate();
     const location = useLocation();
 
-    const [selectedEntry, setSelectedEntry] = createSignal<LogEntry | null>(null);
+    const [selectedEntry, setSelectedEntry] = createSignal<NormalizedQueryLogItem | null>(null);
     const [disallowTarget, setDisallowTarget] = createSignal<string | null>(null);
     const [isIncrementalLoad, setIsIncrementalLoad] = createSignal(false);
 
@@ -111,7 +111,7 @@ export const QueryLog = () => {
         );
     const visibleLogs = () =>
         filterLogsByStatus(
-            (queryLogsState.logs || []) as { reason: string; originalResponse?: ResponseEntry[] }[],
+            queryLogsState.logs || [],
             currentStatus(),
         );
     const emptyStateMode = () => getEmptyStateMode(queryLogsState.enabled, queryLogsState.interval);
@@ -190,7 +190,7 @@ export const QueryLog = () => {
         setDisallowTarget(null);
     };
 
-    const handleRowClick = (entry: LogEntry) => {
+    const handleRowClick = (entry: NormalizedQueryLogItem) => {
         setSelectedEntry(entry);
     };
 
@@ -236,7 +236,7 @@ export const QueryLog = () => {
 
                 <div class={s.desktopView}>
                     <LogTable
-                        logs={visibleLogs() as LogEntry[]}
+                        logs={visibleLogs()}
                         emptyStateMode={emptyStateMode()}
                         hasMore={hasMore()}
                         isLoadingMore={isLoadingMore()}
@@ -275,7 +275,7 @@ export const QueryLog = () => {
                                             <For each={visibleLogs()}>
                                                 {(entry) => (
                                                     <LogCard
-                                                        entry={entry as LogEntry}
+                                                        entry={entry}
                                                         onRowClick={handleRowClick}
                                                         onBlock={handleBlockDomain}
                                                         onUnblock={handleUnblockDomain}
