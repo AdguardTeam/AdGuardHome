@@ -54,6 +54,7 @@ export const Form = (props: Props) => {
                                 errorMessage={field.error as string}
                                 autocomplete="username"
                                 autocapitalize="none"
+                                size="large"
                             />
                         )}
                     </Field>
@@ -74,6 +75,7 @@ export const Form = (props: Props) => {
                                 inputError={field.error as string}
                                 autocomplete="current-password"
                                 onChange={(value: string) => setValue(loginForm, 'password', value)}
+                                size="large"
                             />
                         )}
                     </Field>

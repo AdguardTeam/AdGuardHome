@@ -1,6 +1,6 @@
 import { type JSX } from 'solid-js';
 import { Logo } from 'panel/common/ui/Sidebar';
-import intl from 'panel/common/intl';
+import intl, { type LocalesType } from 'panel/common/intl';
 import { LanguageDropdown } from 'panel/common/ui/LanguageDropdown/LanguageDropdown';
 import { setHtmlLangAttr } from 'panel/helpers/helpers';
 import { changeLanguage as changeLanguageAction, dashboardState } from 'panel/stores/dashboard';
@@ -15,22 +15,21 @@ type Props = {
     dropdownPosition?: 'bottomRight' | 'bottomLeft' | 'topRight' | 'topLeft';
     center?: JSX.Element;
     useLocalLanguage?: boolean;
+    hideLanguageDropdown?: boolean;
 };
 
 export const PublicHeader = (props: Props) => {
     const changeLanguage = async (newLang: Lang) => {
+        await intl.changeLanguage(newLang as LocalesType);
         setHtmlLangAttr(newLang);
+        LocalStorageHelper.setItem(LOCAL_STORAGE_KEYS.LANGUAGE, newLang);
 
         if (props.useLocalLanguage) {
-            LocalStorageHelper.setItem(LOCAL_STORAGE_KEYS.LANGUAGE, newLang);
-            window.location.reload();
             return;
         }
 
         try {
             await changeLanguageAction(newLang);
-            LocalStorageHelper.setItem(LOCAL_STORAGE_KEYS.LANGUAGE, newLang);
-            window.location.reload();
         } catch (error) {
             console.error('Failed to save language preference:', error);
         }
@@ -46,14 +45,16 @@ export const PublicHeader = (props: Props) => {
                 </div>
                 {props.center}
                 <div class={styles.languageWrap}>
-                    <LanguageDropdown
-                        value={currentLanguage()}
-                        languages={LANGUAGES}
-                        languageNames={LANGUAGE_NAMES}
-                        onChange={(lang: Lang) => changeLanguage(lang)}
-                        class={props.dropdownClass}
-                        position={props.dropdownPosition ?? 'bottomRight'}
-                    />
+                    {!props.hideLanguageDropdown && (
+                        <LanguageDropdown
+                            value={currentLanguage()}
+                            languages={LANGUAGES}
+                            languageNames={LANGUAGE_NAMES}
+                            onChange={(lang: Lang) => changeLanguage(lang)}
+                            class={props.dropdownClass}
+                            position={props.dropdownPosition ?? 'bottomRight'}
+                        />
+                    )}
                 </div>
             </div>
         </div>

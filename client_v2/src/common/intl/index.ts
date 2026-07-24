@@ -2,41 +2,23 @@ import { createSignal } from 'solid-js';
 
 import { I18nInterface, Locale, translate } from '@adguard/translate';
 import { BASE_LOCALE } from 'panel/helpers/twosky';
-
-import en from 'panel/__locales/en.json';
-import de from 'panel/__locales/de.json';
-import es from 'panel/__locales/es.json';
-import fr from 'panel/__locales/fr.json';
-import it from 'panel/__locales/it.json';
-import ja from 'panel/__locales/ja.json';
-import ko from 'panel/__locales/ko.json';
-import ptBr from 'panel/__locales/pt-br.json';
-import ptPt from 'panel/__locales/pt-pt.json';
-import ru from 'panel/__locales/ru.json';
-import zhCn from 'panel/__locales/zh-cn.json';
-import zhTw from 'panel/__locales/zh-tw.json';
 import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from 'panel/helpers/localStorageHelper';
+import { LANGUAGE_QUERY_PARAM } from 'panel/helpers/constants';
+
+import {
+    LOCALES,
+    LOCALE_LOADERS,
+    LOCALE_CODES,
+    LocaleMessage,
+} from 'panel/common/intl/locales.generated';
 
 export type LocalesType = ReturnType<I18nInterface['getUILanguage']>;
 
-type LocalesTypes = Partial<Record<LocalesType, Record<string, string>>>;
-
-const LOCALES = {
-    en,
-    de,
-    es,
-    fr,
-    it,
-    ja,
-    ko,
-    ru,
-    'pt-br': ptBr,
-    'pt-pt': ptPt,
-    'zh-cn': zhCn,
-    'zh-tw': zhTw,
-};
-
-const messages: LocalesTypes = LOCALES;
+/**
+ * The live message map — starts with only the base locale (`en`),
+ * populated with additional locales at runtime via {@link preloadLocale}.
+ */
+const messages: Record<string, LocaleMessage> = { ...LOCALES };
 
 /**
  * Converts a hyphenated twosky locale code to the underscore format that
@@ -44,6 +26,12 @@ const messages: LocalesTypes = LOCALES;
  * expects for plural-form lookups (e.g. pt-br → pt_br).
  */
 const toTranslateLocale = (code: string): Locale => {
+    // si-lk → am (Amharic): identical CLDR plural rules (one: n=0..1, other).
+    // This only affects plural-form indexing — actual strings come from si-lk.json.
+    //
+    // TODO(ik): Contribute missing `si` locale to @adguard/translate
+    if (code === 'si-lk') return 'am' as Locale;
+
     // zh-hk / sr-cs → parent locale
     if (code === 'zh-hk') return 'zh' as Locale;
     if (code === 'sr-cs') return 'sr' as Locale;
@@ -54,7 +42,7 @@ const toTranslateLocale = (code: string): Locale => {
 const resolveLanguage = (lng: string): LocalesType => {
     const l = lng.toLowerCase();
 
-    if (messages[l as LocalesType]) {
+    if (LOCALE_CODES.has(l)) {
         return l as LocalesType;
     }
 
@@ -75,9 +63,9 @@ const resolveLanguage = (lng: string): LocalesType => {
     }
 
     // Try base language (e.g., en-us -> en)
-    const base = l.split('-')[0] as LocalesType;
-    if (messages[base]) {
-        return base;
+    const base = l.split('-')[0];
+    if (LOCALE_CODES.has(base)) {
+        return base as LocalesType;
     }
 
     return BASE_LOCALE as LocalesType;
@@ -93,16 +81,41 @@ export const i18n = (lang: LocalesType) => {
     };
 };
 
-const detectedLanguage = ((typeof window !== 'undefined' &&
-    typeof localStorage !== 'undefined' &&
-    LocalStorageHelper.getItem<string>(LOCAL_STORAGE_KEYS.LANGUAGE)) ||
-    (typeof navigator !== 'undefined' && (navigator.language as string)) ||
-    BASE_LOCALE) as LocalesType;
+/**
+ * Detects the initial language using a priority chain: URL query param
+ * (set after cross-port redirect from the install wizard) → localStorage
+ * → browser language → base locale.
+ */
+export const getInitialLanguage = (): LocalesType => {
+    if (typeof window === 'undefined') {
+        return BASE_LOCALE as LocalesType;
+    }
 
-const initialLanguage: LocalesType = resolveLanguage(detectedLanguage);
+    const urlLang = new URL(window.location.href).searchParams.get(LANGUAGE_QUERY_PARAM);
+    if (urlLang) {
+        const resolved = resolveLanguage(urlLang);
+        LocalStorageHelper.setItem(LOCAL_STORAGE_KEYS.LANGUAGE, resolved);
+        return resolved;
+    }
 
-// Solid-reactive language signal
-const [lang, setLang] = createSignal<LocalesType>(initialLanguage);
+    const stored = LocalStorageHelper.getItem<string>(LOCAL_STORAGE_KEYS.LANGUAGE);
+    if (stored) {
+        return resolveLanguage(stored);
+    }
+
+    if (typeof navigator !== 'undefined' && navigator.language) {
+        return resolveLanguage(navigator.language);
+    }
+
+    return BASE_LOCALE as LocalesType;
+};
+
+export const initialLanguage: LocalesType = getInitialLanguage();
+
+// Always start with English (the only locale guaranteed to be in `messages`
+// at module-init time).  The App.onMount preloads the actual detected locale
+// and triggers a reactive re-render via changeLanguage.
+const [lang, setLang] = createSignal<LocalesType>(BASE_LOCALE as LocalesType);
 
 /**
  * Creates default value functions for common HTML tags.
@@ -195,7 +208,7 @@ const createSolidTranslator = (i18nInstance: ReturnType<typeof i18n>) =>
         createSolidDefaultValues(),
     );
 
-let translator = createSolidTranslator(i18n(initialLanguage));
+let translator = createSolidTranslator(i18n(BASE_LOCALE as LocalesType));
 
 const intl = {
     getMessage: (key: string, values?: any) => {
@@ -228,8 +241,20 @@ const intl = {
 
     getBaseUILanguage: () => BASE_LOCALE as LocalesType,
 
-    changeLanguage: (newLang: LocalesType) => {
+    /**
+     * Changes the active language.  If the locale has not been loaded yet
+     * (common at boot), it is fetched on-demand via the lazy
+     * `LOCALE_LOADERS` map before the translator is rebuilt.
+     */
+    changeLanguage: async (newLang: LocalesType) => {
         const resolved = resolveLanguage(newLang);
+        try {
+            await preloadLocale(resolved);
+        } catch (err) {
+            // eslint-disable-next-line no-console
+            console.warn('[i18n] Failed to load locale:', resolved, err);
+            return;
+        }
         translator = createSolidTranslator(i18n(resolved));
         setLang(resolved);
     },
@@ -238,5 +263,29 @@ const intl = {
         return translator;
     },
 };
+
+/**
+ * Loads a non-base locale into the `messages` map so that subsequent
+ * `getMessage`/`getPlural` calls can serve it.  If the locale is already
+ * loaded or is the base locale (`en`), this is a no-op.
+ */
+export const preloadLocale = async (code: string) => {
+    if (messages[code]) return;
+    const loader = LOCALE_LOADERS[code];
+    if (!loader) return;
+    const mod = await loader();
+    messages[code] = (mod as { default?: LocaleMessage }).default ?? (mod as LocaleMessage);
+};
+
+// Fire-and-forget: preload the browser-detected locale as soon as the module
+// loads.  Every entry point (dashboard, login, install, forgot_password)
+// benefits without needing its own onMount preload gate.  The app renders
+// immediately with English; once the locale chunk loads, changeLanguage
+// triggers a reactive re-render.
+if (typeof window !== 'undefined') {
+    intl.changeLanguage(initialLanguage).catch((err) => {
+        console.warn('[i18n] Failed to preload locale:', err);
+    });
+}
 
 export default intl;

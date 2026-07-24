@@ -1,4 +1,4 @@
-import { createSignal, createEffect, type Accessor, Show } from 'solid-js';
+import { createSignal, createEffect, createMemo, type Accessor, Show } from 'solid-js';
 
 import { dnsConfigState, setDnsConfig } from 'panel/stores/dnsConfig';
 import intl from 'panel/common/intl';
@@ -25,7 +25,7 @@ type Props = {
 };
 
 export const BlockingModeDialog = (props: Props) => {
-    const blockingModeOptions = getBlockingModeOptions();
+    const blockingModeOptions = createMemo(() => getBlockingModeOptions());
 
     const [blockingMode, setBlockingMode] = createSignal(dnsConfigState.blocking_mode);
     createEffect(() => {
@@ -89,7 +89,7 @@ export const BlockingModeDialog = (props: Props) => {
         >
             <Radio
                 name="blocking_mode"
-                options={blockingModeOptions}
+                options={blockingModeOptions()}
                 value={blockingMode()}
                 handleChange={(v: DNSConfigBlockingMode) => setBlockingMode(v)}
                 inModal

@@ -615,6 +615,7 @@
   "save": "Save",
   "save_btn": "Save",
   "search_placeholder": "Search",
+  "select_language": "Select language",
   "server_config_blocking_mode_ipv4_faq": "IP address to return for a blocked A request",
   "server_config_blocking_mode_ipv6_faq": "IP address to return for a blocked AAAA request",
   "server_config_blocking_mode_ttl_faq": "Specifies how long clients should cache a filtered response",

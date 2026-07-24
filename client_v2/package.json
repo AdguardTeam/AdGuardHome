@@ -20,6 +20,8 @@
     "typecheck": "tsc --noEmit",
     "typecheck:watch": "tsc --noEmit --watch",
     "translations:check": "node ./scripts/check-translations.js",
+    "locales:generate": "node ./scripts/generate-locales.js",
+    "locales:check": "node ./scripts/check-locales.js",
     "api:generate": "orval --config ./orval.config.ts && bash scripts/postgenerate.sh"
   },
   "type": "module",

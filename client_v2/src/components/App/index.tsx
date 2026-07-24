@@ -67,9 +67,10 @@ const App = () => {
         const language = dashboardState.language;
         const processing = dashboardState.processing;
         if (!processing && language) {
-            intl.changeLanguage(language as LocalesType);
-            setHtmlLangAttr(language);
-            LocalStorageHelper.setItem(LOCAL_STORAGE_KEYS.LANGUAGE, language);
+            intl.changeLanguage(language as LocalesType).then(() => {
+                setHtmlLangAttr(language);
+                LocalStorageHelper.setItem(LOCAL_STORAGE_KEYS.LANGUAGE, language);
+            });
         }
     });
 

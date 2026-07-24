@@ -9,7 +9,8 @@ vi.mock('panel/api/generated', () => ({
 }));
 
 vi.mock('panel/stores/toasts', () => ({ addErrorToast: vi.fn() }));
-vi.mock('panel/helpers/constants', () => ({
+vi.mock('panel/helpers/constants', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('panel/helpers/constants')>()),
     ALL_INTERFACES_IP: '0.0.0.0',
     INSTALL_FIRST_STEP: 1,
     STANDARD_DNS_PORT: 53,

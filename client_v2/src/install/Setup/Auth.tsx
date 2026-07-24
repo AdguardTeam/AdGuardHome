@@ -25,7 +25,7 @@ const validatePasswordLengthMsg = (value: string | undefined) => {
     return result === true ? intl.getMessage('password_requirements_characters') : result;
 };
 
-type AuthFormValues = {
+export type AuthFormValues = {
     username: string;
     password: string;
     confirm_password: string;

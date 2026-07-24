@@ -1,3 +1,4 @@
+import { createMemo } from 'solid-js';
 import cn from 'clsx';
 
 import intl from 'panel/common/intl';
@@ -12,16 +13,16 @@ type Props = {
 };
 
 export const SortSelect = (props: Props) => {
-    const options: IOption<string>[] = [
+    const options = createMemo<IOption<string>[]>(() => [
         { value: 'asc', label: intl.getMessage('sort_asc') },
         { value: 'desc', label: intl.getMessage('sort_desc') },
-    ];
+    ]);
 
     return (
         <div class={cn(s.wrapper, props.class)}>
             <Select<string>
-                options={options}
-                value={options.find((o) => o.value === props.value)}
+                options={options()}
+                value={options().find((o) => o.value === props.value)}
                 onChange={(option: any) => props.onChange(option.value as 'asc' | 'desc')}
                 height="medium"
                 isSearchable={false}

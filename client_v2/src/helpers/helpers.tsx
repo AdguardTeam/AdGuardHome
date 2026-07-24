@@ -21,6 +21,8 @@ import {
     SHORT_DATE_FORMAT_OPTIONS,
 } from './constants';
 import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from './localStorageHelper';
+import { LANGUAGES, BASE_LOCALE } from './twosky';
+import type { Lang } from 'panel/api/model/lang';
 import type { DnsAnswer } from 'panel/api/model/dnsAnswer';
 import type { ResultRule } from 'panel/api/model/resultRule';
 import type { FilteringReason } from 'panel/api/model/filteringReason';
@@ -739,6 +741,42 @@ export const formatElapsedMs = (elapsedMs: string, millisecondsLabel: string) =>
 };
 
 /**
+ * Type guard: checks whether a string is a supported language code
+ * as defined by the {@link LANGUAGES} map from twosky.
+ */
+export const isLang = (value: string): value is Lang => value in LANGUAGES;
+
+/**
+ * Detects the best initial language from the browser or a previously-stored
+ * preference, validated against the supported {@link LANGUAGES} set.
+ * Falls back to {@code BASE_LOCALE} when no match is found.
+ */
+export const getBrowserLanguage = (): Lang => {
+    // 1. Previously saved language (localStorage)
+    const stored = LocalStorageHelper.getItem<string>(LOCAL_STORAGE_KEYS.LANGUAGE);
+    if (stored && isLang(stored)) {
+        return stored;
+    }
+
+    // 2. Browser language
+    if (typeof navigator !== 'undefined' && navigator.language) {
+        const browserLang = navigator.language.toLowerCase();
+        // Full locale first (e.g. "zh-tw")
+        if (isLang(browserLang)) {
+            return browserLang;
+        }
+        // Base language (e.g. "fr" from "fr-FR")
+        const base = browserLang.split('-')[0];
+        if (base && isLang(base)) {
+            return base;
+        }
+    }
+
+    // 3. Fallback
+    return BASE_LOCALE as Lang;
+};
+
+/**
  * @param language {string}
  */
 export const setHtmlLangAttr = (language: string): void => {
@@ -918,9 +956,7 @@ export const getFilterName = (
 export const getFilterNames = (rules: Rule[], filters: Filter[], whitelistFilters: Filter[]) =>
     rules
         .filter((r): r is Required<Rule> => r.filter_list_id != null)
-        .map(({ filter_list_id }) =>
-            getFilterName(filters, whitelistFilters, filter_list_id),
-        );
+        .map(({ filter_list_id }) => getFilterName(filters, whitelistFilters, filter_list_id));
 
 /**
  * @param {string[]} lines

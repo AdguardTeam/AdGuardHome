@@ -131,7 +131,7 @@ export const Select = <
 
     const testId = (option: any) => getItemTestId(props.optionTestIdPrefix, option.value);
 
-    const clearAriaLabel = intl.getMessage('clear_btn');
+    const clearAriaLabel = createMemo(() => intl.getMessage('clear_btn'));
 
     // Reads the label from the controlled value prop (option object).
     // Falls back to pendingLabel (set on selection) before props.value updates.
@@ -196,7 +196,7 @@ export const Select = <
                                     </Show>
                                 </ArkSelect.Trigger>
                                 <Show when={isClearable() && !isMulti()}>
-                                    <ArkSelect.ClearTrigger aria-label={clearAriaLabel}>
+                                    <ArkSelect.ClearTrigger aria-label={clearAriaLabel()}>
                                         <Icon icon="cross" />
                                     </ArkSelect.ClearTrigger>
                                 </Show>
@@ -326,7 +326,7 @@ export const Select = <
                                 </div>
                                 {/* Clear button shown whenever values exist. */}
                                 <Show when={currentValue().length > 0}>
-                                    <ArkCombobox.ClearTrigger aria-label={clearAriaLabel}>
+                                    <ArkCombobox.ClearTrigger aria-label={clearAriaLabel()}>
                                         <Icon icon="cross" />
                                     </ArkCombobox.ClearTrigger>
                                 </Show>
@@ -364,7 +364,7 @@ export const Select = <
                                     />
                                 </div>
                                 <Show when={isClearable() && currentValue().length > 0}>
-                                    <ArkCombobox.ClearTrigger aria-label={clearAriaLabel}>
+                                    <ArkCombobox.ClearTrigger aria-label={clearAriaLabel()}>
                                         <Icon icon="cross" />
                                     </ArkCombobox.ClearTrigger>
                                 </Show>

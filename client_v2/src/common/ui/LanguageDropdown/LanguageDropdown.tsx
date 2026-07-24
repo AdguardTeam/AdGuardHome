@@ -18,17 +18,24 @@ type LanguageDropdownProps = {
 };
 
 const getLanguageShortLabel = (lang: string) => {
-    const l = lang || '';
+    const code = (lang || '').toLowerCase();
+    const parts = code.split('-');
+    if (parts.length === 1) {
+        return parts[0].slice(0, 2).toUpperCase();
+    }
 
-    const base = (() => {
-        if (typeof Intl !== 'undefined' && 'Locale' in Intl) {
-            return new Intl.Locale(l).language || '';
-        }
+    const prefix = parts[0].slice(0, 2).toUpperCase();
+    const suffix = parts
+        .slice(1)
+        .map((p) => p.toUpperCase())
+        .join('-');
 
-        return l.split('-')[0] || '';
-    })();
+    // Skip redundant suffix, e.g. pt-pt → PT (not PT (PT))
+    if (prefix === suffix) {
+        return prefix;
+    }
 
-    return base.slice(0, 2).toLocaleUpperCase();
+    return `${prefix} (${suffix})`;
 };
 
 export const LanguageDropdown = (props: LanguageDropdownProps) => {
@@ -58,9 +65,13 @@ export const LanguageDropdown = (props: LanguageDropdownProps) => {
                                 class={cn(theme.dropdown.item, {
                                     [theme.dropdown.item_active]: props.value === lang,
                                 })}
-                                onClick={async () => {
-                                    await untrack(() => props.onChange)(lang);
-                                    setOpen(false);
+                                onClick={() => {
+                                    // Fire-and-forget with finally-guaranteed close.
+                                    // If the onChange throws or hangs, the dropdown
+                                    // still closes — no stuck-open state.
+                                    Promise.resolve(untrack(() => props.onChange)(lang)).finally(
+                                        () => setOpen(false),
+                                    );
                                 }}
                             >
                                 {props.languageNames?.[lang] || getLanguageShortLabel(lang)}

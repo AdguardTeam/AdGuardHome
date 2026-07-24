@@ -32,9 +32,12 @@ export const loadTwoskyLocales = async (repoRoot) => {
      * the library handles under a parent code, or doesn't handle at all.
      */
     const toTranslateLocale = (code) => {
-        // Sinhala not in @adguard/translate plural rules table
+        // Sinhala → Amharic: identical CLDR plural rules (one: n=0..1, other)
+        // This only affects plural-form indexing; actual strings come from si-lk.json
+        //
+        // TODO(ik): Contribute missing `si` locale to @adguard/translate
         if (code === 'si-lk') {
-            return null;
+            return 'am';
         }
         // Hong Kong & Serbian Cyrillic → parent locale
         if (code === 'zh-hk') {

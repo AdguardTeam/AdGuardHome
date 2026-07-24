@@ -111,7 +111,7 @@ export const Clients = () => {
 
                                     <PlusButton
                                         onClick={handleAddClient}
-                                        data-testid="clients-add-button"
+                                        testId="clients-add-button"
                                     >
                                         {intl.getMessage('clients_add')}
                                     </PlusButton>

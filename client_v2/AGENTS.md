@@ -54,7 +54,8 @@ Playwright (e2e).
 - **State**: SolidJS `createStore` module-scoped stores (no Redux, no Context
   providers)
 - **HTTP**: Native `fetch` wrapped in a single `Api` class
-- **i18n**: `@adguard/translate` with 13 locale JSON files in `src/__locales/`
+- **i18n**: `@adguard/translate` with 35 bundled locales from `src/__locales/`
+  (generated from `.twosky.json` via `npm run locales:generate`)
 - **Testing**: Vitest 4 + `@solidjs/testing-library` (unit);
   Playwright 1.56 (e2e against a real backend)
 - **Linting/Formatting**: ESLint 8 (`@typescript-eslint`, `eslint-plugin-solid`,
@@ -127,6 +128,8 @@ All commands are run from the `client_v2/` directory.
 | Unit tests (watch)                   | `npm run test:watch`           |
 | E2e tests                            | `npm run test:e2e`             |
 | E2e interactive UI                   | `npm run test:e2e:interactive` |
+| Locale codegen                       | `npm run locales:generate`     |
+| Locale freshness check               | `npm run locales:check`        |
 | Translation check                    | `npm run translations:check`   |
 | Full check (lint + typecheck + test) | `npm run check`                |
 
@@ -441,6 +444,12 @@ friendly:
 
 - All user-facing strings must be localized. Add new keys to the base locale
   `src/__locales/en.json`; other locales are managed externally via Twosky.
+- Locale imports are **generated** — do not hand-edit.
+  When `.twosky.json` or the set of locale JSON files changes, run:
+    ```sh
+    npm run locales:generate
+    ```
+    CI verifies freshness with `npm run locales:check`.
 - Access translations via the `intl` object from `panel/common/intl`:
     - `intl.getMessage('key', values?)` — returns a plain localized string.
       Pass interpolation values as the second argument, referenced inside the

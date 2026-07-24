@@ -43,6 +43,8 @@ export const HTML_PAGES = {
     MAIN: '/',
 };
 
+export const LANGUAGE_QUERY_PARAM = 'lang';
+
 export const STATS_NAMES = {
     avg_processing_time: 'average_processing_time',
     blocked_filtering: 'Blocked by filters',

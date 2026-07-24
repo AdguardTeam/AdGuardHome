@@ -2,16 +2,20 @@ import { createStore } from 'solid-js/store';
 import { untrack } from 'solid-js';
 import { installGetAddresses, installConfigure, installCheckConfig } from 'panel/api/generated';
 import { addErrorToast } from './toasts';
+import intl, { type LocalesType } from 'panel/common/intl';
 import type { InstallInterface } from '../initialState';
 import type { NetInterface } from 'panel/api/model/netInterface';
 import type { InitialConfiguration } from 'panel/api/model/initialConfiguration';
 import type { CheckConfigRequest } from 'panel/api/model/checkConfigRequest';
+import type { Lang } from 'panel/api/model/lang';
 import {
     ALL_INTERFACES_IP,
     INSTALL_FIRST_STEP,
     STANDARD_DNS_PORT,
     STANDARD_WEB_PORT,
 } from 'panel/helpers/constants';
+import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from 'panel/helpers/localStorageHelper';
+import { getBrowserLanguage } from 'panel/helpers/helpers';
 
 type InstallState = {
     step: number;
@@ -43,6 +47,7 @@ type InstallState = {
     };
     interfaces: InstallInterface[];
     dnsVersion: string;
+    language: Lang;
 };
 
 const initialState: InstallState = {
@@ -57,6 +62,7 @@ const initialState: InstallState = {
     staticIp: { static: '', ip: '', error: '' },
     interfaces: [],
     dnsVersion: '',
+    language: getBrowserLanguage(),
 };
 
 const [state, setState] = createStore<InstallState>(initialState);
@@ -102,6 +108,12 @@ export const setAuthData = (auth: Partial<InstallState['auth']>) => {
     setState('auth', (prev) => ({ ...prev, ...auth }));
 };
 
+export const setLanguage = async (lang: Lang) => {
+    await intl.changeLanguage(lang as LocalesType);
+    LocalStorageHelper.setItem(LOCAL_STORAGE_KEYS.LANGUAGE, lang);
+    setState('language', lang);
+};
+
 export const setAllSettings = async (
     config: InitialConfiguration & { confirm_password: string },
 ) => {
@@ -120,7 +132,11 @@ export const setAllSettings = async (
 export const checkConfig = async (values: CheckConfigRequest) => {
     setState('processingCheck', true);
     try {
-        const data = await installCheckConfig(values);
+        const requestWithLang: CheckConfigRequest = {
+            ...values,
+            language: untrack(() => state.language),
+        };
+        const data = await installCheckConfig(requestWithLang);
         setState({
             web: {
                 ip: values.web?.ip ?? '',

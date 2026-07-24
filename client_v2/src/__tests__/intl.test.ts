@@ -1,6 +1,18 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { translate } from '@adguard/translate';
-import { createSolidDefaultValues, solidMessageConstructor } from '../common/intl/index';
+import { LocalStorageHelper } from '../helpers/localStorageHelper';
+
+// Ensure the real constants module is available even when other test files
+// (e.g., install-store.test.ts) mock it with a partial stub.
+vi.mock('panel/helpers/constants', async (importOriginal) =>
+    importOriginal<typeof import('panel/helpers/constants')>(),
+);
+
+import {
+    createSolidDefaultValues,
+    solidMessageConstructor,
+    getInitialLanguage,
+} from '../common/intl/index';
 
 /** Helper to create real DOM elements for test assertions (SolidJS has no h() export) */
 const h = (tag: string, props: Record<string, string> | null, children?: string) => {
@@ -203,5 +215,94 @@ describe('intl.getMessage — missing placeholder fallback', () => {
         // 'query' is missing from values → should return the key
         const result = safeGetPlural('plural_with_value', 5);
         expect(result).toBe('plural_with_value');
+    });
+});
+
+describe('getInitialLanguage', () => {
+    const LANGUAGE_KEY = 'language';
+
+    const setLocation = (href: string) => {
+        delete (globalThis as any).location;
+        (globalThis as any).location = new URL(href);
+    };
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+        localStorage.clear();
+        // Default: a URL with no lang param (so tests without setLocation work)
+        setLocation('http://127.0.0.1:3001/login.html');
+    });
+
+    afterEach(() => {
+        localStorage.clear();
+        delete (globalThis as any).location;
+    });
+
+    const storedLang = () => LocalStorageHelper.getItem<string>(LANGUAGE_KEY);
+
+    it('resolves a valid URL query param and persists to localStorage', () => {
+        setLocation('http://127.0.0.1:3001/login.html?lang=zh-cn');
+
+        const result = getInitialLanguage();
+
+        expect(result).toBe('zh-cn');
+        expect(storedLang()).toBe('zh-cn');
+    });
+
+    it('resolves an invalid URL query param to en and persists en', () => {
+        setLocation('http://127.0.0.1:3001/login.html?lang=garbage');
+
+        const result = getInitialLanguage();
+
+        expect(result).toBe('en');
+        expect(storedLang()).toBe('en');
+    });
+
+    it('resolves abbreviated zh to zh-cn', () => {
+        setLocation('http://127.0.0.1:3001/login.html?lang=zh');
+
+        const result = getInitialLanguage();
+
+        expect(result).toBe('zh-cn');
+        expect(storedLang()).toBe('zh-cn');
+    });
+
+    it('falls back to localStorage when no URL param is present', () => {
+        LocalStorageHelper.setItem(LANGUAGE_KEY, 'de');
+
+        const result = getInitialLanguage();
+
+        expect(result).toBe('de');
+    });
+
+    it('falls back to navigator.language when no URL param or localStorage', () => {
+        vi.stubGlobal('navigator', { language: 'fr-FR' });
+
+        const result = getInitialLanguage();
+
+        expect(result).toBe('fr');
+        vi.unstubAllGlobals();
+    });
+
+    it('falls back to en when no source provides a valid language', () => {
+        // No URL param, no localStorage, stub navigator to a nonsense value
+        vi.stubGlobal('navigator', { language: 'xx-XX' });
+
+        const result = getInitialLanguage();
+
+        expect(result).toBe('en');
+        vi.unstubAllGlobals();
+    });
+
+    it('returns en when typeof window is undefined (SSR)', () => {
+        const originalWindow = globalThis.window;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        delete (globalThis as any).window;
+
+        const result = getInitialLanguage();
+
+        expect(result).toBe('en');
+
+        (globalThis as any).window = originalWindow;
     });
 });
