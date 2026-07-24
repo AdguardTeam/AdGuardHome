@@ -19,6 +19,12 @@ const getIntervalLabel = (t: (key: string, options?: Record<string, unknown>) =>
     return t('auto_refresh_minutes', { count: msToMinutes(intervalMs) });
 };
 
+const getStoredIntervalMs = () => {
+    const stored = Number(LocalStorageHelper.getItem(LOCAL_STORAGE_KEYS.LOGS_AUTO_REFRESH_INTERVAL_MS));
+
+    return LOGS_AUTO_REFRESH_INTERVALS_MS.includes(stored) ? stored : LOGS_AUTO_REFRESH_DEFAULT_INTERVAL_MS;
+};
+
 const AutoRefresh = ({ refreshLogs }: Props) => {
     const { t } = useTranslation();
 
@@ -26,11 +32,7 @@ const AutoRefresh = ({ refreshLogs }: Props) => {
         () => !!LocalStorageHelper.getItem(LOCAL_STORAGE_KEYS.LOGS_AUTO_REFRESH_ENABLED),
     );
 
-    const [intervalMs, setIntervalMs] = useState<number>(
-        () =>
-            Number(LocalStorageHelper.getItem(LOCAL_STORAGE_KEYS.LOGS_AUTO_REFRESH_INTERVAL_MS)) ||
-            LOGS_AUTO_REFRESH_DEFAULT_INTERVAL_MS,
-    );
+    const [intervalMs, setIntervalMs] = useState<number>(getStoredIntervalMs);
 
     const setAutoRefreshEnabled = (enabled: boolean) => {
         setIsAutoRefreshEnabled(enabled);
