@@ -147,8 +147,11 @@ case "$channel" in
 	last_tag="$(git describe --abbrev=0)"
 	readonly last_tag
 
-	# current_branch is the name of the branch currently checked out.
-	current_branch="$(git rev-parse --abbrev-ref HEAD)"
+	# current_branch is the name of the branch.  Prefer the BRANCH
+	# environment variable when set, since 'git rev-parse --abbrev-ref HEAD'
+	# returns 'HEAD' in detached HEAD states (e.g. after 'git checkout
+	# <commit>').
+	current_branch="${BRANCH:-$(git rev-parse --abbrev-ref HEAD)}"
 	readonly current_branch
 
 	# The branch should be named like:
