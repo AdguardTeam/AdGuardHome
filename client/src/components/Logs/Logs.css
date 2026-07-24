@@ -221,6 +221,13 @@
     background-color: transparent;
 }
 
+.logs__auto-refresh {
+    position: relative;
+    top: 3px;
+    margin-left: 0.9375rem;
+    font-size: 0.875rem;
+}
+
 .logs__cell {
     padding: 1rem 1rem 0.5rem 0;
 }

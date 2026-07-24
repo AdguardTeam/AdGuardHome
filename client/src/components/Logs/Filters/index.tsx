@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
 
-import { Form } from './Form';
 import { refreshFilteredLogs } from '../../../actions/queryLogs';
 import { addSuccessToast } from '../../../actions/toasts';
+import AutoRefresh from './AutoRefresh';
+import { Form } from './Form';
 
 interface FiltersProps {
     processingGetLogs: boolean;
@@ -15,11 +16,22 @@ const Filters = ({ setIsLoading }: FiltersProps) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
 
-    const refreshLogs = async () => {
+    const isRefreshingRef = useRef(false);
+    const refreshLogs = async (silently = false) => {
+        if (isRefreshingRef.current) {
+            return;
+        }
+
+        isRefreshingRef.current = true;
         setIsLoading(true);
         await dispatch(refreshFilteredLogs());
-        dispatch(addSuccessToast('query_log_updated'));
+
+        if (!silently) {
+            dispatch(addSuccessToast('query_log_updated'));
+        }
+
         setIsLoading(false);
+        isRefreshingRef.current = false;
     };
 
     return (
@@ -31,15 +43,15 @@ const Filters = ({ setIsLoading }: FiltersProps) => {
                     type="button"
                     className="btn btn-icon--green logs__refresh"
                     title={t('refresh_btn')}
-                    onClick={refreshLogs}>
+                    onClick={() => refreshLogs()}>
                     <svg className="icons icon--24">
                         <use xlinkHref="#update" />
                     </svg>
                 </button>
+
+                <AutoRefresh refreshLogs={refreshLogs} />
             </h1>
-            <Form
-                setIsLoading={setIsLoading}
-            />
+            <Form setIsLoading={setIsLoading} />
         </div>
     );
 };
