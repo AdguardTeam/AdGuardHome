@@ -23,15 +23,22 @@ const Filters = ({ setIsLoading }: FiltersProps) => {
         }
 
         isRefreshingRef.current = true;
-        setIsLoading(true);
-        await dispatch(refreshFilteredLogs());
-
         if (!silently) {
-            dispatch(addSuccessToast('query_log_updated'));
+            setIsLoading(true);
         }
 
-        setIsLoading(false);
-        isRefreshingRef.current = false;
+        try {
+            await dispatch(refreshFilteredLogs());
+
+            if (!silently) {
+                dispatch(addSuccessToast('query_log_updated'));
+            }
+        } finally {
+            if (!silently) {
+                setIsLoading(false);
+            }
+            isRefreshingRef.current = false;
+        }
     };
 
     return (
