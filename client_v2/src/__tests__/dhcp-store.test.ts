@@ -80,7 +80,13 @@ describe('setDhcpConfig', () => {
 
     it('shows dhcp_config_saved toast', async () => {
         await setDhcpConfig({
-            v4: { range_start: 'a', range_end: 'b' },
+            v4: {
+                gateway_ip: '192.168.1.1',
+                subnet_mask: '255.255.255.0',
+                range_start: '192.168.1.100',
+                range_end: '192.168.1.200',
+                lease_duration: 86400,
+            },
             interface_name: 'eth0',
         });
         expect(mocks.addSuccessToast).toHaveBeenCalled();

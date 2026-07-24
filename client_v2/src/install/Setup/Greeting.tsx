@@ -6,7 +6,7 @@ import styles from './styles.module.pcss';
 
 import routerImage from '../../img/router.svg';
 
-const Greeting = () => {
+export const Greeting = () => {
     const configureList = createMemo(() => [
         intl.getMessage('setup_guide_greeting_list_1'),
         intl.getMessage('setup_guide_greeting_list_2'),
@@ -36,5 +36,3 @@ const Greeting = () => {
         </div>
     );
 };
-
-export default Greeting;

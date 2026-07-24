@@ -1,8 +1,7 @@
 import { createStore } from 'solid-js/store';
 import { untrack } from 'solid-js';
 import { installGetAddresses, installConfigure, installCheckConfig } from 'panel/api/generated';
-import { addErrorToast, addSuccessToast } from './toasts';
-import intl from 'panel/common/intl';
+import { addErrorToast } from './toasts';
 import type { InstallInterface } from '../initialState';
 import type { NetInterface } from 'panel/api/model/netInterface';
 import type { InitialConfiguration } from 'panel/api/model/initialConfiguration';
@@ -112,7 +111,6 @@ export const setAllSettings = async (
         void confirm_password;
         await installConfigure(rest);
         setState({ processingSubmit: false, submitted: true });
-        addSuccessToast(intl.getMessage('install_saved'));
     } catch (error) {
         addErrorToast({ error });
         setState('processingSubmit', false);

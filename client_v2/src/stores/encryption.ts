@@ -9,7 +9,10 @@ import type { TlsConfig } from 'panel/api/model/tlsConfig';
 import type { TlsConfigBody } from 'panel/api/model/tlsConfigBody';
 
 type EncryptionState = Partial<
-    Omit<TlsConfig, 'port_https' | 'port_dns_over_tls' | 'port_dns_over_quic' | 'dns_names'>
+    Omit<
+        TlsConfig,
+        'port_https' | 'port_dns_over_tls' | 'port_dns_over_quic' | 'port_dnscrypt' | 'dns_names'
+    >
 > & {
     processing: boolean;
     processingConfig: boolean;
@@ -118,9 +121,7 @@ export const setTlsConfig = async (values: TlsConfigBody, opts?: { silent?: bool
             certificate_path: state.certificate_path,
             private_key_path: state.private_key_path,
             private_key_saved: state.private_key_saved,
-            ...Object.fromEntries(
-                Object.entries(values).filter(([, v]) => v !== undefined),
-            ),
+            ...Object.fromEntries(Object.entries(values).filter(([, v]) => v !== undefined)),
         };
 
         const encoded = encodeRequest(fullValues);

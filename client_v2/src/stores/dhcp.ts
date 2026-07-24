@@ -16,10 +16,10 @@ import { addErrorToast, addSuccessToast } from './toasts';
 import intl from 'panel/common/intl';
 import { STATUS_RESPONSE } from 'panel/helpers/constants';
 import { Paths } from 'panel/components/Routes/Paths';
-import { enrichWithConcatenatedIpAddresses } from 'panel/helpers/helpers';
+
 import type { DhcpStaticLease } from 'panel/api/model/dhcpStaticLease';
 import type { DhcpSearchResult } from 'panel/api/model/dhcpSearchResult';
-import type { DhcpInterfaces } from 'panel/initialState';
+import type { DHCPNetInterfaces } from 'panel/api/model/dHCPNetInterfaces';
 import type { DhcpConfig } from 'panel/api/model/dhcpConfig';
 
 type Lease = { hostname: string; ip: string; mac: string };
@@ -57,7 +57,7 @@ type DhcpState = {
     modalType: LeaseModalType | '';
     dhcp_available: boolean;
     staticIpError: boolean;
-    interfaces?: DhcpInterfaces;
+    interfaces?: DHCPNetInterfaces;
 };
 
 const initialState: DhcpState = {
@@ -141,7 +141,7 @@ export const getDhcpInterfaces = async () => {
     try {
         const data = await dhcpInterfaces();
         setState({
-            interfaces: enrichWithConcatenatedIpAddresses(data),
+            interfaces: data,
             processingInterfaces: false,
         });
     } catch (error) {

@@ -1,4 +1,4 @@
-import { createMemo, onMount, onCleanup, Show, Switch, Match } from 'solid-js';
+import { createMemo, createEffect, onMount, onCleanup, Show, Switch, Match } from 'solid-js';
 
 import { PublicHeader } from 'panel/common/ui/PublicHeader';
 import { SetupGuide } from 'panel/components/SetupGuide/SetupGuide';
@@ -15,7 +15,7 @@ import { dashboardState } from 'panel/stores/dashboard';
 import { getInterfaceIp, getWebAddress } from '../../helpers/helpers';
 import { INSTALL_TOTAL_STEPS, ALL_INTERFACES_IP, DEBOUNCE_TIMEOUT } from '../../helpers/constants';
 
-import Greeting from './Greeting';
+import { Greeting } from './Greeting';
 import type { ConfigType, DnsConfig, WebConfig } from './types';
 import { InterfaceSettings } from './InterfaceSettings';
 import { DnsSettings } from './DnsSettings';
@@ -23,7 +23,7 @@ import { Controls } from './Controls';
 import { Submit } from './Submit';
 import { Progress } from './blocks/Progress';
 import { Auth } from './Auth';
-import Toasts from '../../components/Toasts';
+import { Toasts } from 'panel/components/Toasts';
 
 import styles from './styles.module.pcss';
 import { getDnsAddressWithPort } from './helpers/helpers';
@@ -70,6 +70,11 @@ export const Setup = () => {
 
     onMount(() => {
         getDefaultAddresses();
+    });
+
+    createEffect(() => {
+        step();
+        window.scrollTo({ top: 0, behavior: 'instant' });
     });
 
     const handleNextStep = () => {

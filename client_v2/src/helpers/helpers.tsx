@@ -20,8 +20,6 @@ import {
     SHORT_DATE_FORMAT_OPTIONS,
 } from './constants';
 import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from './localStorageHelper';
-import { DhcpInterfaces } from '../initialState';
-import type { NetInterfaces } from 'panel/api/model/netInterfaces';
 import type { DnsAnswer } from 'panel/api/model/dnsAnswer';
 import type { ResultRule } from 'panel/api/model/resultRule';
 import type { FilteringReason } from 'panel/api/model/filteringReason';
@@ -922,23 +920,6 @@ export const getFilterNames = (rules: Rule[], filters: Filter[], whitelistFilter
     );
 
 /**
- * Add ip_addresses property - concatenated ipv4_addresses and ipv6_addresses for every interface
- * @param interfaces
- * @param interfaces.ipv4_addresses {string[]}
- * @param interfaces.ipv6_addresses {string[]}
- * @returns interfaces Interfaces enriched with ip_addresses property
- */
-
-export const enrichWithConcatenatedIpAddresses = (interfaces: NetInterfaces): DhcpInterfaces =>
-    Object.entries(interfaces).reduce((acc: DhcpInterfaces, [k, v]) => {
-        const ipv4_addresses = v.ipv4_addresses ?? [];
-        const ipv6_addresses = v.ipv6_addresses ?? [];
-
-        acc[k] = { ...v, ip_addresses: ipv4_addresses.concat(ipv6_addresses) };
-        return acc;
-    }, {});
-
-/**
  * @param {string[]} lines
  * @returns {string[]}
  */
@@ -981,11 +962,10 @@ export const calculateDhcpPlaceholdersIpv4 = (ip: string, gatewayIp: string) => 
  * @returns Pre-filled v6 config values
  */
 export const calculateDhcpPlaceholdersIpv6 = () => {
-    const { range_start, range_end, lease_duration } = DHCP_VALUES_PLACEHOLDERS.ipv6;
+    const { range_start, lease_duration } = DHCP_VALUES_PLACEHOLDERS.ipv6;
 
     return {
         range_start,
-        range_end,
         lease_duration,
     };
 };

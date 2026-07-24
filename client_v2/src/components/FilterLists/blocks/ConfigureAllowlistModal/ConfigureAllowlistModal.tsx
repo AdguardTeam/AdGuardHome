@@ -8,8 +8,8 @@ import { ModalWrapper } from 'panel/common/ui/ModalWrapper';
 import { closeModal } from 'panel/stores/modals';
 import theme from 'panel/lib/theme';
 import { Button } from 'panel/common/ui/Button';
+import { InlineLoader } from 'panel/common/ui/Loader/InlineLoader';
 import { addFilter, editFilter, filteringState } from 'panel/stores/filtering';
-import type { FilterSetUrlData } from 'panel/api/model/filterSetUrlData';
 import { Input } from 'panel/common/controls/Input';
 import { validatePath, validateRequiredValue } from 'panel/helpers/validators';
 
@@ -69,11 +69,16 @@ export const ConfigureAllowlistModal = (props: Props) => {
 
         switch (props.modalId) {
             case MODAL_TYPE.ADD_ALLOWLIST: {
-                addFilter(values.url, values.name, true);
+                await addFilter(values.url, values.name, true);
                 break;
             }
             case MODAL_TYPE.EDIT_ALLOWLIST: {
-                editFilter(props.filterToEdit!.url, values as FilterSetUrlData, true);
+                if (!props.filterToEdit) return;
+                await editFilter(
+                    props.filterToEdit.url,
+                    { name: values.name, url: values.url, enabled: props.filterToEdit.enabled ?? true },
+                    true,
+                );
                 break;
             }
             default: {
@@ -132,6 +137,9 @@ export const ConfigureAllowlistModal = (props: Props) => {
                             variant="primary"
                             size="small"
                             disabled={filteringState.processingAddFilter}
+                            leftAddon={
+                                filteringState.processingAddFilter ? <InlineLoader /> : undefined
+                            }
                             class={theme.dialog.button}
                         >
                             {getButtonText(props.modalId)}

@@ -1,4 +1,5 @@
 import { createEffect, Show } from 'solid-js';
+import cn from 'clsx';
 
 import intl from 'panel/common/intl';
 import { Button } from 'panel/common/ui/Button';
@@ -23,7 +24,9 @@ export const Submit = (props: Props) => {
     return (
         <div class={styles.end}>
             <div class={styles.group}>
-                <h1 class={styles.titleStep}>{intl.getMessage('install_submit_title')}</h1>
+                <h1 class={cn(styles.titleStep, styles.endTitle)}>
+                    {intl.getMessage('install_submit_title')}
+                </h1>
 
                 <p class={styles.desc}>{intl.getMessage('setup_complete')}</p>
             </div>

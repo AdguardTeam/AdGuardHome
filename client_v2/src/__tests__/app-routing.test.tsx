@@ -45,7 +45,7 @@ vi.mock('panel/common/ui/Footer', () => ({
     Footer: () => <div data-testid="chrome-footer" />,
 }));
 vi.mock('panel/common/ui/Icons', () => ({ Icons: (): null => null }));
-vi.mock('panel/components/Toasts', () => ({ default: (): null => null }));
+vi.mock('panel/components/Toasts', () => ({ Toasts: (): null => null }));
 
 // Deterministic marker so the assertion does not depend on Dashboard data/i18n.
 vi.mock('panel/components/Dashboard', () => ({

@@ -425,12 +425,14 @@ export const UPSTREAM_TIMEOUT = {
 
 export const DHCP_VALUES_PLACEHOLDERS = {
     ipv4: {
+        gateway_ip: '192.168.1.1',
         subnet_mask: '255.255.255.0',
+        range_start: '192.168.1.100',
+        range_end: '192.168.1.200',
         lease_duration: SECONDS_IN_DAY.toString(),
     },
     ipv6: {
         range_start: '2001::1',
-        range_end: 'ff',
         lease_duration: SECONDS_IN_DAY.toString(),
     },
 };

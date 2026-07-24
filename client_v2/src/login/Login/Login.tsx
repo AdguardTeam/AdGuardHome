@@ -5,8 +5,8 @@ import { Icons } from 'panel/common/ui/Icons';
 
 import s from 'panel/common/ui/Header/Header.module.pcss';
 import { processLogin } from 'panel/stores/login';
-import Toasts from '../../components/Toasts';
-import Form, { type LoginFormValues } from './Form';
+import { Toasts } from 'panel/components/Toasts';
+import { Form, type LoginFormValues } from './Form';
 import styles from './styles.module.pcss';
 
 export const Login = () => {

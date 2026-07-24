@@ -2058,6 +2058,12 @@
           '$ref': '#/components/schemas/DhcpConfigV6'
     'DhcpConfigV4':
       'type': 'object'
+      'required':
+      - 'gateway_ip'
+      - 'subnet_mask'
+      - 'range_start'
+      - 'range_end'
+      - 'lease_duration'
       'properties':
         'gateway_ip':
           'type': 'string'

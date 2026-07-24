@@ -24,7 +24,7 @@ type ToastProps = {
     code?: string;
 };
 
-const Toast = (props: ToastProps) => {
+export const Toast = (props: ToastProps) => {
     let timerRef: ReturnType<typeof setTimeout> | null = null;
 
     const removeCurrentToast = () => removeToast(props.id);
@@ -115,5 +115,3 @@ const Toast = (props: ToastProps) => {
         </div>
     );
 };
-
-export default Toast;

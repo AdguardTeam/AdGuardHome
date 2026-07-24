@@ -13,8 +13,7 @@ import { Filter, type NormalizedQueryLogItem } from './helpers/helpers';
 import type { WhoisInfo } from './api/model/whoisInfo';
 import type { ClientAuto as AutoClient } from './api/model/clientAuto';
 import type { Client } from './api/model/client';
-import type { NetInterface } from './api/model/netInterface';
-import type { NetInterfaces } from './api/model/netInterfaces';
+import type { DHCPNetInterfaces } from './api/model/dHCPNetInterfaces';
 import type { TlsConfig } from './api/model/tlsConfig';
 import type { TlsConfigKeyType } from './api/model/tlsConfigKeyType';
 import type { DnsInfo200 } from './api/model/dnsInfo200';
@@ -74,7 +73,10 @@ export type InstallData = {
 };
 
 export type EncryptionData = Partial<
-    Omit<TlsConfig, 'port_https' | 'port_dns_over_tls' | 'port_dns_over_quic' | 'dns_names'>
+    Omit<
+        TlsConfig,
+        'port_https' | 'port_dns_over_tls' | 'port_dns_over_quic' | 'port_dnscrypt' | 'dns_names'
+    >
 > & {
     // UI-only fields NOT in API model:
     processing: boolean;
@@ -198,9 +200,6 @@ export type AccessData = {
     blocked_hosts: string;
 };
 
-export type DhcpInterface = NetInterface & { ip_addresses: string[] };
-export type DhcpInterfaces = Record<string, DhcpInterface>;
-
 export type DhcpData = {
     processing: boolean;
     processingStatus: boolean;
@@ -233,7 +232,7 @@ export type DhcpData = {
     leaseModalConfig?: { hostname: string; ip: string; mac: string };
     modalType: string;
     dhcp_available: boolean;
-    interfaces?: NetInterfaces;
+    interfaces?: DHCPNetInterfaces;
 };
 
 export type DnsConfigData = Omit<

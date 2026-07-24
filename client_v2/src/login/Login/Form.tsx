@@ -16,11 +16,11 @@ export type LoginFormValues = {
     password: string;
 };
 
-type LoginFormProps = {
+type Props = {
     onSubmit: (data: LoginFormValues) => void;
 };
 
-const Form = (props: LoginFormProps) => {
+export const Form = (props: Props) => {
     const [loginForm, { Form, Field }] = createForm<LoginFormValues>({
         validateOn: 'input',
     });
@@ -33,11 +33,6 @@ const Form = (props: LoginFormProps) => {
 
     const handleSubmit = (values: LoginFormValues) => {
         props.onSubmit(values);
-    };
-
-    // TODO: replace with link
-    const handleForgotPassword = () => {
-        window.location.assign(HTML_PAGES.FORGOT_PASSWORD);
     };
 
     return (
@@ -97,18 +92,15 @@ const Form = (props: LoginFormProps) => {
                     </Button>
 
                     <div class={styles.info}>
-                        <button
-                            type="button"
+                        <a
+                            href={HTML_PAGES.FORGOT_PASSWORD}
                             class={cn(theme.link.link, theme.text.t2)}
-                            onClick={handleForgotPassword}
                         >
                             {intl.getMessage('forgot_password')}
-                        </button>
+                        </a>
                     </div>
                 </div>
             </div>
         </Form>
     );
 };
-
-export default Form;
