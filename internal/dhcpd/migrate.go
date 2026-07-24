@@ -95,7 +95,7 @@ func migrateDB(conf *ServerConfig) (err error) {
 		})
 	}
 
-	err = writeDB(dataDirPath, leases)
+	err = writeDB(dataDirPath, leases, nil)
 	if err != nil {
 		// Don't wrap the error since an annotation deferred already.
 		return err
