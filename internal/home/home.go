@@ -2,6 +2,7 @@
 package home
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"io/fs"
@@ -46,6 +47,7 @@ import (
 	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/AdguardTeam/golibs/osutil"
 	"github.com/AdguardTeam/golibs/osutil/executil"
+	"github.com/AdguardTeam/golibs/service"
 )
 
 // Global context
@@ -124,25 +126,25 @@ func Main(clientBuildFS fs.FS) {
 
 	pidFilePath := setPIDFilePath(opts)
 
-	hc := setupHostsContainer(ctx, baseLogger, opts.noEtcHosts)
+	var (
+		hc        *aghnet.HostsContainer
+		hcWatcher service.Interface
+	)
+	if !opts.noEtcHosts {
+		hc, hcWatcher, err = newHostsContainer(ctx, baseLogger)
+		fatalOnError(err)
+	}
 
 	sigHdlrLogger := baseLogger.With(slogutil.KeyPrefix, "signalhdlr")
-	sigHdlr := newSignalHandler(sigHdlrLogger, signals, func(ctx context.Context) {
-		defer close(done)
-
-		cleanup(ctx, sigHdlrLogger, hc)
-		cleanupAlways(ctx, sigHdlrLogger, pidFilePath)
-
-		if !opts.glinetMode {
-			return
-		}
-
-		closeErr := glTokenFileRoot.Close()
-		if closeErr != nil {
-			baseLogger.ErrorContext(ctx, "closing glinet token root", slogutil.KeyError, closeErr)
-			os.Exit(osutil.ExitCodeFailure)
-		}
-	})
+	sigHdlr := newSignalHandler(sigHdlrLogger, signals, newSignalHandlerCleanup(
+		done,
+		sigHdlrLogger,
+		hc,
+		pidFilePath,
+		opts,
+		glTokenFileRoot,
+		hcWatcher,
+	))
 
 	go sigHdlr.handle(ctx)
 
@@ -184,6 +186,47 @@ func Main(clientBuildFS fs.FS) {
 		pidFilePath,
 		hc,
 	)
+}
+
+// newSignalHandlerCleanup  returns new cleanup function for signal handler.  l
+// and done must not be nil.  glTokenFileRoot must not be nil if opts.glinetMode
+// is true.
+func newSignalHandlerCleanup(
+	done chan struct{},
+	l *slog.Logger,
+	hc *aghnet.HostsContainer,
+	pidFilePath string,
+	opts options,
+	glTokenFileRoot *os.Root,
+	hcWatcher service.Interface,
+) func(ctx context.Context) {
+	return func(ctx context.Context) {
+		defer close(done)
+
+		cleanup(ctx, l, hc)
+		cleanupAlways(ctx, l, pidFilePath)
+
+		if opts.glinetMode {
+			err := glTokenFileRoot.Close()
+			checkCleanupErr(ctx, l, err, "closing glinet token root")
+		}
+
+		if hcWatcher != nil {
+			err := hcWatcher.Shutdown(ctx)
+			checkCleanupErr(ctx, l, err, "shutting down hosts file watcher")
+		}
+	}
+}
+
+// checkCleanupErr logs err and exits with [osutil.ExitCodeFailure] if err is
+// not nil.
+func checkCleanupErr(ctx context.Context, l *slog.Logger, err error, msg string) {
+	if err == nil {
+		return
+	}
+
+	l.ErrorContext(ctx, msg, slogutil.KeyError, err)
+	os.Exit(osutil.ExitCodeFailure)
 }
 
 // setupContext initializes [globalContext] fields.  It also reads and upgrades
@@ -272,26 +315,15 @@ func configureOS(ctx context.Context, l *slog.Logger, conf *configuration) (err 
 	return nil
 }
 
-// setupHostsContainer initializes the structures to keep up-to-date the hosts
+// newHostsContainer initializes the structures to keep up-to-date the hosts
 // provided by the OS.  baseLogger must not be nil.
-func setupHostsContainer(
+func newHostsContainer(
 	ctx context.Context,
 	baseLogger *slog.Logger,
-	noEtcHosts bool,
-) (etcHosts *aghnet.HostsContainer) {
-	var err error
-	defer func() {
-		fatalOnError(err)
-	}()
-
-	if noEtcHosts {
-		return nil
-	}
-
+) (etcHosts *aghnet.HostsContainer, watcher service.Interface, err error) {
 	l := baseLogger.With(slogutil.KeyPrefix, "hosts")
 
-	var hostsWatcher aghos.FSWatcher
-	hostsWatcher, err = aghos.NewOSWatcher(&aghos.OSWatcherConfig{
+	hostsWatcher, err := aghos.NewOSWatcher(&aghos.OSWatcherConfig{
 		Logger: baseLogger.With(slogutil.KeyPrefix, "hosts_watcher"),
 	})
 	if err != nil {
@@ -301,22 +333,20 @@ func setupHostsContainer(
 			slogutil.KeyError,
 			err,
 		)
-
-		hostsWatcher = aghos.EmptyFSWatcher{}
+	} else {
+		watcher = hostsWatcher
 	}
 
 	paths, err := hostsfile.DefaultHostsPaths()
 	if err != nil {
-		err = fmt.Errorf("getting default system hosts paths: %w", err)
-
-		return nil
+		return nil, nil, fmt.Errorf("getting default system hosts paths: %w", err)
 	}
 
 	etcHosts, err = aghnet.NewHostsContainer(
 		ctx,
 		l,
 		osutil.RootDirFS(),
-		hostsWatcher,
+		cmp.Or[aghos.FSWatcher](hostsWatcher, aghos.EmptyFSWatcher{}),
 		paths...,
 	)
 	if err != nil {
@@ -324,19 +354,13 @@ func setupHostsContainer(
 		if errors.Is(err, aghnet.ErrNoHostsPaths) {
 			l.WarnContext(ctx, "initializing hosts container", slogutil.KeyError, err)
 
-			err = closeErr
-
-			return nil
+			return nil, nil, closeErr
 		}
 
-		err = errors.Join(fmt.Errorf("initializing hosts container: %w", err), closeErr)
-
-		return nil
+		return nil, nil, errors.Join(fmt.Errorf("initializing hosts container: %w", err), closeErr)
 	}
 
-	err = hostsWatcher.Start(ctx)
-
-	return etcHosts
+	return etcHosts, watcher, hostsWatcher.Start(ctx)
 }
 
 // initContextClients initializes Context clients and related fields.  All
@@ -462,10 +486,9 @@ func setupDNSFilteringConf(
 
 	conf.Logger = baseLogger.With(slogutil.KeyPrefix, "filtering")
 
-	conf.EtcHosts = hc
 	// TODO(s.chzhen):  Use empty interface.
-	if hc == nil || !config.DNS.HostsFileEnabled {
-		conf.EtcHosts = nil
+	if hc != nil && config.DNS.HostsFileEnabled {
+		conf.EtcHosts = hc
 	}
 
 	conf.ConfModifier = confModifier
@@ -654,8 +677,8 @@ type webConfig struct {
 	// must not be nil.
 	mux *http.ServeMux
 
-	// hc is used for DNS initialization on updates.
-	hc *aghnet.HostsContainer
+	// hostsContainer is used for DNS initialization on updates.
+	hostsContainer *aghnet.HostsContainer
 
 	// configModifier is used to update the global configuration.
 	configModifier agh.ConfigModifier
@@ -709,7 +732,7 @@ func newWeb(ctx context.Context, conf *webConfig) (web *webAPI, err error) {
 		tlsManager:         conf.tlsManager,
 		auth:               conf.auth,
 		mux:                conf.mux,
-		hc:                 conf.hc,
+		hostsContainer:     conf.hostsContainer,
 
 		clientFS: clientFS,
 
@@ -840,7 +863,7 @@ func run(
 	err = setupBindOpts(opts)
 	fatalOnError(err)
 
-	upd, isCustomURL := initUpdate(ctx, baseLogger, opts, tlsMgr, isFirstRun, workDir, confPath, hc)
+	upd, isCustomURL := initUpdate(ctx, baseLogger, opts, tlsMgr, isFirstRun, workDir, confPath)
 
 	dataDirPath := filepath.Join(workDir, dataDir)
 	err = os.MkdirAll(dataDirPath, aghos.DefaultPermDir)
@@ -859,7 +882,7 @@ func run(
 		tlsManager:     tlsMgr,
 		auth:           auth,
 		mux:            mux,
-		hc:             hc,
+		hostsContainer: hc,
 		configModifier: confModifier,
 		httpReg:        httpReg,
 		workDir:        workDir,
@@ -987,7 +1010,6 @@ func initUpdate(
 	isFirstRun bool,
 	workDir string,
 	confPath string,
-	hc *aghnet.HostsContainer,
 ) (upd *updater.Updater, isCustomURL bool) {
 	execPath, err := os.Executable()
 	fatalOnError(errors.Annotate(err, "getting executable path: %w"))
@@ -1004,7 +1026,7 @@ func initUpdate(
 
 	// TODO(e.burkov): This could be made earlier, probably as the option's
 	// effect.
-	cmdlineUpdate(ctx, baseLogger, opts, upd, tlsMgr, isFirstRun, hc)
+	cmdlineUpdate(ctx, baseLogger, opts, upd, tlsMgr, isFirstRun)
 
 	if !isFirstRun {
 		// Save the updated config.
@@ -1413,7 +1435,6 @@ func cmdlineUpdate(
 	upd *updater.Updater,
 	tlsMgr *tlsManager,
 	isFirstRun bool,
-	hc *aghnet.HostsContainer,
 ) {
 	if !opts.performUpdate {
 		return
@@ -1424,7 +1445,7 @@ func cmdlineUpdate(
 	//
 	// TODO(e.burkov):  We could probably initialize the internal resolver
 	// separately.
-	err := initDNSServer(ctx, nil, nil, nil, nil, nil, nil, tlsMgr, l, agh.EmptyConfigModifier{}, hc)
+	err := initDNSServer(ctx, l, dnsforward.DNSCreateParams{}, nil, tlsMgr, agh.EmptyConfigModifier{})
 	fatalOnError(err)
 
 	l.InfoContext(ctx, "performing update via cli")

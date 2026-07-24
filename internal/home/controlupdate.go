@@ -165,15 +165,7 @@ func (web *webAPI) handleUpdate(w http.ResponseWriter, r *http.Request) {
 	// The background context is used because the underlying functions wrap it
 	// with timeout and shut down the server, which handles current request.  It
 	// also should be done in a separate goroutine for the same reason.
-	go finishUpdate(
-		context.Background(),
-		web.logger,
-		web.cmdCons,
-		execPath,
-		web.pidFilePath,
-		web.conf.runningAsService,
-		web.hc,
-	)
+	go web.finishUpdate(context.Background(), execPath)
 }
 
 // versionResponse is the response for /control/version.json endpoint.
@@ -222,31 +214,26 @@ func tlsConfUsesPrivilegedPorts(c *tlsConfigSettings) (ok bool) {
 }
 
 // finishUpdate completes an update procedure.  It is intended to be used as a
-// goroutine.  l and cmdCons must not be nil.
-func finishUpdate(
+// goroutine.
+func (web *webAPI) finishUpdate(
 	ctx context.Context,
-	l *slog.Logger,
-	cmdCons executil.CommandConstructor,
 	execPath string,
-	pidFilePath string,
-	runningAsService bool,
-	hc *aghnet.HostsContainer,
 ) {
-	defer slogutil.RecoverAndExit(ctx, l, osutil.ExitCodeFailure)
+	defer slogutil.RecoverAndExit(ctx, web.logger, osutil.ExitCodeFailure)
 
-	l.InfoContext(ctx, "stopping all tasks")
+	web.logger.InfoContext(ctx, "stopping all tasks")
 
-	cleanup(ctx, l, hc)
-	cleanupAlways(ctx, l, pidFilePath)
+	cleanup(ctx, web.logger, web.hostsContainer)
+	cleanupAlways(ctx, web.logger, web.pidFilePath)
 
 	if runtime.GOOS == "windows" {
-		finalizeWindowsUpdate(ctx, l, cmdCons, execPath, runningAsService)
+		finalizeWindowsUpdate(ctx, web.logger, web.cmdCons, execPath, web.conf.runningAsService)
 
 		os.Exit(osutil.ExitCodeSuccess)
 	}
 
 	var err error
-	l.InfoContext(ctx, "restarting", "exec_path", execPath, "args", os.Args[1:])
+	web.logger.InfoContext(ctx, "restarting", "exec_path", execPath, "args", os.Args[1:])
 	err = syscall.Exec(execPath, os.Args, os.Environ())
 	if err != nil {
 		panic(fmt.Errorf("restarting: %w", err))

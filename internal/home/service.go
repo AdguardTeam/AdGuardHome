@@ -42,7 +42,7 @@ type program struct {
 	baseLogger      *slog.Logger
 	logger          *slog.Logger
 	sigHdlr         *signalHandler
-	hc              *aghnet.HostsContainer
+	hostsContainer  *aghnet.HostsContainer
 	gliNetTokenRoot *os.Root
 	workDir         string
 	confPath        string
@@ -69,7 +69,7 @@ func (p *program) Start(_ service.Service) (err error) {
 		p.workDir,
 		p.confPath,
 		p.pidFilePath,
-		p.hc,
+		p.hostsContainer,
 	)
 
 	return nil
@@ -198,7 +198,7 @@ func handleServiceControlAction(
 			workDir:         workDir,
 			confPath:        confPath,
 			pidFilePath:     pidFilePath,
-			hc:              hc,
+			hostsContainer:  hc,
 		}
 
 		return p.handleRun(ctx, baseLogger, runOpts)

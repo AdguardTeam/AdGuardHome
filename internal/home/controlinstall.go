@@ -479,7 +479,7 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	web.finalizeInstall(ctx, w, r, req, restartHTTP, web.hc)
+	web.finalizeInstall(ctx, w, r, req, restartHTTP)
 }
 
 // finalizeInstall completes first-run setup by applying user-provided settings.
@@ -490,7 +490,6 @@ func (web *webAPI) finalizeInstall(
 	r *http.Request,
 	req *applyConfigReq,
 	restartHTTP bool,
-	hc *aghnet.HostsContainer,
 ) {
 	l := web.logger
 
@@ -537,7 +536,7 @@ func (web *webAPI) finalizeInstall(
 		web.confModifier,
 		web.httpReg,
 		web.conf.workDir,
-		hc,
+		web.hostsContainer,
 	)
 	if err != nil {
 		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusInternalServerError, "%s", err)
