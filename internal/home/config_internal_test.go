@@ -1,10 +1,15 @@
 package home
 
 import (
+	"crypto/x509"
+	"net/netip"
 	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -87,5 +92,83 @@ func TestConfigFilePath(t *testing.T) {
 			got := configFilePath(ctx, testLogger, workDir, tc.confPath)
 			assert.Equal(t, tc.want, got)
 		})
+	}
+}
+
+// newTestTLSConfigProvider returns a [aghtls.TLSConfigProvider] fake that
+// serves the given extended TLS configuration.  extTLSConf must not be nil.
+func newTestTLSConfigProvider(extTLSConf *aghtls.ExtendedTLSConfig) (p *aghtest.TLSConfigProvider) {
+	return &aghtest.TLSConfigProvider{
+		OnExtendedTLSConfig: func() (conf *aghtls.ExtendedTLSConfig) {
+			return extTLSConf
+		},
+		OnRootCAs: func() (pool *x509.CertPool) {
+			return nil
+		},
+	}
+}
+
+func TestNewServerConfig_DefaultHosts(t *testing.T) {
+	dnsConf := &dnsConfig{
+		BindHosts: nil,
+		Port:      53,
+		PendingRequests: &pendingRequests{
+			Enabled: false,
+		},
+	}
+	dohConf := &doHConfig{}
+
+	conf, err := newServerConfig(
+		dnsConf,
+		&clientSourcesConfig{},
+		dohConf,
+		newTestTLSConfigProvider(&aghtls.ExtendedTLSConfig{}),
+		&aghtest.Registrar{},
+		nil, // clientsContainer
+		&aghtest.ConfigModifier{},
+	)
+	require.NoError(t, err)
+	require.Len(t, conf.UDPListenAddrs, 2)
+
+	assert.Equal(t, netutil.IPv4Localhost().String(), conf.UDPListenAddrs[0].IP.String())
+	assert.Equal(t, netutil.IPv6Localhost().String(), conf.UDPListenAddrs[1].IP.String())
+}
+
+func TestNewServerConfig_Issue8363BindHosts(t *testing.T) {
+	bindHosts := []netip.Addr{
+		netip.IPv4Unspecified(),
+		netip.IPv6Unspecified(),
+		netutil.IPv4Localhost(),
+		netutil.IPv6Localhost(),
+	}
+	dnsConf := &dnsConfig{
+		BindHosts: bindHosts,
+		Port:      53,
+		PendingRequests: &pendingRequests{
+			Enabled: false,
+		},
+	}
+	extTLSConf := &aghtls.ExtendedTLSConfig{
+		Enabled:         true,
+		PortDNSOverTLS:  853,
+		PortDNSOverQUIC: 853,
+	}
+
+	conf, err := newServerConfig(
+		dnsConf,
+		&clientSourcesConfig{},
+		&doHConfig{},
+		newTestTLSConfigProvider(extTLSConf),
+		&aghtest.Registrar{},
+		nil, // clientsContainer
+		&aghtest.ConfigModifier{},
+	)
+	require.NoError(t, err)
+	require.Len(t, conf.TLSConf.TLSListenAddrs, len(bindHosts))
+	require.Len(t, conf.TLSConf.QUICListenAddrs, len(bindHosts))
+
+	for i, host := range bindHosts {
+		assert.Equal(t, host.String(), conf.TLSConf.TLSListenAddrs[i].IP.String())
+		assert.Equal(t, host.String(), conf.TLSConf.QUICListenAddrs[i].IP.String())
 	}
 }

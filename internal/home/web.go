@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/fs"
 	"log/slog"
+	"net"
 	"net/http"
 	"net/netip"
 	"runtime"
@@ -334,6 +335,24 @@ func (web *webAPI) tlsConfigChanged(ctx context.Context, tlsConf *aghtls.Extende
 // loggerKeyServer is the key used by [webAPI] to identify servers.
 const loggerKeyServer = "server"
 
+// getBindAddr returns the network and address strings to use when creating a
+// listener on addr and port.  network must be either "tcp" or "udp".  The
+// address family of addr is preserved:  for the unspecified IPv4 address the
+// IPv4-only network is returned, since Go's wildcard listeners otherwise
+// accept connections of both address families on platforms that support
+// IPv4-mapped IPv6 addresses.  For the unspecified IPv6 address the returned
+// address is in the ":port" form, which enables dual-stack listening.
+func getBindAddr(network string, addr netip.Addr, port uint16) (listenNetwork, addrStr string) {
+	switch {
+	case !addr.IsUnspecified():
+		return network, netip.AddrPortFrom(addr, port).String()
+	case addr.Is4():
+		return network + "4", netip.AddrPortFrom(addr, port).String()
+	default:
+		return network, netutil.JoinHostPort("", port)
+	}
+}
+
 // start starts serving HTTP requests.
 func (web *webAPI) start(ctx context.Context) {
 	defer slogutil.RecoverAndExit(ctx, web.logger, osutil.ExitCodeFailure)
@@ -356,9 +375,11 @@ func (web *webAPI) start(ctx context.Context) {
 		protocols.SetUnencryptedHTTP2(true)
 		protocols.SetHTTP1(true)
 
+		network, addrStr := getBindAddr("tcp", web.conf.BindAddr.Addr(), web.conf.BindAddr.Port())
+
 		// Create a new instance, because the Web is not usable after Shutdown.
 		web.httpServer = &http.Server{
-			Addr:              web.conf.BindAddr.String(),
+			Addr:              addrStr,
 			Handler:           hdlr,
 			ReadTimeout:       web.conf.ReadTimeout,
 			ReadHeaderTimeout: web.conf.ReadHeaderTimeout,
@@ -369,9 +390,16 @@ func (web *webAPI) start(ctx context.Context) {
 		go func() {
 			defer slogutil.RecoverAndLog(ctx, logger)
 
-			logger.InfoContext(ctx, "starting plain server", "addr", web.httpServer.Addr)
+			logger.InfoContext(ctx, "starting plain server", "addr", addrStr)
 
-			errs <- web.httpServer.ListenAndServe()
+			ln, lErr := net.Listen(network, addrStr)
+			if lErr != nil {
+				errs <- lErr
+
+				return
+			}
+
+			errs <- web.httpServer.Serve(ln)
 		}()
 
 		err := <-errs
@@ -452,13 +480,13 @@ func (web *webAPI) serveTLS(ctx context.Context) (next bool) {
 		portHTTPS = config.TLS.PortHTTPS
 	}()
 
-	addr := netip.AddrPortFrom(web.conf.BindAddr.Addr(), portHTTPS).String()
+	network, addrStr := getBindAddr("tcp", web.conf.BindAddr.Addr(), portHTTPS)
 	logger := web.baseLogger.With(loggerKeyServer, "https")
 
 	hdlr := web.wrapMux(logger)
 
 	web.httpsServer.server = &http.Server{
-		Addr:              addr,
+		Addr:              addrStr,
 		Handler:           hdlr,
 		TLSConfig:         web.tlsConfProvider.TLSConfig(),
 		ReadTimeout:       web.conf.ReadTimeout,
@@ -471,11 +499,15 @@ func (web *webAPI) serveTLS(ctx context.Context) (next bool) {
 	printHTTPSAddresses(ctx, web.logger, extTLSConf)
 
 	if web.conf.serveHTTP3 {
-		go web.mustStartHTTP3(ctx, addr)
+		go web.mustStartHTTP3(ctx, portHTTPS)
 	}
 
 	logger.InfoContext(ctx, "starting https server")
-	err := web.httpsServer.server.ListenAndServeTLS("", "")
+	ln, err := net.Listen(network, addrStr)
+	if err == nil {
+		err = web.httpsServer.server.ServeTLS(ln, "", "")
+	}
+
 	if !errors.Is(err, http.ErrServerClosed) {
 		cleanupAlways(ctx, logger, web.pidFilePath)
 
@@ -485,23 +517,26 @@ func (web *webAPI) serveTLS(ctx context.Context) (next bool) {
 	return true
 }
 
-// mustStartHTTP3 initializes and starts HTTP3 server.
-func (web *webAPI) mustStartHTTP3(ctx context.Context, address string) {
+// mustStartHTTP3 initializes and starts HTTP3 server on the configured bind
+// address with the given port.
+func (web *webAPI) mustStartHTTP3(ctx context.Context, port uint16) {
 	defer slogutil.RecoverAndExit(ctx, web.logger, osutil.ExitCodeFailure)
 
 	logger := web.baseLogger.With(loggerKeyServer, "http3")
 	hdlr := web.wrapMux(logger)
 
+	network, addrStr := getBindAddr("udp", web.conf.BindAddr.Addr(), port)
+
 	web.httpsServer.server3 = &http3.Server{
 		// TODO(a.garipov): See if there is a way to use the error log as
 		// well as timeouts here.
-		Addr:      address,
+		Addr:      addrStr,
 		TLSConfig: web.tlsConfProvider.TLSConfig(),
 		Handler:   hdlr,
 	}
 
 	web.logger.DebugContext(ctx, "starting http/3 server")
-	err := web.httpsServer.server3.ListenAndServe()
+	err := serveHTTP3(ctx, logger, web.httpsServer.server3, network, addrStr)
 	if !errors.Is(err, http.ErrServerClosed) {
 		cleanupAlways(ctx, logger, web.pidFilePath)
 
@@ -509,10 +544,30 @@ func (web *webAPI) mustStartHTTP3(ctx context.Context, address string) {
 	}
 }
 
-// startPprof launches the debug and profiling server on the provided port.
-func startPprof(baseLogger *slog.Logger, port uint16) {
-	addr := netip.AddrPortFrom(netutil.IPv4Localhost(), port)
+// serveHTTP3 listens for UDP packets on the given network and address, and
+// serves HTTP/3 requests on srv until it is closed.  The created packet
+// connection is closed before returning, since [http3.Server.Serve] does not
+// close connections provided by the caller.  logger and srv must not be nil.
+func serveHTTP3(
+	ctx context.Context,
+	logger *slog.Logger,
+	srv *http3.Server,
+	network string,
+	addrStr string,
+) (err error) {
+	conn, err := net.ListenPacket(network, addrStr)
+	if err != nil {
+		// Don't wrap the error because it's informative enough as is.
+		return err
+	}
+	defer slogutil.CloseAndLog(ctx, logger, conn, slog.LevelDebug)
 
+	return srv.Serve(conn)
+}
+
+// startPprof launches the debug and profiling server on the provided port on
+// both IPv4 and IPv6 loopback addresses.
+func startPprof(baseLogger *slog.Logger, port uint16) {
 	runtime.SetBlockProfileRate(1)
 	runtime.SetMutexProfileFraction(1)
 
@@ -522,15 +577,26 @@ func startPprof(baseLogger *slog.Logger, port uint16) {
 	ctx := context.Background()
 	logger := baseLogger.With(slogutil.KeyPrefix, "pprof")
 
-	go func() {
-		defer slogutil.RecoverAndLog(ctx, logger)
+	go servePprof(ctx, logger, mux, netutil.IPv4Localhost(), port)
+	go servePprof(ctx, logger, mux, netutil.IPv6Localhost(), port)
+}
 
-		logger.InfoContext(ctx, "listening", "addr", addr)
-		err := http.ListenAndServe(addr.String(), mux)
-		if !errors.Is(err, http.ErrServerClosed) {
-			logger.ErrorContext(ctx, "shutting down", slogutil.KeyError, err)
-		}
-	}()
+// servePprof serves the pprof HTTP endpoints on the given host and port.
+func servePprof(
+	ctx context.Context,
+	logger *slog.Logger,
+	mux *http.ServeMux,
+	host netip.Addr,
+	port uint16,
+) {
+	defer slogutil.RecoverAndLog(ctx, logger)
+
+	addrStr := netip.AddrPortFrom(host, port).String()
+	logger.InfoContext(ctx, "listening", "addr", addrStr)
+	err := http.ListenAndServe(addrStr, mux)
+	if !errors.Is(err, http.ErrServerClosed) {
+		logger.ErrorContext(ctx, "shutting down", slogutil.KeyError, err)
+	}
 }
 
 // handleTLSStatus is the handler for the GET /control/tls/status HTTP API.
