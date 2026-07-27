@@ -3,15 +3,15 @@ import whotracksmeWebsites from './whotracksme_web.json';
 import trackersDb from './trackers.json';
 import { REPOSITORY } from '../constants';
 
-/**
- @typedef TrackerData
- @type {object}
- @property {string} id - tracker ID.
- @property {string} name - tracker name.
- @property {string} url - tracker website url.
- @property {number} category - tracker category.
- @property {source} source - tracker data source.
- */
+/** Return type of {@link getTrackerData}. */
+export type TrackerData = {
+    id: string;
+    name: string;
+    url: string;
+    category: string;
+    source: number;
+    sourceData: { name: string; url: string } | null;
+};
 
 /**
  * Tracker data sources

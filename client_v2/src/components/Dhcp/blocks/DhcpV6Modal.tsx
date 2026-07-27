@@ -6,6 +6,8 @@ import theme from 'panel/lib/theme';
 import { ConfigDialog } from 'panel/common/ui/ConfigDialog';
 import { Input } from 'panel/common/controls/Input';
 import { dhcpState } from 'panel/stores/dhcp';
+import { calculateDhcpPlaceholdersIpv6 } from 'panel/helpers/helpers';
+import { DHCP_VALUES_PLACEHOLDERS } from 'panel/helpers/constants';
 import { validateIpv6, validateLeaseTime } from 'panel/helpers/validators';
 
 export type V6Config = {
@@ -36,6 +38,8 @@ export const DhcpV6Modal = (props: Props) => {
         }
     });
 
+    const v6Placeholders = createMemo(() => calculateDhcpPlaceholdersIpv6());
+
     const hasIpv6 = createMemo(
         () =>
             !!(
@@ -52,7 +56,12 @@ export const DhcpV6Modal = (props: Props) => {
     };
 
     const validateLeaseDuration = () => {
-        const err = validateLeaseTime(leaseDuration());
+        const val = leaseDuration();
+        if (!val) {
+            setLeaseDurationError('');
+            return;
+        }
+        const err = validateLeaseTime(val);
         setLeaseDurationError(err || '');
     };
 
@@ -81,7 +90,9 @@ export const DhcpV6Modal = (props: Props) => {
                 <Input
                     id="v6_range_start"
                     label={intl.getMessage('dhcp_form_range_title')}
-                    placeholder={intl.getMessage('dhcp_form_range_start')}
+                    placeholder={
+                        v6Placeholders().range_start || DHCP_VALUES_PLACEHOLDERS.ipv6.range_start
+                    }
                     value={rangeStart()}
                     onChange={(e: Event) => setRangeStart((e.target as HTMLInputElement).value)}
                     onBlur={validateRangeStart}
@@ -94,7 +105,10 @@ export const DhcpV6Modal = (props: Props) => {
                     id="v6_lease_duration"
                     type="number"
                     label={intl.getMessage('dhcp_form_lease_title')}
-                    placeholder="86400"
+                    placeholder={
+                        v6Placeholders().lease_duration ||
+                        DHCP_VALUES_PLACEHOLDERS.ipv6.lease_duration
+                    }
                     value={leaseDuration()}
                     onChange={(e: Event) => setLeaseDuration((e.target as HTMLInputElement).value)}
                     onBlur={() => validateLeaseDuration()}

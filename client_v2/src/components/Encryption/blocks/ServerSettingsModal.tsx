@@ -4,7 +4,7 @@ import { Input } from 'panel/common/controls/Input';
 import { FaqTooltip } from 'panel/common/ui/FaqTooltip';
 import intl from 'panel/common/intl';
 import { encryptionState, setTlsConfig } from 'panel/stores/encryption';
-import { toNumber } from 'panel/helpers/form';
+import { toNumber, normalizeServerName } from 'panel/helpers/form';
 import { validateServerName, validatePort, validateIsSafePort } from 'panel/helpers/validators';
 import s from '../styles.module.pcss';
 import theme from 'panel/lib/theme';
@@ -27,9 +27,9 @@ export const ServerSettingsModal = (props: Props) => {
             (open) => {
                 if (open) {
                     setServerName(encryptionState.server_name || '');
-                    setPortHttps(encryptionState.port_https || 0);
-                    setPortDot(encryptionState.port_dns_over_tls || 0);
-                    setPortDoq(encryptionState.port_dns_over_quic || 0);
+                    setPortHttps(Number(encryptionState.port_https) || 0);
+                    setPortDot(Number(encryptionState.port_dns_over_tls) || 0);
+                    setPortDoq(Number(encryptionState.port_dns_over_quic) || 0);
                     setErrors({});
                 }
             },
@@ -67,7 +67,10 @@ export const ServerSettingsModal = (props: Props) => {
     };
 
     const handleServerNameBlur = () => {
-        const err = validateServerName(serverName());
+        const normalized = normalizeServerName(serverName());
+        setServerName(normalized);
+
+        const err = validateServerName(normalized);
         setErrors((prev) => {
             const next = { ...prev };
             if (err) {

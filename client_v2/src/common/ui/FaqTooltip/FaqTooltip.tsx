@@ -13,7 +13,7 @@ type Props = {
     spacing?: boolean;
     menuClass?: string;
     overlayClass?: string;
-    position?: 'bottomLeft' | 'bottomRight' | 'bottom';
+    position?: 'bottomLeft' | 'bottomRight';
 };
 
 export const FaqTooltip = (props: Props) => {
@@ -33,7 +33,7 @@ export const FaqTooltip = (props: Props) => {
                 </div>
             }
             class={s.dropdown}
-            position={position() as any}
+            position={position()}
         >
             <div class={s.trigger} onPointerDown={(e: PointerEvent) => e.stopPropagation()}>
                 <Icon icon="faq" class={s.icon} />

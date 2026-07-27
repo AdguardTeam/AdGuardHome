@@ -20,17 +20,18 @@ import {
     hasPersistentClient,
     isBlockedReason,
 } from '../../helpers';
-import { LogEntry, Service } from '../../types';
+import type { NormalizedQueryLogItem } from 'panel/helpers/helpers';
+import { Service } from '../../types';
 import { ActionsMenu } from '../ActionsMenu';
 
 import s from './LogCard.module.pcss';
 
 type Props = {
-    entry: LogEntry;
+    entry: NormalizedQueryLogItem;
     filters: Filter[];
     services: Service[];
     whitelistFilters: Filter[];
-    onRowClick: (entry: LogEntry) => void;
+    onRowClick: (entry: NormalizedQueryLogItem) => void;
     onBlock: (domain: string) => void;
     onUnblock: (domain: string) => void;
     onBlockClient: (domain: string, client: string) => void;

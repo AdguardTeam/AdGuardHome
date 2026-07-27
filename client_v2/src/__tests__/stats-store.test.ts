@@ -1,16 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
-    getStats: vi.fn(),
-    searchClients: vi.fn(),
+    stats: vi.fn(),
+    clientsSearch: vi.fn(),
     addErrorToast: vi.fn(),
 }));
 
-vi.mock('panel/api/Api', () => ({
-    apiClient: {
-        getStats: mocks.getStats,
-        searchClients: mocks.searchClients,
-    },
+vi.mock('panel/api/generated', () => ({
+    stats: mocks.stats,
+    clientsSearch: mocks.clientsSearch,
 }));
 vi.mock('panel/stores/toasts', () => ({
     addErrorToast: mocks.addErrorToast,
@@ -21,11 +19,11 @@ import { getStats, statsState } from 'panel/stores/stats';
 describe('getStats', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        mocks.searchClients.mockResolvedValue([]);
+        mocks.clientsSearch.mockResolvedValue([]);
     });
 
     it('enriches top clients and stores normalizedTopClients', async () => {
-        mocks.getStats.mockResolvedValue({
+        mocks.stats.mockResolvedValue({
             top_clients: [{ '1.2.3.4': 5 }],
             avg_processing_time: 0.012,
             top_blocked_domains: [],
@@ -37,7 +35,7 @@ describe('getStats', () => {
         await getStats();
 
         // searchClients was called with discovered client ids
-        expect(mocks.searchClients).toHaveBeenCalledWith({
+        expect(mocks.clientsSearch).toHaveBeenCalledWith({
             clients: [{ id: '1.2.3.4' }],
         });
         // normalizedTopClients is populated (configured bucket carries info name)
@@ -45,17 +43,17 @@ describe('getStats', () => {
     });
 
     it('converts avg_processing_time to milliseconds, falsy passthrough', async () => {
-        mocks.getStats.mockResolvedValue({ avg_processing_time: 0.012 });
+        mocks.stats.mockResolvedValue({ avg_processing_time: 0.012 });
         await getStats();
         expect(statsState.avgProcessingTime).toBe(12);
 
-        mocks.getStats.mockResolvedValue({ avg_processing_time: 0 });
+        mocks.stats.mockResolvedValue({ avg_processing_time: 0 });
         await getStats();
         expect(statsState.avgProcessingTime).toBe(0); // not NaN
     });
 
     it('converts top_upstreams_avg_time entries from seconds to milliseconds', async () => {
-        mocks.getStats.mockResolvedValue({
+        mocks.stats.mockResolvedValue({
             top_upstreams_avg_time: [{ '1.1.1.1': 0.012 }, { '9.9.9.9': 0.3 }],
             top_clients: [],
             avg_processing_time: 0,

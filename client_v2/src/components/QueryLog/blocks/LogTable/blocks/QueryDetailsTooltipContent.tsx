@@ -4,17 +4,17 @@ import cn from 'clsx';
 import intl from 'panel/common/intl';
 import { captitalizeWords } from 'panel/helpers/helpers';
 import theme from 'panel/lib/theme';
+import type { NormalizedQueryLogItem } from 'panel/helpers/helpers';
 import {
     formatLogDate,
     formatLogTimeDetailed,
     getProtocolName,
 } from 'panel/components/QueryLog/helpers';
-import { LogEntry } from 'panel/components/QueryLog/types';
 
 import s from '../LogTable.module.pcss';
 
 type Props = {
-    row: LogEntry;
+    row: NormalizedQueryLogItem;
 };
 
 const renderValue = (value: any) => (
@@ -23,6 +23,8 @@ const renderValue = (value: any) => (
 
 export const QueryDetailsTooltipContent = (props: Props) => {
     const trackerSource = () => props.row.tracker?.sourceData;
+    const trackerName = () => props.row.tracker?.name;
+    const trackerCategory = () => props.row.tracker?.category;
     const displayDomain = () => props.row.unicodeName || props.row.domain;
 
     return (
@@ -77,42 +79,56 @@ export const QueryDetailsTooltipContent = (props: Props) => {
                 </div>
 
                 <div class={s.queryDetailsTooltipSection}>
-                    <div class={s.queryDetailsTooltipItem}>
-                        {intl.getMessage('query_log_detail_name', {
-                            value: props.row.tracker!.name,
-                            span: renderValue,
-                        })}
-                    </div>
-                    <div class={s.queryDetailsTooltipItem}>
-                        {intl.getMessage('query_log_detail_category', {
-                            value: captitalizeWords(props.row.tracker!.category),
-                            span: renderValue,
-                        })}
-                    </div>
-                    <Show when={trackerSource()?.name}>
-                        <div class={s.queryDetailsTooltipItem}>
-                            {intl.getMessage('query_log_detail_source', {
-                                value: trackerSource()!.name,
-                                span: (content: any) =>
-                                    trackerSource()!.url ? (
-                                        <a
-                                            href={trackerSource()!.url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            class={cn(
-                                                s.queryDetailsTooltipLink,
-                                                theme.status.statusGreen,
-                                            )}
-                                        >
-                                            {content}
-                                        </a>
-                                    ) : (
-                                        <span class={cn(s.queryDetailsTooltipValue, theme.text.t3)}>
-                                            {content}
-                                        </span>
-                                    ),
-                            })}
-                        </div>
+                    <Show when={trackerName()}>
+                        {(name) => (
+                            <div class={s.queryDetailsTooltipItem}>
+                                {intl.getMessage('query_log_detail_name', {
+                                    value: name(),
+                                    span: renderValue,
+                                })}
+                            </div>
+                        )}
+                    </Show>
+                    <Show when={trackerCategory()}>
+                        {(category) => (
+                            <div class={s.queryDetailsTooltipItem}>
+                                {intl.getMessage('query_log_detail_category', {
+                                    value: captitalizeWords(category()),
+                                    span: renderValue,
+                                })}
+                            </div>
+                        )}
+                    </Show>
+                    <Show when={trackerSource()}>
+                        {(source) => (
+                            <Show when={source()?.name}>
+                                {(name) => (
+                                    <div class={s.queryDetailsTooltipItem}>
+                                        {intl.getMessage('query_log_detail_source', {
+                                            value: name(),
+                                            span: (content: any) =>
+                                                source()?.url ? (
+                                                    <a
+                                                        href={source()?.url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        class={cn(
+                                                            s.queryDetailsTooltipLink,
+                                                            theme.status.statusGreen,
+                                                        )}
+                                                    >
+                                                        {content}
+                                                    </a>
+                                                ) : (
+                                                    <span class={cn(s.queryDetailsTooltipValue, theme.text.t3)}>
+                                                        {content}
+                                                    </span>
+                                                ),
+                                        })}
+                                    </div>
+                                )}
+                            </Show>
+                        )}
                     </Show>
                 </div>
             </Show>

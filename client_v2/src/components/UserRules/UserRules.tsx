@@ -22,7 +22,7 @@ import { RulesEditor } from './blocks/RulesEditor';
 import { DNS_RECORD_TYPE_OPTIONS } from './types';
 import { useUserRulesActions } from './useUserRulesActions';
 
-import type { CheckFormValues } from './types';
+import type { CheckFormValues, CheckResultData } from './types';
 
 import s from './UserRules.module.pcss';
 
@@ -61,7 +61,7 @@ export const UserRules = () => {
         openDeleteRewriteModal,
         resetCurrentRewrite,
     } = useUserRulesActions({
-        checkResult: () => filteringState.check,
+        checkResult: () => filteringState.check as CheckResultData,
         filteringEnabled: () => filteringState.enabled,
         settingsList: () => settingsState.settingsList,
         persistentClients: () => dashboardState.clients || [],
@@ -83,7 +83,7 @@ export const UserRules = () => {
     });
 
     createEffect(() => {
-        if (filteringState.check?.hostname) {
+        if ((filteringState.check as CheckResultData)?.hostname) {
             setIsResultVisible(true);
         }
     });
@@ -130,7 +130,10 @@ export const UserRules = () => {
 
     const showResultLoader = createMemo(() => isResultVisible() && isResultRefreshing());
     const showResultCard = createMemo(
-        () => isResultVisible() && !isResultRefreshing() && Boolean(filteringState.check?.hostname),
+        () =>
+            isResultVisible() &&
+            !isResultRefreshing() &&
+            Boolean((filteringState.check as CheckResultData)?.hostname),
     );
 
     return (
@@ -182,7 +185,7 @@ export const UserRules = () => {
 
                         <Show when={showResultCard()}>
                             <CheckResult
-                                checkResult={filteringState.check}
+                                checkResult={filteringState.check as CheckResultData}
                                 processingRules={isActionProcessing()}
                                 onDismiss={() => setIsResultVisible(false)}
                                 onAction={handleAction}
@@ -198,13 +201,17 @@ export const UserRules = () => {
 
             <ConfigureRewritesModal
                 modalId={MODAL_TYPE.EDIT_REWRITE}
-                rewriteToEdit={currentRewrite()}
+                rewriteToEdit={
+                    currentRewrite() as { answer: string; domain: string; enabled: boolean }
+                }
                 onSubmit={handleRewriteUpdate}
                 onClose={resetCurrentRewrite}
             />
 
             <DeleteRewriteModal
-                rewriteToDelete={currentRewrite()}
+                rewriteToDelete={
+                    currentRewrite() as { answer: string; domain: string; enabled: boolean }
+                }
                 setRewriteToDelete={setCurrentRewrite}
                 onConfirm={handleRewriteDelete}
             />

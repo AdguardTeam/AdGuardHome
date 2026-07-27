@@ -1,5 +1,7 @@
+import type { FilteringReason } from 'panel/api/model/filteringReason';
+
 export type ResponseEntry = {
-    value: string;
+    value?: string;
     type?: string;
     ttl?: number;
 };
@@ -47,7 +49,7 @@ export type LogEntry = {
     unicodeName?: string;
     type: string;
     response: ResponseEntry[];
-    reason: string;
+    reason: FilteringReason;
     client: string;
     client_info: ClientInfo | null;
     tracker: TrackerInfo | null;

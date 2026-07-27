@@ -21,11 +21,9 @@ import { RewritesTable } from './blocks/RewritesTable/RewritesTable';
 
 import s from './FilterLists.module.pcss';
 
-export type Rewrite = {
-    answer: string;
-    domain: string;
-    enabled: boolean;
-};
+import type { RewriteEntry } from 'panel/api/model/rewriteEntry';
+
+export type Rewrite = RewriteEntry & { enabled?: boolean };
 
 export const DNSRewrites = () => {
     const [currentRewrite, setCurrentRewrite] = createSignal<Rewrite>({

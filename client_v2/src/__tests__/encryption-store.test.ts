@@ -1,19 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
-    setTlsConfig: vi.fn(),
-    validateTlsConfig: vi.fn(),
+    tlsConfigure: vi.fn(),
+    tlsValidate: vi.fn(),
     addErrorToast: vi.fn(),
     addSuccessToast: vi.fn(),
     redirectToCurrentProtocol: vi.fn(),
 }));
 
-vi.mock('panel/api/Api', () => ({
-    apiClient: {
-        setTlsConfig: mocks.setTlsConfig,
-        validateTlsConfig: mocks.validateTlsConfig,
-        getGlobalStatus: vi.fn(),
-    },
+vi.mock('panel/api/generated', () => ({
+    tlsConfigure: mocks.tlsConfigure,
+    tlsValidate: mocks.tlsValidate,
+    status: vi.fn(),
 }));
 vi.mock('panel/stores/toasts', () => ({
     addErrorToast: mocks.addErrorToast,
@@ -38,7 +36,7 @@ describe('setTlsConfig', () => {
     beforeEach(() => vi.clearAllMocks());
 
     it('defaults empty ports to 0', async () => {
-        mocks.setTlsConfig.mockImplementation(async (v: any) => ({
+        mocks.tlsConfigure.mockImplementation(async (v: any) => ({
             ...v,
             certificate_chain: '',
             private_key: '',
@@ -46,18 +44,18 @@ describe('setTlsConfig', () => {
         await setTlsConfig({
             certificate_chain: '',
             private_key: '',
-            port_https: '',
-            port_dns_over_tls: '',
-            port_dns_over_quic: '',
+            port_https: 0,
+            port_dns_over_tls: 0,
+            port_dns_over_quic: 0,
         });
-        const sent = mocks.setTlsConfig.mock.calls[0][0];
+        const sent = mocks.tlsConfigure.mock.calls[0][0];
         expect(sent.port_https).toBe(0);
         expect(sent.port_dns_over_tls).toBe(0);
         expect(sent.port_dns_over_quic).toBe(0);
     });
 
     it('clears validation status fields when resetValidationStatus is called', async () => {
-        mocks.validateTlsConfig.mockResolvedValue({
+        mocks.tlsValidate.mockResolvedValue({
             valid_chain: true,
             valid_cert: true,
             valid_key: true,
@@ -91,7 +89,7 @@ describe('setTlsConfig', () => {
         expect(encryptionState.warning_validation).toBe('');
         expect(encryptionState.subject).toBe('');
         expect(encryptionState.issuer).toBe('');
-        expect(encryptionState.key_type).toBe('');
+        expect(encryptionState.key_type).toBeUndefined();
         expect(encryptionState.dns_names).toBeNull();
     });
 
@@ -100,7 +98,7 @@ describe('setTlsConfig', () => {
             value: { protocol: 'http:' },
             writable: true,
         });
-        mocks.setTlsConfig.mockImplementation(async (v: any) => ({
+        mocks.tlsConfigure.mockImplementation(async (v: any) => ({
             ...v,
             certificate_chain: '',
             private_key: '',
@@ -127,7 +125,7 @@ describe('setTlsConfig', () => {
             value: { protocol: 'https:' },
             writable: true,
         });
-        mocks.setTlsConfig.mockImplementation(async (v: any) => ({
+        mocks.tlsConfigure.mockImplementation(async (v: any) => ({
             ...v,
             certificate_chain: '',
             private_key: '',
@@ -148,7 +146,7 @@ describe('setTlsConfig', () => {
             value: { protocol: 'https:' },
             writable: true,
         });
-        mocks.setTlsConfig.mockImplementation(async (v: any) => ({
+        mocks.tlsConfigure.mockImplementation(async (v: any) => ({
             ...v,
             certificate_chain: '',
             private_key: '',

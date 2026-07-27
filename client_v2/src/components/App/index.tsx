@@ -19,7 +19,7 @@ import { Dashboard } from 'panel/components/Dashboard';
 import { Dhcp } from 'panel/components/Dhcp';
 import { LeasesPage } from 'panel/components/Dhcp/LeasesPage';
 import { QueryLog } from 'panel/components/QueryLog';
-import Toasts from '../Toasts';
+import { Toasts } from 'panel/components/Toasts';
 import { THEMES } from '../../helpers/constants';
 import { setHtmlLangAttr, setUITheme } from '../../helpers/helpers';
 import { getDnsStatus, getTimerStatus, dashboardState } from '../../stores/dashboard';
@@ -67,9 +67,10 @@ const App = () => {
         const language = dashboardState.language;
         const processing = dashboardState.processing;
         if (!processing && language) {
-            intl.changeLanguage(language as LocalesType);
-            setHtmlLangAttr(language);
-            LocalStorageHelper.setItem(LOCAL_STORAGE_KEYS.LANGUAGE, language);
+            intl.changeLanguage(language as LocalesType).then(() => {
+                setHtmlLangAttr(language);
+                LocalStorageHelper.setItem(LOCAL_STORAGE_KEYS.LANGUAGE, language);
+            });
         }
     });
 

@@ -10,12 +10,14 @@ type ToastAction = {
 };
 
 /** Payload accepted by addSuccessToast. */
-type SuccessToastPayload = string | {
-    message: string;
-    code?: string;
-    actionLabel?: string;
-    undoId?: string;
-};
+type SuccessToastPayload =
+    | string
+    | {
+          message: string;
+          code?: string;
+          actionLabel?: string;
+          undoId?: string;
+      };
 
 /** Payload accepted by addErrorToast / addWarningToast. */
 type ErrorToastPayload = {
@@ -24,7 +26,7 @@ type ErrorToastPayload = {
     action?: ToastAction;
 };
 
-type ToastNotice = {
+export type ToastNotice = {
     id: string;
     message: string;
     type: 'error' | 'success' | 'notice' | 'warning';

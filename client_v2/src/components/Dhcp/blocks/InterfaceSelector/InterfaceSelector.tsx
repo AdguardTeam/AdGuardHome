@@ -37,7 +37,10 @@ export const InterfaceSelector = (props: Props) => {
 
     const gatewayIp = () => selectedIface()?.gateway_ip || '';
     const hardwareAddress = () => selectedIface()?.hardware_address || '';
-    const ipAddresses = () => selectedIface()?.ip_addresses || [];
+    const ipAddresses = () => {
+        const iface = selectedIface();
+        return [...(iface?.ipv4_addresses || []), ...(iface?.ipv6_addresses || [])];
+    };
 
     const displayIps = () => {
         const ips = ipAddresses();

@@ -189,7 +189,7 @@
         font-size: 16px;
         background-color: var(--default-page-background);
         display: flex;
-        align-items: center;
+        align-items: stretch;
 
         &:hover,
         &:focus-within {
@@ -400,6 +400,7 @@
         flex: 1;
         min-width: 0;
         padding: 8px 12px 8px 0;
+        align-items: center;
 
         [data-scope='combobox'][data-part='input'] {
             flex: 1 1 80px;
@@ -429,7 +430,7 @@
         display: grid;
         flex: 1;
         min-width: 0;
-        align-items: center;
+        align-items: stretch;
 
         .solid-combobox-single-value,
         .solid-select-placeholder,
@@ -440,6 +441,7 @@
 
         .solid-combobox-single-value,
         .solid-select-placeholder {
+            align-self: center;
             max-width: 100%;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -458,6 +460,7 @@
 
         [data-scope='combobox'][data-part='input'] {
             width: 100%;
+            height: 100%;
             min-width: 0;
             border: none;
             background: transparent;

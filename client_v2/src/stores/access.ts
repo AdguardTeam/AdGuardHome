@@ -1,9 +1,10 @@
 import { createStore } from 'solid-js/store';
 import { untrack } from 'solid-js';
-import { apiClient } from 'panel/api/Api';
+import { accessList, accessSet } from 'panel/api/generated';
 import { addErrorToast, addSuccessToast } from './toasts';
 import { splitByNewLine } from 'panel/helpers/helpers';
 import intl from 'panel/common/intl';
+import type { AccessList } from 'panel/api/model/accessList';
 
 type AccessState = {
     processing: boolean;
@@ -26,7 +27,7 @@ const [state, setState] = createStore<AccessState>(initialState);
 export const getAccessList = async () => {
     setState('processing', true);
     try {
-        const data = await apiClient.getAccessList();
+        const data = await accessList();
         setState({
             allowed_clients: data.allowed_clients?.join('\n') || '',
             disallowed_clients: data.disallowed_clients?.join('\n') || '',
@@ -39,34 +40,35 @@ export const getAccessList = async () => {
     }
 };
 
-export const setAccessList = async (values: any) => {
+export const setAccessList = async (values: {
+    allowed_clients?: string;
+    disallowed_clients?: string;
+    blocked_hosts?: string;
+}) => {
     setState('processingSet', true);
     try {
-        const config = { ...values };
+        const config: AccessList = {
+            allowed_clients:
+                values.allowed_clients !== undefined
+                    ? splitByNewLine(values.allowed_clients)
+                    : undefined,
+            disallowed_clients:
+                values.disallowed_clients !== undefined
+                    ? splitByNewLine(values.disallowed_clients)
+                    : undefined,
+            blocked_hosts:
+                values.blocked_hosts !== undefined
+                    ? splitByNewLine(values.blocked_hosts)
+                    : undefined,
+        };
 
-        if (Object.hasOwn(config, 'allowed_clients')) {
-            config.allowed_clients = splitByNewLine(config.allowed_clients);
-        }
-        if (Object.hasOwn(config, 'disallowed_clients')) {
-            config.disallowed_clients = splitByNewLine(config.disallowed_clients);
-        }
-        if (Object.hasOwn(config, 'blocked_hosts')) {
-            config.blocked_hosts = splitByNewLine(config.blocked_hosts);
-        }
-
-        await apiClient.setAccessList(config);
+        await accessSet(config);
         setState({ ...values, processingSet: false });
         addSuccessToast(intl.getMessage('settings_notify_changes_saved'));
     } catch (error) {
         addErrorToast({ error });
         setState('processingSet', false);
     }
-};
-
-type AccessList = {
-    allowed_clients?: string[];
-    disallowed_clients?: string[];
-    blocked_hosts?: string[];
 };
 
 const addUnique = (items: string[], value: string) =>
@@ -122,14 +124,14 @@ export const toggleClientBlock = async (
 ) => {
     setState('processingSet', true);
     try {
-        const accessList: AccessList = await apiClient.getAccessList();
+        const accessListData = await accessList();
         const values = getNextClientAccessList({
-            accessList,
+            accessList: accessListData,
             ip,
             disallowed,
             disallowedRule,
         });
-        await apiClient.setAccessList(values);
+        await accessSet(values);
         setState({
             allowed_clients: values.allowed_clients.join('\n'),
             disallowed_clients: values.disallowed_clients.join('\n'),

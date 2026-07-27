@@ -2,16 +2,15 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock the API client.
 const mockCheckConfig = vi.fn();
-vi.mock('panel/api/Api', () => ({
-    apiClient: {
-        checkConfig: (...args: unknown[]) => mockCheckConfig(...args),
-        getDefaultAddresses: vi.fn(),
-        setAllSettings: vi.fn(),
-    },
+vi.mock('panel/api/generated', () => ({
+        installCheckConfig: (...args: unknown[]) => mockCheckConfig(...args),
+        installGetAddresses: vi.fn(),
+        installConfigure: vi.fn(),
 }));
 
 vi.mock('panel/stores/toasts', () => ({ addErrorToast: vi.fn() }));
-vi.mock('panel/helpers/constants', () => ({
+vi.mock('panel/helpers/constants', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('panel/helpers/constants')>()),
     ALL_INTERFACES_IP: '0.0.0.0',
     INSTALL_FIRST_STEP: 1,
     STANDARD_DNS_PORT: 53,

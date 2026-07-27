@@ -125,6 +125,7 @@ export const MobileConfigForm = (props: Props) => {
                         onChange={handleHostChange}
                         error={!!hostError()}
                         errorMessage={hostError()}
+                        size="large"
                     />
                 </div>
                 <Show when={protocol() === MOBILE_CONFIG_LINKS.DOH}>
@@ -138,6 +139,7 @@ export const MobileConfigForm = (props: Props) => {
                             onChange={handlePortChange}
                             error={!!portError()}
                             errorMessage={portError()}
+                            size="large"
                         />
                     </div>
                 </Show>
@@ -169,6 +171,7 @@ export const MobileConfigForm = (props: Props) => {
                         onChange={handleClientIdChange}
                         error={!!clientIdError()}
                         errorMessage={clientIdError()}
+                        size="large"
                     />
                 </div>
 

@@ -1,15 +1,22 @@
 import { createStore } from 'solid-js/store';
 import { untrack } from 'solid-js';
-import { apiClient } from 'panel/api/Api';
+import {
+    blockedServicesSchedule,
+    blockedServicesAll,
+    blockedServicesScheduleUpdate,
+} from 'panel/api/generated';
 import { addErrorToast } from './toasts';
+import type { BlockedServicesSchedule } from 'panel/api/model/blockedServicesSchedule';
+import type { BlockedService } from 'panel/api/model/blockedService';
+import type { ServiceGroup } from 'panel/api/model/serviceGroup';
 
 type ServicesState = {
     processing: boolean;
     processingAll: boolean;
     processingSet: boolean;
-    list: any;
-    allServices: any[];
-    allGroups: any[];
+    list: BlockedServicesSchedule;
+    allServices: BlockedService[];
+    allGroups: ServiceGroup[];
 };
 
 const initialState: ServicesState = {
@@ -26,7 +33,7 @@ const [state, setState] = createStore<ServicesState>(initialState);
 export const getBlockedServices = async () => {
     setState('processing', true);
     try {
-        const data = await apiClient.getBlockedServices();
+        const data = await blockedServicesSchedule();
         setState({ list: data, processing: false });
     } catch (error) {
         addErrorToast({ error });
@@ -37,7 +44,7 @@ export const getBlockedServices = async () => {
 export const getAllBlockedServices = async () => {
     setState('processingAll', true);
     try {
-        const data = await apiClient.getAllBlockedServices();
+        const data = await blockedServicesAll();
         setState({
             allServices: data.blocked_services || [],
             allGroups: data.groups || [],
@@ -49,10 +56,10 @@ export const getAllBlockedServices = async () => {
     }
 };
 
-export const updateBlockedServices = async (values: { ids: string[]; schedule?: unknown }) => {
+export const updateBlockedServices = async (values: BlockedServicesSchedule) => {
     setState('processingSet', true);
     try {
-        await apiClient.updateBlockedServices(values);
+        await blockedServicesScheduleUpdate(values);
         setState('processingSet', false);
         await getBlockedServices();
     } catch (error) {

@@ -2,7 +2,8 @@ import cn from 'clsx';
 
 import theme from 'panel/lib/theme';
 import { Filter } from 'panel/helpers/helpers';
-import { LogEntry, Service } from 'panel/components/QueryLog/types';
+import type { NormalizedQueryLogItem } from 'panel/helpers/helpers';
+import { Service } from 'panel/components/QueryLog/types';
 import {
     getQueryReasonLabel,
     getQueryReasonDetails,
@@ -12,7 +13,7 @@ import {
 import s from '../LogTable.module.pcss';
 
 type Props = {
-    row: LogEntry;
+    row: NormalizedQueryLogItem;
     filters: Filter[];
     services: Service[];
     whitelistFilters: Filter[];

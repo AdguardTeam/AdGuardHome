@@ -31,7 +31,7 @@ import { getLogsUrlParams } from 'panel/helpers/helpers';
 import { RoutePath, linkPathBuilder } from 'panel/components/Routes/Paths';
 
 import { filterLogsByStatus } from './helpers';
-import { LogEntry } from './types';
+import type { NormalizedQueryLogItem } from 'panel/helpers/helpers';
 import { Header } from './blocks/Header';
 import { EmptyState, type EmptyStateMode } from './blocks/EmptyState/EmptyState';
 import { LogTable } from './blocks/LogTable';
@@ -56,7 +56,7 @@ export const QueryLog = () => {
     const navigate = useNavigate();
     const location = useLocation();
 
-    const [selectedEntry, setSelectedEntry] = createSignal<LogEntry | null>(null);
+    const [selectedEntry, setSelectedEntry] = createSignal<NormalizedQueryLogItem | null>(null);
     const [disallowTarget, setDisallowTarget] = createSignal<string | null>(null);
     const [isIncrementalLoad, setIsIncrementalLoad] = createSignal(false);
 
@@ -109,7 +109,11 @@ export const QueryLog = () => {
         (dashboardState.clients || []).flatMap(
             (persistentClient: any) => persistentClient.ids ?? [],
         );
-    const visibleLogs = () => filterLogsByStatus(queryLogsState.logs || [], currentStatus());
+    const visibleLogs = () =>
+        filterLogsByStatus(
+            queryLogsState.logs || [],
+            currentStatus(),
+        );
     const emptyStateMode = () => getEmptyStateMode(queryLogsState.enabled, queryLogsState.interval);
     const hasMore = () => !queryLogsState.isEntireLog;
     const logs = () => queryLogsState.logs || [];
@@ -186,7 +190,7 @@ export const QueryLog = () => {
         setDisallowTarget(null);
     };
 
-    const handleRowClick = (entry: LogEntry) => {
+    const handleRowClick = (entry: NormalizedQueryLogItem) => {
         setSelectedEntry(entry);
     };
 

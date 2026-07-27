@@ -4,7 +4,7 @@ import cn from 'clsx';
 import theme from 'panel/lib/theme';
 import { Dropdown } from 'panel/common/ui/Dropdown';
 import { Icon } from 'panel/common/ui/Icon';
-import intl, { LocalesType } from 'panel/common/intl';
+import intl, { type LocalesType } from 'panel/common/intl';
 
 import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from 'panel/helpers/localStorageHelper';
 import { LanguageDropdown } from '../LanguageDropdown/LanguageDropdown';
@@ -19,6 +19,8 @@ import {
 import { dashboardState } from 'panel/stores/dashboard';
 
 import s from './styles.module.pcss';
+import { Lang } from 'panel/api/model/lang';
+import { ProfileInfoTheme } from 'panel/api/model/profileInfoTheme';
 
 export const Footer = () => {
     const currentTheme = () => dashboardState.theme || THEMES.auto;
@@ -50,18 +52,18 @@ export const Footer = () => {
         return 'theme_light';
     };
 
-    const changeLanguage = async (newLang: LocalesType) => {
+    const changeLanguage = async (newLang: Lang) => {
+        await intl.changeLanguage(newLang as LocalesType);
         setHtmlLangAttr(newLang);
+        LocalStorageHelper.setItem(LOCAL_STORAGE_KEYS.LANGUAGE, newLang);
         try {
             await changeLanguageAction(newLang);
-            LocalStorageHelper.setItem(LOCAL_STORAGE_KEYS.LANGUAGE, newLang);
-            window.location.reload();
         } catch (error) {
             console.error('Failed to save language preference:', error);
         }
     };
 
-    const onThemeChange = (value: string) => {
+    const onThemeChange = (value: ProfileInfoTheme) => {
         if (isLoggedIn()) {
             changeTheme(value);
         } else {
@@ -127,7 +129,7 @@ export const Footer = () => {
                         onOpenChange={setThemeDropdownOpen}
                         menu={
                             <div class={theme.dropdown.menu}>
-                                <For each={Object.values(THEMES)}>
+                                <For each={Object.values(THEMES) as ProfileInfoTheme[]}>
                                     {(v) => (
                                         <button
                                             type="button"
@@ -163,7 +165,7 @@ export const Footer = () => {
                         value={currentLanguage()}
                         languages={LANGUAGES}
                         languageNames={LANGUAGE_NAMES}
-                        onChange={(lang: string) => changeLanguage(lang as LocalesType)}
+                        onChange={(lang: Lang) => changeLanguage(lang)}
                         class={s.dropdown}
                         position="bottomRight"
                     />

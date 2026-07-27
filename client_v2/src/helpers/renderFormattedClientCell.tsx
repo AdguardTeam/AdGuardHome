@@ -1,23 +1,31 @@
 import { Show } from 'solid-js';
+import type { JSXElement } from 'solid-js';
 
 import { A } from '@solidjs/router';
 
 import { normalizeWhois } from './helpers';
 import { WHOIS_ICONS } from './constants';
+import type { QueryLogItemClientWhois } from 'panel/api/model/queryLogItemClientWhois';
 
-const getFormattedWhois = (whois: any) => {
+type ClientCellInfo = {
+    name?: string;
+    whois_info?: QueryLogItemClientWhois;
+};
+
+const getFormattedWhois = (whois: QueryLogItemClientWhois) => {
     const whoisInfo = normalizeWhois(whois);
-    return Object.keys(whoisInfo).map((key) => {
+    return Object.entries(whoisInfo).map(([key, value]) => {
         const icon = WHOIS_ICONS[key as keyof typeof WHOIS_ICONS];
+        const strValue = String(value ?? '');
         return (
-            <span class="logs__whois text-muted" title={whoisInfo[key]}>
+            <span class="logs__whois text-muted" title={strValue}>
                 <Show when={icon}>
                     <svg class="logs__whois-icon icons icon--18">
                         <use href={`#${icon}`} />
                     </svg>
                     &nbsp;
                 </Show>
-                {whoisInfo[key]}
+                {strValue}
             </span>
         );
     });
@@ -33,13 +41,13 @@ const getFormattedWhois = (whois: any) => {
  * @returns {JSXElement}
  */
 export const renderFormattedClientCell = (
-    value: any,
-    info: any,
+    value: string,
+    info: ClientCellInfo | null,
     isDetailed = false,
     isLogs = false,
 ) => {
-    let whoisContainer = null;
-    let nameContainer: any = value;
+    let whoisContainer: JSXElement = null;
+    let nameContainer: JSXElement = value;
 
     if (info) {
         const { name, whois_info } = info;

@@ -8,7 +8,7 @@ import theme from 'panel/lib/theme';
 import { setFiltersConfig, filteringState } from 'panel/stores/filtering';
 import { ModalWrapper } from 'panel/common/ui/ModalWrapper';
 import { MODAL_TYPE } from 'panel/helpers/constants';
-import { closeModal } from 'panel/stores/modals';
+import { closeModal, modalsState } from 'panel/stores/modals';
 import { FilterIntervalInput, FILTER_INTERVAL_RANGE } from './FilterIntervalInput';
 
 export const FILTER_INTERVALS = {
@@ -65,6 +65,7 @@ export const FilterUpdateModal = () => {
     );
 
     createEffect(() => {
+        if (modalsState.modalId !== MODAL_TYPE.FILTER_UPDATE) return;
         const currentInterval = filteringState.interval;
         const custom = currentInterval != null && !PREDEFINED_INTERVALS.includes(currentInterval);
         setIntervalValue(custom ? FILTER_INTERVALS.CUSTOM : (currentInterval ?? 24));

@@ -8,8 +8,11 @@ import {
     auditTranslations,
     collectTranslationUsageFromFiles,
     formatAuditReport,
+    formatPluralReport,
     listSourceFiles,
     loadLocaleMessages,
+    loadTwoskyLocales,
+    validatePlurals,
 } from './translation-audit.js';
 
 export const runTranslationAudit = async ({
@@ -29,7 +32,13 @@ export const runTranslationAudit = async ({
         const usage = await collectTranslationUsageFromFiles(filePaths);
         const report = auditTranslations({ localeMessages, usage });
 
-        write(`${formatAuditReport(report, { rootDir })}\n`);
+        write(`${formatAuditReport(report, { rootDir })}\n\n`);
+
+        const repoRoot = path.resolve(rootDir, '..');
+        const localesDir = path.join(srcDir, '__locales');
+        const supportedLocales = await loadTwoskyLocales(repoRoot);
+        const pluralErrors = await validatePlurals(localesDir, supportedLocales);
+        write(`${formatPluralReport(pluralErrors)}\n`);
 
         return 0;
     } catch (error) {

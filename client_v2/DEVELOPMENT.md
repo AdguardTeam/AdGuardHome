@@ -214,6 +214,16 @@ This audits source files for `intl.getMessage` / `intl.getPlural` usage and
 reports missing, unused, and dynamic keys. Other locales are managed
 externally via Twosky (configured in the root `.twosky.json`).
 
+When `.twosky.json` changes (a language is added or removed), regenerate the
+locale import file:
+
+```sh
+npm run locales:generate
+```
+
+This writes `src/common/intl/locales.generated.ts`, which is committed.
+CI verifies freshness with `npm run locales:check`.
+
 ## Common Tasks
 
 ### Adding a Component

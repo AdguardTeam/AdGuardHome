@@ -1,4 +1,4 @@
-import { createMemo, onMount, onCleanup, Show, Switch, Match } from 'solid-js';
+import { createMemo, createEffect, onMount, onCleanup, Show, Switch, Match } from 'solid-js';
 
 import { PublicHeader } from 'panel/common/ui/PublicHeader';
 import { SetupGuide } from 'panel/components/SetupGuide/SetupGuide';
@@ -13,29 +13,31 @@ import {
 import { dashboardState } from 'panel/stores/dashboard';
 
 import { getInterfaceIp, getWebAddress } from '../../helpers/helpers';
-import { INSTALL_TOTAL_STEPS, ALL_INTERFACES_IP, DEBOUNCE_TIMEOUT } from '../../helpers/constants';
+import {
+    INSTALL_TOTAL_STEPS,
+    ALL_INTERFACES_IP,
+    DEBOUNCE_TIMEOUT,
+    LANGUAGE_QUERY_PARAM,
+} from '../../helpers/constants';
 
-import Greeting from './Greeting';
-import type { ConfigType, DnsConfig, WebConfig } from './types';
+import { Greeting } from './Greeting';
+import type { ConfigType, DnsConfig, SettingsFormValues, WebConfig } from './types';
+import type { InitialConfiguration } from 'panel/api/model/initialConfiguration';
+import type { AuthFormValues } from './Auth';
 import { InterfaceSettings } from './InterfaceSettings';
 import { DnsSettings } from './DnsSettings';
 import { Controls } from './Controls';
 import { Submit } from './Submit';
 import { Progress } from './blocks/Progress';
 import { Auth } from './Auth';
-import Toasts from '../../components/Toasts';
+import { Toasts } from 'panel/components/Toasts';
 
 import styles from './styles.module.pcss';
 import { getDnsAddressWithPort } from './helpers/helpers';
 
-type InstallInterface = {
-    name?: string;
-    ip_addresses?: string[];
-};
-
 const getInstallDnsAddresses = (
     dns: { ip: string; port: number },
-    interfaces: InstallInterface[],
+    interfaces: { ip_addresses?: string[] }[],
 ) => {
     if (!dns?.ip || !dns?.port) {
         return [];
@@ -43,8 +45,8 @@ const getInstallDnsAddresses = (
 
     if (dns.ip === ALL_INTERFACES_IP) {
         return (interfaces || [])
-            .filter((iface: InstallInterface) => iface?.ip_addresses?.length > 0)
-            .map((iface: InstallInterface) => getInterfaceIp(iface))
+            .filter((iface) => iface?.ip_addresses?.length > 0)
+            .map((iface) => getInterfaceIp(iface))
             .filter(Boolean)
             .map((ip: string) => getDnsAddressWithPort(ip, dns.port));
     }
@@ -72,22 +74,30 @@ export const Setup = () => {
         getDefaultAddresses();
     });
 
+    createEffect(() => {
+        step();
+        window.scrollTo({ top: 0, behavior: 'instant' });
+    });
+
     const handleNextStep = () => {
         if (step() <= INSTALL_TOTAL_STEPS) {
             nextStep();
         }
     };
 
-    const handleAuthSubmit = (values: any) => {
+    const handleAuthSubmit = (values: AuthFormValues) => {
         setAuthData(values);
         handleNextStep();
     };
 
     const handleFinalSubmit = () => {
-        const config: any = {
+        const config: InitialConfiguration & { confirm_password: string } = {
             web: web(),
             dns: dns(),
-            ...auth(),
+            language: installState.language,
+            username: auth().username,
+            password: auth().password,
+            confirm_password: auth().password,
         };
 
         if (web().port && dns().port) {
@@ -97,7 +107,7 @@ export const Setup = () => {
 
     // Debounced checkConfig
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-    const debouncedCheckConfig = (values: any) => {
+    const debouncedCheckConfig = (values: SettingsFormValues) => {
         if (debounceTimer) {
             clearTimeout(debounceTimer);
         }
@@ -120,11 +130,10 @@ export const Setup = () => {
     };
 
     const openDashboard = (ip: string, port: number) => {
-        let address = getWebAddress(ip, port);
-        if (ip === ALL_INTERFACES_IP) {
-            address = getWebAddress(window.location.hostname, port);
-        }
-        window.location.replace(address);
+        const host = ip === ALL_INTERFACES_IP ? window.location.hostname : ip;
+        const url = new URL(getWebAddress(host, port));
+        url.searchParams.set(LANGUAGE_QUERY_PARAM, installState.language);
+        window.location.replace(url.toString());
     };
 
     const config = createMemo<ConfigType>(() => ({
@@ -141,6 +150,7 @@ export const Setup = () => {
                     dropdownPosition="bottomRight"
                     center={<Progress step={step()} />}
                     useLocalLanguage={true}
+                    hideLanguageDropdown={true}
                 />
 
                 <div class={styles.container}>

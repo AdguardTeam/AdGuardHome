@@ -7,6 +7,8 @@ import theme from 'panel/lib/theme';
 import { ConfigDialog } from 'panel/common/ui/ConfigDialog';
 import { Input } from 'panel/common/controls/Input';
 import { dhcpState } from 'panel/stores/dhcp';
+import { calculateDhcpPlaceholdersIpv4 } from 'panel/helpers/helpers';
+import { DHCP_VALUES_PLACEHOLDERS } from 'panel/helpers/constants';
 import {
     validateIpv4,
     validateIpv4RangeEnd,
@@ -14,6 +16,7 @@ import {
     validateGatewaySubnetMask,
     validateIpForGatewaySubnetMask,
     validateLeaseTime,
+    validateRequiredValue,
 } from 'panel/helpers/validators';
 import s from './DhcpV4Modal.module.pcss';
 
@@ -60,6 +63,15 @@ export const DhcpV4Modal = (props: Props) => {
         }
     });
 
+    const v4Placeholders = createMemo(() => {
+        const iface = dhcpState.interfaces?.[props.selectedInterface()];
+        const firstIpv4 = iface?.ipv4_addresses?.[0];
+        if (firstIpv4) {
+            return calculateDhcpPlaceholdersIpv4(firstIpv4, iface.gateway_ip);
+        }
+        return DHCP_VALUES_PLACEHOLDERS.ipv4;
+    });
+
     const hasIpv4 = createMemo(
         () =>
             !!(
@@ -82,20 +94,28 @@ export const DhcpV4Modal = (props: Props) => {
     );
 
     const validateGatewayIp = () => {
-        const err = validateIpv4(gatewayIp()) || validateNotInRange(gatewayIp(), allValues());
+        const err =
+            validateRequiredValue(gatewayIp()) ||
+            validateIpv4(gatewayIp()) ||
+            validateNotInRange(gatewayIp(), allValues());
         setGatewayIpError(err || '');
     };
     const validateSubnetMask = () => {
-        const err = validateGatewaySubnetMask(undefined, allValues());
+        const err =
+            validateRequiredValue(subnetMask()) ||
+            validateGatewaySubnetMask(undefined, allValues());
         setSubnetMaskError(err || '');
     };
     const validateRangeStart = () => {
         const err =
-            validateIpv4(rangeStart()) || validateIpForGatewaySubnetMask(rangeStart(), allValues());
+            validateRequiredValue(rangeStart()) ||
+            validateIpv4(rangeStart()) ||
+            validateIpForGatewaySubnetMask(rangeStart(), allValues());
         setRangeStartError(err || '');
     };
     const validateRangeEnd = () => {
         const err =
+            validateRequiredValue(rangeEnd()) ||
             validateIpv4(rangeEnd()) ||
             validateIpv4RangeEnd(undefined, allValues()) ||
             validateIpForGatewaySubnetMask(rangeEnd(), allValues());
@@ -123,7 +143,12 @@ export const DhcpV4Modal = (props: Props) => {
     };
 
     const validateLeaseDuration = () => {
-        const err = validateLeaseTime(leaseDuration());
+        const val = leaseDuration();
+        if (!val) {
+            setLeaseDurationError('');
+            return;
+        }
+        const err = validateLeaseTime(val);
         setLeaseDurationError(err || '');
     };
 
@@ -167,7 +192,7 @@ export const DhcpV4Modal = (props: Props) => {
                     onBlur={onGatewayBlur}
                     id="v4_gateway_ip"
                     label={intl.getMessage('dhcp_form_gateway_address')}
-                    placeholder="192.168.1.1"
+                    placeholder={v4Placeholders().gateway_ip}
                     disabled={!hasIpv4()}
                     errorMessage={gatewayIpError()}
                     size="large"
@@ -186,7 +211,7 @@ export const DhcpV4Modal = (props: Props) => {
                             }
                             onBlur={onRangeStartBlur}
                             id="v4_range_start"
-                            placeholder="192.168.1.2"
+                            placeholder={v4Placeholders().range_start}
                             disabled={!hasIpv4()}
                             errorMessage={rangeStartError()}
                             size="large"
@@ -200,7 +225,7 @@ export const DhcpV4Modal = (props: Props) => {
                             }
                             onBlur={onRangeEndBlur}
                             id="v4_range_end"
-                            placeholder="192.168.1.254"
+                            placeholder={v4Placeholders().range_end}
                             disabled={!hasIpv4()}
                             errorMessage={rangeEndError()}
                             size="large"
@@ -215,7 +240,7 @@ export const DhcpV4Modal = (props: Props) => {
                     onBlur={onSubnetBlur}
                     id="v4_subnet_mask"
                     label={intl.getMessage('dhcp_form_subnet_input')}
-                    placeholder="255.255.255.0"
+                    placeholder={v4Placeholders().subnet_mask}
                     disabled={!hasIpv4()}
                     errorMessage={subnetMaskError()}
                     size="large"
@@ -229,7 +254,7 @@ export const DhcpV4Modal = (props: Props) => {
                     id="v4_lease_duration"
                     inputMode="numeric"
                     label={intl.getMessage('dhcp_form_lease_title')}
-                    placeholder="86400"
+                    placeholder={v4Placeholders().lease_duration}
                     disabled={!hasIpv4()}
                     size="large"
                     inputError={leaseDurationError()}

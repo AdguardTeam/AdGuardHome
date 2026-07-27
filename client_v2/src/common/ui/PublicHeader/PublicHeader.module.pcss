@@ -1,5 +1,5 @@
 .header {
-    box-shadow: 4px 4px 8px 0 rgba(0, 0, 0, 0.10);
+    box-shadow: 4px 4px 8px 0 rgba(0, 0, 0, 0.1);
 }
 
 .headerContent {
@@ -16,6 +16,14 @@
 .languageWrap {
     display: flex;
     align-items: center;
+    order: 2;
+    margin-left: auto;
+
+    @media screen and (min-width: 1024px) {
+        order: 0;
+        margin-left: 0;
+        min-width: 90px;
+    }
 }
 
 .headerContent {
@@ -39,15 +47,5 @@
     @media screen and (min-width: 1024px) {
         order: 0;
         padding: 0 0 0 16px;
-    }
-}
-
-.languageWrap {
-    order: 2;
-    margin-left: auto;
-
-    @media screen and (min-width: 1024px) {
-        order: 0;
-        margin-left: 0;
     }
 }

@@ -26,11 +26,11 @@ export const findPersistentClient = (clients: Client[], identifier?: string) => 
 
     const normalizedIdentifier = normalizeClientIdentifier(identifier);
     const matches = clients.filter((client) => {
-        if (normalizeClientIdentifier(client.name) === normalizedIdentifier) {
+        if (normalizeClientIdentifier(client.name ?? '') === normalizedIdentifier) {
             return true;
         }
 
-        return client.ids.some(
+        return (client.ids ?? []).some(
             (clientId) => normalizeClientIdentifier(clientId) === normalizedIdentifier,
         );
     });

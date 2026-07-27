@@ -1,10 +1,23 @@
 import { createStore } from 'solid-js/store';
 import { untrack } from 'solid-js';
-import { apiClient } from 'panel/api/Api';
+import {
+    filteringStatus,
+    filteringSetRules,
+    filteringAddURL,
+    filteringRemoveURL,
+    filteringSetURL,
+    filteringRefresh,
+    filteringConfig,
+    filteringCheckHost,
+} from 'panel/api/generated';
 import { addErrorToast, addSuccessToast, createUndoToast } from './toasts';
 import type { Filter } from 'panel/helpers/helpers';
 import { normalizeFilteringStatus, normalizeRulesTextarea } from 'panel/helpers/helpers';
 import intl from 'panel/common/intl';
+import type { FilterCheckHostResponse } from 'panel/api/model/filterCheckHostResponse';
+import type { FilterSetUrlData } from 'panel/api/model/filterSetUrlData';
+import type { FilterRefreshRequest } from 'panel/api/model/filterRefreshRequest';
+import type { FilterConfig } from 'panel/api/model/filterConfig';
 
 type FilteringState = {
     isModalOpen: boolean;
@@ -20,13 +33,13 @@ type FilteringState = {
     isFilterRemoved: boolean;
     isFilterEdited: boolean;
     filters: Filter[];
-    whitelistFilters: any[];
+    whitelistFilters: Filter[];
     userRules: string;
     interval: number;
     enabled: boolean;
     modalType: string;
     modalFilterUrl: string;
-    check: any;
+    check: (FilterCheckHostResponse & { hostname?: string }) | Record<string, never>;
 };
 
 const initialState: FilteringState = {
@@ -57,7 +70,7 @@ const [state, setState] = createStore<FilteringState>(initialState);
 export const getFilteringStatus = async () => {
     setState('processingFilters', true);
     try {
-        const data = await apiClient.getFilteringStatus();
+        const data = await filteringStatus();
         setState({
             ...normalizeFilteringStatus(data),
             processingFilters: false,
@@ -74,7 +87,7 @@ export const setRules = async (rules: string): Promise<boolean> => {
         const normalizedRules = {
             rules: (normalizeRulesTextarea(rules)?.split('\n') || []).filter(Boolean),
         };
-        await apiClient.setRules(normalizedRules);
+        await filteringSetRules(normalizedRules);
         setState({ userRules: rules, processingRules: false });
         return true;
     } catch (error) {
@@ -254,7 +267,7 @@ export const toggleBlockingForClient = (type: BlockAction, domain: string, clien
 export const addFilter = async (url: string, name: string, whitelist: boolean) => {
     setState('processingAddFilter', true);
     try {
-        await apiClient.addFilter({ url, name, whitelist });
+        await filteringAddURL({ url, name, whitelist });
         setState('processingAddFilter', false);
         setState('isModalOpen', false);
         if (whitelist) {
@@ -276,7 +289,7 @@ export const addFilter = async (url: string, name: string, whitelist: boolean) =
 export const removeFilter = async (url: string, whitelist: boolean, name?: string) => {
     setState('processingRemoveFilter', true);
     try {
-        await apiClient.removeFilter({ url, whitelist });
+        await filteringRemoveURL({ url, whitelist });
         setState('processingRemoveFilter', false);
         setState('isModalOpen', false);
         if (whitelist) {
@@ -295,10 +308,14 @@ export const removeFilter = async (url: string, whitelist: boolean, name?: strin
     }
 };
 
-export const toggleFilterStatus = async (url: string, data: any, whitelist: boolean) => {
+export const toggleFilterStatus = async (
+    url: string,
+    data: FilterSetUrlData,
+    whitelist: boolean,
+) => {
     setState('processingConfigFilter', true);
     try {
-        await apiClient.setFilterUrl({ url, data, whitelist });
+        await filteringSetURL({ url, data, whitelist });
         setState('processingConfigFilter', false);
         await getFilteringStatus();
     } catch (error) {
@@ -307,10 +324,10 @@ export const toggleFilterStatus = async (url: string, data: any, whitelist: bool
     }
 };
 
-export const editFilter = async (url: string, data: any, whitelist: boolean) => {
+export const editFilter = async (url: string, data: FilterSetUrlData, whitelist: boolean) => {
     setState('processingConfigFilter', true);
     try {
-        await apiClient.setFilterUrl({ url, data, whitelist });
+        await filteringSetURL({ url, data, whitelist });
         setState({ processingConfigFilter: false, isModalOpen: false });
         addSuccessToast(intl.getMessage('changes_saved_success'));
         await getFilteringStatus();
@@ -320,12 +337,12 @@ export const editFilter = async (url: string, data: any, whitelist: boolean) => 
     }
 };
 
-export const refreshFilters = async (config: any) => {
+export const refreshFilters = async (config: FilterRefreshRequest) => {
     setState('processingRefreshFilters', true);
     try {
-        const data = await apiClient.refreshFilters(config);
+        const data = await filteringRefresh(config);
         setState('processingRefreshFilters', false);
-        const updated = (data as any)?.updated || 0;
+        const updated = data?.updated ?? 0;
         if (updated > 0) {
             addSuccessToast(intl.getPlural('list_updated', updated));
         } else {
@@ -338,10 +355,10 @@ export const refreshFilters = async (config: any) => {
     }
 };
 
-export const setFiltersConfig = async (config: any) => {
+export const setFiltersConfig = async (config: FilterConfig) => {
     setState('processingSetConfig', true);
     try {
-        await apiClient.setFiltersConfig(config);
+        await filteringConfig(config);
         setState({ ...config, processingSetConfig: false });
     } catch (error) {
         addErrorToast({ error });
@@ -354,9 +371,12 @@ export const checkHost = async (
 ): Promise<boolean> => {
     setState('processingCheck', true);
     try {
-        const data = await apiClient.checkHost(host);
+        const data = await filteringCheckHost(typeof host === 'string' ? { name: host } : host);
         const hostname = typeof host === 'string' ? host : host.name;
-        setState({ check: { hostname, ...data }, processingCheck: false });
+        setState({
+            check: { hostname, ...data },
+            processingCheck: false,
+        });
         return true;
     } catch (error) {
         addErrorToast({ error });
@@ -371,7 +391,7 @@ export const addFiltersBatch = async (
     setState('processingAddFilter', true);
     try {
         const results = await Promise.allSettled(
-            filters.map(({ url, name }) => apiClient.addFilter({ url, name, whitelist: false })),
+            filters.map(({ url, name }) => filteringAddURL({ url, name, whitelist: false })),
         );
 
         const successes: Array<{ url: string; name: string }> = [];

@@ -372,7 +372,7 @@ async function openUserRules(page: Page, options?: UserRulesSetupOptions) {
     const setup = await setupUserRulesMocks(page, options);
 
     await login(page);
-    await page.goto('/#user_rules');
+    await page.goto('/#/custom_rules');
     await expect(page.getByTestId('user-rules-check-submit')).toBeVisible();
 
     return setup;

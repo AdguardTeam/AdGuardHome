@@ -2,10 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock the API client before importing the store.
 const mockLogin = vi.fn().mockResolvedValue(undefined);
-vi.mock('panel/api/Api', () => ({
-    apiClient: {
+vi.mock('panel/api/generated', () => ({
         login: (...args: unknown[]) => mockLogin(...args),
-    },
 }));
 
 // Mock addErrorToast so it does not depend on other stores.
@@ -13,8 +11,10 @@ vi.mock('panel/stores/toasts', () => ({
     addErrorToast: vi.fn(),
 }));
 
-// Mock HTML_PAGES constant.
-vi.mock('panel/helpers/constants', () => ({
+// Mock HTML_PAGES constant, but pass through all real exports so
+// transitive dependencies (e.g., LANGUAGE_QUERY_PARAM in intl) work.
+vi.mock('panel/helpers/constants', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('panel/helpers/constants')>()),
     HTML_PAGES: { LOGIN: '/login.html', MAIN: '/dashboard.html' },
 }));
 

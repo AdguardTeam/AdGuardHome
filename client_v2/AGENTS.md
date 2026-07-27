@@ -2,24 +2,24 @@
 
 ## Table of Contents
 
-- [AGENTS.md — AdGuard Home client\_v2 (SolidJS Frontend)](#agentsmd--adguard-home-client_v2-solidjs-frontend)
-  - [Table of Contents](#table-of-contents)
+- [AGENTS.md — AdGuard Home client_v2 (SolidJS Frontend)](#agentsmd--adguard-home-client_v2-solidjs-frontend)
+    - [Table of Contents](#table-of-contents)
 - [Project Overview](#project-overview)
 - [Technical Context](#technical-context)
 - [Project Structure](#project-structure)
 - [Build And Test Commands](#build-and-test-commands)
 - [Contribution Instructions](#contribution-instructions)
 - [Code Guidelines](#code-guidelines)
-  - [System Design](#system-design)
-  - [Architecture](#architecture)
-  - [Code Quality](#code-quality)
-  - [Testing](#testing)
-  - [Dependency Management](#dependency-management)
-  - [Configuration \& Documentation](#configuration--documentation)
-  - [Markdown Formatting](#markdown-formatting)
-  - [Other](#other)
-    - [Accessibility](#accessibility)
-    - [Translations](#translations)
+    - [System Design](#system-design)
+    - [Architecture](#architecture)
+    - [Code Quality](#code-quality)
+    - [Testing](#testing)
+    - [Dependency Management](#dependency-management)
+    - [Configuration \& Documentation](#configuration--documentation)
+    - [Markdown Formatting](#markdown-formatting)
+    - [Other](#other)
+        - [Accessibility](#accessibility)
+        - [Translations](#translations)
 
 # Project Overview
 
@@ -54,7 +54,8 @@ Playwright (e2e).
 - **State**: SolidJS `createStore` module-scoped stores (no Redux, no Context
   providers)
 - **HTTP**: Native `fetch` wrapped in a single `Api` class
-- **i18n**: `@adguard/translate` with 13 locale JSON files in `src/__locales/`
+- **i18n**: `@adguard/translate` with 35 bundled locales from `src/__locales/`
+  (generated from `.twosky.json` via `npm run locales:generate`)
 - **Testing**: Vitest 4 + `@solidjs/testing-library` (unit);
   Playwright 1.56 (e2e against a real backend)
 - **Linting/Formatting**: ESLint 8 (`@typescript-eslint`, `eslint-plugin-solid`,
@@ -77,7 +78,7 @@ client_v2/
 │   ├── index.tsx                  # Main app entry (renders <App/>)
 │   ├── index.pcss                 # Global CSS (vars, reset)
 │   ├── initialState.ts            # Domain model types + initial form state
-│   ├── api/                       # Single Api class — all HTTP calls
+│   ├── api/                       # Orval-generated typed client + customFetch mutator
 │   ├── common/
 │   │   ├── controls/              # Input primitives (Checkbox, Input, Select, Switch, …)
 │   │   ├── ui/                    # Higher-level UI (Button, Dialog, Table, Tabs, Sidebar, …)
@@ -127,6 +128,8 @@ All commands are run from the `client_v2/` directory.
 | Unit tests (watch)                   | `npm run test:watch`           |
 | E2e tests                            | `npm run test:e2e`             |
 | E2e interactive UI                   | `npm run test:e2e:interactive` |
+| Locale codegen                       | `npm run locales:generate`     |
+| Locale freshness check               | `npm run locales:check`        |
 | Translation check                    | `npm run translations:check`   |
 | Full check (lint + typecheck + test) | `npm run check`                |
 
@@ -166,9 +169,10 @@ no server process of its own. Design for the browser environment:
 - **Stateless client, stateful backend.** The UI holds no durable state; all
   configuration and data persist in the AdGuard Home backend via the `/control`
   HTTP API. Treat the browser as a thin view layer.
-- **Single source of HTTP.** All backend calls go through the singleton
-  `apiClient` in `src/api/Api.ts`. Do not call `fetch` directly from components
-  or stores — add a typed method to the `Api` class instead.
+- **Single source of HTTP.** All backend calls go through the orval-generated
+  typed client in `src/api/generated.ts` (with the `customFetch` mutator in
+  `src/api/customFetch.ts`). Do not call `fetch` directly from components
+  or stores — import a generated function instead.
 - **No shared server memory.** Multiple browser tabs / reloads are independent;
   never rely on in-memory module state surviving a reload. Re-fetch data in
   component `onMount` rather than assuming a store is already populated.
@@ -199,8 +203,9 @@ Universal design principles the codebase follows:
   → api → backend. Stores never import components; api never imports stores.
 - **Explicit Boundaries** — modules interact through named exports; no
   reaching into another module's internals.
-- **Data Flow Clarity** — user action → store action function → `apiClient`
-  → `setState` → reactive UI update. Data moves in one predictable path.
+- **Data Flow Clarity** — user action → store action function → generated
+  API function → `setState` → reactive UI update. Data moves in one
+  predictable path.
 - **Minimize Coupling, Maximize Cohesion** — stores are self-contained and
   imported directly (no Context providers); components depend on narrow store
   exports.
@@ -221,7 +226,7 @@ This project's layers, from top to bottom:
 | Components | Render UI, handle user interaction | `src/components/Dashboard/`, `src/components/Clients/` |
 | Common UI  | Reusable controls and primitives   | `src/common/controls/Select/`, `src/common/ui/Button/` |
 | Stores     | Domain state + async actions       | `src/stores/clients.ts`, `src/stores/queryLogs.ts`     |
-| API        | HTTP transport to backend          | `src/api/Api.ts`                                       |
+| API        | HTTP transport to backend          | `src/api/generated.ts`, `src/api/customFetch.ts`       |
 | Helpers    | Pure utilities, validators         | `src/helpers/`, `src/lib/`                             |
 
 ```text
@@ -229,7 +234,7 @@ Components (pages, controls)
      ↓
 Stores (domain state + actions)
      ↓
-API (apiClient → fetch /control)
+API (generated functions → customFetch → fetch /control)
      ↓
 AdGuard Home backend (Go)
 ```
@@ -246,7 +251,7 @@ must not depend on stores or components. Helpers are pure and dependency-free.
 ## Code Quality
 
 - **Path aliases**: Use the `panel/*` alias for all `src/` imports
-  (e.g. `import { apiClient } from 'panel/api/Api'`). Use `Twosky` for the
+  (e.g. `import { status } from 'panel/api/generated'`). Use `Twosky` for the
   root `.twosky.json` config. Avoid deep relative paths (`../../..`).
 - **Component conventions**: PascalCase directories and component files.
   Each component lives in its own directory with an `index.tsx` and a
@@ -284,12 +289,12 @@ must not depend on stores or components. Helpers are pure and dependency-free.
   `createMemo` (e.g., table columns), **access the prop in the memo body**
   so SolidJS tracks the dependency.
 - **Stores**: Module-scoped `createStore` singletons exported directly — no
-  Context/Provider. Async actions set a `processing*` flag, call `apiClient`,
-  then `setState`. Errors are reported via `addErrorToast`.
+  Context/Provider. Async actions set a `processing*` flag, call generated
+  API functions, then `setState`. Errors are reported via `addErrorToast`.
 - **Naming**: Files `PascalCase.tsx` for components, `camelCase.ts` for
   stores/helpers. CSS module files `*.module.pcss`.
-- **Error handling**: API errors throw from `Api.ts`; store actions catch and
-  surface a toast. Do not swallow errors silently.
+- **Error handling**: API errors throw from `customFetch.ts`; store actions
+  catch and surface a toast. Do not swallow errors silently.
 - **Logging**: `console.warn` and `console.error` are allowed; `console.log`
   is disallowed by ESLint.
 - **Static analysis gates**: ESLint, Prettier, and `tsc --noEmit` must pass.
@@ -312,8 +317,8 @@ must not depend on stores or components. Helpers are pure and dependency-free.
   `@testing-library/jest-dom` matchers.
 - **Store/helper tests**: Call exported action/builder functions directly and
   assert on returned values or state (e.g.
-  `src/__tests__/clientForm/buildClientConfig.test.ts`). Mock `apiClient` when
-  a test would otherwise hit the network.
+  `src/__tests__/clientForm/buildClientConfig.test.ts`). Mock generated API
+  functions when a test would otherwise hit the network.
 - **Naming**: Mirror the source path under `__tests__/`
   (e.g. `stores/clients.ts` → `__tests__/stores/clients.test.ts`).
 - **E2E tests**: Playwright, configured in `playwright.config.ts`
@@ -439,6 +444,12 @@ friendly:
 
 - All user-facing strings must be localized. Add new keys to the base locale
   `src/__locales/en.json`; other locales are managed externally via Twosky.
+- Locale imports are **generated** — do not hand-edit.
+  When `.twosky.json` or the set of locale JSON files changes, run:
+    ```sh
+    npm run locales:generate
+    ```
+    CI verifies freshness with `npm run locales:check`.
 - Access translations via the `intl` object from `panel/common/intl`:
     - `intl.getMessage('key', values?)` — returns a plain localized string.
       Pass interpolation values as the second argument, referenced inside the

@@ -20,7 +20,7 @@ import {
 import { DomainFaqTooltip } from './DomainFaqTooltip';
 import { AnswerFaqTooltip } from './AnswerFaqTooltip';
 
-type FormValues = {
+export type FormValues = {
     answer: string;
     domain: string;
     enabled: boolean;
@@ -30,7 +30,7 @@ type ConfigureRewritesModalIdType = 'ADD_REWRITE' | 'EDIT_REWRITE';
 
 type Props = {
     modalId: ConfigureRewritesModalIdType;
-    rewriteToEdit?: FormValues;
+    rewriteToEdit?: Partial<FormValues>;
     onSubmit?: (values: FormValues) => boolean | void | Promise<boolean | void>;
     onClose?: () => void;
 };
@@ -91,7 +91,11 @@ export const ConfigureRewritesModal = (props: Props) => {
             validateRequiredValue(answer()) ||
             validateAnswer(answer()) ||
             validateRewriteNotSame(domain(), answer()) ||
-            validateRewriteNotExists(domain(), rewritesState.list, props.rewriteToEdit?.domain);
+            validateRewriteNotExists(
+                domain(),
+                rewritesState.list as { domain: string }[],
+                props.rewriteToEdit?.domain,
+            );
         setAnswerError(err || undefined);
         return !err;
     };

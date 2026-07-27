@@ -19,7 +19,10 @@
     "test:e2e:codegen": "npx playwright codegen",
     "typecheck": "tsc --noEmit",
     "typecheck:watch": "tsc --noEmit --watch",
-    "translations:check": "node ./scripts/check-translations.js"
+    "translations:check": "node ./scripts/check-translations.js",
+    "locales:generate": "node ./scripts/generate-locales.js",
+    "locales:check": "node ./scripts/check-locales.js",
+    "api:generate": "orval --config ./orval.config.ts && bash scripts/postgenerate.sh"
   },
   "type": "module",
   "dependencies": {
@@ -34,7 +37,6 @@
     "date-fns": "^4.1.0",
     "ipaddr.js": "^2.2.0",
     "js-yaml": "^4.1.0",
-    "lodash": "^4.17.19",
     "nanoid": "^5.1.0",
     "qs": "^6.14.0",
     "solid-js": "^1.9.0",
@@ -48,7 +50,6 @@
     "@solidjs/testing-library": "^0.8.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/user-event": "^14.6.1",
-    "@types/lodash": "^4.17.4",
     "@types/node": "^22.13.10",
     "@types/qs": "^6.15.1",
     "@typescript-eslint/eslint-plugin": "^8.60.1",
@@ -69,6 +70,7 @@
     "html-webpack-plugin": "^5.6.0",
     "jsdom": "^26.1.0",
     "mini-css-extract-plugin": "^2.9.0",
+    "orval": "^8.22.0",
     "playwright": "^1.61.0",
     "postcss": "^8.5.6",
     "postcss-import": "^16.1.1",

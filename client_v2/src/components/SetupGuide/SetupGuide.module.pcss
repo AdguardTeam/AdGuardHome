@@ -11,6 +11,30 @@
     @media screen and (min-width: 1024px) {
         padding-top: 48px;
     }
+
+    .guidePage {
+        padding-top: 16px;
+        padding-bottom: 24px;
+        margin: 0 auto;
+    }
+
+    .pageTitle {
+        font-size: var(--fs-title-h4);
+        line-height: var(--lh-h4-normal);
+
+        @media screen and (min-width: 1024px) {
+            font-size: var(--fs-title-h3);
+            line-height: var(--lh-h3-normal);
+        }
+    }
+
+    .nav {
+        padding: 0 16px;
+
+        @media screen and (min-width: 1024px) {
+            padding: 0;
+        }
+    }
 }
 
 .footer {
@@ -21,61 +45,45 @@
     }
 }
 
-.stepRoot .guidePage {
-    padding-top: 16px;
-    padding-bottom: 24px;
-    margin: 0 auto;
-}
-
-.stepRoot .pageTitle {
-    font-size: 24px;
-
-    @media screen and (min-width: 1024px) {
-        font-size: 32px;
-    }
-}
-
-.stepRoot .nav {
-    padding: 0 16px;
-
-    @media screen and (min-width: 1024px) {
-        padding: 0;
-    }
-}
-
 .pageTitle {
-    font-size: 24px;
-    font-weight: 700;
+    font-size: var(--fs-title-h4);
+    line-height: var(--lh-h4-normal);
+    font-weight: var(--weight-bold);
     margin-bottom: 12px;
 
     @media screen and (min-width: 1024px) {
-        font-size: 32px;
+        font-size: var(--fs-title-h3);
+        line-height: var(--lh-h3-normal);
     }
 }
 
 .pageDesc {
-    font-size: 16px;
+    font-size: var(--fs-text-t2);
+    line-height: var(--lh-t2-normal);
 }
 
 .dnsTitle {
-    font-size: 20px;
+    font-size: var(--fs-title-h5);
+    line-height: var(--lh-h5-normal);
+    font-weight: var(--weight-bold);
     margin-bottom: 12px;
     margin-top: 40px;
-}
 
-@media screen and (min-width: 768px) {
-    .dnsTitle {
-        font-size: 24px;
+    @media screen and (min-width: 768px) {
+        font-size: var(--fs-title-h4);
+        line-height: var(--lh-h4-normal);
     }
 }
 
 .dnsSubtitle {
     margin: 24px 0 12px;
-    font-weight: 700;
-    font-size: 16px;
+    font-weight: var(--weight-bold);
+    font-size: var(--fs-text-t2);
+    line-height: var(--lh-t2-normal);
 
     @media screen and (min-width: 768px) {
-        font-size: 18px;
+        font-size: var(--fs-text-t1);
+        line-height: var(--lh-t1-normal);
     }
 }
 
@@ -94,11 +102,13 @@
 
 .guideTitle {
     margin-bottom: 24px;
-    font-size: 20px;
-    font-weight: 700;
+    font-size: var(--fs-title-h5);
+    line-height: var(--lh-h5-normal);
+    font-weight: var(--weight-bold);
 
     @media screen and (min-width: 768px) {
-        font-size: 24px;
+        font-size: var(--fs-title-h4);
+        line-height: var(--lh-h4-normal);
     }
 }
 
@@ -110,12 +120,12 @@
     list-style: none;
     padding: 0;
     margin: 12px 0 0 0;
-}
 
-.addressList li {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    li {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
 }
 
 .bulletIcon {
@@ -129,8 +139,9 @@
 .address {
     padding: 4px 12px;
     border-radius: 4px;
-    font-family: monospace;
-    font-size: 14px;
+    font-family: var(--font-family-monospace);
+    font-size: var(--fs-text-t3);
+    line-height: var(--lh-t3-normal);
 }
 
 .iosConfigSection {

@@ -54,7 +54,7 @@ export const Clients = () => {
         initClientForm(buildFormPayload(client));
         navigate(
             linkPathBuilder(RoutePath.ClientsEdit, {
-                clientName: encodeURIComponent(client.name),
+                clientName: encodeURIComponent(client.name ?? ''),
             }),
         );
     };
@@ -79,7 +79,7 @@ export const Clients = () => {
     const serviceMap = createMemo(() => {
         const map = new Map<string, WebService>();
         (servicesState.allServices || []).forEach((svc) => {
-            map.set(svc.id, svc);
+            map.set(svc.id, svc as WebService);
         });
         return map;
     });
@@ -111,7 +111,7 @@ export const Clients = () => {
 
                                     <PlusButton
                                         onClick={handleAddClient}
-                                        data-testid="clients-add-button"
+                                        testId="clients-add-button"
                                     >
                                         {intl.getMessage('clients_add')}
                                     </PlusButton>

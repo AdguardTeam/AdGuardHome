@@ -22,11 +22,9 @@ const mocks = vi.hoisted(() => ({
     addErrorToast: vi.fn(),
 }));
 
-vi.mock('panel/api/Api', () => ({
-    apiClient: {
-        setRules: mocks.apiSetRules,
-        getFilteringStatus: mocks.apiGetFilteringStatus,
-    },
+vi.mock('panel/api/generated', () => ({
+        filteringSetRules: mocks.apiSetRules,
+        filteringStatus: mocks.apiGetFilteringStatus,
 }));
 
 vi.mock('panel/stores/toasts', () => ({

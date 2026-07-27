@@ -7,6 +7,7 @@ import { ConfirmDialog } from 'panel/common/ui/ConfirmDialog';
 import { PageLoader } from 'panel/common/ui/Loader';
 import { Select } from 'panel/common/controls/Select';
 import { updateClientFormField, clientFormState } from 'panel/stores/clientForm';
+import type { ClientFormState } from 'panel/initialState';
 import { getBlockedServices, updateBlockedServices, servicesState } from 'panel/stores/services';
 import theme from 'panel/lib/theme';
 
@@ -47,7 +48,7 @@ export const InactivitySchedule = (props: Props) => {
     const schedule = createMemo<ScheduleData | undefined>(() => {
         return props.clientScope
             ? (clientFormState.blocked_services_schedule as unknown as ScheduleData)
-            : servicesState.list?.schedule;
+            : (servicesState.list?.schedule as ScheduleData | undefined);
     });
 
     const currentTimezone = () => schedule()?.time_zone;
@@ -73,7 +74,7 @@ export const InactivitySchedule = (props: Props) => {
             return;
         }
         const newSchedule = props.clientScope
-            ? { ...(clientFormState.blocked_services_schedule as any), time_zone: option.value }
+            ? { ...clientFormState.blocked_services_schedule, time_zone: option.value }
             : { ...schedule(), time_zone: option.value };
         if (props.clientScope) {
             updateClientFormField('blocked_services_schedule', newSchedule, true);
@@ -108,7 +109,11 @@ export const InactivitySchedule = (props: Props) => {
             }
         });
         if (props.clientScope) {
-            updateClientFormField('blocked_services_schedule', newSchedule, true);
+            updateClientFormField(
+                'blocked_services_schedule',
+                newSchedule as ClientFormState['blocked_services_schedule'],
+                true,
+            );
         } else {
             updateBlockedServices({ ids: servicesState.list?.ids || [], schedule: newSchedule });
         }
@@ -124,7 +129,11 @@ export const InactivitySchedule = (props: Props) => {
         });
         newSchedule[day] = { start, end };
         if (props.clientScope) {
-            updateClientFormField('blocked_services_schedule', newSchedule, true);
+            updateClientFormField(
+                'blocked_services_schedule',
+                newSchedule as ClientFormState['blocked_services_schedule'],
+                true,
+            );
         } else {
             updateBlockedServices({ ids: servicesState.list?.ids || [], schedule: newSchedule });
         }
@@ -172,7 +181,10 @@ export const InactivitySchedule = (props: Props) => {
                 >
                     <div class={cn(theme.layout.container, s.container)}>
                         <div class={cn(theme.layout.containerIn, theme.layout.containerIn_one_col)}>
-                            <div class={s.breadcrumbs} data-testid="inactivity-schedule-breadcrumbs">
+                            <div
+                                class={s.breadcrumbs}
+                                data-testid="inactivity-schedule-breadcrumbs"
+                            >
                                 <Breadcrumbs
                                     parentLinks={parentLinks()}
                                     currentTitle={intl.getMessage('inactivity_schedule')}
@@ -260,7 +272,10 @@ export const InactivitySchedule = (props: Props) => {
             }
         >
             {/* clientScope - render inline */}
-            <div class={cn(s.timezoneWrapper, s.timezoneWrapperClientScope)} data-testid="inactivity-schedule-timezone">
+            <div
+                class={cn(s.timezoneWrapper, s.timezoneWrapperClientScope)}
+                data-testid="inactivity-schedule-timezone"
+            >
                 <div class={s.timezoneLabel}>{intl.getMessage('inactivity_schedule_timezone')}</div>
                 <Select
                     options={TIMEZONE_OPTIONS}

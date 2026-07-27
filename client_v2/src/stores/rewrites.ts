@@ -1,14 +1,17 @@
 import { createStore } from 'solid-js/store';
 import { untrack } from 'solid-js';
-import { apiClient } from 'panel/api/Api';
+import {
+    rewriteList,
+    rewriteAdd,
+    rewriteUpdate,
+    rewriteDelete,
+    rewriteSettingsGet,
+    rewriteSettingsUpdate,
+} from 'panel/api/generated';
 import { addErrorToast, addSuccessToast } from './toasts';
 import intl from 'panel/common/intl';
-
-type RewriteConfig = {
-    answer: string;
-    domain: string;
-    enabled: boolean;
-};
+import type { RewriteEntry } from 'panel/api/model/rewriteEntry';
+import type { RewriteSettings } from 'panel/api/model/rewriteSettings';
 
 type RewritesState = {
     processing: boolean;
@@ -18,8 +21,8 @@ type RewritesState = {
     processingSettings: boolean;
     isModalOpen: boolean;
     modalType: string;
-    currentRewrite: RewriteConfig | Record<string, never>;
-    list: RewriteConfig[];
+    currentRewrite: RewriteEntry;
+    list: (RewriteEntry & { enabled?: boolean })[];
     enabled: boolean;
 };
 
@@ -38,7 +41,7 @@ const initialState: RewritesState = {
 
 const [state, setState] = createStore<RewritesState>(initialState);
 
-export const toggleRewritesModal = (modalType?: string, currentRewrite?: RewriteConfig) => {
+export const toggleRewritesModal = (modalType?: string, currentRewrite?: RewriteEntry) => {
     if (modalType !== undefined) {
         setState({
             isModalOpen: !state.isModalOpen,
@@ -54,7 +57,7 @@ export const toggleRewritesModal = (modalType?: string, currentRewrite?: Rewrite
 export const getRewritesList = async () => {
     setState('processing', true);
     try {
-        const data = await apiClient.getRewritesList();
+        const data = await rewriteList();
         setState({ list: data || [], processing: false });
     } catch (error) {
         addErrorToast({ error });
@@ -62,10 +65,10 @@ export const getRewritesList = async () => {
     }
 };
 
-export const addRewrite = async (config: RewriteConfig) => {
+export const addRewrite = async (config: RewriteEntry) => {
     setState('processingAdd', true);
     try {
-        await apiClient.addRewrite(config);
+        await rewriteAdd(config);
         setState('processingAdd', false);
         toggleRewritesModal();
         addSuccessToast(intl.getMessage('changes_saved_success'));
@@ -77,12 +80,12 @@ export const addRewrite = async (config: RewriteConfig) => {
 };
 
 export const updateRewrite = async (
-    config: { target: RewriteConfig; update: RewriteConfig },
+    config: { target: RewriteEntry; update: RewriteEntry },
     options: { showToast?: boolean; closeModal?: boolean } = {},
 ): Promise<boolean> => {
     setState('processingUpdate', true);
     try {
-        await apiClient.updateRewrite(config);
+        await rewriteUpdate(config);
         setState('processingUpdate', false);
         if (options.closeModal !== false) {
             toggleRewritesModal();
@@ -97,10 +100,10 @@ export const updateRewrite = async (
     }
 };
 
-export const deleteRewrite = async (config: RewriteConfig): Promise<boolean> => {
+export const deleteRewrite = async (config: RewriteEntry): Promise<boolean> => {
     setState('processingDelete', true);
     try {
-        await apiClient.deleteRewrite(config);
+        await rewriteDelete(config);
         setState('processingDelete', false);
         addSuccessToast(intl.getMessage('dns_rewrite_removed'));
         await getRewritesList();
@@ -115,7 +118,7 @@ export const deleteRewrite = async (config: RewriteConfig): Promise<boolean> => 
 export const getRewriteSettings = async () => {
     setState('processingSettings', true);
     try {
-        const data = await apiClient.getRewriteSettings();
+        const data = await rewriteSettingsGet();
         setState({ enabled: data.enabled ?? true, processingSettings: false });
     } catch (error) {
         addErrorToast({ error });
@@ -123,10 +126,10 @@ export const getRewriteSettings = async () => {
     }
 };
 
-export const updateRewriteSettings = async (values: any) => {
+export const updateRewriteSettings = async (values: RewriteSettings) => {
     setState('processingSettings', true);
     try {
-        await apiClient.updateRewriteSettings(values);
+        await rewriteSettingsUpdate(values);
         setState({ ...values, processingSettings: false });
     } catch (error) {
         addErrorToast({ error });

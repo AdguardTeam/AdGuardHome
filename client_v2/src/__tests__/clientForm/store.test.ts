@@ -72,6 +72,7 @@ describe('clientForm store', () => {
                 duckduckgo: false,
                 yandex: false,
                 pixabay: false,
+                ecosia: false,
             },
         });
         expect(clientFormState.safe_search.enabled).toBe(true);

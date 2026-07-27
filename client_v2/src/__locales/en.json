@@ -209,6 +209,7 @@
   "dns_blocking_mode_ttl_label": "Blocked response TTL, in seconds",
   "dns_blocking_mode_ttl_placeholder": "Enter TTL",
   "dns_bootstrap_dns_desc": "Sets the DNS servers used to resolve the hostnames of DoH/DoT upstream resolvers",
+  "dns_bootstrap_dns_desc_2": "Enter one IP address per line. Comments must start on a new line with #",
   "dns_bootstrap_dns_label": "Bootstrap DNS servers, one per line",
   "dns_bootstrap_dns_placeholder": "IP addresses",
   "dns_bootstrap_dns_title": "Bootstrap DNS servers",
@@ -448,7 +449,6 @@
   "install_auth_password_enter": "Enter password",
   "install_auth_username": "Username",
   "install_auth_username_enter": "Enter username",
-  "install_saved": "Saved successfully",
   "install_settings_all_interfaces": "All interfaces",
   "install_settings_port": "Port",
   "install_static_configure": "AdGuard Home has detected that the dynamic IP address %ip% is used. Do you want it to be set as your static address?",
@@ -503,7 +503,7 @@
   "parental_group_software": "Software development",
   "parental_group_streaming": "Streaming",
   "password_label": "Password",
-  "password_login_error": "Your username and password do not match",
+  "password_login_error": "Unrecognized password",
   "password_placeholder": "Enter password",
   "password_requirements": "Password requirements",
   "password_requirements_characters": "Minimum 8 characters",
@@ -615,6 +615,7 @@
   "save": "Save",
   "save_btn": "Save",
   "search_placeholder": "Search",
+  "select_language": "Select language",
   "server_config_blocking_mode_ipv4_faq": "IP address to return for a blocked A request",
   "server_config_blocking_mode_ipv6_faq": "IP address to return for a blocked AAAA request",
   "server_config_blocking_mode_ttl_faq": "Specifies how long clients should cache a filtered response",
@@ -882,5 +883,6 @@
   "yes_disable": "Yes, disable",
   "yes_disallow": "Yes, disallow",
   "yes_remove": "Yes, remove",
-  "yes_reset": "Yes, reset"
+  "yes_reset": "Yes, reset",
+  "logs": "Logs"
 }

@@ -18,17 +18,12 @@ import { EmptyState } from '../EmptyState';
 
 import s from './TopClients.module.pcss';
 
+import type { ClientFindSubEntry } from 'panel/api/model/clientFindSubEntry';
+
 type ClientInfo = {
     name: string;
     count: number;
-    info?: {
-        name?: string;
-        whois_info?: {
-            orgname?: string;
-            country?: string;
-        };
-        disallowed?: boolean;
-    };
+    info?: ClientFindSubEntry;
 };
 
 type Props = {

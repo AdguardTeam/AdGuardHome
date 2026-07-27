@@ -1,22 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
-    getTlsStatus: vi.fn(),
-    getGlobalVersion: vi.fn(),
+    tlsStatus: vi.fn(),
+    getVersionJson: vi.fn(),
     getProfile: vi.fn(),
     addErrorToast: vi.fn(),
     addSuccessToast: vi.fn(),
     addNoticeToast: vi.fn(),
 }));
 
-vi.mock('panel/api/Api', () => ({
-    apiClient: {
-        baseUrl: 'http://x',
-        getGlobalVersion: mocks.getGlobalVersion,
-        getProfile: mocks.getProfile,
-        getUpdate: vi.fn(),
-        getTlsStatus: mocks.getTlsStatus,
-    },
+vi.mock('panel/api/generated', () => ({
+    baseUrl: 'http://x',
+    getStatusUrl: () => 'control/status',
+    getVersionJson: mocks.getVersionJson,
+    getProfile: mocks.getProfile,
+    beginUpdate: vi.fn(),
+    tlsStatus: mocks.tlsStatus,
 }));
 vi.mock('panel/stores/toasts', () => ({
     addErrorToast: mocks.addErrorToast,
@@ -30,12 +29,12 @@ describe('getDnsStatus', () => {
     beforeEach(() => vi.clearAllMocks());
 
     it('fetches TLS status when the core is running', async () => {
-        mocks.getGlobalVersion.mockResolvedValue({
+        mocks.getVersionJson.mockResolvedValue({
             disabled: true,
             new_version: 'x',
         });
         mocks.getProfile.mockResolvedValue({ name: 'n', theme: 't' });
-        mocks.getTlsStatus.mockResolvedValue({ enabled: false });
+        mocks.tlsStatus.mockResolvedValue({ enabled: false });
 
         vi.spyOn(globalThis, 'fetch').mockResolvedValue(
             new Response(
@@ -54,6 +53,6 @@ describe('getDnsStatus', () => {
         await getDnsStatus();
         // allow microtasks for chained getVersion/getTlsStatus/getProfile
         await new Promise((r) => setTimeout(r, 0));
-        expect(mocks.getTlsStatus).toHaveBeenCalled();
+        expect(mocks.tlsStatus).toHaveBeenCalled();
     });
 });

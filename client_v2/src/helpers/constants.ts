@@ -1,12 +1,11 @@
+import type { DNSConfigBlockingMode, SafeSearchConfig } from 'panel/api/model';
+
 export const R_URL_REQUIRES_PROTOCOL = /^https?:\/\/[^/\s]+(\/.*)?$/;
 
 // matches hostname or *.wildcard
 export const R_HOST = /^(\*\.)?[\w.-]+$/;
 
 export const R_IPV4 = /^(?:(?:^|\.)(?:2(?:5[0-5]|[0-4]\d)|1?\d?\d)){4}$/;
-
-export const R_IPV6 =
-    /^(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))$/;
 
 export const R_CIDR =
     /^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$/;
@@ -34,10 +33,6 @@ export const R_CLIENT_ID = /^[a-z0-9-]{1,63}$/;
 
 export const R_HOSTNAME = /^[a-z0-9-]+$/;
 
-export const R_IPV4_SUBNET = /^([0-9]|[1-2][0-9]|3[0-2])?$/;
-
-export const R_IPV6_SUBNET = /^([0-9]|[1-9][0-9]|1[0-1][0-9]|12[0-8])?$/;
-
 export const MIN_PASSWORD_LENGTH = 8;
 export const MAX_PASSWORD_LENGTH = 72;
 
@@ -48,6 +43,8 @@ export const HTML_PAGES = {
     MAIN: '/',
 };
 
+export const LANGUAGE_QUERY_PARAM = 'lang';
+
 export const STATS_NAMES = {
     avg_processing_time: 'average_processing_time',
     blocked_filtering: 'Blocked by filters',
@@ -55,13 +52,6 @@ export const STATS_NAMES = {
     replaced_parental: 'stats_adult',
     replaced_safebrowsing: 'stats_malware_phishing',
     replaced_safesearch: 'enforced_save_search',
-};
-
-export const STATUS_COLORS = {
-    blue: '#467fcf',
-    red: '#cd201f',
-    green: '#5eba00',
-    yellow: '#f1c40f',
 };
 
 export const REPOSITORY = {
@@ -83,26 +73,16 @@ export const TERMS_LINK =
 export const UPSTREAM_CONFIGURATION_WIKI_LINK =
     'https://github.com/AdguardTeam/AdGuardHome/wiki/Configuration#upstreams';
 
-export const FILTERS_RELATIVE_LINK = '#filters';
-
 export const ADDRESS_IN_USE_TEXT = 'address already in use';
 
 export const INSTALL_FIRST_STEP = 1;
 export const INSTALL_TOTAL_STEPS = 6;
-
-export const SETTINGS_NAMES = {
-    filtering: 'filtering',
-    safebrowsing: 'safebrowsing',
-    parental: 'parental',
-    safesearch: 'safesearch',
-};
 
 export const STANDARD_DNS_PORT = 53;
 export const STANDARD_WEB_PORT = 80;
 export const STANDARD_HTTPS_PORT = 443;
 export const DNS_OVER_TLS_PORT = 853;
 export const DNS_OVER_QUIC_PORT = 853;
-export const MIN_PORT = 1;
 export const MAX_PORT = 65535;
 
 export const EMPTY_DATE = '0001-01-01T00:00:00Z';
@@ -110,9 +90,6 @@ export const EMPTY_DATE = '0001-01-01T00:00:00Z';
 export const DEBOUNCE_TIMEOUT = 300;
 export const DEBOUNCE_FILTER_TIMEOUT = 500;
 export const CHECK_TIMEOUT = 1000;
-export const HIDE_TOOLTIP_DELAY = 300;
-export const SHOW_TOOLTIP_DELAY = 200;
-export const MODAL_OPEN_TIMEOUT = 150;
 
 export const UNSAFE_PORTS = [
     1, 7, 9, 11, 13, 15, 17, 19, 20, 21, 22, 23, 25, 37, 42, 43, 53, 77, 79, 87, 95, 101, 102, 103,
@@ -157,11 +134,6 @@ export const TAB_TYPE = {
     MANUAL: 'manual',
 } as const;
 
-export const CLIENT_ID = {
-    MAC: 'mac',
-    IP: 'ip',
-};
-
 export const ENCRYPTION_SOURCE = {
     PATH: 'path',
     CONTENT: 'content',
@@ -169,9 +141,6 @@ export const ENCRYPTION_SOURCE = {
 };
 
 export const FILTERED = 'Filtered';
-export const NOT_FILTERED = 'NotFiltered';
-
-export const DISABLED_STATS_INTERVAL = 0;
 
 export const HOUR = 60 * 60 * 1000;
 
@@ -183,15 +152,7 @@ export const QUERY_LOG_INTERVALS_DAYS = [HOUR * 6, DAY, DAY * 7, DAY * 30, DAY *
 
 export const RETENTION_CUSTOM = 1;
 
-export const RETENTION_CUSTOM_INPUT = 'custom_retention_input';
-
-export const CUSTOM_INTERVAL = 'customInterval';
-
-export const FILTERS_INTERVALS_HOURS = [0, 1, 12, 24, 72, 168];
-
-// Note that translation strings contain these modes (blocking_mode_CONSTANT)
-// i.e. blocking_mode_default, blocking_mode_null_ip
-export const BLOCKING_MODES = {
+export const BLOCKING_MODES: { readonly [K in DNSConfigBlockingMode]: K } = {
     default: 'default',
     refused: 'refused',
     nxdomain: 'nxdomain',
@@ -204,30 +165,13 @@ export const EDNS_MODES = {
     custom: 'custom',
 };
 
-// Note that translation strings contain these modes (theme_CONSTANT)
-// i.e. theme_auto, theme_light.
 export const THEMES = {
     auto: 'auto',
     dark: 'dark',
     light: 'light',
 };
 
-export type SafeSearchProviderKey =
-    | 'google'
-    | 'youtube'
-    | 'bing'
-    | 'duckduckgo'
-    | 'yandex'
-    | 'pixabay';
-
-export const SAFE_SEARCH_PROVIDER_KEYS: SafeSearchProviderKey[] = [
-    'google',
-    'youtube',
-    'bing',
-    'duckduckgo',
-    'yandex',
-    'pixabay',
-];
+export type SafeSearchProviderKey = Exclude<keyof SafeSearchConfig, 'enabled'>;
 
 export const SAFE_SEARCH_PROVIDERS: Record<SafeSearchProviderKey, string> = {
     google: 'Google',
@@ -236,7 +180,12 @@ export const SAFE_SEARCH_PROVIDERS: Record<SafeSearchProviderKey, string> = {
     duckduckgo: 'DuckDuckGo',
     yandex: 'Yandex',
     pixabay: 'Pixabay',
+    ecosia: 'Ecosia',
 };
+
+export const SAFE_SEARCH_PROVIDER_KEYS = Object.keys(
+    SAFE_SEARCH_PROVIDERS,
+) as SafeSearchProviderKey[];
 
 export const WHOIS_ICONS = {
     location: 'location',
@@ -251,11 +200,13 @@ export const DEFAULT_LOGS_FILTER = {
     reason: 'all',
 };
 
-export const DEFAULT_LANGUAGE = 'en';
+export type QueryLogFilter = {
+    search: string;
+    status: string;
+    reason: string;
+};
 
 export const QUERY_LOGS_PAGE_LIMIT = 20;
-
-export const LEASES_TABLE_DEFAULT_PAGE_SIZE = 20;
 
 export const FILTERED_STATUS = {
     FILTERED_BLACK_LIST: 'FilteredBlackList',
@@ -344,10 +295,6 @@ export const QUERY_LOG_REASON_FILTER_QUERIES = Object.values(QUERY_LOG_REASON_FI
     {},
 );
 
-export const RESPONSE_FILTER = QUERY_LOG_REASON_FILTER;
-
-export const RESPONSE_FILTER_QUERIES = QUERY_LOG_REASON_FILTER_QUERIES;
-
 export const QUERY_STATUS_COLORS = {
     BLUE: 'blue',
     GREEN: 'green',
@@ -431,38 +378,7 @@ export const DNS_REQUEST_OPTIONS = {
     PARALLEL: 'parallel',
     FASTEST_ADDR: 'fastest_addr',
     LOAD_BALANCING: 'load_balance',
-};
-
-export const DHCP_FORM_NAMES = {
-    DHCPv4: 'dhcpv4',
-    DHCPv6: 'dhcpv6',
-    DHCP_INTERFACES: 'dhcpInterfaces',
-};
-
-export const FORM_NAME = {
-    UPSTREAM: 'upstream',
-    DOMAIN_CHECK: 'domainCheck',
-    FILTER: 'filter',
-    REWRITES: 'rewrites',
-    LOGS_FILTER: 'logsFilter',
-    CLIENT: 'client',
-    LEASE: 'lease',
-    ACCESS: 'access',
-    BLOCKING_MODE: 'blockingMode',
-    ENCRYPTION: 'encryption',
-    FILTER_CONFIG: 'filterConfig',
-    LOG_CONFIG: 'logConfig',
-    SERVICES: 'services',
-    STATS_CONFIG: 'statsConfig',
-    INSTALL: 'install',
-    LOGIN: 'login',
-    CACHE: 'cache',
-    MOBILE_CONFIG: 'mobileConfig',
-    ...DHCP_FORM_NAMES,
-};
-
-export const SMALL_SCREEN_SIZE = 767;
-export const MEDIUM_SCREEN_SIZE = 1024;
+} as const;
 
 export const SECONDS_IN_DAY = 60 * 60 * 24;
 
@@ -511,17 +427,17 @@ export const UPSTREAM_TIMEOUT = {
 
 export const DHCP_VALUES_PLACEHOLDERS = {
     ipv4: {
+        gateway_ip: '192.168.1.1',
         subnet_mask: '255.255.255.0',
+        range_start: '192.168.1.100',
+        range_end: '192.168.1.200',
         lease_duration: SECONDS_IN_DAY.toString(),
     },
     ipv6: {
         range_start: '2001::1',
-        range_end: 'ff',
         lease_duration: SECONDS_IN_DAY.toString(),
     },
 };
-
-export const TOAST_TRANSITION_TIMEOUT = 500;
 
 export const TOAST_TYPES = {
     SUCCESS: 'success',
@@ -549,12 +465,6 @@ export const ADDRESS_TYPES = {
     UNKNOWN: 'UNKNOWN',
 };
 
-export const CACHE_CONFIG_FIELDS = {
-    cache_size: 'cache_size',
-    cache_ttl_min: 'cache_ttl_min',
-    cache_ttl_max: 'cache_ttl_max',
-};
-
 export const COMMENT_LINE_DEFAULT_TOKEN = '#';
 export const COMMENT_LINE_TOKENS = ['#', '!'] as const;
 export type CommentLineToken = (typeof COMMENT_LINE_TOKENS)[number];
@@ -573,13 +483,7 @@ export const DISABLE_PROTECTION_TIMINGS = {
     TOMORROW: 24 * 60 * 60 * 1000,
 };
 
-export const LOCAL_TIMEZONE_VALUE = 'Local';
-
-export const TABLES_MIN_ROWS = 5;
-
 export const MOBILE_TABLE_MAX_ROWS = 5;
-
-export const DASHBOARD_TABLES_DEFAULT_PAGE_SIZE = 100;
 
 export const TIME_UNITS = {
     HOURS: 'hours',

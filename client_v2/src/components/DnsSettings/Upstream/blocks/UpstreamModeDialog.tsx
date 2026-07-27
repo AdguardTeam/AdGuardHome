@@ -5,6 +5,7 @@ import intl from 'panel/common/intl';
 import { ConfigDialog } from 'panel/common/ui/ConfigDialog';
 import { Radio } from 'panel/common/controls/Radio';
 import { getUpstreamModeOptions } from '../../helpers';
+import type { DNSConfigUpstreamMode } from 'panel/api/model';
 import theme from 'panel/lib/theme';
 
 import s from './UpstreamModeDialog.module.pcss';
@@ -55,7 +56,7 @@ export const UpstreamModeDialog = (props: Props) => {
                 name="upstream_mode"
                 options={upstreamModeOptions()}
                 value={upstreamMode()}
-                handleChange={(v: string) => setUpstreamMode(v)}
+                handleChange={(v: DNSConfigUpstreamMode) => setUpstreamMode(v)}
                 inModal
             />
         </ConfigDialog>

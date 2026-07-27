@@ -59,6 +59,7 @@ const config = {
     output: {
         path: PUBLIC_PATH,
         filename: '[name].[chunkhash].js',
+        chunkFilename: 'assets/[name].[chunkhash].js',
     },
     resolve: {
         modules: ['node_modules'],
@@ -168,7 +169,7 @@ const config = {
         }),
         new MiniCssExtractPlugin({
             filename: isDev ? '[name].css' : '[name].[hash].css',
-            chunkFilename: isDev ? '[id].css' : '[id].[hash].css',
+            chunkFilename: isDev ? 'assets/[id].css' : 'assets/[id].[hash].css',
         }),
         new CopyPlugin({
             patterns: [
