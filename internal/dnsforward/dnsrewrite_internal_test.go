@@ -49,6 +49,7 @@ func TestServer_FilterDNSRewrite(t *testing.T) {
 			},
 			ServePlainDNS: true,
 		},
+		testTLSConfigProvider,
 	)
 
 	makeQ := func(qtype rules.RRType) (req *dns.Msg) {

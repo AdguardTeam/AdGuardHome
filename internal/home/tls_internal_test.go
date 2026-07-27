@@ -229,6 +229,7 @@ func assertCertSerialNumber(tb testing.TB, conf *tlsConfigSettings, wantSN int64
 	assert.Equal(tb, wantSN, cert.Leaf.SerialNumber.Int64())
 }
 
+// TODO(m.kazantsev):  Refactor.
 func TestTLSManager_Reload(t *testing.T) {
 	storeGlobals(t)
 
@@ -240,8 +241,23 @@ func TestTLSManager_Reload(t *testing.T) {
 	)
 
 	globalContext.dnsServer, err = dnsforward.NewServer(dnsforward.DNSCreateParams{
-		Logger: testLogger,
+		Logger:            testLogger,
+		TLSConfigProvider: aghtls.EmptyTLSConfigProvider{},
 	})
+	require.NoError(t, err)
+
+	err = globalContext.dnsServer.Prepare(
+		testutil.ContextWithTimeout(t, testTimeout),
+		&dnsforward.ServerConfig{
+			TLSConf: &dnsforward.TLSConfig{},
+			Config: dnsforward.Config{
+				UpstreamMode:     dnsforward.UpstreamModeLoadBalance,
+				EDNSClientSubnet: &dnsforward.EDNSClientSubnet{Enabled: false},
+				ClientsContainer: dnsforward.EmptyClientsContainer{},
+			},
+			ServePlainDNS: true,
+		},
+	)
 	require.NoError(t, err)
 
 	globalContext.clients.storage, err = client.NewStorage(ctx, &client.StorageConfig{

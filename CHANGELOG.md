@@ -30,6 +30,10 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - The `edge` channel has been switched to the new UI and versioning scheme.
 
+### Deprecated
+
+- `strict_sni_check` is now deprecated.
+
 ### Fixed
 
 - Multiple inaccuracies in the OpenAPI specification:

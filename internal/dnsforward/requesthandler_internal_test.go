@@ -63,9 +63,10 @@ func TestServer_ServeDNS(t *testing.T) {
 			OnHostByIP: func(ip netip.Addr) (_ string) { panic(testutil.UnexpectedCall(ip)) },
 			OnIPByHost: func(host string) (_ netip.Addr) { panic(testutil.UnexpectedCall(host)) },
 		},
-		DNSFilter:   f,
-		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
-		Logger:      testLogger,
+		DNSFilter:         f,
+		PrivateNets:       netutil.SubnetSetFunc(netutil.IsLocallyServed),
+		Logger:            testLogger,
+		TLSConfigProvider: testTLSConfigProvider,
 	})
 	require.NoError(t, err)
 
@@ -264,6 +265,7 @@ func TestServer_ServeDNS_restrictLocal(t *testing.T) {
 			LocalPTRResolvers: []string{localUpsAddr},
 			ServePlainDNS:     true,
 		},
+		testTLSConfigProvider,
 	)
 	startDeferStop(t, s)
 

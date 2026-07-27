@@ -2,7 +2,6 @@ package home
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	"log/slog"
 	"net"
@@ -16,6 +15,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
@@ -146,15 +146,16 @@ func initDNSServer(
 	confModifier agh.ConfigModifier,
 ) (err error) {
 	globalContext.dnsServer, err = dnsforward.NewServer(dnsforward.DNSCreateParams{
-		Logger:      l,
-		DNSFilter:   filters,
-		Stats:       sts,
-		QueryLog:    qlog,
-		PrivateNets: parseSubnetSet(config.DNS.PrivateNets),
-		Anonymizer:  anonymizer,
-		DHCPServer:  dhcpSrv,
-		EtcHosts:    globalContext.etcHosts,
-		LocalDomain: config.DHCP.LocalDomainName,
+		Logger:            l,
+		DNSFilter:         filters,
+		Stats:             sts,
+		QueryLog:          qlog,
+		PrivateNets:       parseSubnetSet(config.DNS.PrivateNets),
+		Anonymizer:        anonymizer,
+		DHCPServer:        dhcpSrv,
+		EtcHosts:          globalContext.etcHosts,
+		LocalDomain:       config.DHCP.LocalDomainName,
+		TLSConfigProvider: tlsMgr,
 	})
 	defer func() {
 		if err != nil {
@@ -265,7 +266,7 @@ func newServerConfig(
 	clientSrcConf *clientSourcesConfig,
 	extTLSConf *tlsConfigSettings,
 	dohConf *doHConfig,
-	tlsMgr *tlsManager,
+	tlsConfProvider aghtls.TLSConfigProvider,
 	httpReg aghhttp.Registrar,
 	clientsContainer dnsforward.ClientsContainer,
 	confModifier agh.ConfigModifier,
@@ -275,7 +276,7 @@ func newServerConfig(
 	fwdConf := dnsConf.Config
 	fwdConf.ClientsContainer = clientsContainer
 
-	intTLSConf, err := newDNSTLSConfig(extTLSConf, hosts, dohConf.InsecureEnabled)
+	intTLSConf, err := newDNSTLSConfig(extTLSConf, hosts)
 	if err != nil {
 		return nil, fmt.Errorf("constructing tls config: %w", err)
 	}
@@ -287,7 +288,7 @@ func newServerConfig(
 		TLSConf:                intTLSConf,
 		TLSAllowUnencryptedDoH: dohConf.InsecureEnabled,
 		UpstreamTimeout:        time.Duration(dnsConf.UpstreamTimeout),
-		TLSv12Roots:            tlsMgr.rootCerts,
+		TLSv12Roots:            tlsConfProvider.RootCAs(),
 		ConfModifier:           confModifier,
 		HTTPReg:                httpReg,
 		LocalPTRResolvers:      dnsConf.PrivateRDNSResolvers,
@@ -327,7 +328,6 @@ func newServerConfig(
 func newDNSTLSConfig(
 	extTLSConf *tlsConfigSettings,
 	addrs []netip.Addr,
-	allowUnencryptedDoH bool,
 ) (dnsConf *dnsforward.TLSConfig, err error) {
 	if !extTLSConf.Enabled {
 		return &dnsforward.TLSConfig{}, nil
@@ -358,22 +358,6 @@ func newDNSTLSConfig(
 	if extTLSConf.PortDNSOverQUIC != 0 {
 		dnsConf.QUICListenAddrs = ipsToUDPAddrs(addrs, extTLSConf.PortDNSOverQUIC)
 	}
-
-	cert, err := tls.X509KeyPair(extTLSConf.CertificateChainData, extTLSConf.PrivateKeyData)
-	if err != nil {
-		err = fmt.Errorf("parsing tls key pair: %w", err)
-		if allowUnencryptedDoH || dnsCryptConf != nil {
-			// TODO(s.chzhen):  Use [slog.Logger].
-			log.Info("warning: %s", err)
-
-			return dnsConf, nil
-		}
-
-		// Don't wrap the error, because it's already annotated.
-		return nil, err
-	}
-
-	dnsConf.Cert = &cert
 
 	return dnsConf, nil
 }

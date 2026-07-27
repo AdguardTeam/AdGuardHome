@@ -465,6 +465,8 @@ func (web *webAPI) serveTLS(ctx context.Context) (next bool) {
 	web.httpsServer.server = &http.Server{
 		Addr:    addr,
 		Handler: hdlr,
+		// TODO(m.kazantsev):  Do not create TLS config manually, but use
+		// [aghtls.TLSConfigProvider].
 		TLSConfig: &tls.Config{
 			Certificates: []tls.Certificate{web.httpsServer.certificate()},
 			RootCAs:      web.tlsManager.rootCerts,
@@ -505,6 +507,8 @@ func (web *webAPI) mustStartHTTP3(ctx context.Context, address string) {
 		// TODO(a.garipov): See if there is a way to use the error log as
 		// well as timeouts here.
 		Addr: address,
+		// TODO(m.kazantsev):  Do not create TLS config manually, but use
+		// [aghtls.TLSConfigProvider].
 		TLSConfig: &tls.Config{
 			Certificates: []tls.Certificate{web.httpsServer.certificate()},
 			RootCAs:      web.tlsManager.rootCerts,
@@ -809,7 +813,12 @@ func (web *webAPI) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 	newTLSConf := &req.tlsConfigSettings
 	newTLSConf.Status = *status
 
-	restartHTTPS = web.tlsManager.setConfig(ctx, newTLSConf, req.ServePlainDNS)
+	restartHTTPS, err = web.tlsManager.setConfig(ctx, newTLSConf, req.ServePlainDNS)
+	if err != nil {
+		aghhttp.ErrorAndLog(ctx, web.logger, r, w, http.StatusInternalServerError, "%s", err)
+
+		return
+	}
 
 	err = web.reconfigureDNSServer(ctx, newTLSConf)
 	if err != nil {
