@@ -35,8 +35,6 @@ const (
 // uint16.
 //
 // See https://www.iana.org/assignments/arp-parameters/arp-parameters.xhtml#arp-parameters-2.
-//
-// TODO(e.burkov):  Use.
 var HardwareTypeEthernet = []byte{0x00, 0x01}
 
 // DHCPv6 multicast addresses.
@@ -54,15 +52,14 @@ var (
 )
 
 // v6PrefLen is the length of prefix to match ip against.
-//
-// TODO(e.burkov):  DHCPv6 inherits the weird behavior of legacy implementation
-// where the allocated range constrained by the first address and the first
-// address with last byte set to 0xff.  Proper prefixes should be used instead.
 const v6PrefLen = netutil.IPv6BitLen - 8
 
 // IPv6Config is the interface-specific configuration for DHCPv6.
 //
-// TODO(e.burkov):  Add RangeEnd and SubnetPrefix fields, and validate them.
+// TODO(e.burkov):  DHCPv6 inherits the weird behavior of legacy implementation
+// where the allocated range constrained by the first address and the first
+// address with last byte set to 0xff.  Proper prefixes should be used instead,
+// so add RangeEnd and SubnetPrefix fields, and validate them.
 type IPv6Config struct {
 	// Clock is used to get the current time.  It should not be nil.
 	Clock timeutil.Clock
@@ -108,23 +105,11 @@ func (c *IPv6Config) Validate() (err error) {
 		validate.Positive("lease duration", c.LeaseDuration),
 	}
 
-	errs = c.validateSubnet(errs)
-
-	return errors.Join(errs...)
-}
-
-// validateSubnet validates the subnet configuration.
-//
-// TODO(e.burkov):  Use [validate].
-func (c *IPv6Config) validateSubnet(orig []error) (errs []error) {
-	errs = orig
-
 	if !c.RangeStart.Is6() {
-		err := newMustErr("range start", "be a valid ipv6", c.RangeStart)
-		errs = append(errs, err)
+		errs = append(errs, fmt.Errorf("range start: %s: must be a valid ipv6", c.RangeStart))
 	}
 
-	return errs
+	return errors.Join(errs...)
 }
 
 // dhcpInterfaceV6 is a DHCP interface for IPv6 address family.
@@ -134,15 +119,7 @@ type dhcpInterfaceV6 struct {
 	common *netInterface
 
 	// clock is used to get the current time.
-	//
-	// TODO(e.burkov):  Move to [netInterface].
 	clock timeutil.Clock
-
-	// addrChecker checks if an address is available for leasing in current
-	// network.
-	//
-	// TODO(e.burkov):  Move to [netInterface].
-	addrChecker addressChecker
 
 	// subnetPrefix is the network prefix of the interface's IPv6 subnet.  It is
 	// used for on-link address determination.
@@ -190,29 +167,24 @@ func (srv *DHCPServer) newDHCPInterfaceV6(
 		return nil
 	}
 
-	// TODO(e.burkov):  Migrate the configuration to use proper range start,
-	// end, and subnet prefix.
 	rangeEndData := conf.RangeStart.As16()
 	rangeEndData[15] = 0xff
 
-	// TODO(e.burkov):  Validate the range end and subnet prefix against the
-	// range start during configuration validation.
 	addrSpace, _ := newIPRange(conf.RangeStart, netip.AddrFrom16(rangeEndData))
 
 	iface = &dhcpInterfaceV6{
 		common: &netInterface{
-			logger:        l,
-			leases:        map[macKey]*Lease{},
-			indexMu:       srv.leasesMu,
-			index:         srv.leases,
-			name:          name,
-			addrSpace:     addrSpace,
-			leasedOffsets: newBitSet(),
-			leaseTTL:      conf.LeaseDuration,
+			logger:         l,
+			addressChecker: noopAddressChecker{},
+			leases:         map[macKey]*Lease{},
+			indexMu:        srv.leasesMu,
+			index:          srv.leases,
+			name:           name,
+			addrSpace:      addrSpace,
+			leasedOffsets:  newBitSet(),
+			leaseTTL:       conf.LeaseDuration,
 		},
-		clock: conf.Clock,
-		// TODO(e.burkov):  Use an ICMP implementation.
-		addrChecker:  noopAddressChecker{},
+		clock:        conf.Clock,
 		subnetPrefix: netip.PrefixFrom(conf.RangeStart, v6PrefLen),
 		// Recommended values for T1 and T2 are 0.5 and 0.8 times the shortest
 		// preferred lifetime of the addresses in the IA that the server is
@@ -234,11 +206,11 @@ func (srv *DHCPServer) newDHCPInterfaceV6(
 // dhcpInterfacesV6 is a slice of network interfaces of IPv6 address family.
 type dhcpInterfacesV6 []*dhcpInterfaceV6
 
-// find returns the first network interface within ifaces whose subnet prefix
+// find returns the first network interface within ifaces whose address space
 // contains ip.  It returns false if there is no such interface.
 func (ifaces dhcpInterfacesV6) find(ip netip.Addr) (iface6 *netInterface, ok bool) {
 	i := slices.IndexFunc(ifaces, func(iface *dhcpInterfaceV6) (contains bool) {
-		return iface.subnetPrefix.Contains(ip)
+		return iface.common.addrSpace.contains(ip)
 	})
 	if i < 0 {
 		return nil, false
@@ -424,9 +396,6 @@ func respond6(fd *frameData6, resp *layers.DHCPv6) (err error) {
 // leasing.  mac must be a valid MAC address according to [netutil.ValidateMAC],
 // req must be a valid DHCPv6 message of SOLICIT type, iface.common.indexMu
 // must be locked.
-//
-// TODO(e.burkov):  Support allocating several leases at a time when the
-// database will migrate, see the BUG at [Lease]'s documentation.
 func (iface *dhcpInterfaceV6) allocateForSolicit(
 	ctx context.Context,
 	mac net.HardwareAddr,
@@ -443,7 +412,6 @@ func (iface *dhcpInterfaceV6) allocateForSolicit(
 		var iana IANAOption
 		err := iana.UnmarshalBinary(reqOpt.Data)
 		if err != nil {
-			// TODO(e.burkov):  Recheck the logic on malformed IA_NA options.
 			l.DebugContext(ctx, "malformed ia_na", "idx", i, slogutil.KeyError, err)
 
 			continue
@@ -454,9 +422,7 @@ func (iface *dhcpInterfaceV6) allocateForSolicit(
 			return lease, iana.ID
 		}
 
-		// TODO(e.burkov):  Support allocating the exact requested address if it
-		// is available.
-		lease, err = iface.common.allocateLease(ctx, mac, iface.addrChecker, iface.clock)
+		lease, err = iface.common.allocateLease(ctx, mac, iface.clock.Now())
 		if err != nil {
 			l.DebugContext(ctx, "no address available", "iaid", iana.ID, slogutil.KeyError, err)
 
@@ -473,9 +439,6 @@ func (iface *dhcpInterfaceV6) allocateForSolicit(
 
 // firstIANA returns the first valid IA_NA option in req.  It returns false if
 // there is no such option.  req must not be nil.
-//
-// TODO(e.burkov):  Support handling several IA_NA options at a time when the
-// database will migrate, see the BUG at [Lease]'s documentation.
 func (iface *dhcpInterfaceV6) firstIANA(
 	ctx context.Context,
 	req *layers.DHCPv6,
@@ -499,6 +462,43 @@ func (iface *dhcpInterfaceV6) firstIANA(
 	}
 
 	return nil, false
+}
+
+// confirmAddrsOnLink checks whether every address in every IA_NA option of req
+// is appropriate for the link, i.e., lies within iface.subnetPrefix.  It
+// returns true in hasAddrs if at least one address was found across all IA_NA
+// options.  If all addresses are on-link, allOnLink is true.  req must be a
+// valid DHCPv6 message of CONFIRM type.
+//
+// See RFC 9915 Section 18.3.3.
+func (iface *dhcpInterfaceV6) confirmAddrsOnLink(
+	ctx context.Context,
+	req *layers.DHCPv6,
+) (allOnLink, hasAddrs bool) {
+	logger := iface.common.logger
+
+	for i, reqOpt := range req.Options {
+		if reqOpt.Code != layers.DHCPv6OptIANA {
+			continue
+		}
+
+		var iana IANAOption
+		err := iana.UnmarshalBinary(reqOpt.Data)
+		if err != nil {
+			logger.DebugContext(ctx, "malformed ia_na", "idx", i, slogutil.KeyError, err)
+
+			continue
+		}
+
+		for _, addr := range iana.Nested {
+			hasAddrs = true
+			if !iface.common.addrSpace.contains(addr.Addr) {
+				return false, true
+			}
+		}
+	}
+
+	return true, hasAddrs
 }
 
 // newSolicitRespOpts returns the common option list for Advertise and
@@ -567,6 +567,34 @@ func (iface *dhcpInterfaceV6) newRequestRespOpts(
 	return iface.appendRequestedOptions(opts, req)
 }
 
+// newConfirmRespOpts returns the common option list for Reply responses to a
+// Confirm message.  fd and cliID must not be nil.  If status is
+// [layers.DHCPv6StatusCodeSuccess], the response will not include a Status Code
+// option.
+//
+// See RFC 9915 Section 18.3.3.
+func (iface *dhcpInterfaceV6) newConfirmRespOpts(
+	fd *frameData6,
+	cliID *layers.DHCPv6DUID,
+	status layers.DHCPv6StatusCode,
+) (opts layers.DHCPv6Options) {
+	opts = append(
+		opts,
+		layers.NewDHCPv6Option(layers.DHCPv6OptServerID, fd.duidData),
+		layers.NewDHCPv6Option(layers.DHCPv6OptClientID, cliID.Encode()),
+	)
+
+	// If the Status Code option does not appear in a message in which the
+	// option could appear, the status of the message is assumed to be Success.
+	//
+	// See RFC 9915 Section 21.13.
+	if status != layers.DHCPv6StatusCodeSuccess {
+		opts = append(opts, newStatusCodeOption(status))
+	}
+
+	return opts
+}
+
 // iaNAFromLease returns an IA_NA option with a single IA Address sub-option
 // corresponding to lease and with the given iaid.  The T1 and T2 values are set
 // according to iface.t1 and iface.t2.  If lease is nil, it returns an IA_NA
@@ -591,9 +619,6 @@ func (iface *dhcpInterfaceV6) iaNAFromLease(lease *Lease, iaid uint32) (iana lay
 // leaseForRequest returns the committed lease for req.  It reuses an already
 // reserved lease for the client when possible, or allocates and commits the new
 // address.  iface.common.indexMu must be locked.
-//
-// TODO(e.burkov):  Support committing several leases at a time when the
-// database will migrate, see the BUG at [Lease]'s documentation.
 func (iface *dhcpInterfaceV6) leaseForRequest(
 	ctx context.Context,
 	req *layers.DHCPv6,
@@ -604,7 +629,7 @@ func (iface *dhcpInterfaceV6) leaseForRequest(
 
 	lease, ok := iface.common.leases[key]
 	if !ok {
-		lease, err = iface.common.allocateLease(ctx, mac, iface.addrChecker, iface.clock)
+		lease, err = iface.common.allocateLease(ctx, mac, iface.clock.Now())
 		if err != nil {
 			return nil, fmt.Errorf("allocating lease for mac %s: %w", mac, err)
 		}
@@ -626,9 +651,6 @@ func (iface *dhcpInterfaceV6) leaseForRequest(
 // deallocates the lease if the one fails to be committed.  lease must be
 // non-nil and allocated for the client corresponding to req,
 // iface.common.indexMu mutex must be locked.
-//
-// TODO(e.burkov):  Support committing several leases at a time when the
-// database will migrate, see the BUG at [Lease]'s documentation.
 func (iface *dhcpInterfaceV6) commit(
 	ctx context.Context,
 	req *layers.DHCPv6,
@@ -648,9 +670,8 @@ func (iface *dhcpInterfaceV6) commit(
 		l.DebugContext(ctx, "updated lease hostname", "hostname", hostname, "ip", lease.IP)
 	}
 
-	// TODO(e.burkov):  Add the Lease.isExpired. method.
-	if exp := lease.Expiry; !exp.IsZero() && exp.Before(iface.clock.Now()) {
-		lease.updateExpiry(iface.clock, iface.common.leaseTTL)
+	if now := iface.clock.Now(); lease.isExpiredAt(now) {
+		lease.updateExpiry(now, iface.common.leaseTTL)
 
 		l.DebugContext(ctx, "updated lease expiry", "expires", lease.Expiry, "ip", lease.IP)
 	}

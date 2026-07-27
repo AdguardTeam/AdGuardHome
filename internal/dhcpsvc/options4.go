@@ -422,6 +422,17 @@ func clientIdentifier4(msg *layers.DHCPv4) (id []byte) {
 	return nil
 }
 
+// message4 returns the optional message from the DHCPv4 message, if any.
+func message4(msg *layers.DHCPv4) (res string, ok bool) {
+	for _, opt := range msg.Options {
+		if opt.Type == layers.DHCPOptMessage && len(opt.Data) > 0 {
+			return string(opt.Data), true
+		}
+	}
+
+	return "", false
+}
+
 // requestedOptions4 returns the list of options requested in DHCPv4 message, if
 // any.
 //

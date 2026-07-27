@@ -150,14 +150,7 @@ type dhcpInterfaceV4 struct {
 	common *netInterface
 
 	// clock used to get current time.
-	//
-	// TODO(e.burkov):  Move to [netInterface].
 	clock timeutil.Clock
-
-	// addrChecker checks addresses for availability.
-	//
-	// TODO(e.burkov):  Move to [netInterface].
-	addrChecker addressChecker
 
 	// gateway is the IP address of the network gateway.
 	gateway netip.Addr
@@ -200,20 +193,19 @@ func (srv *DHCPServer) newDHCPInterfaceV4(
 	addrSpace, _ := newIPRange(conf.RangeStart, conf.RangeEnd)
 
 	iface = &dhcpInterfaceV4{
-		// TODO(e.burkov):  Use an ICMP implementation.
-		addrChecker: noopAddressChecker{},
-		gateway:     conf.GatewayIP,
-		clock:       conf.Clock,
-		subnet:      netip.PrefixFrom(conf.GatewayIP, maskLen),
+		gateway: conf.GatewayIP,
+		clock:   conf.Clock,
+		subnet:  netip.PrefixFrom(conf.GatewayIP, maskLen),
 		common: &netInterface{
-			logger:        baseLogger,
-			indexMu:       srv.leasesMu,
-			index:         srv.leases,
-			leases:        map[macKey]*Lease{},
-			leasedOffsets: newBitSet(),
-			name:          name,
-			addrSpace:     addrSpace,
-			leaseTTL:      conf.LeaseDuration,
+			logger:         baseLogger,
+			addressChecker: noopAddressChecker{},
+			indexMu:        srv.leasesMu,
+			index:          srv.leases,
+			leases:         map[macKey]*Lease{},
+			leasedOffsets:  newBitSet(),
+			name:           name,
+			addrSpace:      addrSpace,
+			leaseTTL:       conf.LeaseDuration,
 		},
 	}
 	iface.implicitOpts, iface.explicitOpts = conf.options(ctx, baseLogger)

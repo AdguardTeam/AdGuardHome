@@ -4,6 +4,8 @@ import (
 	"cmp"
 	"context"
 	"fmt"
+	"log/slog"
+	"net"
 	"net/netip"
 	"slices"
 
@@ -112,6 +114,8 @@ func (iface *dhcpInterfaceV4) handleDHCPv4(
 
 // handleDiscover handles messages of type DHCPDISCOVER.  req must be a
 // DHCPDISCOVER message, fd must be valid.
+//
+// TODO(e.burkov):  Remove allocated leases after client have chosen one.
 func (iface *dhcpInterfaceV4) handleDiscover(
 	ctx context.Context,
 	req *layers.DHCPv4,
@@ -127,6 +131,8 @@ func (iface *dhcpInterfaceV4) handleDiscover(
 	iface.common.indexMu.Lock()
 	defer iface.common.indexMu.Unlock()
 
+	now := iface.clock.Now()
+
 	lease, hasLease := iface.common.leases[mk]
 	if hasLease {
 		reqIP, hasReqIP := requestedIPv4(req)
@@ -134,13 +140,13 @@ func (iface *dhcpInterfaceV4) handleDiscover(
 			l.DebugContext(ctx, "different requested ip", "requested", reqIP, "lease", lease.IP)
 		}
 
-		lease.updateExpiry(iface.clock, iface.common.leaseTTL)
+		lease.updateExpiry(now, iface.common.leaseTTL)
 		iface.respondOffer(ctx, req, fd, lease, idOpt)
 
 		return
 	}
 
-	lease, err := iface.common.allocateLease(ctx, mac, iface.addrChecker, iface.clock)
+	lease, err := iface.common.allocateLease(ctx, mac, now)
 	if err != nil {
 		l.ErrorContext(ctx, "allocating a lease", slogutil.KeyError, err)
 
@@ -155,8 +161,6 @@ func (iface *dhcpInterfaceV4) handleDiscover(
 // DHCPREQUEST message.  req must not be nil, fd must be valid.
 //
 // See https://datatracker.ietf.org/doc/html/rfc2131#section-4.3.2.
-//
-// TODO(e.burkov):  Remove allocated leases after client have chosen one.
 func (iface *dhcpInterfaceV4) handleRequest(
 	ctx context.Context,
 	req *layers.DHCPv4,
@@ -292,7 +296,9 @@ func (iface *dhcpInterfaceV4) handleInitReboot(
 	if !hasLease {
 		// If the DHCP server has no record of this client, then it MUST remain
 		// silent, and MAY output a warning to the network administrator.
-		l.WarnContext(ctx, "no existing lease", "mac", mac)
+		//
+		// See https://datatracker.ietf.org/doc/html/rfc2131#section-4.3.2.
+		l.InfoContext(ctx, "no existing lease", "mac", mac)
 
 		return
 	}
@@ -342,7 +348,6 @@ func (iface *dhcpInterfaceV4) handleRenew(
 		// silent, and MAY output a warning to the network administrator.
 		l.InfoContext(ctx, "no existing lease", "mac", mac)
 
-		// TODO(e.burkov):  Investigate if we should respond with NAK.
 		return
 	}
 
@@ -369,52 +374,37 @@ func (iface *dhcpInterfaceV4) handleRenew(
 
 // handleDecline handles messages of type DHCPDECLINE.  req must be a
 // DHCPDECLINE message.
-//
-// TODO(e.burkov):  Log the message option, as the request should include one.
-//
-// TODO(e.burkov):  Consider DRY'ing this with [dhcpInterfaceV4.handleRelease].
 func (iface *dhcpInterfaceV4) handleDecline(ctx context.Context, req *layers.DHCPv4) {
 	l := iface.common.logger
 
 	reqIP, hasReqIP := requestedIPv4(req)
-	if !hasReqIP {
-		l.DebugContext(ctx, "skipping decline message without requested ip")
+	if !hasReqIP || !iface.subnet.Contains(reqIP) {
+		l.DebugContext(ctx, "skipping decline message", "requested_ip", reqIP)
 
 		return
 	}
-
-	if !iface.subnet.Contains(reqIP) {
-		l.DebugContext(ctx, "skipping decline message", "requestedip", reqIP)
-
-		return
-	}
-
-	// Check if the lease exists and matches.
-	mac := req.ClientHWAddr
-	mk := macToKey(mac)
 
 	iface.common.indexMu.Lock()
 	defer iface.common.indexMu.Unlock()
 
-	lease, hasLease := iface.common.leases[mk]
-	if !hasLease {
-		l.ErrorContext(ctx, "decline message for non-existing lease", "mac", mac)
-
-		return
-	}
-
-	if lease.IP != reqIP {
-		l.ErrorContext(ctx, "decline mismatch", "ip", reqIP, "lease", lease.IP)
-
+	lease := iface.leaseByMacWithIP(ctx, l, req.ClientHWAddr, reqIP)
+	if lease == nil {
 		return
 	}
 
 	l.WarnContext(ctx, "lease reported to be unavailable", "ip", lease.IP)
 
-	err := iface.common.blockLease(ctx, lease, iface.clock)
+	err := iface.common.blockLease(ctx, lease, iface.clock.Now())
 	if err != nil {
 		l.ErrorContext(ctx, "blocking lease", slogutil.KeyError, err)
 	}
+
+	var args []any
+	if msg, ok := message4(req); ok {
+		args = append(args, "message", msg)
+	}
+
+	l.DebugContext(ctx, "lease declined", args...)
 }
 
 // handleRelease handles messages of type DHCPRELEASE.  req must be a
@@ -422,32 +412,21 @@ func (iface *dhcpInterfaceV4) handleDecline(ctx context.Context, req *layers.DHC
 //
 // TODO(e.burkov):  Retain the lease instead of removing it completely.
 func (iface *dhcpInterfaceV4) handleRelease(ctx context.Context, req *layers.DHCPv4) {
-	l := iface.common.logger
+	l := iface.common.logger.With("msg_type", layers.DHCPMsgTypeRelease)
 
-	ip, _ := netip.AddrFromSlice(req.ClientIP.To4())
-	if !iface.subnet.Contains(ip) {
+	ip, ok := netip.AddrFromSlice(req.ClientIP.To4())
+
+	if !ok || !iface.subnet.Contains(ip) {
 		l.DebugContext(ctx, "skipping release message", "clientip", ip)
 
 		return
 	}
 
-	// Check if the lease exists and matches.
-	mac := req.ClientHWAddr
-	mk := macToKey(mac)
-
 	iface.common.indexMu.Lock()
 	defer iface.common.indexMu.Unlock()
 
-	lease, hasLease := iface.common.leases[mk]
-	if !hasLease {
-		l.WarnContext(ctx, "release message for non-existing lease", "mac", mac)
-
-		return
-	}
-
-	if lease.IP != ip {
-		l.WarnContext(ctx, "release mismatch", "ip", ip, "lease", lease.IP)
-
+	lease := iface.leaseByMacWithIP(ctx, l, req.ClientHWAddr, ip)
+	if lease == nil {
 		return
 	}
 
@@ -457,4 +436,30 @@ func (iface *dhcpInterfaceV4) handleRelease(ctx context.Context, req *layers.DHC
 
 		return
 	}
+}
+
+// leaseByMacWithIP returns the lease for the given MAC address and IP address.
+// It returns nil if the lease doesn't exist or if the IP address doesn't match
+// the lease, logging each case.  logger must not be nil, mac must be a valid
+// MAC address, ip must be a valid IPv4 address.
+func (iface *dhcpInterfaceV4) leaseByMacWithIP(
+	ctx context.Context,
+	logger *slog.Logger,
+	mac net.HardwareAddr,
+	ip netip.Addr,
+) (lease *Lease) {
+	lease, ok := iface.common.leases[macToKey(mac)]
+	if !ok {
+		logger.WarnContext(ctx, "non-existent lease", "mac", mac)
+
+		return nil
+	}
+
+	if lease.IP != ip {
+		logger.WarnContext(ctx, "ip doesn't match", "mac", mac, "expected", ip, "actual", lease.IP)
+
+		return nil
+	}
+
+	return lease
 }

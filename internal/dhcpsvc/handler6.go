@@ -40,8 +40,6 @@ func (srv *DHCPServer) serveEther6(ctx context.Context, iface *dhcpInterfaceV6, 
 
 // serveV6 handles the ethernet packet of IPv6 type. iface and pkt must not be
 // nil.  iface and fd must be valid.  pkt must be an IPv6 packet.
-//
-//lint:ignore U1000 TODO(e.burkov): Use.
 func (srv *DHCPServer) serveV6(
 	ctx context.Context,
 	iface *dhcpInterfaceV6,
@@ -52,9 +50,7 @@ func (srv *DHCPServer) serveV6(
 
 	msg, ok := pkt.Layer(layers.LayerTypeDHCPv6).(*layers.DHCPv6)
 	if !ok {
-		// TODO(e.burkov):  Consider adding some debug information about the
-		// actual received packet.
-		srv.logger.DebugContext(ctx, "skipping non-dhcpv6 packet")
+		srv.logger.DebugContext(ctx, "skipping non-dhcpv6 packet", "pkt", pkt)
 
 		return nil
 	}
@@ -207,11 +203,9 @@ func (iface *dhcpInterfaceV6) handleRequest(
 
 // handleConfirm handles messages of type CONFIRM.  req must not be nil and must
 // be a valid DHCPv6 message of type CONFIRM.  fd must be valid.
-//
-// TODO(e.burkov):  Implement.  This is a stub for now.
 func (iface *dhcpInterfaceV6) handleConfirm(
 	ctx context.Context,
-	_ *frameData6,
+	fd *frameData6,
 	req *layers.DHCPv6,
 ) (err error) {
 	cliID, err := clientIDNoServer(req.Options)
@@ -222,7 +216,35 @@ func (iface *dhcpInterfaceV6) handleConfirm(
 	l := iface.common.logger
 	l.DebugContext(ctx, "handling message", "type", req.MsgType, "cli_id", cliID)
 
-	return nil
+	// Collect all addresses from IA_NA options and check if they are
+	// appropriate for the link to which the client is attached.
+	//
+	// See RFC 9915 Section 18.3.3.
+	allOnLink, hasAddrs := iface.confirmAddrsOnLink(ctx, req)
+	if !hasAddrs {
+		// If the server is unable to perform this test (for example, the server
+		// does not have information about prefixes on the link to which the
+		// client is connected) or there were no addresses in any of the IAs
+		// sent by the client, the server MUST NOT send a Reply to the client.
+		//
+		// See RFC 9915 Section 18.3.3.
+		l.DebugContext(ctx, "no addresses in IA_NA options")
+
+		return nil
+	}
+
+	status := layers.DHCPv6StatusCodeSuccess
+	if !allOnLink {
+		status = layers.DHCPv6StatusCodeNotOnLink
+	}
+
+	resp := &layers.DHCPv6{
+		MsgType:       layers.DHCPv6MsgTypeReply,
+		TransactionID: req.TransactionID,
+		Options:       iface.newConfirmRespOpts(fd, cliID, status),
+	}
+
+	return respond6(fd, resp)
 }
 
 // handleRenew handles messages of type RENEW.  req must not be nil and must be

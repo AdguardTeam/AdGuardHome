@@ -270,6 +270,10 @@ var (
 
 	// testIPv6Static is the test IP address for a known static lease.
 	testIPv6Static = netip.MustParseAddr("2001:db8::65")
+
+	// testIPv6OtherSubnet is the test IP address for a client on another
+	// subnet.
+	testIPv6OtherSubnet = netip.MustParseAddr(testAnotherRangeStartV6Str)
 )
 
 // Time-related variables for test cases.
