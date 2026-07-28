@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agh"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
@@ -32,17 +33,24 @@ const (
 func TestValidateCertificates(t *testing.T) {
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
 
-	m, err := newTLSManager(ctx, &tlsManagerConfig{
-		logger:        testLogger,
-		confModifier:  agh.EmptyConfigModifier{},
-		manager:       aghtls.EmptyManager{},
-		servePlainDNS: false,
-	})
-	require.NoError(t, err)
+	tlsConfProvider := &aghtest.TLSConfigProvider{
+		OnRootCAs: func() *x509.CertPool {
+			return nil
+		},
+	}
 
+	var err error
 	t.Run("bad_certificate", func(t *testing.T) {
 		status := &tlsConfigStatus{}
-		err = m.validateCertificates(ctx, status, []byte("bad cert"), nil, "")
+		err = validateCertificates(
+			ctx,
+			testLogger,
+			tlsConfProvider,
+			status,
+			[]byte("bad cert"),
+			nil,
+			"",
+		)
 		testutil.AssertErrorMsg(t, "empty certificate", err)
 		assert.False(t, status.ValidCert)
 		assert.False(t, status.ValidChain)
@@ -50,7 +58,15 @@ func TestValidateCertificates(t *testing.T) {
 
 	t.Run("bad_private_key", func(t *testing.T) {
 		status := &tlsConfigStatus{}
-		err = m.validateCertificates(ctx, status, nil, []byte("bad priv key"), "")
+		err = validateCertificates(
+			ctx,
+			testLogger,
+			tlsConfProvider,
+			status,
+			nil,
+			[]byte("bad priv key"),
+			"",
+		)
 		testutil.AssertErrorMsg(t, "no valid keys were found", err)
 		assert.False(t, status.ValidKey)
 	})
@@ -61,7 +77,15 @@ func TestValidateCertificates(t *testing.T) {
 		testCertChainData := requireReadFile(t, testCertificatePath)
 		testPrivateKeyData := requireReadFile(t, testPrivateKeyPath)
 
-		err = m.validateCertificates(ctx, status, testCertChainData, testPrivateKeyData, "")
+		err = validateCertificates(
+			ctx,
+			testLogger,
+			tlsConfProvider,
+			status,
+			testCertChainData,
+			testPrivateKeyData,
+			"",
+		)
 		assert.Error(t, err)
 
 		notBefore := time.Date(2019, 2, 27, 9, 24, 23, 0, time.UTC)
@@ -81,19 +105,31 @@ func TestValidateCertificates(t *testing.T) {
 	t.Run("no_ip_in_cert", func(t *testing.T) {
 		caCert, chainPEM, leafKeyPEM := newCertWithoutIP(t)
 
-		m.rootCerts = x509.NewCertPool()
-		m.rootCerts.AddCert(caCert)
+		tlsConfProvider.OnRootCAs = func() *x509.CertPool {
+			pool := x509.NewCertPool()
+			pool.AddCert(caCert)
+
+			return pool
+		}
 
 		status := &tlsConfigStatus{}
 		var ok bool
-		ok, err = m.validateCertificate(ctx, status, chainPEM, "")
+		ok, err = validateCertificate(ctx, testLogger, tlsConfProvider, status, chainPEM, "")
 		assert.True(t, ok)
 		assert.ErrorIs(t, err, errNoIPInCert)
 		assert.True(t, status.ValidCert)
 		assert.True(t, status.ValidChain)
 
 		status = &tlsConfigStatus{}
-		err = m.validateCertificates(ctx, status, chainPEM, leafKeyPEM, "")
+		err = validateCertificates(
+			ctx,
+			testLogger,
+			tlsConfProvider,
+			status,
+			chainPEM,
+			leafKeyPEM,
+			"",
+		)
 		assert.ErrorIs(t, err, errNoIPInCert)
 		assert.True(t, status.ValidCert)
 		assert.True(t, status.ValidChain)

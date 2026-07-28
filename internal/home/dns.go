@@ -114,6 +114,7 @@ func initDNS(
 		globalContext.dhcpServer,
 		anonymizer,
 		httpReg,
+		tlsMgr.extendedTLSConfig(),
 		tlsMgr,
 		baseLogger,
 		confModifier,
@@ -141,7 +142,8 @@ func initDNSServer(
 	dhcpSrv dnsforward.DHCP,
 	anonymizer *aghnet.IPMut,
 	httpReg aghhttp.Registrar,
-	tlsMgr *tlsManager,
+	extTLSConf *tlsConfigSettings,
+	tlsConfProvider aghtls.TLSConfigProvider,
 	l *slog.Logger,
 	confModifier agh.ConfigModifier,
 ) (err error) {
@@ -155,7 +157,7 @@ func initDNSServer(
 		DHCPServer:        dhcpSrv,
 		EtcHosts:          globalContext.etcHosts,
 		LocalDomain:       config.DHCP.LocalDomainName,
-		TLSConfigProvider: tlsMgr,
+		TLSConfigProvider: tlsConfProvider,
 	})
 	defer func() {
 		if err != nil {
@@ -171,9 +173,9 @@ func initDNSServer(
 	dnsConf, err := newServerConfig(
 		&config.DNS,
 		config.Clients.Sources,
-		tlsMgr.extendedTLSConfig(),
+		extTLSConf,
 		config.HTTPConfig.DoH,
-		tlsMgr,
+		tlsConfProvider,
 		httpReg,
 		globalContext.clients.storage,
 		confModifier,

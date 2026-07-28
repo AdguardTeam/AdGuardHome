@@ -2,7 +2,7 @@ package home
 
 import (
 	"context"
-	"crypto/tls"
+	"encoding/base64"
 	"fmt"
 	"io/fs"
 	"log/slog"
@@ -16,12 +16,12 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/updater"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/netutil/httputil"
-	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/AdguardTeam/golibs/osutil"
 	"github.com/AdguardTeam/golibs/osutil/executil"
 	"github.com/NYTimes/gziphandler"
@@ -141,9 +141,6 @@ type httpsServer struct {
 	// whenever cert, enabled, or shutdown changes.
 	reconfigured chan unit
 
-	// cert is the certificate used by server and server3.
-	cert tls.Certificate
-
 	// shutdown is true when this httpsServer is shutting down.
 	shutdown bool
 
@@ -166,14 +163,6 @@ func (srv *httpsServer) inShutdown() (ok bool) {
 	defer srv.mu.Unlock()
 
 	return srv.shutdown
-}
-
-// certificate returns a cert used by the server.  cert must not be modified.
-func (srv *httpsServer) certificate() (cert tls.Certificate) {
-	srv.mu.Lock()
-	defer srv.mu.Unlock()
-
-	return srv.cert
 }
 
 // waitForTLSReady blocks until the server is enabled or a shutdown signal is
@@ -228,6 +217,9 @@ type webAPI struct {
 	// encryption.
 	tlsManager *tlsManager
 
+	// tlsConfProvider is used to provide the TLS configuration.
+	tlsConfProvider aghtls.TLSConfigProvider
+
 	// auth stores web user information and handles authentication.
 	auth *auth
 
@@ -252,16 +244,17 @@ func newWebAPI(ctx context.Context, conf *webAPIConfig) (w *webAPI) {
 	conf.logger.InfoContext(ctx, "initializing")
 
 	w = &webAPI{
-		conf:         conf,
-		confModifier: conf.confModifier,
-		httpReg:      conf.httpReg,
-		cmdCons:      conf.CommandConstructor,
-		logger:       conf.logger,
-		baseLogger:   conf.baseLogger,
-		tlsManager:   conf.tlsManager,
-		auth:         conf.auth,
-		pidFilePath:  conf.pidFilePath,
-		startTime:    time.Now(),
+		conf:            conf,
+		confModifier:    conf.confModifier,
+		httpReg:         conf.httpReg,
+		cmdCons:         conf.CommandConstructor,
+		logger:          conf.logger,
+		baseLogger:      conf.baseLogger,
+		tlsManager:      conf.tlsManager,
+		tlsConfProvider: conf.tlsManager,
+		auth:            conf.auth,
+		pidFilePath:     conf.pidFilePath,
+		startTime:       time.Now(),
 	}
 
 	clientFS := http.FileServer(http.FS(conf.clientFS))
@@ -306,14 +299,6 @@ func (web *webAPI) tlsConfigChanged(ctx context.Context, tlsConf *tlsConfigSetti
 		tlsConf.PortHTTPS != 0 &&
 		len(tlsConf.PrivateKeyData) != 0 &&
 		len(tlsConf.CertificateChainData) != 0
-	var cert tls.Certificate
-	var err error
-	if enabled {
-		cert, err = tls.X509KeyPair(tlsConf.CertificateChainData, tlsConf.PrivateKeyData)
-		if err != nil {
-			panic(err)
-		}
-	}
 
 	// TODO(d.kolyshev):  Consider protecting server with mu.
 	if web.httpsServer.server != nil {
@@ -330,7 +315,6 @@ func (web *webAPI) tlsConfigChanged(ctx context.Context, tlsConf *tlsConfigSetti
 		defer web.httpsServer.mu.Unlock()
 
 		web.httpsServer.enabled = enabled
-		web.httpsServer.cert = cert
 	}()
 
 	web.httpsServer.notifyReconfigured(ctx)
@@ -350,7 +334,7 @@ func (web *webAPI) start(ctx context.Context) {
 
 	// This loop is used as an ability to change listening host and/or port.
 	for !web.httpsServer.inShutdown() {
-		printHTTPAddresses(ctx, web.logger, urlutil.SchemeHTTP, web.tlsManager)
+		printHTTPAddresses(ctx, web.logger)
 		errs := make(chan error, 2)
 
 		logger := web.baseLogger.With(loggerKeyServer, "plain")
@@ -463,23 +447,16 @@ func (web *webAPI) serveTLS(ctx context.Context) (next bool) {
 	hdlr := web.wrapMux(logger)
 
 	web.httpsServer.server = &http.Server{
-		Addr:    addr,
-		Handler: hdlr,
-		// TODO(m.kazantsev):  Do not create TLS config manually, but use
-		// [aghtls.TLSConfigProvider].
-		TLSConfig: &tls.Config{
-			Certificates: []tls.Certificate{web.httpsServer.certificate()},
-			RootCAs:      web.tlsManager.rootCerts,
-			CipherSuites: web.tlsManager.customCipherIDs,
-			MinVersion:   tls.VersionTLS12,
-		},
+		Addr:              addr,
+		Handler:           hdlr,
+		TLSConfig:         web.tlsConfProvider.TLSConfig(),
 		ReadTimeout:       web.conf.ReadTimeout,
 		ReadHeaderTimeout: web.conf.ReadHeaderTimeout,
 		WriteTimeout:      web.conf.WriteTimeout,
 		ErrorLog:          slog.NewLogLogger(logger.Handler(), slog.LevelError),
 	}
 
-	printHTTPAddresses(ctx, web.logger, urlutil.SchemeHTTPS, web.tlsManager)
+	printHTTPSAddresses(ctx, web.logger, web.tlsManager)
 
 	if web.conf.serveHTTP3 {
 		go web.mustStartHTTP3(ctx, addr)
@@ -506,16 +483,9 @@ func (web *webAPI) mustStartHTTP3(ctx context.Context, address string) {
 	web.httpsServer.server3 = &http3.Server{
 		// TODO(a.garipov): See if there is a way to use the error log as
 		// well as timeouts here.
-		Addr: address,
-		// TODO(m.kazantsev):  Do not create TLS config manually, but use
-		// [aghtls.TLSConfigProvider].
-		TLSConfig: &tls.Config{
-			Certificates: []tls.Certificate{web.httpsServer.certificate()},
-			RootCAs:      web.tlsManager.rootCerts,
-			CipherSuites: web.tlsManager.customCipherIDs,
-			MinVersion:   tls.VersionTLS12,
-		},
-		Handler: hdlr,
+		Addr:      address,
+		TLSConfig: web.tlsConfProvider.TLSConfig(),
+		Handler:   hdlr,
 	}
 
 	web.logger.DebugContext(ctx, "starting http/3 server")
@@ -572,7 +542,7 @@ func (web *webAPI) handleTLSStatus(w http.ResponseWriter, r *http.Request) {
 		tlsConfigStatus: &tlsConf.Status,
 	}
 
-	web.tlsManager.marshalTLS(r.Context(), w, r, data)
+	web.marshalTLS(r.Context(), w, r, data)
 }
 
 // handleTLSValidate is the handler for the POST /control/tls/validate HTTP API.
@@ -607,13 +577,13 @@ func (web *webAPI) handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 	// Skip the error check, since we are only interested in the value of
 	// status.WarningValidation.
 	status := &tlsConfigStatus{}
-	_ = web.tlsManager.loadTLSConfig(ctx, &setts.tlsConfigSettings, status)
+	_ = loadTLSConfig(ctx, web.logger, web.tlsConfProvider, &setts.tlsConfigSettings, status)
 	resp := &tlsConfig{
 		tlsConfigSettingsExt: setts,
 		tlsConfigStatus:      status,
 	}
 
-	web.tlsManager.marshalTLS(ctx, w, r, resp)
+	web.marshalTLS(ctx, w, r, resp)
 }
 
 // validateTLSSettings returns error if the setts are not valid.
@@ -779,7 +749,7 @@ func (web *webAPI) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 	var restartHTTPS bool
 	defer func() {
 		if restartHTTPS {
-			web.tlsManager.confModifier.Apply(ctx)
+			web.confModifier.Apply(ctx)
 		}
 	}()
 
@@ -798,14 +768,14 @@ func (web *webAPI) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 	}
 
 	status := &tlsConfigStatus{}
-	err = web.tlsManager.loadTLSConfig(ctx, &req.tlsConfigSettings, status)
+	err = loadTLSConfig(ctx, web.logger, web.tlsConfProvider, &req.tlsConfigSettings, status)
 	if err != nil {
 		resp := &tlsConfig{
 			tlsConfigSettingsExt: req,
 			tlsConfigStatus:      status,
 		}
 
-		web.tlsManager.marshalTLS(ctx, w, r, resp)
+		web.marshalTLS(ctx, w, r, resp)
 
 		return
 	}
@@ -834,7 +804,7 @@ func (web *webAPI) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 		tlsConfigStatus:      status,
 	}
 
-	web.tlsManager.marshalTLS(ctx, w, r, resp)
+	web.marshalTLS(ctx, w, r, resp)
 	rc := http.NewResponseController(w)
 	err = rc.Flush()
 	if err != nil {
@@ -861,10 +831,10 @@ func (web *webAPI) reconfigureDNSServer(
 		config.Clients.Sources,
 		extTLSConf,
 		config.HTTPConfig.DoH,
-		web.tlsManager,
+		web.tlsConfProvider,
 		web.httpReg,
 		globalContext.clients.storage,
-		web.tlsManager.confModifier,
+		web.confModifier,
 	)
 	if err != nil {
 		return fmt.Errorf("generating forwarding dns server config: %w", err)
@@ -876,4 +846,25 @@ func (web *webAPI) reconfigureDNSServer(
 	}
 
 	return nil
+}
+
+// marshalTLS encodes sensitive fields and writes data as JSON.  All arguments
+// must not be nil.
+func (web *webAPI) marshalTLS(
+	ctx context.Context,
+	w http.ResponseWriter,
+	r *http.Request,
+	data *tlsConfig,
+) {
+	if data.CertificateChain != "" {
+		encoded := base64.StdEncoding.EncodeToString([]byte(data.CertificateChain))
+		data.CertificateChain = encoded
+	}
+
+	if data.PrivateKey != "" {
+		data.PrivateKeySaved = true
+		data.PrivateKey = ""
+	}
+
+	aghhttp.WriteJSONResponseOK(ctx, web.logger, w, r, *data)
 }

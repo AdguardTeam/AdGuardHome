@@ -12,7 +12,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
-	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/AdguardTeam/golibs/osutil/executil"
 	"github.com/kardianos/service"
 )
@@ -337,7 +336,7 @@ func handleServiceInstallCmd(
 			"There are a few more things that must be configured before you can use it.\n"+
 			"Click on the link below and follow the Installation Wizard steps to finish setup.\n"+
 			"AdGuard Home is now available at the following addresses:")
-		printHTTPAddresses(ctx, l, urlutil.SchemeHTTP, nil)
+		printHTTPAddresses(ctx, l)
 	}
 
 	return nil

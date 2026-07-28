@@ -1298,28 +1298,36 @@ func printWebAddrs(ctx context.Context, l *slog.Logger, proto, addr string, port
 }
 
 // printHTTPAddresses prints the IP addresses which user can use to access the
-// admin interface.  proto is either [urlutil.SchemeHTTPS] or
-// [urlutil.SchemeHTTP].  l must not be nil.  If proto is [urlutil.SchemeHTTPS],
-// then tlsMgr must not be nil.
-//
-// TODO(s.chzhen):  Implement separate functions for HTTP and HTTPS.
-func printHTTPAddresses(ctx context.Context, l *slog.Logger, proto string, tlsMgr *tlsManager) {
+// admin interface over HTTP.  l must not be nil.
+func printHTTPAddresses(ctx context.Context, l *slog.Logger) {
+	port := config.HTTPConfig.Address.Port()
+
+	printWebInterfaces(ctx, l, urlutil.SchemeHTTP, port)
+}
+
+// printHTTPAddresses prints the IP addresses which user can use to access the
+// admin interface over HTTPS.  l and tlsMgr must not be nil.
+func printHTTPSAddresses(ctx context.Context, l *slog.Logger, tlsMgr *tlsManager) {
 	var extTLSConf *tlsConfigSettings
 	if tlsMgr != nil {
 		extTLSConf = tlsMgr.extendedTLSConfig()
 	}
 
-	port := config.HTTPConfig.Address.Port()
-	if proto == urlutil.SchemeHTTPS {
-		port = extTLSConf.PortHTTPS
-	}
+	port := extTLSConf.PortHTTPS
 
-	if proto == urlutil.SchemeHTTPS && extTLSConf.ServerName != "" {
-		printWebAddrs(ctx, l, proto, extTLSConf.ServerName, extTLSConf.PortHTTPS)
+	if extTLSConf.ServerName != "" {
+		printWebAddrs(ctx, l, urlutil.SchemeHTTPS, extTLSConf.ServerName, extTLSConf.PortHTTPS)
 
 		return
 	}
 
+	printWebInterfaces(ctx, l, urlutil.SchemeHTTPS, port)
+}
+
+// printWebInterfaces prints the web interface addresses for the given proto and
+// port.  proto must be either [urlutil.SchemeHTTPS] or [urlutil.SchemeHTTP].
+// l must not be nil.
+func printWebInterfaces(ctx context.Context, l *slog.Logger, proto string, port uint16) {
 	bindHost := config.HTTPConfig.Address.Addr()
 	if !bindHost.IsUnspecified() {
 		printWebAddrs(ctx, l, proto, bindHost.String(), port)
@@ -1392,7 +1400,19 @@ func cmdlineUpdate(
 	//
 	// TODO(e.burkov):  We could probably initialize the internal resolver
 	// separately.
-	err := initDNSServer(ctx, nil, nil, nil, nil, nil, nil, tlsMgr, l, agh.EmptyConfigModifier{})
+	err := initDNSServer(
+		ctx,
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+		tlsMgr.extendedTLSConfig(),
+		tlsMgr,
+		l,
+		agh.EmptyConfigModifier{},
+	)
 	fatalOnError(err)
 
 	l.InfoContext(ctx, "performing update via cli")

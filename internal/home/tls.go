@@ -149,7 +149,7 @@ func newTLSManager(ctx context.Context, conf *tlsManagerConfig) (m *tlsManager, 
 		m.logger.ErrorContext(ctx, "setting tls files", slogutil.KeyError, err)
 	}
 
-	err = m.loadTLSConfig(ctx, m.extTLSConf, &m.extTLSConf.Status)
+	err = loadTLSConfig(ctx, m.logger, m, m.extTLSConf, &m.extTLSConf.Status)
 	if err != nil {
 		m.extTLSConf.Enabled = false
 
@@ -177,32 +177,6 @@ func newTLSManager(ctx context.Context, conf *tlsManagerConfig) (m *tlsManager, 
 	m.setCertFileTime(ctx)
 
 	return m, nil
-}
-
-// checkIfValidStatus checks if status is valid.  If it is valid, certErr is set
-// to nil.  Otherwise, certErr is returned as is.  status must not be nil.
-func (m *tlsManager) checkIfValidStatus(
-	ctx context.Context,
-	status *tlsConfigStatus,
-	certErr error,
-) (err error) {
-	if certErr == nil {
-		return nil
-	}
-
-	status.WarningValidation = certErr.Error()
-	if status.ValidCert && status.ValidKey && status.ValidPair {
-		// Do not return warnings since those aren't critical, just log.
-		m.logger.WarnContext(
-			ctx,
-			"error while loading tls configuration",
-			slogutil.KeyError, certErr,
-		)
-
-		certErr = nil
-	}
-
-	return certErr
 }
 
 // setWebAPI stores the provided web API.  It must be called before
@@ -307,7 +281,7 @@ func (m *tlsManager) reload(ctx context.Context) {
 	extTLSConf := *tlsConfPtr
 	status := &tlsConfigStatus{}
 
-	err = m.loadTLSConfig(ctx, &extTLSConf, status)
+	err = loadTLSConfig(ctx, m.logger, m, &extTLSConf, status)
 	if err != nil {
 		m.logger.WarnContext(ctx, "reloading interrupted", slogutil.KeyError, err)
 
@@ -337,13 +311,15 @@ func (m *tlsManager) reload(ctx context.Context) {
 // [tlsConfigSettings.PrivateKeyData] properties.  The returned error is also
 // set in status.WarningValidation.  All arguments must not be nil.  m.mu is
 // expected to be locked.
-func (m *tlsManager) loadTLSConfig(
+func loadTLSConfig(
 	ctx context.Context,
+	logger *slog.Logger,
+	tlsConfProvider aghtls.TLSConfigProvider,
 	extTLSConf *tlsConfigSettings,
 	status *tlsConfigStatus,
 ) (err error) {
 	defer func() {
-		err = m.checkIfValidStatus(ctx, status, err)
+		err = checkIfValidStatus(ctx, logger, status, err)
 	}()
 
 	err = loadCertificateChainData(extTLSConf)
@@ -358,8 +334,10 @@ func (m *tlsManager) loadTLSConfig(
 		return err
 	}
 
-	err = m.validateCertificates(
+	err = validateCertificates(
 		ctx,
+		logger,
+		tlsConfProvider,
 		status,
 		extTLSConf.CertificateChainData,
 		extTLSConf.PrivateKeyData,
@@ -367,6 +345,34 @@ func (m *tlsManager) loadTLSConfig(
 	)
 
 	return errors.Annotate(err, "validating certificate pair: %w")
+}
+
+// checkIfValidStatus checks if status is valid.  If it is valid, certErr is set
+// to nil.  Otherwise, certErr is returned as is.  logger and status must not be
+// nil.
+func checkIfValidStatus(
+	ctx context.Context,
+	logger *slog.Logger,
+	status *tlsConfigStatus,
+	certErr error,
+) (err error) {
+	if certErr == nil {
+		return nil
+	}
+
+	status.WarningValidation = certErr.Error()
+	if status.ValidCert && status.ValidKey && status.ValidPair {
+		// Do not return warnings since those aren't critical, just log.
+		logger.WarnContext(
+			ctx,
+			"error while loading tls configuration",
+			slogutil.KeyError, certErr,
+		)
+
+		certErr = nil
+	}
+
+	return certErr
 }
 
 // loadCertificateChainData loads PEM-encoded certificates chain data to the
@@ -542,12 +548,11 @@ func (c *tlsConfigSettings) updatePlainDNS(
 
 // validateCertChain verifies certs using the first as the main one and others
 // as intermediate.  srvName stands for the expected DNS name.  certs must not
-// be empty.
-//
-// TODO(e.burkov):  Pass logger and rootCerts through arguments and remove
-// dependency on tlsManager.
-func (m *tlsManager) validateCertChain(
+// be empty.  logger and tlsConfProvider must not be nil.
+func validateCertChain(
 	ctx context.Context,
+	logger *slog.Logger,
+	tlsConfProvider aghtls.TLSConfigProvider,
 	certs []*x509.Certificate,
 	srvName string,
 ) (err error) {
@@ -560,7 +565,7 @@ func (m *tlsManager) validateCertChain(
 
 	othersLen := len(others)
 	if othersLen > 0 {
-		m.logger.InfoContext(
+		logger.InfoContext(
 			ctx,
 			"verifying certificate chain: got an intermediate cert",
 			"num", othersLen,
@@ -569,7 +574,7 @@ func (m *tlsManager) validateCertChain(
 
 	opts := x509.VerifyOptions{
 		DNSName:       srvName,
-		Roots:         m.rootCerts,
+		Roots:         tlsConfProvider.RootCAs(),
 		Intermediates: pool,
 	}
 	_, err = main.Verify(opts)
@@ -586,15 +591,14 @@ const errNoIPInCert errors.Error = `certificates has no IP addresses; ` +
 	`DNS-over-TLS won't be advertised via DDR`
 
 // parseCertChain parses the certificate chain from raw data, and returns it.
-// If ok is true, the returned error, if any, is not critical.
-//
-// TODO(e.burkov):  Pass logger through arguments and remove dependency on
-// tlsManager.
-func (m *tlsManager) parseCertChain(
+// If ok is true, the returned error, if any, is not critical.  logger must not
+// be nil.
+func parseCertChain(
 	ctx context.Context,
+	logger *slog.Logger,
 	chain []byte,
 ) (parsedCerts []*x509.Certificate, ok bool, err error) {
-	m.logger.DebugContext(ctx, "parsing certificate chain", "size", datasize.ByteSize(len(chain)))
+	logger.DebugContext(ctx, "parsing certificate chain", "size", datasize.ByteSize(len(chain)))
 
 	var certs []*pem.Block
 	for decoded, pemblock := pem.Decode(chain); decoded != nil; {
@@ -610,7 +614,7 @@ func (m *tlsManager) parseCertChain(
 		return nil, false, err
 	}
 
-	m.logger.InfoContext(ctx, "parsing multiple pem certificates", "num", len(parsedCerts))
+	logger.InfoContext(ctx, "parsing multiple pem certificates", "num", len(parsedCerts))
 
 	if !aghtls.CertificateHasIP(parsedCerts[0]) {
 		err = errNoIPInCert
@@ -675,10 +679,12 @@ func validatePKey(pkey []byte) (keyType string, err error) {
 }
 
 // validateCertificates processes certificate data and its private key.  status
-// must not be nil, since it's used to accumulate the validation results.  Other
-// parameters are optional.
-func (m *tlsManager) validateCertificates(
+// must not be nil, since it's used to accumulate the validation results.
+// logger and tlsConfProvider must not be nil.  Other parameters are optional.
+func validateCertificates(
 	ctx context.Context,
+	logger *slog.Logger,
+	tlsConfProvider aghtls.TLSConfigProvider,
 	status *tlsConfigStatus,
 	certChain []byte,
 	pkey []byte,
@@ -687,7 +693,7 @@ func (m *tlsManager) validateCertificates(
 	// Check only the public certificate separately from the key.
 	if len(certChain) > 0 {
 		var ok bool
-		ok, err = m.validateCertificate(ctx, status, certChain, serverName)
+		ok, err = validateCertificate(ctx, logger, tlsConfProvider, status, certChain, serverName)
 		if !ok {
 			// Don't wrap the error, since it's informative enough as is.
 			return err
@@ -722,10 +728,13 @@ func (m *tlsManager) validateCertificates(
 }
 
 // validateCertificate processes certificate data.  status must not be nil, as
-// it is used to accumulate the validation results.  Other parameters are
-// optional.  If ok is true, the returned error, if any, is not critical.
-func (m *tlsManager) validateCertificate(
+// it is used to accumulate the validation results.  logger and tlsConfProvider
+// must not be nil. Other parameters are optional.  If ok is true, the returned
+// error, if any, is not critical.
+func validateCertificate(
 	ctx context.Context,
+	logger *slog.Logger,
+	tlsConfProvider aghtls.TLSConfigProvider,
 	status *tlsConfigStatus,
 	certChain []byte,
 	serverName string,
@@ -736,7 +745,7 @@ func (m *tlsManager) validateCertificate(
 
 	// Set status.ValidCert to true to signal the frontend that the
 	// certificate opens successfully and certificate chain is valid.
-	certs, status.ValidCert, parseErr = m.parseCertChain(ctx, certChain)
+	certs, status.ValidCert, parseErr = parseCertChain(ctx, logger, certChain)
 	if !status.ValidCert {
 		// Don't wrap the error, since it's informative enough as is.
 		return false, parseErr
@@ -749,7 +758,7 @@ func (m *tlsManager) validateCertificate(
 	status.NotBefore = mainCert.NotBefore
 	status.DNSNames = mainCert.DNSNames
 
-	err = m.validateCertChain(ctx, certs, serverName)
+	err = validateCertChain(ctx, logger, tlsConfProvider, certs, serverName)
 	if err != nil {
 		// Let self-signed certs through and don't return this error to set
 		// its message into the status.WarningValidation afterwards.
@@ -839,27 +848,6 @@ func unmarshalTLS(r *http.Request) (data tlsConfigSettingsExt, err error) {
 	}
 
 	return data, nil
-}
-
-// marshalTLS encodes sensitive fields and writes data as JSON.  All arguments
-// must not be nil.
-func (m *tlsManager) marshalTLS(
-	ctx context.Context,
-	w http.ResponseWriter,
-	r *http.Request,
-	data *tlsConfig,
-) {
-	if data.CertificateChain != "" {
-		encoded := base64.StdEncoding.EncodeToString([]byte(data.CertificateChain))
-		data.CertificateChain = encoded
-	}
-
-	if data.PrivateKey != "" {
-		data.PrivateKeySaved = true
-		data.PrivateKey = ""
-	}
-
-	aghhttp.WriteJSONResponseOK(ctx, m.logger, w, r, *data)
 }
 
 // TLSConfig implements the [aghtls.TLSConfigProvider] interface for
