@@ -877,7 +877,16 @@ func runDNSServer(
 	querylogDir string,
 	httpReg *aghhttp.DefaultRegistrar,
 ) {
-	err := initDNS(ctx, slogLogger, tlsMgr, confModifier, httpReg, statsDir, querylogDir)
+	err := initDNS(
+		ctx,
+		slogLogger,
+		tlsMgr,
+		tlsMgr.extendedTLSConfig(),
+		confModifier,
+		httpReg,
+		statsDir,
+		querylogDir,
+	)
 	fatalOnError(err)
 
 	tlsMgr.start(ctx)

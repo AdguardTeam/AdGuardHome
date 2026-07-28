@@ -215,10 +215,17 @@ type webAPI struct {
 
 	// tlsManager contains the current configuration and state of TLS
 	// encryption.
+	//
+	// TODO(m.kazantsev): !! Find a way to remove it.
 	tlsManager *tlsManager
 
 	// tlsConfProvider is used to provide the TLS configuration.
+	//
+	// TODO(m.kazantsev):  Merge with [aghtls.Manager].
 	tlsConfProvider aghtls.TLSConfigProvider
+
+	// manager manages the TLS configuration.
+	manager aghtls.Manager
 
 	// auth stores web user information and handles authentication.
 	auth *auth
@@ -251,6 +258,7 @@ func newWebAPI(ctx context.Context, conf *webAPIConfig) (w *webAPI) {
 		logger:          conf.logger,
 		baseLogger:      conf.baseLogger,
 		tlsManager:      conf.tlsManager,
+		manager:         conf.tlsManager.manager,
 		tlsConfProvider: conf.tlsManager,
 		auth:            conf.auth,
 		pidFilePath:     conf.pidFilePath,

@@ -46,7 +46,8 @@ const (
 func initDNS(
 	ctx context.Context,
 	baseLogger *slog.Logger,
-	tlsMgr *tlsManager,
+	tlsConfProvider aghtls.TLSConfigProvider,
+	extendedTLSConf *tlsConfigSettings,
 	confModifier agh.ConfigModifier,
 	httpReg aghhttp.Registrar,
 	statsDir string,
@@ -114,8 +115,8 @@ func initDNS(
 		globalContext.dhcpServer,
 		anonymizer,
 		httpReg,
-		tlsMgr.extendedTLSConfig(),
-		tlsMgr,
+		extendedTLSConf,
+		tlsConfProvider,
 		baseLogger,
 		confModifier,
 	)

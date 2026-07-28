@@ -19,6 +19,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/errors"
@@ -532,7 +533,9 @@ func (web *webAPI) finalizeInstall(
 	err = startMods(
 		ctx,
 		web.baseLogger,
-		web.tlsManager,
+		web.tlsConfProvider,
+		web.tlsManager.extendedTLSConfig(),
+		web.manager,
 		web.confModifier,
 		web.httpReg,
 		web.conf.workDir,
@@ -637,27 +640,36 @@ func decodeApplyConfigReq(r io.Reader) (req *applyConfigReq, restartHTTP bool, e
 func startMods(
 	ctx context.Context,
 	baseLogger *slog.Logger,
-	tlsMgr *tlsManager,
+	tlsConfProvider aghtls.TLSConfigProvider,
+	extTLSConf *tlsConfigSettings,
+	manager aghtls.Manager,
 	confModifier agh.ConfigModifier,
 	httpReg aghhttp.Registrar,
 	workDir string,
 ) (err error) {
 	statsDir, querylogDir, err := checkStatsAndQuerylogDirs(config, workDir)
 	if err != nil {
+		// Don't wrap the error, because it's informative enough as is.
 		return err
 	}
 
-	err = initDNS(ctx, baseLogger, tlsMgr, confModifier, httpReg, statsDir, querylogDir)
+	err = initDNS(ctx, baseLogger, tlsConfProvider, extTLSConf, confModifier, httpReg, statsDir, querylogDir)
 	if err != nil {
+		// Don't wrap the error, because it's informative enough as is.
 		return err
 	}
 
-	tlsMgr.start(ctx)
+	err = manager.Start(ctx)
+	if err != nil {
+		// Don't wrap the error, because it's informative enough as is.
+		return err
+	}
 
 	err = startDNSServer()
 	if err != nil {
 		closeDNSServer(ctx)
 
+		// Don't wrap the error, because it's informative enough as is.
 		return err
 	}
 
