@@ -41,7 +41,7 @@ const (
 
 // initDNS updates all the fields of the [globalContext] needed to initialize
 // the DNS server and initializes it at last.  It also must not be called unless
-// [config] and [globalContext] are initialized.  baseLogger, tlsMgr,
+// [config] and [globalContext] are initialized.  baseLogger, tlsConfProvider,
 // confModifier, and httpReg must not be nil.
 func initDNS(
 	ctx context.Context,
@@ -130,9 +130,10 @@ func initDNS(
 }
 
 // initDNSServer initializes the [context.dnsServer].  To only use the internal
-// proxy, none of the arguments are required, but tlsMgr and l still must not be
-// nil, in other cases all the arguments also must not be nil.  It also must not
-// be called unless [config] and [globalContext] are initialized.
+// proxy, none of the arguments are required, but extTLSConf, tlsConfProvider
+// and l still must not be nil, in other cases all the arguments also must not
+// be nil.  It also must not be called unless [config] and [globalContext] are
+// initialized.
 //
 // TODO(e.burkov): Use [dnsforward.DNSCreateParams] as a parameter.
 func initDNSServer(
@@ -412,10 +413,8 @@ type dnsEncryption struct {
 }
 
 // getDNSEncryption returns the TLS encryption addresses that AdGuard Home
-// listens on.  tlsMgr must not be nil.
-func getDNSEncryption(tlsMgr *tlsManager) (de dnsEncryption) {
-	extTLSConf := tlsMgr.extendedTLSConfig()
-
+// listens on.  extTLSConf must not be nil.
+func getDNSEncryption(extTLSConf *tlsConfigSettings) (de dnsEncryption) {
 	if !extTLSConf.Enabled || extTLSConf.ServerName == "" {
 		return dnsEncryption{}
 	}

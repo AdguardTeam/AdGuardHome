@@ -134,11 +134,11 @@ type httpsServer struct {
 	// [httpsServer.server] must also be non-nil.
 	server3 *http3.Server
 
-	// mu protects cert, enabled, and shutdown.  It must not be nil.
+	// mu protects enabled, and shutdown.  It must not be nil.
 	mu *sync.Mutex
 
 	// reconfigured wakes the TLS server loop waiting in [waitForTLSReady]
-	// whenever cert, enabled, or shutdown changes.
+	// whenever enabled or shutdown changes.
 	reconfigured chan unit
 
 	// shutdown is true when this httpsServer is shutting down.
@@ -224,9 +224,6 @@ type webAPI struct {
 	// TODO(m.kazantsev):  Merge with [aghtls.Manager].
 	tlsConfProvider aghtls.TLSConfigProvider
 
-	// manager manages the TLS configuration.
-	manager aghtls.Manager
-
 	// auth stores web user information and handles authentication.
 	auth *auth
 
@@ -241,6 +238,15 @@ type webAPI struct {
 
 	// startTime is the start time of the web API server in Unix milliseconds.
 	startTime time.Time
+
+	// mu protects extTLSConfigCached.
+	mu sync.RWMutex
+
+	// extTLSConfigCached is a cached copy of the current extended TLS
+	// configuration settings. It is updated by [webAPI.tlsConfigChanged] and
+	// read by handlers that need TLS settings without accessing tlsManager
+	// directly.
+	extTLSConfigCached *tlsConfigSettings
 }
 
 // newWebAPI creates a new instance of the web UI and API server.  conf must be
@@ -251,18 +257,19 @@ func newWebAPI(ctx context.Context, conf *webAPIConfig) (w *webAPI) {
 	conf.logger.InfoContext(ctx, "initializing")
 
 	w = &webAPI{
-		conf:            conf,
-		confModifier:    conf.confModifier,
-		httpReg:         conf.httpReg,
-		cmdCons:         conf.CommandConstructor,
-		logger:          conf.logger,
-		baseLogger:      conf.baseLogger,
-		tlsManager:      conf.tlsManager,
-		manager:         conf.tlsManager.manager,
-		tlsConfProvider: conf.tlsManager,
-		auth:            conf.auth,
-		pidFilePath:     conf.pidFilePath,
-		startTime:       time.Now(),
+		conf:               conf,
+		confModifier:       conf.confModifier,
+		httpReg:            conf.httpReg,
+		cmdCons:            conf.CommandConstructor,
+		logger:             conf.logger,
+		baseLogger:         conf.baseLogger,
+		tlsManager:         conf.tlsManager,
+		tlsConfProvider:    conf.tlsManager,
+		auth:               conf.auth,
+		pidFilePath:        conf.pidFilePath,
+		startTime:          time.Now(),
+		mu:                 sync.RWMutex{},
+		extTLSConfigCached: conf.tlsManager.extendedTLSConfig(),
 	}
 
 	clientFS := http.FileServer(http.FS(conf.clientFS))
@@ -302,6 +309,9 @@ func (web *webAPI) tlsConfigChanged(ctx context.Context, tlsConf *tlsConfigSetti
 	defer slogutil.RecoverAndExit(ctx, web.logger, osutil.ExitCodeFailure)
 
 	web.logger.DebugContext(ctx, "applying new tls configuration")
+
+	// Update the cached TLS configuration before using it.
+	web.updateTLSCache(tlsConf)
 
 	enabled := tlsConf.Enabled &&
 		tlsConf.PortHTTPS != 0 &&
@@ -464,7 +474,7 @@ func (web *webAPI) serveTLS(ctx context.Context) (next bool) {
 		ErrorLog:          slog.NewLogLogger(logger.Handler(), slog.LevelError),
 	}
 
-	printHTTPSAddresses(ctx, web.logger, web.tlsManager)
+	printHTTPSAddresses(ctx, web.logger, web.tlsConfigSettings())
 
 	if web.conf.serveHTTP3 {
 		go web.mustStartHTTP3(ctx, addr)
@@ -540,7 +550,7 @@ func (web *webAPI) registerTLSHandlers() {
 
 // handleTLSStatus is the handler for the GET /control/tls/status HTTP API.
 func (web *webAPI) handleTLSStatus(w http.ResponseWriter, r *http.Request) {
-	tlsConf := web.tlsManager.extendedTLSConfig()
+	tlsConf := web.tlsConfigSettings()
 
 	data := &tlsConfig{
 		tlsConfigSettingsExt: tlsConfigSettingsExt{
@@ -568,7 +578,7 @@ func (web *webAPI) handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	extTLSConf := web.tlsManager.extendedTLSConfig()
+	extTLSConf := web.tlsConfigSettings()
 
 	if setts.PrivateKeySaved {
 		setts.PrivateKey = extTLSConf.PrivateKey
@@ -761,7 +771,7 @@ func (web *webAPI) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	extTLSConf := web.tlsManager.extendedTLSConfig()
+	extTLSConf := web.tlsConfigSettings()
 
 	if req.PrivateKeySaved {
 		req.PrivateKey = extTLSConf.PrivateKey
@@ -791,12 +801,22 @@ func (web *webAPI) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 	newTLSConf := &req.tlsConfigSettings
 	newTLSConf.Status = *status
 
-	restartHTTPS, err = web.tlsManager.setConfig(ctx, newTLSConf, req.ServePlainDNS)
+	restartHTTPS, err = web.tlsManager.setExtendedTLSConfig(ctx, newTLSConf, req.ServePlainDNS)
 	if err != nil {
 		aghhttp.ErrorAndLog(ctx, web.logger, r, w, http.StatusInternalServerError, "%s", err)
 
 		return
 	}
+
+	defer func() {
+		// The background context is used because the TLSConfigChanged wraps context
+		// with timeout on its own and shuts down the server, which handles current
+		// request.  It is also should be done in a separate goroutine due to the
+		// same reason.
+		if restartHTTPS {
+			go web.tlsConfigChanged(context.Background(), newTLSConf)
+		}
+	}()
 
 	err = web.reconfigureDNSServer(ctx, newTLSConf)
 	if err != nil {
@@ -812,19 +832,21 @@ func (web *webAPI) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 		tlsConfigStatus:      status,
 	}
 
+	web.writeTLSConfigureResponse(ctx, w, r, resp)
+}
+
+func (web *webAPI) writeTLSConfigureResponse(
+	ctx context.Context,
+	w http.ResponseWriter,
+	r *http.Request,
+	resp *tlsConfig,
+) {
 	web.marshalTLS(ctx, w, r, resp)
+
 	rc := http.NewResponseController(w)
-	err = rc.Flush()
+	err := rc.Flush()
 	if err != nil {
 		web.logger.ErrorContext(ctx, "flushing response", slogutil.KeyError, err)
-	}
-
-	// The background context is used because the TLSConfigChanged wraps context
-	// with timeout on its own and shuts down the server, which handles current
-	// request.  It is also should be done in a separate goroutine due to the
-	// same reason.
-	if restartHTTPS {
-		go web.tlsConfigChanged(context.Background(), &req.tlsConfigSettings)
 	}
 }
 
@@ -856,8 +878,26 @@ func (web *webAPI) reconfigureDNSServer(
 	return nil
 }
 
+// updateTLSCache atomically replaces the cached TLS configuration with a deep
+// copy of the provided config.  This ensures the cache stays in sync with
+// tlsManager after mutations.
+func (web *webAPI) updateTLSCache(tlsConf *tlsConfigSettings) {
+	web.mu.Lock()
+	web.extTLSConfigCached = tlsConf.clone()
+	web.mu.Unlock()
+}
+
+// tlsConfigSettings returns a deep copy of the cached extended TLS
+// configuration settings.
+func (web *webAPI) tlsConfigSettings() (conf *tlsConfigSettings) {
+	web.mu.RLock()
+	defer web.mu.RUnlock()
+
+	return web.extTLSConfigCached.clone()
+}
+
 // marshalTLS encodes sensitive fields and writes data as JSON.  All arguments
-// must not be nil.
+// must not be nil.  data is modified in place.
 func (web *webAPI) marshalTLS(
 	ctx context.Context,
 	w http.ResponseWriter,

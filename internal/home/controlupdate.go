@@ -65,7 +65,7 @@ func (web *webAPI) handleVersionJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = resp.setAllowedToAutoUpdate(ctx, l, web.tlsManager)
+	err = resp.setAllowedToAutoUpdate(ctx, l, web.tlsConfigSettings())
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
 		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusInternalServerError, "%s", err)
@@ -186,19 +186,19 @@ type versionResponse struct {
 const maxPrivilegedPort = 1024
 
 // setAllowedToAutoUpdate sets CanAutoUpdate to true if AdGuard Home is actually
-// allowed to perform an automatic update by the OS.  l and tlsMgr must not be
-// nil.
+// allowed to perform an automatic update by the OS.  l and extTLSConf must not
+// be nil.
 func (vr *versionResponse) setAllowedToAutoUpdate(
 	ctx context.Context,
 	l *slog.Logger,
-	tlsMgr *tlsManager,
+	extTLSConf *tlsConfigSettings,
 ) (err error) {
 	if vr.CanAutoUpdate != aghalg.NBTrue {
 		return nil
 	}
 
 	canUpdate := true
-	if tlsConfUsesPrivilegedPorts(tlsMgr.extendedTLSConfig()) ||
+	if tlsConfUsesPrivilegedPorts(extTLSConf) ||
 		config.HTTPConfig.Address.Port() < maxPrivilegedPort ||
 		config.DNS.Port < maxPrivilegedPort {
 		canUpdate, err = aghnet.CanBindPrivilegedPorts(ctx, l)

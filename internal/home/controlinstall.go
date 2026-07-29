@@ -14,12 +14,10 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
-	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/errors"
@@ -530,16 +528,7 @@ func (web *webAPI) finalizeInstall(
 	// moment we'll allow setting up TLS in the initial configuration or the
 	// configuration itself will use HTTPS protocol, because the underlying
 	// functions potentially restart the HTTPS server.
-	err = startMods(
-		ctx,
-		web.baseLogger,
-		web.tlsConfProvider,
-		web.tlsManager.extendedTLSConfig(),
-		web.manager,
-		web.confModifier,
-		web.httpReg,
-		web.conf.workDir,
-	)
+	err = web.startMods(ctx)
 	if err != nil {
 		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusInternalServerError, "%s", err)
 
@@ -549,7 +538,7 @@ func (web *webAPI) finalizeInstall(
 	err = config.write(
 		ctx,
 		web.logger,
-		web.tlsManager,
+		web.tlsConfigSettings(),
 		web.auth,
 		web.conf.workDir,
 		web.conf.confPath,
@@ -636,34 +625,29 @@ func decodeApplyConfigReq(r io.Reader) (req *applyConfigReq, restartHTTP bool, e
 }
 
 // startMods initializes and starts the DNS server after installation.
-// baseLogger, tlsMgr, confModifier, and httpReg must not be nil.
-func startMods(
-	ctx context.Context,
-	baseLogger *slog.Logger,
-	tlsConfProvider aghtls.TLSConfigProvider,
-	extTLSConf *tlsConfigSettings,
-	manager aghtls.Manager,
-	confModifier agh.ConfigModifier,
-	httpReg aghhttp.Registrar,
-	workDir string,
-) (err error) {
-	statsDir, querylogDir, err := checkStatsAndQuerylogDirs(config, workDir)
+func (web *webAPI) startMods(ctx context.Context) (err error) {
+	statsDir, querylogDir, err := checkStatsAndQuerylogDirs(config, web.conf.workDir)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
 		return err
 	}
 
-	err = initDNS(ctx, baseLogger, tlsConfProvider, extTLSConf, confModifier, httpReg, statsDir, querylogDir)
+	err = initDNS(
+		ctx,
+		web.baseLogger,
+		web.tlsConfProvider,
+		web.tlsConfigSettings(),
+		web.confModifier,
+		web.httpReg,
+		statsDir,
+		querylogDir,
+	)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
 		return err
 	}
 
-	err = manager.Start(ctx)
-	if err != nil {
-		// Don't wrap the error, because it's informative enough as is.
-		return err
-	}
+	web.tlsManager.start(ctx)
 
 	err = startDNSServer()
 	if err != nil {

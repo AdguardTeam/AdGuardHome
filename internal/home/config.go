@@ -880,7 +880,7 @@ func readConfigFile(
 func (c *configuration) write(
 	ctx context.Context,
 	l *slog.Logger,
-	tlsMgr *tlsManager,
+	extTLSConf *tlsConfigSettings,
 	auth *auth,
 	workDir string,
 	confPath string,
@@ -892,8 +892,7 @@ func (c *configuration) write(
 		config.Users = auth.usersList(ctx)
 	}
 
-	if tlsMgr != nil {
-		extTLSConf := tlsMgr.extendedTLSConfig()
+	if extTLSConf != nil {
 		config.TLS = *extTLSConf
 	}
 
@@ -1014,7 +1013,7 @@ var _ agh.ConfigModifier = (*defaultConfigModifier)(nil)
 // Apply implements the [agh.ConfigModifier] interface for
 // *defaultConfigModifier.
 func (cm *defaultConfigModifier) Apply(ctx context.Context) {
-	err := cm.config.write(ctx, cm.logger, cm.tlsMgr, cm.auth, cm.workDir, cm.confPath)
+	err := cm.config.write(ctx, cm.logger, cm.tlsMgr.extendedTLSConfig(), cm.auth, cm.workDir, cm.confPath)
 	if err != nil {
 		cm.logger.ErrorContext(ctx, "writing config", slogutil.KeyError, err)
 	}

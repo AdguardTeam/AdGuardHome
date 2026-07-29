@@ -137,6 +137,7 @@ func TestWebAPI_HandleTLSConfigure(t *testing.T) {
 	wantIssuer := cert.Leaf.Issuer.String()
 	assert.Equal(t, wantIssuer, res.tlsConfigStatus.Issuer)
 
+	// Assert that the Web API's TLS configuration has been updated.
 	assert.Eventually(t, func() bool {
 		cert = *m.tlsCert
 		if cert.Leaf == nil {

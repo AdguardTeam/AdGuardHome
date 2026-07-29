@@ -180,8 +180,7 @@ func newTLSManager(ctx context.Context, conf *tlsManagerConfig) (m *tlsManager, 
 }
 
 // setWebAPI stores the provided web API.  It must be called before
-// [tlsManager.start], [tlsManager.reload], [webAPI.handleTLSConfigure], or
-// [webAPI.validateTLSSettings].
+// [tlsManager.start], [tlsManager.reload] or [webAPI.validateTLSSettings].
 //
 // TODO(s.chzhen):  Remove it once cyclic dependency is resolved.
 func (m *tlsManager) setWebAPI(webAPI *webAPI) {
@@ -309,8 +308,7 @@ func (m *tlsManager) reload(ctx context.Context) {
 // loadTLSConfig loads and validates the TLS configuration.  It also sets
 // [tlsConfigSettings.CertificateChainData] and
 // [tlsConfigSettings.PrivateKeyData] properties.  The returned error is also
-// set in status.WarningValidation.  All arguments must not be nil.  m.mu is
-// expected to be locked.
+// set in status.WarningValidation.  All arguments must not be nil.
 func loadTLSConfig(
 	ctx context.Context,
 	logger *slog.Logger,
@@ -478,9 +476,11 @@ type tlsConfigSettingsExt struct {
 	ServePlainDNS aghalg.NullBool `yaml:"-" json:"serve_plain_dns"`
 }
 
-// setConfig updates manager TLS configuration with the given one.  newConf must
-// not be nil.
-func (m *tlsManager) setConfig(
+// setExtendedTLSConfig updates the TLS configuration with the given one.
+// newConf must not be nil.  If restartsHTTPS is true, the m.extTLSConf is
+// modified and the HTTPS server must be restarted.  If error is not nil,
+// restartHTTPS cannot be true and m.extTLSConf is not modified.
+func (m *tlsManager) setExtendedTLSConfig(
 	ctx context.Context,
 	newConf *tlsConfigSettings,
 	servePlain aghalg.NullBool,
@@ -500,12 +500,11 @@ func (m *tlsManager) setConfig(
 
 	if !m.extTLSConf.setPrivateFieldsAndCompare(newConf) {
 		m.logger.InfoContext(ctx, "config has changed, restarting https server")
+		m.extTLSConf = newConf
 		restartHTTPS = true
 	} else {
 		m.logger.InfoContext(ctx, "config has not changed")
 	}
-
-	m.extTLSConf = newConf
 
 	certPath, keyPath := "", ""
 	if newConf.Enabled {
@@ -585,7 +584,7 @@ func validateCertChain(
 	return nil
 }
 
-// errNoIPInCert is the error that is returned from [tlsManager.parseCertChain]
+// errNoIPInCert is the error that is returned from [parseCertChain]
 // if the leaf certificate doesn't contain IPs.
 const errNoIPInCert errors.Error = `certificates has no IP addresses; ` +
 	`DNS-over-TLS won't be advertised via DDR`

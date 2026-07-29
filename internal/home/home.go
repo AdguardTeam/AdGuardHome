@@ -1314,14 +1314,9 @@ func printHTTPAddresses(ctx context.Context, l *slog.Logger) {
 	printWebInterfaces(ctx, l, urlutil.SchemeHTTP, port)
 }
 
-// printHTTPAddresses prints the IP addresses which user can use to access the
-// admin interface over HTTPS.  l and tlsMgr must not be nil.
-func printHTTPSAddresses(ctx context.Context, l *slog.Logger, tlsMgr *tlsManager) {
-	var extTLSConf *tlsConfigSettings
-	if tlsMgr != nil {
-		extTLSConf = tlsMgr.extendedTLSConfig()
-	}
-
+// printHTTPSAddresses prints the IP addresses which user can use to access the
+// admin interface over HTTPS.  l and extTLSConf must not be nil.
+func printHTTPSAddresses(ctx context.Context, l *slog.Logger, extTLSConf *tlsConfigSettings) {
 	port := extTLSConf.PortHTTPS
 
 	if extTLSConf.ServerName != "" {
