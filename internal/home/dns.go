@@ -109,7 +109,6 @@ func initDNS(
 
 	err = initDNSServer(
 		ctx,
-		baseLogger,
 		dnsforward.DNSCreateParams{
 			Logger:            baseLogger,
 			DNSFilter:         globalContext.filters,
@@ -135,26 +134,28 @@ func initDNS(
 	return nil
 }
 
-// initDNSServer initializes the [context.dnsServer].  tlsMgr and l must not be
-// nil.  Other arguments, including params fields, are allowed to be nil if you
-// want to use only the internal proxy.  It also must not be called unless
-// [config] and [globalContext] are initialized.
+// initDNSServer initializes the [context.dnsServer].  To only use the internal
+// proxy, none of the arguments are required, but params must be valid and
+// tlsMgr must not be nil.  In other cases all the arguments also must not be
+// nil.  It also must not be called unless [config] and [globalContext] are
+// initialized.
 func initDNSServer(
 	ctx context.Context,
-	l *slog.Logger,
 	params dnsforward.DNSCreateParams,
 	httpReg aghhttp.Registrar,
 	tlsMgr *tlsManager,
 	confModifier agh.ConfigModifier,
 ) (err error) {
 	globalContext.dnsServer, err = dnsforward.NewServer(params)
+	// TODO(m.kazantsev):  Investigate if the server should be closed in case of
+	// error and consider removing this defer.
 	defer func() {
 		if err != nil {
 			closeDNSServer(ctx)
 		}
 	}()
 	if err != nil {
-		return fmt.Errorf("dnsforward.NewServer: %w", err)
+		return fmt.Errorf("creating new dns server: %w", err)
 	}
 
 	globalContext.clients.clientChecker = globalContext.dnsServer
@@ -164,26 +165,27 @@ func initDNSServer(
 		config.Clients.Sources,
 		tlsMgr.extendedTLSConfig(),
 		config.HTTPConfig.DoH,
-		tlsMgr,
+		params.TLSConfigProvider,
 		httpReg,
 		globalContext.clients.storage,
 		confModifier,
 	)
 	if err != nil {
-		return fmt.Errorf("newServerConfig: %w", err)
+		return fmt.Errorf("creating new dns server config: %w", err)
 	}
 
 	// Try to prepare the server with disabled private RDNS resolution if it
 	// failed to prepare as is.  See TODO on [dnsforward.PrivateRDNSError].
 	err = globalContext.dnsServer.Prepare(ctx, dnsConf)
 	if _, ok := errors.AsType[*dnsforward.PrivateRDNSError](err); ok {
+		l := params.Logger
 		l.WarnContext(ctx, "private rdns resolution failed; disabling", slogutil.KeyError, err)
 
 		dnsConf.UsePrivateRDNS = false
 		err = globalContext.dnsServer.Prepare(ctx, dnsConf)
 	}
 	if err != nil {
-		return fmt.Errorf("dnsServer.Prepare: %w", err)
+		return fmt.Errorf("preparing dns server: %w", err)
 	}
 
 	return nil
