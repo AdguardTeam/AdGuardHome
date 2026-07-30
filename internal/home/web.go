@@ -77,6 +77,9 @@ type webAPIConfig struct {
 	// must not be nil.
 	mux *http.ServeMux
 
+	// hostsContainer is used for DNS initialization on updates.
+	hostsContainer *aghnet.HostsContainer
+
 	// clientFS is used to initialize file server.  It must not be nil.
 	clientFS fs.FS
 
@@ -231,6 +234,9 @@ type webAPI struct {
 	// auth stores web user information and handles authentication.
 	auth *auth
 
+	// hostsContainer is used for DNS initialization on updates.
+	hostsContainer *aghnet.HostsContainer
+
 	// httpsServer is the server that handles HTTPS traffic.  If it is not nil,
 	// [Web.http3Server] must also not be nil.
 	//
@@ -252,16 +258,17 @@ func newWebAPI(ctx context.Context, conf *webAPIConfig) (w *webAPI) {
 	conf.logger.InfoContext(ctx, "initializing")
 
 	w = &webAPI{
-		conf:         conf,
-		confModifier: conf.confModifier,
-		httpReg:      conf.httpReg,
-		cmdCons:      conf.CommandConstructor,
-		logger:       conf.logger,
-		baseLogger:   conf.baseLogger,
-		tlsManager:   conf.tlsManager,
-		auth:         conf.auth,
-		pidFilePath:  conf.pidFilePath,
-		startTime:    time.Now(),
+		conf:           conf,
+		confModifier:   conf.confModifier,
+		httpReg:        conf.httpReg,
+		cmdCons:        conf.CommandConstructor,
+		logger:         conf.logger,
+		baseLogger:     conf.baseLogger,
+		tlsManager:     conf.tlsManager,
+		auth:           conf.auth,
+		pidFilePath:    conf.pidFilePath,
+		startTime:      time.Now(),
+		hostsContainer: conf.hostsContainer,
 	}
 
 	clientFS := http.FileServer(http.FS(conf.clientFS))

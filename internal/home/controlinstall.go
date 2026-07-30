@@ -536,6 +536,7 @@ func (web *webAPI) finalizeInstall(
 		web.confModifier,
 		web.httpReg,
 		web.conf.workDir,
+		web.hostsContainer,
 	)
 	if err != nil {
 		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusInternalServerError, "%s", err)
@@ -641,13 +642,14 @@ func startMods(
 	confModifier agh.ConfigModifier,
 	httpReg aghhttp.Registrar,
 	workDir string,
+	hc *aghnet.HostsContainer,
 ) (err error) {
 	statsDir, querylogDir, err := checkStatsAndQuerylogDirs(config, workDir)
 	if err != nil {
 		return err
 	}
 
-	err = initDNS(ctx, baseLogger, tlsMgr, confModifier, httpReg, statsDir, querylogDir)
+	err = initDNS(ctx, baseLogger, tlsMgr, confModifier, httpReg, statsDir, querylogDir, hc)
 	if err != nil {
 		return err
 	}

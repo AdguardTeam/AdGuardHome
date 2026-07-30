@@ -7,10 +7,12 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/osutil"
+	"github.com/AdguardTeam/golibs/service"
 )
 
 // signalHandler processes incoming signals.  It reloads configurations of
@@ -128,4 +130,45 @@ func (h *signalHandler) reloadConfig(ctx context.Context) {
 			h.logger.ErrorContext(ctx, "refreshing tls manager", slogutil.KeyError, err)
 		}
 	}
+}
+
+// signalHandlerCleanup performs application resources cleanup for
+// [signalHandler].
+type signalHandlerCleanup struct {
+	logger          *slog.Logger
+	hostsContainer  *aghnet.HostsContainer
+	glTokenFileRoot *os.Root
+	hcWatcher       service.Interface
+	done            chan struct{}
+	pidFilePath     string
+	glinetMode      bool
+}
+
+// cleanup performs application cleanup.
+func (c *signalHandlerCleanup) cleanup(ctx context.Context) {
+	defer close(c.done)
+
+	cleanup(ctx, c.logger, c.hostsContainer)
+	cleanupAlways(ctx, c.logger, c.pidFilePath)
+
+	if c.glinetMode {
+		err := c.glTokenFileRoot.Close()
+		checkCleanupErr(ctx, c.logger, err, "closing glinet token root")
+	}
+
+	if c.hcWatcher != nil {
+		err := c.hcWatcher.Shutdown(ctx)
+		checkCleanupErr(ctx, c.logger, err, "shutting down hosts file watcher")
+	}
+}
+
+// checkCleanupErr logs err and exits with [osutil.ExitCodeFailure] if err is
+// not nil.  l must not be nil.
+func checkCleanupErr(ctx context.Context, l *slog.Logger, err error, msg string) {
+	if err == nil {
+		return
+	}
+
+	l.ErrorContext(ctx, msg, slogutil.KeyError, err)
+	os.Exit(osutil.ExitCodeFailure)
 }
