@@ -63,7 +63,7 @@
   "blocking_mode_refused": "NÆGTET: Svar med en NÆGTET-kode",
   "blocklist": "Sortliste",
   "bootstrap_dns": "Bootstrap DNS-servere",
-  "bootstrap_dns_desc": "IP-adresser på DNS-servere, som bruges til at opløse IP-adresser på de DoH/DoT-opløsere, som angives som upstreams. Kommentarer er ikke tilladt.",
+  "bootstrap_dns_desc": "IP-adresser på DNS-servere, som bruges til at opløse værtsnavnene for DoH/DoT-upstream-opløsere. Angiv én IP-adresse pr. linje. Kommentarer skal starte på en ny linje med #. Tomme linjer og kommentarer ignoreres.",
   "cache_cleared": "DNS-cache hermed ryddet",
   "cache_enabled": "Aktivér cache",
   "cache_enabled_desc": "Opbevar DNS-svar lokalt.",

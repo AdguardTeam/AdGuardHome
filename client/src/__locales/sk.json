@@ -63,7 +63,7 @@
   "blocking_mode_refused": "REFUSED: Odpovedať kódom REFUSED",
   "blocklist": "Zoznam blokovaní",
   "bootstrap_dns": "Bootstrap DNS servery",
-  "bootstrap_dns_desc": "IP adresy serverov DNS používaných na rozlíšenie IP adries prekladačov DoH/DoT, ktoré zadáte ako upstream. Komentáre nie sú povolené.",
+  "bootstrap_dns_desc": "IP adresy DNS serverov používaných na preklad názvov hostiteľov upstreamových prekladačov DoH/DoT. Zadajte jednu IP adresu na riadok. Komentáre musia začínať na novom riadku znakom #. Prázdne riadky a komentáre sa ignorujú.",
   "cache_cleared": "Vyrovnávacia pamäť DNS bola úspešne vymazaná",
   "cache_enabled": "Povoliť vyrovnávaciu pamäť",
   "cache_enabled_desc": "Ukladať DNS odpovede lokálne.",
