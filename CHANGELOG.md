@@ -42,13 +42,6 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
-- Multiple inaccuracies in the OpenAPI specification:
-    - Wrong property names: `enable` → `enabled` in the Parental status response, `protection_disabled_until` → `protection_disabled_duration` in `ServerStatus`, `ratelimit_subnet_subnet_len_ipv4` and `ratelimit_subnet_subnet_len_ipv6` in `DNSConfig`.
-    - `upstream_mode` enum in `DNSConfig` changed from object to string format for compatibility with code generators.
-    - Missing required properties in `DhcpConfigV4` and `DhcpStatus` schemas.
-    - Missing `port_dnscrypt` and `dnscrypt_config_file` properties in `TlsConfig`.
-    - Split `NetInterface` into `NetInterface` and `DHCPNetInterface` schemas; `GET /dhcp/interfaces` now uses `DHCPNetInterfaces`.
-
 - Blocked requests without an EDNS(0) OPT record ([#8183]).
 
 [#8183]: https://github.com/AdguardTeam/AdGuardHome/issues/8183
