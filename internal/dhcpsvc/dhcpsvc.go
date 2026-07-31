@@ -38,15 +38,17 @@ type Interface interface {
 
 	// MACByIP returns the MAC address for the given IP address leased.  It
 	// returns nil if there is no such client, due to an assumption that a DHCP
-	// client must always have a MAC address.
-	//
-	// TODO(e.burkov):  Think of a contract for the returned value.
+	// client must always have a MAC address.  mac must be a valid MAC address
+	// according to [netutil.ValidateMAC].
 	MACByIP(ip netip.Addr) (mac net.HardwareAddr)
 
 	// IPByHost returns the IP address of the DHCP client with the given
 	// hostname.  The hostname will be an empty string if there is no such
 	// client, due to an assumption that a DHCP client must always have a
 	// hostname, either set or generated.
+	//
+	// TODO(e.burkov):  Support several IP addresses for a single hostname.
+	// This is possible if the client has several network interfaces.
 	IPByHost(host string) (ip netip.Addr)
 
 	// Leases returns all the active DHCP leases.  The returned slice should be
@@ -70,8 +72,6 @@ type Interface interface {
 	RemoveLease(ctx context.Context, l *Lease) (err error)
 
 	// Reset removes all the DHCP leases.
-	//
-	// TODO(e.burkov):  If it's really needed?
 	Reset(ctx context.Context) (err error)
 }
 

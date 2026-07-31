@@ -20,10 +20,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TODO(e.burkov):  Use addresses and prefixes from [RFC 5737].
-//
-// [RFC 5737]: https://datatracker.ietf.org/doc/html/rfc5737
-
 // testLocalTLD is a common local TLD for tests.
 const testLocalTLD = "local"
 
@@ -180,7 +176,7 @@ var (
 
 	// testIfaceHWAddr is a common valid hardware address of the test network
 	// interface.
-	testIfaceHWAddr = net.HardwareAddr{0x01, 0x01, 0x01, 0x01, 0x01, 0x01}
+	testIfaceHWAddr = net.HardwareAddr{0x00, 0x00, 0x5E, 0x00, 0x53, 0xFF}
 )
 
 // testInterfaceConf is a common valid set of interface configurations for
@@ -216,19 +212,19 @@ var testInterfaceConf = map[string]*dhcpsvc.InterfaceConfig{
 // NOTE: Keep in sync with testdata.
 var (
 	// testHWUnknown is the test MAC address for an unknown client.
-	testHWUnknown = net.HardwareAddr{0x0, 0x1, 0x2, 0x3, 0x4, 0x5}
+	testHWUnknown = net.HardwareAddr{0x00, 0x00, 0x5E, 0x00, 0x53, 0x01}
 
 	// testHWStatic is the test MAC address for a known static lease.
-	testHWStatic = net.HardwareAddr{0x1, 0x2, 0x3, 0x4, 0x5, 0x6}
+	testHWStatic = net.HardwareAddr{0x00, 0x00, 0x5E, 0x00, 0x53, 0x02}
 
 	// testHWDynamic is the test MAC address for a known dynamic lease.
-	testHWDynamic = net.HardwareAddr{0x2, 0x3, 0x4, 0x5, 0x6, 0x7}
+	testHWDynamic = net.HardwareAddr{0x00, 0x00, 0x5E, 0x00, 0x53, 0x03}
 
 	// testHWExpired is the test MAC address for a known expired lease.
-	testHWExpired = net.HardwareAddr{0x3, 0x4, 0x5, 0x6, 0x7, 0x8}
+	testHWExpired = net.HardwareAddr{0x00, 0x00, 0x5E, 0x00, 0x53, 0x04}
 
 	// testHWAnother is the test MAC address for a lease with another IP.
-	testHWAnother = net.HardwareAddr{0x4, 0x5, 0x6, 0x7, 0x8, 0x9}
+	testHWAnother = net.HardwareAddr{0x00, 0x00, 0x5E, 0x00, 0x53, 0x05}
 )
 
 // IPv4 addresses for tests.

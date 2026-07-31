@@ -132,8 +132,6 @@ func (c *JSONDatabaseConfig) Validate() (err error) {
 
 // JSONDatabase is a [Database] implementation that stores leases in a JSON
 // file.
-//
-// TODO(e.burkov):  Test.
 type JSONDatabase struct {
 	// mu protects the database file from concurrent access.
 	mu       *sync.RWMutex

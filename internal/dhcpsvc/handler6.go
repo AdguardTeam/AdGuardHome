@@ -187,14 +187,7 @@ func (iface *dhcpInterfaceV6) handleRequest(
 		return respond6(fd, resp)
 	}
 
-	var ianaOpt layers.DHCPv6Option
-
-	lease, err := iface.leaseForRequest(ctx, req, fd.ether.SrcMAC)
-	if err != nil {
-		ianaOpt = newIANAWithStatus(iana.ID, layers.DHCPv6StatusCodeNoAddrsAvail)
-	} else {
-		ianaOpt = iface.iaNAFromLease(lease, iana.ID)
-	}
+	ianaOpt := iface.ianaForRequest(ctx, req, iana.ID, fd.ether.SrcMAC)
 
 	resp.Options = iface.newRequestRespOpts(fd, req, cliID, ianaOpt)
 
@@ -241,7 +234,7 @@ func (iface *dhcpInterfaceV6) handleConfirm(
 	resp := &layers.DHCPv6{
 		MsgType:       layers.DHCPv6MsgTypeReply,
 		TransactionID: req.TransactionID,
-		Options:       iface.newConfirmRespOpts(fd, cliID, status),
+		Options:       iface.newConfirmRespOpts(fd, req, cliID, status),
 	}
 
 	return respond6(fd, resp)
@@ -250,7 +243,9 @@ func (iface *dhcpInterfaceV6) handleConfirm(
 // handleRenew handles messages of type RENEW.  req must not be nil and must be
 // a valid DHCPv6 message of type RENEW.  fd must be valid.
 //
-// TODO(e.burkov):  Implement.  This is a stub for now.
+// TODO(e.burkov):  The current implementation renews only the first valid IA_NA
+// option.  It does not verify that the addresses in the IA match the stored
+// lease, since clients are identified by MAC address rather than DUID+IAID.
 func (iface *dhcpInterfaceV6) handleRenew(
 	ctx context.Context,
 	fd *frameData6,
@@ -264,7 +259,30 @@ func (iface *dhcpInterfaceV6) handleRenew(
 	l := iface.common.logger
 	l.DebugContext(ctx, "handling message", "type", req.MsgType, "cli_id", cliID)
 
-	return nil
+	iface.common.indexMu.Lock()
+	defer iface.common.indexMu.Unlock()
+
+	resp := &layers.DHCPv6{
+		MsgType:       layers.DHCPv6MsgTypeReply,
+		TransactionID: req.TransactionID,
+	}
+
+	iana, ok := iface.firstIANA(ctx, req)
+	if !ok {
+		// With no IA_NA options and no requested addresses there's nothing to
+		// renew.  Respond with no IA options similarly to how the Request
+		// handler does.
+		//
+		// See RFC 9915 Section 18.3.4.
+		resp.Options = iface.newRenewRespOpts(fd, req, cliID, layers.DHCPv6Option{})
+
+		return respond6(fd, resp)
+	}
+
+	ianaOpt := iface.ianaForRenew(ctx, req, iana, fd.ether.SrcMAC)
+	resp.Options = iface.newRenewRespOpts(fd, req, cliID, ianaOpt)
+
+	return respond6(fd, resp)
 }
 
 // handleRebind handles messages of type REBIND.  req must not be nil and must

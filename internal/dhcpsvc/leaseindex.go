@@ -97,9 +97,6 @@ func (idx *leaseIndex) add(l *Lease, iface *netInterface) (err error) {
 // remove removes l from idx and from iface.  l must be valid, iface should
 // contain the same lease or the lease itself.  It returns an error if the lease
 // not found.
-//
-// TODO(e.burkov):  Consider using the iface's logger after simplifying
-// relations between index and interfaces.
 func (idx *leaseIndex) remove(
 	ctx context.Context,
 	l *Lease,
@@ -189,13 +186,13 @@ func (idx *leaseIndex) dbLoad(
 		return fmt.Errorf("loading leases: %w", err)
 	}
 
-	idx.addDBLeases(ctx, logger, leases, ifaces4, ifaces6)
+	idx.indexLeases(ctx, logger, leases, ifaces4, ifaces6)
 
 	return nil
 }
 
-// addDBLeases adds leases to the server.  logger must not be nil.
-func (idx *leaseIndex) addDBLeases(
+// indexLeases adds leases to idx.  logger must not be nil.
+func (idx *leaseIndex) indexLeases(
 	ctx context.Context,
 	logger *slog.Logger,
 	leases []*Lease,

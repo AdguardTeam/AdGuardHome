@@ -62,7 +62,7 @@ func TestIPv4Config_Validate(t *testing.T) {
 			RangeEnd:      testIPv4Conf.RangeEnd,
 			LeaseDuration: testIPv4Conf.LeaseDuration,
 		},
-		wantErrMsg: "gateway ip " + testRangeStartV6Str + " must be a valid ipv4" + "\n" +
+		wantErrMsg: "gateway ip: " + testRangeStartV6Str + ": must be a valid ipv4" + "\n" +
 			"range start " + testRangeStartV4Str + " is not within " + testRangeStartV6Str + "/24",
 	}, {
 		name: "bad_subnet_mask",
@@ -75,7 +75,7 @@ func TestIPv4Config_Validate(t *testing.T) {
 			RangeEnd:      testIPv4Conf.RangeEnd,
 			LeaseDuration: testIPv4Conf.LeaseDuration,
 		},
-		wantErrMsg: "subnet mask " + testRangeStartV6Str + " must be a valid ipv4 cidr mask",
+		wantErrMsg: "subnet mask: " + testRangeStartV6Str + ": must be a valid ipv4 cidr mask",
 	}, {
 		name: "bad_range_start",
 		conf: &dhcpsvc.IPv4Config{
@@ -87,7 +87,7 @@ func TestIPv4Config_Validate(t *testing.T) {
 			RangeEnd:      testIPv4Conf.RangeEnd,
 			LeaseDuration: testIPv4Conf.LeaseDuration,
 		},
-		wantErrMsg: "range start " + testRangeStartV6Str + " must be a valid ipv4" + "\n" +
+		wantErrMsg: "range start: " + testRangeStartV6Str + ": must be a valid ipv4" + "\n" +
 			"range start " + testRangeStartV6Str + " is not within " +
 			testGatewayIPv4Str + "/24" + "\n" + "invalid ip range: " + testRangeStartV6Str +
 			" and " + testRangeEndV4Str + " must be within the same address family",
@@ -102,7 +102,7 @@ func TestIPv4Config_Validate(t *testing.T) {
 			RangeEnd:      netip.MustParseAddr(testRangeStartV6Str),
 			LeaseDuration: testIPv4Conf.LeaseDuration,
 		},
-		wantErrMsg: "range end " + testRangeStartV6Str + " must be a valid ipv4" + "\n" +
+		wantErrMsg: "range end: " + testRangeStartV6Str + ": must be a valid ipv4" + "\n" +
 			"range end " + testRangeStartV6Str + " is not within " + testGatewayIPv4Str + "/24" +
 			"\n" + "invalid ip range: " + testRangeStartV4Str + " and " + testRangeStartV6Str +
 			" must be within the same address family",

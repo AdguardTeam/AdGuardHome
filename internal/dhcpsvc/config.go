@@ -25,7 +25,7 @@ type Config struct {
 	// NetworkDeviceManager is the manager of network devices.  It must not be
 	// nil.
 	//
-	// TODO(e.burkov):  Set.
+	// TODO(e.burkov):  Implement and set.
 	NetworkDeviceManager NetworkDeviceManager
 
 	// Logger will be used to log the DHCP events.  It must not be nil.

@@ -146,7 +146,7 @@ func (iface *dhcpInterfaceV4) handleDiscover(
 		return
 	}
 
-	lease, err := iface.common.allocateLease(ctx, mac, now)
+	lease, err := iface.common.allocateLease(ctx, mac, mk, now)
 	if err != nil {
 		l.ErrorContext(ctx, "allocating a lease", slogutil.KeyError, err)
 
