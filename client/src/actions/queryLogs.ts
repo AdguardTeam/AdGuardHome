@@ -156,8 +156,36 @@ export const setFilteredLogs = (filter?: SearchFormValues) => async (dispatch: a
 export const resetFilteredLogs = () => setFilteredLogs(DEFAULT_LOGS_FILTER);
 
 export const refreshFilteredLogs = () => async (dispatch: any, getState: any) => {
-    const { filter } = getState().queryLogs;
-    await dispatch(setFilteredLogs(filter));
+    const { filter, logs: previousLogs, oldest: previousOldest } = getState().queryLogs;
+
+    dispatch(setFilteredLogsRequest());
+    try {
+        const data = await getLogsWithParams({ older_than: '', filter });
+        const currentQuery = filter?.search;
+
+        const additionalData = await shortPollQueryLogs(data, filter, dispatch, currentQuery);
+        const updatedData = additionalData.logs ? { ...data, ...additionalData } : data;
+
+        const previousTimes = new Set(previousLogs.map((log: any) => log.time));
+        const freshLogs = updatedData.logs.filter((log: any) => !previousTimes.has(log.time));
+        const mergedLogs = [...freshLogs, ...previousLogs];
+
+        // Keep the previously loaded pagination cursor so infinite scroll continues
+        // from where the user left off, instead of restarting from the newest page.
+        const oldest = previousLogs.length > updatedData.logs.length ? previousOldest : updatedData.oldest;
+
+        dispatch(
+            setFilteredLogsSuccess({
+                ...updatedData,
+                logs: mergedLogs,
+                oldest,
+                filter,
+            }),
+        );
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(setFilteredLogsFailure(error));
+    }
 };
 
 export const clearLogsRequest = createAction('CLEAR_LOGS_REQUEST');
