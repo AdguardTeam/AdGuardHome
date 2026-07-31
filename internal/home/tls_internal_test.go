@@ -41,7 +41,7 @@ func TestValidateCertificates(t *testing.T) {
 
 	var err error
 	t.Run("bad_certificate", func(t *testing.T) {
-		status := &tlsConfigStatus{}
+		status := &aghtls.TLSConfigStatus{}
 		err = validateCertificates(
 			ctx,
 			testLogger,
@@ -57,7 +57,7 @@ func TestValidateCertificates(t *testing.T) {
 	})
 
 	t.Run("bad_private_key", func(t *testing.T) {
-		status := &tlsConfigStatus{}
+		status := &aghtls.TLSConfigStatus{}
 		err = validateCertificates(
 			ctx,
 			testLogger,
@@ -72,7 +72,7 @@ func TestValidateCertificates(t *testing.T) {
 	})
 
 	t.Run("valid", func(t *testing.T) {
-		status := &tlsConfigStatus{}
+		status := &aghtls.TLSConfigStatus{}
 
 		testCertChainData := requireReadFile(t, testCertificatePath)
 		testPrivateKeyData := requireReadFile(t, testPrivateKeyPath)
@@ -112,15 +112,15 @@ func TestValidateCertificates(t *testing.T) {
 			return pool
 		}
 
-		status := &tlsConfigStatus{}
+		status := &aghtls.TLSConfigStatus{}
 		var ok bool
-		ok, err = validateCertificate(ctx, testLogger, tlsConfProvider, status, chainPEM, "")
+		ok, err = validateCertificate(ctx, testLogger, tlsConfProvider.RootCAs(), status, chainPEM, "")
 		assert.True(t, ok)
 		assert.ErrorIs(t, err, errNoIPInCert)
 		assert.True(t, status.ValidCert)
 		assert.True(t, status.ValidChain)
 
-		status = &tlsConfigStatus{}
+		status = &aghtls.TLSConfigStatus{}
 		err = validateCertificates(
 			ctx,
 			testLogger,
@@ -256,7 +256,7 @@ func writeCertAndKey(
 
 // assertCertSerialNumber is a helper function that checks serial number of the
 // TLS certificate.
-func assertCertSerialNumber(tb testing.TB, conf *tlsConfigSettings, wantSN int64) {
+func assertCertSerialNumber(tb testing.TB, conf *aghtls.ExtendedTLSConfig, wantSN int64) {
 	tb.Helper()
 
 	cert, err := tls.X509KeyPair(conf.CertificateChainData, conf.PrivateKeyData)
@@ -319,7 +319,7 @@ func TestTLSManager_Reload(t *testing.T) {
 		logger:       testLogger,
 		confModifier: agh.EmptyConfigModifier{},
 		manager:      aghtls.EmptyManager{},
-		tlsSettings: tlsConfigSettings{
+		extTLSConf: aghtls.ExtendedTLSConfig{
 			Enabled:         true,
 			CertificatePath: certPath,
 			PrivateKeyPath:  keyPath,
@@ -331,7 +331,7 @@ func TestTLSManager_Reload(t *testing.T) {
 	web := newTestWeb(t, &webConfig{tlsManager: m})
 	m.setWebAPI(web)
 
-	extTLSConf := m.extendedTLSConfig()
+	extTLSConf := m.ExtendedTLSConfig()
 	assertCertSerialNumber(t, extTLSConf, snBefore)
 
 	certDER, key = newCertAndKey(t, snAfter)
@@ -345,6 +345,6 @@ func TestTLSManager_Reload(t *testing.T) {
 		return globalContext.dnsServer.Stop(testutil.ContextWithTimeout(t, testTimeout))
 	})
 
-	extTLSConf = m.extendedTLSConfig()
+	extTLSConf = m.ExtendedTLSConfig()
 	assertCertSerialNumber(t, extTLSConf, snAfter)
 }

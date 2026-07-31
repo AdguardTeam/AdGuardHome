@@ -8,7 +8,6 @@ import (
 	"net/netip"
 	"os"
 	"path/filepath"
-	"slices"
 	"sync"
 	"time"
 
@@ -29,7 +28,6 @@ import (
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/timeutil"
-	"github.com/google/go-cmp/cmp"
 	"github.com/google/renameio/v2/maybe"
 	yaml "go.yaml.in/yaml/v4"
 )
@@ -135,10 +133,10 @@ type configuration struct {
 
 	// TODO(a.garipov): Make DNS and the fields below pointers and validate
 	// and/or reset on explicit nulling.
-	DNS      dnsConfig         `yaml:"dns"`
-	TLS      tlsConfigSettings `yaml:"tls"`
-	QueryLog queryLogConfig    `yaml:"querylog"`
-	Stats    statsConfig       `yaml:"statistics"`
+	DNS      dnsConfig                `yaml:"dns"`
+	TLS      aghtls.ExtendedTLSConfig `yaml:"tls"`
+	QueryLog queryLogConfig           `yaml:"querylog"`
+	Stats    statsConfig              `yaml:"statistics"`
 
 	// Filters reflects the filters from [filtering.Config].  It's cloned to the
 	// config used in the filtering module at the startup.  Afterwards it's
@@ -297,115 +295,6 @@ type pendingRequests struct {
 	Enabled bool `yaml:"enabled"`
 }
 
-// tlsConfigSettings is the TLS configuration for DNS-over-TLS, DNS-over-QUIC,
-// and HTTPS.  When adding new properties, update the [tlsConfigSettings.clone]
-// and [tlsConfigSettings.setPrivateFieldsAndCompare] methods as necessary.
-type tlsConfigSettings struct {
-	// Status is the current status of the configuration.
-	Status tlsConfigStatus `yaml:"-" json:"-"`
-
-	// Enabled indicates whether encryption (DoT/DoH/HTTPS) is enabled.
-	Enabled bool `yaml:"enabled" json:"enabled"`
-
-	// ServerName is the hostname of the HTTPS/TLS server.
-	ServerName string `yaml:"server_name" json:"server_name,omitempty"`
-
-	// ForceHTTPS, if true, forces an HTTP to HTTPS redirect.
-	ForceHTTPS bool `yaml:"force_https" json:"force_https"`
-
-	// PortHTTPS is the HTTPS port.  If 0, HTTPS will be disabled.
-	PortHTTPS uint16 `yaml:"port_https" json:"port_https,omitempty"`
-
-	// PortDNSOverTLS is the DNS-over-TLS port.  If 0, DoT will be disabled.
-	PortDNSOverTLS uint16 `yaml:"port_dns_over_tls" json:"port_dns_over_tls,omitempty"`
-
-	// PortDNSOverQUIC is the DNS-over-QUIC port.  If 0, DoQ will be disabled.
-	PortDNSOverQUIC uint16 `yaml:"port_dns_over_quic" json:"port_dns_over_quic,omitempty"`
-
-	// PortDNSCrypt is the port for DNSCrypt requests.  If it's zero, DNSCrypt
-	// is disabled.
-	PortDNSCrypt uint16 `yaml:"port_dnscrypt" json:"port_dnscrypt"`
-
-	// DNSCryptConfigFile is the path to the DNSCrypt config file.  Must be set
-	// if PortDNSCrypt is not zero.
-	//
-	// See https://github.com/AdguardTeam/dnsproxy and
-	// https://github.com/AdguardTeam/dnscrypt.
-	DNSCryptConfigFile string `yaml:"dnscrypt_config_file" json:"dnscrypt_config_file"`
-
-	// CertificateChain is the PEM-encoded certificate chain.  Must be empty if
-	// [tlsConfigSettings.CertificatePath] is provided.
-	CertificateChain string `yaml:"certificate_chain" json:"certificate_chain"`
-
-	// PrivateKey is the PEM-encoded private key.  Must be empty if
-	// [tlsConfigSettings.PrivateKeyPath] is provided.
-	PrivateKey string `yaml:"private_key" json:"private_key"`
-
-	// CertificatePath is the path to the certificate file.  Must be empty if
-	// [tlsConfigSettings.CertificateChain] is provided.
-	CertificatePath string `yaml:"certificate_path" json:"certificate_path"`
-
-	// PrivateKeyPath is the path to the private key file.  Must be empty if
-	// [tlsConfigSettings.PrivateKey] is provided.
-	PrivateKeyPath string `yaml:"private_key_path" json:"private_key_path"`
-
-	// OverrideTLSCiphers, when set, contains the names of the cipher suites to
-	// use.  If the slice is empty, the default safe suites are used.
-	OverrideTLSCiphers []string `yaml:"override_tls_ciphers,omitempty" json:"-"`
-
-	// CertificateChainData is the PEM-encoded byte data for the certificate
-	// chain.
-	CertificateChainData []byte `yaml:"-" json:"-"`
-
-	// PrivateKeyData is the PEM-encoded byte data for the private key.
-	PrivateKeyData []byte `yaml:"-" json:"-"`
-
-	// StrictSNICheck controls if the connections with SNI mismatching the
-	// certificate's ones should be rejected.
-	StrictSNICheck bool `yaml:"strict_sni_check" json:"-"`
-
-	// ServePlainDNS defines whether to serve a plain DNS.
-	ServePlainDNS bool `yaml:"-" json:"-"`
-}
-
-// clone returns a deep copy of c.
-func (c *tlsConfigSettings) clone() (clone *tlsConfigSettings) {
-	clone = &tlsConfigSettings{}
-	*clone = *c
-
-	clone.OverrideTLSCiphers = slices.Clone(c.OverrideTLSCiphers)
-	clone.CertificateChainData = slices.Clone(c.CertificateChainData)
-	clone.PrivateKeyData = slices.Clone(c.PrivateKeyData)
-
-	clone.Status.DNSNames = slices.Clone(c.Status.DNSNames)
-
-	return clone
-}
-
-// setPrivateFieldsAndCompare sets any missing properties in conf to match those
-// in c and returns true if TLS configurations are equal.  conf must not be nil.
-// It sets the following properties because these are not accepted from the
-// frontend:
-//
-//	[tlsConfigSettings.DNSCryptConfigFile]
-//	[tlsConfigSettings.OverrideTLSCiphers]
-//	[tlsConfigSettings.PortDNSCrypt]
-//
-// The following properties are skipped as they are set by
-// [tlsManager.loadTLSConfig]:
-//
-//	[tlsConfigSettings.CertificateChainData]
-//	[tlsConfigSettings.PrivateKeyData]
-func (c *tlsConfigSettings) setPrivateFieldsAndCompare(conf *tlsConfigSettings) (equal bool) {
-	conf.OverrideTLSCiphers = slices.Clone(c.OverrideTLSCiphers)
-
-	conf.DNSCryptConfigFile = c.DNSCryptConfigFile
-	conf.PortDNSCrypt = c.PortDNSCrypt
-
-	// TODO(a.garipov): Define a custom comparer.
-	return cmp.Equal(c, conf)
-}
-
 type queryLogConfig struct {
 	// DirPath is the custom directory for logs.  If it's empty the default
 	// directory will be used.  See [homeContext.getDataDir].
@@ -524,7 +413,7 @@ var config = &configuration{
 			Enabled: true,
 		},
 	},
-	TLS: tlsConfigSettings{
+	TLS: aghtls.ExtendedTLSConfig{
 		PortHTTPS:       defaultPortHTTPS,
 		PortDNSOverTLS:  defaultPortTLS, // needs to be passed through to dnsproxy
 		PortDNSOverQUIC: defaultPortQUIC,
@@ -880,7 +769,7 @@ func readConfigFile(
 func (c *configuration) write(
 	ctx context.Context,
 	l *slog.Logger,
-	extTLSConf *tlsConfigSettings,
+	extTLSConf *aghtls.ExtendedTLSConfig,
 	auth *auth,
 	workDir string,
 	confPath string,
@@ -1013,7 +902,7 @@ var _ agh.ConfigModifier = (*defaultConfigModifier)(nil)
 // Apply implements the [agh.ConfigModifier] interface for
 // *defaultConfigModifier.
 func (cm *defaultConfigModifier) Apply(ctx context.Context) {
-	err := cm.config.write(ctx, cm.logger, cm.tlsMgr.extendedTLSConfig(), cm.auth, cm.workDir, cm.confPath)
+	err := cm.config.write(ctx, cm.logger, cm.tlsMgr.ExtendedTLSConfig(), cm.auth, cm.workDir, cm.confPath)
 	if err != nil {
 		cm.logger.ErrorContext(ctx, "writing config", slogutil.KeyError, err)
 	}

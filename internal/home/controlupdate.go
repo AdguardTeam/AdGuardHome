@@ -14,6 +14,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/updater"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
@@ -65,7 +66,8 @@ func (web *webAPI) handleVersionJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = resp.setAllowedToAutoUpdate(ctx, l, web.tlsConfigSettings())
+	extTLSConf := web.tlsConfProvider.ExtendedTLSConfig()
+	err = resp.setAllowedToAutoUpdate(ctx, l, extTLSConf)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
 		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusInternalServerError, "%s", err)
@@ -184,7 +186,7 @@ const maxPrivilegedPort = 1024
 func (vr *versionResponse) setAllowedToAutoUpdate(
 	ctx context.Context,
 	l *slog.Logger,
-	extTLSConf *tlsConfigSettings,
+	extTLSConf *aghtls.ExtendedTLSConfig,
 ) (err error) {
 	if vr.CanAutoUpdate != aghalg.NBTrue {
 		return nil
@@ -207,7 +209,7 @@ func (vr *versionResponse) setAllowedToAutoUpdate(
 
 // tlsConfUsesPrivilegedPorts returns true if the provided TLS configuration
 // indicates that privileged ports are used.  c must be valid.
-func tlsConfUsesPrivilegedPorts(c *tlsConfigSettings) (ok bool) {
+func tlsConfUsesPrivilegedPorts(c *aghtls.ExtendedTLSConfig) (ok bool) {
 	return c.Enabled && (c.PortHTTPS < maxPrivilegedPort ||
 		c.PortDNSOverTLS < maxPrivilegedPort ||
 		c.PortDNSOverQUIC < maxPrivilegedPort)

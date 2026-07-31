@@ -205,9 +205,10 @@ func (m *Registrar) Register(method, path string, h http.HandlerFunc) {
 // TLSConfigProvider is a fake [aghtls.TLSConfigProvider] implementation for
 // tests.
 type TLSConfigProvider struct {
-	OnTLSConfig  func() (conf *tls.Config)
-	OnRootCAs    func() (cert *x509.CertPool)
-	OnHasIPAddrs func() (ok bool)
+	OnTLSConfig         func() (conf *tls.Config)
+	OnRootCAs           func() (cert *x509.CertPool)
+	OnHasIPAddrs        func() (ok bool)
+	OnExtendedTLSConfig func() (conf *aghtls.ExtendedTLSConfig)
 }
 
 // type check
@@ -229,4 +230,10 @@ func (t *TLSConfigProvider) RootCAs() (pool *x509.CertPool) {
 // *TLSConfigProvider.
 func (t *TLSConfigProvider) HasIPAddrs() (ok bool) {
 	return t.OnHasIPAddrs()
+}
+
+// ExtendedTLSConfig implements the [aghtls.TLSConfigProvider] interface for
+// *TLSConfigProvider.
+func (t *TLSConfigProvider) ExtendedTLSConfig() (conf *aghtls.ExtendedTLSConfig) {
+	return t.OnExtendedTLSConfig()
 }

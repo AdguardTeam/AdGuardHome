@@ -897,7 +897,6 @@ func runDNSServer(
 		ctx,
 		slogLogger,
 		tlsMgr,
-		tlsMgr.extendedTLSConfig(),
 		confModifier,
 		httpReg,
 		statsDir,
@@ -960,7 +959,7 @@ func initTLS(
 		confModifier:  confModifier,
 		manager:       aghtlsMgr,
 		httpReg:       httpReg,
-		tlsSettings:   config.TLS,
+		extTLSConf:    config.TLS,
 		servePlainDNS: config.DNS.ServePlainDNS,
 	})
 	if err != nil {
@@ -1333,7 +1332,7 @@ func printHTTPAddresses(ctx context.Context, l *slog.Logger) {
 
 // printHTTPSAddresses prints the IP addresses which user can use to access the
 // admin interface over HTTPS.  l and extTLSConf must not be nil.
-func printHTTPSAddresses(ctx context.Context, l *slog.Logger, extTLSConf *tlsConfigSettings) {
+func printHTTPSAddresses(ctx context.Context, l *slog.Logger, extTLSConf *aghtls.ExtendedTLSConfig) {
 	port := extTLSConf.PortHTTPS
 
 	if extTLSConf.ServerName != "" {
@@ -1428,7 +1427,6 @@ func cmdlineUpdate(
 			TLSConfigProvider: tlsMgr,
 		},
 		nil,
-		tlsMgr.extendedTLSConfig(),
 		agh.EmptyConfigModifier{},
 	)
 	fatalOnError(err)

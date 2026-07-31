@@ -20,6 +20,10 @@ type TLSConfigProvider interface {
 	// HasIPAddrs returns true if the current TLS configuration has at least one
 	// certificate with an IP address in its SAN extension.
 	HasIPAddrs() (ok bool)
+
+	// ExtendedTLSConfig returns a clone of the current extended TLS
+	// configuration.
+	ExtendedTLSConfig() (conf *ExtendedTLSConfig)
 }
 
 // type check
@@ -45,4 +49,10 @@ func (EmptyTLSConfigProvider) RootCAs() (root *x509.CertPool) {
 // EmptyTLSConfigProvider.  It always returns false.
 func (EmptyTLSConfigProvider) HasIPAddrs() (ok bool) {
 	return false
+}
+
+// ExtendedTLSConfig implements the [TLSConfigProvider] interface for
+// EmptyTLSConfigProvider.  It always returns nil.
+func (EmptyTLSConfigProvider) ExtendedTLSConfig() (conf *ExtendedTLSConfig) {
+	return nil
 }
