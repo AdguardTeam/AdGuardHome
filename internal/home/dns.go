@@ -52,6 +52,7 @@ func initDNS(
 	httpReg aghhttp.Registrar,
 	statsDir string,
 	querylogDir string,
+	hc *aghnet.HostsContainer,
 ) (err error) {
 	anonymizer := config.anonymizer()
 
@@ -107,17 +108,24 @@ func initDNS(
 		return err
 	}
 
+	params := dnsforward.DNSCreateParams{
+		Logger:            baseLogger,
+		DNSFilter:         globalContext.filters,
+		Stats:             globalContext.stats,
+		QueryLog:          globalContext.queryLog,
+		PrivateNets:       parseSubnetSet(config.DNS.PrivateNets),
+		Anonymizer:        anonymizer,
+		DHCPServer:        globalContext.dhcpServer,
+		EtcHosts:          hc,
+		LocalDomain:       config.DHCP.LocalDomainName,
+		TLSConfigProvider: tlsConfProvider,
+	}
+
 	err = initDNSServer(
 		ctx,
-		globalContext.filters,
-		globalContext.stats,
-		globalContext.queryLog,
-		globalContext.dhcpServer,
-		anonymizer,
+		params,
 		httpReg,
 		extendedTLSConf,
-		tlsConfProvider,
-		baseLogger,
 		confModifier,
 	)
 	if err != nil {
@@ -130,44 +138,27 @@ func initDNS(
 }
 
 // initDNSServer initializes the [context.dnsServer].  To only use the internal
-// proxy, none of the arguments are required, but extTLSConf, tlsConfProvider
-// and l still must not be nil, in other cases all the arguments also must not
+// proxy, none of the arguments are required, but params must be valid and
+// extTLSConf must not be nil.  In other cases all the arguments also must not
 // be nil.  It also must not be called unless [config] and [globalContext] are
 // initialized.
-//
-// TODO(e.burkov): Use [dnsforward.DNSCreateParams] as a parameter.
 func initDNSServer(
 	ctx context.Context,
-	filters *filtering.DNSFilter,
-	sts stats.Interface,
-	qlog querylog.QueryLog,
-	dhcpSrv dnsforward.DHCP,
-	anonymizer *aghnet.IPMut,
+	params dnsforward.DNSCreateParams,
 	httpReg aghhttp.Registrar,
 	extTLSConf *tlsConfigSettings,
-	tlsConfProvider aghtls.TLSConfigProvider,
-	l *slog.Logger,
 	confModifier agh.ConfigModifier,
 ) (err error) {
-	globalContext.dnsServer, err = dnsforward.NewServer(dnsforward.DNSCreateParams{
-		Logger:            l,
-		DNSFilter:         filters,
-		Stats:             sts,
-		QueryLog:          qlog,
-		PrivateNets:       parseSubnetSet(config.DNS.PrivateNets),
-		Anonymizer:        anonymizer,
-		DHCPServer:        dhcpSrv,
-		EtcHosts:          globalContext.etcHosts,
-		LocalDomain:       config.DHCP.LocalDomainName,
-		TLSConfigProvider: tlsConfProvider,
-	})
+	globalContext.dnsServer, err = dnsforward.NewServer(params)
+	// TODO(m.kazantsev):  Investigate if the server should be closed in case of
+	// error and consider removing this defer.
 	defer func() {
 		if err != nil {
 			closeDNSServer(ctx)
 		}
 	}()
 	if err != nil {
-		return fmt.Errorf("dnsforward.NewServer: %w", err)
+		return fmt.Errorf("creating new dns server: %w", err)
 	}
 
 	globalContext.clients.clientChecker = globalContext.dnsServer
@@ -177,26 +168,27 @@ func initDNSServer(
 		config.Clients.Sources,
 		extTLSConf,
 		config.HTTPConfig.DoH,
-		tlsConfProvider,
+		params.TLSConfigProvider,
 		httpReg,
 		globalContext.clients.storage,
 		confModifier,
 	)
 	if err != nil {
-		return fmt.Errorf("newServerConfig: %w", err)
+		return fmt.Errorf("creating new dns server config: %w", err)
 	}
 
 	// Try to prepare the server with disabled private RDNS resolution if it
 	// failed to prepare as is.  See TODO on [dnsforward.PrivateRDNSError].
 	err = globalContext.dnsServer.Prepare(ctx, dnsConf)
 	if _, ok := errors.AsType[*dnsforward.PrivateRDNSError](err); ok {
+		l := params.Logger
 		l.WarnContext(ctx, "private rdns resolution failed; disabling", slogutil.KeyError, err)
 
 		dnsConf.UsePrivateRDNS = false
 		err = globalContext.dnsServer.Prepare(ctx, dnsConf)
 	}
 	if err != nil {
-		return fmt.Errorf("dnsServer.Prepare: %w", err)
+		return fmt.Errorf("preparing dns server: %w", err)
 	}
 
 	return nil

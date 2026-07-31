@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/ossvc"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
@@ -40,6 +41,7 @@ type program struct {
 	baseLogger      *slog.Logger
 	logger          *slog.Logger
 	sigHdlr         *signalHandler
+	hostsContainer  *aghnet.HostsContainer
 	gliNetTokenRoot *os.Root
 	workDir         string
 	confPath        string
@@ -66,6 +68,7 @@ func (p *program) Start(_ service.Service) (err error) {
 		p.workDir,
 		p.confPath,
 		p.pidFilePath,
+		p.hostsContainer,
 	)
 
 	return nil
@@ -161,6 +164,7 @@ func handleServiceControlAction(
 	workDir string,
 	confPath string,
 	pidFilePath string,
+	hc *aghnet.HostsContainer,
 ) (err error) {
 	actionName := opts.serviceControlAction
 	l.InfoContext(ctx, version.Full())
@@ -193,6 +197,7 @@ func handleServiceControlAction(
 			workDir:         workDir,
 			confPath:        confPath,
 			pidFilePath:     pidFilePath,
+			hostsContainer:  hc,
 		}
 
 		return p.handleRun(ctx, baseLogger, runOpts)

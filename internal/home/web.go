@@ -77,6 +77,9 @@ type webAPIConfig struct {
 	// must not be nil.
 	mux *http.ServeMux
 
+	// hostsContainer is used for DNS initialization on updates.
+	hostsContainer *aghnet.HostsContainer
+
 	// clientFS is used to initialize file server.  It must not be nil.
 	clientFS fs.FS
 
@@ -227,6 +230,9 @@ type webAPI struct {
 	// auth stores web user information and handles authentication.
 	auth *auth
 
+	// hostsContainer is used for DNS initialization on updates.
+	hostsContainer *aghnet.HostsContainer
+
 	// httpsServer is the server that handles HTTPS traffic.  If it is not nil,
 	// [Web.http3Server] must also not be nil.
 	//
@@ -292,7 +298,6 @@ func newWebAPI(ctx context.Context, conf *webAPIConfig) (w *webAPI) {
 		mux.Handle("/install.html", w.preInstallHandler(clientFS))
 		w.registerInstallHandlers()
 	} else {
-		w.registerTLSHandlers()
 		w.registerControlHandlers()
 	}
 
@@ -537,15 +542,6 @@ func startPprof(baseLogger *slog.Logger, port uint16) {
 			logger.ErrorContext(ctx, "shutting down", slogutil.KeyError, err)
 		}
 	}()
-}
-
-// registerTLSHandlers registers HTTP handlers for TLS configuration.
-//
-// TODO(m.kazantsev):  Consider uniting with registerControlHandlers.
-func (web *webAPI) registerTLSHandlers() {
-	web.httpReg.Register(http.MethodGet, "/control/tls/status", web.handleTLSStatus)
-	web.httpReg.Register(http.MethodPost, "/control/tls/configure", web.handleTLSConfigure)
-	web.httpReg.Register(http.MethodPost, "/control/tls/validate", web.handleTLSValidate)
 }
 
 // handleTLSStatus is the handler for the GET /control/tls/status HTTP API.

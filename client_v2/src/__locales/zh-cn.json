@@ -751,7 +751,7 @@
   "settings_filter_requests": "过滤请求",
   "settings_filter_requests_desc": "您可以使用<a>拦截列表</a>、<b>允许列表</b>和<c>用户规则</c>来设置过滤规则。",
   "settings_filtering_and_security": "过滤与安全",
-  "settings_general_short": "常规",
+  "settings_general_short": "General",
   "settings_global": "全局",
   "settings_hours": "%count% 个小时 | %count% 个小时",
   "settings_log_dns_requests": "记录 DNS 请求",

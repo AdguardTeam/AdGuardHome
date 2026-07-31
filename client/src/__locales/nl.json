@@ -63,7 +63,7 @@
   "blocking_mode_refused": "REFUSED: Antwoorden met REFUSED code",
   "blocklist": "Blokkeerlijst",
   "bootstrap_dns": "Bootstrap DNS-servers",
-  "bootstrap_dns_desc": "IP-adressen van DNS-servers die worden gebruikt om IP-adressen om te zetten van de DoH/DoT-resolvers die je opgeeft als upstreams. Opmerkingen zijn niet toegestaan.",
+  "bootstrap_dns_desc": "IP-adressen van DNS-servers die worden gebruikt om de hostnamen van DoH/DoT-upstream-resolvers op te lossen. Voer één IP-adres per regel in. Opmerkingen moeten op een nieuwe regel beginnen met een #. Lege regels en opmerkingen worden genegeerd.",
   "cache_cleared": "DNS-cache succesvol gewist",
   "cache_enabled": "Cache inschakelen",
   "cache_enabled_desc": "DNS-antwoorden lokaal opslaan.",

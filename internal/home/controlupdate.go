@@ -165,14 +165,7 @@ func (web *webAPI) handleUpdate(w http.ResponseWriter, r *http.Request) {
 	// The background context is used because the underlying functions wrap it
 	// with timeout and shut down the server, which handles current request.  It
 	// also should be done in a separate goroutine for the same reason.
-	go finishUpdate(
-		context.Background(),
-		web.logger,
-		web.cmdCons,
-		execPath,
-		web.pidFilePath,
-		web.conf.runningAsService,
-	)
+	go web.finishUpdate(context.Background(), execPath)
 }
 
 // versionResponse is the response for /control/version.json endpoint.
@@ -221,47 +214,40 @@ func tlsConfUsesPrivilegedPorts(c *tlsConfigSettings) (ok bool) {
 }
 
 // finishUpdate completes an update procedure.  It is intended to be used as a
-// goroutine.  l and cmdCons must not be nil.
-func finishUpdate(
+// goroutine.
+func (web *webAPI) finishUpdate(
 	ctx context.Context,
-	l *slog.Logger,
-	cmdCons executil.CommandConstructor,
 	execPath string,
-	pidFilePath string,
-	runningAsService bool,
 ) {
-	defer slogutil.RecoverAndExit(ctx, l, osutil.ExitCodeFailure)
+	defer slogutil.RecoverAndExit(ctx, web.logger, osutil.ExitCodeFailure)
 
-	l.InfoContext(ctx, "stopping all tasks")
+	web.logger.InfoContext(ctx, "stopping all tasks")
 
-	cleanup(ctx, l)
-	cleanupAlways(ctx, l, pidFilePath)
+	cleanup(ctx, web.logger, web.hostsContainer)
+	cleanupAlways(ctx, web.logger, web.pidFilePath)
 
 	if runtime.GOOS == "windows" {
-		finalizeWindowsUpdate(ctx, l, cmdCons, execPath, runningAsService)
+		web.finalizeWindowsUpdate(ctx, execPath)
 
 		os.Exit(osutil.ExitCodeSuccess)
 	}
 
 	var err error
-	l.InfoContext(ctx, "restarting", "exec_path", execPath, "args", os.Args[1:])
+	web.logger.InfoContext(ctx, "restarting", "exec_path", execPath, "args", os.Args[1:])
 	err = syscall.Exec(execPath, os.Args, os.Environ())
 	if err != nil {
 		panic(fmt.Errorf("restarting: %w", err))
 	}
 }
 
-// finalizeWindowsUpdate completes an update procedure on windows.  l and
-// cmdCons must not be nil.
-func finalizeWindowsUpdate(ctx context.Context,
-	l *slog.Logger,
-	cmdCons executil.CommandConstructor,
+// finalizeWindowsUpdate completes an update procedure on windows.
+func (web *webAPI) finalizeWindowsUpdate(
+	ctx context.Context,
 	execPath string,
-	runningAsService bool,
 ) {
 	var commandConf *executil.CommandConfig
 
-	if runningAsService {
+	if web.conf.runningAsService {
 		// NOTE: We can't restart the service via "kardianos/service" package,
 		// because it kills the process first we can't start a new instance,
 		// because Windows doesn't allow it.
@@ -281,10 +267,10 @@ func finalizeWindowsUpdate(ctx context.Context,
 		}
 	}
 
-	l.InfoContext(ctx, "restarting", "exec_path", execPath, "args", os.Args[1:])
+	web.logger.InfoContext(ctx, "restarting", "exec_path", execPath, "args", os.Args[1:])
 
 	var cmd executil.Command
-	cmd, err := cmdCons.New(ctx, commandConf)
+	cmd, err := web.cmdCons.New(ctx, commandConf)
 	if err != nil {
 		panic(fmt.Errorf("constructing cmd: %w", err))
 	}

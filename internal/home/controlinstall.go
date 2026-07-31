@@ -561,7 +561,6 @@ func (web *webAPI) finalizeInstall(
 	web.conf.BindAddr = netip.AddrPortFrom(req.Web.IP, req.Web.Port)
 
 	web.registerControlHandlers()
-	web.registerTLSHandlers()
 
 	aghhttp.OK(ctx, l, w)
 
@@ -641,6 +640,7 @@ func (web *webAPI) startMods(ctx context.Context) (err error) {
 		web.httpReg,
 		statsDir,
 		querylogDir,
+		web.hostsContainer,
 	)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
