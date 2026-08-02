@@ -42,8 +42,11 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Configuration migrations no longer change files when run with `--check-config` ([#4067]).
+
 - Blocked requests without an EDNS(0) OPT record ([#8183]).
 
+[#4067]: https://github.com/AdguardTeam/AdGuardHome/issues/4067
 [#8183]: https://github.com/AdguardTeam/AdGuardHome/issues/8183
 
 <!--

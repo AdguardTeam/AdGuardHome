@@ -25,13 +25,15 @@ import (
 func (m *Migrator) migrateTo2(ctx context.Context, diskConf yobj) (err error) {
 	diskConf["schema_version"] = 2
 
-	coreFilePath := filepath.Join(m.workingDir, "Corefile")
-	m.logger.InfoContext(ctx, "deleting file as we do not need it anymore", "path", coreFilePath)
-	err = os.Remove(coreFilePath)
-	if err != nil && !errors.Is(err, os.ErrNotExist) {
-		m.logger.WarnContext(ctx, "failed to delete", slogutil.KeyError, err)
+	if !m.readOnly {
+		coreFilePath := filepath.Join(m.workingDir, "Corefile")
+		m.logger.InfoContext(ctx, "deleting file as we do not need it anymore", "path", coreFilePath)
+		err = os.Remove(coreFilePath)
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
+			m.logger.WarnContext(ctx, "failed to delete", slogutil.KeyError, err)
 
-		// Go on.
+			// Go on.
+		}
 	}
 
 	return moveVal[any](diskConf, diskConf, "coredns", "dns")

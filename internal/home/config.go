@@ -687,8 +687,15 @@ func validateBindHosts(
 }
 
 // parseConfig loads configuration from the YAML file, upgrading it if
-// necessary.  l must not be nil.
-func parseConfig(ctx context.Context, l *slog.Logger, workDir, confPath string) (err error) {
+// necessary.  If readOnly is true, it only upgrades the configuration in
+// memory.  l must not be nil.
+func parseConfig(
+	ctx context.Context,
+	l *slog.Logger,
+	workDir string,
+	confPath string,
+	readOnly bool,
+) (err error) {
 	// Do the upgrade if necessary.
 	config.fileData, err = readConfigFile(ctx, l, workDir, confPath)
 	if err != nil {
@@ -699,6 +706,7 @@ func parseConfig(ctx context.Context, l *slog.Logger, workDir, confPath string) 
 		Logger:     l.With(slogutil.KeyPrefix, "config_migrator"),
 		WorkingDir: workDir,
 		DataDir:    filepath.Join(workDir, dataDir),
+		ReadOnly:   readOnly,
 	})
 
 	var upgraded bool
@@ -710,7 +718,7 @@ func parseConfig(ctx context.Context, l *slog.Logger, workDir, confPath string) 
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
 		return err
-	} else if upgraded {
+	} else if upgraded && !readOnly {
 		confPath = configFilePath(ctx, l, workDir, confPath)
 		l.DebugContext(ctx, "writing config file after config upgrade", "path", confPath)
 

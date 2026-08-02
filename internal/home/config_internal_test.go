@@ -1,10 +1,12 @@
 package home
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/configmigrate"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -86,6 +88,49 @@ func TestConfigFilePath(t *testing.T) {
 			ctx := testutil.ContextWithTimeout(t, testTimeout)
 			got := configFilePath(ctx, testLogger, workDir, tc.confPath)
 			assert.Equal(t, tc.want, got)
+		})
+	}
+}
+
+func TestParseConfig_Migration(t *testing.T) {
+	const fixturePath = "../configmigrate/testdata/TestMigrateConfig_Migrate/v34/input.yml"
+
+	want, err := os.ReadFile(fixturePath)
+	require.NoError(t, err)
+
+	testCases := []struct {
+		name        string
+		readOnly    bool
+		wantChanged bool
+	}{{
+		name:        "normal",
+		readOnly:    false,
+		wantChanged: true,
+	}, {
+		name:        "read_only",
+		readOnly:    true,
+		wantChanged: false,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			storeGlobals(t)
+			config = &configuration{}
+
+			workDir := t.TempDir()
+			confPath := filepath.Join(workDir, "AdGuardHome.yaml")
+			writeErr := os.WriteFile(confPath, want, 0o600)
+			require.NoError(t, writeErr)
+
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			parseErr := parseConfig(ctx, testLogger, workDir, confPath, tc.readOnly)
+			require.NoError(t, parseErr)
+
+			got, readErr := os.ReadFile(confPath)
+			require.NoError(t, readErr)
+
+			assert.Equal(t, tc.wantChanged, !bytes.Equal(want, got))
+			assert.Equal(t, uint(configmigrate.LastSchemaVersion), config.SchemaVersion)
 		})
 	}
 }

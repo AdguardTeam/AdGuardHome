@@ -242,6 +242,63 @@ func TestMigrateConfig_Migrate(t *testing.T) {
 	}
 }
 
+func TestMigrateConfig_ReadOnly(t *testing.T) {
+	t.Parallel()
+
+	t.Run("normal", func(t *testing.T) {
+		t.Parallel()
+
+		testMigrateConfigReadOnly(t, false)
+	})
+
+	t.Run("read_only", func(t *testing.T) {
+		t.Parallel()
+
+		testMigrateConfigReadOnly(t, true)
+	})
+}
+
+func testMigrateConfigReadOnly(t *testing.T, readOnly bool) {
+	t.Helper()
+
+	const (
+		body     = "schema_version: 0\ncoredns: {}\n"
+		fileData = "test"
+	)
+
+	workDir := t.TempDir()
+	paths := []string{
+		filepath.Join(workDir, "dnsfilter.txt"),
+		filepath.Join(workDir, "Corefile"),
+	}
+	for _, filePath := range paths {
+		err := os.WriteFile(filePath, []byte(fileData), 0o600)
+		require.NoError(t, err)
+	}
+
+	migrator := configmigrate.New(&configmigrate.Config{
+		Logger:     testLogger,
+		WorkingDir: workDir,
+		DataDir:    filepath.Join(workDir, "data"),
+		ReadOnly:   readOnly,
+	})
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	newBody, upgraded, err := migrator.Migrate(ctx, []byte(body), 2)
+	require.NoError(t, err)
+	require.True(t, upgraded)
+	require.YAMLEq(t, "schema_version: 2\ndns: {}\n", string(newBody))
+
+	for _, filePath := range paths {
+		got, readErr := os.ReadFile(filePath)
+		if readOnly {
+			require.NoError(t, readErr)
+			require.Equal(t, fileData, string(got))
+		} else {
+			require.ErrorIs(t, readErr, os.ErrNotExist)
+		}
+	}
+}
+
 // TODO(a.garipov):  Consider ways of merging into the previous one.
 func TestMigrateConfig_Migrate_v29(t *testing.T) {
 	t.Parallel()
