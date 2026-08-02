@@ -529,6 +529,55 @@ func TestServer_Prepare_fallbacks(t *testing.T) {
 	assert.Len(t, s.dnsProxy.Fallbacks.Upstreams, 1)
 }
 
+func TestServer_Prepare_fallbackBootstrap(t *testing.T) {
+	const fallbackHost = "fallback.example"
+
+	lookupCh := make(chan dns.Question, 4)
+	pt := testutil.NewPanicT(t)
+	bootstrapHandler := dns.HandlerFunc(func(w dns.ResponseWriter, req *dns.Msg) {
+		require.Len(pt, req.Question, 1)
+		testutil.RequireSend(pt, lookupCh, req.Question[0], testTimeout)
+
+		err := w.WriteMsg(new(dns.Msg).SetReply(req))
+		require.NoError(pt, err)
+	})
+	bootstrapAddr := newLocalUpstreamListener(t, 0, bootstrapHandler)
+
+	srvConf := &ServerConfig{
+		UpstreamTimeout: 100 * time.Millisecond,
+		TLSConf:         &TLSConfig{},
+		Config: Config{
+			BootstrapDNS: []string{"tcp://" + bootstrapAddr.String()},
+			FallbackDNS: []string{
+				"tls://" + netutil.JoinHostPort(fallbackHost, 1),
+			},
+			UpstreamMode:     UpstreamModeLoadBalance,
+			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+			ClientsContainer: EmptyClientsContainer{},
+		},
+		ServePlainDNS: true,
+	}
+
+	s, err := NewServer(DNSCreateParams{
+		Logger:            testLogger,
+		TLSConfigProvider: testTLSConfigProvider,
+	})
+	require.NoError(t, err)
+
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	err = s.Prepare(ctx, srvConf)
+	require.NoError(t, err)
+	require.NotNil(t, s.dnsProxy.Fallbacks)
+	require.Len(t, s.dnsProxy.Fallbacks.Upstreams, 1)
+
+	_, err = s.dnsProxy.Fallbacks.Upstreams[0].Exchange(createGoogleATestMessage())
+	require.Error(t, err)
+
+	q, ok := testutil.RequireReceive(t, lookupCh, testTimeout)
+	require.True(t, ok)
+	assert.Equal(t, dns.Fqdn(fallbackHost), q.Name)
+}
+
 func TestServerWithProtectionDisabled(t *testing.T) {
 	s := createTestServer(
 		t,

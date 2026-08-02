@@ -687,11 +687,11 @@ func (s *Server) setupFallbackDNS() (uc *proxy.UpstreamConfig, err error) {
 	}
 
 	uc, err = proxy.ParseUpstreamsConfig(fallbacks, &upstream.Options{
-		Logger: aghslog.NewForUpstream(s.baseLogger, aghslog.UpstreamTypeFallback),
+		Logger:    aghslog.NewForUpstream(s.baseLogger, aghslog.UpstreamTypeFallback),
+		Bootstrap: s.bootstrap,
 		// TODO(s.chzhen):  Investigate if other options are needed.
 		Timeout:    s.conf.UpstreamTimeout,
 		PreferIPv6: s.conf.BootstrapPreferIPv6,
-		// TODO(e.burkov):  Use bootstrap.
 	})
 	if err != nil {
 		// Do not wrap the error because it's informative enough as is.
