@@ -17,6 +17,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghuser"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/golibs/netutil"
@@ -25,6 +26,31 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestWebAPI_wrapMux_recoversPanic(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /panic", func(http.ResponseWriter, *http.Request) {
+		panic("test panic")
+	})
+
+	web := &webAPI{
+		conf: &webAPIConfig{mux: mux},
+		auth: &auth{
+			logger: testLogger,
+			mux:    mux,
+			users:  aghuser.NewDefaultDB(),
+		},
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/panic", nil)
+	res := httptest.NewRecorder()
+
+	require.NotPanics(t, func() {
+		web.wrapMux(testLogger).ServeHTTP(res, req)
+	})
+	assert.Equal(t, http.StatusInternalServerError, res.Code)
+	assert.Equal(t, http.StatusText(http.StatusInternalServerError)+"\n", res.Body.String())
+}
 
 func TestWebAPI_HandleTLSConfigure(t *testing.T) {
 	// Store the global state before making any changes.
