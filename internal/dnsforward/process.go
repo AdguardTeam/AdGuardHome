@@ -489,6 +489,8 @@ func (s *Server) processUpstream(
 	}
 
 	if dctx.err = prx.Resolve(ctx, pctx); dctx.err != nil {
+		s.processUpstreamError(ctx, l, dctx)
+
 		return resultCodeError
 	}
 
@@ -496,6 +498,25 @@ func (s *Server) processUpstream(
 	dctx.responseAD = pctx.Res.AuthenticatedData
 
 	return resultCodeSuccess
+}
+
+// processUpstreamError records the response generated for an upstream error.
+// l and dctx must not be nil.
+func (s *Server) processUpstreamError(ctx context.Context, l *slog.Logger, dctx *dnsContext) {
+	pctx := dctx.proxyCtx
+	if q := dctx.origQuestion; q.Name != "" {
+		pctx.Req.Question[0] = q
+		if pctx.Res != nil && len(pctx.Res.Question) > 0 {
+			pctx.Res.Question[0] = q
+		}
+	}
+
+	if pctx.Res == nil {
+		return
+	}
+
+	dctx.result = &filtering.Result{Reason: filtering.NotFilteredError}
+	s.processQueryLogsAndStats(ctx, l, dctx)
 }
 
 // dhcpHostFromRequest returns a hostname from question, if the request is for a

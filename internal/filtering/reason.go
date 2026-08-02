@@ -16,8 +16,7 @@ const (
 	// NotFilteredAllowList: the host is explicitly allowed.
 	NotFilteredAllowList
 
-	// NotFilteredError is returned when there was an error during checking.
-	// Reserved, currently unused.
+	// NotFilteredError is returned when there was an error during processing.
 	NotFilteredError
 
 	// FilteredBlockList: the host was matched to be advertising host.
