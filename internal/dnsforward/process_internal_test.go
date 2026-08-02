@@ -231,6 +231,15 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 			&dns.SVCBDoHPath{Template: "/dns-query{?dns}"},
 		},
 	}
+	dohSVCBAltPort := &dns.SVCB{
+		Priority: 1,
+		Target:   ddrTestFQDN,
+		Value: []dns.SVCBKeyValue{
+			&dns.SVCBAlpn{Alpn: []string{"h2"}},
+			&dns.SVCBPort{Port: 8144},
+			&dns.SVCBDoHPath{Template: "/dns-query{?dns}"},
+		},
+	}
 
 	dotSVCB := &dns.SVCB{
 		Priority: 1,
@@ -238,6 +247,14 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 		Value: []dns.SVCBKeyValue{
 			&dns.SVCBAlpn{Alpn: []string{"dot"}},
 			&dns.SVCBPort{Port: 8043},
+		},
+	}
+	dotSVCBAltPort := &dns.SVCB{
+		Priority: 1,
+		Target:   ddrTestFQDN,
+		Value: []dns.SVCBKeyValue{
+			&dns.SVCBAlpn{Alpn: []string{"dot"}},
+			&dns.SVCBPort{Port: 8143},
 		},
 	}
 
@@ -249,10 +266,33 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 			&dns.SVCBPort{Port: 8042},
 		},
 	}
+	doqSVCBAltPort := &dns.SVCB{
+		Priority: 1,
+		Target:   ddrTestFQDN,
+		Value: []dns.SVCBKeyValue{
+			&dns.SVCBAlpn{Alpn: []string{"doq"}},
+			&dns.SVCBPort{Port: 8142},
+		},
+	}
 
 	addrsDoH := []netip.AddrPort{netip.AddrPortFrom(netutil.IPv4Localhost(), 8044)}
 	addrsDoT := []*net.TCPAddr{{Port: 8043}}
 	addrsDoQ := []*net.UDPAddr{{Port: 8042}}
+	duplicateAddrsDoH := []netip.AddrPort{
+		netip.AddrPortFrom(netutil.IPv4Localhost(), 8044),
+		netip.AddrPortFrom(netutil.IPv6Localhost(), 8044),
+		netip.AddrPortFrom(netutil.IPv4Localhost(), 8144),
+	}
+	duplicateAddrsDoT := []*net.TCPAddr{
+		net.TCPAddrFromAddrPort(netip.AddrPortFrom(netutil.IPv4Localhost(), 8043)),
+		net.TCPAddrFromAddrPort(netip.AddrPortFrom(netutil.IPv6Localhost(), 8043)),
+		net.TCPAddrFromAddrPort(netip.AddrPortFrom(netutil.IPv4Localhost(), 8143)),
+	}
+	duplicateAddrsDoQ := []*net.UDPAddr{
+		net.UDPAddrFromAddrPort(netip.AddrPortFrom(netutil.IPv4Localhost(), 8042)),
+		net.UDPAddrFromAddrPort(netip.AddrPortFrom(netutil.IPv6Localhost(), 8042)),
+		net.UDPAddrFromAddrPort(netip.AddrPortFrom(netutil.IPv4Localhost(), 8142)),
+	}
 
 	testCases := []struct {
 		name       string
@@ -271,6 +311,30 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 		qtype:      dns.TypeSVCB,
 		ddrEnabled: true,
 		addrsDoH:   addrsDoH,
+	}, {
+		name:       "dot_deduplicate",
+		wantRes:    resultCodeFinish,
+		want:       []*dns.SVCB{dotSVCB, dotSVCBAltPort},
+		host:       ddrHostFQDN,
+		qtype:      dns.TypeSVCB,
+		ddrEnabled: true,
+		addrsDoT:   duplicateAddrsDoT,
+	}, {
+		name:       "doh_deduplicate",
+		wantRes:    resultCodeFinish,
+		want:       []*dns.SVCB{dohSVCB, dohSVCBAltPort},
+		host:       ddrHostFQDN,
+		qtype:      dns.TypeSVCB,
+		ddrEnabled: true,
+		addrsDoH:   duplicateAddrsDoH,
+	}, {
+		name:       "doq_deduplicate",
+		wantRes:    resultCodeFinish,
+		want:       []*dns.SVCB{doqSVCB, doqSVCBAltPort},
+		host:       ddrHostFQDN,
+		qtype:      dns.TypeSVCB,
+		ddrEnabled: true,
+		addrsDoQ:   duplicateAddrsDoQ,
 	}, {
 		name:       "pass_qtype",
 		wantRes:    resultCodeFinish,
