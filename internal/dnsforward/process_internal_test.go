@@ -222,11 +222,20 @@ func TestServer_ProcessFilteringAfterResponse(t *testing.T) {
 }
 
 func TestServer_ProcessDDRQuery(t *testing.T) {
-	dohSVCB := &dns.SVCB{
+	dohHTTP2SVCB := &dns.SVCB{
 		Priority: 1,
 		Target:   ddrTestFQDN,
 		Value: []dns.SVCBKeyValue{
 			&dns.SVCBAlpn{Alpn: []string{"h2"}},
+			&dns.SVCBPort{Port: 8044},
+			&dns.SVCBDoHPath{Template: "/dns-query{?dns}"},
+		},
+	}
+	dohHTTP3SVCB := &dns.SVCB{
+		Priority: 1,
+		Target:   ddrTestFQDN,
+		Value: []dns.SVCBKeyValue{
+			&dns.SVCBAlpn{Alpn: []string{"h2", "h3"}},
 			&dns.SVCBPort{Port: 8044},
 			&dns.SVCBDoHPath{Template: "/dns-query{?dns}"},
 		},
@@ -264,6 +273,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 		addrsDoQ   []*net.UDPAddr
 		qtype      uint16
 		ddrEnabled bool
+		serveHTTP3 bool
 	}{{
 		name:       "pass_host",
 		wantRes:    resultCodeSuccess,
@@ -300,12 +310,21 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 		ddrEnabled: true,
 		addrsDoT:   addrsDoT,
 	}, {
-		name:       "doh",
+		name:       "doh_http2",
 		wantRes:    resultCodeFinish,
-		want:       []*dns.SVCB{dohSVCB},
+		want:       []*dns.SVCB{dohHTTP2SVCB},
 		host:       ddrHostFQDN,
 		qtype:      dns.TypeSVCB,
 		ddrEnabled: true,
+		addrsDoH:   addrsDoH,
+	}, {
+		name:       "doh_http3",
+		wantRes:    resultCodeFinish,
+		want:       []*dns.SVCB{dohHTTP3SVCB},
+		host:       ddrHostFQDN,
+		qtype:      dns.TypeSVCB,
+		ddrEnabled: true,
+		serveHTTP3: true,
 		addrsDoH:   addrsDoH,
 	}, {
 		name:       "doq",
@@ -318,7 +337,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 	}, {
 		name:       "dot_doh",
 		wantRes:    resultCodeFinish,
-		want:       []*dns.SVCB{dotSVCB, dohSVCB},
+		want:       []*dns.SVCB{dotSVCB, dohHTTP2SVCB},
 		host:       ddrHostFQDN,
 		qtype:      dns.TypeSVCB,
 		ddrEnabled: true,
@@ -352,6 +371,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 						HTTPSListenAddrs: tc.addrsDoH,
 						QUICListenAddrs:  tc.addrsDoQ,
 					},
+					ServeHTTP3:    tc.serveHTTP3,
 					ServePlainDNS: true,
 				},
 				tlsConfProvider,

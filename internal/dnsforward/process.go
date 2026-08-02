@@ -209,9 +209,14 @@ func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
 	// name somewhere.
 	domainName := dns.Fqdn(s.conf.TLSConf.ServerName)
 
+	dohALPN := []string{"h2"}
+	if s.conf.ServeHTTP3 {
+		dohALPN = append(dohALPN, "h3")
+	}
+
 	for _, addr := range s.conf.TLSConf.HTTPSListenAddrs {
 		values := []dns.SVCBKeyValue{
-			&dns.SVCBAlpn{Alpn: []string{"h2"}},
+			&dns.SVCBAlpn{Alpn: dohALPN},
 			&dns.SVCBPort{Port: addr.Port()},
 			&dns.SVCBDoHPath{Template: "/dns-query{?dns}"},
 		}

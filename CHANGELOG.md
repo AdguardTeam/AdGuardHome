@@ -42,8 +42,12 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Discovery of Designated Resolvers responses now advertise HTTP/3 for
+  DNS-over-HTTPS when it is enabled ([#6487]).
+
 - Blocked requests without an EDNS(0) OPT record ([#8183]).
 
+[#6487]: https://github.com/AdguardTeam/AdGuardHome/issues/6487
 [#8183]: https://github.com/AdguardTeam/AdGuardHome/issues/8183
 
 <!--
