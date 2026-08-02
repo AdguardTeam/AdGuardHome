@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"hash"
+	"io"
 	"io/fs"
 	"log/slog"
 	"net"
@@ -799,6 +800,73 @@ func ruleListFromFilter(f Filter) (rl filterlist.Interface, skip bool, err error
 // https://github.com/AdguardTeam/AdGuardHome/issues/8491.
 const rebuildGCPercent = 20
 
+// gcTarget serializes the changes of the garbage-collection target between the
+// rebuilds that are running at the same time.
+//
+// The target is a property of the whole process, while each [DNSFilter] only
+// tightens it for the duration of its own rebuild, so the bookkeeping cannot
+// live in a single instance.  Two overlapping rebuilds would otherwise restore
+// each other's saved value: the first one to finish would restore the original
+// target while the second is still running, and the second would then restore
+// the tightened one, leaving the process at it permanently.
+type gcTarget struct {
+	// set changes the target and returns the previous one.  It is
+	// [debug.SetGCPercent] outside of tests and must not be nil.
+	set func(percent int) (prev int)
+
+	// mu protects depth and prev.
+	mu sync.Mutex
+
+	// depth is the number of rebuilds currently holding the target tightened.
+	depth int
+
+	// prev is the target to restore once the last of them finishes.  It is
+	// only meaningful when depth is positive.
+	prev int
+}
+
+// rebuildGCTarget is the garbage-collection target shared by every [DNSFilter]
+// within the process.
+var rebuildGCTarget = &gcTarget{set: debug.SetGCPercent}
+
+// tighten lowers the garbage-collection target to percent for the duration of a
+// rebuild and returns the function that undoes it, which must be called exactly
+// once.
+//
+// The target is only ever tightened: a user who has set a stricter GOGC, or
+// disabled the garbage collector altogether, must not have that overridden.
+func (t *gcTarget) tighten(percent int) (restore func()) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	if t.depth == 0 {
+		prev := t.set(percent)
+		if prev < percent {
+			t.set(prev)
+
+			return func() {}
+		}
+
+		t.prev = prev
+	}
+
+	t.depth++
+
+	return t.release
+}
+
+// release undoes a single [gcTarget.tighten], restoring the original target
+// once the last rebuild has finished.
+func (t *gcTarget) release() {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	t.depth--
+	if t.depth == 0 {
+		t.set(t.prev)
+	}
+}
+
 // Initialize urlfilter objects.
 func (d *DNSFilter) initFiltering(ctx context.Context, allowFilters, blockFilters []Filter) (err error) {
 	d.initMu.Lock()
@@ -819,14 +887,8 @@ func (d *DNSFilter) initFiltering(ctx context.Context, allowFilters, blockFilter
 	// rebuild has failed midway.
 	defer debug.FreeOSMemory()
 
-	// Only ever tighten the target for the duration of the rebuild.  A user who
-	// has set a stricter GOGC, or disabled the GC altogether, must not have
-	// that overridden.
-	if prev := debug.SetGCPercent(rebuildGCPercent); prev < rebuildGCPercent {
-		debug.SetGCPercent(prev)
-	} else {
-		defer debug.SetGCPercent(prev)
-	}
+	restoreGCTarget := rebuildGCTarget.tighten(rebuildGCPercent)
+	defer restoreGCTarget()
 
 	rulesStorage, err := newRuleStorage(blockFilters)
 	if err != nil {
@@ -898,20 +960,25 @@ func hashFilters(h hash.Hash, filters []Filter) {
 		_, _ = fmt.Fprintf(h, "id:%d;path:%q;data:%d;", f.ID, f.FilePath, len(f.Data))
 		_, _ = h.Write(f.Data)
 
-		hashFileMeta(h, f.FilePath)
+		hashFileContents(h, f.FilePath)
 	}
 }
 
-// hashFileMeta writes the data identifying the current content of the file at
-// path into h.  AdGuard Home replaces rule-list files atomically and always
-// updates their modification time, so the size and the modification time are
-// enough to detect a change of the contents.
-func hashFileMeta(h hash.Hash, path string) {
+// hashFileContents writes the current contents of the file at path into h.
+//
+// The contents are read in full rather than summarized by the size and the
+// modification time of the file.  Those are metadata, not an identity: a
+// restored backup or an explicit [os.Chtimes] can leave both unchanged while
+// the rules differ, which would keep stale rules in use, and merely touching a
+// file whose contents are unchanged would force a needless rebuild.  Reading
+// the lists is far cheaper than rebuilding the engines from them, which is what
+// this check exists to avoid.
+func hashFileContents(h hash.Hash, path string) {
 	if path == "" {
 		return
 	}
 
-	fi, err := os.Stat(path)
+	f, err := os.Open(path)
 	if err != nil {
 		// [ruleListFromFilter] skips the lists whose files cannot be read, so
 		// record the fact that this one is currently unavailable.
@@ -919,8 +986,18 @@ func hashFileMeta(h hash.Hash, path string) {
 
 		return
 	}
+	defer func() { _ = f.Close() }()
 
-	_, _ = fmt.Fprintf(h, "size:%d;mtime:%d;", fi.Size(), fi.ModTime().UnixNano())
+	n, err := io.Copy(h, f)
+	if err != nil {
+		_, _ = fmt.Fprintf(h, "readerr:%v;", err)
+
+		return
+	}
+
+	// Write the length as well, so that the contents of a list cannot be
+	// confused with those of the next one.
+	_, _ = fmt.Fprintf(h, "size:%d;", n)
 }
 
 // closeStorage closes rs and logs the error, if any.  rs may be nil.

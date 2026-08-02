@@ -96,13 +96,36 @@ func TestFiltersFingerprint_file(t *testing.T) {
 		assert.NotEqual(t, base, filtersFingerprint(nil, flts))
 	})
 
-	t.Run("same_size_new_mtime", func(t *testing.T) {
+	// The fingerprint follows the contents of the file and nothing else, so
+	// metadata that a rewrite happens to preserve must not hide a change of the
+	// rules, and metadata that changes on its own must not fake one.
+
+	t.Run("same_metadata_different_bytes", func(t *testing.T) {
+		prev := filtersFingerprint(nil, flts)
+
+		// Replace the contents with different rules of exactly the same length
+		// and restore the modification time, the way a restored backup would.
+		const other = "||example.org^\n"
+		require.Len(t, other, len("||example.net^\n"))
+
+		require.NoError(t, os.WriteFile(path, []byte(other), 0o644))
+		require.NoError(t, os.Chtimes(path, mtime, mtime))
+
+		fi, err := os.Stat(path)
+		require.NoError(t, err)
+		require.Equal(t, int64(len(other)), fi.Size())
+		require.True(t, fi.ModTime().Equal(mtime))
+
+		assert.NotEqual(t, prev, filtersFingerprint(nil, flts))
+	})
+
+	t.Run("same_bytes_new_mtime", func(t *testing.T) {
 		prev := filtersFingerprint(nil, flts)
 
 		newTime := mtime.Add(1 * time.Minute)
 		require.NoError(t, os.Chtimes(path, newTime, newTime))
 
-		assert.NotEqual(t, prev, filtersFingerprint(nil, flts))
+		assert.Equal(t, prev, filtersFingerprint(nil, flts))
 	})
 
 	t.Run("removed", func(t *testing.T) {
@@ -111,6 +134,84 @@ func TestFiltersFingerprint_file(t *testing.T) {
 
 		assert.NotEqual(t, prev, filtersFingerprint(nil, flts))
 	})
+}
+
+// TestGCTarget_overlap makes sure that two rebuilds running at the same time
+// don't restore each other's saved garbage-collection target.  The target
+// belongs to the whole process, while each [DNSFilter] only tightens it for the
+// duration of its own rebuild.
+func TestGCTarget_overlap(t *testing.T) {
+	t.Parallel()
+
+	const (
+		base    = 100
+		percent = 20
+	)
+
+	// current is the target that a real [debug.SetGCPercent] would have left the
+	// process at.
+	current := base
+	tgt := &gcTarget{
+		set: func(p int) (prev int) {
+			prev, current = current, p
+
+			return prev
+		},
+	}
+
+	// Two instances start rebuilding, the second while the first is running.
+	restoreFirst := tgt.tighten(percent)
+	assert.Equal(t, percent, current)
+
+	restoreSecond := tgt.tighten(percent)
+	assert.Equal(t, percent, current)
+
+	// The first one finishes while the second is still running, so the target
+	// must stay tightened.
+	restoreFirst()
+	assert.Equal(t, percent, current)
+
+	// Only once the last one finishes is the original target restored.
+	restoreSecond()
+	assert.Equal(t, base, current)
+}
+
+// TestGCTarget_stricter makes sure that a target stricter than the one used for
+// rebuilds is left alone, including a disabled garbage collector.
+func TestGCTarget_stricter(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name string
+		base int
+	}{{
+		name: "stricter",
+		base: 10,
+	}, {
+		name: "disabled",
+		base: -1,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			current := tc.base
+			tgt := &gcTarget{
+				set: func(p int) (prev int) {
+					prev, current = current, p
+
+					return prev
+				},
+			}
+
+			restore := tgt.tighten(20)
+			assert.Equal(t, tc.base, current)
+
+			restore()
+			assert.Equal(t, tc.base, current)
+		})
+	}
 }
 
 // newFilterForTest returns a *DNSFilter with an initialized filtering engine
