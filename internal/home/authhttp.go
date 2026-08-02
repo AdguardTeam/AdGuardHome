@@ -80,6 +80,31 @@ func realIP(r *http.Request) (ip netip.Addr, err error) {
 	return netip.ParseAddr(ipStr)
 }
 
+// authLogIP returns the client IP address to use in authentication logs.  It
+// only trusts forwarded IP headers when the direct peer is a trusted proxy.
+func authLogIP(r *http.Request, trustedProxies netutil.SubnetSet) (ip string) {
+	remoteIP, err := netutil.SplitHost(r.RemoteAddr)
+	if err != nil {
+		return r.RemoteAddr
+	}
+
+	if trustedProxies == nil {
+		return remoteIP
+	}
+
+	remoteAddr, err := netip.ParseAddr(remoteIP)
+	if err != nil || !trustedProxies.Contains(remoteAddr.Unmap()) {
+		return remoteIP
+	}
+
+	clientIP, err := realIP(r)
+	if err != nil {
+		return remoteIP
+	}
+
+	return clientIP.String()
+}
+
 // writeErrorWithIP is like [aghhttp.Error], but includes the remote IP address
 // when it writes to the log.  r, w and err must not be nil.
 func (web *webAPI) writeErrorWithIP(
@@ -441,7 +466,17 @@ func (mw *authMiddlewareDefault) handleAuthenticatedUser(
 ) (ok bool) {
 	u, err := mw.userFromRequest(ctx, r)
 	if err != nil {
-		mw.logger.ErrorContext(ctx, "retrieving user from request", slogutil.KeyError, err)
+		_, _, hasBasicAuth := r.BasicAuth()
+		if hasBasicAuth {
+			mw.logger.ErrorContext(
+				ctx,
+				"retrieving user from request",
+				"ip", authLogIP(r, mw.trustedProxies),
+				slogutil.KeyError, err,
+			)
+		} else {
+			mw.logger.ErrorContext(ctx, "retrieving user from request", slogutil.KeyError, err)
+		}
 	}
 
 	if u == nil {
