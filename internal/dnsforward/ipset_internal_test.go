@@ -5,6 +5,7 @@ import (
 	"net"
 	"testing"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/miekg/dns"
@@ -119,6 +120,48 @@ func TestIpsetCtx_process(t *testing.T) {
 		err := ictx.close()
 		assert.NoError(t, err)
 	})
+
+	t.Run("rewrite_ipv4", func(t *testing.T) {
+		dctx := &dnsContext{
+			proxyCtx: &proxy.DNSContext{
+				Req: req4,
+				Res: resp4,
+			},
+			result: &filtering.Result{Reason: filtering.Rewritten},
+		}
+
+		m := &fakeIpsetMgr{}
+		ictx := &ipsetHandler{
+			ipsetMgr: m,
+			logger:   testLogger,
+		}
+
+		rc := ictx.process(testutil.ContextWithTimeout(t, testTimeout), testLogger, dctx)
+		assert.Equal(t, resultCodeSuccess, rc)
+		assert.Equal(t, []net.IP{ip4}, m.ip4s)
+		assert.Empty(t, m.ip6s)
+	})
+
+	t.Run("rewrite_ipv6", func(t *testing.T) {
+		dctx := &dnsContext{
+			proxyCtx: &proxy.DNSContext{
+				Req: req6,
+				Res: resp6,
+			},
+			result: &filtering.Result{Reason: filtering.Rewritten},
+		}
+
+		m := &fakeIpsetMgr{}
+		ictx := &ipsetHandler{
+			ipsetMgr: m,
+			logger:   testLogger,
+		}
+
+		rc := ictx.process(testutil.ContextWithTimeout(t, testTimeout), testLogger, dctx)
+		assert.Equal(t, resultCodeSuccess, rc)
+		assert.Empty(t, m.ip4s)
+		assert.Equal(t, []net.IP{ip6}, m.ip6s)
+	})
 }
 
 func TestIpsetCtx_SkipIpsetProcessing(t *testing.T) {
@@ -152,6 +195,39 @@ func TestIpsetCtx_SkipIpsetProcessing(t *testing.T) {
 		},
 	}, {
 		name: "rewrite",
+		want: false,
+		dctx: &dnsContext{
+			proxyCtx: &proxy.DNSContext{
+				Req: req4,
+				Res: resp4,
+			},
+
+			result: &filtering.Result{Reason: filtering.Rewritten},
+		},
+	}, {
+		name: "hosts_rewrite",
+		want: false,
+		dctx: &dnsContext{
+			proxyCtx: &proxy.DNSContext{
+				Req: req4,
+				Res: resp4,
+			},
+
+			result: &filtering.Result{Reason: filtering.RewrittenAutoHosts},
+		},
+	}, {
+		name: "rule_rewrite",
+		want: false,
+		dctx: &dnsContext{
+			proxyCtx: &proxy.DNSContext{
+				Req: req4,
+				Res: resp4,
+			},
+
+			result: &filtering.Result{Reason: filtering.RewrittenRule},
+		},
+	}, {
+		name: "blocked",
 		want: true,
 		dctx: &dnsContext{
 			proxyCtx: &proxy.DNSContext{
@@ -159,8 +235,54 @@ func TestIpsetCtx_SkipIpsetProcessing(t *testing.T) {
 				Res: resp4,
 			},
 
-			responseFromUpstream: false,
+			result: &filtering.Result{Reason: filtering.FilteredBlockList},
 		},
+	}, {
+		name: "safe_search",
+		want: true,
+		dctx: &dnsContext{
+			proxyCtx: &proxy.DNSContext{
+				Req: req4,
+				Res: resp4,
+			},
+
+			result: &filtering.Result{Reason: filtering.FilteredSafeSearch},
+		},
+	}, {
+		name: "dhcp",
+		want: true,
+		dctx: &dnsContext{
+			proxyCtx: &proxy.DNSContext{
+				Req: req4,
+				Res: resp4,
+			},
+
+			isDHCPHost: true,
+		},
+	}, {
+		name: "unrelated_local",
+		want: true,
+		dctx: &dnsContext{
+			proxyCtx: &proxy.DNSContext{
+				Req: req4,
+				Res: resp4,
+			},
+
+			result: &filtering.Result{Reason: filtering.NotFilteredNotFound},
+		},
+	}, {
+		name: "nil_result",
+		want: true,
+		dctx: &dnsContext{
+			proxyCtx: &proxy.DNSContext{
+				Req: req4,
+				Res: resp4,
+			},
+		},
+	}, {
+		name: "nil_context",
+		want: true,
+		dctx: nil,
 	}, {
 		name: "empty_req",
 		want: true,
