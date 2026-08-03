@@ -383,6 +383,9 @@ configure() {
 	set_download_func
 	set_sudo_cmd
 	check_out_dir
+	if [ -d "$out_dir/AdGuardHome" ]; then
+		out_dir="$(CDPATH='' cd "$out_dir" && pwd)"
+	fi
 
 	pkg_name="AdGuardHome_${os}_${cpu}.${pkg_ext}"
 	url="https://static.adtidy.org/adguardhome/${channel}/${pkg_name}"
@@ -592,6 +595,12 @@ fi
 fix_freebsd
 
 if [ "$reinstall" -eq '1' ]; then
+	if [ -d "$agh_dir" ]; then
+		# Keep both the working directory and the downloaded package outside the
+		# installation directory removed by handle_existing.
+		cd "$out_dir"
+	fi
+
 	download
 	handle_existing
 else

@@ -49,10 +49,21 @@ case "$command_name" in
 			shift 2
 
 			continue
+		elif [ "$1" = '-f' ]; then
+			archive="$2"
+			shift 2
+
+			continue
 		fi
 
 		shift
 	done
+
+	if ! [ -f "$archive" ]; then
+		printf '%s\n' "install-test: archive disappeared: $archive" 1>&2
+
+		exit 1
+	fi
 
 	mkdir -p "$output_dir/AdGuardHome"
 	ln -s "$test_script_env" "$output_dir/AdGuardHome/AdGuardHome"
@@ -95,13 +106,14 @@ prepare_existing() {
 	: >"$prepare_event_log"
 }
 
-run_installer() (
-	run_install_dir="$1"
-	run_event_log="$2"
-	run_download_fail="$3"
-	shift 3
+run_installer_from() (
+	run_cwd="$1"
+	run_install_dir="$2"
+	run_event_log="$3"
+	run_download_fail="$4"
+	shift 4
 
-	cd "$test_dir"
+	cd "$run_cwd"
 
 	AGH_INSTALL_TEST_DOWNLOAD_FAIL="$run_download_fail" \
 		AGH_INSTALL_TEST_EVENT_LOG="$run_event_log" \
@@ -110,6 +122,10 @@ run_installer() (
 		/bin/sh "$repo_dir/scripts/install.sh" \
 		-C amd64 -O linux -o "$run_install_dir" "$@"
 )
+
+run_installer() {
+	run_installer_from "$test_dir" "$@"
+}
 
 assert_events() {
 	assert_want="$1"
@@ -141,6 +157,26 @@ install' "$event_log" \
 	'package download must finish before stopping the existing service'
 
 printf '%s\n' 'install-test: PASS successful reinstall ordering'
+
+inside_install_dir="$test_dir/inside-install"
+inside_event_log="$test_dir/inside-events"
+readonly inside_install_dir inside_event_log
+
+prepare_existing "$inside_install_dir" "$inside_event_log"
+run_installer_from \
+	"$inside_install_dir/AdGuardHome" \
+	'..' \
+	"$inside_event_log" \
+	'0' \
+	-r
+assert_events 'download
+stop
+uninstall
+unpack
+install' "$inside_event_log" \
+	'reinstall from the existing directory must preserve the downloaded package'
+
+printf '%s\n' 'install-test: PASS reinstall from existing directory'
 
 failed_install_dir="$test_dir/failed-install"
 failed_event_log="$test_dir/failed-events"
