@@ -3,6 +3,7 @@ import cn from 'clsx';
 
 import intl from 'panel/common/intl';
 import theme from 'panel/lib/theme';
+import { Input } from 'panel/common/controls/Input';
 import { Table, type TableColumn } from 'panel/common/ui/Table';
 import { Icon } from 'panel/common/ui/Icon';
 import { Dropdown } from 'panel/common/ui/Dropdown';
@@ -26,6 +27,29 @@ type Props = {
 
 export const StaticLeasesTable = (props: Props) => {
     const [openMenuId, setOpenMenuId] = createSignal<string | null>(null);
+    const [search, setSearch] = createSignal('');
+    const searchTerm = createMemo(() => search().trim().toLowerCase());
+
+    const filteredLeases = createMemo(() => {
+        const term = searchTerm();
+        if (!term) {
+            return props.staticLeases;
+        }
+
+        return props.staticLeases.filter((lease) =>
+            [lease.mac, lease.ip, lease.hostname].some((value) =>
+                value.toLowerCase().includes(term),
+            ),
+        );
+    });
+
+    const handleSearchChange = (event: Event) => {
+        setSearch((event.target as HTMLInputElement).value);
+    };
+
+    const handleSearchClear = () => {
+        setSearch('');
+    };
 
     const handleEdit = (row: StaticLease) => {
         props.onEdit(row);
@@ -214,12 +238,39 @@ export const StaticLeasesTable = (props: Props) => {
         },
     ]);
 
+    const emptyTableContent = () => (
+        <div class={s.emptyTableContent}>
+            <Icon icon="not_found_search" color="gray" class={s.emptyTableIcon} />
+            <div class={cn(theme.text.t3, s.emptyTableDesc)}>
+                {intl.getMessage('nothing_found')}
+            </div>
+        </div>
+    );
+
     return (
-        <Table
-            data={props.staticLeases}
-            class={s.staticTable}
-            columns={columns()}
-            getRowId={(row: StaticLease) => `${row.mac}-${row.ip}`}
-        />
+        <>
+            <div class={s.search}>
+                <Input
+                    id="dhcp-static-leases-search"
+                    type="search"
+                    label={intl.getMessage('search_placeholder')}
+                    value={search()}
+                    onInput={handleSearchChange}
+                    isClearable
+                    onClear={handleSearchClear}
+                    placeholder={intl.getMessage('search_placeholder')}
+                    prefixIcon={<Icon icon="search" class={s.searchIcon} color="gray" />}
+                />
+            </div>
+
+            <Table
+                data={filteredLeases()}
+                class={s.staticTable}
+                columns={columns()}
+                emptyTable={emptyTableContent()}
+                pageResetKey={`${searchTerm()}:${filteredLeases().length}`}
+                getRowId={(row: StaticLease) => `${row.mac}-${row.ip}`}
+            />
+        </>
     );
 };

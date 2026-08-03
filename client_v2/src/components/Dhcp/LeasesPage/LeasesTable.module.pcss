@@ -34,6 +34,8 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    gap: 16px;
+    padding: 48px 16px;
 }
 
 .emptyTableIcon {
@@ -43,6 +45,20 @@
 
 .emptyTableDesc {
     color: var(--default-description-text);
+}
+
+.search {
+    width: 100%;
+    max-width: 360px;
+    margin-bottom: 24px;
+
+    @media (min-width: 768px) {
+        margin-left: auto;
+    }
+}
+
+.searchIcon {
+    margin-left: 8px;
 }
 
 .staticTable {
