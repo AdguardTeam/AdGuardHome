@@ -249,6 +249,119 @@ func TestRewrites(t *testing.T) {
 	}
 }
 
+func TestRewritesWildcardMultipleAnswers(t *testing.T) {
+	addr1 := netip.MustParseAddr("192.0.2.1")
+	addr2 := netip.MustParseAddr("192.0.2.2")
+	addr3 := netip.MustParseAddr("192.0.2.3")
+	addr4 := netip.MustParseAddr("192.0.2.4")
+	addr1v6 := netip.MustParseAddr("2001:db8::1")
+	addr2v6 := netip.MustParseAddr("2001:db8::2")
+	newRewrite := func(domain, answer string) *LegacyRewrite {
+		return &LegacyRewrite{Domain: domain, Answer: answer, Enabled: true}
+	}
+
+	testCases := []struct {
+		name       string
+		host       string
+		rewrites   []*LegacyRewrite
+		wantIPs    []netip.Addr
+		qtype      uint16
+		wantReason Reason
+	}{{
+		name: "ipv4",
+		host: "host.example.com",
+		rewrites: []*LegacyRewrite{
+			newRewrite("*.example.com", addr1.String()),
+			newRewrite("*.example.com", addr2.String()),
+		},
+		wantIPs:    []netip.Addr{addr1, addr2},
+		qtype:      dns.TypeA,
+		wantReason: Rewritten,
+	}, {
+		name: "ipv6",
+		host: "host.example.com",
+		rewrites: []*LegacyRewrite{
+			newRewrite("*.example.com", addr1v6.String()),
+			newRewrite("*.example.com", addr2v6.String()),
+		},
+		wantIPs:    []netip.Addr{addr1v6, addr2v6},
+		qtype:      dns.TypeAAAA,
+		wantReason: Rewritten,
+	}, {
+		name: "most_specific",
+		host: "host.sub.example.com",
+		rewrites: []*LegacyRewrite{
+			newRewrite("*.example.com", addr3.String()),
+			newRewrite("*.sub.example.com", addr1.String()),
+			newRewrite("*.sub.example.com", addr2.String()),
+		},
+		wantIPs:    []netip.Addr{addr1, addr2},
+		qtype:      dns.TypeA,
+		wantReason: Rewritten,
+	}, {
+		name: "exact",
+		host: "host.example.com",
+		rewrites: []*LegacyRewrite{
+			newRewrite("*.example.com", addr1.String()),
+			newRewrite("*.example.com", addr2.String()),
+			newRewrite("host.example.com", addr3.String()),
+			newRewrite("host.example.com", addr4.String()),
+		},
+		wantIPs:    []netip.Addr{addr3, addr4},
+		qtype:      dns.TypeA,
+		wantReason: Rewritten,
+	}, {
+		name: "opposite_type_exception",
+		host: "host.example.com",
+		rewrites: []*LegacyRewrite{
+			newRewrite("*.example.com", "AAAA"),
+			newRewrite("*.example.com", addr1.String()),
+			newRewrite("*.example.com", addr2.String()),
+		},
+		wantIPs:    []netip.Addr{addr1, addr2},
+		qtype:      dns.TypeA,
+		wantReason: Rewritten,
+	}, {
+		name: "opposite_type_only",
+		host: "host.example.com",
+		rewrites: []*LegacyRewrite{
+			newRewrite("*.example.com", "AAAA"),
+		},
+		wantIPs:    nil,
+		qtype:      dns.TypeA,
+		wantReason: Rewritten,
+	}, {
+		name: "same_type_exception",
+		host: "host.example.com",
+		rewrites: []*LegacyRewrite{
+			newRewrite("*.example.com", addr1.String()),
+			newRewrite("*.example.com", addr2.String()),
+			newRewrite("*.example.com", "A"),
+		},
+		wantIPs:    nil,
+		qtype:      dns.TypeA,
+		wantReason: NotFilteredNotFound,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			d, _ := newForTest(t, &Config{
+				DataDir:         t.TempDir(),
+				RewritesEnabled: true,
+			}, nil)
+			t.Cleanup(d.Close)
+
+			d.conf.Rewrites = tc.rewrites
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			require.NoError(t, d.prepareRewrites(ctx))
+
+			res := d.processRewrites(tc.host, tc.qtype)
+			assert.Equal(t, tc.wantReason, res.Reason)
+			assert.ElementsMatch(t, tc.wantIPs, res.IPList)
+		})
+	}
+}
+
 func TestRewritesLevels(t *testing.T) {
 	d, _ := newForTest(t, nil, nil)
 	t.Cleanup(d.Close)

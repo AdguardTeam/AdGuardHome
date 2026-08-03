@@ -42,8 +42,11 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Multiple IP address answers for wildcard DNS rewrites ([#7652]).
+
 - Blocked requests without an EDNS(0) OPT record ([#8183]).
 
+[#7652]: https://github.com/AdguardTeam/AdGuardHome/issues/7652
 [#8183]: https://github.com/AdguardTeam/AdGuardHome/issues/8183
 
 <!--

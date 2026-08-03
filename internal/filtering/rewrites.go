@@ -195,24 +195,44 @@ func findRewrites(
 		return nil, matched
 	}
 
-	return finalizeRewrites(rewrites), matched
+	return finalizeRewrites(rewrites, qtype), matched
 }
 
 // finalizeRewrites sorts rewrites and truncates wildcard ones.
-func finalizeRewrites(rewrites []*LegacyRewrite) (resRewrites []*LegacyRewrite) {
+func finalizeRewrites(rewrites []*LegacyRewrite, qtype uint16) (resRewrites []*LegacyRewrite) {
 	slices.SortFunc(rewrites, (*LegacyRewrite).Compare)
 
-	for i, r := range rewrites {
-		if isWildcard(r.Domain) {
-			// Don't use rewrites[:0], because we need to return at least one
-			// item here.
-			rewrites = rewrites[:max(1, i)]
-
-			break
-		}
+	wildcardIdx := slices.IndexFunc(rewrites, func(r *LegacyRewrite) (ok bool) {
+		return isWildcard(r.Domain)
+	})
+	if wildcardIdx == -1 {
+		return rewrites
+	} else if wildcardIdx > 0 {
+		// Exact entries take priority over wildcard entries.
+		return rewrites[:wildcardIdx]
 	}
 
-	return rewrites
+	// Preserve all IP answers from the most-specific wildcard.  CNAME rewrites
+	// must remain singular.
+	first := rewrites[0]
+	if first.Type == dns.TypeCNAME {
+		return rewrites[:1]
+	}
+
+	for _, r := range rewrites {
+		if r.Domain != first.Domain || r.Type != qtype {
+			continue
+		}
+
+		if !r.IP.IsValid() {
+			// An A or AAAA exception takes priority over IP answers.
+			return []*LegacyRewrite{r}
+		}
+
+		resRewrites = append(resRewrites, r)
+	}
+
+	return resRewrites
 }
 
 // setRewriteResult sets the Reason or IPList of res if necessary.  res must not
