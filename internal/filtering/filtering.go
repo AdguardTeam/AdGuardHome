@@ -845,24 +845,31 @@ func (d *DNSFilter) matchHostProcessDNSResult(
 // [matchHostProcessDNSResult].  dnsres must not be nil.
 func resultFromHostRules(qtype uint16, dnsres *urlfilter.DNSResult) (res Result, ok bool) {
 	if qtype == dns.TypeA && dnsres.HostRulesV4 != nil {
-		res = makeResult(hostRulesToRules(dnsres.HostRulesV4), FilteredBlockList)
-		for i, hr := range dnsres.HostRulesV4 {
-			res.Rules[i].IP = hr.IP
-		}
-
-		return res, true
+		return resultForHostRules(dnsres.HostRulesV4), true
 	}
 
 	if qtype == dns.TypeAAAA && dnsres.HostRulesV6 != nil {
-		res = makeResult(hostRulesToRules(dnsres.HostRulesV6), FilteredBlockList)
-		for i, hr := range dnsres.HostRulesV6 {
-			res.Rules[i].IP = hr.IP
-		}
-
-		return res, true
+		return resultForHostRules(dnsres.HostRulesV6), true
 	}
 
 	return Result{}, false
+}
+
+// resultForHostRules returns the filtering result for matched hostRules.
+// hostRules must not be nil.
+func resultForHostRules(hostRules []*rules.HostRule) (res Result) {
+	res = makeResult(hostRulesToRules(hostRules), FilteredBlockList)
+	for i, hr := range hostRules {
+		ip := hr.IP
+		res.Rules[i].IP = ip
+		if hr.GetFilterListID() == rulelist.IDCustom && !ip.IsUnspecified() {
+			res.Reason = RewrittenRule
+		}
+	}
+
+	// Keep IsFiltered set so that the configured blocking mode is applied to
+	// the response.  The reason is used to classify the query as a rewrite.
+	return res
 }
 
 // hostResultForOtherQType returns a result based on the host rules in dnsres,

@@ -47,7 +47,8 @@ const (
 	// RewrittenAutoHosts is returned when there was a rewrite by /etc/hosts.
 	RewrittenAutoHosts
 
-	// RewrittenRule is returned when a $dnsrewrite filter rule was applied.
+	// RewrittenRule is returned when a $dnsrewrite filter rule or a custom
+	// hosts-file-style rule was applied.
 	//
 	// TODO(a.garipov): Remove [Rewritten] and [RewrittenAutoHosts] by merging
 	// their functionality into RewrittenRule.
