@@ -121,6 +121,16 @@ type Server struct {
 	// stats is the statistics collector for client's DNS usage data.
 	stats stats.Interface
 
+	// ignoredReqs contains the request messages of the queries whose statistics
+	// must not be counted, keyed by *dns.Msg.  An upstream exchange carries no
+	// client identity, so [statsUpstream] cannot apply the ignore lists itself;
+	// the request handler records the decision here, while the client is still
+	// known, see [Server.markIgnoredReq].
+	//
+	// Only the ignored queries are stored, so the map is empty unless some
+	// client or domain is actually ignored.
+	ignoredReqs sync.Map
+
 	// upstreamStats is the same collector as stats, but it's set once and never
 	// reset, so that it can be used from [statsUpstream] without acquiring
 	// serverLock.  An upstream exchange may happen while serverLock is already
@@ -576,7 +586,7 @@ func (s *Server) prepareUpstreamSettings(ctx context.Context, boot upstream.Reso
 		return fmt.Errorf("preparing upstream config: %w", err)
 	}
 
-	s.conf.UpstreamConfig = s.WrapUpstreamConfig(uc)
+	s.conf.UpstreamConfig = s.WrapUpstreamConfig(uc, s.conf.UpstreamTimeout)
 	s.conf.ClientsContainer.UpdateCommonUpstreamConfig(&client.CommonUpstreamConfig{
 		Bootstrap:               boot,
 		UpstreamConfigWrapper:   s,
@@ -680,7 +690,10 @@ func (s *Server) prepareInternalDNS(ctx context.Context) (err error) {
 		return err
 	}
 
-	s.conf.PrivateRDNSUpstreamConfig = s.WrapUpstreamConfig(privateUC)
+	// NOTE:  The private rDNS upstreams are constructed with defaultLocalTimeout,
+	// see prepareLocalResolvers, so that is the timeout a retried exchange with
+	// them is measured against.
+	s.conf.PrivateRDNSUpstreamConfig = s.WrapUpstreamConfig(privateUC, defaultLocalTimeout)
 
 	err = s.prepareInternalProxy()
 	if err != nil {
@@ -710,7 +723,7 @@ func (s *Server) setupFallbackDNS() (uc *proxy.UpstreamConfig, err error) {
 		return nil, err
 	}
 
-	return s.WrapUpstreamConfig(uc), nil
+	return s.WrapUpstreamConfig(uc, s.conf.UpstreamTimeout), nil
 }
 
 // setupAddrProc initializes the address processor.  It assumes s.serverLock is

@@ -29,18 +29,9 @@ func (s *Server) processQueryLogsAndStats(
 	host := aghnet.NormalizeDomain(q.Name)
 	processingTime := time.Since(dctx.startTime)
 
-	ip := pctx.Addr.Addr().AsSlice()
-	s.anonymizer.Load()(ip)
-	ipStr := net.IP(ip).String()
+	ip, ipStr, ids := s.clientIdentity(dctx)
 
 	l.DebugContext(ctx, "client ip for stats and querylog", "ip", ipStr)
-
-	ids := []string{ipStr}
-	if dctx.clientID != "" {
-		// Use the ClientID first because it has a higher priority.  Filters
-		// have the same priority, see applyAdditionalFiltering.
-		ids = []string{dctx.clientID, ipStr}
-	}
 
 	qt, cl := q.Qtype, q.Qclass
 
@@ -73,6 +64,25 @@ func (s *Server) processQueryLogsAndStats(
 	}
 
 	return resultCodeSuccess
+}
+
+// clientIdentity returns the anonymized address of the client of dctx, its
+// string form, and the identifiers by which the query log and the statistics
+// know it.  dctx must not be nil.
+func (s *Server) clientIdentity(dctx *dnsContext) (ip net.IP, ipStr string, ids []string) {
+	addr := dctx.proxyCtx.Addr.Addr().AsSlice()
+	s.anonymizer.Load()(addr)
+
+	ip = net.IP(addr)
+	ipStr = ip.String()
+
+	if dctx.clientID != "" {
+		// Use the ClientID first because it has a higher priority.  Filters
+		// have the same priority, see applyAdditionalFiltering.
+		return ip, ipStr, []string{dctx.clientID, ipStr}
+	}
+
+	return ip, ipStr, []string{ipStr}
 }
 
 // shouldLog returns true if the query with the given data should be logged in

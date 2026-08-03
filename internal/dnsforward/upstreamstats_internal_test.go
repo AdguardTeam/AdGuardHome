@@ -2,6 +2,7 @@ package dnsforward
 
 import (
 	"net"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -159,11 +160,14 @@ func TestStatsUpstream_Exchange_timeoutRetry(t *testing.T) {
 	}
 }
 
+// testUpsTimeout is the upstream timeout used by the wrapper tests.
+const testUpsTimeout = 10 * time.Second
+
 func TestServer_WrapUpstreamConfig(t *testing.T) {
 	s := &Server{}
 
 	t.Run("nil", func(t *testing.T) {
-		assert.Nil(t, s.WrapUpstreamConfig(nil))
+		assert.Nil(t, s.WrapUpstreamConfig(nil, testUpsTimeout))
 	})
 
 	t.Run("all_fields", func(t *testing.T) {
@@ -183,7 +187,7 @@ func TestServer_WrapUpstreamConfig(t *testing.T) {
 			Upstreams:           []upstream.Upstream{ups},
 		}
 
-		wrapped := s.WrapUpstreamConfig(uc)
+		wrapped := s.WrapUpstreamConfig(uc, testUpsTimeout)
 		require.NotNil(t, wrapped)
 
 		assert.Same(t, exclusions, wrapped.SubdomainExclusions)
@@ -207,7 +211,7 @@ func TestServer_WrapUpstreamConfig(t *testing.T) {
 	})
 
 	t.Run("nil_fields", func(t *testing.T) {
-		wrapped := s.WrapUpstreamConfig(&proxy.UpstreamConfig{})
+		wrapped := s.WrapUpstreamConfig(&proxy.UpstreamConfig{}, testUpsTimeout)
 		require.NotNil(t, wrapped)
 
 		assert.Nil(t, wrapped.Upstreams)
@@ -313,3 +317,181 @@ func TestServer_updateStats_optimisticCache(t *testing.T) {
 
 // type check
 var _ stats.Interface = (*testStats)(nil)
+
+// TestServer_updateStats_ignoredClient is a regression test for the statistics
+// ignore lists being bypassed by the upstream wrappers.
+//
+// An upstream exchange carries no client identity, so a wrapper that recorded
+// every exchange would count the queries of a client whose statistics are
+// ignored, which both contradicts the documented behaviour and biases the very
+// averages this collection exists to report.
+func TestServer_updateStats_ignoredClient(t *testing.T) {
+	const domain = "example.com."
+
+	upsAddr := aghtest.StartLocalhostUpstream(t, dns.HandlerFunc(func(
+		w dns.ResponseWriter,
+		r *dns.Msg,
+	) {
+		resp := (&dns.Msg{}).SetReply(r)
+		resp.Answer = []dns.RR{&dns.A{
+			Hdr: dns.RR_Header{Name: domain, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: 60},
+			A:   net.IP{1, 2, 3, 4},
+		}}
+
+		require.NoError(testutil.PanicT{}, w.WriteMsg(resp))
+	})).String()
+
+	var countClient atomic.Bool
+	st := &testStats{
+		onShouldCount: func(_ string, _, _ uint16, _ []string) (ok bool) {
+			return countClient.Load()
+		},
+	}
+
+	forwardConf := ServerConfig{
+		UDPListenAddrs: []*net.UDPAddr{{}},
+		TCPListenAddrs: []*net.TCPAddr{{}},
+		TLSConf:        &TLSConfig{},
+		Config: Config{
+			UpstreamDNS:      []string{upsAddr},
+			UpstreamMode:     UpstreamModeLoadBalance,
+			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+			ClientsContainer: EmptyClientsContainer{},
+		},
+		ServePlainDNS: true,
+	}
+
+	s := createTestServer(t, &filtering.Config{
+		Logger:            testLogger,
+		ProtectionEnabled: true,
+		BlockingMode:      filtering.BlockingModeDefault,
+	}, forwardConf, testTLSConfigProvider)
+	s.stats, s.upstreamStats = st, st
+
+	startDeferStop(t, s)
+	addr := s.dnsProxy.Addr(proxy.ProtoUDP).String()
+
+	t.Run("ignored", func(t *testing.T) {
+		countClient.Store(false)
+
+		resp, err := dns.Exchange((&dns.Msg{}).SetQuestion(domain, dns.TypeA), addr)
+		require.NoError(t, err)
+		require.NotEmpty(t, resp.Answer)
+
+		assert.Empty(t, st.upstreamEntries())
+	})
+
+	t.Run("counted", func(t *testing.T) {
+		countClient.Store(true)
+
+		// Use a different name, so that the answer isn't served from the cache.
+		resp, err := dns.Exchange((&dns.Msg{}).SetQuestion("other."+domain, dns.TypeA), addr)
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+
+		assert.Len(t, st.upstreamEntries(), 1)
+	})
+}
+
+// TestServer_WrapUpstreamConfig_race makes sure that wrapping does not read the
+// mutable [Server.conf], which is written under serverLock while the client
+// upstream manager may wrap a configuration without holding it.
+//
+// Run with -race.
+func TestServer_WrapUpstreamConfig_race(t *testing.T) {
+	t.Parallel()
+
+	s := &Server{}
+	uc := &proxy.UpstreamConfig{
+		Upstreams: []upstream.Upstream{
+			aghtest.NewUpstreamMock(func(req *dns.Msg) (resp *dns.Msg, err error) {
+				panic(testutil.UnexpectedCall(req))
+			}),
+		},
+	}
+
+	const iterations = 200
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	// A /control/dns_config update writing the timeout under the lock.
+	go func() {
+		defer wg.Done()
+
+		for i := range iterations {
+			s.serverLock.Lock()
+			s.conf.UpstreamTimeout = time.Duration(i+1) * time.Second
+			s.serverLock.Unlock()
+		}
+	}()
+
+	// The client upstream manager wrapping a configuration without the lock.
+	go func() {
+		defer wg.Done()
+
+		for range iterations {
+			assert.NotNil(t, s.WrapUpstreamConfig(uc, testUpsTimeout))
+		}
+	}()
+
+	wg.Wait()
+}
+
+// TestServer_prepareInternalDNS_privateTimeout is a regression test for the
+// private rDNS wrappers carrying the wrong retry threshold.
+//
+// Those upstreams are constructed with [defaultLocalTimeout], one second, while
+// the configured upstream timeout is normally ten.  A wrapper holding the
+// configured timeout would compare a one-second retried exchange against ten
+// seconds and record it as an ordinary response, reintroducing exactly the
+// inflated sample this collection is meant to exclude.
+func TestServer_prepareInternalDNS_privateTimeout(t *testing.T) {
+	const upsTimeout = 10 * time.Second
+
+	require.NotEqual(t, upsTimeout, defaultLocalTimeout)
+
+	upsAddr := aghtest.StartLocalhostUpstream(t, dns.HandlerFunc(func(
+		w dns.ResponseWriter,
+		r *dns.Msg,
+	) {
+		require.NoError(testutil.PanicT{}, w.WriteMsg((&dns.Msg{}).SetReply(r)))
+	})).String()
+
+	forwardConf := ServerConfig{
+		UDPListenAddrs: []*net.UDPAddr{{}},
+		TCPListenAddrs: []*net.TCPAddr{{}},
+		TLSConf:        &TLSConfig{},
+		Config: Config{
+			UpstreamDNS:      []string{upsAddr},
+			UpstreamMode:     UpstreamModeLoadBalance,
+			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+			ClientsContainer: EmptyClientsContainer{},
+		},
+		LocalPTRResolvers: []string{upsAddr},
+		UsePrivateRDNS:    true,
+		UpstreamTimeout:   upsTimeout,
+		ServePlainDNS:     true,
+	}
+
+	s := createTestServer(t, &filtering.Config{
+		Logger:            testLogger,
+		ProtectionEnabled: true,
+		BlockingMode:      filtering.BlockingModeDefault,
+	}, forwardConf, testTLSConfigProvider)
+
+	// wrapperTimeout returns the retry threshold stored in the first wrapper of
+	// uc.
+	wrapperTimeout := func(uc *proxy.UpstreamConfig) (d time.Duration) {
+		require.NotNil(t, uc)
+		require.NotEmpty(t, uc.Upstreams)
+
+		su, ok := uc.Upstreams[0].(*statsUpstream)
+		require.True(t, ok)
+
+		return su.timeout
+	}
+
+	assert.Equal(t, upsTimeout, wrapperTimeout(s.conf.UpstreamConfig))
+	assert.Equal(t, defaultLocalTimeout, wrapperTimeout(s.conf.PrivateRDNSUpstreamConfig))
+}
