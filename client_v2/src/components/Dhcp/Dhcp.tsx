@@ -7,6 +7,7 @@ import { Icon } from 'panel/common/ui/Icon';
 import { PageLoader } from 'panel/common/ui/Loader';
 import { SettingRow } from 'panel/common/ui/SettingRow';
 import { ConfirmDialog } from 'panel/common/ui/ConfirmDialog';
+import { Button } from 'panel/common/ui/Button';
 import intl from 'panel/common/intl';
 import theme from 'panel/lib/theme';
 import { useDialog } from 'panel/hooks/useDialog';
@@ -44,17 +45,19 @@ export const Dhcp = () => {
         }
     });
 
-    onMount(async () => {
+    const loadDhcp = async () => {
         await getDhcpStatus();
 
-        if (dhcpState.dhcp_available) {
+        if (!dhcpState.statusError && dhcpState.dhcp_available) {
             await getDhcpInterfaces();
             if (!selectedInterface() && dhcpState.interfaces) {
                 const firstIface = Object.keys(dhcpState.interfaces)[0];
                 if (firstIface) setSelectedInterface(firstIface);
             }
         }
-    });
+    };
+
+    onMount(loadDhcp);
 
     const handleSaveV4Config = (values: V4Config) => {
         setDhcpConfig({ interface_name: selectedInterface(), v4: values });
@@ -102,13 +105,24 @@ export const Dhcp = () => {
         </div>
     );
 
-    const isLoaded = () => !dhcpState.processing && !dhcpState.processingInterfaces;
+    const isLoaded = () =>
+        !dhcpState.processing && !dhcpState.processingStatus && !dhcpState.processingInterfaces;
 
     return (
         <div class={theme.layout.container}>
             <div class={cn(theme.layout.containerIn, theme.layout.containerIn_one_col)}>
                 <Show when={isLoaded()} fallback={<PageLoader />}>
-                    <Show when={!dhcpState.dhcp_available}>
+                    <Show when={dhcpState.statusError}>
+                        <div class={s.unavailable}>
+                            <h1 class={cn(theme.title.h4, theme.title.h3_tablet)}>
+                                {intl.getMessage('error')}
+                            </h1>
+                            <div class={theme.text.t2}>{intl.getMessage('dhcp_error')}</div>
+                            <Button onClick={loadDhcp}>{intl.getMessage('try_again')}</Button>
+                        </div>
+                    </Show>
+
+                    <Show when={!dhcpState.statusError && !dhcpState.dhcp_available}>
                         <div class={s.unavailable}>
                             <h1 class={cn(theme.title.h4, theme.title.h3_tablet)}>
                                 {intl.getMessage('unavailable_dhcp')}
@@ -119,7 +133,7 @@ export const Dhcp = () => {
                         </div>
                     </Show>
 
-                    <Show when={dhcpState.dhcp_available}>
+                    <Show when={!dhcpState.statusError && dhcpState.dhcp_available}>
                         <div class={s.header}>
                             <h1
                                 class={cn(
