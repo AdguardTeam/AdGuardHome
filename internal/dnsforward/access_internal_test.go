@@ -109,6 +109,27 @@ func TestIsBlockedHost(t *testing.T) {
 	}
 }
 
+func TestIsBlockedHostException(t *testing.T) {
+	t.Run("network_rule", func(t *testing.T) {
+		a, err := newAccessCtx(nil, nil, []string{
+			"||*^",
+			"@@||google.com^$important",
+		})
+		require.NoError(t, err)
+
+		assert.False(t, a.isBlockedHost("google.com", dns.TypeA))
+		assert.False(t, a.isBlockedHost("sub.google.com", dns.TypeA))
+		assert.True(t, a.isBlockedHost("example.org", dns.TypeA))
+	})
+
+	t.Run("host_rule", func(t *testing.T) {
+		a, err := newAccessCtx(nil, nil, []string{"0.0.0.0 hosts-file.example"})
+		require.NoError(t, err)
+
+		assert.True(t, a.isBlockedHost("hosts-file.example", dns.TypeA))
+	})
+}
+
 func TestIsBlockedIP(t *testing.T) {
 	clients := []string{
 		"1.2.3.4",

@@ -128,12 +128,12 @@ func (a *accessManager) isBlockedClientID(id string) (ok bool) {
 
 // isBlockedHost returns true if host should be blocked.
 func (a *accessManager) isBlockedHost(host string, qt rules.RRType) (ok bool) {
-	_, ok = a.blockedHostsEng.MatchRequest(&urlfilter.DNSRequest{
+	res, ok := a.blockedHostsEng.MatchRequest(&urlfilter.DNSRequest{
 		Hostname: host,
 		DNSType:  qt,
 	})
 
-	return ok
+	return ok && (res.NetworkRule == nil || !res.NetworkRule.Whitelist)
 }
 
 // isBlockedIP returns the status of the IP address blocking as well as the rule
