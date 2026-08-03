@@ -34,7 +34,9 @@ type Updater struct {
 	client *http.Client
 	logger *slog.Logger
 
-	cmdCons executil.CommandConstructor
+	cmdCons    executil.CommandConstructor
+	copyFile   func(src, dst string, perm fs.FileMode) (err error)
+	renameFile func(oldPath, newPath string) (err error)
 
 	version string
 	channel string
@@ -43,6 +45,7 @@ type Updater struct {
 	goarm   string
 	gomips  string
 
+	installDir      string
 	workDir         string
 	confName        string
 	execPath        string
@@ -60,6 +63,7 @@ type Updater struct {
 	backupExeName  string // "workDir/agh-backup/AdGuardHome[.exe]"
 	updateExeName  string // "workDir/agh-update-v0.103.0/AdGuardHome[.exe]"
 	unpackedFiles  []string
+	backedUpFiles  map[string]bool
 
 	newVersion string
 	packageURL string
@@ -135,7 +139,9 @@ func NewUpdater(conf *Config) *Updater {
 		client: conf.Client,
 		logger: conf.Logger,
 
-		cmdCons: conf.CommandConstructor,
+		cmdCons:    conf.CommandConstructor,
+		copyFile:   copyFile,
+		renameFile: os.Rename,
 
 		version: conf.Version,
 		channel: conf.Channel,
@@ -145,6 +151,7 @@ func NewUpdater(conf *Config) *Updater {
 		gomips:  conf.GOMIPS,
 
 		confName:        conf.ConfName,
+		installDir:      filepath.Dir(conf.ExecPath),
 		workDir:         conf.WorkDir,
 		execPath:        conf.ExecPath,
 		versionCheckURL: conf.VersionCheckURL.String(),
@@ -284,7 +291,7 @@ func (u *Updater) unpack(ctx context.Context) (err error) {
 func (u *Updater) check(ctx context.Context) (err error) {
 	u.logger.InfoContext(ctx, "checking configuration")
 
-	err = copyFile(u.confName, filepath.Join(u.updateDir, "AdGuardHome.yaml"), aghos.DefaultPermFile)
+	err = u.copyFile(u.confName, filepath.Join(u.updateDir, "AdGuardHome.yaml"), aghos.DefaultPermFile)
 	if err != nil {
 		return fmt.Errorf("copyFile() failed: %w", err)
 	}
@@ -325,29 +332,31 @@ func (u *Updater) check(ctx context.Context) (err error) {
 func (u *Updater) backup(ctx context.Context, firstRun bool) (err error) {
 	u.logger.InfoContext(ctx, "backing up current configuration")
 
-	_ = os.Mkdir(u.backupDir, aghos.DefaultPermDir)
+	err = os.MkdirAll(u.backupDir, aghos.DefaultPermDir)
+	if err != nil {
+		return fmt.Errorf("creating backup directory: %w", err)
+	}
+
 	if !firstRun {
-		err = copyFile(u.confName, filepath.Join(u.backupDir, "AdGuardHome.yaml"), aghos.DefaultPermFile)
+		err = u.copyFile(
+			u.confName,
+			filepath.Join(u.backupDir, "AdGuardHome.yaml"),
+			aghos.DefaultPermFile,
+		)
 		if err != nil {
 			return fmt.Errorf("copyFile() failed: %w", err)
 		}
 	}
 
-	wd := u.workDir
-	err = u.copySupportingFiles(ctx, u.unpackedFiles, wd, u.backupDir)
+	var backedUp []string
+	backedUp, err = u.copySupportingFiles(ctx, u.unpackedFiles, u.installDir, u.backupDir)
 	if err != nil {
-		return fmt.Errorf("copySupportingFiles(%s, %s) failed: %w", wd, u.backupDir, err)
+		return fmt.Errorf("copySupportingFiles(%s, %s) failed: %w", u.installDir, u.backupDir, err)
 	}
 
-	return nil
-}
-
-// replace moves the current executable with the updated one and also copies the
-// supporting files.
-func (u *Updater) replace(ctx context.Context) (err error) {
-	err = u.copySupportingFiles(ctx, u.unpackedFiles, u.updateDir, u.workDir)
-	if err != nil {
-		return fmt.Errorf("copySupportingFiles(%s, %s) failed: %w", u.updateDir, u.workDir, err)
+	u.backedUpFiles = make(map[string]bool, len(backedUp))
+	for _, name := range backedUp {
+		u.backedUpFiles[name] = true
 	}
 
 	u.logger.InfoContext(
@@ -356,29 +365,182 @@ func (u *Updater) replace(ctx context.Context) (err error) {
 		"from", u.currentExeName,
 		"to", u.backupExeName,
 	)
-	err = os.Rename(u.currentExeName, u.backupExeName)
+
+	err = u.copyFile(u.currentExeName, u.backupExeName, aghos.DefaultPermExe)
+	if err != nil {
+		return fmt.Errorf("copying current executable: %w", err)
+	}
+
+	return nil
+}
+
+// replace installs the updated executable and supporting files.
+func (u *Updater) replace(ctx context.Context) (err error) {
+	var stagedExe string
+	stagedExe, err = u.stageExecutable()
+	if err != nil {
+		return fmt.Errorf("staging executable: %w", err)
+	}
+	defer u.removeStagedExecutable(ctx, stagedExe)
+
+	var oldExeName string
+	oldExeName, err = u.prepareWindowsExecutable()
 	if err != nil {
 		return err
 	}
 
-	if u.goos == "windows" {
-		// Use copy, since renaming fails with "File in use" error.
-		err = copyFile(u.updateExeName, u.currentExeName, aghos.DefaultPermExe)
-	} else {
-		err = os.Rename(u.updateExeName, u.currentExeName)
-	}
+	var copied []string
+	copied, err = u.copySupportingFiles(ctx, u.unpackedFiles, u.updateDir, u.installDir)
 	if err != nil {
-		return err
+		return errors.Join(
+			fmt.Errorf("copySupportingFiles(%s, %s) failed: %w", u.updateDir, u.installDir, err),
+			u.rollbackSupportingFiles(ctx, copied),
+		)
+	}
+
+	err = u.replaceExecutable(ctx, stagedExe, oldExeName)
+	if err != nil {
+		return errors.Join(err, u.rollbackSupportingFiles(ctx, copied))
 	}
 
 	u.logger.InfoContext(
 		ctx,
 		"replacing current executable",
-		"from", u.updateExeName,
+		"from", stagedExe,
 		"to", u.currentExeName,
 	)
 
 	return nil
+}
+
+// removeStagedExecutable removes the executable staged for replacement.
+func (u *Updater) removeStagedExecutable(ctx context.Context, name string) {
+	err := os.Remove(name)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		u.logger.WarnContext(ctx, "removing staged executable", slogutil.KeyError, err)
+	}
+}
+
+// prepareWindowsExecutable removes an executable left from a previous update.
+func (u *Updater) prepareWindowsExecutable() (oldExeName string, err error) {
+	if u.goos != "windows" {
+		return "", nil
+	}
+
+	oldExeName = u.currentExeName + ".old"
+	err = os.Remove(oldExeName)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return "", fmt.Errorf("removing old executable: %w", err)
+	}
+
+	return oldExeName, nil
+}
+
+// replaceExecutable replaces the current executable with stagedExe.
+func (u *Updater) replaceExecutable(
+	ctx context.Context,
+	stagedExe string,
+	oldExeName string,
+) (err error) {
+	if u.goos == "windows" {
+		return u.replaceWindowsExecutable(ctx, stagedExe, oldExeName)
+	}
+
+	return u.renameFile(stagedExe, u.currentExeName)
+}
+
+// stageExecutable copies the new executable to the installation directory so
+// that replacing the current executable doesn't cross filesystem boundaries.
+func (u *Updater) stageExecutable() (name string, err error) {
+	f, err := os.CreateTemp(u.installDir, ".AdGuardHome-update-*")
+	if err != nil {
+		return "", err
+	}
+
+	stagedName := f.Name()
+	defer func() {
+		if err != nil {
+			_ = os.Remove(stagedName)
+		}
+	}()
+
+	err = f.Chmod(aghos.DefaultPermExe)
+	err = errors.WithDeferred(err, f.Close())
+	if err != nil {
+		return "", err
+	}
+
+	err = u.copyFile(u.updateExeName, stagedName, aghos.DefaultPermExe)
+	if err != nil {
+		return "", err
+	}
+
+	return stagedName, nil
+}
+
+// replaceWindowsExecutable installs stagedExe while retaining the rename-aside
+// strategy required for a running Windows executable.
+func (u *Updater) replaceWindowsExecutable(
+	ctx context.Context,
+	stagedExe string,
+	oldExeName string,
+) (err error) {
+	err = u.renameFile(u.currentExeName, oldExeName)
+	if err != nil {
+		return fmt.Errorf("moving current executable aside: %w", err)
+	}
+
+	err = u.copyFile(stagedExe, u.currentExeName, aghos.DefaultPermExe)
+	if err != nil {
+		removeErr := os.Remove(u.currentExeName)
+		if errors.Is(removeErr, os.ErrNotExist) {
+			removeErr = nil
+		} else if removeErr != nil {
+			removeErr = fmt.Errorf("removing incomplete executable: %w", removeErr)
+		}
+
+		restoreErr := u.renameFile(oldExeName, u.currentExeName)
+		if restoreErr != nil {
+			restoreErr = fmt.Errorf("restoring current executable: %w", restoreErr)
+		}
+
+		return errors.Join(err, removeErr, restoreErr)
+	}
+
+	removeErr := os.Remove(oldExeName)
+	if removeErr != nil && !errors.Is(removeErr, os.ErrNotExist) {
+		u.logger.WarnContext(ctx, "removing old executable", slogutil.KeyError, removeErr)
+	}
+
+	return nil
+}
+
+// rollbackSupportingFiles restores files copied during a failed replacement.
+func (u *Updater) rollbackSupportingFiles(ctx context.Context, files []string) (err error) {
+	errList := make([]error, 0, len(files))
+	for i := len(files) - 1; i >= 0; i-- {
+		name := files[i]
+		dst := filepath.Join(u.installDir, name)
+		if u.backedUpFiles[name] {
+			src := filepath.Join(u.backupDir, name)
+			err = u.copyFile(src, dst, aghos.DefaultPermFile)
+		} else {
+			err = os.Remove(dst)
+			if errors.Is(err, os.ErrNotExist) {
+				err = nil
+			}
+		}
+
+		if err != nil {
+			errList = append(errList, fmt.Errorf("restoring %q: %w", name, err))
+
+			continue
+		}
+
+		u.logger.InfoContext(ctx, "restored", "name", dst)
+	}
+
+	return errors.Join(errList...)
 }
 
 // clean removes the temporary directory itself and all it's contents.
@@ -646,13 +808,15 @@ func copyFile(src, dst string, perm fs.FileMode) (err error) {
 
 // copySupportingFiles copies each file specified in files from srcdir to
 // dstdir.  If a file specified as a path, only the name of the file is used.
-// It skips AdGuardHome, AdGuardHome.exe, and AdGuardHome.yaml.
+// It skips AdGuardHome, AdGuardHome.exe, and AdGuardHome.yaml.  copied contains
+// the names of destinations that may have changed, including a destination
+// whose copy returned an error.
 func (u *Updater) copySupportingFiles(
 	ctx context.Context,
 	files []string,
 	srcdir string,
 	dstdir string,
-) (err error) {
+) (copied []string, err error) {
 	for _, f := range files {
 		_, name := filepath.Split(f)
 		if name == "AdGuardHome" || name == "AdGuardHome.exe" || name == "AdGuardHome.yaml" {
@@ -662,13 +826,16 @@ func (u *Updater) copySupportingFiles(
 		src := filepath.Join(srcdir, name)
 		dst := filepath.Join(dstdir, name)
 
-		err = copyFile(src, dst, aghos.DefaultPermFile)
-		if err != nil && !errors.Is(err, os.ErrNotExist) {
-			return err
+		err = u.copyFile(src, dst, aghos.DefaultPermFile)
+		if errors.Is(err, os.ErrNotExist) {
+			continue
+		} else if err != nil {
+			return append(copied, name), err
 		}
 
+		copied = append(copied, name)
 		u.logger.InfoContext(ctx, "copied", "from", src, "to", dst)
 	}
 
-	return nil
+	return copied, nil
 }

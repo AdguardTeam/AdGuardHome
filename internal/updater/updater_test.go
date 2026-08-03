@@ -41,12 +41,16 @@ func TestUpdater_Update(t *testing.T) {
 
 	const packagePath = "/AdGuardHome.tar.gz"
 
-	wd := t.TempDir()
+	testDir := t.TempDir()
+	workDir := filepath.Join(testDir, "work")
+	installDir := filepath.Join(testDir, "install")
+	require.NoError(t, os.Mkdir(workDir, 0o755))
+	require.NoError(t, os.Mkdir(installDir, 0o755))
 
-	exePath := filepath.Join(wd, "AdGuardHome")
-	yamlPath := filepath.Join(wd, "AdGuardHome.yaml")
-	readmePath := filepath.Join(wd, "README.md")
-	licensePath := filepath.Join(wd, "LICENSE.txt")
+	exePath := filepath.Join(installDir, "AdGuardHome")
+	yamlPath := filepath.Join(workDir, "AdGuardHome.yaml")
+	readmePath := filepath.Join(installDir, "README.md")
+	licensePath := filepath.Join(installDir, "LICENSE.txt")
 
 	require.NoError(t, os.WriteFile(exePath, []byte("AdGuardHome"), 0o755))
 	require.NoError(t, os.WriteFile(yamlPath, []byte("AdGuardHome.yaml"), 0o644))
@@ -87,7 +91,7 @@ func TestUpdater_Update(t *testing.T) {
 		GOOS:               "linux",
 		Version:            "v0.103.0",
 		ConfName:           yamlPath,
-		WorkDir:            wd,
+		WorkDir:            workDir,
 		ExecPath:           exePath,
 		VersionCheckURL:    versionCheckURL,
 	})
@@ -101,12 +105,12 @@ func TestUpdater_Update(t *testing.T) {
 	require.NoError(t, err)
 
 	// check backup files
-	d, err := os.ReadFile(filepath.Join(wd, "agh-backup", "LICENSE.txt"))
+	d, err := os.ReadFile(filepath.Join(workDir, "agh-backup", "LICENSE.txt"))
 	require.NoError(t, err)
 
 	assert.Equal(t, "LICENSE.txt", string(d))
 
-	d, err = os.ReadFile(filepath.Join(wd, "agh-backup", "README.md"))
+	d, err = os.ReadFile(filepath.Join(workDir, "agh-backup", "README.md"))
 	require.NoError(t, err)
 
 	assert.Equal(t, "README.md", string(d))
