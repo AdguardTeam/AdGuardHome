@@ -534,11 +534,28 @@ func TestServer_Prepare_fallbackBootstrap(t *testing.T) {
 
 	lookupCh := make(chan dns.Question, 4)
 	pt := testutil.NewPanicT(t)
+	failedBootstrapAddr := newLocalUpstreamListener(t, 0, dns.HandlerFunc(
+		func(_ dns.ResponseWriter, _ *dns.Msg) {},
+	))
 	bootstrapHandler := dns.HandlerFunc(func(w dns.ResponseWriter, req *dns.Msg) {
 		require.Len(pt, req.Question, 1)
-		testutil.RequireSend(pt, lookupCh, req.Question[0], testTimeout)
+		q := req.Question[0]
+		testutil.RequireSend(pt, lookupCh, q, testTimeout)
 
-		err := w.WriteMsg(new(dns.Msg).SetReply(req))
+		resp := new(dns.Msg).SetReply(req)
+		if q.Qtype == dns.TypeA {
+			resp.Answer = append(resp.Answer, &dns.A{
+				Hdr: dns.RR_Header{
+					Name:   q.Name,
+					Rrtype: dns.TypeA,
+					Class:  dns.ClassINET,
+					Ttl:    60,
+				},
+				A: net.IP(netutil.IPv4Localhost().AsSlice()),
+			})
+		}
+
+		err := w.WriteMsg(resp)
 		require.NoError(pt, err)
 	})
 	bootstrapAddr := newLocalUpstreamListener(t, 0, bootstrapHandler)
@@ -547,7 +564,10 @@ func TestServer_Prepare_fallbackBootstrap(t *testing.T) {
 		UpstreamTimeout: 100 * time.Millisecond,
 		TLSConf:         &TLSConfig{},
 		Config: Config{
-			BootstrapDNS: []string{"tcp://" + bootstrapAddr.String()},
+			BootstrapDNS: []string{
+				"tcp://" + failedBootstrapAddr.String(),
+				"tcp://" + bootstrapAddr.String(),
+			},
 			FallbackDNS: []string{
 				"tls://" + netutil.JoinHostPort(fallbackHost, 1),
 			},
