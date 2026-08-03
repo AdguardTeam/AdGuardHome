@@ -2,24 +2,49 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
     stats: vi.fn(),
+    statsReset: vi.fn(),
     clientsSearch: vi.fn(),
     addErrorToast: vi.fn(),
+    addSuccessToast: vi.fn(),
 }));
 
 vi.mock('panel/api/generated', () => ({
     stats: mocks.stats,
+    statsReset: mocks.statsReset,
     clientsSearch: mocks.clientsSearch,
 }));
 vi.mock('panel/stores/toasts', () => ({
     addErrorToast: mocks.addErrorToast,
+    addSuccessToast: mocks.addSuccessToast,
 }));
 
-import { getStats, statsState } from 'panel/stores/stats';
+import { getStats, resetStats, statsState } from 'panel/stores/stats';
 
 describe('getStats', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mocks.clientsSearch.mockResolvedValue([]);
+        mocks.statsReset.mockResolvedValue(undefined);
+    });
+
+    it('keeps reset busy until the refreshed statistics are loaded', async () => {
+        let resolveStats: (value: { num_dns_queries: number }) => void = () => {};
+        const statsPromise = new Promise<{ num_dns_queries: number }>((resolve) => {
+            resolveStats = resolve;
+        });
+        mocks.stats.mockReturnValue(statsPromise);
+
+        const resetPromise = resetStats();
+        await vi.waitFor(() => expect(mocks.stats).toHaveBeenCalledOnce());
+
+        expect(statsState.processingReset).toBe(true);
+
+        resolveStats({ num_dns_queries: 0 });
+        await resetPromise;
+
+        expect(statsState.numDnsQueries).toBe(0);
+        expect(statsState.processingStats).toBe(false);
+        expect(statsState.processingReset).toBe(false);
     });
 
     it('enriches top clients and stores normalizedTopClients', async () => {
