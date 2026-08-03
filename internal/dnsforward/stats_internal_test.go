@@ -52,6 +52,9 @@ type testStats struct {
 	lastEntry *stats.Entry
 
 	upsEntries []*stats.UpstreamEntry
+
+	// onShouldCount, if not nil, decides the verdict of ShouldCount.
+	onShouldCount func(host string, qt, cl uint16, ids []string) (ok bool)
 }
 
 // Update implements the [stats.Interface] interface for *testStats.
@@ -83,7 +86,11 @@ func (l *testStats) upstreamEntries() (entries []*stats.UpstreamEntry) {
 }
 
 // ShouldCount implements the [stats.Interface] interface for *testStats.
-func (l *testStats) ShouldCount(string, uint16, uint16, []string) bool {
+func (l *testStats) ShouldCount(host string, qt, cl uint16, ids []string) bool {
+	if l.onShouldCount != nil {
+		return l.onShouldCount(host, qt, cl, ids)
+	}
+
 	return true
 }
 

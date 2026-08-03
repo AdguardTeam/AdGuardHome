@@ -20,8 +20,12 @@ import (
 // statistics about the exchanges with them.
 type UpstreamConfigWrapper interface {
 	// WrapUpstreamConfig returns a wrapped copy of uc, or nil if uc is nil.  It
-	// must not modify uc.
-	WrapUpstreamConfig(uc *proxy.UpstreamConfig) (wrapped *proxy.UpstreamConfig)
+	// must not modify uc.  timeout must be the timeout that the upstreams of uc
+	// have been constructed with.
+	WrapUpstreamConfig(
+		uc *proxy.UpstreamConfig,
+		timeout time.Duration,
+	) (wrapped *proxy.UpstreamConfig)
 }
 
 // CommonUpstreamConfig contains common settings for custom client upstream
@@ -246,7 +250,7 @@ func newCustomUpstreamConfig(
 	}
 
 	if w := conf.UpstreamConfigWrapper; w != nil {
-		upsConf = w.WrapUpstreamConfig(upsConf)
+		upsConf = w.WrapUpstreamConfig(upsConf, conf.UpstreamTimeout)
 	}
 
 	return proxy.NewCustomUpstreamConfig(

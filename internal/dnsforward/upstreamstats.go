@@ -53,6 +53,45 @@ func (u *statsUpstream) Exchange(req *dns.Msg) (resp *dns.Msg, err error) {
 	return resp, nil
 }
 
+// markIgnoredReq records the request of dctx as one whose upstream exchanges
+// must not be counted, when the statistics ignore its client or its domain.  It
+// returns the function that undoes it, which must be called once the request
+// has been resolved.
+//
+// An upstream exchange carries no client identity, so [statsUpstream] cannot
+// consult [stats.Interface.ShouldCount] itself.  The decision is therefore made
+// here, where the client is still known, and left for the wrappers to find.
+// Exchanges that belong to no request at all, such as the background refreshes
+// of the optimistic cache, are never marked and so are always counted.
+//
+// dctx and its proxy context must not be nil.
+func (s *Server) markIgnoredReq(dctx *dnsContext) (unmark func()) {
+	pctx := dctx.proxyCtx
+	q := pctx.Req.Question[0]
+	_, _, ids := s.clientIdentity(dctx)
+
+	s.serverLock.RLock()
+	count := s.shouldCountStat(aghnet.NormalizeDomain(q.Name), q.Qtype, q.Qclass, ids)
+	s.serverLock.RUnlock()
+
+	if count {
+		return func() {}
+	}
+
+	req := pctx.Req
+	s.ignoredReqs.Store(req, struct{}{})
+
+	return func() { s.ignoredReqs.Delete(req) }
+}
+
+// isIgnoredReq returns true if req belongs to a query whose statistics are
+// ignored, see [Server.markIgnoredReq].
+func (s *Server) isIgnoredReq(req *dns.Msg) (ok bool) {
+	_, ok = s.ignoredReqs.Load(req)
+
+	return ok
+}
+
 // Address implements the [upstream.Upstream] interface for *statsUpstream.
 func (u *statsUpstream) Address() (addr string) {
 	return u.upstream.Address()
@@ -68,6 +107,12 @@ func (u *statsUpstream) Close() (err error) {
 // of a single exchange attempt, if any.  req must not be nil.
 func (s *Server) updateUpstreamStats(addr string, req *dns.Msg, dur, timeout time.Duration) {
 	if len(req.Question) == 0 {
+		return
+	}
+
+	if s.isIgnoredReq(req) {
+		// The statistics ignore the client or the domain of the query this
+		// exchange was performed for, see [Server.markIgnoredReq].
 		return
 	}
 
@@ -110,16 +155,27 @@ func (s *Server) updateUpstreamStats(addr string, req *dns.Msg, dur, timeout tim
 // [*statsUpstream], or nil if uc is nil.  uc itself is not modified, but the
 // returned configuration shares the underlying upstreams with it, so only one
 // of the two should ever be closed.
-func (s *Server) WrapUpstreamConfig(uc *proxy.UpstreamConfig) (wrapped *proxy.UpstreamConfig) {
+//
+// timeout must be the timeout that the upstreams of uc have actually been
+// constructed with, since it is what tells a retried exchange from a slow one,
+// see [Server.updateUpstreamStats].  It differs between configurations: the
+// private rDNS upstreams use [defaultLocalTimeout] rather than the configured
+// one.  It is taken as an argument rather than read from [Server.conf], which
+// is mutable and is written under serverLock while this method may be called
+// without it, from the client upstream manager.
+func (s *Server) WrapUpstreamConfig(
+	uc *proxy.UpstreamConfig,
+	timeout time.Duration,
+) (wrapped *proxy.UpstreamConfig) {
 	if uc == nil {
 		return nil
 	}
 
 	return &proxy.UpstreamConfig{
-		DomainReservedUpstreams:  s.wrapUpstreamsMap(uc.DomainReservedUpstreams),
-		SpecifiedDomainUpstreams: s.wrapUpstreamsMap(uc.SpecifiedDomainUpstreams),
+		DomainReservedUpstreams:  s.wrapUpstreamsMap(uc.DomainReservedUpstreams, timeout),
+		SpecifiedDomainUpstreams: s.wrapUpstreamsMap(uc.SpecifiedDomainUpstreams, timeout),
 		SubdomainExclusions:      uc.SubdomainExclusions,
-		Upstreams:                s.wrapUpstreams(uc.Upstreams),
+		Upstreams:                s.wrapUpstreams(uc.Upstreams, timeout),
 	}
 }
 
@@ -127,6 +183,7 @@ func (s *Server) WrapUpstreamConfig(uc *proxy.UpstreamConfig) (wrapped *proxy.Up
 // [*statsUpstream], or nil if ups is nil.
 func (s *Server) wrapUpstreamsMap(
 	ups map[string][]upstream.Upstream,
+	timeout time.Duration,
 ) (wrapped map[string][]upstream.Upstream) {
 	if ups == nil {
 		return nil
@@ -134,7 +191,7 @@ func (s *Server) wrapUpstreamsMap(
 
 	wrapped = make(map[string][]upstream.Upstream, len(ups))
 	for domain, u := range ups {
-		wrapped[domain] = s.wrapUpstreams(u)
+		wrapped[domain] = s.wrapUpstreams(u, timeout)
 	}
 
 	return wrapped
@@ -145,12 +202,13 @@ func (s *Server) wrapUpstreamsMap(
 // by several fields of a [proxy.UpstreamConfig], in which case it gets a
 // wrapper of its own for each reference, just like it gets closed once for each
 // of them, see [proxy.UpstreamConfig.Close].
-func (s *Server) wrapUpstreams(ups []upstream.Upstream) (wrapped []upstream.Upstream) {
+func (s *Server) wrapUpstreams(
+	ups []upstream.Upstream,
+	timeout time.Duration,
+) (wrapped []upstream.Upstream) {
 	if ups == nil {
 		return nil
 	}
-
-	timeout := s.conf.UpstreamTimeout
 
 	wrapped = make([]upstream.Upstream, 0, len(ups))
 	for _, u := range ups {
