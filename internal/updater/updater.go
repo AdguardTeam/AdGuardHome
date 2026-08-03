@@ -33,6 +33,7 @@ import (
 type Updater struct {
 	client *http.Client
 	logger *slog.Logger
+	rename func(oldPath, newPath string) (err error)
 
 	cmdCons executil.CommandConstructor
 
@@ -135,6 +136,7 @@ func NewUpdater(conf *Config) *Updater {
 	return &Updater{
 		client: conf.Client,
 		logger: conf.Logger,
+		rename: os.Rename,
 
 		cmdCons: conf.CommandConstructor,
 
@@ -362,31 +364,64 @@ func (u *Updater) replace(ctx context.Context) (err error) {
 		return fmt.Errorf("copySupportingFiles(%s, %s) failed: %w", u.updateDir, u.workDir, err)
 	}
 
+	stagedExe, err := os.CreateTemp(filepath.Dir(u.currentExeName), ".agh-update-*")
+	if err != nil {
+		return fmt.Errorf("creating staged executable: %w", err)
+	}
+	stagedExeName := stagedExe.Name()
+	defer func() { _ = os.Remove(stagedExeName) }()
+
+	err = stagedExe.Close()
+	if err != nil {
+		return fmt.Errorf("closing staged executable: %w", err)
+	}
+
+	err = copyFile(u.updateExeName, stagedExeName, aghos.DefaultPermExe)
+	if err != nil {
+		return fmt.Errorf("staging executable: %w", err)
+	}
+
+	err = os.Chmod(stagedExeName, aghos.DefaultPermExe)
+	if err != nil {
+		return fmt.Errorf("setting staged executable permissions: %w", err)
+	}
+
 	u.logger.InfoContext(
 		ctx,
 		"backing up current executable",
 		"from", u.currentExeName,
 		"to", u.backupExeName,
 	)
-	err = os.Rename(u.currentExeName, u.backupExeName)
+	err = u.rename(u.currentExeName, u.backupExeName)
 	if err != nil {
 		return err
 	}
 
 	if u.goos == "windows" {
 		// Use copy, since renaming fails with "File in use" error.
-		err = copyFile(u.updateExeName, u.currentExeName, aghos.DefaultPermExe)
+		err = copyFile(stagedExeName, u.currentExeName, aghos.DefaultPermExe)
 	} else {
-		err = os.Rename(u.updateExeName, u.currentExeName)
+		err = u.rename(stagedExeName, u.currentExeName)
 	}
 	if err != nil {
-		return err
+		installErr := err
+		removeErr := os.Remove(u.currentExeName)
+		if removeErr != nil && !errors.Is(removeErr, os.ErrNotExist) {
+			return errors.Join(installErr, fmt.Errorf("removing failed executable: %w", removeErr))
+		}
+
+		err = u.rename(u.backupExeName, u.currentExeName)
+		if err != nil {
+			return errors.Join(installErr, fmt.Errorf("restoring executable: %w", err))
+		}
+
+		return installErr
 	}
 
 	u.logger.InfoContext(
 		ctx,
 		"replacing current executable",
-		"from", u.updateExeName,
+		"from", stagedExeName,
 		"to", u.currentExeName,
 	)
 
