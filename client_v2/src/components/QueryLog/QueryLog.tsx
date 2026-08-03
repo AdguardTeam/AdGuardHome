@@ -1,4 +1,4 @@
-import { createSignal, createEffect, onMount, Show, For } from 'solid-js';
+import { createSignal, createEffect, onMount, onCleanup, Show, For } from 'solid-js';
 import cn from 'clsx';
 import { useNavigate, useLocation } from '@solidjs/router';
 
@@ -11,6 +11,7 @@ import {
     setFilteredLogs,
     refreshFilteredLogs,
     getAdditionalLogs,
+    cancelQueryLogRequests,
 } from 'panel/stores/queryLogs';
 import { accessState, getAccessList, toggleClientBlock } from 'panel/stores/access';
 import { dashboardState, getClients } from 'panel/stores/dashboard';
@@ -67,6 +68,8 @@ export const QueryLog = () => {
         getFilteringStatus();
         getAllBlockedServices();
     });
+
+    onCleanup(cancelQueryLogRequests);
 
     // Watch location.search for filter changes
     createEffect(() => {
