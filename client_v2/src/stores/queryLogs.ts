@@ -13,6 +13,7 @@ import {
     type QueryLogFilter,
 } from 'panel/helpers/constants';
 import { normalizeLogs, type NormalizedQueryLogItem } from 'panel/helpers/helpers';
+import { filterLogsByStatus } from 'panel/helpers/queryLogStatus';
 import type { GetQueryLogConfigResponse } from 'panel/api/model/getQueryLogConfigResponse';
 
 type QueryLogsState = {
@@ -105,17 +106,6 @@ const fetchLogsWithParams = async (olderThan: string, filter?: QueryLogFilter) =
     }
     const raw = await queryLog(params);
     return { logs: normalizeLogs(raw.data || []), oldest: raw.oldest || '' };
-};
-
-/** Simple stateless filter: count entries matching the status */
-const filterLogsByStatus = (
-    logs: NormalizedQueryLogItem[],
-    status: string,
-): NormalizedQueryLogItem[] => {
-    if (!status || status === 'all') return logs;
-    const reasons = STATUS_TO_REASONS[status];
-    if (!reasons || reasons.length === 0) return logs;
-    return logs.filter((log) => reasons.includes(log.reason ?? ''));
 };
 
 const shortPollQueryLogs = async (

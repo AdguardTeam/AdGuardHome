@@ -18,12 +18,18 @@ type Props = {
 
 export const StatusCell = (props: Props) => {
     const statusKey = createMemo(() =>
-        getQueryStatusKey(props.row.reason, props.row.originalResponse ?? []),
+        getQueryStatusKey(props.row.reason, props.row.originalResponse ?? [], props.row.status),
     );
 
     return (
         <div class={s.statusCell}>
-            <span class={cn(s.status, getStatusClassName(props.row.reason), theme.text.t3)}>
+            <span
+                class={cn(
+                    s.status,
+                    getStatusClassName(props.row.reason, statusKey()),
+                    theme.text.t3,
+                )}
+            >
                 {getQueryStatusLabel(statusKey())}
             </span>
             <span class={cn(s.secondaryLine, theme.text.t4)}>

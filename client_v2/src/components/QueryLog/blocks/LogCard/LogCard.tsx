@@ -47,7 +47,11 @@ export const LogCard = (props: Props) => {
     const clientDetails = () => props.entry.client_info?.name || props.entry.client_id;
     const clientLocation = () => getClientLocation(props.entry.client_info?.whois);
     const statusKey = () =>
-        getQueryStatusKey(props.entry.reason, props.entry.originalResponse ?? []);
+        getQueryStatusKey(
+            props.entry.reason,
+            props.entry.originalResponse ?? [],
+            props.entry.status,
+        );
     const reasonKey = () => getQueryReasonKey(props.entry.reason, props.entry.rules ?? []);
     const reasonDetails = () =>
         getQueryReasonDetails({
@@ -142,7 +146,7 @@ export const LogCard = (props: Props) => {
                             s.status,
                             theme.text.t4,
                             theme.text.condenced,
-                            getStatusClassName(props.entry.reason),
+                            getStatusClassName(props.entry.reason, statusKey()),
                         )}
                     >
                         {statusLabel()}
