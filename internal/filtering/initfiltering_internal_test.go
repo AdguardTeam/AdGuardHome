@@ -323,8 +323,6 @@ func benchRuleList(tb testing.TB, n int, suffix string) (path string) {
 // constrained hardware these rebuilds are reported to run out of memory on
 // without having to obtain a particular blocklist first.
 func BenchmarkDNSFilter_initFiltering(b *testing.B) {
-	ctx := context.Background()
-
 	for _, n := range []int{10_000, 100_000} {
 		firstPath := benchRuleList(b, n, "a")
 		secondPath := benchRuleList(b, n, "b")
@@ -333,32 +331,49 @@ func BenchmarkDNSFilter_initFiltering(b *testing.B) {
 		second := []Filter{{ID: 1, FilePath: secondPath}}
 
 		b.Run(fmt.Sprintf("changed_%d", n), func(b *testing.B) {
-			d := newFilterForTest(b, first)
-
-			b.ReportAllocs()
-			b.ResetTimer()
-
-			for i := range b.N {
-				// Alternate the lists so that every iteration has work to do.
-				flts := first
-				if i%2 == 0 {
-					flts = second
-				}
-
-				require.NoError(b, d.initFiltering(ctx, nil, flts))
-			}
+			benchRebuildChanged(b, first, second)
 		})
 
 		b.Run(fmt.Sprintf("unchanged_%d", n), func(b *testing.B) {
-			d := newFilterForTest(b, first)
-			require.NoError(b, d.initFiltering(ctx, nil, first))
-
-			b.ReportAllocs()
-			b.ResetTimer()
-
-			for range b.N {
-				require.NoError(b, d.initFiltering(ctx, nil, first))
-			}
+			benchRebuildUnchanged(b, first)
 		})
+	}
+}
+
+// benchRebuildChanged benchmarks the rebuilds that have work to do, by
+// alternating between two different sets of rule lists.
+func benchRebuildChanged(b *testing.B, first, second []Filter) {
+	b.Helper()
+
+	ctx := context.Background()
+	d := newFilterForTest(b, first)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := range b.N {
+		flts := first
+		if i%2 == 0 {
+			flts = second
+		}
+
+		require.NoError(b, d.initFiltering(ctx, nil, flts))
+	}
+}
+
+// benchRebuildUnchanged benchmarks the rebuilds that the fingerprint skips, by
+// passing the same rule lists the engines are already built from.
+func benchRebuildUnchanged(b *testing.B, flts []Filter) {
+	b.Helper()
+
+	ctx := context.Background()
+	d := newFilterForTest(b, flts)
+	require.NoError(b, d.initFiltering(ctx, nil, flts))
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for range b.N {
+		require.NoError(b, d.initFiltering(ctx, nil, flts))
 	}
 }
