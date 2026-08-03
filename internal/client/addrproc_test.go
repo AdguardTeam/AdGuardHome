@@ -264,6 +264,84 @@ func TestDefaultAddrProc_Process_WHOIS(t *testing.T) {
 	}
 }
 
+func TestDefaultAddrProc_Process_WHOIS_PrivateSubnets(t *testing.T) {
+	t.Parallel()
+
+	privateSubnet := netip.MustParsePrefix("2606:4700:4700::/64")
+	wantInfo := &whois.Info{
+		City: testWHOISCity,
+	}
+
+	testCases := []struct {
+		ip       netip.Addr
+		wantInfo *whois.Info
+		name     string
+		wantDial bool
+	}{
+		{
+			ip:       netip.MustParseAddr("2606:4700:4700::1111"),
+			name:     "private_network",
+			wantInfo: nil,
+			wantDial: false,
+		},
+		{
+			ip:       netip.MustParseAddr("2001:4860:4860::8888"),
+			name:     "public",
+			wantInfo: wantInfo,
+			wantDial: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			var dialed bool
+			whoisConn := &fakenet.Conn{
+				OnClose: func() (err error) { return nil },
+				OnRead: func(b []byte) (n int, err error) {
+					data := "city: " + testWHOISCity + "\n"
+					copy(b, data)
+
+					return len(data), io.EOF
+				},
+				OnSetDeadline: func(_ time.Time) (err error) { return nil },
+				OnWrite:       func(b []byte) (n int, err error) { return len(b), nil },
+			}
+
+			updInfoCh := make(chan *whois.Info, 1)
+			p := client.NewDefaultAddrProc(&client.DefaultAddrProcConfig{
+				BaseLogger: slogutil.NewDiscardLogger(),
+				DialContext: func(_ context.Context, _, _ string) (conn net.Conn, err error) {
+					dialed = true
+
+					return whoisConn, nil
+				},
+				PrivateSubnets: privateSubnet,
+				AddressUpdater: &aghtest.AddressUpdater{
+					OnUpdateAddress: func(
+						_ context.Context,
+						_ netip.Addr,
+						_ string,
+						info *whois.Info,
+					) {
+						updInfoCh <- info
+					},
+				},
+				UseWHOIS: true,
+			})
+			testutil.CleanupAndRequireSuccess(t, p.Close)
+
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			p.Process(ctx, tc.ip)
+
+			gotInfo, _ := testutil.RequireReceive(t, updInfoCh, testTimeout)
+			assert.Equal(t, tc.wantInfo, gotInfo)
+			assert.Equal(t, tc.wantDial, dialed)
+		})
+	}
+}
+
 func TestDefaultAddrProc_Close(t *testing.T) {
 	t.Parallel()
 
