@@ -24,6 +24,7 @@ import (
 	"github.com/AdguardTeam/golibs/netutil/httputil"
 	"github.com/AdguardTeam/golibs/osutil"
 	"github.com/AdguardTeam/golibs/osutil/executil"
+	"github.com/AdguardTeam/golibs/service"
 	"github.com/NYTimes/gziphandler"
 	"github.com/quic-go/quic-go/http3"
 )
@@ -216,11 +217,11 @@ type webAPI struct {
 	// nil.
 	baseLogger *slog.Logger
 
-	// tlsManager contains the current configuration and state of TLS
-	// encryption.
+	// tlsManager manages the TLS state.  It must not be nil.
 	//
-	// TODO(m.kazantsev): !! Find a way to remove it.
-	tlsManager *tlsManager
+	// TODO(m.kazantsev):  Replace with [aghtls.Manager] once
+	// [aghtls.TLSConfigProvider] is merged with it.
+	tlsManager service.Interface
 
 	// tlsConfProvider is used to provide the TLS configuration.
 	//
@@ -632,12 +633,12 @@ func (web *webAPI) validateTLSSettings(setts tlsConfigSettingsExt) (err error) {
 	return checkPortAvailability(tlsConf, setts.ExtendedTLSConfig, webAPIAddr)
 }
 
-// checkPortAvailability checks [tlsConfigSettings.PortHTTPS],
-// [tlsConfigSettings.PortDNSOverTLS], and [tlsConfigSettings.PortDNSOverQUIC]
-// are available for use.  It checks the current configuration and, if needed,
-// attempts to bind to the port.  The function returns human-readable error
-// messages for the frontend.  This is best-effort check to prevent an "address
-// already in use" error.
+// checkPortAvailability checks [aghtls.ExtendedTLSConfig.PortHTTPS],
+// [aghtls.ExtendedTLSConfig.PortDNSOverTLS], and
+// [aghtls.ExtendedTLSConfig.PortDNSOverQUIC] are available for use.  It checks
+// the current configuration and, if needed, attempts to bind to the port.  The
+// function returns human-readable error messages for the frontend.  This is
+// best-effort check to prevent an "address already in use" error.
 //
 // TODO(a.garipov): Adapt for HTTP/3.
 func checkPortAvailability(
@@ -784,22 +785,12 @@ func (web *webAPI) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 	newTLSConf := &req.ExtendedTLSConfig
 	newTLSConf.Status = *status
 
-	restartHTTPS, err = web.tlsManager.setExtendedTLSConfig(ctx, newTLSConf, req.ServePlainDNS)
+	restartHTTPS, err = web.tlsConfProvider.SetExtendedTLSConfig(ctx, req.ServePlainDNS, newTLSConf)
 	if err != nil {
 		aghhttp.ErrorAndLog(ctx, web.logger, r, w, http.StatusInternalServerError, "%s", err)
 
 		return
 	}
-
-	defer func() {
-		// The background context is used because the TLSConfigChanged wraps context
-		// with timeout on its own and shuts down the server, which handles current
-		// request.  It is also should be done in a separate goroutine due to the
-		// same reason.
-		if restartHTTPS {
-			go web.tlsConfigChanged(context.Background(), newTLSConf)
-		}
-	}()
 
 	err = web.reconfigureDNSServer(ctx)
 	if err != nil {
@@ -816,6 +807,16 @@ func (web *webAPI) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 	}
 
 	web.writeTLSConfigureResponse(ctx, w, r, resp)
+
+	defer func() {
+		// The background context is used because the TLSConfigChanged wraps context
+		// with timeout on its own and shuts down the server, which handles current
+		// request.  It is also should be done in a separate goroutine due to the
+		// same reason.
+		if restartHTTPS {
+			go web.tlsConfigChanged(context.Background(), newTLSConf)
+		}
+	}()
 }
 
 // writeTLSConfigureResponse writes the response for the POST

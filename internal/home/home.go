@@ -905,7 +905,11 @@ func runDNSServer(
 	)
 	fatalOnError(err)
 
-	tlsMgr.start(ctx)
+	err = tlsMgr.Start(ctx)
+	if err != nil {
+		// Should never happen.
+		fatalOnError(err)
+	}
 
 	go func() {
 		startErr := startDNSServer()

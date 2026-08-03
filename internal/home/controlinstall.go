@@ -646,7 +646,11 @@ func (web *webAPI) startMods(ctx context.Context) (err error) {
 		return err
 	}
 
-	web.tlsManager.start(ctx)
+	err = web.tlsManager.Start(ctx)
+	if err != nil {
+		// Should never happen.
+		return err
+	}
 
 	err = startDNSServer()
 	if err != nil {

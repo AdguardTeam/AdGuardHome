@@ -26,6 +26,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/golibs/service"
 	"github.com/c2h5oh/datasize"
 	"github.com/google/go-cmp/cmp"
 )
@@ -95,7 +96,7 @@ type tlsManagerConfig struct {
 
 	httpReg aghhttp.Registrar
 
-	// extTLSConf contains the extended TLS configuration.  It must not be nil.
+	// extTLSConf contains the extended TLS configuration.
 	extTLSConf aghtls.ExtendedTLSConfig
 
 	// servePlainDNS defines if plain DNS is allowed for incoming requests.
@@ -203,21 +204,6 @@ func (m *tlsManager) setCertFileTime(ctx context.Context) {
 	}
 
 	m.certLastMod = fi.ModTime().UTC()
-}
-
-// start updates the configuration of t and starts it.
-//
-// TODO(s.chzhen):  Use context.
-func (m *tlsManager) start(ctx context.Context) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	// The background context is used because the TLSConfigChanged wraps context
-	// with timeout on its own and shuts down the server, which handles current
-	// request.
-	m.web.tlsConfigChanged(context.Background(), m.extTLSConf)
-
-	go m.handleCertFileChange(ctx)
 }
 
 // handleCertFileChange handles changes in the certificate file.  It's intended
@@ -425,54 +411,6 @@ type tlsConfigSettingsExt struct {
 	// is an [aghalg.NullBool] to be able to tell when it's set without using
 	// pointers.
 	ServePlainDNS aghalg.NullBool `yaml:"-" json:"serve_plain_dns"`
-}
-
-// setExtendedTLSConfig updates the TLS configuration with the given one.
-// newConf must not be nil.  If restartsHTTPS is true, the m.extTLSConf is
-// modified and the HTTPS server must be restarted.  If error is not nil,
-// restartHTTPS cannot be true and m.extTLSConf is not modified.
-func (m *tlsManager) setExtendedTLSConfig(
-	ctx context.Context,
-	newConf *aghtls.ExtendedTLSConfig,
-	servePlain aghalg.NullBool,
-) (restartHTTPS bool, err error) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	err = m.updateTLSCert(newConf)
-	if err != nil {
-		m.logger.ErrorContext(ctx, "updating tls certificate", slogutil.KeyError, err)
-
-		// Don't wrap the error, because it is informative enough as is.
-		return false, err
-	}
-
-	updatePlainDNS(m.extTLSConf, newConf, servePlain)
-
-	if !setPrivateFieldsAndCompare(m.extTLSConf, newConf) {
-		m.logger.InfoContext(ctx, "config has changed, restarting https server")
-		m.extTLSConf = newConf
-		restartHTTPS = true
-	} else {
-		m.logger.InfoContext(ctx, "config has not changed")
-	}
-
-	certPath, keyPath := "", ""
-	if newConf.Enabled {
-		certPath, keyPath = newConf.CertificatePath, newConf.PrivateKeyPath
-	}
-
-	err = m.manager.Set(ctx, aghtls.TLSPair{
-		CertPath: certPath,
-		KeyPath:  keyPath,
-	})
-	if err != nil {
-		m.logger.ErrorContext(ctx, "setting tls files", slogutil.KeyError, err)
-	}
-
-	m.setCertFileTime(ctx)
-
-	return restartHTTPS, nil
 }
 
 // setPrivateFieldsAndCompare sets any missing properties in conf to match those
@@ -859,13 +797,64 @@ func (m *tlsManager) HasIPAddrs() (ok bool) {
 	return aghtls.CertificateHasIP(m.tlsCert.Leaf)
 }
 
-// extendedTLSConfig returns a deep copy of the stored extended TLS
+// ExtendedTLSConfig implements the [aghtls.TLSConfigProvider] provider
+// interface for *tlsManager.  It returns a deep copy of the stored extended TLS
 // configuration.
 func (m *tlsManager) ExtendedTLSConfig() (extTLSConf *aghtls.ExtendedTLSConfig) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	return m.extTLSConf.Clone()
+}
+
+// SetExtendedTLSConfig implements the [aghtls.TLSConfigProvider] interface for
+// *tlsManager.  It updates the TLS configuration with the given one.  newConf
+// must not be nil.  newConf is always modified. If restartsHTTPS is true,
+// the HTTPS server must be restarted.  If error is not nil, restartHTTPS cannot
+// be true.
+func (m *tlsManager) SetExtendedTLSConfig(
+	ctx context.Context,
+	servePlainDNS aghalg.NullBool,
+	newConf *aghtls.ExtendedTLSConfig,
+) (restartHTTPS bool, err error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	err = m.updateTLSCert(newConf)
+	if err != nil {
+		m.logger.ErrorContext(ctx, "updating tls certificate", slogutil.KeyError, err)
+
+		// Don't wrap the error, because it is informative enough as is.
+		return false, err
+	}
+
+	updatePlainDNS(m.extTLSConf, newConf, servePlainDNS)
+
+	if !setPrivateFieldsAndCompare(m.extTLSConf, newConf) {
+		m.logger.InfoContext(ctx, "config has changed, restarting https server")
+		restartHTTPS = true
+	} else {
+		m.logger.InfoContext(ctx, "config has not changed")
+	}
+
+	m.extTLSConf = newConf
+
+	certPath, keyPath := "", ""
+	if newConf.Enabled {
+		certPath, keyPath = newConf.CertificatePath, newConf.PrivateKeyPath
+	}
+
+	err = m.manager.Set(ctx, aghtls.TLSPair{
+		CertPath: certPath,
+		KeyPath:  keyPath,
+	})
+	if err != nil {
+		m.logger.ErrorContext(ctx, "setting tls files", slogutil.KeyError, err)
+	}
+
+	m.setCertFileTime(ctx)
+
+	return restartHTTPS, nil
 }
 
 // onGetCertificate gets [*tls.Certificate] from [*tls.Config].  If
@@ -910,6 +899,42 @@ func (m *tlsManager) updateTLSCert(extTLSConf *aghtls.ExtendedTLSConfig) (err er
 	}
 
 	m.tlsCert = &cert
+
+	return nil
+}
+
+// type check
+var _ service.Interface = (*tlsManager)(nil)
+
+// Start implements the [service.Interface] interface for *tlsManager.  It
+// starts the TLS manager.
+func (m *tlsManager) Start(ctx context.Context) (err error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	// The background context is used because the TLSConfigChanged wraps context
+	// with timeout on its own and shuts down the server, which handles current
+	// request.
+	m.web.tlsConfigChanged(context.Background(), m.extTLSConf)
+
+	go m.handleCertFileChange(ctx)
+
+	return nil
+}
+
+// Shutdown implements the [service.Interface] interface for *tlsManager.  It
+// shuts down the TLS manager and logs any errors.
+//
+// TODO(m.kazantsev):  Remove the method once [aghtls.TLSConfigProvider] is
+// merged with [aghtls.Manager].
+func (m *tlsManager) Shutdown(ctx context.Context) (err error) {
+	err = m.manager.Shutdown(ctx)
+	if err != nil {
+		m.logger.ErrorContext(ctx, "shutting down tls manager", slogutil.KeyError, err)
+
+		// Don't wrap the error, because it is informative enough as is.
+		return err
+	}
 
 	return nil
 }

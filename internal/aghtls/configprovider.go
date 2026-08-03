@@ -1,8 +1,11 @@
 package aghtls
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
+
+	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 )
 
 // TLSConfigProvider provides TLS configuration to consumers.  Implementations
@@ -24,6 +27,15 @@ type TLSConfigProvider interface {
 	// ExtendedTLSConfig returns a clone of the current extended TLS
 	// configuration.
 	ExtendedTLSConfig() (conf *ExtendedTLSConfig)
+
+	// SetExtendedTLSConfig updates the current extended TLS configuration.  It
+	// returns true if the configuration was changed.  servePlainDNS is used to
+	// determine whether to serve DNS over plain UDP/TCP.
+	SetExtendedTLSConfig(
+		ctx context.Context,
+		servePlainDNS aghalg.NullBool,
+		conf *ExtendedTLSConfig,
+	) (changed bool, err error)
 }
 
 // type check
@@ -55,4 +67,14 @@ func (EmptyTLSConfigProvider) HasIPAddrs() (ok bool) {
 // EmptyTLSConfigProvider.  It always returns nil.
 func (EmptyTLSConfigProvider) ExtendedTLSConfig() (conf *ExtendedTLSConfig) {
 	return nil
+}
+
+// SetExtendedTLSConfig implements the [TLSConfigProvider] interface for
+// EmptyTLSConfigProvider.  It always returns false and nil.
+func (EmptyTLSConfigProvider) SetExtendedTLSConfig(
+	ctx context.Context,
+	servePlainDNS aghalg.NullBool,
+	conf *ExtendedTLSConfig,
+) (changed bool, err error) {
+	return false, nil
 }
