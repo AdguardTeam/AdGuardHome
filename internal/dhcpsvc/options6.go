@@ -100,8 +100,6 @@ func (opt *IANAOption) UnmarshalBinary(data []byte) (err error) {
 
 // Encode serializes opt into a DHCPv6 IA_NA option.  Each contained
 // [IAAddrOption] is encoded as a nested IA Address option.
-//
-// TODO(e.burkov):  Use.
 func (opt IANAOption) Encode() (iaOpt layers.DHCPv6Option) {
 	// Each nested IA Address option: code (2) + length (2) + data (24).
 	const nestedAddrSize = 2 + 2 + iaAddrDataLen

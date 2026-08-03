@@ -16,6 +16,8 @@ import (
 func TestDHCPServer_AddLease(t *testing.T) {
 	t.Parallel()
 
+	outOfRangeAddr := testIPv4Conf.RangeEnd.Next()
+
 	testCases := []struct {
 		name       string
 		want       *dhcpsvc.Lease
@@ -24,10 +26,10 @@ func TestDHCPServer_AddLease(t *testing.T) {
 		name: "outside_range",
 		want: &dhcpsvc.Lease{
 			Hostname: testLease4HostnameUnknown,
-			IP:       netip.MustParseAddr("1.2.3.4"),
+			IP:       outOfRangeAddr,
 			HWAddr:   testHWUnknown,
 		},
-		wantErrMsg: "adding lease: no interface for ip 1.2.3.4",
+		wantErrMsg: "adding lease: no interface for ip " + outOfRangeAddr.String(),
 	}, {
 		name: "duplicate_ip",
 		want: &dhcpsvc.Lease{

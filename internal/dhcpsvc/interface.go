@@ -181,20 +181,18 @@ func (iface *netInterface) findExpiredLease(now time.Time) (l *Lease) {
 }
 
 // allocateLease allocates a new lease for the MAC address.  If there are no IP
-// addresses left, both lease and err are nil.  mac must be a valid according to
-// [netutil.ValidateMAC].
-//
-// TODO(e.burkov):  Pass the precalculated macKey.
+// addresses left, both lease and err are nil.  mac must be a valid hardware
+// address according to [netutil.ValidateMAC], macKey must be calculated from
+// mac.
 //
 // TODO(e.burkov):  Support allocating the exact requested address if it is
 // available.
 func (iface *netInterface) allocateLease(
 	ctx context.Context,
 	mac net.HardwareAddr,
+	macKey macKey,
 	now time.Time,
 ) (lease *Lease, err error) {
-	key := macToKey(mac)
-
 	for {
 		lease, err = iface.reserveLease(ctx, mac, now)
 		if err != nil {
@@ -208,7 +206,7 @@ func (iface *netInterface) allocateLease(
 		}
 
 		if ok {
-			iface.leases[key] = lease
+			iface.leases[macKey] = lease
 
 			off, _ := iface.addrSpace.offset(lease.IP)
 			iface.leasedOffsets.set(off, true)
@@ -252,9 +250,7 @@ func (iface *netInterface) reserveLease(
 
 	err = iface.index.remove(ctx, lease, iface)
 	if err != nil {
-		// TODO(e.burkov):  Reconsider the severity of this error, it actually
-		// seems impossible to get the error about the existing lease from the
-		// method.
+		// The lease may have been allocated but not yet committed.
 		iface.logger.DebugContext(ctx, "deleting expired lease", slogutil.KeyError, err)
 	}
 
