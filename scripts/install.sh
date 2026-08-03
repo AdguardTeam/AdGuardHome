@@ -591,9 +591,13 @@ fi
 # Needs rights.
 fix_freebsd
 
-handle_existing
-
-download
+if [ "$reinstall" -eq '1' ]; then
+	download
+	handle_existing
+else
+	handle_existing
+	download
+fi
 unpack
 
 install_service
