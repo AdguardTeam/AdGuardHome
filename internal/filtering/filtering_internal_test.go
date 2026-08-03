@@ -10,9 +10,11 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/hashprefix"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
+	"github.com/AdguardTeam/urlfilter"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
@@ -171,6 +173,162 @@ func TestDNSFilter_CheckHost_hostRules(t *testing.T) {
 	require.Len(t, res.Rules, 1)
 
 	assert.Equal(t, res.Rules[0].IP, netutil.IPv6Localhost())
+}
+
+func TestDNSFilter_CheckHost_networkRules(t *testing.T) {
+	const basicRule = "||blocked.example^"
+
+	testCases := []struct {
+		name         string
+		rules        []string
+		wantIDs      []rulelist.APIID
+		wantTexts    []string
+		wantPrimary  rulelist.APIID
+		wantText     string
+		wantReason   Reason
+		wantFiltered bool
+	}{
+		{
+			name:         "duplicate",
+			rules:        []string{basicRule, basicRule},
+			wantIDs:      []rulelist.APIID{1, 2},
+			wantTexts:    []string{basicRule, basicRule},
+			wantPrimary:  1,
+			wantText:     basicRule,
+			wantReason:   FilteredBlockList,
+			wantFiltered: true,
+		},
+		{
+			name:         "distinct",
+			rules:        []string{basicRule, basicRule + "$dnstype=A"},
+			wantIDs:      []rulelist.APIID{1, 2},
+			wantTexts:    []string{basicRule, basicRule + "$dnstype=A"},
+			wantPrimary:  2,
+			wantText:     basicRule + "$dnstype=A",
+			wantReason:   FilteredBlockList,
+			wantFiltered: true,
+		},
+		{
+			name:         "same_list",
+			rules:        []string{basicRule + "\n" + basicRule + "$dnstype=A"},
+			wantIDs:      []rulelist.APIID{1, 1},
+			wantTexts:    []string{basicRule, basicRule + "$dnstype=A"},
+			wantPrimary:  1,
+			wantText:     basicRule + "$dnstype=A",
+			wantReason:   FilteredBlockList,
+			wantFiltered: true,
+		},
+		{
+			name: "losing_exception",
+			rules: []string{
+				basicRule,
+				"@@" + basicRule,
+				basicRule + "$important",
+			},
+			wantIDs:      []rulelist.APIID{1, 3},
+			wantTexts:    []string{basicRule, basicRule + "$important"},
+			wantPrimary:  3,
+			wantText:     basicRule + "$important",
+			wantReason:   FilteredBlockList,
+			wantFiltered: true,
+		},
+		{
+			name: "badfilter",
+			rules: []string{
+				basicRule,
+				basicRule + "$badfilter",
+				basicRule + "$important",
+			},
+			wantIDs:      []rulelist.APIID{3},
+			wantTexts:    []string{basicRule + "$important"},
+			wantPrimary:  3,
+			wantText:     basicRule + "$important",
+			wantReason:   FilteredBlockList,
+			wantFiltered: true,
+		},
+		{
+			name:         "winning_exception",
+			rules:        []string{basicRule, "@@" + basicRule},
+			wantIDs:      []rulelist.APIID{2},
+			wantTexts:    []string{"@@" + basicRule},
+			wantPrimary:  2,
+			wantText:     "@@" + basicRule,
+			wantReason:   NotFilteredAllowList,
+			wantFiltered: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			filters := make([]Filter, len(tc.rules))
+			for i, rule := range tc.rules {
+				filters[i] = Filter{
+					ID:   rules.ListID(i + 1),
+					Data: []byte(rule + "\n"),
+				}
+			}
+
+			d, setts := newForTest(t, nil, filters)
+			t.Cleanup(d.Close)
+
+			res, err := d.CheckHostRules("blocked.example", dns.TypeA, setts)
+			require.NoError(t, err)
+			require.NotEmpty(t, res.Rules)
+
+			gotIDs := make([]rulelist.APIID, len(res.Rules))
+			gotTexts := make([]string, len(res.Rules))
+			for i, r := range res.Rules {
+				gotIDs[i] = r.FilterListID
+				gotTexts[i] = r.Text
+			}
+
+			assert.Equal(t, tc.wantPrimary, gotIDs[0])
+			assert.Equal(t, tc.wantText, gotTexts[0])
+			assert.ElementsMatch(t, tc.wantIDs, gotIDs)
+			assert.ElementsMatch(t, tc.wantTexts, gotTexts)
+			assert.Equal(t, tc.wantReason, res.Reason)
+			assert.Equal(t, tc.wantFiltered, res.IsFiltered)
+		})
+	}
+}
+
+func TestNetworkRulesToRules_effectiveBasicBlocks(t *testing.T) {
+	newRule := func(text string, id rules.ListID) (r *rules.NetworkRule) {
+		r, err := rules.NewNetworkRule(text, id)
+		require.NoError(t, err)
+
+		return r
+	}
+
+	winner := newRule("||blocked.example^$important", 1)
+	active := newRule("|blocked.example|", 2)
+	disabled := newRule("||blocked.example^", 3)
+	badfilter := newRule("||blocked.example^$badfilter", 4)
+	exception := newRule("@@||blocked.example^", 5)
+	rewrite := newRule("||blocked.example^$dnsrewrite=NOERROR;A;192.0.2.1", 6)
+	cosmetic := newRule("@@||blocked.example^$elemhide", 7)
+	unrelatedBadfilter := newRule("||blocked.example^$dnstype=AAAA,badfilter", 8)
+
+	dnsres := &urlfilter.DNSResult{
+		NetworkRule: winner,
+		NetworkRules: []*rules.NetworkRule{
+			disabled,
+			badfilter,
+			exception,
+			rewrite,
+			cosmetic,
+			unrelatedBadfilter,
+			active,
+			winner,
+		},
+	}
+
+	got := networkRulesToRules(dnsres)
+	assert.Equal(t, []rules.Rule{winner, active}, got)
+
+	dnsres.NetworkRule = exception
+	got = networkRulesToRules(dnsres)
+	assert.Equal(t, []rules.Rule{exception}, got)
 }
 
 // Safe Browsing.

@@ -791,6 +791,76 @@ func hostRulesToRules(netRules []*rules.HostRule) (res []rules.Rule) {
 	return res
 }
 
+// isBasicBlock returns true if r is a basic blocking rule.  r must not be nil.
+func isBasicBlock(r *rules.NetworkRule) (ok bool) {
+	if r.Whitelist {
+		return false
+	}
+
+	single := [1]*rules.NetworkRule{r}
+
+	return rules.GetDNSBasicRule(single[:]) == r
+}
+
+// networkBadfilters returns the badfilter rules from all.  Every element of all
+// must not be nil.
+func networkBadfilters(all []*rules.NetworkRule) (badfilters []*rules.NetworkRule) {
+	for _, r := range all {
+		if r.IsOptionEnabled(rules.OptionBadfilter) {
+			badfilters = append(badfilters, r)
+		}
+	}
+
+	return badfilters
+}
+
+// isEffectiveBasicBlock returns true if r remains a basic blocking rule after
+// applying badfilters.  r and every badfilter must not be nil.  processed must
+// have room for all badfilters followed by r when badfilters is not empty.
+func isEffectiveBasicBlock(
+	r *rules.NetworkRule,
+	badfilters []*rules.NetworkRule,
+	processed []*rules.NetworkRule,
+) (ok bool) {
+	if !isBasicBlock(r) {
+		return false
+	} else if len(badfilters) == 0 {
+		return true
+	}
+
+	processed[len(badfilters)] = r
+
+	return rules.GetDNSBasicRule(processed) == r
+}
+
+// networkRulesToRules returns the winning network rule and all other effective
+// basic blocking matches.  dnsres must not be nil and must have a network rule.
+func networkRulesToRules(dnsres *urlfilter.DNSResult) (res []rules.Rule) {
+	winner := dnsres.NetworkRule
+	res = append(res, winner)
+	if winner.Whitelist {
+		return res
+	}
+
+	badfilters := networkBadfilters(dnsres.NetworkRules)
+
+	var processed []*rules.NetworkRule
+	if len(badfilters) > 0 {
+		processed = make([]*rules.NetworkRule, len(badfilters)+1)
+		copy(processed, badfilters)
+	}
+
+	for _, r := range dnsres.NetworkRules {
+		if r == winner || !isEffectiveBasicBlock(r, badfilters, processed) {
+			continue
+		}
+
+		res = append(res, r)
+	}
+
+	return res
+}
+
 // matchHostProcessAllowList processes the allowlist logic of host matching.
 func (d *DNSFilter) matchHostProcessAllowList(
 	ctx context.Context,
@@ -831,7 +901,7 @@ func (d *DNSFilter) matchHostProcessDNSResult(
 			reason = NotFilteredAllowList
 		}
 
-		return makeResult([]rules.Rule{dnsres.NetworkRule}, reason)
+		return makeResult(networkRulesToRules(dnsres), reason)
 	}
 
 	if result, ok := resultFromHostRules(qtype, dnsres); ok {
