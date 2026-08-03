@@ -385,6 +385,8 @@
   "filter_category_security_desc": "Lists designed specifically to block malicious, phishing, and scam domains",
   "filter_removed_successfully": "Removed blocklist: <strong>%value%</strong>",
   "filter_removed_successfully_allowlist": "Removed allowlist: <strong>%value%</strong>",
+  "filter_toggle_progress_desc": "Please wait while AdGuard Home applies the filter changes. Internet connectivity may be affected until this process is complete.",
+  "filter_toggle_progress_title": "Updating filter lists",
   "filters": "Filters",
   "forgot_password": "Forgot password?",
   "forgot_password_list_item_1": "Create a new password using the htpasswd tool or any online BCrypt generator.",

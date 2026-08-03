@@ -334,7 +334,9 @@ func (d *DNSFilter) handleFilteringSetURL(w http.ResponseWriter, r *http.Request
 
 	d.conf.ConfModifier.Apply(ctx)
 	if restart {
-		d.EnableFilters(true)
+		// Rebuild synchronously so that the response reports completion only
+		// after the new filtering engine is ready.
+		d.EnableFilters(false)
 	}
 }
 

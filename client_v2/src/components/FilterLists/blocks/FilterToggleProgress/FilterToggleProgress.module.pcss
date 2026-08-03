@@ -1,0 +1,49 @@
+.backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1600;
+    background-color: var(--modal-overlay);
+}
+
+.positioner {
+    position: fixed;
+    inset: 0;
+    z-index: 1601;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+
+.content {
+    width: 100%;
+    max-width: 480px;
+    padding: 32px 24px;
+    color: var(--default-main-text);
+    text-align: center;
+    background: var(--default-page-background);
+    border-radius: 16px;
+    box-shadow: var(--main-box-shadow);
+    outline: 0;
+}
+
+.loader {
+    width: 56px;
+    height: 56px;
+    margin-bottom: 24px;
+    color: var(--default-product-icon);
+}
+
+.title {
+    margin: 0;
+    font-size: 24px;
+    font-weight: var(--weight-bold);
+    line-height: 28px;
+}
+
+.description {
+    margin: 16px 0 0;
+    color: var(--default-description-text);
+    font-size: var(--fs-text-t2);
+    line-height: var(--lh-t2-normal);
+}

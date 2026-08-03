@@ -236,6 +236,8 @@ type Stats struct {
 type filtersInitializerParams struct {
 	allowFilters []Filter
 	blockFilters []Filter
+
+	generation uint64
 }
 
 type hostChecker struct {
@@ -293,8 +295,10 @@ type DNSFilter struct {
 	done chan struct{}
 
 	// Channel for passing data to filters-initializer goroutine
-	filtersInitializerChan chan filtersInitializerParams
-	filtersInitializerLock sync.Mutex
+	filtersInitializerChan       chan filtersInitializerParams
+	filtersInitializerGeneration uint64
+	filtersInitializerLock       sync.Mutex
+	filtersInitializerRunLock    sync.Mutex
 
 	refreshLock *sync.Mutex
 
@@ -351,6 +355,19 @@ func (d *DNSFilter) WriteDiskConfig(c *Config) {
 	c.UserRules = slices.Clone(d.conf.UserRules)
 }
 
+// discardPendingFilterInitializers discards all queued filter engine snapshots.
+// d.filtersInitializerLock must be locked.
+func (d *DNSFilter) discardPendingFilterInitializers() {
+	for {
+		select {
+		case <-d.filtersInitializerChan:
+			// Continue removing.
+		default:
+			return
+		}
+	}
+}
+
 // setFilters sets new filters, synchronously or asynchronously.  When filters
 // are set asynchronously, the old filters continue working until the new
 // filters are ready.
@@ -363,31 +380,53 @@ func (d *DNSFilter) setFilters(
 	async bool,
 ) (err error) {
 	if async {
-		params := filtersInitializerParams{
-			allowFilters: allowFilters,
-			blockFilters: blockFilters,
-		}
-
 		d.filtersInitializerLock.Lock()
 		defer d.filtersInitializerLock.Unlock()
 
-		// Remove all pending tasks.
-	removeLoop:
-		for {
-			select {
-			case <-d.filtersInitializerChan:
-				// Continue removing.
-			default:
-				break removeLoop
-			}
+		d.filtersInitializerGeneration++
+		params := filtersInitializerParams{
+			allowFilters: allowFilters,
+			blockFilters: blockFilters,
+			generation:   d.filtersInitializerGeneration,
 		}
 
+		d.discardPendingFilterInitializers()
 		d.filtersInitializerChan <- params
 
 		return nil
 	}
 
+	d.filtersInitializerRunLock.Lock()
+	defer d.filtersInitializerRunLock.Unlock()
+
+	d.filtersInitializerLock.Lock()
+	d.filtersInitializerGeneration++
+
+	// Remove all pending asynchronous snapshots, since this synchronous rebuild
+	// supersedes them.
+	d.discardPendingFilterInitializers()
+	d.filtersInitializerLock.Unlock()
+
 	return d.initFiltering(ctx, allowFilters, blockFilters)
+}
+
+// initFilteringAsync initializes the filtering engine from params unless a
+// newer snapshot has superseded it.
+func (d *DNSFilter) initFilteringAsync(
+	ctx context.Context,
+	params filtersInitializerParams,
+) (err error) {
+	d.filtersInitializerRunLock.Lock()
+	defer d.filtersInitializerRunLock.Unlock()
+
+	d.filtersInitializerLock.Lock()
+	isCurrent := params.generation == d.filtersInitializerGeneration
+	d.filtersInitializerLock.Unlock()
+	if !isCurrent {
+		return nil
+	}
+
+	return d.initFiltering(ctx, params.allowFilters, params.blockFilters)
 }
 
 // Close - close the object
@@ -1093,7 +1132,7 @@ func (d *DNSFilter) updatesLoop(ctx context.Context) {
 	for {
 		select {
 		case params := <-d.filtersInitializerChan:
-			err := d.initFiltering(ctx, params.allowFilters, params.blockFilters)
+			err := d.initFilteringAsync(ctx, params)
 			if err != nil {
 				d.logger.ErrorContext(ctx, "initializing", slogutil.KeyError, err)
 

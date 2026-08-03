@@ -67,6 +67,18 @@ const initialState: FilteringState = {
 
 const [state, setState] = createStore<FilteringState>(initialState);
 
+let processingConfigFilterCount = 0;
+
+const startProcessingConfigFilter = () => {
+    processingConfigFilterCount += 1;
+    setState('processingConfigFilter', true);
+};
+
+const finishProcessingConfigFilter = () => {
+    processingConfigFilterCount -= 1;
+    setState('processingConfigFilter', processingConfigFilterCount > 0);
+};
+
 export const getFilteringStatus = async () => {
     setState('processingFilters', true);
     try {
@@ -313,27 +325,28 @@ export const toggleFilterStatus = async (
     data: FilterSetUrlData,
     whitelist: boolean,
 ) => {
-    setState('processingConfigFilter', true);
+    startProcessingConfigFilter();
     try {
         await filteringSetURL({ url, data, whitelist });
-        setState('processingConfigFilter', false);
         await getFilteringStatus();
     } catch (error) {
         addErrorToast({ error });
-        setState('processingConfigFilter', false);
+    } finally {
+        finishProcessingConfigFilter();
     }
 };
 
 export const editFilter = async (url: string, data: FilterSetUrlData, whitelist: boolean) => {
-    setState('processingConfigFilter', true);
+    startProcessingConfigFilter();
     try {
         await filteringSetURL({ url, data, whitelist });
-        setState({ processingConfigFilter: false, isModalOpen: false });
+        setState('isModalOpen', false);
         addSuccessToast(intl.getMessage('changes_saved_success'));
         await getFilteringStatus();
     } catch (error) {
         addErrorToast({ error });
-        setState('processingConfigFilter', false);
+    } finally {
+        finishProcessingConfigFilter();
     }
 };
 
