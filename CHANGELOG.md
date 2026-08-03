@@ -42,8 +42,11 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- TLS certificate expiration warnings appearing too early ([#1400]).
+
 - Blocked requests without an EDNS(0) OPT record ([#8183]).
 
+[#1400]: https://github.com/AdguardTeam/AdGuardHome/issues/1400
 [#8183]: https://github.com/AdguardTeam/AdGuardHome/issues/8183
 
 <!--
