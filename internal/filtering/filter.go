@@ -662,14 +662,24 @@ func (d *DNSFilter) load(ctx context.Context, flt *FilterYAML) (err error) {
 
 // EnableFilters enables filters.
 func (d *DNSFilter) EnableFilters(async bool) {
+	ctx := context.TODO()
+	err := d.enableFilters(ctx, async)
+	if err != nil {
+		d.logger.ErrorContext(ctx, "enabling filters", slogutil.KeyError, err)
+	}
+}
+
+// enableFilters enables filters and returns any filtering-engine initialization
+// error to the caller.
+func (d *DNSFilter) enableFilters(ctx context.Context, async bool) (err error) {
 	d.conf.filtersMu.RLock()
 	defer d.conf.filtersMu.RUnlock()
 
-	d.enableFiltersLocked(context.TODO(), async)
+	return d.enableFiltersLocked(ctx, async)
 }
 
 // enableFiltersLocked enables filters under the conf.filtersMu lock.
-func (d *DNSFilter) enableFiltersLocked(ctx context.Context, async bool) {
+func (d *DNSFilter) enableFiltersLocked(ctx context.Context, async bool) (err error) {
 	filters := make([]Filter, 1, len(d.conf.Filters)+len(d.conf.WhitelistFilters)+1)
 	filters[0] = Filter{
 		ID:   rulelist.IDCustom,
@@ -699,12 +709,10 @@ func (d *DNSFilter) enableFiltersLocked(ctx context.Context, async bool) {
 		})
 	}
 
-	err := d.setFilters(ctx, filters, allowFilters, async)
-	if err != nil {
-		d.logger.ErrorContext(ctx, "enabling filters", slogutil.KeyError, err)
-	}
-
+	err = d.setFilters(ctx, filters, allowFilters, async)
 	d.SetEnabled(d.conf.FilteringEnabled)
+
+	return err
 }
 
 // ApplyAdditionalFiltering enhances the provided filtering settings with
