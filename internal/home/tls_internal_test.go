@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agh"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
@@ -120,6 +121,29 @@ func TestNewTLSManagerCertificatePair(t *testing.T) {
 			assert.Equal(t, tc.wantTLS, m.TLSConfig() != nil)
 		})
 	}
+}
+
+func TestTLSManagerCertlessTransition(t *testing.T) {
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	m, err := newTLSManager(ctx, &tlsManagerConfig{
+		logger:       testLogger,
+		confModifier: agh.EmptyConfigModifier{},
+		manager:      aghtls.EmptyManager{},
+		tlsSettings: tlsConfigSettings{
+			Enabled:         true,
+			CertificatePath: testCertificatePath,
+			PrivateKeyPath:  testPrivateKeyPath,
+		},
+	})
+	require.NoError(t, err)
+	require.NotNil(t, m.TLSConfig())
+	require.NotNil(t, m.tlsCert)
+
+	_, err = m.setConfig(ctx, &tlsConfigSettings{Enabled: true}, aghalg.NBNull)
+	require.NoError(t, err)
+	assert.Nil(t, m.TLSConfig())
+	assert.Nil(t, m.tlsCert)
+	assert.False(t, m.HasIPAddrs())
 }
 
 func TestValidateCertificates(t *testing.T) {

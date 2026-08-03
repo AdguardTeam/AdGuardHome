@@ -911,6 +911,9 @@ func (m *tlsManager) updateTLSCert(extTLSConf *tlsConfigSettings) (err error) {
 		len(extTLSConf.PrivateKeyData) == 0 &&
 		extTLSConf.CertificatePath == "" &&
 		extTLSConf.PrivateKeyPath == "" {
+		m.tlsConf = nil
+		m.tlsCert = nil
+
 		return nil
 	}
 

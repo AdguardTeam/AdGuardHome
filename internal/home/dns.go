@@ -424,6 +424,10 @@ func getDNSEncryption(tlsMgr *tlsManager) (de dnsEncryption) {
 		}).String()
 	}
 
+	if tlsMgr.TLSConfig() == nil {
+		return de
+	}
+
 	if p := extTLSConf.PortDNSOverTLS; p != 0 {
 		de.tls = (&url.URL{
 			Scheme: "tls",

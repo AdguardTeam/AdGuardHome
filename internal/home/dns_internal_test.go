@@ -89,3 +89,26 @@ func TestNewServerConfigCertlessEncryption(t *testing.T) {
 	require.NoError(t, dnsSrv.Prepare(ctx, serverConf))
 	dnsSrv.Close(ctx)
 }
+
+func TestGetDNSEncryptionCertless(t *testing.T) {
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	tlsMgr, err := newTLSManager(ctx, &tlsManagerConfig{
+		logger:       testLogger,
+		confModifier: agh.EmptyConfigModifier{},
+		manager:      aghtls.EmptyManager{},
+		tlsSettings: tlsConfigSettings{
+			Enabled:         true,
+			ServerName:      "dns.example",
+			PortHTTPS:       defaultPortHTTPS,
+			PortDNSOverTLS:  853,
+			PortDNSOverQUIC: 853,
+		},
+	})
+	require.NoError(t, err)
+	require.Nil(t, tlsMgr.TLSConfig())
+
+	de := getDNSEncryption(tlsMgr)
+	assert.Equal(t, "https://dns.example/dns-query", de.https)
+	assert.Empty(t, de.tls)
+	assert.Empty(t, de.quic)
+}
