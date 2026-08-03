@@ -2,6 +2,9 @@ package filtering
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
@@ -21,11 +24,26 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/ioutil"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"golang.org/x/net/http/httpguts"
 )
 
 // filterDir is the subdirectory of a data directory to store downloaded
 // filters.
 const filterDir = "filters"
+
+// filterHTTPMetadataSuffix is the suffix of a file containing the cached HTTP
+// validators of a downloaded filter.
+const filterHTTPMetadataSuffix = ".metadata"
+
+// filterHTTPMetadata contains the HTTP validators cached for a downloaded
+// filter.  URL prevents using validators after a filter source has changed,
+// and Digest binds them to the exact cached contents.
+type filterHTTPMetadata struct {
+	URL          string `json:"url"`
+	ETag         string `json:"etag,omitempty"`
+	LastModified string `json:"last_modified,omitempty"`
+	Digest       string `json:"digest"`
+}
 
 // FilterYAML represents a filter list in the configuration file.
 //
@@ -56,6 +74,11 @@ func (filter *FilterYAML) Path(dataDir string) string {
 		filterDir,
 		strconv.FormatUint(uint64(filter.ID), 10)+".txt",
 	)
+}
+
+// httpMetadataPath returns the path to filter's cached HTTP validators.
+func (filter *FilterYAML) httpMetadataPath(dataDir string) string {
+	return filter.Path(dataDir) + filterHTTPMetadataSuffix
 }
 
 // ensureName sets provided title or default name for the filter if it doesn't
@@ -502,21 +525,64 @@ func (d *DNSFilter) updateIntl(ctx context.Context, flt *FilterYAML) (ok bool, e
 	d.logger.DebugContext(ctx, "downloading update for filter", "id", flt.ID, "url", flt.URL)
 
 	var res *rulelist.ParseResult
+	var metadata *filterHTTPMetadata
+	var previous filterHTTPMetadata
+	var currentDigest string
+	var responseDigest string
+	hasCurrentContents := false
+	hasPrevious := false
+	forceUpdate := false
+
+	if !filepath.IsAbs(flt.URL) {
+		previous, hasPrevious = d.loadHTTPMetadata(ctx, flt)
+		currentDigest, hasCurrentContents, hasPrevious, forceUpdate = d.currentHTTPFilterState(
+			ctx,
+			flt,
+			previous,
+			hasPrevious,
+		)
+	}
 
 	tmpFile, err := aghrenameio.NewPendingFile(flt.Path(d.conf.DataDir), aghos.DefaultPermFile)
 	if err != nil {
 		// Don't wrap the error because it's informative enough as is.
 		return false, err
 	}
-	defer func() { err = d.finalizeUpdate(ctx, tmpFile, flt, res, err, ok) }()
+	defer func() {
+		err = d.finalizeUpdateWithHTTPMetadata(
+			ctx,
+			tmpFile,
+			flt,
+			res,
+			metadata,
+			err,
+			ok,
+			hasCurrentContents,
+		)
+	}()
 
 	if filepath.IsAbs(flt.URL) {
 		// Initialise this variable to avoid any confusion.
 		path := flt.URL
 
 		res, err = d.readFromFile(tmpFile, path)
+		if err == nil {
+			// Remove obsolete HTTP metadata after a successful update from a local
+			// source.
+			metadata = &filterHTTPMetadata{}
+		}
 	} else {
-		res, err = d.readFromHTTP(tmpFile, flt.URL)
+		var notModified bool
+		res, metadata, responseDigest, notModified, err = d.readFromHTTP(
+			ctx,
+			tmpFile,
+			flt,
+			previous,
+			hasPrevious,
+		)
+		if notModified {
+			return false, err
+		}
 	}
 
 	if err != nil {
@@ -524,24 +590,136 @@ func (d *DNSFilter) updateIntl(ctx context.Context, flt *FilterYAML) (ok bool, e
 		return false, err
 	}
 
-	return res.Checksum != flt.checksum, nil
+	return forceUpdate ||
+		res.Checksum != flt.checksum ||
+		(hasCurrentContents && responseDigest != currentDigest), nil
 }
 
-// readFromHTTP reads filter data from urlStr via HTTP and parses it into the
-// tmpFile file.  tmpFile must not be nil.  urlStr must be a valid URL.
+// currentHTTPFilterState returns the current digest and whether the filter
+// has usable contents.  forceUpdate is true if contents previously loaded for
+// flt can no longer be read.
+func (d *DNSFilter) currentHTTPFilterState(
+	ctx context.Context,
+	flt *FilterYAML,
+	metadata filterHTTPMetadata,
+	hasMetadata bool,
+) (digest string, hasContents, useMetadata, forceUpdate bool) {
+	hasLoadedContents := flt.checksum != 0 || flt.RulesCount != 0
+	if !hasLoadedContents {
+		return "", false, false, false
+	}
+
+	digest, err := d.currentFilterDigest(flt)
+	if err == nil {
+		return digest, true, hasMetadata && metadata.Digest == digest, false
+	}
+
+	if !errors.Is(err, os.ErrNotExist) {
+		d.logger.WarnContext(
+			ctx,
+			"checking current filter contents",
+			"id", flt.ID,
+			slogutil.KeyError, err,
+		)
+	}
+
+	return "", false, false, true
+}
+
+// finalizeUpdateWithHTTPMetadata finalizes a filter update and stores its HTTP
+// metadata after a successful finalization.
+func (d *DNSFilter) finalizeUpdateWithHTTPMetadata(
+	ctx context.Context,
+	file aghrenameio.PendingFile,
+	flt *FilterYAML,
+	res *rulelist.ParseResult,
+	metadata *filterHTTPMetadata,
+	returned error,
+	updated bool,
+	hadContents bool,
+) (err error) {
+	err = d.finalizeUpdate(ctx, file, flt, res, returned, updated)
+	if err != nil || metadata == nil {
+		return err
+	}
+
+	var metaErr error
+	if updated || hadContents {
+		metaErr = d.storeHTTPMetadata(flt, *metadata)
+	} else {
+		metaErr = d.removeHTTPMetadata(flt)
+	}
+	if metaErr != nil {
+		d.logger.WarnContext(
+			ctx,
+			"storing filter http metadata",
+			"id", flt.ID,
+			slogutil.KeyError, metaErr,
+		)
+	}
+
+	return err
+}
+
+// readFromHTTP reads flt's data via HTTP and parses it into tmpFile.  flt and
+// tmpFile must not be nil.  flt.URL must be a valid URL.
 func (d *DNSFilter) readFromHTTP(
+	ctx context.Context,
 	tmpFile aghrenameio.PendingFile,
-	urlStr string,
-) (res *rulelist.ParseResult, err error) {
-	resp, err := d.conf.HTTPClient.Get(urlStr)
+	flt *FilterYAML,
+	previous filterHTTPMetadata,
+	hasPrevious bool,
+) (
+	res *rulelist.ParseResult,
+	metadata *filterHTTPMetadata,
+	digest string,
+	notModified bool,
+	err error,
+) {
+	req, err := newHTTPFilterRequest(ctx, flt, previous, hasPrevious)
+	if err != nil {
+		return nil, nil, "", false, err
+	}
+
+	httpClient := d.conf.HTTPClient
+	if hasPrevious {
+		httpClient = httpClientWithoutRedirectValidators(httpClient)
+	}
+
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		// Don't wrap the error because it's informative enough as is.
-		return nil, err
+		return nil, nil, "", false, err
 	}
 	defer func() { err = errors.WithDeferred(err, resp.Body.Close()) }()
 
+	finalURLDiffers := resp.Request.URL.String() != req.URL.String()
+	if resp.StatusCode == http.StatusNotModified {
+		if finalURLDiffers {
+			return nil, nil, "", false, errors.Error("got status code 304 after redirect")
+		}
+
+		metadata, err = updateNotModifiedHTTPMetadata(resp, previous, hasPrevious)
+
+		return nil, metadata, "", err == nil, err
+	}
+
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("got status code %d, want %d", resp.StatusCode, http.StatusOK)
+		return nil, nil, "", false, fmt.Errorf(
+			"got status code %d, want %d or %d",
+			resp.StatusCode,
+			http.StatusOK,
+			http.StatusNotModified,
+		)
+	}
+
+	metadata = &filterHTTPMetadata{}
+	if !finalURLDiffers {
+		*metadata = filterHTTPMetadata{
+			URL:          flt.URL,
+			ETag:         resp.Header.Get("ETag"),
+			LastModified: resp.Header.Get("Last-Modified"),
+		}
 	}
 
 	bufPtr := d.bufPool.Get()
@@ -549,8 +727,187 @@ func (d *DNSFilter) readFromHTTP(
 
 	p := rulelist.NewParser()
 	httpBody := ioutil.LimitReader(resp.Body, d.conf.MaxHTTPSize.Bytes())
+	hasher := sha256.New()
+	dst := io.MultiWriter(tmpFile, hasher)
 
-	return p.Parse(tmpFile, httpBody, *bufPtr)
+	res, err = p.Parse(dst, httpBody, *bufPtr)
+	if err == nil {
+		digest = hex.EncodeToString(hasher.Sum(nil))
+		metadata.Digest = digest
+	}
+
+	return res, metadata, digest, false, err
+}
+
+// updateNotModifiedHTTPMetadata returns metadata updated from a 304 response.
+func updateNotModifiedHTTPMetadata(
+	resp *http.Response,
+	previous filterHTTPMetadata,
+	hasPrevious bool,
+) (metadata *filterHTTPMetadata, err error) {
+	if !hasPrevious {
+		return nil, errors.Error("got status code 304 without cached validators")
+	}
+
+	if etag := resp.Header.Get("ETag"); etag != "" {
+		previous.ETag = etag
+	}
+	if lastModified := resp.Header.Get("Last-Modified"); lastModified != "" {
+		previous.LastModified = lastModified
+	}
+
+	return &previous, nil
+}
+
+// newHTTPFilterRequest returns a GET request for flt, adding metadata's cached
+// HTTP validators when available.  flt must not be nil and its URL must be
+// valid.
+func newHTTPFilterRequest(
+	ctx context.Context,
+	flt *FilterYAML,
+	metadata filterHTTPMetadata,
+	hasMetadata bool,
+) (req *http.Request, err error) {
+	req, err = http.NewRequestWithContext(ctx, http.MethodGet, flt.URL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if hasMetadata {
+		if metadata.ETag != "" {
+			req.Header.Set("If-None-Match", metadata.ETag)
+		}
+		if metadata.LastModified != "" {
+			req.Header.Set("If-Modified-Since", metadata.LastModified)
+		}
+	}
+
+	return req, nil
+}
+
+// httpClientWithoutRedirectValidators returns a shallow copy of c that removes
+// filter validators from redirected requests.  It preserves c's transport,
+// timeout, cookie jar, and redirect policy.
+func httpClientWithoutRedirectValidators(c *http.Client) (clone *http.Client) {
+	cloned := *c
+	originalCheckRedirect := c.CheckRedirect
+	cloned.CheckRedirect = func(req *http.Request, via []*http.Request) (err error) {
+		if originalCheckRedirect != nil {
+			err = originalCheckRedirect(req, via)
+		} else if len(via) >= 10 {
+			return errors.Error("stopped after 10 redirects")
+		}
+		if err != nil {
+			return err
+		}
+
+		req.Header.Del("If-None-Match")
+		req.Header.Del("If-Modified-Since")
+
+		return nil
+	}
+
+	return &cloned
+}
+
+// loadHTTPMetadata loads flt's cached HTTP validators.  It returns false if the
+// metadata cannot be used.  Invalid metadata is ignored so that this optional
+// cache cannot prevent a filter update.
+func (d *DNSFilter) loadHTTPMetadata(
+	ctx context.Context,
+	flt *FilterYAML,
+) (metadata filterHTTPMetadata, ok bool) {
+	b, err := os.ReadFile(flt.httpMetadataPath(d.conf.DataDir))
+	if err != nil {
+		if !errors.Is(err, os.ErrNotExist) {
+			d.logger.WarnContext(
+				ctx,
+				"reading filter http metadata",
+				"id", flt.ID,
+				slogutil.KeyError, err,
+			)
+		}
+
+		return filterHTTPMetadata{}, false
+	}
+
+	err = json.Unmarshal(b, &metadata)
+	if err != nil {
+		d.logger.WarnContext(
+			ctx,
+			"decoding filter http metadata",
+			"id", flt.ID,
+			slogutil.KeyError, err,
+		)
+
+		return filterHTTPMetadata{}, false
+	}
+
+	if !validFilterHTTPMetadata(metadata, flt.URL) {
+		return filterHTTPMetadata{}, false
+	}
+
+	return metadata, true
+}
+
+// validFilterHTTPMetadata returns true if metadata is safe and applies to the
+// current representation of the filter at urlStr.
+func validFilterHTTPMetadata(
+	metadata filterHTTPMetadata,
+	urlStr string,
+) (ok bool) {
+	if metadata.URL != urlStr {
+		return false
+	}
+
+	if metadata.ETag == "" && metadata.LastModified == "" {
+		return false
+	}
+
+	digest, err := hex.DecodeString(metadata.Digest)
+	if err != nil || len(digest) != sha256.Size {
+		return false
+	}
+
+	return httpguts.ValidHeaderFieldValue(metadata.ETag) &&
+		httpguts.ValidHeaderFieldValue(metadata.LastModified)
+}
+
+// storeHTTPMetadata stores flt's HTTP validators atomically.  Empty validators
+// remove previously cached metadata.
+func (d *DNSFilter) storeHTTPMetadata(
+	flt *FilterYAML,
+	metadata filterHTTPMetadata,
+) (err error) {
+	path := flt.httpMetadataPath(d.conf.DataDir)
+	if metadata.ETag == "" && metadata.LastModified == "" {
+		return d.removeHTTPMetadata(flt)
+	}
+
+	metadata.URL = flt.URL
+	b, err := json.Marshal(metadata)
+	if err != nil {
+		return fmt.Errorf("encoding: %w", err)
+	}
+
+	pending, err := aghrenameio.NewPendingFile(path, aghos.DefaultPermFile)
+	if err != nil {
+		return err
+	}
+
+	_, err = pending.Write(b)
+
+	return aghrenameio.WithDeferredCleanup(err, pending)
+}
+
+// removeHTTPMetadata removes flt's cached HTTP validators.
+func (d *DNSFilter) removeHTTPMetadata(flt *FilterYAML) (err error) {
+	err = os.Remove(flt.httpMetadataPath(d.conf.DataDir))
+	if errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+
+	return err
 }
 
 // readFromFile reads filter data from a file located at path and parses it into
@@ -577,6 +934,27 @@ func (d *DNSFilter) readFromFile(
 	p := rulelist.NewParser()
 
 	return p.Parse(tmpFile, file, *bufPtr)
+}
+
+// currentFilterDigest returns the SHA-256 digest of flt's current contents.
+func (d *DNSFilter) currentFilterDigest(flt *FilterYAML) (digest string, err error) {
+	// #nosec G304 -- The filter path is always within DataDir.
+	file, err := os.Open(flt.Path(d.conf.DataDir))
+	if err != nil {
+		return "", err
+	}
+	defer func() { err = errors.WithDeferred(err, file.Close()) }()
+
+	hasher := sha256.New()
+	bufPtr := d.bufPool.Get()
+	defer d.bufPool.Put(bufPtr)
+
+	_, err = io.CopyBuffer(hasher, file, *bufPtr)
+	if err != nil {
+		return "", fmt.Errorf("calculating filter digest: %w", err)
+	}
+
+	return hex.EncodeToString(hasher.Sum(nil)), nil
 }
 
 // finalizeUpdate closes and gets rid of temporary file f with filter's content
