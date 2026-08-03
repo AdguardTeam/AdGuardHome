@@ -42,8 +42,12 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Runtime client recognition for link-local IPv6 addresses with zone
+  identifiers ([#7836]).
+
 - Blocked requests without an EDNS(0) OPT record ([#8183]).
 
+[#7836]: https://github.com/AdguardTeam/AdGuardHome/issues/7836
 [#8183]: https://github.com/AdguardTeam/AdGuardHome/issues/8183
 
 <!--

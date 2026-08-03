@@ -125,6 +125,99 @@ func compareRuntimeInfo(rc *client.Runtime, src client.Source, host string) (ok 
 	return true
 }
 
+func TestStorage_ClientRuntime_zones(t *testing.T) {
+	const (
+		hostBrLAN  = "client.br-lan"
+		hostDHCP   = "client.dhcp"
+		hostGuest  = "client.guest"
+		hostNoZone = "client.no-zone"
+	)
+
+	var (
+		ip      = netip.MustParseAddr("fe80::1ff:fe23:4567:890a")
+		ipBrLAN = ip.WithZone("br-lan")
+		ipGuest = ip.WithZone("guest")
+		ctx     = testutil.ContextWithTimeout(t, testTimeout)
+	)
+
+	t.Run("unique", func(t *testing.T) {
+		s := newStorage(t, nil)
+		s.UpdateAddress(ctx, ipBrLAN, hostBrLAN, nil)
+
+		rc := s.ClientRuntime(ip)
+		require.NotNil(t, rc)
+		assert.Equal(t, ipBrLAN, rc.Addr())
+		assert.True(t, compareRuntimeInfo(rc, client.SourceRDNS, hostBrLAN))
+	})
+
+	t.Run("exact", func(t *testing.T) {
+		s := newStorage(t, nil)
+		s.UpdateAddress(ctx, ip, hostNoZone, nil)
+		s.UpdateAddress(ctx, ipBrLAN, hostBrLAN, nil)
+
+		rc := s.ClientRuntime(ip)
+		require.NotNil(t, rc)
+		assert.Equal(t, ip, rc.Addr())
+		assert.True(t, compareRuntimeInfo(rc, client.SourceRDNS, hostNoZone))
+	})
+
+	t.Run("unique_with_dhcp", func(t *testing.T) {
+		dhcp := &testDHCP{
+			OnLeases: func() (leases []*dhcpsvc.Lease) { return nil },
+			OnHostBy: func(got netip.Addr) (host string) {
+				assert.Equal(t, ip, got)
+
+				return hostDHCP
+			},
+			OnMACBy: func(_ netip.Addr) (mac net.HardwareAddr) { return nil },
+		}
+
+		s, err := client.NewStorage(ctx, &client.StorageConfig{
+			BaseLogger:        testLogger,
+			Logger:            testLogger,
+			DHCP:              dhcp,
+			RuntimeSourceDHCP: true,
+		})
+		require.NoError(t, err)
+
+		wantWHOIS := &whois.Info{Orgname: "Example Org"}
+		s.UpdateAddress(ctx, ipBrLAN, hostBrLAN, wantWHOIS)
+
+		rc := s.ClientRuntime(ip)
+		require.NotNil(t, rc)
+		assert.Equal(t, ipBrLAN, rc.Addr())
+		assert.True(t, compareRuntimeInfo(rc, client.SourceDHCP, hostDHCP))
+		assert.Equal(t, wantWHOIS, rc.WHOIS())
+
+		count := 0
+		s.RangeRuntime(func(_ *client.Runtime) (cont bool) {
+			count++
+
+			return true
+		})
+		assert.Equal(t, 1, count)
+	})
+
+	t.Run("ambiguous", func(t *testing.T) {
+		s := newStorage(t, nil)
+		s.UpdateAddress(ctx, ipBrLAN, hostBrLAN, nil)
+		s.UpdateAddress(ctx, ipGuest, hostGuest, nil)
+
+		assert.Nil(t, s.ClientRuntime(ip))
+		assert.Nil(t, s.ClientRuntime(ip.WithZone("other")))
+
+		rcBrLAN := s.ClientRuntime(ipBrLAN)
+		require.NotNil(t, rcBrLAN)
+		assert.Equal(t, ipBrLAN, rcBrLAN.Addr())
+		assert.True(t, compareRuntimeInfo(rcBrLAN, client.SourceRDNS, hostBrLAN))
+
+		rcGuest := s.ClientRuntime(ipGuest)
+		require.NotNil(t, rcGuest)
+		assert.Equal(t, ipGuest, rcGuest.Addr())
+		assert.True(t, compareRuntimeInfo(rcGuest, client.SourceRDNS, hostGuest))
+	})
+}
+
 func TestStorage_Add_hostsfile(t *testing.T) {
 	var (
 		cliIP1   = netip.MustParseAddr("1.1.1.1")
