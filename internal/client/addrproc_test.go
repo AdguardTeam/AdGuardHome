@@ -267,28 +267,44 @@ func TestDefaultAddrProc_Process_WHOIS(t *testing.T) {
 func TestDefaultAddrProc_Process_WHOIS_PrivateSubnets(t *testing.T) {
 	t.Parallel()
 
-	privateSubnet := netip.MustParsePrefix("2606:4700:4700::/64")
 	wantInfo := &whois.Info{
 		City: testWHOISCity,
 	}
 
 	testCases := []struct {
-		ip       netip.Addr
-		wantInfo *whois.Info
-		name     string
-		wantDial bool
+		privateSubnet netip.Prefix
+		ip            netip.Addr
+		wantInfo      *whois.Info
+		name          string
+		wantDial      bool
 	}{
 		{
-			ip:       netip.MustParseAddr("2606:4700:4700::1111"),
-			name:     "private_network",
-			wantInfo: nil,
-			wantDial: false,
+			privateSubnet: netip.MustParsePrefix("2606:4700:4700::/64"),
+			ip:            netip.MustParseAddr("2606:4700:4700::1111"),
+			name:          "private_network",
+			wantInfo:      nil,
+			wantDial:      false,
 		},
 		{
-			ip:       netip.MustParseAddr("2001:4860:4860::8888"),
-			name:     "public",
-			wantInfo: wantInfo,
-			wantDial: true,
+			privateSubnet: netip.MustParsePrefix("2606:4700:4700::/64"),
+			ip:            netip.MustParseAddr("2001:4860:4860::8888"),
+			name:          "public",
+			wantInfo:      wantInfo,
+			wantDial:      true,
+		},
+		{
+			privateSubnet: netip.MustParsePrefix("192.168.0.0/16"),
+			ip:            netip.MustParseAddr("::ffff:192.168.0.1"),
+			name:          "private_network_mapped_ipv4",
+			wantInfo:      nil,
+			wantDial:      false,
+		},
+		{
+			privateSubnet: netip.MustParsePrefix("192.168.0.0/16"),
+			ip:            netip.MustParseAddr("::ffff:8.8.8.8"),
+			name:          "public_mapped_ipv4",
+			wantInfo:      wantInfo,
+			wantDial:      true,
 		},
 	}
 
@@ -317,7 +333,7 @@ func TestDefaultAddrProc_Process_WHOIS_PrivateSubnets(t *testing.T) {
 
 					return whoisConn, nil
 				},
-				PrivateSubnets: privateSubnet,
+				PrivateSubnets: tc.privateSubnet,
 				AddressUpdater: &aghtest.AddressUpdater{
 					OnUpdateAddress: func(
 						_ context.Context,

@@ -289,7 +289,7 @@ func (p *DefaultAddrProc) shouldResolve(ip netip.Addr) (ok bool) {
 // WHOIS databases.  info is nil if there were errors or if the information
 // hasn't changed.
 func (p *DefaultAddrProc) processWHOIS(ctx context.Context, ip netip.Addr) (info *whois.Info) {
-	if p.privateSubnets.Contains(ip) {
+	if p.privateSubnets.Contains(ip.Unmap()) {
 		return nil
 	}
 
