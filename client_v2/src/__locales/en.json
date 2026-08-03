@@ -214,6 +214,7 @@
   "dns_bootstrap_dns_placeholder": "IP addresses",
   "dns_bootstrap_dns_title": "Bootstrap DNS servers",
   "dns_bootstrap_servers": "Bootstrap DNS servers",
+  "dns_cache_cleared": "DNS cache cleared",
   "dns_cache_desc": "Stores DNS responses locally",
   "dns_cache_size": "Cache size",
   "dns_cache_size_desc": "Sets the DNS cache size",

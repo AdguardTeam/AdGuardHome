@@ -73,6 +73,10 @@ NOTE: Add new changes BELOW THIS COMMENT.
   with a handful of requests the same weight as an hour with tens of thousands of them.  It is
   now weighted by the number of requests, the same way the upstream response times already were.
 
+- Clearing the DNS cache gave no feedback at all once the confirmation dialog was accepted, so
+  there was no way to tell whether it had worked.  It now shows a notification on success, the
+  way the previous user interface did; failures were already reported.
+
 [#7514]: https://github.com/AdguardTeam/AdGuardHome/issues/7514
 [#8183]: https://github.com/AdguardTeam/AdGuardHome/issues/8183
 [#8435]: https://github.com/AdguardTeam/AdGuardHome/issues/8435
