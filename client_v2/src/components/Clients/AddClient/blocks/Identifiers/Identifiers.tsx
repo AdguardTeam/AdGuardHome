@@ -114,7 +114,7 @@ export const Identifiers = () => {
                                     errorMessage={activeError()}
                                     size="large"
                                     suffixIcon={
-                                        index > 0 ? (
+                                        clientFormState.ids.length > 1 ? (
                                             <button
                                                 type="button"
                                                 class={s.removeSuffixBtn}
