@@ -768,6 +768,10 @@ func (s *Storage) ClearUpstreamCache() {
 // ClientID or client IP address, and applies it to the filtering settings.
 // setts must not be nil.
 func (s *Storage) ApplyClientFiltering(id string, addr netip.Addr, setts *filtering.Settings) {
+	// Filtering rules match addresses without IPv6 zones, while client lookup
+	// below still needs the original address to prefer exact scoped identifiers.
+	setts.ClientIP = addr.WithZone("")
+
 	c, ok := s.index.findByClientID(ClientID(id))
 	if !ok {
 		c, ok = s.index.findByIP(addr)
