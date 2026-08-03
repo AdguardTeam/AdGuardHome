@@ -154,6 +154,73 @@ func TestDNSFilter_handleFilteringSetURL(t *testing.T) {
 	}
 }
 
+func TestDNSFilter_filterSetPropertiesHTTPMetadata(t *testing.T) {
+	const (
+		oldURL = "https://example.org/old.txt"
+		newURL = "https://example.org/new.txt"
+	)
+
+	testCases := []struct {
+		name             string
+		url              string
+		wantMetadataKept bool
+	}{
+		{
+			name:             "same_url",
+			url:              oldURL,
+			wantMetadataKept: true,
+		}, {
+			name: "changed_url",
+			url:  newURL,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			d := newDNSFilter(t)
+			d.conf.Filters = []FilterYAML{{
+				Enabled:    true,
+				URL:        oldURL,
+				Name:       "test-filter",
+				RulesCount: 1,
+				Filter: Filter{
+					ID: 1,
+				},
+			}}
+
+			flt := &d.conf.Filters[0]
+			require.NoError(t, os.WriteFile(
+				flt.Path(d.conf.DataDir),
+				[]byte("||example.org^\n"),
+				0o600,
+			))
+			digest, err := d.currentFilterDigest(flt)
+			require.NoError(t, err)
+			require.NoError(t, d.storeHTTPMetadata(flt, filterHTTPMetadata{
+				ETag:   `"v1"`,
+				Digest: digest,
+			}))
+			metadataPath := flt.httpMetadataPath(d.conf.DataDir)
+			require.FileExists(t, metadataPath)
+
+			restart, err := d.filterSetProperties(oldURL, FilterYAML{
+				Enabled: false,
+				URL:     tc.url,
+				Name:    "test-filter",
+			}, false)
+			require.NoError(t, err)
+			assert.True(t, restart)
+			assert.False(t, flt.Enabled)
+			assert.Equal(t, tc.url, flt.URL)
+			if tc.wantMetadataKept {
+				require.FileExists(t, metadataPath)
+			} else {
+				require.NoFileExists(t, metadataPath)
+			}
+		})
+	}
+}
+
 func TestDNSFilter_handleFilteringRemoveURLRemovesHTTPMetadata(t *testing.T) {
 	const filterURL = "https://example.org/filter.txt"
 

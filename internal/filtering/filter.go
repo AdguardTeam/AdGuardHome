@@ -154,7 +154,8 @@ func (d *DNSFilter) filterSetProperties(
 
 	flt.Name = newList.Name
 
-	if flt.URL != newList.URL {
+	urlChanged := flt.URL != newList.URL
+	if urlChanged {
 		if d.filterExistsLocked(newList.URL) {
 			return false, errFilterExists
 		}
@@ -178,6 +179,7 @@ func (d *DNSFilter) filterSetProperties(
 		// kick in when the filter is enabled.  Consider changing this behavior
 		// to be stricter.
 		flt.unload()
+		d.removeHTTPMetadataOnURLChangeAndLog(context.TODO(), flt, urlChanged)
 
 		return shouldRestart, err
 	}
@@ -187,6 +189,18 @@ func (d *DNSFilter) filterSetProperties(
 	}
 
 	return d.update(flt)
+}
+
+// removeHTTPMetadataOnURLChangeAndLog removes flt's HTTP metadata if its URL
+// has changed and logs any error.
+func (d *DNSFilter) removeHTTPMetadataOnURLChangeAndLog(
+	ctx context.Context,
+	flt *FilterYAML,
+	urlChanged bool,
+) {
+	if urlChanged {
+		d.removeHTTPMetadataAndLog(ctx, flt)
+	}
 }
 
 // filterExists returns true if a filter with the same url exists in d.  It's
