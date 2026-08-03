@@ -42,9 +42,12 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- A data race when updating custom filtering rules ([#8507]).
+
 - Blocked requests without an EDNS(0) OPT record ([#8183]).
 
 [#8183]: https://github.com/AdguardTeam/AdGuardHome/issues/8183
+[#8507]: https://github.com/AdguardTeam/AdGuardHome/issues/8507
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
