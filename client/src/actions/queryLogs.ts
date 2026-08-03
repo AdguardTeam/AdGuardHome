@@ -2,7 +2,7 @@ import { createAction } from 'redux-actions';
 
 import apiClient from '../api/Api';
 
-import { normalizeLogs } from '../helpers/helpers';
+import { mergeRefreshedLogs, normalizeLogs } from '../helpers/helpers';
 import { DEFAULT_LOGS_FILTER, QUERY_LOGS_PAGE_LIMIT } from '../helpers/constants';
 import { addErrorToast, addSuccessToast } from './toasts';
 import { SearchFormValues } from '../components/Logs';
@@ -166,9 +166,7 @@ export const refreshFilteredLogs = () => async (dispatch: any, getState: any) =>
         const additionalData = await shortPollQueryLogs(data, filter, dispatch, currentQuery);
         const updatedData = additionalData.logs ? { ...data, ...additionalData } : data;
 
-        const previousTimes = new Set(previousLogs.map((log: any) => log.time));
-        const freshLogs = updatedData.logs.filter((log: any) => !previousTimes.has(log.time));
-        const mergedLogs = [...freshLogs, ...previousLogs];
+        const mergedLogs = mergeRefreshedLogs(previousLogs, updatedData.logs);
 
         // Keep the previously loaded pagination cursor so infinite scroll continues
         // from where the user left off, instead of restarting from the newest page.
