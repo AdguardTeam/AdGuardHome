@@ -2,8 +2,10 @@ package filtering
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -216,15 +218,15 @@ func TestGCTarget_stricter(t *testing.T) {
 
 // newFilterForTest returns a *DNSFilter with an initialized filtering engine
 // built from blockFilters.
-func newFilterForTest(t *testing.T, blockFilters []Filter) (d *DNSFilter) {
-	t.Helper()
+func newFilterForTest(tb testing.TB, blockFilters []Filter) (d *DNSFilter) {
+	tb.Helper()
 
 	d, err := New(&Config{
 		Logger:  testLogger,
-		DataDir: t.TempDir(),
+		DataDir: tb.TempDir(),
 	}, blockFilters)
-	require.NoError(t, err)
-	t.Cleanup(d.Close)
+	require.NoError(tb, err)
+	tb.Cleanup(d.Close)
 
 	return d
 }
@@ -285,4 +287,78 @@ func TestDNSFilter_initFiltering_error(t *testing.T) {
 	changed := []Filter{{ID: 1, Data: []byte("||example.net^\n")}}
 	require.NoError(t, d.initFiltering(ctx, nil, changed))
 	assert.NotSame(t, engine, d.filteringEngine)
+}
+
+// benchRuleList writes a rule list of n unique blocking rules into a file
+// within a temporary directory and returns its path.
+func benchRuleList(tb testing.TB, n int, suffix string) (path string) {
+	tb.Helper()
+
+	buf := &strings.Builder{}
+	for i := range n {
+		fmt.Fprintf(buf, "||host%d-%s.example^\n", i, suffix)
+	}
+
+	path = filepath.Join(tb.TempDir(), "rules.txt")
+	require.NoError(tb, os.WriteFile(path, []byte(buf.String()), 0o644))
+
+	return path
+}
+
+// BenchmarkDNSFilter_initFiltering measures rebuilding the filtering engines
+// from rule lists of a realistic size, which is the operation that briefly
+// doubles the memory taken by the rules.
+//
+// The "unchanged" case is the one the fingerprint is meant to skip: every
+// filtering-related HTTP API request reaches initFiltering, including the ones
+// that set a property to the value it already had.  Compare the two with:
+//
+//	go test -bench BenchmarkDNSFilter_initFiltering -benchmem ./internal/filtering/
+//
+// Allocated bytes per operation are the figure to watch.  They stay
+// proportional to the size of the lists for a real rebuild, and drop to
+// approximately zero once a rebuild is skipped.
+//
+// This benchmark is deliberately self-contained, so that it can be run on the
+// constrained hardware these rebuilds are reported to run out of memory on
+// without having to obtain a particular blocklist first.
+func BenchmarkDNSFilter_initFiltering(b *testing.B) {
+	ctx := context.Background()
+
+	for _, n := range []int{10_000, 100_000} {
+		firstPath := benchRuleList(b, n, "a")
+		secondPath := benchRuleList(b, n, "b")
+
+		first := []Filter{{ID: 1, FilePath: firstPath}}
+		second := []Filter{{ID: 1, FilePath: secondPath}}
+
+		b.Run(fmt.Sprintf("changed_%d", n), func(b *testing.B) {
+			d := newFilterForTest(b, first)
+
+			b.ReportAllocs()
+			b.ResetTimer()
+
+			for i := range b.N {
+				// Alternate the lists so that every iteration has work to do.
+				flts := first
+				if i%2 == 0 {
+					flts = second
+				}
+
+				require.NoError(b, d.initFiltering(ctx, nil, flts))
+			}
+		})
+
+		b.Run(fmt.Sprintf("unchanged_%d", n), func(b *testing.B) {
+			d := newFilterForTest(b, first)
+			require.NoError(b, d.initFiltering(ctx, nil, first))
+
+			b.ReportAllocs()
+			b.ResetTimer()
+
+			for range b.N {
+				require.NoError(b, d.initFiltering(ctx, nil, first))
+			}
+		})
+	}
 }
