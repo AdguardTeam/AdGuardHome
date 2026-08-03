@@ -617,6 +617,18 @@ func (d *DNSFilter) handleRewriteLoop(
 	return *res
 }
 
+// blockedServiceDNSRewriteResult returns the processed DNS rewrite for rule, if
+// any.  rule must not be nil.
+func (d *DNSFilter) blockedServiceDNSRewriteResult(
+	rule *rules.NetworkRule,
+) (res *DNSRewriteResult) {
+	if rule.DNSRewrite == nil {
+		return nil
+	}
+
+	return d.processDNSRewrites([]*rules.NetworkRule{rule}).DNSRewriteResult
+}
+
 // matchBlockedServicesRules checks the host against the blocked services rules
 // in settings, if any.  err is always nil, it is only there to make this a
 // valid hostChecker function.
@@ -641,6 +653,7 @@ func (d *DNSFilter) matchBlockedServicesRules(
 				res.Reason = FilteredBlockedService
 				res.IsFiltered = true
 				res.ServiceName = s.Name
+				res.DNSRewriteResult = d.blockedServiceDNSRewriteResult(rule)
 
 				ruleText := rule.Text()
 				res.Rules = []*ResultRule{{

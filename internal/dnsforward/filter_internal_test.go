@@ -15,6 +15,53 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestServer_filterDNSRequest_blockedServiceDNSRewrite(t *testing.T) {
+	const serviceID = "icloud_private_relay"
+
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	filtering.InitModule(ctx, testLogger)
+
+	blockedServices := emptyFilteringBlockedServices()
+	blockedServices.IDs = []string{serviceID}
+	s := createTestServer(
+		t,
+		&filtering.Config{
+			BlockedServices: blockedServices,
+			BlockingMode:    filtering.BlockingModeDefault,
+		},
+		ServerConfig{
+			TLSConf: &TLSConfig{},
+			Config: Config{
+				UpstreamMode:     UpstreamModeLoadBalance,
+				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+				ClientsContainer: EmptyClientsContainer{},
+			},
+			ServePlainDNS: true,
+		},
+		testTLSConfigProvider,
+	)
+
+	dctx := &dnsContext{
+		proxyCtx: &proxy.DNSContext{
+			Req:  createTestMessageWithType("mask.icloud.com.", dns.TypeA),
+			Addr: testClientAddrPort,
+		},
+		protectionEnabled: true,
+	}
+	dctx.setts = s.clientRequestFilteringSettings(dctx)
+
+	res, err := s.filterDNSRequest(ctx, testLogger, dctx)
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	assert.Equal(t, filtering.FilteredBlockedService, res.Reason)
+	assert.Equal(t, serviceID, res.ServiceName)
+
+	resp := dctx.proxyCtx.Res
+	require.NotNil(t, resp)
+	assert.Equal(t, dns.RcodeNameError, resp.Rcode)
+}
+
 func TestServer_filterDNSResponse(t *testing.T) {
 	const (
 		passedIPv4Str  = "1.1.1.1"
