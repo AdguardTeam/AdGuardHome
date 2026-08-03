@@ -114,6 +114,13 @@ export const Header = (props: Props) => {
     const isMobile = useIsMobile();
     const isBusy = () => props.isLoading || props.isClearing;
 
+    const cancelDebouncedSearch = () => {
+        if (debounceTimer) {
+            clearTimeout(debounceTimer);
+            debounceTimer = null;
+        }
+    };
+
     createEffect(
         on(
             () => props.currentSearch,
@@ -126,9 +133,7 @@ export const Header = (props: Props) => {
         const value = (e.target as HTMLInputElement).value;
         setSearchValue(value);
 
-        if (debounceTimer) {
-            clearTimeout(debounceTimer);
-        }
+        cancelDebouncedSearch();
 
         debounceTimer = setTimeout(() => {
             props.onSearch(value);
@@ -136,11 +141,14 @@ export const Header = (props: Props) => {
     };
 
     const handleClearSearch = () => {
-        if (debounceTimer) {
-            clearTimeout(debounceTimer);
-        }
+        cancelDebouncedSearch();
         setSearchValue('');
         props.onSearch('');
+    };
+
+    const handleOpenClearConfirm = () => {
+        cancelDebouncedSearch();
+        setShowClearConfirm(true);
     };
 
     const handleClear = async () => {
@@ -149,9 +157,7 @@ export const Header = (props: Props) => {
     };
 
     onCleanup(() => {
-        if (debounceTimer) {
-            clearTimeout(debounceTimer);
-        }
+        cancelDebouncedSearch();
     });
 
     const selectedStatus = createMemo(
@@ -215,7 +221,7 @@ export const Header = (props: Props) => {
                         size="small"
                         aria-label={intl.getMessage('clear_query_log')}
                         title={intl.getMessage('clear_query_log')}
-                        onClick={() => setShowClearConfirm(true)}
+                        onClick={handleOpenClearConfirm}
                         disabled={isBusy()}
                     >
                         <Icon icon="delete" class={s.clearIcon} />
@@ -289,7 +295,7 @@ export const Header = (props: Props) => {
                     size="small"
                     aria-label={intl.getMessage('clear_query_log')}
                     title={intl.getMessage('clear_query_log')}
-                    onClick={() => setShowClearConfirm(true)}
+                    onClick={handleOpenClearConfirm}
                     disabled={isBusy()}
                 >
                     <Icon icon="delete" class={s.clearIcon} />

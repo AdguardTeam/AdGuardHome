@@ -1,7 +1,7 @@
 import { HashRouter, Route } from '@solidjs/router';
 import { fireEvent, render, screen } from '@solidjs/testing-library';
 import { createSignal, type JSX } from 'solid-js';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { DAY } from 'panel/helpers/constants';
 import { Header as DashboardHeader } from 'panel/components/Dashboard/blocks/Header/Header';
@@ -26,6 +26,10 @@ const renderInRouter = (component: () => JSX.Element) => {
 };
 
 describe('Activity clear actions', () => {
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
     it('blocks query-log loading while a clear is in progress', () => {
         expect(isQueryLogBusy(false, false, true)).toBe(true);
     });
@@ -123,6 +127,35 @@ describe('Activity clear actions', () => {
         setIsLoading(true);
 
         expect(screen.getByTestId('query-log-clear-confirm')).toBeDisabled();
+    });
+
+    it('cancels a pending query-log search when clear confirmation opens', () => {
+        vi.useFakeTimers();
+        const onSearch = vi.fn();
+
+        renderInRouter(() => (
+            <QueryLogHeader
+                onSearch={onSearch}
+                onRefresh={vi.fn()}
+                onClear={vi.fn().mockResolvedValue(undefined)}
+                onStatusFilterChange={vi.fn()}
+                onReasonFilterChange={vi.fn()}
+                currentSearch=""
+                currentStatus="all"
+                currentReason="all"
+                isLoading={false}
+                isClearing={false}
+            />
+        ));
+
+        fireEvent.input(screen.getByPlaceholderText('domain_or_client'), {
+            target: { value: 'pending.example' },
+        });
+        fireEvent.click(screen.getByTestId('query-log-clear-button-desktop'));
+        vi.runAllTimers();
+
+        expect(screen.getByText('settings_confirm_clear_query_log')).toBeInTheDocument();
+        expect(onSearch).not.toHaveBeenCalled();
     });
 
     it('confirms before clearing dashboard statistics', () => {
