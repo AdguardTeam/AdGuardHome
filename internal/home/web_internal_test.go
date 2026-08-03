@@ -150,6 +150,44 @@ func TestWebAPI_HandleTLSConfigure(t *testing.T) {
 	}, testTimeout, testTimeout/10)
 }
 
+func TestWebAPI_HandleHTTPSRedirectTLSAvailability(t *testing.T) {
+	storeGlobals(t)
+
+	config = &configuration{
+		TLS: tlsConfigSettings{
+			Enabled:    true,
+			ForceHTTPS: true,
+			PortHTTPS:  defaultPortHTTPS,
+		},
+	}
+
+	web := newTestWeb(t, nil)
+	web.httpsServer.server = &http.Server{}
+
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	certless := &tlsConfigSettings{
+		Enabled:    true,
+		ForceHTTPS: true,
+		PortHTTPS:  defaultPortHTTPS,
+	}
+	web.tlsConfigChanged(ctx, certless)
+
+	r := httptest.NewRequest(http.MethodGet, "http://dns.example/", nil)
+	w := httptest.NewRecorder()
+	assert.True(t, web.handleHTTPSRedirect(w, r))
+	assert.Empty(t, w.Header().Get("Location"))
+
+	certful := certless.clone()
+	certful.CertificateChainData = requireReadFile(t, testCertificatePath)
+	certful.PrivateKeyData = requireReadFile(t, testPrivateKeyPath)
+	web.tlsConfigChanged(ctx, certful)
+
+	w = httptest.NewRecorder()
+	assert.False(t, web.handleHTTPSRedirect(w, r))
+	assert.Equal(t, http.StatusTemporaryRedirect, w.Code)
+	assert.Equal(t, "https://dns.example/", w.Header().Get("Location"))
+}
+
 func TestWebAPI_HandleTLSStatus(t *testing.T) {
 	var (
 		ctx = testutil.ContextWithTimeout(t, testTimeout)

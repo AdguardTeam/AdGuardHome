@@ -88,6 +88,27 @@ func TestNewServerConfigCertlessEncryption(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, dnsSrv.Prepare(ctx, serverConf))
 	dnsSrv.Close(ctx)
+
+	serverConf, err = newServerConfig(
+		&dnsConfig{
+			BindHosts: []netip.Addr{netutil.IPv4Localhost()},
+			Config: dnsforward.Config{
+				UpstreamMode:     dnsforward.UpstreamModeLoadBalance,
+				EDNSClientSubnet: &dnsforward.EDNSClientSubnet{},
+			},
+			ServePlainDNS:   true,
+			PendingRequests: &pendingRequests{},
+		},
+		&clientSourcesConfig{},
+		tlsMgr.extendedTLSConfig(),
+		&doHConfig{},
+		tlsMgr,
+		aghhttp.EmptyRegistrar{},
+		dnsforward.EmptyClientsContainer{},
+		agh.EmptyConfigModifier{},
+	)
+	require.NoError(t, err)
+	assert.Empty(t, serverConf.TLSConf.HTTPSListenAddrs)
 }
 
 func TestGetDNSEncryptionCertless(t *testing.T) {
@@ -107,7 +128,12 @@ func TestGetDNSEncryptionCertless(t *testing.T) {
 	require.NoError(t, err)
 	require.Nil(t, tlsMgr.TLSConfig())
 
-	de := getDNSEncryption(tlsMgr)
+	de := getDNSEncryption(tlsMgr, false)
+	assert.Empty(t, de.https)
+	assert.Empty(t, de.tls)
+	assert.Empty(t, de.quic)
+
+	de = getDNSEncryption(tlsMgr, true)
 	assert.Equal(t, "https://dns.example/dns-query", de.https)
 	assert.Empty(t, de.tls)
 	assert.Empty(t, de.quic)

@@ -55,6 +55,12 @@ func TestNewTLSManagerCertificatePair(t *testing.T) {
 	require.NoError(t, os.WriteFile(emptyCertPath, nil, 0o600))
 	require.NoError(t, os.WriteFile(emptyKeyPath, nil, 0o600))
 
+	mismatchDir := t.TempDir()
+	mismatchCertPath := filepath.Join(mismatchDir, "cert.pem")
+	mismatchKeyPath := filepath.Join(mismatchDir, "key.pem")
+	mismatchCert, mismatchKey := newCertAndKey(t, 2)
+	writeCertAndKey(t, mismatchCert, mismatchCertPath, mismatchKey, mismatchKeyPath)
+
 	testCases := []struct {
 		name     string
 		certPath string
@@ -79,6 +85,12 @@ func TestNewTLSManagerCertificatePair(t *testing.T) {
 			name:     "malformed_pair",
 			certData: "bad certificate",
 			keyData:  "bad key",
+			wantErr:  true,
+		},
+		{
+			name:     "mismatched_pair",
+			certPath: testCertificatePath,
+			keyPath:  mismatchKeyPath,
 			wantErr:  true,
 		},
 		{
@@ -139,11 +151,25 @@ func TestTLSManagerCertlessTransition(t *testing.T) {
 	require.NotNil(t, m.TLSConfig())
 	require.NotNil(t, m.tlsCert)
 
-	_, err = m.setConfig(ctx, &tlsConfigSettings{Enabled: true}, aghalg.NBNull)
+	restartHTTPS, err := m.setConfig(ctx, &tlsConfigSettings{Enabled: true}, aghalg.NBNull)
 	require.NoError(t, err)
+	assert.True(t, restartHTTPS)
 	assert.Nil(t, m.TLSConfig())
 	assert.Nil(t, m.tlsCert)
 	assert.False(t, m.HasIPAddrs())
+	assert.True(t, m.extendedTLSConfig().Enabled)
+
+	restartHTTPS, err = m.setConfig(ctx, &tlsConfigSettings{
+		Enabled:              true,
+		CertificatePath:      testCertificatePath,
+		PrivateKeyPath:       testPrivateKeyPath,
+		CertificateChainData: requireReadFile(t, testCertificatePath),
+		PrivateKeyData:       requireReadFile(t, testPrivateKeyPath),
+	}, aghalg.NBNull)
+	require.NoError(t, err)
+	assert.True(t, restartHTTPS)
+	assert.NotNil(t, m.TLSConfig())
+	assert.NotNil(t, m.tlsCert)
 }
 
 func TestValidateCertificates(t *testing.T) {
