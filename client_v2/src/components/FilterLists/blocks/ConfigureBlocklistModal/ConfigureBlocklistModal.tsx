@@ -120,7 +120,7 @@ export const ConfigureBlocklistModal = (props: Props) => {
                     if (nameErr || urlErr) {
                         return;
                     }
-                    addFilter(values.url, values.name, false);
+                    await addFilter(values.url, values.name, false);
                 } else {
                     const existingFilterSources = new Set(
                         filteringState.filters.map((filter: Filter) => filter.url),
