@@ -36,6 +36,9 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - The `edge` channel has been switched to the new UI and versioning scheme.
 
+- The dashboard no longer shows zero-valued statistics for disabled Safe
+  Browsing, Parental Control, and Safe Search features ([#689]).
+
 ### Deprecated
 
 - `strict_sni_check` is now deprecated.
@@ -45,6 +48,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 - Blocked requests without an EDNS(0) OPT record ([#8183]).
 
 [#8183]: https://github.com/AdguardTeam/AdGuardHome/issues/8183
+[#689]:  https://github.com/AdguardTeam/AdGuardHome/issues/689
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
