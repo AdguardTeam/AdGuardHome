@@ -42,9 +42,12 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Excessive filter update retry intervals after network errors ([#8506]).
+
 - Blocked requests without an EDNS(0) OPT record ([#8183]).
 
 [#8183]: https://github.com/AdguardTeam/AdGuardHome/issues/8183
+[#8506]: https://github.com/AdguardTeam/AdGuardHome/issues/8506
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

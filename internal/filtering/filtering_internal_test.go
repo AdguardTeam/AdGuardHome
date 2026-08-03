@@ -4,15 +4,18 @@ import (
 	"bytes"
 	"cmp"
 	"fmt"
+	"net/http"
 	"net/netip"
 	"testing"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/hashprefix"
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
+	"github.com/AdguardTeam/golibs/testutil/fakenet/fakehttp"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
@@ -29,6 +32,51 @@ const (
 
 // testLogger is the common logger for tests.
 var testLogger = slogutil.NewDiscardLogger()
+
+func TestDNSFilter_PeriodicallyRefreshFilters(t *testing.T) {
+	const errNetwork errors.Error = "test network error"
+
+	d := newDNSFilter(t)
+	t.Cleanup(d.Close)
+
+	d.conf.FiltersUpdateIntervalHours = 1
+	d.conf.Filters = []FilterYAML{{
+		Enabled: true,
+		URL:     "https://example.org/filter.txt",
+		Filter: Filter{
+			ID: 1,
+		},
+	}}
+	d.conf.HTTPClient.Transport = &fakehttp.RoundTripper{
+		OnRoundTrip: func(_ *http.Request) (_ *http.Response, _ error) {
+			return nil, errNetwork
+		},
+	}
+
+	testCases := []struct {
+		name string
+		ivl  time.Duration
+		want time.Duration
+	}{{
+		name: "initial",
+		ivl:  5 * time.Second,
+		want: 10 * time.Second,
+	}, {
+		name: "below_maximum",
+		ivl:  45 * time.Minute,
+		want: time.Hour,
+	}, {
+		name: "at_maximum",
+		ivl:  time.Hour,
+		want: time.Hour,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.want, d.periodicallyRefreshFilters(tc.ivl))
+		})
+	}
+}
 
 // Helpers.
 
