@@ -42,8 +42,12 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Query-log drill-down links for top queried domains and clients on the
+  dashboard ([#1368]).
+
 - Blocked requests without an EDNS(0) OPT record ([#8183]).
 
+[#1368]: https://github.com/AdguardTeam/AdGuardHome/issues/1368
 [#8183]: https://github.com/AdguardTeam/AdGuardHome/issues/8183
 
 <!--

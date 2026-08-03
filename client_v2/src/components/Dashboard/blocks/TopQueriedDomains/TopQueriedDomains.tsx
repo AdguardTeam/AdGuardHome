@@ -4,7 +4,9 @@ import { useIsDesktop } from 'panel/helpers/useMediaQuery';
 import { MOBILE_TABLE_MAX_ROWS } from 'panel/helpers/constants';
 import intl from 'panel/common/intl';
 import { Icon } from 'panel/common/ui/Icon';
+import { Link } from 'panel/common/ui/Link';
 import { Tooltip } from 'panel/common/ui/Tooltip';
+import { RoutePath } from 'panel/components/Routes/Paths';
 import { formatNumber, formatCompactNumber } from 'panel/helpers/helpers';
 import { getTrackerData } from 'panel/helpers/trackers/trackers';
 import theme from 'panel/lib/theme';
@@ -91,7 +93,13 @@ export const TopQueriedDomains = (props: Props) => {
                                                 <Icon icon="eye_open" class={s.tableRowIcon} />
                                             </Tooltip>
                                         </Show>
-                                        <span class={s.domainName}>{domain.name}</span>
+                                        <Link
+                                            to={RoutePath.QueryLog}
+                                            query={{ search: `"${domain.name}"` }}
+                                            class={s.domainName}
+                                        >
+                                            {domain.name}
+                                        </Link>
                                     </div>
 
                                     <div class={s.tableRowRight}>
