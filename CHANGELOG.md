@@ -42,8 +42,12 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Starting AdGuard Home with DNSCrypt or unencrypted DNS-over-HTTPS enabled
+  without a TLS certificate ([#7773]).
+
 - Blocked requests without an EDNS(0) OPT record ([#8183]).
 
+[#7773]: https://github.com/AdguardTeam/AdGuardHome/issues/7773
 [#8183]: https://github.com/AdguardTeam/AdGuardHome/issues/8183
 
 <!--

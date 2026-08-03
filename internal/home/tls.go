@@ -156,24 +156,14 @@ func newTLSManager(ctx context.Context, conf *tlsManagerConfig) (m *tlsManager, 
 		// Don't wrap the error, because it's informative enough as is.
 		return m, err
 	}
-
-	cert, err := tls.X509KeyPair(m.extTLSConf.CertificateChainData, m.extTLSConf.PrivateKeyData)
+	err = m.updateTLSCert(m.extTLSConf)
 	if err != nil {
 		m.extTLSConf.Enabled = false
 
-		return m, fmt.Errorf("parsing tls certificate: %w", err)
+		// Don't wrap the error, because it's informative enough as is.
+		return m, err
 	}
 
-	slices.Sort(cert.Leaf.DNSNames)
-
-	m.tlsConf = &tls.Config{
-		RootCAs:        m.rootCerts,
-		CipherSuites:   m.customCipherIDs,
-		MinVersion:     tls.VersionTLS12,
-		GetCertificate: m.onGetCertificate,
-	}
-
-	m.tlsCert = &cert
 	m.setCertFileTime(ctx)
 
 	return m, nil
@@ -868,6 +858,10 @@ func (m *tlsManager) TLSConfig() (conf *tls.Config) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
+	if m.tlsConf == nil {
+		return nil
+	}
+
 	return m.tlsConf.Clone()
 }
 
@@ -913,7 +907,10 @@ func (m *tlsManager) onGetCertificate(chi *tls.ClientHelloInfo) (cert *tls.Certi
 // m.tlsConf is nil, it will be initialized.  extTLSConf must not be nil.  m.mu
 // must be locked.
 func (m *tlsManager) updateTLSCert(extTLSConf *tlsConfigSettings) (err error) {
-	if len(extTLSConf.CertificateChainData) == 0 || len(extTLSConf.PrivateKeyData) == 0 {
+	if len(extTLSConf.CertificateChainData) == 0 &&
+		len(extTLSConf.PrivateKeyData) == 0 &&
+		extTLSConf.CertificatePath == "" &&
+		extTLSConf.PrivateKeyPath == "" {
 		return nil
 	}
 

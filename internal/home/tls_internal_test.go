@@ -29,6 +29,99 @@ const (
 	testPrivateKeyPath  = "./testdata/key.pem"
 )
 
+func TestNewTLSManagerCertlessDNSCrypt(t *testing.T) {
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+
+	m, err := newTLSManager(ctx, &tlsManagerConfig{
+		logger:       testLogger,
+		confModifier: agh.EmptyConfigModifier{},
+		manager:      aghtls.EmptyManager{},
+		tlsSettings: tlsConfigSettings{
+			Enabled:            true,
+			PortDNSCrypt:       5443,
+			DNSCryptConfigFile: "testdata/dnscrypt.yaml",
+		},
+	})
+	require.NoError(t, err)
+	assert.Nil(t, m.TLSConfig())
+	assert.True(t, m.extendedTLSConfig().Enabled)
+}
+
+func TestNewTLSManagerCertificatePair(t *testing.T) {
+	emptyDir := t.TempDir()
+	emptyCertPath := filepath.Join(emptyDir, "cert.pem")
+	emptyKeyPath := filepath.Join(emptyDir, "key.pem")
+	require.NoError(t, os.WriteFile(emptyCertPath, nil, 0o600))
+	require.NoError(t, os.WriteFile(emptyKeyPath, nil, 0o600))
+
+	testCases := []struct {
+		name     string
+		certPath string
+		keyPath  string
+		certData string
+		keyData  string
+
+		wantErr bool
+		wantTLS bool
+	}{
+		{
+			name:     "certificate_only",
+			certPath: testCertificatePath,
+			wantErr:  true,
+		},
+		{
+			name:    "private_key_only",
+			keyPath: testPrivateKeyPath,
+			wantErr: true,
+		},
+		{
+			name:     "malformed_pair",
+			certData: "bad certificate",
+			keyData:  "bad key",
+			wantErr:  true,
+		},
+		{
+			name:     "empty_files",
+			certPath: emptyCertPath,
+			keyPath:  emptyKeyPath,
+			wantErr:  true,
+		},
+		{
+			name:     "valid_pair",
+			certPath: testCertificatePath,
+			keyPath:  testPrivateKeyPath,
+			wantTLS:  true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			m, err := newTLSManager(ctx, &tlsManagerConfig{
+				logger:       testLogger,
+				confModifier: agh.EmptyConfigModifier{},
+				manager:      aghtls.EmptyManager{},
+				tlsSettings: tlsConfigSettings{
+					Enabled:          true,
+					CertificateChain: tc.certData,
+					PrivateKey:       tc.keyData,
+					CertificatePath:  tc.certPath,
+					PrivateKeyPath:   tc.keyPath,
+				},
+			})
+			if tc.wantErr {
+				require.Error(t, err)
+				assert.False(t, m.extendedTLSConfig().Enabled)
+
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tc.wantTLS, m.TLSConfig() != nil)
+		})
+	}
+}
+
 func TestValidateCertificates(t *testing.T) {
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
 

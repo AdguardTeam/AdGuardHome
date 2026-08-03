@@ -501,6 +501,36 @@ func TestServer_timeout(t *testing.T) {
 	})
 }
 
+func TestServerPrepareCertlessTLS(t *testing.T) {
+	s, err := NewServer(DNSCreateParams{
+		Logger:            testLogger,
+		TLSConfigProvider: aghtls.EmptyTLSConfigProvider{},
+	})
+	require.NoError(t, err)
+
+	conf := &ServerConfig{
+		TLSConf: &TLSConfig{
+			TLSListenAddrs:  []*net.TCPAddr{{IP: net.IPv4(127, 0, 0, 1), Port: 5445}},
+			QUICListenAddrs: []*net.UDPAddr{{IP: net.IPv4(127, 0, 0, 1), Port: 5446}},
+		},
+		Config: Config{
+			UpstreamMode:     UpstreamModeLoadBalance,
+			EDNSClientSubnet: &EDNSClientSubnet{},
+			ClientsContainer: EmptyClientsContainer{},
+		},
+		ServePlainDNS: true,
+	}
+
+	err = s.Prepare(testutil.ContextWithTimeout(t, testTimeout), conf)
+	require.NoError(t, err)
+	assert.Nil(t, s.dnsProxy.TLSListenAddr)
+	assert.Nil(t, s.dnsProxy.QUICListenAddr)
+
+	req := (&dns.Msg{}).SetQuestion(ddrHostFQDN, dns.TypeSVCB)
+	resp := s.makeDDRResponse(req)
+	assert.Empty(t, resp.Answer)
+}
+
 func TestServer_Prepare_fallbacks(t *testing.T) {
 	srvConf := &ServerConfig{
 		TLSConf: &TLSConfig{},
