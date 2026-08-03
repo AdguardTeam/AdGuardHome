@@ -2,6 +2,8 @@ package dnsforward
 
 import (
 	"net/netip"
+	"slices"
+	"sync"
 	"testing"
 	"time"
 
@@ -36,13 +38,20 @@ func (l *testQueryLog) ShouldLog(string, uint16, uint16, []string) bool {
 	return true
 }
 
-// testStats is a simple [stats.Interface] implementation for tests.
+// testStats is a simple [stats.Interface] implementation for tests.  It's safe
+// for concurrent use, since the upstream entries may be collected from the
+// background goroutines, e.g. the optimistic cache resolver's ones.
 type testStats struct {
 	// Stats is embedded here simply to make testStats a [stats.Interface]
 	// without actually implementing all methods.
 	stats.Interface
 
+	// mu protects lastEntry and upsEntries.
+	mu sync.Mutex
+
 	lastEntry *stats.Entry
+
+	upsEntries []*stats.UpstreamEntry
 }
 
 // Update implements the [stats.Interface] interface for *testStats.
@@ -51,7 +60,26 @@ func (l *testStats) Update(e *stats.Entry) {
 		return
 	}
 
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
 	l.lastEntry = e
+}
+
+// UpdateUpstream implements the [stats.Interface] interface for *testStats.
+func (l *testStats) UpdateUpstream(e *stats.UpstreamEntry) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	l.upsEntries = append(l.upsEntries, e)
+}
+
+// upstreamEntries returns a copy of the collected upstream entries.
+func (l *testStats) upstreamEntries() (entries []*stats.UpstreamEntry) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	return slices.Clone(l.upsEntries)
 }
 
 // ShouldCount implements the [stats.Interface] interface for *testStats.

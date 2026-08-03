@@ -175,3 +175,36 @@ func TestTopUpstreamsPairs(t *testing.T) {
 		})
 	}
 }
+
+// TestStatsCtx_dataFromUnits_avgProcessingTime makes sure that the average
+// processing time is weighted by the number of requests of each unit.
+//
+// [unitDB.TimeAvg] is the mean within a single unit, so taking the mean of the
+// means would give a nearly idle hour the same weight as a busy one.
+func TestStatsCtx_dataFromUnits_avgProcessingTime(t *testing.T) {
+	t.Parallel()
+
+	// A busy unit with a low mean and a nearly idle one with a high mean.  The
+	// weighted mean is dominated by the busy unit:
+	//
+	//	(1000*1000 + 100000*10) / (1000 + 10) = 1980.198 microseconds
+	//
+	// The unweighted mean of the means would be (1000 + 100000) / 2 = 50500,
+	// which is off by more than an order of magnitude.
+	units := []*unitDB{{
+		NResult: make([]uint64, resultLast),
+		NTotal:  1000,
+		TimeAvg: 1000,
+	}, {
+		NResult: make([]uint64, resultLast),
+		NTotal:  10,
+		TimeAvg: 100_000,
+	}}
+
+	s := &StatsCtx{}
+	resp := s.dataFromUnits(units, 0)
+
+	wantAvg := microsecondsToSeconds(2_000_000 / 1010.0)
+	assert.InDelta(t, wantAvg, resp.AvgProcessingTime, 1e-12)
+	assert.Equal(t, uint64(1010), resp.NumDNSQueries)
+}
