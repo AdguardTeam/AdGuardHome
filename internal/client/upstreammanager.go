@@ -16,10 +16,23 @@ import (
 	"github.com/AdguardTeam/golibs/timeutil"
 )
 
+// UpstreamConfigWrapper wraps parsed upstream configurations, e.g. to collect
+// statistics about the exchanges with them.
+type UpstreamConfigWrapper interface {
+	// WrapUpstreamConfig returns a wrapped copy of uc, or nil if uc is nil.  It
+	// must not modify uc.
+	WrapUpstreamConfig(uc *proxy.UpstreamConfig) (wrapped *proxy.UpstreamConfig)
+}
+
 // CommonUpstreamConfig contains common settings for custom client upstream
 // configurations.
 type CommonUpstreamConfig struct {
-	Bootstrap               upstream.Resolver
+	Bootstrap upstream.Resolver
+
+	// UpstreamConfigWrapper wraps the parsed custom client upstream
+	// configurations.  If it's nil, they are used as is.
+	UpstreamConfigWrapper UpstreamConfigWrapper
+
 	UpstreamTimeout         time.Duration
 	BootstrapPreferIPv6     bool
 	EDNSClientSubnetEnabled bool
@@ -230,6 +243,10 @@ func newCustomUpstreamConfig(
 		// Should not happen because upstreams are already validated.  See
 		// [Persistent.validate].
 		panic(fmt.Errorf("creating custom upstream config: %w", err))
+	}
+
+	if w := conf.UpstreamConfigWrapper; w != nil {
+		upsConf = w.WrapUpstreamConfig(upsConf)
 	}
 
 	return proxy.NewCustomUpstreamConfig(

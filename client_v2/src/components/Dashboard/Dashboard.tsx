@@ -189,7 +189,7 @@ export const Dashboard = () => {
 
                             <UpstreamAvgTime
                                 topUpstreamsAvgTime={statsState.topUpstreamsAvgTime}
-                                avgProcessingTime={statsState.avgProcessingTime}
+                                avgUpstreamResponseTime={statsState.avgUpstreamResponseTime}
                             />
                         </div>
                     </Show>

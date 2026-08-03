@@ -94,6 +94,17 @@ type Interface interface {
 	// Update collects the incoming statistics data.
 	Update(e *Entry)
 
+	// UpdateUpstream collects the response time of a single successful exchange
+	// with an upstream DNS server.
+	//
+	// It's called separately from [Interface.Update], since not every exchange
+	// with an upstream server is bound to a client's request.  Most notably,
+	// the optimistic cache resolves expired entries in the background, and
+	// those exchanges must be accounted for as well, or else the average
+	// upstream response time is only based on cache misses, which are biased
+	// towards rare and slow domain names.
+	UpdateUpstream(e *UpstreamEntry)
+
 	// GetTopClientIP returns at most limit IP addresses corresponding to the
 	// clients with the most number of requests.
 	TopClientsIP(limit uint) []netip.Addr
@@ -300,6 +311,41 @@ func (s *StatsCtx) Update(e *Entry) {
 	}
 
 	s.curr.add(e)
+}
+
+// UpdateUpstream implements the [Interface] interface for *StatsCtx.  e must
+// not be nil.
+func (s *StatsCtx) UpdateUpstream(e *UpstreamEntry) {
+	s.confMu.Lock()
+	defer s.confMu.Unlock()
+
+	if !s.enabled || s.limit == 0 {
+		return
+	}
+
+	err := e.validate()
+	if err != nil {
+		s.logger.Debug("validating upstream entry", slogutil.KeyError, err)
+
+		return
+	}
+
+	// Only the domain can be checked here, since a background exchange, such as
+	// an optimistic cache refresh, has no client associated with it.
+	if s.isIgnored(e.Domain) {
+		return
+	}
+
+	s.currMu.Lock()
+	defer s.currMu.Unlock()
+
+	if s.curr == nil {
+		s.logger.Error("current unit is nil")
+
+		return
+	}
+
+	s.curr.addUpstream(e)
 }
 
 // WriteDiskConfig implements the [Interface] interface for *StatsCtx.

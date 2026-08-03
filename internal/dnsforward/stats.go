@@ -143,15 +143,10 @@ func (s *Server) logQuery(dctx *dnsContext, ip net.IP, processingTime time.Durat
 func (s *Server) updateStats(dctx *dnsContext, clientIP string, processingTime time.Duration) {
 	pctx := dctx.proxyCtx
 
-	var upstreamStats []*proxy.UpstreamStatistics
-	qs := pctx.QueryStatistics()
-	if qs != nil {
-		upstreamStats = append(upstreamStats, qs.Main()...)
-		upstreamStats = append(upstreamStats, qs.Fallback()...)
-	}
-
+	// NOTE:  The upstream response times are not taken from
+	// [proxy.DNSContext.QueryStatistics] here, since they are collected for
+	// every exchange, including the background ones, see [statsUpstream].
 	e := &stats.Entry{
-		UpstreamStats:  upstreamStats,
 		Domain:         aghnet.NormalizeDomain(pctx.Req.Question[0].Name),
 		Result:         stats.RNotFiltered,
 		ProcessingTime: processingTime,

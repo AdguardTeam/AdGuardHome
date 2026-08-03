@@ -121,6 +121,14 @@ type Server struct {
 	// stats is the statistics collector for client's DNS usage data.
 	stats stats.Interface
 
+	// upstreamStats is the same collector as stats, but it's set once and never
+	// reset, so that it can be used from [statsUpstream] without acquiring
+	// serverLock.  An upstream exchange may happen while serverLock is already
+	// held for reading, see [Server.Resolve], so acquiring it again there could
+	// deadlock with a concurrent writer.  Updating an already closed collector
+	// only loses the data, which is acceptable during the shutdown.
+	upstreamStats stats.Interface
+
 	// sysResolvers used to fetch system resolvers to use by default for private
 	// PTR resolving.
 	sysResolvers SystemResolvers
@@ -242,13 +250,14 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 	}
 
 	s = &Server{
-		dnsFilter:   p.DNSFilter,
-		dhcpServer:  p.DHCPServer,
-		stats:       p.Stats,
-		queryLog:    p.QueryLog,
-		privateNets: p.PrivateNets,
-		baseLogger:  p.Logger,
-		logger:      p.Logger.With(slogutil.KeyPrefix, "dnsforward"),
+		dnsFilter:     p.DNSFilter,
+		dhcpServer:    p.DHCPServer,
+		stats:         p.Stats,
+		upstreamStats: p.Stats,
+		queryLog:      p.QueryLog,
+		privateNets:   p.PrivateNets,
+		baseLogger:    p.Logger,
+		logger:        p.Logger.With(slogutil.KeyPrefix, "dnsforward"),
 		// TODO(e.burkov):  Use some case-insensitive string comparison.
 		localDomainSuffix: strings.ToLower(localDomainSuffix),
 		etcHosts:          etcHosts,
@@ -567,9 +576,10 @@ func (s *Server) prepareUpstreamSettings(ctx context.Context, boot upstream.Reso
 		return fmt.Errorf("preparing upstream config: %w", err)
 	}
 
-	s.conf.UpstreamConfig = uc
+	s.conf.UpstreamConfig = s.WrapUpstreamConfig(uc)
 	s.conf.ClientsContainer.UpdateCommonUpstreamConfig(&client.CommonUpstreamConfig{
 		Bootstrap:               boot,
+		UpstreamConfigWrapper:   s,
 		UpstreamTimeout:         s.conf.UpstreamTimeout,
 		BootstrapPreferIPv6:     s.conf.BootstrapPreferIPv6,
 		EDNSClientSubnetEnabled: s.conf.EDNSClientSubnet.Enabled,
@@ -665,10 +675,12 @@ func (s *Server) prepareInternalDNS(ctx context.Context) (err error) {
 		return err
 	}
 
-	s.conf.PrivateRDNSUpstreamConfig, err = s.prepareLocalResolvers(ctx)
+	privateUC, err := s.prepareLocalResolvers(ctx)
 	if err != nil {
 		return err
 	}
+
+	s.conf.PrivateRDNSUpstreamConfig = s.WrapUpstreamConfig(privateUC)
 
 	err = s.prepareInternalProxy()
 	if err != nil {
@@ -698,7 +710,7 @@ func (s *Server) setupFallbackDNS() (uc *proxy.UpstreamConfig, err error) {
 		return nil, err
 	}
 
-	return uc, nil
+	return s.WrapUpstreamConfig(uc), nil
 }
 
 // setupAddrProc initializes the address processor.  It assumes s.serverLock is

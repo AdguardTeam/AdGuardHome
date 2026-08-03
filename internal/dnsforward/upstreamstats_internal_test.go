@@ -1,0 +1,315 @@
+package dnsforward
+
+import (
+	"net"
+	"sync/atomic"
+	"testing"
+	"time"
+
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/AdGuardHome/internal/stats"
+	"github.com/AdguardTeam/dnsproxy/proxy"
+	"github.com/AdguardTeam/dnsproxy/upstream"
+	"github.com/AdguardTeam/golibs/container"
+	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/testutil"
+	"github.com/AdguardTeam/golibs/timeutil"
+	"github.com/miekg/dns"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestStatsUpstream_Exchange(t *testing.T) {
+	const domain = "example.com."
+
+	req := (&dns.Msg{}).SetQuestion(domain, dns.TypeA)
+
+	testCases := []struct {
+		upsErr     error
+		req        *dns.Msg
+		name       string
+		wantDomain string
+	}{{
+		upsErr:     nil,
+		req:        req,
+		name:       "success",
+		wantDomain: "example.com",
+	}, {
+		upsErr:     errors.Error("network is unreachable"),
+		req:        req,
+		name:       "error",
+		wantDomain: "",
+	}, {
+		upsErr:     nil,
+		req:        &dns.Msg{},
+		name:       "no_question",
+		wantDomain: "",
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			st := &testStats{}
+			ups := &statsUpstream{
+				upstream: aghtest.NewUpstreamMock(func(req *dns.Msg) (resp *dns.Msg, err error) {
+					if tc.upsErr != nil {
+						return nil, tc.upsErr
+					}
+
+					return (&dns.Msg{}).SetReply(req), nil
+				}),
+				srv: &Server{upstreamStats: st},
+			}
+
+			_, err := ups.Exchange(tc.req)
+			if tc.upsErr != nil {
+				assert.ErrorIs(t, err, tc.upsErr)
+			} else {
+				assert.NoError(t, err)
+			}
+
+			entries := st.upstreamEntries()
+			if tc.wantDomain == "" {
+				assert.Empty(t, entries)
+
+				return
+			}
+
+			require.Len(t, entries, 1)
+
+			assert.Equal(t, tc.wantDomain, entries[0].Domain)
+			assert.Equal(t, ups.Address(), entries[0].Address)
+		})
+	}
+}
+
+// TestStatsUpstream_Exchange_timeoutRetry is a regression test for the upstream
+// response times being much higher than the actual network latency, see
+// https://github.com/AdguardTeam/AdGuardHome/issues/8457.
+//
+// A plain DNS upstream retries once when an attempt times out, e.g. when a UDP
+// datagram is lost, and the retried exchange succeeds.  Its duration is then at
+// least the whole upstream timeout, which defaults to ten seconds, so a single
+// such sample outweighs a hundred normal ones several times over.
+func TestStatsUpstream_Exchange_timeoutRetry(t *testing.T) {
+	const domain = "example.com."
+	const upsTimeout = 1 * time.Second
+
+	// dropFirst tells the upstream to ignore the very first query, the way a
+	// lossy network would.
+	var dropFirst atomic.Bool
+
+	var reqNum atomic.Uint32
+	upsAddr := aghtest.StartLocalhostUpstream(t, dns.HandlerFunc(func(
+		w dns.ResponseWriter,
+		r *dns.Msg,
+	) {
+		if reqNum.Add(1) == 1 && dropFirst.Load() {
+			return
+		}
+
+		resp := (&dns.Msg{}).SetReply(r)
+		resp.Answer = []dns.RR{&dns.A{
+			Hdr: dns.RR_Header{Name: domain, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: 60},
+			A:   net.IP{1, 2, 3, 4},
+		}}
+
+		require.NoError(testutil.PanicT{}, w.WriteMsg(resp))
+	})).String()
+
+	testCases := []struct {
+		name      string
+		dropFirst bool
+		wantLen   int
+	}{{
+		name:      "normal_exchange_counted",
+		dropFirst: false,
+		wantLen:   1,
+	}, {
+		name:      "retried_exchange_not_counted",
+		dropFirst: true,
+		wantLen:   0,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			reqNum.Store(0)
+			dropFirst.Store(tc.dropFirst)
+
+			ups, err := upstream.AddressToUpstream(upsAddr, &upstream.Options{
+				Logger:  testLogger,
+				Timeout: upsTimeout,
+			})
+			require.NoError(t, err)
+			testutil.CleanupAndRequireSuccess(t, ups.Close)
+
+			st := &testStats{}
+			wrapped := &statsUpstream{
+				upstream: ups,
+				srv:      &Server{upstreamStats: st, logger: testLogger},
+				timeout:  upsTimeout,
+			}
+
+			resp, err := wrapped.Exchange((&dns.Msg{}).SetQuestion(domain, dns.TypeA))
+			require.NoError(t, err)
+			require.NotEmpty(t, resp.Answer)
+
+			assert.Len(t, st.upstreamEntries(), tc.wantLen)
+		})
+	}
+}
+
+func TestServer_WrapUpstreamConfig(t *testing.T) {
+	s := &Server{}
+
+	t.Run("nil", func(t *testing.T) {
+		assert.Nil(t, s.WrapUpstreamConfig(nil))
+	})
+
+	t.Run("all_fields", func(t *testing.T) {
+		ups := aghtest.NewUpstreamMock(func(req *dns.Msg) (resp *dns.Msg, err error) {
+			panic(testutil.UnexpectedCall(req))
+		})
+		exclusions := container.NewMapSet("excluded.example.")
+
+		uc := &proxy.UpstreamConfig{
+			DomainReservedUpstreams: map[string][]upstream.Upstream{
+				"reserved.example.": {ups},
+			},
+			SpecifiedDomainUpstreams: map[string][]upstream.Upstream{
+				"specified.example.": {ups},
+			},
+			SubdomainExclusions: exclusions,
+			Upstreams:           []upstream.Upstream{ups},
+		}
+
+		wrapped := s.WrapUpstreamConfig(uc)
+		require.NotNil(t, wrapped)
+
+		assert.Same(t, exclusions, wrapped.SubdomainExclusions)
+
+		// The original configuration must stay intact.
+		assert.Same(t, ups, uc.Upstreams[0])
+
+		for _, u := range [][]upstream.Upstream{
+			wrapped.Upstreams,
+			wrapped.DomainReservedUpstreams["reserved.example."],
+			wrapped.SpecifiedDomainUpstreams["specified.example."],
+		} {
+			require.Len(t, u, 1)
+
+			su, ok := u[0].(*statsUpstream)
+			require.True(t, ok)
+
+			assert.Same(t, ups, su.upstream)
+			assert.Same(t, s, su.srv)
+		}
+	})
+
+	t.Run("nil_fields", func(t *testing.T) {
+		wrapped := s.WrapUpstreamConfig(&proxy.UpstreamConfig{})
+		require.NotNil(t, wrapped)
+
+		assert.Nil(t, wrapped.Upstreams)
+		assert.Nil(t, wrapped.DomainReservedUpstreams)
+		assert.Nil(t, wrapped.SpecifiedDomainUpstreams)
+	})
+}
+
+// TestServer_updateStats_optimisticCache is a regression test for the biased
+// average upstream response time, see
+// https://github.com/AdguardTeam/AdGuardHome/issues/8435.
+//
+// The response served from the optimistic cache is refreshed in the background,
+// and that refresh must be counted in the upstream statistics as well.
+func TestServer_updateStats_optimisticCache(t *testing.T) {
+	const domain = "example.com."
+
+	// cacheTTL is the TTL that the upstream sets on its answers, and also the
+	// maximum TTL of the cache, so that the entry expires quickly.
+	const cacheTTL = 1 * time.Second
+
+	upsAddr := aghtest.StartLocalhostUpstream(t, dns.HandlerFunc(func(
+		w dns.ResponseWriter,
+		r *dns.Msg,
+	) {
+		resp := (&dns.Msg{}).SetReply(r)
+		resp.Answer = []dns.RR{&dns.A{
+			Hdr: dns.RR_Header{
+				Name:   domain,
+				Rrtype: dns.TypeA,
+				Class:  dns.ClassINET,
+				Ttl:    uint32(cacheTTL.Seconds()),
+			},
+			A: net.IP{1, 2, 3, 4},
+		}}
+
+		require.NoError(testutil.PanicT{}, w.WriteMsg(resp))
+	})).String()
+
+	st := &testStats{}
+	forwardConf := ServerConfig{
+		UDPListenAddrs: []*net.UDPAddr{{}},
+		TCPListenAddrs: []*net.TCPAddr{{}},
+		TLSConf:        &TLSConfig{},
+		Config: Config{
+			UpstreamDNS:              []string{upsAddr},
+			UpstreamMode:             UpstreamModeLoadBalance,
+			CacheEnabled:             true,
+			CacheSize:                4096,
+			CacheMaxTTL:              uint32(cacheTTL.Seconds()),
+			CacheOptimistic:          true,
+			CacheOptimisticAnswerTTL: timeutil.Duration(time.Minute),
+			CacheOptimisticMaxAge:    timeutil.Duration(time.Hour),
+			EDNSClientSubnet:         &EDNSClientSubnet{Enabled: false},
+			ClientsContainer:         EmptyClientsContainer{},
+		},
+		ServePlainDNS: true,
+	}
+
+	s := createTestServer(t, &filtering.Config{
+		Logger:            testLogger,
+		ProtectionEnabled: true,
+		BlockingMode:      filtering.BlockingModeDefault,
+	}, forwardConf, testTLSConfigProvider)
+	s.stats, s.upstreamStats = st, st
+
+	startDeferStop(t, s)
+	addr := s.dnsProxy.Addr(proxy.ProtoUDP).String()
+
+	req := (&dns.Msg{}).SetQuestion(domain, dns.TypeA)
+
+	// The first query is a cache miss, so it's resolved by the upstream.
+	resp, err := dns.Exchange(req, addr)
+	require.NoError(t, err)
+	require.NotEmpty(t, resp.Answer)
+
+	assert.Len(t, st.upstreamEntries(), 1)
+
+	// Let the cached entry expire.
+	time.Sleep(cacheTTL + 100*time.Millisecond)
+
+	// The second query is an optimistic cache hit, so it's answered right away
+	// while the entry is refreshed in the background.
+	resp, err = dns.Exchange(req, addr)
+	require.NoError(t, err)
+	require.NotEmpty(t, resp.Answer)
+
+	// Use a timeout that is generous enough for the background refresh to
+	// finish on a loaded machine.
+	const refreshTimeout = 10 * time.Second
+
+	assert.Eventually(t, func() (ok bool) {
+		return len(st.upstreamEntries()) == 2
+	}, refreshTimeout, refreshTimeout/100)
+
+	// NOTE:  Don't assert on QueryDuration, since an exchange with a localhost
+	// upstream may well finish within a single tick of a coarse system clock.
+	for _, e := range st.upstreamEntries() {
+		assert.Equal(t, "example.com", e.Domain)
+		assert.Equal(t, upsAddr, e.Address)
+	}
+}
+
+// type check
+var _ stats.Interface = (*testStats)(nil)
