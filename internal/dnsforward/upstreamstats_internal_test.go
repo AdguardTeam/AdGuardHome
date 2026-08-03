@@ -50,38 +50,48 @@ func TestStatsUpstream_Exchange(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			st := &testStats{}
-			ups := &statsUpstream{
-				upstream: aghtest.NewUpstreamMock(func(req *dns.Msg) (resp *dns.Msg, err error) {
-					if tc.upsErr != nil {
-						return nil, tc.upsErr
-					}
-
-					return (&dns.Msg{}).SetReply(req), nil
-				}),
-				srv: &Server{upstreamStats: st},
-			}
-
-			_, err := ups.Exchange(tc.req)
-			if tc.upsErr != nil {
-				assert.ErrorIs(t, err, tc.upsErr)
-			} else {
-				assert.NoError(t, err)
-			}
-
-			entries := st.upstreamEntries()
-			if tc.wantDomain == "" {
-				assert.Empty(t, entries)
-
-				return
-			}
-
-			require.Len(t, entries, 1)
-
-			assert.Equal(t, tc.wantDomain, entries[0].Domain)
-			assert.Equal(t, ups.Address(), entries[0].Address)
+			assertExchangeSample(t, tc.req, tc.upsErr, tc.wantDomain)
 		})
 	}
+}
+
+// assertExchangeSample performs a single exchange through a [statsUpstream]
+// whose wrapped upstream fails with upsErr, if it is not nil, and asserts that
+// the statistics received a sample for wantDomain, or none at all if it is
+// empty.
+func assertExchangeSample(t *testing.T, req *dns.Msg, upsErr error, wantDomain string) {
+	t.Helper()
+
+	st := &testStats{}
+	ups := &statsUpstream{
+		upstream: aghtest.NewUpstreamMock(func(req *dns.Msg) (resp *dns.Msg, err error) {
+			if upsErr != nil {
+				return nil, upsErr
+			}
+
+			return (&dns.Msg{}).SetReply(req), nil
+		}),
+		srv: &Server{upstreamStats: st},
+	}
+
+	_, err := ups.Exchange(req)
+	if upsErr != nil {
+		assert.ErrorIs(t, err, upsErr)
+	} else {
+		assert.NoError(t, err)
+	}
+
+	entries := st.upstreamEntries()
+	if wantDomain == "" {
+		assert.Empty(t, entries)
+
+		return
+	}
+
+	require.Len(t, entries, 1)
+
+	assert.Equal(t, wantDomain, entries[0].Domain)
+	assert.Equal(t, ups.Address(), entries[0].Address)
 }
 
 // TestStatsUpstream_Exchange_timeoutRetry is a regression test for the upstream
