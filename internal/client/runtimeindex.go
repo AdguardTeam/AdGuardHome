@@ -21,6 +21,18 @@ func (ri *runtimeIndex) client(ip netip.Addr) (rc *Runtime) {
 	return ri.index[ip]
 }
 
+// clientByIP returns the exact runtime client for ip.  If there is no
+// non-empty exact client, it returns the only client whose address differs
+// from ip only by its IPv6 zone.
+func (ri *runtimeIndex) clientByIP(ip netip.Addr) (rc *Runtime) {
+	rc = ri.client(ip)
+	if rc != nil && !rc.isEmpty() {
+		return rc
+	}
+
+	return ri.clientByIPWithoutZone(ip)
+}
+
 // clientByIPWithoutZone returns the only saved runtime client whose IP address
 // equals ip after removing its IPv6 zone.  It returns nil if ip is not an
 // unzoned IPv6 address, no client matches, or multiple clients match.
@@ -30,7 +42,7 @@ func (ri *runtimeIndex) clientByIPWithoutZone(ip netip.Addr) (rc *Runtime) {
 	}
 
 	for addr, c := range ri.index {
-		if addr.WithZone("") != ip {
+		if c.isEmpty() || addr.WithZone("") != ip {
 			continue
 		}
 

@@ -369,7 +369,12 @@ func (s *Storage) UpdateDHCP(ctx context.Context) {
 
 	added := 0
 	for _, l := range s.dhcp.Leases() {
-		s.runtimeIndex.setInfo(l.IP, src, []string{l.Hostname})
+		ip := l.IP
+		if rc := s.runtimeIndex.clientByIP(ip); rc != nil {
+			ip = rc.Addr()
+		}
+
+		s.runtimeIndex.setInfo(ip, src, []string{l.Hostname})
 		added++
 	}
 
@@ -690,10 +695,7 @@ func (s *Storage) ClientRuntime(ip netip.Addr) (rc *Runtime) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	rc = s.runtimeIndex.client(ip)
-	if rc == nil {
-		rc = s.runtimeIndex.clientByIPWithoutZone(ip)
-	}
+	rc = s.runtimeIndex.clientByIP(ip)
 
 	if !s.runtimeSourceDHCP {
 		return rc.clone()

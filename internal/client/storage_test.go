@@ -198,6 +198,57 @@ func TestStorage_ClientRuntime_zones(t *testing.T) {
 		assert.Equal(t, 1, count)
 	})
 
+	t.Run("unique_with_dhcp_refresh", func(t *testing.T) {
+		leases := []*dhcpsvc.Lease{{
+			IP:       ip,
+			Hostname: hostDHCP,
+		}}
+		dhcp := &testDHCP{
+			OnLeases: func() (got []*dhcpsvc.Lease) { return leases },
+			OnHostBy: func(_ netip.Addr) (host string) { return "" },
+			OnMACBy:  func(_ netip.Addr) (mac net.HardwareAddr) { return nil },
+		}
+
+		s, err := client.NewStorage(ctx, &client.StorageConfig{
+			BaseLogger:        testLogger,
+			Logger:            testLogger,
+			DHCP:              dhcp,
+			RuntimeSourceDHCP: true,
+		})
+		require.NoError(t, err)
+
+		// Seed an unzoned DHCP-only client to ensure that clearing the DHCP
+		// source doesn't leave an empty exact match that prevents convergence.
+		s.UpdateDHCP(ctx)
+
+		wantWHOIS := &whois.Info{Orgname: "Example Org"}
+		s.UpdateAddress(ctx, ipBrLAN, hostBrLAN, wantWHOIS)
+		s.UpdateDHCP(ctx)
+
+		count := 0
+		s.RangeRuntime(func(_ *client.Runtime) (cont bool) {
+			count++
+
+			return true
+		})
+		require.Equal(t, 1, count)
+
+		rc := s.ClientRuntime(ip)
+		require.NotNil(t, rc)
+		assert.Equal(t, ipBrLAN, rc.Addr())
+		assert.True(t, compareRuntimeInfo(rc, client.SourceDHCP, hostDHCP))
+		assert.Equal(t, wantWHOIS, rc.WHOIS())
+
+		leases = nil
+		s.UpdateDHCP(ctx)
+
+		rc = s.ClientRuntime(ip)
+		require.NotNil(t, rc)
+		assert.Equal(t, ipBrLAN, rc.Addr())
+		assert.True(t, compareRuntimeInfo(rc, client.SourceRDNS, hostBrLAN))
+		assert.Equal(t, wantWHOIS, rc.WHOIS())
+	})
+
 	t.Run("ambiguous", func(t *testing.T) {
 		s := newStorage(t, nil)
 		s.UpdateAddress(ctx, ipBrLAN, hostBrLAN, nil)
