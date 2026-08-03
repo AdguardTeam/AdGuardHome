@@ -595,14 +595,12 @@ func (iface *dhcpInterfaceV6) newConfirmRespOpts(
 	return iface.appendRequestedOptions(opts, req)
 }
 
-// newRenewRespOpts returns the common option list for Reply responses to a
-// Renew message.  fd, req, and cliID must not be nil.  iana must be a valid
-// IA_NA option, or be empty if the response should not contain an IA_NA option.
+// newUpdateRespOpts returns the common option list for Reply responses to a
+// RENEW or REBIND messages.  fd, req, and cliID must not be nil.  iana must be
+// a valid IA_NA option, or empty if the response should not include one.
 //
 // See RFC 9915 Section 18.3.4.
-//
-// TODO(e.burkov):  DRY with other response option builders.
-func (iface *dhcpInterfaceV6) newRenewRespOpts(
+func (iface *dhcpInterfaceV6) newUpdateRespOpts(
 	fd *frameData6,
 	req *layers.DHCPv6,
 	cliID *layers.DHCPv6DUID,
@@ -621,6 +619,28 @@ func (iface *dhcpInterfaceV6) newRenewRespOpts(
 	// See RFC 9915 Section 18.3.9.
 	opts = append(opts, newPreferenceOption(0))
 	opts = append(opts, newSOLMaxRTOption(DefaultSolMaxRT))
+
+	return iface.appendRequestedOptions(opts, req)
+}
+
+// newInfoRespOpts returns the option list for a Reply to an INFORMATION-REQUEST
+// message.  The Client Identifier option is echoed back only if the request
+// contained one.  fd and req must not be nil.
+//
+// See RFC 9915 Section 18.3.6.
+func (iface *dhcpInterfaceV6) newInfoRespOpts(
+	fd *frameData6,
+	req *layers.DHCPv6,
+) (opts layers.DHCPv6Options) {
+	opts = append(opts, layers.NewDHCPv6Option(layers.DHCPv6OptServerID, fd.duidData))
+
+	// Client ID is optional in INFORMATION-REQUEST but must be echoed if
+	// present.
+	//
+	// See RFC 9915 Section 18.3.6.
+	if cliIDData, ok := clientDUID6(req.Options); ok {
+		opts = append(opts, layers.NewDHCPv6Option(layers.DHCPv6OptClientID, cliIDData))
+	}
 
 	return iface.appendRequestedOptions(opts, req)
 }
@@ -679,12 +699,12 @@ func (iface *dhcpInterfaceV6) ianaForRequest(
 	return iface.iaNAFromLease(lease, iaid)
 }
 
-// ianaForRenew returns the IANA filled with committed lease data for req.  It
+// ianaForUpdate returns the IANA filled with committed lease data for req.  It
 // reuses an already reserved lease for the client, if it exists.  req must be a
-// valid DHCPv6 message of type RENEW, iaid must not be zero, and mac must be a
-// valid MAC address according to [netutil.ValidateMAC].  iface.common.indexMu
-// must be locked.
-func (iface *dhcpInterfaceV6) ianaForRenew(
+// valid DHCPv6 message of type RENEW or REBIND, iaid must not be zero, and mac
+// must be a valid MAC address according to [netutil.ValidateMAC].
+// iface.common.indexMu must be locked.
+func (iface *dhcpInterfaceV6) ianaForUpdate(
 	ctx context.Context,
 	req *layers.DHCPv6,
 	reqIANA *IANAOption,
@@ -698,7 +718,7 @@ func (iface *dhcpInterfaceV6) ianaForRenew(
 		// With no requested addresses there's nothing to renew.  Respond with
 		// no IA options similarly to how the Request handler does.
 		//
-		// See RFC 9915 Section 18.3.4.
+		// See RFC 9915 Section 18.3.4 and 18.3.5.
 		return layers.DHCPv6Option{}
 	}
 
@@ -707,8 +727,8 @@ func (iface *dhcpInterfaceV6) ianaForRenew(
 		// No binding found for this client.  The server returns the IA with a
 		// NoBinding status code.
 		//
-		// See RFC 9915 Section 18.3.4.
-		return layers.DHCPv6Option{}
+		// See RFC 9915 Section 18.3.4 and 18.3.5.
+		return newIANAWithStatus(reqIANA.ID, layers.DHCPv6StatusCodeNoBinding)
 	}
 
 	err := iface.commit(ctx, req, lease)
