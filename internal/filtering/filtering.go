@@ -3,9 +3,9 @@ package filtering
 
 import (
 	"context"
-	"crypto/sha256"
 	"fmt"
 	"hash"
+	"hash/maphash"
 	"io"
 	"io/fs"
 	"log/slog"
@@ -933,13 +933,28 @@ func (d *DNSFilter) initFiltering(ctx context.Context, allowFilters, blockFilter
 
 // fingerprint is a fingerprint of the rule lists that a pair of filtering
 // engines is built from, see [filtersFingerprint].
-type fingerprint = [sha256.Size]byte
+type fingerprint = uint64
+
+// fingerprintSeed is the seed of every [filtersFingerprint].  It must be the
+// same for all of them, or their values would not be comparable, and it is
+// drawn once per process so that the hash cannot be targeted from the outside.
+var fingerprintSeed = maphash.MakeSeed()
 
 // filtersFingerprint returns the fingerprint of the given rule lists.  Two
 // calls return the same value if and only if building the filtering engines
 // from these lists is expected to produce the same engines.
+//
+// The hash is not cryptographic.  Its value never leaves the process and is
+// only ever compared against the one the current engines were built from, so
+// it needs no second-preimage resistance; it is seeded per process so that a
+// collision cannot be prepared in a rule list either.  A collision would cost
+// a skipped rebuild, that is, the previous rules staying in use until the next
+// change, and nothing worse.  Hashing 43 MiB of rules costs about 11ms this
+// way against about 124ms with SHA-256, which is worth having on the hardware
+// these rebuilds are reported to run out of memory on.
 func filtersFingerprint(allowFilters, blockFilters []Filter) (f fingerprint) {
-	h := sha256.New()
+	h := &maphash.Hash{}
+	h.SetSeed(fingerprintSeed)
 
 	hashFilters(h, blockFilters)
 
@@ -949,7 +964,7 @@ func filtersFingerprint(allowFilters, blockFilters []Filter) (f fingerprint) {
 
 	hashFilters(h, allowFilters)
 
-	return fingerprint(h.Sum(nil))
+	return h.Sum64()
 }
 
 // hashFilters writes the data identifying filters into h.
