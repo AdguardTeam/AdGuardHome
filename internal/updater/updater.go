@@ -364,27 +364,11 @@ func (u *Updater) replace(ctx context.Context) (err error) {
 		return fmt.Errorf("copySupportingFiles(%s, %s) failed: %w", u.updateDir, u.workDir, err)
 	}
 
-	stagedExe, err := os.CreateTemp(filepath.Dir(u.currentExeName), ".agh-update-*")
+	stagedExeName, err := u.stageExecutable()
 	if err != nil {
-		return fmt.Errorf("creating staged executable: %w", err)
+		return err
 	}
-	stagedExeName := stagedExe.Name()
 	defer func() { _ = os.Remove(stagedExeName) }()
-
-	err = stagedExe.Close()
-	if err != nil {
-		return fmt.Errorf("closing staged executable: %w", err)
-	}
-
-	err = copyFile(u.updateExeName, stagedExeName, aghos.DefaultPermExe)
-	if err != nil {
-		return fmt.Errorf("staging executable: %w", err)
-	}
-
-	err = os.Chmod(stagedExeName, aghos.DefaultPermExe)
-	if err != nil {
-		return fmt.Errorf("setting staged executable permissions: %w", err)
-	}
 
 	u.logger.InfoContext(
 		ctx,
@@ -404,18 +388,7 @@ func (u *Updater) replace(ctx context.Context) (err error) {
 		err = u.rename(stagedExeName, u.currentExeName)
 	}
 	if err != nil {
-		installErr := err
-		removeErr := os.Remove(u.currentExeName)
-		if removeErr != nil && !errors.Is(removeErr, os.ErrNotExist) {
-			return errors.Join(installErr, fmt.Errorf("removing failed executable: %w", removeErr))
-		}
-
-		err = u.rename(u.backupExeName, u.currentExeName)
-		if err != nil {
-			return errors.Join(installErr, fmt.Errorf("restoring executable: %w", err))
-		}
-
-		return installErr
+		return u.restoreExecutable(err)
 	}
 
 	u.logger.InfoContext(
@@ -426,6 +399,43 @@ func (u *Updater) replace(ctx context.Context) (err error) {
 	)
 
 	return nil
+}
+
+func (u *Updater) stageExecutable() (name string, err error) {
+	f, err := os.CreateTemp(filepath.Dir(u.currentExeName), ".agh-update-*")
+	if err != nil {
+		return "", fmt.Errorf("creating staged executable: %w", err)
+	}
+	name = f.Name()
+
+	err = f.Close()
+	if err == nil {
+		err = copyFile(u.updateExeName, name, aghos.DefaultPermExe)
+	}
+	if err == nil {
+		err = os.Chmod(name, aghos.DefaultPermExe)
+	}
+	if err != nil {
+		_ = os.Remove(name)
+
+		return "", fmt.Errorf("staging executable: %w", err)
+	}
+
+	return name, nil
+}
+
+func (u *Updater) restoreExecutable(installErr error) (err error) {
+	err = os.Remove(u.currentExeName)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return errors.Join(installErr, fmt.Errorf("removing failed executable: %w", err))
+	}
+
+	err = u.rename(u.backupExeName, u.currentExeName)
+	if err != nil {
+		return errors.Join(installErr, fmt.Errorf("restoring executable: %w", err))
+	}
+
+	return installErr
 }
 
 // clean removes the temporary directory itself and all it's contents.
