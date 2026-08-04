@@ -70,7 +70,8 @@ func newQLogFile(path string) (qf *qLogFile, err error) {
 // validateQLogLineIdx returns error if the line index is not valid to continue
 // search.
 func (q *qLogFile) validateQLogLineIdx(lineIdx, lastProbeLineIdx, ts, fSize int64) (err error) {
-	if lineIdx == lastProbeLineIdx {
+	switch lineIdx {
+	case lastProbeLineIdx:
 		if lineIdx == 0 {
 			return errTSTooEarly
 		}
@@ -78,11 +79,11 @@ func (q *qLogFile) validateQLogLineIdx(lineIdx, lastProbeLineIdx, ts, fSize int6
 		// If we're testing the same line twice then most likely the scope is
 		// too narrow and we won't find anything anymore in any other file.
 		return fmt.Errorf("looking up timestamp %d in %q: %w", ts, q.file.Name(), errTSNotFound)
-	} else if lineIdx == fSize {
+	case fSize:
 		return errTSTooLate
+	default:
+		return nil
 	}
-
-	return nil
 }
 
 // seekTS performs binary search in the query log file looking for a record
