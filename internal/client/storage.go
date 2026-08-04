@@ -1,16 +1,12 @@
 package client
 
 import (
-	"bufio"
-	"bytes"
 	"context"
 	"fmt"
 	"log/slog"
 	"net"
 	"net/netip"
-	"os/exec"
 	"slices"
-	"strings"
 	"sync"
 	"time"
 
@@ -23,6 +19,7 @@ import (
 	"github.com/AdguardTeam/golibs/hostsfile"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/golibs/osutil/executil"
 	"github.com/AdguardTeam/golibs/timeutil"
 )
 
@@ -114,13 +111,13 @@ type StorageConfig struct {
 	// ARPDB is used to update [SourceARP] runtime client information.
 	ARPDB arpdb.Interface
 
+	// CmdCons is used to run the command that prints the IPv6 neighbor table.
+	// If nil, [executil.SystemCommandConstructor] is used.
+	CmdCons executil.CommandConstructor
+
 	// InitialClients is a list of persistent clients parsed from the
 	// configuration file.  Each client must not be nil.
 	InitialClients []*Persistent
-
-	// NDPData returns the raw output of the IPv6 neighbor table.  If nil,
-	// defaults to running "ip -6 neigh".
-	NDPData func() ([]byte, error)
 
 	// ARPClientsUpdatePeriod defines how often [SourceARP] runtime client
 	// information is updated.
@@ -158,14 +155,10 @@ type Storage struct {
 	// arpDB is used to update [SourceARP] runtime client information.
 	arpDB arpdb.Interface
 
-	// ndpData returns the raw output of the IPv6 neighbor table.
-	ndpData func() ([]byte, error)
-
-	// ndpCache maps IPv6 addresses to MAC addresses from the kernel NDP
-	// neighbor table.  Used to identify persistent clients querying over IPv6.
-	ndpCache   map[netip.Addr]net.HardwareAddr
-	ndpCacheMu sync.RWMutex
-	ndpCacheAt time.Time
+	// ndp is used to match the IPv6 addresses of the neighbors against the MACs
+	// of persistent clients.  It may be nil, in which case no neighbors are
+	// reported.
+	ndp *ndpNeighbors
 
 	// done is the shutdown signaling channel.
 	done chan struct{}
@@ -190,9 +183,9 @@ func NewStorage(ctx context.Context, conf *StorageConfig) (s *Storage, err error
 	tags := slices.Clone(allowedTags)
 	slices.Sort(tags)
 
-	ndpData := conf.NDPData
-	if ndpData == nil {
-		ndpData = defaultNDPData
+	cmdCons := conf.CmdCons
+	if cmdCons == nil {
+		cmdCons = executil.SystemCommandConstructor{}
 	}
 
 	s = &Storage{
@@ -204,8 +197,7 @@ func NewStorage(ctx context.Context, conf *StorageConfig) (s *Storage, err error
 		dhcp:                   conf.DHCP,
 		etcHosts:               conf.EtcHosts,
 		arpDB:                  conf.ARPDB,
-		ndpData:                ndpData,
-		ndpCache:               make(map[netip.Addr]net.HardwareAddr),
+		ndp:                    newNDPNeighbors(conf.Logger, conf.Clock, cmdCons),
 		done:                   make(chan struct{}),
 		allowedTags:            tags,
 		arpClientsUpdatePeriod: conf.ARPClientsUpdatePeriod,
@@ -260,96 +252,25 @@ func (s *Storage) periodicARPUpdate(ctx context.Context) {
 	}
 }
 
-// ReloadARP reloads runtime clients from ARP, if configured.
+// ReloadARP reloads runtime clients from ARP, if configured, as well as the
+// IPv6 neighbor table, if there is anything to match against it.
 func (s *Storage) ReloadARP(ctx context.Context) {
 	if s.arpDB != nil {
 		s.addFromSystemARP(ctx)
 	}
 
-	s.refreshNDP()
+	if s.hasMACs() {
+		s.ndp.refresh(ctx)
+	}
 }
 
-// defaultNDPData returns the output of "ip -6 neigh".
-func defaultNDPData() ([]byte, error) {
-	return exec.Command("ip", "-6", "neigh").Output()
-}
+// hasMACs returns true if at least one persistent client is identified by a MAC
+// address.
+func (s *Storage) hasMACs() (ok bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-// refreshNDP reads the IPv6 neighbor table and caches the IPv6 address to MAC
-// address mappings.
-func (s *Storage) refreshNDP() {
-	out, err := s.ndpData()
-	if err != nil {
-		return
-	}
-
-	cache := parseNDPNeigh(out)
-
-	s.ndpCacheMu.Lock()
-	s.ndpCache = cache
-	s.ndpCacheAt = time.Now()
-	s.ndpCacheMu.Unlock()
-}
-
-// parseNDPNeigh parses the output of "ip -6 neigh" and returns a map of IPv6
-// addresses to MAC addresses.  The expected input format:
-//
-//	fe80::1 dev eth0 lladdr aa:bb:cc:dd:ee:ff REACHABLE
-func parseNDPNeigh(data []byte) (cache map[netip.Addr]net.HardwareAddr) {
-	cache = make(map[netip.Addr]net.HardwareAddr)
-	sc := bufio.NewScanner(bytes.NewReader(data))
-
-	for sc.Scan() {
-		fields := strings.Fields(sc.Text())
-		if len(fields) < 5 {
-			continue
-		}
-
-		ip, parseErr := netip.ParseAddr(fields[0])
-		if parseErr != nil {
-			continue
-		}
-
-		for i, f := range fields {
-			if f == "lladdr" && i+1 < len(fields) {
-				mac, macErr := net.ParseMAC(fields[i+1])
-				if macErr == nil {
-					cache[ip] = mac
-				}
-
-				break
-			}
-		}
-	}
-
-	return cache
-}
-
-// macFromNDP returns the MAC address for the given IPv6 address from the NDP
-// neighbor cache.  If the cache is stale (>30s) and the address is not found,
-// it refreshes the cache and retries once.
-func (s *Storage) macFromNDP(ip netip.Addr) net.HardwareAddr {
-	if !ip.Is6() {
-		return nil
-	}
-
-	s.ndpCacheMu.RLock()
-	mac := s.ndpCache[ip]
-	stale := time.Since(s.ndpCacheAt) > 30*time.Second
-	s.ndpCacheMu.RUnlock()
-
-	if mac != nil {
-		return mac
-	}
-
-	if stale {
-		s.refreshNDP()
-
-		s.ndpCacheMu.RLock()
-		mac = s.ndpCache[ip]
-		s.ndpCacheMu.RUnlock()
-	}
-
-	return mac
+	return s.index.hasMACs()
 }
 
 // addFromSystemARP adds the IP-hostname pairings from the output of the arp -a
@@ -677,10 +598,10 @@ func (s *Storage) findByIP(addr netip.Addr) (p *Persistent, ok bool) {
 	}
 
 	foundMAC := s.dhcp.MACByIP(addr)
-	if foundMAC == nil {
-		// Fall back to the NDP neighbor table for IPv6 addresses that
-		// don't have a corresponding DHCPv4 lease.
-		foundMAC = s.macFromNDP(addr)
+	if foundMAC == nil && s.index.hasMACs() {
+		// Fall back to the IPv6 neighbor table, since the addresses configured
+		// via SLAAC have no DHCP lease.
+		foundMAC = s.ndp.macFor(addr)
 	}
 
 	if foundMAC != nil {
@@ -709,8 +630,8 @@ func (s *Storage) FindLoose(ip netip.Addr, id string) (p *Persistent, ok bool) {
 	}
 
 	foundMAC := s.dhcp.MACByIP(ip)
-	if foundMAC == nil {
-		foundMAC = s.macFromNDP(ip)
+	if foundMAC == nil && s.index.hasMACs() {
+		foundMAC = s.ndp.macFor(ip)
 	}
 
 	if foundMAC != nil {
@@ -894,8 +815,8 @@ func (s *Storage) ApplyClientFiltering(id string, addr netip.Addr, setts *filter
 
 	if !ok {
 		foundMAC := s.dhcp.MACByIP(addr)
-		if foundMAC == nil {
-			foundMAC = s.macFromNDP(addr)
+		if foundMAC == nil && s.index.hasMACs() {
+			foundMAC = s.ndp.macFor(addr)
 		}
 
 		if foundMAC != nil {
