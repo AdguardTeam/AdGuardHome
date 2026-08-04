@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"go.etcd.io/bbolt"
@@ -61,6 +62,10 @@ type Entry struct {
 
 	// Domain is the domain name requested.
 	Domain string
+
+	// UpstreamStats contains the DNS query statistics for both the upstream and
+	// fallback DNS servers.  Don't modify items in the slice.
+	UpstreamStats []*proxy.UpstreamStatistics
 
 	// Result is the result of processing the request.
 	Result Result
@@ -350,6 +355,16 @@ func (u *unit) add(e *Entry) {
 	pt := uint64(e.ProcessingTime.Microseconds())
 	u.timeSum += pt
 	u.nTotal++
+
+	for _, s := range e.UpstreamStats {
+		if s.IsCached || s.Error != nil {
+			continue
+		}
+
+		addr := s.Address
+		u.upstreamsResponses[addr]++
+		u.upstreamsTimeSum[addr] += uint64(s.QueryDuration.Microseconds())
+	}
 }
 
 // addUpstream adds the data about a single upstream exchange to u.  It's safe

@@ -480,11 +480,6 @@ func (s *Server) processUpstream(
 
 	s.setCustomUpstream(ctx, l, pctx, dctx.clientID)
 
-	// Record whether the statistics ignore this query before resolving it,
-	// since the upstream wrappers that collect the response times have no way
-	// of knowing its client, see [Server.markIgnoredReq].
-	defer s.markIgnoredReq(dctx)()
-
 	// Process the request further since it wasn't filtered.
 	prx := s.proxy()
 	if prx == nil {

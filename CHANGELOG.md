@@ -50,8 +50,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
   ([#8435]).  An optimistic cache hit is answered from the cache right away and the expired entry
   is refreshed by a background query, and those background queries used to be left out of the
   statistics.  The average was therefore based on cache misses alone, which are skewed towards
-  rare domain names that the upstream itself resolves slower.  Every exchange with an upstream
-  server is now counted, including the background ones.
+  rare domain names that the upstream itself resolves slower.  Those refreshes are now counted
+  as well, through the new `OnOptimisticRefresh` callback of the DNS proxy.
 
 - Upstream response times on the dashboard being far higher than the actual network latency to
   the upstream servers ([#8457]).  A plain DNS upstream retries once when an attempt times out,
