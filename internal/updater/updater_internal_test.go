@@ -2,7 +2,6 @@ package updater
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"net/url"
 	"os"
@@ -171,7 +170,7 @@ func TestUpdater_replaceRollback(t *testing.T) {
 	assert.Equal(t, "current", string(got))
 
 	_, err = os.Stat(backupExeName)
-	assert.True(t, errors.Is(err, os.ErrNotExist))
+	assert.ErrorIs(t, err, os.ErrNotExist)
 }
 
 // newCtx is a helper that returns a new context with a timeout.
