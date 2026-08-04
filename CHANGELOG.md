@@ -32,6 +32,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - The user is able to remove the static lease's hostname via the HTTP API.
 
+- On Linux, persistent clients identified by MAC address are now also matched against the IPv6 neighbor table, so they are recognized when their requests come from addresses that have no DHCP lease, e.g. the ones configured via SLAAC ([#961]).
+
 ### Changed
 
 - The `edge` channel has been switched to the new UI and versioning scheme.
@@ -44,6 +46,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Blocked requests without an EDNS(0) OPT record ([#8183]).
 
+[#961]:  https://github.com/AdguardTeam/AdGuardHome/issues/961
 [#8183]: https://github.com/AdguardTeam/AdGuardHome/issues/8183
 
 <!--
@@ -277,8 +280,6 @@ See also the [v0.107.72 GitHub milestone][ms-v0.107.72].
 
 - New field `"ignored_enabled"` in `GetStatsConfigResponse` or `GetQueryLogConfigResponse`.  See `openapi/openapi.yaml` for details.
 
-- On Linux, persistent clients identified by MAC address are now also matched against the IPv6 neighbor table, so they are recognized when their requests come from addresses that have no DHCP lease, e.g. the ones configured via SLAAC ([#961]).
-
 ### Changed
 
 - In addition to modifying the contents of a hosts file, deleting or renaming the file now also updates runtime clients and DNS filtering results.
@@ -321,7 +322,6 @@ In this release, the schema version has changed from 32 to 33.
 
 - Unknown blocked services from both global and client configuration now logged instead of causing server crash.
 
-[#961]:  https://github.com/AdguardTeam/AdGuardHome/issues/961
 [#3962]: https://github.com/AdguardTeam/AdGuardHome/issues/3962
 [#8237]: https://github.com/AdguardTeam/AdGuardHome/issues/8237
 

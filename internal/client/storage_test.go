@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"slices"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -24,6 +25,7 @@ import (
 	"github.com/AdguardTeam/golibs/osutil/executil"
 	"github.com/AdguardTeam/golibs/service"
 	"github.com/AdguardTeam/golibs/testutil"
+	"github.com/AdguardTeam/golibs/testutil/fakeos/fakeexec"
 	"github.com/AdguardTeam/golibs/testutil/faketime"
 	"github.com/AdguardTeam/golibs/testutil/servicetest"
 	"github.com/AdguardTeam/golibs/timeutil"
@@ -1053,14 +1055,18 @@ func TestStorage_NDP(t *testing.T) {
 		OnMACBy:  func(_ netip.Addr) (mac net.HardwareAddr) { return nil },
 	}
 
-	newStorage := func(t *testing.T, cmdCons executil.CommandConstructor) (s *client.Storage) {
+	newStorage := func(
+		t *testing.T,
+		clock timeutil.Clock,
+		cmdCons executil.CommandConstructor,
+	) (s *client.Storage) {
 		t.Helper()
 
 		ctx := testutil.ContextWithTimeout(t, testTimeout)
 		s, err := client.NewStorage(ctx, &client.StorageConfig{
 			BaseLogger: testLogger,
 			Logger:     testLogger,
-			Clock:      timeutil.SystemClock{},
+			Clock:      clock,
 			DHCP:       dhcp,
 			CmdCons:    cmdCons,
 			InitialClients: []*client.Persistent{{
@@ -1077,7 +1083,11 @@ func TestStorage_NDP(t *testing.T) {
 
 	// The neighbor table is read within [client.NewStorage], since the initial
 	// clients contain a MAC address.
-	storage := newStorage(t, agh.NewCommandConstructor("ip", 0, ndpOutput, nil))
+	storage := newStorage(
+		t,
+		timeutil.SystemClock{},
+		agh.NewCommandConstructor("ip", 0, ndpOutput, nil),
+	)
 
 	t.Run("find_by_ipv6", func(t *testing.T) {
 		params := &client.FindParams{}
@@ -1124,7 +1134,7 @@ func TestStorage_NDP(t *testing.T) {
 
 	t.Run("command_error", func(t *testing.T) {
 		cmdCons := agh.NewCommandConstructor("ip", 0, "", errors.Error("no such command"))
-		errStorage := newStorage(t, cmdCons)
+		errStorage := newStorage(t, timeutil.SystemClock{}, cmdCons)
 
 		params := &client.FindParams{}
 		err := params.Set(cliIPv6.String())
@@ -1133,6 +1143,119 @@ func TestStorage_NDP(t *testing.T) {
 		_, ok := errStorage.Find(params)
 		assert.False(t, ok)
 	})
+
+	// expiration is a time span certainly exceeding the lifetime of the data
+	// read from the neighbor table.
+	const expiration = 1 * time.Hour
+
+	t.Run("expired_data_not_applied", func(t *testing.T) {
+		cmdCons, fail, runs := newTestNDPCmdCons(ndpOutput)
+		clock, advance := newTestClock()
+		expStorage := newStorage(t, clock, cmdCons)
+
+		setts := &filtering.Settings{}
+		expStorage.ApplyClientFiltering("", cliIPv6, setts)
+		require.Equal(t, prsCliName, setts.ClientName)
+
+		// Once the table can no longer be read, the data must stop being used
+		// for identifying clients, since the address may have been reassigned.
+		fail.Store(true)
+		advance(expiration)
+
+		prevRuns := runs.Load()
+		setts = &filtering.Settings{}
+		expStorage.ApplyClientFiltering("", cliIPv6, setts)
+		assert.Empty(t, setts.ClientName)
+
+		// The request above has scheduled a read, which fails, so the data
+		// remains unused.
+		require.EventuallyWithT(t, func(ct *assert.CollectT) {
+			assert.Greater(ct, runs.Load(), prevRuns)
+		}, testTimeout, testTimeout/100)
+
+		setts = &filtering.Settings{}
+		expStorage.ApplyClientFiltering("", cliIPv6, setts)
+		assert.Empty(t, setts.ClientName)
+	})
+
+	t.Run("refreshed_data_applied", func(t *testing.T) {
+		cmdCons, _, _ := newTestNDPCmdCons(ndpOutput)
+		clock, advance := newTestClock()
+		refStorage := newStorage(t, clock, cmdCons)
+
+		advance(expiration)
+
+		// The request that finds the data expired schedules a read, after which
+		// the client is identified again.
+		require.EventuallyWithT(t, func(ct *assert.CollectT) {
+			setts := &filtering.Settings{}
+			refStorage.ApplyClientFiltering("", cliIPv6, setts)
+
+			assert.Equal(ct, prsCliName, setts.ClientName)
+		}, testTimeout, testTimeout/100)
+	})
+}
+
+// newTestNDPCmdCons returns a command constructor printing out as the IPv6
+// neighbor table, along with the switch making the command fail and the counter
+// of its runs.
+func newTestNDPCmdCons(out string) (
+	cons executil.CommandConstructor,
+	fail *atomic.Bool,
+	runs *atomic.Int64,
+) {
+	fail, runs = &atomic.Bool{}, &atomic.Int64{}
+	cons = &fakeexec.CommandConstructor{
+		OnNew: func(
+			_ context.Context,
+			conf *executil.CommandConfig,
+		) (cmd executil.Command, err error) {
+			runs.Add(1)
+			isFailing := fail.Load()
+
+			return &fakeexec.Command{
+				OnStart: func(_ context.Context) (startErr error) {
+					if isFailing {
+						return nil
+					}
+
+					_, startErr = conf.Stdout.Write([]byte(out))
+
+					return startErr
+				},
+				OnWait: func(_ context.Context) (waitErr error) {
+					if isFailing {
+						return errors.Error("no such command")
+					}
+
+					return nil
+				},
+			}, nil
+		},
+	}
+
+	return cons, fail, runs
+}
+
+// newTestClock returns a clock reporting the time that advance moves forward.
+// Both the clock and advance are safe for concurrent use.
+func newTestClock() (clock timeutil.Clock, advance func(d time.Duration)) {
+	mu := &sync.Mutex{}
+	now := time.Now()
+
+	return &faketime.Clock{
+			OnNow: func() (t time.Time) {
+				mu.Lock()
+				defer mu.Unlock()
+
+				return now
+			},
+		}, func(d time.Duration) {
+			mu.Lock()
+			defer mu.Unlock()
+
+			now = now.Add(d)
+		}
 }
 
 func TestStorage_Update(t *testing.T) {

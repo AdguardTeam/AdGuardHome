@@ -20,11 +20,17 @@ import (
 )
 
 const (
-	// ndpDataTTL is the time after which the data read from the IPv6 neighbor
-	// table is considered outdated.  It's also the minimum interval between two
-	// reads of the table, which limits the number of the processes spawned on
-	// the DNS request path.
-	ndpDataTTL = 30 * time.Second
+	// ndpUpdateInterval is how often the IPv6 neighbor table is read.  It's also
+	// the minimum interval between two reads, successful or not, which limits
+	// the number of the processes spawned on behalf of the DNS requests.
+	ndpUpdateInterval = 30 * time.Second
+
+	// ndpDataTTL is how long the data read from the IPv6 neighbor table may be
+	// used to identify clients.  Data that no successful read has confirmed
+	// within this time isn't used at all: an address may have been reassigned to
+	// another device, and a wrong MAC address means the settings of a wrong
+	// client.
+	ndpDataTTL = 2 * ndpUpdateInterval
 
 	// ndpReadTimeout is the maximum time to spend reading the IPv6 neighbor
 	// table.
@@ -95,12 +101,12 @@ func newNDPNeighbors(
 }
 
 // macFor returns the MAC address of the neighbor with the IPv6 address ip, if
-// it's known.  ip must contain the zone, if it's a link-local address.
+// it's known and the data is still within [ndpDataTTL].  ip must contain the
+// zone, if it's a link-local address.
 //
-// If ip is unknown or the data has become outdated, macFor schedules a read of
-// the neighbor table and returns the data that it currently has, if any.  It
-// doesn't wait for the read to finish, since it's called on the DNS request
-// path, where the callers may hold their locks.
+// If ip is unknown or the data has expired, macFor schedules a read of the
+// neighbor table and returns nil.  It doesn't wait for the read to finish, since
+// it's called on the DNS request path, where the callers may hold their locks.
 func (n *ndpNeighbors) macFor(ip netip.Addr) (mac net.HardwareAddr) {
 	if n == nil || !ip.Is6() || ip.Is4In6() {
 		return nil
@@ -108,11 +114,13 @@ func (n *ndpNeighbors) macFor(ip netip.Addr) (mac net.HardwareAddr) {
 
 	n.mu.RLock()
 	mac = n.neighbors[ip]
-	isOutdated := n.clock.Now().Sub(n.updated) >= ndpDataTTL
+	isExpired := n.clock.Now().Sub(n.updated) >= ndpDataTTL
 	n.mu.RUnlock()
 
-	if mac == nil || isOutdated {
+	if mac == nil || isExpired {
 		n.scheduleRead()
+
+		return nil
 	}
 
 	return mac
@@ -132,7 +140,7 @@ func (n *ndpNeighbors) refresh(ctx context.Context) {
 }
 
 // scheduleRead reads the IPv6 neighbor table in a separate goroutine, unless
-// it's being read right now or has been read within [ndpDataTTL].
+// it's being read right now or has been read within [ndpUpdateInterval].
 //
 // TODO(AndyHazz):  Pass the context once the client lookup methods accept it.
 func (n *ndpNeighbors) scheduleRead() {
@@ -152,14 +160,14 @@ func (n *ndpNeighbors) scheduleRead() {
 
 // beginRead reports whether the caller should read the IPv6 neighbor table,
 // marking the read as started if it should.  Unless force is true, the read is
-// also skipped if the table has been read within [ndpDataTTL].  The caller must
-// call [ndpNeighbors.endRead] once the read is finished.
+// also skipped if the table has been read within [ndpUpdateInterval].  The
+// caller must call [ndpNeighbors.endRead] once the read is finished.
 func (n *ndpNeighbors) beginRead(force bool) (ok bool) {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 
 	now := n.clock.Now()
-	if n.isReading || (!force && now.Sub(n.attempted) < ndpDataTTL) {
+	if n.isReading || (!force && now.Sub(n.attempted) < ndpUpdateInterval) {
 		return false
 	}
 

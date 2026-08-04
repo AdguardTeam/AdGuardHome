@@ -212,6 +212,7 @@ func NewStorage(ctx context.Context, conf *StorageConfig) (s *Storage, err error
 	}
 
 	s.ReloadARP(ctx)
+	s.reloadNDP(ctx)
 
 	return s, nil
 }
@@ -221,6 +222,7 @@ func NewStorage(ctx context.Context, conf *StorageConfig) (s *Storage, err error
 // TODO(s.chzhen):  Pass context.
 func (s *Storage) Start(ctx context.Context) (err error) {
 	go s.periodicARPUpdate(ctx)
+	go s.periodicNDPUpdate(ctx)
 	go s.handleHostsUpdates(ctx)
 
 	return nil
@@ -252,13 +254,35 @@ func (s *Storage) periodicARPUpdate(ctx context.Context) {
 	}
 }
 
-// ReloadARP reloads runtime clients from ARP, if configured, as well as the
-// IPv6 neighbor table, if there is anything to match against it.
+// ReloadARP reloads runtime clients from ARP, if configured.
 func (s *Storage) ReloadARP(ctx context.Context) {
 	if s.arpDB != nil {
 		s.addFromSystemARP(ctx)
 	}
+}
 
+// periodicNDPUpdate periodically rereads the IPv6 neighbor table, so that the
+// clients identified by MAC address keep being recognized without reading it on
+// the DNS request path.  It is intended to be used as a goroutine.
+func (s *Storage) periodicNDPUpdate(ctx context.Context) {
+	defer slogutil.RecoverAndLog(ctx, s.logger)
+
+	t := time.NewTicker(ndpUpdateInterval)
+	defer t.Stop()
+
+	for {
+		select {
+		case <-t.C:
+			s.reloadNDP(ctx)
+		case <-s.done:
+			return
+		}
+	}
+}
+
+// reloadNDP rereads the IPv6 neighbor table, unless there is nothing to match
+// against it.
+func (s *Storage) reloadNDP(ctx context.Context) {
 	if s.hasMACs() {
 		s.ndp.refresh(ctx)
 	}

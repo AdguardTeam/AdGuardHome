@@ -25,9 +25,10 @@ const ndpTestTimeout = 1 * time.Second
 
 // Neighbors used throughout the tests of the IPv6 neighbor table reader.
 var (
-	ndpTestIP     = netip.MustParseAddr("2001:db8::1")
-	ndpTestMAC    = errors.Must(net.ParseMAC("aa:bb:cc:dd:ee:ff"))
-	ndpTestOthMAC = errors.Must(net.ParseMAC("11:22:33:44:55:66"))
+	ndpTestIP        = netip.MustParseAddr("2001:db8::1")
+	ndpTestUnknownIP = netip.MustParseAddr("2001:db8::dead")
+	ndpTestMAC       = errors.Must(net.ParseMAC("aa:bb:cc:dd:ee:ff"))
+	ndpTestOthMAC    = errors.Must(net.ParseMAC("11:22:33:44:55:66"))
 )
 
 // ndpTestOutput is the output of the neighbor table command containing
@@ -178,13 +179,13 @@ func TestNDPNeighbors_macFor(t *testing.T) {
 
 		assert.Equal(t, int64(1), cmd.runs.Load())
 
-		advance(ndpDataTTL)
+		advance(ndpUpdateInterval)
 
 		assert.Nil(t, n.macFor(ndpTestIP))
 		waitNDPRead(t, n, cmd, 2)
 	})
 
-	t.Run("keeps_data_on_failure", func(t *testing.T) {
+	t.Run("failed_read_keeps_data", func(t *testing.T) {
 		t.Parallel()
 
 		n, cmd, advance := newTestNDPNeighbors(t, func(num int64) (out string, err error) {
@@ -198,16 +199,23 @@ func TestNDPNeighbors_macFor(t *testing.T) {
 		n.refresh(testutil.ContextWithTimeout(t, ndpTestTimeout))
 		require.Equal(t, ndpTestMAC, n.macFor(ndpTestIP))
 
-		advance(ndpDataTTL)
+		advance(ndpUpdateInterval)
 
-		// The failed read must not discard the previously known neighbors.
-		assert.Equal(t, ndpTestMAC, n.macFor(ndpTestIP))
+		// A request for an unknown address schedules a read, which fails.  It
+		// must not discard the data that is still within the TTL.
+		assert.Nil(t, n.macFor(ndpTestUnknownIP))
 		waitNDPRead(t, n, cmd, 2)
 
 		assert.Equal(t, ndpTestMAC, n.macFor(ndpTestIP))
+
+		// Once no successful read has confirmed the data within the TTL, it
+		// isn't used at all.
+		advance(ndpDataTTL)
+
+		assert.Nil(t, n.macFor(ndpTestIP))
 	})
 
-	t.Run("outdated_data_is_replaced", func(t *testing.T) {
+	t.Run("expired_data_is_replaced", func(t *testing.T) {
 		t.Parallel()
 
 		n, cmd, advance := newTestNDPNeighbors(t, func(num int64) (out string, err error) {
@@ -223,10 +231,11 @@ func TestNDPNeighbors_macFor(t *testing.T) {
 
 		advance(ndpDataTTL)
 
-		// The request that finds the data outdated still gets the previously
-		// known MAC address, but it also schedules a read, so the requests that
-		// follow get the current one.
-		assert.Equal(t, ndpTestMAC, n.macFor(ndpTestIP))
+		// The expired MAC address must not be returned, since the address may
+		// have been reassigned to another device.  The request that finds it
+		// expired schedules a read, so the requests that follow get the current
+		// one.
+		assert.Nil(t, n.macFor(ndpTestIP))
 		waitNDPRead(t, n, cmd, 2)
 
 		assert.Equal(t, ndpTestOthMAC, n.macFor(ndpTestIP))
