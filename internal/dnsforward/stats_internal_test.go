@@ -68,6 +68,14 @@ func (l *testStats) UpdateUpstream(e *stats.UpstreamEntry) {
 	l.upsEntries = append(l.upsEntries, e)
 }
 
+// entry returns the last entry the statistics received, or nil.
+func (l *testStats) entry() (e *stats.Entry) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	return l.lastEntry
+}
+
 // upstreamEntries returns a copy of the collected upstream entries.
 func (l *testStats) upstreamEntries() (entries []*stats.UpstreamEntry) {
 	l.mu.Lock()
@@ -308,8 +316,11 @@ func TestServer_stats_upstreamTimes(t *testing.T) {
 				require.NoError(t, err)
 				require.NotEmpty(t, resp.Answer)
 
-				require.NotNil(t, st.lastEntry)
-				assert.Empty(t, st.lastEntry.UpstreamStats)
+				require.Eventually(t, func() (ok bool) {
+					return st.entry() != nil
+				}, testTimeout, testTimeout/20)
+
+				assert.Empty(t, st.entry().UpstreamStats)
 			})
 		}
 	})
