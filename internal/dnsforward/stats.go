@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"net"
+	"net/netip"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
@@ -29,9 +30,18 @@ func (s *Server) processQueryLogsAndStats(
 	host := aghnet.NormalizeDomain(q.Name)
 	processingTime := time.Since(dctx.startTime)
 
-	ip, ipStr, ids := s.clientIdentity(dctx)
+	ip := pctx.Addr.Addr().AsSlice()
+	s.anonymizer.Load()(ip)
+	ipStr := net.IP(ip).String()
 
 	l.DebugContext(ctx, "client ip for stats and querylog", "ip", ipStr)
+
+	ids := []string{ipStr}
+	if dctx.clientID != "" {
+		// Use the ClientID first because it has a higher priority.  Filters
+		// have the same priority, see applyAdditionalFiltering.
+		ids = []string{dctx.clientID, ipStr}
+	}
 
 	qt, cl := q.Qtype, q.Qclass
 
@@ -64,25 +74,6 @@ func (s *Server) processQueryLogsAndStats(
 	}
 
 	return resultCodeSuccess
-}
-
-// clientIdentity returns the anonymized address of the client of dctx, its
-// string form, and the identifiers by which the query log and the statistics
-// know it.  dctx must not be nil.
-func (s *Server) clientIdentity(dctx *dnsContext) (ip net.IP, ipStr string, ids []string) {
-	addr := dctx.proxyCtx.Addr.Addr().AsSlice()
-	s.anonymizer.Load()(addr)
-
-	ip = net.IP(addr)
-	ipStr = ip.String()
-
-	if dctx.clientID != "" {
-		// Use the ClientID first because it has a higher priority.  Filters
-		// have the same priority, see applyAdditionalFiltering.
-		return ip, ipStr, []string{dctx.clientID, ipStr}
-	}
-
-	return ip, ipStr, []string{ipStr}
 }
 
 // shouldLog returns true if the query with the given data should be logged in
@@ -149,14 +140,104 @@ func (s *Server) logQuery(dctx *dnsContext, ip net.IP, processingTime time.Durat
 	s.queryLog.Add(p)
 }
 
+// retryThreshold returns the duration at or above which a successful exchange
+// must have retried after an attempt that timed out, since a single attempt
+// cannot outlast the timeout it was made with.  pctx must not be nil.
+//
+// s.serverLock is expected to be locked.
+func (s *Server) retryThreshold(pctx *proxy.DNSContext) (d time.Duration) {
+	if pctx.RequestedPrivateRDNS != (netip.Prefix{}) {
+		// The private rDNS upstreams are constructed with a timeout of their
+		// own, see prepareLocalResolvers.
+		return defaultLocalTimeout
+	}
+
+	return s.conf.UpstreamTimeout
+}
+
+// appendCountedUpstreams appends those of us that should be counted in the
+// statistics to stats.
+//
+// A plain DNS upstream retries once when an attempt times out, for example
+// when a UDP datagram is lost, and reports the retried exchange as an ordinary
+// success.  Its duration is then at least the whole timeout, ten seconds by
+// default, even though the successful attempt itself took a millisecond.
+// Averaging such a sample in makes the reported response time an order of
+// magnitude higher than the actual one, so leave it out: it describes the retry
+// policy and the configured timeout rather than the speed of the upstream.
+//
+// See https://github.com/AdguardTeam/AdGuardHome/issues/8457.
+func appendCountedUpstreams(
+	stats []*proxy.UpstreamStatistics,
+	us []*proxy.UpstreamStatistics,
+	threshold time.Duration,
+) (appended []*proxy.UpstreamStatistics) {
+	for _, u := range us {
+		if threshold > 0 && u.Error == nil && u.QueryDuration >= threshold {
+			continue
+		}
+
+		stats = append(stats, u)
+	}
+
+	return stats
+}
+
+// handleOptimisticRefresh records the response times of an optimistic cache
+// refresh.  It implements [proxy.Config.OnOptimisticRefresh].  dctx must not be
+// nil.
+//
+// Such a refresh is performed in the background once an expired entry has
+// already been answered from the cache, so it reaches no request handler and
+// belongs to no client.  Without it the response times would only ever be
+// sampled from cache misses, and with the optimistic cache enabled the popular
+// names, which are exactly the ones kept warm, would never be sampled at all.
+//
+// See https://github.com/AdguardTeam/AdGuardHome/issues/8435.
+func (s *Server) handleOptimisticRefresh(dctx *proxy.DNSContext) {
+	qs := dctx.QueryStatistics()
+	if qs == nil || dctx.Req == nil || len(dctx.Req.Question) == 0 {
+		return
+	}
+
+	domain := aghnet.NormalizeDomain(dctx.Req.Question[0].Name)
+
+	// Synchronize access to s.stats so it won't be suddenly uninitialized while
+	// in use, the same way processQueryLogsAndStats does.
+	s.serverLock.RLock()
+	defer s.serverLock.RUnlock()
+
+	if s.stats == nil {
+		return
+	}
+
+	threshold := s.retryThreshold(dctx)
+	for _, u := range appendCountedUpstreams(nil, qs.Main(), threshold) {
+		if u.IsCached || u.Error != nil {
+			continue
+		}
+
+		s.stats.UpdateUpstream(&stats.UpstreamEntry{
+			Address:       u.Address,
+			Domain:        domain,
+			QueryDuration: u.QueryDuration,
+		})
+	}
+}
+
 // updateStats writes the request data into statistics.
 func (s *Server) updateStats(dctx *dnsContext, clientIP string, processingTime time.Duration) {
 	pctx := dctx.proxyCtx
 
-	// NOTE:  The upstream response times are not taken from
-	// [proxy.DNSContext.QueryStatistics] here, since they are collected for
-	// every exchange, including the background ones, see [statsUpstream].
+	var upstreamStats []*proxy.UpstreamStatistics
+	if qs := pctx.QueryStatistics(); qs != nil {
+		threshold := s.retryThreshold(pctx)
+		upstreamStats = appendCountedUpstreams(upstreamStats, qs.Main(), threshold)
+		upstreamStats = appendCountedUpstreams(upstreamStats, qs.Fallback(), threshold)
+	}
+
 	e := &stats.Entry{
+		UpstreamStats:  upstreamStats,
 		Domain:         aghnet.NormalizeDomain(pctx.Req.Question[0].Name),
 		Result:         stats.RNotFiltered,
 		ProcessingTime: processingTime,
