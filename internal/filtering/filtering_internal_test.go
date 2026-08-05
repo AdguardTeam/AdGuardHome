@@ -10,6 +10,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/hashprefix"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
@@ -113,7 +114,7 @@ func TestDNSFilter_CheckHost_hostRules(t *testing.T) {
 `,
 		addr, addr6)
 	filters := []Filter{{
-		ID: 0, Data: []byte(text),
+		ID: 1, Data: []byte(text),
 	}}
 	d, setts := newForTest(t, nil, filters)
 	t.Cleanup(d.Close)
@@ -171,6 +172,133 @@ func TestDNSFilter_CheckHost_hostRules(t *testing.T) {
 	require.Len(t, res.Rules, 1)
 
 	assert.Equal(t, res.Rules[0].IP, netutil.IPv6Localhost())
+}
+
+func TestDNSFilter_CheckHost_customHostRules(t *testing.T) {
+	const (
+		customIPv4Rule  = "192.0.2.1 v4.example"
+		customIPv6Rule  = "2001:db8::1 v6.example"
+		customMixedRule = "192.0.2.2 mixed.example"
+		zeroIPv4Rule    = "0.0.0.0 zero-v4.example"
+		zeroIPv6Rule    = ":: zero-v6.example"
+
+		downloadedRule          = "198.51.100.1 downloaded.example"
+		downloadedMixedRule     = "198.51.100.2 mixed.example"
+		downloadedDuplicateRule = "192.0.2.2 mixed.example"
+	)
+
+	filters := []Filter{{
+		ID: rulelist.IDCustom,
+		Data: []byte(customIPv4Rule + "\n" +
+			customIPv6Rule + "\n" +
+			customMixedRule + "\n" +
+			zeroIPv4Rule + "\n" +
+			zeroIPv6Rule + "\n"),
+	}, {
+		ID: 1,
+		Data: []byte(downloadedRule + "\n" +
+			downloadedDuplicateRule + "\n" +
+			downloadedMixedRule + "\n"),
+	}}
+	d, setts := newForTest(t, nil, filters)
+	t.Cleanup(d.Close)
+
+	t.Run("ipv4", func(t *testing.T) {
+		wantIP := netip.MustParseAddr("192.0.2.1")
+		res, err := d.CheckHost("v4.example", dns.TypeA, setts)
+		require.NoError(t, err)
+
+		assert.True(t, res.IsFiltered)
+		assert.Equal(t, RewrittenRule, res.Reason)
+		require.Len(t, res.Rules, 1)
+		assert.Equal(t, customIPv4Rule, res.Rules[0].Text)
+		assert.Equal(t, rulelist.APIIDCustom, res.Rules[0].FilterListID)
+		assert.Equal(t, wantIP, res.Rules[0].IP)
+		assert.Nil(t, res.DNSRewriteResult)
+	})
+
+	t.Run("ipv6", func(t *testing.T) {
+		wantIP := netip.MustParseAddr("2001:db8::1")
+		res, err := d.CheckHost("v6.example", dns.TypeAAAA, setts)
+		require.NoError(t, err)
+
+		assert.True(t, res.IsFiltered)
+		assert.Equal(t, RewrittenRule, res.Reason)
+		require.Len(t, res.Rules, 1)
+		assert.Equal(t, customIPv6Rule, res.Rules[0].Text)
+		assert.Equal(t, rulelist.APIIDCustom, res.Rules[0].FilterListID)
+		assert.Equal(t, wantIP, res.Rules[0].IP)
+		assert.Nil(t, res.DNSRewriteResult)
+	})
+
+	t.Run("downloaded", func(t *testing.T) {
+		res, err := d.CheckHost("downloaded.example", dns.TypeA, setts)
+		require.NoError(t, err)
+
+		assert.True(t, res.IsFiltered)
+		assert.Equal(t, FilteredBlockList, res.Reason)
+		assert.Nil(t, res.DNSRewriteResult)
+	})
+
+	t.Run("mixed", func(t *testing.T) {
+		wantCustomIP := netip.MustParseAddr("192.0.2.2")
+		wantDownloadedIP := netip.MustParseAddr("198.51.100.2")
+		res, err := d.CheckHost("mixed.example", dns.TypeA, setts)
+		require.NoError(t, err)
+
+		assert.True(t, res.IsFiltered)
+		assert.Equal(t, RewrittenRule, res.Reason)
+		require.Len(t, res.Rules, 3)
+
+		type ruleData struct {
+			text string
+			id   rulelist.APIID
+			ip   netip.Addr
+		}
+
+		gotRules := make([]ruleData, len(res.Rules))
+		for i, r := range res.Rules {
+			gotRules[i] = ruleData{
+				text: r.Text,
+				id:   r.FilterListID,
+				ip:   r.IP,
+			}
+		}
+
+		assert.ElementsMatch(t, []ruleData{
+			{text: customMixedRule, id: rulelist.APIIDCustom, ip: wantCustomIP},
+			{text: downloadedDuplicateRule, id: 1, ip: wantCustomIP},
+			{text: downloadedMixedRule, id: 1, ip: wantDownloadedIP},
+		}, gotRules)
+		assert.Nil(t, res.DNSRewriteResult)
+	})
+
+	t.Run("zero_ipv4", func(t *testing.T) {
+		res, err := d.CheckHost("zero-v4.example", dns.TypeA, setts)
+		require.NoError(t, err)
+
+		assert.True(t, res.IsFiltered)
+		assert.Equal(t, FilteredBlockList, res.Reason)
+		assert.Nil(t, res.DNSRewriteResult)
+	})
+
+	t.Run("zero_ipv6", func(t *testing.T) {
+		res, err := d.CheckHost("zero-v6.example", dns.TypeAAAA, setts)
+		require.NoError(t, err)
+
+		assert.True(t, res.IsFiltered)
+		assert.Equal(t, FilteredBlockList, res.Reason)
+		assert.Nil(t, res.DNSRewriteResult)
+	})
+
+	t.Run("qtype_mismatch", func(t *testing.T) {
+		res, err := d.CheckHost("v4.example", dns.TypeAAAA, setts)
+		require.NoError(t, err)
+
+		assert.True(t, res.IsFiltered)
+		assert.Equal(t, FilteredBlockList, res.Reason)
+		assert.Nil(t, res.DNSRewriteResult)
+	})
 }
 
 // Safe Browsing.

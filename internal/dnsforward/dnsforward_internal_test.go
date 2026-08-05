@@ -1235,6 +1235,39 @@ func TestBlockedCustomIP(t *testing.T) {
 }
 
 func TestBlockedByHosts(t *testing.T) {
+	customIPv4 := netip.MustParseAddr("192.0.2.1")
+	testCases := []struct {
+		name      string
+		mode      filtering.BlockingMode
+		wantIP    netip.Addr
+		wantRCode int
+	}{
+		{
+			name:      "default",
+			mode:      filtering.BlockingModeDefault,
+			wantIP:    netutil.IPv4Localhost(),
+			wantRCode: dns.RcodeSuccess,
+		}, {
+			name:      "null_ip",
+			mode:      filtering.BlockingModeNullIP,
+			wantIP:    netip.IPv4Unspecified(),
+			wantRCode: dns.RcodeSuccess,
+		}, {
+			name:      "nxdomain",
+			mode:      filtering.BlockingModeNXDOMAIN,
+			wantRCode: dns.RcodeNameError,
+		}, {
+			name:      "refused",
+			mode:      filtering.BlockingModeREFUSED,
+			wantRCode: dns.RcodeRefused,
+		}, {
+			name:      "custom_ip",
+			mode:      filtering.BlockingModeCustomIP,
+			wantIP:    customIPv4,
+			wantRCode: dns.RcodeSuccess,
+		},
+	}
+
 	forwardConf := ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
@@ -1248,45 +1281,33 @@ func TestBlockedByHosts(t *testing.T) {
 		},
 		ServePlainDNS: true,
 	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := createTestServer(t, &filtering.Config{
+				ProtectionEnabled: true,
+				BlockingMode:      tc.mode,
+				BlockingIPv4:      customIPv4,
+				BlockingIPv6:      netip.MustParseAddr("2001:db8::1"),
+			}, forwardConf, testTLSConfigProvider)
+			startDeferStop(t, s)
 
-	s := createTestServer(
-		t,
-		&filtering.Config{ProtectionEnabled: true, BlockingMode: filtering.BlockingModeDefault},
-		forwardConf,
-		testTLSConfigProvider,
-	)
-	startDeferStop(t, s)
-	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
+			addr := s.dnsProxy.Addr(proxy.ProtoUDP)
+			req := createTestMessage("host.example.org.")
+			reply, err := dns.Exchange(req, addr.String())
+			require.NoErrorf(t, err, "couldn't talk to server %s: %s", addr, err)
 
-	// Hosts blocking.
-	req := createTestMessage("host.example.org.")
+			assert.Equal(t, tc.wantRCode, reply.Rcode)
+			if !tc.wantIP.IsValid() {
+				assert.Empty(t, reply.Answer)
 
-	reply, err := dns.Exchange(req, addr.String())
-	require.NoErrorf(t, err, "couldn't talk to server %s: %s", addr, err)
-	require.Lenf(
-		t,
-		reply.Answer,
-		1,
-		"dns server %s returned reply with wrong number of answers - %d",
-		addr,
-		len(reply.Answer),
-	)
-	a, ok := reply.Answer[0].(*dns.A)
-	require.Truef(
-		t,
-		ok,
-		"dns server %s returned wrong answer type instead of A: %v",
-		addr,
-		reply.Answer[0],
-	)
-	assert.Equalf(
-		t,
-		net.IP{127, 0, 0, 1},
-		a.A,
-		"dns server %s returned wrong answer instead of 8.8.8.8: %v",
-		addr,
-		a.A,
-	)
+				return
+			}
+
+			require.Len(t, reply.Answer, 1)
+			a := testutil.RequireTypeAssert[*dns.A](t, reply.Answer[0])
+			assert.Equal(t, tc.wantIP.String(), a.A.String())
+		})
+	}
 }
 
 func TestBlockedBySafeBrowsing(t *testing.T) {

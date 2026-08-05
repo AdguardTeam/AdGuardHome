@@ -42,8 +42,12 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Custom filtering rules in `/etc/hosts` format are now reported as rewrites
+  in the query log ([#7659]).
+
 - Blocked requests without an EDNS(0) OPT record ([#8183]).
 
+[#7659]: https://github.com/AdguardTeam/AdGuardHome/issues/7659
 [#8183]: https://github.com/AdguardTeam/AdGuardHome/issues/8183
 
 <!--
