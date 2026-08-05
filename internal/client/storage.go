@@ -369,7 +369,12 @@ func (s *Storage) UpdateDHCP(ctx context.Context) {
 
 	added := 0
 	for _, l := range s.dhcp.Leases() {
-		s.runtimeIndex.setInfo(l.IP, src, []string{l.Hostname})
+		ip := l.IP
+		if rc := s.runtimeIndex.clientByIP(ip); rc != nil {
+			ip = rc.Addr()
+		}
+
+		s.runtimeIndex.setInfo(ip, src, []string{l.Hostname})
 		added++
 	}
 
@@ -682,13 +687,16 @@ func (s *Storage) Size() (n int) {
 	return s.index.size()
 }
 
-// ClientRuntime returns a copy of the saved runtime client by ip.  If no such
-// client exists, returns nil.
+// ClientRuntime returns a copy of the saved runtime client by ip.  If an exact
+// client isn't found for an unzoned IPv6 address, it returns the only client
+// whose address differs from ip only by its zone.  If there is no such unique
+// client, it returns nil.
 func (s *Storage) ClientRuntime(ip netip.Addr) (rc *Runtime) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	rc = s.runtimeIndex.client(ip)
+	rc = s.runtimeIndex.clientByIP(ip)
+
 	if !s.runtimeSourceDHCP {
 		return rc.clone()
 	}
@@ -704,6 +712,10 @@ func (s *Storage) ClientRuntime(ip netip.Addr) (rc *Runtime) {
 	host := s.dhcp.HostByIP(ip)
 	if host == "" {
 		return rc.clone()
+	}
+
+	if rc != nil {
+		ip = rc.Addr()
 	}
 
 	rc = s.runtimeIndex.setInfo(ip, SourceDHCP, []string{host})
