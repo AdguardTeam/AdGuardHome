@@ -20,6 +20,10 @@ type Config struct {
 
 	// DataDir is the absolute path to the data directory of AdGuardHome.
 	DataDir string
+
+	// ReadOnly prevents migrations from modifying files.  The returned
+	// configuration data is still upgraded.
+	ReadOnly bool
 }
 
 // Migrator performs the YAML configuration file migrations.
@@ -27,6 +31,7 @@ type Migrator struct {
 	logger     *slog.Logger
 	workingDir string
 	dataDir    string
+	readOnly   bool
 }
 
 // New creates a new Migrator.
@@ -35,6 +40,7 @@ func New(c *Config) (m *Migrator) {
 		logger:     c.Logger,
 		workingDir: c.WorkingDir,
 		dataDir:    c.DataDir,
+		readOnly:   c.ReadOnly,
 	}
 }
 
