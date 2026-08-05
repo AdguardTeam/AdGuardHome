@@ -44,6 +44,7 @@ type StatsState = {
     numReplacedSafebrowsing: number;
     numReplacedSafesearch: number;
     avgProcessingTime: number;
+    avgUpstreamResponseTime: number;
     timeUnits: string;
     enabled: boolean;
     topUpstreamsAvgTime: { name: string; count: number }[];
@@ -73,6 +74,7 @@ const initialState: StatsState = {
     numReplacedSafebrowsing: 0,
     numReplacedSafesearch: 0,
     avgProcessingTime: 0,
+    avgUpstreamResponseTime: 0,
     timeUnits: TIME_UNITS?.HOURS || 'hours',
     enabled: true,
     topUpstreamsAvgTime: [],
@@ -108,6 +110,7 @@ export const getStats = async (period?: number) => {
             numReplacedSafebrowsing: data.num_replaced_safebrowsing || 0,
             numReplacedSafesearch: data.num_replaced_safesearch || 0,
             avgProcessingTime: secondsToMilliseconds(data.avg_processing_time),
+            avgUpstreamResponseTime: secondsToMilliseconds(data.avg_upstream_response_time),
             timeUnits: data.time_units || initialState.timeUnits,
             topUpstreamsAvgTime: normalizeTopStats(data.top_upstreams_avg_time || []).map(
                 (item: { name: string; count: number }) => ({

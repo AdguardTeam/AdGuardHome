@@ -91,6 +91,34 @@ func (e *Entry) validate() (err error) {
 	}
 }
 
+// UpstreamEntry is a statistics data entry for a single successful DNS exchange
+// with an upstream server.
+//
+// Note that such an exchange isn't necessarily bound to a client's request, see
+// [Interface.UpdateUpstream].
+type UpstreamEntry struct {
+	// Address is the address of the upstream DNS server that responded.
+	Address string
+
+	// Domain is the domain name that has been requested from the upstream.
+	Domain string
+
+	// QueryDuration is the duration of the exchange.
+	QueryDuration time.Duration
+}
+
+// validate returns an error if the upstream entry is not valid.
+func (e *UpstreamEntry) validate() (err error) {
+	switch {
+	case e.Address == "":
+		return errors.Error("upstream address is empty")
+	case e.Domain == "":
+		return errors.Error("domain is empty")
+	default:
+		return nil
+	}
+}
+
 // unit collects the statistics data for a specific period of time.
 type unit struct {
 	// domains stores the number of requests for each domain.
@@ -122,6 +150,17 @@ type unit struct {
 
 	// nTotal stores the total number of requests.
 	nTotal uint64
+
+	// upstreamsResponsesTotal is the number of responses from all the upstream
+	// servers, and upstreamsTimeSumTotal is the sum of their durations in
+	// microseconds.
+	//
+	// They are kept apart from upstreamsResponses and upstreamsTimeSum because
+	// those are truncated to the top [maxUpstreams] entries independently of
+	// each other when serialized, so the two need not describe the same set of
+	// upstreams and cannot be summed against one another.
+	upstreamsResponsesTotal uint64
+	upstreamsTimeSumTotal   uint64
 
 	// timeSum stores the sum of processing time in microseconds of each request
 	// written by the unit.
@@ -174,6 +213,15 @@ type unitDB struct {
 
 	// NTotal is the total number of requests.
 	NTotal uint64
+
+	// UpstreamsResponsesTotal is the number of responses from all the upstream
+	// servers, and UpstreamsTimeSumTotal is the sum of their durations in
+	// microseconds, both before UpstreamsResponses and UpstreamsTimeSum are
+	// truncated.  They are absent from the records written by the versions that
+	// predate them, in which case they decode as zero, see
+	// [avgUpstreamResponseTime].
+	UpstreamsResponsesTotal uint64
+	UpstreamsTimeSumTotal   uint64
 
 	// TimeAvg is the average of processing times in microseconds of all the
 	// requests in the unit.
@@ -270,6 +318,9 @@ func (u *unit) serialize() (udb *unitDB) {
 		UpstreamsResponses: convertMapToSlice(u.upstreamsResponses, maxUpstreams),
 		UpstreamsTimeSum:   convertMapToSlice(u.upstreamsTimeSum, maxUpstreams),
 		TimeAvg:            timeAvg,
+
+		UpstreamsResponsesTotal: u.upstreamsResponsesTotal,
+		UpstreamsTimeSumTotal:   u.upstreamsTimeSumTotal,
 	}
 }
 
@@ -311,6 +362,7 @@ func (u *unit) deserialize(udb *unitDB) {
 	u.clients = convertSliceToMap(udb.Clients)
 	u.upstreamsResponses = convertSliceToMap(udb.UpstreamsResponses)
 	u.upstreamsTimeSum = convertSliceToMap(udb.UpstreamsTimeSum)
+	u.upstreamsTimeSumTotal, u.upstreamsResponsesTotal = upstreamTotals(udb)
 	u.timeSum = uint64(udb.TimeAvg) * udb.NTotal
 }
 
@@ -334,9 +386,24 @@ func (u *unit) add(e *Entry) {
 		}
 
 		addr := s.Address
+		dur := uint64(s.QueryDuration.Microseconds())
+
 		u.upstreamsResponses[addr]++
-		u.upstreamsTimeSum[addr] += uint64(s.QueryDuration.Microseconds())
+		u.upstreamsTimeSum[addr] += dur
+		u.upstreamsResponsesTotal++
+		u.upstreamsTimeSumTotal += dur
 	}
+}
+
+// addUpstream adds the data about a single upstream exchange to u.  It's safe
+// for concurrent use.
+func (u *unit) addUpstream(e *UpstreamEntry) {
+	dur := uint64(e.QueryDuration.Microseconds())
+
+	u.upstreamsResponses[e.Address]++
+	u.upstreamsTimeSum[e.Address] += dur
+	u.upstreamsResponsesTotal++
+	u.upstreamsTimeSumTotal += dur
 }
 
 // flushUnitToDB puts udb to the database at id.
@@ -445,6 +512,8 @@ func (s *StatsCtx) dataFromUnits(units []*unitDB, curID uint32) (resp *StatsResp
 		TopUpstreamsResponses: topUpstreamsResponses,
 		TopUpstreamsAvgTime:   topUpstreamsAvgTime,
 		TopClients:            topsCollector(units, maxClients, nil, topClientPairs(s)),
+
+		AvgUpstreamResponseTime: avgUpstreamResponseTime(units),
 	}
 
 	s.fillCollectedStats(resp, units, curID)
@@ -453,13 +522,21 @@ func (s *StatsCtx) dataFromUnits(units []*unitDB, curID uint32) (resp *StatsResp
 	sum := unitDB{
 		NResult: make([]uint64, resultLast),
 	}
-	var timeN uint32
+
+	// timeSum is the total processing time of all the requests within units, in
+	// microseconds, and timeN is their number.
+	//
+	// NOTE:  [unitDB.TimeAvg] is the mean processing time within a single unit,
+	// so it must be weighted by the number of requests of that unit.  Taking
+	// the mean of the means instead would give an hour with a handful of
+	// requests the same weight as an hour with tens of thousands of them, and
+	// would also disagree with the upstream response times, which are averaged
+	// over the whole period, see [topUpstreamsPairs].
+	var timeSum, timeN uint64
 	for _, u := range units {
 		sum.NTotal += u.NTotal
-		sum.TimeAvg += u.TimeAvg
-		if u.TimeAvg != 0 {
-			timeN++
-		}
+		timeSum += uint64(u.TimeAvg) * u.NTotal
+		timeN += u.NTotal
 		sum.NResult[RFiltered] += u.NResult[RFiltered]
 		sum.NResult[RSafeBrowsing] += u.NResult[RSafeBrowsing]
 		sum.NResult[RSafeSearch] += u.NResult[RSafeSearch]
@@ -473,7 +550,7 @@ func (s *StatsCtx) dataFromUnits(units []*unitDB, curID uint32) (resp *StatsResp
 	resp.NumReplacedParental = sum.NResult[RParental]
 
 	if timeN != 0 {
-		resp.AvgProcessingTime = microsecondsToSeconds(float64(sum.TimeAvg / timeN))
+		resp.AvgProcessingTime = microsecondsToSeconds(float64(timeSum) / float64(timeN))
 	}
 
 	return resp
@@ -594,6 +671,58 @@ func topUpstreamsPairs(
 	topUpstreamsResponses = convertTopSlice(upstreamsPairs)
 
 	return topUpstreamsResponses, prepareTopUpstreamsAvgTime(upstreamsAvgTime)
+}
+
+// avgUpstreamResponseTime returns the average time that the upstream DNS
+// servers took to respond within units, in seconds.
+//
+// It is averaged over the responses of every upstream server, as opposed to
+// [StatsResp.AvgProcessingTime], which is averaged over every request that
+// AdGuard Home has processed, including the ones answered from the cache or
+// blocked by a filter.  Those take almost no time, so the two values are
+// expected to differ, often by an order of magnitude.
+func avgUpstreamResponseTime(units []*unitDB) (avg float64) {
+	var timeSum, respNum uint64
+	for _, u := range units {
+		t, n := upstreamTotals(u)
+		timeSum += t
+		respNum += n
+	}
+
+	if respNum == 0 {
+		return 0
+	}
+
+	return microsecondsToSeconds(float64(timeSum) / float64(respNum))
+}
+
+// upstreamTotals returns the total duration of the responses from all the
+// upstream servers of udb, in microseconds, and their number.  udb must not be
+// nil.
+//
+// [unitDB.UpstreamsResponses] and [unitDB.UpstreamsTimeSum] are each truncated
+// to the top [maxUpstreams] entries independently of each other, so on a unit
+// that has seen more upstreams than that they need not describe the same set,
+// and summing one against the other gives a ratio of two different populations.
+// The exact totals are therefore stored alongside them.
+//
+// Records written before those totals existed decode them as zero, and the
+// bounded slices are all such a record has; summing them is what this used to
+// do and remains the best available answer for it.
+func upstreamTotals(udb *unitDB) (timeSum, respNum uint64) {
+	if udb.UpstreamsResponsesTotal != 0 || udb.UpstreamsTimeSumTotal != 0 {
+		return udb.UpstreamsTimeSumTotal, udb.UpstreamsResponsesTotal
+	}
+
+	for _, cp := range udb.UpstreamsTimeSum {
+		timeSum += cp.Count
+	}
+
+	for _, cp := range udb.UpstreamsResponses {
+		respNum += cp.Count
+	}
+
+	return timeSum, respNum
 }
 
 // microsecondsToSeconds converts microseconds to seconds.

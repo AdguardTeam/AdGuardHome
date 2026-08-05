@@ -20,6 +20,10 @@
 
 - New property `"language"` in `POST /control/install/check_config` and `POST /control/install/configure` HTTP APIs defines the language to use once AdGuard Home is installed.
 
+### New `avg_upstream_response_time` field in `GET /control/stats`
+
+- New property `avg_upstream_response_time` in the `Stats` object contains the average time in seconds that the upstream DNS servers took to respond.  Unlike `avg_processing_time`, which covers every request AdGuard Home has processed, including the ones answered from the cache or blocked by a filter, it only covers the requests that have actually been sent to an upstream server.  The two are therefore expected to differ, often by an order of magnitude.
+
 ## v0.107.78: API changes
 
 The property `interval` of the objects returned from and accepted by the aforementioned APIs can now be any integer between 0 and 8760 (365 days).

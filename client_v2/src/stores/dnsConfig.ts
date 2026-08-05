@@ -95,6 +95,7 @@ export const getDnsConfig = async () => {
 export const clearDnsCache = async () => {
     try {
         await cacheClear();
+        addSuccessToast(intl.getMessage('dns_cache_cleared'));
     } catch (error) {
         addErrorToast({ error });
     }
