@@ -7,7 +7,7 @@
 # This comment is used to simplify checking local copies of the Makefile.  Bump
 # this number every time a significant change is made to this Makefile.
 #
-# AdGuard-Project-Version: 12
+# AdGuard-Project-Version: 13
 
 # Don't name these macros "GO" etc., because GNU Make apparently makes them
 # exported environment variables with the literal value of "${GO:-go}" and so
@@ -145,8 +145,9 @@ go-os-check:
 .PHONY: txt-lint
 txt-lint: ; $(ENV) "$(SHELL)" ./scripts/make/txt-lint.sh
 
-.PHONY: md-lint sh-lint
+.PHONY: md-lint sh-lint sh-test
 md-lint: ; $(ENV_MISC) "$(SHELL)" ./scripts/make/md-lint.sh
 sh-lint: ; $(ENV_MISC) "$(SHELL)" ./scripts/make/sh-lint.sh
+sh-test: ; $(ENV_MISC) "$(SHELL)" ./scripts/make/install-test.sh
 
 # TODO(a.garipov):  Re-add openapi-lint.
