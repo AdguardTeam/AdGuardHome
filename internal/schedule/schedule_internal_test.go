@@ -123,6 +123,54 @@ func TestWeekly_Contains(t *testing.T) {
 	}
 }
 
+func TestWeekly_Contains_wallClock(t *testing.T) {
+	denver, err := time.LoadLocation("America/Denver")
+	require.NoError(t, err)
+
+	london, err := time.LoadLocation("Europe/London")
+	require.NoError(t, err)
+
+	testCases := []struct {
+		at   time.Time
+		name string
+		day  dayRange
+		want bool
+	}{
+		{
+			name: "fall_back",
+			at:   time.Date(2024, 11, 3, 21, 0, 0, 0, denver),
+			day: dayRange{
+				start: 18 * time.Hour,
+				end:   21*time.Hour + 30*time.Minute,
+			},
+			want: true,
+		},
+		{
+			name: "spring_forward",
+			at:   time.Date(2025, 3, 30, 8, 30, 0, 0, london),
+			day: dayRange{
+				start: 0,
+				end:   8 * time.Hour,
+			},
+			want: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			days := [7]dayRange{}
+			days[tc.at.Weekday()] = tc.day
+
+			weekly := &Weekly{
+				location: tc.at.Location(),
+				days:     days,
+			}
+
+			assert.Equal(t, tc.want, weekly.Contains(tc.at))
+		})
+	}
+}
+
 const brusselsSundayYAML = `
 sun:
     start: 12h
