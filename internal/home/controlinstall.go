@@ -537,6 +537,7 @@ func (web *webAPI) finalizeInstall(
 		web.httpReg,
 		web.conf.workDir,
 		web.hostsContainer,
+		web.conf.mux,
 	)
 	if err != nil {
 		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusInternalServerError, "%s", err)
@@ -633,7 +634,7 @@ func decodeApplyConfigReq(r io.Reader) (req *applyConfigReq, restartHTTP bool, e
 }
 
 // startMods initializes and starts the DNS server after installation.
-// baseLogger, tlsMgr, confModifier, and httpReg must not be nil.
+// baseLogger, tlsMgr, confModifier, httpReg, and mux must not be nil.
 func startMods(
 	ctx context.Context,
 	baseLogger *slog.Logger,
@@ -642,13 +643,14 @@ func startMods(
 	httpReg aghhttp.Registrar,
 	workDir string,
 	hc *aghnet.HostsContainer,
+	mux *http.ServeMux,
 ) (err error) {
 	statsDir, querylogDir, err := checkStatsAndQuerylogDirs(config, workDir)
 	if err != nil {
 		return err
 	}
 
-	err = initDNS(ctx, baseLogger, tlsMgr, confModifier, httpReg, statsDir, querylogDir, hc)
+	err = initDNS(ctx, baseLogger, tlsMgr, confModifier, httpReg, statsDir, querylogDir, hc, mux)
 	if err != nil {
 		return err
 	}

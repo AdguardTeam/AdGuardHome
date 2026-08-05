@@ -407,7 +407,6 @@ func TestAuth_ServeHTTP_firstRun(t *testing.T) {
 		isFirstRun: true,
 	})
 
-	globalContext.web = web
 	mw.set(web)
 
 	testCases := []struct {
@@ -560,7 +559,6 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	globalContext.web = web
 	mw.set(web)
 
 	mux := auth.middleware().Wrap(baseMux)
@@ -722,7 +720,6 @@ func TestAuth_ServeHTTP_logout(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	globalContext.web = web
 	mw.set(web)
 
 	mux := auth.middleware().Wrap(baseMux)

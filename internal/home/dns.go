@@ -26,6 +26,7 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/golibs/netutil/httputil"
 	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	yaml "go.yaml.in/yaml/v4"
 )
@@ -42,7 +43,7 @@ const (
 // initDNS updates all the fields of the [globalContext] needed to initialize
 // the DNS server and initializes it at last.  It also must not be called unless
 // [config] and [globalContext] are initialized.  baseLogger, tlsMgr,
-// confModifier, and httpReg must not be nil.
+// confModifier, httpReg, and mux must not be nil.
 func initDNS(
 	ctx context.Context,
 	baseLogger *slog.Logger,
@@ -52,6 +53,7 @@ func initDNS(
 	statsDir string,
 	querylogDir string,
 	hc *aghnet.HostsContainer,
+	mux httputil.Router,
 ) (err error) {
 	anonymizer := config.anonymizer()
 
@@ -129,7 +131,9 @@ func initDNS(
 		return fmt.Errorf("creating dns server: %w", err)
 	}
 
-	registerDoHHandlers(config.HTTPConfig.DoH.Routes)
+	for _, route := range config.HTTPConfig.DoH.Routes {
+		mux.Handle(route, globalContext.dnsServer)
+	}
 
 	return nil
 }
@@ -569,11 +573,4 @@ func checkDir(path string) (err error) {
 	}
 
 	return nil
-}
-
-// registerDoHHandlers registers DoH handlers on the given routes.
-func registerDoHHandlers(routes []string) {
-	for _, route := range routes {
-		globalContext.web.conf.mux.Handle(route, globalContext.dnsServer)
-	}
 }
