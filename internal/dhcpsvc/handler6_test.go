@@ -818,6 +818,170 @@ func TestDHCPServer_ServeEther6_release(t *testing.T) {
 	}
 }
 
+func TestDHCPServer_ServeEther6_decline(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		in       gopacket.Packet
+		want     *dhcpsvc.Lease
+		name     string
+		wantOpts layers.DHCPv6Options
+	}{{
+		in: newDHCPv6Decline(t, testHWDynamic, testIPv6Dynamic),
+		want: &dhcpsvc.Lease{
+			IP:       testIPv6Dynamic,
+			Expiry:   testExpiryDynamicLease,
+			Hostname: "",
+			HWAddr:   dhcpsvc.BlockedHardwareAddr,
+			IsStatic: false,
+		},
+		name: "success",
+		wantOpts: layers.DHCPv6Options{
+			newOptServerDUID(t, testIfaceHWAddr),
+			newOptClientDUID(t, testHWDynamic),
+			newOptIANAStatus(t, testIAID, layers.DHCPv6StatusCodeSuccess),
+			newOptPreference(t, 0),
+			newOptSolMaxRT(t, dhcpsvc.DefaultSolMaxRT),
+		},
+	}, {
+		in:   newDHCPv6Decline(t, testHWUnknown, testIPv6Unknown),
+		want: nil,
+		name: "no_binding",
+		wantOpts: layers.DHCPv6Options{
+			newOptServerDUID(t, testIfaceHWAddr),
+			newOptClientDUID(t, testHWUnknown),
+			newOptIANAStatus(t, testIAID, layers.DHCPv6StatusCodeNoBinding),
+			newOptPreference(t, 0),
+			newOptSolMaxRT(t, dhcpsvc.DefaultSolMaxRT),
+		},
+	}, {
+		in:   newDHCPv6Decline(t, testHWDynamic, testIPv6Unknown),
+		want: nil,
+		name: "ip_mismatch",
+		wantOpts: layers.DHCPv6Options{
+			newOptServerDUID(t, testIfaceHWAddr),
+			newOptClientDUID(t, testHWDynamic),
+			newOptIANAStatus(t, testIAID, layers.DHCPv6StatusCodeNoBinding),
+			newOptPreference(t, 0),
+			newOptSolMaxRT(t, dhcpsvc.DefaultSolMaxRT),
+		},
+	}, {
+		in:   newDHCPv6Decline(t, testHWDynamic, netip.Addr{}),
+		want: nil,
+		name: "no_iana",
+		wantOpts: layers.DHCPv6Options{
+			newOptServerDUID(t, testIfaceHWAddr),
+			newOptClientDUID(t, testHWDynamic),
+			newOptPreference(t, 0),
+			newOptSolMaxRT(t, dhcpsvc.DefaultSolMaxRT),
+		},
+	}}
+
+	for _, tc := range testCases {
+		req := testutil.RequireTypeAssert[*layers.DHCPv6](t, tc.in.Layer(layers.LayerTypeDHCPv6))
+
+		db := newTestDatabase(t)
+
+		onStore := func(ctx context.Context, leases []*dhcpsvc.Lease) (err error) {
+			assert.Contains(t, leases, tc.want)
+
+			return nil
+		}
+
+		if tc.want != nil {
+			db.onStore = onStore
+		}
+
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			ndMgr, inCh, outCh := newTestNetworkDeviceManager(t, testIfaceAddrV6)
+			startTestDHCPServer(t, &dhcpsvc.Config{
+				Database:             db,
+				Interfaces:           testIPv6InterfacesConf,
+				Logger:               testLogger,
+				NetworkDeviceManager: ndMgr,
+				Enabled:              true,
+			})
+
+			testutil.RequireSend(t, inCh, tc.in, testTimeout)
+
+			assertValidResponse6(t, req, outCh, tc.wantOpts)
+		})
+	}
+}
+
+// assertValidResponse6 asserts that the response received on recvCh is a valid
+// DHCPv6 response for the given request and contains the expected options.  It
+// does nothing if wantOpts is nil, which should be used in case no response is
+// expected.  req and recvCh must not be nil.
+func assertValidResponse6(
+	tb testing.TB,
+	req *layers.DHCPv6,
+	recvCh <-chan []byte,
+	wantOpts layers.DHCPv6Options,
+) {
+	tb.Helper()
+
+	if wantOpts == nil {
+		return
+	}
+
+	respData, ok := testutil.RequireReceive(tb, recvCh, testTimeout)
+	require.True(tb, ok)
+
+	ip := &layers.IPv6{}
+	udp := &layers.UDP{}
+	resp := &layers.DHCPv6{}
+	types := requireEthernet(tb, respData, &layers.Ethernet{}, ip, udp, resp)
+	require.Equal(tb, fullLayersStack6, types)
+
+	assertValidDHCPv6(tb, req, resp)
+
+	// TODO(e.burkov):  Consider comparing the whole message instead of separate
+	// fields.
+	assert.Equal(tb, req.LinkAddr, resp.LinkAddr, "link address")
+	assert.Equal(tb, req.PeerAddr, resp.PeerAddr, "peer address")
+	assert.Equal(tb, req.TransactionID, resp.TransactionID, "transaction id")
+	assert.Equal(tb, wantOpts, resp.Options, "options")
+}
+
+// assertValidDHCPv6 asserts that the response is valid for the given request
+// according to RFC 9915.
+//
+// TODO(e.burkov):  Add more checks involving other network layers.
+func assertValidDHCPv6(
+	tb testing.TB,
+	req *layers.DHCPv6,
+	resp *layers.DHCPv6,
+) {
+	tb.Helper()
+
+	switch req.MsgType {
+	case
+		layers.DHCPv6MsgTypeRequest,
+		layers.DHCPv6MsgTypeConfirm,
+		layers.DHCPv6MsgTypeRenew,
+		layers.DHCPv6MsgTypeRebind,
+		layers.DHCPv6MsgTypeRelease,
+		layers.DHCPv6MsgTypeDecline,
+		layers.DHCPv6MsgTypeInformationRequest:
+		assert.Equal(tb, layers.DHCPv6MsgTypeReply, resp.MsgType)
+	case layers.DHCPv6MsgTypeSolicit:
+		isRapidCommit := slices.ContainsFunc(resp.Options, func(o layers.DHCPv6Option) (ok bool) {
+			return o.Code == layers.DHCPv6OptRapidCommit
+		})
+
+		if isRapidCommit {
+			assert.Equal(tb, layers.DHCPv6MsgTypeReply, resp.MsgType)
+		} else {
+			assert.Equal(tb, layers.DHCPv6MsgTypeAdvertise, resp.MsgType)
+		}
+	default:
+		tb.Errorf("request message type: %v: %s", errors.ErrUnexpectedValue, req.MsgType)
+	}
+}
+
 // newDHCPv6Solicit creates a new DHCPv6 SOLICIT packet for testing.
 func newDHCPv6Solicit(
 	tb testing.TB,
@@ -912,6 +1076,137 @@ func newDHCPv6Confirm(
 	return newTestPacket(tb, layers.LinkTypeEthernet, eth, ip, udp, dhcp)
 }
 
+// newDHCPv6Renew creates a new DHCPv6 RENEW packet for testing.
+func newDHCPv6Renew(tb testing.TB, mac net.HardwareAddr, reqIP netip.Addr) (pkt gopacket.Packet) {
+	tb.Helper()
+
+	opts := layers.DHCPv6Options{
+		newOptClientDUID(tb, mac),
+		newOptServerDUID(tb, testIfaceHWAddr),
+	}
+
+	if reqIP.Is6() {
+		opts = append(opts, newOptIANA(tb, testIAID, reqIP, testLeaseTTL))
+	}
+
+	eth := newEthernetLayer(tb, mac, testIfaceHWAddr, layers.EthernetTypeIPv6)
+	ip, udp := newIPv6UDPLayer(tb, netip.AddrPort{}, netip.AddrPort{})
+	dhcp := newTestDHCPv6(tb, layers.DHCPv6MsgTypeRenew, opts...)
+
+	return newTestPacket(tb, layers.LinkTypeEthernet, eth, ip, udp, dhcp)
+}
+
+// newDHCPv6Rebind creates a new DHCPv6 REBIND packet for testing.
+func newDHCPv6Rebind(tb testing.TB, mac net.HardwareAddr, reqIP netip.Addr) (pkt gopacket.Packet) {
+	tb.Helper()
+
+	opts := layers.DHCPv6Options{
+		newOptClientDUID(tb, mac),
+		// REBIND must not contain a Server ID option.
+	}
+
+	if reqIP.IsValid() && reqIP.Is6() {
+		opts = append(opts, newOptIANA(tb, testIAID, reqIP, testLeaseTTL))
+	}
+
+	// REBIND is sent to any available server, so the destination is the
+	// multicast address, not a specific server's unicast.
+	eth := newEthernetLayer(tb, mac, nil, layers.EthernetTypeIPv6)
+	ip, udp := newIPv6UDPLayer(tb, netip.AddrPort{}, netip.AddrPort{})
+	dhcp := newTestDHCPv6(tb, layers.DHCPv6MsgTypeRebind, opts...)
+
+	return newTestPacket(tb, layers.LinkTypeEthernet, eth, ip, udp, dhcp)
+}
+
+// newDHCPv6Info creates a new DHCPv6 INFORMATION-REQUEST packet for testing.
+// withClientID controls whether the packet includes a Client Identifier option.
+func newDHCPv6Info(
+	tb testing.TB,
+	mac net.HardwareAddr,
+	addClientID bool,
+	addServerID bool,
+) (pkt gopacket.Packet) {
+	tb.Helper()
+
+	var opts layers.DHCPv6Options
+
+	if addClientID {
+		opts = append(opts, newOptClientDUID(tb, mac))
+	}
+
+	if addServerID {
+		opts = append(opts, newOptServerDUID(tb, testIfaceHWAddr))
+	}
+
+	eth := newEthernetLayer(tb, mac, nil, layers.EthernetTypeIPv6)
+	ip, udp := newIPv6UDPLayer(tb, netip.AddrPort{}, netip.AddrPort{})
+	dhcp := newTestDHCPv6(tb, layers.DHCPv6MsgTypeInformationRequest, opts...)
+
+	return newTestPacket(tb, layers.LinkTypeEthernet, eth, ip, udp, dhcp)
+}
+
+// newDHCPv6Release creates a new DHCPv6 RELEASE packet for testing.
+func newDHCPv6Release(tb testing.TB, mac net.HardwareAddr, reqIP netip.Addr) (pkt gopacket.Packet) {
+	tb.Helper()
+
+	opts := layers.DHCPv6Options{
+		newOptClientDUID(tb, mac),
+		newOptServerDUID(tb, testIfaceHWAddr),
+	}
+
+	if reqIP.Is6() {
+		opts = append(opts, newOptIANA(tb, testIAID, reqIP, testLeaseTTL))
+	}
+
+	eth := newEthernetLayer(tb, mac, testIfaceHWAddr, layers.EthernetTypeIPv6)
+	ip, udp := newIPv6UDPLayer(tb, netip.AddrPort{}, netip.AddrPort{})
+	dhcp := newTestDHCPv6(tb, layers.DHCPv6MsgTypeRelease, opts...)
+
+	return newTestPacket(tb, layers.LinkTypeEthernet, eth, ip, udp, dhcp)
+}
+
+// newDHCPv6Decline creates a new DHCPv6 DECLINE packet for testing.
+func newDHCPv6Decline(tb testing.TB, mac net.HardwareAddr, reqIP netip.Addr) (pkt gopacket.Packet) {
+	tb.Helper()
+
+	opts := layers.DHCPv6Options{
+		newOptClientDUID(tb, mac),
+		newOptServerDUID(tb, testIfaceHWAddr),
+	}
+
+	if reqIP.Is6() {
+		opts = append(opts, newOptIANA(tb, testIAID, reqIP, testLeaseTTL))
+	}
+
+	eth := newEthernetLayer(tb, mac, testIfaceHWAddr, layers.EthernetTypeIPv6)
+	ip, udp := newIPv6UDPLayer(tb, netip.AddrPort{}, netip.AddrPort{})
+	dhcp := newTestDHCPv6(tb, layers.DHCPv6MsgTypeDecline, opts...)
+
+	return newTestPacket(tb, layers.LinkTypeEthernet, eth, ip, udp, dhcp)
+}
+
+// newTestDHCPv6 creates a new DHCPv6 message for testing with the specified
+// type and options.  The link and peer addresses are not set, as they are
+// intended for relay messages.
+func newTestDHCPv6(
+	tb testing.TB,
+	msgType layers.DHCPv6MsgType,
+	opts ...layers.DHCPv6Option,
+) (dhcp *layers.DHCPv6) {
+	tb.Helper()
+
+	return &layers.DHCPv6{
+		MsgType:  msgType,
+		HopCount: 0,
+		// Don't specify link and peer addresses, as they are intended for relay
+		// messages.
+		LinkAddr:      nil,
+		PeerAddr:      nil,
+		TransactionID: testTransactionID,
+		Options:       opts,
+	}
+}
+
 // newIPv6UDPLayer creates IPv6 and UDP layers for testing.  Invalid src is
 // replaced with an unspecified address and client DHCPv6 port, invalid dst is
 // replaced with the broadcast address and server DHCPv6 port.
@@ -969,196 +1264,4 @@ func newEthernetLayer(
 		DstMAC:       dst,
 		EthernetType: typ,
 	}
-}
-
-// assertValidResponse6 asserts that the response received on recvCh is a valid
-// DHCPv6 response for the given request and contains the expected options.  It
-// does nothing if wantOpts is nil, which should be used in case no response is
-// expected.  req and recvCh must not be nil.
-func assertValidResponse6(
-	tb testing.TB,
-	req *layers.DHCPv6,
-	recvCh <-chan []byte,
-	wantOpts layers.DHCPv6Options,
-) {
-	tb.Helper()
-
-	if wantOpts == nil {
-		return
-	}
-
-	respData, ok := testutil.RequireReceive(tb, recvCh, testTimeout)
-	require.True(tb, ok)
-
-	ip := &layers.IPv6{}
-	udp := &layers.UDP{}
-	resp := &layers.DHCPv6{}
-	types := requireEthernet(tb, respData, &layers.Ethernet{}, ip, udp, resp)
-	require.Equal(tb, fullLayersStack6, types)
-
-	assertValidDHCPv6(tb, req, resp)
-
-	// TODO(e.burkov):  Consider comparing the whole message instead of separate
-	// fields.
-	assert.Equal(tb, req.LinkAddr, resp.LinkAddr, "link address")
-	assert.Equal(tb, req.PeerAddr, resp.PeerAddr, "peer address")
-	assert.Equal(tb, req.TransactionID, resp.TransactionID, "transaction id")
-	assert.Equal(tb, wantOpts, resp.Options, "options")
-}
-
-// assertValidDHCPv6 asserts that the response is valid for the given request
-// according to RFC 9915.
-//
-// TODO(e.burkov):  Add more checks involving other network layers.
-func assertValidDHCPv6(
-	tb testing.TB,
-	req *layers.DHCPv6,
-	resp *layers.DHCPv6,
-) {
-	tb.Helper()
-
-	switch req.MsgType {
-	case
-		layers.DHCPv6MsgTypeRequest,
-		layers.DHCPv6MsgTypeConfirm,
-		layers.DHCPv6MsgTypeRenew,
-		layers.DHCPv6MsgTypeRebind,
-		layers.DHCPv6MsgTypeRelease,
-		layers.DHCPv6MsgTypeDecline,
-		layers.DHCPv6MsgTypeInformationRequest:
-		assert.Equal(tb, layers.DHCPv6MsgTypeReply, resp.MsgType)
-	case layers.DHCPv6MsgTypeSolicit:
-		isRapidCommit := slices.ContainsFunc(resp.Options, func(o layers.DHCPv6Option) (ok bool) {
-			return o.Code == layers.DHCPv6OptRapidCommit
-		})
-
-		if isRapidCommit {
-			assert.Equal(tb, layers.DHCPv6MsgTypeReply, resp.MsgType)
-		} else {
-			assert.Equal(tb, layers.DHCPv6MsgTypeAdvertise, resp.MsgType)
-		}
-	default:
-		tb.Errorf("request message type: %v: %s", errors.ErrUnexpectedValue, req.MsgType)
-	}
-}
-
-// newDHCPv6Rebind creates a new DHCPv6 REBIND packet for testing.
-func newDHCPv6Rebind(tb testing.TB, mac net.HardwareAddr, reqIP netip.Addr) (pkt gopacket.Packet) {
-	tb.Helper()
-
-	// REBIND is sent to any available server, so the destination is the
-	// multicast address, not a specific server's unicast.
-	eth := newEthernetLayer(tb, mac, nil, layers.EthernetTypeIPv6)
-	ip, udp := newIPv6UDPLayer(tb, netip.AddrPort{}, netip.AddrPort{})
-
-	dhcp := &layers.DHCPv6{
-		MsgType:  layers.DHCPv6MsgTypeRebind,
-		HopCount: 0,
-		// Don't specify link and peer addresses, as they are intended for relay
-		// messages.
-		LinkAddr:      nil,
-		PeerAddr:      nil,
-		TransactionID: testTransactionID,
-		Options: layers.DHCPv6Options{
-			newOptClientDUID(tb, mac),
-			// REBIND must not contain a Server ID option.
-		},
-	}
-
-	if reqIP.IsValid() && reqIP.Is6() {
-		dhcp.Options = append(dhcp.Options, newOptIANA(tb, testIAID, reqIP, testLeaseTTL))
-	}
-
-	return newTestPacket(tb, layers.LinkTypeEthernet, eth, ip, udp, dhcp)
-}
-
-// newDHCPv6Info creates a new DHCPv6 INFORMATION-REQUEST packet for testing.
-// withClientID controls whether the packet includes a Client Identifier option.
-func newDHCPv6Info(
-	tb testing.TB,
-	mac net.HardwareAddr,
-	addClientID bool,
-	addServerID bool,
-) (pkt gopacket.Packet) {
-	tb.Helper()
-
-	eth := newEthernetLayer(tb, mac, nil, layers.EthernetTypeIPv6)
-	ip, udp := newIPv6UDPLayer(tb, netip.AddrPort{}, netip.AddrPort{})
-
-	dhcp := &layers.DHCPv6{
-		MsgType:  layers.DHCPv6MsgTypeInformationRequest,
-		HopCount: 0,
-		// Don't specify link and peer addresses, as they are intended for relay
-		// messages.
-		LinkAddr:      nil,
-		PeerAddr:      nil,
-		TransactionID: testTransactionID,
-		Options:       layers.DHCPv6Options{},
-	}
-
-	if addClientID {
-		dhcp.Options = append(dhcp.Options, newOptClientDUID(tb, mac))
-	}
-
-	if addServerID {
-		dhcp.Options = append(dhcp.Options, newOptServerDUID(tb, testIfaceHWAddr))
-	}
-
-	return newTestPacket(tb, layers.LinkTypeEthernet, eth, ip, udp, dhcp)
-}
-
-// newDHCPv6Renew creates a new DHCPv6 RENEW packet for testing.
-func newDHCPv6Renew(tb testing.TB, mac net.HardwareAddr, reqIP netip.Addr) (pkt gopacket.Packet) {
-	tb.Helper()
-
-	eth := newEthernetLayer(tb, mac, testIfaceHWAddr, layers.EthernetTypeIPv6)
-	ip, udp := newIPv6UDPLayer(tb, netip.AddrPort{}, netip.AddrPort{})
-
-	dhcp := &layers.DHCPv6{
-		MsgType:  layers.DHCPv6MsgTypeRenew,
-		HopCount: 0,
-		// Don't specify link and peer addresses, as they are intended for relay
-		// messages.
-		LinkAddr:      nil,
-		PeerAddr:      nil,
-		TransactionID: testTransactionID,
-		Options: layers.DHCPv6Options{
-			newOptClientDUID(tb, mac),
-			newOptServerDUID(tb, testIfaceHWAddr),
-		},
-	}
-
-	if reqIP.IsValid() && reqIP.Is6() {
-		dhcp.Options = append(dhcp.Options, newOptIANA(tb, testIAID, reqIP, testLeaseTTL))
-	}
-
-	return newTestPacket(tb, layers.LinkTypeEthernet, eth, ip, udp, dhcp)
-}
-
-// newDHCPv6Release creates a new DHCPv6 RELEASE packet for testing.
-func newDHCPv6Release(tb testing.TB, mac net.HardwareAddr, reqIP netip.Addr) (pkt gopacket.Packet) {
-	tb.Helper()
-
-	eth := newEthernetLayer(tb, mac, testIfaceHWAddr, layers.EthernetTypeIPv6)
-	ip, udp := newIPv6UDPLayer(tb, netip.AddrPort{}, netip.AddrPort{})
-
-	dhcp := &layers.DHCPv6{
-		MsgType:  layers.DHCPv6MsgTypeRelease,
-		HopCount: 0,
-		// Don't specify link and peer addresses, as they are intended for relay
-		// messages.
-		LinkAddr:      nil,
-		PeerAddr:      nil,
-		TransactionID: testTransactionID,
-		Options: layers.DHCPv6Options{
-			newOptClientDUID(tb, mac),
-			newOptServerDUID(tb, testIfaceHWAddr),
-		},
-	}
-
-	if reqIP.IsValid() && reqIP.Is6() {
-		dhcp.Options = append(dhcp.Options, newOptIANA(tb, testIAID, reqIP, testLeaseTTL))
-	}
-
-	return newTestPacket(tb, layers.LinkTypeEthernet, eth, ip, udp, dhcp)
 }
