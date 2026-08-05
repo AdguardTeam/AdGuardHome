@@ -34,6 +34,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Changed
 
+- The mobile and tablet header now stays sticky while scrolling ([#7840]).
+
 - The `edge` channel has been switched to the new UI and versioning scheme.
 
 ### Deprecated
@@ -47,6 +49,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 - Blocked requests without an EDNS(0) OPT record ([#8183]).
 
 [#7514]: https://github.com/AdguardTeam/AdGuardHome/issues/7514
+[#7840]: https://github.com/AdguardTeam/AdGuardHome/pull/7840
 [#8183]: https://github.com/AdguardTeam/AdGuardHome/issues/8183
 
 <!--
