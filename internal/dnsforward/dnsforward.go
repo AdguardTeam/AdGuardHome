@@ -338,12 +338,28 @@ func (s *Server) UpstreamTimeout() (t time.Duration) {
 	return s.conf.UpstreamTimeout
 }
 
-// Resolve gets IP addresses by host name from an upstream server.  No
-// request/response filtering is performed.  Query log and Stats are not
-// updated.  This method may be called before [Server.Start].
+// Resolve gets IP addresses by host name from the system hosts files or an
+// upstream server.  No request/response filtering is performed.  Query log and
+// Stats are not updated.  This method may be called before [Server.Start].
 func (s *Server) Resolve(ctx context.Context, net, host string) (addr []netip.Addr, err error) {
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()
+
+	if s.etcHosts != nil {
+		hostsNet := "ip"
+		switch net {
+		case "tcp4", "udp4", "ip4":
+			hostsNet = "ip4"
+		case "tcp6", "udp6", "ip6":
+			hostsNet = "ip6"
+		}
+
+		return upstream.ConsequentResolver{s.etcHosts, s.internalProxy}.LookupNetIP(
+			ctx,
+			hostsNet,
+			host,
+		)
+	}
 
 	return s.internalProxy.LookupNetIP(ctx, net, host)
 }

@@ -42,9 +42,12 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Filter downloads now honor addresses from the system hosts file ([#8460]).
+
 - Blocked requests without an EDNS(0) OPT record ([#8183]).
 
 [#8183]: https://github.com/AdguardTeam/AdGuardHome/issues/8183
+[#8460]: https://github.com/AdguardTeam/AdGuardHome/issues/8460
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
