@@ -209,10 +209,17 @@ func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
 	// name somewhere.
 	domainName := dns.Fqdn(s.conf.TLSConf.ServerName)
 
+	seenDoHPorts := map[uint16]struct{}{}
 	for _, addr := range s.conf.TLSConf.HTTPSListenAddrs {
+		port := addr.Port()
+		if _, ok := seenDoHPorts[port]; ok {
+			continue
+		}
+
+		seenDoHPorts[port] = struct{}{}
 		values := []dns.SVCBKeyValue{
 			&dns.SVCBAlpn{Alpn: []string{"h2"}},
-			&dns.SVCBPort{Port: addr.Port()},
+			&dns.SVCBPort{Port: port},
 			&dns.SVCBDoHPath{Template: "/dns-query{?dns}"},
 		}
 
@@ -228,10 +235,17 @@ func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
 
 	s.appendDoTResolvers(req, resp, domainName)
 
+	seenDoQPorts := map[uint16]struct{}{}
 	for _, addr := range s.dnsProxy.QUICListenAddr {
+		port := uint16(addr.Port)
+		if _, ok := seenDoQPorts[port]; ok {
+			continue
+		}
+
+		seenDoQPorts[port] = struct{}{}
 		values := []dns.SVCBKeyValue{
 			&dns.SVCBAlpn{Alpn: []string{"doq"}},
-			&dns.SVCBPort{Port: uint16(addr.Port)},
+			&dns.SVCBPort{Port: port},
 		}
 
 		ans := &dns.SVCB{
@@ -258,10 +272,17 @@ func (s *Server) appendDoTResolvers(req, resp *dns.Msg, domainName string) {
 		// addresses.
 		//
 		// See https://github.com/AdguardTeam/AdGuardHome/issues/4927.
+		seenDoTPorts := map[uint16]struct{}{}
 		for _, addr := range s.dnsProxy.TLSListenAddr {
+			port := uint16(addr.Port)
+			if _, ok := seenDoTPorts[port]; ok {
+				continue
+			}
+
+			seenDoTPorts[port] = struct{}{}
 			values := []dns.SVCBKeyValue{
 				&dns.SVCBAlpn{Alpn: []string{"dot"}},
-				&dns.SVCBPort{Port: uint16(addr.Port)},
+				&dns.SVCBPort{Port: port},
 			}
 
 			ans := &dns.SVCB{
