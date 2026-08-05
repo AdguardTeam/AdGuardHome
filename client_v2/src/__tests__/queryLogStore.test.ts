@@ -114,6 +114,35 @@ describe('queryLogs store', () => {
         expect(queryLogsState.processingGetLogs).toBe(false);
     });
 
+    it('continues processed short-polling past failed responses', async () => {
+        (queryLog as any).mockReset();
+        (queryLog as any)
+            .mockResolvedValueOnce({
+                data: Array.from({ length: 20 }, () => ({
+                    reason: 'NotFilteredNotFound',
+                    status: 'SERVFAIL',
+                    question: {},
+                })),
+                oldest: 'cur',
+            })
+            .mockResolvedValueOnce({
+                data: [{ reason: 'NotFilteredNotFound', status: 'NOERROR', question: {} }],
+                oldest: '',
+            });
+
+        await setFilteredLogs({ search: '', status: 'processed', reason: 'all' });
+
+        expect(queryLog).toHaveBeenCalledTimes(2);
+        expect(queryLog).toHaveBeenLastCalledWith(
+            expect.objectContaining({
+                older_than: 'cur',
+                reason: ['NotFilteredNotFound'],
+            }),
+        );
+        expect(queryLogsState.logs).toHaveLength(21);
+        expect(queryLogsState.logs.at(-1)?.status).toBe('NOERROR');
+    });
+
     it('always sends limit=20 to prevent loading all records at once', async () => {
         (queryLog as any).mockReset();
         (queryLog as any)

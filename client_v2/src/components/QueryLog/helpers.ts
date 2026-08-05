@@ -17,15 +17,21 @@ import {
     getServiceName,
     type Filter,
 } from 'panel/helpers/helpers';
+import {
+    filterLogsByStatus,
+    getQueryStatusKey,
+    type QueryStatusKey,
+} from 'panel/helpers/queryLogStatus';
 import { ResponseEntry, WhoisInfo } from './types';
+
+export { filterLogsByStatus, getQueryStatusKey };
+export type { QueryStatusKey };
 
 const parseLogDate = (time: string): Date | null => {
     const parsedTime = new Date(time);
 
     return isValid(parsedTime) ? parsedTime : null;
 };
-
-export type QueryStatusKey = 'all' | 'allowed' | 'processed' | 'blocked' | 'rewritten' | 'error';
 
 export type QueryReasonKey =
     | 'all'
@@ -139,10 +145,20 @@ const PROTOCOL_LABEL_GETTERS = {
     plain_dns: () => intl.getMessage('plain_dns'),
 } as const;
 
-export const getStatusClassName = (reason?: string): string =>
-    STATUS_COLOR_TO_CLASS[
-        FILTERED_STATUS_TO_COLOR_MAP[reason as keyof typeof FILTERED_STATUS_TO_COLOR_MAP]
-    ] || '';
+export const getStatusClassName = (
+    reason?: string,
+    statusKey?: Exclude<QueryStatusKey, 'all'>,
+): string => {
+    if (statusKey === 'error') {
+        return theme.status.statusRed;
+    }
+
+    return (
+        STATUS_COLOR_TO_CLASS[
+            FILTERED_STATUS_TO_COLOR_MAP[reason as keyof typeof FILTERED_STATUS_TO_COLOR_MAP]
+        ] || ''
+    );
+};
 
 export const isBlockedReason = (reason?: string): boolean =>
     !!reason && reason.startsWith('Filtered') && reason !== 'FilteredSafeSearch';
@@ -191,36 +207,6 @@ type ResponseDetailsParams = {
     serviceName?: string;
     services?: { id: string; name: string }[];
     whitelistFilters: Filter[];
-};
-
-export const getQueryStatusKey = (
-    reason?: string,
-    originalResponse: { value?: string; type?: string; ttl?: number }[] = [],
-): Exclude<QueryStatusKey, 'all'> => {
-    switch (reason) {
-        case FILTERED_STATUS.NOT_FILTERED_WHITE_LIST:
-            return 'allowed';
-        case FILTERED_STATUS.REWRITE:
-        case FILTERED_STATUS.REWRITE_HOSTS:
-        case FILTERED_STATUS.REWRITE_RULE:
-        case FILTERED_STATUS.FILTERED_SAFE_SEARCH:
-            return 'rewritten';
-        case FILTERED_STATUS.NOT_FILTERED_NOT_FOUND:
-            return 'processed';
-        case FILTERED_STATUS.NOT_FILTERED_ERROR:
-        case FILTERED_STATUS.FILTERED_INVALID:
-            return 'error';
-        default:
-            if (originalResponse.length > 0) {
-                return 'rewritten';
-            }
-
-            if (reason && reason.startsWith('Filtered')) {
-                return 'blocked';
-            }
-
-            return 'processed';
-    }
 };
 
 export const getQueryReasonKey = (
@@ -284,23 +270,12 @@ export const getQueryReasonDetails = ({
     }
 };
 
-export const filterLogsByStatus = <
-    T extends { reason?: string; originalResponse?: { type?: string; value?: string }[] },
->(
-    logs: T[],
-    status: QueryStatusKey | string,
-): T[] => {
-    if (status === 'all') {
-        return logs;
-    }
-
-    return logs.filter(
-        (log) => getQueryStatusKey(log.reason ?? '', log.originalResponse ?? []) === status,
-    );
-};
-
 export const hasPersistentClient = (
-    entry: { client: string; client_id?: string; client_info?: { name?: string; ids?: string[] } | null },
+    entry: {
+        client: string;
+        client_id?: string;
+        client_info?: { name?: string; ids?: string[] } | null;
+    },
     persistentClientIds: string[],
 ): boolean => {
     const entryIds = [entry.client, entry.client_id, ...(entry.client_info?.ids ?? [])].filter(

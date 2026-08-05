@@ -63,7 +63,11 @@ const hasValue = (value: any) =>
 
 export const DetailModal = (props: Props) => {
     const statusKey = () =>
-        getQueryStatusKey(props.entry.reason, props.entry.originalResponse ?? []);
+        getQueryStatusKey(
+            props.entry.reason,
+            props.entry.originalResponse ?? [],
+            props.entry.status,
+        );
     const reasonKey = () => getQueryReasonKey(props.entry.reason, props.entry.rules ?? []);
     const isBlocked = () => isBlockedReason(props.entry.reason);
     const isBlockedService = () => checkBlockedService(props.entry.reason);
@@ -84,7 +88,7 @@ export const DetailModal = (props: Props) => {
             services: props.services,
             whitelistFilters: props.whitelistFilters,
         });
-    const statusClassName = () => getStatusClassName(props.entry.reason);
+    const statusClassName = () => getStatusClassName(props.entry.reason, statusKey());
     const clientName = () => props.entry.client_info?.name || '';
     const protocol = () => getProtocolName(props.entry.client_proto);
     const responseList = () => formatResponses(props.entry.response);

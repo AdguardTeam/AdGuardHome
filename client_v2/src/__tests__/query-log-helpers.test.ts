@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import intl from 'panel/common/intl';
+import theme from 'panel/lib/theme';
 import { FILTERED_STATUS, SPECIAL_FILTER_ID } from '../helpers/constants';
 import {
     filterLogsByStatus,
@@ -9,6 +10,7 @@ import {
     getQueryReasonKey,
     getQueryStatusLabel,
     getQueryStatusKey,
+    getStatusClassName,
 } from '../components/QueryLog/helpers';
 
 afterEach(() => {
@@ -31,6 +33,44 @@ describe('getQueryStatusKey', () => {
             getQueryStatusKey('UnexpectedReason', [{ value: '203.0.113.10', type: 'A', ttl: 300 }]),
         ).toBe('rewritten');
     });
+
+    test.each(['SERVFAIL', 'NXDOMAIN', 'REFUSED', 'FORMERR'])(
+        'maps an unfiltered %s response to error status',
+        (responseStatus) => {
+            expect(
+                getQueryStatusKey(FILTERED_STATUS.NOT_FILTERED_NOT_FOUND, [], responseStatus),
+            ).toBe('error');
+        },
+    );
+
+    test.each(['SERVFAIL', 'NXDOMAIN', 'REFUSED', 'FORMERR'])(
+        'maps an allowlisted %s response to error status',
+        (responseStatus) => {
+            expect(
+                getQueryStatusKey(FILTERED_STATUS.NOT_FILTERED_WHITE_LIST, [], responseStatus),
+            ).toBe('error');
+        },
+    );
+
+    test('keeps successful, blocked, and rewritten responses unchanged', () => {
+        expect(getQueryStatusKey(FILTERED_STATUS.NOT_FILTERED_NOT_FOUND, [], 'NOERROR')).toBe(
+            'processed',
+        );
+        expect(getQueryStatusKey(FILTERED_STATUS.NOT_FILTERED_WHITE_LIST, [], 'NOERROR')).toBe(
+            'allowed',
+        );
+        expect(getQueryStatusKey(FILTERED_STATUS.FILTERED_BLACK_LIST, [], 'SERVFAIL')).toBe(
+            'blocked',
+        );
+        expect(getQueryStatusKey(FILTERED_STATUS.REWRITE, [], 'SERVFAIL')).toBe('rewritten');
+    });
+
+    test.each([FILTERED_STATUS.NOT_FILTERED_NOT_FOUND, FILTERED_STATUS.NOT_FILTERED_WHITE_LIST])(
+        'uses the error color for failed %s responses',
+        (reason) => {
+            expect(getStatusClassName(reason, 'error')).toBe(theme.status.statusRed);
+        },
+    );
 });
 
 describe('getQueryReasonKey', () => {
