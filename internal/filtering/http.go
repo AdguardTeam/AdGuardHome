@@ -334,7 +334,20 @@ func (d *DNSFilter) handleFilteringSetURL(w http.ResponseWriter, r *http.Request
 
 	d.conf.ConfModifier.Apply(ctx)
 	if restart {
-		d.EnableFilters(true)
+		// Rebuild synchronously so that the response reports completion only
+		// after the new filtering engine is ready.
+		err = d.enableFilters(ctx, false)
+		if err != nil {
+			aghhttp.ErrorAndLog(
+				ctx,
+				l,
+				r,
+				w,
+				http.StatusInternalServerError,
+				"enabling filters: %s",
+				err,
+			)
+		}
 	}
 }
 

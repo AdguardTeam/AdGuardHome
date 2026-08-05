@@ -13,6 +13,7 @@ import { Blocklists } from 'panel/components/FilterLists/Blocklists';
 import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from 'panel/helpers/localStorageHelper';
 
 import { Allowlists } from 'panel/components/FilterLists/Allowlists';
+import { FilterToggleProgress } from 'panel/components/FilterLists/blocks/FilterToggleProgress';
 import { DNSRewrites } from 'panel/components/FilterLists/DNSRewrites';
 import { SetupGuide } from 'panel/components/SetupGuide';
 import { Dashboard } from 'panel/components/Dashboard';
@@ -119,6 +120,8 @@ const App = () => {
                     </div>
 
                     <Footer />
+
+                    <FilterToggleProgress />
 
                     <Toasts />
 

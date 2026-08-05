@@ -34,6 +34,9 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Changed
 
+- Enabling or disabling a filter list now blocks other UI actions and shows
+  progress while the filtering engine is rebuilt ([#667]).
+
 - The `edge` channel has been switched to the new UI and versioning scheme.
 
 ### Deprecated
@@ -44,6 +47,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Blocked requests without an EDNS(0) OPT record ([#8183]).
 
+[#667]:  https://github.com/AdguardTeam/AdGuardHome/issues/667
 [#8183]: https://github.com/AdguardTeam/AdGuardHome/issues/8183
 
 <!--

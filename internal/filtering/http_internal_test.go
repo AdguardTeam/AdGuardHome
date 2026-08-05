@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
@@ -150,6 +151,235 @@ func TestDNSFilter_handleFilteringSetURL(t *testing.T) {
 			assert.Equal(t, tc.wantBody == "", confModifiedCalled)
 		})
 	}
+}
+
+func TestDNSFilter_handleFilteringSetURLWaitsForEngine(t *testing.T) {
+	const filterURL = "https://filters.example.org/filter.txt"
+
+	filtersDir := t.TempDir()
+	confApplied := make(chan struct{})
+	confModifier := &aghtest.ConfigModifier{
+		OnApply: func(_ context.Context) {
+			close(confApplied)
+		},
+	}
+
+	d, err := New(&Config{
+		Logger:           testLogger,
+		FilteringEnabled: true,
+		Filters: []FilterYAML{{
+			Enabled: true,
+			URL:     filterURL,
+			Name:    "example",
+		}},
+		ConfModifier: confModifier,
+		HTTPReg:      aghhttp.EmptyRegistrar{},
+		DataDir:      filtersDir,
+		MaxHTTPSize:  testFilterSize,
+	}, nil)
+	require.NoError(t, err)
+
+	// Initialize the asynchronous queue without starting its consumer.  This
+	// makes the previous fire-and-forget behavior return immediately while the
+	// synchronous behavior below is blocked at the engine swap.
+	d.filtersInitializerChan = make(chan filtersInitializerParams, 1)
+
+	d.engineLock.RLock()
+	engineLocked := true
+	t.Cleanup(func() {
+		if engineLocked {
+			d.engineLock.RUnlock()
+		}
+
+		d.Close()
+	})
+
+	reqData := &filterURLReq{
+		Data: &filterURLReqData{
+			Name:    "example",
+			URL:     filterURL,
+			Enabled: false,
+		},
+		URL: filterURL,
+	}
+	data, err := json.Marshal(reqData)
+	require.NoError(t, err)
+
+	r := httptest.NewRequest(http.MethodPost, "http://example.org", bytes.NewReader(data))
+	w := httptest.NewRecorder()
+	handlerDone := make(chan struct{})
+	go func() {
+		d.handleFilteringSetURL(w, r)
+		close(handlerDone)
+	}()
+
+	testutil.RequireReceive(t, confApplied, testTimeout)
+
+	deadline := time.NewTimer(testTimeout)
+	defer deadline.Stop()
+
+	for d.engineLock.TryRLock() {
+		d.engineLock.RUnlock()
+
+		select {
+		case <-handlerDone:
+			require.FailNow(t, "handler returned before the filtering engine was rebuilt")
+		case <-deadline.C:
+			require.FailNow(t, "filtering engine rebuild did not reach the engine swap")
+		default:
+			time.Sleep(time.Millisecond)
+		}
+	}
+
+	select {
+	case <-handlerDone:
+		require.FailNow(t, "handler returned while the filtering engine rebuild was blocked")
+	default:
+	}
+
+	d.engineLock.RUnlock()
+	engineLocked = false
+	testutil.RequireReceive(t, handlerDone, testTimeout)
+	assert.Empty(t, w.Body.String())
+}
+
+func TestDNSFilter_handleFilteringSetURLSupersedesQueuedEngine(t *testing.T) {
+	const hostname = "example.org"
+
+	filterURL := serveFiltersLocally(t, []byte("||"+hostname+"^"))
+	d, err := New(&Config{
+		Logger:           testLogger,
+		FilteringEnabled: true,
+		Filters: []FilterYAML{{
+			Enabled: true,
+			URL:     filterURL,
+			Name:    "example",
+			Filter: Filter{
+				ID: 1,
+			},
+		}},
+		ConfModifier: agh.EmptyConfigModifier{},
+		HTTPReg:      aghhttp.EmptyRegistrar{},
+		HTTPClient:   http.DefaultClient,
+		DataDir:      t.TempDir(),
+		MaxHTTPSize:  testFilterSize,
+	}, nil)
+	require.NoError(t, err)
+	t.Cleanup(d.Close)
+
+	updated, err := d.update(&d.conf.Filters[0])
+	require.NoError(t, err)
+	require.True(t, updated)
+
+	setts := &Settings{
+		ProtectionEnabled: true,
+		FilteringEnabled:  true,
+	}
+	d.EnableFilters(false)
+	d.checkMatch(t, hostname, setts)
+
+	// Simulate an asynchronous initializer that has already received an older
+	// enabled snapshot but has not rebuilt the engine yet.
+	d.filtersInitializerChan = make(chan filtersInitializerParams, 1)
+	d.EnableFilters(true)
+	staleParams, ok := testutil.RequireReceive(t, d.filtersInitializerChan, testTimeout)
+	require.True(t, ok)
+	require.Len(t, staleParams.blockFilters, 2)
+
+	// Also leave an older snapshot queued, to verify that the synchronous
+	// update discards snapshots that the worker has not received yet.
+	d.EnableFilters(true)
+
+	reqData := &filterURLReq{
+		Data: &filterURLReqData{
+			Name:    "example",
+			URL:     filterURL,
+			Enabled: false,
+		},
+		URL: filterURL,
+	}
+	data, err := json.Marshal(reqData)
+	require.NoError(t, err)
+
+	r := httptest.NewRequest(http.MethodPost, "http://example.org", bytes.NewReader(data))
+	w := httptest.NewRecorder()
+	d.handleFilteringSetURL(w, r)
+	require.Empty(t, w.Body.String())
+	d.checkMatchEmpty(t, hostname, setts)
+
+	select {
+	case <-d.filtersInitializerChan:
+		require.FailNow(t, "synchronous rebuild left an older snapshot queued")
+	default:
+	}
+
+	// A worker that received the older snapshot before the synchronous update
+	// must not restore that stale engine afterwards.
+	require.NoError(t, d.initFilteringAsync(t.Context(), staleParams))
+	d.checkMatchEmpty(t, hostname, setts)
+}
+
+func TestDNSFilter_handleFilteringSetURLReportsEngineError(t *testing.T) {
+	const (
+		oldHostname = "old.example"
+		newHostname = "new.example"
+	)
+
+	disabledURL := serveFiltersLocally(t, []byte("||"+newHostname+"^"))
+	d, err := New(&Config{
+		Logger:           testLogger,
+		FilteringEnabled: true,
+		Filters: []FilterYAML{{
+			Enabled: false,
+			URL:     disabledURL,
+			Name:    "disabled",
+		}, {
+			Enabled: true,
+			URL:     "https://filters.example.org/enabled.txt",
+			Name:    "enabled",
+		}},
+		ConfModifier: agh.EmptyConfigModifier{},
+		HTTPReg:      aghhttp.EmptyRegistrar{},
+		HTTPClient:   http.DefaultClient,
+		DataDir:      t.TempDir(),
+		MaxHTTPSize:  testFilterSize,
+	}, nil)
+	require.NoError(t, err)
+	t.Cleanup(d.Close)
+
+	// Install a known-good engine, then make the configured snapshot invalid so
+	// that enabling the list through the handler fails during engine creation.
+	require.NoError(t, d.setFilters(t.Context(), []Filter{{
+		ID:   d.idGen.next(),
+		Data: []byte("||" + oldHostname + "^"),
+	}}, nil, false))
+	d.conf.Filters[0].ID = d.conf.Filters[1].ID
+
+	setts := &Settings{
+		ProtectionEnabled: true,
+		FilteringEnabled:  true,
+	}
+	d.checkMatch(t, oldHostname, setts)
+
+	reqData := &filterURLReq{
+		Data: &filterURLReqData{
+			Name:    "disabled",
+			URL:     disabledURL,
+			Enabled: true,
+		},
+		URL: disabledURL,
+	}
+	data, err := json.Marshal(reqData)
+	require.NoError(t, err)
+
+	r := httptest.NewRequest(http.MethodPost, "http://example.org", bytes.NewReader(data))
+	w := httptest.NewRecorder()
+	d.handleFilteringSetURL(w, r)
+
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+	assert.Contains(t, w.Body.String(), "enabling filters")
+	d.checkMatch(t, oldHostname, setts)
+	d.checkMatchEmpty(t, newHostname, setts)
 }
 
 func TestDNSFilter_handleSafeBrowsingStatus(t *testing.T) {
