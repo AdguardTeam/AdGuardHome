@@ -405,8 +405,9 @@ func (web *webAPI) wrapMux(l *slog.Logger) (h http.Handler) {
 	// TODO(a.garipov):  Remove other logs like this in other code.
 	logMw := httputil.NewLogMiddleware(l, slog.LevelDebug)
 	h = logMw.Wrap(h)
+	h = web.auth.middleware().Wrap(h)
 
-	return web.auth.middleware().Wrap(h)
+	return recoverPanics(l, h)
 }
 
 // close gracefully shuts down the HTTP servers.
