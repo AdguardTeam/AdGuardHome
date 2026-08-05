@@ -38,11 +38,13 @@ trailing_newlines() (
 		'!' '(' \
 		-name '*.db' \
 		-o -name '*.exe' \
+		-o -name '*.ico' \
 		-o -name '*.out' \
 		-o -name '*.png' \
 		-o -name '*.svg' \
 		-o -name '*.tar.gz' \
 		-o -name '*.test' \
+		-o -name '*.woff2' \
 		-o -name '*.zip' \
 		-o -name 'AdGuardHome' \
 		-o -name 'adguard-home' \
@@ -64,11 +66,13 @@ trailing_whitespace() {
 		'!' '(' \
 		-name '*.db' \
 		-o -name '*.exe' \
+		-o -name '*.ico' \
 		-o -name '*.out' \
 		-o -name '*.png' \
 		-o -name '*.svg' \
 		-o -name '*.tar.gz' \
 		-o -name '*.test' \
+		-o -name '*.woff2' \
 		-o -name '*.zip' \
 		-o -name 'AdGuardHome' \
 		-o -name 'adguard-home' \

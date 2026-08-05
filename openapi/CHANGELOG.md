@@ -2,9 +2,25 @@
 
 <!-- TODO(a.garipov): Reformat in accordance with the KeepAChangelog spec. -->
 
-## v0.107.78: API changes
+## v0.107.79: API changes
 
-### New `interval` values in `GET /control/filtering/status` and `POST /control/filtering/config` APIs
+- Field `bootstrap_dns` in `POST /control/dns_config` now accepts comments.  A comment must start with the `#` symbol.
+
+- Fixed wrong property names: `enable` → `enabled` in the Parental status response, `protection_disabled_until` → `protection_disabled_duration` in `ServerStatus`, `ratelimit_subnet_subnet_len_ipv4` and `ratelimit_subnet_subnet_len_ipv6` in `DNSConfig`.
+
+- `upstream_mode` enum in `DNSConfig` changed from object to string format for compatibility with code generators.
+
+- Fixed missing required properties in `DhcpConfigV4` and `DhcpStatus` schemas.
+
+- Fixed missing `port_dnscrypt` and `dnscrypt_config_file` properties in `TlsConfig`.
+
+- Split `NetInterface` into `NetInterface` and `DHCPNetInterface` schemas; `GET /dhcp/interfaces` now uses `DHCPNetInterfaces`.
+
+### Setting the UI language through the install API
+
+- New property `"language"` in `POST /control/install/check_config` and `POST /control/install/configure` HTTP APIs defines the language to use once AdGuard Home is installed.
+
+## v0.107.78: API changes
 
 The property `interval` of the objects returned from and accepted by the aforementioned APIs can now be any integer between 0 and 8760 (365 days).
 

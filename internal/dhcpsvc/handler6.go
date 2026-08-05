@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"net/netip"
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
@@ -11,10 +12,35 @@ import (
 	"github.com/gopacket/gopacket/layers"
 )
 
+// serveEther6 handles the incoming ethernet packets and dispatches them to the
+// appropriate handler.  It's used to run in a separate goroutine as it blocks
+// until packets channel is closed.  iface and nd must not be nil.  nd must have
+// at least a single address returned by its Addresses method.
+func (srv *DHCPServer) serveEther6(ctx context.Context, iface *dhcpInterfaceV6, nd NetworkDevice) {
+	defer slogutil.RecoverAndLog(ctx, srv.logger)
+
+	src := gopacket.NewPacketSource(nd, nd.LinkType())
+	srvDUID := newServerDUID(nd.HardwareAddr())
+
+	// TODO(e.burkov):  Use [gopacket.PacketSource.PacketsCtx] and cancel
+	// context on shutdown.
+	for pkt := range src.Packets() {
+		fd, err := newFrameData6(pkt, nd, srvDUID)
+		if err != nil {
+			srv.logger.DebugContext(ctx, "parsing frame data", slogutil.KeyError, err)
+
+			continue
+		}
+
+		err = srv.serveV6(ctx, iface, pkt, fd)
+		if err != nil {
+			srv.logger.ErrorContext(ctx, "serving", slogutil.KeyError, err)
+		}
+	}
+}
+
 // serveV6 handles the ethernet packet of IPv6 type. iface and pkt must not be
 // nil.  iface and fd must be valid.  pkt must be an IPv6 packet.
-//
-//lint:ignore U1000 TODO(e.burkov): Use.
 func (srv *DHCPServer) serveV6(
 	ctx context.Context,
 	iface *dhcpInterfaceV6,
@@ -25,9 +51,7 @@ func (srv *DHCPServer) serveV6(
 
 	msg, ok := pkt.Layer(layers.LayerTypeDHCPv6).(*layers.DHCPv6)
 	if !ok {
-		// TODO(e.burkov):  Consider adding some debug information about the
-		// actual received packet.
-		srv.logger.DebugContext(ctx, "skipping non-dhcpv6 packet")
+		srv.logger.DebugContext(ctx, "skipping non-dhcpv6 packet", "pkt", pkt)
 
 		return nil
 	}
@@ -124,8 +148,6 @@ func (iface *dhcpInterfaceV6) handleSolicit(
 
 // handleRequest handles messages of type REQUEST.  req must not be nil and must
 // be a valid DHCPv6 message of type REQUEST.  fd must be valid.
-//
-// TODO(e.burkov):  Implement.  This is a stub for now.
 func (iface *dhcpInterfaceV6) handleRequest(
 	ctx context.Context,
 	fd *frameData6,
@@ -139,16 +161,45 @@ func (iface *dhcpInterfaceV6) handleRequest(
 	l := iface.common.logger
 	l.DebugContext(ctx, "handling message", "type", req.MsgType, "cli_id", cliID)
 
-	return nil
+	iface.common.indexMu.Lock()
+	defer iface.common.indexMu.Unlock()
+
+	resp := &layers.DHCPv6{
+		MsgType:       layers.DHCPv6MsgTypeReply,
+		TransactionID: req.TransactionID,
+	}
+
+	iana, ok := iface.firstIANA(ctx, req)
+	if !ok {
+		// In practice, the DHCPv6 REQUEST with no IA_NA options is not useful,
+		// since the standard explicitly defines the INFORMATION-REQUEST message
+		// type for that purpose.  However, there are no requirements which
+		// invalidate such messages, so the server must respond.
+		resp.Options = iface.newRequestRespOpts(fd, req, cliID, layers.DHCPv6Option{})
+
+		return respond6(fd, resp)
+	}
+
+	reqIP, hasReqIP := iana.requestedAddr()
+	if hasReqIP && !iface.subnetPrefix.Contains(reqIP) {
+		respIANA := newIANAWithStatus(iana.ID, layers.DHCPv6StatusCodeNotOnLink)
+		resp.Options = iface.newRequestRespOpts(fd, req, cliID, respIANA)
+
+		return respond6(fd, resp)
+	}
+
+	ianaOpt := iface.ianaForRequest(ctx, req, iana.ID, fd.ether.SrcMAC)
+
+	resp.Options = iface.newRequestRespOpts(fd, req, cliID, ianaOpt)
+
+	return respond6(fd, resp)
 }
 
 // handleConfirm handles messages of type CONFIRM.  req must not be nil and must
 // be a valid DHCPv6 message of type CONFIRM.  fd must be valid.
-//
-// TODO(e.burkov):  Implement.  This is a stub for now.
 func (iface *dhcpInterfaceV6) handleConfirm(
 	ctx context.Context,
-	_ *frameData6,
+	fd *frameData6,
 	req *layers.DHCPv6,
 ) (err error) {
 	cliID, err := clientIDNoServer(req.Options)
@@ -159,13 +210,43 @@ func (iface *dhcpInterfaceV6) handleConfirm(
 	l := iface.common.logger
 	l.DebugContext(ctx, "handling message", "type", req.MsgType, "cli_id", cliID)
 
-	return nil
+	// Collect all addresses from IA_NA options and check if they are
+	// appropriate for the link to which the client is attached.
+	//
+	// See RFC 9915 Section 18.3.3.
+	allOnLink, hasAddrs := iface.confirmAddrsOnLink(ctx, req)
+	if !hasAddrs {
+		// If the server is unable to perform this test (for example, the server
+		// does not have information about prefixes on the link to which the
+		// client is connected) or there were no addresses in any of the IAs
+		// sent by the client, the server MUST NOT send a Reply to the client.
+		//
+		// See RFC 9915 Section 18.3.3.
+		l.DebugContext(ctx, "no addresses in IA_NA options")
+
+		return nil
+	}
+
+	status := layers.DHCPv6StatusCodeSuccess
+	if !allOnLink {
+		status = layers.DHCPv6StatusCodeNotOnLink
+	}
+
+	resp := &layers.DHCPv6{
+		MsgType:       layers.DHCPv6MsgTypeReply,
+		TransactionID: req.TransactionID,
+		Options:       iface.newConfirmRespOpts(fd, req, cliID, status),
+	}
+
+	return respond6(fd, resp)
 }
 
 // handleRenew handles messages of type RENEW.  req must not be nil and must be
 // a valid DHCPv6 message of type RENEW.  fd must be valid.
 //
-// TODO(e.burkov):  Implement.  This is a stub for now.
+// TODO(e.burkov):  The current implementation renews only the first valid IA_NA
+// option.  It does not verify that the addresses in the IA match the stored
+// lease, since clients are identified by MAC address rather than DUID+IAID.
 func (iface *dhcpInterfaceV6) handleRenew(
 	ctx context.Context,
 	fd *frameData6,
@@ -179,16 +260,42 @@ func (iface *dhcpInterfaceV6) handleRenew(
 	l := iface.common.logger
 	l.DebugContext(ctx, "handling message", "type", req.MsgType, "cli_id", cliID)
 
-	return nil
+	iface.common.indexMu.Lock()
+	defer iface.common.indexMu.Unlock()
+
+	resp := &layers.DHCPv6{
+		MsgType:       layers.DHCPv6MsgTypeReply,
+		TransactionID: req.TransactionID,
+	}
+
+	iana, ok := iface.firstIANA(ctx, req)
+	if !ok {
+		// With no IA_NA options and no requested addresses there's nothing to
+		// renew.  Respond with no IA options similarly to how the Request
+		// handler does.
+		//
+		// See RFC 9915 Section 18.3.4.
+		resp.Options = iface.newUpdateRespOpts(fd, req, cliID, layers.DHCPv6Option{})
+
+		return respond6(fd, resp)
+	}
+
+	ianaOpt := iface.ianaForUpdate(ctx, req, iana, fd.ether.SrcMAC)
+	resp.Options = iface.newUpdateRespOpts(fd, req, cliID, ianaOpt)
+
+	return respond6(fd, resp)
 }
 
 // handleRebind handles messages of type REBIND.  req must not be nil and must
-// be a valid DHCPv6 message of type REBIND.  fd must be valid.
+// be a valid DHCPv6 message of type REBIND, fd must be valid.
 //
-// TODO(e.burkov):  Implement.  This is a stub for now.
+// TODO(e.burkov):  The current implementation rebinds only the first valid
+// IA_NA option.  It does not verify that the addresses in the IA match the
+// stored lease, since clients are identified by MAC address rather than
+// DUID+IAID.
 func (iface *dhcpInterfaceV6) handleRebind(
 	ctx context.Context,
-	_ *frameData6,
+	fd *frameData6,
 	req *layers.DHCPv6,
 ) (err error) {
 	cliID, err := clientIDNoServer(req.Options)
@@ -199,31 +306,54 @@ func (iface *dhcpInterfaceV6) handleRebind(
 	l := iface.common.logger
 	l.DebugContext(ctx, "handling message", "type", req.MsgType, "cli_id", cliID)
 
-	return nil
+	iface.common.indexMu.Lock()
+	defer iface.common.indexMu.Unlock()
+
+	resp := &layers.DHCPv6{
+		MsgType:       layers.DHCPv6MsgTypeReply,
+		TransactionID: req.TransactionID,
+	}
+
+	iana, ok := iface.firstIANA(ctx, req)
+	if !ok {
+		// With no IA_NA options and no requested addresses there's nothing to
+		// rebind.  Respond with no IA options similarly to how the Renew
+		// handler does.
+		//
+		// See RFC 9915 Section 18.3.5.
+		resp.Options = iface.newUpdateRespOpts(fd, req, cliID, layers.DHCPv6Option{})
+
+		return respond6(fd, resp)
+	}
+
+	ianaOpt := iface.ianaForUpdate(ctx, req, iana, fd.ether.SrcMAC)
+	resp.Options = iface.newUpdateRespOpts(fd, req, cliID, ianaOpt)
+
+	return respond6(fd, resp)
 }
 
 // handleInfo handles messages of type INFORMATION-REQUEST.  req must not be nil
 // and must be a valid DHCPv6 message of type INFORMATION-REQUEST.  fd must be
 // valid.
 //
-// TODO(e.burkov):  Implement.  This is a stub for now.
+// TODO(e.burkov):  The current implementation does not handle relay-forwarded
+// INFORMATION-REQUEST messages.
 func (iface *dhcpInterfaceV6) handleInfo(
 	ctx context.Context,
 	fd *frameData6,
 	req *layers.DHCPv6,
 ) (err error) {
-	if srvID, ok := findOption6(req.Options, layers.DHCPv6OptServerID); ok {
-		if !bytes.Equal(srvID, fd.duidData) {
-			return fmt.Errorf(
-				"dhcpv6: server id: got %v, want %v: %w",
-				srvID,
-				fd.duidData,
-				errors.ErrNotEqual,
-			)
-		}
+	srvID, ok := findOption6(req.Options, layers.DHCPv6OptServerID)
+	if ok && !bytes.Equal(srvID, fd.duidData) {
+		return fmt.Errorf(
+			"dhcpv6: server id: got %v, want %v: %w",
+			srvID,
+			fd.duidData,
+			errors.ErrNotEqual,
+		)
 	}
 
-	_, ok := findOption6(req.Options, layers.DHCPv6OptIANA)
+	_, ok = findOption6(req.Options, layers.DHCPv6OptIANA)
 	if ok {
 		return fmt.Errorf("dhcpv6: %s: ia option: %w", req.MsgType, errors.ErrUnexpectedValue)
 	}
@@ -236,13 +366,20 @@ func (iface *dhcpInterfaceV6) handleInfo(
 	l := iface.common.logger
 	l.DebugContext(ctx, "handling message", "type", req.MsgType)
 
-	return nil
+	resp := &layers.DHCPv6{
+		MsgType:       layers.DHCPv6MsgTypeReply,
+		TransactionID: req.TransactionID,
+		Options:       iface.newInfoRespOpts(fd, req),
+	}
+
+	return respond6(fd, resp)
 }
 
 // handleRelease handles messages of type RELEASE.  req must not be nil and must
 // be a valid DHCPv6 message of type RELEASE.  fd must be valid.
 //
-// TODO(e.burkov):  Implement.  This is a stub for now.
+// TODO(e.burkov):  Verify all IA_NA options instead of handling only the first
+// one.
 func (iface *dhcpInterfaceV6) handleRelease(
 	ctx context.Context,
 	fd *frameData6,
@@ -256,7 +393,43 @@ func (iface *dhcpInterfaceV6) handleRelease(
 	l := iface.common.logger
 	l.DebugContext(ctx, "handling message", "type", req.MsgType, "cli_id", cliID)
 
-	return nil
+	resp := &layers.DHCPv6{
+		MsgType:       layers.DHCPv6MsgTypeReply,
+		TransactionID: req.TransactionID,
+	}
+
+	iaid, ip := iface.ipForRelease(ctx, req)
+	if ip == (netip.Addr{}) {
+		resp.Options = iface.newUpdateRespOpts(fd, req, cliID, layers.DHCPv6Option{})
+
+		return respond6(fd, resp)
+	}
+
+	key := macToKey(fd.ether.SrcMAC)
+
+	iface.common.indexMu.Lock()
+	defer iface.common.indexMu.Unlock()
+
+	lease, hasLease := iface.common.leases[key]
+	if !hasLease || lease.IP != ip {
+		respIANA := newIANAWithStatus(iaid, layers.DHCPv6StatusCodeNoBinding)
+		resp.Options = iface.newUpdateRespOpts(fd, req, cliID, respIANA)
+
+		return respond6(fd, resp)
+	}
+
+	err = iface.common.index.remove(ctx, lease, iface.common)
+	if err != nil {
+		l.ErrorContext(ctx, "removing lease", slogutil.KeyError, err)
+
+		respIANA := newIANAWithStatus(iaid, layers.DHCPv6StatusCodeNoBinding)
+		resp.Options = iface.newUpdateRespOpts(fd, req, cliID, respIANA)
+	} else {
+		respIANA := &IANAOption{ID: iaid}
+		resp.Options = iface.newUpdateRespOpts(fd, req, cliID, respIANA.Encode())
+	}
+
+	return respond6(fd, resp)
 }
 
 // handleDecline handles messages of type DECLINE.  req must not be nil and must

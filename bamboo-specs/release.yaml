@@ -10,6 +10,7 @@
     # flaky test suite.
     'cacheBuster': '0'
     'channel': 'edge'
+    'clientDir': 'client_v2'
     'dockerFrontend': 'adguard/home-js-builder:4.0'
     'dockerGo': 'adguard/go-builder:1.26.5--1'
 
@@ -67,8 +68,9 @@
                   docker info
 
                   docker build \
-                      --build-arg "BASE_IMAGE=${bamboo.dockerFrontend}" \
+                      --build-arg "BASE_IMAGE=${bamboo_dockerFrontend}" \
                       --build-arg "CACHE_BUSTER=${bamboo_cacheBuster}" \
+                      --build-arg "CLIENT_DIR=${bamboo_clientDir}" \
                       --output '.' \
                       --progress 'plain' \
                       --target 'builder-exporter' \
@@ -104,12 +106,20 @@
                 set -e -f -u -x
 
                 # Explicitly checkout the revision that we need.
-                git checkout "${bamboo.repository.revision.number}"
+                git checkout "${bamboo_repository_revision_number}"
 
                 version="$(env CHANNEL=${bamboo_channel} sh ./scripts/make/version.sh)"
                 readonly version
 
                 docker info
+
+                # Disable xtrace so the expanded secret values aren't printed to
+                # the build log.
+                set +x
+                export GPG_KEY_PASSPHRASE="${bamboo_gpgPassword}"
+                export GPG_SECRET_KEY="${bamboo_gpgSecretKeyPart1}${bamboo_gpgSecretKeyPart2}"
+                export SIGNER_API_KEY="${bamboo_adguardHomeWinSignerSecretApiKey}"
+                set -x
 
                 docker build \
                     --build-arg "BASE_IMAGE=${bamboo_dockerGo}" \
@@ -117,15 +127,15 @@
                     --build-arg "CACHE_BUSTER=${bamboo_cacheBuster}" \
                     --build-arg "CHANNEL=${bamboo_channel}" \
                     --build-arg "DEPLOY_SCRIPT_PATH=./bamboo-deploy-publisher/deploy.sh" \
-                    --build-arg "GPG_SECRET_KEY=${bamboo_gpgSecretKeyPart1}${bamboo_gpgSecretKeyPart2}" \
-                    --build-arg "GPG_KEY_PASSPHRASE=${bamboo_gpgPassword}" \
                     --build-arg "REVISION=${bamboo_repository_revision_number}" \
                     --build-arg "SIGN=1" \
-                    --build-arg "SIGNER_API_KEY=${bamboo_adguardHomeWinSignerSecretApiKey}" \
                     --build-arg "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" \
                     --build-arg "VERSION=$version" \
                     --output '.' \
                     --progress 'plain' \
+                    --secret id=GPG_KEY_PASSPHRASE \
+                    --secret id=GPG_SECRET_KEY \
+                    --secret id=SIGNER_API_KEY \
                     --target 'builder-exporter' \
                     -f ./docker/ci.Dockerfile \
                     .
@@ -149,6 +159,12 @@
 
                 set -e -f -u -x
 
+                # The version.sh script queries the current state of the git
+                # repository, so we must explicitly checkout the revision that
+                # triggered the build to prevent race conditions when the master
+                # branch changes while this build is running.
+                git checkout "${bamboo_repository_revision_number}"
+
                 # Install Qemu, create builder.
                 docker version -f '{{ .Server.Experimental }}'
                 docker buildx rm buildx-builder || :
@@ -160,8 +176,8 @@
 
                 # Login to DockerHub.
                 docker login \
-                    -u="${bamboo.dockerHubUsername}" \
-                    -p="${bamboo.dockerHubPassword}"
+                    -u="${bamboo_dockerHubUsername}" \
+                    -p="${bamboo_dockerHubPassword}"
 
                 # Boot the builder.
                 docker buildx inspect --bootstrap
@@ -172,8 +188,8 @@
 
                 # Prepare and push the build.
                 env \
-                    CHANNEL="${bamboo.channel}" \
-                    REVISION="${bamboo.repository.revision.number}" \
+                    CHANNEL="${bamboo_channel}" \
+                    REVISION="${bamboo_repository_revision_number}" \
                     DIST_DIR='dist' \
                     DOCKER_IMAGE_NAME='adguard/adguardhome' \
                     DOCKER_PUSH='1' \
@@ -202,7 +218,7 @@
 
                 cd ./dist/
 
-                CHANNEL="${bamboo.channel}"
+                CHANNEL="${bamboo_channel}"
                 export CHANNEL
 
                 ../bamboo-deploy-publisher/deploy.sh adguard-home-"$CHANNEL"
@@ -227,7 +243,7 @@
 
                 set -e -f -u -x
 
-                channel="${bamboo.channel}"
+                channel="${bamboo_channel}"
                 readonly channel
 
                 if [ "$channel" != 'release' ] && [ "${channel}" != 'beta' ]
@@ -240,7 +256,7 @@
                 cd ./dist/
 
                 env\
-                        GITHUB_TOKEN="${bamboo.githubPublicRepoPassword}"\
+                        GITHUB_TOKEN="${bamboo_githubPublicRepoPassword}"\
                         ../bamboo-deploy-publisher/deploy.sh adguard-home-github
 
 'triggers':
@@ -279,6 +295,7 @@
         # need to build a few of these.
         'variables':
             'channel': 'beta'
+            'clientDir': 'client'
             'dockerFrontend': 'adguard/home-js-builder:4.0'
             'dockerGo': 'adguard/go-builder:1.26.5--1'
     # release-vX.Y.Z branches are the branches from which the actual final
@@ -295,5 +312,6 @@
         # are the ones that actually get released.
         'variables':
             'channel': 'release'
+            'clientDir': 'client'
             'dockerFrontend': 'adguard/home-js-builder:4.0'
             'dockerGo': 'adguard/go-builder:1.26.5--1'

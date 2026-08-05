@@ -9,7 +9,6 @@ import (
 // must be safe for concurrent use.
 //
 // TODO(m.kazantsev):  Merge with the Manager interface.
-// TODO(m.kazantsev):  Add at least one real implementation.
 type TLSConfigProvider interface {
 	// TLSConfig returns a clone of the current TLS configuration.  conf
 	// provides its certificates via GetConfigForClient method.
@@ -17,6 +16,10 @@ type TLSConfigProvider interface {
 
 	// RootCAs returns the current root CA pool.
 	RootCAs() (root *x509.CertPool)
+
+	// HasIPAddrs returns true if the current TLS configuration has at least one
+	// certificate with an IP address in its SAN extension.
+	HasIPAddrs() (ok bool)
 }
 
 // type check
@@ -36,4 +39,10 @@ func (EmptyTLSConfigProvider) TLSConfig() (conf *tls.Config) {
 // EmptyTLSConfigProvider.  It always returns nil.
 func (EmptyTLSConfigProvider) RootCAs() (root *x509.CertPool) {
 	return nil
+}
+
+// HasIPAddrs implements the [TLSConfigProvider] interface for
+// EmptyTLSConfigProvider.  It always returns false.
+func (EmptyTLSConfigProvider) HasIPAddrs() (ok bool) {
+	return false
 }

@@ -1,0 +1,150 @@
+.header {
+    padding: 0 16px;
+}
+
+.stepRoot {
+    max-width: 632px;
+    margin: 0 auto;
+    padding-top: 24px;
+    padding-bottom: 80px;
+
+    @media screen and (min-width: 1024px) {
+        padding-top: 48px;
+    }
+
+    .guidePage {
+        padding-top: 16px;
+        padding-bottom: 24px;
+        margin: 0 auto;
+    }
+
+    .pageTitle {
+        font-size: var(--fs-title-h4);
+        line-height: var(--lh-h4-normal);
+
+        @media screen and (min-width: 1024px) {
+            font-size: var(--fs-title-h3);
+            line-height: var(--lh-h3-normal);
+        }
+    }
+
+    .nav {
+        padding: 0 16px;
+
+        @media screen and (min-width: 1024px) {
+            padding: 0;
+        }
+    }
+}
+
+.footer {
+    padding: 0;
+
+    @media screen and (min-width: 1024px) {
+        padding: 0 16px;
+    }
+}
+
+.pageTitle {
+    font-size: var(--fs-title-h4);
+    line-height: var(--lh-h4-normal);
+    font-weight: var(--weight-bold);
+    margin-bottom: 12px;
+
+    @media screen and (min-width: 1024px) {
+        font-size: var(--fs-title-h3);
+        line-height: var(--lh-h3-normal);
+    }
+}
+
+.pageDesc {
+    font-size: var(--fs-text-t2);
+    line-height: var(--lh-t2-normal);
+}
+
+.dnsTitle {
+    font-size: var(--fs-title-h5);
+    line-height: var(--lh-h5-normal);
+    font-weight: var(--weight-bold);
+    margin-bottom: 12px;
+    margin-top: 40px;
+
+    @media screen and (min-width: 768px) {
+        font-size: var(--fs-title-h4);
+        line-height: var(--lh-h4-normal);
+    }
+}
+
+.dnsSubtitle {
+    margin: 24px 0 12px;
+    font-weight: var(--weight-bold);
+    font-size: var(--fs-text-t2);
+    line-height: var(--lh-t2-normal);
+
+    @media screen and (min-width: 768px) {
+        font-size: var(--fs-text-t1);
+        line-height: var(--lh-t1-normal);
+    }
+}
+
+.guidePage {
+    padding: 24px 16px;
+    max-width: 632px;
+
+    @media screen and (min-width: 768px) {
+        padding: 32px 16px;
+    }
+
+    @media screen and (min-width: 1024px) {
+        padding: 40px 16px;
+    }
+}
+
+.guideTitle {
+    margin-bottom: 24px;
+    font-size: var(--fs-title-h5);
+    line-height: var(--lh-h5-normal);
+    font-weight: var(--weight-bold);
+
+    @media screen and (min-width: 768px) {
+        font-size: var(--fs-title-h4);
+        line-height: var(--lh-h4-normal);
+    }
+}
+
+.guideDesc {
+    margin-bottom: 24px;
+}
+
+.addressList {
+    list-style: none;
+    padding: 0;
+    margin: 12px 0 0 0;
+
+    li {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+}
+
+.bulletIcon {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--default-main-text);
+    flex-shrink: 0;
+}
+
+.address {
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-family: var(--font-family-monospace);
+    font-size: var(--fs-text-t3);
+    line-height: var(--lh-t3-normal);
+}
+
+.iosConfigSection {
+    margin-top: 40px;
+    padding-top: 32px;
+}

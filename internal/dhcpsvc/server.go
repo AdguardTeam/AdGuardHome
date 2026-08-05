@@ -86,7 +86,7 @@ func New(ctx context.Context, conf *Config) (srv *DHCPServer, err error) {
 		localTLD:      conf.LocalDomainName,
 		serveWG:       &sync.WaitGroup{},
 		leasesMu:      &sync.RWMutex{},
-		leases:        newLeaseIndex(conf.DBFilePath),
+		leases:        newLeaseIndex(conf.Database),
 		icmpTimeout:   conf.ICMPTimeout,
 	}
 
@@ -294,7 +294,7 @@ func (srv *DHCPServer) Reset(ctx context.Context) (err error) {
 	for _, iface := range srv.interfaces6 {
 		iface.common.reset()
 	}
-	err = srv.leases.clear(ctx, srv.logger)
+	err = srv.leases.clear(ctx)
 	if err != nil {
 		// Don't wrap the error since there is already an annotation deferred.
 		return err
@@ -319,10 +319,15 @@ func (srv *DHCPServer) AddLease(ctx context.Context, l *Lease) (err error) {
 	srv.leasesMu.Lock()
 	defer srv.leasesMu.Unlock()
 
-	err = srv.leases.add(ctx, srv.logger, l, iface)
+	err = srv.leases.add(l, iface)
 	if err != nil {
 		// Don't wrap the error since there is already an annotation deferred.
 		return err
+	}
+
+	err = srv.leases.dbStore(ctx)
+	if err != nil {
+		return fmt.Errorf("storing leases: %w", err)
 	}
 
 	iface.logger.DebugContext(
@@ -352,7 +357,7 @@ func (srv *DHCPServer) UpdateStaticLease(ctx context.Context, l *Lease) (err err
 	srv.leasesMu.Lock()
 	defer srv.leasesMu.Unlock()
 
-	err = srv.leases.update(ctx, srv.logger, l, iface)
+	err = srv.leases.update(ctx, l, iface)
 	if err != nil {
 		// Don't wrap the error since there is already an annotation deferred.
 		return err
@@ -383,7 +388,7 @@ func (srv *DHCPServer) RemoveLease(ctx context.Context, l *Lease) (err error) {
 	srv.leasesMu.Lock()
 	defer srv.leasesMu.Unlock()
 
-	err = srv.leases.remove(ctx, srv.logger, l, iface)
+	err = srv.leases.remove(ctx, l, iface)
 	if err != nil {
 		// Don't wrap the error since there is already an annotation deferred.
 		return err
@@ -403,7 +408,7 @@ func (srv *DHCPServer) RemoveLease(ctx context.Context, l *Lease) (err error) {
 // removeLeaseByAddr removes the lease with the given IP address from the
 // server.  It returns an error if the lease can't be removed.
 //
-//lint:ignore U1000 TODO(e.burkov):  Use.
+//lint:ignore U1000 TODO(e.burkov):  Use or remove.
 func (srv *DHCPServer) removeLeaseByAddr(ctx context.Context, addr netip.Addr) (err error) {
 	defer func() { err = errors.Annotate(err, "removing lease by address: %w") }()
 
@@ -421,7 +426,7 @@ func (srv *DHCPServer) removeLeaseByAddr(ctx context.Context, addr netip.Addr) (
 		return fmt.Errorf("no lease for ip %s", addr)
 	}
 
-	err = srv.leases.remove(ctx, srv.logger, l, iface)
+	err = srv.leases.remove(ctx, l, iface)
 	if err != nil {
 		// Don't wrap the error since there is already an annotation deferred.
 		return err

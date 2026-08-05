@@ -65,8 +65,6 @@ type ipPredicate func(ip netip.Addr) (ok bool)
 
 // find finds the first IP address in r for which p returns true.  It returns an
 // empty [netip.Addr] if there are no addresses that satisfy p.
-//
-// TODO(e.burkov):  Use.
 func (r ipRange) find(p ipPredicate) (ip netip.Addr) {
 	for ip = r.start; !r.end.Less(ip); ip = ip.Next() {
 		if p(ip) {

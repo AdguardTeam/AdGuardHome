@@ -84,9 +84,12 @@ type checkConfReqEnt struct {
 }
 
 type checkConfReq struct {
-	Web         checkConfReqEnt `json:"web"`
-	DNS         checkConfReqEnt `json:"dns"`
-	SetStaticIP bool            `json:"set_static_ip"`
+	Web checkConfReqEnt `json:"web"`
+	DNS checkConfReqEnt `json:"dns"`
+
+	Language string `json:"language"`
+
+	SetStaticIP bool `json:"set_static_ip"`
 }
 
 type checkConfRespEnt struct {
@@ -102,8 +105,9 @@ type staticIPJSON struct {
 
 type checkConfResp struct {
 	StaticIP staticIPJSON     `json:"static_ip"`
-	Web      checkConfRespEnt `json:"web"`
 	DNS      checkConfRespEnt `json:"dns"`
+	Language checkConfRespEnt `json:"language"`
+	Web      checkConfRespEnt `json:"web"`
 }
 
 // validateWeb returns error is the web part if the initial configuration can't
@@ -200,6 +204,12 @@ func (web *webAPI) handleInstallCheckConfig(w http.ResponseWriter, r *http.Reque
 	}
 
 	resp := &checkConfResp{}
+
+	err = validateLang(req.Language, true)
+	if err != nil {
+		resp.Language.Status = err.Error()
+	}
+
 	tcpPorts := aghalg.UniqChecker[tcpPort]{}
 	if err = req.validateWeb(tcpPorts); err != nil {
 		resp.Web.Status = err.Error()
@@ -362,19 +372,21 @@ type applyConfigReqEnt struct {
 }
 
 type applyConfigReq struct {
-	Username string `json:"username"`
+	Language string `json:"language"`
 	Password string `json:"password"`
+	Username string `json:"username"`
 
 	Web applyConfigReqEnt `json:"web"`
 	DNS applyConfigReqEnt `json:"dns"`
 }
 
 // copyInstallSettings copies the installation parameters between two
-// configuration structures.
+// configuration structures.  All arguments must not be nil.
 func copyInstallSettings(dst, src *configuration) {
-	dst.HTTPConfig = src.HTTPConfig
 	dst.DNS.BindHosts = src.DNS.BindHosts
 	dst.DNS.Port = src.DNS.Port
+	dst.HTTPConfig = src.HTTPConfig
+	dst.Language = src.Language
 }
 
 // shutdownTimeout is the timeout for shutting HTTP server down operation.
@@ -491,6 +503,10 @@ func (web *webAPI) finalizeInstall(
 		}
 	}()
 
+	if req.Language != "" {
+		config.Language = req.Language
+	}
+
 	config.DNS.BindHosts = []netip.Addr{req.DNS.IP}
 	config.DNS.Port = req.DNS.Port
 	config.Filtering.Logger = web.baseLogger.With(slogutil.KeyPrefix, "filtering")
@@ -520,6 +536,8 @@ func (web *webAPI) finalizeInstall(
 		web.confModifier,
 		web.httpReg,
 		web.conf.workDir,
+		web.hostsContainer,
+		web.conf.mux,
 	)
 	if err != nil {
 		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusInternalServerError, "%s", err)
@@ -553,7 +571,6 @@ func (web *webAPI) finalizeInstall(
 	web.conf.BindAddr = netip.AddrPortFrom(req.Web.IP, req.Web.Port)
 
 	web.registerControlHandlers()
-	web.registerTLSHandlers()
 
 	aghhttp.OK(ctx, l, w)
 
@@ -589,6 +606,12 @@ func decodeApplyConfigReq(r io.Reader) (req *applyConfigReq, restartHTTP bool, e
 		return nil, false, fmt.Errorf("parsing request: %w", err)
 	}
 
+	err = validateLang(req.Language, true)
+	if err != nil {
+		// Don't wrap the error, because it's informative enough as is.
+		return nil, false, err
+	}
+
 	if req.Web.Port == 0 || req.DNS.Port == 0 {
 		return nil, false, errors.Error("ports cannot be 0")
 	}
@@ -611,7 +634,7 @@ func decodeApplyConfigReq(r io.Reader) (req *applyConfigReq, restartHTTP bool, e
 }
 
 // startMods initializes and starts the DNS server after installation.
-// baseLogger, tlsMgr, confModifier, and httpReg must not be nil.
+// baseLogger, tlsMgr, confModifier, httpReg, and mux must not be nil.
 func startMods(
 	ctx context.Context,
 	baseLogger *slog.Logger,
@@ -619,13 +642,15 @@ func startMods(
 	confModifier agh.ConfigModifier,
 	httpReg aghhttp.Registrar,
 	workDir string,
+	hc *aghnet.HostsContainer,
+	mux *http.ServeMux,
 ) (err error) {
 	statsDir, querylogDir, err := checkStatsAndQuerylogDirs(config, workDir)
 	if err != nil {
 		return err
 	}
 
-	err = initDNS(ctx, baseLogger, tlsMgr, confModifier, httpReg, statsDir, querylogDir)
+	err = initDNS(ctx, baseLogger, tlsMgr, confModifier, httpReg, statsDir, querylogDir, hc, mux)
 	if err != nil {
 		return err
 	}

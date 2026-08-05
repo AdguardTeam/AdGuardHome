@@ -11,27 +11,89 @@ import (
 	"github.com/gopacket/gopacket/layers"
 )
 
+// newOptStatusCode creates a top-level DHCPv6 Status Code option.
+func newOptStatusCode(tb testing.TB, status layers.DHCPv6StatusCode) (opt layers.DHCPv6Option) {
+	tb.Helper()
+
+	const (
+		statusCodeLen = 2
+	)
+
+	data := make([]byte, 0, statusCodeLen)
+	data = binary.BigEndian.AppendUint16(data, uint16(status))
+
+	return layers.NewDHCPv6Option(layers.DHCPv6OptStatusCode, data)
+}
+
 // newOptIANA creates a DHCPv6 Identity Association for Non-temporary Address
 // (3) option containing an IA Address with the specified IAID and requested IP
-// address.  reqIP must be a valid IPv6 address.  The option will have the T1
-// and T2 values set to the recommended values based on the [testLeaseTTL]
-// constant, see the RFC reference in the
-// [dhcpsvc.DHCPServer.newDHCPInterfaceV6].
-func newOptIANA(tb testing.TB, iaid uint32, reqIP netip.Addr) (opt layers.DHCPv6Option) {
+// address.  The option will have the T1 and T2 values set to the recommended
+// values based on ttl, see the RFC reference in the
+// [dhcpsvc.DHCPServer.newDHCPInterfaceV6].  reqIP must be a valid IPv6 address.
+func newOptIANA(
+	tb testing.TB,
+	iaid uint32,
+	reqIP netip.Addr,
+	ttl time.Duration,
+) (opt layers.DHCPv6Option) {
 	tb.Helper()
 
 	iana := &dhcpsvc.IANAOption{
 		ID: iaid,
 		Nested: []dhcpsvc.IAAddrOption{{
-			PreferredLifetime: testLeaseTTL,
-			ValidLifetime:     testLeaseTTL,
+			PreferredLifetime: ttl,
+			ValidLifetime:     ttl,
 			Addr:              reqIP,
 		}},
-		T1: testLeaseTTL / 2,
-		T2: testLeaseTTL * 4 / 5,
+		T1: ttl / 2,
+		T2: ttl * 4 / 5,
 	}
 
 	return iana.Encode()
+}
+
+// newOptIANAStatus creates a DHCPv6 IA_NA (3) option carrying only a nested
+// Status Code option.  If status is [layers.DHCPv6StatusCodeSuccess], the
+// returned option will not contain a nested Status Code option, as per RFC 8415
+// section 21.13.
+func newOptIANAStatus(
+	tb testing.TB,
+	iaid uint32,
+	status layers.DHCPv6StatusCode,
+) (opt layers.DHCPv6Option) {
+	tb.Helper()
+
+	const (
+		// statusOptLen is the length of the nested status code option:
+		//   code (2) + length (2) + status (2) = 6 bytes.
+		statusOptLen = 6
+
+		// iaNAMinLen is the minimum length of the IA_NA option:
+		//   IAID (4) + T1 (4) + T2 (4) = 12 bytes.
+		iaNAMinLen = 12
+
+		// iaNAStatusLen is the length of the IA_NA option with a nested status
+		// code option.
+		iaNAStatusLen = iaNAMinLen + statusOptLen
+	)
+
+	data := make([]byte, 0, iaNAStatusLen)
+
+	data = binary.BigEndian.AppendUint32(data, iaid)
+	// T1 and T2 are set to zero.
+	data = binary.BigEndian.AppendUint32(data, 0)
+	data = binary.BigEndian.AppendUint32(data, 0)
+
+	if status != layers.DHCPv6StatusCodeSuccess {
+		// Nested Status Code option.
+		data = binary.BigEndian.AppendUint16(data, uint16(layers.DHCPv6OptStatusCode))
+
+		// The length of the Status Code option data is 2 bytes.
+		data = binary.BigEndian.AppendUint16(data, 2)
+		data = binary.BigEndian.AppendUint16(data, uint16(status))
+	}
+
+	return layers.NewDHCPv6Option(layers.DHCPv6OptIANA, data)
 }
 
 // newOptPreference creates a DHCPv6 Preference (7) option with the specified

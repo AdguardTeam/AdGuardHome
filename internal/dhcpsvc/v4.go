@@ -1,7 +1,6 @@
 package dhcpsvc
 
 import (
-	"cmp"
 	"context"
 	"fmt"
 	"log/slog"
@@ -11,7 +10,6 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/AdguardTeam/golibs/validate"
 	"github.com/gopacket/gopacket/layers"
@@ -51,6 +49,9 @@ type IPv4Config struct {
 
 	// SubnetMask is the IPv4 subnet mask of the network.  It should be a valid
 	// IPv4 CIDR (i.e. all 1s followed by all 0s).
+	//
+	// TODO(e.burkov):  Use the a unsinged integer type for the mask length
+	// instead of [netip.Addr] to reduce the chance of misconfiguration.
 	SubnetMask netip.Addr
 
 	// RangeStart is the first address in the range to assign to DHCP clients.
@@ -100,28 +101,26 @@ func (c *IPv4Config) Validate() (err error) {
 }
 
 // validateSubnet validates the subnet configuration.
-//
-// TODO(e.burkov):  Use [validate].
 func (c *IPv4Config) validateSubnet(orig []error) (errs []error) {
 	errs = orig
 
 	if !c.GatewayIP.Is4() {
-		err := newMustErr("gateway ip", "be a valid ipv4", c.GatewayIP)
+		err := fmt.Errorf("gateway ip: %s: must be a valid ipv4", c.GatewayIP)
 		errs = append(errs, err)
 	}
 
 	if !c.SubnetMask.Is4() {
-		err := newMustErr("subnet mask", "be a valid ipv4 cidr mask", c.SubnetMask)
+		err := fmt.Errorf("subnet mask: %s: must be a valid ipv4 cidr mask", c.SubnetMask)
 		errs = append(errs, err)
 	}
 
 	if !c.RangeStart.Is4() {
-		err := newMustErr("range start", "be a valid ipv4", c.RangeStart)
+		err := fmt.Errorf("range start: %s: must be a valid ipv4", c.RangeStart)
 		errs = append(errs, err)
 	}
 
 	if !c.RangeEnd.Is4() {
-		err := newMustErr("range end", "be a valid ipv4", c.RangeEnd)
+		err := fmt.Errorf("range end: %s: must be a valid ipv4", c.RangeEnd)
 		errs = append(errs, err)
 	}
 
@@ -152,12 +151,7 @@ type dhcpInterfaceV4 struct {
 	common *netInterface
 
 	// clock used to get current time.
-	//
-	// TODO(e.burkov):  Move to [netInterface].
 	clock timeutil.Clock
-
-	// addrChecker checks addresses for availability.
-	addrChecker addressChecker
 
 	// gateway is the IP address of the network gateway.
 	gateway netip.Addr
@@ -192,28 +186,25 @@ func (srv *DHCPServer) newDHCPInterfaceV4(
 		return nil
 	}
 
-	// TODO(e.burkov):  Add a helper for converting [netip.Addr] to subnet mask
-	// to [netutil].
 	maskLen, _ := net.IPMask(conf.SubnetMask.AsSlice()).Size()
 
 	// Ignore the error since it's already checked in [IPv4Config.Validate].
 	addrSpace, _ := newIPRange(conf.RangeStart, conf.RangeEnd)
 
 	iface = &dhcpInterfaceV4{
-		// TODO(e.burkov):  Use an ICMP implementation.
-		addrChecker: noopAddressChecker{},
-		gateway:     conf.GatewayIP,
-		clock:       conf.Clock,
-		subnet:      netip.PrefixFrom(conf.GatewayIP, maskLen),
+		gateway: conf.GatewayIP,
+		clock:   conf.Clock,
+		subnet:  netip.PrefixFrom(conf.GatewayIP, maskLen),
 		common: &netInterface{
-			logger:        baseLogger,
-			indexMu:       srv.leasesMu,
-			index:         srv.leases,
-			leases:        map[macKey]*Lease{},
-			leasedOffsets: newBitSet(),
-			name:          name,
-			addrSpace:     addrSpace,
-			leaseTTL:      conf.LeaseDuration,
+			logger:         baseLogger,
+			addressChecker: noopAddressChecker{},
+			indexMu:        srv.leasesMu,
+			index:          srv.leases,
+			leases:         map[macKey]*Lease{},
+			leasedOffsets:  newBitSet(),
+			name:           name,
+			addrSpace:      addrSpace,
+			leaseTTL:       conf.LeaseDuration,
 		},
 	}
 	iface.implicitOpts, iface.explicitOpts = conf.options(ctx, baseLogger)
@@ -223,8 +214,10 @@ func (srv *DHCPServer) newDHCPInterfaceV4(
 
 // updateLease updates lease in the database.  lease must be valid and not
 // expired.
+//
+// TODO(e.burkov):  Consider simplifying the wrapping.
 func (iface *dhcpInterfaceV4) updateLease(ctx context.Context, lease *Lease) (err error) {
-	return iface.common.index.update(ctx, iface.common.logger, lease, iface.common)
+	return iface.common.index.update(ctx, lease, iface.common)
 }
 
 // respondOffer sends a DHCPOFFER message to the client.  idOpt is expected to
@@ -281,13 +274,14 @@ func (iface *dhcpInterfaceV4) respondACK(
 // present.  req and resp must not be nil, fd must be valid.
 //
 // See https://datatracker.ietf.org/doc/html/rfc2131#section-4.3.1.
+//
+// TODO(e.burkov):  Add a message according to RFC 2131.
 func (iface *dhcpInterfaceV4) respondNAK(
 	ctx context.Context,
 	req *layers.DHCPv4,
 	fd *frameData4,
 	idOpt []byte,
 ) {
-	// TODO(e.burkov):  According to RFC 2131 we should add a message.
 	opts := newRespOptions(layers.DHCPMsgTypeNak, fd, idOpt)
 
 	// If 'giaddr' is set in the DHCPREQUEST message, the client is on a
@@ -339,38 +333,13 @@ type dhcpInterfacesV4 []*dhcpInterfaceV4
 // returns false if there is no such interface.  ip must be valid.
 func (ifaces dhcpInterfacesV4) find(ip netip.Addr) (iface4 *netInterface, ok bool) {
 	i := slices.IndexFunc(ifaces, func(iface *dhcpInterfaceV4) (contains bool) {
-		return iface.subnet.Contains(ip)
+		return iface.common.addrSpace.contains(ip)
 	})
 	if i < 0 {
 		return nil, false
 	}
 
 	return ifaces[i].common, true
-}
-
-// updateAndRespond updates the lease and sends a DHCPACK or DHCPNAK response to
-// the client according to the update result.  idOpt is an expected to be the
-// value of the DHCP option Client Identifier, nil if not present.  req must be
-// a DHCPREQUEST message, lease, and l must not be nil, fd must be valid.
-func (iface *dhcpInterfaceV4) updateAndRespond(
-	ctx context.Context,
-	l *slog.Logger,
-	req *layers.DHCPv4,
-	lease *Lease,
-	fd *frameData4,
-	idOpt []byte,
-) {
-	lease.Hostname = cmp.Or(hostname4(req), lease.Hostname)
-
-	err := iface.updateLease(ctx, lease)
-	if err != nil {
-		l.ErrorContext(ctx, "init-reboot request failed", slogutil.KeyError, err)
-		iface.respondNAK(ctx, req, fd, idOpt)
-
-		return
-	}
-
-	iface.respondACK(ctx, req, fd, lease, idOpt)
 }
 
 // FlagsBroadcast is the DHCPv4 message flags field with the broadcast bit set.

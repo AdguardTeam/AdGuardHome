@@ -179,6 +179,10 @@ func (web *webAPI) handleStatus(w http.ResponseWriter, r *http.Request) {
 func (web *webAPI) registerControlHandlers() {
 	mux := web.conf.mux
 
+	web.httpReg.Register(http.MethodGet, "/control/tls/status", web.handleTLSStatus)
+	web.httpReg.Register(http.MethodPost, "/control/tls/configure", web.handleTLSConfigure)
+	web.httpReg.Register(http.MethodPost, "/control/tls/validate", web.handleTLSValidate)
+
 	mux.Handle(
 		"/control/version.json",
 		web.postInstallHandler(http.HandlerFunc(web.handleVersionJSON)),

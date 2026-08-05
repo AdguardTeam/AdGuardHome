@@ -63,7 +63,7 @@
   "blocking_mode_refused": "REFUSED: Respond with REFUSED code",
   "blocklist": "Blocklist",
   "bootstrap_dns": "Bootstrap DNS servers",
-  "bootstrap_dns_desc": "IP addresses of DNS servers used to resolve IP addresses of the DoH/DoT resolvers you specify as upstreams. Comments are not permitted.",
+  "bootstrap_dns_desc": "IP addresses of DNS servers used to resolve the hostnames of DoH/DoT upstream resolvers. Enter one IP address per line. Comments must start on a new line with #. Empty lines and comments are ignored.",
   "cache_cleared": "DNS cache successfully cleared",
   "cache_enabled": "Enable cache",
   "cache_enabled_desc": "Store DNS responses locally.",

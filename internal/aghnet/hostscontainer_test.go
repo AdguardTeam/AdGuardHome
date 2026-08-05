@@ -64,10 +64,10 @@ func TestNewHostsContainer(t *testing.T) {
 				return nil
 			}
 
-			var eventsCalledCounter uint32
+			var eventsCalledCounter atomic.Uint32
 			eventsCh := make(chan struct{})
 			onEvents := func() (e <-chan struct{}) {
-				assert.Equal(t, uint32(1), atomic.AddUint32(&eventsCalledCounter, 1))
+				assert.Equal(t, uint32(1), eventsCalledCounter.Add(1))
 
 				return eventsCh
 			}
@@ -95,7 +95,7 @@ func TestNewHostsContainer(t *testing.T) {
 			assert.NotNil(t, <-hc.Upd())
 
 			eventsCh <- struct{}{}
-			assert.Equal(t, uint32(1), atomic.LoadUint32(&eventsCalledCounter))
+			assert.Equal(t, uint32(1), eventsCalledCounter.Load())
 		})
 	}
 

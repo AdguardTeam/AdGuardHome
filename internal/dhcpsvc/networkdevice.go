@@ -2,11 +2,14 @@ package dhcpsvc
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net"
 	"net/netip"
+	"slices"
 
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/validate"
 	"github.com/gopacket/gopacket"
 	"github.com/gopacket/gopacket/layers"
@@ -168,4 +171,106 @@ type frameData6 struct {
 	// used to match the Server Identifier option in incoming DHCPv6 messages.
 	// It must not be nil.
 	duidData []byte
+}
+
+// newFrameData4 creates a new [frameData4] with layers extracted from pkt.  It
+// returns nil if the packet is not an Ethernet or IPv4 packet, or if the
+// network device has no addresses.  pkt and dev must not be nil.
+func newFrameData4(pkt gopacket.Packet, dev NetworkDevice) (fd *frameData4, err error) {
+	addrs := dev.Addresses()
+	if len(addrs) == 0 {
+		return nil, fmt.Errorf("addresses of network device: %w", errors.ErrEmptyValue)
+	}
+
+	ether, err := ethernetFromPacket(pkt, layers.EthernetTypeIPv4)
+	if err != nil {
+		return nil, fmt.Errorf("extracting ethernet layer: %w", err)
+	}
+
+	ipLayer, ok := pkt.Layer(layers.LayerTypeIPv4).(*layers.IPv4)
+	if !ok {
+		return nil, fmt.Errorf("extracting ipv4 layer: %w", errors.ErrNoValue)
+	}
+
+	addr, ok := netip.AddrFromSlice(ipLayer.DstIP)
+	if !ok || !slices.Contains(addrs, addr) {
+		addr = addrs[0]
+	}
+
+	return &frameData4{
+		ether:     ether,
+		ip:        ipLayer,
+		device:    dev,
+		localAddr: addr,
+	}, nil
+}
+
+// newFrameData6 creates a new [frameData6] with layers extracted from pkt.  It
+// returns nil if the packet is not an Ethernet or IPv6 packet, or if the
+// network device has no addresses.  pkt, dev, and duid must not be nil.
+func newFrameData6(
+	pkt gopacket.Packet,
+	dev NetworkDevice,
+	duid *layers.DHCPv6DUID,
+) (fd *frameData6, err error) {
+	addrs := dev.Addresses()
+	if len(addrs) == 0 {
+		return nil, fmt.Errorf("addresses of network device: %w", errors.ErrEmptyValue)
+	}
+
+	ether, err := ethernetFromPacket(pkt, layers.EthernetTypeIPv6)
+	if err != nil {
+		return nil, fmt.Errorf("extracting ethernet layer: %w", err)
+	}
+
+	ipLayer, ok := pkt.Layer(layers.LayerTypeIPv6).(*layers.IPv6)
+	if !ok {
+		return nil, fmt.Errorf("extracting ipv6 layer: %w", errors.ErrNoValue)
+	}
+
+	addr, ok := netip.AddrFromSlice(ipLayer.DstIP)
+	if !ok || !slices.Contains(addrs, addr) {
+		addr = addrs[0]
+	}
+
+	return &frameData6{
+		ether:     ether,
+		ip:        ipLayer,
+		duid:      duid,
+		duidData:  duid.Encode(),
+		device:    dev,
+		localAddr: addr,
+	}, nil
+}
+
+// ethernetFromPacket extracts the Ethernet layer from the given packet and
+// validates its contents.  pkt must not be nil, expType is the expected type of
+// the Ethernet layer.
+func ethernetFromPacket(
+	pkt gopacket.Packet,
+	expType layers.EthernetType,
+) (ether *layers.Ethernet, err error) {
+	ether, ok := pkt.Layer(layers.LayerTypeEthernet).(*layers.Ethernet)
+	if !ok {
+		return nil, errors.ErrNoValue
+	}
+
+	var errs []error
+
+	err = netutil.ValidateMAC(ether.SrcMAC)
+	if err != nil {
+		errs = append(errs, fmt.Errorf("source mac: %w", err))
+	}
+
+	err = netutil.ValidateMAC(ether.DstMAC)
+	if err != nil {
+		errs = append(errs, fmt.Errorf("destination mac: %w", err))
+	}
+
+	err = validate.Equal("type", ether.EthernetType, expType)
+	if err != nil {
+		errs = append(errs, fmt.Errorf("ethernet type: %w", err))
+	}
+
+	return ether, errors.Join(errs...)
 }

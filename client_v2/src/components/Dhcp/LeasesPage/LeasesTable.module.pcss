@@ -1,0 +1,70 @@
+.headerCell {
+    background-color: var(--page-background-additional);
+
+    @media (min-width: 768px) {
+        width: 100%;
+        min-height: 42px;
+        padding: 0 12px;
+    }
+
+    &:first-child {
+        border-radius: 8px 0 0 8px;
+    }
+
+    &:last-child {
+        border-radius: 0 8px 8px 0;
+    }
+}
+
+.actionButton {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 0;
+    outline: 0;
+    cursor: pointer;
+    background: none;
+    color: var(--default-gray-icons);
+}
+
+.emptyTableContent {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.emptyTableIcon {
+    width: 64px;
+    height: 64px;
+}
+
+.emptyTableDesc {
+    color: var(--default-description-text);
+}
+
+.staticTable {
+    @media (min-width: 768px) {
+        grid-template-columns: 1fr 1fr 1fr fit-content(100%);
+    }
+}
+
+.dynamicTable {
+    @media (min-width: 768px) {
+        grid-template-columns: 1fr 1fr 1fr fit-content(100%);
+    }
+}
+
+.mobileActions {
+    @media (min-width: 768px) {
+        display: none !important;
+    }
+}
+
+.desktopActions {
+    @media (max-width: 767px) {
+        display: none !important;
+    }
+}

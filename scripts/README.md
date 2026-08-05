@@ -202,6 +202,9 @@ Optional environment:
 
 - `go run ./scripts/translations summary`: show the current locales summary.
 
+    > [!NOTE]
+    > The following script may produce false positives because JavaScript uses template literals like `servicesgroup.${group.id}.name`, so the actual key won't be found by substring search.
+
 - `go run ./scripts/translations unused`: show the list of unused strings.
 
 - `go run ./scripts/translations auto-add`: add locales with additions to the git and restore locales with deletions.

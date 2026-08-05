@@ -9,11 +9,11 @@ The format is based on [*Keep a Changelog*](https://keepachangelog.com/en/1.0.0/
 <!--
 ## [v1.0.0] – TBA
 
-## [v0.107.78] - 2026-06-15 (APPROX.)
+## [v0.107.80] - 2026-08-24 (APPROX.)
 
-See also the [v0.107.79 GitHub milestone][ms-v0.107.79].
+See also the [v0.107.80 GitHub milestone][ms-v0.107.80].
 
-[ms-v0.107.79]: https://github.com/AdguardTeam/AdGuardHome/milestone/114?closed=1
+[ms-v0.107.80]: https://github.com/AdguardTeam/AdGuardHome/milestone/115?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
@@ -21,6 +21,43 @@ NOTE: Add new changes BELOW THIS COMMENT.
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
+
+## [v0.107.79] - 2026-08-10
+
+See also the [v0.107.79 GitHub milestone][ms-v0.107.79].
+
+### Security
+
+- AdGuard Home is now more resistant to resource exhaustion attacks when using DNS-over-QUIC.
+
+    This is GHSA-w6v6-f44j-3rj2.  We thank @ATinyShoe for reporting this security issue.
+
+### Added
+
+- Bootstrap servers configuration now supports comments.
+
+- New property `"language"` in `POST /control/install/check_config` and `POST /control/install/configure` HTTP APIs.
+
+- The user is able to remove the static lease's hostname via the HTTP API.
+
+### Changed
+
+- The `edge` channel has been switched to the new UI and versioning scheme.
+
+### Deprecated
+
+- `strict_sni_check` is now deprecated.
+
+### Fixed
+
+- DNS64 treating unresolved `CNAME`/`DNAME` answers as the end of resolution chain ([#7514]).
+
+- Blocked requests without an EDNS(0) OPT record ([#8183]).
+
+[#7514]: https://github.com/AdguardTeam/AdGuardHome/issues/7514
+[#8183]: https://github.com/AdguardTeam/AdGuardHome/issues/8183
+
+[ms-v0.107.79]: https://github.com/AdguardTeam/AdGuardHome/milestone/114?closed=1
 
 ## [v0.107.78] - 2026-07-13
 
@@ -62,11 +99,11 @@ See also the [v0.107.78 GitHub milestone][ms-v0.107.78].
 
 - The `filtering` object of the YAML configuration now includes a new property, `max_http_size`, which defines the maximum size of the HTTP request for rulelists. To disable the limitation, set a large size, such as `1 TB`.
 
-### Fixed
-
 - Invalid AA flag in DNS responses ([#7955]).
 
 - The parsing of the `ech` parameter in DNS rewrite rules for the HTTPS record type ([#8276]).
+
+- Validation of the `answer` field in DNS rewrite rules in case it is represented as CNAME.
 
 - Blocked services check on the Custom filtering rules page does not work properly without specifying of a client.
 
@@ -3698,11 +3735,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 [ms-v0.104.2]: https://github.com/AdguardTeam/AdGuardHome/milestone/28?closed=1
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.79...HEAD
-[v0.107.79]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.78...v0.107.79
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.80...HEAD
+[v0.107.80]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.79...v0.107.80
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.78...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.79...HEAD
+[v0.107.79]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.78...v0.107.79
 [v0.107.78]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.77...v0.107.78
 [v0.107.77]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.76...v0.107.77
 [v0.107.76]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.75...v0.107.76

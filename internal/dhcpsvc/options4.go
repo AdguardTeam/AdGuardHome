@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/binary"
 	"log/slog"
-	"net"
 	"net/netip"
 	"slices"
 	"time"
@@ -353,9 +352,6 @@ func (iface *dhcpInterfaceV4) appendTimeOptions(
 
 // appendHostnameOption appends the hostname option to the response, if it's
 // provided.
-//
-// TODO(e.burkov):  Lease should always has a hostname, investigate when it
-// isn't the case.
 func appendHostnameOption(opts layers.DHCPOptions, hostname string) (res layers.DHCPOptions) {
 	if hostname == "" {
 		return opts
@@ -377,13 +373,18 @@ func msg4Type(msg *layers.DHCPv4) (typ layers.DHCPMsgType, ok bool) {
 
 // requestedIPv4 returns the IPv4 address, requested by client in the DHCP
 // message, if any.
-//
-// TODO(e.burkov):  DRY with other IP-from-option helpers.
 func requestedIPv4(msg *layers.DHCPv4) (ip netip.Addr, ok bool) {
 	for _, opt := range msg.Options {
-		if opt.Type == layers.DHCPOptRequestIP && len(opt.Data) == net.IPv4len {
-			return netip.AddrFromSlice(opt.Data)
+		if opt.Type == layers.DHCPOptRequestIP {
+			ip, ok = netip.AddrFromSlice(opt.Data)
+
+			break
 		}
+	}
+
+	ip = ip.Unmap()
+	if ok && ip.Is4() {
+		return ip, true
 	}
 
 	return netip.Addr{}, false
@@ -392,9 +393,16 @@ func requestedIPv4(msg *layers.DHCPv4) (ip netip.Addr, ok bool) {
 // serverID4 returns the server ID of the DHCP message, if any.
 func serverID4(msg *layers.DHCPv4) (ip netip.Addr, ok bool) {
 	for _, opt := range msg.Options {
-		if opt.Type == layers.DHCPOptServerID && len(opt.Data) == net.IPv4len {
-			return netip.AddrFromSlice(opt.Data)
+		if opt.Type == layers.DHCPOptServerID {
+			ip, ok = netip.AddrFromSlice(opt.Data)
+
+			break
 		}
+	}
+
+	ip = ip.Unmap()
+	if ok && ip.Is4() {
+		return ip, true
 	}
 
 	return netip.Addr{}, false
@@ -420,6 +428,17 @@ func clientIdentifier4(msg *layers.DHCPv4) (id []byte) {
 	}
 
 	return nil
+}
+
+// message4 returns the optional message from the DHCPv4 message, if any.
+func message4(msg *layers.DHCPv4) (res string, ok bool) {
+	for _, opt := range msg.Options {
+		if opt.Type == layers.DHCPOptMessage && len(opt.Data) > 0 {
+			return string(opt.Data), true
+		}
+	}
+
+	return "", false
 }
 
 // requestedOptions4 returns the list of options requested in DHCPv4 message, if

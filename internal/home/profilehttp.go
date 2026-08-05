@@ -94,8 +94,9 @@ func (web *webAPI) handlePutProfile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	lang := profileReq.Language
-	if !allowedLanguages.Has(lang) {
-		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "unknown language: %q", lang)
+	err = validateLang(lang, false)
+	if err != nil {
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}

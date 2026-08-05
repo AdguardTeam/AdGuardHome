@@ -45,10 +45,9 @@ func newTestStatsCtx(tb testing.TB, c Config) (s *StatsCtx) {
 }
 
 func TestStats_races(t *testing.T) {
-	var r uint32
-	idGen := func() (id uint32) { return atomic.LoadUint32(&r) }
+	var currentRound atomic.Uint32
 	s := newTestStatsCtx(t, Config{
-		UnitID:  idGen,
+		UnitID:  currentRound.Load,
 		Enabled: true,
 	})
 
@@ -81,14 +80,14 @@ func TestStats_races(t *testing.T) {
 	}
 
 	const (
-		roundsNum = 3
+		roundsNum uint32 = 3
 
 		writersNum = 10
 		readersNum = 5
 	)
 
 	for round := range roundsNum {
-		atomic.StoreUint32(&r, uint32(round))
+		currentRound.Store(round)
 
 		startWG, finWG := &sync.WaitGroup{}, &sync.WaitGroup{}
 		waitCh := make(chan unit)

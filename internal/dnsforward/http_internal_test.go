@@ -93,7 +93,7 @@ func TestDNSForwardHTTP_handleGetConfig(t *testing.T) {
 		ConfModifier:  agh.EmptyConfigModifier{},
 		ServePlainDNS: true,
 	}
-	s := createTestServer(t, filterConf, forwardConf)
+	s := createTestServer(t, filterConf, forwardConf, testTLSConfigProvider)
 	s.sysResolvers = &emptySysResolvers{}
 
 	require.NoError(t, s.Start(testutil.ContextWithTimeout(t, testTimeout)))
@@ -178,7 +178,7 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 		ConfModifier:  agh.EmptyConfigModifier{},
 		ServePlainDNS: true,
 	}
-	s := createTestServer(t, filterConf, forwardConf)
+	s := createTestServer(t, filterConf, forwardConf, testTLSConfigProvider)
 	s.sysResolvers = &emptySysResolvers{}
 
 	defaultConf := s.conf
@@ -387,21 +387,26 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	srv := createTestServer(t, &filtering.Config{
-		BlockingMode: filtering.BlockingModeDefault,
-		EtcHosts:     hc,
-	}, ServerConfig{
-		UDPListenAddrs:  []*net.UDPAddr{{}},
-		TCPListenAddrs:  []*net.TCPAddr{{}},
-		UpstreamTimeout: upsTimeout,
-		TLSConf:         &TLSConfig{},
-		Config: Config{
-			UpstreamMode:     UpstreamModeLoadBalance,
-			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
-			ClientsContainer: EmptyClientsContainer{},
+	srv := createTestServer(
+		t,
+		&filtering.Config{
+			BlockingMode: filtering.BlockingModeDefault,
+			EtcHosts:     hc,
 		},
-		ServePlainDNS: true,
-	})
+		ServerConfig{
+			UDPListenAddrs:  []*net.UDPAddr{{}},
+			TCPListenAddrs:  []*net.TCPAddr{{}},
+			UpstreamTimeout: upsTimeout,
+			TLSConf:         &TLSConfig{},
+			Config: Config{
+				UpstreamMode:     UpstreamModeLoadBalance,
+				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+				ClientsContainer: EmptyClientsContainer{},
+			},
+			ServePlainDNS: true,
+		},
+		testTLSConfigProvider,
+	)
 	srv.etcHosts = upstream.NewHostsResolver(hc)
 	startDeferStop(t, srv)
 

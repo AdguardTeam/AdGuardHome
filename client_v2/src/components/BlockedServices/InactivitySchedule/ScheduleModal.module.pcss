@@ -1,0 +1,74 @@
+.content {
+    padding: 16px;
+}
+
+.dayLabel {
+    padding: 8px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--default-main-text);
+}
+
+.allDayRow {
+    padding: 16px 0;
+}
+
+.timeWrapper {
+    display: flex;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 16px;
+    padding: 8px 0;
+
+    @media (min-width: 768px) {
+        flex-direction: row;
+    }
+}
+
+.timeField {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+}
+
+.timeLabel {
+    display: block;
+    font-size: 14px;
+    color: var(--default-description-text);
+    margin-bottom: 8px;
+}
+
+.error {
+    font-size: 14px;
+    color: var(--default-error-icon);
+    margin-bottom: 16px;
+}
+
+.notice {
+    margin-top: 12px;
+    padding-left: 16px;
+    position: relative;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 3px;
+        height: 100%;
+        background-color: var(--default-attention-link);
+        border-radius: 4px;
+    }
+}
+
+.selects {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.selects :global(.solid-select) {
+    width: 100%;
+    flex: 1;
+    min-width: 0;
+}

@@ -1,4 +1,4 @@
-'openapi': '3.0.3'
+'openapi': '3.2.0'
 'info':
   'title': 'AdGuard Home'
   'description': >
@@ -514,7 +514,7 @@
           'content':
             'application/json':
               'schema':
-                '$ref': '#/components/schemas/NetInterfaces'
+                '$ref': '#/components/schemas/DHCPNetInterfaces'
         '500':
           'content':
             'application/json':
@@ -865,7 +865,7 @@
               'schema':
                 'type': 'object'
                 'properties':
-                  'enable':
+                  'enabled':
                     'type': 'boolean'
                   'sensitivity':
                     'type': 'integer'
@@ -1508,7 +1508,7 @@
       - 'dns_port'
       - 'http_port'
       - 'protection_enabled'
-      - 'protection_disabled_until'
+      - 'protection_disabled_duration'
       - 'running'
       - 'version'
       - 'language'
@@ -1543,8 +1543,7 @@
           'type': 'string'
           'example': 'v0.123.4'
         'language':
-          'type': 'string'
-          'example': 'en'
+          '$ref': '#/components/schemas/Lang'
         'start_time':
           'type': 'number'
           'format': 'double'
@@ -1558,7 +1557,8 @@
           'type': 'array'
           'description': >
             Bootstrap servers, port is optional after colon.  Empty value will
-            reset it to default values.
+            reset it to default values.  Comments are allowed, a comment line
+            starts with a `#` symbol.
           'items':
             'type': 'string'
           'example':
@@ -1568,7 +1568,8 @@
           'type': 'array'
           'description': >
             Upstream servers, port is optional after colon.  Empty value will
-            reset it to default values.
+            reset it to default values.  Comments are allowed, a comment line
+            starts with a `#` symbol.
           'items':
             'type': 'string'
           'example':
@@ -1578,7 +1579,8 @@
           'type': 'array'
           'description': >
             List of fallback DNS servers used when upstream DNS servers are not
-            responding.  Empty value will clear the list.
+            responding.  Empty value will clear the list.  Comments are allowed,
+            a comment line starts with a `#` symbol.
           'items':
             'type': 'string'
           'example':
@@ -1590,13 +1592,13 @@
           'type': 'boolean'
         'ratelimit':
           'type': 'integer'
-        'ratelimit_subnet_subnet_len_ipv4':
+        'ratelimit_subnet_len_ipv4':
           'description': 'Length of the subnet mask for IPv4 addresses.'
           'type': 'integer'
           'default': 24
           'minimum': 0
           'maximum': 32
-        'ratelimit_subnet_subnet_len_ipv6':
+        'ratelimit_subnet_len_ipv6':
           'description': 'Length of the subnet mask for IPv6 addresses.'
           'type': 'integer'
           'default': 56
@@ -1656,13 +1658,14 @@
         'upstream_mode':
           'type': 'string'
           'enum':
-          - const: ''
-            deprecated: true
-            description: Use `load_balance` instead.
-          - const: 'fastest_addr'
-          - const: 'load_balance'
-          - const: 'parallel'
-          'description': Upstream modes enumeration.
+          - ''
+          - 'fastest_addr'
+          - 'load_balance'
+          - 'parallel'
+          'description': >-
+            Upstream modes enumeration.
+            The empty string value is deprecated; use `load_balance`
+            instead.
         'use_private_ptr_resolvers':
           'type': 'boolean'
         'resolve_clients':
@@ -1671,7 +1674,8 @@
           'type': 'array'
           'description': >
             Upstream servers, port is optional after colon.  Empty value will
-            reset it to default values.
+            reset it to default values.  Comments are allowed, a comment line
+            starts with a `#` symbol.
           'items':
             'type': 'string'
           'example':
@@ -2051,6 +2055,12 @@
           '$ref': '#/components/schemas/DhcpConfigV6'
     'DhcpConfigV4':
       'type': 'object'
+      'required':
+      - 'gateway_ip'
+      - 'subnet_mask'
+      - 'range_start'
+      - 'range_end'
+      - 'lease_duration'
       'properties':
         'gateway_ip':
           'type': 'string'
@@ -2115,8 +2125,12 @@
       'type': 'object'
       'description': 'Built-in DHCP server configuration and status'
       'required':
-      - 'config'
+      - 'enabled'
+      - 'interface_name'
+      - 'v4'
+      - 'v6'
       - 'leases'
+      - 'static_leases'
       'properties':
         'enabled':
           'type': 'boolean'
@@ -2140,6 +2154,13 @@
         Network interfaces dictionary, keys are interface names.
       'additionalProperties':
         '$ref': '#/components/schemas/NetInterface'
+
+    'DHCPNetInterfaces':
+      'type': 'object'
+      'description': >
+        DHCP network interfaces dictionary, keys are interface names.
+      'additionalProperties':
+        '$ref': '#/components/schemas/DHCPNetInterface'
 
     'DhcpFindActiveReq':
       'description': >
@@ -2590,9 +2611,51 @@
           'example': true
           'description': >
             Set to true if plain DNS is allowed for incoming requests.
+        'port_dnscrypt':
+          'type': 'integer'
+          'format': 'uint16'
+          'example': 5443
+          'description': 'DNS-over-HTTPS port. If 0, DNSCrypt will be disabled.'
+        'dnscrypt_config_file':
+          'type': 'string'
+          'description': 'Path to the DNSCrypt configuration file.'
     'NetInterface':
       'type': 'object'
       'description': 'Network interface info'
+      'required':
+      - 'flags'
+      - 'hardware_address'
+      - 'ip_addresses'
+      - 'mtu'
+      - 'name'
+      'properties':
+        'flags':
+          'type': 'string'
+          'description': >
+            Flags could be any combination of the following values, divided by
+            the "|" character: "up", "broadcast", "loopback", "pointtopoint" and
+            "multicast".
+          'example': 'up|broadcast|multicast'
+        'hardware_address':
+          'type': 'string'
+          'example': '52:54:00:11:09:ba'
+        'ip_addresses':
+          'type': 'array'
+          'description': >
+            The addresses of the interface.
+          'items':
+            'type': 'string'
+        'mtu':
+          'type': 'integer'
+          'description': 'MTU value of the interface.'
+          'example': 1500
+        'name':
+          'type': 'string'
+          'example': 'eth0'
+
+    'DHCPNetInterface':
+      'type': 'object'
+      'description': 'DHCP network interface info'
       'required':
       - 'flags'
       - 'gateway_ip'
@@ -2685,7 +2748,7 @@
         'name':
           'type': 'string'
         'language':
-          'type': 'string'
+          '$ref': '#/components/schemas/Lang'
         'theme':
           'type': 'string'
           'description': 'Interface theme'
@@ -3159,11 +3222,13 @@
       'properties':
         'dns':
           '$ref': '#/components/schemas/CheckConfigRequestInfo'
-        'web':
-          '$ref': '#/components/schemas/CheckConfigRequestInfo'
+        'language':
+          '$ref': '#/components/schemas/Lang'
         'set_static_ip':
           'type': 'boolean'
           'example': false
+        'web':
+          '$ref': '#/components/schemas/CheckConfigRequestInfo'
     'CheckConfigRequestInfo':
       'type': 'object'
       'properties':
@@ -3181,15 +3246,18 @@
       'type': 'object'
       'required':
       - 'dns'
-      - 'web'
+      - 'language'
       - 'static_ip'
+      - 'web'
       'properties':
         'dns':
           '$ref': '#/components/schemas/CheckConfigResponseInfo'
-        'web':
+        'language':
           '$ref': '#/components/schemas/CheckConfigResponseInfo'
         'static_ip':
           '$ref': '#/components/schemas/CheckConfigStaticIpInfo'
+        'web':
+          '$ref': '#/components/schemas/CheckConfigResponseInfo'
     'CheckConfigResponseInfo':
       'type': 'object'
       'required':
@@ -3231,21 +3299,23 @@
       'required':
       - 'dns'
       - 'web'
-      - 'username'
       - 'password'
+      - 'username'
       'properties':
         'dns':
           '$ref': '#/components/schemas/AddressInfo'
         'web':
           '$ref': '#/components/schemas/AddressInfo'
-        'username':
-          'type': 'string'
-          'description': 'Basic auth username'
-          'example': 'admin'
+        'language':
+          '$ref': '#/components/schemas/Lang'
         'password':
-          'type': 'string'
           'description': 'Basic auth password'
           'example': 'password'
+          'type': 'string'
+        'username':
+          'description': 'Basic auth username'
+          'example': 'admin'
+          'type': 'string'
     'Login':
       'type': 'object'
       'description': 'Login request data'
@@ -3267,11 +3337,52 @@
       'description': 'Language settings object.'
       'properties':
         'language':
-          'description': 'The current language or the language to set.'
-          'type': 'string'
+          '$ref': '#/components/schemas/Lang'
       'required':
       - 'language'
       'type': 'object'
+    'Lang':
+      'description': >
+        Language code.
+      # Hold the enum in sync with .twosky.json.
+      'enum':
+      - 'ar'
+      - 'be'
+      - 'bg'
+      - 'cs'
+      - 'da'
+      - 'de'
+      - 'en'
+      - 'es'
+      - 'fa'
+      - 'fi'
+      - 'fr'
+      - 'hr'
+      - 'hu'
+      - 'id'
+      - 'it'
+      - 'ja'
+      - 'ko'
+      - 'nl'
+      - 'no'
+      - 'pl'
+      - 'pt-br'
+      - 'pt-pt'
+      - 'ro'
+      - 'ru'
+      - 'si-lk'
+      - 'sk'
+      - 'sl'
+      - 'sr-cs'
+      - 'sv'
+      - 'th'
+      - 'tr'
+      - 'uk'
+      - 'vi'
+      - 'zh-cn'
+      - 'zh-hk'
+      - 'zh-tw'
+      'type': 'string'
   'securitySchemes':
     'basicAuth':
       'type': 'http'

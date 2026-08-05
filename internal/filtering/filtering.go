@@ -169,7 +169,9 @@ type Config struct {
 	//
 	// It is of type uint32 to be accessed by atomic.
 	//
-	// TODO(e.burkov):  Use atomic.Bool in Go 1.19.
+	// TODO(e.burkov):  Use *atomic.Bool once this entire package is refactored.
+	// Do not use it until then, since *newConf = *oldConf will copy an atomic
+	// bool by value, which is prohibited.
 	enabled uint32
 
 	// FiltersUpdateIntervalHours is the time period to update filters

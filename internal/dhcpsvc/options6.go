@@ -100,8 +100,6 @@ func (opt *IANAOption) UnmarshalBinary(data []byte) (err error) {
 
 // Encode serializes opt into a DHCPv6 IA_NA option.  Each contained
 // [IAAddrOption] is encoded as a nested IA Address option.
-//
-// TODO(e.burkov):  Use.
 func (opt IANAOption) Encode() (iaOpt layers.DHCPv6Option) {
 	// Each nested IA Address option: code (2) + length (2) + data (24).
 	const nestedAddrSize = 2 + 2 + iaAddrDataLen
@@ -117,6 +115,17 @@ func (opt IANAOption) Encode() (iaOpt layers.DHCPv6Option) {
 	}
 
 	return layers.NewDHCPv6Option(layers.DHCPv6OptIANA, data)
+}
+
+// requestedAddr returns the first requested address within iana, if any.
+func (opt IANAOption) requestedAddr() (addr netip.Addr, ok bool) {
+	if len(opt.Nested) == 0 {
+		return netip.Addr{}, false
+	}
+
+	addr = opt.Nested[0].Addr
+
+	return addr, addr.IsValid()
 }
 
 // iaAddrDataLen is the minimum length of an IA Address option data field, which
