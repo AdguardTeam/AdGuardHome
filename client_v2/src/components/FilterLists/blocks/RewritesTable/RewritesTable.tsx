@@ -1,7 +1,9 @@
 import { createSignal, createMemo } from 'solid-js';
 import cn from 'clsx';
+import ipaddr from 'ipaddr.js';
 
 import intl from 'panel/common/intl';
+import { sortIp } from 'panel/helpers/helpers';
 import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from 'panel/helpers/localStorageHelper';
 import { Table, type TableColumn } from 'panel/common/ui/Table';
 import { Icon } from 'panel/common/ui/Icon';
@@ -22,6 +24,35 @@ type Props = {
     deleteRewrite: (rewrite: Rewrite) => void;
     editRewrite: (rewrite: Rewrite) => void;
     toggleRewrite: (rewrite: Rewrite) => void;
+};
+
+const isIpAddress = (value: string): boolean =>
+    ipaddr.IPv4.isValidFourPartDecimal(value) || ipaddr.IPv6.isValid(value);
+
+const sortAnswer = (a: string, b: string): number => {
+    const aIsIp = isIpAddress(a);
+    const bIsIp = isIpAddress(b);
+
+    if (aIsIp && bIsIp) {
+        return sortIp(a, b);
+    }
+
+    if (aIsIp !== bIsIp) {
+        return aIsIp ? -1 : 1;
+    }
+
+    const normalizedA = a.toLowerCase();
+    const normalizedB = b.toLowerCase();
+
+    if (normalizedA < normalizedB) {
+        return -1;
+    }
+
+    if (normalizedA > normalizedB) {
+        return 1;
+    }
+
+    return 0;
 };
 
 export const RewritesTable = (props: Props) => {
@@ -99,6 +130,7 @@ export const RewritesTable = (props: Props) => {
             },
             accessor: 'answer',
             sortable: true,
+            sortFn: sortAnswer,
             render: (value: string) => (
                 <div class={theme.table.cell}>
                     <div class={theme.table.cellValueText}>

@@ -42,8 +42,12 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- DNS rewrite results in the web UI are now sorted numerically when they are IP
+  addresses ([#8062]).
+
 - Blocked requests without an EDNS(0) OPT record ([#8183]).
 
+[#8062]: https://github.com/AdguardTeam/AdGuardHome/issues/8062
 [#8183]: https://github.com/AdguardTeam/AdGuardHome/issues/8183
 
 <!--
