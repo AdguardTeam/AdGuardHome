@@ -257,6 +257,13 @@ func (ci *index) findByIP(ip netip.Addr) (c *Persistent, found bool) {
 	}
 
 	ipWithoutZone := ip.WithZone("")
+	if ipWithoutZone != ip {
+		uid, found = ci.ipToUID[ipWithoutZone]
+		if found {
+			return ci.uidToClient[uid], true
+		}
+	}
+
 	ci.subnetToUID.Range(func(pref netip.Prefix, id UID) (cont bool) {
 		// Remove zone before checking because prefixes strip zones.
 		if pref.Contains(ipWithoutZone) {

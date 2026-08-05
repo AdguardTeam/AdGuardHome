@@ -289,6 +289,56 @@ func TestIndex_FindByIPWithoutZone(t *testing.T) {
 	}
 }
 
+func TestIndex_FindByIPScopedFallback(t *testing.T) {
+	ip := netip.MustParseAddr("fe80::1")
+	scopedIP := ip.WithZone("eth0")
+	clientNoZone := &Persistent{
+		Name: "client_no_zone",
+		IPs:  []netip.Addr{ip},
+	}
+	clientScoped := &Persistent{
+		Name: "client_scoped",
+		IPs:  []netip.Addr{scopedIP},
+	}
+	clientSubnet := &Persistent{
+		Name:    "client_subnet",
+		Subnets: []netip.Prefix{netip.MustParsePrefix("fe80::/64")},
+	}
+	ci := newIDIndex([]*Persistent{clientNoZone, clientScoped, clientSubnet})
+
+	testCases := []struct {
+		ip   netip.Addr
+		want *Persistent
+		name string
+	}{
+		{
+			name: "without_zone",
+			ip:   ip,
+			want: clientNoZone,
+		}, {
+			name: "exact_scoped",
+			ip:   scopedIP,
+			want: clientScoped,
+		}, {
+			name: "scoped_fallback",
+			ip:   ip.WithZone("eth1"),
+			want: clientNoZone,
+		}, {
+			name: "subnet",
+			ip:   netip.MustParseAddr("fe80::2%eth1"),
+			want: clientSubnet,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			got, ok := ci.findByIP(tc.ip)
+			require.True(t, ok)
+			assert.Same(t, tc.want, got)
+		})
+	}
+}
+
 func TestClientIndex_RangeByName(t *testing.T) {
 	sortedClients := []*Persistent{{
 		Name:      "clientA",

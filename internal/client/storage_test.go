@@ -15,6 +15,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/whois"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/hostsfile"
@@ -24,6 +25,7 @@ import (
 	"github.com/AdguardTeam/golibs/testutil/faketime"
 	"github.com/AdguardTeam/golibs/testutil/servicetest"
 	"github.com/AdguardTeam/golibs/timeutil"
+	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -658,6 +660,62 @@ func newStorage(tb testing.TB, m []*client.Persistent) (s *client.Storage) {
 	return s
 }
 
+func TestStorage_ApplyClientFilteringScopedIP(t *testing.T) {
+	const (
+		clientName   = "client"
+		filteredHost = "filtered.example"
+	)
+
+	clientIP := netip.MustParseAddr("fe80::1")
+	s := newStorage(t, []*client.Persistent{{
+		Name: clientName,
+		IPs:  []netip.Addr{clientIP},
+	}})
+
+	dnsFilter, err := filtering.New(&filtering.Config{
+		Logger:                testLogger,
+		DataDir:               t.TempDir(),
+		SafeBrowsingCacheSize: 10000,
+		ParentalCacheSize:     10000,
+		SafeSearchCacheSize:   1000,
+		CacheTime:             30,
+	}, []filtering.Filter{{
+		ID:   0,
+		Data: []byte("||" + filteredHost + "^$client=" + clientIP.String()),
+	}})
+	require.NoError(t, err)
+	t.Cleanup(dnsFilter.Close)
+
+	testCases := []struct {
+		addr netip.Addr
+		name string
+	}{
+		{
+			name: "without_zone",
+			addr: clientIP,
+		}, {
+			name: "with_zone",
+			addr: clientIP.WithZone("eth0"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			setts := &filtering.Settings{
+				ClientIP:          tc.addr,
+				ProtectionEnabled: true,
+				FilteringEnabled:  true,
+			}
+			s.ApplyClientFiltering("", tc.addr, setts)
+			assert.Equal(t, clientName, setts.ClientName)
+
+			res, checkErr := dnsFilter.CheckHostRules(filteredHost, dns.TypeA, setts)
+			require.NoError(t, checkErr)
+			assert.True(t, res.Reason.Matched(), "result: %#v", res)
+		})
+	}
+}
+
 func TestStorage_Add(t *testing.T) {
 	const (
 		existingName     = "existing_name"
@@ -1166,6 +1224,7 @@ func TestStorage_CustomUpstreamConfig(t *testing.T) {
 	var (
 		existingIP    = netip.MustParseAddr("192.0.2.1")
 		nonExistingIP = netip.MustParseAddr("192.0.2.255")
+		scopedIP      = netip.MustParseAddr("fe80::1")
 
 		dhcpCliIP  = netip.MustParseAddr("192.0.2.2")
 		dhcpCliMAC = errors.Must(net.ParseMAC("02:00:00:00:00:00"))
@@ -1213,7 +1272,7 @@ func TestStorage_CustomUpstreamConfig(t *testing.T) {
 
 	err = s.Add(ctx, &client.Persistent{
 		Name:      "client_first",
-		IPs:       []netip.Addr{existingIP},
+		IPs:       []netip.Addr{existingIP, scopedIP},
 		ClientIDs: []client.ClientID{existingClientID},
 		UID:       client.MustNewUID(),
 		Upstreams: []string{"192.0.2.0"},
@@ -1242,6 +1301,11 @@ func TestStorage_CustomUpstreamConfig(t *testing.T) {
 		name:        "client_addr",
 		cliID:       "",
 		cliAddr:     existingIP,
+		wantNilConf: assert.NotNil,
+	}, {
+		name:        "client_addr_scoped",
+		cliID:       "",
+		cliAddr:     scopedIP.WithZone("eth0"),
 		wantNilConf: assert.NotNil,
 	}, {
 		name:        "client_dhcp",
