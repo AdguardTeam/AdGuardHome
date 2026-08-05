@@ -1128,7 +1128,7 @@ func (d *DNSFilter) periodicallyRefreshFilters(ivl time.Duration) (nextIvl time.
 		ivl = maxInterval
 	} else if isNetErr {
 		ivl *= 2
-		ivl = max(ivl, maxInterval)
+		ivl = min(ivl, maxInterval)
 	}
 
 	return ivl
