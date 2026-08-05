@@ -1,6 +1,7 @@
 package filtering
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -136,6 +137,30 @@ func TestFiltersFingerprint_file(t *testing.T) {
 
 		assert.NotEqual(t, prev, filtersFingerprint(nil, flts))
 	})
+}
+
+// TestFiltersFingerprint_largeFile makes sure that a rule list larger than the
+// buffer it is read through is hashed in full, including the part that only the
+// reads after the first one see.
+func TestFiltersFingerprint_largeFile(t *testing.T) {
+	t.Parallel()
+
+	const rule = "||example.com^\n"
+
+	data := bytes.Repeat([]byte(rule), 1+fingerprintBufSize/len(rule))
+	require.Greater(t, len(data), fingerprintBufSize)
+
+	path := writeRuleList(t, string(data))
+	flts := []Filter{{ID: 1, FilePath: path}}
+
+	base := filtersFingerprint(nil, flts)
+	assert.Equal(t, base, filtersFingerprint(nil, flts))
+
+	// Change the last rule, which is past the first buffer's worth of data.
+	data[len(data)-2] = 'g'
+	require.NoError(t, os.WriteFile(path, data, 0o644))
+
+	assert.NotEqual(t, base, filtersFingerprint(nil, flts))
 }
 
 // TestGCTarget_overlap makes sure that two rebuilds running at the same time

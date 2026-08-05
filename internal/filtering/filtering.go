@@ -967,6 +967,24 @@ func filtersFingerprint(allowFilters, blockFilters []Filter) (f fingerprint) {
 	return h.Sum64()
 }
 
+// fingerprintBufSize is the size of the buffer that [hashFileContents] reads a
+// rule list through.  It is the size that [io.Copy] uses when it has to
+// allocate a buffer itself.
+const fingerprintBufSize = 32 * 1024
+
+// fingerprintBufPool contains the buffers that [hashFileContents] reads rule
+// lists through.  [filtersFingerprint] runs on every filtering-related API
+// request, and each rule list is read separately, so the buffers are pooled
+// rather than allocated anew for every list of every request.
+var fingerprintBufPool = syncutil.NewSlicePool[byte](fingerprintBufSize)
+
+// onlyReader hides the methods of a reader other than [io.Reader.Read].  In
+// particular, it hides [io.WriterTo], which [io.CopyBuffer] prefers over the
+// buffer that it is given.
+type onlyReader struct {
+	io.Reader
+}
+
 // hashFilters writes the data identifying filters into h.
 func hashFilters(h hash.Hash, filters []Filter) {
 	for _, f := range filters {
@@ -1003,7 +1021,13 @@ func hashFileContents(h hash.Hash, path string) {
 	}
 	defer func() { _ = f.Close() }()
 
-	n, err := io.Copy(h, f)
+	bufPtr := fingerprintBufPool.Get()
+	defer fingerprintBufPool.Put(bufPtr)
+
+	// Hide [os.File.WriteTo] from [io.CopyBuffer], since it would be preferred
+	// over the pooled buffer and would allocate one of its own for every list
+	// of every request.
+	n, err := io.CopyBuffer(h, onlyReader{Reader: f}, *bufPtr)
 	if err != nil {
 		_, _ = fmt.Fprintf(h, "readerr:%v;", err)
 
