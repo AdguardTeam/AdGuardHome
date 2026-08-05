@@ -79,7 +79,7 @@ func collectDNSAddresses(tlsMgr *tlsManager) (addrs []string, err error) {
 		}
 	}
 
-	de := getDNSEncryption(tlsMgr)
+	de := getDNSEncryption(tlsMgr, config.HTTPConfig.DoH.InsecureEnabled)
 	if de.https != "" {
 		addrs = append(addrs, de.https)
 	}
@@ -359,7 +359,7 @@ func (web *webAPI) preInstallHandler(handler http.Handler) (wrapped http.Handler
 // HTTPS-related headers.  If proceed is true, the middleware must continue
 // handling the request.
 func (web *webAPI) handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (proceed bool) {
-	if web.httpsServer.server == nil {
+	if !web.httpsServer.isEnabled() {
 		return true
 	}
 

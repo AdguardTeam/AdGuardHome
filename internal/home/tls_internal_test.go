@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agh"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
@@ -28,6 +29,148 @@ const (
 	testCertificatePath = "./testdata/cert.pem"
 	testPrivateKeyPath  = "./testdata/key.pem"
 )
+
+func TestNewTLSManagerCertlessDNSCrypt(t *testing.T) {
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+
+	m, err := newTLSManager(ctx, &tlsManagerConfig{
+		logger:       testLogger,
+		confModifier: agh.EmptyConfigModifier{},
+		manager:      aghtls.EmptyManager{},
+		tlsSettings: tlsConfigSettings{
+			Enabled:            true,
+			PortDNSCrypt:       5443,
+			DNSCryptConfigFile: "testdata/dnscrypt.yaml",
+		},
+	})
+	require.NoError(t, err)
+	assert.Nil(t, m.TLSConfig())
+	assert.True(t, m.extendedTLSConfig().Enabled)
+}
+
+func TestNewTLSManagerCertificatePair(t *testing.T) {
+	emptyDir := t.TempDir()
+	emptyCertPath := filepath.Join(emptyDir, "cert.pem")
+	emptyKeyPath := filepath.Join(emptyDir, "key.pem")
+	require.NoError(t, os.WriteFile(emptyCertPath, nil, 0o600))
+	require.NoError(t, os.WriteFile(emptyKeyPath, nil, 0o600))
+
+	mismatchDir := t.TempDir()
+	mismatchCertPath := filepath.Join(mismatchDir, "cert.pem")
+	mismatchKeyPath := filepath.Join(mismatchDir, "key.pem")
+	mismatchCert, mismatchKey := newCertAndKey(t, 2)
+	writeCertAndKey(t, mismatchCert, mismatchCertPath, mismatchKey, mismatchKeyPath)
+
+	testCases := []struct {
+		name     string
+		certPath string
+		keyPath  string
+		certData string
+		keyData  string
+
+		wantErr bool
+		wantTLS bool
+	}{
+		{
+			name:     "certificate_only",
+			certPath: testCertificatePath,
+			wantErr:  true,
+		},
+		{
+			name:    "private_key_only",
+			keyPath: testPrivateKeyPath,
+			wantErr: true,
+		},
+		{
+			name:     "malformed_pair",
+			certData: "bad certificate",
+			keyData:  "bad key",
+			wantErr:  true,
+		},
+		{
+			name:     "mismatched_pair",
+			certPath: testCertificatePath,
+			keyPath:  mismatchKeyPath,
+			wantErr:  true,
+		},
+		{
+			name:     "empty_files",
+			certPath: emptyCertPath,
+			keyPath:  emptyKeyPath,
+			wantErr:  true,
+		},
+		{
+			name:     "valid_pair",
+			certPath: testCertificatePath,
+			keyPath:  testPrivateKeyPath,
+			wantTLS:  true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			m, err := newTLSManager(ctx, &tlsManagerConfig{
+				logger:       testLogger,
+				confModifier: agh.EmptyConfigModifier{},
+				manager:      aghtls.EmptyManager{},
+				tlsSettings: tlsConfigSettings{
+					Enabled:          true,
+					CertificateChain: tc.certData,
+					PrivateKey:       tc.keyData,
+					CertificatePath:  tc.certPath,
+					PrivateKeyPath:   tc.keyPath,
+				},
+			})
+			if tc.wantErr {
+				require.Error(t, err)
+				assert.False(t, m.extendedTLSConfig().Enabled)
+
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tc.wantTLS, m.TLSConfig() != nil)
+		})
+	}
+}
+
+func TestTLSManagerCertlessTransition(t *testing.T) {
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	m, err := newTLSManager(ctx, &tlsManagerConfig{
+		logger:       testLogger,
+		confModifier: agh.EmptyConfigModifier{},
+		manager:      aghtls.EmptyManager{},
+		tlsSettings: tlsConfigSettings{
+			Enabled:         true,
+			CertificatePath: testCertificatePath,
+			PrivateKeyPath:  testPrivateKeyPath,
+		},
+	})
+	require.NoError(t, err)
+	require.NotNil(t, m.TLSConfig())
+	require.NotNil(t, m.tlsCert)
+
+	restartHTTPS, err := m.setConfig(ctx, &tlsConfigSettings{Enabled: true}, aghalg.NBNull)
+	require.NoError(t, err)
+	assert.True(t, restartHTTPS)
+	assert.Nil(t, m.TLSConfig())
+	assert.Nil(t, m.tlsCert)
+	assert.False(t, m.HasIPAddrs())
+	assert.True(t, m.extendedTLSConfig().Enabled)
+
+	restartHTTPS, err = m.setConfig(ctx, &tlsConfigSettings{
+		Enabled:              true,
+		CertificatePath:      testCertificatePath,
+		PrivateKeyPath:       testPrivateKeyPath,
+		CertificateChainData: requireReadFile(t, testCertificatePath),
+		PrivateKeyData:       requireReadFile(t, testPrivateKeyPath),
+	}, aghalg.NBNull)
+	require.NoError(t, err)
+	assert.True(t, restartHTTPS)
+	assert.NotNil(t, m.TLSConfig())
+	assert.NotNil(t, m.tlsCert)
+}
 
 func TestValidateCertificates(t *testing.T) {
 	ctx := testutil.ContextWithTimeout(t, testTimeout)

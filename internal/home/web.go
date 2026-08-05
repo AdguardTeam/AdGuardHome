@@ -172,6 +172,14 @@ func (srv *httpsServer) inShutdown() (ok bool) {
 	return srv.shutdown
 }
 
+// isEnabled reports whether the HTTPS server is ready to use.
+func (srv *httpsServer) isEnabled() (ok bool) {
+	srv.mu.Lock()
+	defer srv.mu.Unlock()
+
+	return srv.enabled
+}
+
 // certificate returns a cert used by the server.  cert must not be modified.
 func (srv *httpsServer) certificate() (cert tls.Certificate) {
 	srv.mu.Lock()

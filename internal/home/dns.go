@@ -277,6 +277,9 @@ func newServerConfig(
 	if err != nil {
 		return nil, fmt.Errorf("constructing tls config: %w", err)
 	}
+	if tlsConfProvider.TLSConfig() == nil && !dohConf.InsecureEnabled {
+		intTLSConf.HTTPSListenAddrs = nil
+	}
 
 	newConf = &dnsforward.ServerConfig{
 		UDPListenAddrs:         ipsToUDPAddrs(hosts, dnsConf.Port),
@@ -407,15 +410,16 @@ type dnsEncryption struct {
 
 // getDNSEncryption returns the TLS encryption addresses that AdGuard Home
 // listens on.  tlsMgr must not be nil.
-func getDNSEncryption(tlsMgr *tlsManager) (de dnsEncryption) {
+func getDNSEncryption(tlsMgr *tlsManager, allowUnencryptedDoH bool) (de dnsEncryption) {
 	extTLSConf := tlsMgr.extendedTLSConfig()
 
 	if !extTLSConf.Enabled || extTLSConf.ServerName == "" {
 		return dnsEncryption{}
 	}
 
+	hasTLS := tlsMgr.TLSConfig() != nil
 	hostname := extTLSConf.ServerName
-	if extTLSConf.PortHTTPS != 0 {
+	if extTLSConf.PortHTTPS != 0 && (hasTLS || allowUnencryptedDoH) {
 		addr := hostname
 		if p := extTLSConf.PortHTTPS; p != defaultPortHTTPS {
 			addr = netutil.JoinHostPort(addr, p)
@@ -426,6 +430,10 @@ func getDNSEncryption(tlsMgr *tlsManager) (de dnsEncryption) {
 			Host:   addr,
 			Path:   "/dns-query",
 		}).String()
+	}
+
+	if !hasTLS {
+		return de
 	}
 
 	if p := extTLSConf.PortDNSOverTLS; p != 0 {
