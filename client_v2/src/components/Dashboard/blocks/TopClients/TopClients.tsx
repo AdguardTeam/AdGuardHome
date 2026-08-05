@@ -4,9 +4,11 @@ import { MOBILE_TABLE_MAX_ROWS } from 'panel/helpers/constants';
 
 import intl from 'panel/common/intl';
 import { Icon } from 'panel/common/ui/Icon';
+import { Link } from 'panel/common/ui/Link';
 import { Tooltip } from 'panel/common/ui/Tooltip';
 import { Dropdown } from 'panel/common/ui/Dropdown';
 import { ConfirmDialog } from 'panel/common/ui/ConfirmDialog';
+import { RoutePath } from 'panel/components/Routes/Paths';
 import { formatNumber, formatCompactNumber } from 'panel/helpers/helpers';
 import { addErrorToast } from 'panel/stores/toasts';
 import { accessState, toggleClientBlock } from 'panel/stores/access';
@@ -181,7 +183,12 @@ export const TopClients = (props: Props) => {
                                                 <Icon icon="location" class={s.tableRowIcon} />
                                             </Show>
 
-                                            {client.name}
+                                            <Link
+                                                to={RoutePath.QueryLog}
+                                                query={{ search: `"${client.name}"` }}
+                                            >
+                                                {client.name}
+                                            </Link>
                                         </div>
                                     </div>
 
