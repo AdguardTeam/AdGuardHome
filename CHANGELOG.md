@@ -42,8 +42,11 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- WHOIS lookups for client addresses from configured private networks ([#3817]).
+
 - Blocked requests without an EDNS(0) OPT record ([#8183]).
 
+[#3817]: https://github.com/AdguardTeam/AdGuardHome/issues/3817
 [#8183]: https://github.com/AdguardTeam/AdGuardHome/issues/8183
 
 <!--
