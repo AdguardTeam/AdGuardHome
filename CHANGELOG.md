@@ -42,8 +42,12 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Client identifiers can now be removed from any row when more than one is
+  configured ([#8082]).
+
 - Blocked requests without an EDNS(0) OPT record ([#8183]).
 
+[#8082]: https://github.com/AdguardTeam/AdGuardHome/issues/8082
 [#8183]: https://github.com/AdguardTeam/AdGuardHome/issues/8183
 
 <!--

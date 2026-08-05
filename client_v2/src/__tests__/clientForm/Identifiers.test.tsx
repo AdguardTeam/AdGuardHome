@@ -45,17 +45,26 @@ describe('Identifiers', () => {
         expect(clientFormState.ids).toEqual(['1.2.3.4', '']);
     });
 
-    it('removes an identifier row (except the first one which has no remove button)', () => {
+    it('removes the first identifier when multiple rows remain', () => {
+        initClientForm({ ids: ['first-client', 'second-client'] });
         render(() => <Identifiers />);
-        fireEvent.click(screen.getByTestId('client-form-add-identifier'));
-        expect(document.querySelectorAll('input[type="text"]')).toHaveLength(2);
 
-        // The remove button is the suffix of the second row.
-        const removeBtn = document.querySelector('[aria-label]') as HTMLElement;
-        fireEvent.click(removeBtn);
+        const removeButtons = document.querySelectorAll('button[aria-label]');
+        expect(removeButtons).toHaveLength(2);
 
-        expect(document.querySelectorAll('input[type="text"]')).toHaveLength(1);
-        expect(clientFormState.ids).toEqual(['']);
+        fireEvent.click(removeButtons[0]);
+
+        const inputs = document.querySelectorAll('input[type="text"]');
+        expect(inputs).toHaveLength(1);
+        expect((inputs[0] as HTMLInputElement).value).toBe('second-client');
+        expect(document.querySelectorAll('button[aria-label]')).toHaveLength(0);
+        expect(clientFormState.ids).toEqual(['second-client']);
+    });
+
+    it('does not remove the sole identifier row', () => {
+        render(() => <Identifiers />);
+
+        expect(document.querySelectorAll('button[aria-label]')).toHaveLength(0);
     });
 
     it('shows a validation error on blur for an invalid identifier', async () => {
