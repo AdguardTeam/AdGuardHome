@@ -8,7 +8,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/netip"
+	"runtime"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -19,6 +21,58 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestDNSFilter_handleFilteringSetRulesConcurrent(t *testing.T) {
+	confModifier := &aghtest.ConfigModifier{
+		OnApply: func(_ context.Context) {},
+	}
+	d, err := New(&Config{
+		Logger:       testLogger,
+		ConfModifier: confModifier,
+		DataDir:      t.TempDir(),
+	}, nil)
+	require.NoError(t, err)
+	t.Cleanup(d.Close)
+
+	// Avoid starting background work while allowing EnableFilters to enqueue
+	// its asynchronous update.
+	d.filtersInitializerChan = make(chan filtersInitializerParams, 1)
+
+	const iterations = 1_000
+
+	start := make(chan struct{})
+	wg := &sync.WaitGroup{}
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+		<-start
+
+		for range iterations {
+			r := httptest.NewRequest(
+				http.MethodPost,
+				"http://example.org/control/filtering/set_rules",
+				strings.NewReader(`{"rules":["||example.org^"]}`),
+			)
+
+			d.handleFilteringSetRules(httptest.NewRecorder(), r)
+			runtime.Gosched()
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		<-start
+
+		for range iterations {
+			d.EnableFilters(true)
+			runtime.Gosched()
+		}
+	}()
+
+	close(start)
+	wg.Wait()
+}
 
 func TestDNSFilter_handleFilteringSetURL(t *testing.T) {
 	filtersDir := t.TempDir()

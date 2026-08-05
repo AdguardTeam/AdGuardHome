@@ -358,7 +358,10 @@ func (d *DNSFilter) handleFilteringSetRules(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	d.conf.filtersMu.Lock()
 	d.conf.UserRules = req.Rules
+	d.conf.filtersMu.Unlock()
+
 	d.conf.ConfModifier.Apply(ctx)
 	d.EnableFilters(true)
 }
