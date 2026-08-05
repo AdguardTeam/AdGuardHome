@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/ipset"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
@@ -66,10 +67,27 @@ func (h *ipsetHandler) close() (err error) {
 	return nil
 }
 
+// isIpsetRewrite returns true if res represents a local DNS rewrite response
+// whose IP addresses should be added to ipsets.
+func isIpsetRewrite(res *filtering.Result) (ok bool) {
+	if res == nil {
+		return false
+	}
+
+	switch res.Reason {
+	case filtering.Rewritten,
+		filtering.RewrittenAutoHosts,
+		filtering.RewrittenRule:
+		return true
+	default:
+		return false
+	}
+}
+
 // dctxIsFilled returns true if dctx has enough information to process.
 func dctxIsFilled(dctx *dnsContext) (ok bool) {
 	return dctx != nil &&
-		dctx.responseFromUpstream &&
+		(dctx.responseFromUpstream || isIpsetRewrite(dctx.result)) &&
 		dctx.proxyCtx != nil &&
 		dctx.proxyCtx.Res != nil &&
 		dctx.proxyCtx.Req != nil &&

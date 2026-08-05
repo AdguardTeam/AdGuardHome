@@ -42,9 +42,13 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- IP addresses from local DNS rewrites are now added to configured ipsets
+  ([#8341]).
+
 - Blocked requests without an EDNS(0) OPT record ([#8183]).
 
 [#8183]: https://github.com/AdguardTeam/AdGuardHome/issues/8183
+[#8341]: https://github.com/AdguardTeam/AdGuardHome/issues/8341
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
