@@ -42,8 +42,12 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Query log filters now cancel superseded searches and ignore stale responses
+  ([#1370]).
+
 - Blocked requests without an EDNS(0) OPT record ([#8183]).
 
+[#1370]: https://github.com/AdguardTeam/AdGuardHome/issues/1370
 [#8183]: https://github.com/AdguardTeam/AdGuardHome/issues/8183
 
 <!--

@@ -57,6 +57,11 @@ const initialState: QueryLogsState = {
 
 const [state, setState] = createStore<QueryLogsState>(initialState);
 
+let filteredLogsAbortController: AbortController | null = null;
+let filteredLogsRequestId = 0;
+let additionalLogsAbortController: AbortController | null = null;
+let additionalLogsRequestId = 0;
+
 // ---------- Short-poll helpers (v2 parity) ----------
 
 /** Maps frontend status filter → exact backend reason strings */
@@ -93,7 +98,11 @@ const getReasons = (filter?: QueryLogFilter): string[] => {
     return STATUS_TO_REASONS[status] ?? [];
 };
 
-const fetchLogsWithParams = async (olderThan: string, filter?: QueryLogFilter) => {
+const fetchLogsWithParams = async (
+    olderThan: string,
+    filter?: QueryLogFilter,
+    signal?: AbortSignal,
+) => {
     const params: Record<string, string | string[] | number | undefined> = {
         search: filter?.search ?? DEFAULT_LOGS_FILTER.search,
         older_than: olderThan,
@@ -103,7 +112,7 @@ const fetchLogsWithParams = async (olderThan: string, filter?: QueryLogFilter) =
     if (reasons.length > 0) {
         params.reason = reasons;
     }
-    const raw = await queryLog(params);
+    const raw = signal ? await queryLog(params, { signal }) : await queryLog(params);
     return { logs: normalizeLogs(raw.data || []), oldest: raw.oldest || '' };
 };
 
@@ -121,6 +130,7 @@ const filterLogsByStatus = (
 const shortPollQueryLogs = async (
     data: { logs: NormalizedQueryLogItem[]; oldest: string },
     filter: QueryLogFilter,
+    signal?: AbortSignal,
     total?: { logs: NormalizedQueryLogItem[]; oldest: string },
 ): Promise<{ logs: NormalizedQueryLogItem[]; oldest: string }> => {
     const totalData = total
@@ -131,11 +141,81 @@ const shortPollQueryLogs = async (
         filter?.status || DEFAULT_LOGS_FILTER.status,
     ).length;
     if (visible >= QUERY_LOGS_PAGE_LIMIT || totalData.oldest === '') return totalData;
-    const more = await fetchLogsWithParams(totalData.oldest, filter);
-    return shortPollQueryLogs(more, filter, totalData);
+    if (signal?.aborted) return totalData;
+
+    const more = await fetchLogsWithParams(totalData.oldest, filter, signal);
+    return shortPollQueryLogs(more, filter, signal, totalData);
+};
+
+const startFilteredLogsRequest = () => {
+    const previousController = filteredLogsAbortController;
+    const controller = new AbortController();
+    const requestId = ++filteredLogsRequestId;
+
+    filteredLogsAbortController = controller;
+    previousController?.abort();
+
+    return { controller, requestId };
+};
+
+const isLatestFilteredLogsRequest = (requestId: number): boolean =>
+    requestId === filteredLogsRequestId;
+
+const finishFilteredLogsRequest = (requestId: number): boolean => {
+    if (!isLatestFilteredLogsRequest(requestId)) {
+        return false;
+    }
+
+    filteredLogsAbortController = null;
+
+    return true;
+};
+
+const abortFilteredLogsRequest = (): void => {
+    filteredLogsRequestId += 1;
+    const controller = filteredLogsAbortController;
+    filteredLogsAbortController = null;
+    controller?.abort();
+};
+
+const startAdditionalLogsRequest = () => {
+    const previousController = additionalLogsAbortController;
+    const controller = new AbortController();
+    const requestId = ++additionalLogsRequestId;
+
+    additionalLogsAbortController = controller;
+    previousController?.abort();
+
+    return { controller, requestId };
+};
+
+const finishAdditionalLogsRequest = (requestId: number): boolean => {
+    if (requestId !== additionalLogsRequestId) {
+        return false;
+    }
+
+    additionalLogsAbortController = null;
+
+    return true;
+};
+
+const abortAdditionalLogsRequest = (): void => {
+    additionalLogsRequestId += 1;
+    const controller = additionalLogsAbortController;
+    additionalLogsAbortController = null;
+    controller?.abort();
 };
 
 // ---------- Public actions ----------
+
+export const cancelQueryLogRequests = (): void => {
+    abortFilteredLogsRequest();
+    abortAdditionalLogsRequest();
+    setState({
+        processingGetLogs: false,
+        processingAdditionalLogs: false,
+    });
+};
 
 export const getLogs = async (currentQuery?: string) => {
     setState('processingGetLogs', true);
@@ -166,10 +246,15 @@ export const getLogs = async (currentQuery?: string) => {
 };
 
 export const getAdditionalLogs = async () => {
+    const { controller, requestId } = startAdditionalLogsRequest();
     setState('processingAdditionalLogs', true);
     try {
         const { filter, oldest } = untrack(() => state);
-        const data = await fetchLogsWithParams(oldest, filter);
+        const data = await fetchLogsWithParams(oldest, filter, controller.signal);
+        if (!finishAdditionalLogsRequest(requestId)) {
+            return;
+        }
+
         setState({
             logs: [...state.logs, ...data.logs],
             oldest: data.oldest,
@@ -177,7 +262,13 @@ export const getAdditionalLogs = async () => {
             processingAdditionalLogs: false,
         });
     } catch (error) {
-        addErrorToast({ error });
+        if (!finishAdditionalLogsRequest(requestId)) {
+            return;
+        }
+
+        if (!controller.signal.aborted) {
+            addErrorToast({ error });
+        }
         setState('processingAdditionalLogs', false);
     }
 };
@@ -234,24 +325,38 @@ export const setLogsConfig = async (values: GetQueryLogConfigResponse): Promise<
 };
 
 export const setFilteredLogs = async (filter?: QueryLogFilter): Promise<boolean> => {
+    abortAdditionalLogsRequest();
+    const currentFilter = filter ?? DEFAULT_LOGS_FILTER;
+    const { controller, requestId } = startFilteredLogsRequest();
     setState({
-        filter: filter ?? DEFAULT_LOGS_FILTER,
+        filter: currentFilter,
         isFiltered: true,
         processingGetLogs: true,
+        processingAdditionalLogs: false,
     });
     try {
-        const data = await fetchLogsWithParams('', filter);
-        const accumulated = await shortPollQueryLogs(data, filter);
+        const data = await fetchLogsWithParams('', currentFilter, controller.signal);
+        const accumulated = await shortPollQueryLogs(data, currentFilter, controller.signal);
+        if (!finishFilteredLogsRequest(requestId)) {
+            return false;
+        }
+
         setState({
             logs: accumulated.logs,
             oldest: accumulated.oldest,
             isEntireLog: accumulated.oldest === '',
-            filter: filter ?? DEFAULT_LOGS_FILTER,
+            filter: currentFilter,
             processingGetLogs: false,
         });
         return true;
     } catch (error) {
-        addErrorToast({ error });
+        if (!finishFilteredLogsRequest(requestId)) {
+            return false;
+        }
+
+        if (!controller.signal.aborted) {
+            addErrorToast({ error });
+        }
         setState('processingGetLogs', false);
         return false;
     }
