@@ -268,7 +268,6 @@ export const addFilter = async (url: string, name: string, whitelist: boolean) =
     setState('processingAddFilter', true);
     try {
         await filteringAddURL({ url, name, whitelist });
-        setState('processingAddFilter', false);
         setState('isModalOpen', false);
         if (whitelist) {
             addSuccessToast({
@@ -280,6 +279,7 @@ export const addFilter = async (url: string, name: string, whitelist: boolean) =
             });
         }
         await getFilteringStatus();
+        setState('processingAddFilter', false);
     } catch (error) {
         addErrorToast({ error });
         setState('processingAddFilter', false);
