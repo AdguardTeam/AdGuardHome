@@ -1,6 +1,5 @@
 import intl from 'panel/common/intl';
 
-import { getInterfaceIp } from 'panel/helpers/helpers';
 import { ALL_INTERFACES_IP } from 'panel/helpers/constants';
 import type { InstallInterface } from 'panel/initialState';
 
@@ -32,14 +31,13 @@ export const buildInterfaceOptions = (interfaces: InstallInterface[]): SelectOpt
                   const isUp = iface.flags?.includes('up');
                   return isUp;
               })
-              .map((iface) => {
-                  const ip = getInterfaceIp(iface);
+              .flatMap((iface) => {
                   const displayName = getInterfaceDisplayName(iface);
 
-                  return {
+                  return iface.ip_addresses.map((ip) => ({
                       value: ip,
                       label: `${displayName} – ${ip}`,
-                  };
+                  }));
               })
         : []),
 ];
