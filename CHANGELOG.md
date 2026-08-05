@@ -42,8 +42,11 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- DNS rewrite responses from blocked-service rules ([#5286]).
+
 - Blocked requests without an EDNS(0) OPT record ([#8183]).
 
+[#5286]: https://github.com/AdguardTeam/AdGuardHome/issues/5286
 [#8183]: https://github.com/AdguardTeam/AdGuardHome/issues/8183
 
 <!--

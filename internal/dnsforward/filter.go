@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
 )
@@ -51,8 +52,9 @@ func (s *Server) filterDNSRequest(
 		req.Question[0].Name = dns.Fqdn(res.CanonName)
 		checkReason = false
 	} else if res.IsFiltered {
-		l.DebugContext(ctx, "host is filtered", "reason", res.Reason)
-		pctx.Res = s.genDNSFilterMessage(ctx, l, pctx, res)
+		if err = s.setFilteredResponse(ctx, l, pctx, res); err != nil {
+			return nil, err
+		}
 		checkReason = false
 	}
 
@@ -74,6 +76,25 @@ func (s *Server) filterDNSRequest(
 	}
 
 	return res, err
+}
+
+// setFilteredResponse sets the response in pctx for the filtering result res.
+// l, pctx, and res must not be nil.
+func (s *Server) setFilteredResponse(
+	ctx context.Context,
+	l *slog.Logger,
+	pctx *proxy.DNSContext,
+	res *filtering.Result,
+) (err error) {
+	l.DebugContext(ctx, "host is filtered", "reason", res.Reason)
+
+	if res.Reason == filtering.FilteredBlockedService && res.DNSRewriteResult != nil {
+		return s.filterDNSRewrite(ctx, pctx.Req, res, pctx)
+	}
+
+	pctx.Res = s.genDNSFilterMessage(ctx, l, pctx, res)
+
+	return nil
 }
 
 // isRewrittenCNAME returns true if the request considered to be rewritten with
