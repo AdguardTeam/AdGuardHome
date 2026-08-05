@@ -19,7 +19,7 @@ import {
 
 import s from './Banners.module.pcss';
 
-const TLS_EXPIRY_WARNING_MS = 30 * 24 * 60 * 60 * 1000;
+const TLS_EXPIRY_WARNING_MS = 5 * 24 * 60 * 60 * 1000;
 
 type Props = {
     forceBanner?: BannerSpec;

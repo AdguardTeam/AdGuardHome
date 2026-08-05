@@ -101,15 +101,25 @@ describe('Banners', () => {
         expect(screen.getByText('Your TLS certificate has expired')).toBeInTheDocument();
     });
 
-    it('shows TLS expiring banner when cert expires within 30 days', () => {
+    it('shows TLS expiring banner when cert expires within 5 days', () => {
         mockEncryptionState.enabled = true;
         mockEncryptionState.valid_cert = true;
-        mockEncryptionState.not_after = new Date(Date.now() + 15 * 86400000).toISOString(); // 15 days
+        mockEncryptionState.not_after = new Date(Date.now() + 4 * 86400000).toISOString();
 
         renderBanners();
 
         expect(screen.getByTestId('banner-tls-expiring')).toBeInTheDocument();
         expect(screen.getByText('Your TLS certificate is about to expire')).toBeInTheDocument();
+    });
+
+    it('does not show TLS expiring banner more than 5 days before expiry', () => {
+        mockEncryptionState.enabled = true;
+        mockEncryptionState.valid_cert = true;
+        mockEncryptionState.not_after = new Date(Date.now() + 15 * 86400000).toISOString();
+
+        renderBanners();
+
+        expect(screen.queryByTestId('banner-tls-expiring')).not.toBeInTheDocument();
     });
 
     it('shows auto-update banner when update available and can auto-update', () => {
@@ -218,7 +228,7 @@ describe('Banners', () => {
         expect(screen.queryByTestId('banner-tls-expired')).not.toBeInTheDocument();
 
         // Change condition: now cert is valid but expiring soon
-        mockEncryptionState.not_after = new Date(Date.now() + 15 * 86400000).toISOString(); // 15 days
+        mockEncryptionState.not_after = new Date(Date.now() + 4 * 86400000).toISOString();
         // Re-render
         renderBanners();
 
