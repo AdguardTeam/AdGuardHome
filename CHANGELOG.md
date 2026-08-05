@@ -26,6 +26,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Added
 
+- Automatic gateway address selection for DHCP interfaces ([#3530]).
+
 - Bootstrap servers configuration now supports comments.
 
 - New property `"language"` in `POST /control/install/check_config` and `POST /control/install/configure` HTTP APIs.
@@ -44,6 +46,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Blocked requests without an EDNS(0) OPT record ([#8183]).
 
+[#3530]: https://github.com/AdguardTeam/AdGuardHome/issues/3530
 [#8183]: https://github.com/AdguardTeam/AdGuardHome/issues/8183
 
 <!--

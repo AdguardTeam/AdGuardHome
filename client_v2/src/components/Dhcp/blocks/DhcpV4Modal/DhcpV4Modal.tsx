@@ -47,10 +47,17 @@ export const DhcpV4Modal = (props: Props) => {
     const [rangeEndError, setRangeEndError] = createSignal('');
     const [leaseDurationError, setLeaseDurationError] = createSignal('');
 
+    const interfaceV4Defaults = createMemo(() => {
+        const iface = dhcpState.interfaces?.[props.selectedInterface()];
+        const firstIpv4 = iface?.ipv4_addresses?.[0];
+
+        return firstIpv4 ? calculateDhcpPlaceholdersIpv4(firstIpv4, iface.gateway_ip) : undefined;
+    });
+
     createEffect(() => {
         if (props.open) {
             const v4 = dhcpState.v4;
-            setGatewayIp(v4?.gateway_ip || '');
+            setGatewayIp(v4?.gateway_ip || interfaceV4Defaults()?.gateway_ip || '');
             setSubnetMask(v4?.subnet_mask || '');
             setRangeStart(v4?.range_start || '');
             setRangeEnd(v4?.range_end || '');
@@ -63,14 +70,7 @@ export const DhcpV4Modal = (props: Props) => {
         }
     });
 
-    const v4Placeholders = createMemo(() => {
-        const iface = dhcpState.interfaces?.[props.selectedInterface()];
-        const firstIpv4 = iface?.ipv4_addresses?.[0];
-        if (firstIpv4) {
-            return calculateDhcpPlaceholdersIpv4(firstIpv4, iface.gateway_ip);
-        }
-        return DHCP_VALUES_PLACEHOLDERS.ipv4;
-    });
+    const v4Placeholders = createMemo(() => interfaceV4Defaults() || DHCP_VALUES_PLACEHOLDERS.ipv4);
 
     const hasIpv4 = createMemo(
         () =>
