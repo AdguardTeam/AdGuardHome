@@ -529,6 +529,75 @@ func TestServer_Prepare_fallbacks(t *testing.T) {
 	assert.Len(t, s.dnsProxy.Fallbacks.Upstreams, 1)
 }
 
+func TestServer_Prepare_fallbackBootstrap(t *testing.T) {
+	const fallbackHost = "fallback.example"
+
+	lookupCh := make(chan dns.Question, 4)
+	pt := testutil.NewPanicT(t)
+	failedBootstrapAddr := newLocalUpstreamListener(t, 0, dns.HandlerFunc(
+		func(_ dns.ResponseWriter, _ *dns.Msg) {},
+	))
+	bootstrapHandler := dns.HandlerFunc(func(w dns.ResponseWriter, req *dns.Msg) {
+		require.Len(pt, req.Question, 1)
+		q := req.Question[0]
+		testutil.RequireSend(pt, lookupCh, q, testTimeout)
+
+		resp := new(dns.Msg).SetReply(req)
+		if q.Qtype == dns.TypeA {
+			resp.Answer = append(resp.Answer, &dns.A{
+				Hdr: dns.RR_Header{
+					Name:   q.Name,
+					Rrtype: dns.TypeA,
+					Class:  dns.ClassINET,
+					Ttl:    60,
+				},
+				A: net.IP(netutil.IPv4Localhost().AsSlice()),
+			})
+		}
+
+		err := w.WriteMsg(resp)
+		require.NoError(pt, err)
+	})
+	bootstrapAddr := newLocalUpstreamListener(t, 0, bootstrapHandler)
+
+	srvConf := &ServerConfig{
+		UpstreamTimeout: 100 * time.Millisecond,
+		TLSConf:         &TLSConfig{},
+		Config: Config{
+			BootstrapDNS: []string{
+				"tcp://" + failedBootstrapAddr.String(),
+				"tcp://" + bootstrapAddr.String(),
+			},
+			FallbackDNS: []string{
+				"tls://" + netutil.JoinHostPort(fallbackHost, 1),
+			},
+			UpstreamMode:     UpstreamModeLoadBalance,
+			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+			ClientsContainer: EmptyClientsContainer{},
+		},
+		ServePlainDNS: true,
+	}
+
+	s, err := NewServer(DNSCreateParams{
+		Logger:            testLogger,
+		TLSConfigProvider: testTLSConfigProvider,
+	})
+	require.NoError(t, err)
+
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	err = s.Prepare(ctx, srvConf)
+	require.NoError(t, err)
+	require.NotNil(t, s.dnsProxy.Fallbacks)
+	require.Len(t, s.dnsProxy.Fallbacks.Upstreams, 1)
+
+	_, err = s.dnsProxy.Fallbacks.Upstreams[0].Exchange(createGoogleATestMessage())
+	require.Error(t, err)
+
+	q, ok := testutil.RequireReceive(t, lookupCh, testTimeout)
+	require.True(t, ok)
+	assert.Equal(t, dns.Fqdn(fallbackHost), q.Name)
+}
+
 func TestServerWithProtectionDisabled(t *testing.T) {
 	s := createTestServer(
 		t,

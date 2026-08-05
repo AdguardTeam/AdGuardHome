@@ -44,7 +44,10 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Blocked requests without an EDNS(0) OPT record ([#8183]).
 
+- Configured bootstrap DNS servers are now used to resolve fallback DNS server hostnames ([#7842]).
+
 [#8183]: https://github.com/AdguardTeam/AdGuardHome/issues/8183
+[#7842]: https://github.com/AdguardTeam/AdGuardHome/issues/7842
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
