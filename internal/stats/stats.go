@@ -575,25 +575,27 @@ func (s *StatsCtx) loadUnits(limit uint32) (units []*unitDB, curID uint32) {
 		return nil, 0
 	}
 
-	// NOTE:  This mutex, when combined with the database transaction, is
-	// required to be locked first.
+	// Snapshot the current unit and the database together so that a concurrent
+	// flush can't move the current unit into the database between the two
+	// snapshots.  Opening a read-only transaction doesn't wait for another
+	// writable transaction to finish.
 	s.currMu.RLock()
-	defer s.currMu.RUnlock()
+	cur := s.curr
+	var curData *unitDB
 
-	// Use writable transaction to ensure any ongoing writable transaction is
-	// taken into account.
-	tx, err := db.Begin(true)
+	if cur != nil {
+		curID = cur.id
+		curData = cur.serialize()
+	} else {
+		curID = s.unitIDGen()
+	}
+
+	tx, err := db.Begin(false)
+	s.currMu.RUnlock()
 	if err != nil {
 		s.logger.Error("opening transaction", slogutil.KeyError, err)
 
 		return nil, 0
-	}
-	cur := s.curr
-
-	if cur != nil {
-		curID = cur.id
-	} else {
-		curID = s.unitIDGen()
 	}
 
 	// Per-hour units.
@@ -612,8 +614,8 @@ func (s *StatsCtx) loadUnits(limit uint32) (units []*unitDB, curID uint32) {
 		s.logger.Error("finishing transaction", slogutil.KeyError, err)
 	}
 
-	if cur != nil {
-		units = append(units, cur.serialize())
+	if curData != nil {
+		units = append(units, curData)
 	}
 
 	if unitsLen := len(units); unitsLen != int(limit) {
