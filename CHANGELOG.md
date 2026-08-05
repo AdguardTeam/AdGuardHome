@@ -42,8 +42,12 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Errors loading the DHCP status are now shown instead of reporting DHCP as
+  unavailable ([#3422]).
+
 - Blocked requests without an EDNS(0) OPT record ([#8183]).
 
+[#3422]: https://github.com/AdguardTeam/AdGuardHome/issues/3422
 [#8183]: https://github.com/AdguardTeam/AdGuardHome/issues/8183
 
 <!--

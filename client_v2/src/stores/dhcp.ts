@@ -36,6 +36,7 @@ type DhcpState = {
     processingDeleting: boolean;
     processingUpdating: boolean;
     processingReset: boolean;
+    statusError: boolean;
     enabled: boolean;
     interface_name: string;
     check: DhcpSearchResult | null;
@@ -70,6 +71,7 @@ const initialState: DhcpState = {
     processingDeleting: false,
     processingUpdating: false,
     processingReset: false,
+    statusError: false,
     enabled: false,
     interface_name: '',
     check: null,
@@ -97,7 +99,7 @@ const initialState: DhcpState = {
 const [state, setState] = createStore<DhcpState>(initialState);
 
 export const getDhcpStatus = async () => {
-    setState('processingStatus', true);
+    setState({ processingStatus: true, statusError: false });
     try {
         const globalStatus = await status();
         if (globalStatus.dhcp_available) {
@@ -132,7 +134,7 @@ export const getDhcpStatus = async () => {
         }
     } catch (error) {
         addErrorToast({ error });
-        setState({ processingStatus: false, processing: false });
+        setState({ processingStatus: false, processing: false, statusError: true });
     }
 };
 
