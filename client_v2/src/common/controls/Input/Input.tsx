@@ -132,6 +132,7 @@ export const Input = (props: Props) => {
                     class={cn(s.input, props.innerClass, {
                         [s.prefix]: props.prefixIcon,
                         [s.postfix]: hasActions(),
+                        [s.hideNativeSearchClear]: props.type === 'search' && showClearButton(),
                     })}
                     onChange={handleChange}
                     onInput={(e) => (props.onInput as any)?.(e)}

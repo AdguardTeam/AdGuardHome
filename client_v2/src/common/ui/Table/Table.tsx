@@ -1,4 +1,4 @@
-import { type JSX, createMemo, For, Show, untrack } from 'solid-js';
+import { type JSX, createEffect, createMemo, For, Show, untrack } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import cn from 'clsx';
 
@@ -51,6 +51,7 @@ export interface TableProps<T = any> {
     onRowClick?: (row: T) => void;
     tableHeaderClass?: string;
     tableRowClass?: string;
+    pageResetKey?: string | number;
 }
 
 export const Table = <T extends Record<string, any>>(props: TableProps<T>) => {
@@ -59,6 +60,12 @@ export const Table = <T extends Record<string, any>>(props: TableProps<T>) => {
         pageSize: untrack(() => props.pageSize) ?? DEFAULT_PAGE_SIZE_OPTIONS[0],
         sortKey: props.defaultSort?.key ?? (null as string | null),
         sortDirection: props.defaultSort?.direction ?? ('asc' as 'asc' | 'desc'),
+    });
+
+    createEffect(() => {
+        if (props.pageResetKey !== undefined) {
+            setState('currentPage', 0);
+        }
     });
 
     const sortedData = createMemo(() => {

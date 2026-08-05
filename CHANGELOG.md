@@ -26,6 +26,9 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Added
 
+- Search by MAC address, IP address, or hostname in the DHCP static leases
+  table ([#6884]).
+
 - Bootstrap servers configuration now supports comments.
 
 - New property `"language"` in `POST /control/install/check_config` and `POST /control/install/configure` HTTP APIs.
@@ -44,6 +47,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Blocked requests without an EDNS(0) OPT record ([#8183]).
 
+[#6884]: https://github.com/AdguardTeam/AdGuardHome/issues/6884
 [#8183]: https://github.com/AdguardTeam/AdGuardHome/issues/8183
 
 <!--
