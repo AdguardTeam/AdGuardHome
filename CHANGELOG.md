@@ -32,6 +32,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - The user is able to remove the static lease's hostname via the HTTP API.
 
+- On Linux, persistent clients identified by MAC address are now also matched against the IPv6 neighbor table, so they are recognized when their requests come from addresses that have no DHCP lease, e.g. the ones configured via SLAAC ([#961]).
+
 ### Changed
 
 - The `edge` channel has been switched to the new UI and versioning scheme.
@@ -44,6 +46,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Blocked requests without an EDNS(0) OPT record ([#8183]).
 
+[#961]:  https://github.com/AdguardTeam/AdGuardHome/issues/961
 [#8183]: https://github.com/AdguardTeam/AdGuardHome/issues/8183
 
 <!--

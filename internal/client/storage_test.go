@@ -7,20 +7,25 @@ import (
 	"runtime"
 	"slices"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/arpdb"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/whois"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/hostsfile"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/golibs/osutil/executil"
 	"github.com/AdguardTeam/golibs/service"
 	"github.com/AdguardTeam/golibs/testutil"
+	"github.com/AdguardTeam/golibs/testutil/fakeos/fakeexec"
 	"github.com/AdguardTeam/golibs/testutil/faketime"
 	"github.com/AdguardTeam/golibs/testutil/servicetest"
 	"github.com/AdguardTeam/golibs/timeutil"
@@ -1015,6 +1020,242 @@ func TestStorage_FindLoose(t *testing.T) {
 			tc.want(t, ok)
 		})
 	}
+}
+
+func TestStorage_NDP(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("skipping ipv6 neighbor table test on " + runtime.GOOS)
+	}
+
+	const (
+		prsCliName = "ndp-client"
+
+		// ndpOutput maps cliIPv6 to cliMAC.
+		ndpOutput = "2001:db8::1 dev eth0 lladdr aa:bb:cc:dd:ee:ff REACHABLE\n"
+	)
+
+	var (
+		// cliIPv6 is an IPv6 address that has no DHCP lease, e.g. the one
+		// configured via SLAAC.
+		cliIPv6 = netip.MustParseAddr("2001:db8::1")
+
+		// cliMAC is the MAC address that the neighbor table maps cliIPv6 to.
+		cliMAC = errors.Must(net.ParseMAC("AA:BB:CC:DD:EE:FF"))
+
+		// unknownIPv4 is an address that isn't known via any mechanism.
+		unknownIPv4 = netip.MustParseAddr("192.0.2.99")
+
+		// unknownIPv6 is an address that isn't in the neighbor table.
+		unknownIPv6 = netip.MustParseAddr("2001:db8::dead")
+	)
+
+	dhcp := &testDHCP{
+		OnLeases: func() (ls []*dhcpsvc.Lease) { return nil },
+		OnHostBy: func(_ netip.Addr) (host string) { return "" },
+		OnMACBy:  func(_ netip.Addr) (mac net.HardwareAddr) { return nil },
+	}
+
+	newStorage := func(
+		t *testing.T,
+		clock timeutil.Clock,
+		cmdCons executil.CommandConstructor,
+	) (s *client.Storage) {
+		t.Helper()
+
+		ctx := testutil.ContextWithTimeout(t, testTimeout)
+		s, err := client.NewStorage(ctx, &client.StorageConfig{
+			BaseLogger: testLogger,
+			Logger:     testLogger,
+			Clock:      clock,
+			DHCP:       dhcp,
+			CmdCons:    cmdCons,
+			InitialClients: []*client.Persistent{{
+				Name: prsCliName,
+				UID:  client.MustNewUID(),
+				MACs: []net.HardwareAddr{cliMAC},
+			}},
+			ARPClientsUpdatePeriod: testTimeout / 10,
+		})
+		require.NoError(t, err)
+
+		return s
+	}
+
+	// The neighbor table is read within [client.NewStorage], since the initial
+	// clients contain a MAC address.
+	storage := newStorage(
+		t,
+		timeutil.SystemClock{},
+		agh.NewCommandConstructor("ip", 0, ndpOutput, nil),
+	)
+
+	t.Run("find_by_ipv6", func(t *testing.T) {
+		params := &client.FindParams{}
+		err := params.Set(cliIPv6.String())
+		require.NoError(t, err)
+
+		p, ok := storage.Find(params)
+		require.True(t, ok)
+
+		assert.Equal(t, prsCliName, p.Name)
+	})
+
+	t.Run("find_loose_by_ipv6", func(t *testing.T) {
+		p, ok := storage.FindLoose(cliIPv6, "nonexistent-id")
+		require.True(t, ok)
+
+		assert.Equal(t, prsCliName, p.Name)
+	})
+
+	t.Run("apply_client_filtering", func(t *testing.T) {
+		setts := &filtering.Settings{}
+		storage.ApplyClientFiltering("", cliIPv6, setts)
+
+		assert.Equal(t, prsCliName, setts.ClientName)
+	})
+
+	t.Run("ipv4_not_in_ndp", func(t *testing.T) {
+		params := &client.FindParams{}
+		err := params.Set(unknownIPv4.String())
+		require.NoError(t, err)
+
+		_, ok := storage.Find(params)
+		assert.False(t, ok)
+	})
+
+	t.Run("unknown_ipv6_not_found", func(t *testing.T) {
+		params := &client.FindParams{}
+		err := params.Set(unknownIPv6.String())
+		require.NoError(t, err)
+
+		_, ok := storage.Find(params)
+		assert.False(t, ok)
+	})
+
+	t.Run("command_error", func(t *testing.T) {
+		cmdCons := agh.NewCommandConstructor("ip", 0, "", errors.Error("no such command"))
+		errStorage := newStorage(t, timeutil.SystemClock{}, cmdCons)
+
+		params := &client.FindParams{}
+		err := params.Set(cliIPv6.String())
+		require.NoError(t, err)
+
+		_, ok := errStorage.Find(params)
+		assert.False(t, ok)
+	})
+
+	// expiration is a time span certainly exceeding the lifetime of the data
+	// read from the neighbor table.
+	const expiration = 1 * time.Hour
+
+	t.Run("expired_data_not_applied", func(t *testing.T) {
+		cmdCons, fail, runs := newTestNDPCmdCons(ndpOutput)
+		clock, advance := newTestClock()
+		expStorage := newStorage(t, clock, cmdCons)
+
+		setts := &filtering.Settings{}
+		expStorage.ApplyClientFiltering("", cliIPv6, setts)
+		require.Equal(t, prsCliName, setts.ClientName)
+
+		// Once the table can no longer be read, the data must stop being used
+		// for identifying clients, since the address may have been reassigned.
+		fail.Store(true)
+		advance(expiration)
+
+		prevRuns := runs.Load()
+		setts = &filtering.Settings{}
+		expStorage.ApplyClientFiltering("", cliIPv6, setts)
+		assert.Empty(t, setts.ClientName)
+
+		// The request above has scheduled a read, which fails, so the data
+		// remains unused.
+		require.EventuallyWithT(t, func(ct *assert.CollectT) {
+			assert.Greater(ct, runs.Load(), prevRuns)
+		}, testTimeout, testTimeout/100)
+
+		setts = &filtering.Settings{}
+		expStorage.ApplyClientFiltering("", cliIPv6, setts)
+		assert.Empty(t, setts.ClientName)
+	})
+
+	t.Run("refreshed_data_applied", func(t *testing.T) {
+		cmdCons, _, _ := newTestNDPCmdCons(ndpOutput)
+		clock, advance := newTestClock()
+		refStorage := newStorage(t, clock, cmdCons)
+
+		advance(expiration)
+
+		// The request that finds the data expired schedules a read, after which
+		// the client is identified again.
+		require.EventuallyWithT(t, func(ct *assert.CollectT) {
+			setts := &filtering.Settings{}
+			refStorage.ApplyClientFiltering("", cliIPv6, setts)
+
+			assert.Equal(ct, prsCliName, setts.ClientName)
+		}, testTimeout, testTimeout/100)
+	})
+}
+
+// newTestNDPCmdCons returns a command constructor printing out as the IPv6
+// neighbor table, along with the switch making the command fail and the counter
+// of its runs.
+func newTestNDPCmdCons(out string) (
+	cons executil.CommandConstructor,
+	fail *atomic.Bool,
+	runs *atomic.Int64,
+) {
+	fail, runs = &atomic.Bool{}, &atomic.Int64{}
+	cons = &fakeexec.CommandConstructor{
+		OnNew: func(
+			_ context.Context,
+			conf *executil.CommandConfig,
+		) (cmd executil.Command, err error) {
+			runs.Add(1)
+			isFailing := fail.Load()
+
+			return &fakeexec.Command{
+				OnStart: func(_ context.Context) (startErr error) {
+					if isFailing {
+						return nil
+					}
+
+					_, startErr = conf.Stdout.Write([]byte(out))
+
+					return startErr
+				},
+				OnWait: func(_ context.Context) (waitErr error) {
+					if isFailing {
+						return errors.Error("no such command")
+					}
+
+					return nil
+				},
+			}, nil
+		},
+	}
+
+	return cons, fail, runs
+}
+
+// newTestClock returns a clock reporting the time that advance moves forward.
+// Both the clock and advance are safe for concurrent use.
+func newTestClock() (clock timeutil.Clock, advance func(d time.Duration)) {
+	mu := &sync.Mutex{}
+	now := time.Now()
+
+	return &faketime.Clock{
+			OnNow: func() (t time.Time) {
+				mu.Lock()
+				defer mu.Unlock()
+
+				return now
+			},
+		}, func(d time.Duration) {
+			mu.Lock()
+			defer mu.Unlock()
+
+			now = now.Add(d)
+		}
 }
 
 func TestStorage_Update(t *testing.T) {

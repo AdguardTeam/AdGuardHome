@@ -19,6 +19,7 @@ import (
 	"github.com/AdguardTeam/golibs/hostsfile"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/golibs/osutil/executil"
 	"github.com/AdguardTeam/golibs/timeutil"
 )
 
@@ -110,6 +111,10 @@ type StorageConfig struct {
 	// ARPDB is used to update [SourceARP] runtime client information.
 	ARPDB arpdb.Interface
 
+	// CmdCons is used to run the command that prints the IPv6 neighbor table.
+	// If nil, [executil.SystemCommandConstructor] is used.
+	CmdCons executil.CommandConstructor
+
 	// InitialClients is a list of persistent clients parsed from the
 	// configuration file.  Each client must not be nil.
 	InitialClients []*Persistent
@@ -150,6 +155,11 @@ type Storage struct {
 	// arpDB is used to update [SourceARP] runtime client information.
 	arpDB arpdb.Interface
 
+	// ndp is used to match the IPv6 addresses of the neighbors against the MACs
+	// of persistent clients.  It may be nil, in which case no neighbors are
+	// reported.
+	ndp *ndpNeighbors
+
 	// done is the shutdown signaling channel.
 	done chan struct{}
 
@@ -173,6 +183,11 @@ func NewStorage(ctx context.Context, conf *StorageConfig) (s *Storage, err error
 	tags := slices.Clone(allowedTags)
 	slices.Sort(tags)
 
+	cmdCons := conf.CmdCons
+	if cmdCons == nil {
+		cmdCons = executil.SystemCommandConstructor{}
+	}
+
 	s = &Storage{
 		logger:                 conf.Logger,
 		mu:                     &sync.Mutex{},
@@ -182,6 +197,7 @@ func NewStorage(ctx context.Context, conf *StorageConfig) (s *Storage, err error
 		dhcp:                   conf.DHCP,
 		etcHosts:               conf.EtcHosts,
 		arpDB:                  conf.ARPDB,
+		ndp:                    newNDPNeighbors(conf.Logger, conf.Clock, cmdCons),
 		done:                   make(chan struct{}),
 		allowedTags:            tags,
 		arpClientsUpdatePeriod: conf.ARPClientsUpdatePeriod,
@@ -196,6 +212,7 @@ func NewStorage(ctx context.Context, conf *StorageConfig) (s *Storage, err error
 	}
 
 	s.ReloadARP(ctx)
+	s.reloadNDP(ctx)
 
 	return s, nil
 }
@@ -205,6 +222,7 @@ func NewStorage(ctx context.Context, conf *StorageConfig) (s *Storage, err error
 // TODO(s.chzhen):  Pass context.
 func (s *Storage) Start(ctx context.Context) (err error) {
 	go s.periodicARPUpdate(ctx)
+	go s.periodicNDPUpdate(ctx)
 	go s.handleHostsUpdates(ctx)
 
 	return nil
@@ -241,6 +259,42 @@ func (s *Storage) ReloadARP(ctx context.Context) {
 	if s.arpDB != nil {
 		s.addFromSystemARP(ctx)
 	}
+}
+
+// periodicNDPUpdate periodically rereads the IPv6 neighbor table, so that the
+// clients identified by MAC address keep being recognized without reading it on
+// the DNS request path.  It is intended to be used as a goroutine.
+func (s *Storage) periodicNDPUpdate(ctx context.Context) {
+	defer slogutil.RecoverAndLog(ctx, s.logger)
+
+	t := time.NewTicker(ndpUpdateInterval)
+	defer t.Stop()
+
+	for {
+		select {
+		case <-t.C:
+			s.reloadNDP(ctx)
+		case <-s.done:
+			return
+		}
+	}
+}
+
+// reloadNDP rereads the IPv6 neighbor table, unless there is nothing to match
+// against it.
+func (s *Storage) reloadNDP(ctx context.Context) {
+	if s.hasMACs() {
+		s.ndp.refresh(ctx)
+	}
+}
+
+// hasMACs returns true if at least one persistent client is identified by a MAC
+// address.
+func (s *Storage) hasMACs() (ok bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return s.index.hasMACs()
 }
 
 // addFromSystemARP adds the IP-hostname pairings from the output of the arp -a
@@ -568,6 +622,12 @@ func (s *Storage) findByIP(addr netip.Addr) (p *Persistent, ok bool) {
 	}
 
 	foundMAC := s.dhcp.MACByIP(addr)
+	if foundMAC == nil && s.index.hasMACs() {
+		// Fall back to the IPv6 neighbor table, since the addresses configured
+		// via SLAAC have no DHCP lease.
+		foundMAC = s.ndp.macFor(addr)
+	}
+
 	if foundMAC != nil {
 		return s.index.findByMAC(foundMAC)
 	}
@@ -594,6 +654,10 @@ func (s *Storage) FindLoose(ip netip.Addr, id string) (p *Persistent, ok bool) {
 	}
 
 	foundMAC := s.dhcp.MACByIP(ip)
+	if foundMAC == nil && s.index.hasMACs() {
+		foundMAC = s.ndp.macFor(ip)
+	}
+
 	if foundMAC != nil {
 		return s.index.findByMAC(foundMAC)
 	}
@@ -775,6 +839,10 @@ func (s *Storage) ApplyClientFiltering(id string, addr netip.Addr, setts *filter
 
 	if !ok {
 		foundMAC := s.dhcp.MACByIP(addr)
+		if foundMAC == nil && s.index.hasMACs() {
+			foundMAC = s.ndp.macFor(addr)
+		}
+
 		if foundMAC != nil {
 			c, ok = s.index.findByMAC(foundMAC)
 		}

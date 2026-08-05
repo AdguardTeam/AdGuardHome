@@ -306,6 +306,11 @@ func (ci *index) findByMAC(mac net.HardwareAddr) (c *Persistent, found bool) {
 	return nil, false
 }
 
+// hasMACs returns true if at least one client is identified by a MAC address.
+func (ci *index) hasMACs() (ok bool) {
+	return len(ci.macToUID) > 0
+}
+
 // findByIPWithoutZone finds a persistent client by IP address without zone.  It
 // strips the IPv6 zone index from the stored IP addresses before comparing,
 // because querylog entries don't have it.  See TODO on [querylog.logEntry.IP].
