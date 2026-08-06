@@ -22,6 +22,7 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/timeutil"
+	"github.com/AdguardTeam/urlfilter/rules"
 )
 
 // clientsContainer is the storage of all runtime and persistent clients.
@@ -53,6 +54,12 @@ type clientsContainer struct {
 	// TODO(a.garipov): Use a pointer and describe which fields are protected in
 	// more detail.  Use sync.RWMutex.
 	lock sync.Mutex
+
+	// filterListsMu serializes the whole sequence of preparing the DNS filtering
+	// engine, storing the client and pruning, so that two concurrent mutations
+	// cannot each prepare against a storage that lacks the other's prospective
+	// policy and drop the list it has just loaded.
+	filterListsMu sync.Mutex
 
 	// safeSearchCacheSize is the size of the safe search cache to use for
 	// persistent clients.
@@ -140,6 +147,7 @@ func (clients *clientsContainer) Init(
 	sigHdlr.addClientStorage(clients.storage)
 
 	filteringConf.ApplyClientFiltering = clients.storage.ApplyClientFiltering
+	filteringConf.ClientFilterListIDs = clients.storage.ReferencedFilterListIDs
 
 	return nil
 }
@@ -190,6 +198,13 @@ type clientObject struct {
 	SafeBrowsingEnabled      bool `yaml:"safebrowsing_enabled"`
 	UseGlobalBlockedServices bool `yaml:"use_global_blocked_services"`
 
+	// UseOwnFilterLists uses the positive form, unlike the fields above, so that
+	// its zero value keeps the global filter lists for older configurations.
+	UseOwnFilterLists bool `yaml:"use_own_filter_lists"`
+
+	FilterListIDs      []rules.ListID `yaml:"filter_list_ids"`
+	AllowFilterListIDs []rules.ListID `yaml:"allow_filter_list_ids"`
+
 	IgnoreQueryLog   bool `yaml:"ignore_querylog"`
 	IgnoreStatistics bool `yaml:"ignore_statistics"`
 }
@@ -214,6 +229,9 @@ func (o *clientObject) toPersistent(
 		SafeSearchConf:        o.SafeSearchConf,
 		SafeBrowsingEnabled:   o.SafeBrowsingEnabled,
 		UseOwnBlockedServices: !o.UseGlobalBlockedServices,
+		UseOwnFilterLists:     o.UseOwnFilterLists,
+		FilterListIDs:         slices.Clone(o.FilterListIDs),
+		AllowFilterListIDs:    slices.Clone(o.AllowFilterListIDs),
 		IgnoreQueryLog:        o.IgnoreQueryLog,
 		IgnoreStatistics:      o.IgnoreStatistics,
 		UpstreamsCacheEnabled: o.UpstreamsCacheEnabled,
@@ -296,6 +314,9 @@ func (clients *clientsContainer) forConfig() (objs []*clientObject) {
 			SafeSearchConf:           cli.SafeSearchConf,
 			SafeBrowsingEnabled:      cli.SafeBrowsingEnabled,
 			UseGlobalBlockedServices: !cli.UseOwnBlockedServices,
+			UseOwnFilterLists:        cli.UseOwnFilterLists,
+			FilterListIDs:            slices.Clone(cli.FilterListIDs),
+			AllowFilterListIDs:       slices.Clone(cli.AllowFilterListIDs),
 			IgnoreQueryLog:           cli.IgnoreQueryLog,
 			IgnoreStatistics:         cli.IgnoreStatistics,
 			UpstreamsCacheEnabled:    cli.UpstreamsCacheEnabled,

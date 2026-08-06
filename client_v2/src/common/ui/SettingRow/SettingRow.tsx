@@ -149,6 +149,7 @@ export const SettingRow = (props: Props) => {
                     <Show when={isSwitchVariant()}>
                         <Switch
                             id={props.id}
+                            ariaLabel={props.title}
                             checked={!!props.checked}
                             disabled={!!props.disabled}
                             onChange={handleSwitchChange}

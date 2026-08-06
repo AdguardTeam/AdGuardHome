@@ -348,6 +348,9 @@ export type ClientFormState = {
     upstreams: string;
     upstreams_cache_enabled: boolean;
     upstreams_cache_size: number;
+    use_own_filter_lists: boolean;
+    filter_list_ids: number[];
+    allow_filter_list_ids: number[];
     processingSave: boolean;
     formErrors: Record<string, string | string[]>;
 };
@@ -382,6 +385,9 @@ export const getInitialClientFormState = (): ClientFormState => ({
     upstreams: '',
     upstreams_cache_enabled: false,
     upstreams_cache_size: DEFAULT_DNS_CACHE_SIZE,
+    use_own_filter_lists: false,
+    filter_list_ids: [],
+    allow_filter_list_ids: [],
     processingSave: false,
     formErrors: {},
 });

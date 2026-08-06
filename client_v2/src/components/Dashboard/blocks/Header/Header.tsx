@@ -172,6 +172,7 @@ export const Header = (props: Props) => {
                     <div class={s.protectionToggle}>
                         <Switch
                             id="protection_toggle"
+                            ariaLabel={intl.getMessage('protection')}
                             data-testid="protection-toggle"
                             checked={!!props.protectionEnabled}
                             onChange={handleToggleProtection}

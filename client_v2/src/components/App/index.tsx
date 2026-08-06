@@ -34,6 +34,7 @@ import { InactivitySchedule } from '../BlockedServices/InactivitySchedule';
 import { AddClient } from '../Clients/AddClient';
 import { Protection } from '../Clients/AddClient/blocks/Protection/Protection';
 import { ClientBlockedServices } from '../Clients/AddClient/blocks/ClientBlockedServices';
+import { ClientFilterLists } from '../Clients/AddClient/blocks/ClientFilterLists';
 import { ClientSchedule } from '../Clients/AddClient/blocks/ClientSchedule';
 import { Paths } from '../Routes/Paths';
 
@@ -42,6 +43,7 @@ const BlockedServicesRoute = () => <BlockedServices />;
 const InactivityScheduleRoute = () => <InactivitySchedule />;
 const ClientScheduleRoute = () => <ClientSchedule />;
 const ClientBlockedServicesRoute = () => <ClientBlockedServices />;
+const ClientFilterListsRoute = () => <ClientFilterLists />;
 const ProtectionRoute = () => <Protection />;
 const AddClientRoute = () => <AddClient />;
 
@@ -143,10 +145,12 @@ const App = () => {
             <Route path={Paths.BlockedServices} component={BlockedServicesRoute} />
             <Route path={Paths.ClientsSchedule} component={ClientScheduleRoute} />
             <Route path={Paths.ClientsBlockedServices} component={ClientBlockedServicesRoute} />
+            <Route path={Paths.ClientsFilterLists} component={ClientFilterListsRoute} />
             <Route path={Paths.ClientsProtection} component={ProtectionRoute} />
             <Route path={Paths.ClientsAdd} component={AddClientRoute} />
             <Route path={Paths.ClientsEditSchedule} component={ClientScheduleRoute} />
             <Route path={Paths.ClientsEditBlockedServices} component={ClientBlockedServicesRoute} />
+            <Route path={Paths.ClientsEditFilterLists} component={ClientFilterListsRoute} />
             <Route path={Paths.ClientsEditProtection} component={ProtectionRoute} />
             <Route path={Paths.ClientsEdit} component={AddClientRoute} />
             <Route path={Paths.Clients} component={Clients} />
