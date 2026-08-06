@@ -21,6 +21,7 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/ioutil"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/urlfilter/rules"
 )
 
 // filterDir is the subdirectory of a data directory to store downloaded
@@ -119,19 +120,19 @@ func (d *DNSFilter) filterSetProperties(
 		"filter_url", flt.URL,
 	)
 
-	defer func(oldURL, oldName string, oldEnabled bool, oldUpdated time.Time, oldRulesCount int) {
+	// Restore the whole entry on failure, including the checksum, so that a
+	// failed update doesn't leave metadata that disagrees with the contents on
+	// disk.
+	defer func(old FilterYAML) {
 		if err != nil {
-			flt.URL = oldURL
-			flt.Name = oldName
-			flt.Enabled = oldEnabled
-			flt.LastUpdated = oldUpdated
-			flt.RulesCount = oldRulesCount
+			*flt = old
 		}
-	}(flt.URL, flt.Name, flt.Enabled, flt.LastUpdated, flt.RulesCount)
+	}(*flt)
 
 	flt.Name = newList.Name
 
-	if flt.URL != newList.URL {
+	urlChanged := flt.URL != newList.URL
+	if urlChanged {
 		if d.filterExistsLocked(newList.URL) {
 			return false, errFilterExists
 		}
@@ -148,12 +149,10 @@ func (d *DNSFilter) filterSetProperties(
 		shouldRestart = true
 	}
 
-	if !flt.Enabled {
-		// TODO(e.burkov):  The validation of the contents of the new URL is
-		// currently skipped if the rule list is disabled.  This makes it
-		// possible to set a bad rules source, but the validation should still
-		// kick in when the filter is enabled.  Consider changing this behavior
-		// to be stricter.
+	if d.shouldUnload(flt, isAllowlist, urlChanged) {
+		// TODO(e.burkov):  The contents of a rule list that stays out of the
+		// engine are not validated, which makes it possible to keep a bad rules
+		// source.  Consider changing this behavior to be stricter.
 		flt.unload()
 
 		return shouldRestart, err
@@ -163,7 +162,7 @@ func (d *DNSFilter) filterSetProperties(
 		return false, nil
 	}
 
-	return d.update(flt)
+	return d.update(flt, urlChanged)
 }
 
 // filterExists returns true if a filter with the same url exists in d.  It's
@@ -218,9 +217,14 @@ func (d *DNSFilter) filterAdd(flt FilterYAML) (err error) {
 	return nil
 }
 
-// Load filters from the disk
-// And if any filter has zero ID, assign a new one
-func (d *DNSFilter) loadFilters(ctx context.Context, array []FilterYAML) {
+// loadFilters loads filters from the disk and assigns a new ID to any filter
+// that has a zero one.  A disabled filter is only loaded if clientIDs contains
+// it, since a client may use a filter that is disabled globally.
+func (d *DNSFilter) loadFilters(
+	ctx context.Context,
+	array []FilterYAML,
+	clientIDs map[rules.ListID]bool,
+) {
 	for i := range array {
 		filter := &array[i] // otherwise we're operating on a copy
 		if filter.ID == 0 {
@@ -230,8 +234,7 @@ func (d *DNSFilter) loadFilters(ctx context.Context, array []FilterYAML) {
 			filter.ID = newID
 		}
 
-		if !filter.Enabled {
-			// No need to load a filter that is not enabled
+		if !filter.Enabled && !clientIDs[filter.ID] {
 			continue
 		}
 
@@ -273,8 +276,13 @@ func (d *DNSFilter) tryRefreshFilters(block, allow, force bool) (updated int, is
 	return updated, isNetworkErr, ok
 }
 
-// listsToUpdate returns the slice of filter lists that could be updated.
-func (d *DNSFilter) listsToUpdate(filters *[]FilterYAML, force bool) (toUpd []FilterYAML) {
+// listsToUpdate returns the slice of filter lists that could be updated.  A
+// disabled filter list is only updated if clientIDs contains it.
+func (d *DNSFilter) listsToUpdate(
+	filters *[]FilterYAML,
+	clientIDs map[rules.ListID]bool,
+	force bool,
+) (toUpd []FilterYAML) {
 	now := time.Now()
 
 	d.conf.filtersMu.RLock()
@@ -283,7 +291,7 @@ func (d *DNSFilter) listsToUpdate(filters *[]FilterYAML, force bool) (toUpd []Fi
 	for i := range *filters {
 		flt := &(*filters)[i] // otherwise we will be operating on a copy
 
-		if !flt.Enabled {
+		if !flt.Enabled && !clientIDs[flt.ID] {
 			continue
 		}
 
@@ -313,9 +321,10 @@ func (d *DNSFilter) listsToUpdate(filters *[]FilterYAML, force bool) (toUpd []Fi
 func (d *DNSFilter) refreshFiltersArray(
 	ctx context.Context,
 	filters *[]FilterYAML,
+	clientIDs map[rules.ListID]bool,
 	force bool,
 ) (updateCount int, updateFilters []FilterYAML, updateFlags []bool, isNetErr bool) {
-	updateFilters = d.listsToUpdate(filters, force)
+	updateFilters = d.listsToUpdate(filters, clientIDs, force)
 	if len(updateFilters) == 0 {
 		return 0, nil, nil, false
 	}
@@ -342,7 +351,7 @@ func (d *DNSFilter) updateFilterList(
 ) (failNum int, updateFlags []bool) {
 	for i := range updateFilters {
 		uf := &updateFilters[i]
-		updated, err := d.update(uf)
+		updated, err := d.update(uf, false)
 		updateFlags = append(updateFlags, updated)
 		if err != nil {
 			failNum++
@@ -426,13 +435,15 @@ func (d *DNSFilter) refreshFiltersIntl(block, allow, force bool) (int, bool) {
 	var toUpd []bool
 	isNetErr := false
 
+	blockIDs, allowIDs := d.clientFilterListIDs()
 	if block {
-		updNum, lists, toUpd, isNetErr = d.refreshFiltersArray(ctx, &d.conf.Filters, force)
+		updNum, lists, toUpd, isNetErr = d.refreshFiltersArray(ctx, &d.conf.Filters, blockIDs, force)
 	}
 	if allow {
 		updNumAl, listsAl, toUpdAl, isNetErrAl := d.refreshFiltersArray(
 			ctx,
 			&d.conf.WhitelistFilters,
+			allowIDs,
 			force,
 		)
 
@@ -477,10 +488,10 @@ func removeOldFilterFile(ctx context.Context, l *slog.Logger, fltPath string) {
 }
 
 // update refreshes filter's content and a/mtimes of it's file.
-func (d *DNSFilter) update(filter *FilterYAML) (b bool, err error) {
+func (d *DNSFilter) update(filter *FilterYAML, replace bool) (b bool, err error) {
 	ctx := context.TODO()
 
-	b, err = d.updateIntl(ctx, filter)
+	b, err = d.updateIntl(ctx, filter, replace)
 	filter.LastUpdated = time.Now()
 	if !b {
 		chErr := os.Chtimes(
@@ -497,8 +508,13 @@ func (d *DNSFilter) update(filter *FilterYAML) (b bool, err error) {
 }
 
 // updateIntl updates the flt rewriting it's actual file.  It returns true if
-// the actual update has been performed.  flt must not be nil.
-func (d *DNSFilter) updateIntl(ctx context.Context, flt *FilterYAML) (ok bool, err error) {
+// the actual update has been performed.  When replace is true, the contents are
+// saved even if they parse to the same checksum.  flt must not be nil.
+func (d *DNSFilter) updateIntl(
+	ctx context.Context,
+	flt *FilterYAML,
+	replace bool,
+) (ok bool, err error) {
 	d.logger.DebugContext(ctx, "downloading update for filter", "id", flt.ID, "url", flt.URL)
 
 	var res *rulelist.ParseResult
@@ -524,7 +540,7 @@ func (d *DNSFilter) updateIntl(ctx context.Context, flt *FilterYAML) (ok bool, e
 		return false, err
 	}
 
-	return res.Checksum != flt.checksum, nil
+	return replace || res.Checksum != flt.checksum, nil
 }
 
 // readFromHTTP reads filter data from urlStr via HTTP and parses it into the
@@ -660,51 +676,285 @@ func (d *DNSFilter) load(ctx context.Context, flt *FilterYAML) (err error) {
 	return nil
 }
 
+// appendEnabledFilters appends to orig the filters that must be put into the
+// engine, that is the enabled ones and those that clientIDs contains, and
+// returns the set of enabled IDs among them.  enabledIDs is nil if every
+// appended filter is enabled, in which case matching needs no ID filtering.
+func appendEnabledFilters(
+	orig []Filter,
+	flts []FilterYAML,
+	clientIDs map[rules.ListID]bool,
+	dataDir string,
+) (res []Filter, enabledIDs map[rules.ListID]bool) {
+	res = orig
+	ids := make(map[rules.ListID]bool, len(flts))
+	hasDisabled := false
+
+	for _, flt := range flts {
+		if flt.Enabled {
+			ids[flt.ID] = true
+		} else if clientIDs[flt.ID] {
+			hasDisabled = true
+		} else {
+			continue
+		}
+
+		res = append(res, Filter{
+			ID:       flt.ID,
+			FilePath: flt.Path(dataDir),
+		})
+	}
+
+	if !hasDisabled {
+		return res, nil
+	}
+
+	return res, ids
+}
+
+// shouldUnload reports whether flt must be kept out of the engine, that is when
+// it is disabled and no client uses it.  A filter with a new URL is always
+// fetched, since the file on disk is named after the ID and would otherwise keep
+// the rules of the previous source.
+func (d *DNSFilter) shouldUnload(flt *FilterYAML, isAllowlist, urlChanged bool) (ok bool) {
+	return !urlChanged && !flt.Enabled && !d.clientListIDs(isAllowlist)[flt.ID]
+}
+
+// clientListIDs is like [DNSFilter.clientFilterListIDs], but returns the IDs of
+// either the allowing or the blocking filter lists.
+func (d *DNSFilter) clientListIDs(isAllowlist bool) (ids map[rules.ListID]bool) {
+	blockIDs, allowIDs := d.clientFilterListIDs()
+	if isAllowlist {
+		return allowIDs
+	}
+
+	return blockIDs
+}
+
+// clientFilterListIDs returns the filter list IDs used by clients that have
+// their own filter lists, or nil sets if no client does.
+func (d *DNSFilter) clientFilterListIDs() (blockIDs, allowIDs map[rules.ListID]bool) {
+	if d.conf.ClientFilterListIDs == nil {
+		return nil, nil
+	}
+
+	return d.conf.ClientFilterListIDs()
+}
+
+// needRefresh returns the disabled filters of flts that next references and the
+// engine cannot enforce yet, that is the ones no client referenced before and
+// the ones whose cache is missing.  A cache can be absent because the list was
+// never downloadable, in which case being referenced already is not enough.
+// d.conf.filtersMu is expected to be locked.
+func (d *DNSFilter) needRefresh(
+	flts []FilterYAML,
+	prev, next map[rules.ListID]bool,
+) (res []*FilterYAML) {
+	for i := range flts {
+		flt := &flts[i] // otherwise we're operating on a copy
+		if flt.Enabled || !next[flt.ID] {
+			continue
+		}
+
+		if !prev[flt.ID] {
+			res = append(res, flt)
+
+			continue
+		}
+
+		if _, err := os.Stat(flt.Path(d.conf.DataDir)); err != nil {
+			res = append(res, flt)
+		}
+	}
+
+	return res
+}
+
+// refreshReferenced downloads flts, so that a list a client has just picked has
+// contents to match against even when its cache is absent or stale.  A refresh
+// that fails while a cached copy exists is only logged, since that copy is
+// enough to enforce the policy.  d.conf.filtersMu is expected to be locked for
+// writing.
+func (d *DNSFilter) refreshReferenced(ctx context.Context, flts []*FilterYAML) (errs []error) {
+	for _, flt := range flts {
+		_, err := d.update(flt, true)
+		if err == nil {
+			continue
+		}
+
+		if _, statErr := os.Stat(flt.Path(d.conf.DataDir)); statErr != nil {
+			errs = append(errs, fmt.Errorf("filter %d: %w", flt.ID, err))
+
+			continue
+		}
+
+		d.logger.WarnContext(
+			ctx,
+			"refreshing client filter list, keeping cached copy",
+			"id", flt.ID,
+			slogutil.KeyError, err,
+		)
+	}
+
+	return errs
+}
+
+// loadedListIDs returns the rule lists the engines currently hold.
+func (d *DNSFilter) loadedListIDs() (ids map[rules.ListID]bool) {
+	d.engineLock.RLock()
+	defer d.engineLock.RUnlock()
+
+	return unionListIDs(d.loadedBlockIDs, d.loadedAllowIDs)
+}
+
+// unionListIDs returns the union of a and b.  It doesn't modify either.
+func unionListIDs(a, b map[rules.ListID]bool) (res map[rules.ListID]bool) {
+	res = make(map[rules.ListID]bool, len(a)+len(b))
+	for id := range a {
+		res[id] = true
+	}
+
+	for id := range b {
+		res[id] = true
+	}
+
+	return res
+}
+
+// ErrUnknownListID is returned when a client references a filter list that is
+// not configured, or one of the wrong kind.
+const ErrUnknownListID errors.Error = "unknown filter list id"
+
+// validateListIDs returns an error if ids names a list absent from flts.  A
+// client whose policy names a list the engine cannot hold would match neither
+// that list nor the global ones, so such a request is rejected instead.
+// d.conf.filtersMu is expected to be locked.
+func validateListIDs(flts []FilterYAML, ids map[rules.ListID]bool, kind string) (err error) {
+	var errs []error
+	for id := range ids {
+		if id == rulelist.IDCustom {
+			continue
+		}
+
+		if !slices.ContainsFunc(flts, func(f FilterYAML) (ok bool) { return f.ID == id }) {
+			errs = append(errs, fmt.Errorf("%s %d: %w", kind, id, ErrUnknownListID))
+		}
+	}
+
+	return errors.Join(errs...)
+}
+
+// SetClientFilterLists puts the filter lists that blockIDs and allowIDs
+// reference into the engine, downloading the disabled ones that no client used
+// before.  It does nothing when the engine already holds them all.
+//
+// It must be called before a client configuration that relies on those lists
+// becomes observable, since a policy naming a list the engine doesn't hold
+// matches neither that list nor the global ones.  Lists that no client uses
+// anymore are pruned by a later [DNSFilter.EnableFilters].
+func (d *DNSFilter) SetClientFilterLists(
+	ctx context.Context,
+	blockIDs, allowIDs map[rules.ListID]bool,
+) (err error) {
+	d.conf.filtersMu.Lock()
+	defer d.conf.filtersMu.Unlock()
+
+	err = errors.Join(
+		validateListIDs(d.conf.Filters, blockIDs, "blocking filter list"),
+		validateListIDs(d.conf.WhitelistFilters, allowIDs, "allowing filter list"),
+	)
+	if err != nil {
+		return err
+	}
+
+	prevBlock, prevAllow := d.clientFilterListIDs()
+
+	newBlock := d.needRefresh(d.conf.Filters, prevBlock, blockIDs)
+	newAllow := d.needRefresh(d.conf.WhitelistFilters, prevAllow, allowIDs)
+	if len(newBlock) == 0 && len(newAllow) == 0 {
+		return nil
+	}
+
+	errs := d.refreshReferenced(ctx, newBlock)
+	errs = append(errs, d.refreshReferenced(ctx, newAllow)...)
+	if err = errors.Join(errs...); err != nil {
+		return fmt.Errorf("refreshing client filter lists: %w", err)
+	}
+
+	// Require the lists the engines hold today plus the ones this policy names,
+	// so that a file that vanished cannot silently drop a live list, while a list
+	// that was already absent stays tolerated.
+	required := unionListIDs(d.loadedListIDs(), unionListIDs(blockIDs, allowIDs))
+
+	// Keep the lists that clients use today as well, so that the rebuild never
+	// drops a policy that is still published.
+	err = d.enableFiltersLocked(
+		ctx,
+		unionListIDs(prevBlock, blockIDs),
+		unionListIDs(prevAllow, allowIDs),
+		required,
+		false,
+	)
+	if err != nil {
+		return fmt.Errorf("rebuilding with client filter lists: %w", err)
+	}
+
+	return nil
+}
+
 // EnableFilters enables filters.
 func (d *DNSFilter) EnableFilters(async bool) {
 	d.conf.filtersMu.RLock()
 	defer d.conf.filtersMu.RUnlock()
 
-	d.enableFiltersLocked(context.TODO(), async)
+	ctx := context.TODO()
+	blockIDs, allowIDs := d.clientFilterListIDs()
+
+	err := d.enableFiltersLocked(ctx, blockIDs, allowIDs, nil, async)
+	if err != nil {
+		d.logger.ErrorContext(ctx, "enabling filters", slogutil.KeyError, err)
+	}
 }
 
-// enableFiltersLocked enables filters under the conf.filtersMu lock.
-func (d *DNSFilter) enableFiltersLocked(ctx context.Context, async bool) {
+// enableFiltersLocked enables filters under the conf.filtersMu lock.  The
+// clientIDs sets tell which disabled lists must still be put into the engine
+// because a client uses them.
+func (d *DNSFilter) enableFiltersLocked(
+	ctx context.Context,
+	blockClientIDs, allowClientIDs map[rules.ListID]bool,
+	requiredIDs map[rules.ListID]bool,
+	async bool,
+) (err error) {
 	filters := make([]Filter, 1, len(d.conf.Filters)+len(d.conf.WhitelistFilters)+1)
 	filters[0] = Filter{
 		ID:   rulelist.IDCustom,
 		Data: []byte(strings.Join(d.conf.UserRules, "\n")),
 	}
 
-	for _, filter := range d.conf.Filters {
-		if !filter.Enabled {
-			continue
-		}
+	filters, enabledBlockIDs := appendEnabledFilters(
+		filters,
+		d.conf.Filters,
+		blockClientIDs,
+		d.conf.DataDir,
+	)
+	allowFilters, enabledAllowIDs := appendEnabledFilters(
+		nil,
+		d.conf.WhitelistFilters,
+		allowClientIDs,
+		d.conf.DataDir,
+	)
 
-		filters = append(filters, Filter{
-			ID:       filter.ID,
-			FilePath: filter.Path(d.conf.DataDir),
-		})
-	}
-
-	var allowFilters []Filter
-	for _, filter := range d.conf.WhitelistFilters {
-		if !filter.Enabled {
-			continue
-		}
-
-		allowFilters = append(allowFilters, Filter{
-			ID:       filter.ID,
-			FilePath: filter.Path(d.conf.DataDir),
-		})
-	}
-
-	err := d.setFilters(ctx, filters, allowFilters, async)
-	if err != nil {
-		d.logger.ErrorContext(ctx, "enabling filters", slogutil.KeyError, err)
-	}
+	err = d.setFilters(ctx, &filtersInitializerParams{
+		enabledBlockIDs: enabledBlockIDs,
+		enabledAllowIDs: enabledAllowIDs,
+		allowFilters:    allowFilters,
+		blockFilters:    filters,
+		requiredIDs:     requiredIDs,
+	}, async)
 
 	d.SetEnabled(d.conf.FilteringEnabled)
+
+	return err
 }
 
 // ApplyAdditionalFiltering enhances the provided filtering settings with

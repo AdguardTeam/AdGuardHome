@@ -2856,6 +2856,41 @@
           '$ref': '#/components/schemas/SafeSearchConfig'
         'use_global_blocked_services':
           'type': 'boolean'
+        'use_own_filter_lists':
+          'type': 'boolean'
+          'description': |
+            Whether to use the filter lists in `filter_list_ids` and
+            `allow_filter_list_ids` instead of the globally enabled ones.  Rules
+            from the user's own list apply either way.
+
+            NOTE: If `use_own_filter_lists` is not set in the
+            `POST /clients/add` request then the default value (false) will be
+            used, and the client uses the globally enabled filter lists.
+
+            If it is not set in the `POST /clients/update` request then the
+            existing value will not be changed.
+        'filter_list_ids':
+          'type': 'array'
+          'description': |
+            IDs of the blocking filter lists of the client.  They are only used
+            if `use_own_filter_lists` is `true`.
+
+            NOTE: If `filter_list_ids` is not set in the `POST /clients/update`
+            request then the existing value will not be changed.  Set it to an
+            empty array to clear it.
+          'items':
+            'type': 'integer'
+        'allow_filter_list_ids':
+          'type': 'array'
+          'description': |
+            IDs of the allowing filter lists of the client.  They are only used
+            if `use_own_filter_lists` is `true`.
+
+            NOTE: If `allow_filter_list_ids` is not set in the
+            `POST /clients/update` request then the existing value will not be
+            changed.  Set it to an empty array to clear it.
+          'items':
+            'type': 'integer'
         'blocked_services_schedule':
           '$ref': '#/components/schemas/Schedule'
         'blocked_services':

@@ -458,9 +458,22 @@ func startDNSServer() (err error) {
 
 	// TODO(s.chzhen):  Pass context.
 	ctx := context.TODO()
+
 	err = globalContext.clients.Start(ctx)
 	if err != nil {
 		return fmt.Errorf("starting clients container: %w", err)
+	}
+
+	// Fetch the filter lists that clients use but that never made it to disk, so
+	// that a restored configuration or a cleared cache doesn't leave a promised
+	// list inactive until the next refresh.  It has to happen before the
+	// listeners accept traffic, since an own-list client whose list is absent
+	// matches neither that list nor the global ones.  The HTTP client has a
+	// timeout, so a dead source cannot hold startup indefinitely.
+	blockIDs, allowIDs := globalContext.clients.storage.ReferencedFilterListIDs()
+	err = globalContext.filters.SetClientFilterLists(ctx, blockIDs, allowIDs)
+	if err != nil {
+		log.Error("dnsforward: preparing client filter lists: %s", err)
 	}
 
 	err = globalContext.dnsServer.Start(ctx)
