@@ -12,7 +12,7 @@ import whoisCell from './whoisCell';
 
 import LogsSearchLink from '../../ui/LogsSearchLink';
 
-import { sortIp } from '../../../helpers/helpers';
+import { sortIp, formatNumber } from '../../../helpers/helpers';
 import { LocalStorageHelper, LOCAL_STORAGE_KEYS } from '../../../helpers/localStorageHelper';
 import { TABLES_MIN_ROWS } from '../../../helpers/constants';
 
@@ -66,7 +66,7 @@ class AutoClients extends Component<AutoClientsProps> {
                     return (
                         <div className="logs__row">
                             <div className="logs__text" title={clientStats}>
-                                <LogsSearchLink search={row.original.ip}>{clientStats}</LogsSearchLink>
+                                <LogsSearchLink search={row.original.ip}>{formatNumber(clientStats)}</LogsSearchLink>
                             </div>
                         </div>
                     );

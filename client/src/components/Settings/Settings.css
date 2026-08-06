@@ -63,6 +63,7 @@
 }
 
 .form__message {
+    margin-top: 4px;
     font-size: 11px;
 }
 
@@ -95,6 +96,10 @@
 
 .form__desc--top {
     margin: 0 0 8px;
+}
+
+.form__label {
+    margin-bottom: 8px;
 }
 
 .form__label--bold {

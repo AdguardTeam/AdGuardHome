@@ -2,6 +2,7 @@ package home
 
 import (
 	"cmp"
+	"context"
 	"fmt"
 	"log/slog"
 	"path/filepath"
@@ -10,8 +11,8 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	yaml "go.yaml.in/yaml/v4"
 	"gopkg.in/natefinch/lumberjack.v2"
-	"gopkg.in/yaml.v3"
 )
 
 // configSyslog is used to indicate that syslog or eventlog (win) should be used
@@ -19,6 +20,7 @@ import (
 const configSyslog = "syslog"
 
 // newSlogLogger returns new [*slog.Logger] configured with the given settings.
+// ls must not be nil.
 func newSlogLogger(ls *logSettings) (l *slog.Logger) {
 	if !ls.Enabled {
 		return slogutil.NewDiscardLogger()
@@ -29,15 +31,12 @@ func newSlogLogger(ls *logSettings) (l *slog.Logger) {
 		lvl = slog.LevelDebug
 	}
 
-	return slogutil.New(&slogutil.Config{
+	l = slogutil.New(&slogutil.Config{
 		Format:       slogutil.FormatAdGuardLegacy,
 		Level:        lvl,
 		AddTimestamp: true,
 	})
-}
 
-// configureLogger configures logger level and output.
-func configureLogger(ls *logSettings) (err error) {
 	// Configure logger level.
 	if !ls.Enabled {
 		log.SetLevel(log.OFF)
@@ -45,6 +44,11 @@ func configureLogger(ls *logSettings) (err error) {
 		log.SetLevel(log.DEBUG)
 	}
 
+	return l
+}
+
+// configureLogger configures logger output.  ls must not be nil.
+func configureLogger(ls *logSettings, workDir string) (err error) {
 	// Make sure that we see the microseconds in logs, as networking stuff can
 	// happen pretty quickly.
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
@@ -66,7 +70,7 @@ func configureLogger(ls *logSettings) (err error) {
 
 	logFilePath := ls.File
 	if !filepath.IsAbs(logFilePath) {
-		logFilePath = filepath.Join(Context.workDir, logFilePath)
+		logFilePath = filepath.Join(workDir, logFilePath)
 	}
 
 	log.SetOutput(&lumberjack.Logger{
@@ -82,10 +86,17 @@ func configureLogger(ls *logSettings) (err error) {
 }
 
 // getLogSettings returns a log settings object properly initialized from opts.
-func getLogSettings(opts options) (ls *logSettings) {
+// l must not be nil.
+func getLogSettings(
+	ctx context.Context,
+	l *slog.Logger,
+	opts options,
+	workDir string,
+	confPath string,
+) (ls *logSettings) {
 	configLogSettings := config.Log
 
-	ls = readLogSettings()
+	ls = readLogSettings(ctx, l, workDir, confPath)
 	if ls == nil {
 		// Use default log settings.
 		ls = &configLogSettings
@@ -109,8 +120,13 @@ func getLogSettings(opts options) (ls *logSettings) {
 
 // readLogSettings reads logging settings from the config file.  We do it in a
 // separate method in order to configure logger before the actual configuration
-// is parsed and applied.
-func readLogSettings() (ls *logSettings) {
+// is parsed and applied.  l must not be nil.
+func readLogSettings(
+	ctx context.Context,
+	l *slog.Logger,
+	workDir string,
+	confPath string,
+) (ls *logSettings) {
 	// TODO(s.chzhen):  Add a helper function that returns default parameters
 	// for this structure and for the global configuration structure [config].
 	conf := &configuration{
@@ -120,14 +136,14 @@ func readLogSettings() (ls *logSettings) {
 		},
 	}
 
-	yamlFile, err := readConfigFile()
+	yamlFile, err := readConfigFile(ctx, l, workDir, confPath)
 	if err != nil {
 		return nil
 	}
 
 	err = yaml.Unmarshal(yamlFile, conf)
 	if err != nil {
-		log.Error("Couldn't get logging settings from the configuration: %s", err)
+		l.ErrorContext(ctx, "getting logging settings from config", slogutil.KeyError, err)
 	}
 
 	return &conf.Log

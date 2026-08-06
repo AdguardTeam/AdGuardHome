@@ -1,11 +1,13 @@
 package dnsforward
 
 import (
+	"context"
 	"encoding/base64"
+	"log/slog"
 	"net"
 	"strconv"
 
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
 )
@@ -14,9 +16,9 @@ import (
 //
 // See the comment on genAnswerSVCB for a list of current restrictions on
 // parameter values.
-func (s *Server) genAnswerHTTPS(req *dns.Msg, svcb *rules.DNSSVCB) (ans *dns.HTTPS) {
+func (s *Server) genAnswerHTTPS(ctx context.Context, req *dns.Msg, svcb *rules.DNSSVCB) (ans *dns.HTTPS) {
 	ans = &dns.HTTPS{
-		SVCB: *s.genAnswerSVCB(req, svcb),
+		SVCB: *s.genAnswerSVCB(ctx, req, svcb),
 	}
 
 	ans.Hdr.Rrtype = dns.TypeHTTPS
@@ -44,21 +46,25 @@ var strToSVCBKey = map[string]dns.SVCBKey{
 	"echconfig": dns.SVCB_ECHCONFIG,
 }
 
-// svcbKeyHandler is a handler for one SVCB parameter key.
-type svcbKeyHandler func(valStr string) (val dns.SVCBKeyValue)
+// svcbKeyHandler is a handler for one SVCB parameter key.  l must not be nil.
+type svcbKeyHandler func(
+	ctx context.Context,
+	l *slog.Logger,
+	valStr string,
+) (val dns.SVCBKeyValue)
 
 // svcbKeyHandlers are the supported SVCB parameters handlers.
 var svcbKeyHandlers = map[string]svcbKeyHandler{
-	"alpn": func(valStr string) (val dns.SVCBKeyValue) {
+	"alpn": func(_ context.Context, _ *slog.Logger, valStr string) (val dns.SVCBKeyValue) {
 		return &dns.SVCBAlpn{
 			Alpn: []string{valStr},
 		}
 	},
 
-	"ech": func(valStr string) (val dns.SVCBKeyValue) {
-		ech, err := base64.StdEncoding.DecodeString(valStr)
+	"ech": func(ctx context.Context, l *slog.Logger, valStr string) (val dns.SVCBKeyValue) {
+		ech, err := base64.RawStdEncoding.DecodeString(valStr)
 		if err != nil {
-			log.Debug("can't parse svcb/https ech: %s; ignoring", err)
+			l.DebugContext(ctx, "can't parse svcb/https ech, ignoring", slogutil.KeyError, err)
 
 			return nil
 		}
@@ -68,10 +74,10 @@ var svcbKeyHandlers = map[string]svcbKeyHandler{
 		}
 	},
 
-	"ipv4hint": func(valStr string) (val dns.SVCBKeyValue) {
+	"ipv4hint": func(ctx context.Context, l *slog.Logger, valStr string) (val dns.SVCBKeyValue) {
 		ip := net.ParseIP(valStr)
 		if ip4 := ip.To4(); ip == nil || ip4 == nil {
-			log.Debug("can't parse svcb/https ipv4 hint %q; ignoring", valStr)
+			l.DebugContext(ctx, "can't parse svcb/https ipv4 hint, ignoring", "value", valStr)
 
 			return nil
 		}
@@ -81,10 +87,10 @@ var svcbKeyHandlers = map[string]svcbKeyHandler{
 		}
 	},
 
-	"ipv6hint": func(valStr string) (val dns.SVCBKeyValue) {
+	"ipv6hint": func(ctx context.Context, l *slog.Logger, valStr string) (val dns.SVCBKeyValue) {
 		ip := net.ParseIP(valStr)
 		if ip == nil {
-			log.Debug("can't parse svcb/https ipv6 hint %q; ignoring", valStr)
+			l.DebugContext(ctx, "can't parse svcb/https ipv6 hint, ignoring", "value", valStr)
 
 			return nil
 		}
@@ -94,10 +100,10 @@ var svcbKeyHandlers = map[string]svcbKeyHandler{
 		}
 	},
 
-	"mandatory": func(valStr string) (val dns.SVCBKeyValue) {
+	"mandatory": func(ctx context.Context, l *slog.Logger, valStr string) (val dns.SVCBKeyValue) {
 		code, ok := strToSVCBKey[valStr]
 		if !ok {
-			log.Debug("unknown svcb/https mandatory key %q, ignoring", valStr)
+			l.DebugContext(ctx, "unknown svcb/https mandatory key, ignoring", "value", valStr)
 
 			return nil
 		}
@@ -107,14 +113,14 @@ var svcbKeyHandlers = map[string]svcbKeyHandler{
 		}
 	},
 
-	"no-default-alpn": func(_ string) (val dns.SVCBKeyValue) {
+	"no-default-alpn": func(_ context.Context, _ *slog.Logger, _ string) (val dns.SVCBKeyValue) {
 		return &dns.SVCBNoDefaultAlpn{}
 	},
 
-	"port": func(valStr string) (val dns.SVCBKeyValue) {
+	"port": func(ctx context.Context, l *slog.Logger, valStr string) (val dns.SVCBKeyValue) {
 		port64, err := strconv.ParseUint(valStr, 10, 16)
 		if err != nil {
-			log.Debug("can't parse svcb/https port: %s; ignoring", err)
+			l.DebugContext(ctx, "can't parse svcb/https port; ignoring", slogutil.KeyError, err)
 
 			return nil
 		}
@@ -126,15 +132,16 @@ var svcbKeyHandlers = map[string]svcbKeyHandler{
 
 	// TODO(a.garipov): This is the previous name for the parameter that has
 	// since been changed.  Remove this in v0.109.0.
-	"echconfig": func(valStr string) (val dns.SVCBKeyValue) {
-		log.Info(
-			`warning: svcb/https record parameter name "echconfig" is deprecated; ` +
+	"echconfig": func(ctx context.Context, l *slog.Logger, valStr string) (val dns.SVCBKeyValue) {
+		l.WarnContext(
+			ctx,
+			`svcb/https record parameter name "echconfig" is deprecated; `+
 				`use "ech" instead`,
 		)
 
 		ech, err := base64.StdEncoding.DecodeString(valStr)
 		if err != nil {
-			log.Debug("can't parse svcb/https ech: %s; ignoring", err)
+			l.DebugContext(ctx, "can't parse svcb/https ech; ignoring", slogutil.KeyError, err)
 
 			return nil
 		}
@@ -144,7 +151,7 @@ var svcbKeyHandlers = map[string]svcbKeyHandler{
 		}
 	},
 
-	"dohpath": func(valStr string) (val dns.SVCBKeyValue) {
+	"dohpath": func(_ context.Context, _ *slog.Logger, valStr string) (val dns.SVCBKeyValue) {
 		return &dns.SVCBDoHPath{
 			Template: valStr,
 		}
@@ -163,7 +170,11 @@ var svcbKeyHandlers = map[string]svcbKeyHandler{
 //	ipv4hint="127.0.0.1,127.0.0.2" // Unsupported.
 //
 // TODO(a.garipov): Support all of these.
-func (s *Server) genAnswerSVCB(req *dns.Msg, svcb *rules.DNSSVCB) (ans *dns.SVCB) {
+func (s *Server) genAnswerSVCB(
+	ctx context.Context,
+	req *dns.Msg,
+	svcb *rules.DNSSVCB,
+) (ans *dns.SVCB) {
 	ans = &dns.SVCB{
 		Hdr:      s.hdr(req, dns.TypeSVCB),
 		Priority: svcb.Priority,
@@ -177,12 +188,12 @@ func (s *Server) genAnswerSVCB(req *dns.Msg, svcb *rules.DNSSVCB) (ans *dns.SVCB
 	for k, valStr := range svcb.Params {
 		handler, ok := svcbKeyHandlers[k]
 		if !ok {
-			log.Debug("unknown svcb/https key %q, ignoring", k)
+			s.logger.DebugContext(ctx, "unknown svcb/https key, ignoring", "key", k)
 
 			continue
 		}
 
-		val := handler(valStr)
+		val := handler(ctx, s.logger, valStr)
 		if val == nil {
 			continue
 		}

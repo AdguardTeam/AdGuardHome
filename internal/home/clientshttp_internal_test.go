@@ -11,7 +11,6 @@ import (
 	"net/url"
 	"slices"
 	"testing"
-	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
@@ -21,9 +20,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-// testTimeout is the common timeout for tests and contexts.
-const testTimeout = 1 * time.Second
 
 const (
 	testClientIP1 = "1.1.1.1"
@@ -85,11 +81,10 @@ func assertClients(tb testing.TB, want, got []*client.Persistent) {
 	slices.SortFunc(want, sortFunc)
 	slices.SortFunc(got, sortFunc)
 
-	slices.CompareFunc(want, got, func(a, b *client.Persistent) (n int) {
-		assert.True(tb, a.EqualIDs(b), "%q doesn't have the same ids as %q", a.Name, b.Name)
-
-		return 0
-	})
+	for i, a := range want {
+		b := got[i]
+		assert.Truef(tb, a.EqualIDs(b), "%q doesn't have the same ids as %q", a.Name, b.Name)
+	}
 }
 
 // assertPersistentClients is a helper function that uses HTTP API to check
@@ -101,11 +96,8 @@ func assertPersistentClients(tb testing.TB, clients *clientsContainer, want []*c
 	rw := httptest.NewRecorder()
 	clients.handleGetClients(rw, &http.Request{})
 
-	body, err := io.ReadAll(rw.Body)
-	require.NoError(tb, err)
-
 	clientList := &clientListJSON{}
-	err = json.Unmarshal(body, clientList)
+	err := json.NewDecoder(rw.Body).Decode(clientList)
 	require.NoError(tb, err)
 
 	var got []*client.Persistent
@@ -153,7 +145,7 @@ func TestClientsContainer_HandleAddClient(t *testing.T) {
 	clientTwo := newPersistentClientWithIDs(t, "client2", []string{testClientIP2})
 
 	clientEmptyID := newPersistentClient("empty_client_id")
-	clientEmptyID.ClientIDs = []string{""}
+	clientEmptyID.ClientIDs = []client.ClientID{""}
 
 	testCases := []struct {
 		name       string
@@ -278,7 +270,7 @@ func TestClientsContainer_HandleUpdateClient(t *testing.T) {
 	clientModified := newPersistentClientWithIDs(t, "client2", []string{testClientIP2})
 
 	clientEmptyID := newPersistentClient("empty_client_id")
-	clientEmptyID.ClientIDs = []string{""}
+	clientEmptyID.ClientIDs = []client.ClientID{""}
 
 	testCases := []struct {
 		name       string
@@ -421,7 +413,6 @@ func TestClientsContainer_HandleSearchClient(t *testing.T) {
 		allowed     = false
 		dissallowed = true
 
-		emptyRule      = ""
 		disallowedRule = "disallowed_rule"
 	)
 
@@ -432,7 +423,7 @@ func TestClientsContainer_HandleSearchClient(t *testing.T) {
 				return true, disallowedRule
 			}
 
-			return false, emptyRule
+			return false, ""
 		},
 	}
 
@@ -481,11 +472,10 @@ func TestClientsContainer_HandleSearchClient(t *testing.T) {
 			}},
 		},
 		wantRuntime: &clientJSON{
-			Name:           runtimeCli,
-			IDs:            []string{runtimeCliIP},
-			Disallowed:     &allowed,
-			DisallowedRule: &emptyRule,
-			WHOIS:          &whois.Info{},
+			Name:       runtimeCli,
+			IDs:        []string{runtimeCliIP},
+			Disallowed: &allowed,
+			WHOIS:      &whois.Info{},
 		},
 	}, {
 		name: "blocked_access",
@@ -508,10 +498,9 @@ func TestClientsContainer_HandleSearchClient(t *testing.T) {
 			}},
 		},
 		wantRuntime: &clientJSON{
-			IDs:            []string{nonExistentCliIP},
-			Disallowed:     &allowed,
-			DisallowedRule: &emptyRule,
-			WHOIS:          &whois.Info{},
+			IDs:        []string{nonExistentCliIP},
+			Disallowed: &allowed,
+			WHOIS:      &whois.Info{},
 		},
 	}}
 

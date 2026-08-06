@@ -1,13 +1,11 @@
 import React from 'react';
-import { shallowEqual, useSelector } from 'react-redux';
-
-import { Field, reduxForm } from 'redux-form';
+import { useSelector } from 'react-redux';
+import { useFormContext } from 'react-hook-form';
 import { Trans, useTranslation } from 'react-i18next';
 
-import { renderSelectField } from '../../../helpers/form';
 import { validateRequiredValue } from '../../../helpers/validators';
-import { FORM_NAME } from '../../../helpers/constants';
 import { RootState } from '../../../initialState';
+import { DhcpFormValues } from '.';
 
 const renderInterfaces = (interfaces: any) =>
     Object.keys(interfaces).map((item) => {
@@ -47,13 +45,13 @@ const getInterfaceValues = ({ gateway_ip, hardware_address, ip_addresses }: any)
     },
 ];
 
-interface renderInterfaceValuesProps {
+interface RenderInterfaceValuesProps {
     gateway_ip: string;
     hardware_address: string;
     ip_addresses: string[];
 }
 
-const renderInterfaceValues = ({ gateway_ip, hardware_address, ip_addresses }: renderInterfaceValuesProps) => (
+const renderInterfaceValues = ({ gateway_ip, hardware_address, ip_addresses }: RenderInterfaceValuesProps) => (
     <div className="d-flex align-items-end dhcp__interfaces-info">
         <ul className="list-unstyled m-0">
             {getInterfaceValues({
@@ -77,11 +75,15 @@ const renderInterfaceValues = ({ gateway_ip, hardware_address, ip_addresses }: r
 
 const Interfaces = () => {
     const { t } = useTranslation();
+    const {
+        register,
+        watch,
+        formState: { errors },
+    } = useFormContext<DhcpFormValues>();
 
-    const { processingInterfaces, interfaces, enabled } = useSelector((store: RootState) => store.dhcp, shallowEqual);
+    const { processingInterfaces, interfaces, enabled } = useSelector((store: RootState) => store.dhcp);
 
-    const interface_name =
-        useSelector((store: RootState) => store.form[FORM_NAME.DHCP_INTERFACES]?.values?.interface_name);
+    const interface_name = watch('interface_name');
 
     if (processingInterfaces || !interfaces) {
         return null;
@@ -92,27 +94,34 @@ const Interfaces = () => {
     return (
         <div className="row dhcp__interfaces">
             <div className="col col__dhcp">
-                <Field
-                    name="interface_name"
-                    component={renderSelectField}
+                <label htmlFor="interface_name" className="form__label">
+                    {t('dhcp_interface_select')}
+                </label>
+                <select
+                    id="interface_name"
+                    data-testid="interface_name"
                     className="form-control custom-select pl-4 col-md"
-                    validate={[validateRequiredValue]}
-                    label="dhcp_interface_select">
+                    disabled={enabled}
+                    {...register('interface_name', {
+                        validate: validateRequiredValue,
+                    })}>
                     <option value="" disabled={enabled}>
                         {t('dhcp_interface_select')}
                     </option>
                     {renderInterfaces(interfaces)}
-                </Field>
+                </select>
+                {errors.interface_name && (
+                    <div className="form__message form__message--error">{t(errors.interface_name.message)}</div>
+                )}
             </div>
-            {interfaceValue && renderInterfaceValues({
-                gateway_ip: interfaceValue.gateway_ip,
-                hardware_address: interfaceValue.hardware_address,
-                ip_addresses: interfaceValue.ip_addresses
-            })}
+            {interfaceValue &&
+                renderInterfaceValues({
+                    gateway_ip: interfaceValue.gateway_ip,
+                    hardware_address: interfaceValue.hardware_address,
+                    ip_addresses: interfaceValue.ip_addresses,
+                })}
         </div>
     );
 };
 
-export default reduxForm({
-    form: FORM_NAME.DHCP_INTERFACES,
-})(Interfaces);
+export default Interfaces;

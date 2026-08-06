@@ -1,5 +1,7 @@
 package configmigrate
 
+import "context"
+
 // migrateTo14 performs the following changes:
 //
 //	# BEFORE:
@@ -27,7 +29,7 @@ package configmigrate
 //	    'dhcp': true
 //	    'hosts': true
 //	# …
-func migrateTo14(diskConf yobj) (err error) {
+func (m *Migrator) migrateTo14(_ context.Context, diskConf yobj) (err error) {
 	diskConf["schema_version"] = 14
 
 	persistent, ok, err := fieldVal[yarr](diskConf, "clients")

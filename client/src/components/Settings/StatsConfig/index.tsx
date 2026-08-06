@@ -3,13 +3,14 @@ import { withTranslation } from 'react-i18next';
 
 import Card from '../../ui/Card';
 
-import Form from './Form';
+import { Form, FormValues } from './Form';
 import { HOUR } from '../../../helpers/constants';
 
 interface StatsConfigProps {
     interval: number;
     customInterval?: number;
     ignored: unknown[];
+    ignoredEnabled: boolean;
     enabled: boolean;
     processing: boolean;
     processingReset: boolean;
@@ -19,7 +20,7 @@ interface StatsConfigProps {
 }
 
 class StatsConfig extends Component<StatsConfigProps> {
-    handleFormSubmit = ({ enabled, interval, ignored, customInterval }: any) => {
+    handleFormSubmit = ({ enabled, interval, ignored, ignored_enabled, customInterval }: FormValues) => {
         const { t, interval: prevInterval } = this.props;
         const newInterval = customInterval ? customInterval * HOUR : interval;
 
@@ -27,6 +28,7 @@ class StatsConfig extends Component<StatsConfigProps> {
             enabled,
             interval: newInterval,
             ignored: ignored ? ignored.split('\n') : [],
+            ignored_enabled,
         };
 
         if (config.interval < prevInterval) {
@@ -49,17 +51,12 @@ class StatsConfig extends Component<StatsConfigProps> {
     render() {
         const {
             t,
-
             interval,
-
             customInterval,
-
             processing,
-
             processingReset,
-
             ignored,
-
+            ignoredEnabled,
             enabled,
         } = this.props;
 
@@ -71,12 +68,13 @@ class StatsConfig extends Component<StatsConfigProps> {
                             interval,
                             customInterval,
                             enabled,
-                            ignored: ignored.join('\n'),
+                            ignored: ignored?.join('\n'),
+                            ignored_enabled: ignoredEnabled,
                         }}
-                        onSubmit={this.handleFormSubmit}
                         processing={processing}
                         processingReset={processingReset}
-                        handleReset={this.handleReset}
+                        onSubmit={this.handleFormSubmit}
+                        onReset={this.handleReset}
                     />
                 </div>
             </Card>

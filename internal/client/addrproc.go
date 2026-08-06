@@ -268,7 +268,7 @@ func (p *DefaultAddrProc) processRDNS(ctx context.Context, ip netip.Addr) (host 
 
 	ok := p.shouldResolve(ip)
 	if !ok {
-		return
+		return ""
 	}
 
 	host, changed := p.rdns.Process(ctx, ip)

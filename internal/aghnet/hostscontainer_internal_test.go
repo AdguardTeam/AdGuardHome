@@ -7,7 +7,8 @@ import (
 	"testing/fstest"
 
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/testutil/fakefs"
+	"github.com/AdguardTeam/golibs/testutil"
+	"github.com/AdguardTeam/golibs/testutil/fakeio/fakefs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -64,7 +65,7 @@ func TestHostsContainer_PathsToPatterns(t *testing.T) {
 		const errStat errors.Error = "bad file"
 
 		badFS := &fakefs.StatFS{
-			OnOpen: func(_ string) (f fs.File, err error) { panic("not implemented") },
+			OnOpen: func(s string) (f fs.File, err error) { panic(testutil.UnexpectedCall(s)) },
 			OnStat: func(name string) (fi fs.FileInfo, err error) {
 				return nil, errStat
 			},

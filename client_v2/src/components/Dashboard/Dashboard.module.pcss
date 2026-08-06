@@ -1,0 +1,22 @@
+.statContainer {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 0 16px;
+
+    @media (min-width: 1024px) {
+        grid-template-columns: 1fr 1fr;
+        padding: 0;
+    }
+}
+
+.loader {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+}
+
+.emptyState {
+    flex: 1;
+}

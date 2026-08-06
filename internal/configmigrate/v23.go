@@ -1,6 +1,7 @@
 package configmigrate
 
 import (
+	"context"
 	"fmt"
 	"net/netip"
 	"time"
@@ -23,7 +24,7 @@ import (
 //	  'address': '1.2.3.4:8080'
 //	  'session_ttl': '720h'
 //	# …
-func migrateTo23(diskConf yobj) (err error) {
+func (m *Migrator) migrateTo23(_ context.Context, diskConf yobj) (err error) {
 	diskConf["schema_version"] = 23
 
 	bindHost, ok, err := fieldVal[string](diskConf, "bind_host")

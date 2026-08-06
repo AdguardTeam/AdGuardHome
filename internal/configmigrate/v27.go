@@ -1,5 +1,7 @@
 package configmigrate
 
+import "context"
+
 // migrateTo27 performs the following changes:
 //
 //	# BEFORE:
@@ -27,7 +29,7 @@ package configmigrate
 //	  - # …
 //	  # …
 //	# …
-func migrateTo27(diskConf yobj) (err error) {
+func (m *Migrator) migrateTo27(_ context.Context, diskConf yobj) (err error) {
 	diskConf["schema_version"] = 27
 
 	keys := []string{"querylog", "statistics"}

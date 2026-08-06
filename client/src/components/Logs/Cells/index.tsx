@@ -288,7 +288,7 @@ const Row = memo(
         );
 
         return (
-            <div style={style} className={className} onClick={onClick} role="row">
+            <div style={style} className={className} onClick={onClick} role="row" data-testid="querylog_cell">
                 <DateCell {...rowProps} />
 
                 <DomainCell {...rowProps} />

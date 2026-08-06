@@ -10,7 +10,6 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/httphdr"
-	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 )
 
@@ -20,24 +19,15 @@ import (
 // TODO(e.burkov, a.garipov):  Get rid of it.
 type RegisterFunc func(method, url string, handler http.HandlerFunc)
 
-// OK responds with word OK.
-func OK(w http.ResponseWriter) {
+// OK writes "OK\n" to the response.  l and w must not be nil.
+func OK(ctx context.Context, l *slog.Logger, w http.ResponseWriter) {
 	if _, err := io.WriteString(w, "OK\n"); err != nil {
-		log.Error("couldn't write body: %s", err)
+		l.WarnContext(ctx, "writing ok body", slogutil.KeyError, err)
 	}
 }
 
-// Error writes formatted message to w and also logs it.
-//
-// TODO(s.chzhen):  Remove it.
-func Error(r *http.Request, w http.ResponseWriter, code int, format string, args ...any) {
-	text := fmt.Sprintf(format, args...)
-	log.Error("%s %s %s: %s", r.Method, r.Host, r.URL, text)
-	http.Error(w, text, code)
-}
-
-// ErrorAndLog writes formatted message to w and also logs it with the specified
-// logging level.
+// ErrorAndLog writes a formatted HTTP error response and logs it at
+// [slog.LevelError] level.  l, r, and w must not be nil.
 func ErrorAndLog(
 	ctx context.Context,
 	l *slog.Logger,
@@ -48,13 +38,14 @@ func ErrorAndLog(
 	args ...any,
 ) {
 	text := fmt.Sprintf(format, args...)
-	l.ErrorContext(
+	l.WarnContext(
 		ctx,
 		"http error",
 		"host", r.Host,
 		"method", r.Method,
 		"raddr", r.RemoteAddr,
 		"request_uri", r.RequestURI,
+		"status", code,
 		slogutil.KeyError, text,
 	)
 
@@ -74,13 +65,18 @@ const textPlainDeprMsg = `using this api with the text/plain content-type is dep
 
 // WriteTextPlainDeprecated responds to the request with a message about
 // deprecation and removal of a plain-text API if the request is made with the
-// "text/plain" content-type.
-func WriteTextPlainDeprecated(w http.ResponseWriter, r *http.Request) (isPlainText bool) {
+// "text/plain" Content-Type.  All arguments must not be nil.
+func WriteTextPlainDeprecated(
+	ctx context.Context,
+	l *slog.Logger,
+	w http.ResponseWriter,
+	r *http.Request,
+) (isPlainText bool) {
 	if r.Header.Get(httphdr.ContentType) != HdrValTextPlain {
 		return false
 	}
 
-	Error(r, w, http.StatusUnsupportedMediaType, textPlainDeprMsg)
+	ErrorAndLog(ctx, l, r, w, http.StatusUnsupportedMediaType, textPlainDeprMsg)
 
 	return true
 }

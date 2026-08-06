@@ -1,10 +1,9 @@
 package hashprefix
 
 import (
+	"context"
 	"encoding/binary"
 	"time"
-
-	"github.com/AdguardTeam/golibs/log"
 )
 
 // expirySize is the size of expiry in cacheItem.
@@ -22,6 +21,8 @@ type cacheItem struct {
 // toCacheItem decodes cacheItem from data.  data must be at least equal to
 // expiry size.
 func toCacheItem(data []byte) *cacheItem {
+	// #nosec G115 -- Assume that the values are as the ones that have been
+	// encoded.
 	t := time.Unix(int64(binary.BigEndian.Uint64(data)), 0)
 
 	data = data[expirySize:]
@@ -44,6 +45,7 @@ func fromCacheItem(item *cacheItem) (data []byte) {
 	data = make([]byte, 0, len(item.hashes)*hashSize+expirySize)
 
 	expiry := item.expiry.Unix()
+	// #nosec G115 -- The Unix epoch time is highly unlikely to be negative.
 	data = binary.BigEndian.AppendUint64(data, uint64(expiry))
 
 	for _, v := range item.hashes {
@@ -91,7 +93,7 @@ func (c *Checker) findInCache(
 }
 
 // storeInCache caches hashes.
-func (c *Checker) storeInCache(hashesToRequest, respHashes []hostnameHash) {
+func (c *Checker) storeInCache(ctx context.Context, hashesToRequest, respHashes []hostnameHash) {
 	hashToStore := make(map[prefix][]hostnameHash)
 
 	for _, hash := range respHashes {
@@ -102,7 +104,7 @@ func (c *Checker) storeInCache(hashesToRequest, respHashes []hostnameHash) {
 	}
 
 	for pref, hash := range hashToStore {
-		c.setCache(pref, hash)
+		c.setCache(ctx, pref, hash)
 	}
 
 	for _, hash := range hashesToRequest {
@@ -111,18 +113,18 @@ func (c *Checker) storeInCache(hashesToRequest, respHashes []hostnameHash) {
 			var pref prefix
 			copy(pref[:], hash[:])
 
-			c.setCache(pref, nil)
+			c.setCache(ctx, pref, nil)
 		}
 	}
 }
 
 // setCache stores hash in cache.
-func (c *Checker) setCache(pref prefix, hashes []hostnameHash) {
+func (c *Checker) setCache(ctx context.Context, pref prefix, hashes []hostnameHash) {
 	item := &cacheItem{
 		expiry: time.Now().Add(c.cacheTime),
 		hashes: hashes,
 	}
 
 	c.cache.Set(pref[:], fromCacheItem(item))
-	log.Debug("%s: stored in cache: %v", c.svc, pref)
+	c.logger.DebugContext(ctx, "stored in cache", "pref", pref)
 }

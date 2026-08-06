@@ -1,25 +1,29 @@
 package aghalg
 
 import (
+	"cmp"
 	"slices"
 )
 
 // SortedMap is a map that keeps elements in order with internal sorting
-// function.  Must be initialised by the [NewSortedMap].
+// function.  It must be initialized with [NewSortedMap] or [NewSortedMapFunc].
 type SortedMap[K comparable, V any] struct {
 	vals map[K]V
 	cmp  func(a, b K) (res int)
 	keys []K
 }
 
-// NewSortedMap initializes the new instance of sorted map.  cmp is a sort
-// function to keep elements in order.
-//
-// TODO(s.chzhen):  Use cmp.Compare in Go 1.21.
-func NewSortedMap[K comparable, V any](cmp func(a, b K) (res int)) SortedMap[K, V] {
-	return SortedMap[K, V]{
+// NewSortedMap initializes a new instance of sorted map.
+func NewSortedMap[K cmp.Ordered, V any]() (m *SortedMap[K, V]) {
+	return NewSortedMapFunc[K, V](cmp.Compare[K])
+}
+
+// NewSortedMapFunc initializes a new instance of sorted map.  cmpFunc is a
+// comparison function to keep elements in order.  cmpFunc must not be nil.
+func NewSortedMapFunc[K comparable, V any](cmpFunc func(a, b K) (res int)) (m *SortedMap[K, V]) {
+	return &SortedMap[K, V]{
 		vals: map[K]V{},
-		cmp:  cmp,
+		cmp:  cmpFunc,
 	}
 }
 
@@ -38,7 +42,9 @@ func (m *SortedMap[K, V]) Set(key K, val V) {
 // Get returns val by key from the sorted map.
 func (m *SortedMap[K, V]) Get(key K) (val V, ok bool) {
 	if m == nil {
-		return
+		var zero V
+
+		return zero, false
 	}
 
 	val, ok = m.vals[key]
@@ -67,7 +73,7 @@ func (m *SortedMap[K, V]) Clear() {
 		return
 	}
 
-	m.keys = nil
+	m.keys = m.keys[:0]
 	clear(m.vals)
 }
 

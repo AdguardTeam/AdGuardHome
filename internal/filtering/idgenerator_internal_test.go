@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
-	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
+	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -64,7 +64,7 @@ func TestIDGenerator_Fix(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			g := newIDGenerator(1)
+			g := newIDGenerator(1, testLogger)
 			g.fix(tc.in)
 
 			assertUniqueIDs(t, tc.in)
@@ -74,13 +74,13 @@ func TestIDGenerator_Fix(t *testing.T) {
 
 // assertUniqueIDs is a test helper that asserts that the IDs of filters are
 // unique.
-func assertUniqueIDs(t testing.TB, flts []FilterYAML) {
-	t.Helper()
+func assertUniqueIDs(tb testing.TB, flts []FilterYAML) {
+	tb.Helper()
 
-	uc := aghalg.UniqChecker[rulelist.URLFilterID]{}
+	uc := aghalg.UniqChecker[rules.ListID]{}
 	for _, f := range flts {
 		uc.Add(f.ID)
 	}
 
-	assert.NoError(t, uc.Validate())
+	assert.NoError(tb, uc.Validate())
 }

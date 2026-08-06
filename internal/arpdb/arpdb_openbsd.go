@@ -9,12 +9,14 @@ import (
 	"sync"
 
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/golibs/osutil/executil"
 )
 
-func newARPDB(logger *slog.Logger) (arp *cmdARPDB) {
+func newARPDB(logger *slog.Logger, cmdCons executil.CommandConstructor) (arp *cmdARPDB) {
 	return &cmdARPDB{
-		logger: logger,
-		parse:  parseArpA,
+		logger:  logger,
+		cmdCons: cmdCons,
+		parse:   parseArpA,
 		ns: &neighs{
 			mu: &sync.RWMutex{},
 			ns: make([]Neighbor, 0),

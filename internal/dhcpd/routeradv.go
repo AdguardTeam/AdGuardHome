@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net"
+	"slices"
 	"sync/atomic"
 	"time"
 
@@ -14,18 +15,48 @@ import (
 	"golang.org/x/net/ipv6"
 )
 
+// raCtx is a context for the Router Advertisement logic.
 type raCtx struct {
-	raAllowSLAAC     bool   // send RA packets without MO flags
-	raSLAACOnly      bool   // send RA packets with MO flags
-	ipAddr           net.IP // source IP address (link-local-unicast)
-	dnsIPAddr        net.IP // IP address for DNS Server option
-	prefixIPAddr     net.IP // IP address for Prefix option
-	ifaceName        string
-	iface            *net.Interface
-	packetSendPeriod time.Duration // how often RA packets are sent
+	// raAllowSLAAC is used to determine if the ICMP Router Advertisement
+	// messages should be sent.
+	//
+	// If both raAllowSLAAC and raSLAACOnly are false, the Router Advertisement
+	// messages aren't sent.
+	raAllowSLAAC bool
 
-	conn *icmp.PacketConn // ICMPv6 socket
-	stop atomic.Value     // stop the packet sending loop
+	// raSLAACOnly is used to determine if the ICMP Router Advertisement
+	// messages should set M and O flags, see RFC 4861, section 4.2.
+	//
+	// If both raAllowSLAAC and raSLAACOnly are false, the Router Advertisement
+	// messages aren't sent.
+	raSLAACOnly bool
+
+	// ipAddr is an IP address used within the Source Link-Layer Address option.
+	// See RFC 4861, section 4.6.1.
+	ipAddr net.IP
+
+	// dnsIPAddr is an IP address used within the DNS Server option.
+	dnsIPAddr net.IP
+
+	// prefixIPAddr is an IP address used within the Prefix Information option.
+	// See RFC 4861, section 4.6.2.
+	prefixIPAddr net.IP
+
+	// ifaceName is the name of the interface used as a scope of the IP
+	// addresses.
+	ifaceName string
+
+	// iface is the network interface used to send the ICMPv6 packets.
+	iface *net.Interface
+
+	// packetSendPeriod is the interval between sending the ICMPv6 packets.
+	packetSendPeriod time.Duration
+
+	// conn is the ICMPv6 socket.
+	conn *icmp.PacketConn
+
+	// stop is used to stop the packet sending loop.
+	stop atomic.Value
 }
 
 type icmpv6RA struct {
@@ -38,10 +69,11 @@ type icmpv6RA struct {
 	mtu                         uint32
 }
 
-// hwAddrToLinkLayerAddr converts a hardware address into a form required by
-// RFC4861.  That is, a byte slice of length divisible by 8.
+// hwAddrToLinkLayerAddr clones the hardware address and returns it as a byte
+// slice suitable for the Source Link-Layer Address option in the ICMPv6
+// Router Advertisement packet.
 //
-// See https://tools.ietf.org/html/rfc4861#section-4.6.1.
+// TODO(e.burkov):  Check if it's safe to use the original slice.
 func hwAddrToLinkLayerAddr(hwa net.HardwareAddr) (lla []byte, err error) {
 	err = netutil.ValidateMAC(hwa)
 	if err != nil {
@@ -50,19 +82,7 @@ func hwAddrToLinkLayerAddr(hwa net.HardwareAddr) (lla []byte, err error) {
 		return nil, err
 	}
 
-	if len(hwa) == 6 || len(hwa) == 8 {
-		lla = make([]byte, 8)
-		copy(lla, hwa)
-
-		return lla, nil
-	}
-
-	// Assume that netutil.ValidateMAC prevents lengths other than 20 by
-	// now.
-	lla = make([]byte, 24)
-	copy(lla, hwa)
-
-	return lla, nil
+	return slices.Clone(hwa), nil
 }
 
 // Create an ICMPv6.RouterAdvertisement packet with all necessary options.
@@ -103,15 +123,24 @@ func hwAddrToLinkLayerAddr(hwa net.HardwareAddr) (lla []byte, err error) {
 //
 // TODO(a.garipov): Replace with an existing implementation from a dependency.
 func createICMPv6RAPacket(params icmpv6RA) (data []byte, err error) {
-	var lla []byte
-	lla, err = hwAddrToLinkLayerAddr(params.sourceLinkLayerAddress)
+	lla, err := hwAddrToLinkLayerAddr(params.sourceLinkLayerAddress)
 	if err != nil {
-		return nil, fmt.Errorf("converting source link layer address: %w", err)
+		return nil, fmt.Errorf("converting source link-layer address: %w", err)
 	}
 
+	// Calculate length of the source link-layer address option.  As per RFC
+	// 4861, section 4.6.1, the length should be in units of 8 octets, including
+	// the type and length fields.
+	//
+	// See https://datatracker.ietf.org/doc/html/rfc4861#section-4.6.1.
+	srcLLAOptLen := len(lla) + 2
+	// Make sure the value is rounded up to the nearest multiple of 8.
+	srcLLAOptLenValue := (srcLLAOptLen + 7) / 8
+	srcLLAPadLen := srcLLAOptLenValue*8 - srcLLAOptLen
+
 	// TODO(a.garipov): Don't use a magic constant here.  Refactor the code
-	// and make all constants named instead of all those comments..
-	data = make([]byte, 82+len(lla))
+	// and make all constants named instead of all those comments.
+	data = make([]byte, 80+srcLLAOptLen+srcLLAPadLen)
 	i := 0
 
 	// ICMPv6:
@@ -175,12 +204,11 @@ func createICMPv6RAPacket(params icmpv6RA) (data []byte, err error) {
 
 	// Option=Source link-layer address:
 
-	data[i] = 1   // Type
-	data[i+1] = 1 // Length
+	data[i] = 1                         // Type
+	data[i+1] = byte(srcLLAOptLenValue) // Length
 	i += 2
-
 	copy(data[i:], lla) // Link-Layer Address[8/24]
-	i += len(lla)
+	i += len(lla) + srcLLAPadLen
 
 	// Option=Recursive DNS Server:
 

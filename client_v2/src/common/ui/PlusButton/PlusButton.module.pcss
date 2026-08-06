@@ -1,0 +1,35 @@
+.plusButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    font-size: 16px;
+    color: var(--default-link);
+    border: 0;
+    background: none;
+    cursor: pointer;
+
+    &:hover,
+    &:focus {
+        color: var(--hovered-link);
+        background: none;
+    }
+
+    &:active {
+        color: var(--pressed-link);
+        background: none;
+    }
+
+    &:disabled {
+        color: var(--disabled-main-button);
+        cursor: default;
+    }
+
+    &.bold {
+        font-weight: var(--weight-bold);
+    }
+
+    &.semi {
+        font-weight: var(--weight-semi-bold);
+    }
+}

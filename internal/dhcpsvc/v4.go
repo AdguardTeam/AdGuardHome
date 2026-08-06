@@ -10,33 +10,67 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/netutil"
-	"github.com/google/gopacket/layers"
+	"github.com/AdguardTeam/golibs/timeutil"
+	"github.com/AdguardTeam/golibs/validate"
+	"github.com/gopacket/gopacket/layers"
+)
+
+// Port numbers for DHCPv4.
+//
+// See RFC 2131 Section 4.1.
+const (
+	// ServerPortV4 is the standard DHCPv4 server port.
+	ServerPortV4 layers.UDPPort = 67
+
+	// ClientPortV4 is the standard DHCPv4 client port.
+	ClientPortV4 layers.UDPPort = 68
+)
+
+const (
+	// IPv4DefaultTTL is the default Time to Live value in seconds as
+	// recommended by RFC 1700.
+	IPv4DefaultTTL = 64
+
+	// IPProtoVersion is the IP internetwork general protocol version number as
+	// defined by RFC 1700.
+	IPProtoVersion = 4
 )
 
 // IPv4Config is the interface-specific configuration for DHCPv4.
 type IPv4Config struct {
+	// Clock is used to get current time.  It should not be nil.
+	Clock timeutil.Clock
+
 	// GatewayIP is the IPv4 address of the network's gateway.  It is used as
-	// the default gateway for DHCP clients and also used in calculating the
-	// network-specific broadcast address.
+	// the default gateway for DHCP clients and also used for calculating the
+	// network-specific broadcast address.  It should be a valid IPv4 address,
+	// should be within the subnet, and should be outside the address range.
 	GatewayIP netip.Addr
 
 	// SubnetMask is the IPv4 subnet mask of the network.  It should be a valid
 	// IPv4 CIDR (i.e. all 1s followed by all 0s).
+	//
+	// TODO(e.burkov):  Use the a unsinged integer type for the mask length
+	// instead of [netip.Addr] to reduce the chance of misconfiguration.
 	SubnetMask netip.Addr
 
 	// RangeStart is the first address in the range to assign to DHCP clients.
+	// It should be a valid IPv4 address, should be within the subnet, and
+	// should be less or equal to RangeEnd.
 	RangeStart netip.Addr
 
-	// RangeEnd is the last address in the range to assign to DHCP clients.
+	// RangeEnd is the last address in the range to assign to DHCP clients.  It
+	// should be a valid IPv4 address, should be within the subnet, and should
+	// be greater or equal to RangeStart.
 	RangeEnd netip.Addr
 
-	// Options is the list of DHCP options to send to DHCP clients.  The options
-	// having a zero value within the Length field are treated as deletions of
-	// the corresponding options, either implicit or explicit.
+	// Options is the list of explicitly configured DHCP options to send to
+	// clients.  Options with nil Data field are removed from responses.
+	//
+	// TODO(e.burkov):  Validate.
 	Options layers.DHCPOptions
 
-	// LeaseDuration is the TTL of a DHCP lease.
+	// LeaseDuration is the TTL of a DHCP lease.  It should be positive.
 	LeaseDuration time.Duration
 
 	// Enabled is the state of the DHCPv4 service, whether it is enabled or not
@@ -44,42 +78,70 @@ type IPv4Config struct {
 	Enabled bool
 }
 
-// validate returns an error in conf if any.
-func (c *IPv4Config) validate() (err error) {
+// type check
+var _ validate.Interface = (*IPv4Config)(nil)
+
+// Validate implements the [validate.Interface] interface for *IPv4Config.
+func (c *IPv4Config) Validate() (err error) {
 	if c == nil {
-		return errNilConfig
+		return errors.ErrNoValue
 	} else if !c.Enabled {
+		// Don't validate the configuration for disabled interface.
 		return nil
 	}
 
-	var errs []error
+	errs := []error{
+		validate.NotNilInterface("clock", c.Clock),
+		validate.Positive("lease duration", c.LeaseDuration),
+	}
+
+	errs = c.validateSubnet(errs)
+
+	return errors.Join(errs...)
+}
+
+// validateSubnet validates the subnet configuration.
+func (c *IPv4Config) validateSubnet(orig []error) (errs []error) {
+	errs = orig
 
 	if !c.GatewayIP.Is4() {
-		err = newMustErr("gateway ip", "be a valid ipv4", c.GatewayIP)
+		err := fmt.Errorf("gateway ip: %s: must be a valid ipv4", c.GatewayIP)
 		errs = append(errs, err)
 	}
 
 	if !c.SubnetMask.Is4() {
-		err = newMustErr("subnet mask", "be a valid ipv4 cidr mask", c.SubnetMask)
+		err := fmt.Errorf("subnet mask: %s: must be a valid ipv4 cidr mask", c.SubnetMask)
 		errs = append(errs, err)
 	}
 
 	if !c.RangeStart.Is4() {
-		err = newMustErr("range start", "be a valid ipv4", c.RangeStart)
+		err := fmt.Errorf("range start: %s: must be a valid ipv4", c.RangeStart)
 		errs = append(errs, err)
 	}
 
 	if !c.RangeEnd.Is4() {
-		err = newMustErr("range end", "be a valid ipv4", c.RangeEnd)
+		err := fmt.Errorf("range end: %s: must be a valid ipv4", c.RangeEnd)
 		errs = append(errs, err)
 	}
 
-	if c.LeaseDuration <= 0 {
-		err = newMustErr("icmp timeout", "be positive", c.LeaseDuration)
-		errs = append(errs, err)
+	maskLen, _ := net.IPMask(c.SubnetMask.AsSlice()).Size()
+	subnet := netip.PrefixFrom(c.GatewayIP, maskLen)
+
+	switch {
+	case !subnet.Contains(c.RangeStart):
+		errs = append(errs, fmt.Errorf("range start %s is not within %s", c.RangeStart, subnet))
+	case !subnet.Contains(c.RangeEnd):
+		errs = append(errs, fmt.Errorf("range end %s is not within %s", c.RangeEnd, subnet))
 	}
 
-	return errors.Join(errs...)
+	addrSpace, err := newIPRange(c.RangeStart, c.RangeEnd)
+	if err != nil {
+		errs = append(errs, err)
+	} else if addrSpace.contains(c.GatewayIP) {
+		errs = append(errs, fmt.Errorf("gateway ip %s in the ip range %s", c.GatewayIP, addrSpace))
+	}
+
+	return errs
 }
 
 // dhcpInterfaceV4 is a DHCP interface for IPv4 address family.
@@ -88,14 +150,14 @@ type dhcpInterfaceV4 struct {
 	// server.
 	common *netInterface
 
+	// clock used to get current time.
+	clock timeutil.Clock
+
 	// gateway is the IP address of the network gateway.
 	gateway netip.Addr
 
-	// subnet is the network subnet.
+	// subnet is the network subnet of the interface.
 	subnet netip.Prefix
-
-	// addrSpace is the IPv4 address space allocated for leasing.
-	addrSpace ipRange
 
 	// implicitOpts are the options listed in Appendix A of RFC 2131 and
 	// initialized with default values.  It must not have intersections with
@@ -103,66 +165,175 @@ type dhcpInterfaceV4 struct {
 	implicitOpts layers.DHCPOptions
 
 	// explicitOpts are the user-configured options.  It must not have
-	// intersections with implicitOpts.
+	// intersections with implicitOpts.  Options with nil Data field are removed
+	// from responses.
 	explicitOpts layers.DHCPOptions
 }
 
 // newDHCPInterfaceV4 creates a new DHCP interface for IPv4 address family with
-// the given configuration.  It returns an error if the given configuration
-// can't be used.
-func newDHCPInterfaceV4(
+// the given configuration.  If the interface is disabled, it returns nil.
+// baseLogger must not be nil, name must be a valid network interface name, conf
+// must be valid.
+func (srv *DHCPServer) newDHCPInterfaceV4(
 	ctx context.Context,
-	l *slog.Logger,
+	baseLogger *slog.Logger,
 	name string,
 	conf *IPv4Config,
-) (i *dhcpInterfaceV4, err error) {
-	l = l.With(
-		keyInterface, name,
-		keyFamily, netutil.AddrFamilyIPv4,
-	)
-
+) (iface *dhcpInterfaceV4) {
 	if !conf.Enabled {
-		l.DebugContext(ctx, "disabled")
+		baseLogger.DebugContext(ctx, "disabled")
 
-		return nil, nil
+		return nil
 	}
 
 	maskLen, _ := net.IPMask(conf.SubnetMask.AsSlice()).Size()
-	subnet := netip.PrefixFrom(conf.GatewayIP, maskLen)
 
-	switch {
-	case !subnet.Contains(conf.RangeStart):
-		return nil, fmt.Errorf("range start %s is not within %s", conf.RangeStart, subnet)
-	case !subnet.Contains(conf.RangeEnd):
-		return nil, fmt.Errorf("range end %s is not within %s", conf.RangeEnd, subnet)
+	// Ignore the error since it's already checked in [IPv4Config.Validate].
+	addrSpace, _ := newIPRange(conf.RangeStart, conf.RangeEnd)
+
+	iface = &dhcpInterfaceV4{
+		gateway: conf.GatewayIP,
+		clock:   conf.Clock,
+		subnet:  netip.PrefixFrom(conf.GatewayIP, maskLen),
+		common: &netInterface{
+			logger:         baseLogger,
+			addressChecker: noopAddressChecker{},
+			indexMu:        srv.leasesMu,
+			index:          srv.leases,
+			leases:         map[macKey]*Lease{},
+			leasedOffsets:  newBitSet(),
+			name:           name,
+			addrSpace:      addrSpace,
+			leaseTTL:       conf.LeaseDuration,
+		},
 	}
+	iface.implicitOpts, iface.explicitOpts = conf.options(ctx, baseLogger)
 
-	addrSpace, err := newIPRange(conf.RangeStart, conf.RangeEnd)
+	return iface
+}
+
+// updateLease updates lease in the database.  lease must be valid and not
+// expired.
+//
+// TODO(e.burkov):  Consider simplifying the wrapping.
+func (iface *dhcpInterfaceV4) updateLease(ctx context.Context, lease *Lease) (err error) {
+	return iface.common.index.update(ctx, lease, iface.common)
+}
+
+// respondOffer sends a DHCPOFFER message to the client.  idOpt is expected to
+// be the value of the DHCP option Client Identifier, nil if not present.  req
+// and lease must not be nil, fd must be valid
+//
+// TODO(e.burkov):  Consider merging with [respondACK].
+func (iface *dhcpInterfaceV4) respondOffer(
+	ctx context.Context,
+	req *layers.DHCPv4,
+	fd *frameData4,
+	lease *Lease,
+	idOpt []byte,
+) {
+	opts := newRespOptions(layers.DHCPMsgTypeOffer, fd, idOpt)
+	opts = iface.appendTimeOptions(opts, lease)
+	opts = appendHostnameOption(opts, lease.Hostname)
+	opts = iface.appendRequestedOptions(opts, req)
+
+	resp := buildResponse(req, lease.IP, net.IPv4zero, req.Flags, opts)
+	err := respond4(fd, req, resp)
 	if err != nil {
-		return nil, err
-	} else if addrSpace.contains(conf.GatewayIP) {
-		return nil, fmt.Errorf("gateway ip %s in the ip range %s", conf.GatewayIP, addrSpace)
+		iface.common.logger.ErrorContext(ctx, "writing offer", "error", err)
+	}
+}
+
+// respondACK sends a DHCPACK message to the client.  idOpt is expected to be
+// the value of the DHCP option Client Identifier, nil if not present.  req and
+// lease must not be nil, fd must be valid.
+//
+// TODO(e.burkov):  Implement according to RFC, answer to DHCPINFORM
+// differently, when it's supported.
+func (iface *dhcpInterfaceV4) respondACK(
+	ctx context.Context,
+	req *layers.DHCPv4,
+	fd *frameData4,
+	lease *Lease,
+	idOpt []byte,
+) {
+	opts := newRespOptions(layers.DHCPMsgTypeAck, fd, idOpt)
+	opts = iface.appendTimeOptions(opts, lease)
+	opts = iface.appendRequestedOptions(opts, req)
+	opts = appendHostnameOption(opts, lease.Hostname)
+
+	resp := buildResponse(req, lease.IP, req.ClientIP, req.Flags, opts)
+	err := respond4(fd, req, resp)
+	if err != nil {
+		iface.common.logger.ErrorContext(ctx, "writing ack", "error", err)
+	}
+}
+
+// respondNAK constructs and sends a DHCPNAK message to the client.  idOpt is
+// expected to be the value of the DHCP option Client Identifier, nil if not
+// present.  req and resp must not be nil, fd must be valid.
+//
+// See https://datatracker.ietf.org/doc/html/rfc2131#section-4.3.1.
+//
+// TODO(e.burkov):  Add a message according to RFC 2131.
+func (iface *dhcpInterfaceV4) respondNAK(
+	ctx context.Context,
+	req *layers.DHCPv4,
+	fd *frameData4,
+	idOpt []byte,
+) {
+	opts := newRespOptions(layers.DHCPMsgTypeNak, fd, idOpt)
+
+	// If 'giaddr' is set in the DHCPREQUEST message, the client is on a
+	// different subnet.  The server MUST set the broadcast bit in the DHCPNAK,
+	// so that the relay agent will broadcast the DHCPNAK to the client, because
+	// the client may not have a correct network address or subnet mask, and the
+	// client may not be answering ARP requests.
+	flags := req.Flags
+	if isSpecified(req.RelayAgentIP) {
+		flags = flags | FlagsBroadcast
 	}
 
-	i = &dhcpInterfaceV4{
-		gateway:   conf.GatewayIP,
-		subnet:    subnet,
-		addrSpace: addrSpace,
-		common:    newNetInterface(name, l, conf.LeaseDuration),
+	resp := buildResponse(req, netip.Addr{}, net.IPv4zero, flags, opts)
+	err := respond4(fd, req, resp)
+	if err != nil {
+		iface.common.logger.ErrorContext(ctx, "writing nak", "error", err)
 	}
-	i.implicitOpts, i.explicitOpts = conf.options(ctx, l)
+}
 
-	return i, nil
+// buildResponse constructs a DHCPv4 response message.  req must not be nil.
+// Note that in order to be a valid response, opts must contain some mandatory
+// options, e.g. a message type.
+func buildResponse(
+	req *layers.DHCPv4,
+	yiaddr netip.Addr,
+	ciaddr net.IP,
+	flags uint16,
+	opts layers.DHCPOptions,
+) (resp *layers.DHCPv4) {
+	return &layers.DHCPv4{
+		Operation:    layers.DHCPOpReply,
+		HardwareType: layers.LinkTypeEthernet,
+		HardwareLen:  uint8(len(req.ClientHWAddr)),
+		Xid:          req.Xid,
+		Secs:         0,
+		Flags:        flags,
+		ClientIP:     ciaddr,
+		RelayAgentIP: req.RelayAgentIP,
+		ClientHWAddr: req.ClientHWAddr,
+		YourClientIP: yiaddr.AsSlice(),
+		Options:      opts,
+	}
 }
 
 // dhcpInterfacesV4 is a slice of network interfaces of IPv4 address family.
 type dhcpInterfacesV4 []*dhcpInterfaceV4
 
 // find returns the first network interface within ifaces containing ip.  It
-// returns false if there is no such interface.
+// returns false if there is no such interface.  ip must be valid.
 func (ifaces dhcpInterfacesV4) find(ip netip.Addr) (iface4 *netInterface, ok bool) {
 	i := slices.IndexFunc(ifaces, func(iface *dhcpInterfaceV4) (contains bool) {
-		return iface.subnet.Contains(ip)
+		return iface.common.addrSpace.contains(ip)
 	})
 	if i < 0 {
 		return nil, false
@@ -171,193 +342,81 @@ func (ifaces dhcpInterfacesV4) find(ip netip.Addr) (iface4 *netInterface, ok boo
 	return ifaces[i].common, true
 }
 
-// options returns the implicit and explicit options for the interface.  The two
-// lists are disjoint and the implicit options are initialized with default
-// values.
-//
-// TODO(e.burkov):  DRY with the IPv6 version.
-func (c *IPv4Config) options(ctx context.Context, l *slog.Logger) (imp, exp layers.DHCPOptions) {
-	// Set default values of host configuration parameters listed in Appendix A
-	// of RFC-2131.
-	imp = layers.DHCPOptions{
-		// Values From Configuration
+// FlagsBroadcast is the DHCPv4 message flags field with the broadcast bit set.
+const FlagsBroadcast uint16 = 1 << 15
 
-		layers.NewDHCPOption(layers.DHCPOptSubnetMask, c.SubnetMask.AsSlice()),
-		layers.NewDHCPOption(layers.DHCPOptRouter, c.GatewayIP.AsSlice()),
-
-		// IP-Layer Per Host
-
-		// An Internet host that includes embedded gateway code MUST have a
-		// configuration switch to disable the gateway function, and this switch
-		// MUST default to the non-gateway mode.
-		//
-		// See https://datatracker.ietf.org/doc/html/rfc1122#section-3.3.5.
-		layers.NewDHCPOption(layers.DHCPOptIPForwarding, []byte{0x0}),
-
-		// A host that supports non-local source-routing MUST have a
-		// configurable switch to disable forwarding, and this switch MUST
-		// default to disabled.
-		//
-		// See https://datatracker.ietf.org/doc/html/rfc1122#section-3.3.5.
-		layers.NewDHCPOption(layers.DHCPOptSourceRouting, []byte{0x0}),
-
-		// Do not set the Policy Filter Option since it only makes sense when
-		// the non-local source routing is enabled.
-
-		// The minimum legal value is 576.
-		//
-		// See https://datatracker.ietf.org/doc/html/rfc2132#section-4.4.
-		layers.NewDHCPOption(layers.DHCPOptDatagramMTU, []byte{0x2, 0x40}),
-
-		// Set the current recommended default time to live for the Internet
-		// Protocol which is 64.
-		//
-		// See https://www.iana.org/assignments/ip-parameters/ip-parameters.xhtml#ip-parameters-2.
-		layers.NewDHCPOption(layers.DHCPOptDefaultTTL, []byte{0x40}),
-
-		// For example, after the PTMU estimate is decreased, the timeout should
-		// be set to 10 minutes; once this timer expires and a larger MTU is
-		// attempted, the timeout can be set to a much smaller value.
-		//
-		// See https://datatracker.ietf.org/doc/html/rfc1191#section-6.6.
-		layers.NewDHCPOption(layers.DHCPOptPathMTUAgingTimeout, []byte{0x0, 0x0, 0x2, 0x58}),
-
-		// There is a table describing the MTU values representing all major
-		// data-link technologies in use in the Internet so that each set of
-		// similar MTUs is associated with a plateau value equal to the lowest
-		// MTU in the group.
-		//
-		// See https://datatracker.ietf.org/doc/html/rfc1191#section-7.
-		layers.NewDHCPOption(layers.DHCPOptPathPlateuTableOption, []byte{
-			0x0, 0x44,
-			0x1, 0x28,
-			0x1, 0xFC,
-			0x3, 0xEE,
-			0x5, 0xD4,
-			0x7, 0xD2,
-			0x11, 0x0,
-			0x1F, 0xE6,
-			0x45, 0xFA,
-		}),
-
-		// IP-Layer Per Interface
-
-		// Don't set the Interface MTU because client may choose the value on
-		// their own since it's listed in the [Host Requirements RFC].  It also
-		// seems the values listed there sometimes appear obsolete, see
-		// https://github.com/AdguardTeam/AdGuardHome/issues/5281.
-		//
-		// [Host Requirements RFC]: https://datatracker.ietf.org/doc/html/rfc1122#section-3.3.3.
-
-		// Set the All Subnets Are Local Option to false since commonly the
-		// connected hosts aren't expected to be multihomed.
-		//
-		// See https://datatracker.ietf.org/doc/html/rfc1122#section-3.3.3.
-		layers.NewDHCPOption(layers.DHCPOptAllSubsLocal, []byte{0x0}),
-
-		// Set the Perform Mask Discovery Option to false to provide the subnet
-		// mask by options only.
-		//
-		// See https://datatracker.ietf.org/doc/html/rfc1122#section-3.2.2.9.
-		layers.NewDHCPOption(layers.DHCPOptMaskDiscovery, []byte{0x0}),
-
-		// A system MUST NOT send an Address Mask Reply unless it is an
-		// authoritative agent for address masks.  An authoritative agent may be
-		// a host or a gateway, but it MUST be explicitly configured as a
-		// address mask agent.
-		//
-		// See https://datatracker.ietf.org/doc/html/rfc1122#section-3.2.2.9.
-		layers.NewDHCPOption(layers.DHCPOptMaskSupplier, []byte{0x0}),
-
-		// Set the Perform Router Discovery Option to true as per Router
-		// Discovery Document.
-		//
-		// See https://datatracker.ietf.org/doc/html/rfc1256#section-5.1.
-		layers.NewDHCPOption(layers.DHCPOptRouterDiscovery, []byte{0x1}),
-
-		// The all-routers address is preferred wherever possible.
-		//
-		// See https://datatracker.ietf.org/doc/html/rfc1256#section-5.1.
-		layers.NewDHCPOption(layers.DHCPOptSolicitAddr, netutil.IPv4allrouter()),
-
-		// Don't set the Static Routes Option since it should be set up by
-		// system administrator.
-		//
-		// See https://datatracker.ietf.org/doc/html/rfc1122#section-3.3.1.2.
-
-		// A datagram with the destination address of limited broadcast will be
-		// received by every host on the connected physical network but will not
-		// be forwarded outside that network.
-		//
-		// See https://datatracker.ietf.org/doc/html/rfc1122#section-3.2.1.3.
-		layers.NewDHCPOption(layers.DHCPOptBroadcastAddr, netutil.IPv4bcast()),
-
-		// Link-Layer Per Interface
-
-		// If the system does not dynamically negotiate use of the trailer
-		// protocol on a per-destination basis, the default configuration MUST
-		// disable the protocol.
-		//
-		// See https://datatracker.ietf.org/doc/html/rfc1122#section-2.3.1.
-		layers.NewDHCPOption(layers.DHCPOptARPTrailers, []byte{0x0}),
-
-		// For proxy ARP situations, the timeout needs to be on the order of a
-		// minute.
-		//
-		// See https://datatracker.ietf.org/doc/html/rfc1122#section-2.3.2.1.
-		layers.NewDHCPOption(layers.DHCPOptARPTimeout, []byte{0x0, 0x0, 0x0, 0x3C}),
-
-		// An Internet host that implements sending both the RFC-894 and the
-		// RFC-1042 encapsulations MUST provide a configuration switch to select
-		// which is sent, and this switch MUST default to RFC-894.
-		//
-		// See https://datatracker.ietf.org/doc/html/rfc1122#section-2.3.3.
-		layers.NewDHCPOption(layers.DHCPOptEthernetEncap, []byte{0x0}),
-
-		// TCP Per Host
-
-		// A fixed value must be at least big enough for the Internet diameter,
-		// i.e., the longest possible path.  A reasonable value is about twice
-		// the diameter, to allow for continued Internet growth.
-		//
-		// See https://datatracker.ietf.org/doc/html/rfc1122#section-3.2.1.7.
-		layers.NewDHCPOption(layers.DHCPOptTCPTTL, []byte{0x0, 0x0, 0x0, 0x3C}),
-
-		// The interval MUST be configurable and MUST default to no less than
-		// two hours.
-		//
-		// See https://datatracker.ietf.org/doc/html/rfc1122#section-4.2.3.6.
-		layers.NewDHCPOption(layers.DHCPOptTCPKeepAliveInt, []byte{0x0, 0x0, 0x1C, 0x20}),
-
-		// Unfortunately, some misbehaved TCP implementations fail to respond to
-		// a probe segment unless it contains data.
-		//
-		// See https://datatracker.ietf.org/doc/html/rfc1122#section-4.2.3.6.
-		layers.NewDHCPOption(layers.DHCPOptTCPKeepAliveGarbage, []byte{0x1}),
-	}
-	slices.SortFunc(imp, compareV4OptionCodes)
-
-	// Set values for explicitly configured options.
-	for _, o := range c.Options {
-		i, found := slices.BinarySearchFunc(imp, o, compareV4OptionCodes)
-		if found {
-			imp = slices.Delete(imp, i, i+1)
-		}
-
-		i, found = slices.BinarySearchFunc(exp, o, compareV4OptionCodes)
-		if o.Length > 0 {
-			exp = slices.Insert(exp, i, o)
-		} else if found {
-			exp = slices.Delete(exp, i, i+1)
-		}
+// respond4 sends a DHCPv4 response.  req and resp must not be nil, fd must be
+// valid.
+func respond4(fd *frameData4, req, resp *layers.DHCPv4) (err error) {
+	eth := &layers.Ethernet{
+		SrcMAC:       fd.ether.DstMAC,
+		DstMAC:       fd.ether.SrcMAC,
+		EthernetType: layers.EthernetTypeIPv4,
 	}
 
-	l.DebugContext(ctx, "options", "implicit", imp, "explicit", exp)
+	ip, udp := newIPv4UDPLayers(fd, req, resp)
 
-	return imp, exp
+	err = respond(fd.device, eth, udp, ip, resp)
+	if err != nil {
+		return fmt.Errorf("writing dhcpv4 response: %w", err)
+	}
+
+	return nil
 }
 
-// compareV4OptionCodes compares option codes of a and b.
-func compareV4OptionCodes(a, b layers.DHCPOption) (res int) {
-	return int(a.Type) - int(b.Type)
+// newIPv4UDPLayers creates new UDP and IP layers for DHCPv4 response.  req and
+// resp must not be nil, fd must be valid.
+func newIPv4UDPLayers(fd *frameData4, req, resp *layers.DHCPv4) (ip *layers.IPv4, udp *layers.UDP) {
+	var dstIP net.IP
+	dstPort := ClientPortV4
+	switch {
+	case isSpecified(req.RelayAgentIP.To4()):
+		// If the 'giaddr' field in a DHCP message from a client is non-zero,
+		// the server sends any return messages to the 'DHCP server' port on the
+		// BOOTP relay agent whose address appears in 'giaddr'.
+		dstIP, dstPort = req.RelayAgentIP.To4(), ServerPortV4
+	case isSpecified(req.ClientIP.To4()):
+		// If the 'giaddr' field is zero and the 'ciaddr' field is nonzero, then
+		// the server unicasts DHCPOFFER and DHCPACK messages to the address in
+		// 'ciaddr'.
+		dstIP = req.ClientIP.To4()
+	case req.Flags&FlagsBroadcast != 0:
+		// If 'giaddr' is zero and 'ciaddr' is zero, and the broadcast bit is
+		// set, then the server broadcasts DHCPOFFER and DHCPACK messages to
+		// 0xffffffff.
+		dstIP = net.IPv4bcast.To4()
+	case isSpecified(resp.YourClientIP.To4()):
+		// If the broadcast bit is not set and 'giaddr' is zero and 'ciaddr' is
+		// zero, then the server unicasts DHCPOFFER and DHCPACK messages to the
+		// client's hardware address and 'yiaddr' address.
+		dstIP = resp.YourClientIP.To4()
+	default:
+		// Unicast to the client's hardware address only.
+		dstIP = netip.IPv4Unspecified().AsSlice()
+	}
+
+	ip = &layers.IPv4{
+		Version:  IPProtoVersion,
+		TTL:      IPv4DefaultTTL,
+		SrcIP:    fd.localAddr.AsSlice(),
+		DstIP:    dstIP,
+		Protocol: layers.IPProtocolUDP,
+	}
+	udp = &layers.UDP{
+		SrcPort: ServerPortV4,
+		DstPort: dstPort,
+	}
+
+	// It only returns an error if the network layer is not an IP layer.
+	err := udp.SetNetworkLayerForChecksum(ip)
+	if err != nil {
+		panic(err)
+	}
+
+	return ip, udp
+}
+
+// isSpecified checks if the IP is not nil and not unspecified.
+func isSpecified(ip net.IP) (ok bool) {
+	return ip != nil && !ip.IsUnspecified()
 }

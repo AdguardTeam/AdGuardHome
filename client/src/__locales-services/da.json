@@ -1,0 +1,38 @@
+{
+  "servicesgroup.ai.name": {
+    "message": "Kunstig intelligens"
+  },
+  "servicesgroup.cdn.name": {
+    "message": "Indholdsleveringsnetværk (CDN)"
+  },
+  "servicesgroup.dating.name": {
+    "message": "Dating-tjenester"
+  },
+  "servicesgroup.gambling.name": {
+    "message": "Spil og væddemål"
+  },
+  "servicesgroup.gaming.name": {
+    "message": "Gaming"
+  },
+  "servicesgroup.hosting.name": {
+    "message": "Webhosting"
+  },
+  "servicesgroup.messenger.name": {
+    "message": "Beskedtjenester"
+  },
+  "servicesgroup.privacy.name": {
+    "message": "Fortrolighedsværktøjer"
+  },
+  "servicesgroup.shopping.name": {
+    "message": "Shopping"
+  },
+  "servicesgroup.social_network.name": {
+    "message": "Sociale netværk"
+  },
+  "servicesgroup.software.name": {
+    "message": "Softwareudvikling"
+  },
+  "servicesgroup.streaming.name": {
+    "message": "Streamingtjenester"
+  }
+}

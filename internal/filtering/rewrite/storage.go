@@ -2,13 +2,14 @@
 package rewrite
 
 import (
+	"context"
 	"fmt"
+	"log/slog"
 	"slices"
 	"strings"
 	"sync"
 
 	"github.com/AdguardTeam/golibs/container"
-	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/urlfilter"
 	"github.com/AdguardTeam/urlfilter/filterlist"
 	"github.com/AdguardTeam/urlfilter/rules"
@@ -30,8 +31,23 @@ type Storage interface {
 	List() (items []*Item)
 }
 
+// Config is the configuration for DefaultStorage.
+type Config struct {
+	// logger is used for logging storage processes.  It must not be nil.
+	Logger *slog.Logger
+
+	// Rewrites stores the rewrite entries.  It must not be nil.
+	Rewrites []*Item
+
+	// ListID is used as an identifier of the underlying rules list.
+	ListID rules.ListID
+}
+
 // DefaultStorage is the default storage for rewrite rules.
 type DefaultStorage struct {
+	// logger is used for logging storage processes.  It must not be nil.
+	logger *slog.Logger
+
 	// mu protects items.
 	mu *sync.RWMutex
 
@@ -39,25 +55,22 @@ type DefaultStorage struct {
 	engine *urlfilter.DNSEngine
 
 	// ruleList is the filtering rule ruleList used by the engine.
-	ruleList filterlist.RuleList
+	ruleList filterlist.Interface
 
 	// rewrites stores the rewrite entries from configuration.
 	rewrites []*Item
 
 	// urlFilterID is the synthetic integer identifier for the urlfilter engine.
-	//
-	// TODO(a.garipov): Change the type to a string in module urlfilter and
-	// remove this crutch.
-	urlFilterID int
+	urlFilterID rules.ListID
 }
 
-// NewDefaultStorage returns new rewrites storage.  listID is used as an
-// identifier of the underlying rules list.  rewrites must not be nil.
-func NewDefaultStorage(listID int, rewrites []*Item) (s *DefaultStorage, err error) {
+// NewDefaultStorage returns new rewrites storage.  conf must not be nil.
+func NewDefaultStorage(conf *Config) (s *DefaultStorage, err error) {
 	s = &DefaultStorage{
+		logger:      conf.Logger,
 		mu:          &sync.RWMutex{},
-		urlFilterID: listID,
-		rewrites:    rewrites,
+		urlFilterID: conf.ListID,
+		rewrites:    conf.Rewrites,
 	}
 
 	s.mu.Lock()
@@ -79,55 +92,85 @@ func (s *DefaultStorage) MatchRequest(dReq *urlfilter.DNSRequest) (rws []*rules.
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	rrules := s.rewriteRulesForReq(dReq)
-	if len(rrules) == 0 {
+	ctx := context.TODO()
+
+	rewriteRules := s.rewriteRulesForReq(dReq)
+	if len(rewriteRules) == 0 {
 		return nil
 	}
 
+	resolvedRules, wildcardRewrite := s.resolveCNAMEChain(ctx, dReq, rewriteRules)
+	if wildcardRewrite != nil {
+		return []*rules.DNSRewrite{wildcardRewrite}
+	}
+
+	if resolvedRules == nil {
+		return nil
+	}
+
+	return s.collectDNSRewrites(resolvedRules, dReq.DNSType)
+}
+
+// resolveCNAMEChain follows the CNAME chain for a DNS request, handling loops
+// and special cases.  dReq must not be nil, and rewriteRules must not contain
+// nil elements.
+func (s *DefaultStorage) resolveCNAMEChain(
+	ctx context.Context,
+	dReq *urlfilter.DNSRequest,
+	rewriteRules []*rules.NetworkRule,
+) (resolvedRules []*rules.NetworkRule, wildcardRewrite *rules.DNSRewrite) {
 	// TODO(a.garipov): Check cnames for cycles on initialization.
 	cnames := container.NewMapSet[string]()
 	host := dReq.Hostname
-	for len(rrules) > 0 && rrules[0].DNSRewrite != nil && rrules[0].DNSRewrite.NewCNAME != "" {
-		rule := rrules[0]
+	for len(rewriteRules) > 0 &&
+		rewriteRules[0].DNSRewrite != nil &&
+		rewriteRules[0].DNSRewrite.NewCNAME != "" {
+		rule := rewriteRules[0]
 		rwAns := rule.DNSRewrite.NewCNAME
 
-		log.Debug("rewrite: cname for %s is %s", host, rwAns)
+		s.logger.DebugContext(ctx, "cname found", "host", host, "cname", rwAns)
 
 		if dReq.Hostname == rwAns {
 			// A request for the hostname itself is an exception rule.
 			// TODO(d.kolyshev): Check rewrite of a pattern onto itself.
 
-			return nil
+			return nil, nil
 		}
 
-		if host == rwAns && isWildcard(rule.RuleText) {
-			// An "*.example.com → sub.example.com" rewrite matching in a loop.
-			//
-			// See https://github.com/AdguardTeam/AdGuardHome/issues/4016.
-
-			return []*rules.DNSRewrite{rule.DNSRewrite}
+		if isSelfMatchingWildcard(host, rwAns, rule.Text()) {
+			return nil, rule.DNSRewrite
 		}
 
 		if cnames.Has(rwAns) {
-			log.Info("rewrite: cname loop for %q on %q", dReq.Hostname, rwAns)
+			s.logger.WarnContext(ctx, "rewrite cname loop", "host", dReq.Hostname, "rewrite", rwAns)
 
-			return nil
+			return nil, nil
 		}
 
 		cnames.Add(rwAns)
 
-		drules := s.rewriteRulesForReq(&urlfilter.DNSRequest{
+		rewriteRulesForReq := s.rewriteRulesForReq(&urlfilter.DNSRequest{
 			Hostname: rwAns,
 			DNSType:  dReq.DNSType,
 		})
-		if drules != nil {
-			rrules = drules
+		if rewriteRulesForReq != nil {
+			rewriteRules = rewriteRulesForReq
 		}
 
 		host = rwAns
 	}
 
-	return s.collectDNSRewrites(rrules, dReq.DNSType)
+	return rewriteRules, nil
+}
+
+// isSelfMatchingWildcard returns true when a wildcard rewrite matches its own
+// result.
+//
+// For example, an "*.example.com → sub.example.com" rewrite matching in a loop.
+//
+// See https://github.com/AdguardTeam/AdGuardHome/issues/4016.
+func isSelfMatchingWildcard(host, rwAns, ruleText string) (ok bool) {
+	return host == rwAns && isWildcard(ruleText)
 }
 
 // collectDNSRewrites filters DNSRewrite by question type.
@@ -168,12 +211,14 @@ func (s *DefaultStorage) Remove(item *Item) (err error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	ctx := context.TODO()
+
 	arr := []*Item{}
 
 	// TODO(d.kolyshev): Use slices.IndexFunc + slices.Delete?
 	for _, ent := range s.rewrites {
 		if ent.equal(item) {
-			log.Debug("rewrite: removed element: %s -> %s", ent.Domain, ent.Answer)
+			s.logger.DebugContext(ctx, "removed element", "domain", ent.Domain, "ans", ent.Answer)
 
 			continue
 		}
@@ -201,13 +246,13 @@ func (s *DefaultStorage) resetRules() (err error) {
 		rulesText = append(rulesText, rewrite.toRule())
 	}
 
-	strList := &filterlist.StringRuleList{
+	strList := filterlist.NewString(&filterlist.StringConfig{
 		ID:             s.urlFilterID,
 		RulesText:      strings.Join(rulesText, "\n"),
 		IgnoreCosmetic: true,
-	}
+	})
 
-	rs, err := filterlist.NewRuleStorage([]filterlist.RuleList{strList})
+	rs, err := filterlist.NewRuleStorage([]filterlist.Interface{strList})
 	if err != nil {
 		return fmt.Errorf("creating list storage: %w", err)
 	}
@@ -215,7 +260,12 @@ func (s *DefaultStorage) resetRules() (err error) {
 	s.ruleList = strList
 	s.engine = urlfilter.NewDNSEngine(rs)
 
-	log.Info("rewrite: filter %d: reset %d rules", s.urlFilterID, s.engine.RulesCount)
+	s.logger.InfoContext(
+		context.TODO(),
+		"reset rules",
+		"filter", s.urlFilterID,
+		"count", s.engine.RulesCount,
+	)
 
 	return nil
 }

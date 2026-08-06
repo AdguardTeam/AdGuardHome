@@ -7,7 +7,7 @@ import PageTitle from '../ui/PageTitle';
 
 import Examples from './Examples';
 
-import Check from './Check';
+import Check, { FilteringCheckFormValues } from './Check';
 
 import { getTextareaCommentsHighlight, syncScroll } from '../../helpers/highlightTextareaComments';
 import { COMMENT_LINE_DEFAULT_TOKEN } from '../../helpers/constants';
@@ -48,8 +48,18 @@ class CustomRules extends Component<CustomRulesProps> {
         this.props.setRules(this.props.filtering.userRules);
     };
 
-    handleCheck = (values: any) => {
-        this.props.checkHost(values);
+    handleCheck = (values: FilteringCheckFormValues) => {
+        const params: FilteringCheckFormValues = { name: values.name };
+
+        if (values.client) {
+            params.client = values.client;
+        }
+
+        if (values.qtype) {
+            params.qtype = values.qtype;
+        }
+
+        this.props.checkHost(params);
     };
 
     onScroll = (e: any) => syncScroll(e, this.ref);
@@ -68,6 +78,7 @@ class CustomRules extends Component<CustomRulesProps> {
                     <form onSubmit={this.handleSubmit}>
                         <div className="text-edit-container mb-4">
                             <textarea
+                                data-testid="custom_rule_textarea"
                                 className="form-control font-monospace text-input"
                                 value={userRules}
                                 onChange={this.handleChange}
@@ -81,6 +92,7 @@ class CustomRules extends Component<CustomRulesProps> {
 
                         <div className="card-actions">
                             <button
+                                data-testid="apply_custom_rule"
                                 className="btn btn-success btn-standard btn-large"
                                 type="submit"
                                 onClick={this.handleSubmit}>

@@ -203,8 +203,8 @@ type engineRefresh struct {
 func (r *engineRefresh) process(
 	ctx context.Context,
 	filters []*Filter,
-) (ruleLists []filterlist.RuleList, errs []error) {
-	ruleLists = make([]filterlist.RuleList, 0, len(filters))
+) (ruleLists []filterlist.Interface, errs []error) {
+	ruleLists = make([]filterlist.Interface, 0, len(filters))
 	for i, f := range filters {
 		select {
 		case <-ctx.Done():

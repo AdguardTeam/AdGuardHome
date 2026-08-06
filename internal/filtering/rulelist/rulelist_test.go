@@ -13,14 +13,16 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
 	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/AdguardTeam/golibs/testutil"
+	"github.com/AdguardTeam/urlfilter/rules"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 // testTimeout is the common timeout for tests.
 const testTimeout = 1 * time.Second
 
-// testURLFilterID is the common [rulelist.URLFilterID] for tests.
-const testURLFilterID rulelist.URLFilterID = 1
+// testURLFilterID is the common rules.ListID for tests.
+const testURLFilterID rules.ListID = 1
 
 // testTitle is the common title for tests.
 const testTitle = "Test Title"
@@ -42,18 +44,18 @@ const (
 )
 
 // urlFilterIDCounter is the atomic integer used to create unique filter IDs.
-var urlFilterIDCounter = &atomic.Int32{}
+var urlFilterIDCounter = &atomic.Uint64{}
 
 // newURLFilterID returns a new unique URLFilterID.
-func newURLFilterID() (id rulelist.URLFilterID) {
-	return rulelist.URLFilterID(urlFilterIDCounter.Add(1))
+func newURLFilterID() (id rules.ListID) {
+	return rules.ListID(urlFilterIDCounter.Add(1))
 }
 
 // newFilter is a helper for creating new filters in tests.  It does not
 // register the closing of the filter using t.Cleanup; callers must do that
 // either directly or by using the filter in an engine.
-func newFilter(t testing.TB, u *url.URL, name string) (f *rulelist.Filter) {
-	t.Helper()
+func newFilter(tb testing.TB, u *url.URL, name string) (f *rulelist.Filter) {
+	tb.Helper()
 
 	f, err := rulelist.NewFilter(&rulelist.FilterConfig{
 		URL:         u,
@@ -62,7 +64,7 @@ func newFilter(t testing.TB, u *url.URL, name string) (f *rulelist.Filter) {
 		URLFilterID: newURLFilterID(),
 		Enabled:     true,
 	})
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
 	return f
 }
@@ -71,24 +73,24 @@ func newFilter(t testing.TB, u *url.URL, name string) (f *rulelist.Filter) {
 // file and the HTTP-server.  It also registers file removal and server stopping
 // using t.Cleanup.
 func newFilterLocations(
-	t testing.TB,
+	tb testing.TB,
 	cacheDir string,
 	fileData string,
 	httpData string,
 ) (fileURL, srvURL *url.URL) {
-	t.Helper()
+	tb.Helper()
 
 	f, err := os.CreateTemp(cacheDir, "")
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
 	err = f.Close()
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
 	filePath := f.Name()
 	err = os.WriteFile(filePath, []byte(fileData), 0o644)
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
-	testutil.CleanupAndRequireSuccess(t, func() (err error) {
+	testutil.CleanupAndRequireSuccess(tb, func() (err error) {
 		return os.Remove(filePath)
 	})
 
@@ -97,21 +99,35 @@ func newFilterLocations(
 		Path:   filePath,
 	}
 
-	srv := newStringHTTPServer(httpData)
-	t.Cleanup(srv.Close)
+	srv := newStringHTTPServer(tb, httpData)
+	tb.Cleanup(srv.Close)
 
 	srvURL, err = url.Parse(srv.URL)
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
 	return fileURL, srvURL
 }
 
 // newStringHTTPServer returns a new HTTP server that serves s.
-func newStringHTTPServer(s string) (srv *httptest.Server) {
-	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		pt := testutil.PanicT{}
+func newStringHTTPServer(tb testing.TB, s string) (srv *httptest.Server) {
+	tb.Helper()
 
+	pt := testutil.NewPanicT(tb)
+
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		_, err := io.WriteString(w, s)
 		require.NoError(pt, err)
 	}))
+}
+
+func TestIDs(t *testing.T) {
+	// Use a variable to prevent compilation errors.
+	id := rulelist.IDCustom
+	assert.Equal(t, rulelist.APIIDCustom, rulelist.APIID(id))
+
+	id = rulelist.IDBlockedService
+	assert.Equal(t, rulelist.APIIDBlockedService, rulelist.APIID(id))
+
+	id = rulelist.IDSafeSearch
+	assert.Equal(t, rulelist.APIIDSafeSearch, rulelist.APIID(id))
 }

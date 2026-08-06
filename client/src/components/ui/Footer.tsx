@@ -13,7 +13,7 @@ import './Select.css';
 
 import { setHtmlLangAttr, setUITheme } from '../../helpers/helpers';
 
-import { changeTheme } from '../../actions';
+import { changeLanguage, changeTheme } from '../../actions';
 import { RootState } from '../../initialState';
 
 const linksData = [
@@ -46,10 +46,13 @@ const Footer = () => {
         return today.getFullYear();
     };
 
-    const changeLanguage = (event: any) => {
-        const { value } = event.target;
-        i18n.changeLanguage(value);
-        setHtmlLangAttr(value);
+    const onLanguageChange = (language: string) => {
+        i18n.changeLanguage(language);
+        setHtmlLangAttr(language);
+
+        if (isLoggedIn) {
+            dispatch(changeLanguage(language));
+        }
     };
 
     const onThemeChange = (value: any) => {
@@ -94,14 +97,17 @@ const Footer = () => {
             auto: {
                 desc: t('theme_auto_desc'),
                 icon: '#auto',
+                testId: 'theme_auto',
             },
             dark: {
                 desc: t('theme_dark_desc'),
                 icon: '#dark',
+                testId: 'theme_dark',
             },
             light: {
                 desc: t('theme_light_desc'),
                 icon: '#light',
+                testId: 'theme_light',
             },
         };
 
@@ -113,7 +119,9 @@ const Footer = () => {
                     type="button"
                     className="btn btn-sm btn-secondary footer__theme-button"
                     onClick={() => onThemeChange(theme)}
-                    title={content[theme].desc}>
+                    title={content[theme].desc}
+                    data-testid={content[theme].testId}
+                >
                     <svg className={cn('footer__theme-icon', { 'footer__theme-icon--active': currentValue === theme })}>
                         <use xlinkHref={content[theme].icon} />
                     </svg>
@@ -138,7 +146,7 @@ const Footer = () => {
                             <select
                                 className="form-control select select--language"
                                 value={i18n.language}
-                                onChange={changeLanguage}>
+                                onChange={(e) => onLanguageChange(e.target.value)}>
                                 {Object.keys(LANGUAGES).map((lang) => (
                                     <option key={lang} value={lang}>
                                         {LANGUAGES[lang]}

@@ -10,6 +10,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/updater"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -57,15 +58,18 @@ func TestUpdater_VersionInfo(t *testing.T) {
 	fakeURL := srvURL.JoinPath("adguardhome", version.ChannelBeta, "version.json")
 
 	u := updater.NewUpdater(&updater.Config{
-		Client:          srv.Client(),
-		Version:         "v0.103.0-beta.1",
-		Channel:         version.ChannelBeta,
-		GOARCH:          "arm",
-		GOOS:            "linux",
-		VersionCheckURL: fakeURL,
+		Client:             srv.Client(),
+		Logger:             testLogger,
+		CommandConstructor: testCmdCons,
+		Version:            "v0.103.0-beta.1",
+		Channel:            version.ChannelBeta,
+		GOARCH:             "arm",
+		GOOS:               "linux",
+		VersionCheckURL:    fakeURL,
 	})
 
-	info, err := u.VersionInfo(false)
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	info, err := u.VersionInfo(ctx, false)
 	require.NoError(t, err)
 
 	assert.Equal(t, counter, 1)
@@ -75,14 +79,14 @@ func TestUpdater_VersionInfo(t *testing.T) {
 	assert.Equal(t, aghalg.NBTrue, info.CanAutoUpdate)
 
 	t.Run("cache_check", func(t *testing.T) {
-		_, err = u.VersionInfo(false)
+		_, err = u.VersionInfo(testutil.ContextWithTimeout(t, testTimeout), false)
 		require.NoError(t, err)
 
 		assert.Equal(t, counter, 1)
 	})
 
 	t.Run("force_check", func(t *testing.T) {
-		_, err = u.VersionInfo(true)
+		_, err = u.VersionInfo(testutil.ContextWithTimeout(t, testTimeout), true)
 		require.NoError(t, err)
 
 		assert.Equal(t, counter, 2)
@@ -91,7 +95,7 @@ func TestUpdater_VersionInfo(t *testing.T) {
 	t.Run("api_fail", func(t *testing.T) {
 		srv.Close()
 
-		_, err = u.VersionInfo(true)
+		_, err = u.VersionInfo(testutil.ContextWithTimeout(t, testTimeout), true)
 		var urlErr *url.Error
 		assert.ErrorAs(t, err, &urlErr)
 	})
@@ -107,7 +111,14 @@ func TestUpdater_VersionInfo_others(t *testing.T) {
   "download_linux_mips_softfloat": "https://static.adtidy.org/adguardhome/beta/AdGuardHome_linux_mips_softfloat.tar.gz"
 }`
 
-	fakeClient, fakeURL := aghtest.StartHTTPServer(t, []byte(jsonData))
+	handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		pt := testutil.NewPanicT(t)
+
+		_, err := w.Write([]byte(jsonData))
+		require.NoError(pt, err)
+	})
+
+	fakeClient, fakeURL := aghtest.StartHTTPServer(t, handler)
 	fakeURL = fakeURL.JoinPath("adguardhome", version.ChannelBeta, "version.json")
 
 	testCases := []struct {
@@ -129,17 +140,20 @@ func TestUpdater_VersionInfo_others(t *testing.T) {
 
 	for _, tc := range testCases {
 		u := updater.NewUpdater(&updater.Config{
-			Client:          fakeClient,
-			Version:         "v0.103.0-beta.1",
-			Channel:         version.ChannelBeta,
-			GOOS:            "linux",
-			GOARCH:          tc.arch,
-			GOARM:           tc.arm,
-			GOMIPS:          tc.mips,
-			VersionCheckURL: fakeURL,
+			Client:             fakeClient,
+			Logger:             testLogger,
+			CommandConstructor: testCmdCons,
+			Version:            "v0.103.0-beta.1",
+			Channel:            version.ChannelBeta,
+			GOOS:               "linux",
+			GOARCH:             tc.arch,
+			GOARM:              tc.arm,
+			GOMIPS:             tc.mips,
+			VersionCheckURL:    fakeURL,
 		})
 
-		info, err := u.VersionInfo(false)
+		ctx := testutil.ContextWithTimeout(t, testTimeout)
+		info, err := u.VersionInfo(ctx, false)
 		require.NoError(t, err)
 
 		assert.Equal(t, "v0.103.0-beta.2", info.NewVersion)

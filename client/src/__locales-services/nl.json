@@ -1,0 +1,38 @@
+{
+  "servicesgroup.ai.name": {
+    "message": "Kunstmatige intelligentie"
+  },
+  "servicesgroup.cdn.name": {
+    "message": "Content Delivery Networks (CDN)"
+  },
+  "servicesgroup.dating.name": {
+    "message": "Datingdiensten"
+  },
+  "servicesgroup.gambling.name": {
+    "message": "Gokken en wedden"
+  },
+  "servicesgroup.gaming.name": {
+    "message": "Gamen"
+  },
+  "servicesgroup.hosting.name": {
+    "message": "Webhosting"
+  },
+  "servicesgroup.messenger.name": {
+    "message": "Berichtendiensten"
+  },
+  "servicesgroup.privacy.name": {
+    "message": "Privacyhulpmiddelen"
+  },
+  "servicesgroup.shopping.name": {
+    "message": "Winkelen"
+  },
+  "servicesgroup.social_network.name": {
+    "message": "Sociale netwerken"
+  },
+  "servicesgroup.software.name": {
+    "message": "Softwareontwikkeling"
+  },
+  "servicesgroup.streaming.name": {
+    "message": "Streamingdiensten"
+  }
+}

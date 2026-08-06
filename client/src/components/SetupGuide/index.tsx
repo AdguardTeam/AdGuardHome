@@ -1,7 +1,7 @@
 import React from 'react';
 import { Trans, withTranslation } from 'react-i18next';
 
-import Guide from '../ui/Guide';
+import { Guide } from '../ui/Guide';
 
 import Card from '../ui/Card';
 
@@ -14,10 +14,7 @@ interface SetupGuideProps {
     t: (id: string) => string;
 }
 
-const SetupGuide = ({
-    t,
-    dashboard: { dnsAddresses },
-}: SetupGuideProps) => (
+const SetupGuide = ({ t, dashboard: { dnsAddresses } }: SetupGuideProps) => (
     <div className="guide">
         <PageTitle title={t('setup_guide')} />
 

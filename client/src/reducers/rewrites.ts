@@ -66,6 +66,39 @@ const rewrites = handleActions(
             };
             return newState;
         },
+        [actions.getRewriteSettingsRequest.toString()]: (state: any) => ({
+            ...state,
+            processing: true,
+        }),
+        [actions.getRewriteSettingsFailure.toString()]: (state: any) => ({
+            ...state,
+            processing: false,
+        }),
+        [actions.getRewriteSettingsSuccess.toString()]: (state: any, { payload }: any) => {
+            const newState = {
+                ...state,
+                settings: payload,
+                processing: false,
+            };
+            return newState;
+        },
+
+        [actions.updateRewriteSettingsRequest.toString()]: (state: any) => ({
+            ...state,
+            processingUpdate: true,
+        }),
+        [actions.updateRewriteSettingsFailure.toString()]: (state: any) => ({
+            ...state,
+            processingUpdate: false,
+        }),
+        [actions.updateRewriteSettingsSuccess.toString()]: (state: any, { payload }: any) => ({
+            ...state,
+            settings: {
+                ...state.settings,
+                ...payload,
+            },
+            processingUpdate: false,
+        }),
 
         [actions.toggleRewritesModal.toString()]: (state: any, { payload }: any) => {
             if (payload) {
@@ -94,6 +127,7 @@ const rewrites = handleActions(
         modalType: '',
         currentRewrite: {},
         list: [],
+        settings: { enabled: false },
     },
 );
 

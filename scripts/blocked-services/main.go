@@ -86,6 +86,12 @@ type blockedService struct {
 	Name    string   ` + "`" + `json:"name"` + "`" + `
 	IconSVG []byte   ` + "`" + `json:"icon_svg"` + "`" + `
 	Rules   []string ` + "`" + `json:"rules"` + "`" + `
+	GroupID string   ` + "`" + `json:"group_id"` + "`" + `
+}
+
+// serviceGroup represents single group of services.
+type serviceGroup struct {
+	ID string ` + "`" + `json:"id"` + "`" + `
 }
 
 // blockedServices contains raw blocked service data.
@@ -97,6 +103,13 @@ var blockedServices = []blockedService{<% $l := len .BlockedServices %>
 	Rules: []string{<% range $s.Rules %>
 		<% printf "%q" . %>,<% end %>
 	},
+	GroupID: <% printf "%q" $s.Group %>,
+}<% if isnotlast $i $l %>, <% end %><% end %>}
+
+// serviceGroups contains raw service group data.
+var serviceGroups = []serviceGroup{<% $l := len .ServiceGroups %>
+	<%- range $i, $s := .ServiceGroups %>{
+	ID: <% printf "%q" $s.ID %>,
 }<% if isnotlast $i $l %>, <% end %><% end %>}
 `
 
@@ -104,6 +117,7 @@ var blockedServices = []blockedService{<% $l := len .BlockedServices %>
 // index.
 type hlServices struct {
 	BlockedServices []*hlServicesService `json:"blocked_services"`
+	ServiceGroups   []*hlServicesGroup   `json:"groups"`
 }
 
 // hlServicesService is the JSON structure for a service in the Hostlists
@@ -113,4 +127,11 @@ type hlServicesService struct {
 	Name    string   `json:"name"`
 	IconSVG string   `json:"icon_svg"`
 	Rules   []string `json:"rules"`
+	Group   string   `json:"group"`
+}
+
+// hlServicesGroup is the JSON structure for a service group in the Hostlists
+// Registry.
+type hlServicesGroup struct {
+	ID string `json:"id"`
 }

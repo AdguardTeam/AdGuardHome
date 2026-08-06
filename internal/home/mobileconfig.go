@@ -1,17 +1,20 @@
 package home
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net"
 	"net/http"
 	"net/url"
 	"path"
+	"strings"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
+	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/httphdr"
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/google/uuid"
 	"howett.net/plist"
@@ -47,12 +50,22 @@ type dnsSettings struct {
 type payloadContent struct {
 	DNSSettings *dnsSettings
 
+	OnDemandEnabled int
+	OnDemandRules   []*onDemandRule
+
 	PayloadType        string
 	PayloadIdentifier  string
 	PayloadDisplayName string
 	PayloadDescription string
-	PayloadUUID        uuid.UUID
+	PayloadUUID        string
 	PayloadVersion     int
+}
+
+// onDemandRule determines which queries use the DNS server.
+//
+// See https://developer.apple.com/documentation/devicemanagement/dnssettings/ondemandruleselement.
+type onDemandRule struct {
+	Action string
 }
 
 // dnsSettingsPayloadType is the payload type for a DNSSettings profile.
@@ -67,16 +80,38 @@ type mobileConfig struct {
 	PayloadDisplayName       string
 	PayloadType              string
 	PayloadContent           []*payloadContent
-	PayloadIdentifier        uuid.UUID
-	PayloadUUID              uuid.UUID
+	PayloadIdentifier        string
+	PayloadUUID              string
 	PayloadVersion           int
 	PayloadRemovalDisallowed bool
+	PayloadScope             string
 }
 
 const (
 	dnsProtoHTTPS = "HTTPS"
 	dnsProtoTLS   = "TLS"
 )
+
+// mobileConfigHandlerConfig is the configuration structure for
+// [newMobileConfigHandler].
+type mobileConfigHandlerConfig struct {
+	// logger is used for logging the operations of mobile config handler.  It
+	// must not be nil.
+	logger *slog.Logger
+}
+
+// mobileConfigHandler handles mobile-config related operations.
+type mobileConfigHandler struct {
+	logger *slog.Logger
+}
+
+// newMobileConfigHandler creates a new instance of [*mobileConfigHandler].  c
+// must not be nil and must be valid.
+func newMobileConfigHandler(c *mobileConfigHandlerConfig) *mobileConfigHandler {
+	return &mobileConfigHandler{
+		logger: c.logger.With(slogutil.KeyPrefix, "mobile_handler"),
+	}
+}
 
 func encodeMobileConfig(d *dnsSettings, clientID string) ([]byte, error) {
 	var dspName string
@@ -107,18 +142,22 @@ func encodeMobileConfig(d *dnsSettings, clientID string) ([]byte, error) {
 		PayloadDescription: "Adds AdGuard Home to macOS Big Sur and iOS 14 or newer systems",
 		PayloadDisplayName: dspName,
 		PayloadType:        "Configuration",
+		PayloadScope:       "System",
 		PayloadContent: []*payloadContent{{
-			DNSSettings: d,
-
+			DNSSettings:     d,
+			OnDemandEnabled: 1,
+			OnDemandRules: []*onDemandRule{{
+				Action: "Connect",
+			}},
 			PayloadType:        dnsSettingsPayloadType,
 			PayloadIdentifier:  payloadID,
 			PayloadDisplayName: dspName,
 			PayloadDescription: "Configures device to use AdGuard Home",
-			PayloadUUID:        uuid.New(),
+			PayloadUUID:        strings.ToUpper(uuid.New().String()),
 			PayloadVersion:     1,
 		}},
-		PayloadIdentifier:        uuid.New(),
-		PayloadUUID:              uuid.New(),
+		PayloadIdentifier:        strings.ToUpper(uuid.New().String()),
+		PayloadUUID:              strings.ToUpper(uuid.New().String()),
 		PayloadVersion:           1,
 		PayloadRemovalDisallowed: false,
 	}
@@ -126,34 +165,45 @@ func encodeMobileConfig(d *dnsSettings, clientID string) ([]byte, error) {
 	return plist.MarshalIndent(data, plist.XMLFormat, "\t")
 }
 
-func respondJSONError(w http.ResponseWriter, status int, msg string) {
+// respondJSONError writes an internal server error to the header and responds
+// to the client with an error.  l and w must not be nil.
+func respondJSONError(
+	ctx context.Context,
+	l *slog.Logger,
+	w http.ResponseWriter,
+	status int,
+	msg string,
+) {
 	w.WriteHeader(http.StatusInternalServerError)
 	err := json.NewEncoder(w).Encode(&jsonError{
 		Message: msg,
 	})
 	if err != nil {
-		log.Debug("writing %d json response: %s", status, err)
+		l.DebugContext(ctx, "writing json response", "status", status, slogutil.KeyError, err)
 	}
 }
 
+// errEmptyHost error indicates that the host and server names are missing from
+// the query parameters.
 const errEmptyHost errors.Error = "no host in query parameters and no server_name"
 
-func handleMobileConfig(w http.ResponseWriter, r *http.Request, dnsp string) {
+func (m *mobileConfigHandler) handleMobileConfig(w http.ResponseWriter, r *http.Request, dnsp string) {
 	var err error
 
+	ctx := r.Context()
 	q := r.URL.Query()
 	host := q.Get("host")
 	if host == "" {
-		respondJSONError(w, http.StatusInternalServerError, string(errEmptyHost))
+		respondJSONError(ctx, m.logger, w, http.StatusInternalServerError, string(errEmptyHost))
 
 		return
 	}
 
 	clientID := q.Get("client_id")
 	if clientID != "" {
-		err = dnsforward.ValidateClientID(clientID)
+		err = client.ValidateClientID(clientID)
 		if err != nil {
-			respondJSONError(w, http.StatusBadRequest, err.Error())
+			respondJSONError(ctx, m.logger, w, http.StatusBadRequest, err.Error())
 
 			return
 		}
@@ -166,7 +216,7 @@ func handleMobileConfig(w http.ResponseWriter, r *http.Request, dnsp string) {
 
 	mobileconfig, err := encodeMobileConfig(d, clientID)
 	if err != nil {
-		respondJSONError(w, http.StatusInternalServerError, err.Error())
+		respondJSONError(ctx, m.logger, w, http.StatusInternalServerError, err.Error())
 
 		return
 	}
@@ -188,10 +238,12 @@ func handleMobileConfig(w http.ResponseWriter, r *http.Request, dnsp string) {
 	_, _ = w.Write(mobileconfig)
 }
 
-func handleMobileConfigDoH(w http.ResponseWriter, r *http.Request) {
-	handleMobileConfig(w, r, dnsProtoHTTPS)
+// handleMobileConfigDoH handles getting DNS-over-HTTPS .mobileconfig.
+func (m *mobileConfigHandler) handleMobileConfigDoH(w http.ResponseWriter, r *http.Request) {
+	m.handleMobileConfig(w, r, dnsProtoHTTPS)
 }
 
-func handleMobileConfigDoT(w http.ResponseWriter, r *http.Request) {
-	handleMobileConfig(w, r, dnsProtoTLS)
+// handleMobileConfigDoT handles getting DNS-over-TLS .mobileconfig.
+func (m *mobileConfigHandler) handleMobileConfigDoT(w http.ResponseWriter, r *http.Request) {
+	m.handleMobileConfig(w, r, dnsProtoTLS)
 }

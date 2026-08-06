@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
-	"github.com/AdguardTeam/golibs/log"
 )
 
 // Theme is an enum of all allowed UI themes.
@@ -46,8 +45,21 @@ type profileJSON struct {
 }
 
 // handleGetProfile is the handler for GET /control/profile endpoint.
-func handleGetProfile(w http.ResponseWriter, r *http.Request) {
-	u := Context.auth.getCurrentUser(r)
+func (web *webAPI) handleGetProfile(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var name string
+
+	if !web.auth.isGLiNet && !web.auth.isUserless {
+		u, ok := webUserFromContext(ctx)
+		if !ok {
+			w.WriteHeader(http.StatusUnauthorized)
+
+			return
+		}
+
+		name = string(u.Login)
+	}
 
 	var resp profileJSON
 	func() {
@@ -55,48 +67,62 @@ func handleGetProfile(w http.ResponseWriter, r *http.Request) {
 		defer config.RUnlock()
 
 		resp = profileJSON{
-			Name:     u.Name,
+			Name:     name,
 			Language: config.Language,
 			Theme:    config.Theme,
 		}
 	}()
 
-	aghhttp.WriteJSONResponseOK(w, r, resp)
+	aghhttp.WriteJSONResponseOK(ctx, web.logger, w, r, resp)
 }
 
 // handlePutProfile is the handler for PUT /control/profile/update endpoint.
-func handlePutProfile(w http.ResponseWriter, r *http.Request) {
-	if aghhttp.WriteTextPlainDeprecated(w, r) {
+func (web *webAPI) handlePutProfile(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	l := web.logger
+
+	if aghhttp.WriteTextPlainDeprecated(ctx, l, w, r) {
 		return
 	}
 
 	profileReq := &profileJSON{}
 	err := json.NewDecoder(r.Body).Decode(profileReq)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "reading req: %s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "reading req: %s", err)
 
 		return
 	}
 
 	lang := profileReq.Language
-	if !allowedLanguages.Has(lang) {
-		aghhttp.Error(r, w, http.StatusBadRequest, "unknown language: %q", lang)
+	err = validateLang(lang, false)
+	if err != nil {
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
 
 	theme := profileReq.Theme
 
+	changed := false
 	func() {
 		config.Lock()
 		defer config.Unlock()
 
+		if config.Language == lang && config.Theme == theme {
+			l.DebugContext(ctx, "updating profile; no changes")
+
+			return
+		}
+
+		changed = true
 		config.Language = lang
 		config.Theme = theme
-		log.Printf("home: language is set to %s", lang)
-		log.Printf("home: theme is set to %s", theme)
+		l.InfoContext(ctx, "profile updated", "lang", lang, "theme", theme)
 	}()
 
-	onConfigModified()
-	aghhttp.OK(w)
+	if changed {
+		web.confModifier.Apply(ctx)
+	}
+
+	aghhttp.OK(ctx, l, w)
 }

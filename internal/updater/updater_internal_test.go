@@ -1,12 +1,18 @@
 package updater
 
 import (
+	"context"
+	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/golibs/osutil/executil"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -50,16 +56,25 @@ func TestUpdater_internal(t *testing.T) {
 		pkgData, err := os.ReadFile(filepath.Join("testdata", tc.archiveName))
 		require.NoError(t, err)
 
-		fakeClient, fakeURL := aghtest.StartHTTPServer(t, pkgData)
+		handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			pt := testutil.NewPanicT(t)
+
+			_, werr := w.Write(pkgData)
+			require.NoError(pt, werr)
+		})
+
+		fakeClient, fakeURL := aghtest.StartHTTPServer(t, handler)
 		fakeURL = fakeURL.JoinPath(tc.archiveName)
 
 		u := NewUpdater(&Config{
-			Client:   fakeClient,
-			GOOS:     tc.os,
-			Version:  "v0.103.0",
-			ExecPath: exePath,
-			WorkDir:  wd,
-			ConfName: yamlPath,
+			Client:             fakeClient,
+			Logger:             slogutil.NewDiscardLogger(),
+			CommandConstructor: executil.EmptyCommandConstructor{},
+			GOOS:               tc.os,
+			Version:            "v0.103.0",
+			ExecPath:           exePath,
+			WorkDir:            wd,
+			ConfName:           yamlPath,
 			// TODO(e.burkov):  Rewrite the test to use a fake version check
 			// URL with a fake URLs for the package files.
 			VersionCheckURL: &url.URL{},
@@ -68,13 +83,13 @@ func TestUpdater_internal(t *testing.T) {
 		u.newVersion = "v0.103.1"
 		u.packageURL = fakeURL.String()
 
-		require.NoError(t, u.prepare())
-		require.NoError(t, u.downloadPackageFile())
-		require.NoError(t, u.unpack())
-		require.NoError(t, u.backup(false))
-		require.NoError(t, u.replace())
+		require.NoError(t, u.prepare(newCtx(t)))
+		require.NoError(t, u.downloadPackageFile(newCtx(t)))
+		require.NoError(t, u.unpack(newCtx(t)))
+		require.NoError(t, u.backup(newCtx(t), false))
+		require.NoError(t, u.replace(newCtx(t)))
 
-		u.clean()
+		u.clean(newCtx(t))
 
 		require.True(t, t.Run("backup", func(t *testing.T) {
 			var d []byte
@@ -112,4 +127,9 @@ func TestUpdater_internal(t *testing.T) {
 			assert.Equal(t, "AdGuardHome.yaml", string(d))
 		}))
 	}
+}
+
+// newCtx is a helper that returns a new context with a timeout.
+func newCtx(tb testing.TB) (ctx context.Context) {
+	return testutil.ContextWithTimeout(tb, 1*time.Second)
 }

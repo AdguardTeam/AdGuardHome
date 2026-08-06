@@ -13,6 +13,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
@@ -20,6 +21,7 @@ import (
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"go.etcd.io/bbolt"
+	bbolterrors "go.etcd.io/bbolt/errors"
 )
 
 // checkInterval returns true if days is valid to be used as statistics
@@ -54,22 +56,25 @@ type Config struct {
 	// nil, the default function is used, see newUnitID.
 	UnitID UnitIDGenFunc
 
-	// ConfigModified will be called each time the configuration changed via web
-	// interface.
-	ConfigModified func()
+	// ConfigModifier is used to update the global configuration.  It must not
+	// be nil.
+	ConfigModifier agh.ConfigModifier
 
 	// ShouldCountClient returns client's ignore setting.
 	ShouldCountClient func([]string) bool
 
 	// HTTPRegister is the function that registers handlers for the stats
 	// endpoints.
-	HTTPRegister aghhttp.RegisterFunc
+	HTTPReg aghhttp.Registrar
 
 	// Ignored contains the list of host names, which should not be counted,
 	// and matches them.
 	Ignored *aghnet.IgnoreEngine
 
 	// Filename is the name of the database file.
+	//
+	// TODO(f.setrakov): Move the work with DB into a separate entity with
+	// interface.
 	Filename string
 
 	// Limit is an upper limit for collecting statistics.
@@ -119,12 +124,11 @@ type StatsCtx struct {
 	// unit.  It's here for only testing purposes.
 	unitIDGen UnitIDGenFunc
 
-	// httpRegister is used to set HTTP handlers.
-	httpRegister aghhttp.RegisterFunc
+	// httpReg registers HTTP handlers.  It must not be nil.
+	httpReg aghhttp.Registrar
 
-	// configModified is called whenever the configuration is modified via web
-	// interface.
-	configModified func()
+	// configModifier is used to update the global configuration.
+	configModifier agh.ConfigModifier
 
 	// confMu protects ignored, limit, and enabled.
 	confMu *sync.RWMutex
@@ -163,8 +167,8 @@ func New(conf Config) (s *StatsCtx, err error) {
 	s = &StatsCtx{
 		logger:         conf.Logger,
 		currMu:         &sync.RWMutex{},
-		httpRegister:   conf.HTTPRegister,
-		configModified: conf.ConfigModified,
+		httpReg:        conf.HTTPReg,
+		configModifier: conf.ConfigModifier,
 		filename:       conf.Filename,
 
 		confMu:            &sync.RWMutex{},
@@ -253,16 +257,18 @@ func (s *StatsCtx) Close() (err error) {
 		err = errors.WithDeferred(err, cerr)
 	}()
 
+	// NOTE:  This mutex, when combined with the database transaction, is
+	// required to be locked first.
+	s.currMu.RLock()
+	defer s.currMu.RUnlock()
+
+	udb := s.curr.serialize()
+
 	tx, err := db.Begin(true)
 	if err != nil {
 		return fmt.Errorf("opening transaction: %w", err)
 	}
 	defer func() { err = errors.WithDeferred(err, finishTxn(tx, err == nil)) }()
-
-	s.currMu.RLock()
-	defer s.currMu.RUnlock()
-
-	udb := s.curr.serialize()
 
 	return s.flushUnitToDB(udb, tx, s.curr.id)
 }
@@ -417,6 +423,8 @@ func (s *StatsCtx) flush() (cont bool, sleepFor time.Duration) {
 	s.confMu.Lock()
 	defer s.confMu.Unlock()
 
+	// NOTE:  This mutex, when combined with the database transaction, is
+	// required to be locked first.
 	s.currMu.Lock()
 	defer s.currMu.Unlock()
 
@@ -469,7 +477,7 @@ func (s *StatsCtx) flushDB(id, limit uint32, ptr *unit) (cont bool, sleepFor tim
 		// TODO(e.burkov):  Improve the algorithm of deleting the oldest bucket
 		// to avoid the error.
 		lvl := slog.LevelDebug
-		if !errors.Is(delErr, bbolt.ErrBucketNotFound) {
+		if !errors.Is(delErr, bbolterrors.ErrBucketNotFound) {
 			isCommitable = false
 			lvl = slog.LevelError
 		}
@@ -567,6 +575,11 @@ func (s *StatsCtx) loadUnits(limit uint32) (units []*unitDB, curID uint32) {
 		return nil, 0
 	}
 
+	// NOTE:  This mutex, when combined with the database transaction, is
+	// required to be locked first.
+	s.currMu.RLock()
+	defer s.currMu.RUnlock()
+
 	// Use writable transaction to ensure any ongoing writable transaction is
 	// taken into account.
 	tx, err := db.Begin(true)
@@ -575,10 +588,6 @@ func (s *StatsCtx) loadUnits(limit uint32) (units []*unitDB, curID uint32) {
 
 		return nil, 0
 	}
-
-	s.currMu.RLock()
-	defer s.currMu.RUnlock()
-
 	cur := s.curr
 
 	if cur != nil {

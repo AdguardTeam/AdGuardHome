@@ -1,5 +1,7 @@
 package configmigrate
 
+import "context"
+
 // migrateTo16 performs the following changes:
 //
 //	# BEFORE:
@@ -43,7 +45,7 @@ package configmigrate
 //	  'ignored': []
 //	  # …
 //	# …
-func migrateTo16(diskConf yobj) (err error) {
+func (m *Migrator) migrateTo16(_ context.Context, diskConf yobj) (err error) {
 	diskConf["schema_version"] = 16
 
 	dns, ok, err := fieldVal[yobj](diskConf, "dns")

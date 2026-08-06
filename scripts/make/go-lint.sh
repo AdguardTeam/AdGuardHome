@@ -3,7 +3,7 @@
 # This comment is used to simplify checking local copies of the script.  Bump
 # this number every time a significant change is made to this script.
 #
-# AdGuard-Project-Version: 13
+# AdGuard-Project-Version: 19
 
 verbose="${VERBOSE:-0}"
 readonly verbose
@@ -26,15 +26,17 @@ set -f -u
 
 # Simple analyzers
 
-# blocklist_imports is a simple check against unwanted packages.  The following
-# packages are banned:
+# blocklist_imports is a simple best-effort check against unwanted packages.
+# The following packages are banned:
 #
 #   *  Package errors is replaced by our own package in the
-#   github.com/AdguardTeam/golibs module.
+#      github.com/AdguardTeam/golibs module.
 #
 #   *  Packages log and github.com/AdguardTeam/golibs/log are replaced by
 #      stdlib's new package log/slog and AdGuard's new utilities package
-#      github.com/AdguardTeam/golibs/logutil/slogutil.
+#      github.com/AdguardTeam/golibs/logutil/slogutil.  The exceptions are
+#      packages home, dhcpd, and aghos, where package log is used before the
+#      main logger is configured.
 #
 #   *  Package github.com/prometheus/client_golang/prometheus/promauto is not
 #      recommended, as it encourages reliance on global state.
@@ -56,8 +58,9 @@ set -f -u
 #   *  Package unsafe is… unsafe.
 #
 # Currently, the only standard exception are files generated from protobuf
-# schemas, which use package reflect.  If your project needs more exceptions,
-# add and document them.
+# schemas, which use package reflect.  Additionally, some packages are allowed
+# to use package log, see above.  If your project needs more exceptions, add and
+# document them.
 #
 # NOTE:  Flag -H for grep is non-POSIX but all of Busybox, GNU, macOS, and
 # OpenBSD support it.
@@ -67,7 +70,10 @@ set -f -u
 #
 # TODO(a.garipov): Add golibs/log.
 blocklist_imports() {
-	find . \
+	import_or_tab="$(printf '^\\(import \\|\t\\)')"
+	readonly import_or_tab
+
+	find_with_ignore \
 		-type 'f' \
 		-name '*.go' \
 		'!' '(' \
@@ -77,16 +83,30 @@ blocklist_imports() {
 		-exec \
 		'grep' \
 		'-H' \
-		'-e' '[[:space:]]"errors"$' \
-		'-e' '[[:space:]]"github.com/prometheus/client_golang/prometheus/promauto"$' \
-		'-e' '[[:space:]]"golang.org/x/exp/maps"$' \
-		'-e' '[[:space:]]"golang.org/x/exp/slices"$' \
-		'-e' '[[:space:]]"golang.org/x/net/context"$' \
-		'-e' '[[:space:]]"io/ioutil"$' \
-		'-e' '[[:space:]]"log"$' \
-		'-e' '[[:space:]]"reflect"$' \
-		'-e' '[[:space:]]"sort"$' \
-		'-e' '[[:space:]]"unsafe"$' \
+		'-e' "$import_or_tab"'"errors"$' \
+		'-e' "$import_or_tab"'"github.com/prometheus/client_golang/prometheus/promauto"$' \
+		'-e' "$import_or_tab"'"golang.org/x/exp/maps"$' \
+		'-e' "$import_or_tab"'"golang.org/x/exp/slices"$' \
+		'-e' "$import_or_tab"'"golang.org/x/net/context"$' \
+		'-e' "$import_or_tab"'"io/ioutil"$' \
+		'-e' "$import_or_tab"'"reflect"$' \
+		'-e' "$import_or_tab"'"sort"$' \
+		'-e' "$import_or_tab"'"unsafe"$' \
+		'-n' \
+		'{}' \
+		';'
+
+	# Package home is allowed to use package log, see the comment above.
+	find_with_ignore \
+		-type 'f' \
+		-name '*.go' \
+		'!' '(' \
+		-path './internal/home/*' \
+		')' \
+		-exec \
+		'grep' \
+		'-H' \
+		'-e' "$import_or_tab"'"log"$' \
 		'-n' \
 		'{}' \
 		';'
@@ -94,8 +114,11 @@ blocklist_imports() {
 
 # method_const is a simple check against the usage of some raw strings and
 # numbers where one should use named constants.
+#
+# NOTE:  Flag -H for grep is non-POSIX but all of Busybox, GNU, macOS, and
+# OpenBSD support it.
 method_const() {
-	find . \
+	find_with_ignore \
 		-type 'f' \
 		-name '*.go' \
 		-exec \
@@ -116,10 +139,11 @@ method_const() {
 # use of filenames like client_manager.go.
 underscores() {
 	underscore_files="$(
-		find . \
+		find_with_ignore \
 			-type 'f' \
 			-name '*_*.go' \
-			'!' '(' -name '*_bsd.go' \
+			'!' '(' \
+			-name '*_bsd.go' \
 			-o -name '*_darwin.go' \
 			-o -name '*_freebsd.go' \
 			-o -name '*_generate.go' \
@@ -142,6 +166,9 @@ underscores() {
 	fi
 }
 
+go="${GO:-go}"
+readonly go
+
 # TODO(a.garipov): Add an analyzer to look for `fallthrough`, `goto`, and `new`?
 
 # Checks
@@ -152,83 +179,70 @@ run_linter -e method_const
 
 run_linter -e underscores
 
-run_linter -e gofumpt --extra -e -l .
+run_linter -e "$go" tool gofumpt --extra -e -l .
 
-run_linter "${GO:-go}" vet ./...
+run_linter "${GO:-go}" vet work
 
-run_linter govulncheck ./...
+# govulncheck is not stricly reproducible, because it queries the VulnDB, which
+# is updated constantly.  If a stricly reproducible lint is desired, for example
+# for Docker lint stages, set IGNORE_NON_REPRODUCIBLE to 1 to ignore the exit
+# code from govulncheck.
+#
+# TODO(a.garipov):  Return the default to 0 and update the Go version once
+# https://github.com/quic-go/quic-go/issues/5543 is fixed.
+if [ "${IGNORE_NON_REPRODUCIBLE:-1}" -gt '0' ]; then
+	# run_linter calls set +e, so don't mind the cancelling effect of ||.
+	# shellcheck disable=SC2310
+	run_linter "$go" tool govulncheck work || :
+else
+	run_linter "$go" tool govulncheck work
+fi
 
-run_linter gocyclo --over 10 .
+# TODO(e.burkov):  Improve the ignore mechanism to take the go.mod ignore
+# section into account.
+run_linter "$go" tool gocyclo --over 10 ./internal/ ./scripts/
 
 # TODO(a.garipov): Enable 10 for all.
-run_linter gocognit --over='20' \
-	./internal/querylog/ \
-	;
-
-run_linter gocognit --over='19' \
-	./internal/home/ \
-	;
-
-run_linter gocognit --over='18' \
-	./internal/aghtls/ \
-	;
-
-run_linter gocognit --over='15' \
-	./internal/aghos/ \
-	./internal/filtering/ \
-	;
-
-run_linter gocognit --over='14' \
+run_linter "$go" tool gocognit --over='14' \
 	./internal/dhcpd \
 	;
 
-run_linter gocognit --over='13' \
-	./internal/aghnet/ \
-	;
-
-run_linter gocognit --over='12' \
-	./internal/filtering/rewrite/ \
-	;
-
-run_linter gocognit --over='11' \
-	./internal/updater/ \
-	;
-
-run_linter gocognit --over='10' \
+run_linter "$go" tool gocognit --over='10' \
 	./internal/aghalg/ \
+	./internal/agh/ \
 	./internal/aghhttp/ \
+	./internal/aghnet/ \
+	./internal/aghos/ \
 	./internal/aghrenameio/ \
 	./internal/aghtest/ \
+	./internal/aghtls/ \
+	./internal/aghuser/ \
 	./internal/arpdb/ \
 	./internal/client/ \
 	./internal/configmigrate/ \
 	./internal/dhcpsvc \
 	./internal/dnsforward/ \
-	./internal/filtering/hashprefix/ \
-	./internal/filtering/rulelist/ \
-	./internal/filtering/safesearch/ \
+	./internal/filtering/ \
+	./internal/home/ \
 	./internal/ipset \
 	./internal/next/ \
+	./internal/ossvc/ \
+	./internal/permcheck/ \
+	./internal/querylog/ \
 	./internal/rdns/ \
 	./internal/schedule/ \
 	./internal/stats/ \
-	./internal/tools/ \
+	./internal/updater/ \
 	./internal/version/ \
 	./internal/whois/ \
 	./scripts/ \
 	;
 
-run_linter ineffassign ./...
+run_linter "$go" tool ineffassign work
 
-run_linter unparam ./...
+run_linter "$go" tool unparam work
 
-find . \
-	'(' \
-	-name 'node_modules' \
-	-type 'd' \
-	-prune \
-	')' \
-	-o \
+find_with_ignore \
 	-type 'f' \
 	'(' \
 	-name 'Makefile' \
@@ -239,18 +253,19 @@ find . \
 	-o -name '*.yaml' \
 	-o -name '*.yml' \
 	')' \
-	-exec 'misspell' '--error' '{}' '+'
+	-exec "$go" 'tool' 'misspell' '--error' '{}' '+'
 
-run_linter nilness ./...
+run_linter "$go" tool nilness work
 
 # TODO(a.garipov): Enable for all.
-run_linter fieldalignment \
+run_linter "$go" tool fieldalignment \
 	./internal/aghalg/ \
 	./internal/aghhttp/ \
 	./internal/aghos/ \
 	./internal/aghrenameio/ \
 	./internal/aghtest/ \
 	./internal/aghtls/ \
+	./internal/aghuser/ \
 	./internal/arpdb/ \
 	./internal/client/ \
 	./internal/configmigrate/ \
@@ -261,6 +276,7 @@ run_linter fieldalignment \
 	./internal/filtering/safesearch/ \
 	./internal/ipset/ \
 	./internal/next/... \
+	./internal/ossvc/ \
 	./internal/querylog/ \
 	./internal/rdns/ \
 	./internal/schedule/ \
@@ -270,17 +286,18 @@ run_linter fieldalignment \
 	./internal/whois/ \
 	;
 
-run_linter -e shadow --strict ./...
+run_linter -e "$go" tool shadow --strict work
 
 # TODO(a.garipov): Enable for all.
 # TODO(e.burkov):  Re-enable G115.
-run_linter gosec --exclude G115 --quiet \
+run_linter "$go" tool gosec --exclude=G115 --fmt=golint --quiet \
 	./internal/aghalg/ \
 	./internal/aghhttp/ \
 	./internal/aghnet/ \
 	./internal/aghos/ \
 	./internal/aghrenameio/ \
 	./internal/aghtest/ \
+	./internal/aghuser/ \
 	./internal/arpdb/ \
 	./internal/client/ \
 	./internal/configmigrate/ \
@@ -293,23 +310,20 @@ run_linter gosec --exclude G115 --quiet \
 	./internal/filtering/safesearch/ \
 	./internal/ipset/ \
 	./internal/next/ \
+	./internal/ossvc/ \
 	./internal/rdns/ \
 	./internal/schedule/ \
 	./internal/stats/ \
-	./internal/tools/ \
 	./internal/version/ \
 	./internal/whois/ \
 	;
 
-run_linter errcheck ./...
+run_linter "$go" tool errcheck work
 
-staticcheck_matrix='
-darwin:  GOOS=darwin
-freebsd: GOOS=freebsd
-linux:   GOOS=linux
-openbsd: GOOS=openbsd
-windows: GOOS=windows
-'
-readonly staticcheck_matrix
-
-printf '%s' "$staticcheck_matrix" | run_linter staticcheck --matrix ./...
+run_linter "$go" tool staticcheck --matrix work <<-'EOF'
+	darwin:  GOOS=darwin
+	freebsd: GOOS=freebsd
+	linux:   GOOS=linux
+	openbsd: GOOS=openbsd
+	windows: GOOS=windows
+EOF

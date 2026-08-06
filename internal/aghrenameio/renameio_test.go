@@ -43,14 +43,14 @@ func TestPendingFile(t *testing.T) {
 
 // newInitialFile is a test helper that returns the path to the file containing
 // [initialData].
-func newInitialFile(t *testing.T) (targetPath string) {
-	t.Helper()
+func newInitialFile(tb testing.TB) (targetPath string) {
+	tb.Helper()
 
-	dir := t.TempDir()
+	dir := tb.TempDir()
 	targetPath = filepath.Join(dir, "target")
 
 	err := os.WriteFile(targetPath, initialData, 0o644)
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
 	return targetPath
 }

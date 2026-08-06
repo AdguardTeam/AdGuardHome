@@ -2,7 +2,89 @@
 
 <!-- TODO(a.garipov): Reformat in accordance with the KeepAChangelog spec. -->
 
-## v0.108.0: API changes
+## v0.107.79: API changes
+
+- Field `bootstrap_dns` in `POST /control/dns_config` now accepts comments.  A comment must start with the `#` symbol.
+
+- Fixed wrong property names: `enable` → `enabled` in the Parental status response, `protection_disabled_until` → `protection_disabled_duration` in `ServerStatus`, `ratelimit_subnet_subnet_len_ipv4` and `ratelimit_subnet_subnet_len_ipv6` in `DNSConfig`.
+
+- `upstream_mode` enum in `DNSConfig` changed from object to string format for compatibility with code generators.
+
+- Fixed missing required properties in `DhcpConfigV4` and `DhcpStatus` schemas.
+
+- Fixed missing `port_dnscrypt` and `dnscrypt_config_file` properties in `TlsConfig`.
+
+- Split `NetInterface` into `NetInterface` and `DHCPNetInterface` schemas; `GET /dhcp/interfaces` now uses `DHCPNetInterfaces`.
+
+### Setting the UI language through the install API
+
+- New property `"language"` in `POST /control/install/check_config` and `POST /control/install/configure` HTTP APIs defines the language to use once AdGuard Home is installed.
+
+## v0.107.78: API changes
+
+The property `interval` of the objects returned from and accepted by the aforementioned APIs can now be any integer between 0 and 8760 (365 days).
+
+## v0.107.77: API changes
+
+### New `reason` query parameter in 'GET /control/querylog'
+
+- New query parameter `reason` allows filtering query log entries by reason.  The `response_status` parameter is now deprecated.
+
+## v0.107.72: API changes
+
+### New `recent` query parameter in 'GET /control/stats/'
+
+- New query parameter `recent` defines the statistics lookback period in millieseconds.
+
+### New `ignored_enabled` field in `GetStatsConfigResponse` and  `GetQueryLogConfigResponse`
+
+- The new field `ignored_enabled` indicates whether the host names in the ignored array should be ignored.  This field has been added for the following endpoints:
+    - `GET /control/querylog/config`
+    - `PUT /control/querylog/config/update`
+    - `GET /control/stats/config`
+    - `PUT /control/stats/config/update`
+
+## v0.107.70: API changes
+
+### New `"start_time"` field in 'GET /control/status'
+
+- New field `"start_time"` indicates the start time of the web API server (Unix time in milliseconds).
+
+## v0.107.68: API changes
+
+### New HTTP APIs 'GET /control/rewrite/settings' and 'PUT /control/rewrite/settings/update'
+
+- New HTTP APIs to manage global DNS rewrites.
+
+    ```json
+    {
+      "enabled": true
+    }
+    ```
+
+### New `"enabled"` field in 'POST /control/rewrite/add' and 'PUT /control/rewrite/update'
+
+- New optional field `"enabled"` indicates whether the rewrite is active.
+
+### The blocked services groups
+
+- The new field `"groups"` in `GET /control/blocked_services/all` is a list of service group.  Groups make it possible to block multiple services with equal `"group_id"` at once.
+
+- The new field `"group_id"` for each `BlockedService` object in `GET /control/blocked_services/all` indicates which group the service belongs to.
+
+## v0.107.64: API changes
+
+- The new field `"cache_enabled"` in `GET /control/dns_info` and `POST /control/dns_config`.  Setting this flag to true turns the DNS-response cache on and requires a positive `cache_size` value (or a positive `dns.cache_size` in the configuration file).
+
+## v0.107.58: API changes
+
+### The ability to check rules for query types and/or clients: GET /control/check_host
+
+- Added optional `client` and `qtype` URL query parameters.
+
+## v0.107.57: API changes
+
+- The new field `"upstream_timeout"` in `GET /control/dns_info` and `POST /control/dns_config` is the number of seconds to wait for a response from the upstream server.
 
 ## v0.107.56: API changes
 

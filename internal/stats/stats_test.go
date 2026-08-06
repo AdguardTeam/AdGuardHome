@@ -11,8 +11,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
+	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
@@ -25,25 +28,25 @@ import (
 // constUnitID is the UnitIDGenFunc which always return 0.
 func constUnitID() (id uint32) { return 0 }
 
-func assertSuccessAndUnmarshal(t *testing.T, to any, handler http.Handler, req *http.Request) {
-	t.Helper()
+func assertSuccessAndUnmarshal(tb testing.TB, to any, handler http.Handler, req *http.Request) {
+	tb.Helper()
 
-	require.NotNil(t, handler)
+	require.NotNil(tb, handler)
 
 	rw := httptest.NewRecorder()
 
 	handler.ServeHTTP(rw, req)
-	require.Equal(t, http.StatusOK, rw.Code)
+	require.Equal(tb, http.StatusOK, rw.Code)
 
 	data := rw.Body.Bytes()
 	if to == nil {
-		assert.Empty(t, data)
+		assert.Empty(tb, data)
 
 		return
 	}
 
 	err := json.Unmarshal(data, to)
-	require.NoError(t, err)
+	require.NoError(tb, err)
 }
 
 func TestStats(t *testing.T) {
@@ -58,8 +61,10 @@ func TestStats(t *testing.T) {
 		Limit:             timeutil.Day,
 		Enabled:           true,
 		UnitID:            constUnitID,
-		HTTPRegister: func(_, url string, handler http.HandlerFunc) {
-			handlers[url] = handler
+		HTTPReg: &aghtest.Registrar{
+			OnRegister: func(_, url string, handler http.HandlerFunc) {
+				handlers[url] = handler
+			},
 		},
 	}
 
@@ -78,15 +83,19 @@ func TestStats(t *testing.T) {
 			Client:         cliIPStr,
 			Result:         stats.RFiltered,
 			ProcessingTime: time.Microsecond * 123456,
-			Upstream:       respUpstream,
-			UpstreamTime:   time.Microsecond * 222222,
+			UpstreamStats: []*proxy.UpstreamStatistics{{
+				Address:       respUpstream,
+				QueryDuration: time.Microsecond * 222222,
+			}},
 		}, {
 			Domain:         reqDomain,
 			Client:         cliIPStr,
 			Result:         stats.RNotFiltered,
 			ProcessingTime: time.Microsecond * 123456,
-			Upstream:       respUpstream,
-			UpstreamTime:   time.Microsecond * 222222,
+			UpstreamStats: []*proxy.UpstreamStatistics{{
+				Address:       respUpstream,
+				QueryDuration: time.Microsecond * 222222,
+			}},
 		}}
 
 		wantData := &stats.StatsResp{
@@ -175,7 +184,11 @@ func TestLargeNumbers(t *testing.T) {
 		Limit:             timeutil.Day,
 		Enabled:           true,
 		UnitID:            func() (id uint32) { return atomic.LoadUint32(&curHour) },
-		HTTPRegister:      func(_, url string, handler http.HandlerFunc) { handlers[url] = handler },
+		HTTPReg: &aghtest.Registrar{
+			OnRegister: func(_, url string, handler http.HandlerFunc) {
+				handlers[url] = handler
+			},
+		},
 	}
 
 	s, err := stats.New(conf)
@@ -191,7 +204,7 @@ func TestLargeNumbers(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodGet, "/control/stats", nil)
 
-	for h := 0; h < hoursNum; h++ {
+	for h := range hoursNum {
 		atomic.AddUint32(&curHour, 1)
 
 		for i := range cliNumPerHour {
@@ -217,7 +230,7 @@ func TestShouldCount(t *testing.T) {
 		ignored2 = "ignored.to"
 	)
 	ignored := []string{ignored1, ignored2}
-	engine, err := aghnet.NewIgnoreEngine(ignored)
+	engine, err := aghnet.NewIgnoreEngine(ignored, true)
 	require.NoError(t, err)
 
 	s, err := stats.New(stats.Config{
@@ -229,6 +242,7 @@ func TestShouldCount(t *testing.T) {
 		ShouldCountClient: func(ids []string) (a bool) {
 			return ids[0] != "no_count"
 		},
+		HTTPReg: aghhttp.EmptyRegistrar{},
 	})
 	require.NoError(t, err)
 

@@ -1,0 +1,109 @@
+.card {
+    padding: 8px 0;
+    cursor: pointer;
+}
+
+.cardBody {
+    display: flex;
+    flex-direction: column;
+    padding: 8px 0 16px;
+    background: var(--default-page-background);
+    border-radius: 8px;
+    box-shadow: 8px 8px 24px 0 rgba(0, 0, 0, 0.1);
+}
+
+.icon {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+}
+
+.domain {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.typeLine,
+.fieldLabel {
+    color: var(--default-description-text);
+}
+
+.typeLine {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fieldValue {
+    color: var(--default-main-text);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cardHeader {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    padding: 8px 8px 8px 12px;
+}
+
+.titleBlock {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    justify-content: center;
+}
+
+.titleRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    width: 100%;
+}
+
+.iconsRow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.iconWrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.fieldGrid {
+    display: grid;
+    grid-template-columns: minmax(0, 124px) minmax(0, 1fr);
+    gap: 0 8px;
+    padding-top: 4px;
+}
+
+.actions {
+    flex-shrink: 0;
+}
+
+.fieldLabel,
+.fieldValue {
+    min-height: 24px;
+    padding: 4px 12px;
+}
+
+.status {
+    min-width: 0;
+    min-height: 24px;
+    padding: 4px 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}

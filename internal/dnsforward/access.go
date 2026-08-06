@@ -8,10 +8,9 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
+	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/golibs/container"
-	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/urlfilter"
 	"github.com/AdguardTeam/urlfilter/filterlist"
@@ -51,7 +50,7 @@ func processAccessClients(
 		} else if ipnet, err = netip.ParsePrefix(s); err == nil {
 			*nets = append(*nets, ipnet)
 		} else {
-			err = ValidateClientID(s)
+			err = client.ValidateClientID(s)
 			if err != nil {
 				return fmt.Errorf("value %q at index %d: bad ip, cidr, or clientid", s, i)
 			}
@@ -88,12 +87,12 @@ func newAccessCtx(allowed, blocked, blockedHosts []string) (a *accessManager, er
 		stringutil.WriteToBuilder(b, strings.ToLower(h), "\n")
 	}
 
-	lists := []filterlist.RuleList{
-		&filterlist.StringRuleList{
+	lists := []filterlist.Interface{
+		filterlist.NewString(&filterlist.StringConfig{
 			ID:             0,
 			RulesText:      b.String(),
 			IgnoreCosmetic: true,
-		},
+		}),
 	}
 
 	rulesStrg, err := filterlist.NewRuleStorage(lists)
@@ -186,7 +185,7 @@ func (s *Server) accessListJSON() (j accessListJSON) {
 
 // handleAccessList handles requests to the GET /control/access/list endpoint.
 func (s *Server) handleAccessList(w http.ResponseWriter, r *http.Request) {
-	aghhttp.WriteJSONResponseOK(w, r, s.accessListJSON())
+	aghhttp.WriteJSONResponseOK(r.Context(), s.logger, w, r, s.accessListJSON())
 }
 
 // validateAccessSet checks the internal accessListJSON lists.  To search for
@@ -208,38 +207,54 @@ func validateAccessSet(list *accessListJSON) (err error) {
 		return fmt.Errorf("validating blocked hosts: %w", err)
 	}
 
-	merged := allowed.Merge(disallowed)
-	err = merged.Validate()
-	if err != nil {
-		return fmt.Errorf("items in allowed and disallowed clients intersect: %w", err)
+	allowed = allowed.Intersection(allowed, disallowed)
+	if allowed.Len() == 0 {
+		return nil
 	}
 
-	return nil
+	return fmt.Errorf(
+		"items in allowed and disallowed clients intersect: %s",
+		container.MapSetToString(allowed),
+	)
 }
 
 // validateStrUniq returns an informative error if clients are not unique.
-func validateStrUniq(clients []string) (uc aghalg.UniqChecker[string], err error) {
-	uc = make(aghalg.UniqChecker[string], len(clients))
-	for _, c := range clients {
-		uc.Add(c)
+func validateStrUniq(clients []string) (m *container.MapSet[string], err error) {
+	var dup []string
+	m = container.NewMapSet[string]()
+	for _, client := range clients {
+		if m.Has(client) {
+			dup = append(dup, client)
+		}
+
+		m.Add(client)
 	}
 
-	return uc, uc.Validate()
+	if len(dup) != 0 {
+		slices.Sort(dup)
+
+		return nil, fmt.Errorf("duplicated values: %v", dup)
+	}
+
+	return m, nil
 }
 
 // handleAccessSet handles requests to the POST /control/access/set endpoint.
 func (s *Server) handleAccessSet(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	l := s.logger
+
 	list := &accessListJSON{}
 	err := json.NewDecoder(r.Body).Decode(&list)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "decoding request: %s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "decoding request: %s", err)
 
 		return
 	}
 
 	err = validateAccessSet(list)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, err.Error())
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
@@ -247,19 +262,20 @@ func (s *Server) handleAccessSet(w http.ResponseWriter, r *http.Request) {
 	var a *accessManager
 	a, err = newAccessCtx(list.AllowedClients, list.DisallowedClients, list.BlockedHosts)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "creating access ctx: %s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "creating access ctx: %s", err)
 
 		return
 	}
 
-	defer log.Debug(
-		"access: updated lists: %d, %d, %d",
-		len(list.AllowedClients),
-		len(list.DisallowedClients),
-		len(list.BlockedHosts),
+	defer l.DebugContext(
+		ctx,
+		"updated access lists",
+		"allowed", len(list.AllowedClients),
+		"disallowed", len(list.DisallowedClients),
+		"blocked_hosts", len(list.BlockedHosts),
 	)
 
-	defer s.conf.ConfigModified()
+	defer s.conf.ConfModifier.Apply(ctx)
 
 	s.serverLock.Lock()
 	defer s.serverLock.Unlock()

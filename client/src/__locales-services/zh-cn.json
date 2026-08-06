@@ -1,0 +1,38 @@
+{
+  "servicesgroup.ai.name": {
+    "message": "人工智能"
+  },
+  "servicesgroup.cdn.name": {
+    "message": "内容分发网络（CDN）"
+  },
+  "servicesgroup.dating.name": {
+    "message": "交友服务"
+  },
+  "servicesgroup.gambling.name": {
+    "message": "赌博和博彩"
+  },
+  "servicesgroup.gaming.name": {
+    "message": "游戏"
+  },
+  "servicesgroup.hosting.name": {
+    "message": "网站托管"
+  },
+  "servicesgroup.messenger.name": {
+    "message": "消息服务"
+  },
+  "servicesgroup.privacy.name": {
+    "message": "隐私工具"
+  },
+  "servicesgroup.shopping.name": {
+    "message": "购物"
+  },
+  "servicesgroup.social_network.name": {
+    "message": "社交网络"
+  },
+  "servicesgroup.software.name": {
+    "message": "软件开发"
+  },
+  "servicesgroup.streaming.name": {
+    "message": "串流服务"
+  }
+}

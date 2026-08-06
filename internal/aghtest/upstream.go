@@ -220,7 +220,7 @@ func NewErrorUpstream() (u *UpstreamMock) {
 	return &UpstreamMock{
 		OnAddress: func() (addr string) { return "error.upstream.example" },
 		OnExchange: func(_ *dns.Msg) (resp *dns.Msg, err error) {
-			return nil, errors.Error("test upstream error")
+			return nil, ErrUpstream
 		},
 		OnClose: func() (err error) { return nil },
 	}

@@ -1,42 +1,69 @@
 import React from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { Trans, useTranslation } from 'react-i18next';
 
-import { Field, reduxForm } from 'redux-form';
-import { Trans, withTranslation } from 'react-i18next';
-import flow from 'lodash/flow';
-
-import { renderInputField } from '../../../helpers/form';
 import { validateAnswer, validateDomain, validateRequiredValue } from '../../../helpers/validators';
-import { FORM_NAME } from '../../../helpers/constants';
+import { Input } from '../../ui/Controls/Input';
 
-interface FormProps {
-    pristine: boolean;
-    handleSubmit: (...args: unknown[]) => string;
-    reset: (...args: unknown[]) => string;
-    toggleRewritesModal: (...args: unknown[]) => unknown;
-    submitting: boolean;
-    processingAdd: boolean;
-    t: (...args: unknown[]) => string;
-    initialValues?: object;
+interface RewriteFormValues {
+    domain: string;
+    answer: string;
 }
 
-const Form = (props: FormProps) => {
-    const { t, handleSubmit, reset, pristine, submitting, toggleRewritesModal, processingAdd } = props;
+type Props = {
+    processingAdd: boolean;
+    currentRewrite?: RewriteFormValues;
+    toggleRewritesModal: () => void;
+    onSubmit?: (data: RewriteFormValues) => Promise<void> | void;
+};
+
+const Form = ({ processingAdd, currentRewrite, toggleRewritesModal, onSubmit }: Props) => {
+    const { t } = useTranslation();
+
+    const {
+        handleSubmit,
+        reset,
+        control,
+        formState: { isDirty, isSubmitting },
+    } = useForm<RewriteFormValues>({
+        mode: 'onBlur',
+        defaultValues: {
+            domain: currentRewrite?.domain || '',
+            answer: currentRewrite?.answer || '',
+        },
+    });
+
+    const handleFormSubmit = async (data: RewriteFormValues) => {
+        if (onSubmit) {
+            await onSubmit(data);
+        }
+    };
 
     return (
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit(handleFormSubmit)}>
             <div className="modal-body">
                 <div className="form__desc form__desc--top">
                     <Trans>domain_desc</Trans>
                 </div>
                 <div className="form__group">
-                    <Field
-                        id="domain"
+                    <Controller
                         name="domain"
-                        component={renderInputField}
-                        type="text"
-                        className="form-control"
-                        placeholder={t('form_domain')}
-                        validate={[validateRequiredValue, validateDomain]}
+                        control={control}
+                        rules={{
+                            validate: {
+                                validate: validateDomain,
+                                required: validateRequiredValue,
+                            },
+                        }}
+                        render={({ field, fieldState }) => (
+                            <Input
+                                {...field}
+                                type="text"
+                                data-testid="rewrites_domain"
+                                placeholder={t('form_domain')}
+                                error={fieldState.error?.message}
+                            />
+                        )}
                     />
                 </div>
                 <Trans>examples_title</Trans>:
@@ -44,7 +71,6 @@ const Form = (props: FormProps) => {
                     <li>
                         <code>example.org</code> – <Trans>example_rewrite_domain</Trans>
                     </li>
-
                     <li>
                         <code>*.example.org</code> –&nbsp;
                         <span>
@@ -53,14 +79,24 @@ const Form = (props: FormProps) => {
                     </li>
                 </ol>
                 <div className="form__group">
-                    <Field
-                        id="answer"
+                    <Controller
                         name="answer"
-                        component={renderInputField}
-                        type="text"
-                        className="form-control"
-                        placeholder={t('form_answer')}
-                        validate={[validateRequiredValue, validateAnswer]}
+                        control={control}
+                        rules={{
+                            validate: {
+                                validate: validateAnswer,
+                                required: validateRequiredValue,
+                            },
+                        }}
+                        render={({ field, fieldState }) => (
+                            <Input
+                                {...field}
+                                type="text"
+                                data-testid="rewrites_answer"
+                                placeholder={t('form_answer')}
+                                error={fieldState.error?.message}
+                            />
+                        )}
                     />
                 </div>
             </div>
@@ -77,8 +113,9 @@ const Form = (props: FormProps) => {
                 <div className="btn-list">
                     <button
                         type="button"
+                        data-testid="rewrites_cancel"
                         className="btn btn-secondary btn-standard"
-                        disabled={submitting || processingAdd}
+                        disabled={isSubmitting || processingAdd}
                         onClick={() => {
                             reset();
                             toggleRewritesModal();
@@ -88,8 +125,9 @@ const Form = (props: FormProps) => {
 
                     <button
                         type="submit"
+                        data-testid="rewrites_save"
                         className="btn btn-success btn-standard"
-                        disabled={submitting || pristine || processingAdd}>
+                        disabled={isSubmitting || !isDirty || processingAdd}>
                         <Trans>save_btn</Trans>
                     </button>
                 </div>
@@ -98,10 +136,4 @@ const Form = (props: FormProps) => {
     );
 };
 
-export default flow([
-    withTranslation(),
-    reduxForm({
-        form: FORM_NAME.REWRITES,
-        enableReinitialize: true,
-    }),
-])(Form);
+export default Form;

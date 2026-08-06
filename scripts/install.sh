@@ -254,6 +254,9 @@ set_cpu() {
 
 			cpu="${cpu}_softfloat"
 			;;
+		'riscv64')
+			cpu='riscv64'
+			;;
 		*)
 			error_exit "unsupported cpu type: $cpu"
 			;;
@@ -262,7 +265,7 @@ set_cpu() {
 
 	# Validate.
 	case "$cpu" in
-	'amd64' | '386' | 'armv5' | 'armv6' | 'armv7' | 'arm64')
+	'amd64' | '386' | 'armv5' | 'armv6' | 'armv7' | 'arm64' | 'riscv64')
 		# All right, go on.
 		;;
 	'mips64le_softfloat' | 'mips64_softfloat' | 'mipsle_softfloat' | 'mips_softfloat')
@@ -298,7 +301,7 @@ fix_darwin() {
 
 # Function fix_freebsd performs some fixes to make it work on FreeBSD.
 fix_freebsd() {
-	if ! [ "$os" = 'freebsd' ]; then
+	if [ "$os" != 'freebsd' ]; then
 		return 0
 	fi
 

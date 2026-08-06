@@ -5,15 +5,12 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
 	"maps"
-	"net/url"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -23,17 +20,18 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/osutil"
+	"github.com/AdguardTeam/golibs/osutil/executil"
+	"github.com/c2h5oh/datasize"
 )
 
+// TODO(e.burkov):  Remove the default as they should be set by configuration.
 const (
-	twoskyConfFile   = "./.twosky.json"
-	localesDir       = "./client/src/__locales"
 	defaultBaseFile  = "en.json"
 	defaultProjectID = "home"
-	srcDir           = "./client/src"
+	twoskyConfFile   = "./.twosky.json"
 	twoskyURI        = "https://twosky.int.agrd.dev/api/v1"
 
-	readLimit     = 1 * 1024 * 1024
+	readLimit     = 1 * datasize.MB
 	uploadTimeout = 20 * time.Second
 )
 
@@ -62,8 +60,9 @@ type languages map[langCode]string
 // textlabel is a text label of localization.
 type textLabel string
 
-// locales is a map, where key is text label and value is translation.
-type locales map[textLabel]string
+// locales is a map, where key is a text label and the value is either a string
+// or an object.
+type locales map[textLabel]any
 
 func main() {
 	ctx := context.Background()
@@ -77,27 +76,20 @@ func main() {
 		usage("")
 	}
 
-	conf := errors.Must(readTwoskyConfig())
-
-	var cli *twoskyClient
+	conf := errors.Must(newTwoskyConfig())
+	cli := errors.Must(newTwoskyClient(conf))
 
 	switch os.Args[1] {
 	case "summary":
-		errors.Check(summary(conf.Languages))
+		errors.Check(cli.summary())
 	case "download":
-		cli = errors.Must(conf.toClient())
-
-		errors.Check(cli.download(ctx, l))
+		cli.download(ctx, l)
 	case "unused":
-		err := unused(ctx, l, conf.LocalizableFiles[0])
-		errors.Check(err)
+		errors.Check(cli.unused(ctx, l))
 	case "upload":
-		cli = errors.Must(conf.toClient())
-
 		errors.Check(cli.upload())
 	case "auto-add":
-		err := autoAdd(conf.LocalizableFiles[0])
-		errors.Check(err)
+		errors.Check(cli.autoAdd(ctx, l))
 	default:
 		usage("unknown command")
 	}
@@ -133,107 +125,6 @@ Commands:
 	os.Exit(osutil.ExitCodeSuccess)
 }
 
-// twoskyConfig is the configuration structure for localization.
-type twoskyConfig struct {
-	Languages        languages `json:"languages"`
-	ProjectID        string    `json:"project_id"`
-	BaseLangcode     langCode  `json:"base_locale"`
-	LocalizableFiles []string  `json:"localizable_files"`
-}
-
-// readTwoskyConfig returns twosky configuration.
-func readTwoskyConfig() (t *twoskyConfig, err error) {
-	defer func() { err = errors.Annotate(err, "parsing twosky config: %w") }()
-
-	b, err := os.ReadFile(twoskyConfFile)
-	if err != nil {
-		// Don't wrap the error since it's informative enough as is.
-		return nil, err
-	}
-
-	var tsc []twoskyConfig
-	err = json.Unmarshal(b, &tsc)
-	if err != nil {
-		return nil, fmt.Errorf("unmarshalling %q: %w", twoskyConfFile, err)
-	}
-
-	if len(tsc) == 0 {
-		return nil, fmt.Errorf("%q is empty", twoskyConfFile)
-	}
-
-	conf := tsc[0]
-
-	for _, lang := range conf.Languages {
-		if lang == "" {
-			return nil, errors.Error("language is empty")
-		}
-	}
-
-	if len(conf.LocalizableFiles) == 0 {
-		return nil, errors.Error("no localizable files specified")
-	}
-
-	return &conf, nil
-}
-
-// twoskyClient is the twosky client with methods for download and upload
-// translations.
-type twoskyClient struct {
-	// uri is the base URL.
-	uri *url.URL
-
-	// projectID is the name of the project.
-	projectID string
-
-	// baseLang is the base language code.
-	baseLang langCode
-
-	// langs is the list of codes of languages to download.
-	langs []langCode
-}
-
-// toClient reads values from environment variables or defaults, validates
-// them, and returns the twosky client.
-func (t *twoskyConfig) toClient() (cli *twoskyClient, err error) {
-	defer func() { err = errors.Annotate(err, "filling config: %w") }()
-
-	uriStr := cmp.Or(os.Getenv("TWOSKY_URI"), twoskyURI)
-	uri, err := url.Parse(uriStr)
-	if err != nil {
-		return nil, err
-	}
-
-	projectID := cmp.Or(os.Getenv("TWOSKY_PROJECT_ID"), defaultProjectID)
-
-	baseLang := t.BaseLangcode
-	uLangStr := os.Getenv("UPLOAD_LANGUAGE")
-	if uLangStr != "" {
-		baseLang = langCode(uLangStr)
-	}
-
-	langs := slices.Sorted(maps.Keys(t.Languages))
-
-	dlLangStr := os.Getenv("DOWNLOAD_LANGUAGES")
-	if dlLangStr == "blocker" {
-		langs = blockerLangCodes
-	} else if dlLangStr != "" {
-		var dlLangs []langCode
-		dlLangs, err = validateLanguageStr(dlLangStr, t.Languages)
-		if err != nil {
-			return nil, err
-		}
-
-		langs = dlLangs
-	}
-
-	return &twoskyClient{
-		uri:       uri,
-		projectID: projectID,
-		baseLang:  baseLang,
-		langs:     langs,
-	}, nil
-}
-
 // validateLanguageStr validates languages codes that contain in the str and
 // returns them or error.
 func validateLanguageStr(str string, all languages) (langs []langCode, err error) {
@@ -253,10 +144,10 @@ func validateLanguageStr(str string, all languages) (langs []langCode, err error
 	return langs, nil
 }
 
-// readLocales reads file with name fn and returns a map, where key is text
-// label and value is localization.
-func readLocales(fn string) (loc locales, err error) {
-	b, err := os.ReadFile(fn)
+// readLocales reads file by name and returns a map, where the key is a text
+// label and the value is a localization.
+func readLocales(name string) (loc locales, err error) {
+	b, err := os.ReadFile(name)
 	if err != nil {
 		// Don't wrap the error since it's informative enough as is.
 		return nil, err
@@ -265,45 +156,44 @@ func readLocales(fn string) (loc locales, err error) {
 	loc = make(locales)
 	err = json.Unmarshal(b, &loc)
 	if err != nil {
-		err = fmt.Errorf("unmarshalling %q: %w", fn, err)
-
-		return nil, err
+		return nil, fmt.Errorf("unmarshalling %q: %w", name, err)
 	}
 
 	return loc, nil
 }
 
-// summary prints summary for translations.
-func summary(langs languages) (err error) {
-	basePath := filepath.Join(localesDir, defaultBaseFile)
+// summary prints a summary for translations.
+func (c *twoskyClient) summary() (err error) {
+	defer func() { err = errors.Annotate(err, "summary: %w") }()
+
+	fmt.Printf("Summary for %s:\n\n", c.projectID)
+
+	basePath := filepath.Join(c.localesDir, defaultBaseFile)
 	baseLoc, err := readLocales(basePath)
 	if err != nil {
-		return fmt.Errorf("summary: %w", err)
+		return fmt.Errorf("reading base locales: %w", err)
 	}
 
 	size := float64(len(baseLoc))
 
-	keys := slices.Sorted(maps.Keys(langs))
-
-	for _, lang := range keys {
-		name := filepath.Join(localesDir, string(lang)+".json")
+	for _, lang := range c.langs {
+		name := filepath.Join(c.localesDir, string(lang)+".json")
 		if name == basePath {
+			// Skip base lang.
 			continue
 		}
 
 		var loc locales
 		loc, err = readLocales(name)
 		if err != nil {
-			return fmt.Errorf("summary: reading locales: %w", err)
+			return fmt.Errorf("reading locales for %s: %w", lang, err)
 		}
 
 		f := float64(len(loc)) * 100 / size
 
 		blocker := ""
-
 		// N is small enough to not raise performance questions.
-		ok := slices.Contains(blockerLangCodes, lang)
-		if ok {
+		if slices.Contains(blockerLangCodes, lang) {
 			blocker = " (blocker)"
 		}
 
@@ -313,29 +203,39 @@ func summary(langs languages) (err error) {
 	return nil
 }
 
-// unused prints unused text labels.
-func unused(ctx context.Context, l *slog.Logger, basePath string) (err error) {
+// unused prints unused text labels.  l must not be nil.
+func (c *twoskyClient) unused(ctx context.Context, l *slog.Logger) (err error) {
 	defer func() { err = errors.Annotate(err, "unused: %w") }()
 
-	baseLoc, err := readLocales(basePath)
+	fmt.Printf("Unused for %s:\n\n", c.projectID)
+	fmt.Println()
+
+	basePath := filepath.Join(c.localesDir, defaultBaseFile)
+	baseLocales, err := readLocales(basePath)
 	if err != nil {
-		return err
+		return fmt.Errorf("reading locales: %w", err)
 	}
 
-	locDir := filepath.Clean(localesDir)
-	js, err := findJS(ctx, l, locDir)
+	srcFiles, err := c.findSourceFiles(ctx, l)
 	if err != nil {
-		return err
+		return fmt.Errorf("collecting js files: %w", err)
 	}
 
-	return findUnused(js, baseLoc)
+	err = findUnused(srcFiles, baseLocales)
+	if err != nil {
+		return fmt.Errorf("finding unused files: %w", err)
+	}
+
+	return nil
 }
 
-// findJS returns list of JavaScript and JSON files or error.
-func findJS(ctx context.Context, l *slog.Logger, locDir string) (fileNames []string, err error) {
-	walkFn := func(name string, _ os.FileInfo, err error) error {
-		if err != nil {
-			l.WarnContext(ctx, "accessing a path", slogutil.KeyError, err)
+// findSourceFiles returns list of source files.  l must not be nil.
+func (c *twoskyClient) findSourceFiles(ctx context.Context, l *slog.Logger) (fileNames []string, err error) {
+	locDir := filepath.Clean(c.localesDir)
+
+	walkFn := func(name string, _ os.FileInfo, pErr error) (err error) {
+		if pErr != nil {
+			l.WarnContext(ctx, "accessing a path", slogutil.KeyError, pErr)
 
 			return nil
 		}
@@ -345,16 +245,16 @@ func findJS(ctx context.Context, l *slog.Logger, locDir string) (fileNames []str
 		}
 
 		ext := filepath.Ext(name)
-		if ext == ".js" || ext == ".json" {
+		if ext == ".js" || ext == ".json" || ext == ".ts" || ext == ".tsx" {
 			fileNames = append(fileNames, name)
 		}
 
 		return nil
 	}
 
-	err = filepath.Walk(srcDir, walkFn)
+	err = filepath.Walk(c.sourcesDir, walkFn)
 	if err != nil {
-		return nil, fmt.Errorf("filepath walking %q: %w", srcDir, err)
+		return nil, fmt.Errorf("walking %q: %w", c.sourcesDir, err)
 	}
 
 	return fileNames, nil
@@ -376,7 +276,7 @@ func findUnused(fileNames []string, loc locales) (err error) {
 		var buf []byte
 		buf, err = os.ReadFile(fn)
 		if err != nil {
-			return fmt.Errorf("finding unused: %w", err)
+			return fmt.Errorf("reading file: %w", err)
 		}
 
 		for k := range loc {
@@ -394,62 +294,74 @@ func findUnused(fileNames []string, loc locales) (err error) {
 }
 
 // autoAdd adds locales with additions to the git and restores locales with
-// deletions.
-func autoAdd(basePath string) (err error) {
+// deletions.  l must not be nil.
+func (c *twoskyClient) autoAdd(ctx context.Context, l *slog.Logger) (err error) {
 	defer func() { err = errors.Annotate(err, "auto add: %w") }()
 
-	adds, dels, err := changedLocales()
+	cmdCons := executil.SystemCommandConstructor{}
+
+	adds, dels, err := c.changedLocales(ctx, l, cmdCons)
 	if err != nil {
 		// Don't wrap the error since it's informative enough as is.
 		return err
 	}
 
+	basePath := filepath.Join(c.localesDir, defaultBaseFile)
 	if slices.Contains(dels, basePath) {
 		return errors.Error("base locale contains deletions")
 	}
 
-	err = handleAdds(adds)
+	err = handleAdds(ctx, l, cmdCons, adds)
 	if err != nil {
 		// Don't wrap the error since it's informative enough as is.
-		return nil
+		return err
 	}
 
-	err = handleDels(dels)
-	if err != nil {
-		// Don't wrap the error since it's informative enough as is.
-		return nil
-	}
-
-	return nil
+	return handleDels(ctx, l, cmdCons, dels)
 }
 
+// gitCmd is the shell command for Git.
+const gitCmd = "git"
+
 // handleAdds adds locales with additions to the git.
-func handleAdds(locales []string) (err error) {
+func handleAdds(
+	ctx context.Context,
+	l *slog.Logger,
+	cmdCons executil.CommandConstructor,
+	locales []string,
+) (err error) {
 	if len(locales) == 0 {
 		return nil
 	}
 
-	args := append([]string{"add"}, locales...)
-	code, out, err := aghos.RunCommand("git", args...)
+	gitArgs := append([]string{"add"}, locales...)
+	l.DebugContext(ctx, "executing", "cmd", gitCmd, "args", gitArgs)
 
-	if err != nil || code != 0 {
-		return fmt.Errorf("git add exited with code %d output %q: %w", code, out, err)
+	err = executil.RunWithPeek(ctx, cmdCons, aghos.MaxCmdOutputSize, gitCmd, gitArgs...)
+	if err != nil {
+		return fmt.Errorf("git add failed: %w", err)
 	}
 
 	return nil
 }
 
 // handleDels restores locales with deletions.
-func handleDels(locales []string) (err error) {
+func handleDels(
+	ctx context.Context,
+	l *slog.Logger,
+	cmdCons executil.CommandConstructor,
+	locales []string,
+) (err error) {
 	if len(locales) == 0 {
 		return nil
 	}
 
-	args := append([]string{"restore"}, locales...)
-	code, out, err := aghos.RunCommand("git", args...)
+	gitArgs := append([]string{"restore"}, locales...)
+	l.DebugContext(ctx, "executing", "cmd", gitCmd, "args", gitArgs)
 
-	if err != nil || code != 0 {
-		return fmt.Errorf("git restore exited with code %d output %q: %w", code, out, err)
+	err = executil.RunWithPeek(ctx, cmdCons, aghos.MaxCmdOutputSize, gitCmd, gitArgs...)
+	if err != nil {
+		return fmt.Errorf("git restore failed: %w", err)
 	}
 
 	return nil
@@ -457,23 +369,33 @@ func handleDels(locales []string) (err error) {
 
 // changedLocales returns cleaned paths of locales with changes or error.  adds
 // is the list of locales with only additions.  dels is the list of locales
-// with only deletions.
-func changedLocales() (adds, dels []string, err error) {
+// with only deletions.  l and cmdCons must not be nil.
+func (c *twoskyClient) changedLocales(
+	ctx context.Context,
+	l *slog.Logger,
+	cmdCons executil.CommandConstructor,
+) (adds, dels []string, err error) {
 	defer func() { err = errors.Annotate(err, "getting changes: %w") }()
 
-	cmd := exec.Command("git", "diff", "--numstat", localesDir)
+	gitArgs := []string{"diff", "--numstat", c.localesDir}
+	l.DebugContext(ctx, "executing", "cmd", gitCmd, "args", gitArgs)
 
-	stdout, err := cmd.StdoutPipe()
+	// TODO(s.chzhen):  Consider streaming the output if needed.  Using
+	// [io.Pipe] here is unnecessary; it complicates lifecycle management
+	// because the output must be read concurrently, and the PipeWriter must be
+	// explicitly closed to signal EOF.  Since this command's output is small, a
+	// bytes.Buffer via executil.Run is sufficient.
+	var out bytes.Buffer
+	err = executil.Run(ctx, cmdCons, &executil.CommandConfig{
+		Path:   gitCmd,
+		Args:   gitArgs,
+		Stdout: &out,
+	})
 	if err != nil {
-		return nil, nil, fmt.Errorf("piping: %w", err)
+		return nil, nil, fmt.Errorf("executing cmd: %w", err)
 	}
 
-	err = cmd.Start()
-	if err != nil {
-		return nil, nil, fmt.Errorf("starting: %w", err)
-	}
-
-	scanner := bufio.NewScanner(stdout)
+	scanner := bufio.NewScanner(&out)
 
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -495,11 +417,6 @@ func changedLocales() (adds, dels []string, err error) {
 	err = scanner.Err()
 	if err != nil {
 		return nil, nil, fmt.Errorf("scanning: %w", err)
-	}
-
-	err = cmd.Wait()
-	if err != nil {
-		return nil, nil, fmt.Errorf("waiting: %w", err)
 	}
 
 	return adds, dels, nil

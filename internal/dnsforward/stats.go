@@ -1,6 +1,8 @@
 package dnsforward
 
 import (
+	"context"
+	"log/slog"
 	"net"
 	"time"
 
@@ -9,14 +11,18 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/dnsproxy/proxy"
-	"github.com/AdguardTeam/golibs/log"
 	"github.com/miekg/dns"
 )
 
-// Write Stats data and logs
-func (s *Server) processQueryLogsAndStats(dctx *dnsContext) (rc resultCode) {
-	log.Debug("dnsforward: started processing querylog and stats")
-	defer log.Debug("dnsforward: finished processing querylog and stats")
+// processQueryLogsAndStats writes stats data and logs.  l and dctx must not be
+// nil.
+func (s *Server) processQueryLogsAndStats(
+	ctx context.Context,
+	l *slog.Logger,
+	dctx *dnsContext,
+) (rc resultCode) {
+	l.DebugContext(ctx, "started processing querylog and stats")
+	defer l.DebugContext(ctx, "finished processing querylog and stats")
 
 	pctx := dctx.proxyCtx
 	q := pctx.Req.Question[0]
@@ -27,7 +33,7 @@ func (s *Server) processQueryLogsAndStats(dctx *dnsContext) (rc resultCode) {
 	s.anonymizer.Load()(ip)
 	ipStr := net.IP(ip).String()
 
-	log.Debug("dnsforward: client ip for stats and querylog: %s", ipStr)
+	l.DebugContext(ctx, "client ip for stats and querylog", "ip", ipStr)
 
 	ids := []string{ipStr}
 	if dctx.clientID != "" {
@@ -47,24 +53,22 @@ func (s *Server) processQueryLogsAndStats(dctx *dnsContext) (rc resultCode) {
 	if s.shouldLog(host, qt, cl, ids) {
 		s.logQuery(dctx, ip, processingTime)
 	} else {
-		log.Debug(
-			"dnsforward: request %s %s %q from %s ignored; not adding to querylog",
-			dns.Class(cl),
-			dns.Type(qt),
-			host,
-			ipStr,
+		l.DebugContext(
+			ctx,
+			"not adding to querylog",
+			"dns_class", dns.Class(cl),
+			"ip", ipStr,
 		)
 	}
 
 	if s.shouldCountStat(host, qt, cl, ids) {
 		s.updateStats(dctx, ipStr, processingTime)
 	} else {
-		log.Debug(
-			"dnsforward: request %s %s %q from %s ignored; not counting in stats",
-			dns.Class(cl),
-			dns.Type(qt),
-			host,
-			ipStr,
+		l.DebugContext(
+			ctx,
+			"not counting in stats",
+			"dns_class", dns.Class(cl),
+			"ip", ipStr,
 		)
 	}
 
@@ -122,9 +126,14 @@ func (s *Server) logQuery(dctx *dnsContext, ip net.IP, processingTime time.Durat
 
 	if pctx.Upstream != nil {
 		p.Upstream = pctx.Upstream.Address()
-	} else if cachedUps := pctx.CachedUpstreamAddr; cachedUps != "" {
-		p.Upstream = pctx.CachedUpstreamAddr
-		p.Cached = true
+	}
+
+	if qs := pctx.QueryStatistics(); qs != nil {
+		ms := qs.Main()
+		if len(ms) == 1 && ms[0].IsCached {
+			p.Upstream = ms[0].Address
+			p.Cached = true
+		}
 	}
 
 	s.queryLog.Add(p)
@@ -134,15 +143,18 @@ func (s *Server) logQuery(dctx *dnsContext, ip net.IP, processingTime time.Durat
 func (s *Server) updateStats(dctx *dnsContext, clientIP string, processingTime time.Duration) {
 	pctx := dctx.proxyCtx
 
+	var upstreamStats []*proxy.UpstreamStatistics
+	qs := pctx.QueryStatistics()
+	if qs != nil {
+		upstreamStats = append(upstreamStats, qs.Main()...)
+		upstreamStats = append(upstreamStats, qs.Fallback()...)
+	}
+
 	e := &stats.Entry{
+		UpstreamStats:  upstreamStats,
 		Domain:         aghnet.NormalizeDomain(pctx.Req.Question[0].Name),
 		Result:         stats.RNotFiltered,
 		ProcessingTime: processingTime,
-		UpstreamTime:   pctx.QueryDuration,
-	}
-
-	if pctx.Upstream != nil {
-		e.Upstream = pctx.Upstream.Address()
 	}
 
 	if clientID := dctx.clientID; clientID != "" {

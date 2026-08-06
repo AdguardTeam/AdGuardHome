@@ -61,38 +61,28 @@ func Main(embeddedFrontend fs.FS) {
 		FileName:   opts.confFile,
 	}
 
-	confMgr, err := configmgr.New(startCtx, confMgrConf)
+	svc, err := newServiceMgr(ctx, &serviceMgrConfig{
+		confMgrConf: confMgrConf,
+		logger:      baseLogger.With(slogutil.KeyPrefix, "svc"),
+		pidFilePath: opts.pidFile,
+	})
 	errors.Check(err)
 
-	web := confMgr.Web()
-	err = web.Start(startCtx)
-	errors.Check(err)
+	errors.Check(svc.Start(startCtx))
 
-	dns := confMgr.DNS()
-	err = dns.Start(startCtx)
-	errors.Check(err)
+	sigHdlr := service.NewSignalHandler(&service.SignalHandlerConfig{
+		Logger: baseLogger.With(slogutil.KeyPrefix, service.SignalHandlerPrefix),
+	})
 
-	sigHdlr := newSignalHandler(
-		baseLogger.With(slogutil.KeyPrefix, service.SignalHandlerPrefix),
-		confMgrConf,
-		opts.pidFile,
-		web,
-		dns,
-	)
+	sigHdlr.AddService(svc)
+	sigHdlr.AddRefresher(svc)
 
-	os.Exit(sigHdlr.handle(ctx))
+	os.Exit(sigHdlr.Handle(ctx))
 }
 
 // Default timeouts.
 //
 // TODO(a.garipov):  Make configurable.
 const (
-	defaultTimeoutStart    = 1 * time.Minute
-	defaultTimeoutShutdown = 5 * time.Second
+	defaultTimeoutStart = 1 * time.Minute
 )
-
-// newConfigMgr returns a new configuration manager using defaultTimeout as the
-// context timeout.
-func newConfigMgr(ctx context.Context, c *configmgr.Config) (m *configmgr.Manager, err error) {
-	return configmgr.New(ctx, c)
-}

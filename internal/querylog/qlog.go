@@ -87,7 +87,7 @@ var _ QueryLog = (*queryLog)(nil)
 
 // Start implements the [QueryLog] interface for *queryLog.
 func (l *queryLog) Start(ctx context.Context) (err error) {
-	if l.conf.HTTPRegister != nil {
+	if l.conf.HTTPReg != nil {
 		l.initWeb()
 	}
 

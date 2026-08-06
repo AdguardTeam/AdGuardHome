@@ -1,6 +1,5 @@
 import { createAction } from 'redux-actions';
 import i18next from 'i18next';
-import axios from 'axios';
 
 import endsWith from 'lodash/endsWith';
 import escapeRegExp from 'lodash/escapeRegExp';
@@ -19,11 +18,11 @@ import {
     CHECK_TIMEOUT,
     STATUS_RESPONSE,
     SETTINGS_NAMES,
-    FORM_NAME,
     MANUAL_UPDATE_LINK,
     DISABLE_PROTECTION_TIMINGS,
 } from '../helpers/constants';
 import { areEqualVersions } from '../helpers/version';
+import { fetchRequest } from '../api/fetch';
 import { getTlsStatus } from './encryption';
 import apiClient from '../api/Api';
 import { addErrorToast, addNoticeToast, addSuccessToast } from './toasts';
@@ -80,27 +79,17 @@ export const initSettingsRequest = createAction('SETTINGS_INIT_REQUEST');
 export const initSettingsFailure = createAction('SETTINGS_INIT_FAILURE');
 export const initSettingsSuccess = createAction('SETTINGS_INIT_SUCCESS');
 
-export const initSettings =
-    (
-        settingsList = {
-            safebrowsing: {},
-            parental: {},
-        },
-    ) =>
-    async (dispatch: any) => {
+export const initSettings = () => async (dispatch: any) => {
         dispatch(initSettingsRequest());
         try {
             const safebrowsingStatus = await apiClient.getSafebrowsingStatus();
             const parentalStatus = await apiClient.getParentalStatus();
             const safesearchStatus = await apiClient.getSafesearchStatus();
-            const { safebrowsing, parental } = settingsList;
             const newSettingsList = {
                 safebrowsing: {
-                    ...safebrowsing,
                     enabled: safebrowsingStatus.enabled,
                 },
                 parental: {
-                    ...parental,
                     enabled: parentalStatus.enabled,
                 },
                 safesearch: {
@@ -192,38 +181,39 @@ export const getUpdateRequest = createAction('GET_UPDATE_REQUEST');
 export const getUpdateFailure = createAction('GET_UPDATE_FAILURE');
 export const getUpdateSuccess = createAction('GET_UPDATE_SUCCESS');
 
-const checkStatus = async (handleRequestSuccess: any, handleRequestError: any, attempts = 60) => {
+export const checkStatus = async (handleRequestSuccess: any, handleRequestError: any, attempts = 60) => {
     let timeout;
 
     if (attempts === 0) {
         handleRequestError();
+        return;
     }
 
     const rmTimeout = (t: any) => t && clearTimeout(t);
 
     try {
-        const response = await axios.get(`${apiClient.baseUrl}/status`);
+        const response = await fetchRequest(`${apiClient.baseUrl}/status`, 'GET');
         rmTimeout(timeout);
-        if (response?.status === 200) {
-            handleRequestSuccess(response);
-            if (response.data.running === false) {
-                timeout = setTimeout(
-                    checkStatus,
-                    CHECK_TIMEOUT,
-                    handleRequestSuccess,
-                    handleRequestError,
-                    attempts - 1,
-                );
-            }
+
+        handleRequestSuccess(response);
+
+        if (response.data.running === false) {
+            timeout = setTimeout(
+                checkStatus,
+                CHECK_TIMEOUT,
+                handleRequestSuccess,
+                handleRequestError,
+                attempts - 1,
+            );
         }
-    } catch (error) {
+    } catch (_error) {
         rmTimeout(timeout);
         timeout = setTimeout(checkStatus, CHECK_TIMEOUT, handleRequestSuccess, handleRequestError, attempts - 1);
     }
 };
 
 export const getUpdate = () => async (dispatch: any, getState: any) => {
-    const { dnsVersion } = getState().dashboard;
+    const { dnsVersion, dnsStartTime } = getState().dashboard;
 
     dispatch(getUpdateRequest());
     const handleRequestError = () => {
@@ -239,8 +229,9 @@ export const getUpdate = () => async (dispatch: any, getState: any) => {
 
     const handleRequestSuccess = (response: any) => {
         const responseVersion = response.data?.version;
+        const responseStartTime = response.data?.start_time;
 
-        if (dnsVersion !== responseVersion) {
+        if (dnsVersion !== responseVersion || dnsStartTime !== responseStartTime) {
             dispatch(getUpdateSuccess());
 
             window.location.reload();
@@ -424,10 +415,9 @@ export const testUpstream =
         }
     };
 
-export const testUpstreamWithFormValues = () => async (dispatch: any, getState: any) => {
+export const testUpstreamWithFormValues = (formValues: any) => async (dispatch: any, getState: any) => {
     const { upstream_dns_file } = getState().dnsConfig;
-    const { bootstrap_dns, upstream_dns, local_ptr_upstreams, fallback_dns } =
-        getState().form[FORM_NAME.UPSTREAM].values;
+    const { bootstrap_dns, upstream_dns, local_ptr_upstreams, fallback_dns } = formValues;
 
     return dispatch(
         testUpstream(
@@ -512,16 +502,15 @@ export const findActiveDhcpRequest = createAction('FIND_ACTIVE_DHCP_REQUEST');
 export const findActiveDhcpSuccess = createAction('FIND_ACTIVE_DHCP_SUCCESS');
 export const findActiveDhcpFailure = createAction('FIND_ACTIVE_DHCP_FAILURE');
 
-export const findActiveDhcp = (name: any) => async (dispatch: any, getState: any) => {
+export const findActiveDhcp = (selectedInterface: any) => async (dispatch: any, getState: any) => {
     dispatch(findActiveDhcpRequest());
     try {
         const req = {
-            interface: name,
+            interface: selectedInterface,
         };
         const activeDhcp = await apiClient.findActiveDhcp(req);
         dispatch(findActiveDhcpSuccess(activeDhcp));
         const { check, interface_name, interfaces } = getState().dhcp;
-        const selectedInterface = getState().form[FORM_NAME.DHCP_INTERFACES].values.interface_name;
         const v4 = check?.v4 ?? { static_ip: {}, other_server: {} };
         const v6 = check?.v6 ?? { other_server: {} };
 

@@ -1,7 +1,7 @@
 import { connect } from 'react-redux';
 
 import { toggleProtection, getClients } from '../actions';
-import { getStats, getStatsConfig, setStatsConfig } from '../actions/stats';
+import { getStats, getStatsConfig } from '../actions/stats';
 import { getAccessList } from '../actions/access';
 
 import Dashboard from '../components/Dashboard';
@@ -19,7 +19,7 @@ type DispatchProps = {
     getStats: (...args: unknown[]) => unknown;
     getStatsConfig: (...args: unknown[]) => unknown;
     getAccessList: () => (dispatch: any) => void;
-}
+};
 
 const mapDispatchToProps: DispatchProps = {
     toggleProtection,

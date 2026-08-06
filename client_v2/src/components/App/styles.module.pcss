@@ -1,0 +1,22 @@
+.wrapper {
+    display: block;
+
+    @media (min-width: 1200px) {
+        display: flex;
+        flex-direction: row;
+        align-items: flex-start;
+    }
+}
+
+.bodyWrapper {
+    width: 100%;
+    min-width: 0;
+    min-height: calc(100vh - 64px);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+
+    @media (min-width: 1200px) {
+        min-height: 100vh;
+    }
+}

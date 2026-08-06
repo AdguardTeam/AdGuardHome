@@ -70,7 +70,8 @@ func newQLogFile(path string) (qf *qLogFile, err error) {
 // validateQLogLineIdx returns error if the line index is not valid to continue
 // search.
 func (q *qLogFile) validateQLogLineIdx(lineIdx, lastProbeLineIdx, ts, fSize int64) (err error) {
-	if lineIdx == lastProbeLineIdx {
+	switch lineIdx {
+	case lastProbeLineIdx:
 		if lineIdx == 0 {
 			return errTSTooEarly
 		}
@@ -78,11 +79,11 @@ func (q *qLogFile) validateQLogLineIdx(lineIdx, lastProbeLineIdx, ts, fSize int6
 		// If we're testing the same line twice then most likely the scope is
 		// too narrow and we won't find anything anymore in any other file.
 		return fmt.Errorf("looking up timestamp %d in %q: %w", ts, q.file.Name(), errTSNotFound)
-	} else if lineIdx == fSize {
+	case fSize:
 		return errTSTooLate
+	default:
+		return nil
 	}
-
-	return nil
 }
 
 // seekTS performs binary search in the query log file looking for a record
@@ -120,85 +121,144 @@ func (q *qLogFile) seekTS(
 		return 0, 0, err
 	}
 
-	// Define the search scope.
-
-	// Start of the search interval (position in the file).
-	start := int64(0)
-	// End of the search interval (position in the file).
-	end := fileInfo.Size()
-	// Probe is the approximate index of the line we'll try to check.
-	probe := (end - start) / 2
-
-	var line string
-	// Index of the probe line in the file.
-	var lineIdx int64
-	var lineEndIdx int64
-	// Index of the last probe line.
-	var lastProbeLineIdx int64
-	lastProbeLineIdx = -1
+	fileSize := fileInfo.Size()
+	st := &tsSearchState{
+		start:            0,
+		end:              fileSize,
+		probe:            fileSize / 2,
+		lastProbeLineIdx: -1,
+		fileSize:         fileSize,
+	}
 
 	// Count seek depth in order to detect mistakes.  If depth is too large,
 	// we should stop the search.
 	for {
-		// Get the line at the specified position.
-		line, lineIdx, lineEndIdx, err = q.readProbeLine(probe)
+		var found bool
+		found, err = q.seekTSStep(ctx, logger, timestamp, st)
 		if err != nil {
-			return 0, depth, err
+			return 0, st.depth, err
 		}
 
-		// Check if the line index if invalid.
-		err = q.validateQLogLineIdx(lineIdx, lastProbeLineIdx, timestamp, fileInfo.Size())
-		if err != nil {
-			return 0, depth, err
-		}
-
-		// Save the last found idx.
-		lastProbeLineIdx = lineIdx
-
-		// Get the timestamp from the query log record.
-		ts := readQLogTimestamp(ctx, logger, line)
-		if ts == 0 {
-			return 0, depth, fmt.Errorf(
-				"looking up timestamp %d in %q: record %q has empty timestamp",
-				timestamp,
-				q.file.Name(),
-				line,
-			)
-		}
-
-		if ts == timestamp {
-			// Hurray, returning the result.
+		if found {
 			break
-		}
-
-		// Narrow the scope and repeat the search.
-		if ts > timestamp {
-			// If the timestamp we're looking for is OLDER than what we found,
-			// then the line is somewhere on the LEFT side from the current
-			// probe position.
-			end = lineIdx
-		} else {
-			// If the timestamp we're looking for is NEWER than what we found,
-			// then the line is somewhere on the RIGHT side from the current
-			// probe position.
-			start = lineEndIdx
-		}
-		probe = start + (end-start)/2
-
-		depth++
-		if depth >= 100 {
-			return 0, depth, fmt.Errorf(
-				"looking up timestamp %d in %q: depth %d too high: %w",
-				timestamp,
-				q.file.Name(),
-				depth,
-				errTSNotFound,
-			)
 		}
 	}
 
-	q.position = lineIdx + int64(len(line))
-	return q.position, depth, nil
+	q.position = st.lineIdx + int64(len(st.line))
+
+	return q.position, st.depth, nil
+}
+
+// tsSearchState contains the state of the binary-search loop.
+type tsSearchState struct {
+	// line holds the contents of the matched line.
+	line string
+
+	// end is the end of the current search interval.
+	end int64
+
+	// fileSize is the total file size in bytes.
+	fileSize int64
+
+	// lastProbeLineIdx is the byte offset of the last probed line start.
+	lastProbeLineIdx int64
+
+	// lineIdx is the byte offset of the current line start.
+	lineIdx int64
+
+	// probe is the byte offset to probe.
+	probe int64
+
+	// start is the start of current search interval.
+	start int64
+
+	// depth is the number of search iterations performed.
+	depth int
+}
+
+// maxSearchDepth is the maximum number of search iterations.
+const maxSearchDepth = 100
+
+// seekTSStep performs one iteration of the binary search over the qlog file.  l
+// and st must not be nil.
+func (q *qLogFile) seekTSStep(
+	ctx context.Context,
+	l *slog.Logger,
+	timestamp int64,
+	st *tsSearchState,
+) (found bool, err error) {
+	line, lineIdx, lineEndIdx, err := q.readAndValidateProbe(st, timestamp)
+	if err != nil {
+		// Don't wrap the error, because it's informative enough as is.
+		return false, err
+	}
+
+	// Get the timestamp from the query log record.
+	ts := readQLogTimestamp(ctx, l, line)
+	if ts == 0 {
+		return false, fmt.Errorf(
+			"looking up timestamp %d in %q: record %q has empty timestamp",
+			timestamp,
+			q.file.Name(),
+			line,
+		)
+	}
+
+	if ts == timestamp {
+		// Found the target record.
+		st.line = line
+		st.lineIdx = lineIdx
+
+		return true, nil
+	}
+
+	// Narrow the scope and repeat the search.
+	if ts > timestamp {
+		// If the timestamp we're looking for is OLDER than what we found, then
+		// the line is somewhere on the LEFT side from the current probe
+		// position.
+		st.end = lineIdx
+	} else {
+		// If the timestamp we're looking for is NEWER than what we found, then
+		// the line is somewhere on the RIGHT side from the current probe
+		// position.
+		st.start = lineEndIdx
+	}
+	st.probe = st.start + (st.end-st.start)/2
+
+	st.depth++
+	if st.depth >= maxSearchDepth {
+		return false, fmt.Errorf(
+			"looking up timestamp %d in %q: depth %d too high: %w",
+			timestamp,
+			q.file.Name(),
+			st.depth,
+			errTSNotFound,
+		)
+	}
+
+	return false, nil
+}
+
+// readAndValidateProbe reads the probe line and validates the line index.
+func (q *qLogFile) readAndValidateProbe(
+	st *tsSearchState,
+	timestamp int64,
+) (line string, lineIdx, lineEndIdx int64, err error) {
+	// Get the line at the specified position.
+	line, lineIdx, lineEndIdx, err = q.readProbeLine(st.probe)
+	if err != nil {
+		return "", 0, 0, fmt.Errorf("reading probe line: %w", err)
+	}
+
+	err = q.validateQLogLineIdx(lineIdx, st.lastProbeLineIdx, timestamp, st.fileSize)
+	if err != nil {
+		return "", 0, 0, fmt.Errorf("validating line index: %w", err)
+	}
+
+	st.lastProbeLineIdx = lineIdx
+
+	return line, lineIdx, lineEndIdx, nil
 }
 
 // SeekStart changes the current position to the end of the file.  Please note,
@@ -221,10 +281,7 @@ func (q *qLogFile) SeekStart() (int64, error) {
 	}
 
 	// Place the position to the very end of file.
-	q.position = fileInfo.Size() - 1
-	if q.position < 0 {
-		q.position = 0
-	}
+	q.position = max(fileInfo.Size()-1, 0)
 
 	return q.position, nil
 }
@@ -373,7 +430,7 @@ func (q *qLogFile) readProbeLine(position int64) (string, int64, int64, error) {
 
 // readJSONValue reads a JSON string in form of '"key":"value"'.  prefix must
 // be of the form '"key":"' to generate less garbage.
-func readJSONValue(s, prefix string) string {
+func readJSONValue(s, prefix string) (res string) {
 	i := strings.Index(s, prefix)
 	if i == -1 {
 		return ""
@@ -386,11 +443,34 @@ func readJSONValue(s, prefix string) string {
 	}
 
 	end := start + i
+
 	return s[start:end]
 }
 
-// readQLogTimestamp reads the timestamp field from the query log line.
-func readQLogTimestamp(ctx context.Context, logger *slog.Logger, str string) int64 {
+// readJSONNumericValue reads a string containing unquoted JSON numeric value
+// from substring of s after prefix.
+func readJSONNumericValue(s, prefix string) (res string) {
+	i := strings.Index(s, prefix)
+	if i == -1 {
+		return ""
+	}
+
+	start := i + len(prefix)
+	i = strings.IndexFunc(s[start:], func(r rune) (ok bool) {
+		return (r > '9' || r < '0') && r != '.'
+	})
+	if i == -1 {
+		return ""
+	}
+
+	end := start + i
+
+	return s[start:end]
+}
+
+// readQLogTimestamp reads the timestamp field from the query log line.  logger
+// must not be nil.
+func readQLogTimestamp(ctx context.Context, logger *slog.Logger, str string) (res int64) {
 	val := readJSONValue(str, `"T":"`)
 	if len(val) == 0 {
 		val = readJSONValue(str, `"Time":"`)

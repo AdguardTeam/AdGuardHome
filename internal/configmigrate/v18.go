@@ -1,5 +1,7 @@
 package configmigrate
 
+import "context"
+
 // migrateTo18 performs the following changes:
 //
 //	# BEFORE:
@@ -22,7 +24,7 @@ package configmigrate
 //	    'youtube': true
 //	  # …
 //	# …
-func migrateTo18(diskConf yobj) (err error) {
+func (m *Migrator) migrateTo18(_ context.Context, diskConf yobj) (err error) {
 	diskConf["schema_version"] = 18
 
 	dns, ok, err := fieldVal[yobj](diskConf, "dns")

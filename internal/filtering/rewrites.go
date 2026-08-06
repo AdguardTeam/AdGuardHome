@@ -1,13 +1,16 @@
 package filtering
 
 import (
+	"context"
 	"fmt"
+	"log/slog"
 	"net/netip"
 	"slices"
 	"strings"
 
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/miekg/dns"
 )
 
@@ -15,9 +18,11 @@ import (
 
 // LegacyRewrite is a single legacy DNS rewrite record.
 //
-// Instances of *LegacyRewrite must never be nil.
+// Instances of *LegacyRewrite must not be nil.
+//
+// NOTE:  Keep fields in sync with [cloneRewrites].
 type LegacyRewrite struct {
-	// Domain is the domain pattern for which this rewrite should work.
+	// Domain is the pattern to which this rewrite applies.
 	Domain string `yaml:"domain"`
 
 	// Answer is the IP address, canonical name, or one of the special
@@ -30,6 +35,9 @@ type LegacyRewrite struct {
 
 	// Type is the DNS record type: A, AAAA, or CNAME.
 	Type uint16 `yaml:"-"`
+
+	// Enabled indicates whether this rewrite is active.
+	Enabled bool `yaml:"enabled"`
 }
 
 // equal returns true if the rw is equal to the other.
@@ -58,7 +66,7 @@ func (rw *LegacyRewrite) matchesQType(qt uint16) (ok bool) {
 // to domain name case, IP length, and so on.
 //
 // If rw is nil, it returns an errors.
-func (rw *LegacyRewrite) normalize() (err error) {
+func (rw *LegacyRewrite) normalize(ctx context.Context, l *slog.Logger) (err error) {
 	if rw == nil {
 		return errors.Error("nil rewrite entry")
 	}
@@ -85,7 +93,16 @@ func (rw *LegacyRewrite) normalize() (err error) {
 
 	ip, err := netip.ParseAddr(rw.Answer)
 	if err != nil {
-		log.Debug("normalizing legacy rewrite: %s", err)
+		l.DebugContext(ctx, "normalizing legacy rewrite", slogutil.KeyError, err)
+
+		// Not an IP address, treat as CNAME target, but validate as a domain
+		// name first.
+		err = netutil.ValidateDomainName(rw.Answer)
+		if err != nil {
+			// Use capital letters, as the error message is shown to the user.
+			return fmt.Errorf("invalid CNAME target %q: %w", rw.Answer, err)
+		}
+
 		rw.Type = dns.TypeCNAME
 
 		return nil
@@ -136,9 +153,9 @@ func (rw *LegacyRewrite) Compare(b *LegacyRewrite) (res int) {
 }
 
 // prepareRewrites normalizes and validates all legacy DNS rewrites.
-func (d *DNSFilter) prepareRewrites() (err error) {
+func (d *DNSFilter) prepareRewrites(ctx context.Context) (err error) {
 	for i, r := range d.conf.Rewrites {
-		err = r.normalize()
+		err = r.normalize(ctx, d.logger)
 		if err != nil {
 			return fmt.Errorf("at index %d: %w", i, err)
 		}
@@ -160,6 +177,10 @@ func findRewrites(
 	qtype uint16,
 ) (rewrites []*LegacyRewrite, matched bool) {
 	for _, e := range entries {
+		if !e.Enabled {
+			continue
+		}
+
 		if e.Domain != host && !matchDomainWildcard(host, e.Domain) {
 			continue
 		}
@@ -174,6 +195,11 @@ func findRewrites(
 		return nil, matched
 	}
 
+	return finalizeRewrites(rewrites), matched
+}
+
+// finalizeRewrites sorts rewrites and truncates wildcard ones.
+func finalizeRewrites(rewrites []*LegacyRewrite) (resRewrites []*LegacyRewrite) {
 	slices.SortFunc(rewrites, (*LegacyRewrite).Compare)
 
 	for i, r := range rewrites {
@@ -186,12 +212,18 @@ func findRewrites(
 		}
 	}
 
-	return rewrites, matched
+	return rewrites
 }
 
 // setRewriteResult sets the Reason or IPList of res if necessary.  res must not
 // be nil.
-func setRewriteResult(res *Result, host string, rewrites []*LegacyRewrite, qtype uint16) {
+func (d *DNSFilter) setRewriteResult(
+	ctx context.Context,
+	res *Result,
+	host string,
+	rewrites []*LegacyRewrite,
+	qtype uint16,
+) {
 	for _, rw := range rewrites {
 		if rw.Type == qtype && (qtype == dns.TypeA || qtype == dns.TypeAAAA) {
 			if rw.IP == (netip.Addr{}) {
@@ -203,7 +235,7 @@ func setRewriteResult(res *Result, host string, rewrites []*LegacyRewrite, qtype
 
 			res.IPList = append(res.IPList, rw.IP)
 
-			log.Debug("rewrite: a/aaaa for %s is %s", host, rw.IP)
+			d.logger.DebugContext(ctx, "set a/aaaa rewrite", "host", host, "ans", rw.IP)
 		}
 	}
 }
@@ -213,10 +245,11 @@ func cloneRewrites(entries []*LegacyRewrite) (clone []*LegacyRewrite) {
 	clone = make([]*LegacyRewrite, len(entries))
 	for i, rw := range entries {
 		clone[i] = &LegacyRewrite{
-			Domain: rw.Domain,
-			Answer: rw.Answer,
-			IP:     rw.IP,
-			Type:   rw.Type,
+			Domain:  rw.Domain,
+			Answer:  rw.Answer,
+			IP:      rw.IP,
+			Type:    rw.Type,
+			Enabled: rw.Enabled,
 		}
 	}
 

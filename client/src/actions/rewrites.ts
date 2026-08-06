@@ -2,6 +2,7 @@ import { createAction } from 'redux-actions';
 import i18next from 'i18next';
 import apiClient from '../api/Api';
 import { addErrorToast, addSuccessToast } from './toasts';
+import type { RootState } from '../initialState';
 
 export const toggleRewritesModal = createAction('TOGGLE_REWRITES_MODAL');
 
@@ -47,12 +48,15 @@ export const updateRewriteSuccess = createAction('UPDATE_REWRITE_SUCCESS');
  * @param {string} config.target - current DNS rewrite value
  * @param {string} config.update - updated DNS rewrite value
  */
-export const updateRewrite = (config: any) => async (dispatch: any) => {
+export const updateRewrite = (config: any) => async (dispatch: any, getState: () => RootState) => {
     dispatch(updateRewriteRequest());
     try {
         await apiClient.updateRewrite(config);
         dispatch(updateRewriteSuccess());
-        dispatch(toggleRewritesModal());
+        const state = getState();
+        if (state?.rewrites?.isModalOpen) {
+            dispatch(toggleRewritesModal());
+        }
         dispatch(getRewritesList());
         dispatch(addSuccessToast(i18next.t('rewrite_updated', { key: config.domain })));
     } catch (error) {
@@ -75,5 +79,37 @@ export const deleteRewrite = (config: any) => async (dispatch: any) => {
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(deleteRewriteFailure());
+    }
+};
+
+export const getRewriteSettingsRequest = createAction('GET_REWRITE_SETTINGS_REQUEST');
+export const getRewriteSettingsFailure = createAction('GET_REWRITE_SETTINGS_FAILURE');
+export const getRewriteSettingsSuccess = createAction('GET_REWRITE_SETTINGS_SUCCESS');
+
+export const getRewriteSettings = () => async (dispatch: any) => {
+    dispatch(getRewriteSettingsRequest());
+    try {
+        const data = await apiClient.getRewriteSettings();
+        dispatch(getRewriteSettingsSuccess(data));
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(getRewriteSettingsFailure());
+    }
+};
+
+export const updateRewriteSettingsRequest = createAction('UPDATE_REWRITE_SETTINGS_REQUEST');
+export const updateRewriteSettingsFailure = createAction('UPDATE_REWRITE_SETTINGS_FAILURE');
+export const updateRewriteSettingsSuccess = createAction('UPDATE_REWRITE_SETTINGS_SUCCESS');
+
+export const updateRewriteSettings = (config: any) => async (dispatch: any) => {
+    dispatch(updateRewriteSettingsRequest());
+    try {
+        await apiClient.updateRewriteSettings(config);
+        dispatch(updateRewriteSettingsSuccess(config));
+        dispatch(getRewriteSettings());
+        dispatch(addSuccessToast(i18next.t('rewrite_settings_updated')));
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(updateRewriteSettingsFailure());
     }
 };

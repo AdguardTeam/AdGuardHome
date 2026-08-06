@@ -85,12 +85,12 @@ user_rules: []
 querylog:
   enabled: true
   file_enabled: true
-  interval: 720h
+  interval: 30d
   size_memory: 1000
   ignored: []
 statistics:
   enabled: true
-  interval: 240h
+  interval: 10d
   ignored: []
 os:
   group: ''

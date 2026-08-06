@@ -15,19 +15,25 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/dnssvc"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/websvc"
+	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/netutil/urlutil"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestService_HandlePatchSettingsDNS(t *testing.T) {
 	wantDNS := &websvc.HTTPAPIDNSSettings{
+		UpstreamMode:        proxy.UpstreamModeParallel,
 		Addresses:           []netip.AddrPort{netip.MustParseAddrPort("127.0.1.1:53")},
 		BootstrapServers:    []string{"1.0.0.1"},
 		UpstreamServers:     []string{"1.1.1.1"},
 		DNS64Prefixes:       []netip.Prefix{netip.MustParsePrefix("1234::/64")},
 		UpstreamTimeout:     aghhttp.JSONDuration(2 * time.Second),
+		Ratelimit:           100,
+		CacheSize:           1048576,
 		BootstrapPreferIPv6: true,
+		RefuseAny:           true,
 		UseDNS64:            true,
 	}
 
@@ -40,7 +46,7 @@ func TestService_HandlePatchSettingsDNS(t *testing.T) {
 
 				return nil
 			},
-			OnShutdown: func(_ context.Context) (err error) { panic("not implemented") },
+			OnShutdown: func(ctx context.Context) (_ error) { panic(testutil.UnexpectedCall(ctx)) },
 			OnConfig:   func() (c *dnssvc.Config) { return &dnssvc.Config{} },
 		}
 	}
@@ -56,12 +62,16 @@ func TestService_HandlePatchSettingsDNS(t *testing.T) {
 	}
 
 	req := jobj{
+		"upstream_mode":         wantDNS.UpstreamMode,
 		"addresses":             wantDNS.Addresses,
 		"bootstrap_servers":     wantDNS.BootstrapServers,
 		"upstream_servers":      wantDNS.UpstreamServers,
 		"dns64_prefixes":        wantDNS.DNS64Prefixes,
 		"upstream_timeout":      wantDNS.UpstreamTimeout,
+		"cache_size":            wantDNS.CacheSize,
+		"ratelimit":             wantDNS.Ratelimit,
 		"bootstrap_prefer_ipv6": wantDNS.BootstrapPreferIPv6,
+		"refuse_any":            wantDNS.RefuseAny,
 		"use_dns64":             wantDNS.UseDNS64,
 	}
 

@@ -9,6 +9,8 @@ import (
 )
 
 // Item is a single DNS rewrite record.
+//
+// TODO(s.chzhen):  Add "Enabled" property.
 type Item struct {
 	// Domain is the domain pattern for which this rewrite should work.
 	Domain string `yaml:"domain"`

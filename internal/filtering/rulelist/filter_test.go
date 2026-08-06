@@ -18,7 +18,6 @@ func TestFilter_Refresh(t *testing.T) {
 	t.Parallel()
 
 	cacheDir := t.TempDir()
-	uid := rulelist.MustNewUID()
 
 	const fltData = testRuleTextTitle + testRuleTextBlocked
 	fileURL, srvURL := newFilterLocations(t, cacheDir, fltData, fltData)
@@ -54,6 +53,7 @@ func TestFilter_Refresh(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
+			uid := rulelist.MustNewUID()
 			f, err := rulelist.NewFilter(&rulelist.FilterConfig{
 				URL:         tc.url,
 				Name:        tc.name,

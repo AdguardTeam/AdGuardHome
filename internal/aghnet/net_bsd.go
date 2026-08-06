@@ -2,8 +2,13 @@
 
 package aghnet
 
-import "github.com/AdguardTeam/AdGuardHome/internal/aghos"
+import (
+	"context"
+	"log/slog"
 
-func canBindPrivilegedPorts() (can bool, err error) {
+	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
+)
+
+func canBindPrivilegedPorts(_ context.Context, _ *slog.Logger) (can bool, err error) {
 	return aghos.HaveAdminRights()
 }

@@ -34,7 +34,7 @@ func (Empty) Process(_ context.Context, _ netip.Addr) (host string, changed bool
 type Exchanger interface {
 	// Exchange tries to resolve the ip in a suitable way, i.e. either as local
 	// or as external.
-	Exchange(ip netip.Addr) (host string, ttl time.Duration, err error)
+	Exchange(ctx context.Context, ip netip.Addr) (host string, ttl time.Duration, err error)
 }
 
 // Config is the configuration structure for Default.
@@ -93,7 +93,7 @@ func (r *Default) Process(ctx context.Context, ip netip.Addr) (host string, chan
 		return fromCache, false
 	}
 
-	host, ttl, err := r.exchanger.Exchange(ip)
+	host, ttl, err := r.exchanger.Exchange(ctx, ip)
 	if err != nil {
 		r.logger.DebugContext(ctx, "resolving", "ip", ip, slogutil.KeyError, err)
 	}

@@ -123,7 +123,7 @@ func NewDefault(ctx context.Context, conf *DefaultConfig) (ss *Default, err erro
 	}
 
 	// TODO(s.chzhen):  Move to [Default.InitialRefresh].
-	err = ss.resetEngine(ctx, rulelist.URLFilterIDSafeSearch, conf.ServicesConfig)
+	err = ss.resetEngine(ctx, rulelist.IDSafeSearch, conf.ServicesConfig)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
 		return nil, err
@@ -136,7 +136,7 @@ func NewDefault(ctx context.Context, conf *DefaultConfig) (ss *Default, err erro
 // sets it in ss.
 func (ss *Default) resetEngine(
 	ctx context.Context,
-	listID int,
+	id rules.ListID,
 	conf filtering.SafeSearchConfig,
 ) (err error) {
 	if !conf.Enabled {
@@ -152,13 +152,15 @@ func (ss *Default) resetEngine(
 		}
 	}
 
-	strList := &filterlist.StringRuleList{
-		ID:             listID,
-		RulesText:      sb.String(),
-		IgnoreCosmetic: true,
+	strList := []filterlist.Interface{
+		filterlist.NewString(&filterlist.StringConfig{
+			ID:             id,
+			RulesText:      sb.String(),
+			IgnoreCosmetic: true,
+		}),
 	}
 
-	rs, err := filterlist.NewRuleStorage([]filterlist.RuleList{strList})
+	rs, err := filterlist.NewRuleStorage(strList)
 	if err != nil {
 		return fmt.Errorf("creating rule storage: %w", err)
 	}
@@ -261,7 +263,7 @@ func (ss *Default) newResult(
 		}
 
 		res.Rules = []*filtering.ResultRule{{
-			FilterListID: rulelist.URLFilterIDSafeSearch,
+			FilterListID: rulelist.APIIDSafeSearch,
 			IP:           ip,
 		}}
 
@@ -275,12 +277,16 @@ func (ss *Default) newResult(
 
 // setCacheResult stores data in cache for host.  qtype is expected to be either
 // [dns.TypeA] or [dns.TypeAAAA].
+//
+// TODO(a.garipov):  Remove gob and use uint64.
 func (ss *Default) setCacheResult(
 	ctx context.Context,
 	host string,
 	qtype rules.RRType,
 	res filtering.Result,
 ) {
+	// #nosec G115 -- The Unix epoch time is highly unlikely to be negative, and
+	// also see the TODO.
 	expire := uint32(time.Now().Add(ss.cacheTTL).Unix())
 	exp := make([]byte, 4)
 	binary.BigEndian.PutUint32(exp, expire)
@@ -306,6 +312,8 @@ func (ss *Default) setCacheResult(
 
 // getCachedResult returns stored data from cache for host.  qtype is expected
 // to be either [dns.TypeA] or [dns.TypeAAAA].
+//
+// TODO(a.garipov):  Remove gob and use uint64.
 func (ss *Default) getCachedResult(
 	ctx context.Context,
 	host string,
@@ -319,6 +327,8 @@ func (ss *Default) getCachedResult(
 	}
 
 	exp := binary.BigEndian.Uint32(data[:4])
+	// #nosec G115 -- The Unix epoch time is highly unlikely to be negative, and
+	// also see the TODO.
 	if exp <= uint32(time.Now().Unix()) {
 		ss.cache.Del([]byte(host))
 
@@ -343,7 +353,7 @@ func (ss *Default) Update(ctx context.Context, conf filtering.SafeSearchConfig) 
 	ss.mu.Lock()
 	defer ss.mu.Unlock()
 
-	err = ss.resetEngine(ctx, rulelist.URLFilterIDSafeSearch, conf)
+	err = ss.resetEngine(ctx, rulelist.IDSafeSearch, conf)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
 		return err

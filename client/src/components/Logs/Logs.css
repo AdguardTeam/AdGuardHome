@@ -337,7 +337,8 @@
 }
 
 .button-action--arrow-option:disabled {
-    display: none;
+    opacity: 0.5;
+    cursor: default;
 }
 
 .tooltip-custom__container .button-action--arrow-option {
@@ -367,6 +368,10 @@
     min-height: 26px;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.logs__row--center {
+    align-items: center;
 }
 
 .logs__row--icons {

@@ -1,6 +1,10 @@
 package configmigrate
 
-import "github.com/AdguardTeam/golibs/log"
+import (
+	"context"
+
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
+)
 
 // migrateTo19 performs the following changes:
 //
@@ -30,7 +34,7 @@ import "github.com/AdguardTeam/golibs/log"
 //	    # …
 //	  # …
 //	# …
-func migrateTo19(diskConf yobj) (err error) {
+func (m *Migrator) migrateTo19(ctx context.Context, diskConf yobj) (err error) {
 	diskConf["schema_version"] = 19
 
 	clients, ok, err := fieldVal[yobj](diskConf, "clients")
@@ -62,7 +66,7 @@ func migrateTo19(diskConf yobj) (err error) {
 
 		err = moveVal[bool](c, safeSearch, "safesearch_enabled", "enabled")
 		if err != nil {
-			log.Debug("migrating to version 19: %s", err)
+			m.logger.DebugContext(ctx, "migrating to", "version", 19, slogutil.KeyError, err)
 		}
 
 		c["safe_search"] = safeSearch

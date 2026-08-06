@@ -6,14 +6,6 @@
 
 Run `make init` from the project root.
 
-## `querylog/`: Query Log Helpers
-
-### Usage
-
-- `npm install`: install dependencies. Run this first.
-
-- `npm run anonymize <source> <dst>`: read the query log from the `<source>` and write anonymized version to `<dst>`.
-
 ## `make/`: Makefile scripts
 
 The release channels are: `development` (the default), `edge`, `beta`, and `release`. If verbosity levels aren’t documented here, there are only two: `0`, don’t print anything, and `1`, be verbose.
@@ -34,7 +26,7 @@ Optional environment:
 
 - `DOCKER_IMAGE_NAME`: the name of the resulting Docker container. By default it’s `adguardhome-dev`.
 
-- `DOCKER_OUTPUT`: the `--output` parameters. By default they are `type=image,name=${DOCKER_IMAGE_NAME},push=false`.
+- `DOCKER_PUSH`: `1` to push the image to DockerHub, `0` to not push. By default it’s `0`.
 
 - `SUDO`: allow users to use `sudo` or `doas` with `docker`. By default none is used.
 
@@ -140,8 +132,6 @@ Optional environment:
 
 ### `go-lint.sh`: Run backend static analyzers
 
-Don’t forget to run `make go-tools` once first!
-
 Optional environment:
 
 - `EXIT_ON_ERROR`: if set to `0`, don’t exit the script after the first encountered error. The default value is `1`.
@@ -162,14 +152,6 @@ Optional environment:
 
 - `VERBOSE`: verbosity level. `1` shows every command that is run and every Go package that is processed. `2` also shows subcommands. The default value is `0`, don’t be verbose.
 
-### `go-tools.sh`: Install backend tooling
-
-Installs the Go static analysis and other tools into `${PWD}/bin`. Either add `${PWD}/bin` to your `$PATH` before all other entries, or use the commands directly, or use the commands through `make` (for example, `make go-lint`).
-
-Optional environment:
-
-- `GO`: set an alternative name for the Go compiler.
-
 ### `version.sh`: Generate And Print The Current Version
 
 Required environment:
@@ -181,6 +163,10 @@ Required environment:
 ### `build.sh`
 
 Builds the Snapcraft packages from the binaries created by `download.sh`.
+
+Optional environment:
+
+- `SNAPCRAFT_CMD`: Overrides the Snapcraft command. Default: `snapcraft`.
 
 ### `download.sh`
 
@@ -210,17 +196,20 @@ Optional environment:
 
 - `go run ./scripts/translations help`: print usage.
 
-- `go run ./scripts/translations download [-n <count>]`: download and save all translations. `n` is optional flag where count is a number of concurrent downloads.
+- `go run ./scripts/translations download [-n <count>]`: download and save all translations. `n` is optional flag where count is a number of concurrent downloads. Note, that it downloads locales for all configurations in the `.twosky.json` file.
 
 - `go run ./scripts/translations upload`: upload the base `en` locale.
 
 - `go run ./scripts/translations summary`: show the current locales summary.
 
+    > [!NOTE]
+    > The following script may produce false positives because JavaScript uses template literals like `servicesgroup.${group.id}.name`, so the actual key won't be found by substring search.
+
 - `go run ./scripts/translations unused`: show the list of unused strings.
 
 - `go run ./scripts/translations auto-add`: add locales with additions to the git and restore locales with deletions.
 
-After the download you’ll find the output locales in the `client/src/__locales/` directory.
+After the download you’ll find the output locales in the configured directory.
 
 Optional environment:
 
@@ -230,7 +219,7 @@ Optional environment:
 
 - `TWOSKY_URI`: set an alternative URL for `download` or `upload`.
 
-- `TWOSKY_PROJECT_ID`: set an alternative project ID for `download` or `upload`.
+- `TWOSKY_PROJECT_ID`: set an alternative project ID. The default value is `home`.
 
 ## `companiesdb/`: Whotracks.me database converter
 

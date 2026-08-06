@@ -1,13 +1,14 @@
 import React, { Component, Fragment } from 'react';
 import { withTranslation } from 'react-i18next';
 
+import i18next from 'i18next';
 import StatsConfig from './StatsConfig';
 
 import LogsConfig from './LogsConfig';
 
-import FiltersConfig from './FiltersConfig';
+import { FiltersConfig } from './FiltersConfig';
 
-import Checkbox from '../ui/Checkbox';
+import { Checkbox } from '../ui/Controls/Checkbox';
 
 import Loading from '../ui/Loading';
 
@@ -15,26 +16,9 @@ import PageTitle from '../ui/PageTitle';
 
 import Card from '../ui/Card';
 
-import { getObjectKeysSorted, captitalizeWords } from '../../helpers/helpers';
+import { captitalizeWords } from '../../helpers/helpers';
 import './Settings.css';
 import { SettingsData } from '../../initialState';
-
-const ORDER_KEY = 'order';
-
-const SETTINGS = {
-    safebrowsing: {
-        enabled: false,
-        title: 'use_adguard_browsing_sec',
-        subtitle: 'use_adguard_browsing_sec_hint',
-        [ORDER_KEY]: 0,
-    },
-    parental: {
-        enabled: false,
-        title: 'use_adguard_parental',
-        subtitle: 'use_adguard_parental_hint',
-        [ORDER_KEY]: 1,
-    },
-};
 
 interface SettingsProps {
     initSettings: (...args: unknown[]) => unknown;
@@ -55,6 +39,7 @@ interface SettingsProps {
         customInterval?: number;
         enabled?: boolean;
         ignored?: unknown[];
+        ignored_enabled?: boolean;
         processingSetConfig?: boolean;
         processingReset?: boolean;
     };
@@ -67,6 +52,7 @@ interface SettingsProps {
         processingClear?: boolean;
         processingGetConfig?: boolean;
         ignored?: unknown[];
+        ignored_enabled?: boolean;
     };
     filtering?: {
         interval?: number;
@@ -77,7 +63,7 @@ interface SettingsProps {
 
 class Settings extends Component<SettingsProps> {
     componentDidMount() {
-        this.props.initSettings(SETTINGS);
+        this.props.initSettings();
 
         this.props.getStatsConfig();
 
@@ -86,47 +72,38 @@ class Settings extends Component<SettingsProps> {
         this.props.getFilteringStatus();
     }
 
-    renderSettings = (settings: any) =>
-        getObjectKeysSorted(SETTINGS, ORDER_KEY).map((key: any) => {
-            const setting = settings[key];
-            const { enabled } = setting;
-
-            return <Checkbox {...setting} key={key} handleChange={() => this.props.toggleSetting(key, enabled)} />;
-        });
-
     renderSafeSearch = () => {
-        const {
-            settings: {
-                settingsList: { safesearch },
-            },
-        } = this.props;
-        const { enabled } = safesearch || {};
+        const safesearch = this.props.settings.settingsList?.safesearch || {};
+        const { enabled } = safesearch;
         const searches = { ...(safesearch || {}) };
         delete searches.enabled;
 
         return (
             <>
-                <Checkbox
-                    enabled={enabled}
-                    title="enforce_safe_search"
-                    subtitle="enforce_save_search_hint"
-                    handleChange={({ target: { checked: enabled } }) =>
-                        this.props.toggleSetting('safesearch', { ...safesearch, enabled })
-                    }
-                />
+                <div className="form__group form__group--checkbox">
+                    <Checkbox
+                        data-testid="safesearch"
+                        value={enabled}
+                        title={i18next.t('enforce_safe_search')}
+                        subtitle={i18next.t('enforce_save_search_hint')}
+                        onChange={(checked) =>
+                            this.props.toggleSetting('safesearch', { ...safesearch, enabled: checked })
+                        }
+                    />
+                </div>
 
                 <div className="form__group--inner">
                     {Object.keys(searches).map((searchKey) => (
-                        <Checkbox
-                            key={searchKey}
-                            enabled={searches[searchKey]}
-                            title={captitalizeWords(searchKey)}
-                            subtitle=""
-                            disabled={!safesearch.enabled}
-                            handleChange={({ target: { checked } }: any) =>
-                                this.props.toggleSetting('safesearch', { ...safesearch, [searchKey]: checked })
-                            }
-                        />
+                        <div key={searchKey} className="form__group form__group--checkbox">
+                            <Checkbox
+                                value={searches[searchKey]}
+                                title={captitalizeWords(searchKey)}
+                                disabled={!safesearch.enabled}
+                                onChange={(checked) =>
+                                    this.props.toggleSetting('safesearch', { ...safesearch, [searchKey]: checked })
+                                }
+                            />
+                        </div>
                     ))}
                 </div>
             </>
@@ -136,25 +113,18 @@ class Settings extends Component<SettingsProps> {
     render() {
         const {
             settings,
-
             setStatsConfig,
-
             resetStats,
-
             stats,
-
             queryLogs,
-
             setLogsConfig,
-
             clearLogs,
-
             filtering,
-
             setFiltersConfig,
-
             t,
         } = this.props;
+        const safebrowsingEnabled = settings.settingsList?.safebrowsing?.enabled ?? false;
+        const parentalEnabled = settings.settingsList?.parental?.enabled ?? false;
 
         const isDataReady = !settings.processing && !stats.processingGetConfig && !queryLogs.processingGetConfig;
 
@@ -163,6 +133,7 @@ class Settings extends Component<SettingsProps> {
                 <PageTitle title={t('general_settings')} />
 
                 {!isDataReady && <Loading />}
+
                 {isDataReady && (
                     <div className="content">
                         <div className="row">
@@ -177,7 +148,24 @@ class Settings extends Component<SettingsProps> {
                                             processing={filtering.processingSetConfig}
                                             setFiltersConfig={setFiltersConfig}
                                         />
-                                        {this.renderSettings(settings.settingsList)}
+                                        <div className="form__group form__group--checkbox">
+                                            <Checkbox
+                                                data-testid="safebrowsing"
+                                                value={safebrowsingEnabled}
+                                                title={t('use_adguard_browsing_sec')}
+                                                subtitle={t('use_adguard_browsing_sec_hint')}
+                                                onChange={(checked) => this.props.toggleSetting('safebrowsing', !checked)}
+                                            />
+                                        </div>
+                                        <div className="form__group form__group--checkbox">
+                                            <Checkbox
+                                                data-testid="parental"
+                                                value={parentalEnabled}
+                                                title={t('use_adguard_parental')}
+                                                subtitle={t('use_adguard_parental_hint')}
+                                                onChange={(checked) => this.props.toggleSetting('parental', !checked)}
+                                            />
+                                        </div>
                                         {this.renderSafeSearch()}
                                     </div>
                                 </Card>
@@ -187,6 +175,7 @@ class Settings extends Component<SettingsProps> {
                                 <LogsConfig
                                     enabled={queryLogs.enabled}
                                     ignored={queryLogs.ignored}
+                                    ignoredEnabled={queryLogs.ignored_enabled}
                                     interval={queryLogs.interval}
                                     customInterval={queryLogs.customInterval}
                                     anonymize_client_ip={queryLogs.anonymize_client_ip}
@@ -202,6 +191,7 @@ class Settings extends Component<SettingsProps> {
                                     interval={stats.interval}
                                     customInterval={stats.customInterval}
                                     ignored={stats.ignored}
+                                    ignoredEnabled={stats.ignored_enabled}
                                     enabled={stats.enabled}
                                     processing={stats.processingSetConfig}
                                     processingReset={stats.processingReset}

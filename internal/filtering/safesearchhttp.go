@@ -13,7 +13,7 @@ import (
 // Deprecated: Use handleSafeSearchSettings.
 func (d *DNSFilter) handleSafeSearchEnable(w http.ResponseWriter, r *http.Request) {
 	setProtectedBool(d.confMu, &d.conf.SafeSearchConf.Enabled, true)
-	d.conf.ConfigModified()
+	d.conf.ConfModifier.Apply(r.Context())
 }
 
 // handleSafeSearchDisable is the handler for POST /control/safesearch/disable
@@ -22,7 +22,7 @@ func (d *DNSFilter) handleSafeSearchEnable(w http.ResponseWriter, r *http.Reques
 // Deprecated: Use handleSafeSearchSettings.
 func (d *DNSFilter) handleSafeSearchDisable(w http.ResponseWriter, r *http.Request) {
 	setProtectedBool(d.confMu, &d.conf.SafeSearchConf.Enabled, false)
-	d.conf.ConfigModified()
+	d.conf.ConfModifier.Apply(r.Context())
 }
 
 // handleSafeSearchStatus is the handler for GET /control/safesearch/status
@@ -36,24 +36,27 @@ func (d *DNSFilter) handleSafeSearchStatus(w http.ResponseWriter, r *http.Reques
 		resp = d.conf.SafeSearchConf
 	}()
 
-	aghhttp.WriteJSONResponseOK(w, r, resp)
+	aghhttp.WriteJSONResponseOK(r.Context(), d.logger, w, r, resp)
 }
 
 // handleSafeSearchSettings is the handler for PUT /control/safesearch/settings
 // HTTP API.
 func (d *DNSFilter) handleSafeSearchSettings(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	l := d.logger
+
 	req := &SafeSearchConfig{}
 	err := json.NewDecoder(r.Body).Decode(req)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "reading req: %s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "reading req: %s", err)
 
 		return
 	}
 
 	conf := *req
-	err = d.safeSearch.Update(r.Context(), conf)
+	err = d.safeSearch.Update(ctx, conf)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "updating: %s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "updating: %s", err)
 
 		return
 	}
@@ -65,7 +68,7 @@ func (d *DNSFilter) handleSafeSearchSettings(w http.ResponseWriter, r *http.Requ
 		d.conf.SafeSearchConf = conf
 	}()
 
-	d.conf.ConfigModified()
+	d.conf.ConfModifier.Apply(ctx)
 
-	aghhttp.OK(w)
+	aghhttp.OK(ctx, l, w)
 }

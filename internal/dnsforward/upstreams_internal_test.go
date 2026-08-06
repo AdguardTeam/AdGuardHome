@@ -15,13 +15,15 @@ import (
 )
 
 func TestUpstreamConfigValidator(t *testing.T) {
+	pt := testutil.NewPanicT(t)
+
 	goodHandler := dns.HandlerFunc(func(w dns.ResponseWriter, m *dns.Msg) {
 		err := w.WriteMsg(new(dns.Msg).SetReply(m))
-		require.NoError(testutil.PanicT{}, err)
+		require.NoError(pt, err)
 	})
 	badHandler := dns.HandlerFunc(func(w dns.ResponseWriter, _ *dns.Msg) {
 		err := w.WriteMsg(new(dns.Msg))
-		require.NoError(testutil.PanicT{}, err)
+		require.NoError(pt, err)
 	})
 
 	goodUps := (&url.URL{
@@ -143,14 +145,19 @@ func TestUpstreamConfigValidator(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			cv := newUpstreamConfigValidator(tc.general, tc.fallback, tc.private, &upstream.Options{
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			opts := &upstream.Options{
+				Logger:    testLogger,
 				Timeout:   upsTimeout,
 				Bootstrap: net.DefaultResolver,
-			})
-			cv.check()
+			}
+
+			cv := newUpstreamConfigValidator(ctx, tc.general, tc.fallback, tc.private, opts)
+
+			cv.check(ctx, testLogger)
 			cv.close()
 
-			assert.Equal(t, tc.want, cv.status())
+			assert.Equal(t, tc.want, cv.status(ctx, testLogger))
 		})
 	}
 }
@@ -160,8 +167,7 @@ func TestUpstreamConfigValidator_Check_once(t *testing.T) {
 
 	reqCh := make(chan signal)
 	hdlr := dns.HandlerFunc(func(w dns.ResponseWriter, m *dns.Msg) {
-		pt := testutil.PanicT{}
-
+		pt := testutil.NewPanicT(t)
 		err := w.WriteMsg(new(dns.Msg).SetReply(m))
 		require.NoError(pt, err)
 
@@ -194,13 +200,16 @@ func TestUpstreamConfigValidator_Check_once(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			cv := newUpstreamConfigValidator(tc.ups, nil, nil, &upstream.Options{
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			cv := newUpstreamConfigValidator(ctx, tc.ups, nil, nil, &upstream.Options{
+				Logger:  testLogger,
 				Timeout: testTimeout,
 			})
 
+			pt := testutil.NewPanicT(t)
 			go func() {
-				cv.check()
-				testutil.RequireSend(testutil.PanicT{}, reqCh, signal{}, testTimeout)
+				cv.check(ctx, testLogger)
+				testutil.RequireSend(pt, reqCh, signal{}, testTimeout)
 			}()
 
 			// Wait for the only request to be sent.
@@ -210,7 +219,7 @@ func TestUpstreamConfigValidator_Check_once(t *testing.T) {
 			testutil.RequireReceive(t, reqCh, testTimeout)
 
 			cv.close()
-			require.Equal(t, wantStatus, cv.status())
+			require.Equal(t, wantStatus, cv.status(ctx, testLogger))
 		})
 	}
 }

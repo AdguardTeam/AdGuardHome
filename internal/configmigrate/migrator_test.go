@@ -12,13 +12,9 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/configmigrate"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/require"
+	yaml "go.yaml.in/yaml/v4"
 	"golang.org/x/crypto/bcrypt"
-	yaml "gopkg.in/yaml.v3"
 )
-
-func TestMain(m *testing.M) {
-	testutil.DiscardLogOutput(m)
-}
 
 // testdata is a virtual filesystem containing test data.
 var testdata = os.DirFS("testdata")
@@ -54,6 +50,8 @@ func getField[T any](t require.TestingT, obj any, indexes ...any) (val T) {
 }
 
 func TestMigrateConfig_Migrate(t *testing.T) {
+	t.Parallel()
+
 	const (
 		inputFileName  = "input.yml"
 		outputFileName = "output.yml"
@@ -193,10 +191,36 @@ func TestMigrateConfig_Migrate(t *testing.T) {
 		yamlEqFunc:    require.YAMLEq,
 		name:          "v27",
 		targetVersion: 27,
+	}, {
+		yamlEqFunc:    require.YAMLEq,
+		name:          "v28",
+		targetVersion: 28,
+	}, {
+		yamlEqFunc:    require.YAMLEq,
+		name:          "v30",
+		targetVersion: 30,
+	}, {
+		yamlEqFunc:    require.YAMLEq,
+		name:          "v31",
+		targetVersion: 31,
+	}, {
+		yamlEqFunc:    require.YAMLEq,
+		name:          "v32",
+		targetVersion: 32,
+	}, {
+		yamlEqFunc:    require.YAMLEq,
+		name:          "v33",
+		targetVersion: 33,
+	}, {
+		yamlEqFunc:    require.YAMLEq,
+		name:          "v34",
+		targetVersion: 34,
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			body, err := fs.ReadFile(testdata, path.Join(t.Name(), inputFileName))
 			require.NoError(t, err)
 
@@ -204,10 +228,12 @@ func TestMigrateConfig_Migrate(t *testing.T) {
 			require.NoError(t, err)
 
 			migrator := configmigrate.New(&configmigrate.Config{
+				Logger:     testLogger,
 				WorkingDir: t.Name(),
 				DataDir:    filepath.Join(t.Name(), "data"),
 			})
-			newBody, upgraded, err := migrator.Migrate(body, tc.targetVersion)
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			newBody, upgraded, err := migrator.Migrate(ctx, body, tc.targetVersion)
 			require.NoError(t, err)
 			require.True(t, upgraded)
 
@@ -218,6 +244,8 @@ func TestMigrateConfig_Migrate(t *testing.T) {
 
 // TODO(a.garipov):  Consider ways of merging into the previous one.
 func TestMigrateConfig_Migrate_v29(t *testing.T) {
+	t.Parallel()
+
 	const (
 		pathUnix       = `/path/to/file.txt`
 		userDirPatUnix = `TestMigrateConfig_Migrate/v29/data/userfilters/*`
@@ -245,11 +273,13 @@ func TestMigrateConfig_Migrate_v29(t *testing.T) {
 	wantBody = bytes.ReplaceAll(wantBody, []byte("USERFILTERSPATH"), []byte(patternToReplace))
 
 	migrator := configmigrate.New(&configmigrate.Config{
+		Logger:     testLogger,
 		WorkingDir: t.Name(),
 		DataDir:    "TestMigrateConfig_Migrate/v29/data",
 	})
 
-	newBody, upgraded, err := migrator.Migrate(body, 29)
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	newBody, upgraded, err := migrator.Migrate(ctx, body, 29)
 	require.NoError(t, err)
 	require.True(t, upgraded)
 

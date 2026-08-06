@@ -1,6 +1,7 @@
 package configmigrate
 
 import (
+	"context"
 	"time"
 
 	"github.com/AdguardTeam/golibs/timeutil"
@@ -21,7 +22,7 @@ import (
 //	  'interval': 24h
 //	  # …
 //	# …
-func migrateTo20(diskConf yobj) (err error) {
+func (m *Migrator) migrateTo20(_ context.Context, diskConf yobj) (err error) {
 	diskConf["schema_version"] = 20
 
 	stats, ok, err := fieldVal[yobj](diskConf, "statistics")

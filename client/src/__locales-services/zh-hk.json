@@ -1,0 +1,38 @@
+{
+  "servicesgroup.ai.name": {
+    "message": "人工智能"
+  },
+  "servicesgroup.cdn.name": {
+    "message": "內容傳遞網路 (CDN)"
+  },
+  "servicesgroup.dating.name": {
+    "message": "約會服務"
+  },
+  "servicesgroup.gambling.name": {
+    "message": "賭博和投注"
+  },
+  "servicesgroup.gaming.name": {
+    "message": "遊戲"
+  },
+  "servicesgroup.hosting.name": {
+    "message": "網頁寄存"
+  },
+  "servicesgroup.messenger.name": {
+    "message": "訊息傳送服務"
+  },
+  "servicesgroup.privacy.name": {
+    "message": "隱私權工具"
+  },
+  "servicesgroup.shopping.name": {
+    "message": "購物"
+  },
+  "servicesgroup.social_network.name": {
+    "message": "社交媒體"
+  },
+  "servicesgroup.software.name": {
+    "message": "軟體開發"
+  },
+  "servicesgroup.streaming.name": {
+    "message": "串流服務"
+  }
+}

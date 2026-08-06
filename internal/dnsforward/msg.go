@@ -1,12 +1,14 @@
 package dnsforward
 
 import (
+	"context"
+	"log/slog"
 	"net/netip"
 	"slices"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
 )
@@ -15,9 +17,16 @@ import (
 // template.  Also extract all the methods to a separate entity.
 
 // reply creates a DNS response for req.
+//
+// NOTE: If req uses EDNS(0), the response copies its UDP size and DO flag.
 func (*Server) reply(req *dns.Msg, code int) (resp *dns.Msg) {
 	resp = (&dns.Msg{}).SetRcode(req, code)
 	resp.RecursionAvailable = true
+
+	opt := req.IsEdns0()
+	if opt != nil {
+		resp.SetEdns0(opt.UDPSize(), opt.Do())
+	}
 
 	return resp
 }
@@ -45,8 +54,10 @@ func ipsFromRules(resRules []*filtering.ResultRule) (ips []netip.Addr) {
 }
 
 // genDNSFilterMessage generates a filtered response to req for the filtering
-// result res.
+// result res.  l, dctx, and res must not be nil.
 func (s *Server) genDNSFilterMessage(
+	ctx context.Context,
+	l *slog.Logger,
 	dctx *proxy.DNSContext,
 	res *filtering.Result,
 ) (resp *dns.Msg) {
@@ -63,22 +74,27 @@ func (s *Server) genDNSFilterMessage(
 
 	switch res.Reason {
 	case filtering.FilteredSafeBrowsing:
-		return s.genBlockedHost(req, s.dnsFilter.SafeBrowsingBlockHost(), dctx)
+		return s.genBlockedHost(ctx, l, req, s.dnsFilter.SafeBrowsingBlockHost(), dctx)
 	case filtering.FilteredParental:
-		return s.genBlockedHost(req, s.dnsFilter.ParentalBlockHost(), dctx)
+		return s.genBlockedHost(ctx, l, req, s.dnsFilter.ParentalBlockHost(), dctx)
 	case filtering.FilteredSafeSearch:
 		// If Safe Search generated the necessary IP addresses, use them.
 		// Otherwise, if there were no errors, there are no addresses for the
 		// requested IP version, so produce a NODATA response.
-		return s.getCNAMEWithIPs(req, ipsFromRules(res.Rules), res.CanonName)
+		return s.getCNAMEWithIPs(ctx, req, ipsFromRules(res.Rules), res.CanonName)
 	default:
-		return s.genForBlockingMode(req, ipsFromRules(res.Rules))
+		return s.genForBlockingMode(ctx, req, ipsFromRules(res.Rules))
 	}
 }
 
 // getCNAMEWithIPs generates a filtered response to req for with CNAME record
 // and provided ips.
-func (s *Server) getCNAMEWithIPs(req *dns.Msg, ips []netip.Addr, cname string) (resp *dns.Msg) {
+func (s *Server) getCNAMEWithIPs(
+	ctx context.Context,
+	req *dns.Msg,
+	ips []netip.Addr,
+	cname string,
+) (resp *dns.Msg) {
 	resp = s.replyCompressed(req)
 
 	originalName := req.Question[0].Name
@@ -94,7 +110,7 @@ func (s *Server) getCNAMEWithIPs(req *dns.Msg, ips []netip.Addr, cname string) (
 
 	switch req.Question[0].Qtype {
 	case dns.TypeA:
-		ans = append(ans, s.genAnswersWithIPv4s(req, ips)...)
+		ans = append(ans, s.genAnswersWithIPv4s(ctx, req, ips)...)
 	case dns.TypeAAAA:
 		for _, ip := range ips {
 			if ip.Is6() {
@@ -112,24 +128,28 @@ func (s *Server) getCNAMEWithIPs(req *dns.Msg, ips []netip.Addr, cname string) (
 
 // genForBlockingMode generates a filtered response to req based on the server's
 // blocking mode.
-func (s *Server) genForBlockingMode(req *dns.Msg, ips []netip.Addr) (resp *dns.Msg) {
+func (s *Server) genForBlockingMode(
+	ctx context.Context,
+	req *dns.Msg,
+	ips []netip.Addr,
+) (resp *dns.Msg) {
 	switch mode, bIPv4, bIPv6 := s.dnsFilter.BlockingMode(); mode {
 	case filtering.BlockingModeCustomIP:
-		return s.makeResponseCustomIP(req, bIPv4, bIPv6)
+		return s.makeResponseCustomIP(ctx, req, bIPv4, bIPv6)
 	case filtering.BlockingModeDefault:
 		if len(ips) > 0 {
-			return s.genResponseWithIPs(req, ips)
+			return s.genResponseWithIPs(ctx, req, ips)
 		}
 
-		return s.makeResponseNullIP(req)
+		return s.makeResponseNullIP(ctx, req)
 	case filtering.BlockingModeNullIP:
-		return s.makeResponseNullIP(req)
+		return s.makeResponseNullIP(ctx, req)
 	case filtering.BlockingModeNXDOMAIN:
 		return s.NewMsgNXDOMAIN(req)
 	case filtering.BlockingModeREFUSED:
 		return s.makeResponseREFUSED(req)
 	default:
-		log.Error("dnsforward: invalid blocking mode %q", mode)
+		s.logger.ErrorContext(ctx, "invalid blocking mode", "mode", mode)
 
 		return s.replyCompressed(req)
 	}
@@ -138,6 +158,7 @@ func (s *Server) genForBlockingMode(req *dns.Msg, ips []netip.Addr) (resp *dns.M
 // makeResponseCustomIP generates a DNS response message for Custom IP blocking
 // mode with the provided IP addresses and an appropriate resource record type.
 func (s *Server) makeResponseCustomIP(
+	ctx context.Context,
 	req *dns.Msg,
 	bIPv4 netip.Addr,
 	bIPv6 netip.Addr,
@@ -150,7 +171,11 @@ func (s *Server) makeResponseCustomIP(
 	default:
 		// Generally shouldn't happen, since the types are checked in
 		// genDNSFilterMessage.
-		log.Error("dnsforward: invalid msg type %s for custom IP blocking mode", dns.Type(qt))
+		s.logger.ErrorContext(
+			ctx,
+			"invalid message type for custom IP blocking mode",
+			"dns_type", dns.Type(qt),
+		)
 
 		return s.replyCompressed(req)
 	}
@@ -234,11 +259,15 @@ func (s *Server) genAnswerTXT(req *dns.Msg, strs []string) (ans *dns.TXT) {
 // addresses and an appropriate resource record type.  If any of the IPs cannot
 // be converted to the correct protocol, genResponseWithIPs returns an empty
 // response.
-func (s *Server) genResponseWithIPs(req *dns.Msg, ips []netip.Addr) (resp *dns.Msg) {
+func (s *Server) genResponseWithIPs(
+	ctx context.Context,
+	req *dns.Msg,
+	ips []netip.Addr,
+) (resp *dns.Msg) {
 	var ans []dns.RR
 	switch req.Question[0].Qtype {
 	case dns.TypeA:
-		ans = s.genAnswersWithIPv4s(req, ips)
+		ans = s.genAnswersWithIPv4s(ctx, req, ips)
 	case dns.TypeAAAA:
 		for _, ip := range ips {
 			if ip.Is6() {
@@ -258,10 +287,14 @@ func (s *Server) genResponseWithIPs(req *dns.Msg, ips []netip.Addr) (resp *dns.M
 // genAnswersWithIPv4s generates DNS A answers provided IPv4 addresses.  If any
 // of the IPs isn't an IPv4 address, genAnswersWithIPv4s logs a warning and
 // returns nil,
-func (s *Server) genAnswersWithIPv4s(req *dns.Msg, ips []netip.Addr) (ans []dns.RR) {
+func (s *Server) genAnswersWithIPv4s(
+	ctx context.Context,
+	req *dns.Msg,
+	ips []netip.Addr,
+) (ans []dns.RR) {
 	for _, ip := range ips {
 		if !ip.Is4() {
-			log.Info("dnsforward: warning: ip %s is not ipv4 address", ip)
+			s.logger.WarnContext(ctx, "ip is not an ipv4 address", "ip", ip)
 
 			return nil
 		}
@@ -274,16 +307,16 @@ func (s *Server) genAnswersWithIPv4s(req *dns.Msg, ips []netip.Addr) (ans []dns.
 
 // makeResponseNullIP creates a response with 0.0.0.0 for A requests, :: for
 // AAAA requests, and an empty response for other types.
-func (s *Server) makeResponseNullIP(req *dns.Msg) (resp *dns.Msg) {
+func (s *Server) makeResponseNullIP(ctx context.Context, req *dns.Msg) (resp *dns.Msg) {
 	// Respond with the corresponding zero IP type as opposed to simply
 	// using one or the other in both cases, because the IPv4 zero IP is
 	// converted to a IPV6-mapped IPv4 address, while the IPv6 zero IP is
 	// converted into an empty slice instead of the zero IPv4.
 	switch req.Question[0].Qtype {
 	case dns.TypeA:
-		resp = s.genResponseWithIPs(req, []netip.Addr{netip.IPv4Unspecified()})
+		resp = s.genResponseWithIPs(ctx, req, []netip.Addr{netip.IPv4Unspecified()})
 	case dns.TypeAAAA:
-		resp = s.genResponseWithIPs(req, []netip.Addr{netip.IPv6Unspecified()})
+		resp = s.genResponseWithIPs(ctx, req, []netip.Addr{netip.IPv6Unspecified()})
 	default:
 		resp = s.replyCompressed(req)
 	}
@@ -291,16 +324,24 @@ func (s *Server) makeResponseNullIP(req *dns.Msg) (resp *dns.Msg) {
 	return resp
 }
 
-func (s *Server) genBlockedHost(request *dns.Msg, newAddr string, d *proxy.DNSContext) *dns.Msg {
+// genBlockedHost generates a blocked host response.  l, request, and d must not
+// be nil.
+func (s *Server) genBlockedHost(
+	ctx context.Context,
+	l *slog.Logger,
+	request *dns.Msg,
+	newAddr string,
+	d *proxy.DNSContext,
+) (msg *dns.Msg) {
 	if newAddr == "" {
-		log.Info("dnsforward: block host is not specified")
+		l.InfoContext(ctx, "block host not specified")
 
 		return s.NewMsgSERVFAIL(request)
 	}
 
 	ip, err := netip.ParseAddr(newAddr)
 	if err == nil {
-		return s.genResponseWithIPs(request, []netip.Addr{ip})
+		return s.genResponseWithIPs(ctx, request, []netip.Addr{ip})
 	}
 
 	// look up the hostname, TODO: cache
@@ -316,14 +357,19 @@ func (s *Server) genBlockedHost(request *dns.Msg, newAddr string, d *proxy.DNSCo
 
 	prx := s.proxy()
 	if prx == nil {
-		log.Debug("dnsforward: %s", srvClosedErr)
+		l.DebugContext(ctx, "getting current proxy", slogutil.KeyError, srvClosedErr)
 
 		return s.NewMsgSERVFAIL(request)
 	}
 
-	err = prx.Resolve(newContext)
+	err = prx.Resolve(ctx, newContext)
 	if err != nil {
-		log.Info("dnsforward: looking up replacement host %q: %s", newAddr, err)
+		l.ErrorContext(
+			ctx,
+			"looking up replacement host",
+			"host", newAddr,
+			slogutil.KeyError, err,
+		)
 
 		return s.NewMsgSERVFAIL(request)
 	}
@@ -365,7 +411,11 @@ func (s *Server) NewMsgSERVFAIL(req *dns.Msg) (resp *dns.Msg) {
 // NewMsgNOTIMPLEMENTED implements the [proxy.MessageConstructor] interface for
 // *Server.
 func (s *Server) NewMsgNOTIMPLEMENTED(req *dns.Msg) (resp *dns.Msg) {
-	resp = s.reply(req, dns.RcodeNotImplemented)
+	// NOTE: [Server.reply] must not be used there, because it unconditionally
+	// copies UDP size and DO bit from the request, when in this case we want to
+	// use constant values.
+	resp = (&dns.Msg{}).SetRcode(req, dns.RcodeNotImplemented)
+	resp.RecursionAvailable = true
 
 	// Most of the Internet and especially the inner core has an MTU of at least
 	// 1500 octets.  Maximum DNS/UDP payload size for IPv6 on MTU 1500 ethernet
@@ -376,7 +426,10 @@ func (s *Server) NewMsgNOTIMPLEMENTED(req *dns.Msg) (resp *dns.Msg) {
 
 	// NOTIMPLEMENTED without EDNS is treated as 'we don't support EDNS', so
 	// explicitly set it.
-	resp.SetEdns0(maxUDPPayload, false)
+	opt := req.IsEdns0()
+	if opt != nil {
+		resp.SetEdns0(maxUDPPayload, false)
+	}
 
 	return resp
 }
@@ -387,6 +440,12 @@ func (s *Server) NewMsgNODATA(req *dns.Msg) (resp *dns.Msg) {
 	resp.Ns = s.genSOA(req)
 
 	return resp
+}
+
+// NewMsgFORMERR implements the [proxy.MessageConstructor] interface for
+// *Server.
+func (s *Server) NewMsgFORMERR(req *dns.Msg) (resp *dns.Msg) {
+	return s.reply(req, dns.RcodeFormatError)
 }
 
 func (s *Server) genSOA(req *dns.Msg) []dns.RR {

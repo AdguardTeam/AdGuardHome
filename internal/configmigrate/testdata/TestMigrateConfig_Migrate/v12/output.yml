@@ -16,7 +16,7 @@ dns:
   parental_sensitivity: 0
   blocked_response_ttl: 10
   querylog_enabled: true
-  querylog_interval: 720h
+  querylog_interval: 30d
   upstream_dns:
   - tls://1.1.1.1
   - tls://1.0.0.1

@@ -7,7 +7,7 @@ import { MOBILE_CONFIG_LINKS } from '../../../helpers/constants';
 
 import Tabs from '../Tabs';
 
-import MobileConfigForm from './MobileConfigForm';
+import { MobileConfigForm } from './MobileConfigForm';
 import { RootState } from '../../../initialState';
 
 interface renderLiProps {
@@ -346,7 +346,7 @@ interface GuideProps {
     dnsAddresses?: unknown[];
 }
 
-const Guide = ({ dnsAddresses }: GuideProps) => {
+export const Guide = ({ dnsAddresses }: GuideProps) => {
     const { t } = useTranslation();
 
     const serverName = useSelector((state: RootState) => state.encryption?.server_name);
@@ -381,5 +381,3 @@ const Guide = ({ dnsAddresses }: GuideProps) => {
 Guide.defaultProps = {
     dnsAddresses: [],
 };
-
-export default Guide;

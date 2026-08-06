@@ -2,7 +2,6 @@ import 'url-polyfill';
 import dateParse from 'date-fns/parse';
 import dateFormat from 'date-fns/format';
 import round from 'lodash/round';
-import axios from 'axios';
 import i18n from 'i18next';
 import ipaddr, { IPv4, IPv6 } from 'ipaddr.js';
 import queryString from 'query-string';
@@ -28,7 +27,7 @@ import {
     THEMES,
 } from './constants';
 import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from './localStorageHelper';
-import { DhcpInterface } from '../initialState';
+import { DhcpInterface, InstallInterface } from '../initialState';
 
 /**
  * @param time {string} The time to format
@@ -217,9 +216,9 @@ export const getInterfaceIp = (option: any) => {
     return interfaceIP;
 };
 
-export const getIpList = (interfaces: DhcpInterface[]) =>
+export const getIpList = (interfaces: InstallInterface[]) =>
     Object.values(interfaces)
-        .reduce((acc: string[], curr: DhcpInterface) => acc.concat(curr.ip_addresses), [] as string[])
+        .reduce((acc: string[], curr: InstallInterface) => acc.concat(curr.ip_addresses), [] as string[])
         .sort();
 
 /**
@@ -275,22 +274,13 @@ export const checkRedirect = (url: any, attempts: number = 1) => {
 
     let timeout: any;
 
-    axios
-        .get(url)
-        .then((response) => {
+    fetch(url)
+        .then(() => {
             rmTimeout(timeout);
-            if (response) {
-                window.location.replace(url);
-                return;
-            }
-            timeout = setRecursiveTimeout(CHECK_TIMEOUT, url, (count += 1));
+            window.location.replace(url);
         })
-        .catch((error) => {
+        .catch(() => {
             rmTimeout(timeout);
-            if (error.response) {
-                window.location.replace(url);
-                return;
-            }
             timeout = setRecursiveTimeout(CHECK_TIMEOUT, url, (count += 1));
         });
 
@@ -453,7 +443,7 @@ export const getParamsForClientsSearch = (data: any, param: any, additionalParam
     });
 
     return {
-        clients: Array.from(clients).map(id => ({ id })),
+        clients: Array.from(clients).map((id) => ({ id })),
     };
 };
 
@@ -468,8 +458,6 @@ export const getParamsForClientsSearch = (data: any, param: any, additionalParam
  * @param {function} [normalizeOnBlur]
  * @returns {function}
  */
-export const createOnBlurHandler = (event: any, input: any, normalizeOnBlur: any) =>
-    normalizeOnBlur ? input.onBlur(normalizeOnBlur(event.target.value)) : input.onBlur();
 
 export const checkFiltered = (reason: any) => reason.indexOf(FILTERED) === 0;
 export const checkRewrite = (reason: any) => reason === FILTERED_STATUS.REWRITE;
@@ -653,7 +641,7 @@ export const countClientsStatistics = (ids: any, autoClients: any) => {
     const cidrsCount = Object.entries(autoClients).reduce((acc: any, curr: any) => {
         const [id, count] = curr;
         if (!ipaddr.isValid(id)) {
-            return false;
+            return acc;
         }
         if (cidrs.some((cidr: any) => isIpInCidr(id, cidr))) {
             // eslint-disable-next-line no-param-reassign
@@ -670,9 +658,18 @@ export const countClientsStatistics = (ids: any, autoClients: any) => {
  * @param {function} t translate
  * @returns {string}
  */
-export const formatElapsedMs = (elapsedMs: any, t: any) => {
-    const formattedElapsedMs = parseInt(elapsedMs, 10) || parseFloat(elapsedMs).toFixed(2);
-    return `${formattedElapsedMs} ${t('milliseconds_abbreviation')}`;
+export const formatElapsedMs = (elapsedMs: string, t: (key: string) => string) => {
+    const parsedElapsedMs = parseFloat(elapsedMs);
+
+    if (Number.isNaN(parsedElapsedMs)) {
+        return elapsedMs;
+    }
+
+    const formattedValue = parsedElapsedMs < 1
+        ? parsedElapsedMs.toFixed(2)
+        : Math.floor(parsedElapsedMs).toString();
+
+    return `${formattedValue} ${t('milliseconds_abbreviation')}`;
 };
 
 /**
@@ -754,12 +751,9 @@ type NestedObject = {
     order: number;
 };
 
-export const getObjectKeysSorted = <
-    T extends Record<string, NestedObject>,
-    K extends keyof NestedObject
->(
+export const getObjectKeysSorted = <T extends Record<string, NestedObject>, K extends keyof NestedObject>(
     object: T,
-    sortKey: K
+    sortKey: K,
 ): string[] => {
     return Object.entries(object)
         .sort(([, a], [, b]) => (a[sortKey] as number) - (b[sortKey] as number))

@@ -3,24 +3,36 @@
 package aghnet
 
 import (
+	"context"
 	"io"
+	"log/slog"
 	"syscall"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/osutil/executil"
 	"golang.org/x/sys/windows"
 )
 
-func canBindPrivilegedPorts() (can bool, err error) {
+func canBindPrivilegedPorts(_ context.Context, _ *slog.Logger) (can bool, err error) {
 	return true, nil
 }
 
-func ifaceHasStaticIP(string) (ok bool, err error) {
+func ifaceHasStaticIP(
+	_ context.Context,
+	_ executil.CommandConstructor,
+	_ string,
+) (ok bool, err error) {
 	return false, aghos.Unsupported("checking static ip")
 }
 
-func ifaceSetStaticIP(string) (err error) {
+func ifaceSetStaticIP(
+	_ context.Context,
+	_ *slog.Logger,
+	_ executil.CommandConstructor,
+	_ string,
+) (err error) {
 	return aghos.Unsupported("setting static ip")
 }
 

@@ -1,25 +1,37 @@
 package dhcpd
 
 import (
+	"context"
 	"fmt"
+	"log/slog"
 	"net"
 	"net/netip"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/osutil/executil"
 )
 
 // ServerConfig is the configuration for the DHCP server.  The order of YAML
 // fields is important, since the YAML configuration file follows it.
 type ServerConfig struct {
-	// Called when the configuration is changed by HTTP request
-	ConfigModified func() `yaml:"-"`
+	// Logger is used for logging the operation of the DHCP server.  It must not
+	// be nil.
+	Logger *slog.Logger `yaml:"-"`
+
+	// CommandConstructor is used to run external commands.  It must not be nil.
+	CommandConstructor executil.CommandConstructor `yaml:"-"`
+
+	// ConfModifier is used to update the global configuration.  It must not be
+	// nil.
+	ConfModifier agh.ConfigModifier `yaml:"-"`
 
 	// Register an HTTP handler
-	HTTPRegister aghhttp.RegisterFunc `yaml:"-"`
+	HTTPReg aghhttp.Registrar `yaml:"-"`
 
 	Enabled       bool   `yaml:"enabled"`
 	InterfaceName string `yaml:"interface_name"`
@@ -79,7 +91,7 @@ type DHCPServer interface {
 	WriteDiskConfig6(c *V6ServerConf)
 
 	// Start - start server
-	Start() (err error)
+	Start(ctx context.Context) (err error)
 	// Stop - stop server
 	Stop() (err error)
 	getLeasesRef() []*dhcpsvc.Lease
@@ -87,6 +99,10 @@ type DHCPServer interface {
 
 // V4ServerConf - server configuration
 type V4ServerConf struct {
+	// Logger is used for logging the operation of the DHCPv4 server.  It must
+	// not be nil.
+	Logger *slog.Logger `yaml:"-" json:"-"`
+
 	Enabled       bool   `yaml:"-" json:"-"`
 	InterfaceName string `yaml:"-" json:"-"`
 
@@ -200,7 +216,8 @@ func (c *V4ServerConf) Validate() (err error) {
 	}
 
 	if c.ipRange.contains(gatewayIP.AsSlice()) {
-		return fmt.Errorf("gateway ip %v in the ip range: %v-%v",
+		return fmt.Errorf(
+			"gateway ip %v in the ip range: %v-%v",
 			gatewayIP,
 			c.RangeStart,
 			c.RangeEnd,
@@ -208,14 +225,16 @@ func (c *V4ServerConf) Validate() (err error) {
 	}
 
 	if !c.subnet.Contains(rangeStart) {
-		return fmt.Errorf("range start %v is outside network %v",
+		return fmt.Errorf(
+			"range start %v is outside network %v",
 			c.RangeStart,
 			c.subnet,
 		)
 	}
 
 	if !c.subnet.Contains(rangeEnd) {
-		return fmt.Errorf("range end %v is outside network %v",
+		return fmt.Errorf(
+			"range end %v is outside network %v",
 			c.RangeEnd,
 			c.subnet,
 		)
@@ -226,6 +245,10 @@ func (c *V4ServerConf) Validate() (err error) {
 
 // V6ServerConf - server configuration
 type V6ServerConf struct {
+	// Logger is used for logging the operation of the DHCPv6 server.  It must
+	// not be nil.
+	Logger *slog.Logger `yaml:"-" json:"-"`
+
 	Enabled       bool   `yaml:"-" json:"-"`
 	InterfaceName string `yaml:"-" json:"-"`
 

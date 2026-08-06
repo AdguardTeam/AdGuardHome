@@ -1,49 +1,48 @@
 package home
 
 import (
+	"bytes"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/tls"
+	"crypto/x509"
+	"encoding/pem"
+	"math/big"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agh"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
+	"github.com/AdguardTeam/AdGuardHome/internal/client"
+	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/golibs/testutil"
+	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-var testCertChainData = []byte(`-----BEGIN CERTIFICATE-----
-MIICKzCCAZSgAwIBAgIJAMT9kPVJdM7LMA0GCSqGSIb3DQEBCwUAMC0xFDASBgNV
-BAoMC0FkR3VhcmQgTHRkMRUwEwYDVQQDDAxBZEd1YXJkIEhvbWUwHhcNMTkwMjI3
-MDkyNDIzWhcNNDYwNzE0MDkyNDIzWjAtMRQwEgYDVQQKDAtBZEd1YXJkIEx0ZDEV
-MBMGA1UEAwwMQWRHdWFyZCBIb21lMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKB
-gQCwvwUnPJiOvLcOaWmGu6Y68ksFr13nrXBcsDlhxlXy8PaohVi3XxEmt2OrVjKW
-QFw/bdV4fZ9tdWFAVRRkgeGbIZzP7YBD1Ore/O5SQ+DbCCEafvjJCcXQIrTeKFE6
-i9G3aSMHs0Pwq2LgV8U5mYotLrvyFiE8QPInJbDDMpaFYwIDAQABo1MwUTAdBgNV
-HQ4EFgQUdLUmQpEqrhn4eKO029jYd2AAZEQwHwYDVR0jBBgwFoAUdLUmQpEqrhn4
-eKO029jYd2AAZEQwDwYDVR0TAQH/BAUwAwEB/zANBgkqhkiG9w0BAQsFAAOBgQB8
-LwlXfbakf7qkVTlCNXgoY7RaJ8rJdPgOZPoCTVToEhT6u/cb1c2qp8QB0dNExDna
-b0Z+dnODTZqQOJo6z/wIXlcUrnR4cQVvytXt8lFn+26l6Y6EMI26twC/xWr+1swq
-Muj4FeWHVDerquH4yMr1jsYLD3ci+kc5sbIX6TfVxQ==
------END CERTIFICATE-----`)
-
-var testPrivateKeyData = []byte(`-----BEGIN PRIVATE KEY-----
-MIICeAIBADANBgkqhkiG9w0BAQEFAASCAmIwggJeAgEAAoGBALC/BSc8mI68tw5p
-aYa7pjrySwWvXeetcFywOWHGVfLw9qiFWLdfESa3Y6tWMpZAXD9t1Xh9n211YUBV
-FGSB4ZshnM/tgEPU6t787lJD4NsIIRp++MkJxdAitN4oUTqL0bdpIwezQ/CrYuBX
-xTmZii0uu/IWITxA8iclsMMyloVjAgMBAAECgYEAmjzoG1h27UDkIlB9BVWl95TP
-QVPLB81D267xNFDnWk1Lgr5zL/pnNjkdYjyjgpkBp1yKyE4gHV4skv5sAFWTcOCU
-QCgfPfUn/rDFcxVzAdJVWAa/CpJNaZgjTPR8NTGU+Ztod+wfBESNCP5tbnuw0GbL
-MuwdLQJGbzeJYpsNysECQQDfFHYoRNfgxHwMbX24GCoNZIgk12uDmGTA9CS5E+72
-9t3V1y4CfXxSkfhqNbd5RWrUBRLEw9BKofBS7L9NMDKDAkEAytQoIueE1vqEAaRg
-a3A1YDUekKesU5wKfKfKlXvNgB7Hwh4HuvoQS9RCvVhf/60Dvq8KSu6hSjkFRquj
-FQ5roQJBAMwKwyiCD5MfJPeZDmzcbVpiocRQ5Z4wPbffl9dRTDnIA5AciZDthlFg
-An/jMjZSMCxNl6UyFcqt5Et1EGVhuFECQQCZLXxaT+qcyHjlHJTMzuMgkz1QFbEp
-O5EX70gpeGQMPDK0QSWpaazg956njJSDbNCFM4BccrdQbJu1cW4qOsfBAkAMgZuG
-O88slmgTRHX4JGFmy3rrLiHNI2BbJSuJ++Yllz8beVzh6NfvuY+HKRCmPqoBPATU
-kXS9jgARhhiWXJrk
------END PRIVATE KEY-----`)
+// Paths to the test TLS-related data.
+const (
+	testCertificatePath = "./testdata/cert.pem"
+	testPrivateKeyPath  = "./testdata/key.pem"
+)
 
 func TestValidateCertificates(t *testing.T) {
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+
+	m, err := newTLSManager(ctx, &tlsManagerConfig{
+		logger:        testLogger,
+		confModifier:  agh.EmptyConfigModifier{},
+		manager:       aghtls.EmptyManager{},
+		servePlainDNS: false,
+	})
+	require.NoError(t, err)
+
 	t.Run("bad_certificate", func(t *testing.T) {
 		status := &tlsConfigStatus{}
-		err := validateCertificates(status, []byte("bad cert"), nil, "")
+		err = m.validateCertificates(ctx, status, []byte("bad cert"), nil, "")
 		testutil.AssertErrorMsg(t, "empty certificate", err)
 		assert.False(t, status.ValidCert)
 		assert.False(t, status.ValidChain)
@@ -51,14 +50,18 @@ func TestValidateCertificates(t *testing.T) {
 
 	t.Run("bad_private_key", func(t *testing.T) {
 		status := &tlsConfigStatus{}
-		err := validateCertificates(status, nil, []byte("bad priv key"), "")
+		err = m.validateCertificates(ctx, status, nil, []byte("bad priv key"), "")
 		testutil.AssertErrorMsg(t, "no valid keys were found", err)
 		assert.False(t, status.ValidKey)
 	})
 
 	t.Run("valid", func(t *testing.T) {
 		status := &tlsConfigStatus{}
-		err := validateCertificates(status, testCertChainData, testPrivateKeyData, "")
+
+		testCertChainData := requireReadFile(t, testCertificatePath)
+		testPrivateKeyData := requireReadFile(t, testPrivateKeyPath)
+
+		err = m.validateCertificates(ctx, status, testCertChainData, testPrivateKeyData, "")
 		assert.Error(t, err)
 
 		notBefore := time.Date(2019, 2, 27, 9, 24, 23, 0, time.UTC)
@@ -74,4 +77,238 @@ func TestValidateCertificates(t *testing.T) {
 		assert.Equal(t, notAfter, status.NotAfter)
 		assert.True(t, status.ValidPair)
 	})
+
+	t.Run("no_ip_in_cert", func(t *testing.T) {
+		caCert, chainPEM, leafKeyPEM := newCertWithoutIP(t)
+
+		m.rootCerts = x509.NewCertPool()
+		m.rootCerts.AddCert(caCert)
+
+		status := &tlsConfigStatus{}
+		var ok bool
+		ok, err = m.validateCertificate(ctx, status, chainPEM, "")
+		assert.True(t, ok)
+		assert.ErrorIs(t, err, errNoIPInCert)
+		assert.True(t, status.ValidCert)
+		assert.True(t, status.ValidChain)
+
+		status = &tlsConfigStatus{}
+		err = m.validateCertificates(ctx, status, chainPEM, leafKeyPEM, "")
+		assert.ErrorIs(t, err, errNoIPInCert)
+		assert.True(t, status.ValidCert)
+		assert.True(t, status.ValidChain)
+		assert.True(t, status.ValidKey)
+		assert.True(t, status.ValidPair)
+	})
+}
+
+// newCertWithoutIP generates a CA certificate, a leaf certificate without an IP
+// address, and the PEM-encoded leaf private key.
+func newCertWithoutIP(tb testing.TB) (
+	caCert *x509.Certificate,
+	chainPEM []byte,
+	leafKeyPEM []byte,
+) {
+	tb.Helper()
+
+	caKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	require.NoError(tb, err)
+
+	now := time.Now()
+	caTmpl := &x509.Certificate{
+		SerialNumber:          big.NewInt(1),
+		NotBefore:             now.Add(-time.Hour),
+		NotAfter:              now.Add(time.Hour),
+		IsCA:                  true,
+		BasicConstraintsValid: true,
+		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
+	}
+
+	caDER, err := x509.CreateCertificate(rand.Reader, caTmpl, caTmpl, &caKey.PublicKey, caKey)
+	require.NoError(tb, err)
+
+	caCert, err = x509.ParseCertificate(caDER)
+	require.NoError(tb, err)
+
+	leafKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	require.NoError(tb, err)
+
+	leafTmpl := &x509.Certificate{
+		SerialNumber: big.NewInt(2),
+		NotBefore:    now.Add(-time.Hour),
+		NotAfter:     now.Add(time.Hour),
+		KeyUsage:     x509.KeyUsageDigitalSignature,
+	}
+
+	leafDER, err := x509.CreateCertificate(
+		rand.Reader,
+		leafTmpl,
+		caTmpl,
+		&leafKey.PublicKey,
+		caKey,
+	)
+	require.NoError(tb, err)
+
+	buf := bytes.Buffer{}
+	err = pem.Encode(&buf, &pem.Block{Type: "CERTIFICATE", Bytes: leafDER})
+	require.NoError(tb, err)
+
+	err = pem.Encode(&buf, &pem.Block{Type: "CERTIFICATE", Bytes: caDER})
+	require.NoError(tb, err)
+
+	leafKeyPEM = pem.EncodeToMemory(&pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(leafKey),
+	})
+
+	return caCert, buf.Bytes(), leafKeyPEM
+}
+
+// newCertAndKey is a helper function that generates certificate and key.
+func newCertAndKey(tb testing.TB, n int64) (certDER []byte, key *rsa.PrivateKey) {
+	tb.Helper()
+
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	require.NoError(tb, err)
+
+	certTmpl := &x509.Certificate{
+		SerialNumber: big.NewInt(n),
+	}
+
+	certDER, err = x509.CreateCertificate(rand.Reader, certTmpl, certTmpl, &key.PublicKey, key)
+	require.NoError(tb, err)
+
+	return certDER, key
+}
+
+// writeCertAndKey is a helper function that writes certificate and key to
+// specified paths.  key must not be nil.
+func writeCertAndKey(
+	tb testing.TB,
+	certDER []byte,
+	certPath string,
+	key *rsa.PrivateKey,
+	keyPath string,
+) {
+	tb.Helper()
+
+	certFile, err := os.OpenFile(certPath, os.O_WRONLY|os.O_CREATE, 0o600)
+	require.NoError(tb, err)
+
+	defer func() {
+		err = certFile.Close()
+		require.NoError(tb, err)
+	}()
+
+	err = pem.Encode(certFile, &pem.Block{Type: "CERTIFICATE", Bytes: certDER})
+	require.NoError(tb, err)
+
+	keyFile, err := os.OpenFile(keyPath, os.O_WRONLY|os.O_CREATE, 0o600)
+	require.NoError(tb, err)
+
+	defer func() {
+		err = keyFile.Close()
+		require.NoError(tb, err)
+	}()
+
+	err = pem.Encode(keyFile, &pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(key),
+	})
+	require.NoError(tb, err)
+}
+
+// assertCertSerialNumber is a helper function that checks serial number of the
+// TLS certificate.
+func assertCertSerialNumber(tb testing.TB, conf *tlsConfigSettings, wantSN int64) {
+	tb.Helper()
+
+	cert, err := tls.X509KeyPair(conf.CertificateChainData, conf.PrivateKeyData)
+	require.NoError(tb, err)
+
+	assert.Equal(tb, wantSN, cert.Leaf.SerialNumber.Int64())
+}
+
+// TODO(m.kazantsev):  Refactor.
+func TestTLSManager_Reload(t *testing.T) {
+	storeGlobals(t)
+
+	config.DNS.Port = 0
+
+	var (
+		ctx = testutil.ContextWithTimeout(t, testTimeout)
+		err error
+	)
+
+	globalContext.dnsServer, err = dnsforward.NewServer(dnsforward.DNSCreateParams{
+		Logger:            testLogger,
+		TLSConfigProvider: aghtls.EmptyTLSConfigProvider{},
+	})
+	require.NoError(t, err)
+
+	err = globalContext.dnsServer.Prepare(
+		testutil.ContextWithTimeout(t, testTimeout),
+		&dnsforward.ServerConfig{
+			TLSConf: &dnsforward.TLSConfig{},
+			Config: dnsforward.Config{
+				UpstreamMode:     dnsforward.UpstreamModeLoadBalance,
+				EDNSClientSubnet: &dnsforward.EDNSClientSubnet{Enabled: false},
+				ClientsContainer: dnsforward.EmptyClientsContainer{},
+			},
+			ServePlainDNS: true,
+		},
+	)
+	require.NoError(t, err)
+
+	globalContext.clients.storage, err = client.NewStorage(ctx, &client.StorageConfig{
+		BaseLogger: testLogger,
+		Logger:     testLogger,
+		Clock:      timeutil.SystemClock{},
+	})
+	require.NoError(t, err)
+
+	const (
+		snBefore int64 = 1
+		snAfter  int64 = 2
+	)
+
+	tmpDir := t.TempDir()
+	certPath := filepath.Join(tmpDir, "cert.pem")
+	keyPath := filepath.Join(tmpDir, "key.pem")
+
+	certDER, key := newCertAndKey(t, snBefore)
+	writeCertAndKey(t, certDER, certPath, key, keyPath)
+
+	m, err := newTLSManager(ctx, &tlsManagerConfig{
+		logger:       testLogger,
+		confModifier: agh.EmptyConfigModifier{},
+		manager:      aghtls.EmptyManager{},
+		tlsSettings: tlsConfigSettings{
+			Enabled:         true,
+			CertificatePath: certPath,
+			PrivateKeyPath:  keyPath,
+		},
+		servePlainDNS: false,
+	})
+	require.NoError(t, err)
+
+	web := newTestWeb(t, &webConfig{tlsManager: m})
+	m.setWebAPI(web)
+
+	extTLSConf := m.extendedTLSConfig()
+	assertCertSerialNumber(t, extTLSConf, snBefore)
+
+	certDER, key = newCertAndKey(t, snAfter)
+	writeCertAndKey(t, certDER, certPath, key, keyPath)
+
+	m.reload(ctx)
+
+	// The [tlsManager.reload] method will start the DNS server and it should be
+	// stopped after the test ends.
+	testutil.CleanupAndRequireSuccess(t, func() (err error) {
+		return globalContext.dnsServer.Stop(testutil.ContextWithTimeout(t, testTimeout))
+	})
+
+	extTLSConf = m.extendedTLSConfig()
+	assertCertSerialNumber(t, extTLSConf, snAfter)
 }

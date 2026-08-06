@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { fetchRequest } from './fetch';
 
 import { BASE_URL } from '../../constants';
 
@@ -13,20 +13,10 @@ class Api {
     async makeRequest(path: any, method = 'POST', config: any = {}) {
         const url = `${this.baseUrl}/${path}`;
 
-        const axiosConfig = config || {};
-        if (method !== 'GET' && axiosConfig.data) {
-            axiosConfig.headers = axiosConfig.headers || {};
-            axiosConfig.headers['Content-Type'] = axiosConfig.headers['Content-Type'] || 'application/json';
-        }
-
         try {
-            const response = await axios({
-                url,
-                method,
-                ...axiosConfig,
-            });
+            const response = await fetchRequest(url, method, config);
             return response.data;
-        } catch (error) {
+        } catch (error: any) {
             const errorPath = url;
 
             if (error.response) {
@@ -489,6 +479,10 @@ class Api {
 
     REWRITE_DELETE = { path: 'rewrite/delete', method: 'POST' };
 
+    REWRITE_SETTINGS = { path: 'rewrite/settings', method: 'GET' };
+
+    REWRITE_SETTINGS_UPDATE = { path: 'rewrite/settings/update', method: 'PUT' };
+
     getRewritesList() {
         const { path, method } = this.REWRITES_LIST;
 
@@ -511,12 +505,26 @@ class Api {
         return this.makeRequest(path, method, parameters);
     }
 
+    updateRewriteSettings(config: any) {
+        const { path, method } = this.REWRITE_SETTINGS_UPDATE;
+        const parameters = {
+            data: config,
+        };
+        return this.makeRequest(path, method, parameters);
+    }
+
     deleteRewrite(config: any) {
         const { path, method } = this.REWRITE_DELETE;
         const parameters = {
             data: config,
         };
         return this.makeRequest(path, method, parameters);
+    }
+
+    getRewriteSettings() {
+        const { path, method } = this.REWRITE_SETTINGS;
+
+        return this.makeRequest(path, method);
     }
 
     // Blocked services

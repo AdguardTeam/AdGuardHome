@@ -1,47 +1,47 @@
 import React from 'react';
-
-import { Field, reduxForm } from 'redux-form';
-import { withTranslation, Trans } from 'react-i18next';
-import flow from 'lodash/flow';
-
-import i18n from '../../i18n';
-
+import { Controller, useForm } from 'react-hook-form';
+import { Trans, useTranslation } from 'react-i18next';
 import Controls from './Controls';
+import { validatePasswordLength, validateRequiredValue } from '../../helpers/validators';
+import { Input } from '../../components/ui/Controls/Input';
 
-import { renderInputField } from '../../helpers/form';
-import { FORM_NAME } from '../../helpers/constants';
-import { validatePasswordLength } from '../../helpers/validators';
-
-const required = (value: any) => {
-    if (value || value === 0) {
-        return false;
-    }
-
-    return <Trans>form_error_required</Trans>;
+type AuthFormValues = {
+    username: string;
+    password: string;
+    confirm_password: string;
 };
 
-const validate = (values: any) => {
-    const errors: { confirm_password?: string } = {};
-
-    if (values.confirm_password !== values.password) {
-        errors.confirm_password = i18n.t('form_error_password');
-    }
-
-    return errors;
+type Props = {
+    onAuthSubmit: (values: AuthFormValues) => void;
 };
 
-interface AuthProps {
-    handleSubmit: (...args: unknown[]) => string;
-    pristine: boolean;
-    invalid: boolean;
-    t: (...args: unknown[]) => string;
-}
+export const Auth = ({ onAuthSubmit }: Props) => {
+    const { t } = useTranslation();
+    const {
+        handleSubmit,
+        watch,
+        control,
+        formState: { isDirty, isValid },
+    } = useForm<AuthFormValues>({
+        mode: 'onBlur',
+        defaultValues: {
+            username: '',
+            password: '',
+            confirm_password: '',
+        },
+    });
 
-const Auth = (props: AuthProps) => {
-    const { handleSubmit, pristine, invalid, t } = props;
+    const password = watch('password');
+
+    const validateConfirmPassword = (value: string) => {
+        if (value !== password) {
+            return t('form_error_password');
+        }
+        return undefined;
+    };
 
     return (
-        <form className="setup__step" onSubmit={handleSubmit}>
+        <form className="setup__step" onSubmit={handleSubmit(onAuthSubmit)}>
             <div className="setup__group">
                 <div className="setup__subtitle">
                     <Trans>install_auth_title</Trans>
@@ -52,65 +52,74 @@ const Auth = (props: AuthProps) => {
                 </p>
 
                 <div className="form-group">
-                    <label>
-                        <Trans>install_auth_username</Trans>
-                    </label>
-
-                    <Field
+                    <Controller
                         name="username"
-                        component={renderInputField}
-                        type="text"
-                        className="form-control"
-                        placeholder={t('install_auth_username_enter')}
-                        validate={[required]}
-                        autoComplete="username"
+                        control={control}
+                        rules={{ validate: validateRequiredValue }}
+                        render={({ field, fieldState }) => (
+                            <Input
+                                {...field}
+                                type="text"
+                                data-testid="install_username"
+                                label={t('install_auth_username')}
+                                placeholder={t('install_auth_username_enter')}
+                                error={fieldState.error?.message}
+                                autoComplete="username"
+                            />
+                        )}
                     />
                 </div>
 
                 <div className="form-group">
-                    <label>
-                        <Trans>install_auth_password</Trans>
-                    </label>
-
-                    <Field
+                    <Controller
                         name="password"
-                        component={renderInputField}
-                        type="password"
-                        className="form-control"
-                        placeholder={t('install_auth_password_enter')}
-                        validate={[required, validatePasswordLength]}
-                        autoComplete="new-password"
+                        control={control}
+                        rules={{
+                            validate: {
+                                required: validateRequiredValue,
+                                passwordLength: validatePasswordLength,
+                            },
+                        }}
+                        render={({ field, fieldState }) => (
+                            <Input
+                                {...field}
+                                type="password"
+                                data-testid="install_password"
+                                label={t('install_auth_password')}
+                                placeholder={t('install_auth_password_enter')}
+                                error={fieldState.error?.message}
+                                autoComplete="new-password"
+                            />
+                        )}
                     />
                 </div>
 
                 <div className="form-group">
-                    <label>
-                        <Trans>install_auth_confirm</Trans>
-                    </label>
-
-                    <Field
+                    <Controller
                         name="confirm_password"
-                        component={renderInputField}
-                        type="password"
-                        className="form-control"
-                        placeholder={t('install_auth_confirm')}
-                        validate={[required]}
-                        autoComplete="new-password"
+                        control={control}
+                        rules={{
+                            validate: {
+                                required: validateRequiredValue,
+                                confirmPassword: validateConfirmPassword,
+                            },
+                        }}
+                        render={({ field, fieldState }) => (
+                            <Input
+                                {...field}
+                                type="password"
+                                data-testid="install_confirm_password"
+                                label={t('install_auth_confirm')}
+                                placeholder={t('install_auth_confirm')}
+                                error={fieldState.error?.message}
+                                autoComplete="new-password"
+                            />
+                        )}
                     />
                 </div>
             </div>
 
-            <Controls pristine={pristine} invalid={invalid} />
+            <Controls isDirty={isDirty} isValid={isValid} />
         </form>
     );
 };
-
-export default flow([
-    withTranslation(),
-    reduxForm({
-        form: FORM_NAME.INSTALL,
-        destroyOnUnmount: false,
-        forceUnregisterOnUnmount: true,
-        validate,
-    }),
-])(Auth);

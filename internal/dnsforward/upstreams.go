@@ -1,14 +1,15 @@
 package dnsforward
 
 import (
+	"context"
 	"fmt"
+	"log/slog"
 	"slices"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
-	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 )
@@ -28,6 +29,8 @@ func newBootstrap(
 	etcHosts upstream.Resolver,
 	opts *upstream.Options,
 ) (r upstream.Resolver, boots []*upstream.UpstreamResolver, err error) {
+	addrs = stringutil.FilterOut(addrs, aghnet.IsCommentOrEmpty)
+
 	if len(addrs) == 0 {
 		addrs = defaultBootstrap
 	}
@@ -55,8 +58,10 @@ func newBootstrap(
 // newUpstreamConfig returns the upstream configuration based on upstreams.  If
 // upstreams slice specifies no default upstreams, defaultUpstreams are used to
 // create upstreams with no domain specifications.  opts are used when creating
-// upstream configuration.
+// upstream configuration.  l must not be nil.
 func newUpstreamConfig(
+	ctx context.Context,
+	l *slog.Logger,
 	upstreams []string,
 	defaultUpstreams []string,
 	opts *upstream.Options,
@@ -67,7 +72,12 @@ func newUpstreamConfig(
 	}
 
 	if len(uc.Upstreams) == 0 && len(defaultUpstreams) > 0 {
-		log.Info("dnsforward: warning: no default upstreams specified, using %v", defaultUpstreams)
+		l.WarnContext(
+			ctx,
+			"no default upstreams specified",
+			"default_upstreams",
+			defaultUpstreams,
+		)
 
 		var defaultUpstreamConfig *proxy.UpstreamConfig
 		defaultUpstreamConfig, err = proxy.ParseUpstreamsConfig(defaultUpstreams, opts)
@@ -84,8 +94,11 @@ func newUpstreamConfig(
 // newPrivateConfig creates an upstream configuration for resolving PTR records
 // for local addresses.  The configuration is built either from the provided
 // addresses or from the system resolvers.  unwanted filters the resulting
-// upstream configuration.
+// upstream configuration.  l, unwanted, sysResolvers, privateNets and opts must
+// not be nil.
 func newPrivateConfig(
+	ctx context.Context,
+	l *slog.Logger,
 	addrs []string,
 	unwanted addrPortSet,
 	sysResolvers SystemResolvers,
@@ -94,7 +107,7 @@ func newPrivateConfig(
 ) (uc *proxy.UpstreamConfig, err error) {
 	confNeedsFiltering := len(addrs) > 0
 	if confNeedsFiltering {
-		addrs = stringutil.FilterOut(addrs, IsCommentOrEmpty)
+		addrs = stringutil.FilterOut(addrs, aghnet.IsCommentOrEmpty)
 	} else {
 		sysResolvers := slices.DeleteFunc(slices.Clone(sysResolvers.Addrs()), unwanted.Has)
 		addrs = make([]string, 0, len(sysResolvers))
@@ -103,7 +116,7 @@ func newPrivateConfig(
 		}
 	}
 
-	log.Debug("dnsforward: private-use upstreams: %v", addrs)
+	l.DebugContext(ctx, "private-use upstreams", "addrs", addrs)
 
 	uc, err = proxy.ParseUpstreamsConfig(addrs, opts)
 	if err != nil {
@@ -127,20 +140,6 @@ func newPrivateConfig(
 	return uc, nil
 }
 
-// UpstreamHTTPVersions returns the HTTP versions for upstream configuration
-// depending on configuration.
-func UpstreamHTTPVersions(http3 bool) (v []upstream.HTTPVersion) {
-	if !http3 {
-		return upstream.DefaultHTTPVersions
-	}
-
-	return []upstream.HTTPVersion{
-		upstream.HTTPVersion3,
-		upstream.HTTPVersion2,
-		upstream.HTTPVersion11,
-	}
-}
-
 // setProxyUpstreamMode sets the upstream mode and related settings in conf
 // based on provided parameters.
 func setProxyUpstreamMode(
@@ -161,11 +160,4 @@ func setProxyUpstreamMode(
 	}
 
 	return nil
-}
-
-// IsCommentOrEmpty returns true if s starts with a "#" character or is empty.
-// This function is useful for filtering out non-upstream lines from upstream
-// configs.
-func IsCommentOrEmpty(s string) (ok bool) {
-	return len(s) == 0 || s[0] == '#'
 }

@@ -1,6 +1,10 @@
 package configmigrate
 
-import "github.com/AdguardTeam/golibs/errors"
+import (
+	"context"
+
+	"github.com/AdguardTeam/golibs/errors"
+)
 
 // migrateTo15 performs the following changes:
 //
@@ -28,7 +32,7 @@ import "github.com/AdguardTeam/golibs/errors"
 //	  'ignored': []
 //	  # …
 //	# …
-func migrateTo15(diskConf yobj) (err error) {
+func (m *Migrator) migrateTo15(_ context.Context, diskConf yobj) (err error) {
 	diskConf["schema_version"] = 15
 
 	dns, ok, err := fieldVal[yobj](diskConf, "dns")

@@ -14,7 +14,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/httphdr"
-	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/NYTimes/gziphandler"
@@ -69,7 +68,8 @@ func appendDNSAddrsWithIfaces(dst []string, src []netip.Addr) (res []string, err
 
 // collectDNSAddresses returns the list of DNS addresses the server is listening
 // on, including the addresses on all interfaces in cases of unspecified IPs.
-func collectDNSAddresses() (addrs []string, err error) {
+// tlsMgr must not be nil.
+func collectDNSAddresses(tlsMgr *tlsManager) (addrs []string, err error) {
 	if hosts := config.DNS.BindHosts; len(hosts) == 0 {
 		addrs = appendDNSAddrs(addrs, netutil.IPv4Localhost())
 	} else {
@@ -79,7 +79,7 @@ func collectDNSAddresses() (addrs []string, err error) {
 		}
 	}
 
-	de := getDNSEncryption()
+	de := getDNSEncryption(tlsMgr)
 	if de.https != "" {
 		addrs = append(addrs, de.https)
 	}
@@ -107,6 +107,9 @@ type statusResponse struct {
 	// milliseconds.
 	ProtectionDisabledDuration int64 `json:"protection_disabled_duration"`
 
+	// StartTime is the start time of the web API server in Unix milliseconds.
+	StartTime aghhttp.JSONTime `json:"start_time"`
+
 	ProtectionEnabled bool `json:"protection_enabled"`
 	// TODO(e.burkov): Inspect if front-end doesn't requires this field as
 	// openapi.yaml declares.
@@ -114,25 +117,28 @@ type statusResponse struct {
 	IsRunning       bool `json:"running"`
 }
 
-func handleStatus(w http.ResponseWriter, r *http.Request) {
-	dnsAddrs, err := collectDNSAddresses()
+func (web *webAPI) handleStatus(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	l := web.logger
+
+	dnsAddrs, err := collectDNSAddresses(web.tlsManager)
 	if err != nil {
 		// Don't add a lot of formatting, since the error is already
 		// wrapped by collectDNSAddresses.
-		aghhttp.Error(r, w, http.StatusInternalServerError, "%s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusInternalServerError, "%s", err)
 
 		return
 	}
 
 	var (
-		fltConf                 *dnsforward.Config
-		protectionDisabledUntil *time.Time
-		protectionEnabled       bool
+		fltConf           *dnsforward.Config
+		protDisabledUntil *time.Time
+		protEnabled       bool
 	)
-	if Context.dnsServer != nil {
+	if globalContext.dnsServer != nil {
 		fltConf = &dnsforward.Config{}
-		Context.dnsServer.WriteDiskConfig(fltConf)
-		protectionEnabled, protectionDisabledUntil = Context.dnsServer.UpdatedProtectionStatus()
+		globalContext.dnsServer.WriteDiskConfig(fltConf)
+		protEnabled, protDisabledUntil = globalContext.dnsServer.UpdatedProtectionStatus(ctx)
 	}
 
 	var resp statusResponse
@@ -141,11 +147,11 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 		defer config.RUnlock()
 
 		var protectionDisabledDuration int64
-		if protectionDisabledUntil != nil {
+		if protDisabledUntil != nil {
 			// Make sure that we don't send negative numbers to the frontend,
 			// since enough time might have passed to make the difference less
 			// than zero.
-			protectionDisabledDuration = max(0, time.Until(*protectionDisabledUntil).Milliseconds())
+			protectionDisabledDuration = max(0, time.Until(*protDisabledUntil).Milliseconds())
 		}
 
 		resp = statusResponse{
@@ -155,76 +161,124 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 			DNSPort:                    config.DNS.Port,
 			HTTPPort:                   config.HTTPConfig.Address.Port(),
 			ProtectionDisabledDuration: protectionDisabledDuration,
-			ProtectionEnabled:          protectionEnabled,
+			StartTime:                  aghhttp.JSONTime(web.startTime),
+			ProtectionEnabled:          protEnabled,
 			IsRunning:                  isRunning(),
 		}
 	}()
 
 	// IsDHCPAvailable field is now false by default for Windows.
 	if runtime.GOOS != "windows" {
-		resp.IsDHCPAvailable = Context.dhcpServer != nil
+		resp.IsDHCPAvailable = globalContext.dhcpServer != nil
 	}
 
-	aghhttp.WriteJSONResponseOK(w, r, resp)
+	aghhttp.WriteJSONResponseOK(ctx, l, w, r, resp)
 }
 
-// ------------------------
-// registration of handlers
-// ------------------------
-func registerControlHandlers(web *webAPI) {
-	Context.mux.HandleFunc(
+// registerControlHandlers sets up HTTP handlers for various control endpoints.
+func (web *webAPI) registerControlHandlers() {
+	mux := web.conf.mux
+
+	web.httpReg.Register(http.MethodGet, "/control/tls/status", web.handleTLSStatus)
+	web.httpReg.Register(http.MethodPost, "/control/tls/configure", web.handleTLSConfigure)
+	web.httpReg.Register(http.MethodPost, "/control/tls/validate", web.handleTLSValidate)
+
+	mux.Handle(
 		"/control/version.json",
-		postInstall(optionalAuth(web.handleVersionJSON)),
+		web.postInstallHandler(http.HandlerFunc(web.handleVersionJSON)),
 	)
-	httpRegister(http.MethodPost, "/control/update", web.handleUpdate)
+	web.httpReg.Register(http.MethodPost, "/control/update", web.handleUpdate)
 
-	httpRegister(http.MethodGet, "/control/status", handleStatus)
-	httpRegister(http.MethodPost, "/control/i18n/change_language", handleI18nChangeLanguage)
-	httpRegister(http.MethodGet, "/control/i18n/current_language", handleI18nCurrentLanguage)
-	httpRegister(http.MethodGet, "/control/profile", handleGetProfile)
-	httpRegister(http.MethodPut, "/control/profile/update", handlePutProfile)
+	web.httpReg.Register(http.MethodGet, "/control/status", web.handleStatus)
+	web.httpReg.Register(
+		http.MethodPost,
+		"/control/i18n/change_language",
+		web.handleI18nChangeLanguage,
+	)
+	web.httpReg.Register(
+		http.MethodGet,
+		"/control/i18n/current_language",
+		web.handleI18nCurrentLanguage,
+	)
+	web.httpReg.Register(http.MethodGet, "/control/profile", web.handleGetProfile)
+	web.httpReg.Register(http.MethodPut, "/control/profile/update", web.handlePutProfile)
 
-	// No auth is necessary for DoH/DoT configurations
-	Context.mux.HandleFunc("/apple/doh.mobileconfig", postInstall(handleMobileConfigDoH))
-	Context.mux.HandleFunc("/apple/dot.mobileconfig", postInstall(handleMobileConfigDoT))
-	RegisterAuthHandlers()
+	mobileConfHandler := newMobileConfigHandler(&mobileConfigHandlerConfig{
+		logger: web.baseLogger,
+	})
+
+	// No authentication is required for DoH/DoT configuration endpoints.
+	mux.Handle(
+		"/apple/doh.mobileconfig",
+		web.postInstallHandler(http.HandlerFunc(mobileConfHandler.handleMobileConfigDoH)),
+	)
+	mux.Handle(
+		"/apple/dot.mobileconfig",
+		web.postInstallHandler(http.HandlerFunc(mobileConfHandler.handleMobileConfigDoT)),
+	)
+
+	web.registerAuthHandlers()
 }
 
-func httpRegister(method, url string, handler http.HandlerFunc) {
-	if method == "" {
-		// "/dns-query" handler doesn't need auth, gzip and isn't restricted by 1 HTTP method
-		Context.mux.HandleFunc(url, postInstall(handler))
-		return
+// webMw provides middleware for route handlers.  The set method must be called
+// to initialize the middleware.
+type webMw struct {
+	// postInstallMw is middleware that verifies that AdGuard Home is not
+	// running for the first time.
+	postInstallMw func(h http.Handler) (wrapped http.Handler)
+
+	// ensureMw is like postInstallMw, but also applies gzip and enforces the
+	// HTTP method.
+	ensureMw aghhttp.WrapFunc
+}
+
+// set sets the middleware functions used to build handler chains.
+func (mw *webMw) set(web *webAPI) {
+	mw.postInstallMw = web.postInstallHandler
+
+	mw.ensureMw = func(method string, h http.HandlerFunc) (wrapped http.Handler) {
+		return web.postInstallHandler(gziphandler.GzipHandler(web.ensure(method, h)))
 	}
-
-	Context.mux.Handle(url, postInstallHandler(optionalAuthHandler(gziphandler.GzipHandler(ensureHandler(method, handler)))))
 }
 
-// ensure returns a wrapped handler that makes sure that the request has the
-// correct method as well as additional method and header checks.
-func ensure(
+// wrap returns a wrapped HTTP handler for the given route.
+//
+// TODO(s.chzhen):  Implement [httputil.Middleware].
+func (mw *webMw) wrap(method string, h http.HandlerFunc) (wrapped http.Handler) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mw.ensureMw(method, h).ServeHTTP(w, r)
+	})
+}
+
+// ensure returns a wrapped handler that verifies the request method.  It also
+// performs additional method and header checks.
+func (web *webAPI) ensure(
 	method string,
 	handler func(http.ResponseWriter, *http.Request),
-) (wrapped func(http.ResponseWriter, *http.Request)) {
+) (wrapped http.HandlerFunc) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-		m, u := r.Method, r.URL
-		log.Debug("started %s %s %s", m, r.Host, u)
-		defer func() { log.Debug("finished %s %s %s in %s", m, r.Host, u, time.Since(start)) }()
-
+		m := r.Method
 		if m != method {
-			aghhttp.Error(r, w, http.StatusMethodNotAllowed, "only method %s is allowed", method)
+			aghhttp.ErrorAndLog(
+				r.Context(),
+				web.logger,
+				r,
+				w,
+				http.StatusMethodNotAllowed,
+				"only method %s is allowed",
+				method,
+			)
 
 			return
 		}
 
 		if modifiesData(m) {
-			if !ensureContentType(w, r) {
+			if !web.ensureContentType(w, r) {
 				return
 			}
 
-			Context.controlLock.Lock()
-			defer Context.controlLock.Unlock()
+			globalContext.controlLock.Lock()
+			defer globalContext.controlLock.Unlock()
 		}
 
 		handler(w, r)
@@ -239,8 +293,10 @@ func modifiesData(m string) (ok bool) {
 // ensureContentType makes sure that the content type of a data-modifying
 // request is set correctly.  If it is not, ensureContentType writes a response
 // to w, and ok is false.
-func ensureContentType(w http.ResponseWriter, r *http.Request) (ok bool) {
+func (web *webAPI) ensureContentType(w http.ResponseWriter, r *http.Request) (ok bool) {
 	const statusUnsup = http.StatusUnsupportedMediaType
+
+	ctx := r.Context()
 
 	cType := r.Header.Get(httphdr.ContentType)
 	if r.ContentLength == 0 {
@@ -251,7 +307,15 @@ func ensureContentType(w http.ResponseWriter, r *http.Request) (ok bool) {
 		// Assume that browsers always send a content type when submitting HTML
 		// forms and require no content type for requests with no body to make
 		// sure that the request comes from JavaScript.
-		aghhttp.Error(r, w, statusUnsup, "empty body with content-type %q not allowed", cType)
+		aghhttp.ErrorAndLog(
+			ctx,
+			web.logger,
+			r,
+			w,
+			statusUnsup,
+			"empty body with content-type %q not allowed",
+			cType,
+		)
 
 		return false
 
@@ -262,72 +326,48 @@ func ensureContentType(w http.ResponseWriter, r *http.Request) (ok bool) {
 		return true
 	}
 
-	aghhttp.Error(r, w, statusUnsup, "only content-type %s is allowed", wantCType)
+	aghhttp.ErrorAndLog(
+		ctx,
+		web.logger,
+		r,
+		w,
+		statusUnsup,
+		"only content-type %s is allowed",
+		wantCType,
+	)
 
 	return false
 }
 
-func ensurePOST(handler func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
-	return ensure(http.MethodPost, handler)
-}
-
-func ensureGET(handler func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
-	return ensure(http.MethodGet, handler)
-}
-
-// Bridge between http.Handler object and Go function
-type httpHandler struct {
-	handler func(http.ResponseWriter, *http.Request)
-}
-
-func (h *httpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	h.handler(w, r)
-}
-
-func ensureHandler(method string, handler func(http.ResponseWriter, *http.Request)) http.Handler {
-	h := httpHandler{}
-	h.handler = ensure(method, handler)
-	return &h
-}
-
-// preInstall lets the handler run only if firstRun is true, no redirects
-func preInstall(handler func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if !Context.firstRun {
-			// if it's not first run, don't let users access it (for example /install.html when configuration is done)
+// preInstallHandler lets the handler run only if firstRun is true; it does not
+// perform redirects.
+func (web *webAPI) preInstallHandler(handler http.Handler) (wrapped http.Handler) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !web.conf.firstRun {
+			// If it's not first run, do not allow access to install-only routes
+			// (for example, /install.html once configuration is complete).
 			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+
 			return
 		}
-		handler(w, r)
-	}
-}
 
-// preInstallStruct wraps preInstall into a struct that can be returned as an interface where necessary
-type preInstallHandlerStruct struct {
-	handler http.Handler
-}
-
-func (p *preInstallHandlerStruct) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	preInstall(p.handler.ServeHTTP)(w, r)
-}
-
-// preInstallHandler returns http.Handler interface for preInstall wrapper
-func preInstallHandler(handler http.Handler) http.Handler {
-	return &preInstallHandlerStruct{handler}
+		handler.ServeHTTP(w, r)
+	})
 }
 
 // handleHTTPSRedirect redirects the request to HTTPS, if needed, and adds some
 // HTTPS-related headers.  If proceed is true, the middleware must continue
 // handling the request.
-func handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (proceed bool) {
-	web := Context.web
+func (web *webAPI) handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (proceed bool) {
 	if web.httpsServer.server == nil {
 		return true
 	}
 
+	ctx := r.Context()
+
 	host, err := netutil.SplitHost(r.Host)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "bad host: %s", err)
+		aghhttp.ErrorAndLog(ctx, web.logger, r, w, http.StatusBadRequest, "bad host: %s", err)
 
 		return false
 	}
@@ -403,34 +443,22 @@ func httpsURL(u *url.URL, host string, portHTTPS uint16) (redirectURL *url.URL) 
 	}
 }
 
-// postInstall lets the handler to run only if firstRun is false.  Otherwise, it
-// redirects to /install.html.  It also enforces HTTPS if it is enabled and
-// configured and sets appropriate access control headers.
-func postInstall(handler func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
+// postInstallHandler lets the handler to run only if firstRun is false.
+// Otherwise, it redirects to /install.html.  It also enforces HTTPS if it is
+// enabled and configured and sets appropriate access control headers.
+func (web *webAPI) postInstallHandler(handler http.Handler) (wrapped http.Handler) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
-		if Context.firstRun && !strings.HasPrefix(path, "/install.") &&
+		if web.conf.firstRun &&
+			!strings.HasPrefix(path, "/install.") &&
 			!strings.HasPrefix(path, "/assets/") {
 			http.Redirect(w, r, "install.html", http.StatusFound)
 
 			return
 		}
 
-		proceed := handleHTTPSRedirect(w, r)
-		if proceed {
-			handler(w, r)
+		if web.handleHTTPSRedirect(w, r) {
+			handler.ServeHTTP(w, r)
 		}
-	}
-}
-
-type postInstallHandlerStruct struct {
-	handler http.Handler
-}
-
-func (p *postInstallHandlerStruct) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	postInstall(p.handler.ServeHTTP)(w, r)
-}
-
-func postInstallHandler(handler http.Handler) http.Handler {
-	return &postInstallHandlerStruct{handler}
+	})
 }

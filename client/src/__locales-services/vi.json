@@ -1,0 +1,38 @@
+{
+  "servicesgroup.ai.name": {
+    "message": "Trí tuệ nhân tạo"
+  },
+  "servicesgroup.cdn.name": {
+    "message": "Mạng phân phối nội dung (CDN)"
+  },
+  "servicesgroup.dating.name": {
+    "message": "Dịch vụ hẹn hò"
+  },
+  "servicesgroup.gambling.name": {
+    "message": "Cờ bạc và cá cược"
+  },
+  "servicesgroup.gaming.name": {
+    "message": "Chơi game"
+  },
+  "servicesgroup.hosting.name": {
+    "message": "Lưu trữ web"
+  },
+  "servicesgroup.messenger.name": {
+    "message": "Dịch vụ nhắn tin"
+  },
+  "servicesgroup.privacy.name": {
+    "message": "Công cụ bảo mật"
+  },
+  "servicesgroup.shopping.name": {
+    "message": "Mua sắm"
+  },
+  "servicesgroup.social_network.name": {
+    "message": "Mạng xã hội"
+  },
+  "servicesgroup.software.name": {
+    "message": "Phát triển phần mềm"
+  },
+  "servicesgroup.streaming.name": {
+    "message": "Dịch vụ phát trực tuyến"
+  }
+}

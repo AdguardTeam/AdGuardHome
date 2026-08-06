@@ -1,6 +1,7 @@
 package configmigrate
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"strconv"
@@ -30,7 +31,7 @@ import (
 //	   - 'quic://some-upstream.com:784'
 //	  # …
 //	# …
-func migrateTo10(diskConf yobj) (err error) {
+func (m *Migrator) migrateTo10(_ context.Context, diskConf yobj) (err error) {
 	diskConf["schema_version"] = 10
 
 	dns, ok, err := fieldVal[yobj](diskConf, "dns")
@@ -88,8 +89,8 @@ func addQUICPort(ups string, port int) (withPort string) {
 
 	var doms string
 	withPort = ups
-	if strings.HasPrefix(ups, "[/") {
-		domsAndUps := strings.Split(strings.TrimPrefix(ups, "[/"), "/]")
+	if after, ok := strings.CutPrefix(ups, "[/"); ok {
+		domsAndUps := strings.Split(after, "/]")
 		if len(domsAndUps) != 2 {
 			return ups
 		}

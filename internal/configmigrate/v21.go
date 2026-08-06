@@ -1,5 +1,7 @@
 package configmigrate
 
+import "context"
+
 // migrateTo21 performs the following changes:
 //
 //	# BEFORE:
@@ -22,7 +24,7 @@ package configmigrate
 //	      'time_zone': 'Local'
 //	  # …
 //	# …
-func migrateTo21(diskConf yobj) (err error) {
+func (m *Migrator) migrateTo21(_ context.Context, diskConf yobj) (err error) {
 	diskConf["schema_version"] = 21
 
 	const field = "blocked_services"

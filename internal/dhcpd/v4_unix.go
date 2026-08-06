@@ -4,6 +4,7 @@ package dhcpd
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"net"
 	"net/netip"
@@ -312,16 +313,6 @@ func (s *v4Server) rmDynamicLease(lease *dhcpsvc.Lease) (err error) {
 	return nil
 }
 
-const (
-	// ErrDupHostname is returned by addLease, validateStaticLease when the
-	// modified lease has a not empty non-unique hostname.
-	ErrDupHostname = errors.Error("hostname is not unique")
-
-	// ErrDupIP is returned by addLease, validateStaticLease when the modified
-	// lease has a non-unique IP address.
-	ErrDupIP = errors.Error("ip address is not unique")
-)
-
 // addLease adds a dynamic or static lease.
 func (s *v4Server) addLease(l *dhcpsvc.Lease) (err error) {
 	r := s.conf.ipRange
@@ -341,7 +332,7 @@ func (s *v4Server) addLease(l *dhcpsvc.Lease) (err error) {
 	// TODO(e.burkov):  l must have a valid hostname here, investigate.
 	if l.Hostname != "" {
 		if _, ok := s.hostsIndex[l.Hostname]; ok {
-			return ErrDupHostname
+			return fmt.Errorf("hostname: %w", errors.ErrDuplicated)
 		}
 
 		s.hostsIndex[l.Hostname] = l
@@ -484,22 +475,24 @@ func (s *v4Server) validateStaticLease(l *dhcpsvc.Lease) (err error) {
 		return err
 	}
 
-	err = netutil.ValidateHostname(hostname)
-	if err != nil {
-		return fmt.Errorf("validating hostname: %w", err)
-	}
+	if hostname != "" {
+		err = netutil.ValidateHostname(hostname)
+		if err != nil {
+			return fmt.Errorf("hostname: %w", err)
+		}
 
-	dup, ok := s.hostsIndex[hostname]
-	if ok && !bytes.Equal(dup.HWAddr, l.HWAddr) {
-		return ErrDupHostname
-	}
-
-	dup, ok = s.ipIndex[l.IP]
-	if ok && !bytes.Equal(dup.HWAddr, l.HWAddr) {
-		return ErrDupIP
+		dup, ok := s.hostsIndex[hostname]
+		if ok && !bytes.Equal(dup.HWAddr, l.HWAddr) {
+			return fmt.Errorf("hostname: %w", errors.ErrDuplicated)
+		}
 	}
 
 	l.Hostname = hostname
+
+	dup, ok := s.ipIndex[l.IP]
+	if ok && !bytes.Equal(dup.HWAddr, l.HWAddr) {
+		return fmt.Errorf("ip address: %w", errors.ErrDuplicated)
+	}
 
 	if gwIP := s.conf.GatewayIP; gwIP == l.IP {
 		return fmt.Errorf("can't assign the gateway IP %q to the lease", gwIP)
@@ -1096,9 +1089,7 @@ func (s *v4Server) handleRelease(req, resp *dhcpv4.DHCPv4) (err error) {
 
 		err = s.rmDynamicLease(l)
 		if err != nil {
-			err = fmt.Errorf("removing dynamic lease for %s: %w", mac, err)
-
-			return
+			return fmt.Errorf("removing dynamic lease for %s: %w", mac, err)
 		}
 
 		n++
@@ -1301,7 +1292,7 @@ func (s *v4Server) packetHandler(conn net.PacketConn, peer net.Addr, req *dhcpv4
 }
 
 // Start starts the IPv4 DHCP server.
-func (s *v4Server) Start() (err error) {
+func (s *v4Server) Start(ctx context.Context) (err error) {
 	defer func() { err = errors.Annotate(err, "dhcpv4: %w") }()
 
 	if !s.enabled() {
@@ -1317,6 +1308,8 @@ func (s *v4Server) Start() (err error) {
 	log.Debug("dhcpv4: starting...")
 
 	dnsIPAddrs, err := aghnet.IfaceDNSIPAddrs(
+		ctx,
+		s.conf.Logger,
 		iface,
 		aghnet.IPVersion4,
 		defaultMaxAttempts,
@@ -1391,7 +1384,7 @@ func (s *v4Server) configureDNSIPAddrs(dnsIPAddrs []net.IP) {
 // Stop - stop server
 func (s *v4Server) Stop() (err error) {
 	if s.srv == nil {
-		return
+		return nil
 	}
 
 	log.Debug("dhcpv4: stopping")

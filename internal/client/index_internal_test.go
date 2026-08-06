@@ -5,6 +5,7 @@ import (
 	"net/netip"
 	"testing"
 
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -58,12 +59,12 @@ func TestClientIndex_Find(t *testing.T) {
 
 		clientWithMAC = &Persistent{
 			Name: "client_with_mac",
-			MACs: []net.HardwareAddr{mustParseMAC(cliMAC)},
+			MACs: []net.HardwareAddr{errors.Must(net.ParseMAC(cliMAC))},
 		}
 
 		clientWithID = &Persistent{
 			Name:      "client_with_id",
-			ClientIDs: []string{cliID},
+			ClientIDs: []ClientID{cliID},
 		}
 
 		clientLinkLocal = &Persistent{
@@ -141,10 +142,10 @@ func TestClientIndex_Clashes(t *testing.T) {
 		Subnets: []netip.Prefix{netip.MustParsePrefix(cliSubnet)},
 	}, {
 		Name: "client_with_mac",
-		MACs: []net.HardwareAddr{mustParseMAC(cliMAC)},
+		MACs: []net.HardwareAddr{errors.Must(net.ParseMAC(cliMAC))},
 	}, {
 		Name:      "client_with_id",
-		ClientIDs: []string{cliID},
+		ClientIDs: []ClientID{cliID},
 	}}
 
 	ci := newIDIndex(clients)
@@ -181,17 +182,6 @@ func TestClientIndex_Clashes(t *testing.T) {
 	}
 }
 
-// mustParseMAC is wrapper around [net.ParseMAC] that panics if there is an
-// error.
-func mustParseMAC(s string) (mac net.HardwareAddr) {
-	mac, err := net.ParseMAC(s)
-	if err != nil {
-		panic(err)
-	}
-
-	return mac
-}
-
 func TestMACToKey(t *testing.T) {
 	testCases := []struct {
 		want any
@@ -200,44 +190,44 @@ func TestMACToKey(t *testing.T) {
 	}{{
 		name: "column6",
 		in:   "00:00:5e:00:53:01",
-		want: [6]byte(mustParseMAC("00:00:5e:00:53:01")),
+		want: [6]byte(errors.Must(net.ParseMAC("00:00:5e:00:53:01"))),
 	}, {
 		name: "column8",
 		in:   "02:00:5e:10:00:00:00:01",
-		want: [8]byte(mustParseMAC("02:00:5e:10:00:00:00:01")),
+		want: [8]byte(errors.Must(net.ParseMAC("02:00:5e:10:00:00:00:01"))),
 	}, {
 		name: "column20",
 		in:   "00:00:00:00:fe:80:00:00:00:00:00:00:02:00:5e:10:00:00:00:01",
-		want: [20]byte(mustParseMAC("00:00:00:00:fe:80:00:00:00:00:00:00:02:00:5e:10:00:00:00:01")),
+		want: [20]byte(errors.Must(net.ParseMAC("00:00:00:00:fe:80:00:00:00:00:00:00:02:00:5e:10:00:00:00:01"))),
 	}, {
 		name: "hyphen6",
 		in:   "00-00-5e-00-53-01",
-		want: [6]byte(mustParseMAC("00-00-5e-00-53-01")),
+		want: [6]byte(errors.Must(net.ParseMAC("00-00-5e-00-53-01"))),
 	}, {
 		name: "hyphen8",
 		in:   "02-00-5e-10-00-00-00-01",
-		want: [8]byte(mustParseMAC("02-00-5e-10-00-00-00-01")),
+		want: [8]byte(errors.Must(net.ParseMAC("02-00-5e-10-00-00-00-01"))),
 	}, {
 		name: "hyphen20",
 		in:   "00-00-00-00-fe-80-00-00-00-00-00-00-02-00-5e-10-00-00-00-01",
-		want: [20]byte(mustParseMAC("00-00-00-00-fe-80-00-00-00-00-00-00-02-00-5e-10-00-00-00-01")),
+		want: [20]byte(errors.Must(net.ParseMAC("00-00-00-00-fe-80-00-00-00-00-00-00-02-00-5e-10-00-00-00-01"))),
 	}, {
 		name: "dot6",
 		in:   "0000.5e00.5301",
-		want: [6]byte(mustParseMAC("0000.5e00.5301")),
+		want: [6]byte(errors.Must(net.ParseMAC("0000.5e00.5301"))),
 	}, {
 		name: "dot8",
 		in:   "0200.5e10.0000.0001",
-		want: [8]byte(mustParseMAC("0200.5e10.0000.0001")),
+		want: [8]byte(errors.Must(net.ParseMAC("0200.5e10.0000.0001"))),
 	}, {
 		name: "dot20",
 		in:   "0000.0000.fe80.0000.0000.0000.0200.5e10.0000.0001",
-		want: [20]byte(mustParseMAC("0000.0000.fe80.0000.0000.0000.0200.5e10.0000.0001")),
+		want: [20]byte(errors.Must(net.ParseMAC("0000.0000.fe80.0000.0000.0000.0200.5e10.0000.0001"))),
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			mac := mustParseMAC(tc.in)
+			mac := errors.Must(net.ParseMAC(tc.in))
 
 			key := macToKey(mac)
 			assert.Equal(t, tc.want, key)
@@ -302,19 +292,19 @@ func TestIndex_FindByIPWithoutZone(t *testing.T) {
 func TestClientIndex_RangeByName(t *testing.T) {
 	sortedClients := []*Persistent{{
 		Name:      "clientA",
-		ClientIDs: []string{"A"},
+		ClientIDs: []ClientID{"A"},
 	}, {
 		Name:      "clientB",
-		ClientIDs: []string{"B"},
+		ClientIDs: []ClientID{"B"},
 	}, {
 		Name:      "clientC",
-		ClientIDs: []string{"C"},
+		ClientIDs: []ClientID{"C"},
 	}, {
 		Name:      "clientD",
-		ClientIDs: []string{"D"},
+		ClientIDs: []ClientID{"D"},
 	}, {
 		Name:      "clientE",
-		ClientIDs: []string{"E"},
+		ClientIDs: []ClientID{"E"},
 	}}
 
 	testCases := []struct {
@@ -346,6 +336,118 @@ func TestClientIndex_RangeByName(t *testing.T) {
 			})
 
 			assert.Equal(t, tc.want, got)
+		})
+	}
+}
+
+func TestIndex_FindByName(t *testing.T) {
+	const (
+		clientExistingName        = "client_existing"
+		clientAnotherExistingName = "client_another_existing"
+		nonExistingClientName     = "client_non_existing"
+	)
+
+	var (
+		clientExisting = &Persistent{
+			Name: clientExistingName,
+			IPs:  []netip.Addr{netip.MustParseAddr("192.0.2.1")},
+		}
+
+		clientAnotherExisting = &Persistent{
+			Name: clientAnotherExistingName,
+			IPs:  []netip.Addr{netip.MustParseAddr("192.0.2.2")},
+		}
+	)
+
+	clients := []*Persistent{
+		clientExisting,
+		clientAnotherExisting,
+	}
+	ci := newIDIndex(clients)
+
+	testCases := []struct {
+		want       *Persistent
+		found      assert.BoolAssertionFunc
+		name       string
+		clientName string
+	}{{
+		want:       clientExisting,
+		found:      assert.True,
+		name:       "existing",
+		clientName: clientExistingName,
+	}, {
+		want:       clientAnotherExisting,
+		found:      assert.True,
+		name:       "another_existing",
+		clientName: clientAnotherExistingName,
+	}, {
+		want:       nil,
+		found:      assert.False,
+		name:       "non_existing",
+		clientName: nonExistingClientName,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			c, ok := ci.findByName(tc.clientName)
+			assert.Equal(t, tc.want, c)
+			tc.found(t, ok)
+		})
+	}
+}
+
+func TestIndex_FindByMAC(t *testing.T) {
+	var (
+		cliMAC               = errors.Must(net.ParseMAC("11:11:11:11:11:11"))
+		cliAnotherMAC        = errors.Must(net.ParseMAC("22:22:22:22:22:22"))
+		nonExistingClientMAC = errors.Must(net.ParseMAC("33:33:33:33:33:33"))
+	)
+
+	var (
+		clientExisting = &Persistent{
+			Name: "client",
+			MACs: []net.HardwareAddr{cliMAC},
+		}
+
+		clientAnotherExisting = &Persistent{
+			Name: "another_client",
+			MACs: []net.HardwareAddr{cliAnotherMAC},
+		}
+	)
+
+	clients := []*Persistent{
+		clientExisting,
+		clientAnotherExisting,
+	}
+	ci := newIDIndex(clients)
+
+	testCases := []struct {
+		want      *Persistent
+		found     assert.BoolAssertionFunc
+		name      string
+		clientMAC net.HardwareAddr
+	}{{
+		want:      clientExisting,
+		found:     assert.True,
+		name:      "existing",
+		clientMAC: cliMAC,
+	}, {
+		want:      clientAnotherExisting,
+		found:     assert.True,
+		name:      "another_existing",
+		clientMAC: cliAnotherMAC,
+	}, {
+		want:      nil,
+		found:     assert.False,
+		name:      "non_existing",
+		clientMAC: nonExistingClientMAC,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			c, ok := ci.findByMAC(tc.clientMAC)
+			assert.Equal(t, tc.want, c)
+			tc.found(t, ok)
 		})
 	}
 }

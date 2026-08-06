@@ -124,9 +124,9 @@ See our [Wiki][wiki].
 
 ### <a href="#api" id="api" name="api">API</a>
 
-If you want to integrate with AdGuard Home, you can use our [REST API][openapi]. Alternatively, you can use this [python client][pyclient], which is used to build the [AdGuard Home Hass.io Add-on][hassio].
+If you want to integrate with AdGuard Home, you can use our [REST API][openapi]. Alternatively, you can use this [python client][pyclient], which can be used to build the [AdGuard Home Assistant integration][assistant-integration].
 
-[hassio]:   https://www.home-assistant.io/integrations/adguard/
+[assistant-integration]:   https://www.home-assistant.io/integrations/adguard/
 [openapi]:  https://github.com/AdguardTeam/AdGuardHome/tree/master/openapi
 [pyclient]: https://pypi.org/project/adguardhome/
 
@@ -205,9 +205,9 @@ Run `make init` to prepare the development environment.
 
 You will need this to build AdGuard Home:
 
-- [Go](https://golang.org/dl/) v1.23 or later;
-- [Node.js](https://nodejs.org/en/download/) v18.18 or later;
-- [npm](https://www.npmjs.com/) v8 or later;
+- [Go](https://golang.org/dl/) v1.25 or later;
+- [Node.js](https://nodejs.org/en/download/) v24.10.0 or later;
+- [npm](https://www.npmjs.com/) v10.8 or later;
 
 ### <a href="#building" id="building" name="building">Building</a>
 
@@ -289,6 +289,22 @@ When you need to debug the frontend without recompiling the production version e
 [src-makefile]: https://github.com/AdguardTeam/AdGuardHome/blob/master/Makefile
 [targ-docker]:  https://github.com/AdguardTeam/AdGuardHome/tree/master/scripts#build-dockersh-build-a-multi-architecture-docker-image
 [targ-release]: https://github.com/AdguardTeam/AdGuardHome/tree/master/scripts#build-releasesh-build-a-release-for-all-platforms
+
+#### <a href="#e2e-frontend-tests" id="e2e-frontend-tests" name="e2e-frontend-tests">End-to-End (E2E) Frontend Tests</a>
+
+AdGuard Home uses [Playwright](https://playwright.dev) for E2E testing. Tests are located in `tests/e2e`.
+
+**Running Tests:**
+- `npm run test:e2e` – run all tests (headless).
+- `npm run test:e2e:interactive` – run tests interactively.
+- `npm run test:e2e:debug` – run tests in debug mode.
+- `npm run test:e2e:codegen` – generate new test code.
+
+**Setup:**
+1. Run `npm install` to install dependencies.
+2. Run `npx playwright install` to set up required browsers.
+
+> **Warning:** Playwright will download and install its own browser binaries for testing, which may differ from the browsers installed on your system.
 
 ## <a href="#contributing" id="contributing" name="contributing">Contributing</a>
 

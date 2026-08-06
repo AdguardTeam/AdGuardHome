@@ -1,9 +1,11 @@
 package dnsforward
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"log/slog"
 	"net"
 	"net/netip"
 	"os"
@@ -11,44 +13,28 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
+	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
-	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghslog"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
-	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/dnscrypt"
 	"github.com/AdguardTeam/dnsproxy/proxy"
+	"github.com/AdguardTeam/dnsproxy/ratelimit"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/golibs/timeutil"
-	"github.com/ameshkov/dnscrypt/v2"
+	"github.com/AdguardTeam/golibs/validate"
 )
-
-// ClientsContainer provides information about preconfigured DNS clients.
-type ClientsContainer interface {
-	// UpstreamConfigByID returns the custom upstream configuration for the
-	// client having id, using boot to initialize the one if necessary.  It
-	// returns nil if there is no custom upstream configuration for the client.
-	// The id is expected to be either a string representation of an IP address
-	// or the ClientID.
-	UpstreamConfigByID(
-		id string,
-		boot upstream.Resolver,
-	) (conf *proxy.CustomUpstreamConfig, err error)
-}
 
 // Config represents the DNS filtering configuration of AdGuard Home.  The zero
 // Config is empty and ready for use.
 type Config struct {
 	// Callbacks for other modules
-
-	// FilterHandler is an optional additional filtering callback.
-	FilterHandler func(cliAddr netip.Addr, clientID string, settings *filtering.Settings) `yaml:"-"`
 
 	// ClientsContainer stores the information about special handling of some
 	// DNS clients.
@@ -62,11 +48,11 @@ type Config struct {
 
 	// RatelimitSubnetLenIPv4 is a subnet length for IPv4 addresses used for
 	// rate limiting requests.
-	RatelimitSubnetLenIPv4 int `yaml:"ratelimit_subnet_len_ipv4"`
+	RatelimitSubnetLenIPv4 uint `yaml:"ratelimit_subnet_len_ipv4"`
 
 	// RatelimitSubnetLenIPv6 is a subnet length for IPv6 addresses used for
 	// rate limiting requests.
-	RatelimitSubnetLenIPv6 int `yaml:"ratelimit_subnet_len_ipv6"`
+	RatelimitSubnetLenIPv6 uint `yaml:"ratelimit_subnet_len_ipv6"`
 
 	// RatelimitWhitelist is the list of whitelisted client IP addresses.
 	RatelimitWhitelist []netip.Addr `yaml:"ratelimit_whitelist"`
@@ -119,6 +105,9 @@ type Config struct {
 
 	// DNS cache settings
 
+	// CacheEnabled defines if the DNS cache should be used.
+	CacheEnabled bool `yaml:"cache_enabled"`
+
 	// CacheSize is the DNS cache size (in bytes).
 	CacheSize uint32 `yaml:"cache_size"`
 
@@ -133,6 +122,13 @@ type Config struct {
 	// CacheOptimistic defines if optimistic cache mechanism should be used.
 	CacheOptimistic bool `yaml:"cache_optimistic"`
 
+	// CacheOptimisticAnswerTTL is the default TTL for expired cached responses.
+	CacheOptimisticAnswerTTL timeutil.Duration `yaml:"cache_optimistic_answer_ttl"`
+
+	// CacheOptimisticMaxAge is the maximum time entries remain in the cache
+	// when cache is optimistic.
+	CacheOptimisticMaxAge timeutil.Duration `yaml:"cache_optimistic_max_age"`
+
 	// Other settings
 
 	// BogusNXDomain is the list of IP addresses, responses with them will be
@@ -143,7 +139,8 @@ type Config struct {
 	// requests.
 	AAAADisabled bool `yaml:"aaaa_disabled"`
 
-	// EnableDNSSEC, if true, set AD flag in outcoming DNS request.
+	// EnableDNSSEC defines whether the proxy should set the AD/DO bits in the
+	// upstream requests.
 	EnableDNSSEC bool `yaml:"enable_dnssec"`
 
 	// EDNSClientSubnet is the settings list for EDNS Client Subnet.
@@ -185,52 +182,55 @@ type EDNSClientSubnet struct {
 	UseCustom bool `yaml:"use_custom"`
 }
 
-// TLSConfig is the TLS configuration for HTTPS, DNS-over-HTTPS, and DNS-over-TLS
+// TLSConfig contains the TLS configuration settings for DNSCrypt,
+// DNS-over-HTTPS (DoH), DNS-over-TLS (DoT), DNS-over-QUIC (DoQ), and Discovery
+// of Designated Resolvers (DDR).
 type TLSConfig struct {
-	cert tls.Certificate
+	// DNSCryptConf contains the configuration settings for a DNSCrypt server.
+	// It is nil if the DNSCrypt server is disabled.
+	DNSCryptConf *DNSCryptConfig
 
-	TLSListenAddrs   []*net.TCPAddr `yaml:"-" json:"-"`
-	QUICListenAddrs  []*net.UDPAddr `yaml:"-" json:"-"`
-	HTTPSListenAddrs []*net.TCPAddr `yaml:"-" json:"-"`
+	// TLSListenAddrs are the addresses to listen on for DoT connections.  Each
+	// item in the list must be non-nil if TLS has at least one valid
+	// certificate.
+	TLSListenAddrs []*net.TCPAddr
 
-	// PEM-encoded certificates chain
-	CertificateChain string `yaml:"certificate_chain" json:"certificate_chain"`
-	// PEM-encoded private key
-	PrivateKey string `yaml:"private_key" json:"private_key"`
+	// QUICListenAddrs are the addresses to listen on for DoQ connections.  Each
+	// item in the list must be non-nil if TLS has at least one valid
+	// certificate.
+	QUICListenAddrs []*net.UDPAddr
 
-	CertificatePath string `yaml:"certificate_path" json:"certificate_path"`
-	PrivateKeyPath  string `yaml:"private_key_path" json:"private_key_path"`
-
-	CertificateChainData []byte `yaml:"-" json:"-"`
-	PrivateKeyData       []byte `yaml:"-" json:"-"`
+	// HTTPSListenAddrs should be the addresses AdGuard Home is listening on for
+	// DoH connections.  These addresses are announced with DDR.  Each item in
+	// the list must be non-nil.
+	HTTPSListenAddrs []netip.AddrPort
 
 	// ServerName is the hostname of the server.  Currently, it is only being
 	// used for ClientID checking and Discovery of Designated Resolvers (DDR).
-	ServerName string `yaml:"-" json:"-"`
-
-	// DNS names from certificate (SAN) or CN value from Subject
-	dnsNames []string
-
-	// OverrideTLSCiphers, when set, contains the names of the cipher suites to
-	// use.  If the slice is empty, the default safe suites are used.
-	OverrideTLSCiphers []string `yaml:"override_tls_ciphers,omitempty" json:"-"`
+	ServerName string
 
 	// StrictSNICheck controls if the connections with SNI mismatching the
 	// certificate's ones should be rejected.
-	StrictSNICheck bool `yaml:"strict_sni_check" json:"-"`
-
-	// hasIPAddrs is set during the certificate parsing and is true if the
-	// configured certificate contains at least a single IP address.
-	hasIPAddrs bool
+	StrictSNICheck bool
 }
 
-// DNSCryptConfig is the DNSCrypt server configuration struct.
+// DNSCryptConfig contains the configuration settings for a DNSCrypt server.
 type DNSCryptConfig struct {
-	ResolverCert   *dnscrypt.Cert
-	ProviderName   string
+	// ResolverCert is the certificate used for DNSCrypt connections.  It is not
+	// nil if there is at least one UDP or TCP address present.
+	ResolverCert *dnscrypt.Certificate
+
+	// UDPListenAddrs are the addresses to listen on for DNSCrypt UDP
+	// connections.
 	UDPListenAddrs []*net.UDPAddr
+
+	// TCPListenAddrs are the addresses to listen on for DNSCrypt TCP
+	// connections.
 	TCPListenAddrs []*net.TCPAddr
-	Enabled        bool
+
+	// ProviderName is the name of the DNSCrypt provider.  It is not empty if
+	// there is at least one UDP or TCP address present.
+	ProviderName string
 }
 
 // ServerConfig represents server configuration.
@@ -256,9 +256,14 @@ type ServerConfig struct {
 	// Remove that.
 	AddrProcConf *client.DefaultAddrProcConfig
 
+	// TLSConf is the TLS configuration for DNS-over-TLS, DNS-over-QUIC, and
+	// HTTPS.  It must not be nil.
+	TLSConf *TLSConfig
+
 	Config
-	TLSConfig
-	DNSCryptConfig
+
+	// TLSAllowUnencryptedDoH defines if unencrypted DoH connections are
+	// allowed.
 	TLSAllowUnencryptedDoH bool
 
 	// UpstreamTimeout is the timeout for querying upstream servers.
@@ -269,11 +274,12 @@ type ServerConfig struct {
 	// TLSCiphers are the IDs of TLS cipher suites to use.
 	TLSCiphers []uint16
 
-	// Called when the configuration is changed by HTTP request
-	ConfigModified func()
+	// ConfModifier is used to update the global configuration.  It must not be
+	// nil.
+	ConfModifier agh.ConfigModifier
 
 	// Register an HTTP handler
-	HTTPRegister aghhttp.RegisterFunc
+	HTTPReg aghhttp.Registrar
 
 	// LocalPTRResolvers is a slice of addresses to be used as upstreams for
 	// resolving PTR queries for local addresses.
@@ -298,6 +304,10 @@ type ServerConfig struct {
 
 	// ServePlainDNS defines if plain DNS is allowed for incoming requests.
 	ServePlainDNS bool
+
+	// PendingRequestsEnabled defines if duplicate requests should be forwarded
+	// to upstreams along with the original one.
+	PendingRequestsEnabled bool
 }
 
 // UpstreamMode is a enumeration of upstream mode representations.  See
@@ -313,27 +323,37 @@ const (
 )
 
 // newProxyConfig creates and validates configuration for the main proxy.
-func (s *Server) newProxyConfig() (conf *proxy.Config, err error) {
+// s.serverLock must be locked.
+//
+// TODO(d.kolyshev):  Improve maintainability.
+func (s *Server) newProxyConfig(ctx context.Context) (conf *proxy.Config, err error) {
 	srvConf := s.conf
 	trustedPrefixes := netutil.UnembedPrefixes(srvConf.TrustedProxies)
 
+	ratelimitMw, err := newRatelimitMw(s.baseLogger, srvConf)
+	if err != nil {
+		return nil, fmt.Errorf("ratelimit middleware: %w", err)
+	}
+
+	logMw := newLogMiddleware(s.baseLogger, slogutil.LevelTrace)
+
+	httpConf := &proxy.HTTPConfig{
+		ServerHeader:    aghhttp.UserAgent(),
+		InsecureEnabled: s.conf.TLSAllowUnencryptedDoH,
+	}
+
 	conf = &proxy.Config{
-		Logger:                    s.baseLogger.With(slogutil.KeyPrefix, "dnsproxy"),
-		HTTP3:                     srvConf.ServeHTTP3,
-		Ratelimit:                 int(srvConf.Ratelimit),
-		RatelimitSubnetLenIPv4:    srvConf.RatelimitSubnetLenIPv4,
-		RatelimitSubnetLenIPv6:    srvConf.RatelimitSubnetLenIPv6,
-		RatelimitWhitelist:        srvConf.RatelimitWhitelist,
+		Logger:                    s.baseLogger.With(slogutil.KeyPrefix, aghslog.PrefixDNSProxy),
 		RefuseAny:                 srvConf.RefuseAny,
 		TrustedProxies:            netutil.SliceSubnetSet(trustedPrefixes),
 		CacheMinTTL:               srvConf.CacheMinTTL,
 		CacheMaxTTL:               srvConf.CacheMaxTTL,
 		CacheOptimistic:           srvConf.CacheOptimistic,
+		CacheOptimisticAnswerTTL:  time.Duration(srvConf.CacheOptimisticAnswerTTL),
+		CacheOptimisticMaxAge:     time.Duration(srvConf.CacheOptimisticMaxAge),
 		UpstreamConfig:            srvConf.UpstreamConfig,
 		PrivateRDNSUpstreamConfig: srvConf.PrivateRDNSUpstreamConfig,
-		BeforeRequestHandler:      s,
-		RequestHandler:            s.handleDNSRequest,
-		HTTPSServerName:           aghhttp.UserAgent(),
+		RequestHandler:            ratelimitMw.Wrap(logMw.Wrap(s.Wrap(s))),
 		EnableEDNSClientSubnet:    srvConf.EDNSClientSubnet.Enabled,
 		MaxGoroutines:             srvConf.MaxGoroutines,
 		UseDNS64:                  srvConf.UseDNS64,
@@ -341,6 +361,11 @@ func (s *Server) newProxyConfig() (conf *proxy.Config, err error) {
 		UsePrivateRDNS:            srvConf.UsePrivateRDNS,
 		PrivateSubnets:            s.privateNets,
 		MessageConstructor:        s,
+		PendingRequests: &proxy.PendingRequestsConfig{
+			Enabled: srvConf.PendingRequestsEnabled,
+		},
+		HTTPConfig:    httpConf,
+		DNSSECEnabled: srvConf.EnableDNSSEC,
 	}
 
 	if srvConf.EDNSClientSubnet.UseCustom {
@@ -358,24 +383,16 @@ func (s *Server) newProxyConfig() (conf *proxy.Config, err error) {
 		return nil, fmt.Errorf("bogus_nxdomain: %w", err)
 	}
 
-	err = s.prepareTLS(conf)
-	if err != nil {
-		return nil, fmt.Errorf("validating tls: %w", err)
-	}
+	s.prepareTLS(ctx, conf)
 
-	err = s.preparePlain(conf)
+	err = s.preparePlain(ctx, conf)
 	if err != nil {
 		return nil, fmt.Errorf("validating plain: %w", err)
 	}
 
-	if c := srvConf.DNSCryptConfig; c.Enabled {
-		conf.DNSCryptUDPListenAddr = c.UDPListenAddrs
-		conf.DNSCryptTCPListenAddr = c.TCPListenAddrs
-		conf.DNSCryptProviderName = c.ProviderName
-		conf.DNSCryptResolverCert = c.ResolverCert
-	}
-
-	conf, err = prepareCacheConfig(conf,
+	conf, err = prepareCacheConfig(
+		conf,
+		srvConf.CacheEnabled,
 		srvConf.CacheSize,
 		srvConf.CacheMinTTL,
 		srvConf.CacheMaxTTL,
@@ -388,17 +405,47 @@ func (s *Server) newProxyConfig() (conf *proxy.Config, err error) {
 	return conf, nil
 }
 
+// newRatelimitMw returns the ratelimit middleware.  In case of invalid
+// ratelimit configuration returns an error. l must not be nil.
+func newRatelimitMw(
+	l *slog.Logger,
+	conf ServerConfig,
+) (mw proxy.Middleware, err error) {
+	if conf.Ratelimit == 0 {
+		return proxy.MiddlewareFunc(proxy.PassThrough), nil
+	}
+
+	rlConf := &ratelimit.Config{
+		Logger:        l.With(slogutil.KeyPrefix, "ratelimit"),
+		Ratelimit:     uint(conf.Ratelimit),
+		SubnetLenIPv4: conf.RatelimitSubnetLenIPv4,
+		SubnetLenIPv6: conf.RatelimitSubnetLenIPv6,
+	}
+	if err = rlConf.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid configuration: %w", err)
+	}
+
+	return ratelimit.NewMiddleware(rlConf), nil
+}
+
 // prepareCacheConfig prepares the cache configuration and returns an error if
 // there is one.
 func prepareCacheConfig(
 	conf *proxy.Config,
+	isEnabled bool,
 	size uint32,
 	minTTL uint32,
 	maxTTL uint32,
 ) (prepared *proxy.Config, err error) {
-	if size != 0 {
+	if isEnabled {
+		cacheSize := int(size)
+		err = validate.Positive("cache_size", cacheSize)
+		if err != nil {
+			return nil, fmt.Errorf("cache_enabled is true: %w", err)
+		}
+
 		conf.CacheEnabled = true
-		conf.CacheSizeBytes = int(size)
+		conf.CacheSizeBytes = cacheSize
 	}
 
 	err = validateCacheTTL(minTTL, maxTTL)
@@ -454,7 +501,7 @@ func (s *Server) initDefaultSettings() {
 
 // prepareIpsetListSettings reads and prepares the ipset configuration either
 // from a file or from the data in the configuration file.
-func (s *Server) prepareIpsetListSettings() (ipsets []string, err error) {
+func (s *Server) prepareIpsetListSettings(ctx context.Context) (ipsets []string, err error) {
 	fn := s.conf.IpsetListFileName
 	if fn == "" {
 		return s.conf.IpsetList, nil
@@ -467,21 +514,25 @@ func (s *Server) prepareIpsetListSettings() (ipsets []string, err error) {
 	}
 
 	ipsets = stringutil.SplitTrimmed(string(data), "\n")
-	ipsets = slices.DeleteFunc(ipsets, IsCommentOrEmpty)
+	ipsets = slices.DeleteFunc(ipsets, aghnet.IsCommentOrEmpty)
 
-	log.Debug("dns: using %d ipset rules from file %q", len(ipsets), fn)
+	s.logger.DebugContext(ctx, "using ipset rules from file", "num", len(ipsets), "file", fn)
 
 	return ipsets, nil
 }
 
 // loadUpstreams parses upstream DNS servers from the configured file or from
-// the configuration itself.
-func (conf *ServerConfig) loadUpstreams() (upstreams []string, err error) {
+// the configuration itself.  l must not be nil.
+func (conf *ServerConfig) loadUpstreams(
+	ctx context.Context,
+	l *slog.Logger,
+) (upstreams []string, err error) {
 	if conf.UpstreamDNSFileName == "" {
-		return stringutil.FilterOut(conf.UpstreamDNS, IsCommentOrEmpty), nil
+		return stringutil.FilterOut(conf.UpstreamDNS, aghnet.IsCommentOrEmpty), nil
 	}
 
 	var data []byte
+	// #nosec G703 -- Trust the path explicitly given by the user.
 	data, err = os.ReadFile(conf.UpstreamDNSFileName)
 	if err != nil {
 		return nil, fmt.Errorf("reading upstream from file: %w", err)
@@ -489,9 +540,14 @@ func (conf *ServerConfig) loadUpstreams() (upstreams []string, err error) {
 
 	upstreams = stringutil.SplitTrimmed(string(data), "\n")
 
-	log.Debug("dnsforward: got %d upstreams in %q", len(upstreams), conf.UpstreamDNSFileName)
+	l.DebugContext(
+		ctx,
+		"got upstreams",
+		"number", len(upstreams),
+		"filename", conf.UpstreamDNSFileName,
+	)
 
-	return stringutil.FilterOut(upstreams, IsCommentOrEmpty), nil
+	return stringutil.FilterOut(upstreams, aghnet.IsCommentOrEmpty), nil
 }
 
 // collectListenAddr adds addrPort to addrs.  It also adds its port to
@@ -596,16 +652,19 @@ func filterOutAddrs(upsConf *proxy.UpstreamConfig, set addrPortSet) (err error) 
 }
 
 // ourAddrsSet returns an addrPortSet that contains all the configured listening
-// addresses.
-func (conf *ServerConfig) ourAddrsSet() (m addrPortSet, err error) {
+// addresses.  l must not be nil.
+func (conf *ServerConfig) ourAddrsSet(
+	ctx context.Context,
+	l *slog.Logger,
+) (m addrPortSet, err error) {
 	addrs, unspecPorts := conf.collectDNSAddrs()
 	switch {
 	case addrs.Len() == 0:
-		log.Debug("dnsforward: no listen addresses")
+		l.DebugContext(ctx, "no listen addresses")
 
 		return emptyAddrPortSet{}, nil
 	case unspecPorts.Len() == 0:
-		log.Debug("dnsforward: filtering out addresses %s", addrs)
+		l.DebugContext(ctx, "filtering out addresses", "addresses", addrs)
 
 		return addrs, nil
 	default:
@@ -616,7 +675,12 @@ func (conf *ServerConfig) ourAddrsSet() (m addrPortSet, err error) {
 			return nil, err
 		}
 
-		log.Debug("dnsforward: filtering out addresses %s on ports %d", ifaceAddrs, unspecPorts)
+		l.DebugContext(
+			ctx,
+			"filtering out addresses",
+			"addresses", ifaceAddrs,
+			"ports", unspecPorts,
+		)
 
 		return &combinedAddrPortSet{
 			ports: unspecPorts,
@@ -625,56 +689,41 @@ func (conf *ServerConfig) ourAddrsSet() (m addrPortSet, err error) {
 	}
 }
 
-// prepareTLS - prepares TLS configuration for the DNS proxy
-func (s *Server) prepareTLS(proxyConfig *proxy.Config) (err error) {
-	if len(s.conf.CertificateChainData) == 0 || len(s.conf.PrivateKeyData) == 0 {
-		return nil
+// prepareDNSCrypt sets up the DNSCrypt configuration for the DNS proxy.
+func (s *Server) prepareDNSCrypt(proxyConf *proxy.Config) {
+	dnsCryptConf := s.conf.TLSConf.DNSCryptConf
+	if dnsCryptConf == nil {
+		return
 	}
 
-	if s.conf.TLSListenAddrs == nil && s.conf.QUICListenAddrs == nil {
-		return nil
+	proxyConf.DNSCryptUDPListenAddr = dnsCryptConf.UDPListenAddrs
+	proxyConf.DNSCryptTCPListenAddr = dnsCryptConf.TCPListenAddrs
+	proxyConf.DNSCryptProviderName = dnsCryptConf.ProviderName
+	proxyConf.DNSCryptResolverCert = dnsCryptConf.ResolverCert
+}
+
+// prepareTLS sets up the TLS configuration for the DNS proxy.  s.serverLock
+// must be locked.  proxyConf must be non-nil and valid.
+func (s *Server) prepareTLS(ctx context.Context, proxyConf *proxy.Config) {
+	s.prepareDNSCrypt(proxyConf)
+
+	if s.conf.TLSConf.TLSListenAddrs == nil && s.conf.TLSConf.QUICListenAddrs == nil {
+		return
 	}
 
-	proxyConfig.TLSListenAddr = aghalg.CoalesceSlice(
-		s.conf.TLSListenAddrs,
-		proxyConfig.TLSListenAddr,
-	)
+	proxyConf.TLSListenAddr = s.conf.TLSConf.TLSListenAddrs
+	proxyConf.QUICListenAddr = s.conf.TLSConf.QUICListenAddrs
 
-	proxyConfig.QUICListenAddr = aghalg.CoalesceSlice(
-		s.conf.QUICListenAddrs,
-		proxyConfig.QUICListenAddr,
-	)
+	proxyConf.TLSConfig = s.tlsConfigProvider.TLSConfig()
+	if proxyConf.TLSConfig == nil {
+		s.logger.WarnContext(ctx, "tls configuration is not set")
 
-	s.conf.cert, err = tls.X509KeyPair(s.conf.CertificateChainData, s.conf.PrivateKeyData)
-	if err != nil {
-		return fmt.Errorf("failed to parse TLS keypair: %w", err)
+		return
 	}
 
-	cert, err := x509.ParseCertificate(s.conf.cert.Certificate[0])
-	if err != nil {
-		return fmt.Errorf("x509.ParseCertificate(): %w", err)
+	if s.conf.TLSConf.StrictSNICheck && proxyConf.TLSConfig.GetCertificate != nil {
+		s.replaceGetCertificate(proxyConf.TLSConfig)
 	}
-
-	s.conf.hasIPAddrs = aghtls.CertificateHasIP(cert)
-
-	if s.conf.StrictSNICheck {
-		if len(cert.DNSNames) != 0 {
-			s.conf.dnsNames = cert.DNSNames
-			log.Debug("dns: using certificate's SAN as DNS names: %v", cert.DNSNames)
-			slices.Sort(s.conf.dnsNames)
-		} else {
-			s.conf.dnsNames = append(s.conf.dnsNames, cert.Subject.CommonName)
-			log.Debug("dns: using certificate's CN as DNS name: %s", cert.Subject.CommonName)
-		}
-	}
-
-	proxyConfig.TLSConfig = &tls.Config{
-		GetCertificate: s.onGetCertificate,
-		CipherSuites:   s.conf.TLSCiphers,
-		MinVersion:     tls.VersionTLS12,
-	}
-
-	return nil
 }
 
 // isWildcard returns true if host is a wildcard hostname.
@@ -709,19 +758,49 @@ func anyNameMatches(dnsNames []string, sni string) (ok bool) {
 	return false
 }
 
-// Called by 'tls' package when Client Hello is received
-// If the server name (from SNI) supplied by client is incorrect - we terminate the ongoing TLS handshake.
-func (s *Server) onGetCertificate(ch *tls.ClientHelloInfo) (*tls.Certificate, error) {
-	if s.conf.StrictSNICheck && !anyNameMatches(s.conf.dnsNames, ch.ServerName) {
-		log.Info("dns: tls: unknown SNI in Client Hello: %s", ch.ServerName)
-		return nil, fmt.Errorf("invalid SNI")
+// replaceGetCertificate replaces the TLS.Config.GetCertificate with a wrapped
+// version of the previous one, adding a SNI check.  It must be called only once
+// for each instance of orig.  orig must not be nil and orig.GetCertificate must
+// be populated.
+//
+// TODO(m.kazantsev):  Consider moving this method to aghtls.
+func (s *Server) replaceGetCertificate(orig *tls.Config) {
+	origGetCert := orig.GetCertificate
+
+	orig.GetCertificate = func(chi *tls.ClientHelloInfo) (cert *tls.Certificate, err error) {
+		cert, err = origGetCert(chi)
+		if err != nil {
+			// Don't wrap the error, because it is informative enough as is.
+			return nil, err
+		}
+		if cert == nil || cert.Leaf == nil {
+			return nil, errors.Error("tls certificate is not set")
+		}
+
+		var dnsNames []string
+		if len(cert.Leaf.DNSNames) == 0 {
+			dnsNames = []string{cert.Leaf.Subject.CommonName}
+		} else {
+			dnsNames = cert.Leaf.DNSNames
+		}
+
+		if !anyNameMatches(dnsNames, chi.ServerName) {
+			s.logger.WarnContext(
+				chi.Context(),
+				"unknown sni in client hello",
+				"server_name", chi.ServerName,
+			)
+
+			return nil, errors.Error("unknown sni in client hello")
+		}
+
+		return cert, nil
 	}
-	return &s.conf.cert, nil
 }
 
-// preparePlain prepares the plain-DNS configuration for the DNS proxy.
-// preparePlain assumes that prepareTLS has already been called.
-func (s *Server) preparePlain(proxyConf *proxy.Config) (err error) {
+// preparePlain prepares the plain-DNS configuration for the DNS proxy. The
+// method assumes that prepareTLS has already been called.
+func (s *Server) preparePlain(ctx context.Context, proxyConf *proxy.Config) (err error) {
 	if s.conf.ServePlainDNS {
 		proxyConf.UDPListenAddr = s.conf.UDPListenAddrs
 		proxyConf.TCPListenAddr = s.conf.TCPListenAddrs
@@ -731,7 +810,7 @@ func (s *Server) preparePlain(proxyConf *proxy.Config) (err error) {
 
 	lenEncrypted := len(proxyConf.DNSCryptTCPListenAddr) +
 		len(proxyConf.DNSCryptUDPListenAddr) +
-		len(proxyConf.HTTPSListenAddr) +
+		len(proxyConf.HTTPConfig.ListenAddresses) +
 		len(proxyConf.QUICListenAddr) +
 		len(proxyConf.TLSListenAddr)
 	if lenEncrypted == 0 {
@@ -739,14 +818,16 @@ func (s *Server) preparePlain(proxyConf *proxy.Config) (err error) {
 		return errors.Error("disabling plain dns requires at least one encrypted protocol")
 	}
 
-	log.Info("dnsforward: warning: plain dns is disabled")
+	s.logger.WarnContext(ctx, "plain dns is disabled")
 
 	return nil
 }
 
 // UpdatedProtectionStatus updates protection state, if the protection was
 // disabled temporarily.  Returns the updated state of protection.
-func (s *Server) UpdatedProtectionStatus() (enabled bool, disabledUntil *time.Time) {
+func (s *Server) UpdatedProtectionStatus(
+	ctx context.Context,
+) (enabled bool, disabledUntil *time.Time) {
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()
 
@@ -766,7 +847,7 @@ func (s *Server) UpdatedProtectionStatus() (enabled bool, disabledUntil *time.Ti
 	//
 	// See https://github.com/AdguardTeam/AdGuardHome/issues/5661.
 	if s.protectionUpdateInProgress.CompareAndSwap(false, true) {
-		go s.enableProtectionAfterPause()
+		go s.enableProtectionAfterPause(ctx)
 	}
 
 	return true, nil
@@ -774,19 +855,19 @@ func (s *Server) UpdatedProtectionStatus() (enabled bool, disabledUntil *time.Ti
 
 // enableProtectionAfterPause sets the protection configuration to enabled
 // values.  It is intended to be used as a goroutine.
-func (s *Server) enableProtectionAfterPause() {
-	defer log.OnPanic("dns: enabling protection after pause")
+func (s *Server) enableProtectionAfterPause(ctx context.Context) {
+	defer slogutil.RecoverAndLog(ctx, s.logger)
 
 	defer s.protectionUpdateInProgress.Store(false)
 
-	defer s.conf.ConfigModified()
+	defer s.conf.ConfModifier.Apply(ctx)
 
 	s.serverLock.Lock()
 	defer s.serverLock.Unlock()
 
 	s.dnsFilter.SetProtectionStatus(true, nil)
 
-	log.Info("dns: protection is restarted after pause")
+	s.logger.InfoContext(ctx, "protection is restarted after pause")
 }
 
 // validateCacheTTL returns an error if the configuration of the cache TTL

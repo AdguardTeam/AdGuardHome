@@ -3,8 +3,9 @@ import { createAction } from 'redux-actions';
 import apiClient from '../api/Api';
 
 import { normalizeLogs } from '../helpers/helpers';
-import { DEFAULT_LOGS_FILTER, FORM_NAME, QUERY_LOGS_PAGE_LIMIT } from '../helpers/constants';
+import { DEFAULT_LOGS_FILTER, QUERY_LOGS_PAGE_LIMIT } from '../helpers/constants';
 import { addErrorToast, addSuccessToast } from './toasts';
+import { SearchFormValues } from '../components/Logs';
 
 const getLogsWithParams = async (config: any) => {
     const { older_than, filter, ...values } = config;
@@ -27,12 +28,10 @@ export const getAdditionalLogsRequest = createAction('GET_ADDITIONAL_LOGS_REQUES
 export const getAdditionalLogsFailure = createAction('GET_ADDITIONAL_LOGS_FAILURE');
 export const getAdditionalLogsSuccess = createAction('GET_ADDITIONAL_LOGS_SUCCESS');
 
-const shortPollQueryLogs = async (data: any, filter: any, dispatch: any, getState: any, total?: any) => {
+const shortPollQueryLogs = async (data: any, filter: any, dispatch: any, currentQuery?: string, total?: any) => {
     const { logs, oldest } = data;
     const totalData = total || { logs };
 
-    const queryForm = getState().form[FORM_NAME.LOGS_FILTER];
-    const currentQuery = queryForm && queryForm.values.search;
     const previousQuery = filter?.search;
     const isQueryTheSame =
         typeof previousQuery === 'string' && typeof currentQuery === 'string' && previousQuery === currentQuery;
@@ -51,7 +50,7 @@ const shortPollQueryLogs = async (data: any, filter: any, dispatch: any, getStat
                 filter,
             });
             if (additionalLogs.oldest.length > 0) {
-                return await shortPollQueryLogs(additionalLogs, filter, dispatch, getState, {
+                return await shortPollQueryLogs(additionalLogs, filter, dispatch, currentQuery, {
                     logs: [...totalData.logs, ...additionalLogs.logs],
                     oldest: additionalLogs.oldest,
                 });
@@ -91,17 +90,18 @@ export const updateLogs = () => async (dispatch: any, getState: any) => {
     }
 };
 
-export const getLogs = () => async (dispatch: any, getState: any) => {
+export const getLogs = (currentQuery?: string) => async (dispatch: any, getState: any) => {
     dispatch(getLogsRequest());
     try {
         const { isFiltered, filter, oldest } = getState().queryLogs;
+
         const data = await getLogsWithParams({
             older_than: oldest,
             filter,
         });
 
         if (isFiltered) {
-            const additionalData = await shortPollQueryLogs(data, filter, dispatch, getState);
+            const additionalData = await shortPollQueryLogs(data, filter, dispatch, currentQuery);
             const updatedData = additionalData.logs ? { ...data, ...additionalData } : data;
             dispatch(getLogsSuccess(updatedData));
         } else {
@@ -122,13 +122,13 @@ export const setLogsFilterRequest = createAction('SET_LOGS_FILTER_REQUEST');
  * @param {string} filter.response_status 'QUERY' field of RESPONSE_FILTER object
  * @returns function
  */
-export const setLogsFilter = (filter: any) => setLogsFilterRequest(filter);
+export const setLogsFilter = (filter: SearchFormValues) => setLogsFilterRequest(filter);
 
 export const setFilteredLogsRequest = createAction('SET_FILTERED_LOGS_REQUEST');
 export const setFilteredLogsFailure = createAction('SET_FILTERED_LOGS_FAILURE');
 export const setFilteredLogsSuccess = createAction('SET_FILTERED_LOGS_SUCCESS');
 
-export const setFilteredLogs = (filter?: any) => async (dispatch: any, getState: any) => {
+export const setFilteredLogs = (filter?: SearchFormValues) => async (dispatch: any) => {
     dispatch(setFilteredLogsRequest());
     try {
         const data = await getLogsWithParams({
@@ -136,7 +136,9 @@ export const setFilteredLogs = (filter?: any) => async (dispatch: any, getState:
             filter,
         });
 
-        const additionalData = await shortPollQueryLogs(data, filter, dispatch, getState);
+        const currentQuery = filter?.search;
+
+        const additionalData = await shortPollQueryLogs(data, filter, dispatch, currentQuery);
         const updatedData = additionalData.logs ? { ...data, ...additionalData } : data;
 
         dispatch(

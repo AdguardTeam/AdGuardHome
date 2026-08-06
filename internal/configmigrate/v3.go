@@ -1,5 +1,7 @@
 package configmigrate
 
+import "context"
+
 // migrateTo3 performs the following changes:
 //
 //	# BEFORE:
@@ -14,7 +16,7 @@ package configmigrate
 //	  'bootstrap_dns':
 //	  - '1.1.1.1'
 //	  # …
-func migrateTo3(diskConf yobj) (err error) {
+func (m *Migrator) migrateTo3(_ context.Context, diskConf yobj) (err error) {
 	diskConf["schema_version"] = 3
 
 	dnsConfig, ok, err := fieldVal[yobj](diskConf, "dns")

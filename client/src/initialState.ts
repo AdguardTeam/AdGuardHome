@@ -1,15 +1,21 @@
 import {
-    ALL_INTERFACES_IP,
     BLOCKING_MODES,
     DAY,
     DEFAULT_LOGS_FILTER,
-    INSTALL_FIRST_STEP,
     STANDARD_DNS_PORT,
     STANDARD_WEB_PORT,
     TIME_UNITS,
 } from './helpers/constants';
 import { DEFAULT_BLOCKING_IPV4, DEFAULT_BLOCKING_IPV6 } from './reducers/dnsConfig';
 import { Filter } from './helpers/helpers';
+
+export type InstallInterface = {
+    flags: string;
+    hardware_address: string;
+    ip_addresses: string[];
+    mtu: number;
+    name: string;
+};
 
 export type InstallData = {
     step: number;
@@ -33,13 +39,7 @@ export type InstallData = {
         ip: string;
         error: string;
     };
-    interfaces: {
-        flags: string;
-        hardware_address: string;
-        ip_addresses: string[];
-        mtu: number;
-        name: string;
-    }[];
+    interfaces: InstallInterface[];
     dnsVersion: string;
 };
 
@@ -78,17 +78,17 @@ export type EncryptionData = {
 };
 
 export type Client = {
-    blocked_services: string[],
+    blocked_services: string[];
     blocked_services_schedule: {
-        sun?: { start: number, end: number },
-        mon?: { start: number, end: number },
-        tue?: { start: number, end: number },
-        wed?: { start: number, end: number },
-        thu?: { start: number, end: number },
-        fri?: { start: number, end: number },
-        sat?: { start: number, end: number },
+        sun?: { start: number; end: number };
+        mon?: { start: number; end: number };
+        tue?: { start: number; end: number };
+        wed?: { start: number; end: number };
+        thu?: { start: number; end: number };
+        fri?: { start: number; end: number };
+        sat?: { start: number; end: number };
         time_zone: string;
-    },
+    };
     filtering_enabled: boolean;
     ids: string[];
     ignore_querylog: boolean;
@@ -104,14 +104,14 @@ export type Client = {
     upstreams_cache_size: number;
     use_global_blocked_services: boolean;
     use_global_settings: boolean;
-}
+};
 
 export type AutoClient = {
     ip: string;
     name: string;
     source: string;
     whois_info: any;
-}
+};
 
 export type DashboardData = {
     processing: boolean;
@@ -128,6 +128,7 @@ export type DashboardData = {
     dnsPort: number;
     dnsAddresses: string[];
     dnsVersion: string;
+    dnsStartTime: number | null;
     clients: Client[];
     autoClients: AutoClient[];
     supportedTags: string[];
@@ -151,13 +152,13 @@ export type SettingsData = {
             order: number;
             subtitle: string;
             title: string;
-        },
+        };
         safebrowsing: {
             enabled: boolean;
             order: number;
             subtitle: string;
             title: string;
-        },
+        };
         safesearch: Record<string, boolean>;
     };
 };
@@ -172,17 +173,22 @@ export type RewritesData = {
     currentRewrite?: {
         answer: string;
         domain: string;
+        enabled: boolean;
     };
     list: {
         answer: string;
         domain: string;
+        enabled: boolean;
     }[];
+    settings: {
+        enabled: boolean;
+    };
 };
 
 export type NormalizedTopClients = {
     auto: Record<string, number>;
     configured: Record<string, number>;
-}
+};
 
 export type StatsData = {
     processingGetConfig: boolean;
@@ -191,6 +197,7 @@ export type StatsData = {
     processingReset: boolean;
     interval: number;
     customInterval?: number;
+    ignored_enabled: boolean;
     dnsQueries: number[];
     blockedFiltering: number[];
     replacedParental: number[];
@@ -256,13 +263,13 @@ export type DhcpData = {
     interface_name: string;
     check?: {
         v4?: {
-            other_server?: { found: string; error?: string },
-            static_ip?: {static: string, ip: string},
-        },
+            other_server?: { found: string; error?: string };
+            static_ip?: { static: string; ip: string };
+        };
         v6?: {
-            other_server?: { found: string; error?: string },
-            static_ip?: {static: string, ip: string},
-        },
+            other_server?: { found: string; error?: string };
+            static_ip?: { static: string; ip: string };
+        };
     };
     v4: {
         gateway_ip: string;
@@ -304,6 +311,7 @@ export type DnsConfigData = {
     blocking_ipv4: string;
     blocking_ipv6: string;
     blocked_response_ttl: number;
+    upstream_timeout: number;
     edns_cs_enabled: boolean;
     disable_ipv6: boolean;
     dnssec_enabled: boolean;
@@ -320,7 +328,8 @@ export type DnsConfigData = {
     ratelimit_subnet_len_ipv4?: number;
     ratelimit_subnet_len_ipv6?: number;
     edns_cs_use_custom?: boolean;
-    edns_cs_custom_ip?: boolean;
+    edns_cs_custom_ip?: string;
+    cache_enabled?: boolean;
     cache_size?: number;
     cache_ttl_max?: number;
     cache_ttl_min?: number;
@@ -364,6 +373,7 @@ export type QueryLogsData = {
     isDetailed: boolean;
     isEntireLog: boolean;
     customInterval: any;
+    ignored_enabled: boolean;
 };
 
 export type ServicesData = {
@@ -372,6 +382,7 @@ export type ServicesData = {
     processingSet: boolean;
     list: any;
     allServices: any[];
+    allGroups: any[];
 };
 
 export type RootState = {
@@ -390,7 +401,6 @@ export type RootState = {
     install?: InstallData;
     toasts: { notices: any[] };
     loadingBar: any;
-    form: any;
 };
 
 export type InstallState = {
@@ -439,6 +449,7 @@ export const initialState: RootState = {
         dnsPort: STANDARD_DNS_PORT,
         dnsAddresses: [],
         dnsVersion: '',
+        dnsStartTime: null,
         clients: [],
         autoClients: [],
         supportedTags: [],
@@ -489,6 +500,7 @@ export const initialState: RootState = {
         blocking_ipv4: DEFAULT_BLOCKING_IPV4,
         blocking_ipv6: DEFAULT_BLOCKING_IPV6,
         blocked_response_ttl: 10,
+        upstream_timeout: 10,
         edns_cs_enabled: false,
         disable_ipv6: false,
         dnssec_enabled: false,
@@ -566,6 +578,7 @@ export const initialState: RootState = {
         isDetailed: true,
         isEntireLog: false,
         customInterval: null,
+        ignored_enabled: true,
     },
     rewrites: {
         processing: true,
@@ -575,6 +588,7 @@ export const initialState: RootState = {
         isModalOpen: false,
         modalType: '',
         list: [],
+        settings: { enabled: false },
     },
     services: {
         processing: true,
@@ -582,6 +596,7 @@ export const initialState: RootState = {
         processingSet: false,
         list: {},
         allServices: [],
+        allGroups: [],
     },
     settings: {
         processing: true,
@@ -595,6 +610,7 @@ export const initialState: RootState = {
         processingReset: false,
         interval: DAY,
         customInterval: null,
+        ignored_enabled: true,
         dnsQueries: [],
         blockedFiltering: [],
         replacedParental: [],
@@ -615,5 +631,4 @@ export const initialState: RootState = {
     },
     toasts: { notices: [] },
     loadingBar: {},
-    form: {},
 };
