@@ -834,6 +834,67 @@ func TestBlockedRequest(t *testing.T) {
 	assert.True(t, reply.Answer[0].(*dns.A).A.IsUnspecified())
 }
 
+func TestBlockedRequestNOERROR(t *testing.T) {
+	const blockedResponseTTL uint32 = 42
+
+	forwardConf := ServerConfig{
+		UDPListenAddrs: []*net.UDPAddr{{}},
+		TCPListenAddrs: []*net.TCPAddr{{}},
+		TLSConf:        &TLSConfig{},
+		Config: Config{
+			UpstreamMode: UpstreamModeLoadBalance,
+			EDNSClientSubnet: &EDNSClientSubnet{
+				Enabled: false,
+			},
+			ClientsContainer: EmptyClientsContainer{},
+		},
+		ServePlainDNS: true,
+	}
+	s := createTestServer(
+		t,
+		&filtering.Config{
+			ProtectionEnabled:  true,
+			BlockingMode:       filtering.BlockingModeNOERROR,
+			BlockedResponseTTL: blockedResponseTTL,
+		},
+		forwardConf,
+		testTLSConfigProvider,
+	)
+	startDeferStop(t, s)
+
+	const host = "nxdomain.example.org."
+	wantSOA := &dns.SOA{
+		Hdr: dns.RR_Header{
+			Name:     host,
+			Rrtype:   dns.TypeSOA,
+			Class:    dns.ClassINET,
+			Ttl:      blockedResponseTTL,
+			Rdlength: 72,
+		},
+		Ns:      "fake-for-negative-caching.adguard.com.",
+		Mbox:    "hostmaster." + host,
+		Serial:  100500,
+		Refresh: 1800,
+		Retry:   900,
+		Expire:  604800,
+		Minttl:  86400,
+	}
+
+	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
+	for _, qType := range []uint16{dns.TypeA, dns.TypeAAAA, dns.TypeHTTPS} {
+		t.Run(dns.TypeToString[qType], func(t *testing.T) {
+			req := createTestMessageWithType(host, qType)
+			reply, err := dns.Exchange(req, addr.String())
+			require.NoError(t, err)
+
+			assert.Equal(t, dns.RcodeSuccess, reply.Rcode)
+			assert.Empty(t, reply.Answer)
+			require.Len(t, reply.Ns, 1)
+			assert.Equal(t, wantSOA, reply.Ns[0])
+		})
+	}
+}
+
 func TestServerCustomClientUpstream(t *testing.T) {
 	const defaultCacheSize = 1024 * 1024
 
