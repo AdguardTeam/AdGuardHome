@@ -4,7 +4,7 @@ import React, { Component } from 'react';
 import ReactTable from 'react-table';
 import { withTranslation } from 'react-i18next';
 
-import { sortIp } from '../../../helpers/helpers';
+import { sortAddress } from '../../../helpers/helpers';
 import { MODAL_TYPE, TABLES_MIN_ROWS } from '../../../helpers/constants';
 import { LocalStorageHelper, LOCAL_STORAGE_KEYS } from '../../../helpers/localStorageHelper';
 
@@ -67,7 +67,7 @@ class Table extends Component<TableProps> {
         {
             Header: this.props.t('answer'),
             accessor: 'answer',
-            sortMethod: sortIp,
+            sortMethod: sortAddress, 
             Cell: this.cellWrap,
         },
         {
