@@ -1848,7 +1848,11 @@
 
             Deprecated: use `rules[*].text` instead.
         'rules':
-          'description': 'Applied rules.'
+          'description': >
+            Rules associated with the result.  For a blocked request using
+            network rules, the selected rule is first, followed by all other
+            effective basic blocking matches.  The first item is also exposed
+            through the deprecated `rule` and `filter_id` fields.
           'type': 'array'
           'items':
             '$ref': '#/components/schemas/ResultRule'
@@ -2358,7 +2362,11 @@
 
             Deprecated: use `rules[*].text` instead.
         'rules':
-          'description': 'Applied rules.'
+          'description': >
+            Rules associated with the result.  For a blocked request using
+            network rules, the selected rule is first, followed by all other
+            effective basic blocking matches.  The first item is also exposed
+            through the deprecated `rule` and `filterId` fields.
           'type': 'array'
           'items':
             '$ref': '#/components/schemas/ResultRule'
@@ -2480,7 +2488,7 @@
     'PutQueryLogConfigUpdateRequest':
       '$ref': '#/components/schemas/GetQueryLogConfigResponse'
     'ResultRule':
-      'description': 'Applied rule.'
+      'description': 'A filtering rule associated with a result.'
       'properties':
         'filter_list_id':
           'description': >
