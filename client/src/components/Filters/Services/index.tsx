@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useDispatch, useSelector } from 'react-redux';
 
-import { Form } from './Form';
+import { Form, ServiceSchedule } from './Form';
 
 import Card from '../../ui/Card';
 import { getBlockedServices, getAllBlockedServices, updateBlockedServices } from '../../../actions/services';
@@ -48,6 +48,7 @@ const Services = () => {
             updateBlockedServices({
                 ids: blocked_services,
                 schedule: services.list.schedule,
+                services: services.list.services,
             }),
         );
     };
@@ -57,6 +58,30 @@ const Services = () => {
             updateBlockedServices({
                 ids: services.list.ids,
                 schedule: values,
+                services: services.list.services,
+            }),
+        );
+    };
+
+    const handleServiceScheduleSubmit = (serviceId: string, schedule: any) => {
+        const currentServices = services.list.services || [];
+        const existingIndex = currentServices.findIndex((s: ServiceSchedule) => s.id === serviceId);
+
+        let newServices: ServiceSchedule[];
+        if (schedule === null) {
+            newServices = currentServices.filter((s: ServiceSchedule) => s.id !== serviceId);
+        } else if (existingIndex >= 0) {
+            newServices = [...currentServices];
+            newServices[existingIndex] = { id: serviceId, schedule };
+        } else {
+            newServices = [...currentServices, { id: serviceId, schedule }];
+        }
+
+        dispatch(
+            updateBlockedServices({
+                ids: services.list.ids,
+                schedule: services.list.schedule,
+                services: newServices,
             }),
         );
     };
@@ -77,9 +102,11 @@ const Services = () => {
                         initialValues={initialValues}
                         blockedServices={services.allServices}
                         serviceGroups={services.allGroups}
+                        serviceSchedules={services.list.services}
                         processing={services.processing}
                         processingSet={services.processingSet}
                         onSubmit={handleSubmit}
+                        onScheduleSubmit={handleServiceScheduleSubmit}
                     />
                 </div>
             </Card>
