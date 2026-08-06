@@ -131,6 +131,7 @@ underscores() {
 			-o -name '*_freebsd.go' \
 			-o -name '*_generate.go' \
 			-o -name '*_linux.go' \
+			-o -name '*_netbsd.go' \
 			-o -name '*_next.go' \
 			-o -name '*_openbsd.go' \
 			-o -name '*_others.go' \
@@ -287,6 +288,7 @@ staticcheck_matrix='
 darwin:  GOOS=darwin
 freebsd: GOOS=freebsd
 linux:   GOOS=linux
+netbsd:  GOOS=netbsd
 openbsd: GOOS=openbsd
 windows: GOOS=windows
 '
