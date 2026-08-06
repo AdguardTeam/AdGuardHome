@@ -69,6 +69,7 @@ describe('clientForm store', () => {
                 google: true,
                 youtube: false,
                 bing: false,
+                brave: false,
                 duckduckgo: false,
                 yandex: false,
                 pixabay: false,
