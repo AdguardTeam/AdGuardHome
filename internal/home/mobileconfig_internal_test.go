@@ -100,6 +100,20 @@ func TestMobileConfigHandler_HandleMobileConfigDoH(t *testing.T) {
 		assert.Empty(t, s.ServerName)
 		assert.Equal(t, "https://example.org/dns-query/cli42", s.ServerURL)
 	})
+
+	t.Run("invalid_client_id", func(t *testing.T) {
+		r, err := http.NewRequest(
+			http.MethodGet,
+			"https://example.com:12345/apple/doh.mobileconfig?host=example.org&client_id=invalid/client",
+			nil,
+		)
+		require.NoError(t, err)
+
+		w := httptest.NewRecorder()
+
+		mobileConfHandler.handleMobileConfigDoH(w, r)
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
 }
 
 func TestMobileConfigHandler_HandleMobileConfigDoT(t *testing.T) {
@@ -170,5 +184,19 @@ func TestMobileConfigHandler_HandleMobileConfigDoT(t *testing.T) {
 
 		assert.Equal(t, "cli42.example.org", s.ServerName)
 		assert.Empty(t, s.ServerURL)
+	})
+
+	t.Run("invalid_client_id", func(t *testing.T) {
+		r, err := http.NewRequest(
+			http.MethodGet,
+			"https://example.com:12345/apple/dot.mobileconfig?host=example.org&client_id=invalid/client",
+			nil,
+		)
+		require.NoError(t, err)
+
+		w := httptest.NewRecorder()
+
+		mobileConfHandler.handleMobileConfigDoT(w, r)
+		assert.Equal(t, http.StatusBadRequest, w.Code)
 	})
 }
