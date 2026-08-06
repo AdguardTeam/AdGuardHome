@@ -7,6 +7,7 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
+	"log/slog"
 	"maps"
 	"net/http"
 	"net/http/httptest"
@@ -23,6 +24,8 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghuser"
 	"github.com/AdguardTeam/golibs/httphdr"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -289,6 +292,123 @@ func TestAuthMiddlewareDefault(t *testing.T) {
 			assert.Equal(t, tc.wantUser, h.user)
 		})
 	}
+}
+
+type authLogTestCase struct {
+	trustedProxies netutil.SubnetSet
+	name           string
+	remoteIP       string
+	forwardedIP    string
+	wantIP         string
+	blocked        bool
+}
+
+func TestAuthMiddlewareDefault_logClientIP(t *testing.T) {
+	const (
+		remoteIP = "192.0.2.1"
+		clientIP = "198.51.100.2"
+	)
+
+	testCases := []authLogTestCase{
+		{
+			trustedProxies: nil,
+			name:           "direct_blocked",
+			remoteIP:       remoteIP,
+			forwardedIP:    "",
+			wantIP:         remoteIP,
+			blocked:        true,
+		},
+		{
+			trustedProxies: netutil.SliceSubnetSet{
+				netip.MustParsePrefix(remoteIP + "/32"),
+			},
+			name:        "trusted_proxy",
+			remoteIP:    remoteIP,
+			forwardedIP: clientIP,
+			wantIP:      clientIP,
+			blocked:     false,
+		},
+		{
+			trustedProxies: netutil.SliceSubnetSet{
+				netip.MustParsePrefix("203.0.113.1/32"),
+			},
+			name:        "untrusted_proxy_spoof",
+			remoteIP:    remoteIP,
+			forwardedIP: clientIP,
+			wantIP:      remoteIP,
+			blocked:     false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			testAuthMiddlewareDefaultLogClientIP(t, tc)
+		})
+	}
+}
+
+func testAuthMiddlewareDefaultLogClientIP(t *testing.T, tc authLogTestCase) {
+	t.Helper()
+
+	const (
+		username = "log-user-secret"
+		password = "log-pass-secret"
+	)
+
+	logOutput := &bytes.Buffer{}
+	logger := slog.New(slog.NewTextHandler(logOutput, &slog.HandlerOptions{
+		ReplaceAttr: slogutil.RemoveTime,
+	}))
+
+	usersDB := newTestUsersDB()
+	usersDB.onAll = func(_ context.Context) (users []*aghuser.User, err error) {
+		return []*aghuser.User{{}}, nil
+	}
+	usersDB.onByLogin = func(
+		_ context.Context,
+		_ aghuser.Login,
+	) (u *aghuser.User, err error) {
+		return nil, nil
+	}
+
+	var rateLimiter loginRateLimiter = emptyRateLimiter{}
+	if tc.blocked {
+		limiter := newAuthRateLimiter(time.Hour, 1)
+		limiter.inc(tc.remoteIP)
+		rateLimiter = limiter
+	}
+
+	mw := newAuthMiddlewareDefault(&authMiddlewareDefaultConfig{
+		logger:         logger,
+		mux:            http.NewServeMux(),
+		rateLimiter:    rateLimiter,
+		trustedProxies: tc.trustedProxies,
+		sessions:       newTestSessionStorage(),
+		users:          usersDB,
+	})
+
+	req := authRequest("/control/profile", nil, username, password)
+	req.RemoteAddr = tc.remoteIP + ":1234"
+	if tc.forwardedIP != "" {
+		req.Header.Set(httphdr.XRealIP, tc.forwardedIP)
+	}
+
+	h := &testAuthHandler{}
+	w := httptest.NewRecorder()
+	mw.Wrap(h).ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusUnauthorized, w.Code)
+	assert.False(t, h.called)
+
+	logLine := logOutput.String()
+	assert.Contains(t, logLine, " ip="+tc.wantIP)
+	if tc.forwardedIP != "" && tc.forwardedIP != tc.wantIP {
+		assert.NotContains(t, logLine, tc.forwardedIP)
+	}
+
+	assert.NotContains(t, logLine, username)
+	assert.NotContains(t, logLine, password)
+	assert.NotContains(t, logLine, req.Header.Get("Authorization"))
 }
 
 func TestAuthMiddlewareDefault_public(t *testing.T) {
