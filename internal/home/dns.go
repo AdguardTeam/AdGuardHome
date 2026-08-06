@@ -23,7 +23,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/dnscrypt"
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/netutil/httputil"
@@ -155,7 +154,7 @@ func initDNSServer(
 	// error and consider removing this defer.
 	defer func() {
 		if err != nil {
-			closeDNSServer(ctx)
+			closeDNSServer(ctx, params.Logger)
 		}
 	}()
 	if err != nil {
@@ -480,7 +479,9 @@ func startDNSServer() (err error) {
 	return nil
 }
 
-func stopDNSServer(ctx context.Context) (err error) {
+// stopDNSServer stops the DNS server and closes all the DNS modules.  l must
+// not be nil.
+func stopDNSServer(ctx context.Context, l *slog.Logger) (err error) {
 	if !isRunning() {
 		return nil
 	}
@@ -495,12 +496,14 @@ func stopDNSServer(ctx context.Context) (err error) {
 		return fmt.Errorf("closing clients container: %w", err)
 	}
 
-	closeDNSServer(ctx)
+	closeDNSServer(ctx, l)
 
 	return nil
 }
 
-func closeDNSServer(ctx context.Context) {
+// closeDNSServer closes the DNS server and the modules it depends on.  l must
+// not be nil.
+func closeDNSServer(ctx context.Context, l *slog.Logger) {
 	// DNS forward module must be closed BEFORE stats or queryLog because it depends on them
 	if globalContext.dnsServer != nil {
 		globalContext.dnsServer.Close(ctx)
@@ -514,18 +517,18 @@ func closeDNSServer(ctx context.Context) {
 	if globalContext.stats != nil {
 		err := globalContext.stats.Close()
 		if err != nil {
-			log.Error("closing stats: %s", err)
+			l.ErrorContext(ctx, "closing stats", slogutil.KeyError, err)
 		}
 	}
 
 	if globalContext.queryLog != nil {
 		err := globalContext.queryLog.Shutdown(ctx)
 		if err != nil {
-			log.Error("closing query log: %s", err)
+			l.ErrorContext(ctx, "closing query log", slogutil.KeyError, err)
 		}
 	}
 
-	log.Debug("all dns modules are closed")
+	l.DebugContext(ctx, "all dns modules are closed")
 }
 
 // checkStatsAndQuerylogDirs checks and returns directory paths to store

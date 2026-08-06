@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
+	"log"
 	"log/slog"
 	"net/http"
 	"net/netip"
@@ -40,7 +41,6 @@ import (
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/hostsfile"
-	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/netutil/httputil"
@@ -103,7 +103,7 @@ func Main(clientBuildFS fs.FS) {
 
 	// Configure log level and output.
 	err = configureLogger(ls, workDir)
-	fatalOnError(err)
+	fatalOnError(ctx, baseLogger, err)
 
 	// Print the first message after logger is configured.
 	baseLogger.InfoContext(ctx, "starting adguard home", "version", version.Full())
@@ -115,7 +115,7 @@ func Main(clientBuildFS fs.FS) {
 	var glTokenFileRoot *os.Root
 	if opts.glinetMode {
 		glTokenFileRoot, err = os.OpenRoot("/tmp/")
-		fatalOnError(err)
+		fatalOnError(ctx, baseLogger, err)
 	}
 
 	done := make(chan struct{})
@@ -123,7 +123,7 @@ func Main(clientBuildFS fs.FS) {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT)
 
-	pidFilePath := setPIDFilePath(opts)
+	pidFilePath := setPIDFilePath(ctx, baseLogger, opts)
 
 	var (
 		hc        *aghnet.HostsContainer
@@ -131,7 +131,7 @@ func Main(clientBuildFS fs.FS) {
 	)
 	if !opts.noEtcHosts {
 		hc, hcWatcher, err = newHostsContainer(ctx, baseLogger)
-		fatalOnError(err)
+		fatalOnError(ctx, baseLogger, err)
 	}
 
 	sigHdlrLogger := baseLogger.With(slogutil.KeyPrefix, "signalhdlr")
@@ -374,9 +374,9 @@ func initContextClients(
 }
 
 // setPIDFilePath writes the PID value to a file and returns its path, if the
-// PID file option is specified.
-func setPIDFilePath(opts options) (pidFilePath string) {
-	if opts.pidFile != "" && !opts.performUpdate && writePIDFile(opts.pidFile) {
+// PID file option is specified.  l must not be nil.
+func setPIDFilePath(ctx context.Context, l *slog.Logger, opts options) (pidFilePath string) {
+	if opts.pidFile != "" && !opts.performUpdate && writePIDFile(ctx, l, opts.pidFile) {
 		pidFilePath = opts.pidFile
 	}
 
@@ -756,9 +756,13 @@ func suggestedWebPort(ctx context.Context, l *slog.Logger) (p uint16) {
 	return uint16(v)
 }
 
-func fatalOnError(err error) {
+// fatalOnError logs err and exits with a failure exit code if err is not nil.
+// l must not be nil.
+func fatalOnError(ctx context.Context, l *slog.Logger, err error) {
 	if err != nil {
-		log.Fatal(err)
+		l.ErrorContext(ctx, "fatal error", slogutil.KeyError, err)
+
+		os.Exit(osutil.ExitCodeFailure)
 	}
 }
 
@@ -791,7 +795,7 @@ func run(
 	setupContext(ctx, baseLogger, opts, workDir, confPath, isFirstRun)
 
 	err := configureOS(ctx, baseLogger, config)
-	fatalOnError(err)
+	fatalOnError(ctx, baseLogger, err)
 
 	// Clients package uses filtering package's static data
 	// (filtering.BlockedSvcKnown()), so we have to initialize filtering static
@@ -806,10 +810,10 @@ func run(
 	)
 
 	err = initContextClients(ctx, baseLogger, sigHdlr, confModifier, httpReg, workDir, hc)
-	fatalOnError(err)
+	fatalOnError(ctx, baseLogger, err)
 
 	tlsMgr, err := initTLS(ctx, baseLogger, sigHdlr, confModifier, httpReg)
-	fatalOnError(err)
+	fatalOnError(ctx, baseLogger, err)
 
 	err = setupDNSFilteringConf(
 		ctx,
@@ -821,19 +825,23 @@ func run(
 		workDir,
 		hc,
 	)
-	fatalOnError(err)
+	fatalOnError(ctx, baseLogger, err)
 
 	err = setupBindOpts(opts)
-	fatalOnError(err)
+	fatalOnError(ctx, baseLogger, err)
 
 	upd, isCustomURL := initUpdate(ctx, baseLogger, opts, tlsMgr, isFirstRun, workDir, confPath)
 
 	dataDirPath := filepath.Join(workDir, dataDir)
 	err = os.MkdirAll(dataDirPath, aghos.DefaultPermDir)
-	fatalOnError(errors.Annotate(err, "creating DNS data dir at %s: %w", dataDirPath))
+	fatalOnError(
+		ctx,
+		baseLogger,
+		errors.Annotate(err, "creating dns data dir at %q: %w", dataDirPath),
+	)
 
 	auth, err := initUsers(ctx, baseLogger, workDir, mux, opts.glinetMode, glTokenFileRoot)
-	fatalOnError(err)
+	fatalOnError(ctx, baseLogger, err)
 
 	confModifier.setAuth(auth)
 
@@ -856,7 +864,7 @@ func run(
 	}
 
 	web, err := newWeb(ctx, conf)
-	fatalOnError(err)
+	fatalOnError(ctx, baseLogger, err)
 
 	mw.set(web)
 
@@ -865,7 +873,7 @@ func run(
 	tlsMgr.setWebAPI(web)
 
 	statsDir, querylogDir, err := checkStatsAndQuerylogDirs(config, workDir)
-	fatalOnError(err)
+	fatalOnError(ctx, baseLogger, err)
 
 	if !isFirstRun {
 		runDNSServer(ctx, baseLogger, tlsMgr, confModifier, statsDir, querylogDir, httpReg, hc, web.conf.mux)
@@ -896,15 +904,15 @@ func runDNSServer(
 	mux httputil.Router,
 ) {
 	err := initDNS(ctx, slogLogger, tlsMgr, confModifier, httpReg, statsDir, querylogDir, hc, mux)
-	fatalOnError(err)
+	fatalOnError(ctx, slogLogger, err)
 
 	tlsMgr.start(ctx)
 
 	go func() {
 		startErr := startDNSServer()
 		if startErr != nil {
-			closeDNSServer(ctx)
-			fatalOnError(startErr)
+			closeDNSServer(ctx, slogLogger)
+			fatalOnError(ctx, slogLogger, startErr)
 		}
 	}()
 
@@ -977,7 +985,7 @@ func initUpdate(
 	confPath string,
 ) (upd *updater.Updater, isCustomURL bool) {
 	execPath, err := os.Executable()
-	fatalOnError(errors.Annotate(err, "getting executable path: %w"))
+	fatalOnError(ctx, baseLogger, errors.Annotate(err, "getting executable path: %w"))
 
 	updLogger := baseLogger.With(slogutil.KeyPrefix, "updater")
 	upd, isCustomURL = newUpdater(
@@ -996,7 +1004,7 @@ func initUpdate(
 	if !isFirstRun {
 		// Save the updated config.
 		err = config.write(ctx, baseLogger, nil, nil, workDir, confPath)
-		fatalOnError(err)
+		fatalOnError(ctx, baseLogger, err)
 
 		if config.HTTPConfig.Pprof.Enabled {
 			startPprof(baseLogger, config.HTTPConfig.Pprof.Port)
@@ -1175,14 +1183,17 @@ func checkNetworkPermissions(ctx context.Context, l *slog.Logger) {
 	l.InfoContext(ctx, "adguard home can bind to port 53")
 }
 
-// Write PID to a file
-func writePIDFile(fn string) bool {
+// writePIDFile writes the PID of the current process to the file at fn.  l
+// must not be nil.
+func writePIDFile(ctx context.Context, l *slog.Logger, fn string) (ok bool) {
 	data := fmt.Sprintf("%d", os.Getpid())
 	err := os.WriteFile(fn, []byte(data), 0o644)
 	if err != nil {
-		log.Error("Couldn't write PID to file %s: %v", fn, err)
+		l.ErrorContext(ctx, "writing pid file", "path", fn, slogutil.KeyError, err)
+
 		return false
 	}
+
 	return true
 }
 
@@ -1238,7 +1249,7 @@ func initWorkingDir(opts options) (workDir string, err error) {
 func cleanup(ctx context.Context, l *slog.Logger, hc *aghnet.HostsContainer) {
 	l.InfoContext(ctx, "stopping adguard home")
 
-	err := stopDNSServer(ctx)
+	err := stopDNSServer(ctx, l)
 	if err != nil {
 		l.ErrorContext(ctx, "stopping dns server", slogutil.KeyError, err)
 	}
@@ -1276,10 +1287,13 @@ func exitWithError() {
 // loadCmdLineOpts reads command line arguments and initializes configuration
 // from them.  If there is an error or an effect, loadCmdLineOpts processes them
 // and exits.
+//
+// TODO(m.kazantsev):  Consider refactoring the logs so that it
+// resembles AdGuard DNS CLI.
 func loadCmdLineOpts() (opts options) {
 	opts, eff, err := parseCmdOpts(os.Args[0], os.Args[1:])
 	if err != nil {
-		log.Error("%s", err)
+		log.Printf("error: %s\n", err)
 		printHelp(os.Args[0])
 
 		exitWithError()
@@ -1288,7 +1302,7 @@ func loadCmdLineOpts() (opts options) {
 	if eff != nil {
 		err = eff()
 		if err != nil {
-			log.Error("%s", err)
+			log.Printf("error: %s\n", err)
 			exitWithError()
 		}
 
@@ -1417,7 +1431,7 @@ func cmdlineUpdate(
 		tlsMgr,
 		agh.EmptyConfigModifier{},
 	)
-	fatalOnError(err)
+	fatalOnError(ctx, l, err)
 
 	l.InfoContext(ctx, "performing update via cli")
 
@@ -1435,7 +1449,7 @@ func cmdlineUpdate(
 	}
 
 	err = upd.Update(ctx, isFirstRun)
-	fatalOnError(err)
+	fatalOnError(ctx, l, err)
 
 	err = restartService(ctx, l)
 	if err != nil {

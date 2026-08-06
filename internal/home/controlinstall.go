@@ -659,7 +659,7 @@ func startMods(
 
 	err = startDNSServer()
 	if err != nil {
-		closeDNSServer(ctx)
+		closeDNSServer(ctx, baseLogger)
 
 		return err
 	}
