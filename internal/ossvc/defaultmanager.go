@@ -2,37 +2,42 @@ package ossvc
 
 import (
 	"context"
-	_ "embed"
 	"fmt"
 	"log/slog"
 	"os"
+	"path/filepath"
 	"runtime"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/osutil/executil"
 	"github.com/kardianos/service"
 )
 
 // TODO(e.burkov):  Declare managers for each OS.
 
-// manager is the implementation of [Manager] that wraps [service.Service].
+// manager is the implementation of [Manager] that uses [service.Service].
 type manager struct {
-	logger  *slog.Logger
-	cmdCons executil.CommandConstructor
+	logger        *slog.Logger
+	cmdCons       executil.CommandConstructor
+	isOpenWrt     bool
+	isUnixSystemV bool
 }
 
-// newManager creates a new [Manager] that wraps [service.Service].
+// newManager creates a new [Manager] that uses [service.Service].
 //
 // TODO(e.burkov):  Return error.
-func newManager(_ context.Context, conf *ManagerConfig) (mgr *manager) {
+func newManager(ctx context.Context, conf *ManagerConfig) (mgr *manager) {
 	// Call chooseSystem explicitly to introduce platform-specific support for
 	// service package.  It's a noop for other GOOS values.
-	chooseSystem()
+	chooseSystem(ctx, conf.Logger, conf.CommandConstructor)
 
 	return &manager{
-		logger:  conf.Logger,
-		cmdCons: conf.CommandConstructor,
+		logger:        conf.Logger,
+		cmdCons:       conf.CommandConstructor,
+		isOpenWrt:     aghos.IsOpenWrt(),
+		isUnixSystemV: service.Platform() == "unix-systemv",
 	}
 }
 
@@ -43,19 +48,36 @@ var _ Manager = (*manager)(nil)
 func (m *manager) Perform(ctx context.Context, action Action) (err error) {
 	switch action := action.(type) {
 	case *ActionInstall:
-		return m.install(ctx, action)
-	case *ActionReload:
-		return m.reload(ctx, action)
+		err = m.install(ctx, action)
+	case *ActionRestart:
+		err = m.restart(ctx, action)
 	case *ActionStart:
-		return m.start(ctx, action)
+		err = m.start(ctx, action)
 	case *ActionStop:
-		return m.stop(ctx, action)
+		err = m.stop(ctx, action)
 	case *ActionUninstall:
-		return m.uninstall(ctx, action)
+		err = m.uninstall(ctx, action)
 	default:
-		return fmt.Errorf("action: %w: %T(%[2]v)", errors.ErrBadEnumValue, action)
+		panic(fmt.Errorf("action: %w: %T(%[2]v)", errors.ErrBadEnumValue, action))
 	}
+	if err != nil {
+		// Don't wrap the error, since it's informative enough as is.
+		return err
+	}
+
+	m.logger.DebugContext(
+		ctx,
+		"performed service action",
+		"action", action.Name(),
+		"system", service.ChosenSystem(),
+	)
+
+	return nil
 }
+
+// statusRestartOnFail is a custom status value used to indicate the
+// service's state of restarting after failed start.
+const statusRestartOnFail = service.StatusStopped + 1
 
 // Status implements the [Manager] interface for *manager.
 func (m *manager) Status(ctx context.Context, name ServiceName) (status Status, err error) {
@@ -69,10 +91,18 @@ func (m *manager) Status(ctx context.Context, name ServiceName) (status Status, 
 	}
 
 	svcStatus, err := s.Status()
-	if err != nil && service.Platform() == "unix-systemv" {
-		var code int
-		code, err = m.runInitdCommand(ctx, string(name), "status")
-		if err != nil || code != 0 {
+	if err != nil && m.isUnixSystemV {
+		m.logger.DebugContext(ctx, "got error from status request", slogutil.KeyError, err)
+
+		err = m.runInitdCommand(ctx, string(name), "status")
+		if err != nil {
+			m.logger.DebugContext(ctx, "got error from init.d command", slogutil.KeyError, err)
+
+			// Treat an error or non-zero exit code as stopped status on Unix
+			// System V.
+			//
+			// TODO(e.burkov):  Investigate if it's a valid assumption, and
+			// properly handle errors in similar cases.
 			return StatusStopped, nil
 		}
 
@@ -87,34 +117,45 @@ func (m *manager) Status(ctx context.Context, name ServiceName) (status Status, 
 		return "", fmt.Errorf("getting service status: %w", err)
 	}
 
-	switch svcStatus {
-	case service.StatusRunning:
-		return StatusRunning, nil
-	case service.StatusStopped:
-		return StatusStopped, nil
-	default:
-		return "", fmt.Errorf("service status: %w: %v", errors.ErrBadEnumValue, svcStatus)
-	}
+	return statusToInternal(svcStatus)
+}
+
+// type check
+var _ ReloadManager = (*manager)(nil)
+
+// Reload implements the [ReloadManager] interface for *manager.
+func (m *manager) Reload(ctx context.Context, name ServiceName) (err error) {
+	return m.reload(ctx, name)
 }
 
 // install installs the service in the service manager.
 func (m *manager) install(ctx context.Context, action *ActionInstall) (err error) {
-	m.logger.InfoContext(ctx, "installing service", "name", action.ServiceConf.Name)
+	m.logger.InfoContext(ctx, "installing service", "name", action.ServiceName)
 
-	s, err := service.New(nil, action.ServiceConf)
+	conf := &service.Config{
+		Name:             string(action.ServiceName),
+		DisplayName:      action.DisplayName,
+		Description:      action.Description,
+		WorkingDirectory: action.WorkingDirectory,
+		Arguments:        action.Arguments,
+	}
+	ConfigureServiceOptions(conf, action.Version)
+
+	s, err := service.New(emptyInterface{}, conf)
 	if err != nil {
 		return fmt.Errorf("creating service: %w", err)
 	}
 
-	if err = s.Install(); err != nil {
+	err = s.Install()
+	if err != nil {
 		return fmt.Errorf("installing service: %w", err)
 	}
 
-	if aghos.IsOpenWrt() {
+	if m.isOpenWrt {
 		// On OpenWrt it is important to run enable after the service
 		// installation.  Otherwise, the service won't start on the system
 		// startup.
-		_, err = m.runInitdCommand(ctx, action.ServiceConf.Name, "enable")
+		err = m.runInitdCommand(ctx, string(action.ServiceName), "enable")
 		if err != nil {
 			return fmt.Errorf("enabling service on openwrt: %w", err)
 		}
@@ -123,19 +164,24 @@ func (m *manager) install(ctx context.Context, action *ActionInstall) (err error
 	return nil
 }
 
-// reload stops, if not yet, and starts the configured service in the service
+// restart stops, if not yet, and starts the configured service in the service
 // manager.
-func (m *manager) reload(ctx context.Context, action *ActionReload) (err error) {
-	m.logger.InfoContext(ctx, "reloading service", "name", action.ServiceConf.Name)
+func (m *manager) restart(ctx context.Context, action *ActionRestart) (err error) {
+	m.logger.InfoContext(ctx, "restarting service", "name", action.ServiceName)
 
-	s, err := service.New(nil, action.ServiceConf)
+	s, err := service.New(emptyInterface{}, &service.Config{
+		Name: string(action.ServiceName),
+	})
 	if err != nil {
 		return fmt.Errorf("creating service: %w", err)
 	}
 
 	err = s.Restart()
-	if err != nil && service.Platform() == "unix-systemv" {
-		_, err = m.runInitdCommand(ctx, action.ServiceConf.Name, "restart")
+	if err != nil && m.isUnixSystemV {
+		initdErr := m.runInitdCommand(ctx, string(action.ServiceName), "restart")
+		if initdErr != nil {
+			return fmt.Errorf("%w (restarting via init.d: %w)", err, initdErr)
+		}
 	}
 
 	return err
@@ -143,21 +189,26 @@ func (m *manager) reload(ctx context.Context, action *ActionReload) (err error) 
 
 // start starts the configured service in the service manager.
 func (m *manager) start(ctx context.Context, action *ActionStart) (err error) {
-	m.logger.InfoContext(ctx, "starting service", "name", action.ServiceConf.Name)
+	m.logger.InfoContext(ctx, "starting service", "name", action.ServiceName)
 
 	// Perform pre-check before starting service.
 	if err = aghos.PreCheckActionStart(); err != nil {
 		m.logger.ErrorContext(ctx, "pre-check failed", "err", err)
 	}
 
-	s, err := service.New(nil, action.ServiceConf)
+	s, err := service.New(emptyInterface{}, &service.Config{
+		Name: string(action.ServiceName),
+	})
 	if err != nil {
 		return fmt.Errorf("creating service: %w", err)
 	}
 
 	err = s.Start()
-	if err != nil && service.Platform() == "unix-systemv" {
-		_, err = m.runInitdCommand(ctx, action.ServiceConf.Name, "start")
+	if err != nil && m.isUnixSystemV {
+		initdErr := m.runInitdCommand(ctx, string(action.ServiceName), "start")
+		if initdErr != nil {
+			return fmt.Errorf("%w (starting via init.d: %w)", err, initdErr)
+		}
 	}
 
 	return err
@@ -165,16 +216,23 @@ func (m *manager) start(ctx context.Context, action *ActionStart) (err error) {
 
 // stop stops the service in the service manager.
 func (m *manager) stop(ctx context.Context, action *ActionStop) (err error) {
-	m.logger.InfoContext(ctx, "stopping service", "name", action.ServiceConf.Name)
+	m.logger.InfoContext(ctx, "stopping service", "name", action.ServiceName)
 
-	s, err := service.New(nil, action.ServiceConf)
+	conf := &service.Config{
+		Name: string(action.ServiceName),
+	}
+
+	s, err := service.New(emptyInterface{}, conf)
 	if err != nil {
 		return fmt.Errorf("creating service: %w", err)
 	}
 
 	err = s.Stop()
-	if err != nil && service.Platform() == "unix-systemv" {
-		_, err = m.runInitdCommand(ctx, action.ServiceConf.Name, "stop")
+	if err != nil && m.isUnixSystemV {
+		initdErr := m.runInitdCommand(ctx, string(action.ServiceName), "stop")
+		if initdErr != nil {
+			return fmt.Errorf("%w (stopping via init.d: %w)", err, initdErr)
+		}
 	}
 
 	return err
@@ -182,31 +240,37 @@ func (m *manager) stop(ctx context.Context, action *ActionStop) (err error) {
 
 // uninstall uninstalls the service from the service manager.
 func (m *manager) uninstall(ctx context.Context, action *ActionUninstall) (err error) {
-	m.logger.InfoContext(ctx, "uninstalling service", "name", action.ServiceConf.Name)
+	m.logger.InfoContext(ctx, "uninstalling service", "name", action.ServiceName)
 
-	if aghos.IsOpenWrt() {
+	if m.isOpenWrt {
 		// On OpenWrt it is important to run disable command first as it will
 		// remove the symlink.
-		_, err = m.runInitdCommand(ctx, action.ServiceConf.Name, "disable")
+		err = m.runInitdCommand(ctx, string(action.ServiceName), "disable")
 		if err != nil {
 			return fmt.Errorf("disabling service on openwrt: %w", err)
 		}
 	}
 
-	s, err := service.New(nil, action.ServiceConf)
+	s, err := service.New(emptyInterface{}, &service.Config{
+		Name: string(action.ServiceName),
+	})
 	if err != nil {
 		return fmt.Errorf("creating service: %w", err)
 	}
 
-	if err = s.Stop(); err != nil {
+	err = s.Stop()
+	if err != nil {
 		m.logger.DebugContext(ctx, "stopping service", "err", err)
 	}
 
-	if err = s.Uninstall(); err != nil {
+	err = s.Uninstall()
+	if err != nil {
 		return fmt.Errorf("uninstalling service: %w", err)
 	}
 
-	removeLaunchdStdLogs(ctx, m.logger)
+	if runtime.GOOS == "darwin" {
+		removeLaunchdStdLogs(ctx, m.logger)
+	}
 
 	return nil
 }
@@ -239,18 +303,36 @@ func removeLaunchdStdLogs(ctx context.Context, logger *slog.Logger) {
 	}
 }
 
-// runInitdCommand runs init.d service command.  It returns command code or
-// error if any.
+// runInitdCommand runs init.d service command.  Returns an error if any.
 //
 // TODO(e.burkov):  Move to manager_linux.go.
 func (m *manager) runInitdCommand(
 	ctx context.Context,
 	serviceName string,
 	action string,
-) (code int, err error) {
-	confPath := "/etc/init.d/" + serviceName
+) (err error) {
+	confPath := filepath.Join("/etc", "init.d", serviceName)
 	// Pass the script and action as a single string argument.
-	code, _, err = aghos.RunCommand(ctx, m.cmdCons, "sh", "-c", confPath, action)
-
-	return code, err
+	return executil.RunWithPeek(
+		ctx,
+		m.cmdCons,
+		aghos.MaxCmdOutputSize,
+		"sh",
+		"-c",
+		confPath,
+		action,
+	)
 }
+
+// emptyInterface is an empty implementation of the [service.Interface], as the
+// actual implementation is only needed for the [service.Service.Run] method.
+type emptyInterface struct{}
+
+// type check
+var _ service.Interface = emptyInterface{}
+
+// Start implements the [service.Interface] interface for emptyInterface.
+func (emptyInterface) Start(_ service.Service) (err error) { return nil }
+
+// Stop implements the [service.Interface] interface for emptyInterface.
+func (emptyInterface) Stop(_ service.Service) (err error) { return nil }

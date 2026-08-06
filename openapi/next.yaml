@@ -7,91 +7,75 @@
   'description': |
     **!! WARNING!  API IS AT THE DRAFT STAGE! THINGS WILL BREAK! !!**
 
-    AdGuard Home REST API, V1 **DRAFT**.  Our administration web interface is
-    built on top of this REST API.
+    AdGuard Home REST API, V1 **DRAFT**.  Our administration web interface is built on top of this REST API.
 
-    This API is currently a **DRAFT** and is not covered by any stability
-    guarantees.  Once this API reaches maturity, the old `/control/` API will
-    mostly be removed.
+    This API is currently a **DRAFT** and is not covered by any stability guarantees.  Once this API reaches maturity, the old `/control/` API will mostly be removed.
 
-    ##  Information For API Users
+    ## Information for API users
 
-     *  Empty arrays are always sent by the backend, unless documented
-        otherwise.  If the backend doesn't, it's a backend error.
+    - Empty arrays are always sent by the backend, unless documented otherwise.  If the backend doesn't, it's a backend error.
 
-     *  `PATCH` requests with JSON bodies use RFC 7396 JSON Merge Patch unless
-        documented otherwise.
+    - `PATCH` requests with JSON bodies use RFC 7396 JSON Merge Patch unless documented otherwise.
 
-     *  The property `x-error-class` on plain text error responses suggests,
-        which class of error should be used if the API user wants to wrap it
-        into an object.  The property `x-error-code` suggest the error code for
-        the error object.  The code usually goes into the `code` property, and
-        the content, into `msg`.
+    - The property `x-error-class` on plain text error responses suggests, which class of error should be used if the API user wants to wrap it into an object.  The property `x-error-code` suggest the error code for the error object.  The code usually goes into the `code` property, and the content, into `msg`.
 
-     *  The property `x-skip-web-api` on operations suggests API clients for
-        web, like our frontend, to skip this operation in their generated code.
+    - The property `x-skip-web-api` on operations suggests API clients for web, like our frontend, to skip this operation in their generated code.
 
-     *  The header `Server` will be set to `AdGuardHome/<<full-version>>`.  For
-        example: `AdGuardHome/v0.107.0-a.42+abcd1234`.
+    - The header `Server` will be set to `AdGuardHome/<<full-version>>`.  For example: `AdGuardHome/v0.107.0-a.42+abcd1234`.
 
-    ##  Conventions For API Authors
+    ## Conventions for API authors
 
-       ###  Naming
+    ### Naming
 
-     *  `CapitalCamelCase` for entities.
+    - `CapitalCamelCase` for entities.
 
-     *  Initialisms are spelled like `DhcpSettings` and not `DHCPSettings`.
+    - Initialisms are spelled like `DhcpSettings` and not `DHCPSettings`.
 
-     *  `lower_snake_case` for path and query parameters.
+    - `lower_snake_case` for path and query parameters.
 
-     *  No unit suffices.
+    - No unit suffices.
 
-     *  Path parameters's names start with `Path`; query, with `Query`.
+    - Path parameters' names start with `Path`; query, with `Query`.
 
-     *  Requests end with `Req`; responses, with `Resp`.
+    - Requests end with `Req`; responses, with `Resp`.
 
-       ###  Structure
+    ### Structure
 
-     *  Add `400` and `422` responses to requests that accept data.
+    - Add `400` and `422` responses to requests that accept data.
 
-     *  Add `401` responses, unless the method can work without authorization.
+    - Add `401` responses, unless the method can work without authorization.
 
-     *  Add `500` responses.
+    - Add `500` responses.
 
-     *  Descriptions are always on their own lines.
+    - Descriptions are always on their own lines.
 
-     *  Don't add a description if there is already one a level above.
+    - Don't add a description if there is already one a level above.
 
-     *  Five levels of indentation max, except for descriptions and array
-        items.
+    - Five levels of indentation max, except for descriptions and array items.
 
-     *  Keep things in alphabetical order.
+    - Keep things in alphabetical order.
 
-     *  Mark required things as such.  Document possibly-absent fields **both**
-        in `required` **and** in `description`, if there is one.
+    - Mark required things as such.  Document possibly-absent fields **both** in `required` **and** in `description`, if there is one.
 
-     *  Prefer flat objects.  Example: `resp.top_user`, not `resp.top.user.val`.
+    - Prefer flat objects.  Example: `resp.top_user`, not `resp.top.user.val`.
 
-     *  Prefer to make it easier for the frontend where possible.
+    - Prefer to make it easier for the frontend where possible.
 
-     *  Provide examples for requests and responses.  If examples are provided
-        elsewhere, document that.
+    - Provide examples for requests and responses.  If examples are provided elsewhere, document that.
 
-     *  Summaries and descriptions with dots.
+    - Summaries and descriptions with dots.
 
-     *  Top-level value in a JSON request or response must be an object.
+    - Top-level value in a JSON request or response must be an object.
 
-       ###  Types
+    ### Types
 
-     *  Add `'maximum': 65535` for 16-bit unsigned integers (for example, port
-        numbers).
+    - Add `'maximum': 65535` for 16-bit unsigned integers (for example, port numbers).
 
-     *  Add `'minimum': 0` for unsigned integers.
+    - Add `'minimum': 0` for unsigned integers.
 
-     *  Duration in milliseconds.  Time in milliseconds in the Unix epoch.  Both
-        of type `double`, because that is easier for the JS frontend.
+    - Duration in milliseconds.  Time in milliseconds in the Unix epoch.  Both of type `double`, because that is easier for the JS frontend.
 
-     *  Integers are always `int64`, numbers are always `double.
+    - Integers are always `int64`, numbers are always `double.
 
   'license':
     'name': 'GNU General Public License v3.0'

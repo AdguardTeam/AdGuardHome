@@ -124,9 +124,9 @@ See our [Wiki][wiki].
 
 ### <a href="#api" id="api" name="api">API</a>
 
-If you want to integrate with AdGuard Home, you can use our [REST API][openapi]. Alternatively, you can use this [python client][pyclient], which is used to build the [AdGuard Home Hass.io Add-on][hassio].
+If you want to integrate with AdGuard Home, you can use our [REST API][openapi]. Alternatively, you can use this [python client][pyclient], which can be used to build the [AdGuard Home Assistant integration][assistant-integration].
 
-[hassio]:   https://www.home-assistant.io/integrations/adguard/
+[assistant-integration]:   https://www.home-assistant.io/integrations/adguard/
 [openapi]:  https://github.com/AdguardTeam/AdGuardHome/tree/master/openapi
 [pyclient]: https://pypi.org/project/adguardhome/
 

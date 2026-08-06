@@ -2,7 +2,6 @@ import 'url-polyfill';
 import dateParse from 'date-fns/parse';
 import dateFormat from 'date-fns/format';
 import round from 'lodash/round';
-import axios from 'axios';
 import i18n from 'i18next';
 import ipaddr, { IPv4, IPv6 } from 'ipaddr.js';
 import queryString from 'query-string';
@@ -275,22 +274,13 @@ export const checkRedirect = (url: any, attempts: number = 1) => {
 
     let timeout: any;
 
-    axios
-        .get(url)
-        .then((response) => {
+    fetch(url)
+        .then(() => {
             rmTimeout(timeout);
-            if (response) {
-                window.location.replace(url);
-                return;
-            }
-            timeout = setRecursiveTimeout(CHECK_TIMEOUT, url, (count += 1));
+            window.location.replace(url);
         })
-        .catch((error) => {
+        .catch(() => {
             rmTimeout(timeout);
-            if (error.response) {
-                window.location.replace(url);
-                return;
-            }
             timeout = setRecursiveTimeout(CHECK_TIMEOUT, url, (count += 1));
         });
 

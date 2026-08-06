@@ -33,13 +33,12 @@ func HostToIPs(host string) (ipv4, ipv6 netip.Addr) {
 }
 
 // StartHTTPServer is a helper that starts the HTTP server, which is configured
-// to return data on every request, and returns the client and server URL.
-func StartHTTPServer(tb testing.TB, data []byte) (c *http.Client, u *url.URL) {
+// to handle HTTP requests with the given handler.  It then returns the client
+// and server URL.
+func StartHTTPServer(tb testing.TB, handler http.Handler) (c *http.Client, u *url.URL) {
 	tb.Helper()
 
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		_, _ = w.Write(data)
-	}))
+	srv := httptest.NewServer(handler)
 	tb.Cleanup(srv.Close)
 
 	u, err := url.Parse(srv.URL)
@@ -55,7 +54,7 @@ const testTimeout = 1 * time.Second
 
 // StartLocalhostUpstream is a test helper that starts a DNS server on
 // localhost.
-func StartLocalhostUpstream(tb *testing.T, h dns.Handler) (addr *url.URL) {
+func StartLocalhostUpstream(tb testing.TB, h dns.Handler) (addr *url.URL) {
 	tb.Helper()
 
 	startCh := make(chan netip.AddrPort)

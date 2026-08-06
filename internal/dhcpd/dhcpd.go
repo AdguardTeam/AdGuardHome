@@ -176,7 +176,7 @@ func (s *server) setServers(
 			return false, false, fmt.Errorf("creating dhcpv4 srv: %w", err)
 		}
 
-		s.conf.Logger.WarnContext(ctx, "creating dhcpv4 server", slogutil.KeyError, err)
+		s.conf.Logger.DebugContext(ctx, "creating dhcpv4 server", slogutil.KeyError, err)
 	}
 
 	v6conf := conf.Conf6

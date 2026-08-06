@@ -37,18 +37,20 @@ func TestIfaceHasStaticIP(t *testing.T) {
 	}, {
 		name: "comments_and_trash",
 		rootFsys: fstest.MapFS{rcConf: &fstest.MapFile{
-			Data: []byte(`# comment 1` + nl +
-				`` + nl +
-				`# comment 2` + nl +
-				`ifconfig_` + ifaceName + `="inet 127.0.0.253 netmask 0xffffffff"` + nl,
+			Data: []byte(
+				`# comment 1` + nl +
+					`` + nl +
+					`# comment 2` + nl +
+					`ifconfig_` + ifaceName + `="inet 127.0.0.253 netmask 0xffffffff"` + nl,
 			),
 		}},
 		wantHas: assert.True,
 	}, {
 		name: "aliases",
 		rootFsys: fstest.MapFS{rcConf: &fstest.MapFile{
-			Data: []byte(`ifconfig_` + ifaceName + `_alias="inet 127.0.0.1/24"` + nl +
-				`ifconfig_` + ifaceName + `="inet 127.0.0.253 netmask 0xffffffff"` + nl,
+			Data: []byte(
+				`ifconfig_` + ifaceName + `_alias="inet 127.0.0.1/24"` + nl +
+					`ifconfig_` + ifaceName + `="inet 127.0.0.253 netmask 0xffffffff"` + nl,
 			),
 		}},
 		wantHas: assert.True,

@@ -52,11 +52,11 @@ type jsonDNSConfig struct {
 
 	// RatelimitSubnetLenIPv4 is a subnet length for IPv4 addresses used for
 	// rate limiting requests.
-	RatelimitSubnetLenIPv4 *int `json:"ratelimit_subnet_len_ipv4"`
+	RatelimitSubnetLenIPv4 *uint `json:"ratelimit_subnet_len_ipv4"`
 
 	// RatelimitSubnetLenIPv6 is a subnet length for IPv6 addresses used for
 	// rate limiting requests.
-	RatelimitSubnetLenIPv6 *int `json:"ratelimit_subnet_len_ipv6"`
+	RatelimitSubnetLenIPv6 *uint `json:"ratelimit_subnet_len_ipv6"`
 
 	// UpstreamTimeout is an upstream timeout in seconds.
 	UpstreamTimeout *int `json:"upstream_timeout"`
@@ -342,8 +342,8 @@ func (req *jsonDNSConfig) checkBootstrap() (err error) {
 	defer func() { err = errors.Annotate(err, "checking bootstrap %s: %w", b) }()
 
 	for _, b = range *req.Bootstraps {
-		if b == "" {
-			return errors.Error("empty")
+		if aghnet.IsCommentOrEmpty(b) {
+			continue
 		}
 
 		var resolver *upstream.UpstreamResolver
@@ -391,7 +391,8 @@ func (req *jsonDNSConfig) checkPrivateRDNS(
 		privateNets,
 		&upstream.Options{
 			Logger: slogutil.NewDiscardLogger(),
-		})
+		},
+	)
 	err = errors.WithDeferred(err, uc.Close())
 	if err != nil {
 		return fmt.Errorf("private upstream servers: %w", err)
@@ -519,7 +520,7 @@ func (req *jsonDNSConfig) checkUpstreamTimeout() (err error) {
 
 // checkInclusion returns an error if a ptr is not nil and points to value,
 // that not in the inclusive range between minN and maxN.
-func checkInclusion(ptr *int, minN, maxN int) (err error) {
+func checkInclusion(ptr *uint, minN, maxN uint) (err error) {
 	if ptr == nil {
 		return nil
 	}
@@ -729,8 +730,6 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req.BootstrapDNS = stringutil.FilterOut(req.BootstrapDNS, aghnet.IsCommentOrEmpty)
-
 	opts := &upstream.Options{
 		Logger:     aghslog.NewForUpstream(s.baseLogger, aghslog.UpstreamTypeTest),
 		Timeout:    s.conf.UpstreamTimeout,
@@ -819,42 +818,7 @@ func (s *Server) handleSetProtection(w http.ResponseWriter, r *http.Request) {
 	aghhttp.OK(ctx, l, w)
 }
 
-// handleDoH is the DNS-over-HTTPs handler.
-//
-// Control flow:
-//
-//	HTTP server
-//	-> dnsforward.handleDoH
-//	-> dnsforward.ServeHTTP
-//	-> proxy.ServeHTTP
-//	-> proxy.handleDNSRequest
-//	-> dnsforward.handleDNSRequest
-func (s *Server) handleDoH(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	l := s.logger
-
-	if !s.conf.TLSAllowUnencryptedDoH && r.TLS == nil {
-		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusNotFound, "Not Found")
-
-		return
-	}
-
-	if !s.IsRunning() {
-		aghhttp.ErrorAndLog(
-			ctx,
-			l,
-			r,
-			w,
-			http.StatusInternalServerError,
-			"dns server is not running",
-		)
-
-		return
-	}
-
-	s.ServeHTTP(w, r)
-}
-
+// registerHandlers registers web HTTP handlers.
 func (s *Server) registerHandlers() {
 	if webRegistered || s.conf.HTTPReg == nil {
 		return
@@ -869,16 +833,6 @@ func (s *Server) registerHandlers() {
 	s.conf.HTTPReg.Register(http.MethodPost, "/control/access/set", s.handleAccessSet)
 
 	s.conf.HTTPReg.Register(http.MethodPost, "/control/cache_clear", s.handleCacheClear)
-
-	// Register both versions, with and without the trailing slash, to
-	// prevent a 301 Moved Permanently redirect when clients request the
-	// path without the trailing slash.  Those redirects break some clients.
-	//
-	// See go doc net/http.ServeMux.
-	//
-	// See also https://github.com/AdguardTeam/AdGuardHome/issues/2628.
-	s.conf.HTTPReg.Register("", "/dns-query", s.handleDoH)
-	s.conf.HTTPReg.Register("", "/dns-query/", s.handleDoH)
 
 	webRegistered = true
 }

@@ -129,6 +129,7 @@ const stats = handleActions(
         processingReset: false,
         interval: DAY,
         customInterval: null,
+        ignored_enabled: true,
         ...defaultStats,
     },
 );

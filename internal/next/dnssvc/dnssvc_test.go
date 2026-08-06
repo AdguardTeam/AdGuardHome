@@ -24,14 +24,13 @@ func TestService(t *testing.T) {
 		upstreamAddr  = "upstream.example"
 	)
 
+	pt := testutil.NewPanicT(t)
 	upstreamErrCh := make(chan error, 1)
 	upstreamStartedCh := make(chan struct{})
 	upstreamSrv := &dns.Server{
 		Addr: bootstrapAddr,
 		Net:  "udp",
 		Handler: dns.HandlerFunc(func(w dns.ResponseWriter, req *dns.Msg) {
-			pt := testutil.PanicT{}
-
 			resp := (&dns.Msg{}).SetReply(req)
 			resp.Answer = append(resp.Answer, &dns.A{
 				Hdr: dns.RR_Header{},

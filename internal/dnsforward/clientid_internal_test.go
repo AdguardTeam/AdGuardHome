@@ -229,7 +229,7 @@ func TestServer_clientIDFromDNSContext(t *testing.T) {
 			}
 
 			ctx := testutil.ContextWithTimeout(t, testTimeout)
-			clientID, err := srv.clientIDFromDNSContext(ctx, pctx)
+			clientID, err := srv.clientIDFromDNSContext(ctx, testLogger, pctx)
 			assert.Equal(t, tc.wantClientID, clientID)
 
 			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
@@ -261,62 +261,58 @@ func newHTTPReq(cliSrvName string, inclTLS bool) (r *http.Request) {
 
 func TestClientIDFromDNSContextHTTPS(t *testing.T) {
 	testCases := []struct {
+		clientID     string
 		name         string
-		path         string
+		pattern      string
 		cliSrvName   string
 		wantClientID string
 		wantErrMsg   string
 	}{{
+		clientID:     "",
 		name:         "no_clientid",
-		path:         "/dns-query",
+		pattern:      "GET /dns-query",
 		cliSrvName:   "example.com",
 		wantClientID: "",
 		wantErrMsg:   "",
 	}, {
+		clientID:     "",
 		name:         "no_clientid_slash",
-		path:         "/dns-query/",
+		pattern:      "GET /dns-query/",
 		cliSrvName:   "example.com",
 		wantClientID: "",
 		wantErrMsg:   "",
 	}, {
+		clientID:     "cli",
 		name:         "clientid",
-		path:         "/dns-query/cli",
+		pattern:      "GET /dns-query/{ClientID}",
 		cliSrvName:   "example.com",
 		wantClientID: "cli",
 		wantErrMsg:   "",
 	}, {
+		clientID:     "cli",
 		name:         "clientid_slash",
-		path:         "/dns-query/cli/",
+		pattern:      "GET /dns-query/{ClientID}/",
 		cliSrvName:   "example.com",
 		wantClientID: "cli",
 		wantErrMsg:   "",
 	}, {
+		clientID:     "InSeNsItIvE",
 		name:         "clientid_case",
-		path:         "/dns-query/InSeNsItIvE",
+		pattern:      "GET /dns-query/{ClientID}",
 		cliSrvName:   "example.com",
 		wantClientID: "insensitive",
 		wantErrMsg:   ``,
 	}, {
-		name:         "bad_url",
-		path:         "/foo",
-		cliSrvName:   "example.com",
-		wantClientID: "",
-		wantErrMsg:   `clientid check: invalid path "/foo"`,
-	}, {
-		name:         "extra",
-		path:         "/dns-query/cli/foo",
-		cliSrvName:   "example.com",
-		wantClientID: "",
-		wantErrMsg:   `clientid check: invalid path "/dns-query/cli/foo": extra parts`,
-	}, {
+		clientID:     "!!!",
 		name:         "invalid_clientid",
-		path:         "/dns-query/!!!",
+		pattern:      "GET /dns-query/{ClientID}",
 		cliSrvName:   "example.com",
 		wantClientID: "",
 		wantErrMsg:   `clientid check: invalid clientid "!!!": bad hostname label rune '!'`,
 	}, {
+		clientID:     "right",
 		name:         "both_ids",
-		path:         "/dns-query/right",
+		pattern:      "GET /dns-query/{ClientID}",
 		cliSrvName:   "wrong.example.com",
 		wantClientID: "right",
 		wantErrMsg:   "",
@@ -329,11 +325,10 @@ func TestClientIDFromDNSContextHTTPS(t *testing.T) {
 			}
 
 			r := &http.Request{
-				URL: &url.URL{
-					Path: tc.path,
-				},
-				TLS: connState,
+				TLS:     connState,
+				Pattern: tc.pattern,
 			}
+			r.SetPathValue("ClientID", tc.clientID)
 
 			pctx := &proxy.DNSContext{
 				Proto:       proxy.ProtoHTTPS,
@@ -342,7 +337,6 @@ func TestClientIDFromDNSContextHTTPS(t *testing.T) {
 
 			clientID, err := clientIDFromDNSContextHTTPS(pctx)
 			assert.Equal(t, tc.wantClientID, clientID)
-
 			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
 		})
 	}

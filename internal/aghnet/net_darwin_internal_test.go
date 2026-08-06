@@ -81,7 +81,7 @@ func TestIfaceHasStaticIP(t *testing.T) {
 		}),
 		ifaceName:  "en0",
 		wantHas:    assert.False,
-		wantErrMsg: `command "networksetup" failed: running: can't get: `,
+		wantErrMsg: "running: can't get",
 	}, {
 		name: "port_bad_output",
 		cmdCons: agh.NewMultipleCommandConstructor(agh.ExternalCommand{
@@ -179,17 +179,18 @@ func TestIfaceSetStaticIP(t *testing.T) {
 		wantErrMsg: `could not find hardware port for en0`,
 	}, {
 		name: "resolv_conf_error",
-		cmdCons: agh.NewMultipleCommandConstructor(agh.ExternalCommand{
-			Cmd:  "networksetup -listallhardwareports",
-			Err:  nil,
-			Out:  "Hardware Port: hwport\nDevice: en0\n",
-			Code: 0,
-		}, agh.ExternalCommand{
-			Cmd:  "networksetup -getinfo hwport",
-			Err:  nil,
-			Out:  "IP address: 1.2.3.4\nSubnet mask: 255.255.255.0\nRouter: 1.2.3.1\n",
-			Code: 0,
-		},
+		cmdCons: agh.NewMultipleCommandConstructor(
+			agh.ExternalCommand{
+				Cmd:  "networksetup -listallhardwareports",
+				Err:  nil,
+				Out:  "Hardware Port: hwport\nDevice: en0\n",
+				Code: 0,
+			}, agh.ExternalCommand{
+				Cmd:  "networksetup -getinfo hwport",
+				Err:  nil,
+				Out:  "IP address: 1.2.3.4\nSubnet mask: 255.255.255.0\nRouter: 1.2.3.1\n",
+				Code: 0,
+			},
 		),
 		fsys: fstest.MapFS{
 			"etc/resolv.conf": &fstest.MapFile{
@@ -215,8 +216,9 @@ func TestIfaceSetStaticIP(t *testing.T) {
 			Out:  "",
 			Code: 0,
 		}),
-		fsys:       succFsys,
-		wantErrMsg: `command "networksetup" failed: running: can't set: `,
+		fsys: succFsys,
+		wantErrMsg: `networksetup failed to set dns servers: running: can't set; ` +
+			`stderr peek: ""; stdout peek: ""`,
 	}, {
 		name: "set_manual_error",
 		cmdCons: agh.NewMultipleCommandConstructor(agh.ExternalCommand{
@@ -240,8 +242,9 @@ func TestIfaceSetStaticIP(t *testing.T) {
 			Out:  "",
 			Code: 0,
 		}),
-		fsys:       succFsys,
-		wantErrMsg: `command "networksetup" failed: running: can't set: `,
+		fsys: succFsys,
+		wantErrMsg: `networksetup failed to configure dns servers: running: can't set; ` +
+			`stderr peek: ""; stdout peek: ""`,
 	}}
 
 	for _, tc := range testCases {

@@ -8,7 +8,8 @@
 verbose="${VERBOSE:-0}"
 readonly verbose
 
-set -e -f -u
+# Don't use -f, because we use globs in this script.
+set -e -u
 
 if [ "$verbose" -gt '0' ]; then
 	set -x

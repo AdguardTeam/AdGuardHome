@@ -4,20 +4,17 @@ import { Trans, useTranslation } from 'react-i18next';
 
 import i18next from 'i18next';
 import { toNumber } from '../../../helpers/form';
-import { DAY, FILTERS_INTERVALS_HOURS, FILTERS_RELATIVE_LINK } from '../../../helpers/constants';
+import { DAY_HOURS, FILTERS_INTERVALS_HOURS, FILTERS_RELATIVE_LINK } from '../../../helpers/constants';
 import { Checkbox } from '../../ui/Controls/Checkbox';
 import { Select } from '../../ui/Controls/Select';
-
-const THREE_DAYS_INTERVAL = DAY * 3;
-const SEVEN_DAYS_INTERVAL = DAY * 7;
 
 const getTitleForInterval = (interval: number) => {
     if (interval === 0) {
         return i18next.t('disabled');
     }
 
-    if (interval === THREE_DAYS_INTERVAL || interval === SEVEN_DAYS_INTERVAL) {
-        return i18next.t('interval_days', { count: interval / DAY });
+    if (interval % DAY_HOURS === 0) {
+        return i18next.t('interval_days', { count: interval / DAY_HOURS });
     }
 
     return i18next.t('interval_hours', { count: interval });
@@ -57,6 +54,10 @@ export const FiltersConfig = ({ initialValues, setFiltersConfig, processing }: P
     const components = {
         a: <a href={FILTERS_RELATIVE_LINK} rel="noopener noreferrer" />,
     };
+
+    const options = FILTERS_INTERVALS_HOURS.includes(initialValues.interval)
+        ? FILTERS_INTERVALS_HOURS
+        : [...FILTERS_INTERVALS_HOURS, initialValues.interval];
 
     return (
         <>
@@ -99,7 +100,7 @@ export const FiltersConfig = ({ initialValues, setFiltersConfig, processing }: P
                                         const { value } = e.target;
                                         field.onChange(toNumber(value));
                                     }}>
-                                    {FILTERS_INTERVALS_HOURS.map((interval) => (
+                                    {options.map((interval) => (
                                         <option value={interval} key={interval}>
                                             {getTitleForInterval(interval)}
                                         </option>

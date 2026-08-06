@@ -204,7 +204,7 @@ func TestLargeNumbers(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodGet, "/control/stats", nil)
 
-	for h := 0; h < hoursNum; h++ {
+	for h := range hoursNum {
 		atomic.AddUint32(&curHour, 1)
 
 		for i := range cliNumPerHour {
@@ -230,7 +230,7 @@ func TestShouldCount(t *testing.T) {
 		ignored2 = "ignored.to"
 	)
 	ignored := []string{ignored1, ignored2}
-	engine, err := aghnet.NewIgnoreEngine(ignored)
+	engine, err := aghnet.NewIgnoreEngine(ignored, true)
 	require.NoError(t, err)
 
 	s, err := stats.New(stats.Config{

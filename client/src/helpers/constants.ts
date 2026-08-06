@@ -169,7 +169,9 @@ export const DISABLED_STATS_INTERVAL = 0;
 
 export const HOUR = 60 * 60 * 1000;
 
-export const DAY = HOUR * 24;
+export const DAY_HOURS = 24;
+
+export const DAY = HOUR * DAY_HOURS;
 
 export const STATS_INTERVALS_DAYS = [DAY, DAY * 7, DAY * 30, DAY * 90];
 

@@ -11,7 +11,7 @@ import (
 
 // listenPacketReusable announces on the local network address additionally
 // configuring the socket to have a reusable binding.
-func listenPacketReusable(ifaceName, network, address string) (c net.PacketConn, err error) {
+func listenPacketReusable(ifaceName, _, address string) (c net.PacketConn, err error) {
 	var port uint16
 	_, port, err = netutil.SplitHostPort(address)
 	if err != nil {

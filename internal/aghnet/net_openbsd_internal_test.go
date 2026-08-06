@@ -42,9 +42,10 @@ func TestIfaceHasStaticIP(t *testing.T) {
 		name: "comments_and_trash",
 		rootFsys: fstest.MapFS{
 			confFile: &fstest.MapFile{
-				Data: []byte(`# comment 1` + nl + nl +
-					`# inet 127.0.0.253` + nl +
-					`inet` + nl,
+				Data: []byte(
+					`# comment 1` + nl + nl +
+						`# inet 127.0.0.253` + nl +
+						`inet` + nl,
 				),
 			},
 		},

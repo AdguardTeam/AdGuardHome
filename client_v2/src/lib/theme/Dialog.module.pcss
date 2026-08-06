@@ -1,0 +1,60 @@
+.body {
+    padding: 8px 16px;
+    line-height: 1.5;
+    color: var(--default-main-text);
+    overflow-wrap: break-word;
+    word-break: break-word;
+
+    b {
+        font-weight: var(--weight-bold);
+    }
+}
+
+.description {
+    padding: 8px 16px;
+}
+
+.footer {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 16px;
+
+    @media (min-width: 768px) {
+        flex-wrap: nowrap;
+    }
+
+    &_inner {
+        padding: 0;
+    }
+
+    .button {
+        width: auto;
+        min-width: 200px;
+        font-size: 16px;
+        font-weight: var(--weight-medium);
+        flex: 1;
+
+        @media (min-width: 768px) {
+            flex: initial;
+        }
+    }
+}
+
+.buttonContent {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+}
+
+.buttonLoader {
+    width: 24px;
+    height: 24px;
+    color: var(--gray-0);
+}
+
+.close {
+    color: var(--default-gray-icons);
+}

@@ -1,0 +1,426 @@
+/* Disable Auto Zoom in Input - Safari on iPhone https://stackoverflow.com/a/6394497 */
+input,
+select,
+textarea {
+    font-size: 1rem;
+
+    @media screen and (min-width: 1024px) {
+        font-size: inherit;
+    }
+}
+
+.setup {
+    min-height: calc(100vh - 345px);
+    line-height: 1.48;
+}
+
+@media screen and (min-width: 768px) {
+    .setup {
+        min-height: calc(100vh - 141px);
+    }
+}
+
+.container {
+    max-width: 1176px;
+    margin: 0 auto;
+    padding-bottom: 24px;
+}
+
+.step {
+    display: flex;
+    gap: 88px;
+    justify-content: center;
+    flex-direction: column;
+    padding: 0;
+
+    @media screen and (min-width: 1024px) {
+        flex-direction: row;
+        padding: 0 16px;
+    }
+}
+
+.title {
+    font-size: var(--fs-title-h4);
+    font-weight: var(--weight-bold);
+    line-height: var(--lh-h4-normal);
+    margin-bottom: 12px;
+
+    @media screen and (min-width: 1024px) {
+        font-size: var(--fs-title-h2);
+        line-height: var(--lh-h2-normal);
+        margin-bottom: 16px;
+    }
+}
+
+.titleStep {
+    font-size: var(--fs-title-h4);
+    font-weight: var(--weight-bold);
+    line-height: var(--lh-h4-normal);
+    margin-bottom: 12px;
+
+    @media screen and (min-width: 1024px) {
+        font-size: var(--fs-title-h3);
+        line-height: var(--lh-h3-normal);
+        margin-bottom: 16px;
+    }
+}
+
+.endTitle {
+    font-size: var(--fs-title-h3);
+    line-height: var(--lh-h3-normal);
+
+    @media screen and (min-width: 1024px) {
+        font-size: var(--fs-title-h2);
+        line-height: var(--lh-h2-normal);
+    }
+}
+
+.input {
+    margin-bottom: 16px;
+}
+
+.authRequirementsMobile {
+    display: block;
+    margin: 0 0 16px;
+
+    .bannerItem {
+        font-size: var(--fs-text-t3);
+        margin-top: 16px;
+    }
+
+    .bannerTitle {
+        display: none;
+    }
+
+    @media screen and (min-width: 1024px) {
+        display: none;
+    }
+}
+
+.authBanner {
+    display: none;
+
+    @media screen and (min-width: 1024px) {
+        display: block;
+    }
+}
+
+.info {
+    max-width: 584px;
+    text-align: left;
+    font-size: var(--fs-text-t1);
+    font-weight: var(--weight-regular);
+    line-height: var(--lh-t1-normal);
+    padding: 0 16px;
+
+    @media screen and (min-width: 1024px) {
+        padding-left: 48px;
+    }
+}
+
+.subtitle {
+    margin-bottom: 10px;
+    font-size: 17px;
+    font-weight: var(--weight-bold);
+}
+
+.langLabel {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--default-description-text);
+}
+
+.langSelect {
+    margin-bottom: 32px;
+}
+
+.desc {
+    font-size: var(--fs-text-t2);
+    font-weight: var(--weight-regular);
+    line-height: var(--lh-t2-normal);
+
+    @media screen and (min-width: 1024px) {
+        font-size: var(--fs-text-t1);
+        line-height: var(--lh-t1-normal);
+    }
+}
+
+.descStep {
+    margin-bottom: 8px;
+
+    @media screen and (min-width: 1024px) {
+        margin-bottom: 24px;
+    }
+}
+
+.descAdresses {
+    margin-top: 0;
+
+    @media screen and (min-width: 1024px) {
+        margin-top: 32px;
+    }
+}
+
+.list {
+    padding-left: 26px;
+    margin: 18px 0 24px;
+
+    @media screen and (min-width: 1024px) {
+        margin: 18px 0 40px;
+    }
+}
+
+.listItem {
+    font-size: var(--fs-text-t2);
+
+    @media screen and (min-width: 1024px) {
+        font-size: inherit;
+    }
+}
+
+.group {
+    margin-bottom: 35px;
+}
+
+.group:last-child {
+    margin-bottom: 0;
+}
+
+.groupCenter {
+    padding: 48px 24px;
+    max-width: 632px;
+    margin: 0 auto;
+}
+
+.consent {
+    margin: 32px 0 36px;
+}
+
+.consentContent {
+    font-size: var(--fs-text-t2);
+    font-weight: var(--weight-regular);
+    line-height: var(--lh-t2-normal);
+}
+
+.button {
+    max-width: 200px;
+}
+
+.errorText {
+    color: var(--red-50);
+}
+
+.successText {
+    color: var(--default-link);
+}
+
+.spacerBottom {
+    margin-bottom: 8px;
+}
+
+.greeting {
+    display: flex;
+    justify-content: space-between;
+    gap: 40px;
+    padding-top: 40px;
+    align-items: center;
+
+    .content {
+        display: none;
+    }
+
+    @media screen and (min-width: 1024px) {
+        padding-top: 116px;
+
+        .content {
+            display: block;
+        }
+    }
+}
+
+.configSetting {
+    padding-top: 40px;
+
+    @media screen and (min-width: 1024px) {
+        padding-top: 48px;
+    }
+}
+
+.banner {
+    display: none;
+    box-shadow: none;
+    padding: 0;
+    margin-bottom: 24px;
+
+    @media screen and (min-width: 1024px) {
+        display: flex;
+        width: 400px;
+        padding: 26px 16px 16px 24px;
+        flex-direction: column;
+        align-items: flex-start;
+        border-radius: 16px;
+        box-shadow: 8px 8px 24px 0 rgba(0, 0, 0, 0.1);
+        background-color: var(--default-cards-background);
+        margin-bottom: 0;
+    }
+}
+
+.bannerList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.bannerItem {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    font-size: var(--fs-text-t2);
+    font-weight: var(--weight-regular);
+    line-height: var(--lh-t2-normal);
+    margin-top: 16px;
+}
+
+.bannerTitle {
+    font-size: var(--fs-title-h4);
+    font-weight: var(--weight-bold);
+    line-height: var(--lh-h4-normal);
+    margin-bottom: 8px;
+
+    @media screen and (min-width: 1024px) {
+        font-size: var(--fs-title-h4);
+    }
+}
+
+.bannerMobile {
+    display: flex;
+    width: 100%;
+    margin-top: 16px;
+    flex-direction: column;
+
+    @media screen and (min-width: 1024px) {
+        display: none;
+    }
+}
+
+.link {
+    color: var(--default-link);
+    text-decoration: underline;
+
+    &:hover,
+    &:focus {
+        text-decoration: none;
+    }
+}
+
+.nav {
+    display: flex;
+    gap: 24px;
+    flex-direction: column;
+
+    button {
+        max-width: 100%;
+
+        @media screen and (min-width: 768px) {
+            max-width: unset;
+        }
+    }
+
+    @media screen and (min-width: 1024px) {
+        flex-direction: row;
+
+        button {
+            max-width: 200px;
+        }
+    }
+}
+
+.end {
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+    max-width: 576px;
+    align-items: center;
+    text-align: center;
+    height: 100%;
+    padding: 48px 16px 24px;
+
+    @media screen and (min-width: 768px) {
+        padding: 48px 16px 24px;
+    }
+
+    @media screen and (min-width: 1024px) {
+        padding: 116px 0 0;
+    }
+}
+
+.end button {
+    max-width: 100%;
+
+    @media screen and (min-width: 1024px) {
+        max-width: 200px;
+    }
+}
+
+.quote {
+    margin-bottom: 24px;
+}
+
+.quoteTitle {
+    font-size: var(--fs-title-h5);
+    font-weight: var(--weight-bold);
+    margin-bottom: 28px;
+    line-height: var(--lh-h5-normal);
+
+    @media screen and (min-width: 1024px) {
+        font-size: var(--fs-title-h4);
+        line-height: var(--lh-h4-normal);
+        margin-bottom: 32px;
+    }
+}
+
+.quoteDesc {
+    font-size: var(--fs-text-t2);
+    font-weight: var(--weight-regular);
+    line-height: var(--lh-t2-normal);
+    position: relative;
+    padding-left: 16px;
+
+    @media screen and (min-width: 1024px) {
+        font-size: var(--fs-text-t1);
+        line-height: var(--lh-t1-normal);
+    }
+
+    &::before {
+        content: '';
+        height: 100%;
+        position: absolute;
+        left: 0;
+        border-radius: 8px;
+        width: 4px;
+        display: block;
+        background-color: var(--orange-50);
+    }
+}
+
+.quoteDesc .message {
+    margin-right: 4px;
+    display: inline-block;
+}
+
+.addressList {
+    padding-left: 20px;
+}
+
+.addressListWrapper {
+    margin-bottom: 40px;
+}
+
+.addressListItem {
+    margin-bottom: 16px;
+
+    &:last-child {
+        margin-bottom: 0;
+    }
+}

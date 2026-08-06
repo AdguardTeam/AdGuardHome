@@ -10,8 +10,6 @@ import (
 // Manager is the interface for communication with the OS service manager.
 //
 // TODO(e.burkov):  Move to golibs.
-//
-// TODO(e.burkov):  Use.
 type Manager interface {
 	// Perform performs the specified action.
 	Perform(ctx context.Context, action Action) (err error)

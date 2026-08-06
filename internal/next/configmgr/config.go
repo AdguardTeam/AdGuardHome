@@ -84,6 +84,7 @@ func (c *dnsConfig) Validate() (err error) {
 // httpConfig is the on-disk web API configuration.
 type httpConfig struct {
 	Pprof *httpPprofConfig `yaml:"pprof"`
+	DoH   *doHConfig       `yaml:"doh"`
 
 	// TODO(a.garipov): Document the configuration change.
 	Addresses       []netip.AddrPort  `yaml:"addresses"`
@@ -128,6 +129,21 @@ func (c *httpPprofConfig) Validate() (err error) {
 	}
 
 	return nil
+}
+
+// doHConfig is the block with DNS-over-HTTPS configuration.
+type doHConfig struct {
+	// Routes is the list of HTTP route patterns for DoH requests.  Each route
+	// should be in the format "METHOD /path" or "METHOD /path/{param}".
+	// Default routes are:
+	//   - "GET /dns-query"
+	//   - "POST /dns-query"
+	//   - "GET /dns-query/{ClientID}"
+	//   - "POST /dns-query/{ClientID}"
+	Routes []string `yaml:"routes"`
+
+	// InsecureEnabled allows DoH queries via unencrypted HTTP.
+	InsecureEnabled bool `yaml:"insecure_enabled"`
 }
 
 // logConfig is the on-disk web API configuration.

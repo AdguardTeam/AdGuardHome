@@ -90,7 +90,12 @@ func newUpstreamConfigValidator(
 // collectErrResults parses err and returns parsing results containing the
 // original upstream configuration line and the corresponding error.  err can be
 // nil.  l must not be nil.
-func collectErrResults(ctx context.Context, l *slog.Logger, lines []string, err error) (results []*parseResult) {
+func collectErrResults(
+	ctx context.Context,
+	l *slog.Logger,
+	lines []string,
+	err error,
+) (results []*parseResult) {
 	if err == nil {
 		return nil
 	}
@@ -98,8 +103,8 @@ func collectErrResults(ctx context.Context, l *slog.Logger, lines []string, err 
 	// limit is a maximum length for upstream configuration lines.
 	const limit = 80
 
-	wrapper, ok := err.(errors.WrapperSlice)
-	if !ok {
+	wrapper, isWrapper := err.(errors.WrapperSlice)
+	if !isWrapper {
 		l.DebugContext(ctx, "unwrapping", slogutil.KeyError, err)
 
 		return nil
@@ -108,8 +113,8 @@ func collectErrResults(ctx context.Context, l *slog.Logger, lines []string, err 
 	errs := wrapper.Unwrap()
 	results = make([]*parseResult, 0, len(errs))
 	for i, e := range errs {
-		var parseErr *proxy.ParseError
-		if !errors.As(e, &parseErr) {
+		parseErr, ok := errors.AsType[*proxy.ParseError](e)
+		if !ok {
 			l.DebugContext(ctx, "inserting unexpected error", "index", i, slogutil.KeyError, err)
 
 			continue
@@ -132,7 +137,7 @@ func collectErrResults(ctx context.Context, l *slog.Logger, lines []string, err 
 }
 
 // insertConfResults parses conf and inserts the upstream result into results.
-// It can insert multiple results as well as none.
+// It can insert multiple results as well as none.  conf must not be nil.
 func insertConfResults(conf *proxy.UpstreamConfig, results map[string]*upstreamResult) {
 	insertListResults(conf.Upstreams, results, false)
 

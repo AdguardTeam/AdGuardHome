@@ -3,7 +3,6 @@ import { Controller, useForm } from 'react-hook-form';
 import { Trans, useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 
-import i18next from 'i18next';
 import clsx from 'clsx';
 import { testUpstreamWithFormValues } from '../../../../actions';
 import { DNS_REQUEST_OPTIONS, UINT32_RANGE, UPSTREAM_CONFIGURATION_WIKI_LINK } from '../../../../helpers/constants';
@@ -36,24 +35,6 @@ type FormProps = {
     initialValues?: Partial<FormData>;
     onSubmit: (data: FormData) => void;
 };
-
-const upstreamModeOptions = [
-    {
-        label: i18next.t('load_balancing'),
-        desc: <Trans components={{ br: <br />, b: <b /> }}>load_balancing_desc</Trans>,
-        value: DNS_REQUEST_OPTIONS.LOAD_BALANCING,
-    },
-    {
-        label: i18next.t('parallel_requests'),
-        desc: <Trans components={{ br: <br />, b: <b /> }}>upstream_parallel</Trans>,
-        value: DNS_REQUEST_OPTIONS.PARALLEL,
-    },
-    {
-        label: i18next.t('fastest_addr'),
-        desc: <Trans components={{ br: <br />, b: <b /> }}>fastest_addr_desc</Trans>,
-        value: DNS_REQUEST_OPTIONS.FASTEST_ADDR,
-    },
-];
 
 const Form = ({ initialValues, onSubmit }: FormProps) => {
     const { t } = useTranslation();
@@ -94,6 +75,24 @@ const Form = ({ initialValues, onSubmit }: FormProps) => {
         };
         dispatch(testUpstreamWithFormValues(formValues));
     };
+
+    const upstreamModeOptions = [
+        {
+            label: t('load_balancing'),
+            desc: <Trans components={{ br: <br />, b: <b /> }}>load_balancing_desc</Trans>,
+            value: DNS_REQUEST_OPTIONS.LOAD_BALANCING,
+        },
+        {
+            label: t('parallel_requests'),
+            desc: <Trans components={{ br: <br />, b: <b /> }}>upstream_parallel</Trans>,
+            value: DNS_REQUEST_OPTIONS.PARALLEL,
+        },
+        {
+            label: t('fastest_addr'),
+            desc: <Trans components={{ br: <br />, b: <b /> }}>fastest_addr_desc</Trans>,
+            value: DNS_REQUEST_OPTIONS.FASTEST_ADDR,
+        },
+    ];
 
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="form--upstream">

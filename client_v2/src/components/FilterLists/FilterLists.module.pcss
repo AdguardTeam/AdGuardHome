@@ -1,0 +1,99 @@
+.header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.desc {
+    width: 100%;
+    max-width: 556px;
+    padding: 16px;
+}
+
+.settingRowDesc {
+    padding-top: 8px;
+    font-size: var(--fs-text-t2);
+    line-height: var(--lh-t2-normal);
+}
+
+.dnsRewritesSettingRow {
+    max-width: 564px;
+}
+
+.dnsRewritesContainer {
+    padding-top: 24px;
+
+    @media (min-width: 1024px) {
+        padding-top: 32px;
+    }
+}
+
+.dnsRewritesSettingRowInput {
+    padding-top: 16px;
+}
+
+.button {
+    width: fit-content;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    font-size: 16px;
+    color: var(--default-main-text);
+    border-radius: 8px;
+    transition: var(--t2) background-color;
+    border: 0;
+    background: none;
+    cursor: pointer;
+
+    &:hover,
+    &:focus {
+        background: var(--hovered-secondary-button);
+    }
+
+    &:active {
+        background: var(--pressed-secondary-button);
+    }
+
+    &:disabled {
+        background: var(--disabled-secondary-button);
+        color: var(--disabled-secondary-button-stroke);
+        cursor: default;
+    }
+
+    &_checkUpdates {
+        margin-left: auto;
+    }
+
+    &_add {
+        padding: 8px;
+        color: var(--default-link);
+    }
+}
+
+.labelDesktop {
+    display: none;
+
+    @media (min-width: 768px) {
+        display: inline;
+    }
+}
+
+.group {
+    display: flex;
+    flex-direction: column;
+    padding: 8px 16px;
+
+    &.tableGroup {
+        padding-top: 16px;
+        flex: 1 0 auto;
+
+        @media (min-width: 768px) {
+            padding-top: 32px;
+        }
+    }
+
+    &.buttonGroup {
+        align-items: flex-start;
+    }
+}

@@ -18,7 +18,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghuser"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/httphdr"
-	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/netutil/httputil"
@@ -82,18 +81,27 @@ func realIP(r *http.Request) (ip netip.Addr, err error) {
 }
 
 // writeErrorWithIP is like [aghhttp.Error], but includes the remote IP address
-// when it writes to the log.
-func writeErrorWithIP(
+// when it writes to the log.  r, w and err must not be nil.
+func (web *webAPI) writeErrorWithIP(
+	ctx context.Context,
+	err error,
 	r *http.Request,
 	w http.ResponseWriter,
 	code int,
 	remoteIP string,
-	format string,
-	args ...any,
 ) {
-	text := fmt.Sprintf(format, args...)
-	log.Error("%s %s %s: from ip %s: %s", r.Method, r.Host, r.URL, remoteIP, text)
-	http.Error(w, text, code)
+	web.logger.ErrorContext(
+		ctx,
+		"http error",
+		"host", r.Host,
+		"method", r.Method,
+		"url", r.URL,
+		"status", code,
+		"ip", remoteIP,
+		slogutil.KeyError, err,
+	)
+
+	http.Error(w, err.Error(), code)
 }
 
 // handleLogin is the handler for the POST /control/login HTTP API.
@@ -108,34 +116,34 @@ func (web *webAPI) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var remoteIP string
+	var remoteIPStr string
 	// The real IP address of the client [realIP] cannot be used here without
 	// taking trusted proxies into account due to security issues:
 	//
 	// See https://github.com/AdguardTeam/AdGuardHome/issues/2799.
-	if remoteIP, err = netutil.SplitHost(r.RemoteAddr); err != nil {
-		writeErrorWithIP(
+	if remoteIPStr, err = netutil.SplitHost(r.RemoteAddr); err != nil {
+		web.writeErrorWithIP(
+			ctx,
+			fmt.Errorf("auth: getting remote address: %w", err),
 			r,
 			w,
 			http.StatusBadRequest,
 			r.RemoteAddr,
-			"auth: getting remote address: %s",
-			err,
 		)
 
 		return
 	}
 
 	if rateLimiter := web.auth.rateLimiter; rateLimiter != nil {
-		if left := rateLimiter.check(remoteIP); left > 0 {
+		if left := rateLimiter.check(remoteIPStr); left > 0 {
 			w.Header().Set(httphdr.RetryAfter, strconv.Itoa(int(left.Seconds())))
-			writeErrorWithIP(
+			web.writeErrorWithIP(
+				ctx,
+				fmt.Errorf("auth: blocked for %s", left),
 				r,
 				w,
 				http.StatusTooManyRequests,
-				remoteIP,
-				"auth: blocked for %s",
-				left,
+				remoteIPStr,
 			)
 
 			return
@@ -147,24 +155,38 @@ func (web *webAPI) handleLogin(w http.ResponseWriter, r *http.Request) {
 		web.logger.ErrorContext(
 			ctx,
 			"getting real ip",
-			"remote_ip", remoteIP,
+			"remote_ip", remoteIPStr,
 			slogutil.KeyError, err,
 		)
 	}
 
-	cookie, err := newCookie(ctx, web.auth, req, remoteIP)
+	remoteIP, err := netip.ParseAddr(remoteIPStr)
 	if err != nil {
-		logIP := remoteIP
-		if web.auth.trustedProxies.Contains(ip.Unmap()) {
-			logIP = ip.String()
-		}
-
-		writeErrorWithIP(r, w, http.StatusForbidden, logIP, "%s", err)
+		web.writeErrorWithIP(
+			ctx,
+			fmt.Errorf("auth: parsing remote address: %w", err),
+			r,
+			w,
+			http.StatusInternalServerError,
+			r.RemoteAddr,
+		)
 
 		return
 	}
 
-	web.logger.InfoContext(ctx, "successful login", "user", req.Name, "ip", ip)
+	logIP := remoteIPStr
+	if web.auth.trustedProxies.Contains(remoteIP.Unmap()) {
+		logIP = ip.String()
+	}
+
+	cookie, err := newCookie(ctx, web.auth, req, remoteIPStr)
+	if err != nil {
+		web.writeErrorWithIP(ctx, err, r, w, http.StatusForbidden, logIP)
+
+		return
+	}
+
+	web.logger.InfoContext(ctx, "successful login", "user", req.Name, "ip", logIP)
 
 	http.SetCookie(w, cookie)
 
@@ -288,13 +310,13 @@ func isPublicResource(p string) (ok bool) {
 		panic(fmt.Errorf("bad login pattern: %w", err))
 	}
 
-	// TODO(s.chzhen):  Implement a more strict version.
-	if strings.HasPrefix(p, "/dns-query/") {
-		return true
+	isForgotPassword, err := path.Match("/forgot_password.*", p)
+	if err != nil {
+		// Same as above.
+		panic(fmt.Errorf("bad forgot password pattern: %w", err))
 	}
 
 	paths := []string{
-		"/dns-query",
 		"/control/login",
 		"/apple/doh.mobileconfig",
 		"/apple/dot.mobileconfig",
@@ -304,7 +326,17 @@ func isPublicResource(p string) (ok bool) {
 		"/install.html",
 	}
 
-	return isAsset || isLogin || slices.Contains(paths, p)
+	return isAsset || isLogin || isForgotPassword || slices.Contains(paths, p)
+}
+
+// isDoHRoute returns true if r is a request to a DoH route.  r must not be nil.
+func (mw *authMiddlewareDefault) isDoHRoute(r *http.Request) (ok bool) {
+	_, pattern := mw.mux.Handler(r)
+	if pattern == "" {
+		return false
+	}
+
+	return slices.Contains(mw.doHRoutes, pattern)
 }
 
 const (
@@ -317,7 +349,12 @@ const (
 type authMiddlewareDefaultConfig struct {
 	// logger is used for logging the operation of the middleware.  It must not
 	// be nil.
+	//
+	// TODO(e.burkov):  Require a logger in request's context instead.
 	logger *slog.Logger
+
+	// mux is the server's multiplexer.  It must not be nil.
+	mux *http.ServeMux
 
 	// rateLimiter manages the rate limiting for login attempts.
 	rateLimiter loginRateLimiter
@@ -333,6 +370,9 @@ type authMiddlewareDefaultConfig struct {
 
 	// users contains web user information.  It must not be nil.
 	users aghuser.DB
+
+	// doHRoutes is a list of DoH routes for public access.
+	doHRoutes []string
 }
 
 // authMiddlewareDefault is the default authentication middleware.  It searches
@@ -340,10 +380,12 @@ type authMiddlewareDefaultConfig struct {
 // passes it with the context.
 type authMiddlewareDefault struct {
 	logger         *slog.Logger
+	mux            *http.ServeMux
 	rateLimiter    loginRateLimiter
 	trustedProxies netutil.SubnetSet
 	sessions       aghuser.SessionStorage
 	users          aghuser.DB
+	doHRoutes      []string
 }
 
 // newAuthMiddlewareDefault returns the new properly initialized
@@ -351,10 +393,12 @@ type authMiddlewareDefault struct {
 func newAuthMiddlewareDefault(c *authMiddlewareDefaultConfig) (mw *authMiddlewareDefault) {
 	return &authMiddlewareDefault{
 		logger:         c.logger,
+		mux:            c.mux,
 		rateLimiter:    c.rateLimiter,
 		trustedProxies: c.trustedProxies,
 		sessions:       c.sessions,
 		users:          c.users,
+		doHRoutes:      c.doHRoutes,
 	}
 }
 
@@ -401,10 +445,12 @@ func (mw *authMiddlewareDefault) handleAuthenticatedUser(
 	}
 
 	if u == nil {
+		mw.logger.DebugContext(ctx, "no user found in request")
+
 		return false
 	}
 
-	if path == "/login.html" {
+	if path == "/login.html" || path == "/forgot_password.html" {
 		http.Redirect(w, r, "/", http.StatusFound)
 
 		return true
@@ -423,7 +469,7 @@ func (mw *authMiddlewareDefault) handlePublicAccess(
 	h http.Handler,
 	path string,
 ) (ok bool) {
-	if isPublicResource(path) {
+	if isPublicResource(path) || mw.isDoHRoute(r) {
 		h.ServeHTTP(w, r)
 
 		return true

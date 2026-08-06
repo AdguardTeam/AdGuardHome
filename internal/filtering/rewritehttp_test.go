@@ -8,8 +8,10 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
@@ -39,42 +41,49 @@ type rewriteUpdateJSON struct {
 	Update rewriteJSON `json:"update"`
 }
 
+// URLs for the rewrite HTTP API.
 const (
 	listURL   = "/control/rewrite/list"
 	addURL    = "/control/rewrite/add"
 	deleteURL = "/control/rewrite/delete"
 	updateURL = "/control/rewrite/update"
+)
 
+// Messages for the rewrite HTTP API.
+const (
 	decodeMsg            = "json.Decode: json: cannot unmarshal string into Go value of type"
 	decodeErrorMsg       = decodeMsg + " filtering.rewriteEntryJSON\n"
 	decodeUpdateErrorMsg = decodeMsg + " filtering.rewriteUpdateJSON\n"
 )
 
+// Test domains.
+const (
+	exampleDomain  = "example.local"
+	exampleAnswer  = "example.rewrite"
+	oneDomain      = "one.local"
+	oneAnswer      = "one.rewrite"
+	disabledDomain = "disabled.local"
+	disabledAnswer = "disabled.rewrite"
+	addDomain      = "add.local"
+	addAnswer      = "add.rewrite"
+	updDomain      = "upd.local"
+	updAnswer      = "upd.rewrite"
+	invDomain      = "inv.local"
+	invAnswer      = "inv.rewrite"
+	invalidDomain  = "invalid_domain"
+)
+
+// testRewrites is a common rewrites list for tests.
+var testRewrites = []*rewriteJSON{
+	newRewriteJSON(exampleDomain, exampleAnswer, aghalg.NBTrue),
+	newRewriteJSON(oneDomain, oneAnswer, aghalg.NBTrue),
+	newRewriteJSON(disabledDomain, disabledAnswer, aghalg.NBFalse),
+}
+
 func TestDNSFilter_HandleRewriteHTTP(t *testing.T) {
 	t.Parallel()
 
-	const (
-		exampleDomain  = "example.local"
-		exampleAnswer  = "example.rewrite"
-		oneDomain      = "one.local"
-		oneAnswer      = "one.rewrite"
-		disabledDomain = "disabled.local"
-		disabledAnswer = "disabled.rewrite"
-		addDomain      = "add.local"
-		addAnswer      = "add.rewrite"
-		updDomain      = "upd.local"
-		updAnswer      = "upd.rewrite"
-		invDomain      = "inv.local"
-		invAnswer      = "inv.rewrite"
-	)
-
-	testRewrites := []*rewriteJSON{
-		newRewriteJSON(exampleDomain, exampleAnswer, aghalg.NBTrue),
-		newRewriteJSON(oneDomain, oneAnswer, aghalg.NBTrue),
-		newRewriteJSON(disabledDomain, disabledAnswer, aghalg.NBFalse),
-	}
-
-	testRewritesJSON, mErr := json.Marshal(testRewrites)
+	rewritesJSON, mErr := json.Marshal(testRewrites)
 	require.NoError(t, mErr)
 
 	testCases := []struct {
@@ -83,7 +92,7 @@ func TestDNSFilter_HandleRewriteHTTP(t *testing.T) {
 		url         string
 		method      string
 		wantList    []*rewriteJSON
-		wantBody    string
+		wantBody    []byte
 		wantConfMod bool
 		wantStatus  int
 	}{{
@@ -93,7 +102,7 @@ func TestDNSFilter_HandleRewriteHTTP(t *testing.T) {
 		reqData:     nil,
 		wantConfMod: false,
 		wantStatus:  http.StatusOK,
-		wantBody:    string(testRewritesJSON) + "\n",
+		wantBody:    append(rewritesJSON, '\n'),
 		wantList:    testRewrites,
 	}, {
 		name:        "add_enabled_null",
@@ -102,7 +111,7 @@ func TestDNSFilter_HandleRewriteHTTP(t *testing.T) {
 		reqData:     rewriteJSON{Domain: addDomain, Answer: addAnswer},
 		wantConfMod: true,
 		wantStatus:  http.StatusOK,
-		wantBody:    "",
+		wantBody:    []byte{},
 		wantList: append(
 			testRewrites,
 			newRewriteJSON(addDomain, addAnswer, aghalg.NBTrue),
@@ -118,7 +127,7 @@ func TestDNSFilter_HandleRewriteHTTP(t *testing.T) {
 		},
 		wantConfMod: true,
 		wantStatus:  http.StatusOK,
-		wantBody:    "",
+		wantBody:    []byte{},
 		wantList: append(
 			testRewrites,
 			newRewriteJSON(addDomain, addAnswer, aghalg.NBFalse),
@@ -134,20 +143,11 @@ func TestDNSFilter_HandleRewriteHTTP(t *testing.T) {
 		},
 		wantConfMod: true,
 		wantStatus:  http.StatusOK,
-		wantBody:    "",
+		wantBody:    []byte{},
 		wantList: append(
 			testRewrites,
 			newRewriteJSON(addDomain, addAnswer, aghalg.NBTrue),
 		),
-	}, {
-		name:        "add_error",
-		url:         addURL,
-		method:      http.MethodPost,
-		reqData:     "invalid_json",
-		wantConfMod: false,
-		wantStatus:  http.StatusBadRequest,
-		wantBody:    decodeErrorMsg,
-		wantList:    testRewrites,
 	}, {
 		name:        "delete",
 		url:         deleteURL,
@@ -155,20 +155,11 @@ func TestDNSFilter_HandleRewriteHTTP(t *testing.T) {
 		reqData:     rewriteJSON{Domain: oneDomain, Answer: oneAnswer},
 		wantConfMod: true,
 		wantStatus:  http.StatusOK,
-		wantBody:    "",
+		wantBody:    []byte{},
 		wantList: []*rewriteJSON{
 			newRewriteJSON(exampleDomain, exampleAnswer, aghalg.NBTrue),
 			newRewriteJSON(disabledDomain, disabledAnswer, aghalg.NBFalse),
 		},
-	}, {
-		name:        "delete_error",
-		url:         deleteURL,
-		method:      http.MethodPost,
-		reqData:     "invalid_json",
-		wantConfMod: false,
-		wantStatus:  http.StatusBadRequest,
-		wantBody:    decodeErrorMsg,
-		wantList:    testRewrites,
 	}, {
 		name:   "update_enabled_null",
 		url:    updateURL,
@@ -179,7 +170,7 @@ func TestDNSFilter_HandleRewriteHTTP(t *testing.T) {
 		},
 		wantConfMod: true,
 		wantStatus:  http.StatusOK,
-		wantBody:    "",
+		wantBody:    []byte{},
 		wantList: []*rewriteJSON{
 			newRewriteJSON(exampleDomain, exampleAnswer, aghalg.NBTrue),
 			newRewriteJSON(updDomain, updAnswer, aghalg.NBTrue),
@@ -199,7 +190,7 @@ func TestDNSFilter_HandleRewriteHTTP(t *testing.T) {
 		},
 		wantConfMod: true,
 		wantStatus:  http.StatusOK,
-		wantBody:    "",
+		wantBody:    []byte{},
 		wantList: []*rewriteJSON{
 			newRewriteJSON(exampleDomain, exampleAnswer, aghalg.NBTrue),
 			newRewriteJSON(updDomain, updAnswer, aghalg.NBFalse),
@@ -215,21 +206,86 @@ func TestDNSFilter_HandleRewriteHTTP(t *testing.T) {
 		},
 		wantConfMod: true,
 		wantStatus:  http.StatusOK,
-		wantBody:    "",
+		wantBody:    []byte{},
 		wantList: []*rewriteJSON{
 			newRewriteJSON(exampleDomain, exampleAnswer, aghalg.NBTrue),
 			newRewriteJSON(updDomain, updAnswer, aghalg.NBTrue),
 			newRewriteJSON(disabledDomain, disabledAnswer, aghalg.NBFalse),
 		},
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			confModCh := make(chan struct{}, 1)
+			pt := testutil.NewPanicT(t)
+			confModifier := &aghtest.ConfigModifier{}
+			confModifier.OnApply = func(_ context.Context) {
+				require.Truef(pt, tc.wantConfMod, "config modified has been fired")
+				testutil.RequireSend(pt, confModCh, struct{}{}, testTimeout)
+			}
+
+			cl, baseURL := setupTestFiltering(t, confModifier)
+
+			respBody, status := executeRequest(t, cl, baseURL, tc.method, tc.url, tc.reqData)
+
+			if tc.wantConfMod {
+				testutil.RequireReceive(t, confModCh, testTimeout)
+			}
+
+			assert.Equal(t, tc.wantStatus, status)
+			assert.Equal(t, tc.wantBody, respBody)
+			assertRewritesList(t, cl, baseURL, tc.wantList)
+		})
+	}
+}
+
+func TestDNSFilter_HandleRewriteHTTP_errors(t *testing.T) {
+	t.Parallel()
+
+	pt := testutil.NewPanicT(t)
+	confModifier := &aghtest.ConfigModifier{}
+	confModifier.OnApply = func(_ context.Context) {
+		require.Truef(pt, false, "config modified has been fired")
+	}
+
+	testCases := []struct {
+		reqData  any
+		name     string
+		url      string
+		method   string
+		wantBody []byte
+	}{{
+		name:     "add_error",
+		url:      addURL,
+		method:   http.MethodPost,
+		reqData:  "invalid_json",
+		wantBody: []byte(decodeErrorMsg),
 	}, {
-		name:        "update_error",
-		url:         updateURL,
-		method:      http.MethodPut,
-		reqData:     "invalid_json",
-		wantConfMod: false,
-		wantStatus:  http.StatusBadRequest,
-		wantBody:    decodeUpdateErrorMsg,
-		wantList:    testRewrites,
+		name:   "add_error_invalid_cname",
+		url:    addURL,
+		method: http.MethodPost,
+		reqData: rewriteJSON{
+			Domain:  addDomain,
+			Answer:  invalidDomain,
+			Enabled: aghalg.NBTrue,
+		},
+		wantBody: []byte(`normalizing: invalid CNAME target "` + invalidDomain + `": bad domain name ` +
+			`"` + invalidDomain + `": bad top-level domain name label "` + invalidDomain +
+			`": bad top-level domain name label rune '_'` + "\n"),
+	}, {
+		name:     "delete_error",
+		url:      deleteURL,
+		method:   http.MethodPost,
+		reqData:  "invalid_json",
+		wantBody: []byte(decodeErrorMsg),
+	}, {
+		name:     "update_error",
+		url:      updateURL,
+		method:   http.MethodPut,
+		reqData:  "invalid_json",
+		wantBody: []byte(decodeUpdateErrorMsg),
 	}, {
 		name:   "update_error_target",
 		url:    updateURL,
@@ -238,93 +294,115 @@ func TestDNSFilter_HandleRewriteHTTP(t *testing.T) {
 			Target: rewriteJSON{Domain: invDomain, Answer: invAnswer},
 			Update: rewriteJSON{Domain: updDomain, Answer: updAnswer},
 		},
-		wantConfMod: false,
-		wantStatus:  http.StatusBadRequest,
-		wantBody:    "target rule not found\n",
-		wantList:    testRewrites,
+		wantBody: []byte("target rule not found\n"),
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			confModCh := make(chan struct{})
-			reqCh := make(chan struct{})
+			cl, base := setupTestFiltering(t, confModifier)
+			respBody, status := executeRequest(t, cl, base, tc.method, tc.url, tc.reqData)
 
-			handlers := make(map[string]http.Handler)
-			confModifier := &aghtest.ConfigModifier{}
-			confModifier.OnApply = func(_ context.Context) {
-				require.Truef(t, tc.wantConfMod, "config modified has been fired")
-				testutil.RequireSend(testutil.PanicT{}, confModCh, struct{}{}, testTimeout)
-			}
-
-			d, err := filtering.New(&filtering.Config{
-				Logger:       testLogger,
-				ConfModifier: confModifier,
-				HTTPReg: &aghtest.Registrar{
-					OnRegister: func(_, url string, handler http.HandlerFunc) {
-						handlers[url] = handler
-					},
-				},
-				Rewrites: rewriteEntriesToLegacyRewrites(testRewrites),
-			}, nil)
-			require.NoError(t, err)
-			t.Cleanup(d.Close)
-
-			d.RegisterFilteringHandlers()
-			require.NotEmpty(t, handlers)
-			require.Contains(t, handlers, listURL)
-			require.Contains(t, handlers, tc.url)
-
-			var body io.Reader
-			if tc.reqData != nil {
-				data, rErr := json.Marshal(tc.reqData)
-				require.NoError(t, rErr)
-
-				body = bytes.NewReader(data)
-			}
-
-			r := httptest.NewRequest(tc.method, tc.url, body)
-			w := httptest.NewRecorder()
-
-			go func() {
-				handlers[tc.url].ServeHTTP(w, r)
-
-				testutil.RequireSend(testutil.PanicT{}, reqCh, struct{}{}, testTimeout)
-			}()
-
-			if tc.wantConfMod {
-				testutil.RequireReceive(t, confModCh, testTimeout)
-			}
-
-			testutil.RequireReceive(t, reqCh, testTimeout)
-			assert.Equal(t, tc.wantStatus, w.Code)
-
-			respBody, err := io.ReadAll(w.Body)
-			require.NoError(t, err)
-			assert.Equal(t, []byte(tc.wantBody), respBody)
-
-			assertRewritesList(t, handlers[listURL], tc.wantList)
+			assert.Equal(t, http.StatusBadRequest, status)
+			assert.Equal(t, tc.wantBody, respBody)
+			assertRewritesList(t, cl, base, testRewrites)
 		})
 	}
 }
 
 // assertRewritesList checks if rewrites list equals the list received from the
 // handler by listURL.
-func assertRewritesList(tb testing.TB, handler http.Handler, wantList []*rewriteJSON) {
+func assertRewritesList(tb testing.TB, cl *http.Client, base *url.URL, wantList []*rewriteJSON) {
 	tb.Helper()
 
-	r := httptest.NewRequest(http.MethodGet, listURL, nil)
-	w := httptest.NewRecorder()
+	full := base.ResolveReference(&url.URL{Path: listURL})
+	ctx := testutil.ContextWithTimeout(tb, testTimeout)
+	r, err := http.NewRequestWithContext(ctx, http.MethodGet, full.String(), nil)
+	require.NoError(tb, err)
 
-	handler.ServeHTTP(w, r)
-	require.Equal(tb, http.StatusOK, w.Code)
+	resp, err := cl.Do(r)
+	require.NoError(tb, err)
+	defer func() {
+		require.NoError(tb, resp.Body.Close())
+	}()
+
+	require.Equal(tb, http.StatusOK, resp.StatusCode)
 
 	var actual []*rewriteJSON
-	err := json.NewDecoder(w.Body).Decode(&actual)
+	err = json.NewDecoder(resp.Body).Decode(&actual)
 	require.NoError(tb, err)
 
 	assert.Equal(tb, wantList, actual)
+}
+
+// setupTestFiltering creates the test environment with the filtering DNS filter
+// and returns the HTTP client and server URL for making requests.
+func setupTestFiltering(
+	tb testing.TB,
+	confModifier agh.ConfigModifier,
+) (cl *http.Client, base *url.URL) {
+	tb.Helper()
+
+	mux := http.NewServeMux()
+
+	d, err := filtering.New(&filtering.Config{
+		Logger:       testLogger,
+		ConfModifier: confModifier,
+		HTTPReg: &aghtest.Registrar{
+			OnRegister: func(_, urlPath string, handler http.HandlerFunc) {
+				mux.Handle(urlPath, handler)
+			},
+		},
+		Rewrites: rewriteEntriesToLegacyRewrites(testRewrites),
+	}, nil)
+	require.NoError(tb, err)
+	tb.Cleanup(d.Close)
+
+	d.RegisterFilteringHandlers()
+
+	cl, base = aghtest.StartHTTPServer(tb, mux)
+
+	return cl, base
+}
+
+// executeRequest prepares and executes an HTTP request against the given
+// client and base URL, returning the response body and status code.
+func executeRequest(
+	tb testing.TB,
+	client *http.Client,
+	base *url.URL,
+	method string,
+	path string,
+	reqData any,
+) (respBody []byte, status int) {
+	tb.Helper()
+
+	var body io.Reader
+	if reqData != nil {
+		data, rErr := json.Marshal(reqData)
+		require.NoError(tb, rErr)
+
+		body = bytes.NewReader(data)
+	}
+
+	fullURL := base.ResolveReference(&url.URL{Path: path})
+	ctx := testutil.ContextWithTimeout(tb, testTimeout)
+	r, err := http.NewRequestWithContext(ctx, method, fullURL.String(), body)
+	require.NoError(tb, err)
+
+	resp, err := client.Do(r)
+	require.NoError(tb, err)
+	defer func() {
+		require.NoError(tb, resp.Body.Close())
+	}()
+
+	respBody, err = io.ReadAll(resp.Body)
+	require.NoError(tb, err)
+
+	status = resp.StatusCode
+
+	return respBody, status
 }
 
 // rewriteEntriesToLegacyRewrites gets legacy rewrites from json entries.

@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net/http"
+	"os"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghuser"
@@ -52,6 +54,13 @@ type authConfig struct {
 	// baseLogger is used for creating other loggers.  It must not be nil.
 	baseLogger *slog.Logger
 
+	// mux is the server's multiplexer.  It must not be nil.
+	mux *http.ServeMux
+
+	// gliNetTokenRoot is the root where GLiNet tokens are stored.  It must not
+	// be nil if isGLiNet is true.
+	gliNetTokenRoot *os.Root
+
 	// rateLimiter manages the rate limiting for login attempts.  It must not be
 	// nil.
 	rateLimiter loginRateLimiter
@@ -62,6 +71,9 @@ type authConfig struct {
 	// dbFilename is the name of the file where session data is stored.  It must
 	// not be empty.
 	dbFilename string
+
+	// doHRoutes is a list of DoH routes for public access.
+	doHRoutes []string
 
 	// users contains web user information from the configuration file.
 	users []webUser
@@ -78,6 +90,13 @@ type auth struct {
 	// logger is used to log the operation of the auth module.
 	logger *slog.Logger
 
+	// mux is the server's multiplexer.
+	mux *http.ServeMux
+
+	// gliNetTokenRoot is the root where GLiNet tokens are stored.  It must not
+	// be nil if isGLiNet is true.
+	gliNetTokenRoot *os.Root
+
 	// rateLimiter manages rate limiting for login attempts.
 	rateLimiter loginRateLimiter
 
@@ -89,6 +108,9 @@ type auth struct {
 
 	// users stores user credentials.
 	users aghuser.DB
+
+	// doHRoutes is a list of DoH routes for public access.
+	doHRoutes []string
 
 	// isGLiNet indicates whether GLiNet mode is enabled.
 	isGLiNet bool
@@ -120,13 +142,16 @@ func newAuth(ctx context.Context, conf *authConfig) (a *auth, err error) {
 	}
 
 	return &auth{
-		logger:         conf.baseLogger.With(slogutil.KeyPrefix, "auth"),
-		rateLimiter:    conf.rateLimiter,
-		trustedProxies: conf.trustedProxies,
-		sessions:       s,
-		users:          userDB,
-		isGLiNet:       conf.isGLiNet,
-		isUserless:     len(conf.users) == 0,
+		logger:          conf.baseLogger.With(slogutil.KeyPrefix, "auth"),
+		mux:             conf.mux,
+		rateLimiter:     conf.rateLimiter,
+		trustedProxies:  conf.trustedProxies,
+		gliNetTokenRoot: conf.gliNetTokenRoot,
+		sessions:        s,
+		users:           userDB,
+		doHRoutes:       conf.doHRoutes,
+		isGLiNet:        conf.isGLiNet,
+		isUserless:      len(conf.users) == 0,
 	}, nil
 }
 
@@ -134,20 +159,24 @@ func newAuth(ctx context.Context, conf *authConfig) (a *auth, err error) {
 func (a *auth) middleware() (mw httputil.Middleware) {
 	if a.isGLiNet {
 		return newAuthMiddlewareGLiNet(&authMiddlewareGLiNetConfig{
-			logger:          a.logger,
-			clock:           timeutil.SystemClock{},
-			tokenFilePrefix: glFilePrefix,
-			ttl:             glTokenTimeout,
-			maxTokenSize:    MaxFileSize,
+			logger:        a.logger,
+			mux:           a.mux,
+			clock:         timeutil.SystemClock{},
+			doHRoutes:     a.doHRoutes,
+			tokenFileRoot: a.gliNetTokenRoot,
+			ttl:           glTokenTimeout,
+			maxTokenSize:  MaxFileSize,
 		})
 	}
 
 	return newAuthMiddlewareDefault(&authMiddlewareDefaultConfig{
 		logger:         a.logger,
+		mux:            a.mux,
 		rateLimiter:    a.rateLimiter,
 		trustedProxies: a.trustedProxies,
 		sessions:       a.sessions,
 		users:          a.users,
+		doHRoutes:      a.doHRoutes,
 	})
 }
 

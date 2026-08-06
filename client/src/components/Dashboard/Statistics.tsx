@@ -3,28 +3,23 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { withTranslation, Trans } from 'react-i18next';
 
-import StatsCard from './StatsCard';
+import { StatsCard, STATS_CARD_VARIANTS } from './StatsCard';
 
-import { getPercent, normalizeHistory } from '../../helpers/helpers';
+import { getPercent } from '../../helpers/helpers';
 import { RESPONSE_FILTER } from '../../helpers/constants';
 
-const getNormalizedHistory = (data: any, interval: any, id: any) => [{ data: normalizeHistory(data), id }];
-
 interface StatisticsProps {
-    interval: number;
     dnsQueries: number[];
-    blockedFiltering: unknown[];
-    replacedSafebrowsing: unknown[];
-    replacedParental: unknown[];
+    blockedFiltering: number[];
+    replacedSafebrowsing: number[];
+    replacedParental: number[];
     numDnsQueries: number;
     numBlockedFiltering: number;
     numReplacedSafebrowsing: number;
     numReplacedParental: number;
-    refreshButton: React.ReactNode;
 }
 
 const Statistics = ({
-    interval,
     dnsQueries,
     blockedFiltering,
     replacedSafebrowsing,
@@ -38,20 +33,20 @@ const Statistics = ({
         <div className="col-sm-6 col-lg-3">
             <StatsCard
                 total={numDnsQueries}
-                lineData={getNormalizedHistory(dnsQueries, interval, 'dnsQuery')}
+                lineData={dnsQueries}
                 title={
                     <Link to="logs">
                         <Trans>dns_query</Trans>
                     </Link>
                 }
-                color="blue"
+                variant={STATS_CARD_VARIANTS.QUERIES}
             />
         </div>
 
         <div className="col-sm-6 col-lg-3">
             <StatsCard
                 total={numBlockedFiltering}
-                lineData={getNormalizedHistory(blockedFiltering, interval, 'blockedFiltering')}
+                lineData={blockedFiltering}
                 percent={getPercent(numDnsQueries, numBlockedFiltering)}
                 title={
                     <Trans
@@ -63,35 +58,35 @@ const Statistics = ({
                         blocked_by
                     </Trans>
                 }
-                color="red"
+                variant={STATS_CARD_VARIANTS.ADS}
             />
         </div>
 
         <div className="col-sm-6 col-lg-3">
             <StatsCard
                 total={numReplacedSafebrowsing}
-                lineData={getNormalizedHistory(replacedSafebrowsing, interval, 'replacedSafebrowsing')}
+                lineData={replacedSafebrowsing}
                 percent={getPercent(numDnsQueries, numReplacedSafebrowsing)}
                 title={
                     <Link to={`logs?response_status=${RESPONSE_FILTER.BLOCKED_THREATS.QUERY}`}>
                         <Trans>stats_malware_phishing</Trans>
                     </Link>
                 }
-                color="green"
+                variant={STATS_CARD_VARIANTS.THREATS}
             />
         </div>
 
         <div className="col-sm-6 col-lg-3">
             <StatsCard
                 total={numReplacedParental}
-                lineData={getNormalizedHistory(replacedParental, interval, 'replacedParental')}
+                lineData={replacedParental}
                 percent={getPercent(numDnsQueries, numReplacedParental)}
                 title={
                     <Link to={`logs?response_status=${RESPONSE_FILTER.BLOCKED_ADULT_WEBSITES.QUERY}`}>
                         <Trans>stats_adult</Trans>
                     </Link>
                 }
-                color="yellow"
+                variant={STATS_CARD_VARIANTS.ADULT}
             />
         </div>
     </div>

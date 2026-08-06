@@ -3,7 +3,7 @@
 # This comment is used to simplify checking local copies of the script.  Bump
 # this number every time a significant change is made to this script.
 #
-# AdGuard-Project-Version: 10
+# AdGuard-Project-Version: 12
 
 verbose="${VERBOSE:-0}"
 readonly verbose
@@ -38,11 +38,13 @@ trailing_newlines() (
 		'!' '(' \
 		-name '*.db' \
 		-o -name '*.exe' \
+		-o -name '*.ico' \
 		-o -name '*.out' \
 		-o -name '*.png' \
 		-o -name '*.svg' \
 		-o -name '*.tar.gz' \
 		-o -name '*.test' \
+		-o -name '*.woff2' \
 		-o -name '*.zip' \
 		-o -name 'AdGuardHome' \
 		-o -name 'adguard-home' \
@@ -64,11 +66,13 @@ trailing_whitespace() {
 		'!' '(' \
 		-name '*.db' \
 		-o -name '*.exe' \
+		-o -name '*.ico' \
 		-o -name '*.out' \
 		-o -name '*.png' \
 		-o -name '*.svg' \
 		-o -name '*.tar.gz' \
 		-o -name '*.test' \
+		-o -name '*.woff2' \
 		-o -name '*.zip' \
 		-o -name 'AdGuardHome' \
 		-o -name 'adguard-home' \
@@ -80,11 +84,42 @@ trailing_whitespace() {
 		done
 }
 
-# TODO(a.garipov):  Consider using jq for JSON validation.
+# valid_json check ensures that all the .json files in the project are valid and
+# well-formatted according to the jq.
+#
+# TODO(e.burkov):  Include tsconfig.json when it stop containing comments.
+valid_json() {
+	find_with_ignore \
+		-type 'f' \
+		-name '*.json' \
+		'!' '(' \
+		-name 'tsconfig.json' \
+		')' \
+		-print \
+		| while read -r f; do
+			validation_msg="$(jq empty "$f" 2>&1)"
+			exitcode="$?"
+
+			if [ "$exitcode" -ne '0' ]; then
+				printf 'file %s: %s\n' "$f" "$validation_msg"
+
+				continue
+			fi
+
+			if ! jq . "$f" | diff -u "$f" - >/dev/null 2>&1; then
+				printf 'file %s has formatting issues\n' "$f"
+			fi
+		done
+}
 
 run_linter -e trailing_newlines
 
 run_linter -e trailing_whitespace
+
+run_linter -e valid_json
+
+go="${GO:-go}"
+readonly go
 
 find_with_ignore \
 	-type 'f' \
@@ -96,4 +131,5 @@ find_with_ignore \
 	-o -name '*.yaml' \
 	-o -name '*.yml' \
 	')' \
-	-exec 'misspell' '--error' '{}' '+'
+	-exec "$go" 'tool' 'misspell' '--error' '{}' '+' \
+	;

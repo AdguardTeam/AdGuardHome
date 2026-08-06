@@ -9,3 +9,7 @@ import (
 func sendShutdownSignal(_ chan<- os.Signal) {
 	// On Unix we are already notified by the system.
 }
+
+func rootDir() (dir string) {
+	return "/"
+}

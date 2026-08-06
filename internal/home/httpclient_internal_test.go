@@ -20,10 +20,11 @@ func TestCustomUserAgentTransport_RoundTrip(t *testing.T) {
 		presentUA = "Present-user-agent/1.1"
 	)
 
+	pt := testutil.NewPanicT(t)
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ua := r.Header.Get(httphdr.UserAgent)
 		_, err := io.WriteString(w, ua)
-		require.NoError(testutil.PanicT{}, err)
+		require.NoError(pt, err)
 	}))
 	t.Cleanup(srv.Close)
 

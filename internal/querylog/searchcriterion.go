@@ -4,9 +4,12 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"slices"
 	"strings"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/golibs/container"
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/stringutil"
 )
 
@@ -17,10 +20,16 @@ const (
 	// the client's ID or the client's name.  The domain name search
 	// supports IDNAs.
 	ctTerm criterionType = iota
+
 	// ctFilteringStatus is for searching by the filtering status.
 	//
 	// See (*searchCriterion).ctFilteringStatusCase for details.
+	//
+	// Deprecated: Remove when migration to reason criterion is complete.
 	ctFilteringStatus
+
+	// ctReason is for searching by the filtering reason.
+	ctReason
 )
 
 const (
@@ -37,22 +46,59 @@ const (
 	filteringStatusProcessed           = "processed"            // not blocked, not white-listed entries
 )
 
-// filteringStatusValues -- array with all possible filteringStatus values
-var filteringStatusValues = []string{
-	filteringStatusAll, filteringStatusFiltered, filteringStatusBlocked,
-	filteringStatusBlockedService, filteringStatusBlockedSafebrowsing, filteringStatusBlockedParental,
-	filteringStatusWhitelisted, filteringStatusRewritten, filteringStatusSafeSearch,
+// filteringStatusValues is the set of all possible [filteringStatus] values.
+var filteringStatusValues = container.NewMapSet(
+	filteringStatusAll,
+	filteringStatusBlocked,
+	filteringStatusBlockedParental,
+	filteringStatusBlockedSafebrowsing,
+	filteringStatusBlockedService,
+	filteringStatusFiltered,
 	filteringStatusProcessed,
+	filteringStatusRewritten,
+	filteringStatusSafeSearch,
+	filteringStatusWhitelisted,
+)
+
+// reasonCodes is a set of all valid reason codes.
+var reasonCodes = [...]string{
+	filtering.NotFilteredAllowList:   "1",
+	filtering.NotFilteredError:       "2",
+	filtering.FilteredBlockList:      "3",
+	filtering.FilteredSafeBrowsing:   "4",
+	filtering.FilteredParental:       "5",
+	filtering.FilteredInvalid:        "6",
+	filtering.FilteredSafeSearch:     "7",
+	filtering.FilteredBlockedService: "8",
+	filtering.Rewritten:              "9",
+	filtering.RewrittenAutoHosts:     "10",
+	filtering.RewrittenRule:          "11",
 }
 
 // searchCriterion is a search criterion that is used to match a record.
 type searchCriterion struct {
-	value         string
-	asciiVal      string
+	// value is the target value for searching.  If
+	// [searchCriterion.criterionType] is [ctTerm] or [ctFilteringStatus] value
+	// must not be empty.
+	value string
+
+	// asciiVal is the ASCII representation of value for matching IDNA domain
+	// names.  It is used by [ctTerm].
+	asciiVal string
+
+	// values is a list of target values for searching.  It is used by
+	// [ctReason] type.
+	values []string
+
+	// criterionType is the type of search criterion.  It must be one of:
+	//	- [ctTerm]
+	//	- [ctFilteringStatus]
+	//	- [ctReason]
 	criterionType criterionType
-	// strict, if true, means that the criterion must be applied to the
-	// whole value rather than the part of it.  That is, equality and not
-	// containment.
+
+	// strict, if true, means that the criterion must be applied to the whole
+	// value rather than the part of it.  That is, equality and not containment.
+	// It is used by [ctTerm].
 	strict bool
 }
 
@@ -88,7 +134,7 @@ func ctDomainOrClientCaseNonStrict(
 
 // quickMatch quickly checks if the line matches the given search criterion.
 // It returns false if the like doesn't match.  This method is only here for
-// optimization purposes.
+// optimization purposes.  logger and findClient must not be nil.
 func (c *searchCriterion) quickMatch(
 	ctx context.Context,
 	logger *slog.Logger,
@@ -115,18 +161,36 @@ func (c *searchCriterion) quickMatch(
 		// Go on, as we currently don't do quick matches against
 		// filtering statuses.
 		return true
+	case ctReason:
+		reasonCode := readJSONNumericValue(line, `"Reason":`)
+		if reasonCode == "" {
+			// For [filtering.NotFilteredNotFound] reason can be empty.
+			return slices.Contains(c.values, filtering.NotFilteredNotFound.String())
+		}
+
+		idx := slices.Index(reasonCodes[:], reasonCode)
+		if idx == -1 {
+			return false
+		}
+
+		return slices.Contains(c.values, filtering.Reason(idx).String())
 	default:
 		return true
 	}
 }
 
-// match checks if the log entry matches this search criterion.
+// match checks if the log entry matches this search criterion.  entry must not
+// be nil.
 func (c *searchCriterion) match(entry *logEntry) bool {
 	switch c.criterionType {
 	case ctTerm:
 		return c.ctDomainOrClientCase(entry)
 	case ctFilteringStatus:
 		return c.ctFilteringStatusCase(entry.Result.Reason, entry.Result.IsFiltered)
+	case ctReason:
+		// TODO(f.setrakov): Consider comparing [filtering.Reason] instead of
+		// strings.
+		return slices.Contains(c.values, entry.Result.Reason.String())
 	}
 
 	return false
@@ -158,12 +222,7 @@ func (c *searchCriterion) ctFilteringStatusCase(
 	case filteringStatusAll:
 		return true
 	case filteringStatusFiltered:
-		return isFiltered || reason.In(
-			filtering.NotFilteredAllowList,
-			filtering.Rewritten,
-			filtering.RewrittenAutoHosts,
-			filtering.RewrittenRule,
-		)
+		return isFiltered || reason == filtering.NotFilteredAllowList || reasonIsRewrite(reason)
 	case
 		filteringStatusBlocked,
 		filteringStatusBlockedParental,
@@ -174,34 +233,44 @@ func (c *searchCriterion) ctFilteringStatusCase(
 	case filteringStatusWhitelisted:
 		return reason == filtering.NotFilteredAllowList
 	case filteringStatusRewritten:
-		return reason.In(
-			filtering.Rewritten,
-			filtering.RewrittenAutoHosts,
-			filtering.RewrittenRule,
-		)
+		return reasonIsRewrite(reason)
 	case filteringStatusProcessed:
-		return !reason.In(
-			filtering.FilteredBlockList,
-			filtering.FilteredBlockedService,
-			filtering.NotFilteredAllowList,
-		)
+		return !reasonIsRuleList(reason)
 	default:
 		return false
 	}
 }
 
+// reasonIsRewrite returns true if r is one of:
+//
+//   - [filtering.RewrittenAutoHosts]
+//   - [filtering.RewrittenRule]
+//   - [filtering.Rewritten]
+func reasonIsRewrite(r filtering.Reason) (ok bool) {
+	return r == filtering.RewrittenAutoHosts ||
+		r == filtering.RewrittenRule ||
+		r == filtering.Rewritten
+}
+
 // isFilteredWithReason returns true if reason matches the criterion value.
 // c.value must be one of:
 //
-//   - filteringStatusBlocked
-//   - filteringStatusBlockedParental
-//   - filteringStatusBlockedSafebrowsing
-//   - filteringStatusBlockedService
-//   - filteringStatusSafeSearch
+//   - [filteringStatusBlockedParental]
+//   - [filteringStatusBlockedSafebrowsing]
+//   - [filteringStatusBlockedService]
+//   - [filteringStatusBlocked]
+//   - [filteringStatusSafeSearch]
 func (c *searchCriterion) isFilteredWithReason(reason filtering.Reason) (matched bool) {
 	switch c.value {
 	case filteringStatusBlocked:
-		return reason.In(filtering.FilteredBlockList, filtering.FilteredBlockedService)
+		switch reason {
+		case
+			filtering.FilteredBlockList,
+			filtering.FilteredBlockedService:
+			return true
+		default:
+			return false
+		}
 	case filteringStatusBlockedParental:
 		return reason == filtering.FilteredParental
 	case filteringStatusBlockedSafebrowsing:
@@ -211,6 +280,17 @@ func (c *searchCriterion) isFilteredWithReason(reason filtering.Reason) (matched
 	case filteringStatusSafeSearch:
 		return reason == filtering.FilteredSafeSearch
 	default:
-		panic(fmt.Errorf("unexpected value %q", c.value))
+		panic(fmt.Errorf("%w: %q", errors.ErrBadEnumValue, c.value))
 	}
+}
+
+// reasonIsRuleList returns true if r is one of:
+//
+//   - [filtering.FilteredBlockList]
+//   - [filtering.FilteredBlockedService]
+//   - [filtering.NotFilteredAllowList]
+func reasonIsRuleList(r filtering.Reason) (ok bool) {
+	return r == filtering.FilteredBlockList ||
+		r == filtering.FilteredBlockedService ||
+		r == filtering.NotFilteredAllowList
 }

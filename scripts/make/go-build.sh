@@ -144,4 +144,5 @@ fi
 	--trimpath \
 	"$o_flags" \
 	"$v_flags" \
-	"$x_flags"
+	"$x_flags" \
+	;

@@ -37,8 +37,6 @@ func configureOSOptions(conf *service.Config) {
 //  2. The StandardOutput and StandardError settings are set to redirect the
 //     output to the systemd journal, see
 //     https://man7.org/linux/man-pages/man5/systemd.exec.5.html#LOGGING_AND_STANDARD_INPUT/OUTPUT.
-//
-//lint:ignore U1000 TODO(e.burkov): Use.
 const systemdScript = `[Unit]
 Description={{.Description}}
 ConditionFileIsExecutable={{.Path|cmdEscape}}
@@ -73,8 +71,6 @@ WantedBy=multi-user.target
 //
 // Use ps command instead of reading the procfs since it's a more
 // implementation-independent approach.
-//
-//lint:ignore U1000 TODO(e.burkov): Use.
 const sysvScript = `#!/bin/sh
 # For RedHat and cousins:
 # chkconfig: - 99 01
@@ -175,8 +171,6 @@ exit 0
 
 // OpenWrt procd init script
 // https://github.com/AdguardTeam/AdGuardHome/internal/issues/1386
-//
-//lint:ignore U1000 TODO(e.burkov): Use.
 const openWrtScript = `#!/bin/sh /etc/rc.common
 
 USE_PROCD=1

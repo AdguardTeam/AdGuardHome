@@ -48,6 +48,12 @@ for arch in \
 	cp './snap/local/adguard-home-web.sh' "$snap_dir"
 	cp -r './snap/gui' "${snap_dir}/meta/"
 
+	# Set required permissions.
+	chmod o+rx "${snap_dir}/adguard-home-web.sh"
+	chmod o+rx "${snap_dir}/meta/gui"
+	chmod o+r "${snap_dir}/meta/gui/adguard-home-web.desktop"
+	chmod o+r "${snap_dir}/meta/gui/adguard-home-web.png"
+
 	# Create a snap.yaml file, setting the values.
 	sed \
 		-e 's/%VERSION%/'"$version"'/' \

@@ -77,7 +77,7 @@ func (web *webAPI) handleVersionJSON(w http.ResponseWriter, r *http.Request) {
 }
 
 // requestVersionInfo sets the VersionInfo field of resp if it can reach the
-// update server.
+// update server.  resp must not be nil.
 func (web *webAPI) requestVersionInfo(
 	ctx context.Context,
 	resp *versionResponse,
@@ -90,8 +90,7 @@ func (web *webAPI) requestVersionInfo(
 			return nil
 		}
 
-		var terr temporaryError
-		if errors.As(err, &terr) && terr.Temporary() {
+		if tmpErr, ok := errors.AsType[temporaryError](err); ok && tmpErr.Temporary() {
 			// Temporary network error.  This case may happen while we're
 			// restarting our DNS server.  Log and sleep for some time.
 			//
@@ -110,6 +109,8 @@ func (web *webAPI) requestVersionInfo(
 	}
 
 	if err != nil {
+		web.logger.WarnContext(ctx, "getting version info", slogutil.KeyError, err)
+
 		return fmt.Errorf("getting version info: %w", err)
 	}
 
@@ -129,7 +130,7 @@ func (web *webAPI) handleUpdate(w http.ResponseWriter, r *http.Request) {
 			r,
 			w,
 			http.StatusBadRequest,
-			"/update request isn't allowed now",
+			"update request isn't allowed now",
 		)
 
 		return
@@ -164,13 +165,7 @@ func (web *webAPI) handleUpdate(w http.ResponseWriter, r *http.Request) {
 	// The background context is used because the underlying functions wrap it
 	// with timeout and shut down the server, which handles current request.  It
 	// also should be done in a separate goroutine for the same reason.
-	go finishUpdate(
-		context.Background(),
-		web.logger,
-		web.cmdCons,
-		execPath,
-		web.conf.runningAsService,
-	)
+	go web.finishUpdate(context.Background(), execPath)
 }
 
 // versionResponse is the response for /control/version.json endpoint.
@@ -178,6 +173,10 @@ type versionResponse struct {
 	updater.VersionInfo
 	Disabled bool `json:"disabled"`
 }
+
+// maxPrivilegedPort is the maximum port number.  This only applies to Unix, as
+// on Windows, [aghnet.CanBindPrivilegedPorts] always returns `true`, `nil`.
+const maxPrivilegedPort = 1024
 
 // setAllowedToAutoUpdate sets CanAutoUpdate to true if AdGuard Home is actually
 // allowed to perform an automatic update by the OS.  l and tlsMgr must not be
@@ -192,9 +191,9 @@ func (vr *versionResponse) setAllowedToAutoUpdate(
 	}
 
 	canUpdate := true
-	if tlsConfUsesPrivilegedPorts(tlsMgr.config()) ||
-		config.HTTPConfig.Address.Port() < 1024 ||
-		config.DNS.Port < 1024 {
+	if tlsConfUsesPrivilegedPorts(tlsMgr.extendedTLSConfig()) ||
+		config.HTTPConfig.Address.Port() < maxPrivilegedPort ||
+		config.DNS.Port < maxPrivilegedPort {
 		canUpdate, err = aghnet.CanBindPrivilegedPorts(ctx, l)
 		if err != nil {
 			return fmt.Errorf("checking ability to bind privileged ports: %w", err)
@@ -207,52 +206,55 @@ func (vr *versionResponse) setAllowedToAutoUpdate(
 }
 
 // tlsConfUsesPrivilegedPorts returns true if the provided TLS configuration
-// indicates that privileged ports are used.
+// indicates that privileged ports are used.  c must be valid.
 func tlsConfUsesPrivilegedPorts(c *tlsConfigSettings) (ok bool) {
-	return c.Enabled && (c.PortHTTPS < 1024 || c.PortDNSOverTLS < 1024 || c.PortDNSOverQUIC < 1024)
+	return c.Enabled && (c.PortHTTPS < maxPrivilegedPort ||
+		c.PortDNSOverTLS < maxPrivilegedPort ||
+		c.PortDNSOverQUIC < maxPrivilegedPort)
 }
 
 // finishUpdate completes an update procedure.  It is intended to be used as a
-// goroutine.  l and cmdCons must not be nil.
-func finishUpdate(
+// goroutine.
+func (web *webAPI) finishUpdate(
 	ctx context.Context,
-	l *slog.Logger,
-	cmdCons executil.CommandConstructor,
 	execPath string,
-	runningAsService bool,
 ) {
-	defer slogutil.RecoverAndExit(ctx, l, osutil.ExitCodeFailure)
+	defer slogutil.RecoverAndExit(ctx, web.logger, osutil.ExitCodeFailure)
 
-	l.InfoContext(ctx, "stopping all tasks")
+	web.logger.InfoContext(ctx, "stopping all tasks")
 
-	cleanup(ctx)
-	cleanupAlways()
+	// Ignore the error because, according to the documentation, this method
+	//  always returns nil error.
+	err := web.Shutdown(ctx)
+	if err != nil {
+		// Should never happen.
+		web.logger.WarnContext(ctx, "shutting down web", slogutil.KeyError, err)
+	}
+
+	cleanup(ctx, web.logger, web.hostsContainer)
+	cleanupAlways(ctx, web.logger, web.pidFilePath)
 
 	if runtime.GOOS == "windows" {
-		finalizeWindowsUpdate(ctx, l, cmdCons, execPath, runningAsService)
+		web.finalizeWindowsUpdate(ctx, execPath)
 
 		os.Exit(osutil.ExitCodeSuccess)
 	}
 
-	var err error
-	l.InfoContext(ctx, "restarting", "exec_path", execPath, "args", os.Args[1:])
+	web.logger.InfoContext(ctx, "restarting", "exec_path", execPath, "args", os.Args[1:])
 	err = syscall.Exec(execPath, os.Args, os.Environ())
 	if err != nil {
 		panic(fmt.Errorf("restarting: %w", err))
 	}
 }
 
-// finalizeWindowsUpdate completes an update procedure on windows.  l and
-// cmdCons must not be nil.
-func finalizeWindowsUpdate(ctx context.Context,
-	l *slog.Logger,
-	cmdCons executil.CommandConstructor,
+// finalizeWindowsUpdate completes an update procedure on windows.
+func (web *webAPI) finalizeWindowsUpdate(
+	ctx context.Context,
 	execPath string,
-	runningAsService bool,
 ) {
 	var commandConf *executil.CommandConfig
 
-	if runningAsService {
+	if web.conf.runningAsService {
 		// NOTE: We can't restart the service via "kardianos/service" package,
 		// because it kills the process first we can't start a new instance,
 		// because Windows doesn't allow it.
@@ -272,10 +274,10 @@ func finalizeWindowsUpdate(ctx context.Context,
 		}
 	}
 
-	l.InfoContext(ctx, "restarting", "exec_path", execPath, "args", os.Args[1:])
+	web.logger.InfoContext(ctx, "restarting", "exec_path", execPath, "args", os.Args[1:])
 
 	var cmd executil.Command
-	cmd, err := cmdCons.New(ctx, commandConf)
+	cmd, err := web.cmdCons.New(ctx, commandConf)
 	if err != nil {
 		panic(fmt.Errorf("constructing cmd: %w", err))
 	}

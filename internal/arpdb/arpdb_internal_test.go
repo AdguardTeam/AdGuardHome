@@ -24,9 +24,6 @@ const testTimeout = 1 * time.Second
 // testdata is the filesystem containing data for testing the package.
 var testdata fs.FS = os.DirFS("./testdata")
 
-// RunCmdFunc is the signature of aghos.RunCommand function.
-type RunCmdFunc func(cmd string, args ...string) (code int, out []byte, err error)
-
 func Test_New(t *testing.T) {
 	var a Interface
 	require.NotPanics(t, func() { a = New(slogutil.NewDiscardLogger()) })

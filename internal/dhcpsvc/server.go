@@ -12,9 +12,11 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/netutil"
-	"github.com/google/gopacket"
+	"github.com/gopacket/gopacket"
+	"github.com/gopacket/gopacket/layers"
 )
 
 // DHCPServer is a DHCP server for both IPv4 and IPv6 address families.
@@ -28,14 +30,22 @@ type DHCPServer struct {
 	// logger logs common DHCP events.
 	logger *slog.Logger
 
-	// packetSource is the source of DHCP packets to process.
+	// deviceManager is the manager of network devices.
+	deviceManager NetworkDeviceManager
+
+	// devices are the network devices opened in [DHCPServer.Start], mapped to
+	// their names.  Those are closed in [DHCPServer.Shutdown].
 	//
-	// TODO(e.burkov):  Implement and set.
-	packetSource gopacket.PacketSource
+	// TODO(e.burkov):  Consider storing those within interfaces.
+	devices container.KeyValues[string, NetworkDevice]
 
 	// localTLD is the top-level domain name to use for resolving DHCP clients'
 	// hostnames.
 	localTLD string
+
+	// serveWG is used to wait for all serving goroutines to finish in
+	// [DHCPServer.Shutdown].
+	serveWG *sync.WaitGroup
 
 	// leasesMu protects the leases index as well as leases in the interfaces.
 	leasesMu *sync.RWMutex
@@ -70,12 +80,14 @@ func New(ctx context.Context, conf *Config) (srv *DHCPServer, err error) {
 	enabled.Store(conf.Enabled)
 
 	srv = &DHCPServer{
-		enabled:     enabled,
-		logger:      l,
-		localTLD:    conf.LocalDomainName,
-		leasesMu:    &sync.RWMutex{},
-		leases:      newLeaseIndex(conf.DBFilePath),
-		icmpTimeout: conf.ICMPTimeout,
+		enabled:       enabled,
+		logger:        l,
+		deviceManager: conf.NetworkDeviceManager,
+		localTLD:      conf.LocalDomainName,
+		serveWG:       &sync.WaitGroup{},
+		leasesMu:      &sync.RWMutex{},
+		leases:        newLeaseIndex(conf.Database),
+		icmpTimeout:   conf.ICMPTimeout,
 	}
 
 	srv.interfaces4, srv.interfaces6 = srv.newInterfaces(ctx, l, conf.Interfaces)
@@ -129,27 +141,79 @@ func (srv *DHCPServer) newInterfaces(
 }
 
 // type check
-//
-// TODO(e.burkov):  Uncomment when the [Interface] interface is implemented.
-// var _ Interface = (*DHCPServer)(nil)
+var _ Interface = (*DHCPServer)(nil)
 
 // Start implements the [Interface] interface for *DHCPServer.
 func (srv *DHCPServer) Start(ctx context.Context) (err error) {
 	srv.logger.DebugContext(ctx, "starting dhcp server")
 
-	// TODO(e.burkov):  Listen to configured interfaces.
+	// TODO(e.burkov):  Create a single device for each network interface with
+	// dual-stack support when possible.
 
-	go srv.serve(context.WithoutCancel(ctx))
+	var errs []error
+	for _, iface := range srv.interfaces4 {
+		netDevName := iface.common.name
 
-	return nil
+		var netDev NetworkDevice
+		netDev, err = srv.deviceManager.Open(ctx, &NetworkDeviceConfig{
+			Name: netDevName,
+		})
+		if err != nil {
+			errs = append(errs, fmt.Errorf("opening ipv4 device %q: %w", netDevName, err))
+
+			continue
+		}
+
+		srv.devices = append(srv.devices, container.KeyValue[string, NetworkDevice]{
+			Key:   netDevName,
+			Value: netDev,
+		})
+
+		srv.serveWG.Go(func() { srv.serveEther4(context.WithoutCancel(ctx), iface, netDev) })
+	}
+
+	for _, iface := range srv.interfaces6 {
+		netDevName := iface.common.name
+
+		var netDev NetworkDevice
+		netDev, err = srv.deviceManager.Open(ctx, &NetworkDeviceConfig{
+			Name: netDevName,
+		})
+		if err != nil {
+			errs = append(errs, fmt.Errorf("opening ipv6 device %q: %w", netDevName, err))
+
+			continue
+		}
+
+		srv.devices = append(srv.devices, container.KeyValue[string, NetworkDevice]{
+			Key:   netDevName,
+			Value: netDev,
+		})
+
+		srv.serveWG.Go(func() { srv.serveEther6(context.WithoutCancel(ctx), iface, netDev) })
+	}
+
+	return errors.Join(errs...)
 }
 
+// Shutdown implements the [Interface] interface for *DHCPServer.
 func (srv *DHCPServer) Shutdown(ctx context.Context) (err error) {
 	srv.logger.DebugContext(ctx, "shutting down dhcp server")
 
-	// TODO(e.burkov):  Close the packet source.
+	var errs []error
+	for _, kv := range srv.devices {
+		netDevName, netDev := kv.Key, kv.Value
 
-	return nil
+		err = netDev.Close()
+		if err != nil {
+			errs = append(errs, fmt.Errorf("closing device %q: %w", netDevName, err))
+		}
+	}
+
+	// TODO(e.burkov):  Respect the context cancellation.
+	srv.serveWG.Wait()
+
+	return errors.Join(errs...)
 }
 
 // Enabled implements the [Interface] interface for *DHCPServer.
@@ -159,11 +223,23 @@ func (srv *DHCPServer) Enabled() (ok bool) {
 
 // Leases implements the [Interface] interface for *DHCPServer.
 func (srv *DHCPServer) Leases() (leases []*Lease) {
+	leases = srv.cloneLeases()
+
+	slices.SortStableFunc(leases, compareLeases)
+
+	return leases
+}
+
+func (srv *DHCPServer) cloneLeases() (leases []*Lease) {
 	srv.leasesMu.RLock()
 	defer srv.leasesMu.RUnlock()
 
 	for l := range srv.leases.rangeLeases {
-		leases = append(leases, l)
+		if l.IsBlocked() {
+			continue
+		}
+
+		leases = append(leases, l.Clone())
 	}
 
 	return leases
@@ -218,7 +294,7 @@ func (srv *DHCPServer) Reset(ctx context.Context) (err error) {
 	for _, iface := range srv.interfaces6 {
 		iface.common.reset()
 	}
-	err = srv.leases.clear(ctx, srv.logger)
+	err = srv.leases.clear(ctx)
 	if err != nil {
 		// Don't wrap the error since there is already an annotation deferred.
 		return err
@@ -243,10 +319,15 @@ func (srv *DHCPServer) AddLease(ctx context.Context, l *Lease) (err error) {
 	srv.leasesMu.Lock()
 	defer srv.leasesMu.Unlock()
 
-	err = srv.leases.add(ctx, srv.logger, l, iface)
+	err = srv.leases.add(l, iface)
 	if err != nil {
 		// Don't wrap the error since there is already an annotation deferred.
 		return err
+	}
+
+	err = srv.leases.dbStore(ctx)
+	if err != nil {
+		return fmt.Errorf("storing leases: %w", err)
 	}
 
 	iface.logger.DebugContext(
@@ -276,7 +357,7 @@ func (srv *DHCPServer) UpdateStaticLease(ctx context.Context, l *Lease) (err err
 	srv.leasesMu.Lock()
 	defer srv.leasesMu.Unlock()
 
-	err = srv.leases.update(ctx, srv.logger, l, iface)
+	err = srv.leases.update(ctx, l, iface)
 	if err != nil {
 		// Don't wrap the error since there is already an annotation deferred.
 		return err
@@ -307,7 +388,7 @@ func (srv *DHCPServer) RemoveLease(ctx context.Context, l *Lease) (err error) {
 	srv.leasesMu.Lock()
 	defer srv.leasesMu.Unlock()
 
-	err = srv.leases.remove(ctx, srv.logger, l, iface)
+	err = srv.leases.remove(ctx, l, iface)
 	if err != nil {
 		// Don't wrap the error since there is already an annotation deferred.
 		return err
@@ -327,7 +408,7 @@ func (srv *DHCPServer) RemoveLease(ctx context.Context, l *Lease) (err error) {
 // removeLeaseByAddr removes the lease with the given IP address from the
 // server.  It returns an error if the lease can't be removed.
 //
-//lint:ignore U1000 TODO(e.burkov):  Use.
+//lint:ignore U1000 TODO(e.burkov):  Use or remove.
 func (srv *DHCPServer) removeLeaseByAddr(ctx context.Context, addr netip.Addr) (err error) {
 	defer func() { err = errors.Annotate(err, "removing lease by address: %w") }()
 
@@ -345,7 +426,7 @@ func (srv *DHCPServer) removeLeaseByAddr(ctx context.Context, addr netip.Addr) (
 		return fmt.Errorf("no lease for ip %s", addr)
 	}
 
-	err = srv.leases.remove(ctx, srv.logger, l, iface)
+	err = srv.leases.remove(ctx, l, iface)
 	if err != nil {
 		// Don't wrap the error since there is already an annotation deferred.
 		return err
@@ -382,4 +463,34 @@ func ifaceForAddr(
 	}
 
 	return iface, nil
+}
+
+// respond constructs a response packet with eth, udp, ip and resp layers, and
+// writes it.  All arguments must not be nil, ip must be either [*layers.IPv4]
+// or [*layers.IPv6], and resp must be either [*layers.DHCPv4] or
+// [*layers.DHCPv6].  Additionally, udp's checksum must use ip.
+//
+// TODO(e.burkov):  Pool buffers.
+//
+// TODO(e.burkov):  Consider adding context.
+func respond(
+	nd NetworkDevice,
+	eth *layers.Ethernet,
+	udp *layers.UDP,
+	ip gopacket.SerializableLayer,
+	resp gopacket.SerializableLayer,
+) (err error) {
+	buf := gopacket.NewSerializeBuffer()
+
+	opts := gopacket.SerializeOptions{
+		FixLengths:       true,
+		ComputeChecksums: true,
+	}
+
+	err = gopacket.SerializeLayers(buf, opts, eth, ip, udp, resp)
+	if err != nil {
+		return fmt.Errorf("serializing layers: %w", err)
+	}
+
+	return nd.WritePacketData(buf.Bytes())
 }

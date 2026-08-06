@@ -31,15 +31,12 @@ func newSlogLogger(ls *logSettings) (l *slog.Logger) {
 		lvl = slog.LevelDebug
 	}
 
-	return slogutil.New(&slogutil.Config{
+	l = slogutil.New(&slogutil.Config{
 		Format:       slogutil.FormatAdGuardLegacy,
 		Level:        lvl,
 		AddTimestamp: true,
 	})
-}
 
-// configureLogger configures logger level and output.  ls must not be nil.
-func configureLogger(ls *logSettings, workDir string) (err error) {
 	// Configure logger level.
 	if !ls.Enabled {
 		log.SetLevel(log.OFF)
@@ -47,6 +44,11 @@ func configureLogger(ls *logSettings, workDir string) (err error) {
 		log.SetLevel(log.DEBUG)
 	}
 
+	return l
+}
+
+// configureLogger configures logger output.  ls must not be nil.
+func configureLogger(ls *logSettings, workDir string) (err error) {
 	// Make sure that we see the microseconds in logs, as networking stuff can
 	// happen pretty quickly.
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
@@ -141,7 +143,7 @@ func readLogSettings(
 
 	err = yaml.Unmarshal(yamlFile, conf)
 	if err != nil {
-		log.Error("Couldn't get logging settings from the configuration: %s", err)
+		l.ErrorContext(ctx, "getting logging settings from config", slogutil.KeyError, err)
 	}
 
 	return &conf.Log

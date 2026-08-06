@@ -2,6 +2,8 @@ package aghtest
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"net/http"
 	"net/netip"
 	"time"
@@ -9,10 +11,12 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	nextagh "github.com/AdguardTeam/AdGuardHome/internal/next/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/rdns"
 	"github.com/AdguardTeam/AdGuardHome/internal/whois"
 	"github.com/AdguardTeam/dnsproxy/upstream"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/miekg/dns"
 )
 
@@ -20,8 +24,20 @@ import (
 type FSWatcher struct {
 	OnStart    func(ctx context.Context) (err error)
 	OnShutdown func(ctx context.Context) (err error)
-	OnEvents   func() (e <-chan struct{})
+	OnEvents   func() (e <-chan aghos.Event)
 	OnAdd      func(name string) (err error)
+	OnRemove   func(name string) (err error)
+}
+
+// NewFSWatcher returns a new *FSWatcher all methods of which panic.
+func NewFSWatcher() (w *FSWatcher) {
+	return &FSWatcher{
+		OnStart:    func(ctx context.Context) (_ error) { panic(testutil.UnexpectedCall(ctx)) },
+		OnShutdown: func(ctx context.Context) (_ error) { panic(testutil.UnexpectedCall(ctx)) },
+		OnEvents:   func() (_ <-chan aghos.Event) { panic(testutil.UnexpectedCall()) },
+		OnAdd:      func(name string) (_ error) { panic(testutil.UnexpectedCall(name)) },
+		OnRemove:   func(name string) (_ error) { panic(testutil.UnexpectedCall(name)) },
+	}
 }
 
 // type check
@@ -38,13 +54,18 @@ func (w *FSWatcher) Shutdown(ctx context.Context) (err error) {
 }
 
 // Events implements the [aghos.FSWatcher] interface for *FSWatcher.
-func (w *FSWatcher) Events() (e <-chan struct{}) {
+func (w *FSWatcher) Events() (e <-chan aghos.Event) {
 	return w.OnEvents()
 }
 
 // Add implements the [aghos.FSWatcher] interface for *FSWatcher.
 func (w *FSWatcher) Add(name string) (err error) {
 	return w.OnAdd(name)
+}
+
+// Remove implements the [aghos.FSWatcher] interface for *FSWatcher.
+func (w *FSWatcher) Remove(name string) (err error) {
+	return w.OnRemove(name)
 }
 
 // ServiceWithConfig is a fake [nextagh.ServiceWithConfig] implementation for
@@ -179,4 +200,33 @@ var _ aghhttp.Registrar = (*Registrar)(nil)
 // Register implements the [aghhttp.Registrar] interface for *Registrar.
 func (m *Registrar) Register(method, path string, h http.HandlerFunc) {
 	m.OnRegister(method, path, h)
+}
+
+// TLSConfigProvider is a fake [aghtls.TLSConfigProvider] implementation for
+// tests.
+type TLSConfigProvider struct {
+	OnTLSConfig  func() (conf *tls.Config)
+	OnRootCAs    func() (cert *x509.CertPool)
+	OnHasIPAddrs func() (ok bool)
+}
+
+// type check
+var _ aghtls.TLSConfigProvider = (*TLSConfigProvider)(nil)
+
+// TLSConfig implements the [aghtls.TLSConfigProvider] interface for
+// *TLSConfigProvider.
+func (t *TLSConfigProvider) TLSConfig() (conf *tls.Config) {
+	return t.OnTLSConfig()
+}
+
+// RootCAs implements the [aghtls.TLSConfigProvider] interface for
+// *TLSConfigProvider.
+func (t *TLSConfigProvider) RootCAs() (pool *x509.CertPool) {
+	return t.OnRootCAs()
+}
+
+// HasIPAddrs implements the [aghtls.TLSConfigProvider] interface for
+// *TLSConfigProvider.
+func (t *TLSConfigProvider) HasIPAddrs() (ok bool) {
+	return t.OnHasIPAddrs()
 }

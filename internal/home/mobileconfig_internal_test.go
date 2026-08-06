@@ -31,8 +31,12 @@ func setupDNSIPs(tb testing.TB) {
 	}
 }
 
-func TestHandleMobileConfigDoH(t *testing.T) {
+func TestMobileConfigHandler_HandleMobileConfigDoH(t *testing.T) {
 	setupDNSIPs(t)
+
+	mobileConfHandler := newMobileConfigHandler(&mobileConfigHandlerConfig{
+		logger: testLogger,
+	})
 
 	t.Run("success", func(t *testing.T) {
 		r, err := http.NewRequest(http.MethodGet, "https://example.com:12345/apple/doh.mobileconfig?host=example.org", nil)
@@ -40,7 +44,7 @@ func TestHandleMobileConfigDoH(t *testing.T) {
 
 		w := httptest.NewRecorder()
 
-		handleMobileConfigDoH(w, r)
+		mobileConfHandler.handleMobileConfigDoH(w, r)
 		require.Equal(t, http.StatusOK, w.Code)
 
 		var mc mobileConfig
@@ -69,7 +73,7 @@ func TestHandleMobileConfigDoH(t *testing.T) {
 
 		w := httptest.NewRecorder()
 
-		handleMobileConfigDoH(w, r)
+		mobileConfHandler.handleMobileConfigDoH(w, r)
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
 		assert.JSONEq(t, w.Body.String(), b.String())
 	})
@@ -80,7 +84,7 @@ func TestHandleMobileConfigDoH(t *testing.T) {
 
 		w := httptest.NewRecorder()
 
-		handleMobileConfigDoH(w, r)
+		mobileConfHandler.handleMobileConfigDoH(w, r)
 		require.Equal(t, http.StatusOK, w.Code)
 
 		var mc mobileConfig
@@ -98,8 +102,12 @@ func TestHandleMobileConfigDoH(t *testing.T) {
 	})
 }
 
-func TestHandleMobileConfigDoT(t *testing.T) {
+func TestMobileConfigHandler_HandleMobileConfigDoT(t *testing.T) {
 	setupDNSIPs(t)
+
+	mobileConfHandler := newMobileConfigHandler(&mobileConfigHandlerConfig{
+		logger: testLogger,
+	})
 
 	t.Run("success", func(t *testing.T) {
 		r, err := http.NewRequest(http.MethodGet, "https://example.com:12345/apple/dot.mobileconfig?host=example.org", nil)
@@ -107,7 +115,7 @@ func TestHandleMobileConfigDoT(t *testing.T) {
 
 		w := httptest.NewRecorder()
 
-		handleMobileConfigDoT(w, r)
+		mobileConfHandler.handleMobileConfigDoT(w, r)
 		require.Equal(t, http.StatusOK, w.Code)
 
 		var mc mobileConfig
@@ -136,7 +144,7 @@ func TestHandleMobileConfigDoT(t *testing.T) {
 
 		w := httptest.NewRecorder()
 
-		handleMobileConfigDoT(w, r)
+		mobileConfHandler.handleMobileConfigDoT(w, r)
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
 		assert.JSONEq(t, w.Body.String(), b.String())
 	})
@@ -147,7 +155,7 @@ func TestHandleMobileConfigDoT(t *testing.T) {
 
 		w := httptest.NewRecorder()
 
-		handleMobileConfigDoT(w, r)
+		mobileConfHandler.handleMobileConfigDoT(w, r)
 		require.Equal(t, http.StatusOK, w.Code)
 
 		var mc mobileConfig

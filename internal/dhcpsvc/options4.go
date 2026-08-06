@@ -4,14 +4,30 @@ import (
 	"context"
 	"encoding/binary"
 	"log/slog"
-	"net"
 	"net/netip"
 	"slices"
 	"time"
 
 	"github.com/AdguardTeam/golibs/netutil"
-	"github.com/google/gopacket/layers"
+	"github.com/gopacket/gopacket/layers"
 )
+
+// msgTypeOptions4 contains preallocated DHCPv4 message type options mapped by
+// their type.
+var msgTypeOptions4 = map[layers.DHCPMsgType]layers.DHCPOption{
+	layers.DHCPMsgTypeAck: layers.NewDHCPOption(
+		layers.DHCPOptMessageType,
+		[]byte{byte(layers.DHCPMsgTypeAck)},
+	),
+	layers.DHCPMsgTypeNak: layers.NewDHCPOption(
+		layers.DHCPOptMessageType,
+		[]byte{byte(layers.DHCPMsgTypeNak)},
+	),
+	layers.DHCPMsgTypeOffer: layers.NewDHCPOption(
+		layers.DHCPOptMessageType,
+		[]byte{byte(layers.DHCPMsgTypeOffer)},
+	),
+}
 
 // implicitOptions returns the implicit options for the interface, sorted by
 // code.
@@ -247,26 +263,29 @@ func compareV4OptionCodes(a, b layers.DHCPOption) (res int) {
 	return int(a.Type) - int(b.Type)
 }
 
-// updateOptions updates the options of the response in accordance with the
-// requested parameters.  req and resp must not be nil.
+// appendRequestedOptions adds the options to opts in accordance with the
+// requested parameters.  req must not be nil.
 //
 // See https://datatracker.ietf.org/doc/html/rfc2131#section-4.3.1.
-func (iface *dhcpInterfaceV4) updateOptions(req, resp *layers.DHCPv4) {
+func (iface *dhcpInterfaceV4) appendRequestedOptions(
+	opts layers.DHCPOptions,
+	req *layers.DHCPv4,
+) (res layers.DHCPOptions) {
 	// If the server recognizes the parameter as a parameter defined in the Host
 	// Requirements Document, the server MUST include the default value for that
 	// parameter.
 	optWithCode := layers.DHCPOption{}
-	for _, code := range requestedOptions(req) {
+	for _, code := range requestedOptions4(req) {
 		optWithCode.Type = code
 		i, has := slices.BinarySearchFunc(iface.implicitOpts, optWithCode, compareV4OptionCodes)
 		if has {
-			// The client MAY list the options in order of preference. The DHCP
+			// The client MAY list the options in order of preference.  The DHCP
 			// server is not required to return the options in the requested
 			// order, but MUST try to insert the requested options in the order
 			// requested by the client.
 			//
 			// See https://datatracker.ietf.org/doc/html/rfc2132#section-9.8.
-			resp.Options = append(resp.Options, iface.implicitOpts[i])
+			opts = append(opts, iface.implicitOpts[i])
 		}
 	}
 
@@ -274,28 +293,71 @@ func (iface *dhcpInterfaceV4) updateOptions(req, resp *layers.DHCPv4) {
 	// parameter or the parameter has a non-default value on the client's
 	// subnet, the server MUST include that value in an appropriate option.
 	for _, opt := range iface.explicitOpts {
-		if opt.Data != nil {
-			resp.Options = append(resp.Options, opt)
+		if len(opt.Data) > 0 {
+			opts = append(opts, opt)
 
 			continue
 		}
 
 		// Remove options explicitly configured to be removed, in case they are
 		// already set.
-		resp.Options = slices.DeleteFunc(resp.Options, func(o layers.DHCPOption) (ok bool) {
+		opts = slices.DeleteFunc(opts, func(o layers.DHCPOption) (ok bool) {
 			return o.Type == opt.Type
 		})
 	}
+
+	return opts
 }
 
-// appendLeaseTime appends the lease time option to the response.
-func appendLeaseTime(resp *layers.DHCPv4, leaseTime time.Duration) {
-	leaseTimeData := binary.BigEndian.AppendUint32(nil, uint32(leaseTime.Seconds()))
+// newRespOptions creates the basic options for a DHCP response.  fd must not be
+// nil, mt must be a valid DHCP response message type.  idOpt is an optional
+// client identifier from the corresponding request.
+func newRespOptions(mt layers.DHCPMsgType, fd *frameData4, idOpt []byte) (opts layers.DHCPOptions) {
+	opts = layers.DHCPOptions{
+		msgTypeOptions4[mt],
+		layers.NewDHCPOption(layers.DHCPOptServerID, fd.localAddr.AsSlice()),
+	}
 
-	resp.Options = append(
-		resp.Options,
-		layers.NewDHCPOption(layers.DHCPOptLeaseTime, leaseTimeData),
+	if len(idOpt) > 0 {
+		opts = append(opts, layers.NewDHCPOption(layers.DHCPOptClientID, idOpt))
+	}
+
+	return opts
+}
+
+// appendTimeOptions adds the lease time option to the response.  lease must
+// not be nil.
+//
+// TODO(e.burkov):  Add also renewal (T1) and rebinding (T2) time options, see
+// RFC 2131 Section 4.4.5, and RFC 2132 Sections 9.11 and 9.12.
+func (iface *dhcpInterfaceV4) appendTimeOptions(
+	opts layers.DHCPOptions,
+	lease *Lease,
+) (res layers.DHCPOptions) {
+	var dur time.Duration
+	if lease.IsStatic {
+		dur = iface.common.leaseTTL
+	} else {
+		dur = lease.Expiry.Sub(iface.clock.Now())
+	}
+
+	leaseTimeOpt := [4]byte{}
+	binary.BigEndian.PutUint32(leaseTimeOpt[:], uint32(dur.Seconds()))
+
+	return append(
+		opts,
+		layers.NewDHCPOption(layers.DHCPOptLeaseTime, leaseTimeOpt[:]),
 	)
+}
+
+// appendHostnameOption appends the hostname option to the response, if it's
+// provided.
+func appendHostnameOption(opts layers.DHCPOptions, hostname string) (res layers.DHCPOptions) {
+	if hostname == "" {
+		return opts
+	}
+
+	return append(opts, layers.NewDHCPOption(layers.DHCPOptHostname, []byte(hostname)))
 }
 
 // msg4Type returns the message type of msg, if it's present within the options.
@@ -311,13 +373,18 @@ func msg4Type(msg *layers.DHCPv4) (typ layers.DHCPMsgType, ok bool) {
 
 // requestedIPv4 returns the IPv4 address, requested by client in the DHCP
 // message, if any.
-//
-// TODO(e.burkov):  DRY with other IP-from-option helpers.
 func requestedIPv4(msg *layers.DHCPv4) (ip netip.Addr, ok bool) {
 	for _, opt := range msg.Options {
-		if opt.Type == layers.DHCPOptRequestIP && len(opt.Data) == net.IPv4len {
-			return netip.AddrFromSlice(opt.Data)
+		if opt.Type == layers.DHCPOptRequestIP {
+			ip, ok = netip.AddrFromSlice(opt.Data)
+
+			break
 		}
+	}
+
+	ip = ip.Unmap()
+	if ok && ip.Is4() {
+		return ip, true
 	}
 
 	return netip.Addr{}, false
@@ -326,9 +393,16 @@ func requestedIPv4(msg *layers.DHCPv4) (ip netip.Addr, ok bool) {
 // serverID4 returns the server ID of the DHCP message, if any.
 func serverID4(msg *layers.DHCPv4) (ip netip.Addr, ok bool) {
 	for _, opt := range msg.Options {
-		if opt.Type == layers.DHCPOptServerID && len(opt.Data) == net.IPv4len {
-			return netip.AddrFromSlice(opt.Data)
+		if opt.Type == layers.DHCPOptServerID {
+			ip, ok = netip.AddrFromSlice(opt.Data)
+
+			break
 		}
+	}
+
+	ip = ip.Unmap()
+	if ok && ip.Is4() {
+		return ip, true
 	}
 
 	return netip.Addr{}, false
@@ -345,11 +419,33 @@ func hostname4(msg *layers.DHCPv4) (hostname string) {
 	return ""
 }
 
-// requestedOptions returns the list of options requested in DHCPv4 message, if
+// clientIdentifier4 returns a client identifier from msg, if any.
+func clientIdentifier4(msg *layers.DHCPv4) (id []byte) {
+	for _, opt := range msg.Options {
+		if opt.Type == layers.DHCPOptClientID && len(opt.Data) > 0 {
+			return opt.Data
+		}
+	}
+
+	return nil
+}
+
+// message4 returns the optional message from the DHCPv4 message, if any.
+func message4(msg *layers.DHCPv4) (res string, ok bool) {
+	for _, opt := range msg.Options {
+		if opt.Type == layers.DHCPOptMessage && len(opt.Data) > 0 {
+			return string(opt.Data), true
+		}
+	}
+
+	return "", false
+}
+
+// requestedOptions4 returns the list of options requested in DHCPv4 message, if
 // any.
 //
-// TODO(e.burkov):  Use [iter.Seq1].
-func requestedOptions(msg *layers.DHCPv4) (opts []layers.DHCPOpt) {
+// TODO(e.burkov):  Use [iter.Seq].
+func requestedOptions4(msg *layers.DHCPv4) (opts []layers.DHCPOpt) {
 	for _, opt := range msg.Options {
 		l := len(opt.Data)
 		if opt.Type != layers.DHCPOptParamsRequest || l == 0 {

@@ -19,6 +19,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghslog"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
@@ -26,7 +27,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
-	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
@@ -42,11 +42,6 @@ const DefaultTimeout = 10 * time.Second
 // locally-served networks.  It is assumed that local resolvers should work much
 // faster than ordinary upstreams.
 const defaultLocalTimeout = 1 * time.Second
-
-// defaultClientIDCacheCount is the default count of items in the LRU ClientID
-// cache.  The assumption here is that there won't be more than this many
-// requests between the BeforeRequestHandler stage and the actual processing.
-const defaultClientIDCacheCount = 1024
 
 var defaultDNS = []string{
 	"https://dns10.quad9.net/dns-query",
@@ -110,10 +105,6 @@ type Server struct {
 	// bootstrap is the resolver for upstreams' hostnames.
 	bootstrap upstream.Resolver
 
-	// clientIDCache is a temporary storage for ClientIDs that were extracted
-	// during the BeforeRequestHandler stage.
-	clientIDCache cache.Cache
-
 	// dhcpServer is the DHCP server for accessing lease data.
 	dhcpServer DHCP
 
@@ -133,6 +124,10 @@ type Server struct {
 	// sysResolvers used to fetch system resolvers to use by default for private
 	// PTR resolving.
 	sysResolvers SystemResolvers
+
+	// tlsConfigProvider provides TLS configuration for the server.  It must not
+	// be nil.
+	tlsConfigProvider aghtls.TLSConfigProvider
 
 	// access drops disallowed clients.
 	access *accessManager
@@ -179,10 +174,6 @@ type Server struct {
 	// [upstream.Resolver] interface.
 	bootResolvers []*upstream.UpstreamResolver
 
-	// dnsNames are the DNS names from certificate (SAN) or CN value from
-	// Subject.
-	dnsNames []string
-
 	// conf is the current configuration of the server.
 	conf ServerConfig
 
@@ -195,10 +186,6 @@ type Server struct {
 
 	// isRunning is true if the DNS server is running.
 	isRunning bool
-
-	// hasIPAddrs is set during the certificate parsing and is true if the
-	// configured certificate contains at least a single IP address.
-	hasIPAddrs bool
 }
 
 // defaultLocalDomainSuffix is the default suffix used to detect internal hosts
@@ -216,6 +203,10 @@ type DNSCreateParams struct {
 	PrivateNets netutil.SubnetSet
 	Anonymizer  *aghnet.IPMut
 	EtcHosts    *aghnet.HostsContainer
+
+	// TLSConfigProvider provides a TLS configuration for the server.  It must
+	// not be nil.
+	TLSConfigProvider aghtls.TLSConfigProvider
 
 	// Logger is used as a base logger.  It must not be nil.
 	Logger *slog.Logger
@@ -261,14 +252,11 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 		// TODO(e.burkov):  Use some case-insensitive string comparison.
 		localDomainSuffix: strings.ToLower(localDomainSuffix),
 		etcHosts:          etcHosts,
-		clientIDCache: cache.New(cache.Config{
-			EnableLRU: true,
-			MaxCount:  defaultClientIDCacheCount,
-		}),
-		anonymizer: p.Anonymizer,
+		anonymizer:        p.Anonymizer,
 		conf: ServerConfig{
 			ServePlainDNS: true,
 		},
+		tlsConfigProvider: p.TLSConfigProvider,
 	}
 
 	s.sysResolvers, err = sysresolv.NewSystemResolvers(nil, defaultPlainDNSPort)
@@ -418,7 +406,7 @@ func (s *Server) Exchange(
 	} else {
 		errMsg = "resolving an address: %w"
 	}
-	if err = s.internalProxy.Resolve(dctx); err != nil {
+	if err = s.internalProxy.Resolve(ctx, dctx); err != nil {
 		return "", 0, fmt.Errorf(errMsg, err)
 	}
 
@@ -492,8 +480,9 @@ func (s *Server) startLocked(ctx context.Context) error {
 	return err
 }
 
-// Prepare initializes parameters of s using data from conf.  conf must not be
-// nil.
+// Prepare initializes parameters of s using data from conf.  It can be called
+// from outside of the package and without acquired s.serverLock only while the
+// initialization. conf must be non-nil and valid.
 func (s *Server) Prepare(ctx context.Context, conf *ServerConfig) (err error) {
 	s.conf = *conf
 
@@ -900,6 +889,12 @@ func (s *Server) Reconfigure(ctx context.Context, conf *ServerConfig) error {
 
 // ServeHTTP is a HTTP handler method we use to provide DNS-over-HTTPS.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if !s.IsRunning() {
+		http.Error(w, "DNS server is not running", http.StatusInternalServerError)
+
+		return
+	}
+
 	if prx := s.proxy(); prx != nil {
 		prx.ServeHTTP(w, r)
 	}

@@ -1,0 +1,144 @@
+.footer {
+    padding: 32px 16px;
+    border-top: 1px solid var(--default-item-divider);
+
+    @media (min-width: 1024px) {
+        padding: 16px 32px;
+    }
+}
+
+.container {
+    display: flex;
+    flex-direction: column-reverse;
+    justify-content: center;
+    align-items: center;
+    gap: 24px;
+    width: 100%;
+
+    @media (min-width: 1024px) {
+        flex-direction: row;
+        gap: 24px;
+    }
+
+    @media (min-width: 1200px) {
+        gap: 40px;
+    }
+}
+
+.leftGroup {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    gap: 24px;
+    justify-content: center;
+
+    @media (min-width: 1024px) {
+        column-gap: 40px;
+        row-gap: 24px;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        margin-right: auto;
+    }
+}
+
+.copyright {
+    order: 1;
+
+    @media (min-width: 1024px) {
+        order: 0;
+    }
+}
+
+.version {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    order: 2;
+
+    @media (min-width: 1024px) {
+        order: 0;
+    }
+}
+
+.checkUpdateBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    border-radius: 4px;
+    color: var(--default-product-icon);
+    flex-shrink: 0;
+
+    &:hover,
+    &:focus {
+        background-color: var(--page-background-additional);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--product-primary-90);
+        outline-offset: 2px;
+    }
+
+    &:disabled {
+        cursor: default;
+        opacity: 0.5;
+
+        &:hover {
+            background-color: transparent;
+        }
+    }
+}
+
+.checkUpdateBtn_loading {
+    cursor: default;
+}
+
+.links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 16px;
+
+    @media (min-width: 1024px) {
+        flex-wrap: nowrap;
+        gap: 24px;
+        flex-shrink: 0;
+    }
+
+    @media (min-width: 1200px) {
+        gap: 40px;
+    }
+}
+
+.dropdownWrapper {
+    flex-shrink: 0;
+}
+
+.dropdown {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.dropdownTrigger {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.icon {
+    color: var(--default-gray-icons);
+}
+
+.langOverlay {
+    max-width: 100%;
+}

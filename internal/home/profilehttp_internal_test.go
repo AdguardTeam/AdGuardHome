@@ -3,12 +3,10 @@ package home
 import (
 	"bytes"
 	"context"
-	"encoding/binary"
 	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -16,6 +14,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/httphdr"
 	"github.com/AdguardTeam/golibs/testutil"
@@ -30,8 +29,6 @@ func TestWeb_HandleGetProfile(t *testing.T) {
 	const (
 		testTTL = 60
 
-		glTokenFileSuffix = "test"
-
 		userName     = "name"
 		userPassword = "password"
 
@@ -42,14 +39,6 @@ func TestWeb_HandleGetProfile(t *testing.T) {
 	require.NoError(t, err)
 
 	tempDir := t.TempDir()
-	glFilePrefix = tempDir + "/gl_token_"
-	glTokenFile := glFilePrefix + glTokenFileSuffix
-
-	glFileData := make([]byte, 4)
-	binary.NativeEndian.PutUint32(glFileData, uint32(time.Now().Unix()+testTTL))
-
-	err = os.WriteFile(glTokenFile, glFileData, 0o644)
-	require.NoError(t, err)
 
 	sessionsDB := filepath.Join(tempDir, "sessions.db")
 
@@ -58,10 +47,13 @@ func TestWeb_HandleGetProfile(t *testing.T) {
 		PasswordHash: string(passwordHash),
 	}
 
+	baseMux := http.NewServeMux()
+
 	auth, err := newAuth(testutil.ContextWithTimeout(t, testTimeout), &authConfig{
 		baseLogger:     testLogger,
+		mux:            baseMux,
 		rateLimiter:    emptyRateLimiter{},
-		trustedProxies: nil,
+		trustedProxies: testTrustedProxies,
 		dbFilename:     sessionsDB,
 		users:          nil,
 		sessionTTL:     testTTL * time.Second,
@@ -71,11 +63,10 @@ func TestWeb_HandleGetProfile(t *testing.T) {
 
 	t.Cleanup(func() { auth.close(testutil.ContextWithTimeout(t, testTimeout)) })
 
-	baseMux := http.NewServeMux()
-
 	tlsMgr, err := newTLSManager(testutil.ContextWithTimeout(t, testTimeout), &tlsManagerConfig{
 		logger:       testLogger,
 		confModifier: agh.EmptyConfigModifier{},
+		manager:      aghtls.EmptyManager{},
 	})
 	require.NoError(t, err)
 
@@ -85,8 +76,6 @@ func TestWeb_HandleGetProfile(t *testing.T) {
 		mux:        baseMux,
 	})
 	require.NoError(t, err)
-
-	globalContext.web = web
 
 	mux := auth.middleware().Wrap(baseMux)
 
@@ -138,7 +127,6 @@ func TestWeb_HandlePutProfile(t *testing.T) {
 		httpReg:        httpReg,
 	})
 
-	globalContext.web = web
 	mw.set(web)
 
 	var (

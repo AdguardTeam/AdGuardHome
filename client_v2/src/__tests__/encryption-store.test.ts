@@ -1,0 +1,170 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+const mocks = vi.hoisted(() => ({
+    tlsConfigure: vi.fn(),
+    tlsValidate: vi.fn(),
+    addErrorToast: vi.fn(),
+    addSuccessToast: vi.fn(),
+    redirectToCurrentProtocol: vi.fn(),
+}));
+
+vi.mock('panel/api/generated', () => ({
+    tlsConfigure: mocks.tlsConfigure,
+    tlsValidate: mocks.tlsValidate,
+    status: vi.fn(),
+}));
+vi.mock('panel/stores/toasts', () => ({
+    addErrorToast: mocks.addErrorToast,
+    addSuccessToast: mocks.addSuccessToast,
+}));
+vi.mock('panel/stores/dashboard', () => ({
+    getDnsStatus: vi.fn(),
+    dashboardState: { httpPort: 80 },
+}));
+vi.mock('panel/helpers/helpers', () => ({
+    redirectToCurrentProtocol: mocks.redirectToCurrentProtocol,
+}));
+
+import {
+    setTlsConfig,
+    validateTlsConfig,
+    resetValidationStatus,
+    encryptionState,
+} from 'panel/stores/encryption';
+
+describe('setTlsConfig', () => {
+    beforeEach(() => vi.clearAllMocks());
+
+    it('defaults empty ports to 0', async () => {
+        mocks.tlsConfigure.mockImplementation(async (v: any) => ({
+            ...v,
+            certificate_chain: '',
+            private_key: '',
+        }));
+        await setTlsConfig({
+            certificate_chain: '',
+            private_key: '',
+            port_https: 0,
+            port_dns_over_tls: 0,
+            port_dns_over_quic: 0,
+        });
+        const sent = mocks.tlsConfigure.mock.calls[0][0];
+        expect(sent.port_https).toBe(0);
+        expect(sent.port_dns_over_tls).toBe(0);
+        expect(sent.port_dns_over_quic).toBe(0);
+    });
+
+    it('clears validation status fields when resetValidationStatus is called', async () => {
+        mocks.tlsValidate.mockResolvedValue({
+            valid_chain: true,
+            valid_cert: true,
+            valid_key: true,
+            valid_pair: true,
+            subject: 'CN=example.com',
+            issuer: 'CN=example.com',
+            key_type: 'RSA',
+            not_after: '2027-01-01T00:00:00Z',
+            not_before: '2026-01-01T00:00:00Z',
+            dns_names: ['example.com'],
+            warning_validation: 'self-signed certificate',
+            certificate_chain: '',
+            private_key: '',
+        });
+
+        await validateTlsConfig({
+            enabled: true,
+            certificate_chain: 'x',
+            private_key: 'y',
+        });
+
+        expect(encryptionState.valid_cert).toBe(true);
+        expect(encryptionState.warning_validation).toBe('self-signed certificate');
+
+        resetValidationStatus();
+
+        expect(encryptionState.valid_cert).toBe(false);
+        expect(encryptionState.valid_chain).toBe(false);
+        expect(encryptionState.valid_key).toBe(false);
+        expect(encryptionState.valid_pair).toBe(false);
+        expect(encryptionState.warning_validation).toBe('');
+        expect(encryptionState.subject).toBe('');
+        expect(encryptionState.issuer).toBe('');
+        expect(encryptionState.key_type).toBeUndefined();
+        expect(encryptionState.dns_names).toBeNull();
+    });
+
+    it('calls redirectToCurrentProtocol when enabled+force_https on http: origin', async () => {
+        Object.defineProperty(window, 'location', {
+            value: { protocol: 'http:' },
+            writable: true,
+        });
+        mocks.tlsConfigure.mockImplementation(async (v: any) => ({
+            ...v,
+            certificate_chain: '',
+            private_key: '',
+        }));
+        await setTlsConfig({
+            certificate_chain: '',
+            private_key: '',
+            enabled: true,
+            force_https: true,
+            port_https: 443,
+        });
+        expect(mocks.redirectToCurrentProtocol).toHaveBeenCalledWith(
+            expect.objectContaining({
+                enabled: true,
+                force_https: true,
+                port_https: 443,
+            }),
+            expect.any(Number),
+        );
+    });
+
+    it('calls redirectToCurrentProtocol when disabling encryption on https: origin', async () => {
+        Object.defineProperty(window, 'location', {
+            value: { protocol: 'https:' },
+            writable: true,
+        });
+        mocks.tlsConfigure.mockImplementation(async (v: any) => ({
+            ...v,
+            certificate_chain: '',
+            private_key: '',
+        }));
+        await setTlsConfig({
+            certificate_chain: '',
+            private_key: '',
+            enabled: false,
+        });
+        expect(mocks.redirectToCurrentProtocol).toHaveBeenCalledWith(
+            expect.objectContaining({ enabled: false }),
+            expect.any(Number),
+        );
+    });
+
+    it('calls redirectToCurrentProtocol when changing port_https on https: origin', async () => {
+        Object.defineProperty(window, 'location', {
+            value: { protocol: 'https:' },
+            writable: true,
+        });
+        mocks.tlsConfigure.mockImplementation(async (v: any) => ({
+            ...v,
+            certificate_chain: '',
+            private_key: '',
+        }));
+        await setTlsConfig({
+            certificate_chain: '',
+            private_key: '',
+            enabled: true,
+            force_https: true,
+            port_https: 8443,
+        });
+        expect(mocks.redirectToCurrentProtocol).toHaveBeenCalledWith(
+            expect.objectContaining({
+                enabled: true,
+                force_https: true,
+                port_https: 8443,
+            }),
+            expect.any(Number),
+        );
+    });
+});

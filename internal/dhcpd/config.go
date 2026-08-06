@@ -216,7 +216,8 @@ func (c *V4ServerConf) Validate() (err error) {
 	}
 
 	if c.ipRange.contains(gatewayIP.AsSlice()) {
-		return fmt.Errorf("gateway ip %v in the ip range: %v-%v",
+		return fmt.Errorf(
+			"gateway ip %v in the ip range: %v-%v",
 			gatewayIP,
 			c.RangeStart,
 			c.RangeEnd,
@@ -224,14 +225,16 @@ func (c *V4ServerConf) Validate() (err error) {
 	}
 
 	if !c.subnet.Contains(rangeStart) {
-		return fmt.Errorf("range start %v is outside network %v",
+		return fmt.Errorf(
+			"range start %v is outside network %v",
 			c.RangeStart,
 			c.subnet,
 		)
 	}
 
 	if !c.subnet.Contains(rangeEnd) {
-		return fmt.Errorf("range end %v is outside network %v",
+		return fmt.Errorf(
+			"range end %v is outside network %v",
 			c.RangeEnd,
 			c.subnet,
 		)

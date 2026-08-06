@@ -74,8 +74,6 @@ func (d *DNSFilter) handleRewriteAdd(w http.ResponseWriter, r *http.Request) {
 
 	err = rw.normalize(ctx, l)
 	if err != nil {
-		// Shouldn't happen currently, since normalize only returns a non-nil
-		// error when a rewrite is nil, but be change-proof.
 		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "normalizing: %s", err)
 
 		return
@@ -173,8 +171,6 @@ func (d *DNSFilter) handleRewriteUpdate(w http.ResponseWriter, r *http.Request) 
 
 	err = rwAdd.normalize(ctx, l)
 	if err != nil {
-		// Shouldn't happen currently, since normalize only returns a non-nil
-		// error when a rewrite is nil, but be change-proof.
 		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "normalizing: %s", err)
 
 		return

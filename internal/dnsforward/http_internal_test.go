@@ -93,7 +93,7 @@ func TestDNSForwardHTTP_handleGetConfig(t *testing.T) {
 		ConfModifier:  agh.EmptyConfigModifier{},
 		ServePlainDNS: true,
 	}
-	s := createTestServer(t, filterConf, forwardConf)
+	s := createTestServer(t, filterConf, forwardConf, testTLSConfigProvider)
 	s.sysResolvers = &emptySysResolvers{}
 
 	require.NoError(t, s.Start(testutil.ContextWithTimeout(t, testTimeout)))
@@ -178,7 +178,7 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 		ConfModifier:  agh.EmptyConfigModifier{},
 		ServePlainDNS: true,
 	}
-	s := createTestServer(t, filterConf, forwardConf)
+	s := createTestServer(t, filterConf, forwardConf, testTLSConfigProvider)
 	s.sysResolvers = &emptySysResolvers{}
 
 	defaultConf := s.conf
@@ -331,9 +331,11 @@ func newLocalUpstreamListener(tb testing.TB, port uint16, h dns.Handler) (real n
 		Handler:           h,
 		NotifyStartedFunc: func() { close(startCh) },
 	}
+
+	pt := testutil.NewPanicT(tb)
 	go func() {
 		err := upsSrv.ListenAndServe()
-		require.NoError(testutil.PanicT{}, err)
+		require.NoError(pt, err)
 	}()
 
 	<-startCh
@@ -345,7 +347,7 @@ func newLocalUpstreamListener(tb testing.TB, port uint16, h dns.Handler) (real n
 func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 	hdlr := dns.HandlerFunc(func(w dns.ResponseWriter, m *dns.Msg) {
 		err := w.WriteMsg(new(dns.Msg).SetReply(m))
-		require.NoError(testutil.PanicT{}, err)
+		require.NoError(testutil.NewPanicT(t), err)
 	})
 
 	ups := (&url.URL{
@@ -366,6 +368,11 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 		Host:   netutil.JoinHostPort(upstreamHost, hostsListener.Port()),
 	}).String()
 
+	watcher := aghtest.NewFSWatcher()
+	watcher.OnEvents = func() (e <-chan struct{}) { return nil }
+	watcher.OnAdd = func(_ string) (err error) { return nil }
+	watcher.OnShutdown = func(_ context.Context) (err error) { return nil }
+
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
 	hc, err := aghnet.NewHostsContainer(
 		ctx,
@@ -375,31 +382,31 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 				Data: []byte(hostsListener.Addr().String() + " " + upstreamHost),
 			},
 		},
-		&aghtest.FSWatcher{
-			OnStart:    func(ctx context.Context) (_ error) { panic(testutil.UnexpectedCall(ctx)) },
-			OnEvents:   func() (e <-chan struct{}) { return nil },
-			OnAdd:      func(_ string) (err error) { return nil },
-			OnShutdown: func(_ context.Context) (err error) { return nil },
-		},
+		watcher,
 		hostsFileName,
 	)
 	require.NoError(t, err)
 
-	srv := createTestServer(t, &filtering.Config{
-		BlockingMode: filtering.BlockingModeDefault,
-		EtcHosts:     hc,
-	}, ServerConfig{
-		UDPListenAddrs:  []*net.UDPAddr{{}},
-		TCPListenAddrs:  []*net.TCPAddr{{}},
-		UpstreamTimeout: upsTimeout,
-		TLSConf:         &TLSConfig{},
-		Config: Config{
-			UpstreamMode:     UpstreamModeLoadBalance,
-			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
-			ClientsContainer: EmptyClientsContainer{},
+	srv := createTestServer(
+		t,
+		&filtering.Config{
+			BlockingMode: filtering.BlockingModeDefault,
+			EtcHosts:     hc,
 		},
-		ServePlainDNS: true,
-	})
+		ServerConfig{
+			UDPListenAddrs:  []*net.UDPAddr{{}},
+			TCPListenAddrs:  []*net.TCPAddr{{}},
+			UpstreamTimeout: upsTimeout,
+			TLSConf:         &TLSConfig{},
+			Config: Config{
+				UpstreamMode:     UpstreamModeLoadBalance,
+				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+				ClientsContainer: EmptyClientsContainer{},
+			},
+			ServePlainDNS: true,
+		},
+		testTLSConfigProvider,
+	)
 	srv.etcHosts = upstream.NewHostsResolver(hc)
 	startDeferStop(t, srv)
 
@@ -449,10 +456,11 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 	}
 
 	t.Run("timeout", func(t *testing.T) {
+		pt := testutil.NewPanicT(t)
 		slowHandler := dns.HandlerFunc(func(w dns.ResponseWriter, m *dns.Msg) {
 			time.Sleep(upsTimeout * 2)
 			writeErr := w.WriteMsg(new(dns.Msg).SetReply(m))
-			require.NoError(testutil.PanicT{}, writeErr)
+			require.NoError(pt, writeErr)
 		})
 		sleepyUps := (&url.URL{
 			Scheme: "tcp",

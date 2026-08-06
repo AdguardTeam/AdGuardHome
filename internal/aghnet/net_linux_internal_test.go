@@ -27,13 +27,14 @@ func TestHasStaticIP(t *testing.T) {
 	}{{
 		rootFsys: fstest.MapFS{
 			dhcpcd: &fstest.MapFile{
-				Data: []byte(`#comment` + nl +
-					`# comment` + nl +
-					`interface eth0` + nl +
-					`static ip_address=192.168.0.1/24` + nl +
-					`# interface ` + ifaceName + nl +
-					`static ip_address=192.168.1.1/24` + nl +
-					`# comment` + nl,
+				Data: []byte(
+					`#comment` + nl +
+						`# comment` + nl +
+						`interface eth0` + nl +
+						`static ip_address=192.168.0.1/24` + nl +
+						`# interface ` + ifaceName + nl +
+						`static ip_address=192.168.1.1/24` + nl +
+						`# comment` + nl,
 				),
 			},
 		},
@@ -43,13 +44,14 @@ func TestHasStaticIP(t *testing.T) {
 	}, {
 		rootFsys: fstest.MapFS{
 			dhcpcd: &fstest.MapFile{
-				Data: []byte(`#comment` + nl +
-					`# comment` + nl +
-					`interface ` + ifaceName + nl +
-					`static ip_address=192.168.0.1/24` + nl +
-					`# interface ` + ifaceName + nl +
-					`static ip_address=192.168.1.1/24` + nl +
-					`# comment` + nl,
+				Data: []byte(
+					`#comment` + nl +
+						`# comment` + nl +
+						`interface ` + ifaceName + nl +
+						`static ip_address=192.168.0.1/24` + nl +
+						`# interface ` + ifaceName + nl +
+						`static ip_address=192.168.1.1/24` + nl +
+						`# comment` + nl,
 				),
 			},
 		},
@@ -59,12 +61,13 @@ func TestHasStaticIP(t *testing.T) {
 	}, {
 		rootFsys: fstest.MapFS{
 			netifaces: &fstest.MapFile{
-				Data: []byte(`allow-hotplug ` + ifaceName + nl +
-					`#iface enp0s3 inet static` + nl +
-					`#  address 192.168.0.200` + nl +
-					`#  netmask 255.255.255.0` + nl +
-					`#  gateway 192.168.0.1` + nl +
-					`iface ` + ifaceName + ` inet dhcp` + nl,
+				Data: []byte(
+					`allow-hotplug ` + ifaceName + nl +
+						`#iface enp0s3 inet static` + nl +
+						`#  address 192.168.0.200` + nl +
+						`#  netmask 255.255.255.0` + nl +
+						`#  gateway 192.168.0.1` + nl +
+						`iface ` + ifaceName + ` inet dhcp` + nl,
 				),
 			},
 		},
@@ -74,12 +77,13 @@ func TestHasStaticIP(t *testing.T) {
 	}, {
 		rootFsys: fstest.MapFS{
 			netifaces: &fstest.MapFile{
-				Data: []byte(`allow-hotplug ` + ifaceName + nl +
-					`iface ` + ifaceName + ` inet static` + nl +
-					`  address 192.168.0.200` + nl +
-					`  netmask 255.255.255.0` + nl +
-					`  gateway 192.168.0.1` + nl +
-					`#iface ` + ifaceName + ` inet dhcp` + nl,
+				Data: []byte(
+					`allow-hotplug ` + ifaceName + nl +
+						`iface ` + ifaceName + ` inet static` + nl +
+						`  address 192.168.0.200` + nl +
+						`  netmask 255.255.255.0` + nl +
+						`  gateway 192.168.0.1` + nl +
+						`#iface ` + ifaceName + ` inet dhcp` + nl,
 				),
 			},
 		},
@@ -89,8 +93,9 @@ func TestHasStaticIP(t *testing.T) {
 	}, {
 		rootFsys: fstest.MapFS{
 			netifaces: &fstest.MapFile{
-				Data: []byte(`source hello` + nl +
-					`#iface ` + ifaceName + ` inet static` + nl,
+				Data: []byte(
+					`source hello` + nl +
+						`#iface ` + ifaceName + ` inet static` + nl,
 				),
 			},
 			"hello": &fstest.MapFile{
@@ -103,8 +108,9 @@ func TestHasStaticIP(t *testing.T) {
 	}, {
 		rootFsys: fstest.MapFS{
 			netifaces: &fstest.MapFile{
-				Data: []byte(`source hello` + nl +
-					`iface ` + ifaceName + ` inet static` + nl,
+				Data: []byte(
+					`source hello` + nl +
+						`iface ` + ifaceName + ` inet static` + nl,
 				),
 			},
 		},

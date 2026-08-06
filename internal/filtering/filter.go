@@ -19,6 +19,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
 	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/ioutil"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 )
 
@@ -30,7 +31,8 @@ const filterDir = "filters"
 //
 // TODO(e.burkov):  Investigate if the field ordering is important.
 type FilterYAML struct {
-	Enabled     bool
+	Enabled bool
+	// TODO(m.kazantsev):  Refactor.
 	URL         string    // URL or a file path
 	Name        string    `yaml:"name"`
 	RulesCount  int       `yaml:"-"`
@@ -495,7 +497,7 @@ func (d *DNSFilter) update(filter *FilterYAML) (b bool, err error) {
 }
 
 // updateIntl updates the flt rewriting it's actual file.  It returns true if
-// the actual update has been performed.
+// the actual update has been performed.  flt must not be nil.
 func (d *DNSFilter) updateIntl(ctx context.Context, flt *FilterYAML) (ok bool, err error) {
 	d.logger.DebugContext(ctx, "downloading update for filter", "id", flt.ID, "url", flt.URL)
 
@@ -503,24 +505,78 @@ func (d *DNSFilter) updateIntl(ctx context.Context, flt *FilterYAML) (ok bool, e
 
 	tmpFile, err := aghrenameio.NewPendingFile(flt.Path(d.conf.DataDir), aghos.DefaultPermFile)
 	if err != nil {
+		// Don't wrap the error because it's informative enough as is.
 		return false, err
 	}
 	defer func() { err = d.finalizeUpdate(ctx, tmpFile, flt, res, err, ok) }()
 
-	r, err := d.reader(flt.URL)
+	if filepath.IsAbs(flt.URL) {
+		// Initialise this variable to avoid any confusion.
+		path := flt.URL
+
+		res, err = d.readFromFile(tmpFile, path)
+	} else {
+		res, err = d.readFromHTTP(tmpFile, flt.URL)
+	}
+
 	if err != nil {
-		// Don't wrap the error since it's informative enough as is.
+		// Don't wrap the error because it's informative enough as is.
 		return false, err
 	}
-	defer func() { err = errors.WithDeferred(err, r.Close()) }()
+
+	return res.Checksum != flt.checksum, nil
+}
+
+// readFromHTTP reads filter data from urlStr via HTTP and parses it into the
+// tmpFile file.  tmpFile must not be nil.  urlStr must be a valid URL.
+func (d *DNSFilter) readFromHTTP(
+	tmpFile aghrenameio.PendingFile,
+	urlStr string,
+) (res *rulelist.ParseResult, err error) {
+	resp, err := d.conf.HTTPClient.Get(urlStr)
+	if err != nil {
+		// Don't wrap the error because it's informative enough as is.
+		return nil, err
+	}
+	defer func() { err = errors.WithDeferred(err, resp.Body.Close()) }()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("got status code %d, want %d", resp.StatusCode, http.StatusOK)
+	}
 
 	bufPtr := d.bufPool.Get()
 	defer d.bufPool.Put(bufPtr)
 
 	p := rulelist.NewParser()
-	res, err = p.Parse(tmpFile, r, *bufPtr)
+	httpBody := ioutil.LimitReader(resp.Body, d.conf.MaxHTTPSize.Bytes())
 
-	return res.Checksum != flt.checksum && err == nil, err
+	return p.Parse(tmpFile, httpBody, *bufPtr)
+}
+
+// readFromFile reads filter data from a file located at path and parses it into
+// the tmpFile file.  tmpFile must not be nil.  path must be a valid filepath.
+func (d *DNSFilter) readFromFile(
+	tmpFile aghrenameio.PendingFile,
+	path string,
+) (res *rulelist.ParseResult, err error) {
+	path = filepath.Clean(path)
+
+	if !pathMatchesAny(d.safeFSPatterns, path) {
+		return nil, fmt.Errorf("path %q does not match safe patterns", path)
+	}
+
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("opening file: %w", err)
+	}
+	defer func() { err = errors.WithDeferred(err, file.Close()) }()
+
+	bufPtr := d.bufPool.Get()
+	defer d.bufPool.Put(bufPtr)
+
+	p := rulelist.NewParser()
+
+	return p.Parse(tmpFile, file, *bufPtr)
 }
 
 // finalizeUpdate closes and gets rid of temporary file f with filter's content
@@ -564,47 +620,6 @@ func (d *DNSFilter) finalizeUpdate(
 	flt.RulesCount = rulesCount
 
 	return nil
-}
-
-// reader returns an io.ReadCloser reading filtering-rule list data form either
-// a file on the filesystem or the filter's HTTP URL.
-func (d *DNSFilter) reader(fltURL string) (r io.ReadCloser, err error) {
-	if !filepath.IsAbs(fltURL) {
-		r, err = d.readerFromURL(fltURL)
-		if err != nil {
-			return nil, fmt.Errorf("reading from url: %w", err)
-		}
-
-		return r, nil
-	}
-
-	fltURL = filepath.Clean(fltURL)
-	if !pathMatchesAny(d.safeFSPatterns, fltURL) {
-		return nil, fmt.Errorf("path %q does not match safe patterns", fltURL)
-	}
-
-	r, err = os.Open(fltURL)
-	if err != nil {
-		return nil, fmt.Errorf("opening file: %w", err)
-	}
-
-	return r, nil
-}
-
-// readerFromURL returns an io.ReadCloser reading filtering-rule list data form
-// the filter's URL.
-func (d *DNSFilter) readerFromURL(fltURL string) (r io.ReadCloser, err error) {
-	resp, err := d.conf.HTTPClient.Get(fltURL)
-	if err != nil {
-		// Don't wrap the error since it's informative enough as is.
-		return nil, err
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("got status code %d, want %d", resp.StatusCode, http.StatusOK)
-	}
-
-	return resp.Body, nil
 }
 
 // loads filter contents from the file in dataDir

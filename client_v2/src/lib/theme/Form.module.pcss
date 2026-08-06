@@ -1,0 +1,88 @@
+.buttonGroup {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+
+    @media (min-width: 768px) {
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .button {
+        min-width: 200px;
+        max-width: 100%;
+
+        @media (min-width: 768px) {
+            width: auto;
+        }
+    }
+}
+
+.input {
+    padding: 8px 0;
+}
+
+.checkbox {
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+}
+
+.group {
+    position: relative;
+    padding: 0 16px;
+}
+
+.inner {
+    padding-left: 32px;
+}
+
+.error {
+    margin-top: 8px;
+    font-size: 14px;
+    color: var(--default-error-icon);
+}
+
+.actionRow {
+    padding: 8px 16px;
+
+    .actionButton {
+        width: auto;
+        min-width: 200px;
+    }
+}
+
+.action {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    border: 0;
+    outline: 0;
+    padding: 0;
+    cursor: pointer;
+    background: none;
+    transition: background-color var(--t2);
+    color: var(--default-gray-icons);
+    border-radius: 4px;
+
+    &:disabled {
+        cursor: default;
+        color: var(--disabled-secondary-button-stroke);
+    }
+
+    &:hover,
+    &:focus {
+        background-color: var(--hovered-page-background);
+    }
+
+    &:active {
+        background-color: var(--pressed-page-background);
+    }
+
+    &_danger {
+        color: var(--default-error-link);
+    }
+}

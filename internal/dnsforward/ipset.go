@@ -120,10 +120,15 @@ func ipsFromAnswer(ans []dns.RR) (ip4s, ip6s []net.IP) {
 	return ip4s, ip6s
 }
 
-// process adds the resolved IP addresses to the domain's ipsets, if any.
-func (h *ipsetHandler) process(ctx context.Context, dctx *dnsContext) (rc resultCode) {
-	h.logger.DebugContext(ctx, "started processing")
-	defer h.logger.DebugContext(ctx, "finished processing")
+// process adds the resolved IP addresses to the domain's ipsets, if any.  l and
+// dctx must not be nil.
+func (h *ipsetHandler) process(
+	ctx context.Context,
+	l *slog.Logger,
+	dctx *dnsContext,
+) (rc resultCode) {
+	l.DebugContext(ctx, "started processing")
+	defer l.DebugContext(ctx, "finished processing")
 
 	if h.skipIpsetProcessing(dctx) {
 		return resultCodeSuccess
@@ -138,12 +143,12 @@ func (h *ipsetHandler) process(ctx context.Context, dctx *dnsContext) (rc result
 	n, err := h.ipsetMgr.Add(ctx, host, ip4s, ip6s)
 	if err != nil {
 		// Consider ipset errors non-critical to the request.
-		h.logger.ErrorContext(ctx, "adding host ips", slogutil.KeyError, err)
+		l.ErrorContext(ctx, "adding host ips", slogutil.KeyError, err)
 
 		return resultCodeSuccess
 	}
 
-	h.logger.DebugContext(ctx, "added new ipset entries", "num", n)
+	l.DebugContext(ctx, "added new ipset entries", "num", n)
 
 	return resultCodeSuccess
 }

@@ -1,0 +1,50 @@
+.wrapper {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    font-size: 14px;
+    font-weight: var(--weight-semi-bold);
+    line-height: 24px;
+    gap: 8px;
+    color: var(--default-description-text);
+    padding: 16px 0;
+    overflow: hidden;
+
+    @media (min-width: 768px) {
+        padding: 32px 0 24px;
+        font-size: 16px;
+        gap: 16px;
+    }
+
+    @media (min-width: 1200px) {
+        max-width: calc(var(--container) + 24px);
+    }
+
+    @media (min-width: 1400px) {
+        margin: 0 auto;
+        min-width: 0;
+        width: 100%;
+    }
+}
+
+.link {
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    min-width: 0;
+}
+
+.current {
+    min-width: 0;
+}
+
+.arrow {
+    margin-left: 8px;
+    transform: rotate(-90deg);
+    cursor: pointer;
+    color: var(--default-gray-icons);
+
+    @media (min-width: 768px) {
+        margin-left: 16px;
+    }
+}
