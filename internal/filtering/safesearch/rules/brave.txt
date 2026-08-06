@@ -1,1 +1,1 @@
-|search.brave.com^$dnsrewrite=NOERROR;CNAME;safesearch.brave.com
+|search.brave.com^$dnsrewrite=NOERROR;CNAME;forcesafe.search.brave.com

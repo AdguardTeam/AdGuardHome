@@ -244,7 +244,7 @@ func TestDefault_CheckHost_brave(t *testing.T) {
 
 		assert.True(t, res.IsFiltered)
 		assert.Equal(t, filtering.FilteredSafeSearch, res.Reason)
-		assert.Equal(t, "safesearch.brave.com", res.CanonName)
+		assert.Equal(t, "forcesafe.search.brave.com", res.CanonName)
 		assert.Empty(t, res.Rules)
 	})
 }
