@@ -161,9 +161,9 @@ export const resetStats = async () => {
     setState('processingReset', true);
     try {
         await statsReset();
-        setState('processingReset', false);
         addSuccessToast(intl.getMessage('settings_notify_statistics_cleared'));
         await getStats();
+        setState('processingReset', false);
     } catch (error) {
         addErrorToast({ error });
         setState('processingReset', false);

@@ -11,6 +11,7 @@ import {
     setFilteredLogs,
     refreshFilteredLogs,
     getAdditionalLogs,
+    clearLogs,
 } from 'panel/stores/queryLogs';
 import { accessState, getAccessList, toggleClientBlock } from 'panel/stores/access';
 import { dashboardState, getClients } from 'panel/stores/dashboard';
@@ -51,6 +52,12 @@ const getEmptyStateMode = (enabled: boolean, interval?: number): EmptyStateMode 
     }
     return 'default';
 };
+
+export const isQueryLogBusy = (
+    processingGetLogs: boolean,
+    processingAdditionalLogs: boolean,
+    processingClear: boolean,
+): boolean => processingGetLogs || processingAdditionalLogs || processingClear;
 
 export const QueryLog = () => {
     const navigate = useNavigate();
@@ -119,7 +126,11 @@ export const QueryLog = () => {
     const logs = () => queryLogsState.logs || [];
 
     const isRequestInFlight = () =>
-        queryLogsState.processingGetLogs || queryLogsState.processingAdditionalLogs;
+        isQueryLogBusy(
+            queryLogsState.processingGetLogs,
+            queryLogsState.processingAdditionalLogs,
+            queryLogsState.processingClear,
+        );
     const isLoadingMore = () => isIncrementalLoad() && isRequestInFlight();
     const isInitialLoading = () =>
         queryLogsState.processingGetLogs && logs().length === 0 && !isIncrementalLoad();
@@ -226,12 +237,14 @@ export const QueryLog = () => {
                 <Header
                     onSearch={handleSearch}
                     onRefresh={handleRefresh}
+                    onClear={clearLogs}
                     onStatusFilterChange={handleStatusFilterChange}
                     onReasonFilterChange={handleReasonFilterChange}
                     currentSearch={currentSearch()}
                     currentStatus={currentStatus()}
                     currentReason={currentReason()}
                     isLoading={!!isRequestInFlight()}
+                    isClearing={queryLogsState.processingClear}
                 />
 
                 <div class={s.desktopView}>

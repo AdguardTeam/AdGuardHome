@@ -8,6 +8,7 @@ import { Dropdown } from 'panel/common/ui/Dropdown';
 import { Select } from 'panel/common/controls/Select';
 import { Icon } from 'panel/common/ui/Icon';
 import { Link } from 'panel/common/ui/Link';
+import { ConfirmDialog } from 'panel/common/ui/ConfirmDialog';
 import { RoutePath, SCROLL_QUERY_KEY } from 'panel/components/Routes/Paths';
 import { useIsMobile } from 'panel/hooks/useIsMobile';
 import { DISABLE_PROTECTION_TIMINGS, ONE_SECOND_IN_MS } from 'panel/helpers/constants';
@@ -79,15 +80,19 @@ type Props = {
     selectedPeriod: number;
     periodOptions: Array<{ value: number; label: string }>;
     isLoading: boolean;
+    isClearing: boolean;
     onToggleProtection: (enabled: boolean, duration?: number) => void;
     onRefreshStats: () => void;
+    onClear: () => Promise<void>;
     onPeriodChange: (period: number) => void;
 };
 
 export const Header = (props: Props) => {
     const [protectionMenuOpen, setProtectionMenuOpen] = createSignal(false);
     const [selectedDisableTime, setSelectedDisableTime] = createSignal<number | null>(null);
+    const [showClearConfirm, setShowClearConfirm] = createSignal(false);
     const isMobile = useIsMobile();
+    const isBusy = () => props.isLoading || props.isClearing;
 
     const handleToggleProtection = () => {
         props.onToggleProtection(props.protectionEnabled);
@@ -98,6 +103,11 @@ export const Header = (props: Props) => {
         setSelectedDisableTime(time);
         props.onToggleProtection(props.protectionEnabled, duration);
         setProtectionMenuOpen(false);
+    };
+
+    const handleClear = async () => {
+        await props.onClear();
+        setShowClearConfirm(false);
     };
 
     const protectionMenu = (
@@ -152,16 +162,30 @@ export const Header = (props: Props) => {
                 <div class={s.titleRow}>
                     <h1 class={cn(theme.title.h5, s.onlyMobile)}>{intl.getMessage('dashboard')}</h1>
 
-                    <button
-                        type="button"
-                        class={cn(s.refreshButton, s.refreshMobileButton, s.onlyMobile)}
-                        onClick={() => props.onRefreshStats?.()}
-                        disabled={props.isLoading}
-                        aria-label={intl.getMessage('refresh_btn')}
-                        title={intl.getMessage('refresh_btn')}
-                    >
-                        <Icon icon="refresh" color="green" />
-                    </button>
+                    <div class={cn(s.mobileActions, s.onlyMobile)}>
+                        <button
+                            type="button"
+                            data-testid="dashboard-clear-stats-button-mobile"
+                            class={cn(s.refreshButton, s.refreshMobileButton)}
+                            onClick={() => setShowClearConfirm(true)}
+                            disabled={isBusy()}
+                            aria-label={intl.getMessage('settings_statistics_clear')}
+                            title={intl.getMessage('settings_statistics_clear')}
+                        >
+                            <Icon icon="delete" color="red" />
+                        </button>
+
+                        <button
+                            type="button"
+                            class={cn(s.refreshButton, s.refreshMobileButton)}
+                            onClick={() => props.onRefreshStats?.()}
+                            disabled={isBusy()}
+                            aria-label={intl.getMessage('refresh_btn')}
+                            title={intl.getMessage('refresh_btn')}
+                        >
+                            <Icon icon="refresh" color="green" />
+                        </button>
+                    </div>
                 </div>
 
                 <h1 class={cn(theme.title.h3_tablet, s.onlyDesktop)}>
@@ -215,9 +239,22 @@ export const Header = (props: Props) => {
             <div class={s.headerRight}>
                 <button
                     type="button"
+                    data-testid="dashboard-clear-stats-button-desktop"
+                    class={cn(s.refreshButton, s.refreshDesktopButton, s.onlyDesktop)}
+                    onClick={() => setShowClearConfirm(true)}
+                    disabled={isBusy()}
+                    aria-label={intl.getMessage('settings_statistics_clear')}
+                    title={intl.getMessage('settings_statistics_clear')}
+                >
+                    {intl.getMessage('settings_statistics_clear')}
+                    <Icon icon="delete" color="red" />
+                </button>
+
+                <button
+                    type="button"
                     class={cn(s.refreshButton, s.refreshDesktopButton, s.onlyDesktop)}
                     onClick={() => props.onRefreshStats?.()}
-                    disabled={props.isLoading}
+                    disabled={isBusy()}
                     aria-label={intl.getMessage('refresh_btn')}
                     title={intl.getMessage('refresh_btn')}
                 >
@@ -235,11 +272,26 @@ export const Header = (props: Props) => {
                     height="big"
                     isSearchable={false}
                     borderless={!isMobile()}
+                    isDisabled={isBusy()}
                     menuSize="big"
                     menuPosition="right"
                     menuFooter={periodSettingsFooter}
                 />
             </div>
+
+            <Show when={showClearConfirm()}>
+                <ConfirmDialog
+                    title={intl.getMessage('settings_confirm_clear_statistics')}
+                    text={intl.getMessage('settings_confirm_clear_statistics_desc')}
+                    buttonText={intl.getMessage('settings_yes_clear')}
+                    cancelText={intl.getMessage('cancel')}
+                    buttonVariant="danger"
+                    submitDisabled={isBusy()}
+                    submitTestId="dashboard-clear-stats-confirm"
+                    onClose={() => setShowClearConfirm(false)}
+                    onConfirm={handleClear}
+                />
+            </Show>
         </div>
     );
 };
