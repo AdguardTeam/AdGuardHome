@@ -265,8 +265,7 @@ func (svc *Service) Config() (c *Config) {
 			addrs[i] = a.(*net.UDPAddr).AddrPort()
 		}
 	} else {
-		conf := svc.proxy.Config
-		udpAddrs := conf.UDPListenAddr
+		udpAddrs := svc.proxy.UDPListenAddr
 		addrs = make([]netip.AddrPort, len(udpAddrs))
 		for i, a := range udpAddrs {
 			addrs[i] = a.AddrPort()
