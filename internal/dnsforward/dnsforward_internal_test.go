@@ -945,9 +945,7 @@ func TestBlockCNAMEProtectionEnabled(t *testing.T) {
 		IPv4:  testIPv4,
 	}
 
-	s.dnsProxy.UpstreamConf = &proxy.UpstreamConfig{
-		Upstreams: []upstream.Upstream{testUpstm},
-	}
+	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{testUpstm}
 	startDeferStop(t, s)
 
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP)

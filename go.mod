@@ -4,7 +4,7 @@ go 1.26.5
 
 require (
 	github.com/AdguardTeam/dnscrypt v0.0.2
-	// TODO(m.kazantsev):  Update when the corresponding pull request will be 
+	// TODO(m.kazantsev): !! Update when the corresponding pull request will be 
 	// merged.
 	github.com/AdguardTeam/dnsproxy v0.83.3-0.20260810153019-3ed2ad5795ea
 	github.com/AdguardTeam/golibs v0.35.15
