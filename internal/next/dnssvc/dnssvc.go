@@ -43,6 +43,7 @@ type Service struct {
 	// The fields below have been used to create proxy and are saved to return
 	// them in [Service.Config].
 
+	addrs               []netip.AddrPort
 	bootstraps          []string
 	bootstrapResolvers  []*upstream.UpstreamResolver
 	upstreams           []string
@@ -80,6 +81,7 @@ func New(c *Config) (svc *Service, err error) {
 			DNSSECEnabled:  c.DNSSECEnabled,
 			UseDNS64:       c.UseDNS64,
 		},
+		addrs:               c.Addresses,
 		bootstraps:          c.BootstrapServers,
 		upstreams:           c.UpstreamServers,
 		upstreamTimeout:     c.UpstreamTimeout,
@@ -257,18 +259,12 @@ func (svc *Service) Shutdown(ctx context.Context) (err error) {
 func (svc *Service) Config() (c *Config) {
 	// TODO(a.garipov): Do we need to get the TCP addresses separately?
 
-	var addrs []netip.AddrPort
+	addrs := svc.addrs
 	if svc.running.Load() {
 		udpAddrs := svc.proxy.Addrs(proxy.ProtoUDP)
 		addrs = make([]netip.AddrPort, len(udpAddrs))
 		for i, a := range udpAddrs {
 			addrs[i] = a.(*net.UDPAddr).AddrPort()
-		}
-	} else {
-		udpAddrs := svc.proxy.UDPListenAddr
-		addrs = make([]netip.AddrPort, len(udpAddrs))
-		for i, a := range udpAddrs {
-			addrs[i] = a.AddrPort()
 		}
 	}
 

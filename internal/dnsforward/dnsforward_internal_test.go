@@ -945,6 +945,8 @@ func TestBlockCNAMEProtectionEnabled(t *testing.T) {
 		IPv4:  testIPv4,
 	}
 
+	// TODO(m.kazantsev):  Get rid of this manual assignment of upstreams across
+	// the whole project.
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{testUpstm}
 	startDeferStop(t, s)
 
