@@ -24,6 +24,7 @@ import (
 	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/AdguardTeam/golibs/osutil"
 	"github.com/AdguardTeam/golibs/osutil/executil"
+	"github.com/AdguardTeam/golibs/service"
 	"github.com/NYTimes/gziphandler"
 	"github.com/quic-go/quic-go/http3"
 )
@@ -871,6 +872,17 @@ func (web *webAPI) reconfigureDNSServer(
 	if err != nil {
 		return fmt.Errorf("starting forwarding dns server: %w", err)
 	}
+
+	return nil
+}
+
+// type check
+var _ service.Shutdowner = (*webAPI)(nil)
+
+// Shutdown implements the [service.Shutdowner] interface.  It gracefully shuts
+// down the web API server.  It always returns nil error.
+func (web *webAPI) Shutdown(ctx context.Context) (err error) {
+	web.close(ctx)
 
 	return nil
 }

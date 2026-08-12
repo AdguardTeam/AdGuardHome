@@ -63,7 +63,6 @@ func newTestWeb(
 //   - [config]
 //   - [globalContext.clients.storage]
 //   - [globalContext.dnsServer]
-//   - [globalContext.web]
 //
 // TODO(s.chzhen):  Remove this once the TLS manager no longer accesses global
 // variables.  Make tests that use this helper concurrent.
@@ -73,13 +72,11 @@ func storeGlobals(tb testing.TB) {
 	prevConfig := config
 	storage := globalContext.clients.storage
 	dnsServer := globalContext.dnsServer
-	web := globalContext.web
 
 	tb.Cleanup(func() {
 		config = prevConfig
 		globalContext.clients.storage = storage
 		globalContext.dnsServer = dnsServer
-		globalContext.web = web
 	})
 }
 
