@@ -12,7 +12,7 @@ import (
 func checkOtherDHCP(
 	_ context.Context,
 	_ *slog.Logger,
-	ifaceName string,
+	_ string,
 ) (ok4, ok6 bool, err4, err6 error) {
 	return false,
 		false,

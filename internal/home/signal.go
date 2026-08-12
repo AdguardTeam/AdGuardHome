@@ -23,7 +23,7 @@ type signalHandler struct {
 	// logger is used to log the operation of the signal handler.
 	logger *slog.Logger
 
-	// mu protects clientStorage and tlsManager.
+	// mu protects clientStorage, tlsManager, and web.
 	mu *sync.Mutex
 
 	// clientStorage is used to reload information about runtime clients with an
@@ -32,6 +32,9 @@ type signalHandler struct {
 
 	// tlsManager is used to reload the TLS configuration.
 	tlsManager aghtls.Manager
+
+	// web is the web API server.
+	web service.Shutdowner
 
 	// signals receives incoming signals.
 	signals <-chan os.Signal
@@ -69,6 +72,14 @@ func (h *signalHandler) addTLSManager(m aghtls.Manager) {
 	defer h.mu.Unlock()
 
 	h.tlsManager = m
+}
+
+// addWeb stores the web API server.
+func (h *signalHandler) addWeb(w *webAPI) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	h.web = w
 }
 
 // handle processes incoming signals.  It blocks until a signal is received.  It
@@ -109,6 +120,13 @@ func (h *signalHandler) shutdown(ctx context.Context) {
 		err := h.tlsManager.Shutdown(ctx)
 		if err != nil {
 			h.logger.ErrorContext(ctx, "shutting down tls manager", slogutil.KeyError, err)
+		}
+	}
+
+	if h.web != nil {
+		err := h.web.Shutdown(ctx)
+		if err != nil {
+			h.logger.ErrorContext(ctx, "shutting down web", slogutil.KeyError, err)
 		}
 	}
 

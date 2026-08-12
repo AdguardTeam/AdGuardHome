@@ -83,7 +83,7 @@ func TestDHCPServer_ServeEther4_discover(t *testing.T) {
 
 			ndMgr, inCh, outCh := newTestNetworkDeviceManager(t, testIfaceAddrV4)
 			startTestDHCPServer(t, &dhcpsvc.Config{
-				Database:             newTestDatabase(t, testLeases),
+				Database:             newTestDatabase(t),
 				Interfaces:           testIPv4InterfacesConf,
 				NetworkDeviceManager: ndMgr,
 				Enabled:              true,
@@ -105,7 +105,7 @@ func TestDHCPServer_ServeEther4_discoverExpired(t *testing.T) {
 	ndMgr, inCh, outCh := newTestNetworkDeviceManager(t, testIfaceAddrV4)
 
 	startTestDHCPServer(t, &dhcpsvc.Config{
-		Database:             newTestDatabase(t, testLeases),
+		Database:             newTestDatabase(t),
 		Interfaces:           testIPv4InterfacesConf,
 		NetworkDeviceManager: ndMgr,
 		Enabled:              true,
@@ -156,7 +156,7 @@ func TestDHCPServer_ServeEther4_release(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			db := newTestDatabase(t, testLeases)
+			db := newTestDatabase(t)
 
 			onStore := func(ctx context.Context, leases []*dhcpsvc.Lease) (err error) {
 				assert.NotContains(testutil.NewPanicT(t), leases, tc.want)
@@ -262,7 +262,7 @@ func TestDHCPServer_ServeEther4_requestSelecting(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			db := newTestDatabase(t, testLeases)
+			db := newTestDatabase(t)
 
 			onStore := func(ctx context.Context, leases []*dhcpsvc.Lease) (err error) {
 				assert.Contains(t, leases, tc.want)
@@ -311,7 +311,7 @@ func TestDHCPServer_ServeEther4_requestSelectingNoLease(t *testing.T) {
 		flags:        dhcpsvc.FlagsBroadcast,
 	})
 
-	db := newTestDatabase(t, testLeases)
+	db := newTestDatabase(t)
 
 	ndMgr, inCh, outCh := newTestNetworkDeviceManager(t, testIfaceAddrV4)
 	startTestDHCPServer(t, &dhcpsvc.Config{
@@ -413,7 +413,7 @@ func TestDHCPServer_ServeEther4_requestInitReboot(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			db := newTestDatabase(t, testLeases)
+			db := newTestDatabase(t)
 
 			onStore := func(ctx context.Context, leases []*dhcpsvc.Lease) (err error) {
 				assert.Contains(t, leases, tc.want)
@@ -513,7 +513,7 @@ func TestDHCPServer_ServeEther4_requestRenewSuccess(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			db := newTestDatabase(t, testLeases)
+			db := newTestDatabase(t)
 
 			onStore := func(ctx context.Context, leases []*dhcpsvc.Lease) (err error) {
 				assert.Contains(t, leases, tc.want)
@@ -586,7 +586,7 @@ func TestDHCPServer_ServeEther4_requestRenewFail(t *testing.T) {
 			}
 
 			startTestDHCPServer(t, &dhcpsvc.Config{
-				Database:             newTestDatabase(t, testLeases),
+				Database:             newTestDatabase(t),
 				Interfaces:           testIPv4InterfacesConf,
 				NetworkDeviceManager: ndMgr,
 				Enabled:              true,
@@ -641,7 +641,7 @@ func TestDHCPServer_ServeEther4_decline(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			db := newTestDatabase(t, testLeases)
+			db := newTestDatabase(t)
 
 			onStore := func(ctx context.Context, leases []*dhcpsvc.Lease) (err error) {
 				assert.Contains(t, leases, wantLease)

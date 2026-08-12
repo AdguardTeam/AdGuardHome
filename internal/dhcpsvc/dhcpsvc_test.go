@@ -393,27 +393,19 @@ func (db *testDatabase) Store(ctx context.Context, leases []*dhcpsvc.Lease) (err
 	return db.onStore(ctx, leases)
 }
 
-// newTestDatabase creates a new *testDatabase for testing.  If initial is not
-// nil, db.Load is set to return it.  By default, db.Store panics on any call.
-func newTestDatabase(tb testing.TB, initial []*dhcpsvc.Lease) (db *testDatabase) {
+// newTestDatabase creates a new *testDatabase for testing.  The Load method
+// returns [testLeases], and the Store method panics.
+func newTestDatabase(tb testing.TB) (db *testDatabase) {
 	tb.Helper()
 
-	db = &testDatabase{
-		onLoad: func(ctx context.Context) (_ []*dhcpsvc.Lease, _ error) {
-			panic(testutil.UnexpectedCall(ctx))
+	return &testDatabase{
+		onLoad: func(_ context.Context) (leases []*dhcpsvc.Lease, err error) {
+			return testLeases, nil
 		},
 		onStore: func(ctx context.Context, leases []*dhcpsvc.Lease) (_ error) {
 			panic(testutil.UnexpectedCall(ctx, leases))
 		},
 	}
-
-	if initial != nil {
-		db.onLoad = func(ctx context.Context) (leases []*dhcpsvc.Lease, err error) {
-			return initial, nil
-		}
-	}
-
-	return db
 }
 
 // newTestDHCPServer creates a new DHCPServer for testing.  It uses the default

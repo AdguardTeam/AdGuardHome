@@ -97,11 +97,7 @@ func (idx *leaseIndex) add(l *Lease, iface *netInterface) (err error) {
 // remove removes l from idx and from iface.  l must be valid, iface should
 // contain the same lease or the lease itself.  It returns an error if the lease
 // not found.
-func (idx *leaseIndex) remove(
-	ctx context.Context,
-	l *Lease,
-	iface *netInterface,
-) (err error) {
+func (idx *leaseIndex) remove(ctx context.Context, l *Lease, iface *netInterface) (err error) {
 	loweredName := strings.ToLower(l.Hostname)
 
 	if _, ok := idx.byAddr[l.IP]; !ok {

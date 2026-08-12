@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"net/netip"
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
@@ -377,7 +378,8 @@ func (iface *dhcpInterfaceV6) handleInfo(
 // handleRelease handles messages of type RELEASE.  req must not be nil and must
 // be a valid DHCPv6 message of type RELEASE.  fd must be valid.
 //
-// TODO(e.burkov):  Implement.  This is a stub for now.
+// TODO(e.burkov):  Verify all IA_NA options instead of handling only the first
+// one.
 func (iface *dhcpInterfaceV6) handleRelease(
 	ctx context.Context,
 	fd *frameData6,
@@ -391,7 +393,43 @@ func (iface *dhcpInterfaceV6) handleRelease(
 	l := iface.common.logger
 	l.DebugContext(ctx, "handling message", "type", req.MsgType, "cli_id", cliID)
 
-	return nil
+	resp := &layers.DHCPv6{
+		MsgType:       layers.DHCPv6MsgTypeReply,
+		TransactionID: req.TransactionID,
+	}
+
+	iaid, ip := iface.ipForRelease(ctx, req)
+	if ip == (netip.Addr{}) {
+		resp.Options = iface.newUpdateRespOpts(fd, req, cliID, layers.DHCPv6Option{})
+
+		return respond6(fd, resp)
+	}
+
+	key := macToKey(fd.ether.SrcMAC)
+
+	iface.common.indexMu.Lock()
+	defer iface.common.indexMu.Unlock()
+
+	lease, hasLease := iface.common.leases[key]
+	if !hasLease || lease.IP != ip {
+		respIANA := newIANAWithStatus(iaid, layers.DHCPv6StatusCodeNoBinding)
+		resp.Options = iface.newUpdateRespOpts(fd, req, cliID, respIANA)
+
+		return respond6(fd, resp)
+	}
+
+	err = iface.common.index.remove(ctx, lease, iface.common)
+	if err != nil {
+		l.ErrorContext(ctx, "removing lease", slogutil.KeyError, err)
+
+		respIANA := newIANAWithStatus(iaid, layers.DHCPv6StatusCodeNoBinding)
+		resp.Options = iface.newUpdateRespOpts(fd, req, cliID, respIANA)
+	} else {
+		respIANA := &IANAOption{ID: iaid}
+		resp.Options = iface.newUpdateRespOpts(fd, req, cliID, respIANA.Encode())
+	}
+
+	return respond6(fd, resp)
 }
 
 // handleDecline handles messages of type DECLINE.  req must not be nil and must
