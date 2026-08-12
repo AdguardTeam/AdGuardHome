@@ -275,18 +275,31 @@ func (u *unit) serialize() (udb *unitDB) {
 
 // loadUnitFromDB loads unit by id from the database.
 func (s *StatsCtx) loadUnitFromDB(tx *bbolt.Tx, id uint32) (udb *unitDB) {
+	return s.decodeUnit(s.loadUnitDataFromDB(tx, id), id)
+}
+
+// loadUnitDataFromDB loads a copy of the serialized unit by id from the
+// database.
+func (s *StatsCtx) loadUnitDataFromDB(tx *bbolt.Tx, id uint32) (data []byte) {
 	bkt := tx.Bucket(idToUnitName(id))
 	if bkt == nil {
 		return nil
 	}
 
+	return bytes.Clone(bkt.Get([]byte{0}))
+}
+
+// decodeUnit decodes data into a unit with id.  It returns nil if data is nil.
+func (s *StatsCtx) decodeUnit(data []byte, id uint32) (udb *unitDB) {
+	if data == nil {
+		return nil
+	}
+
 	s.logger.Debug("loading unit", "id", id)
 
-	var buf bytes.Buffer
-	buf.Write(bkt.Get([]byte{0}))
 	udb = &unitDB{}
 
-	err := gob.NewDecoder(&buf).Decode(udb)
+	err := gob.NewDecoder(bytes.NewReader(data)).Decode(udb)
 	if err != nil {
 		s.logger.Error("gob decode", slogutil.KeyError, err)
 

@@ -598,21 +598,16 @@ func (s *StatsCtx) loadUnits(limit uint32) (units []*unitDB, curID uint32) {
 		return nil, 0
 	}
 
-	// Per-hour units.
-	units = make([]*unitDB, 0, limit)
 	firstID := curID - limit + 1
-	for i := firstID; i != curID; i++ {
-		u := s.loadUnitFromDB(tx, i)
-		if u == nil {
-			u = &unitDB{NResult: make([]uint64, resultLast)}
-		}
-		units = append(units, u)
-	}
+	unitsData := s.loadUnitsData(tx, firstID, limit)
 
 	err = finishTxn(tx, false)
 	if err != nil {
 		s.logger.Error("finishing transaction", slogutil.KeyError, err)
 	}
+
+	// Per-hour units.
+	units = s.decodeUnits(unitsData, firstID, limit)
 
 	if curData != nil {
 		units = append(units, curData)
@@ -624,6 +619,33 @@ func (s *StatsCtx) loadUnits(limit uint32) (units []*unitDB, curID uint32) {
 	}
 
 	return units, curID
+}
+
+// loadUnitsData copies the stored per-hour units.  Decoding may take a long
+// time, and keeping a read transaction open during it can block a map-growing
+// write transaction.
+func (s *StatsCtx) loadUnitsData(tx *bbolt.Tx, firstID, limit uint32) (unitsData [][]byte) {
+	unitsData = make([][]byte, 0, limit-1)
+	for id := firstID; id != firstID+limit-1; id++ {
+		unitsData = append(unitsData, s.loadUnitDataFromDB(tx, id))
+	}
+
+	return unitsData
+}
+
+// decodeUnits decodes unitsData starting with firstID.
+func (s *StatsCtx) decodeUnits(unitsData [][]byte, firstID, limit uint32) (units []*unitDB) {
+	units = make([]*unitDB, 0, limit)
+	for i, data := range unitsData {
+		u := s.decodeUnit(data, firstID+uint32(i))
+		if u == nil {
+			u = &unitDB{NResult: make([]uint64, resultLast)}
+		}
+
+		units = append(units, u)
+	}
+
+	return units
 }
 
 // ShouldCount returns true if request for the host should be counted.

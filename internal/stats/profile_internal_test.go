@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os"
 	"runtime"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -181,6 +182,90 @@ func TestStatsCtx_LoadUnitsConcurrentFlush(t *testing.T) {
 		assert.Equal(t, uint64(2), units[1].NTotal)
 		assert.Equal(t, uint64(3), units[2].NTotal)
 	}
+}
+
+func TestStatsCtx_LoadUnitsDoesNotBlockFlushAtMapGrowth(t *testing.T) {
+	const (
+		limit        uint32 = 2
+		longNameSize        = 16 * 1024
+	)
+
+	loadEntered := make(chan struct{})
+	loadRelease := make(chan struct{})
+	flushEntered := make(chan struct{})
+
+	curID := profileCurrentUnitID
+	s := newTestStatsCtx(t, Config{
+		Enabled: true,
+		Limit:   time.Duration(limit) * time.Hour,
+		UnitID:  func() (id uint32) { return curID },
+	})
+	t.Cleanup(func() { require.NoError(t, s.Close()) })
+
+	db := s.db.Load()
+	tx, err := db.Begin(true)
+	require.NoError(t, err)
+
+	err = s.flushUnitToDB(&unitDB{NResult: make([]uint64, resultLast)}, tx, curID-1)
+	require.NoError(t, err)
+	require.NoError(t, finishTxn(tx, true))
+
+	infoBefore, err := os.Stat(s.filename)
+	require.NoError(t, err)
+
+	longName := strings.Repeat("a", longNameSize)
+	for i := range maxDomains {
+		s.curr.domains[fmt.Sprintf("%03d.%s", i, longName)] = uint64(i + 1)
+	}
+
+	s.logger = slog.New(&profileLoadHandler{
+		Handler:      slog.NewTextHandler(io.Discard, &slog.HandlerOptions{Level: slog.LevelDebug}),
+		loadEntered:  loadEntered,
+		flushEntered: flushEntered,
+		loadRelease:  loadRelease,
+	})
+
+	loadDone := make(chan struct{})
+	go func() {
+		_, _ = s.loadUnits(limit)
+		close(loadDone)
+	}()
+
+	testutil.RequireReceive(t, loadEntered, time.Second)
+
+	flushDone := make(chan struct{})
+	curID++
+	go func() {
+		_, _ = s.flush()
+		close(flushDone)
+	}()
+
+	var releaseOnce sync.Once
+	releaseLoad := func() { releaseOnce.Do(func() { close(loadRelease) }) }
+	t.Cleanup(releaseLoad)
+
+	// The read transaction must be closed before decoding begins.  Otherwise a
+	// map-growing flush holds currMu while waiting for the loader to finish.
+	testutil.RequireReceive(t, flushEntered, time.Second)
+
+	updateDone := make(chan struct{})
+	go func() {
+		s.Update(&Entry{
+			Client: "192.0.2.1",
+			Domain: "example.org",
+			Result: RNotFiltered,
+		})
+		close(updateDone)
+	}()
+	testutil.RequireReceive(t, updateDone, time.Second)
+
+	releaseLoad()
+	testutil.RequireReceive(t, loadDone, time.Second)
+	testutil.RequireReceive(t, flushDone, time.Second)
+
+	infoAfter, err := os.Stat(s.filename)
+	require.NoError(t, err)
+	assert.Greater(t, infoAfter.Size(), infoBefore.Size())
 }
 
 func BenchmarkStatsCtx_LoadUnits(b *testing.B) {
