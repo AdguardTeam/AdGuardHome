@@ -50,7 +50,9 @@ export const DhcpToggle = (props: Props) => {
         // Turning ON — check prerequisites before saving to backend.
         const v4 = dhcpState.v4;
         const v6 = dhcpState.v6;
-        const hasV4Config = !!(v4 && Object.values(v4).some(Boolean));
+        const hasV4Config = !!(
+            v4 && v4.gateway_ip && v4.subnet_mask && v4.range_start && v4.range_end
+        );
         const hasV6Config = !!(v6 && Object.values(v6).some(Boolean));
 
         // v4 config is already set up — save the change.

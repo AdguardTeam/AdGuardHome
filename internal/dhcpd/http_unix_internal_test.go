@@ -23,7 +23,7 @@ func defaultResponse() *dhcpStatusResponse {
 	conf4.LeaseDuration = 86400
 
 	resp := &dhcpStatusResponse{
-		V4:           *conf4,
+		V4:           v4ServerConfToStatusJSON(conf4),
 		V6:           V6ServerConf{},
 		Leases:       []*leaseDynamic{},
 		StaticLeases: []*leaseStatic{},
@@ -149,6 +149,109 @@ func TestServer_handleDHCPStatus(t *testing.T) {
 		checkStatus(t, s, resp)
 	})
 	require.True(t, ok)
+}
+
+func TestServer_handleDHCPSetConfigOptions(t *testing.T) {
+	const (
+		initialOption = "66 text old-pxe.example.org"
+		pxeServer     = "66 text pxe.example.org"
+		bootFile      = "67 text bootx64.efi"
+	)
+
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	conf4 := defaultV4ServerConf()
+	conf4.Options = []string{initialOption}
+
+	s, err := Create(ctx, &ServerConfig{
+		Logger:       testLogger,
+		Enabled:      false,
+		Conf4:        *conf4,
+		DataDir:      t.TempDir(),
+		ConfModifier: agh.EmptyConfigModifier{},
+	})
+	require.NoError(t, err)
+
+	setConfig := func(t *testing.T, options []string, includeOptions bool) (w *httptest.ResponseRecorder) {
+		t.Helper()
+
+		v4 := map[string]any{
+			"gateway_ip":     DefaultGatewayIP.String(),
+			"subnet_mask":    DefaultSubnetMask.String(),
+			"range_start":    DefaultRangeStart.String(),
+			"range_end":      DefaultRangeEnd.String(),
+			"lease_duration": DefaultDHCPLeaseTTL,
+		}
+		if includeOptions {
+			v4["options"] = options
+		}
+
+		body, reqErr := json.Marshal(map[string]any{
+			"enabled": false,
+			"v4":      v4,
+		})
+		require.NoError(t, reqErr)
+
+		r := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader(body))
+		w = httptest.NewRecorder()
+		s.handleDHCPSetConfig(w, r)
+
+		return w
+	}
+
+	getOptions := func(t *testing.T) (options []string) {
+		t.Helper()
+
+		w := httptest.NewRecorder()
+		s.handleDHCPStatus(w, httptest.NewRequest(http.MethodGet, "/", nil))
+		require.Equal(t, http.StatusOK, w.Code)
+
+		var resp struct {
+			V4 struct {
+				Options []string `json:"options"`
+			} `json:"v4"`
+		}
+		decodeErr := json.NewDecoder(w.Body).Decode(&resp)
+		require.NoError(t, decodeErr)
+
+		return resp.V4.Options
+	}
+
+	getDiskOptions := func() (options []string) {
+		conf := &ServerConfig{}
+		s.WriteDiskConfig(conf)
+
+		return conf.Conf4.Options
+	}
+
+	t.Run("status", func(t *testing.T) {
+		assert.Equal(t, []string{initialOption}, getOptions(t))
+	})
+
+	t.Run("omitted_preserves", func(t *testing.T) {
+		w := setConfig(t, nil, false)
+		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Equal(t, []string{initialOption}, getOptions(t))
+	})
+
+	t.Run("replace", func(t *testing.T) {
+		w := setConfig(t, []string{pxeServer, bootFile}, true)
+		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Equal(t, []string{pxeServer, bootFile}, getOptions(t))
+		assert.Equal(t, []string{pxeServer, bootFile}, getDiskOptions())
+	})
+
+	t.Run("clear", func(t *testing.T) {
+		w := setConfig(t, []string{}, true)
+		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Empty(t, getOptions(t))
+		assert.Empty(t, getDiskOptions())
+	})
+
+	t.Run("invalid_rejected", func(t *testing.T) {
+		w := setConfig(t, []string{"66 unknown pxe.example.org"}, true)
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		assert.Empty(t, getOptions(t))
+	})
 }
 
 func TestServer_HandleUpdateStaticLease(t *testing.T) {

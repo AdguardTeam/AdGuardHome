@@ -32,6 +32,7 @@ type v4ServerConfJSON struct {
 	RangeStart    netip.Addr `json:"range_start"`
 	RangeEnd      netip.Addr `json:"range_end"`
 	LeaseDuration uint32     `json:"lease_duration"`
+	Options       *[]string  `json:"options,omitempty"`
 }
 
 func (j *v4ServerConfJSON) toServerConf() *V4ServerConf {
@@ -45,6 +46,33 @@ func (j *v4ServerConfJSON) toServerConf() *V4ServerConf {
 		RangeStart:    j.RangeStart,
 		RangeEnd:      j.RangeEnd,
 		LeaseDuration: j.LeaseDuration,
+	}
+}
+
+// v4ServerConfStatusJSON is the JSON response form of [V4ServerConf].
+type v4ServerConfStatusJSON struct {
+	GatewayIP     netip.Addr `json:"gateway_ip"`
+	SubnetMask    netip.Addr `json:"subnet_mask"`
+	RangeStart    netip.Addr `json:"range_start"`
+	RangeEnd      netip.Addr `json:"range_end"`
+	LeaseDuration uint32     `json:"lease_duration"`
+	Options       []string   `json:"options"`
+}
+
+// v4ServerConfToStatusJSON returns the JSON response form of c.
+func v4ServerConfToStatusJSON(c *V4ServerConf) (j v4ServerConfStatusJSON) {
+	options := slices.Clone(c.Options)
+	if options == nil {
+		options = []string{}
+	}
+
+	return v4ServerConfStatusJSON{
+		GatewayIP:     c.GatewayIP,
+		SubnetMask:    c.SubnetMask,
+		RangeStart:    c.RangeStart,
+		RangeEnd:      c.RangeEnd,
+		LeaseDuration: c.LeaseDuration,
+		Options:       options,
 	}
 }
 
@@ -66,12 +94,12 @@ func v6JSONToServerConf(j *v6ServerConfJSON) V6ServerConf {
 
 // dhcpStatusResponse is the response for /control/dhcp/status endpoint.
 type dhcpStatusResponse struct {
-	IfaceName    string          `json:"interface_name"`
-	V4           V4ServerConf    `json:"v4"`
-	V6           V6ServerConf    `json:"v6"`
-	Leases       []*leaseDynamic `json:"leases"`
-	StaticLeases []*leaseStatic  `json:"static_leases"`
-	Enabled      bool            `json:"enabled"`
+	IfaceName    string                 `json:"interface_name"`
+	V4           v4ServerConfStatusJSON `json:"v4"`
+	V6           V6ServerConf           `json:"v6"`
+	Leases       []*leaseDynamic        `json:"leases"`
+	StaticLeases []*leaseStatic         `json:"static_leases"`
+	Enabled      bool                   `json:"enabled"`
 }
 
 // leaseStatic is the JSON form of static DHCP lease.
@@ -140,14 +168,16 @@ func leasesToDynamic(leases []*dhcpsvc.Lease) (dynamic []*leaseDynamic) {
 }
 
 func (s *server) handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
+	v4Conf := &V4ServerConf{}
+	s.srv4.WriteDiskConfig4(v4Conf)
+
 	status := &dhcpStatusResponse{
 		Enabled:   s.conf.Enabled,
 		IfaceName: s.conf.InterfaceName,
-		V4:        V4ServerConf{},
+		V4:        v4ServerConfToStatusJSON(v4Conf),
 		V6:        V6ServerConf{},
 	}
 
-	s.srv4.WriteDiskConfig4(&status.V4)
 	s.srv6.WriteDiskConfig6(&status.V6)
 
 	leases := s.Leases()
@@ -256,7 +286,15 @@ func (s *server) handleDHCPSetConfigV4(
 	s.srv4.WriteDiskConfig4(c4)
 	v4Conf.notify = c4.notify
 	v4Conf.ICMPTimeout = c4.ICMPTimeout
-	v4Conf.Options = c4.Options
+	if options := conf.V4.Options; options != nil {
+		v4Conf.Options = slices.Clone(*options)
+		err = validateDHCPOptions(v4Conf.Options)
+		if err != nil {
+			return nil, false, fmt.Errorf("validating dhcpv4 options: %w", err)
+		}
+	} else {
+		v4Conf.Options = c4.Options
+	}
 
 	srv4, err := v4Create(v4Conf)
 

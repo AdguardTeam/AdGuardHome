@@ -6,8 +6,9 @@ import intl from 'panel/common/intl';
 import theme from 'panel/lib/theme';
 import { ConfigDialog } from 'panel/common/ui/ConfigDialog';
 import { Input } from 'panel/common/controls/Input';
+import { Textarea } from 'panel/common/controls/Textarea';
 import { dhcpState } from 'panel/stores/dhcp';
-import { calculateDhcpPlaceholdersIpv4 } from 'panel/helpers/helpers';
+import { calculateDhcpPlaceholdersIpv4, splitByNewLine } from 'panel/helpers/helpers';
 import { DHCP_VALUES_PLACEHOLDERS } from 'panel/helpers/constants';
 import {
     validateIpv4,
@@ -26,6 +27,7 @@ export type V4Config = {
     range_start: string;
     range_end: string;
     lease_duration: number;
+    options: string[];
 };
 
 type Props = {
@@ -41,6 +43,7 @@ export const DhcpV4Modal = (props: Props) => {
     const [rangeStart, setRangeStart] = createSignal('');
     const [rangeEnd, setRangeEnd] = createSignal('');
     const [leaseDuration, setLeaseDuration] = createSignal('');
+    const [options, setOptions] = createSignal('');
     const [gatewayIpError, setGatewayIpError] = createSignal('');
     const [subnetMaskError, setSubnetMaskError] = createSignal('');
     const [rangeStartError, setRangeStartError] = createSignal('');
@@ -55,6 +58,7 @@ export const DhcpV4Modal = (props: Props) => {
             setRangeStart(v4?.range_start || '');
             setRangeEnd(v4?.range_end || '');
             setLeaseDuration(v4?.lease_duration ? String(v4.lease_duration) : '');
+            setOptions(v4?.options?.join('\n') || '');
             setGatewayIpError('');
             setSubnetMaskError('');
             setRangeStartError('');
@@ -173,6 +177,7 @@ export const DhcpV4Modal = (props: Props) => {
             range_start: rangeStart().trim(),
             range_end: rangeEnd().trim(),
             lease_duration: leaseDuration() ? Number(leaseDuration().trim()) : 0,
+            options: splitByNewLine(options()),
         });
     };
 
@@ -180,6 +185,7 @@ export const DhcpV4Modal = (props: Props) => {
         <ConfigDialog
             open={props.open}
             title={intl.getMessage('dhcp_ipv4_settings')}
+            description={intl.getMessage('dhcp_form_options_warning')}
             onClose={props.onClose}
             onSubmit={handleSave}
             processing={!!dhcpState.processingConfig}
@@ -259,6 +265,21 @@ export const DhcpV4Modal = (props: Props) => {
                     size="large"
                     inputError={leaseDurationError()}
                 />
+            </div>
+            <div class={s.formField}>
+                <Textarea
+                    value={options()}
+                    onChange={(e: Event) => setOptions((e.target as HTMLTextAreaElement).value)}
+                    id="v4_options"
+                    label={intl.getMessage('dhcp_form_options')}
+                    placeholder={intl.getMessage('dhcp_form_options_placeholder')}
+                    disabled={!hasIpv4()}
+                    rows={4}
+                    size="large"
+                />
+                <div class={cn(theme.text.t3, s.formFieldHint)}>
+                    {intl.getMessage('dhcp_form_options_hint')}
+                </div>
             </div>
         </ConfigDialog>
     );

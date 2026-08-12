@@ -57,8 +57,11 @@ export const Dhcp = () => {
     });
 
     const handleSaveV4Config = (values: V4Config) => {
-        setDhcpConfig({ interface_name: selectedInterface(), v4: values });
-        v4Dialog.closeDialog();
+        void setDhcpConfig({ interface_name: selectedInterface(), v4: values }).then((saved) => {
+            if (saved) {
+                v4Dialog.closeDialog();
+            }
+        });
     };
 
     const handleSaveV6Config = (values: V6Config) => {
