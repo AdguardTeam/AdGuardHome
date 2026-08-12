@@ -91,7 +91,7 @@ func TestDHCPServer_ServeEther6_solicit(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			db := newTestDatabase(t, testLeases)
+			db := newTestDatabase(t)
 
 			ndMgr, inCh, outCh := newTestNetworkDeviceManager(t, testIfaceAddrV6)
 			startTestDHCPServer(t, &dhcpsvc.Config{
@@ -185,7 +185,7 @@ func TestDHCPServer_ServeEther6_solicitRapidCommit(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			db := newTestDatabase(t, testLeases)
+			db := newTestDatabase(t)
 
 			onStore := func(ctx context.Context, leases []*dhcpsvc.Lease) (err error) {
 				assert.Contains(t, leases, tc.want)
@@ -280,7 +280,7 @@ func TestDHCPServer_ServeEther6_request(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			db := newTestDatabase(t, testLeases)
+			db := newTestDatabase(t)
 
 			onStore := func(ctx context.Context, leases []*dhcpsvc.Lease) (err error) {
 				assert.Contains(t, leases, tc.want)
@@ -361,7 +361,7 @@ func TestDHCPServer_ServeEther6_requestWithSolicit(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			db := newTestDatabase(t, testLeases)
+			db := newTestDatabase(t)
 
 			onStore := func(ctx context.Context, leases []*dhcpsvc.Lease) (err error) {
 				assert.Contains(t, leases, tc.want)
@@ -469,7 +469,7 @@ func TestDHCPServer_ServeEther6_confirm(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			db := newTestDatabase(t, testLeases)
+			db := newTestDatabase(t)
 
 			ndMgr, inCh, outCh := newTestNetworkDeviceManager(t, testIfaceAddrV6)
 			startTestDHCPServer(t, &dhcpsvc.Config{
@@ -543,7 +543,7 @@ func TestDHCPServer_ServeEther6_renew(t *testing.T) {
 	for _, tc := range testCases {
 		req := testutil.RequireTypeAssert[*layers.DHCPv6](t, tc.in.Layer(layers.LayerTypeDHCPv6))
 
-		db := newTestDatabase(t, testLeases)
+		db := newTestDatabase(t)
 
 		onStore := func(ctx context.Context, leases []*dhcpsvc.Lease) (err error) {
 			assert.Contains(t, leases, tc.want)
@@ -630,7 +630,7 @@ func TestDHCPServer_ServeEther6_rebind(t *testing.T) {
 	for _, tc := range testCases {
 		req := testutil.RequireTypeAssert[*layers.DHCPv6](t, tc.in.Layer(layers.LayerTypeDHCPv6))
 
-		db := newTestDatabase(t, testLeases)
+		db := newTestDatabase(t)
 
 		onStore := func(ctx context.Context, leases []*dhcpsvc.Lease) (err error) {
 			assert.Contains(t, leases, tc.want)
@@ -699,10 +699,108 @@ func TestDHCPServer_ServeEther6_info(t *testing.T) {
 	for _, tc := range testCases {
 		req := testutil.RequireTypeAssert[*layers.DHCPv6](t, tc.in.Layer(layers.LayerTypeDHCPv6))
 
+		db := newTestDatabase(t)
+
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			db := newTestDatabase(t, testLeases)
+			ndMgr, inCh, outCh := newTestNetworkDeviceManager(t, testIfaceAddrV6)
+			startTestDHCPServer(t, &dhcpsvc.Config{
+				Database:             db,
+				Interfaces:           testIPv6InterfacesConf,
+				Logger:               testLogger,
+				NetworkDeviceManager: ndMgr,
+				Enabled:              true,
+			})
+
+			testutil.RequireSend(t, inCh, tc.in, testTimeout)
+
+			assertValidResponse6(t, req, outCh, tc.wantOpts)
+		})
+	}
+}
+
+func TestDHCPServer_ServeEther6_release(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		in       gopacket.Packet
+		want     *dhcpsvc.Lease
+		name     string
+		wantOpts layers.DHCPv6Options
+	}{{
+		in:   newDHCPv6Release(t, testHWDynamic, testIPv6Dynamic),
+		want: testLease6Dynamic,
+		name: "success",
+		wantOpts: layers.DHCPv6Options{
+			newOptServerDUID(t, testIfaceHWAddr),
+			newOptClientDUID(t, testHWDynamic),
+			newOptIANAStatus(t, testIAID, layers.DHCPv6StatusCodeSuccess),
+			newOptPreference(t, 0),
+			newOptSolMaxRT(t, dhcpsvc.DefaultSolMaxRT),
+		},
+	}, {
+		in:   newDHCPv6Release(t, testHWStatic, testIPv6Static),
+		want: testLease6Static,
+		name: "success_static",
+		wantOpts: layers.DHCPv6Options{
+			newOptServerDUID(t, testIfaceHWAddr),
+			newOptClientDUID(t, testHWStatic),
+			newOptIANAStatus(t, testIAID, layers.DHCPv6StatusCodeSuccess),
+			newOptPreference(t, 0),
+			newOptSolMaxRT(t, dhcpsvc.DefaultSolMaxRT),
+		},
+	}, {
+		in:   newDHCPv6Release(t, testHWUnknown, testIPv6Unknown),
+		want: nil,
+		name: "no_binding",
+		wantOpts: layers.DHCPv6Options{
+			newOptServerDUID(t, testIfaceHWAddr),
+			newOptClientDUID(t, testHWUnknown),
+			newOptIANAStatus(t, testIAID, layers.DHCPv6StatusCodeNoBinding),
+			newOptPreference(t, 0),
+			newOptSolMaxRT(t, dhcpsvc.DefaultSolMaxRT),
+		},
+	}, {
+		in:   newDHCPv6Release(t, testHWDynamic, netip.Addr{}),
+		want: nil,
+		name: "no_iana",
+		wantOpts: layers.DHCPv6Options{
+			newOptServerDUID(t, testIfaceHWAddr),
+			newOptClientDUID(t, testHWDynamic),
+			newOptPreference(t, 0),
+			newOptSolMaxRT(t, dhcpsvc.DefaultSolMaxRT),
+		},
+	}, {
+		in:   newDHCPv6Release(t, testHWDynamic, testIPv6Unknown),
+		want: nil,
+		name: "ip_mismatch",
+		wantOpts: layers.DHCPv6Options{
+			newOptServerDUID(t, testIfaceHWAddr),
+			newOptClientDUID(t, testHWDynamic),
+			newOptIANAStatus(t, testIAID, layers.DHCPv6StatusCodeNoBinding),
+			newOptPreference(t, 0),
+			newOptSolMaxRT(t, dhcpsvc.DefaultSolMaxRT),
+		},
+	}}
+
+	for _, tc := range testCases {
+		req := testutil.RequireTypeAssert[*layers.DHCPv6](t, tc.in.Layer(layers.LayerTypeDHCPv6))
+
+		db := newTestDatabase(t)
+
+		onStore := func(ctx context.Context, leases []*dhcpsvc.Lease) (err error) {
+			assert.NotContains(t, leases, tc.want)
+
+			return nil
+		}
+
+		if tc.want != nil {
+			db.onStore = onStore
+		}
+
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ndMgr, inCh, outCh := newTestNetworkDeviceManager(t, testIfaceAddrV6)
 			startTestDHCPServer(t, &dhcpsvc.Config{
@@ -1018,6 +1116,34 @@ func newDHCPv6Renew(tb testing.TB, mac net.HardwareAddr, reqIP netip.Addr) (pkt 
 
 	dhcp := &layers.DHCPv6{
 		MsgType:  layers.DHCPv6MsgTypeRenew,
+		HopCount: 0,
+		// Don't specify link and peer addresses, as they are intended for relay
+		// messages.
+		LinkAddr:      nil,
+		PeerAddr:      nil,
+		TransactionID: testTransactionID,
+		Options: layers.DHCPv6Options{
+			newOptClientDUID(tb, mac),
+			newOptServerDUID(tb, testIfaceHWAddr),
+		},
+	}
+
+	if reqIP.IsValid() && reqIP.Is6() {
+		dhcp.Options = append(dhcp.Options, newOptIANA(tb, testIAID, reqIP, testLeaseTTL))
+	}
+
+	return newTestPacket(tb, layers.LinkTypeEthernet, eth, ip, udp, dhcp)
+}
+
+// newDHCPv6Release creates a new DHCPv6 RELEASE packet for testing.
+func newDHCPv6Release(tb testing.TB, mac net.HardwareAddr, reqIP netip.Addr) (pkt gopacket.Packet) {
+	tb.Helper()
+
+	eth := newEthernetLayer(tb, mac, testIfaceHWAddr, layers.EthernetTypeIPv6)
+	ip, udp := newIPv6UDPLayer(tb, netip.AddrPort{}, netip.AddrPort{})
+
+	dhcp := &layers.DHCPv6{
+		MsgType:  layers.DHCPv6MsgTypeRelease,
 		HopCount: 0,
 		// Don't specify link and peer addresses, as they are intended for relay
 		// messages.

@@ -143,7 +143,7 @@ func readLogSettings(
 
 	err = yaml.Unmarshal(yamlFile, conf)
 	if err != nil {
-		log.Error("Couldn't get logging settings from the configuration: %s", err)
+		l.ErrorContext(ctx, "getting logging settings from config", slogutil.KeyError, err)
 	}
 
 	return &conf.Log

@@ -3,6 +3,7 @@ package home
 import (
 	"fmt"
 	"iter"
+	"log"
 	"net/netip"
 	"os"
 	"slices"
@@ -11,7 +12,6 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/configmigrate"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
-	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/osutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 )
@@ -264,7 +264,7 @@ var cmdLineOpts = []cmdLineOpt{{
 	updateWithValue: nil,
 	updateNoValue:   nil,
 	effect: func(_ options, _ string) (f effect, err error) {
-		log.Info("warning: using --no-mem-optimization flag has no effect and is deprecated")
+		log.Println("warning: using --no-mem-optimization flag has no effect and is deprecated")
 
 		return nil, nil
 	},
@@ -276,7 +276,7 @@ var cmdLineOpts = []cmdLineOpt{{
 	updateWithValue: nil,
 	updateNoValue:   func(o options) (options, error) { o.noEtcHosts = true; return o, nil },
 	effect: func(_ options, _ string) (f effect, err error) {
-		log.Info(
+		log.Println(
 			"warning: --no-etc-hosts flag is deprecated " +
 				"and will be removed in the future versions; " +
 				"set clients.runtime_sources.hosts and dns.hostsfile_enabled " +

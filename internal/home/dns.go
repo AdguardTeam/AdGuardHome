@@ -23,9 +23,9 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/dnscrypt"
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/golibs/netutil/httputil"
 	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	yaml "go.yaml.in/yaml/v4"
 )
@@ -42,7 +42,7 @@ const (
 // initDNS updates all the fields of the [globalContext] needed to initialize
 // the DNS server and initializes it at last.  It also must not be called unless
 // [config] and [globalContext] are initialized.  baseLogger, tlsMgr,
-// confModifier, and httpReg must not be nil.
+// confModifier, httpReg, and mux must not be nil.
 func initDNS(
 	ctx context.Context,
 	baseLogger *slog.Logger,
@@ -52,6 +52,7 @@ func initDNS(
 	statsDir string,
 	querylogDir string,
 	hc *aghnet.HostsContainer,
+	mux httputil.Router,
 ) (err error) {
 	anonymizer := config.anonymizer()
 
@@ -129,7 +130,9 @@ func initDNS(
 		return fmt.Errorf("creating dns server: %w", err)
 	}
 
-	registerDoHHandlers(config.HTTPConfig.DoH.Routes)
+	for _, route := range config.HTTPConfig.DoH.Routes {
+		mux.Handle(route, globalContext.dnsServer)
+	}
 
 	return nil
 }
@@ -151,7 +154,7 @@ func initDNSServer(
 	// error and consider removing this defer.
 	defer func() {
 		if err != nil {
-			closeDNSServer(ctx)
+			closeDNSServer(ctx, params.Logger)
 		}
 	}()
 	if err != nil {
@@ -476,7 +479,9 @@ func startDNSServer() (err error) {
 	return nil
 }
 
-func stopDNSServer(ctx context.Context) (err error) {
+// stopDNSServer stops the DNS server and closes all the DNS modules.  l must
+// not be nil.
+func stopDNSServer(ctx context.Context, l *slog.Logger) (err error) {
 	if !isRunning() {
 		return nil
 	}
@@ -491,12 +496,14 @@ func stopDNSServer(ctx context.Context) (err error) {
 		return fmt.Errorf("closing clients container: %w", err)
 	}
 
-	closeDNSServer(ctx)
+	closeDNSServer(ctx, l)
 
 	return nil
 }
 
-func closeDNSServer(ctx context.Context) {
+// closeDNSServer closes the DNS server and the modules it depends on.  l must
+// not be nil.
+func closeDNSServer(ctx context.Context, l *slog.Logger) {
 	// DNS forward module must be closed BEFORE stats or queryLog because it depends on them
 	if globalContext.dnsServer != nil {
 		globalContext.dnsServer.Close(ctx)
@@ -510,18 +517,18 @@ func closeDNSServer(ctx context.Context) {
 	if globalContext.stats != nil {
 		err := globalContext.stats.Close()
 		if err != nil {
-			log.Error("closing stats: %s", err)
+			l.ErrorContext(ctx, "closing stats", slogutil.KeyError, err)
 		}
 	}
 
 	if globalContext.queryLog != nil {
 		err := globalContext.queryLog.Shutdown(ctx)
 		if err != nil {
-			log.Error("closing query log: %s", err)
+			l.ErrorContext(ctx, "closing query log", slogutil.KeyError, err)
 		}
 	}
 
-	log.Debug("all dns modules are closed")
+	l.DebugContext(ctx, "all dns modules are closed")
 }
 
 // checkStatsAndQuerylogDirs checks and returns directory paths to store
@@ -569,11 +576,4 @@ func checkDir(path string) (err error) {
 	}
 
 	return nil
-}
-
-// registerDoHHandlers registers DoH handlers on the given routes.
-func registerDoHHandlers(routes []string) {
-	for _, route := range routes {
-		globalContext.web.conf.mux.Handle(route, globalContext.dnsServer)
-	}
 }

@@ -403,6 +403,7 @@ func (iface *dhcpInterfaceV6) allocateForSolicit(
 ) (lease *Lease, iaid uint32) {
 	l := iface.common.logger
 	key := macToKey(mac)
+	now := iface.clock.Now()
 
 	for i, reqOpt := range req.Options {
 		if reqOpt.Code != layers.DHCPv6OptIANA {
@@ -417,12 +418,14 @@ func (iface *dhcpInterfaceV6) allocateForSolicit(
 			continue
 		}
 
+		// TODO(e.burkov):  Check if the IA actually requests any address.
+
 		var ok bool
 		if lease, ok = iface.common.leases[key]; ok {
 			return lease, iana.ID
 		}
 
-		lease, err = iface.common.allocateLease(ctx, mac, key, iface.clock.Now())
+		lease, err = iface.common.allocateLease(ctx, mac, key, now)
 		if err != nil {
 			l.DebugContext(ctx, "no address available", "iaid", iana.ID, slogutil.KeyError, err)
 
@@ -435,6 +438,41 @@ func (iface *dhcpInterfaceV6) allocateForSolicit(
 	l.DebugContext(ctx, "no valid ia_na in solicit")
 
 	return nil, 0
+}
+
+// ipForRelease returns the IAID and IP address requested for release in req.
+// It returns zero values if there is no IA_NA option or if all options are
+// malformed.  req must be a valid DHCPv6 message of RELEASE type.
+func (iface *dhcpInterfaceV6) ipForRelease(
+	ctx context.Context,
+	req *layers.DHCPv6,
+) (iaid uint32, ip netip.Addr) {
+	l := iface.common.logger
+
+	for i, reqOpt := range req.Options {
+		if reqOpt.Code != layers.DHCPv6OptIANA {
+			continue
+		}
+
+		iana := &IANAOption{}
+		err := iana.UnmarshalBinary(reqOpt.Data)
+		if err != nil {
+			l.DebugContext(ctx, "malformed ia_na", "idx", i, slogutil.KeyError, err)
+
+			continue
+		}
+
+		reqIP, hasReqIP := iana.requestedAddr()
+		if !hasReqIP {
+			l.DebugContext(ctx, "no ip in ia_na for release", "iaid", iana.ID)
+
+			continue
+		}
+
+		return iana.ID, reqIP
+	}
+
+	return 0, netip.Addr{}
 }
 
 // firstIANA returns the first valid IA_NA option in req.  It returns false if
@@ -502,10 +540,10 @@ func (iface *dhcpInterfaceV6) confirmAddrsOnLink(
 }
 
 // newSolicitRespOpts returns the common option list for Advertise and
-// rapid-commit Reply responses to a Solicit request.  Zero iaid creates an
+// rapid-commit Reply responses to a Solicit request.  Nil lease creates an
 // option with Status Code NoAddrsAvail.  rapidCommit defines whether the
-// response should include the Rapid Commit option.  fd, req, cliID, and lease
-// must not be nil.
+// response should include the Rapid Commit option.  fd, req, and cliID must not
+// be nil.
 func (iface *dhcpInterfaceV6) newSolicitRespOpts(
 	fd *frameData6,
 	req *layers.DHCPv6,
@@ -519,7 +557,7 @@ func (iface *dhcpInterfaceV6) newSolicitRespOpts(
 
 	// For Solicit without IA_NA options, respond with safe Advertise with no
 	// IA_NA options and Status Code NoAddrsAvail.
-	if iaid == 0 {
+	if lease == nil {
 		opts = append(opts, newStatusCodeOption(layers.DHCPv6StatusCodeNoAddrsAvail))
 	} else {
 		opts = append(opts, iface.iaNAFromLease(lease, iaid))
@@ -541,7 +579,8 @@ func (iface *dhcpInterfaceV6) newSolicitRespOpts(
 
 // newRequestRespOpts returns the common option list for Reply responses to a
 // Request message.  fd, req, and cliID must not be nil.  iana must be a valid
-// IA_NA option, or be empty if the response should not contain an IA_NA option.
+// IA_NA option, or have a zero code if the response should not contain an IA_NA
+// option.
 //
 // TODO(e.burkov):  Keep the Reply option set aligned with the current Advertise
 // response shape until the wider DHCPv6 implementation is completed.
@@ -595,11 +634,16 @@ func (iface *dhcpInterfaceV6) newConfirmRespOpts(
 	return iface.appendRequestedOptions(opts, req)
 }
 
-// newUpdateRespOpts returns the common option list for Reply responses to a
-// RENEW or REBIND messages.  fd, req, and cliID must not be nil.  iana must be
-// a valid IA_NA option, or empty if the response should not include one.
+// newUpdateRespOpts returns the common option list for Reply responses to
+// RENEW, REBIND, and RELEASE messages.  fd, req, and cliID must not be nil.
+// iana must be a valid IA_NA option, or have a zero code if the response should
+// not include one.
 //
 // See RFC 9915 Section 18.3.4.
+//
+// TODO(e.burkov):  DRY with other options builders
+//
+// TODO(e.burkov):  Use internal types for options.
 func (iface *dhcpInterfaceV6) newUpdateRespOpts(
 	fd *frameData6,
 	req *layers.DHCPv6,

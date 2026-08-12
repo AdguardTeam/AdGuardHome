@@ -94,7 +94,7 @@ func TestDHCPServer_AddLease(t *testing.T) {
 				return nil
 			}
 
-			db := newTestDatabase(t, testLeases)
+			db := newTestDatabase(t)
 			if tc.wantErrMsg == "" {
 				db.onStore = onStore
 			}
@@ -116,7 +116,7 @@ func TestDHCPServer_index(t *testing.T) {
 	t.Parallel()
 
 	srv := newTestDHCPServer(t, &dhcpsvc.Config{
-		Database: newTestDatabase(t, testLeases),
+		Database: newTestDatabase(t),
 		Enabled:  true,
 	})
 
@@ -244,7 +244,7 @@ func TestDHCPServer_UpdateStaticLease(t *testing.T) {
 				return nil
 			}
 
-			db := newTestDatabase(t, testLeases)
+			db := newTestDatabase(t)
 			if tc.wantErrMsg == "" {
 				db.onStore = onStore
 			}
@@ -319,7 +319,7 @@ func TestDHCPServer_RemoveLease(t *testing.T) {
 				return nil
 			}
 
-			db := newTestDatabase(t, testLeases)
+			db := newTestDatabase(t)
 			if tc.wantErrMsg == "" {
 				db.onStore = onStore
 			}
@@ -340,7 +340,7 @@ func TestDHCPServer_RemoveLease(t *testing.T) {
 func TestDHCPServer_Reset(t *testing.T) {
 	t.Parallel()
 
-	db := newTestDatabase(t, testLeases)
+	db := newTestDatabase(t)
 	db.onStore = func(_ context.Context, leases []*dhcpsvc.Lease) (err error) {
 		assert.Empty(t, leases)
 
@@ -364,7 +364,7 @@ func TestServer_Leases(t *testing.T) {
 	t.Parallel()
 
 	srv := newTestDHCPServer(t, &dhcpsvc.Config{
-		Database: newTestDatabase(t, testLeases),
+		Database: newTestDatabase(t),
 		Enabled:  true,
 	})
 
