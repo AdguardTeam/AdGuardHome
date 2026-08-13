@@ -916,8 +916,6 @@ func (m *tlsManager) HasIPAddrs() (ok bool) {
 		return false
 	}
 
-	// TODO(m.kazantsev):  Consider storing the value instead of parsing each
-	// time.
 	return aghtls.CertificateHasIP(m.tlsCert.Leaf)
 }
 
