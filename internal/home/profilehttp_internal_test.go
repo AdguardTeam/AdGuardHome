@@ -121,10 +121,19 @@ func TestWeb_HandlePutProfile(t *testing.T) {
 		OnApply: func(_ context.Context) { isConfigChanged = true },
 	}
 
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	m, err := newTLSManager(ctx, &tlsManagerConfig{
+		logger:       testLogger,
+		confModifier: confModifier,
+		manager:      aghtls.EmptyManager{},
+	})
+	require.NoError(t, err)
+
 	web := newTestWeb(t, &webConfig{
 		mux:            mux,
 		configModifier: confModifier,
 		httpReg:        httpReg,
+		tlsManager:     m,
 	})
 
 	mw.set(web)

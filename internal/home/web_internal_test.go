@@ -80,7 +80,7 @@ func TestWebAPI_HandleTLSConfigure(t *testing.T) {
 		logger:       testLogger,
 		confModifier: agh.EmptyConfigModifier{},
 		manager:      aghtls.EmptyManager{},
-		tlsSettings: tlsConfigSettings{
+		extTLSConf: &aghtls.ExtendedTLSConfig{
 			Enabled:         true,
 			CertificatePath: certPath,
 			PrivateKeyPath:  keyPath,
@@ -93,7 +93,7 @@ func TestWebAPI_HandleTLSConfigure(t *testing.T) {
 	web := newTestWeb(t, &webConfig{tlsManager: m})
 	m.setWebAPI(web)
 
-	extTLSConf := m.extendedTLSConfig()
+	extTLSConf := m.ExtendedTLSConfig()
 	assertCertSerialNumber(t, extTLSConf, wantSerialNumber)
 
 	// Prepare a request with the new TLS configuration.
@@ -139,7 +139,10 @@ func TestWebAPI_HandleTLSConfigure(t *testing.T) {
 
 	// Assert that the Web API's TLS configuration has been updated.
 	assert.Eventually(t, func() bool {
-		cert = web.httpsServer.certificate()
+		m.mu.Lock()
+		cert = *m.tlsCert
+		m.mu.Unlock()
+
 		if cert.Leaf == nil {
 			return false
 		}
@@ -163,7 +166,7 @@ func TestWebAPI_HandleTLSStatus(t *testing.T) {
 		logger:       testLogger,
 		confModifier: agh.EmptyConfigModifier{},
 		manager:      aghtls.EmptyManager{},
-		tlsSettings: tlsConfigSettings{
+		extTLSConf: &aghtls.ExtendedTLSConfig{
 			Enabled:          true,
 			CertificateChain: string(testCertChain),
 			PrivateKey:       string(testPrivateKeyData),
@@ -297,7 +300,7 @@ func TestWebAPI_HandleTLSValidate(t *testing.T) {
 		logger:       testLogger,
 		confModifier: agh.EmptyConfigModifier{},
 		manager:      aghtls.EmptyManager{},
-		tlsSettings: tlsConfigSettings{
+		extTLSConf: &aghtls.ExtendedTLSConfig{
 			Enabled:         true,
 			CertificatePath: testCertificatePath,
 			PrivateKeyPath:  testPrivateKeyPath,
