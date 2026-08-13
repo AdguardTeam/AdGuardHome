@@ -44,8 +44,10 @@ type Service struct {
 	// them in [Service.Config].
 
 	// initialAddrs is the list of addresses that the service was configured to
-	// listen on.
-	initialAddrs        []netip.AddrPort
+	// listen on.  It is used to return the addresses in [Service.Config] before
+	// the service is started.
+	initialAddrs []netip.AddrPort
+
 	bootstraps          []string
 	bootstrapResolvers  []*upstream.UpstreamResolver
 	upstreams           []string
