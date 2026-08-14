@@ -20,6 +20,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Security
 
+- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.26.6][go-1.26.6].
+
 - AdGuard Home is now more resistant to resource exhaustion attacks when using DNS-over-QUIC.
 
     This is GHSA-w6v6-f44j-3rj2.  We thank @ATinyShoe for reporting this security issue.
@@ -46,6 +48,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Blocked requests without an EDNS(0) OPT record ([#8183]).
 
+[go-1.26.6]: https://groups.google.com/g/golang-announce/c/94pEornpRlI
 [#7514]: https://github.com/AdguardTeam/AdGuardHome/issues/7514
 [#8183]: https://github.com/AdguardTeam/AdGuardHome/issues/8183
 
