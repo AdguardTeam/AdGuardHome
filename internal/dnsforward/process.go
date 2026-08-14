@@ -228,7 +228,7 @@ func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
 
 	s.appendDoTResolvers(req, resp, domainName)
 
-	for _, addr := range s.dnsProxy.QUICListenAddr {
+	for _, addr := range s.conf.TLSConf.QUICListenAddrs {
 		values := []dns.SVCBKeyValue{
 			&dns.SVCBAlpn{Alpn: []string{"doq"}},
 			&dns.SVCBPort{Port: uint16(addr.Port)},
@@ -259,7 +259,7 @@ func (s *Server) appendDoTResolvers(req, resp *dns.Msg, domainName string) {
 	// addresses.
 	//
 	// See https://github.com/AdguardTeam/AdGuardHome/issues/4927.
-	for _, addr := range s.dnsProxy.TLSListenAddr {
+	for _, addr := range s.conf.TLSConf.TLSListenAddrs {
 		values := []dns.SVCBKeyValue{
 			&dns.SVCBAlpn{Alpn: []string{"dot"}},
 			&dns.SVCBPort{Port: uint16(addr.Port)},
