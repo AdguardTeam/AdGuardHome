@@ -440,10 +440,12 @@ func (iface *dhcpInterfaceV6) allocateForSolicit(
 	return nil, 0
 }
 
-// ipForRelease returns the IAID and IP address requested for release in req.
-// It returns zero values if there is no IA_NA option or if all options are
-// malformed.  req must be a valid DHCPv6 message of RELEASE type.
-func (iface *dhcpInterfaceV6) ipForRelease(
+// firstIANAAddr returns the IAID and the first address of the first valid
+// IA_NA option in req.  It returns zero values if there is no IA_NA option or
+// if all options are malformed.  req must not be nil.
+//
+// See RFC 9915 Sections 18.3.7 and 18.3.8.
+func (iface *dhcpInterfaceV6) firstIANAAddr(
 	ctx context.Context,
 	req *layers.DHCPv6,
 ) (iaid uint32, ip netip.Addr) {
@@ -464,7 +466,7 @@ func (iface *dhcpInterfaceV6) ipForRelease(
 
 		reqIP, hasReqIP := iana.requestedAddr()
 		if !hasReqIP {
-			l.DebugContext(ctx, "no ip in ia_na for release", "iaid", iana.ID)
+			l.DebugContext(ctx, "no ip in ia_na", "iaid", iana.ID)
 
 			continue
 		}
@@ -667,6 +669,22 @@ func (iface *dhcpInterfaceV6) newUpdateRespOpts(
 	return iface.appendRequestedOptions(opts, req)
 }
 
+// newNoBindingRespOpts returns the option list for a Reply to a RENEW or REBIND
+// message when the server has no binding for the client.  fd, req, and cliID
+// must not be nil.  iaid must not be zero.
+//
+// See RFC 9915 Section 18.3.4 and 18.3.5.
+func (iface *dhcpInterfaceV6) newNoBindingRespOpts(
+	fd *frameData6,
+	req *layers.DHCPv6,
+	cliID *layers.DHCPv6DUID,
+	iaid uint32,
+) (opts layers.DHCPv6Options) {
+	respIANA := newIANAWithStatus(iaid, layers.DHCPv6StatusCodeNoBinding)
+
+	return iface.newUpdateRespOpts(fd, req, cliID, respIANA)
+}
+
 // newInfoRespOpts returns the option list for a Reply to an INFORMATION-REQUEST
 // message.  The Client Identifier option is echoed back only if the request
 // contained one.  fd and req must not be nil.
@@ -698,7 +716,7 @@ func (iface *dhcpInterfaceV6) iaNAFromLease(lease *Lease, iaid uint32) (iana lay
 		return newIANAWithStatus(iaid, layers.DHCPv6StatusCodeNoAddrsAvail)
 	}
 
-	return IANAOption{
+	opt := IANAOption{
 		Nested: []IAAddrOption{{
 			Addr:              lease.IP,
 			PreferredLifetime: iface.common.leaseTTL,
@@ -707,7 +725,9 @@ func (iface *dhcpInterfaceV6) iaNAFromLease(lease *Lease, iaid uint32) (iana lay
 		ID: iaid,
 		T1: iface.t1,
 		T2: iface.t2,
-	}.Encode()
+	}
+
+	return opt.Encode()
 }
 
 // ianaForRequest returns the IANA filled with committed lease data for req.  It

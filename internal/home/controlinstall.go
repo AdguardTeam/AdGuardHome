@@ -14,7 +14,6 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
@@ -529,16 +528,7 @@ func (web *webAPI) finalizeInstall(
 	// moment we'll allow setting up TLS in the initial configuration or the
 	// configuration itself will use HTTPS protocol, because the underlying
 	// functions potentially restart the HTTPS server.
-	err = startMods(
-		ctx,
-		web.baseLogger,
-		web.tlsManager,
-		web.confModifier,
-		web.httpReg,
-		web.conf.workDir,
-		web.hostsContainer,
-		web.conf.mux,
-	)
+	err = web.startMods(ctx)
 	if err != nil {
 		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusInternalServerError, "%s", err)
 
@@ -548,7 +538,7 @@ func (web *webAPI) finalizeInstall(
 	err = config.write(
 		ctx,
 		web.logger,
-		web.tlsManager,
+		web.tlsConfProvider.ExtendedTLSConfig(),
 		web.auth,
 		web.conf.workDir,
 		web.conf.confPath,
@@ -634,33 +624,40 @@ func decodeApplyConfigReq(r io.Reader) (req *applyConfigReq, restartHTTP bool, e
 }
 
 // startMods initializes and starts the DNS server after installation.
-// baseLogger, tlsMgr, confModifier, httpReg, and mux must not be nil.
-func startMods(
-	ctx context.Context,
-	baseLogger *slog.Logger,
-	tlsMgr *tlsManager,
-	confModifier agh.ConfigModifier,
-	httpReg aghhttp.Registrar,
-	workDir string,
-	hc *aghnet.HostsContainer,
-	mux *http.ServeMux,
-) (err error) {
-	statsDir, querylogDir, err := checkStatsAndQuerylogDirs(config, workDir)
+func (web *webAPI) startMods(ctx context.Context) (err error) {
+	statsDir, querylogDir, err := checkStatsAndQuerylogDirs(config, web.conf.workDir)
 	if err != nil {
+		// Don't wrap the error, because it's informative enough as is.
 		return err
 	}
 
-	err = initDNS(ctx, baseLogger, tlsMgr, confModifier, httpReg, statsDir, querylogDir, hc, mux)
+	err = initDNS(
+		ctx,
+		web.baseLogger,
+		web.tlsConfProvider,
+		web.confModifier,
+		web.httpReg,
+		statsDir,
+		querylogDir,
+		web.hostsContainer,
+		web.conf.mux,
+	)
 	if err != nil {
+		// Don't wrap the error, because it's informative enough as is.
 		return err
 	}
 
-	tlsMgr.start(ctx)
+	err = web.tlsManager.Start(ctx)
+	if err != nil {
+		// Should never happen.
+		return err
+	}
 
 	err = startDNSServer()
 	if err != nil {
-		closeDNSServer(ctx, baseLogger)
+		closeDNSServer(ctx, web.baseLogger)
 
+		// Don't wrap the error, because it's informative enough as is.
 		return err
 	}
 

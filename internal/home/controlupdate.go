@@ -14,6 +14,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/updater"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
@@ -65,7 +66,8 @@ func (web *webAPI) handleVersionJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = resp.setAllowedToAutoUpdate(ctx, l, web.tlsManager)
+	extTLSConf := web.tlsConfProvider.ExtendedTLSConfig()
+	err = resp.setAllowedToAutoUpdate(ctx, l, extTLSConf)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
 		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusInternalServerError, "%s", err)
@@ -179,19 +181,19 @@ type versionResponse struct {
 const maxPrivilegedPort = 1024
 
 // setAllowedToAutoUpdate sets CanAutoUpdate to true if AdGuard Home is actually
-// allowed to perform an automatic update by the OS.  l and tlsMgr must not be
-// nil.
+// allowed to perform an automatic update by the OS.  l and extTLSConf must not
+// be nil.
 func (vr *versionResponse) setAllowedToAutoUpdate(
 	ctx context.Context,
 	l *slog.Logger,
-	tlsMgr *tlsManager,
+	extTLSConf *aghtls.ExtendedTLSConfig,
 ) (err error) {
 	if vr.CanAutoUpdate != aghalg.NBTrue {
 		return nil
 	}
 
 	canUpdate := true
-	if tlsConfUsesPrivilegedPorts(tlsMgr.extendedTLSConfig()) ||
+	if extTLSConf.UsesPrivilegedPorts(maxPrivilegedPort) ||
 		config.HTTPConfig.Address.Port() < maxPrivilegedPort ||
 		config.DNS.Port < maxPrivilegedPort {
 		canUpdate, err = aghnet.CanBindPrivilegedPorts(ctx, l)
@@ -203,14 +205,6 @@ func (vr *versionResponse) setAllowedToAutoUpdate(
 	vr.CanAutoUpdate = aghalg.BoolToNullBool(canUpdate)
 
 	return nil
-}
-
-// tlsConfUsesPrivilegedPorts returns true if the provided TLS configuration
-// indicates that privileged ports are used.  c must be valid.
-func tlsConfUsesPrivilegedPorts(c *tlsConfigSettings) (ok bool) {
-	return c.Enabled && (c.PortHTTPS < maxPrivilegedPort ||
-		c.PortDNSOverTLS < maxPrivilegedPort ||
-		c.PortDNSOverQUIC < maxPrivilegedPort)
 }
 
 // finishUpdate completes an update procedure.  It is intended to be used as a

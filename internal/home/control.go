@@ -11,6 +11,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/httphdr"
@@ -68,8 +69,8 @@ func appendDNSAddrsWithIfaces(dst []string, src []netip.Addr) (res []string, err
 
 // collectDNSAddresses returns the list of DNS addresses the server is listening
 // on, including the addresses on all interfaces in cases of unspecified IPs.
-// tlsMgr must not be nil.
-func collectDNSAddresses(tlsMgr *tlsManager) (addrs []string, err error) {
+// extTLSConf must not be nil.
+func collectDNSAddresses(extTLSConf *aghtls.ExtendedTLSConfig) (addrs []string, err error) {
 	if hosts := config.DNS.BindHosts; len(hosts) == 0 {
 		addrs = appendDNSAddrs(addrs, netutil.IPv4Localhost())
 	} else {
@@ -79,7 +80,7 @@ func collectDNSAddresses(tlsMgr *tlsManager) (addrs []string, err error) {
 		}
 	}
 
-	de := getDNSEncryption(tlsMgr)
+	de := getDNSEncryption(extTLSConf)
 	if de.https != "" {
 		addrs = append(addrs, de.https)
 	}
@@ -121,7 +122,9 @@ func (web *webAPI) handleStatus(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	l := web.logger
 
-	dnsAddrs, err := collectDNSAddresses(web.tlsManager)
+	extTLSConfig := web.tlsConfProvider.ExtendedTLSConfig()
+
+	dnsAddrs, err := collectDNSAddresses(extTLSConfig)
 	if err != nil {
 		// Don't add a lot of formatting, since the error is already
 		// wrapped by collectDNSAddresses.

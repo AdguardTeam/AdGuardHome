@@ -8,12 +8,14 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"math/big"
+	"net"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agh"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
@@ -32,36 +34,59 @@ const (
 func TestValidateCertificates(t *testing.T) {
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
 
-	m, err := newTLSManager(ctx, &tlsManagerConfig{
-		logger:        testLogger,
-		confModifier:  agh.EmptyConfigModifier{},
-		manager:       aghtls.EmptyManager{},
-		servePlainDNS: false,
-	})
-	require.NoError(t, err)
+	tlsConfProvider := &aghtest.TLSConfigProvider{
+		OnRootCAs: func() *x509.CertPool {
+			return nil
+		},
+	}
 
+	var err error
 	t.Run("bad_certificate", func(t *testing.T) {
-		status := &tlsConfigStatus{}
-		err = m.validateCertificates(ctx, status, []byte("bad cert"), nil, "")
+		status := &aghtls.TLSConfigStatus{}
+		err = validateCertificates(
+			ctx,
+			testLogger,
+			tlsConfProvider,
+			status,
+			[]byte("bad cert"),
+			nil,
+			"",
+		)
 		testutil.AssertErrorMsg(t, "empty certificate", err)
 		assert.False(t, status.ValidCert)
 		assert.False(t, status.ValidChain)
 	})
 
 	t.Run("bad_private_key", func(t *testing.T) {
-		status := &tlsConfigStatus{}
-		err = m.validateCertificates(ctx, status, nil, []byte("bad priv key"), "")
+		status := &aghtls.TLSConfigStatus{}
+		err = validateCertificates(
+			ctx,
+			testLogger,
+			tlsConfProvider,
+			status,
+			nil,
+			[]byte("bad priv key"),
+			"",
+		)
 		testutil.AssertErrorMsg(t, "no valid keys were found", err)
 		assert.False(t, status.ValidKey)
 	})
 
 	t.Run("valid", func(t *testing.T) {
-		status := &tlsConfigStatus{}
+		status := &aghtls.TLSConfigStatus{}
 
 		testCertChainData := requireReadFile(t, testCertificatePath)
 		testPrivateKeyData := requireReadFile(t, testPrivateKeyPath)
 
-		err = m.validateCertificates(ctx, status, testCertChainData, testPrivateKeyData, "")
+		err = validateCertificates(
+			ctx,
+			testLogger,
+			tlsConfProvider,
+			status,
+			testCertChainData,
+			testPrivateKeyData,
+			"",
+		)
 		assert.Error(t, err)
 
 		notBefore := time.Date(2019, 2, 27, 9, 24, 23, 0, time.UTC)
@@ -81,19 +106,31 @@ func TestValidateCertificates(t *testing.T) {
 	t.Run("no_ip_in_cert", func(t *testing.T) {
 		caCert, chainPEM, leafKeyPEM := newCertWithoutIP(t)
 
-		m.rootCerts = x509.NewCertPool()
-		m.rootCerts.AddCert(caCert)
+		tlsConfProvider.OnRootCAs = func() *x509.CertPool {
+			pool := x509.NewCertPool()
+			pool.AddCert(caCert)
 
-		status := &tlsConfigStatus{}
+			return pool
+		}
+
+		status := &aghtls.TLSConfigStatus{}
 		var ok bool
-		ok, err = m.validateCertificate(ctx, status, chainPEM, "")
+		ok, err = validateCertificate(ctx, testLogger, tlsConfProvider.RootCAs(), status, chainPEM, "")
 		assert.True(t, ok)
 		assert.ErrorIs(t, err, errNoIPInCert)
 		assert.True(t, status.ValidCert)
 		assert.True(t, status.ValidChain)
 
-		status = &tlsConfigStatus{}
-		err = m.validateCertificates(ctx, status, chainPEM, leafKeyPEM, "")
+		status = &aghtls.TLSConfigStatus{}
+		err = validateCertificates(
+			ctx,
+			testLogger,
+			tlsConfProvider,
+			status,
+			chainPEM,
+			leafKeyPEM,
+			"",
+		)
 		assert.ErrorIs(t, err, errNoIPInCert)
 		assert.True(t, status.ValidCert)
 		assert.True(t, status.ValidChain)
@@ -164,6 +201,35 @@ func newCertWithoutIP(tb testing.TB) (
 	return caCert, buf.Bytes(), leafKeyPEM
 }
 
+// newCertWithIP generates a self-signed certificate with an IP address in its
+// SAN extension and returns the PEM-encoded certificate and private key.
+func newCertWithIP(tb testing.TB) (certPEM, keyPEM []byte) {
+	tb.Helper()
+
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	require.NoError(tb, err)
+
+	now := time.Now()
+	tmpl := &x509.Certificate{
+		SerialNumber: big.NewInt(1),
+		NotBefore:    now.Add(-time.Hour),
+		NotAfter:     now.Add(time.Hour),
+		KeyUsage:     x509.KeyUsageDigitalSignature,
+		IPAddresses:  []net.IP{net.ParseIP("192.0.2.1")},
+	}
+
+	certDER, err := x509.CreateCertificate(rand.Reader, tmpl, tmpl, &key.PublicKey, key)
+	require.NoError(tb, err)
+
+	certPEM = pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: certDER})
+	keyPEM = pem.EncodeToMemory(&pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(key),
+	})
+
+	return certPEM, keyPEM
+}
+
 // newCertAndKey is a helper function that generates certificate and key.
 func newCertAndKey(tb testing.TB, n int64) (certDER []byte, key *rsa.PrivateKey) {
 	tb.Helper()
@@ -220,7 +286,7 @@ func writeCertAndKey(
 
 // assertCertSerialNumber is a helper function that checks serial number of the
 // TLS certificate.
-func assertCertSerialNumber(tb testing.TB, conf *tlsConfigSettings, wantSN int64) {
+func assertCertSerialNumber(tb testing.TB, conf *aghtls.ExtendedTLSConfig, wantSN int64) {
 	tb.Helper()
 
 	cert, err := tls.X509KeyPair(conf.CertificateChainData, conf.PrivateKeyData)
@@ -283,7 +349,7 @@ func TestTLSManager_Reload(t *testing.T) {
 		logger:       testLogger,
 		confModifier: agh.EmptyConfigModifier{},
 		manager:      aghtls.EmptyManager{},
-		tlsSettings: tlsConfigSettings{
+		extTLSConf: &aghtls.ExtendedTLSConfig{
 			Enabled:         true,
 			CertificatePath: certPath,
 			PrivateKeyPath:  keyPath,
@@ -295,7 +361,7 @@ func TestTLSManager_Reload(t *testing.T) {
 	web := newTestWeb(t, &webConfig{tlsManager: m})
 	m.setWebAPI(web)
 
-	extTLSConf := m.extendedTLSConfig()
+	extTLSConf := m.ExtendedTLSConfig()
 	assertCertSerialNumber(t, extTLSConf, snBefore)
 
 	certDER, key = newCertAndKey(t, snAfter)
@@ -309,6 +375,88 @@ func TestTLSManager_Reload(t *testing.T) {
 		return globalContext.dnsServer.Stop(testutil.ContextWithTimeout(t, testTimeout))
 	})
 
-	extTLSConf = m.extendedTLSConfig()
+	extTLSConf = m.ExtendedTLSConfig()
 	assertCertSerialNumber(t, extTLSConf, snAfter)
+}
+
+func TestTLSManager_HasIPAddrs(t *testing.T) {
+	t.Parallel()
+
+	_, noIPChainPEM, noIPKeyPEM := newCertWithoutIP(t)
+	ipChainPEM, ipKeyPEM := newCertWithIP(t)
+
+	noIPSettings := &aghtls.ExtendedTLSConfig{
+		Enabled:          true,
+		CertificateChain: string(noIPChainPEM),
+		PrivateKey:       string(noIPKeyPEM),
+	}
+	ipSettings := &aghtls.ExtendedTLSConfig{
+		Enabled:          true,
+		CertificateChain: string(ipChainPEM),
+		PrivateKey:       string(ipKeyPEM),
+	}
+
+	testCases := []struct {
+		want                 assert.BoolAssertionFunc
+		name                 string
+		certificateChainData []byte
+		privateKeyData       []byte
+		settings             *aghtls.ExtendedTLSConfig
+	}{{
+		name:     "no_ip_in_cert",
+		settings: noIPSettings,
+		want:     assert.False,
+	}, {
+		name:     "has_ip_in_cert",
+		settings: ipSettings,
+		want:     assert.True,
+	}, {
+		name:                 "updated_to_ip",
+		settings:             noIPSettings,
+		certificateChainData: ipChainPEM,
+		privateKeyData:       ipKeyPEM,
+		want:                 assert.True,
+	}, {
+		name:                 "updated_to_no_ip",
+		settings:             ipSettings,
+		certificateChainData: noIPChainPEM,
+		privateKeyData:       noIPKeyPEM,
+		want:                 assert.False,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Do not run in parallel because the test modifies the TLS
+			// manager's state.
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+
+			m, err := newTLSManager(ctx, &tlsManagerConfig{
+				logger:        testLogger,
+				confModifier:  agh.EmptyConfigModifier{},
+				manager:       aghtls.EmptyManager{},
+				extTLSConf:    tc.settings,
+				servePlainDNS: false,
+			})
+			require.NoError(t, err)
+
+			if tc.certificateChainData == nil && tc.privateKeyData == nil {
+				tc.want(t, m.HasIPAddrs())
+
+				return
+			}
+
+			func() {
+				m.mu.Lock()
+				defer m.mu.Unlock()
+
+				var cert tls.Certificate
+				cert, err = tls.X509KeyPair(tc.certificateChainData, tc.privateKeyData)
+				require.NoError(t, err)
+
+				m.tlsCert = &cert
+			}()
+
+			tc.want(t, m.HasIPAddrs())
+		})
+	}
 }
