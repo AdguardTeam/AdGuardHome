@@ -289,10 +289,9 @@ func (iface *dhcpInterfaceV6) handleRenew(
 // handleRebind handles messages of type REBIND.  req must not be nil and must
 // be a valid DHCPv6 message of type REBIND, fd must be valid.
 //
-// TODO(e.burkov):  The current implementation rebinds only the first valid
-// IA_NA option.  It does not verify that the addresses in the IA match the
-// stored lease, since clients are identified by MAC address rather than
-// DUID+IAID.
+// TODO(e.burkov):  Rebind all valid IA_NA options instead of only the first
+// valid one.  It does not verify that the addresses in the IA match the stored
+// lease, since clients are identified by MAC address rather than DUID+IAID.
 func (iface *dhcpInterfaceV6) handleRebind(
 	ctx context.Context,
 	fd *frameData6,
@@ -336,8 +335,7 @@ func (iface *dhcpInterfaceV6) handleRebind(
 // and must be a valid DHCPv6 message of type INFORMATION-REQUEST.  fd must be
 // valid.
 //
-// TODO(e.burkov):  The current implementation does not handle relay-forwarded
-// INFORMATION-REQUEST messages.
+// TODO(e.burkov):  Handle relay-forwarded INFORMATION-REQUEST messages.
 func (iface *dhcpInterfaceV6) handleInfo(
 	ctx context.Context,
 	fd *frameData6,
@@ -398,7 +396,7 @@ func (iface *dhcpInterfaceV6) handleRelease(
 		TransactionID: req.TransactionID,
 	}
 
-	iaid, ip := iface.ipForRelease(ctx, req)
+	iaid, ip := iface.firstIANAAddr(ctx, req)
 	if ip == (netip.Addr{}) {
 		resp.Options = iface.newUpdateRespOpts(fd, req, cliID, layers.DHCPv6Option{})
 
@@ -412,8 +410,7 @@ func (iface *dhcpInterfaceV6) handleRelease(
 
 	lease, hasLease := iface.common.leases[key]
 	if !hasLease || lease.IP != ip {
-		respIANA := newIANAWithStatus(iaid, layers.DHCPv6StatusCodeNoBinding)
-		resp.Options = iface.newUpdateRespOpts(fd, req, cliID, respIANA)
+		resp.Options = iface.newNoBindingRespOpts(fd, req, cliID, iaid)
 
 		return respond6(fd, resp)
 	}
@@ -422,8 +419,7 @@ func (iface *dhcpInterfaceV6) handleRelease(
 	if err != nil {
 		l.ErrorContext(ctx, "removing lease", slogutil.KeyError, err)
 
-		respIANA := newIANAWithStatus(iaid, layers.DHCPv6StatusCodeNoBinding)
-		resp.Options = iface.newUpdateRespOpts(fd, req, cliID, respIANA)
+		resp.Options = iface.newNoBindingRespOpts(fd, req, cliID, iaid)
 	} else {
 		respIANA := &IANAOption{ID: iaid}
 		resp.Options = iface.newUpdateRespOpts(fd, req, cliID, respIANA.Encode())
@@ -435,7 +431,10 @@ func (iface *dhcpInterfaceV6) handleRelease(
 // handleDecline handles messages of type DECLINE.  req must not be nil and must
 // be a valid DHCPv6 message of type DECLINE.  fd must be valid.
 //
-// TODO(e.burkov):  Implement.  This is a stub for now.
+// See RFC 9915 Section 18.3.8.
+//
+// TODO(e.burkov):  Verify all IA_NA options instead of handling only the first
+// one.
 func (iface *dhcpInterfaceV6) handleDecline(
 	ctx context.Context,
 	fd *frameData6,
@@ -449,5 +448,41 @@ func (iface *dhcpInterfaceV6) handleDecline(
 	l := iface.common.logger
 	l.DebugContext(ctx, "handling message", "type", req.MsgType, "cli_id", cliID)
 
-	return nil
+	resp := &layers.DHCPv6{
+		MsgType:       layers.DHCPv6MsgTypeReply,
+		TransactionID: req.TransactionID,
+	}
+
+	iaid, ip := iface.firstIANAAddr(ctx, req)
+	if ip == (netip.Addr{}) {
+		resp.Options = iface.newUpdateRespOpts(fd, req, cliID, layers.DHCPv6Option{})
+
+		return respond6(fd, resp)
+	}
+
+	key := macToKey(fd.ether.SrcMAC)
+
+	iface.common.indexMu.Lock()
+	defer iface.common.indexMu.Unlock()
+
+	lease, hasLease := iface.common.leases[key]
+	if !hasLease || lease.IP != ip {
+		resp.Options = iface.newNoBindingRespOpts(fd, req, cliID, iaid)
+
+		return respond6(fd, resp)
+	}
+
+	l.WarnContext(ctx, "lease is unavailable", "ip", lease.IP)
+
+	err = iface.common.blockLease(ctx, lease, iface.clock.Now())
+	if err != nil {
+		l.ErrorContext(ctx, "blocking lease", slogutil.KeyError, err)
+
+		resp.Options = iface.newNoBindingRespOpts(fd, req, cliID, iaid)
+	} else {
+		respIANA := &IANAOption{ID: iaid}
+		resp.Options = iface.newUpdateRespOpts(fd, req, cliID, respIANA.Encode())
+	}
+
+	return respond6(fd, resp)
 }
