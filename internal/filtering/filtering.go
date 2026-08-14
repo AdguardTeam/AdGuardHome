@@ -4,6 +4,9 @@ package filtering
 import (
 	"context"
 	"fmt"
+	"hash"
+	"hash/maphash"
+	"io"
 	"io/fs"
 	"log/slog"
 	"net"
@@ -268,6 +271,25 @@ type DNSFilter struct {
 	rulesStorageAllow    *filterlist.RuleStorage
 	filteringEngineAllow *urlfilter.DNSEngine
 
+	// initMu serializes the rebuilds of the filtering engines performed by
+	// [DNSFilter.initFiltering].  A rebuild keeps the previous engines alive
+	// until the new ones are ready, so it roughly doubles the amount of memory
+	// taken by the filtering rules.  Running two rebuilds at the same time
+	// would double it once more, which is enough to get the whole process
+	// OOM-killed on memory-constrained systems.
+	initMu sync.Mutex
+
+	// engineFingerprint is the fingerprint of the rule lists that the current
+	// filtering engines have been built from, see [filtersFingerprint].  It is
+	// only valid when hasEngine is true.  It must only be accessed while
+	// holding initMu.
+	engineFingerprint fingerprint
+
+	// hasEngine is true if the filtering engines have been built at least
+	// once, which means that engineFingerprint is valid.  It must only be
+	// accessed while holding initMu.
+	hasEngine bool
+
 	safeSearch SafeSearch
 
 	// safeBrowsingChecker is the safe browsing hash-prefix checker.
@@ -405,17 +427,8 @@ func (d *DNSFilter) Close() {
 }
 
 func (d *DNSFilter) reset(ctx context.Context) {
-	if d.rulesStorage != nil {
-		if err := d.rulesStorage.Close(); err != nil {
-			d.logger.ErrorContext(ctx, "closing rules storage", slogutil.KeyError, err)
-		}
-	}
-
-	if d.rulesStorageAllow != nil {
-		if err := d.rulesStorageAllow.Close(); err != nil {
-			d.logger.ErrorContext(ctx, "closing allow rules storage", slogutil.KeyError, err)
-		}
-	}
+	d.closeStorage(ctx, d.rulesStorage, "rules storage")
+	d.closeStorage(ctx, d.rulesStorageAllow, "allow rules storage")
 }
 
 // ProtectionStatus returns the status of protection and time until it's
@@ -674,6 +687,15 @@ func (d *DNSFilter) matchBlockedServicesRules(
 
 func newRuleStorage(filters []Filter) (rs *filterlist.RuleStorage, err error) {
 	lists := make([]filterlist.Interface, 0, len(filters))
+
+	// Rule lists opened so far own file descriptors, so they must be closed if
+	// the storage is never created and thus never takes the ownership of them.
+	defer func() {
+		if err != nil {
+			closeRuleLists(lists)
+		}
+	}()
+
 	for _, f := range filters {
 		var rl filterlist.Interface
 		var skip bool
@@ -696,6 +718,14 @@ func newRuleStorage(filters []Filter) (rs *filterlist.RuleStorage, err error) {
 	}
 
 	return rs, nil
+}
+
+// closeRuleLists closes each rule list in lists, ignoring the errors, since
+// there is nothing to be done about them at this point.
+func closeRuleLists(lists []filterlist.Interface) {
+	for _, l := range lists {
+		_ = l.Close()
+	}
 }
 
 // ruleListFromFilter returns a rule list from a Filter.
@@ -744,17 +774,141 @@ func ruleListFromFilter(f Filter) (rl filterlist.Interface, skip bool, err error
 	return rl, false, nil
 }
 
+// rebuildGCPercent is the garbage-collection target percentage used while the
+// filtering engines are being rebuilt, see [debug.SetGCPercent].
+//
+// A rebuild keeps the previous engines alive until the new ones are ready, so
+// the live heap roughly doubles for its duration.  With the default target of
+// 100% the heap is only collected once it has grown to twice the live heap, so
+// the transient peak of a rebuild is about three times the memory that a
+// single set of engines takes.  On systems with large rule lists and little
+// RAM that is enough to get the process OOM-killed.
+//
+// A rebuild is a background operation, and DNS requests keep being served by
+// the previous engines while it runs, so a slower rebuild is a much better
+// outcome than an OOM kill, which takes DNS down until an operator intervenes.
+//
+// Measured on a rebuild of a single 2.1M-rule list, peak heap and rebuild
+// duration against the number of available CPUs:
+//
+//	target   peak (n CPUs)   peak (1 CPU)   time (n CPUs)   time (1 CPU)
+//	100%     830 MiB         878 MiB        4.8s            5.2s
+//	 50%     665 MiB         713 MiB        4.7s            5.1s
+//	 20%     575 MiB         597 MiB        4.8s            6.9s
+//
+// See https://github.com/AdguardTeam/AdGuardHome/issues/8297 and
+// https://github.com/AdguardTeam/AdGuardHome/issues/8491.
+const rebuildGCPercent = 20
+
+// gcTarget serializes the changes of the garbage-collection target between the
+// rebuilds that are running at the same time.
+//
+// The target is a property of the whole process, while each [DNSFilter] only
+// tightens it for the duration of its own rebuild, so the bookkeeping cannot
+// live in a single instance.  Two overlapping rebuilds would otherwise restore
+// each other's saved value: the first one to finish would restore the original
+// target while the second is still running, and the second would then restore
+// the tightened one, leaving the process at it permanently.
+type gcTarget struct {
+	// set changes the target and returns the previous one.  It is
+	// [debug.SetGCPercent] outside of tests and must not be nil.
+	set func(percent int) (prev int)
+
+	// mu protects depth and prev.
+	mu sync.Mutex
+
+	// depth is the number of rebuilds currently holding the target tightened.
+	depth int
+
+	// prev is the target to restore once the last of them finishes.  It is
+	// only meaningful when depth is positive.
+	prev int
+}
+
+// rebuildGCTarget is the garbage-collection target shared by every [DNSFilter]
+// within the process.
+var rebuildGCTarget = &gcTarget{set: debug.SetGCPercent}
+
+// tighten lowers the garbage-collection target to percent for the duration of a
+// rebuild and returns the function that undoes it, which must be called exactly
+// once.
+//
+// The target is only ever tightened: a user who has set a stricter GOGC, or
+// disabled the garbage collector altogether, must not have that overridden.
+func (t *gcTarget) tighten(percent int) (restore func()) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	if t.depth == 0 {
+		prev := t.set(percent)
+		if prev < percent {
+			t.set(prev)
+
+			return func() {}
+		}
+
+		t.prev = prev
+	}
+
+	t.depth++
+
+	return t.release
+}
+
+// release undoes a single [gcTarget.tighten], restoring the original target
+// once the last rebuild has finished.
+func (t *gcTarget) release() {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	t.depth--
+	if t.depth == 0 {
+		t.set(t.prev)
+	}
+}
+
 // Initialize urlfilter objects.
 func (d *DNSFilter) initFiltering(ctx context.Context, allowFilters, blockFilters []Filter) (err error) {
+	d.initMu.Lock()
+	defer d.initMu.Unlock()
+
+	fp := filtersFingerprint(allowFilters, blockFilters)
+	if d.hasEngine && fp == d.engineFingerprint {
+		// Nothing that the engines are built from has changed, so rebuilding
+		// them would only waste memory and CPU.  This is a common case, since
+		// the HTTP API rebuilds the engines after any filtering-related
+		// setting is set, even to its previous value.
+		d.logger.DebugContext(ctx, "filtering engine is up to date")
+
+		return nil
+	}
+
+	// Make sure that the OS reclaims memory as soon as possible, even if the
+	// rebuild has failed midway.
+	defer debug.FreeOSMemory()
+
+	restoreGCTarget := rebuildGCTarget.tighten(rebuildGCPercent)
+	defer restoreGCTarget()
+
 	rulesStorage, err := newRuleStorage(blockFilters)
 	if err != nil {
 		return err
 	}
+	defer func() {
+		if err != nil {
+			d.closeStorage(ctx, rulesStorage, "new rules storage")
+		}
+	}()
 
 	rulesStorageAllow, err := newRuleStorage(allowFilters)
 	if err != nil {
 		return err
 	}
+	defer func() {
+		if err != nil {
+			d.closeStorage(ctx, rulesStorageAllow, "new allow rules storage")
+		}
+	}()
 
 	filteringEngine := urlfilter.NewDNSEngine(rulesStorage)
 	filteringEngineAllow := urlfilter.NewDNSEngine(rulesStorageAllow)
@@ -770,12 +924,135 @@ func (d *DNSFilter) initFiltering(ctx context.Context, allowFilters, blockFilter
 		d.filteringEngineAllow = filteringEngineAllow
 	}()
 
-	// Make sure that the OS reclaims memory as soon as possible.
-	debug.FreeOSMemory()
+	d.engineFingerprint, d.hasEngine = fp, true
 
 	d.logger.DebugContext(ctx, "initialized filtering engine")
 
 	return nil
+}
+
+// fingerprint is a fingerprint of the rule lists that a pair of filtering
+// engines is built from, see [filtersFingerprint].
+type fingerprint = uint64
+
+// fingerprintSeed is the seed of every [filtersFingerprint].  It must be the
+// same for all of them, or their values would not be comparable, and it is
+// drawn once per process so that the hash cannot be targeted from the outside.
+var fingerprintSeed = maphash.MakeSeed()
+
+// filtersFingerprint returns the fingerprint of the given rule lists.  Two
+// calls return the same value if and only if building the filtering engines
+// from these lists is expected to produce the same engines.
+//
+// The hash is not cryptographic.  Its value never leaves the process and is
+// only ever compared against the one the current engines were built from, so
+// it needs no second-preimage resistance; it is seeded per process so that a
+// collision cannot be prepared in a rule list either.  A collision would cost
+// a skipped rebuild, that is, the previous rules staying in use until the next
+// change, and nothing worse.  Hashing 43 MiB of rules costs about 11ms this
+// way against about 124ms with SHA-256, which is worth having on the hardware
+// these rebuilds are reported to run out of memory on.
+func filtersFingerprint(allowFilters, blockFilters []Filter) (f fingerprint) {
+	h := &maphash.Hash{}
+	h.SetSeed(fingerprintSeed)
+
+	hashFilters(h, blockFilters)
+
+	// Separate the groups, so that moving a list from one to the other changes
+	// the fingerprint.
+	_, _ = h.Write([]byte{0})
+
+	hashFilters(h, allowFilters)
+
+	return h.Sum64()
+}
+
+// fingerprintBufSize is the size of the buffer that [hashFileContents] reads a
+// rule list through.  It is the size that [io.Copy] uses when it has to
+// allocate a buffer itself.
+const fingerprintBufSize = 32 * 1024
+
+// fingerprintBufPool contains the buffers that [hashFileContents] reads rule
+// lists through.  [filtersFingerprint] runs on every filtering-related API
+// request, and each rule list is read separately, so the buffers are pooled
+// rather than allocated anew for every list of every request.
+var fingerprintBufPool = syncutil.NewSlicePool[byte](fingerprintBufSize)
+
+// onlyReader hides the methods of a reader other than [io.Reader.Read].  In
+// particular, it hides [io.WriterTo], which [io.CopyBuffer] prefers over the
+// buffer that it is given.
+type onlyReader struct {
+	io.Reader
+}
+
+// hashFilters writes the data identifying filters into h.
+func hashFilters(h hash.Hash, filters []Filter) {
+	for _, f := range filters {
+		// Write the lengths as well, so that the fields of adjacent lists
+		// cannot be confused with each other.
+		_, _ = fmt.Fprintf(h, "id:%d;path:%q;data:%d;", f.ID, f.FilePath, len(f.Data))
+		_, _ = h.Write(f.Data)
+
+		hashFileContents(h, f.FilePath)
+	}
+}
+
+// hashFileContents writes the current contents of the file at path into h.
+//
+// The contents are read in full rather than summarized by the size and the
+// modification time of the file.  Those are metadata, not an identity: a
+// restored backup or an explicit [os.Chtimes] can leave both unchanged while
+// the rules differ, which would keep stale rules in use, and merely touching a
+// file whose contents are unchanged would force a needless rebuild.  Reading
+// the lists is far cheaper than rebuilding the engines from them, which is what
+// this check exists to avoid.
+func hashFileContents(h hash.Hash, path string) {
+	if path == "" {
+		return
+	}
+
+	f, err := os.Open(path)
+	if err != nil {
+		// [ruleListFromFilter] skips the lists whose files cannot be read, so
+		// record the fact that this one is currently unavailable.
+		_, _ = fmt.Fprintf(h, "err:%v;", err)
+
+		return
+	}
+	defer func() { _ = f.Close() }()
+
+	bufPtr := fingerprintBufPool.Get()
+	defer fingerprintBufPool.Put(bufPtr)
+
+	// Hide [os.File.WriteTo] from [io.CopyBuffer], since it would be preferred
+	// over the pooled buffer and would allocate one of its own for every list
+	// of every request.
+	n, err := io.CopyBuffer(h, onlyReader{Reader: f}, *bufPtr)
+	if err != nil {
+		_, _ = fmt.Fprintf(h, "readerr:%v;", err)
+
+		return
+	}
+
+	// Write the length as well, so that the contents of a list cannot be
+	// confused with those of the next one.
+	_, _ = fmt.Fprintf(h, "size:%d;", n)
+}
+
+// closeStorage closes rs and logs the error, if any.  rs may be nil.
+func (d *DNSFilter) closeStorage(
+	ctx context.Context,
+	rs *filterlist.RuleStorage,
+	name string,
+) {
+	if rs == nil {
+		return
+	}
+
+	err := rs.Close()
+	if err != nil {
+		d.logger.ErrorContext(ctx, "closing "+name, slogutil.KeyError, err)
+	}
 }
 
 // hostRules is a helper that converts a slice of host rules into a slice of the

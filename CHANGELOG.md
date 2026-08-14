@@ -46,8 +46,20 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Blocked requests without an EDNS(0) OPT record ([#8183]).
 
+- Excessive memory usage, sometimes resulting in the process being OOM-killed, when the filtering engine is rebuilt after a filter-list update or a change of the filtering settings ([#8297], [#8491]).
+
+    - The engines are no longer rebuilt when nothing that they are built from has changed.  Previously, every filtering-related HTTP API request rebuilt them, even when it set a property to its previous value, which made tools that periodically push the whole configuration, such as AdGuardHome-Sync, rebuild them on every run.
+
+    - Two rebuilds can no longer run at the same time, since each one keeps the previous engines alive until the new ones are ready.
+
+    - The garbage collector is made more aggressive for the duration of a rebuild, which lowers its transient memory peak by about a third.  Rebuilds are performed in the background, and DNS requests keep being served by the previous engines while they run.
+
+- Rule-list files no longer stay open when the filtering engine fails to be rebuilt.
+
 [#7514]: https://github.com/AdguardTeam/AdGuardHome/issues/7514
 [#8183]: https://github.com/AdguardTeam/AdGuardHome/issues/8183
+[#8297]: https://github.com/AdguardTeam/AdGuardHome/issues/8297
+[#8491]: https://github.com/AdguardTeam/AdGuardHome/issues/8491
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
