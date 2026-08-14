@@ -46,8 +46,41 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Blocked requests without an EDNS(0) OPT record ([#8183]).
 
+- Inflated average upstream response time on the dashboard when optimistic caching is enabled
+  ([#8435]).  An optimistic cache hit is answered from the cache right away and the expired entry
+  is refreshed by a background query, and those background queries used to be left out of the
+  statistics.  The average was therefore based on cache misses alone, which are skewed towards
+  rare domain names that the upstream itself resolves slower.  Those refreshes are now counted
+  as well, through the new `OnOptimisticRefresh` callback of the DNS proxy.
+
+- Upstream response times on the dashboard being far higher than the actual network latency to
+  the upstream servers ([#8457]).  A plain DNS upstream retries once when an attempt times out,
+  for example when a UDP datagram is lost, so a retried exchange takes at least the whole
+  `upstream_timeout`, ten seconds by default, even though the successful attempt itself took a
+  millisecond.  Such an exchange used to be averaged in as an ordinary response, where a single
+  one of them outweighed a hundred normal ones several times over.  Exchanges that had to retry
+  after a timeout are no longer counted, since their duration describes the retry policy and the
+  configured timeout rather than the speed of the upstream.
+
+- The "Average upstream response time" panel on the dashboard showed the average *processing*
+  time next to the list of per-upstream response times.  Processing time covers every request,
+  including the ones answered from the cache or blocked by a filter, which take almost no time,
+  so the panel's headline was typically an order of magnitude lower than every upstream listed
+  below it.  It now shows the new `avg_upstream_response_time` property of `GET /control/stats`,
+  which is averaged over the responses of the upstream servers.
+
+- The average processing time was the unweighted mean of the hourly means, which gave an hour
+  with a handful of requests the same weight as an hour with tens of thousands of them.  It is
+  now weighted by the number of requests, the same way the upstream response times already were.
+
+- Clearing the DNS cache gave no feedback at all once the confirmation dialog was accepted, so
+  there was no way to tell whether it had worked.  It now shows a notification on success, the
+  way the previous user interface did; failures were already reported.
+
 [#7514]: https://github.com/AdguardTeam/AdGuardHome/issues/7514
 [#8183]: https://github.com/AdguardTeam/AdGuardHome/issues/8183
+[#8435]: https://github.com/AdguardTeam/AdGuardHome/issues/8435
+[#8457]: https://github.com/AdguardTeam/AdGuardHome/issues/8457
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

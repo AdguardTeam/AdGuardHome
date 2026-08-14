@@ -354,6 +354,7 @@ func (s *Server) newProxyConfig(ctx context.Context) (conf *proxy.Config, err er
 		UpstreamConfig:            srvConf.UpstreamConfig,
 		PrivateRDNSUpstreamConfig: srvConf.PrivateRDNSUpstreamConfig,
 		RequestHandler:            ratelimitMw.Wrap(logMw.Wrap(s.Wrap(s))),
+		OnOptimisticRefresh:       s.handleOptimisticRefresh,
 		EnableEDNSClientSubnet:    srvConf.EDNSClientSubnet.Enabled,
 		MaxGoroutines:             srvConf.MaxGoroutines,
 		UseDNS64:                  srvConf.UseDNS64,
