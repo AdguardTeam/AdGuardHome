@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { fetchRequest } from './fetch';
 
 import { BASE_URL } from '../../constants';
 
@@ -13,20 +13,10 @@ class Api {
     async makeRequest(path: any, method = 'POST', config: any = {}) {
         const url = `${this.baseUrl}/${path}`;
 
-        const axiosConfig = config || {};
-        if (method !== 'GET' && axiosConfig.data) {
-            axiosConfig.headers = axiosConfig.headers || {};
-            axiosConfig.headers['Content-Type'] = axiosConfig.headers['Content-Type'] || 'application/json';
-        }
-
         try {
-            const response = await axios({
-                url,
-                method,
-                ...axiosConfig,
-            });
+            const response = await fetchRequest(url, method, config);
             return response.data;
-        } catch (error) {
+        } catch (error: any) {
             const errorPath = url;
 
             if (error.response) {

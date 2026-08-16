@@ -179,17 +179,18 @@ func TestIfaceSetStaticIP(t *testing.T) {
 		wantErrMsg: `could not find hardware port for en0`,
 	}, {
 		name: "resolv_conf_error",
-		cmdCons: agh.NewMultipleCommandConstructor(agh.ExternalCommand{
-			Cmd:  "networksetup -listallhardwareports",
-			Err:  nil,
-			Out:  "Hardware Port: hwport\nDevice: en0\n",
-			Code: 0,
-		}, agh.ExternalCommand{
-			Cmd:  "networksetup -getinfo hwport",
-			Err:  nil,
-			Out:  "IP address: 1.2.3.4\nSubnet mask: 255.255.255.0\nRouter: 1.2.3.1\n",
-			Code: 0,
-		},
+		cmdCons: agh.NewMultipleCommandConstructor(
+			agh.ExternalCommand{
+				Cmd:  "networksetup -listallhardwareports",
+				Err:  nil,
+				Out:  "Hardware Port: hwport\nDevice: en0\n",
+				Code: 0,
+			}, agh.ExternalCommand{
+				Cmd:  "networksetup -getinfo hwport",
+				Err:  nil,
+				Out:  "IP address: 1.2.3.4\nSubnet mask: 255.255.255.0\nRouter: 1.2.3.1\n",
+				Code: 0,
+			},
 		),
 		fsys: fstest.MapFS{
 			"etc/resolv.conf": &fstest.MapFile{

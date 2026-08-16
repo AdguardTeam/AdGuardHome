@@ -13,30 +13,20 @@ import (
 	"github.com/AdguardTeam/golibs/validate"
 )
 
-// Constants for mapping the twosky configurations.
-//
-// Keep in sync with the .twosky.json file.
-const (
-	// twoskyProjectIdxHome is the index of the Home project in the localization
-	// configuration.
-	twoskyProjectIdxHome = iota
-
-	// twoskyProjectIdxServices is the index of the Services project in the
-	// localization configuration.
-	twoskyProjectIdxServices
-
-	// twoskyProjectCount is the number of projects in the localization
-	// configuration.
-	twoskyProjectCount
-)
+// metadata represents additional information for a single project.
+type metadata struct {
+	LocalesDir string `json:"locales_dir"`
+	SourcesDir string `json:"sources_dir"`
+}
 
 // twoskyConfig is the configuration structure for localization of a single
 // project.
 type twoskyConfig struct {
 	Languages        languages `json:"languages"`
 	ProjectID        string    `json:"project_id"`
-	BaseLangcode     langCode  `json:"base_locale"`
+	BaseLangCode     langCode  `json:"base_locale"`
 	LocalizableFiles []string  `json:"localizable_files"`
+	Metadata         metadata  `json:"metadata"`
 }
 
 // type check
@@ -50,8 +40,11 @@ func (t *twoskyConfig) Validate() (err error) {
 
 	errs := []error{
 		validate.NotEmpty("project_id", t.ProjectID),
-		validate.NotEmpty("base_locale", t.BaseLangcode),
+		validate.NotEmpty("base_locale", t.BaseLangCode),
 		validate.NotEmptySlice("localizable_files", t.LocalizableFiles),
+		validate.NotEmpty("metadata", t.Metadata),
+		validate.NotEmpty("metadata.locales_dir", t.Metadata.LocalesDir),
+		validate.NotEmpty("metadata.sources_dir", t.Metadata.SourcesDir),
 	}
 
 	if len(t.Languages) == 0 {
@@ -68,48 +61,63 @@ func (t *twoskyConfig) Validate() (err error) {
 	return errors.Join(errs...)
 }
 
-// readTwoskyConfig returns twosky configuration.
-func readTwoskyConfig() (home, services *twoskyConfig, err error) {
+// newTwoskyConfig returns new twosky configuration.
+func newTwoskyConfig() (conf *twoskyConfig, err error) {
 	defer func() { err = errors.Annotate(err, "parsing twosky config: %w") }()
 
 	b, err := os.ReadFile(twoskyConfFile)
 	if err != nil {
 		// Don't wrap the error since it's informative enough as is.
-		return nil, nil, err
+		return nil, err
 	}
 
-	var tsc []*twoskyConfig
-	err = json.Unmarshal(b, &tsc)
+	var confs []*twoskyConfig
+	err = json.Unmarshal(b, &confs)
 	if err != nil {
-		return nil, nil, fmt.Errorf("unmarshalling %q: %w", twoskyConfFile, err)
+		return nil, fmt.Errorf("unmarshalling %q: %w", twoskyConfFile, err)
 	}
 
-	err = validate.Equal("projects count", len(tsc), twoskyProjectCount)
+	err = validate.NotEmptySlice("projects", confs)
 	if err != nil {
-		return nil, nil, err
+		// Don't wrap the error since it's informative enough as is.
+		return nil, err
 	}
 
-	err = errors.Join(validate.AppendSlice(nil, "projects", tsc)...)
+	err = errors.Join(validate.AppendSlice(nil, "projects", confs)...)
 	if err != nil {
-		return nil, nil, err
+		// Don't wrap the error since it's informative enough as is.
+		return nil, err
 	}
 
-	return tsc[twoskyProjectIdxHome], tsc[twoskyProjectIdxServices], nil
+	projectID := cmp.Or(os.Getenv("TWOSKY_PROJECT_ID"), defaultProjectID)
+	for _, c := range confs {
+		if c.ProjectID == projectID {
+			return c, nil
+		}
+	}
+
+	return nil, fmt.Errorf("project %q not found in %s", projectID, twoskyConfFile)
 }
 
-// twoskyClient is the twosky client with methods for download and upload
-// translations.
+// twoskyClient is the client for the twosky translation service.
 type twoskyClient struct {
 	// uri is the base URL.
 	uri *url.URL
 
-	// projectID is the name of the project.
-	projectID string
-
 	// baseLang is the base language code.
 	baseLang langCode
 
-	// langs is the list of codes of languages to download.
+	// localesDir is the path to the directory with locale files.
+	localesDir string
+
+	// projectID is the name of the project.
+	projectID string
+
+	// sourcesDir is the path to directory with source files in there the
+	// localizations are used.
+	sourcesDir string
+
+	// langs is the list of codes of languages.
 	langs []langCode
 
 	// localizableFiles are the files to localize.
@@ -117,7 +125,7 @@ type twoskyClient struct {
 }
 
 // newTwoskyClient reads values from environment variables or defaults,
-// validates them, and returns the twosky client.
+// validates them, and returns the twosky client.  conf must be valid.
 func newTwoskyClient(conf *twoskyConfig) (cli *twoskyClient, err error) {
 	defer func() { err = errors.Annotate(err, "filling config: %w") }()
 
@@ -134,7 +142,7 @@ func newTwoskyClient(conf *twoskyConfig) (cli *twoskyClient, err error) {
 		projectID = envProjectID
 	}
 
-	baseLang := conf.BaseLangcode
+	baseLang := conf.BaseLangCode
 	uLangStr := os.Getenv("UPLOAD_LANGUAGE")
 	if uLangStr != "" {
 		baseLang = langCode(uLangStr)
@@ -157,8 +165,10 @@ func newTwoskyClient(conf *twoskyConfig) (cli *twoskyClient, err error) {
 
 	return &twoskyClient{
 		uri:              uri,
-		projectID:        projectID,
 		baseLang:         baseLang,
+		localesDir:       conf.Metadata.LocalesDir,
+		projectID:        projectID,
+		sourcesDir:       conf.Metadata.SourcesDir,
 		langs:            langs,
 		localizableFiles: conf.LocalizableFiles,
 	}, nil

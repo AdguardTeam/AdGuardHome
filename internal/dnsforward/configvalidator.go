@@ -90,7 +90,12 @@ func newUpstreamConfigValidator(
 // collectErrResults parses err and returns parsing results containing the
 // original upstream configuration line and the corresponding error.  err can be
 // nil.  l must not be nil.
-func collectErrResults(ctx context.Context, l *slog.Logger, lines []string, err error) (results []*parseResult) {
+func collectErrResults(
+	ctx context.Context,
+	l *slog.Logger,
+	lines []string,
+	err error,
+) (results []*parseResult) {
 	if err == nil {
 		return nil
 	}
@@ -132,7 +137,7 @@ func collectErrResults(ctx context.Context, l *slog.Logger, lines []string, err 
 }
 
 // insertConfResults parses conf and inserts the upstream result into results.
-// It can insert multiple results as well as none.
+// It can insert multiple results as well as none.  conf must not be nil.
 func insertConfResults(conf *proxy.UpstreamConfig, results map[string]*upstreamResult) {
 	insertListResults(conf.Upstreams, results, false)
 

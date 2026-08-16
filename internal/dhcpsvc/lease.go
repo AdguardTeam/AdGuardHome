@@ -6,16 +6,16 @@ import (
 	"net/netip"
 	"slices"
 	"time"
-
-	"github.com/AdguardTeam/golibs/timeutil"
 )
 
 // Lease is a DHCP lease.
 //
-// TODO(e.burkov):  Consider moving it to [agh], since it also may be needed in
-// [websvc].
-//
 // TODO(e.burkov):  Add validation method.
+//
+// BUG(e.burkov):  The implementation currently relies on the client's hardware
+// address for client identification.  This approach is not recommended by RFC
+// 9915, so the database should be migrated to use the client's DUID and IAID
+// for lease identification.
 type Lease struct {
 	// IP is the IP address leased to the client.  It must not be empty.
 	IP netip.Addr
@@ -27,7 +27,8 @@ type Lease struct {
 	// Hostname of the client.  It may be empty if the lease is blocked.
 	Hostname string
 
-	// HWAddr is the physical hardware (MAC) address.  It must not be nil.
+	// HWAddr is the physical hardware (MAC) address.  It must be a valid
+	// hardware address of length 6, 8, or 20 bytes, see [netutil.ValidateMAC].
 	HWAddr net.HardwareAddr
 
 	// IsStatic defines if the lease is static.
@@ -60,17 +61,32 @@ func (l *Lease) IsBlocked() (blocked bool) {
 	return bytes.Equal(l.HWAddr, blockedHardwareAddr)
 }
 
+// isExpiredAt returns true if the lease is expired at now.  For static leases,
+// it always returns false.
+func (l *Lease) isExpiredAt(now time.Time) (ok bool) {
+	if l.IsStatic {
+		return false
+	}
+
+	return l.Expiry.Before(now)
+}
+
 // updateExpiry updates the lease expiry time if the current time is past the
 // expiry.  For static leases, this operation is a no-op.
-func (l *Lease) updateExpiry(clock timeutil.Clock, ttl time.Duration) {
+func (l *Lease) updateExpiry(now time.Time, ttl time.Duration) {
 	if l.IsStatic {
 		return
 	}
 
-	now := clock.Now()
 	if now.Before(l.Expiry) {
 		return
 	}
 
 	l.Expiry = now.Add(ttl)
+}
+
+// compareLeases is a helper function that sorts a slice of leases according to
+// their IP.
+func compareLeases(a, b *Lease) (res int) {
+	return a.IP.Compare(b.IP)
 }

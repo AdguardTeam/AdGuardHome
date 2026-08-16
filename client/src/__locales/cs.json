@@ -63,7 +63,7 @@
   "blocking_mode_refused": "REFUSED: Odezva pomocí kódu REFUSED",
   "blocklist": "Zakázaný",
   "bootstrap_dns": "Bootstrap DNS servery",
-  "bootstrap_dns_desc": "IP adresy DNS serverů používaných k překladu IP adres řešitelů DoH/DoT, které zadáte jako odchozí servery. Komentáře nejsou povoleny.",
+  "bootstrap_dns_desc": "IP adresy DNS serverů používaných k překladu názvů hostitelů upstream řešitelů DoH/DoT. Do každého řádku zadejte jednu IP adresu. Komentáře musí začínat na novém řádku znakem #. Prázdné řádky a komentáře se ignorují.",
   "cache_cleared": "Mezipaměť DNS úspěšně vymazána",
   "cache_enabled": "Povolit mezipaměť",
   "cache_enabled_desc": "Ukládejte odezvy DNS lokálně.",

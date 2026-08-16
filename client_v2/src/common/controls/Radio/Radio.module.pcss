@@ -1,0 +1,91 @@
+.wrap {
+    display: flex;
+    flex-direction: column;
+}
+
+.radio {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    padding: 8px 0;
+    cursor: pointer;
+
+    &.center {
+        align-items: center;
+    }
+
+    &.start {
+        align-items: flex-start;
+    }
+
+    &.end {
+        align-items: flex-end;
+    }
+
+    &.modal {
+        align-items: flex-start;
+
+        .text {
+            max-width: 100%;
+            font-weight: var(--weight-bold);
+        }
+
+        .description {
+            font-size: var(--fs-text-t3);
+            line-height: var(--lh-t3-normal);
+            font-weight: var(--weight-regular);
+
+            p {
+                margin-bottom: 8px;
+
+                &:last-child {
+                    margin-bottom: 0;
+                }
+            }
+        }
+
+        @media (min-width: 768px) {
+            padding: 16px 0;
+        }
+    }
+}
+
+.input {
+    display: none;
+}
+
+.text {
+    max-width: 250px;
+    flex: 1;
+
+    &.fullWidth {
+        max-width: 100%;
+    }
+
+    &.disabled {
+        color: var(--disabled-main-text);
+    }
+}
+
+.description {
+    margin-top: 2px;
+    color: var(--default-description-text);
+}
+
+.icon {
+    color: var(--default-gray-icons);
+}
+
+.active {
+    transition: none;
+    color: var(--default-product-icon);
+}
+
+.input:disabled + .handler .icon {
+    color: var(--disabled-gray-icons);
+}
+
+.input:disabled:checked + .handler .icon {
+    color: var(--disabled-main-button);
+}

@@ -32,6 +32,7 @@ import (
 	"github.com/AdguardTeam/urlfilter"
 	"github.com/AdguardTeam/urlfilter/filterlist"
 	"github.com/AdguardTeam/urlfilter/rules"
+	"github.com/c2h5oh/datasize"
 	"github.com/miekg/dns"
 )
 
@@ -154,6 +155,10 @@ type Config struct {
 	// files can be added.
 	SafeFSPatterns []string `yaml:"safe_fs_patterns"`
 
+	// MaxHTTPSize defines the maximum size of the HTTP body.  The value must
+	// not be equal to zero.
+	MaxHTTPSize datasize.ByteSize `yaml:"max_http_size"`
+
 	SafeBrowsingCacheSize uint `yaml:"safebrowsing_cache_size"` // (in bytes)
 	SafeSearchCacheSize   uint `yaml:"safesearch_cache_size"`   // (in bytes)
 	ParentalCacheSize     uint `yaml:"parental_cache_size"`     // (in bytes)
@@ -164,7 +169,9 @@ type Config struct {
 	//
 	// It is of type uint32 to be accessed by atomic.
 	//
-	// TODO(e.burkov):  Use atomic.Bool in Go 1.19.
+	// TODO(e.burkov):  Use *atomic.Bool once this entire package is refactored.
+	// Do not use it until then, since *newConf = *oldConf will copy an atomic
+	// bool by value, which is prohibited.
 	enabled uint32
 
 	// FiltersUpdateIntervalHours is the time period to update filters

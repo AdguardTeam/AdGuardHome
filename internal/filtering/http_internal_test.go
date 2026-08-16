@@ -119,6 +119,7 @@ func TestDNSFilter_handleFilteringSetURL(t *testing.T) {
 				ConfModifier: confModifier,
 				HTTPReg:      aghhttp.EmptyRegistrar{},
 				DataDir:      filtersDir,
+				MaxHTTPSize:  testFilterSize,
 			}, nil)
 			require.NoError(t, err)
 			t.Cleanup(d.Close)

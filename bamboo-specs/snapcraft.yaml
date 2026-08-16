@@ -98,14 +98,20 @@
 
                 docker info
 
+                # Disable xtrace so the expanded secret values aren't printed to
+                # the build log.
+                set +x
+                export SNAPCRAFT_STORE_CREDENTIALS="${bamboo_snapcraftMacaroonPassword}"
+                set -x
+
                 docker build \
                     --build-arg "BASE_IMAGE=${bamboo_dockerSnap}" \
                     --build-arg "CACHE_BUSTER=${bamboo_cacheBuster}" \
                     --build-arg "SNAPCRAFT_CHANNEL=${bamboo_snapcraftChannel}" \
-                    --build-arg "SNAPCRAFT_STORE_CREDENTIALS=${bamboo_snapcraftMacaroonPassword}" \
                     --build-arg "VERSION=${bamboo_buildNumber}" \
                     --output '.' \
                     --progress 'plain' \
+                    --secret id=SNAPCRAFT_STORE_CREDENTIALS \
                     --target 'publisher' \
                     -f ./docker/snapcraft.Dockerfile \
                     .

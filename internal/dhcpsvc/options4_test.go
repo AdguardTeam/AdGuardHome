@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/gopacket/layers"
+	"github.com/gopacket/gopacket/layers"
 )
 
 // newOptHostname creates a DHCP hostname (12) option.

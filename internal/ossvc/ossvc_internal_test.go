@@ -8,6 +8,7 @@ import (
 
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/osutil/executil"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/golibs/testutil/fakeos/fakeexec"
 	"github.com/kardianos/service"
 	"github.com/stretchr/testify/require"
@@ -117,6 +118,20 @@ func (t *testService) Platform() (s string) {
 // Status implements the [service.Service] interface for *testService.
 func (t *testService) Status() (s service.Status, err error) {
 	return t.OnStatus()
+}
+
+// newTestService returns a new [*testService] with all methods set to panic,
+// since they should be overridden in tests as needed.
+func newTestService() (ts *testService) {
+	return &testService{
+		OnRun:       func() (err error) { panic(testutil.UnexpectedCall()) },
+		OnStart:     func() (err error) { panic(testutil.UnexpectedCall()) },
+		OnStop:      func() (err error) { panic(testutil.UnexpectedCall()) },
+		OnRestart:   func() (err error) { panic(testutil.UnexpectedCall()) },
+		OnInstall:   func() (err error) { panic(testutil.UnexpectedCall()) },
+		OnUninstall: func() (err error) { panic(testutil.UnexpectedCall()) },
+		OnStatus:    func() (s service.Status, err error) { panic(testutil.UnexpectedCall()) },
+	}
 }
 
 // newTestCmdConstructor is a helper that creates a new command constructor. The

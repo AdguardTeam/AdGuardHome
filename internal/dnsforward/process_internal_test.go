@@ -86,9 +86,12 @@ func TestServer_ProcessInitial(t *testing.T) {
 				ServePlainDNS: true,
 			}
 
-			s := createTestServer(t, &filtering.Config{
-				BlockingMode: filtering.BlockingModeDefault,
-			}, c)
+			s := createTestServer(
+				t,
+				&filtering.Config{BlockingMode: filtering.BlockingModeDefault},
+				c,
+				testTLSConfigProvider,
+			)
 
 			var gotAddr netip.Addr
 			s.addrProc = &aghtest.AddressProcessor{
@@ -187,9 +190,12 @@ func TestServer_ProcessFilteringAfterResponse(t *testing.T) {
 				ServePlainDNS: true,
 			}
 
-			s := createTestServer(t, &filtering.Config{
-				BlockingMode: filtering.BlockingModeDefault,
-			}, c)
+			s := createTestServer(
+				t,
+				&filtering.Config{BlockingMode: filtering.BlockingModeDefault},
+				c,
+				testTLSConfigProvider,
+			)
 
 			resp := newResp(dns.RcodeSuccess, tc.req, tc.respAns)
 			dctx := &dnsContext{
@@ -320,33 +326,36 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 		addrsDoH:   addrsDoH,
 	}}
 
-	_, certPem, keyPem := createServerTLSConfig(t)
-	cert, err := tls.X509KeyPair(certPem, keyPem)
-	require.NoError(t, err)
+	tlsConf, _, _ := createServerTLSConfig(t)
+
+	tlsConfProvider := &aghtest.TLSConfigProvider{}
+	tlsConfProvider.OnTLSConfig = func() (conf *tls.Config) { return tlsConf }
+	tlsConfProvider.OnHasIPAddrs = func() (ok bool) { return true }
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := createTestServer(t, &filtering.Config{
-				BlockingMode: filtering.BlockingModeDefault,
-			}, ServerConfig{
-				Config: Config{
-					HandleDDR:        tc.ddrEnabled,
-					UpstreamMode:     UpstreamModeLoadBalance,
-					EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
-					ClientsContainer: EmptyClientsContainer{},
+			s := createTestServer(
+				t,
+				&filtering.Config{
+					BlockingMode: filtering.BlockingModeDefault,
 				},
-				TLSConf: &TLSConfig{
-					ServerName:       ddrTestDomainName,
-					Cert:             &cert,
-					TLSListenAddrs:   tc.addrsDoT,
-					HTTPSListenAddrs: tc.addrsDoH,
-					QUICListenAddrs:  tc.addrsDoQ,
+				ServerConfig{
+					Config: Config{
+						HandleDDR:        tc.ddrEnabled,
+						UpstreamMode:     UpstreamModeLoadBalance,
+						EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+						ClientsContainer: EmptyClientsContainer{},
+					},
+					TLSConf: &TLSConfig{
+						ServerName:       ddrTestDomainName,
+						TLSListenAddrs:   tc.addrsDoT,
+						HTTPSListenAddrs: tc.addrsDoH,
+						QUICListenAddrs:  tc.addrsDoQ,
+					},
+					ServePlainDNS: true,
 				},
-				ServePlainDNS: true,
-			})
-			// TODO(e.burkov):  Generate a certificate actually containing the
-			// IP addresses.
-			s.hasIPAddrs = true
+				tlsConfProvider,
+			)
 
 			req := createTestMessageWithType(tc.host, tc.qtype)
 
@@ -683,6 +692,7 @@ func TestServer_ProcessUpstream_localPTR(t *testing.T) {
 				LocalPTRResolvers: []string{localUpsAddr},
 				ServePlainDNS:     true,
 			},
+			testTLSConfigProvider,
 		)
 		ctx := testutil.ContextWithTimeout(t, testTimeout)
 		pctx := newPrxCtx()
@@ -713,6 +723,7 @@ func TestServer_ProcessUpstream_localPTR(t *testing.T) {
 				LocalPTRResolvers: []string{localUpsAddr},
 				ServePlainDNS:     true,
 			},
+			testTLSConfigProvider,
 		)
 		pctx := newPrxCtx()
 

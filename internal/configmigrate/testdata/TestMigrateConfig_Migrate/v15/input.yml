@@ -16,7 +16,7 @@ dns:
   blocked_response_ttl: 10
   querylog_enabled: true
   querylog_file_enabled: true
-  querylog_interval: 720h
+  querylog_interval: 30d
   querylog_size_memory: 1000
   upstream_dns:
   - tls://1.1.1.1

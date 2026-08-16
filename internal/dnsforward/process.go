@@ -226,27 +226,7 @@ func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
 		resp.Answer = append(resp.Answer, ans)
 	}
 
-	if s.hasIPAddrs {
-		// Only add DNS-over-TLS resolvers in case the certificate contains IP
-		// addresses.
-		//
-		// See https://github.com/AdguardTeam/AdGuardHome/issues/4927.
-		for _, addr := range s.dnsProxy.TLSListenAddr {
-			values := []dns.SVCBKeyValue{
-				&dns.SVCBAlpn{Alpn: []string{"dot"}},
-				&dns.SVCBPort{Port: uint16(addr.Port)},
-			}
-
-			ans := &dns.SVCB{
-				Hdr:      s.hdr(req, dns.TypeSVCB),
-				Priority: 1,
-				Target:   domainName,
-				Value:    values,
-			}
-
-			resp.Answer = append(resp.Answer, ans)
-		}
-	}
+	s.appendDoTResolvers(req, resp, domainName)
 
 	for _, addr := range s.dnsProxy.QUICListenAddr {
 		values := []dns.SVCBKeyValue{
@@ -265,6 +245,36 @@ func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
 	}
 
 	return resp
+}
+
+// appendDoTResolvers appends DNS-over-TLS SVCB resolver entries to resp if the
+// server's TLS certificate contains IP addresses.  req and resp must not be
+// nil.
+func (s *Server) appendDoTResolvers(req, resp *dns.Msg, domainName string) {
+	if !s.tlsConfigProvider.HasIPAddrs() {
+		return
+	}
+
+	// Only add DNS-over-TLS resolvers in case the certificate contains IP
+	// addresses.
+	//
+	// See https://github.com/AdguardTeam/AdGuardHome/issues/4927.
+	for _, addr := range s.dnsProxy.TLSListenAddr {
+		values := []dns.SVCBKeyValue{
+			&dns.SVCBAlpn{Alpn: []string{"dot"}},
+			&dns.SVCBPort{Port: uint16(addr.Port)},
+		}
+
+		ans := &dns.SVCB{
+			Hdr:      s.hdr(req, dns.TypeSVCB),
+			Priority: 1,
+			Target:   domainName,
+			Value:    values,
+		}
+
+		resp.Answer = append(resp.Answer, ans)
+
+	}
 }
 
 // processDHCPHosts respond to A requests if the target hostname is known to
@@ -471,8 +481,6 @@ func (s *Server) processUpstream(
 
 	s.setCustomUpstream(ctx, l, pctx, dctx.clientID)
 
-	reqWantsDNSSEC := s.setReqAD(req)
-
 	// Process the request further since it wasn't filtered.
 	prx := s.proxy()
 	if prx == nil {
@@ -488,52 +496,7 @@ func (s *Server) processUpstream(
 	dctx.responseFromUpstream = true
 	dctx.responseAD = pctx.Res.AuthenticatedData
 
-	s.setRespAD(pctx, reqWantsDNSSEC)
-
 	return resultCodeSuccess
-}
-
-// setReqAD changes the request based on the server settings.  wantsDNSSEC is
-// false if the response should be cleared of the AD bit.
-//
-// TODO(a.garipov, e.burkov): This should probably be done in module dnsproxy.
-func (s *Server) setReqAD(req *dns.Msg) (wantsDNSSEC bool) {
-	if !s.conf.EnableDNSSEC {
-		return false
-	}
-
-	origReqAD := req.AuthenticatedData
-	req.AuthenticatedData = true
-
-	// Per [RFC 6840] says, validating resolvers should only set the AD bit when
-	// the response has the AD bit set and the request contained either a set DO
-	// bit or a set AD bit.  So, if neither of these is true, clear the AD bits
-	// in [Server.setRespAD].
-	//
-	// [RFC 6840]: https://datatracker.ietf.org/doc/html/rfc6840#section-5.8
-	return origReqAD || hasDO(req)
-}
-
-// hasDO returns true if msg has EDNS(0) options and the DNSSEC OK flag is set
-// in there.
-//
-// TODO(a.garipov): Move to golibs/dnsmsg when it's there.
-func hasDO(msg *dns.Msg) (do bool) {
-	o := msg.IsEdns0()
-	if o == nil {
-		return false
-	}
-
-	return o.Do()
-}
-
-// setRespAD changes the request and response based on the server settings and
-// the original request data.
-func (s *Server) setRespAD(pctx *proxy.DNSContext, reqWantsDNSSEC bool) {
-	if s.conf.EnableDNSSEC && !reqWantsDNSSEC {
-		pctx.Req.AuthenticatedData = false
-		pctx.Res.AuthenticatedData = false
-	}
 }
 
 // dhcpHostFromRequest returns a hostname from question, if the request is for a

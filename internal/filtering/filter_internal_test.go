@@ -11,6 +11,7 @@ import (
 
 	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/AdguardTeam/golibs/testutil"
+	"github.com/c2h5oh/datasize"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -76,6 +77,9 @@ func updateAndAssert(
 	require.NoError(tb, err)
 }
 
+// testFilterSize is a test size of filters.
+const testFilterSize = 10 * datasize.MB
+
 // newDNSFilter returns a new properly initialized DNS filter instance.
 func newDNSFilter(tb testing.TB) (d *DNSFilter) {
 	tb.Helper()
@@ -86,6 +90,7 @@ func newDNSFilter(tb testing.TB) (d *DNSFilter) {
 		HTTPClient: &http.Client{
 			Timeout: testTimeout,
 		},
+		MaxHTTPSize: testFilterSize,
 	}, nil)
 	require.NoError(tb, err)
 

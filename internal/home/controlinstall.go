@@ -14,7 +14,6 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
@@ -84,9 +83,12 @@ type checkConfReqEnt struct {
 }
 
 type checkConfReq struct {
-	Web         checkConfReqEnt `json:"web"`
-	DNS         checkConfReqEnt `json:"dns"`
-	SetStaticIP bool            `json:"set_static_ip"`
+	Web checkConfReqEnt `json:"web"`
+	DNS checkConfReqEnt `json:"dns"`
+
+	Language string `json:"language"`
+
+	SetStaticIP bool `json:"set_static_ip"`
 }
 
 type checkConfRespEnt struct {
@@ -102,8 +104,9 @@ type staticIPJSON struct {
 
 type checkConfResp struct {
 	StaticIP staticIPJSON     `json:"static_ip"`
-	Web      checkConfRespEnt `json:"web"`
 	DNS      checkConfRespEnt `json:"dns"`
+	Language checkConfRespEnt `json:"language"`
+	Web      checkConfRespEnt `json:"web"`
 }
 
 // validateWeb returns error is the web part if the initial configuration can't
@@ -200,6 +203,12 @@ func (web *webAPI) handleInstallCheckConfig(w http.ResponseWriter, r *http.Reque
 	}
 
 	resp := &checkConfResp{}
+
+	err = validateLang(req.Language, true)
+	if err != nil {
+		resp.Language.Status = err.Error()
+	}
+
 	tcpPorts := aghalg.UniqChecker[tcpPort]{}
 	if err = req.validateWeb(tcpPorts); err != nil {
 		resp.Web.Status = err.Error()
@@ -362,19 +371,21 @@ type applyConfigReqEnt struct {
 }
 
 type applyConfigReq struct {
-	Username string `json:"username"`
+	Language string `json:"language"`
 	Password string `json:"password"`
+	Username string `json:"username"`
 
 	Web applyConfigReqEnt `json:"web"`
 	DNS applyConfigReqEnt `json:"dns"`
 }
 
 // copyInstallSettings copies the installation parameters between two
-// configuration structures.
+// configuration structures.  All arguments must not be nil.
 func copyInstallSettings(dst, src *configuration) {
-	dst.HTTPConfig = src.HTTPConfig
 	dst.DNS.BindHosts = src.DNS.BindHosts
 	dst.DNS.Port = src.DNS.Port
+	dst.HTTPConfig = src.HTTPConfig
+	dst.Language = src.Language
 }
 
 // shutdownTimeout is the timeout for shutting HTTP server down operation.
@@ -491,6 +502,10 @@ func (web *webAPI) finalizeInstall(
 		}
 	}()
 
+	if req.Language != "" {
+		config.Language = req.Language
+	}
+
 	config.DNS.BindHosts = []netip.Addr{req.DNS.IP}
 	config.DNS.Port = req.DNS.Port
 	config.Filtering.Logger = web.baseLogger.With(slogutil.KeyPrefix, "filtering")
@@ -513,14 +528,7 @@ func (web *webAPI) finalizeInstall(
 	// moment we'll allow setting up TLS in the initial configuration or the
 	// configuration itself will use HTTPS protocol, because the underlying
 	// functions potentially restart the HTTPS server.
-	err = startMods(
-		ctx,
-		web.baseLogger,
-		web.tlsManager,
-		web.confModifier,
-		web.httpReg,
-		web.conf.workDir,
-	)
+	err = web.startMods(ctx)
 	if err != nil {
 		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusInternalServerError, "%s", err)
 
@@ -530,7 +538,7 @@ func (web *webAPI) finalizeInstall(
 	err = config.write(
 		ctx,
 		web.logger,
-		web.tlsManager,
+		web.tlsConfProvider.ExtendedTLSConfig(),
 		web.auth,
 		web.conf.workDir,
 		web.conf.confPath,
@@ -588,6 +596,12 @@ func decodeApplyConfigReq(r io.Reader) (req *applyConfigReq, restartHTTP bool, e
 		return nil, false, fmt.Errorf("parsing request: %w", err)
 	}
 
+	err = validateLang(req.Language, true)
+	if err != nil {
+		// Don't wrap the error, because it's informative enough as is.
+		return nil, false, err
+	}
+
 	if req.Web.Port == 0 || req.DNS.Port == 0 {
 		return nil, false, errors.Error("ports cannot be 0")
 	}
@@ -610,31 +624,40 @@ func decodeApplyConfigReq(r io.Reader) (req *applyConfigReq, restartHTTP bool, e
 }
 
 // startMods initializes and starts the DNS server after installation.
-// baseLogger, tlsMgr, confModifier, and httpReg must not be nil.
-func startMods(
-	ctx context.Context,
-	baseLogger *slog.Logger,
-	tlsMgr *tlsManager,
-	confModifier agh.ConfigModifier,
-	httpReg aghhttp.Registrar,
-	workDir string,
-) (err error) {
-	statsDir, querylogDir, err := checkStatsAndQuerylogDirs(config, workDir)
+func (web *webAPI) startMods(ctx context.Context) (err error) {
+	statsDir, querylogDir, err := checkStatsAndQuerylogDirs(config, web.conf.workDir)
 	if err != nil {
+		// Don't wrap the error, because it's informative enough as is.
 		return err
 	}
 
-	err = initDNS(ctx, baseLogger, tlsMgr, confModifier, httpReg, statsDir, querylogDir)
+	err = initDNS(
+		ctx,
+		web.baseLogger,
+		web.tlsConfProvider,
+		web.confModifier,
+		web.httpReg,
+		statsDir,
+		querylogDir,
+		web.hostsContainer,
+		web.conf.mux,
+	)
 	if err != nil {
+		// Don't wrap the error, because it's informative enough as is.
 		return err
 	}
 
-	tlsMgr.start(ctx)
+	err = web.tlsManager.Start(ctx)
+	if err != nil {
+		// Should never happen.
+		return err
+	}
 
 	err = startDNSServer()
 	if err != nil {
-		closeDNSServer(ctx)
+		closeDNSServer(ctx, web.baseLogger)
 
+		// Don't wrap the error, because it's informative enough as is.
 		return err
 	}
 

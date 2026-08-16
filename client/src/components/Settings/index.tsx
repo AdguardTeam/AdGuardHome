@@ -16,28 +16,9 @@ import PageTitle from '../ui/PageTitle';
 
 import Card from '../ui/Card';
 
-import { getObjectKeysSorted, captitalizeWords } from '../../helpers/helpers';
+import { captitalizeWords } from '../../helpers/helpers';
 import './Settings.css';
 import { SettingsData } from '../../initialState';
-
-const ORDER_KEY = 'order';
-
-const SETTINGS = {
-    safebrowsing: {
-        enabled: false,
-        title: i18next.t('use_adguard_browsing_sec'),
-        subtitle: i18next.t('use_adguard_browsing_sec_hint'),
-        testId: 'safebrowsing',
-        [ORDER_KEY]: 0,
-    },
-    parental: {
-        enabled: false,
-        title: i18next.t('use_adguard_parental'),
-        subtitle: i18next.t('use_adguard_parental_hint'),
-        testId: 'parental',
-        [ORDER_KEY]: 1,
-    },
-};
 
 interface SettingsProps {
     initSettings: (...args: unknown[]) => unknown;
@@ -82,7 +63,7 @@ interface SettingsProps {
 
 class Settings extends Component<SettingsProps> {
     componentDidMount() {
-        this.props.initSettings(SETTINGS);
+        this.props.initSettings();
 
         this.props.getStatsConfig();
 
@@ -91,31 +72,9 @@ class Settings extends Component<SettingsProps> {
         this.props.getFilteringStatus();
     }
 
-    renderSettings = (settings: any) =>
-        getObjectKeysSorted(SETTINGS, ORDER_KEY).map((key: any) => {
-            const setting = settings[key];
-            const { enabled, title, subtitle, testId } = setting;
-
-            return (
-                <div key={key} className="form__group form__group--checkbox">
-                    <Checkbox
-                        data-testid={testId}
-                        value={enabled}
-                        title={title}
-                        subtitle={subtitle}
-                        onChange={(checked) => this.props.toggleSetting(key, !checked)}
-                    />
-                </div>
-            );
-        });
-
     renderSafeSearch = () => {
-        const {
-            settings: {
-                settingsList: { safesearch },
-            },
-        } = this.props;
-        const { enabled } = safesearch || {};
+        const safesearch = this.props.settings.settingsList?.safesearch || {};
+        const { enabled } = safesearch;
         const searches = { ...(safesearch || {}) };
         delete searches.enabled;
 
@@ -164,6 +123,8 @@ class Settings extends Component<SettingsProps> {
             setFiltersConfig,
             t,
         } = this.props;
+        const safebrowsingEnabled = settings.settingsList?.safebrowsing?.enabled ?? false;
+        const parentalEnabled = settings.settingsList?.parental?.enabled ?? false;
 
         const isDataReady = !settings.processing && !stats.processingGetConfig && !queryLogs.processingGetConfig;
 
@@ -187,7 +148,24 @@ class Settings extends Component<SettingsProps> {
                                             processing={filtering.processingSetConfig}
                                             setFiltersConfig={setFiltersConfig}
                                         />
-                                        {this.renderSettings(settings.settingsList)}
+                                        <div className="form__group form__group--checkbox">
+                                            <Checkbox
+                                                data-testid="safebrowsing"
+                                                value={safebrowsingEnabled}
+                                                title={t('use_adguard_browsing_sec')}
+                                                subtitle={t('use_adguard_browsing_sec_hint')}
+                                                onChange={(checked) => this.props.toggleSetting('safebrowsing', !checked)}
+                                            />
+                                        </div>
+                                        <div className="form__group form__group--checkbox">
+                                            <Checkbox
+                                                data-testid="parental"
+                                                value={parentalEnabled}
+                                                title={t('use_adguard_parental')}
+                                                subtitle={t('use_adguard_parental_hint')}
+                                                onChange={(checked) => this.props.toggleSetting('parental', !checked)}
+                                            />
+                                        </div>
                                         {this.renderSafeSearch()}
                                     </div>
                                 </Card>

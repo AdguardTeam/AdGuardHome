@@ -68,7 +68,7 @@ class StatsConfig extends Component<StatsConfigProps> {
                             interval,
                             customInterval,
                             enabled,
-                            ignored: ignored.join('\n'),
+                            ignored: ignored?.join('\n'),
                             ignored_enabled: ignoredEnabled,
                         }}
                         processing={processing}

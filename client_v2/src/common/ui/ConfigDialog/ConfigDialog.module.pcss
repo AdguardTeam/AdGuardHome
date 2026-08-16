@@ -1,0 +1,39 @@
+.configDialog {
+    :global(.rc-dialog-wrap) {
+        padding: 0;
+    }
+}
+
+.body {
+    overflow-y: auto;
+    border: none;
+    padding: 0 16px;
+}
+
+.footer {
+    display: flex;
+    gap: 8px;
+    padding: 16px;
+}
+
+.saveButton {
+    width: 100%;
+    max-width: none;
+    min-width: 200px;
+
+    @media (min-width: 768px) {
+        width: auto;
+    }
+}
+
+.description {
+    padding: 8px 16px;
+
+    p {
+        margin: 0;
+    }
+
+    p + p {
+        margin-top: 12px;
+    }
+}

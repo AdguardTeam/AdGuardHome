@@ -204,7 +204,7 @@ func TestLargeNumbers(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodGet, "/control/stats", nil)
 
-	for h := 0; h < hoursNum; h++ {
+	for h := range hoursNum {
 		atomic.AddUint32(&curHour, 1)
 
 		for i := range cliNumPerHour {

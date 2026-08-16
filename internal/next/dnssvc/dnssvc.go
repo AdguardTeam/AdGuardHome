@@ -77,6 +77,7 @@ func New(c *Config) (svc *Service, err error) {
 			CacheSizeBytes: c.CacheSize,
 			CacheEnabled:   c.CacheEnabled,
 			RefuseAny:      c.RefuseAny,
+			DNSSECEnabled:  c.DNSSECEnabled,
 			UseDNS64:       c.UseDNS64,
 		},
 		bootstraps:          c.BootstrapServers,
@@ -109,6 +110,7 @@ func New(c *Config) (svc *Service, err error) {
 		RequestHandler: rlMw.Wrap(proxy.DefaultHandler{}),
 		DNS64Prefs:     svc.proxyConf.DNS64Prefs,
 		CacheEnabled:   svc.proxyConf.CacheEnabled,
+		DNSSECEnabled:  svc.proxyConf.DNSSECEnabled,
 		RefuseAny:      svc.proxyConf.RefuseAny,
 		UseDNS64:       svc.proxyConf.UseDNS64,
 	})

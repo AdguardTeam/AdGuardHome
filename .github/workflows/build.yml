@@ -1,7 +1,16 @@
+# TODO(a.garipov):  Use client_v2 for the frontend tests once Windows build is
+# fixed.
 name: build
 
+# Permissions are disabled for all the jobs by default, and then overridden for
+# specific jobs if needed.  This is a recommended practice for security reasons,
+# and also allows to avoid mistakes with permissions when creating new jobs.
+#
+# See https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#permissions.
+permissions: {}
+
 env:
-  GO_VERSION: 1.26.2
+  GO_VERSION: 1.26.6
   NODE_VERSION: 24
 
 on:
@@ -15,6 +24,8 @@ on:
 jobs:
   test:
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
     env:
       GO111MODULE: on
       GOPROXY: https://goproxy.cn
@@ -43,7 +54,7 @@ jobs:
           cache-dependency-path: client/package-lock.json
       - name: Run tests
         shell: bash
-        run: make VERBOSE=1 deps test go-bench go-fuzz
+        run: make CLIENT_DIR=client VERBOSE=1 deps test go-bench go-fuzz
       - name: Upload coverage
         uses: codecov/codecov-action@v5
         if: success() && matrix.os == 'ubuntu-latest'
@@ -54,6 +65,8 @@ jobs:
   build-release:
     runs-on: ubuntu-latest
     needs: test
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v6

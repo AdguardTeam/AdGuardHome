@@ -1,0 +1,76 @@
+.hidden {
+    display: none;
+}
+
+.noWrap {
+    white-space: nowrap;
+}
+
+.textOverflow {
+    max-width: 100%;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.twoRowsOverflow {
+    display: -webkit-box;
+    white-space: initial;
+    word-break: break-word;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    text-overflow: ellipsis;
+    overflow: hidden;
+
+    @media (min-width: 768px) {
+        -webkit-line-clamp: none;
+    }
+}
+
+.scrollable {
+    &::-webkit-scrollbar {
+        -webkit-appearance: none;
+        width: 6px;
+        background: var(--light-gray);
+        border-radius: 8px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        border-radius: 8px;
+        background: var(--middle-gray);
+    }
+}
+
+.breakWord {
+    word-break: break-word;
+    display: inline-block;
+}
+
+.desktop {
+    display: none;
+
+    @media (min-width: 1024px) {
+        display: block;
+    }
+}
+
+.mobile {
+    display: block;
+
+    @media (min-width: 1024px) {
+        display: none;
+    }
+}
+
+.visuallyHidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    border: 0;
+    padding: 0;
+    white-space: nowrap;
+    clip-path: inset(100%);
+    clip: rect(0 0 0 0);
+    overflow: hidden;
+}

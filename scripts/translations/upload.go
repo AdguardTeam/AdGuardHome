@@ -22,7 +22,7 @@ func (c *twoskyClient) upload() (err error) {
 	defer func() { err = errors.Annotate(err, "upload: %w") }()
 
 	uploadURI := c.uri.JoinPath("upload")
-	basePath := filepath.Join(localesDirHome, defaultBaseFile)
+	basePath := filepath.Join(c.localesDir, defaultBaseFile)
 
 	formData := map[string]string{
 		"format":   "json",

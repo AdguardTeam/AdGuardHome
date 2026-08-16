@@ -2,6 +2,7 @@ package updater
 
 import (
 	"context"
+	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -55,7 +56,14 @@ func TestUpdater_internal(t *testing.T) {
 		pkgData, err := os.ReadFile(filepath.Join("testdata", tc.archiveName))
 		require.NoError(t, err)
 
-		fakeClient, fakeURL := aghtest.StartHTTPServer(t, pkgData)
+		handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			pt := testutil.NewPanicT(t)
+
+			_, werr := w.Write(pkgData)
+			require.NoError(pt, werr)
+		})
+
+		fakeClient, fakeURL := aghtest.StartHTTPServer(t, handler)
 		fakeURL = fakeURL.JoinPath(tc.archiveName)
 
 		u := NewUpdater(&Config{

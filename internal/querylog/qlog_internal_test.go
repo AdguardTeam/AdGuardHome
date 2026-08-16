@@ -7,7 +7,6 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
-	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/miekg/dns"
@@ -22,6 +21,15 @@ func searchCriTerm(val string, isStrict bool) (c searchCriterion) {
 		value:         val,
 		criterionType: ctTerm,
 		strict:        isStrict,
+	}
+}
+
+// searchReason is a helper function for tests that constructs a search
+// criterion of type [ctReason].
+func searchReason(values []string) (c searchCriterion) {
+	return searchCriterion{
+		values:        values,
+		criterionType: ctReason,
 	}
 }
 
@@ -52,7 +60,7 @@ func TestQueryLog(t *testing.T) {
 	entryRootWant := &logEntry{QHost: ".", Answer: entryRoot.Answer, IP: entryRoot.IP}
 
 	l, err := newQueryLog(Config{
-		Logger:      slogutil.NewDiscardLogger(),
+		Logger:      testLogger,
 		Enabled:     true,
 		FileEnabled: true,
 		RotationIvl: timeutil.Day,
@@ -64,7 +72,7 @@ func TestQueryLog(t *testing.T) {
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
 
 	// Add disk entries.
-	addEntry(l, entry1.QHost, entry1.Answer, entry1.IP)
+	addTestEntry(l, entry1.QHost, entry1.Answer, entry1.IP, filtering.Rewritten)
 	// Write to disk (first file).
 	require.NoError(t, l.flushLogBuffer(ctx))
 
@@ -72,14 +80,14 @@ func TestQueryLog(t *testing.T) {
 	require.NoError(t, l.rotate(ctx))
 
 	// Add disk entries.
-	addEntry(l, entry2.QHost, entry2.Answer, entry2.IP)
+	addTestEntry(l, entry2.QHost, entry2.Answer, entry2.IP, filtering.Rewritten)
 	// Write to disk.
 	require.NoError(t, l.flushLogBuffer(ctx))
 
 	// Add memory entries.
-	addEntry(l, entry3.QHost, entry3.Answer, entry3.IP)
-	addEntry(l, entry4.QHost, entry4.Answer, entry4.IP)
-	addEntry(l, entryRoot.QHost, entryRoot.Answer, entryRoot.IP)
+	addTestEntry(l, entry3.QHost, entry3.Answer, entry3.IP, filtering.Rewritten)
+	addTestEntry(l, entry4.QHost, entry4.Answer, entry4.IP, filtering.Rewritten)
+	addTestEntry(l, entryRoot.QHost, entryRoot.Answer, entryRoot.IP, filtering.Rewritten)
 
 	testCases := []struct {
 		name string
@@ -105,6 +113,10 @@ func TestQueryLog(t *testing.T) {
 		name: "by_client_ip_non-strict",
 		sCr:  []searchCriterion{searchCriTerm("203.0.113", false)},
 		want: []*logEntry{entryRootWant, entry4, entry3, entry2, entry1},
+	}, {
+		name: "by_reason",
+		sCr:  []searchCriterion{searchReason([]string{filtering.Rewritten.String()})},
+		want: []*logEntry{entryRootWant, entry4, entry3, entry2, entry1},
 	}}
 
 	for _, tc := range testCases {
@@ -124,7 +136,7 @@ func TestQueryLog(t *testing.T) {
 
 func TestQueryLogOffsetLimit(t *testing.T) {
 	l, err := newQueryLog(Config{
-		Logger:      slogutil.NewDiscardLogger(),
+		Logger:      testLogger,
 		Enabled:     true,
 		RotationIvl: timeutil.Day,
 		MemSize:     100,
@@ -142,14 +154,26 @@ func TestQueryLogOffsetLimit(t *testing.T) {
 
 	// Add entries to the log.
 	for range entNum {
-		addEntry(l, secondPageDomain, net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))
+		addTestEntry(
+			l,
+			secondPageDomain,
+			testAnswerIPv4,
+			testClientIPv4,
+			filtering.Rewritten,
+		)
 	}
 	// Write them to the first file.
 	require.NoError(t, l.flushLogBuffer(ctx))
 
 	// Add more to the in-memory part of log.
 	for range entNum {
-		addEntry(l, firstPageDomain, net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))
+		addTestEntry(
+			l,
+			firstPageDomain,
+			testAnswerIPv4,
+			testClientIPv4,
+			filtering.Rewritten,
+		)
 	}
 
 	params := newSearchParams()
@@ -203,7 +227,7 @@ func TestQueryLogOffsetLimit(t *testing.T) {
 
 func TestQueryLogMaxFileScanEntries(t *testing.T) {
 	l, err := newQueryLog(Config{
-		Logger:      slogutil.NewDiscardLogger(),
+		Logger:      testLogger,
 		Enabled:     true,
 		FileEnabled: true,
 		RotationIvl: timeutil.Day,
@@ -217,7 +241,13 @@ func TestQueryLogMaxFileScanEntries(t *testing.T) {
 	const entNum = 10
 	// Add entries to the log.
 	for range entNum {
-		addEntry(l, "example.org", net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))
+		addTestEntry(
+			l,
+			"example.org",
+			testAnswerIPv4,
+			testClientIPv4,
+			filtering.Rewritten,
+		)
 	}
 	// Write them to disk.
 	require.NoError(t, l.flushLogBuffer(ctx))
@@ -234,7 +264,7 @@ func TestQueryLogMaxFileScanEntries(t *testing.T) {
 
 func TestQueryLogFileDisabled(t *testing.T) {
 	l, err := newQueryLog(Config{
-		Logger:      slogutil.NewDiscardLogger(),
+		Logger:      testLogger,
 		Enabled:     true,
 		FileEnabled: false,
 		RotationIvl: timeutil.Day,
@@ -243,10 +273,10 @@ func TestQueryLogFileDisabled(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	addEntry(l, "example1.org", net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))
-	addEntry(l, "example2.org", net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))
+	addTestEntry(l, "example1.org", testAnswerIPv4, testClientIPv4, filtering.Rewritten)
+	addTestEntry(l, "example2.org", testAnswerIPv4, testClientIPv4, filtering.Rewritten)
 	// The oldest entry is going to be removed from memory buffer.
-	addEntry(l, "example3.org", net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))
+	addTestEntry(l, "example3.org", testAnswerIPv4, testClientIPv4, filtering.Rewritten)
 
 	params := newSearchParams()
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
@@ -335,49 +365,6 @@ func TestQueryLogShouldLog(t *testing.T) {
 			assert.Equal(t, tc.wantLog, res)
 		})
 	}
-}
-
-func addEntry(l *queryLog, host string, answerStr, client net.IP) {
-	q := dns.Msg{
-		Question: []dns.Question{{
-			Name:   host + ".",
-			Qtype:  dns.TypeA,
-			Qclass: dns.ClassINET,
-		}},
-	}
-
-	a := dns.Msg{
-		Question: q.Question,
-		Answer: []dns.RR{&dns.A{
-			Hdr: dns.RR_Header{
-				Name:   q.Question[0].Name,
-				Rrtype: dns.TypeA,
-				Class:  dns.ClassINET,
-			},
-			A: answerStr,
-		}},
-	}
-
-	res := filtering.Result{
-		ServiceName: "SomeService",
-		Rules: []*filtering.ResultRule{{
-			FilterListID: 1,
-			Text:         "SomeRule",
-		}},
-		Reason:     filtering.Rewritten,
-		IsFiltered: true,
-	}
-
-	params := &AddParams{
-		Question:   &q,
-		Answer:     &a,
-		OrigAnswer: &a,
-		Result:     &res,
-		Upstream:   "upstream",
-		ClientIP:   client,
-	}
-
-	l.Add(params)
 }
 
 func assertLogEntry(tb testing.TB, entry *logEntry, host string, answer, client net.IP) {

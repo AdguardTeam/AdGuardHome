@@ -399,7 +399,7 @@
   "form_error_ip_format": "無效的 IP 格式",
   "form_error_mac_format": "無效的 「MAC 位址」格式",
   "form_error_password": "密碼不相符",
-  "form_error_password_length": "密碼必須至少 {{value}} 個字元長度",
+  "form_error_password_length": "密碼長度必須介於 {{min}} 至 {{max}} 個字元之間",
   "form_error_port": "輸入有效的連接埠",
   "form_error_port_range": "輸入範圍 80-65535 中的值",
   "form_error_port_unsafe": "這個連接埠不安全",

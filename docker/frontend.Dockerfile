@@ -29,6 +29,7 @@
 
 # NOTE:  Keep in sync with bamboo-specs/bamboo.yaml.
 ARG BASE_IMAGE=adguard/home-js-builder:4.0
+ARG CLIENT_DIR=client
 
 # The dependencies stage is needed to install packages and tool dependencies.
 # This is also where binaries like osslsigncode, which may be required for tests
@@ -38,13 +39,15 @@ ARG BASE_IMAGE=adguard/home-js-builder:4.0
 FROM "$BASE_IMAGE" AS dependencies
 ADD Makefile /app/
 ADD scripts /app/scripts
-ADD client /app/client
+ARG CLIENT_DIR
+ADD "${CLIENT_DIR}" "/app/${CLIENT_DIR}"
 WORKDIR /app
 RUN \
     --mount=type=cache,id=npm-root-cache,target=/root/.npm \
 <<-'EOF'
 set -e -f -u -x
 make \
+	CLIENT_DIR="${CLIENT_DIR}" \
 	VERBOSE=1 \
 	js-deps \
 	;
@@ -53,14 +56,16 @@ EOF
 # The linter stage is separated from the tester stage to make catching test
 # failures easier.
 FROM dependencies AS linter
-ARG CACHE_BUSTER=0
 ADD . /app
+ARG CACHE_BUSTER=0
+ARG CLIENT_DIR
 WORKDIR /app
 RUN \
     --mount=type=cache,id=npm-root-cache,target=/root/.npm \
 <<-'EOF'
 set -e -f -u -x
 make \
+	CLIENT_DIR="${CLIENT_DIR}" \
 	VERBOSE=1 \
 	js-typecheck \
 	js-lint \
@@ -70,11 +75,13 @@ EOF
 # The test stage.
 FROM linter AS tester
 ARG CACHE_BUSTER=0
+ARG CLIENT_DIR
 RUN \
     --mount=type=cache,id=npm-root-cache,target=/root/.npm \
 <<-'EOF'
 set -e -f -u -x
 make \
+	CLIENT_DIR="${CLIENT_DIR}" \
 	VERBOSE=1 \
 	js-test \
 	;
@@ -83,6 +90,7 @@ EOF
 # The e2e test stage.
 FROM dependencies AS e2etester
 ARG CACHE_BUSTER=0
+ARG CLIENT_DIR
 ADD . /app
 WORKDIR /app
 RUN \
@@ -90,6 +98,7 @@ RUN \
 <<-'EOF'
 set -e -f -u -x
 make \
+	CLIENT_DIR="${CLIENT_DIR}" \
 	CI='true' \
 	VERBOSE=1 \
 	js-test-e2e \
@@ -99,6 +108,7 @@ EOF
 # The builder stage.
 FROM dependencies AS builder
 ARG CACHE_BUSTER=0
+ARG CLIENT_DIR
 ADD . /app
 WORKDIR /app
 RUN \
@@ -106,6 +116,7 @@ RUN \
 <<-'EOF'
 set -e -f -u -x
 make \
+	CLIENT_DIR="${CLIENT_DIR}" \
 	VERBOSE=1 \
 	js-build \
 	;
@@ -115,4 +126,5 @@ EOF
 # could be published.  This stage should only be used in a CI.
 FROM scratch AS builder-exporter
 ARG CACHE_BUSTER=0
+ARG CLIENT_DIR
 COPY --from=builder /app/build /build

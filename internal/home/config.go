@@ -8,7 +8,6 @@ import (
 	"net/netip"
 	"os"
 	"path/filepath"
-	"slices"
 	"sync"
 	"time"
 
@@ -20,6 +19,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
@@ -28,7 +28,6 @@ import (
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/timeutil"
-	"github.com/google/go-cmp/cmp"
 	"github.com/google/renameio/v2/maybe"
 	yaml "go.yaml.in/yaml/v4"
 )
@@ -297,9 +296,12 @@ type pendingRequests struct {
 }
 
 // tlsConfigSettings is the TLS configuration for DNS-over-TLS, DNS-over-QUIC,
-// and HTTPS.  When adding new properties, update the [tlsConfigSettings.clone]
-// and [tlsConfigSettings.setPrivateFieldsAndCompare] methods as necessary.
+// and HTTPS.  When adding new properties, update the conversion functions
+// [confFromTLSSettings] and [confToTLSSettings] as necessary.
 type tlsConfigSettings struct {
+	// Status is the current status of the configuration.
+	Status tlsConfigStatus `yaml:"-" json:"-"`
+
 	// Enabled indicates whether encryption (DoT/DoH/HTTPS) is enabled.
 	Enabled bool `yaml:"enabled" json:"enabled"`
 
@@ -326,7 +328,7 @@ type tlsConfigSettings struct {
 	// if PortDNSCrypt is not zero.
 	//
 	// See https://github.com/AdguardTeam/dnsproxy and
-	// https://github.com/ameshkov/dnscrypt.
+	// https://github.com/AdguardTeam/dnscrypt.
 	DNSCryptConfigFile string `yaml:"dnscrypt_config_file" json:"dnscrypt_config_file"`
 
 	// CertificateChain is the PEM-encoded certificate chain.  Must be empty if
@@ -359,43 +361,9 @@ type tlsConfigSettings struct {
 	// StrictSNICheck controls if the connections with SNI mismatching the
 	// certificate's ones should be rejected.
 	StrictSNICheck bool `yaml:"strict_sni_check" json:"-"`
-}
 
-// clone returns a deep copy of c.
-func (c *tlsConfigSettings) clone() (clone *tlsConfigSettings) {
-	clone = &tlsConfigSettings{}
-	*clone = *c
-
-	clone.OverrideTLSCiphers = slices.Clone(c.OverrideTLSCiphers)
-	clone.CertificateChainData = slices.Clone(c.CertificateChainData)
-	clone.PrivateKeyData = slices.Clone(c.PrivateKeyData)
-
-	return clone
-}
-
-// setPrivateFieldsAndCompare sets any missing properties in conf to match those
-// in c and returns true if TLS configurations are equal.  conf must not be be
-// nil.
-// It sets the following properties because these are not accepted from the
-// frontend:
-//
-//	[tlsConfigSettings.DNSCryptConfigFile]
-//	[tlsConfigSettings.OverrideTLSCiphers]
-//	[tlsConfigSettings.PortDNSCrypt]
-//
-// The following properties are skipped as they are set by
-// [tlsManager.loadTLSConfig]:
-//
-//	[tlsConfigSettings.CertificateChainData]
-//	[tlsConfigSettings.PrivateKeyData]
-func (c *tlsConfigSettings) setPrivateFieldsAndCompare(conf *tlsConfigSettings) (equal bool) {
-	conf.OverrideTLSCiphers = slices.Clone(c.OverrideTLSCiphers)
-
-	conf.DNSCryptConfigFile = c.DNSCryptConfigFile
-	conf.PortDNSCrypt = c.PortDNSCrypt
-
-	// TODO(a.garipov): Define a custom comparer.
-	return cmp.Equal(c, conf)
+	// ServePlainDNS defines whether to serve a plain DNS.
+	ServePlainDNS bool `yaml:"-" json:"-"`
 }
 
 type queryLogConfig struct {
@@ -494,6 +462,7 @@ var config = &configuration{
 			CacheSize:                4 * 1024 * 1024,
 			CacheOptimisticAnswerTTL: timeutil.Duration(30 * time.Second),
 			CacheOptimisticMaxAge:    timeutil.Duration(12 * time.Hour),
+			EnableDNSSEC:             true,
 
 			EDNSClientSubnet: &dnsforward.EDNSClientSubnet{
 				CustomIP:  netip.Addr{},
@@ -563,6 +532,7 @@ var config = &configuration{
 		ParentalEnabled:     false,
 		SafeBrowsingEnabled: false,
 
+		MaxHTTPSize:           rulelist.DefaultMaxRuleListSize,
 		SafeBrowsingCacheSize: 1 * 1024 * 1024,
 		SafeSearchCacheSize:   1 * 1024 * 1024,
 		ParentalCacheSize:     1 * 1024 * 1024,
@@ -870,7 +840,7 @@ func readConfigFile(
 func (c *configuration) write(
 	ctx context.Context,
 	l *slog.Logger,
-	tlsMgr *tlsManager,
+	extTLSConf *aghtls.ExtendedTLSConfig,
 	auth *auth,
 	workDir string,
 	confPath string,
@@ -882,9 +852,8 @@ func (c *configuration) write(
 		config.Users = auth.usersList(ctx)
 	}
 
-	if tlsMgr != nil {
-		tlsConf := tlsMgr.config()
-		config.TLS = *tlsConf
+	if extTLSConf != nil {
+		config.TLS = confToTLSSettings(extTLSConf)
 	}
 
 	if globalContext.stats != nil {
@@ -1004,7 +973,12 @@ var _ agh.ConfigModifier = (*defaultConfigModifier)(nil)
 // Apply implements the [agh.ConfigModifier] interface for
 // *defaultConfigModifier.
 func (cm *defaultConfigModifier) Apply(ctx context.Context) {
-	err := cm.config.write(ctx, cm.logger, cm.tlsMgr, cm.auth, cm.workDir, cm.confPath)
+	var extTLSConf *aghtls.ExtendedTLSConfig
+	if cm.tlsMgr != nil {
+		extTLSConf = cm.tlsMgr.ExtendedTLSConfig()
+	}
+
+	err := cm.config.write(ctx, cm.logger, extTLSConf, cm.auth, cm.workDir, cm.confPath)
 	if err != nil {
 		cm.logger.ErrorContext(ctx, "writing config", slogutil.KeyError, err)
 	}

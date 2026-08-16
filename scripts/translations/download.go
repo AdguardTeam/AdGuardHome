@@ -49,15 +49,15 @@ func (c *twoskyClient) download(ctx context.Context, l *slog.Logger) {
 		wg.Go(dw.run)
 	}
 
-	for _, baseFile := range c.localizableFiles {
-		dir, file := filepath.Split(baseFile)
+	for _, mask := range c.localizableFiles {
+		_, file := filepath.Split(mask)
 
 		for _, lang := range c.langs {
 			uri := translationURL(downloadURI, file, c.projectID, lang)
 
 			reqCh <- downloadRequest{
 				uri: uri,
-				dir: dir,
+				dir: c.localesDir,
 			}
 		}
 	}

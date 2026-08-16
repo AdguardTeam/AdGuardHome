@@ -21,7 +21,7 @@ import (
 const DefaultRuleBufSize = 1024
 
 // DefaultMaxRuleListSize is the default maximum filtering-rule list size.
-const DefaultMaxRuleListSize = 64 * datasize.MB
+const DefaultMaxRuleListSize = 256 * datasize.MB
 
 // APIID is the type for the rule-list IDs used in the HTTP API.
 type APIID int64

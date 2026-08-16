@@ -2,6 +2,7 @@ package home
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
@@ -48,6 +49,20 @@ var allowedLanguages = container.NewMapSet(
 	"zh-tw",
 )
 
+// validateLang returns a standard error about if lang is an unknown language.
+// If allowEmpty is true, the language can also be empty.
+func validateLang(lang string, allowEmpty bool) (err error) {
+	if allowEmpty && lang == "" {
+		return nil
+	}
+
+	if !allowedLanguages.Has(lang) {
+		return fmt.Errorf("unknown language: %q", lang)
+	}
+
+	return nil
+}
+
 // languageJSON is the JSON structure for language requests and responses.
 type languageJSON struct {
 	Language string `json:"language"`
@@ -89,8 +104,9 @@ func (web *webAPI) handleI18nChangeLanguage(w http.ResponseWriter, r *http.Reque
 	}
 
 	lang := langReq.Language
-	if !allowedLanguages.Has(lang) {
-		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "unknown language: %q", lang)
+	err = validateLang(lang, false)
+	if err != nil {
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
