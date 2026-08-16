@@ -21,7 +21,7 @@ require (
 	github.com/google/renameio/v2 v2.0.2
 	github.com/google/uuid v1.6.0
 	github.com/gopacket/gopacket v1.7.0
-	github.com/insomniacslk/dhcp v0.0.0-20260603135910-a415979eb11e
+	github.com/insomniacslk/dhcp v0.0.0-20260719225207-c76316d4aa82
 	// TODO(e.burkov):  Get rid of this dependency.  At least, don't update it,
 	// unless all custom templates will be migrated to the new format, see
 	// https://github.com/kardianos/service/issues/418.
