@@ -106,7 +106,8 @@ jobs:
     if:
       ${{
         always() &&
-        github.repository_owner == 'AdguardTeam' &&
+        needs.build-release.result == 'failure' &&
+        github.repository == 'AdguardTeam/AdGuardHome' &&
         (
           github.event_name == 'push' ||
           github.event.pull_request.head.repo.full_name == github.repository
@@ -120,9 +121,9 @@ jobs:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           webhook-type: incoming-webhook
           payload: |
-            text: "${{ needs.build-release.result == 'failure' && '❌ Build failed' || (needs.build-release.result == 'success' && '✅ Build passed' || '⚠️ Build skipped') }}"
+            text: "❌ Build failed"
             attachments:
-              - color: "${{ needs.build-release.result == 'failure' && 'danger' || (needs.build-release.result == 'success' && 'good' || 'warning') }}"
+              - color: "danger"
                 fields:
                   - title: "Workflow"
                     value: "${{ github.workflow }}"
@@ -131,7 +132,7 @@ jobs:
                     value: "<${{ github.server_url }}/${{ github.repository }}|${{ github.repository }}>"
                     short: true
                   - title: "Message"
-                    value: "${{ github.event.head_commit.message }}"
+                    value: ${{ toJSON(github.event.head_commit.message) }}
                     short: false
                   - title: "Commit"
                     value: "<${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>"

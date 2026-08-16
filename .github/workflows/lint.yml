@@ -66,7 +66,8 @@ jobs:
     if:
       ${{
         always() &&
-        github.repository_owner == 'AdguardTeam' &&
+        (needs.go-lint.result == 'failure' || needs.eslint.result == 'failure') &&
+        github.repository == 'AdguardTeam/AdGuardHome' &&
         (
           github.event_name == 'push' ||
           github.event.pull_request.head.repo.full_name == github.repository
@@ -80,9 +81,9 @@ jobs:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           webhook-type: incoming-webhook
           payload: |
-            text: "${{ (needs.go-lint.result == 'failure' || needs.eslint.result == 'failure') && '❌ Lint failed' || '✅ Lint passed' }}"
+            text: "❌ Lint failed"
             attachments:
-              - color: "${{ (needs.go-lint.result == 'failure' || needs.eslint.result == 'failure') && 'danger' || 'good' }}"
+              - color: "danger"
                 fields:
                   - title: "Workflow"
                     value: "${{ github.workflow }}"
@@ -91,7 +92,7 @@ jobs:
                     value: "<${{ github.server_url }}/${{ github.repository }}|${{ github.repository }}>"
                     short: true
                   - title: "Message"
-                    value: "${{ github.event.head_commit.message }}"
+                    value: ${{ toJSON(github.event.head_commit.message) }}
                     short: false
                   - title: "Commit"
                     value: "<${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>"
