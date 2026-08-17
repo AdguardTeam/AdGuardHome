@@ -22,6 +22,9 @@ import (
 // store filters in data/filters/.
 func (m *Migrator) migrateTo1(ctx context.Context, diskConf yobj) (err error) {
 	diskConf["schema_version"] = 1
+	if m.readOnly {
+		return nil
+	}
 
 	dnsFilterPath := filepath.Join(m.workingDir, "dnsfilter.txt")
 	m.logger.InfoContext(ctx, "deleting file as we do not need it anymore", "path", dnsFilterPath)

@@ -208,7 +208,7 @@ func setupContext(
 	}
 
 	// TODO(s.chzhen):  Consider adding a key prefix.
-	err := parseConfig(ctx, baseLogger, workDir, confPath)
+	err := parseConfig(ctx, baseLogger, workDir, confPath, opts.checkConfig)
 	if err != nil {
 		baseLogger.ErrorContext(ctx, "failed to parse configuration file", slogutil.KeyError, err)
 

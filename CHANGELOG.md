@@ -44,10 +44,13 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Configuration migrations no longer change files when run with `--check-config` ([#4067]).
+
 - DNS64 treating unresolved `CNAME`/`DNAME` answers as the end of resolution chain ([#7514]).
 
 - Blocked requests without an EDNS(0) OPT record ([#8183]).
 
+[#4067]: https://github.com/AdguardTeam/AdGuardHome/issues/4067
 [go-1.26.6]: https://groups.google.com/g/golang-announce/c/94pEornpRlI
 [#7514]: https://github.com/AdguardTeam/AdGuardHome/issues/7514
 [#8183]: https://github.com/AdguardTeam/AdGuardHome/issues/8183
