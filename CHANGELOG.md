@@ -9,7 +9,7 @@ The format is based on [*Keep a Changelog*](https://keepachangelog.com/en/1.0.0/
 <!--
 ## [v1.0.0] – TBA
 
-## [v0.107.80] - 2026-08-24 (APPROX.)
+## [v0.107.80] - 2026-09-03 (APPROX.)
 
 See also the [v0.107.80 GitHub milestone][ms-v0.107.80].
 
@@ -22,11 +22,13 @@ NOTE: Add new changes BELOW THIS COMMENT.
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
 
-## [v0.107.79] - 2026-08-10
+## [v0.107.79] - 2026-08-17
 
 See also the [v0.107.79 GitHub milestone][ms-v0.107.79].
 
 ### Security
+
+- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.26.6][go-1.26.6].
 
 - AdGuard Home is now more resistant to resource exhaustion attacks when using DNS-over-QUIC.
 
@@ -54,8 +56,9 @@ See also the [v0.107.79 GitHub milestone][ms-v0.107.79].
 
 - Blocked requests without an EDNS(0) OPT record ([#8183]).
 
-[#7514]: https://github.com/AdguardTeam/AdGuardHome/issues/7514
-[#8183]: https://github.com/AdguardTeam/AdGuardHome/issues/8183
+[#7514]:     https://github.com/AdguardTeam/AdGuardHome/issues/7514
+[#8183]:     https://github.com/AdguardTeam/AdGuardHome/issues/8183
+[go-1.26.6]: https://groups.google.com/g/golang-announce/c/94pEornpRlI
 
 [ms-v0.107.79]: https://github.com/AdguardTeam/AdGuardHome/milestone/114?closed=1
 
