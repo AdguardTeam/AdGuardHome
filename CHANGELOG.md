@@ -54,6 +54,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
     - The garbage collector is made more aggressive for the duration of a rebuild, which lowers its transient memory peak by about a third.  Rebuilds are performed in the background, and DNS requests keep being served by the previous engines while they run.
 
+    - The heap is collected before a rebuild as well as after it, so that the memory that serving DNS has left behind is not held for the rebuild's duration on top of its own peak.
+
 - Rule-list files no longer stay open when the filtering engine fails to be rebuilt.
 
 [#7514]: https://github.com/AdguardTeam/AdGuardHome/issues/7514
