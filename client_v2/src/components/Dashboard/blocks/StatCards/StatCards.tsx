@@ -1,4 +1,5 @@
 import intl from 'panel/common/intl';
+import { Show } from 'solid-js';
 import { RoutePath } from 'panel/components/Routes/Paths';
 import { QUERY_LOG_REASON_FILTER, QUERY_LOG_STATUS_FILTER } from 'panel/helpers/constants';
 
@@ -14,6 +15,8 @@ type Props = {
     blockedFiltering: number[];
     replacedSafebrowsing: number[];
     replacedParental: number[];
+    showSafebrowsing: boolean;
+    showParental: boolean;
 };
 
 export const StatCards = (props: Props) => {
@@ -44,26 +47,30 @@ export const StatCards = (props: Props) => {
                 linkTo={RoutePath.QueryLog}
                 query={{ status: QUERY_LOG_STATUS_FILTER.BLOCKED.QUERY }}
             />
-            <StatCard
-                value={props.numReplacedSafebrowsing}
-                label={intl.getMessage('blocked_threats_chart')}
-                data={props.replacedSafebrowsing}
-                color={CARDS_COLORS.THREATS}
-                percentValue={threatsPercent()}
-                cardTheme={CARDS_THEME.THREATS}
-                linkTo={RoutePath.QueryLog}
-                query={{ reason: QUERY_LOG_REASON_FILTER.BLOCKED_BY_THREATS.QUERY }}
-            />
-            <StatCard
-                value={props.numReplacedParental}
-                label={intl.getMessage('stats_adult')}
-                data={props.replacedParental}
-                color={CARDS_COLORS.ADULT}
-                percentValue={parentalPercent()}
-                cardTheme={CARDS_THEME.ADULT}
-                linkTo={RoutePath.QueryLog}
-                query={{ reason: QUERY_LOG_REASON_FILTER.BLOCKED_BY_PARENTAL_CONTROL.QUERY }}
-            />
+            <Show when={props.showSafebrowsing}>
+                <StatCard
+                    value={props.numReplacedSafebrowsing}
+                    label={intl.getMessage('blocked_threats_chart')}
+                    data={props.replacedSafebrowsing}
+                    color={CARDS_COLORS.THREATS}
+                    percentValue={threatsPercent()}
+                    cardTheme={CARDS_THEME.THREATS}
+                    linkTo={RoutePath.QueryLog}
+                    query={{ reason: QUERY_LOG_REASON_FILTER.BLOCKED_BY_THREATS.QUERY }}
+                />
+            </Show>
+            <Show when={props.showParental}>
+                <StatCard
+                    value={props.numReplacedParental}
+                    label={intl.getMessage('stats_adult')}
+                    data={props.replacedParental}
+                    color={CARDS_COLORS.ADULT}
+                    percentValue={parentalPercent()}
+                    cardTheme={CARDS_THEME.ADULT}
+                    linkTo={RoutePath.QueryLog}
+                    query={{ reason: QUERY_LOG_REASON_FILTER.BLOCKED_BY_PARENTAL_CONTROL.QUERY }}
+                />
+            </Show>
         </div>
     );
 };

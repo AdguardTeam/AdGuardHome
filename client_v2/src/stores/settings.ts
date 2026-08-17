@@ -18,6 +18,7 @@ import type { SafeSearchConfig } from 'panel/api/model/safeSearchConfig';
 import type { UpstreamsConfig } from 'panel/api/model/upstreamsConfig';
 
 type SettingsState = {
+    loadStatus: 'idle' | 'loading' | 'loaded' | 'failed';
     processing: boolean;
     processingTestUpstream: boolean;
     processingDhcpStatus: boolean;
@@ -29,6 +30,7 @@ type SettingsState = {
 };
 
 const initialState: SettingsState = {
+    loadStatus: 'idle',
     processing: true,
     processingTestUpstream: false,
     processingDhcpStatus: false,
@@ -40,23 +42,34 @@ const initialState: SettingsState = {
 };
 
 const [state, setState] = createStore<SettingsState>(initialState);
+let initGeneration = 0;
 
 export const initSettings = async () => {
-    setState('processing', true);
+    const generation = ++initGeneration;
+    setState({ loadStatus: 'loading', processing: true });
     try {
         const [safebrowsingStatusData, parentalStatusData, safesearchStatusData] =
             await Promise.all([safebrowsingStatus(), parentalStatus(), safesearchStatus()]);
+        if (generation !== initGeneration) {
+            return;
+        }
+
         setState({
             settingsList: {
                 safebrowsing: { enabled: safebrowsingStatusData.enabled },
                 parental: { enabled: parentalStatusData.enabled },
                 safesearch: { ...safesearchStatusData },
             },
+            loadStatus: 'loaded',
             processing: false,
         });
     } catch (error) {
+        if (generation !== initGeneration) {
+            return;
+        }
+
         addErrorToast({ error });
-        setState('processing', false);
+        setState({ loadStatus: 'failed', processing: false });
     }
 };
 

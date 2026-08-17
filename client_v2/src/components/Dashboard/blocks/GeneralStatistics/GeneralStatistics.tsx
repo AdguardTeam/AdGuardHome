@@ -16,6 +16,9 @@ type Props = {
     numReplacedParental: number;
     numReplacedSafesearch: number;
     avgProcessingTime: number;
+    showSafebrowsing: boolean;
+    showParental: boolean;
+    showSafesearch: boolean;
 };
 
 export const GeneralStatistics = (props: Props) => {
@@ -66,32 +69,38 @@ export const GeneralStatistics = (props: Props) => {
                         tooltip={intl.getMessage('ads_blocked_tooltip')}
                     />
 
-                    <StatRow
-                        label={intl.getMessage('threats_blocked')}
-                        value={props.numReplacedSafebrowsing}
-                        percent={safebrowsingPercent()}
-                        icon="tracking"
-                        rowTheme="threatsBlocked"
-                        tooltip={intl.getMessage('threats_blocked_tooltip')}
-                    />
+                    <Show when={props.showSafebrowsing}>
+                        <StatRow
+                            label={intl.getMessage('threats_blocked')}
+                            value={props.numReplacedSafebrowsing}
+                            percent={safebrowsingPercent()}
+                            icon="tracking"
+                            rowTheme="threatsBlocked"
+                            tooltip={intl.getMessage('threats_blocked_tooltip')}
+                        />
+                    </Show>
 
-                    <StatRow
-                        label={intl.getMessage('adult_websites_blocked')}
-                        value={props.numReplacedParental}
-                        percent={parentalPercent()}
-                        icon="parental"
-                        rowTheme="adultWebsitesBlocked"
-                        tooltip={intl.getMessage('adult_websites_blocked_tooltip')}
-                    />
+                    <Show when={props.showParental}>
+                        <StatRow
+                            label={intl.getMessage('adult_websites_blocked')}
+                            value={props.numReplacedParental}
+                            percent={parentalPercent()}
+                            icon="parental"
+                            rowTheme="adultWebsitesBlocked"
+                            tooltip={intl.getMessage('adult_websites_blocked_tooltip')}
+                        />
+                    </Show>
 
-                    <StatRow
-                        label={intl.getMessage('safe_search_used')}
-                        value={props.numReplacedSafesearch}
-                        percent={safesearchPercent()}
-                        icon="search"
-                        rowTheme="safeSearchUsed"
-                        tooltip={intl.getMessage('safe_search_used_tooltip')}
-                    />
+                    <Show when={props.showSafesearch}>
+                        <StatRow
+                            label={intl.getMessage('safe_search_used')}
+                            value={props.numReplacedSafesearch}
+                            percent={safesearchPercent()}
+                            icon="search"
+                            rowTheme="safeSearchUsed"
+                            tooltip={intl.getMessage('safe_search_used_tooltip')}
+                        />
+                    </Show>
 
                     <div class={s.rowDivider} />
 
