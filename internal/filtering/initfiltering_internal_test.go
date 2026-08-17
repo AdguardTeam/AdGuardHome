@@ -286,6 +286,46 @@ func TestDNSFilter_initFiltering_unchanged(t *testing.T) {
 	})
 }
 
+// TestDNSFilter_initFiltering_freeOSMemory makes sure that a rebuild collects
+// both before and after itself, and that a skipped one collects at all.
+//
+// Collecting only afterwards leaves the dead objects that serving DNS has
+// produced resident for the early part of the rebuild, which raises its peak by
+// their whole size.
+//
+// See https://github.com/AdguardTeam/AdGuardHome/issues/8491.
+func TestDNSFilter_initFiltering_freeOSMemory(t *testing.T) {
+	// Not parallel: it replaces a package-level variable that every rebuild
+	// reads.
+
+	ctx := context.Background()
+	blockFilters := []Filter{{ID: 1, Data: []byte("||example.com^\n")}}
+
+	d := newFilterForTest(t, blockFilters)
+
+	// The rebuilds must be counted separately from the one that
+	// newFilterForTest has already performed.
+	freed := 0
+	prev := freeOSMemory
+	freeOSMemory = func() { freed++ }
+	t.Cleanup(func() { freeOSMemory = prev })
+
+	t.Run("rebuild", func(t *testing.T) {
+		changed := []Filter{{ID: 1, Data: []byte("||example.net^\n")}}
+		require.NoError(t, d.initFiltering(ctx, nil, changed))
+
+		assert.Equal(t, 2, freed)
+	})
+
+	t.Run("skipped", func(t *testing.T) {
+		unchanged := []Filter{{ID: 1, Data: []byte("||example.net^\n")}}
+		require.NoError(t, d.initFiltering(ctx, nil, unchanged))
+
+		// A skipped rebuild has nothing to collect.
+		assert.Equal(t, 2, freed)
+	})
+}
+
 // TestDNSFilter_initFiltering_error makes sure that a failed rebuild leaves
 // the previous engines in place and does not prevent the following ones.
 func TestDNSFilter_initFiltering_error(t *testing.T) {

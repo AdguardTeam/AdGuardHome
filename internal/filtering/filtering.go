@@ -829,6 +829,10 @@ type gcTarget struct {
 // within the process.
 var rebuildGCTarget = &gcTarget{set: debug.SetGCPercent}
 
+// freeOSMemory collects the heap and returns as much of it to the OS as it can.
+// It is [debug.FreeOSMemory] outside of tests.
+var freeOSMemory = debug.FreeOSMemory
+
 // tighten lowers the garbage-collection target to percent for the duration of a
 // rebuild and returns the function that undoes it, which must be called exactly
 // once.
@@ -885,10 +889,27 @@ func (d *DNSFilter) initFiltering(ctx context.Context, allowFilters, blockFilter
 
 	// Make sure that the OS reclaims memory as soon as possible, even if the
 	// rebuild has failed midway.
-	defer debug.FreeOSMemory()
+	defer freeOSMemory()
 
 	restoreGCTarget := rebuildGCTarget.tighten(rebuildGCPercent)
 	defer restoreGCTarget()
+
+	// Collect before the rebuild as well, and not only after it.  The heap that
+	// the rebuild's peak is added on top of is the one that serving DNS has
+	// left behind, and lowering the garbage-collection target does not clear
+	// it: the target only decides when the next collection happens, so the dead
+	// objects already there stay resident for the early part of the rebuild and
+	// raise its peak by their whole size.
+	//
+	// Measured on a rebuild of a single 2.1M-rule list entered with 120 MiB of
+	// dead objects on the heap, peak resident memory and rebuild duration:
+	//
+	//	                 peak (n CPUs)   peak (1 CPU)   time (n CPUs)   time (1 CPU)
+	//	collect after    372.8 MiB       400.3 MiB      4.8s            8.3s
+	//	collect before   350.2 MiB       362.5 MiB      4.8s            8.7s
+	//
+	// See https://github.com/AdguardTeam/AdGuardHome/issues/8491.
+	freeOSMemory()
 
 	rulesStorage, err := newRuleStorage(blockFilters)
 	if err != nil {
