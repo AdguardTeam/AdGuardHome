@@ -78,6 +78,7 @@ jobs:
       - name: Send Slack notification
         uses: slackapi/slack-github-action@v4
         with:
+          errors: true
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           webhook-type: incoming-webhook
           payload: |
@@ -92,7 +93,7 @@ jobs:
                     value: "<${{ github.server_url }}/${{ github.repository }}|${{ github.repository }}>"
                     short: true
                   - title: "Message"
-                    value: ${{ toJSON(github.event.head_commit.message) }}
+                    value: ${{ toJSON(github.event_name == 'push' && github.event.head_commit.message || github.event.pull_request.title) }}
                     short: false
                   - title: "Commit"
                     value: "<${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>"

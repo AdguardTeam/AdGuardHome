@@ -41,6 +41,10 @@ jobs:
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
+          # Set to false to avoid  GITHUB_TOKEN leaking.
+          #
+          # See https://github.com/actions/checkout/issues/485#issuecomment-934422611.
+          persist-credentials: false
       - name: Set up Go
         uses: actions/setup-go@v7
         with:
@@ -60,7 +64,8 @@ jobs:
         if: success() && matrix.os == 'ubuntu-latest'
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage.txt
+          files: ./cover.out
+          disable_search: true
 
   build-release:
     runs-on: ubuntu-latest
@@ -72,6 +77,10 @@ jobs:
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
+          # Set to false to avoid  GITHUB_TOKEN leaking.
+          #
+          # See https://github.com/actions/checkout/issues/485#issuecomment-934422611.
+          persist-credentials: false
       - name: Set up Go
         uses: actions/setup-go@v7
         with:
@@ -97,6 +106,7 @@ jobs:
 
   notify:
     needs:
+      - test
       - build-release
     # Secrets are not passed to workflows that are triggered by a pull request
     # from a fork.
@@ -106,7 +116,7 @@ jobs:
     if:
       ${{
         always() &&
-        needs.build-release.result == 'failure' &&
+        (needs.test.result == 'failure' || needs.build-release.result == 'failure') &&
         github.repository == 'AdguardTeam/AdGuardHome' &&
         (
           github.event_name == 'push' ||
@@ -118,6 +128,7 @@ jobs:
       - name: Send Slack notification
         uses: slackapi/slack-github-action@v4
         with:
+          errors: true
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           webhook-type: incoming-webhook
           payload: |
@@ -132,7 +143,7 @@ jobs:
                     value: "<${{ github.server_url }}/${{ github.repository }}|${{ github.repository }}>"
                     short: true
                   - title: "Message"
-                    value: ${{ toJSON(github.event.head_commit.message) }}
+                    value: ${{ toJSON(github.event_name == 'push' && github.event.head_commit.message || github.event.pull_request.title) }}
                     short: false
                   - title: "Commit"
                     value: "<${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>"
