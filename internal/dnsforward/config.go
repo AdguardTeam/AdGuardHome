@@ -714,7 +714,7 @@ func (s *Server) prepareTLS(ctx context.Context, proxyConf *proxy.Config) {
 	proxyConf.TLSListenAddr = s.conf.TLSConf.TLSListenAddrs
 	proxyConf.QUICListenAddr = s.conf.TLSConf.QUICListenAddrs
 
-	proxyConf.TLSConfig = s.tlsConfigProvider.TLSConfig()
+	proxyConf.TLSConfig = s.tlsManager.TLSConfig()
 	if proxyConf.TLSConfig == nil {
 		s.logger.WarnContext(ctx, "tls configuration is not set")
 

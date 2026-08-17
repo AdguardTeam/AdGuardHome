@@ -125,9 +125,9 @@ type Server struct {
 	// PTR resolving.
 	sysResolvers SystemResolvers
 
-	// tlsConfigProvider provides TLS configuration for the server.  It must not
+	// tlsManager provides TLS configuration for the server.  It must not
 	// be nil.
-	tlsConfigProvider aghtls.TLSConfigProvider
+	tlsManager aghtls.Manager
 
 	// access drops disallowed clients.
 	access *accessManager
@@ -204,9 +204,9 @@ type DNSCreateParams struct {
 	Anonymizer  *aghnet.IPMut
 	EtcHosts    *aghnet.HostsContainer
 
-	// TLSConfigProvider provides a TLS configuration for the server.  It must
+	// TLSManager provides a TLS configuration for the server.  It must
 	// not be nil.
-	TLSConfigProvider aghtls.TLSConfigProvider
+	TLSManager aghtls.Manager
 
 	// Logger is used as a base logger.  It must not be nil.
 	Logger *slog.Logger
@@ -256,7 +256,7 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 		conf: ServerConfig{
 			ServePlainDNS: true,
 		},
-		tlsConfigProvider: p.TLSConfigProvider,
+		tlsManager: p.TLSManager,
 	}
 
 	s.sysResolvers, err = sysresolv.NewSystemResolvers(nil, defaultPlainDNSPort)

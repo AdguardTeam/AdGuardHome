@@ -2,12 +2,12 @@ package home
 
 import (
 	"context"
-	"crypto/tls"
 	"net"
 	"net/http"
 	"net/url"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/golibs/httphdr"
 )
 
@@ -51,7 +51,7 @@ func (t *customUserAgentTransport) RoundTrip(req *http.Request) (resp *http.Resp
 // until [Context.dnsServer] is initialized.  tlsMgr must not be nil.
 //
 // TODO(a.garipov, e.burkov): This is rather messy.  Refactor.
-func httpClient(tlsMgr *tlsManager) (c *http.Client) {
+func httpClient(tlsMgr aghtls.Manager) (c *http.Client) {
 	// Do not use Context.dnsServer.DialContext directly in the struct literal
 	// below, since Context.dnsServer may be nil when this function is called.
 	dialContext := func(ctx context.Context, network, addr string) (conn net.Conn, err error) {
@@ -59,15 +59,9 @@ func httpClient(tlsMgr *tlsManager) (c *http.Client) {
 	}
 
 	tr := newCustomUserAgentTransport(&http.Transport{
-		DialContext: dialContext,
-		Proxy:       httpProxy,
-		// TODO(m.kazantsev):  Do not create TLS config manually, but use
-		// [aghtls.TLSConfigProvider].
-		TLSClientConfig: &tls.Config{
-			RootCAs:      tlsMgr.rootCerts,
-			CipherSuites: tlsMgr.customCipherIDs,
-			MinVersion:   tls.VersionTLS12,
-		},
+		DialContext:     dialContext,
+		Proxy:           httpProxy,
+		TLSClientConfig: tlsMgr.TLSConfig(),
 	}, aghhttp.UserAgent())
 
 	return &http.Client{

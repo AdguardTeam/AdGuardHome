@@ -310,7 +310,7 @@ func TestServer_ServeDNS_dns64(t *testing.T) {
 					LocalPTRResolvers: []string{localUpsAddr},
 					ServePlainDNS:     true,
 				},
-				testTLSConfigProvider,
+				testTLSManager,
 			)
 
 			startDeferStop(t, s)
@@ -355,7 +355,7 @@ func TestServer_dns64WithDisabledRDNS(t *testing.T) {
 			LocalPTRResolvers: []string{localUpsAddr},
 			ServePlainDNS:     true,
 		},
-		testTLSConfigProvider,
+		testTLSManager,
 	)
 	startDeferStop(t, s)
 

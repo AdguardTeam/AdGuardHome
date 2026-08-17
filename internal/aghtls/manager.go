@@ -2,7 +2,10 @@ package aghtls
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/golibs/service"
 )
 
@@ -35,6 +38,30 @@ type Manager interface {
 	// TODO(e.burkov):  Move reloading logic to the manager and get rid of this
 	// method.
 	Updates(ctx context.Context) (updates <-chan UpdateSignal)
+
+	// TLSConfig returns a clone of the current TLS configuration.  conf
+	// provides its certificates via GetConfigForClient method.
+	TLSConfig() (conf *tls.Config)
+
+	// RootCAs returns the current root CA pool.
+	RootCAs() (root *x509.CertPool)
+
+	// HasIPAddrs returns true if the current TLS configuration has at least one
+	// certificate with an IP address in its SAN extension.
+	HasIPAddrs() (ok bool)
+
+	// ExtendedTLSConfig returns a clone of the current extended TLS
+	// configuration.
+	ExtendedTLSConfig() (conf *ExtendedTLSConfig)
+
+	// SetExtendedTLSConfig updates the current extended TLS configuration.  It
+	// returns true if the configuration was changed.  servePlainDNS is used to
+	// determine whether to serve DNS over plain UDP/TCP.
+	SetExtendedTLSConfig(
+		ctx context.Context,
+		servePlainDNS aghalg.NullBool,
+		conf *ExtendedTLSConfig,
+	) (changed bool, err error)
 }
 
 // EmptyManager is an empty implementation of the [Manager] interface.
@@ -62,3 +89,37 @@ func (EmptyManager) Set(_ context.Context, _ TLSPair) (err error) { return nil }
 // Updates implements the [Manager] interface for EmptyManager.  It always
 // returns a nil channel.
 func (EmptyManager) Updates(_ context.Context) (updates <-chan UpdateSignal) { return nil }
+
+// TLSConfig implements the [Manager] interface for EmptyManager.  It always
+// returns nil.
+func (EmptyManager) TLSConfig() (conf *tls.Config) {
+	return nil
+}
+
+// RootCAs implements the [Manager] interface for EmptyManager.  It always
+// returns nil.
+func (EmptyManager) RootCAs() (root *x509.CertPool) {
+	return nil
+}
+
+// HasIPAddrs implements the [Manager] interface for EmptyManager.  It always
+// returns false.
+func (EmptyManager) HasIPAddrs() (ok bool) {
+	return false
+}
+
+// ExtendedTLSConfig implements the [Manager] interface for EmptyManager.  It
+// always returns nil.
+func (EmptyManager) ExtendedTLSConfig() (conf *ExtendedTLSConfig) {
+	return nil
+}
+
+// SetExtendedTLSConfig implements the [Manager] interface for EmptyManager.  It
+// always returns false and nil.
+func (EmptyManager) SetExtendedTLSConfig(
+	_ context.Context,
+	_ aghalg.NullBool,
+	_ *ExtendedTLSConfig,
+) (changed bool, err error) {
+	return false, nil
+}

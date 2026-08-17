@@ -538,7 +538,7 @@ func (web *webAPI) finalizeInstall(
 	err = config.write(
 		ctx,
 		web.logger,
-		web.tlsConfProvider.ExtendedTLSConfig(),
+		web.tlsManager.ExtendedTLSConfig(),
 		web.auth,
 		web.conf.workDir,
 		web.conf.confPath,
@@ -634,7 +634,7 @@ func (web *webAPI) startMods(ctx context.Context) (err error) {
 	err = initDNS(
 		ctx,
 		web.baseLogger,
-		web.tlsConfProvider,
+		web.tlsManager,
 		web.confModifier,
 		web.httpReg,
 		statsDir,

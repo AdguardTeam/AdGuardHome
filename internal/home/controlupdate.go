@@ -66,7 +66,7 @@ func (web *webAPI) handleVersionJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	extTLSConf := web.tlsConfProvider.ExtendedTLSConfig()
+	extTLSConf := web.tlsManager.ExtendedTLSConfig()
 	err = resp.setAllowedToAutoUpdate(ctx, l, extTLSConf)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.

@@ -251,7 +251,7 @@ func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
 // server's TLS certificate contains IP addresses.  req and resp must not be
 // nil.
 func (s *Server) appendDoTResolvers(req, resp *dns.Msg, domainName string) {
-	if !s.tlsConfigProvider.HasIPAddrs() {
+	if !s.tlsManager.HasIPAddrs() {
 		return
 	}
 

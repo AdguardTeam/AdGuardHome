@@ -429,7 +429,7 @@ func setupDNSFilteringConf(
 	ctx context.Context,
 	baseLogger *slog.Logger,
 	conf *filtering.Config,
-	tlsMgr *tlsManager,
+	tlsMgr aghtls.Manager,
 	confModifier agh.ConfigModifier,
 	httpReg aghhttp.Registrar,
 	workDir string,
@@ -630,7 +630,7 @@ type webConfig struct {
 
 	// tlsManager contains the current configuration and state of TLS
 	// encryption. It must not be nil.
-	tlsManager *tlsManager
+	tlsManager aghtls.Manager
 
 	// auth stores web user information and handles authentication.  It must not
 	// be nil.
@@ -812,7 +812,7 @@ func run(
 	err = initContextClients(ctx, baseLogger, sigHdlr, confModifier, httpReg, workDir, hc)
 	fatalOnError(ctx, baseLogger, err)
 
-	tlsMgr, err := initTLS(ctx, baseLogger, sigHdlr, confModifier, httpReg)
+	tlsMgr, err := initTLS(ctx, baseLogger, sigHdlr, confModifier)
 	fatalOnError(ctx, baseLogger, err)
 
 	err = setupDNSFilteringConf(
@@ -893,7 +893,7 @@ func run(
 func runDNSServer(
 	ctx context.Context,
 	slogLogger *slog.Logger,
-	tlsMgr *tlsManager,
+	tlsMgr aghtls.Manager,
 	confModifier *defaultConfigModifier,
 	statsDir string,
 	querylogDir string,
@@ -933,8 +933,7 @@ func initTLS(
 	baseLogger *slog.Logger,
 	sigHdlr *signalHandler,
 	confModifier *defaultConfigModifier,
-	httpReg *aghhttp.DefaultRegistrar,
-) (tlsMgr *tlsManager, err error) {
+) (tlsMgr aghtls.Manager, err error) {
 	tlsMgrLogger := baseLogger.With(slogutil.KeyPrefix, "tls_manager")
 
 	var watcher aghos.FSWatcher
@@ -946,30 +945,23 @@ func initTLS(
 		watcher = aghos.EmptyFSWatcher{}
 	}
 
-	aghtlsMgr := aghtls.NewDefaultManager(&aghtls.DefaultManagerConfig{
-		Logger:  baseLogger.With(slogutil.KeyPrefix, "aghtls_manager"),
-		Watcher: watcher,
-	})
-	err = aghtlsMgr.Start(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("starting tls manager: %w", err)
-	}
-
-	sigHdlr.addTLSManager(aghtlsMgr)
-
-	tlsMgr, err = newTLSManager(ctx, &tlsManagerConfig{
-		logger:        tlsMgrLogger,
-		confModifier:  confModifier,
-		manager:       aghtlsMgr,
-		httpReg:       httpReg,
-		extTLSConf:    confFromTLSSettings(&config.TLS),
-		servePlainDNS: config.DNS.ServePlainDNS,
+	tlsMgr, err = aghtls.NewDefaultManager(ctx, &aghtls.DefaultManagerConfig{
+		ExtendedTLSConfig: confFromTLSSettings(&config.TLS),
+		ServePlainDNS:     config.DNS.ServePlainDNS,
+		Logger:            baseLogger.With(slogutil.KeyPrefix, "aghtls_manager"),
+		Watcher:           watcher,
 	})
 	if err != nil {
 		tlsMgrLogger.ErrorContext(ctx, "initializing", slogutil.KeyError, err)
 		confModifier.Apply(ctx)
 	}
 
+	err = tlsMgr.Start(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("starting tls manager: %w", err)
+	}
+
+	sigHdlr.addTLSManager(tlsMgr)
 	confModifier.setTLSManager(tlsMgr)
 
 	return tlsMgr, nil
@@ -981,7 +973,7 @@ func initUpdate(
 	ctx context.Context,
 	baseLogger *slog.Logger,
 	opts options,
-	tlsMgr *tlsManager,
+	tlsMgr aghtls.Manager,
 	isFirstRun bool,
 	workDir string,
 	confPath string,
@@ -1414,7 +1406,7 @@ func cmdlineUpdate(
 	l *slog.Logger,
 	opts options,
 	upd *updater.Updater,
-	tlsMgr *tlsManager,
+	tlsMgr aghtls.Manager,
 	isFirstRun bool,
 ) {
 	if !opts.performUpdate {
@@ -1429,8 +1421,8 @@ func cmdlineUpdate(
 	err := initDNSServer(
 		ctx,
 		dnsforward.DNSCreateParams{
-			Logger:            l,
-			TLSConfigProvider: tlsMgr,
+			Logger:     l,
+			TLSManager: tlsMgr,
 		},
 		nil,
 		agh.EmptyConfigModifier{},

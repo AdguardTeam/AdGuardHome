@@ -944,7 +944,7 @@ type defaultConfigModifier struct {
 	auth     *auth
 	config   *configuration
 	logger   *slog.Logger
-	tlsMgr   *tlsManager
+	tlsMgr   aghtls.Manager
 	workDir  string
 	confPath string
 }
@@ -990,6 +990,6 @@ func (cm *defaultConfigModifier) setAuth(a *auth) {
 }
 
 // setTLSManager sets the TLS manager used by Apply.
-func (cm *defaultConfigModifier) setTLSManager(m *tlsManager) {
+func (cm *defaultConfigModifier) setTLSManager(m aghtls.Manager) {
 	cm.tlsMgr = m
 }

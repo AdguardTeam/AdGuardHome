@@ -18,7 +18,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghuser"
@@ -402,10 +401,8 @@ func TestAuth_ServeHTTP_firstRun(t *testing.T) {
 	httpReg := aghhttp.NewDefaultRegistrar(mux, mw.wrap)
 
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
-	m, err := newTLSManager(ctx, &tlsManagerConfig{
-		logger:       testLogger,
-		confModifier: agh.EmptyConfigModifier{},
-		manager:      aghtls.EmptyManager{},
+	m, err := aghtls.NewDefaultManager(ctx, &aghtls.DefaultManagerConfig{
+		Logger: testLogger,
 	})
 	require.NoError(t, err)
 
@@ -538,10 +535,9 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 	baseMux := http.NewServeMux()
 	httpReg := aghhttp.NewDefaultRegistrar(baseMux, mw.wrap)
 
-	tlsMgr, err := newTLSManager(testutil.ContextWithTimeout(t, testTimeout), &tlsManagerConfig{
-		logger:       testLogger,
-		confModifier: agh.EmptyConfigModifier{},
-		manager:      aghtls.EmptyManager{},
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	m, err := aghtls.NewDefaultManager(ctx, &aghtls.DefaultManagerConfig{
+		Logger: testLogger,
 	})
 	require.NoError(t, err)
 
@@ -561,7 +557,7 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 	t.Cleanup(func() { auth.close(testutil.ContextWithTimeout(t, testTimeout)) })
 
 	web := newTestWeb(t, &webConfig{
-		tlsManager: tlsMgr,
+		tlsManager: m,
 		auth:       auth,
 		mux:        baseMux,
 		httpReg:    httpReg,
@@ -723,10 +719,8 @@ func TestAuth_ServeHTTP_logout(t *testing.T) {
 	t.Cleanup(func() { auth.close(testutil.ContextWithTimeout(t, testTimeout)) })
 
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
-	m, err := newTLSManager(ctx, &tlsManagerConfig{
-		logger:       testLogger,
-		confModifier: agh.EmptyConfigModifier{},
-		manager:      aghtls.EmptyManager{},
+	m, err := aghtls.NewDefaultManager(ctx, &aghtls.DefaultManagerConfig{
+		Logger: testLogger,
 	})
 	require.NoError(t, err)
 
