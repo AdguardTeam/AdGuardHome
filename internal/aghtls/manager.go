@@ -68,7 +68,7 @@ type Manager interface {
 type EmptyManager struct{}
 
 // type check
-var _ Manager = (*EmptyManager)(nil)
+var _ Manager = EmptyManager{}
 
 // Start implements the [service.Interface] interface for EmptyManager.  It
 // always returns nil.

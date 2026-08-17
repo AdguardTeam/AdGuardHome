@@ -52,8 +52,7 @@ type DefaultManager struct {
 	watcher     aghos.FSWatcher
 	logger      *slog.Logger
 
-	// mu protects tlsConf, extTLSConf, certLastMod, tlsCert, rootCerts, and
-	// pair.
+	// mu protects tlsConf, extTLSConf, certLastMod, tlsCert, and pair.
 	mu              *sync.Mutex
 	tlsConf         *tls.Config
 	extTLSConf      *ExtendedTLSConfig
@@ -784,11 +783,11 @@ func validatePKey(pkey []byte) (keyType string, err error) {
 
 // validateCertificates processes certificate data and its private key.  status
 // must not be nil, since it's used to accumulate the validation results.
-// logger and tlsConfProvider must not be nil.  Other parameters are optional.
+// logger and tlsManager must not be nil.  Other parameters are optional.
 func validateCertificates(
 	ctx context.Context,
 	logger *slog.Logger,
-	tlsMnager Manager,
+	tlsManager Manager,
 	status *TLSConfigStatus,
 	certChain []byte,
 	pkey []byte,
@@ -797,7 +796,14 @@ func validateCertificates(
 	// Check only the public certificate separately from the key.
 	if len(certChain) > 0 {
 		var ok bool
-		ok, err = validateCertificate(ctx, logger, tlsMnager.RootCAs(), status, certChain, serverName)
+		ok, err = validateCertificate(
+			ctx,
+			logger,
+			tlsManager.RootCAs(),
+			status,
+			certChain,
+			serverName,
+		)
 		if !ok {
 			// Don't wrap the error, since it's informative enough as is.
 			return err

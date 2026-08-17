@@ -958,6 +958,8 @@ func initTLS(
 
 	err = tlsMgr.Start(ctx)
 	if err != nil {
+		confModifier.Apply(ctx)
+
 		return nil, fmt.Errorf("starting tls manager: %w", err)
 	}
 
