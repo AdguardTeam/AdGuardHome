@@ -45,6 +45,7 @@ type DhcpState = {
         range_start: string;
         range_end: string;
         lease_duration: number;
+        options: string[];
     };
     v6: {
         range_start: string;
@@ -79,6 +80,7 @@ const initialState: DhcpState = {
         range_start: '',
         range_end: '',
         lease_duration: 0,
+        options: [],
     },
     v6: {
         range_start: '',
@@ -112,6 +114,7 @@ export const getDhcpStatus = async () => {
                     range_start: values.v4?.range_start ?? '',
                     range_end: values.v4?.range_end ?? '',
                     lease_duration: values.v4?.lease_duration ?? 0,
+                    options: values.v4?.options ?? [],
                 },
                 v6: {
                     range_start: values.v6?.range_start ?? '',
@@ -238,15 +241,21 @@ export const setDhcpConfig = async (values: DhcpConfig) => {
         await dhcpSetConfig(values);
         const cur = untrack(() => state);
         setState({
-            v4: { ...cur.v4, ...values.v4 },
+            v4: {
+                ...cur.v4,
+                ...values.v4,
+                options: values.v4?.options ?? cur.v4.options,
+            },
             v6: { ...cur.v6, ...values.v6 },
             interface_name: values.interface_name ?? cur.interface_name,
             processingConfig: false,
         });
         addSuccessToast(intl.getMessage('dhcp_config_saved'));
+        return true;
     } catch (error) {
         addErrorToast({ error });
         setState('processingConfig', false);
+        return false;
     }
 };
 

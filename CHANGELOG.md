@@ -34,6 +34,9 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - The user is able to remove the static lease's hostname via the HTTP API.
 
+- DHCPv4 custom options can now be configured through the web interface and
+  HTTP API ([#7036]).
+
 ### Changed
 
 - The `edge` channel has been switched to the new UI and versioning scheme.
@@ -51,6 +54,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [go-1.26.6]: https://groups.google.com/g/golang-announce/c/94pEornpRlI
 [#7514]: https://github.com/AdguardTeam/AdGuardHome/issues/7514
 [#8183]: https://github.com/AdguardTeam/AdGuardHome/issues/8183
+[#7036]: https://github.com/AdguardTeam/AdGuardHome/issues/7036
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

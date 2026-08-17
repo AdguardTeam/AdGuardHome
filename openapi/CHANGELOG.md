@@ -12,6 +12,10 @@
 
 - Fixed missing required properties in `DhcpConfigV4` and `DhcpStatus` schemas.
 
+- New optional `options` property in DHCPv4 configuration and status responses.
+  Omit it from a configuration update to preserve existing custom options, or
+  send an empty array to clear them.
+
 - Fixed missing `port_dnscrypt` and `dnscrypt_config_file` properties in `TlsConfig`.
 
 - Split `NetInterface` into `NetInterface` and `DHCPNetInterface` schemas; `GET /dhcp/interfaces` now uses `DHCPNetInterfaces`.

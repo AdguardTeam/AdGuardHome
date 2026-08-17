@@ -194,6 +194,18 @@ func parseDHCPOption(s string) (code dhcpv4.OptionCode, val dhcpv4.OptionValue, 
 	return dhcpv4.GenericOptionCode(code64), val, nil
 }
 
+// validateDHCPOptions returns an error if any option in options is invalid.
+func validateDHCPOptions(options []string) (err error) {
+	for i, option := range options {
+		_, _, err = parseDHCPOption(option)
+		if err != nil {
+			return fmt.Errorf("option at index %d: %w", i, err)
+		}
+	}
+
+	return nil
+}
+
 // prepareOptions builds the set of DHCP options according to host requirements
 // document and values from conf.
 func (s *v4Server) prepareOptions() {

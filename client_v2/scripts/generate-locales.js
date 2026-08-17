@@ -118,7 +118,6 @@ try {
     lines.push('export const LOCALES: Record<string, LocaleMessage> = {');
     lines.push(`    ${baseLocale}: ${baseAlias},`);
     lines.push('};');
-    lines.push('');
 
     writeFileSync(OUTPUT_PATH, lines.join('\n') + '\n', 'utf-8');
 

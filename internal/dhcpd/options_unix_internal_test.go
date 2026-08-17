@@ -204,6 +204,16 @@ func TestPrepareOptions(t *testing.T) {
 			fmt.Sprintf("%d ips %s,%s", dhcpv4.OptionDomainNameServer, oneIP, otherIP),
 		},
 	}, {
+		name: "configured_pxe",
+		wantExplicit: dhcpv4.OptionsFromList(
+			dhcpv4.OptTFTPServerName("pxe.example.org"),
+			dhcpv4.OptBootFileName("bootx64.efi"),
+		),
+		opts: []string{
+			"66 text pxe.example.org",
+			"67 text bootx64.efi",
+		},
+	}, {
 		name:         "configured_bad",
 		wantExplicit: nil,
 		opts: []string{

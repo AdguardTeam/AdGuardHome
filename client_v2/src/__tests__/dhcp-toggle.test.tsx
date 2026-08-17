@@ -9,7 +9,14 @@ const mocks = vi.hoisted(() => ({
         interface_name: '',
         processingDhcp: false,
         processingConfig: false,
-        v4: { gateway_ip: '', subnet_mask: '', range_start: '', range_end: '', lease_duration: 0 },
+        v4: {
+            gateway_ip: '',
+            subnet_mask: '',
+            range_start: '',
+            range_end: '',
+            lease_duration: 0,
+            options: [] as string[],
+        },
         v6: { range_start: '', lease_duration: 0 },
     },
 }));
@@ -30,7 +37,14 @@ describe('DhcpToggle', () => {
             interface_name: 'eth0',
             processingDhcp: false,
             processingConfig: false,
-            v4: { gateway_ip: '', subnet_mask: '', range_start: '', range_end: '', lease_duration: 0 },
+            v4: {
+                gateway_ip: '',
+                subnet_mask: '',
+                range_start: '',
+                range_end: '',
+                lease_duration: 0,
+                options: [],
+            },
             v6: { range_start: '', lease_duration: 0 },
         };
         const { container } = render(() => <DhcpToggle selectedInterface={() => 'eth0'} />);
@@ -44,7 +58,14 @@ describe('DhcpToggle', () => {
             interface_name: 'eth0',
             processingDhcp: false,
             processingConfig: false,
-            v4: { gateway_ip: '', subnet_mask: '', range_start: '', range_end: '', lease_duration: 0 },
+            v4: {
+                gateway_ip: '',
+                subnet_mask: '',
+                range_start: '',
+                range_end: '',
+                lease_duration: 0,
+                options: [],
+            },
             v6: { range_start: '', lease_duration: 0 },
         };
         const onToggleOn = vi.fn();
@@ -73,6 +94,7 @@ describe('DhcpToggle', () => {
                 range_start: '192.168.1.50',
                 range_end: '192.168.1.100',
                 lease_duration: 86400,
+                options: [],
             },
             v6: { range_start: '', lease_duration: 0 },
         };
@@ -99,7 +121,14 @@ describe('DhcpToggle', () => {
             interface_name: 'eth0',
             processingDhcp: false,
             processingConfig: false,
-            v4: { gateway_ip: '', subnet_mask: '', range_start: '', range_end: '', lease_duration: 0 },
+            v4: {
+                gateway_ip: '',
+                subnet_mask: '',
+                range_start: '',
+                range_end: '',
+                lease_duration: 0,
+                options: [],
+            },
             v6: { range_start: '', lease_duration: 0 },
         };
         const onToggleOn = vi.fn();
@@ -118,11 +147,45 @@ describe('DhcpToggle', () => {
             interface_name: '',
             processingConfig: true,
             processingDhcp: false,
-            v4: { gateway_ip: '', subnet_mask: '', range_start: '', range_end: '', lease_duration: 0 },
+            v4: {
+                gateway_ip: '',
+                subnet_mask: '',
+                range_start: '',
+                range_end: '',
+                lease_duration: 0,
+                options: [],
+            },
             v6: { range_start: '', lease_duration: 0 },
         };
         const { container } = render(() => <DhcpToggle selectedInterface={() => ''} />);
         const input = container.querySelector('#dhcp_enabled') as HTMLInputElement;
         expect(input.disabled).toBe(true);
+    });
+
+    it('does not treat custom options alone as a usable DHCPv4 configuration', () => {
+        mocks.dhcpState = {
+            enabled: false,
+            interface_name: 'eth0',
+            processingDhcp: false,
+            processingConfig: false,
+            v4: {
+                gateway_ip: '',
+                subnet_mask: '',
+                range_start: '',
+                range_end: '',
+                lease_duration: 0,
+                options: ['66 text pxe.example.org'],
+            },
+            v6: { range_start: '', lease_duration: 0 },
+        };
+        const onToggleOn = vi.fn();
+        const { container } = render(() => (
+            <DhcpToggle selectedInterface={() => 'eth0'} onToggleOn={onToggleOn} />
+        ));
+        const input = container.querySelector('#dhcp_enabled') as HTMLInputElement;
+        fireEvent.change(input, { target: { checked: true } });
+
+        expect(mocks.toggleDhcp).not.toHaveBeenCalled();
+        expect(onToggleOn).toHaveBeenCalledOnce();
     });
 });

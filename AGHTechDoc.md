@@ -436,15 +436,32 @@ DHCP leases are used in several ways by DNS module.
 
 ### DHCP Custom Options
 
-Option with arbitrary hexadecimal data:
+Each option is a string in the following form:
 
-	DEC_CODE hex HEX_DATA
+	DEC_CODE TYPE VALUE
 
-where DEC_CODE is a decimal DHCPv4 option code in range [1..255]
+where `DEC_CODE` is a decimal DHCPv4 option code in range `[1..255]`.  The
+following option types are supported:
 
-Option with IP data (only 1 IP is supported):
+- `bool`: a boolean value;
+- `del`: an empty option (no value is required);
+- `dur`: a duration, such as `2h5s`;
+- `hex`: arbitrary hexadecimal data;
+- `ip`: one IPv4 address;
+- `ips`: comma-separated IPv4 addresses;
+- `text`: text data;
+- `u8`: an unsigned 8-bit integer;
+- `u16`: an unsigned 16-bit integer.
 
-	DEC_CODE ip IP_ADDR
+For example, PXE clients commonly use options 66 and 67:
+
+	66 text pxe.example.org
+	67 text bootx64.efi
+
+Custom options replace AdGuard Home's built-in value when they use the same
+option code.  In particular, custom option 6 values replace the DNS server
+list.  Make sure every configured DNS server enforces the intended filtering
+policy, because another DNS server can allow clients to bypass filtering.
 
 
 ### API: Show DHCP interfaces
@@ -489,6 +506,7 @@ Response:
 			"range_start":"...", // if empty: DHCPv4 won't be enabled
 			"range_end":"...",
 			"lease_duration":60,
+			"options":["66 text pxe.example.org", "67 text bootx64.efi"],
 		},
 		"v6":{
 			"range_start":"...", // if empty: DHCPv6 won't be enabled
@@ -568,6 +586,7 @@ Request:
 		"range_start":"192.169.56.100",
 		"range_end":"192.169.56.200", // Note: first 3 octets must match "range_start"
 		"lease_duration":60,
+		"options":["66 text pxe.example.org", "67 text bootx64.efi"],
 	},
 	"v6":{
 		"range_start":"...",
@@ -584,6 +603,9 @@ Response:
 For v4, if range_start = "1.2.3.4", the range_end must be "1.2.3.X" where X > 4.
 
 For v6, if range_start = "2001::1", the last IP is "2001:ff".
+
+When updating DHCPv4 settings, omit `options` to preserve the existing custom
+options.  Send an empty `options` array to clear all custom options.
 
 
 ### Static IP check/set
