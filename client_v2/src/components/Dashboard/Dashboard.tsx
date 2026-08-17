@@ -3,7 +3,7 @@ import { createSignal, createMemo, createEffect, onCleanup, Show } from 'solid-j
 import theme from 'panel/lib/theme';
 import { PageLoader } from 'panel/common/ui/Loader';
 import { dashboardState, toggleProtection, getClients } from 'panel/stores/dashboard';
-import { statsState, getStats, getStatsConfig } from 'panel/stores/stats';
+import { statsState, getStats, getStatsConfig, resetStats } from 'panel/stores/stats';
 import { accessState, getAccessList } from 'panel/stores/access';
 import { ONE_SECOND_IN_MS, HOUR, DAY, STATS_INTERVALS_DAYS } from 'panel/helpers/constants';
 
@@ -129,8 +129,10 @@ export const Dashboard = () => {
                     selectedPeriod={selectedPeriod()}
                     periodOptions={periodOptions()}
                     isLoading={isLoading()}
+                    isClearing={statsState.processingReset}
                     onToggleProtection={handleToggleProtection}
                     onRefreshStats={handleRefreshStats}
+                    onClear={resetStats}
                     onPeriodChange={handlePeriodChange}
                 />
 

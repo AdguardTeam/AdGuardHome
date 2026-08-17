@@ -162,7 +162,9 @@
 }
 
 .refreshMobileButton,
-.refreshDesktopButton {
+.refreshDesktopButton,
+.clearMobileButton,
+.clearDesktopButton {
     flex-shrink: 0;
     width: 40px;
     height: 40px;
@@ -179,13 +181,15 @@
     }
 }
 
-.refreshMobileButton {
+.refreshMobileButton,
+.clearMobileButton {
     @media (min-width: 1024px) {
         display: none;
     }
 }
 
-.refreshDesktopButton {
+.refreshDesktopButton,
+.clearDesktopButton {
     display: none;
 
     @media (min-width: 1024px) {
@@ -205,6 +209,11 @@
 
 .refreshDesktopIcon {
     color: var(--default-product-icon);
+}
+
+.clearIcon {
+    width: 24px;
+    height: 24px;
 }
 
 .searchLoader {

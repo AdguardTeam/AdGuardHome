@@ -5,6 +5,7 @@ import intl from 'panel/common/intl';
 import theme from 'panel/lib/theme';
 import { Input } from 'panel/common/controls/Input';
 import { Button } from 'panel/common/ui/Button';
+import { ConfirmDialog } from 'panel/common/ui/ConfirmDialog';
 import { Icon } from 'panel/common/ui/Icon';
 import { Select } from 'panel/common/controls/Select';
 import { FaqTooltip } from 'panel/common/ui/FaqTooltip';
@@ -18,12 +19,14 @@ import s from './Header.module.pcss';
 type Props = {
     onSearch: (value: string) => void;
     onRefresh: () => void;
+    onClear: () => Promise<void>;
     onStatusFilterChange: (status: string) => void;
     onReasonFilterChange: (reason: string) => void;
     currentSearch: string;
     currentStatus: string;
     currentReason: string;
     isLoading: boolean;
+    isClearing: boolean;
 };
 
 const STATUS_OPTIONS = [
@@ -106,8 +109,17 @@ const REASON_OPTIONS = [
 
 export const Header = (props: Props) => {
     const [searchValue, setSearchValue] = createSignal(untrack(() => props.currentSearch));
+    const [showClearConfirm, setShowClearConfirm] = createSignal(false);
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
     const isMobile = useIsMobile();
+    const isBusy = () => props.isLoading || props.isClearing;
+
+    const cancelDebouncedSearch = () => {
+        if (debounceTimer) {
+            clearTimeout(debounceTimer);
+            debounceTimer = null;
+        }
+    };
 
     createEffect(
         on(
@@ -121,9 +133,7 @@ export const Header = (props: Props) => {
         const value = (e.target as HTMLInputElement).value;
         setSearchValue(value);
 
-        if (debounceTimer) {
-            clearTimeout(debounceTimer);
-        }
+        cancelDebouncedSearch();
 
         debounceTimer = setTimeout(() => {
             props.onSearch(value);
@@ -131,17 +141,23 @@ export const Header = (props: Props) => {
     };
 
     const handleClearSearch = () => {
-        if (debounceTimer) {
-            clearTimeout(debounceTimer);
-        }
+        cancelDebouncedSearch();
         setSearchValue('');
         props.onSearch('');
     };
 
+    const handleOpenClearConfirm = () => {
+        cancelDebouncedSearch();
+        setShowClearConfirm(true);
+    };
+
+    const handleClear = async () => {
+        await props.onClear();
+        setShowClearConfirm(false);
+    };
+
     onCleanup(() => {
-        if (debounceTimer) {
-            clearTimeout(debounceTimer);
-        }
+        cancelDebouncedSearch();
     });
 
     const selectedStatus = createMemo(
@@ -166,6 +182,7 @@ export const Header = (props: Props) => {
                         placeholder={intl.getMessage('domain_or_client')}
                         value={searchValue()}
                         onInput={handleSearchChange}
+                        disabled={isBusy()}
                         size="small"
                         prefixIcon={<Icon icon="search" class={s.searchIcon} />}
                         suffixIcon={
@@ -180,6 +197,7 @@ export const Header = (props: Props) => {
                                                 data-testid="query-log-search-clear-button"
                                                 aria-label={intl.getMessage('reset')}
                                                 title={intl.getMessage('reset')}
+                                                disabled={isBusy()}
                                                 onMouseDown={(event) => event.preventDefault()}
                                                 onClick={handleClearSearch}
                                             >
@@ -197,12 +215,25 @@ export const Header = (props: Props) => {
                     />
 
                     <Button
+                        data-testid="query-log-clear-button-mobile"
+                        class={s.clearMobileButton}
+                        variant="secondary-danger"
+                        size="small"
+                        aria-label={intl.getMessage('clear_query_log')}
+                        title={intl.getMessage('clear_query_log')}
+                        onClick={handleOpenClearConfirm}
+                        disabled={isBusy()}
+                    >
+                        <Icon icon="delete" class={s.clearIcon} />
+                    </Button>
+
+                    <Button
                         data-testid="query-log-refresh-button-mobile"
                         class={s.refreshMobileButton}
                         variant="primary"
                         size="small"
                         onClick={props.onRefresh}
-                        disabled={props.isLoading}
+                        disabled={isBusy()}
                     >
                         <Icon icon="refresh" class={s.refreshMobileIcon} />
                     </Button>
@@ -220,6 +251,7 @@ export const Header = (props: Props) => {
                             }
                             menuSize="big"
                             menuPosition="right"
+                            isDisabled={isBusy()}
                             borderless={!isMobile()}
                             class={s.filterSelect}
                         />
@@ -236,6 +268,7 @@ export const Header = (props: Props) => {
                             }
                             menuSize="big"
                             menuPosition="right"
+                            isDisabled={isBusy()}
                             borderless={!isMobile()}
                             class={s.filterSelect}
                         />
@@ -250,11 +283,38 @@ export const Header = (props: Props) => {
                     aria-label={intl.getMessage('refresh_btn')}
                     title={intl.getMessage('refresh_btn')}
                     onClick={props.onRefresh}
-                    disabled={props.isLoading}
+                    disabled={isBusy()}
                 >
                     <Icon icon="refresh" class={s.refreshDesktopIcon} />
                 </Button>
+
+                <Button
+                    data-testid="query-log-clear-button-desktop"
+                    class={s.clearDesktopButton}
+                    variant="secondary-danger"
+                    size="small"
+                    aria-label={intl.getMessage('clear_query_log')}
+                    title={intl.getMessage('clear_query_log')}
+                    onClick={handleOpenClearConfirm}
+                    disabled={isBusy()}
+                >
+                    <Icon icon="delete" class={s.clearIcon} />
+                </Button>
             </div>
+
+            <Show when={showClearConfirm()}>
+                <ConfirmDialog
+                    title={intl.getMessage('settings_confirm_clear_query_log')}
+                    text={intl.getMessage('settings_confirm_clear_query_log_desc')}
+                    buttonText={intl.getMessage('settings_yes_clear')}
+                    cancelText={intl.getMessage('cancel')}
+                    buttonVariant="danger"
+                    submitDisabled={isBusy()}
+                    submitTestId="query-log-clear-confirm"
+                    onClose={() => setShowClearConfirm(false)}
+                    onConfirm={handleClear}
+                />
+            </Show>
         </div>
     );
 };
