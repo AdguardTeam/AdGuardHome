@@ -119,27 +119,24 @@ func NewDefaultManager(
 func (mgr *DefaultManager) setOverrideTLSCiphers(ctx context.Context) {
 	var err error
 
-	if len(mgr.extTLSConf.OverrideTLSCiphers) > 0 {
-		mgr.customCipherIDs, err = ParseCiphers(mgr.extTLSConf.OverrideTLSCiphers)
-		if err != nil {
-			// Should not happen because upstreams are already validated.  See
-			// [validateTLSCipherIDs].
-			panic(err)
-		}
-
-		mgr.logger.InfoContext(
-			ctx,
-			"overriding ciphers",
-			"ciphers", mgr.extTLSConf.OverrideTLSCiphers,
-		)
-	} else {
+	if len(mgr.extTLSConf.OverrideTLSCiphers) <= 0 {
 		mgr.logger.InfoContext(ctx, "using default ciphers")
+
+		return
 	}
+
+	mgr.customCipherIDs, err = ParseCiphers(mgr.extTLSConf.OverrideTLSCiphers)
+	if err != nil {
+		// Should not happen because upstreams are already validated.  See
+		// [validateTLSCipherIDs].
+		panic(err)
+	}
+
+	mgr.logger.InfoContext(ctx, "overriding ciphers", "ciphers", mgr.extTLSConf.OverrideTLSCiphers)
 }
 
-// prepareTLSConfig prepares the TLS configuration for the mgr.  It must be
-// called after the call of the mgr.Set method.  Returns an error if the
-// configuration is invalid.
+// prepareTLSConfig prepares the TLS configuration for the mgr.  It returns an
+// error if the TLS configuration is invalid.
 func (mgr *DefaultManager) prepareTLSConfig(ctx context.Context) (err error) {
 	err = LoadTLSConfig(ctx, mgr.logger, mgr, mgr.extTLSConf, &mgr.extTLSConf.Status)
 	if err != nil {
@@ -163,8 +160,8 @@ func (mgr *DefaultManager) prepareTLSConfig(ctx context.Context) (err error) {
 	mgr.tlsConf = &tls.Config{
 		RootCAs:        mgr.rootCerts,
 		CipherSuites:   mgr.customCipherIDs,
-		MinVersion:     tls.VersionTLS12,
 		GetCertificate: mgr.onGetCertificate,
+		MinVersion:     tls.VersionTLS12,
 	}
 
 	return nil
