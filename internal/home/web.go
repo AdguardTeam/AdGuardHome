@@ -831,14 +831,16 @@ func (web *webAPI) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 
 // setServePlainDNS updates the ServePlainDNS field of [config.DNS].
 func setServePlainDNS(req tlsConfigSettingsExt) {
-	if req.ServePlainDNS != aghalg.NBNull {
-		func() {
-			config.Lock()
-			defer config.Unlock()
-
-			config.DNS.ServePlainDNS = req.ServePlainDNS == aghalg.NBTrue
-		}()
+	if req.ServePlainDNS == aghalg.NBNull {
+		return
 	}
+
+	func() {
+		config.Lock()
+		defer config.Unlock()
+
+		config.DNS.ServePlainDNS = req.ServePlainDNS == aghalg.NBTrue
+	}()
 }
 
 // writeTLSConfigureResponse writes the response for the POST

@@ -560,7 +560,7 @@ func (s *Server) prepareUpstreamSettings(ctx context.Context, boot upstream.Reso
 		// See [aghtls.SystemRootCAs].
 		//
 		// TODO(a.garipov): Investigate if that's true.
-		RootCAs:      s.conf.TLSv12Roots,
+		RootCAs:      s.tlsManager.RootCAs(),
 		CipherSuites: s.conf.TLSCiphers,
 	})
 	if err != nil {

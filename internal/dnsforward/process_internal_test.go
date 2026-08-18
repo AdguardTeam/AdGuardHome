@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"net"
 	"net/netip"
 	"testing"
@@ -331,6 +332,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 	tlsManager := &aghtest.Manager{}
 	tlsManager.OnTLSConfig = func() (conf *tls.Config) { return tlsConf }
 	tlsManager.OnHasIPAddrs = func() (ok bool) { return true }
+	tlsManager.OnRootCAs = func() (cert *x509.CertPool) { return tlsConf.RootCAs }
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {

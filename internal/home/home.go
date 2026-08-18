@@ -812,7 +812,7 @@ func run(
 	err = initContextClients(ctx, baseLogger, sigHdlr, confModifier, httpReg, workDir, hc)
 	fatalOnError(ctx, baseLogger, err)
 
-	tlsMgr, err := initTLS(ctx, baseLogger, sigHdlr, confModifier)
+	tlsMgr, err := newTLSManager(ctx, baseLogger, sigHdlr, confModifier)
 	fatalOnError(ctx, baseLogger, err)
 
 	err = setupDNSFilteringConf(
@@ -926,9 +926,9 @@ func runDNSServer(
 	}
 }
 
-// initTLS initializes TLS manager.  baseLogger, sigHdlr, confModifier, and
-// httpReg must not be nil.
-func initTLS(
+// newTLSManager initializes TLS manager.  baseLogger, sigHdlr, and confModifier
+// must not be nil.
+func newTLSManager(
 	ctx context.Context,
 	baseLogger *slog.Logger,
 	sigHdlr *signalHandler,

@@ -3,7 +3,6 @@ package dnsforward
 import (
 	"context"
 	"crypto/tls"
-	"crypto/x509"
 	"fmt"
 	"log/slog"
 	"net"
@@ -268,8 +267,6 @@ type ServerConfig struct {
 
 	// UpstreamTimeout is the timeout for querying upstream servers.
 	UpstreamTimeout time.Duration
-
-	TLSv12Roots *x509.CertPool // list of root CAs for TLSv1.2
 
 	// TLSCiphers are the IDs of TLS cipher suites to use.
 	TLSCiphers []uint16

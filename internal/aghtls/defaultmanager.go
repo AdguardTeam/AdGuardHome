@@ -71,7 +71,7 @@ func NewDefaultManager(
 	ctx context.Context,
 	conf *DefaultManagerConfig,
 ) (mgr *DefaultManager, err error) {
-	m := &DefaultManager{
+	mgr = &DefaultManager{
 		logger: conf.Logger,
 		mu:     &sync.Mutex{},
 		pair:   TLSPair{},
@@ -82,73 +82,92 @@ func NewDefaultManager(
 	}
 
 	if conf.ExtendedTLSConfig != nil {
-		m.extTLSConf = conf.ExtendedTLSConfig
+		mgr.extTLSConf = conf.ExtendedTLSConfig
 	}
 
-	m.rootCerts = SystemRootCAs(ctx, conf.Logger)
+	mgr.rootCerts = SystemRootCAs(ctx, conf.Logger)
+	mgr.extTLSConf.ServePlainDNS = conf.ServePlainDNS
+	mgr.extTLSConf.Status = TLSConfigStatus{}
 
-	m.extTLSConf.ServePlainDNS = conf.ServePlainDNS
-	m.extTLSConf.Status = TLSConfigStatus{}
+	mgr.setOverrideTLSCiphers(ctx)
 
-	if len(m.extTLSConf.OverrideTLSCiphers) > 0 {
-		m.customCipherIDs, err = ParseCiphers(m.extTLSConf.OverrideTLSCiphers)
+	// There is no need to lock m.mu here, since the manager isn't shared with
+	// other goroutines yet.
+	if !mgr.extTLSConf.Enabled {
+		return mgr, nil
+	}
+
+	err = mgr.Set(ctx, TLSPair{
+		CertPath: mgr.extTLSConf.CertificatePath,
+		KeyPath:  mgr.extTLSConf.PrivateKeyPath,
+	})
+	if err != nil {
+		mgr.logger.ErrorContext(ctx, "setting tls files", slogutil.KeyError, err)
+	}
+
+	err = mgr.prepareTLSConfig(ctx)
+	if err != nil {
+		// Don't wrap the error, because it's informative enough as is.
+		return mgr, err
+	}
+
+	return mgr, nil
+}
+
+// setOverrideTLSCiphers sets the custom TLS ciphers if specified in the
+// extended TLS configuration.
+func (mgr *DefaultManager) setOverrideTLSCiphers(ctx context.Context) {
+	var err error
+
+	if len(mgr.extTLSConf.OverrideTLSCiphers) > 0 {
+		mgr.customCipherIDs, err = ParseCiphers(mgr.extTLSConf.OverrideTLSCiphers)
 		if err != nil {
 			// Should not happen because upstreams are already validated.  See
 			// [validateTLSCipherIDs].
 			panic(err)
 		}
 
-		m.logger.InfoContext(
+		mgr.logger.InfoContext(
 			ctx,
 			"overriding ciphers",
-			"ciphers", conf.ExtendedTLSConfig.OverrideTLSCiphers,
+			"ciphers", mgr.extTLSConf.OverrideTLSCiphers,
 		)
 	} else {
-		m.logger.InfoContext(ctx, "using default ciphers")
+		mgr.logger.InfoContext(ctx, "using default ciphers")
 	}
+}
 
-	// There is no need to lock m.mu here, since the manager isn't shared with
-	// other goroutines yet.
-	if !m.extTLSConf.Enabled {
-		return m, nil
-	}
-
-	err = m.Set(ctx, TLSPair{
-		CertPath: m.extTLSConf.CertificatePath,
-		KeyPath:  m.extTLSConf.PrivateKeyPath,
-	})
+// prepareTLSConfig prepares the TLS configuration for the mgr.  It must be
+// called after the call of the mgr.Set method.  Returns an error if the
+// configuration is invalid.
+func (mgr *DefaultManager) prepareTLSConfig(ctx context.Context) (err error) {
+	err = LoadTLSConfig(ctx, mgr.logger, mgr, mgr.extTLSConf, &mgr.extTLSConf.Status)
 	if err != nil {
-		m.logger.ErrorContext(ctx, "setting tls files", slogutil.KeyError, err)
-	}
-
-	err = LoadTLSConfig(ctx, m.logger, m, m.extTLSConf, &m.extTLSConf.Status)
-	if err != nil {
-		m.extTLSConf.Enabled = false
+		mgr.extTLSConf.Enabled = false
 
 		// Don't wrap the error, because it's informative enough as is.
-		return m, err
+		return err
 	}
 
-	cert, err := tls.X509KeyPair(m.extTLSConf.CertificateChainData, m.extTLSConf.PrivateKeyData)
+	cert, err := tls.X509KeyPair(mgr.extTLSConf.CertificateChainData, mgr.extTLSConf.PrivateKeyData)
 	if err != nil {
-		m.extTLSConf.Enabled = false
+		mgr.extTLSConf.Enabled = false
 
-		return m, fmt.Errorf("parsing tls certificate: %w", err)
+		return fmt.Errorf("parsing tls certificate: %w", err)
 	}
 
 	slices.Sort(cert.Leaf.DNSNames)
 
-	m.tlsConf = &tls.Config{
-		RootCAs:        m.rootCerts,
-		CipherSuites:   m.customCipherIDs,
+	mgr.tlsCert = &cert
+	mgr.setCertFileTime(ctx)
+	mgr.tlsConf = &tls.Config{
+		RootCAs:        mgr.rootCerts,
+		CipherSuites:   mgr.customCipherIDs,
 		MinVersion:     tls.VersionTLS12,
-		GetCertificate: m.onGetCertificate,
+		GetCertificate: mgr.onGetCertificate,
 	}
 
-	m.tlsCert = &cert
-	m.setCertFileTime(ctx)
-
-	return m, nil
+	return nil
 }
 
 // type check
