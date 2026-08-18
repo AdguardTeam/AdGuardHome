@@ -478,7 +478,7 @@ func (mgr *DefaultManager) updateTLSCert(extTLSConf *ExtendedTLSConfig) (err err
 }
 
 // onGetCertificate gets [*tls.Certificate] from [*tls.Config].  If
-// [tlsManager.extTLSConf.Enabled] is false, nil is returned.
+// [DefaultManager.extTLSConf.Enabled] is false, nil is returned.
 //
 // TODO(m.kazantsev):  Consider using tls.SupportsCertificate.
 func (mgr *DefaultManager) onGetCertificate(
