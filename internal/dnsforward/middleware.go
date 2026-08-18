@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net/netip"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
@@ -34,7 +35,15 @@ func (s *Server) Wrap(h proxy.Handler) (wrapped proxy.Handler) {
 			return nil
 		}
 
-		blocked, _ := s.IsBlockedClient(pctx.Addr.Addr(), clientID)
+		// Try to extract the client address from the EDNS Client Subnet option.
+		clientAddr := pctx.Addr.Addr()
+		if s.conf.EDNSClientSubnet.UseClientAddrFromECS {
+			if ecsAddr, ok := ecsClientAddr(pctx.Req); ok {
+				clientAddr = ecsAddr
+			}
+		}
+
+		blocked, _ := s.IsBlockedClient(clientAddr, clientID)
 		if blocked {
 			return s.serveBlockedResponse(pctx)
 		}
@@ -48,10 +57,53 @@ func (s *Server) Wrap(h proxy.Handler) (wrapped proxy.Handler) {
 			ctx = contextWithClientID(ctx, clientID)
 		}
 
+		// Store the ECS client address in context for downstream processors.
+		if clientAddr != pctx.Addr.Addr() {
+			ctx = contextWithECSClientAddr(ctx, clientAddr)
+		}
+
 		return h.ServeDNS(ctx, p, pctx)
 	}
 
 	return proxy.HandlerFunc(f)
+}
+
+// ecsClientAddr extracts the client IP from the EDNS Client Subnet option, or
+// the zero address and false if absent.
+func ecsClientAddr(req *dns.Msg) (addr netip.Addr, ok bool) {
+	opt := req.IsEdns0()
+	if opt == nil {
+		return netip.Addr{}, false
+	}
+
+	for _, o := range opt.Option {
+		ecs, ok := o.(*dns.EDNS0_SUBNET)
+		if !ok {
+			continue
+		}
+
+		switch ecs.Family {
+		case 1:
+			// IPv4.
+			ip := ecs.Address.To4()
+			if ip == nil {
+				continue
+			}
+
+			addr, ok = netip.AddrFromSlice(ip)
+			if ok && addr.IsValid() && !addr.IsUnspecified() {
+				return addr, true
+			}
+		case 2:
+			// IPv6.
+			addr, ok = netip.AddrFromSlice(ecs.Address)
+			if ok && addr.IsValid() && !addr.IsUnspecified() {
+				return addr, true
+			}
+		}
+	}
+
+	return netip.Addr{}, false
 }
 
 // serveBlockedResponse sets a protocol-appropriate response for a request that
