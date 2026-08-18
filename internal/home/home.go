@@ -374,13 +374,21 @@ func initContextClients(
 }
 
 // setPIDFilePath writes the PID value to a file and returns its path, if the
-// PID file option is specified.  l must not be nil.
+// PID file is required.  l must not be nil.
 func setPIDFilePath(ctx context.Context, l *slog.Logger, opts options) (pidFilePath string) {
-	if opts.pidFile != "" && !opts.performUpdate && writePIDFile(ctx, l, opts.pidFile) {
+	if pidFileRequired(opts) && writePIDFile(ctx, l, opts.pidFile) {
 		pidFilePath = opts.pidFile
 	}
 
 	return pidFilePath
+}
+
+// pidFileRequired returns true if the PID file is required.
+func pidFileRequired(opts options) (ok bool) {
+	return opts.pidFile != "" &&
+		!opts.performUpdate &&
+		!opts.checkConfig &&
+		opts.serviceControlAction == ""
 }
 
 // setupBindOpts overrides bind host/port from the opts.
