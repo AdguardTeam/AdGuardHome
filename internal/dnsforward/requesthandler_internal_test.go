@@ -8,6 +8,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
@@ -211,6 +212,105 @@ func TestServer_ServeDNS(t *testing.T) {
 
 			assert.Equal(t, tc.wantRCode, dctx.Res.Rcode)
 			assert.Equal(t, tc.wantAns, dctx.Res.Answer)
+		})
+	}
+}
+
+func TestServer_ServeDNS_upstreamErrorQueryLog(t *testing.T) {
+	testCases := []struct {
+		name     string
+		rewrites []*filtering.LegacyRewrite
+	}{{
+		name: "plain",
+	}, {
+		name: "cname_rewrite",
+		rewrites: []*filtering.LegacyRewrite{{
+			Domain:  aghtest.ReqHost,
+			Answer:  "upstream-error.example",
+			Type:    dns.TypeCNAME,
+			Enabled: true,
+		}},
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ql := &testQueryLog{}
+			st := &testStats{}
+			upstreamQuestion := make(chan dns.Question, 1)
+			s := createTestServer(
+				t,
+				&filtering.Config{
+					BlockingMode:      filtering.BlockingModeDefault,
+					ProtectionEnabled: true,
+					Rewrites:          tc.rewrites,
+					RewritesEnabled:   len(tc.rewrites) > 0,
+				},
+				ServerConfig{
+					UDPListenAddrs: []*net.UDPAddr{{}},
+					TCPListenAddrs: []*net.TCPAddr{{}},
+					TLSConf:        &TLSConfig{},
+					Config: Config{
+						UpstreamMode:     UpstreamModeLoadBalance,
+						EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+						ClientsContainer: EmptyClientsContainer{},
+					},
+					ServePlainDNS: true,
+				},
+				testTLSConfigProvider,
+			)
+			s.queryLog = ql
+			s.stats = st
+			s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{
+				aghtest.NewUpstreamMock(func(req *dns.Msg) (resp *dns.Msg, err error) {
+					upstreamQuestion <- req.Question[0]
+
+					return nil, aghtest.ErrUpstream
+				}),
+			}
+			startDeferStop(t, s)
+
+			req := createTestMessage(aghtest.ReqFQDN)
+			wantQuestion := req.Question[0]
+			pctx := &proxy.DNSContext{
+				Proto: proxy.ProtoUDP,
+				Req:   req,
+				Addr:  testClientAddrPort,
+			}
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			ctx = slogutil.ContextWithLogger(ctx, testLogger)
+
+			err := s.ServeDNS(ctx, nil, pctx)
+			require.ErrorIs(t, err, aghtest.ErrUpstream)
+
+			wantUpstreamQuestion := wantQuestion
+			if len(tc.rewrites) > 0 {
+				wantUpstreamQuestion.Name = dns.Fqdn(tc.rewrites[0].Answer)
+			}
+			assert.Equal(t, wantUpstreamQuestion, <-upstreamQuestion)
+
+			require.NotNil(t, pctx.Res)
+			assert.Equal(t, dns.RcodeServerFailure, pctx.Res.Rcode)
+			assert.Equal(t, wantQuestion, pctx.Req.Question[0])
+			assert.Equal(t, []dns.Question{wantQuestion}, pctx.Res.Question)
+			assert.Empty(t, pctx.Res.Answer)
+
+			require.NotNil(t, ql.lastParams)
+			assert.Equal(t, 1, ql.addCalls)
+			assert.Equal(t, net.IP(testClientAddrPort.Addr().AsSlice()), ql.lastParams.ClientIP)
+
+			require.NotNil(t, ql.lastParams.Question)
+			assert.Equal(t, []dns.Question{wantQuestion}, ql.lastParams.Question.Question)
+
+			require.NotNil(t, ql.lastParams.Answer)
+			assert.Equal(t, dns.RcodeServerFailure, ql.lastParams.Answer.Rcode)
+
+			require.NotNil(t, ql.lastParams.Result)
+			assert.Equal(t, filtering.NotFilteredError, ql.lastParams.Result.Reason)
+
+			require.NotNil(t, st.lastEntry)
+			assert.Equal(t, 1, st.updateCalls)
+			assert.Equal(t, aghtest.ReqHost, st.lastEntry.Domain)
+			assert.Equal(t, stats.RNotFiltered, st.lastEntry.Result)
 		})
 	}
 }

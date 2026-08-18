@@ -48,9 +48,12 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Blocked requests without an EDNS(0) OPT record ([#8183]).
 
+- Queries that fail during upstream resolution are now recorded in the query log and statistics ([#5826]).
+
 [go-1.26.6]: https://groups.google.com/g/golang-announce/c/94pEornpRlI
 [#7514]: https://github.com/AdguardTeam/AdGuardHome/issues/7514
 [#8183]: https://github.com/AdguardTeam/AdGuardHome/issues/8183
+[#5826]: https://github.com/AdguardTeam/AdGuardHome/issues/5826
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

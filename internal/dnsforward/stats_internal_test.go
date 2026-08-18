@@ -24,11 +24,13 @@ type testQueryLog struct {
 	querylog.QueryLog
 
 	lastParams *querylog.AddParams
+	addCalls   int
 }
 
 // Add implements the [querylog.QueryLog] interface for *testQueryLog.
 func (l *testQueryLog) Add(p *querylog.AddParams) {
 	l.lastParams = p
+	l.addCalls++
 }
 
 // ShouldLog implements the [querylog.QueryLog] interface for *testQueryLog.
@@ -42,7 +44,8 @@ type testStats struct {
 	// without actually implementing all methods.
 	stats.Interface
 
-	lastEntry *stats.Entry
+	lastEntry   *stats.Entry
+	updateCalls int
 }
 
 // Update implements the [stats.Interface] interface for *testStats.
@@ -52,6 +55,7 @@ func (l *testStats) Update(e *stats.Entry) {
 	}
 
 	l.lastEntry = e
+	l.updateCalls++
 }
 
 // ShouldCount implements the [stats.Interface] interface for *testStats.
