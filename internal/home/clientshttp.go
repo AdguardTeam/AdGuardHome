@@ -6,15 +6,20 @@ import (
 	"fmt"
 	"net/http"
 	"net/netip"
+	"slices"
+
+	"github.com/AdguardTeam/golibs/errors"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/safesearch"
 	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
 	"github.com/AdguardTeam/AdGuardHome/internal/whois"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/urlfilter/rules"
 )
 
 // clientJSON is a common structure used by several handlers to deal with
@@ -56,6 +61,17 @@ type clientJSON struct {
 	SafeSearchEnabled        bool `json:"safesearch_enabled"`
 	UseGlobalBlockedServices bool `json:"use_global_blocked_services"`
 	UseGlobalSettings        bool `json:"use_global_settings"`
+
+	// UseOwnFilterLists uses the positive form, unlike the fields above, so that
+	// its zero value keeps the global filter lists.  It is absence aware, so
+	// that an update request that omits it doesn't reset the filter lists of a
+	// client configured by other means.
+	UseOwnFilterLists aghalg.NullBool `json:"use_own_filter_lists"`
+
+	// FilterListIDs and AllowFilterListIDs are pointers to tell an omitted
+	// field, which keeps the stored IDs, from an empty one, which clears them.
+	FilterListIDs      *[]int64 `json:"filter_list_ids"`
+	AllowFilterListIDs *[]int64 `json:"allow_filter_list_ids"`
 
 	IgnoreQueryLog   aghalg.NullBool `json:"ignore_querylog"`
 	IgnoreStatistics aghalg.NullBool `json:"ignore_statistics"`
@@ -128,6 +144,33 @@ func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, r *http
 	aghhttp.WriteJSONResponseOK(ctx, clients.logger, w, r, data)
 }
 
+// filterListsFromJSON returns the filter list policy of the client described by
+// cj, falling back to prev for each field that cj omits.
+func filterListsFromJSON(
+	cj clientJSON,
+	prev *client.Persistent,
+) (useOwn bool, blockIDs, allowIDs []rules.ListID) {
+	if prev != nil {
+		useOwn = prev.UseOwnFilterLists
+		blockIDs = slices.Clone(prev.FilterListIDs)
+		allowIDs = slices.Clone(prev.AllowFilterListIDs)
+	}
+
+	if cj.UseOwnFilterLists != aghalg.NBNull {
+		useOwn = cj.UseOwnFilterLists == aghalg.NBTrue
+	}
+
+	if cj.FilterListIDs != nil {
+		blockIDs = apiIDsToListIDs(*cj.FilterListIDs)
+	}
+
+	if cj.AllowFilterListIDs != nil {
+		allowIDs = apiIDsToListIDs(*cj.AllowFilterListIDs)
+	}
+
+	return useOwn, blockIDs, allowIDs
+}
+
 // initPrev initializes the persistent client with the default or previous
 // client properties.
 func initPrev(cj clientJSON, prev *client.Persistent) (c *client.Persistent, err error) {
@@ -146,6 +189,8 @@ func initPrev(cj clientJSON, prev *client.Persistent) (c *client.Persistent, err
 		upsCacheEnabled = prev.UpstreamsCacheEnabled
 		upsCacheSize = prev.UpstreamsCacheSize
 	}
+
+	useOwnFilterLists, filterListIDs, allowFilterListIDs := filterListsFromJSON(cj, prev)
 
 	if cj.IgnoreQueryLog != aghalg.NBNull {
 		ignoreQueryLog = cj.IgnoreQueryLog == aghalg.NBTrue
@@ -175,10 +220,13 @@ func initPrev(cj clientJSON, prev *client.Persistent) (c *client.Persistent, err
 	return &client.Persistent{
 		BlockedServices:       svcs,
 		UID:                   uid,
+		FilterListIDs:         filterListIDs,
+		AllowFilterListIDs:    allowFilterListIDs,
 		IgnoreQueryLog:        ignoreQueryLog,
 		IgnoreStatistics:      ignoreStatistics,
 		UpstreamsCacheEnabled: upsCacheEnabled,
 		UpstreamsCacheSize:    upsCacheSize,
+		UseOwnFilterLists:     useOwnFilterLists,
 	}, nil
 }
 
@@ -271,11 +319,12 @@ func copyBlockedServices(
 	prev *client.Persistent,
 ) (svcs *filtering.BlockedServices, err error) {
 	var weekly *schedule.Weekly
-	if sch != nil {
+	switch {
+	case sch != nil:
 		weekly = sch.Clone()
-	} else if prev != nil {
+	case prev != nil && prev.BlockedServices != nil:
 		weekly = prev.BlockedServices.Schedule.Clone()
-	} else {
+	default:
 		weekly = schedule.EmptyWeekly()
 	}
 
@@ -311,6 +360,9 @@ func clientToJSON(c *client.Persistent) (cj *clientJSON) {
 		SafeBrowsingEnabled: c.SafeBrowsingEnabled,
 
 		UseGlobalBlockedServices: !c.UseOwnBlockedServices,
+		UseOwnFilterLists:        aghalg.BoolToNullBool(c.UseOwnFilterLists),
+		FilterListIDs:            pointerTo(listIDsToAPIIDs(c.FilterListIDs)),
+		AllowFilterListIDs:       pointerTo(listIDsToAPIIDs(c.AllowFilterListIDs)),
 
 		Schedule:        c.BlockedServices.Schedule,
 		BlockedServices: c.BlockedServices.IDs,
@@ -353,6 +405,21 @@ func (clients *clientsContainer) handleAddClient(w http.ResponseWriter, r *http.
 		return
 	}
 
+	// Keep the whole sequence of preparing the engine, storing the client and
+	// pruning atomic against another mutation.
+	clients.filterListsMu.Lock()
+	defer clients.filterListsMu.Unlock()
+
+	// Make the engine able to enforce the policy before storing the client.
+	err = clients.prepareFilterLists(ctx, c)
+	if err != nil {
+		aghhttp.ErrorAndLog(ctx, l, r, w, filterListsStatus(err), "%s", err)
+
+		return
+	}
+
+	prevBlock, prevAllow := clients.storage.ReferencedFilterListIDs()
+
 	err = clients.storage.Add(ctx, c)
 	if err != nil {
 		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "%s", err)
@@ -360,7 +427,103 @@ func (clients *clientsContainer) handleAddClient(w http.ResponseWriter, r *http.
 		return
 	}
 
+	clients.reloadFilterLists(prevBlock, prevAllow)
 	clients.confModifier.Apply(ctx)
+}
+
+// prepareFilterLists puts the filter lists that c references into the DNS
+// filtering engine.  It must be called before c becomes observable, since a
+// client naming a list the engine doesn't hold matches neither that list nor the
+// global ones.
+func (clients *clientsContainer) prepareFilterLists(
+	ctx context.Context,
+	c *client.Persistent,
+) (err error) {
+	f := globalContext.filters
+	if f == nil || !c.UseOwnFilterLists {
+		return nil
+	}
+
+	blockIDs, allowIDs := clients.storage.ReferencedFilterListIDs()
+
+	return f.SetClientFilterLists(
+		ctx,
+		withListIDs(blockIDs, c.FilterListIDs),
+		withListIDs(allowIDs, c.AllowFilterListIDs),
+	)
+}
+
+// hasDropped reports whether some ID of prev is absent from cur.
+func hasDropped(prev, cur map[rules.ListID]bool) (ok bool) {
+	for id := range prev {
+		if !cur[id] {
+			return true
+		}
+	}
+
+	return false
+}
+
+// filterListsStatus returns the status code to answer a failed filter list
+// preparation with.  A list the configuration doesn't have is the caller's
+// fault, anything else is not.
+func filterListsStatus(err error) (code int) {
+	if errors.Is(err, filtering.ErrUnknownListID) {
+		return http.StatusBadRequest
+	}
+
+	return http.StatusInternalServerError
+}
+
+// withListIDs returns the union of set and ids.  It doesn't modify set.
+func withListIDs(set map[rules.ListID]bool, ids []rules.ListID) (res map[rules.ListID]bool) {
+	res = make(map[rules.ListID]bool, len(set)+len(ids))
+	for id := range set {
+		res[id] = true
+	}
+
+	for _, id := range ids {
+		res[id] = true
+	}
+
+	return res
+}
+
+// findByName returns the persistent client with the given name, or nil if there
+// is none.
+func (clients *clientsContainer) findByName(name string) (c *client.Persistent) {
+	clients.storage.RangeByName(func(p *client.Persistent) (cont bool) {
+		if p.Name != name {
+			return true
+		}
+
+		c = p
+
+		return false
+	})
+
+	return c
+}
+
+// reloadFilterLists reloads the filter lists if the set of those used by
+// clients with their own filter lists differs from prevBlock and prevAllow.  It
+// must be called after the client storage has been modified and unlocked, since
+// a globally disabled list is only put into the engine while a client uses it.
+func (clients *clientsContainer) reloadFilterLists(prevBlock, prevAllow map[rules.ListID]bool) {
+	if globalContext.filters == nil {
+		return
+	}
+
+	blockIDs, allowIDs := clients.storage.ReferencedFilterListIDs()
+
+	// Newly referenced lists are already in the engine, since prepareFilterLists
+	// put them there before the client became observable.  Only dropping a list
+	// still needs a rebuild.
+	if !hasDropped(prevBlock, blockIDs) && !hasDropped(prevAllow, allowIDs) {
+		return
+	}
+
+	globalContext.filters.EnableFilters(true)
 }
 
 // handleDelClient is the handler for POST /control/clients/delete HTTP API.
@@ -390,12 +553,18 @@ func (clients *clientsContainer) handleDelClient(w http.ResponseWriter, r *http.
 		return
 	}
 
+	clients.filterListsMu.Lock()
+	defer clients.filterListsMu.Unlock()
+
+	prevBlock, prevAllow := clients.storage.ReferencedFilterListIDs()
+
 	if !clients.storage.RemoveByName(ctx, cj.Name) {
 		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "Client not found")
 
 		return
 	}
 
+	clients.reloadFilterLists(prevBlock, prevAllow)
 	clients.confModifier.Apply(ctx)
 }
 
@@ -434,12 +603,26 @@ func (clients *clientsContainer) handleUpdateClient(w http.ResponseWriter, r *ht
 		return
 	}
 
-	c, err := clients.jsonToClient(ctx, dj.Data, nil)
+	// Pass the stored client, so that a request omitting an absence aware field
+	// keeps its current value instead of resetting it.
+	c, err := clients.jsonToClient(ctx, dj.Data, clients.findByName(dj.Name))
 	if err != nil {
 		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
+
+	clients.filterListsMu.Lock()
+	defer clients.filterListsMu.Unlock()
+
+	err = clients.prepareFilterLists(ctx, c)
+	if err != nil {
+		aghhttp.ErrorAndLog(ctx, l, r, w, filterListsStatus(err), "%s", err)
+
+		return
+	}
+
+	prevBlock, prevAllow := clients.storage.ReferencedFilterListIDs()
 
 	err = clients.storage.Update(ctx, dj.Name, c)
 	if err != nil {
@@ -448,6 +631,7 @@ func (clients *clientsContainer) handleUpdateClient(w http.ResponseWriter, r *ht
 		return
 	}
 
+	clients.reloadFilterLists(prevBlock, prevAllow)
 	clients.confModifier.Apply(ctx)
 }
 
@@ -606,6 +790,40 @@ func (clients *clientsContainer) findRuntime(
 		Disallowed:     &disallowed,
 		DisallowedRule: disallowedRule,
 	}
+}
+
+// pointerTo returns a pointer to v, so that an always present field is told from
+// an omitted one.
+func pointerTo[T any](v T) (ptr *T) {
+	return &v
+}
+
+// listIDsToAPIIDs converts filter list IDs into their API representation.
+func listIDsToAPIIDs(ids []rules.ListID) (apiIDs []int64) {
+	if len(ids) == 0 {
+		return nil
+	}
+
+	apiIDs = make([]int64, len(ids))
+	for i, id := range ids {
+		apiIDs[i] = int64(rulelist.APIID(id))
+	}
+
+	return apiIDs
+}
+
+// apiIDsToListIDs converts filter list IDs from their API representation.
+func apiIDsToListIDs(apiIDs []int64) (ids []rules.ListID) {
+	if len(apiIDs) == 0 {
+		return nil
+	}
+
+	ids = make([]rules.ListID, len(apiIDs))
+	for i, id := range apiIDs {
+		ids[i] = rules.ListID(id)
+	}
+
+	return ids
 }
 
 // registerWebHandlers registers HTTP handlers.

@@ -24,10 +24,12 @@ export const RoutePath = {
     ClientsAdd: 'ClientsAdd',
     ClientsProtection: 'ClientsProtection',
     ClientsBlockedServices: 'ClientsBlockedServices',
+    ClientsFilterLists: 'ClientsFilterLists',
     ClientsSchedule: 'ClientsSchedule',
     ClientsEdit: 'ClientsEdit',
     ClientsEditProtection: 'ClientsEditProtection',
     ClientsEditBlockedServices: 'ClientsEditBlockedServices',
+    ClientsEditFilterLists: 'ClientsEditFilterLists',
     ClientsEditSchedule: 'ClientsEditSchedule',
 } as const;
 
@@ -57,10 +59,12 @@ export const Paths: Record<RoutePathKey, string> = {
     ClientsAdd: pathBuilder('clients/add'),
     ClientsProtection: pathBuilder('clients/add/protection'),
     ClientsBlockedServices: pathBuilder('clients/add/blocked_services'),
+    ClientsFilterLists: pathBuilder('clients/add/filter_lists'),
     ClientsSchedule: pathBuilder('clients/add/blocked_services/schedule'),
     ClientsEdit: pathBuilder('clients/edit/:clientName'),
     ClientsEditProtection: pathBuilder('clients/edit/:clientName/protection'),
     ClientsEditBlockedServices: pathBuilder('clients/edit/:clientName/blocked_services'),
+    ClientsEditFilterLists: pathBuilder('clients/edit/:clientName/filter_lists'),
     ClientsEditSchedule: pathBuilder('clients/edit/:clientName/blocked_services/schedule'),
 };
 

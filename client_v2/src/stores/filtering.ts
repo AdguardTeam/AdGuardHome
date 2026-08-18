@@ -32,6 +32,14 @@ type FilteringState = {
     isFilterAdded: boolean;
     isFilterRemoved: boolean;
     isFilterEdited: boolean;
+
+    /**
+     * Whether the filtering status has been fetched successfully at least once.
+     * The filter arrays are empty both before the first fetch and after a failed
+     * one, so a caller that must not act on an empty list checks this instead.
+     */
+    statusLoaded: boolean;
+
     filters: Filter[];
     whitelistFilters: Filter[];
     userRules: string;
@@ -55,6 +63,7 @@ const initialState: FilteringState = {
     isFilterAdded: false,
     isFilterRemoved: false,
     isFilterEdited: false,
+    statusLoaded: false,
     filters: [],
     whitelistFilters: [],
     userRules: '',
@@ -73,6 +82,7 @@ export const getFilteringStatus = async () => {
         const data = await filteringStatus();
         setState({
             ...normalizeFilteringStatus(data),
+            statusLoaded: true,
             processingFilters: false,
         });
     } catch (error) {
