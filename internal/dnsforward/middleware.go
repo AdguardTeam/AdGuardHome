@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net/netip"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
@@ -34,7 +35,9 @@ func (s *Server) Wrap(h proxy.Handler) (wrapped proxy.Handler) {
 			return nil
 		}
 
-		blocked, _ := s.IsBlockedClient(pctx.Addr.Addr(), clientID)
+		ctx, clientAddr := s.withECSClientAddr(ctx, pctx)
+
+		blocked, _ := s.IsBlockedClient(clientAddr, clientID)
 		if blocked {
 			return s.serveBlockedResponse(pctx)
 		}
@@ -52,6 +55,76 @@ func (s *Server) Wrap(h proxy.Handler) (wrapped proxy.Handler) {
 	}
 
 	return proxy.HandlerFunc(f)
+}
+
+// withECSClientAddr returns the context carrying the ECS client address, if
+// any, and the address to use for client identification: the one advertised in
+// the EDNS Client Subnet option when it's enabled and valid, or the connection
+// address otherwise.
+func (s *Server) withECSClientAddr(
+	ctx context.Context,
+	pctx *proxy.DNSContext,
+) (newCtx context.Context, addr netip.Addr) {
+	addr = pctx.Addr.Addr()
+
+	if s.useClientAddrFromECS() {
+		if ecsAddr, ok := ecsClientAddr(pctx.Req); ok {
+			addr = ecsAddr
+		}
+	}
+
+	if addr == pctx.Addr.Addr() {
+		return ctx, addr
+	}
+
+	return contextWithECSClientAddr(ctx, addr), addr
+}
+
+// useClientAddrFromECS returns whether the client address should be taken from
+// the EDNS Client Subnet option instead of the connection address.
+func (s *Server) useClientAddrFromECS() (ok bool) {
+	s.serverLock.RLock()
+	defer s.serverLock.RUnlock()
+
+	return s.conf.EDNSClientSubnet.UseClientAddrFromECS
+}
+
+// ecsClientAddr extracts the client IP from the EDNS Client Subnet option, or
+// the zero address and false if absent.
+func ecsClientAddr(req *dns.Msg) (addr netip.Addr, ok bool) {
+	opt := req.IsEdns0()
+	if opt == nil {
+		return netip.Addr{}, false
+	}
+
+	for _, o := range opt.Option {
+		ecs, isSubnet := o.(*dns.EDNS0_SUBNET)
+		if !isSubnet {
+			continue
+		}
+
+		switch ecs.Family {
+		case 1:
+			// IPv4.
+			ip := ecs.Address.To4()
+			if ip == nil {
+				continue
+			}
+
+			addr, ok = netip.AddrFromSlice(ip)
+			if ok && addr.IsValid() && !addr.IsUnspecified() {
+				return addr, true
+			}
+		case 2:
+			// IPv6.
+			addr, ok = netip.AddrFromSlice(ecs.Address)
+			if ok && addr.IsValid() && !addr.IsUnspecified() {
+				return addr, true
+			}
+		}
+	}
+
+	return netip.Addr{}, false
 }
 
 // serveBlockedResponse sets a protocol-appropriate response for a request that
