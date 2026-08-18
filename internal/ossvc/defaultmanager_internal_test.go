@@ -8,9 +8,13 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/osutil/executil"
 	"github.com/AdguardTeam/golibs/testutil"
+	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/kardianos/service"
 	"github.com/stretchr/testify/assert"
 )
+
+// testClock is a test clock used for tests.
+var testClock = timeutil.SystemClock{}
 
 func TestManager_Status(t *testing.T) {
 	const invalidSvcStatus = statusRestartOnFail + 1
@@ -18,6 +22,7 @@ func TestManager_Status(t *testing.T) {
 	svc := newTestServiceWithSystem(t)
 
 	m := &manager{
+		clock:         testClock,
 		logger:        testLogger,
 		cmdCons:       executil.EmptyCommandConstructor{},
 		isOpenWrt:     aghos.IsOpenWrt(),
@@ -96,6 +101,7 @@ func TestManager_Status_unixSystemV(t *testing.T) {
 	}
 
 	m := &manager{
+		clock:         testClock,
 		logger:        testLogger,
 		cmdCons:       executil.EmptyCommandConstructor{},
 		isOpenWrt:     aghos.IsOpenWrt(),
@@ -133,6 +139,7 @@ func TestManager_Install(t *testing.T) {
 	svc := newTestServiceWithSystem(t)
 
 	m := &manager{
+		clock:         testClock,
 		logger:        testLogger,
 		cmdCons:       executil.EmptyCommandConstructor{},
 		isOpenWrt:     false,
@@ -175,6 +182,7 @@ func TestManager_Install_unixSystemV(t *testing.T) {
 	}
 
 	m := &manager{
+		clock:         testClock,
 		logger:        testLogger,
 		cmdCons:       executil.EmptyCommandConstructor{},
 		isOpenWrt:     aghos.IsOpenWrt(),

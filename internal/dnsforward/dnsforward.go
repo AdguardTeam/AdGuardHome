@@ -641,7 +641,7 @@ func (s *Server) prepareInternalDNS(ctx context.Context) (err error) {
 	}
 
 	ipsetLogger := s.baseLogger.With(slogutil.KeyPrefix, "ipset")
-	s.ipset, err = newIpsetHandler(context.TODO(), ipsetLogger, ipsetList)
+	s.ipset, err = newIpsetHandler(ctx, ipsetLogger, ipsetList)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
 		return err

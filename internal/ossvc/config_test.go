@@ -4,10 +4,14 @@ import (
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/ossvc"
+	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/kardianos/service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// testClock is a test clock used for tests.
+var testClock = timeutil.SystemClock{}
 
 func TestConfigureServiceOptions(t *testing.T) {
 	t.Parallel()
@@ -23,7 +27,7 @@ func TestConfigureServiceOptions(t *testing.T) {
 			Name: serviceName,
 		}
 
-		ossvc.ConfigureServiceOptions(conf, vInfo)
+		ossvc.ConfigureServiceOptions(conf, testClock.Now(), vInfo)
 		require.NotNil(t, conf.Option)
 
 		svcInfo, ok := conf.Option[svcInfoKey]
@@ -47,7 +51,7 @@ func TestConfigureServiceOptions(t *testing.T) {
 			},
 		}
 
-		ossvc.ConfigureServiceOptions(conf, vInfo)
+		ossvc.ConfigureServiceOptions(conf, testClock.Now(), vInfo)
 		require.NotNil(t, conf.Option)
 
 		assert.Equal(t, val, conf.Option[key])
