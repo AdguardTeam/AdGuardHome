@@ -4,6 +4,12 @@
 
 ## v0.107.79: API changes
 
+### Per-client filter lists
+
+- New properties `use_own_filter_lists`, `filter_list_ids`, and `allow_filter_list_ids` in the `Client` schema assign filter lists to a single client.  When `use_own_filter_lists` is `true`, only the assigned lists apply to that client, along with the user rules.  Omitting the properties in `POST /control/clients/add` keeps the globally enabled filter lists.
+
+    Omitting them in `POST /control/clients/update` leaves the stored values unchanged, so that a client that does not know about these properties cannot reset them.  Send `filter_list_ids` or `allow_filter_list_ids` as an empty array to clear them.
+
 - Field `bootstrap_dns` in `POST /control/dns_config` now accepts comments.  A comment must start with the `#` symbol.
 
 - Fixed wrong property names: `enable` → `enabled` in the Parental status response, `protection_disabled_until` → `protection_disabled_duration` in `ServerStatus`, `ratelimit_subnet_subnet_len_ipv4` and `ratelimit_subnet_subnet_len_ipv6` in `DNSConfig`.

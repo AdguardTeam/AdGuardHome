@@ -28,6 +28,12 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Added
 
+- Filter lists can now be assigned to a single client, through the new
+  `use_own_filter_lists`, `filter_list_ids`, and `allow_filter_list_ids`
+  properties of the client configuration.  A client that has its own filter
+  lists only uses those, along with the user rules.  A filter list that is
+  disabled globally is only downloaded and loaded while a client uses it.
+
 - Bootstrap servers configuration now supports comments.
 
 - New property `"language"` in `POST /control/install/check_config` and `POST /control/install/configure` HTTP APIs.

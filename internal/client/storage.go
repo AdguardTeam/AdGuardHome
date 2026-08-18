@@ -20,6 +20,7 @@ import (
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/timeutil"
+	"github.com/AdguardTeam/urlfilter/rules"
 )
 
 // allowedTags is the list of available client tags.
@@ -792,6 +793,12 @@ func (s *Storage) ApplyClientFiltering(id string, addr netip.Addr, setts *filter
 		setts.BlockedServices = c.BlockedServices.Clone()
 	}
 
+	if c.UseOwnFilterLists {
+		setts.UseOwnFilterLists = true
+		setts.ClientFilterListIDs = listIDsToMap(c.FilterListIDs)
+		setts.ClientAllowListIDs = listIDsToMap(c.AllowFilterListIDs)
+	}
+
 	setts.ClientName = c.Name
 	setts.ClientTags = slices.Clone(c.Tags)
 	if !c.UseOwnSettings {
@@ -803,4 +810,48 @@ func (s *Storage) ApplyClientFiltering(id string, addr netip.Addr, setts *filter
 	setts.ClientSafeSearch = c.SafeSearch
 	setts.SafeBrowsingEnabled = c.SafeBrowsingEnabled
 	setts.ParentalEnabled = c.ParentalEnabled
+}
+
+// listIDsToMap converts a slice of filter list IDs into a set.
+func listIDsToMap(ids []rules.ListID) (set map[rules.ListID]bool) {
+	set = make(map[rules.ListID]bool, len(ids))
+	for _, id := range ids {
+		set[id] = true
+	}
+
+	return set
+}
+
+// ReferencedFilterListIDs returns the filter list IDs used by the persistent
+// clients that have their own filter lists.  The sets are nil if no client does.
+func (s *Storage) ReferencedFilterListIDs() (blockIDs, allowIDs map[rules.ListID]bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.index.rangeByName(func(c *Persistent) (cont bool) {
+		if !c.UseOwnFilterLists {
+			return true
+		}
+
+		blockIDs = addListIDs(blockIDs, c.FilterListIDs)
+		allowIDs = addListIDs(allowIDs, c.AllowFilterListIDs)
+
+		return true
+	})
+
+	return blockIDs, allowIDs
+}
+
+// addListIDs adds ids to set, allocating it if needed.
+func addListIDs(set map[rules.ListID]bool, ids []rules.ListID) (res map[rules.ListID]bool) {
+	res = set
+	for _, id := range ids {
+		if res == nil {
+			res = map[rules.ListID]bool{}
+		}
+
+		res[id] = true
+	}
+
+	return res
 }

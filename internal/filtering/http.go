@@ -118,7 +118,7 @@ func (d *DNSFilter) handleFilteringAddURL(w http.ResponseWriter, r *http.Request
 	}
 
 	// Download the filter contents
-	ok, err := d.update(&filt)
+	ok, err := d.update(&filt, false)
 	if err != nil {
 		aghhttp.ErrorAndLog(
 			ctx,

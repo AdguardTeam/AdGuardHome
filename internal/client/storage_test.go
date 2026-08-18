@@ -15,6 +15,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/whois"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/hostsfile"
@@ -24,6 +25,7 @@ import (
 	"github.com/AdguardTeam/golibs/testutil/faketime"
 	"github.com/AdguardTeam/golibs/testutil/servicetest"
 	"github.com/AdguardTeam/golibs/timeutil"
+	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -1289,6 +1291,107 @@ func TestStorage_CustomUpstreamConfig(t *testing.T) {
 		require.NotNil(t, secondConf)
 
 		assert.Same(t, firstConf, secondConf)
+	})
+}
+
+func TestStorage_ApplyClientFiltering_filterLists(t *testing.T) {
+	const (
+		cliName = "test_client"
+	)
+
+	cliIP := netip.MustParseAddr("1.1.1.1")
+
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+
+	t.Run("with_own_filter_lists", func(t *testing.T) {
+		s := newTestStorage(t, nil)
+		err := s.Add(ctx, &client.Persistent{
+			Name:               cliName,
+			IPs:                []netip.Addr{cliIP},
+			UID:                client.MustNewUID(),
+			UseOwnFilterLists:  true,
+			FilterListIDs:      []rules.ListID{1, 3},
+			AllowFilterListIDs: []rules.ListID{5},
+		})
+		require.NoError(t, err)
+
+		setts := &filtering.Settings{
+			ProtectionEnabled: true,
+			FilteringEnabled:  true,
+		}
+
+		s.ApplyClientFiltering("", cliIP, setts)
+
+		assert.True(t, setts.UseOwnFilterLists)
+		assert.Equal(t, map[rules.ListID]bool{1: true, 3: true}, setts.ClientFilterListIDs)
+		assert.Equal(t, map[rules.ListID]bool{5: true}, setts.ClientAllowListIDs)
+	})
+
+	t.Run("without_own_filter_lists", func(t *testing.T) {
+		s := newTestStorage(t, nil)
+		err := s.Add(ctx, &client.Persistent{
+			Name:              cliName,
+			IPs:               []netip.Addr{cliIP},
+			UID:               client.MustNewUID(),
+			UseOwnFilterLists: false,
+		})
+		require.NoError(t, err)
+
+		setts := &filtering.Settings{
+			ProtectionEnabled: true,
+			FilteringEnabled:  true,
+		}
+
+		s.ApplyClientFiltering("", cliIP, setts)
+
+		assert.False(t, setts.UseOwnFilterLists)
+		assert.Nil(t, setts.ClientFilterListIDs)
+		assert.Nil(t, setts.ClientAllowListIDs)
+	})
+}
+
+func TestStorage_ReferencedFilterListIDs(t *testing.T) {
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+
+	t.Run("no_clients_with_own_lists", func(t *testing.T) {
+		s := newTestStorage(t, nil)
+		err := s.Add(ctx, &client.Persistent{
+			Name:          "global",
+			IPs:           []netip.Addr{netip.MustParseAddr("1.1.1.1")},
+			UID:           client.MustNewUID(),
+			FilterListIDs: []rules.ListID{1},
+		})
+		require.NoError(t, err)
+
+		blockIDs, allowIDs := s.ReferencedFilterListIDs()
+		assert.Nil(t, blockIDs)
+		assert.Nil(t, allowIDs)
+	})
+
+	t.Run("union_of_clients", func(t *testing.T) {
+		s := newTestStorage(t, nil)
+		err := s.Add(ctx, &client.Persistent{
+			Name:               "first",
+			IPs:                []netip.Addr{netip.MustParseAddr("1.1.1.1")},
+			UID:                client.MustNewUID(),
+			UseOwnFilterLists:  true,
+			FilterListIDs:      []rules.ListID{1, 2},
+			AllowFilterListIDs: []rules.ListID{10},
+		})
+		require.NoError(t, err)
+
+		err = s.Add(ctx, &client.Persistent{
+			Name:              "second",
+			IPs:               []netip.Addr{netip.MustParseAddr("2.2.2.2")},
+			UID:               client.MustNewUID(),
+			UseOwnFilterLists: true,
+			FilterListIDs:     []rules.ListID{2, 3},
+		})
+		require.NoError(t, err)
+
+		blockIDs, allowIDs := s.ReferencedFilterListIDs()
+		assert.Equal(t, map[rules.ListID]bool{1: true, 2: true, 3: true}, blockIDs)
+		assert.Equal(t, map[rules.ListID]bool{10: true}, allowIDs)
 	})
 }
 
