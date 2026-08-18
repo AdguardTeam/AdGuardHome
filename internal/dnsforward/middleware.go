@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/netip"
 	"time"
 
@@ -82,28 +83,39 @@ func ecsClientAddr(req *dns.Msg) (addr netip.Addr, ok bool) {
 			continue
 		}
 
-		switch ecs.Family {
-		case 1:
-			// IPv4.
-			ip := ecs.Address.To4()
-			if ip == nil {
-				continue
-			}
-
-			addr, ok = netip.AddrFromSlice(ip)
-			if ok && addr.IsValid() && !addr.IsUnspecified() {
-				return addr, true
-			}
-		case 2:
-			// IPv6.
-			addr, ok = netip.AddrFromSlice(ecs.Address)
-			if ok && addr.IsValid() && !addr.IsUnspecified() {
-				return addr, true
-			}
+		if addr, ok = ecsSubnetAddr(ecs); ok {
+			return addr, true
 		}
 	}
 
 	return netip.Addr{}, false
+}
+
+// ecsSubnetAddr returns the client address from an EDNS Client Subnet option,
+// or the zero address and false if the option is absent or invalid.
+func ecsSubnetAddr(ecs *dns.EDNS0_SUBNET) (addr netip.Addr, ok bool) {
+	var ip net.IP
+	switch ecs.Family {
+	case 1:
+		// IPv4.
+		ip = ecs.Address.To4()
+	case 2:
+		// IPv6.
+		ip = ecs.Address
+	default:
+		return netip.Addr{}, false
+	}
+
+	if ip == nil {
+		return netip.Addr{}, false
+	}
+
+	addr, ok = netip.AddrFromSlice(ip)
+	if !ok || !addr.IsValid() || addr.IsUnspecified() {
+		return netip.Addr{}, false
+	}
+
+	return addr, true
 }
 
 // serveBlockedResponse sets a protocol-appropriate response for a request that
