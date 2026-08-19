@@ -101,10 +101,14 @@
     }
 }
 
+.statCardChartWrapper {
+    position: relative;
+    margin-top: auto;
+}
+
 .statCardChart {
     min-height: 16px;
     height: 60px;
-    margin-top: auto;
     padding: 0 8px;
     overflow: hidden;
 
@@ -120,25 +124,26 @@
 }
 
 .chartTooltip {
-    position: fixed;
+    position: absolute;
     pointer-events: none;
     z-index: 100;
     opacity: 0;
+    min-width: 74px;
     background: var(--default-cards-background);
     border: 1px solid var(--default-item-divider);
-    border-radius: 8px;
-    padding: 8px 12px;
+    font-size: 10px;
+    white-space: nowrap;
+    border-radius: 4px;
+    padding: 4px 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .chartTooltipValue {
-    font-size: 14px;
-    font-weight: 600;
+    font-weight: var(--weight-semi-bold);
     color: var(--default-main-text);
 }
 
 .chartTooltipDate {
-    font-size: 12px;
     color: var(--default-description-text);
     margin-top: 2px;
 }

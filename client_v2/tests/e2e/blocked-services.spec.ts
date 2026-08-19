@@ -278,6 +278,86 @@ test.describe('Blocked Services Page', () => {
         await expect(epicToggle).not.toBeAttached();
     });
 
+    test('should display blocked/unblocked pills and divider', async ({ page }) => {
+        const blockedPill = page.getByTestId('blocked-services-show-blocked-only');
+        const unblockedPill = page.getByTestId('blocked-services-show-unblocked-only');
+        const divider = page.getByTestId('blocked-services-filters-divider');
+
+        await expect(blockedPill).toBeVisible();
+        await expect(unblockedPill).toBeVisible();
+        await expect(divider).toBeVisible();
+
+        // Both pills are inactive by default — all services are visible
+        await expect(blockedPill).toHaveAttribute('aria-pressed', 'false');
+        await expect(unblockedPill).toHaveAttribute('aria-pressed', 'false');
+        const allServices = page.locator('[data-testid^="blocked-service-row-"]');
+        await expect(allServices).toHaveCount(8);
+    });
+
+    test('should show only blocked services when blocked only pill is active', async ({ page }) => {
+        const blockedPill = page.getByTestId('blocked-services-show-blocked-only');
+        await blockedPill.click();
+
+        await expect(blockedPill).toHaveAttribute('aria-pressed', 'true');
+
+        // Blocked mock services are telegram and steam
+        await expect(page.locator('input#service_telegram')).toBeAttached();
+        await expect(page.locator('input#service_steam')).toBeAttached();
+
+        // Unblocked services should be hidden
+        await expect(page.locator('input#service_whatsapp')).not.toBeAttached();
+        await expect(page.locator('input#service_tiktok')).not.toBeAttached();
+    });
+
+    test('should show only unblocked services when unblocked only pill is active', async ({
+        page,
+    }) => {
+        const unblockedPill = page.getByTestId('blocked-services-show-unblocked-only');
+        await unblockedPill.click();
+
+        await expect(unblockedPill).toHaveAttribute('aria-pressed', 'true');
+
+        // Unblocked mock services should be visible
+        await expect(page.locator('input#service_whatsapp')).toBeAttached();
+        await expect(page.locator('input#service_tiktok')).toBeAttached();
+
+        // Blocked services should be hidden
+        await expect(page.locator('input#service_telegram')).not.toBeAttached();
+        await expect(page.locator('input#service_steam')).not.toBeAttached();
+    });
+
+    test('should deactivate state filter when pill is clicked again', async ({ page }) => {
+        const blockedPill = page.getByTestId('blocked-services-show-blocked-only');
+
+        // Activate filter
+        await blockedPill.click();
+        await expect(page.locator('input#service_whatsapp')).not.toBeAttached();
+
+        // Deactivate filter
+        await blockedPill.click();
+        await expect(blockedPill).toHaveAttribute('aria-pressed', 'false');
+
+        // All services should be visible again
+        const allServices = page.locator('[data-testid^="blocked-service-row-"]');
+        await expect(allServices).toHaveCount(8);
+    });
+
+    test('should switch between blocked and unblocked state filters', async ({ page }) => {
+        const blockedPill = page.getByTestId('blocked-services-show-blocked-only');
+        const unblockedPill = page.getByTestId('blocked-services-show-unblocked-only');
+
+        await blockedPill.click();
+        await expect(blockedPill).toHaveAttribute('aria-pressed', 'true');
+
+        // Switching to unblocked only should deactivate the blocked pill
+        await unblockedPill.click();
+        await expect(unblockedPill).toHaveAttribute('aria-pressed', 'true');
+        await expect(blockedPill).toHaveAttribute('aria-pressed', 'false');
+
+        await expect(page.locator('input#service_whatsapp')).toBeAttached();
+        await expect(page.locator('input#service_telegram')).not.toBeAttached();
+    });
+
     test('should navigate to inactivity schedule page', async ({ page }) => {
         const navItem = page.getByTestId('blocked-services-schedule-link');
         await navItem.click();

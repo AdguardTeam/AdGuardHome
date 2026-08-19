@@ -1,13 +1,10 @@
 import { Show, For, createMemo } from 'solid-js';
-
-import { useIsDesktop } from 'panel/helpers/useMediaQuery';
-import { MOBILE_TABLE_MAX_ROWS } from 'panel/helpers/constants';
 import intl from 'panel/common/intl';
 import { formatNumber, formatCompactNumber } from 'panel/helpers/helpers';
 import theme from 'panel/lib/theme';
 import { Tooltip } from 'panel/common/ui/Tooltip';
 import cn from 'clsx';
-import { SortableTableHeader } from '../SortableTableHeader';
+import { TableHeader } from '../TableHeader';
 import { EmptyState } from '../EmptyState';
 import { useSortedData } from '../../hooks/useSortedData';
 
@@ -24,16 +21,7 @@ type Props = {
 };
 
 export const TopUpstreams = (props: Props) => {
-    const isDesktop = useIsDesktop();
-    const {
-        sortedData: sortedUpstreams,
-        sortField,
-        sortDirection,
-        handleSort,
-    } = useSortedData(() => props.topUpstreamsResponses);
-    const visibleUpstreams = createMemo(() =>
-        isDesktop() ? sortedUpstreams() : sortedUpstreams().slice(0, MOBILE_TABLE_MAX_ROWS),
-    );
+    const { sortedData: sortedUpstreams } = useSortedData(() => props.topUpstreamsResponses);
 
     const hasStats = createMemo(() => props.topUpstreamsResponses.length > 0);
 
@@ -46,18 +34,15 @@ export const TopUpstreams = (props: Props) => {
             </div>
 
             <Show when={hasStats()}>
-                <SortableTableHeader
+                <TableHeader
                     nameLabel={intl.getMessage('upstream')}
                     countLabel={intl.getMessage('queries')}
-                    sortField={sortField()}
-                    sortDirection={sortDirection()}
-                    onSort={handleSort}
                 />
             </Show>
 
             <div class={s.tableRows}>
                 <Show when={hasStats()} fallback={<EmptyState />}>
-                    <For each={visibleUpstreams()}>
+                    <For each={sortedUpstreams()}>
                         {(upstream) => {
                             const percent = createMemo(() =>
                                 props.numDnsQueries > 0

@@ -185,9 +185,11 @@ export const StatCard = (props: StatCardProps) => {
                         </Show>
                     </div>
                 </div>
-                <div class={s.statCardChart}>
+                <div class={s.statCardChartWrapper}>
+                    <div class={s.statCardChart}>
+                        <canvas ref={setCanvasRef} />
+                    </div>
                     <div ref={setTooltipRef} class={s.chartTooltip} />
-                    <canvas ref={setCanvasRef} />
                 </div>
             </div>
             <div class={cn(theme.text.t3, s.statCardLabel)}>

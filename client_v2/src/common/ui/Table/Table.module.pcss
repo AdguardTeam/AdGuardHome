@@ -30,6 +30,7 @@
         background-color: var(--page-background-additional);
         border-radius: 8px;
         overflow: hidden;
+        margin-bottom: 8px;
     }
 }
 
@@ -75,20 +76,18 @@
     @media (min-width: 768px) {
         display: grid;
         grid-template-columns: var(--table-columns);
-        border-radius: 0;
         padding: 0;
         background-color: transparent;
         box-shadow: none;
 
-        &:hover:not(:has([data-table-action]:hover)),
-        &:focus:not(:has([data-table-action]:focus-visible)) {
+        &:hover,
+        &:focus {
             background-color: var(--page-background-additional);
         }
     }
 
     &:last-child {
         @media (min-width: 768px) {
-            border-radius: 0 0 8px 8px;
             overflow: hidden;
         }
     }

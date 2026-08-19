@@ -1,15 +1,14 @@
 import { Show, For, createMemo } from 'solid-js';
-
-import { useIsDesktop } from 'panel/helpers/useMediaQuery';
-import { MOBILE_TABLE_MAX_ROWS } from 'panel/helpers/constants';
 import intl from 'panel/common/intl';
 import { Icon } from 'panel/common/ui/Icon';
 import { Tooltip } from 'panel/common/ui/Tooltip';
+import { Link } from 'panel/common/ui/Link';
+import { RoutePath } from 'panel/components/Routes/Paths';
 import { formatNumber, formatCompactNumber } from 'panel/helpers/helpers';
 import { getTrackerData } from 'panel/helpers/trackers/trackers';
 import theme from 'panel/lib/theme';
 import cn from 'clsx';
-import { SortableTableHeader } from '../SortableTableHeader';
+import { TableHeader } from '../TableHeader';
 import { TrackerTooltip } from '../TrackerTooltip';
 import { EmptyState } from '../EmptyState';
 import { useSortedData } from '../../hooks/useSortedData';
@@ -27,16 +26,7 @@ type Props = {
 };
 
 export const TopQueriedDomains = (props: Props) => {
-    const isDesktop = useIsDesktop();
-    const {
-        sortedData: sortedDomains,
-        sortField,
-        sortDirection,
-        handleSort,
-    } = useSortedData(() => props.topQueriedDomains);
-    const visibleDomains = createMemo(() =>
-        isDesktop() ? sortedDomains() : sortedDomains().slice(0, MOBILE_TABLE_MAX_ROWS),
-    );
+    const { sortedData: sortedDomains } = useSortedData(() => props.topQueriedDomains);
 
     const hasStats = createMemo(() => props.topQueriedDomains.length > 0);
 
@@ -49,18 +39,15 @@ export const TopQueriedDomains = (props: Props) => {
             </div>
 
             <Show when={hasStats()}>
-                <SortableTableHeader
+                <TableHeader
                     nameLabel={intl.getMessage('domain')}
                     countLabel={intl.getMessage('queries')}
-                    sortField={sortField()}
-                    sortDirection={sortDirection()}
-                    onSort={handleSort}
                 />
             </Show>
 
             <div class={s.tableRows}>
                 <Show when={hasStats()} fallback={<EmptyState />}>
-                    <For each={visibleDomains()}>
+                    <For each={sortedDomains()}>
                         {(domain) => {
                             const percent = createMemo(() =>
                                 props.numDnsQueries > 0
@@ -70,7 +57,10 @@ export const TopQueriedDomains = (props: Props) => {
                             const trackerData = getTrackerData(domain.name);
 
                             return (
-                                <div class={cn(s.tableRow, s.statRowValue)}>
+                                <div
+                                    class={cn(s.tableRow, s.statRowValue)}
+                                    data-testid="top-domain-row"
+                                >
                                     <div
                                         class={cn(
                                             theme.text.t3,
@@ -114,7 +104,17 @@ export const TopQueriedDomains = (props: Props) => {
                                                         s.queryCount,
                                                     )}
                                                 >
-                                                    {formatCompactNumber(domain.count)}
+                                                    <Link
+                                                        to={RoutePath.QueryLog}
+                                                        query={{ search: `"${domain.name}"` }}
+                                                        class={cn(
+                                                            theme.text.t3,
+                                                            theme.text.condenced,
+                                                            s.queryCountLink,
+                                                        )}
+                                                    >
+                                                        {formatCompactNumber(domain.count)}
+                                                    </Link>
 
                                                     <div
                                                         class={cn(

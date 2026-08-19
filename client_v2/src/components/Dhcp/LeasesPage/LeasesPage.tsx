@@ -19,6 +19,7 @@ import {
     getDhcpStatus,
 } from 'panel/stores/dhcp';
 
+import { DhcpDisabledBanner } from 'panel/components/Dhcp/DhcpDisabledBanner';
 import { StaticLeasesTab } from './StaticLeasesTab';
 import { DynamicLeasesTab } from './DynamicLeasesTab';
 import { StaticLeaseModal } from './StaticLeaseModal';
@@ -102,6 +103,8 @@ export const LeasesPage = () => {
                     />
                 </div>
 
+                <DhcpDisabledBanner />
+
                 <div class={s.header}>
                     <h1 class={cn(theme.layout.title, theme.title.h4, theme.title.h3_tablet)}>
                         {intl.getMessage('dhcp_leases_title')}
@@ -113,10 +116,11 @@ export const LeasesPage = () => {
                             open={menuOpen()}
                             onOpenChange={setMenuOpen}
                             menu={resetMenu}
+                            anchorClass={theme.dropdown.trigger_offset}
                         >
                             <button
                                 type="button"
-                                class={s.menuButton}
+                                class={theme.dropdown.trigger}
                                 aria-label={intl.getMessage('dhcp_reset_leases')}
                             >
                                 <Icon icon="bullets" />

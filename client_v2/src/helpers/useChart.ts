@@ -100,6 +100,12 @@ export function createCursorLinePlugin(color: string): Plugin<'line'> {
  * into a DOM element with recharts-style positioning (right of cursor,
  * flipping left near viewport edges).
  *
+ * The tooltip element must be positioned with `position: absolute` and its
+ * nearest positioned ancestor should be the chart container. The handler
+ * converts viewport coordinates to coordinates relative to that ancestor,
+ * so the tooltip scrolls together with the chart instead of staying fixed
+ * to the viewport.
+ *
  * @param getTooltipEl - accessor for the tooltip DOM element
  * @param renderContent - returns the innerHTML string for a data point
  */
@@ -122,6 +128,9 @@ export function createExternalTooltipHandler(
 
         const { chart } = context;
         const rect = chart.canvas.getBoundingClientRect();
+        // The tooltip is absolutely positioned relative to its nearest
+        // positioned ancestor, so coordinates must be relative to it.
+        const parentRect = el.parentElement?.getBoundingClientRect() ?? rect;
 
         el.innerHTML = renderContent(dataPoint);
         el.style.opacity = '1';
@@ -134,6 +143,7 @@ export function createExternalTooltipHandler(
         if (left + tooltipWidth > window.innerWidth - 12) {
             left = rect.left + tooltip.caretX - tooltipWidth - 12;
         }
+        left -= parentRect.left;
 
         let top = rect.top + tooltip.caretY - tooltipHeight / 2;
         // Keep tooltip vertically within viewport
@@ -141,6 +151,7 @@ export function createExternalTooltipHandler(
         if (top + tooltipHeight > window.innerHeight - 8) {
             top = window.innerHeight - tooltipHeight - 8;
         }
+        top -= parentRect.top;
 
         el.style.left = `${left}px`;
         el.style.top = `${top}px`;

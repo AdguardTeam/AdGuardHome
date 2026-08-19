@@ -61,42 +61,30 @@
     }
 }
 
-.checkUpdateBtn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 24px;
-    height: 24px;
-    padding: 0;
-    border: none;
-    background: transparent;
+.versionButton {
+    padding: 8px;
+    border: 0;
+    background: none;
+    border-radius: 8px;
+    color: inherit;
+    font: inherit;
     cursor: pointer;
-    border-radius: 4px;
-    color: var(--default-product-icon);
-    flex-shrink: 0;
+    transition: var(--t2) background-color;
 
     &:hover,
     &:focus {
-        background-color: var(--page-background-additional);
+        background: var(--hovered-secondary-button);
     }
 
-    &:focus-visible {
-        outline: 2px solid var(--product-primary-90);
-        outline-offset: 2px;
+    &:active {
+        background: var(--pressed-secondary-button);
     }
 
     &:disabled {
+        background: var(--disabled-secondary-button);
+        color: var(--disabled-secondary-button-stroke);
         cursor: default;
-        opacity: 0.5;
-
-        &:hover {
-            background-color: transparent;
-        }
     }
-}
-
-.checkUpdateBtn_loading {
-    cursor: default;
 }
 
 .links {
@@ -126,6 +114,21 @@
     gap: 8px;
     flex-shrink: 0;
     white-space: nowrap;
+}
+
+.dropdownPill {
+    padding: 8px;
+    border-radius: 8px;
+    transition: var(--t2) background-color;
+
+    &:hover,
+    &:focus-within {
+        background: var(--hovered-secondary-button);
+    }
+
+    &:active {
+        background: var(--pressed-secondary-button);
+    }
 }
 
 .dropdownTrigger {

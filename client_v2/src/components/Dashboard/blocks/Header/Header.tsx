@@ -194,7 +194,7 @@ export const Header = (props: Props) => {
                     >
                         <button
                             type="button"
-                            class={s.dropdownTrigger}
+                            class={theme.dropdown.trigger}
                             aria-label={intl.getMessage('disable_protection_btn')}
                             disabled={!props.protectionEnabled}
                         >
@@ -232,7 +232,7 @@ export const Header = (props: Props) => {
                     value={props.periodOptions.find((o) => o.value === props.selectedPeriod)}
                     onChange={(option: any) => props.onPeriodChange(option.value)}
                     size="responsive"
-                    height="big"
+                    height="small"
                     isSearchable={false}
                     borderless={!isMobile()}
                     menuSize="big"

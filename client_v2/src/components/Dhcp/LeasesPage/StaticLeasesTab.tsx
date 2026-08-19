@@ -1,8 +1,11 @@
-import { createSignal, Show } from 'solid-js';
+import { createMemo, createSignal, Show } from 'solid-js';
+import cn from 'clsx';
 
 import intl from 'panel/common/intl';
+import theme from 'panel/lib/theme';
 import { ConfirmDialog } from 'panel/common/ui/ConfirmDialog';
 import { PlusButton } from 'panel/common/ui/PlusButton';
+import { Tooltip } from 'panel/common/ui/Tooltip';
 import { StaticLeasesTable } from './StaticLeasesTable';
 import { dhcpState, removeStaticLease, toggleLeaseModal, getDhcpStatus } from 'panel/stores/dhcp';
 
@@ -16,6 +19,8 @@ type LeaseData = {
 
 export const StaticLeasesTab = () => {
     const [confirmDeleteLease, setConfirmDeleteLease] = createSignal<LeaseData | null>(null);
+
+    const isAddDisabled = createMemo(() => !dhcpState.enabled || !dhcpState.v4?.range_start);
 
     const handleAddStaticLease = () => {
         toggleLeaseModal('ADD_LEASE');
@@ -44,12 +49,19 @@ export const StaticLeasesTab = () => {
     return (
         <>
             <div class={s.addButton}>
-                <PlusButton
-                    onClick={handleAddStaticLease}
-                    disabled={!dhcpState.enabled || !dhcpState.v4?.range_start}
+                <Tooltip
+                    content={
+                        <div class={cn(theme.dropdown.menu, s.tooltipMenu)}>
+                            {intl.getMessage('enable_dhcp_leases_notice')}
+                        </div>
+                    }
+                    position="bottomRight"
+                    disabled={!isAddDisabled()}
                 >
-                    {intl.getMessage('dhcp_add_static_lease')}
-                </PlusButton>
+                    <PlusButton onClick={handleAddStaticLease} disabled={isAddDisabled()}>
+                        {intl.getMessage('dhcp_add_static_lease')}
+                    </PlusButton>
+                </Tooltip>
             </div>
 
             <Show when={dhcpState.staticLeases && dhcpState.staticLeases.length > 0}>

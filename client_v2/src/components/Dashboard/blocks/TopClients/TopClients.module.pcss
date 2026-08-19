@@ -7,7 +7,7 @@
     overflow: hidden;
 
     @media (min-width: 768px) {
-        max-height: 374px;
+        max-height: 384px;
         padding: 8px 8px 0;
     }
 }
@@ -37,14 +37,6 @@
     display: flex;
     align-items: center;
     gap: 16px;
-
-    & .clientBlocked {
-        display: block;
-
-        @media (min-width: 768px) {
-            display: none;
-        }
-    }
 }
 
 .tableRowIcon {
@@ -52,6 +44,11 @@
     height: 24px;
     stroke: var(--default-gray-icons);
     color: var(--default-gray-icons);
+}
+
+.tableRowIconDanger {
+    stroke: var(--default-error-icon);
+    color: var(--default-error-icon);
 }
 
 .tableRowInfo {
@@ -87,6 +84,17 @@
     align-items: center;
     gap: 4px;
     white-space: nowrap;
+}
+
+.queryCountLink {
+    color: inherit;
+    text-decoration: none;
+
+    &:hover,
+    &:focus {
+        color: inherit;
+        text-decoration: underline;
+    }
 }
 
 .dropdownWrapper {
@@ -196,20 +204,22 @@
     gap: 8px;
 }
 
+.clientIpLink {
+    color: inherit;
+    text-decoration: none;
+
+    &:hover,
+    &:focus {
+        color: inherit;
+        text-decoration: underline;
+    }
+}
+
 .clientName {
     color: var(--default-description-text);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-}
-
-.clientBlocked {
-    display: none;
-    color: var(--default-error-link);
-
-    @media (min-width: 768px) {
-        display: block;
-    }
 }
 
 .clientActions {

@@ -72,6 +72,18 @@
         [data-scope='select'][data-part='control'],
         [data-scope='combobox'][data-part='control'] {
             border: 0;
+            transition: background-color var(--t2);
+
+            &:not([data-disabled]) {
+                &:hover,
+                &:focus-within {
+                    background-color: var(--hovered-secondary-button);
+                }
+
+                &:active {
+                    background-color: var(--pressed-secondary-button);
+                }
+            }
         }
     }
 
@@ -184,14 +196,19 @@
         border: 1px solid var(--default-item-divider);
         box-shadow: none;
         border-radius: 8px;
-        transition: border var(--t2);
+        transition:
+            border var(--t2),
+            background-color var(--t2);
         cursor: pointer;
         font-size: 16px;
         background-color: var(--default-page-background);
         display: flex;
         align-items: stretch;
 
-        &:hover,
+        &:hover {
+            background-color: var(--default-input-background);
+        }
+
         &:focus-within {
             border-color: var(--hovered-main-button);
         }

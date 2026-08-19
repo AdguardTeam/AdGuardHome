@@ -88,7 +88,6 @@
 }
 
 .protectionMenu {
-    padding: 8px 0;
     min-width: 200px;
 
     @media (min-width: 768px) {
@@ -161,33 +160,6 @@
     width: 32px;
     height: 32px;
     padding: 0;
-}
-
-.dropdownTrigger {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 4px;
-    background: none;
-    border: 0;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: var(--t2) background-color;
-
-    &:hover,
-    &:focus {
-        background: var(--hovered-secondary-button);
-    }
-
-    &:active {
-        background: var(--pressed-secondary-button);
-    }
-
-    &:disabled {
-        background: var(--disabled-secondary-button);
-        color: var(--disabled-secondary-button-stroke);
-        cursor: default;
-    }
 }
 
 .onlyMobile {

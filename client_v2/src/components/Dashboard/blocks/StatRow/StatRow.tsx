@@ -4,6 +4,8 @@ import intl from 'panel/common/intl';
 import { Icon, type IconType } from 'panel/common/ui/Icon';
 import theme from 'panel/lib/theme';
 import { Tooltip } from 'panel/common/ui/Tooltip';
+import { Link } from 'panel/common/ui/Link';
+import { type RoutePathKey } from 'panel/components/Routes/Paths';
 import cn from 'clsx';
 import { formatCompactNumber, formatNumber } from 'panel/helpers/helpers';
 
@@ -17,6 +19,8 @@ export type StatRowProps = {
     isTotal?: boolean;
     isQueriesValue?: boolean;
     tooltip: string;
+    linkTo?: RoutePathKey;
+    query?: Record<string, string | number | boolean>;
     rowTheme:
         | 'dnsQueries'
         | 'adsBlocked'
@@ -31,6 +35,24 @@ export const StatRow = (props: StatRowProps) => {
 
     const formattedValue = () =>
         typeof props.value === 'number' ? formatNumber(props.value) : props.value;
+
+    const queriesValue = () =>
+        typeof props.value === 'number' ? formatCompactNumber(props.value) : props.value;
+
+    const queriesPercent = () => (
+        <div class={cn(theme.text.t3, theme.text.condenced, s.queryPercent)}>
+            <Show
+                when={props.isTotal}
+                fallback={
+                    <Show when={props.percent !== undefined && props.percent! > 0}>
+                        <span>({props.percent!.toFixed(1)}%)</span>
+                    </Show>
+                }
+            >
+                <span>({intl.getMessage('total')})</span>
+            </Show>
+        </div>
+    );
 
     return (
         <div class={cn(s.statRow, s[props.rowTheme])}>
@@ -69,29 +91,21 @@ export const StatRow = (props: StatRowProps) => {
                             }
                         >
                             <div class={cn(theme.text.t3, theme.text.condenced, s.queryCount)}>
-                                {typeof props.value === 'number'
-                                    ? formatCompactNumber(props.value)
-                                    : props.value}
-
-                                <div
-                                    class={cn(theme.text.t3, theme.text.condenced, s.queryPercent)}
-                                >
-                                    <Show
-                                        when={props.isTotal}
-                                        fallback={
-                                            <Show
-                                                when={
-                                                    props.percent !== undefined &&
-                                                    props.percent! > 0
-                                                }
-                                            >
-                                                <span>({props.percent!.toFixed(1)}%)</span>
-                                            </Show>
-                                        }
+                                <Show when={props.linkTo} fallback={queriesValue()}>
+                                    <Link
+                                        to={props.linkTo}
+                                        query={props.query}
+                                        class={cn(
+                                            theme.text.t3,
+                                            theme.text.condenced,
+                                            s.queryCount,
+                                            s.queryCountLink,
+                                        )}
                                     >
-                                        <span>({intl.getMessage('total')})</span>
-                                    </Show>
-                                </div>
+                                        {queriesValue()}
+                                    </Link>
+                                </Show>
+                                {queriesPercent()}
                             </div>
                         </Tooltip>
                     </div>

@@ -52,6 +52,9 @@ export const Footer = () => {
         return 'theme_light';
     };
 
+    const versionLabel = () =>
+        intl.getMessage('version_number', { value: dashboardState.dnsVersion });
+
     const changeLanguage = async (newLang: Lang) => {
         await intl.changeLanguage(newLang as LocalesType);
         setHtmlLangAttr(newLang);
@@ -80,31 +83,25 @@ export const Footer = () => {
                     <div class={s.copyright}>&copy; 2018–{getYear()} AdGuard Home</div>
 
                     <Show when={dashboardState.dnsVersion}>
-                        <div class={s.version}>
-                            {intl.getMessage('version_number', {
-                                value: dashboardState.dnsVersion,
-                            })}
-
-                            <Show when={dashboardState.checkUpdateFlag}>
-                                <button
-                                    type="button"
-                                    class={cn(s.checkUpdateBtn, {
-                                        [s.checkUpdateBtn_loading]:
-                                            dashboardState.processingVersion,
-                                    })}
-                                    aria-label={intl.getMessage('check_updates_btn')}
-                                    disabled={dashboardState.processingVersion}
-                                    data-testid="footer-check-updates"
-                                    onClick={() => getVersion(true)}
-                                >
-                                    <Icon
-                                        icon={
-                                            dashboardState.processingVersion ? 'loader' : 'refresh'
-                                        }
-                                    />
-                                </button>
-                            </Show>
-                        </div>
+                        <Show
+                            when={dashboardState.checkUpdateFlag}
+                            fallback={<div class={s.version}>{versionLabel()}</div>}
+                        >
+                            <button
+                                type="button"
+                                class={cn(s.version, s.versionButton)}
+                                aria-label={intl.getMessage('check_updates_btn')}
+                                disabled={dashboardState.processingVersion}
+                                data-testid="footer-check-updates"
+                                onClick={() => getVersion(true)}
+                            >
+                                {versionLabel()}
+                                <Icon
+                                    icon={dashboardState.processingVersion ? 'loader' : 'refresh'}
+                                    color="green"
+                                />
+                            </button>
+                        </Show>
                     </Show>
 
                     <div class={s.links}>
@@ -112,7 +109,7 @@ export const Footer = () => {
                             {({ name, href }) => (
                                 <a
                                     href={href}
-                                    class={cn(theme.link.link, theme.link.noDecoration)}
+                                    class={cn(theme.link.link, theme.link.hoverDecoration)}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                 >
@@ -145,6 +142,7 @@ export const Footer = () => {
                             </div>
                         }
                         class={s.dropdown}
+                        wrapClass={s.dropdownPill}
                         position="bottomRight"
                     >
                         <div class={s.dropdownTrigger}>
@@ -167,6 +165,7 @@ export const Footer = () => {
                         languageNames={LANGUAGE_NAMES}
                         onChange={(lang: Lang) => changeLanguage(lang)}
                         class={s.dropdown}
+                        wrapClass={s.dropdownPill}
                         position="bottomRight"
                     />
                 </div>

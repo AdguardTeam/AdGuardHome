@@ -110,11 +110,18 @@ export const Dhcp = () => {
                 <Show when={isLoaded()} fallback={<PageLoader />}>
                     <Show when={!dhcpState.dhcp_available}>
                         <div class={s.unavailable}>
-                            <h1 class={cn(theme.title.h4, theme.title.h3_tablet)}>
-                                {intl.getMessage('unavailable_dhcp')}
+                            <h1
+                                class={cn(
+                                    theme.layout.title,
+                                    theme.title.h4,
+                                    theme.title.h3_tablet,
+                                    s.title,
+                                )}
+                            >
+                                {intl.getMessage('dhcp')}
                             </h1>
-                            <div class={theme.text.t2}>
-                                {intl.getMessage('unavailable_dhcp_desc')}
+                            <div class={cn(theme.text.t2, s.unavailableDesc)}>
+                                {intl.getMessage('unavailable_dhcp')}
                             </div>
                         </div>
                     </Show>
@@ -137,10 +144,11 @@ export const Dhcp = () => {
                                 open={menuOpen()}
                                 onOpenChange={setMenuOpen}
                                 menu={resetMenu}
+                                anchorClass={theme.dropdown.trigger_offset}
                             >
                                 <button
                                     type="button"
-                                    class={cn(theme.form.action, s.menuButton)}
+                                    class={theme.dropdown.trigger}
                                     aria-label={intl.getMessage('reset_dhcp_settings')}
                                 >
                                     <Icon icon="bullets" />

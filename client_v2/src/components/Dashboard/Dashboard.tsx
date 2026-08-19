@@ -5,6 +5,7 @@ import { PageLoader } from 'panel/common/ui/Loader';
 import { dashboardState, toggleProtection, getClients } from 'panel/stores/dashboard';
 import { statsState, getStats, getStatsConfig } from 'panel/stores/stats';
 import { accessState, getAccessList } from 'panel/stores/access';
+import { LocalStorageHelper, LOCAL_STORAGE_KEYS } from 'panel/helpers/localStorageHelper';
 import { ONE_SECOND_IN_MS, HOUR, DAY, STATS_INTERVALS_DAYS } from 'panel/helpers/constants';
 
 import { Header, getPeriodLabel } from './blocks/Header/Header';
@@ -19,9 +20,16 @@ import { UpstreamAvgTime } from './blocks/UpstreamAvgTime';
 
 import s from './Dashboard.module.pcss';
 
+const getSavedPeriod = (): number => {
+    const savedPeriod = LocalStorageHelper.getItem<number>(LOCAL_STORAGE_KEYS.STATS_PERIOD);
+    return typeof savedPeriod === 'number' && Number.isFinite(savedPeriod) && savedPeriod > 0
+        ? savedPeriod
+        : DAY;
+};
+
 export const Dashboard = () => {
     const [remainingTime, setRemainingTime] = createSignal<number | null>(null);
-    const [selectedPeriod, setSelectedPeriod] = createSignal(DAY);
+    const [selectedPeriod, setSelectedPeriod] = createSignal(getSavedPeriod());
     let timerRef: ReturnType<typeof setInterval> | null = null;
 
     const startCountdown = (duration: number) => {
@@ -81,15 +89,14 @@ export const Dashboard = () => {
         })),
     );
 
-    createEffect(() => {
-        const maxAvailable = periodIntervals()[periodIntervals().length - 1];
-        if (maxAvailable && selectedPeriod() > maxAvailable) {
-            setSelectedPeriod(maxAvailable);
-        }
-    });
+    const maxAvailablePeriod = createMemo(
+        () => periodIntervals()[periodIntervals().length - 1] || DAY,
+    );
+
+    const effectivePeriod = createMemo(() => Math.min(selectedPeriod(), maxAvailablePeriod()));
 
     createEffect(() => {
-        const period = selectedPeriod();
+        const period = effectivePeriod();
         getStats(period);
         getStatsConfig();
         getClients();
@@ -97,7 +104,7 @@ export const Dashboard = () => {
     });
 
     const handleRefreshStats = () => {
-        getStats(selectedPeriod());
+        getStats(effectivePeriod());
         getStatsConfig();
         getClients();
         getAccessList();
@@ -114,6 +121,7 @@ export const Dashboard = () => {
 
     const handlePeriodChange = (period: number) => {
         setSelectedPeriod(period);
+        LocalStorageHelper.setItem(LOCAL_STORAGE_KEYS.STATS_PERIOD, period);
     };
 
     const isLoading = () =>
@@ -126,7 +134,7 @@ export const Dashboard = () => {
                     protectionEnabled={!!dashboardState.protectionEnabled}
                     processingProtection={dashboardState.processingProtection}
                     remainingTime={remainingTime()}
-                    selectedPeriod={selectedPeriod()}
+                    selectedPeriod={effectivePeriod()}
                     periodOptions={periodOptions()}
                     isLoading={isLoading()}
                     onToggleProtection={handleToggleProtection}

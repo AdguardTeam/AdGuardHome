@@ -14,6 +14,7 @@ type LanguageDropdownProps = {
     onChange: (lang: string) => void | Promise<void>;
     position?: 'bottomRight' | 'bottomLeft' | 'topRight' | 'topLeft';
     class?: string;
+    wrapClass?: string;
     sort?: boolean;
 };
 
@@ -81,6 +82,7 @@ export const LanguageDropdown = (props: LanguageDropdownProps) => {
                 </div>
             }
             class={props.class}
+            wrapClass={props.wrapClass}
             overlayClass={s.langOverlay}
             position={props.position ?? 'bottomRight'}
         >

@@ -1,5 +1,6 @@
-import { Show } from 'solid-js';
+import { Show, createSignal } from 'solid-js';
 import { Icon } from 'panel/common/ui/Icon';
+import { ConfirmDialog } from 'panel/common/ui/ConfirmDialog';
 import intl from 'panel/common/intl';
 import {
     encryptionState,
@@ -12,9 +13,11 @@ import s from '../styles.module.pcss';
 import theme from 'panel/lib/theme';
 
 export const TlsCertSection = () => {
+    const [showDeleteConfirm, setShowDeleteConfirm] = createSignal(false);
+
     const enc = () => encryptionState;
 
-    const removeCert = () => {
+    const handleRemoveCert = () => {
         clearCertOptimistically();
         resetValidationStatus();
         setTlsConfig({
@@ -26,6 +29,7 @@ export const TlsCertSection = () => {
             private_key_path: '',
             private_key_saved: false,
         });
+        setShowDeleteConfirm(false);
     };
 
     const renderStatus = () => {
@@ -71,13 +75,25 @@ export const TlsCertSection = () => {
                 <button
                     type="button"
                     class={theme.form.action}
-                    onClick={removeCert}
+                    onClick={() => setShowDeleteConfirm(true)}
                     aria-label={intl.getMessage('encryption_certificates')}
                 >
                     <Icon icon="delete" color="red" />
                 </button>
             </div>
             {renderStatus()}
+
+            <Show when={showDeleteConfirm()}>
+                <ConfirmDialog
+                    title={intl.getMessage('delete_tls_certificate')}
+                    text={intl.getMessage('delete_tls_certificate_desc')}
+                    buttonText={intl.getMessage('delete_table_action_confirm')}
+                    cancelText={intl.getMessage('cancel')}
+                    buttonVariant="danger"
+                    onConfirm={handleRemoveCert}
+                    onClose={() => setShowDeleteConfirm(false)}
+                />
+            </Show>
         </div>
     );
 };
