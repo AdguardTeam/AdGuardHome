@@ -358,9 +358,6 @@ func TestTLSManager_Reload(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	web := newTestWeb(t, &webConfig{tlsManager: m})
-	m.setWebAPI(web)
-
 	extTLSConf := m.ExtendedTLSConfig()
 	assertCertSerialNumber(t, extTLSConf, snBefore)
 

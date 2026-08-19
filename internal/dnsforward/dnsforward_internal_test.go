@@ -501,34 +501,6 @@ func TestServer_timeout(t *testing.T) {
 	})
 }
 
-func TestServer_Prepare_fallbacks(t *testing.T) {
-	srvConf := &ServerConfig{
-		TLSConf: &TLSConfig{},
-		Config: Config{
-			FallbackDNS: []string{
-				"#tls://1.1.1.1",
-				"8.8.8.8",
-			},
-			UpstreamMode:     UpstreamModeLoadBalance,
-			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
-			ClientsContainer: EmptyClientsContainer{},
-		},
-		ServePlainDNS: true,
-	}
-
-	s, err := NewServer(DNSCreateParams{
-		Logger:            testLogger,
-		TLSConfigProvider: testTLSConfigProvider,
-	})
-	require.NoError(t, err)
-
-	err = s.Prepare(testutil.ContextWithTimeout(t, testTimeout), srvConf)
-	require.NoError(t, err)
-	require.NotNil(t, s.dnsProxy.Fallbacks)
-
-	assert.Len(t, s.dnsProxy.Fallbacks.Upstreams, 1)
-}
-
 func TestServerWithProtectionDisabled(t *testing.T) {
 	s := createTestServer(
 		t,
@@ -945,9 +917,9 @@ func TestBlockCNAMEProtectionEnabled(t *testing.T) {
 		IPv4:  testIPv4,
 	}
 
-	s.dnsProxy.UpstreamConfig = &proxy.UpstreamConfig{
-		Upstreams: []upstream.Upstream{testUpstm},
-	}
+	// TODO(m.kazantsev):  Get rid of this manual assignment of upstreams across
+	// the whole project.
+	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{testUpstm}
 	startDeferStop(t, s)
 
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP)

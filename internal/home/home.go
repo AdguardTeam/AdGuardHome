@@ -870,8 +870,6 @@ func run(
 
 	sigHdlr.addWeb(web)
 
-	tlsMgr.setWebAPI(web)
-
 	statsDir, querylogDir, err := checkStatsAndQuerylogDirs(config, workDir)
 	fatalOnError(ctx, baseLogger, err)
 
@@ -913,7 +911,7 @@ func runDNSServer(
 	}
 
 	go func() {
-		startErr := startDNSServer()
+		startErr := startDNSServer(ctx)
 		if startErr != nil {
 			closeDNSServer(ctx, slogLogger)
 			fatalOnError(ctx, slogLogger, startErr)

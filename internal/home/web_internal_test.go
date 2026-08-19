@@ -91,7 +91,6 @@ func TestWebAPI_HandleTLSConfigure(t *testing.T) {
 	require.NoError(t, err)
 
 	web := newTestWeb(t, &webConfig{tlsManager: m})
-	m.setWebAPI(web)
 
 	extTLSConf := m.ExtendedTLSConfig()
 	assertCertSerialNumber(t, extTLSConf, wantSerialNumber)
@@ -176,7 +175,6 @@ func TestWebAPI_HandleTLSStatus(t *testing.T) {
 	require.NoError(t, err)
 
 	web := newTestWeb(t, &webConfig{tlsManager: m})
-	m.setWebAPI(web)
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "/control/tls/status", nil)
@@ -209,7 +207,6 @@ func TestWebAPI_ValidateTLSSettings(t *testing.T) {
 	require.NoError(t, err)
 
 	web := newTestWeb(t, &webConfig{tlsManager: m})
-	m.setWebAPI(web)
 
 	tcpLn, err := net.Listen("tcp", ":0")
 	require.NoError(t, err)
@@ -310,7 +307,6 @@ func TestWebAPI_HandleTLSValidate(t *testing.T) {
 	require.NoError(t, err)
 
 	web := newTestWeb(t, &webConfig{tlsManager: m})
-	m.setWebAPI(web)
 
 	setts := &tlsConfigSettingsExt{
 		tlsConfigSettings: tlsConfigSettings{

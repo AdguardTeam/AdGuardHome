@@ -56,12 +56,6 @@ type tlsManager struct {
 	// nil.
 	extTLSConf *aghtls.ExtendedTLSConfig
 
-	// web is the web UI and API server.  It must not be nil.
-	//
-	// TODO(s.chzhen):  Temporary cyclic dependency due to ongoing refactoring.
-	// Resolve it.
-	web *webAPI
-
 	// rootCerts is a pool of root CAs for TLSv1.2.
 	rootCerts *x509.CertPool
 
@@ -106,8 +100,7 @@ type tlsManagerConfig struct {
 // newTLSManager initializes the manager of TLS configuration.  m is always
 // non-nil while any returned error indicates that the TLS configuration isn't
 // valid.  Thus TLS may be initialized later, e.g. via the web UI.  conf must
-// not be nil.  Note that [tlsManager.web] must be initialized later on by using
-// [tlsManager.setWebAPI].
+// not be nil.
 func newTLSManager(ctx context.Context, conf *tlsManagerConfig) (m *tlsManager, err error) {
 	m = &tlsManager{
 		logger:       conf.logger,
@@ -183,14 +176,6 @@ func newTLSManager(ctx context.Context, conf *tlsManagerConfig) (m *tlsManager, 
 	m.setCertFileTime(ctx)
 
 	return m, nil
-}
-
-// setWebAPI stores the provided web API.  It must be called before
-// [tlsManager.Start], [tlsManager.reload] or [webAPI.validateTLSSettings].
-//
-// TODO(s.chzhen):  Remove it once cyclic dependency is resolved.
-func (m *tlsManager) setWebAPI(webAPI *webAPI) {
-	m.web = webAPI
 }
 
 // setCertFileTime sets [tlsManager.certLastMod] from the certificate.  If there
@@ -1031,14 +1016,6 @@ var _ service.Interface = (*tlsManager)(nil)
 // Start implements the [service.Interface] interface for *tlsManager.  It
 // starts the TLS manager.
 func (m *tlsManager) Start(ctx context.Context) (err error) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	// The background context is used because the TLSConfigChanged wraps context
-	// with timeout on its own and shuts down the server, which handles current
-	// request.
-	m.web.tlsConfigChanged(context.Background(), m.extTLSConf)
-
 	go m.handleCertFileChange(ctx)
 
 	return nil
