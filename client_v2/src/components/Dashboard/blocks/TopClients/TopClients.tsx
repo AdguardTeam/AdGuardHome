@@ -16,7 +16,7 @@ import cn from 'clsx';
 import { useSortedData, TOP_CLIENTS_VISIBLE_ITEMS } from '../../hooks/useSortedData';
 import { TableHeader } from '../TableHeader';
 import { EmptyState } from '../EmptyState';
-import { ClientTooltip } from './ClientTooltip';
+import { ClientTooltip } from '../ClientTooltip';
 
 import s from './TopClients.module.pcss';
 

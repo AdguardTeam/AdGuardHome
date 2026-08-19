@@ -1,9 +1,11 @@
 import { Show } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
+import cn from 'clsx';
 
 import intl from 'panel/common/intl';
 import { Button } from 'panel/common/ui/Button';
 import { Icon } from 'panel/common/ui/Icon';
+import theme from 'panel/lib/theme';
 import { Paths } from 'panel/components/Routes/Paths';
 import { dhcpState, toggleDhcp } from 'panel/stores/dhcp';
 
@@ -33,7 +35,9 @@ export const DhcpDisabledBanner = () => {
             <div class={s.wrapper}>
                 <div class={s.banner} role="status" data-testid="dhcp-disabled-banner">
                     <Icon icon="attention_filled" class={s.icon} />
-                    <div class={s.message}>{intl.getMessage('setting_not_applied_dhcp')}</div>
+                    <div class={cn(s.message, theme.text.t2, theme.text.semibold)}>
+                        {intl.getMessage('setting_not_applied_dhcp')}
+                    </div>
                     <Button
                         variant="secondary"
                         class={s.action}
