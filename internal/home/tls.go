@@ -116,22 +116,10 @@ func newTLSManager(ctx context.Context, conf *tlsManagerConfig) (m *tlsManager, 
 	}
 
 	m.rootCerts = aghtls.SystemRootCAs(ctx, conf.logger)
-
 	m.extTLSConf.ServePlainDNS = conf.servePlainDNS
 	m.extTLSConf.Status = aghtls.TLSConfigStatus{}
 
-	if len(m.extTLSConf.OverrideTLSCiphers) > 0 {
-		m.customCipherIDs, err = aghtls.ParseCiphers(m.extTLSConf.OverrideTLSCiphers)
-		if err != nil {
-			// Should not happen because upstreams are already validated.  See
-			// [validateTLSCipherIDs].
-			panic(err)
-		}
-
-		m.logger.InfoContext(ctx, "overriding ciphers", "ciphers", conf.extTLSConf.OverrideTLSCiphers)
-	} else {
-		m.logger.InfoContext(ctx, "using default ciphers")
-	}
+	m.setOverrideTLSCiphers(ctx)
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -158,6 +146,14 @@ func newTLSManager(ctx context.Context, conf *tlsManagerConfig) (m *tlsManager, 
 
 	cert, err := tls.X509KeyPair(m.extTLSConf.CertificateChainData, m.extTLSConf.PrivateKeyData)
 	if err != nil {
+		// DNSCrypt provides its own certificate, meaning we can ignore TLS
+		// certificate parsing errors.
+		if m.extTLSConf.PortDNSCrypt != 0 && m.extTLSConf.DNSCryptConfigFile != "" {
+			m.logger.InfoContext(ctx, "dnscrypt is configured")
+
+			return m, nil
+		}
+
 		m.extTLSConf.Enabled = false
 
 		return m, fmt.Errorf("parsing tls certificate: %w", err)
@@ -176,6 +172,27 @@ func newTLSManager(ctx context.Context, conf *tlsManagerConfig) (m *tlsManager, 
 	m.setCertFileTime(ctx)
 
 	return m, nil
+}
+
+// setOverrideTLSCiphers sets the custom TLS ciphers if specified in the
+// extended TLS configuration.
+func (m *tlsManager) setOverrideTLSCiphers(ctx context.Context) {
+	var err error
+
+	if len(m.extTLSConf.OverrideTLSCiphers) <= 0 {
+		m.logger.InfoContext(ctx, "using default ciphers")
+
+		return
+	}
+
+	m.customCipherIDs, err = aghtls.ParseCiphers(m.extTLSConf.OverrideTLSCiphers)
+	if err != nil {
+		// Should not happen because upstreams are already validated.  See
+		// [validateTLSCipherIDs].
+		panic(err)
+	}
+
+	m.logger.InfoContext(ctx, "overriding ciphers", "ciphers", m.extTLSConf.OverrideTLSCiphers)
 }
 
 // setCertFileTime sets [tlsManager.certLastMod] from the certificate.  If there
