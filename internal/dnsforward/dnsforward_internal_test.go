@@ -32,6 +32,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/hashprefix"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/safesearch"
 	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
+	"github.com/AdguardTeam/dnsproxy/dnsproxytest"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
@@ -297,7 +298,7 @@ func createGoogleATestMessage() *dns.Msg {
 }
 
 func newGoogleUpstream() (u upstream.Upstream) {
-	return &aghtest.UpstreamMock{
+	return &dnsproxytest.Upstream{
 		OnAddress: func() (addr string) { return "google.upstream.example" },
 		OnExchange: func(req *dns.Msg) (resp *dns.Msg, err error) {
 			return cmp.Or(
@@ -912,10 +913,7 @@ func TestBlockCNAMEProtectionEnabled(t *testing.T) {
 		},
 		testTLSConfigProvider,
 	)
-	testUpstm := &aghtest.Upstream{
-		CName: testCNAMEs,
-		IPv4:  testIPv4,
-	}
+	testUpstm := aghtest.NewUpstream(testCNAMEs, testIPv4, nil)
 
 	// TODO(m.kazantsev):  Get rid of this manual assignment of upstreams across
 	// the whole project.
@@ -955,10 +953,7 @@ func TestBlockCNAME(t *testing.T) {
 		testTLSConfigProvider,
 	)
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{
-		&aghtest.Upstream{
-			CName: testCNAMEs,
-			IPv4:  testIPv4,
-		},
+		aghtest.NewUpstream(testCNAMEs, testIPv4, nil),
 	}
 	startDeferStop(t, s)
 
@@ -1032,10 +1027,7 @@ func TestClientRulesForCNAMEMatching(t *testing.T) {
 		testTLSConfigProvider,
 	)
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{
-		&aghtest.Upstream{
-			CName: testCNAMEs,
-			IPv4:  testIPv4,
-		},
+		aghtest.NewUpstream(testCNAMEs, testIPv4, nil),
 	}
 	startDeferStop(t, s)
 
