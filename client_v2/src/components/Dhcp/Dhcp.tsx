@@ -108,7 +108,7 @@ export const Dhcp = () => {
         <div class={theme.layout.container}>
             <div class={cn(theme.layout.containerIn, theme.layout.containerIn_one_col)}>
                 <Show when={isLoaded()} fallback={<PageLoader />}>
-                    <Show when={dhcpState.dhcp_available}>
+                    <Show when={!dhcpState.dhcp_available}>
                         <div class={s.unavailable}>
                             <h1
                                 class={cn(
@@ -126,7 +126,7 @@ export const Dhcp = () => {
                         </div>
                     </Show>
 
-                    <Show when={!dhcpState.dhcp_available}>
+                    <Show when={dhcpState.dhcp_available}>
                         <div class={s.header}>
                             <h1
                                 class={cn(
