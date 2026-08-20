@@ -1,4 +1,4 @@
-import { createSignal, createEffect, untrack } from 'solid-js';
+import { createSignal, createEffect, on, untrack } from 'solid-js';
 
 import intl from 'panel/common/intl';
 import theme from 'panel/lib/theme';
@@ -20,10 +20,16 @@ type Props = {
 export const FiltersConfig = (props: Props) => {
     const [enabled, setEnabled] = createSignal(props.initialValues.enabled);
 
-    createEffect(() => {
-        const initial = untrack(() => props.initialValues);
-        setFiltersConfig({ ...initial, enabled: enabled() });
-    });
+    createEffect(
+        on(
+            enabled,
+            () => {
+                const initial = untrack(() => props.initialValues);
+                setFiltersConfig({ ...initial, enabled: enabled() });
+            },
+            { defer: true },
+        ),
+    );
 
     return (
         <SettingRow
