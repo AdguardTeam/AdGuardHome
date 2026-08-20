@@ -57,6 +57,7 @@
     --hovered-danger-button: var(--red-60);
     --pressed-danger-button: var(--red-70);
     --disabled-danger-button: var(--red-30);
+    --hovered-secondary-danger-button: var(--red-100);
     /* Link */
     --default-link: var(--product-primary-50);
     --hovered-link: var(--product-primary-60);
