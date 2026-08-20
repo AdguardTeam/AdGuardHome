@@ -913,7 +913,7 @@ func TestBlockCNAMEProtectionEnabled(t *testing.T) {
 		},
 		testTLSConfigProvider,
 	)
-	testUpstm := aghtest.NewUpstream(testCNAMEs, testIPv4, nil)
+	testUpstm := aghtest.NewUpstreamMock(aghtest.NewOnExchange(testCNAMEs, testIPv4, nil))
 
 	// TODO(m.kazantsev):  Get rid of this manual assignment of upstreams across
 	// the whole project.
@@ -953,7 +953,7 @@ func TestBlockCNAME(t *testing.T) {
 		testTLSConfigProvider,
 	)
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{
-		aghtest.NewUpstream(testCNAMEs, testIPv4, nil),
+		aghtest.NewUpstreamMock(aghtest.NewOnExchange(testCNAMEs, testIPv4, nil)),
 	}
 	startDeferStop(t, s)
 
@@ -1027,7 +1027,7 @@ func TestClientRulesForCNAMEMatching(t *testing.T) {
 		testTLSConfigProvider,
 	)
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{
-		aghtest.NewUpstream(testCNAMEs, testIPv4, nil),
+		aghtest.NewUpstreamMock(aghtest.NewOnExchange(testCNAMEs, testIPv4, nil)),
 	}
 	startDeferStop(t, s)
 

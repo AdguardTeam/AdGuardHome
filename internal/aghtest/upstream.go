@@ -13,23 +13,9 @@ import (
 	"github.com/miekg/dns"
 )
 
-// NewUpstream creates a test upstream that responds with the provided
-// CNAME, A, and AAAA records.
-func NewUpstream(
-	cname map[string][]string,
-	ipv4 map[string][]net.IP,
-	ipv6 map[string][]net.IP,
-) (u *dnsproxytest.Upstream) {
-	return &dnsproxytest.Upstream{
-		OnExchange: newOnExchange(cname, ipv4, ipv6),
-		OnAddress:  func() (s string) { return "todo.upstream.example" },
-		OnClose:    func() (err error) { return nil },
-	}
-}
-
-// newOnExchange returns a new OnExchange function for a test upstream.  The
+// NewOnExchange returns a new OnExchange function for a test upstream.  The
 // returned function responds with the provided CNAME, A, and AAAA records.
-func newOnExchange(
+func NewOnExchange(
 	cname map[string][]string,
 	ipv4 map[string][]net.IP,
 	ipv6 map[string][]net.IP,
@@ -173,9 +159,9 @@ func mustAnsAAAA(respHdr dns.RR_Header, s string) (ans []dns.RR) {
 	}}
 }
 
-// NewUpstreamMock returns an [*UpstreamMock], fields OnAddress and OnClose of
-// which are set to stubs that return "upstream.example" and nil respectively.
-// The field OnExchange is set to onExc.
+// NewUpstreamMock returns an [*dnsproxytest.Upstream], fields OnAddress and
+// OnClose of which are set to stubs that return "upstream.example" and nil
+// respectively. The field OnExchange is set to onExc.
 func NewUpstreamMock(
 	onExc func(req *dns.Msg) (resp *dns.Msg, err error),
 ) (u *dnsproxytest.Upstream) {
@@ -186,10 +172,10 @@ func NewUpstreamMock(
 	}
 }
 
-// NewBlockUpstream returns an [*UpstreamMock] that works like an upstream that
-// supports hash-based safe-browsing/adult-blocking feature.  If shouldBlock is
-// true, hostname's actual hash is returned, blocking it.  Otherwise, it returns
-// a different hash.
+// NewBlockUpstream returns an [*dnsproxytest.Upstream] that works like an
+// upstream that supports hash-based safe-browsing/adult-blocking feature.  If
+// shouldBlock is true, hostname's actual hash is returned, blocking it.
+// Otherwise, it returns a different hash.
 func NewBlockUpstream(hostname string, shouldBlock bool) (u *dnsproxytest.Upstream) {
 	hash := sha256.Sum256([]byte(hostname))
 	hashStr := hex.EncodeToString(hash[:])
@@ -223,12 +209,12 @@ func NewBlockUpstream(hostname string, shouldBlock bool) (u *dnsproxytest.Upstre
 	}
 }
 
-// ErrUpstream is the error returned from the [*UpstreamMock] created by
-// [NewErrorUpstream].
+// ErrUpstream is the error returned from the [*dnsproxytest.Upstream] created
+// by [NewErrorUpstream].
 const ErrUpstream errors.Error = "test upstream error"
 
-// NewErrorUpstream returns an [*UpstreamMock] that returns [ErrUpstream] from
-// its Exchange method.
+// NewErrorUpstream returns an [*dnsproxytest.Upstream] that returns
+// [ErrUpstream] from its Exchange method.
 func NewErrorUpstream() (u *dnsproxytest.Upstream) {
 	return &dnsproxytest.Upstream{
 		OnAddress: func() (addr string) { return "error.upstream.example" },

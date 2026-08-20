@@ -81,10 +81,12 @@ func TestServer_ServeDNS(t *testing.T) {
 	}
 
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{
-		aghtest.NewUpstream(
-			cNames,
-			map[string][]net.IP{"a.exception.": {{0, 0, 0, 1}}},
-			map[string][]net.IP{"aaaa.exception.": {net.ParseIP("::1")}},
+		aghtest.NewUpstreamMock(
+			aghtest.NewOnExchange(
+				cNames,
+				map[string][]net.IP{"a.exception.": {{0, 0, 0, 1}}},
+				map[string][]net.IP{"aaaa.exception.": {net.ParseIP("::1")}},
+			),
 		),
 	}
 	startDeferStop(t, s)
