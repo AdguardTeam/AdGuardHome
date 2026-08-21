@@ -10,7 +10,6 @@ import (
 
 	"github.com/AdguardTeam/dnsproxy/dnsproxytest"
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/miekg/dns"
 )
 
@@ -160,20 +159,20 @@ func mustAnsAAAA(respHdr dns.RR_Header, s string) (ans []dns.RR) {
 	}}
 }
 
-// NewUpstream returns an *dnsproxytest.Upstream, fields OnAddress and
+// NewUpstreamMock returns an [*dnsproxytest.Upstream], fields OnAddress and
 // OnClose of which are set to stubs that return "upstream.example" and nil
-// respectively. The field OnExchange is set to a stub that panics.
-func NewUpstream() (u *dnsproxytest.Upstream) {
+// respectively. The field OnExchange is set to onExc.
+func NewUpstreamMock(
+	onExc func(req *dns.Msg) (resp *dns.Msg, err error),
+) (u *dnsproxytest.Upstream) {
 	return &dnsproxytest.Upstream{
-		OnExchange: func(req *dns.Msg) (resp *dns.Msg, err error) {
-			panic(testutil.UnexpectedCall())
-		},
-		OnAddress: func() (addr string) { return "upstream.example" },
-		OnClose:   func() (err error) { return nil },
+		OnAddress:  func() (addr string) { return "upstream.example" },
+		OnExchange: onExc,
+		OnClose:    func() (err error) { return nil },
 	}
 }
 
-// NewBlockUpstream returns an *dnsproxytest.Upstream that works like an
+// NewBlockUpstream returns an [*dnsproxytest.Upstream] that works like an
 // upstream that supports hash-based safe-browsing/adult-blocking feature.  If
 // shouldBlock is true, hostname's actual hash is returned, blocking it.
 // Otherwise, it returns a different hash.
@@ -210,11 +209,11 @@ func NewBlockUpstream(hostname string, shouldBlock bool) (u *dnsproxytest.Upstre
 	}
 }
 
-// ErrUpstream is the error returned from the *dnsproxytest.Upstream created
-// by NewErrorUpstream.
+// ErrUpstream is the error returned from the [*dnsproxytest.Upstream] created
+// by [NewErrorUpstream].
 const ErrUpstream errors.Error = "test upstream error"
 
-// NewErrorUpstream returns an *dnsproxytest.Upstream that returns
+// NewErrorUpstream returns an [*dnsproxytest.Upstream] that returns
 // [ErrUpstream] from its Exchange method.
 func NewErrorUpstream() (u *dnsproxytest.Upstream) {
 	return &dnsproxytest.Upstream{
