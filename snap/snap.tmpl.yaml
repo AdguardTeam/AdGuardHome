@@ -1,5 +1,4 @@
 # The %VARIABLES% are be replaced by actual values by the build script.
-
 'name': 'adguard-home'
 'base': 'core22'
 'version': '%VERSION%'
@@ -15,28 +14,26 @@
   of common code.
 'grade': 'stable'
 'confinement': 'strict'
-
 'architectures':
-- '%ARCH%'
-
+  - '%ARCH%'
 'apps':
   'adguard-home':
     'command': 'AdGuardHome --no-check-update -w $SNAP_DATA'
     'plugs':
-    # Add the "network-bind" plug to bind to interfaces.
-    - 'network-bind'
-    # Add the "network-observe" plug to be able to bind to ports below 1024
-    # (cap_net_bind_service) and also to bind to a particular interface using
-    # SO_BINDTODEVICE (cap_net_raw).
-    - 'network-observe'
-    # Add the "network-control" plug to be able to use raw sockets in the DHCP
-    # server.
-    #
-    # TODO(a.garipov): If this works, request auto-connect of this plug.
-    - 'network-control'
+      # Add the "network-bind" plug to bind to interfaces.
+      - 'network-bind'
+      # Add the "network-observe" plug to be able to bind to ports below 1024
+      # (cap_net_bind_service) and also to bind to a particular interface using
+      # SO_BINDTODEVICE (cap_net_raw).
+      - 'network-observe'
+      # Add the "network-control" plug to be able to use raw sockets in the DHCP
+      # server.
+      #
+      # TODO(a.garipov): If this works, request auto-connect of this plug.
+      - 'network-control'
     'daemon': 'simple'
     'restart-condition': 'always'
   'adguard-home-web':
     'command': 'adguard-home-web.sh'
     'plugs':
-    - 'desktop'
+      - 'desktop'
