@@ -385,10 +385,7 @@ func (web *webAPI) handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (
 		defer config.RUnlock()
 
 		serveHTTP3, portHTTPS = config.DNS.ServeHTTP3, config.TLS.PortHTTPS
-		forceHTTPS = config.TLS.ForceHTTPS &&
-			config.TLS.Enabled &&
-			config.TLS.PortHTTPS != 0 &&
-			web.tlsConfProvider.TLSConfig() != nil
+		forceHTTPS = config.TLS.ForceHTTPS && config.TLS.Enabled && config.TLS.PortHTTPS != 0
 	}()
 
 	respHdr := w.Header()
