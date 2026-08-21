@@ -89,7 +89,7 @@ func NewDefaultManager(
 	mgr.extTLSConf.ServePlainDNS = conf.ServePlainDNS
 	mgr.extTLSConf.Status = TLSConfigStatus{}
 
-	mgr.setOverrideTLSCiphers(ctx)
+	mgr.parseCustomCiphers(ctx)
 
 	// There is no need to lock m.mu here, since the manager isn't shared with
 	// other goroutines yet.
@@ -114,12 +114,13 @@ func NewDefaultManager(
 	return mgr, nil
 }
 
-// setOverrideTLSCiphers sets the custom TLS ciphers if specified in the
-// extended TLS configuration.
-func (mgr *DefaultManager) setOverrideTLSCiphers(ctx context.Context) {
+// parseCustomCiphers parses the custom TLS ciphers specified in the extended
+// TLS configuration and sets them in the TLS manager.  If no custom ciphers are
+// specified, it uses the default ciphers.
+func (mgr *DefaultManager) parseCustomCiphers(ctx context.Context) {
 	var err error
 
-	if len(mgr.extTLSConf.OverrideTLSCiphers) <= 0 {
+	if len(mgr.extTLSConf.OverrideTLSCiphers) == 0 {
 		mgr.logger.InfoContext(ctx, "using default ciphers")
 
 		return
@@ -505,8 +506,7 @@ func (mgr *DefaultManager) onGetCertificate(
 //	[ExtendedTLSConfig.OverrideTLSCiphers]
 //	[ExtendedTLSConfig.PortDNSCrypt]
 //
-// The following properties are skipped as they are set by
-// [tlsManager.loadTLSConfig]:
+// The following properties are skipped as they are set by [LoadTLSConfig]:
 //
 //	[ExtendedTLSConfig.CertificateChainData]
 //	[ExtendedTLSConfig.PrivateKeyData]
@@ -854,9 +854,9 @@ func validateCertificates(
 }
 
 // validateCertificate processes certificate data.  status must not be nil, as
-// it is used to accumulate the validation results.  logger and tlsConfProvider
-// must not be nil. Other parameters are optional.  If ok is true, the returned
-// error, if any, is not critical.
+// it is used to accumulate the validation results.  logger and rootCAs must not
+// be nil. Other parameters are optional.  If ok is true, the returned error, if
+// any, is not critical.
 func validateCertificate(
 	ctx context.Context,
 	logger *slog.Logger,
