@@ -28,9 +28,15 @@ const Version = () => {
                 {version && (
                     <>
                         <Trans>version</Trans>:&nbsp;
-                        <span className="version__value" title={version}>
+                        <a
+                            className="version__value"
+                            title={version}
+                            href={`https://github.com/AdguardTeam/AdGuardHome/releases/tag/v${version}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
                             {version}
-                        </span>
+                        </a>
                     </>
                 )}
 
