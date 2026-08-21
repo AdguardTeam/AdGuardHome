@@ -541,3 +541,45 @@
 [data-theme='dark'] .button-action__icon {
     color: var(--gray-f3);
 }
+
+.logs__search-toggle {
+    position: relative;
+    left: 2.25rem;
+    top: 2px;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    padding: 0;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--gray-8);
+    transition: color 0.2s;
+}
+
+.logs__search-toggle:hover {
+    color: var(--gray-3);
+}
+
+.logs__search-toggle--active {
+    color: var(--danger) !important;
+}
+
+.form-control--exclude {
+    border-color: var(--danger) !important;
+    box-shadow: 0 0 0 0.2rem rgba(223, 56, 18, 0.25) !important;
+}
+
+.logs__exclude-badge {
+    position: relative;
+    left: -4rem;
+    top: 0.5rem;
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--danger);
+    text-transform: uppercase;
+    pointer-events: none;
+}
