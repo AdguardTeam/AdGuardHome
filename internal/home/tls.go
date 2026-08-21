@@ -119,7 +119,7 @@ func newTLSManager(ctx context.Context, conf *tlsManagerConfig) (m *tlsManager, 
 	m.extTLSConf.ServePlainDNS = conf.servePlainDNS
 	m.extTLSConf.Status = aghtls.TLSConfigStatus{}
 
-	m.setOverrideTLSCiphers(ctx)
+	m.parseCustomCiphers(ctx)
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -174,17 +174,17 @@ func newTLSManager(ctx context.Context, conf *tlsManagerConfig) (m *tlsManager, 
 	return m, nil
 }
 
-// setOverrideTLSCiphers sets the custom TLS ciphers if specified in the
-// extended TLS configuration.
-func (m *tlsManager) setOverrideTLSCiphers(ctx context.Context) {
-	var err error
-
-	if len(m.extTLSConf.OverrideTLSCiphers) <= 0 {
+// parseCustomCiphers parses the custom TLS ciphers specified in the extended
+// TLS configuration and sets them in the TLS manager.  If no custom ciphers are
+// specified, it uses the default ciphers.
+func (m *tlsManager) parseCustomCiphers(ctx context.Context) {
+	if len(m.extTLSConf.OverrideTLSCiphers) == 0 {
 		m.logger.InfoContext(ctx, "using default ciphers")
 
 		return
 	}
 
+	var err error
 	m.customCipherIDs, err = aghtls.ParseCiphers(m.extTLSConf.OverrideTLSCiphers)
 	if err != nil {
 		// Should not happen because upstreams are already validated.  See

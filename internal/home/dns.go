@@ -318,17 +318,13 @@ func newServerConfig(
 }
 
 // newDNSTLSConfig converts values from the configuration file into the internal
-// TLS settings for the DNS server.
+// TLS settings for the DNS server.  tlsConfProvider must not be nil.
 func newDNSTLSConfig(
 	tlsConfProvider aghtls.TLSConfigProvider,
 	addrs []netip.Addr,
 ) (dnsConf *dnsforward.TLSConfig, err error) {
 	extTLSConf := tlsConfProvider.ExtendedTLSConfig()
-	if extTLSConf == nil {
-		return &dnsforward.TLSConfig{}, nil
-	}
-
-	if !extTLSConf.Enabled {
+	if extTLSConf == nil || !extTLSConf.Enabled {
 		return &dnsforward.TLSConfig{}, nil
 	}
 
