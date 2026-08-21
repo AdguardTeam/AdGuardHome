@@ -653,7 +653,7 @@ func (web *webAPI) startMods(ctx context.Context) (err error) {
 		return err
 	}
 
-	err = startDNSServer()
+	err = startDNSServer(ctx)
 	if err != nil {
 		closeDNSServer(ctx, web.baseLogger)
 

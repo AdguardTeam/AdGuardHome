@@ -911,7 +911,7 @@ func runDNSServer(
 	}
 
 	go func() {
-		startErr := startDNSServer()
+		startErr := startDNSServer(ctx)
 		if startErr != nil {
 			closeDNSServer(ctx, slogLogger)
 			fatalOnError(ctx, slogLogger, startErr)

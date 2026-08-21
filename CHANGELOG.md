@@ -9,14 +9,22 @@ The format is based on [*Keep a Changelog*](https://keepachangelog.com/en/1.0.0/
 <!--
 ## [v1.0.0] – TBA
 
-## [v0.107.78] - 2026-06-15 (APPROX.)
+## [v0.107.80] - 2026-09-03 (APPROX.)
 
-See also the [v0.107.79 GitHub milestone][ms-v0.107.79].
+See also the [v0.107.80 GitHub milestone][ms-v0.107.80].
 
-[ms-v0.107.79]: https://github.com/AdguardTeam/AdGuardHome/milestone/114?closed=1
+[ms-v0.107.80]: https://github.com/AdguardTeam/AdGuardHome/milestone/115?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
+
+<!--
+NOTE: Add new changes ABOVE THIS COMMENT.
+-->
+
+## [v0.107.79] - 2026-08-18
+
+See also the [v0.107.79 GitHub milestone][ms-v0.107.79].
 
 ### Security
 
@@ -48,13 +56,11 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Blocked requests without an EDNS(0) OPT record ([#8183]).
 
+[#7514]:     https://github.com/AdguardTeam/AdGuardHome/issues/7514
+[#8183]:     https://github.com/AdguardTeam/AdGuardHome/issues/8183
 [go-1.26.6]: https://groups.google.com/g/golang-announce/c/94pEornpRlI
-[#7514]: https://github.com/AdguardTeam/AdGuardHome/issues/7514
-[#8183]: https://github.com/AdguardTeam/AdGuardHome/issues/8183
 
-<!--
-NOTE: Add new changes ABOVE THIS COMMENT.
--->
+[ms-v0.107.79]: https://github.com/AdguardTeam/AdGuardHome/milestone/114?closed=1
 
 ## [v0.107.78] - 2026-07-13
 
@@ -3732,11 +3738,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 [ms-v0.104.2]: https://github.com/AdguardTeam/AdGuardHome/milestone/28?closed=1
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.79...HEAD
-[v0.107.79]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.78...v0.107.79
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.80...HEAD
+[v0.107.80]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.79...v0.107.80
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.78...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.79...HEAD
+[v0.107.79]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.78...v0.107.79
 [v0.107.78]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.77...v0.107.78
 [v0.107.77]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.76...v0.107.77
 [v0.107.76]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.75...v0.107.76
