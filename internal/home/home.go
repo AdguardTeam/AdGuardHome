@@ -904,12 +904,6 @@ func runDNSServer(
 	err := initDNS(ctx, slogLogger, tlsMgr, confModifier, httpReg, statsDir, querylogDir, hc, mux)
 	fatalOnError(ctx, slogLogger, err)
 
-	err = tlsMgr.Start(ctx)
-	if err != nil {
-		// Should never happen.
-		fatalOnError(ctx, slogLogger, err)
-	}
-
 	go func() {
 		startErr := startDNSServer(ctx)
 		if startErr != nil {

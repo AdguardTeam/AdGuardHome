@@ -438,7 +438,9 @@ func shutdownSrv3(ctx context.Context, l *slog.Logger, srv *http3.Server) {
 // PasswordMinRunes is the minimum length of user's password in runes.
 const PasswordMinRunes = 8
 
-// Apply new configuration, start DNS server, restart Web server
+// handleInstallConfigure handles the installation configuration request.  It
+// validates the request and then finalizes the installation by applying the
+// provided settings.
 func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	l := web.logger
@@ -644,12 +646,6 @@ func (web *webAPI) startMods(ctx context.Context) (err error) {
 	)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
-		return err
-	}
-
-	err = web.tlsManager.Start(ctx)
-	if err != nil {
-		// Should never happen.
 		return err
 	}
 
