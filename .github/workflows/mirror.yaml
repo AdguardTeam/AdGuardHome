@@ -1,0 +1,25 @@
+'jobs':
+  'mirror':
+    'if': |
+      ${{ github.repository_owner == 'AdGuardSoftwareLimited' }}
+    'permissions':
+      'actions': 'write'
+      'contents': 'read'
+      'id-token': 'write'
+    'uses': 'AdGuardSoftwareLimited/actions/.github/workflows/mirror.yml@master'
+    'with':
+      'disable_workflows_source': 'workflow.yaml'
+      'disable_workflows_target': 'mirror.yaml private.yaml'
+      'target_repo': 'git@github.com:AdguardTeam/AdGuardHome.git'
+      'team': 'go'
+'name': 'Mirror'
+'on':
+  'push':
+    'branches': ['master']
+  'workflow_dispatch': null
+# Permissions are disabled for all the jobs by default, and then overridden for
+# specific jobs if needed.  This is a recommended practice for security reasons,
+# and also allows to avoid mistakes with permissions when creating new jobs.
+#
+# See https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#permissions.
+'permissions': {}
