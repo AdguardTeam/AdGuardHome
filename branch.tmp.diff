@@ -1,0 +1,178 @@
+diff --git a/internal/home/control.go b/internal/home/control.go
+index 40f6c62c..c07c83ee 100644
+--- a/internal/home/control.go
++++ b/internal/home/control.go
+@@ -385,7 +385,10 @@ func (web *webAPI) handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (
+ 		defer config.RUnlock()
+ 
+ 		serveHTTP3, portHTTPS = config.DNS.ServeHTTP3, config.TLS.PortHTTPS
+-		forceHTTPS = config.TLS.ForceHTTPS && config.TLS.Enabled && config.TLS.PortHTTPS != 0
++		forceHTTPS = config.TLS.ForceHTTPS &&
++			config.TLS.Enabled &&
++			config.TLS.PortHTTPS != 0 &&
++			web.tlsConfProvider.TLSConfig() != nil
+ 	}()
+ 
+ 	respHdr := w.Header()
+diff --git a/internal/home/dns.go b/internal/home/dns.go
+index 16003255..0b8bd2c5 100644
+--- a/internal/home/dns.go
++++ b/internal/home/dns.go
+@@ -270,8 +270,7 @@ func newServerConfig(
+ 	fwdConf := dnsConf.Config
+ 	fwdConf.ClientsContainer = clientsContainer
+ 
+-	extTLSConf := tlsConfProvider.ExtendedTLSConfig()
+-	intTLSConf, err := newDNSTLSConfig(extTLSConf, hosts)
++	intTLSConf, err := newDNSTLSConfig(tlsConfProvider, hosts)
+ 	if err != nil {
+ 		return nil, fmt.Errorf("constructing tls config: %w", err)
+ 	}
+@@ -319,12 +318,13 @@ func newServerConfig(
+ }
+ 
+ // newDNSTLSConfig converts values from the configuration file into the internal
+-// TLS settings for the DNS server.  extTLSConf must not be nil.
++// TLS settings for the DNS server.  tlsConfProvider must not be nil.
+ func newDNSTLSConfig(
+-	extTLSConf *aghtls.ExtendedTLSConfig,
++	tlsConfProvider aghtls.TLSConfigProvider,
+ 	addrs []netip.Addr,
+ ) (dnsConf *dnsforward.TLSConfig, err error) {
+-	if !extTLSConf.Enabled {
++	extTLSConf := tlsConfProvider.ExtendedTLSConfig()
++	if extTLSConf == nil || !extTLSConf.Enabled {
+ 		return &dnsforward.TLSConfig{}, nil
+ 	}
+ 
+@@ -342,6 +342,10 @@ func newDNSTLSConfig(
+ 		StrictSNICheck: extTLSConf.StrictSNICheck,
+ 	}
+ 
++	if tlsConfProvider.TLSConfig() == nil {
++		return dnsConf, nil
++	}
++
+ 	if extTLSConf.PortHTTPS != 0 {
+ 		dnsConf.HTTPSListenAddrs = ipsToAddrPorts(addrs, extTLSConf.PortHTTPS)
+ 	}
+diff --git a/internal/home/tls.go b/internal/home/tls.go
+index b25182dc..dafb79e0 100644
+--- a/internal/home/tls.go
++++ b/internal/home/tls.go
+@@ -116,22 +116,10 @@ func newTLSManager(ctx context.Context, conf *tlsManagerConfig) (m *tlsManager,
+ 	}
+ 
+ 	m.rootCerts = aghtls.SystemRootCAs(ctx, conf.logger)
+-
+ 	m.extTLSConf.ServePlainDNS = conf.servePlainDNS
+ 	m.extTLSConf.Status = aghtls.TLSConfigStatus{}
+ 
+-	if len(m.extTLSConf.OverrideTLSCiphers) > 0 {
+-		m.customCipherIDs, err = aghtls.ParseCiphers(m.extTLSConf.OverrideTLSCiphers)
+-		if err != nil {
+-			// Should not happen because upstreams are already validated.  See
+-			// [validateTLSCipherIDs].
+-			panic(err)
+-		}
+-
+-		m.logger.InfoContext(ctx, "overriding ciphers", "ciphers", conf.extTLSConf.OverrideTLSCiphers)
+-	} else {
+-		m.logger.InfoContext(ctx, "using default ciphers")
+-	}
++	m.parseCustomCiphers(ctx)
+ 
+ 	m.mu.Lock()
+ 	defer m.mu.Unlock()
+@@ -158,6 +146,14 @@ func newTLSManager(ctx context.Context, conf *tlsManagerConfig) (m *tlsManager,
+ 
+ 	cert, err := tls.X509KeyPair(m.extTLSConf.CertificateChainData, m.extTLSConf.PrivateKeyData)
+ 	if err != nil {
++		// DNSCrypt provides its own certificate, meaning we can ignore TLS
++		// certificate parsing errors.
++		if m.extTLSConf.PortDNSCrypt != 0 && m.extTLSConf.DNSCryptConfigFile != "" {
++			m.logger.InfoContext(ctx, "dnscrypt is configured")
++
++			return m, nil
++		}
++
+ 		m.extTLSConf.Enabled = false
+ 
+ 		return m, fmt.Errorf("parsing tls certificate: %w", err)
+@@ -178,6 +174,27 @@ func newTLSManager(ctx context.Context, conf *tlsManagerConfig) (m *tlsManager,
+ 	return m, nil
+ }
+ 
++// parseCustomCiphers parses the custom TLS ciphers specified in the extended
++// TLS configuration and sets them in the TLS manager.  If no custom ciphers are
++// specified, it uses the default ciphers.
++func (m *tlsManager) parseCustomCiphers(ctx context.Context) {
++	if len(m.extTLSConf.OverrideTLSCiphers) == 0 {
++		m.logger.InfoContext(ctx, "using default ciphers")
++
++		return
++	}
++
++	var err error
++	m.customCipherIDs, err = aghtls.ParseCiphers(m.extTLSConf.OverrideTLSCiphers)
++	if err != nil {
++		// Should not happen because upstreams are already validated.  See
++		// [validateTLSCipherIDs].
++		panic(err)
++	}
++
++	m.logger.InfoContext(ctx, "overriding ciphers", "ciphers", m.extTLSConf.OverrideTLSCiphers)
++}
++
+ // setCertFileTime sets [tlsManager.certLastMod] from the certificate.  If there
+ // are errors, setCertFileTime logs them.  m.mu is expected to be locked.
+ func (m *tlsManager) setCertFileTime(ctx context.Context) {
+diff --git a/internal/home/web.go b/internal/home/web.go
+index 6cbb3cb3..7cb86b0e 100644
+--- a/internal/home/web.go
++++ b/internal/home/web.go
+@@ -300,16 +300,20 @@ func newWebAPI(ctx context.Context, conf *webAPIConfig) (w *webAPI) {
+ }
+ 
+ // tlsConfigChanged updates the TLS configuration and restarts the HTTPS server
+-// if necessary.  tlsConf must not be nil.
+-func (web *webAPI) tlsConfigChanged(ctx context.Context, tlsConf *aghtls.ExtendedTLSConfig) {
++// if necessary.
++func (web *webAPI) tlsConfigChanged(ctx context.Context) {
+ 	defer slogutil.RecoverAndExit(ctx, web.logger, osutil.ExitCodeFailure)
+ 
+ 	web.logger.DebugContext(ctx, "applying new tls configuration")
+ 
+-	enabled := tlsConf.Enabled &&
+-		tlsConf.PortHTTPS != 0 &&
+-		len(tlsConf.PrivateKeyData) != 0 &&
+-		len(tlsConf.CertificateChainData) != 0
++	extTLSConf := web.tlsConfProvider.ExtendedTLSConfig()
++	tlsConf := web.tlsConfProvider.TLSConfig()
++
++	enabled := tlsConf != nil &&
++		extTLSConf.Enabled &&
++		extTLSConf.PortHTTPS != 0 &&
++		len(extTLSConf.PrivateKeyData) != 0 &&
++		len(extTLSConf.CertificateChainData) != 0
+ 
+ 	// TODO(d.kolyshev):  Consider protecting server with mu.
+ 	if web.httpsServer.server != nil {
+@@ -344,7 +348,7 @@ func (web *webAPI) start(ctx context.Context) {
+ 		// Apply the initial TLS configuration.  The background context is used
+ 		// because tlsConfigChanged wraps context with timeout on its own and shuts
+ 		// down the server, which handles current request.
+-		web.tlsConfigChanged(context.Background(), web.tlsConfProvider.ExtendedTLSConfig())
++		web.tlsConfigChanged(context.Background())
+ 
+ 		// For https, we have a separate goroutine loop.
+ 		web.tlsServerLoop(ctx)
+@@ -829,7 +833,7 @@ func (web *webAPI) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
+ 		// request.  It is also should be done in a separate goroutine due to the
+ 		// same reason.
+ 		if restartHTTPS {
+-			go web.tlsConfigChanged(context.Background(), newTLSConf)
++			go web.tlsConfigChanged(context.Background())
+ 		}
+ 	}()
+ }
