@@ -80,15 +80,14 @@ func TestServer_ServeDNS(t *testing.T) {
 		"blocked.first.":   {"blocked.domain.", "allowed.domain."},
 	}
 
-	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{
-		aghtest.NewUpstreamMock(
-			aghtest.NewOnExchange(
-				cNames,
-				map[string][]net.IP{"a.exception.": {{0, 0, 0, 1}}},
-				map[string][]net.IP{"aaaa.exception.": {net.ParseIP("::1")}},
-			),
-		),
-	}
+	ups := aghtest.NewUpstream()
+	ups.OnExchange = aghtest.NewOnExchange(
+		cNames,
+		map[string][]net.IP{"a.exception.": {{0, 0, 0, 1}}},
+		map[string][]net.IP{"aaaa.exception.": {net.ParseIP("::1")}},
+	)
+
+	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{ups}
 	startDeferStop(t, s)
 
 	testCases := []struct {
