@@ -1,6 +1,6 @@
-import { merge } from 'webpack-merge';
-import yaml from 'js-yaml';
 import fs from 'fs';
+import yaml from 'js-yaml';
+import { merge } from 'webpack-merge';
 import { BASE_URL } from './constants.js';
 import common from './webpack.common.js';
 
@@ -41,9 +41,13 @@ const getDevServerConfig = (proxyUrl = BASE_URL) => {
         open: true,
         host: devServerHost,
         port: devServerPort,
-        proxy: {
-            [proxyUrl]: `http://${devServerHost}:${port}`,
-        },
+        proxy: [
+            {
+                context: [`/${proxyUrl}`],
+                target: `http://${host}:${port}`,
+                changeOrigin: true,
+            },
+        ],
     };
 };
 
