@@ -219,6 +219,7 @@ class Api {
      * interface SafeSearchConfig {
         "enabled": boolean,
         "bing": boolean,
+        "brave": boolean,
         "duckduckgo": boolean,
         "google": boolean,
         "pixabay": boolean,
