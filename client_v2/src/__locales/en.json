@@ -203,6 +203,8 @@
   "dns_blocking_mode_null_ip_desc": "Responds with 0.0.0.0 for A and :: for AAAA",
   "dns_blocking_mode_nxdomain": "NXDOMAIN",
   "dns_blocking_mode_nxdomain_desc": "Responds with NXDOMAIN code",
+  "dns_blocking_mode_noerror": "NOERROR",
+  "dns_blocking_mode_noerror_desc": "Responds with NOERROR code and an empty answer section",
   "dns_blocking_mode_refused": "REFUSED",
   "dns_blocking_mode_refused_desc": "Responds with REFUSED code",
   "dns_blocking_mode_title": "Blocking mode",
