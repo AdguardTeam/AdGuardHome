@@ -2,10 +2,15 @@ import React, { useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 
-import { UINT32_RANGE } from '../../../helpers/constants';
+import {
+    DHCP_V6_PREFIX_SOURCE_OPTIONS,
+    DHCP_V6_PREFIX_SOURCE_VALUES,
+    UINT32_RANGE,
+} from '../../../helpers/constants';
 import { validateIpv6, validateRequiredValue } from '../../../helpers/validators';
-import { DhcpFormValues } from '.';
+import { DhcpFormValues, hasMeaningfulV6Value, isInterfaceSLAACOnlyV6Config } from '.';
 import { Input } from '../../ui/Controls/Input';
+import { Select } from '../../ui/Controls/Select';
 import { toNumber } from '../../../helpers/form';
 
 type FormDHCPv6Props = {
@@ -30,16 +35,47 @@ const FormDHCPv6 = ({ processingConfig, ipv6placeholders, interfaces, onSubmit }
 
     const interfaceName = watch('interface_name');
     const isInterfaceIncludesIpv6 = interfaces?.[interfaceName]?.ipv6_addresses;
+    const prefixSource = watch('v6.prefix_source') ?? DHCP_V6_PREFIX_SOURCE_VALUES.STATIC;
+    const canConfigureV6 = Boolean(isInterfaceIncludesIpv6) || prefixSource === DHCP_V6_PREFIX_SOURCE_VALUES.INTERFACE;
 
     const formValues = watch('v6');
-    const isEmptyConfig = !Object.values(formValues || {}).some(Boolean);
+    const isInterfaceRASLAACOnly = isInterfaceSLAACOnlyV6Config(formValues);
+    const isRequiredForPool = !isInterfaceRASLAACOnly;
+    const isEmptyConfig = !hasMeaningfulV6Value(formValues);
 
     const isDisabled = useMemo(() => {
-        return isSubmitting || !isValid || processingConfig || !isInterfaceIncludesIpv6 || isEmptyConfig;
-    }, [isSubmitting, isValid, processingConfig, isInterfaceIncludesIpv6, isEmptyConfig]);
+        return isSubmitting || !isValid || processingConfig || !canConfigureV6 || isEmptyConfig;
+    }, [isSubmitting, isValid, processingConfig, canConfigureV6, isEmptyConfig]);
 
     return (
         <form onSubmit={handleSubmit(onSubmit)}>
+            <div className="row">
+                <div className="col-lg-6 form__group form__group--settings">
+                    <Controller
+                        name="v6.prefix_source"
+                        control={control}
+                        render={({ field }) => (
+                            <Select
+                                {...field}
+                                value={field.value ?? DHCP_V6_PREFIX_SOURCE_VALUES.STATIC}
+                                label={t('dhcp_form_prefix_source_title')}
+                                data-testid="v6_prefix_source"
+                                disabled={!interfaceName}>
+                                {DHCP_V6_PREFIX_SOURCE_OPTIONS.map((value) => (
+                                    <option key={value} value={value}>
+                                        {t(
+                                            value === DHCP_V6_PREFIX_SOURCE_VALUES.STATIC
+                                                ? 'dhcp_form_prefix_source_static'
+                                                : 'dhcp_form_prefix_source_interface',
+                                        )}
+                                    </option>
+                                ))}
+                            </Select>
+                        )}
+                    />
+                </div>
+            </div>
+
             <div className="row">
                 <div className="col-lg-6">
                     <div className="form__group mb-0">
@@ -53,10 +89,12 @@ const FormDHCPv6 = ({ processingConfig, ipv6placeholders, interfaces, onSubmit }
                                     name="v6.range_start"
                                     control={control}
                                     rules={{
-                                        validate: isInterfaceIncludesIpv6
+                                        validate: canConfigureV6
                                             ? {
                                                   ipv6: validateIpv6,
-                                                  required: validateRequiredValue,
+                                                  required: isRequiredForPool
+                                                      ? validateRequiredValue
+                                                      : undefined,
                                               }
                                             : undefined,
                                     }}
@@ -65,9 +103,19 @@ const FormDHCPv6 = ({ processingConfig, ipv6placeholders, interfaces, onSubmit }
                                             {...field}
                                             type="text"
                                             data-testid="v6_range_start"
+                                            label={
+                                                prefixSource === DHCP_V6_PREFIX_SOURCE_VALUES.INTERFACE
+                                                    ? t('dhcp_form_host_template_input')
+                                                    : t('dhcp_form_range_start')
+                                            }
                                             placeholder={t(ipv6placeholders.range_start)}
+                                            desc={
+                                                prefixSource === DHCP_V6_PREFIX_SOURCE_VALUES.INTERFACE
+                                                    ? t('dhcp_form_host_template_desc')
+                                                    : undefined
+                                            }
                                             error={fieldState.error?.message}
-                                            disabled={!isInterfaceIncludesIpv6}
+                                            disabled={!canConfigureV6}
                                         />
                                     )}
                                 />
@@ -100,9 +148,11 @@ const FormDHCPv6 = ({ processingConfig, ipv6placeholders, interfaces, onSubmit }
                         name="v6.lease_duration"
                         control={control}
                         rules={{
-                            validate: isInterfaceIncludesIpv6
+                            validate: canConfigureV6
                                 ? {
-                                      required: validateRequiredValue,
+                                      required: isRequiredForPool
+                                          ? validateRequiredValue
+                                          : undefined,
                                   }
                                 : undefined,
                         }}
@@ -114,7 +164,7 @@ const FormDHCPv6 = ({ processingConfig, ipv6placeholders, interfaces, onSubmit }
                                 label={t('dhcp_form_lease_title')}
                                 placeholder={t(ipv6placeholders.lease_duration)}
                                 error={fieldState.error?.message}
-                                disabled={!isInterfaceIncludesIpv6}
+                                disabled={!canConfigureV6}
                                 min={1}
                                 max={UINT32_RANGE.MAX}
                                 onChange={(e) => {

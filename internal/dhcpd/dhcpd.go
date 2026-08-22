@@ -181,9 +181,11 @@ func (s *server) setServers(
 
 	v6conf := conf.Conf6
 	v6conf.Logger = s.conf.Logger.With("ip_version", "6")
+	v6conf.CommandConstructor = s.conf.CommandConstructor
 	v6conf.InterfaceName = s.conf.InterfaceName
 	v6conf.notify = s.onNotify
-	v6conf.Enabled = s.conf.Enabled && len(v6conf.RangeStart) != 0
+	v6conf.PrefixSource = v6conf.NormalizedPrefixSource()
+	v6conf.Enabled = s.conf.Enabled && v6conf.IsConfiguredForEnable()
 
 	s.srv6, err = v6Create(v6conf)
 	if err != nil {

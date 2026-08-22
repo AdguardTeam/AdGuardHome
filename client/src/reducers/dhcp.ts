@@ -3,6 +3,7 @@ import { handleActions } from 'redux-actions';
 import * as actions from '../actions';
 
 import { enrichWithConcatenatedIpAddresses } from '../helpers/helpers';
+import { DHCP_V6_PREFIX_SOURCE_VALUES } from '../helpers/constants';
 
 const dhcp = handleActions(
     {
@@ -15,12 +16,22 @@ const dhcp = handleActions(
             processing: false,
         }),
         [actions.getDhcpStatusSuccess.toString()]: (state: any, { payload }: any) => {
-            const { static_leases: staticLeases, ...values } = payload;
+            const { static_leases: staticLeases, v4, v6, ...values } = payload;
 
             const newState = {
                 ...state,
                 staticLeases,
                 processing: false,
+                v4: {
+                    ...state.v4,
+                    ...v4,
+                },
+                v6: {
+                    ...state.v6,
+                    prefix_source: DHCP_V6_PREFIX_SOURCE_VALUES.STATIC,
+                    ra_slaac_only: false,
+                    ...v6,
+                },
                 ...values,
             };
 
@@ -117,7 +128,10 @@ const dhcp = handleActions(
             processingReset: false,
             enabled: false,
             v4: {},
-            v6: {},
+            v6: {
+                prefix_source: DHCP_V6_PREFIX_SOURCE_VALUES.STATIC,
+                ra_slaac_only: false,
+            },
             interface_name: '',
         }),
         [actions.resetDhcpLeasesSuccess.toString()]: (state: any) => ({
@@ -215,6 +229,8 @@ const dhcp = handleActions(
             lease_duration: 0,
         },
         v6: {
+            prefix_source: DHCP_V6_PREFIX_SOURCE_VALUES.STATIC,
+            ra_slaac_only: false,
             range_start: '',
             lease_duration: 0,
         },
