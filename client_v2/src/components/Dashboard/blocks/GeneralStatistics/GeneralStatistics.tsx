@@ -115,7 +115,7 @@ export const GeneralStatistics = (props: Props) => {
                                 value: (props.avgProcessingTime ?? 0).toFixed(0),
                             })}
                             isQueriesValue={false}
-                            icon="time"
+                            icon="recent"
                             rowTheme="averageProcessingTime"
                             tooltip={intl.getMessage('average_time_processing_tooltip')}
                         />

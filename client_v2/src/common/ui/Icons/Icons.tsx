@@ -56,6 +56,7 @@ export const ICONS = {
     eye_close: 'eye_close',
     check_tiny: 'check_tiny',
     user: 'user',
+    recent: 'recent',
 } as const;
 
 export type IconType = keyof typeof ICONS;
@@ -1077,6 +1078,36 @@ export const Icons = () => (
                 stroke="currentColor"
                 stroke-width="1.5"
                 stroke-miterlimit="16"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            />
+        </symbol>
+
+        <symbol id="recent" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+                d="M20.2847 8.47792C18.914 5.25773 15.7207 3 12 3C7.02944 3 3 7.02944 3 12C3 16.9706 7.02944 21 12 21C14.6372 21 17.0095 19.8657 18.6556 18.0583"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+            />
+            <path
+                d="M14.5 14.5L12 12"
+                stroke="currentColor"
+                stroke-width="1.6"
+                stroke-linecap="round"
+            />
+            <path d="M12 12V8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+            <path
+                d="M21 5V9"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            />
+            <path
+                d="M17 9H21"
+                stroke="currentColor"
+                stroke-width="1.5"
                 stroke-linecap="round"
                 stroke-linejoin="round"
             />
