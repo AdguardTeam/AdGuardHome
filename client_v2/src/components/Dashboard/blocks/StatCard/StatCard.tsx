@@ -20,7 +20,7 @@ import {
     createCursorLinePlugin,
     createExternalTooltipHandler,
 } from 'panel/helpers/useChart';
-import intl from 'panel/common/intl';
+import { formatHistoryLabel } from 'panel/helpers/lineUtils';
 import theme from 'panel/lib/theme';
 
 import s from './StatCard.module.pcss';
@@ -49,18 +49,11 @@ export const CARDS_COLORS = {
     ADULT: '#9B59B6',
 };
 
-const formatDate = (date: Date): string => {
-    return date.toLocaleDateString(intl.getUILanguage(), {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-    });
-};
-
 export type StatCardProps = {
     value: number;
     label: string;
     data: number[];
+    timeUnits: string;
     color: string;
     percentValue?: number;
     cardTheme: (typeof CARDS_THEME)[keyof typeof CARDS_THEME];
@@ -74,11 +67,7 @@ export const StatCard = (props: StatCardProps) => {
 
     const chartData = createMemo(() => {
         const data = paddedData();
-        const labels = data.map((_, i) => {
-            const date = new Date();
-            date.setDate(date.getDate() - (data.length - 1 - i));
-            return formatDate(date);
-        });
+        const labels = data.map((_, i) => formatHistoryLabel(i, data.length, props.timeUnits));
         return {
             labels,
             datasets: [

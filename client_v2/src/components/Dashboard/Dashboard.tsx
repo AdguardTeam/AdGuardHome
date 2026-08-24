@@ -159,6 +159,7 @@ export const Dashboard = () => {
                         blockedFiltering={statsState.blockedFiltering}
                         replacedSafebrowsing={statsState.replacedSafebrowsing}
                         replacedParental={statsState.replacedParental}
+                        timeUnits={statsState.timeUnits}
                     />
 
                     <Show
