@@ -18,6 +18,7 @@ type Props = {
     processingAdd: boolean;
     processingDelete: boolean;
     processingUpdate: boolean;
+    rewritesEnabled: boolean;
     addRewritesList: () => void;
     deleteRewrite: (rewrite: Rewrite) => void;
     editRewrite: (rewrite: Rewrite) => void;
@@ -84,7 +85,7 @@ export const RewritesTable = (props: Props) => {
                                 data-testid={`rewrite-toggle-${domain}`}
                                 checked={enabled}
                                 onChange={() => props.toggleRewrite(row)}
-                                disabled={props.processingUpdate}
+                                disabled={props.processingUpdate || !props.rewritesEnabled}
                             />
                         </div>
                     </div>

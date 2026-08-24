@@ -4,6 +4,7 @@ import cn from 'clsx';
 import {
     LinkParams,
     linkPathBuilder,
+    type QueryParams,
     RoutePathKey,
     SCROLL_QUERY_KEY,
 } from 'panel/components/Routes/Paths';
@@ -19,7 +20,7 @@ type Props = {
     disabled?: boolean;
     onClick?: JSX.EventHandler<HTMLAnchorElement, MouseEvent>;
     id?: string;
-    query?: Record<string, string | number | boolean>;
+    query?: QueryParams;
     children?: JSX.Element;
 };
 

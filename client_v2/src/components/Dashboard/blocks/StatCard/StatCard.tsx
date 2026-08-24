@@ -11,8 +11,7 @@ import {
     Filler,
     type ScriptableContext,
 } from 'chart.js';
-import { Link } from 'panel/common/ui/Link';
-import { type RoutePathKey } from 'panel/components/Routes/Paths';
+import { type QueryParams, type RoutePathKey } from 'panel/components/Routes/Paths';
 
 import { formatNumber } from 'panel/helpers/helpers';
 import {
@@ -23,6 +22,7 @@ import {
 import { formatHistoryLabel } from 'panel/helpers/lineUtils';
 import theme from 'panel/lib/theme';
 
+import { StatLink } from './StatLink';
 import s from './StatCard.module.pcss';
 
 Chart.register(
@@ -57,8 +57,8 @@ export type StatCardProps = {
     color: string;
     percentValue?: number;
     cardTheme: (typeof CARDS_THEME)[keyof typeof CARDS_THEME];
-    linkTo?: RoutePathKey;
-    query?: Record<string, string | number | boolean>;
+    linkTo: RoutePathKey;
+    query?: QueryParams;
 };
 
 export const StatCard = (props: StatCardProps) => {
@@ -160,6 +160,7 @@ export const StatCard = (props: StatCardProps) => {
     }));
 
     const percent = () => props.percentValue ?? 0;
+    const percentText = () => `${percent().toFixed(0)}%`;
 
     const { setCanvasRef, hideTooltip } = untrack(() =>
         useChart(chartData, chartOptions, [cursorLinePlugin]),
@@ -177,21 +178,25 @@ export const StatCard = (props: StatCardProps) => {
             <div class={s.statCardInner}>
                 <div class={s.statCardHeader}>
                     <div class={s.statCardHeaderLeft}>
-                        <div class={s.statCardValue}>{formatNumber(props.value)}</div>
+                        <div class={s.statCardValue}>
+                            <StatLink to={props.linkTo} query={props.query}>
+                                {formatNumber(props.value)}
+                            </StatLink>
+                        </div>
                     </div>
 
                     <Show when={props.cardTheme !== CARDS_THEME.QUERIES}>
                         <div class={cn(theme.text.t3, theme.text.t2_tablet, s.statCardPercent)}>
-                            {percent().toFixed(0)}%
+                            <StatLink to={props.linkTo} query={props.query}>
+                                {percentText()}
+                            </StatLink>
                         </div>
                     </Show>
 
                     <div class={cn(theme.text.t4, s.statCardLabel)}>
-                        <Show when={props.linkTo} fallback={props.label}>
-                            <Link to={props.linkTo} query={props.query} class={s.statLabelLink}>
-                                {props.label}
-                            </Link>
-                        </Show>
+                        <StatLink to={props.linkTo} query={props.query}>
+                            {props.label}
+                        </StatLink>
                     </div>
                 </div>
                 <div class={s.statCardChartWrapper}>
@@ -202,11 +207,9 @@ export const StatCard = (props: StatCardProps) => {
                 </div>
             </div>
             <div class={cn(theme.text.t3, s.statCardLabel)}>
-                <Show when={props.linkTo} fallback={props.label}>
-                    <Link to={props.linkTo!} query={props.query} class={s.statLabelLink}>
-                        {props.label}
-                    </Link>
-                </Show>
+                <StatLink to={props.linkTo} query={props.query}>
+                    {props.label}
+                </StatLink>
             </div>
         </div>
     );

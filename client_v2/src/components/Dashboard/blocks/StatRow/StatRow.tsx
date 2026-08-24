@@ -5,7 +5,7 @@ import { Icon, type IconType } from 'panel/common/ui/Icon';
 import theme from 'panel/lib/theme';
 import { Tooltip } from 'panel/common/ui/Tooltip';
 import { Link } from 'panel/common/ui/Link';
-import { type RoutePathKey } from 'panel/components/Routes/Paths';
+import { type QueryParams, type RoutePathKey } from 'panel/components/Routes/Paths';
 import cn from 'clsx';
 import { formatCompactNumber, formatNumber } from 'panel/helpers/helpers';
 
@@ -20,7 +20,7 @@ export type StatRowProps = {
     isQueriesValue?: boolean;
     tooltip: string;
     linkTo?: RoutePathKey;
-    query?: Record<string, string | number | boolean>;
+    query?: QueryParams;
     rowTheme:
         | 'dnsQueries'
         | 'adsBlocked'

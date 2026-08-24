@@ -10,7 +10,7 @@ import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from 'panel/helpers/localStora
 import { LanguageDropdown } from '../LanguageDropdown/LanguageDropdown';
 import { REPOSITORY, PRIVACY_POLICY_LINK, THEMES } from 'panel/helpers/constants';
 import { LANGUAGES, LANGUAGE_NAMES } from 'panel/helpers/twosky';
-import { setHtmlLangAttr, setUITheme } from 'panel/helpers/helpers';
+import { getTheme, setHtmlLangAttr, setUITheme } from 'panel/helpers/helpers';
 import {
     changeTheme,
     changeLanguage as changeLanguageAction,
@@ -40,15 +40,18 @@ export const Footer = () => {
         light: intl.getMessage('light_theme'),
     }));
 
-    const [currentThemeLocal, setCurrentThemeLocal] = createSignal(THEMES.auto);
+    const [currentThemeLocal, setCurrentThemeLocal] = createSignal(getTheme());
     const [themeDropdownOpen, setThemeDropdownOpen] = createSignal(false);
+
+    const activeTheme = () => (isLoggedIn() ? currentTheme() : currentThemeLocal());
+    const themeLabel = () => themeTranslations()[activeTheme()];
 
     const getYear = () => new Date().getFullYear();
 
     const getThemeIcon = () => {
-        const activeTheme = isLoggedIn() ? currentTheme() : currentThemeLocal();
-        if (activeTheme === THEMES.auto) return 'theme_auto';
-        if (activeTheme === THEMES.dark) return 'theme_dark';
+        const active = activeTheme();
+        if (active === THEMES.auto) return 'theme_auto';
+        if (active === THEMES.dark) return 'theme_dark';
         return 'theme_light';
     };
 
@@ -131,7 +134,7 @@ export const Footer = () => {
                                         <button
                                             type="button"
                                             class={cn(theme.dropdown.item, {
-                                                [theme.dropdown.item_active]: currentTheme() === v,
+                                                [theme.dropdown.item_active]: activeTheme() === v,
                                             })}
                                             onClick={() => onThemeChange(v)}
                                         >
@@ -147,13 +150,7 @@ export const Footer = () => {
                     >
                         <div class={s.dropdownTrigger}>
                             <Icon icon={getThemeIcon()} class={s.icon} />
-                            <span>
-                                {
-                                    themeTranslations()[
-                                        isLoggedIn() ? currentTheme() : currentThemeLocal()
-                                    ]
-                                }
-                            </span>
+                            <span>{themeLabel()}</span>
                         </div>
                     </Dropdown>
                 </div>

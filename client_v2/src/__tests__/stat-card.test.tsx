@@ -1,7 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, fireEvent } from '@solidjs/testing-library';
+import { HashRouter, Route } from '@solidjs/router';
 
 import { StatCard, CARDS_THEME } from 'panel/components/Dashboard/blocks/StatCard';
+import { RoutePath } from 'panel/components/Routes/Paths';
 
 /**
  * Collects the Chart instances created by useChart so tests can drive the
@@ -70,14 +72,22 @@ vi.mock('chart.js', () => {
 
 const renderStatCard = () => {
     const result = render(() => (
-        <StatCard
-            value={123}
-            label="DNS queries"
-            data={[1, 2, 3]}
-            timeUnits="hours"
-            color="#7F7F7F"
-            cardTheme={CARDS_THEME.QUERIES}
-        />
+        <HashRouter>
+            <Route
+                path="/"
+                component={() => (
+                    <StatCard
+                        value={123}
+                        label="DNS queries"
+                        data={[1, 2, 3]}
+                        timeUnits="hours"
+                        color="#7F7F7F"
+                        cardTheme={CARDS_THEME.QUERIES}
+                        linkTo={RoutePath.QueryLog}
+                    />
+                )}
+            />
+        </HashRouter>
     ));
 
     const chart = chartInstances.at(-1);
@@ -140,14 +150,22 @@ describe('StatCard chart tooltip', () => {
 
     it('does not dismiss when no tooltip is visible', () => {
         render(() => (
-            <StatCard
-                value={123}
-                label="DNS queries"
-                data={[1, 2, 3]}
-                timeUnits="hours"
-                color="#7F7F7F"
-                cardTheme={CARDS_THEME.QUERIES}
-            />
+            <HashRouter>
+                <Route
+                    path="/"
+                    component={() => (
+                        <StatCard
+                            value={123}
+                            label="DNS queries"
+                            data={[1, 2, 3]}
+                            timeUnits="hours"
+                            color="#7F7F7F"
+                            cardTheme={CARDS_THEME.QUERIES}
+                            linkTo={RoutePath.QueryLog}
+                        />
+                    )}
+                />
+            </HashRouter>
         ));
         const chart = chartInstances.at(-1);
         if (!chart) throw new Error('Chart instance was not created');
