@@ -20,7 +20,7 @@ export const formatHistoryLabel = (
     index: number,
     pointsCount: number,
     timeUnits: string,
-    now = Date.now(),
+    now: number | Date = Date.now(),
 ): string => {
     const stepsAgo = pointsCount - 1 - index;
 

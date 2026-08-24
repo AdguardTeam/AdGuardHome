@@ -25,17 +25,24 @@ function cloneChartData(d: ChartData<'line'>): ChartData<'line'> {
     };
 }
 
+export type UseChartApi = {
+    /** Ref callback to attach to a `<canvas>` element. */
+    setCanvasRef: (el: HTMLCanvasElement) => void;
+    /** Hides the external tooltip and removes the hover cursor line. */
+    hideTooltip: () => void;
+};
+
 /**
  * SolidJS primitive that manages a Chart.js instance lifecycle.
  *
- * Returns a `ref` callback to attach to a `<canvas>` element.
- * Handles creation, reactive data/options sync, and cleanup.
+ * Returns a `ref` callback and a `hideTooltip` method to dismiss the
+ * hover state on outside taps. Handles reactive sync and cleanup.
  */
 export function useChart(
     data: () => ChartData<'line'>,
     options: () => ChartOptions<'line'>,
     plugins?: Plugin<'line'>[],
-): (el: HTMLCanvasElement) => void {
+): UseChartApi {
     let canvasEl!: HTMLCanvasElement;
     let chart: Chart | undefined;
 
@@ -61,12 +68,20 @@ export function useChart(
         chart.update('none');
     });
 
+    /** Clears the hover state (dots, cursor line, tooltip) and redraws. */
+    const hideTooltip = () => {
+        if (!chart) return;
+        chart.setActiveElements([]); // hover dots + cursor line
+        chart.tooltip.setActiveElements([], { x: 0, y: 0 }); // tooltip DOM
+        chart.update('none');
+    };
+
     onCleanup(() => {
         chart?.destroy();
         chart = undefined;
     });
 
-    return setCanvasRef;
+    return { setCanvasRef, hideTooltip };
 }
 
 /**

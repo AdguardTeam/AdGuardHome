@@ -1,4 +1,4 @@
-import { createMemo, Show, untrack } from 'solid-js';
+import { createMemo, Show, untrack, onMount, onCleanup } from 'solid-js';
 import cn from 'clsx';
 import {
     Chart,
@@ -114,6 +114,24 @@ export const StatCard = (props: StatCardProps) => {
         tooltipEl = el;
     };
 
+    // Dismiss on pointerdown outside the chart (capture phase): Chart.js
+    // keeps tooltips open after a tap on touch devices.
+    onMount(() => {
+        const onPointerDown = (e: PointerEvent) => {
+            const el = tooltipEl;
+            if (!el || el.style.opacity !== '1') return;
+
+            const target = e.target as Element;
+            // Taps on the chart itself are handled by Chart.js.
+            if (el.parentElement?.contains(target)) return;
+
+            hideTooltip();
+        };
+
+        document.addEventListener('pointerdown', onPointerDown, true);
+        onCleanup(() => document.removeEventListener('pointerdown', onPointerDown, true));
+    });
+
     const chartOptions = createMemo(() => ({
         responsive: true,
         maintainAspectRatio: false,
@@ -143,7 +161,9 @@ export const StatCard = (props: StatCardProps) => {
 
     const percent = () => props.percentValue ?? 0;
 
-    const setCanvasRef = untrack(() => useChart(chartData, chartOptions, [cursorLinePlugin]));
+    const { setCanvasRef, hideTooltip } = untrack(() =>
+        useChart(chartData, chartOptions, [cursorLinePlugin]),
+    );
 
     return (
         <div
