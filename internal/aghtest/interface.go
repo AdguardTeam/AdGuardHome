@@ -219,10 +219,16 @@ type Manager struct {
 		servePlainDNS aghalg.NullBool,
 		conf *aghtls.ExtendedTLSConfig,
 	) (changed bool, err error)
+	OnCipherSuites func() (cs []uint16)
 }
 
 // type check
 var _ aghtls.Manager = (*Manager)(nil)
+
+// CipherSuites implements the [aghtls.Manager] interface for *Manager.
+func (m *Manager) CipherSuites() (cs []uint16) {
+	return m.OnCipherSuites()
+}
 
 // Set implements the [aghtls.Manager] interface for *Manager.
 func (m *Manager) Set(ctx context.Context, certKey aghtls.TLSPair) (err error) {

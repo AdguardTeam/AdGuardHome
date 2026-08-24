@@ -28,6 +28,11 @@ type Manager interface {
 	service.Interface
 	service.Refresher
 
+	// CipherSuites returns the list of supported TLS cipher suites.
+	//
+	// TODO(m.kazantsev): Remove.
+	CipherSuites() (cs []uint16)
+
 	// Set sets the TLS certificate and key.  certKey may have unset fields,
 	// in which case the corresponding files will not be tracked.
 	Set(ctx context.Context, certKey TLSPair) (err error)
@@ -77,6 +82,10 @@ func (EmptyManager) Start(_ context.Context) (err error) { return nil }
 // Shutdown implements the [service.Interface] interface for EmptyManager.  It
 // always returns nil.
 func (EmptyManager) Shutdown(_ context.Context) (err error) { return nil }
+
+// CipherSuites implements the [Manager] interface for EmptyManager.  It always
+// returns nil.
+func (EmptyManager) CipherSuites() (cs []uint16) { return nil }
 
 // Refresh implements the [service.Refresher] interface for EmptyManager.  It
 // always returns nil.

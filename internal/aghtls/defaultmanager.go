@@ -363,6 +363,12 @@ func (mgr *DefaultManager) reload(ctx context.Context) {
 	mgr.certLastMod = fi.ModTime().UTC()
 }
 
+// CipherSuites implements the [Manager] interface for *DefaultManager.  It
+// returns the list of TLS cipher suite IDs.
+func (mgr *DefaultManager) CipherSuites() (cs []uint16) {
+	return mgr.customCipherIDs
+}
+
 // TLSConfig implements the [Manager] interface for *DefaultManager.
 func (mgr *DefaultManager) TLSConfig() (conf *tls.Config) {
 	mgr.mu.Lock()

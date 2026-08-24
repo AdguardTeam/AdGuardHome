@@ -65,8 +65,9 @@ func httpClient(tlsMgr aghtls.Manager) (c *http.Client) {
 		// Do not call tlsMgr.TLSConfig() if TLS is disabled, as the method
 		// will return nil, resulting in no RootCAs being set.
 		TLSClientConfig: &tls.Config{
-			RootCAs:    tlsMgr.RootCAs(),
-			MinVersion: tls.VersionTLS12,
+			RootCAs:      tlsMgr.RootCAs(),
+			CipherSuites: tlsMgr.CipherSuites(),
+			MinVersion:   tls.VersionTLS12,
 		},
 	}, aghhttp.UserAgent())
 
