@@ -3,9 +3,10 @@ import cn from 'clsx';
 import intl from 'panel/common/intl';
 import { Icon } from 'panel/common/ui/Icon';
 import { Tooltip } from 'panel/common/ui/Tooltip';
+import { QueriesTooltip } from 'panel/common/ui/QueriesTooltip';
 import { Link } from 'panel/common/ui/Link';
 import { RoutePath } from 'panel/components/Routes/Paths';
-import { formatNumber, formatCompactNumber } from 'panel/helpers/helpers';
+import { formatCompactNumber } from 'panel/helpers/helpers';
 import theme from 'panel/lib/theme';
 import { getTrackerData } from 'panel/helpers/trackers/trackers';
 import { TableHeader } from '../TableHeader';
@@ -82,6 +83,7 @@ export const TopBlockedDomains = (props: Props) => {
                                                     <TrackerTooltip trackerData={trackerData!} />
                                                 }
                                                 position="bottomLeft"
+                                                class={theme.common.noShrink}
                                             >
                                                 <Icon icon="eye_open" class={s.tableRowIcon} />
                                             </Tooltip>
@@ -91,17 +93,7 @@ export const TopBlockedDomains = (props: Props) => {
 
                                     <div class={s.tableRowRight}>
                                         <div class={s.dropdowWrapper}>
-                                            <Tooltip
-                                                position="top"
-                                                overlayClass={s.queryTooltipOverlay}
-                                                content={
-                                                    <div class={s.queryTooltip}>
-                                                        {intl.getMessage('queries_tooltip', {
-                                                            value: formatNumber(domain.count),
-                                                        })}
-                                                    </div>
-                                                }
-                                            >
+                                            <QueriesTooltip count={domain.count}>
                                                 <div
                                                     class={cn(
                                                         theme.text.t3,
@@ -131,7 +123,7 @@ export const TopBlockedDomains = (props: Props) => {
                                                         ({percent().toFixed(2)}%)
                                                     </div>
                                                 </div>
-                                            </Tooltip>
+                                            </QueriesTooltip>
                                         </div>
 
                                         <div class={s.queryBar}>

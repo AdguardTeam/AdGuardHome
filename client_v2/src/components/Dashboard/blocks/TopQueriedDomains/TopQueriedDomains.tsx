@@ -2,9 +2,10 @@ import { Show, For, createMemo } from 'solid-js';
 import intl from 'panel/common/intl';
 import { Icon } from 'panel/common/ui/Icon';
 import { Tooltip } from 'panel/common/ui/Tooltip';
+import { QueriesTooltip } from 'panel/common/ui/QueriesTooltip';
 import { Link } from 'panel/common/ui/Link';
 import { RoutePath } from 'panel/components/Routes/Paths';
-import { formatNumber, formatCompactNumber } from 'panel/helpers/helpers';
+import { formatCompactNumber } from 'panel/helpers/helpers';
 import { getTrackerData } from 'panel/helpers/trackers/trackers';
 import theme from 'panel/lib/theme';
 import cn from 'clsx';
@@ -77,6 +78,7 @@ export const TopQueriedDomains = (props: Props) => {
                                                     <TrackerTooltip trackerData={trackerData!} />
                                                 }
                                                 position="bottomLeft"
+                                                class={theme.common.noShrink}
                                             >
                                                 <Icon icon="eye_open" class={s.tableRowIcon} />
                                             </Tooltip>
@@ -86,17 +88,7 @@ export const TopQueriedDomains = (props: Props) => {
 
                                     <div class={s.tableRowRight}>
                                         <div class={s.dropdowWrapper}>
-                                            <Tooltip
-                                                position="top"
-                                                overlayClass={s.queryTooltipOverlay}
-                                                content={
-                                                    <div class={s.queryTooltip}>
-                                                        {intl.getMessage('queries_tooltip', {
-                                                            value: formatNumber(domain.count),
-                                                        })}
-                                                    </div>
-                                                }
-                                            >
+                                            <QueriesTooltip count={domain.count}>
                                                 <div
                                                     class={cn(
                                                         theme.text.t3,
@@ -126,7 +118,7 @@ export const TopQueriedDomains = (props: Props) => {
                                                         ({percent().toFixed(1)}%)
                                                     </div>
                                                 </div>
-                                            </Tooltip>
+                                            </QueriesTooltip>
                                         </div>
 
                                         <div class={s.queryBar}>

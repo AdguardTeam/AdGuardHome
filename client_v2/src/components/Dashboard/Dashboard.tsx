@@ -3,7 +3,12 @@ import { createSignal, createMemo, createEffect, onCleanup, Show } from 'solid-j
 import theme from 'panel/lib/theme';
 import { PageLoader } from 'panel/common/ui/Loader';
 import { dashboardState, toggleProtection, getClients } from 'panel/stores/dashboard';
-import { statsState, getStats, getStatsConfig } from 'panel/stores/stats';
+import {
+    statsState,
+    getStats,
+    getStatsConfig,
+    enableStatistics,
+} from 'panel/stores/stats';
 import { accessState, getAccessList } from 'panel/stores/access';
 import { LocalStorageHelper, LOCAL_STORAGE_KEYS } from 'panel/helpers/localStorageHelper';
 import { ONE_SECOND_IN_MS, HOUR, DAY, STATS_INTERVALS_DAYS } from 'panel/helpers/constants';
@@ -164,7 +169,13 @@ export const Dashboard = () => {
 
                     <Show
                         when={statsState.enabled}
-                        fallback={<EmptyState mode="disabled" class={s.emptyState} />}
+                        fallback={
+                            <EmptyState
+                                mode="disabled"
+                                class={s.emptyState}
+                                onEnable={() => enableStatistics(effectivePeriod())}
+                            />
+                        }
                     >
                         <div class={s.statContainer}>
                             <GeneralStatistics

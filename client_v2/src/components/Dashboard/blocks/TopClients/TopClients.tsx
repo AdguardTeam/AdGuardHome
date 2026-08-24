@@ -4,11 +4,12 @@ import { useIsDesktop } from 'panel/helpers/useMediaQuery';
 import intl from 'panel/common/intl';
 import { Icon } from 'panel/common/ui/Icon';
 import { Tooltip } from 'panel/common/ui/Tooltip';
+import { QueriesTooltip } from 'panel/common/ui/QueriesTooltip';
 import { Dropdown } from 'panel/common/ui/Dropdown';
 import { ConfirmDialog } from 'panel/common/ui/ConfirmDialog';
 import { Link } from 'panel/common/ui/Link';
 import { RoutePath } from 'panel/components/Routes/Paths';
-import { formatNumber, formatCompactNumber } from 'panel/helpers/helpers';
+import { formatCompactNumber } from 'panel/helpers/helpers';
 import { addErrorToast } from 'panel/stores/toasts';
 import { accessState, toggleClientBlock } from 'panel/stores/access';
 import theme from 'panel/lib/theme';
@@ -96,12 +97,10 @@ export const TopClients = (props: Props) => {
     };
 
     const getClientMenu = (client: ClientInfo) => {
-        const isBlocked = isClientBlocked(client.name);
-
         return (
             <div class={s.protectionMenu}>
                 <Show
-                    when={isBlocked}
+                    when={isClientBlocked(client.name)}
                     fallback={
                         <div
                             class={cn(
@@ -156,7 +155,6 @@ export const TopClients = (props: Props) => {
                                     ? (client.count / props.numDnsQueries) * 100
                                     : 0,
                             );
-                            const isBlocked = isClientBlocked(client.name);
 
                             return (
                                 <div class={s.clientRow} data-testid="top-client-row">
@@ -177,17 +175,28 @@ export const TopClients = (props: Props) => {
                                                     <ClientTooltip
                                                         address={client.name}
                                                         whoisInfo={client.info?.whois_info}
-                                                        blocked={isBlocked}
+                                                        blocked={isClientBlocked(client.name)}
                                                     />
                                                 }
+                                                class={theme.common.noShrink}
                                             >
-                                                <Icon
-                                                    icon={isBlocked ? 'wifi_protect' : 'wifi'}
-                                                    class={cn(
-                                                        s.tableRowIcon,
-                                                        isBlocked && s.tableRowIconDanger,
-                                                    )}
-                                                />
+                                                <Show
+                                                    when={isClientBlocked(client.name)}
+                                                    fallback={
+                                                        <Icon
+                                                            icon="wifi"
+                                                            class={s.tableRowIcon}
+                                                        />
+                                                    }
+                                                >
+                                                    <Icon
+                                                        icon="wifi_protect"
+                                                        class={cn(
+                                                            s.tableRowIcon,
+                                                            s.tableRowIconDanger,
+                                                        )}
+                                                    />
+                                                </Show>
                                             </Tooltip>
 
                                             {client.name}
@@ -197,17 +206,7 @@ export const TopClients = (props: Props) => {
                                     <div class={s.tableRowRight}>
                                         <Show when={isDesktop()}>
                                             <div class={s.dropdowWrapper}>
-                                                <Tooltip
-                                                    position="top"
-                                                    overlayClass={s.queryTooltipOverlay}
-                                                    content={
-                                                        <div class={s.queryTooltip}>
-                                                            {intl.getMessage('queries_tooltip', {
-                                                                value: formatNumber(client.count),
-                                                            })}
-                                                        </div>
-                                                    }
-                                                >
+                                                <QueriesTooltip count={client.count}>
                                                     <div
                                                         class={cn(
                                                             theme.text.t3,
@@ -237,7 +236,7 @@ export const TopClients = (props: Props) => {
                                                             ({percent().toFixed(1)}%)
                                                         </div>
                                                     </div>
-                                                </Tooltip>
+                                                </QueriesTooltip>
                                             </div>
                                         </Show>
 

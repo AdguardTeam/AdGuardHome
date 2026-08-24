@@ -4,10 +4,11 @@ import intl from 'panel/common/intl';
 import { Icon, type IconType } from 'panel/common/ui/Icon';
 import theme from 'panel/lib/theme';
 import { Tooltip } from 'panel/common/ui/Tooltip';
+import { QueriesTooltip } from 'panel/common/ui/QueriesTooltip';
 import { Link } from 'panel/common/ui/Link';
 import { type QueryParams, type RoutePathKey } from 'panel/components/Routes/Paths';
 import cn from 'clsx';
-import { formatCompactNumber, formatNumber } from 'panel/helpers/helpers';
+import { formatCompactNumber } from 'panel/helpers/helpers';
 
 import s from './StatRow.module.pcss';
 
@@ -32,9 +33,6 @@ export type StatRowProps = {
 
 export const StatRow = (props: StatRowProps) => {
     const isQueriesValue = () => props.isQueriesValue !== false;
-
-    const formattedValue = () =>
-        typeof props.value === 'number' ? formatNumber(props.value) : props.value;
 
     const queriesValue = () =>
         typeof props.value === 'number' ? formatCompactNumber(props.value) : props.value;
@@ -61,6 +59,7 @@ export const StatRow = (props: StatRowProps) => {
                     position="bottomLeft"
                     overlayClass={s.queryTooltipOverlay}
                     content={<div class={cn(theme.text.t3, s.statTooltip)}>{props.tooltip}</div>}
+                    class={theme.common.noShrink}
                 >
                     <div class={cn(theme.text.t3, theme.text.condenced, s.statRowLeft)}>
                         <Icon icon={props.icon} class={s.tableRowIcon} />
@@ -79,17 +78,7 @@ export const StatRow = (props: StatRowProps) => {
                     }
                 >
                     <div class={s.dropdownWrapper}>
-                        <Tooltip
-                            position="top"
-                            overlayClass={s.queryTooltipOverlay}
-                            content={
-                                <div class={s.queryTooltip}>
-                                    {intl.getMessage('queries_tooltip', {
-                                        value: formattedValue(),
-                                    })}
-                                </div>
-                            }
-                        >
+                        <QueriesTooltip count={props.value as number}>
                             <div class={cn(theme.text.t3, theme.text.condenced, s.queryCount)}>
                                 <Show when={props.linkTo} fallback={queriesValue()}>
                                     <Link
@@ -107,7 +96,7 @@ export const StatRow = (props: StatRowProps) => {
                                 </Show>
                                 {queriesPercent()}
                             </div>
-                        </Tooltip>
+                        </QueriesTooltip>
                     </div>
                 </Show>
 

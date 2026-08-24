@@ -998,23 +998,23 @@ export const Icons = () => (
             />
         </symbol>
 
-        <symbol id="wifi" viewBox="0 0 16 16" fill="none">
+        <symbol id="wifi" viewBox="0 0 24 24" fill="none">
             <path
-                d="M2.06836 7.07522C3.43011 5.02508 5.40732 4 7.99998 4C11.889 4 13.9316 7.07522 13.9316 7.07522"
+                d="M3.10254 10.6128C5.14516 7.53761 8.11098 6 12 6C17.8335 6 20.8974 10.6128 20.8974 10.6128"
                 stroke="currentColor"
                 stroke-width="1.5"
                 stroke-linecap="round"
                 stroke-linejoin="round"
             />
             <path
-                d="M4.38574 9.47421C5.21541 8.22513 6.42005 7.60059 7.99967 7.60059C10.3691 7.60059 11.6136 9.47421 11.6136 9.47421"
+                d="M6.5791 14.2116C7.8236 12.338 9.63056 11.4012 12 11.4012C15.5541 11.4012 17.4209 14.2116 17.4209 14.2116"
                 stroke="currentColor"
                 stroke-width="1.5"
                 stroke-linecap="round"
                 stroke-linejoin="round"
             />
             <path
-                d="M7.08984 11.7659C7.33317 11.3336 7.99984 11.3335 7.99984 11.3335C7.99984 11.3335 8.6665 11.3336 8.8669 11.7771"
+                d="M10.6348 17.6485C10.9998 17 11.9998 17 11.9998 17C11.9998 17 12.9998 17 13.3003 17.6654"
                 stroke="currentColor"
                 stroke-width="1.5"
                 stroke-linecap="round"

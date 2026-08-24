@@ -1,8 +1,8 @@
 import { Show, For, createMemo } from 'solid-js';
 import intl from 'panel/common/intl';
-import { formatNumber, formatCompactNumber } from 'panel/helpers/helpers';
+import { formatCompactNumber } from 'panel/helpers/helpers';
 import theme from 'panel/lib/theme';
-import { Tooltip } from 'panel/common/ui/Tooltip';
+import { QueriesTooltip } from 'panel/common/ui/QueriesTooltip';
 import cn from 'clsx';
 import { TableHeader } from '../TableHeader';
 import { EmptyState } from '../EmptyState';
@@ -64,17 +64,7 @@ export const TopUpstreams = (props: Props) => {
 
                                     <div class={s.tableRowRight}>
                                         <div class={s.dropdowWrapper}>
-                                            <Tooltip
-                                                position="top"
-                                                overlayClass={s.queryTooltipOverlay}
-                                                content={
-                                                    <div class={s.queryTooltip}>
-                                                        {intl.getMessage('queries_tooltip', {
-                                                            value: formatNumber(upstream.count),
-                                                        })}
-                                                    </div>
-                                                }
-                                            >
+                                            <QueriesTooltip count={upstream.count}>
                                                 <div
                                                     class={cn(
                                                         theme.text.t3,
@@ -94,7 +84,7 @@ export const TopUpstreams = (props: Props) => {
                                                         ({percent().toFixed(2)}%)
                                                     </div>
                                                 </div>
-                                            </Tooltip>
+                                            </QueriesTooltip>
                                         </div>
 
                                         <div class={s.queryBar}>

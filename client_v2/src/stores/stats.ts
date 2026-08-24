@@ -157,6 +157,19 @@ export const setStatsConfig = async (values: GetStatsConfigResponse): Promise<bo
     }
 };
 
+export const enableStatistics = async (period?: number): Promise<boolean> => {
+    const result = await setStatsConfig({
+        enabled: true,
+        interval: state.interval,
+        ignored: state.ignored,
+        ignored_enabled: state.ignored_enabled,
+    });
+    if (result) {
+        await getStats(period);
+    }
+    return result;
+};
+
 export const resetStats = async () => {
     setState('processingReset', true);
     try {
