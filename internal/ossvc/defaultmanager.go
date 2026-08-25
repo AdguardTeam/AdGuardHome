@@ -12,6 +12,7 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/osutil/executil"
+	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/kardianos/service"
 )
 
@@ -20,6 +21,7 @@ import (
 // manager is the implementation of [Manager] that uses [service.Service].
 type manager struct {
 	logger        *slog.Logger
+	clock         timeutil.Clock
 	cmdCons       executil.CommandConstructor
 	isOpenWrt     bool
 	isUnixSystemV bool
@@ -35,6 +37,7 @@ func newManager(ctx context.Context, conf *ManagerConfig) (mgr *manager) {
 
 	return &manager{
 		logger:        conf.Logger,
+		clock:         conf.Clock,
 		cmdCons:       conf.CommandConstructor,
 		isOpenWrt:     aghos.IsOpenWrt(),
 		isUnixSystemV: service.Platform() == "unix-systemv",
@@ -139,7 +142,7 @@ func (m *manager) install(ctx context.Context, action *ActionInstall) (err error
 		WorkingDirectory: action.WorkingDirectory,
 		Arguments:        action.Arguments,
 	}
-	ConfigureServiceOptions(conf, action.Version)
+	ConfigureServiceOptions(conf, m.clock.Now(), action.Version)
 
 	s, err := service.New(emptyInterface{}, conf)
 	if err != nil {

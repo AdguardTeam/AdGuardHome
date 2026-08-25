@@ -46,7 +46,7 @@ const (
 func initDNS(
 	ctx context.Context,
 	baseLogger *slog.Logger,
-	tlsMgr *tlsManager,
+	tlsConfProvider aghtls.TLSConfigProvider,
 	confModifier agh.ConfigModifier,
 	httpReg aghhttp.Registrar,
 	statsDir string,
@@ -108,22 +108,23 @@ func initDNS(
 		return err
 	}
 
+	params := dnsforward.DNSCreateParams{
+		Logger:            baseLogger,
+		DNSFilter:         globalContext.filters,
+		Stats:             globalContext.stats,
+		QueryLog:          globalContext.queryLog,
+		PrivateNets:       parseSubnetSet(config.DNS.PrivateNets),
+		Anonymizer:        anonymizer,
+		DHCPServer:        globalContext.dhcpServer,
+		EtcHosts:          hc,
+		LocalDomain:       config.DHCP.LocalDomainName,
+		TLSConfigProvider: tlsConfProvider,
+	}
+
 	err = initDNSServer(
 		ctx,
-		dnsforward.DNSCreateParams{
-			Logger:            baseLogger,
-			DNSFilter:         globalContext.filters,
-			Stats:             globalContext.stats,
-			QueryLog:          globalContext.queryLog,
-			PrivateNets:       parseSubnetSet(config.DNS.PrivateNets),
-			Anonymizer:        anonymizer,
-			DHCPServer:        globalContext.dhcpServer,
-			EtcHosts:          hc,
-			LocalDomain:       config.DHCP.LocalDomainName,
-			TLSConfigProvider: tlsMgr,
-		},
+		params,
 		httpReg,
-		tlsMgr,
 		confModifier,
 	)
 	if err != nil {
@@ -138,15 +139,14 @@ func initDNS(
 }
 
 // initDNSServer initializes the [context.dnsServer].  To only use the internal
-// proxy, none of the arguments are required, but params must be valid and
-// tlsMgr must not be nil.  In other cases all the arguments also must not be
-// nil.  It also must not be called unless [config] and [globalContext] are
+// proxy, none of the arguments are required, but params must be non-nil and
+// valid.  In other cases all the arguments also must not be nil.  It also must
+// not be called unless [config] and [globalContext] are
 // initialized.
 func initDNSServer(
 	ctx context.Context,
 	params dnsforward.DNSCreateParams,
 	httpReg aghhttp.Registrar,
-	tlsMgr *tlsManager,
 	confModifier agh.ConfigModifier,
 ) (err error) {
 	globalContext.dnsServer, err = dnsforward.NewServer(params)
@@ -166,7 +166,6 @@ func initDNSServer(
 	dnsConf, err := newServerConfig(
 		&config.DNS,
 		config.Clients.Sources,
-		tlsMgr.extendedTLSConfig(),
 		config.HTTPConfig.DoH,
 		params.TLSConfigProvider,
 		httpReg,
@@ -260,7 +259,6 @@ func ipsToUDPAddrs(ips []netip.Addr, port uint16) (udpAddrs []*net.UDPAddr) {
 func newServerConfig(
 	dnsConf *dnsConfig,
 	clientSrcConf *clientSourcesConfig,
-	extTLSConf *tlsConfigSettings,
 	dohConf *doHConfig,
 	tlsConfProvider aghtls.TLSConfigProvider,
 	httpReg aghhttp.Registrar,
@@ -272,6 +270,7 @@ func newServerConfig(
 	fwdConf := dnsConf.Config
 	fwdConf.ClientsContainer = clientsContainer
 
+	extTLSConf := tlsConfProvider.ExtendedTLSConfig()
 	intTLSConf, err := newDNSTLSConfig(extTLSConf, hosts)
 	if err != nil {
 		return nil, fmt.Errorf("constructing tls config: %w", err)
@@ -322,7 +321,7 @@ func newServerConfig(
 // newDNSTLSConfig converts values from the configuration file into the internal
 // TLS settings for the DNS server.  extTLSConf must not be nil.
 func newDNSTLSConfig(
-	extTLSConf *tlsConfigSettings,
+	extTLSConf *aghtls.ExtendedTLSConfig,
 	addrs []netip.Addr,
 ) (dnsConf *dnsforward.TLSConfig, err error) {
 	if !extTLSConf.Enabled {
@@ -361,7 +360,7 @@ func newDNSTLSConfig(
 // newDNSCryptConfig converts values from the configuration file into the
 // internal DNSCrypt settings for the DNS server.  extTLSConf must not be nil.
 func newDNSCryptConfig(
-	extTLSConf *tlsConfigSettings,
+	extTLSConf *aghtls.ExtendedTLSConfig,
 	addrs []netip.Addr,
 ) (dnsCryptConf *dnsforward.DNSCryptConfig, err error) {
 	if extTLSConf.PortDNSCrypt == 0 {
@@ -405,10 +404,8 @@ type dnsEncryption struct {
 }
 
 // getDNSEncryption returns the TLS encryption addresses that AdGuard Home
-// listens on.  tlsMgr must not be nil.
-func getDNSEncryption(tlsMgr *tlsManager) (de dnsEncryption) {
-	extTLSConf := tlsMgr.extendedTLSConfig()
-
+// listens on.  extTLSConf must not be nil.
+func getDNSEncryption(extTLSConf *aghtls.ExtendedTLSConfig) (de dnsEncryption) {
 	if !extTLSConf.Enabled || extTLSConf.ServerName == "" {
 		return dnsEncryption{}
 	}
@@ -446,7 +443,7 @@ func getDNSEncryption(tlsMgr *tlsManager) (de dnsEncryption) {
 
 // startDNSServer starts the DNS server, clients container, filters, stats and
 // the query log.
-func startDNSServer() (err error) {
+func startDNSServer(ctx context.Context) (err error) {
 	config.RLock()
 	defer config.RUnlock()
 
@@ -456,8 +453,6 @@ func startDNSServer() (err error) {
 
 	globalContext.filters.EnableFilters(false)
 
-	// TODO(s.chzhen):  Pass context.
-	ctx := context.TODO()
 	err = globalContext.clients.Start(ctx)
 	if err != nil {
 		return fmt.Errorf("starting clients container: %w", err)

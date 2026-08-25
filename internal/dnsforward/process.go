@@ -228,7 +228,7 @@ func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
 
 	s.appendDoTResolvers(req, resp, domainName)
 
-	for _, addr := range s.dnsProxy.QUICListenAddr {
+	for _, addr := range s.conf.TLSConf.QUICListenAddrs {
 		values := []dns.SVCBKeyValue{
 			&dns.SVCBAlpn{Alpn: []string{"doq"}},
 			&dns.SVCBPort{Port: uint16(addr.Port)},
@@ -251,28 +251,29 @@ func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
 // server's TLS certificate contains IP addresses.  req and resp must not be
 // nil.
 func (s *Server) appendDoTResolvers(req, resp *dns.Msg, domainName string) {
-	hasIPAddrs := s.tlsConfigProvider.HasIPAddrs()
+	if !s.tlsConfigProvider.HasIPAddrs() {
+		return
+	}
 
-	if hasIPAddrs {
-		// Only add DNS-over-TLS resolvers in case the certificate contains IP
-		// addresses.
-		//
-		// See https://github.com/AdguardTeam/AdGuardHome/issues/4927.
-		for _, addr := range s.dnsProxy.TLSListenAddr {
-			values := []dns.SVCBKeyValue{
-				&dns.SVCBAlpn{Alpn: []string{"dot"}},
-				&dns.SVCBPort{Port: uint16(addr.Port)},
-			}
-
-			ans := &dns.SVCB{
-				Hdr:      s.hdr(req, dns.TypeSVCB),
-				Priority: 1,
-				Target:   domainName,
-				Value:    values,
-			}
-
-			resp.Answer = append(resp.Answer, ans)
+	// Only add DNS-over-TLS resolvers in case the certificate contains IP
+	// addresses.
+	//
+	// See https://github.com/AdguardTeam/AdGuardHome/issues/4927.
+	for _, addr := range s.conf.TLSConf.TLSListenAddrs {
+		values := []dns.SVCBKeyValue{
+			&dns.SVCBAlpn{Alpn: []string{"dot"}},
+			&dns.SVCBPort{Port: uint16(addr.Port)},
 		}
+
+		ans := &dns.SVCB{
+			Hdr:      s.hdr(req, dns.TypeSVCB),
+			Priority: 1,
+			Target:   domainName,
+			Value:    values,
+		}
+
+		resp.Answer = append(resp.Answer, ans)
+
 	}
 }
 

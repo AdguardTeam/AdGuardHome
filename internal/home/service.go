@@ -13,8 +13,8 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
-	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/AdguardTeam/golibs/osutil/executil"
+	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/kardianos/service"
 )
 
@@ -35,6 +35,7 @@ const svcLogPrefix = "service_manager"
 // action.
 type program struct {
 	ctx             context.Context
+	clock           timeutil.Clock
 	clientBuildFS   fs.FS
 	signals         chan os.Signal
 	done            chan struct{}
@@ -108,7 +109,7 @@ func (p *program) handleRun(
 		WorkingDirectory: pwd,
 		Arguments:        args,
 	}
-	ossvc.ConfigureServiceOptions(svcConfig, version.Full())
+	ossvc.ConfigureServiceOptions(svcConfig, p.clock.Now(), version.Full())
 
 	s, err := service.New(p, svcConfig)
 	if err != nil {
@@ -122,6 +123,7 @@ func (p *program) handleRun(
 // running.  l must not be nil.
 func restartService(ctx context.Context, baseLogger *slog.Logger) (err error) {
 	svcMgr, err := ossvc.NewManager(ctx, &ossvc.ManagerConfig{
+		Clock:              timeutil.SystemClock{},
 		Logger:             baseLogger.With(slogutil.KeyPrefix, svcLogPrefix),
 		CommandConstructor: executil.SystemCommandConstructor{},
 	})
@@ -171,9 +173,12 @@ func handleServiceControlAction(
 	l.InfoContext(ctx, version.Full())
 	l.InfoContext(ctx, "control", "action", actionName)
 
+	clock := timeutil.SystemClock{}
+
 	// Create a service manager before even a run action, since it picks the
 	// correct system implementation.
 	svcMgr, err := ossvc.NewManager(ctx, &ossvc.ManagerConfig{
+		Clock:              clock,
 		Logger:             baseLogger.With(slogutil.KeyPrefix, svcLogPrefix),
 		CommandConstructor: executil.SystemCommandConstructor{},
 	})
@@ -187,6 +192,7 @@ func handleServiceControlAction(
 
 		p := &program{
 			ctx:             ctx,
+			clock:           clock,
 			clientBuildFS:   clientBuildFS,
 			signals:         signals,
 			done:            done,
@@ -342,7 +348,7 @@ func handleServiceInstallCmd(
 			"There are a few more things that must be configured before you can use it.\n"+
 			"Click on the link below and follow the Installation Wizard steps to finish setup.\n"+
 			"AdGuard Home is now available at the following addresses:")
-		printHTTPAddresses(ctx, l, urlutil.SchemeHTTP, nil)
+		printHTTPAddresses(ctx, l)
 	}
 
 	return nil

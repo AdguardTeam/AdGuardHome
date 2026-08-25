@@ -11,7 +11,7 @@
     'channel': 'development'
     'clientDir': 'client_v2'
     'dockerFrontend': 'adguard/home-js-builder:4.0'
-    'dockerGo': 'adguard/go-builder:1.26.5--1'
+    'dockerGo': 'adguard/go-builder:1.26.6--1'
 
 'stages':
   - 'Tests':
@@ -272,4 +272,4 @@
             'channel': 'candidate'
             'clientDir': 'client'
             'dockerFrontend': 'adguard/home-js-builder:4.0'
-            'dockerGo': 'adguard/go-builder:1.26.5--1'
+            'dockerGo': 'adguard/go-builder:1.26.6--1'
