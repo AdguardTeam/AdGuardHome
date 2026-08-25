@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/netip"
 	"strings"
+	"testing"
 
 	"github.com/AdguardTeam/dnsproxy/dnsproxytest"
 	"github.com/AdguardTeam/golibs/errors"
@@ -14,31 +15,40 @@ import (
 	"github.com/miekg/dns"
 )
 
-// NewOnExchange returns a new OnExchange function for a test upstream.  The
-// returned function responds with the provided CNAME, A, and AAAA records.
-func NewOnExchange(
+// NewExchangingUpstream returns a new test upstream that responds with the
+// provided CNAME, A, and AAAA records.
+func NewExchangingUpstream(
+	tb testing.TB,
 	cname map[string][]string,
 	ipv4 map[string][]net.IP,
 	ipv6 map[string][]net.IP,
-) (f func(m *dns.Msg) (resp *dns.Msg, err error)) {
-	return func(m *dns.Msg) (resp *dns.Msg, err error) {
-		resp = new(dns.Msg).SetReply(m)
+) (ups *dnsproxytest.Upstream) {
+	tb.Helper()
 
-		if len(m.Question) == 0 {
-			return nil, fmt.Errorf("question should not be empty")
-		}
+	ups = &dnsproxytest.Upstream{
+		OnAddress: func() (addr string) { return "upstream.example" },
+		OnClose:   func() (err error) { return nil },
+		OnExchange: func(m *dns.Msg) (resp *dns.Msg, err error) {
+			resp = new(dns.Msg).SetReply(m)
 
-		q := m.Question[0]
+			if len(m.Question) == 0 {
+				return nil, fmt.Errorf("question should not be empty")
+			}
 
-		resp.Answer = append(resp.Answer, cnameAnswers(q.Name, cname)...)
-		resp.Answer = append(resp.Answer, ipAnswers(q.Name, q.Qtype, ipv4, ipv6)...)
+			q := m.Question[0]
 
-		if len(resp.Answer) == 0 {
-			resp.SetRcode(m, dns.RcodeNameError)
-		}
+			resp.Answer = append(resp.Answer, cnameAnswers(q.Name, cname)...)
+			resp.Answer = append(resp.Answer, ipAnswers(q.Name, q.Qtype, ipv4, ipv6)...)
 
-		return resp, nil
+			if len(resp.Answer) == 0 {
+				resp.SetRcode(m, dns.RcodeNameError)
+			}
+
+			return resp, nil
+		},
 	}
+
+	return ups
 }
 
 // cnameAnswers returns CNAME records for name from the cname map.

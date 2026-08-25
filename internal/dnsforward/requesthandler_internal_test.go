@@ -80,8 +80,8 @@ func TestServer_ServeDNS(t *testing.T) {
 		"blocked.first.":   {"blocked.domain.", "allowed.domain."},
 	}
 
-	ups := aghtest.NewUpstream()
-	ups.OnExchange = aghtest.NewOnExchange(
+	ups := aghtest.NewExchangingUpstream(
+		t,
 		cNames,
 		map[string][]net.IP{"a.exception.": {{0, 0, 0, 1}}},
 		map[string][]net.IP{"aaaa.exception.": {net.ParseIP("::1")}},
