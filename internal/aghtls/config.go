@@ -25,10 +25,18 @@ type ExtendedTLSConfig struct {
 	PortDNSOverQUIC      uint16
 	PortDNSOverTLS       uint16
 	PortHTTPS            uint16
-	Enabled              bool
-	ForceHTTPS           bool
-	StrictSNICheck       bool
-	ServePlainDNS        bool
+
+	// Enabled indicates whether encrypted protocols are enabled. The encrypted
+	// protocols are: DNS-over-TLS, DNS-over-QUIC, HTTPS and DNSCrypt.  When set
+	// to false, none of the encrypted protocols are started, the HTTPS redirect
+	// is disabled and certificate reloading is skipped.  When true, the
+	// configured encrypted protocols are attempted to be started, but this does
+	// not guarantee that the TLS configuration is valid or complete.
+	Enabled bool
+
+	ForceHTTPS     bool
+	StrictSNICheck bool
+	ServePlainDNS  bool
 }
 
 // TLSConfigStatus contains the status of a certificate chain and key pair.
