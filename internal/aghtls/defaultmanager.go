@@ -53,13 +53,15 @@ type DefaultManager struct {
 	logger      *slog.Logger
 
 	// mu protects tlsConf, extTLSConf, certLastMod, tlsCert, and pair.
-	mu              *sync.Mutex
-	tlsConf         *tls.Config
-	extTLSConf      *ExtendedTLSConfig
-	tlsCert         *tls.Certificate
-	rootCerts       *x509.CertPool
-	updates         chan UpdateSignal
-	pair            TLSPair
+	mu         *sync.Mutex
+	tlsConf    *tls.Config
+	extTLSConf *ExtendedTLSConfig
+	tlsCert    *tls.Certificate
+	rootCerts  *x509.CertPool
+	updates    chan UpdateSignal
+	pair       TLSPair
+
+	// TODO(m.kazantsev): Add support for dynamic updates of custom ciphers.
 	customCipherIDs []uint16
 }
 
@@ -415,7 +417,7 @@ func (mgr *DefaultManager) ExtendedTLSConfig() (extTLSConf *ExtendedTLSConfig) {
 
 // SetExtendedTLSConfig implements the [Manager] interface for *DefaultManager.
 // It updates the TLS configuration with the given one.  newConf must not be
-// nil.  newConf is always modified. If restartsHTTPS is true, the HTTPS server
+// nil.  newConf is always modified.  If restartHTTPS is true, the HTTPS server
 // must be restarted.  If error is not nil, restartHTTPS cannot be true.
 func (mgr *DefaultManager) SetExtendedTLSConfig(
 	ctx context.Context,
@@ -518,11 +520,6 @@ func (mgr *DefaultManager) onGetCertificate(
 //	[ExtendedTLSConfig.DNSCryptConfigFile]
 //	[ExtendedTLSConfig.OverrideTLSCiphers]
 //	[ExtendedTLSConfig.PortDNSCrypt]
-//
-// The following properties are skipped as they are set by [LoadTLSConfig]:
-//
-//	[ExtendedTLSConfig.CertificateChainData]
-//	[ExtendedTLSConfig.PrivateKeyData]
 func setPrivateFieldsAndCompare(
 	currentTLSConf *ExtendedTLSConfig,
 	newTLSConf *ExtendedTLSConfig,

@@ -45,7 +45,7 @@ type Manager interface {
 	Updates(ctx context.Context) (updates <-chan UpdateSignal)
 
 	// TLSConfig returns a clone of the current TLS configuration.  conf
-	// provides its certificates via GetConfigForClient method.
+	// provides its certificates via GetCertificate method.
 	TLSConfig() (conf *tls.Config)
 
 	// RootCAs returns the current root CA pool.
@@ -60,8 +60,10 @@ type Manager interface {
 	ExtendedTLSConfig() (conf *ExtendedTLSConfig)
 
 	// SetExtendedTLSConfig updates the current extended TLS configuration.  It
-	// returns true if the configuration was changed.  servePlainDNS is used to
-	// determine whether to serve DNS over plain UDP/TCP.
+	// returns true if the configuration has changed.  Note that changing only
+	// the plain-DNS setting also causes this method to return true.  Also, this
+	// method only updates the manager's own state, persisting the plain-DNS
+	// setting to the global configuration is the caller's responsibility.
 	SetExtendedTLSConfig(
 		ctx context.Context,
 		servePlainDNS aghalg.NullBool,
@@ -129,6 +131,6 @@ func (EmptyManager) SetExtendedTLSConfig(
 	_ context.Context,
 	_ aghalg.NullBool,
 	_ *ExtendedTLSConfig,
-) (changed bool, err error) {
+) (restartHTTPS bool, err error) {
 	return false, nil
 }

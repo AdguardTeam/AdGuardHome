@@ -218,7 +218,7 @@ type Manager struct {
 		ctx context.Context,
 		servePlainDNS aghalg.NullBool,
 		conf *aghtls.ExtendedTLSConfig,
-	) (changed bool, err error)
+	) (restartHTTPS bool, err error)
 	OnCipherSuites func() (cs []uint16)
 }
 
@@ -280,6 +280,6 @@ func (m *Manager) SetExtendedTLSConfig(
 	ctx context.Context,
 	servePlainDNS aghalg.NullBool,
 	conf *aghtls.ExtendedTLSConfig,
-) (changed bool, err error) {
+) (restartHTTPS bool, err error) {
 	return m.OnSetExtendedTLSConfig(ctx, servePlainDNS, conf)
 }
