@@ -1,0 +1,161 @@
+'env':
+  'BASE_IMAGE': |-
+    ${{ vars.BASE_IMAGE || 'adguard/go-builder:1.26.6--1' }}
+  'CACHE_BUSTER': |-
+    ${{ inputs.cache_buster || '0' }}
+  'CLIENT_DIR': |-
+    ${{ inputs.client_dir || 'client_v2' }}
+  'FRONTEND_BASE_IMAGE': |-
+    ${{ vars.FRONTEND_BASE_IMAGE || 'adguard/home-js-builder:4.0' }}
+'jobs':
+  'TestFrontend':
+    'if': |
+      ${{ github.repository_owner == 'AdGuardSoftwareLimited' }}
+    'permissions':
+      'contents': 'read'
+    'runs-on': 'team-go'
+    'steps':
+      - 'uses': 'actions/checkout@v6'
+        'with':
+          # Set to false to avoid GITHUB_TOKEN leaking.
+          #
+          # See https://github.com/actions/checkout/issues/485#issuecomment-934422611.
+          'persist-credentials': false
+      - 'name': 'Run frontend tests'
+        'run': |
+          #!/bin/sh
+
+          set -e -f -o pipefail -u -x
+
+          docker build \
+              --build-arg "BASE_IMAGE=${FRONTEND_BASE_IMAGE}" \
+              --build-arg "CACHE_BUSTER=${CACHE_BUSTER}" \
+              --build-arg "CLIENT_DIR=${CLIENT_DIR}" \
+              --progress 'plain' \
+              --target 'tester' \
+              -f ./docker/frontend.Dockerfile \
+              .
+  'LintAndTestJobDocker':
+    'if': |
+      ${{ github.repository_owner == 'AdGuardSoftwareLimited' }}
+    'permissions':
+      'contents': 'read'
+    'runs-on': 'team-go'
+    'steps':
+      - 'uses': 'actions/checkout@v6'
+        'with':
+          # Set to false to avoid GITHUB_TOKEN leaking.
+          #
+          # See https://github.com/actions/checkout/issues/485#issuecomment-934422611.
+          'persist-credentials': false
+      - 'name': 'Lint and test step'
+        'run': |
+          #!/bin/sh
+
+          set -e -f -o pipefail -u -x
+
+          docker build \
+              --build-arg "BASE_IMAGE=${BASE_IMAGE}" \
+              --build-arg "CACHE_BUSTER=${CACHE_BUSTER}" \
+              --output '.' \
+              --progress 'plain' \
+              --target 'tester-exporter' \
+              -f ./docker/ci.Dockerfile \
+              .
+
+          exit_code="$(cat ./test-reports/test-exit-code.txt)"
+          readonly exit_code
+
+          exit "$exit_code"
+  'LintAndTestJobMacOS':
+    'if': |
+      ${{ github.repository_owner == 'AdGuardSoftwareLimited' }}
+    'permissions':
+      'contents': 'read'
+    'runs-on':
+      - 'ephemeral'
+      - 'ephemeral-mac'
+      - '${{ vars.BUILD_IMAGE_VERSION_MACOS }}'
+    'steps':
+      - 'uses': 'actions/checkout@v6'
+        'with':
+          # Set to false to avoid GITHUB_TOKEN leaking.
+          #
+          # See https://github.com/actions/checkout/issues/485#issuecomment-934422611.
+          'persist-credentials': false
+      - 'name': 'Lint and test step'
+        'run': |
+          #!/bin/sh
+
+          set -e -f -o pipefail -u -x
+
+          # NOTE: Only run those checks that only need Go and Go tools.
+          make \
+              VERBOSE=1 \
+              go-deps \
+              go-os-check \
+              go-lint \
+              go-test \
+              go-bench \
+              go-fuzz \
+              ;
+  'LintAndTestJobWindows':
+    'if': |
+      ${{ github.repository_owner == 'AdGuardSoftwareLimited' }}
+    'permissions':
+      'contents': 'read'
+    'runs-on':
+      - 'ephemeral'
+      - 'ephemeral-vmwin'
+      - '${{ vars.BUILD_IMAGE_VERSION_WINDOWS_GO }}'
+      - 'ephemeral-limit-memory-8192'
+      - 'ephemeral-limit-cpu-4'
+    'steps':
+      - 'uses': 'actions/checkout@v6'
+        'with':
+          # Set to false to avoid GITHUB_TOKEN leaking.
+          #
+          # See https://github.com/actions/checkout/issues/485#issuecomment-934422611.
+          'persist-credentials': false
+      - 'name': 'Lint and test step'
+        'run': |
+          set -e -f -o pipefail -u -x
+
+          make \
+              VERBOSE=1 \
+              go-deps \
+              go-os-check \
+              go-lint \
+              ;
+
+          # NOTE: Only run go-test with CGO_ENABLED for race test.
+          make \
+              VERBOSE=1 \
+              CGO_ENABLED=1 \
+              go-test \
+              ;
+
+          make \
+              VERBOSE=1 \
+              go-bench \
+              go-fuzz \
+              ;
+        'shell': 'bash'
+'name': 'Lint and test workflow (private)'
+'on':
+  'push':
+    'branches':
+      - '*'
+  'workflow_dispatch':
+    'inputs':
+      'cache_buster':
+        'default': ''
+        'description': |
+          Override to force re-run of cached stages (pass any unique value).
+        'type': 'string'
+# Permissions are disabled for all the jobs by default, and then overridden for
+# specific jobs if needed.  This is a recommended practice for security reasons,
+# and also allows to avoid mistakes with permissions when creating new jobs.
+#
+# See https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#permissions.
+'permissions': {}

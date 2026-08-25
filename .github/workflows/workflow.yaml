@@ -1,0 +1,123 @@
+'env':
+  'CLIENT_DIR': 'client'
+  'GO_VERSION': '1.26.6'
+  'NODE_VERSION': '24'
+'jobs':
+  'ESLint':
+    'if': |
+      ${{ github.repository_owner != 'AdGuardSoftwareLimited' }}
+    'permissions':
+      'contents': 'read'
+    'runs-on': 'ubuntu-latest'
+    'steps':
+      - 'uses': 'actions/checkout@v6'
+        'with':
+          # Set to false to avoid  GITHUB_TOKEN leaking.
+          #
+          # See https://github.com/actions/checkout/issues/485#issuecomment-934422611.
+          'persist-credentials': false
+      - 'name': 'Install modules'
+        'run': |
+          #!/bin/sh
+
+          set -e -f -u -x
+
+          npm \
+              --prefix="./${{ env.CLIENT_DIR }}" \
+              ci \
+              ;
+      - 'name': 'Run ESLint'
+        'run': |
+          #!/bin/sh
+
+          set -e -f -u -x
+
+          npm \
+              --prefix="./${{ env.CLIENT_DIR }}" \
+              run lint \
+              ;
+  'TestJob':
+    'if': |
+      ${{ github.repository_owner != 'AdGuardSoftwareLimited' }}
+    'permissions':
+      'contents': 'read'
+    'runs-on': '${{ matrix.os }}'
+    'strategy':
+      'fail-fast': false
+      'matrix':
+        'os':
+          - 'windows-latest'
+          - 'macos-latest'
+          - 'ubuntu-latest'
+    'steps':
+      - 'uses': 'actions/checkout@v6'
+        'with':
+          # Set to false to avoid GITHUB_TOKEN leaking.
+          #
+          # See https://github.com/actions/checkout/issues/485#issuecomment-934422611.
+          'persist-credentials': false
+      - 'uses': 'actions/setup-go@v6'
+        'with':
+          'go-version': '${{ env.GO_VERSION }}'
+      - 'name': 'Lint step'
+        'run': |
+          #!/bin/sh
+
+          set -e -f -u -x
+
+          # NOTE: Only run those checks that only need Go and Go tools.
+          make \
+              VERBOSE=1 \
+              go-deps \
+              go-os-check \
+              go-lint \
+              ;
+        'shell': 'bash'
+      - 'name': 'Set up Node'
+        'uses': 'actions/setup-node@v1'
+        'with':
+          'node-version': '${{ env.NODE_VERSION }}'
+      - 'name': 'Get npm cache directory'
+        'id': 'npm-cache'
+        'run': 'echo "::set-output name=dir::$( npm config get cache )"'
+      - 'name': 'Set up npm cache'
+        'uses': 'actions/cache@v4'
+        'with':
+          'path': '${{ steps.npm-cache.outputs.dir }}'
+          'key': "${{ runner.os }}-node-${{ hashFiles('client/package-lock.json') }}"
+          'restore-keys': '${{ runner.os }}-node-'
+      - 'name': 'Run tests'
+        'shell': 'bash'
+        'run': |
+          #!/bin/sh
+
+          set -e -f -u -x
+          make \
+              CLIENT_DIR=client \
+              VERBOSE=1 \
+              deps \
+              test \
+              go-bench \
+              go-fuzz \
+              ;
+      - 'name': 'Upload coverage'
+        'uses': 'codecov/codecov-action@v1'
+        'if': "success() && matrix.os == 'ubuntu-latest'"
+        'with':
+          'token': '${{ secrets.CODECOV_TOKEN }}'
+          'file': './cover.out'
+          # TODO(d.kolyshev):  Build snapshot.
+'name': 'Lint and test workflow'
+'on':
+  'push':
+    'tags':
+      - 'v*'
+    'branches':
+      - '*'
+  'pull_request':
+# Permissions are disabled for all the jobs by default, and then overridden for
+# specific jobs if needed.  This is a recommended practice for security reasons,
+# and also allows to avoid mistakes with permissions when creating new jobs.
+#
+# See https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#permissions.
+'permissions': {}

@@ -54,6 +54,7 @@ require (
 	github.com/anthropics/anthropic-sdk-go v1.63.1 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/beefsack/go-rate v0.0.0-20220214233405-116f4ca011a0 // indirect
+	github.com/bmatcuk/doublestar/v4 v4.10.0 // indirect
 	github.com/buger/jsonparser v1.6.1 // indirect
 	github.com/ccojocar/zxcvbn-go v1.0.4 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
@@ -63,6 +64,7 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/golangci/misspell v0.8.0 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
+	github.com/google/yamlfmt v0.21.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.21 // indirect
 	github.com/googleapis/gax-go/v2 v2.23.0 // indirect
 	github.com/gookit/color v1.6.1 // indirect
@@ -73,6 +75,7 @@ require (
 	github.com/jstemmer/go-junit-report/v2 v2.1.0 // indirect
 	github.com/kisielk/errcheck v1.20.0 // indirect
 	github.com/mdlayher/socket v0.6.1 // indirect
+	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/openai/openai-go/v3 v3.52.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pb33f/ordered-map/v2 v2.3.1 // indirect
@@ -81,6 +84,7 @@ require (
 	github.com/quic-go/qpack v0.6.0 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/rogpeppe/go-internal v1.16.0 // indirect
+	github.com/sabhiram/go-gitignore v0.0.0-20210923224102-525f6e181f06 // indirect
 	github.com/securego/gosec/v2 v2.28.0 // indirect
 	github.com/standard-webhooks/standard-webhooks/libraries v0.0.1 // indirect
 	github.com/tidwall/gjson v1.19.0 // indirect
@@ -117,6 +121,7 @@ require (
 	mvdan.cc/gofumpt v0.11.0 // indirect
 	mvdan.cc/sh/v3 v3.13.1 // indirect
 	mvdan.cc/unparam v0.0.0-20260818115549-3f964bcb5673 // indirect
+	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
 // NOTE:  Keep in sync with .gitignore.
@@ -135,6 +140,7 @@ ignore (
 tool (
 	github.com/fzipp/gocyclo/cmd/gocyclo
 	github.com/golangci/misspell/cmd/misspell
+	github.com/google/yamlfmt/cmd/yamlfmt
 	github.com/gordonklaus/ineffassign
 	github.com/jstemmer/go-junit-report/v2
 	github.com/kisielk/errcheck
