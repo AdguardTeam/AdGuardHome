@@ -52,13 +52,13 @@
           'output': '.'
           # TODO(d.kolyshev): !! Set version.
           'build-args': |
-            ARCH="amd64 arm64"
+            ARCH=amd64 arm64
             BASE_IMAGE=${{ env.BASE_IMAGE }}
             BRANCH=${{ github.ref_name }}
             CACHE_BUSTER=${{ inputs.cache_buster || '0' }}
             CHANNEL="development"
             DIST_DIR=${{ env.DIST_DIR }}
-            OS="windows darwin linux"
+            OS=windows darwin linux
             REVISION=${{ github.sha }}
             SIGN=0
             SOURCE_DATE_EPOCH=${{ env.SOURCE_DATE_EPOCH }}
