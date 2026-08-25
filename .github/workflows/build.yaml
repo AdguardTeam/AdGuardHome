@@ -1,14 +1,16 @@
 'env':
   'BASE_IMAGE': |-
     ${{ vars.BASE_IMAGE || 'adguard/go-builder:1.26.6--1' }}
+  'BUILD_DIR': |-
+    build
   'CLIENT_DIR': |-
     ${{ inputs.client_dir || 'client_v2' }}
   'DIST_DIR': |-
-    build
+    dist
   'FRONTEND_BASE_IMAGE': |-
     ${{ vars.FRONTEND_BASE_IMAGE || 'adguard/home-js-builder:4.0' }}
 'jobs':
-  'BuildFrontend':
+  'Build':
     'if': |
       ${{ github.repository_owner == 'AdGuardSoftwareLimited' }}
     'permissions':
@@ -21,7 +23,7 @@
           #
           # See https://github.com/actions/checkout/issues/485#issuecomment-934422611.
           'persist-credentials': false
-      - 'name': 'Build'
+      - 'name': 'Build frontend'
         'uses': 'AdGuardSoftwareLimited/actions/actions/docker-build@master'
         'with':
           'dockerfile': 'docker/frontend.Dockerfile'
@@ -32,31 +34,12 @@
             BASE_IMAGE=${{ env.FRONTEND_BASE_IMAGE }}
             CACHE_BUSTER=${{ inputs.cache_buster || '0' }}
             CLIENT_DIR=${{ env.CLIENT_DIR }}
-            DIST_DIR=${{ env.DIST_DIR }}
+            DIST_DIR=${{ env.BUILD_DIR }}
       - 'uses': 'actions/upload-artifact@v7'
         'with':
           'name': 'adguardhomefrontend'
           'path': |
-            ${{ env.DIST_DIR }}
-  'Build':
-    'if': |
-      ${{ github.repository_owner == 'AdGuardSoftwareLimited' }}
-    'needs': 'BuildFrontend'
-    'permissions':
-      'contents': 'read'
-    'runs-on': 'team-go'
-    'steps':
-      - 'uses': 'actions/checkout@v6'
-        'with':
-          # Set to false to avoid GITHUB_TOKEN leaking.
-          #
-          # See https://github.com/actions/checkout/issues/485#issuecomment-934422611.
-          'persist-credentials': false
-      - 'uses': 'actions/download-artifact@v8'
-        'with':
-          'name': 'adguardhomefrontend'
-          'path': |
-            ${{ env.DIST_DIR }}
+            ${{ env.BUILD_DIR }}
       - 'name': 'Set source date epoch'
         'run': |
           echo "SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)" >> "$GITHUB_ENV"
@@ -67,13 +50,14 @@
           'context': '.'
           'target': 'builder-exporter'
           'output': '.'
-          # TODO(d.kolyshev): !! Set version and DIST_DIR.
+          # TODO(d.kolyshev): !! Set version.
           'build-args': |
             ARCH="amd64 arm64"
             BASE_IMAGE=${{ env.BASE_IMAGE }}
             BRANCH=${{ github.ref_name }}
             CACHE_BUSTER=${{ inputs.cache_buster || '0' }}
             CHANNEL="development"
+            DIST_DIR=${{ env.DIST_DIR }}
             OS="windows darwin linux"
             REVISION=${{ github.sha }}
             SIGN=0
@@ -105,12 +89,12 @@
         'with':
           'name': 'adguardhomefrontend'
           'path': |
-            ${{ env.DIST_DIR }}
+            ${{ env.BUILD_DIR }}
       - 'uses': 'actions/download-artifact@v8'
         'with':
           'name': 'adguardhome'
           'path': |
-            ${{ env.DIST_DIR }}/AdGuardHome_linux_amd64.tar.gz
+            ${{ env.DIST_DIR }}
       - 'run': |
           #!/bin/sh
 
