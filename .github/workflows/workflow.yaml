@@ -106,7 +106,7 @@
         'with':
           'token': '${{ secrets.CODECOV_TOKEN }}'
           'file': './cover.out'
-          # TODO(d.kolyshev):  Build snapshot.
+          # TODO(d.kolyshev): !! Build snapshot.
 'name': 'Lint and test workflow'
 'on':
   'push':

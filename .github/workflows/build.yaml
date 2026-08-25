@@ -1,0 +1,151 @@
+'env':
+  'BASE_IMAGE': |-
+    ${{ vars.BASE_IMAGE || 'adguard/go-builder:1.26.6--1' }}
+  'CLIENT_DIR': |-
+    ${{ inputs.client_dir || 'client_v2' }}
+  'DIST_DIR': |-
+    build
+  'FRONTEND_BASE_IMAGE': |-
+    ${{ vars.FRONTEND_BASE_IMAGE || 'adguard/home-js-builder:4.0' }}
+'jobs':
+  'BuildFrontend':
+    'if': |
+      ${{ github.repository_owner == 'AdGuardSoftwareLimited' }}
+    'permissions':
+      'contents': 'read'
+    'runs-on': 'team-go'
+    'steps':
+      - 'uses': 'actions/checkout@v6'
+        'with':
+          # Set to false to avoid GITHUB_TOKEN leaking.
+          #
+          # See https://github.com/actions/checkout/issues/485#issuecomment-934422611.
+          'persist-credentials': false
+      - 'name': 'Build'
+        'uses': 'AdGuardSoftwareLimited/actions/actions/docker-build@master'
+        'with':
+          'dockerfile': 'docker/frontend.Dockerfile'
+          'context': '.'
+          'target': 'builder-exporter'
+          'output': '.'
+          'build-args': |
+            BASE_IMAGE=${{ env.FRONTEND_BASE_IMAGE }}
+            CACHE_BUSTER=${{ inputs.cache_buster || '0' }}
+            CLIENT_DIR=${{ env.CLIENT_DIR }}
+            DIST_DIR=${{ env.DIST_DIR }}
+      - 'uses': 'actions/upload-artifact@v7'
+        'with':
+          'name': 'adguardhomefrontend'
+          'path': |
+            ${{ env.DIST_DIR }}
+  'Build':
+    'if': |
+      ${{ github.repository_owner == 'AdGuardSoftwareLimited' }}
+    'needs': 'BuildFrontend'
+    'permissions':
+      'contents': 'read'
+    'runs-on': 'team-go'
+    'steps':
+      - 'uses': 'actions/checkout@v6'
+        'with':
+          # Set to false to avoid GITHUB_TOKEN leaking.
+          #
+          # See https://github.com/actions/checkout/issues/485#issuecomment-934422611.
+          'persist-credentials': false
+      - 'uses': 'actions/download-artifact@v8'
+        'with':
+          'name': 'adguardhomefrontend'
+          'path': |
+            ${{ env.DIST_DIR }}
+      - 'name': 'Set source date epoch'
+        'run': |
+          echo "SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)" >> "$GITHUB_ENV"
+      - 'name': 'Build QA artifacts'
+        'uses': 'AdGuardSoftwareLimited/actions/actions/docker-build@master'
+        'with':
+          'dockerfile': 'docker/ci.Dockerfile'
+          'context': '.'
+          'target': 'builder-exporter'
+          'output': '.'
+          # TODO(d.kolyshev): !! Set version and DIST_DIR.
+          'build-args': |
+            ARCH="amd64 arm64"
+            BASE_IMAGE=${{ env.BASE_IMAGE }}
+            BRANCH=${{ github.ref_name }}
+            CACHE_BUSTER=${{ inputs.cache_buster || '0' }}
+            CHANNEL="development"
+            OS="windows darwin linux"
+            REVISION=${{ github.sha }}
+            SIGN=0
+            SOURCE_DATE_EPOCH=${{ env.SOURCE_DATE_EPOCH }}
+            VERSION="v0.0.0-github"
+      - 'uses': 'actions/upload-artifact@v7'
+        'with':
+          'name': 'adguardhome'
+          'path': |
+            ${{ env.DIST_DIR }}/AdGuardHome_windows_amd64.zip
+            ${{ env.DIST_DIR }}/AdGuardHome_darwin_amd64.zip
+            ${{ env.DIST_DIR }}/AdGuardHome_darwin_arm64.zip
+            ${{ env.DIST_DIR }}/AdGuardHome_linux_amd64.tar.gz
+  'TestE2E':
+    'if': |
+      ${{ github.repository_owner == 'AdGuardSoftwareLimited' }}
+    'needs': 'Build'
+    'permissions':
+      'contents': 'read'
+    'runs-on': 'team-go'
+    'steps':
+      - 'uses': 'actions/checkout@v6'
+        'with':
+          # Set to false to avoid GITHUB_TOKEN leaking.
+          #
+          # See https://github.com/actions/checkout/issues/485#issuecomment-934422611.
+          'persist-credentials': false
+      - 'uses': 'actions/download-artifact@v8'
+        'with':
+          'name': 'adguardhomefrontend'
+          'path': |
+            ${{ env.DIST_DIR }}
+      - 'uses': 'actions/download-artifact@v8'
+        'with':
+          'name': 'adguardhome'
+          'path': |
+            ${{ env.DIST_DIR }}/AdGuardHome_linux_amd64.tar.gz
+      - 'run': |
+          #!/bin/sh
+
+          set -e -f -u -x
+
+          tar -xzf ${{ env.DIST_DIR }}/AdGuardHome_linux_amd64.tar.gz -C /tmp
+
+          mv /tmp/AdGuardHome/AdGuardHome ./AdGuardHome
+      - 'name': 'Run tests'
+        'uses': 'AdGuardSoftwareLimited/actions/actions/docker-build@master'
+        'with':
+          'dockerfile': 'docker/frontend.Dockerfile'
+          'context': '.'
+          'target': 'e2etester'
+          'output': '.'
+          'build-args': |
+            BASE_IMAGE=${{ env.FRONTEND_BASE_IMAGE }}
+            CACHE_BUSTER=${{ inputs.cache_buster || '0' }}
+            CLIENT_DIR=${{ env.CLIENT_DIR }}
+'name': 'Build and Test QA Artifacts'
+'on':
+  'push':
+    # TODO(d.kolyshev):  Rewrite channel and client_dir for rc.
+    'branches':
+      - '*'
+  'workflow_dispatch':
+    'inputs':
+      'cache_buster':
+        'default': ''
+        'description': |
+          Override to force re-run of cached stages (pass any unique value).
+        'type': 'string'
+# Permissions are disabled for all the jobs by default, and then overridden for
+# specific jobs if needed.  This is a recommended practice for security reasons,
+# and also allows to avoid mistakes with permissions when creating new jobs.
+#
+# See https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#permissions.
+'permissions': {}
