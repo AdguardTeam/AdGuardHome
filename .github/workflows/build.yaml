@@ -56,13 +56,13 @@
             BASE_IMAGE=${{ env.BASE_IMAGE }}
             BRANCH=${{ github.ref_name }}
             CACHE_BUSTER=${{ inputs.cache_buster || '0' }}
-            CHANNEL="development"
+            CHANNEL=development
             DIST_DIR=${{ env.DIST_DIR }}
             OS=windows darwin linux
             REVISION=${{ github.sha }}
             SIGN=0
             SOURCE_DATE_EPOCH=${{ env.SOURCE_DATE_EPOCH }}
-            VERSION="v0.0.0-github"
+            VERSION=v0.0.0-github
       - 'uses': 'actions/upload-artifact@v7'
         'with':
           'name': 'adguardhome'
@@ -117,7 +117,7 @@
 'name': 'Build and Test QA Artifacts'
 'on':
   'push':
-    # TODO(d.kolyshev):  Rewrite channel and client_dir for rc.
+    # TODO(d.kolyshev): !! Rewrite channel and client_dir for rc.
     'branches':
       - '*'
   'workflow_dispatch':
