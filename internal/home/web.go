@@ -292,16 +292,20 @@ func newWebAPI(ctx context.Context, conf *webAPIConfig) (w *webAPI) {
 }
 
 // tlsConfigChanged updates the TLS configuration and restarts the HTTPS server
-// if necessary.  tlsConf must not be nil.
-func (web *webAPI) tlsConfigChanged(ctx context.Context, tlsConf *aghtls.ExtendedTLSConfig) {
+// if necessary.
+func (web *webAPI) tlsConfigChanged(ctx context.Context) {
 	defer slogutil.RecoverAndExit(ctx, web.logger, osutil.ExitCodeFailure)
 
 	web.logger.DebugContext(ctx, "applying new tls configuration")
 
-	enabled := tlsConf.Enabled &&
-		tlsConf.PortHTTPS != 0 &&
-		len(tlsConf.PrivateKeyData) != 0 &&
-		len(tlsConf.CertificateChainData) != 0
+	extTLSConf := web.tlsManager.ExtendedTLSConfig()
+	tlsConf := web.tlsManager.TLSConfig()
+
+	enabled := tlsConf != nil &&
+		extTLSConf.Enabled &&
+		extTLSConf.PortHTTPS != 0 &&
+		len(extTLSConf.PrivateKeyData) != 0 &&
+		len(extTLSConf.CertificateChainData) != 0
 
 	// TODO(d.kolyshev):  Consider protecting server with mu.
 	if web.httpsServer.server != nil {
@@ -336,7 +340,7 @@ func (web *webAPI) start(ctx context.Context) {
 		// Apply the initial TLS configuration.  The background context is used
 		// because tlsConfigChanged wraps context with timeout on its own and shuts
 		// down the server, which handles current request.
-		web.tlsConfigChanged(context.Background(), web.tlsManager.ExtendedTLSConfig())
+		web.tlsConfigChanged(context.Background())
 
 		// For https, we have a separate goroutine loop.
 		web.tlsServerLoop(ctx)
@@ -824,7 +828,7 @@ func (web *webAPI) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 		// request.  It is also should be done in a separate goroutine due to the
 		// same reason.
 		if restartHTTPS {
-			go web.tlsConfigChanged(context.Background(), newTLSConf)
+			go web.tlsConfigChanged(context.Background())
 		}
 	}()
 }

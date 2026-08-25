@@ -118,14 +118,13 @@ func NewDefaultManager(
 // TLS configuration and sets them in the TLS manager.  If no custom ciphers are
 // specified, it uses the default ciphers.
 func (mgr *DefaultManager) parseCustomCiphers(ctx context.Context) {
-	var err error
-
 	if len(mgr.extTLSConf.OverrideTLSCiphers) == 0 {
 		mgr.logger.InfoContext(ctx, "using default ciphers")
 
 		return
 	}
 
+	var err error
 	mgr.customCipherIDs, err = ParseCiphers(mgr.extTLSConf.OverrideTLSCiphers)
 	if err != nil {
 		// Should not happen because upstreams are already validated.  See
@@ -149,6 +148,14 @@ func (mgr *DefaultManager) prepareTLSConfig(ctx context.Context) (err error) {
 
 	cert, err := tls.X509KeyPair(mgr.extTLSConf.CertificateChainData, mgr.extTLSConf.PrivateKeyData)
 	if err != nil {
+		// DNSCrypt provides its own certificate, meaning we can ignore TLS
+		// certificate parsing errors.
+		if mgr.extTLSConf.PortDNSCrypt != 0 && mgr.extTLSConf.DNSCryptConfigFile != "" {
+			mgr.logger.InfoContext(ctx, "dnscrypt is configured")
+
+			return nil
+		}
+
 		mgr.extTLSConf.Enabled = false
 
 		return fmt.Errorf("parsing tls certificate: %w", err)
