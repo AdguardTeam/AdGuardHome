@@ -117,4 +117,16 @@ describe('saveClient cross-client validation', () => {
         expect(result).toBe(false);
         expect(clientFormState.formErrors.upstreams_cache_size).toBeDefined();
     });
+
+    it('rejects empty cache size when cache is enabled', async () => {
+        clearClientForm();
+        updateClientFormField({ field: 'name', value: 'Test' });
+        updateClientFormField({ field: 'ids', value: ['192.168.1.1'] });
+        updateClientFormField({ field: 'upstreams_cache_enabled', value: true });
+        updateClientFormField({ field: 'upstreams_cache_size', value: '' });
+
+        const result = await saveClient();
+        expect(result).toBe(false);
+        expect(clientFormState.formErrors.upstreams_cache_size).toBeDefined();
+    });
 });

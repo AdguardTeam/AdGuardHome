@@ -53,7 +53,27 @@
     @media (min-width: 768px) {
         min-height: 42px;
         padding: 8px 12px;
+        overflow: hidden;
     }
+}
+
+.tableHeaderText {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/* Tooltip trigger is a flex item inside the header cell — must be allowed to shrink */
+.headerTooltipWrapper {
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.headerTooltipOverlay {
+    padding: 8px 12px;
+    color: var(--default-main-text);
 }
 
 .tableBodyCell {

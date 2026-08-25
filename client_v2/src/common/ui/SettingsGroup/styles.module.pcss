@@ -4,7 +4,7 @@
     transition: background-color var(--t2);
     border-radius: 8px;
 
-    &:hover,
+    &:hover:not(:has(.content:hover)),
     &:focus {
         background-color: var(--page-background-additional);
     }

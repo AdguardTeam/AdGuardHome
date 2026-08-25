@@ -77,6 +77,7 @@
     --default-black-icons: var(--gray-80);
     --default-gray-icons: var(--gray-60);
     --disabled-gray-icons: var(--gray-30);
+    --disabled-product-icon: #94c9a1;
     --default-error-icon: var(--red-50);
     --stroke-icons-white-icons-default: var(--gray-0);
     --stroke-icons-tertiary-icon-disabled: var(--product-tertiary-30);

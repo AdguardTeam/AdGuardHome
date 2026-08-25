@@ -3,12 +3,7 @@ import { createSignal, createMemo, createEffect, onCleanup, Show } from 'solid-j
 import theme from 'panel/lib/theme';
 import { PageLoader } from 'panel/common/ui/Loader';
 import { dashboardState, toggleProtection, getClients } from 'panel/stores/dashboard';
-import {
-    statsState,
-    getStats,
-    getStatsConfig,
-    enableStatistics,
-} from 'panel/stores/stats';
+import { statsState, getStats, getStatsConfig, enableStatistics } from 'panel/stores/stats';
 import { accessState, getAccessList } from 'panel/stores/access';
 import { LocalStorageHelper, LOCAL_STORAGE_KEYS } from 'panel/helpers/localStorageHelper';
 import { ONE_SECOND_IN_MS, HOUR, DAY, STATS_INTERVALS_DAYS } from 'panel/helpers/constants';
@@ -132,6 +127,21 @@ export const Dashboard = () => {
     const isLoading = () =>
         statsState.processingStats || statsState.processingGetConfig || accessState.processing;
 
+    const hasStatsData = () =>
+        statsState.numDnsQueries > 0 ||
+        statsState.dnsQueries.length > 0 ||
+        statsState.topClients.length > 0 ||
+        statsState.topQueriedDomains.length > 0 ||
+        !statsState.enabled;
+
+    const [isInitialLoading, setIsInitialLoading] = createSignal(!hasStatsData());
+
+    createEffect(() => {
+        if (isInitialLoading() && !isLoading()) {
+            setIsInitialLoading(false);
+        }
+    });
+
     return (
         <div class={theme.layout.container}>
             <div class={theme.layout.containerIn}>
@@ -148,7 +158,7 @@ export const Dashboard = () => {
                 />
 
                 <Show
-                    when={!isLoading()}
+                    when={!isInitialLoading()}
                     fallback={
                         <div class={s.loader}>
                             <PageLoader />

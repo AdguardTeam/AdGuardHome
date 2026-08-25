@@ -389,6 +389,7 @@
   "filter_removed_successfully": "Removed blocklist: <strong>%value%</strong>",
   "filter_removed_successfully_allowlist": "Removed allowlist: <strong>%value%</strong>",
   "filters": "Filters",
+  "fix": "Fix",
   "forgot_password": "Forgot password?",
   "forgot_password_list_item_1": "Create a new password using the htpasswd tool or any online BCrypt generator.",
   "forgot_password_list_item_2": "Stop AdGuard Home.",

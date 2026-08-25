@@ -20,6 +20,7 @@ type Props = {
     disabled?: boolean;
     onClick?: JSX.EventHandler<HTMLAnchorElement, MouseEvent>;
     id?: string;
+    title?: string;
     query?: QueryParams;
     children?: JSX.Element;
 };
@@ -55,13 +56,14 @@ export const Link = (linkProps: Props) => {
         <Show
             when={!linkProps.disabled}
             fallback={
-                <div id={linkProps.id} tabIndex={0} class={cn(linkProps.class)}>
+                <div id={linkProps.id} tabIndex={0} title={linkProps.title} class={cn(linkProps.class)}>
                     {linkProps.children}
                 </div>
             }
         >
             <A
                 id={linkProps.id}
+                title={linkProps.title}
                 class={cn(theme.link.link, linkProps.class)}
                 href={linkPathBuilder(
                     linkProps.to,

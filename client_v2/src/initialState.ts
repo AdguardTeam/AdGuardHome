@@ -347,7 +347,7 @@ export type ClientFormState = {
     };
     upstreams: string;
     upstreams_cache_enabled: boolean;
-    upstreams_cache_size: number;
+    upstreams_cache_size: number | string;
     processingSave: boolean;
     formErrors: Record<string, string | string[]>;
 };

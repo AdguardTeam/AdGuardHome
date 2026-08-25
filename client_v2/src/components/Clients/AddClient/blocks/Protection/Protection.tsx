@@ -82,7 +82,12 @@ export const Protection = () => {
                 >
                     <For each={SAFE_SEARCH_PROVIDER_KEYS}>
                         {(key) => (
-                            <div class={s.checkboxRow}>
+                            <div
+                                class={cn(s.checkboxRow, {
+                                    [s.checkboxRowDisabled]:
+                                        disabled() || !clientFormState.safe_search.enabled,
+                                })}
+                            >
                                 <Checkbox
                                     id={`safe-search-${key}`}
                                     checked={clientFormState.safe_search[key]}

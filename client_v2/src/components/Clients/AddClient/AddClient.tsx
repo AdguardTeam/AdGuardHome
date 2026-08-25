@@ -149,7 +149,8 @@ export const AddClient = () => {
     };
 
     const handleCacheSizeChange = (e: Event) => {
-        const value = Number((e.target as HTMLInputElement).value) || 0;
+        const raw = (e.target as HTMLInputElement).value;
+        const value = raw === '' ? '' : parseInt(raw, 10);
         updateClientFormField({ field: 'upstreams_cache_size', value });
         setCacheSizeError(undefined);
     };
@@ -214,6 +215,7 @@ export const AddClient = () => {
                             size="large"
                             error={!!nameError()}
                             errorMessage={nameError()}
+                            isClearable
                         />
                     </div>
 

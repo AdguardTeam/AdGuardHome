@@ -779,16 +779,18 @@ export const validateMinValue = (value: number, min: number): string | undefined
  * @param enabled - Whether per-client upstream caching is enabled
  *
  * @example validateCacheSize(0, true)         // error ("must be greater than zero")
+ * @example validateCacheSize('', true)        // error ("must be greater than zero")
  * @example validateCacheSize(1000, true)      // undefined (valid)
  * @example validateCacheSize(4294967296, true) // error (exceeds UINT32_MAX)
  * @example validateCacheSize(0, false)        // undefined (no validation when disabled)
  */
-export const validateCacheSize = (size: number, enabled: boolean): ValidationResult => {
+export const validateCacheSize = (size: number | string, enabled: boolean): ValidationResult => {
     if (!enabled) {
         return undefined;
     }
-    if (size === 0) {
+    const num = Number(size);
+    if (Number.isNaN(num) || num === 0) {
         return intl.getMessage('cache_config_size_validation');
     }
-    return validateBetween(size, 1, UINT32_RANGE.MAX);
+    return validateBetween(num, 1, UINT32_RANGE.MAX);
 };

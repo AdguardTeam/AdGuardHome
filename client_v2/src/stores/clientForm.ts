@@ -143,7 +143,7 @@ export const buildClientConfig = (form: ClientFormState) => ({
         ? form.upstreams.split('\n').filter((line: string) => line.trim() !== '')
         : [],
     upstreams_cache_enabled: form.upstreams_cache_enabled,
-    upstreams_cache_size: form.upstreams_cache_size,
+    upstreams_cache_size: form.upstreams_cache_size === '' ? 0 : Number(form.upstreams_cache_size),
 });
 
 /**

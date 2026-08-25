@@ -53,7 +53,7 @@ export const SetupGuide = (props: Props) => {
                 <Show when={!props.isStep}>
                     <h1 class={s.guideTitle}>{intl.getMessage('setup_guide_device_type')}</h1>
                 </Show>
-                <Guide dnsAddresses={dnsAddresses()} />
+                <Guide dnsAddresses={dnsAddresses()} isInstall={props.isStep} />
 
                 <div class={s.guideDesc}>
                     <h1 class={s.dnsTitle}>{intl.getMessage('home_dns_addresses')}</h1>

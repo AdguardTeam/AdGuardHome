@@ -3,6 +3,7 @@ import { createStore } from 'solid-js/store';
 import cn from 'clsx';
 
 import { Loader } from 'panel/common/ui/Loader';
+import { Tooltip } from 'panel/common/ui/Tooltip';
 import theme from 'panel/lib/theme';
 import { Pagination } from './blocks/Pagination/Pagination';
 
@@ -229,15 +230,24 @@ export const Table = <T extends Record<string, any>>(props: TableProps<T>) => {
                                         {column.header.render ? (
                                             column.header.render()
                                         ) : (
-                                            <span
-                                                class={cn(
-                                                    theme.text.t3,
-                                                    theme.text.condenced,
-                                                    theme.text.semibold,
-                                                )}
+                                            <Tooltip
+                                                class={s.headerTooltipWrapper}
+                                                overlayClass={s.headerTooltipOverlay}
+                                                content={column.header.text}
                                             >
-                                                {column.header.text}
-                                            </span>
+                                                <span
+                                                    data-testid={`table-header-${column.key}`}
+                                                    title={column.header.text}
+                                                    class={cn(
+                                                        theme.text.t3,
+                                                        theme.text.condenced,
+                                                        theme.text.semibold,
+                                                        s.tableHeaderText,
+                                                    )}
+                                                >
+                                                    {column.header.text}
+                                                </span>
+                                            </Tooltip>
                                         )}
 
                                         {(props.sortable ?? true) && column.sortable && (
