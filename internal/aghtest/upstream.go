@@ -168,7 +168,7 @@ func NewUpstream() (u *dnsproxytest.Upstream) {
 		OnAddress: func() (addr string) { return "upstream.example" },
 		OnClose:   func() (err error) { return nil },
 		OnExchange: func(req *dns.Msg) (resp *dns.Msg, err error) {
-			panic(testutil.UnexpectedCall())
+			panic(testutil.UnexpectedCall(req))
 		},
 	}
 }
