@@ -12,7 +12,9 @@ describe('validateHostname', () => {
     });
 
     it('rejects hostnames longer than 253 chars', () => {
-        expect(validateHostname('a'.repeat(254))).toBe('Hostname must not be longer than 253 characters');
+        expect(validateHostname('a'.repeat(254))).toBe(
+            'Hostname must not be longer than 253 characters',
+        );
     });
 
     it('keeps empty values valid', () => {
@@ -45,8 +47,11 @@ describe('validateHostnameNotDuplicate', () => {
 });
 
 describe('validateLeaseTime', () => {
+    const maxLeaseTime = 4294967295;
+    const formattedMax = maxLeaseTime.toLocaleString();
+
     it('rejects non-integer values', () => {
-        expect(validateLeaseTime('1.5')).toBe('Enter a value from 1 and 4,294,967,295');
+        expect(validateLeaseTime('1.5')).toBe(`Enter a value from 1 and ${formattedMax}`);
     });
 
     it('accepts an integer number of seconds', () => {
@@ -54,8 +59,8 @@ describe('validateLeaseTime', () => {
     });
 
     it('rejects values above uint32 max', () => {
-        expect(validateLeaseTime('4294967296')).toBe(
-            'Enter a value from 1 and 4,294,967,295',
+        expect(validateLeaseTime(String(maxLeaseTime + 1))).toBe(
+            `Enter a value from 1 and ${formattedMax}`,
         );
     });
 });
