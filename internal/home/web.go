@@ -3,6 +3,7 @@ package home
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"log/slog"
@@ -68,7 +69,7 @@ type webAPIConfig struct {
 
 	// tlsManager contains the current configuration and state of TLS
 	// encryption.  It must not be nil.
-	tlsManager *tlsManager
+	tlsManager aghtls.Manager
 
 	// auth stores web user information and handles authentication.  It must not
 	// be nil.
@@ -218,15 +219,7 @@ type webAPI struct {
 	baseLogger *slog.Logger
 
 	// tlsManager manages the TLS state.  It must not be nil.
-	//
-	// TODO(m.kazantsev):  Replace with [aghtls.Manager] once
-	// [aghtls.TLSConfigProvider] is merged with it.
-	tlsManager service.Interface
-
-	// tlsConfProvider is used to provide the TLS configuration.
-	//
-	// TODO(m.kazantsev):  Merge with [aghtls.Manager].
-	tlsConfProvider aghtls.TLSConfigProvider
+	tlsManager aghtls.Manager
 
 	// auth stores web user information and handles authentication.
 	auth *auth
@@ -255,18 +248,17 @@ func newWebAPI(ctx context.Context, conf *webAPIConfig) (w *webAPI) {
 	conf.logger.InfoContext(ctx, "initializing")
 
 	w = &webAPI{
-		conf:            conf,
-		confModifier:    conf.confModifier,
-		httpReg:         conf.httpReg,
-		cmdCons:         conf.CommandConstructor,
-		logger:          conf.logger,
-		baseLogger:      conf.baseLogger,
-		tlsManager:      conf.tlsManager,
-		tlsConfProvider: conf.tlsManager,
-		auth:            conf.auth,
-		pidFilePath:     conf.pidFilePath,
-		startTime:       time.Now(),
-		hostsContainer:  conf.hostsContainer,
+		conf:           conf,
+		confModifier:   conf.confModifier,
+		httpReg:        conf.httpReg,
+		cmdCons:        conf.CommandConstructor,
+		logger:         conf.logger,
+		baseLogger:     conf.baseLogger,
+		tlsManager:     conf.tlsManager,
+		auth:           conf.auth,
+		pidFilePath:    conf.pidFilePath,
+		startTime:      time.Now(),
+		hostsContainer: conf.hostsContainer,
 	}
 
 	clientFS := http.FileServer(http.FS(conf.clientFS))
@@ -306,8 +298,8 @@ func (web *webAPI) tlsConfigChanged(ctx context.Context) {
 
 	web.logger.DebugContext(ctx, "applying new tls configuration")
 
-	extTLSConf := web.tlsConfProvider.ExtendedTLSConfig()
-	tlsConf := web.tlsConfProvider.TLSConfig()
+	extTLSConf := web.tlsManager.ExtendedTLSConfig()
+	tlsConf := web.tlsManager.TLSConfig()
 
 	enabled := tlsConf != nil &&
 		extTLSConf.Enabled &&
@@ -471,14 +463,14 @@ func (web *webAPI) serveTLS(ctx context.Context) (next bool) {
 	web.httpsServer.server = &http.Server{
 		Addr:              addr,
 		Handler:           hdlr,
-		TLSConfig:         web.tlsConfProvider.TLSConfig(),
+		TLSConfig:         web.tlsManager.TLSConfig(),
 		ReadTimeout:       web.conf.ReadTimeout,
 		ReadHeaderTimeout: web.conf.ReadHeaderTimeout,
 		WriteTimeout:      web.conf.WriteTimeout,
 		ErrorLog:          slog.NewLogLogger(logger.Handler(), slog.LevelError),
 	}
 
-	extTLSConf := web.tlsConfProvider.ExtendedTLSConfig()
+	extTLSConf := web.tlsManager.ExtendedTLSConfig()
 	printHTTPSAddresses(ctx, web.logger, extTLSConf)
 
 	if web.conf.serveHTTP3 {
@@ -507,7 +499,7 @@ func (web *webAPI) mustStartHTTP3(ctx context.Context, address string) {
 		// TODO(a.garipov): See if there is a way to use the error log as
 		// well as timeouts here.
 		Addr:      address,
-		TLSConfig: web.tlsConfProvider.TLSConfig(),
+		TLSConfig: web.tlsManager.TLSConfig(),
 		Handler:   hdlr,
 	}
 
@@ -546,7 +538,7 @@ func startPprof(baseLogger *slog.Logger, port uint16) {
 
 // handleTLSStatus is the handler for the GET /control/tls/status HTTP API.
 func (web *webAPI) handleTLSStatus(w http.ResponseWriter, r *http.Request) {
-	tlsConf := web.tlsConfProvider.ExtendedTLSConfig()
+	tlsConf := web.tlsManager.ExtendedTLSConfig()
 
 	data := &tlsConfig{
 		tlsConfigSettingsExt: tlsConfigSettingsExt{
@@ -556,7 +548,7 @@ func (web *webAPI) handleTLSStatus(w http.ResponseWriter, r *http.Request) {
 		tlsConfigStatus: tlsConfigStatusFromConf(&tlsConf.Status),
 	}
 
-	web.marshalTLS(r.Context(), w, r, data)
+	marshalTLS(r.Context(), web.logger, w, r, data)
 }
 
 // handleTLSValidate is the handler for the POST /control/tls/validate HTTP API.
@@ -574,7 +566,7 @@ func (web *webAPI) handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	extTLSConf := web.tlsConfProvider.ExtendedTLSConfig()
+	extTLSConf := web.tlsManager.ExtendedTLSConfig()
 
 	if setts.PrivateKeySaved {
 		setts.PrivateKey = extTLSConf.PrivateKey
@@ -591,10 +583,10 @@ func (web *webAPI) handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 	// Skip the error check, since we are only interested in the value of
 	// status.WarningValidation.
 	status := &aghtls.TLSConfigStatus{}
-	_ = loadTLSConfig(
+	_ = aghtls.LoadTLSConfig(
 		ctx,
 		web.logger,
-		web.tlsConfProvider,
+		web.tlsManager,
 		confFromTLSSettings(&setts.tlsConfigSettings),
 		status,
 	)
@@ -603,7 +595,7 @@ func (web *webAPI) handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 		tlsConfigStatus:      tlsConfigStatusFromConf(status),
 	}
 
-	web.marshalTLS(ctx, w, r, resp)
+	marshalTLS(ctx, web.logger, w, r, resp)
 }
 
 // validateTLSSettings returns error if the setts are not valid.
@@ -773,7 +765,7 @@ func (web *webAPI) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	extTLSConf := web.tlsConfProvider.ExtendedTLSConfig()
+	extTLSConf := web.tlsManager.ExtendedTLSConfig()
 
 	if req.PrivateKeySaved {
 		req.PrivateKey = extTLSConf.PrivateKey
@@ -781,7 +773,8 @@ func (web *webAPI) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 
 	req.StrictSNICheck = extTLSConf.StrictSNICheck
 
-	if err = web.validateTLSSettings(req); err != nil {
+	err = web.validateTLSSettings(req)
+	if err != nil {
 		aghhttp.ErrorAndLog(ctx, web.logger, r, w, http.StatusBadRequest, "%s", err)
 
 		return
@@ -789,14 +782,14 @@ func (web *webAPI) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 
 	status := &aghtls.TLSConfigStatus{}
 	conf := confFromTLSSettings(&req.tlsConfigSettings)
-	err = loadTLSConfig(ctx, web.logger, web.tlsConfProvider, conf, status)
+	err = aghtls.LoadTLSConfig(ctx, web.logger, web.tlsManager, conf, status)
 	if err != nil {
 		resp := &tlsConfig{
 			tlsConfigSettingsExt: req,
 			tlsConfigStatus:      tlsConfigStatusFromConf(status),
 		}
 
-		web.marshalTLS(ctx, w, r, resp)
+		marshalTLS(ctx, web.logger, w, r, resp)
 
 		return
 	}
@@ -804,12 +797,14 @@ func (web *webAPI) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 	newTLSConf := conf
 	newTLSConf.Status = *status
 
-	restartHTTPS, err = web.tlsConfProvider.SetExtendedTLSConfig(ctx, req.ServePlainDNS, newTLSConf)
+	restartHTTPS, err = web.tlsManager.SetExtendedTLSConfig(ctx, req.ServePlainDNS, newTLSConf)
 	if err != nil {
 		aghhttp.ErrorAndLog(ctx, web.logger, r, w, http.StatusInternalServerError, "%s", err)
 
 		return
 	}
+
+	setServePlainDNS(req)
 
 	err = web.reconfigureDNSServer(ctx)
 	if err != nil {
@@ -838,6 +833,20 @@ func (web *webAPI) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 	}()
 }
 
+// setServePlainDNS updates the ServePlainDNS field of [config.DNS].
+func setServePlainDNS(req tlsConfigSettingsExt) {
+	if req.ServePlainDNS == aghalg.NBNull {
+		return
+	}
+
+	func() {
+		config.Lock()
+		defer config.Unlock()
+
+		config.DNS.ServePlainDNS = req.ServePlainDNS == aghalg.NBTrue
+	}()
+}
+
 // writeTLSConfigureResponse writes the response for the POST
 // /control/tls/configure HTTP API.  All arguments must not be nil.
 func (web *webAPI) writeTLSConfigureResponse(
@@ -846,7 +855,7 @@ func (web *webAPI) writeTLSConfigureResponse(
 	r *http.Request,
 	resp *tlsConfig,
 ) {
-	web.marshalTLS(ctx, w, r, resp)
+	marshalTLS(ctx, web.logger, w, r, resp)
 
 	rc := http.NewResponseController(w)
 	err := rc.Flush()
@@ -861,7 +870,7 @@ func (web *webAPI) reconfigureDNSServer(ctx context.Context) (err error) {
 		&config.DNS,
 		config.Clients.Sources,
 		config.HTTPConfig.DoH,
-		web.tlsConfProvider,
+		web.tlsManager,
 		web.httpReg,
 		globalContext.clients.storage,
 		web.confModifier,
@@ -880,8 +889,9 @@ func (web *webAPI) reconfigureDNSServer(ctx context.Context) (err error) {
 
 // marshalTLS encodes sensitive fields and writes data as JSON.  All arguments
 // must not be nil.  data is modified in place.
-func (web *webAPI) marshalTLS(
+func marshalTLS(
 	ctx context.Context,
+	logger *slog.Logger,
 	w http.ResponseWriter,
 	r *http.Request,
 	data *tlsConfig,
@@ -896,7 +906,45 @@ func (web *webAPI) marshalTLS(
 		data.PrivateKey = ""
 	}
 
-	aghhttp.WriteJSONResponseOK(ctx, web.logger, w, r, *data)
+	aghhttp.WriteJSONResponseOK(ctx, logger, w, r, *data)
+}
+
+// unmarshalTLS handles base64-encoded certificates transparently.
+func unmarshalTLS(r *http.Request) (data tlsConfigSettingsExt, err error) {
+	data = tlsConfigSettingsExt{}
+	err = json.NewDecoder(r.Body).Decode(&data)
+	if err != nil {
+		return data, fmt.Errorf("failed to parse new TLS config json: %w", err)
+	}
+
+	if data.tlsConfigSettings.CertificateChain != "" {
+		var cert []byte
+		cert, err = base64.StdEncoding.DecodeString(data.tlsConfigSettings.CertificateChain)
+		if err != nil {
+			return data, fmt.Errorf("failed to base64-decode certificate chain: %w", err)
+		}
+
+		data.tlsConfigSettings.CertificateChain = string(cert)
+		if data.tlsConfigSettings.CertificatePath != "" {
+			return data, fmt.Errorf("certificate data and file can't be set together")
+		}
+	}
+
+	if data.tlsConfigSettings.PrivateKey == "" {
+		return data, nil
+	}
+
+	key, err := base64.StdEncoding.DecodeString(data.tlsConfigSettings.PrivateKey)
+	if err != nil {
+		return data, fmt.Errorf("failed to base64-decode private key: %w", err)
+	}
+
+	data.tlsConfigSettings.PrivateKey = string(key)
+	if data.tlsConfigSettings.PrivateKeyPath != "" {
+		return data, fmt.Errorf("private key data and file can't be set together")
+	}
+
+	return data, nil
 }
 
 // type check

@@ -7,7 +7,7 @@ import (
 
 // ExtendedTLSConfig is the TLS configuration for DNS-over-TLS, DNS-over-QUIC,
 // and HTTPS.  When adding new properties, update the [ExtendedTLSConfig.Clone]
-// and [home.setPrivateFieldsAndCompare] methods as necessary.
+// and [setPrivateFieldsAndCompare] methods as necessary.
 //
 // TODO(m.kazantsev):  Add documentation for each field.
 type ExtendedTLSConfig struct {
