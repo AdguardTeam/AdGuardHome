@@ -53,15 +53,13 @@ type DefaultManager struct {
 	logger      *slog.Logger
 
 	// mu protects tlsConf, extTLSConf, certLastMod, tlsCert, and pair.
-	mu         *sync.Mutex
-	tlsConf    *tls.Config
-	extTLSConf *ExtendedTLSConfig
-	tlsCert    *tls.Certificate
-	rootCerts  *x509.CertPool
-	updates    chan UpdateSignal
-	pair       TLSPair
-
-	// TODO(m.kazantsev): Add support for dynamic updates of custom ciphers.
+	mu              *sync.Mutex
+	tlsConf         *tls.Config
+	extTLSConf      *ExtendedTLSConfig
+	tlsCert         *tls.Certificate
+	rootCerts       *x509.CertPool
+	updates         chan UpdateSignal
+	pair            TLSPair
 	customCipherIDs []uint16
 }
 
@@ -533,10 +531,10 @@ func setPrivateFieldsAndCompare(
 	return cmp.Equal(currentTLSConf, newTLSConf)
 }
 
-// updatePlainDNS checks the old value of
-// [aghtls.ExtendedTLSConfig.ServePlainDNS] in currentTLSConf and if it differs
-// from servePlain, sets the value of servePlain in newTLSConf.ServePlainDNS.
-// currentTLSConf and newTLSConf must not be nil.
+// updatePlainDNS checks the old value of [ExtendedTLSConfig.ServePlainDNS] in
+// currentTLSConf and if it differs from servePlain, sets the value of
+// servePlain in newTLSConf.ServePlainDNS. currentTLSConf and newTLSConf must
+// not be nil.
 func updatePlainDNS(
 	currentTLSConf *ExtendedTLSConfig,
 	newTLSConf *ExtendedTLSConfig,

@@ -229,8 +229,6 @@ type webAPI struct {
 
 	// httpsServer is the server that handles HTTPS traffic.  If it is not nil,
 	// [Web.http3Server] must also not be nil.
-	//
-	// TODO(d.kolyshev):  Make it a pointer.
 	httpsServer httpsServer
 
 	// pidFilePath is used for cleanup.
@@ -513,6 +511,7 @@ func (web *webAPI) mustStartHTTP3(ctx context.Context, address string) {
 }
 
 // startPprof launches the debug and profiling server on the provided port.
+// baseLogger must not be nil.
 func startPprof(baseLogger *slog.Logger, port uint16) {
 	addr := netip.AddrPortFrom(netutil.IPv4Localhost(), port)
 
@@ -591,15 +590,16 @@ func (web *webAPI) handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 		status,
 	)
 	resp := &tlsConfig{
-		tlsConfigSettingsExt: setts,
+		tlsConfigSettingsExt: *setts,
 		tlsConfigStatus:      tlsConfigStatusFromConf(status),
 	}
 
 	marshalTLS(ctx, web.logger, w, r, resp)
 }
 
-// validateTLSSettings returns error if the setts are not valid.
-func (web *webAPI) validateTLSSettings(setts tlsConfigSettingsExt) (err error) {
+// validateTLSSettings returns error if the setts are not valid.  setts must be
+// non-nil and valid.
+func (web *webAPI) validateTLSSettings(setts *tlsConfigSettingsExt) (err error) {
 	if !setts.Enabled {
 		if setts.ServePlainDNS == aghalg.NBFalse {
 			// TODO(a.garipov): Support full disabling of all DNS.
@@ -785,7 +785,7 @@ func (web *webAPI) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 	err = aghtls.LoadTLSConfig(ctx, web.logger, web.tlsManager, conf, status)
 	if err != nil {
 		resp := &tlsConfig{
-			tlsConfigSettingsExt: req,
+			tlsConfigSettingsExt: *req,
 			tlsConfigStatus:      tlsConfigStatusFromConf(status),
 		}
 
@@ -816,7 +816,7 @@ func (web *webAPI) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := &tlsConfig{
-		tlsConfigSettingsExt: req,
+		tlsConfigSettingsExt: *req,
 		tlsConfigStatus:      tlsConfigStatusFromConf(status),
 	}
 
@@ -834,7 +834,7 @@ func (web *webAPI) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 }
 
 // setServePlainDNS updates the ServePlainDNS field of [config.DNS].
-func setServePlainDNS(req tlsConfigSettingsExt) {
+func setServePlainDNS(req *tlsConfigSettingsExt) {
 	if req.ServePlainDNS == aghalg.NBNull {
 		return
 	}
@@ -909,12 +909,18 @@ func marshalTLS(
 	aghhttp.WriteJSONResponseOK(ctx, logger, w, r, *data)
 }
 
-// unmarshalTLS handles base64-encoded certificates transparently.
-func unmarshalTLS(r *http.Request) (data tlsConfigSettingsExt, err error) {
-	data = tlsConfigSettingsExt{}
+// unmarshalTLS handles base64-encoded certificates transparently.  r must not
+// be nil.
+func unmarshalTLS(r *http.Request) (data *tlsConfigSettingsExt, err error) {
+	data = &tlsConfigSettingsExt{}
+
 	err = json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {
-		return data, fmt.Errorf("failed to parse new TLS config json: %w", err)
+		return data, fmt.Errorf("failed to parse new tls config json: %w", err)
+	}
+
+	if data == nil {
+		return &tlsConfigSettingsExt{}, nil
 	}
 
 	if data.tlsConfigSettings.CertificateChain != "" {
