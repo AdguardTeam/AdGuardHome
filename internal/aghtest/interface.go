@@ -155,7 +155,7 @@ func (e *Exchanger) Exchange(
 // rename it to just Upstream.
 type UpstreamMock struct {
 	OnAddress  func() (addr string)
-	OnExchange func(req *dns.Msg) (resp *dns.Msg, err error)
+	OnExchange func(ctx context.Context, req *dns.Msg) (resp *dns.Msg, err error)
 	OnClose    func() (err error)
 }
 
@@ -168,8 +168,8 @@ func (u *UpstreamMock) Address() (addr string) {
 }
 
 // Exchange implements the [upstream.Upstream] interface for *UpstreamMock.
-func (u *UpstreamMock) Exchange(req *dns.Msg) (resp *dns.Msg, err error) {
-	return u.OnExchange(req)
+func (u *UpstreamMock) Exchange(ctx context.Context, req *dns.Msg) (resp *dns.Msg, err error) {
+	return u.OnExchange(ctx, req)
 }
 
 // Close implements the [upstream.Upstream] interface for *UpstreamMock.

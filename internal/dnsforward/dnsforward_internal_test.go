@@ -2,6 +2,7 @@ package dnsforward
 
 import (
 	"cmp"
+	"context"
 	"crypto/ecdsa"
 	"crypto/rand"
 	"crypto/rsa"
@@ -299,7 +300,7 @@ func createGoogleATestMessage() *dns.Msg {
 func newGoogleUpstream() (u upstream.Upstream) {
 	return &aghtest.UpstreamMock{
 		OnAddress: func() (addr string) { return "google.upstream.example" },
-		OnExchange: func(req *dns.Msg) (resp *dns.Msg, err error) {
+		OnExchange: func(_ context.Context, req *dns.Msg) (resp *dns.Msg, err error) {
 			return cmp.Or(
 				aghtest.MatchedResponse(req, dns.TypeA, googleDomainName, "8.8.8.8"),
 				new(dns.Msg).SetRcode(req, dns.RcodeNameError),
@@ -569,7 +570,9 @@ func TestDoQServer(t *testing.T) {
 
 	// Send the test message.
 	req := createGoogleATestMessage()
-	res, err := u.Exchange(req)
+
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	res, err := u.Exchange(ctx, req)
 	require.NoError(t, err)
 
 	assertGoogleAResponse(t, res)
@@ -654,11 +657,13 @@ func TestSafeSearch(t *testing.T) {
 	s := createTestServer(t, filterConf, forwardConf, testTLSConfigProvider)
 
 	pt := testutil.NewPanicT(t)
-	ups := aghtest.NewUpstreamMock(func(req *dns.Msg) (resp *dns.Msg, err error) {
-		assert.Equal(pt, googleSafeSearch, req.Question[0].Name)
+	ups := aghtest.NewUpstreamMock(
+		func(_ context.Context, req *dns.Msg) (resp *dns.Msg, err error) {
+			assert.Equal(pt, googleSafeSearch, req.Question[0].Name)
 
-		return aghtest.MatchedResponse(req, dns.TypeA, googleSafeSearch, "1.2.3.4"), nil
-	})
+			return aghtest.MatchedResponse(req, dns.TypeA, googleSafeSearch, "1.2.3.4"), nil
+		},
+	)
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{ups}
 
 	startDeferStop(t, s)
@@ -833,14 +838,16 @@ func TestServerCustomClientUpstream(t *testing.T) {
 		testTLSConfigProvider,
 	)
 
-	ups := aghtest.NewUpstreamMock(func(req *dns.Msg) (resp *dns.Msg, err error) {
-		upsCalledCounter.Add(1)
+	ups := aghtest.NewUpstreamMock(
+		func(_ context.Context, req *dns.Msg) (resp *dns.Msg, err error) {
+			upsCalledCounter.Add(1)
 
-		return cmp.Or(
-			aghtest.MatchedResponse(req, dns.TypeA, "host", "192.168.0.1"),
-			new(dns.Msg).SetRcode(req, dns.RcodeNameError),
-		), nil
-	})
+			return cmp.Or(
+				aghtest.MatchedResponse(req, dns.TypeA, "host", "192.168.0.1"),
+				new(dns.Msg).SetRcode(req, dns.RcodeNameError),
+			), nil
+		},
+	)
 
 	customUpsConf := proxy.NewCustomUpstreamConfig(
 		&proxy.UpstreamConfig{
@@ -1376,12 +1383,14 @@ func TestRewrite(t *testing.T) {
 		ServePlainDNS: true,
 	}))
 
-	ups := aghtest.NewUpstreamMock(func(req *dns.Msg) (resp *dns.Msg, err error) {
-		return cmp.Or(
-			aghtest.MatchedResponse(req, dns.TypeA, "example.org", "4.3.2.1"),
-			new(dns.Msg).SetRcode(req, dns.RcodeNameError),
-		), nil
-	})
+	ups := aghtest.NewUpstreamMock(
+		func(_ context.Context, req *dns.Msg) (resp *dns.Msg, err error) {
+			return cmp.Or(
+				aghtest.MatchedResponse(req, dns.TypeA, "example.org", "4.3.2.1"),
+				new(dns.Msg).SetRcode(req, dns.RcodeNameError),
+			), nil
+		},
+	)
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{ups}
 	startDeferStop(t, s)
 

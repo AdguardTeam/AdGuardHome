@@ -219,7 +219,7 @@ func (cv *upstreamConfigValidator) check(ctx context.Context, l *slog.Logger) {
 func checkSrv(ctx context.Context, l *slog.Logger, res *upstreamResult, hc *healthchecker) {
 	defer slogutil.RecoverAndLog(ctx, l)
 
-	res.err = hc.check(res.server)
+	res.err = hc.check(ctx, res.server)
 	if res.err != nil && res.isSpecific {
 		res.err = domainSpecificTestError{Err: res.err}
 	}
@@ -411,7 +411,7 @@ type healthchecker struct {
 }
 
 // check exchanges with u and validates the response.
-func (h *healthchecker) check(u upstream.Upstream) (err error) {
+func (h *healthchecker) check(ctx context.Context, u upstream.Upstream) (err error) {
 	req := &dns.Msg{
 		MsgHdr: dns.MsgHdr{
 			Id:               dns.Id(),
@@ -424,7 +424,7 @@ func (h *healthchecker) check(u upstream.Upstream) (err error) {
 		}},
 	}
 
-	reply, err := u.Exchange(req)
+	reply, err := u.Exchange(ctx, req)
 	if err != nil {
 		return fmt.Errorf("couldn't communicate with upstream: %w", err)
 	} else if h.ansEmpty && len(reply.Answer) > 0 {

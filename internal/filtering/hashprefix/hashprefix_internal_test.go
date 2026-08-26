@@ -1,6 +1,7 @@
 package hashprefix
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"slices"
@@ -208,10 +209,10 @@ func TestChecker_Check(t *testing.T) {
 
 		var numReq int
 		onExchange := ups.OnExchange
-		ups.OnExchange = func(req *dns.Msg) (resp *dns.Msg, err error) {
+		ups.OnExchange = func(ctx context.Context, req *dns.Msg) (resp *dns.Msg, err error) {
 			numReq++
 
-			return onExchange(req)
+			return onExchange(ctx, req)
 		}
 
 		c.upstream = ups

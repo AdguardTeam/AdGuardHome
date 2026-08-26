@@ -1,6 +1,7 @@
 package aghtest
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -32,7 +33,7 @@ var _ upstream.Upstream = (*Upstream)(nil)
 // Exchange implements the [upstream.Upstream] interface for *Upstream.
 //
 // TODO(a.garipov): Split further into handlers.
-func (u *Upstream) Exchange(m *dns.Msg) (resp *dns.Msg, err error) {
+func (u *Upstream) Exchange(_ context.Context, m *dns.Msg) (resp *dns.Msg, err error) {
 	resp = new(dns.Msg).SetReply(m)
 
 	if len(m.Question) == 0 {
@@ -165,7 +166,9 @@ func mustAnsAAAA(respHdr dns.RR_Header, s string) (ans []dns.RR) {
 // NewUpstreamMock returns an [*UpstreamMock], fields OnAddress and OnClose of
 // which are set to stubs that return "upstream.example" and nil respectively.
 // The field OnExchange is set to onExc.
-func NewUpstreamMock(onExc func(req *dns.Msg) (resp *dns.Msg, err error)) (u *UpstreamMock) {
+func NewUpstreamMock(
+	onExc func(ctx context.Context, req *dns.Msg) (resp *dns.Msg, err error),
+) (u *UpstreamMock) {
 	return &UpstreamMock{
 		OnAddress:  func() (addr string) { return "upstream.example" },
 		OnExchange: onExc,
@@ -199,7 +202,7 @@ func NewBlockUpstream(hostname string, shouldBlock bool) (u *UpstreamMock) {
 
 	return &UpstreamMock{
 		OnAddress: func() (addr string) { return "sbpc.upstream.example" },
-		OnExchange: func(req *dns.Msg) (resp *dns.Msg, err error) {
+		OnExchange: func(_ context.Context, req *dns.Msg) (resp *dns.Msg, err error) {
 			resp = respTmpl.Copy()
 			resp.SetReply(req)
 			resp.Answer[0].(*dns.TXT).Hdr.Name = req.Question[0].Name
@@ -219,7 +222,7 @@ const ErrUpstream errors.Error = "test upstream error"
 func NewErrorUpstream() (u *UpstreamMock) {
 	return &UpstreamMock{
 		OnAddress: func() (addr string) { return "error.upstream.example" },
-		OnExchange: func(_ *dns.Msg) (resp *dns.Msg, err error) {
+		OnExchange: func(_ context.Context, _ *dns.Msg) (resp *dns.Msg, err error) {
 			return nil, ErrUpstream
 		},
 		OnClose: func() (err error) { return nil },

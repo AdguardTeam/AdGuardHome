@@ -122,7 +122,7 @@ func (c *Checker) Check(host string) (ok bool, err error) {
 	l.DebugContext(ctx, "checking", "question", question)
 	req := (&dns.Msg{}).SetQuestion(question, dns.TypeTXT)
 
-	resp, err := c.upstream.Exchange(req)
+	resp, err := c.upstream.Exchange(ctx, req)
 	if err != nil {
 		return false, fmt.Errorf("getting hashes: %w", err)
 	}
