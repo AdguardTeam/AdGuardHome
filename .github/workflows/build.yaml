@@ -50,7 +50,6 @@
           'context': '.'
           'target': 'builder-exporter'
           'output': '.'
-          # TODO(d.kolyshev): !! Set version.
           'build-args': |
             ARCH=amd64 arm64
             BASE_IMAGE=${{ env.BASE_IMAGE }}
@@ -62,7 +61,7 @@
             REVISION=${{ github.sha }}
             SIGN=0
             SOURCE_DATE_EPOCH=${{ env.SOURCE_DATE_EPOCH }}
-            VERSION=v0.0.0-github
+            VERSION=${{ github.ref_name }}
       - 'uses': 'actions/upload-artifact@v7'
         'with':
           'name': 'adguardhome'
@@ -117,7 +116,6 @@
 'name': 'Build and Test QA Artifacts'
 'on':
   'push':
-    # TODO(d.kolyshev): !! Rewrite channel and client_dir for rc.
     'branches':
       - '*'
   'workflow_dispatch':
