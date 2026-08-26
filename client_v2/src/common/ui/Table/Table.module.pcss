@@ -64,18 +64,6 @@
     text-overflow: ellipsis;
 }
 
-/* Tooltip trigger is a flex item inside the header cell — must be allowed to shrink */
-.headerTooltipWrapper {
-    min-width: 0;
-    max-width: 100%;
-    overflow: hidden;
-}
-
-.headerTooltipOverlay {
-    padding: 8px 12px;
-    color: var(--default-main-text);
-}
-
 .tableBodyCell {
     @media (min-width: 768px) {
         min-height: 42px;
@@ -117,12 +105,19 @@
     cursor: pointer;
 }
 
-.sortAsc {
-    transform: rotate(90deg);
+.sortIcon {
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity var(--t2), transform var(--t2);
 }
 
 .sortDesc {
-    transform: rotate(-90deg);
+    transform: rotate(180deg);
+    opacity: 1;
+}
+
+.tableHeaderCell:hover .sortIcon {
+    opacity: 1;
 }
 
 .tablePagination {

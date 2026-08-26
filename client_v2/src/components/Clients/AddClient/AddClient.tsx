@@ -194,9 +194,9 @@ export const AddClient = () => {
 
     return (
         <div class={cn(theme.layout.container, s.containerOverride)} data-testid="client-form">
-            <div class={cn(theme.layout.containerIn, theme.layout.containerIn_one_col)}>
-                <ClientsHeader currentTitle={intl.getMessage('clients_add')} />
+            <ClientsHeader currentTitle={intl.getMessage('clients_add')} />
 
+            <div class={cn(theme.layout.containerIn, theme.layout.containerIn_one_col)}>
                 <Show when={clientFormState.processingSave}>
                     <PageLoader />
                 </Show>

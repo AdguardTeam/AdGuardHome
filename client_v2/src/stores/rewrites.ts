@@ -8,7 +8,7 @@ import {
     rewriteSettingsGet,
     rewriteSettingsUpdate,
 } from 'panel/api/generated';
-import { addErrorToast, addSuccessToast } from './toasts';
+import { addErrorToast, addSuccessToast, createUndoToast } from './toasts';
 import intl from 'panel/common/intl';
 import type { RewriteEntry } from 'panel/api/model/rewriteEntry';
 import type { RewriteSettings } from 'panel/api/model/rewriteSettings';
@@ -100,12 +100,25 @@ export const updateRewrite = async (
     }
 };
 
-export const deleteRewrite = async (config: RewriteEntry): Promise<boolean> => {
+export const deleteRewrite = async (
+    config: RewriteEntry,
+    { withUndo = false }: { withUndo?: boolean } = {},
+): Promise<boolean> => {
     setState('processingDelete', true);
     try {
         await rewriteDelete(config);
         setState('processingDelete', false);
-        addSuccessToast(intl.getMessage('dns_rewrite_removed'));
+        const message = intl.getMessage('user_rules_dns_rewrite_removed');
+        if (withUndo) {
+            addSuccessToast(
+                createUndoToast(message, intl.getMessage('notify_undo'), async () => {
+                    await rewriteAdd(config);
+                    await getRewritesList();
+                }),
+            );
+        } else {
+            addSuccessToast(message);
+        }
         await getRewritesList();
         return true;
     } catch (error) {
@@ -124,6 +137,19 @@ export const getRewriteSettings = async () => {
         addErrorToast({ error });
         setState('processingSettings', false);
     }
+};
+
+/** Finds the rewrite rule that produced the given query log entry. */
+export const findRewriteRuleByDomain = (
+    domain: string,
+): RewriteEntry | undefined => {
+    const exact = state.list.find((r) => r.domain === domain);
+    if (exact) return exact;
+    const wildcard = state.list.find((r) => r.domain === `*.${domain}`);
+    if (wildcard) return wildcard;
+    return state.list.find(
+        (r) => r.domain?.startsWith('*.') && domain.endsWith(r.domain.slice(1)),
+    );
 };
 
 export const updateRewriteSettings = async (values: RewriteSettings) => {

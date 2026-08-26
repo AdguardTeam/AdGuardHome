@@ -32,9 +32,14 @@
     align-items: center;
     overflow: hidden;
     min-width: 0;
+    max-width: 240px;
 
     & a {
         min-width: 0;
+    }
+
+    &:first-child {
+        flex-shrink: 0;
     }
 }
 

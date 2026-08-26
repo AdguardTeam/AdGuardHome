@@ -14,6 +14,7 @@ import {
     MIN_PASSWORD_LENGTH,
     R_HOSTNAME,
     UINT32_RANGE,
+    MAX_HOSTNAME_LENGTH,
 } from './constants';
 
 import { ip4ToInt, isValidAbsolutePath } from './form';
@@ -653,6 +654,10 @@ export const validateHostname = (value?: string): ValidationResult => {
         return undefined;
     }
 
+    if (value.length > MAX_HOSTNAME_LENGTH) {
+        return intl.getMessage('form_error_hostname_length', { max: MAX_HOSTNAME_LENGTH });
+    }
+
     if (
         !R_HOSTNAME.test(value) ||
         R_ALL_DIGITS.test(value) ||
@@ -710,6 +715,7 @@ export const validateDomainsPerLine = (value: string): string | undefined =>
 interface LeaseEntry {
     ip: string;
     mac?: string;
+    hostname?: string;
 }
 
 export const validateIpNotDuplicate =
@@ -724,8 +730,27 @@ export const validateIpNotDuplicate =
 export const validateMacNotDuplicate =
     (existingLeases: LeaseEntry[], editMac?: string): ((value?: string) => ValidationResult) =>
     (value) => {
-        if (value && value !== editMac && existingLeases.some((lease) => lease.mac === value)) {
+        if (
+            value &&
+            value.toLowerCase() !== editMac?.toLowerCase() &&
+            existingLeases.some((lease) => lease.mac?.toLowerCase() === value.toLowerCase())
+        ) {
             return intl.getMessage('dhcp_mac_address_already_added');
+        }
+        return undefined;
+    };
+
+export const validateHostnameNotDuplicate =
+    (existingLeases: LeaseEntry[], editHostname?: string): ((value?: string) => ValidationResult) =>
+    (value) => {
+        if (
+            value &&
+            value !== editHostname &&
+            existingLeases.some(
+                (lease) => lease.hostname && lease.hostname.toLowerCase() === value.toLowerCase(),
+            )
+        ) {
+            return intl.getMessage('dhcp_hostname_already_added');
         }
         return undefined;
     };
@@ -757,6 +782,12 @@ export const validateLeaseTime = (value?: number | string): ValidationResult => 
     const num = typeof value === 'string' ? Number(value) : value;
     if (Number.isNaN(num)) {
         return intl.getMessage('form_error_required');
+    }
+    if (!Number.isInteger(num)) {
+        return intl.getMessage('form_value_value_from_error', {
+            min_value: (1).toLocaleString(),
+            max_value: UINT32_RANGE.MAX.toLocaleString(),
+        });
     }
     return validateBetween(num, 1, UINT32_RANGE.MAX);
 };

@@ -21,7 +21,11 @@ export const FaqTooltip = (props: Props) => {
 
     return (
         <Tooltip
-            overlayClass={cn(s.overlay_mobile, props.overlayClass)}
+            overlayClass={cn(
+                s.overlay_mobile,
+                props.menuSize === 'large' && s.overlay_large,
+                props.overlayClass,
+            )}
             content={
                 <div
                     class={cn(theme.dropdown.menu, s.menu, props.menuClass, {

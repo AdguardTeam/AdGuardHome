@@ -1,18 +1,14 @@
 .switch {
     width: 100%;
     padding: 8px 16px;
-    transition: background-color var(--t2);
     border-radius: 8px;
-
-    &:hover:not(:has(.content:hover)),
-    &:focus {
-        background-color: var(--page-background-additional);
-    }
 }
 
-.switchDisabled {
+.switchDisabled .row {
+    cursor: default;
+
     &:hover,
-    &:focus {
+    &:focus-within {
         background-color: transparent;
     }
 }
@@ -26,7 +22,16 @@
     align-items: flex-start;
     justify-content: space-between;
     gap: 24px;
+    margin: -8px -16px;
+    padding: 8px 16px;
+    border-radius: 8px;
     cursor: pointer;
+    transition: background-color var(--t2);
+
+    &:hover,
+    &:focus-within {
+        background-color: var(--page-background-additional);
+    }
 
     @media (min-width: 1024px) {
         gap: 40px;

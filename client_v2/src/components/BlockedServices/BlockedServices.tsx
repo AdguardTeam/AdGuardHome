@@ -185,6 +185,26 @@ export const BlockedServices = (props: Props) => {
     return (
         <Show when={!isInitialLoading()}>
             <div class={cn(theme.layout.container, props.class)}>
+                <Show when={props.breadcrumbs}>
+                    <div class={s.breadcrumbs}>
+                        <Breadcrumbs
+                            parentLinks={props.breadcrumbs!.parentLinks}
+                            currentTitle={props.breadcrumbs!.currentTitle}
+                        />
+                    </div>
+                    <h1
+                        class={cn(
+                            theme.layout.title,
+                            theme.title.h4,
+                            theme.title.h3_tablet,
+                            s.clientsTitle,
+                        )}
+                    >
+                        {intl.getMessage('blocked_services')}
+                    </h1>
+                    <p class={s.description}>{intl.getMessage('blocked_services_desc')}</p>
+                </Show>
+
                 <div class={cn(theme.layout.containerIn, theme.layout.containerIn_one_col)}>
                     <Show when={!props.clientScope && !props.breadcrumbs}>
                         <div class={s.header}>
@@ -200,26 +220,6 @@ export const BlockedServices = (props: Props) => {
                             </h1>
                             <p class={s.description}>{intl.getMessage('blocked_services_desc')}</p>
                         </div>
-                    </Show>
-
-                    <Show when={props.breadcrumbs}>
-                        <div class={s.breadcrumbs}>
-                            <Breadcrumbs
-                                parentLinks={props.breadcrumbs!.parentLinks}
-                                currentTitle={props.breadcrumbs!.currentTitle}
-                            />
-                        </div>
-                        <h1
-                            class={cn(
-                                theme.layout.title,
-                                theme.title.h4,
-                                theme.title.h3_tablet,
-                                s.clientsTitle,
-                            )}
-                        >
-                            {intl.getMessage('blocked_services')}
-                        </h1>
-                        <p class={s.description}>{intl.getMessage('blocked_services_desc')}</p>
                     </Show>
 
                     <Link

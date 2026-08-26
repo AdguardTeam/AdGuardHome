@@ -3,7 +3,6 @@ import { createStore } from 'solid-js/store';
 import cn from 'clsx';
 
 import { Loader } from 'panel/common/ui/Loader';
-import { Tooltip } from 'panel/common/ui/Tooltip';
 import theme from 'panel/lib/theme';
 import { Pagination } from './blocks/Pagination/Pagination';
 
@@ -230,53 +229,30 @@ export const Table = <T extends Record<string, any>>(props: TableProps<T>) => {
                                         {column.header.render ? (
                                             column.header.render()
                                         ) : (
-                                            <Tooltip
-                                                class={s.headerTooltipWrapper}
-                                                overlayClass={s.headerTooltipOverlay}
-                                                content={column.header.text}
+                                            <span
+                                                data-testid={`table-header-${column.key}`}
+                                                title={column.header.text}
+                                                class={cn(
+                                                    theme.text.t3,
+                                                    theme.text.condenced,
+                                                    theme.text.semibold,
+                                                    s.tableHeaderText,
+                                                )}
                                             >
-                                                <span
-                                                    data-testid={`table-header-${column.key}`}
-                                                    title={column.header.text}
-                                                    class={cn(
-                                                        theme.text.t3,
-                                                        theme.text.condenced,
-                                                        theme.text.semibold,
-                                                        s.tableHeaderText,
-                                                    )}
-                                                >
-                                                    {column.header.text}
-                                                </span>
-                                            </Tooltip>
+                                                {column.header.text}
+                                            </span>
                                         )}
 
                                         {(props.sortable ?? true) && column.sortable && (
-                                            <span>
-                                                <Show
-                                                    when={
+                                            <Icon
+                                                icon="arrow_bottom"
+                                                color="gray"
+                                                class={cn(s.sortIcon, {
+                                                    [s.sortDesc]:
                                                         state.sortKey === column.key &&
-                                                        state.sortDirection === 'asc'
-                                                    }
-                                                >
-                                                    <Icon
-                                                        icon="arrow"
-                                                        color="gray"
-                                                        class={s.sortAsc}
-                                                    />
-                                                </Show>
-                                                <Show
-                                                    when={
-                                                        state.sortKey === column.key &&
-                                                        state.sortDirection === 'desc'
-                                                    }
-                                                >
-                                                    <Icon
-                                                        icon="arrow"
-                                                        color="gray"
-                                                        class={s.sortDesc}
-                                                    />
-                                                </Show>
-                                            </span>
+                                                        state.sortDirection === 'desc',
+                                                })}
+                                            />
                                         )}
                                     </div>
                                 )}

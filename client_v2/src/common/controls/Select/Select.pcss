@@ -76,7 +76,7 @@
 
             &:not([data-disabled]) {
                 &:hover,
-                &:focus-within {
+                &:has(:focus-visible) {
                     background-color: var(--hovered-secondary-button);
                 }
 
@@ -84,6 +84,14 @@
                     background-color: var(--pressed-secondary-button);
                 }
             }
+        }
+
+        [data-scope='select'][data-part='trigger'] {
+            padding-left: 8px;
+        }
+
+        [data-scope='select'][data-part='indicator'] {
+            padding-right: 0;
         }
     }
 

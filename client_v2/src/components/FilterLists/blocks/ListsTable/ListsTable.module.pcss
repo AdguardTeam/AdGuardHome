@@ -46,9 +46,14 @@
 
 .domainCellValue {
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     flex: 1;
     white-space: normal;
+
+    & > span {
+        flex: 1;
+        min-width: 0;
+    }
 
     @media (min-width: 768px) {
         flex-direction: row-reverse;
@@ -56,6 +61,11 @@
         gap: 8px;
         flex: initial;
         white-space: nowrap;
+        align-items: center;
+
+        & > span {
+            flex: initial;
+        }
     }
 }
 

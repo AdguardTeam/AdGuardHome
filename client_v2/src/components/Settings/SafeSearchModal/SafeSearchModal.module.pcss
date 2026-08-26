@@ -1,14 +1,17 @@
 .providersGrid {
     display: flex;
     flex-direction: column;
-    gap: 16px;
     padding: 8px 0;
 }
 
 .providerRow {
-    width: 100%;
-    padding: 8px 0;
+    display: flex;
+    align-items: center;
+    width: calc(100% + 32px);
+    padding: 8px 16px;
+    margin: 0 -16px;
     border-radius: 8px;
+    transition: var(--t2) background-color;
 
     &:hover,
     &:focus-within {

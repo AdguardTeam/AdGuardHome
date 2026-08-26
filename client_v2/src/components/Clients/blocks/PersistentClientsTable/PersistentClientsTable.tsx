@@ -141,7 +141,7 @@ export const PersistentClientsTable = (props: Props) => {
                                 }
                                 class={s.nameDropdownInner}
                             >
-                                <span class={cn(theme.common.textOverflow, s.nameTrigger)}>
+                                <span class={cn(theme.common.twoRowsOverflow, s.nameTrigger)}>
                                     {value}
                                 </span>
                             </Tooltip>

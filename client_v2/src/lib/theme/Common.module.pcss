@@ -18,6 +18,7 @@
 }
 
 .twoRowsOverflow {
+    max-width: 100%;
     display: -webkit-box;
     white-space: initial;
     word-break: break-word;
@@ -27,6 +28,9 @@
     overflow: hidden;
 
     @media (min-width: 768px) {
+        display: block;
+        white-space: nowrap;
+        word-break: normal;
         -webkit-line-clamp: none;
     }
 }

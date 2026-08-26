@@ -35,7 +35,7 @@ export const DhcpDisabledBanner = () => {
             <div class={s.wrapper}>
                 <div class={s.banner} role="status" data-testid="dhcp-disabled-banner">
                     <Icon icon="attention_filled" class={s.icon} />
-                    <div class={cn(s.message, theme.text.t2, theme.text.semibold)}>
+                    <div class={cn(s.message, theme.text.t2)}>
                         {intl.getMessage('setting_not_applied_dhcp')}
                     </div>
                     <Button

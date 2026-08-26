@@ -79,7 +79,7 @@ export const RewritesTable = (props: Props) => {
                 return (
                     <div class={theme.table.cell}>
                         <div class={cn(theme.table.cellValueText, s.domainCellValue)}>
-                            <span class={theme.common.textOverflow}>{value}</span>
+                            <span class={theme.common.twoRowsOverflow}>{value}</span>
                             <Switch
                                 id={id}
                                 data-testid={`rewrite-toggle-${domain}`}
