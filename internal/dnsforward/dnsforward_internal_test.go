@@ -32,6 +32,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/hashprefix"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/safesearch"
 	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
+	"github.com/AdguardTeam/dnsproxy/dnsproxytest"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
@@ -294,7 +295,7 @@ func createGoogleATestMessage() *dns.Msg {
 }
 
 func newGoogleUpstream() (u upstream.Upstream) {
-	return &aghtest.UpstreamMock{
+	return &dnsproxytest.Upstream{
 		OnAddress: func() (addr string) { return "google.upstream.example" },
 		OnExchange: func(req *dns.Msg) (resp *dns.Msg, err error) {
 			return cmp.Or(
@@ -651,11 +652,13 @@ func TestSafeSearch(t *testing.T) {
 	s := createTestServer(t, filterConf, forwardConf, testTLSManager)
 
 	pt := testutil.NewPanicT(t)
-	ups := aghtest.NewUpstreamMock(func(req *dns.Msg) (resp *dns.Msg, err error) {
+	ups := aghtest.NewUpstream()
+	ups.OnExchange = func(req *dns.Msg) (resp *dns.Msg, err error) {
 		assert.Equal(pt, googleSafeSearch, req.Question[0].Name)
 
 		return aghtest.MatchedResponse(req, dns.TypeA, googleSafeSearch, "1.2.3.4"), nil
-	})
+	}
+
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{ups}
 
 	startDeferStop(t, s)
@@ -830,14 +833,15 @@ func TestServerCustomClientUpstream(t *testing.T) {
 		testTLSManager,
 	)
 
-	ups := aghtest.NewUpstreamMock(func(req *dns.Msg) (resp *dns.Msg, err error) {
+	ups := aghtest.NewUpstream()
+	ups.OnExchange = func(req *dns.Msg) (resp *dns.Msg, err error) {
 		upsCalledCounter.Add(1)
 
 		return cmp.Or(
 			aghtest.MatchedResponse(req, dns.TypeA, "host", "192.168.0.1"),
 			new(dns.Msg).SetRcode(req, dns.RcodeNameError),
 		), nil
-	})
+	}
 
 	customUpsConf := proxy.NewCustomUpstreamConfig(
 		&proxy.UpstreamConfig{
@@ -909,10 +913,8 @@ func TestBlockCNAMEProtectionEnabled(t *testing.T) {
 		},
 		testTLSManager,
 	)
-	testUpstm := &aghtest.Upstream{
-		CName: testCNAMEs,
-		IPv4:  testIPv4,
-	}
+
+	testUpstm := aghtest.NewExchangingUpstream(t, testCNAMEs, testIPv4, nil)
 
 	// TODO(m.kazantsev):  Get rid of this manual assignment of upstreams across
 	// the whole project.
@@ -951,12 +953,10 @@ func TestBlockCNAME(t *testing.T) {
 		forwardConf,
 		testTLSManager,
 	)
-	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{
-		&aghtest.Upstream{
-			CName: testCNAMEs,
-			IPv4:  testIPv4,
-		},
-	}
+
+	ups := aghtest.NewExchangingUpstream(t, testCNAMEs, testIPv4, nil)
+
+	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{ups}
 	startDeferStop(t, s)
 
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP).String()
@@ -1028,12 +1028,10 @@ func TestClientRulesForCNAMEMatching(t *testing.T) {
 		forwardConf,
 		testTLSManager,
 	)
-	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{
-		&aghtest.Upstream{
-			CName: testCNAMEs,
-			IPv4:  testIPv4,
-		},
-	}
+
+	ups := aghtest.NewExchangingUpstream(t, testCNAMEs, testIPv4, nil)
+
+	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{ups}
 	startDeferStop(t, s)
 
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
@@ -1373,12 +1371,14 @@ func TestRewrite(t *testing.T) {
 		ServePlainDNS: true,
 	}))
 
-	ups := aghtest.NewUpstreamMock(func(req *dns.Msg) (resp *dns.Msg, err error) {
+	ups := aghtest.NewUpstream()
+	ups.OnExchange = func(req *dns.Msg) (resp *dns.Msg, err error) {
 		return cmp.Or(
 			aghtest.MatchedResponse(req, dns.TypeA, "example.org", "4.3.2.1"),
 			new(dns.Msg).SetRcode(req, dns.RcodeNameError),
 		), nil
-	})
+	}
+
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{ups}
 	startDeferStop(t, s)
 

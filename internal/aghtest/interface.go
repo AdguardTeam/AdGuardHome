@@ -16,9 +16,7 @@ import (
 	nextagh "github.com/AdguardTeam/AdGuardHome/internal/next/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/rdns"
 	"github.com/AdguardTeam/AdGuardHome/internal/whois"
-	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/testutil"
-	"github.com/miekg/dns"
 )
 
 // FSWatcher is a fake [aghos.FSWatcher] implementation for tests.
@@ -147,34 +145,6 @@ func (e *Exchanger) Exchange(
 	ip netip.Addr,
 ) (host string, ttl time.Duration, err error) {
 	return e.OnExchange(ctx, ip)
-}
-
-// UpstreamMock is a fake [upstream.Upstream] implementation for tests.
-//
-// TODO(a.garipov): Replace with all uses of Upstream with UpstreamMock and
-// rename it to just Upstream.
-type UpstreamMock struct {
-	OnAddress  func() (addr string)
-	OnExchange func(req *dns.Msg) (resp *dns.Msg, err error)
-	OnClose    func() (err error)
-}
-
-// type check
-var _ upstream.Upstream = (*UpstreamMock)(nil)
-
-// Address implements the [upstream.Upstream] interface for *UpstreamMock.
-func (u *UpstreamMock) Address() (addr string) {
-	return u.OnAddress()
-}
-
-// Exchange implements the [upstream.Upstream] interface for *UpstreamMock.
-func (u *UpstreamMock) Exchange(req *dns.Msg) (resp *dns.Msg, err error) {
-	return u.OnExchange(req)
-}
-
-// Close implements the [upstream.Upstream] interface for *UpstreamMock.
-func (u *UpstreamMock) Close() (err error) {
-	return u.OnClose()
 }
 
 // ConfigModifier is a fake [agh.ConfigModifier] implementation for tests.
