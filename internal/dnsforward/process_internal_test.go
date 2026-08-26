@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"net"
 	"net/netip"
 	"testing"
@@ -90,7 +91,7 @@ func TestServer_ProcessInitial(t *testing.T) {
 				t,
 				&filtering.Config{BlockingMode: filtering.BlockingModeDefault},
 				c,
-				testTLSConfigProvider,
+				testTLSManager,
 			)
 
 			var gotAddr netip.Addr
@@ -194,7 +195,7 @@ func TestServer_ProcessFilteringAfterResponse(t *testing.T) {
 				t,
 				&filtering.Config{BlockingMode: filtering.BlockingModeDefault},
 				c,
-				testTLSConfigProvider,
+				testTLSManager,
 			)
 
 			resp := newResp(dns.RcodeSuccess, tc.req, tc.respAns)
@@ -328,9 +329,10 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 
 	tlsConf, _, _ := createServerTLSConfig(t)
 
-	tlsConfProvider := &aghtest.TLSConfigProvider{}
-	tlsConfProvider.OnTLSConfig = func() (conf *tls.Config) { return tlsConf }
-	tlsConfProvider.OnHasIPAddrs = func() (ok bool) { return true }
+	tlsManager := &aghtest.Manager{}
+	tlsManager.OnTLSConfig = func() (conf *tls.Config) { return tlsConf }
+	tlsManager.OnHasIPAddrs = func() (ok bool) { return true }
+	tlsManager.OnRootCAs = func() (cert *x509.CertPool) { return tlsConf.RootCAs }
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -354,7 +356,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 					},
 					ServePlainDNS: true,
 				},
-				tlsConfProvider,
+				tlsManager,
 			)
 
 			req := createTestMessageWithType(tc.host, tc.qtype)
@@ -692,7 +694,7 @@ func TestServer_ProcessUpstream_localPTR(t *testing.T) {
 				LocalPTRResolvers: []string{localUpsAddr},
 				ServePlainDNS:     true,
 			},
-			testTLSConfigProvider,
+			testTLSManager,
 		)
 		ctx := testutil.ContextWithTimeout(t, testTimeout)
 		pctx := newPrxCtx()
@@ -723,7 +725,7 @@ func TestServer_ProcessUpstream_localPTR(t *testing.T) {
 				LocalPTRResolvers: []string{localUpsAddr},
 				ServePlainDNS:     true,
 			},
-			testTLSConfigProvider,
+			testTLSManager,
 		)
 		pctx := newPrxCtx()
 

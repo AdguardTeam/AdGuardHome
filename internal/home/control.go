@@ -122,7 +122,7 @@ func (web *webAPI) handleStatus(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	l := web.logger
 
-	extTLSConfig := web.tlsConfProvider.ExtendedTLSConfig()
+	extTLSConfig := web.tlsManager.ExtendedTLSConfig()
 
 	dnsAddrs, err := collectDNSAddresses(extTLSConfig)
 	if err != nil {
