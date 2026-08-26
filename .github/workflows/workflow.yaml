@@ -106,8 +106,6 @@
     'steps':
       - 'uses': 'actions/checkout@v6'
         'with':
-          # Set fetch-depth for correct version parsing.
-          'fetch-depth': '0'
           # Set to false to avoid GITHUB_TOKEN leaking.
           #
           # See https://github.com/actions/checkout/issues/485#issuecomment-934422611.
