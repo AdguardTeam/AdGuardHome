@@ -143,14 +143,18 @@
 
           set -e -f -u -x
 
+          # Set a custom version string, since the checkout action does not seem
+          # to know about the master branch, while the version script uses it to
+          # count the number of commits within the branch.
           make \
               CLIENT_DIR=${{ env.CLIENT_DIR }} \
               SIGN=0 \
               VERBOSE=1 \
+              VERSION="v0.0.0-github" \
               build-release \
               build-docker \
               ;
-'name': 'Lint and test workflow'
+'name': 'Test and snapshot workflow'
 'on':
   'push':
     'tags':
