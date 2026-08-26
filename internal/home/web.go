@@ -227,9 +227,9 @@ type webAPI struct {
 	// hostsContainer is used for DNS initialization on updates.
 	hostsContainer *aghnet.HostsContainer
 
-	// httpsServer is the server that handles HTTPS traffic.  If it is not nil,
-	// [Web.http3Server] must also not be nil.
-	httpsServer httpsServer
+	// httpsServer is the server that handles HTTPS traffic.  It is always
+	// non-nil.
+	httpsServer *httpsServer
 
 	// pidFilePath is used for cleanup.
 	pidFilePath string
@@ -282,9 +282,11 @@ func newWebAPI(ctx context.Context, conf *webAPIConfig) (w *webAPI) {
 		w.registerControlHandlers()
 	}
 
-	w.httpsServer.logger = conf.baseLogger.With(slogutil.KeyPrefix, "https_server")
-	w.httpsServer.mu = &sync.Mutex{}
-	w.httpsServer.reconfigured = make(chan unit, 1)
+	w.httpsServer = &httpsServer{
+		logger:       conf.baseLogger.With(slogutil.KeyPrefix, "https_server"),
+		mu:           &sync.Mutex{},
+		reconfigured: make(chan unit, 1),
+	}
 
 	return w
 }
@@ -597,8 +599,8 @@ func (web *webAPI) handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 	marshalTLS(ctx, web.logger, w, r, resp)
 }
 
-// validateTLSSettings returns error if the setts are not valid.  setts must be
-// non-nil and valid.
+// validateTLSSettings returns error if the setts are not valid.  setts must not
+// be nil.
 func (web *webAPI) validateTLSSettings(setts *tlsConfigSettingsExt) (err error) {
 	if !setts.Enabled {
 		if setts.ServePlainDNS == aghalg.NBFalse {
