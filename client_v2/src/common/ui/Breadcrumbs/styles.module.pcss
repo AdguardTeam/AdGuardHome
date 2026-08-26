@@ -1,16 +1,17 @@
 .wrapper {
     display: flex;
     align-items: center;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     font-size: 14px;
     font-weight: var(--weight-semi-bold);
     line-height: 24px;
-    gap: 8px;
+    gap: 6px 8px;
     color: var(--default-description-text);
     padding: 16px 0;
     overflow: hidden;
 
     @media (min-width: 768px) {
+        flex-wrap: nowrap;
         padding: 32px 0 24px;
         font-size: 16px;
         gap: 16px;
@@ -33,6 +34,7 @@
     overflow: hidden;
     min-width: 0;
     max-width: 240px;
+    flex-shrink: 0;
 
     & a {
         min-width: 0;
@@ -41,10 +43,19 @@
     &:first-child {
         flex-shrink: 0;
     }
+
+    @media (min-width: 768px) {
+        flex-shrink: 1;
+    }
 }
 
 .current {
     min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex-shrink: 1;
+    max-width: 100%;
 }
 
 .arrow {

@@ -248,6 +248,9 @@ export const Table = <T extends Record<string, any>>(props: TableProps<T>) => {
                                                 icon="arrow_bottom"
                                                 color="gray"
                                                 class={cn(s.sortIcon, {
+                                                    [s.sortAsc]:
+                                                        state.sortKey === column.key &&
+                                                        state.sortDirection === 'asc',
                                                     [s.sortDesc]:
                                                         state.sortKey === column.key &&
                                                         state.sortDirection === 'desc',
