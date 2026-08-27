@@ -388,6 +388,13 @@ export const UINT32_RANGE = {
 };
 
 /**
+ * Max hostname length in bytes (RFC 1035).  Mirrors the backend check
+ * `netutil.MaxDomainNameLen` (github.com/AdguardTeam/golibs) used when
+ * adding static leases in `internal/dhcpd`.
+ */
+export const MAX_HOSTNAME_LENGTH = 253;
+
+/**
  * Default DNS cache size (4 MiB), matching the backend default
  * (`internal/home/config.go`, `CacheSize: 4 * 1024 * 1024`).
  */

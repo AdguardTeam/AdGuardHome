@@ -30,10 +30,6 @@
     &:disabled {
         cursor: default;
     }
-
-    &:focus {
-        outline: none;
-    }
 }
 
 .height_xs {
@@ -59,7 +55,7 @@
     border-color: var(--default-main-button);
 
     &:not(:disabled):hover,
-    &:not(:disabled):focus {
+    &:not(:disabled):focus-visible {
         background: var(--hovered-main-button);
         border-color: var(--hovered-main-button);
     }
@@ -81,7 +77,7 @@
     border-color: var(--default-secondary-button-stroke);
 
     &:hover,
-    &:focus {
+    &:focus-visible {
         color: var(--default-secondary-button-stroke);
         background: var(--hovered-secondary-button);
         border-color: var(--default-secondary-button-stroke);
@@ -107,7 +103,7 @@
     border-color: transparent;
 
     &:hover,
-    &:focus {
+    &:focus-visible {
         background: var(--hovered-secondary-button);
     }
 
@@ -125,9 +121,10 @@
     border-color: var(--default-danger-button);
 
     &:hover,
-    &:focus {
+    &:focus-visible {
         color: var(--hovered-danger-button);
         border-color: var(--hovered-danger-button);
+        background-color: var(--hovered-secondary-danger-button);
     }
 
     &:active {
@@ -147,7 +144,7 @@
     border-color: var(--default-danger-button);
 
     &:hover,
-    &:focus {
+    &:focus-visible {
         background: var(--hovered-danger-button);
         border-color: var(--hovered-danger-button);
     }

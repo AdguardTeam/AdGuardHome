@@ -4,19 +4,23 @@
 }
 
 .overlay_mobile {
-    @media (max-width: 767px) {
-        max-width: calc(100vw - 32px) !important;
-        overflow: visible !important;
+    --tooltip-overlay-max-width: calc(100vw - 32px);
+
+    @media (min-width: 768px) {
+        --tooltip-overlay-max-width: 280px;
+    }
+}
+
+.overlay_large {
+    @media (min-width: 768px) {
+        --tooltip-overlay-max-width: 340px;
     }
 }
 
 .menu {
     padding: 16px;
     background-color: var(--page-background-additional);
-
-    @media (max-width: 767px) {
-        max-width: calc(100vw - 32px);
-    }
+    max-width: calc(100vw - 32px);
 
     @media (min-width: 768px) {
         max-width: 280px;

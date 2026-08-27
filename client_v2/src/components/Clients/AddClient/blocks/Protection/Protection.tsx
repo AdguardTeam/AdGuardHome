@@ -26,9 +26,16 @@ export const Protection = () => {
         const enabled = (e.target as HTMLInputElement).checked;
         const providersUpdate: Record<string, boolean> = {};
         if (enabled) {
-            SAFE_SEARCH_PROVIDER_KEYS.forEach((key) => {
-                providersUpdate[key] = true;
-            });
+            // Preserve the user's provider selection when re-enabling; only
+            // default all providers to on when none has been selected yet.
+            const hasAnyProvider = SAFE_SEARCH_PROVIDER_KEYS.some(
+                (key) => clientFormState.safe_search[key],
+            );
+            if (!hasAnyProvider) {
+                SAFE_SEARCH_PROVIDER_KEYS.forEach((key) => {
+                    providersUpdate[key] = true;
+                });
+            }
         }
         updateClientFormField('safe_search', {
             ...clientFormState.safe_search,
@@ -46,9 +53,9 @@ export const Protection = () => {
 
     return (
         <div class={cn(theme.layout.container, s.containerOverride)}>
-            <div class={cn(theme.layout.containerIn, theme.layout.containerIn_one_col)}>
-                <ClientsHeader currentTitle={intl.getMessage('clients_protection')} />
+            <ClientsHeader currentTitle={intl.getMessage('clients_protection')} />
 
+            <div class={cn(theme.layout.containerIn, theme.layout.containerIn_one_col)}>
                 <SwitchGroup
                     id="filtering-enabled"
                     title={intl.getMessage('settings_filter_requests')}
@@ -82,9 +89,15 @@ export const Protection = () => {
                 >
                     <For each={SAFE_SEARCH_PROVIDER_KEYS}>
                         {(key) => (
-                            <div class={s.checkboxRow}>
+                            <div
+                                class={cn(s.checkboxRow, {
+                                    [s.checkboxRowDisabled]:
+                                        disabled() || !clientFormState.safe_search.enabled,
+                                })}
+                            >
                                 <Checkbox
                                     id={`safe-search-${key}`}
+                                    class={s.checkboxFull}
                                     checked={clientFormState.safe_search[key]}
                                     onChange={handleSafeSearchProvider(key)}
                                     disabled={disabled() || !clientFormState.safe_search.enabled}

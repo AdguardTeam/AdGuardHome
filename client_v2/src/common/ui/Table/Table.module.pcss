@@ -30,6 +30,7 @@
         background-color: var(--page-background-additional);
         border-radius: 8px;
         overflow: hidden;
+        margin-bottom: 8px;
     }
 }
 
@@ -52,7 +53,15 @@
     @media (min-width: 768px) {
         min-height: 42px;
         padding: 8px 12px;
+        overflow: hidden;
     }
+}
+
+.tableHeaderText {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .tableBodyCell {
@@ -75,20 +84,18 @@
     @media (min-width: 768px) {
         display: grid;
         grid-template-columns: var(--table-columns);
-        border-radius: 0;
         padding: 0;
         background-color: transparent;
         box-shadow: none;
 
-        &:hover:not(:has([data-table-action]:hover)),
-        &:focus:not(:has([data-table-action]:focus-visible)) {
+        &:hover,
+        &:focus {
             background-color: var(--page-background-additional);
         }
     }
 
     &:last-child {
         @media (min-width: 768px) {
-            border-radius: 0 0 8px 8px;
             overflow: hidden;
         }
     }
@@ -98,12 +105,23 @@
     cursor: pointer;
 }
 
+.sortIcon {
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity var(--t2), transform var(--t2);
+}
+
 .sortAsc {
-    transform: rotate(90deg);
+    transform: rotate(180deg);
+    opacity: 1;
 }
 
 .sortDesc {
-    transform: rotate(-90deg);
+    opacity: 1;
+}
+
+.tableHeaderCell:hover .sortIcon {
+    opacity: 1;
 }
 
 .tablePagination {

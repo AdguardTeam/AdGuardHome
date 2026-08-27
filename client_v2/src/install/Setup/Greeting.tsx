@@ -33,7 +33,7 @@ export const Greeting = () => {
     return (
         <div class={styles.greeting}>
             <div class={styles.info}>
-                <h1 class={styles.title}>{intl.getMessage('setup_guide_greeting_title')}</h1>
+                <h1 class={styles.titleStep}>{intl.getMessage('setup_guide_greeting_title')}</h1>
 
                 <label class={cn(styles.langLabel, theme.text.t3)}>
                     {intl.getMessage('select_language')}
@@ -61,7 +61,7 @@ export const Greeting = () => {
             </div>
 
             <div class={styles.content}>
-                <img src={routerImage} alt="Router" />
+                <img src={routerImage} class={styles.routerImage} alt="Router" />
             </div>
         </div>
     );
