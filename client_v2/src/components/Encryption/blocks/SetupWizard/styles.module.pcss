@@ -1,0 +1,88 @@
+.header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0 16px;
+}
+
+.wizardTitle {
+    margin: 0;
+    padding: 8px 0;
+    font-weight: var(--weight-bold);
+    font-size: 24px;
+    line-height: 28px;
+    color: var(--default-main-text);
+}
+
+.wizardDescription {
+    padding: 0 0 16px;
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--default-main-text);
+}
+
+.goBack {
+    border: none;
+    padding: 0;
+    background: transparent;
+    color: var(--default-link);
+    font-size: 14px;
+    line-height: 1.3;
+    white-space: nowrap;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.steps {
+    display: flex;
+    flex: 1 0 0;
+    gap: 4px;
+}
+
+.pill {
+    flex: 1 0 0;
+    height: 4px;
+    border-radius: 8px;
+    background: var(--gray-30);
+
+    &_active {
+        background: var(--product-primary-50);
+    }
+}
+
+.footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    width: 100%;
+
+    & button {
+        width: 100%;
+    }
+
+    @media (min-width: 768px) {
+        flex-wrap: nowrap;
+
+        & button {
+            width: auto;
+        }
+    }
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.description {
+    padding-bottom: 16px;
+}
+
+.backendError {
+    padding: 16px 0 8px;
+}
+
+.goBackHint {
+    padding-top: 8px;
+}

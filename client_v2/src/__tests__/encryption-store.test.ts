@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
+    tlsStatus: vi.fn(),
     tlsConfigure: vi.fn(),
     tlsValidate: vi.fn(),
     addErrorToast: vi.fn(),
@@ -9,9 +10,9 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('panel/api/generated', () => ({
+    tlsStatus: mocks.tlsStatus,
     tlsConfigure: mocks.tlsConfigure,
     tlsValidate: mocks.tlsValidate,
-    status: vi.fn(),
 }));
 vi.mock('panel/stores/toasts', () => ({
     addErrorToast: mocks.addErrorToast,
@@ -166,5 +167,72 @@ describe('setTlsConfig', () => {
             }),
             expect.any(Number),
         );
+    });
+});
+
+describe('validateTlsConfig', () => {
+    beforeEach(() => vi.clearAllMocks());
+
+    it('persist:false returns the decoded config without touching the store or toasts', async () => {
+        mocks.tlsValidate.mockResolvedValue({
+            valid_chain: true,
+            valid_cert: true,
+            valid_key: true,
+            valid_pair: true,
+            subject: 'CN=example.com',
+            warning_validation: '',
+            certificate_chain: '',
+            private_key: '',
+        });
+
+        const res = await validateTlsConfig({ enabled: true }, { persist: false });
+
+        expect('error' in res).toBe(false);
+        if ('error' in res) return;
+        expect(res.valid_cert).toBe(true);
+        expect(res.valid_pair).toBe(true);
+        expect(encryptionState.valid_cert).toBe(false);
+        expect(encryptionState.processingValidate).toBe(false);
+        expect(mocks.addErrorToast).not.toHaveBeenCalled();
+        expect(mocks.addSuccessToast).not.toHaveBeenCalled();
+    });
+
+    it('persist:false returns { error } with the body text on 400 without toasts', async () => {
+        mocks.tlsValidate.mockRejectedValue(
+            new Error(
+                'http://127.0.0.1/control/tls/validate | port 443 for HTTPS is not available | 400',
+            ),
+        );
+
+        const res = await validateTlsConfig({ enabled: true }, { persist: false });
+
+        expect(res).toEqual({ error: 'port 443 for HTTPS is not available' });
+        expect(encryptionState.processingValidate).toBe(false);
+        expect(mocks.addErrorToast).not.toHaveBeenCalled();
+    });
+
+    it('persist:false keeps newline-joined bodies from errors.Join', async () => {
+        mocks.tlsValidate.mockRejectedValue(
+            new Error(
+                'http://127.0.0.1/control/tls/validate | port 443 for HTTPS is not available\nport 853 for DNS-over-TLS is not available | 400',
+            ),
+        );
+
+        const res = await validateTlsConfig({ enabled: true }, { persist: false });
+
+        expect(res).toEqual({
+            error: 'port 443 for HTTPS is not available\nport 853 for DNS-over-TLS is not available',
+        });
+    });
+
+    it('persist:true (default) shows an error toast on failure and clears processingValidate', async () => {
+        mocks.tlsValidate.mockRejectedValue(
+            new Error('http://127.0.0.1/control/tls/validate | plain DNS is required | 400'),
+        );
+
+        await validateTlsConfig({ enabled: true });
+
+        expect(mocks.addErrorToast).toHaveBeenCalledTimes(1);
+        expect(encryptionState.processingValidate).toBe(false);
     });
 });
