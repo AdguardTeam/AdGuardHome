@@ -71,6 +71,7 @@ export const Pagination = (props: Props) => {
                         class={cn(theme.dropdown.item, {
                             [theme.dropdown.item_active]: props.pageSize === size,
                         })}
+                        data-testid={`pagination-page-size-${size}`}
                         onClick={() => {
                             props.onPageSizeChange(size);
                             setLimitMenuOpen(false);
@@ -96,6 +97,7 @@ export const Pagination = (props: Props) => {
                     onClick={() => props.onPageChange(props.currentPage - 1)}
                     disabled={!canPreviousPage()}
                     class={theme.pagination.button}
+                    data-testid="pagination-previous-button"
                 >
                     <Icon
                         icon="arrow"
@@ -131,6 +133,7 @@ export const Pagination = (props: Props) => {
                     onClick={() => props.onPageChange(props.currentPage + 1)}
                     disabled={!canNextPage()}
                     class={theme.pagination.button}
+                    data-testid="pagination-next-button"
                 >
                     <Icon
                         icon="arrow"
@@ -155,7 +158,10 @@ export const Pagination = (props: Props) => {
                     class={theme.dropdown.flexDropdownWrap}
                     wrapClass={cn(theme.dropdown.dropdown, theme.pagination.dropdownShowOnPage)}
                 >
-                    <span class={theme.pagination.dropdownText}>
+                    <span
+                        class={theme.pagination.dropdownText}
+                        data-testid="pagination-page-size-trigger"
+                    >
                         {intl.getMessage('rows_per_page', { value: props.pageSize })}
                     </span>
                 </Dropdown>

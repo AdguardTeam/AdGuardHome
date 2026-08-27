@@ -1,0 +1,72 @@
+.containerOverride {
+    padding-top: 0;
+}
+
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+.header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.headerLeft {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pageTitle {
+    margin: 0;
+}
+
+.headerControls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.searchField {
+    flex: 1 1 220px;
+    max-width: 320px;
+    min-width: 180px;
+}
+
+.searchIcon {
+    width: 24px;
+    height: 24px;
+    color: var(--default-gray-icons);
+}
+
+.refreshButton {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    max-width: none;
+    padding: 0;
+}
+
+.refreshIcon {
+    width: 24px;
+    height: 24px;
+    color: var(--default-product-icon);
+}
+
+.mobileCards {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.emptyText {
+    padding: 24px 0;
+    text-align: center;
+    color: var(--default-description-text);
+}

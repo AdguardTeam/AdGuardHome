@@ -86,7 +86,8 @@ client_v2/
 │   │   └── styles/                # Theme tokens (vars.css, colors/light|dark|adg.css)
 │   ├── components/                # Feature/page components (Dashboard, Clients, QueryLog, …)
 │   │   ├── App/                   # Root component — HashRouter + layout + <Route>s
-│   │   └── Routes/Paths.ts        # Route path constants
+│   │   ├── Routes/Paths.ts        # Route path constants
+│   │   └── Stats/                 # Dashboard "Show more" detail pages (top clients, domains, upstreams)
 │   ├── helpers/                   # Pure utilities, validators, theme helpers
 │   ├── hooks/                     # Shared SolidJS hooks
 │   ├── lib/                       # Theme aggregation, misc utils
@@ -282,6 +283,17 @@ must not depend on stores or components. Helpers are pure and dependency-free.
   (`var(--default-main-text)`, `var(--default-page-background)`, …). Light and
   dark themes are toggled via the `data-theme` attribute on `<html>`, so using
   the variables handles dark mode automatically.
+- **Dashboard table cards share their footer**: The "Show more" footer of
+  dashboard table cards must use the shared `CardFooter` component
+  (`blocks/CardFooter`) with `to` and `testId` props instead of duplicating
+  the markup and styles in every card.
+- **Stats pages persist user preferences**: The stats detail pages
+  (`components/Stats`) persist UI state in both `localStorage` and URL query
+  params. Sort (`?sort=<key>&dir=<asc|desc>`) is wired via `StatsPage`'s
+  `sortStorageKey` + `Table`'s `onSortChange`; page size uses `pageSizeKey`.
+  The stats period is read from `?period=<ms>` via `resolveStatsPeriod` in
+  `helpers/statistics.ts` (URL params take precedence, clamped by the server
+  max interval, with `localStorage` as the cross-session fallback).
 - **No inline styles**: Do not use the `style` attribute on elements. All
   styling belongs in co-located CSS Modules (`.module.pcss`) using class
   names. If a value must be dynamic, drive it through a CSS custom property or

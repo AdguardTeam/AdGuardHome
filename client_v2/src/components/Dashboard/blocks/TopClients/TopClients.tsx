@@ -17,6 +17,7 @@ import cn from 'clsx';
 import { useSortedData, TOP_CLIENTS_VISIBLE_ITEMS } from '../../hooks/useSortedData';
 import { TableHeader } from '../TableHeader';
 import { EmptyState } from '../EmptyState';
+import { CardFooter } from '../CardFooter';
 import { ClientTooltip } from '../ClientTooltip';
 
 import s from './TopClients.module.pcss';
@@ -32,6 +33,7 @@ type ClientInfo = {
 type Props = {
     topClients: ClientInfo[];
     numDnsQueries: number;
+    period?: number;
 };
 
 export const TopClients = (props: Props) => {
@@ -183,10 +185,7 @@ export const TopClients = (props: Props) => {
                                                 <Show
                                                     when={isClientBlocked(client.name)}
                                                     fallback={
-                                                        <Icon
-                                                            icon="wifi"
-                                                            class={s.tableRowIcon}
-                                                        />
+                                                        <Icon icon="wifi" class={s.tableRowIcon} />
                                                     }
                                                 >
                                                     <Icon
@@ -386,6 +385,12 @@ export const TopClients = (props: Props) => {
                     })()}
                 </Show>
             </div>
+
+            <CardFooter
+                to={RoutePath.TopClients}
+                testId="show-more-top-clients"
+                query={props.period ? { period: props.period } : undefined}
+            />
         </div>
     );
 };

@@ -1,0 +1,76 @@
+.addClientRow {
+    display: flex;
+    /* The row sits flush under the header: the header-to-table gap (32px on
+       all stat pages) is reserved below the button, like in the design. */
+    margin-top: -32px;
+}
+
+.nameCell {
+    max-width: 260px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.blockedStatus {
+    color: var(--default-error-link);
+}
+
+.countCell {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 4px;
+}
+
+.percent {
+    color: var(--default-description-text);
+}
+
+.ipCell {
+    font-family: var(--mono-font, monospace);
+}
+
+.whoisCell {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.4;
+}
+
+.actionsDropdown {
+    display: inline-flex;
+}
+
+.actionMenu {
+    display: flex;
+    flex-direction: column;
+    padding: 4px 0;
+}
+
+.menuItem {
+    padding: 8px 16px;
+    cursor: pointer;
+}
+
+.menuItemRed {
+    color: var(--default-error-link);
+}
+
+.actionButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    cursor: pointer;
+}
+
+.unblockLink {
+    color: var(--product-primary-50);
+}
+
+.blockLink {
+    color: var(--default-error-link);
+}

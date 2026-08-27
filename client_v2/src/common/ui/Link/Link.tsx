@@ -11,6 +11,7 @@ import {
 import theme from 'panel/lib/theme';
 
 type Props = {
+    'data-testid'?: string;
     to: RoutePathKey;
     hash?: string;
     props?: LinkParams;
@@ -56,7 +57,13 @@ export const Link = (linkProps: Props) => {
         <Show
             when={!linkProps.disabled}
             fallback={
-                <div id={linkProps.id} tabIndex={0} title={linkProps.title} class={cn(linkProps.class)}>
+                <div
+                    id={linkProps.id}
+                    tabIndex={0}
+                    title={linkProps.title}
+                    class={cn(linkProps.class)}
+                    data-testid={linkProps['data-testid']}
+                >
                     {linkProps.children}
                 </div>
             }
@@ -72,6 +79,7 @@ export const Link = (linkProps: Props) => {
                     linkProps.hash,
                 )}
                 onClick={handleClick}
+                data-testid={linkProps['data-testid']}
             >
                 {linkProps.children}
             </A>
