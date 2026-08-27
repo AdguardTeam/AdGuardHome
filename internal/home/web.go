@@ -227,8 +227,7 @@ type webAPI struct {
 	// hostsContainer is used for DNS initialization on updates.
 	hostsContainer *aghnet.HostsContainer
 
-	// httpsServer is the server that handles HTTPS traffic.  It is always
-	// non-nil.
+	// httpsServer is the server that handles HTTPS traffic.
 	httpsServer *httpsServer
 
 	// pidFilePath is used for cleanup.
@@ -934,7 +933,7 @@ func unmarshalTLS(r *http.Request) (data *tlsConfigSettingsExt, err error) {
 
 		data.tlsConfigSettings.CertificateChain = string(cert)
 		if data.tlsConfigSettings.CertificatePath != "" {
-			return data, fmt.Errorf("certificate data and file can't be set together")
+			return data, errors.Error("certificate data and file can't be set together")
 		}
 	}
 
@@ -949,7 +948,7 @@ func unmarshalTLS(r *http.Request) (data *tlsConfigSettingsExt, err error) {
 
 	data.tlsConfigSettings.PrivateKey = string(key)
 	if data.tlsConfigSettings.PrivateKeyPath != "" {
-		return data, fmt.Errorf("private key data and file can't be set together")
+		return data, errors.Error("private key data and file can't be set together")
 	}
 
 	return data, nil

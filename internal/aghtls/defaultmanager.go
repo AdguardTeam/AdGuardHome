@@ -533,7 +533,7 @@ func setPrivateFieldsAndCompare(
 
 // updatePlainDNS checks the old value of [ExtendedTLSConfig.ServePlainDNS] in
 // currentTLSConf and if it differs from servePlain, sets the value of
-// servePlain in newTLSConf.ServePlainDNS. currentTLSConf and newTLSConf must
+// servePlain in newTLSConf.ServePlainDNS.  currentTLSConf and newTLSConf must
 // not be nil.
 func updatePlainDNS(
 	currentTLSConf *ExtendedTLSConfig,
