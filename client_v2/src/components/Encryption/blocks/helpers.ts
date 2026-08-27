@@ -6,7 +6,18 @@ import {
     ENCRYPTION_SOURCE,
 } from 'panel/helpers/constants';
 import { validateTlsConfig } from 'panel/stores/encryption';
+import type { TlsConfig } from 'panel/api/model/tlsConfig';
 import type { EncryptionFormValues } from '../validate';
+
+/** Result of a backend TLS validation — decoded config or an error text. */
+export type ValidationResult = TlsConfig | { error: string };
+
+type DebouncedValidatorOpts = {
+    /** Passed through to validateTlsConfig. Defaults to true (store updates). */
+    persist?: boolean;
+    /** Called with the backend result after each validation request. */
+    onResult?: (result: ValidationResult) => void;
+};
 
 /** Wire format sent to the backend — EncryptionFormValues without the source tri-state fields. */
 export type TlsSubmitValues = Omit<EncryptionFormValues, 'certificate_source' | 'key_source'>;
@@ -70,10 +81,9 @@ export const getSubmitValues = (values: EncryptionFormValues): TlsSubmitValues =
  * Returns [validate(values), cancel()] tuple.
  * Call cancel() in onCleanup to avoid stale timeouts after unmount.
  */
-export const createDebouncedValidator = (): [
-    (values: EncryptionFormValues) => void,
-    () => void,
-] => {
+export const createDebouncedValidator = (
+    opts?: DebouncedValidatorOpts,
+): [(values: EncryptionFormValues) => void, () => void] => {
     let timer: ReturnType<typeof setTimeout> | null = null;
 
     const validate = (values: EncryptionFormValues) => {
@@ -81,7 +91,9 @@ export const createDebouncedValidator = (): [
         timer = setTimeout(() => {
             const submitValues = getSubmitValues(values);
             if (submitValues.enabled) {
-                validateTlsConfig(submitValues);
+                validateTlsConfig(submitValues, { persist: opts?.persist }).then((result) => {
+                    opts?.onResult?.(result);
+                });
             }
         }, DEBOUNCE_TIMEOUT);
     };

@@ -144,8 +144,44 @@ export const setTlsConfig = async (values: TlsConfigBody, opts?: { silent?: bool
     }
 };
 
-export const validateTlsConfig = async (values: TlsConfigBody) => {
-    setState('processingValidate', true);
+/**
+ * Extracts the body text from a customFetch error.
+ *
+ * customFetch throws `Error(`${url} | ${body} | ${status}`)` — there is no
+ * `.body` property.  The body itself may contain `\n`-joined lines
+ * (e.g. `errors.Join` for port probes), so we split on ` | `, rejoin the
+ * middle segments and drop the trailing status segment.
+ */
+const extractBodyText = (error: unknown): string => {
+    const message = error instanceof Error ? error.message : String(error);
+    const segments = message.split(' | ');
+    if (segments.length > 2) {
+        return segments.slice(1, -1).join(' | ');
+    }
+    if (segments.length === 2) {
+        return segments[1] ?? message;
+    }
+    return message;
+};
+
+/**
+ * Validates TLS settings on the backend.
+ *
+ * With `persist` (default) it updates the store fields and shows error
+ * toasts — existing callers are unaffected. With `persist: false` it is a
+ * pure check: it never touches the store or the toasts and returns the
+ * decoded `TlsConfig` on success or `{ error }` with the body text.
+ */
+export const validateTlsConfig = async (
+    values: TlsConfigBody,
+    opts?: { persist?: boolean },
+): Promise<TlsConfig | { error: string }> => {
+    const persist = opts?.persist ?? true;
+
+    if (persist) {
+        setState('processingValidate', true);
+    }
+
     try {
         const encoded = encodeRequest(values);
         // Normalise empty port strings to 0 before sending to the backend,
@@ -155,10 +191,16 @@ export const validateTlsConfig = async (values: TlsConfigBody) => {
         encoded.port_dns_over_quic = encoded.port_dns_over_quic || 0;
         const data = await tlsValidate(encoded);
         const decoded = decodeResponse(data);
-        setState({ ...decoded, processingValidate: false });
+        if (persist) {
+            setState({ ...decoded, processingValidate: false });
+        }
+        return decoded;
     } catch (error) {
-        addErrorToast({ error });
-        setState('processingValidate', false);
+        if (persist) {
+            addErrorToast({ error });
+            setState('processingValidate', false);
+        }
+        return { error: extractBodyText(error) };
     }
 };
 

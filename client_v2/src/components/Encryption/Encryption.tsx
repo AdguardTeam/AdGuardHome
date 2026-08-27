@@ -18,7 +18,7 @@ import { ServerSettingsRow } from './blocks/ServerSettingsRow';
 import { RedirectToggle } from './blocks/RedirectToggle';
 import { ResetDnsModal } from './blocks/ResetDnsModal';
 import { ServerSettingsModal } from './blocks/ServerSettingsModal';
-import { AddTlsCertModal } from './blocks/AddTlsCert';
+import { TlsSetupWizard } from './blocks/SetupWizard';
 import s from './styles.module.pcss';
 
 export const Encryption = () => {
@@ -238,7 +238,7 @@ export const Encryption = () => {
                 onClose={() => setServerSettingsOpen(false)}
             />
 
-            <AddTlsCertModal open={addCertOpen()} onClose={() => setAddCertOpen(false)} />
+            <TlsSetupWizard open={addCertOpen()} onClose={() => setAddCertOpen(false)} />
         </div>
     );
 };
