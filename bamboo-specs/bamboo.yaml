@@ -3,6 +3,3 @@
 
 ---
 !include snapcraft.yaml
-
----
-!include test.yaml
