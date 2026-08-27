@@ -18,6 +18,12 @@ See also the [v0.107.80 GitHub milestone][ms-v0.107.80].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Fixed
+
+- DHCP server persisting uncommitted leases with zero expiry after `DHCPDISCOVER` messages ([#8572]).
+
+[#8572]: https://github.com/AdguardTeam/AdGuardHome/issues/8572
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
