@@ -19,11 +19,13 @@
     justify-content: space-between;
     gap: 8px;
     padding: 4px 0;
-    font-size: var(--fs-text-t3);
-    line-height: var(--lh-t3-normal);
+    font-size: var(--fs-text-t2);
+    line-height: var(--lh-t2-normal);
 
     @media (min-width: 768px) {
         padding: 0;
+        font-size: var(--fs-text-t3);
+        line-height: var(--lh-t3-normal);
     }
 }
 
@@ -76,10 +78,15 @@
 }
 
 .whoisText {
-    font-size: 14px;
-    line-height: 1.4;
+    font-size: var(--fs-text-t2);
+    line-height: var(--lh-t2-normal);
     color: var(--default-main-text);
     min-width: 0;
+
+    @media (min-width: 768px) {
+        font-size: 14px;
+        line-height: 1.4;
+    }
 }
 
 .tooltip {

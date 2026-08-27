@@ -6,6 +6,7 @@ export const LOCAL_STORAGE_KEYS = {
     REWRITES_PAGE_SIZE: 'rewrites_page_size',
     AUTO_CLIENTS_PAGE_SIZE: 'auto_clients_page_size',
     LANGUAGE: 'language',
+    STATS_PERIOD: 'stats_period',
 };
 
 export const LocalStorageHelper = {

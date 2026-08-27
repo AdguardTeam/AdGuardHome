@@ -44,6 +44,13 @@ export const DnsBanner = (props: Props) => {
         return isPortInUse ? intl.getMessage('port_in_use') : undefined;
     });
 
+    const handlePortChange = (e: Event) => {
+        const { value } = e.target as HTMLInputElement;
+        props.setDnsPort(toNumber(value));
+    };
+
+    const isPortInUse = () => Boolean(props.dnsStatus?.includes(ADDRESS_IN_USE_TEXT));
+
     return (
         <div class={props.class}>
             <div class={styles.bannerInputs}>
@@ -82,50 +89,49 @@ export const DnsBanner = (props: Props) => {
                             value={props.dnsPort()}
                             errorMessage={portError()}
                             placeholder={STANDARD_DNS_PORT.toString()}
-                            onChange={(e: Event) => {
-                                const { value } = e.target as HTMLInputElement;
-                                props.setDnsPort(toNumber(value));
-                            }}
+                            onChange={handlePortChange}
+                            onInput={handlePortChange}
                             size="large"
                         />
                     </div>
 
                     <div>
-                        <Show when={props.dnsStatus}>
+                        <Show when={props.dnsStatus && !isPortInUse()}>
                             <div class={cn(styles.setupError, styles.errorRow, styles.errorText)}>
                                 {props.dnsStatus}
-                                <Show when={props.isDnsFixAvailable}>
-                                    <Button
-                                        type="button"
-                                        id="install_dns_fix"
-                                        size="small"
-                                        variant="primary"
-                                        class={styles.inlineButton}
-                                        onClick={props.onAutofix}
-                                    />
-                                </Show>
                             </div>
-                            <Show when={props.isDnsFixAvailable}>
-                                <div class={styles.mutedText}>
-                                    <p class={styles.compactParagraph}>
-                                        {intl.getMessage('autofix_warning_text')}
-                                    </p>
-                                    {intl.getMessage('autofix_warning_list', {
-                                        p: (text: string) => (
-                                            <p class={styles.compactParagraph}>{text}</p>
-                                        ),
-                                    })}
-                                    <p class={styles.compactParagraph}>
-                                        {intl.getMessage('autofix_warning_result')}
-                                    </p>
-                                </div>
-                            </Show>
+                        </Show>
+                        <Show when={props.isDnsFixAvailable}>
+                            <div class={cn(styles.setupError, styles.errorRow)}>
+                                <Button
+                                    type="button"
+                                    id="install_dns_fix"
+                                    size="small"
+                                    variant="primary"
+                                    onClick={props.onAutofix}
+                                >
+                                    {intl.getMessage('fix')}
+                                </Button>
+                            </div>
+                            <div class={styles.mutedText}>
+                                <p class={styles.compactParagraph}>
+                                    {intl.getMessage('autofix_warning_text')}
+                                </p>
+                                {intl.getMessage('autofix_warning_list', {
+                                    p: (text: string) => (
+                                        <p class={styles.compactParagraph}>{text}</p>
+                                    ),
+                                })}
+                                <p class={styles.compactParagraph}>
+                                    {intl.getMessage('autofix_warning_result')}
+                                </p>
+                            </div>
                         </Show>
                         <Show
                             when={
                                 props.dnsPort() === STANDARD_DNS_PORT &&
                                 !props.isDnsFixAvailable &&
-                                props.dnsStatus?.includes(ADDRESS_IN_USE_TEXT)
+                                isPortInUse()
                             }
                         >
                             <p>

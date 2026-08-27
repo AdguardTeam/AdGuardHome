@@ -1,4 +1,4 @@
-import { createMemo } from 'solid-js';
+import { createMemo, Show } from 'solid-js';
 import cn from 'clsx';
 
 import { accessState } from 'panel/stores/access';
@@ -43,7 +43,16 @@ export const Access = () => {
                 variant="link"
                 id="disallowed_clients"
                 title={intl.getMessage('dns_disallowed_clients')}
-                description={intl.getMessage('dns_disallowed_clients_desc')}
+                description={
+                    <>
+                        <p>{intl.getMessage('dns_disallowed_clients_desc')}</p>
+                        <Show when={allowedClientsOn()}>
+                            <p class={theme.status.statusYellow}>
+                                {intl.getMessage('dns_disallowed_clients_notice')}
+                            </p>
+                        </Show>
+                    </>
+                }
                 value={disallowedClientsValue()}
                 disabled={allowedClientsOn()}
                 onClick={disallowedClientsDialog.openDialog}

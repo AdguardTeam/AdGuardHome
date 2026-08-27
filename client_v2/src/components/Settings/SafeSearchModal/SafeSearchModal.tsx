@@ -55,14 +55,17 @@ export const SafeSearchModal = (props: Props) => {
             <div class={s.providersGrid}>
                 <For each={Object.keys(SAFE_SEARCH_PROVIDERS)}>
                     {(key) => (
-                        <Checkbox
-                            id={`safesearch-${key}`}
-                            checked={selected[key] ?? false}
-                            disabled={props.processing}
-                            onChange={() => setSelected(key, !selected[key])}
-                        >
-                            {getSafeSearchProviderTitle(key)}
-                        </Checkbox>
+                        <div class={s.providerRow}>
+                            <Checkbox
+                                class={s.checkboxFull}
+                                id={`safesearch-${key}`}
+                                checked={selected[key] ?? false}
+                                disabled={props.processing}
+                                onChange={() => setSelected(key, !selected[key])}
+                            >
+                                {getSafeSearchProviderTitle(key)}
+                            </Checkbox>
+                        </div>
                     )}
                 </For>
             </div>

@@ -202,6 +202,7 @@ export const findActiveDhcp = async (interfaceName: string, navigate?: (path: st
         ) {
             addErrorToast({
                 error: intl.getMessage('dhcp_found'),
+                noIcon: true,
                 action: {
                     text: intl.getMessage('try_again'),
                     callback: () => findActiveDhcp(interfaceName, navigate),

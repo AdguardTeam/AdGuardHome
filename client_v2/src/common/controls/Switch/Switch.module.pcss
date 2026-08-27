@@ -10,7 +10,12 @@
 }
 
 .input {
-    display: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
 }
 
 .label {
@@ -27,8 +32,7 @@
     background-color: var(--fills-switch-off-default);
     transition: background-color var(--t2);
 
-    &:hover,
-    &:focus {
+    &:hover {
         background-color: var(--fills-switch-off-hovered);
     }
 
@@ -47,11 +51,14 @@
     }
 }
 
+.input:focus-visible + .handler {
+    background-color: var(--fills-switch-off-hovered);
+}
+
 .input:checked + .handler {
     background-color: var(--fills-switch-on-default);
 
-    &:hover,
-    &:focus {
+    &:hover {
         background-color: var(--fills-switch-on-hovered);
     }
 
@@ -60,12 +67,15 @@
     }
 }
 
+.input:focus-visible:checked + .handler {
+    background-color: var(--fills-switch-on-hovered);
+}
+
 .input:disabled + .handler {
     cursor: default;
     background-color: var(--fills-switch-off-disabled);
 
-    &:hover,
-    &:focus {
+    &:hover {
         background-color: var(--fills-switch-off-disabled);
     }
 
@@ -77,8 +87,7 @@
 .input:checked:disabled + .handler {
     background-color: var(--fills-switch-on-disabled);
 
-    &:hover,
-    &:focus {
+    &:hover {
         background-color: var(--fills-switch-on-disabled);
     }
 

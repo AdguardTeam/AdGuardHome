@@ -3,9 +3,11 @@ import cn from 'clsx';
 
 import s from './Button.module.pcss';
 
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'secondary-danger';
+
 export type ButtonProps = JSX.ButtonHTMLAttributes<HTMLButtonElement> & {
     size?: 'very-small' | 'small' | 'medium' | 'big';
-    variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'secondary-danger';
+    variant?: ButtonVariant;
     leftAddon?: JSX.Element;
     rightAddon?: JSX.Element;
     compact?: boolean;

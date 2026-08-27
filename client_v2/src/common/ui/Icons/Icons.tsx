@@ -19,12 +19,12 @@ export const ICONS = {
     theme_light: 'theme_light',
     cross: 'cross',
     arrow_bottom: 'arrow_bottom',
-    arrows_sort: 'arrows_sort',
     butter: 'butter',
     loader: 'loader',
     check: 'check',
     dot: 'dot',
     attention: 'attention',
+    attention_filled: 'attention_filled',
     arrow: 'arrow',
     edit: 'edit',
     delete: 'delete',
@@ -48,6 +48,7 @@ export const ICONS = {
     tracking: 'tracking',
     parental: 'parental',
     wifi: 'wifi',
+    wifi_protect: 'wifi_protect',
     lock: 'lock',
     search: 'search',
     time: 'time',
@@ -55,6 +56,7 @@ export const ICONS = {
     eye_close: 'eye_close',
     check_tiny: 'check_tiny',
     user: 'user',
+    recent: 'recent',
 } as const;
 
 export type IconType = keyof typeof ICONS;
@@ -442,27 +444,6 @@ export const Icons = () => (
             />
         </symbol>
 
-        <symbol
-            id="arrows_sort"
-            viewBox="0 0 24 24"
-            fill="none"
-            fill-rule="evenodd"
-            clip-rule="evenodd"
-        >
-            <path
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                d="m8.00009 8.86453 4.01891-3.86453 3.9811 4"
-            />
-            <path
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                d="m15.9999 15.1355-4.0189 3.8645-3.98108-4"
-            />
-        </symbol>
-
         <symbol id="butter" viewBox="0 0 24 24" fill="none">
             <path
                 d="M4 12H20"
@@ -543,6 +524,19 @@ export const Icons = () => (
                 stroke-width="1.5"
                 stroke-linecap="round"
                 stroke-linejoin="round"
+            />
+        </symbol>
+
+        <symbol
+            id="attention_filled"
+            viewBox="0 0 16 16"
+            fill="none"
+            fill-rule="evenodd"
+            clip-rule="evenodd"
+        >
+            <path
+                d="M8 16C12.4183 16 16 12.4183 16 8C16 3.58172 12.4183 0 8 0C3.58174 0 0 3.58172 0 8C0 12.4183 3.58174 16 8 16ZM8 3.41176C7.54515 3.41176 7.17647 3.78047 7.17647 4.23529V8.82353C7.17647 9.27835 7.54515 9.64706 8 9.64706C8.45485 9.64706 8.82353 9.27835 8.82353 8.82353V4.23529C8.82353 3.78047 8.45485 3.41176 8 3.41176ZM8 10.9412C7.54515 10.9412 7.17647 11.3099 7.17647 11.7647C7.17647 12.2195 7.54515 12.5882 8 12.5882C8.45485 12.5882 8.82353 12.2195 8.82353 11.7647C8.82353 11.3099 8.45485 10.9412 8 10.9412Z"
+                fill="currentColor"
             />
         </symbol>
 
@@ -1004,23 +998,54 @@ export const Icons = () => (
             />
         </symbol>
 
-        <symbol id="wifi" viewBox="0 0 16 16" fill="none">
+        <symbol id="wifi" viewBox="0 0 24 24" fill="none">
             <path
-                d="M2.06836 7.07522C3.43011 5.02508 5.40732 4 7.99998 4C11.889 4 13.9316 7.07522 13.9316 7.07522"
+                d="M3.10254 10.6128C5.14516 7.53761 8.11098 6 12 6C17.8335 6 20.8974 10.6128 20.8974 10.6128"
                 stroke="currentColor"
                 stroke-width="1.5"
                 stroke-linecap="round"
                 stroke-linejoin="round"
             />
             <path
-                d="M4.38574 9.47421C5.21541 8.22513 6.42005 7.60059 7.99967 7.60059C10.3691 7.60059 11.6136 9.47421 11.6136 9.47421"
+                d="M6.5791 14.2116C7.8236 12.338 9.63056 11.4012 12 11.4012C15.5541 11.4012 17.4209 14.2116 17.4209 14.2116"
                 stroke="currentColor"
                 stroke-width="1.5"
                 stroke-linecap="round"
                 stroke-linejoin="round"
             />
             <path
-                d="M7.08984 11.7659C7.33317 11.3336 7.99984 11.3335 7.99984 11.3335C7.99984 11.3335 8.6665 11.3336 8.8669 11.7771"
+                d="M10.6348 17.6485C10.9998 17 11.9998 17 11.9998 17C11.9998 17 12.9998 17 13.3003 17.6654"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            />
+        </symbol>
+
+        <symbol id="wifi_protect" viewBox="0 0 25 24" fill="none">
+            <path
+                d="M3.10254 10.6128C5.14516 7.53761 8.11098 6 12 6C17.8335 6 20.8974 10.6128 20.8974 10.6128"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            />
+            <path
+                d="M6.5791 14.2116C7.8236 12.3379 9.63056 11.4011 12 11.4011C13.5169 11.4011 14.7265 11.9131 15.6147 12.5"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            />
+            <path
+                d="M10.6348 17.6486C10.9998 17.0001 11.9998 17 11.9998 17C11.9998 17 12.9998 17.0001 13.3003 17.6655"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            />
+            <path
+                d="M17.833 17.257C17.833 15.9129 17.8472 14.257 19.7657 14.257C21.6842 14.257 21.833 15.8581 21.833 17.257M16.333 17.9456C16.333 18.9683 16.3329 23.257 19.8329 23.257C23.333 23.257 23.333 18.9683 23.333 17.9456C22.2466 17.4721 20.927 17.257 19.8329 17.257C18.739 17.257 17.4194 17.4721 16.333 17.9456ZM19.833 19.757V20.757V19.757Z"
                 stroke="currentColor"
                 stroke-width="1.5"
                 stroke-linecap="round"
@@ -1053,6 +1078,36 @@ export const Icons = () => (
                 stroke="currentColor"
                 stroke-width="1.5"
                 stroke-miterlimit="16"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            />
+        </symbol>
+
+        <symbol id="recent" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+                d="M20.2847 8.47792C18.914 5.25773 15.7207 3 12 3C7.02944 3 3 7.02944 3 12C3 16.9706 7.02944 21 12 21C14.6372 21 17.0095 19.8657 18.6556 18.0583"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+            />
+            <path
+                d="M14.5 14.5L12 12"
+                stroke="currentColor"
+                stroke-width="1.6"
+                stroke-linecap="round"
+            />
+            <path d="M12 12V8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+            <path
+                d="M21 5V9"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            />
+            <path
+                d="M17 9H21"
+                stroke="currentColor"
+                stroke-width="1.5"
                 stroke-linecap="round"
                 stroke-linejoin="round"
             />

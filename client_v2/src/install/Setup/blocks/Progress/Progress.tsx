@@ -26,17 +26,16 @@ export const Progress = (props: Props) => {
                     aria-valuemax={totalProgressSteps}
                 >
                     <For each={Array.from({ length: totalProgressSteps }, (_, i) => i + 1)}>
-                        {(installStep) => {
-                            const isDoneOrCurrent = installStep <= progressStep();
-                            return (
-                                <div
-                                    class={cn(styles.progressStep, {
-                                        [styles.progressStepGreen]: isDoneOrCurrent,
-                                        [styles.progressStepGrey]: !isDoneOrCurrent,
-                                    })}
-                                />
-                            );
-                        }}
+                        {(installStep) => (
+                            <div
+                                class={cn(
+                                    styles.progressStep,
+                                    installStep <= progressStep()
+                                        ? styles.progressStepGreen
+                                        : styles.progressStepGrey,
+                                )}
+                            />
+                        )}
                     </For>
                 </div>
             </div>

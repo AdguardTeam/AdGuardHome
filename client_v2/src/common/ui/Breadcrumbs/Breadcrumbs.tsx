@@ -25,6 +25,7 @@ export const Breadcrumbs = (props: Props) => (
                 <div class={s.link}>
                     <Link
                         to={path}
+                        title={title}
                         class={cn(
                             theme.link.link,
                             theme.link.noDecoration,

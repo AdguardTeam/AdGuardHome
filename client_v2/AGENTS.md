@@ -149,6 +149,18 @@ All commands are run from the `client_v2/` directory.
   break existing functionality. Use `npm run check` for the full gate
   (lint + typecheck + test).
 
+- You MUST verify UI changes against the running AdGuard Home instance, not
+  the webpack dev server. Rebuild with `npm run build-dev` (quick iteration)
+  or `npm run build-prod` (final check) — both emit to `../build/static/` —
+  then open `http://127.0.0.1:<bind_port>/`, where `bind_port` comes from the
+  local `AdGuardHome.yaml` (commonly `3001` or `80`). Do not use webpack's
+  default port `8080`; the dev server, when used, runs on `bind_port + 8000`.
+
+- When you need to sign in to the running AdGuard Home instance to verify UI
+  changes in the browser, ask the user for the login and password with
+  `#tool:vscode/askQuestions` — do not guess credentials or reuse hardcoded
+  ones.
+
 - When making changes to the project structure, ensure the Project Structure
   section in `AGENTS.md` is updated and remains valid.
 
@@ -359,8 +371,11 @@ vulnerabilities, supply-chain risk, and long-term maintenance cost.
 ## Configuration & Documentation
 
 - **Runtime configuration**: The dev server (`webpack.dev.js`) reads the
-  backend host/port from the root `AdguardHome.yaml` and proxies `/control`
-  requests to it. The dev server runs on `backendPort + 8000`.
+  backend host/port from the root `AdGuardHome.yaml` (gitignored, local
+  config) and proxies `/control` requests to it. The dev server runs on
+  `bind_port + 8000` (overridable via `DEV_SERVER_PORT`), NOT webpack's
+  default `8080`. The AdGuard Home instance itself is reachable at
+  `http://127.0.0.1:<bind_port>/` — commonly `3001` or `80`.
 - **Build configuration**: `BUILD_ENV` (`dev`/`prod`) is set via `cross-env`
   in npm scripts and read from `constants.js`. `BASE_URL = 'control'` is the
   API path prefix.
@@ -445,11 +460,13 @@ friendly:
 - All user-facing strings must be localized. Add new keys to the base locale
   `src/__locales/en.json`; other locales are managed externally via Twosky.
 - Locale imports are **generated** — do not hand-edit.
-  When `.twosky.json` or the set of locale JSON files changes, run:
-    ```sh
-    npm run locales:generate
-    ```
-    CI verifies freshness with `npm run locales:check`.
+  `npm run locales:generate` regenerates
+  `src/common/intl/locales.generated.ts` from the language list in
+  `.twosky.json`; it does not read translation string content. Do NOT run it
+  after editing translation strings (e.g. adding a key to `en.json`) — it is
+  only needed when `.twosky.json` changes or a locale JSON file is added or
+  removed. Use the side-effect-free `npm run locales:check` to verify
+  freshness instead.
 - Access translations via the `intl` object from `panel/common/intl`:
     - `intl.getMessage('key', values?)` — returns a plain localized string.
       Pass interpolation values as the second argument, referenced inside the

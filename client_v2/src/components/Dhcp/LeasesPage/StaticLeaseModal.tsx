@@ -12,6 +12,7 @@ import {
     validateHostname,
     validateIpNotDuplicate,
     validateMacNotDuplicate,
+    validateHostnameNotDuplicate,
     validateIpv4InCidr,
     validateIpGateway,
 } from 'panel/helpers/validators';
@@ -80,18 +81,24 @@ export const StaticLeaseModal = (props: Props) => {
         props.isMakeStatic ? intl.getMessage('make_static') : intl.getMessage('save');
 
     const validateMac = () => {
+        const normalizedMac = normalizeMac(mac().trim());
         const err =
             validateRequiredValue(mac()) ||
             validateMacFormat(mac()) ||
             validateMacNotDuplicate(
                 props.staticLeases,
                 props.isEdit ? props.initialData?.mac : undefined,
-            )(mac());
+            )(normalizedMac);
         setMacError(err || '');
     };
 
     const validateHostnameField = () => {
-        const err = validateHostname(hostname());
+        const err =
+            validateHostname(hostname()) ||
+            validateHostnameNotDuplicate(
+                props.staticLeases,
+                props.isEdit ? props.initialData?.hostname : undefined,
+            )(hostname());
         setHostnameError(err || '');
     };
 

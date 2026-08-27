@@ -424,8 +424,17 @@ describe('validateCacheSize', () => {
         expect(result).toBeTruthy();
     });
 
+    it('returns error for empty string when enabled', () => {
+        const result = validateCacheSize('', true);
+        expect(result).toBeTruthy();
+    });
+
     it('returns undefined for a valid size when enabled', () => {
         expect(validateCacheSize(1000, true)).toBeUndefined();
+    });
+
+    it('validates a numeric string when enabled', () => {
+        expect(validateCacheSize('1000', true)).toBeUndefined();
     });
 
     it('returns error for value exceeding UINT32_MAX', () => {

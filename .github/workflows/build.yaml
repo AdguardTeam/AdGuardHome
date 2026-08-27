@@ -108,7 +108,7 @@
           'dockerfile': 'docker/frontend.Dockerfile'
           'context': '.'
           'target': 'e2etester'
-          'output': '.'
+          # No output: exporting the e2etester filesystem hangs the build.
           'build-args': |
             BASE_IMAGE=${{ env.FRONTEND_BASE_IMAGE }}
             CACHE_BUSTER=${{ inputs.cache_buster || '0' }}

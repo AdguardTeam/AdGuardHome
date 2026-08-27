@@ -7,9 +7,15 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    margin: 0;
-    padding: 8px 0;
+    margin: 0 -16px;
+    padding: 8px 16px;
     cursor: pointer;
+    border-radius: 8px;
+    transition: background-color var(--t2);
+
+    &:hover:not(:has(input:disabled)) {
+        background-color: var(--page-background-additional);
+    }
 
     &.center {
         align-items: center;
@@ -46,7 +52,7 @@
         }
 
         @media (min-width: 768px) {
-            padding: 16px 0;
+            padding: 16px 16px;
         }
     }
 }
