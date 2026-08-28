@@ -132,7 +132,8 @@ func TestWebAPI_HandleTLSConfigure(t *testing.T) {
 	})
 
 	res := &tlsConfig{
-		tlsConfigStatus: &tlsConfigStatus{},
+		tlsConfigStatus:      &tlsConfigStatus{},
+		tlsConfigSettingsExt: tlsConfigSettingsExt{},
 	}
 
 	err = json.NewDecoder(w.Body).Decode(res)
@@ -223,21 +224,21 @@ func TestWebAPI_ValidateTLSSettings(t *testing.T) {
 	testCases := []struct {
 		name    string
 		wantErr string
-		setts   tlsConfigSettingsExt
+		setts   *tlsConfigSettingsExt
 	}{{
 		name:    "basic",
 		wantErr: "",
-		setts:   tlsConfigSettingsExt{},
+		setts:   &tlsConfigSettingsExt{},
 	}, {
 		name:    "disabled_all",
 		wantErr: "plain DNS is required in case encryption protocols are disabled",
-		setts: tlsConfigSettingsExt{
+		setts: &tlsConfigSettingsExt{
 			ServePlainDNS: aghalg.NBFalse,
 		},
 	}, {
 		name:    "busy_https_port",
 		wantErr: fmt.Sprintf("port %d for HTTPS is not available", busyTCPPort),
-		setts: tlsConfigSettingsExt{
+		setts: &tlsConfigSettingsExt{
 			tlsConfigSettings: tlsConfigSettings{
 				Enabled:   true,
 				PortHTTPS: uint16(busyTCPPort),
@@ -246,7 +247,7 @@ func TestWebAPI_ValidateTLSSettings(t *testing.T) {
 	}, {
 		name:    "busy_dot_port",
 		wantErr: fmt.Sprintf("port %d for DNS-over-TLS is not available", busyTCPPort),
-		setts: tlsConfigSettingsExt{
+		setts: &tlsConfigSettingsExt{
 			tlsConfigSettings: tlsConfigSettings{
 				Enabled:        true,
 				PortDNSOverTLS: uint16(busyTCPPort),
@@ -255,7 +256,7 @@ func TestWebAPI_ValidateTLSSettings(t *testing.T) {
 	}, {
 		name:    "busy_doq_port",
 		wantErr: fmt.Sprintf("port %d for DNS-over-QUIC is not available", busyUDPPort),
-		setts: tlsConfigSettingsExt{
+		setts: &tlsConfigSettingsExt{
 			tlsConfigSettings: tlsConfigSettings{
 				Enabled:         true,
 				PortDNSOverQUIC: uint16(busyUDPPort),
@@ -264,7 +265,7 @@ func TestWebAPI_ValidateTLSSettings(t *testing.T) {
 	}, {
 		name:    "duplicate_port",
 		wantErr: "validating tcp ports: duplicated values: [4433]",
-		setts: tlsConfigSettingsExt{
+		setts: &tlsConfigSettingsExt{
 			tlsConfigSettings: tlsConfigSettings{
 				Enabled:        true,
 				PortHTTPS:      4433,

@@ -53,15 +53,13 @@ type DefaultManager struct {
 	logger      *slog.Logger
 
 	// mu protects tlsConf, extTLSConf, certLastMod, tlsCert, and pair.
-	mu         *sync.Mutex
-	tlsConf    *tls.Config
-	extTLSConf *ExtendedTLSConfig
-	tlsCert    *tls.Certificate
-	rootCerts  *x509.CertPool
-	updates    chan UpdateSignal
-	pair       TLSPair
-
-	// TODO(m.kazantsev): Add support for dynamic updates of custom ciphers.
+	mu              *sync.Mutex
+	tlsConf         *tls.Config
+	extTLSConf      *ExtendedTLSConfig
+	tlsCert         *tls.Certificate
+	rootCerts       *x509.CertPool
+	updates         chan UpdateSignal
+	pair            TLSPair
 	customCipherIDs []uint16
 }
 
@@ -435,7 +433,11 @@ func (mgr *DefaultManager) SetExtendedTLSConfig(
 		return false, err
 	}
 
-	updatePlainDNS(mgr.extTLSConf, newConf, servePlainDNS)
+	if servePlainDNS != aghalg.NBNull {
+		newConf.ServePlainDNS = servePlainDNS == aghalg.NBTrue
+	} else {
+		newConf.ServePlainDNS = mgr.extTLSConf.ServePlainDNS
+	}
 
 	if !setPrivateFieldsAndCompare(mgr.extTLSConf, newConf) {
 		mgr.logger.InfoContext(ctx, "config has changed, restarting https server")
@@ -531,22 +533,6 @@ func setPrivateFieldsAndCompare(
 
 	// TODO(a.garipov): Define a custom comparer.
 	return cmp.Equal(currentTLSConf, newTLSConf)
-}
-
-// updatePlainDNS checks the old value of
-// [aghtls.ExtendedTLSConfig.ServePlainDNS] in currentTLSConf and if it differs
-// from servePlain, sets the value of servePlain in newTLSConf.ServePlainDNS.
-// currentTLSConf and newTLSConf must not be nil.
-func updatePlainDNS(
-	currentTLSConf *ExtendedTLSConfig,
-	newTLSConf *ExtendedTLSConfig,
-	servePlain aghalg.NullBool,
-) {
-	if servePlain != aghalg.NBNull {
-		newTLSConf.ServePlainDNS = servePlain == aghalg.NBTrue
-	} else {
-		newTLSConf.ServePlainDNS = currentTLSConf.ServePlainDNS
-	}
 }
 
 // setCertFileTime sets [tlsManager.certLastMod] from the certificate.  If there
