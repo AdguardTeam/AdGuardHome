@@ -143,7 +143,10 @@ export const TopClientsPage = () => {
             accessor: (row) => row.name,
             sortable: true,
             render: (_v, row) => (
-                <span class={cn(theme.text.t3, theme.text.condenced, s.ipCell)} data-testid="client-ip-cell">
+                <span
+                    class={cn(theme.text.t3, theme.text.condenced, s.ipCell)}
+                    data-testid="client-ip-cell"
+                >
                     {row.name}
                 </span>
             ),
@@ -222,7 +225,9 @@ export const TopClientsPage = () => {
                     label: intl.getMessage('status_table_header'),
                     value: (
                         <span class={cn(isBlocked(row.name) && s.blockedStatus)}>
-                            {intl.getMessage(isBlocked(row.name) ? 'blocked' : 'unblocked')}
+                            {isBlocked(row.name)
+                                ? intl.getMessage('blocked')
+                                : intl.getMessage('unblocked')}
                         </span>
                     ),
                 },
@@ -284,6 +289,7 @@ export const TopClientsPage = () => {
             >
                 <div class={s.addClientRow}>
                     <PlusButton
+                        class={s.addClientButton}
                         onClick={() => handleAddClient()}
                         testId="stats-add-client-button"
                     >
