@@ -44,7 +44,12 @@ See also the [v0.107.79 GitHub milestone][ms-v0.107.79].
 
 ### Changed
 
+- Basic Authentication failure logs now include the client IP address
+  ([#8428]).
+
 - The `edge` channel has been switched to the new UI and versioning scheme.
+
+[#8428]: https://github.com/AdguardTeam/AdGuardHome/issues/8428
 
 ### Deprecated
 
