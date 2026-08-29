@@ -549,6 +549,7 @@
   "query_log_blocked_by_parental_control": "Blocked by parental control",
   "query_log_blocked_services": "Blocked services",
   "query_log_blocked_threats": "Blocked threats",
+  "query_log_cached": "Cached",
   "query_log_custom_filtering_rules": "Custom filtering rules",
   "query_log_detail_address": "Address: <span>%value%</span>",
   "query_log_detail_category": "Category: <span>%value%</span>",
