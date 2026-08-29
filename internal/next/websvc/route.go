@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/golibs/netutil/httputil"
 )
 
@@ -38,7 +39,7 @@ func (svc *Service) route(mux *http.ServeMux) {
 		pattern: routePatternHealthCheck,
 		isJSON:  false,
 	}, {
-		handler: http.FileServer(http.FS(svc.frontend)),
+		handler: aghhttp.NewStaticFileServer(svc.frontend),
 		pattern: routePatternFrontend,
 		isJSON:  false,
 	}, {
