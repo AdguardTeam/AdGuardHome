@@ -20,7 +20,6 @@ VERBOSE.MACRO = $${VERBOSE:-0}
 
 CHANNEL = development
 CLIENT_DIR = client_v2
-DEPLOY_SCRIPT_PATH = not/a/real/path
 DIST_DIR = dist
 GOAMD64 = v1
 GOPROXY = https://proxy.golang.org|direct
@@ -34,7 +33,6 @@ NPM_INSTALL_FLAGS = $(NPM_FLAGS) --quiet --no-progress
 RACE = 0
 REVISION = $${REVISION:-$$(git rev-parse --short HEAD)}
 SIGN = 1
-SIGNER_API_KEY = not-a-real-key
 VERSION = v0.0.0
 
 NEXTAPI = 0
@@ -56,7 +54,6 @@ BUILD_RELEASE_DEPS_1 = go-deps
 # needed.
 ENV = env \
 	CHANNEL='$(CHANNEL)' \
-	DEPLOY_SCRIPT_PATH='$(DEPLOY_SCRIPT_PATH)' \
 	DIST_DIR='$(DIST_DIR)' \
 	GO="$(GO.MACRO)" \
 	GOAMD64='$(GOAMD64)' \
@@ -70,7 +67,6 @@ ENV = env \
 	RACE='$(RACE)' \
 	REVISION="$(REVISION)" \
 	SIGN='$(SIGN)' \
-	SIGNER_API_KEY='$(SIGNER_API_KEY)' \
 	VERBOSE="$(VERBOSE.MACRO)" \
 	VERSION="$(VERSION)" \
 

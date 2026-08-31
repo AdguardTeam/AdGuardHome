@@ -9,7 +9,7 @@
     'uses': 'AdGuardSoftwareLimited/actions/.github/workflows/mirror.yml@master'
     'with':
       'disable_workflows_source': 'workflow.yaml'
-      'disable_workflows_target': 'build.yaml mirror.yaml private.yaml'
+      'disable_workflows_target': 'build.yaml mirror.yaml private.yaml release.yaml'
       'target_repo': 'git@github.com:AdguardTeam/AdGuardHome.git'
       'team': 'go'
 'name': 'Mirror'

@@ -128,4 +128,4 @@ FROM scratch AS builder-exporter
 ARG CACHE_BUSTER=0
 ARG CLIENT_DIR
 ARG DIST_DIR="build"
-COPY --from=builder /app/$DIST_DIR /$DIST_DIR
+COPY --from=builder /app/${DIST_DIR} /${DIST_DIR}

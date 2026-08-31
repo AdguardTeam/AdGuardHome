@@ -26,14 +26,14 @@ readonly sign
 
 # Exit the script if a pipeline fails (-e), prevent accidental filename
 # expansion (-f), and consider undefined variables as errors (-u).
-set -e -f -u
+set -e -o 'pipefail' -f -u
 
 # Function log is an echo wrapper that writes to stderr if the caller requested
 # verbosity level greater than 0.  Otherwise, it does nothing.
 log() {
 	if [ "$verbose" -gt '0' ]; then
 		# Don't use quotes to get word splitting.
-		echo "$1" 1>&2
+		printf '%s\n' "$1" 1>&2
 	fi
 }
 
@@ -77,15 +77,11 @@ readonly oses
 if [ "$sign" -eq '1' ]; then
 	gpg_key_passphrase="${GPG_KEY_PASSPHRASE:?please set GPG_KEY_PASSPHRASE or unset SIGN}"
 	gpg_key="${GPG_KEY:?please set GPG_KEY or unset SIGN}"
-	signer_api_key="${SIGNER_API_KEY:?please set SIGNER_API_KEY or unset SIGN}"
-	deploy_script_path="${DEPLOY_SCRIPT_PATH:?please set DEPLOY_SCRIPT_PATH or unset SIGN}"
 else
 	gpg_key_passphrase=''
 	gpg_key=''
-	signer_api_key=''
-	deploy_script_path=''
 fi
-readonly gpg_key_passphrase gpg_key signer_api_key deploy_script_path
+readonly gpg_key_passphrase gpg_key
 
 # The default distribution files directory is dist.
 dist="${DIST_DIR:-dist}"
@@ -93,24 +89,14 @@ readonly dist
 
 log "checking tools"
 
-# Make sure we fail gracefully if one of the tools we need is missing.  Use
-# alternatives when available.
-use_shasum='0'
-for tool in gpg gzip sed sha256sum tar zip; do
+# Make sure we fail gracefully if one of the tools we need is missing.
+for tool in gpg gzip sed tar zip; do
 	if ! command -v "$tool" >/dev/null; then
-		if [ "$tool" = 'sha256sum' ] && command -v 'shasum' >/dev/null; then
-			# macOS doesn't have sha256sum installed by default, but it does
-			# have shasum.
-			log 'replacing sha256sum with shasum -a 256'
-			use_shasum='1'
-		else
-			log "pieces don't fit, '$tool' not found"
+		log "pieces don't fit, '$tool' not found"
 
-			exit 1
-		fi
+		exit 1
 	fi
 done
-readonly use_shasum
 
 # Data section.  Arrange data into space-separated tables for read -r to read.
 # Use a hyphen for missing values.
@@ -164,17 +150,6 @@ sign() {
 			--passphrase "$gpg_key_passphrase" \
 			--pinentry-mode loopback -q "$sign_bin_path" \
 			;
-
-		return
-	elif [ "$channel" = 'beta' ] || [ "$channel" = 'release' ]; then
-		signed_bin_path="${sign_bin_path}.signed"
-
-		env INPUT_FILE="$sign_bin_path" \
-			OUTPUT_FILE="$signed_bin_path" \
-			SIGNER_API_KEY="$signer_api_key" \
-			"$deploy_script_path" sign-executable
-
-		mv "$signed_bin_path" "$sign_bin_path"
 	fi
 }
 
@@ -291,38 +266,11 @@ log "$build_archive"
 
 log "calculating checksums"
 
-# calculate_checksums uses the previously detected SHA-256 tool to calculate
-# checksums.  Do not use find with -exec, since shasum requires arguments.
-calculate_checksums() {
-	if [ "$use_shasum" -eq '0' ]; then
-		sha256sum "$@"
-	else
-		shasum -a 256 "$@"
-	fi
-}
-
-# Calculate the checksums of the files in a subshell with a different working
-# directory.  Don't use ls, because files matching one of the patterns may be
-# absent, which will make ls return with a non-zero status code.
-#
-# TODO(a.garipov): Consider calculating these as the build goes.
-(
-	set +f
-
-	cd "./${dist}"
-
-	: >./checksums.txt
-
-	for archive in ./*.zip ./*.tar.gz; do
-		# Make sure that we don't try to calculate a checksum for a glob pattern
-		# that matched no files.
-		if [ ! -f "$archive" ]; then
-			continue
-		fi
-
-		calculate_checksums "$archive" >>./checksums.txt
-	done
-)
+env \
+	DIST_DIR="$dist" \
+	VERBOSE="$verbose" \
+	sh ./scripts/make/calc-checksums.sh \
+	;
 
 log "writing versions"
 

@@ -3,8 +3,18 @@
     ${{ vars.BASE_IMAGE || 'adguard/go-builder:1.26.6--1' }}
   'BUILD_DIR': |-
     build
+  'CHANNEL': |-
+    ${{ case(
+      startsWith(github.ref_name, 'release-v'), 'release',
+      startsWith(github.ref_name, 'beta-v'), 'beta',
+      'edge'
+    ) }}
   'CLIENT_DIR': |-
-    ${{ inputs.client_dir || 'client_v2' }}
+    ${{ case(
+      startsWith(github.ref_name, 'release-v'), 'client',
+      startsWith(github.ref_name, 'beta-v'), 'client',
+      'client_v2'
+    ) }}
   'DIST_DIR': |-
     dist
   'FRONTEND_BASE_IMAGE': |-
@@ -15,6 +25,7 @@
       ${{ github.repository_owner == 'AdGuardSoftwareLimited' }}
     'permissions':
       'contents': 'read'
+      'id-token': write
     'runs-on': 'team-go'
     'steps':
       - 'uses': 'actions/checkout@v6'
@@ -35,45 +46,63 @@
             CACHE_BUSTER=${{ inputs.cache_buster || '0' }}
             CLIENT_DIR=${{ env.CLIENT_DIR }}
             DIST_DIR=${{ env.BUILD_DIR }}
-      - 'uses': 'actions/upload-artifact@v7'
-        'with':
-          'name': 'adguardhomefrontend'
-          'path': |
-            ${{ env.BUILD_DIR }}
       - 'name': 'Set source date epoch'
         'run': |
           echo "SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)" >> "$GITHUB_ENV"
-      - 'name': 'Build QA artifacts'
+      - 'name': 'Retrieve GPG signing secrets'
+        'uses': 'hashicorp/vault-action@v4'
+        'with':
+          'url': ${{ vars.VAULT_URL }}
+          'method': 'jwt'
+          'role': 'gpg-signing'
+          'secrets': |
+            secret/data/ci-secrets/gpg-signing gpgPassword | GPG_PASSWORD ;
+            secret/data/ci-secrets/gpg-signing gpgSecretKey | GPG_SECRET_KEY ;
+      - 'name': 'Build release artifacts'
         'uses': 'AdGuardSoftwareLimited/actions/actions/docker-build@master'
         'with':
           'dockerfile': 'docker/ci.Dockerfile'
           'context': '.'
           'target': 'builder-exporter'
           'output': '.'
+          # TODO(d.kolyshev): !! Set correct version.
           'build-args': |
-            ARCH=amd64 arm64
             BASE_IMAGE=${{ env.BASE_IMAGE }}
             BRANCH=${{ github.ref_name }}
             CACHE_BUSTER=${{ inputs.cache_buster || '0' }}
-            CHANNEL=development
+            CHANNEL=${{ env.CHANNEL }}
             DIST_DIR=${{ env.DIST_DIR }}
-            OS=windows darwin linux
             REVISION=${{ github.sha }}
-            SIGN=0
+            SIGN=1
             SOURCE_DATE_EPOCH=${{ env.SOURCE_DATE_EPOCH }}
             VERSION=${{ github.ref_name }}
+          'secrets': |
+            GPG_KEY_PASSPHRASE=${{ env.GPG_PASSWORD }}
+            GPG_SECRET_KEY=${{ env.GPG_SECRET_KEY }}
       - 'uses': 'actions/upload-artifact@v7'
         'with':
           'name': 'adguardhome'
           'path': |
-            ${{ env.DIST_DIR }}/AdGuardHome_windows_amd64.zip
-            ${{ env.DIST_DIR }}/AdGuardHome_darwin_amd64.zip
-            ${{ env.DIST_DIR }}/AdGuardHome_darwin_arm64.zip
-            ${{ env.DIST_DIR }}/AdGuardHome_linux_amd64.tar.gz
-  'TestE2E':
+            ${{ env.DIST_DIR }}
+  'SignWindowsBuilds':
+    'name': 'Sign Windows executables'
+    'needs': 'Build'
     'if': |
       ${{ github.repository_owner == 'AdGuardSoftwareLimited' }}
-    'needs': 'Build'
+    'permissions':
+      'contents': 'read'
+      'id-token': 'write'
+    'uses': 'AdGuardSoftwareLimited/actions/.github/workflows/sign-by-signer.yml@master'
+    'with':
+      'team': 'go'
+      'artifact-name': 'adguardhome'
+      'files': '**/**/AdGuardHome.exe'
+      'signed-artifact-name': 'adguardhome'
+  'CalculateChecksums':
+    'name': 'Calculate Checksums'
+    'needs': 'SignWindowsBuilds'
+    'if': |
+      ${{ github.repository_owner == 'AdGuardSoftwareLimited' }}
     'permissions':
       'contents': 'read'
     'runs-on': 'team-go'
@@ -86,35 +115,24 @@
           'persist-credentials': false
       - 'uses': 'actions/download-artifact@v8'
         'with':
-          'name': 'adguardhomefrontend'
-          'path': |
-            ${{ env.BUILD_DIR }}
-      - 'uses': 'actions/download-artifact@v8'
-        'with':
           'name': 'adguardhome'
           'path': |
             ${{ env.DIST_DIR }}
-      - 'run': |
-          #!/bin/sh
-
-          set -e -f -u -x
-
-          tar -xzf ${{ env.DIST_DIR }}/AdGuardHome_linux_amd64.tar.gz -C /tmp
-
-          mv /tmp/AdGuardHome/AdGuardHome ./AdGuardHome
-      - 'name': 'Run tests'
-        'uses': 'AdGuardSoftwareLimited/actions/actions/docker-build@master'
+      - 'name': 'Calculate Checksums'
+        'run': |
+          env \
+            DIST_DIR="${{ env.DIST_DIR }}" \
+            VERBOSE=1 \
+            sh ./scripts/make/calc-checksums.sh
+      - 'uses': 'actions/upload-artifact@v7'
         'with':
-          'dockerfile': 'docker/frontend.Dockerfile'
-          'context': '.'
-          'target': 'e2etester'
-          # No output: exporting the e2etester filesystem hangs the build.
-          'build-args': |
-            BASE_IMAGE=${{ env.FRONTEND_BASE_IMAGE }}
-            CACHE_BUSTER=${{ inputs.cache_buster || '0' }}
-            CLIENT_DIR=${{ env.CLIENT_DIR }}
-'name': 'Build and test QA artifacts'
+          'name': 'adguardhome'
+          'overwrite': true
+          'path': |
+            ${{ env.DIST_DIR }}
+'name': 'Build and publish releases'
 'on':
+  # TODO(d.kolyshev): !! Remove on push.
   'push':
     'branches':
       - '*'
