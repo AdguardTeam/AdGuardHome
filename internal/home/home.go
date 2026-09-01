@@ -96,7 +96,7 @@ func Main(clientBuildFS fs.FS) {
 
 	confPath := initConfigFilename(ctx, l, opts, workDir)
 
-	ls := getLogSettings(ctx, l, opts, workDir, confPath)
+	ls := newLogSettings(ctx, l, opts, workDir, confPath)
 
 	// TODO(a.garipov): Use slog everywhere.
 	baseLogger := newSlogLogger(ls)
