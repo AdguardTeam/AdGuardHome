@@ -1,6 +1,6 @@
 'env':
   'BASE_IMAGE': |-
-    ${{ vars.BASE_IMAGE || 'adguard/go-builder:1.26.6--1' }}
+    ${{ vars.BASE_IMAGE || 'adguard/go-builder:1.26.7--1' }}
   'CACHE_BUSTER': |-
     ${{ inputs.cache_buster || '0' }}
   'CLIENT_DIR': |-
