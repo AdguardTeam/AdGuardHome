@@ -98,6 +98,7 @@
       'artifact-name': 'adguardhome'
       'files': '**/**/AdGuardHome.exe'
       'signed-artifact-name': 'adguardhome'
+  # TODO(d.kolyshev): !! Rewrite windows ZIP archives.
   'CalculateChecksums':
     'name': 'Calculate Checksums'
     'needs': 'SignWindowsBuilds'
@@ -130,6 +131,66 @@
           'overwrite': true
           'path': |
             ${{ env.DIST_DIR }}
+  'PublishDocker':
+    'if': |
+      ${{
+        (github.ref_type == 'tag' || github.event_name == 'workflow_dispatch')
+        && github.repository_owner == 'AdGuardSoftwareLimited'
+      }}
+    'needs': 'CalculateChecksums'
+    'permissions':
+      # Download the artifact.
+      'contents': 'read'
+    'runs-on': 'team-go'
+    'steps':
+      - 'uses': 'actions/checkout@v6'
+        'with':
+          'fetch-depth': 0
+          # Set to false to avoid GITHUB_TOKEN leaking.
+          #
+          # See https://github.com/actions/checkout/issues/485#issuecomment-934422611.
+          'persist-credentials': false
+      - 'uses': 'actions/download-artifact@v8'
+        'with':
+          'name': 'adguardhome'
+          'path': |
+            ${{ env.DIST_DIR }}
+      - 'name': 'Publish to Docker Hub'
+        'run': |
+          #!/bin/sh
+
+          set -e -f -u -x
+
+          # TODO(d.kolyshev):  Use AdGuardSoftwareLimited/actions/actions/docker-build.
+          # TODO(d.kolyshev): !! Set DOCKER_PUSH='1'.
+          env \
+              CHANNEL=${{ env.CHANNEL }} \
+              REVISION=${{ github.sha }} \
+              DIST_DIR=${{ env.DIST_DIR }} \
+              DOCKER_IMAGE_NAME='adguard/adguardhome' \
+              DOCKER_PUSH='0' \
+              VERBOSE='1' \
+              sh ./scripts/make/build-docker.sh \
+              ;
+  'PublishGitHubRelease':
+    'if': |
+      ${{
+        (github.ref_type == 'tag' || github.event_name == 'workflow_dispatch')
+        && github.repository_owner == 'AdGuardSoftwareLimited'
+      }}
+    'needs': 'CalculateChecksums'
+    'permissions':
+      # Download the artifact.
+      'contents': 'read'
+      # Octopass OIDC for the cross-repo token.
+      'id-token': 'write'
+    'uses': 'AdGuardSoftwareLimited/actions/.github/workflows/create-gh-release.yml@master'
+    'with':
+      'artifact_name': 'adguardhome'
+      'draft': true
+      'tag_name': ${{ github.ref_name }}
+      'team': 'go'
+      'target_repo': 'AdguardTeam/adguardhome'
 'name': 'Build and publish releases'
 'on':
   # TODO(d.kolyshev): !! Remove on push.
