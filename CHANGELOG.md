@@ -18,15 +18,15 @@ See also the [v0.107.80 GitHub milestone][ms-v0.107.80].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.26.8][go-1.26.8].
+
+[go-1.26.8]: https://groups.google.com/g/golang-announce/c/QiTRm-HGGtI
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
-
-### Security
-
-- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.26.7][go-1.26.7].
-
-[go-1.26.7]: https://groups.google.com/g/golang-announce/c/qA6Vpj2UA-4
 
 ## [v0.107.79] - 2026-08-18
 
