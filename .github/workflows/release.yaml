@@ -134,8 +134,7 @@
   'PublishDocker':
     'if': |
       ${{
-        (github.ref_type == 'tag' || github.event_name == 'workflow_dispatch')
-        && github.repository_owner == 'AdGuardSoftwareLimited'
+        github.event_name == 'workflow_dispatch' && github.repository_owner == 'AdGuardSoftwareLimited'
       }}
     'needs': 'CalculateChecksums'
     'permissions':
@@ -175,8 +174,7 @@
   'PublishGitHubRelease':
     'if': |
       ${{
-        (github.ref_type == 'tag' || github.event_name == 'workflow_dispatch')
-        && github.repository_owner == 'AdGuardSoftwareLimited'
+        github.event_name == 'workflow_dispatch' && github.repository_owner == 'AdGuardSoftwareLimited'
       }}
     'needs': 'CalculateChecksums'
     'permissions':
