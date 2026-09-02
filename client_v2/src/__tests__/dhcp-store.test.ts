@@ -10,11 +10,11 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('panel/api/generated', () => ({
-        checkActiveDhcp: mocks.checkActiveDhcp,
-        dhcpInterfaces: mocks.dhcpInterfaces,
-        dhcpStatus: mocks.dhcpStatus,
-        status: vi.fn(),
-        dhcpSetConfig: mocks.dhcpSetConfig,
+    checkActiveDhcp: mocks.checkActiveDhcp,
+    dhcpInterfaces: mocks.dhcpInterfaces,
+    dhcpStatus: mocks.dhcpStatus,
+    status: vi.fn(),
+    dhcpSetConfig: mocks.dhcpSetConfig,
 }));
 vi.mock('panel/stores/toasts', () => ({
     addErrorToast: mocks.addErrorToast,
@@ -50,6 +50,7 @@ describe('findActiveDhcp', () => {
         await findActiveDhcp('eth0');
         expect(mocks.addErrorToast).toHaveBeenCalledWith(
             expect.objectContaining({
+                noIcon: true,
                 action: expect.objectContaining({ text: expect.any(String) }),
             }),
         );

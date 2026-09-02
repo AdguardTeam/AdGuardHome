@@ -1,4 +1,4 @@
-import { createMemo, Show, untrack } from 'solid-js';
+import { createMemo, Show, untrack, onMount, onCleanup } from 'solid-js';
 import cn from 'clsx';
 import {
     Chart,
@@ -11,8 +11,7 @@ import {
     Filler,
     type ScriptableContext,
 } from 'chart.js';
-import { Link } from 'panel/common/ui/Link';
-import { type RoutePathKey } from 'panel/components/Routes/Paths';
+import { type QueryParams, type RoutePathKey } from 'panel/components/Routes/Paths';
 
 import { formatNumber } from 'panel/helpers/helpers';
 import {
@@ -20,9 +19,10 @@ import {
     createCursorLinePlugin,
     createExternalTooltipHandler,
 } from 'panel/helpers/useChart';
-import intl from 'panel/common/intl';
+import { formatHistoryLabel } from 'panel/helpers/lineUtils';
 import theme from 'panel/lib/theme';
 
+import { StatLink } from './StatLink';
 import s from './StatCard.module.pcss';
 
 Chart.register(
@@ -49,23 +49,16 @@ export const CARDS_COLORS = {
     ADULT: '#9B59B6',
 };
 
-const formatDate = (date: Date): string => {
-    return date.toLocaleDateString(intl.getUILanguage(), {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-    });
-};
-
 export type StatCardProps = {
     value: number;
     label: string;
     data: number[];
+    timeUnits: string;
     color: string;
     percentValue?: number;
     cardTheme: (typeof CARDS_THEME)[keyof typeof CARDS_THEME];
-    linkTo?: RoutePathKey;
-    query?: Record<string, string | number | boolean>;
+    linkTo: RoutePathKey;
+    query?: QueryParams;
 };
 
 export const StatCard = (props: StatCardProps) => {
@@ -74,11 +67,7 @@ export const StatCard = (props: StatCardProps) => {
 
     const chartData = createMemo(() => {
         const data = paddedData();
-        const labels = data.map((_, i) => {
-            const date = new Date();
-            date.setDate(date.getDate() - (data.length - 1 - i));
-            return formatDate(date);
-        });
+        const labels = data.map((_, i) => formatHistoryLabel(i, data.length, props.timeUnits));
         return {
             labels,
             datasets: [
@@ -125,6 +114,24 @@ export const StatCard = (props: StatCardProps) => {
         tooltipEl = el;
     };
 
+    // Dismiss on pointerdown outside the chart (capture phase): Chart.js
+    // keeps tooltips open after a tap on touch devices.
+    onMount(() => {
+        const onPointerDown = (e: PointerEvent) => {
+            const el = tooltipEl;
+            if (!el || el.style.opacity !== '1') return;
+
+            const target = e.target as Element;
+            // Taps on the chart itself are handled by Chart.js.
+            if (el.parentElement?.contains(target)) return;
+
+            hideTooltip();
+        };
+
+        document.addEventListener('pointerdown', onPointerDown, true);
+        onCleanup(() => document.removeEventListener('pointerdown', onPointerDown, true));
+    });
+
     const chartOptions = createMemo(() => ({
         responsive: true,
         maintainAspectRatio: false,
@@ -153,8 +160,11 @@ export const StatCard = (props: StatCardProps) => {
     }));
 
     const percent = () => props.percentValue ?? 0;
+    const percentText = () => `${percent().toFixed(0)}%`;
 
-    const setCanvasRef = untrack(() => useChart(chartData, chartOptions, [cursorLinePlugin]));
+    const { setCanvasRef, hideTooltip } = untrack(() =>
+        useChart(chartData, chartOptions, [cursorLinePlugin]),
+    );
 
     return (
         <div
@@ -168,34 +178,38 @@ export const StatCard = (props: StatCardProps) => {
             <div class={s.statCardInner}>
                 <div class={s.statCardHeader}>
                     <div class={s.statCardHeaderLeft}>
-                        <div class={s.statCardValue}>{formatNumber(props.value)}</div>
+                        <div class={s.statCardValue}>
+                            <StatLink to={props.linkTo} query={props.query}>
+                                {formatNumber(props.value)}
+                            </StatLink>
+                        </div>
                     </div>
 
                     <Show when={props.cardTheme !== CARDS_THEME.QUERIES}>
                         <div class={cn(theme.text.t3, theme.text.t2_tablet, s.statCardPercent)}>
-                            {percent().toFixed(0)}%
+                            <StatLink to={props.linkTo} query={props.query}>
+                                {percentText()}
+                            </StatLink>
                         </div>
                     </Show>
 
                     <div class={cn(theme.text.t4, s.statCardLabel)}>
-                        <Show when={props.linkTo} fallback={props.label}>
-                            <Link to={props.linkTo} query={props.query} class={s.statLabelLink}>
-                                {props.label}
-                            </Link>
-                        </Show>
+                        <StatLink to={props.linkTo} query={props.query}>
+                            {props.label}
+                        </StatLink>
                     </div>
                 </div>
-                <div class={s.statCardChart}>
+                <div class={s.statCardChartWrapper}>
+                    <div class={s.statCardChart}>
+                        <canvas ref={setCanvasRef} />
+                    </div>
                     <div ref={setTooltipRef} class={s.chartTooltip} />
-                    <canvas ref={setCanvasRef} />
                 </div>
             </div>
             <div class={cn(theme.text.t3, s.statCardLabel)}>
-                <Show when={props.linkTo} fallback={props.label}>
-                    <Link to={props.linkTo!} query={props.query} class={s.statLabelLink}>
-                        {props.label}
-                    </Link>
-                </Show>
+                <StatLink to={props.linkTo} query={props.query}>
+                    {props.label}
+                </StatLink>
             </div>
         </div>
     );

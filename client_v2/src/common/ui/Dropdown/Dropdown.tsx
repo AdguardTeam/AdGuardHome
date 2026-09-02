@@ -20,6 +20,7 @@ type Props = {
     flexWrapper?: boolean;
     childrenClass?: string;
     wrapClass?: string;
+    anchorClass?: string;
     children?: JSX.Element;
     isSelect?: boolean;
     disabled?: boolean;
@@ -80,7 +81,7 @@ export const Dropdown = (props: Props) => {
             }}
             closeOnInteractOutside={true}
         >
-            <Popover.Anchor>
+            <Popover.Anchor class={props.anchorClass}>
                 <div
                     class={cn(
                         props.class,

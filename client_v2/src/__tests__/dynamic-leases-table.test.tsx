@@ -1,10 +1,27 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, fireEvent } from '@solidjs/testing-library';
+import { render, fireEvent, screen } from '@solidjs/testing-library';
 import { DynamicLeasesTable } from 'panel/components/Dhcp/LeasesPage/DynamicLeasesTable';
 
 const LEASES = [{ mac: 'AA:BB:CC:DD:EE:FF', ip: '192.168.1.101', hostname: 'dyn1' }];
 
 describe('DynamicLeasesTable', () => {
+    it('clamps the hostname with twoRowsOverflow (2-line ellipsis)', () => {
+        render(() => (
+            <DynamicLeasesTable
+                leases={LEASES}
+                processingUpdating={false}
+                processingDeleting={false}
+                onEdit={() => {}}
+                onDelete={() => {}}
+                onMakeStatic={() => {}}
+                onRefresh={() => {}}
+            />
+        ));
+
+        const hostnameSpan = screen.getByText('dyn1');
+        expect(hostnameSpan.className).toContain('twoRowsOverflow');
+    });
+
     it('renders mobile action buttons for all four actions', () => {
         const { getByTestId } = render(() => (
             <DynamicLeasesTable

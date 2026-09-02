@@ -25,6 +25,7 @@ import {
     clientFormState,
     saveClient,
 } from 'panel/stores/clientForm';
+import intl from 'panel/common/intl';
 
 describe('clientForm store', () => {
     it('returns initial state by default', () => {
@@ -106,12 +107,40 @@ describe('saveClient cross-client validation', () => {
         expect(clientFormState.formErrors.ids).toBeDefined();
     });
 
+    it('keeps identifier errors index-aligned when a later field is empty', async () => {
+        clearClientForm();
+        updateClientFormField({ field: 'name', value: 'Test Client' });
+        // First field filled, second one empty — the error must land on index 1.
+        updateClientFormField({ field: 'ids', value: ['192.168.1.1', ''] });
+
+        const result = await saveClient();
+        expect(result).toBe(false);
+
+        const idsErrors = clientFormState.formErrors.ids;
+        expect(Array.isArray(idsErrors)).toBe(true);
+        expect(idsErrors).toHaveLength(2);
+        expect(idsErrors?.[0]).toBeUndefined();
+        expect(idsErrors?.[1]).toBe(intl.getMessage('form_error_required'));
+    });
+
     it('rejects cache size of 0 when cache is enabled', async () => {
         clearClientForm();
         updateClientFormField({ field: 'name', value: 'Test' });
         updateClientFormField({ field: 'ids', value: ['192.168.1.1'] });
         updateClientFormField({ field: 'upstreams_cache_enabled', value: true });
         updateClientFormField({ field: 'upstreams_cache_size', value: 0 });
+
+        const result = await saveClient();
+        expect(result).toBe(false);
+        expect(clientFormState.formErrors.upstreams_cache_size).toBeDefined();
+    });
+
+    it('rejects empty cache size when cache is enabled', async () => {
+        clearClientForm();
+        updateClientFormField({ field: 'name', value: 'Test' });
+        updateClientFormField({ field: 'ids', value: ['192.168.1.1'] });
+        updateClientFormField({ field: 'upstreams_cache_enabled', value: true });
+        updateClientFormField({ field: 'upstreams_cache_size', value: '' });
 
         const result = await saveClient();
         expect(result).toBe(false);

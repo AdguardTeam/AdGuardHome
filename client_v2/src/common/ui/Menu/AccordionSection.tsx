@@ -23,17 +23,19 @@ type Props = {
 
 export const AccordionSection = (props: Props) => {
     const [isOpen, setIsOpen] = createSignal(false);
+    const [isUserInteracted, setIsUserInteracted] = createSignal(false);
 
     const isAnyItemActive = () => props.items.some((item) => props.isActive(item.path));
 
     createEffect(() => {
-        if (!isOpen() && isAnyItemActive()) {
+        if (!isOpen() && isAnyItemActive() && !isUserInteracted()) {
             setIsOpen(true);
         }
     });
 
     const toggleAccordion = (e: MouseEvent) => {
         e.stopPropagation();
+        setIsUserInteracted(true);
         setIsOpen(!isOpen());
     };
 

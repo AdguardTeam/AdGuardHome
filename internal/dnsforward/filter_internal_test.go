@@ -41,11 +41,11 @@ func TestServer_filterDNSResponse(t *testing.T) {
 	f.SetEnabled(true)
 
 	s, err := NewServer(DNSCreateParams{
-		DHCPServer:        &testDHCP{},
-		DNSFilter:         f,
-		PrivateNets:       netutil.SubnetSetFunc(netutil.IsLocallyServed),
-		Logger:            testLogger,
-		TLSConfigProvider: testTLSConfigProvider,
+		DHCPServer:  &testDHCP{},
+		DNSFilter:   f,
+		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
+		Logger:      testLogger,
+		TLSManager:  testTLSManager,
 	})
 	require.NoError(t, err)
 

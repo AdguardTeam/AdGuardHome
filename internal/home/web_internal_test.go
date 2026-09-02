@@ -2,10 +2,15 @@ package home
 
 import (
 	"bytes"
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/tls"
+	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
+	"math/big"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -14,8 +19,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
@@ -24,6 +29,12 @@ import (
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+)
+
+// Paths to the test TLS-related data.
+const (
+	testCertificatePath = "./testdata/cert.pem"
+	testPrivateKeyPath  = "./testdata/key.pem"
 )
 
 func TestWebAPI_HandleTLSConfigure(t *testing.T) {
@@ -36,8 +47,8 @@ func TestWebAPI_HandleTLSConfigure(t *testing.T) {
 	)
 
 	globalContext.dnsServer, err = dnsforward.NewServer(dnsforward.DNSCreateParams{
-		Logger:            testLogger,
-		TLSConfigProvider: aghtls.EmptyTLSConfigProvider{},
+		Logger:     testLogger,
+		TLSManager: aghtls.EmptyManager{},
 	})
 	require.NoError(t, err)
 
@@ -76,17 +87,17 @@ func TestWebAPI_HandleTLSConfigure(t *testing.T) {
 	writeCertAndKey(t, certDER, certPath, key, keyPath)
 
 	// Initialize the TLS manager and assert its configuration.
-	m, err := newTLSManager(ctx, &tlsManagerConfig{
-		logger:       testLogger,
-		confModifier: agh.EmptyConfigModifier{},
-		manager:      aghtls.EmptyManager{},
-		extTLSConf: &aghtls.ExtendedTLSConfig{
+	ctx = testutil.ContextWithTimeout(t, testTimeout)
+	m, err := aghtls.NewDefaultManager(ctx, &aghtls.DefaultManagerConfig{
+		Logger:  testLogger,
+		Watcher: aghos.EmptyFSWatcher{},
+		ExtendedTLSConfig: &aghtls.ExtendedTLSConfig{
 			Enabled:         true,
 			CertificatePath: certPath,
 			PrivateKeyPath:  keyPath,
 			ServePlainDNS:   true,
 		},
-		servePlainDNS: true,
+		ServePlainDNS: true,
 	})
 	require.NoError(t, err)
 
@@ -121,7 +132,8 @@ func TestWebAPI_HandleTLSConfigure(t *testing.T) {
 	})
 
 	res := &tlsConfig{
-		tlsConfigStatus: &tlsConfigStatus{},
+		tlsConfigStatus:      &tlsConfigStatus{},
+		tlsConfigSettingsExt: tlsConfigSettingsExt{},
 	}
 
 	err = json.NewDecoder(w.Body).Decode(res)
@@ -138,39 +150,31 @@ func TestWebAPI_HandleTLSConfigure(t *testing.T) {
 
 	// Assert that the Web API's TLS configuration has been updated.
 	assert.Eventually(t, func() bool {
-		m.mu.Lock()
-		cert = *m.tlsCert
-		m.mu.Unlock()
+		tlsConf := m.TLSConfig()
 
-		if cert.Leaf == nil {
+		var tlsCert *tls.Certificate
+		tlsCert, err = tlsConf.GetCertificate(&tls.ClientHelloInfo{})
+		if err != nil || tlsCert.Leaf == nil {
 			return false
 		}
 
-		assert.Equal(t, wantIssuer, cert.Leaf.Issuer.String())
-
-		return true
+		return tlsCert.Leaf.Issuer.String() == wantIssuer
 	}, testTimeout, testTimeout/10)
 }
 
 func TestWebAPI_HandleTLSStatus(t *testing.T) {
-	var (
-		ctx = testutil.ContextWithTimeout(t, testTimeout)
-		err error
-	)
-
 	testCertChain := requireReadFile(t, testCertificatePath)
 	testPrivateKeyData := requireReadFile(t, testPrivateKeyPath)
 
-	m, err := newTLSManager(ctx, &tlsManagerConfig{
-		logger:       testLogger,
-		confModifier: agh.EmptyConfigModifier{},
-		manager:      aghtls.EmptyManager{},
-		extTLSConf: &aghtls.ExtendedTLSConfig{
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	m, err := aghtls.NewDefaultManager(ctx, &aghtls.DefaultManagerConfig{
+		Logger:  testLogger,
+		Watcher: aghos.EmptyFSWatcher{},
+		ExtendedTLSConfig: &aghtls.ExtendedTLSConfig{
 			Enabled:          true,
 			CertificateChain: string(testCertChain),
 			PrivateKey:       string(testPrivateKeyData),
 		},
-		servePlainDNS: false,
 	})
 	require.NoError(t, err)
 
@@ -193,16 +197,9 @@ func TestWebAPI_HandleTLSStatus(t *testing.T) {
 func TestWebAPI_ValidateTLSSettings(t *testing.T) {
 	storeGlobals(t)
 
-	var (
-		ctx = testutil.ContextWithTimeout(t, testTimeout)
-		err error
-	)
-
-	m, err := newTLSManager(ctx, &tlsManagerConfig{
-		logger:        testLogger,
-		confModifier:  agh.EmptyConfigModifier{},
-		manager:       aghtls.EmptyManager{},
-		servePlainDNS: false,
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	m, err := aghtls.NewDefaultManager(ctx, &aghtls.DefaultManagerConfig{
+		Logger: testLogger,
 	})
 	require.NoError(t, err)
 
@@ -227,21 +224,21 @@ func TestWebAPI_ValidateTLSSettings(t *testing.T) {
 	testCases := []struct {
 		name    string
 		wantErr string
-		setts   tlsConfigSettingsExt
+		setts   *tlsConfigSettingsExt
 	}{{
 		name:    "basic",
 		wantErr: "",
-		setts:   tlsConfigSettingsExt{},
+		setts:   &tlsConfigSettingsExt{},
 	}, {
 		name:    "disabled_all",
 		wantErr: "plain DNS is required in case encryption protocols are disabled",
-		setts: tlsConfigSettingsExt{
+		setts: &tlsConfigSettingsExt{
 			ServePlainDNS: aghalg.NBFalse,
 		},
 	}, {
 		name:    "busy_https_port",
 		wantErr: fmt.Sprintf("port %d for HTTPS is not available", busyTCPPort),
-		setts: tlsConfigSettingsExt{
+		setts: &tlsConfigSettingsExt{
 			tlsConfigSettings: tlsConfigSettings{
 				Enabled:   true,
 				PortHTTPS: uint16(busyTCPPort),
@@ -250,7 +247,7 @@ func TestWebAPI_ValidateTLSSettings(t *testing.T) {
 	}, {
 		name:    "busy_dot_port",
 		wantErr: fmt.Sprintf("port %d for DNS-over-TLS is not available", busyTCPPort),
-		setts: tlsConfigSettingsExt{
+		setts: &tlsConfigSettingsExt{
 			tlsConfigSettings: tlsConfigSettings{
 				Enabled:        true,
 				PortDNSOverTLS: uint16(busyTCPPort),
@@ -259,7 +256,7 @@ func TestWebAPI_ValidateTLSSettings(t *testing.T) {
 	}, {
 		name:    "busy_doq_port",
 		wantErr: fmt.Sprintf("port %d for DNS-over-QUIC is not available", busyUDPPort),
-		setts: tlsConfigSettingsExt{
+		setts: &tlsConfigSettingsExt{
 			tlsConfigSettings: tlsConfigSettings{
 				Enabled:         true,
 				PortDNSOverQUIC: uint16(busyUDPPort),
@@ -268,7 +265,7 @@ func TestWebAPI_ValidateTLSSettings(t *testing.T) {
 	}, {
 		name:    "duplicate_port",
 		wantErr: "validating tcp ports: duplicated values: [4433]",
-		setts: tlsConfigSettingsExt{
+		setts: &tlsConfigSettingsExt{
 			tlsConfigSettings: tlsConfigSettings{
 				Enabled:        true,
 				PortHTTPS:      4433,
@@ -288,21 +285,15 @@ func TestWebAPI_ValidateTLSSettings(t *testing.T) {
 func TestWebAPI_HandleTLSValidate(t *testing.T) {
 	storeGlobals(t)
 
-	var (
-		ctx = testutil.ContextWithTimeout(t, testTimeout)
-		err error
-	)
-
-	m, err := newTLSManager(ctx, &tlsManagerConfig{
-		logger:       testLogger,
-		confModifier: agh.EmptyConfigModifier{},
-		manager:      aghtls.EmptyManager{},
-		extTLSConf: &aghtls.ExtendedTLSConfig{
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	m, err := aghtls.NewDefaultManager(ctx, &aghtls.DefaultManagerConfig{
+		Logger:  testLogger,
+		Watcher: aghos.EmptyFSWatcher{},
+		ExtendedTLSConfig: &aghtls.ExtendedTLSConfig{
 			Enabled:         true,
 			CertificatePath: testCertificatePath,
 			PrivateKeyPath:  testPrivateKeyPath,
 		},
-		servePlainDNS: false,
 	})
 	require.NoError(t, err)
 
@@ -347,4 +338,69 @@ func requireReadFile(tb testing.TB, path string) (data []byte) {
 	require.NoError(tb, err)
 
 	return data
+}
+
+// newCertAndKey is a helper function that generates certificate and key.
+func newCertAndKey(tb testing.TB, n int64) (certDER []byte, key *rsa.PrivateKey) {
+	tb.Helper()
+
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	require.NoError(tb, err)
+
+	certTmpl := &x509.Certificate{
+		SerialNumber: big.NewInt(n),
+	}
+
+	certDER, err = x509.CreateCertificate(rand.Reader, certTmpl, certTmpl, &key.PublicKey, key)
+	require.NoError(tb, err)
+
+	return certDER, key
+}
+
+// writeCertAndKey is a helper function that writes certificate and key to
+// specified paths.  key must not be nil.
+func writeCertAndKey(
+	tb testing.TB,
+	certDER []byte,
+	certPath string,
+	key *rsa.PrivateKey,
+	keyPath string,
+) {
+	tb.Helper()
+
+	certFile, err := os.OpenFile(certPath, os.O_WRONLY|os.O_CREATE, 0o600)
+	require.NoError(tb, err)
+
+	defer func() {
+		err = certFile.Close()
+		require.NoError(tb, err)
+	}()
+
+	err = pem.Encode(certFile, &pem.Block{Type: "CERTIFICATE", Bytes: certDER})
+	require.NoError(tb, err)
+
+	keyFile, err := os.OpenFile(keyPath, os.O_WRONLY|os.O_CREATE, 0o600)
+	require.NoError(tb, err)
+
+	defer func() {
+		err = keyFile.Close()
+		require.NoError(tb, err)
+	}()
+
+	err = pem.Encode(keyFile, &pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(key),
+	})
+	require.NoError(tb, err)
+}
+
+// assertCertSerialNumber is a helper function that checks serial number of the
+// TLS certificate.
+func assertCertSerialNumber(tb testing.TB, conf *aghtls.ExtendedTLSConfig, wantSN int64) {
+	tb.Helper()
+
+	cert, err := tls.X509KeyPair(conf.CertificateChainData, conf.PrivateKeyData)
+	require.NoError(tb, err)
+
+	assert.Equal(tb, wantSN, cert.Leaf.SerialNumber.Int64())
 }

@@ -8,9 +8,24 @@
     font-size: 16px;
     border: 1px solid var(--default-item-divider);
     border-radius: 8px;
+    transition:
+        border var(--t2),
+        background-color var(--t2),
+        box-shadow var(--t2);
 
     &.focused {
         border-color: var(--pressed-link);
+    }
+
+    &:hover,
+    &:hover .input {
+        background-color: var(--default-input-background);
+    }
+
+    &:not(.disabled):hover .input:-webkit-autofill,
+    &:not(.disabled):hover .input:-webkit-autofill:hover,
+    &:not(.disabled):hover .input:-webkit-autofill:focus {
+        box-shadow: 0 0 0 100px var(--default-input-background) inset;
     }
 
     &.disabled {
@@ -67,6 +82,9 @@
         padding: 8px 16px;
         border-radius: 8px;
         background-color: var(--default-page-background);
+        transition:
+            background-color var(--t2),
+            box-shadow var(--t2);
 
         &::placeholder {
             color: var(--default-placeholder);
@@ -79,11 +97,12 @@
         }
 
         &:-webkit-autofill,
-        &:-webkit-autofill:hover,
         &:-webkit-autofill:focus {
             box-shadow: 0 0 0 100px var(--default-page-background) inset;
             caret-color: var(--default-main-text);
-            transition: background-color 5000s ease-in-out 0s;
+            transition:
+                background-color 5000s ease-in-out 0s,
+                box-shadow var(--t2);
         }
     }
 }

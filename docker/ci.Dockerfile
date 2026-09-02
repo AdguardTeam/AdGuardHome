@@ -28,7 +28,7 @@
 #    needed.  Keep it in sync with bamboo-specs/bamboo.yaml.
 
 # NOTE:  Keep in sync with bamboo-specs/bamboo.yaml.
-ARG BASE_IMAGE=adguard/go-builder:1.26.6--1
+ARG BASE_IMAGE=adguard/go-builder:1.26.7--1
 
 # The dependencies stage is needed to install packages and tool dependencies.
 # This is also where binaries like osslsigncode, which may be required for tests
@@ -153,6 +153,7 @@ ARG BRANCH=master
 ARG CACHE_BUSTER=0
 ARG CHANNEL=development
 ARG DEPLOY_SCRIPT_PATH=not/a/real/path
+ARG DIST_DIR="dist"
 ARG OS=""
 ARG REVISION=0000000000000000000000000000000000000000
 ARG SIGN=0
@@ -179,6 +180,7 @@ make \
 	BRANCH="${BRANCH}" \
 	CHANNEL="${CHANNEL}" \
 	DEPLOY_SCRIPT_PATH="${DEPLOY_SCRIPT_PATH}" \
+	DIST_DIR="${DIST_DIR}" \
 	FRONTEND_PREBUILT=1 \
 	GPG_KEY_PASSPHRASE="${GPG_KEY_PASSPHRASE}" \
 	OS="${OS}" \
@@ -197,4 +199,5 @@ EOF
 # could be published.  This stage should only be used in a CI.
 FROM scratch AS builder-exporter
 ARG CACHE_BUSTER=0
-COPY --from=builder /app/dist /dist
+ARG DIST_DIR="dist"
+COPY --from=builder /app/$DIST_DIR /$DIST_DIR

@@ -1,4 +1,4 @@
-import { createSignal, Show, For } from 'solid-js';
+import { createSignal, createEffect, onCleanup, Show, For } from 'solid-js';
 import cn from 'clsx';
 
 import intl from 'panel/common/intl';
@@ -38,7 +38,7 @@ export const getPeriodLabel = (interval: number) => {
     return intl.getPlural('last_hours', Math.floor(hours));
 };
 
-const getDisableText = (key: string, time: number) => {
+const getDisableText = (key: string, time: number, now: Date = new Date()) => {
     switch (key) {
         case 'half_minute':
             return intl.getPlural('pause_for_seconds', msToSeconds(time));
@@ -48,7 +48,6 @@ const getDisableText = (key: string, time: number) => {
         case 'hour':
             return intl.getMessage('pause_for_hour', { count: msToHours(time) });
         case 'tomorrow': {
-            const now = new Date();
             const tomorrowTime = now.toLocaleTimeString([], {
                 hour: '2-digit',
                 minute: '2-digit',
@@ -87,7 +86,25 @@ type Props = {
 export const Header = (props: Props) => {
     const [protectionMenuOpen, setProtectionMenuOpen] = createSignal(false);
     const [selectedDisableTime, setSelectedDisableTime] = createSignal<number | null>(null);
+    const [now, setNow] = createSignal(new Date());
     const isMobile = useIsMobile();
+
+    const handleProtectionMenuOpenChange = (open: boolean) => {
+        if (open) {
+            setNow(new Date());
+        }
+        setProtectionMenuOpen(open);
+    };
+
+    // Keep the "pause until tomorrow" time up to date while the menu is open.
+    createEffect(() => {
+        if (!protectionMenuOpen()) {
+            return;
+        }
+
+        const timer = setInterval(() => setNow(new Date()), DISABLE_PROTECTION_TIMINGS.MINUTE);
+        onCleanup(() => clearInterval(timer));
+    });
 
     const handleToggleProtection = () => {
         props.onToggleProtection(props.protectionEnabled);
@@ -120,7 +137,7 @@ export const Header = (props: Props) => {
                         >
                             <Icon icon="check_tiny" class={theme.select.icon} />
                         </Show>
-                        {getDisableText(item.key, item.time)}
+                        {getDisableText(item.key, item.time, now())}
                     </div>
                 )}
             </For>
@@ -187,14 +204,14 @@ export const Header = (props: Props) => {
                         menu={protectionMenu}
                         position="bottomLeft"
                         open={protectionMenuOpen()}
-                        onOpenChange={setProtectionMenuOpen}
+                        onOpenChange={handleProtectionMenuOpenChange}
                         wrapClass={s.protectionMenuWrapper}
                         disabled={!props.protectionEnabled}
                         noIcon
                     >
                         <button
                             type="button"
-                            class={s.dropdownTrigger}
+                            class={theme.dropdown.trigger}
                             aria-label={intl.getMessage('disable_protection_btn')}
                             disabled={!props.protectionEnabled}
                         >
@@ -232,7 +249,7 @@ export const Header = (props: Props) => {
                     value={props.periodOptions.find((o) => o.value === props.selectedPeriod)}
                     onChange={(option: any) => props.onPeriodChange(option.value)}
                     size="responsive"
-                    height="big"
+                    height="small"
                     isSearchable={false}
                     borderless={!isMobile()}
                     menuSize="big"

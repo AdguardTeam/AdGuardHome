@@ -3,9 +3,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // Mock the API client.
 const mockCheckConfig = vi.fn();
 vi.mock('panel/api/generated', () => ({
-        installCheckConfig: (...args: unknown[]) => mockCheckConfig(...args),
-        installGetAddresses: vi.fn(),
-        installConfigure: vi.fn(),
+    installCheckConfig: (...args: unknown[]) => mockCheckConfig(...args),
+    installGetAddresses: vi.fn(),
+    installConfigure: vi.fn(),
 }));
 
 vi.mock('panel/stores/toasts', () => ({ addErrorToast: vi.fn() }));
@@ -17,7 +17,7 @@ vi.mock('panel/helpers/constants', async (importOriginal) => ({
     STANDARD_WEB_PORT: 80,
 }));
 
-import { checkConfig, installState } from '../stores/install';
+import { checkConfig, installState, saveInstallAddresses } from '../stores/install';
 
 describe('checkConfig', () => {
     beforeEach(() => {
@@ -62,5 +62,36 @@ describe('checkConfig', () => {
         expect(installState.web.port).toBe(3000);
         expect(installState.web.status).toBe('address already in use');
         expect(installState.web.can_autofix).toBe(true);
+    });
+});
+
+describe('saveInstallAddresses', () => {
+    it('persists web/dns ip and port to the store synchronously', () => {
+        saveInstallAddresses({
+            web: { ip: '0.0.0.0', port: 8080 },
+            dns: { ip: '127.0.0.1', port: 5353 },
+        });
+
+        expect(installState.web.ip).toBe('0.0.0.0');
+        expect(installState.web.port).toBe(8080);
+        expect(installState.dns.ip).toBe('127.0.0.1');
+        expect(installState.dns.port).toBe(5353);
+    });
+
+    it('keeps the status fields untouched', () => {
+        const webStatusBefore = installState.web.status;
+        const webCanAutofixBefore = installState.web.can_autofix;
+        const dnsStatusBefore = installState.dns.status;
+        const dnsCanAutofixBefore = installState.dns.can_autofix;
+
+        saveInstallAddresses({
+            web: { ip: '0.0.0.0', port: 3000 },
+            dns: { ip: '0.0.0.0', port: 53 },
+        });
+
+        expect(installState.web.status).toBe(webStatusBefore);
+        expect(installState.web.can_autofix).toBe(webCanAutofixBefore);
+        expect(installState.dns.status).toBe(dnsStatusBefore);
+        expect(installState.dns.can_autofix).toBe(dnsCanAutofixBefore);
     });
 });

@@ -46,7 +46,7 @@ const (
 func initDNS(
 	ctx context.Context,
 	baseLogger *slog.Logger,
-	tlsConfProvider aghtls.TLSConfigProvider,
+	tlsManager aghtls.Manager,
 	confModifier agh.ConfigModifier,
 	httpReg aghhttp.Registrar,
 	statsDir string,
@@ -109,16 +109,16 @@ func initDNS(
 	}
 
 	params := dnsforward.DNSCreateParams{
-		Logger:            baseLogger,
-		DNSFilter:         globalContext.filters,
-		Stats:             globalContext.stats,
-		QueryLog:          globalContext.queryLog,
-		PrivateNets:       parseSubnetSet(config.DNS.PrivateNets),
-		Anonymizer:        anonymizer,
-		DHCPServer:        globalContext.dhcpServer,
-		EtcHosts:          hc,
-		LocalDomain:       config.DHCP.LocalDomainName,
-		TLSConfigProvider: tlsConfProvider,
+		Logger:      baseLogger,
+		DNSFilter:   globalContext.filters,
+		Stats:       globalContext.stats,
+		QueryLog:    globalContext.queryLog,
+		PrivateNets: parseSubnetSet(config.DNS.PrivateNets),
+		Anonymizer:  anonymizer,
+		DHCPServer:  globalContext.dhcpServer,
+		EtcHosts:    hc,
+		LocalDomain: config.DHCP.LocalDomainName,
+		TLSManager:  tlsManager,
 	}
 
 	err = initDNSServer(
@@ -167,7 +167,7 @@ func initDNSServer(
 		&config.DNS,
 		config.Clients.Sources,
 		config.HTTPConfig.DoH,
-		params.TLSConfigProvider,
+		params.TLSManager,
 		httpReg,
 		globalContext.clients.storage,
 		confModifier,
@@ -260,7 +260,7 @@ func newServerConfig(
 	dnsConf *dnsConfig,
 	clientSrcConf *clientSourcesConfig,
 	dohConf *doHConfig,
-	tlsConfProvider aghtls.TLSConfigProvider,
+	tlsManager aghtls.Manager,
 	httpReg aghhttp.Registrar,
 	clientsContainer dnsforward.ClientsContainer,
 	confModifier agh.ConfigModifier,
@@ -270,8 +270,7 @@ func newServerConfig(
 	fwdConf := dnsConf.Config
 	fwdConf.ClientsContainer = clientsContainer
 
-	extTLSConf := tlsConfProvider.ExtendedTLSConfig()
-	intTLSConf, err := newDNSTLSConfig(extTLSConf, hosts)
+	intTLSConf, err := newDNSTLSConfig(tlsManager, hosts)
 	if err != nil {
 		return nil, fmt.Errorf("constructing tls config: %w", err)
 	}
@@ -283,7 +282,6 @@ func newServerConfig(
 		TLSConf:                intTLSConf,
 		TLSAllowUnencryptedDoH: dohConf.InsecureEnabled,
 		UpstreamTimeout:        time.Duration(dnsConf.UpstreamTimeout),
-		TLSv12Roots:            tlsConfProvider.RootCAs(),
 		ConfModifier:           confModifier,
 		HTTPReg:                httpReg,
 		LocalPTRResolvers:      dnsConf.PrivateRDNSResolvers,
@@ -319,12 +317,14 @@ func newServerConfig(
 }
 
 // newDNSTLSConfig converts values from the configuration file into the internal
-// TLS settings for the DNS server.  extTLSConf must not be nil.
+// TLS settings for the DNS server.  tlsManager must not be nil.
 func newDNSTLSConfig(
-	extTLSConf *aghtls.ExtendedTLSConfig,
+	tlsManager aghtls.Manager,
 	addrs []netip.Addr,
 ) (dnsConf *dnsforward.TLSConfig, err error) {
-	if !extTLSConf.Enabled {
+	extTLSConf := tlsManager.ExtendedTLSConfig()
+
+	if extTLSConf == nil || !extTLSConf.Enabled {
 		return &dnsforward.TLSConfig{}, nil
 	}
 
@@ -340,6 +340,10 @@ func newDNSTLSConfig(
 		DNSCryptConf:   dnsCryptConf,
 		ServerName:     extTLSConf.ServerName,
 		StrictSNICheck: extTLSConf.StrictSNICheck,
+	}
+
+	if tlsManager.TLSConfig() == nil {
+		return dnsConf, nil
 	}
 
 	if extTLSConf.PortHTTPS != 0 {

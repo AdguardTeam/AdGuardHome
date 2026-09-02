@@ -1,4 +1,4 @@
-import { Show, For } from 'solid-js';
+import { Show, For, type JSX } from 'solid-js';
 import cn from 'clsx';
 import intl from 'panel/common/intl';
 
@@ -12,6 +12,7 @@ type Props = {
     groups: ServiceGroup[];
     activeGroups: string[];
     onToggleGroup: (groupId: string) => void;
+    children?: JSX.Element;
 };
 
 const getGroupName = (id: string): string => {
@@ -53,8 +54,9 @@ const getGroupName = (id: string): string => {
 
 export const GroupFilter = (props: Props) => {
     return (
-        <Show when={props.groups.length > 0}>
-            <div class={s.groups}>
+        <div class={s.groups}>
+            {props.children}
+            <Show when={props.groups.length > 0}>
                 <For each={props.groups}>
                     {(group) => (
                         <button
@@ -70,7 +72,7 @@ export const GroupFilter = (props: Props) => {
                         </button>
                     )}
                 </For>
-            </div>
-        </Show>
+            </Show>
+        </div>
     );
 };

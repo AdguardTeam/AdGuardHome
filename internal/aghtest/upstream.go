@@ -8,78 +8,86 @@ import (
 	"net"
 	"net/netip"
 	"strings"
+	"testing"
 
-	"github.com/AdguardTeam/dnsproxy/upstream"
+	"github.com/AdguardTeam/dnsproxy/dnsproxytest"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/miekg/dns"
 )
 
-// Additional Upstream Testing Utilities
+// NewExchangingUpstream returns a new test upstream that responds with the
+// provided CNAME, A, and AAAA records.
+func NewExchangingUpstream(
+	tb testing.TB,
+	cname map[string][]string,
+	ipv4 map[string][]net.IP,
+	ipv6 map[string][]net.IP,
+) (ups *dnsproxytest.Upstream) {
+	tb.Helper()
 
-// Upstream is a mock implementation of upstream.Upstream.
-//
-// TODO(a.garipov): Replace with UpstreamMock and rename it to just Upstream.
-type Upstream struct {
-	// CName is a map of hostname to canonical name.
-	CName map[string][]string
-	// IPv4 is a map of hostname to IPv4.
-	IPv4 map[string][]net.IP
-	// IPv6 is a map of hostname to IPv6.
-	IPv6 map[string][]net.IP
-}
+	ups = &dnsproxytest.Upstream{
+		OnAddress: func() (addr string) { return "upstream.example" },
+		OnClose:   func() (err error) { return nil },
+		OnExchange: func(_ context.Context, m *dns.Msg) (resp *dns.Msg, err error) {
+			resp = new(dns.Msg).SetReply(m)
 
-var _ upstream.Upstream = (*Upstream)(nil)
+			if len(m.Question) == 0 {
+				return nil, fmt.Errorf("question should not be empty")
+			}
 
-// Exchange implements the [upstream.Upstream] interface for *Upstream.
-//
-// TODO(a.garipov): Split further into handlers.
-func (u *Upstream) Exchange(_ context.Context, m *dns.Msg) (resp *dns.Msg, err error) {
-	resp = new(dns.Msg).SetReply(m)
+			q := m.Question[0]
 
-	if len(m.Question) == 0 {
-		return nil, fmt.Errorf("question should not be empty")
+			resp.Answer = append(resp.Answer, cnameAnswers(q.Name, cname)...)
+			resp.Answer = append(resp.Answer, ipAnswers(q.Name, q.Qtype, ipv4, ipv6)...)
+
+			if len(resp.Answer) == 0 {
+				resp.SetRcode(m, dns.RcodeNameError)
+			}
+
+			return resp, nil
+		},
 	}
 
-	q := m.Question[0]
-	name := q.Name
-	for _, cname := range u.CName[name] {
-		resp.Answer = append(resp.Answer, &dns.CNAME{
+	return ups
+}
+
+// cnameAnswers returns CNAME records for name from the cname map.
+func cnameAnswers(name string, cname map[string][]string) (answers []dns.RR) {
+	for _, t := range cname[name] {
+		answers = append(answers, &dns.CNAME{
 			Hdr:    dns.RR_Header{Name: name, Rrtype: dns.TypeCNAME},
-			Target: cname,
+			Target: t,
 		})
 	}
 
-	qtype := q.Qtype
-	hdr := dns.RR_Header{
-		Name:   name,
-		Rrtype: qtype,
-	}
+	return answers
+}
 
+// ipAnswers returns A or AAAA records for name from the corresponding IP map,
+// depending on qtype.
+func ipAnswers(name string, qtype uint16, ipv4, ipv6 map[string][]net.IP) (ans []dns.RR) {
+	var ips []net.IP
 	switch qtype {
 	case dns.TypeA:
-		for _, ip := range u.IPv4[name] {
-			resp.Answer = append(resp.Answer, &dns.A{Hdr: hdr, A: ip})
-		}
+		ips = ipv4[name]
 	case dns.TypeAAAA:
-		for _, ip := range u.IPv6[name] {
-			resp.Answer = append(resp.Answer, &dns.AAAA{Hdr: hdr, AAAA: ip})
+		ips = ipv6[name]
+	default:
+		return nil
+	}
+
+	hdr := dns.RR_Header{Name: name, Rrtype: qtype}
+	for _, ip := range ips {
+		switch qtype {
+		case dns.TypeA:
+			ans = append(ans, &dns.A{Hdr: hdr, A: ip})
+		case dns.TypeAAAA:
+			ans = append(ans, &dns.AAAA{Hdr: hdr, AAAA: ip})
 		}
 	}
-	if len(resp.Answer) == 0 {
-		resp.SetRcode(m, dns.RcodeNameError)
-	}
 
-	return resp, nil
-}
-
-// Address implements [upstream.Upstream] interface for *Upstream.
-func (u *Upstream) Address() string {
-	return "todo.upstream.example"
-}
-
-// Close implements [upstream.Upstream] interface for *Upstream.
-func (u *Upstream) Close() (err error) {
-	return nil
+	return ans
 }
 
 // MatchedResponse is a test helper that returns a response with answer if req
@@ -163,24 +171,24 @@ func mustAnsAAAA(respHdr dns.RR_Header, s string) (ans []dns.RR) {
 	}}
 }
 
-// NewUpstreamMock returns an [*UpstreamMock], fields OnAddress and OnClose of
-// which are set to stubs that return "upstream.example" and nil respectively.
-// The field OnExchange is set to onExc.
-func NewUpstreamMock(
-	onExc func(ctx context.Context, req *dns.Msg) (resp *dns.Msg, err error),
-) (u *UpstreamMock) {
-	return &UpstreamMock{
-		OnAddress:  func() (addr string) { return "upstream.example" },
-		OnExchange: onExc,
-		OnClose:    func() (err error) { return nil },
+// NewUpstream returns an *dnsproxytest.Upstream, fields OnAddress and
+// OnClose of which are set to stubs that return "upstream.example" and nil
+// respectively. The field OnExchange is a stub that panics on call.
+func NewUpstream() (u *dnsproxytest.Upstream) {
+	return &dnsproxytest.Upstream{
+		OnAddress: func() (addr string) { return "upstream.example" },
+		OnClose:   func() (err error) { return nil },
+		OnExchange: func(_ context.Context, req *dns.Msg) (resp *dns.Msg, err error) {
+			panic(testutil.UnexpectedCall(req))
+		},
 	}
 }
 
-// NewBlockUpstream returns an [*UpstreamMock] that works like an upstream that
-// supports hash-based safe-browsing/adult-blocking feature.  If shouldBlock is
-// true, hostname's actual hash is returned, blocking it.  Otherwise, it returns
-// a different hash.
-func NewBlockUpstream(hostname string, shouldBlock bool) (u *UpstreamMock) {
+// NewBlockUpstream returns an *dnsproxytest.Upstream that works like an
+// upstream that supports hash-based safe-browsing/adult-blocking feature.  If
+// shouldBlock is true, hostname's actual hash is returned, blocking it.
+// Otherwise, it returns a different hash.
+func NewBlockUpstream(hostname string, shouldBlock bool) (u *dnsproxytest.Upstream) {
 	hash := sha256.Sum256([]byte(hostname))
 	hashStr := hex.EncodeToString(hash[:])
 	if !shouldBlock {
@@ -200,7 +208,7 @@ func NewBlockUpstream(hostname string, shouldBlock bool) (u *UpstreamMock) {
 		Answer: []dns.RR{ans},
 	}
 
-	return &UpstreamMock{
+	return &dnsproxytest.Upstream{
 		OnAddress: func() (addr string) { return "sbpc.upstream.example" },
 		OnExchange: func(_ context.Context, req *dns.Msg) (resp *dns.Msg, err error) {
 			resp = respTmpl.Copy()
@@ -213,14 +221,14 @@ func NewBlockUpstream(hostname string, shouldBlock bool) (u *UpstreamMock) {
 	}
 }
 
-// ErrUpstream is the error returned from the [*UpstreamMock] created by
-// [NewErrorUpstream].
+// ErrUpstream is the error returned from the *dnsproxytest.Upstream created
+// by NewErrorUpstream.
 const ErrUpstream errors.Error = "test upstream error"
 
-// NewErrorUpstream returns an [*UpstreamMock] that returns [ErrUpstream] from
-// its Exchange method.
-func NewErrorUpstream() (u *UpstreamMock) {
-	return &UpstreamMock{
+// NewErrorUpstream returns an *dnsproxytest.Upstream that returns
+// ErrUpstream from its Exchange method.
+func NewErrorUpstream() (u *dnsproxytest.Upstream) {
+	return &dnsproxytest.Upstream{
 		OnAddress: func() (addr string) { return "error.upstream.example" },
 		OnExchange: func(_ context.Context, _ *dns.Msg) (resp *dns.Msg, err error) {
 			return nil, ErrUpstream

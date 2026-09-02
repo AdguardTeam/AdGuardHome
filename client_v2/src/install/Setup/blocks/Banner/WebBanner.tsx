@@ -3,7 +3,6 @@ import { createMemo, Show } from 'solid-js';
 import { Input } from 'panel/common/controls/Input';
 import { Select } from 'panel/common/controls/Select';
 import intl from 'panel/common/intl';
-import { Button } from 'panel/common/ui/Button';
 import cn from 'clsx';
 
 import { STANDARD_WEB_PORT, ADDRESS_IN_USE_TEXT } from 'panel/helpers/constants';
@@ -25,8 +24,6 @@ type Props = {
     setWebPort: (value: number) => void;
     webIpOptions: SelectOption[];
     webStatus?: string;
-    isWebFixAvailable: boolean;
-    onAutofix: () => void;
 };
 
 export const WebBanner = (props: Props) => {
@@ -41,6 +38,13 @@ export const WebBanner = (props: Props) => {
         );
         return isPortInUse ? intl.getMessage('port_in_use') : undefined;
     });
+
+    const handlePortChange = (e: Event) => {
+        const { value } = e.target as HTMLInputElement;
+        props.setWebPort(toNumber(value));
+    };
+
+    const isPortInUse = () => Boolean(props.webStatus?.includes(ADDRESS_IN_USE_TEXT));
 
     return (
         <div class={props.class}>
@@ -71,28 +75,16 @@ export const WebBanner = (props: Props) => {
                         value={props.webPort()}
                         placeholder={STANDARD_WEB_PORT.toString()}
                         errorMessage={portError()}
-                        onChange={(e: Event) => {
-                            const { value } = e.target as HTMLInputElement;
-                            props.setWebPort(toNumber(value));
-                        }}
+                        onChange={handlePortChange}
+                        onInput={handlePortChange}
                         size="large"
                     />
                 </div>
 
                 <div>
-                    <Show when={props.webStatus}>
+                    <Show when={props.webStatus && !isPortInUse()}>
                         <div class={cn(styles.setupError, styles.errorRow, styles.errorText)}>
                             {props.webStatus}
-                            <Show when={props.isWebFixAvailable}>
-                                <Button
-                                    type="button"
-                                    id="install_web_fix"
-                                    size="small"
-                                    variant="primary"
-                                    class={styles.inlineButton}
-                                    onClick={props.onAutofix}
-                                />
-                            </Show>
                         </div>
                     </Show>
                 </div>
