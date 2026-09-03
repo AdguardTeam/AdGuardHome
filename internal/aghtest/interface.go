@@ -16,9 +16,7 @@ import (
 	nextagh "github.com/AdguardTeam/AdGuardHome/internal/next/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/rdns"
 	"github.com/AdguardTeam/AdGuardHome/internal/whois"
-	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/testutil"
-	"github.com/miekg/dns"
 )
 
 // FSWatcher is a fake [aghos.FSWatcher] implementation for tests.
@@ -149,34 +147,6 @@ func (e *Exchanger) Exchange(
 	return e.OnExchange(ctx, ip)
 }
 
-// UpstreamMock is a fake [upstream.Upstream] implementation for tests.
-//
-// TODO(a.garipov): Replace with all uses of Upstream with UpstreamMock and
-// rename it to just Upstream.
-type UpstreamMock struct {
-	OnAddress  func() (addr string)
-	OnExchange func(req *dns.Msg) (resp *dns.Msg, err error)
-	OnClose    func() (err error)
-}
-
-// type check
-var _ upstream.Upstream = (*UpstreamMock)(nil)
-
-// Address implements the [upstream.Upstream] interface for *UpstreamMock.
-func (u *UpstreamMock) Address() (addr string) {
-	return u.OnAddress()
-}
-
-// Exchange implements the [upstream.Upstream] interface for *UpstreamMock.
-func (u *UpstreamMock) Exchange(req *dns.Msg) (resp *dns.Msg, err error) {
-	return u.OnExchange(req)
-}
-
-// Close implements the [upstream.Upstream] interface for *UpstreamMock.
-func (u *UpstreamMock) Close() (err error) {
-	return u.OnClose()
-}
-
 // ConfigModifier is a fake [agh.ConfigModifier] implementation for tests.
 type ConfigModifier struct {
 	OnApply func(ctx context.Context)
@@ -203,9 +173,13 @@ func (m *Registrar) Register(method, path string, h http.HandlerFunc) {
 	m.OnRegister(method, path, h)
 }
 
-// TLSConfigProvider is a fake [aghtls.TLSConfigProvider] implementation for
-// tests.
-type TLSConfigProvider struct {
+// Manager is a fake [aghtls.Manager] implementation for tests.
+type Manager struct {
+	OnStart                func(ctx context.Context) (err error)
+	OnShutdown             func(ctx context.Context) (err error)
+	OnRefresh              func(ctx context.Context) (err error)
+	OnSet                  func(ctx context.Context, certKey aghtls.TLSPair) (err error)
+	OnUpdates              func(ctx context.Context) (updates <-chan aghtls.UpdateSignal)
 	OnTLSConfig            func() (conf *tls.Config)
 	OnRootCAs              func() (cert *x509.CertPool)
 	OnHasIPAddrs           func() (ok bool)
@@ -214,42 +188,68 @@ type TLSConfigProvider struct {
 		ctx context.Context,
 		servePlainDNS aghalg.NullBool,
 		conf *aghtls.ExtendedTLSConfig,
-	) (changed bool, err error)
+	) (restartHTTPS bool, err error)
+	OnCipherSuites func() (cs []uint16)
 }
 
 // type check
-var _ aghtls.TLSConfigProvider = (*TLSConfigProvider)(nil)
+var _ aghtls.Manager = (*Manager)(nil)
 
-// TLSConfig implements the [aghtls.TLSConfigProvider] interface for
-// *TLSConfigProvider.
-func (t *TLSConfigProvider) TLSConfig() (conf *tls.Config) {
-	return t.OnTLSConfig()
+// CipherSuites implements the [aghtls.Manager] interface for *Manager.
+func (m *Manager) CipherSuites() (cs []uint16) {
+	return m.OnCipherSuites()
 }
 
-// RootCAs implements the [aghtls.TLSConfigProvider] interface for
-// *TLSConfigProvider.
-func (t *TLSConfigProvider) RootCAs() (pool *x509.CertPool) {
-	return t.OnRootCAs()
+// Set implements the [aghtls.Manager] interface for *Manager.
+func (m *Manager) Set(ctx context.Context, certKey aghtls.TLSPair) (err error) {
+	return m.OnSet(ctx, certKey)
 }
 
-// HasIPAddrs implements the [aghtls.TLSConfigProvider] interface for
-// *TLSConfigProvider.
-func (t *TLSConfigProvider) HasIPAddrs() (ok bool) {
-	return t.OnHasIPAddrs()
+// Start implements the [aghtls.Manager] interface for *Manager.
+func (m *Manager) Start(ctx context.Context) (err error) {
+	return m.OnStart(ctx)
 }
 
-// ExtendedTLSConfig implements the [aghtls.TLSConfigProvider] interface for
-// *TLSConfigProvider.
-func (t *TLSConfigProvider) ExtendedTLSConfig() (conf *aghtls.ExtendedTLSConfig) {
-	return t.OnExtendedTLSConfig()
+// Shutdown implements the [aghtls.Manager] interface for *Manager.
+func (m *Manager) Shutdown(ctx context.Context) (err error) {
+	return m.OnShutdown(ctx)
 }
 
-// SetExtendedTLSConfig implements the [aghtls.TLSConfigProvider] interface for
-// *TLSConfigProvider.
-func (t *TLSConfigProvider) SetExtendedTLSConfig(
+// Refresh implements the [aghtls.Manager] interface for *Manager.
+func (m *Manager) Refresh(ctx context.Context) (err error) {
+	return m.OnRefresh(ctx)
+}
+
+// Updates implements the [aghtls.Manager] interface for *Manager.
+func (m *Manager) Updates(ctx context.Context) (updates <-chan aghtls.UpdateSignal) {
+	return m.OnUpdates(ctx)
+}
+
+// TLSConfig implements the [aghtls.Manager] interface for *Manager.
+func (m *Manager) TLSConfig() (conf *tls.Config) {
+	return m.OnTLSConfig()
+}
+
+// RootCAs implements the [aghtls.Manager] interface for *Manager.
+func (m *Manager) RootCAs() (pool *x509.CertPool) {
+	return m.OnRootCAs()
+}
+
+// HasIPAddrs implements the [aghtls.Manager] interface for *Manager.
+func (m *Manager) HasIPAddrs() (ok bool) {
+	return m.OnHasIPAddrs()
+}
+
+// ExtendedTLSConfig implements the [aghtls.Manager] interface for *Manager.
+func (m *Manager) ExtendedTLSConfig() (conf *aghtls.ExtendedTLSConfig) {
+	return m.OnExtendedTLSConfig()
+}
+
+// SetExtendedTLSConfig implements the [aghtls.Manager] interface for *Manager.
+func (m *Manager) SetExtendedTLSConfig(
 	ctx context.Context,
 	servePlainDNS aghalg.NullBool,
 	conf *aghtls.ExtendedTLSConfig,
-) (changed bool, err error) {
-	return t.OnSetExtendedTLSConfig(ctx, servePlainDNS, conf)
+) (restartHTTPS bool, err error) {
+	return m.OnSetExtendedTLSConfig(ctx, servePlainDNS, conf)
 }

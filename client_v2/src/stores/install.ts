@@ -104,6 +104,22 @@ export const prevStep = () => {
     setState('step', (prev) => prev - 1);
 };
 
+export const saveInstallAddresses = (values: {
+    web: { ip: string; port: number };
+    dns: { ip: string; port: number };
+}) => {
+    setState('web', (prev) => ({
+        ...prev,
+        ip: values.web.ip,
+        port: values.web.port,
+    }));
+    setState('dns', (prev) => ({
+        ...prev,
+        ip: values.dns.ip,
+        port: values.dns.port,
+    }));
+};
+
 export const setAuthData = (auth: Partial<InstallState['auth']>) => {
     setState('auth', (prev) => ({ ...prev, ...auth }));
 };

@@ -36,15 +36,15 @@ const getIntervalTitle = (interval: number) => {
     }
 };
 
-const RADIO_OPTIONS = [
-    { text: getIntervalTitle(FILTER_INTERVALS.DISABLE), value: FILTER_INTERVALS.DISABLE },
-    { text: getIntervalTitle(FILTER_INTERVALS.HOURLY), value: FILTER_INTERVALS.HOURLY },
-    { text: getIntervalTitle(FILTER_INTERVALS.DAILY), value: FILTER_INTERVALS.DAILY },
-    { text: getIntervalTitle(FILTER_INTERVALS.WEEKLY), value: FILTER_INTERVALS.WEEKLY },
-    { text: getIntervalTitle(FILTER_INTERVALS.CUSTOM), value: FILTER_INTERVALS.CUSTOM },
-];
-
 export const FilterUpdateModal = () => {
+    const getRadioOptions = createMemo(() => [
+        { text: getIntervalTitle(FILTER_INTERVALS.DISABLE), value: FILTER_INTERVALS.DISABLE },
+        { text: getIntervalTitle(FILTER_INTERVALS.HOURLY), value: FILTER_INTERVALS.HOURLY },
+        { text: getIntervalTitle(FILTER_INTERVALS.DAILY), value: FILTER_INTERVALS.DAILY },
+        { text: getIntervalTitle(FILTER_INTERVALS.WEEKLY), value: FILTER_INTERVALS.WEEKLY },
+        { text: getIntervalTitle(FILTER_INTERVALS.CUSTOM), value: FILTER_INTERVALS.CUSTOM },
+    ]);
+
     const PREDEFINED_INTERVALS: number[] = [
         FILTER_INTERVALS.DISABLE,
         FILTER_INTERVALS.HOURLY,
@@ -119,7 +119,7 @@ export const FilterUpdateModal = () => {
                         <Radio
                             name="interval"
                             value={intervalValue()}
-                            options={RADIO_OPTIONS}
+                            options={getRadioOptions()}
                             handleChange={(value: number) => setIntervalValue(value)}
                             disabled={filteringState.processingSetConfig}
                         />

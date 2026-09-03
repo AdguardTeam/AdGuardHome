@@ -24,7 +24,7 @@ export const PrivateReverseServersDialog = (props: Props) => {
     return (
         <ConfigDialog
             open={props.open()}
-            title={intl.getMessage('dns_private_reverse_servers_title')}
+            title={intl.getMessage('dns_server_addresses')}
             description={
                 <>
                     <p>{intl.getMessage('dns_private_reverse_servers_desc')}</p>

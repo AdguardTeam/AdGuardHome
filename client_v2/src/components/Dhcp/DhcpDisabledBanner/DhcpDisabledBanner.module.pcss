@@ -1,0 +1,55 @@
+.wrapper {
+    padding: 0 16px;
+    margin-bottom: 12px;
+}
+
+.banner {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+        'message icon'
+        'action action';
+    gap: 24px 8px;
+    padding: 16px;
+    border-radius: 8px;
+    background-color: var(--page-background-additional);
+
+    @media (min-width: 768px) {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: nowrap;
+    }
+}
+
+.icon {
+    grid-area: icon;
+    align-self: flex-start;
+    width: 24px;
+    height: 24px;
+    padding: 4px;
+    color: var(--default-attention-icon-stroke);
+
+    @media (min-width: 768px) {
+        align-self: center;
+    }
+}
+
+.message {
+    grid-area: message;
+    min-width: 0;
+
+    @media (min-width: 768px) {
+        margin-right: auto;
+        font-weight: var(--weight-semi-bold);
+    }
+}
+
+.action {
+    grid-area: action;
+    width: 100%;
+
+    @media (min-width: 768px) {
+        width: auto;
+    }
+}

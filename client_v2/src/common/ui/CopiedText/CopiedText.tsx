@@ -63,7 +63,7 @@ export const CopiedText = (props: CopiedTextProps) => {
             aria-label={isCopied() ? intl.getMessage('copied') : intl.getMessage('copy')}
         >
             <span class={s.text}>{props.text}</span>
-            <Icon icon="copy" class={cn(s.icon, { [s.copied]: isCopied() })} />
+            <Icon icon="copy" class={s.icon} />
         </div>
     );
 };

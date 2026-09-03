@@ -117,6 +117,17 @@
     white-space: nowrap;
 }
 
+.queryCountLink {
+    color: inherit;
+    text-decoration: none;
+
+    &:hover,
+    &:focus {
+        color: inherit;
+        text-decoration: underline;
+    }
+}
+
 .dropdownWrapper {
     flex-shrink: 0;
 }
@@ -150,13 +161,6 @@
 .queryBarFill {
     height: 100%;
     background: var(--default-tertiary-stat);
-}
-
-.queryTooltip {
-    font-size: var(--fs-text-t3);
-    line-height: var(--lh-t3-normal);
-    padding: 8px 12px;
-    white-space: nowrap;
 }
 
 .queryTooltipOverlay {

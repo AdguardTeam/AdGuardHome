@@ -24,6 +24,7 @@ type ErrorToastPayload = {
     error: unknown;
     options?: Record<string, unknown>;
     action?: ToastAction;
+    noIcon?: boolean;
 };
 
 export type ToastNotice = {
@@ -35,6 +36,7 @@ export type ToastNotice = {
     action?: ToastAction;
     options?: Record<string, unknown>;
     code?: string;
+    noIcon?: boolean;
 };
 
 type ToastsState = {
@@ -68,7 +70,7 @@ export const createUndoToast = (
 };
 
 export const addErrorToast = (payload: ErrorToastPayload) => {
-    const { error, options, action } = payload;
+    const { error, options, action, noIcon } = payload;
     const message = error instanceof Error ? error.message : String(error);
     console.error(message); // eslint-disable-line no-console
     const notice: ToastNotice = {
@@ -76,6 +78,7 @@ export const addErrorToast = (payload: ErrorToastPayload) => {
         message,
         options,
         type: 'error' as const,
+        noIcon,
     };
     if (action) {
         notice.action = action;
@@ -98,13 +101,14 @@ export const addSuccessToast = (message: SuccessToastPayload) => {
 };
 
 export const addWarningToast = (payload: ErrorToastPayload) => {
-    const { error, options, action } = payload;
+    const { error, options, action, noIcon } = payload;
     const message = error instanceof Error ? error.message : String(error);
     const notice: ToastNotice = {
         id: nanoid(),
         message,
         options,
         type: 'warning' as const,
+        noIcon,
     };
     if (action) {
         notice.action = action;

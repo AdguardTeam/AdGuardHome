@@ -46,6 +46,8 @@ export const BlockedServices = (props: Props) => {
     const [search, setSearch] = createSignal('');
     const [groupFilter, setGroupFilter] = createSignal<string[]>([]);
     const [togglingId, setTogglingId] = createSignal<string | null>(null);
+    const [showBlockedOnly, setShowBlockedOnly] = createSignal(false);
+    const [showUnblockedOnly, setShowUnblockedOnly] = createSignal(false);
 
     onMount(() => {
         if (!props.clientScope) {
@@ -98,6 +100,13 @@ export const BlockedServices = (props: Props) => {
                 return groupId && selected.has(groupId);
             });
         }
+        if (showBlockedOnly()) {
+            const bSet = blockedSet();
+            filtered = filtered.filter((service) => bSet.has(service.id));
+        } else if (showUnblockedOnly()) {
+            const bSet = blockedSet();
+            filtered = filtered.filter((service) => !bSet.has(service.id));
+        }
         const term = search().trim().toLowerCase();
         if (term) {
             filtered = filtered.filter(
@@ -116,6 +125,16 @@ export const BlockedServices = (props: Props) => {
                 ? current.filter((g) => g !== groupId)
                 : [...current, groupId],
         );
+    };
+
+    const handleToggleStateFilter = (filter: 'blocked' | 'unblocked') => {
+        if (filter === 'blocked') {
+            setShowBlockedOnly((v) => !v);
+            setShowUnblockedOnly(false);
+        } else {
+            setShowUnblockedOnly((v) => !v);
+            setShowBlockedOnly(false);
+        }
     };
 
     const handleToggleService = (serviceId: string, checked: boolean) => {
@@ -166,6 +185,26 @@ export const BlockedServices = (props: Props) => {
     return (
         <Show when={!isInitialLoading()}>
             <div class={cn(theme.layout.container, props.class)}>
+                <Show when={props.breadcrumbs}>
+                    <div class={s.breadcrumbs}>
+                        <Breadcrumbs
+                            parentLinks={props.breadcrumbs!.parentLinks}
+                            currentTitle={props.breadcrumbs!.currentTitle}
+                        />
+                    </div>
+                    <h1
+                        class={cn(
+                            theme.layout.title,
+                            theme.title.h4,
+                            theme.title.h3_tablet,
+                            s.clientsTitle,
+                        )}
+                    >
+                        {intl.getMessage('blocked_services')}
+                    </h1>
+                    <p class={s.description}>{intl.getMessage('blocked_services_desc')}</p>
+                </Show>
+
                 <div class={cn(theme.layout.containerIn, theme.layout.containerIn_one_col)}>
                     <Show when={!props.clientScope && !props.breadcrumbs}>
                         <div class={s.header}>
@@ -181,26 +220,6 @@ export const BlockedServices = (props: Props) => {
                             </h1>
                             <p class={s.description}>{intl.getMessage('blocked_services_desc')}</p>
                         </div>
-                    </Show>
-
-                    <Show when={props.breadcrumbs}>
-                        <div class={s.breadcrumbs}>
-                            <Breadcrumbs
-                                parentLinks={props.breadcrumbs!.parentLinks}
-                                currentTitle={props.breadcrumbs!.currentTitle}
-                            />
-                        </div>
-                        <h1
-                            class={cn(
-                                theme.layout.title,
-                                theme.title.h4,
-                                theme.title.h3_tablet,
-                                s.clientsTitle,
-                            )}
-                        >
-                            {intl.getMessage('blocked_services')}
-                        </h1>
-                        <p class={s.description}>{intl.getMessage('blocked_services_desc')}</p>
                     </Show>
 
                     <Link
@@ -242,6 +261,7 @@ export const BlockedServices = (props: Props) => {
                                     </button>
                                 </Show>
                             }
+                            size="large"
                         />
                     </div>
 
@@ -250,7 +270,34 @@ export const BlockedServices = (props: Props) => {
                         activeGroups={groupFilter()}
                         onToggleGroup={handleToggleGroup}
                         data-testid="blocked-services-groups"
-                    />
+                    >
+                        <button
+                            type="button"
+                            class={cn(s.groupButton, {
+                                [s.groupButtonActive]: showBlockedOnly(),
+                            })}
+                            onClick={() => handleToggleStateFilter('blocked')}
+                            aria-pressed={showBlockedOnly()}
+                            data-testid="blocked-services-show-blocked-only"
+                        >
+                            {intl.getMessage('blocked_only')}
+                        </button>
+                        <button
+                            type="button"
+                            class={cn(s.groupButton, {
+                                [s.groupButtonActive]: showUnblockedOnly(),
+                            })}
+                            onClick={() => handleToggleStateFilter('unblocked')}
+                            aria-pressed={showUnblockedOnly()}
+                            data-testid="blocked-services-show-unblocked-only"
+                        >
+                            {intl.getMessage('unblocked_only')}
+                        </button>
+                        <span
+                            class={s.filtersDivider}
+                            data-testid="blocked-services-filters-divider"
+                        />
+                    </GroupFilter>
 
                     <div class={s.servicesList} data-testid="blocked-services-list">
                         <Show

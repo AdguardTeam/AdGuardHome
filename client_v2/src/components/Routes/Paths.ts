@@ -33,6 +33,8 @@ export const RoutePath = {
 
 export type RoutePathKey = keyof typeof RoutePath;
 
+export type QueryParams = Record<string, string | number | boolean>;
+
 /** Query param key used to pass a target element ID for scroll-to-section navigation. */
 export const SCROLL_QUERY_KEY = 'section';
 

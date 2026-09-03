@@ -59,7 +59,7 @@ export const RuntimeClientsTable = (props: Props) => {
                     <span class={s.cellLabel}>{intl.getMessage('name_table_header')}</span>
 
                     <div class={s.cellValue}>
-                        <span class={theme.common.textOverflow} title={value || '-'}>
+                        <span class={theme.common.twoRowsOverflow} title={value || '-'}>
                             {value || '-'}
                         </span>
                     </div>

@@ -9,6 +9,7 @@ import {
     setAuthData,
     setAllSettings,
     checkConfig,
+    saveInstallAddresses,
 } from 'panel/stores/install';
 import { dashboardState } from 'panel/stores/dashboard';
 
@@ -79,7 +80,11 @@ export const Setup = () => {
         window.scrollTo({ top: 0, behavior: 'instant' });
     });
 
-    const handleNextStep = () => {
+    const handleNextStep = (data?: SettingsFormValues) => {
+        if (data) {
+            saveInstallAddresses(data);
+        }
+
         if (step() <= INSTALL_TOTAL_STEPS) {
             nextStep();
         }

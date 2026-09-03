@@ -63,32 +63,31 @@ func TestServer_ServeDNS(t *testing.T) {
 			OnHostByIP: func(ip netip.Addr) (_ string) { panic(testutil.UnexpectedCall(ip)) },
 			OnIPByHost: func(host string) (_ netip.Addr) { panic(testutil.UnexpectedCall(host)) },
 		},
-		DNSFilter:         f,
-		PrivateNets:       netutil.SubnetSetFunc(netutil.IsLocallyServed),
-		Logger:            testLogger,
-		TLSConfigProvider: testTLSConfigProvider,
+		DNSFilter:   f,
+		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
+		Logger:      testLogger,
+		TLSManager:  testTLSManager,
 	})
 	require.NoError(t, err)
 
 	err = s.Prepare(testutil.ContextWithTimeout(t, testTimeout), &forwardConf)
 	require.NoError(t, err)
 
-	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{
-		&aghtest.Upstream{
-			CName: map[string][]string{
-				"cname.exception.": {"cname.specific."},
-				"should.block.":    {"blocked.domain."},
-				"allowed.first.":   {"allowed.domain.", "blocked.domain."},
-				"blocked.first.":   {"blocked.domain.", "allowed.domain."},
-			},
-			IPv4: map[string][]net.IP{
-				"a.exception.": {{0, 0, 0, 1}},
-			},
-			IPv6: map[string][]net.IP{
-				"aaaa.exception.": {net.ParseIP("::1")},
-			},
-		},
+	cNames := map[string][]string{
+		"cname.exception.": {"cname.specific."},
+		"should.block.":    {"blocked.domain."},
+		"allowed.first.":   {"allowed.domain.", "blocked.domain."},
+		"blocked.first.":   {"blocked.domain.", "allowed.domain."},
 	}
+
+	ups := aghtest.NewExchangingUpstream(
+		t,
+		cNames,
+		map[string][]net.IP{"a.exception.": {{0, 0, 0, 1}}},
+		map[string][]net.IP{"aaaa.exception.": {net.ParseIP("::1")}},
+	)
+
+	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{ups}
 	startDeferStop(t, s)
 
 	testCases := []struct {
@@ -265,7 +264,7 @@ func TestServer_ServeDNS_restrictLocal(t *testing.T) {
 			LocalPTRResolvers: []string{localUpsAddr},
 			ServePlainDNS:     true,
 		},
-		testTLSConfigProvider,
+		testTLSManager,
 	)
 	startDeferStop(t, s)
 

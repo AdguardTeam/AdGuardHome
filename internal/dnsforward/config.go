@@ -3,7 +3,6 @@ package dnsforward
 import (
 	"context"
 	"crypto/tls"
-	"crypto/x509"
 	"fmt"
 	"log/slog"
 	"net"
@@ -268,8 +267,6 @@ type ServerConfig struct {
 
 	// UpstreamTimeout is the timeout for querying upstream servers.
 	UpstreamTimeout time.Duration
-
-	TLSv12Roots *x509.CertPool // list of root CAs for TLSv1.2
 
 	// TLSCiphers are the IDs of TLS cipher suites to use.
 	TLSCiphers []uint16
@@ -714,7 +711,7 @@ func (s *Server) prepareTLS(ctx context.Context, proxyConf *proxy.Config) {
 	proxyConf.TLSListenAddr = s.conf.TLSConf.TLSListenAddrs
 	proxyConf.QUICListenAddr = s.conf.TLSConf.QUICListenAddrs
 
-	proxyConf.TLSConfig = s.tlsConfigProvider.TLSConfig()
+	proxyConf.TLSConfig = s.tlsManager.TLSConfig()
 	if proxyConf.TLSConfig == nil {
 		s.logger.WarnContext(ctx, "tls configuration is not set")
 

@@ -54,6 +54,24 @@ describe('buildClientConfig', () => {
         expect(config.upstreams).toEqual([]);
     });
 
+    it('converts empty cache size string to 0', () => {
+        const form = {
+            ...getInitialClientFormState(),
+            upstreams_cache_size: '',
+        };
+        const config = buildClientConfig(form);
+        expect(config.upstreams_cache_size).toBe(0);
+    });
+
+    it('converts numeric cache size string to number', () => {
+        const form = {
+            ...getInitialClientFormState(),
+            upstreams_cache_size: '123',
+        };
+        const config = buildClientConfig(form);
+        expect(config.upstreams_cache_size).toBe(123);
+    });
+
     it('returns all expected top-level keys', () => {
         const config = buildClientConfig(getInitialClientFormState());
         expect(Object.keys(config).sort()).toEqual([

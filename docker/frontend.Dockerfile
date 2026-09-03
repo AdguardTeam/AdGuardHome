@@ -127,4 +127,5 @@ EOF
 FROM scratch AS builder-exporter
 ARG CACHE_BUSTER=0
 ARG CLIENT_DIR
-COPY --from=builder /app/build /build
+ARG DIST_DIR="build"
+COPY --from=builder /app/$DIST_DIR /$DIST_DIR

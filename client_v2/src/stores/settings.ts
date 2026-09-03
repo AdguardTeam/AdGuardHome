@@ -11,7 +11,7 @@ import {
     safesearchSettings,
     testUpstreamDNS,
 } from 'panel/api/generated';
-import { addErrorToast, addSuccessToast } from './toasts';
+import { addErrorToast, addSuccessToast, createUndoToast } from './toasts';
 import { splitByNewLine } from 'panel/helpers/helpers';
 import intl from 'panel/common/intl';
 import type { SafeSearchConfig } from 'panel/api/model/safeSearchConfig';
@@ -104,6 +104,68 @@ export async function toggleSetting(
 }
 
 export const settingsState = untrack(() => state);
+
+const disableWithUndo = async (
+    disable: () => Promise<void>,
+    enable: () => Promise<void>,
+    setEnabled: (enabled: boolean) => void,
+    message: string,
+): Promise<boolean> => {
+    try {
+        await disable();
+        setEnabled(false);
+        addSuccessToast(
+            createUndoToast(message, intl.getMessage('notify_undo'), async () => {
+                await enable();
+                setEnabled(true);
+            }),
+        );
+        return true;
+    } catch (error) {
+        addErrorToast({ error });
+        return false;
+    }
+};
+
+export const disableSafeBrowsing = () =>
+    disableWithUndo(
+        safebrowsingDisable,
+        safebrowsingEnable,
+        (enabled) => setState('settingsList', 'safebrowsing', 'enabled', enabled),
+        intl.getMessage('user_rules_browsing_security_disabled'),
+    );
+
+export const disableParental = () =>
+    disableWithUndo(
+        parentalDisable,
+        parentalEnable,
+        (enabled) => setState('settingsList', 'parental', 'enabled', enabled),
+        intl.getMessage('user_rules_parental_control_disabled'),
+    );
+
+export const disableSafeSearch = async (): Promise<boolean> => {
+    // Snapshot as a plain object: store reads return live proxies, so keeping
+    // a reference would reflect post-disable state instead of the original.
+    const previousConfig = { ...state.settingsList.safesearch };
+    try {
+        await safesearchSettings({ ...previousConfig, enabled: false });
+        setState('settingsList', 'safesearch', { ...previousConfig, enabled: false });
+        addSuccessToast(
+            createUndoToast(
+                intl.getMessage('user_rules_safe_search_disabled'),
+                intl.getMessage('notify_undo'),
+                async () => {
+                    await safesearchSettings(previousConfig);
+                    setState('settingsList', 'safesearch', previousConfig);
+                },
+            ),
+        );
+        return true;
+    } catch (error) {
+        addErrorToast({ error });
+        return false;
+    }
+};
 
 export const testUpstreamWithFormValues = async (
     formValues: {

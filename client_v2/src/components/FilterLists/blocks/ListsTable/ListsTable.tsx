@@ -94,10 +94,8 @@ export const ListsTable = (props: Props) => {
 
                 return (
                     <div class={theme.table.cell}>
-                        <span class={theme.table.cellLabel}>{intl.getMessage('name_label')}</span>
-
                         <div class={cn(theme.table.cellValueText, s.domainCellValue)}>
-                            <span class={theme.common.textOverflow}>{value}</span>
+                            <span class={theme.common.twoRowsOverflow}>{value}</span>
                             <Switch
                                 id={id}
                                 checked={enabled}

@@ -42,7 +42,9 @@ Developers need to be able to reproduce the faulty behavior in order to fix an i
 
 ### Discuss your changes first
 
-Please discuss your changes by opening an issue.  The maintainers should evaluate your proposal, and it’s generally better if that’s done before any code is written.
+Please discuss your changes by opening an issue.  The maintainers should evaluate your proposal, and it’s generally better if that’s done before any code is written. Due to a recent increase in low-effort and AI-generated ("vibe-coded") pull requests, we're not able to review contributions that weren't discussed beforehand.
+
+Pull requests that implement changes not previously discussed with the maintainers in an issue may be closed without a detailed review - this isn't a judgement on the contribution itself, we simply don't have the capacity to review unsolicited large changes line by line. If this becomes a repeated pattern from the same contributor, we may need to limit their ability to open issues or pull requests here.
 
 ### Review your changes for style
 
