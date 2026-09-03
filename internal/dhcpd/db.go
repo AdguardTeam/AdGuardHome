@@ -155,11 +155,24 @@ func (s *server) dbStore() (err error) {
 	leases := []*dbLease{}
 
 	for _, l := range s.srv4.getLeasesRef() {
+		// Non-static leases with zero [dhcpsvc.Lease.Expiry] are the
+		// uncommitted leases allocated during DHCPDISCOVER, and they must not
+		// be persisted.
+		//
+		// See https://github.com/AdguardTeam/AdGuardHome/issues/8572.
+		if !l.IsStatic && l.Expiry.IsZero() {
+			continue
+		}
+
 		leases = append(leases, fromLease(l))
 	}
 
 	if s.srv6 != nil {
 		for _, l := range s.srv6.getLeasesRef() {
+			if !l.IsStatic && l.Expiry.IsZero() {
+				continue
+			}
+
 			leases = append(leases, fromLease(l))
 		}
 	}
