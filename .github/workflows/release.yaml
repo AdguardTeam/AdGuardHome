@@ -132,9 +132,10 @@
           'path': |
             ${{ env.DIST_DIR }}
   'PublishDocker':
+    # TODO(d.kolyshev): !! Set on workflow_dispatch.
     'if': |
       ${{
-        github.event_name == 'workflow_dispatch' && github.repository_owner == 'AdGuardSoftwareLimited'
+        github.repository_owner == 'AdGuardSoftwareLimited'
       }}
     'needs': 'CalculateChecksums'
     'permissions':
@@ -172,9 +173,10 @@
               sh ./scripts/make/build-docker.sh \
               ;
   'PublishGitHubRelease':
+    # TODO(d.kolyshev): !! Set on workflow_dispatch.
     'if': |
       ${{
-        github.event_name == 'workflow_dispatch' && github.repository_owner == 'AdGuardSoftwareLimited'
+        github.repository_owner == 'AdGuardSoftwareLimited'
       }}
     'needs': 'CalculateChecksums'
     'permissions':
