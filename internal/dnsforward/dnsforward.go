@@ -855,29 +855,53 @@ func (s *Server) Reconfigure(ctx context.Context, conf *ServerConfig) error {
 	s.logger.InfoContext(ctx, "starting reconfiguring server")
 	defer s.logger.InfoContext(ctx, "finished reconfiguring server")
 
-	s.stopLocked(ctx)
+	if conf == nil {
+		conf = &s.conf
+	}
 
-	// It seems that net.Listener.Close() doesn't close file descriptors right
-	// away.  We wait for some time and hope that this fd will be closed.
-	time.Sleep(100 * time.Millisecond)
+	// Keep references to the currently-running state.  We build the new state
+	// *before* tearing the old one down, so that the expensive parts (loading
+	// upstreams, bootstrapping, building the filtering proxy) run while the old
+	// listeners are still bound.  This keeps clients sending queries instead of
+	// getting "connection refused" during a settings change, and removes the
+	// previous blind 100 ms sleep that was only a workaround for slow listener
+	// fd cleanup.
+	//
+	// NOTE: The exclusive lock is still held for the whole operation, which
+	// serializes request handling.  A full fix would build the new proxy
+	// outside the lock and only swap it in under a brief critical section; that
+	// is left as a follow-up since Prepare currently mutates many fields of s.
+	oldProxy := s.dnsProxy
+	oldBootResolvers := s.bootResolvers
+	oldAddrProc := s.addrProc
 
-	if s.addrProc != nil {
-		err := s.addrProc.Close()
+	err := s.Prepare(ctx, conf)
+	if err != nil {
+		return fmt.Errorf("could not reconfigure the server: %w", err)
+	}
+
+	// Shut down the old proxy and free the old resources.  After Prepare,
+	// s.dnsProxy, s.bootResolvers and s.addrProc point to the new state, so we
+	// close the saved references explicitly.
+	if oldProxy != nil {
+		err = oldProxy.Shutdown(ctx)
+		if err != nil {
+			s.logger.ErrorContext(ctx, "closing primary resolvers", slogutil.KeyError, err)
+		}
+	}
+
+	for _, b := range oldBootResolvers {
+		logCloserErr(ctx, b, "closing bootstrap", s.logger.With("address", b.Address()))
+	}
+
+	if oldAddrProc != nil {
+		err = oldAddrProc.Close()
 		if err != nil {
 			s.logger.ErrorContext(ctx, "closing address processor", slogutil.KeyError, err)
 		}
 	}
 
-	if conf == nil {
-		conf = &s.conf
-	}
-
-	// TODO(e.burkov):  It seems an error here brings the server down, which is
-	// not reliable enough.
-	err := s.Prepare(ctx, conf)
-	if err != nil {
-		return fmt.Errorf("could not reconfigure the server: %w", err)
-	}
+	s.isRunning = false
 
 	err = s.startLocked(ctx)
 	if err != nil {
