@@ -1,0 +1,69 @@
+'env':
+  'BASE_IMAGE': |-
+    ${{ vars.BASE_IMAGE || 'adguard/snap-builder:2.1' }}
+  'CHANNEL': |-
+    ${{ case(
+      startsWith(github.ref_name, 'release-v'), 'release',
+      startsWith(github.ref_name, 'beta-v'), 'beta',
+      'edge'
+    ) }}
+  'SNAP_CHANNEL': |-
+    ${{ case(
+      startsWith(github.ref_name, 'release-v'), 'candidate',
+      startsWith(github.ref_name, 'beta-v'), 'beta',
+      'edge'
+    ) }}
+jobs:
+  'Build':
+    'if': |
+      ${{ github.repository_owner == 'AdGuardSoftwareLimited' }}
+    'permissions':
+      'contents': 'read'
+      'id-token': 'write'
+    'runs-on': 'team-go'
+    'steps':
+      - 'uses': 'actions/checkout@v6'
+        'with':
+          # Set to false to avoid GITHUB_TOKEN leaking.
+          #
+          # See https://github.com/actions/checkout/issues/485#issuecomment-934422611.
+          'persist-credentials': false
+      - 'name': 'Build'
+        'uses': 'AdGuardSoftwareLimited/actions/actions/docker-build@master'
+        'with':
+          'dockerfile': 'docker/snapcraft.Dockerfile'
+          'context': '.'
+          'target': 'builder-exporter'
+          'output': '.'
+          'build-args': |
+            BASE_IMAGE=${{ env.BASE_IMAGE }}
+            CACHE_BUSTER=${{ inputs.cache_buster || '0' }}
+            CHANNEL=${{ env.CHANNEL }}
+            VERSION=${{ github.ref_name }}
+      - 'uses': 'actions/upload-artifact@v7'
+        'with':
+          'name': 'adguardhome'
+          'path': |
+            AdGuardHome_amd64.snap
+            AdGuardHome_armhf.snap
+            AdGuardHome_arm64.snap
+            AdGuardHome_i386.snap
+'name': 'Build and publish Snapcraft release'
+'on':
+  # TODO(d.kolyshev): !! Remove on push.
+  'push':
+    'branches':
+      - '*'
+  'workflow_dispatch':
+    'inputs':
+      'cache_buster':
+        'default': ''
+        'description': |
+          Override to force re-run of cached stages (pass any unique value).
+        'type': 'string'
+# Permissions are disabled for all the jobs by default, and then overridden for
+# specific jobs if needed.  This is a recommended practice for security reasons,
+# and also allows to avoid mistakes with permissions when creating new jobs.
+#
+# See https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#permissions.
+'permissions': {}
