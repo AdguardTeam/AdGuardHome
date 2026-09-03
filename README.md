@@ -394,7 +394,7 @@ Please note that these projects are not affiliated with AdGuard, but are made by
 
 - [Chocolatey package](https://community.chocolatey.org/packages/adguardhome/) by [niks255](https://community.chocolatey.org/profiles/niks255).
 
-- [ZimaOS App Store listing](https://www.zimaspace.com/zimaos/app-store/app/org.icewhale.adguardhome) by [CasaOS Team](https://casaos.zimaspace.com/).
+- [ZimaOS App Store listing](https://www.zimaspace.com/zimaos/app-store/app/org.icewhale.adguardhome) by [ZimaOS Team](https://www.zimaspace.com/zimaos).
 
 ## <a href="#acknowledgments" id="acknowledgments" name="acknowledgments">Acknowledgments</a>
 
