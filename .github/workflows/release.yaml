@@ -25,7 +25,7 @@
       ${{ github.repository_owner == 'AdGuardSoftwareLimited' }}
     'permissions':
       'contents': 'read'
-      'id-token': write
+      'id-token': 'write'
     'runs-on': 'team-go'
     'steps':
       - 'uses': 'actions/checkout@v6'
@@ -131,15 +131,24 @@
           'overwrite': true
           'path': |
             ${{ env.DIST_DIR }}
-  'PublishDocker':
-    # TODO(d.kolyshev): !! Set on workflow_dispatch.
+  'DeployToStaticStorage':
     'if': |
-      ${{
-        github.repository_owner == 'AdGuardSoftwareLimited'
-      }}
+      ${{ github.event_name == 'workflow_dispatch' && github.repository_owner == 'AdGuardSoftwareLimited' }}
     'needs': 'CalculateChecksums'
     'permissions':
-      # Download the artifact.
+      'contents': 'read'
+      'id-token': 'write'
+    'uses': 'AdGuardSoftwareLimited/actions/.github/workflows/deploy-to-static.yml@master'
+    'with':
+      'team': 'go'
+      'deployer-module': 'adguard-home-${{ env.CHANNEL }}'
+      'artifact-name': 'adguardhome'
+      'environment': '${{ env.CHANNEL }}-static'
+  'PublishDocker':
+    'if': |
+      ${{ github.event_name == 'workflow_dispatch' && github.repository_owner == 'AdGuardSoftwareLimited' }}
+    'needs': 'DeployToStaticStorage'
+    'permissions':
       'contents': 'read'
     'runs-on': 'team-go'
     'steps':
@@ -173,14 +182,10 @@
               sh ./scripts/make/build-docker.sh \
               ;
   'PublishGitHubRelease':
-    # TODO(d.kolyshev): !! Set on workflow_dispatch.
     'if': |
-      ${{
-        github.repository_owner == 'AdGuardSoftwareLimited'
-      }}
-    'needs': 'CalculateChecksums'
+      ${{ github.event_name == 'workflow_dispatch' && github.repository_owner == 'AdGuardSoftwareLimited' }}
+    'needs': 'DeployToStaticStorage'
     'permissions':
-      # Download the artifact.
       'contents': 'read'
       # Octopass OIDC for the cross-repo token.
       'id-token': 'write'
