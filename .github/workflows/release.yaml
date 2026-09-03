@@ -190,7 +190,7 @@
       'draft': true
       'tag_name': ${{ github.ref_name }}
       'team': 'go'
-      'target_repo': 'AdguardTeam/adguardhome'
+      'target_repo': 'AdguardTeam/AdGuardHome'
 'name': 'Build and publish releases'
 'on':
   # TODO(d.kolyshev): !! Remove on push.
