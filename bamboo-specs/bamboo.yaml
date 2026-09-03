@@ -1,7 +1,0 @@
-# TODO(d.kolyshev): !! Remove.
-
----
-!include release.yaml
-
----
-!include snapcraft.yaml
