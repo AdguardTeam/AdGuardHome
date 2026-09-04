@@ -1,6 +1,6 @@
 'env':
   'BASE_IMAGE': |-
-    ${{ vars.BASE_IMAGE || 'adguard/go-builder:1.26.6--1' }}
+    ${{ vars.BASE_IMAGE || 'adguard/go-builder:1.26.8--1' }}
   'BUILD_DIR': |-
     build
   'CHANNEL': |-
@@ -30,6 +30,7 @@
     'steps':
       - 'uses': 'actions/checkout@v6'
         'with':
+          'fetch-depth': 0
           # Set to false to avoid GITHUB_TOKEN leaking.
           #
           # See https://github.com/actions/checkout/issues/485#issuecomment-934422611.
@@ -65,7 +66,7 @@
           'context': '.'
           'target': 'builder-exporter'
           'output': '.'
-          # TODO(d.kolyshev): !! Set correct version.
+          # TODO(d.kolyshev): !! Check correct version.
           'build-args': |
             BASE_IMAGE=${{ env.BASE_IMAGE }}
             BRANCH=${{ github.ref_name }}
