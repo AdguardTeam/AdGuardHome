@@ -230,10 +230,13 @@ export const Table = <T extends Record<string, any>>(props: TableProps<T>) => {
                                             column.header.render()
                                         ) : (
                                             <span
+                                                data-testid={`table-header-${column.key}`}
+                                                title={column.header.text}
                                                 class={cn(
                                                     theme.text.t3,
                                                     theme.text.condenced,
                                                     theme.text.semibold,
+                                                    s.tableHeaderText,
                                                 )}
                                             >
                                                 {column.header.text}
@@ -241,32 +244,18 @@ export const Table = <T extends Record<string, any>>(props: TableProps<T>) => {
                                         )}
 
                                         {(props.sortable ?? true) && column.sortable && (
-                                            <span>
-                                                <Show
-                                                    when={
+                                            <Icon
+                                                icon="arrow_bottom"
+                                                color="gray"
+                                                class={cn(s.sortIcon, {
+                                                    [s.sortAsc]:
                                                         state.sortKey === column.key &&
-                                                        state.sortDirection === 'asc'
-                                                    }
-                                                >
-                                                    <Icon
-                                                        icon="arrow"
-                                                        color="gray"
-                                                        class={s.sortAsc}
-                                                    />
-                                                </Show>
-                                                <Show
-                                                    when={
+                                                        state.sortDirection === 'asc',
+                                                    [s.sortDesc]:
                                                         state.sortKey === column.key &&
-                                                        state.sortDirection === 'desc'
-                                                    }
-                                                >
-                                                    <Icon
-                                                        icon="arrow"
-                                                        color="gray"
-                                                        class={s.sortDesc}
-                                                    />
-                                                </Show>
-                                            </span>
+                                                        state.sortDirection === 'desc',
+                                                })}
+                                            />
                                         )}
                                     </div>
                                 )}

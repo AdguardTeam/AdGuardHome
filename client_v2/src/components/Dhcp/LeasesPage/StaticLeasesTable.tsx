@@ -95,7 +95,7 @@ export const StaticLeasesTable = (props: Props) => {
                         {intl.getMessage('dhcp_table_hostname')}
                     </span>
                     <div class={theme.table.cellValueText}>
-                        <span class={theme.common.textOverflow}>{value}</span>
+                        <span class={theme.common.twoRowsOverflow}>{value}</span>
                     </div>
                 </div>
             ),

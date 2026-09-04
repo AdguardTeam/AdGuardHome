@@ -3,5 +3,26 @@
 }
 
 .checkboxRow {
-    padding: 8px 0;
+    display: flex;
+    align-items: center;
+    margin: 0 -16px;
+    border-radius: 8px;
+    transition: var(--t2) background-color;
+
+    &:hover,
+    &:focus-within {
+        background-color: var(--page-background-additional);
+    }
+}
+
+.checkboxFull {
+    width: 100%;
+    padding: 8px 16px;
+}
+
+.checkboxRowDisabled {
+    &:hover,
+    &:focus-within {
+        background-color: transparent;
+    }
 }

@@ -4,6 +4,7 @@
     --hovered-page-background: var(--gray-80);
     --pressed-page-background: var(--gray-70);
     --page-background-additional: var(--gray-80);
+    --page-background-additional-hovered: var(--gray-70);
     --page-background-additional-pressed: var(--gray-70);
     /* Cards background */
     --default-cards-background: var(--gray-80);
@@ -56,6 +57,7 @@
     --hovered-danger-button: var(--red-60);
     --pressed-danger-button: var(--red-70);
     --disabled-danger-button: var(--red-30);
+    --hovered-secondary-danger-button: var(--red-100);
     /* Link */
     --default-link: var(--product-primary-50);
     --hovered-link: var(--product-primary-60);
@@ -75,6 +77,7 @@
     --default-black-icons: var(--gray-20);
     --default-gray-icons: var(--gray-40);
     --disabled-gray-icons: var(--gray-70);
+    --disabled-product-icon: var(--product-primary-90);
     --default-error-icon: var(--red-50);
     --stroke-icons-white-icons-default: var(--gray-0);
     --stroke-icons-secondary-icon-disabled: var(--product-secondary-100);

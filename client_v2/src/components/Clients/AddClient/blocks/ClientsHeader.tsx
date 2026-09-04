@@ -42,7 +42,9 @@ export const ClientsHeader = (props: ClientsHeaderProps) => {
     );
 
     const pageTitle = createMemo(() =>
-        isEdit() ? intl.getMessage('clients_edit') : props.currentTitle,
+        isEdit() && isMainFormPage()
+            ? intl.getMessage('clients_edit')
+            : props.currentTitle,
     );
 
     const breadcrumbCurrent = createMemo(() =>

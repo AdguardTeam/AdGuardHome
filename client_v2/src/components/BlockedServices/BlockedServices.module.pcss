@@ -77,11 +77,21 @@
     margin-left: 8px;
 }
 
+.filtersDivider {
+    width: 1px;
+    height: 14px;
+    margin: 0 12px;
+    align-self: center;
+    flex-shrink: 0;
+    background-color: var(--default-gray-icons);
+    border-radius: 2px;
+}
+
 .groups {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
-    padding: 8px 16px 16px;
+    gap: 16px;
+    padding: 16px;
 }
 
 .groupButton {
@@ -99,7 +109,7 @@
     outline: none;
 
     &:hover,
-    &:focus {
+    &:focus-visible {
         background-color: var(--page-background-additional);
     }
 }
@@ -108,7 +118,7 @@
     border-color: var(--default-link);
 
     &:hover,
-    &:focus {
+    &:focus-visible {
         background-color: transparent;
     }
 }

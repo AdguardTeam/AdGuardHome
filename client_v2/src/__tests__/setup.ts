@@ -4,6 +4,12 @@ import { cleanup } from '@solidjs/testing-library';
 
 afterEach(() => cleanup());
 
+// Mock window.scrollTo for router navigation (jsdom doesn't implement it).
+Object.defineProperty(window, 'scrollTo', {
+    writable: true,
+    value: () => {},
+});
+
 // Mock window.matchMedia for components that use useIsMobile
 Object.defineProperty(window, 'matchMedia', {
     writable: true,

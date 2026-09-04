@@ -10,7 +10,7 @@ import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from 'panel/helpers/localStora
 import { LanguageDropdown } from '../LanguageDropdown/LanguageDropdown';
 import { REPOSITORY, PRIVACY_POLICY_LINK, THEMES } from 'panel/helpers/constants';
 import { LANGUAGES, LANGUAGE_NAMES } from 'panel/helpers/twosky';
-import { setHtmlLangAttr, setUITheme } from 'panel/helpers/helpers';
+import { getTheme, setHtmlLangAttr, setUITheme } from 'panel/helpers/helpers';
 import {
     changeTheme,
     changeLanguage as changeLanguageAction,
@@ -40,17 +40,23 @@ export const Footer = () => {
         light: intl.getMessage('light_theme'),
     }));
 
-    const [currentThemeLocal, setCurrentThemeLocal] = createSignal(THEMES.auto);
+    const [currentThemeLocal, setCurrentThemeLocal] = createSignal(getTheme());
     const [themeDropdownOpen, setThemeDropdownOpen] = createSignal(false);
+
+    const activeTheme = () => (isLoggedIn() ? currentTheme() : currentThemeLocal());
+    const themeLabel = () => themeTranslations()[activeTheme()];
 
     const getYear = () => new Date().getFullYear();
 
     const getThemeIcon = () => {
-        const activeTheme = isLoggedIn() ? currentTheme() : currentThemeLocal();
-        if (activeTheme === THEMES.auto) return 'theme_auto';
-        if (activeTheme === THEMES.dark) return 'theme_dark';
+        const active = activeTheme();
+        if (active === THEMES.auto) return 'theme_auto';
+        if (active === THEMES.dark) return 'theme_dark';
         return 'theme_light';
     };
+
+    const versionLabel = () =>
+        intl.getMessage('version_number', { value: dashboardState.dnsVersion });
 
     const changeLanguage = async (newLang: Lang) => {
         await intl.changeLanguage(newLang as LocalesType);
@@ -80,31 +86,25 @@ export const Footer = () => {
                     <div class={s.copyright}>&copy; 2018–{getYear()} AdGuard Home</div>
 
                     <Show when={dashboardState.dnsVersion}>
-                        <div class={s.version}>
-                            {intl.getMessage('version_number', {
-                                value: dashboardState.dnsVersion,
-                            })}
-
-                            <Show when={dashboardState.checkUpdateFlag}>
-                                <button
-                                    type="button"
-                                    class={cn(s.checkUpdateBtn, {
-                                        [s.checkUpdateBtn_loading]:
-                                            dashboardState.processingVersion,
-                                    })}
-                                    aria-label={intl.getMessage('check_updates_btn')}
-                                    disabled={dashboardState.processingVersion}
-                                    data-testid="footer-check-updates"
-                                    onClick={() => getVersion(true)}
-                                >
-                                    <Icon
-                                        icon={
-                                            dashboardState.processingVersion ? 'loader' : 'refresh'
-                                        }
-                                    />
-                                </button>
-                            </Show>
-                        </div>
+                        <Show
+                            when={dashboardState.checkUpdateFlag}
+                            fallback={<div class={s.version}>{versionLabel()}</div>}
+                        >
+                            <button
+                                type="button"
+                                class={cn(s.version, s.versionButton)}
+                                aria-label={intl.getMessage('check_updates_btn')}
+                                disabled={dashboardState.processingVersion}
+                                data-testid="footer-check-updates"
+                                onClick={() => getVersion(true)}
+                            >
+                                {versionLabel()}
+                                <Icon
+                                    icon={dashboardState.processingVersion ? 'loader' : 'refresh'}
+                                    color="green"
+                                />
+                            </button>
+                        </Show>
                     </Show>
 
                     <div class={s.links}>
@@ -112,7 +112,7 @@ export const Footer = () => {
                             {({ name, href }) => (
                                 <a
                                     href={href}
-                                    class={cn(theme.link.link, theme.link.noDecoration)}
+                                    class={cn(theme.link.link, theme.link.hoverDecoration)}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                 >
@@ -134,7 +134,7 @@ export const Footer = () => {
                                         <button
                                             type="button"
                                             class={cn(theme.dropdown.item, {
-                                                [theme.dropdown.item_active]: currentTheme() === v,
+                                                [theme.dropdown.item_active]: activeTheme() === v,
                                             })}
                                             onClick={() => onThemeChange(v)}
                                         >
@@ -145,17 +145,12 @@ export const Footer = () => {
                             </div>
                         }
                         class={s.dropdown}
+                        wrapClass={s.dropdownPill}
                         position="bottomRight"
                     >
                         <div class={s.dropdownTrigger}>
                             <Icon icon={getThemeIcon()} class={s.icon} />
-                            <span>
-                                {
-                                    themeTranslations()[
-                                        isLoggedIn() ? currentTheme() : currentThemeLocal()
-                                    ]
-                                }
-                            </span>
+                            <span>{themeLabel()}</span>
                         </div>
                     </Dropdown>
                 </div>
@@ -167,6 +162,7 @@ export const Footer = () => {
                         languageNames={LANGUAGE_NAMES}
                         onChange={(lang: Lang) => changeLanguage(lang)}
                         class={s.dropdown}
+                        wrapClass={s.dropdownPill}
                         position="bottomRight"
                     />
                 </div>

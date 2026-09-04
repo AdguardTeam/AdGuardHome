@@ -252,7 +252,7 @@ export const DhcpV4Modal = (props: Props) => {
                     onChange={(e: Event) => setLeaseDuration((e.target as HTMLInputElement).value)}
                     onBlur={() => validateLeaseDuration()}
                     id="v4_lease_duration"
-                    inputMode="numeric"
+                    type="number"
                     label={intl.getMessage('dhcp_form_lease_title')}
                     placeholder={v4Placeholders().lease_duration}
                     disabled={!hasIpv4()}

@@ -8,19 +8,15 @@
     background: var(--default-input-background);
     border: 1px solid var(--default-inactive-input-stroke);
     border-radius: 4px;
-    transition: var(--t2) border-color, var(--t2) background-color;
+    transition:
+        var(--t2) border-color,
+        var(--t2) background-color;
     width: fit-content;
 }
 
 .container {
     &:hover {
-        border-color: var(--default-active-input-stroke);
-        background: var(--hovered-page-background);
-    }
-
-    &:hover .icon {
-        color: var(--default-main-text);
-        transform: scale(1.1);
+        background: var(--page-background-additional-hovered);
     }
 
     &:focus {
@@ -29,10 +25,6 @@
 
     &:focus .icon {
         color: var(--default-main-text);
-    }
-
-    &:active .icon {
-        transform: scale(0.95);
     }
 }
 
@@ -50,12 +42,9 @@
     height: 20px;
     color: var(--default-gray-icons);
     cursor: pointer;
-    transition: var(--t2) color, var(--t2) transform;
+    transition:
+        var(--t2) color,
+        var(--t2) transform;
     flex-shrink: 0;
     pointer-events: none;
-}
-
-.copied {
-    color: var(--product-primary-50) !important;
-    transform: scale(1.1) !important;
 }

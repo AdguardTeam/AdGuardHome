@@ -324,6 +324,38 @@ export const toggleFilterStatus = async (
     }
 };
 
+export const disableFilter = async (filter: Filter): Promise<boolean> => {
+    const data: FilterSetUrlData = {
+        enabled: false,
+        name: filter.name,
+        url: filter.url,
+    };
+    try {
+        await filteringSetURL({ url: filter.url, data, whitelist: false });
+        addSuccessToast(
+            createUndoToast(
+                intl.getMessage('user_rules_filter_was_disabled', {
+                    value: filter.name,
+                }),
+                intl.getMessage('notify_undo'),
+                async () => {
+                    await filteringSetURL({
+                        url: filter.url,
+                        data: { ...data, enabled: true },
+                        whitelist: false,
+                    });
+                    await getFilteringStatus();
+                },
+            ),
+        );
+        await getFilteringStatus();
+        return true;
+    } catch (error) {
+        addErrorToast({ error });
+        return false;
+    }
+};
+
 export const editFilter = async (url: string, data: FilterSetUrlData, whitelist: boolean) => {
     setState('processingConfigFilter', true);
     try {

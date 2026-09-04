@@ -26,44 +26,44 @@ export const TrackerTooltip = (props: Props) => {
 
     return (
         <div class={s.tooltip}>
-            <div class={cn(theme.text.t3, s.tooltipTitle)}>
+            <div class={cn(theme.text.t2, theme.text.semibold, s.tooltipTitle)}>
                 {intl.getMessage('found_in_known_domains')}
             </div>
 
             <div class={s.tooltipRow}>
-                <span class={cn(theme.text.t4, s.tooltipLabel)}>
+                <span class={cn(theme.text.t3, theme.text.semibold, s.tooltipLabel)}>
                     {intl.getMessage('name_tooltip')}:
                 </span>
                 <a
                     href={props.trackerData.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    class={cn(theme.text.t4, s.tooltipLink)}
+                    class={cn(theme.text.t3, s.tooltipLink)}
                 >
                     {props.trackerData.name}
                 </a>
             </div>
 
             <div class={s.tooltipRow}>
-                <span class={cn(theme.text.t4, s.tooltipLabel)}>
+                <span class={cn(theme.text.t3, theme.text.semibold, s.tooltipLabel)}>
                     {intl.getMessage('category_tooltip')}:
                 </span>
 
-                <span class={cn(theme.text.t4, theme.text.semibold, s.tooltipValue)}>
+                <span class={cn(theme.text.t3, s.tooltipValue)}>
                     {captitalizeWords(props.trackerData.category)}
                 </span>
             </div>
 
             <Show when={sourceData()}>
                 <div class={s.tooltipRow}>
-                    <span class={cn(theme.text.t4, s.tooltipLabel)}>
+                    <span class={cn(theme.text.t3, theme.text.semibold, s.tooltipLabel)}>
                         {intl.getMessage('source_tooltip')}:
                     </span>
                     <a
                         href={sourceData()!.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        class={cn(theme.text.t4, s.tooltipLink)}
+                        class={cn(theme.text.t3, s.tooltipLink)}
                     >
                         {sourceData()!.name}
                     </a>

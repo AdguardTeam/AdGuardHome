@@ -8,7 +8,7 @@ import { Controls } from './Controls';
 import { WebBanner } from './blocks/Banner';
 import { AddressList } from './blocks';
 import { buildInterfaceOptions } from './helpers/InterfaceOptions';
-import { createHandleAutofix, useInstallSettingsForm } from './helpers/useInstallSettingsForm';
+import { useInstallSettingsForm } from './helpers/useInstallSettingsForm';
 
 import { ALL_INTERFACES_IP, STATUS_RESPONSE, STANDARD_WEB_PORT } from '../../helpers/constants';
 
@@ -33,15 +33,9 @@ export const InterfaceSettings = (props: Props) => {
     );
 
     const webStatus = () => props.config.web.status;
-    const isWebFixAvailable = () => props.config.web.can_autofix;
     const staticIp = () => props.config.staticIp;
 
     const webIpOptions = createMemo(() => buildInterfaceOptions(props.interfaces));
-
-    const handleAutofix = createHandleAutofix(
-        form.watchFields,
-        untrack(() => props.handleFix),
-    );
 
     const handleStaticIp = (ip: string) => {
         const fields = form.watchFields();
@@ -84,8 +78,6 @@ export const InterfaceSettings = (props: Props) => {
                             setWebPort={form.setWebPort}
                             webIpOptions={webIpOptions()}
                             webStatus={webStatus()}
-                            isWebFixAvailable={isWebFixAvailable()}
-                            onAutofix={() => handleAutofix('web')}
                         />
                     </div>
 
@@ -141,8 +133,6 @@ export const InterfaceSettings = (props: Props) => {
                         setWebPort={form.setWebPort}
                         webIpOptions={webIpOptions()}
                         webStatus={webStatus()}
-                        isWebFixAvailable={isWebFixAvailable()}
-                        onAutofix={() => handleAutofix('web')}
                     />
                 </div>
             </form>

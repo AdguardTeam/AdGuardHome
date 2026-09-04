@@ -169,7 +169,7 @@ export const Encryption = () => {
             <div class={cn(theme.layout.containerIn, theme.layout.containerIn_one_col)}>
                 <div class={s.header}>
                     <h1 class={cn(theme.layout.title, theme.title.h4, theme.title.h3_tablet)}>
-                        {intl.getMessage('dns_protocols_title')}
+                        {intl.getMessage('protocols')}
                     </h1>
                     <Dropdown
                         position="bottomRight"
@@ -177,10 +177,11 @@ export const Encryption = () => {
                         open={menuOpen()}
                         onOpenChange={setMenuOpen}
                         menu={resetMenu}
+                        anchorClass={theme.dropdown.trigger_offset}
                     >
                         <button
                             type="button"
-                            class={s.menuButton}
+                            class={theme.dropdown.trigger}
                             aria-label={intl.getMessage('reset_dns_protocols')}
                         >
                             <Icon icon="bullets" />

@@ -6,8 +6,6 @@ cloud.google.com/go/compute/metadata v0.9.0 h1:pDUj4QMoPejqq20dK0Pg2N4yG9zIkYGdB
 cloud.google.com/go/compute/metadata v0.9.0/go.mod h1:E0bWwX5wTnLPedCKqk3pJmVgCBSM6qQI1yTBdEb3C10=
 github.com/AdguardTeam/dnscrypt v0.0.2 h1:kIFCyjYofKHug7RwPGOjVga81P0/zOQdbUN+7p+I95M=
 github.com/AdguardTeam/dnscrypt v0.0.2/go.mod h1:qCFs51rLfNzEDZqb6nz1tocVLnEearJ1zng6O3I6ecA=
-github.com/AdguardTeam/dnsproxy v0.84.0 h1:bcTORgQL0L5cwcTz9f+iB0JPZVbCHlCv7phso9y3lrU=
-github.com/AdguardTeam/dnsproxy v0.84.0/go.mod h1:nZlktYebWcLO613q1j2N0bZ5BEnHPuqXAyW6O9vIhDU=
 github.com/AdguardTeam/dnsproxy v0.84.1 h1:Ge1UdyVNswKn0BKrV5qp+o/V0tF0N6wYcxaGYujDeEg=
 github.com/AdguardTeam/dnsproxy v0.84.1/go.mod h1:nZlktYebWcLO613q1j2N0bZ5BEnHPuqXAyW6O9vIhDU=
 github.com/AdguardTeam/dnsproxy v0.84.2-0.20260827044600-ec403a1b112c h1:1J0V6c4jwBefxhDmYY2fPGo/abUUDE9lpiPUdxJ7oUM=

@@ -39,19 +39,6 @@ textarea {
     }
 }
 
-.title {
-    font-size: var(--fs-title-h4);
-    font-weight: var(--weight-bold);
-    line-height: var(--lh-h4-normal);
-    margin-bottom: 12px;
-
-    @media screen and (min-width: 1024px) {
-        font-size: var(--fs-title-h2);
-        line-height: var(--lh-h2-normal);
-        margin-bottom: 16px;
-    }
-}
-
 .titleStep {
     font-size: var(--fs-title-h4);
     font-weight: var(--weight-bold);
@@ -106,16 +93,13 @@ textarea {
 }
 
 .info {
-    max-width: 584px;
+    width: 100%;
+    max-width: 544px;
     text-align: left;
     font-size: var(--fs-text-t1);
     font-weight: var(--weight-regular);
     line-height: var(--lh-t1-normal);
     padding: 0 16px;
-
-    @media screen and (min-width: 1024px) {
-        padding-left: 48px;
-    }
 }
 
 .subtitle {
@@ -220,22 +204,26 @@ textarea {
 
 .greeting {
     display: flex;
-    justify-content: space-between;
-    gap: 40px;
+    justify-content: center;
+    gap: 24px;
     padding-top: 40px;
-    align-items: center;
 
     .content {
         display: none;
     }
 
     @media screen and (min-width: 1024px) {
-        padding-top: 116px;
+        padding-top: 80px;
 
         .content {
             display: block;
         }
     }
+}
+
+.routerImage {
+    display: block;
+    max-width: 488px;
 }
 
 .configSetting {

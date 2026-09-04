@@ -2,7 +2,8 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@solidjs/testing-library';
 
 import { Identifiers } from 'panel/components/Clients/AddClient/blocks/Identifiers';
-import { initClientForm, clientFormState } from 'panel/stores/clientForm';
+import { initClientForm, clientFormState, setFormErrors } from 'panel/stores/clientForm';
+import intl from 'panel/common/intl';
 
 describe('Identifiers', () => {
     beforeEach(() => {
@@ -85,5 +86,28 @@ describe('Identifiers', () => {
         // Check that the wrapper does not have the error modifier class.
         const wrapper = input.closest('[class*="inputWrapper"]');
         expect(wrapper?.className).not.toContain('error');
+    });
+
+    it('shows the store error on the empty field only (index-aligned errors)', () => {
+        render(() => <Identifiers />);
+
+        // Add a second identifier row and fill the first one.
+        fireEvent.click(screen.getByTestId('client-form-add-identifier'));
+        const inputs = document.querySelectorAll('input[type="text"]');
+        fireEvent.input(inputs[0] as HTMLInputElement, { target: { value: '192.168.1.1' } });
+
+        // Simulate save-time validation errors: the second (empty) field is invalid.
+        setFormErrors({ ids: [undefined, intl.getMessage('form_error_required')] });
+
+        const renderedInputs = document.querySelectorAll('input[type="text"]');
+        expect(renderedInputs).toHaveLength(2);
+        const firstWrapper = (renderedInputs[0] as HTMLInputElement).closest(
+            '[class*="inputWrapper"]',
+        );
+        const secondWrapper = (renderedInputs[1] as HTMLInputElement).closest(
+            '[class*="inputWrapper"]',
+        );
+        expect(firstWrapper?.className).not.toContain('error');
+        expect(secondWrapper?.className).toContain('error');
     });
 });

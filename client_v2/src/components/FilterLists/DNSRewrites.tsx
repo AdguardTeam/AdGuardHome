@@ -126,6 +126,7 @@ export const DNSRewrites = () => {
                             processingAdd={rewritesState.processingAdd}
                             processingUpdate={rewritesState.processingUpdate}
                             processingDelete={rewritesState.processingDelete}
+                            rewritesEnabled={rewritesState.enabled}
                             addRewritesList={openAddRewiresModal}
                             deleteRewrite={openDeleteRewriteModal}
                             editRewrite={openEditRewriteModal}

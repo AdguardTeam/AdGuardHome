@@ -71,31 +71,27 @@
    line instead of wrapping into many lines next to the label. */
 .cellValueText {
     min-width: 0;
-    flex: 1;
+    flex: 0 1 auto;
+    max-width: 100%;
     display: flex;
     align-items: flex-start;
-    justify-content: flex-end;
-    text-align: right;
+    justify-content: flex-start;
+    text-align: left;
     color: var(--default-description-text);
     overflow: hidden;
-    font-size: var(--fs-text-t3);
-    line-height: var(--lh-t3-normal);
-
-    @media (max-width: 767px) {
-        flex: 0 1 min-content;
-        min-width: 0;
-        max-width: 100%;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-        justify-content: flex-start;
-        text-align: left;
-    }
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: var(--fs-text-t2);
+    line-height: var(--lh-t2-normal);
 
     @media (min-width: 768px) {
+        flex: 1;
+        align-items: center;
         text-align: left;
         justify-content: flex-start;
-        align-items: center;
         color: var(--default-main-text);
+        font-size: var(--fs-text-t3);
+        line-height: var(--lh-t3-normal);
     }
 }
 
@@ -160,7 +156,7 @@
 }
 
 .actionLabel {
-    font-size: 14px;
+    font-size: var(--fs-text-t2);
     line-height: 1.4;
 
     @media (min-width: 768px) {
