@@ -142,9 +142,21 @@
     'uses': 'AdGuardSoftwareLimited/actions/.github/workflows/deploy-to-static.yml@master'
     'with':
       'team': 'go'
-      'deployer-module': 'adguard-home-${{ env.CHANNEL }}'
+      # env is not available in reusable workflow inputs; keep this in sync
+      # with the workflow-level CHANNEL value.
+      'deployer-module': |-
+        adguard-home-${{ case(
+          startsWith(github.ref_name, 'release-v'), 'release',
+          startsWith(github.ref_name, 'beta-v'), 'beta',
+          'edge'
+        ) }}
       'artifact-name': 'adguardhome'
-      'environment': '${{ env.CHANNEL }}-static'
+      'environment': |-
+        ${{ case(
+          startsWith(github.ref_name, 'release-v'), 'release',
+          startsWith(github.ref_name, 'beta-v'), 'beta',
+          'edge'
+        ) }}-static
   'PublishDocker':
     'if': |
       ${{ github.event_name == 'workflow_dispatch' && github.repository_owner == 'AdGuardSoftwareLimited' }}
