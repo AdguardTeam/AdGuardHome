@@ -73,6 +73,11 @@ type jsonDNSConfig struct {
 	// EDNSCSUseCustom defines if EDNSCSCustomIP should be used.
 	EDNSCSUseCustom *bool `json:"edns_cs_use_custom"`
 
+	// EDNSCSUseInStats defines if the client IP from EDNS Client Subnet
+	// should be used in statistics and query log instead of the actual
+	// connection IP.
+	EDNSCSUseInStats *bool `json:"edns_cs_use_in_stats"`
+
 	// DNSSECEnabled defines if DNSSEC is enabled.
 	DNSSECEnabled *bool `json:"dnssec_enabled"`
 
@@ -163,6 +168,7 @@ func (s *Server) getDNSConfig(ctx context.Context) (c *jsonDNSConfig) {
 	customIP := s.conf.EDNSClientSubnet.CustomIP
 	enableEDNSClientSubnet := s.conf.EDNSClientSubnet.Enabled
 	useCustom := s.conf.EDNSClientSubnet.UseCustom
+	useInStats := s.conf.EDNSClientSubnet.UseInStats
 
 	enableDNSSEC := s.conf.EnableDNSSEC
 	aaaaDisabled := s.conf.AAAADisabled
@@ -209,6 +215,7 @@ func (s *Server) getDNSConfig(ctx context.Context) (c *jsonDNSConfig) {
 		EDNSCSCustomIP:           customIP,
 		EDNSCSEnabled:            &enableEDNSClientSubnet,
 		EDNSCSUseCustom:          &useCustom,
+		EDNSCSUseInStats:         &useInStats,
 		DNSSECEnabled:            &enableDNSSEC,
 		DisableIPv6:              &aaaaDisabled,
 		BlockedResponseTTL:       &blockedResponseTTL,
@@ -659,6 +666,7 @@ func (s *Server) setConfigRestartable(dc *jsonDNSConfig) (shouldRestart bool) {
 		setIfNotNil(&s.conf.FallbackDNS, dc.Fallbacks),
 		setIfNotNil(&s.conf.EDNSClientSubnet.Enabled, dc.EDNSCSEnabled),
 		setIfNotNil(&s.conf.EDNSClientSubnet.UseCustom, dc.EDNSCSUseCustom),
+		setIfNotNil(&s.conf.EDNSClientSubnet.UseInStats, dc.EDNSCSUseInStats),
 		setIfNotNil(&s.conf.CacheEnabled, dc.CacheEnabled),
 		setIfNotNil(&s.conf.CacheSize, dc.CacheSize),
 		setIfNotNil(&s.conf.CacheMinTTL, dc.CacheMinTTL),
