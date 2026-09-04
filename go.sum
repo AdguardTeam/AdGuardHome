@@ -10,6 +10,8 @@ github.com/AdguardTeam/dnsproxy v0.84.1 h1:Ge1UdyVNswKn0BKrV5qp+o/V0tF0N6wYcxaGY
 github.com/AdguardTeam/dnsproxy v0.84.1/go.mod h1:nZlktYebWcLO613q1j2N0bZ5BEnHPuqXAyW6O9vIhDU=
 github.com/AdguardTeam/dnsproxy v0.84.2-0.20260827044600-ec403a1b112c h1:1J0V6c4jwBefxhDmYY2fPGo/abUUDE9lpiPUdxJ7oUM=
 github.com/AdguardTeam/dnsproxy v0.84.2-0.20260827044600-ec403a1b112c/go.mod h1:nZlktYebWcLO613q1j2N0bZ5BEnHPuqXAyW6O9vIhDU=
+github.com/AdguardTeam/dnsproxy v0.84.2 h1:VlGPQhVEHPy2xgqet4r6iXHFCPZ8+BtTnRx/+nSs/wQ=
+github.com/AdguardTeam/dnsproxy v0.84.2/go.mod h1:6kCM5M/gtuQr/0BjtnReHlK6+N0BTee+WHOq3m1JNq4=
 github.com/AdguardTeam/golibs v0.35.15 h1:KjksvvzlQqxdNvrz+O3FgMbZKZAQdcoCkgBz0mR7wFQ=
 github.com/AdguardTeam/golibs v0.35.15/go.mod h1:lScOIavWuRFL0vls26jKfQXaITP7OKO1qw75WYp5nYk=
 github.com/AdguardTeam/urlfilter v0.23.4 h1:3cwt5xj7lpK2t3sWtr9WI8mmsKP+RtpkdnEy7lrn8cg=
