@@ -25,9 +25,9 @@
 #    Docker daemon, which can invalidate the cache.
 #
 # 6. Add a CACHE_BUSTER argument to stages to be able to rerun the stages if
-#    needed.  Keep it in sync with bamboo-specs/snapcraft.yaml.
+#    needed.  Keep it in sync with .github/workflows/snapcraft.yaml.
 
-# NOTE:  Keep in sync with bamboo-specs/snapcraft.yaml.
+# NOTE:  Keep in sync with .github/workflows/snapcraft.yaml.
 ARG BASE_IMAGE=adguard/snap-builder:2.1
 
 # builder downloads the release artifacts and builds snap artifacts.

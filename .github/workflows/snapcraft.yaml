@@ -7,7 +7,7 @@
       startsWith(github.ref_name, 'beta-v'), 'beta',
       'edge'
     ) }}
-  'SNAP_CHANNEL': |-
+  'SNAPCRAFT_CHANNEL': |-
     ${{ case(
       startsWith(github.ref_name, 'release-v'), 'candidate',
       startsWith(github.ref_name, 'beta-v'), 'beta',
@@ -48,12 +48,30 @@ jobs:
             AdGuardHome_armhf.snap
             AdGuardHome_arm64.snap
             AdGuardHome_i386.snap
+      - 'name': 'Retrieve Snapcraft secrets'
+        'uses': 'hashicorp/vault-action@v4'
+        'with':
+          'url': ${{ vars.VAULT_URL }}
+          'method': 'jwt'
+          'role': 'snapcraft'
+          'secrets': |
+            secret/data/ci-secrets/snapcraft macaroonPassword | SNAPCRAFT_STORE_CREDENTIALS ;
+      - 'name': 'Publish to Snapstore'
+        'uses': 'AdGuardSoftwareLimited/actions/actions/docker-build@master'
+        'with':
+          'dockerfile': 'docker/snapcraft.Dockerfile'
+          'context': '.'
+          'target': 'publisher'
+          'output': '.'
+          'build-args': |
+            BASE_IMAGE=${{ env.BASE_IMAGE }}
+            CACHE_BUSTER=${{ inputs.cache_buster || '0' }}
+            SNAPCRAFT_CHANNEL=${{ env.SNAPCRAFT_CHANNEL }}
+            VERSION=${{ github.ref_name }}
+          'secrets': |
+            SNAPCRAFT_STORE_CREDENTIALS=${{ env.SNAPCRAFT_STORE_CREDENTIALS }}
 'name': 'Build and publish Snapcraft release'
 'on':
-  # TODO(d.kolyshev): !! Remove on push.
-  'push':
-    'branches':
-      - '*'
   'workflow_dispatch':
     'inputs':
       'cache_buster':
