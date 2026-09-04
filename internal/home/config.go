@@ -15,6 +15,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
+	"github.com/AdguardTeam/AdGuardHome/internal/configmgr"
 	"github.com/AdguardTeam/AdGuardHome/internal/configmigrate"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
@@ -41,39 +42,6 @@ const (
 	// FS-based rule lists.
 	userFilterDataDir = "userfilters"
 )
-
-// logSettings are the logging settings part of the configuration file.
-type logSettings struct {
-	// Enabled indicates whether logging is enabled.
-	Enabled bool `yaml:"enabled"`
-
-	// File is the path to the log file.  If empty, logs are written to stdout.
-	// If "syslog", logs are written to syslog.
-	File string `yaml:"file"`
-
-	// MaxBackups is the maximum number of old log files to retain.
-	//
-	// NOTE: MaxAge may still cause them to get deleted.
-	MaxBackups int `yaml:"max_backups"`
-
-	// MaxSize is the maximum size of the log file before it gets rotated, in
-	// megabytes.  The default value is 100 MB.
-	MaxSize int `yaml:"max_size"`
-
-	// MaxAge is the maximum duration for retaining old log files, in days.
-	MaxAge int `yaml:"max_age"`
-
-	// Compress determines, if the rotated log files should be compressed using
-	// gzip.
-	Compress bool `yaml:"compress"`
-
-	// LocalTime determines, if the time used for formatting the timestamps in
-	// is the computer's local time.
-	LocalTime bool `yaml:"local_time"`
-
-	// Verbose determines, if verbose (aka debug) logging is enabled.
-	Verbose bool `yaml:"verbose"`
-}
 
 // osConfig contains OS-related configuration.
 type osConfig struct {
@@ -109,6 +77,8 @@ type clientSourcesConfig struct {
 //
 // Field ordering is important, YAML fields better not to be reordered, if it's
 // not absolutely necessary.
+//
+// TODO(d.kolyshev):  Use [configmgr.Config].
 type configuration struct {
 	// Raw file data to avoid re-reading of configuration file
 	// It's reset after config is parsed
@@ -158,7 +128,7 @@ type configuration struct {
 	Clients *clientsConfig `yaml:"clients"`
 
 	// Log is a block with log configuration settings.
-	Log logSettings `yaml:"log"`
+	Log *configmgr.LogConfig `yaml:"log"`
 
 	OSConfig *osConfig `yaml:"os"`
 
@@ -575,16 +545,6 @@ var config = &configuration{
 			DHCP:      true,
 			HostsFile: true,
 		},
-	},
-	Log: logSettings{
-		Enabled:    true,
-		File:       "",
-		MaxBackups: 0,
-		MaxSize:    100,
-		MaxAge:     3,
-		Compress:   false,
-		LocalTime:  false,
-		Verbose:    false,
 	},
 	OSConfig:      &osConfig{},
 	SchemaVersion: configmigrate.LastSchemaVersion,
