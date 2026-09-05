@@ -34,6 +34,8 @@ export const getBlockingModeSummary = (mode: DNSConfigBlockingMode): string => {
             return 'REFUSED';
         case BLOCKING_MODES.nxdomain:
             return 'NXDOMAIN';
+        case BLOCKING_MODES.noerror:
+            return 'NOERROR';
         case BLOCKING_MODES.null_ip:
             return intl.getMessage('dns_blocking_mode_null_ip');
         case BLOCKING_MODES.custom_ip:
@@ -80,6 +82,11 @@ export const getBlockingModeOptions = () => {
             text: intl.getMessage('dns_blocking_mode_nxdomain'),
             value: BLOCKING_MODES.nxdomain,
             description: intl.getMessage('dns_blocking_mode_nxdomain_desc'),
+        },
+        {
+            text: intl.getMessage('dns_blocking_mode_noerror'),
+            value: BLOCKING_MODES.noerror,
+            description: intl.getMessage('dns_blocking_mode_noerror_desc'),
         },
         {
             text: intl.getMessage('dns_blocking_mode_null_ip'),
