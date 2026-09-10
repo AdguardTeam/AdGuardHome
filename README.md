@@ -112,6 +112,8 @@ You can use our official Docker image on [Docker Hub].
 
 You can deploy AdGuard Home with one click using the [official Easypanel template], which runs our Docker image for you and exposes the required ports and persistent storage automatically.
 
+![AdGuard Home deployed on Easypanel](docs/easypanel_deployed.png)
+
 #### <a href="#snap-store" id="snap-store" name="snap-store">Snap Store</a>
 
 If you're running **Linux,** there's a secure and easy way to install AdGuard Home: get it from the [Snap Store].
