@@ -1948,7 +1948,18 @@
         'avg_processing_time':
           'type': 'number'
           'format': 'float'
-          'description': 'Average time in seconds on processing a DNS request'
+          'description':
+            'Average time in seconds on processing a DNS request.  It covers every request,
+            including the ones answered from the cache or blocked by a filter, so it is
+            normally much lower than avg_upstream_response_time.'
+          'example': 0.34
+        'avg_upstream_response_time':
+          'type': 'number'
+          'format': 'float'
+          'description':
+            'Average time in seconds that the upstream DNS servers took to respond.  Unlike
+            avg_processing_time, it only covers the requests that have actually been sent to
+            an upstream server.'
           'example': 0.34
         'top_queried_domains':
           'type': 'array'
