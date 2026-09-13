@@ -90,16 +90,47 @@ func TestServer_ServeDNS(t *testing.T) {
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{ups}
 	startDeferStop(t, s)
 
+	const ednsUDPSize = 1452
+
+	ednsReq := createTestMessage("blocked.domain.")
+	ednsReq.SetEdns0(ednsUDPSize, false)
+	dnssecReq := createTestMessage("blocked.domain.")
+	dnssecReq.SetEdns0(ednsUDPSize, true)
+
+	blockedAns := []dns.RR{&dns.A{
+		Hdr: dns.RR_Header{
+			Name:   "blocked.domain.",
+			Rrtype: dns.TypeA,
+			Class:  dns.ClassINET,
+		},
+		A: netutil.IPv4Zero(),
+	}}
+
 	testCases := []struct {
 		req       *dns.Msg
 		name      string
 		wantRCode int
 		wantAns   []dns.RR
+		wantEDNS  bool
+		wantDO    bool
 	}{{
 		req:       createTestMessage(aghtest.ReqFQDN),
 		name:      "pass",
 		wantRCode: dns.RcodeNameError,
 		wantAns:   nil,
+	}, {
+		req:       ednsReq,
+		name:      "blocked_edns",
+		wantRCode: dns.RcodeSuccess,
+		wantAns:   blockedAns,
+		wantEDNS:  true,
+	}, {
+		req:       dnssecReq,
+		name:      "blocked_edns_dnssec",
+		wantRCode: dns.RcodeSuccess,
+		wantAns:   blockedAns,
+		wantEDNS:  true,
+		wantDO:    true,
 	}, {
 		req:       createTestMessage("cname.exception."),
 		name:      "cname_exception",
@@ -210,6 +241,17 @@ func TestServer_ServeDNS(t *testing.T) {
 
 			assert.Equal(t, tc.wantRCode, dctx.Res.Rcode)
 			assert.Equal(t, tc.wantAns, dctx.Res.Answer)
+
+			respOPT := dctx.Res.IsEdns0()
+			if !tc.wantEDNS {
+				assert.Nil(t, respOPT)
+
+				return
+			}
+
+			require.NotNil(t, respOPT)
+			assert.Equal(t, uint16(ednsUDPSize), respOPT.UDPSize())
+			assert.Equal(t, tc.wantDO, respOPT.Do())
 		})
 	}
 }
