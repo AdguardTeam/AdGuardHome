@@ -22,6 +22,15 @@ type Config struct {
 	// Log is a block with log configuration settings.
 	Log *LogConfig `yaml:"log"`
 
+	// QueryLog is a block with query log configuration settings.
+	QueryLog *QueryLogConfig `yaml:"querylog"`
+
+	// Stats is a block with statistics configuration settings.
+	Stats *StatsConfig `yaml:"statistics"`
+
+	// TLS is a block with TLS configuration settings.
+	TLS *TLSConfig `yaml:"tls"`
+
 	// ProxyURL is the address of proxy server for the internal HTTP client.
 	ProxyURL string `yaml:"http_proxy"`
 
@@ -74,6 +83,15 @@ func (c *Config) Validate() (err error) {
 	}, {
 		Key:   "log",
 		Value: c.Log,
+	}, {
+		Key:   "querylog",
+		Value: c.QueryLog,
+	}, {
+		Key:   "statistics",
+		Value: c.Stats,
+	}, {
+		Key:   "tls",
+		Value: c.TLS,
 	}, {
 		Key:   "users",
 		Value: c.Users,
