@@ -351,7 +351,7 @@ func (s *Server) Resolve(ctx context.Context, net, host string) (addr []netip.Ad
 const (
 	// ErrRDNSNoData is returned by [RDNSExchanger.Exchange] when the answer
 	// section of response is either NODATA or has no PTR records.
-	ErrRDNSNoData errors.Error = "no ptr data in response"
+	ErrRDNSNoData = rdns.ErrNoData
 
 	// ErrRDNSFailed is returned by [RDNSExchanger.Exchange] if the received
 	// response is not a NOERROR or NXDOMAIN.
