@@ -224,14 +224,15 @@ func (c *DNSConfig) Validate() (err error) {
 		return errors.ErrNoValue
 	}
 
+	var errs []error
 	if c.UpstreamMode != "" {
 		_, err = dnsforward.NewUpstreamMode(c.UpstreamMode)
 		if err != nil {
-			return fmt.Errorf("upstream_mode: %w", err)
+			errs = append(errs, fmt.Errorf("upstream_mode: %w", err))
 		}
 	}
 
 	// TODO(d.kolyshev):  Add more validations.
 
-	return nil
+	return errors.Join(errs...)
 }

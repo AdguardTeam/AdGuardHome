@@ -12,7 +12,7 @@ import (
 // HTTPConfig is the on-disk web API configuration.
 type HTTPConfig struct {
 	// DoH contains DNS-over-HTTPS configuration.
-	DoH *DOHConfig `yaml:"doh"`
+	DoH *DoHConfig `yaml:"doh"`
 
 	// Pprof defines the profiling HTTP handler.
 	Pprof *HTTPPprofConfig `yaml:"pprof"`
@@ -21,8 +21,8 @@ type HTTPConfig struct {
 	SessionTTL timeutil.Duration `yaml:"session_ttl"`
 }
 
-// DOHConfig is the block with DNS-over-HTTPS configuration.
-type DOHConfig struct {
+// DoHConfig is the block with DNS-over-HTTPS configuration.
+type DoHConfig struct {
 	// Routes is the list of HTTP route patterns for DoH requests.  Each route
 	// should be in the format "METHOD /path" or "METHOD /path/{param}".
 	Routes []string `yaml:"routes"`
@@ -46,13 +46,10 @@ var _ validate.Interface = (*HTTPConfig)(nil)
 // Validate implements the [validate.Interface] interface for *HTTPConfig.
 func (c *HTTPConfig) Validate() (err error) {
 	if c == nil {
-		return nil
+		return errors.ErrNoValue
 	}
 
-	errs := []error{
-		validate.Positive("session_ttl", c.SessionTTL),
-	}
-
+	var errs []error
 	errs = validate.Append(errs, "doh", c.DoH)
 	errs = validate.Append(errs, "pprof", c.Pprof)
 
@@ -66,10 +63,10 @@ var doHRoutePatternRegexp = regexp.MustCompile(
 )
 
 // type check
-var _ validate.Interface = (*DOHConfig)(nil)
+var _ validate.Interface = (*DoHConfig)(nil)
 
-// Validate implements the [validate.Interface] interface for *DOHConfig.
-func (c *DOHConfig) Validate() (err error) {
+// Validate implements the [validate.Interface] interface for *DoHConfig.
+func (c *DoHConfig) Validate() (err error) {
 	if c == nil {
 		return nil
 	}

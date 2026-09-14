@@ -11,7 +11,7 @@ import (
 // Config is the top-level on-disk configuration structure.
 //
 // TODO(d.kolyshev):  Use.
-// TODO(d.kolyshev):  Add contracts.
+// TODO(d.kolyshev):  Add tests and contracts.
 type Config struct {
 	// DNSConfig is a block with DNS configuration params.
 	DNSConfig *DNSConfig `yaml:"dns"`

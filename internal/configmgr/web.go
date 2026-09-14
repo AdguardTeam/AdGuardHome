@@ -24,7 +24,7 @@ var _ validate.Interface = WebUsers(nil)
 
 // Validate implements the [validate.Interface] interface for WebUsers.
 func (ws WebUsers) Validate() (res error) {
-	return validate.Slice("users", ws)
+	return validate.Slice("slice", ws)
 }
 
 // type check
