@@ -7,7 +7,6 @@ import { EmptyState } from '../EmptyState';
 
 import s from './GeneralStatistics.module.pcss';
 import { StatRow } from '../StatRow';
-import { formatCompactNumber } from 'panel/helpers/helpers';
 import { RoutePath } from 'panel/components/Routes/Paths';
 import { QUERY_LOG_REASON_FILTER } from 'panel/helpers/constants';
 
@@ -38,14 +37,6 @@ export const GeneralStatistics = (props: Props) => {
                 <div class={cn(theme.title.h5, s.cardTitle)}>
                     {intl.getMessage('general_statistics')}
                 </div>
-
-                <Show when={hasStats()}>
-                    <div class={cn(theme.text.t3, s.cardSubtitle)}>
-                        {intl.getPlural('queries_total', props.numDnsQueries, {
-                            value: formatCompactNumber(props.numDnsQueries),
-                        })}
-                    </div>
-                </Show>
             </div>
 
             <Show when={hasStats()} fallback={<EmptyState />}>

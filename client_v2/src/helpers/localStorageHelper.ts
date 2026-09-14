@@ -7,6 +7,16 @@ export const LOCAL_STORAGE_KEYS = {
     AUTO_CLIENTS_PAGE_SIZE: 'auto_clients_page_size',
     LANGUAGE: 'language',
     STATS_PERIOD: 'stats_period',
+    TOP_CLIENTS_PAGE_SIZE: 'top_clients_page_size',
+    TOP_QUERIED_DOMAINS_PAGE_SIZE: 'top_queried_domains_page_size',
+    TOP_BLOCKED_DOMAINS_PAGE_SIZE: 'top_blocked_domains_page_size',
+    TOP_UPSTREAMS_PAGE_SIZE: 'top_upstreams_page_size',
+    UPSTREAM_AVG_TIME_PAGE_SIZE: 'upstream_avg_time_page_size',
+    TOP_CLIENTS_SORT: 'top_clients_sort',
+    TOP_QUERIED_DOMAINS_SORT: 'top_queried_domains_sort',
+    TOP_BLOCKED_DOMAINS_SORT: 'top_blocked_domains_sort',
+    TOP_UPSTREAMS_SORT: 'top_upstreams_sort',
+    UPSTREAM_AVG_TIME_SORT: 'upstream_avg_time_sort',
 };
 
 export const LocalStorageHelper = {

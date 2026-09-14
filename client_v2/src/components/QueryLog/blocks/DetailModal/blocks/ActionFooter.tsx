@@ -107,7 +107,7 @@ export const ActionFooter = (props: Props) => {
         secondaryVariant?: ButtonVariant;
         testId: string;
         dataAction: string;
-        labelKey: string;
+        label: string;
         onClick: () => void;
     };
 
@@ -117,63 +117,63 @@ export const ActionFooter = (props: Props) => {
             secondaryVariant: 'secondary-danger',
             testId: 'query-log-detail-action-block',
             dataAction: 'block',
-            labelKey: 'block',
+            label: intl.getMessage('block'),
             onClick: handleBlock,
         },
         'add-to-allowlist': {
             variant: 'primary',
             testId: 'query-log-detail-action-allowlist',
             dataAction: 'allowlist',
-            labelKey: 'user_rules_add_to_allowlist',
+            label: intl.getMessage('user_rules_add_to_allowlist'),
             onClick: handleAddToAllowlist,
         },
         'allow-service': {
             variant: 'secondary',
             testId: 'query-log-detail-action-allow-service',
             dataAction: 'allow-service',
-            labelKey: 'user_rules_allow_service',
+            label: intl.getMessage('user_rules_allow_service'),
             onClick: handleAllowService,
         },
         'disable-filter': {
             variant: 'secondary',
             testId: 'query-log-detail-action-disable-filter',
             dataAction: 'disable-filter',
-            labelKey: 'user_rules_disable_filter',
+            label: intl.getMessage('user_rules_disable_filter'),
             onClick: handleDisableFilter,
         },
         'disable-browsing-security': {
             variant: 'secondary',
             testId: 'query-log-detail-action-disable-browsing-security',
             dataAction: 'disable-browsing-security',
-            labelKey: 'user_rules_disable_browsing_security',
+            label: intl.getMessage('user_rules_disable_browsing_security'),
             onClick: handleDisableSafeBrowsing,
         },
         'disable-parental': {
             variant: 'secondary',
             testId: 'query-log-detail-action-disable-parental',
             dataAction: 'disable-parental',
-            labelKey: 'user_rules_disable_parental_control',
+            label: intl.getMessage('user_rules_disable_parental_control'),
             onClick: handleDisableParental,
         },
         'disable-safe-search': {
             variant: 'secondary',
             testId: 'query-log-detail-action-disable-safe-search',
             dataAction: 'disable-safe-search',
-            labelKey: 'user_rules_disable_safe_search',
+            label: intl.getMessage('user_rules_disable_safe_search'),
             onClick: handleDisableSafeSearch,
         },
         'remove-dns-rewrite': {
             variant: 'primary',
             testId: 'query-log-detail-action-remove-dns-rewrite',
             dataAction: 'remove-dns-rewrite',
-            labelKey: 'user_rules_remove_dns_rewrite',
+            label: intl.getMessage('user_rules_remove_dns_rewrite'),
             onClick: handleRemoveRewrite,
         },
         'edit-dns-rewrite': {
             variant: 'secondary',
             testId: 'query-log-detail-action-edit-dns-rewrite',
             dataAction: 'edit-dns-rewrite',
-            labelKey: 'user_rules_edit_dns_rewrite',
+            label: intl.getMessage('user_rules_edit_dns_rewrite'),
             onClick: handleEditRewrite,
         },
     };
@@ -199,7 +199,7 @@ export const ActionFooter = (props: Props) => {
                                 class={s.actionButton}
                                 onClick={config.onClick}
                             >
-                                {intl.getMessage(config.labelKey)}
+                                {config.label}
                             </Button>
                         );
                     }}

@@ -12,12 +12,21 @@
 }
 
 .table {
+    --table-row-min-height: 42px;
+    --table-header-height: 50px;
+
     display: flex;
     flex-direction: column;
     gap: 16px;
 
     @media (min-width: 768px) {
         gap: 0;
+    }
+}
+
+.tableWithPagination {
+    @media (min-width: 768px) {
+        min-height: calc(var(--table-row-min-height) * 10 + var(--table-header-height));
     }
 }
 
@@ -51,7 +60,7 @@
 
 .tableHeaderCell {
     @media (min-width: 768px) {
-        min-height: 42px;
+        min-height: var(--table-row-min-height);
         padding: 8px 12px;
         overflow: hidden;
     }
@@ -66,7 +75,7 @@
 
 .tableBodyCell {
     @media (min-width: 768px) {
-        min-height: 42px;
+        min-height: var(--table-row-min-height);
         padding: 8px 12px;
         align-items: center;
     }
@@ -108,7 +117,9 @@
 .sortIcon {
     flex-shrink: 0;
     opacity: 0;
-    transition: opacity var(--t2), transform var(--t2);
+    transition:
+        opacity var(--t2),
+        transform var(--t2);
 }
 
 .sortAsc {
@@ -125,7 +136,7 @@
 }
 
 .tablePagination {
-    margin-top: auto;
+    margin-top: 0;
 }
 
 .emptyTableWrapper {
