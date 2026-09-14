@@ -115,8 +115,7 @@
 }
 
 .action {
-    width: 100%;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 8px;
     border: 0;
@@ -134,20 +133,16 @@
     }
 
     @media (min-width: 768px) {
+        display: flex;
         width: 24px;
         height: 24px;
         min-height: unset;
         justify-content: center;
         gap: 0;
-    }
 
-    &:hover,
-    &:focus {
-        background-color: var(--hovered-page-background);
-    }
-
-    &:active {
-        background-color: var(--pressed-page-background);
+        &:active {
+            background-color: var(--pressed-page-background);
+        }
     }
 }
 

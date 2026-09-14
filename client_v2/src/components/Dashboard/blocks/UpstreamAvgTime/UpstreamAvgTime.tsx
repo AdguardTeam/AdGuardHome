@@ -1,9 +1,11 @@
 import { Show, For, createMemo } from 'solid-js';
 import intl from 'panel/common/intl';
 import theme from 'panel/lib/theme';
+import { RoutePath } from 'panel/components/Routes/Paths';
 import cn from 'clsx';
 import { TableHeader } from '../TableHeader';
 import { EmptyState } from '../EmptyState';
+import { CardFooter } from '../CardFooter';
 import { useSortedData } from '../../hooks/useSortedData';
 
 import s from '../TableCard.module.pcss';
@@ -16,6 +18,7 @@ type UpstreamInfo = {
 type Props = {
     topUpstreamsAvgTime: UpstreamInfo[];
     avgProcessingTime: number;
+    period?: number;
 };
 
 export const UpstreamAvgTime = (props: Props) => {
@@ -72,6 +75,12 @@ export const UpstreamAvgTime = (props: Props) => {
                     </For>
                 </Show>
             </div>
+
+            <CardFooter
+                to={RoutePath.UpstreamAvgTime}
+                testId="show-more-upstream-avg-time"
+                query={props.period ? { period: props.period } : undefined}
+            />
         </div>
     );
 };

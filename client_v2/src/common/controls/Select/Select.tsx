@@ -50,6 +50,7 @@ export const Select = <
             { 'solid-select--menu-right': props.menuPosition === 'right' },
             { 'solid-select--borderless': props.borderless },
             { 'solid-select--adaptive-height': props.adaptiveHeight },
+            { 'solid-select--height-extra-small': props.height === 'extra-small' },
             { 'solid-select--height-small': props.height === 'small' },
             { 'solid-select--height-medium': props.height === 'medium' },
             { 'solid-select--height-big': props.height === 'big' },

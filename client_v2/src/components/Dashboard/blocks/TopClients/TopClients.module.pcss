@@ -2,13 +2,13 @@
     display: flex;
     flex-direction: column;
     border-radius: 16px;
-    padding: 8px 0 0;
+    padding: 8px 0;
     border: 1px solid var(--default-item-divider);
     overflow: hidden;
 
     @media (min-width: 768px) {
         max-height: 384px;
-        padding: 8px 8px 0;
+        padding: 8px;
     }
 }
 
@@ -30,7 +30,6 @@
 
 .tableRows {
     height: 100%;
-    overflow-y: auto;
 }
 
 .tableRowRight {
@@ -201,6 +200,13 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    min-width: 0;
+}
+
+.clientIpText {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .clientIpLink {

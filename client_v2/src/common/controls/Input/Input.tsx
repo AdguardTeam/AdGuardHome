@@ -11,6 +11,7 @@ type InputChangeEvent = Event & {
 };
 
 type Props = Omit<JSX.InputHTMLAttributes<HTMLInputElement>, 'size' | 'onChange' | 'onBlur'> & {
+    'data-testid'?: string;
     label?: JSX.Element;
     class?: string;
     innerClass?: string;
@@ -149,6 +150,7 @@ export const Input = (props: Props) => {
                     maxLength={props.maxLength}
                     disabled={props.disabled}
                     autocomplete={props.autocomplete}
+                    data-testid={props['data-testid']}
                 />
                 <Show when={hasActions()}>
                     <div class={s.actions}>

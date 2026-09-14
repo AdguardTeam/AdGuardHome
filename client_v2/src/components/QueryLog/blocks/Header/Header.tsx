@@ -191,7 +191,7 @@ export const Header = (props: Props) => {
                                     <InlineLoader class={s.searchLoader} />
                                 </Show>
 
-                                <FaqTooltip text={intl.getMessage('query_log_strict_search')} />
+                                <FaqTooltip text={intl.getMessage('stats_strict_search')} />
                             </div>
                         }
                     />

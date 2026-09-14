@@ -5,6 +5,7 @@ import { PageLoader } from 'panel/common/ui/Loader';
 import { dashboardState, toggleProtection, getClients } from 'panel/stores/dashboard';
 import { statsState, getStats, getStatsConfig, enableStatistics } from 'panel/stores/stats';
 import { accessState, getAccessList } from 'panel/stores/access';
+import { getStoredStatsPeriod } from 'panel/helpers/statistics';
 import { LocalStorageHelper, LOCAL_STORAGE_KEYS } from 'panel/helpers/localStorageHelper';
 import { ONE_SECOND_IN_MS, HOUR, DAY, STATS_INTERVALS_DAYS } from 'panel/helpers/constants';
 
@@ -20,16 +21,9 @@ import { UpstreamAvgTime } from './blocks/UpstreamAvgTime';
 
 import s from './Dashboard.module.pcss';
 
-const getSavedPeriod = (): number => {
-    const savedPeriod = LocalStorageHelper.getItem<number>(LOCAL_STORAGE_KEYS.STATS_PERIOD);
-    return typeof savedPeriod === 'number' && Number.isFinite(savedPeriod) && savedPeriod > 0
-        ? savedPeriod
-        : DAY;
-};
-
 export const Dashboard = () => {
     const [remainingTime, setRemainingTime] = createSignal<number | null>(null);
-    const [selectedPeriod, setSelectedPeriod] = createSignal(getSavedPeriod());
+    const [selectedPeriod, setSelectedPeriod] = createSignal(getStoredStatsPeriod());
     let timerRef: ReturnType<typeof setInterval> | null = null;
 
     const startCountdown = (duration: number) => {
@@ -200,26 +194,31 @@ export const Dashboard = () => {
                             <TopClients
                                 topClients={statsState.topClients}
                                 numDnsQueries={statsState.numDnsQueries}
+                                period={effectivePeriod()}
                             />
 
                             <TopQueriedDomains
                                 topQueriedDomains={statsState.topQueriedDomains}
                                 numDnsQueries={statsState.numDnsQueries}
+                                period={effectivePeriod()}
                             />
 
                             <TopBlockedDomains
                                 topBlockedDomains={statsState.topBlockedDomains}
                                 numBlockedFiltering={statsState.numBlockedFiltering}
+                                period={effectivePeriod()}
                             />
 
                             <TopUpstreams
                                 topUpstreamsResponses={statsState.topUpstreamsResponses}
                                 numDnsQueries={statsState.numDnsQueries}
+                                period={effectivePeriod()}
                             />
 
                             <UpstreamAvgTime
                                 topUpstreamsAvgTime={statsState.topUpstreamsAvgTime}
                                 avgProcessingTime={statsState.avgProcessingTime}
+                                period={effectivePeriod()}
                             />
                         </div>
                     </Show>
