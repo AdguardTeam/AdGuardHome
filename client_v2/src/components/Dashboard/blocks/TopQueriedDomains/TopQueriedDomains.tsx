@@ -12,6 +12,7 @@ import cn from 'clsx';
 import { TableHeader } from '../TableHeader';
 import { TrackerTooltip } from '../TrackerTooltip';
 import { EmptyState } from '../EmptyState';
+import { CardFooter } from '../CardFooter';
 import { useSortedData } from '../../hooks/useSortedData';
 
 import s from '../TableCard.module.pcss';
@@ -24,6 +25,7 @@ type DomainInfo = {
 type Props = {
     topQueriedDomains: DomainInfo[];
     numDnsQueries: number;
+    period?: number;
 };
 
 export const TopQueriedDomains = (props: Props) => {
@@ -83,7 +85,18 @@ export const TopQueriedDomains = (props: Props) => {
                                                 <Icon icon="eye_open" class={s.tableRowIcon} />
                                             </Tooltip>
                                         </Show>
-                                        <span class={s.domainName}>{domain.name}</span>
+                                        <Link
+                                            to={RoutePath.QueryLog}
+                                            query={{ search: `"${domain.name}"` }}
+                                            class={cn(
+                                                theme.text.t3,
+                                                theme.text.condenced,
+                                                s.domainNameLink,
+                                            )}
+                                            title={domain.name}
+                                        >
+                                            <span class={s.domainName}>{domain.name}</span>
+                                        </Link>
                                     </div>
 
                                     <div class={s.tableRowRight}>
@@ -141,6 +154,12 @@ export const TopQueriedDomains = (props: Props) => {
                     </For>
                 </Show>
             </div>
+
+            <CardFooter
+                to={RoutePath.TopQueriedDomains}
+                testId="show-more-top-queried-domains"
+                query={props.period ? { period: props.period } : undefined}
+            />
         </div>
     );
 };

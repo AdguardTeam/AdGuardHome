@@ -8,6 +8,7 @@
 - [Technical Context](#technical-context)
 - [Project Structure](#project-structure)
 - [Build And Test Commands](#build-and-test-commands)
+    - [Fast verification loop](#fast-verification-loop)
 - [Contribution Instructions](#contribution-instructions)
 - [Code Guidelines](#code-guidelines)
     - [System Design](#system-design)
@@ -86,7 +87,8 @@ client_v2/
 │   │   └── styles/                # Theme tokens (vars.css, colors/light|dark|adg.css)
 │   ├── components/                # Feature/page components (Dashboard, Clients, QueryLog, …)
 │   │   ├── App/                   # Root component — HashRouter + layout + <Route>s
-│   │   └── Routes/Paths.ts        # Route path constants
+│   │   ├── Routes/Paths.ts        # Route path constants
+│   │   └── Stats/                 # Dashboard "Show more" detail pages (top clients, domains, upstreams)
 │   ├── helpers/                   # Pure utilities, validators, theme helpers
 │   ├── hooks/                     # Shared SolidJS hooks
 │   ├── lib/                       # Theme aggregation, misc utils
@@ -113,7 +115,9 @@ client_v2/
 
 # Build And Test Commands
 
-All commands are run from the `client_v2/` directory.
+All commands are run from the `client_v2/` directory. If your terminal's
+working directory is the repo root (or anywhere else), `cd client_v2` first —
+never run `npm`/`npx` from the repo root.
 
 | Task                                 | Command                        |
 | ------------------------------------ | ------------------------------ |
@@ -125,6 +129,7 @@ All commands are run from the `client_v2/` directory.
 | Lint                                 | `npm run lint`                 |
 | Lint + format fix                    | `npm run lint:fix`             |
 | Unit tests (single run)              | `npm run test`                 |
+| Unit tests (single file)             | `npm run test -- <path>`       |
 | Unit tests (watch)                   | `npm run test:watch`           |
 | E2e tests                            | `npm run test:e2e`             |
 | E2e interactive UI                   | `npm run test:e2e:interactive` |
@@ -133,21 +138,56 @@ All commands are run from the `client_v2/` directory.
 | Translation check                    | `npm run translations:check`   |
 | Full check (lint + typecheck + test) | `npm run check`                |
 
+> **Note**: `npm run test` runs the **entire** suite. While iterating, run a
+> single file with `npm run test -- <path>`, optionally filtered to one
+> test by name with `-t "<name>"` (a regex matching test names containing the
+> pattern). Run `npm run check` only once, at the end — see "Fast
+> verification loop" below.
+
+### Fast verification loop
+
+While iterating on a single component or test file, recheck quickly instead
+of re-running the whole suite and typecheck for every change:
+
+```bash
+# If your terminal's working directory is the repo root, cd client_v2 first.
+npm run typecheck > /tmp/tsc.log 2>&1; echo "tsc-exit:$?"
+npm run test -- src/__tests__/stats-pages/stats-page.test.tsx > /tmp/vitest.log 2>&1; echo "vitest-exit:$?"
+
+# Then inspect the logs, e.g.:
+tail /tmp/tsc.log /tmp/vitest.log
+```
+
+The `> log 2>&1; echo "...-exit:$?"` pattern writes both streams to a file and
+records the exit code, so a failing check is never mistaken for a hang and
+there is no wall of output to scroll through. Replace the test path with the
+file you are working on.
+
 # Contribution Instructions
 
 - You MUST verify your work with the linter, formatter, and type checker.
 
-    Use the following commands:
-    - `npm run typecheck` to check for type errors
+    Run only the npm scripts, from the `client_v2/` directory. Do not invoke
+    the underlying binaries directly (`npx eslint ...`, `npx tsc`,
+    `npx vitest`, `node_modules/.bin/...`, etc.) — the scripts are the only
+    supported commands. In particular, never run `npx` from the repo root:
+    the repository has no root `package.json`, so `npx` tries to download the
+    tooling from the npm registry and can hang for minutes. Ad-hoc `npx` calls
+    can also install tooling into the repo root instead of
+    `client_v2/node_modules`:
+    - `npm run check` — the full gate (lint + typecheck + unit tests)
     - `npm run lint` to run the linter
     - `npm run lint:fix` to fix linting and formatting issues automatically
+    - `npm run typecheck` to check for type errors
+    - `npm run test` to run the unit tests
+    - `npm run test -- <path> [-t "<name>"]` to run a single test file,
+      optionally filtered to one test by name — see "Fast verification loop"
 
 - You MUST update the unit tests for changed code. New stores, helpers, and
   components should have corresponding tests under `src/__tests__/`.
 
-- You MUST run tests with `npm run test` to verify that your changes do not
-  break existing functionality. Use `npm run check` for the full gate
-  (lint + typecheck + test).
+- You MUST run `npm run check` after completing your changes: lint,
+  typecheck, and all unit tests must pass before the task is done.
 
 - You MUST verify UI changes against the running AdGuard Home instance, not
   the webpack dev server. Rebuild with `npm run build-dev` (quick iteration)
@@ -157,9 +197,13 @@ All commands are run from the `client_v2/` directory.
   default port `8080`; the dev server, when used, runs on `bind_port + 8000`.
 
 - When you need to sign in to the running AdGuard Home instance to verify UI
-  changes in the browser, ask the user for the login and password with
-  `#tool:vscode/askQuestions` — do not guess credentials or reuse hardcoded
-  ones.
+  changes in the browser, read the credentials from `client_v2/.env.local`
+  (git-ignored; keys `ADGUARD_TEST_USERNAME` / `ADGUARD_TEST_PASSWORD` —
+  relative to `client_v2/` it is `.env.local`). Never echo the password into
+  the chat, terminal output, or log files, and never commit or copy the file
+  elsewhere. If the file is missing, ask the user for the login and password
+  with `#tool:vscode/askQuestions` — do not guess credentials or reuse
+  hardcoded ones.
 
 - When making changes to the project structure, ensure the Project Structure
   section in `AGENTS.md` is updated and remains valid.

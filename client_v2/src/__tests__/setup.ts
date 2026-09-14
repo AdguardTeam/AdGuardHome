@@ -25,3 +25,25 @@ Object.defineProperty(window, 'matchMedia', {
             dispatchEvent: () => false,
         }) as MediaQueryList,
 });
+
+// jsdom lacks ResizeObserver; floating-ui (@zag-js/popper) needs it when
+// popovers/select menus open.
+class ResizeObserverMock {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+}
+
+Object.defineProperty(window, 'ResizeObserver', {
+    writable: true,
+    value: ResizeObserverMock,
+});
+
+// jsdom lacks Element.scrollTo; @zag-js/select calls contentEl.scrollTo when
+// a menu item is selected.
+if (!Element.prototype.scrollTo) {
+    Object.defineProperty(Element.prototype, 'scrollTo', {
+        writable: true,
+        value: () => {},
+    });
+}
