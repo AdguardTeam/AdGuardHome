@@ -13,6 +13,9 @@ import (
 // TODO(d.kolyshev):  Use.
 // TODO(d.kolyshev):  Add contracts.
 type Config struct {
+	// DHCP is a block with DHCP configuration params.
+	DHCP *DHCPConfig `yaml:"dhcp"`
+
 	// DNSConfig is a block with DNS configuration params.
 	DNSConfig *DNSConfig `yaml:"dns"`
 
@@ -75,6 +78,9 @@ func (c *Config) Validate() (err error) {
 
 	// Keep this in the same order as the fields in the config.
 	validators := container.KeyValues[string, validate.Interface]{{
+		Key:   "dhcp",
+		Value: c.DHCP,
+	}, {
 		Key:   "dns",
 		Value: c.DNSConfig,
 	}, {
