@@ -5,28 +5,15 @@ import { Icon } from 'panel/common/ui/Icon';
 import intl from 'panel/common/intl';
 
 import s from './Dropzone.module.pcss';
+import theme from 'panel/lib/theme';
 
-type DropzoneProps = {
-    /** Called with the text contents of the dropped/selected file. */
+export type DropzoneProps = {
     onFileSelect: (content: string) => void;
-    /** Localized hint shown inside the zone. */
     hint: string;
-    /** `data-testid` of the interactive zone. */
     testId: string;
-    /** Extra class for layout spacing (the zone itself owns no outer margins). */
     class?: string;
 };
 
-export type { DropzoneProps };
-
-/**
- * File drop zone (Figma "Certificate drop file").
- *
- * The whole zone is a single `<button>`: clicking it opens the file picker and
- * dragging a file over it swaps the "Browse" link for a download icon. The
- * hidden file input is a sibling — interactive content may not be nested
- * inside a button.
- */
 export const Dropzone = (props: DropzoneProps) => {
     let fileInputRef: HTMLInputElement | undefined;
     const [dragOver, setDragOver] = createSignal(false);
@@ -48,7 +35,6 @@ export const Dropzone = (props: DropzoneProps) => {
     const handleFileChange = (e: Event) => {
         const input = e.currentTarget as HTMLInputElement;
         readFile(input.files?.[0]);
-        // Reset so the same file can be selected again.
         input.value = '';
     };
 
@@ -76,7 +62,7 @@ export const Dropzone = (props: DropzoneProps) => {
         <>
             <button
                 type="button"
-                class={cn(s.dropzone, props.class, { [s.dragOver]: dragOver() })}
+                class={cn(s.dropzone, theme.text.t3, props.class, { [s.dragOver]: dragOver() })}
                 data-testid={props.testId}
                 onClick={handleClick}
                 onDragOver={handleDragOver}

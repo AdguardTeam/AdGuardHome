@@ -4,7 +4,6 @@ import { Input } from 'panel/common/controls/Input';
 import { Radio } from 'panel/common/controls/Radio';
 import { Textarea } from 'panel/common/controls/Textarea';
 import { Dropzone } from 'panel/common/ui/Dropzone';
-import intl from 'panel/common/intl';
 import theme from 'panel/lib/theme';
 import { ENCRYPTION_SOURCE } from 'panel/helpers/constants';
 import { InlineMessage } from './InlineMessage';
@@ -12,12 +11,9 @@ import type { PemFields, PemStepConfig } from './pemFields';
 import s from './styles.module.pcss';
 
 type Props = {
-    /** Constant per step — pass the module-level config, never a new object. */
     config: PemStepConfig;
     fields: PemFields;
-    /** Error to render under the active field, composed by the host. */
     errorFor: (field: string) => string | undefined;
-    /** Warning to render under the active field, composed by the host. */
     warningFor: (field: string) => string | undefined;
 };
 
@@ -26,12 +22,9 @@ type Props = {
  * PEM data and a path on the server, plus the matching input and dropzone.
  */
 export const PemSourceFields = (props: Props) => {
-    // Stable objects (a module-level config and the per-instance handlers); the
-    // values inside them are accessors, so reactivity lives in the calls below.
     const config = untrack(() => props.config);
     const fields = untrack(() => props.fields);
 
-    // Built reactively: the option texts are translated on each language change.
     const sourceOptions = createMemo(() => [
         {
             text: config.texts.textOption(),
@@ -67,7 +60,7 @@ export const PemSourceFields = (props: Props) => {
                             value={fields.pathValue()}
                             onChange={fields.handlePathChange}
                             onBlur={fields.validateOnBlur}
-                            placeholder={intl.getMessage('path_to_file_placeholder')}
+                            placeholder="/etc/letsencrypt/live/example.com/fullchain.pem"
                             errorMessage={props.errorFor(config.fields.path)}
                             label={config.texts.pathLabel()}
                             size="large"

@@ -1,13 +1,16 @@
-import { createEffect, createSignal, on, Show } from 'solid-js';
+import { createEffect, createSignal, on, Show, type JSX } from 'solid-js';
 import { createStore } from 'solid-js/store';
+import cn from 'clsx';
 
 import { ConfigDialog } from 'panel/common/ui/ConfigDialog';
 import { Button } from 'panel/common/ui/Button';
 import intl from 'panel/common/intl';
+import theme from 'panel/lib/theme';
 import {
     DNS_OVER_QUIC_PORT,
     DNS_OVER_TLS_PORT,
     ENCRYPTION_SOURCE,
+    LETSENCRYPT_LINK,
     STANDARD_HTTPS_PORT,
 } from 'panel/helpers/constants';
 import { normalizeServerName, toNumber } from 'panel/helpers/form';
@@ -41,7 +44,7 @@ export const TlsSetupWizard = (props: Props) => {
     const [errors, setErrors] = createSignal<Record<string, string>>({});
     const [saving, setSaving] = createSignal(false);
 
-    const stepCheck = createStepCheck({ step, values });
+    const stepCheck = createStepCheck({ step, values, goToStep: setStep });
 
     createEffect(
         on(
@@ -245,8 +248,20 @@ export const TlsSetupWizard = (props: Props) => {
         () => intl.getMessage('tls_setup_key_title'),
         () => intl.getMessage('tls_setup_config_title'),
     ];
-    const descriptions: readonly (() => string | undefined)[] = [
-        () => intl.getMessage('tls_setup_cert_description'),
+    const descriptions: readonly (() => JSX.Element | undefined)[] = [
+        () =>
+            intl.getMessage('tls_setup_cert_description', {
+                a: (text: string) => (
+                    <a
+                        href={LETSENCRYPT_LINK}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class={cn(theme.link.link, theme.link.hoverDecoration)}
+                    >
+                        {text}
+                    </a>
+                ),
+            }),
         () => intl.getMessage('tls_setup_key_description'),
         () => undefined,
     ];
@@ -297,9 +312,9 @@ export const TlsSetupWizard = (props: Props) => {
             footer={footer()}
         >
             <WizardSteps step={step()} onGoBack={handleGoBack} />
-            <h2 class={s.wizardTitle}>{title()}</h2>
+            <h2 class={cn(theme.title.h4, s.wizardTitle)}>{title()}</h2>
             <Show when={description()}>
-                <div class={s.wizardDescription}>{description()}</div>
+                <div class={cn(theme.text.t2, s.wizardDescription)}>{description()}</div>
             </Show>
 
             <Show when={step() === 1}>
@@ -335,6 +350,7 @@ export const TlsSetupWizard = (props: Props) => {
                         onFieldChange={handleConfigFieldChange}
                         onFieldBlur={handleConfigFieldBlur}
                         errorFor={configFieldError}
+                        warningFor={stepCheck.fieldWarning}
                     />
                     <StepFormMessage message={stepCheck.formMessage()} />
                 </div>

@@ -146,22 +146,26 @@ never run `npm`/`npx` from the repo root.
 
 ### Fast verification loop
 
-While iterating on a single component or test file, recheck quickly instead
-of re-running the whole suite and typecheck for every change:
+While iterating, run the focused command and read its result directly: the
+terminal tool reports the exit code, and any output over 20 KiB is saved to a
+temp file whose path you can search.
 
 ```bash
 # If your terminal's working directory is the repo root, cd client_v2 first.
-npm run typecheck > /tmp/tsc.log 2>&1; echo "tsc-exit:$?"
-npm run test -- src/__tests__/stats-pages/stats-page.test.tsx > /tmp/vitest.log 2>&1; echo "vitest-exit:$?"
-
-# Then inspect the logs, e.g.:
-tail /tmp/tsc.log /tmp/vitest.log
+npm run typecheck
+npm run test -- src/__tests__/stats-pages/stats-page.test.tsx -t "<name>"
 ```
 
-The `> log 2>&1; echo "...-exit:$?"` pattern writes both streams to a file and
-records the exit code, so a failing check is never mistaken for a hang and
-there is no wall of output to scroll through. Replace the test path with the
-file you are working on.
+Replace the path with the file you are working on. Do not chain these into
+`... > log 2>&1; echo "exit:$?"; tail log` one-liners: the trailing `tail`
+becomes the reported exit code, the redirect hides the output, and the line
+falls outside the terminal allow-list, so every run needs manual approval.
+
+Only slow commands you will re-read — the full `npm run check`,
+`npm run build-prod` — may be capped to one stable log file, reused across
+runs; confirm the command actually ran before trusting its log. A stale log
+from an earlier run is the easiest way to "verify" a fix that was never
+checked.
 
 # Contribution Instructions
 
@@ -325,7 +329,17 @@ must not depend on stores or components. Helpers are pure and dependency-free.
   `src/common/styles/vars.css` and `src/common/styles/colors/*.css`
   (`var(--default-main-text)`, `var(--default-page-background)`, …). Light and
   dark themes are toggled via the `data-theme` attribute on `<html>`, so using
-  the variables handles dark mode automatically.
+  the variables handles dark mode automatically. Prefer the semantic tokens
+  (`--default-item-divider`, `--default-product-icon`, `--default-error-link`)
+  over the raw palette values (`--gray-30`, `--product-primary-50`, …) so the
+  element keeps the right _context_: an icon token for an icon, a link token
+  for text.
+- **Typography**: Do not hardcode `font-size`, `line-height`, or `font-weight`
+  in a `.pcss` file. Use the typography classes from `panel/lib/theme` via
+  `cn(...)` — `theme.title.h0`–`h6` for headings and `theme.text.t1`–`t4` for
+  body copy, with the `theme.text.condenced` / `semibold` / `medium` modifiers
+  as needed (e.g. `cn(theme.text.t3, s.label)`). The local class then carries
+  only layout, never the same properties.
 - **No inline styles**: Do not use the `style` attribute on elements. All
   styling belongs in co-located CSS Modules (`.module.pcss`) using class
   names. If a value must be dynamic, drive it through a CSS custom property or

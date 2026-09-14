@@ -93,7 +93,7 @@ describe('TlsSetupWizard — shell & header', () => {
 
     it('renders step 1 with the title and a 3-segment progress bar', () => {
         renderWizard();
-        expect(screen.getByText('Add certificate')).toBeInTheDocument();
+        expect(screen.getByText('Add TLS certificate')).toBeInTheDocument();
 
         const progressbar = screen.getByRole('progressbar');
         expect(progressbar).toHaveAttribute('aria-valuenow', '1');
@@ -123,7 +123,7 @@ describe('TlsSetupWizard — shell & header', () => {
         await goToStep2(user);
         await user.click(screen.getByText('Go back'));
 
-        expect(screen.getByText('Add certificate')).toBeInTheDocument();
+        expect(screen.getByText('Add TLS certificate')).toBeInTheDocument();
         expect(
             (screen.getByLabelText('Paste the certificate contents') as HTMLTextAreaElement).value,
         ).toBe(CERT);
@@ -141,12 +141,23 @@ describe('TlsSetupWizard — step 1 (certificate)', () => {
         const textarea = screen.getByLabelText('Paste the certificate contents');
         expect(textarea).toHaveAttribute('placeholder', '-----BEGIN CERTIFICATE-----');
 
-        await user.click(screen.getByText('Path to file on the server'));
-        expect(screen.getByLabelText('Full path to the certificate file')).toBeInTheDocument();
+        await user.click(screen.getByText('Path to file on server'));
+        expect(
+            screen.getByLabelText('Enter full path to the certificate file'),
+        ).toBeInTheDocument();
         expect(screen.queryByLabelText('Paste the certificate contents')).toBeNull();
 
         await user.click(screen.getByText('Certificate as text'));
         expect(screen.getByLabelText('Paste the certificate contents')).toBeInTheDocument();
+    });
+
+    it('renders the letsencrypt.org link in the step description', () => {
+        renderWizard();
+
+        const link = screen.getByRole('link', { name: 'letsencrypt.org' });
+        expect(link).toHaveAttribute('href', 'https://letsencrypt.org/');
+        expect(link).toHaveAttribute('target', '_blank');
+        expect(link).toHaveAttribute('rel', 'noopener noreferrer');
     });
 
     it('does not advance on empty input and shows an inline error', async () => {
@@ -156,7 +167,7 @@ describe('TlsSetupWizard — step 1 (certificate)', () => {
         await user.click(screen.getByTestId('tls-setup-add'));
 
         expect(screen.getByText('Fill out this field')).toBeInTheDocument();
-        expect(screen.getByText('Add certificate')).toBeInTheDocument();
+        expect(screen.getByText('Add TLS certificate')).toBeInTheDocument();
         expect(screen.queryByText('Add private key')).toBeNull();
     });
 
@@ -196,6 +207,24 @@ describe('TlsSetupWizard — step 1 (certificate)', () => {
         expect(screen.getByText('Add private key')).toBeInTheDocument();
     });
 
+    it('does not block on a check that failed to run, leaving it to the save', async () => {
+        const user = userEvent.setup();
+        mocks.tlsValidate.mockRejectedValue(
+            new Error(
+                'http://127.0.0.1/control/tls/validate | Failed to unmarshal TLS config: boom | 400',
+            ),
+        );
+        renderWizard();
+
+        // The request carried no verdict about the certificate, so Add goes
+        // through; if the configuration is really bad, the save reports it.
+        await goToStep2(user);
+
+        expect(screen.getByText('Add private key')).toBeInTheDocument();
+        expect(screen.queryByText(/Certificate has issues/)).toBeNull();
+        expect(screen.queryByText(/Unable to parse the certificate/)).toBeNull();
+    });
+
     it('blocks step 1 with the backend parse error inline under the textarea', async () => {
         const user = userEvent.setup();
         mocks.tlsValidate.mockResolvedValue({
@@ -217,7 +246,7 @@ describe('TlsSetupWizard — step 1 (certificate)', () => {
                 screen.getByText('Unable to parse the certificate. The file may be corrupted'),
             ).toBeInTheDocument();
         });
-        expect(screen.getByText('Add certificate')).toBeInTheDocument(); // still on step 1
+        expect(screen.getByText('Add TLS certificate')).toBeInTheDocument(); // still on step 1
         // An error never turns Add into its warning state.
         expect(screen.getByTestId('tls-setup-add')).toHaveTextContent(/^Add$/);
     });
@@ -249,7 +278,7 @@ describe('TlsSetupWizard — step 1 (certificate)', () => {
                 ),
             ).toBeInTheDocument();
         });
-        expect(screen.getByText('Add certificate')).toBeInTheDocument();
+        expect(screen.getByText('Add TLS certificate')).toBeInTheDocument();
 
         // The button now spells out what going past the warning means.
         expect(add).toHaveTextContent('Add anyway');
@@ -299,7 +328,7 @@ describe('TlsSetupWizard — step 1 (certificate)', () => {
                 'This is not a certificate. Check that you pasted a certificate, not a key',
             ),
         ).toBeInTheDocument();
-        expect(screen.getByText('Add certificate')).toBeInTheDocument();
+        expect(screen.getByText('Add TLS certificate')).toBeInTheDocument();
         expect(mocks.tlsValidate).not.toHaveBeenCalled();
     });
 
@@ -452,7 +481,7 @@ describe('TlsSetupWizard — warnings show only where they can be fixed', () => 
 
         // The message was dropped on the way back and no check runs until the
         // field is touched again.
-        expect(screen.getByText('Add certificate')).toBeInTheDocument();
+        expect(screen.getByText('Add TLS certificate')).toBeInTheDocument();
         expect(screen.queryByText(/This certificate is self-signed/)).toBeNull();
     });
 });
@@ -529,7 +558,7 @@ describe('TlsSetupWizard — step 3 (config & enable)', () => {
         expect(payload.server_name).toBe('');
     });
 
-    it('maps invalid backend flags to a blocking inline message with a go-back hint', async () => {
+    it('sends the user back to the key step when the pair breaks', async () => {
         const user = userEvent.setup();
         renderWizard();
 
@@ -543,15 +572,65 @@ describe('TlsSetupWizard — step 3 (config & enable)', () => {
         await user.type(screen.getByPlaceholderText('Enter your domain name'), 'example.com');
         await user.tab();
 
+        // The message belongs to the key field, so it is shown there — no
+        // form-level error with a hint to go back.
         await waitFor(() => {
-            expect(
-                screen.getByText(
-                    'This private key does not match the certificate from the previous step',
-                ),
-            ).toBeInTheDocument();
+            expect(screen.getByText('Add private key')).toBeInTheDocument();
         });
-        expect(screen.getByText('Go back to a previous step to fix the issue')).toBeInTheDocument();
-        expect(screen.getByTestId('tls-setup-enable')).toBeDisabled();
+        expect(
+            screen.getByText(
+                'This private key does not match the certificate from the previous step',
+            ),
+        ).toBeInTheDocument();
+        expect(screen.queryByText(/Go back to a previous step/)).toBeNull();
+    });
+
+    it('sends the user back to the certificate step when the chain regresses', async () => {
+        const user = userEvent.setup();
+        renderWizard();
+
+        await goToStep3(user);
+        mocks.tlsValidate.mockResolvedValue({
+            ...validStatus,
+            valid_cert: false,
+            warning_validation:
+                'validating certificate pair: parsing certificate at index 0: x509: malformed certificate',
+        });
+        await user.type(screen.getByPlaceholderText('Enter your domain name'), 'example.com');
+        await user.tab();
+
+        // The message belongs to the certificate field, so the wizard goes back
+        // to the step that owns it instead of blocking the config step.
+        await waitFor(() => {
+            expect(screen.getByText('Add TLS certificate')).toBeInTheDocument();
+        });
+        expect(
+            screen.getByText('Unable to parse the certificate. The file may be corrupted'),
+        ).toBeInTheDocument();
+        expect(screen.queryByText(/Go back to a previous step/)).toBeNull();
+    });
+
+    it('treats a non-critical verify failure as a warning and lets the user enable', async () => {
+        const user = userEvent.setup();
+        renderWizard();
+
+        await goToStep3(user);
+        mocks.tlsValidate.mockResolvedValue({
+            ...validStatus,
+            valid_chain: false,
+            warning_validation:
+                'validating certificate pair: certificate does not verify: x509: certificate has expired or is not yet valid',
+        });
+        await user.type(screen.getByPlaceholderText('Enter your domain name'), 'example.com');
+        await user.tab();
+
+        // The certificate step already warned about this chain, and the backend
+        // accepts the config: the config step stays clean and Enable works.
+        await waitFor(() => {
+            expect(screen.getByTestId('tls-setup-enable')).not.toBeDisabled();
+        });
+        expect(screen.getByText('Enable encrypted DNS')).toBeInTheDocument();
+        expect(screen.queryByText(/Certificate has issues/)).toBeNull();
     });
 
     it('hides a repeated certificate warning on the config step', async () => {
@@ -579,9 +658,10 @@ describe('TlsSetupWizard — step 3 (config & enable)', () => {
         });
     });
 
-    it('maps a hostname mismatch to the server name field', async () => {
+    it('shows a hostname mismatch as a warning and still allows enabling', async () => {
         const user = userEvent.setup();
-        renderWizard();
+        const onClose = renderWizard();
+        mocks.tlsConfigure.mockImplementation(async (v: unknown) => v);
 
         await goToStep3(user);
         mocks.tlsValidate.mockResolvedValue({
@@ -600,7 +680,18 @@ describe('TlsSetupWizard — step 3 (config & enable)', () => {
                 ),
             ).toBeInTheDocument();
         });
-        expect(screen.getByTestId('tls-setup-enable')).toBeDisabled();
+
+        // The certificate and key pair are valid, so the backend accepts the
+        // config: a name that is missing from the certificate warns instead of
+        // blocking Enable.
+        const enable = screen.getByTestId('tls-setup-enable');
+        expect(enable).not.toBeDisabled();
+
+        await user.click(enable);
+        await waitFor(() => {
+            expect(mocks.tlsConfigure).toHaveBeenCalled();
+        });
+        expect(onClose).toHaveBeenCalled();
     });
 
     it('maps a 400 port-busy error to the matching port field', async () => {

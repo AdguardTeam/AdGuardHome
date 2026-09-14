@@ -85,9 +85,9 @@ export const TlsCertSection = () => {
 
             <Show when={showDeleteConfirm()}>
                 <ConfirmDialog
-                    title={intl.getMessage('delete_tls_certificate')}
-                    text={intl.getMessage('delete_tls_certificate_desc')}
-                    buttonText={intl.getMessage('delete_table_action_confirm')}
+                    title={intl.getMessage('remove_tls_certificate')}
+                    text={intl.getMessage('remove_tls_certificate_desc')}
+                    buttonText={intl.getMessage('yes_remove')}
                     cancelText={intl.getMessage('cancel')}
                     buttonVariant="danger"
                     onConfirm={handleRemoveCert}

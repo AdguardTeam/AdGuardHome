@@ -11,7 +11,15 @@ type Options = {
     step: Accessor<WizardStep>;
     /** Live form values, read when a check runs. */
     values: EncryptionFormValues;
+    /** Moves the wizard to another step, e.g. back to a broken field. */
+    goToStep: (step: WizardStep) => void;
 };
+
+const STEP_ORDER: readonly WizardStep[] = [1, 2, 3];
+
+/** The step whose form contains `field`, if any. */
+const stepOfField = (field: string): WizardStep | undefined =>
+    STEP_ORDER.find((step) => STEP_FIELDS[step].has(field));
 
 /** True when both describe the same thing the user has already been shown. */
 const sameMessage = (a?: StepMessage, b?: StepMessage) =>
@@ -54,11 +62,12 @@ export const createStepCheck = (opts: Options) => {
     /**
      * The message to render right now, if any.
      *
-     * An error always shows: a certificate that regressed on a later step
-     * sends the user back with the go-back hint.  A warning shows only where
-     * it is actionable — bound to a field of the current step.  Every step
-     * re-runs the certificate checks on the backend, so without this the
-     * certificate diagnostics would repeat on steps that cannot fix them.
+     * An error always shows — the wizard takes the user to the step that owns
+     * its field, so a certificate that regressed is reported where the
+     * certificate is entered.  A warning shows only where it is actionable —
+     * bound to a field of the current step.  Every step re-runs the certificate
+     * checks on the backend, so without this the certificate diagnostics would
+     * repeat on steps that cannot fix them.
      */
     const message = () => {
         const m = checked();
@@ -79,6 +88,12 @@ export const createStepCheck = (opts: Options) => {
         setValidating(false);
         const result = mapStepResult(step, res, opts.values);
         setChecked(result);
+
+        // An error about a field on an earlier step asks the user to fix
+        // something they cannot see: show it where it belongs instead of
+        // blocking the current step with a hint.
+        const owner = result?.kind === 'error' && result.field ? stepOfField(result.field) : undefined;
+        if (owner !== undefined && owner < step) opts.goToStep(owner);
 
         return result;
     };

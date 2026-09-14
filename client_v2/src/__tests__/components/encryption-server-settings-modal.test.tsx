@@ -47,6 +47,11 @@ vi.mock('panel/stores/encryption', () => ({
 
 import { ServerSettingsModal } from 'panel/components/Encryption/blocks/ServerSettingsModal';
 import { ServerSettingsFields } from 'panel/components/Encryption/blocks/ServerSettingsFields';
+import {
+    DNS_OVER_QUIC_PORT,
+    DNS_OVER_TLS_PORT,
+    STANDARD_HTTPS_PORT,
+} from 'panel/helpers/constants';
 
 const renderModal = () => {
     const onClose = vi.fn();
@@ -240,5 +245,21 @@ describe('ServerSettingsFields — the settings shared with the wizard', () => {
 
         expect(onFieldChange).toHaveBeenCalledWith('port_https', '8443');
         expect(onFieldBlur).toHaveBeenCalledWith('port_https');
+    });
+
+    it('fills the default ports in the tooltips from the shared constants', () => {
+        // The tooltips are rendered with their text nodes even when closed.
+        render(() => (
+            <ServerSettingsFields values={values} onFieldChange={vi.fn()} onFieldBlur={vi.fn()} />
+        ));
+
+        const labels = [...document.querySelectorAll('label')]
+            .map((label) => label.textContent)
+            .join(' ');
+
+        expect(labels).toContain(`Default: ${STANDARD_HTTPS_PORT}`);
+        expect(labels).toContain(`Default: ${DNS_OVER_TLS_PORT}`);
+        expect(labels).toContain(`Default: ${DNS_OVER_QUIC_PORT}`);
+        expect(labels).not.toContain('%port%');
     });
 });

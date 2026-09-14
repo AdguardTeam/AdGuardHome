@@ -2,22 +2,17 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 8px 0 16px;
+    padding: 8px 0 32px;
 }
 
 .wizardTitle {
     margin: 0;
-    padding: 8px 0;
-    font-weight: var(--weight-bold);
-    font-size: 24px;
-    line-height: 28px;
+    padding: 8px 0 16px;
     color: var(--default-main-text);
 }
 
 .wizardDescription {
     padding: 0 0 16px;
-    font-size: 16px;
-    line-height: 1.5;
     color: var(--default-main-text);
 }
 
@@ -26,8 +21,6 @@
     padding: 0;
     background: transparent;
     color: var(--default-link);
-    font-size: 14px;
-    line-height: 1.3;
     white-space: nowrap;
     cursor: pointer;
     font-family: inherit;
@@ -39,7 +32,6 @@
     gap: 4px;
 }
 
-/* Gap between the paste field and the dropzone below it. */
 .dropzoneGap {
     margin-top: 16px;
 }
@@ -48,10 +40,10 @@
     flex: 1 0 0;
     height: 4px;
     border-radius: 8px;
-    background: var(--gray-30);
+    background: var(--default-item-divider);
 
     &_active {
-        background: var(--product-primary-50);
+        background: var(--default-product-icon);
     }
 }
 
@@ -80,24 +72,14 @@
     gap: 8px;
 }
 
-/* Inline per-field validation messages (Figma AGDNS-4262).  Only rendered for
-   warnings and form-level messages: field errors use the controls'
-   `errorMessage`, which also paints the field border red. */
 .message {
     margin-top: 8px;
-    font-size: 14px;
-    line-height: 1.4;
 }
 
 .messageError {
-    color: var(--default-error-icon);
+    color: var(--default-error-link);
 }
 
 .messageWarning {
     color: var(--default-attention-link);
-}
-
-.messageHint {
-    padding-top: 4px;
-    color: var(--default-description-text);
 }

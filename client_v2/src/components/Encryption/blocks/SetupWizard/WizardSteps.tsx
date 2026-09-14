@@ -2,7 +2,7 @@ import { For, Show } from 'solid-js';
 import cn from 'clsx';
 
 import intl from 'panel/common/intl';
-
+import theme from 'panel/lib/theme';
 import s from './styles.module.pcss';
 
 const STEPS = [1, 2, 3] as const;
@@ -21,7 +21,11 @@ export const WizardSteps = (props: Props) => (
         aria-valuenow={props.step}
     >
         <Show when={props.step > 1}>
-            <button type="button" class={s.goBack} onClick={() => props.onGoBack()}>
+            <button
+                type="button"
+                class={cn(theme.text.t3, s.goBack)}
+                onClick={() => props.onGoBack()}
+            >
                 {intl.getMessage('go_back')}
             </button>
         </Show>

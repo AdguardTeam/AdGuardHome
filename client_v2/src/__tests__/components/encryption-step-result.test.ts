@@ -77,15 +77,11 @@ describe('mapStepResult — step 1 (certificate)', () => {
 
     it('returns nothing for a clean cert-only step 1 response', () => {
         expect(
-            mapStepResult(
-                1,
-                { ...validStatus, valid_key: false, valid_pair: false },
-                certValues,
-            ),
+            mapStepResult(1, { ...validStatus, valid_key: false, valid_pair: false }, certValues),
         ).toBeUndefined();
     });
 
-    it('maps an unclassified invalid certificate to a blocking error', () => {
+    it('maps a silent parse failure to the parse message', () => {
         const m = mapStepResult(
             1,
             { ...validStatus, valid_cert: false, warning_validation: '' },
@@ -94,8 +90,7 @@ describe('mapStepResult — step 1 (certificate)', () => {
         expect(m).toEqual({
             field: 'certificate_chain',
             kind: 'error',
-            message:
-                'Certificate has issues. Check subject, issuer, validity, and hostnames',
+            message: 'Unable to parse the certificate. The file may be corrupted',
         });
     });
 
@@ -116,12 +111,10 @@ describe('mapStepResult — step 1 (certificate)', () => {
         });
     });
 
-    it('treats a transport error as a blocking message for the certificate', () => {
-        const m = mapStepResult(1, { error: 'network is unreachable' }, certValues);
-        expect(m?.kind).toBe('error');
-        expect(m?.message).toBe(
-            'Certificate has issues. Check subject, issuer, validity, and hostnames',
-        );
+    it('does not turn a failed check into a verdict on the certificate step', () => {
+        // The check itself failed, so there is no certificate verdict to show:
+        // the step stays clean and the configuration save is the authority.
+        expect(mapStepResult(1, { error: 'network is unreachable' }, certValues)).toBeUndefined();
     });
 });
 
@@ -188,7 +181,7 @@ describe('mapStepResult — step 2 (private key)', () => {
         });
     });
 
-    it('returns a go-back error when the certificate regresses before step 2', () => {
+    it('keeps the certificate error on the certificate field before step 2', () => {
         const m = mapStepResult(
             2,
             {
@@ -202,11 +195,10 @@ describe('mapStepResult — step 2 (private key)', () => {
             certValues,
         );
         expect(m).toEqual({
-            // certificate_chain is not visible on step 2 → rendered form-level.
+            // Bound to the certificate field so the wizard shows it on step 1.
             field: 'certificate_chain',
             kind: 'error',
             message: 'Unable to parse the certificate. The file may be corrupted',
-            goBack: true,
         });
     });
 
@@ -216,7 +208,7 @@ describe('mapStepResult — step 2 (private key)', () => {
 });
 
 describe('mapStepResult — step 3 (config)', () => {
-    it('maps a hostname mismatch at the config step to the server name', () => {
+    it('maps a hostname mismatch at the config step to a non-blocking server name warning', () => {
         const m = mapStepResult(
             3,
             {
@@ -229,7 +221,7 @@ describe('mapStepResult — step 3 (config)', () => {
         );
         expect(m).toEqual({
             field: 'server_name',
-            kind: 'error',
+            kind: 'warning',
             message:
                 'The certificate is not valid for dns.home.arpa. Check the hostnames in the certificate',
         });
@@ -243,6 +235,46 @@ describe('mapStepResult — step 3 (config)', () => {
                 valid_chain: false,
                 warning_validation:
                     'validating certificate pair: certificate does not verify: x509: certificate signed by unknown authority',
+            },
+            certValues,
+        );
+        expect(m).toEqual({
+            kind: 'warning',
+            message:
+                'This certificate is self-signed — it may not work on all devices. Make sure your devices will accept it',
+        });
+    });
+
+    it('maps the macOS untrusted-chain wording to the same warning', () => {
+        // Go's darwin verifier reports an untrusted chain as `certificate is
+        // not trusted` instead of `signed by unknown authority`.
+        const m = mapStepResult(
+            3,
+            {
+                ...validStatus,
+                valid_chain: false,
+                warning_validation:
+                    'validating certificate pair: certificate does not verify: x509: “agadguard.example.com” certificate is not trusted',
+            },
+            certValues,
+        );
+        expect(m).toEqual({
+            kind: 'warning',
+            message:
+                'This certificate is self-signed — it may not work on all devices. Make sure your devices will accept it',
+        });
+    });
+
+    it('warns instead of blocking on an unrecognized verify complaint', () => {
+        // An expired or revoked certificate is non-critical for the backend,
+        // exactly like an untrusted chain.
+        const m = mapStepResult(
+            3,
+            {
+                ...validStatus,
+                valid_chain: false,
+                warning_validation:
+                    'validating certificate pair: certificate does not verify: x509: certificate has expired or is not yet valid',
             },
             certValues,
         );
@@ -285,7 +317,7 @@ describe('mapStepResult — step 3 (config)', () => {
         expect(m?.message).toBe('Port 9000 is used by multiple DNS protocols. It must be unique');
     });
 
-    it('maps a pair failure at the config step to a go-back error', () => {
+    it('maps a pair failure at the config step to the key field', () => {
         const m = mapStepResult(
             3,
             {
@@ -296,14 +328,14 @@ describe('mapStepResult — step 3 (config)', () => {
             },
             certValues,
         );
-        expect(m?.goBack).toBe(true);
-        expect(m?.field).toBeUndefined();
-        expect(m?.message).toBe(
-            'This private key does not match the certificate from the previous step',
-        );
+        expect(m).toEqual({
+            field: 'private_key',
+            kind: 'error',
+            message: 'This private key does not match the certificate from the previous step',
+        });
     });
 
-    it('returns a go-back error when nothing is valid and the backend stays silent', () => {
+    it('points at the certificate when nothing is valid and the backend stays silent', () => {
         const m = mapStepResult(
             3,
             {
@@ -316,9 +348,9 @@ describe('mapStepResult — step 3 (config)', () => {
             certValues,
         );
         expect(m).toEqual({
+            field: 'certificate_chain',
             kind: 'error',
-            message: 'Certificate has issues. Check subject, issuer, validity, and hostnames',
-            goBack: true,
+            message: 'Unable to parse the certificate. The file may be corrupted',
         });
     });
 

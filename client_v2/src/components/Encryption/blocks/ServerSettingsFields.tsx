@@ -1,9 +1,15 @@
-import type { JSX } from 'solid-js';
+import { Show, type JSX } from 'solid-js';
+import cn from 'clsx';
 
 import { Input } from 'panel/common/controls/Input';
 import { FaqTooltip } from 'panel/common/ui/FaqTooltip';
 import intl from 'panel/common/intl';
 import theme from 'panel/lib/theme';
+import {
+    DNS_OVER_QUIC_PORT,
+    DNS_OVER_TLS_PORT,
+    STANDARD_HTTPS_PORT,
+} from 'panel/helpers/constants';
 import type { PortField, ServerSettingsField, ServerSettingsValues } from '../validate';
 import s from '../styles.module.pcss';
 
@@ -15,6 +21,8 @@ type Props = {
     onFieldBlur: (field: ServerSettingsField) => void;
     /** Error to render under a field, composed by the host. */
     errorFor?: (field: ServerSettingsField) => string | undefined;
+    /** Non-blocking warning to render under a field, composed by the host. */
+    warningFor?: (field: ServerSettingsField) => string | undefined;
     /** DOM id prefix — the wizard prefixes its ids with `tls_setup_`. */
     idPrefix?: string;
     clearablePorts?: boolean;
@@ -28,8 +36,20 @@ type PortInputProps = {
     onChange: (e: Event) => void;
     onBlur: () => void;
     errorMessage?: string;
+    warning?: string;
     clearable?: boolean;
 };
+
+/**
+ * Non-blocking note under a field, e.g. a server name missing from the
+ * certificate.  Mirrors the wizard's yellow step message so both render the
+ * same way.
+ */
+const FieldWarning = (props: { text?: string }) => (
+    <Show when={props.text}>
+        <div class={cn(theme.text.t3, theme.status.statusYellow, s.fieldWarning)}>{props.text}</div>
+    </Show>
+);
 
 const PortInput = (props: PortInputProps) => (
     <div class={theme.form.input}>
@@ -45,6 +65,7 @@ const PortInput = (props: PortInputProps) => (
             errorMessage={props.errorMessage}
             size="large"
         />
+        <FieldWarning text={props.warning} />
     </div>
 );
 
@@ -57,6 +78,7 @@ const PortInput = (props: PortInputProps) => (
 export const ServerSettingsFields = (props: Props) => {
     const id = (field: ServerSettingsField) => `${props.idPrefix ?? ''}${field}`;
     const error = (field: ServerSettingsField) => props.errorFor?.(field);
+    const warning = (field: ServerSettingsField) => props.warningFor?.(field);
 
     return (
         <>
@@ -75,14 +97,9 @@ export const ServerSettingsFields = (props: Props) => {
                             <FaqTooltip
                                 menuSize="large"
                                 text={
-                                    <>
-                                        <div class={s.tooltipText}>
-                                            {intl.getMessage('encryption_server_tooltip_1')}
-                                        </div>
-                                        <div class={s.tooltipText}>
-                                            {intl.getMessage('encryption_server_tooltip_2')}
-                                        </div>
-                                    </>
+                                    <div class={s.tooltipText}>
+                                        {intl.getMessage('encryption_server_tooltip')}
+                                    </div>
                                 }
                             />
                         </>
@@ -91,6 +108,7 @@ export const ServerSettingsFields = (props: Props) => {
                     errorMessage={error('server_name')}
                     size="large"
                 />
+                <FieldWarning text={warning('server_name')} />
             </div>
 
             <PortInput
@@ -101,7 +119,9 @@ export const ServerSettingsFields = (props: Props) => {
                         {intl.getMessage('encryption_https')}
                         <FaqTooltip
                             menuSize="large"
-                            text={intl.getMessage('encryption_https_tooltip')}
+                            text={intl.getMessage('encryption_https_tooltip', {
+                                port: STANDARD_HTTPS_PORT,
+                            })}
                         />
                     </>
                 }
@@ -111,6 +131,7 @@ export const ServerSettingsFields = (props: Props) => {
                 }
                 onBlur={() => props.onFieldBlur('port_https')}
                 errorMessage={error('port_https')}
+                warning={warning('port_https')}
                 clearable={props.clearablePorts}
             />
 
@@ -122,7 +143,9 @@ export const ServerSettingsFields = (props: Props) => {
                         {intl.getMessage('encryption_dot')}
                         <FaqTooltip
                             menuSize="large"
-                            text={intl.getMessage('encryption_dot_tooltip')}
+                            text={intl.getMessage('encryption_dot_tooltip', {
+                                port: DNS_OVER_TLS_PORT,
+                            })}
                         />
                     </>
                 }
@@ -132,6 +155,7 @@ export const ServerSettingsFields = (props: Props) => {
                 }
                 onBlur={() => props.onFieldBlur('port_dns_over_tls')}
                 errorMessage={error('port_dns_over_tls')}
+                warning={warning('port_dns_over_tls')}
                 clearable={props.clearablePorts}
             />
 
@@ -143,7 +167,9 @@ export const ServerSettingsFields = (props: Props) => {
                         {intl.getMessage('encryption_doq')}
                         <FaqTooltip
                             menuSize="large"
-                            text={intl.getMessage('encryption_doq_tooltip')}
+                            text={intl.getMessage('encryption_doq_tooltip', {
+                                port: DNS_OVER_QUIC_PORT,
+                            })}
                         />
                     </>
                 }
@@ -153,6 +179,7 @@ export const ServerSettingsFields = (props: Props) => {
                 }
                 onBlur={() => props.onFieldBlur('port_dns_over_quic')}
                 errorMessage={error('port_dns_over_quic')}
+                warning={warning('port_dns_over_quic')}
                 clearable={props.clearablePorts}
             />
         </>
