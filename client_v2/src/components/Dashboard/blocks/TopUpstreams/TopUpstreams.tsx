@@ -3,9 +3,11 @@ import intl from 'panel/common/intl';
 import { formatCompactNumber } from 'panel/helpers/helpers';
 import theme from 'panel/lib/theme';
 import { QueriesTooltip } from 'panel/common/ui/QueriesTooltip';
+import { RoutePath } from 'panel/components/Routes/Paths';
 import cn from 'clsx';
 import { TableHeader } from '../TableHeader';
 import { EmptyState } from '../EmptyState';
+import { CardFooter } from '../CardFooter';
 import { useSortedData } from '../../hooks/useSortedData';
 
 import s from '../TableCard.module.pcss';
@@ -18,6 +20,7 @@ type UpstreamInfo = {
 type Props = {
     topUpstreamsResponses: UpstreamInfo[];
     numDnsQueries: number;
+    period?: number;
 };
 
 export const TopUpstreams = (props: Props) => {
@@ -107,6 +110,12 @@ export const TopUpstreams = (props: Props) => {
                     </For>
                 </Show>
             </div>
+
+            <CardFooter
+                to={RoutePath.TopUpstreams}
+                testId="show-more-top-upstreams"
+                query={props.period ? { period: props.period } : undefined}
+            />
         </div>
     );
 };

@@ -10,7 +10,7 @@ import s from './Table.module.pcss';
 
 import { Icon } from '../Icon';
 
-const DEFAULT_PAGE_SIZE_OPTIONS = [10, 20, 30, 40, 50];
+export const DEFAULT_PAGE_SIZE_OPTIONS = [10, 20, 30, 40, 50];
 export const DEFAULT_PAGE_SIZE = DEFAULT_PAGE_SIZE_OPTIONS[0];
 
 export interface TableColumn<T = any> {
@@ -195,6 +195,11 @@ export const Table = <T extends Record<string, any>>(props: TableProps<T>) => {
 
     const hasData = () => paginatedData().length > 0;
 
+    // The rows-per-page select lives in the pagination footer, so the whole
+    // footer is hidden until there is at least a full page of rows.
+    const showPagination = () =>
+        (props.pagination ?? true) && sortedData().length >= DEFAULT_PAGE_SIZE;
+
     return (
         <Show
             when={!props.loading}
@@ -206,7 +211,11 @@ export const Table = <T extends Record<string, any>>(props: TableProps<T>) => {
         >
             <div class={s.tableContainer}>
                 <div class={s.tableMain}>
-                    <div class={cn(s.table, props.class)}>
+                    <div
+                        class={cn(s.table, props.class, {
+                            [s.tableWithPagination]: showPagination(),
+                        })}
+                    >
                         <div class={cn(s.tableHeader, props.tableHeaderClass)} style={tableStyle()}>
                             <For each={props.columns}>
                                 {(column) => (
@@ -299,21 +308,21 @@ export const Table = <T extends Record<string, any>>(props: TableProps<T>) => {
                     <Show when={!hasData() && props.emptyTable}>
                         <div class={s.emptyTableWrapper}>{props.emptyTable}</div>
                     </Show>
-                </div>
 
-                <Show when={(props.pagination ?? true) && sortedData().length >= DEFAULT_PAGE_SIZE}>
-                    <div class={s.tablePagination}>
-                        <Pagination
-                            currentPage={state.currentPage}
-                            totalPages={totalPages()}
-                            pageSize={state.pageSize}
-                            totalItems={sortedData().length}
-                            pageSizeOptions={props.pageSizeOptions ?? DEFAULT_PAGE_SIZE_OPTIONS}
-                            onPageChange={handlePageChange}
-                            onPageSizeChange={handlePageSizeChange}
-                        />
-                    </div>
-                </Show>
+                    <Show when={showPagination()}>
+                        <div class={s.tablePagination}>
+                            <Pagination
+                                currentPage={state.currentPage}
+                                totalPages={totalPages()}
+                                pageSize={state.pageSize}
+                                totalItems={sortedData().length}
+                                pageSizeOptions={props.pageSizeOptions ?? DEFAULT_PAGE_SIZE_OPTIONS}
+                                onPageChange={handlePageChange}
+                                onPageSizeChange={handlePageSizeChange}
+                            />
+                        </div>
+                    </Show>
+                </div>
             </div>
         </Show>
     );
