@@ -21,6 +21,9 @@ import (
 type dnsContext struct {
 	proxyCtx *proxy.DNSContext
 
+	// ecsClientAddr is the client address from the EDNS Client Subnet option.
+	ecsClientAddr netip.Addr
+
 	// setts are the filtering settings for the client.
 	setts *filtering.Settings
 
@@ -57,6 +60,16 @@ type dnsContext struct {
 	// isDHCPHost is true if the request for a local domain name and the DHCP is
 	// available for this request.
 	isDHCPHost bool
+}
+
+// clientAddr returns the ECS client address if set, or the connection address
+// otherwise.
+func (dctx *dnsContext) clientAddr() netip.Addr {
+	if dctx.ecsClientAddr.IsValid() {
+		return dctx.ecsClientAddr
+	}
+
+	return dctx.proxyCtx.Addr.Addr()
 }
 
 // resultCode is the result of a request processing function.
@@ -110,7 +123,13 @@ func (s *Server) processInitial(
 	defer l.DebugContext(ctx, "finished processing initial")
 
 	pctx := dctx.proxyCtx
-	s.processClientIP(ctx, l, pctx.Addr.Addr())
+
+	// Check for the ECS client address passed from the middleware.
+	if ecsAddr, ok := ecsClientAddrFromContext(ctx); ok {
+		dctx.ecsClientAddr = ecsAddr
+	}
+
+	s.processClientIP(ctx, l, dctx.clientAddr())
 
 	q := pctx.Req.Question[0]
 	qt := q.Qtype
