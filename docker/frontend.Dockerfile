@@ -97,9 +97,6 @@ RUN \
     --mount=type=cache,id=npm-root-cache,target=/root/.npm \
 <<-'EOF'
 set -e -f -u -x
-
-chmod +x ./AdGuardHome
-
 make \
 	CLIENT_DIR="${CLIENT_DIR}" \
 	CI='true' \

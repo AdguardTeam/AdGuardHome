@@ -96,7 +96,8 @@
 
           set -e -f -u -x
 
-          mv ${{ env.DIST_DIR }}/AdGuardHome_linux_amd64/AdGuardHome ./AdGuardHome
+          mv ${{ env.DIST_DIR }}/AdGuardHome_linux_amd64/AdGuardHome/AdGuardHome ./AdGuardHome
+          chmod +x ./AdGuardHome
       - 'name': 'Run tests'
         'uses': 'AdGuardSoftwareLimited/actions/actions/docker-build@master'
         'with':
