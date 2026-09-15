@@ -5,6 +5,9 @@ import _ "embed"
 //go:embed rules/bing.txt
 var bing string
 
+//go:embed rules/brave.txt
+var brave string
+
 //go:embed rules/google.txt
 var google string
 
@@ -29,6 +32,7 @@ var youtube string
 // https://adguardteam.github.io/HostlistsRegistry/assets/youtube_safe_search.txt.
 var safeSearchRules = map[Service]string{
 	Bing:       bing,
+	Brave:      brave,
 	DuckDuckGo: duckduckgo,
 	Ecosia:     ecosia,
 	Google:     google,

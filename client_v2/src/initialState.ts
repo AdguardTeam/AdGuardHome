@@ -326,6 +326,7 @@ export type ClientFormState = {
         google: boolean;
         youtube: boolean;
         bing: boolean;
+        brave: boolean;
         duckduckgo: boolean;
         yandex: boolean;
         pixabay: boolean;
@@ -367,6 +368,7 @@ export const getInitialClientFormState = (): ClientFormState => ({
         google: false,
         youtube: false,
         bing: false,
+        brave: false,
         duckduckgo: false,
         yandex: false,
         pixabay: false,
