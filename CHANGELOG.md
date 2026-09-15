@@ -24,7 +24,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
-- `log.enabled` set to `false` leaves the legacy logger enabled ([#8565]).
+- `log.enabled` set to `false` leaving the legacy logger enabled ([#8565]).
 
 - DHCP server persisting uncommitted leases with zero expiry after `DHCPDISCOVER` messages ([#8572]).
 
