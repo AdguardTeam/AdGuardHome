@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/netip"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -150,6 +152,159 @@ func TestDNSFilter_handleFilteringSetURL(t *testing.T) {
 			assert.Equal(t, tc.wantBody == "", confModifiedCalled)
 		})
 	}
+}
+
+func TestDNSFilter_filterSetPropertiesHTTPMetadata(t *testing.T) {
+	const (
+		oldURL = "https://example.org/old.txt"
+		newURL = "https://example.org/new.txt"
+	)
+
+	testCases := []struct {
+		name             string
+		url              string
+		wantMetadataKept bool
+	}{
+		{
+			name:             "same_url",
+			url:              oldURL,
+			wantMetadataKept: true,
+		}, {
+			name: "changed_url",
+			url:  newURL,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			d := newDNSFilter(t)
+			d.conf.Filters = []FilterYAML{{
+				Enabled:    true,
+				URL:        oldURL,
+				Name:       "test-filter",
+				RulesCount: 1,
+				Filter: Filter{
+					ID: 1,
+				},
+			}}
+
+			flt := &d.conf.Filters[0]
+			require.NoError(t, os.WriteFile(
+				flt.Path(d.conf.DataDir),
+				[]byte("||example.org^\n"),
+				0o600,
+			))
+			digest, err := d.currentFilterDigest(flt)
+			require.NoError(t, err)
+			require.NoError(t, d.storeHTTPMetadata(flt, filterHTTPMetadata{
+				ETag:   `"v1"`,
+				Digest: digest,
+			}))
+			metadataPath := flt.httpMetadataPath(d.conf.DataDir)
+			require.FileExists(t, metadataPath)
+
+			restart, err := d.filterSetProperties(oldURL, FilterYAML{
+				Enabled: false,
+				URL:     tc.url,
+				Name:    "test-filter",
+			}, false)
+			require.NoError(t, err)
+			assert.True(t, restart)
+			assert.False(t, flt.Enabled)
+			assert.Equal(t, tc.url, flt.URL)
+			if tc.wantMetadataKept {
+				require.FileExists(t, metadataPath)
+			} else {
+				require.NoFileExists(t, metadataPath)
+			}
+		})
+	}
+}
+
+func TestDNSFilter_handleFilteringRemoveURLRemovesHTTPMetadata(t *testing.T) {
+	const filterURL = "https://example.org/filter.txt"
+
+	confModifier := &aghtest.ConfigModifier{
+		OnApply: func(context.Context) {},
+	}
+	d, err := New(&Config{
+		Logger:       testLogger,
+		ConfModifier: confModifier,
+		HTTPReg:      aghhttp.EmptyRegistrar{},
+		DataDir:      t.TempDir(),
+		Filters: []FilterYAML{{
+			Enabled: false,
+			URL:     filterURL,
+			Filter: Filter{
+				ID: 1,
+			},
+		}},
+	}, nil)
+	require.NoError(t, err)
+	d.Start()
+	t.Cleanup(d.Close)
+
+	flt := &d.conf.Filters[0]
+	contentPath := flt.Path(d.conf.DataDir)
+	metadataPath := flt.httpMetadataPath(d.conf.DataDir)
+	require.NoError(t, os.WriteFile(contentPath, []byte("||example.org^\n"), 0o600))
+	digest, err := d.currentFilterDigest(flt)
+	require.NoError(t, err)
+	require.NoError(t, d.storeHTTPMetadata(flt, filterHTTPMetadata{
+		ETag:   `"v1"`,
+		Digest: digest,
+	}))
+	require.FileExists(t, metadataPath)
+
+	body, err := json.Marshal(&filterURLReq{
+		URL: filterURL,
+	})
+	require.NoError(t, err)
+	req := httptest.NewRequest(http.MethodPost, "http://example.org", bytes.NewReader(body))
+	resp := httptest.NewRecorder()
+
+	d.handleFilteringRemoveURL(resp, req)
+
+	assert.Equal(t, http.StatusOK, resp.Code)
+	assert.Equal(t, "OK 0 rules\n", resp.Body.String())
+	require.NoFileExists(t, metadataPath)
+	require.FileExists(t, contentPath+".old")
+}
+
+func TestDNSFilter_handleFilteringAddURLEmptyHTTPMetadata(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("ETag", `"v1"`)
+		_, err := w.Write([]byte("! Empty filter\n"))
+		require.NoError(testutil.NewPanicT(t), err)
+	}))
+	t.Cleanup(srv.Close)
+
+	dataDir := t.TempDir()
+	d, err := New(&Config{
+		Logger:      testLogger,
+		DataDir:     dataDir,
+		HTTPClient:  srv.Client(),
+		MaxHTTPSize: testFilterSize,
+	}, nil)
+	require.NoError(t, err)
+	t.Cleanup(d.Close)
+
+	body, err := json.Marshal(&filterAddJSON{
+		Name: "empty-filter",
+		URL:  srv.URL,
+	})
+	require.NoError(t, err)
+	req := httptest.NewRequest(http.MethodPost, "http://example.org", bytes.NewReader(body))
+	resp := httptest.NewRecorder()
+
+	d.handleFilteringAddURL(resp, req)
+
+	assert.Equal(t, http.StatusBadRequest, resp.Code)
+	assert.Empty(t, d.conf.Filters)
+
+	files, err := filepath.Glob(filepath.Join(dataDir, filterDir, "*"))
+	require.NoError(t, err)
+	assert.Empty(t, files)
 }
 
 func TestDNSFilter_handleSafeBrowsingStatus(t *testing.T) {
