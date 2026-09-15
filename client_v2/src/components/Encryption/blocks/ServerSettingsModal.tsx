@@ -122,7 +122,7 @@ export const ServerSettingsModal = (props: Props) => {
                 onFieldChange={handleFieldChange}
                 onFieldBlur={handleFieldBlur}
                 errorFor={fieldError}
-                clearablePorts
+                clearable
             />
         </ConfigDialog>
     );

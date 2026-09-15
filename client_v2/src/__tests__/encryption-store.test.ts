@@ -28,13 +28,51 @@ vi.mock('panel/helpers/helpers', () => ({
 
 import {
     setTlsConfig,
+    getTlsStatus,
     validateTlsConfig,
     resetValidationStatus,
     encryptionState,
 } from 'panel/stores/encryption';
 
+/**
+ * The backend marshals a cleared server name and a port that is turned off with
+ * `omitempty`, so they are missing from its response instead of empty.
+ */
+const RESPONSE_WITHOUT_EMPTIES = {
+    enabled: false,
+    serve_plain_dns: true,
+    certificate_chain: '',
+    private_key: '',
+    certificate_path: '',
+    private_key_path: '',
+    private_key_saved: false,
+};
+
 describe('setTlsConfig', () => {
     beforeEach(() => vi.clearAllMocks());
+
+    it('empties a server name and port the backend leaves out of the response', async () => {
+        // Seed the store the way a save with values does: the backend echoes
+        // them back.
+        mocks.tlsConfigure.mockResolvedValue({
+            ...RESPONSE_WITHOUT_EMPTIES,
+            server_name: 'dns.example.com',
+            port_https: 8443,
+        });
+        await setTlsConfig({ certificate_chain: '', private_key: '' });
+        expect(encryptionState.server_name).toBe('dns.example.com');
+        expect(encryptionState.port_https).toBe(8443);
+
+        // Clearing them makes the backend drop the fields.  A plain merge would
+        // keep the previous values, which is what the form would then show.
+        mocks.tlsConfigure.mockResolvedValue({ ...RESPONSE_WITHOUT_EMPTIES });
+        await setTlsConfig({ server_name: '', port_https: 0 });
+
+        expect(encryptionState.server_name).toBe('');
+        expect(encryptionState.port_https).toBe(0);
+        expect(encryptionState.port_dns_over_tls).toBe(0);
+        expect(encryptionState.port_dns_over_quic).toBe(0);
+    });
 
     it('defaults empty ports to 0', async () => {
         mocks.tlsConfigure.mockImplementation(async (v: any) => ({
@@ -261,6 +299,26 @@ describe('setTlsConfig — enabling encryption', () => {
 
         expect(mocks.addSuccessToast).not.toHaveBeenCalled();
         expect(encryptionState.enabled).toBe(true);
+    });
+});
+
+describe('getTlsStatus', () => {
+    beforeEach(() => vi.clearAllMocks());
+
+    it('empties the settings the backend leaves out of the status response', async () => {
+        mocks.tlsConfigure.mockResolvedValue({
+            ...RESPONSE_WITHOUT_EMPTIES,
+            server_name: 'dns.example.com',
+            port_https: 8443,
+        });
+        await setTlsConfig({ certificate_chain: '', private_key: '' });
+
+        // The status response reports the same cleared settings the save did.
+        mocks.tlsStatus.mockResolvedValue({ ...RESPONSE_WITHOUT_EMPTIES });
+        await getTlsStatus();
+
+        expect(encryptionState.server_name).toBe('');
+        expect(encryptionState.port_https).toBe(0);
     });
 });
 

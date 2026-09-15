@@ -64,8 +64,32 @@ const initialState: EncryptionState = {
 
 const [state, setState] = createStore<EncryptionState>(initialState);
 
+/**
+ * Settings the backend marshals with `omitempty`: a cleared server name or a
+ * port that is turned off comes back as a missing key rather than an empty
+ * value.  The store merges every response into its state, so the absence has to
+ * be spelled out — otherwise a cleared value would silently keep the previous
+ * one until the page is reloaded and the state is built from scratch.
+ *
+ * Keep in sync with `tlsConfigSettings` in `internal/home/config.go`.
+ */
+const OMITTED_WHEN_EMPTY: Pick<
+    TlsConfig,
+    'server_name' | 'port_https' | 'port_dns_over_tls' | 'port_dns_over_quic'
+> = {
+    server_name: '',
+    port_https: 0,
+    port_dns_over_tls: 0,
+    port_dns_over_quic: 0,
+};
+
+/**
+ * Turns a TLS config response into store-ready values: the base64 payloads are
+ * decoded, and the settings the backend omits when they are empty are filled
+ * in.
+ */
 const decodeResponse = (data: TlsConfig): TlsConfig => {
-    const decoded: TlsConfig = { ...data };
+    const decoded: TlsConfig = { ...OMITTED_WHEN_EMPTY, ...data };
     const fields = ['certificate_chain', 'private_key'] as const;
     fields.forEach((field) => {
         const value = decoded[field];

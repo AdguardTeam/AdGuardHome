@@ -20,9 +20,8 @@ type Props = {
     errorFor?: (field: ServerSettingsField) => string | undefined;
     warningFor?: (field: ServerSettingsField) => string | undefined;
     idPrefix?: string;
-    /** Test-id prefix, e.g. `tls-setup` — ids become `<prefix>-<field>`. */
     testIdPrefix?: string;
-    clearablePorts?: boolean;
+    clearable?: boolean;
 };
 
 type PortInputProps = {
@@ -94,6 +93,7 @@ export const ServerSettingsFields = (props: Props) => {
                         props.onFieldChange('server_name', (e.target as HTMLInputElement).value)
                     }
                     onBlur={() => props.onFieldBlur('server_name')}
+                    isClearable={props.clearable}
                     label={
                         <>
                             {intl.getMessage('encryption_server')}
@@ -141,7 +141,7 @@ export const ServerSettingsFields = (props: Props) => {
                 onBlur={() => props.onFieldBlur('port_https')}
                 errorMessage={error('port_https')}
                 warning={warning('port_https')}
-                clearable={props.clearablePorts}
+                clearable={props.clearable}
                 testId={testId('port-https')}
             />
 
@@ -166,7 +166,7 @@ export const ServerSettingsFields = (props: Props) => {
                 onBlur={() => props.onFieldBlur('port_dns_over_tls')}
                 errorMessage={error('port_dns_over_tls')}
                 warning={warning('port_dns_over_tls')}
-                clearable={props.clearablePorts}
+                clearable={props.clearable}
                 testId={testId('port-dns-over-tls')}
             />
 
@@ -191,7 +191,7 @@ export const ServerSettingsFields = (props: Props) => {
                 onBlur={() => props.onFieldBlur('port_dns_over_quic')}
                 errorMessage={error('port_dns_over_quic')}
                 warning={warning('port_dns_over_quic')}
-                clearable={props.clearablePorts}
+                clearable={props.clearable}
                 testId={testId('port-dns-over-quic')}
             />
         </>

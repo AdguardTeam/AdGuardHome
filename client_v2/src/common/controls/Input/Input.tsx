@@ -135,7 +135,12 @@ export const Input = (props: Props) => {
                         [s.postfix]: hasActions(),
                     })}
                     onChange={handleChange}
-                    onInput={(e) => (props.onInput as any)?.(e)}
+                    onInput={(e) => {
+                        // Reveal the clear button as soon as there is text; the
+                        // parent still only learns the value on `change`.
+                        setHasValue((e.currentTarget as HTMLInputElement).value.length > 0);
+                        (props.onInput as any)?.(e);
+                    }}
                     onKeyDown={handleKeyDown}
                     type={props.type}
                     id={props.id}

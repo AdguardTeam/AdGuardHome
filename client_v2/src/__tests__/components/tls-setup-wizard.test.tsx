@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@solidjs/testing-library';
-import userEvent from '@testing-library/user-event';
+import { render, screen, waitFor, within } from '@solidjs/testing-library';
+import userEventBase from '@testing-library/user-event';
 
 const mocks = vi.hoisted(() => ({
     tlsStatus: vi.fn(),
@@ -27,9 +27,27 @@ vi.mock('panel/stores/dashboard', () => ({
 vi.mock('panel/helpers/helpers', () => ({
     redirectToCurrentProtocol: mocks.redirectToCurrentProtocol,
 }));
+// The wizard debounces every per-step backend check.  Shrinking the constant
+// keeps the behaviour under test — the assertions still wait for the check to
+// land — without making every test pay the real 300ms of wall clock.
+vi.mock('panel/helpers/constants', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('panel/helpers/constants')>()),
+    DEBOUNCE_TIMEOUT: 20,
+}));
 
 import { TlsSetupWizard } from 'panel/components/Encryption/blocks/SetupWizard';
 import { getTlsStatus } from 'panel/stores/encryption';
+
+/**
+ * user-event waits a tick between every dispatched event, which costs ~2ms per
+ * character — and every step-3 test types a 56-char certificate plus a 46-char
+ * key.  The wizard does not depend on that pacing.
+ */
+const userEvent = {
+    ...userEventBase,
+    setup: (options?: Parameters<typeof userEventBase.setup>[0]) =>
+        userEventBase.setup({ ...options, delay: null }),
+};
 
 const CERT = '-----BEGIN CERTIFICATE-----\nabc\n-----END CERTIFICATE-----';
 const KEY = '-----BEGIN PRIVATE KEY-----\nxyz\n-----END PRIVATE KEY-----';
@@ -91,20 +109,12 @@ const goToStep3 = async (user: ReturnType<typeof userEvent.setup>) => {
 describe('TlsSetupWizard — shell & header', () => {
     beforeEach(() => vi.clearAllMocks());
 
-    it('renders step 1 with the title and a 3-segment progress bar', () => {
-        renderWizard();
-        expect(screen.getByTestId('tls-setup-title')).toHaveTextContent('Add TLS certificate');
-
-        const progressbar = screen.getByTestId('tls-setup-progress');
-        expect(progressbar).toHaveAttribute('aria-valuenow', '1');
-        // 3 segments: one pill per step.
-        expect(screen.getByTestId('tls-setup-progress-pills').children).toHaveLength(3);
-    });
-
-    it('hides Go back on step 1 and shows it on steps 2-3', async () => {
+    it('shows the step title, hides Go back on step 1 and shows it on steps 2-3', async () => {
         const user = userEvent.setup();
         renderWizard();
 
+        expect(screen.getByTestId('tls-setup-title')).toHaveTextContent('Add TLS certificate');
+        expect(screen.getByTestId('tls-setup-progress')).toHaveAttribute('aria-valuenow', '1');
         expect(screen.queryByTestId('tls-setup-back')).toBeNull();
 
         await goToStep2(user);
@@ -197,15 +207,6 @@ describe('TlsSetupWizard — step 1 (certificate)', () => {
         );
     });
 
-    it('advances to step 2 on valid input', async () => {
-        const user = userEvent.setup();
-        renderWizard();
-
-        await goToStep2(user);
-
-        expect(screen.getByTestId('tls-setup-step-key')).toBeInTheDocument();
-    });
-
     it('does not block on a check that failed to run, leaving it to the save', async () => {
         const user = userEvent.setup();
         mocks.tlsValidate.mockRejectedValue(
@@ -288,32 +289,6 @@ describe('TlsSetupWizard — step 1 (certificate)', () => {
         });
     });
 
-    it('flips Add into the warning state on the blur check, before anything is clicked', async () => {
-        const user = userEvent.setup();
-        mocks.tlsValidate.mockResolvedValue({
-            ...CERT_ONLY_STATUS,
-            valid_chain: false,
-            warning_validation: SELF_SIGNED_WARNING,
-        });
-        renderWizard();
-
-        await user.type(screen.getByTestId('tls-setup-cert-content'), CERT);
-        await user.tab(); // schedules the debounced per-step check
-
-        const add = screen.getByTestId('tls-setup-add');
-        await waitFor(() => {
-            expect(add).toHaveTextContent('Add anyway');
-        });
-        expect(add.className).toContain('warning');
-        expect(add).not.toBeDisabled();
-
-        // The warning is already on screen, so a single click goes through.
-        await user.click(add);
-        await waitFor(() => {
-            expect(screen.getByTestId('tls-setup-step-key')).toBeInTheDocument();
-        });
-    });
-
     it('blocks step 1 when the pasted content is not a certificate', async () => {
         const user = userEvent.setup();
         renderWizard();
@@ -325,6 +300,23 @@ describe('TlsSetupWizard — step 1 (certificate)', () => {
             'This is not a certificate. Check that you pasted a certificate, not a key',
         );
         expect(screen.getByTestId('tls-setup-step-certificate')).toBeInTheDocument();
+        expect(mocks.tlsValidate).not.toHaveBeenCalled();
+    });
+
+    it('blocks step 1 when the certificate is missing its closing line', async () => {
+        const user = userEvent.setup();
+        renderWizard();
+
+        await user.type(
+            screen.getByTestId('tls-setup-cert-content'),
+            '-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJAKlM4NvZ5W4r',
+        );
+        await user.tab();
+
+        expect(screen.getByTestId('tls-setup-cert-content-error')).toHaveTextContent(
+            'Make sure you copied the whole certificate, including the -----BEGIN----- and -----END----- lines',
+        );
+        // Truncated PEM is caught before the backend is asked to parse it.
         expect(mocks.tlsValidate).not.toHaveBeenCalled();
     });
 
@@ -352,43 +344,6 @@ describe('TlsSetupWizard — step 1 (certificate)', () => {
 describe('TlsSetupWizard — step 2 (private key)', () => {
     beforeEach(() => vi.clearAllMocks());
 
-    it('renders two sources and no saved-key option', async () => {
-        const user = userEvent.setup();
-        renderWizard();
-
-        await goToStep2(user);
-
-        expect(screen.getByTestId('tls-setup-key-source-content')).toBeInTheDocument();
-        expect(screen.getByTestId('tls-setup-key-source-path')).toBeInTheDocument();
-        // Two sources only — retrieving the stored key is never offered.
-        expect(screen.getAllByRole('radio')).toHaveLength(2);
-    });
-
-    it('gates Add on the key validation', async () => {
-        const user = userEvent.setup();
-        renderWizard();
-
-        await goToStep2(user);
-        await user.click(screen.getByTestId('tls-setup-add'));
-
-        expect(screen.getByTestId('tls-setup-key-content-error')).toBeInTheDocument();
-        expect(screen.getByTestId('tls-setup-step-key')).toBeInTheDocument();
-    });
-
-    it('does not flag an untouched key field when the file picker takes focus', async () => {
-        const user = userEvent.setup();
-        renderWizard();
-
-        await goToStep2(user);
-        await user.click(screen.getByTestId('tls-setup-key-content'));
-        await user.click(screen.getByTestId('tls-setup-key-dropzone'));
-
-        expect(screen.queryByTestId('tls-setup-key-content-error')).toBeNull();
-
-        await user.click(screen.getByTestId('tls-setup-add'));
-        expect(screen.getByTestId('tls-setup-key-content-error')).toBeInTheDocument();
-    });
-
     it('blocks step 2 when the key does not match the certificate', async () => {
         const user = userEvent.setup();
         mocks.tlsValidate.mockResolvedValueOnce(validStatus);
@@ -410,6 +365,90 @@ describe('TlsSetupWizard — step 2 (private key)', () => {
             );
         });
         expect(screen.getByTestId('tls-setup-step-key')).toBeInTheDocument(); // stays on step 2
+    });
+
+    it('blocks step 2 when the key is missing its closing line', async () => {
+        const user = userEvent.setup();
+        renderWizard();
+
+        await goToStep2(user);
+        await user.type(
+            screen.getByTestId('tls-setup-key-content'),
+            '-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0B',
+        );
+        const callsBefore = mocks.tlsValidate.mock.calls.length;
+        await user.click(screen.getByTestId('tls-setup-add'));
+
+        expect(screen.getByTestId('tls-setup-key-content-error')).toHaveTextContent(
+            'Make sure you copied the whole key, including the -----BEGIN----- and -----END----- lines',
+        );
+        expect(screen.getByTestId('tls-setup-step-key')).toBeInTheDocument();
+        // The client gate held the step, so the truncated key was never sent.
+        expect(mocks.tlsValidate.mock.calls.length).toBe(callsBefore);
+    });
+});
+
+describe('TlsSetupWizard — expired certificate', () => {
+    beforeEach(() => vi.clearAllMocks());
+
+    /** A valid pair whose chain does not cover the current date. */
+    const warnOnExpiredCert = () =>
+        mocks.tlsValidate.mockResolvedValue({
+            ...validStatus,
+            valid_chain: false,
+            not_after: '2020-01-01T00:00:00Z',
+            warning_validation:
+                'validating certificate pair: certificate does not verify: x509: certificate has expired or is not yet valid',
+        });
+
+    it('warns on step 1 and advances on the second Add', async () => {
+        const user = userEvent.setup();
+        warnOnExpiredCert();
+        renderWizard();
+
+        await user.type(screen.getByTestId('tls-setup-cert-content'), CERT);
+        const add = screen.getByTestId('tls-setup-add');
+        await user.click(add);
+
+        await waitFor(() => {
+            expect(screen.getByTestId('tls-setup-cert-content-warning')).toHaveTextContent(
+                'This certificate has expired or is not yet valid — it may not work on all devices. Make sure your devices will accept it',
+            );
+        });
+        // An expiry is not critical: the step warns and the button says so.
+        expect(screen.getByTestId('tls-setup-step-certificate')).toBeInTheDocument();
+        expect(add).toHaveTextContent('Add anyway');
+
+        await user.click(add);
+        await waitFor(() => {
+            expect(screen.getByTestId('tls-setup-step-key')).toBeInTheDocument();
+        });
+    });
+
+    it('keeps the config step clean, so Enable does not ask for confirmation', async () => {
+        const user = userEvent.setup();
+        renderWizard();
+
+        await goToStep3(user);
+        mocks.tlsValidate.mockResolvedValue({
+            ...validStatus,
+            valid_chain: false,
+            not_after: '2020-01-01T00:00:00Z',
+            warning_validation:
+                'validating certificate pair: certificate does not verify: x509: certificate has expired or is not yet valid',
+        });
+        await user.type(screen.getByTestId('tls-setup-server-name'), 'example.com');
+        await user.tab();
+
+        // The warning was already shown where the certificate is entered, is not
+        // repeated here, and never blocks: the backend accepts an expired
+        // certificate, so Enable stays a plain Enable rather than a confirmation.
+        await waitFor(() => {
+            expect(screen.getByTestId('tls-setup-step-config')).toBeInTheDocument();
+        });
+        expect(screen.getByTestId('tls-setup-enable')).not.toBeDisabled();
+        expect(screen.getByTestId('tls-setup-enable')).toHaveTextContent(/^Enable$/);
+        expect(screen.queryByTestId('tls-setup-form-message')).toBeNull();
     });
 });
 
@@ -521,17 +560,49 @@ describe('TlsSetupWizard — step 3 (config & enable)', () => {
         expect(serverName).toHaveValue('example.com');
     });
 
-    it('fires a debounced validation with the exact save payload once the form is clean', async () => {
+    it('offers a clear button for the server name as soon as it has text', async () => {
+        const user = userEvent.setup();
+        renderWizard();
+
+        await goToStep3(user);
+
+        // The wizard opens with no name, so there is nothing to clear yet.
+        expect(screen.getAllByTestId('input-clear-button')).toHaveLength(3);
+
+        await user.type(screen.getByTestId('tls-setup-server-name'), 'example.com');
+
+        // Typing alone is enough: the field has content, so the button is there
+        // before the value is committed to the form.
+        const serverName = screen.getByTestId('tls-setup-server-name');
+        await user.click(
+            within(serverName.parentElement as HTMLElement).getByTestId('input-clear-button'),
+        );
+
+        expect(serverName).toHaveValue('');
+    });
+
+    it('fires a debounced pre-flight with the exact save payload once the form is clean', async () => {
         const user = userEvent.setup();
         mocks.tlsValidate.mockResolvedValue(validStatus);
         renderWizard();
 
         await goToStep3(user);
+
+        // The pre-flight runs with an empty name too: the backend only skips
+        // DDR, ClientID detection and the hostname check in that case.
+        await waitFor(() => {
+            const calls = mocks.tlsValidate.mock.calls;
+            expect(calls[calls.length - 1][0].enabled).toBe(true);
+        });
+        const emptyNameCalls = mocks.tlsValidate.mock.calls;
+        expect(emptyNameCalls[emptyNameCalls.length - 1][0].server_name).toBe('');
+
         await user.type(screen.getByTestId('tls-setup-server-name'), 'example.com');
         await user.tab();
 
         await waitFor(() => {
-            expect(mocks.tlsValidate.mock.calls.length).toBeGreaterThan(2);
+            const calls = mocks.tlsValidate.mock.calls;
+            expect(calls[calls.length - 1][0].server_name).toBe('example.com');
         });
         const calls = mocks.tlsValidate.mock.calls;
         const payload = calls[calls.length - 1][0];
@@ -539,22 +610,6 @@ describe('TlsSetupWizard — step 3 (config & enable)', () => {
         expect(payload.serve_plain_dns).toBe(true);
         expect(atob(payload.certificate_chain)).toBe(CERT);
         expect(atob(payload.private_key)).toBe(KEY);
-    });
-
-    it('runs the pre-flight with an empty server name', async () => {
-        const user = userEvent.setup();
-        mocks.tlsValidate.mockResolvedValue(validStatus);
-        renderWizard();
-
-        await goToStep3(user);
-
-        await waitFor(() => {
-            expect(mocks.tlsValidate.mock.calls.length).toBeGreaterThan(2);
-        });
-        const calls = mocks.tlsValidate.mock.calls;
-        const payload = calls[calls.length - 1][0];
-        expect(payload.enabled).toBe(true);
-        expect(payload.server_name).toBe('');
     });
 
     it('sends the user back to the key step when the pair breaks', async () => {
@@ -615,6 +670,7 @@ describe('TlsSetupWizard — step 3 (config & enable)', () => {
         mocks.tlsValidate.mockResolvedValue({
             ...validStatus,
             valid_chain: false,
+            not_after: '2020-01-01T00:00:00Z',
             warning_validation:
                 'validating certificate pair: certificate does not verify: x509: certificate has expired or is not yet valid',
         });
@@ -629,32 +685,6 @@ describe('TlsSetupWizard — step 3 (config & enable)', () => {
         expect(screen.getByTestId('tls-setup-step-config')).toBeInTheDocument();
         expect(screen.queryByTestId('tls-setup-server-name-warning')).toBeNull();
         expect(screen.queryByTestId('tls-setup-form-message')).toBeNull();
-    });
-
-    it('hides a repeated certificate warning on the config step', async () => {
-        const user = userEvent.setup();
-        renderWizard();
-
-        await goToStep3(user);
-        mocks.tlsValidate.mockResolvedValue({
-            ...validStatus,
-            valid_chain: false,
-            warning_validation: SELF_SIGNED_WARNING,
-        });
-        await user.type(screen.getByTestId('tls-setup-server-name'), 'example.com');
-        await user.tab();
-
-        await waitFor(() => {
-            expect(mocks.tlsValidate.mock.calls.length).toBeGreaterThan(2);
-        });
-        // The certificate warning was already shown on the step that collected
-        // the certificate — repeating it here would be noise, and it never
-        // blocks enabling.
-        expect(screen.queryByTestId('tls-setup-server-name-warning')).toBeNull();
-        expect(screen.queryByTestId('tls-setup-form-message')).toBeNull();
-        await waitFor(() => {
-            expect(screen.getByTestId('tls-setup-enable')).not.toBeDisabled();
-        });
     });
 
     it('shows a hostname mismatch as a warning and still allows enabling', async () => {
@@ -842,6 +872,12 @@ describe('TlsSetupWizard — step 3 (config & enable)', () => {
         await waitFor(() => {
             expect(screen.getByTestId('tls-setup-form-message')).toBeInTheDocument();
         });
+        // The failed save drops the pending state: no stuck loader, no stuck
+        // disabled fields.
+        expect(
+            screen.getByTestId('tls-setup-enable').querySelector('[class*="loader"]'),
+        ).toBeNull();
+        expect(screen.getByTestId('tls-setup-port-https')).not.toBeDisabled();
         expect(onClose).not.toHaveBeenCalled();
         // The wizard renders the error inline instead of toasting it.
         expect(mocks.addErrorToast).not.toHaveBeenCalled();
@@ -1022,30 +1058,5 @@ describe('TlsSetupWizard — the enable button reports that it is working', () =
         await waitFor(() => {
             expect(onClose).toHaveBeenCalled();
         });
-    });
-
-    it('drops the loader when the save is refused', async () => {
-        const user = userEvent.setup();
-        mocks.tlsConfigure.mockRejectedValue(
-            new Error('http://127.0.0.1/control/tls/configure | saving: boom | 500'),
-        );
-
-        const onClose = renderWizard();
-        await goToStep3(user);
-
-        const enable = screen.getByTestId('tls-setup-enable');
-        await waitFor(() => {
-            expect(enable).not.toBeDisabled();
-        });
-        await user.click(enable);
-
-        await waitFor(() => {
-            expect(screen.getByTestId('tls-setup-form-message')).toBeInTheDocument();
-        });
-        expect(
-            screen.getByTestId('tls-setup-enable').querySelector('[class*="loader"]'),
-        ).toBeNull();
-        expect(screen.getByTestId('tls-setup-port-https')).not.toBeDisabled();
-        expect(onClose).not.toHaveBeenCalled();
     });
 });

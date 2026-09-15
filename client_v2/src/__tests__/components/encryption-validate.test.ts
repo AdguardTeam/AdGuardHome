@@ -225,6 +225,40 @@ describe('validateCertFields', () => {
         expect(errs.certificate_chain).toBe('Enter the certificate contents with header');
     });
 
+    it('asks for the whole certificate when the closing line is missing', () => {
+        const errs = validateCertFields({
+            ...valid,
+            certificate_chain: '-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJAKlM4NvZ5W4r',
+        });
+        expect(errs.certificate_chain).toBe(
+            'Make sure you copied the whole certificate, including the -----BEGIN----- and -----END----- lines',
+        );
+    });
+
+    it('keeps the wrong-content error for a truncated private key in the certificate field', () => {
+        // Pasting a key into the certificate field is the more useful verdict,
+        // whether or not that key happens to be truncated.
+        const errs = validateCertFields({
+            ...valid,
+            certificate_chain: '-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkq',
+        });
+        expect(errs.certificate_chain).toBe(
+            'This is not a certificate. Check that you pasted a certificate, not a key',
+        );
+    });
+
+    it('accepts a chain whose last block is complete', () => {
+        const chain = [
+            '-----BEGIN CERTIFICATE-----',
+            'MIIDXTCCAkWg',
+            '-----END CERTIFICATE-----',
+            '-----BEGIN CERTIFICATE-----',
+            'MIIDXTCCAkWh',
+            '-----END CERTIFICATE-----',
+        ].join('\n');
+        expect(validateCertFields({ ...valid, certificate_chain: chain })).toEqual({});
+    });
+
     it('accepts a certificate block so the backend can parse it', () => {
         expect(validateCertFields(valid).certificate_chain).toBeUndefined();
         expect(
@@ -336,6 +370,31 @@ describe('validateKeyFields', () => {
         expect(validateKeyFields({ ...valid, private_key: 'MIIEvQIBADANBgkq' }).private_key).toBe(
             'Enter the private key with header',
         );
+    });
+
+    it('asks for the whole key when the closing line is missing', () => {
+        const errs = validateKeyFields({
+            ...valid,
+            private_key: '-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0B',
+        });
+        expect(errs.private_key).toBe(
+            'Make sure you copied the whole key, including the -----BEGIN----- and -----END----- lines',
+        );
+    });
+
+    it('keeps the wrong-content error for a truncated certificate in the key field', () => {
+        const errs = validateKeyFields({
+            ...valid,
+            private_key: '-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWg',
+        });
+        expect(errs.private_key).toBe(
+            'This is not a private key. Check that you pasted a key, not a certificate',
+        );
+    });
+
+    it('accepts any private key flavour whose closing line is complete', () => {
+        const rsaKey = '-----BEGIN RSA PRIVATE KEY-----\nMIIEvQIBADANBgkq\n-----END RSA PRIVATE KEY-----';
+        expect(validateKeyFields({ ...valid, private_key: rsaKey })).toEqual({});
     });
 });
 

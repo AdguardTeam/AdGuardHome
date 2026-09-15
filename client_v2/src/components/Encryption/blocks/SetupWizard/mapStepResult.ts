@@ -53,12 +53,37 @@ const certTextMessage = (text: string, field: CertField): StepMessage | undefine
     return undefined;
 };
 
+/**
+ * True when the certificate in the response does not cover the current moment:
+ * expired, or not valid yet.  Read from the certificate dates rather than the
+ * verify wording, which differs per platform — and the backend words both cases
+ * the same way, so one flag is enough.
+ */
+const certDatesInvalid = (notAfter?: string, notBefore?: string): boolean => {
+    const now = Date.now();
+    const after = Date.parse(notAfter ?? '');
+    const before = Date.parse(notBefore ?? '');
+
+    return (!Number.isNaN(after) && now > after) || (!Number.isNaN(before) && now < before);
+};
+
 /** Maps `warning_validation` / 400 text about the certificate. */
-const mapCertText = (text: string, field: CertField, certValid: boolean): StepMessage => {
+const mapCertText = (
+    text: string,
+    field: CertField,
+    certValid: boolean,
+    datesInvalid: boolean,
+): StepMessage => {
     const common = certTextMessage(text, field);
     if (common) return common;
 
     if (text.includes('certificate does not verify')) {
+        // A validity window that excludes now is worth naming: the generic
+        // untrusted wording would send the user looking for a CA problem.
+        if (datesInvalid) {
+            return { field, kind: 'warning', message: msg('tls_setup_warning_cert_expired') };
+        }
+
         // Non-critical for the backend: the chain is simply not trusted, or a
         // certificate in it is expired.  It warns on every step.
         return { field, kind: 'warning', message: msg('tls_setup_warning_cert_untrusted') };
@@ -202,15 +227,18 @@ export const mapStepResult = (
     }
 
     const text = res.warning_validation ?? '';
+    // Only a certificate that parsed carries dates, so the flag stays false on
+    // the responses that never produced a certificate verdict.
+    const datesInvalid = certDatesInvalid(res.not_after, res.not_before);
 
     if (step === 1) {
         if (res.valid_cert && !text) return undefined;
 
-        return mapCertText(text, cert, !!res.valid_cert);
+        return mapCertText(text, cert, !!res.valid_cert, datesInvalid);
     }
 
     if (step === 2) {
-        if (!res.valid_cert) return mapCertText(text, cert, false);
+        if (!res.valid_cert) return mapCertText(text, cert, false, datesInvalid);
 
         if (!res.valid_key) return mapKeyText(text, key);
 
@@ -220,7 +248,7 @@ export const mapStepResult = (
                 : { field: key, kind: 'error', message: msg('tls_setup_error_key_mismatch') };
         }
 
-        if (text) return mapCertText(text, cert, true);
+        if (text) return mapCertText(text, cert, true, datesInvalid);
 
         return undefined;
     }

@@ -361,7 +361,7 @@ export const TlsSetupWizard = (props: Props) => {
                     <ServerSettingsFields
                         idPrefix="tls_setup_"
                         values={values}
-                        clearablePorts
+                        clearable
                         onFieldChange={handleConfigFieldChange}
                         onFieldBlur={handleConfigFieldBlur}
                         errorFor={configFieldError}

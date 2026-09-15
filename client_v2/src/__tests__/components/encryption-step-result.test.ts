@@ -16,6 +16,12 @@ const validStatus = {
     warning_validation: '',
 };
 
+const SELF_SIGNED_WARNING =
+    'validating certificate pair: certificate does not verify: x509: certificate signed by unknown authority';
+
+const EXPIRED_WARNING =
+    'This certificate has expired or is not yet valid — it may not work on all devices. Make sure your devices will accept it';
+
 describe('mapStepResult — step 1 (certificate)', () => {
     it('maps an unparsed certificate to the certificate field', () => {
         const m = mapStepResult(
@@ -73,6 +79,87 @@ describe('mapStepResult — step 1 (certificate)', () => {
             message:
                 'The certificate does not contain IP addresses. DDR and DNS-over-TLS may not work properly',
         });
+    });
+
+    it('maps an expired certificate to the validity warning', () => {
+        const m = mapStepResult(
+            1,
+            {
+                ...validStatus,
+                valid_key: false,
+                valid_pair: false,
+                not_after: '2020-01-01T00:00:00Z',
+                warning_validation:
+                    'validating certificate pair: certificate does not verify: x509: certificate has expired or is not yet valid',
+            },
+            certValues,
+        );
+        expect(m).toEqual({
+            field: 'certificate_chain',
+            kind: 'warning',
+            message:
+                'This certificate has expired or is not yet valid — it may not work on all devices. Make sure your devices will accept it',
+        });
+    });
+
+    it('maps a not-yet-valid certificate to the same validity warning', () => {
+        const m = mapStepResult(
+            1,
+            {
+                ...validStatus,
+                valid_key: false,
+                valid_pair: false,
+                not_before: '2099-01-01T00:00:00Z',
+                warning_validation:
+                    'validating certificate pair: certificate does not verify: x509: certificate has expired or is not yet valid',
+            },
+            certValues,
+        );
+        expect(m?.kind).toBe('warning');
+        expect(m?.message).toBe(
+            'This certificate has expired or is not yet valid — it may not work on all devices. Make sure your devices will accept it',
+        );
+    });
+
+    it('falls back to the untrusted warning when the certificate dates are unusable', () => {
+        // No dates in the response, or a malformed one: the verify wording is
+        // the only evidence, and it must not be read as an expiry.
+        for (const dates of [{}, { not_after: '' }, { not_after: 'not-a-date' }]) {
+            const m = mapStepResult(
+                1,
+                {
+                    ...validStatus,
+                    valid_key: false,
+                    valid_pair: false,
+                    ...dates,
+                    warning_validation:
+                        'validating certificate pair: certificate does not verify: x509: certificate has expired or is not yet valid',
+                },
+                certValues,
+            );
+            expect(m?.message).toBe(
+                'This certificate is self-signed — it may not work on all devices. Make sure your devices will accept it',
+            );
+        }
+    });
+
+    it('keeps the untrusted warning for a valid-dated certificate', () => {
+        // A chain that is simply not trusted — the dates are fine.
+        const m = mapStepResult(
+            1,
+            {
+                ...validStatus,
+                valid_key: false,
+                valid_pair: false,
+                not_before: '2020-01-01T00:00:00Z',
+                not_after: '2099-01-01T00:00:00Z',
+                warning_validation: SELF_SIGNED_WARNING,
+            },
+            certValues,
+        );
+        expect(m?.message).toBe(
+            'This certificate is self-signed — it may not work on all devices. Make sure your devices will accept it',
+        );
     });
 
     it('returns nothing for a clean cert-only step 1 response', () => {
@@ -181,6 +268,23 @@ describe('mapStepResult — step 2 (private key)', () => {
         });
     });
 
+    it('keeps an expired certificate bound to the certificate field on step 2', () => {
+        // The key is fine — only the chain fails to verify — so the warning
+        // belongs under the certificate field of the previous step.
+        const m = mapStepResult(
+            2,
+            {
+                ...validStatus,
+                valid_chain: false,
+                not_after: '2020-01-01T00:00:00Z',
+                warning_validation:
+                    'validating certificate pair: certificate does not verify: x509: certificate has expired or is not yet valid',
+            },
+            certValues,
+        );
+        expect(m).toEqual({ field: 'certificate_chain', kind: 'warning', message: EXPIRED_WARNING });
+    });
+
     it('keeps the certificate error on the certificate field before step 2', () => {
         const m = mapStepResult(
             2,
@@ -267,12 +371,15 @@ describe('mapStepResult — step 3 (config)', () => {
 
     it('warns instead of blocking on an unrecognized verify complaint', () => {
         // An expired or revoked certificate is non-critical for the backend,
-        // exactly like an untrusted chain.
+        // exactly like an untrusted chain.  The config step maps it to a
+        // form-level warning, which `useStepCheck` never renders here, so the
+        // wording does not matter — the certificate step is where it is shown.
         const m = mapStepResult(
             3,
             {
                 ...validStatus,
                 valid_chain: false,
+                not_after: '2020-01-01T00:00:00Z',
                 warning_validation:
                     'validating certificate pair: certificate does not verify: x509: certificate has expired or is not yet valid',
             },

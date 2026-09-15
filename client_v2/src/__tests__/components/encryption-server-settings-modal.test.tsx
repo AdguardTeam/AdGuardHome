@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@solidjs/testing-library';
+import { render, screen, waitFor, within } from '@solidjs/testing-library';
 import userEvent from '@testing-library/user-event';
 
 const mocks = vi.hoisted(() => ({
@@ -77,11 +77,12 @@ describe('ServerSettingsModal — opening', () => {
         expect(screen.getAllByDisplayValue('853')).toHaveLength(2);
     });
 
-    it('renders a clear button in every port input', () => {
+    it('renders a clear button in every field', () => {
         renderModal();
 
-        // The server name is not clearable; the three ports are.
-        expect(screen.getAllByTestId('input-clear-button')).toHaveLength(3);
+        // The server name is optional too, so it is cleared the same way the
+        // three ports are.
+        expect(screen.getAllByTestId('input-clear-button')).toHaveLength(4);
     });
 });
 
@@ -194,6 +195,30 @@ describe('ServerSettingsModal — saving', () => {
         });
         expect(onClose).toHaveBeenCalled();
         expect(mocks.addErrorToast).not.toHaveBeenCalled();
+    });
+
+    it('saves an empty server name after its clear button empties the field', async () => {
+        const user = userEvent.setup();
+        renderModal();
+
+        const serverName = screen.getByDisplayValue('dns.example.com');
+        const clearButton = within(serverName.parentElement as HTMLElement).getByTestId(
+            'input-clear-button',
+        );
+        await user.click(clearButton);
+
+        // The name is optional: clearing it must reach the form state, not just
+        // the DOM, so the empty name is what gets saved.
+        expect(serverName).toHaveValue('');
+        expect(screen.getAllByDisplayValue('853')).toHaveLength(2);
+
+        await user.click(saveButton());
+        expect(mocks.setTlsConfig).toHaveBeenCalledWith({
+            server_name: '',
+            port_https: 443,
+            port_dns_over_tls: 853,
+            port_dns_over_quic: 853,
+        });
     });
 });
 
