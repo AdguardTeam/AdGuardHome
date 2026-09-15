@@ -2,6 +2,7 @@ package configmgr
 
 import (
 	"fmt"
+	"net/netip"
 	"regexp"
 
 	"github.com/AdguardTeam/golibs/errors"
@@ -16,6 +17,9 @@ type HTTPConfig struct {
 
 	// Pprof defines the profiling HTTP handler.
 	Pprof *HTTPPprofConfig `yaml:"pprof"`
+
+	// Address is the addresses on which to serve web API.
+	Address netip.AddrPort `yaml:"address"`
 
 	// SessionTTL for a web session.
 	SessionTTL timeutil.Duration `yaml:"session_ttl"`

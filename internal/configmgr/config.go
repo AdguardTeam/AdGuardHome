@@ -34,7 +34,7 @@ type Config struct {
 	Theme string `yaml:"theme"`
 
 	// Users are the clients capable for accessing the web interface.
-	Users WebUsers `yaml:"users"`
+	Users []*WebUser `yaml:"users"`
 
 	// AuthAttempts is the maximum number of failed login attempts a user can do
 	// before being blocked.
@@ -74,9 +74,6 @@ func (c *Config) Validate() (err error) {
 	}, {
 		Key:   "log",
 		Value: c.Log,
-	}, {
-		Key:   "users",
-		Value: c.Users,
 	}}
 
 	var errs []error
@@ -90,6 +87,8 @@ func (c *Config) Validate() (err error) {
 			errs = append(errs, fmt.Errorf("theme: %w", err))
 		}
 	}
+
+	errs = validate.AppendSlice(errs, "users", c.Users)
 
 	return errors.Join(errs...)
 }
