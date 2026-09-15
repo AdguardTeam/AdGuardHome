@@ -43,7 +43,6 @@ import (
 	"github.com/AdguardTeam/golibs/hostsfile"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
-	"github.com/AdguardTeam/golibs/netutil/httputil"
 	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/AdguardTeam/golibs/osutil"
 	"github.com/AdguardTeam/golibs/osutil/executil"
@@ -848,7 +847,7 @@ func run(
 		errors.Annotate(err, "creating dns data dir at %q: %w", dataDirPath),
 	)
 
-	auth, err := initUsers(ctx, baseLogger, workDir, mux, opts.glinetMode, glTokenFileRoot)
+	auth, err := initUsers(ctx, baseLogger, workDir, opts.glinetMode, glTokenFileRoot)
 	fatalOnError(ctx, baseLogger, err)
 
 	confModifier.setAuth(auth)
@@ -882,7 +881,13 @@ func run(
 	fatalOnError(ctx, baseLogger, err)
 
 	if !isFirstRun {
-		runDNSServer(ctx, baseLogger, tlsMgr, confModifier, statsDir, querylogDir, httpReg, hc, web.conf.mux)
+		runDNSServer(ctx, baseLogger, tlsMgr, confModifier, statsDir, querylogDir, httpReg, hc)
+
+		web.setDoHServer(newDoHServer(
+			baseLogger.With(slogutil.KeyPrefix, "doh_server"),
+			globalContext.dnsServer,
+			config.HTTPConfig.DoH.Routes,
+		))
 	}
 
 	if !opts.noPermCheck {
@@ -896,8 +901,7 @@ func run(
 }
 
 // runDNSServer initializes and starts DNS and DHCP servers if this is not the
-// first run.  httpReg, slogLogger, tlsMgr, confModifier, and mux must not be
-// nil.
+// first run.  httpReg, slogLogger, tlsMgr, and confModifier must not be nil.
 func runDNSServer(
 	ctx context.Context,
 	slogLogger *slog.Logger,
@@ -907,9 +911,8 @@ func runDNSServer(
 	querylogDir string,
 	httpReg *aghhttp.DefaultRegistrar,
 	hc *aghnet.HostsContainer,
-	mux httputil.Router,
 ) {
-	err := initDNS(ctx, slogLogger, tlsMgr, confModifier, httpReg, statsDir, querylogDir, hc, mux)
+	err := initDNS(ctx, slogLogger, tlsMgr, confModifier, httpReg, statsDir, querylogDir, hc)
 	fatalOnError(ctx, slogLogger, err)
 
 	go func() {
@@ -1087,13 +1090,12 @@ func checkPermissions(
 }
 
 // initUsers initializes authentication module and clears the [config.Users]
-// field.  baseLogger and mux must not be nil.  glTokenRoot must not be nil if
-// isGLiNet is true.
+// field.  baseLogger must not be nil.  glTokenRoot must not be nil if isGLiNet
+// is true.
 func initUsers(
 	ctx context.Context,
 	baseLogger *slog.Logger,
 	workDir string,
-	mux *http.ServeMux,
 	isGLiNet bool,
 	glTokenRoot *os.Root,
 ) (auth *auth, err error) {
@@ -1109,11 +1111,9 @@ func initUsers(
 	dataDirPath := filepath.Join(workDir, dataDir)
 	auth, err = newAuth(ctx, &authConfig{
 		baseLogger:      baseLogger,
-		mux:             mux,
 		rateLimiter:     rateLimiter,
 		trustedProxies:  netutil.SliceSubnetSet(netutil.UnembedPrefixes(config.DNS.TrustedProxies)),
 		dbFilename:      filepath.Join(dataDirPath, sessionsDBName),
-		doHRoutes:       config.HTTPConfig.DoH.Routes,
 		users:           config.Users,
 		sessionTTL:      time.Duration(config.HTTPConfig.SessionTTL),
 		isGLiNet:        isGLiNet,

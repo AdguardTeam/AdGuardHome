@@ -231,6 +231,12 @@ type webAPI struct {
 	// nil.
 	httpsServer *httpsServer
 
+	// dohSrv is the DNS-over-HTTPS server, the routes of which are registered
+	// on the web server's handler.
+	//
+	// TODO(d.kolyshev): Remove after DoH is served on a separate address.
+	dohSrv *doHServer
+
 	// pidFilePath is used for cleanup.
 	pidFilePath string
 
@@ -389,6 +395,12 @@ func (web *webAPI) start(ctx context.Context) {
 	}
 }
 
+// setDoHServer sets the DoH server, the routes of which are registered by
+// [webAPI.wrapMux].  srv must not be nil.
+func (web *webAPI) setDoHServer(srv *doHServer) {
+	web.dohSrv = srv
+}
+
 // wrapMux wraps mux with common middlewares.  l must not be nil.
 func (web *webAPI) wrapMux(l *slog.Logger) (h http.Handler) {
 	h = httputil.Wrap(web.conf.mux, httputil.MiddlewareFunc(limitRequestBody))
@@ -397,7 +409,14 @@ func (web *webAPI) wrapMux(l *slog.Logger) (h http.Handler) {
 	logMw := httputil.NewLogMiddleware(l, slog.LevelDebug)
 	h = logMw.Wrap(h)
 
-	return web.auth.middleware().Wrap(h)
+	h = web.auth.middleware().Wrap(h)
+
+	// TODO(d.kolyshev): Remove after DoH is served on a separate address.
+	if srv := web.dohSrv; srv != nil {
+		h = srv.wrapRoutes(h)
+	}
+
+	return h
 }
 
 // close gracefully shuts down the HTTP servers.
@@ -873,6 +892,7 @@ func (web *webAPI) reconfigureDNSServer(ctx context.Context) (err error) {
 		config.Clients.Sources,
 		config.HTTPConfig.DoH,
 		web.tlsManager,
+		config.HTTPConfig.Address,
 		web.httpReg,
 		globalContext.clients.storage,
 		web.confModifier,

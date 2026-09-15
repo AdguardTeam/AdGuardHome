@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"slices"
 	"time"
 
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
@@ -43,14 +42,8 @@ type authMiddlewareGLiNetConfig struct {
 	// TODO(s.chzhen):  Use logger from the context.
 	logger *slog.Logger
 
-	// mux is the server's multiplexer.  It must not be nil.
-	mux *http.ServeMux
-
 	// clock is used to get the current time.  It must not be nil.
 	clock timeutil.Clock
-
-	// doHRoutes is a list of DoH routes for public access.
-	doHRoutes []string
 
 	// tokenFileRoot is the root where GLiNet tokens are stored.  It must not be
 	// nil.
@@ -69,9 +62,7 @@ type authMiddlewareGLiNetConfig struct {
 // the request is authenticated using a cookie.
 type authMiddlewareGLiNet struct {
 	logger        *slog.Logger
-	mux           *http.ServeMux
 	clock         timeutil.Clock
-	doHRoutes     []string
 	tokenFileRoot *os.Root
 	ttl           time.Duration
 	maxTokenSize  uint
@@ -82,9 +73,7 @@ type authMiddlewareGLiNet struct {
 func newAuthMiddlewareGLiNet(c *authMiddlewareGLiNetConfig) (mw *authMiddlewareGLiNet) {
 	return &authMiddlewareGLiNet{
 		logger:        c.logger,
-		mux:           c.mux,
 		clock:         c.clock,
-		doHRoutes:     c.doHRoutes,
 		tokenFileRoot: c.tokenFileRoot,
 		ttl:           c.ttl,
 		maxTokenSize:  c.maxTokenSize,
@@ -101,7 +90,7 @@ func (mw *authMiddlewareGLiNet) Wrap(h http.Handler) (wrapped http.Handler) {
 		ctx := r.Context()
 
 		path := r.URL.Path
-		if isPublicResource(path) || mw.isDoHRoute(r) || mw.isAuthenticated(ctx, r) {
+		if isPublicResource(path) || mw.isAuthenticated(ctx, r) {
 			h.ServeHTTP(w, r)
 
 			return
@@ -126,16 +115,6 @@ func (mw *authMiddlewareGLiNet) Wrap(h http.Handler) (wrapped http.Handler) {
 
 		w.WriteHeader(http.StatusUnauthorized)
 	})
-}
-
-// isDoHRoute returns true if r is a request to a DoH route.  r must not be nil.
-func (mw *authMiddlewareGLiNet) isDoHRoute(r *http.Request) (ok bool) {
-	_, pattern := mw.mux.Handler(r)
-	if pattern == "" {
-		return false
-	}
-
-	return slices.Contains(mw.doHRoutes, pattern)
 }
 
 // isAuthenticated returns true if the request is authenticated using a cookie.

@@ -208,7 +208,6 @@ func TestAuthMiddlewareDefault(t *testing.T) {
 
 	mw := newAuthMiddlewareDefault(&authMiddlewareDefaultConfig{
 		logger:      testLogger,
-		mux:         http.NewServeMux(),
 		rateLimiter: emptyRateLimiter{},
 		sessions:    ts,
 		users:       usersDB,
@@ -293,12 +292,7 @@ func TestAuthMiddlewareDefault(t *testing.T) {
 func TestAuthMiddlewareDefault_public(t *testing.T) {
 	t.Parallel()
 
-	const (
-		login = aghuser.Login(testUsername)
-
-		dohPath    = "/dns-query"
-		doHPattern = http.MethodGet + " " + dohPath
-	)
+	const login = aghuser.Login(testUsername)
 
 	user := newTestUser(t, testPassword, login)
 	usersDB := newTestUsersDB()
@@ -306,16 +300,11 @@ func TestAuthMiddlewareDefault_public(t *testing.T) {
 		return []*aghuser.User{user}, nil
 	}
 
-	mux := http.NewServeMux()
-	mux.Handle(doHPattern, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
-
 	mw := newAuthMiddlewareDefault(&authMiddlewareDefaultConfig{
 		logger:      testLogger,
-		mux:         mux,
 		rateLimiter: emptyRateLimiter{},
 		sessions:    newTestSessionStorage(),
 		users:       usersDB,
-		doHRoutes:   []string{doHPattern},
 	})
 
 	testCases := []struct {
@@ -338,14 +327,6 @@ func TestAuthMiddlewareDefault_public(t *testing.T) {
 		req:      httptest.NewRequest(http.MethodGet, "/apple/doh.mobileconfig", nil),
 		name:     "public_doh_config",
 		wantCode: http.StatusOK,
-	}, {
-		req:      httptest.NewRequest(http.MethodGet, dohPath, nil),
-		name:     "public_doh",
-		wantCode: http.StatusOK,
-	}, {
-		req:      httptest.NewRequest(http.MethodPost, dohPath, nil),
-		name:     "public_doh_invalid",
-		wantCode: http.StatusUnauthorized,
 	}}
 
 	for _, tc := range testCases {
@@ -543,7 +524,6 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 
 	auth, err := newAuth(testutil.ContextWithTimeout(t, testTimeout), &authConfig{
 		baseLogger:      testLogger,
-		mux:             baseMux,
 		rateLimiter:     emptyRateLimiter{},
 		trustedProxies:  testTrustedProxies,
 		gliNetTokenRoot: gliNetRoot,
@@ -706,7 +686,6 @@ func TestAuth_ServeHTTP_logout(t *testing.T) {
 
 	auth, err := newAuth(testutil.ContextWithTimeout(t, testTimeout), &authConfig{
 		baseLogger:     testLogger,
-		mux:            baseMux,
 		rateLimiter:    emptyRateLimiter{},
 		trustedProxies: testTrustedProxies,
 		dbFilename:     sessionsDB,

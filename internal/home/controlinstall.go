@@ -537,6 +537,12 @@ func (web *webAPI) finalizeInstall(
 		return
 	}
 
+	web.setDoHServer(newDoHServer(
+		web.baseLogger.With(slogutil.KeyPrefix, "doh_server"),
+		globalContext.dnsServer,
+		config.HTTPConfig.DoH.Routes,
+	))
+
 	err = config.write(
 		ctx,
 		web.logger,
@@ -642,7 +648,6 @@ func (web *webAPI) startMods(ctx context.Context) (err error) {
 		statsDir,
 		querylogDir,
 		web.hostsContainer,
-		web.conf.mux,
 	)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.

@@ -54,7 +54,6 @@ func TestAuthMiddlewareGLiNet(t *testing.T) {
 
 	mw := newAuthMiddlewareGLiNet(&authMiddlewareGLiNetConfig{
 		logger:        testLogger,
-		mux:           http.NewServeMux(),
 		clock:         timeutil.SystemClock{},
 		tokenFileRoot: tokenFileRoot,
 		maxTokenSize:  MaxFileSize,
