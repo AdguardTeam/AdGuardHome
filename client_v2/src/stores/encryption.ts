@@ -65,28 +65,43 @@ const initialState: EncryptionState = {
 const [state, setState] = createStore<EncryptionState>(initialState);
 
 /**
- * Settings the backend marshals with `omitempty`: a cleared server name or a
- * port that is turned off comes back as a missing key rather than an empty
- * value.  The store merges every response into its state, so the absence has to
- * be spelled out — otherwise a cleared value would silently keep the previous
- * one until the page is reloaded and the state is built from scratch.
+ * Settings the backend marshals with `omitempty`: a cleared server name, a port
+ * that is turned off, and a resolved validation warning with the certificate
+ * metadata behind it all come back as missing keys rather than empty values.
+ * The store merges every response into its state, so the absence has to be
+ * spelled out — otherwise a cleared value would silently keep the previous one
+ * until the page is reloaded and the state is built from scratch.
  *
- * Keep in sync with `tlsConfigSettings` in `internal/home/config.go`.
+ * Keep in sync with `tlsConfigSettings` in `internal/home/config.go` and with
+ * `tlsConfigStatus` in `internal/home/tls.go`.
  */
 const OMITTED_WHEN_EMPTY: Pick<
     TlsConfig,
-    'server_name' | 'port_https' | 'port_dns_over_tls' | 'port_dns_over_quic'
+    | 'server_name'
+    | 'port_https'
+    | 'port_dns_over_tls'
+    | 'port_dns_over_quic'
+    | 'warning_validation'
+    | 'subject'
+    | 'issuer'
+    | 'key_type'
 > = {
     server_name: '',
     port_https: 0,
     port_dns_over_tls: 0,
     port_dns_over_quic: 0,
+    warning_validation: '',
+    subject: '',
+    issuer: '',
+    // `key_type` is a union, not a string: the backend omits it for a key it
+    // could not read, and the UI reads that absence as "unknown".
+    key_type: undefined,
 };
 
 /**
  * Turns a TLS config response into store-ready values: the base64 payloads are
- * decoded, and the settings the backend omits when they are empty are filled
- * in.
+ * decoded, and the settings and status fields the backend omits when they are
+ * empty are filled in.
  */
 const decodeResponse = (data: TlsConfig): TlsConfig => {
     const decoded: TlsConfig = { ...OMITTED_WHEN_EMPTY, ...data };

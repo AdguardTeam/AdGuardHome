@@ -48,6 +48,48 @@ const RESPONSE_WITHOUT_EMPTIES = {
     private_key_saved: false,
 };
 
+/**
+ * The status fields the backend also marshals with `omitempty`
+ * (`tlsConfigStatus` in `internal/home/tls.go`): a resolved warning and the
+ * certificate metadata that came with it are dropped from the response
+ * entirely instead of being sent empty.
+ */
+const STATUS_WITHOUT_EMPTIES = {
+    valid_chain: true,
+    valid_cert: true,
+    valid_key: true,
+    valid_pair: true,
+    not_before: '2026-01-01T00:00:00Z',
+    not_after: '2027-01-01T00:00:00Z',
+    dns_names: [] as string[],
+};
+
+/** The warning the backend reports when the certificate does not cover the name. */
+const SERVER_NAME_MISMATCH_WARNING =
+    'certificate does not verify: x509: certificate is valid for wrong.example.com, ' +
+    'not adguard.example.com';
+
+/** A response from a check that found the name mismatch. */
+const RESPONSE_WITH_WARNING = {
+    ...RESPONSE_WITHOUT_EMPTIES,
+    ...STATUS_WITHOUT_EMPTIES,
+    subject: 'CN=wrong.example.com',
+    issuer: 'CN=wrong.example.com',
+    key_type: 'RSA',
+    warning_validation: SERVER_NAME_MISMATCH_WARNING,
+};
+
+/** A response from a check that no longer finds anything wrong. */
+const RESPONSE_AFTER_FIX = { ...RESPONSE_WITHOUT_EMPTIES, ...STATUS_WITHOUT_EMPTIES };
+
+/** Asserts that no part of the previously reported warning is left behind. */
+const expectValidationStatusCleared = () => {
+    expect(encryptionState.warning_validation).toBe('');
+    expect(encryptionState.subject).toBe('');
+    expect(encryptionState.issuer).toBe('');
+    expect(encryptionState.key_type).toBeUndefined();
+};
+
 describe('setTlsConfig', () => {
     beforeEach(() => vi.clearAllMocks());
 
@@ -320,10 +362,60 @@ describe('getTlsStatus', () => {
         expect(encryptionState.server_name).toBe('');
         expect(encryptionState.port_https).toBe(0);
     });
+
+    it('clears the warning the status response omits', async () => {
+        mocks.tlsStatus.mockResolvedValue(RESPONSE_WITH_WARNING);
+        await getTlsStatus();
+        expect(encryptionState.warning_validation).toBe(SERVER_NAME_MISMATCH_WARNING);
+
+        mocks.tlsStatus.mockResolvedValue(RESPONSE_AFTER_FIX);
+        await getTlsStatus();
+
+        expectValidationStatusCleared();
+    });
+});
+
+describe('stale validation status', () => {
+    beforeEach(() => vi.clearAllMocks());
+
+    it('validateTlsConfig clears the warning a corrected response omits', async () => {
+        mocks.tlsValidate.mockResolvedValue(RESPONSE_WITH_WARNING);
+        await validateTlsConfig({ enabled: true, server_name: 'adguard.example.com' });
+
+        expect(encryptionState.warning_validation).toBe(SERVER_NAME_MISMATCH_WARNING);
+        expect(encryptionState.subject).toBe('CN=wrong.example.com');
+
+        // The name matches the certificate again, so the backend drops the
+        // warning and the metadata behind it from the response.
+        mocks.tlsValidate.mockResolvedValue(RESPONSE_AFTER_FIX);
+        await validateTlsConfig({ enabled: true, server_name: 'wrong.example.com' });
+
+        expectValidationStatusCleared();
+    });
+
+    it('setTlsConfig clears the warning a corrected save omits', async () => {
+        // The settings modal saves the corrected name, and the save echoes the
+        // validation status back.
+        mocks.tlsConfigure.mockResolvedValue(RESPONSE_WITH_WARNING);
+        await setTlsConfig({ server_name: 'adguard.example.com' });
+
+        expect(encryptionState.warning_validation).toBe(SERVER_NAME_MISMATCH_WARNING);
+
+        mocks.tlsConfigure.mockResolvedValue(RESPONSE_AFTER_FIX);
+        await setTlsConfig({ server_name: 'wrong.example.com' });
+
+        expectValidationStatusCleared();
+    });
 });
 
 describe('validateTlsConfig', () => {
-    beforeEach(() => vi.clearAllMocks());
+    beforeEach(() => {
+        vi.clearAllMocks();
+        // The store is shared by the whole file, and this describe asserts on
+        // what `persist: false` leaves behind, so the starting point has to be
+        // stated rather than inherited from an earlier test.
+        resetValidationStatus();
+    });
 
     it('persist:false returns the decoded config without touching the store or toasts', async () => {
         mocks.tlsValidate.mockResolvedValue({
