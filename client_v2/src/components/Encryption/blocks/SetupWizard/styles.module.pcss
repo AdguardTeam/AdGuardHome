@@ -49,6 +49,13 @@
 
 .footer {
     display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.footerButtons {
+    display: flex;
     flex-wrap: wrap;
     gap: 16px;
     width: 100%;
@@ -64,6 +71,11 @@
             width: auto;
         }
     }
+}
+
+.footerMessage {
+    font-size: var(--fs-text-t2);
+    line-height: var(--lh-t2-normal);
 }
 
 .content {

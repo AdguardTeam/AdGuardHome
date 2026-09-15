@@ -5,6 +5,7 @@ import type { StepMessage } from './mapStepResult';
 
 type Props = {
     message?: StepMessage;
+    class?: string;
 };
 
 /**
@@ -13,7 +14,7 @@ type Props = {
  */
 export const StepFormMessage = (props: Props) => (
     <Show when={props.message}>
-        <InlineMessage kind={props.message?.kind ?? 'error'}>
+        <InlineMessage kind={props.message?.kind ?? 'error'} class={props.class}>
             {props.message?.message}
         </InlineMessage>
     </Show>

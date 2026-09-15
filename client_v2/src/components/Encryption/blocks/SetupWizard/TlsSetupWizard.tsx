@@ -272,20 +272,23 @@ export const TlsSetupWizard = (props: Props) => {
     const footer = () =>
         step() === 3 ? (
             <div class={s.footer}>
-                <Button
-                    variant="primary"
-                    onClick={handleEnable}
-                    disabled={enableDisabled()}
-                    data-testid="tls-setup-enable"
-                >
-                    {intl.getMessage('enable')}
-                </Button>
-                <Button variant="secondary" onClick={props.onClose}>
-                    {intl.getMessage('cancel')}
-                </Button>
+                <div class={s.footerButtons}>
+                    <Button
+                        variant="primary"
+                        onClick={handleEnable}
+                        disabled={enableDisabled()}
+                        data-testid="tls-setup-enable"
+                    >
+                        {intl.getMessage('enable')}
+                    </Button>
+                    <Button variant="secondary" onClick={props.onClose}>
+                        {intl.getMessage('cancel')}
+                    </Button>
+                </div>
+                <StepFormMessage message={stepCheck.formMessage()} class={s.footerMessage} />
             </div>
         ) : (
-            <div class={s.footer}>
+            <div class={s.footerButtons}>
                 <Button
                     variant={stepCheck.hasWarning() ? 'warning' : 'primary'}
                     onClick={() => void goToNextStep()}
@@ -352,7 +355,6 @@ export const TlsSetupWizard = (props: Props) => {
                         errorFor={configFieldError}
                         warningFor={stepCheck.fieldWarning}
                     />
-                    <StepFormMessage message={stepCheck.formMessage()} />
                 </div>
             </Show>
         </ConfigDialog>
