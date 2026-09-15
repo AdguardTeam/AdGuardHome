@@ -14,17 +14,14 @@ import type { PortField, ServerSettingsField, ServerSettingsValues } from '../va
 import s from '../styles.module.pcss';
 
 type Props = {
-    /** Current settings, e.g. a `createStore` object. */
     values: ServerSettingsValues;
-    /** Raw input value — the host decides how to store it (e.g. `toNumber`). */
     onFieldChange: (field: ServerSettingsField, value: string) => void;
     onFieldBlur: (field: ServerSettingsField) => void;
-    /** Error to render under a field, composed by the host. */
     errorFor?: (field: ServerSettingsField) => string | undefined;
-    /** Non-blocking warning to render under a field, composed by the host. */
     warningFor?: (field: ServerSettingsField) => string | undefined;
-    /** DOM id prefix — the wizard prefixes its ids with `tls_setup_`. */
     idPrefix?: string;
+    /** Test-id prefix, e.g. `tls-setup` — ids become `<prefix>-<field>`. */
+    testIdPrefix?: string;
     clearablePorts?: boolean;
 };
 
@@ -38,16 +35,17 @@ type PortInputProps = {
     errorMessage?: string;
     warning?: string;
     clearable?: boolean;
+    testId?: string;
 };
 
-/**
- * Non-blocking note under a field, e.g. a server name missing from the
- * certificate.  Mirrors the wizard's yellow step message so both render the
- * same way.
- */
-const FieldWarning = (props: { text?: string }) => (
+const FieldWarning = (props: { text?: string; testId?: string }) => (
     <Show when={props.text}>
-        <div class={cn(theme.text.t3, theme.status.statusYellow, s.fieldWarning)}>{props.text}</div>
+        <div
+            class={cn(theme.text.t3, theme.status.statusYellow, s.fieldWarning)}
+            data-testid={props.testId}
+        >
+            {props.text}
+        </div>
     </Show>
 );
 
@@ -64,21 +62,26 @@ const PortInput = (props: PortInputProps) => (
             label={props.label}
             errorMessage={props.errorMessage}
             size="large"
+            data-testid={props.testId}
         />
-        <FieldWarning text={props.warning} />
+        <FieldWarning
+            text={props.warning}
+            testId={props.testId ? `${props.testId}-warning` : undefined}
+        />
     </div>
 );
 
 /**
  * Server name and the three encrypted DNS ports — the settings shared by the
  * TLS setup wizard's config step and the "Encrypted DNS server settings"
- * dialog.  Presentational: the host owns the values, their validation and the
- * error precedence.
+ * dialog.
  */
 export const ServerSettingsFields = (props: Props) => {
     const id = (field: ServerSettingsField) => `${props.idPrefix ?? ''}${field}`;
     const error = (field: ServerSettingsField) => props.errorFor?.(field);
     const warning = (field: ServerSettingsField) => props.warningFor?.(field);
+    const testId = (field: string) =>
+        props.testIdPrefix ? `${props.testIdPrefix}-${field}` : undefined;
 
     return (
         <>
@@ -107,8 +110,14 @@ export const ServerSettingsFields = (props: Props) => {
                     placeholder={intl.getMessage('encryption_server_enter')}
                     errorMessage={error('server_name')}
                     size="large"
+                    data-testid={testId('server-name')}
                 />
-                <FieldWarning text={warning('server_name')} />
+                <FieldWarning
+                    text={warning('server_name')}
+                    testId={
+                        props.testIdPrefix ? `${props.testIdPrefix}-server-name-warning` : undefined
+                    }
+                />
             </div>
 
             <PortInput
@@ -133,6 +142,7 @@ export const ServerSettingsFields = (props: Props) => {
                 errorMessage={error('port_https')}
                 warning={warning('port_https')}
                 clearable={props.clearablePorts}
+                testId={testId('port-https')}
             />
 
             <PortInput
@@ -157,6 +167,7 @@ export const ServerSettingsFields = (props: Props) => {
                 errorMessage={error('port_dns_over_tls')}
                 warning={warning('port_dns_over_tls')}
                 clearable={props.clearablePorts}
+                testId={testId('port-dns-over-tls')}
             />
 
             <PortInput
@@ -181,6 +192,7 @@ export const ServerSettingsFields = (props: Props) => {
                 errorMessage={error('port_dns_over_quic')}
                 warning={warning('port_dns_over_quic')}
                 clearable={props.clearablePorts}
+                testId={testId('port-dns-over-quic')}
             />
         </>
     );

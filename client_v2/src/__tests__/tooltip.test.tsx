@@ -92,6 +92,20 @@ describe('Tooltip', () => {
         expect(trigger?.className).toContain('my-custom-class');
     });
 
+    it('applies triggerAttrs to the trigger element', () => {
+        const { container } = render(() => (
+            <Tooltip
+                content="Help text"
+                triggerAttrs={{ tabindex: 0, 'aria-label': 'More information' }}
+            >
+                <span>Trigger</span>
+            </Tooltip>
+        ));
+        const trigger = container.querySelector('[data-part="trigger"]');
+        expect(trigger).toHaveAttribute('tabindex', '0');
+        expect(trigger).toHaveAttribute('aria-label', 'More information');
+    });
+
     it('applies overlayClass to the content', () => {
         render(() => (
             <Tooltip content="Help text" overlayClass="custom-overlay">

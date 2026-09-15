@@ -34,6 +34,7 @@ type Props = Omit<
     isClearable?: boolean;
     /** Called after the field has been emptied via the clear button. */
     onClear?: () => void;
+    'data-testid'?: string;
 };
 
 export const Textarea = (props: Props) => {
@@ -134,6 +135,7 @@ export const Textarea = (props: Props) => {
                             wrap={props.wrap}
                             maxLength={props.maxLength}
                             disabled={props.disabled}
+                            data-testid={props['data-testid']}
                             ref={(el: HTMLTextAreaElement) => setRef(el)}
                         />
                     }
@@ -163,6 +165,7 @@ export const Textarea = (props: Props) => {
                                 wrap={props.wrap}
                                 maxLength={props.maxLength}
                                 disabled={props.disabled}
+                                data-testid={props['data-testid']}
                                 ref={(el: HTMLTextAreaElement) => setRef(el)}
                             />
                         </div>
@@ -182,7 +185,12 @@ export const Textarea = (props: Props) => {
                 </Show>
             </div>
             <Show when={props.errorMessage}>
-                <div class={s.errorMessage}>{props.errorMessage}</div>
+                <div
+                    class={s.errorMessage}
+                    data-testid={props['data-testid'] ? `${props['data-testid']}-error` : undefined}
+                >
+                    {props.errorMessage}
+                </div>
             </Show>
         </div>
     );

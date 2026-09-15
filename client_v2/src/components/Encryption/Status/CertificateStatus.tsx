@@ -13,6 +13,7 @@ type Props = {
     issuer?: string;
     notAfter?: string;
     dnsNames?: string[];
+    keyType?: string;
 };
 
 export const CertificateStatus = (props: Props) => (
@@ -52,6 +53,11 @@ export const CertificateStatus = (props: Props) => (
                     </li>
                 </Show>
             </ul>
+        </Show>
+        <Show when={props.keyType}>
+            <div class={s.statusText}>
+                {intl.getMessage('encryption_key_type', { value: props.keyType })}
+            </div>
         </Show>
     </StatusBlock>
 );

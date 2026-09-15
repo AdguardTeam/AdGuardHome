@@ -209,6 +209,61 @@ describe('setTlsConfig', () => {
     });
 });
 
+describe('setTlsConfig — enabling encryption', () => {
+    beforeEach(() => vi.clearAllMocks());
+
+    /**
+     * Saves `values` on top of a known state and forgets the toast that save
+     * produced, so the next assertion only sees the call under test.  The
+     * backend echoes the request with the certificate contents stripped.
+     */
+    const save = async (values: Record<string, unknown>) => {
+        mocks.tlsConfigure.mockImplementation(async (v: any) => ({
+            ...v,
+            certificate_chain: '',
+            private_key: '',
+        }));
+        await setTlsConfig({ certificate_chain: '', private_key: '', ...values });
+        mocks.addSuccessToast.mockClear();
+    };
+
+    it('confirms a save that turns encryption on with its own toast', async () => {
+        await save({ enabled: false });
+
+        await setTlsConfig({ enabled: true });
+
+        expect(mocks.addSuccessToast).toHaveBeenCalledTimes(1);
+        expect(mocks.addSuccessToast).toHaveBeenCalledWith('Encrypted DNS is enabled');
+    });
+
+    it('keeps the generic toast when encryption was already on', async () => {
+        await save({ enabled: true });
+
+        await setTlsConfig({ port_https: 8443 });
+
+        expect(mocks.addSuccessToast).toHaveBeenCalledTimes(1);
+        expect(mocks.addSuccessToast).toHaveBeenCalledWith('Changes saved');
+    });
+
+    it('keeps the generic toast for saves that do not enable encryption', async () => {
+        await save({ enabled: false });
+
+        await setTlsConfig({ port_https: 8443 });
+
+        expect(mocks.addSuccessToast).toHaveBeenCalledTimes(1);
+        expect(mocks.addSuccessToast).toHaveBeenCalledWith('Changes saved');
+    });
+
+    it('stays silent about the enable when the caller asks for it', async () => {
+        await save({ enabled: false });
+
+        await setTlsConfig({ enabled: true }, { silent: true });
+
+        expect(mocks.addSuccessToast).not.toHaveBeenCalled();
+        expect(encryptionState.enabled).toBe(true);
+    });
+});
+
 describe('validateTlsConfig', () => {
     beforeEach(() => vi.clearAllMocks());
 

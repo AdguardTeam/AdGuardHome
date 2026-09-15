@@ -3,6 +3,15 @@
     color: var(--default-gray-icons);
 }
 
+.dropdown {
+    border-radius: 2px;
+
+    &:focus-visible {
+        outline: 2px solid var(--product-primary-90);
+        outline-offset: 2px;
+    }
+}
+
 .overlay_mobile {
     --tooltip-overlay-max-width: calc(100vw - 32px);
 
@@ -12,6 +21,8 @@
 }
 
 .overlay_large {
+    --tooltip-overlay-max-width: min(340px, calc(100vw - 32px));
+
     @media (min-width: 768px) {
         --tooltip-overlay-max-width: 340px;
     }

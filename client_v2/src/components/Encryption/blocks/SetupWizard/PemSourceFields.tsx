@@ -48,6 +48,7 @@ export const PemSourceFields = (props: Props) => {
                 handleChange={fields.handleSourceChange}
                 name={config.radioName}
                 options={sourceOptions()}
+                optionTestIdPrefix={`${config.testIdPrefix}-source`}
                 inModal
             />
             <Show
@@ -64,9 +65,15 @@ export const PemSourceFields = (props: Props) => {
                             errorMessage={props.errorFor(config.fields.path)}
                             label={config.texts.pathLabel()}
                             size="large"
+                            data-testid={`${config.testIdPrefix}-path`}
                         />
                         <Show when={pathWarning()}>
-                            <InlineMessage kind="warning">{pathWarning()}</InlineMessage>
+                            <InlineMessage
+                                kind="warning"
+                                data-testid={`${config.testIdPrefix}-path-warning`}
+                            >
+                                {pathWarning()}
+                            </InlineMessage>
                         </Show>
                     </div>
                 }
@@ -84,15 +91,21 @@ export const PemSourceFields = (props: Props) => {
                         isClearable
                         onClear={fields.handleClear}
                         size={fields.dropzoneVisible() ? 'compact' : 'large'}
+                        data-testid={`${config.testIdPrefix}-content`}
                     />
                     <Show when={contentWarning()}>
-                        <InlineMessage kind="warning">{contentWarning()}</InlineMessage>
+                        <InlineMessage
+                            kind="warning"
+                            data-testid={`${config.testIdPrefix}-content-warning`}
+                        >
+                            {contentWarning()}
+                        </InlineMessage>
                     </Show>
                     <Show when={fields.dropzoneVisible()}>
                         <Dropzone
                             onFileSelect={fields.handleFileSelect}
                             hint={config.texts.dropzoneHint()}
-                            testId={config.dropzoneTestId}
+                            testId={`${config.testIdPrefix}-dropzone`}
                             class={s.dropzoneGap}
                         />
                     </Show>

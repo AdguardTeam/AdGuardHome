@@ -84,12 +84,9 @@ export const Encryption = () => {
         // Native input already shows ON from the click; sync effect
         // confirms on success or reverts on failure.
         if (hasCert && hasKey && hasServerName) {
-            setTlsConfig(
-                {
-                    enabled: true,
-                },
-                { silent: true },
-            );
+            setTlsConfig({
+                enabled: true,
+            });
             return;
         }
 

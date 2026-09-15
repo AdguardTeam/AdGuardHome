@@ -14,7 +14,10 @@ type Props = {
  */
 export const StepFormMessage = (props: Props) => (
     <Show when={props.message}>
-        <InlineMessage kind={props.message?.kind ?? 'error'} class={props.class}>
+        <InlineMessage
+            kind={props.message?.kind ?? 'error'}
+            data-testid="tls-setup-form-message"
+        >
             {props.message?.message}
         </InlineMessage>
     </Show>

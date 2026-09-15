@@ -8,7 +8,7 @@ import {
     resetValidationStatus,
     clearCertOptimistically,
 } from 'panel/stores/encryption';
-import { CertificateStatus, KeyStatus, ValidationStatus } from '../Status';
+import { CertificateStatus, ValidationStatus } from '../Status';
 import s from '../styles.module.pcss';
 import theme from 'panel/lib/theme';
 
@@ -52,19 +52,15 @@ export const TlsCertSection = () => {
         }
         if (!enc().certificate_chain && !enc().certificate_path) return null;
         return (
-            <>
-                <CertificateStatus
-                    validChain={enc().valid_chain}
-                    validCert={enc().valid_cert}
-                    subject={enc().subject}
-                    issuer={enc().issuer}
-                    notAfter={enc().not_after}
-                    dnsNames={enc().dns_names}
-                />
-                <Show when={enc().private_key || enc().private_key_path}>
-                    <KeyStatus validKey={enc().valid_key} keyType={enc().key_type} />
-                </Show>
-            </>
+            <CertificateStatus
+                validChain={enc().valid_chain}
+                validCert={enc().valid_cert}
+                subject={enc().subject}
+                issuer={enc().issuer}
+                notAfter={enc().not_after}
+                dnsNames={enc().dns_names}
+                keyType={enc().valid_key ? enc().key_type : undefined}
+            />
         );
     };
 

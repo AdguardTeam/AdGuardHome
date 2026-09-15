@@ -4,6 +4,7 @@ import cn from 'clsx';
 import { Tooltip } from 'panel/common/ui/Tooltip';
 import theme from 'panel/lib/theme';
 import { Icon } from 'panel/common/ui/Icon';
+import intl from 'panel/common/intl';
 
 import s from './styles.module.pcss';
 
@@ -26,6 +27,10 @@ export const FaqTooltip = (props: Props) => {
                 props.menuSize === 'large' && s.overlay_large,
                 props.overlayClass,
             )}
+            triggerAttrs={{
+                tabindex: 0,
+                'aria-label': intl.getMessage('aria_more_info'),
+            }}
             content={
                 <div
                     class={cn(theme.dropdown.menu, s.menu, props.menuClass, {
@@ -39,7 +44,11 @@ export const FaqTooltip = (props: Props) => {
             class={s.dropdown}
             position={position()}
         >
-            <div class={s.trigger} onPointerDown={(e: PointerEvent) => e.stopPropagation()}>
+            <div
+                class={s.trigger}
+                onClick={(e: MouseEvent) => e.preventDefault()}
+                onPointerDown={(e: PointerEvent) => e.stopPropagation()}
+            >
                 <Icon icon="faq" class={s.icon} />
             </div>
         </Tooltip>

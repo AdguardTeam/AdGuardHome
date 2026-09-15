@@ -10,6 +10,7 @@ type Props = {
     kind: InlineMessageKind;
     children: JSX.Element;
     class?: string;
+    'data-testid'?: string;
 };
 
 export const InlineMessage = (props: Props) => (
@@ -23,6 +24,7 @@ export const InlineMessage = (props: Props) => (
             },
             props.class,
         )}
+        data-testid={props['data-testid']}
     >
         <div>{props.children}</div>
     </div>

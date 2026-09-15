@@ -11,7 +11,6 @@ type InputChangeEvent = Event & {
 };
 
 type Props = Omit<JSX.InputHTMLAttributes<HTMLInputElement>, 'size' | 'onChange' | 'onBlur'> & {
-    'data-testid'?: string;
     label?: JSX.Element;
     class?: string;
     innerClass?: string;
@@ -32,6 +31,7 @@ type Props = Omit<JSX.InputHTMLAttributes<HTMLInputElement>, 'size' | 'onChange'
     onBlur?: (event: FocusEvent) => void;
     ref?: HTMLInputElement | ((el: HTMLInputElement) => void);
     onKeyDown?: (e: KeyboardEvent) => void;
+    'data-testid'?: string;
 };
 
 const hasInputValue = (value: string | number | readonly string[] | undefined) => {
@@ -173,7 +173,12 @@ export const Input = (props: Props) => {
                 </Show>
             </div>
             <Show when={computedErrorMessage()}>
-                <div class={s.inputError}>{computedErrorMessage()}</div>
+                <div
+                    class={s.inputError}
+                    data-testid={props['data-testid'] ? `${props['data-testid']}-error` : undefined}
+                >
+                    {computedErrorMessage()}
+                </div>
             </Show>
         </>
     );

@@ -108,13 +108,18 @@ export const getTlsStatus = async () => {
  *
  * With the default options it updates the store and shows toasts — existing
  * callers are unaffected.  With `suppressErrorToast` the error is returned
- * instead of toasted so callers can render it inline.
+ * instead of toasted so callers can render it inline.  A save that turns
+ * encryption on is confirmed with its own toast, whichever caller asked for
+ * it.
  */
 export const setTlsConfig = async (
     values: TlsConfigBody,
     opts?: { silent?: boolean; suppressErrorToast?: boolean },
 ): Promise<{ ok: true } | { ok: false; error: string }> => {
     setState('processingConfig', true);
+    // Read before the save: the response below overwrites `state`, so after it
+    // the previous value can no longer tell whether this call enabled anything.
+    const wasEnabled = !!state.enabled;
     try {
         // Merge: start with all store values, then override with caller's
         // defined values (empty strings / false are intentional overrides).
@@ -144,9 +149,17 @@ export const setTlsConfig = async (
 
         redirectToCurrentProtocol(fullValues, dashboardState.httpPort);
 
+        // Turning encryption on is the outcome the user asked for, so it is
+        // confirmed by name instead of the generic "changes saved".
+        const justEnabled = !wasEnabled && !!fullValues.enabled;
+
         setState({ ...decoded, processingConfig: false });
         if (!opts?.silent) {
-            addSuccessToast(intl.getMessage('settings_notify_changes_saved'));
+            addSuccessToast(
+                justEnabled
+                    ? intl.getMessage('encryption_enabled_toast')
+                    : intl.getMessage('settings_notify_changes_saved'),
+            );
         }
 
         return { ok: true };

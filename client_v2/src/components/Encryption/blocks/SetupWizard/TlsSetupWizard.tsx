@@ -4,6 +4,7 @@ import cn from 'clsx';
 
 import { ConfigDialog } from 'panel/common/ui/ConfigDialog';
 import { Button } from 'panel/common/ui/Button';
+import { InlineLoader } from 'panel/common/ui/Loader';
 import intl from 'panel/common/intl';
 import theme from 'panel/lib/theme';
 import {
@@ -218,23 +219,26 @@ export const TlsSetupWizard = (props: Props) => {
             return;
         }
 
-        // Errors keep the dialog open; a warning shown on this step has to be
-        // seen before it goes through, so that needs a second click.
-        if (!(await stepCheck.requestAdvance(3))) return;
-
+        // The pending state covers the whole submit — the backend check and
+        // the save — so the button never looks idle while it is working.
         setSaving(true);
-        const res = await setTlsConfig(
-            getSubmitValues({ ...values, enabled: true, serve_plain_dns: true }),
-            { suppressErrorToast: true },
-        );
-        setSaving(false);
+        try {
+            if (!(await stepCheck.requestAdvance(3))) return;
 
-        if (!res.ok) {
-            stepCheck.fail(intl.getMessage('tls_setup_error_enable_failed'));
-            return;
+            const res = await setTlsConfig(
+                getSubmitValues({ ...values, enabled: true, serve_plain_dns: true }),
+                { suppressErrorToast: true },
+            );
+
+            if (!res.ok) {
+                stepCheck.fail(intl.getMessage('tls_setup_error_enable_failed'));
+                return;
+            }
+
+            props.onClose();
+        } finally {
+            setSaving(false);
         }
-
-        props.onClose();
     };
 
     const enableDisabled = () =>
@@ -257,6 +261,7 @@ export const TlsSetupWizard = (props: Props) => {
                         target="_blank"
                         rel="noopener noreferrer"
                         class={cn(theme.link.link, theme.link.hoverDecoration)}
+                        data-testid="tls-setup-letsencrypt-link"
                     >
                         {text}
                     </a>
@@ -268,18 +273,22 @@ export const TlsSetupWizard = (props: Props) => {
 
     const title = () => titles[step() - 1]();
     const description = () => descriptions[step() - 1]();
+    const submitVariant = () => (stepCheck.hasWarning() ? 'warning' : 'primary');
 
     const footer = () =>
         step() === 3 ? (
             <div class={s.footer}>
                 <div class={s.footerButtons}>
                     <Button
-                        variant="primary"
+                        variant={submitVariant()}
                         onClick={handleEnable}
                         disabled={enableDisabled()}
                         data-testid="tls-setup-enable"
+                        rightAddon={saving() ? <InlineLoader /> : undefined}
                     >
-                        {intl.getMessage('enable')}
+                        {stepCheck.hasWarning()
+                            ? intl.getMessage('tls_setup_enable_anyway')
+                            : intl.getMessage('enable')}
                     </Button>
                     <Button variant="secondary" onClick={props.onClose}>
                         {intl.getMessage('cancel')}
@@ -290,7 +299,7 @@ export const TlsSetupWizard = (props: Props) => {
         ) : (
             <div class={s.footerButtons}>
                 <Button
-                    variant={stepCheck.hasWarning() ? 'warning' : 'primary'}
+                    variant={submitVariant()}
                     onClick={() => void goToNextStep()}
                     disabled={stepCheck.validating()}
                     data-testid="tls-setup-add"
@@ -311,17 +320,20 @@ export const TlsSetupWizard = (props: Props) => {
             title=""
             onClose={props.onClose}
             onSubmit={handleEnable}
+            processing={saving()}
             hideSubmit
             footer={footer()}
         >
             <WizardSteps step={step()} onGoBack={handleGoBack} />
-            <h2 class={cn(theme.title.h4, s.wizardTitle)}>{title()}</h2>
+            <h2 class={cn(theme.title.h4, s.wizardTitle)} data-testid="tls-setup-title">
+                {title()}
+            </h2>
             <Show when={description()}>
                 <div class={cn(theme.text.t2, s.wizardDescription)}>{description()}</div>
             </Show>
 
             <Show when={step() === 1}>
-                <div class={s.content}>
+                <div class={s.content} data-testid="tls-setup-step-certificate">
                     <PemSourceFields
                         config={CERT_CONFIG}
                         fields={certFields}
@@ -333,7 +345,7 @@ export const TlsSetupWizard = (props: Props) => {
             </Show>
 
             <Show when={step() === 2}>
-                <div class={s.content}>
+                <div class={s.content} data-testid="tls-setup-step-key">
                     <PemSourceFields
                         config={KEY_CONFIG}
                         fields={keyFields}
@@ -345,7 +357,7 @@ export const TlsSetupWizard = (props: Props) => {
             </Show>
 
             <Show when={step() === 3}>
-                <div class={s.content}>
+                <div class={s.content} data-testid="tls-setup-step-config">
                     <ServerSettingsFields
                         idPrefix="tls_setup_"
                         values={values}
@@ -354,6 +366,7 @@ export const TlsSetupWizard = (props: Props) => {
                         onFieldBlur={handleConfigFieldBlur}
                         errorFor={configFieldError}
                         warningFor={stepCheck.fieldWarning}
+                        testIdPrefix="tls-setup"
                     />
                 </div>
             </Show>

@@ -38,7 +38,7 @@ export type PemStepConfig = {
     idPrefix: string;
     /** PEM header — not translated. */
     contentPlaceholder: string;
-    dropzoneTestId: string;
+    testIdPrefix: string;
     texts: PemTexts;
 };
 
@@ -52,7 +52,7 @@ export const CERT_CONFIG: PemStepConfig = {
     radioName: 'tls_setup_certificate_source',
     idPrefix: 'tls_setup_',
     contentPlaceholder: '-----BEGIN CERTIFICATE-----',
-    dropzoneTestId: 'tls-setup-cert-dropzone',
+    testIdPrefix: 'tls-setup-cert',
     texts: {
         textOption: () => intl.getMessage('tls_setup_cert_text_option'),
         textOptionDesc: () => intl.getMessage('tls_setup_cert_text_option_desc'),
@@ -80,7 +80,7 @@ export const KEY_CONFIG: PemStepConfig = {
     radioName: 'tls_setup_key_source',
     idPrefix: 'tls_setup_',
     contentPlaceholder: '-----BEGIN PRIVATE KEY-----',
-    dropzoneTestId: 'tls-setup-key-dropzone',
+    testIdPrefix: 'tls-setup-key',
     texts: {
         textOption: () => intl.getMessage('tls_setup_key_text_option'),
         textOptionDesc: () => intl.getMessage('tls_setup_key_text_option_desc'),
