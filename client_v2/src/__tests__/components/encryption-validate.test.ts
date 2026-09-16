@@ -10,6 +10,13 @@ import {
 } from 'panel/components/Encryption/validate';
 import { ENCRYPTION_SOURCE } from 'panel/helpers/constants';
 
+/**
+ * The copy the validators return, read from the same locale file the app loads.
+ * Asserting via the keys keeps the tests about *which* message is produced, so
+ * rewording it does not break them.
+ */
+import en from 'panel/__locales/en.json';
+
 const valid = {
     enabled: true,
     serve_plain_dns: true,
@@ -230,9 +237,7 @@ describe('validateCertFields', () => {
             ...valid,
             certificate_chain: '-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJAKlM4NvZ5W4r',
         });
-        expect(errs.certificate_chain).toBe(
-            'Make sure you copied the whole certificate, including the -----BEGIN----- and -----END----- lines',
-        );
+        expect(errs.certificate_chain).toBe(en.tls_setup_error_cert_incomplete);
     });
 
     it('keeps the wrong-content error for a truncated private key in the certificate field', () => {
@@ -377,9 +382,7 @@ describe('validateKeyFields', () => {
             ...valid,
             private_key: '-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0B',
         });
-        expect(errs.private_key).toBe(
-            'Make sure you copied the whole key, including the -----BEGIN----- and -----END----- lines',
-        );
+        expect(errs.private_key).toBe(en.tls_setup_error_key_incomplete);
     });
 
     it('keeps the wrong-content error for a truncated certificate in the key field', () => {

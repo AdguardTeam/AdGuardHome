@@ -39,6 +39,13 @@ import { TlsSetupWizard } from 'panel/components/Encryption/blocks/SetupWizard';
 import { getTlsStatus } from 'panel/stores/encryption';
 
 /**
+ * The copy the wizard renders, read from the same locale file the app loads.
+ * Asserting via the keys keeps the tests about *which* message is shown, so
+ * rewording it does not break them.
+ */
+import en from 'panel/__locales/en.json';
+
+/**
  * user-event waits a tick between every dispatched event, which costs ~2ms per
  * character — and every step-3 test types a 56-char certificate plus a 46-char
  * key.  The wizard does not depend on that pacing.
@@ -314,7 +321,7 @@ describe('TlsSetupWizard — step 1 (certificate)', () => {
         await user.tab();
 
         expect(screen.getByTestId('tls-setup-cert-content-error')).toHaveTextContent(
-            'Make sure you copied the whole certificate, including the -----BEGIN----- and -----END----- lines',
+            en.tls_setup_error_cert_incomplete,
         );
         // Truncated PEM is caught before the backend is asked to parse it.
         expect(mocks.tlsValidate).not.toHaveBeenCalled();
@@ -380,7 +387,7 @@ describe('TlsSetupWizard — step 2 (private key)', () => {
         await user.click(screen.getByTestId('tls-setup-add'));
 
         expect(screen.getByTestId('tls-setup-key-content-error')).toHaveTextContent(
-            'Make sure you copied the whole key, including the -----BEGIN----- and -----END----- lines',
+            en.tls_setup_error_key_incomplete,
         );
         expect(screen.getByTestId('tls-setup-step-key')).toBeInTheDocument();
         // The client gate held the step, so the truncated key was never sent.
@@ -412,7 +419,7 @@ describe('TlsSetupWizard — expired certificate', () => {
 
         await waitFor(() => {
             expect(screen.getByTestId('tls-setup-cert-content-warning')).toHaveTextContent(
-                'This certificate has expired or is not yet valid — it may not work on all devices. Make sure your devices will accept it',
+                en.tls_setup_warning_cert_expired,
             );
         });
         // An expiry is not critical: the step warns and the button says so.

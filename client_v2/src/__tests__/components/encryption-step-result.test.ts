@@ -2,6 +2,13 @@ import { describe, it, expect } from 'vitest';
 import { mapStepResult } from 'panel/components/Encryption/blocks/SetupWizard/mapStepResult';
 import { ENCRYPTION_SOURCE } from 'panel/helpers/constants';
 
+/**
+ * The copy the mapper reports, read from the same locale file the app loads.
+ * Asserting via the keys keeps the tests about *which* message is produced, so
+ * rewording it does not break them.
+ */
+import en from 'panel/__locales/en.json';
+
 const certValues = {
     certificate_source: ENCRYPTION_SOURCE.CONTENT,
     key_source: ENCRYPTION_SOURCE.CONTENT,
@@ -19,8 +26,7 @@ const validStatus = {
 const SELF_SIGNED_WARNING =
     'validating certificate pair: certificate does not verify: x509: certificate signed by unknown authority';
 
-const EXPIRED_WARNING =
-    'This certificate has expired or is not yet valid — it may not work on all devices. Make sure your devices will accept it';
+const EXPIRED_WARNING = en.tls_setup_warning_cert_expired;
 
 describe('mapStepResult — step 1 (certificate)', () => {
     it('maps an unparsed certificate to the certificate field', () => {
@@ -97,8 +103,7 @@ describe('mapStepResult — step 1 (certificate)', () => {
         expect(m).toEqual({
             field: 'certificate_chain',
             kind: 'warning',
-            message:
-                'This certificate has expired or is not yet valid — it may not work on all devices. Make sure your devices will accept it',
+            message: EXPIRED_WARNING,
         });
     });
 
@@ -116,9 +121,7 @@ describe('mapStepResult — step 1 (certificate)', () => {
             certValues,
         );
         expect(m?.kind).toBe('warning');
-        expect(m?.message).toBe(
-            'This certificate has expired or is not yet valid — it may not work on all devices. Make sure your devices will accept it',
-        );
+        expect(m?.message).toBe(EXPIRED_WARNING);
     });
 
     it('falls back to the untrusted warning when the certificate dates are unusable', () => {
