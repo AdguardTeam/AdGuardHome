@@ -231,8 +231,12 @@ type webAPI struct {
 	// nil.
 	httpsServer *httpsServer
 
-	// dohSrv is the DNS-over-HTTPS server, the routes of which are registered
-	// on the web server's handler.
+	// dohSrvMu protects dohSrv.
+	dohSrvMu *sync.RWMutex
+
+	// dohSrv is the DNS-over-HTTPS server, the routes of which are served by
+	// the handlers returned by [webAPI.wrapMux] in front of the authentication
+	// middleware.  Once set it must not be modified.
 	//
 	// TODO(d.kolyshev): Remove after DoH is served on a separate address.
 	dohSrv *doHServer
@@ -254,15 +258,16 @@ func newWebAPI(ctx context.Context, conf *webAPIConfig) (w *webAPI) {
 	w = &webAPI{
 		conf:           conf,
 		confModifier:   conf.confModifier,
-		httpReg:        conf.httpReg,
 		cmdCons:        conf.CommandConstructor,
+		httpReg:        conf.httpReg,
 		logger:         conf.logger,
 		baseLogger:     conf.baseLogger,
 		tlsManager:     conf.tlsManager,
 		auth:           conf.auth,
+		hostsContainer: conf.hostsContainer,
+		dohSrvMu:       &sync.RWMutex{},
 		pidFilePath:    conf.pidFilePath,
 		startTime:      time.Now(),
-		hostsContainer: conf.hostsContainer,
 	}
 
 	clientFS := http.FileServer(http.FS(conf.clientFS))
@@ -395,9 +400,13 @@ func (web *webAPI) start(ctx context.Context) {
 	}
 }
 
-// setDoHServer sets the DoH server, the routes of which are registered by
-// [webAPI.wrapMux].  srv must not be nil.
+// setDoHServer sets the DoH server, the routes of which are served by the
+// handlers returned by [webAPI.wrapMux], including the ones created before this
+// call.  srv must not be nil.
 func (web *webAPI) setDoHServer(srv *doHServer) {
+	web.dohSrvMu.Lock()
+	defer web.dohSrvMu.Unlock()
+
 	web.dohSrv = srv
 }
 
@@ -411,12 +420,28 @@ func (web *webAPI) wrapMux(l *slog.Logger) (h http.Handler) {
 
 	h = web.auth.middleware().Wrap(h)
 
-	// TODO(d.kolyshev): Remove after DoH is served on a separate address.
-	if srv := web.dohSrv; srv != nil {
-		h = srv.wrapRoutes(h)
-	}
+	// TODO(d.kolyshev):  Remove after DoH is served on a separate address.
+	h = web.wrapDoHRoutes(h)
 
 	return h
+}
+
+// wrapDoHRoutes returns a handler that serves the DoH routes in front of the
+// authentication middleware as soon as the DoH server is set via
+// [webAPI.setDoHServer], including for the handlers created before that, and
+// passes all other requests to h.  h must not be nil.
+func (web *webAPI) wrapDoHRoutes(h http.Handler) (wrapped http.Handler) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		web.dohSrvMu.RLock()
+		srv := web.dohSrv
+		web.dohSrvMu.RUnlock()
+
+		if srv != nil && srv.tryServe(w, r) {
+			return
+		}
+
+		h.ServeHTTP(w, r)
+	})
 }
 
 // close gracefully shuts down the HTTP servers.

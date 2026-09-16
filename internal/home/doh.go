@@ -3,47 +3,42 @@ package home
 import (
 	"log/slog"
 	"net/http"
-	"slices"
 
 	"github.com/AdguardTeam/golibs/netutil/httputil"
 )
 
 // doHServer represents a DNS-over-HTTPS server.
 type doHServer struct {
-	// logger is used for logging operations of the server.  It must not be nil.
-	logger *slog.Logger
-
-	// handler handles DoH requests.  It must not be nil.
-	handler http.Handler
-
-	// routes is the list of HTTP route patterns for DoH requests.
-	routes []string
+	// mux matches the DoH route patterns and serves the matched requests with
+	// the DoH handler.  It must not be nil.
+	mux *http.ServeMux
 }
 
 // newDoHServer returns a new properly initialized *doHServer.  logger and
 // handler must not be nil.
 func newDoHServer(logger *slog.Logger, handler http.Handler, routes []string) (srv *doHServer) {
-	return &doHServer{
-		logger:  logger,
-		handler: handler,
-		routes:  slices.Clone(routes),
-	}
-}
+	h := httputil.Wrap(handler, httputil.MiddlewareFunc(limitRequestBody))
 
-// wrapRoutes returns a handler that serves the DoH routes of srv and passes
-// all other requests to h.  h must not be nil.
-func (srv *doHServer) wrapRoutes(h http.Handler) (wrapped http.Handler) {
-	dohHdlr := httputil.Wrap(srv.handler, httputil.MiddlewareFunc(limitRequestBody))
-
-	logMw := httputil.NewLogMiddleware(srv.logger, slog.LevelDebug)
-	dohHdlr = logMw.Wrap(dohHdlr)
+	logMw := httputil.NewLogMiddleware(logger, slog.LevelDebug)
+	h = logMw.Wrap(h)
 
 	mux := http.NewServeMux()
-	for _, route := range srv.routes {
-		mux.Handle(route, dohHdlr)
+	for _, route := range routes {
+		mux.Handle(route, h)
 	}
 
-	mux.Handle("/", h)
+	return &doHServer{mux: mux}
+}
 
-	return mux
+// tryServe serves r with the DoH handler if r matches one of the DoH routes and
+// reports whether it did.  w must not be nil.
+func (srv *doHServer) tryServe(w http.ResponseWriter, r *http.Request) (ok bool) {
+	_, pattern := srv.mux.Handler(r)
+	if pattern == "" {
+		return false
+	}
+
+	srv.mux.ServeHTTP(w, r)
+
+	return true
 }

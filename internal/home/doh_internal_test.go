@@ -27,6 +27,7 @@ func TestWebAPI_wrapMux(t *testing.T) {
 	sessionsDB := filepath.Join(t.TempDir(), "sessions.db")
 
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
+
 	auth, err := newAuth(ctx, &authConfig{
 		baseLogger:     testLogger,
 		rateLimiter:    emptyRateLimiter{},
@@ -37,7 +38,7 @@ func TestWebAPI_wrapMux(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	t.Cleanup(func() { auth.close(testutil.ContextWithTimeout(t, testTimeout)) })
+	t.Cleanup(func() { auth.close(ctx) })
 
 	web := newTestWeb(t, &webConfig{auth: auth})
 
