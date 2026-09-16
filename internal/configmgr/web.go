@@ -7,9 +7,6 @@ import (
 	"github.com/AdguardTeam/golibs/validate"
 )
 
-// WebUsers is the on-disk web users configuration.
-type WebUsers []*WebUser
-
 // WebUser represents a user of the web UI.
 type WebUser struct {
 	// Name represents the login name of the web user.
@@ -17,14 +14,6 @@ type WebUser struct {
 
 	// PasswordHash is the hashed representation of the web user password.
 	PasswordHash string `yaml:"password"`
-}
-
-// type check
-var _ validate.Interface = WebUsers(nil)
-
-// Validate implements the [validate.Interface] interface for WebUsers.
-func (ws WebUsers) Validate() (res error) {
-	return validate.Slice("users", ws)
 }
 
 // type check

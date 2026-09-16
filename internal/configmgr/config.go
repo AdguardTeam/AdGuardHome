@@ -11,7 +11,7 @@ import (
 // Config is the top-level on-disk configuration structure.
 //
 // TODO(d.kolyshev):  Use.
-// TODO(d.kolyshev):  Add contracts.
+// TODO(d.kolyshev):  Add tests and contracts.
 type Config struct {
 	// DHCP is a block with DHCP configuration params.
 	DHCP *DHCPConfig `yaml:"dhcp"`
@@ -46,7 +46,7 @@ type Config struct {
 	Theme string `yaml:"theme"`
 
 	// Users are the clients capable for accessing the web interface.
-	Users WebUsers `yaml:"users"`
+	Users []*WebUser `yaml:"users"`
 
 	// AuthAttempts is the maximum number of failed login attempts a user can do
 	// before being blocked.
@@ -98,9 +98,6 @@ func (c *Config) Validate() (err error) {
 	}, {
 		Key:   "tls",
 		Value: c.TLS,
-	}, {
-		Key:   "users",
-		Value: c.Users,
 	}}
 
 	var errs []error
@@ -114,6 +111,8 @@ func (c *Config) Validate() (err error) {
 			errs = append(errs, fmt.Errorf("theme: %w", err))
 		}
 	}
+
+	errs = validate.AppendSlice(errs, "users", c.Users)
 
 	return errors.Join(errs...)
 }
