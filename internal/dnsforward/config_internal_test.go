@@ -147,10 +147,20 @@ func TestNewRatelimitMw_Whitelist(t *testing.T) {
 				RatelimitWhitelist:     []netip.Addr{{}},
 			},
 		},
-		wantErrMsg: `ratelimit whitelist ip at index 0: ParseAddr("invalid IP"): ` +
-			`unable to parse IP`,
+		wantErrMsg: "ratelimit whitelist ip at index 0 is invalid",
+	}, {
+		name: "ratelimit_whitelisted_mapped_v4",
+		conf: ServerConfig{
+			Config: Config{
+				Ratelimit:              1,
+				RatelimitSubnetLenIPv4: netutil.IPv4BitLen,
+				RatelimitSubnetLenIPv6: netutil.IPv6BitLen,
+				RatelimitWhitelist:     []netip.Addr{netip.MustParseAddr("::ffff:198.51.100.7")},
+			},
+		},
+		req:       netip.MustParseAddr("198.51.100.7"),
+		wantDrops: []bool{false, false, false, false},
 	}}
-
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()

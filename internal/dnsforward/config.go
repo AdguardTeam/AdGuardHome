@@ -413,18 +413,15 @@ func newRatelimitMw(
 	}
 
 	allowListAddrs := make(netutil.SliceSubnetSet, len(conf.RatelimitWhitelist))
-	var (
-		ip     netip.Addr
-		subnet netip.Prefix
-	)
+	var subnet netip.Prefix
 
 	for i, s := range conf.RatelimitWhitelist {
-		ip, err = netip.ParseAddr(s.String())
-		if err != nil {
-			return nil, fmt.Errorf("ratelimit whitelist ip at index %d: %w", i, err)
+		if !s.IsValid() {
+			return nil, fmt.Errorf("ratelimit whitelist ip at index %d is invalid", i)
 		}
 
-		subnet = netip.PrefixFrom(ip, ip.BitLen())
+		s = s.Unmap()
+		subnet = netip.PrefixFrom(s, s.BitLen())
 
 		allowListAddrs[i] = subnet
 	}
