@@ -33,6 +33,7 @@ import {
     resetValidationStatus,
     encryptionState,
 } from 'panel/stores/encryption';
+import { copy } from 'panel/__tests__/helpers/copy';
 
 /**
  * The backend marshals a cleared server name and a port that is turned off with
@@ -313,7 +314,7 @@ describe('setTlsConfig — enabling encryption', () => {
         await setTlsConfig({ enabled: true });
 
         expect(mocks.addSuccessToast).toHaveBeenCalledTimes(1);
-        expect(mocks.addSuccessToast).toHaveBeenCalledWith('Encrypted DNS is enabled');
+        expect(mocks.addSuccessToast).toHaveBeenCalledWith(copy('encryption_enabled_toast'));
     });
 
     it('keeps the generic toast when encryption was already on', async () => {

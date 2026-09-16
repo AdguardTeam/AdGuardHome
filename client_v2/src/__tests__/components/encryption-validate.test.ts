@@ -16,6 +16,13 @@ import { ENCRYPTION_SOURCE } from 'panel/helpers/constants';
  * rewording it does not break them.
  */
 import en from 'panel/__locales/en.json';
+import { copy } from 'panel/__tests__/helpers/copy';
+
+/** Copy several cases assert, named by key so a reword cannot break them. */
+const PORT_IN_USE = copy('tls_setup_error_port_in_use');
+const NOT_A_CERT = copy('tls_setup_error_not_a_cert');
+const NOT_A_KEY = copy('tls_setup_error_not_a_key');
+const UNSAFE_PORT = copy('form_error_port_unsafe');
 
 const valid = {
     enabled: true,
@@ -104,10 +111,8 @@ describe('validateEncryptionForm', () => {
             port_https: 853,
             port_dns_over_tls: 853,
         });
-        expect(errs.port_https).toBe('This port is already used by another AdGuard Home setting');
-        expect(errs.port_dns_over_tls).toBe(
-            'This port is already used by another AdGuard Home setting',
-        );
+        expect(errs.port_https).toBe(PORT_IN_USE);
+        expect(errs.port_dns_over_tls).toBe(PORT_IN_USE);
     });
 
     it('flags the fields whose port is already used by another AGH setting', () => {
@@ -116,7 +121,7 @@ describe('validateEncryptionForm', () => {
             plainDns: 53,
             dnscrypt: 0,
         });
-        expect(errs.port_https).toBe('This port is already used by another AdGuard Home setting');
+        expect(errs.port_https).toBe(PORT_IN_USE);
         expect(errs.port_dns_over_tls).toBeUndefined();
     });
 
@@ -135,9 +140,7 @@ describe('validateEncryptionForm', () => {
             { ...valid, port_dns_over_quic: 5353 },
             { plainDns: 5353 },
         );
-        expect(errs.port_dns_over_quic).toBe(
-            'This port is already used by another AdGuard Home setting',
-        );
+        expect(errs.port_dns_over_quic).toBe(PORT_IN_USE);
         expect(errs.port_dns_over_tls).toBeUndefined();
     });
 
@@ -219,9 +222,7 @@ describe('validateCertFields', () => {
             ...valid,
             certificate_chain: '-----BEGIN PRIVATE KEY-----\nxyz\n-----END PRIVATE KEY-----',
         });
-        expect(errs.certificate_chain).toBe(
-            'This is not a certificate. Check that you pasted a certificate, not a key',
-        );
+        expect(errs.certificate_chain).toBe(NOT_A_CERT);
     });
 
     it('asks for the whole certificate when it is not a complete PEM block', () => {
@@ -247,9 +248,7 @@ describe('validateCertFields', () => {
             ...valid,
             certificate_chain: '-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkq',
         });
-        expect(errs.certificate_chain).toBe(
-            'This is not a certificate. Check that you pasted a certificate, not a key',
-        );
+        expect(errs.certificate_chain).toBe(NOT_A_CERT);
     });
 
     it('accepts a chain whose last block is complete', () => {
@@ -344,9 +343,7 @@ describe('validateKeyFields', () => {
             ...valid,
             private_key: '-----BEGIN CERTIFICATE-----\nabc\n-----END CERTIFICATE-----',
         });
-        expect(errs.private_key).toBe(
-            'This is not a private key. Check that you pasted a key, not a certificate',
-        );
+        expect(errs.private_key).toBe(NOT_A_KEY);
     });
 
     it('rejects invalid cert path', () => {
@@ -356,9 +353,7 @@ describe('validateKeyFields', () => {
             certificate_path: 'relative/path/no/leading/slash',
             certificate_chain: '',
         });
-        expect(errs.certificate_path).toBe(
-            'Unable to read the certificate file at the specified path',
-        );
+        expect(errs.certificate_path).toBe(copy('tls_setup_error_read_cert'));
     });
 
     it('rejects invalid key path', () => {
@@ -368,7 +363,7 @@ describe('validateKeyFields', () => {
             private_key_path: 'relative/path/no/leading/slash',
             private_key: '',
         });
-        expect(errs.private_key_path).toBe('Unable to read private key file');
+        expect(errs.private_key_path).toBe(copy('tls_setup_error_read_key'));
     });
 
     it('asks for the whole key when it is not a complete PEM block', () => {
@@ -390,13 +385,12 @@ describe('validateKeyFields', () => {
             ...valid,
             private_key: '-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWg',
         });
-        expect(errs.private_key).toBe(
-            'This is not a private key. Check that you pasted a key, not a certificate',
-        );
+        expect(errs.private_key).toBe(NOT_A_KEY);
     });
 
     it('accepts any private key flavour whose closing line is complete', () => {
-        const rsaKey = '-----BEGIN RSA PRIVATE KEY-----\nMIIEvQIBADANBgkq\n-----END RSA PRIVATE KEY-----';
+        const rsaKey =
+            '-----BEGIN RSA PRIVATE KEY-----\nMIIEvQIBADANBgkq\n-----END RSA PRIVATE KEY-----';
         expect(validateKeyFields({ ...valid, private_key: rsaKey })).toEqual({});
     });
 });
@@ -453,7 +447,7 @@ describe('validatePortField', () => {
     it('flags an unsafe HTTPS port but not the same port on DoT/DoQ', () => {
         // Browsers block a set of ports for the Web UI; the same restriction
         // does not apply to the other DNS protocols.
-        expect(validatePortField('port_https', 22)).toBe('Unsafe port');
+        expect(validatePortField('port_https', 22)).toBe(UNSAFE_PORT);
         expect(validatePortField('port_dns_over_tls', 22)).toBeUndefined();
         expect(validatePortField('port_dns_over_quic', 22)).toBeUndefined();
     });
@@ -479,13 +473,13 @@ describe('validateServerSettings', () => {
     it('treats the server name as optional but validates its format', () => {
         expect(validateServerSettings({ server_name: '' }).server_name).toBeUndefined();
         expect(validateServerSettings({ server_name: 'not a domain' }).server_name).toBe(
-            'Invalid server name',
+            copy('form_error_server_name'),
         );
     });
 
     it('flags a port already used by another AdGuard Home setting', () => {
         const errs = validateServerSettings({ ...settings, port_https: 80 }, external);
-        expect(errs.port_https).toBe('This port is already used by another AdGuard Home setting');
+        expect(errs.port_https).toBe(PORT_IN_USE);
         expect(errs.port_dns_over_tls).toBeUndefined();
     });
 
@@ -495,15 +489,13 @@ describe('validateServerSettings', () => {
             port_https: 853,
             port_dns_over_tls: 853,
         });
-        expect(errs.port_https).toBe('This port is already used by another AdGuard Home setting');
-        expect(errs.port_dns_over_tls).toBe(
-            'This port is already used by another AdGuard Home setting',
-        );
+        expect(errs.port_https).toBe(PORT_IN_USE);
+        expect(errs.port_dns_over_tls).toBe(PORT_IN_USE);
     });
 
     it('flags an unsafe HTTPS port', () => {
         expect(validateServerSettings({ ...settings, port_https: 22 }).port_https).toBe(
-            'Unsafe port',
+            UNSAFE_PORT,
         );
     });
 

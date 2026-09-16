@@ -8,6 +8,15 @@ import { ENCRYPTION_SOURCE } from 'panel/helpers/constants';
  * rewording it does not break them.
  */
 import en from 'panel/__locales/en.json';
+import { copy } from 'panel/__tests__/helpers/copy';
+
+/** The message copy the mapper reports, named by key. */
+const PARSE_CERT = copy('tls_setup_error_parse_cert');
+const PARSE_KEY = copy('tls_setup_error_parse_key');
+const READ_CERT = copy('tls_setup_error_read_cert');
+const KEY_MISMATCH = copy('tls_setup_error_key_mismatch');
+const CERT_UNTRUSTED = copy('tls_setup_warning_cert_untrusted');
+const NO_IP = copy('tls_setup_warning_no_ip');
 
 const certValues = {
     certificate_source: ENCRYPTION_SOURCE.CONTENT,
@@ -45,7 +54,7 @@ describe('mapStepResult — step 1 (certificate)', () => {
         expect(m).toEqual({
             field: 'certificate_chain',
             kind: 'error',
-            message: 'Unable to parse the certificate. The file may be corrupted',
+            message: PARSE_CERT,
         });
     });
 
@@ -63,9 +72,7 @@ describe('mapStepResult — step 1 (certificate)', () => {
         );
         expect(m?.kind).toBe('warning');
         expect(m?.field).toBe('certificate_chain');
-        expect(m?.message).toBe(
-            'This certificate is self-signed — it may not work on all devices. Make sure your devices will accept it',
-        );
+        expect(m?.message).toBe(CERT_UNTRUSTED);
     });
 
     it('maps the missing-IP warning to the certificate field', () => {
@@ -82,8 +89,7 @@ describe('mapStepResult — step 1 (certificate)', () => {
         expect(m).toEqual({
             field: 'certificate_chain',
             kind: 'warning',
-            message:
-                'The certificate does not contain IP addresses. DDR and DNS-over-TLS may not work properly',
+            message: NO_IP,
         });
     });
 
@@ -140,9 +146,7 @@ describe('mapStepResult — step 1 (certificate)', () => {
                 },
                 certValues,
             );
-            expect(m?.message).toBe(
-                'This certificate is self-signed — it may not work on all devices. Make sure your devices will accept it',
-            );
+            expect(m?.message).toBe(CERT_UNTRUSTED);
         }
     });
 
@@ -160,9 +164,7 @@ describe('mapStepResult — step 1 (certificate)', () => {
             },
             certValues,
         );
-        expect(m?.message).toBe(
-            'This certificate is self-signed — it may not work on all devices. Make sure your devices will accept it',
-        );
+        expect(m?.message).toBe(CERT_UNTRUSTED);
     });
 
     it('returns nothing for a clean cert-only step 1 response', () => {
@@ -180,7 +182,7 @@ describe('mapStepResult — step 1 (certificate)', () => {
         expect(m).toEqual({
             field: 'certificate_chain',
             kind: 'error',
-            message: 'Unable to parse the certificate. The file may be corrupted',
+            message: PARSE_CERT,
         });
     });
 
@@ -197,7 +199,7 @@ describe('mapStepResult — step 1 (certificate)', () => {
         expect(m).toEqual({
             field: 'certificate_path',
             kind: 'error',
-            message: 'Unable to read the certificate file at the specified path',
+            message: READ_CERT,
         });
     });
 
@@ -223,7 +225,7 @@ describe('mapStepResult — step 2 (private key)', () => {
         expect(m).toEqual({
             field: 'private_key',
             kind: 'error',
-            message: 'This private key does not match the certificate from the previous step',
+            message: KEY_MISMATCH,
         });
     });
 
@@ -242,7 +244,7 @@ describe('mapStepResult — step 2 (private key)', () => {
         expect(m).toEqual({
             field: 'private_key',
             kind: 'error',
-            message: 'Unable to parse the private key. The file may be corrupted',
+            message: PARSE_KEY,
         });
     });
 
@@ -257,9 +259,7 @@ describe('mapStepResult — step 2 (private key)', () => {
             },
             certValues,
         );
-        expect(m?.message).toBe(
-            'This key type is not supported by browsers. Use an RSA or ECDSA key instead',
-        );
+        expect(m?.message).toBe(copy('tls_setup_error_ed25519_key'));
     });
 
     it('maps a pair failure without backend text to the key-mismatch message', () => {
@@ -267,7 +267,7 @@ describe('mapStepResult — step 2 (private key)', () => {
         expect(m).toEqual({
             field: 'private_key',
             kind: 'error',
-            message: 'This private key does not match the certificate from the previous step',
+            message: KEY_MISMATCH,
         });
     });
 
@@ -305,7 +305,7 @@ describe('mapStepResult — step 2 (private key)', () => {
             // Bound to the certificate field so the wizard shows it on step 1.
             field: 'certificate_chain',
             kind: 'error',
-            message: 'Unable to parse the certificate. The file may be corrupted',
+            message: PARSE_CERT,
         });
     });
 
@@ -329,8 +329,9 @@ describe('mapStepResult — step 3 (config)', () => {
         expect(m).toEqual({
             field: 'server_name',
             kind: 'warning',
-            message:
-                'The certificate is not valid for dns.home.arpa. Check the hostnames in the certificate',
+            message: copy('tls_setup_warning_server_name_mismatch', {
+                hostname: 'dns.home.arpa',
+            }),
         });
     });
 
@@ -347,8 +348,7 @@ describe('mapStepResult — step 3 (config)', () => {
         );
         expect(m).toEqual({
             kind: 'warning',
-            message:
-                'This certificate is self-signed — it may not work on all devices. Make sure your devices will accept it',
+            message: CERT_UNTRUSTED,
         });
     });
 
@@ -367,8 +367,7 @@ describe('mapStepResult — step 3 (config)', () => {
         );
         expect(m).toEqual({
             kind: 'warning',
-            message:
-                'This certificate is self-signed — it may not work on all devices. Make sure your devices will accept it',
+            message: CERT_UNTRUSTED,
         });
     });
 
@@ -390,8 +389,7 @@ describe('mapStepResult — step 3 (config)', () => {
         );
         expect(m).toEqual({
             kind: 'warning',
-            message:
-                'This certificate is self-signed — it may not work on all devices. Make sure your devices will accept it',
+            message: CERT_UNTRUSTED,
         });
     });
 
@@ -404,7 +402,7 @@ describe('mapStepResult — step 3 (config)', () => {
         expect(m).toEqual({
             field: 'port_dns_over_tls',
             kind: 'error',
-            message: 'Port 853 is not available for DNS-over-TLS',
+            message: copy('tls_setup_error_port_busy', { port: 853, protocol: 'DNS-over-TLS' }),
         });
     });
 
@@ -413,7 +411,7 @@ describe('mapStepResult — step 3 (config)', () => {
         expect(m).toEqual({
             field: 'port_https',
             kind: 'error',
-            message: 'Port 443 is not available for HTTPS',
+            message: copy('tls_setup_error_port_busy', { port: 443, protocol: 'HTTPS' }),
         });
     });
 
@@ -424,7 +422,7 @@ describe('mapStepResult — step 3 (config)', () => {
             certValues,
         );
         expect(m?.kind).toBe('error');
-        expect(m?.message).toBe('Port 9000 is used by multiple DNS protocols. It must be unique');
+        expect(m?.message).toBe(copy('tls_setup_error_duplicate_port', { port: 9000 }));
     });
 
     it('maps a pair failure at the config step to the key field', () => {
@@ -441,7 +439,7 @@ describe('mapStepResult — step 3 (config)', () => {
         expect(m).toEqual({
             field: 'private_key',
             kind: 'error',
-            message: 'This private key does not match the certificate from the previous step',
+            message: KEY_MISMATCH,
         });
     });
 
@@ -460,7 +458,7 @@ describe('mapStepResult — step 3 (config)', () => {
         expect(m).toEqual({
             field: 'certificate_chain',
             kind: 'error',
-            message: 'Unable to parse the certificate. The file may be corrupted',
+            message: PARSE_CERT,
         });
     });
 

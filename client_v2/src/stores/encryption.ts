@@ -289,19 +289,16 @@ export const resetValidationStatus = () => {
 };
 
 /**
- * Optimistically clears cert and key fields in the local store so
- * consumers reacting to certificate_chain / certificate_path
- * (e.g. certConfigured()) flip synchronously, avoiding a flash of
- * stale validation status while the async delete API call is in flight.
+ * Applies TLS values to the store before the backend has confirmed them, so
+ * consumers reacting to the config (e.g. `certConfigured()`, the server
+ * settings summary) already reflect the change while the save is in flight — a
+ * save that rewrites the config restarts the DNS server and can take seconds.
+ *
+ * This state is transient: [setTlsConfig] overwrites it with the response, so
+ * callers must pass the same values they send there.
  */
-export const clearCertOptimistically = () => {
-    setState({
-        certificate_chain: '',
-        private_key: '',
-        certificate_path: '',
-        private_key_path: '',
-        private_key_saved: false,
-    });
+export const applyTlsOptimistically = (values: TlsConfigBody): void => {
+    setState(values);
 };
 
 export const encryptionState = untrack(() => state);

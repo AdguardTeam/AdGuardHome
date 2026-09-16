@@ -1,6 +1,7 @@
 import { render } from '@solidjs/testing-library';
 import { describe, it, expect, vi } from 'vitest';
 import { Select } from '../common/controls/Select/Select';
+import { copyInDom } from 'panel/__tests__/helpers/copy';
 
 const OPTIONS = [
     { value: '0.0.0.0', label: 'All interfaces' },
@@ -161,7 +162,7 @@ describe('Select — empty state (nothing found)', () => {
 
         const empty = document.querySelector('[data-scope="combobox"][data-part="empty"]');
         expect(empty).toBeInTheDocument();
-        expect(empty?.textContent).toContain('Nothing found');
+        expect(empty?.textContent).toContain(copyInDom('nothing_found'));
     });
 });
 

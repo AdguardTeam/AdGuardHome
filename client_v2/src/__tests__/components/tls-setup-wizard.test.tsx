@@ -44,6 +44,24 @@ import { getTlsStatus } from 'panel/stores/encryption';
  * rewording it does not break them.
  */
 import en from 'panel/__locales/en.json';
+import { copy, copyInDom } from 'panel/__tests__/helpers/copy';
+
+/** Anchored match, so the label `Add` does not also match `Add anyway`. */
+const exactly = (text: string) => new RegExp(`^${text}$`);
+
+const ADD = copyInDom('add');
+const ENABLE = copyInDom('enable');
+const ADD_ANYWAY = copyInDom('tls_setup_add_anyway');
+const ENABLE_ANYWAY = copyInDom('tls_setup_enable_anyway');
+const CERT_UNTRUSTED = copyInDom('tls_setup_warning_cert_untrusted');
+const CERT_EXPIRED = copyInDom('tls_setup_warning_cert_expired');
+const PARSE_CERT = copyInDom('tls_setup_error_parse_cert');
+const NOT_A_CERT = copyInDom('tls_setup_error_not_a_cert');
+const KEY_MISMATCH = copyInDom('tls_setup_error_key_mismatch');
+/** The warning the config step shows for a name the certificate does not cover. */
+const NAME_MISMATCH = copyInDom('tls_setup_warning_server_name_mismatch', {
+    hostname: 'dns.home.arpa',
+});
 
 /**
  * user-event waits a tick between every dispatched event, which costs ~2ms per
@@ -120,7 +138,9 @@ describe('TlsSetupWizard — shell & header', () => {
         const user = userEvent.setup();
         renderWizard();
 
-        expect(screen.getByTestId('tls-setup-title')).toHaveTextContent('Add TLS certificate');
+        expect(screen.getByTestId('tls-setup-title')).toHaveTextContent(
+            copyInDom('tls_setup_cert_title'),
+        );
         expect(screen.getByTestId('tls-setup-progress')).toHaveAttribute('aria-valuenow', '1');
         expect(screen.queryByTestId('tls-setup-back')).toBeNull();
 
@@ -250,13 +270,13 @@ describe('TlsSetupWizard — step 1 (certificate)', () => {
 
         await waitFor(() => {
             expect(screen.getByTestId('tls-setup-cert-content-error')).toHaveTextContent(
-                'Unable to parse the certificate. The file may be corrupted',
+                PARSE_CERT,
             );
         });
         // Still on step 1.
         expect(screen.getByTestId('tls-setup-step-certificate')).toBeInTheDocument();
         // An error never turns Add into its warning state.
-        expect(screen.getByTestId('tls-setup-add')).toHaveTextContent(/^Add$/);
+        expect(screen.getByTestId('tls-setup-add')).toHaveTextContent(exactly(ADD));
     });
 
     it('shows the self-signed warning on the first Add and advances on the second', async () => {
@@ -272,7 +292,7 @@ describe('TlsSetupWizard — step 1 (certificate)', () => {
 
         // Nothing is known to be wrong until the check runs: a plain Add.
         const add = screen.getByTestId('tls-setup-add');
-        expect(add).toHaveTextContent(/^Add$/);
+        expect(add).toHaveTextContent(exactly(ADD));
         expect(add.className).not.toContain('warning');
 
         await user.click(add);
@@ -281,13 +301,13 @@ describe('TlsSetupWizard — step 1 (certificate)', () => {
         // next one, and it never blocks — it just has to be seen once.
         await waitFor(() => {
             expect(screen.getByTestId('tls-setup-cert-content-warning')).toHaveTextContent(
-                'This certificate is self-signed — it may not work on all devices. Make sure your devices will accept it',
+                CERT_UNTRUSTED,
             );
         });
         expect(screen.getByTestId('tls-setup-step-certificate')).toBeInTheDocument();
 
         // The button now spells out what going past the warning means.
-        expect(add).toHaveTextContent('Add anyway');
+        expect(add).toHaveTextContent(ADD_ANYWAY);
         expect(add.className).toContain('warning');
 
         await user.click(add);
@@ -303,9 +323,7 @@ describe('TlsSetupWizard — step 1 (certificate)', () => {
         await user.type(screen.getByTestId('tls-setup-cert-content'), KEY);
         await user.click(screen.getByTestId('tls-setup-add'));
 
-        expect(screen.getByTestId('tls-setup-cert-content-error')).toHaveTextContent(
-            'This is not a certificate. Check that you pasted a certificate, not a key',
-        );
+        expect(screen.getByTestId('tls-setup-cert-content-error')).toHaveTextContent(NOT_A_CERT);
         expect(screen.getByTestId('tls-setup-step-certificate')).toBeInTheDocument();
         expect(mocks.tlsValidate).not.toHaveBeenCalled();
     });
@@ -368,7 +386,7 @@ describe('TlsSetupWizard — step 2 (private key)', () => {
 
         await waitFor(() => {
             expect(screen.getByTestId('tls-setup-key-content-error')).toHaveTextContent(
-                'This private key does not match the certificate from the previous step',
+                KEY_MISMATCH,
             );
         });
         expect(screen.getByTestId('tls-setup-step-key')).toBeInTheDocument(); // stays on step 2
@@ -419,12 +437,12 @@ describe('TlsSetupWizard — expired certificate', () => {
 
         await waitFor(() => {
             expect(screen.getByTestId('tls-setup-cert-content-warning')).toHaveTextContent(
-                en.tls_setup_warning_cert_expired,
+                CERT_EXPIRED,
             );
         });
         // An expiry is not critical: the step warns and the button says so.
         expect(screen.getByTestId('tls-setup-step-certificate')).toBeInTheDocument();
-        expect(add).toHaveTextContent('Add anyway');
+        expect(add).toHaveTextContent(ADD_ANYWAY);
 
         await user.click(add);
         await waitFor(() => {
@@ -454,7 +472,7 @@ describe('TlsSetupWizard — expired certificate', () => {
             expect(screen.getByTestId('tls-setup-step-config')).toBeInTheDocument();
         });
         expect(screen.getByTestId('tls-setup-enable')).not.toBeDisabled();
-        expect(screen.getByTestId('tls-setup-enable')).toHaveTextContent(/^Enable$/);
+        expect(screen.getByTestId('tls-setup-enable')).toHaveTextContent(exactly(ENABLE));
         expect(screen.queryByTestId('tls-setup-form-message')).toBeNull();
     });
 });
@@ -638,9 +656,7 @@ describe('TlsSetupWizard — step 3 (config & enable)', () => {
         await waitFor(() => {
             expect(screen.getByTestId('tls-setup-step-key')).toBeInTheDocument();
         });
-        expect(screen.getByTestId('tls-setup-key-content-error')).toHaveTextContent(
-            'This private key does not match the certificate from the previous step',
-        );
+        expect(screen.getByTestId('tls-setup-key-content-error')).toHaveTextContent(KEY_MISMATCH);
         expect(screen.queryByTestId('tls-setup-form-message')).toBeNull();
     });
 
@@ -663,9 +679,7 @@ describe('TlsSetupWizard — step 3 (config & enable)', () => {
         await waitFor(() => {
             expect(screen.getByTestId('tls-setup-step-certificate')).toBeInTheDocument();
         });
-        expect(screen.getByTestId('tls-setup-cert-content-error')).toHaveTextContent(
-            'Unable to parse the certificate. The file may be corrupted',
-        );
+        expect(screen.getByTestId('tls-setup-cert-content-error')).toHaveTextContent(PARSE_CERT);
         expect(screen.queryByTestId('tls-setup-form-message')).toBeNull();
     });
 
@@ -711,7 +725,7 @@ describe('TlsSetupWizard — step 3 (config & enable)', () => {
 
         await waitFor(() => {
             expect(screen.getByTestId('tls-setup-server-name-warning')).toHaveTextContent(
-                'The certificate is not valid for dns.home.arpa. Check the hostnames in the certificate',
+                NAME_MISMATCH,
             );
         });
 
@@ -720,7 +734,7 @@ describe('TlsSetupWizard — step 3 (config & enable)', () => {
         // blocking Enable.  The label spells out what going past it means.
         const enable = screen.getByTestId('tls-setup-enable');
         expect(enable).not.toBeDisabled();
-        expect(enable).toHaveTextContent('Enable anyway');
+        expect(enable).toHaveTextContent(ENABLE_ANYWAY);
         expect(enable.className).toContain('warning');
 
         // The warning is already on screen, so a single click goes through.
@@ -747,6 +761,9 @@ describe('TlsSetupWizard — step 3 (config & enable)', () => {
 
         await goToStep3(user);
         const serverName = screen.getByTestId('tls-setup-server-name');
+        // Earlier cases save a server name through the shared store, so start
+        // from a known empty field instead of appending to theirs.
+        await user.clear(serverName);
         await user.type(serverName, 'dns.home.arpa');
         await user.tab();
         await waitFor(() => {
@@ -755,7 +772,7 @@ describe('TlsSetupWizard — step 3 (config & enable)', () => {
 
         // Clean check: nothing is known to be wrong yet.
         const enable = screen.getByTestId('tls-setup-enable');
-        expect(enable).toHaveTextContent(/^Enable$/);
+        expect(enable).toHaveTextContent(exactly(ENABLE));
         expect(enable.className).not.toContain('warning');
 
         mocks.tlsValidate.mockResolvedValue({
@@ -769,12 +786,12 @@ describe('TlsSetupWizard — step 3 (config & enable)', () => {
         // The first click only puts the warning on screen — Enable must not
         // save past a warning the user has not seen.
         await waitFor(() => {
-            expect(enable).toHaveTextContent('Enable anyway');
+            expect(enable).toHaveTextContent(ENABLE_ANYWAY);
         });
         expect(enable.className).toContain('warning');
         expect(enable).not.toBeDisabled();
         expect(screen.getByTestId('tls-setup-server-name-warning')).toHaveTextContent(
-            'Check the hostnames in the certificate',
+            NAME_MISMATCH,
         );
         expect(mocks.tlsConfigure).not.toHaveBeenCalled();
         expect(onClose).not.toHaveBeenCalled();
@@ -804,7 +821,7 @@ describe('TlsSetupWizard — step 3 (config & enable)', () => {
 
         const enable = screen.getByTestId('tls-setup-enable');
         await waitFor(() => {
-            expect(enable).toHaveTextContent('Enable anyway');
+            expect(enable).toHaveTextContent(ENABLE_ANYWAY);
         });
 
         // Editing the name drops the message, so the button goes back to plain
@@ -816,7 +833,7 @@ describe('TlsSetupWizard — step 3 (config & enable)', () => {
         await user.tab();
 
         await waitFor(() => {
-            expect(enable).toHaveTextContent(/^Enable$/);
+            expect(enable).toHaveTextContent(exactly(ENABLE));
         });
         expect(enable.className).not.toContain('warning');
     });
@@ -836,7 +853,7 @@ describe('TlsSetupWizard — step 3 (config & enable)', () => {
 
         await waitFor(() => {
             expect(screen.getByTestId('tls-setup-port-dns-over-tls-error')).toHaveTextContent(
-                'Port 853 is not available for DNS-over-TLS',
+                copyInDom('tls_setup_error_port_busy', { port: 853, protocol: 'DNS-over-TLS' }),
             );
         });
         expect(screen.getByTestId('tls-setup-enable')).toBeDisabled();
@@ -1020,7 +1037,7 @@ describe('TlsSetupWizard — enabling is confirmed by name', () => {
         await waitFor(() => {
             expect(onClose).toHaveBeenCalled();
         });
-        expect(mocks.addSuccessToast).toHaveBeenCalledWith('Encrypted DNS is enabled');
+        expect(mocks.addSuccessToast).toHaveBeenCalledWith(copy('encryption_enabled_toast'));
     });
 });
 

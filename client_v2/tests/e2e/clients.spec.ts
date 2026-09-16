@@ -375,8 +375,9 @@ test.describe('Clients', () => {
         // Click Save
         await page.getByTestId('client-form-save').click();
 
-        // Should show validation error message
-        await expect(page.getByText('Please fill out this field')).toBeVisible();
+        // The name field is flagged without pinning the wording of the message,
+        // which lives in the locale files.
+        await expect(page.getByTestId('client-form-name-error')).toBeVisible();
 
         // No API call
         expect(addClientPayloads).toHaveLength(0);

@@ -47,6 +47,7 @@ vi.mock('panel/stores/encryption', () => ({
 
 import { ServerSettingsModal } from 'panel/components/Encryption/blocks/ServerSettingsModal';
 import { ServerSettingsFields } from 'panel/components/Encryption/blocks/ServerSettingsFields';
+import { copy, copyInDom } from 'panel/__tests__/helpers/copy';
 import {
     DNS_OVER_QUIC_PORT,
     DNS_OVER_TLS_PORT,
@@ -60,7 +61,7 @@ const renderModal = () => {
 };
 
 const saveButton = () => screen.getByTestId('config-dialog-save');
-const conflictMessage = 'This port is already used by another AdGuard Home setting';
+const conflictMessage = copy('tls_setup_error_port_in_use');
 
 beforeEach(() => {
     vi.clearAllMocks();
@@ -71,7 +72,7 @@ describe('ServerSettingsModal — opening', () => {
     it('prefills the current settings from the store', () => {
         renderModal();
 
-        expect(screen.getByText('Encrypted DNS server settings')).toBeInTheDocument();
+        expect(screen.getByText(copyInDom('encrypted_dns_settings'))).toBeInTheDocument();
         expect(screen.getByDisplayValue('dns.example.com')).toBeInTheDocument();
         expect(screen.getByDisplayValue('443')).toBeInTheDocument();
         expect(screen.getAllByDisplayValue('853')).toHaveLength(2);
@@ -113,7 +114,7 @@ describe('ServerSettingsModal — validation', () => {
         await user.type(serverName, 'not a domain');
         await user.tab();
 
-        expect(screen.getByText('Invalid server name')).toBeInTheDocument();
+        expect(screen.getByText(copyInDom('form_error_server_name'))).toBeInTheDocument();
         expect(saveButton()).toBeDisabled();
     });
 
@@ -127,11 +128,11 @@ describe('ServerSettingsModal — validation', () => {
 
         // The format error belongs to blur — a half-typed name must not flash
         // an error mid-word.
-        expect(screen.queryByText('Invalid server name')).toBeNull();
+        expect(screen.queryByText(copyInDom('form_error_server_name'))).toBeNull();
         expect(saveButton()).not.toBeDisabled();
 
         await user.tab();
-        expect(screen.getByText('Invalid server name')).toBeInTheDocument();
+        expect(screen.getByText(copyInDom('form_error_server_name'))).toBeInTheDocument();
         expect(saveButton()).toBeDisabled();
     });
 
@@ -157,7 +158,7 @@ describe('ServerSettingsModal — validation', () => {
         await user.type(dot, '99999');
         await user.tab();
 
-        expect(screen.getByText('Enter port number in the range of 80-65535')).toBeInTheDocument();
+        expect(screen.getByText(copyInDom('form_error_port_range'))).toBeInTheDocument();
         expect(saveButton()).toBeDisabled();
     });
 });
@@ -282,9 +283,11 @@ describe('ServerSettingsFields — the settings shared with the wizard', () => {
             .map((label) => label.textContent)
             .join(' ');
 
-        expect(labels).toContain(`Default: ${STANDARD_HTTPS_PORT}`);
-        expect(labels).toContain(`Default: ${DNS_OVER_TLS_PORT}`);
-        expect(labels).toContain(`Default: ${DNS_OVER_QUIC_PORT}`);
+        expect(labels).toContain(
+            copyInDom('encryption_https_tooltip', { port: STANDARD_HTTPS_PORT }),
+        );
+        expect(labels).toContain(copyInDom('encryption_dot_tooltip', { port: DNS_OVER_TLS_PORT }));
+        expect(labels).toContain(copyInDom('encryption_doq_tooltip', { port: DNS_OVER_QUIC_PORT }));
         expect(labels).not.toContain('%port%');
     });
 });
