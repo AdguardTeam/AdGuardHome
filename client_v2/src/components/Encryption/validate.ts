@@ -40,36 +40,33 @@ const validateKeyPath = (value?: string): string | undefined => {
     return undefined;
 };
 
-/** Matches any PEM private-key block, e.g. `-----BEGIN RSA PRIVATE KEY-----`. */
-const R_PEM_KEY_BLOCK = /-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----/;
+/** Matches any PEM private-key header, e.g. `-----BEGIN RSA PRIVATE KEY-----`. */
+const R_PEM_KEY_HEADER = /-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----/;
 
-/** Matches a PEM certificate block. */
-const R_PEM_CERT_BLOCK = /-----BEGIN CERTIFICATE-----/;
+/** Matches a PEM certificate header. */
+const R_PEM_CERT_HEADER = /-----BEGIN CERTIFICATE-----/;
 
-/** Matches any PEM block header. */
-const R_PEM_ANY_HEADER = /-----BEGIN [A-Z0-9 ]+-----/;
+/** Matches a complete PEM certificate block: header, body, and closing line. */
+const R_PEM_CERT_BLOCK = /-----BEGIN CERTIFICATE-----[\s\S]*-----END CERTIFICATE-----/;
 
-/** Matches the closing line of a PEM certificate block. */
-const R_PEM_CERT_END = /-----END CERTIFICATE-----/;
-
-/** Matches the closing line of any PEM private-key block. */
-const R_PEM_KEY_END = /-----END [A-Z0-9 ]*PRIVATE KEY-----/;
+/** Matches a complete PEM private-key block of any flavour. */
+const R_PEM_KEY_BLOCK =
+    /-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----[\s\S]*-----END [A-Z0-9 ]*PRIVATE KEY-----/;
 
 /**
  * Validates the certificate field content.  Only the cases the backend cannot
- * express are handled here — content that is obviously a private key, content
- * with no PEM header, and content that lost its closing line to a partial
- * copy.  Real parsing is left to the backend so the user gets its precise
- * message.
+ * express are handled here — content that is obviously a private key, and
+ * content that is not a complete PEM block (no header, or missing the closing
+ * line to a partial copy).  Real parsing is left to the backend so the user
+ * gets its precise message.
  */
 const validateCertContent = (value?: string): string | undefined => {
     const required = validateRequiredValue(value);
     if (required) return required;
 
     const text = String(value);
-    if (R_PEM_KEY_BLOCK.test(text)) return intl.getMessage('tls_setup_error_not_a_cert');
-    if (!R_PEM_ANY_HEADER.test(text)) return intl.getMessage('tls_setup_error_cert_no_header');
-    if (!R_PEM_CERT_END.test(text)) return intl.getMessage('tls_setup_error_cert_incomplete');
+    if (R_PEM_KEY_HEADER.test(text)) return intl.getMessage('tls_setup_error_not_a_cert');
+    if (!R_PEM_CERT_BLOCK.test(text)) return intl.getMessage('tls_setup_error_cert_incomplete');
 
     return undefined;
 };
@@ -80,11 +77,10 @@ const validateKeyContent = (value?: string): string | undefined => {
     if (required) return required;
 
     const text = String(value);
-    if (R_PEM_CERT_BLOCK.test(text) && !R_PEM_KEY_BLOCK.test(text)) {
+    if (R_PEM_CERT_HEADER.test(text) && !R_PEM_KEY_HEADER.test(text)) {
         return intl.getMessage('tls_setup_error_not_a_key');
     }
-    if (!R_PEM_ANY_HEADER.test(text)) return intl.getMessage('tls_setup_error_key_no_header');
-    if (!R_PEM_KEY_END.test(text)) return intl.getMessage('tls_setup_error_key_incomplete');
+    if (!R_PEM_KEY_BLOCK.test(text)) return intl.getMessage('tls_setup_error_key_incomplete');
 
     return undefined;
 };

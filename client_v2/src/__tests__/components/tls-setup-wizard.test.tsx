@@ -210,7 +210,7 @@ describe('TlsSetupWizard — step 1 (certificate)', () => {
         await user.tab();
 
         expect(screen.getByTestId('tls-setup-cert-content-error')).toHaveTextContent(
-            'Enter the certificate contents with header',
+            en.tls_setup_error_cert_incomplete,
         );
     });
 

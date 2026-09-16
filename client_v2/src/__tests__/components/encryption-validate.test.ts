@@ -224,12 +224,12 @@ describe('validateCertFields', () => {
         );
     });
 
-    it('asks for a PEM header when the certificate has none', () => {
+    it('asks for the whole certificate when it is not a complete PEM block', () => {
         const errs = validateCertFields({
             ...valid,
             certificate_chain: 'MIIDTCCAHgAwIBAgIJ',
         });
-        expect(errs.certificate_chain).toBe('Enter the certificate contents with header');
+        expect(errs.certificate_chain).toBe(en.tls_setup_error_cert_incomplete);
     });
 
     it('asks for the whole certificate when the closing line is missing', () => {
@@ -371,9 +371,9 @@ describe('validateKeyFields', () => {
         expect(errs.private_key_path).toBe('Unable to read private key file');
     });
 
-    it('asks for a PEM header when the private key has none', () => {
+    it('asks for the whole key when it is not a complete PEM block', () => {
         expect(validateKeyFields({ ...valid, private_key: 'MIIEvQIBADANBgkq' }).private_key).toBe(
-            'Enter the private key with header',
+            en.tls_setup_error_key_incomplete,
         );
     });
 
