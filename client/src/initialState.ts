@@ -127,6 +127,7 @@ export type DashboardData = {
     httpPort: number;
     dnsPort: number;
     dnsAddresses: string[];
+    dnsPrivacyAvailable: boolean;
     dnsVersion: string;
     dnsStartTime: number | null;
     clients: Client[];
@@ -448,6 +449,7 @@ export const initialState: RootState = {
         httpPort: STANDARD_WEB_PORT,
         dnsPort: STANDARD_DNS_PORT,
         dnsAddresses: [],
+        dnsPrivacyAvailable: false,
         dnsVersion: '',
         dnsStartTime: null,
         clients: [],
