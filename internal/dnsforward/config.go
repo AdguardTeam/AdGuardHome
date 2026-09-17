@@ -313,11 +313,28 @@ type ServerConfig struct {
 // TODO(d.kolyshev): Consider using [proxy.UpstreamMode].
 type UpstreamMode string
 
+// Allowed [UpstreamMode] values.
 const (
+	UpstreamModeFastestAddr UpstreamMode = "fastest_addr"
 	UpstreamModeLoadBalance UpstreamMode = "load_balance"
 	UpstreamModeParallel    UpstreamMode = "parallel"
-	UpstreamModeFastestAddr UpstreamMode = "fastest_addr"
 )
+
+// NewUpstreamMode converts a simple string into an [UpstreamMode] and makes
+// sure it's valid.
+func NewUpstreamMode(s string) (m UpstreamMode, err error) {
+	switch m = UpstreamMode(s); m {
+	case UpstreamModeFastestAddr, UpstreamModeLoadBalance, UpstreamModeParallel:
+		return m, nil
+	default:
+		return "", fmt.Errorf(
+			"%w: %q, supported: %q",
+			errors.ErrBadEnumValue,
+			s,
+			[]UpstreamMode{UpstreamModeFastestAddr, UpstreamModeLoadBalance, UpstreamModeParallel},
+		)
+	}
+}
 
 // newProxyConfig creates and validates configuration for the main proxy.
 // s.serverLock must be locked.
