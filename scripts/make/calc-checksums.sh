@@ -77,7 +77,9 @@ calculate_checksums() {
 (
 	cd "./${dist}"
 
-	: >./checksums.txt
+	cksum_file="./checksums.txt"
+
+	: >"$cksum_file"
 
 	for archive in ./*.zip ./*.tar.gz ./*.msi; do
 		# Make sure that we don't try to calculate a checksum for a glob pattern
@@ -86,7 +88,7 @@ calculate_checksums() {
 			continue
 		fi
 
-		calculate_checksums "$archive" >>./checksums.txt
+		calculate_checksums "$archive" >>"$cksum_file"
 	done
 )
 

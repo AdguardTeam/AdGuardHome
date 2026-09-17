@@ -242,8 +242,4 @@ echo "$platforms" | while read -r os arch arm mips; do
 	build "$dir" "$os" "$arch" "$arm" "$mips"
 done
 
-log 'writing versions'
-
-echo "version=$version" >"./${dist}/version.txt"
-
 log 'finished'
