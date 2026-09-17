@@ -18,6 +18,7 @@ type Props = {
     class?: string;
     disabled?: boolean;
     children?: JSX.Element;
+    triggerAttrs?: JSX.HTMLAttributes<HTMLDivElement>;
 };
 
 export const Tooltip = (props: Props) => {
@@ -89,6 +90,7 @@ export const Tooltip = (props: Props) => {
                     asChild={(triggerProps) => (
                         <div
                             {...triggerProps}
+                            {...props.triggerAttrs}
                             ref={(el) => {
                                 triggerRef = el;
                             }}

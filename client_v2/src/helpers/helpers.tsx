@@ -597,8 +597,9 @@ export const isIpInCidr = (ip: string, cidr: string): boolean => {
         const parsedCidr = ipaddr.parseCIDR(cidr);
 
         return isIpMatchCidr(parsedIp, parsedCidr);
-    } catch (e) {
-        console.error(e);
+    } catch (_e) {
+        // Unparseable input is an ordinary outcome here — callers branch on
+        // the boolean, so there is nothing to report.
         return false;
     }
 };
@@ -624,8 +625,9 @@ export const isValidIpv6 = (value: string): boolean => {
 export const parseSubnetMask = (subnetMask: string): number | null => {
     try {
         return ipaddr.parse(subnetMask).prefixLengthFromSubnetMask();
-    } catch (e) {
-        console.error(e);
+    } catch (_e) {
+        // A mask that is not a mask is what this function answers for — the
+        // live DHCP validation calls it on every keystroke.
         return null;
     }
 };

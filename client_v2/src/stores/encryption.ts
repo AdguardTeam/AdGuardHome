@@ -64,8 +64,47 @@ const initialState: EncryptionState = {
 
 const [state, setState] = createStore<EncryptionState>(initialState);
 
+/**
+ * Settings the backend marshals with `omitempty`: a cleared server name, a port
+ * that is turned off, and a resolved validation warning with the certificate
+ * metadata behind it all come back as missing keys rather than empty values.
+ * The store merges every response into its state, so the absence has to be
+ * spelled out — otherwise a cleared value would silently keep the previous one
+ * until the page is reloaded and the state is built from scratch.
+ *
+ * Keep in sync with `tlsConfigSettings` in `internal/home/config.go` and with
+ * `tlsConfigStatus` in `internal/home/tls.go`.
+ */
+const OMITTED_WHEN_EMPTY: Pick<
+    TlsConfig,
+    | 'server_name'
+    | 'port_https'
+    | 'port_dns_over_tls'
+    | 'port_dns_over_quic'
+    | 'warning_validation'
+    | 'subject'
+    | 'issuer'
+    | 'key_type'
+> = {
+    server_name: '',
+    port_https: 0,
+    port_dns_over_tls: 0,
+    port_dns_over_quic: 0,
+    warning_validation: '',
+    subject: '',
+    issuer: '',
+    // `key_type` is a union, not a string: the backend omits it for a key it
+    // could not read, and the UI reads that absence as "unknown".
+    key_type: undefined,
+};
+
+/**
+ * Turns a TLS config response into store-ready values: the base64 payloads are
+ * decoded, and the settings and status fields the backend omits when they are
+ * empty are filled in.
+ */
 const decodeResponse = (data: TlsConfig): TlsConfig => {
-    const decoded: TlsConfig = { ...data };
+    const decoded: TlsConfig = { ...OMITTED_WHEN_EMPTY, ...data };
     const fields = ['certificate_chain', 'private_key'] as const;
     fields.forEach((field) => {
         const value = decoded[field];
@@ -103,8 +142,23 @@ export const getTlsStatus = async () => {
     }
 };
 
-export const setTlsConfig = async (values: TlsConfigBody, opts?: { silent?: boolean }) => {
+/**
+ * Saves the TLS configuration.
+ *
+ * With the default options it updates the store and shows toasts — existing
+ * callers are unaffected.  With `suppressErrorToast` the error is returned
+ * instead of toasted so callers can render it inline.  A save that turns
+ * encryption on is confirmed with its own toast, whichever caller asked for
+ * it.
+ */
+export const setTlsConfig = async (
+    values: TlsConfigBody,
+    opts?: { silent?: boolean; suppressErrorToast?: boolean },
+): Promise<{ ok: true } | { ok: false; error: string }> => {
     setState('processingConfig', true);
+    // Read before the save: the response below overwrites `state`, so after it
+    // the previous value can no longer tell whether this call enabled anything.
+    const wasEnabled = !!state.enabled;
     try {
         // Merge: start with all store values, then override with caller's
         // defined values (empty strings / false are intentional overrides).
@@ -134,18 +188,68 @@ export const setTlsConfig = async (values: TlsConfigBody, opts?: { silent?: bool
 
         redirectToCurrentProtocol(fullValues, dashboardState.httpPort);
 
+        // Turning encryption on is the outcome the user asked for, so it is
+        // confirmed by name instead of the generic "changes saved".
+        const justEnabled = !wasEnabled && !!fullValues.enabled;
+
         setState({ ...decoded, processingConfig: false });
         if (!opts?.silent) {
-            addSuccessToast(intl.getMessage('settings_notify_changes_saved'));
+            addSuccessToast(
+                justEnabled
+                    ? intl.getMessage('encryption_enabled_toast')
+                    : intl.getMessage('settings_notify_changes_saved'),
+            );
         }
+
+        return { ok: true };
     } catch (error) {
-        addErrorToast({ error });
+        if (!opts?.suppressErrorToast) {
+            addErrorToast({ error });
+        }
         setState('processingConfig', false);
+
+        return { ok: false, error: extractBodyText(error) };
     }
 };
 
-export const validateTlsConfig = async (values: TlsConfigBody) => {
-    setState('processingValidate', true);
+/**
+ * Extracts the body text from a customFetch error.
+ *
+ * customFetch throws `Error(`${url} | ${body} | ${status}`)` — there is no
+ * `.body` property.  The body itself may contain `\n`-joined lines
+ * (e.g. `errors.Join` for port probes), so we split on ` | `, rejoin the
+ * middle segments and drop the trailing status segment.
+ */
+const extractBodyText = (error: unknown): string => {
+    const message = error instanceof Error ? error.message : String(error);
+    const segments = message.split(' | ');
+    if (segments.length > 2) {
+        return segments.slice(1, -1).join(' | ');
+    }
+    if (segments.length === 2) {
+        return segments[1] ?? message;
+    }
+    return message;
+};
+
+/**
+ * Validates TLS settings on the backend.
+ *
+ * With `persist` (default) it updates the store fields and shows error
+ * toasts — existing callers are unaffected. With `persist: false` it is a
+ * pure check: it never touches the store or the toasts and returns the
+ * decoded `TlsConfig` on success or `{ error }` with the body text.
+ */
+export const validateTlsConfig = async (
+    values: TlsConfigBody,
+    opts?: { persist?: boolean },
+): Promise<TlsConfig | { error: string }> => {
+    const persist = opts?.persist ?? true;
+
+    if (persist) {
+        setState('processingValidate', true);
+    }
+
     try {
         const encoded = encodeRequest(values);
         // Normalise empty port strings to 0 before sending to the backend,
@@ -155,10 +259,16 @@ export const validateTlsConfig = async (values: TlsConfigBody) => {
         encoded.port_dns_over_quic = encoded.port_dns_over_quic || 0;
         const data = await tlsValidate(encoded);
         const decoded = decodeResponse(data);
-        setState({ ...decoded, processingValidate: false });
+        if (persist) {
+            setState({ ...decoded, processingValidate: false });
+        }
+        return decoded;
     } catch (error) {
-        addErrorToast({ error });
-        setState('processingValidate', false);
+        if (persist) {
+            addErrorToast({ error });
+            setState('processingValidate', false);
+        }
+        return { error: extractBodyText(error) };
     }
 };
 
@@ -179,19 +289,16 @@ export const resetValidationStatus = () => {
 };
 
 /**
- * Optimistically clears cert and key fields in the local store so
- * consumers reacting to certificate_chain / certificate_path
- * (e.g. certConfigured()) flip synchronously, avoiding a flash of
- * stale validation status while the async delete API call is in flight.
+ * Applies TLS values to the store before the backend has confirmed them, so
+ * consumers reacting to the config (e.g. `certConfigured()`, the server
+ * settings summary) already reflect the change while the save is in flight — a
+ * save that rewrites the config restarts the DNS server and can take seconds.
+ *
+ * This state is transient: [setTlsConfig] overwrites it with the response, so
+ * callers must pass the same values they send there.
  */
-export const clearCertOptimistically = () => {
-    setState({
-        certificate_chain: '',
-        private_key: '',
-        certificate_path: '',
-        private_key_path: '',
-        private_key_saved: false,
-    });
+export const applyTlsOptimistically = (values: TlsConfigBody): void => {
+    setState(values);
 };
 
 export const encryptionState = untrack(() => state);
