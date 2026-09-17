@@ -59,6 +59,18 @@
           # Also expose the version as a job output, since the env context is
           # not available to the other jobs.
           echo "app_version=${app_version}" >> "$GITHUB_OUTPUT"
+      - 'name': 'Build frontend'
+        'uses': 'AdGuardSoftwareLimited/actions/actions/docker-build@master'
+        'with':
+          'dockerfile': 'docker/frontend.Dockerfile'
+          'context': '.'
+          'target': 'builder-exporter'
+          'output': '.'
+          'build-args': |
+            BASE_IMAGE=${{ env.FRONTEND_BASE_IMAGE }}
+            CACHE_BUSTER=${{ inputs.cache_buster || '0' }}
+            CLIENT_DIR=${{ env.CLIENT_DIR }}
+            DIST_DIR=${{ env.BUILD_DIR }}
       - 'name': 'Retrieve GPG signing secrets'
         'uses': 'hashicorp/vault-action@v4'
         'with':
