@@ -404,26 +404,19 @@ func (s *Server) newProxyConfig(ctx context.Context) (conf *proxy.Config, err er
 
 // newRatelimitMw returns the ratelimit middleware.  In case of invalid
 // ratelimit configuration returns an error. l must not be nil.
-func newRatelimitMw(
-	l *slog.Logger,
-	conf ServerConfig,
-) (mw proxy.Middleware, err error) {
+func newRatelimitMw(l *slog.Logger, conf ServerConfig) (mw proxy.Middleware, err error) {
 	if conf.Ratelimit == 0 {
 		return proxy.MiddlewareFunc(proxy.PassThrough), nil
 	}
 
 	allowListAddrs := make(netutil.SliceSubnetSet, len(conf.RatelimitWhitelist))
-	var subnet netip.Prefix
-
 	for i, s := range conf.RatelimitWhitelist {
 		if !s.IsValid() {
 			return nil, fmt.Errorf("ratelimit whitelist ip at index %d is invalid", i)
 		}
 
 		s = s.Unmap()
-		subnet = netip.PrefixFrom(s, s.BitLen())
-
-		allowListAddrs[i] = subnet
+		allowListAddrs[i] = netip.PrefixFrom(s, s.BitLen())
 	}
 
 	rlConf := &ratelimit.Config{

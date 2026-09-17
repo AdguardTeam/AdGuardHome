@@ -138,17 +138,6 @@ func TestNewRatelimitMw_Whitelist(t *testing.T) {
 		req:       netip.MustParseAddr("192.0.2.1"),
 		wantDrops: []bool{false, true},
 	}, {
-		name: "invalid_whitelist_ip",
-		conf: ServerConfig{
-			Config: Config{
-				Ratelimit:              1,
-				RatelimitSubnetLenIPv4: netutil.IPv4BitLen,
-				RatelimitSubnetLenIPv6: netutil.IPv6BitLen,
-				RatelimitWhitelist:     []netip.Addr{{}},
-			},
-		},
-		wantErrMsg: "ratelimit whitelist ip at index 0 is invalid",
-	}, {
 		name: "ratelimit_whitelisted_mapped_v4",
 		conf: ServerConfig{
 			Config: Config{
@@ -171,15 +160,59 @@ func TestNewRatelimitMw_Whitelist(t *testing.T) {
 				return
 			}
 
-			wrapped := mw.Wrap(handler)
-			handleDrops(t, wrapped, tc.req, tc.wantDrops)
+			wrappedHdlr := mw.Wrap(handler)
+			handleDrops(t, wrappedHdlr, tc.req, tc.wantDrops)
+		})
+	}
+}
+
+func TestNewRatelimitMw_Whitelist_errors(t *testing.T) {
+	t.Parallel()
+
+	const invalidIPErrorMsg = "ratelimit whitelist ip at index 0 is invalid"
+
+	testCases := []struct {
+		name       string
+		conf       ServerConfig
+		req        netip.Addr
+		wantDrops  []bool
+		wantErrMsg string
+	}{{
+		name: "invalid_whitelist_ip",
+		conf: ServerConfig{
+			Config: Config{
+				Ratelimit:              1,
+				RatelimitSubnetLenIPv4: netutil.IPv4BitLen,
+				RatelimitSubnetLenIPv6: netutil.IPv6BitLen,
+				RatelimitWhitelist:     []netip.Addr{{}},
+			},
+		},
+		wantErrMsg: invalidIPErrorMsg,
+	}, {
+		name: "empty_whitelist_ip",
+		conf: ServerConfig{
+			Config: Config{
+				Ratelimit:              1,
+				RatelimitSubnetLenIPv4: netutil.IPv4BitLen,
+				RatelimitSubnetLenIPv6: netutil.IPv6BitLen,
+				RatelimitWhitelist:     []netip.Addr{{}},
+			},
+		},
+		wantErrMsg: invalidIPErrorMsg,
+	}}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			_, err := newRatelimitMw(testLogger, tc.conf)
+			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
 		})
 	}
 }
 
 // handleDrops handles a series of DNS requests and checks if they are dropped
 // according to the wantDrops slice.  wrapped must not be nil.
-func handleDrops(tb testing.TB, wrapped proxy.Handler, addr netip.Addr, wantDrops []bool) {
+func handleDrops(tb testing.TB, handler proxy.Handler, addr netip.Addr, wantDrops []bool) {
 	const testPort = 1
 
 	for i, wantDrop := range wantDrops {
@@ -189,11 +222,9 @@ func handleDrops(tb testing.TB, wrapped proxy.Handler, addr netip.Addr, wantDrop
 			Req:   createTestMessage(testQuestionTarget),
 		}
 
-		err := wrapped.ServeDNS(testutil.ContextWithTimeout(tb, testTimeout), nil, dctx)
-		if !assert.Equalf(tb, wantDrop, err == proxy.ErrDrop, "request #%d", i) {
-			continue
-		}
+		err := handler.ServeDNS(testutil.ContextWithTimeout(tb, testTimeout), nil, dctx)
 		if wantDrop {
+			assert.ErrorIs(tb, err, proxy.ErrDrop, "request #%d", i)
 			continue
 		}
 
