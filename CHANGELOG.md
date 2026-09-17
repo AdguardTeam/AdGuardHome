@@ -24,8 +24,11 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- `log.enabled` set to `false` leaving the legacy logger enabled ([#8565]).
+
 - DHCP server persisting uncommitted leases with zero expiry after `DHCPDISCOVER` messages ([#8572]).
 
+[#8565]:     https://github.com/AdguardTeam/AdGuardHome/issues/8565
 [#8572]:     https://github.com/AdguardTeam/AdGuardHome/issues/8572
 [go-1.26.8]: https://groups.google.com/g/golang-announce/c/QiTRm-HGGtI
 
