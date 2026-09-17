@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, fireEvent } from '@solidjs/testing-library';
-import { createSignal } from 'solid-js';
+import { createSignal, For } from 'solid-js';
 
 // CSS modules return {} under css:false, so theme class names would be
 // undefined. Mock theme with identity class names for deterministic asserts.
@@ -17,11 +17,9 @@ vi.mock('panel/lib/theme', () => {
                 'arrow_left',
                 'arrow_right',
                 'summary',
-                'dropdownText',
-                'dropdownShowOnPage',
+                'select',
                 'limitContainer',
             ]),
-            dropdown: make(['menu', 'item', 'item_active', 'icon', 'flexDropdownWrap', 'dropdown']),
         },
     };
 });
@@ -33,16 +31,21 @@ vi.mock('panel/common/intl', () => ({
     },
 }));
 
-vi.mock('panel/common/ui/Dropdown', () => ({
-    Dropdown: (props: any) => (
+vi.mock('panel/common/controls/Select', () => ({
+    Select: (props: any) => (
         <>
-            <button
-                data-testid="page-size-trigger"
-                onClick={() => props.onOpenChange?.(!props.open)}
-            >
-                {props.children}
+            <button data-testid="page-size-trigger" onClick={() => {}}>
+                {props.value?.label}
             </button>
-            {props.open && <div data-testid="page-size-menu">{props.menu}</div>}
+            <div data-testid="page-size-menu">
+                <For each={props.options}>
+                    {(option: any) => (
+                        <div class="item" onClick={() => props.onChange(option)}>
+                            {option.label}
+                        </div>
+                    )}
+                </For>
+            </div>
         </>
     ),
 }));
@@ -163,5 +166,27 @@ describe('Pagination', () => {
         fireEvent.click(getByTestId('page-size-trigger'));
         fireEvent.click(getByTestId('page-size-menu').querySelectorAll('[class~="item"]')[1]);
         expect(baseProps.onPageSizeChange).toHaveBeenCalledWith(20);
+    });
+
+    it('scrolls to the top on page change when mobile', () => {
+        const scrollSpy = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+        const { container } = render(() => (
+            <Pagination {...baseProps} currentPage={0} totalPages={5} />
+        ));
+        fireEvent.click(pageButton(container, '2'));
+        expect(scrollSpy).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' });
+        scrollSpy.mockRestore();
+    });
+
+    it('does not scroll to the top on page-size change when mobile', () => {
+        const scrollSpy = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+        const { getByTestId } = render(() => (
+            <Pagination {...baseProps} currentPage={2} totalPages={3} />
+        ));
+        fireEvent.click(getByTestId('page-size-trigger'));
+        fireEvent.click(getByTestId('page-size-menu').querySelectorAll('[class~="item"]')[1]);
+        expect(baseProps.onPageSizeChange).toHaveBeenCalledWith(20);
+        expect(scrollSpy).not.toHaveBeenCalled();
+        scrollSpy.mockRestore();
     });
 });

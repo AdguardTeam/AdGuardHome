@@ -4,7 +4,7 @@ import { IOption } from 'panel/lib/helpers/utils';
 export const SEARCH_ENABLE_LIMIT = 10;
 
 export type ISelectSize = 'auto' | 'small' | 'medium' | 'big' | 'big-limit' | 'responsive';
-export type ISelectHeight = 'small' | 'medium' | 'big' | 'big-mobile';
+export type ISelectHeight = 'extra-small' | 'small' | 'medium' | 'big' | 'big-mobile';
 export type ISelectMenuSize = 'small' | 'medium' | 'big' | 'large';
 export type ISelectValue<T, Multi extends boolean> = Multi extends true ? IOption<T>[] : IOption<T>;
 

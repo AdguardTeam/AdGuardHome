@@ -24,7 +24,8 @@
     'if': |
       ${{ github.repository_owner == 'AdGuardSoftwareLimited' }}
     'outputs':
-      'app_version': ${{ steps.app_version.outputs.app_version }}
+      'app_version': ${{ steps.set_envs.outputs.app_version }}
+      'source_date_epoch': ${{ steps.set_envs.outputs.source_date_epoch }}
     'permissions':
       'contents': 'read'
       'id-token': 'write'
@@ -32,17 +33,24 @@
     'steps':
       - 'uses': 'actions/checkout@v6'
         'with':
+          # Fetch all branches and tags to make the version script work.
           'fetch-depth': 0
           # Set to false to avoid GITHUB_TOKEN leaking.
           #
           # See https://github.com/actions/checkout/issues/485#issuecomment-934422611.
           'persist-credentials': false
-      - 'name': 'Set source date epoch'
+      - 'name': "Set environment variables"
+        'id': 'set_envs'
         'run': |
-          echo "SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)" >> "$GITHUB_ENV"
-      - 'name': 'Set app version'
-        'id': 'app_version'
-        'run': |
+          source_date_epoch=$(git log -1 --format=%ct)
+          readonly source_date_epoch
+
+          echo "SOURCE_DATE_EPOCH=${source_date_epoch}" >> "$GITHUB_ENV"
+
+          # Also expose the source date epoch as a job output, since the env
+          # context is not available to the other jobs.
+          echo "source_date_epoch=${source_date_epoch}" >> "$GITHUB_OUTPUT"
+
           app_version="$(env CHANNEL=${{ env.CHANNEL }} sh ./scripts/make/version.sh)"
           readonly app_version
 
@@ -140,9 +148,6 @@
           #
           # See https://github.com/actions/checkout/issues/485#issuecomment-934422611.
           'persist-credentials': false
-      - 'name': 'Set source date epoch'
-        'run': |
-          echo "SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)" >> "$GITHUB_ENV"
       - 'name': 'Build frontend'
         'uses': 'AdGuardSoftwareLimited/actions/actions/docker-build@master'
         'with':
@@ -176,7 +181,7 @@
             CACHE_BUSTER=${{ inputs.cache_buster || '0' }}
             CHANNEL=${{ env.CHANNEL }}
             DIST_DIR=${{ env.DIST_DIR }}
-            SOURCE_DATE_EPOCH=${{ env.SOURCE_DATE_EPOCH }}
+            SOURCE_DATE_EPOCH=${{ needs.Build.outputs.source_date_epoch }}
             VERSION=${{ needs.Build.outputs.app_version }}
       - 'uses': 'actions/upload-artifact@v7'
         'with':

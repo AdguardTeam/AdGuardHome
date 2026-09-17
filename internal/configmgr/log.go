@@ -42,12 +42,12 @@ type LogConfig struct {
 var _ validate.Interface = (*LogConfig)(nil)
 
 // Validate implements the [validate.Interface] interface for *LogConfig.
-//
-// TODO(d.kolyshev): Add more validations.
 func (c *LogConfig) Validate() (err error) {
 	if c == nil {
 		return errors.ErrNoValue
 	}
+
+	// TODO(d.kolyshev):  Add more validations.
 
 	return nil
 }

@@ -6,12 +6,14 @@ import { Tooltip } from 'panel/common/ui/Tooltip';
 import { QueriesTooltip } from 'panel/common/ui/QueriesTooltip';
 import { Link } from 'panel/common/ui/Link';
 import { RoutePath } from 'panel/components/Routes/Paths';
+import { QUERY_LOG_STATUS_FILTER } from 'panel/helpers/constants';
 import { formatCompactNumber } from 'panel/helpers/helpers';
 import theme from 'panel/lib/theme';
 import { getTrackerData } from 'panel/helpers/trackers/trackers';
 import { TableHeader } from '../TableHeader';
 import { TrackerTooltip } from '../TrackerTooltip';
 import { EmptyState } from '../EmptyState';
+import { CardFooter } from '../CardFooter';
 import { useSortedData } from '../../hooks/useSortedData';
 
 import s from '../TableCard.module.pcss';
@@ -24,6 +26,7 @@ type DomainInfo = {
 type Props = {
     topBlockedDomains: DomainInfo[];
     numBlockedFiltering: number;
+    period?: number;
 };
 
 export const TopBlockedDomains = (props: Props) => {
@@ -40,9 +43,16 @@ export const TopBlockedDomains = (props: Props) => {
 
                 <Show when={hasStats()}>
                     <div class={cn(theme.text.t3, s.cardSubtitle)}>
-                        {intl.getMessage('blocked_total', {
-                            value: formatCompactNumber(props.numBlockedFiltering),
-                        })}
+                        <Link
+                            to={RoutePath.QueryLog}
+                            query={{ status: QUERY_LOG_STATUS_FILTER.BLOCKED.QUERY }}
+                            class={s.cardSubtitleLink}
+                            data-testid="blocked-total-link"
+                        >
+                            {intl.getMessage('blocked_total', {
+                                value: formatCompactNumber(props.numBlockedFiltering),
+                            })}
+                        </Link>
                     </div>
                 </Show>
             </div>
@@ -88,7 +98,18 @@ export const TopBlockedDomains = (props: Props) => {
                                                 <Icon icon="eye_open" class={s.tableRowIcon} />
                                             </Tooltip>
                                         </Show>
-                                        <span class={s.domainName}>{domain.name}</span>
+                                        <Link
+                                            to={RoutePath.QueryLog}
+                                            query={{ search: `"${domain.name}"` }}
+                                            class={cn(
+                                                theme.text.t3,
+                                                theme.text.condenced,
+                                                s.domainNameLink,
+                                            )}
+                                            title={domain.name}
+                                        >
+                                            <span class={s.domainName}>{domain.name}</span>
+                                        </Link>
                                     </div>
 
                                     <div class={s.tableRowRight}>
@@ -146,6 +167,12 @@ export const TopBlockedDomains = (props: Props) => {
                     </For>
                 </Show>
             </div>
+
+            <CardFooter
+                to={RoutePath.TopBlockedDomains}
+                testId="show-more-top-blocked-domains"
+                query={props.period ? { period: props.period } : undefined}
+            />
         </div>
     );
 };

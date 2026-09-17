@@ -11,6 +11,7 @@ export type BreadcrumbLink = {
     path: RoutePathKey;
     title: string;
     props?: Partial<Record<string, string | number>>;
+    dataTestid?: string;
 };
 
 type Props = {
@@ -21,7 +22,7 @@ type Props = {
 export const Breadcrumbs = (props: Props) => (
     <div class={s.wrapper}>
         <For each={props.parentLinks}>
-            {({ path, title, props: linkProps }) => (
+            {({ path, title, props: linkProps, dataTestid }) => (
                 <div class={s.link}>
                     <Link
                         to={path}
@@ -32,6 +33,7 @@ export const Breadcrumbs = (props: Props) => (
                             theme.common.textOverflow,
                         )}
                         props={linkProps}
+                        data-testid={dataTestid}
                     >
                         {title}
                     </Link>
