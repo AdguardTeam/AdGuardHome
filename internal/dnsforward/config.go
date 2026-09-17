@@ -409,14 +409,14 @@ func newRatelimitMw(l *slog.Logger, conf ServerConfig) (mw proxy.Middleware, err
 		return proxy.MiddlewareFunc(proxy.PassThrough), nil
 	}
 
-	allowListAddrs := make(netutil.SliceSubnetSet, len(conf.RatelimitWhitelist))
+	allowListAddrs := make(netutil.SliceSubnetSet, 0, len(conf.RatelimitWhitelist))
 	for i, s := range conf.RatelimitWhitelist {
 		if !s.IsValid() {
-			return nil, fmt.Errorf("ratelimit whitelist ip at index %d is invalid", i)
+			return nil, fmt.Errorf("ratelimit: whitelist: at index %d: invalid ip", i)
 		}
 
 		s = s.Unmap()
-		allowListAddrs[i] = netip.PrefixFrom(s, s.BitLen())
+		allowListAddrs = append(allowListAddrs, netip.PrefixFrom(s, s.BitLen()))
 	}
 
 	rlConf := &ratelimit.Config{

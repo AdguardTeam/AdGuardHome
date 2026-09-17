@@ -63,7 +63,7 @@ func TestAnyNameMatches(t *testing.T) {
 	}
 }
 
-func TestNewRatelimitMw_Whitelist(t *testing.T) {
+func TestMiddleware_Wrap(t *testing.T) {
 	t.Parallel()
 
 	handler := proxy.HandlerFunc(
@@ -75,11 +75,12 @@ func TestNewRatelimitMw_Whitelist(t *testing.T) {
 	)
 
 	testCases := []struct {
-		name       string
-		conf       ServerConfig
-		req        netip.Addr
-		wantDrops  []bool
-		wantErrMsg string
+		name          string
+		conf          ServerConfig
+		req           netip.Addr
+		wantErrMsg    string
+		wantFirstDrop int
+		attemptNum    int
 	}{{
 		name: "disabled_ratelimit",
 		conf: ServerConfig{
@@ -88,8 +89,10 @@ func TestNewRatelimitMw_Whitelist(t *testing.T) {
 				RatelimitSubnetLenIPv6: netutil.IPv6BitLen,
 			},
 		},
-		req:       netip.MustParseAddr("192.0.2.1"),
-		wantDrops: []bool{false, false, false},
+		req:           netip.MustParseAddr("192.0.2.1"),
+		attemptNum:    3,
+		wantFirstDrop: 3,
+		wantErrMsg:    "",
 	}, {
 		name: "ratelimit_without_whitelist",
 		conf: ServerConfig{
@@ -99,8 +102,10 @@ func TestNewRatelimitMw_Whitelist(t *testing.T) {
 				RatelimitSubnetLenIPv6: netutil.IPv6BitLen,
 			},
 		},
-		req:       netip.MustParseAddr("192.0.2.1"),
-		wantDrops: []bool{false, true, true},
+		req:           netip.MustParseAddr("192.0.2.1"),
+		attemptNum:    3,
+		wantFirstDrop: 1,
+		wantErrMsg:    "",
 	}, {
 		name: "ratelimit_whitelisted_v4",
 		conf: ServerConfig{
@@ -111,8 +116,10 @@ func TestNewRatelimitMw_Whitelist(t *testing.T) {
 				RatelimitWhitelist:     []netip.Addr{netip.MustParseAddr("198.51.100.7")},
 			},
 		},
-		req:       netip.MustParseAddr("198.51.100.7"),
-		wantDrops: []bool{false, false, false, false},
+		req:           netip.MustParseAddr("198.51.100.7"),
+		attemptNum:    4,
+		wantFirstDrop: 4,
+		wantErrMsg:    "",
 	}, {
 		name: "ratelimit_whitelisted_v6",
 		conf: ServerConfig{
@@ -123,8 +130,10 @@ func TestNewRatelimitMw_Whitelist(t *testing.T) {
 				RatelimitWhitelist:     []netip.Addr{netip.MustParseAddr("2001:db8::7")},
 			},
 		},
-		req:       netip.MustParseAddr("2001:db8::7"),
-		wantDrops: []bool{false, false, false, false},
+		req:           netip.MustParseAddr("2001:db8::7"),
+		attemptNum:    4,
+		wantFirstDrop: 4,
+		wantErrMsg:    "",
 	}, {
 		name: "ratelimit_whitelist_other_ip",
 		conf: ServerConfig{
@@ -135,8 +144,10 @@ func TestNewRatelimitMw_Whitelist(t *testing.T) {
 				RatelimitWhitelist:     []netip.Addr{netip.MustParseAddr("198.51.100.7")},
 			},
 		},
-		req:       netip.MustParseAddr("192.0.2.1"),
-		wantDrops: []bool{false, true},
+		req:           netip.MustParseAddr("192.0.2.1"),
+		attemptNum:    2,
+		wantFirstDrop: 1,
+		wantErrMsg:    "",
 	}, {
 		name: "ratelimit_whitelisted_mapped_v4",
 		conf: ServerConfig{
@@ -147,9 +158,12 @@ func TestNewRatelimitMw_Whitelist(t *testing.T) {
 				RatelimitWhitelist:     []netip.Addr{netip.MustParseAddr("::ffff:198.51.100.7")},
 			},
 		},
-		req:       netip.MustParseAddr("198.51.100.7"),
-		wantDrops: []bool{false, false, false, false},
+		req:           netip.MustParseAddr("198.51.100.7"),
+		attemptNum:    4,
+		wantFirstDrop: 4,
+		wantErrMsg:    "",
 	}}
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
@@ -161,15 +175,15 @@ func TestNewRatelimitMw_Whitelist(t *testing.T) {
 			}
 
 			wrappedHdlr := mw.Wrap(handler)
-			handleDrops(t, wrappedHdlr, tc.req, tc.wantDrops)
+			handleDrops(t, wrappedHdlr, tc.req, tc.attemptNum, tc.wantFirstDrop)
 		})
 	}
 }
 
-func TestNewRatelimitMw_Whitelist_errors(t *testing.T) {
+func TestMiddleware_Wrap_errors(t *testing.T) {
 	t.Parallel()
 
-	const invalidIPErrorMsg = "ratelimit whitelist ip at index 0 is invalid"
+	const invalidIPErrorMsg = "ratelimit: whitelist: at index 0: invalid ip"
 
 	testCases := []struct {
 		name       string
@@ -200,6 +214,7 @@ func TestNewRatelimitMw_Whitelist_errors(t *testing.T) {
 		},
 		wantErrMsg: invalidIPErrorMsg,
 	}}
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
@@ -211,11 +226,17 @@ func TestNewRatelimitMw_Whitelist_errors(t *testing.T) {
 }
 
 // handleDrops handles a series of DNS requests and checks if they are dropped
-// according to the wantDrops slice.  wrapped must not be nil.
-func handleDrops(tb testing.TB, handler proxy.Handler, addr netip.Addr, wantDrops []bool) {
+// according to the wantDrops slice.  handler must not be nil.
+func handleDrops(
+	tb testing.TB,
+	handler proxy.Handler,
+	addr netip.Addr,
+	attemptNum int,
+	wantFirstDrop int,
+) {
 	const testPort = 1
 
-	for i, wantDrop := range wantDrops {
+	for i := 0; i < attemptNum; i++ {
 		dctx := &proxy.DNSContext{
 			Proto: proxy.ProtoUDP,
 			Addr:  netip.AddrPortFrom(addr, testPort),
@@ -223,12 +244,13 @@ func handleDrops(tb testing.TB, handler proxy.Handler, addr netip.Addr, wantDrop
 		}
 
 		err := handler.ServeDNS(testutil.ContextWithTimeout(tb, testTimeout), nil, dctx)
-		if wantDrop {
-			assert.ErrorIs(tb, err, proxy.ErrDrop, "request #%d", i)
+		if i >= wantFirstDrop {
+			assert.ErrorIsf(tb, err, proxy.ErrDrop, "request %d", i)
+
 			continue
 		}
-
 		require.NoError(tb, err)
+
 		assert.NotNil(tb, dctx.Res)
 	}
 }
