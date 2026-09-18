@@ -181,6 +181,8 @@ type doHConfig struct {
 	//   - "POST /dns-query"
 	//   - "GET /dns-query/{ClientID}"
 	//   - "POST /dns-query/{ClientID}"
+	//
+	// TODO(d.kolyshev):  Validate.
 	Routes []string `yaml:"routes"`
 
 	// InsecureEnabled allows DoH queries via unencrypted HTTP.

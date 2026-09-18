@@ -537,11 +537,12 @@ func (web *webAPI) finalizeInstall(
 		return
 	}
 
-	web.setDoHServer(newDoHServer(
-		web.baseLogger.With(slogutil.KeyPrefix, "doh_server"),
-		globalContext.dnsServer,
-		config.HTTPConfig.DoH.Routes,
-	))
+	doHSrv := newDoHServer(&doHServerConfig{
+		handler: globalContext.dnsServer,
+		logger:  web.baseLogger.With(slogutil.KeyPrefix, "doh_server"),
+		routes:  config.HTTPConfig.DoH.Routes,
+	})
+	web.setDoHServer(doHSrv)
 
 	err = config.write(
 		ctx,

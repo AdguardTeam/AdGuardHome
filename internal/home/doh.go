@@ -7,6 +7,20 @@ import (
 	"github.com/AdguardTeam/golibs/netutil/httputil"
 )
 
+// doHServerConfig is the configuration for a DNS-over-HTTPS server.
+type doHServerConfig struct {
+	// handler is the DoH handler that serves the DoH requests.  It must not be
+	// nil.
+	handler http.Handler
+
+	// logger is the logger used by the DoH server.  It must not be nil.
+	logger *slog.Logger
+
+	// routes are the route patterns that the DoH server will handle.  Each
+	// route entry must be a valid HTTP route pattern.
+	routes []string
+}
+
 // doHServer represents a DNS-over-HTTPS server.
 type doHServer struct {
 	// mux matches the DoH route patterns and serves the matched requests with
@@ -14,16 +28,15 @@ type doHServer struct {
 	mux *http.ServeMux
 }
 
-// newDoHServer returns a new properly initialized *doHServer.  logger and
-// handler must not be nil.
-func newDoHServer(logger *slog.Logger, handler http.Handler, routes []string) (srv *doHServer) {
-	h := httputil.Wrap(handler, httputil.MiddlewareFunc(limitRequestBody))
+// newDoHServer returns a new properly initialized *doHServer.  c must be valid.
+func newDoHServer(c *doHServerConfig) (srv *doHServer) {
+	h := httputil.Wrap(c.handler, httputil.MiddlewareFunc(limitRequestBody))
 
-	logMw := httputil.NewLogMiddleware(logger, slog.LevelDebug)
+	logMw := httputil.NewLogMiddleware(c.logger, slog.LevelDebug)
 	h = logMw.Wrap(h)
 
 	mux := http.NewServeMux()
-	for _, route := range routes {
+	for _, route := range c.routes {
 		mux.Handle(route, h)
 	}
 

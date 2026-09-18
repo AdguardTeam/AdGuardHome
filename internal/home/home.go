@@ -883,11 +883,12 @@ func run(
 	if !isFirstRun {
 		runDNSServer(ctx, baseLogger, tlsMgr, confModifier, statsDir, querylogDir, httpReg, hc)
 
-		web.setDoHServer(newDoHServer(
-			baseLogger.With(slogutil.KeyPrefix, "doh_server"),
-			globalContext.dnsServer,
-			config.HTTPConfig.DoH.Routes,
-		))
+		doHSrv := newDoHServer(&doHServerConfig{
+			handler: globalContext.dnsServer,
+			logger:  web.baseLogger.With(slogutil.KeyPrefix, "doh_server"),
+			routes:  config.HTTPConfig.DoH.Routes,
+		})
+		web.setDoHServer(doHSrv)
 	}
 
 	if !opts.noPermCheck {

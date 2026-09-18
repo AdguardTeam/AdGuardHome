@@ -57,13 +57,13 @@ func TestWebAPI_wrapMux(t *testing.T) {
 	})
 
 	var dohCalled bool
-	web.setDoHServer(newDoHServer(
-		testLogger,
-		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	web.setDoHServer(newDoHServer(&doHServerConfig{
+		handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			dohCalled = true
 		}),
-		[]string{http.MethodGet + " " + dohPath},
-	))
+		logger: testLogger,
+		routes: []string{http.MethodGet + " " + dohPath},
+	}))
 
 	h := web.wrapMux(testLogger)
 
