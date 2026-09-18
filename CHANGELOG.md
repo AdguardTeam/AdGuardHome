@@ -24,6 +24,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Incorrect addresses of DNS-over-HTTPS resolvers in DDR responses when the DNS bind hosts differ from the web server address.
+
 - `log.enabled` set to `false` leaving the legacy logger enabled ([#8565]).
 
 - DHCP server persisting uncommitted leases with zero expiry after `DHCPDISCOVER` messages ([#8572]).
