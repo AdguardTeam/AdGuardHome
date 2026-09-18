@@ -12,10 +12,10 @@ import (
 // DHCPConfig is the on-disk DHCP configuration.
 type DHCPConfig struct {
 	// Conf4 is the configuration of the DHCPv4 server.
-	Conf4 *V4ServerConf `yaml:"dhcpv4"`
+	Conf4 *DHCPv4Config `yaml:"dhcpv4"`
 
 	// Conf6 is the configuration of the DHCPv6 server.
-	Conf6 *V6ServerConf `yaml:"dhcpv6"`
+	Conf6 *DHCPv6Config `yaml:"dhcpv6"`
 
 	// InterfaceName is the name of the network interface the DHCP server
 	// listens on.
@@ -33,8 +33,8 @@ type DHCPConfig struct {
 	Enabled bool `yaml:"enabled"`
 }
 
-// V4ServerConf is the on-disk configuration of the DHCPv4 server.
-type V4ServerConf struct {
+// DHCPv4Config is the on-disk configuration of the DHCPv4 server.
+type DHCPv4Config struct {
 	// GatewayIP is the IPv4 address of the network gateway advertised to DHCP
 	// clients.
 	GatewayIP netip.Addr `yaml:"gateway_ip"`
@@ -67,8 +67,8 @@ type V4ServerConf struct {
 	LeaseDuration uint32 `yaml:"lease_duration"`
 }
 
-// V6ServerConf is the on-disk configuration of the DHCPv6 server.
-type V6ServerConf struct {
+// DHCPv6Config is the on-disk configuration of the DHCPv6 server.
+type DHCPv6Config struct {
 	// RangeStart is the first IPv6 address of the dynamic lease range.  The
 	// last allowed IP address ends with the 0xff byte.
 	RangeStart net.IP `yaml:"range_start"`
@@ -89,7 +89,7 @@ var _ validate.Interface = (*DHCPConfig)(nil)
 // Validate implements the [validate.Interface] interface for *DHCPConfig.
 func (c *DHCPConfig) Validate() (err error) {
 	if c == nil {
-		return nil
+		return errors.ErrNoValue
 	}
 
 	if !c.Enabled {
@@ -105,10 +105,10 @@ func (c *DHCPConfig) Validate() (err error) {
 }
 
 // type check
-var _ validate.Interface = (*V4ServerConf)(nil)
+var _ validate.Interface = (*DHCPv4Config)(nil)
 
-// Validate implements the [validate.Interface] interface for *V4ServerConf.
-func (c *V4ServerConf) Validate() (err error) {
+// Validate implements the [validate.Interface] interface for *DHCPv4Config.
+func (c *DHCPv4Config) Validate() (err error) {
 	if c == nil {
 		return errors.ErrNoValue
 	}
@@ -134,10 +134,6 @@ func (c *V4ServerConf) Validate() (err error) {
 		errs = append(errs, err)
 	}
 
-	if rangeStart.Compare(rangeEnd) >= 0 {
-		errs = append(errs, fmt.Errorf("invalid ip range: %v-%v", c.RangeStart, c.RangeEnd))
-	}
-
 	err = errors.Join(errs...)
 	if err != nil {
 		// Don't wrap the error, since it's informative enough as is.
@@ -148,12 +144,16 @@ func (c *V4ServerConf) Validate() (err error) {
 }
 
 // validateRange checks that the range is valid for the given network.
-func (c *V4ServerConf) validateRange(
+func (c *DHCPv4Config) validateRange(
 	rangeStart netip.Addr,
 	rangeEnd netip.Addr,
 	gatewayIP netip.Addr,
 	subnetMask netip.Addr,
 ) (err error) {
+	if rangeStart.Compare(rangeEnd) >= 0 {
+		return fmt.Errorf("invalid ip range: %v-%v", c.RangeStart, c.RangeEnd)
+	}
+
 	if rangeStart.Compare(gatewayIP) <= 0 && gatewayIP.Compare(rangeEnd) <= 0 {
 		return fmt.Errorf(
 			"gateway ip %v in the ip range: %v-%v",
@@ -196,10 +196,10 @@ func ensureV4(ip netip.Addr, kind string) (ip4 netip.Addr, err error) {
 }
 
 // type check
-var _ validate.Interface = (*V6ServerConf)(nil)
+var _ validate.Interface = (*DHCPv6Config)(nil)
 
-// Validate implements the [validate.Interface] interface for *V6ServerConf.
-func (c *V6ServerConf) Validate() (err error) {
+// Validate implements the [validate.Interface] interface for *DHCPv6Config.
+func (c *DHCPv6Config) Validate() (err error) {
 	// TODO(d.kolyshev):  Add validations.
 	return nil
 }
