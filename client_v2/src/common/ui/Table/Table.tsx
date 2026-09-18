@@ -3,8 +3,8 @@ import { createStore } from 'solid-js/store';
 import cn from 'clsx';
 
 import { Loader } from 'panel/common/ui/Loader';
-import theme from 'panel/lib/theme';
 import { Pagination } from './blocks/Pagination/Pagination';
+import { HeaderLabel } from './blocks/HeaderLabel/HeaderLabel';
 
 import s from './Table.module.pcss';
 
@@ -51,6 +51,11 @@ export interface TableProps<T = any> {
     onRowClick?: (row: T) => void;
     tableHeaderClass?: string;
     tableRowClass?: string;
+    /**
+     * Show a tooltip with the full label when a column header's text is
+     * clipped by `text-overflow: ellipsis`
+     */
+    headerTooltip?: boolean;
 }
 
 export const Table = <T extends Record<string, any>>(props: TableProps<T>) => {
@@ -238,18 +243,11 @@ export const Table = <T extends Record<string, any>>(props: TableProps<T>) => {
                                         {column.header.render ? (
                                             column.header.render()
                                         ) : (
-                                            <span
-                                                data-testid={`table-header-${column.key}`}
-                                                title={column.header.text}
-                                                class={cn(
-                                                    theme.text.t3,
-                                                    theme.text.condenced,
-                                                    theme.text.semibold,
-                                                    s.tableHeaderText,
-                                                )}
-                                            >
-                                                {column.header.text}
-                                            </span>
+                                            <HeaderLabel
+                                                columnKey={column.key}
+                                                text={column.header.text}
+                                                tooltip={props.headerTooltip}
+                                            />
                                         )}
 
                                         {(props.sortable ?? true) && column.sortable && (

@@ -57,6 +57,8 @@ type logSettings struct {
 // ls must not be nil.
 func newSlogLogger(ls *logSettings) (l *slog.Logger) {
 	if !ls.enabled {
+		log.SetLevel(log.OFF)
+
 		return slogutil.NewDiscardLogger()
 	}
 

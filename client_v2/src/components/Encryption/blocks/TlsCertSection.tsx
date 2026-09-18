@@ -6,9 +6,10 @@ import {
     encryptionState,
     setTlsConfig,
     resetValidationStatus,
-    clearCertOptimistically,
+    applyTlsOptimistically,
 } from 'panel/stores/encryption';
-import { CertificateStatus, KeyStatus, ValidationStatus } from '../Status';
+import { CertificateStatus, ValidationStatus } from '../Status';
+import { defaultTlsValues, getSubmitValues } from './helpers';
 import s from '../styles.module.pcss';
 import theme from 'panel/lib/theme';
 
@@ -17,18 +18,21 @@ export const TlsCertSection = () => {
 
     const enc = () => encryptionState;
 
+    /**
+     * Removing the certificate takes the whole encryption setup down with it:
+     * encryption is turned off and the TLS data goes back to its defaults, the
+     * same payload "Reset DNS protocols" writes.  The server settings row is
+     * disabled without a pair but keeps rendering what it knows, so a partial
+     * reset would leave the hostname, the ports, and the redirect behind —
+     * describing a server that no longer serves TLS, and seeding the next
+     * wizard run with those values.
+     */
     const handleRemoveCert = () => {
-        clearCertOptimistically();
+        const values = getSubmitValues(defaultTlsValues);
+
+        applyTlsOptimistically(values);
         resetValidationStatus();
-        setTlsConfig({
-            enabled: false,
-            serve_plain_dns: true,
-            certificate_chain: '',
-            private_key: '',
-            certificate_path: '',
-            private_key_path: '',
-            private_key_saved: false,
-        });
+        setTlsConfig(values);
         setShowDeleteConfirm(false);
     };
 
@@ -52,19 +56,15 @@ export const TlsCertSection = () => {
         }
         if (!enc().certificate_chain && !enc().certificate_path) return null;
         return (
-            <>
-                <CertificateStatus
-                    validChain={enc().valid_chain}
-                    validCert={enc().valid_cert}
-                    subject={enc().subject}
-                    issuer={enc().issuer}
-                    notAfter={enc().not_after}
-                    dnsNames={enc().dns_names}
-                />
-                <Show when={enc().private_key || enc().private_key_path}>
-                    <KeyStatus validKey={enc().valid_key} keyType={enc().key_type} />
-                </Show>
-            </>
+            <CertificateStatus
+                validChain={enc().valid_chain}
+                validCert={enc().valid_cert}
+                subject={enc().subject}
+                issuer={enc().issuer}
+                notAfter={enc().not_after}
+                dnsNames={enc().dns_names}
+                keyType={enc().valid_key ? enc().key_type : undefined}
+            />
         );
     };
 
@@ -77,6 +77,7 @@ export const TlsCertSection = () => {
                     class={theme.form.action}
                     onClick={() => setShowDeleteConfirm(true)}
                     aria-label={intl.getMessage('encryption_certificates')}
+                    data-testid="tls-cert-remove"
                 >
                     <Icon icon="delete" color="red" />
                 </button>
@@ -85,9 +86,9 @@ export const TlsCertSection = () => {
 
             <Show when={showDeleteConfirm()}>
                 <ConfirmDialog
-                    title={intl.getMessage('delete_tls_certificate')}
-                    text={intl.getMessage('delete_tls_certificate_desc')}
-                    buttonText={intl.getMessage('delete_table_action_confirm')}
+                    title={intl.getMessage('remove_tls_certificate')}
+                    text={intl.getMessage('remove_tls_certificate_desc')}
+                    buttonText={intl.getMessage('yes_remove')}
                     cancelText={intl.getMessage('cancel')}
                     buttonVariant="danger"
                     onConfirm={handleRemoveCert}

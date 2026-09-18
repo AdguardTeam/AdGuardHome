@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@solidjs/testing-library';
 
 import { StaticLeaseModal } from 'panel/components/Dhcp/LeasesPage/StaticLeaseModal';
+import { copyInDom } from 'panel/__tests__/helpers/copy';
 
 const existingLeases = [{ mac: 'AA:BB:CC:DD:EE:FF', ip: '192.168.1.50', hostname: 'router' }];
 
@@ -41,8 +42,8 @@ describe('StaticLeaseModal', () => {
         fillLease('00:11:22:33:44:55', '192.168.1.100', 'router');
         fireEvent.blur(getInput('static_lease_hostname'));
 
-        expect(screen.getByText('This hostname is already added')).toBeInTheDocument();
-        fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+        expect(screen.getByText(copyInDom('dhcp_hostname_already_added'))).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: copyInDom('save') }));
         expect(onSubmit).not.toHaveBeenCalled();
     });
 
@@ -52,7 +53,7 @@ describe('StaticLeaseModal', () => {
             initialData: { mac: 'AA:BB:CC:DD:EE:FF', ip: '192.168.1.50', hostname: 'router' },
         });
         fireEvent.change(getInput('static_lease_ip'), { target: { value: '192.168.1.60' } });
-        fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+        fireEvent.click(screen.getByRole('button', { name: copyInDom('save') }));
 
         expect(onSubmit).toHaveBeenCalledWith({
             mac: 'AA:BB:CC:DD:EE:FF',
@@ -67,7 +68,7 @@ describe('StaticLeaseModal', () => {
         fireEvent.blur(getInput('static_lease_hostname'));
 
         expect(
-            screen.getByText('Hostname must not be longer than 253 characters'),
+            screen.getByText(copyInDom('form_error_hostname_length', { max: 253 })),
         ).toBeInTheDocument();
         expect(onSubmit).not.toHaveBeenCalled();
     });
@@ -78,9 +79,9 @@ describe('StaticLeaseModal', () => {
         });
         // Backend returns MACs lowercase; the user may type them uppercase.
         fillLease('AA:BB:CC:DD:EE:FF', '192.168.1.100', 'device');
-        fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+        fireEvent.click(screen.getByRole('button', { name: copyInDom('save') }));
 
-        expect(screen.getByText('This MAC address is already added')).toBeInTheDocument();
+        expect(screen.getByText(copyInDom('dhcp_mac_address_already_added'))).toBeInTheDocument();
         expect(onSubmit).not.toHaveBeenCalled();
     });
 });

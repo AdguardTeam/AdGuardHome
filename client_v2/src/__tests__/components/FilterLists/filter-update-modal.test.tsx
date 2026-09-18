@@ -7,6 +7,7 @@ import { getFilteringStatus } from 'panel/stores/filtering';
 import { openModal, closeModal } from 'panel/stores/modals';
 import { MODAL_TYPE } from 'panel/helpers/constants';
 import intl from 'panel/common/intl';
+import { copyInDom } from 'panel/__tests__/helpers/copy';
 
 const mocks = vi.hoisted(() => ({
     apiSetFiltersConfig: vi.fn(() => Promise.resolve(undefined)),
@@ -74,7 +75,7 @@ describe('FilterUpdateModal interval', () => {
 
         const hourly = container.querySelector('#interval-1') as HTMLInputElement;
         await userEvent.click(hourly);
-        await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+        await userEvent.click(screen.getByRole('button', { name: copyInDom('save') }));
 
         expect(mocks.apiSetFiltersConfig).toHaveBeenCalledWith({
             enabled: true,

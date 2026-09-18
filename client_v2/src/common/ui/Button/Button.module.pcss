@@ -160,6 +160,28 @@
     }
 }
 
+.warning {
+    color: var(--gray-0);
+    background: var(--default-warning-button);
+    border-color: var(--default-warning-button);
+
+    &:hover,
+    &:focus-visible {
+        background: var(--hovered-warning-button);
+        border-color: var(--hovered-warning-button);
+    }
+
+    &:active {
+        background: var(--pressed-warning-button);
+        border-color: var(--pressed-warning-button);
+    }
+
+    &:disabled {
+        background: var(--disabled-warning-button);
+        border-color: var(--disabled-warning-button);
+    }
+}
+
 .icon {
     & + .text {
         position: relative;

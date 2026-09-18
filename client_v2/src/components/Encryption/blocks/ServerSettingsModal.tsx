@@ -1,137 +1,112 @@
 import { createEffect, createSignal, on } from 'solid-js';
+import { createStore } from 'solid-js/store';
+
 import { ConfigDialog } from 'panel/common/ui/ConfigDialog';
-import { Input } from 'panel/common/controls/Input';
-import { FaqTooltip } from 'panel/common/ui/FaqTooltip';
 import intl from 'panel/common/intl';
+import { normalizeServerName, toNumber } from 'panel/helpers/form';
+import { validateServerName } from 'panel/helpers/validators';
 import { encryptionState, setTlsConfig } from 'panel/stores/encryption';
-import { toNumber, normalizeServerName } from 'panel/helpers/form';
-import { validateServerName, validatePort, validateIsSafePort } from 'panel/helpers/validators';
-import s from '../styles.module.pcss';
-import theme from 'panel/lib/theme';
+import {
+    validatePortField,
+    validateServerSettings,
+    type ServerSettingsField,
+    type ServerSettingsValues,
+} from '../validate';
+import { getExternalPorts } from './helpers';
+import { ServerSettingsFields } from './ServerSettingsFields';
 
 type Props = {
     open: boolean;
     onClose: () => void;
 };
 
+const defaults: ServerSettingsValues = {
+    server_name: '',
+    port_https: 0,
+    port_dns_over_tls: 0,
+    port_dns_over_quic: 0,
+};
+
 export const ServerSettingsModal = (props: Props) => {
-    const [serverName, setServerName] = createSignal('');
-    const [portHttps, setPortHttps] = createSignal(0);
-    const [portDot, setPortDot] = createSignal(0);
-    const [portDoq, setPortDoq] = createSignal(0);
+    const [values, setValues] = createStore<ServerSettingsValues>({ ...defaults });
     const [errors, setErrors] = createSignal<Record<string, string>>({});
 
     createEffect(
         on(
             () => props.open,
             (open) => {
-                if (open) {
-                    setServerName(encryptionState.server_name || '');
-                    setPortHttps(Number(encryptionState.port_https) || 0);
-                    setPortDot(Number(encryptionState.port_dns_over_tls) || 0);
-                    setPortDoq(Number(encryptionState.port_dns_over_quic) || 0);
-                    setErrors({});
-                }
+                if (!open) return;
+
+                setValues({
+                    server_name: encryptionState.server_name || '',
+                    port_https: Number(encryptionState.port_https) || 0,
+                    port_dns_over_tls: Number(encryptionState.port_dns_over_tls) || 0,
+                    port_dns_over_quic: Number(encryptionState.port_dns_over_quic) || 0,
+                });
+                setErrors({});
             },
         ),
     );
 
-    const clearError = (field: string) => {
+    /** Errors that follow from the current values, e.g. a port conflict. */
+    const clientErrors = () => validateServerSettings(values, getExternalPorts());
+
+    /**
+     * Error to render under a field: blur/submit errors win, then the live
+     * client-side rules.  Only the ports have live rules — the server name is
+     * validated on blur and by the backend, so typing does not flash an error
+     * mid-word.
+     */
+    const fieldError = (field: ServerSettingsField) =>
+        errors()[field] ?? (field === 'server_name' ? undefined : clientErrors()[field]);
+
+    const setFieldError = (field: ServerSettingsField, message?: string) => {
         setErrors((prev) => {
             const next = { ...prev };
-            delete next[field];
-            return next;
-        });
-    };
-
-    const hasErrors = () => Object.values(errors()).some(Boolean);
-
-    const handleServerNameChange = (e: Event) => {
-        setServerName((e.target as HTMLInputElement).value);
-        clearError('server_name');
-    };
-
-    const handlePortHttpsChange = (e: Event) => {
-        setPortHttps(toNumber((e.target as HTMLInputElement).value));
-        clearError('port_https');
-    };
-
-    const handlePortDotChange = (e: Event) => {
-        setPortDot(toNumber((e.target as HTMLInputElement).value));
-        clearError('port_dns_over_tls');
-    };
-
-    const handlePortDoqChange = (e: Event) => {
-        setPortDoq(toNumber((e.target as HTMLInputElement).value));
-        clearError('port_dns_over_quic');
-    };
-
-    const handleServerNameBlur = () => {
-        const normalized = normalizeServerName(serverName());
-        setServerName(normalized);
-
-        const err = validateServerName(normalized);
-        setErrors((prev) => {
-            const next = { ...prev };
-            if (err) {
-                next.server_name = err;
+            if (message) {
+                next[field] = message;
             } else {
-                delete next.server_name;
+                delete next[field];
             }
             return next;
         });
     };
 
-    const handlePortHttpsBlur = () => {
-        const err = validatePort(portHttps()) || validateIsSafePort(portHttps());
-        setErrors((prev) => {
-            const next = { ...prev };
-            if (err) {
-                next.port_https = err as string;
-            } else {
-                delete next.port_https;
-            }
-            return next;
-        });
+    const handleFieldChange = (field: ServerSettingsField, raw: string) => {
+        setFieldError(field);
+        if (field === 'server_name') {
+            setValues('server_name', raw);
+            return;
+        }
+        setValues(field, toNumber(raw));
     };
 
-    const handlePortDotBlur = () => {
-        const err = validatePort(portDot());
-        setErrors((prev) => {
-            const next = { ...prev };
-            if (err) {
-                next.port_dns_over_tls = err as string;
-            } else {
-                delete next.port_dns_over_tls;
-            }
-            return next;
-        });
-    };
+    const handleFieldBlur = (field: ServerSettingsField) => {
+        if (field === 'server_name') {
+            const normalized = normalizeServerName(String(values.server_name ?? ''));
+            setValues('server_name', normalized);
+            setFieldError(field, validateServerName(normalized));
+            return;
+        }
 
-    const handlePortDoqBlur = () => {
-        const err = validatePort(portDoq());
-        setErrors((prev) => {
-            const next = { ...prev };
-            if (err) {
-                next.port_dns_over_quic = err as string;
-            } else {
-                delete next.port_dns_over_quic;
-            }
-            return next;
-        });
+        const port = Number(values[field]) || 0;
+        setFieldError(field, validatePortField(field, port));
     };
 
     const save = () => {
-        setTlsConfig({
-            server_name: serverName(),
-            port_https: portHttps(),
-            port_dns_over_tls: portDot(),
-            port_dns_over_quic: portDoq(),
-        });
+        const errs = clientErrors();
+        if (Object.values(errs).some(Boolean)) {
+            setErrors(errs);
+            return;
+        }
+
+        setTlsConfig({ ...values });
         props.onClose();
     };
 
     const processing = () => encryptionState.processingConfig || encryptionState.processingValidate;
+    const hasErrors = () =>
+        Object.values(errors()).some(Boolean) || Object.values(clientErrors()).some(Boolean);
 
     return (
         <ConfigDialog
@@ -142,99 +117,13 @@ export const ServerSettingsModal = (props: Props) => {
             processing={processing()}
             submitDisabled={processing() || hasErrors()}
         >
-            <div class={theme.form.input}>
-                <Input
-                    id="server_name"
-                    name="server_name"
-                    value={serverName()}
-                    onChange={handleServerNameChange}
-                    onBlur={handleServerNameBlur}
-                    label={
-                        <>
-                            {intl.getMessage('encryption_server')}
-                            <FaqTooltip
-                                menuSize="large"
-                                text={
-                                    <>
-                                        <div class={s.tooltipText}>
-                                            {intl.getMessage('encryption_server_tooltip_1')}
-                                        </div>
-                                        <div class={s.tooltipText}>
-                                            {intl.getMessage('encryption_server_tooltip_2')}
-                                        </div>
-                                    </>
-                                }
-                            />
-                        </>
-                    }
-                    placeholder={intl.getMessage('encryption_server_enter')}
-                    errorMessage={errors().server_name}
-                    size="large"
-                />
-            </div>
-            <div class={theme.form.input}>
-                <Input
-                    id="port_https"
-                    name="port_https"
-                    type="number"
-                    value={portHttps()}
-                    onChange={handlePortHttpsChange}
-                    onBlur={handlePortHttpsBlur}
-                    label={
-                        <>
-                            {intl.getMessage('encryption_https')}
-                            <FaqTooltip
-                                menuSize="large"
-                                text={intl.getMessage('encryption_https_tooltip')}
-                            />
-                        </>
-                    }
-                    errorMessage={errors().port_https}
-                    size="large"
-                />
-            </div>
-            <div class={theme.form.input}>
-                <Input
-                    id="port_dns_over_tls"
-                    name="port_dns_over_tls"
-                    type="number"
-                    value={portDot()}
-                    onChange={handlePortDotChange}
-                    onBlur={handlePortDotBlur}
-                    label={
-                        <>
-                            {intl.getMessage('encryption_dot')}
-                            <FaqTooltip
-                                menuSize="large"
-                                text={intl.getMessage('encryption_dot_tooltip')}
-                            />
-                        </>
-                    }
-                    errorMessage={errors().port_dns_over_tls}
-                    size="large"
-                />
-            </div>
-            <div class={theme.form.input}>
-                <Input
-                    id="port_dns_over_quic"
-                    name="port_dns_over_quic"
-                    type="number"
-                    value={portDoq()}
-                    onChange={handlePortDoqChange}
-                    onBlur={handlePortDoqBlur}
-                    label={
-                        <>
-                            {intl.getMessage('encryption_doq')}
-                            <FaqTooltip
-                                menuSize="large"
-                                text={intl.getMessage('encryption_doq_tooltip')}
-                            />
-                        </>
-                    }
-                    errorMessage={errors().port_dns_over_quic}
-                    size="large"
-                />
-            </div>
+            <ServerSettingsFields
+                values={values}
+                onFieldChange={handleFieldChange}
+                onFieldBlur={handleFieldBlur}
+                errorFor={fieldError}
+                clearable
+            />
         </ConfigDialog>
     );
 };

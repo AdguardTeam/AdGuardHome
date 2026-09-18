@@ -1,0 +1,45 @@
+.dropzone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 146px;
+    padding: 16px;
+    border: 1px solid transparent;
+    border-radius: 16px;
+    background-color: var(--page-background-additional);
+    color: var(--default-description-text);
+    font-weight: 400;
+    text-align: center;
+    cursor: pointer;
+
+    &.dragOver {
+        background-color: var(--fills-backgrounds-recent-activity);
+        border: 1px dashed var(--default-product-icon);
+        color: var(--default-main-text);
+    }
+}
+
+.browseLink {
+    color: var(--default-link);
+}
+
+.dropzoneIcon {
+    width: 40px;
+    height: 40px;
+    color: var(--default-main-text);
+}
+
+.hiddenFileInput {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}

@@ -20,6 +20,8 @@ import {
     validateLeaseTime,
 } from 'panel/helpers/validators';
 
+import { copy } from 'panel/__tests__/helpers/copy';
+
 describe('validateIdentifier', () => {
     it('returns required error for empty string', () => {
         const result = validateIdentifier('', [], 0);
@@ -110,52 +112,52 @@ describe('validateUpstreams', () => {
 
     it('returns error for a line without dot or colon', () => {
         const result = validateUpstreams('not-a-valid-upstream');
-        expect(result).toBe('Invalid format');
+        expect(result).toBe(copy('form_error_format'));
     });
 
     it('returns error on the correct line number for mixed content', () => {
         const result = validateUpstreams('1.1.1.1\nbadline\ntls://ok.com');
-        expect(result).toBe('Invalid format on line 2');
+        expect(result).toBe(copy('form_error_format_line', { line: 2 }));
     });
 
     it('skips comments and only flags real lines', () => {
         const result = validateUpstreams('# comment\nbadline\n1.1.1.1');
-        expect(result).toBe('Invalid format on line 2');
+        expect(result).toBe(copy('form_error_format_line', { line: 2 }));
     });
 
     it('returns "Invalid format" for single invalid line with trailing newline', () => {
         const result = validateUpstreams('badline\n');
-        expect(result).toBe('Invalid format');
+        expect(result).toBe(copy('form_error_format'));
     });
 
     it('returns "Invalid format" for single invalid line with leading newline', () => {
         const result = validateUpstreams('\nbadline');
-        expect(result).toBe('Invalid format');
+        expect(result).toBe(copy('form_error_format'));
     });
 
     it('returns "Invalid format on lines 1, 2" when both invalid', () => {
         const result = validateUpstreams('bad1\nbad2');
-        expect(result).toBe('Invalid format on lines 1, 2');
+        expect(result).toBe(copy('form_error_format_lines', { lines: '1, 2' }));
     });
 
     it('returns "Invalid format on line 2" when second line invalid in multi-content', () => {
         const result = validateUpstreams('1.1.1.1\nbad');
-        expect(result).toBe('Invalid format on line 2');
+        expect(result).toBe(copy('form_error_format_line', { line: 2 }));
     });
 
     it('handles blank line between two invalid lines', () => {
         const result = validateUpstreams('bad1\n\nbad2');
-        expect(result).toBe('Invalid format on lines 1, 3');
+        expect(result).toBe(copy('form_error_format_lines', { lines: '1, 3' }));
     });
 
     it('returns "Invalid format" for comment-then-invalid (one content line)', () => {
         const result = validateUpstreams('# comment\nbadline');
-        expect(result).toBe('Invalid format');
+        expect(result).toBe(copy('form_error_format'));
     });
 
     it('returns "Invalid format" for invalid-then-comment (one content line)', () => {
         const result = validateUpstreams('badline\n# comment');
-        expect(result).toBe('Invalid format');
+        expect(result).toBe(copy('form_error_format'));
     });
 });
 
@@ -449,42 +451,77 @@ describe('validateCacheSize', () => {
 
 describe('validateRewriteNotExists', () => {
     it('returns undefined for a non-existing domain', () => {
-        const result = validateRewriteNotExists('new.example.com', [
-            { domain: 'existing.example.com' },
+        const result = validateRewriteNotExists('new.example.com', '1.2.3.4', [
+            { domain: 'existing.example.com', answer: '1.2.3.4' },
         ]);
         expect(result).toBeUndefined();
     });
 
-    it('returns error for a domain that already exists', () => {
-        const result = validateRewriteNotExists('example.com', [{ domain: 'example.com' }]);
+    it('returns undefined for the same domain with a different answer', () => {
+        const result = validateRewriteNotExists('example.com', '5.6.7.8', [
+            { domain: 'example.com', answer: '1.2.3.4' },
+        ]);
+        expect(result).toBeUndefined();
+    });
+
+    it('returns error for a duplicated domain and answer', () => {
+        const result = validateRewriteNotExists('example.com', '1.2.3.4', [
+            { domain: 'example.com', answer: '1.2.3.4' },
+        ]);
         expect(result).toBeTruthy();
     });
 
     it('returns undefined when editing the same rewrite', () => {
         const result = validateRewriteNotExists(
             'example.com',
-            [{ domain: 'example.com' }],
-            'example.com',
+            '1.2.3.4',
+            [{ domain: 'example.com', answer: '1.2.3.4' }],
+            { domain: 'example.com', answer: '1.2.3.4' },
         );
         expect(result).toBeUndefined();
     });
 
-    it('returns error when editing and changing to an existing other domain', () => {
+    it('returns undefined when editing and changing the answer', () => {
+        const result = validateRewriteNotExists(
+            'example.com',
+            '5.6.7.8',
+            [{ domain: 'example.com', answer: '1.2.3.4' }],
+            { domain: 'example.com', answer: '1.2.3.4' },
+        );
+        expect(result).toBeUndefined();
+    });
+
+    it('returns error when editing and changing to an existing domain/answer pair', () => {
         const result = validateRewriteNotExists(
             'other.example.com',
-            [{ domain: 'example.com' }, { domain: 'other.example.com' }],
-            'example.com',
+            '1.2.3.4',
+            [
+                { domain: 'example.com', answer: '1.2.3.4' },
+                { domain: 'other.example.com', answer: '1.2.3.4' },
+            ],
+            { domain: 'example.com', answer: '1.2.3.4' },
         );
         expect(result).toBeTruthy();
     });
 
     it('returns undefined for an empty domain', () => {
-        const result = validateRewriteNotExists('', [{ domain: 'example.com' }]);
+        const result = validateRewriteNotExists('', '1.2.3.4', [
+            { domain: 'example.com', answer: '1.2.3.4' },
+        ]);
+        expect(result).toBeUndefined();
+    });
+
+    it('returns undefined for an empty answer', () => {
+        const result = validateRewriteNotExists('example.com', '', [
+            { domain: 'example.com', answer: '1.2.3.4' },
+        ]);
         expect(result).toBeUndefined();
     });
 
     it('case-insensitive duplicate check', () => {
-        const result = validateRewriteNotExists('Example.COM', [{ domain: 'example.com' }]);
+        const result = validateRewriteNotExists('Example.COM', '1.2.3.4', [
+            { domain: 'example.com', answer: '1.2.3.4' },
+        ]);
         expect(result).toBeTruthy();
     });
 });
