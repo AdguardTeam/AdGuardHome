@@ -36,14 +36,17 @@ type DHCPConfig struct {
 // DHCPv4Config is the on-disk configuration of the DHCPv4 server.
 type DHCPv4Config struct {
 	// GatewayIP is the IPv4 address of the network gateway advertised to DHCP
-	// clients.
+	// clients.  It must be outside the RangeStart–RangeEnd range.
 	GatewayIP netip.Addr `yaml:"gateway_ip"`
 
-	// RangeStart is the first IPv4 address of the dynamic lease range.  Bytes
-	// [0..2] of RangeEnd must match those of RangeStart.
+	// RangeStart is the first IPv4 address of the dynamic lease range.  It
+	// must be within the subnet defined by GatewayIP and SubnetMask and must
+	// be less than RangeEnd.
 	RangeStart netip.Addr `yaml:"range_start"`
 
-	// RangeEnd is the last IPv4 address of the dynamic lease range.
+	// RangeEnd is the last IPv4 address of the dynamic lease range.  It must
+	// be within the subnet defined by GatewayIP and SubnetMask and must be
+	// greater than RangeStart.
 	RangeEnd netip.Addr `yaml:"range_end"`
 
 	// SubnetMask is the IPv4 subnet mask of the served network.
