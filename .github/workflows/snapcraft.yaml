@@ -1,0 +1,98 @@
+'env':
+  'BASE_IMAGE': |-
+    ${{ vars.SNAP_BASE_IMAGE || 'adguard/snap-builder:2.1' }}
+  'CHANNEL': |-
+    ${{ case(
+      startsWith(github.ref_name, 'release-v'), 'release',
+      startsWith(github.ref_name, 'beta-v'), 'beta',
+      'edge'
+    ) }}
+  'SNAPCRAFT_CHANNEL': |-
+    ${{ case(
+      startsWith(github.ref_name, 'release-v'), 'candidate',
+      startsWith(github.ref_name, 'beta-v'), 'beta',
+      'edge'
+    ) }}
+jobs:
+  'Build':
+    'if': |
+      ${{ github.repository_owner == 'AdGuardSoftwareLimited' }}
+    'permissions':
+      'contents': 'read'
+      'id-token': 'write'
+    'runs-on': 'team-go'
+    'steps':
+      - 'uses': 'actions/checkout@v6'
+        'with':
+          # Set to false to avoid GITHUB_TOKEN leaking.
+          #
+          # See https://github.com/actions/checkout/issues/485#issuecomment-934422611.
+          'persist-credentials': false
+      - 'name': 'Build'
+        'uses': 'AdGuardSoftwareLimited/actions/actions/docker-build@master'
+        'with':
+          'dockerfile': 'docker/snapcraft.Dockerfile'
+          'context': '.'
+          'target': 'builder-exporter'
+          'output': '.'
+          'build-args': |
+            BASE_IMAGE=${{ env.BASE_IMAGE }}
+            CACHE_BUSTER=${{ inputs.cache_buster || '0' }}
+            CHANNEL=${{ env.CHANNEL }}
+      - 'uses': 'actions/upload-artifact@v7'
+        'with':
+          'name': 'adguardhome'
+          'path': |
+            AdGuardHome_amd64.snap
+            AdGuardHome_armhf.snap
+            AdGuardHome_arm64.snap
+            AdGuardHome_i386.snap
+      - 'name': 'Retrieve Snapcraft secrets'
+        'uses': 'hashicorp/vault-action@v4'
+        'with':
+          'url': ${{ vars.VAULT_URL }}
+          'method': 'jwt'
+          'role': 'snapcraft'
+          'secrets': |
+            secret/data/ci-secrets/snapcraft macaroonPassword | SNAPCRAFT_STORE_CREDENTIALS ;
+      - 'name': 'Publish to Snapstore'
+        'uses': 'AdGuardSoftwareLimited/actions/actions/docker-build@master'
+        'with':
+          'dockerfile': 'docker/snapcraft.Dockerfile'
+          'context': '.'
+          'target': 'publisher'
+          'output': '.'
+          'build-args': |
+            BASE_IMAGE=${{ env.BASE_IMAGE }}
+            CACHE_BUSTER=${{ inputs.cache_buster || '0' }}
+            SNAPCRAFT_CHANNEL=${{ env.SNAPCRAFT_CHANNEL }}
+          'secrets': |
+            SNAPCRAFT_STORE_CREDENTIALS=${{ env.SNAPCRAFT_STORE_CREDENTIALS }}
+'name': 'Build and publish Snapcraft release'
+'on':
+  # Only the daily schedule runs automatically, on the default branch.  Builds
+  # for the beta-v* and release-v* branches are manual and must be triggered via
+  # workflow_dispatch with the corresponding branch selected.
+  'schedule':
+    # Don't use minute values that end with a zero or a five as these are often
+    # used in CI and so resources during these minutes can be quite busy.
+    #
+    # NOTE: The time is chosen to be exactly one hour after the main release
+    # build as defined as in release.yaml.
+    #
+    # GitHub Actions uses standard 5-field POSIX cron: runs at 14:42 UTC on
+    # weekdays (Mon-Fri).
+    - cron: '42 14 * * 1-5'
+  'workflow_dispatch':
+    'inputs':
+      'cache_buster':
+        'default': ''
+        'description': |
+          Override to force re-run of cached stages (pass any unique value).
+        'type': 'string'
+# Permissions are disabled for all the jobs by default, and then overridden for
+# specific jobs if needed.  This is a recommended practice for security reasons,
+# and also allows to avoid mistakes with permissions when creating new jobs.
+#
+# See https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#permissions.
+'permissions': {}

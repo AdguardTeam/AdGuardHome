@@ -3,6 +3,8 @@
     ${{ vars.BASE_IMAGE || 'adguard/go-builder:1.26.8--1' }}
   'BUILD_DIR': |-
     build
+  'CHANNEL': |-
+    development
   'CLIENT_DIR': |-
     ${{ inputs.client_dir || 'client_v2' }}
   'DIST_DIR': |-
@@ -19,10 +21,24 @@
     'steps':
       - 'uses': 'actions/checkout@v6'
         'with':
+          # Fetch all branches and tags to make the version script work.
+          'fetch-depth': 0
           # Set to false to avoid GITHUB_TOKEN leaking.
           #
           # See https://github.com/actions/checkout/issues/485#issuecomment-934422611.
           'persist-credentials': false
+      - 'name': "Set environment variables"
+        'id': 'set_envs'
+        'run': |
+          source_date_epoch=$(git log -1 --format=%ct)
+          readonly source_date_epoch
+
+          echo "SOURCE_DATE_EPOCH=${source_date_epoch}" >> "$GITHUB_ENV"
+
+          app_version="$(env CHANNEL=${{ env.CHANNEL }} sh ./scripts/make/version.sh)"
+          readonly app_version
+
+          echo "APP_VERSION=${app_version}" >> "$GITHUB_ENV"
       - 'name': 'Build frontend'
         'uses': 'AdGuardSoftwareLimited/actions/actions/docker-build@master'
         'with':
@@ -37,12 +53,9 @@
             DIST_DIR=${{ env.BUILD_DIR }}
       - 'uses': 'actions/upload-artifact@v7'
         'with':
-          'name': 'adguardhomefrontend'
+          'name': 'adguardhome-frontend'
           'path': |
             ${{ env.BUILD_DIR }}
-      - 'name': 'Set source date epoch'
-        'run': |
-          echo "SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)" >> "$GITHUB_ENV"
       - 'name': 'Build QA artifacts'
         'uses': 'AdGuardSoftwareLimited/actions/actions/docker-build@master'
         'with':
@@ -55,21 +68,18 @@
             BASE_IMAGE=${{ env.BASE_IMAGE }}
             BRANCH=${{ github.ref_name }}
             CACHE_BUSTER=${{ inputs.cache_buster || '0' }}
-            CHANNEL=development
+            CHANNEL=${{ env.CHANNEL }}
             DIST_DIR=${{ env.DIST_DIR }}
             OS=windows darwin linux
             REVISION=${{ github.sha }}
             SIGN=0
             SOURCE_DATE_EPOCH=${{ env.SOURCE_DATE_EPOCH }}
-            VERSION=${{ github.ref_name }}
+            VERSION=${{ env.APP_VERSION }}
       - 'uses': 'actions/upload-artifact@v7'
         'with':
-          'name': 'adguardhome'
+          'name': 'adguardhome-qa'
           'path': |
-            ${{ env.DIST_DIR }}/AdGuardHome_windows_amd64.zip
-            ${{ env.DIST_DIR }}/AdGuardHome_darwin_amd64.zip
-            ${{ env.DIST_DIR }}/AdGuardHome_darwin_arm64.zip
-            ${{ env.DIST_DIR }}/AdGuardHome_linux_amd64.tar.gz
+            ${{ env.DIST_DIR }}
   'TestE2E':
     'if': |
       ${{ github.repository_owner == 'AdGuardSoftwareLimited' }}
@@ -86,12 +96,12 @@
           'persist-credentials': false
       - 'uses': 'actions/download-artifact@v8'
         'with':
-          'name': 'adguardhomefrontend'
+          'name': 'adguardhome-frontend'
           'path': |
             ${{ env.BUILD_DIR }}
       - 'uses': 'actions/download-artifact@v8'
         'with':
-          'name': 'adguardhome'
+          'name': 'adguardhome-qa'
           'path': |
             ${{ env.DIST_DIR }}
       - 'run': |
@@ -99,9 +109,8 @@
 
           set -e -f -u -x
 
-          tar -xzf ${{ env.DIST_DIR }}/AdGuardHome_linux_amd64.tar.gz -C /tmp
-
-          mv /tmp/AdGuardHome/AdGuardHome ./AdGuardHome
+          mv ${{ env.DIST_DIR }}/AdGuardHome_linux_amd64/AdGuardHome/AdGuardHome ./AdGuardHome
+          chmod +x ./AdGuardHome
       - 'name': 'Run tests'
         'uses': 'AdGuardSoftwareLimited/actions/actions/docker-build@master'
         'with':
@@ -113,7 +122,7 @@
             BASE_IMAGE=${{ env.FRONTEND_BASE_IMAGE }}
             CACHE_BUSTER=${{ inputs.cache_buster || '0' }}
             CLIENT_DIR=${{ env.CLIENT_DIR }}
-'name': 'Build and Test QA Artifacts'
+'name': 'Build and test QA artifacts'
 'on':
   'push':
     'branches':
