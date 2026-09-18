@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach, beforeAll } from 'vite
 import { render, screen, fireEvent, waitFor } from '@solidjs/testing-library';
 
 import { Tooltip } from 'panel/common/ui/Tooltip';
+import { copy } from 'panel/__tests__/helpers/copy';
 
 // jsdom lacks ResizeObserver, which floating-ui (used by Zag positioning) needs.
 beforeAll(() => {
@@ -90,6 +91,20 @@ describe('Tooltip', () => {
         ));
         const trigger = container.querySelector('[data-part="trigger"]');
         expect(trigger?.className).toContain('my-custom-class');
+    });
+
+    it('applies triggerAttrs to the trigger element', () => {
+        const { container } = render(() => (
+            <Tooltip
+                content="Help text"
+                triggerAttrs={{ tabindex: 0, 'aria-label': copy('aria_more_info') }}
+            >
+                <span>Trigger</span>
+            </Tooltip>
+        ));
+        const trigger = container.querySelector('[data-part="trigger"]');
+        expect(trigger).toHaveAttribute('tabindex', '0');
+        expect(trigger).toHaveAttribute('aria-label', copy('aria_more_info'));
     });
 
     it('applies overlayClass to the content', () => {

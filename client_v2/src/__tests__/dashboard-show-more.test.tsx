@@ -9,6 +9,7 @@ import { TopBlockedDomains } from 'panel/components/Dashboard/blocks/TopBlockedD
 import { TopUpstreams } from 'panel/components/Dashboard/blocks/TopUpstreams';
 import { UpstreamAvgTime } from 'panel/components/Dashboard/blocks/UpstreamAvgTime';
 import { DAY } from 'panel/helpers/constants';
+import { copyInDom } from 'panel/__tests__/helpers/copy';
 
 const renderWithRouter = (ui: () => JSX.Element) =>
     render(() => (
@@ -24,7 +25,7 @@ describe('Dashboard "Show more" links', () => {
         renderWithRouter(() => (
             <TopClients topClients={[{ name: '10.0.0.1', count: 5 }]} numDnsQueries={100} />
         ));
-        expect(screen.getByText('Show more')).toBeInTheDocument();
+        expect(screen.getByText(copyInDom('show_more'))).toBeInTheDocument();
         expect(getLinkHref('show-more-top-clients')).toContain('/top_clients');
     });
 

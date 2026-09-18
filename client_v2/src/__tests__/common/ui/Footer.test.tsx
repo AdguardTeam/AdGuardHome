@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, within } from '@solidjs/testing-library';
 import userEvent from '@testing-library/user-event';
 
+import { copy } from 'panel/__tests__/helpers/copy';
+
 const mockDashboardState = {
     dnsVersion: '',
     processingVersion: true,
@@ -20,26 +22,11 @@ vi.mock('panel/stores/dashboard', () => ({
     changeLanguage: vi.fn(),
 }));
 
-vi.mock('panel/common/intl', () => {
-    const intl = {
-        getMessage: (key: string, values?: any) => {
-            const messages: Record<string, string> = {
-                privacy_policy: 'Privacy Policy',
-                report_an_issue: 'Report an issue',
-                release_notes: 'Release notes',
-                system_theme: 'System',
-                dark_theme: 'Dark',
-                light_theme: 'Light',
-                version_number: `Version ${values?.value || ''}`,
-                check_updates_btn: 'Check for updates',
-            };
-            return messages[key] || key;
-        },
-        getUILanguage: () => 'en',
-        changeLanguage: vi.fn(),
-    };
-    return { default: intl };
-});
+// The footer renders localized copy; serve it from the base locale so the
+// assertions can name the key instead of re-stating the text.
+vi.mock('panel/common/intl', async () =>
+    (await import('panel/__tests__/helpers/copy')).createIntlMock(),
+);
 
 vi.mock('panel/lib/theme', () => ({
     default: {
@@ -92,7 +79,9 @@ describe('Footer', () => {
 
         render(() => <Footer />);
 
-        expect(screen.getByText('Version v1.0.0')).toBeInTheDocument();
+        expect(
+            screen.getByText(copy('version_number', { value: 'v1.0.0' })),
+        ).toBeInTheDocument();
     });
 
     it('disables the check-updates button while processingVersion is true', () => {
@@ -134,7 +123,7 @@ describe('Footer', () => {
         render(() => <Footer />);
 
         const button = screen.getByTestId('footer-check-updates');
-        expect(button.getAttribute('aria-label')).toBe('Check for updates');
+        expect(button.getAttribute('aria-label')).toBe(copy('check_updates_btn'));
     });
 
     it('hides check-updates button when checkUpdateFlag is false (Docker/Snap)', () => {
@@ -146,7 +135,9 @@ describe('Footer', () => {
 
         expect(screen.queryByTestId('footer-check-updates')).not.toBeInTheDocument();
         // Version text is still visible
-        expect(screen.getByText('Version v1.0.0')).toBeInTheDocument();
+        expect(
+            screen.getByText(copy('version_number', { value: 'v1.0.0' })),
+        ).toBeInTheDocument();
     });
 
     it('highlights the current theme item instead of always System when not logged in', async () => {
@@ -158,27 +149,35 @@ describe('Footer', () => {
         render(() => <Footer />);
 
         // Nothing stored, so the applied theme is Light. The trigger shows it.
-        await user.click(screen.getByText('Light'));
+        await user.click(screen.getByText(copy('light_theme')));
 
         const menu = () => within(screen.getByTestId('dropdown-menu'));
 
         // Light must be highlighted — not System.
-        expect(menu().getByRole('button', { name: 'Light' })).toHaveClass('dropdownItemActive');
-        expect(menu().getByRole('button', { name: 'System' })).not.toHaveClass(
+        expect(menu().getByRole('button', { name: copy('light_theme') })).toHaveClass(
             'dropdownItemActive',
         );
-        expect(menu().getByRole('button', { name: 'Dark' })).not.toHaveClass('dropdownItemActive');
+        expect(menu().getByRole('button', { name: copy('system_theme') })).not.toHaveClass(
+            'dropdownItemActive',
+        );
+        expect(menu().getByRole('button', { name: copy('dark_theme') })).not.toHaveClass(
+            'dropdownItemActive',
+        );
 
         // Choose Dark — the menu closes and the trigger updates.
-        await user.click(menu().getByRole('button', { name: 'Dark' }));
-        await user.click(screen.getByText('Dark'));
+        await user.click(menu().getByRole('button', { name: copy('dark_theme') }));
+        await user.click(screen.getByText(copy('dark_theme')));
 
         // Dark must now be highlighted, not System.
-        expect(menu().getByRole('button', { name: 'Dark' })).toHaveClass('dropdownItemActive');
-        expect(menu().getByRole('button', { name: 'System' })).not.toHaveClass(
+        expect(menu().getByRole('button', { name: copy('dark_theme') })).toHaveClass(
             'dropdownItemActive',
         );
-        expect(menu().getByRole('button', { name: 'Light' })).not.toHaveClass('dropdownItemActive');
+        expect(menu().getByRole('button', { name: copy('system_theme') })).not.toHaveClass(
+            'dropdownItemActive',
+        );
+        expect(menu().getByRole('button', { name: copy('light_theme') })).not.toHaveClass(
+            'dropdownItemActive',
+        );
     });
 
     it('shows the persisted theme as active when not logged in', async () => {
@@ -190,13 +189,15 @@ describe('Footer', () => {
         render(() => <Footer />);
 
         // The trigger reflects the persisted theme.
-        expect(screen.getByText('Dark')).toBeInTheDocument();
+        expect(screen.getByText(copy('dark_theme'))).toBeInTheDocument();
 
-        await user.click(screen.getByText('Dark'));
+        await user.click(screen.getByText(copy('dark_theme')));
 
         const menu = () => within(screen.getByTestId('dropdown-menu'));
-        expect(menu().getByRole('button', { name: 'Dark' })).toHaveClass('dropdownItemActive');
-        expect(menu().getByRole('button', { name: 'System' })).not.toHaveClass(
+        expect(menu().getByRole('button', { name: copy('dark_theme') })).toHaveClass(
+            'dropdownItemActive',
+        );
+        expect(menu().getByRole('button', { name: copy('system_theme') })).not.toHaveClass(
             'dropdownItemActive',
         );
     });

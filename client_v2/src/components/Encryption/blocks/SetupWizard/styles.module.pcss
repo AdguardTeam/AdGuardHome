@@ -1,0 +1,97 @@
+.header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0 32px;
+}
+
+.wizardTitle {
+    margin: 0;
+    padding: 8px 0 16px;
+    color: var(--default-main-text);
+}
+
+.wizardDescription {
+    padding: 0 0 16px;
+    color: var(--default-main-text);
+}
+
+.goBack {
+    border: none;
+    padding: 0;
+    background: transparent;
+    color: var(--default-link);
+    white-space: nowrap;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.steps {
+    display: flex;
+    flex: 1 0 0;
+    gap: 4px;
+}
+
+.dropzoneGap {
+    margin-top: 16px;
+}
+
+.pill {
+    flex: 1 0 0;
+    height: 4px;
+    border-radius: 8px;
+    background: var(--default-item-divider);
+
+    &_active {
+        background: var(--default-product-icon);
+    }
+}
+
+.footer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.footerButtons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    width: 100%;
+
+    & button {
+        width: 100%;
+    }
+
+    @media (min-width: 768px) {
+        flex-wrap: nowrap;
+
+        & button {
+            width: auto;
+        }
+    }
+}
+
+.footerMessage {
+    font-size: var(--fs-text-t2);
+    line-height: var(--lh-t2-normal);
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.message {
+    margin-top: 8px;
+}
+
+.messageError {
+    color: var(--default-error-link);
+}
+
+.messageWarning {
+    color: var(--default-attention-link);
+}

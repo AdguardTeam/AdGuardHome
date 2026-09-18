@@ -6,6 +6,7 @@ import { StatsPage } from 'panel/components/Stats/StatsPage';
 import type { TableColumn } from 'panel/common/ui/Table';
 import { LocalStorageHelper } from 'panel/helpers/localStorageHelper';
 import type { IOption } from 'panel/lib/helpers/utils';
+import { copy, copyInDom } from 'panel/__tests__/helpers/copy';
 
 type Row = { name: string; count: number };
 
@@ -56,13 +57,13 @@ const renderPage = (overrides: Partial<Parameters<typeof StatsPage<Row>>[0]> = {
                 path="/"
                 component={() => (
                     <StatsPage<Row>
-                        title="Top queried domains"
+                        title={copy('stats_query_domain')}
                         rows={rows}
                         columns={columns}
                         getRowId={(row) => row.name}
                         defaultSort={{ key: 'count', direction: 'desc' }}
                         loading={false}
-                        emptyText="Nothing found"
+                        emptyText={copyInDom('nothing_found')}
                         onRefresh={vi.fn()}
                         searchTextForRow={(row) => row.name}
                         pageSizeKey="top_queried_domains_page_size"
@@ -92,10 +93,12 @@ describe('StatsPage', () => {
 
     it('renders breadcrumb, title, search and refresh controls (desktop)', () => {
         renderPage();
-        expect(screen.getByText('Dashboard')).toBeInTheDocument();
-        expect(screen.getByRole('heading', { name: 'Top queried domains' })).toBeInTheDocument();
+        expect(screen.getByText(copyInDom('dashboard'))).toBeInTheDocument();
+        expect(
+            screen.getByRole('heading', { name: copyInDom('stats_query_domain') }),
+        ).toBeInTheDocument();
         expect(screen.getByTestId('stats-search-input')).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: 'Refresh' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: copyInDom('refresh_btn') })).toBeInTheDocument();
     });
 
     it('sorts by defaultSort count desc and filters client-side on search', () => {
@@ -135,7 +138,7 @@ describe('StatsPage', () => {
     it('calls onRefresh when refresh is clicked', () => {
         const onRefresh = vi.fn();
         renderPage({ onRefresh });
-        fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
+        fireEvent.click(screen.getByRole('button', { name: copyInDom('refresh_btn') }));
         expect(onRefresh).toHaveBeenCalledTimes(1);
     });
 
@@ -144,7 +147,7 @@ describe('StatsPage', () => {
         fireEvent.input(screen.getByTestId('stats-search-input'), {
             target: { value: 'zzz' },
         });
-        expect(screen.getByText('Nothing found')).toBeInTheDocument();
+        expect(screen.getByText(copyInDom('nothing_found'))).toBeInTheDocument();
     });
 
     it('uses the stored sort when no URL params are present', () => {
@@ -209,7 +212,7 @@ describe('StatsPage', () => {
 
         expect(screen.queryByTestId('stats-mobile-loader')).not.toBeInTheDocument();
         expect(screen.getByTestId('stats-empty-state')).toBeInTheDocument();
-        expect(screen.getByText('Nothing found')).toBeInTheDocument();
+        expect(screen.getByText(copyInDom('nothing_found'))).toBeInTheDocument();
     });
 
     it('shows a loader on mobile during refresh even when rows are present', () => {
