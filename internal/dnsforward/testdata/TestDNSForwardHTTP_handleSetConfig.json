@@ -43,7 +43,8 @@
       "use_private_ptr_resolvers": false,
       "local_ptr_upstreams": [],
       "edns_cs_use_custom": false,
-      "edns_cs_custom_ip": ""
+      "edns_cs_custom_ip": "",
+      "edns_cs_use_in_stats": false
     }
   },
   "bootstraps": {
@@ -86,7 +87,8 @@
       "use_private_ptr_resolvers": false,
       "local_ptr_upstreams": [],
       "edns_cs_use_custom": false,
-      "edns_cs_custom_ip": ""
+      "edns_cs_custom_ip": "",
+      "edns_cs_use_in_stats": false
     }
   },
   "blocking_mode_good": {
@@ -130,7 +132,8 @@
       "use_private_ptr_resolvers": false,
       "local_ptr_upstreams": [],
       "edns_cs_use_custom": false,
-      "edns_cs_custom_ip": ""
+      "edns_cs_custom_ip": "",
+      "edns_cs_use_in_stats": false
     }
   },
   "blocking_mode_bad": {
@@ -174,7 +177,8 @@
       "use_private_ptr_resolvers": false,
       "local_ptr_upstreams": [],
       "edns_cs_use_custom": false,
-      "edns_cs_custom_ip": ""
+      "edns_cs_custom_ip": "",
+      "edns_cs_use_in_stats": false
     }
   },
   "ratelimit": {
@@ -218,7 +222,8 @@
       "use_private_ptr_resolvers": false,
       "local_ptr_upstreams": [],
       "edns_cs_use_custom": false,
-      "edns_cs_custom_ip": ""
+      "edns_cs_custom_ip": "",
+      "edns_cs_use_in_stats": false
     }
   },
   "ratelimit_subnet_len": {
@@ -264,7 +269,8 @@
       "use_private_ptr_resolvers": false,
       "local_ptr_upstreams": [],
       "edns_cs_use_custom": false,
-      "edns_cs_custom_ip": ""
+      "edns_cs_custom_ip": "",
+      "edns_cs_use_in_stats": false
     }
   },
   "ratelimit_whitelist_not_ip": {
@@ -311,7 +317,8 @@
       "use_private_ptr_resolvers": false,
       "local_ptr_upstreams": [],
       "edns_cs_use_custom": false,
-      "edns_cs_custom_ip": ""
+      "edns_cs_custom_ip": "",
+      "edns_cs_use_in_stats": false
     }
   },
   "edns_cs_enabled": {
@@ -355,7 +362,8 @@
       "use_private_ptr_resolvers": false,
       "local_ptr_upstreams": [],
       "edns_cs_use_custom": false,
-      "edns_cs_custom_ip": ""
+      "edns_cs_custom_ip": "",
+      "edns_cs_use_in_stats": false
     }
   },
   "edns_cs_use_custom": {
@@ -401,7 +409,8 @@
       "use_private_ptr_resolvers": false,
       "local_ptr_upstreams": [],
       "edns_cs_use_custom": true,
-      "edns_cs_custom_ip": "1.2.3.4"
+      "edns_cs_custom_ip": "1.2.3.4",
+      "edns_cs_use_in_stats": false
     }
   },
   "edns_cs_use_custom_bad_ip": {
@@ -447,7 +456,8 @@
       "use_private_ptr_resolvers": false,
       "local_ptr_upstreams": [],
       "edns_cs_use_custom": false,
-      "edns_cs_custom_ip": ""
+      "edns_cs_custom_ip": "",
+      "edns_cs_use_in_stats": false
     }
   },
   "dnssec_enabled": {
@@ -491,7 +501,8 @@
       "use_private_ptr_resolvers": false,
       "local_ptr_upstreams": [],
       "edns_cs_use_custom": false,
-      "edns_cs_custom_ip": ""
+      "edns_cs_custom_ip": "",
+      "edns_cs_use_in_stats": false
     }
   },
   "cache_size": {
@@ -535,7 +546,8 @@
       "use_private_ptr_resolvers": false,
       "local_ptr_upstreams": [],
       "edns_cs_use_custom": false,
-      "edns_cs_custom_ip": ""
+      "edns_cs_custom_ip": "",
+      "edns_cs_use_in_stats": false
     }
   },
   "cache_enabled": {
@@ -580,7 +592,8 @@
       "use_private_ptr_resolvers": false,
       "local_ptr_upstreams": [],
       "edns_cs_use_custom": false,
-      "edns_cs_custom_ip": ""
+      "edns_cs_custom_ip": "",
+      "edns_cs_use_in_stats": false
     }
   },
   "upstream_mode_parallel": {
@@ -624,7 +637,8 @@
       "use_private_ptr_resolvers": false,
       "local_ptr_upstreams": [],
       "edns_cs_use_custom": false,
-      "edns_cs_custom_ip": ""
+      "edns_cs_custom_ip": "",
+      "edns_cs_use_in_stats": false
     }
   },
   "upstream_mode_fastest_addr": {
@@ -668,7 +682,8 @@
       "use_private_ptr_resolvers": false,
       "local_ptr_upstreams": [],
       "edns_cs_use_custom": false,
-      "edns_cs_custom_ip": ""
+      "edns_cs_custom_ip": "",
+      "edns_cs_use_in_stats": false
     }
   },
   "upstream_dns_bad": {
@@ -714,7 +729,8 @@
       "use_private_ptr_resolvers": false,
       "local_ptr_upstreams": [],
       "edns_cs_use_custom": false,
-      "edns_cs_custom_ip": ""
+      "edns_cs_custom_ip": "",
+      "edns_cs_use_in_stats": false
     }
   },
   "bootstraps_bad": {
@@ -760,7 +776,8 @@
       "use_private_ptr_resolvers": false,
       "local_ptr_upstreams": [],
       "edns_cs_use_custom": false,
-      "edns_cs_custom_ip": ""
+      "edns_cs_custom_ip": "",
+      "edns_cs_use_in_stats": false
     }
   },
   "cache_bad_ttl": {
@@ -805,7 +822,8 @@
       "use_private_ptr_resolvers": false,
       "local_ptr_upstreams": [],
       "edns_cs_use_custom": false,
-      "edns_cs_custom_ip": ""
+      "edns_cs_custom_ip": "",
+      "edns_cs_use_in_stats": false
     }
   },
   "upstream_mode_bad": {
@@ -849,7 +867,8 @@
       "use_private_ptr_resolvers": false,
       "local_ptr_upstreams": [],
       "edns_cs_use_custom": false,
-      "edns_cs_custom_ip": ""
+      "edns_cs_custom_ip": "",
+      "edns_cs_use_in_stats": false
     }
   },
   "local_ptr_upstreams_good": {
@@ -897,7 +916,8 @@
         "123.123.123.123"
       ],
       "edns_cs_use_custom": false,
-      "edns_cs_custom_ip": ""
+      "edns_cs_custom_ip": "",
+      "edns_cs_use_in_stats": false
     }
   },
   "local_ptr_upstreams_bad": {
@@ -944,7 +964,8 @@
       "use_private_ptr_resolvers": false,
       "local_ptr_upstreams": [],
       "edns_cs_use_custom": false,
-      "edns_cs_custom_ip": ""
+      "edns_cs_custom_ip": "",
+      "edns_cs_use_in_stats": false
     }
   },
   "local_ptr_upstreams_null": {
@@ -988,7 +1009,8 @@
       "use_private_ptr_resolvers": false,
       "local_ptr_upstreams": [],
       "edns_cs_use_custom": false,
-      "edns_cs_custom_ip": ""
+      "edns_cs_custom_ip": "",
+      "edns_cs_use_in_stats": false
     }
   },
   "fallbacks": {
@@ -1036,7 +1058,8 @@
       "use_private_ptr_resolvers": false,
       "local_ptr_upstreams": [],
       "edns_cs_use_custom": false,
-      "edns_cs_custom_ip": ""
+      "edns_cs_custom_ip": "",
+      "edns_cs_use_in_stats": false
     }
   },
   "blocked_response_ttl": {
@@ -1080,7 +1103,8 @@
       "use_private_ptr_resolvers": false,
       "local_ptr_upstreams": [],
       "edns_cs_use_custom": false,
-      "edns_cs_custom_ip": ""
+      "edns_cs_custom_ip": "",
+      "edns_cs_use_in_stats": false
     }
   },
   "multiple_domain_specific_upstreams": {
@@ -1127,7 +1151,8 @@
       "use_private_ptr_resolvers": false,
       "local_ptr_upstreams": [],
       "edns_cs_use_custom": false,
-      "edns_cs_custom_ip": ""
+      "edns_cs_custom_ip": "",
+      "edns_cs_use_in_stats": false
     }
   },
   "upstream_timeout": {
@@ -1171,7 +1196,8 @@
       "use_private_ptr_resolvers": false,
       "local_ptr_upstreams": [],
       "edns_cs_use_custom": false,
-      "edns_cs_custom_ip": ""
+      "edns_cs_custom_ip": "",
+      "edns_cs_use_in_stats": false
     }
   }
 }
