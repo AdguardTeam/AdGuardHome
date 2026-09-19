@@ -1,12 +1,12 @@
 'body':
   - 'attributes':
       'description': >
-        Please make sure that the issue is not a duplicate or a question. If it's a duplicate, please react to the original issue with a thumbs up.  If it's a question, please post it to the GitHub Discussions page.
+        Please make sure that the issue is not a duplicate or a question. If it's a duplicate, please react to the original issue with a thumbs up. If it's a question, please post it to the GitHub Discussions page.
 
       'label': 'Prerequisites'
       'options':
         - 'label': >
-            I have checked the [Wiki](https://github.com/AdguardTeam/AdGuardHome/wiki) and [Discussions](https://github.com/AdguardTeam/AdGuardHome/discussions) and found no answer
+            I have checked the [AdGuard DNS Knowledge Base](https://adguard-dns.io/kb/adguard-home/overview/) and [Discussions](https://github.com/AdguardTeam/AdGuardHome/discussions) and found no answer
 
           'required': true
         - 'label': >
@@ -21,7 +21,7 @@
     'type': 'checkboxes'
   - 'attributes':
       'description': 'Please describe the problem you are trying to solve'
-      'label': 'The problem'
+      'label': 'Issue Details'
       'placeholder': >
         Please describe the problem you are trying to solve
 
@@ -31,7 +31,7 @@
       'required': true
   - 'attributes':
       'description': 'What feature are you proposing to solve this problem?'
-      'label': 'Proposed solution'
+      'label': 'Proposed Solution'
       'placeholder': >
         What feature are you proposing to solve this problem?
 
@@ -40,7 +40,7 @@
     'validations':
       'required': true
   - 'attributes':
-      'label': 'Alternatives considered and additional information'
+      'label': 'Alternative Solution & Additional Information'
       'placeholder': >
         Are there any other ways to solve the problem?
 
@@ -52,7 +52,7 @@
 # doesn't work here.
 'description': |
   Write the title in English to make it easier for other people to search for
-  duplicates.  (Any language is fine in the body.)
+  duplicates. (Any language is fine in the body.)
 'labels':
   - 'feature request'
 'name': 'Feature request or enhancement'
