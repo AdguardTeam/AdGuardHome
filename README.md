@@ -7,10 +7,10 @@
 </p>
 <h3 align="center">Privacy protection center for you and your devices</h3>
 <p align="center">
-  Free and open source, powerful network-wide ads & trackers blocking DNS server.
+  Free and open source, powerful network-wide DNS server blocking ads & trackers.
 </p>
 <p align="center">
-  <a href="https://adguard.com/">AdGuard.com</a> |
+  <a href="https://adguard.com/">Website</a> |
   <a href="https://github.com/AdguardTeam/AdGuardHome/wiki">Wiki</a> |
   <a href="https://reddit.com/r/Adguard">Reddit</a> |
   <a href="https://x.com/AdGuard">X</a> |
@@ -29,7 +29,7 @@
 </p>
 <hr/>
 
-AdGuard Home is network-wide software for blocking ads and tracking. After you set it up, it'll cover ALL your home devices, and you don't need any client-side software for that.
+AdGuard Home is software for blocking ads and tracking network-wide. After you set it up, it'll cover ALL your home devices, and you don't need any client-side software for that.
 
 It operates as a DNS server that re-routes tracking domains to a “black hole”, thus preventing your devices from connecting to those servers. It's based on software we use for our public [AdGuard DNS] servers, and both share a lot of code.
 
@@ -346,7 +346,7 @@ If you run into any problem or have a suggestion, head to [this page][iss] and c
 If you want to help with AdGuard Home translations, please learn more about translating AdGuard products [in our Knowledge Base][kb-trans]. You can contribute to the [AdGuardHome project on CrowdIn][crowdin].
 
 [crowdin]:  https://crowdin.com/project/adguard-applications/en#/adguard-home
-[kb-trans]: https://kb.adguard.com/en/general/adguard-translations
+[kb-trans]: https://adguard.com/kb/miscellaneous/contribute/translate/program/
 
 ### <a href="#help-other" id="help-other" name="help-other"></a> Other
 
@@ -414,4 +414,4 @@ For the full list of all Node.js packages in use, please take a look at [`client
 
 Our main idea is that you are the one, who should be in control of your data. So it is only natural, that AdGuard Home does not collect any usage statistics, and does not use any web services unless you configure it to do so. See also the [full privacy policy][privacy] with every bit that *could in theory be sent* by AdGuard Home is available.
 
-[privacy]: https://adguard.com/en/privacy/home.html
+[privacy]: https://adguard.com/privacy/home.html
