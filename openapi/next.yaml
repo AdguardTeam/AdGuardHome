@@ -2140,6 +2140,9 @@
 
          *  `nxdomain`: Respond with the `NXDOMAIN` code.
 
+         *  `noerror`: Respond with the `NOERROR` code and an empty answer
+             section.
+
          *  `refused`: Respond with the `REFUSET` code.
 
       'enum':
@@ -2147,6 +2150,7 @@
       - 'default'
       - 'null_ip'
       - 'nxdomain'
+      - 'noerror'
       - 'refused'
       'type': 'string'
 
