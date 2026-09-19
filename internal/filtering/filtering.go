@@ -12,7 +12,6 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"runtime/debug"
 	"slices"
 	"strings"
 	"sync"
@@ -770,9 +769,11 @@ func (d *DNSFilter) initFiltering(ctx context.Context, allowFilters, blockFilter
 		d.filteringEngineAllow = filteringEngineAllow
 	}()
 
-	// Make sure that the OS reclaims memory as soon as possible.
-	debug.FreeOSMemory()
-
+	// NOTE: Don't call debug.FreeOSMemory here.  It forces a full
+	// stop-the-world GC and returns all free memory to the OS, which causes a
+	// sudden CPU and I/O spike that can hang or crash the process right after
+	// a settings change, on any host.  The Go runtime scavenger already
+	// returns memory to the OS gradually without the spike.
 	d.logger.DebugContext(ctx, "initialized filtering engine")
 
 	return nil
