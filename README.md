@@ -13,25 +13,15 @@
   <a href="https://adguard.com/">AdGuard.com</a> |
   <a href="https://github.com/AdguardTeam/AdGuardHome/wiki">Wiki</a> |
   <a href="https://reddit.com/r/Adguard">Reddit</a> |
-  <a href="https://twitter.com/AdGuard">Twitter</a> |
+  <a href="https://x.com/AdGuard">X</a> |
   <a href="https://t.me/adguard_en">Telegram</a>
   <br/><br/>
-  <a href="https://codecov.io/github/AdguardTeam/AdGuardHome?branch=master">
-    <img src="https://img.shields.io/codecov/c/github/AdguardTeam/AdGuardHome/master.svg" alt="Code Coverage"/>
-  </a>
-  <a href="https://goreportcard.com/report/AdguardTeam/AdGuardHome">
-    <img src="https://goreportcard.com/badge/github.com/AdguardTeam/AdGuardHome" alt="Go Report Card"/>
-  </a>
-  <a href="https://hub.docker.com/r/adguard/adguardhome">
-    <img alt="Docker Pulls" src="https://img.shields.io/docker/pulls/adguard/adguardhome.svg?maxAge=604800"/>
-  </a>
+  <a href="https://codecov.io/github/AdguardTeam/AdGuardHome?branch=master"><img src="https://img.shields.io/codecov/c/github/AdguardTeam/AdGuardHome/master.svg" alt="Code Coverage"/></a>
+  <a href="https://goreportcard.com/report/AdguardTeam/AdGuardHome"><img src="https://goreportcard.com/badge/github.com/AdguardTeam/AdGuardHome" alt="Go Report Card"/></a>
+  <a href="https://hub.docker.com/r/adguard/adguardhome"><img alt="Docker Pulls" src="https://img.shields.io/docker/pulls/adguard/adguardhome.svg?maxAge=604800"/></a>
   <br/>
-  <a href="https://github.com/AdguardTeam/AdGuardHome/releases">
-    <img src="https://img.shields.io/github/release/AdguardTeam/AdGuardHome/all.svg" alt="Latest release"/>
-  </a>
-  <a href="https://snapcraft.io/adguard-home">
-    <img alt="adguard-home" src="https://snapcraft.io/adguard-home/badge.svg"/>
-  </a>
+  <a href="https://github.com/AdguardTeam/AdGuardHome/releases"><img src="https://img.shields.io/github/release/AdguardTeam/AdGuardHome/all.svg" alt="Latest release"/></a>
+  <a href="https://snapcraft.io/adguard-home"><img alt="adguard-home" src="https://snapcraft.io/adguard-home/badge.svg"/></a>
 </p>
 <br/>
 <p align="center">
@@ -39,7 +29,7 @@
 </p>
 <hr/>
 
-AdGuard Home is a network-wide software for blocking ads and tracking. After you set it up, it'll cover ALL your home devices, and you don't need any client-side software for that.
+AdGuard Home is network-wide software for blocking ads and tracking. After you set it up, it'll cover ALL your home devices, and you don't need any client-side software for that.
 
 It operates as a DNS server that re-routes tracking domains to a “black hole”, thus preventing your devices from connecting to those servers. It's based on software we use for our public [AdGuard DNS] servers, and both share a lot of code.
 
@@ -67,9 +57,9 @@ It operates as a DNS server that re-routes tracking domains to a “black hole�
 - [Acknowledgments](#acknowledgments)
 - [Privacy](#privacy)
 
-## <a href="#getting-started" id="getting-started" name="getting-started">Getting Started</a>
+## <a href="#getting-started" id="getting-started" name="getting-started"></a> Getting Started
 
-### <a href="#automated-install-linux-and-mac" id="automated-install-linux-and-mac" name="automated-install-linux-and-mac">Automated install (Linux/Unix/MacOS/FreeBSD/OpenBSD)</a>
+### <a href="#automated-install-linux-and-mac" id="automated-install-linux-and-mac" name="automated-install-linux-and-mac"></a> Automated install (Linux/Unix/MacOS/FreeBSD/OpenBSD)
 
 To install with `curl` run the following command:
 
@@ -98,17 +88,17 @@ The script also accepts some options:
 
 Note that options `-r` and `-u` are mutually exclusive.
 
-### <a href="#alternative-methods" id="alternative-methods" name="alternative-methods">Alternative methods</a>
+### <a href="#alternative-methods" id="alternative-methods" name="alternative-methods"></a> Alternative methods
 
-#### <a href="#manual-installation" id="manual-installation" name="manual-installation">Manual installation</a>
+#### <a href="#manual-installation" id="manual-installation" name="manual-installation"></a> Manual installation
 
 Please read the **[Getting Started][wiki-start]** article on our Wiki to learn how to install AdGuard Home manually, and how to configure your devices to use it.
 
-#### <a href="#docker" id="docker" name="docker">Docker</a>
+#### <a href="#docker" id="docker" name="docker"></a> Docker
 
 You can use our official Docker image on [Docker Hub].
 
-#### <a href="#snap-store" id="snap-store" name="snap-store">Snap Store</a>
+#### <a href="#snap-store" id="snap-store" name="snap-store"></a> Snap Store
 
 If you're running **Linux,** there's a secure and easy way to install AdGuard Home: get it from the [Snap Store].
 
@@ -116,13 +106,13 @@ If you're running **Linux,** there's a secure and easy way to install AdGuard Ho
 [Snap Store]: https://snapcraft.io/adguard-home
 [wiki-start]: https://adguard-dns.io/kb/adguard-home/getting-started/
 
-### <a href="#guides" id="guides" name="guides">Guides</a>
+### <a href="#guides" id="guides" name="guides"></a> Guides
 
 See our [Wiki][wiki].
 
 [wiki]: https://github.com/AdguardTeam/AdGuardHome/wiki
 
-### <a href="#api" id="api" name="api">API</a>
+### <a href="#api" id="api" name="api"></a> API
 
 If you want to integrate with AdGuard Home, you can use our [REST API][openapi]. Alternatively, you can use this [python client][pyclient], which can be used to build the [AdGuard Home Assistant integration][assistant-integration].
 
@@ -130,9 +120,9 @@ If you want to integrate with AdGuard Home, you can use our [REST API][openapi].
 [openapi]:  https://github.com/AdguardTeam/AdGuardHome/tree/master/openapi
 [pyclient]: https://pypi.org/project/adguardhome/
 
-## <a href="#comparison" id="comparison" name="comparison">Comparing AdGuard Home to other solutions</a>
+## <a href="#comparison" id="comparison" name="comparison"></a> Comparing AdGuard Home to other solutions
 
-### <a href="#comparison-adguard-dns" id="comparison-adguard-dns" name="comparison-adguard-dns">How is this different from public AdGuard DNS servers?</a>
+### <a href="#comparison-adguard-dns" id="comparison-adguard-dns" name="comparison-adguard-dns"></a> How is this different from public AdGuard DNS servers?
 
 Running your own AdGuard Home server allows you to do much more than using a public DNS server. It's a completely different level. See for yourself:
 
@@ -144,7 +134,7 @@ Running your own AdGuard Home server allows you to do much more than using a pub
 
 - **Most importantly, it's your own server, and you are the only one who's in control.**
 
-### <a href="#comparison-pi-hole" id="comparison-pi-hole" name="comparison-pi-hole">How does AdGuard Home compare to Pi-Hole</a>
+### <a href="#comparison-pi-hole" id="comparison-pi-hole" name="comparison-pi-hole"></a> How does AdGuard Home compare to Pi-Hole
 
 At this point, AdGuard Home has a lot in common with Pi-Hole. Both block ads and trackers using the so-called “DNS sinkholing” method and both allow customizing what's blocked.
 
@@ -174,7 +164,7 @@ AdGuard Home provides a lot of features out-of-the-box with no need to install a
 
 [wiki-noroot]: https://adguard-dns.io/kb/adguard-home/getting-started/#running-without-superuser
 
-### <a href="#comparison-adblock" id="comparison-adblock" name="comparison-adblock">How does AdGuard Home compare to traditional ad blockers</a>
+### <a href="#comparison-adblock" id="comparison-adblock" name="comparison-adblock"></a> How does AdGuard Home compare to traditional ad blockers
 
 It depends.
 
@@ -182,7 +172,7 @@ DNS sinkholing is capable of blocking a big percentage of ads, but it lacks the 
 
 Additionally, using a DNS-based blocker can help to block ads, tracking and analytics requests on other types of devices, such as SmartTVs, smart speakers or other kinds of IoT devices (on which you can't install traditional ad blockers).
 
-### <a href="#comparison-limitations" id="comparison-limitations" name="comparison-limitations">Known limitations</a>
+### <a href="#comparison-limitations" id="comparison-limitations" name="comparison-limitations"></a> Known limitations
 
 Here are some examples of what cannot be blocked by a DNS-level blocker:
 
@@ -197,9 +187,9 @@ Is there a chance to handle this in the future?  DNS will never be enough to do 
 [blog-adaway]: https://adguard.com/blog/adguard-vs-adaway-dns66.html
 [issue-1228]:  https://github.com/AdguardTeam/AdGuardHome/issues/1228
 
-## <a href="#how-to-build" id="how-to-build" name="how-to-build">How to build from source</a>
+## <a href="#how-to-build" id="how-to-build" name="how-to-build"></a> How to build from source
 
-### <a href="#prerequisites" id="prerequisites" name="prerequisites">Prerequisites</a>
+### <a href="#prerequisites" id="prerequisites" name="prerequisites"></a> Prerequisites
 
 Run `make init` to prepare the development environment.
 
@@ -209,7 +199,7 @@ You will need this to build AdGuard Home:
 - [Node.js](https://nodejs.org/en/download/) v24.10.0 or later;
 - [npm](https://www.npmjs.com/) v10.8 or later;
 
-### <a href="#building" id="building" name="building">Building</a>
+### <a href="#building" id="building" name="building"></a> Building
 
 Open your terminal and execute these commands:
 
@@ -224,7 +214,7 @@ make
 
 Check the [`Makefile`][src-makefile] to learn about other commands.
 
-#### <a href="#building-cross" id="building-cross" name="building-cross">Building for a different platform</a>
+#### <a href="#building-cross" id="building-cross" name="building-cross">Building for a different platform
 
 You can build AdGuard Home for any OS/ARCH that Go supports. In order to do this, specify `GOOS` and `GOARCH` environment variables as macros when running `make`.
 
@@ -240,7 +230,7 @@ or:
 make GOOS='linux' GOARCH='arm64'
 ```
 
-#### <a href="#preparing-releases" id="preparing-releases" name="preparing-releases">Preparing releases</a>
+#### <a href="#preparing-releases" id="preparing-releases" name="preparing-releases"></a> Preparing releases
 
 You'll need [`snapcraft`] to prepare a release build. Once installed, run the following command:
 
@@ -250,7 +240,7 @@ make build-release CHANNEL='...' VERSION='...'
 
 See the [`build-release` target documentation][targ-release].
 
-#### <a href="#docker-image" id="docker-image" name="docker-image">Docker image</a>
+#### <a href="#docker-image" id="docker-image" name="docker-image"></a> Docker image
 
 Run `make build-docker` to build the Docker image locally (the one that we publish to DockerHub). Please note, that we're using [Docker Buildx][buildx] to build our official image.
 
@@ -270,7 +260,7 @@ You may need to prepare before using these builds:
 
 See the [`build-docker` target documentation][targ-docker].
 
-#### <a href="#debugging-the-frontend" id="debugging-the-frontend" name="debugging-the-frontend">Debugging the frontend</a>
+#### <a href="#debugging-the-frontend" id="debugging-the-frontend" name="debugging-the-frontend"></a> Debugging the frontend
 
 When you need to debug the frontend without recompiling the production version every time, for example to check how your labels would look on a form, you can run the frontend build a development environment.
 
@@ -290,7 +280,7 @@ When you need to debug the frontend without recompiling the production version e
 [targ-docker]:  https://github.com/AdguardTeam/AdGuardHome/tree/master/scripts#build-dockersh-build-a-multi-architecture-docker-image
 [targ-release]: https://github.com/AdguardTeam/AdGuardHome/tree/master/scripts#build-releasesh-build-a-release-for-all-platforms
 
-#### <a href="#e2e-frontend-tests" id="e2e-frontend-tests" name="e2e-frontend-tests">End-to-End (E2E) Frontend Tests</a>
+#### <a href="#e2e-frontend-tests" id="e2e-frontend-tests" name="e2e-frontend-tests"></a> End-to-End (E2E) Frontend Tests
 
 AdGuard Home uses [Playwright](https://playwright.dev) for E2E testing. Tests are located in `tests/e2e`.
 
@@ -306,7 +296,7 @@ AdGuard Home uses [Playwright](https://playwright.dev) for E2E testing. Tests ar
 
 > **Warning:** Playwright will download and install its own browser binaries for testing, which may differ from the browsers installed on your system.
 
-## <a href="#contributing" id="contributing" name="contributing">Contributing</a>
+## <a href="#contributing" id="contributing" name="contributing"></a> Contributing
 
 You are welcome to fork this repository, make your changes and [submit a pull request][pr]. Please make sure you follow our [code guidelines][guide] though.
 
@@ -315,7 +305,7 @@ Please note that we don't expect people to contribute to both UI and backend par
 [guide]: https://github.com/AdguardTeam/CodeGuidelines/
 [pr]:    https://github.com/AdguardTeam/AdGuardHome/pulls
 
-### <a href="#test-unstable-versions" id="test-unstable-versions" name="test-unstable-versions">Test unstable versions</a>
+### <a href="#test-unstable-versions" id="test-unstable-versions" name="test-unstable-versions"></a> Test unstable versions
 
 There are two update channels that you can use:
 
@@ -345,26 +335,26 @@ There are three options how you can install an unstable version:
 
 [wiki-platf]: https://github.com/AdguardTeam/AdGuardHome/wiki/Platforms
 
-### <a href="#reporting-issues" id="reporting-issues" name="reporting-issues">Report issues</a>
+### <a href="#reporting-issues" id="reporting-issues" name="reporting-issues"></a> Report issues
 
 If you run into any problem or have a suggestion, head to [this page][iss] and click on the “New issue” button. Please follow the instructions in the issue form carefully and don't forget to start by searching for duplicates.
 
 [iss]: https://github.com/AdguardTeam/AdGuardHome/issues
 
-### <a href="#translate" id="translate" name="translate">Help with translations</a>
+### <a href="#translate" id="translate" name="translate"></a> Help with translations
 
 If you want to help with AdGuard Home translations, please learn more about translating AdGuard products [in our Knowledge Base][kb-trans]. You can contribute to the [AdGuardHome project on CrowdIn][crowdin].
 
 [crowdin]:  https://crowdin.com/project/adguard-applications/en#/adguard-home
 [kb-trans]: https://kb.adguard.com/en/general/adguard-translations
 
-### <a href="#help-other" id="help-other" name="help-other">Other</a>
+### <a href="#help-other" id="help-other" name="help-other"></a> Other
 
 Another way you can contribute is by [looking for issues][iss-help] marked as `help wanted`, asking if the issue is up for grabs, and sending a PR fixing the bug or implementing the feature.
 
 [iss-help]: https://github.com/AdguardTeam/AdGuardHome/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22
 
-## <a href="#uses" id="uses" name="uses">Projects that use AdGuard Home</a>
+## <a href="#uses" id="uses" name="uses"></a> Projects that use AdGuard Home
 
 Please note that these projects are not affiliated with AdGuard, but are made by third-party developers and fans.
 
@@ -396,7 +386,7 @@ Please note that these projects are not affiliated with AdGuard, but are made by
 
 - [ZimaOS App Store listing](https://www.zimaspace.com/zimaos/app-store/app/org.icewhale.adguardhome) by [ZimaOS Team](https://www.zimaspace.com/zimaos).
 
-## <a href="#acknowledgments" id="acknowledgments" name="acknowledgments">Acknowledgments</a>
+## <a href="#acknowledgments" id="acknowledgments" name="acknowledgments"></a> Acknowledgments
 
 This software wouldn't have been possible without:
 
@@ -420,7 +410,7 @@ For the full list of all Node.js packages in use, please take a look at [`client
 [CoreDNS]:         https://coredns.io
 [src-packagejson]: https://github.com/AdguardTeam/AdGuardHome/blob/master/client/package.json
 
-## <a href="#privacy" id="privacy" name="privacy">Privacy</a>
+## <a href="#privacy" id="privacy" name="privacy"></a> Privacy
 
 Our main idea is that you are the one, who should be in control of your data. So it is only natural, that AdGuard Home does not collect any usage statistics, and does not use any web services unless you configure it to do so. See also the [full privacy policy][privacy] with every bit that *could in theory be sent* by AdGuard Home is available.
 
