@@ -1973,14 +1973,14 @@ func TestServer_Ratelimit(t *testing.T) {
 			for i := range attemptNum {
 				req := createGoogleATestMessage()
 
+				reply, _, err := client.Exchange(req, addr)
+
 				if i >= attemptNum-tc.dropNum {
-					_, _, err := client.Exchange(req, addr)
 					assert.Error(t, err, "request %d", i)
 
 					continue
 				}
 
-				reply, _, err := client.Exchange(req, addr)
 				require.NoErrorf(t, err, "request %d", i)
 
 				assertGoogleAResponse(t, reply)
