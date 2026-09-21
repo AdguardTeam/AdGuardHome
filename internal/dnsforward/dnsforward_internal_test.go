@@ -1911,3 +1911,80 @@ func TestServer_Exchange(t *testing.T) {
 		assert.Empty(t, host)
 	})
 }
+
+func TestServer_Ratelimit(t *testing.T) {
+	t.Parallel()
+
+	const (
+		attemptNum    = 3
+		clientTimeout = 300 * time.Millisecond
+	)
+
+	testCases := []struct {
+		name      string
+		ratelimit uint32
+		whitelist []netip.Addr
+		dropNum   int
+	}{{
+		name:      "ratelimit_disabled",
+		ratelimit: 0,
+		dropNum:   0,
+	}, {
+		name:      "ratelimit_enabled",
+		ratelimit: 1,
+		dropNum:   2,
+	}, {
+		name:      "ratelimit_whitelisted",
+		ratelimit: 1,
+		whitelist: []netip.Addr{netutil.IPv4Localhost(), netip.MustParseAddr("::1")},
+		dropNum:   0,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			s := createTestServer(
+				t,
+				&filtering.Config{BlockingMode: filtering.BlockingModeDefault},
+				ServerConfig{
+					UDPListenAddrs: []*net.UDPAddr{{}},
+					TCPListenAddrs: []*net.TCPAddr{{}},
+					TLSConf:        &TLSConfig{},
+					Config: Config{
+						UpstreamMode:           UpstreamModeLoadBalance,
+						EDNSClientSubnet:       &EDNSClientSubnet{Enabled: false},
+						ClientsContainer:       EmptyClientsContainer{},
+						Ratelimit:              tc.ratelimit,
+						RatelimitSubnetLenIPv4: netutil.IPv4BitLen,
+						RatelimitSubnetLenIPv6: netutil.IPv6BitLen,
+						RatelimitWhitelist:     tc.whitelist,
+					},
+					ServePlainDNS: true,
+				},
+				testTLSManager,
+			)
+			s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{newGoogleUpstream()}
+			startDeferStop(t, s)
+
+			addr := s.dnsProxy.Addr(proxy.ProtoUDP).String()
+			client := &dns.Client{Net: "udp", Timeout: clientTimeout}
+
+			for i := range attemptNum {
+				req := createGoogleATestMessage()
+
+				if i >= attemptNum-tc.dropNum {
+					_, _, err := client.Exchange(req, addr)
+					assert.Error(t, err, "request %d", i)
+
+					continue
+				}
+
+				reply, _, err := client.Exchange(req, addr)
+				require.NoErrorf(t, err, "request %d", i)
+
+				assertGoogleAResponse(t, reply)
+			}
+		})
+	}
+}
