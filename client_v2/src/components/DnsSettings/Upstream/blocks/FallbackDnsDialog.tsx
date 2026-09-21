@@ -65,6 +65,7 @@ export const FallbackDnsDialog = (props: Props) => {
                     errorMessage={field.error()}
                     size="medium"
                     highlightComments
+                    onCard
                 />
             </div>
             <Examples />

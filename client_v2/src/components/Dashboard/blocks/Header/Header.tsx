@@ -9,7 +9,7 @@ import { Select } from 'panel/common/controls/Select';
 import { Icon } from 'panel/common/ui/Icon';
 import { Link } from 'panel/common/ui/Link';
 import { RoutePath, SCROLL_QUERY_KEY } from 'panel/components/Routes/Paths';
-import { useIsMobile } from 'panel/hooks/useIsMobile';
+import { useIsMobile } from 'panel/hooks/useMediaQuery';
 import { DISABLE_PROTECTION_TIMINGS, ONE_SECOND_IN_MS } from 'panel/helpers/constants';
 import { msToSeconds, msToMinutes, msToHours } from 'panel/helpers/helpers';
 

@@ -70,6 +70,31 @@
         }
     }
 
+    &.onCard:not(.disabled) {
+        background-color: var(--page-background-additional);
+
+        .input {
+            background-color: var(--page-background-additional);
+
+            &:-webkit-autofill,
+            &:-webkit-autofill:hover,
+            &:-webkit-autofill:focus {
+                box-shadow: 0 0 0 100px var(--page-background-additional) inset;
+            }
+        }
+
+        &:hover,
+        &:hover .input {
+            background-color: var(--page-background-additional-hovered);
+        }
+
+        &:hover .input:-webkit-autofill,
+        &:hover .input:-webkit-autofill:hover,
+        &:hover .input:-webkit-autofill:focus {
+            box-shadow: 0 0 0 100px var(--page-background-additional-hovered) inset;
+        }
+    }
+
     .input {
         color: var(--default-main-text);
         font-size: 16px;

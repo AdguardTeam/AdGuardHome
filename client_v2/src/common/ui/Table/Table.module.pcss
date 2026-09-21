@@ -107,6 +107,24 @@
     cursor: pointer;
 }
 
+.tableRowLink {
+    cursor: pointer;
+    color: inherit;
+    text-decoration: none;
+
+    &:hover,
+    &:focus,
+    &:active {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--product-primary-90);
+        outline-offset: -2px;
+    }
+}
+
 .sortIcon {
     flex-shrink: 0;
     opacity: 0;

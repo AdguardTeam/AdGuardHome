@@ -4,11 +4,18 @@ import cn from 'clsx';
 
 import intl from 'panel/common/intl';
 import { dnsConfigState, togglePrivatePtrResolvers } from 'panel/stores/dnsConfig';
+import { addWarningToast } from 'panel/stores/toasts';
 import { settingsState, testUpstreamWithFormValues } from 'panel/stores/settings';
 import { Button } from 'panel/common/ui/Button';
 import { SettingRow } from 'panel/common/ui/SettingRow';
 import { useDialog } from 'panel/hooks/useDialog';
-import { getUpstreamModeSummary, getUpstreamServersSummary, getTtlSummary } from '../helpers';
+import { useSwitchState } from 'panel/hooks/useSwitchState';
+import {
+    getUpstreamModeSummary,
+    getUpstreamServersSummary,
+    getTtlSummary,
+    hasUsablePrivatePtrUpstreams,
+} from '../helpers';
 import theme from 'panel/lib/theme';
 
 import { UpstreamModeDialog } from './blocks/UpstreamModeDialog';
@@ -42,6 +49,42 @@ export const Upstream = () => {
     const timeoutValue = createMemo(() => getTtlSummary(dnsConfigState.upstream_timeout));
 
     const processing = () => dnsConfigState.processingSetConfig;
+
+    const [privatePtrEnabled, setPrivatePtrEnabled] = useSwitchState(
+        () => dnsConfigState.use_private_ptr_resolvers,
+        processing,
+    );
+
+    /**
+     * Enabling without a single usable server cannot work — the backend rejects
+     * the request — so the user is taken to the page where the servers are set
+     * up.  Disabling always goes through.
+     */
+    const handlePrivatePtrResolversToggle = (checked: boolean) => {
+        if (!checked) {
+            setPrivatePtrEnabled(false);
+            togglePrivatePtrResolvers();
+
+            return;
+        }
+
+        const canResolve = hasUsablePrivatePtrUpstreams(
+            dnsConfigState.local_ptr_upstreams,
+            dnsConfigState.default_local_ptr_upstreams,
+        );
+        if (!canResolve) {
+            setPrivatePtrEnabled(false);
+            addWarningToast({
+                error: intl.getMessage('dns_private_reverse_no_default_resolvers'),
+            });
+            navigate(Paths.DnsPrivateReverse);
+
+            return;
+        }
+
+        setPrivatePtrEnabled(true);
+        togglePrivatePtrResolvers();
+    };
 
     return (
         <div>
@@ -95,8 +138,8 @@ export const Upstream = () => {
                         <p>{intl.getMessage('dns_private_reverse_resolvers_disabled_desc')}</p>
                     </>
                 }
-                checked={dnsConfigState.use_private_ptr_resolvers}
-                onChange={() => togglePrivatePtrResolvers()}
+                checked={privatePtrEnabled()}
+                onChange={handlePrivatePtrResolversToggle}
                 onClick={() => navigate(Paths.DnsPrivateReverse)}
                 divider
             />

@@ -14,7 +14,8 @@ import { Button } from 'panel/common/ui/Button';
 import { Icon } from 'panel/common/ui/Icon';
 import { FaqTooltip } from 'panel/common/ui/FaqTooltip';
 import { RoutePath } from 'panel/components/Routes/Paths';
-import { useIsMobile } from 'panel/hooks/useIsMobile';
+import type { QueryParams, RoutePathKey } from 'panel/components/Routes/Paths';
+import { useIsMobile } from 'panel/hooks/useMediaQuery';
 import { LocalStorageHelper } from 'panel/helpers/localStorageHelper';
 import { isQueryMatch } from 'panel/helpers/statistics';
 import type { IOption } from 'panel/lib/helpers/utils';
@@ -37,6 +38,8 @@ type StatsPageProps<T> = {
     emptyText: string;
     onRefresh: () => void;
     searchTextForRow: (row: T) => string;
+    /** When it returns a target, the whole desktop row links to it. */
+    rowLink?: (row: T) => { to: RoutePathKey; query?: QueryParams } | undefined;
     pageSizeKey: string;
     sortStorageKey: string;
     mobileSortOptions: IOption<string>[];
@@ -307,7 +310,9 @@ export function StatsPage<T>(props: StatsPageProps<T>) {
                                                 pageSize={pageSize()}
                                                 totalItems={filteredRows().length}
                                                 pageSizeOptions={DEFAULT_PAGE_SIZE_OPTIONS}
-                                                onPageChange={(page: number) => setCurrentPage(page)}
+                                                onPageChange={(page: number) =>
+                                                    setCurrentPage(page)
+                                                }
                                                 onPageSizeChange={handlePageSizeChange}
                                             />
                                         </div>
@@ -327,6 +332,7 @@ export function StatsPage<T>(props: StatsPageProps<T>) {
                         pageSize={pageSize()}
                         onPageSizeChange={handlePageSizeChange}
                         emptyTable={<EmptyState message={props.emptyText} />}
+                        rowLink={props.rowLink}
                     />
                 </Show>
             </div>

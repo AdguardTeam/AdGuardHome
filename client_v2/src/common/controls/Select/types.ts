@@ -34,6 +34,8 @@ export interface SelectProps<
     id?: string;
     inputId?: string;
     borderless?: boolean;
+    /** Fills the control with `--page-background-additional` for cards-background surfaces. */
+    onCard?: boolean;
     adaptiveHeight?: boolean;
     lazyList?: boolean;
     closeMenuOnSelect?: boolean;

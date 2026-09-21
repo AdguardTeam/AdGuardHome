@@ -17,8 +17,14 @@
 }
 
 .clearButton {
-    width: auto;
+    width: 100%;
     min-width: 200px;
+    max-width: none;
+
+    @media (min-width: 1024px) {
+        width: auto;
+        max-width: 400px;
+    }
 }
 
 .section {

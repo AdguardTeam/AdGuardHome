@@ -182,6 +182,7 @@ export const ConfigureRewritesModal = (props: Props) => {
                                     onBlur={validateDomainField}
                                     errorMessage={domainError()}
                                     size="large"
+                                    onCard
                                 />
                             </div>
 
@@ -207,6 +208,7 @@ export const ConfigureRewritesModal = (props: Props) => {
                                     onBlur={validateAnswerField}
                                     errorMessage={answerError()}
                                     size="large"
+                                    onCard
                                 />
                             </div>
                         </div>
@@ -238,6 +240,7 @@ export const ConfigureRewritesModal = (props: Props) => {
                             size="small"
                             onClick={handleCancel}
                             class={theme.dialog.button}
+                            onCard
                         >
                             {intl.getMessage('cancel')}
                         </Button>

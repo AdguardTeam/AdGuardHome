@@ -24,7 +24,9 @@ type Props = {
 };
 
 export const TopUpstreams = (props: Props) => {
-    const { sortedData: sortedUpstreams } = useSortedData(() => props.topUpstreamsResponses);
+    const { sortedData: sortedUpstreams, hasMore } = useSortedData(
+        () => props.topUpstreamsResponses,
+    );
 
     const hasStats = createMemo(() => props.topUpstreamsResponses.length > 0);
 
@@ -111,11 +113,13 @@ export const TopUpstreams = (props: Props) => {
                 </Show>
             </div>
 
-            <CardFooter
-                to={RoutePath.TopUpstreams}
-                testId="show-more-top-upstreams"
-                query={props.period ? { period: props.period } : undefined}
-            />
+            <Show when={hasMore()}>
+                <CardFooter
+                    to={RoutePath.TopUpstreams}
+                    testId="show-more-top-upstreams"
+                    query={props.period ? { period: props.period } : undefined}
+                />
+            </Show>
         </div>
     );
 };

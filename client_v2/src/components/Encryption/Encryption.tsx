@@ -1,14 +1,16 @@
 import { createSignal, createEffect, Show, onMount, onCleanup } from 'solid-js';
 import cn from 'clsx';
+import { useSearchParams } from '@solidjs/router';
 
 import { SettingRow } from 'panel/common/ui/SettingRow';
-import { Dropdown } from 'panel/common/ui/Dropdown';
+import { DangerLink } from 'panel/common/ui/DangerLink';
 import { Icon } from 'panel/common/ui/Icon';
 import { PageLoader } from 'panel/common/ui/Loader';
 import intl from 'panel/common/intl';
 import theme from 'panel/lib/theme';
 import { getTlsStatus, encryptionState, setTlsConfig } from 'panel/stores/encryption';
 import { ENCRYPTION_SOURCE } from 'panel/helpers/constants';
+import { TLS_WIZARD_QUERY_KEY } from 'panel/components/Routes/Paths';
 
 import { createDebouncedValidator } from './blocks/helpers';
 import { PlainDnsToggle } from './blocks/PlainDnsToggle';
@@ -24,7 +26,6 @@ export const Encryption = () => {
     const [resetOpen, setResetOpen] = createSignal(false);
     const [serverSettingsOpen, setServerSettingsOpen] = createSignal(false);
     const [addCertOpen, setAddCertOpen] = createSignal(false);
-    const [menuOpen, setMenuOpen] = createSignal(false);
 
     const [tlsStatusLoaded, setTlsStatusLoaded] = createSignal(false);
 
@@ -55,6 +56,17 @@ export const Encryption = () => {
         cancelValidation();
     });
 
+    const [searchParams, setSearchParams] = useSearchParams<{
+        [TLS_WIZARD_QUERY_KEY]?: string;
+    }>();
+
+    createEffect(() => {
+        if (!tlsStatusLoaded() || !searchParams[TLS_WIZARD_QUERY_KEY]) return;
+
+        setAddCertOpen(true);
+        setSearchParams({ [TLS_WIZARD_QUERY_KEY]: undefined }, { replace: true });
+    });
+
     const certConfigured = () =>
         !!(encryptionState.certificate_chain || encryptionState.certificate_path);
 
@@ -65,6 +77,7 @@ export const Encryption = () => {
                 {
                     enabled: false,
                     serve_plain_dns: true,
+                    force_https: false,
                 },
                 { silent: true },
             );
@@ -144,20 +157,6 @@ export const Encryption = () => {
         });
     });
 
-    const handleResetClick = () => {
-        setMenuOpen(false);
-        setResetOpen(true);
-    };
-
-    const resetMenu = (
-        <div
-            class={cn(theme.dropdown.item, theme.dropdown.item_danger, theme.dropdown.item_large)}
-            onClick={handleResetClick}
-        >
-            {intl.getMessage('reset_dns_protocols')}
-        </div>
-    );
-
     return (
         <div class={theme.layout.container}>
             <div class={cn(theme.layout.containerIn, theme.layout.containerIn_one_col)}>
@@ -165,22 +164,6 @@ export const Encryption = () => {
                     <h1 class={cn(theme.layout.title, theme.title.h4, theme.title.h3_tablet)}>
                         {intl.getMessage('protocols')}
                     </h1>
-                    <Dropdown
-                        position="bottomRight"
-                        noIcon
-                        open={menuOpen()}
-                        onOpenChange={setMenuOpen}
-                        menu={resetMenu}
-                        anchorClass={theme.dropdown.trigger_offset}
-                    >
-                        <button
-                            type="button"
-                            class={theme.dropdown.trigger}
-                            aria-label={intl.getMessage('reset_dns_protocols')}
-                        >
-                            <Icon icon="bullets" />
-                        </button>
-                    </Dropdown>
                 </div>
 
                 <Show when={tlsStatusLoaded()} fallback={<PageLoader />}>
@@ -228,6 +211,10 @@ export const Encryption = () => {
                     <ServerSettingsRow onOpen={() => setServerSettingsOpen(true)} />
 
                     <RedirectToggle />
+
+                    <DangerLink onClick={() => setResetOpen(true)}>
+                        {intl.getMessage('reset_dns_protocols')}
+                    </DangerLink>
                 </Show>
             </div>
 

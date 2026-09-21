@@ -1,7 +1,3 @@
-/* The tooltip trigger is a flex item of the header cell, so it needs the same
-   truncation-friendly sizing the bare label used to have.  `Tooltip` renders
-   this wrapper even when it is disabled — then it carries no `data-part`
-   attribute and the global trigger rules in `Tooltip.pcss` do not apply. */
 .labelWrapper {
     min-width: 0;
     overflow: hidden;
@@ -14,7 +10,6 @@
     text-overflow: ellipsis;
 }
 
-/* Same menu padding the other tooltips in the app use. */
 .tooltipContent {
     padding: 16px;
 }

@@ -101,7 +101,7 @@ export const LogCard = (props: Props) => {
                             </div>
                         </div>
 
-                        <span class={cn(s.typeLine, theme.text.t4, theme.text.condenced)}>
+                        <span class={cn(s.typeLine, theme.text.t3, theme.text.condenced)}>
                             {intl.getMessage('type_value', { value: props.entry.type })}, {proto()}
                         </span>
                     </div>
@@ -127,20 +127,20 @@ export const LogCard = (props: Props) => {
                 </div>
 
                 <div class={s.fieldGrid}>
-                    <span class={cn(s.fieldLabel, theme.text.t4, theme.text.condenced)}>
+                    <span class={cn(s.fieldLabel, theme.text.t3, theme.text.condenced)}>
                         {intl.getMessage('time_table_header')}
                     </span>
-                    <span class={cn(s.fieldValue, theme.text.t4, theme.text.condenced)}>
+                    <span class={cn(s.fieldValue, theme.text.t3, theme.text.condenced)}>
                         {formatLogDate(props.entry.time)}, {formatLogTime(props.entry.time)}
                     </span>
 
-                    <span class={cn(s.fieldLabel, theme.text.t4, theme.text.condenced)}>
+                    <span class={cn(s.fieldLabel, theme.text.t3, theme.text.condenced)}>
                         {intl.getMessage('status_table_header')}
                     </span>
                     <span
                         class={cn(
                             s.status,
-                            theme.text.t4,
+                            theme.text.t3,
                             theme.text.condenced,
                             getStatusClassName(props.entry.reason),
                         )}
@@ -149,36 +149,36 @@ export const LogCard = (props: Props) => {
                     </span>
 
                     <Show when={reasonKey() !== 'none'}>
-                        <span class={cn(s.fieldLabel, theme.text.t4, theme.text.condenced)}>
+                        <span class={cn(s.fieldLabel, theme.text.t3, theme.text.condenced)}>
                             {intl.getMessage('reason_table_header')}
                         </span>
-                        <span class={cn(s.fieldValue, theme.text.t4, theme.text.condenced)}>
+                        <span class={cn(s.fieldValue, theme.text.t3, theme.text.condenced)}>
                             {reasonLabel()}
                             {reasonDetails() ? ` / ${reasonDetails()}` : ''}
                         </span>
                     </Show>
 
-                    <span class={cn(s.fieldLabel, theme.text.t4, theme.text.condenced)}>
+                    <span class={cn(s.fieldLabel, theme.text.t3, theme.text.condenced)}>
                         {intl.getMessage('client_ip')}
                     </span>
-                    <span class={cn(s.fieldValue, theme.text.t4, theme.text.condenced)}>
+                    <span class={cn(s.fieldValue, theme.text.t3, theme.text.condenced)}>
                         {props.entry.client}
                     </span>
 
                     <Show when={clientDetails()}>
-                        <span class={cn(s.fieldLabel, theme.text.t4, theme.text.condenced)}>
+                        <span class={cn(s.fieldLabel, theme.text.t3, theme.text.condenced)}>
                             {intl.getMessage('client_details')}
                         </span>
-                        <span class={cn(s.fieldValue, theme.text.t4, theme.text.condenced)}>
+                        <span class={cn(s.fieldValue, theme.text.t3, theme.text.condenced)}>
                             {clientDetails()}
                         </span>
                     </Show>
 
                     <Show when={clientLocation()}>
-                        <span class={cn(s.fieldLabel, theme.text.t4, theme.text.condenced)}>
+                        <span class={cn(s.fieldLabel, theme.text.t3, theme.text.condenced)}>
                             {intl.getMessage('client_location')}
                         </span>
-                        <span class={cn(s.fieldValue, theme.text.t4, theme.text.condenced)}>
+                        <span class={cn(s.fieldValue, theme.text.t3, theme.text.condenced)}>
                             {clientLocation()}
                         </span>
                     </Show>

@@ -1,5 +1,5 @@
 import { Show, For, createSignal, createMemo } from 'solid-js';
-import { useIsDesktop } from 'panel/helpers/useMediaQuery';
+import { useIsDesktop } from 'panel/hooks/useMediaQuery';
 
 import intl from 'panel/common/intl';
 import { Icon } from 'panel/common/ui/Icon';
@@ -38,6 +38,9 @@ type Props = {
     period?: number;
 };
 
+/** The row is a Query Log link, so the block/unblock menu must not follow it. */
+const preventRowLink = (e: MouseEvent) => e.preventDefault();
+
 export const TopClients = (props: Props) => {
     const {
         confirmState: confirmDialog,
@@ -50,7 +53,7 @@ export const TopClients = (props: Props) => {
     const [openMenuClient, setOpenMenuClient] = createSignal<string | null>(null);
 
     const isDesktop = useIsDesktop();
-    const { sortedData: sortedClients } = useSortedData(
+    const { sortedData: sortedClients, hasMore } = useSortedData(
         () => props.topClients,
         TOP_CLIENTS_VISIBLE_ITEMS,
     );
@@ -121,16 +124,18 @@ export const TopClients = (props: Props) => {
                             );
 
                             return (
-                                <div class={s.clientRow} data-testid="top-client-row">
+                                <Link
+                                    to={RoutePath.QueryLog}
+                                    query={{ search: `"${client.name}"` }}
+                                    class={cn(s.clientRow, s.clientRowLink)}
+                                    data-testid="top-client-row"
+                                >
                                     <div class={s.clientInfo}>
-                                        <Link
-                                            to={RoutePath.QueryLog}
-                                            query={{ search: `"${client.name}"` }}
+                                        <div
                                             class={cn(
                                                 theme.text.t3,
                                                 theme.text.condenced,
                                                 s.clientIp,
-                                                s.clientIpLink,
                                             )}
                                             title={client.name}
                                         >
@@ -162,12 +167,12 @@ export const TopClients = (props: Props) => {
                                             </Tooltip>
 
                                             <span class={s.clientIpText}>{client.name}</span>
-                                        </Link>
+                                        </div>
                                     </div>
 
                                     <div class={s.tableRowRight}>
                                         <Show when={isDesktop()}>
-                                            <div class={s.dropdowWrapper}>
+                                            <div class={s.dropdownWrapper}>
                                                 <QueriesTooltip count={client.count}>
                                                     <div
                                                         class={cn(
@@ -176,9 +181,7 @@ export const TopClients = (props: Props) => {
                                                             s.queryCount,
                                                         )}
                                                     >
-                                                        <Link
-                                                            to={RoutePath.QueryLog}
-                                                            query={{ search: `"${client.name}"` }}
+                                                        <span
                                                             class={cn(
                                                                 theme.text.t3,
                                                                 theme.text.condenced,
@@ -186,7 +189,7 @@ export const TopClients = (props: Props) => {
                                                             )}
                                                         >
                                                             {formatCompactNumber(client.count)}
-                                                        </Link>
+                                                        </span>
 
                                                         <div
                                                             class={cn(
@@ -211,7 +214,7 @@ export const TopClients = (props: Props) => {
                                             </div>
                                         </Show>
 
-                                        <div class={s.dropdownWrapper}>
+                                        <div class={s.dropdownWrapper} onClick={preventRowLink}>
                                             <Dropdown
                                                 wrapClass={s.clientActionsDropdown}
                                                 menu={getClientMenu(client)}
@@ -265,9 +268,7 @@ export const TopClients = (props: Props) => {
                                                     s.queryCount,
                                                 )}
                                             >
-                                                <Link
-                                                    to={RoutePath.QueryLog}
-                                                    query={{ search: `"${client.name}"` }}
+                                                <span
                                                     class={cn(
                                                         theme.text.t3,
                                                         theme.text.condenced,
@@ -275,7 +276,7 @@ export const TopClients = (props: Props) => {
                                                     )}
                                                 >
                                                     {formatCompactNumber(client.count)}
-                                                </Link>
+                                                </span>
 
                                                 <div
                                                     class={cn(
@@ -296,9 +297,11 @@ export const TopClients = (props: Props) => {
                                             </div>
                                         </div>
 
-                                        <div class={s.tableRowActions}>{getClientMenu(client)}</div>
+                                        <div class={s.tableRowActions} onClick={preventRowLink}>
+                                            {getClientMenu(client)}
+                                        </div>
                                     </div>
-                                </div>
+                                </Link>
                             );
                         }}
                     </For>
@@ -311,11 +314,13 @@ export const TopClients = (props: Props) => {
                 />
             </div>
 
-            <CardFooter
-                to={RoutePath.TopClients}
-                testId="show-more-top-clients"
-                query={props.period ? { period: props.period } : undefined}
-            />
+            <Show when={hasMore()}>
+                <CardFooter
+                    to={RoutePath.TopClients}
+                    testId="show-more-top-clients"
+                    query={props.period ? { period: props.period } : undefined}
+                />
+            </Show>
         </div>
     );
 };

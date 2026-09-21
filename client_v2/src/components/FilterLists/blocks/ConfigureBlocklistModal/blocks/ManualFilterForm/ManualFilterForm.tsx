@@ -42,6 +42,7 @@ export const ManualFilterForm = (props: Props) => {
                     placeholder={intl.getMessage('blocklist_placeholder_example')}
                     value={name()}
                     onChange={(e) => setName((e.target as HTMLInputElement).value)}
+                    onCard
                 />
             </div>
 
@@ -56,6 +57,7 @@ export const ManualFilterForm = (props: Props) => {
                     onChange={(e) => setUrl((e.target as HTMLInputElement).value)}
                     onBlur={handleUrlBlur}
                     errorMessage={urlError()}
+                    onCard
                 />
             </div>
         </div>

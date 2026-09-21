@@ -187,10 +187,17 @@
         color: var(--default-main-text);
         padding: 0;
         overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        max-height: var(--available-height, none);
         box-shadow: 8px 8px 24px 0 rgba(0, 0, 0, 0.1);
         background-color: var(--default-dropdown-menu-background);
         z-index: 3;
         border-radius: 8px;
+
+        &[hidden] {
+            display: none;
+        }
 
         @media (min-width: 1024px) {
             left: initial;
@@ -241,6 +248,17 @@
             [data-scope='select'][data-part='value-text'],
             [data-scope='combobox'][data-part='value-text'] {
                 color: var(--default-description-text);
+            }
+        }
+    }
+
+    &.solid-select--on-card {
+        [data-scope='select'][data-part='control'],
+        [data-scope='combobox'][data-part='control'] {
+            background-color: var(--page-background-additional);
+
+            &:not([data-disabled]):hover {
+                background-color: var(--page-background-additional-hovered);
             }
         }
     }
@@ -411,6 +429,8 @@
         overflow-y: auto;
         overflow-x: hidden;
         max-height: 340px;
+        flex: 0 1 auto;
+        min-height: 0;
 
         &::-webkit-scrollbar {
             width: 6px;

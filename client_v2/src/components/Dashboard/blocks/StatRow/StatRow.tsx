@@ -52,8 +52,10 @@ export const StatRow = (props: StatRowProps) => {
         </div>
     );
 
-    return (
-        <div class={cn(s.statRow, s[props.rowTheme])}>
+    const rowClass = () => cn(s.statRow, s[props.rowTheme], props.linkTo && s.statRowLink);
+
+    const rowContent = () => (
+        <>
             <div class={s.statRowDropdown}>
                 <Tooltip
                     position="bottomLeft"
@@ -80,20 +82,7 @@ export const StatRow = (props: StatRowProps) => {
                     <div class={s.dropdownWrapper}>
                         <QueriesTooltip count={props.value as number}>
                             <div class={cn(theme.text.t3, theme.text.condenced, s.queryCount)}>
-                                <Show when={props.linkTo} fallback={queriesValue()}>
-                                    <Link
-                                        to={props.linkTo}
-                                        query={props.query}
-                                        class={cn(
-                                            theme.text.t3,
-                                            theme.text.condenced,
-                                            s.queryCount,
-                                            s.queryCountLink,
-                                        )}
-                                    >
-                                        {queriesValue()}
-                                    </Link>
-                                </Show>
+                                <span class={s.queryCountValue}>{queriesValue()}</span>
                                 {queriesPercent()}
                             </div>
                         </QueriesTooltip>
@@ -118,6 +107,16 @@ export const StatRow = (props: StatRowProps) => {
                     />
                 </div>
             </Show>
-        </div>
+        </>
+    );
+
+    return (
+        <Show when={props.linkTo} fallback={<div class={rowClass()}>{rowContent()}</div>}>
+            {(to) => (
+                <Link to={to()} query={props.query} class={rowClass()}>
+                    {rowContent()}
+                </Link>
+            )}
+        </Show>
     );
 };

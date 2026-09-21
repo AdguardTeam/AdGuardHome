@@ -95,12 +95,6 @@
 .queryCountLink {
     color: inherit;
     text-decoration: none;
-
-    &:hover,
-    &:focus {
-        color: inherit;
-        text-decoration: underline;
-    }
 }
 
 .dropdownWrapper {
@@ -209,14 +203,21 @@
     white-space: nowrap;
 }
 
-.clientIpLink {
+.clientRowLink {
+    cursor: pointer;
     color: inherit;
     text-decoration: none;
 
     &:hover,
-    &:focus {
+    &:focus,
+    &:active {
         color: inherit;
-        text-decoration: underline;
+        text-decoration: none;
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--product-primary-90);
+        outline-offset: -2px;
     }
 }
 

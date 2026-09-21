@@ -1,0 +1,31 @@
+.dangerLink {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-width: 128px;
+    min-height: 24px;
+    margin-top: 32px;
+    padding: 8px 16px;
+    border: none;
+    background: transparent;
+    text-align: left;
+    color: var(--default-error-link);
+    cursor: pointer;
+    transition: color var(--t2);
+    -webkit-tap-highlight-color: transparent;
+
+    &:hover,
+    &:focus-visible {
+        color: var(--hovered-danger-button);
+        text-decoration: underline;
+    }
+
+    &:active {
+        color: var(--pressed-danger-button);
+    }
+
+    &:disabled {
+        cursor: not-allowed;
+        color: var(--disabled-main-button);
+    }
+}

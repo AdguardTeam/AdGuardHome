@@ -1,8 +1,8 @@
-import { Show } from 'solid-js';
+import { Show, createSignal } from 'solid-js';
 import cn from 'clsx';
 
 import { Tooltip } from 'panel/common/ui/Tooltip';
-import { useMediaQuery } from 'panel/helpers/useMediaQuery';
+import { useIsTouchDevice } from 'panel/hooks/useMediaQuery';
 import { useIsTruncated } from 'panel/hooks/useIsTruncated';
 import theme from 'panel/lib/theme';
 
@@ -15,16 +15,16 @@ export type HeaderLabelProps = {
 };
 
 export const HeaderLabel = (props: HeaderLabelProps) => {
-    let labelRef: HTMLSpanElement | undefined;
+    const [labelRef, setLabelRef] = createSignal<HTMLSpanElement>();
 
-    const isTouch = useMediaQuery('(hover: none)');
-    const isTruncated = useIsTruncated(() => labelRef);
+    const isTouch = useIsTouchDevice();
+    const isTruncated = useIsTruncated(labelRef);
 
     const useTooltip = () => !!props.tooltip && !isTouch();
 
     const label = (
         <span
-            ref={labelRef}
+            ref={setLabelRef}
             data-testid={`table-header-${props.columnKey}`}
             class={cn(theme.text.t3, theme.text.condenced, theme.text.semibold, s.text)}
         >

@@ -7,6 +7,7 @@ import type { TableColumn } from 'panel/common/ui/Table';
 import { LocalStorageHelper } from 'panel/helpers/localStorageHelper';
 import type { IOption } from 'panel/lib/helpers/utils';
 import { copy, copyInDom } from 'panel/__tests__/helpers/copy';
+import { mockMatchMedia } from 'panel/__tests__/helpers/matchMedia';
 
 type Row = { name: string; count: number };
 
@@ -32,23 +33,6 @@ const mobileSortOptions: IOption<string>[] = [
     { value: 'count:desc', label: 'Count desc' },
     { value: 'count:asc', label: 'Count asc' },
 ];
-
-const mockMatchMedia = (matches: boolean) => {
-    Object.defineProperty(window, 'matchMedia', {
-        writable: true,
-        value: (query: string) =>
-            ({
-                matches,
-                media: query,
-                onchange: null,
-                addListener: () => {},
-                removeListener: () => {},
-                addEventListener: () => {},
-                removeEventListener: () => {},
-                dispatchEvent: () => false,
-            }) as MediaQueryList,
-    });
-};
 
 const renderPage = (overrides: Partial<Parameters<typeof StatsPage<Row>>[0]> = {}) =>
     render(() => (
@@ -232,5 +216,26 @@ describe('StatsPage', () => {
         });
         expect(screen.queryByTestId('stats-empty-state')).not.toBeInTheDocument();
         expect(screen.queryByTestId('stats-mobile-list')).not.toBeInTheDocument();
+    });
+
+    it('renders every row as a link when rowLink is provided', () => {
+        const { container } = renderPage({
+            rowLink: (row) => ({ to: 'QueryLog', query: { search: `"${row.name}"` } }),
+        });
+
+        const rows = Array.from(container.querySelectorAll('[class*="tableRow"]'));
+        expect(rows.length).toBe(3);
+        rows.forEach((row) => {
+            expect(row.tagName).toBe('A');
+            expect(row.getAttribute('href')).toContain('/logs');
+        });
+        expect(container.querySelectorAll('a a').length).toBe(0);
+    });
+
+    it('keeps rows as plain containers when rowLink is not provided', () => {
+        const { container } = renderPage();
+
+        const rows = Array.from(container.querySelectorAll('[class*="tableRow"]'));
+        rows.forEach((row) => expect(row.tagName).toBe('DIV'));
     });
 });

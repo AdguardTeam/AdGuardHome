@@ -49,6 +49,7 @@ export const DisallowedDomainsDialog = (props: Props) => {
                     errorMessage={field.error()}
                     commentPrefixes={COMMENT_LINE_TOKENS}
                     highlightComments
+                    onCard
                 />
             </div>
         </ConfigDialog>

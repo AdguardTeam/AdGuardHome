@@ -6,6 +6,7 @@ import { RoutePath } from 'panel/components/Routes/Paths';
 import { statsState } from 'panel/stores/stats';
 import { LOCAL_STORAGE_KEYS } from 'panel/helpers/localStorageHelper';
 import { computePercent } from 'panel/helpers/statistics';
+import { queryLogSearchQuery } from 'panel/helpers/helpers';
 import type { IOption } from 'panel/lib/helpers/utils';
 import { StatsPage } from '../StatsPage';
 import { CountWithPercent } from '../blocks/CountWithPercent';
@@ -30,7 +31,7 @@ export const TopQueriedDomainsPage = () => {
             header: { text: intl.getMessage('domain') },
             accessor: 'name',
             sortable: true,
-            render: (_v, row) => <NameCell name={row.name} queryLogSearch={row.name} />,
+            render: (_v, row) => <NameCell name={row.name} />,
         },
         {
             key: 'queries',
@@ -42,7 +43,6 @@ export const TopQueriedDomainsPage = () => {
                 <CountWithPercent
                     count={row.count}
                     total={statsState.numDnsQueries}
-                    queryLogSearch={row.name}
                     progress={computePercent(row.count, statsState.numDnsQueries)}
                 />
             ),
@@ -67,16 +67,16 @@ export const TopQueriedDomainsPage = () => {
             emptyText={intl.getMessage('nothing_found')}
             onRefresh={refreshStats}
             searchTextForRow={(row) => row.name}
+            rowLink={(row) => ({ to: RoutePath.QueryLog, query: queryLogSearchQuery(row.name) })}
             pageSizeKey={LOCAL_STORAGE_KEYS.TOP_QUERIED_DOMAINS_PAGE_SIZE}
             sortStorageKey={LOCAL_STORAGE_KEYS.TOP_QUERIED_DOMAINS_SORT}
             mobileSortOptions={mobileSortOptions()}
             renderMobileCard={(row) => (
                 <StatMobileCard
                     title={row.name}
-                    titleLink={{
+                    cardLink={{
                         to: RoutePath.QueryLog,
-                        query: { search: `"${row.name}"` },
-                        title: row.name,
+                        query: queryLogSearchQuery(row.name),
                     }}
                     items={[
                         {
@@ -85,7 +85,6 @@ export const TopQueriedDomainsPage = () => {
                                 <CountWithPercent
                                     count={row.count}
                                     total={statsState.numDnsQueries}
-                                    queryLogSearch={row.name}
                                 />
                             ),
                             progress: computePercent(row.count, statsState.numDnsQueries),

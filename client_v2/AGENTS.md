@@ -346,6 +346,14 @@ must not depend on stores or components. Helpers are pure and dependency-free.
   a conditional class via `cn(...)`, not an inline `style`. Exception: a single
   computed pixel offset for a dragging/positioning edge case may be acceptable
   when no class-based solution exists — justify it in a comment.
+- **Comments**: Write comments only where they earn their place, and keep
+  them useful and compact — one or two lines explaining a non-obvious
+  *why*: a workaround, a browser quirk, or a cross-file constraint a
+  reader would otherwise break. Do not narrate what a rule or function
+  does, restate selector/property names, or spell out measurements,
+  arithmetic, and design history; that belongs with the value it
+  constrains or in the PR description. Applies to `.pcss`, `.tsx`, and
+  tests alike. Delete a comment once the code it describes changes.
 - **Reactivity**: Use `createSignal` for local state, `createMemo` for
   derived values, `createEffect` for side effects, `onMount` for initial data
   fetches, and `onCleanup` for teardown. Do not read signals imperatively

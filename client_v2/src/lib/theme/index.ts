@@ -1,4 +1,5 @@
 import common from './Common.module.pcss';
+import auth from './Auth.module.pcss';
 import dialog from './Dialog.module.pcss';
 import layout from './Layout.module.pcss';
 import link from './Link.module.pcss';
@@ -14,6 +15,7 @@ import status from './Status.module.pcss';
 const theme = {
     link,
     common,
+    auth,
     layout,
     dialog,
     table,

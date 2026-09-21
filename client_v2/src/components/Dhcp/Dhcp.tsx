@@ -2,8 +2,7 @@ import { createSignal, createEffect, onMount, Show } from 'solid-js';
 import cn from 'clsx';
 import { useNavigate } from '@solidjs/router';
 
-import { Dropdown } from 'panel/common/ui/Dropdown';
-import { Icon } from 'panel/common/ui/Icon';
+import { DangerLink } from 'panel/common/ui/DangerLink';
 import { PageLoader } from 'panel/common/ui/Loader';
 import { SettingRow } from 'panel/common/ui/SettingRow';
 import { ConfirmDialog } from 'panel/common/ui/ConfirmDialog';
@@ -36,7 +35,6 @@ export const Dhcp = () => {
 
     const [selectedInterface, setSelectedInterface] = createSignal(dhcpState.interface_name || '');
     const [showAllIps, setShowAllIps] = createSignal(false);
-    const [menuOpen, setMenuOpen] = createSignal(false);
 
     createEffect(() => {
         if (dhcpState.interface_name) {
@@ -88,20 +86,6 @@ export const Dhcp = () => {
     const hasIpv6 = () =>
         !!(dhcpState.interfaces && dhcpState.interfaces[selectedInterface()]?.ipv6_addresses);
 
-    const handleResetClick = () => {
-        setMenuOpen(false);
-        resetDialog.openDialog();
-    };
-
-    const resetMenu = (
-        <div
-            class={cn(theme.dropdown.item, theme.dropdown.item_danger, theme.dropdown.item_large)}
-            onClick={handleResetClick}
-        >
-            {intl.getMessage('reset_dhcp_settings')}
-        </div>
-    );
-
     const isLoaded = () => !dhcpState.processing && !dhcpState.processingInterfaces;
 
     return (
@@ -138,22 +122,6 @@ export const Dhcp = () => {
                             >
                                 {intl.getMessage('dhcp')}
                             </h1>
-                            <Dropdown
-                                position="bottomRight"
-                                noIcon
-                                open={menuOpen()}
-                                onOpenChange={setMenuOpen}
-                                menu={resetMenu}
-                                anchorClass={theme.dropdown.trigger_offset}
-                            >
-                                <button
-                                    type="button"
-                                    class={theme.dropdown.trigger}
-                                    aria-label={intl.getMessage('reset_dhcp_settings')}
-                                >
-                                    <Icon icon="bullets" />
-                                </button>
-                            </Dropdown>
                         </div>
 
                         <DhcpToggle
@@ -199,6 +167,10 @@ export const Dhcp = () => {
                                 onClick={() => navigate(Paths.DhcpLeases)}
                             />
                         </div>
+
+                        <DangerLink onClick={resetDialog.openDialog}>
+                            {intl.getMessage('reset_dhcp_settings')}
+                        </DangerLink>
 
                         <DhcpV4Modal
                             open={v4Dialog.open()}

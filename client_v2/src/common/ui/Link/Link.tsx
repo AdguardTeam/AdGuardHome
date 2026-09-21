@@ -16,6 +16,7 @@ type Props = {
     hash?: string;
     props?: LinkParams;
     class?: string;
+    style?: JSX.CSSProperties | string;
     type?: string;
     stop?: boolean;
     disabled?: boolean;
@@ -62,6 +63,7 @@ export const Link = (linkProps: Props) => {
                     tabIndex={0}
                     title={linkProps.title}
                     class={cn(linkProps.class)}
+                    style={linkProps.style}
                     data-testid={linkProps['data-testid']}
                 >
                     {linkProps.children}
@@ -72,6 +74,7 @@ export const Link = (linkProps: Props) => {
                 id={linkProps.id}
                 title={linkProps.title}
                 class={cn(theme.link.link, linkProps.class)}
+                style={linkProps.style}
                 href={linkPathBuilder(
                     linkProps.to,
                     linkProps.props,

@@ -29,7 +29,7 @@ type Props = {
 };
 
 export const TopQueriedDomains = (props: Props) => {
-    const { sortedData: sortedDomains } = useSortedData(() => props.topQueriedDomains);
+    const { sortedData: sortedDomains, hasMore } = useSortedData(() => props.topQueriedDomains);
 
     const hasStats = createMemo(() => props.topQueriedDomains.length > 0);
 
@@ -60,8 +60,10 @@ export const TopQueriedDomains = (props: Props) => {
                             const trackerData = getTrackerData(domain.name);
 
                             return (
-                                <div
-                                    class={cn(s.tableRow, s.statRowValue)}
+                                <Link
+                                    to={RoutePath.QueryLog}
+                                    query={{ search: `"${domain.name}"` }}
+                                    class={cn(s.tableRow, s.statRowValue, s.tableRowLink)}
                                     data-testid="top-domain-row"
                                 >
                                     <div
@@ -85,9 +87,7 @@ export const TopQueriedDomains = (props: Props) => {
                                                 <Icon icon="eye_open" class={s.tableRowIcon} />
                                             </Tooltip>
                                         </Show>
-                                        <Link
-                                            to={RoutePath.QueryLog}
-                                            query={{ search: `"${domain.name}"` }}
+                                        <span
                                             class={cn(
                                                 theme.text.t3,
                                                 theme.text.condenced,
@@ -96,11 +96,11 @@ export const TopQueriedDomains = (props: Props) => {
                                             title={domain.name}
                                         >
                                             <span class={s.domainName}>{domain.name}</span>
-                                        </Link>
+                                        </span>
                                     </div>
 
                                     <div class={s.tableRowRight}>
-                                        <div class={s.dropdowWrapper}>
+                                        <div class={s.dropdownWrapper}>
                                             <QueriesTooltip count={domain.count}>
                                                 <div
                                                     class={cn(
@@ -109,9 +109,7 @@ export const TopQueriedDomains = (props: Props) => {
                                                         s.queryCount,
                                                     )}
                                                 >
-                                                    <Link
-                                                        to={RoutePath.QueryLog}
-                                                        query={{ search: `"${domain.name}"` }}
+                                                    <span
                                                         class={cn(
                                                             theme.text.t3,
                                                             theme.text.condenced,
@@ -119,7 +117,7 @@ export const TopQueriedDomains = (props: Props) => {
                                                         )}
                                                     >
                                                         {formatCompactNumber(domain.count)}
-                                                    </Link>
+                                                    </span>
 
                                                     <div
                                                         class={cn(
@@ -148,18 +146,20 @@ export const TopQueriedDomains = (props: Props) => {
                                             style={{ width: `${percent()}%` }}
                                         />
                                     </div>
-                                </div>
+                                </Link>
                             );
                         }}
                     </For>
                 </Show>
             </div>
 
-            <CardFooter
-                to={RoutePath.TopQueriedDomains}
-                testId="show-more-top-queried-domains"
-                query={props.period ? { period: props.period } : undefined}
-            />
+            <Show when={hasMore()}>
+                <CardFooter
+                    to={RoutePath.TopQueriedDomains}
+                    testId="show-more-top-queried-domains"
+                    query={props.period ? { period: props.period } : undefined}
+                />
+            </Show>
         </div>
     );
 };

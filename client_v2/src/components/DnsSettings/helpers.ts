@@ -23,6 +23,23 @@ export const getUpstreamServersSummary = (servers: string, upstreamDnsFile?: str
     return lines.join(', ');
 };
 
+/**
+ * Reports whether the private reverse DNS resolvers have at least one server to
+ * work with, counting the OS resolvers the backend falls back to.
+ *
+ * Comment-only lines do not count, matching the filtering the backend applies
+ * before it decides that there is no upstream to use.
+ */
+export const hasUsablePrivatePtrUpstreams = (
+    localPtrUpstreams: string,
+    defaultLocalPtrUpstreams: string[],
+): boolean =>
+    localPtrUpstreams.split('\n').some((line) => {
+        const trimmed = line.trim();
+
+        return trimmed !== '' && !trimmed.startsWith('#');
+    }) || defaultLocalPtrUpstreams.length > 0;
+
 export const getRateLimitSummary = (ratelimit: number): string => {
     if (ratelimit === 0) return intl.getMessage('dns_rate_limit_no_limit');
     return intl.getMessage('dns_rate_limit_value', { value: ratelimit });

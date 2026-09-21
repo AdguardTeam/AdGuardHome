@@ -90,6 +90,7 @@ export const EdnsDialog = (props: Props) => {
                     disabled={!ednsCsUseCustom()}
                     errorMessage={ednsCsCustomIp.error()}
                     size="large"
+                    onCard
                 />
             </div>
         </ConfigDialog>

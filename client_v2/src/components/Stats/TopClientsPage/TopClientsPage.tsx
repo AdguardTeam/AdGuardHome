@@ -6,7 +6,6 @@ import intl from 'panel/common/intl';
 import theme from 'panel/lib/theme';
 import type { TableColumn } from 'panel/common/ui/Table';
 import { Dropdown } from 'panel/common/ui/Dropdown';
-import { Link } from 'panel/common/ui/Link';
 import {
     ClientBlockConfirmDialog,
     type ClientBlockAction,
@@ -18,7 +17,7 @@ import { accessState, getAccessList } from 'panel/stores/access';
 import { initClientForm } from 'panel/stores/clientForm';
 import { LOCAL_STORAGE_KEYS } from 'panel/helpers/localStorageHelper';
 import { computePercent } from 'panel/helpers/statistics';
-import { splitByNewLine } from 'panel/helpers/helpers';
+import { queryLogSearchQuery, splitByNewLine } from 'panel/helpers/helpers';
 import type { IOption } from 'panel/lib/helpers/utils';
 import { PlusButton } from 'panel/common/ui/PlusButton';
 import { Paths, RoutePath } from 'panel/components/Routes/Paths';
@@ -34,6 +33,9 @@ type ClientStat = {
     count: number;
     info?: { name?: string; whois_info?: Record<string, string> };
 };
+
+/** Rows and mobile cards link to the query log, so inner controls must not follow them. */
+const preventRowLink = (e: MouseEvent) => e.preventDefault();
 
 export const TopClientsPage = () => {
     const navigate = useNavigate();
@@ -152,11 +154,7 @@ export const TopClientsPage = () => {
             sortable: true,
             sortFn: (a: number, b: number) => a - b,
             render: (_v, row) => (
-                <CountWithPercent
-                    count={row.count}
-                    total={statsState.numDnsQueries}
-                    queryLogSearch={row.name}
-                />
+                <CountWithPercent count={row.count} total={statsState.numDnsQueries} />
             ),
         },
         {
@@ -165,15 +163,13 @@ export const TopClientsPage = () => {
             accessor: (row) => row.name,
             sortable: true,
             render: (_v, row) => (
-                <Link
-                    to={RoutePath.QueryLog}
-                    query={{ search: `"${row.name}"` }}
-                    class={cn(theme.text.t3, theme.text.condenced, s.ipCellLink)}
+                <span
+                    class={cn(theme.text.t3, theme.text.condenced, s.nameCell)}
                     title={row.name}
                     data-testid="client-ip-cell"
                 >
                     {row.name}
-                </Link>
+                </span>
             ),
         },
         {
@@ -202,56 +198,62 @@ export const TopClientsPage = () => {
             width: 48,
             class: s.actionsCell,
             render: (_v, row) => (
-                <Dropdown
-                    wrapClass={s.actionsDropdown}
-                    position="bottomRight"
-                    noIcon
-                    open={openMenuClient() === row.name}
-                    onOpenChange={(isOpen: boolean) => setOpenMenuClient(isOpen ? row.name : null)}
-                    menu={
-                        <div class={s.protectionMenu}>
-                            <Show
-                                when={isBlocked(row.name)}
-                                fallback={
+                <div onClick={preventRowLink}>
+                    <Dropdown
+                        wrapClass={s.actionsDropdown}
+                        position="bottomRight"
+                        noIcon
+                        open={openMenuClient() === row.name}
+                        onOpenChange={(isOpen: boolean) =>
+                            setOpenMenuClient(isOpen ? row.name : null)
+                        }
+                        menu={
+                            <div class={s.protectionMenu}>
+                                <Show
+                                    when={isBlocked(row.name)}
+                                    fallback={
+                                        <div
+                                            class={cn(
+                                                theme.text.t2,
+                                                theme.text.condenced,
+                                                s.protectionMenuItem,
+                                                s.protectionMenuItemRed,
+                                            )}
+                                            data-testid="client-block-menu-item"
+                                            onClick={() =>
+                                                openClientConfirmDialog(row.name, 'block')
+                                            }
+                                        >
+                                            {intl.getMessage('block_client')}
+                                        </div>
+                                    }
+                                >
                                     <div
                                         class={cn(
                                             theme.text.t2,
                                             theme.text.condenced,
+                                            theme.dropdown.item,
                                             s.protectionMenuItem,
-                                            s.protectionMenuItemRed,
                                         )}
-                                        data-testid="client-block-menu-item"
-                                        onClick={() => openClientConfirmDialog(row.name, 'block')}
+                                        data-testid="client-unblock-menu-item"
+                                        onClick={() => openClientConfirmDialog(row.name, 'unblock')}
                                     >
-                                        {intl.getMessage('block_client')}
+                                        {intl.getMessage('unblock_client')}
                                     </div>
-                                }
-                            >
-                                <div
-                                    class={cn(
-                                        theme.text.t2,
-                                        theme.text.condenced,
-                                        theme.dropdown.item,
-                                        s.protectionMenuItem,
-                                    )}
-                                    data-testid="client-unblock-menu-item"
-                                    onClick={() => openClientConfirmDialog(row.name, 'unblock')}
-                                >
-                                    {intl.getMessage('unblock_client')}
-                                </div>
-                            </Show>
-                        </div>
-                    }
-                >
-                    <button
-                        type="button"
-                        class={s.actionButton}
-                        data-testid="client-action-button"
-                        aria-label={`${intl.getMessage('aria_actions')}: ${row.info?.name || row.name}`}
+                                </Show>
+                            </div>
+                        }
                     >
-                        <Icon icon="bullets" />
-                    </button>
-                </Dropdown>
+                        <button
+                            type="button"
+                            class={s.actionButton}
+                            data-testid="client-action-button"
+                            aria-label={`${intl.getMessage('aria_actions')}: ${row.info?.name || row.name}`}
+                        >
+                            <Icon icon="bullets" />
+                        </button>
+                    </Dropdown>
+                </div>
             ),
         },
     ];
@@ -274,6 +276,10 @@ export const TopClientsPage = () => {
                         {row.info?.name || row.name}
                     </span>
                 }
+                cardLink={{
+                    to: RoutePath.QueryLog,
+                    query: queryLogSearchQuery(row.name),
+                }}
                 status={
                     <Show when={blocked}>
                         <span
@@ -288,26 +294,13 @@ export const TopClientsPage = () => {
                     {
                         label: intl.getMessage('queries'),
                         value: (
-                            <CountWithPercent
-                                count={row.count}
-                                total={statsState.numDnsQueries}
-                                queryLogSearch={row.name}
-                            />
+                            <CountWithPercent count={row.count} total={statsState.numDnsQueries} />
                         ),
                         progress: computePercent(row.count, statsState.numDnsQueries),
                     },
                     {
                         label: intl.getMessage('ip_address'),
-                        value: (
-                            <Link
-                                to={RoutePath.QueryLog}
-                                query={{ search: `"${row.name}"` }}
-                                class={cn(theme.text.t3, theme.text.condenced, s.ipCellLink)}
-                                title={row.name}
-                            >
-                                {row.name}
-                            </Link>
-                        ),
+                        value: row.name,
                     },
                     ...(hasWhoisInfo(row) ? [whoisCardItem(row)] : []),
                 ]}
@@ -357,6 +350,10 @@ export const TopClientsPage = () => {
                 emptyText={intl.getMessage('nothing_found')}
                 onRefresh={handleRefresh}
                 searchTextForRow={(row) => `${row.name} ${row.info?.name ?? ''}`}
+                rowLink={(row) => ({
+                    to: RoutePath.QueryLog,
+                    query: queryLogSearchQuery(row.name),
+                })}
                 pageSizeKey={LOCAL_STORAGE_KEYS.TOP_CLIENTS_PAGE_SIZE}
                 sortStorageKey={LOCAL_STORAGE_KEYS.TOP_CLIENTS_SORT}
                 mobileSortOptions={mobileSortOptions()}

@@ -10,7 +10,8 @@ Object.defineProperty(window, 'scrollTo', {
     value: () => {},
 });
 
-// Mock window.matchMedia for components that use useIsMobile
+// Mock window.matchMedia for components that use the responsive hooks from
+// `panel/hooks/useMediaQuery`.
 Object.defineProperty(window, 'matchMedia', {
     writable: true,
     value: (query: string): MediaQueryList =>

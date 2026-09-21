@@ -8,6 +8,8 @@ import {
     resetValidationStatus,
     applyTlsOptimistically,
 } from 'panel/stores/encryption';
+import { dashboardState } from 'panel/stores/dashboard';
+import { STANDARD_WEB_PORT } from 'panel/helpers/constants';
 import { CertificateStatus, ValidationStatus } from '../Status';
 import { defaultTlsValues, getSubmitValues } from './helpers';
 import s from '../styles.module.pcss';
@@ -18,15 +20,6 @@ export const TlsCertSection = () => {
 
     const enc = () => encryptionState;
 
-    /**
-     * Removing the certificate takes the whole encryption setup down with it:
-     * encryption is turned off and the TLS data goes back to its defaults, the
-     * same payload "Reset DNS protocols" writes.  The server settings row is
-     * disabled without a pair but keeps rendering what it knows, so a partial
-     * reset would leave the hostname, the ports, and the redirect behind —
-     * describing a server that no longer serves TLS, and seeding the next
-     * wizard run with those values.
-     */
     const handleRemoveCert = () => {
         const values = getSubmitValues(defaultTlsValues);
 
@@ -87,7 +80,10 @@ export const TlsCertSection = () => {
             <Show when={showDeleteConfirm()}>
                 <ConfirmDialog
                     title={intl.getMessage('remove_tls_certificate')}
-                    text={intl.getMessage('remove_tls_certificate_desc')}
+                    text={intl.getMessage('remove_tls_certificate_desc', {
+                        host: window.location.hostname,
+                        port: Number(dashboardState.httpPort) || STANDARD_WEB_PORT,
+                    })}
                     buttonText={intl.getMessage('yes_remove')}
                     cancelText={intl.getMessage('cancel')}
                     buttonVariant="danger"

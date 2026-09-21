@@ -67,6 +67,14 @@
     &.compact {
         min-height: 116px;
     }
+
+    &.onCard:not(:disabled) {
+        background-color: var(--page-background-additional);
+
+        &:hover {
+            background-color: var(--page-background-additional-hovered);
+        }
+    }
 }
 
 /* Leaves room for the clear button (16px inset + 24px icon + 16px gap). */
@@ -132,6 +140,14 @@
 
     &.compact {
         min-height: 116px;
+    }
+
+    &.onCard:not(:has(:disabled)) {
+        background-color: var(--page-background-additional);
+
+        &:hover {
+            background-color: var(--page-background-additional-hovered);
+        }
     }
 }
 

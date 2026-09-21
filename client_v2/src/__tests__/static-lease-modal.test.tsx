@@ -84,4 +84,13 @@ describe('StaticLeaseModal', () => {
         expect(screen.getByText(copyInDom('dhcp_mac_address_already_added'))).toBeInTheDocument();
         expect(onSubmit).not.toHaveBeenCalled();
     });
+
+    it('styles the dialog fields for the card surface', () => {
+        renderModal();
+
+        // The dialog paints `--default-cards-background`, so its fields must
+        // opt into the on-card background.
+        expect(getInput('static_lease_mac').parentElement?.className).toContain('onCard');
+        expect(getInput('static_lease_ip').parentElement?.className).toContain('onCard');
+    });
 });

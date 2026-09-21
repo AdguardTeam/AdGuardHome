@@ -44,18 +44,6 @@
     color: var(--default-error-link);
 }
 
-.ipCellLink {
-    color: inherit;
-    text-decoration: none;
-    min-width: 0;
-
-    &:hover,
-    &:focus {
-        color: inherit;
-        text-decoration: underline;
-    }
-}
-
 .whoisCell {
     display: flex;
     flex-direction: column;
@@ -175,7 +163,6 @@
     &:focus-visible {
         color: var(--hovered-link);
         border-color: var(--hovered-link);
-        background-color: var(--hovered-secondary-button);
     }
 
     &:active {
@@ -192,7 +179,6 @@
     &:focus-visible {
         color: var(--hovered-danger-button);
         border-color: var(--hovered-danger-button);
-        background-color: var(--hovered-secondary-danger-button);
     }
 
     &:active {

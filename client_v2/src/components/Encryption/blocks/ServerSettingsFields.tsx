@@ -61,6 +61,7 @@ const PortInput = (props: PortInputProps) => (
             label={props.label}
             errorMessage={props.errorMessage}
             size="large"
+            onCard
             data-testid={props.testId}
         />
         <FieldWarning
@@ -110,6 +111,7 @@ export const ServerSettingsFields = (props: Props) => {
                     placeholder={intl.getMessage('encryption_server_enter')}
                     errorMessage={error('server_name')}
                     size="large"
+                    onCard
                     data-testid={testId('server-name')}
                 />
                 <FieldWarning

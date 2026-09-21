@@ -115,3 +115,35 @@ describe('Textarea — comment highlight', () => {
         expect(overlay?.parentElement).toBe(textarea?.parentElement);
     });
 });
+
+describe('Textarea — onCard', () => {
+    it('applies the onCard class to the field when set', () => {
+        const { container } = render(() => <Textarea value="text" onCard />);
+
+        expect(container.querySelector('textarea')?.className).toContain('onCard');
+    });
+
+    it('does not apply the onCard class by default', () => {
+        const { container } = render(() => <Textarea value="text" />);
+
+        expect(container.querySelector('textarea')?.className).not.toContain('onCard');
+    });
+
+    it('applies the onCard class to the scroll container in highlighting mode', () => {
+        const { container } = render(() => (
+            <Textarea
+                value="# comment"
+                highlightComments
+                commentPrefixes={COMMENT_LINE_TOKENS}
+                onCard
+            />
+        ));
+
+        // The visible surface in highlighting mode is the scroll container,
+        // not the transparent textarea layered on top of it.
+        const textarea = container.querySelector('textarea');
+        const scrollArea = textarea?.closest('[class*="scrollArea"]');
+        expect(scrollArea?.className).toContain('onCard');
+        expect(textarea?.className).not.toContain('onCard');
+    });
+});
