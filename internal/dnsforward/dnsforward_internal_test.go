@@ -1921,7 +1921,6 @@ func TestServer_ratelimit(t *testing.T) {
 	)
 
 	req := createGoogleATestMessage()
-	filterConf := &filtering.Config{BlockingMode: filtering.BlockingModeDefault}
 	srvConf := ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
@@ -1962,6 +1961,9 @@ func TestServer_ratelimit(t *testing.T) {
 		c.Config.RatelimitWhitelist = tc.whitelist
 
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			filterConf := &filtering.Config{BlockingMode: filtering.BlockingModeDefault}
 			s := createTestServer(t, filterConf, c, testTLSManager)
 			s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{newGoogleUpstream()}
 			startDeferStop(t, s)
