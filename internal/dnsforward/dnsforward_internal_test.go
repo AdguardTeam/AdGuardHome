@@ -1967,21 +1967,38 @@ func TestServer_ratelimit(t *testing.T) {
 			startDeferStop(t, s)
 
 			addr := s.dnsProxy.Addr(proxy.ProtoUDP).String()
+			// TODO(m.kazantsev):  Use fake connections through client.Dial,
+			// instead of using real network connections.
 			client := &dns.Client{Net: "udp", Timeout: clientTimeout}
-
-			for i := range attemptNum {
-				reply, _, err := client.Exchange(req, addr)
-
-				if i >= attemptNum-tc.dropNum {
-					assert.Error(t, err, "request %d", i)
-
-					continue
-				}
-
-				require.NoErrorf(t, err, "request %d", i)
-
-				assertGoogleAResponse(t, reply)
-			}
+			sendDNSRequests(t, client, req, attemptNum, tc.dropNum, addr)
 		})
+	}
+}
+
+// sendDNSRequests sends exactly attemptNum DNS requests and checks if the
+// expected number of requests are dropped according to the ratelimit.  client
+// must not be nil.
+func sendDNSRequests(
+	tb testing.TB,
+	client *dns.Client,
+	req *dns.Msg,
+	attemptNum int,
+	dropNum int,
+	addr string,
+) {
+	tb.Helper()
+
+	for i := range attemptNum {
+		reply, _, err := client.Exchange(req, addr)
+
+		if i >= attemptNum-dropNum {
+			assert.Error(tb, err, "request %d", i)
+
+			continue
+		}
+
+		require.NoErrorf(tb, err, "request %d", i)
+
+		assertGoogleAResponse(tb, reply)
 	}
 }
