@@ -5,6 +5,7 @@ import { Button } from 'panel/common/ui/Button';
 import { HTML_PAGES } from 'panel/helpers/constants';
 import intl from 'panel/common/intl';
 import { useIsDesktop } from 'panel/hooks/useMediaQuery';
+import { useIsDarkTheme } from 'panel/hooks/useTheme';
 
 import theme from 'panel/lib/theme';
 import { PasswordInput } from 'panel/common/controls/Input/PasswordInput';
@@ -25,6 +26,11 @@ export const Form = (props: Props) => {
     });
 
     const isDesktop = useIsDesktop();
+    const isDarkTheme = useIsDarkTheme();
+
+    // The light-theme card shares the page background, so filling the fields
+    // with the card surface only reads as a card in the dark theme.
+    const fieldOnCard = () => isDesktop() && isDarkTheme();
 
     createEffect(() => {
         if (loginState.error) {
@@ -55,7 +61,7 @@ export const Form = (props: Props) => {
                             autocomplete="username"
                             autocapitalize="none"
                             size="large"
-                            onCard={isDesktop()}
+                            onCard={fieldOnCard()}
                         />
                     )}
                 </Field>
@@ -77,7 +83,7 @@ export const Form = (props: Props) => {
                             autocomplete="current-password"
                             onChange={(value: string) => setValue(loginForm, 'password', value)}
                             size="large"
-                            onCard={isDesktop()}
+                            onCard={fieldOnCard()}
                         />
                     )}
                 </Field>

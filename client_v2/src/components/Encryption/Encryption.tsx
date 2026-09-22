@@ -84,19 +84,19 @@ export const Encryption = () => {
             return;
         }
 
-        // Enabling: check if everything is configured before saving.
+        // Enabling: check that the certificate and key are configured before
+        // saving.
         const hasCert = !!(encryptionState.certificate_chain || encryptionState.certificate_path);
         const hasKey = !!(
             encryptionState.private_key ||
             encryptionState.private_key_path ||
             encryptionState.private_key_saved
         );
-        const hasServerName = !!encryptionState.server_name;
 
         // Everything is set up — save the change.
         // Native input already shows ON from the click; sync effect
         // confirms on success or reverts on failure.
-        if (hasCert && hasKey && hasServerName) {
+        if (hasCert && hasKey) {
             setTlsConfig({
                 enabled: true,
             });
@@ -108,15 +108,7 @@ export const Encryption = () => {
         setEncryptionEnabled(false);
 
         // Certificate or key is missing — open the TLS cert wizard (don't save yet).
-        if (!hasCert || !hasKey) {
-            setAddCertOpen(true);
-            return;
-        }
-
-        // Cert and key are present, but server name isn't set — open server settings.
-        if (!hasServerName) {
-            setServerSettingsOpen(true);
-        }
+        setAddCertOpen(true);
     };
 
     /**

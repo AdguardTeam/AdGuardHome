@@ -69,10 +69,6 @@
         border: none;
     }
 
-    &:last-child {
-        border: none;
-    }
-
     & > .queryBar {
         display: block;
         width: 100%;
@@ -106,6 +102,14 @@
 
 .tableRows {
     height: 100%;
+
+    /* A divider separates two rows, so the last row must not have one.  A
+       tooltip trigger wraps its row and is followed by its overlay, so the
+       row is never the list's last child. */
+    & > *:has(> .tableRow):not(:has(~ * > .tableRow)) > .tableRow,
+    & > .tableRow:last-child {
+        border-bottom: none;
+    }
 }
 
 .domainIcon {

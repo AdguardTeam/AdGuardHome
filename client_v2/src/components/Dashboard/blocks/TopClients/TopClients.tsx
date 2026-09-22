@@ -286,13 +286,15 @@ export const TopClients = (props: Props) => {
                         }}
                     </For>
                 </Show>
-
-                <ClientBlockConfirmDialog
-                    state={confirmDialog()}
-                    onClose={closeConfirmDialog}
-                    onConfirm={handleConfirm}
-                />
             </div>
+
+            {/* Outside the list so its dialog is not the list's last child,
+                which would give the last row a divider back while it is open. */}
+            <ClientBlockConfirmDialog
+                state={confirmDialog()}
+                onClose={closeConfirmDialog}
+                onConfirm={handleConfirm}
+            />
 
             <Show when={hasMore()}>
                 <CardFooter

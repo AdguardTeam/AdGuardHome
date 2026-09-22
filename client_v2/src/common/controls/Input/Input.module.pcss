@@ -17,15 +17,17 @@
         border-color: var(--pressed-link);
     }
 
-    &:hover,
-    &:hover .input {
-        background-color: var(--default-input-background);
-    }
+    @media (hover: hover) {
+        &:hover,
+        &:hover .input {
+            background-color: var(--default-input-background);
+        }
 
-    &:not(.disabled):hover .input:-webkit-autofill,
-    &:not(.disabled):hover .input:-webkit-autofill:hover,
-    &:not(.disabled):hover .input:-webkit-autofill:focus {
-        box-shadow: 0 0 0 100px var(--default-input-background) inset;
+        &:not(.disabled):hover .input:-webkit-autofill,
+        &:not(.disabled):hover .input:-webkit-autofill:hover,
+        &:not(.disabled):hover .input:-webkit-autofill:focus {
+            box-shadow: 0 0 0 100px var(--default-input-background) inset;
+        }
     }
 
     &.disabled {
@@ -83,15 +85,17 @@
             }
         }
 
-        &:hover,
-        &:hover .input {
-            background-color: var(--page-background-additional-hovered);
-        }
+        @media (hover: hover) {
+            &:hover,
+            &:hover .input {
+                background-color: var(--page-background-additional-hovered);
+            }
 
-        &:hover .input:-webkit-autofill,
-        &:hover .input:-webkit-autofill:hover,
-        &:hover .input:-webkit-autofill:focus {
-            box-shadow: 0 0 0 100px var(--page-background-additional-hovered) inset;
+            &:hover .input:-webkit-autofill,
+            &:hover .input:-webkit-autofill:hover,
+            &:hover .input:-webkit-autofill:focus {
+                box-shadow: 0 0 0 100px var(--page-background-additional-hovered) inset;
+            }
         }
     }
 

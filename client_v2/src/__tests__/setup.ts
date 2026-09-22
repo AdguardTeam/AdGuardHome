@@ -4,6 +4,9 @@ import { cleanup } from '@solidjs/testing-library';
 
 afterEach(() => cleanup());
 
+// The theme lives on `<html>` and would otherwise leak into the next test.
+afterEach(() => document.documentElement.removeAttribute('data-theme'));
+
 // Mock window.scrollTo for router navigation (jsdom doesn't implement it).
 Object.defineProperty(window, 'scrollTo', {
     writable: true,

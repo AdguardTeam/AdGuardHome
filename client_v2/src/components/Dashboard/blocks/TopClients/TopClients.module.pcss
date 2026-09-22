@@ -30,6 +30,13 @@
 
 .tableRows {
     height: 100%;
+
+    /* A divider separates two rows, so the last row must not have one.  A
+       tooltip trigger wraps its row and is followed by its overlay, so the
+       row is never the list's last child. */
+    & > *:has(> .clientRow):not(:has(~ * > .clientRow)) > .clientRow {
+        border-bottom: none;
+    }
 }
 
 .tableRowRight {
@@ -151,10 +158,6 @@
         &:focus {
             background-color: var(--hovered-page-background);
         }
-    }
-
-    &:last-child {
-        border: none;
     }
 }
 

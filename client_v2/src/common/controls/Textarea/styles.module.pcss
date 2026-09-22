@@ -31,8 +31,10 @@
         border-color: var(--pressed-link);
     }
 
-    &:hover {
-        background-color: var(--default-input-background);
+    @media (hover: hover) {
+        &:hover {
+            background-color: var(--default-input-background);
+        }
     }
 
     &::placeholder {
@@ -71,8 +73,10 @@
     &.onCard:not(:disabled) {
         background-color: var(--page-background-additional);
 
-        &:hover {
-            background-color: var(--page-background-additional-hovered);
+        @media (hover: hover) {
+            &:hover {
+                background-color: var(--page-background-additional-hovered);
+            }
         }
     }
 }
@@ -122,8 +126,10 @@
         border-color: var(--pressed-link);
     }
 
-    &:hover {
-        background-color: var(--default-input-background);
+    @media (hover: hover) {
+        &:hover {
+            background-color: var(--default-input-background);
+        }
     }
 
     &.error {
@@ -145,8 +151,10 @@
     &.onCard:not(:has(:disabled)) {
         background-color: var(--page-background-additional);
 
-        &:hover {
-            background-color: var(--page-background-additional-hovered);
+        @media (hover: hover) {
+            &:hover {
+                background-color: var(--page-background-additional-hovered);
+            }
         }
     }
 }
