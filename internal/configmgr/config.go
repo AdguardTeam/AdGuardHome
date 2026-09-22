@@ -13,11 +13,17 @@ import (
 // TODO(d.kolyshev):  Use.
 // TODO(d.kolyshev):  Add tests and contracts.
 type Config struct {
+	// Clients is a block with persistent clients configuration settings.
+	Clients *ClientsConfig `yaml:"clients"`
+
 	// DHCP is a block with DHCP configuration params.
 	DHCP *DHCPConfig `yaml:"dhcp"`
 
-	// DNSConfig is a block with DNS configuration params.
-	DNSConfig *DNSConfig `yaml:"dns"`
+	// DNS is a block with DNS configuration params.
+	DNS *DNSConfig `yaml:"dns"`
+
+	// Filtering is a block with DNS filtering configuration settings.
+	Filtering *FilteringConfig `yaml:"filtering"`
 
 	// HTTP is a block with web API configuration settings.
 	HTTP *HTTPConfig `yaml:"http"`
@@ -28,6 +34,9 @@ type Config struct {
 	// QueryLog is a block with query log configuration settings.
 	QueryLog *QueryLogConfig `yaml:"querylog"`
 
+	// OS is a block with OS-related configuration settings.
+	OS *OSConfig `yaml:"os"`
+
 	// Stats is a block with statistics configuration settings.
 	Stats *StatsConfig `yaml:"statistics"`
 
@@ -35,6 +44,8 @@ type Config struct {
 	TLS *TLSConfig `yaml:"tls"`
 
 	// ProxyURL is the address of proxy server for the internal HTTP client.
+	//
+	// TODO(d.kolyshev):  Use [url.URL].
 	ProxyURL string `yaml:"http_proxy"`
 
 	// Language is a two-letter ISO 639-1 language code.
@@ -45,8 +56,21 @@ type Config struct {
 	// Theme is a web UI theme for current user.
 	Theme string `yaml:"theme"`
 
+	// Filters is a slice of the blocking filter lists.
+	//
+	// TODO(e.burkov):  Move all the filtering configuration fields into the
+	// only configuration subsection covering the changes with a single
+	// migration.  Also keep the blocked services in mind.
+	Filters []*Filter `yaml:"filters"`
+
+	// UserRules is a list of custom rules.
+	UserRules []string `yaml:"user_rules"`
+
 	// Users are the clients capable for accessing the web interface.
 	Users []*WebUser `yaml:"users"`
+
+	// WhitelistFilters is a slice of the allowing filter lists.
+	WhitelistFilters []*Filter `yaml:"whitelist_filters"`
 
 	// AuthAttempts is the maximum number of failed login attempts a user can do
 	// before being blocked.
@@ -78,11 +102,17 @@ func (c *Config) Validate() (err error) {
 
 	// Keep this in the same order as the fields in the config.
 	validators := container.KeyValues[string, validate.Interface]{{
+		Key:   "clients",
+		Value: c.Clients,
+	}, {
 		Key:   "dhcp",
 		Value: c.DHCP,
 	}, {
 		Key:   "dns",
-		Value: c.DNSConfig,
+		Value: c.DNS,
+	}, {
+		Key:   "filtering",
+		Value: c.Filtering,
 	}, {
 		Key:   "http",
 		Value: c.HTTP,
@@ -112,7 +142,9 @@ func (c *Config) Validate() (err error) {
 		}
 	}
 
+	errs = validate.AppendSlice(errs, "filters", c.Filters)
 	errs = validate.AppendSlice(errs, "users", c.Users)
+	errs = validate.AppendSlice(errs, "whitelist_filters", c.WhitelistFilters)
 
 	return errors.Join(errs...)
 }
