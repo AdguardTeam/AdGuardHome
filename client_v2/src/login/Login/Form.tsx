@@ -4,6 +4,7 @@ import { Input } from 'panel/common/controls/Input';
 import { Button } from 'panel/common/ui/Button';
 import { HTML_PAGES } from 'panel/helpers/constants';
 import intl from 'panel/common/intl';
+import { useIsDesktop } from 'panel/hooks/useMediaQuery';
 
 import theme from 'panel/lib/theme';
 import { PasswordInput } from 'panel/common/controls/Input/PasswordInput';
@@ -22,6 +23,8 @@ export const Form = (props: Props) => {
     const [loginForm, { Form, Field }] = createForm<LoginFormValues>({
         validateOn: 'input',
     });
+
+    const isDesktop = useIsDesktop();
 
     createEffect(() => {
         if (loginState.error) {
@@ -52,7 +55,7 @@ export const Form = (props: Props) => {
                             autocomplete="username"
                             autocapitalize="none"
                             size="large"
-                            onCard
+                            onCard={isDesktop()}
                         />
                     )}
                 </Field>
@@ -74,7 +77,7 @@ export const Form = (props: Props) => {
                             autocomplete="current-password"
                             onChange={(value: string) => setValue(loginForm, 'password', value)}
                             size="large"
-                            onCard
+                            onCard={isDesktop()}
                         />
                     )}
                 </Field>

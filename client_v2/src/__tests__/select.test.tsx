@@ -319,3 +319,23 @@ describe('Select — onCard', () => {
         );
     });
 });
+
+describe('Select — menuOnCard', () => {
+    it('adds the menu-on-card class to the root when set', () => {
+        render(() => (
+            <Select options={OPTIONS} value={OPTIONS[0]} onChange={() => {}} menuOnCard />
+        ));
+
+        expect(document.querySelector('.solid-select')?.className).toContain(
+            'solid-select--menu-on-card',
+        );
+    });
+
+    it('does not add the menu-on-card class by default', () => {
+        render(() => <Select options={OPTIONS} value={OPTIONS[0]} onChange={() => {}} />);
+
+        expect(document.querySelector('.solid-select')?.className).not.toContain(
+            'solid-select--menu-on-card',
+        );
+    });
+});

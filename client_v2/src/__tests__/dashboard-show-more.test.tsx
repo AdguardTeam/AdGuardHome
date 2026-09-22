@@ -1,5 +1,5 @@
 import { type JSX } from 'solid-js';
-import { render, screen } from '@solidjs/testing-library';
+import { render, screen, within } from '@solidjs/testing-library';
 import { HashRouter, Route } from '@solidjs/router';
 import { describe, it, expect, beforeEach } from 'vitest';
 
@@ -21,6 +21,20 @@ const renderWithRouter = (ui: () => JSX.Element) =>
     ));
 
 const getLinkHref = (testid: string) => screen.getByTestId(testid).getAttribute('href') ?? '';
+
+/**
+ * The row that shows `domain`.  The row's tooltip repeats the domain name, so
+ * the lookup has to stay scoped to the row itself.
+ */
+const getDomainRow = (domain: string) => {
+    const row = screen
+        .getAllByTestId('top-domain-row')
+        .find((candidate) => within(candidate).queryByText(domain) !== null);
+
+    expect(row).toBeDefined();
+
+    return row as HTMLElement;
+};
 
 /** Rows a card shows before the "Show more" footer would reveal anything. */
 const DOMAINS_VISIBLE_ITEMS = 5;
@@ -50,38 +64,32 @@ describe('Dashboard "Show more" links', () => {
     it('Top queried domains card links to /top_queried_domains', () => {
         renderWithRouter(() => (
             <TopQueriedDomains
-                topQueriedDomains={[
-                    { name: 'a.org', count: 5 },
-                    ...fillers(DOMAINS_VISIBLE_ITEMS),
-                ]}
+                topQueriedDomains={[{ name: 'a.org', count: 5 }, ...fillers(DOMAINS_VISIBLE_ITEMS)]}
                 numDnsQueries={100}
             />
         ));
         expect(getLinkHref('show-more-top-queried-domains')).toContain('/top_queried_domains');
 
         // The domain name is a QueryLog link filtered by the domain.
-        const domainLink = screen.getByText('a.org').closest('a');
-        expect(domainLink).not.toBeNull();
-        expect(domainLink!.getAttribute('href')).toContain('/logs');
-        expect(domainLink!.getAttribute('href')).toContain('a.org');
+        const domainLink = getDomainRow('a.org');
+        expect(domainLink.tagName).toBe('A');
+        expect(domainLink.getAttribute('href')).toContain('/logs');
+        expect(domainLink.getAttribute('href')).toContain('a.org');
     });
 
     it('Top blocked domains card links to /top_blocked_domains', () => {
         renderWithRouter(() => (
             <TopBlockedDomains
-                topBlockedDomains={[
-                    { name: 'a.org', count: 5 },
-                    ...fillers(DOMAINS_VISIBLE_ITEMS),
-                ]}
+                topBlockedDomains={[{ name: 'a.org', count: 5 }, ...fillers(DOMAINS_VISIBLE_ITEMS)]}
                 numBlockedFiltering={100}
             />
         ));
         expect(getLinkHref('show-more-top-blocked-domains')).toContain('/top_blocked_domains');
 
-        const domainLink = screen.getByText('a.org').closest('a');
-        expect(domainLink).not.toBeNull();
-        expect(domainLink!.getAttribute('href')).toContain('/logs');
-        expect(domainLink!.getAttribute('href')).toContain('a.org');
+        const domainLink = getDomainRow('a.org');
+        expect(domainLink.tagName).toBe('A');
+        expect(domainLink.getAttribute('href')).toContain('/logs');
+        expect(domainLink.getAttribute('href')).toContain('a.org');
 
         // The blocked total links to QueryLog filtered by blocked status.
         expect(getLinkHref('blocked-total-link')).toContain('/logs');
@@ -95,9 +103,7 @@ describe('Dashboard "Show more" links', () => {
                 numBlockedFiltering={100}
             />
         ));
-        expect(screen.getByTestId('blocked-total-link').textContent).toBe(
-            formatCompactNumber(100),
-        );
+        expect(screen.getByTestId('blocked-total-link').textContent).toBe(formatCompactNumber(100));
     });
 
     it('Top blocked domains shows the blocked total copy on desktop', () => {
@@ -200,10 +206,7 @@ describe('Dashboard "Show more" links', () => {
     it('the link includes the selected stats period', () => {
         renderWithRouter(() => (
             <TopBlockedDomains
-                topBlockedDomains={[
-                    { name: 'a.org', count: 5 },
-                    ...fillers(DOMAINS_VISIBLE_ITEMS),
-                ]}
+                topBlockedDomains={[{ name: 'a.org', count: 5 }, ...fillers(DOMAINS_VISIBLE_ITEMS)]}
                 numBlockedFiltering={100}
                 period={DAY}
             />

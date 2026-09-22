@@ -29,9 +29,11 @@
         background-color: transparent;
     }
 
-    &:hover,
-    &:focus {
-        background-color: var(--page-background-additional);
+    @media (hover: hover) {
+        &:hover,
+        &:focus {
+            background-color: var(--page-background-additional);
+        }
     }
 
     &:last-child {

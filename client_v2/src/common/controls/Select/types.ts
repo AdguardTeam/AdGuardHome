@@ -36,6 +36,8 @@ export interface SelectProps<
     borderless?: boolean;
     /** Fills the control with `--page-background-additional` for cards-background surfaces. */
     onCard?: boolean;
+    /** Switches the dropdown menu to the `page-background` tokens on cards-background surfaces. */
+    menuOnCard?: boolean;
     adaptiveHeight?: boolean;
     lazyList?: boolean;
     closeMenuOnSelect?: boolean;

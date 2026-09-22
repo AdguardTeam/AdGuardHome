@@ -101,7 +101,10 @@ export const GeneralStatistics = (props: Props) => {
                         rowTheme="safeSearchUsed"
                         tooltip={intl.getMessage('safe_search_used_tooltip')}
                         linkTo={RoutePath.QueryLog}
-                        query={{ reason: QUERY_LOG_REASON_FILTER.SAFE_SEARCH.QUERY }}
+                        query={{
+                            status: QUERY_LOG_STATUS_FILTER.REWRITTEN.QUERY,
+                            reason: QUERY_LOG_REASON_FILTER.SAFE_SEARCH.QUERY,
+                        }}
                     />
 
                     <div class={s.rowDivider} />

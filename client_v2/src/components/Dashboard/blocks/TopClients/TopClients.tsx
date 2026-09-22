@@ -3,11 +3,10 @@ import { useIsDesktop } from 'panel/hooks/useMediaQuery';
 
 import intl from 'panel/common/intl';
 import { Icon } from 'panel/common/ui/Icon';
-import { Tooltip } from 'panel/common/ui/Tooltip';
-import { QueriesTooltip } from 'panel/common/ui/QueriesTooltip';
 import { Dropdown } from 'panel/common/ui/Dropdown';
 import {
     ClientBlockConfirmDialog,
+    ClientBlockMenuItem,
     useClientBlockConfirm,
 } from 'panel/common/ui/ClientBlockConfirm';
 import { Link } from 'panel/common/ui/Link';
@@ -20,6 +19,7 @@ import { TableHeader } from '../TableHeader';
 import { EmptyState } from '../EmptyState';
 import { CardFooter } from '../CardFooter';
 import { ClientTooltip } from '../ClientTooltip';
+import { RowTooltip } from '../RowTooltip';
 
 import s from './TopClients.module.pcss';
 
@@ -64,36 +64,20 @@ export const TopClients = (props: Props) => {
     };
 
     const getClientMenu = (client: ClientInfo) => {
+        // A memo, not a plain read: the row mapper is untracked, so the menu
+        // must track the access list itself to follow a block/unblock.
+        const blocked = createMemo(() => isClientBlocked(client.name));
+
         return (
             <div class={s.protectionMenu}>
-                <Show
-                    when={isClientBlocked(client.name)}
-                    fallback={
-                        <div
-                            class={cn(
-                                theme.text.t2,
-                                theme.text.condenced,
-                                s.protectionMenuItem,
-                                s.protectionMenuItemRed,
-                            )}
-                            onClick={() => openClientConfirmDialog(client.name, 'block')}
-                        >
-                            {intl.getMessage('block_client')}
-                        </div>
-                    }
-                >
-                    <div
-                        class={cn(
-                            theme.text.t2,
-                            theme.text.condenced,
-                            theme.dropdown.item,
-                            s.protectionMenuItem,
-                        )}
-                        onClick={() => openClientConfirmDialog(client.name, 'unblock')}
-                    >
-                        {intl.getMessage('unblock_client')}
-                    </div>
-                </Show>
+                <ClientBlockMenuItem
+                    action={blocked() ? 'unblock' : 'block'}
+                    class={cn(
+                        s.tableRowMenuItem,
+                        blocked() ? s.tableRowMenuItemGreen : s.tableRowMenuItemRed,
+                    )}
+                    onClick={(action) => openClientConfirmDialog(client.name, action)}
+                />
             </div>
         );
     };
@@ -124,31 +108,28 @@ export const TopClients = (props: Props) => {
                             );
 
                             return (
-                                <Link
-                                    to={RoutePath.QueryLog}
-                                    query={{ search: `"${client.name}"` }}
-                                    class={cn(s.clientRow, s.clientRowLink)}
-                                    data-testid="top-client-row"
+                                <RowTooltip
+                                    content={
+                                        <ClientTooltip
+                                            address={client.name}
+                                            whoisInfo={client.info?.whois_info}
+                                            blocked={isClientBlocked(client.name)}
+                                        />
+                                    }
                                 >
-                                    <div class={s.clientInfo}>
-                                        <div
-                                            class={cn(
-                                                theme.text.t3,
-                                                theme.text.condenced,
-                                                s.clientIp,
-                                            )}
-                                            title={client.name}
-                                        >
-                                            <Tooltip
-                                                position="bottomLeft"
-                                                content={
-                                                    <ClientTooltip
-                                                        address={client.name}
-                                                        whoisInfo={client.info?.whois_info}
-                                                        blocked={isClientBlocked(client.name)}
-                                                    />
-                                                }
-                                                class={theme.common.noShrink}
+                                    <Link
+                                        to={RoutePath.QueryLog}
+                                        query={{ search: `"${client.name}"` }}
+                                        class={cn(s.clientRow, s.clientRowLink)}
+                                        data-testid="top-client-row"
+                                    >
+                                        <div class={s.clientInfo}>
+                                            <div
+                                                class={cn(
+                                                    theme.text.t3,
+                                                    theme.text.condenced,
+                                                    s.clientIp,
+                                                )}
                                             >
                                                 <Show
                                                     when={isClientBlocked(client.name)}
@@ -164,16 +145,14 @@ export const TopClients = (props: Props) => {
                                                         )}
                                                     />
                                                 </Show>
-                                            </Tooltip>
 
-                                            <span class={s.clientIpText}>{client.name}</span>
+                                                <span class={s.clientIpText}>{client.name}</span>
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    <div class={s.tableRowRight}>
-                                        <Show when={isDesktop()}>
-                                            <div class={s.dropdownWrapper}>
-                                                <QueriesTooltip count={client.count}>
+                                        <div class={s.tableRowRight}>
+                                            <Show when={isDesktop()}>
+                                                <div class={s.dropdownWrapper}>
                                                     <div
                                                         class={cn(
                                                             theme.text.t3,
@@ -201,41 +180,54 @@ export const TopClients = (props: Props) => {
                                                             ({percent().toFixed(1)}%)
                                                         </div>
                                                     </div>
-                                                </QueriesTooltip>
-                                            </div>
-                                        </Show>
+                                                </div>
+                                            </Show>
 
-                                        <Show when={isDesktop()}>
-                                            <div class={s.queryBar}>
-                                                <div
-                                                    class={s.queryBarFill}
-                                                    style={{ width: `${percent()}%` }}
-                                                />
-                                            </div>
-                                        </Show>
+                                            <Show when={isDesktop()}>
+                                                <div class={s.queryBar}>
+                                                    <div
+                                                        class={s.queryBarFill}
+                                                        style={{ width: `${percent()}%` }}
+                                                    />
+                                                </div>
+                                            </Show>
 
-                                        <div class={s.dropdownWrapper} onClick={preventRowLink}>
-                                            <Dropdown
-                                                wrapClass={s.clientActionsDropdown}
-                                                menu={getClientMenu(client)}
-                                                position="bottomRight"
-                                                noIcon
-                                                open={openMenuClient() === client.name}
-                                                onOpenChange={(isOpen: boolean) =>
-                                                    setOpenMenuClient(isOpen ? client.name : null)
+                                            <div class={s.dropdownWrapper} onClick={preventRowLink}>
+                                                <Dropdown
+                                                    wrapClass={s.clientActionsDropdown}
+                                                    menu={getClientMenu(client)}
+                                                    position="bottomRight"
+                                                    noIcon
+                                                    open={openMenuClient() === client.name}
+                                                    onOpenChange={(isOpen: boolean) =>
+                                                        setOpenMenuClient(
+                                                            isOpen ? client.name : null,
+                                                        )
+                                                    }
+                                                >
+                                                    <button type="button" class={s.actionButton}>
+                                                        <Icon icon="bullets" />
+                                                    </button>
+                                                </Dropdown>
+                                            </div>
+                                        </div>
+
+                                        <div class={s.tableRowInfo}>
+                                            <Show
+                                                when={client.info?.name}
+                                                fallback={
+                                                    <div
+                                                        data-testid="top-client-name"
+                                                        class={cn(
+                                                            theme.text.t4,
+                                                            theme.text.condenced,
+                                                            s.clientName,
+                                                        )}
+                                                    >
+                                                        {intl.getMessage('not_available')}
+                                                    </div>
                                                 }
                                             >
-                                                <button type="button" class={s.actionButton}>
-                                                    <Icon icon="bullets" />
-                                                </button>
-                                            </Dropdown>
-                                        </div>
-                                    </div>
-
-                                    <div class={s.tableRowInfo}>
-                                        <Show
-                                            when={client.info?.name}
-                                            fallback={
                                                 <div
                                                     data-testid="top-client-name"
                                                     class={cn(
@@ -244,64 +236,52 @@ export const TopClients = (props: Props) => {
                                                         s.clientName,
                                                     )}
                                                 >
-                                                    {intl.getMessage('not_available')}
+                                                    {client.info.name}
                                                 </div>
-                                            }
-                                        >
-                                            <div
-                                                data-testid="top-client-name"
-                                                class={cn(
-                                                    theme.text.t4,
-                                                    theme.text.condenced,
-                                                    s.clientName,
-                                                )}
-                                                title={client.info.name}
-                                            >
-                                                {client.info.name}
-                                            </div>
-                                        </Show>
-                                        <div class={s.tableRowQueriesInfo}>
-                                            <div
-                                                class={cn(
-                                                    theme.text.t3,
-                                                    theme.text.condenced,
-                                                    s.queryCount,
-                                                )}
-                                            >
-                                                <span
-                                                    class={cn(
-                                                        theme.text.t3,
-                                                        theme.text.condenced,
-                                                        s.queryCountLink,
-                                                    )}
-                                                >
-                                                    {formatCompactNumber(client.count)}
-                                                </span>
-
+                                            </Show>
+                                            <div class={s.tableRowQueriesInfo}>
                                                 <div
                                                     class={cn(
                                                         theme.text.t3,
                                                         theme.text.condenced,
-                                                        s.queryPercent,
+                                                        s.queryCount,
                                                     )}
                                                 >
-                                                    ({percent().toFixed(1)}%)
+                                                    <span
+                                                        class={cn(
+                                                            theme.text.t3,
+                                                            theme.text.condenced,
+                                                            s.queryCountLink,
+                                                        )}
+                                                    >
+                                                        {formatCompactNumber(client.count)}
+                                                    </span>
+
+                                                    <div
+                                                        class={cn(
+                                                            theme.text.t3,
+                                                            theme.text.condenced,
+                                                            s.queryPercent,
+                                                        )}
+                                                    >
+                                                        ({percent().toFixed(1)}%)
+                                                    </div>
+                                                </div>
+
+                                                <div class={s.queryBar}>
+                                                    <div
+                                                        class={s.queryBarFill}
+                                                        style={{ width: `${percent()}%` }}
+                                                    />
                                                 </div>
                                             </div>
 
-                                            <div class={s.queryBar}>
-                                                <div
-                                                    class={s.queryBarFill}
-                                                    style={{ width: `${percent()}%` }}
-                                                />
+                                            <div class={s.tableRowActions} onClick={preventRowLink}>
+                                                {getClientMenu(client)}
                                             </div>
                                         </div>
-
-                                        <div class={s.tableRowActions} onClick={preventRowLink}>
-                                            {getClientMenu(client)}
-                                        </div>
-                                    </div>
-                                </Link>
+                                    </Link>
+                                </RowTooltip>
                             );
                         }}
                     </For>

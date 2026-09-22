@@ -81,30 +81,6 @@
     min-width: 200px;
 }
 
-.protectionMenuItem {
-    display: flex;
-    align-items: center;
-    min-height: 56px;
-    padding: 16px;
-    cursor: pointer;
-    color: var(--default-link);
-    transition: background-color var(--t2);
-
-    &:hover,
-    &:focus-visible {
-        background-color: var(--hovered-dropdown-menu-background);
-        outline: 0;
-    }
-
-    &:active {
-        background-color: var(--pressed-dropdown-menu-background);
-    }
-}
-
-.protectionMenuItemRed {
-    color: var(--default-error-link);
-}
-
 .actionButton {
     display: inline-flex;
     align-items: center;
@@ -148,7 +124,8 @@
     border-radius: 8px;
     background: transparent;
     cursor: pointer;
-    font: inherit;
+    font-weight: var(--weight-medium);
+    font-size: inherit;
     transition:
         var(--t2) color,
         var(--t2) border-color,

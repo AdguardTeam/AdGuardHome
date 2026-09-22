@@ -8,6 +8,7 @@ import type { TableColumn } from 'panel/common/ui/Table';
 import { Dropdown } from 'panel/common/ui/Dropdown';
 import {
     ClientBlockConfirmDialog,
+    ClientBlockMenuItem,
     type ClientBlockAction,
     useClientBlockConfirm,
 } from 'panel/common/ui/ClientBlockConfirm';
@@ -20,6 +21,7 @@ import { computePercent } from 'panel/helpers/statistics';
 import { queryLogSearchQuery, splitByNewLine } from 'panel/helpers/helpers';
 import type { IOption } from 'panel/lib/helpers/utils';
 import { PlusButton } from 'panel/common/ui/PlusButton';
+import { TruncatedText } from 'panel/common/ui/TruncatedText';
 import { Paths, RoutePath } from 'panel/components/Routes/Paths';
 import { StatsPage } from '../StatsPage';
 import { StatMobileCard, type StatCardItem } from '../blocks/StatMobileCard';
@@ -124,13 +126,11 @@ export const TopClientsPage = () => {
             accessor: (row) => row.info?.name || row.name,
             sortable: true,
             render: (_v, row) => (
-                <span
+                <TruncatedText
+                    text={row.info?.name || '—'}
+                    testId="client-name-cell"
                     class={cn(theme.text.t3, theme.text.condenced, s.nameCell)}
-                    title={row.info?.name}
-                    data-testid="client-name-cell"
-                >
-                    {row.info?.name || '—'}
-                </span>
+                />
             ),
         },
         {
@@ -163,13 +163,11 @@ export const TopClientsPage = () => {
             accessor: (row) => row.name,
             sortable: true,
             render: (_v, row) => (
-                <span
+                <TruncatedText
+                    text={row.name}
+                    testId="client-ip-cell"
                     class={cn(theme.text.t3, theme.text.condenced, s.nameCell)}
-                    title={row.name}
-                    data-testid="client-ip-cell"
-                >
-                    {row.name}
-                </span>
+                />
             ),
         },
         {
@@ -209,38 +207,12 @@ export const TopClientsPage = () => {
                         }
                         menu={
                             <div class={s.protectionMenu}>
-                                <Show
-                                    when={isBlocked(row.name)}
-                                    fallback={
-                                        <div
-                                            class={cn(
-                                                theme.text.t2,
-                                                theme.text.condenced,
-                                                s.protectionMenuItem,
-                                                s.protectionMenuItemRed,
-                                            )}
-                                            data-testid="client-block-menu-item"
-                                            onClick={() =>
-                                                openClientConfirmDialog(row.name, 'block')
-                                            }
-                                        >
-                                            {intl.getMessage('block_client')}
-                                        </div>
+                                <ClientBlockMenuItem
+                                    action={isBlocked(row.name) ? 'unblock' : 'block'}
+                                    onClick={(action) =>
+                                        openClientConfirmDialog(row.name, action)
                                     }
-                                >
-                                    <div
-                                        class={cn(
-                                            theme.text.t2,
-                                            theme.text.condenced,
-                                            theme.dropdown.item,
-                                            s.protectionMenuItem,
-                                        )}
-                                        data-testid="client-unblock-menu-item"
-                                        onClick={() => openClientConfirmDialog(row.name, 'unblock')}
-                                    >
-                                        {intl.getMessage('unblock_client')}
-                                    </div>
-                                </Show>
+                                />
                             </div>
                         }
                     >

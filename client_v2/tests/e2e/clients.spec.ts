@@ -283,12 +283,13 @@ test.describe('Clients', () => {
         await expect(page.getByRole('button', { name: 'Persistent', exact: true })).toBeVisible();
         await expect(page.getByRole('button', { name: 'Runtime', exact: true })).toBeVisible();
 
-        // Persistent clients are shown by default
-        await expect(page.getByText('Office Desktop')).toBeVisible({
+        // Persistent clients are shown by default.  The name cell renders the
+        // value twice (trigger + tooltip content), so match the first one.
+        await expect(page.getByText('Office Desktop').first()).toBeVisible({
             timeout: 10_000,
         });
         await expect(page.getByText('192.168.0.100')).toBeVisible();
-        await expect(page.getByText('Living Room TV')).toBeVisible();
+        await expect(page.getByText('Living Room TV').first()).toBeVisible();
 
         // Runtime client data is NOT visible until the Runtime tab is active
         await expect(page.getByText('192.168.0.200')).not.toBeVisible();
@@ -312,8 +313,8 @@ test.describe('Clients', () => {
 
         // Switch back to Persistent — URL should update
         await page.getByRole('button', { name: 'Persistent', exact: true }).click();
-        await expect(page).toHaveURL(/#clients(\?tab=persistent)?$/);
-        await expect(page.getByText('Office Desktop')).toBeVisible();
+        await expect(page).toHaveURL(/#\/?clients(\?tab=persistent)?$/);
+        await expect(page.getByText('Office Desktop').first()).toBeVisible();
     });
 
     test('adds a new persistent client', async ({ page }) => {
@@ -323,7 +324,7 @@ test.describe('Clients', () => {
 
         // Click "Add Client" in the page header
         await page.getByTestId('clients-add-button').click();
-        await expect(page).toHaveURL(/#clients\/add$/);
+        await expect(page).toHaveURL(/#\/?clients\/add$/);
         await expect(page.getByTestId('client-form')).toBeVisible();
 
         // Fill in name and identifier
@@ -332,7 +333,7 @@ test.describe('Clients', () => {
 
         // Save
         await page.getByTestId('client-form-save').click();
-        await expect(page).toHaveURL(/#clients$/);
+        await expect(page).toHaveURL(/#\/?clients$/);
 
         // Verify API payload
         await expect.poll(() => addClientPayloads.length).toBe(1);
@@ -348,7 +349,7 @@ test.describe('Clients', () => {
         // Click the edit button for "Office Desktop" (second row)
         await page.getByTestId('clients-edit-button').nth(1).click();
 
-        await expect(page).toHaveURL(/#clients\/edit\/Office%20Desktop$/);
+        await expect(page).toHaveURL(/#\/?clients\/edit\/Office%20Desktop$/);
         await expect(page.getByTestId('client-form')).toBeVisible();
 
         // Verify pre-filled data
@@ -359,7 +360,7 @@ test.describe('Clients', () => {
         await page.getByTestId('client-form-name').fill('Office Desktop Updated');
         await page.getByTestId('client-form-save').click();
 
-        await expect(page).toHaveURL(/#clients$/);
+        await expect(page).toHaveURL(/#\/?clients$/);
 
         // Verify update payload
         await expect.poll(() => updateClientPayloads.length).toBe(1);
@@ -376,10 +377,10 @@ test.describe('Clients', () => {
         await page.getByTestId('clients-delete-button').first().click();
 
         // ConfirmDialog should appear
-        await expect(page.getByText(/Are you sure you want to delete client/)).toBeVisible();
+        await expect(page.getByText(/will be removed from Persistent clients/)).toBeVisible();
 
-        // Click confirm "Remove"
-        await page.getByRole('button', { name: 'Remove' }).click();
+        // Click confirm "Yes, remove"
+        await page.getByRole('button', { name: 'Yes, remove' }).click();
 
         // Verify DELETE API call
         await expect.poll(() => deleteClientPayloads.length).toBe(1);

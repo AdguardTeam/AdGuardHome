@@ -3,6 +3,7 @@ import intl from 'panel/common/intl';
 import { formatCompactNumber } from 'panel/helpers/helpers';
 import theme from 'panel/lib/theme';
 import { QueriesTooltip } from 'panel/common/ui/QueriesTooltip';
+import { TruncatedText } from 'panel/common/ui/TruncatedText';
 import { RoutePath } from 'panel/components/Routes/Paths';
 import cn from 'clsx';
 import { TableHeader } from '../TableHeader';
@@ -64,7 +65,11 @@ export const TopUpstreams = (props: Props) => {
                                             s.tableRowLeft,
                                         )}
                                     >
-                                        <span class={s.domainName}>{upstream.name}</span>
+                                        <TruncatedText
+                                            text={upstream.name}
+                                            testId="top-upstream-name"
+                                            class={s.domainName}
+                                        />
                                     </div>
 
                                     <div class={s.tableRowRight}>

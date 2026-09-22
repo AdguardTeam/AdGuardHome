@@ -80,7 +80,7 @@
     border-radius: 8px;
     padding: 8px 16px;
     background-color: var(--default-cards-background);
-    box-shadow: 8px 8px 24px 0 rgba(0, 0, 0, 0.1);
+    box-shadow: var(--default-cards-box-shadow);
     transition: background-color var(--t2);
 
     @media (min-width: 768px) {
@@ -90,9 +90,11 @@
         background-color: transparent;
         box-shadow: none;
 
-        &:hover,
-        &:focus {
-            background-color: var(--page-background-additional);
+        @media (hover: hover) {
+            &:hover,
+            &:focus {
+                background-color: var(--page-background-additional);
+            }
         }
     }
 

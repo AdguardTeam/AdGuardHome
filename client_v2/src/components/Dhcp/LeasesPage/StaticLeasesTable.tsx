@@ -120,7 +120,6 @@ export const StaticLeasesTable = (props: Props) => {
                                     onClick={() => props.onEdit(row)}
                                     disabled={props.processingUpdating}
                                     class={theme.table.action}
-                                    title={intl.getMessage('edit_table_action')}
                                     aria-label={intl.getMessage('edit_table_action')}
                                     data-testid="static-lease-edit-button"
                                     data-table-action
@@ -135,7 +134,6 @@ export const StaticLeasesTable = (props: Props) => {
                                     type="button"
                                     onClick={() => props.onRefresh()}
                                     class={theme.table.action}
-                                    title={intl.getMessage('refresh_btn')}
                                     aria-label={intl.getMessage('refresh_btn')}
                                     data-testid="static-lease-refresh-button"
                                     data-table-action
@@ -151,14 +149,13 @@ export const StaticLeasesTable = (props: Props) => {
                                     onClick={() => props.onDelete(row)}
                                     disabled={props.processingDeleting}
                                     class={cn(theme.table.action, theme.table.action_danger)}
-                                    title={intl.getMessage('delete_table_action')}
-                                    aria-label={intl.getMessage('delete_table_action')}
+                                    aria-label={intl.getMessage('remove')}
                                     data-testid="static-lease-delete-button"
                                     data-table-action
                                 >
                                     <Icon icon="delete" color="red" />
                                     <span class={theme.table.actionLabel}>
-                                        {intl.getMessage('delete_table_action')}
+                                        {intl.getMessage('remove')}
                                     </span>
                                 </button>
                             </div>
@@ -186,7 +183,7 @@ export const StaticLeasesTable = (props: Props) => {
                                                 )}
                                                 onClick={() => handleDelete(row)}
                                             >
-                                                {intl.getMessage('delete_table_action')}
+                                                {intl.getMessage('remove')}
                                             </div>
                                         </div>
                                     }

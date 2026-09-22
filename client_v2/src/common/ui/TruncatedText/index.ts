@@ -1,0 +1,1 @@
+export { TruncatedText } from './TruncatedText';

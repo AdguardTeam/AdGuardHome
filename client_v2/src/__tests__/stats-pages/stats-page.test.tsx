@@ -126,6 +126,14 @@ describe('StatsPage', () => {
         expect(onRefresh).toHaveBeenCalledTimes(1);
     });
 
+    it('labels the refresh control with aria-label instead of a native title', () => {
+        const { container } = renderPage();
+
+        const refresh = screen.getByRole('button', { name: copyInDom('refresh_btn') });
+        expect(refresh).not.toHaveAttribute('title');
+        expect(container.querySelectorAll('[title]').length).toBe(0);
+    });
+
     it('shows the empty state text when nothing matches', () => {
         renderPage();
         fireEvent.input(screen.getByTestId('stats-search-input'), {

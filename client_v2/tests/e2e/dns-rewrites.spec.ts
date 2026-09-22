@@ -35,7 +35,9 @@ const DELETE_REWRITE: RewriteEntry = {
 
 const openDnsRewritesPage = async (page: Page) => {
     await page.goto('/#dns_rewrites');
-    await expect(page.getByText('DNS rewrites', { exact: true })).toBeVisible();
+    // "DNS rewrites" also labels the sidebar Filters item, which auto-expands on
+    // this route, so a bare text assertion is a strict-mode violation.
+    await expect(page.getByTestId('add-rewrite')).toBeVisible();
 };
 
 const listRewrites = async (page: Page): Promise<RewriteEntry[]> => {
@@ -215,7 +217,8 @@ test.describe('DNS Rewrites', () => {
         await expect(deleteButton).toBeVisible({ timeout: 10_000 });
         await deleteButton.click();
 
-        const confirmButton = page.getByRole('button', { name: /remove|delete/i });
+        // The row actions also match /delete/i, so target the dialog button.
+        const confirmButton = page.getByTestId('rewrite-delete-confirm');
         await expect(confirmButton).toBeVisible({ timeout: 10000 });
         await confirmButton.click();
 

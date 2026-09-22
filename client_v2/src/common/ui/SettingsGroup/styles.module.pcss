@@ -28,7 +28,12 @@
     cursor: pointer;
     transition: background-color var(--t2);
 
-    &:hover,
+    @media (hover: hover) {
+        &:hover {
+            background-color: var(--page-background-additional);
+        }
+    }
+
     &:focus-within {
         background-color: var(--page-background-additional);
     }

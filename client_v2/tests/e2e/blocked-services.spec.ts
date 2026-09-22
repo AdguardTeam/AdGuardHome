@@ -363,7 +363,7 @@ test.describe('Blocked Services Page', () => {
         await navItem.click();
 
         // Should be on schedule page
-        await expect(page).toHaveURL(/#blocked_services\/schedule/);
+        await expect(page).toHaveURL(/#\/?blocked_services\/schedule/);
     });
 
     // TODO: Check if the component actually disables switches during API calls.
@@ -420,7 +420,7 @@ test.describe('Inactivity Schedule Page', () => {
             .getByRole('link', { name: 'Blocked services' });
         await breadcrumb.click();
 
-        await expect(page).toHaveURL(/#blocked_services$/);
+        await expect(page).toHaveURL(/#\/?blocked_services$/);
     });
 
     test('should display timezone selector', async ({ page }) => {
@@ -791,7 +791,7 @@ test.describe('Blocked Services - Schedule Integration', () => {
         const navItem = page.getByTestId('blocked-services-schedule-link');
         await navItem.click();
 
-        await expect(page).toHaveURL(/#blocked_services\/schedule/);
+        await expect(page).toHaveURL(/#\/?blocked_services\/schedule/);
 
         // Navigate back via breadcrumbs
         const breadcrumb = page
@@ -799,6 +799,6 @@ test.describe('Blocked Services - Schedule Integration', () => {
             .getByRole('link', { name: 'Blocked services' });
         await breadcrumb.click();
 
-        await expect(page).toHaveURL(/#blocked_services$/);
+        await expect(page).toHaveURL(/#\/?blocked_services$/);
     });
 });

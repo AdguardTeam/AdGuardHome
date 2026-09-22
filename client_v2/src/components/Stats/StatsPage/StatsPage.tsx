@@ -199,7 +199,6 @@ export function StatsPage<T>(props: StatsPageProps<T>) {
                                     size="small"
                                     compact
                                     aria-label={intl.getMessage('refresh_btn')}
-                                    title={intl.getMessage('refresh_btn')}
                                     onClick={() => props.onRefresh()}
                                     disabled={props.loading}
                                 >
@@ -242,7 +241,6 @@ export function StatsPage<T>(props: StatsPageProps<T>) {
                                 size="small"
                                 compact
                                 aria-label={intl.getMessage('refresh_btn')}
-                                title={intl.getMessage('refresh_btn')}
                                 onClick={() => props.onRefresh()}
                                 disabled={props.loading}
                             >

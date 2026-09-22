@@ -324,6 +324,10 @@ must not depend on stores or components. Helpers are pure and dependency-free.
 './Foo.module.pcss'` — and reference classes as `s.button`, `s[variant]`.
   Compose conditional classes with `clsx`, imported as `cn`:
   `import cn from 'clsx'` (e.g. `cn(s.button, s.primary, { [s.active]: on() })`).
+- **Hover styles**: Wrap `:hover` styling in `@media (hover: hover)` so touch
+  devices do not keep a stuck highlight after a tap. Gate `:hover` together
+  with `:focus` on row links, since a tap also focuses an `<a>` in Chrome;
+  leave `:focus-visible` outlines ungated for keyboard users.
 - **Colors**: Never hardcode color hex values in `.pcss` or inline styles.
   Always reference the CSS custom properties defined in
   `src/common/styles/vars.css` and `src/common/styles/colors/*.css`

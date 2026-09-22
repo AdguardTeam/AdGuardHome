@@ -1,6 +1,7 @@
 import { Show, For, createMemo } from 'solid-js';
 import intl from 'panel/common/intl';
 import theme from 'panel/lib/theme';
+import { TruncatedText } from 'panel/common/ui/TruncatedText';
 import { RoutePath } from 'panel/components/Routes/Paths';
 import cn from 'clsx';
 import { TableHeader } from '../TableHeader';
@@ -58,7 +59,11 @@ export const UpstreamAvgTime = (props: Props) => {
                                 <div
                                     class={cn(theme.text.t3, theme.text.condenced, s.tableRowLeft)}
                                 >
-                                    <span class={s.domainName}>{upstream.name}</span>
+                                    <TruncatedText
+                                        text={upstream.name}
+                                        testId="upstream-avg-time-name"
+                                        class={s.domainName}
+                                    />
                                 </div>
                                 <div class={s.tableRowRight}>
                                     <div

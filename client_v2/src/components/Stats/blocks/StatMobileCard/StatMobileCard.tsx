@@ -84,7 +84,7 @@ export const StatMobileCard = (props: Props) => {
         <Show
             when={props.cardLink}
             fallback={
-                <div class={s.card} data-testid="stats-mobile-card">
+                <div class={cn(s.card, theme.table.mobileCard)} data-testid="stats-mobile-card">
                     {content()}
                 </div>
             }
@@ -93,7 +93,7 @@ export const StatMobileCard = (props: Props) => {
                 <Link
                     to={link().to}
                     query={link().query}
-                    class={cn(s.card, s.cardLink)}
+                    class={cn(s.card, s.cardLink, theme.table.mobileCard)}
                     data-testid="stats-mobile-card"
                 >
                     {content()}

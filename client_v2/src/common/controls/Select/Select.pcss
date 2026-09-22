@@ -263,6 +263,24 @@
         }
     }
 
+    &.solid-select--menu-on-card {
+        [data-scope='select'][data-part='content'],
+        [data-scope='combobox'][data-part='content'] {
+            background-color: var(--default-page-background);
+        }
+
+        [data-scope='select'][data-part='item'],
+        [data-scope='combobox'][data-part='item'] {
+            &[data-highlighted] {
+                background-color: var(--hovered-page-background);
+            }
+
+            &[data-state='checked'] {
+                background-color: var(--pressed-page-background);
+            }
+        }
+    }
+
     [data-scope='select'][data-part='trigger'] {
         flex: 1;
         display: flex;

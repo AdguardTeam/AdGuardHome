@@ -152,6 +152,7 @@ export const ScheduleModal = (props: Props) => {
                                 size="responsive"
                                 isSearchable={false}
                                 onCard
+                                menuOnCard
                             />
                             <Select
                                 options={MINUTES_OPTIONS}
@@ -162,6 +163,7 @@ export const ScheduleModal = (props: Props) => {
                                 size="responsive"
                                 isSearchable={false}
                                 onCard
+                                menuOnCard
                             />
                         </div>
                     </div>
@@ -179,6 +181,7 @@ export const ScheduleModal = (props: Props) => {
                                 size="responsive"
                                 isSearchable={false}
                                 onCard
+                                menuOnCard
                             />
                             <Select
                                 options={endTimeOptions().minutes}
@@ -189,6 +192,7 @@ export const ScheduleModal = (props: Props) => {
                                 size="responsive"
                                 isSearchable={false}
                                 onCard
+                                menuOnCard
                             />
                         </div>
                     </div>

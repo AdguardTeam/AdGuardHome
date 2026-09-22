@@ -127,30 +127,6 @@
     min-width: 200px;
 }
 
-.protectionMenuItem {
-    display: flex;
-    align-items: center;
-    min-height: 56px;
-    padding: 16px;
-    cursor: pointer;
-    color: var(--default-link);
-    transition: background-color var(--t2);
-
-    &:hover,
-    &:focus-visible {
-        background-color: var(--hovered-dropdown-menu-background);
-        outline: 0;
-    }
-
-    &:active {
-        background-color: var(--pressed-dropdown-menu-background);
-    }
-}
-
-.protectionMenuItemRed {
-    color: var(--default-error-link);
-}
-
 .clientRow {
     display: flex;
     justify-content: space-between;
@@ -170,9 +146,11 @@
         border: none;
     }
 
-    &:hover,
-    &:focus {
-        background-color: var(--hovered-page-background);
+    @media (hover: hover) {
+        &:hover,
+        &:focus {
+            background-color: var(--hovered-page-background);
+        }
     }
 
     &:last-child {
@@ -290,20 +268,54 @@
 
     & .protectionMenu {
         padding: 0;
+    }
 
-        & .protectionMenuItem {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 40px;
-            min-height: 40px;
-            padding: 0 24px;
-            border: 1px solid var(--default-link);
-            border-radius: 8px;
+    & .tableRowMenuItem {
+        justify-content: center;
+        height: 40px;
+        min-height: 40px;
+        padding: 0 24px;
+        border-radius: 8px;
+        font-weight: var(--weight-medium);
+        background-color: transparent;
+        transition:
+            var(--t2) color,
+            var(--t2) border-color;
+    }
 
-            &.protectionMenuItemRed {
-                border-color: var(--default-error-link);
-            }
+    & .tableRowMenuItemRed {
+        border: 1px solid var(--default-danger-button);
+        color: var(--default-danger-button);
+
+        &:hover,
+        &:focus-visible {
+            background-color: transparent;
+            color: var(--hovered-danger-button);
+            border-color: var(--hovered-danger-button);
+        }
+
+        &:active {
+            background-color: transparent;
+            color: var(--pressed-danger-button);
+            border-color: var(--pressed-danger-button);
+        }
+    }
+
+    & .tableRowMenuItemGreen {
+        border: 1px solid var(--default-link);
+        color: var(--default-link);
+
+        &:hover,
+        &:focus-visible {
+            background-color: transparent;
+            color: var(--hovered-link);
+            border-color: var(--hovered-link);
+        }
+
+        &:active {
+            background-color: transparent;
+            color: var(--pressed-link);
+            border-color: var(--pressed-link);
         }
     }
 }

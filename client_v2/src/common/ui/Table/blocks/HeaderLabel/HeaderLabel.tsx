@@ -18,9 +18,13 @@ export const HeaderLabel = (props: HeaderLabelProps) => {
     const [labelRef, setLabelRef] = createSignal<HTMLSpanElement>();
 
     const isTouch = useIsTouchDevice();
-    const isTruncated = useIsTruncated(labelRef);
 
     const useTooltip = () => !!props.tooltip && !isTouch();
+
+    const isTruncated = useIsTruncated(labelRef, {
+        enabled: useTooltip,
+        source: () => props.text,
+    });
 
     const label = (
         <span

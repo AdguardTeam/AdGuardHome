@@ -68,7 +68,7 @@ export const LogCard = (props: Props) => {
             onClick={() => props.onRowClick(props.entry)}
             data-testid="query-log-card"
         >
-            <div class={s.cardBody}>
+            <div class={cn(s.cardBody, theme.table.mobileCard)}>
                 <div class={s.cardHeader}>
                     <div class={s.titleBlock}>
                         <div class={s.titleRow}>
