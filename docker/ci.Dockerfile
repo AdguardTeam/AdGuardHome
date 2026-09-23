@@ -3,7 +3,7 @@
 # This comment is used to simplify checking local copies of the Dockerfile.
 # Bump this number every time a significant change is made to this Dockerfile.
 #
-# AdGuard-Project-Version: 11
+# AdGuard-Project-Version: 14
 
 # Dockerfile guidelines:
 #
@@ -25,9 +25,7 @@
 #    Docker daemon, which can invalidate the cache.
 #
 # 6. Add a CACHE_BUSTER argument to stages to be able to rerun the stages if
-#    needed.  Keep it in sync with bamboo-specs/bamboo.yaml.
-
-# NOTE:  Keep in sync with bamboo-specs/bamboo.yaml.
+#    needed.  Keep it in sync with the files in .github/workflows/.
 ARG BASE_IMAGE=adguard/go-builder:1.26.8--1
 
 # The dependencies stage is needed to install packages and tool dependencies.
@@ -46,7 +44,7 @@ RUN \
 	--mount=type=cache,id=gocache,target=/root/.cache/go-build \
 	--mount=type=cache,id=gopath,target=/go \
 <<-'EOF'
-set -e -f -u -x
+set -e -f -o 'pipefail' -u -x
 make \
 	BRANCH='master' \
 	REVISION='0000000000000000000000000000000000000000' \
@@ -62,6 +60,11 @@ EOF
 # Use fake BRANCH and REVISION values to both prevent git calls and also not
 # ruin the caching with ARGs.  IGNORE_NON_REPRODUCIBLE is set to 1 to make this
 # stage reproducible even when linters that query external sources fail.
+#
+# NOTE:  go-deps is necessary to download the modules of the linter tool
+# dependencies, so that the "go: downloading" messages are not treated as linter
+# output by the "run_linter -e" checks in ./scripts/make/go-lint.sh.  This may
+# happen in CI, where builds may receive a fresh cache mount.
 FROM dependencies AS linter
 ADD . /app
 WORKDIR /app
@@ -69,13 +72,14 @@ RUN \
 	--mount=type=cache,id=gocache,target=/root/.cache/go-build \
 	--mount=type=cache,id=gopath,target=/go \
 <<-'EOF'
-set -e -f -u -x
+set -e -f -o 'pipefail' -u -x
 export GOMAXPROCS=2
 make \
 	BRANCH='master' \
 	IGNORE_NON_REPRODUCIBLE='1' \
 	REVISION='0000000000000000000000000000000000000000' \
 	VERBOSE=1 \
+	go-deps \
 	go-lint \
 	md-lint \
 	sh-lint \
@@ -103,7 +107,7 @@ RUN \
 	--mount=type=cache,id=gocache,target=/root/.cache/go-build \
 	--mount=type=cache,id=gopath,target=/go \
 <<-'EOF'
-set -e -f -u -x
+set -e -f -o 'pipefail' -u -x
 export GOMAXPROCS=2
 
 make \
@@ -145,14 +149,13 @@ ARG CACHE_BUSTER=0
 ARG TEST_REPORTS_DIR=/test-reports
 COPY --from=tester "$TEST_REPORTS_DIR" "$TEST_REPORTS_DIR"
 
-# The builder stage is used to build release artifacts.  Real BRANCH and
-# REVISION must be used here.
+# The builder stage is used to build release artifacts.  It imports GPG keys and
+# runs the build-release target.  Real BRANCH and REVISION must be used here.
 FROM dependencies AS builder
 ARG ARCH=""
 ARG BRANCH=master
 ARG CACHE_BUSTER=0
 ARG CHANNEL=development
-ARG DEPLOY_SCRIPT_PATH=not/a/real/path
 ARG DIST_DIR="dist"
 ARG OS=""
 ARG REVISION=0000000000000000000000000000000000000000
@@ -166,9 +169,8 @@ RUN \
 	--mount=type=cache,id=gopath,target=/go \
 	--mount=type=secret,id=GPG_KEY_PASSPHRASE,env=GPG_KEY_PASSPHRASE \
 	--mount=type=secret,id=GPG_SECRET_KEY,env=GPG_SECRET_KEY \
-	--mount=type=secret,id=SIGNER_API_KEY,env=SIGNER_API_KEY \
 <<-'EOF'
-set -e -f -u -x
+set -e -f -o 'pipefail' -u -x
 
 # Import GPG key if provided.
 if [ "${GPG_SECRET_KEY:-}" != '' ]; then
@@ -179,7 +181,6 @@ make \
 	ARCH="${ARCH}" \
 	BRANCH="${BRANCH}" \
 	CHANNEL="${CHANNEL}" \
-	DEPLOY_SCRIPT_PATH="${DEPLOY_SCRIPT_PATH}" \
 	DIST_DIR="${DIST_DIR}" \
 	FRONTEND_PREBUILT=1 \
 	GPG_KEY_PASSPHRASE="${GPG_KEY_PASSPHRASE}" \
@@ -188,7 +189,6 @@ make \
 	REVISION="${REVISION}" \
 	SOURCE_DATE_EPOCH="$SOURCE_DATE_EPOCH" \
 	SIGN="${SIGN}" \
-	SIGNER_API_KEY="${SIGNER_API_KEY}" \
 	VERBOSE=2 \
 	VERSION="${VERSION}" \
 	build-release \
@@ -200,4 +200,45 @@ EOF
 FROM scratch AS builder-exporter
 ARG CACHE_BUSTER=0
 ARG DIST_DIR="dist"
-COPY --from=builder /app/$DIST_DIR /$DIST_DIR
+COPY --from=builder /app/${DIST_DIR} /${DIST_DIR}
+
+# The packer stage is used to pack the built and signed artifacts into archives.
+#
+# Use fake BRANCH and REVISION values to both prevent git calls and also not
+# ruin the caching with ARGs.
+#
+# ARCH, OS, and SOURCE_DATE_EPOCH are not passed to pack-release, but they are
+# declared here on purpose: they define the artifacts produced by the build
+# stages, so changing them must invalidate this stage's cache as well.
+FROM dependencies AS packer
+ARG ARCH=""
+ARG BRANCH=master
+ARG CACHE_BUSTER=0
+ARG CHANNEL=development
+ARG DIST_DIR="dist"
+ARG OS=""
+ARG REVISION=0000000000000000000000000000000000000000
+ARG SOURCE_DATE_EPOCH=0
+ARG VERSION=""
+ADD . /app
+WORKDIR /app
+RUN <<-'EOF'
+set -e -f -o 'pipefail' -u -x
+
+make \
+	BRANCH="${BRANCH}" \
+	CHANNEL="${CHANNEL}" \
+	DIST_DIR="${DIST_DIR}" \
+	REVISION="${REVISION}" \
+	VERBOSE=2 \
+	VERSION="${VERSION}" \
+	pack-release \
+	;
+EOF
+
+# packer-exporter exports the packed artifacts to the host machine so that they
+# could be published.  This stage should only be used in a CI.
+FROM scratch AS packer-exporter
+ARG CACHE_BUSTER=0
+ARG DIST_DIR="dist"
+COPY --from=packer /app/${DIST_DIR} /${DIST_DIR}

@@ -13,6 +13,9 @@ import (
 // TODO(d.kolyshev):  Use.
 // TODO(d.kolyshev):  Add tests and contracts.
 type Config struct {
+	// DHCP is a block with DHCP configuration params.
+	DHCP *DHCPConfig `yaml:"dhcp"`
+
 	// DNSConfig is a block with DNS configuration params.
 	DNSConfig *DNSConfig `yaml:"dns"`
 
@@ -21,6 +24,15 @@ type Config struct {
 
 	// Log is a block with log configuration settings.
 	Log *LogConfig `yaml:"log"`
+
+	// QueryLog is a block with query log configuration settings.
+	QueryLog *QueryLogConfig `yaml:"querylog"`
+
+	// Stats is a block with statistics configuration settings.
+	Stats *StatsConfig `yaml:"statistics"`
+
+	// TLS is a block with TLS configuration settings.
+	TLS *TLSConfig `yaml:"tls"`
 
 	// ProxyURL is the address of proxy server for the internal HTTP client.
 	ProxyURL string `yaml:"http_proxy"`
@@ -66,6 +78,9 @@ func (c *Config) Validate() (err error) {
 
 	// Keep this in the same order as the fields in the config.
 	validators := container.KeyValues[string, validate.Interface]{{
+		Key:   "dhcp",
+		Value: c.DHCP,
+	}, {
 		Key:   "dns",
 		Value: c.DNSConfig,
 	}, {
@@ -74,6 +89,15 @@ func (c *Config) Validate() (err error) {
 	}, {
 		Key:   "log",
 		Value: c.Log,
+	}, {
+		Key:   "querylog",
+		Value: c.QueryLog,
+	}, {
+		Key:   "statistics",
+		Value: c.Stats,
+	}, {
+		Key:   "tls",
+		Value: c.TLS,
 	}}
 
 	var errs []error
