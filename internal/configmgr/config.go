@@ -120,6 +120,9 @@ func (c *Config) Validate() (err error) {
 		Key:   "log",
 		Value: c.Log,
 	}, {
+		Key:   "os",
+		Value: c.OS,
+	}, {
 		Key:   "querylog",
 		Value: c.QueryLog,
 	}, {
