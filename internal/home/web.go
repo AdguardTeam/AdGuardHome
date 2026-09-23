@@ -11,6 +11,7 @@ import (
 	"net/netip"
 	"runtime"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agh"
@@ -231,15 +232,12 @@ type webAPI struct {
 	// nil.
 	httpsServer *httpsServer
 
-	// dohSrvMu protects dohSrv.
-	dohSrvMu *sync.RWMutex
-
 	// dohSrv is the DNS-over-HTTPS server, the routes of which are served by
 	// the handlers returned by [webAPI.wrapMux] in front of the authentication
-	// middleware.  Once set it must not be modified.
+	// middleware.
 	//
 	// TODO(d.kolyshev): Remove after DoH is served on a separate address.
-	dohSrv *doHServer
+	dohSrv atomic.Pointer[doHServer]
 
 	// pidFilePath is used for cleanup.
 	pidFilePath string
@@ -265,7 +263,6 @@ func newWebAPI(ctx context.Context, conf *webAPIConfig) (w *webAPI) {
 		tlsManager:     conf.tlsManager,
 		auth:           conf.auth,
 		hostsContainer: conf.hostsContainer,
-		dohSrvMu:       &sync.RWMutex{},
 		pidFilePath:    conf.pidFilePath,
 		startTime:      time.Now(),
 	}
@@ -404,10 +401,7 @@ func (web *webAPI) start(ctx context.Context) {
 // handlers returned by [webAPI.wrapMux], including the ones created before this
 // call.  srv must not be nil.
 func (web *webAPI) setDoHServer(srv *doHServer) {
-	web.dohSrvMu.Lock()
-	defer web.dohSrvMu.Unlock()
-
-	web.dohSrv = srv
+	web.dohSrv.Store(srv)
 }
 
 // wrapMux wraps mux with common middlewares.  l must not be nil.
@@ -432,9 +426,7 @@ func (web *webAPI) wrapMux(l *slog.Logger) (h http.Handler) {
 // passes all other requests to h.  h must not be nil.
 func (web *webAPI) wrapDoHRoutes(h http.Handler) (wrapped http.Handler) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		web.dohSrvMu.RLock()
-		srv := web.dohSrv
-		web.dohSrvMu.RUnlock()
+		srv := web.dohSrv.Load()
 
 		if srv != nil && srv.tryServe(w, r) {
 			return
