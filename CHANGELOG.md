@@ -28,8 +28,11 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - DHCP server persisting uncommitted leases with zero expiry after `DHCPDISCOVER` messages ([#8572]).
 
+- A panic has been fixed while updating AdGuard Home binary via the command line with `use_private_ptr_resolvers` set to true ([#8613]).
+
 [#8565]:     https://github.com/AdguardTeam/AdGuardHome/issues/8565
 [#8572]:     https://github.com/AdguardTeam/AdGuardHome/issues/8572
+[#8613]:     https://github.com/AdguardTeam/AdGuardHome/issues/8613
 [go-1.26.8]: https://groups.google.com/g/golang-announce/c/QiTRm-HGGtI
 
 <!--
