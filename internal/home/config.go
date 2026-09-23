@@ -183,6 +183,8 @@ type doHConfig struct {
 	//   - "POST /dns-query/{ClientID}"
 	//
 	// TODO(d.kolyshev):  Validate.
+	// TODO(d.kolyshev):  Since we have multiple muxes now serving on one
+	// address, the user can register e.g. GET /control/status.
 	Routes []string `yaml:"routes"`
 
 	// InsecureEnabled allows DoH queries via unencrypted HTTP.
