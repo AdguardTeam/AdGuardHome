@@ -20,6 +20,7 @@ dns:
   bootstrap_prefer_ipv6: true
   refuse_any: true
   use_dns64: true
+safe_search: true
 http:
   pprof:
     port: 6060
