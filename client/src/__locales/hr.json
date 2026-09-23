@@ -63,7 +63,7 @@
   "blocking_mode_refused": "REFUSED: Odgovorite s REFUSED kôdom",
   "blocklist": "Popis nedopuštenih",
   "bootstrap_dns": "Bootstrap DNS poslužitelji",
-  "bootstrap_dns_desc": "IP adrese DNS poslužitelja koji se koriste za rješavanje IP adresa DoH/DoT razrjeđivača koje navedete kao uzvodne. Komentari nisu dopušteni.",
+  "bootstrap_dns_desc": "IP adrese DNS poslužitelja koje se upotrebljavaju za razrješavanje naziva glavnih računala uzvodnih DNS-over-HTTPS/DNS-over-TLS razrješivača. Unesite po jednu IP adresu u svaki redak. Komentari moraju započeti u novom retku znakom #. Prazni retci i komentari se zanemaruju.\nOpen AI • ChatGPT Pre-Translate\nIP adrese DNS poslužitelja koji se koriste za razrješavanje naziva hostova uzvodnih DoH/DoT razrješivača. Unesite jednu IP adresu po retku. Komentari moraju započeti u novom retku sa znakom #. Prazni retci i komentari se zanemaruju.",
   "cache_cleared": "DNS predmemorija je uspješno izbrisana",
   "cache_enabled": "Omogući predmemoriju",
   "cache_enabled_desc": "Pohrani DNS Odgovore lokalno.",
