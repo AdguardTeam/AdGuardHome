@@ -17,6 +17,7 @@ import (
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/insomniacslk/dhcp/dhcpv4"
+	"github.com/insomniacslk/dhcp/iana"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -980,6 +981,77 @@ func TestV4Server_validateStaticLease_emptyHostname(t *testing.T) {
 			// leases.
 			err = s4.validateStaticLease(tc.lease)
 			testutil.AssertErrorMsg(t, tc.wantErr, err)
+		})
+	}
+}
+func TestV4Server_clientMAC(t *testing.T) {
+	ethMAC := net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA}
+	otherMAC := net.HardwareAddr{0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB}
+	zeroMAC := make(net.HardwareAddr, 6)
+
+	// legacyID returns the legacy Ethernet client identifier carrying mac.
+	legacyID := func(mac net.HardwareAddr) (id []byte) {
+		return append([]byte{byte(iana.HWTypeEthernet)}, mac...)
+	}
+
+	// duidID is a type-255 (IAID + DUID) client identifier, an opaque client
+	// identity which must not be interpreted as a hardware address.
+	//
+	// See https://datatracker.ietf.org/doc/html/rfc4361#section-6.1.
+	duidID := []byte{0xFF, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07}
+
+	testCases := []struct {
+		name     string
+		chaddr   net.HardwareAddr
+		clientID []byte
+		wantMAC  net.HardwareAddr
+	}{{
+		name:     "valid_chaddr_is_preferred",
+		chaddr:   ethMAC,
+		clientID: legacyID(otherMAC),
+		wantMAC:  ethMAC,
+	}, {
+		name:     "zero_chaddr_falls_back_to_legacy_id",
+		chaddr:   zeroMAC,
+		clientID: legacyID(otherMAC),
+		wantMAC:  otherMAC,
+	}, {
+		name:     "nil_chaddr_falls_back_to_legacy_id",
+		chaddr:   nil,
+		clientID: legacyID(otherMAC),
+		wantMAC:  otherMAC,
+	}, {
+		name:     "duid_is_not_a_mac",
+		chaddr:   zeroMAC,
+		clientID: duidID,
+		wantMAC:  zeroMAC,
+	}, {
+		name:     "non_ethernet_type_is_not_a_mac",
+		chaddr:   zeroMAC,
+		clientID: append([]byte{6}, otherMAC...),
+		wantMAC:  zeroMAC,
+	}, {
+		name:     "wrong_length_is_not_a_mac",
+		chaddr:   zeroMAC,
+		clientID: []byte{byte(iana.HWTypeEthernet), 0x01, 0x02},
+		wantMAC:  zeroMAC,
+	}, {
+		name:     "no_client_id",
+		chaddr:   zeroMAC,
+		clientID: nil,
+		wantMAC:  zeroMAC,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			req := &dhcpv4.DHCPv4{ClientHWAddr: tc.chaddr}
+			if tc.clientID != nil {
+				req.Options = dhcpv4.OptionsFromList(
+					dhcpv4.OptClientIdentifier(tc.clientID),
+				)
+			}
+
+			assert.Equal(t, tc.wantMAC, clientMAC(req))
 		})
 	}
 }
