@@ -44,7 +44,7 @@ func newDoHServer(c *doHServerConfig) (srv *doHServer) {
 }
 
 // tryServe serves r with the DoH handler if r matches one of the DoH routes and
-// reports whether it did.  w must not be nil.
+// reports whether it did.  r and w must not be nil.
 func (srv *doHServer) tryServe(w http.ResponseWriter, r *http.Request) (ok bool) {
 	_, pattern := srv.mux.Handler(r)
 	if pattern == "" {

@@ -26,9 +26,9 @@ func TestWebAPI_wrapMux(t *testing.T) {
 
 	sessionsDB := filepath.Join(t.TempDir(), "sessions.db")
 
-	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	initCtx := testutil.ContextWithTimeout(t, testTimeout)
 
-	auth, err := newAuth(ctx, &authConfig{
+	auth, err := newAuth(initCtx, &authConfig{
 		baseLogger:     testLogger,
 		rateLimiter:    emptyRateLimiter{},
 		trustedProxies: testTrustedProxies,
@@ -38,23 +38,26 @@ func TestWebAPI_wrapMux(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	t.Cleanup(func() { auth.close(ctx) })
+	t.Cleanup(func() { auth.close(initCtx) })
 
-	web := newTestWeb(t, &webConfig{auth: auth})
+	web := newTestWeb(t, &webConfig{
+		auth: auth,
+	})
 
 	const dohPath = "/dns-query"
 
-	t.Run("no_doh_server", func(t *testing.T) {
+	require.True(t, t.Run("no_doh_server", func(t *testing.T) {
 		h := web.wrapMux(testLogger)
 
-		r := httptest.NewRequest(http.MethodGet, dohPath, nil)
+		ctx := testutil.ContextWithTimeout(t, testTimeout)
+		r := httptest.NewRequestWithContext(ctx, http.MethodGet, dohPath, nil)
 		w := httptest.NewRecorder()
 		h.ServeHTTP(w, r)
 
 		// Without the DoH server all requests go through the authentication
 		// middleware.
 		assert.Equal(t, http.StatusUnauthorized, w.Code)
-	})
+	}))
 
 	var dohCalled bool
 	web.setDoHServer(newDoHServer(&doHServerConfig{
@@ -67,23 +70,25 @@ func TestWebAPI_wrapMux(t *testing.T) {
 
 	h := web.wrapMux(testLogger)
 
-	t.Run("doh_bypasses_auth", func(t *testing.T) {
-		r := httptest.NewRequest(http.MethodGet, dohPath, nil)
+	require.True(t, t.Run("doh_bypasses_auth", func(t *testing.T) {
+		ctx := testutil.ContextWithTimeout(t, testTimeout)
+		r := httptest.NewRequestWithContext(ctx, http.MethodGet, dohPath, nil)
 		w := httptest.NewRecorder()
 		h.ServeHTTP(w, r)
 
 		assert.Equal(t, http.StatusOK, w.Code)
 		assert.True(t, dohCalled)
-	})
+	}))
 
-	t.Run("other_requests_require_auth", func(t *testing.T) {
+	require.True(t, t.Run("other_requests_require_auth", func(t *testing.T) {
 		dohCalled = false
 
-		r := httptest.NewRequest(http.MethodGet, "/control/status", nil)
+		ctx := testutil.ContextWithTimeout(t, testTimeout)
+		r := httptest.NewRequestWithContext(ctx, http.MethodGet, "/control/status", nil)
 		w := httptest.NewRecorder()
 		h.ServeHTTP(w, r)
 
 		assert.Equal(t, http.StatusUnauthorized, w.Code)
 		assert.False(t, dohCalled)
-	})
+	}))
 }
