@@ -37,7 +37,7 @@ import {
     calculateDhcpPlaceholdersIpv6,
     subnetMaskToBitMask,
 } from '../../../helpers/helpers';
-import { isSectionFilled } from '../../../helpers/validators';
+import { isSectionFilled, omitEmptySections } from '../../../helpers/validators';
 import './index.css';
 import { RootState } from '../../../initialState';
 
@@ -187,21 +187,12 @@ const Dhcp = () => {
     };
 
     const handleSubmit = (values: DhcpFormValues) => {
-        const config: DhcpFormValues = { interface_name };
-
-        // Leave an untouched section out of the payload.  Both cards share this
-        // form instance, so an empty section would otherwise be sent along when
-        // saving the other one, and the backend rejects an empty DHCPv4 section
-        // while an omitted one keeps its current configuration.
-        if (isSectionFilled(values.v4)) {
-            config.v4 = values.v4;
-        }
-
-        if (isSectionFilled(values.v6)) {
-            config.v6 = values.v6;
-        }
-
-        dispatch(setDhcpConfig(config));
+        dispatch(
+            setDhcpConfig({
+                interface_name,
+                ...omitEmptySections(values),
+            }),
+        );
     };
 
     const handleReset = () => {
@@ -210,9 +201,9 @@ const Dhcp = () => {
         }
     };
 
-    const enteredSomeV4Value = Object.values(v4).some(Boolean);
+    const enteredSomeV4Value = isSectionFilled(v4);
 
-    const enteredSomeV6Value = Object.values(v6).some(Boolean);
+    const enteredSomeV6Value = isSectionFilled(v6);
     const enteredSomeValue = enteredSomeV4Value || enteredSomeV6Value || interfaceName;
 
     const getToggleDhcpButton = () => {
@@ -225,13 +216,13 @@ const Dhcp = () => {
 
         const onClickDisable = () => dispatch(toggleDhcp({ enabled }));
         const onClickEnable = () => {
-            const values = {
-                enabled,
-                interface_name,
-                v4: enteredSomeV4Value ? v4 : {},
-                v6: enteredSomeV6Value ? v6 : {},
-            };
-            dispatch(toggleDhcp(values));
+            dispatch(
+                toggleDhcp({
+                    enabled,
+                    interface_name,
+                    ...omitEmptySections({ v4, v6 }),
+                }),
+            );
         };
 
         return (
@@ -276,7 +267,7 @@ const Dhcp = () => {
 
     const inputtedIPv4values = ipv4Config.gateway_ip && ipv4Config.subnet_mask;
 
-    const isEmptyConfig = !Object.values(ipv4Config).some(Boolean);
+    const isEmptyConfig = !isSectionFilled(ipv4Config);
     const disabledLeasesButton = Boolean(
         !isInterfaceIncludesIpv4 || isEmptyConfig || processingConfig || !inputtedIPv4values,
     );

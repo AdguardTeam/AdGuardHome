@@ -48,6 +48,29 @@ export const isSectionFilled = (sectionValues: any) =>
     Boolean(sectionValues) && Object.values(sectionValues).some(Boolean);
 
 /**
+ * Returns the DHCP form sections that have values, leaving out the untouched
+ * ones.  The backend keeps the current configuration of an omitted section,
+ * while an empty object fails its validation and rejects the whole request, so
+ * a section the user has not filled in must never be sent.
+ *
+ * @param {object} sections DHCP form sections, e.g. `{ v4, v6 }`.
+ * @returns {object} Payload with only the filled sections.
+ */
+export const omitEmptySections = (sections: { v4?: any; v6?: any }) => {
+    const payload: { v4?: any; v6?: any } = {};
+
+    if (isSectionFilled(sections.v4)) {
+        payload.v4 = sections.v4;
+    }
+
+    if (isSectionFilled(sections.v6)) {
+        payload.v6 = sections.v6;
+    }
+
+    return payload;
+};
+
+/**
  * Creates a `required` validator for one DHCP form section that enforces the
  * value only when that section has any values entered.  DHCPv4 and DHCPv6
  * share a single react-hook-form instance, so an untouched section must not

@@ -2,6 +2,7 @@ import { describe, expect, test, vi } from 'vitest';
 
 import {
     isSectionFilled,
+    omitEmptySections,
     validateClientId,
     validateGatewaySubnetMask,
     validateIpForGatewaySubnetMask,
@@ -147,6 +148,40 @@ describe('validateGatewaySubnetMask', () => {
                 v4: { gateway_ip: '192.168.1.1', subnet_mask: '1.2.3.4' },
             }),
         ).toBe('gateway_or_subnet_invalid');
+    });
+});
+
+describe('omitEmptySections', () => {
+    const v4 = { gateway_ip: '192.168.1.1', subnet_mask: '255.255.255.0' };
+    const v6 = { range_start: 'fe80::1', lease_duration: 86400 };
+
+    test('keeps every filled section', () => {
+        expect(omitEmptySections({ v4, v6 })).toEqual({ v4, v6 });
+    });
+
+    test('leaves out a section the user has not filled in', () => {
+        expect(omitEmptySections({ v4: {}, v6 })).toEqual({ v6 });
+        expect(
+            omitEmptySections({
+                v4: {
+                    gateway_ip: '',
+                    subnet_mask: '',
+                    range_start: '',
+                    range_end: '',
+                    lease_duration: 0,
+                },
+                v6,
+            }),
+        ).toEqual({ v6 });
+    });
+
+    test('keeps only the filled section', () => {
+        expect(omitEmptySections({ v4, v6: {} })).toEqual({ v4 });
+    });
+
+    test('returns no sections when nothing is filled in', () => {
+        expect(omitEmptySections({ v4: {}, v6: {} })).toEqual({});
+        expect(omitEmptySections({})).toEqual({});
     });
 });
 
