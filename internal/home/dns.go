@@ -378,6 +378,11 @@ func newDNSCryptConfig(
 		return nil, fmt.Errorf("decoding dnscrypt config: %w", err)
 	}
 
+	err = rc.Validate()
+	if err != nil {
+		return nil, fmt.Errorf("validating dnscrypt config: %w", err)
+	}
+
 	cert, err := rc.NewCert()
 	if err != nil {
 		return nil, fmt.Errorf("creating dnscrypt cert: %w", err)

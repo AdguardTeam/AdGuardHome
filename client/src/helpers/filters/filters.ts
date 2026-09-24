@@ -71,9 +71,9 @@ export default {
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_43.txt"
         },
         "KOR_list_kr": {
-            "name": "KOR: List-KR DNS",
+            "name": "KOR: filterslists-KO",
             "categoryId": "regional",
-            "homepage": "https://github.com/List-KR/List-KR",
+            "homepage": "https://github.com/FilteringDev/filterslists-KO",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_25.txt"
         },
         "KOR_youslist": {

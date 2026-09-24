@@ -3,7 +3,7 @@ module github.com/AdguardTeam/AdGuardHome
 go 1.26.8
 
 require (
-	github.com/AdguardTeam/dnscrypt v0.0.2
+	github.com/AdguardTeam/dnscrypt v0.0.3
 	github.com/AdguardTeam/dnsproxy v0.84.2
 	github.com/AdguardTeam/golibs v0.35.15
 	github.com/AdguardTeam/urlfilter v0.23.4

@@ -63,7 +63,7 @@
   "blocking_mode_refused": "REFUSED: responder com o código REFUSED",
   "blocklist": "Lista de bloqueio",
   "bootstrap_dns": "Servidores DNS de inicialização",
-  "bootstrap_dns_desc": "Endereços IP de servidores DNS usados para resolver endereços IP dos resolvedores DoH/DoT que você especifica como upstreams. Comentários não são permitidos.",
+  "bootstrap_dns_desc": "Endereços IP de servidores DNS usados para resolver os nomes de host dos resolvedores upstream DoH/DoT. Insira um endereço IP por linha. Comentários devem começar em uma nova linha com #. Linhas vazias e comentários são ignorados.",
   "cache_cleared": "Cache DNS limpo com sucesso",
   "cache_enabled": "Ativar cache",
   "cache_enabled_desc": "Armazenar as respostas DNS localmente.",
