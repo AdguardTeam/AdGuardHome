@@ -1,6 +1,8 @@
 import intl from 'panel/common/intl';
 import {
     MAX_PORT,
+    R_CIDR,
+    R_CIDR_IPV6,
     R_HOST,
     R_IPV4,
     R_MAC,
@@ -17,7 +19,7 @@ import {
 
 import { ip4ToInt, isValidAbsolutePath } from './form';
 
-import { isIpInCidr, isValidCidr, isValidIpv6, parseSubnetMask } from './helpers';
+import { isIpInCidr, isValidIpv6, parseSubnetMask } from './helpers';
 
 /** Return type for all validators: `undefined` means valid, string is the i18n error message. */
 type ValidationResult = string | undefined;
@@ -330,7 +332,8 @@ export const validateClientsPerLine = (value: string): string | undefined =>
         (line) =>
             R_IPV4.test(line) ||
             isValidIpv6(line) ||
-            isValidCidr(line) ||
+            R_CIDR.test(line) ||
+            R_CIDR_IPV6.test(line) ||
             R_CLIENT_ID.test(line),
     );
 
@@ -638,7 +641,8 @@ export const validateIdentifier = (
         R_IPV4.test(trimmed) ||
         isValidIpv6(trimmed) ||
         R_MAC.test(trimmed) ||
-        isValidCidr(trimmed) ||
+        R_CIDR.test(trimmed) ||
+        R_CIDR_IPV6.test(trimmed) ||
         R_CLIENT_ID.test(trimmed);
 
     if (!isValidFormat) {

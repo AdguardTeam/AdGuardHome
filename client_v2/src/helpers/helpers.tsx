@@ -618,21 +618,6 @@ export const isValidIpv6 = (value: string): boolean => {
 };
 
 /**
- * Validates an IP range in CIDR notation using ipaddr.js, covering both address
- * families — including IPv6 with an embedded dotted-decimal IPv4 address.
- * @param value - The string to validate.
- * @returns true if the value is a valid CIDR range.
- */
-export const isValidCidr = (value: string): boolean => {
-    try {
-        ipaddr.parseCIDR(value);
-        return true;
-    } catch (_e) {
-        return false;
-    }
-};
-
-/**
  *
  * @param {string} subnetMask
  * @returns {IPv4 | null}

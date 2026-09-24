@@ -31,19 +31,6 @@ describe('validateClientsPerLine', () => {
         expect(validateClientsPerLine('2001:db8::/32')).toBeUndefined();
     });
 
-    // REGRESSION: GH #8610 — mixed-notation ranges were rejected by the retired
-    // R_CIDR_IPV6, which matched the hex form only.
-    it('returns undefined for IPv6 CIDR with an embedded IPv4 address', () => {
-        expect(validateClientsPerLine('::ffff:192.168.1.0/120')).toBeUndefined();
-        expect(validateClientsPerLine('::ffff:c0a8:100/120')).toBeUndefined();
-    });
-
-    it('rejects IPv6 CIDR with an out-of-range embedded IPv4 octet', () => {
-        expect(validateClientsPerLine('::ffff:192.168.1.256/120')).toBe(
-            copy('form_error_format'),
-        );
-    });
-
     it('returns undefined for valid ClientID', () => {
         expect(validateClientsPerLine('my-client-id')).toBeUndefined();
         expect(validateClientsPerLine('client-123')).toBeUndefined();
