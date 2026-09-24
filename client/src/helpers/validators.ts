@@ -56,14 +56,13 @@ export const isSectionFilled = (sectionValues: any) =>
  * @param {'v4' | 'v6'} section DHCP form section the field belongs to.
  * @returns {Function} Validator for react-hook-form's `validate` rules.
  */
-export const validateRequiredIfSectionFilled =
-    (section: 'v4' | 'v6') => (value: any, allValues: any) => {
-        if (!isSectionFilled(allValues && allValues[section])) {
-            return undefined;
-        }
+export const validateRequiredIfSectionFilled = (section: 'v4' | 'v6') => (value: any, allValues: any) => {
+    if (!isSectionFilled(allValues && allValues[section])) {
+        return undefined;
+    }
 
-        return validateRequiredValue(value);
-    };
+    return validateRequiredValue(value);
+};
 
 /**
  * Creates a `required` validator that enforces the value only when the given
@@ -76,16 +75,15 @@ export const validateRequiredIfSectionFilled =
  * @param {string} field Name of the field that marks the section as configured.
  * @returns {Function} Validator for react-hook-form's `validate` rules.
  */
-export const validateRequiredIfFilled =
-    (section: 'v4' | 'v6', field: string) => (value: any, allValues: any) => {
-        const sibling = allValues && allValues[section] && allValues[section][field];
+export const validateRequiredIfFilled = (section: 'v4' | 'v6', field: string) => (value: any, allValues: any) => {
+    const sibling = allValues && allValues[section] && allValues[section][field];
 
-        if (!sibling) {
-            return undefined;
-        }
+    if (!sibling) {
+        return undefined;
+    }
 
-        return validateRequiredValue(value);
-    };
+    return validateRequiredValue(value);
+};
 
 /**
  * @returns {undefined|string}
@@ -186,13 +184,7 @@ export const validateGatewaySubnetMask = (_: any, allValues: any) => {
  * @param allValues
  */
 export const validateIpForGatewaySubnetMask = (value: any, allValues: any) => {
-    if (
-        !allValues ||
-        !allValues.v4 ||
-        !value ||
-        !allValues.v4.gateway_ip ||
-        !allValues.v4.subnet_mask
-    ) {
+    if (!allValues || !allValues.v4 || !value || !allValues.v4.gateway_ip || !allValues.v4.subnet_mask) {
         return undefined;
     }
 

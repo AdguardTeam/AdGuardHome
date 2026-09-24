@@ -47,28 +47,26 @@ type IPv4FormValues = {
     range_start?: string;
     range_end?: string;
     lease_duration?: number;
-}
+};
 
 type IPv6FormValues = {
     range_start?: string;
     range_end?: string;
     lease_duration?: number;
-}
+};
 
 const getDefaultV4Values = (v4: IPv4FormValues) => {
-    const emptyForm = Object.entries(v4).every(
-        ([key, value]) => key === 'lease_duration' || value === ''
-    );
+    const emptyForm = Object.entries(v4).every(([key, value]) => key === 'lease_duration' || value === '');
 
     if (emptyForm) {
         return {
             ...v4,
             lease_duration: undefined,
-        }
+        };
     }
 
     return v4;
-}
+};
 
 export type DhcpFormValues = {
     v4?: IPv4FormValues;

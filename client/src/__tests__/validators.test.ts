@@ -90,9 +90,7 @@ describe('isSectionFilled', () => {
     test('is false for a missing or untouched section', () => {
         expect(isSectionFilled(undefined)).toBe(false);
         expect(isSectionFilled({})).toBe(false);
-        expect(
-            isSectionFilled({ gateway_ip: '', subnet_mask: '', lease_duration: undefined }),
-        ).toBe(false);
+        expect(isSectionFilled({ gateway_ip: '', subnet_mask: '', lease_duration: undefined })).toBe(false);
     });
 
     test('is true as soon as one value is set', () => {
@@ -125,9 +123,9 @@ describe('validateGatewaySubnetMask', () => {
         expect(validateGatewaySubnetMask(undefined, { v4: { gateway_ip: '192.168.1.1' } })).toBe(
             'gateway_or_subnet_invalid',
         );
-        expect(
-            validateGatewaySubnetMask(undefined, { v4: { subnet_mask: '255.255.255.0' } }),
-        ).toBe('gateway_or_subnet_invalid');
+        expect(validateGatewaySubnetMask(undefined, { v4: { subnet_mask: '255.255.255.0' } })).toBe(
+            'gateway_or_subnet_invalid',
+        );
     });
 
     test('accepts a valid gateway and subnet mask', () => {
@@ -156,20 +154,14 @@ describe('validateRequiredIfSectionFilled', () => {
     const validateV4 = validateRequiredIfSectionFilled('v4');
 
     test('does not require a value while the section is empty', () => {
-        expect(
-            validateV4('', { v4: { range_start: '', range_end: '', lease_duration: undefined } }),
-        ).toBeUndefined();
+        expect(validateV4('', { v4: { range_start: '', range_end: '', lease_duration: undefined } })).toBeUndefined();
         expect(validateV4(undefined, {})).toBeUndefined();
         expect(validateV4(undefined, undefined)).toBeUndefined();
     });
 
     test('requires a value as soon as the section has any value', () => {
-        expect(validateV4('', { v4: { gateway_ip: '', lease_duration: 86400 } })).toBe(
-            'form_error_required',
-        );
-        expect(validateV4('  ', { v4: { gateway_ip: '', lease_duration: 86400 } })).toBe(
-            'form_error_required',
-        );
+        expect(validateV4('', { v4: { gateway_ip: '', lease_duration: 86400 } })).toBe('form_error_required');
+        expect(validateV4('  ', { v4: { gateway_ip: '', lease_duration: 86400 } })).toBe('form_error_required');
         expect(validateV4('192.168.1.1', { v4: { gateway_ip: '192.168.1.1' } })).toBeUndefined();
     });
 
@@ -192,9 +184,7 @@ describe('validateRequiredIfFilled', () => {
 
     test('requires a value once the v6 range start is filled', () => {
         expect(validateLease('', { v6: { range_start: 'fe80::1' } })).toBe('form_error_required');
-        expect(validateLease('  ', { v6: { range_start: 'fe80::1' } })).toBe(
-            'form_error_required',
-        );
+        expect(validateLease('  ', { v6: { range_start: 'fe80::1' } })).toBe('form_error_required');
         expect(validateLease('86400', { v6: { range_start: 'fe80::1' } })).toBeUndefined();
     });
 

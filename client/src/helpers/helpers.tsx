@@ -558,8 +558,7 @@ export const isIpInCidr = (ip: any, cidr: any) => {
  * Matches a canonical dotted-decimal IPv4 address: four octets, no leading
  * zeros.  Mirrors the spellings netip.ParseAddr accepts.
  */
-const R_CANONICAL_IPV4 =
-    /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
+const R_CANONICAL_IPV4 = /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
 
 /**
  * Matches a prefix length without leading zeros, as netip.ParsePrefix requires.
@@ -726,9 +725,7 @@ export const formatElapsedMs = (elapsedMs: string, t: (key: string) => string) =
         return elapsedMs;
     }
 
-    const formattedValue = parsedElapsedMs < 1
-        ? parsedElapsedMs.toFixed(2)
-        : Math.floor(parsedElapsedMs).toString();
+    const formattedValue = parsedElapsedMs < 1 ? parsedElapsedMs.toFixed(2) : Math.floor(parsedElapsedMs).toString();
 
     return `${formattedValue} ${t('milliseconds_abbreviation')}`;
 };
