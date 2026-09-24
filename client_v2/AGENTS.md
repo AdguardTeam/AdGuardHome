@@ -367,6 +367,11 @@ must not depend on stores or components. Helpers are pure and dependency-free.
   catch and surface a toast. Do not swallow errors silently.
 - **Logging**: `console.warn` and `console.error` are allowed; `console.log`
   is disallowed by ESLint.
+- **IP and CIDR validation**: Validate addresses and ranges with the
+  `ipaddr.js`-backed helpers in `panel/helpers/helpers` (`isValidIpv6`,
+  `isValidCidr`, `isIpInCidr`), not with hand-rolled regexes. IPv6 syntax is
+  too easy to get subtly wrong — embedded dotted-decimal IPv4, zone IDs,
+  prefix-length bounds — and a wrong pattern fails silently.
 - **Static analysis gates**: ESLint, Prettier, and `tsc --noEmit` must pass.
   `@typescript-eslint/no-explicit-any` is off (legacy), but prefer concrete
   types for new code. Unused vars must be prefixed with `_`.
