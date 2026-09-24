@@ -480,7 +480,25 @@ describe('isValidCidr', () => {
     // it needed `\d`, so mixed-notation ranges were rejected.
     test('accepts IPv6 CIDRs with an embedded dotted-decimal IPv4 address', () => {
         expect(isValidCidr('::ffff:192.168.1.0/120')).toBe(true);
-        expect(isValidCidr('fe80::1%eth0/64')).toBe(true);
+        expect(isValidCidr('::ffff:1.2.3.4/128')).toBe(true);
+    });
+
+    test('rejects IPv6 CIDRs with a zone ID', () => {
+        // netip.ParsePrefix rejects zones in a prefix, even though
+        // netip.ParseAddr accepts them on a bare address.
+        expect(isValidCidr('fe80::1%eth0/64')).toBe(false);
+    });
+
+    test('rejects prefix lengths spelled with leading zeros', () => {
+        expect(isValidCidr('192.168.1.0/024')).toBe(false);
+        expect(isValidCidr('2001:db8::/064')).toBe(false);
+    });
+
+    test('rejects non-canonical IPv4 addresses', () => {
+        expect(isValidCidr('127.1/24')).toBe(false);
+        expect(isValidCidr('0x7f.0.0.1/8')).toBe(false);
+        expect(isValidCidr('010.0.0.1/8')).toBe(false);
+        expect(isValidCidr('12345/8')).toBe(false);
     });
 
     test('rejects invalid octets, prefix lengths and malformed input', () => {
