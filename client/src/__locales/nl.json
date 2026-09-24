@@ -560,7 +560,7 @@
   "query_log": "Query log",
   "query_log_clear": "Querylogboeken wissen",
   "query_log_cleared": "Het querylogboek is succesvol gewist",
-  "query_log_configuration": "Logbestanden instellingen",
+  "query_log_configuration": "Logboeken instellingen",
   "query_log_confirm_clear": "Weet je zeker dat je het hele querylogboek wilt wissen?",
   "query_log_disabled": "Het query logboek is uitgeschakeld en kan worden geconfigureerd in de <0>instellingen</0>",
   "query_log_enable": "Log bestanden inschakelen",
