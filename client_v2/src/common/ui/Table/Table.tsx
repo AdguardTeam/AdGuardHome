@@ -208,9 +208,10 @@ export const Table = <T extends Record<string, any>>(props: TableProps<T>) => {
     const hasData = () => paginatedData().length > 0;
 
     // The rows-per-page select lives in the pagination footer, so the whole
-    // footer is hidden until there is at least a full page of rows.
+    // footer is hidden until the data needs more than one page at the default
+    // size.
     const showPagination = () =>
-        (props.pagination ?? true) && sortedData().length >= DEFAULT_PAGE_SIZE;
+        (props.pagination ?? true) && sortedData().length > DEFAULT_PAGE_SIZE;
 
     return (
         <Show

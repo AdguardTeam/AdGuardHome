@@ -116,4 +116,31 @@ describe('ConfigDialog', () => {
         const fieldset = screen.getByTestId('test-input').closest('fieldset');
         expect(fieldset).toBeDisabled();
     });
+
+    it('keeps the primary submit style by default', () => {
+        render(() => (
+            <ConfigDialog open={true} title="Test" onClose={vi.fn()} onSubmit={vi.fn()}>
+                <div>Content</div>
+            </ConfigDialog>
+        ));
+        expect(screen.getByTestId('config-dialog-save').className).toContain('primary');
+    });
+
+    it('styles the submit button as a warning when asked', () => {
+        render(() => (
+            <ConfigDialog
+                open={true}
+                title="Test"
+                onClose={vi.fn()}
+                onSubmit={vi.fn()}
+                buttonText="save_anyway"
+                buttonVariant="warning"
+            >
+                <div>Content</div>
+            </ConfigDialog>
+        ));
+        const saveButton = screen.getByTestId('config-dialog-save');
+        expect(saveButton.className).toContain('warning');
+        expect(saveButton).toHaveTextContent('save_anyway');
+    });
 });

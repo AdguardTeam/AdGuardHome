@@ -3,6 +3,7 @@ import { HashRouter, Route } from '@solidjs/router';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { StatsPage } from 'panel/components/Stats/StatsPage';
+import { DEFAULT_PAGE_SIZE } from 'panel/common/ui/Table/Table';
 import type { TableColumn } from 'panel/common/ui/Table';
 import { LocalStorageHelper } from 'panel/helpers/localStorageHelper';
 import type { IOption } from 'panel/lib/helpers/utils';
@@ -245,5 +246,36 @@ describe('StatsPage', () => {
 
         const rows = Array.from(container.querySelectorAll('[class*="tableRow"]'));
         rows.forEach((row) => expect(row.tagName).toBe('DIV'));
+    });
+});
+
+describe('StatsPage — the pagination footer', () => {
+    // The rows-per-page select lives in the footer, so the footer is only
+    // worth showing once the list needs more than one page.
+    const makeRows = (count: number): Row[] =>
+        Array.from({ length: count }, (_, index) => ({
+            name: `domain-${index}.org`,
+            count: index,
+        }));
+
+    it('hides the rows-per-page select when the list fits one page (desktop)', () => {
+        mockMatchMedia(true);
+        renderPage({ rows: makeRows(DEFAULT_PAGE_SIZE) });
+
+        expect(screen.queryByTestId('pagination-page-size-select')).toBeNull();
+    });
+
+    it('hides the rows-per-page select when the list fits one page (mobile)', () => {
+        mockMatchMedia(false);
+        renderPage({ rows: makeRows(DEFAULT_PAGE_SIZE) });
+
+        expect(screen.queryByTestId('pagination-page-size-select')).toBeNull();
+    });
+
+    it('shows the rows-per-page select once the list needs a second page', () => {
+        mockMatchMedia(true);
+        renderPage({ rows: makeRows(DEFAULT_PAGE_SIZE + 1) });
+
+        expect(screen.getByTestId('pagination-page-size-select')).toBeInTheDocument();
     });
 });

@@ -9,10 +9,9 @@ import { PageLoader } from 'panel/common/ui/Loader';
 import intl from 'panel/common/intl';
 import theme from 'panel/lib/theme';
 import { getTlsStatus, encryptionState, setTlsConfig } from 'panel/stores/encryption';
-import { ENCRYPTION_SOURCE } from 'panel/helpers/constants';
 import { TLS_WIZARD_QUERY_KEY } from 'panel/components/Routes/Paths';
 
-import { createDebouncedValidator } from './blocks/helpers';
+import { createDebouncedValidator, getStoreFormValues } from './blocks/helpers';
 import { PlainDnsToggle } from './blocks/PlainDnsToggle';
 import { TlsCertSection } from './blocks/TlsCertSection';
 import { ServerSettingsRow } from './blocks/ServerSettingsRow';
@@ -126,27 +125,7 @@ export const Encryption = () => {
         );
         if (!hasCert || !hasKey) return;
 
-        validateConfig({
-            enabled: encryptionState.enabled,
-            serve_plain_dns: encryptionState.serve_plain_dns,
-            server_name: encryptionState.server_name,
-            force_https: encryptionState.force_https,
-            port_https: Number(encryptionState.port_https) || 0,
-            port_dns_over_tls: Number(encryptionState.port_dns_over_tls) || 0,
-            port_dns_over_quic: Number(encryptionState.port_dns_over_quic) || 0,
-            certificate_chain: encryptionState.certificate_chain,
-            private_key: encryptionState.private_key,
-            certificate_path: encryptionState.certificate_path,
-            private_key_path: encryptionState.private_key_path,
-            certificate_source: encryptionState.certificate_chain
-                ? ENCRYPTION_SOURCE.CONTENT
-                : ENCRYPTION_SOURCE.PATH,
-            key_source:
-                encryptionState.private_key || encryptionState.private_key_saved
-                    ? ENCRYPTION_SOURCE.CONTENT
-                    : ENCRYPTION_SOURCE.PATH,
-            private_key_saved: encryptionState.private_key_saved,
-        });
+        validateConfig(getStoreFormValues());
     });
 
     return (

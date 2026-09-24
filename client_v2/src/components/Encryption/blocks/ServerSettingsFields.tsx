@@ -17,6 +17,7 @@ type Props = {
     values: ServerSettingsValues;
     onFieldChange: (field: ServerSettingsField, value: string) => void;
     onFieldBlur: (field: ServerSettingsField) => void;
+    onFieldInput?: (field: ServerSettingsField, value: string) => void;
     errorFor?: (field: ServerSettingsField) => string | undefined;
     warningFor?: (field: ServerSettingsField) => string | undefined;
     idPrefix?: string;
@@ -92,6 +93,12 @@ export const ServerSettingsFields = (props: Props) => {
                     value={props.values.server_name ?? ''}
                     onChange={(e) =>
                         props.onFieldChange('server_name', (e.target as HTMLInputElement).value)
+                    }
+                    onInput={(e) =>
+                        props.onFieldInput?.(
+                            'server_name',
+                            (e.currentTarget as HTMLInputElement).value,
+                        )
                     }
                     onBlur={() => props.onFieldBlur('server_name')}
                     isClearable={props.clearable}

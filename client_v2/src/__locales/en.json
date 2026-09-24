@@ -613,6 +613,7 @@
   "safe_search_used_tooltip": "The number of DNS queries to search engines for which Safe Search was enforced",
   "saturday": "Saturday",
   "save": "Save",
+  "save_anyway": "Save anyway",
   "save_btn": "Save",
   "search_placeholder": "Search",
   "select_language": "Select language",
