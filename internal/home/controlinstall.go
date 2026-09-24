@@ -537,13 +537,6 @@ func (web *webAPI) finalizeInstall(
 		return
 	}
 
-	doHSrv := newDoHServer(&doHServerConfig{
-		handler: globalContext.dnsServer,
-		logger:  web.baseLogger.With(slogutil.KeyPrefix, "doh_server"),
-		routes:  config.HTTPConfig.DoH.Routes,
-	})
-	web.setDoHServer(doHSrv)
-
 	err = config.write(
 		ctx,
 		web.logger,
@@ -632,7 +625,8 @@ func decodeApplyConfigReq(r io.Reader) (req *applyConfigReq, restartHTTP bool, e
 	return req, restartHTTP, err
 }
 
-// startMods initializes and starts the DNS server after installation.
+// startMods initializes the DNS and DoH servers and starts the DNS one after
+// installation.
 func (web *webAPI) startMods(ctx context.Context) (err error) {
 	statsDir, querylogDir, err := checkStatsAndQuerylogDirs(config, web.conf.workDir)
 	if err != nil {
@@ -654,6 +648,16 @@ func (web *webAPI) startMods(ctx context.Context) (err error) {
 		// Don't wrap the error, because it's informative enough as is.
 		return err
 	}
+
+	// The web server is already serving requests during the installation, so
+	// set the DoH server before starting the DNS one to avoid a window where
+	// DoH requests are answered by the authentication middleware.
+	doHSrv := newDoHServer(&doHServerConfig{
+		handler: globalContext.dnsServer,
+		logger:  web.baseLogger.With(slogutil.KeyPrefix, "doh_server"),
+		routes:  config.HTTPConfig.DoH.Routes,
+	})
+	web.setDoHServer(doHSrv)
 
 	err = startDNSServer(ctx)
 	if err != nil {
