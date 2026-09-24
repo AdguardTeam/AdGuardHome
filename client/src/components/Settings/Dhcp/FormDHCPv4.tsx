@@ -9,7 +9,7 @@ import {
     validateIpv4,
     validateIpv4RangeEnd,
     validateNotInRange,
-    validateRequiredValue,
+    validateRequiredIfSectionFilled,
 } from '../../../helpers/validators';
 import { DhcpFormValues } from '.';
 import { Input } from '../../ui/Controls/Input';
@@ -60,7 +60,7 @@ const FormDHCPv4 = ({ processingConfig, ipv4placeholders, interfaces, onSubmit }
                             rules={{
                                 validate: {
                                     ipv4: validateIpv4,
-                                    required: (value) => (isEmptyConfig ? undefined : validateRequiredValue(value)),
+                                    required: validateRequiredIfSectionFilled('v4'),
                                     notInRange: validateNotInRange,
                                 },
                             }}
@@ -84,7 +84,7 @@ const FormDHCPv4 = ({ processingConfig, ipv4placeholders, interfaces, onSubmit }
                             control={control}
                             rules={{
                                 validate: {
-                                    required: (value) => (isEmptyConfig ? undefined : validateRequiredValue(value)),
+                                    required: validateRequiredIfSectionFilled('v4'),
                                     subnet: validateGatewaySubnetMask,
                                 },
                             }}
@@ -165,7 +165,7 @@ const FormDHCPv4 = ({ processingConfig, ipv4placeholders, interfaces, onSubmit }
                             control={control}
                             rules={{
                                 validate: {
-                                    required: (value) => (isEmptyConfig ? undefined : validateRequiredValue(value)),
+                                    required: validateRequiredIfSectionFilled('v4'),
                                 },
                             }}
                             render={({ field, fieldState }) => (

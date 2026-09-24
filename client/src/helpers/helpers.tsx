@@ -555,6 +555,23 @@ export const isIpInCidr = (ip: any, cidr: any) => {
 };
 
 /**
+ * Checks that the value is an IP range in CIDR notation.  Both address
+ * families are supported, including IPv6 ranges with an embedded
+ * dotted-decimal IPv4 address, the same way the backend parses them.
+ *
+ * @param {string} value Value to check.
+ * @returns {boolean} True if the value is a valid CIDR range.
+ */
+export const isValidCidr = (value: any) => {
+    try {
+        ipaddr.parseCIDR(value);
+        return true;
+    } catch (e) {
+        return false;
+    }
+};
+
+/**
  *
  * @param {string} subnetMask
  * @returns {IPv4 | null}

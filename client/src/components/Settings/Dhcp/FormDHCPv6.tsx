@@ -3,7 +3,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 
 import { UINT32_RANGE } from '../../../helpers/constants';
-import { validateIpv6, validateRequiredValue } from '../../../helpers/validators';
+import { validateIpv6, validateRequiredIfFilled } from '../../../helpers/validators';
 import { DhcpFormValues } from '.';
 import { Input } from '../../ui/Controls/Input';
 import { toNumber } from '../../../helpers/form';
@@ -23,7 +23,7 @@ const FormDHCPv6 = ({ processingConfig, ipv6placeholders, interfaces, onSubmit }
     const { t } = useTranslation();
     const {
         handleSubmit,
-        formState: { isSubmitting, isValid },
+        formState: { errors, isSubmitting },
         control,
         watch,
     } = useFormContext<DhcpFormValues>();
@@ -33,10 +33,11 @@ const FormDHCPv6 = ({ processingConfig, ipv6placeholders, interfaces, onSubmit }
 
     const formValues = watch('v6');
     const isEmptyConfig = !Object.values(formValues || {}).some(Boolean);
+    const hasV6Errors = errors.v6 && Object.keys(errors.v6).length > 0;
 
     const isDisabled = useMemo(() => {
-        return isSubmitting || !isValid || processingConfig || !isInterfaceIncludesIpv6 || isEmptyConfig;
-    }, [isSubmitting, isValid, processingConfig, isInterfaceIncludesIpv6, isEmptyConfig]);
+        return isSubmitting || hasV6Errors || processingConfig || !isInterfaceIncludesIpv6 || isEmptyConfig;
+    }, [isSubmitting, hasV6Errors, processingConfig, isInterfaceIncludesIpv6, isEmptyConfig]);
 
     return (
         <form onSubmit={handleSubmit(onSubmit)}>
@@ -56,7 +57,6 @@ const FormDHCPv6 = ({ processingConfig, ipv6placeholders, interfaces, onSubmit }
                                         validate: isInterfaceIncludesIpv6
                                             ? {
                                                   ipv6: validateIpv6,
-                                                  required: validateRequiredValue,
                                               }
                                             : undefined,
                                     }}
@@ -102,7 +102,7 @@ const FormDHCPv6 = ({ processingConfig, ipv6placeholders, interfaces, onSubmit }
                         rules={{
                             validate: isInterfaceIncludesIpv6
                                 ? {
-                                      required: validateRequiredValue,
+                                      required: validateRequiredIfFilled('v6', 'range_start'),
                                   }
                                 : undefined,
                         }}

@@ -1,6 +1,6 @@
 import { describe, expect, test, afterEach, vi, beforeEach, it } from 'vitest';
 
-import { sortIp, countClientsStatistics, findAddressType, subnetMaskToBitMask } from '../helpers/helpers';
+import { sortIp, countClientsStatistics, findAddressType, isValidCidr, subnetMaskToBitMask } from '../helpers/helpers';
 import { ADDRESS_TYPES } from '../helpers/constants';
 
 describe('sortIp', () => {
@@ -466,5 +466,27 @@ describe('subnetMaskToBitMask', () => {
                 })
                 .every((res) => res === true),
         ).toEqual(true);
+    });
+});
+
+describe('isValidCidr', () => {
+    test('accepts IPv4 and IPv6 CIDR ranges', () => {
+        expect(isValidCidr('192.168.1.0/24')).toBe(true);
+        expect(isValidCidr('0.0.0.0/0')).toBe(true);
+        expect(isValidCidr('2001:db8::/64')).toBe(true);
+    });
+
+    // REGRESSION: GH #8610 — the retired R_CIDR_IPV6 used a literal `d` where
+    // it needed `\d`, so mixed-notation ranges were rejected.
+    test('accepts IPv6 CIDRs with an embedded dotted-decimal IPv4 address', () => {
+        expect(isValidCidr('::ffff:192.168.1.0/120')).toBe(true);
+        expect(isValidCidr('fe80::1%eth0/64')).toBe(true);
+    });
+
+    test('rejects invalid octets, prefix lengths and malformed input', () => {
+        expect(isValidCidr('192.168.1.256/24')).toBe(false);
+        expect(isValidCidr('2001:db8::/129')).toBe(false);
+        expect(isValidCidr('192.168.1.0')).toBe(false);
+        expect(isValidCidr('')).toBe(false);
     });
 });

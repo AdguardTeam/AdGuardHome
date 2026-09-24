@@ -2,8 +2,6 @@ import i18next from 'i18next';
 
 import {
     MAX_PORT,
-    R_CIDR,
-    R_CIDR_IPV6,
     R_HOST,
     R_IPV4,
     R_IPV6,
@@ -21,7 +19,7 @@ import {
 
 import { ip4ToInt, isValidAbsolutePath } from './form';
 
-import { isIpInCidr, parseSubnetMask } from './helpers';
+import { isIpInCidr, isValidCidr, parseSubnetMask } from './helpers';
 
 // Validation functions
 // If the value is valid, the validation function should return undefined.
@@ -36,6 +34,48 @@ export const validateRequiredValue = (value: any) => {
     }
     return i18next.t('form_error_required');
 };
+
+/**
+ * Creates a `required` validator for one DHCP form section that enforces the
+ * value only when that section has any values entered.  DHCPv4 and DHCPv6
+ * share a single react-hook-form instance, so an untouched section must not
+ * block saving the other one.
+ *
+ * @param {'v4' | 'v6'} section DHCP form section the field belongs to.
+ * @returns {Function} Validator for react-hook-form's `validate` rules.
+ */
+export const validateRequiredIfSectionFilled =
+    (section: 'v4' | 'v6') => (value: any, allValues: any) => {
+        const sectionValues = allValues && allValues[section];
+
+        if (!sectionValues || !Object.values(sectionValues).some(Boolean)) {
+            return undefined;
+        }
+
+        return validateRequiredValue(value);
+    };
+
+/**
+ * Creates a `required` validator that enforces the value only when the given
+ * field of the same DHCP form section is filled.  DHCPv6 counts as configured
+ * only when its range start is set, which is also what enables the DHCPv6
+ * server on the backend, so a lease duration left at its default must not
+ * require a range.
+ *
+ * @param {'v4' | 'v6'} section DHCP form section the field belongs to.
+ * @param {string} field Name of the field that marks the section as configured.
+ * @returns {Function} Validator for react-hook-form's `validate` rules.
+ */
+export const validateRequiredIfFilled =
+    (section: 'v4' | 'v6', field: string) => (value: any, allValues: any) => {
+        const sibling = allValues && allValues[section] && allValues[section][field];
+
+        if (!sibling) {
+            return undefined;
+        }
+
+        return validateRequiredValue(value);
+    };
 
 /**
  * @returns {undefined|string}
@@ -125,7 +165,13 @@ export const validateGatewaySubnetMask = (_: any, allValues: any) => {
  * @param allValues
  */
 export const validateIpForGatewaySubnetMask = (value: any, allValues: any) => {
-    if (!allValues || !allValues.v4 || !value || !allValues.gateway_ip || !allValues.subnet_mask) {
+    if (
+        !allValues ||
+        !allValues.v4 ||
+        !value ||
+        !allValues.v4.gateway_ip ||
+        !allValues.v4.subnet_mask
+    ) {
         return undefined;
     }
 
@@ -136,6 +182,10 @@ export const validateIpForGatewaySubnetMask = (value: any, allValues: any) => {
     }
 
     const subnetPrefix = parseSubnetMask(subnet_mask);
+
+    if (subnetPrefix === null) {
+        return undefined;
+    }
 
     if (!isIpInCidr(value, `${gateway_ip}/${subnetPrefix}`)) {
         return i18next.t('subnet_error');
@@ -159,8 +209,7 @@ export const validateClientId = (value: string) => {
             R_IPV4.test(formattedValue) ||
             R_IPV6.test(formattedValue) ||
             R_MAC.test(formattedValue) ||
-            R_CIDR.test(formattedValue) ||
-            R_CIDR_IPV6.test(formattedValue) ||
+            isValidCidr(formattedValue) ||
             R_CLIENT_ID.test(formattedValue)
         )
     ) {
