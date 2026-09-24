@@ -577,8 +577,8 @@ const R_PREFIX_LENGTH = /^(0|[1-9]\d*)$/;
  * @param {string} value Value to check.
  * @returns {boolean} True if the value is a valid CIDR range.
  */
-export const isValidCidr = (value: any) => {
-    const slash = value ? value.lastIndexOf('/') : -1;
+export const isValidCidr = (value: string) => {
+    const slash = value.lastIndexOf('/');
     if (slash <= 0) {
         return false;
     }

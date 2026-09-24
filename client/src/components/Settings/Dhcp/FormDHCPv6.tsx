@@ -3,7 +3,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 
 import { UINT32_RANGE } from '../../../helpers/constants';
-import { validateIpv6, validateRequiredIfFilled } from '../../../helpers/validators';
+import { isSectionFilled, validateIpv6, validateRequiredIfFilled } from '../../../helpers/validators';
 import { DhcpFormValues } from '.';
 import { Input } from '../../ui/Controls/Input';
 import { toNumber } from '../../../helpers/form';
@@ -31,8 +31,7 @@ const FormDHCPv6 = ({ processingConfig, ipv6placeholders, interfaces, onSubmit }
     const interfaceName = watch('interface_name');
     const isInterfaceIncludesIpv6 = interfaces?.[interfaceName]?.ipv6_addresses;
 
-    const formValues = watch('v6');
-    const isEmptyConfig = !Object.values(formValues || {}).some(Boolean);
+    const isEmptyConfig = !isSectionFilled(watch('v6'));
     const hasV6Errors = errors.v6 && Object.keys(errors.v6).length > 0;
 
     const isDisabled = useMemo(() => {

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { UINT32_RANGE } from '../../../helpers/constants';
 import {
+    isSectionFilled,
     validateGatewaySubnetMask,
     validateIpForGatewaySubnetMask,
     validateIpv4,
@@ -41,8 +42,7 @@ const FormDHCPv4 = ({ processingConfig, ipv4placeholders, interfaces, onSubmit }
     const interfaceName = watch('interface_name');
     const isInterfaceIncludesIpv4 = interfaces?.[interfaceName]?.ipv4_addresses;
 
-    const formValues = watch('v4');
-    const isEmptyConfig = !Object.values(formValues || {}).some(Boolean);
+    const isEmptyConfig = !isSectionFilled(watch('v4'));
     const hasV4Errors = errors.v4 && Object.keys(errors.v4).length > 0;
 
     const isDisabled = useMemo(() => {

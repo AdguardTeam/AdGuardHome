@@ -1,7 +1,9 @@
 import { describe, expect, test, vi } from 'vitest';
 
 import {
+    isSectionFilled,
     validateClientId,
+    validateGatewaySubnetMask,
     validateIpForGatewaySubnetMask,
     validateRequiredIfFilled,
     validateRequiredIfSectionFilled,
@@ -81,6 +83,72 @@ describe('validateClientId', () => {
 
     test('rejects malformed identifiers', () => {
         expect(validateClientId('not a client id')).toBe('form_error_client_id_format');
+    });
+});
+
+describe('isSectionFilled', () => {
+    test('is false for a missing or untouched section', () => {
+        expect(isSectionFilled(undefined)).toBe(false);
+        expect(isSectionFilled({})).toBe(false);
+        expect(
+            isSectionFilled({ gateway_ip: '', subnet_mask: '', lease_duration: undefined }),
+        ).toBe(false);
+    });
+
+    test('is true as soon as one value is set', () => {
+        expect(isSectionFilled({ range_start: '', lease_duration: 86400 })).toBe(true);
+        expect(isSectionFilled({ gateway_ip: '192.168.1.1' })).toBe(true);
+    });
+});
+
+describe('validateGatewaySubnetMask', () => {
+    // REGRESSION: AGH-171, mirror direction — both DHCP cards share one form
+    // instance, so an untouched DHCPv4 section is validated when DHCPv6 is
+    // saved and must not report an error there.
+    test('accepts an untouched DHCPv4 section', () => {
+        expect(validateGatewaySubnetMask(undefined, { v4: {} })).toBeUndefined();
+        expect(
+            validateGatewaySubnetMask(undefined, {
+                v4: {
+                    gateway_ip: '',
+                    subnet_mask: '',
+                    range_start: '',
+                    range_end: '',
+                    lease_duration: undefined,
+                },
+            }),
+        ).toBeUndefined();
+        expect(validateGatewaySubnetMask(undefined, undefined)).toBeUndefined();
+    });
+
+    test('rejects a partially filled section', () => {
+        expect(validateGatewaySubnetMask(undefined, { v4: { gateway_ip: '192.168.1.1' } })).toBe(
+            'gateway_or_subnet_invalid',
+        );
+        expect(
+            validateGatewaySubnetMask(undefined, { v4: { subnet_mask: '255.255.255.0' } }),
+        ).toBe('gateway_or_subnet_invalid');
+    });
+
+    test('accepts a valid gateway and subnet mask', () => {
+        expect(
+            validateGatewaySubnetMask(undefined, {
+                v4: { gateway_ip: '192.168.1.1', subnet_mask: '255.255.255.0' },
+            }),
+        ).toBeUndefined();
+    });
+
+    test('rejects an invalid gateway or subnet mask', () => {
+        expect(
+            validateGatewaySubnetMask(undefined, {
+                v4: { gateway_ip: 'not-an-ip', subnet_mask: '255.255.255.0' },
+            }),
+        ).toBe('gateway_or_subnet_invalid');
+        expect(
+            validateGatewaySubnetMask(undefined, {
+                v4: { gateway_ip: '192.168.1.1', subnet_mask: '1.2.3.4' },
+            }),
+        ).toBe('gateway_or_subnet_invalid');
     });
 });
 

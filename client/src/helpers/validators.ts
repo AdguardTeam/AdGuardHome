@@ -36,6 +36,18 @@ export const validateRequiredValue = (value: any) => {
 };
 
 /**
+ * Checks whether a DHCP form section has any values entered.  DHCPv4 and
+ * DHCPv6 share a single react-hook-form instance, so "the user has not touched
+ * this section" is the condition both the section-aware validators and the
+ * save buttons key off.
+ *
+ * @param {object} sectionValues Values of one DHCP form section.
+ * @returns {boolean} True if at least one value is set.
+ */
+export const isSectionFilled = (sectionValues: any) =>
+    Boolean(sectionValues) && Object.values(sectionValues).some(Boolean);
+
+/**
  * Creates a `required` validator for one DHCP form section that enforces the
  * value only when that section has any values entered.  DHCPv4 and DHCPv6
  * share a single react-hook-form instance, so an untouched section must not
@@ -46,9 +58,7 @@ export const validateRequiredValue = (value: any) => {
  */
 export const validateRequiredIfSectionFilled =
     (section: 'v4' | 'v6') => (value: any, allValues: any) => {
-        const sectionValues = allValues && allValues[section];
-
-        if (!sectionValues || !Object.values(sectionValues).some(Boolean)) {
+        if (!isSectionFilled(allValues && allValues[section])) {
             return undefined;
         }
 
@@ -141,16 +151,27 @@ export const validateNotInRange = (value: any, allValues: any) => {
 };
 
 /**
+ * Validates the DHCPv4 subnet mask against the gateway.  An untouched DHCPv4
+ * section is not an error: DHCPv4 and DHCPv6 share a single react-hook-form
+ * instance, so a section the user has not filled in must not block saving the
+ * other one.
+ *
  * @returns {undefined|string}
  * @param _
  * @param allValues
  */
 export const validateGatewaySubnetMask = (_: any, allValues: any) => {
-    if (!allValues || !allValues.v4 || !allValues.v4.subnet_mask || !allValues.v4.gateway_ip) {
+    const v4Values = allValues && allValues.v4;
+
+    if (!isSectionFilled(v4Values)) {
+        return undefined;
+    }
+
+    if (!v4Values.subnet_mask || !v4Values.gateway_ip) {
         return i18next.t('gateway_or_subnet_invalid');
     }
 
-    const { subnet_mask, gateway_ip } = allValues.v4;
+    const { subnet_mask, gateway_ip } = v4Values;
 
     if (validateIpv4(gateway_ip)) {
         return i18next.t('gateway_or_subnet_invalid');

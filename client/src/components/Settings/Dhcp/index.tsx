@@ -37,6 +37,7 @@ import {
     calculateDhcpPlaceholdersIpv6,
     subnetMaskToBitMask,
 } from '../../../helpers/helpers';
+import { isSectionFilled } from '../../../helpers/validators';
 import './index.css';
 import { RootState } from '../../../initialState';
 
@@ -188,12 +189,21 @@ const Dhcp = () => {
     };
 
     const handleSubmit = (values: DhcpFormValues) => {
-        dispatch(
-            setDhcpConfig({
-                interface_name,
-                ...values,
-            }),
-        );
+        const config: DhcpFormValues = { interface_name };
+
+        // Leave an untouched section out of the payload.  Both cards share this
+        // form instance, so an empty section would otherwise be sent along when
+        // saving the other one, and the backend rejects an empty DHCPv4 section
+        // while an omitted one keeps its current configuration.
+        if (isSectionFilled(values.v4)) {
+            config.v4 = values.v4;
+        }
+
+        if (isSectionFilled(values.v6)) {
+            config.v6 = values.v6;
+        }
+
+        dispatch(setDhcpConfig(config));
     };
 
     const handleReset = () => {
