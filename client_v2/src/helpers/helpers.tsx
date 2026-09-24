@@ -618,12 +618,57 @@ export const isValidIpv6 = (value: string): boolean => {
 };
 
 /**
- * Validates an IP range in CIDR notation using ipaddr.js, covering both address
- * families — including IPv6 with an embedded dotted-decimal IPv4 address.
+ * Matches a canonical dotted-decimal IPv4 address: four octets, no leading
+ * zeros.  Mirrors the spellings netip.ParseAddr accepts.
+ */
+const R_CANONICAL_IPV4 =
+    /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
+
+/**
+ * Matches a prefix length without leading zeros, as netip.ParsePrefix requires.
+ */
+const R_PREFIX_LENGTH = /^(0|[1-9]\d*)$/;
+
+/**
+ * Validates an IP range in CIDR notation the way the backend parses it with
+ * netip.ParsePrefix: both address families, including IPv6 with an embedded
+ * dotted-decimal IPv4 address.  The extra checks keep out the spellings
+ * ipaddr.js accepts but netip rejects — zone IDs, prefix lengths with leading
+ * zeros, and non-canonical IPv4 addresses — so the form never accepts a value
+ * the server would refuse on save.
  * @param value - The string to validate.
  * @returns true if the value is a valid CIDR range.
  */
 export const isValidCidr = (value: string): boolean => {
+    const slash = value.lastIndexOf('/');
+    if (slash <= 0) {
+        return false;
+    }
+
+    const addr = value.slice(0, slash);
+    const bits = value.slice(slash + 1);
+
+    // netip.ParsePrefix rejects IPv6 zones in a prefix and prefix lengths
+    // spelled with leading zeros.
+    if (addr.includes('%') || !R_PREFIX_LENGTH.test(bits)) {
+        return false;
+    }
+
+    const colon = addr.lastIndexOf(':');
+    if (colon === -1) {
+        // netip.ParseAddr requires canonical dotted-decimal IPv4, while
+        // ipaddr.js also takes octal, hexadecimal and single-number spellings.
+        if (!R_CANONICAL_IPV4.test(addr)) {
+            return false;
+        }
+    } else {
+        // The same applies to the IPv4 tail of a mixed-notation IPv6 address.
+        const ipv4Part = addr.slice(colon + 1);
+        if (ipv4Part.includes('.') && !R_CANONICAL_IPV4.test(ipv4Part)) {
+            return false;
+        }
+    }
+
     try {
         ipaddr.parseCIDR(value);
         return true;

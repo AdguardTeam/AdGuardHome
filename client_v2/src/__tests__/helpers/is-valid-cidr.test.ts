@@ -25,8 +25,22 @@ describe('isValidCidr', () => {
         expect(isValidCidr('::ffff:c0a8:100/120')).toBe(true);
     });
 
-    it('accepts IPv6 CIDR ranges with a zone ID', () => {
-        expect(isValidCidr('fe80::1%eth0/64')).toBe(true);
+    it('rejects IPv6 CIDR ranges with a zone ID', () => {
+        // netip.ParsePrefix rejects zones in a prefix, even though
+        // netip.ParseAddr accepts them on a bare address.
+        expect(isValidCidr('fe80::1%eth0/64')).toBe(false);
+    });
+
+    it('rejects prefix lengths spelled with leading zeros', () => {
+        expect(isValidCidr('192.168.1.0/024')).toBe(false);
+        expect(isValidCidr('2001:db8::/064')).toBe(false);
+    });
+
+    it('rejects non-canonical IPv4 addresses', () => {
+        expect(isValidCidr('127.1/24')).toBe(false);
+        expect(isValidCidr('0x7f.0.0.1/8')).toBe(false);
+        expect(isValidCidr('010.0.0.1/8')).toBe(false);
+        expect(isValidCidr('12345/8')).toBe(false);
     });
 
     it('rejects out-of-range octets', () => {
