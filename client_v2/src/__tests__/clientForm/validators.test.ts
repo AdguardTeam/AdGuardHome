@@ -53,6 +53,23 @@ describe('validateIdentifier', () => {
         expect(result).toBeUndefined();
     });
 
+    it('returns undefined for valid IPv6 CIDR', () => {
+        expect(validateIdentifier('2001:db8::/64', [], 0)).toBeUndefined();
+    });
+
+    // REGRESSION: GH #8610 — mixed-notation ranges were rejected by the retired
+    // R_CIDR_IPV6, which matched the hex form only.
+    it('returns undefined for IPv6 CIDR with an embedded IPv4 address', () => {
+        expect(validateIdentifier('::ffff:192.168.1.0/120', [], 0)).toBeUndefined();
+        expect(validateIdentifier('::ffff:c0a8:100/120', [], 0)).toBeUndefined();
+    });
+
+    it('returns format error for IPv6 CIDR with an out-of-range embedded IPv4 octet', () => {
+        expect(validateIdentifier('::ffff:192.168.1.256/120', [], 0)).toBe(
+            copy('clients_identifier_format_error'),
+        );
+    });
+
     it('returns undefined for valid ClientID', () => {
         const result = validateIdentifier('my-client-01', ['my-client-01'], 0);
         expect(result).toBeUndefined();
