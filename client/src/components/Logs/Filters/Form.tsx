@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
@@ -34,21 +34,29 @@ export const Form = ({ className, setIsLoading }: Props) => {
 
     const { register, watch, setValue } = useFormContext<SearchFormValues>();
 
-    const searchValue = watch('search');
+    const excludeValue = watch('exclude');
     const responseStatusValue = watch('response_status');
+    const isExclude = Boolean(excludeValue);
+
+    const activeSearchField = isExclude ? 'exclude' : 'search';
+    const searchValue = watch(activeSearchField);
 
     const [debouncedSearch, setDebouncedSearch] = useDebounce(searchValue.trim(), DEBOUNCE_FILTER_TIMEOUT);
 
     useEffect(() => {
+        const searchParam = isExclude ? '' : debouncedSearch;
+        const excludeParam = isExclude ? debouncedSearch : '';
+
         dispatch(
             setLogsFilter({
                 response_status: responseStatusValue,
-                search: debouncedSearch,
+                search: searchParam,
+                exclude: excludeParam,
             }),
         );
 
-        history.replace(`${getLogsUrlParams(debouncedSearch, responseStatusValue)}`);
-    }, [responseStatusValue, debouncedSearch]);
+        history.replace(`${getLogsUrlParams(searchParam, responseStatusValue, excludeParam)}`);
+    }, [responseStatusValue, debouncedSearch, isExclude]);
 
     useEffect(() => {
         if (responseStatusValue && !(responseStatusValue in RESPONSE_FILTER_QUERIES)) {
@@ -57,16 +65,38 @@ export const Form = ({ className, setIsLoading }: Props) => {
     }, [responseStatusValue, setValue]);
 
     useEffect(() => {
-        const { search: searchUrlParam } = queryString.parse(history.location.search);
+        const { search: searchUrlParam, exclude: excludeUrlParam } = queryString.parse(history.location.search);
 
-        if (searchUrlParam !== searchValue) {
-            setValue('search', searchUrlParam ? searchUrlParam.toString() : '');
+        const searchParam = searchUrlParam ? searchUrlParam.toString() : '';
+        const excludeParam = excludeUrlParam ? excludeUrlParam.toString() : '';
+
+        if (excludeParam) {
+            setValue('exclude', excludeParam);
+            setValue('search', excludeParam);
+        } else {
+            setValue('search', searchParam);
+            setValue('exclude', '');
         }
-    }, [history.location.search]);
+    }, [history.location.search, setValue]);
+
+    const toggleExclude = useCallback(() => {
+        const willExclude = !isExclude;
+        const currentVal = searchValue;
+        if (willExclude) {
+            if (!currentVal) {
+                return;
+            }
+            setValue('exclude', currentVal);
+        } else {
+            setValue('exclude', '');
+        }
+    }, [isExclude, searchValue, setValue]);
 
     const onInputClear = async () => {
         setIsLoading(true);
-        history.push(getLogsUrlParams(DEFAULT_LOGS_FILTER.search, responseStatusValue));
+        setValue('search', '');
+        setValue('exclude', '');
+        history.push(getLogsUrlParams('', responseStatusValue, ''));
         setIsLoading(false);
     };
 
@@ -83,16 +113,42 @@ export const Form = ({ className, setIsLoading }: Props) => {
                 e.preventDefault();
             }}>
             <div className="field__search">
+                <button
+                    type="button"
+                    className={classNames(
+                        'btn btn-icon logs__search-toggle',
+                        { 'logs__search-toggle--active': isExclude },
+                    )}
+                    onClick={toggleExclude}
+                    title={t(isExclude ? 'query_log_exclude_tooltip' : 'query_log_include_tooltip')}>
+                    <svg className="icons icon--24">
+                        <use xlinkHref="#magnifier" />
+                    </svg>
+                </button>
                 <SearchField
-                    data-testid="querylog_search"
+                    data-testid={isExclude ? 'querylog_exclude' : 'querylog_search'}
                     value={searchValue}
-                    handleChange={(val) => setValue('search', val)}
+                    handleChange={(val) => {
+                        setValue(activeSearchField, val);
+                        if (isExclude) {
+                            setValue('search', val);
+                        }
+                    }}
                     onKeyDown={onEnterPress}
                     onClear={onInputClear}
-                    placeholder={t('domain_or_client')}
-                    tooltip={t('query_log_strict_search')}
-                    className={classNames('form-control form-control--search form-control--transparent', className)}
+                    placeholder={t(isExclude ? 'domain_to_exclude' : 'domain_or_client')}
+                    tooltip={t(isExclude ? 'query_log_exclude_strict_search' : 'query_log_strict_search')}
+                    className={classNames(
+                        'form-control form-control--search form-control--transparent',
+                        { 'form-control--exclude': isExclude },
+                        className,
+                    )}
                 />
+                {isExclude && (
+                    <span className="logs__exclude-badge">
+                        {t('exclude_mode')}
+                    </span>
+                )}
             </div>
 
             <div className="field__select">

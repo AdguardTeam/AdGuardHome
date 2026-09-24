@@ -120,6 +120,7 @@ export const setLogsFilterRequest = createAction('SET_LOGS_FILTER_REQUEST');
  * @param filter
  * @param {string} filter.search
  * @param {string} filter.response_status 'QUERY' field of RESPONSE_FILTER object
+ * @param {string} [filter.exclude] search terms to exclude from results
  * @returns function
  */
 export const setLogsFilter = (filter: SearchFormValues) => setLogsFilterRequest(filter);
