@@ -70,7 +70,10 @@ export const PersistentClientsTable = (props: Props) => {
 
                             <div class={theme.table.cellValueText}>
                                 <div class={s.idsRow}>
-                                    <span class={cn(theme.common.textOverflow, s.idsText)}>
+                                    <span
+                                        class={cn(theme.common.textOverflow, s.idsText)}
+                                        data-testid="client-ids-text"
+                                    >
                                         {firstId}
                                     </span>
                                     <Show when={hiddenCount > 0}>
@@ -103,7 +106,12 @@ export const PersistentClientsTable = (props: Props) => {
                                                 </div>
                                             }
                                         >
-                                            <span class={s.countLabel}>{hiddenCount}</span>
+                                            <span
+                                                class={s.countLabel}
+                                                data-testid="client-ids-count"
+                                            >
+                                                {hiddenCount}
+                                            </span>
                                         </Tooltip>
                                     </Show>
                                 </div>
