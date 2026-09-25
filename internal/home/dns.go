@@ -17,6 +17,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
+	"github.com/AdguardTeam/AdGuardHome/internal/configmgr"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
@@ -257,7 +258,7 @@ func ipsToUDPAddrs(ips []netip.Addr, port uint16) (udpAddrs []*net.UDPAddr) {
 // newServerConfig converts values from the configuration file into the internal
 // DNS server configuration.  All arguments must not be nil.
 func newServerConfig(
-	dnsConf *dnsConfig,
+	dnsConf *configmgr.DNSConfig,
 	clientSrcConf *clientSourcesConfig,
 	dohConf *doHConfig,
 	tlsManager aghtls.Manager,
@@ -267,9 +268,6 @@ func newServerConfig(
 ) (newConf *dnsforward.ServerConfig, err error) {
 	hosts := aghalg.CoalesceSlice(dnsConf.BindHosts, []netip.Addr{netutil.IPv4Localhost()})
 
-	fwdConf := dnsConf.Config
-	fwdConf.ClientsContainer = clientsContainer
-
 	intTLSConf, err := newDNSTLSConfig(tlsManager, hosts)
 	if err != nil {
 		return nil, fmt.Errorf("constructing tls config: %w", err)
@@ -278,7 +276,7 @@ func newServerConfig(
 	newConf = &dnsforward.ServerConfig{
 		UDPListenAddrs:         ipsToUDPAddrs(hosts, dnsConf.Port),
 		TCPListenAddrs:         ipsToTCPAddrs(hosts, dnsConf.Port),
-		Config:                 fwdConf,
+		Config:                 dnsConfigToInternal(dnsConf, clientsContainer),
 		TLSConf:                intTLSConf,
 		TLSAllowUnencryptedDoH: dohConf.InsecureEnabled,
 		UpstreamTimeout:        time.Duration(dnsConf.UpstreamTimeout),
@@ -291,7 +289,10 @@ func newServerConfig(
 		ServeHTTP3:             dnsConf.ServeHTTP3,
 		UseHTTP3Upstreams:      dnsConf.UseHTTP3Upstreams,
 		ServePlainDNS:          dnsConf.ServePlainDNS,
-		PendingRequestsEnabled: dnsConf.PendingRequests.Enabled,
+	}
+
+	if dnsConf.PendingRequests != nil {
+		newConf.PendingRequestsEnabled = dnsConf.PendingRequests.Enabled
 	}
 
 	var initialAddresses []netip.Addr
@@ -314,6 +315,56 @@ func newServerConfig(
 	}
 
 	return newConf, nil
+}
+
+// dnsConfigToInternal converts c to the DNS forward settings.  c must be valid,
+// clientsContainer must not be nil.
+func dnsConfigToInternal(
+	c *configmgr.DNSConfig,
+	clientsContainer dnsforward.ClientsContainer,
+) (s dnsforward.Config) {
+	ednsClientSubnet := &dnsforward.EDNSClientSubnet{}
+	if c.EDNSClientSubnet != nil {
+		ednsClientSubnet.CustomIP = c.EDNSClientSubnet.CustomIP
+		ednsClientSubnet.Enabled = c.EDNSClientSubnet.Enabled
+		ednsClientSubnet.UseCustom = c.EDNSClientSubnet.UseCustom
+	}
+
+	return dnsforward.Config{
+		ClientsContainer:       clientsContainer,
+		Ratelimit:              c.Ratelimit,
+		RatelimitSubnetLenIPv4: c.RatelimitSubnetLenIPv4,
+		RatelimitSubnetLenIPv6: c.RatelimitSubnetLenIPv6,
+		RatelimitWhitelist:     c.RatelimitWhitelist,
+		RefuseAny:              c.RefuseAny,
+		UpstreamDNS:            c.UpstreamDNS,
+		UpstreamDNSFileName:    c.UpstreamDNSFileName,
+		BootstrapDNS:           c.BootstrapDNS,
+		FallbackDNS:            c.FallbackDNS,
+		// TODO(d.kolyshev): !! Check conversion.
+		UpstreamMode:             dnsforward.UpstreamMode(c.UpstreamMode),
+		FastestTimeout:           c.FastestTimeout,
+		AllowedClients:           c.AllowedClients,
+		DisallowedClients:        c.DisallowedClients,
+		BlockedHosts:             c.BlockedHosts,
+		TrustedProxies:           c.TrustedProxies,
+		CacheEnabled:             c.CacheEnabled,
+		CacheSize:                c.CacheSize,
+		CacheMinTTL:              c.CacheMinTTL,
+		CacheMaxTTL:              c.CacheMaxTTL,
+		CacheOptimistic:          c.CacheOptimistic,
+		CacheOptimisticAnswerTTL: c.CacheOptimisticAnswerTTL,
+		CacheOptimisticMaxAge:    c.CacheOptimisticMaxAge,
+		BogusNXDomain:            c.BogusNXDomain,
+		AAAADisabled:             c.AAAADisabled,
+		EnableDNSSEC:             c.EnableDNSSEC,
+		EDNSClientSubnet:         ednsClientSubnet,
+		MaxGoroutines:            c.MaxGoroutines,
+		HandleDDR:                c.HandleDDR,
+		IpsetList:                c.IpsetList,
+		IpsetListFileName:        c.IpsetListFileName,
+		BootstrapPreferIPv6:      c.BootstrapPreferIPv6,
+	}
 }
 
 // newDNSTLSConfig converts values from the configuration file into the internal

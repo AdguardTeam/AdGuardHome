@@ -24,6 +24,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
 	"github.com/AdguardTeam/dnsproxy/fastip"
+	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
@@ -102,7 +103,10 @@ type configuration struct {
 
 	// TODO(a.garipov): Make DNS and the fields below pointers and validate
 	// and/or reset on explicit nulling.
-	DNS      dnsConfig         `yaml:"dns"`
+
+	// DNS is a block with DNS configuration params.
+	DNS configmgr.DNSConfig `yaml:"dns"`
+
 	TLS      tlsConfigSettings `yaml:"tls"`
 	QueryLog queryLogConfig    `yaml:"querylog"`
 
@@ -186,84 +190,6 @@ type doHConfig struct {
 
 	// InsecureEnabled allows DoH queries via unencrypted HTTP.
 	InsecureEnabled bool `yaml:"insecure_enabled"`
-}
-
-// dnsConfig is a block with DNS configuration params.
-//
-// Field ordering is important, YAML fields better not to be reordered, if it's
-// not absolutely necessary.
-type dnsConfig struct {
-	BindHosts []netip.Addr `yaml:"bind_hosts"`
-	Port      uint16       `yaml:"port"`
-
-	// AnonymizeClientIP defines if clients' IP addresses should be anonymized
-	// in query log and statistics.
-	AnonymizeClientIP bool `yaml:"anonymize_client_ip"`
-
-	// Config is the embed configuration with DNS params.
-	//
-	// TODO(a.garipov): Remove embed.
-	dnsforward.Config `yaml:",inline"`
-
-	// UpstreamTimeout is the timeout for querying upstream servers.
-	UpstreamTimeout timeutil.Duration `yaml:"upstream_timeout"`
-
-	// PrivateNets is the set of IP networks for which the private reverse DNS
-	// resolver should be used.
-	PrivateNets []netutil.Prefix `yaml:"private_networks"`
-
-	// UsePrivateRDNS enables resolving requests containing a private IP address
-	// using private reverse DNS resolvers.  See PrivateRDNSResolvers.
-	//
-	// TODO(e.burkov):  Rename in YAML.
-	UsePrivateRDNS bool `yaml:"use_private_ptr_resolvers"`
-
-	// PrivateRDNSResolvers is the slice of addresses to be used as upstreams
-	// for private requests.  It's only used for PTR, SOA, and NS queries,
-	// containing an ARPA subdomain, came from the the client with private
-	// address.  The address considered private according to PrivateNets.
-	//
-	// If empty, the OS-provided resolvers are used for private requests.
-	PrivateRDNSResolvers []string `yaml:"local_ptr_upstreams"`
-
-	// UseDNS64 defines if DNS64 should be used for incoming requests.  Requests
-	// of type PTR for addresses within the configured prefixes will be resolved
-	// via [PrivateRDNSResolvers], so those should be valid and UsePrivateRDNS
-	// be set to true.
-	UseDNS64 bool `yaml:"use_dns64"`
-
-	// DNS64Prefixes is the list of NAT64 prefixes to be used for DNS64.
-	DNS64Prefixes []netip.Prefix `yaml:"dns64_prefixes"`
-
-	// ServeHTTP3 defines if HTTP/3 is allowed for incoming requests.
-	//
-	// TODO(a.garipov): Add to the UI when HTTP/3 support is no longer
-	// experimental.
-	ServeHTTP3 bool `yaml:"serve_http3"`
-
-	// UseHTTP3Upstreams defines if HTTP/3 is allowed for DNS-over-HTTPS
-	// upstreams.
-	//
-	// TODO(a.garipov): Add to the UI when HTTP/3 support is no longer
-	// experimental.
-	UseHTTP3Upstreams bool `yaml:"use_http3_upstreams"`
-
-	// ServePlainDNS defines if plain DNS is allowed for incoming requests.
-	ServePlainDNS bool `yaml:"serve_plain_dns"`
-
-	// HostsFileEnabled defines whether to use information from the system hosts
-	// file to resolve queries.
-	HostsFileEnabled bool `yaml:"hostsfile_enabled"`
-
-	// PendingRequests configures duplicate requests policy.
-	PendingRequests *pendingRequests `yaml:"pending_requests"`
-}
-
-// pendingRequests is a block with pending requests configuration.
-type pendingRequests struct {
-	// Enabled controls if duplicate requests should be sent to the upstreams
-	// along with the original one.
-	Enabled bool `yaml:"enabled"`
 }
 
 // tlsConfigSettings is the TLS configuration for DNS-over-TLS, DNS-over-QUIC,
@@ -393,48 +319,43 @@ var config = &configuration{
 			InsecureEnabled: false,
 		},
 	},
-	DNS: dnsConfig{
-		BindHosts: []netip.Addr{netip.IPv4Unspecified()},
-		Port:      defaultPortDNS,
-		Config: dnsforward.Config{
-			Ratelimit:              20,
-			RatelimitSubnetLenIPv4: 24,
-			RatelimitSubnetLenIPv6: 56,
-			RefuseAny:              true,
-			UpstreamMode:           dnsforward.UpstreamModeLoadBalance,
-			HandleDDR:              true,
-			FastestTimeout:         timeutil.Duration(fastip.DefaultPingWaitTimeout),
-
-			TrustedProxies: []netutil.Prefix{{
-				Prefix: netip.MustParsePrefix("127.0.0.0/8"),
-			}, {
-				Prefix: netip.MustParsePrefix("::1/128"),
-			}},
-			CacheEnabled:             true,
-			CacheSize:                4 * 1024 * 1024,
-			CacheOptimisticAnswerTTL: timeutil.Duration(30 * time.Second),
-			CacheOptimisticMaxAge:    timeutil.Duration(12 * time.Hour),
-			EnableDNSSEC:             true,
-
-			EDNSClientSubnet: &dnsforward.EDNSClientSubnet{
-				CustomIP:  netip.Addr{},
-				Enabled:   false,
-				UseCustom: false,
-			},
-
-			// set default maximum concurrent queries to 300
-			// we introduced a default limit due to this:
-			// https://github.com/AdguardTeam/AdGuardHome/issues/2015#issuecomment-674041912
-			// was later increased to 300 due to https://github.com/AdguardTeam/AdGuardHome/issues/2257
-			MaxGoroutines: 300,
+	DNS: configmgr.DNSConfig{
+		EDNSClientSubnet: &configmgr.EDNSClientSubnet{
+			CustomIP: netip.Addr{},
 		},
-		UpstreamTimeout:  timeutil.Duration(dnsforward.DefaultTimeout),
-		UsePrivateRDNS:   true,
-		ServePlainDNS:    true,
-		HostsFileEnabled: true,
-		PendingRequests: &pendingRequests{
+		PendingRequests: &configmgr.PendingRequests{
 			Enabled: true,
 		},
+		UpstreamMode: proxy.UpstreamModeLoadBalance,
+		BindHosts:    []netip.Addr{netip.IPv4Unspecified()},
+		TrustedProxies: []netutil.Prefix{{
+			Prefix: netip.MustParsePrefix("127.0.0.0/8"),
+		}, {
+			Prefix: netip.MustParsePrefix("::1/128"),
+		}},
+		CacheOptimisticAnswerTTL: timeutil.Duration(30 * time.Second),
+		CacheOptimisticMaxAge:    timeutil.Duration(12 * time.Hour),
+		FastestTimeout:           timeutil.Duration(fastip.DefaultPingWaitTimeout),
+		UpstreamTimeout:          timeutil.Duration(dnsforward.DefaultTimeout),
+
+		// set default maximum concurrent queries to 300
+		// we introduced a default limit due to this:
+		// https://github.com/AdguardTeam/AdGuardHome/issues/2015#issuecomment-674041912
+		// was later increased to 300 due to https://github.com/AdguardTeam/AdGuardHome/issues/2257
+		MaxGoroutines: 300,
+
+		RatelimitSubnetLenIPv4: 24,
+		RatelimitSubnetLenIPv6: 56,
+		CacheSize:              4 * 1024 * 1024,
+		Ratelimit:              20,
+		Port:                   defaultPortDNS,
+		CacheEnabled:           true,
+		EnableDNSSEC:           true,
+		HandleDDR:              true,
+		HostsFileEnabled:       true,
+		RefuseAny:              true,
+		ServePlainDNS:          true,
+		UsePrivateRDNS:         true,
 	},
 	TLS: tlsConfigSettings{
 		PortHTTPS:       defaultPortHTTPS,
@@ -823,18 +744,11 @@ func (c *configuration) write(
 	}
 
 	if s := globalContext.dnsServer; s != nil {
-		c := dnsforward.Config{}
-		s.WriteDiskConfig(&c)
-		dns := &config.DNS
-		dns.Config = c
-
-		dns.PrivateRDNSResolvers = s.LocalPTRResolvers()
+		s.WriteDiskConfig(&config.DNS)
 
 		addrProcConf := s.AddrProcConfig()
 		config.Clients.Sources.RDNS = addrProcConf.UseRDNS
 		config.Clients.Sources.WHOIS = addrProcConf.UseWHOIS
-		dns.UsePrivateRDNS = addrProcConf.UsePrivateRDNS
-		dns.UpstreamTimeout = timeutil.Duration(s.UpstreamTimeout())
 	}
 
 	if globalContext.dhcpServer != nil {

@@ -21,6 +21,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghslog"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
+	"github.com/AdguardTeam/AdGuardHome/internal/configmgr"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/rdns"
@@ -32,6 +33,7 @@ import (
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/netutil/sysresolv"
 	"github.com/AdguardTeam/golibs/stringutil"
+	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/miekg/dns"
 )
 
@@ -292,21 +294,60 @@ func (s *Server) Close(ctx context.Context) {
 	}
 }
 
-// WriteDiskConfig - write configuration
-func (s *Server) WriteDiskConfig(c *Config) {
+// WriteDiskConfig puts the Server's configuration to the dc.  dc must not be
+// nil.
+func (s *Server) WriteDiskConfig(dc *configmgr.DNSConfig) {
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()
 
 	sc := s.conf.Config
-	*c = sc
-	c.RatelimitWhitelist = slices.Clone(sc.RatelimitWhitelist)
-	c.BootstrapDNS = slices.Clone(sc.BootstrapDNS)
-	c.FallbackDNS = slices.Clone(sc.FallbackDNS)
-	c.AllowedClients = slices.Clone(sc.AllowedClients)
-	c.DisallowedClients = slices.Clone(sc.DisallowedClients)
-	c.BlockedHosts = slices.Clone(sc.BlockedHosts)
-	c.TrustedProxies = slices.Clone(sc.TrustedProxies)
-	c.UpstreamDNS = slices.Clone(sc.UpstreamDNS)
+
+	if sc.EDNSClientSubnet != nil {
+		dc.EDNSClientSubnet = &configmgr.EDNSClientSubnet{
+			CustomIP:  sc.EDNSClientSubnet.CustomIP,
+			Enabled:   sc.EDNSClientSubnet.Enabled,
+			UseCustom: sc.EDNSClientSubnet.UseCustom,
+		}
+	}
+
+	dc.IpsetListFileName = sc.IpsetListFileName
+	dc.UpstreamDNSFileName = sc.UpstreamDNSFileName
+	// TODO(d.kolyshev): !! Check conversion.
+	dc.UpstreamMode = proxy.UpstreamMode(sc.UpstreamMode)
+
+	dc.RatelimitWhitelist = slices.Clone(sc.RatelimitWhitelist)
+	dc.TrustedProxies = slices.Clone(sc.TrustedProxies)
+	dc.AllowedClients = slices.Clone(sc.AllowedClients)
+	dc.BlockedHosts = slices.Clone(sc.BlockedHosts)
+	dc.BogusNXDomain = slices.Clone(sc.BogusNXDomain)
+	dc.BootstrapDNS = slices.Clone(sc.BootstrapDNS)
+	dc.DisallowedClients = slices.Clone(sc.DisallowedClients)
+	dc.FallbackDNS = slices.Clone(sc.FallbackDNS)
+	dc.IpsetList = slices.Clone(sc.IpsetList)
+	dc.PrivateRDNSResolvers = slices.Clone(s.conf.LocalPTRResolvers)
+	dc.UpstreamDNS = slices.Clone(sc.UpstreamDNS)
+
+	dc.CacheOptimisticAnswerTTL = sc.CacheOptimisticAnswerTTL
+	dc.CacheOptimisticMaxAge = sc.CacheOptimisticMaxAge
+	dc.FastestTimeout = sc.FastestTimeout
+	dc.UpstreamTimeout = timeutil.Duration(s.conf.UpstreamTimeout)
+
+	dc.MaxGoroutines = sc.MaxGoroutines
+	dc.RatelimitSubnetLenIPv4 = sc.RatelimitSubnetLenIPv4
+	dc.RatelimitSubnetLenIPv6 = sc.RatelimitSubnetLenIPv6
+	dc.CacheSize = sc.CacheSize
+	dc.CacheMinTTL = sc.CacheMinTTL
+	dc.CacheMaxTTL = sc.CacheMaxTTL
+	dc.Ratelimit = sc.Ratelimit
+
+	dc.AAAADisabled = sc.AAAADisabled
+	dc.BootstrapPreferIPv6 = sc.BootstrapPreferIPv6
+	dc.CacheEnabled = sc.CacheEnabled
+	dc.CacheOptimistic = sc.CacheOptimistic
+	dc.EnableDNSSEC = sc.EnableDNSSEC
+	dc.HandleDDR = sc.HandleDDR
+	dc.RefuseAny = sc.RefuseAny
+	dc.UsePrivateRDNS = s.conf.UsePrivateRDNS
 }
 
 // LocalPTRResolvers returns the current local PTR resolver configuration.
