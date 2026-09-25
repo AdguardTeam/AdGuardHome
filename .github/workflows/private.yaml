@@ -76,6 +76,7 @@
       - 'ephemeral'
       - 'ephemeral-mac'
       - '${{ vars.BUILD_IMAGE_VERSION_MACOS }}'
+      - 'ephemeral-job-key-${{ github.run_id }}-${{ github.job }}-${{ strategy.job-index || 0 }}'
     'steps':
       - 'uses': 'actions/checkout@v6'
         'with':
@@ -110,6 +111,7 @@
       - '${{ vars.BUILD_IMAGE_VERSION_WINDOWS_GO }}'
       - 'ephemeral-limit-memory-8192'
       - 'ephemeral-limit-cpu-4'
+      - 'ephemeral-job-key-${{ github.run_id }}-${{ github.job }}-${{ strategy.job-index || 0 }}'
     'steps':
       - 'uses': 'actions/checkout@v6'
         'with':
