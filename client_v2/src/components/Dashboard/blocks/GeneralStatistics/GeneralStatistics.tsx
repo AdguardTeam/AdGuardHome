@@ -8,7 +8,7 @@ import { EmptyState } from '../EmptyState';
 import s from './GeneralStatistics.module.pcss';
 import { StatRow } from '../StatRow';
 import { RoutePath } from 'panel/components/Routes/Paths';
-import { QUERY_LOG_REASON_FILTER } from 'panel/helpers/constants';
+import { QUERY_LOG_REASON_FILTER, QUERY_LOG_STATUS_FILTER } from 'panel/helpers/constants';
 
 type Props = {
     numDnsQueries: number;
@@ -59,7 +59,10 @@ export const GeneralStatistics = (props: Props) => {
                         rowTheme="adsBlocked"
                         tooltip={intl.getMessage('ads_blocked_tooltip')}
                         linkTo={RoutePath.QueryLog}
-                        query={{ reason: QUERY_LOG_REASON_FILTER.BLOCKED_BY_FILTER.QUERY }}
+                        query={{
+                            status: QUERY_LOG_STATUS_FILTER.BLOCKED.QUERY,
+                            reason: QUERY_LOG_REASON_FILTER.BLOCKED_BY_FILTER.QUERY,
+                        }}
                     />
 
                     <StatRow
@@ -70,7 +73,10 @@ export const GeneralStatistics = (props: Props) => {
                         rowTheme="threatsBlocked"
                         tooltip={intl.getMessage('threats_blocked_tooltip')}
                         linkTo={RoutePath.QueryLog}
-                        query={{ reason: QUERY_LOG_REASON_FILTER.BLOCKED_BY_THREATS.QUERY }}
+                        query={{
+                            status: QUERY_LOG_STATUS_FILTER.BLOCKED.QUERY,
+                            reason: QUERY_LOG_REASON_FILTER.BLOCKED_BY_THREATS.QUERY,
+                        }}
                     />
 
                     <StatRow
@@ -82,6 +88,7 @@ export const GeneralStatistics = (props: Props) => {
                         tooltip={intl.getMessage('adult_websites_blocked_tooltip')}
                         linkTo={RoutePath.QueryLog}
                         query={{
+                            status: QUERY_LOG_STATUS_FILTER.BLOCKED.QUERY,
                             reason: QUERY_LOG_REASON_FILTER.BLOCKED_BY_PARENTAL_CONTROL.QUERY,
                         }}
                     />
@@ -94,7 +101,10 @@ export const GeneralStatistics = (props: Props) => {
                         rowTheme="safeSearchUsed"
                         tooltip={intl.getMessage('safe_search_used_tooltip')}
                         linkTo={RoutePath.QueryLog}
-                        query={{ reason: QUERY_LOG_REASON_FILTER.SAFE_SEARCH.QUERY }}
+                        query={{
+                            status: QUERY_LOG_STATUS_FILTER.REWRITTEN.QUERY,
+                            reason: QUERY_LOG_REASON_FILTER.SAFE_SEARCH.QUERY,
+                        }}
                     />
 
                     <div class={s.rowDivider} />

@@ -290,7 +290,7 @@ export const TlsSetupWizard = (props: Props) => {
                             ? intl.getMessage('tls_setup_enable_anyway')
                             : intl.getMessage('enable')}
                     </Button>
-                    <Button variant="secondary" onClick={props.onClose}>
+                    <Button variant="secondary" onClick={props.onClose} onCard>
                         {intl.getMessage('cancel')}
                     </Button>
                 </div>
@@ -308,7 +308,7 @@ export const TlsSetupWizard = (props: Props) => {
                         ? intl.getMessage('tls_setup_add_anyway')
                         : intl.getMessage('add')}
                 </Button>
-                <Button variant="secondary" onClick={props.onClose}>
+                <Button variant="secondary" onClick={props.onClose} onCard>
                     {intl.getMessage('cancel')}
                 </Button>
             </div>

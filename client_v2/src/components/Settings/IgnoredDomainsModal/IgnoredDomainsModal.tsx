@@ -91,6 +91,7 @@ export const IgnoredDomainsModal = (props: Props) => {
                 disabled={props.processing}
                 commentPrefixes={COMMENT_LINE_TOKENS}
                 highlightComments
+                onCard
             />
         </ConfigDialog>
     );

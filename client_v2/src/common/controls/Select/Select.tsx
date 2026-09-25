@@ -49,6 +49,8 @@ export const Select = <
             { 'solid-select--menu-big': props.menuSize === 'big' },
             { 'solid-select--menu-right': props.menuPosition === 'right' },
             { 'solid-select--borderless': props.borderless },
+            { 'solid-select--on-card': props.onCard },
+            { 'solid-select--menu-on-card': props.menuOnCard },
             { 'solid-select--adaptive-height': props.adaptiveHeight },
             { 'solid-select--height-extra-small': props.height === 'extra-small' },
             { 'solid-select--height-small': props.height === 'small' },

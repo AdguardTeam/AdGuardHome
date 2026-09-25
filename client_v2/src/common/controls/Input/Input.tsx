@@ -18,6 +18,7 @@ type Props = Omit<JSX.InputHTMLAttributes<HTMLInputElement>, 'size' | 'onChange'
     suffixIcon?: JSX.Element;
     borderless?: boolean;
     invalid?: boolean;
+    onCard?: boolean;
     maxLength?: number;
     error?: boolean;
     errorMessage?: string;
@@ -119,6 +120,7 @@ export const Input = (props: Props) => {
                         [s.prefix]: props.prefixIcon,
                         [s.suffix]: hasActions(),
                         [s.invalid]: props.invalid,
+                        [s.onCard]: props.onCard,
                         [s.focused]: focused(),
                         [s.disabled]: props.disabled,
                         [s.error]: props.error || !!computedErrorMessage(),

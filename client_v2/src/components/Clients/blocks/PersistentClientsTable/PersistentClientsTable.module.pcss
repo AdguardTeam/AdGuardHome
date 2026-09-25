@@ -44,8 +44,9 @@
     font-size: 14px;
     line-height: 1.5;
     color: var(--default-main-text);
-    word-break: break-all;
-    overflow-wrap: break-word;
+    white-space: normal;
+    word-break: normal;
+    overflow-wrap: anywhere;
     min-width: 0;
 }
 
@@ -79,14 +80,15 @@
 
 .copyBtnTopRight {
     position: absolute;
-    top: 8px;
-    right: 8px;
+    top: 12px;
+    right: 12px;
 }
 
 .servicesIcons {
     display: flex;
     align-items: center;
     gap: 2px;
+    min-width: 0;
 }
 
 .servicesIconsList {

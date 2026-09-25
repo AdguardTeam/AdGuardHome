@@ -45,7 +45,10 @@ export const StatCards = (props: Props) => {
                 percentValue={blockedPercent()}
                 cardTheme={CARDS_THEME.ADS}
                 linkTo={RoutePath.QueryLog}
-                query={{ status: QUERY_LOG_STATUS_FILTER.BLOCKED.QUERY }}
+                query={{
+                    status: QUERY_LOG_STATUS_FILTER.BLOCKED.QUERY,
+                    reason: QUERY_LOG_REASON_FILTER.BLOCKED_BY_FILTER.QUERY,
+                }}
             />
             <StatCard
                 value={props.numReplacedSafebrowsing}
@@ -56,7 +59,10 @@ export const StatCards = (props: Props) => {
                 percentValue={threatsPercent()}
                 cardTheme={CARDS_THEME.THREATS}
                 linkTo={RoutePath.QueryLog}
-                query={{ reason: QUERY_LOG_REASON_FILTER.BLOCKED_BY_THREATS.QUERY }}
+                query={{
+                    status: QUERY_LOG_STATUS_FILTER.BLOCKED.QUERY,
+                    reason: QUERY_LOG_REASON_FILTER.BLOCKED_BY_THREATS.QUERY,
+                }}
             />
             <StatCard
                 value={props.numReplacedParental}
@@ -67,7 +73,10 @@ export const StatCards = (props: Props) => {
                 percentValue={parentalPercent()}
                 cardTheme={CARDS_THEME.ADULT}
                 linkTo={RoutePath.QueryLog}
-                query={{ reason: QUERY_LOG_REASON_FILTER.BLOCKED_BY_PARENTAL_CONTROL.QUERY }}
+                query={{
+                    status: QUERY_LOG_STATUS_FILTER.BLOCKED.QUERY,
+                    reason: QUERY_LOG_REASON_FILTER.BLOCKED_BY_PARENTAL_CONTROL.QUERY,
+                }}
             />
         </div>
     );

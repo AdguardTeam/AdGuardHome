@@ -1,4 +1,5 @@
 import { type JSX } from 'solid-js';
+import cn from 'clsx';
 import { Logo } from 'panel/common/ui/Sidebar';
 import intl, { type LocalesType } from 'panel/common/intl';
 import { LanguageDropdown } from 'panel/common/ui/LanguageDropdown/LanguageDropdown';
@@ -16,6 +17,12 @@ type Props = {
     center?: JSX.Element;
     useLocalLanguage?: boolean;
     hideLanguageDropdown?: boolean;
+    /**
+     * `auth` renders the compact header used by the login and
+     * forgot-password entry points: a single 48px row on mobile that grows to
+     * the regular 80px bar from the tablet breakpoint up.
+     */
+    variant?: 'default' | 'auth';
 };
 
 export const PublicHeader = (props: Props) => {
@@ -38,7 +45,7 @@ export const PublicHeader = (props: Props) => {
     const currentLanguage = () => dashboardState.language || intl.getUILanguage();
 
     return (
-        <div class={styles.header}>
+        <div class={cn(styles.header, { [styles.auth]: props.variant === 'auth' })}>
             <div class={styles.headerContent}>
                 <div class={styles.logoWrap}>
                     <Logo id="header" />

@@ -61,21 +61,11 @@
     min-height: 40px;
     gap: 0 24px;
     padding: 16px 24px 24px;
-    transition: background-color var(--t2);
     border-bottom: 1px solid var(--default-item-divider);
-
-    &:hover,
-    &:focus {
-        background-color: var(--hovered-page-background);
-    }
 
     @media (min-width: 768px) {
         border-radius: 8px;
         padding: 8px 16px;
-        border: none;
-    }
-
-    &:last-child {
         border: none;
     }
 
@@ -112,6 +102,14 @@
 
 .tableRows {
     height: 100%;
+
+    /* A divider separates two rows, so the last row must not have one.  A
+       tooltip trigger wraps its row and is followed by its overlay, so the
+       row is never the list's last child. */
+    & > *:has(> .tableRow):not(:has(~ * > .tableRow)) > .tableRow,
+    & > .tableRow:last-child {
+        border-bottom: none;
+    }
 }
 
 .domainIcon {
@@ -134,12 +132,6 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-
-    &:hover,
-    &:focus {
-        color: inherit;
-        text-decoration: underline;
-    }
 }
 
 .queryCount {
@@ -153,12 +145,6 @@
 .queryCountLink {
     color: inherit;
     text-decoration: none;
-
-    &:hover,
-    &:focus {
-        color: inherit;
-        text-decoration: underline;
-    }
 }
 
 .dropdownWrapper {
@@ -210,5 +196,31 @@
         height: 8px;
         border-radius: 50%;
         background-color: var(--default-gray-icons);
+    }
+}
+
+.tableRowLink {
+    cursor: pointer;
+    color: inherit;
+    text-decoration: none;
+    transition: background-color var(--t2);
+
+    @media (hover: hover) {
+        &:hover,
+        &:focus {
+            background-color: var(--hovered-page-background);
+        }
+    }
+
+    &:hover,
+    &:focus,
+    &:active {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--product-primary-90);
+        outline-offset: -2px;
     }
 }

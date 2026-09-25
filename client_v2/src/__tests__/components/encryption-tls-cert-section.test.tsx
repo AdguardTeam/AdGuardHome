@@ -5,7 +5,7 @@ import userEvent from '@testing-library/user-event';
 // Deep proxy: `theme` is written as theme.form.action, theme.dialog.body, etc.
 // CSS modules resolve to empty objects under `css: false`, so either mock the
 // exact class names or return the proxy itself for every property.
-const { themeMock, encryptionState, mocks } = vi.hoisted(() => {
+const { themeMock, encryptionState, mocks, dashboardState } = vi.hoisted(() => {
     const proxy: any = new Proxy(
         {},
         {
@@ -43,6 +43,8 @@ const { themeMock, encryptionState, mocks } = vi.hoisted(() => {
             resetValidationStatus: vi.fn(),
             applyTlsOptimistically: vi.fn(),
         },
+        // Mutable so a test can drive the Web UI port the removal dialog names.
+        dashboardState: { httpPort: 8080 } as { httpPort: number | undefined },
     };
 });
 
@@ -55,6 +57,13 @@ vi.mock('panel/stores/encryption', () => ({
     ...mocks,
 }));
 
+// The removal dialog names the HTTP address the session is redirected to: the
+// current host at the Web UI port.  A non-default port keeps the assertion
+// from passing on a hard-coded standard port.
+vi.mock('panel/stores/dashboard', () => ({
+    dashboardState,
+}));
+
 // The section renders localized copy; serve it from the base locale so the
 // assertions can name the key instead of re-stating the text.
 vi.mock('panel/common/intl', async () =>
@@ -63,6 +72,7 @@ vi.mock('panel/common/intl', async () =>
 
 import { TlsCertSection } from 'panel/components/Encryption/blocks/TlsCertSection';
 import { copy, copyInDom } from 'panel/__tests__/helpers/copy';
+import { STANDARD_WEB_PORT } from 'panel/helpers/constants';
 
 const baseState = {
     enabled: true,
@@ -93,6 +103,7 @@ const algorithmLine = () => screen.queryByText(/Encryption algorithm/);
 
 beforeEach(() => {
     vi.clearAllMocks();
+    dashboardState.httpPort = 8080;
 });
 
 describe('TlsCertSection — encryption algorithm', () => {
@@ -231,6 +242,40 @@ describe('TlsCertSection — remove certificate', () => {
 
         expect(screen.getByText(copyInDom('remove_tls_certificate'))).toBeInTheDocument();
         expect(mocks.setTlsConfig).not.toHaveBeenCalled();
+    });
+
+    it('names the HTTP address the redirect lands on', async () => {
+        const user = userEvent.setup();
+        renderSection();
+
+        await openConfirm(user);
+
+        expect(
+            screen.getByText(
+                copyInDom('remove_tls_certificate_desc', {
+                    host: window.location.hostname,
+                    port: 8080,
+                }),
+            ),
+        ).toBeInTheDocument();
+    });
+
+    it('falls back to the standard port when the status has not reported one', async () => {
+        dashboardState.httpPort = 0;
+        const user = userEvent.setup();
+        renderSection();
+
+        await openConfirm(user);
+
+        // Without the fallback the copy would read "http://host:0".
+        expect(
+            screen.getByText(
+                copyInDom('remove_tls_certificate_desc', {
+                    host: window.location.hostname,
+                    port: STANDARD_WEB_PORT,
+                }),
+            ),
+        ).toBeInTheDocument();
     });
 
     it('turns encryption off and resets the TLS data', async () => {

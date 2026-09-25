@@ -133,6 +133,24 @@ const DEFAULT_CLIENTS_RESPONSE: ClientsResponse = {
     supported_tags: ['work', 'home', 'guest'],
 };
 
+const DEFAULT_ALL_SERVICES = [{ id: 'youtube', name: 'YouTube' }];
+
+/**
+ * A catalogue large enough to exercise the "+N" overflow chip, and the ids a
+ * client blocks when every one of them has to collapse into that chip.
+ *
+ * The icons are plain inline SVGs — the real API returns them base64-encoded,
+ * but `decodeSvg` falls back to the raw markup, which keeps the fixtures
+ * readable and still renders at the real 24px size.
+ */
+const MANY_SERVICES = Array.from({ length: 12 }, (_, index) => ({
+    id: `service-${index}`,
+    name: `Service ${index}`,
+    icon_svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect width="24" height="24" rx="4" fill="hsl(${index * 30} 70% 55%)"/><text x="12" y="17" font-size="13" text-anchor="middle" fill="#fff">${index}</text></svg>`,
+}));
+
+const MANY_SERVICE_IDS = MANY_SERVICES.map((service) => service.id);
+
 // ---- Helpers ----
 
 type ClientsMocksResult = {
@@ -143,7 +161,13 @@ type ClientsMocksResult = {
 
 async function setupClientsMocks(
     page: Page,
-    { clientsResponse = DEFAULT_CLIENTS_RESPONSE }: { clientsResponse?: ClientsResponse } = {},
+    {
+        clientsResponse = DEFAULT_CLIENTS_RESPONSE,
+        allServices = DEFAULT_ALL_SERVICES,
+    }: {
+        clientsResponse?: ClientsResponse;
+        allServices?: { id: string; name: string }[];
+    } = {},
 ): Promise<ClientsMocksResult> {
     const addClientPayloads: AddClientPayload[] = [];
     const updateClientPayloads: UpdateClientPayload[] = [];
@@ -223,7 +247,7 @@ async function setupClientsMocks(
             status: 200,
             contentType: 'application/json',
             body: JSON.stringify({
-                blocked_services: [{ id: 'youtube', name: 'YouTube' }],
+                blocked_services: allServices,
                 groups: [],
             }),
         });
@@ -259,12 +283,13 @@ test.describe('Clients', () => {
         await expect(page.getByRole('button', { name: 'Persistent', exact: true })).toBeVisible();
         await expect(page.getByRole('button', { name: 'Runtime', exact: true })).toBeVisible();
 
-        // Persistent clients are shown by default
-        await expect(page.getByText('Office Desktop')).toBeVisible({
+        // Persistent clients are shown by default.  The name cell renders the
+        // value twice (trigger + tooltip content), so match the first one.
+        await expect(page.getByText('Office Desktop').first()).toBeVisible({
             timeout: 10_000,
         });
         await expect(page.getByText('192.168.0.100')).toBeVisible();
-        await expect(page.getByText('Living Room TV')).toBeVisible();
+        await expect(page.getByText('Living Room TV').first()).toBeVisible();
 
         // Runtime client data is NOT visible until the Runtime tab is active
         await expect(page.getByText('192.168.0.200')).not.toBeVisible();
@@ -288,8 +313,8 @@ test.describe('Clients', () => {
 
         // Switch back to Persistent — URL should update
         await page.getByRole('button', { name: 'Persistent', exact: true }).click();
-        await expect(page).toHaveURL(/#clients(\?tab=persistent)?$/);
-        await expect(page.getByText('Office Desktop')).toBeVisible();
+        await expect(page).toHaveURL(/#\/?clients(\?tab=persistent)?$/);
+        await expect(page.getByText('Office Desktop').first()).toBeVisible();
     });
 
     test('adds a new persistent client', async ({ page }) => {
@@ -299,7 +324,7 @@ test.describe('Clients', () => {
 
         // Click "Add Client" in the page header
         await page.getByTestId('clients-add-button').click();
-        await expect(page).toHaveURL(/#clients\/add$/);
+        await expect(page).toHaveURL(/#\/?clients\/add$/);
         await expect(page.getByTestId('client-form')).toBeVisible();
 
         // Fill in name and identifier
@@ -308,7 +333,7 @@ test.describe('Clients', () => {
 
         // Save
         await page.getByTestId('client-form-save').click();
-        await expect(page).toHaveURL(/#clients$/);
+        await expect(page).toHaveURL(/#\/?clients$/);
 
         // Verify API payload
         await expect.poll(() => addClientPayloads.length).toBe(1);
@@ -324,7 +349,7 @@ test.describe('Clients', () => {
         // Click the edit button for "Office Desktop" (second row)
         await page.getByTestId('clients-edit-button').nth(1).click();
 
-        await expect(page).toHaveURL(/#clients\/edit\/Office%20Desktop$/);
+        await expect(page).toHaveURL(/#\/?clients\/edit\/Office%20Desktop$/);
         await expect(page.getByTestId('client-form')).toBeVisible();
 
         // Verify pre-filled data
@@ -335,7 +360,7 @@ test.describe('Clients', () => {
         await page.getByTestId('client-form-name').fill('Office Desktop Updated');
         await page.getByTestId('client-form-save').click();
 
-        await expect(page).toHaveURL(/#clients$/);
+        await expect(page).toHaveURL(/#\/?clients$/);
 
         // Verify update payload
         await expect.poll(() => updateClientPayloads.length).toBe(1);
@@ -352,10 +377,10 @@ test.describe('Clients', () => {
         await page.getByTestId('clients-delete-button').first().click();
 
         // ConfirmDialog should appear
-        await expect(page.getByText(/Are you sure you want to delete client/)).toBeVisible();
+        await expect(page.getByText(/will be removed from Persistent clients/)).toBeVisible();
 
-        // Click confirm "Remove"
-        await page.getByRole('button', { name: 'Remove' }).click();
+        // Click confirm "Yes, remove"
+        await page.getByRole('button', { name: 'Yes, remove' }).click();
 
         // Verify DELETE API call
         await expect.poll(() => deleteClientPayloads.length).toBe(1);
@@ -381,5 +406,70 @@ test.describe('Clients', () => {
 
         // No API call
         expect(addClientPayloads).toHaveLength(0);
+    });
+
+    test('keeps blocked-service icons inside the cell on narrow screens', async ({ page }) => {
+        // The `blocked_services` column is the narrowest one in the table
+        // (minmax(120px, 1fr), 96px of content box), so this viewport is the
+        // worst case for the icon strip.
+        await page.setViewportSize({ width: 900, height: 900 });
+
+        await setupClientsMocks(page, {
+            clientsResponse: {
+                ...DEFAULT_CLIENTS_RESPONSE,
+                clients: [
+                    {
+                        ...MOCK_CLIENT_2,
+                        name: 'Heavy Blocker',
+                        blocked_services: MANY_SERVICE_IDS,
+                        use_global_blocked_services: false,
+                    },
+                ],
+            },
+            allServices: MANY_SERVICES,
+        });
+        await login(page);
+        await page.goto('/#clients');
+
+        await expect(page.getByTestId('service-icons')).toBeVisible({ timeout: 10_000 });
+
+        const strips = await page.evaluate(() => {
+            const elements = Array.from(
+                document.querySelectorAll('[data-testid="service-icons"]'),
+            ) as HTMLElement[];
+
+            return elements.map((strip) => {
+                const list = strip.firstElementChild as HTMLElement;
+                const listRect = list.getBoundingClientRect();
+                const icons = Array.from(list.querySelectorAll('[data-testid="service-icon"]')).map(
+                    (icon) => icon.getBoundingClientRect().right,
+                );
+                const badge = strip.querySelector('[data-testid="services-count"]');
+
+                return {
+                    iconRights: icons,
+                    iconCount: icons.length,
+                    listRight: listRect.right,
+                    badgeCount: badge ? Number(badge.textContent?.trim()) : 0,
+                };
+            });
+        });
+
+        expect(strips.length).toBeGreaterThan(0);
+
+        for (const strip of strips) {
+            // Every icon is fully inside the (overflow-hidden) icon list, i.e.
+            // nothing is clipped mid-glyph.
+            for (const right of strip.iconRights) {
+                expect(right).toBeLessThanOrEqual(strip.listRight + 0.5);
+            }
+
+            // Two icons are rendered inline — three of them need 102px inside a
+            // 96px content box, which is what used to clip the last icon.
+            expect(strip.iconCount).toBe(2);
+
+            // The strip accounts for every blocked service: visible + hidden.
+            expect(strip.iconCount + strip.badgeCount).toBe(MANY_SERVICE_IDS.length);
+        }
     });
 });

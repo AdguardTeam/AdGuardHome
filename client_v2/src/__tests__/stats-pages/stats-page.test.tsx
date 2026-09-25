@@ -3,10 +3,12 @@ import { HashRouter, Route } from '@solidjs/router';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { StatsPage } from 'panel/components/Stats/StatsPage';
+import { DEFAULT_PAGE_SIZE } from 'panel/common/ui/Table/Table';
 import type { TableColumn } from 'panel/common/ui/Table';
 import { LocalStorageHelper } from 'panel/helpers/localStorageHelper';
 import type { IOption } from 'panel/lib/helpers/utils';
 import { copy, copyInDom } from 'panel/__tests__/helpers/copy';
+import { mockMatchMedia } from 'panel/__tests__/helpers/matchMedia';
 
 type Row = { name: string; count: number };
 
@@ -32,23 +34,6 @@ const mobileSortOptions: IOption<string>[] = [
     { value: 'count:desc', label: 'Count desc' },
     { value: 'count:asc', label: 'Count asc' },
 ];
-
-const mockMatchMedia = (matches: boolean) => {
-    Object.defineProperty(window, 'matchMedia', {
-        writable: true,
-        value: (query: string) =>
-            ({
-                matches,
-                media: query,
-                onchange: null,
-                addListener: () => {},
-                removeListener: () => {},
-                addEventListener: () => {},
-                removeEventListener: () => {},
-                dispatchEvent: () => false,
-            }) as MediaQueryList,
-    });
-};
 
 const renderPage = (overrides: Partial<Parameters<typeof StatsPage<Row>>[0]> = {}) =>
     render(() => (
@@ -142,6 +127,14 @@ describe('StatsPage', () => {
         expect(onRefresh).toHaveBeenCalledTimes(1);
     });
 
+    it('labels the refresh control with aria-label instead of a native title', () => {
+        const { container } = renderPage();
+
+        const refresh = screen.getByRole('button', { name: copyInDom('refresh_btn') });
+        expect(refresh).not.toHaveAttribute('title');
+        expect(container.querySelectorAll('[title]').length).toBe(0);
+    });
+
     it('shows the empty state text when nothing matches', () => {
         renderPage();
         fireEvent.input(screen.getByTestId('stats-search-input'), {
@@ -232,5 +225,57 @@ describe('StatsPage', () => {
         });
         expect(screen.queryByTestId('stats-empty-state')).not.toBeInTheDocument();
         expect(screen.queryByTestId('stats-mobile-list')).not.toBeInTheDocument();
+    });
+
+    it('renders every row as a link when rowLink is provided', () => {
+        const { container } = renderPage({
+            rowLink: (row) => ({ to: 'QueryLog', query: { search: `"${row.name}"` } }),
+        });
+
+        const rows = Array.from(container.querySelectorAll('[class*="tableRow"]'));
+        expect(rows.length).toBe(3);
+        rows.forEach((row) => {
+            expect(row.tagName).toBe('A');
+            expect(row.getAttribute('href')).toContain('/logs');
+        });
+        expect(container.querySelectorAll('a a').length).toBe(0);
+    });
+
+    it('keeps rows as plain containers when rowLink is not provided', () => {
+        const { container } = renderPage();
+
+        const rows = Array.from(container.querySelectorAll('[class*="tableRow"]'));
+        rows.forEach((row) => expect(row.tagName).toBe('DIV'));
+    });
+});
+
+describe('StatsPage — the pagination footer', () => {
+    // The rows-per-page select lives in the footer, so the footer is only
+    // worth showing once the list needs more than one page.
+    const makeRows = (count: number): Row[] =>
+        Array.from({ length: count }, (_, index) => ({
+            name: `domain-${index}.org`,
+            count: index,
+        }));
+
+    it('hides the rows-per-page select when the list fits one page (desktop)', () => {
+        mockMatchMedia(true);
+        renderPage({ rows: makeRows(DEFAULT_PAGE_SIZE) });
+
+        expect(screen.queryByTestId('pagination-page-size-select')).toBeNull();
+    });
+
+    it('hides the rows-per-page select when the list fits one page (mobile)', () => {
+        mockMatchMedia(false);
+        renderPage({ rows: makeRows(DEFAULT_PAGE_SIZE) });
+
+        expect(screen.queryByTestId('pagination-page-size-select')).toBeNull();
+    });
+
+    it('shows the rows-per-page select once the list needs a second page', () => {
+        mockMatchMedia(true);
+        renderPage({ rows: makeRows(DEFAULT_PAGE_SIZE + 1) });
+
+        expect(screen.getByTestId('pagination-page-size-select')).toBeInTheDocument();
     });
 });

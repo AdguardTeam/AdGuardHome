@@ -3,13 +3,12 @@ import { Show } from 'solid-js';
 import intl from 'panel/common/intl';
 import { Icon, type IconType } from 'panel/common/ui/Icon';
 import theme from 'panel/lib/theme';
-import { Tooltip } from 'panel/common/ui/Tooltip';
-import { QueriesTooltip } from 'panel/common/ui/QueriesTooltip';
 import { Link } from 'panel/common/ui/Link';
 import { type QueryParams, type RoutePathKey } from 'panel/components/Routes/Paths';
 import cn from 'clsx';
 import { formatCompactNumber } from 'panel/helpers/helpers';
 
+import { RowTooltip } from '../RowTooltip';
 import s from './StatRow.module.pcss';
 
 export type StatRowProps = {
@@ -52,20 +51,22 @@ export const StatRow = (props: StatRowProps) => {
         </div>
     );
 
-    return (
-        <div class={cn(s.statRow, s[props.rowTheme])}>
+    const rowClass = () => cn(s.statRow, s[props.rowTheme], props.linkTo && s.statRowLink);
+
+    const rowContent = () => (
+        <>
             <div class={s.statRowDropdown}>
-                <Tooltip
-                    position="bottomLeft"
-                    overlayClass={s.queryTooltipOverlay}
-                    content={<div class={cn(theme.text.t3, s.statTooltip)}>{props.tooltip}</div>}
-                    class={theme.common.noShrink}
+                <div
+                    class={cn(
+                        theme.text.t3,
+                        theme.text.condenced,
+                        theme.common.noShrink,
+                        s.statRowLeft,
+                    )}
                 >
-                    <div class={cn(theme.text.t3, theme.text.condenced, s.statRowLeft)}>
-                        <Icon icon={props.icon} class={s.tableRowIcon} />
-                        {props.label}
-                    </div>
-                </Tooltip>
+                    <Icon icon={props.icon} class={s.tableRowIcon} />
+                    {props.label}
+                </div>
             </div>
 
             <div class={s.statRowValue}>
@@ -78,25 +79,10 @@ export const StatRow = (props: StatRowProps) => {
                     }
                 >
                     <div class={s.dropdownWrapper}>
-                        <QueriesTooltip count={props.value as number}>
-                            <div class={cn(theme.text.t3, theme.text.condenced, s.queryCount)}>
-                                <Show when={props.linkTo} fallback={queriesValue()}>
-                                    <Link
-                                        to={props.linkTo}
-                                        query={props.query}
-                                        class={cn(
-                                            theme.text.t3,
-                                            theme.text.condenced,
-                                            s.queryCount,
-                                            s.queryCountLink,
-                                        )}
-                                    >
-                                        {queriesValue()}
-                                    </Link>
-                                </Show>
-                                {queriesPercent()}
-                            </div>
-                        </QueriesTooltip>
+                        <div class={cn(theme.text.t3, theme.text.condenced, s.queryCount)}>
+                            <span class={s.queryCountValue}>{queriesValue()}</span>
+                            {queriesPercent()}
+                        </div>
                     </div>
                 </Show>
 
@@ -118,6 +104,24 @@ export const StatRow = (props: StatRowProps) => {
                     />
                 </div>
             </Show>
-        </div>
+        </>
+    );
+
+    // The description is plain text, so its overlay must not swallow the
+    // pointer: it overlaps the row below and would otherwise keep that row from
+    // receiving its own hover.
+    return (
+        <RowTooltip
+            content={<div class={cn(theme.text.t3, s.statTooltip)}>{props.tooltip}</div>}
+            overlayClass={s.queryTooltipOverlay}
+        >
+            <Show when={props.linkTo} fallback={<div class={rowClass()}>{rowContent()}</div>}>
+                {(to) => (
+                    <Link to={to()} query={props.query} class={rowClass()}>
+                        {rowContent()}
+                    </Link>
+                )}
+            </Show>
+        </RowTooltip>
     );
 };

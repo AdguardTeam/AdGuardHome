@@ -30,11 +30,16 @@ export const getStoredStatsPeriod = (): number => {
 };
 
 /** Maximum stats interval from the server config; falls back to DAY if the value is unexpectedly small. */
-const getClampedMaxInterval = (maxInterval: number): number =>
+export const getClampedMaxInterval = (maxInterval: number): number =>
     maxInterval >= HOUR ? maxInterval : DAY;
+
+/** Clamps any stats period by the maximum interval available in the stats config. */
+export const clampStatsPeriod = (period: number, maxInterval: number): number =>
+    Math.min(period, getClampedMaxInterval(maxInterval));
+
 /** Saved period clamped by the maximum interval available in the stats config. */
 export const getEffectiveStatsPeriod = (maxInterval: number): number =>
-    Math.min(getStoredStatsPeriod(), getClampedMaxInterval(maxInterval));
+    clampStatsPeriod(getStoredStatsPeriod(), maxInterval);
 
 /** Stats period from URL search params; null when absent or invalid. */
 export const getStatsPeriodFromUrl = (params: { period?: string }): number | null => {
@@ -49,7 +54,7 @@ export const getStatsPeriodFromUrl = (params: { period?: string }): number | nul
 export const resolveStatsPeriod = (params: { period?: string }, maxInterval: number): number => {
     const urlPeriod = getStatsPeriodFromUrl(params);
     if (urlPeriod !== null) {
-        return Math.min(urlPeriod, getClampedMaxInterval(maxInterval));
+        return clampStatsPeriod(urlPeriod, maxInterval);
     }
     return getEffectiveStatsPeriod(maxInterval);
 };

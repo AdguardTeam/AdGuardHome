@@ -62,6 +62,7 @@ export const DisallowedClientsDialog = (props: Props) => {
                     label={intl.getMessage('dns_disallowed_clients_label')}
                     size="medium"
                     errorMessage={field.error()}
+                    onCard
                 />
             </div>
         </ConfigDialog>

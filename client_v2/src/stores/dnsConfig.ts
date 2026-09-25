@@ -101,43 +101,69 @@ export const clearDnsCache = async () => {
 };
 
 /**
- * Toggles `use_private_ptr_resolvers`.
- * Called from the Private Reverse page's header switch.
- * NOT called from the main DNS settings page.
+ * Saves a switch's new value unless another save is already in flight, since
+ * the two would race for the shared `processingSetConfig` flag.  The switch
+ * itself stays enabled: a click during a save is dropped rather than dimming
+ * every row on the page.
+ */
+const saveToggle = (values: () => Partial<DnsConfigState>) => {
+    if (state.processingSetConfig) {
+        return Promise.resolve();
+    }
+
+    return setDnsConfig(values(), { silent: true });
+};
+
+/**
+ * Toggles `use_private_ptr_resolvers`.  Called from the Private Reverse page's
+ * header switch and from the DNS settings page.
+ *
+ * Enabling sends the effective `local_ptr_upstreams` along with the flag.  The
+ * backend validates the request body in isolation, so a bare
+ * `{ use_private_ptr_resolvers: true }` makes it validate the OS-resolver
+ * fallback instead of the configured servers, failing with
+ * `private upstream servers: no upstream specified` whenever that fallback is
+ * unusable — for example, when the OS resolver is AdGuard Home itself.
+ *
+ * The servers are only added when they are known to be non-empty, so an
+ * unloaded state cannot clear the stored list.  Disabling needs no servers
+ * because it triggers no validation at all.
  */
 export const togglePrivatePtrResolvers = () => {
-    setDnsConfig({ use_private_ptr_resolvers: !state.use_private_ptr_resolvers }, { silent: true });
+    const enable = !state.use_private_ptr_resolvers;
+    const servers = state.local_ptr_upstreams;
+
+    return saveToggle(() =>
+        enable
+            ? {
+                  use_private_ptr_resolvers: true,
+                  ...(servers ? { local_ptr_upstreams: servers } : {}),
+              }
+            : { use_private_ptr_resolvers: false },
+    );
 };
 
 /** Toggles `resolve_clients`. Used by PrivateReverse page switch. */
-export const toggleResolveClients = () => {
-    setDnsConfig({ resolve_clients: !state.resolve_clients }, { silent: true });
-};
+export const toggleResolveClients = () =>
+    saveToggle(() => ({ resolve_clients: !state.resolve_clients }));
 
 /** Toggles `dnssec_enabled`. Used by ServerConfig Section 2, Row 7. */
-export const toggleDnssecEnabled = () => {
-    setDnsConfig({ dnssec_enabled: !state.dnssec_enabled }, { silent: true });
-};
+export const toggleDnssecEnabled = () =>
+    saveToggle(() => ({ dnssec_enabled: !state.dnssec_enabled }));
 
 /** Toggles `disable_ipv6` (inverted in UI). Used by ServerConfig Section 2, Row 8. */
-export const toggleDisableIPv6 = () => {
-    setDnsConfig({ disable_ipv6: !state.disable_ipv6 }, { silent: true });
-};
+export const toggleDisableIPv6 = () => saveToggle(() => ({ disable_ipv6: !state.disable_ipv6 }));
 
 /** Toggles `cache_enabled`. Used by Cache Section 3 header switch. */
-export const toggleCacheEnabled = () => {
-    setDnsConfig({ cache_enabled: !state.cache_enabled }, { silent: true });
-};
+export const toggleCacheEnabled = () => saveToggle(() => ({ cache_enabled: !state.cache_enabled }));
 
 /** Toggles `cache_optimistic`. Used by Cache Section 3, Row 4. */
-export const toggleOptimisticCaching = () => {
-    setDnsConfig({ cache_optimistic: !state.cache_optimistic }, { silent: true });
-};
+export const toggleOptimisticCaching = () =>
+    saveToggle(() => ({ cache_optimistic: !state.cache_optimistic }));
 
 /** Toggles `edns_cs_enabled`. Used by ServerConfig Section 2, Row 6 switch-link. */
-export const toggleEdnsCsEnabled = () => {
-    setDnsConfig({ edns_cs_enabled: !state.edns_cs_enabled }, { silent: true });
-};
+export const toggleEdnsCsEnabled = () =>
+    saveToggle(() => ({ edns_cs_enabled: !state.edns_cs_enabled }));
 
 /**
  * Splits a newline-delimited string into an array.

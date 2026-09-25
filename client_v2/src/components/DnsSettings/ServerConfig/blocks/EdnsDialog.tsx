@@ -78,19 +78,22 @@ export const EdnsDialog = (props: Props) => {
                     handleChange={(v: string) => setEdnsCsUseCustom(v === EDNS_MODES.custom)}
                     inModal
                 />
-                <Input
-                    id="edns_cs_custom_ip"
-                    label={intl.getMessage('dns_edns_custom_label')}
-                    placeholder={intl.getMessage('dns_edns_custom_placeholder')}
-                    value={ednsCsCustomIp.value()}
-                    onChange={(e: Event) =>
-                        ednsCsCustomIp.setValue((e.target as HTMLInputElement).value)
-                    }
-                    onBlur={() => ednsCsCustomIp.validate()}
-                    disabled={!ednsCsUseCustom()}
-                    errorMessage={ednsCsCustomIp.error()}
-                    size="large"
-                />
+                <div class={theme.form.input}>
+                    <Input
+                        id="edns_cs_custom_ip"
+                        label={intl.getMessage('dns_edns_custom_label')}
+                        placeholder={intl.getMessage('dns_edns_custom_placeholder')}
+                        value={ednsCsCustomIp.value()}
+                        onChange={(e: Event) =>
+                            ednsCsCustomIp.setValue((e.target as HTMLInputElement).value)
+                        }
+                        onBlur={() => ednsCsCustomIp.validate()}
+                        disabled={!ednsCsUseCustom()}
+                        errorMessage={ednsCsCustomIp.error()}
+                        size="large"
+                        onCard
+                    />
+                </div>
             </div>
         </ConfigDialog>
     );

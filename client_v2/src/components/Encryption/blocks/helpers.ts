@@ -80,6 +80,38 @@ export const getSubmitValues = (values: EncryptionFormValues): TlsSubmitValues =
     return config;
 };
 
+/**
+ * Current TLS settings from the store, as form values.
+ *
+ * `certificate_source` / `key_source` are derived from the field that holds
+ * the data, and `overrides` win — so callers can validate an edited draft
+ * against the saved certificate and key.
+ */
+export const getStoreFormValues = (
+    overrides?: Partial<EncryptionFormValues>,
+): EncryptionFormValues => ({
+    enabled: encryptionState.enabled,
+    serve_plain_dns: encryptionState.serve_plain_dns,
+    server_name: encryptionState.server_name,
+    force_https: encryptionState.force_https,
+    port_https: Number(encryptionState.port_https) || 0,
+    port_dns_over_tls: Number(encryptionState.port_dns_over_tls) || 0,
+    port_dns_over_quic: Number(encryptionState.port_dns_over_quic) || 0,
+    certificate_chain: encryptionState.certificate_chain,
+    private_key: encryptionState.private_key,
+    certificate_path: encryptionState.certificate_path,
+    private_key_path: encryptionState.private_key_path,
+    certificate_source: encryptionState.certificate_chain
+        ? ENCRYPTION_SOURCE.CONTENT
+        : ENCRYPTION_SOURCE.PATH,
+    key_source:
+        encryptionState.private_key || encryptionState.private_key_saved
+            ? ENCRYPTION_SOURCE.CONTENT
+            : ENCRYPTION_SOURCE.PATH,
+    private_key_saved: encryptionState.private_key_saved,
+    ...overrides,
+});
+
 /** Steps of the TLS setup wizard. */
 export type WizardStep = 1 | 2 | 3;
 

@@ -33,6 +33,19 @@
     overscroll-behavior: contain;
     padding-bottom: 16px;
     -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--default-item-divider) transparent;
+
+    &::-webkit-scrollbar {
+        -webkit-appearance: none;
+        width: 8px;
+        background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        border-radius: 16px;
+        background: var(--default-item-divider);
+    }
 
     @media (min-width: 1024px) and (min-height: 900px) {
         flex: 0 1 auto;
@@ -112,9 +125,12 @@
     gap: 16px;
     flex-shrink: 0;
     padding: 16px 32px 24px;
-    background: var(--default-page-background);
-    border-radius: 8px 8px 16px 16px;
-    box-shadow: 0 -8px 16px 0 rgba(0, 0, 0, 0.1);
+    background: var(--default-cards-background);
+    border-radius: 0 0 16px 16px;
+    box-shadow:
+        0 -4px 8px 3px transparent,
+        0 -1px 3px 0 transparent;
+    transition: box-shadow var(--t2);
     position: relative;
     z-index: 1;
 
@@ -131,16 +147,23 @@
 
 .actionButton {
     flex: 0 0 auto;
-    width: auto;
+    width: 100%;
     min-width: 200px;
     max-width: none;
+
+    @media (min-width: 1024px) {
+        width: auto;
+    }
 }
 
 .dialog :global(.dialog-header) {
     padding: 24px 56px 24px 32px;
-    box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.1);
-    background: var(--default-page-background);
-    border-radius: 16px 16px 8px 8px;
+    box-shadow:
+        0 4px 8px 3px transparent,
+        0 1px 3px 0 transparent;
+    transition: box-shadow var(--t2);
+    background: var(--default-cards-background);
+    border-radius: 16px 16px 0 0;
     flex-shrink: 0;
     position: relative;
     z-index: 1;
@@ -173,7 +196,6 @@
     }
 }
 
-/* The content card carries .dialog itself — compound selector, not descendant */
 .dialog:global([data-part='content']) {
     display: flex;
     flex-direction: column;
@@ -189,7 +211,6 @@
     }
 }
 
-/* The body is a descendant <div class="dialog-body"> */
 .dialog :global(.dialog-body) {
     display: flex;
     flex: 1 1 auto;
@@ -201,4 +222,17 @@
         flex: 0 1 auto;
         min-height: auto;
     }
+}
+
+.dialog:global([data-part='content']):has(.scrollArea[data-can-scroll-up='true'])
+    :global(.dialog-header) {
+    box-shadow:
+        0 4px 8px 3px rgba(0, 0, 0, 0.05),
+        0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+.dialog:global([data-part='content']):has(.scrollArea[data-can-scroll-down='true']) .actionFooter {
+    box-shadow:
+        0 -4px 8px 3px rgba(0, 0, 0, 0.05),
+        0 -1px 3px 0 rgba(0, 0, 0, 0.1);
 }

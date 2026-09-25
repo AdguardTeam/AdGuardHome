@@ -59,6 +59,7 @@ export const ConfirmDialog = (props: Props) => (
                         size="small"
                         onClick={props.onClose}
                         class={theme.dialog.button}
+                        onCard
                     >
                         {props.cancelText}
                     </Button>

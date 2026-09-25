@@ -167,6 +167,7 @@ export const StaticLeaseModal = (props: Props) => {
                             errorMessage={macError()}
                             disabled={props.isEdit || props.isMakeStatic}
                             size="large"
+                            onCard
                         />
                     </div>
 
@@ -183,6 +184,7 @@ export const StaticLeaseModal = (props: Props) => {
                             errorMessage={hostnameError()}
                             disabled={props.isMakeStatic}
                             size="large"
+                            onCard
                         />
                     </div>
 
@@ -196,6 +198,7 @@ export const StaticLeaseModal = (props: Props) => {
                             placeholder={intl.getMessage('form_enter_ip')}
                             errorMessage={ipError()}
                             size="large"
+                            onCard
                         />
                     </div>
                 </div>
@@ -215,6 +218,7 @@ export const StaticLeaseModal = (props: Props) => {
                         onClick={props.onClose}
                         disabled={isProcessing()}
                         class={theme.dialog.button}
+                        onCard
                     >
                         {intl.getMessage('cancel')}
                     </Button>

@@ -13,8 +13,10 @@
     border-radius: 8px;
     transition: background-color var(--t2);
 
-    &:hover:not(:has(input:disabled)) {
-        background-color: var(--page-background-additional);
+    @media (hover: hover) {
+        &:hover:not(:has(input:disabled)) {
+            background-color: var(--page-background-additional-hovered);
+        }
     }
 
     &.center {

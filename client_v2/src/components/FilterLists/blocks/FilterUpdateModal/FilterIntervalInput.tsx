@@ -69,6 +69,7 @@ export const FilterIntervalInput = (props: Props) => {
                 min={FILTER_INTERVAL_RANGE.MIN}
                 max={FILTER_INTERVAL_RANGE.MAX}
                 type="number"
+                onCard
             />
         </div>
     );

@@ -142,3 +142,97 @@ describe('DetailModal actions footer', () => {
         ).not.toBeInTheDocument();
     });
 });
+
+/**
+ * jsdom reports 0 for every scroll metric, so the scroll range of the modal's
+ * scroll area has to be injected.  The properties live on `Element.prototype`,
+ * so shadowing them on `HTMLElement.prototype` and deleting the shadow restores
+ * the originals.
+ */
+const installScrollMetrics = ({
+    scrollTop = 0,
+    scrollHeight = 0,
+    clientHeight = 0,
+}: { scrollTop?: number; scrollHeight?: number; clientHeight?: number } = {}) => {
+    const metrics = { scrollTop, scrollHeight, clientHeight };
+
+    Object.defineProperty(HTMLElement.prototype, 'scrollTop', {
+        configurable: true,
+        get: () => metrics.scrollTop,
+        set: (value: number) => {
+            metrics.scrollTop = value;
+        },
+    });
+    Object.defineProperty(HTMLElement.prototype, 'scrollHeight', {
+        configurable: true,
+        get: () => metrics.scrollHeight,
+    });
+    Object.defineProperty(HTMLElement.prototype, 'clientHeight', {
+        configurable: true,
+        get: () => metrics.clientHeight,
+    });
+};
+
+const restoreScrollMetrics = () => {
+    Reflect.deleteProperty(HTMLElement.prototype, 'scrollTop');
+    Reflect.deleteProperty(HTMLElement.prototype, 'scrollHeight');
+    Reflect.deleteProperty(HTMLElement.prototype, 'clientHeight');
+};
+
+describe('DetailModal scroll edges', () => {
+    beforeEach(() => {
+        vi.spyOn(intl, 'getMessage').mockImplementation((key) => key);
+    });
+
+    afterEach(() => {
+        restoreScrollMetrics();
+        vi.restoreAllMocks();
+    });
+
+    const renderModal = () => {
+        render(() => <DetailModal {...defaultProps} entry={makeEntry()} />);
+
+        return screen.getByTestId('query-log-detail-scroll-area');
+    };
+
+    it('flags both edges while the content overflows in both directions', () => {
+        installScrollMetrics({ scrollTop: 100, scrollHeight: 600, clientHeight: 200 });
+
+        const scrollArea = renderModal();
+
+        expect(scrollArea).toHaveAttribute('data-can-scroll-up', 'true');
+        expect(scrollArea).toHaveAttribute('data-can-scroll-down', 'true');
+    });
+
+    it('flags no edges when the content fits', () => {
+        installScrollMetrics({ scrollHeight: 200, clientHeight: 200 });
+
+        const scrollArea = renderModal();
+
+        expect(scrollArea).toHaveAttribute('data-can-scroll-up', 'false');
+        expect(scrollArea).toHaveAttribute('data-can-scroll-down', 'false');
+    });
+
+    it('drops the bottom edge once scrolled all the way down', () => {
+        installScrollMetrics({ scrollTop: 400, scrollHeight: 600, clientHeight: 200 });
+
+        const scrollArea = renderModal();
+
+        expect(scrollArea).toHaveAttribute('data-can-scroll-up', 'true');
+        expect(scrollArea).toHaveAttribute('data-can-scroll-down', 'false');
+    });
+
+    it('updates the edges when the scroll area is scrolled', () => {
+        installScrollMetrics({ scrollTop: 0, scrollHeight: 600, clientHeight: 200 });
+
+        const scrollArea = renderModal();
+        expect(scrollArea).toHaveAttribute('data-can-scroll-up', 'false');
+        expect(scrollArea).toHaveAttribute('data-can-scroll-down', 'true');
+
+        scrollArea.scrollTop = 400;
+        fireEvent.scroll(scrollArea);
+
+        expect(scrollArea).toHaveAttribute('data-can-scroll-up', 'true');
+        expect(scrollArea).toHaveAttribute('data-can-scroll-down', 'false');
+    });
+});

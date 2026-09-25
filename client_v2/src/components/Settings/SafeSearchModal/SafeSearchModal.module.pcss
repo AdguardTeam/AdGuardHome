@@ -12,9 +12,14 @@
     border-radius: 8px;
     transition: var(--t2) background-color;
 
-    &:hover,
+    @media (hover: hover) {
+        &:hover {
+            background-color: var(--page-background-additional-hovered);
+        }
+    }
+
     &:focus-within {
-        background-color: var(--page-background-additional);
+        background-color: var(--page-background-additional-hovered);
     }
 }
 
