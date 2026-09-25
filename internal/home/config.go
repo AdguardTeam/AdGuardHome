@@ -23,7 +23,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
-	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/dnsproxy/fastip"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
@@ -106,7 +105,9 @@ type configuration struct {
 	DNS      dnsConfig         `yaml:"dns"`
 	TLS      tlsConfigSettings `yaml:"tls"`
 	QueryLog queryLogConfig    `yaml:"querylog"`
-	Stats    statsConfig       `yaml:"statistics"`
+
+	// Stats is a block with statistics configuration settings.
+	Stats configmgr.StatsConfig `yaml:"statistics"`
 
 	// Filters reflects the filters from [filtering.Config].  It's cloned to the
 	// config used in the filtering module at the startup.  Afterwards it's
@@ -363,25 +364,6 @@ type queryLogConfig struct {
 	FileEnabled bool `yaml:"file_enabled"`
 }
 
-type statsConfig struct {
-	// DirPath is the custom directory for statistics.  If it's empty the
-	// default directory is used.  See [homeContext.getDataDir].
-	DirPath string `yaml:"dir_path"`
-
-	// Ignored is the list of host names, which should not be counted.
-	Ignored []string `yaml:"ignored"`
-
-	// Interval is the retention interval for statistics.
-	Interval timeutil.Duration `yaml:"interval"`
-
-	// Enabled defines if the statistics are enabled.
-	Enabled bool `yaml:"enabled"`
-
-	// IgnoredEnabled defines whether hosts from the ignored list should be
-	// ignored.
-	IgnoredEnabled bool `yaml:"ignored_enabled"`
-}
-
 // Default block host constants.
 const (
 	defaultSafeBrowsingBlockHost = "standard-block.dns.adguard.com"
@@ -467,10 +449,11 @@ var config = &configuration{
 		Ignored:        []string{},
 		IgnoredEnabled: false,
 	},
-	Stats: statsConfig{
-		Enabled:        true,
-		Interval:       timeutil.Duration(1 * timeutil.Day),
+	Stats: configmgr.StatsConfig{
+		DirPath:        "",
 		Ignored:        []string{},
+		Interval:       timeutil.Duration(1 * timeutil.Day),
+		Enabled:        true,
 		IgnoredEnabled: false,
 	},
 	// NOTE: Keep these parameters in sync with the one put into
@@ -817,12 +800,7 @@ func (c *configuration) write(
 	}
 
 	if globalContext.stats != nil {
-		statsConf := stats.Config{}
-		globalContext.stats.WriteDiskConfig(&statsConf)
-		config.Stats.Interval = timeutil.Duration(statsConf.Limit)
-		config.Stats.Enabled = statsConf.Enabled
-		config.Stats.Ignored = statsConf.Ignored.Values()
-		config.Stats.IgnoredEnabled = statsConf.Ignored.IsEnabled()
+		globalContext.stats.WriteDiskConfig(&config.Stats)
 	}
 
 	if globalContext.queryLog != nil {

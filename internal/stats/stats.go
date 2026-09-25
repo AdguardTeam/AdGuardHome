@@ -17,6 +17,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
+	"github.com/AdguardTeam/AdGuardHome/internal/configmgr"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/timeutil"
@@ -98,8 +99,9 @@ type Interface interface {
 	// clients with the most number of requests.
 	TopClientsIP(limit uint) []netip.Addr
 
-	// WriteDiskConfig puts the Interface's configuration to the dc.
-	WriteDiskConfig(dc *Config)
+	// WriteDiskConfig puts the Interface's configuration to the dc.  dc must
+	// not be nil.
+	WriteDiskConfig(dc *configmgr.StatsConfig)
 
 	// ShouldCount returns true if request for the host should be counted.
 	ShouldCount(host string, qType, qClass uint16, ids []string) bool
@@ -303,13 +305,14 @@ func (s *StatsCtx) Update(e *Entry) {
 }
 
 // WriteDiskConfig implements the [Interface] interface for *StatsCtx.
-func (s *StatsCtx) WriteDiskConfig(dc *Config) {
+func (s *StatsCtx) WriteDiskConfig(dc *configmgr.StatsConfig) {
 	s.confMu.RLock()
 	defer s.confMu.RUnlock()
 
-	dc.Ignored = s.ignored
-	dc.Limit = s.limit
 	dc.Enabled = s.enabled
+	dc.Ignored = s.ignored.Values()
+	dc.IgnoredEnabled = s.ignored.IsEnabled()
+	dc.Interval = timeutil.Duration(s.limit)
 }
 
 // TopClientsIP implements the [Interface] interface for *StatsCtx.
