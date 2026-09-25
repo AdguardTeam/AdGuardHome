@@ -69,6 +69,9 @@ const resetStores = () => {
 describe('Banners', () => {
     beforeEach(() => {
         resetStores();
+        // The Update buttons navigate; start every test from the root route so
+        // a previous navigation cannot hide the banner.
+        window.location.hash = '';
     });
 
     // ── Priority logic cases ──
@@ -208,6 +211,32 @@ describe('Banners', () => {
         // Should now show the expiring banner
         expect(screen.getByTestId('banner-tls-expiring')).toBeInTheDocument();
         expect(screen.queryByTestId('banner-tls-expired')).not.toBeInTheDocument();
+    });
+
+    // ── Update button deep-links into the TLS setup wizard ──
+
+    it('opens the TLS setup wizard from the expired banner', async () => {
+        const user = userEvent.setup();
+        mockEncryptionState.enabled = true;
+        mockEncryptionState.valid_cert = true;
+        mockEncryptionState.not_after = new Date(Date.now() - 86400000).toISOString(); // expired
+
+        renderBanners();
+        await user.click(screen.getByRole('button', { name: copyInDom('update_button') }));
+
+        expect(window.location.hash).toBe('#/encryption?tlsWizard=true');
+    });
+
+    it('opens the TLS setup wizard from the expiring banner', async () => {
+        const user = userEvent.setup();
+        mockEncryptionState.enabled = true;
+        mockEncryptionState.valid_cert = true;
+        mockEncryptionState.not_after = new Date(Date.now() + 15 * 86400000).toISOString(); // 15 days
+
+        renderBanners();
+        await user.click(screen.getByRole('button', { name: copyInDom('update_button') }));
+
+        expect(window.location.hash).toBe('#/encryption?tlsWizard=true');
     });
 
     // ── forceBanner (dev test override) ──

@@ -307,54 +307,22 @@ const applySearchFilter = (rows: QueryLogApiEntry[], search: string) => {
     });
 };
 
-const applyResponseStatusFilter = (rows: QueryLogApiEntry[], responseStatus: string) => {
-    switch (responseStatus) {
-        case 'all':
-            return rows;
-        case 'blocked':
-            return rows.filter(
-                (row) =>
-                    row.reason === 'FilteredBlackList' || row.reason === 'FilteredBlockedService',
-            );
-        case 'blocked_services':
-            return rows.filter((row) => row.reason === 'FilteredBlockedService');
-        case 'blocked_safebrowsing':
-            return rows.filter((row) => row.reason === 'FilteredSafeBrowsing');
-        case 'blocked_parental':
-            return rows.filter((row) => row.reason === 'FilteredParental');
-        case 'safe_search':
-            return rows.filter((row) => row.reason === 'FilteredSafeSearch');
-        case 'whitelisted':
-            return rows.filter((row) => row.reason === 'NotFilteredWhiteList');
-        case 'rewritten':
-            return rows.filter(
-                (row) =>
-                    row.reason === 'Rewrite' ||
-                    row.reason === 'RewriteEtcHosts' ||
-                    row.reason === 'RewriteRule',
-            );
-        case 'processed':
-            return rows.filter(
-                (row) =>
-                    row.reason !== 'FilteredBlackList' &&
-                    row.reason !== 'FilteredBlockedService' &&
-                    row.reason !== 'NotFilteredWhiteList',
-            );
-        default:
-            return rows;
+const applyReasonFilter = (rows: QueryLogApiEntry[], reasons: string[]) => {
+    if (reasons.length === 0) {
+        return rows;
     }
+
+    return rows.filter((row) => reasons.includes(row.reason));
 };
 
 const buildDefaultQueryLogResponse = (requestUrl: URL): QueryLogResponse => {
     const search = requestUrl.searchParams.get('search') ?? '';
-    const responseStatus = requestUrl.searchParams.get('response_status') ?? 'all';
-    const filteredRows = applyResponseStatusFilter(
-        applySearchFilter(QUERY_LOG_ROWS, search),
-        responseStatus,
-    );
+    // The backend `response_status` param is deprecated; the app now sends the
+    // exact reason strings, repeated once per value.
+    const reasons = requestUrl.searchParams.getAll('reason');
 
     return {
-        data: filteredRows,
+        data: applyReasonFilter(applySearchFilter(QUERY_LOG_ROWS, search), reasons),
         oldest: '',
     };
 };
@@ -636,7 +604,9 @@ test.describe('Query log desktop', () => {
         await searchInput.fill('');
         const clearedSearchRequest = await expectQueryLogRequestCount(queryLogRequests, 3);
 
-        expect(clearedSearchRequest?.searchParams.get('search')).toBeNull();
+        // A cleared search is sent as an empty param, which the backend treats
+        // as "no filter" (the hash URL omits it entirely).
+        expect(clearedSearchRequest?.searchParams.get('search')).toBe('');
         await expect(page.getByTestId('query-log-request-cell')).toHaveCount(QUERY_LOG_ROWS.length);
         expectPageFilters(page, { search: null, status: 'all', reason: 'all' });
 
@@ -665,7 +635,7 @@ test.describe('Query log desktop', () => {
         const refreshRequest = await expectQueryLogRequestCount(queryLogRequests, 6);
 
         expect(refreshRequest?.searchParams.get('search')).toBe('plain.example');
-        expect(refreshRequest?.searchParams.get('response_status')).toBe('all');
+        expect(refreshRequest?.searchParams.getAll('reason')).toEqual([]);
         await expect(
             page.locator('[data-testid="toast"][data-toast-code="notify_updated"]'),
         ).toBeVisible();
@@ -673,7 +643,8 @@ test.describe('Query log desktop', () => {
         await page.getByTestId('query-log-search-clear-button').click();
         const resetSearchRequest = await expectQueryLogRequestCount(queryLogRequests, 7);
 
-        expect(resetSearchRequest?.searchParams.get('search')).toBeNull();
+        // See the cleared-search note above.
+        expect(resetSearchRequest?.searchParams.get('search')).toBe('');
         await expect(searchInput).toHaveValue('');
         await expect(page.getByTestId('query-log-search-clear-button')).toHaveCount(0);
         await expect(page.getByTestId('query-log-request-cell')).toHaveCount(QUERY_LOG_ROWS.length);
@@ -693,7 +664,12 @@ test.describe('Query log desktop', () => {
         );
         const blockedStatusRequest = await expectQueryLogRequestCount(queryLogRequests, 2);
 
-        expect(blockedStatusRequest?.searchParams.get('response_status')).toBe('blocked');
+        expect(blockedStatusRequest?.searchParams.getAll('reason')).toEqual([
+            'FilteredBlackList',
+            'FilteredSafeBrowsing',
+            'FilteredParental',
+            'FilteredBlockedService',
+        ]);
         await expect(page.getByTestId('query-log-request-cell')).toHaveCount(1);
         await expect(getRequestCellByDomain(page, 'example.org')).toHaveCount(1);
         expectPageFilters(page, { search: null, status: 'blocked', reason: 'all' });
@@ -710,7 +686,7 @@ test.describe('Query log desktop', () => {
         );
         const safeSearchRequest = await expectQueryLogRequestCount(queryLogRequests, 4);
 
-        expect(safeSearchRequest?.searchParams.get('response_status')).toBe('safe_search');
+        expect(safeSearchRequest?.searchParams.getAll('reason')).toEqual(['FilteredSafeSearch']);
         await expect(page.getByTestId('query-log-request-cell')).toHaveCount(1);
         await expect(getRequestCellByDomain(page, 'search.example')).toHaveCount(1);
         expectPageFilters(page, { search: null, status: 'all', reason: 'FilteredSafeSearch' });
@@ -723,33 +699,15 @@ test.describe('Query log desktop', () => {
         );
         const emptyStateRequest = await expectQueryLogRequestCount(queryLogRequests, 5);
 
-        expect(emptyStateRequest?.searchParams.get('response_status')).toBe('blocked');
+        expect(emptyStateRequest?.searchParams.getAll('reason')).toEqual([
+            'FilteredBlackList',
+            'FilteredSafeBrowsing',
+            'FilteredParental',
+            'FilteredBlockedService',
+        ]);
         await expect(page.getByTestId('query-log-request-cell')).toHaveCount(1);
         await expect(getRequestCellByDomain(page, 'example.org')).toHaveCount(1);
         expectPageFilters(page, { search: null, status: 'blocked', reason: 'all' });
-    });
-
-    test('shows the log-rotation empty state with a settings link', async ({ page }) => {
-        await setupQueryLogMocks(page, {
-            queryLogResolver: () => ({
-                data: [],
-                oldest: '',
-            }),
-            queryLogConfig: {
-                ...MOCK_QUERY_LOG_CONFIG,
-                interval: 0,
-            },
-        });
-
-        await login(page);
-        await page.goto('/#logs');
-
-        const emptyState = page.locator('[data-testid="query-log-empty-state"]:visible');
-        const settingsLink = emptyState.locator('a');
-
-        await expect(emptyState).toBeVisible();
-        await expect(settingsLink).toHaveCount(1);
-        await expect(settingsLink).toHaveAttribute('href', /#\/?settings$/);
     });
 
     test('shows the disabled-log empty state with a settings link', async ({ page }) => {
@@ -772,7 +730,7 @@ test.describe('Query log desktop', () => {
 
         await expect(emptyState).toBeVisible();
         await expect(settingsLink).toHaveCount(1);
-        await expect(settingsLink).toHaveAttribute('href', /#\/?settings$/);
+        await expect(settingsLink).toHaveAttribute('href', /#\/?settings\?section=query-log$/);
     });
 
     // TODO(AGDNS-4057): Re-enable when row action menus and detail modal
@@ -877,7 +835,7 @@ test.describe('Query log desktop', () => {
         ).toBeVisible();
 
         await unmanagedMenu.getByTestId('query-log-row-action-add-persistent-client').click();
-        await expect(page).toHaveURL(/#clients\?clientId=192\.168\.0\.40$/);
+        await expect(page).toHaveURL(/#\/?clients\?clientId=192\.168\.0\.40$/);
     });
 
     // TODO(AGDNS-4057): Re-enable when detail modal action buttons

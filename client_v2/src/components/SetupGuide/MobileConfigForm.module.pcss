@@ -11,7 +11,12 @@
 }
 
 .configLink {
-    width: fit-content;
+    width: 100%;
+    max-width: 100%;
+
+    @media (min-width: 768px) {
+        width: auto;
+    }
 }
 
 .formLabel {

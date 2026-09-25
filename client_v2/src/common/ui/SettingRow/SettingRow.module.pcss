@@ -9,7 +9,12 @@
         border-radius: 8px;
     }
 
-    &:hover,
+    @media (hover: hover) {
+        &:hover:not(.switchDisabled) {
+            background-color: var(--page-background-additional);
+        }
+    }
+
     &:focus-visible {
         background-color: var(--page-background-additional);
     }
@@ -22,7 +27,6 @@
 .switchDisabled {
     cursor: default;
 
-    &:hover,
     &:focus {
         background-color: transparent;
     }
@@ -102,7 +106,7 @@
 
 .value {
     margin-top: 8px;
-    font-weight: var(--weight-semi-bold);
+    font-weight: var(--weight-medium);
     color: var(--default-description-text);
     display: -webkit-box;
     -webkit-line-clamp: 2;

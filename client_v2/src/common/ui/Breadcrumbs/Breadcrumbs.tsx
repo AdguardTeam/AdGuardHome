@@ -2,6 +2,7 @@ import { For } from 'solid-js';
 import cn from 'clsx';
 import { Icon } from 'panel/common/ui/Icon';
 import { Link } from 'panel/common/ui/Link';
+import { TruncatedText } from 'panel/common/ui/TruncatedText';
 import { type RoutePathKey } from 'panel/components/Routes/Paths';
 import theme from 'panel/lib/theme';
 
@@ -26,7 +27,6 @@ export const Breadcrumbs = (props: Props) => (
                 <div class={s.link}>
                     <Link
                         to={path}
-                        title={title}
                         class={cn(
                             theme.link.link,
                             theme.link.noDecoration,
@@ -41,8 +41,6 @@ export const Breadcrumbs = (props: Props) => (
                 </div>
             )}
         </For>
-        <div class={cn(theme.common.textOverflow, s.current)} title={props.currentTitle}>
-            {props.currentTitle}
-        </div>
+        <TruncatedText text={props.currentTitle} class={s.current} />
     </div>
 );

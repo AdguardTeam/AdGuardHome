@@ -29,9 +29,11 @@
         background-color: transparent;
     }
 
-    &:hover,
-    &:focus {
-        background-color: var(--page-background-additional);
+    @media (hover: hover) {
+        &:hover,
+        &:focus {
+            background-color: var(--page-background-additional);
+        }
     }
 
     &:last-child {
@@ -140,6 +142,12 @@
     align-items: center;
     gap: 8px;
     flex-shrink: 0;
+
+    .requestIcon {
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+    }
 }
 
 .iconTooltipTrigger {
@@ -152,12 +160,6 @@
 
 .iconTooltipMenu {
     padding: 16px;
-}
-
-.requestIcon {
-    width: 16px;
-    height: 16px;
-    flex-shrink: 0;
 }
 
 .domain {
@@ -282,13 +284,13 @@
     gap: 4px;
     min-width: 0;
     color: var(--default-description-text);
-}
 
-.clientLocationIcon {
-    width: 16px;
-    height: 16px;
-    color: var(--default-description-text);
-    flex-shrink: 0;
+    .clientLocationIcon {
+        width: 16px;
+        height: 16px;
+        color: var(--default-description-text);
+        flex-shrink: 0;
+    }
 }
 
 .clientLocationText {

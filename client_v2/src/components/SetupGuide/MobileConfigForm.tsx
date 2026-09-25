@@ -85,7 +85,7 @@ export const MobileConfigForm = (props: Props) => {
     const getDownloadLink = () => {
         if (!host() || !isValid()) {
             return (
-                <Button class={s.configLink} variant="primary" disabled>
+                <Button class={s.configLink} variant="primary" size="medium" disabled compact>
                     {intl.getMessage('download_mobileconfig')}
                 </Button>
             );
@@ -106,7 +106,13 @@ export const MobileConfigForm = (props: Props) => {
         };
 
         return (
-            <Button variant="primary" onClick={handleDownload}>
+            <Button
+                class={s.configLink}
+                variant="primary"
+                size="medium"
+                onClick={handleDownload}
+                compact
+            >
                 {intl.getMessage('download_mobileconfig')}
             </Button>
         );

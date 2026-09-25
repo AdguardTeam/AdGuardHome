@@ -851,6 +851,7 @@ export const Icons = () => (
             id="location"
             fill="none"
             viewBox="0 0 24 24"
+            stroke="currentColor"
             stroke-linecap="round"
             stroke-linejoin="round"
             stroke-width="1.5"
@@ -971,7 +972,7 @@ export const Icons = () => (
             />
         </symbol>
 
-        <symbol id="check_tiny" viewBox="0 0 24 24" fill="none">
+        <symbol id="check_tiny" viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path
                 d="M5 11.7665L10.5878 17L19 8"
                 stroke-width="1.5"

@@ -1,3 +1,4 @@
+import { createSignal } from 'solid-js';
 import { describe, it, expect, afterEach } from 'vitest';
 import { render, screen, cleanup } from '@solidjs/testing-library';
 
@@ -27,15 +28,18 @@ const restoreOverflow = () => {
 
 let observerCallback: ResizeObserverCallback | undefined;
 let observerDisconnected = false;
+let observerCount = 0;
 
 /** Replaces the global no-op `ResizeObserver` from `src/__tests__/setup.ts`. */
 const installResizeObserver = () => {
     observerCallback = undefined;
     observerDisconnected = false;
+    observerCount = 0;
 
     class FakeResizeObserver {
         constructor(callback: ResizeObserverCallback) {
             observerCallback = callback;
+            observerCount += 1;
         }
 
         observe() {}
@@ -54,6 +58,22 @@ const Harness = () => {
     let labelRef: HTMLSpanElement | undefined;
 
     const isTruncated = useIsTruncated(() => labelRef);
+
+    return (
+        <span ref={labelRef} data-testid="label">
+            {isTruncated() ? 'truncated' : 'fits'}
+        </span>
+    );
+};
+
+/** The same probe, with the gating options driven by signals from the test. */
+const GatedHarness = (props: { enabled: boolean; text: string }) => {
+    let labelRef: HTMLSpanElement | undefined;
+
+    const isTruncated = useIsTruncated(() => labelRef, {
+        enabled: () => props.enabled,
+        source: () => props.text,
+    });
 
     return (
         <span ref={labelRef} data-testid="label">
@@ -121,5 +141,59 @@ describe('useIsTruncated', () => {
         cleanup();
 
         expect(observerDisconnected).toBe(true);
+    });
+
+    it('neither measures nor observes while disabled', () => {
+        stubOverflow(200, 100);
+        installResizeObserver();
+
+        render(() => <GatedHarness enabled={false} text="a" />);
+
+        expect(observerCount).toBe(0);
+        expect(screen.getByTestId('label')).toHaveTextContent('fits');
+    });
+
+    it('measures and observes once enabled', () => {
+        stubOverflow(200, 100);
+        installResizeObserver();
+
+        const [enabled, setEnabled] = createSignal(false);
+        render(() => <GatedHarness enabled={enabled()} text="a" />);
+        expect(screen.getByTestId('label')).toHaveTextContent('fits');
+
+        setEnabled(true);
+
+        expect(observerCount).toBe(1);
+        expect(screen.getByTestId('label')).toHaveTextContent('truncated');
+    });
+
+    it('stops observing and resets once disabled again', () => {
+        stubOverflow(200, 100);
+        installResizeObserver();
+
+        const [enabled, setEnabled] = createSignal(true);
+        render(() => <GatedHarness enabled={enabled()} text="a" />);
+        expect(observerDisconnected).toBe(false);
+
+        setEnabled(false);
+
+        expect(observerDisconnected).toBe(true);
+        expect(screen.getByTestId('label')).toHaveTextContent('fits');
+    });
+
+    it('re-measures when the source changes without a box resize', () => {
+        stubOverflow(100, 100);
+        installResizeObserver();
+
+        const [text, setText] = createSignal('a');
+        render(() => <GatedHarness enabled text={text()} />);
+        expect(screen.getByTestId('label')).toHaveTextContent('fits');
+
+        stubOverflow(200, 100);
+        setText('a much longer name');
+
+        expect(screen.getByTestId('label')).toHaveTextContent('truncated');
+        // The observer follows the element, not the text, so it must survive.
+        expect(observerCount).toBe(1);
     });
 });

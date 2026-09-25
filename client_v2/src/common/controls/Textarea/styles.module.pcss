@@ -31,8 +31,10 @@
         border-color: var(--pressed-link);
     }
 
-    &:hover {
-        background-color: var(--default-input-background);
+    @media (hover: hover) {
+        &:hover {
+            background-color: var(--default-input-background);
+        }
     }
 
     &::placeholder {
@@ -66,6 +68,16 @@
     /* Field that shares its space with a dropzone below it. */
     &.compact {
         min-height: 116px;
+    }
+
+    &.onCard:not(:disabled) {
+        background-color: var(--page-background-additional);
+
+        @media (hover: hover) {
+            &:hover {
+                background-color: var(--page-background-additional-hovered);
+            }
+        }
     }
 }
 
@@ -114,8 +126,10 @@
         border-color: var(--pressed-link);
     }
 
-    &:hover {
-        background-color: var(--default-input-background);
+    @media (hover: hover) {
+        &:hover {
+            background-color: var(--default-input-background);
+        }
     }
 
     &.error {
@@ -132,6 +146,16 @@
 
     &.compact {
         min-height: 116px;
+    }
+
+    &.onCard:not(:has(:disabled)) {
+        background-color: var(--page-background-additional);
+
+        @media (hover: hover) {
+            &:hover {
+                background-color: var(--page-background-additional-hovered);
+            }
+        }
     }
 }
 

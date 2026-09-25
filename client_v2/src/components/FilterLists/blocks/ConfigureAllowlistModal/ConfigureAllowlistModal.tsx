@@ -112,6 +112,7 @@ export const ConfigureAllowlistModal = (props: Props) => {
                                     placeholder={intl.getMessage('allowlist_placeholder_example')}
                                     value={name()}
                                     onChange={(e) => setName((e.target as HTMLInputElement).value)}
+                                    onCard
                                 />
                             </div>
 
@@ -125,6 +126,7 @@ export const ConfigureAllowlistModal = (props: Props) => {
                                     onChange={(e) => setUrl((e.target as HTMLInputElement).value)}
                                     onBlur={validateAndSetErrors}
                                     errorMessage={urlError()}
+                                    onCard
                                 />
                             </div>
                         </div>
@@ -152,6 +154,7 @@ export const ConfigureAllowlistModal = (props: Props) => {
                             size="small"
                             onClick={handleCancel}
                             class={theme.dialog.button}
+                            onCard
                         >
                             {intl.getMessage('cancel')}
                         </Button>

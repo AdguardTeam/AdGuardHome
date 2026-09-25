@@ -4,12 +4,30 @@ import userEvent from '@testing-library/user-event';
 
 const mocks = vi.hoisted(() => ({
     setTlsConfig: vi.fn(),
+    validateTlsConfig: vi.fn(),
     tlsStatus: vi.fn(),
     tlsConfigure: vi.fn(),
     tlsValidate: vi.fn(),
     addErrorToast: vi.fn(),
     addSuccessToast: vi.fn(),
     redirectToCurrentProtocol: vi.fn(),
+    // The modal reads the TLS config from the store on open and validates the
+    // edited name against the saved certificate; keep the store out of these
+    // tests and drive both through this object.
+    encryptionState: {
+        server_name: 'dns.example.com',
+        port_https: 443,
+        port_dns_over_tls: 853,
+        port_dns_over_quic: 853,
+        port_dnscrypt: 0,
+        certificate_chain: 'CERTIFICATE',
+        certificate_path: '',
+        private_key: 'PRIVATE KEY',
+        private_key_path: '',
+        private_key_saved: false,
+        processingConfig: false,
+        processingValidate: false,
+    },
 }));
 
 vi.mock('panel/api/generated', () => ({
@@ -30,19 +48,12 @@ vi.mock('panel/stores/dashboard', () => ({
 vi.mock('panel/helpers/helpers', () => ({
     redirectToCurrentProtocol: mocks.redirectToCurrentProtocol,
 }));
-// The modal reads the TLS config from the store on open; keep the store out of
-// these tests and drive the values through the saved configuration.
+// The store mock keeps `validateTlsConfig` local: these tests pin what the
+// modal sends and how it renders the verdict, not the store's HTTP plumbing.
 vi.mock('panel/stores/encryption', () => ({
-    encryptionState: {
-        server_name: 'dns.example.com',
-        port_https: 443,
-        port_dns_over_tls: 853,
-        port_dns_over_quic: 853,
-        port_dnscrypt: 0,
-        processingConfig: false,
-        processingValidate: false,
-    },
+    encryptionState: mocks.encryptionState,
     setTlsConfig: mocks.setTlsConfig,
+    validateTlsConfig: mocks.validateTlsConfig,
 }));
 
 import { ServerSettingsModal } from 'panel/components/Encryption/blocks/ServerSettingsModal';
@@ -63,9 +74,19 @@ const renderModal = () => {
 const saveButton = () => screen.getByTestId('config-dialog-save');
 const conflictMessage = copy('tls_setup_error_port_in_use');
 
+/** What the backend reports when the certificate does not cover the name. */
+const MISMATCH =
+    'validating certificate pair: certificate does not verify: x509: certificate is valid for dns.example.com, not localhost';
+
+/** A certificate verdict with no complaint — the saved pair is fine. */
+const CERT_OK = { valid_cert: true, valid_key: true, valid_pair: true };
+
 beforeEach(() => {
     vi.clearAllMocks();
     mocks.setTlsConfig.mockResolvedValue({ ok: true });
+    mocks.validateTlsConfig.mockResolvedValue(CERT_OK);
+    mocks.encryptionState.certificate_chain = 'CERTIFICATE';
+    mocks.encryptionState.private_key = 'PRIVATE KEY';
 });
 
 describe('ServerSettingsModal — opening', () => {
@@ -170,11 +191,14 @@ describe('ServerSettingsModal — saving', () => {
 
         await user.click(saveButton());
 
-        expect(mocks.setTlsConfig).toHaveBeenCalledWith({
-            server_name: 'dns.example.com',
-            port_https: 443,
-            port_dns_over_tls: 853,
-            port_dns_over_quic: 853,
+        // The save runs after the certificate check, so it settles a tick later.
+        await waitFor(() => {
+            expect(mocks.setTlsConfig).toHaveBeenCalledWith({
+                server_name: 'dns.example.com',
+                port_https: 443,
+                port_dns_over_tls: 853,
+                port_dns_over_quic: 853,
+            });
         });
         expect(onClose).toHaveBeenCalled();
     });
@@ -188,11 +212,13 @@ describe('ServerSettingsModal — saving', () => {
         await user.type(https, '8443');
         await user.click(saveButton());
 
-        expect(mocks.setTlsConfig).toHaveBeenCalledWith({
-            server_name: 'dns.example.com',
-            port_https: 8443,
-            port_dns_over_tls: 853,
-            port_dns_over_quic: 853,
+        await waitFor(() => {
+            expect(mocks.setTlsConfig).toHaveBeenCalledWith({
+                server_name: 'dns.example.com',
+                port_https: 8443,
+                port_dns_over_tls: 853,
+                port_dns_over_quic: 853,
+            });
         });
         expect(onClose).toHaveBeenCalled();
         expect(mocks.addErrorToast).not.toHaveBeenCalled();
@@ -214,12 +240,132 @@ describe('ServerSettingsModal — saving', () => {
         expect(screen.getAllByDisplayValue('853')).toHaveLength(2);
 
         await user.click(saveButton());
-        expect(mocks.setTlsConfig).toHaveBeenCalledWith({
-            server_name: '',
-            port_https: 443,
-            port_dns_over_tls: 853,
-            port_dns_over_quic: 853,
+        await waitFor(() => {
+            expect(mocks.setTlsConfig).toHaveBeenCalledWith({
+                server_name: '',
+                port_https: 443,
+                port_dns_over_tls: 853,
+                port_dns_over_quic: 853,
+            });
         });
+    });
+});
+
+describe('ServerSettingsModal — the certificate warning', () => {
+    const warningText = () =>
+        copyInDom('tls_setup_warning_server_name_mismatch', { hostname: 'localhost' });
+
+    it('warns under the server name when the saved certificate does not cover it', async () => {
+        const user = userEvent.setup();
+        mocks.validateTlsConfig.mockResolvedValue({ ...CERT_OK, warning_validation: MISMATCH });
+        renderModal();
+
+        const serverName = screen.getByDisplayValue('dns.example.com');
+        await user.clear(serverName);
+        await user.type(serverName, 'localhost');
+        await user.tab();
+
+        await waitFor(() => {
+            expect(screen.getByTestId('server-settings-server-name-warning')).toHaveTextContent(
+                warningText(),
+            );
+        });
+
+        // The check asks about the edited name against the saved certificate
+        // and key — the wizard's config-step payload.
+        expect(mocks.validateTlsConfig).toHaveBeenCalledWith(
+            expect.objectContaining({
+                enabled: true,
+                server_name: 'localhost',
+                certificate_chain: 'CERTIFICATE',
+                private_key: 'PRIVATE KEY',
+            }),
+            { persist: false },
+        );
+    });
+
+    it('reveals a newly discovered warning on the first Save click and saves on the next', async () => {
+        const user = userEvent.setup();
+        const onClose = renderModal();
+
+        // Clicking Save blurs the field first, so the blur check is still in
+        // flight when the click handler runs — the real-world timing.  The
+        // click's own check is the one that decides.
+        let releaseBlurCheck: (value: unknown) => void = () => {};
+        mocks.validateTlsConfig.mockImplementationOnce(
+            () =>
+                new Promise((resolve) => {
+                    releaseBlurCheck = resolve;
+                }),
+        );
+        mocks.validateTlsConfig.mockResolvedValue({ ...CERT_OK, warning_validation: MISMATCH });
+
+        const serverName = screen.getByDisplayValue('dns.example.com');
+        await user.clear(serverName);
+        await user.type(serverName, 'localhost');
+
+        await user.click(saveButton());
+
+        await waitFor(() => {
+            expect(screen.getByTestId('server-settings-server-name-warning')).toHaveTextContent(
+                warningText(),
+            );
+        });
+        expect(mocks.setTlsConfig).not.toHaveBeenCalled();
+        expect(onClose).not.toHaveBeenCalled();
+        expect(saveButton()).toHaveTextContent(copyInDom('save_anyway'));
+
+        releaseBlurCheck(CERT_OK);
+
+        // The warning is on screen now, so this click is the confirmation.
+        await user.click(saveButton());
+
+        await waitFor(() => {
+            expect(mocks.setTlsConfig).toHaveBeenCalledWith({
+                server_name: 'localhost',
+                port_https: 443,
+                port_dns_over_tls: 853,
+                port_dns_over_quic: 853,
+            });
+        });
+        expect(onClose).toHaveBeenCalled();
+    });
+
+    it('hides the warning as soon as the name is edited', async () => {
+        const user = userEvent.setup();
+        mocks.validateTlsConfig.mockResolvedValue({ ...CERT_OK, warning_validation: MISMATCH });
+        renderModal();
+
+        const serverName = screen.getByDisplayValue('dns.example.com');
+        await user.clear(serverName);
+        await user.type(serverName, 'localhost');
+        await user.tab();
+
+        await waitFor(() => {
+            expect(screen.getByTestId('server-settings-server-name-warning')).toBeInTheDocument();
+        });
+
+        // The warning names the checked host, so it must not outlive the
+        // value it was reported for.
+        await user.type(serverName, 'x');
+
+        expect(screen.queryByTestId('server-settings-server-name-warning')).toBeNull();
+        expect(saveButton()).toHaveTextContent(copyInDom('save'));
+    });
+
+    it('does not ask the backend when no certificate is configured', async () => {
+        const user = userEvent.setup();
+        mocks.encryptionState.certificate_chain = '';
+        renderModal();
+
+        const serverName = screen.getByDisplayValue('dns.example.com');
+        await user.clear(serverName);
+        await user.type(serverName, 'localhost');
+        await user.tab();
+
+        // Without a certificate there is nothing to verify the name against.
+        expect(mocks.validateTlsConfig).not.toHaveBeenCalled();
+        expect(screen.queryByTestId('server-settings-server-name-warning')).toBeNull();
     });
 });
 
@@ -271,6 +417,25 @@ describe('ServerSettingsFields — the settings shared with the wizard', () => {
 
         expect(onFieldChange).toHaveBeenCalledWith('port_https', '8443');
         expect(onFieldBlur).toHaveBeenCalledWith('port_https');
+    });
+
+    it('reports the live server name on every keystroke when the host asks for it', async () => {
+        const user = userEvent.setup();
+        const onFieldInput = vi.fn();
+        render(() => (
+            <ServerSettingsFields
+                values={values}
+                onFieldChange={vi.fn()}
+                onFieldBlur={vi.fn()}
+                onFieldInput={onFieldInput}
+            />
+        ));
+
+        // `onFieldChange` only fires on `change` (blur), so the host needs the
+        // input stream to keep a warning about the typed name up to date.
+        await user.type(screen.getByDisplayValue('example.com'), 'x');
+
+        expect(onFieldInput).toHaveBeenLastCalledWith('server_name', 'example.comx');
     });
 
     it('fills the default ports in the tooltips from the shared constants', () => {

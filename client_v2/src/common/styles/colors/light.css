@@ -8,6 +8,7 @@
     --page-background-additional-pressed: var(--gray-30);
     /* Cards background */
     --default-cards-background: var(--gray-0);
+    --default-cards-box-shadow: 8px 8px 24px 0 rgba(0, 0, 0, 0.1);
     /* Popup background */
     --default-popup-background: var(--gray-0);
     /* Footer background */
