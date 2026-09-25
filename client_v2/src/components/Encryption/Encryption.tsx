@@ -5,7 +5,6 @@ import { SettingRow } from 'panel/common/ui/SettingRow';
 import { Dropdown } from 'panel/common/ui/Dropdown';
 import { Icon } from 'panel/common/ui/Icon';
 import { PageLoader } from 'panel/common/ui/Loader';
-import { PlusButton } from 'panel/common/ui/PlusButton';
 import intl from 'panel/common/intl';
 import theme from 'panel/lib/theme';
 import { getTlsStatus, encryptionState, setTlsConfig } from 'panel/stores/encryption';
@@ -18,7 +17,7 @@ import { ServerSettingsRow } from './blocks/ServerSettingsRow';
 import { RedirectToggle } from './blocks/RedirectToggle';
 import { ResetDnsModal } from './blocks/ResetDnsModal';
 import { ServerSettingsModal } from './blocks/ServerSettingsModal';
-import { AddTlsCertModal } from './blocks/AddTlsCert';
+import { TlsSetupWizard } from './blocks/SetupWizard';
 import s from './styles.module.pcss';
 
 export const Encryption = () => {
@@ -85,12 +84,9 @@ export const Encryption = () => {
         // Native input already shows ON from the click; sync effect
         // confirms on success or reverts on failure.
         if (hasCert && hasKey && hasServerName) {
-            setTlsConfig(
-                {
-                    enabled: true,
-                },
-                { silent: true },
-            );
+            setTlsConfig({
+                enabled: true,
+            });
             return;
         }
 
@@ -111,10 +107,8 @@ export const Encryption = () => {
     };
 
     /**
-     * Centralised debounced validation trigger.
-     * Watches the encryption state and fires debounced backend validation
+     * Centralised debounced validation trigger: fires a backend validation
      * whenever encryption is enabled and cert/key values are present.
-     * Replaces the createEffect that was previously inside Form.tsx.
      */
     createEffect(() => {
         if (!tlsStatusLoaded()) return;
@@ -214,11 +208,17 @@ export const Encryption = () => {
                     />
 
                     <Show when={!certConfigured()}>
-                        <div class={s.plusButton}>
-                            <PlusButton onClick={() => setAddCertOpen(true)} weight="semi">
-                                {intl.getMessage('add_tls_certificate')}
-                            </PlusButton>
-                        </div>
+                        <SettingRow
+                            id="tls_cert_setup"
+                            variant="link"
+                            prefixIcon={<Icon icon="plus" color="green" />}
+                            titleLink
+                            hideArrow
+                            title={intl.getMessage('tls_setup_row_title')}
+                            description={intl.getMessage('tls_setup_row_description')}
+                            onClick={() => setAddCertOpen(true)}
+                            rowClass={s.setupRow}
+                        />
                     </Show>
 
                     <Show when={certConfigured()}>
@@ -238,7 +238,7 @@ export const Encryption = () => {
                 onClose={() => setServerSettingsOpen(false)}
             />
 
-            <AddTlsCertModal open={addCertOpen()} onClose={() => setAddCertOpen(false)} />
+            <TlsSetupWizard open={addCertOpen()} onClose={() => setAddCertOpen(false)} />
         </div>
     );
 };

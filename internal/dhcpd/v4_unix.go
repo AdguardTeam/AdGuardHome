@@ -1331,12 +1331,19 @@ func (s *v4Server) Start(ctx context.Context) (err error) {
 		return err
 	}
 
+	opts := []server4.ServerOpt{
+		server4.WithConn(c),
+	}
+
+	if log.GetLevel() != log.OFF {
+		opts = append(opts, server4.WithDebugLogger())
+	}
+
 	s.srv, err = server4.NewServer(
 		iface.Name,
 		nil,
 		s.packetHandler,
-		server4.WithConn(c),
-		server4.WithDebugLogger(),
+		opts...,
 	)
 	if err != nil {
 		return err

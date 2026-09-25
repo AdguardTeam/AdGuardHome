@@ -1,0 +1,312 @@
+'env':
+  'BASE_IMAGE': |-
+    ${{ vars.BASE_IMAGE || 'adguard/go-builder:1.26.8--1' }}
+  'BUILD_DIR': |-
+    build
+  'CHANNEL': |-
+    ${{ case(
+      startsWith(github.ref_name, 'release-v'), 'release',
+      startsWith(github.ref_name, 'beta-v'), 'beta',
+      'edge'
+    ) }}
+  'CLIENT_DIR': |-
+    ${{ case(
+      startsWith(github.ref_name, 'release-v'), 'client',
+      startsWith(github.ref_name, 'beta-v'), 'client',
+      'client_v2'
+    ) }}
+  'DIST_DIR': |-
+    dist
+  'FRONTEND_BASE_IMAGE': |-
+    ${{ vars.FRONTEND_BASE_IMAGE || 'adguard/home-js-builder:4.0' }}
+'jobs':
+  'Build':
+    'if': |
+      ${{ github.repository_owner == 'AdGuardSoftwareLimited' }}
+    'outputs':
+      'app_version': ${{ steps.set_envs.outputs.app_version }}
+      'source_date_epoch': ${{ steps.set_envs.outputs.source_date_epoch }}
+    'permissions':
+      'contents': 'read'
+      'id-token': 'write'
+    'runs-on': 'team-go'
+    'steps':
+      - 'uses': 'actions/checkout@v6'
+        'with':
+          # Fetch all branches and tags to make the version script work.
+          'fetch-depth': 0
+          # Set to false to avoid GITHUB_TOKEN leaking.
+          #
+          # See https://github.com/actions/checkout/issues/485#issuecomment-934422611.
+          'persist-credentials': false
+      - 'name': "Set environment variables"
+        'id': 'set_envs'
+        'run': |
+          source_date_epoch=$(git log -1 --format=%ct)
+          readonly source_date_epoch
+
+          echo "SOURCE_DATE_EPOCH=${source_date_epoch}" >> "$GITHUB_ENV"
+
+          # Also expose the source date epoch as a job output, since the env
+          # context is not available to the other jobs.
+          echo "source_date_epoch=${source_date_epoch}" >> "$GITHUB_OUTPUT"
+
+          app_version="$(env CHANNEL=${{ env.CHANNEL }} sh ./scripts/make/version.sh)"
+          readonly app_version
+
+          echo "APP_VERSION=${app_version}" >> "$GITHUB_ENV"
+
+          # Also expose the version as a job output, since the env context is
+          # not available to the other jobs.
+          echo "app_version=${app_version}" >> "$GITHUB_OUTPUT"
+      - 'name': 'Build frontend'
+        'uses': 'AdGuardSoftwareLimited/actions/actions/docker-build@master'
+        'with':
+          'dockerfile': 'docker/frontend.Dockerfile'
+          'context': '.'
+          'target': 'builder-exporter'
+          'output': '.'
+          'build-args': |
+            BASE_IMAGE=${{ env.FRONTEND_BASE_IMAGE }}
+            CACHE_BUSTER=${{ inputs.cache_buster || '0' }}
+            CLIENT_DIR=${{ env.CLIENT_DIR }}
+            DIST_DIR=${{ env.BUILD_DIR }}
+      - 'name': 'Retrieve GPG signing secrets'
+        'uses': 'hashicorp/vault-action@v4'
+        'with':
+          'url': ${{ vars.VAULT_URL }}
+          'method': 'jwt'
+          'role': 'gpg-signing'
+          'secrets': |
+            secret/data/ci-secrets/gpg-signing gpgPassword | GPG_PASSWORD ;
+            secret/data/ci-secrets/gpg-signing gpgSecretKey | GPG_SECRET_KEY ;
+      - 'name': 'Build unix release artifacts'
+        'uses': 'AdGuardSoftwareLimited/actions/actions/docker-build@master'
+        'with':
+          'dockerfile': 'docker/ci.Dockerfile'
+          'context': '.'
+          'target': 'builder-exporter'
+          'output': '.'
+          'build-args': |
+            BASE_IMAGE=${{ env.BASE_IMAGE }}
+            BRANCH=${{ github.ref_name }}
+            CACHE_BUSTER=${{ inputs.cache_buster || '0' }}
+            CHANNEL=${{ env.CHANNEL }}
+            DIST_DIR=${{ env.DIST_DIR }}
+            OS=darwin freebsd linux openbsd
+            REVISION=${{ github.sha }}
+            SIGN=1
+            SOURCE_DATE_EPOCH=${{ env.SOURCE_DATE_EPOCH }}
+            VERSION=${{ env.APP_VERSION }}
+          'secrets': |
+            GPG_KEY_PASSPHRASE=${{ env.GPG_PASSWORD }}
+            GPG_SECRET_KEY=${{ env.GPG_SECRET_KEY }}
+      - 'uses': 'actions/upload-artifact@v7'
+        'with':
+          'name': 'adguardhome-unix'
+          'path': |
+            ${{ env.DIST_DIR }}
+      - 'name': 'Build windows release artifacts'
+        'uses': 'AdGuardSoftwareLimited/actions/actions/docker-build@master'
+        'with':
+          'dockerfile': 'docker/ci.Dockerfile'
+          'context': '.'
+          'target': 'builder-exporter'
+          'output': '.'
+          'build-args': |
+            BASE_IMAGE=${{ env.BASE_IMAGE }}
+            BRANCH=${{ github.ref_name }}
+            CACHE_BUSTER=${{ inputs.cache_buster || '0' }}
+            CHANNEL=${{ env.CHANNEL }}
+            DIST_DIR=${{ env.DIST_DIR }}
+            OS=windows
+            REVISION=${{ github.sha }}
+            SIGN=0
+            SOURCE_DATE_EPOCH=${{ env.SOURCE_DATE_EPOCH }}
+            VERSION=${{ env.APP_VERSION }}
+      - 'uses': 'actions/upload-artifact@v7'
+        'with':
+          'name': 'adguardhome-win'
+          'path': |
+            ${{ env.DIST_DIR }}/AdGuardHome_windows_*
+  'SignWindowsBuilds':
+    'name': 'Sign Windows executables'
+    'needs': 'Build'
+    'if': |
+      ${{ github.repository_owner == 'AdGuardSoftwareLimited' }}
+    'permissions':
+      'contents': 'read'
+      'id-token': 'write'
+    'uses': 'AdGuardSoftwareLimited/actions/.github/workflows/sign-by-signer.yml@master'
+    'with':
+      'team': 'go'
+      'artifact-name': 'adguardhome-win'
+      'files': '**/**/AdGuardHome.exe'
+      'signed-artifact-name': 'adguardhome-win'
+  'PackArtifacts':
+    'name': 'Pack Artifacts'
+    'needs':
+      - 'Build'
+      - 'SignWindowsBuilds'
+    'if': |
+      ${{ github.repository_owner == 'AdGuardSoftwareLimited' }}
+    'permissions':
+      'contents': 'read'
+    'runs-on': 'team-go'
+    'steps':
+      - 'uses': 'actions/checkout@v6'
+        'with':
+          # Set to false to avoid GITHUB_TOKEN leaking.
+          #
+          # See https://github.com/actions/checkout/issues/485#issuecomment-934422611.
+          'persist-credentials': false
+      - 'name': 'Build frontend'
+        'uses': 'AdGuardSoftwareLimited/actions/actions/docker-build@master'
+        'with':
+          'dockerfile': 'docker/frontend.Dockerfile'
+          'context': '.'
+          'target': 'builder-exporter'
+          'output': '.'
+          'build-args': |
+            BASE_IMAGE=${{ env.FRONTEND_BASE_IMAGE }}
+            CACHE_BUSTER=${{ inputs.cache_buster || '0' }}
+            CLIENT_DIR=${{ env.CLIENT_DIR }}
+            DIST_DIR=${{ env.BUILD_DIR }}
+      - 'uses': 'actions/download-artifact@v8'
+        'with':
+          'name': 'adguardhome-unix'
+          'path': |
+            ${{ env.DIST_DIR }}
+      - 'uses': 'actions/download-artifact@v8'
+        'with':
+          'name': 'adguardhome-win'
+          'path': |
+            ${{ env.DIST_DIR }}
+      - 'name': 'Pack'
+        'uses': 'AdGuardSoftwareLimited/actions/actions/docker-build@master'
+        'with':
+          'dockerfile': 'docker/ci.Dockerfile'
+          'context': '.'
+          'target': 'packer-exporter'
+          'output': '.'
+          'build-args': |
+            CACHE_BUSTER=${{ inputs.cache_buster || '0' }}
+            CHANNEL=${{ env.CHANNEL }}
+            DIST_DIR=${{ env.DIST_DIR }}
+            SOURCE_DATE_EPOCH=${{ needs.Build.outputs.source_date_epoch }}
+            VERSION=${{ needs.Build.outputs.app_version }}
+      - 'uses': 'actions/upload-artifact@v7'
+        'with':
+          'name': 'adguardhome'
+          'path': |
+            ${{ env.DIST_DIR }}/*.*
+  'DeployToStaticStorage':
+    'if': |
+      ${{ github.repository_owner == 'AdGuardSoftwareLimited' }}
+    'needs': 'PackArtifacts'
+    'permissions':
+      'contents': 'read'
+      'id-token': 'write'
+    'uses': 'AdGuardSoftwareLimited/actions/.github/workflows/deploy-to-static.yml@master'
+    'with':
+      'team': 'go'
+      # env is not available in reusable workflow inputs; keep this in sync
+      # with the workflow-level CHANNEL value.
+      'deployer-module': |-
+        adguard-home-${{ case(
+          startsWith(github.ref_name, 'release-v'), 'release',
+          startsWith(github.ref_name, 'beta-v'), 'beta',
+          'edge'
+        ) }}
+      'artifact-name': 'adguardhome'
+      'environment': |-
+        ${{ case(
+          startsWith(github.ref_name, 'release-v'), 'release',
+          startsWith(github.ref_name, 'beta-v'), 'beta',
+          'edge'
+        ) }}-static
+  'PublishDocker':
+    'if': |
+      ${{ github.repository_owner == 'AdGuardSoftwareLimited' }}
+    'needs': 'DeployToStaticStorage'
+    'permissions':
+      'contents': 'read'
+    'runs-on': 'team-go'
+    'steps':
+      - 'uses': 'actions/checkout@v6'
+        'with':
+          'fetch-depth': 0
+          # Set to false to avoid GITHUB_TOKEN leaking.
+          #
+          # See https://github.com/actions/checkout/issues/485#issuecomment-934422611.
+          'persist-credentials': false
+      - 'uses': 'actions/download-artifact@v8'
+        'with':
+          'name': 'adguardhome-unix'
+          'path': |
+            ${{ env.DIST_DIR }}
+      - 'name': 'Publish to Docker Hub'
+        'run': |
+          #!/bin/sh
+
+          set -e -f -u -x
+
+          # TODO(d.kolyshev):  Use AdGuardSoftwareLimited/actions/actions/docker-build.
+          env \
+              CHANNEL=${{ env.CHANNEL }} \
+              REVISION=${{ github.sha }} \
+              DIST_DIR=${{ env.DIST_DIR }} \
+              DOCKER_IMAGE_NAME='adguard/adguardhome' \
+              DOCKER_PUSH='1' \
+              VERBOSE='1' \
+              sh ./scripts/make/build-docker.sh \
+              ;
+  'PublishGitHubRelease':
+    # Only publish to GitHub Releases for the beta and release channels.
+    'if': |
+      ${{
+        github.repository_owner == 'AdGuardSoftwareLimited'
+        && (startsWith(github.ref_name, 'release-v') || startsWith(github.ref_name, 'beta-v'))
+      }}
+    'needs':
+      - 'Build'
+      - 'DeployToStaticStorage'
+    'permissions':
+      'contents': 'read'
+      # Octopass OIDC for the cross-repo token.
+      'id-token': 'write'
+    'uses': 'AdGuardSoftwareLimited/actions/.github/workflows/create-gh-release.yml@master'
+    'with':
+      'artifact_name': 'adguardhome'
+      'draft': true
+      # Use the actual application version, e.g. v0.108.1, as the tag, and not
+      # the branch name, so that it matches the announcement_url written to
+      # version.json by scripts/make/pack-release.sh.
+      'tag_name': ${{ needs.Build.outputs.app_version }}
+      'team': 'go'
+      'target_repo': 'AdguardTeam/AdGuardHome'
+'name': 'Build and publish releases'
+'on':
+  # Only the daily schedule runs automatically, on the default branch.  Builds
+  # for the beta-v* and release-v* branches are manual and must be triggered via
+  # workflow_dispatch with the corresponding branch selected.
+  'schedule':
+    # Don't use minute values that end with a zero or a five as these are often
+    # used in CI and so resources during these minutes can be quite busy.
+    #
+    # GitHub Actions uses standard 5-field POSIX cron: runs at 13:42 UTC on
+    # weekdays (Mon-Fri).
+    - cron: '42 13 * * 1-5'
+  'workflow_dispatch':
+    'inputs':
+      'cache_buster':
+        'default': ''
+        'description': |
+          Override to force re-run of cached stages (pass any unique value).
+        'type': 'string'
+# Permissions are disabled for all the jobs by default, and then overridden for
+# specific jobs if needed.  This is a recommended practice for security reasons,
+# and also allows to avoid mistakes with permissions when creating new jobs.
+#
+# See https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#permissions.
+'permissions': {}

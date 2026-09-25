@@ -57,6 +57,7 @@ export const ICONS = {
     check_tiny: 'check_tiny',
     user: 'user',
     recent: 'recent',
+    download: 'download',
 } as const;
 
 export type IconType = keyof typeof ICONS;
@@ -1106,6 +1107,30 @@ export const Icons = () => (
             />
             <path
                 d="M17 9H21"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            />
+        </symbol>
+
+        <symbol id="download" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+                d="M9.2002 12.41L12.0286 14.7671L14.857 12.41"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            />
+            <path
+                d="M12 13.3864V3.88635"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            />
+            <path
+                d="M7.33333 5H6C5.44772 5 5 5.44772 5 6V18C5 18.5523 5.44772 19 6 19H18C18.5523 19 19 18.5523 19 18V6C19 5.44772 18.5523 5 18 5H16.6667"
                 stroke="currentColor"
                 stroke-width="1.5"
                 stroke-linecap="round"

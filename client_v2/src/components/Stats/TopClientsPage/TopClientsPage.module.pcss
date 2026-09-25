@@ -1,0 +1,202 @@
+.filterPill {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    gap: 16px;
+    height: 33px;
+    padding: 0 16px;
+    border: 1px solid var(--default-item-divider);
+    border-radius: 200px;
+    background-color: var(--default-secondary-button);
+    color: var(--default-secondary-button-stroke);
+    font-size: 14px;
+    line-height: 1.5;
+    white-space: nowrap;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+        background-color: var(--hovered-secondary-button);
+    }
+
+    &:active {
+        background-color: var(--pressed-secondary-button);
+    }
+}
+
+.filterPillActive {
+    border-color: var(--product-primary-50);
+}
+
+.filterPillCross {
+    width: 20px;
+    height: 20px;
+}
+
+.nameCell {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    word-break: break-word;
+}
+
+.blockedStatus {
+    color: var(--default-error-link);
+}
+
+.ipCellLink {
+    color: inherit;
+    text-decoration: none;
+    min-width: 0;
+
+    &:hover,
+    &:focus {
+        color: inherit;
+        text-decoration: underline;
+    }
+}
+
+.whoisCell {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    line-height: 1.4;
+}
+
+.whoisSub {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: var(--fs-text-t4);
+    color: var(--default-description-text);
+    white-space: nowrap;
+}
+
+.whoisDivider {
+    width: 1px;
+    height: 12px;
+    background-color: var(--default-item-divider);
+}
+
+.actionsDropdown {
+    display: inline-flex;
+}
+
+.actionsCell {
+    @media (min-width: 768px) {
+        padding: 8px 10px;
+        justify-content: center;
+    }
+}
+
+.protectionMenu {
+    min-width: 200px;
+}
+
+.protectionMenuItem {
+    display: flex;
+    align-items: center;
+    min-height: 56px;
+    padding: 16px;
+    cursor: pointer;
+    color: var(--default-link);
+    transition: background-color var(--t2);
+
+    &:hover,
+    &:focus-visible {
+        background-color: var(--hovered-dropdown-menu-background);
+        outline: 0;
+    }
+
+    &:active {
+        background-color: var(--pressed-dropdown-menu-background);
+    }
+}
+
+.protectionMenuItemRed {
+    color: var(--default-error-link);
+}
+
+.actionButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    cursor: pointer;
+}
+
+.unblockLink {
+    color: var(--product-primary-50);
+}
+
+.blockLink {
+    color: var(--default-error-link);
+}
+
+.mobileTitle {
+    font-weight: var(--weight-semi-bold);
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    word-break: break-word;
+}
+
+.mobileBlocked {
+    color: var(--default-error-link);
+}
+
+.mobileActionButton {
+    width: 100%;
+    height: 40px;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: transparent;
+    cursor: pointer;
+    font: inherit;
+    transition:
+        var(--t2) color,
+        var(--t2) border-color,
+        var(--t2) background-color;
+}
+
+.mobileActionButtonGreen {
+    border: 1px solid var(--default-link);
+    color: var(--default-link);
+
+    &:hover,
+    &:focus-visible {
+        color: var(--hovered-link);
+        border-color: var(--hovered-link);
+        background-color: var(--hovered-secondary-button);
+    }
+
+    &:active {
+        color: var(--pressed-link);
+        border-color: var(--pressed-link);
+    }
+}
+
+.mobileActionButtonRed {
+    border: 1px solid var(--default-danger-button);
+    color: var(--default-danger-button);
+
+    &:hover,
+    &:focus-visible {
+        color: var(--hovered-danger-button);
+        border-color: var(--hovered-danger-button);
+        background-color: var(--hovered-secondary-danger-button);
+    }
+
+    &:active {
+        color: var(--pressed-danger-button);
+        border-color: var(--pressed-danger-button);
+    }
+}

@@ -3,6 +3,8 @@ import { render, screen } from '@solidjs/testing-library';
 import userEvent from '@testing-library/user-event';
 import { HashRouter, Route } from '@solidjs/router';
 
+import { copyInDom } from 'panel/__tests__/helpers/copy';
+
 // We'll mock the stores at the module level and update them per test
 const mockDashboardState = {
     isUpdateAvailable: false,
@@ -34,30 +36,11 @@ vi.mock('panel/stores/encryption', () => ({
     },
 }));
 
-vi.mock('panel/common/intl', () => {
-    const intl = {
-        getMessage: (key: string, values?: any) => {
-            const messages: Record<string, string> = {
-                tls_certificate_expired: 'Your TLS certificate has expired',
-                tls_certificate_expiring: 'Your TLS certificate is about to expire',
-                update_available: `Version ${values?.version || ''} is available. Release notes`,
-                update_button: 'Update',
-                update_how_to: 'How to update',
-                version_number: `Version ${values?.value || ''}`,
-                check_updates_btn: 'Check for updates',
-            };
-            const msg = messages[key] || key;
-            if (values?.a) {
-                // When tag handlers are provided, return the full message
-                return `Version ${values.version} is available. Release notes`;
-            }
-            return msg;
-        },
-        getUILanguage: () => 'en',
-        changeLanguage: vi.fn(),
-    };
-    return { default: intl };
-});
+// The banners render localized copy; serve it from the base locale so the
+// assertions can name the key instead of re-stating the text.
+vi.mock('panel/common/intl', async () =>
+    (await import('panel/__tests__/helpers/copy')).createIntlMock(),
+);
 
 import { Banners } from 'panel/common/ui/Banners';
 import { BANNER_TEST_VALUES } from 'panel/helpers/banners';
@@ -98,7 +81,7 @@ describe('Banners', () => {
         renderBanners();
 
         expect(screen.getByTestId('banner-tls-expired')).toBeInTheDocument();
-        expect(screen.getByText('Your TLS certificate has expired')).toBeInTheDocument();
+        expect(screen.getByText(copyInDom('tls_certificate_expired'))).toBeInTheDocument();
     });
 
     it('shows TLS expiring banner when cert expires within 30 days', () => {
@@ -109,7 +92,7 @@ describe('Banners', () => {
         renderBanners();
 
         expect(screen.getByTestId('banner-tls-expiring')).toBeInTheDocument();
-        expect(screen.getByText('Your TLS certificate is about to expire')).toBeInTheDocument();
+        expect(screen.getByText(copyInDom('tls_certificate_expiring'))).toBeInTheDocument();
     });
 
     it('shows auto-update banner when update available and can auto-update', () => {
