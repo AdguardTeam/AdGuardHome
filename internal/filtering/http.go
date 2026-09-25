@@ -1,6 +1,7 @@
 package filtering
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -246,6 +247,8 @@ func (d *DNSFilter) handleFilteringRemoveURL(w http.ResponseWriter, r *http.Requ
 			return
 		}
 
+		d.removeHTTPMetadataAndLog(ctx, &deleted)
+
 		*filters = slices.Delete(*filters, delIdx, delIdx+1)
 
 		d.logger.InfoContext(ctx, "deleted filter", "id", deleted.ID)
@@ -270,6 +273,19 @@ func (d *DNSFilter) handleFilteringRemoveURL(w http.ResponseWriter, r *http.Requ
 			http.StatusInternalServerError,
 			"couldn't write body: %s",
 			err,
+		)
+	}
+}
+
+// removeHTTPMetadataAndLog removes flt's HTTP metadata and logs any error.
+func (d *DNSFilter) removeHTTPMetadataAndLog(ctx context.Context, flt *FilterYAML) {
+	err := d.removeHTTPMetadata(flt)
+	if err != nil {
+		d.logger.WarnContext(
+			ctx,
+			"removing filter http metadata",
+			"id", flt.ID,
+			slogutil.KeyError, err,
 		)
 	}
 }
