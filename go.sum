@@ -8,6 +8,8 @@ github.com/AdguardTeam/dnscrypt v0.0.3 h1:o2Zg+/CRCPS2lPobMzYs59aE3RNdMKfOBk34bP
 github.com/AdguardTeam/dnscrypt v0.0.3/go.mod h1:qCFs51rLfNzEDZqb6nz1tocVLnEearJ1zng6O3I6ecA=
 github.com/AdguardTeam/dnsproxy v0.84.2-0.20260909091259-93604bc8f5b1 h1:Pbn5Xt6NjKs3K9a/42ZWJiUEY5YL5bS4zysX/JeXDwo=
 github.com/AdguardTeam/dnsproxy v0.84.2-0.20260909091259-93604bc8f5b1/go.mod h1:nZlktYebWcLO613q1j2N0bZ5BEnHPuqXAyW6O9vIhDU=
+github.com/AdguardTeam/dnsproxy v0.84.3-0.20260923110647-63629704191b h1:6wj/cBOIIYaGImuMiQ0OaEsfN+6/wTYqsdR/8CtCpeA=
+github.com/AdguardTeam/dnsproxy v0.84.3-0.20260923110647-63629704191b/go.mod h1:6kCM5M/gtuQr/0BjtnReHlK6+N0BTee+WHOq3m1JNq4=
 github.com/AdguardTeam/golibs v0.35.15 h1:KjksvvzlQqxdNvrz+O3FgMbZKZAQdcoCkgBz0mR7wFQ=
 github.com/AdguardTeam/golibs v0.35.15/go.mod h1:lScOIavWuRFL0vls26jKfQXaITP7OKO1qw75WYp5nYk=
 github.com/AdguardTeam/urlfilter v0.23.4 h1:3cwt5xj7lpK2t3sWtr9WI8mmsKP+RtpkdnEy7lrn8cg=
