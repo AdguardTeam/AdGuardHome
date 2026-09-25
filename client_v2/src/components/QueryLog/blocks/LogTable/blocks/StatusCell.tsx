@@ -1,6 +1,7 @@
-import { createMemo } from 'solid-js';
+import { createMemo, Show } from 'solid-js';
 import cn from 'clsx';
 
+import intl from 'panel/common/intl';
 import theme from 'panel/lib/theme';
 import type { NormalizedQueryLogItem } from 'panel/helpers/helpers';
 import {
@@ -28,6 +29,10 @@ export const StatusCell = (props: Props) => {
             </span>
             <span class={cn(s.secondaryLine, theme.text.t4)}>
                 {getQueryStatusDetails(props.row.elapsedMs)}
+                <Show when={props.row.cached}>
+                    {' / '}
+                    <span>{intl.getMessage('query_log_cached')}</span>
+                </Show>
             </span>
         </div>
     );
