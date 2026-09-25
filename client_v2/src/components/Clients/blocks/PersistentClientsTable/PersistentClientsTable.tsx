@@ -75,6 +75,7 @@ export const PersistentClientsTable = (props: Props) => {
                                     </span>
                                     <Show when={hiddenCount > 0}>
                                         <Tooltip
+                                            class={s.countDropdown}
                                             overlayClass={s.idsTooltipOverlay}
                                             content={
                                                 <div class={s.idsTooltip}>
