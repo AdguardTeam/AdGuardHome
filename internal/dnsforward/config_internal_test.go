@@ -16,19 +16,19 @@ func TestAnyNameMatches(t *testing.T) {
 		dnsName string
 		want    bool
 	}{{
-		name:    "match",
+		name:    "match_host",
 		dnsName: "host1",
 		want:    true,
 	}, {
-		name:    "match",
+		name:    "match_host_with_subdomain",
 		dnsName: "a.host2",
 		want:    true,
 	}, {
-		name:    "match",
+		name:    "match_host_with_multiple_subdomains",
 		dnsName: "b.a.host2",
 		want:    true,
 	}, {
-		name:    "match",
+		name:    "match_ip",
 		dnsName: "1.2.3.4",
 		want:    true,
 	}, {
@@ -36,7 +36,7 @@ func TestAnyNameMatches(t *testing.T) {
 		dnsName: "1.2.3.256",
 		want:    false,
 	}, {
-		name:    "mismatch",
+		name:    "mismatch_host",
 		dnsName: "host2",
 		want:    false,
 	}, {
@@ -44,7 +44,7 @@ func TestAnyNameMatches(t *testing.T) {
 		dnsName: "",
 		want:    false,
 	}, {
-		name:    "mismatch",
+		name:    "mismatch_host_any_subdomain",
 		dnsName: "*.host2",
 		want:    false,
 	}}
