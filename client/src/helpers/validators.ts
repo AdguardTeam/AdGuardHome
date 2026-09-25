@@ -49,15 +49,18 @@ export const isSectionFilled = (sectionValues: any) =>
 
 /**
  * Returns the DHCP form sections that have values, leaving out the untouched
- * ones.  The backend keeps the current configuration of an omitted section,
- * while an empty object fails its validation and rejects the whole request, so
- * a section the user has not filled in must never be sent.
+ * ones.  The backend keeps the current configuration of a section that is
+ * omitted from the request, while an empty section is not a no-op: DHCPv4
+ * rejects it with a validation error and fails the whole request, and DHCPv6
+ * accepts it but replaces the stored server with a disabled one, silently
+ * wiping the current DHCPv6 configuration.  A section the user has not filled
+ * in must therefore never be sent.
  *
  * @param {object} sections DHCP form sections, e.g. `{ v4, v6 }`.
  * @returns {object} Payload with only the filled sections.
  */
-export const omitEmptySections = (sections: { v4?: any; v6?: any }) => {
-    const payload: { v4?: any; v6?: any } = {};
+export const omitEmptySections = <V4, V6>(sections: { v4?: V4; v6?: V6 }) => {
+    const payload: { v4?: V4; v6?: V6 } = {};
 
     if (isSectionFilled(sections.v4)) {
         payload.v4 = sections.v4;
