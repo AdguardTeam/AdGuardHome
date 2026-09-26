@@ -178,7 +178,7 @@ Here are some examples of what cannot be blocked by a DNS-level blocker:
 
 - YouTube, Twitch ads;
 
-- Facebook, Twitter, Instagram sponsored posts.
+- Facebook, X, Instagram sponsored posts.
 
 Essentially, any advertising that shares a domain with content cannot be blocked by a DNS-level blocker.
 
