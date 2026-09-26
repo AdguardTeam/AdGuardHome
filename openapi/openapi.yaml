@@ -1615,6 +1615,7 @@
           - 'default'
           - 'refused'
           - 'nxdomain'
+          - 'noerror'
           - 'null_ip'
           - 'custom_ip'
         'blocking_ipv4':
