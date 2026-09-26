@@ -18,6 +18,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
@@ -27,6 +28,7 @@ import (
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/golibs/timeutil"
+	"github.com/quic-go/quic-go/http3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -36,6 +38,209 @@ const (
 	testCertificatePath = "./testdata/cert.pem"
 	testPrivateKeyPath  = "./testdata/key.pem"
 )
+
+func TestGetBindAddr(t *testing.T) {
+	testCases := []struct {
+		name        string
+		network     string
+		addr        netip.Addr
+		wantNetwork string
+		wantAddr    string
+	}{{
+		name:        "ipv4_unspecified",
+		network:     "tcp",
+		addr:        netip.IPv4Unspecified(),
+		wantNetwork: "tcp4",
+		wantAddr:    "0.0.0.0:443",
+	}, {
+		name:        "ipv6_unspecified",
+		network:     "tcp",
+		addr:        netip.IPv6Unspecified(),
+		wantNetwork: "tcp",
+		wantAddr:    ":443",
+	}, {
+		name:        "ipv4",
+		network:     "tcp",
+		addr:        netutil.IPv4Localhost(),
+		wantNetwork: "tcp",
+		wantAddr:    "127.0.0.1:443",
+	}, {
+		name:        "ipv6",
+		network:     "tcp",
+		addr:        netutil.IPv6Localhost(),
+		wantNetwork: "tcp",
+		wantAddr:    "[::1]:443",
+	}, {
+		name:        "udp_ipv4_unspecified",
+		network:     "udp",
+		addr:        netip.IPv4Unspecified(),
+		wantNetwork: "udp4",
+		wantAddr:    "0.0.0.0:443",
+	}, {
+		name:        "udp_ipv6_unspecified",
+		network:     "udp",
+		addr:        netip.IPv6Unspecified(),
+		wantNetwork: "udp",
+		wantAddr:    ":443",
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			network, addrStr := getBindAddr(tc.network, tc.addr, 443)
+
+			assert.Equal(t, tc.wantNetwork, network)
+			assert.Equal(t, tc.wantAddr, addrStr)
+		})
+	}
+}
+
+// canDial returns true if a connection to addr can be established using
+// network.
+func canDial(t *testing.T, network, addr string) (ok bool) {
+	t.Helper()
+
+	conn, err := net.DialTimeout(network, addr, testTimeout)
+	if err != nil {
+		return false
+	}
+
+	require.NoError(t, conn.Close())
+
+	return true
+}
+
+// TestGetBindAddr_families is a regression test for the bind-scope
+// compatibility of the listeners created using [getBindAddr].  It verifies on
+// a real listener that the explicitly configured unspecified IPv4 address
+// remains IPv4-only, while the unspecified IPv6 address enables dual-stack
+// listening.
+func TestGetBindAddr_families(t *testing.T) {
+	ln6, err := net.Listen("tcp6", "[::1]:0")
+	if err != nil {
+		t.Skipf("skipping: IPv6 seems unsupported: %v", err)
+	}
+	require.NoError(t, ln6.Close())
+
+	testCases := []struct {
+		name     string
+		addr     netip.Addr
+		wantIPv4 bool
+		wantIPv6 bool
+	}{{
+		name:     "ipv4_unspecified",
+		addr:     netip.IPv4Unspecified(),
+		wantIPv4: true,
+		wantIPv6: false,
+	}, {
+		name:     "ipv6_unspecified",
+		addr:     netip.IPv6Unspecified(),
+		wantIPv4: true,
+		wantIPv6: true,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			network, addrStr := getBindAddr("tcp", tc.addr, 0)
+
+			ln, lErr := net.Listen(network, addrStr)
+			require.NoError(t, lErr)
+			testutil.CleanupAndRequireSuccess(t, ln.Close)
+
+			tcpAddr := testutil.RequireTypeAssert[*net.TCPAddr](t, ln.Addr())
+			port := uint16(tcpAddr.Port)
+
+			assert.Equal(t, tc.wantIPv4, canDial(t, "tcp4", netutil.JoinHostPort("127.0.0.1", port)))
+			assert.Equal(t, tc.wantIPv6, canDial(t, "tcp6", netutil.JoinHostPort("::1", port)))
+		})
+	}
+}
+
+// TestServeHTTP3_connClose is a regression test that checks that the packet
+// connection owned by [serveHTTP3] is closed when the HTTP/3 server is shut
+// down, since [http3.Server.Serve] does not close connections provided by the
+// caller, and an unclosed connection would make rebinding the same address
+// fail with EADDRINUSE, e.g. on a TLS reconfiguration.
+func TestServeHTTP3_connClose(t *testing.T) {
+	certDER, key := newCertAndKey(t, 1)
+	srv := &http3.Server{
+		TLSConfig: &tls.Config{
+			Certificates: []tls.Certificate{{
+				Certificate: [][]byte{certDER},
+				PrivateKey:  key,
+			}},
+			MinVersion: tls.VersionTLS12,
+		},
+		Handler: http.NewServeMux(),
+	}
+
+	addrStr, served := startServeHTTP3(t, srv)
+
+	require.NoError(t, srv.Close())
+
+	srvErr, _ := testutil.RequireReceive(t, served, testTimeout)
+	assert.ErrorIs(t, srvErr, http.ErrServerClosed)
+
+	// The address must be available again after the server is closed.
+	conn, err := net.ListenPacket("udp", addrStr)
+	require.NoError(t, err)
+	require.NoError(t, conn.Close())
+}
+
+// startServeHTTP3 reserves a free UDP address on the IPv4 loopback, starts
+// srv on it using [serveHTTP3] in a separate goroutine, and waits until the
+// address is bound.  Since a concurrent listener may take the reserved
+// address before [serveHTTP3] binds it, the reservation is retried with a
+// fresh address in that case.  srv must not be nil.
+func startServeHTTP3(t *testing.T, srv *http3.Server) (addrStr string, served chan error) {
+	t.Helper()
+
+	const maxAttempts = 5
+
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+
+	var lastErr error
+	for range maxAttempts {
+		conn, err := net.ListenPacket("udp", "127.0.0.1:0")
+		require.NoError(t, err)
+
+		addrStr = conn.LocalAddr().String()
+		require.NoError(t, conn.Close())
+
+		served = make(chan error, 1)
+		go func(addr string, ch chan error) {
+			ch <- serveHTTP3(ctx, testLogger, srv, "udp", addr)
+		}(addrStr, served)
+
+		deadline := time.Now().Add(testTimeout)
+
+	wait:
+		for time.Now().Before(deadline) {
+			select {
+			case lastErr = <-served:
+				// The reserved address has been taken by a concurrent
+				// listener, so [serveHTTP3] returned early.  Retry with a
+				// fresh address.
+				break wait
+			default:
+			}
+
+			c, lErr := net.ListenPacket("udp", addrStr)
+			if lErr != nil {
+				// The address is bound by the server.
+				return addrStr, served
+			}
+
+			require.NoError(t, c.Close())
+
+			time.Sleep(testTimeout / 100)
+		}
+	}
+
+	t.Fatalf("http/3 server did not bind after %d attempts: %v", maxAttempts, lastErr)
+
+	// Generally unreachable.
+	return "", nil
+}
 
 func TestWebAPI_HandleTLSConfigure(t *testing.T) {
 	// Store the global state before making any changes.
