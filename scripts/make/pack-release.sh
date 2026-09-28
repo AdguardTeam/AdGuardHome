@@ -124,6 +124,9 @@ pack() {
 		pack_os="$3" \
 		;
 
+	# Make the binary executable as this script may be run independently.
+	chmod +x "./${dist}/${1}/AdGuardHome"
+
 	# Make archives.  Windows and macOS prefer ZIP archives; the rest,
 	# gzipped tarballs.
 	case "$pack_os" in
