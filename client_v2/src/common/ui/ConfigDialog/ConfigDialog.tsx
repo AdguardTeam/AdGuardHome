@@ -2,7 +2,7 @@ import { type JSX, Show } from 'solid-js';
 import cn from 'clsx';
 
 import { Dialog } from 'panel/common/ui/Dialog';
-import { Button } from 'panel/common/ui/Button';
+import { Button, type ButtonVariant } from 'panel/common/ui/Button';
 import intl from 'panel/common/intl';
 
 import s from './ConfigDialog.module.pcss';
@@ -20,6 +20,7 @@ type Props = {
     description?: JSX.Element;
     hideSubmit?: boolean;
     buttonText?: string;
+    buttonVariant?: ButtonVariant;
 };
 
 export const ConfigDialog = (props: Props) => {
@@ -41,7 +42,7 @@ export const ConfigDialog = (props: Props) => {
                 {props.footer}
                 <Show when={!props.hideSubmit}>
                     <Button
-                        variant="primary"
+                        variant={props.buttonVariant ?? 'primary'}
                         class={s.saveButton}
                         disabled={isDisabled()}
                         data-testid="config-dialog-save"

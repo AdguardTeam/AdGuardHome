@@ -97,6 +97,23 @@
     }
 }
 
+.secondary.onCard {
+    background: var(--default-secondary-card-button);
+
+    &:hover,
+    &:focus-visible {
+        background: var(--hovered-secondary-card-button);
+    }
+
+    &:active {
+        background: var(--pressed-secondary-card-button);
+    }
+
+    &:disabled {
+        background-color: var(--disabled-secondary-card-button);
+    }
+}
+
 .ghost {
     color: var(--default-main-text);
     background: none;

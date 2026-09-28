@@ -41,10 +41,21 @@ const CACHE_DIALOG_CONFIG: Record<
         description: () => intl.getMessage('dns_override_min_ttl_desc'),
         label: () => intl.getMessage('dns_override_min_ttl_label'),
         placeholder: () => intl.getMessage('dns_override_min_ttl_placeholder'),
-        validate: (v) =>
-            validateRequiredValue(v) ||
-            validateBetween(Number(v), UINT32_RANGE.MIN, UINT32_RANGE.MAX) ||
-            '',
+        validate: (v) => {
+            const requiredErr = validateRequiredValue(v);
+            if (requiredErr) return requiredErr;
+            const num = Number(v);
+            const rangeErr = validateBetween(num, UINT32_RANGE.MIN, UINT32_RANGE.MAX);
+            if (rangeErr) return rangeErr;
+            // Cross-field TTL check: min > max.  Only the maximum used to run
+            // this check, so a minimum above the stored maximum was accepted,
+            // persisted, and then rejected while reconfiguring the DNS server.
+            const maxVal = Number(dnsConfigState.cache_ttl_max);
+            if (maxVal > 0 && num > 0 && num > maxVal) {
+                return intl.getMessage('cache_config_ttl_validation');
+            }
+            return '';
+        },
     },
     cache_ttl_max: {
         title: () => intl.getMessage('dns_override_max_ttl_title'),
@@ -104,6 +115,7 @@ export const CacheInputDialog = (props: Props) => {
                     max={UINT32_RANGE.MAX}
                     errorMessage={field.error()}
                     size="large"
+                    onCard
                 />
             </div>
         </ConfigDialog>

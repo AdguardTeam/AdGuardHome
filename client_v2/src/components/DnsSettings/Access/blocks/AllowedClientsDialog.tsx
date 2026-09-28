@@ -63,6 +63,7 @@ export const AllowedClientsDialog = (props: Props) => {
                     placeholder={intl.getMessage('dns_allowed_clients_placeholder')}
                     size="medium"
                     errorMessage={field.error()}
+                    onCard
                 />
             </div>
         </ConfigDialog>

@@ -1,13 +1,20 @@
-import { createSignal, createMemo, createEffect, onCleanup, Show } from 'solid-js';
+import {
+    createSignal,
+    createMemo,
+    createEffect,
+    onCleanup,
+    onMount,
+    Show,
+} from 'solid-js';
 
 import theme from 'panel/lib/theme';
 import { PageLoader } from 'panel/common/ui/Loader';
 import { dashboardState, toggleProtection, getClients } from 'panel/stores/dashboard';
 import { statsState, getStats, getStatsConfig, enableStatistics } from 'panel/stores/stats';
 import { accessState, getAccessList } from 'panel/stores/access';
-import { getStoredStatsPeriod } from 'panel/helpers/statistics';
+import { getStoredStatsPeriod, getClampedMaxInterval } from 'panel/helpers/statistics';
 import { LocalStorageHelper, LOCAL_STORAGE_KEYS } from 'panel/helpers/localStorageHelper';
-import { ONE_SECOND_IN_MS, HOUR, DAY, STATS_INTERVALS_DAYS } from 'panel/helpers/constants';
+import { ONE_SECOND_IN_MS, DAY, STATS_INTERVALS_DAYS } from 'panel/helpers/constants';
 
 import { Header, getPeriodLabel } from './blocks/Header/Header';
 import { StatCards } from './blocks/StatCards';
@@ -59,49 +66,58 @@ export const Dashboard = () => {
         }
     });
 
-    const effectiveMaxStatsInterval = createMemo(() => {
-        const maxStatsInterval = statsState.interval || DAY;
-        return maxStatsInterval >= HOUR ? maxStatsInterval : DAY;
-    });
+    const maxStatsInterval = createMemo(() => getClampedMaxInterval(statsState.interval));
 
-    const periodIntervals = createMemo(() => {
-        const intervals = STATS_INTERVALS_DAYS.filter(
-            (interval) => interval <= effectiveMaxStatsInterval(),
-        );
+    const periodOptions = createMemo(() => {
+        const max = maxStatsInterval();
+        const intervals = STATS_INTERVALS_DAYS.filter((interval) => interval <= max);
 
-        if (!intervals.includes(effectiveMaxStatsInterval())) {
-            intervals.push(effectiveMaxStatsInterval());
+        if (!intervals.includes(max)) {
+            intervals.push(max);
         }
 
-        return intervals.sort((a, b) => a - b);
+        // Until the first config attempt settles the list is built from the
+        // default DAY, so keep the stored period selectable to avoid showing a
+        // period the user did not pick.
+        const storedPeriod = selectedPeriod();
+        if (!statsState.configAttempted && !intervals.includes(storedPeriod)) {
+            intervals.push(storedPeriod);
+        }
+
+        return intervals
+            .sort((a, b) => a - b)
+            .map((interval) => ({ value: interval, label: getPeriodLabel(interval) }));
     });
 
-    const periodOptions = createMemo(() =>
-        periodIntervals().map((interval) => ({
-            value: interval,
-            label: getPeriodLabel(interval),
-        })),
-    );
+    const effectivePeriod = createMemo(() => {
+        const options = periodOptions();
+        return Math.min(selectedPeriod(), options[options.length - 1]?.value ?? DAY);
+    });
 
-    const maxAvailablePeriod = createMemo(
-        () => periodIntervals()[periodIntervals().length - 1] || DAY,
-    );
-
-    const effectivePeriod = createMemo(() => Math.min(selectedPeriod(), maxAvailablePeriod()));
-
-    createEffect(() => {
-        const period = effectivePeriod();
-        getStats(period);
-        getStatsConfig();
+    onMount(() => {
         getClients();
         getAccessList();
+        getStatsConfig();
+    });
+
+    createEffect(() => {
+        const period = selectedPeriod();
+        // No stats request before the first config attempt settles: it would
+        // be clamped by the default DAY and paint 24h values before the real
+        // ones.  Tracks `selectedPeriod` only; the interval/configLoaded
+        // changes alone must not re-fire the request.
+        if (!statsState.configAttempted) {
+            return;
+        }
+        // `getStats` clamps the period by the real server retention itself.
+        getStats(period);
     });
 
     const handleRefreshStats = () => {
-        getStats(effectivePeriod());
-        getStatsConfig();
         getClients();
         getAccessList();
+        getStatsConfig();
+        getStats(selectedPeriod());
     };
 
     const handleToggleProtection = (enabled: boolean, duration?: number) => {
@@ -121,20 +137,10 @@ export const Dashboard = () => {
     const isLoading = () =>
         statsState.processingStats || statsState.processingGetConfig || accessState.processing;
 
-    const hasStatsData = () =>
-        statsState.numDnsQueries > 0 ||
-        statsState.dnsQueries.length > 0 ||
-        statsState.topClients.length > 0 ||
-        statsState.topQueriedDomains.length > 0 ||
-        !statsState.enabled;
-
-    const [isInitialLoading, setIsInitialLoading] = createSignal(!hasStatsData());
-
-    createEffect(() => {
-        if (isInitialLoading() && !isLoading()) {
-            setIsInitialLoading(false);
-        }
-    });
+    // The page loader shows exactly once: until the first stats request
+    // settles.  Later refetches keep the previous values painted, so the
+    // loader can never flash back in.
+    const isInitialLoading = () => !statsState.statsAttempted;
 
     return (
         <div class={theme.layout.container}>

@@ -1911,3 +1911,96 @@ func TestServer_Exchange(t *testing.T) {
 		assert.Empty(t, host)
 	})
 }
+
+func TestServer_ratelimit(t *testing.T) {
+	t.Parallel()
+
+	const (
+		attemptNum    = 3
+		clientTimeout = 300 * time.Millisecond
+	)
+
+	req := createGoogleATestMessage()
+	srvConf := ServerConfig{
+		UDPListenAddrs: []*net.UDPAddr{{}},
+		TCPListenAddrs: []*net.TCPAddr{{}},
+		TLSConf:        &TLSConfig{},
+		Config: Config{
+			UpstreamMode:           UpstreamModeLoadBalance,
+			EDNSClientSubnet:       &EDNSClientSubnet{Enabled: false},
+			ClientsContainer:       EmptyClientsContainer{},
+			RatelimitSubnetLenIPv4: netutil.IPv4BitLen,
+			RatelimitSubnetLenIPv6: netutil.IPv6BitLen,
+		},
+		ServePlainDNS: true,
+	}
+
+	testCases := []struct {
+		name      string
+		ratelimit uint32
+		whitelist []netip.Addr
+		dropNum   int
+	}{{
+		name:      "ratelimit_disabled",
+		ratelimit: 0,
+		dropNum:   0,
+	}, {
+		name:      "ratelimit_enabled",
+		ratelimit: 1,
+		dropNum:   2,
+	}, {
+		name:      "ratelimit_whitelisted",
+		ratelimit: 1,
+		whitelist: []netip.Addr{netutil.IPv4Localhost(), netip.MustParseAddr("::1")},
+		dropNum:   0,
+	}}
+
+	for _, tc := range testCases {
+		c := srvConf
+		c.Config.Ratelimit = tc.ratelimit
+		c.Config.RatelimitWhitelist = tc.whitelist
+
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			filterConf := &filtering.Config{BlockingMode: filtering.BlockingModeDefault}
+			s := createTestServer(t, filterConf, c, testTLSManager)
+			s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{newGoogleUpstream()}
+			startDeferStop(t, s)
+
+			addr := s.dnsProxy.Addr(proxy.ProtoUDP).String()
+			// TODO(m.kazantsev):  Use fake connections through client.Dial,
+			// instead of using real network connections.
+			client := &dns.Client{Net: "udp", Timeout: clientTimeout}
+			sendDNSRequests(t, client, req, attemptNum, tc.dropNum, addr)
+		})
+	}
+}
+
+// sendDNSRequests sends exactly attemptNum DNS requests and checks if the
+// expected number of requests are dropped according to the ratelimit.  client
+// must not be nil.
+func sendDNSRequests(
+	tb testing.TB,
+	client *dns.Client,
+	req *dns.Msg,
+	attemptNum int,
+	dropNum int,
+	addr string,
+) {
+	tb.Helper()
+
+	for i := range attemptNum {
+		reply, _, err := client.Exchange(req, addr)
+
+		if i >= attemptNum-dropNum {
+			assert.Error(tb, err, "request %d", i)
+
+			continue
+		}
+
+		require.NoErrorf(tb, err, "request %d", i)
+
+		assertGoogleAResponse(tb, reply)
+	}
+}

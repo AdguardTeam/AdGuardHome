@@ -21,6 +21,7 @@ type Props = Omit<
     label?: JSX.Element;
     size?: 'small' | 'medium' | 'large' | 'compact';
     errorMessage?: string;
+    onCard?: boolean;
     highlightComments?: boolean;
     commentPrefixes?: readonly CommentLineToken[];
     ref?: HTMLTextAreaElement | ((el: HTMLTextAreaElement) => void);
@@ -120,6 +121,7 @@ export const Textarea = (props: Props) => {
                                 props.size && s[props.size],
                                 { [s.error]: !!props.errorMessage },
                                 { [s.clearable]: showClearButton() },
+                                { [s.onCard]: props.onCard },
                                 props.class,
                             )}
                             id={props.id}
@@ -143,6 +145,7 @@ export const Textarea = (props: Props) => {
                     <div
                         class={cn(s.scrollArea, props.size && s[props.size], {
                             [s.error]: !!props.errorMessage,
+                            [s.onCard]: props.onCard,
                         })}
                         style={scrollAreaStyle()}
                     >
