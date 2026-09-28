@@ -127,7 +127,24 @@ pack() {
 	# Make archives.  Windows and macOS prefer ZIP archives; the rest,
 	# gzipped tarballs.
 	case "$pack_os" in
-	'darwin' | 'windows')
+	'darwin')
+		# Make the binary executable as this script may be run independently.
+		chmod +x "./${dist}/${1}/AdGuardHome/AdGuardHome"
+
+		pack_archive="./${dist}/${pack_ar}.zip"
+
+		# Remove the previous archive, if any, because zip updates the existing
+		# archives instead of recreating them.
+		rm -f "$pack_archive"
+
+		# TODO(a.garipov): Find an option similar to the -C option of tar for
+		# zip.
+		(cd "${dist}/${1}" && zip -9 -q -r "../../${pack_archive}" "./AdGuardHome")
+		;;
+	'windows')
+		# Make the binary executable as this script may be run independently.
+		chmod +x "./${dist}/${1}/AdGuardHome/AdGuardHome.exe"
+
 		pack_archive="./${dist}/${pack_ar}.zip"
 
 		# Remove the previous archive, if any, because zip updates the existing
@@ -139,6 +156,9 @@ pack() {
 		(cd "${dist}/${1}" && zip -9 -q -r "../../${pack_archive}" "./AdGuardHome")
 		;;
 	*)
+		# Make the binary executable as this script may be run independently.
+		chmod +x "./${dist}/${1}/AdGuardHome/AdGuardHome"
+
 		pack_archive="./${dist}/${pack_ar}.tar.gz"
 		tar -C "./${dist}/${1}" -c -f - "./AdGuardHome" | gzip -9 - >"$pack_archive"
 		;;
