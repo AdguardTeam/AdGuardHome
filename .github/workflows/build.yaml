@@ -10,7 +10,7 @@
   'DIST_DIR': |-
     dist
   'FRONTEND_BASE_IMAGE': |-
-    ${{ vars.FRONTEND_BASE_IMAGE || 'adguard/home-js-builder:4.0' }}
+    ${{ vars.FRONTEND_BASE_IMAGE || 'adguard/home-js-builder:4.1' }}
 'jobs':
   'Build':
     'if': |
