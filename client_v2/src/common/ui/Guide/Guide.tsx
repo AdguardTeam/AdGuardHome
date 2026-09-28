@@ -33,7 +33,7 @@ const RouterLayout = (props: PlatformLayoutProps) => (
         <div class={s.guideText}>
             <div class={s.guideParagraph}>{intl.getMessage('setup_devices_router_desc_1')}</div>
             <ol class={cn({ [s.strongNumbers]: true })}>
-                <li class={s.guideItem}>
+                <li>
                     <strong class={s.guideItemTitle}>
                         {intl.getMessage('setup_devices_router_list_1_title')}
                     </strong>
@@ -42,7 +42,7 @@ const RouterLayout = (props: PlatformLayoutProps) => (
                         code2: () => <CopiedText text="http://192.168.1.1" />,
                     })}
                 </li>
-                <li class={s.guideItem}>
+                <li>
                     <strong class={s.guideItemTitle}>
                         {intl.getMessage('setup_devices_router_list_2_title')}
                     </strong>
@@ -68,14 +68,14 @@ const RouterLayout = (props: PlatformLayoutProps) => (
 const WindowsLayout = () => (
     <div title="Windows">
         <div class={s.title}>{intl.getMessage('setup_devices_windows_title')}</div>
-        <div class={s.text}>
+        <div class={s.guideText}>
             <ol class={s.guideList}>
-                <li class={s.guideItem}>{intl.getMessage('setup_devices_windows_list_1')}</li>
-                <li class={s.guideItem}>{intl.getMessage('setup_devices_windows_list_2')}</li>
-                <li class={s.guideItem}>{intl.getMessage('setup_devices_windows_list_3')}</li>
-                <li class={s.guideItem}>{intl.getMessage('setup_devices_windows_list_4')}</li>
-                <li class={s.guideItem}>{intl.getMessage('setup_devices_windows_list_5')}</li>
-                <li class={s.guideItem}>{intl.getMessage('setup_devices_windows_list_6')}</li>
+                <li>{intl.getMessage('setup_devices_windows_list_1')}</li>
+                <li>{intl.getMessage('setup_devices_windows_list_2')}</li>
+                <li>{intl.getMessage('setup_devices_windows_list_3')}</li>
+                <li>{intl.getMessage('setup_devices_windows_list_4')}</li>
+                <li>{intl.getMessage('setup_devices_windows_list_5')}</li>
+                <li>{intl.getMessage('setup_devices_windows_list_6')}</li>
             </ol>
         </div>
     </div>
@@ -84,11 +84,11 @@ const WindowsLayout = () => (
 const MacOSLayout = () => (
     <div title="macOS">
         <div class={s.title}>macOS</div>
-        <div class={s.text}>
+        <div class={s.guideText}>
             <ol class={s.guideList}>
-                <li class={s.guideItem}>{intl.getMessage('setup_devices_macos_list_1')}</li>
-                <li class={s.guideItem}>{intl.getMessage('setup_devices_macos_list_2')}</li>
-                <li class={s.guideItem}>{intl.getMessage('setup_devices_macos_list_3')}</li>
+                <li>{intl.getMessage('setup_devices_macos_list_1')}</li>
+                <li>{intl.getMessage('setup_devices_macos_list_2')}</li>
+                <li>{intl.getMessage('setup_devices_macos_list_3')}</li>
             </ol>
         </div>
     </div>
@@ -97,12 +97,12 @@ const MacOSLayout = () => (
 const AndroidLayout = () => (
     <div title="Android">
         <div class={s.title}>Android</div>
-        <div class={s.text}>
+        <div class={s.guideText}>
             <ol class={s.guideList}>
-                <li class={s.guideItem}>{intl.getMessage('setup_devices_android_list_1')}</li>
-                <li class={s.guideItem}>{intl.getMessage('setup_devices_android_list_2')}</li>
-                <li class={s.guideItem}>{intl.getMessage('setup_devices_android_list_3')}</li>
-                <li class={s.guideItem}>{intl.getMessage('setup_devices_android_list_4')}</li>
+                <li>{intl.getMessage('setup_devices_android_list_1')}</li>
+                <li>{intl.getMessage('setup_devices_android_list_2')}</li>
+                <li>{intl.getMessage('setup_devices_android_list_3')}</li>
+                <li>{intl.getMessage('setup_devices_android_list_4')}</li>
             </ol>
         </div>
     </div>
@@ -111,19 +111,19 @@ const AndroidLayout = () => (
 const IOSLayout = () => (
     <div title="iOS">
         <div class={s.title}>iOS</div>
-        <div class={s.text}>
+        <div class={s.guideText}>
             <ol class={s.guideList}>
-                <li class={s.guideItem}>{intl.getMessage('setup_devices_ios_list_1')}</li>
-                <li class={s.guideItem}>{intl.getMessage('setup_devices_ios_list_2')}</li>
-                <li class={s.guideItem}>{intl.getMessage('setup_devices_ios_list_3')}</li>
-                <li class={s.guideItem}>{intl.getMessage('setup_devices_ios_list_4')}</li>
+                <li>{intl.getMessage('setup_devices_ios_list_1')}</li>
+                <li>{intl.getMessage('setup_devices_ios_list_2')}</li>
+                <li>{intl.getMessage('setup_devices_ios_list_3')}</li>
+                <li>{intl.getMessage('setup_devices_ios_list_4')}</li>
             </ol>
         </div>
     </div>
 );
 
 const renderDnsDevicesList = () => (
-    <div class={s.deviceDnsList}>
+    <div>
         <div class={s.guideParagraph}>
             <div class={s.guideTitle}>
                 <strong>Android</strong>
@@ -327,7 +327,7 @@ const getDnsSettingsContent = (
         </div>
     ) : (
         <div class={s.dnsSettingsContent}>
-            <ul class={s.deviceDnsList}>
+            <ul class={s.guideList}>
                 <Show when={tlsAddress.length > 0}>
                     <li class={s.deviceDnsListItem}>
                         {intl.getMessage('setup_devices_dns_list_1', {
@@ -378,7 +378,7 @@ const getDnsSettingsContent = (
 const DnsPrivacyLayout = (props: PlatformLayoutProps) => (
     <div title={intl.getMessage('dns_privacy')}>
         <div class={s.title}>{intl.getMessage('dns_privacy')}</div>
-        <div class={s.text}>
+        <div>
             {getDnsSettingsContent(
                 props.dnsAddresses,
                 props.serverName,

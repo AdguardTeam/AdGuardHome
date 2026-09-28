@@ -8,6 +8,7 @@
     --page-background-additional-pressed: var(--gray-70);
     /* Cards background */
     --default-cards-background: var(--gray-80);
+    --default-cards-box-shadow: none;
     /* Popup background */
     --default-popup-background: var(--gray-90);
     /* Footer background */

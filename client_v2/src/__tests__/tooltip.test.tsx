@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@solidjs/testing-library';
 
 import { Tooltip } from 'panel/common/ui/Tooltip';
 import { copy } from 'panel/__tests__/helpers/copy';
+import { mockMatchMedia } from 'panel/__tests__/helpers/matchMedia';
 
 // jsdom lacks ResizeObserver, which floating-ui (used by Zag positioning) needs.
 beforeAll(() => {
@@ -15,35 +16,11 @@ beforeAll(() => {
     }
 });
 
-// Restore real matchMedia between test suites.  The global mock from
-// src/__tests__/setup.ts returns matches: false for every query (desktop),
-// which is what most tests need.  Touch tests in this file replace it
-// temporarily so that (hover: none) returns true.
-const realMatchMedia = window.matchMedia;
-
-function mockTouchDevice() {
-    window.matchMedia = (query: string): MediaQueryList => {
-        const matches = query === '(hover: none)';
-        return {
-            matches,
-            media: query,
-            onchange: null,
-            addListener: () => {},
-            removeListener: () => {},
-            addEventListener: () => {},
-            removeEventListener: () => {},
-            dispatchEvent: () => false,
-        } as MediaQueryList;
-    };
-}
-
-function mockDesktop() {
-    window.matchMedia = realMatchMedia;
-}
-
 describe('Tooltip', () => {
     beforeEach(() => {
-        mockDesktop();
+        // Matches the global default from src/__tests__/setup.ts: no query
+        // matches, so the tooltip behaves as on a desktop.
+        mockMatchMedia(false);
     });
 
     afterEach(() => {
@@ -176,7 +153,7 @@ describe('Tooltip', () => {
 
     describe('touch device', () => {
         beforeEach(() => {
-            mockTouchDevice();
+            mockMatchMedia((query) => query === '(hover: none)');
         });
 
         it('opens on click (tap)', async () => {

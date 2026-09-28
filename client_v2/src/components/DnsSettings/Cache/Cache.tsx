@@ -12,6 +12,7 @@ import { Button } from 'panel/common/ui/Button';
 import { SettingRow } from 'panel/common/ui/SettingRow';
 import { ConfirmDialog } from 'panel/common/ui/ConfirmDialog';
 import { useDialog } from 'panel/hooks/useDialog';
+import { useSwitchState } from 'panel/hooks/useSwitchState';
 import { getCacheSizeSummary, getTtlSummary } from '../helpers';
 import theme from 'panel/lib/theme';
 
@@ -31,6 +32,25 @@ export const Cache = () => {
 
     const processing = () => dnsConfigState.processingSetConfig;
 
+    const [cacheEnabled, setCacheEnabled] = useSwitchState(
+        () => !!dnsConfigState.cache_enabled,
+        processing,
+    );
+    const [optimisticCaching, setOptimisticCaching] = useSwitchState(
+        () => !!dnsConfigState.cache_optimistic,
+        processing,
+    );
+
+    const handleCacheEnabledToggle = (checked: boolean) => {
+        setCacheEnabled(checked);
+        toggleCacheEnabled();
+    };
+
+    const handleOptimisticCachingToggle = (checked: boolean) => {
+        setOptimisticCaching(checked);
+        toggleOptimisticCaching();
+    };
+
     return (
         <div class={s.section}>
             <SettingRow
@@ -41,8 +61,8 @@ export const Cache = () => {
                 descriptionClass={s.description}
                 align="center"
                 description={intl.getMessage('dns_cache_desc')}
-                checked={!!dnsConfigState.cache_enabled}
-                onChange={() => toggleCacheEnabled()}
+                checked={cacheEnabled()}
+                onChange={handleCacheEnabledToggle}
             />
 
             <SettingRow
@@ -80,9 +100,9 @@ export const Cache = () => {
                 id="optimistic_caching"
                 title={intl.getMessage('dns_optimistic_caching')}
                 description={intl.getMessage('dns_optimistic_caching_desc')}
-                checked={!!dnsConfigState.cache_optimistic}
+                checked={optimisticCaching()}
                 disabled={!dnsConfigState.cache_enabled}
-                onChange={() => toggleOptimisticCaching()}
+                onChange={handleOptimisticCachingToggle}
             />
 
             <div class={theme.form.actionRow}>
