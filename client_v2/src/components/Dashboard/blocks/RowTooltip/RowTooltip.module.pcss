@@ -1,0 +1,9 @@
+/* The shared Tooltip stylesheet makes its trigger `inline-flex`, which would
+   shrink-wrap the row and place consecutive rows on one line.  The doubled
+   class covers the disabled (touch) wrapper, which carries no trigger
+   attributes; the attribute-qualified selector out-specifies the global
+   Tooltip trigger rule whatever the stylesheet order in the bundle is. */
+.rowTrigger.rowTrigger,
+[data-scope='tooltip'][data-part='trigger'].rowTrigger {
+    display: block;
+}

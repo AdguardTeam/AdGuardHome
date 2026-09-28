@@ -3,6 +3,8 @@ import { createStore } from 'solid-js/store';
 import cn from 'clsx';
 
 import { Loader } from 'panel/common/ui/Loader';
+import { Link } from 'panel/common/ui/Link';
+import type { QueryParams, RoutePathKey } from 'panel/components/Routes/Paths';
 import { Pagination } from './blocks/Pagination/Pagination';
 import { HeaderLabel } from './blocks/HeaderLabel/HeaderLabel';
 
@@ -49,6 +51,11 @@ export interface TableProps<T = any> {
     onSortChange?: (key: string, direction: 'asc' | 'desc') => void;
     getRowId?: (row: T, index: number) => string | number;
     onRowClick?: (row: T) => void;
+    /**
+     * When it returns a target, the whole row is rendered as a link to it
+     * instead of a plain container.
+     */
+    rowLink?: (row: T) => { to: RoutePathKey; query?: QueryParams } | undefined;
     tableHeaderClass?: string;
     tableRowClass?: string;
     /**
@@ -201,9 +208,10 @@ export const Table = <T extends Record<string, any>>(props: TableProps<T>) => {
     const hasData = () => paginatedData().length > 0;
 
     // The rows-per-page select lives in the pagination footer, so the whole
-    // footer is hidden until there is at least a full page of rows.
+    // footer is hidden until the data needs more than one page at the default
+    // size.
     const showPagination = () =>
-        (props.pagination ?? true) && sortedData().length >= DEFAULT_PAGE_SIZE;
+        (props.pagination ?? true) && sortedData().length > DEFAULT_PAGE_SIZE;
 
     return (
         <Show
@@ -272,31 +280,57 @@ export const Table = <T extends Record<string, any>>(props: TableProps<T>) => {
                         <Show when={hasData()}>
                             <For each={paginatedData()}>
                                 {(row, index) => {
+                                    const rowLink = () => props.rowLink?.(row);
+
+                                    const rowCells = () => (
+                                        <For each={props.columns}>
+                                            {(column) => (
+                                                <div
+                                                    class={cn(
+                                                        s.tableCell,
+                                                        s.tableBodyCell,
+                                                        column.class,
+                                                        {
+                                                            [s.fitContent]: column.fitContent,
+                                                            [s.clickableCell]:
+                                                                !!props.onRowClick && !rowLink(),
+                                                        },
+                                                    )}
+                                                >
+                                                    {renderCell(column, row, index())}
+                                                </div>
+                                            )}
+                                        </For>
+                                    );
+
                                     return (
-                                        <div
-                                            class={cn(s.tableRow, props.tableRowClass)}
-                                            style={tableStyle()}
-                                            onClick={() => props.onRowClick?.(row)}
+                                        <Show
+                                            when={rowLink()}
+                                            fallback={
+                                                <div
+                                                    class={cn(s.tableRow, props.tableRowClass)}
+                                                    style={tableStyle()}
+                                                    onClick={() => props.onRowClick?.(row)}
+                                                >
+                                                    {rowCells()}
+                                                </div>
+                                            }
                                         >
-                                            <For each={props.columns}>
-                                                {(column) => (
-                                                    <div
-                                                        class={cn(
-                                                            s.tableCell,
-                                                            s.tableBodyCell,
-                                                            column.class,
-                                                            {
-                                                                [s.fitContent]: column.fitContent,
-                                                                [s.clickableCell]:
-                                                                    !!props.onRowClick,
-                                                            },
-                                                        )}
-                                                    >
-                                                        {renderCell(column, row, index())}
-                                                    </div>
-                                                )}
-                                            </For>
-                                        </div>
+                                            {(link) => (
+                                                <Link
+                                                    to={link().to}
+                                                    query={link().query}
+                                                    class={cn(
+                                                        s.tableRow,
+                                                        s.tableRowLink,
+                                                        props.tableRowClass,
+                                                    )}
+                                                    style={tableStyle()}
+                                                >
+                                                    {rowCells()}
+                                                </Link>
+                                            )}
+                                        </Show>
                                     );
                                 }}
                             </For>

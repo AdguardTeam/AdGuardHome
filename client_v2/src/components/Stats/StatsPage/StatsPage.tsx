@@ -14,7 +14,8 @@ import { Button } from 'panel/common/ui/Button';
 import { Icon } from 'panel/common/ui/Icon';
 import { FaqTooltip } from 'panel/common/ui/FaqTooltip';
 import { RoutePath } from 'panel/components/Routes/Paths';
-import { useIsMobile } from 'panel/hooks/useIsMobile';
+import type { QueryParams, RoutePathKey } from 'panel/components/Routes/Paths';
+import { useIsMobile } from 'panel/hooks/useMediaQuery';
 import { LocalStorageHelper } from 'panel/helpers/localStorageHelper';
 import { isQueryMatch } from 'panel/helpers/statistics';
 import type { IOption } from 'panel/lib/helpers/utils';
@@ -37,6 +38,8 @@ type StatsPageProps<T> = {
     emptyText: string;
     onRefresh: () => void;
     searchTextForRow: (row: T) => string;
+    /** When it returns a target, the whole desktop row links to it. */
+    rowLink?: (row: T) => { to: RoutePathKey; query?: QueryParams } | undefined;
     pageSizeKey: string;
     sortStorageKey: string;
     mobileSortOptions: IOption<string>[];
@@ -99,10 +102,10 @@ export function StatsPage<T>(props: StatsPageProps<T>) {
 
     const mobileTotalPages = () => Math.max(1, Math.ceil(filteredRows().length / pageSize()));
 
-    // The rows-per-page select is only meaningful once there is at least a full
-    // page of rows, so the whole footer is hidden for short lists — the same
-    // rule the desktop Table applies.
-    const showMobilePagination = () => filteredRows().length >= DEFAULT_PAGE_SIZE;
+    // The rows-per-page select is only meaningful once the list needs more
+    // than one page at the default size, so the whole footer is hidden for
+    // shorter lists — the same rule the desktop Table applies.
+    const showMobilePagination = () => filteredRows().length > DEFAULT_PAGE_SIZE;
 
     // The desktop Table sorts internally; mirror that logic here so the mobile
     // card list is ordered the same way (resolvedSort drives both).
@@ -196,7 +199,6 @@ export function StatsPage<T>(props: StatsPageProps<T>) {
                                     size="small"
                                     compact
                                     aria-label={intl.getMessage('refresh_btn')}
-                                    title={intl.getMessage('refresh_btn')}
                                     onClick={() => props.onRefresh()}
                                     disabled={props.loading}
                                 >
@@ -239,7 +241,6 @@ export function StatsPage<T>(props: StatsPageProps<T>) {
                                 size="small"
                                 compact
                                 aria-label={intl.getMessage('refresh_btn')}
-                                title={intl.getMessage('refresh_btn')}
                                 onClick={() => props.onRefresh()}
                                 disabled={props.loading}
                             >
@@ -307,7 +308,9 @@ export function StatsPage<T>(props: StatsPageProps<T>) {
                                                 pageSize={pageSize()}
                                                 totalItems={filteredRows().length}
                                                 pageSizeOptions={DEFAULT_PAGE_SIZE_OPTIONS}
-                                                onPageChange={(page: number) => setCurrentPage(page)}
+                                                onPageChange={(page: number) =>
+                                                    setCurrentPage(page)
+                                                }
                                                 onPageSizeChange={handlePageSizeChange}
                                             />
                                         </div>
@@ -327,6 +330,7 @@ export function StatsPage<T>(props: StatsPageProps<T>) {
                         pageSize={pageSize()}
                         onPageSizeChange={handlePageSizeChange}
                         emptyTable={<EmptyState message={props.emptyText} />}
+                        rowLink={props.rowLink}
                     />
                 </Show>
             </div>

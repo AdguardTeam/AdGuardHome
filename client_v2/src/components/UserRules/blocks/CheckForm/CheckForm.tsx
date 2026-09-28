@@ -77,6 +77,7 @@ export const CheckForm = (props: Props) => {
                             props.onHostnameChange('');
                             setHostnameError(intl.getMessage('form_error_required'));
                         }}
+                        onCard
                     />
                 </div>
 
@@ -92,6 +93,7 @@ export const CheckForm = (props: Props) => {
                         onChange={handleClientChange}
                         isClearable
                         onClear={() => props.onClientChange('')}
+                        onCard
                     />
                 </div>
 
@@ -116,6 +118,7 @@ export const CheckForm = (props: Props) => {
                                 (option) => option.value === props.qtype,
                             )}
                             onChange={handleQtypeChange}
+                            onCard
                         />
 
                         <Show when={qtypeError()}>

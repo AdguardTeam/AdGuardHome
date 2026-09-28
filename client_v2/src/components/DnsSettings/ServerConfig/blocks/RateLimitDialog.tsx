@@ -61,6 +61,7 @@ export const RateLimitDialog = (props: Props) => {
                     max={RATE_LIMIT.MAX}
                     errorMessage={field.error()}
                     size="large"
+                    onCard
                 />
             </div>
         </ConfigDialog>

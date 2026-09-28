@@ -27,8 +27,6 @@ export const STEP_FIELDS: Record<WizardStep, ReadonlySet<string>> = {
 type CertField = 'certificate_chain' | 'certificate_path';
 type KeyField = 'private_key' | 'private_key_path';
 
-const msg = (key: string, params?: Record<string, string>) => intl.getMessage(key, params);
-
 const certField = (v: EncryptionFormValues): CertField =>
     v.certificate_source === ENCRYPTION_SOURCE.PATH ? 'certificate_path' : 'certificate_chain';
 
@@ -41,13 +39,13 @@ const keyFieldOf = (v: EncryptionFormValues): KeyField =>
  */
 const certTextMessage = (text: string, field: CertField): StepMessage | undefined => {
     if (text.includes('reading cert file')) {
-        return { field, kind: 'error', message: msg('tls_setup_error_read_cert') };
+        return { field, kind: 'error', message: intl.getMessage('tls_setup_error_read_cert') };
     }
     if (text.includes('empty certificate')) {
-        return { field, kind: 'error', message: msg('tls_setup_error_not_a_cert') };
+        return { field, kind: 'error', message: intl.getMessage('tls_setup_error_not_a_cert') };
     }
     if (text.includes('parsing certificate at index')) {
-        return { field, kind: 'error', message: msg('tls_setup_error_parse_cert') };
+        return { field, kind: 'error', message: intl.getMessage('tls_setup_error_parse_cert') };
     }
 
     return undefined;
@@ -81,15 +79,23 @@ const mapCertText = (
         // A validity window that excludes now is worth naming: the generic
         // untrusted wording would send the user looking for a CA problem.
         if (datesInvalid) {
-            return { field, kind: 'warning', message: msg('tls_setup_warning_cert_expired') };
+            return {
+                field,
+                kind: 'warning',
+                message: intl.getMessage('tls_setup_warning_cert_expired'),
+            };
         }
 
         // Non-critical for the backend: the chain is simply not trusted, or a
         // certificate in it is expired.  It warns on every step.
-        return { field, kind: 'warning', message: msg('tls_setup_warning_cert_untrusted') };
+        return {
+            field,
+            kind: 'warning',
+            message: intl.getMessage('tls_setup_warning_cert_untrusted'),
+        };
     }
     if (text.includes('certificates has no IP addresses')) {
-        return { field, kind: 'warning', message: msg('tls_setup_warning_no_ip') };
+        return { field, kind: 'warning', message: intl.getMessage('tls_setup_warning_no_ip') };
     }
 
     // A certificate that parsed only ever warns; an unparsed one blocks, since
@@ -98,33 +104,33 @@ const mapCertText = (
         return {
             field,
             kind: 'warning',
-            message: text || msg('tls_setup_warning_cert_untrusted'),
+            message: text || intl.getMessage('tls_setup_warning_cert_untrusted'),
         };
     }
 
-    return { field, kind: 'error', message: msg('tls_setup_error_parse_cert') };
+    return { field, kind: 'error', message: intl.getMessage('tls_setup_error_parse_cert') };
 };
 
 /** Maps `warning_validation` / 400 text about the private key and the pair. */
 const mapKeyText = (text: string, field: KeyField): StepMessage => {
     if (text.includes('reading key file')) {
-        return { field, kind: 'error', message: msg('tls_setup_error_read_key') };
+        return { field, kind: 'error', message: intl.getMessage('tls_setup_error_read_key') };
     }
     if (text.includes('no valid keys were found')) {
-        return { field, kind: 'error', message: msg('tls_setup_error_not_a_key') };
+        return { field, kind: 'error', message: intl.getMessage('tls_setup_error_not_a_key') };
     }
     if (text.includes('parsing private key')) {
-        return { field, kind: 'error', message: msg('tls_setup_error_parse_key') };
+        return { field, kind: 'error', message: intl.getMessage('tls_setup_error_parse_key') };
     }
     if (text.includes('ED25519 keys are not supported')) {
-        return { field, kind: 'error', message: msg('tls_setup_error_ed25519_key') };
+        return { field, kind: 'error', message: intl.getMessage('tls_setup_error_ed25519_key') };
     }
     if (text.includes('certificate-key pair')) {
-        return { field, kind: 'error', message: msg('tls_setup_error_key_mismatch') };
+        return { field, kind: 'error', message: intl.getMessage('tls_setup_error_key_mismatch') };
     }
 
     // Defensive: an empty backend text still blocks, with a generic message.
-    return { field, kind: 'error', message: text || msg('tls_setup_error_parse_key') };
+    return { field, kind: 'error', message: text || intl.getMessage('tls_setup_error_parse_key') };
 };
 
 const PROTO_FIELDS: Record<string, keyof EncryptionFormValues> = {
@@ -143,7 +149,10 @@ const mapConfigText = (
         return {
             field: PROTO_FIELDS[busy[2]],
             kind: 'error',
-            message: msg('tls_setup_error_port_busy', { port: busy[1], protocol: busy[2] }),
+            message: intl.getMessage('tls_setup_error_port_busy', {
+                port: busy[1],
+                protocol: busy[2],
+            }),
         };
     }
 
@@ -154,7 +163,7 @@ const mapConfigText = (
         // backend duplicate report also covers external settings).
         return {
             kind: 'error',
-            message: msg('tls_setup_error_duplicate_port', { port: dup[1] }),
+            message: intl.getMessage('tls_setup_error_duplicate_port', { port: dup[1] }),
         };
     }
 
@@ -172,7 +181,7 @@ const mapConfigText = (
             return {
                 field: 'server_name',
                 kind: 'warning',
-                message: msg('tls_setup_warning_server_name_mismatch', {
+                message: intl.getMessage('tls_setup_warning_server_name_mismatch', {
                     hostname: String(values.server_name ?? ''),
                 }),
             };
@@ -182,17 +191,17 @@ const mapConfigText = (
         // not trusted` on macOS — and every other verify complaint, an expired
         // certificate included: the backend treats all of them as
         // non-critical, and so does the certificate step.  Warn, never block.
-        return { kind: 'warning', message: msg('tls_setup_warning_cert_untrusted') };
+        return { kind: 'warning', message: intl.getMessage('tls_setup_warning_cert_untrusted') };
     }
     if (text.includes('certificates has no IP addresses')) {
-        return { kind: 'warning', message: msg('tls_setup_warning_no_ip') };
+        return { kind: 'warning', message: intl.getMessage('tls_setup_warning_no_ip') };
     }
     if (text.includes('certificate-key pair') || text.includes('parsing private key')) {
         // The pair is checked on the key step, which is where the key lives.
         return {
             field: keyFieldOf(values),
             kind: 'error',
-            message: msg('tls_setup_error_key_mismatch'),
+            message: intl.getMessage('tls_setup_error_key_mismatch'),
         };
     }
 
@@ -245,7 +254,11 @@ export const mapStepResult = (
         if (!res.valid_pair) {
             return text
                 ? mapKeyText(text, key)
-                : { field: key, kind: 'error', message: msg('tls_setup_error_key_mismatch') };
+                : {
+                      field: key,
+                      kind: 'error',
+                      message: intl.getMessage('tls_setup_error_key_mismatch'),
+                  };
         }
 
         if (text) return mapCertText(text, cert, true, datesInvalid);
@@ -261,7 +274,7 @@ export const mapStepResult = (
             return {
                 field: cert,
                 kind: 'error',
-                message: msg('tls_setup_error_parse_cert'),
+                message: intl.getMessage('tls_setup_error_parse_cert'),
             };
         }
 
@@ -269,14 +282,14 @@ export const mapStepResult = (
             return {
                 field: key,
                 kind: 'error',
-                message: msg('tls_setup_error_parse_key'),
+                message: intl.getMessage('tls_setup_error_parse_key'),
             };
         }
 
         return {
             field: key,
             kind: 'error',
-            message: msg('tls_setup_error_key_mismatch'),
+            message: intl.getMessage('tls_setup_error_key_mismatch'),
         };
     }
 

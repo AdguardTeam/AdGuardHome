@@ -6,7 +6,7 @@ import theme from 'panel/lib/theme';
 import { Select } from 'panel/common/controls/Select';
 import intl from 'panel/common/intl';
 import type { IOption } from 'panel/lib/helpers/utils';
-import { useIsMobile } from 'panel/hooks/useIsMobile';
+import { useIsMobile } from 'panel/hooks/useMediaQuery';
 
 type Props = {
     currentPage: number;

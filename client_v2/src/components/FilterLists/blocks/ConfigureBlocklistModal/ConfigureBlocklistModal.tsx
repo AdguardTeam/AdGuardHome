@@ -259,6 +259,7 @@ export const ConfigureBlocklistModal = (props: Props) => {
                             size="small"
                             onClick={handleCancel}
                             class={theme.dialog.button}
+                            onCard
                         >
                             {intl.getMessage('cancel')}
                         </Button>
