@@ -80,7 +80,7 @@ func TestServer_ProcessInitial(t *testing.T) {
 				TLSConf: &TLSConfig{},
 				Config: Config{
 					AAAADisabled:     tc.aaaaDisabled,
-					UpstreamMode:     UpstreamModeLoadBalance,
+					UpstreamMode:     proxy.UpstreamModeLoadBalance,
 					EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 					ClientsContainer: EmptyClientsContainer{},
 				},
@@ -184,7 +184,7 @@ func TestServer_ProcessFilteringAfterResponse(t *testing.T) {
 				TLSConf: &TLSConfig{},
 				Config: Config{
 					AAAADisabled:     tc.aaaaDisabled,
-					UpstreamMode:     UpstreamModeLoadBalance,
+					UpstreamMode:     proxy.UpstreamModeLoadBalance,
 					EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 					ClientsContainer: EmptyClientsContainer{},
 				},
@@ -344,7 +344,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 				ServerConfig{
 					Config: Config{
 						HandleDDR:        tc.ddrEnabled,
-						UpstreamMode:     UpstreamModeLoadBalance,
+						UpstreamMode:     proxy.UpstreamModeLoadBalance,
 						EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 						ClientsContainer: EmptyClientsContainer{},
 					},
@@ -686,7 +686,7 @@ func TestServer_ProcessUpstream_localPTR(t *testing.T) {
 				TCPListenAddrs: []*net.TCPAddr{{}},
 				TLSConf:        &TLSConfig{},
 				Config: Config{
-					UpstreamMode:     UpstreamModeLoadBalance,
+					UpstreamMode:     proxy.UpstreamModeLoadBalance,
 					EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 					ClientsContainer: EmptyClientsContainer{},
 				},
@@ -717,7 +717,7 @@ func TestServer_ProcessUpstream_localPTR(t *testing.T) {
 				TCPListenAddrs: []*net.TCPAddr{{}},
 				TLSConf:        &TLSConfig{},
 				Config: Config{
-					UpstreamMode:     UpstreamModeLoadBalance,
+					UpstreamMode:     proxy.UpstreamModeLoadBalance,
 					EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 					ClientsContainer: EmptyClientsContainer{},
 				},

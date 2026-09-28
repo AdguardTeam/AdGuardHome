@@ -273,7 +273,7 @@ func createTestTLS(tb testing.TB, tlsConf *TLSConfig) (s *Server, tlsManager agh
 			TCPListenAddrs: []*net.TCPAddr{{}},
 			TLSConf:        tlsConf,
 			Config: Config{
-				UpstreamMode:     UpstreamModeLoadBalance,
+				UpstreamMode:     proxy.UpstreamModeLoadBalance,
 				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 				ClientsContainer: EmptyClientsContainer{},
 			},
@@ -414,7 +414,7 @@ func TestServer(t *testing.T) {
 			TCPListenAddrs: []*net.TCPAddr{{}},
 			TLSConf:        &TLSConfig{},
 			Config: Config{
-				UpstreamMode:     UpstreamModeLoadBalance,
+				UpstreamMode:     proxy.UpstreamModeLoadBalance,
 				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 				ClientsContainer: EmptyClientsContainer{},
 			},
@@ -458,7 +458,7 @@ func TestServer_timeout(t *testing.T) {
 			UpstreamTimeout: testTimeout,
 			TLSConf:         &TLSConfig{},
 			Config: Config{
-				UpstreamMode:     UpstreamModeLoadBalance,
+				UpstreamMode:     proxy.UpstreamModeLoadBalance,
 				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 				ClientsContainer: EmptyClientsContainer{},
 			},
@@ -487,7 +487,7 @@ func TestServer_timeout(t *testing.T) {
 		require.NoError(t, err)
 
 		s.conf.TLSConf = &TLSConfig{}
-		s.conf.Config.UpstreamMode = UpstreamModeLoadBalance
+		s.conf.Config.UpstreamMode = proxy.UpstreamModeLoadBalance
 		s.conf.Config.EDNSClientSubnet = &EDNSClientSubnet{
 			Enabled: false,
 		}
@@ -510,7 +510,7 @@ func TestServerWithProtectionDisabled(t *testing.T) {
 			TCPListenAddrs: []*net.TCPAddr{{}},
 			TLSConf:        &TLSConfig{},
 			Config: Config{
-				UpstreamMode:     UpstreamModeLoadBalance,
+				UpstreamMode:     proxy.UpstreamModeLoadBalance,
 				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 				ClientsContainer: EmptyClientsContainer{},
 			},
@@ -588,7 +588,7 @@ func TestServerRace(t *testing.T) {
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		Config: Config{
-			UpstreamMode: UpstreamModeLoadBalance,
+			UpstreamMode: proxy.UpstreamModeLoadBalance,
 			UpstreamDNS:  []string{"8.8.8.8:53", "8.8.4.4:53"},
 		},
 		ConfModifier:  agh.EmptyConfigModifier{},
@@ -641,7 +641,7 @@ func TestSafeSearch(t *testing.T) {
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		TLSConf:        &TLSConfig{},
 		Config: Config{
-			UpstreamMode: UpstreamModeLoadBalance,
+			UpstreamMode: proxy.UpstreamModeLoadBalance,
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
@@ -741,7 +741,7 @@ func TestInvalidRequest(t *testing.T) {
 			TCPListenAddrs: []*net.TCPAddr{{}},
 			TLSConf:        &TLSConfig{},
 			Config: Config{
-				UpstreamMode:     UpstreamModeLoadBalance,
+				UpstreamMode:     proxy.UpstreamModeLoadBalance,
 				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 				ClientsContainer: EmptyClientsContainer{},
 			},
@@ -773,7 +773,7 @@ func TestBlockedRequest(t *testing.T) {
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		TLSConf:        &TLSConfig{},
 		Config: Config{
-			UpstreamMode: UpstreamModeLoadBalance,
+			UpstreamMode: proxy.UpstreamModeLoadBalance,
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
@@ -817,7 +817,7 @@ func TestServerCustomClientUpstream(t *testing.T) {
 		TLSConf:        &TLSConfig{},
 		Config: Config{
 			CacheSize:    defaultCacheSize,
-			UpstreamMode: UpstreamModeLoadBalance,
+			UpstreamMode: proxy.UpstreamModeLoadBalance,
 			EnableDNSSEC: true,
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
@@ -905,7 +905,7 @@ func TestBlockCNAMEProtectionEnabled(t *testing.T) {
 			TCPListenAddrs: []*net.TCPAddr{{}},
 			TLSConf:        &TLSConfig{},
 			Config: Config{
-				UpstreamMode:     UpstreamModeLoadBalance,
+				UpstreamMode:     proxy.UpstreamModeLoadBalance,
 				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 				ClientsContainer: EmptyClientsContainer{},
 			},
@@ -939,7 +939,7 @@ func TestBlockCNAME(t *testing.T) {
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		TLSConf:        &TLSConfig{},
 		Config: Config{
-			UpstreamMode: UpstreamModeLoadBalance,
+			UpstreamMode: proxy.UpstreamModeLoadBalance,
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
@@ -1014,7 +1014,7 @@ func TestClientRulesForCNAMEMatching(t *testing.T) {
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		TLSConf:        &TLSConfig{},
 		Config: Config{
-			UpstreamMode: UpstreamModeLoadBalance,
+			UpstreamMode: proxy.UpstreamModeLoadBalance,
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
@@ -1063,7 +1063,7 @@ func TestNullBlockedRequest(t *testing.T) {
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		TLSConf:        &TLSConfig{},
 		Config: Config{
-			UpstreamMode: UpstreamModeLoadBalance,
+			UpstreamMode: proxy.UpstreamModeLoadBalance,
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
@@ -1151,7 +1151,7 @@ func TestBlockedCustomIP(t *testing.T) {
 		TLSConf:        &TLSConfig{},
 		Config: Config{
 			UpstreamDNS:  []string{"8.8.8.8:53", "8.8.4.4:53"},
-			UpstreamMode: UpstreamModeLoadBalance,
+			UpstreamMode: proxy.UpstreamModeLoadBalance,
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
@@ -1207,7 +1207,7 @@ func TestBlockedByHosts(t *testing.T) {
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		TLSConf:        &TLSConfig{},
 		Config: Config{
-			UpstreamMode: UpstreamModeLoadBalance,
+			UpstreamMode: proxy.UpstreamModeLoadBalance,
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
@@ -1284,7 +1284,7 @@ func TestBlockedBySafeBrowsing(t *testing.T) {
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		TLSConf:        &TLSConfig{},
 		Config: Config{
-			UpstreamMode: UpstreamModeLoadBalance,
+			UpstreamMode: proxy.UpstreamModeLoadBalance,
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
@@ -1362,7 +1362,7 @@ func TestRewrite(t *testing.T) {
 		TLSConf:        &TLSConfig{},
 		Config: Config{
 			UpstreamDNS:  []string{"8.8.8.8:53"},
-			UpstreamMode: UpstreamModeLoadBalance,
+			UpstreamMode: proxy.UpstreamModeLoadBalance,
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
@@ -1501,7 +1501,7 @@ func TestPTRResponseFromDHCPLeases(t *testing.T) {
 	s.conf.TLSConf = &TLSConfig{}
 	s.conf.Config.EDNSClientSubnet = &EDNSClientSubnet{Enabled: false}
 	s.conf.Config.ClientsContainer = EmptyClientsContainer{}
-	s.conf.Config.UpstreamMode = UpstreamModeLoadBalance
+	s.conf.Config.UpstreamMode = proxy.UpstreamModeLoadBalance
 
 	err = s.Prepare(testutil.ContextWithTimeout(t, testTimeout), &s.conf)
 	require.NoError(t, err)
@@ -1592,7 +1592,7 @@ func TestPTRResponseFromHosts(t *testing.T) {
 	s.conf.TLSConf = &TLSConfig{}
 	s.conf.Config.EDNSClientSubnet = &EDNSClientSubnet{Enabled: false}
 	s.conf.Config.ClientsContainer = EmptyClientsContainer{}
-	s.conf.Config.UpstreamMode = UpstreamModeLoadBalance
+	s.conf.Config.UpstreamMode = proxy.UpstreamModeLoadBalance
 
 	err = s.Prepare(testutil.ContextWithTimeout(t, testTimeout), &s.conf)
 	require.NoError(t, err)
@@ -1864,7 +1864,7 @@ func TestServer_Exchange(t *testing.T) {
 					TLSConf: &TLSConfig{},
 					Config: Config{
 						UpstreamDNS:      []string{upsAddr},
-						UpstreamMode:     UpstreamModeLoadBalance,
+						UpstreamMode:     proxy.UpstreamModeLoadBalance,
 						EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 						ClientsContainer: EmptyClientsContainer{},
 					},
@@ -1894,7 +1894,7 @@ func TestServer_Exchange(t *testing.T) {
 				TLSConf: &TLSConfig{},
 				Config: Config{
 					UpstreamDNS:      []string{upsAddr},
-					UpstreamMode:     UpstreamModeLoadBalance,
+					UpstreamMode:     proxy.UpstreamModeLoadBalance,
 					EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 					ClientsContainer: EmptyClientsContainer{},
 				},
@@ -1926,7 +1926,7 @@ func TestServer_ratelimit(t *testing.T) {
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		TLSConf:        &TLSConfig{},
 		Config: Config{
-			UpstreamMode:           UpstreamModeLoadBalance,
+			UpstreamMode:           proxy.UpstreamModeLoadBalance,
 			EDNSClientSubnet:       &EDNSClientSubnet{Enabled: false},
 			ClientsContainer:       EmptyClientsContainer{},
 			RatelimitSubnetLenIPv4: netutil.IPv4BitLen,

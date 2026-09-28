@@ -301,7 +301,7 @@ func TestServer_ServeDNS_dns64(t *testing.T) {
 					UseDNS64:       true,
 					TLSConf:        &TLSConfig{},
 					Config: Config{
-						UpstreamMode:     UpstreamModeLoadBalance,
+						UpstreamMode:     proxy.UpstreamModeLoadBalance,
 						EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 						ClientsContainer: EmptyClientsContainer{},
 						UpstreamDNS:      []string{upsAddr},
@@ -346,7 +346,7 @@ func TestServer_dns64WithDisabledRDNS(t *testing.T) {
 			UseDNS64:       true,
 			TLSConf:        &TLSConfig{},
 			Config: Config{
-				UpstreamMode:     UpstreamModeLoadBalance,
+				UpstreamMode:     proxy.UpstreamModeLoadBalance,
 				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 				ClientsContainer: EmptyClientsContainer{},
 				UpstreamDNS:      []string{upsAddr},

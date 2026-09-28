@@ -24,6 +24,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
+	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/golibs/timeutil"
@@ -57,7 +58,7 @@ func TestWebAPI_HandleTLSConfigure(t *testing.T) {
 		&dnsforward.ServerConfig{
 			TLSConf: &dnsforward.TLSConfig{},
 			Config: dnsforward.Config{
-				UpstreamMode:     dnsforward.UpstreamModeLoadBalance,
+				UpstreamMode:     proxy.UpstreamModeLoadBalance,
 				EDNSClientSubnet: &dnsforward.EDNSClientSubnet{Enabled: false},
 				ClientsContainer: dnsforward.EmptyClientsContainer{},
 			},

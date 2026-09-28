@@ -312,8 +312,7 @@ func (s *Server) WriteDiskConfig(dc *configmgr.DNSConfig) {
 
 	dc.IpsetListFileName = sc.IpsetListFileName
 	dc.UpstreamDNSFileName = sc.UpstreamDNSFileName
-	// TODO(d.kolyshev): !! Check conversion.
-	dc.UpstreamMode = proxy.UpstreamMode(sc.UpstreamMode)
+	dc.UpstreamMode = sc.UpstreamMode
 
 	dc.RatelimitWhitelist = slices.Clone(sc.RatelimitWhitelist)
 	dc.TrustedProxies = slices.Clone(sc.TrustedProxies)
@@ -808,11 +807,8 @@ func (s *Server) prepareInternalProxy() (err error) {
 		UsePrivateRDNS:            srvConf.UsePrivateRDNS,
 		PrivateSubnets:            s.privateNets,
 		MessageConstructor:        s,
-	}
-
-	err = setProxyUpstreamMode(conf, srvConf.UpstreamMode, time.Duration(srvConf.FastestTimeout))
-	if err != nil {
-		return fmt.Errorf("invalid upstream mode: %w", err)
+		UpstreamMode:              srvConf.UpstreamMode,
+		FastestPingTimeout:        time.Duration(srvConf.FastestTimeout),
 	}
 
 	s.internalProxy, err = proxy.New(conf)

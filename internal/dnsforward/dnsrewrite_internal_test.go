@@ -43,7 +43,7 @@ func TestServer_FilterDNSRewrite(t *testing.T) {
 		ServerConfig{
 			TLSConf: &TLSConfig{},
 			Config: Config{
-				UpstreamMode:     UpstreamModeLoadBalance,
+				UpstreamMode:     proxy.UpstreamModeLoadBalance,
 				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 				ClientsContainer: EmptyClientsContainer{},
 			},
