@@ -125,7 +125,7 @@ pack() {
 		;
 
 	# Make the binary executable as this script may be run independently.
-	chmod +x "./${dist}/${1}/AdGuardHome"
+	chmod +x "./${dist}/${1}/AdGuardHome/AdGuardHome"
 
 	# Make archives.  Windows and macOS prefer ZIP archives; the rest,
 	# gzipped tarballs.
