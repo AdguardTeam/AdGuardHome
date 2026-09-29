@@ -28,8 +28,19 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - DHCP server persisting uncommitted leases with zero expiry after `DHCPDISCOVER` messages ([#8572]).
 
+- DHCPv4 settings not being saved when an IPv6-capable interface is selected and DHCPv6 is not configured ([#8608]).
+
+- DHCP not being enabled when only the DHCPv6 section is configured.
+
+- DHCP IPv4 range subnet validation not working ([#8609]).
+
+- Client ID validation rejecting valid IPv6 CIDRs with an embedded dotted-decimal IPv4 address ([#8610]).
+
 [#8565]:     https://github.com/AdguardTeam/AdGuardHome/issues/8565
 [#8572]:     https://github.com/AdguardTeam/AdGuardHome/issues/8572
+[#8608]:     https://github.com/AdguardTeam/AdGuardHome/issues/8608
+[#8609]:     https://github.com/AdguardTeam/AdGuardHome/issues/8609
+[#8610]:     https://github.com/AdguardTeam/AdGuardHome/issues/8610
 [go-1.26.8]: https://groups.google.com/g/golang-announce/c/QiTRm-HGGtI
 
 <!--
