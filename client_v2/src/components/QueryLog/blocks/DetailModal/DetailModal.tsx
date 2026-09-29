@@ -1,9 +1,10 @@
-import { Show, For } from 'solid-js';
+import { Show, For, createSignal } from 'solid-js';
 import cn from 'clsx';
 
 import intl from 'panel/common/intl';
 import { Dialog } from 'panel/common/ui/Dialog';
 import theme from 'panel/lib/theme';
+import { useScrollEdges } from 'panel/hooks/useScrollEdges';
 
 import {
     captitalizeWords,
@@ -67,6 +68,9 @@ const hasValue = (value: any) =>
     value !== undefined && value !== null && value !== '' && value !== false;
 
 export const DetailModal = (props: Props) => {
+    const [scrollAreaRef, setScrollAreaRef] = createSignal<HTMLDivElement>();
+    const { canScrollUp, canScrollDown } = useScrollEdges(scrollAreaRef);
+
     const statusKey = () =>
         getQueryStatusKey(props.entry.reason, props.entry.originalResponse ?? []);
     const reasonKey = () => getQueryReasonKey(props.entry.reason, props.entry.rules ?? []);
@@ -120,7 +124,13 @@ export const DetailModal = (props: Props) => {
             wrapClass={s.wrap}
         >
             <div class={s.content} data-testid="query-log-detail-modal">
-                <div class={s.scrollArea} data-testid="query-log-detail-scroll-area">
+                <div
+                    ref={setScrollAreaRef}
+                    class={s.scrollArea}
+                    data-testid="query-log-detail-scroll-area"
+                    data-can-scroll-up={String(canScrollUp())}
+                    data-can-scroll-down={String(canScrollDown())}
+                >
                     <div class={s.section}>
                         <Show when={props.entry.answer_dnssec}>
                             <div class={cn(s.row, theme.text.t3, theme.text.semibold)}>

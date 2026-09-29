@@ -117,6 +117,7 @@ export const BlockingModeDialog = (props: Props) => {
                             errorMessage={blockingIpv4.error()}
                             disabled={blockingMode() !== BLOCKING_MODES.custom_ip}
                             size="large"
+                            onCard
                         />
                     </div>
                     <div class={theme.form.input}>
@@ -140,6 +141,7 @@ export const BlockingModeDialog = (props: Props) => {
                             errorMessage={blockingIpv6.error()}
                             disabled={blockingMode() !== BLOCKING_MODES.custom_ip}
                             size="large"
+                            onCard
                         />
                     </div>
                 </>
@@ -167,6 +169,7 @@ export const BlockingModeDialog = (props: Props) => {
                     max={UINT32_RANGE.MAX}
                     errorMessage={ttl.error()}
                     size="large"
+                    onCard
                 />
             </div>
         </ConfigDialog>

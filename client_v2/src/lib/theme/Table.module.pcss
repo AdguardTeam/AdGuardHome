@@ -42,9 +42,6 @@
     }
 }
 
-/* For text-only cells that need 2-line truncation on mobile.
-   Separate from .cellValue because line-clamp requires
-   display: -webkit-box, which conflicts with display: flex. */
 .cellValueClamped {
     min-width: 0;
     flex: 1;
@@ -66,9 +63,6 @@
     }
 }
 
-/* For plain-text cells. On mobile the value stays on the label line while it
-   fits; when it is too long it drops to the next line as a single truncated
-   line instead of wrapping into many lines next to the label. */
 .cellValueText {
     min-width: 0;
     flex: 0 1 auto;
@@ -157,4 +151,9 @@
     @media (min-width: 768px) {
         display: none;
     }
+}
+
+.mobileCard {
+    background-color: var(--default-cards-background);
+    box-shadow: var(--default-cards-box-shadow);
 }

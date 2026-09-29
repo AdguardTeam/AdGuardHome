@@ -7,14 +7,16 @@ import {
     togglePrivatePtrResolvers,
     toggleResolveClients,
 } from 'panel/stores/dnsConfig';
+import { addWarningToast } from 'panel/stores/toasts';
 import intl from 'panel/common/intl';
 import { Breadcrumbs } from 'panel/common/ui/Breadcrumbs';
 import { PageLoader } from 'panel/common/ui/Loader';
 import { SettingRow } from 'panel/common/ui/SettingRow';
 import { RoutePath } from 'panel/components/Routes/Paths';
 import { useDialog } from 'panel/hooks/useDialog';
+import { useSwitchState } from 'panel/hooks/useSwitchState';
 import { PrivateReverseServersDialog } from '../Upstream/blocks/PrivateReverseServersDialog';
-import { getUpstreamServersSummary } from '../helpers';
+import { getUpstreamServersSummary, hasUsablePrivatePtrUpstreams } from '../helpers';
 import theme from 'panel/lib/theme';
 
 import s from './PrivateReverse.module.pcss';
@@ -28,9 +30,54 @@ export const PrivateReverse = () => {
 
     const processing = () => dnsConfigState.processingSetConfig;
 
+    const [privatePtrEnabled, setPrivatePtrEnabled] = useSwitchState(
+        () => dnsConfigState.use_private_ptr_resolvers,
+        processing,
+    );
+    const [resolveClients, setResolveClients] = useSwitchState(
+        () => dnsConfigState.resolve_clients,
+        processing,
+    );
+
     const privateReverseValue = createMemo(() =>
         getUpstreamServersSummary(dnsConfigState.local_ptr_upstreams),
     );
+
+    /**
+     * Enabling without a single usable server cannot work — the backend has
+     * nothing to resolve with and rejects the request — so the user is sent to
+     * the servers dialog instead.  Disabling always goes through.
+     */
+    const handlePrivatePtrResolversToggle = (checked: boolean) => {
+        if (!checked) {
+            setPrivatePtrEnabled(false);
+            togglePrivatePtrResolvers();
+
+            return;
+        }
+
+        const canResolve = hasUsablePrivatePtrUpstreams(
+            dnsConfigState.local_ptr_upstreams,
+            dnsConfigState.default_local_ptr_upstreams,
+        );
+        if (!canResolve) {
+            setPrivatePtrEnabled(false);
+            addWarningToast({
+                error: intl.getMessage('dns_private_reverse_no_default_resolvers'),
+            });
+            serversDialog.openDialog();
+
+            return;
+        }
+
+        setPrivatePtrEnabled(true);
+        togglePrivatePtrResolvers();
+    };
+
+    const handleResolveClientsToggle = (checked: boolean) => {
+        setResolveClients(checked);
+        toggleResolveClients();
+    };
 
     return (
         <Show when={!dnsConfigState.processingGetConfig} fallback={<PageLoader />}>
@@ -66,8 +113,8 @@ export const PrivateReverse = () => {
                                     </p>
                                 </>
                             }
-                            checked={dnsConfigState.use_private_ptr_resolvers}
-                            onChange={() => togglePrivatePtrResolvers()}
+                            checked={privatePtrEnabled()}
+                            onChange={handlePrivatePtrResolversToggle}
                             largeTitle
                         />
 
@@ -97,8 +144,8 @@ export const PrivateReverse = () => {
                             description={intl.getMessage(
                                 'dns_private_reverse_resolve_clients_desc',
                             )}
-                            checked={dnsConfigState.resolve_clients}
-                            onChange={() => toggleResolveClients()}
+                            checked={resolveClients()}
+                            onChange={handleResolveClientsToggle}
                             disabled={!dnsConfigState.use_private_ptr_resolvers}
                         />
                     </div>

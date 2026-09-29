@@ -2,24 +2,64 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
     stats: vi.fn(),
+    getStatsConfig: vi.fn(),
+    putStatsConfig: vi.fn(),
+    statsReset: vi.fn(),
     clientsSearch: vi.fn(),
     addErrorToast: vi.fn(),
+    addSuccessToast: vi.fn(),
 }));
 
 vi.mock('panel/api/generated', () => ({
     stats: mocks.stats,
+    getStatsConfig: mocks.getStatsConfig,
+    putStatsConfig: mocks.putStatsConfig,
+    statsReset: mocks.statsReset,
     clientsSearch: mocks.clientsSearch,
 }));
 vi.mock('panel/stores/toasts', () => ({
     addErrorToast: mocks.addErrorToast,
+    addSuccessToast: mocks.addSuccessToast,
+}));
+vi.mock('panel/common/intl', () => ({
+    default: { getMessage: vi.fn() },
 }));
 
-import { getStats, statsState } from 'panel/stores/stats';
+import { DAY } from 'panel/helpers/constants';
+
+import { getStats, getStatsConfig, statsState } from 'panel/stores/stats';
 
 describe('getStats', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mocks.clientsSearch.mockResolvedValue([]);
+        mocks.stats.mockResolvedValue({});
+    });
+
+    it('clamps the requested period by the configured stats interval', async () => {
+        await getStats(DAY * 30);
+        expect(mocks.stats).toHaveBeenCalledWith({ recent: DAY });
+
+        // A smaller period is passed through untouched.
+        await getStats(6 * 60 * 60 * 1000);
+        expect(mocks.stats).toHaveBeenCalledWith({ recent: 6 * 60 * 60 * 1000 });
+    });
+
+    it('calls the API without params when no period is given', async () => {
+        await getStats();
+        expect(mocks.stats).toHaveBeenCalledWith(undefined);
+    });
+
+    it('marks statsAttempted after a successful stats request', async () => {
+        await getStats();
+        expect(statsState.statsAttempted).toBe(true);
+    });
+
+    it('marks statsAttempted after a failed stats request', async () => {
+        mocks.stats.mockRejectedValue(new Error('network'));
+        await getStats();
+        expect(statsState.statsAttempted).toBe(true);
+        expect(mocks.addErrorToast).toHaveBeenCalled();
     });
 
     it('enriches top clients and stores normalizedTopClients', async () => {
@@ -68,5 +108,31 @@ describe('getStats', () => {
             { name: '1.1.1.1', count: 12 },
             { name: '9.9.9.9', count: 300 },
         ]);
+    });
+});
+
+describe('getStatsConfig', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
+    it('marks configAttempted but not configLoaded on failure', async () => {
+        mocks.getStatsConfig.mockRejectedValue(new Error('network'));
+
+        await getStatsConfig();
+
+        expect(statsState.configAttempted).toBe(true);
+        expect(statsState.configLoaded).toBe(false);
+        expect(mocks.addErrorToast).toHaveBeenCalled();
+    });
+
+    it('marks configLoaded and configAttempted on success', async () => {
+        mocks.getStatsConfig.mockResolvedValue({ interval: DAY * 30, enabled: true });
+
+        await getStatsConfig();
+
+        expect(statsState.configLoaded).toBe(true);
+        expect(statsState.configAttempted).toBe(true);
+        expect(statsState.interval).toBe(DAY * 30);
     });
 });

@@ -1,0 +1,29 @@
+.item {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: 56px;
+    padding: 16px;
+    border: 0;
+    background: none;
+    appearance: none;
+    font-family: inherit;
+    text-align: left;
+    color: var(--default-link);
+    cursor: pointer;
+    transition: background-color var(--t2);
+
+    &:hover,
+    &:focus-visible {
+        background-color: var(--hovered-dropdown-menu-background);
+        outline: 0;
+    }
+
+    &:active {
+        background-color: var(--pressed-dropdown-menu-background);
+    }
+}
+
+.itemDanger {
+    color: var(--default-error-link);
+}

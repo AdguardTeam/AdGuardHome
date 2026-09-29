@@ -43,6 +43,9 @@ export type QueryParams = Record<string, string | number | boolean>;
 /** Query param key used to pass a target element ID for scroll-to-section navigation. */
 export const SCROLL_QUERY_KEY = 'section';
 
+/** Query param key used to open the TLS setup wizard on the encryption page. */
+export const TLS_WIZARD_QUERY_KEY = 'tlsWizard';
+
 export const Paths: Record<RoutePathKey, string> = {
     Dashboard: pathBuilder('dashboard'),
     Logs: pathBuilder('logs'),

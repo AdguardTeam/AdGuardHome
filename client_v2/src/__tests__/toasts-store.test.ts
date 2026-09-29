@@ -41,4 +41,26 @@ describe('toasts store', () => {
         const last = toastsState.notices[toastsState.notices.length - 1];
         expect(last.message).toBe('config_successfully_saved');
     });
+
+    it('collapses a repeated identical error into one notice', () => {
+        addErrorToast({ error: 'boom' });
+        addErrorToast({ error: 'boom' });
+
+        expect(toastsState.notices.filter((n) => n.message === 'boom')).toHaveLength(1);
+    });
+
+    it('keeps notices with different messages apart', () => {
+        addErrorToast({ error: 'boom' });
+        addErrorToast({ error: 'bang' });
+
+        expect(toastsState.notices).toHaveLength(2);
+    });
+
+    it('does not collapse an error that carries an action', () => {
+        const action = { text: 'retry', callback: () => {} };
+        addErrorToast({ error: 'boom', action });
+        addErrorToast({ error: 'boom' });
+
+        expect(toastsState.notices).toHaveLength(2);
+    });
 });

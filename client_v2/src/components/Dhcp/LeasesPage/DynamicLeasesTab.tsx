@@ -58,7 +58,7 @@ export const DynamicLeasesTab = () => {
                     text={intl.getMessage('delete_confirm_desc', {
                         ip: confirmDeleteLease()?.ip,
                     })}
-                    buttonText={intl.getMessage('delete_table_action_confirm')}
+                    buttonText={intl.getMessage('yes_remove')}
                     cancelText={intl.getMessage('cancel')}
                     buttonVariant="danger"
                     onConfirm={handleConfirmDeleteLease}

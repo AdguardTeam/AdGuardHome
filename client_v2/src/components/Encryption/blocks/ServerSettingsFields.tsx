@@ -17,6 +17,7 @@ type Props = {
     values: ServerSettingsValues;
     onFieldChange: (field: ServerSettingsField, value: string) => void;
     onFieldBlur: (field: ServerSettingsField) => void;
+    onFieldInput?: (field: ServerSettingsField, value: string) => void;
     errorFor?: (field: ServerSettingsField) => string | undefined;
     warningFor?: (field: ServerSettingsField) => string | undefined;
     idPrefix?: string;
@@ -61,6 +62,7 @@ const PortInput = (props: PortInputProps) => (
             label={props.label}
             errorMessage={props.errorMessage}
             size="large"
+            onCard
             data-testid={props.testId}
         />
         <FieldWarning
@@ -92,6 +94,12 @@ export const ServerSettingsFields = (props: Props) => {
                     onChange={(e) =>
                         props.onFieldChange('server_name', (e.target as HTMLInputElement).value)
                     }
+                    onInput={(e) =>
+                        props.onFieldInput?.(
+                            'server_name',
+                            (e.currentTarget as HTMLInputElement).value,
+                        )
+                    }
                     onBlur={() => props.onFieldBlur('server_name')}
                     isClearable={props.clearable}
                     label={
@@ -110,6 +118,7 @@ export const ServerSettingsFields = (props: Props) => {
                     placeholder={intl.getMessage('encryption_server_enter')}
                     errorMessage={error('server_name')}
                     size="large"
+                    onCard
                     data-testid={testId('server-name')}
                 />
                 <FieldWarning

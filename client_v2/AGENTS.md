@@ -324,6 +324,10 @@ must not depend on stores or components. Helpers are pure and dependency-free.
 './Foo.module.pcss'` — and reference classes as `s.button`, `s[variant]`.
   Compose conditional classes with `clsx`, imported as `cn`:
   `import cn from 'clsx'` (e.g. `cn(s.button, s.primary, { [s.active]: on() })`).
+- **Hover styles**: Wrap `:hover` styling in `@media (hover: hover)` so touch
+  devices do not keep a stuck highlight after a tap. Gate `:hover` together
+  with `:focus` on row links, since a tap also focuses an `<a>` in Chrome;
+  leave `:focus-visible` outlines ungated for keyboard users.
 - **Colors**: Never hardcode color hex values in `.pcss` or inline styles.
   Always reference the CSS custom properties defined in
   `src/common/styles/vars.css` and `src/common/styles/colors/*.css`
@@ -346,6 +350,14 @@ must not depend on stores or components. Helpers are pure and dependency-free.
   a conditional class via `cn(...)`, not an inline `style`. Exception: a single
   computed pixel offset for a dragging/positioning edge case may be acceptable
   when no class-based solution exists — justify it in a comment.
+- **Comments**: Write comments only where they earn their place, and keep
+  them useful and compact — one or two lines explaining a non-obvious
+  *why*: a workaround, a browser quirk, or a cross-file constraint a
+  reader would otherwise break. Do not narrate what a rule or function
+  does, restate selector/property names, or spell out measurements,
+  arithmetic, and design history; that belongs with the value it
+  constrains or in the PR description. Applies to `.pcss`, `.tsx`, and
+  tests alike. Delete a comment once the code it describes changes.
 - **Reactivity**: Use `createSignal` for local state, `createMemo` for
   derived values, `createEffect` for side effects, `onMount` for initial data
   fetches, and `onCleanup` for teardown. Do not read signals imperatively
