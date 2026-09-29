@@ -14,6 +14,7 @@ import {
     FILTERED,
     FILTERED_STATUS,
     R_CLIENT_ID,
+    R_IPV4,
     STANDARD_HTTPS_PORT,
     STANDARD_WEB_PORT,
     SPECIAL_FILTER_ID,
@@ -607,23 +608,26 @@ export const isIpInCidr = (ip: string, cidr: string): boolean => {
 
 /**
  * Validates an IPv6 address using ipaddr.js, including zone IDs (e.g., fe80::1%eth0).
+ * A mixed-notation address with a dotted-decimal IPv4 tail must use a canonical
+ * IPv4 spelling there as well: netip.ParseAddr, which the backend uses, rejects
+ * the leading-zero form (e.g. ::ffff:192.168.01.1).
  * @param value - The string to validate.
  * @returns true if the value is a valid IPv6 address.
  */
 export const isValidIpv6 = (value: string): boolean => {
     try {
-        return ipaddr.IPv6.isValid(value);
+        if (!ipaddr.IPv6.isValid(value)) {
+            return false;
+        }
     } catch (_e) {
         return false;
     }
-};
 
-/**
- * Matches a canonical dotted-decimal IPv4 address: four octets, no leading
- * zeros.  Mirrors the spellings netip.ParseAddr accepts.
- */
-const R_CANONICAL_IPV4 =
-    /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
+    const addr = value.split('%')[0];
+    const tail = addr.slice(addr.lastIndexOf(':') + 1);
+
+    return !tail.includes('.') || R_IPV4.test(tail);
+};
 
 /**
  * Matches a prefix length without leading zeros, as netip.ParsePrefix requires.
@@ -659,13 +663,13 @@ export const isValidCidr = (value: string): boolean => {
     if (colon === -1) {
         // netip.ParseAddr requires canonical dotted-decimal IPv4, while
         // ipaddr.js also takes octal, hexadecimal and single-number spellings.
-        if (!R_CANONICAL_IPV4.test(addr)) {
+        if (!R_IPV4.test(addr)) {
             return false;
         }
     } else {
         // The same applies to the IPv4 tail of a mixed-notation IPv6 address.
         const ipv4Part = addr.slice(colon + 1);
-        if (ipv4Part.includes('.') && !R_CANONICAL_IPV4.test(ipv4Part)) {
+        if (ipv4Part.includes('.') && !R_IPV4.test(ipv4Part)) {
             return false;
         }
     }

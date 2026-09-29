@@ -5,10 +5,16 @@ export const R_URL_REQUIRES_PROTOCOL = /^https?:\/\/[^/\s]+(\/.*)?$/;
 // matches hostname or *.wildcard
 export const R_HOST = /^(\*\.)?[\w.-]+$/;
 
-export const R_IPV4 = /^(?:(?:^|\.)(?:2(?:5[0-5]|[0-4]\d)|1?\d?\d)){4}$/;
+// Matches a canonical dotted-decimal IPv4 address: four octets, no leading
+// zeros.  Mirrors the spellings netip.ParseAddr accepts, so the form never
+// accepts a value the server would refuse (e.g. 192.168.01.1).
+export const R_IPV4 = /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
 
+// Mirrors the backend's net.ParseMAC: exactly two hex digits per field, a
+// uniform separator, and the six- and eight-byte field counts, so over-long
+// fields and mixed separators are rejected by the form as well.
 export const R_MAC =
-    /^((([a-fA-F0-9][a-fA-F0-9]+[-:]){5})([a-fA-F0-9]{2})$)|^((([a-fA-F0-9][a-fA-F0-9]+[-:]){7})([a-fA-F0-9]{2})$)|^([a-fA-F0-9][a-fA-F0-9][a-fA-F0-9][a-fA-F0-9]+[.]){2}([a-fA-F0-9]{4})$|^([a-fA-F0-9][a-fA-F0-9][a-fA-F0-9][a-fA-F0-9]+[.]){3}([a-fA-F0-9]{4})$/;
+    /^(([a-fA-F0-9]{2}:){5}[a-fA-F0-9]{2})$|^(([a-fA-F0-9]{2}-){5}[a-fA-F0-9]{2})$|^(([a-fA-F0-9]{2}:){7}[a-fA-F0-9]{2})$|^(([a-fA-F0-9]{2}-){7}[a-fA-F0-9]{2})$|^(([a-fA-F0-9]{4}\.){2}[a-fA-F0-9]{4})$|^(([a-fA-F0-9]{4}\.){3}[a-fA-F0-9]{4})$/;
 export const R_MAC_WITHOUT_COLON =
     /^([a-fA-F0-9]{2}){5}([a-fA-F0-9]{2})$|^([a-fA-F0-9]{2}){7}([a-fA-F0-9]{2})$/;
 
@@ -23,7 +29,10 @@ export const R_WIN_ABSOLUTE_PATH =
     // eslint-disable-next-line no-control-regex
     /^([a-zA-Z]:)?(\\|\/)(?:[^\\/:*?"<>|\x00]+\\)*[^\\/:*?"<>|\x00]*$/;
 
-export const R_CLIENT_ID = /^[a-z0-9-]{1,63}$/;
+// Mirrors the backend's netutil.ValidateHostnameLabel: 1–63 lowercase
+// alphanumerics and hyphens, but the first and last runes must be
+// alphanumeric, so values like "-abc" or "abc-" are rejected by the server.
+export const R_CLIENT_ID = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/;
 
 export const R_HOSTNAME = /^[a-z0-9-]+$/;
 

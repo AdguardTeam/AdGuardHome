@@ -17,6 +17,10 @@ describe('validateClientsPerLine', () => {
         expect(validateClientsPerLine('192.168.1.1')).toBeUndefined();
     });
 
+    it('rejects a non-canonical IPv4 address', () => {
+        expect(validateClientsPerLine('192.168.01.1')).toBe(copy('form_error_format'));
+    });
+
     it('returns undefined for valid IPv6', () => {
         expect(validateClientsPerLine('::1')).toBeUndefined();
         expect(validateClientsPerLine('2001:db8::1')).toBeUndefined();
