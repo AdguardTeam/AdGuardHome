@@ -5,7 +5,11 @@ import {
     omitEmptySections,
     validateClientId,
     validateGatewaySubnetMask,
+    validateIp,
     validateIpForGatewaySubnetMask,
+    validateIpv4,
+    validateIpv6,
+    validateMac,
     validateRequiredIfFilled,
     validateRequiredIfSectionFilled,
 } from '../helpers/validators';
@@ -84,6 +88,110 @@ describe('validateClientId', () => {
 
     test('rejects malformed identifiers', () => {
         expect(validateClientId('not a client id')).toBe('form_error_client_id_format');
+    });
+
+    // REGRESSION: netip.ParseAddr rejects IPv4 addresses with leading-zero
+    // octets, so the backend answers 400 for identifiers the form accepted.
+    test('rejects non-canonical IPv4 addresses with leading zeros', () => {
+        expect(validateClientId('192.168.01.1')).toBe('form_error_client_id_format');
+        expect(validateClientId('010.0.0.1')).toBe('form_error_client_id_format');
+        expect(validateClientId('192.168.001.1')).toBe('form_error_client_id_format');
+    });
+
+    test('rejects an IPv6 address with a non-canonical embedded IPv4 tail', () => {
+        expect(validateClientId('::ffff:192.168.01.1')).toBe('form_error_client_id_format');
+        expect(validateClientId('::ffff:192.168.1.1')).toBeUndefined();
+    });
+
+    // REGRESSION: netutil.ValidateHostnameLabel requires alphanumeric first
+    // and last runes, so leading/trailing hyphens are rejected by the server.
+    test('rejects client IDs with leading or trailing hyphens', () => {
+        expect(validateClientId('-abc')).toBe('form_error_client_id_format');
+        expect(validateClientId('abc-')).toBe('form_error_client_id_format');
+        expect(validateClientId('-')).toBe('form_error_client_id_format');
+        expect(validateClientId('---')).toBe('form_error_client_id_format');
+        expect(validateClientId('a-b')).toBeUndefined();
+        expect(validateClientId('a--b')).toBeUndefined();
+    });
+
+    // REGRESSION: net.ParseMAC requires exactly two hex digits per field and a
+    // uniform separator; the old R_MAC accepted over-long fields and mixed
+    // separators, which the server answers with 400.
+    test('rejects MAC addresses the server would refuse', () => {
+        expect(validateClientId('aaaa:bb:cc:dd:ee:ff')).toBe('form_error_client_id_format');
+        expect(validateClientId('aa:bbb:cc:dd:ee:ff')).toBe('form_error_client_id_format');
+        expect(validateClientId('aa:bb-cc:dd:ee:ff')).toBe('form_error_client_id_format');
+        expect(validateClientId('aaaaa.bbbbb.cccc')).toBe('form_error_client_id_format');
+        expect(validateClientId('aa:bb:cc:dd:ee:ff')).toBeUndefined();
+        expect(validateClientId('aa-bb-cc-dd-ee-ff')).toBeUndefined();
+        expect(validateClientId('aabb.ccdd.eeff')).toBeUndefined();
+    });
+
+    // REGRESSION: netip.ParseAddr rejects a zone ID on fe80: without at least
+    // one group after the colon.
+    test('rejects an fe80 address with no groups before the zone ID', () => {
+        expect(validateClientId('fe80:%eth0')).toBe('form_error_client_id_format');
+        expect(validateClientId('fe80::%eth0')).toBeUndefined();
+        expect(validateClientId('fe80::1%eth0')).toBeUndefined();
+    });
+});
+
+describe('validateIpv4', () => {
+    test('accepts canonical IPv4 addresses', () => {
+        expect(validateIpv4('0.0.0.0')).toBeUndefined();
+        expect(validateIpv4('192.168.1.1')).toBeUndefined();
+        expect(validateIpv4('255.255.255.255')).toBeUndefined();
+    });
+
+    // REGRESSION: the same netip.ParseAddr contract as validateClientId.
+    test('rejects non-canonical IPv4 addresses with leading zeros', () => {
+        expect(validateIpv4('192.168.01.1')).toBe('form_error_ip4_format');
+        expect(validateIpv4('010.0.0.1')).toBe('form_error_ip4_format');
+        expect(validateIpv4('192.168.1.01')).toBe('form_error_ip4_format');
+    });
+});
+
+describe('validateIp', () => {
+    test('accepts canonical IPv4 and IPv6 addresses', () => {
+        expect(validateIp('192.168.1.1')).toBeUndefined();
+        expect(validateIp('::1')).toBeUndefined();
+    });
+
+    test('rejects non-canonical IPv4 addresses with leading zeros', () => {
+        expect(validateIp('192.168.01.1')).toBe('form_error_ip_format');
+        expect(validateIp('010.0.0.1')).toBe('form_error_ip_format');
+    });
+});
+
+describe('validateIpv6', () => {
+    test('accepts IPv6 addresses, including zone IDs and embedded canonical IPv4', () => {
+        expect(validateIpv6('2001:db8::1')).toBeUndefined();
+        expect(validateIpv6('fe80::1%eth0')).toBeUndefined();
+        expect(validateIpv6('::ffff:192.168.1.1')).toBeUndefined();
+    });
+
+    test('rejects an IPv6 address with a non-canonical embedded IPv4 tail', () => {
+        expect(validateIpv6('::ffff:192.168.01.1')).toBe('form_error_ip6_format');
+    });
+
+    test('rejects an fe80 address with no groups before the zone ID', () => {
+        expect(validateIpv6('fe80:%eth0')).toBe('form_error_ip6_format');
+    });
+});
+
+describe('validateMac', () => {
+    test('accepts the formats the server parses', () => {
+        expect(validateMac('aa:bb:cc:dd:ee:ff')).toBeUndefined();
+        expect(validateMac('AA:BB:CC:DD:EE:FF')).toBeUndefined();
+        expect(validateMac('aa-bb-cc-dd-ee-ff')).toBeUndefined();
+        expect(validateMac('aabb.ccdd.eeff')).toBeUndefined();
+        expect(validateMac('00:00:5e:00:53:01:02:03')).toBeUndefined();
+    });
+
+    test('rejects over-long fields and mixed separators', () => {
+        expect(validateMac('aaaa:bb:cc:dd:ee:ff')).toBe('form_error_mac_format');
+        expect(validateMac('aa:bb-cc:dd:ee:ff')).toBe('form_error_mac_format');
+        expect(validateMac('aaaaa.bbbbb.cccc')).toBe('form_error_mac_format');
     });
 });
 

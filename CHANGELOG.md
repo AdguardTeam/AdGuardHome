@@ -36,6 +36,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Client ID validation rejecting valid IPv6 CIDRs with an embedded dotted-decimal IPv4 address ([#8610]).
 
+- Client ID validation accepting IPv4 addresses with leading-zero octets (`192.168.01.1`), malformed MAC addresses, and ClientIDs with leading or trailing hyphens.
+
 [#8565]:     https://github.com/AdguardTeam/AdGuardHome/issues/8565
 [#8572]:     https://github.com/AdguardTeam/AdGuardHome/issues/8572
 [#8608]:     https://github.com/AdguardTeam/AdGuardHome/issues/8608

@@ -1,6 +1,13 @@
 import { describe, expect, test, afterEach, vi, beforeEach, it } from 'vitest';
 
-import { sortIp, countClientsStatistics, findAddressType, isValidCidr, subnetMaskToBitMask } from '../helpers/helpers';
+import {
+    sortIp,
+    countClientsStatistics,
+    findAddressType,
+    isValidCidr,
+    isValidIpv6,
+    subnetMaskToBitMask,
+} from '../helpers/helpers';
 import { ADDRESS_TYPES } from '../helpers/constants';
 
 describe('sortIp', () => {
@@ -506,5 +513,31 @@ describe('isValidCidr', () => {
         expect(isValidCidr('2001:db8::/129')).toBe(false);
         expect(isValidCidr('192.168.1.0')).toBe(false);
         expect(isValidCidr('')).toBe(false);
+    });
+});
+
+describe('isValidIpv6', () => {
+    test('accepts IPv6 addresses, including zone IDs', () => {
+        expect(isValidIpv6('2001:db8::1')).toBe(true);
+        expect(isValidIpv6('fe80::1%eth0')).toBe(true);
+        expect(isValidIpv6('fe80::%eth0')).toBe(true);
+        expect(isValidIpv6('::ffff:192.168.1.1')).toBe(true);
+    });
+
+    // REGRESSION: netip.ParseAddr rejects the dotted-decimal IPv4 tail of a
+    // mixed-notation IPv6 address when an octet has a leading zero.
+    test('rejects a non-canonical embedded IPv4 tail', () => {
+        expect(isValidIpv6('::ffff:192.168.01.1')).toBe(false);
+    });
+
+    // REGRESSION: netip.ParseAddr rejects an fe80 address with a zone ID but
+    // no groups after the colon.
+    test('rejects an fe80 address with no groups before the zone ID', () => {
+        expect(isValidIpv6('fe80:%eth0')).toBe(false);
+    });
+
+    test('rejects non-IPv6 values', () => {
+        expect(isValidIpv6('192.168.1.1')).toBe(false);
+        expect(isValidIpv6('')).toBe(false);
     });
 });

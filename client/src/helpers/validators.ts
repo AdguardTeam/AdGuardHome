@@ -4,7 +4,6 @@ import {
     MAX_PORT,
     R_HOST,
     R_IPV4,
-    R_IPV6,
     R_MAC,
     R_URL_REQUIRES_PROTOCOL,
     STANDARD_WEB_PORT,
@@ -19,7 +18,7 @@ import {
 
 import { ip4ToInt, isValidAbsolutePath } from './form';
 
-import { isIpInCidr, isValidCidr, parseSubnetMask } from './helpers';
+import { isIpInCidr, isValidCidr, isValidIpv6, parseSubnetMask } from './helpers';
 
 // Validation functions
 // If the value is valid, the validation function should return undefined.
@@ -246,7 +245,7 @@ export const validateClientId = (value: string) => {
         formattedValue &&
         !(
             R_IPV4.test(formattedValue) ||
-            R_IPV6.test(formattedValue) ||
+            isValidIpv6(formattedValue) ||
             R_MAC.test(formattedValue) ||
             isValidCidr(formattedValue) ||
             R_CLIENT_ID.test(formattedValue)
@@ -292,7 +291,7 @@ export const validateServerName = (value: any) => {
  * @returns {undefined|string}
  */
 export const validateIpv6 = (value: any) => {
-    if (value && !R_IPV6.test(value)) {
+    if (value && !isValidIpv6(value)) {
         return i18next.t('form_error_ip6_format');
     }
     return undefined;
@@ -303,7 +302,7 @@ export const validateIpv6 = (value: any) => {
  * @returns {undefined|string}
  */
 export const validateIp = (value: any) => {
-    if (value && !R_IPV4.test(value) && !R_IPV6.test(value)) {
+    if (value && !R_IPV4.test(value) && !isValidIpv6(value)) {
         return i18next.t('form_error_ip_format');
     }
     return undefined;
@@ -389,7 +388,7 @@ export const validateDomain = (value: any) => {
  * @returns {undefined|string}
  */
 export const validateAnswer = (value: any) => {
-    if (value && !R_IPV4.test(value) && !R_IPV6.test(value) && !R_HOST.test(value)) {
+    if (value && !R_IPV4.test(value) && !isValidIpv6(value) && !R_HOST.test(value)) {
         return i18next.t('form_error_answer_format');
     }
     return undefined;

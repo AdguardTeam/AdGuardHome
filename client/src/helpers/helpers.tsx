@@ -20,6 +20,8 @@ import {
     FILTERED,
     FILTERED_STATUS,
     R_CLIENT_ID,
+    R_IPV4,
+    R_IPV6,
     STANDARD_DNS_PORT,
     STANDARD_HTTPS_PORT,
     STANDARD_WEB_PORT,
@@ -555,12 +557,6 @@ export const isIpInCidr = (ip: any, cidr: any) => {
 };
 
 /**
- * Matches a canonical dotted-decimal IPv4 address: four octets, no leading
- * zeros.  Mirrors the spellings netip.ParseAddr accepts.
- */
-const R_CANONICAL_IPV4 = /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
-
-/**
  * Matches a prefix length without leading zeros, as netip.ParsePrefix requires.
  */
 const R_PREFIX_LENGTH = /^(0|[1-9]\d*)$/;
@@ -595,13 +591,13 @@ export const isValidCidr = (value: string) => {
     if (colon === -1) {
         // netip.ParseAddr requires canonical dotted-decimal IPv4, while
         // ipaddr.js also takes octal, hexadecimal and single-number spellings.
-        if (!R_CANONICAL_IPV4.test(addr)) {
+        if (!R_IPV4.test(addr)) {
             return false;
         }
     } else {
         // The same applies to the IPv4 tail of a mixed-notation IPv6 address.
         const ipv4Part = addr.slice(colon + 1);
-        if (ipv4Part.includes('.') && !R_CANONICAL_IPV4.test(ipv4Part)) {
+        if (ipv4Part.includes('.') && !R_IPV4.test(ipv4Part)) {
             return false;
         }
     }
@@ -612,6 +608,25 @@ export const isValidCidr = (value: string) => {
     } catch (e) {
         return false;
     }
+};
+
+/**
+ * Checks that the value is an IPv6 address the way the backend parses it with
+ * netip.ParseAddr.  Zone IDs are allowed, but a mixed-notation address with a
+ * dotted-decimal IPv4 tail must use a canonical IPv4 spelling there as well.
+ *
+ * @param {string} value Value to check.
+ * @returns {boolean} True if the value is a valid IPv6 address.
+ */
+export const isValidIpv6 = (value: string) => {
+    if (!R_IPV6.test(value)) {
+        return false;
+    }
+
+    const addr = value.split('%')[0];
+    const tail = addr.slice(addr.lastIndexOf(':') + 1);
+
+    return !tail.includes('.') || R_IPV4.test(tail);
 };
 
 /**
