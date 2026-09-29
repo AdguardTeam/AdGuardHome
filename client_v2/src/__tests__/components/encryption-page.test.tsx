@@ -21,6 +21,9 @@ const { themeMock, encryptionState, mocks } = vi.hoisted(() => {
     return {
         themeMock: proxy,
         encryptionState: {
+            // The mocked store is a plain object, so it cannot react to a
+            // post-mount flip; report the status request as already settled.
+            initialized: true,
             enabled: false,
             processingConfig: false,
             processingValidate: false,
@@ -115,6 +118,7 @@ const openState = (testId: string) => screen.getByTestId(testId).getAttribute('d
 beforeEach(() => {
     vi.clearAllMocks();
     Object.assign(encryptionState, {
+        initialized: true,
         enabled: false,
         processingConfig: false,
         certificate_chain: '',

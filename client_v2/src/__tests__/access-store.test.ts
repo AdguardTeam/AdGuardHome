@@ -16,7 +16,7 @@ vi.mock('panel/stores/toasts', () => ({
     addErrorToast: mocks.addErrorToast,
 }));
 
-import { toggleClientBlock, setAccessList } from 'panel/stores/access';
+import { toggleClientBlock, setAccessList, getAccessList, accessState } from 'panel/stores/access';
 
 describe('toggleClientBlock', () => {
     beforeEach(() => vi.clearAllMocks());
@@ -110,5 +110,29 @@ describe('setAccessList', () => {
             disallowed_clients: undefined,
             blocked_hosts: undefined,
         });
+    });
+});
+
+describe('getAccessList — initialized flag', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        accessState.initialized = false;
+    });
+
+    it('marks initialized after a successful request', async () => {
+        mocks.accessList.mockResolvedValue({});
+
+        await getAccessList();
+
+        expect(accessState.initialized).toBe(true);
+    });
+
+    it('marks initialized after a failed request so the loader cannot get stuck', async () => {
+        mocks.accessList.mockRejectedValue(new Error('network'));
+
+        await getAccessList();
+
+        expect(accessState.initialized).toBe(true);
+        expect(mocks.addErrorToast).toHaveBeenCalled();
     });
 });

@@ -198,3 +198,23 @@ describe('disableSafeSearch', () => {
         expect(settingsState.settingsList.safesearch).toEqual(seedSafeSearchConfig);
     });
 });
+
+describe('initSettings — initialized flag', () => {
+    it('marks initialized after a successful request', async () => {
+        settingsState.initialized = false;
+
+        await initSettings();
+
+        expect(settingsState.initialized).toBe(true);
+    });
+
+    it('marks initialized after a failed request so the loader cannot get stuck', async () => {
+        settingsState.initialized = false;
+        mocks.safebrowsingStatus.mockRejectedValue(new Error('Network error'));
+
+        await initSettings();
+
+        expect(settingsState.initialized).toBe(true);
+        expect(mocks.addErrorToast).toHaveBeenCalled();
+    });
+});

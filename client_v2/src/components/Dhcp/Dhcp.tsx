@@ -86,7 +86,11 @@ export const Dhcp = () => {
     const hasIpv6 = () =>
         !!(dhcpState.interfaces && dhcpState.interfaces[selectedInterface()]?.ipv6_addresses);
 
-    const isLoaded = () => !dhcpState.processing && !dhcpState.processingInterfaces;
+    // The interfaces request only runs when DHCP is available, so a board
+    // without DHCP support is "loaded" as soon as its status settles.
+    const isLoaded = () =>
+        dhcpState.statusInitialized &&
+        (!dhcpState.dhcp_available || dhcpState.interfacesInitialized);
 
     return (
         <div class={theme.layout.container}>

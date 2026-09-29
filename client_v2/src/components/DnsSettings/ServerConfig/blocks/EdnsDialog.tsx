@@ -1,4 +1,4 @@
-import { createSignal, createEffect, type Accessor } from 'solid-js';
+import { createSignal, createEffect, createMemo, type Accessor } from 'solid-js';
 
 import { dnsConfigState, setDnsConfig } from 'panel/stores/dnsConfig';
 import intl from 'panel/common/intl';
@@ -18,7 +18,7 @@ type Props = {
 };
 
 export const EdnsDialog = (props: Props) => {
-    const ednsOptions = getEdnsOptions();
+    const ednsOptions = createMemo(() => getEdnsOptions());
 
     // EDNS custom flag — plain signal synced from store
     const [ednsCsUseCustom, setEdnsCsUseCustom] = createSignal(
@@ -73,7 +73,7 @@ export const EdnsDialog = (props: Props) => {
             <div class={theme.form.input}>
                 <Radio
                     name="edns_cs_mode"
-                    options={ednsOptions}
+                    options={ednsOptions()}
                     value={ednsCsUseCustom() ? EDNS_MODES.custom : EDNS_MODES.default}
                     handleChange={(v: string) => setEdnsCsUseCustom(v === EDNS_MODES.custom)}
                     inModal

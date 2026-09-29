@@ -30,8 +30,6 @@ export const UserRules = () => {
     const [lastSubmittedCheck, setLastSubmittedCheck] = createSignal<CheckFormValues | null>(null);
     const [isResultVisible, setIsResultVisible] = createSignal(false);
     const [isResultRefreshing, setIsResultRefreshing] = createSignal(false);
-    // Skip loader if store already has data (SPA revisit, no page reload).
-    const [isLoaded, setIsLoaded] = createSignal(filteringState.filters.length > 0);
 
     const [userRulesValue, setUserRulesValue] = createSignal(filteringState.userRules || '');
 
@@ -47,6 +45,19 @@ export const UserRules = () => {
             rewritesState.processingDelete ||
             rewritesState.processingUpdate ||
             servicesState.processingSet,
+    );
+
+    // The page loader shows exactly once: until every store this page reads has
+    // settled its first request.  Later refetches keep the previous values
+    // painted, so the loader can never flash back in.
+    const isInitialLoading = createMemo(
+        () =>
+            !filteringState.filtersInitialized ||
+            !settingsState.initialized ||
+            !dashboardState.clientsInitialized ||
+            !rewritesState.initialized ||
+            !servicesState.initialized ||
+            !servicesState.allInitialized,
     );
 
     const {
@@ -70,16 +81,13 @@ export const UserRules = () => {
         setIsResultVisible,
     });
 
-    onMount(async () => {
-        await Promise.all([
-            getFilteringStatus(),
-            initSettings(),
-            getClients(),
-            getRewritesList(),
-            getBlockedServices(),
-            getAllBlockedServices(),
-        ]);
-        setIsLoaded(true);
+    onMount(() => {
+        getFilteringStatus();
+        initSettings();
+        getClients();
+        getRewritesList();
+        getBlockedServices();
+        getAllBlockedServices();
     });
 
     createEffect(() => {
@@ -137,7 +145,7 @@ export const UserRules = () => {
     );
 
     return (
-        <Show when={isLoaded()} fallback={<PageLoader />}>
+        <Show when={!isInitialLoading()} fallback={<PageLoader />}>
             <div class={theme.layout.container}>
                 <div class={s.container}>
                     <div class={s.wrapper}>

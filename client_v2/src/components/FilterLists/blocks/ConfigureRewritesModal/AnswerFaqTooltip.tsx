@@ -1,4 +1,4 @@
-import { For, Show } from 'solid-js';
+import { For, Show, createMemo } from 'solid-js';
 import cn from 'clsx';
 
 import intl from 'panel/common/intl';
@@ -7,24 +7,24 @@ import { Icon } from 'panel/common/ui/Icon';
 import theme from 'panel/lib/theme';
 import s from './ConfigureRewritesModal.module.pcss';
 
-const items = [
-    {
-        message: intl.getMessage('rewrites_tooltip_instructions_item1'),
-    },
-    {
-        message: intl.getMessage('rewrites_tooltip_instructions_item2'),
-    },
-    {
-        message: intl.getMessage('rewrites_tooltip_instructions_item3'),
-        code: 'A',
-    },
-    {
-        message: intl.getMessage('rewrites_tooltip_instructions_item4'),
-        code: 'AAAA',
-    },
-];
-
 export const AnswerFaqTooltip = () => {
+    const items = createMemo(() => [
+        {
+            message: intl.getMessage('rewrites_tooltip_instructions_item1'),
+        },
+        {
+            message: intl.getMessage('rewrites_tooltip_instructions_item2'),
+        },
+        {
+            message: intl.getMessage('rewrites_tooltip_instructions_item3'),
+            code: 'A',
+        },
+        {
+            message: intl.getMessage('rewrites_tooltip_instructions_item4'),
+            code: 'AAAA',
+        },
+    ]);
+
     return (
         <FaqTooltip
             overlayClass={s.dropdown}
@@ -35,7 +35,7 @@ export const AnswerFaqTooltip = () => {
                         {intl.getMessage('instructions')}
                     </div>
 
-                    <For each={items}>
+                    <For each={items()}>
                         {(item) => (
                             <div class={s.tooltipItem}>
                                 <Icon icon="label" class={s.icon} />

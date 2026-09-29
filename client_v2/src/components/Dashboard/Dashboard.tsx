@@ -80,7 +80,7 @@ export const Dashboard = () => {
         // default DAY, so keep the stored period selectable to avoid showing a
         // period the user did not pick.
         const storedPeriod = selectedPeriod();
-        if (!statsState.configAttempted && !intervals.includes(storedPeriod)) {
+        if (!statsState.configInitialized && !intervals.includes(storedPeriod)) {
             intervals.push(storedPeriod);
         }
 
@@ -106,7 +106,7 @@ export const Dashboard = () => {
         // be clamped by the default DAY and paint 24h values before the real
         // ones.  Tracks `selectedPeriod` only; the interval/configLoaded
         // changes alone must not re-fire the request.
-        if (!statsState.configAttempted) {
+        if (!statsState.configInitialized) {
             return;
         }
         // `getStats` clamps the period by the real server retention itself.
@@ -140,7 +140,7 @@ export const Dashboard = () => {
     // The page loader shows exactly once: until the first stats request
     // settles.  Later refetches keep the previous values painted, so the
     // loader can never flash back in.
-    const isInitialLoading = () => !statsState.statsAttempted;
+    const isInitialLoading = () => !statsState.statsInitialized;
 
     return (
         <div class={theme.layout.container}>

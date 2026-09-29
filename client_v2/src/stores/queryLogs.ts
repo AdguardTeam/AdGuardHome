@@ -19,6 +19,7 @@ type QueryLogsState = {
     processingGetLogs: boolean;
     processingClear: boolean;
     processingGetConfig: boolean;
+    configInitialized: boolean;
     processingSetConfig: boolean;
     processingAdditionalLogs: boolean;
     interval: number;
@@ -39,6 +40,7 @@ const initialState: QueryLogsState = {
     processingGetLogs: true,
     processingClear: false,
     processingGetConfig: false,
+    configInitialized: false,
     processingSetConfig: false,
     processingAdditionalLogs: false,
     interval: DAY,
@@ -213,10 +215,11 @@ export const getLogsConfig = async () => {
             ignored: data.ignored || [],
             ignored_enabled: data.ignored_enabled ?? false,
             processingGetConfig: false,
+            configInitialized: true,
         });
     } catch (error) {
         addErrorToast({ error });
-        setState('processingGetConfig', false);
+        setState({ processingGetConfig: false, configInitialized: true });
     }
 };
 
