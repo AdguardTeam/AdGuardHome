@@ -866,7 +866,7 @@
   "upstream_example_upstream_sdns": "<code>%value%</code>: <a>DNS Stamps</a> для рэзолвераў <b>DNSCrypt</b> або <c>DNS-over-HTTPS</c>",
   "upstream_examples_title": "Прыклады",
   "upstream_timeout": "Час чакання upstream, у секундах",
-  "upstreams": "Upstreams",
+  "upstreams": "Cерверы upstream",
   "url_label": "URL-адрас",
   "user_rules_add_to_allowlist": "Дадаць у спіс дазволеных",
   "user_rules_allow_service": "Дазволіць сэрвіс",
