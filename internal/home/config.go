@@ -24,7 +24,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
-	"github.com/AdguardTeam/dnsproxy/fastip"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
@@ -41,6 +40,10 @@ const (
 	// userFilterDataDir is the name of the directory used to store users'
 	// FS-based rule lists.
 	userFilterDataDir = "userfilters"
+
+	// defaultFastestTimeout is the default timeout for proxy fastest upstream
+	// mode.
+	defaultFastestTimeout = 1 * time.Second
 )
 
 // osConfig contains OS-related configuration.
@@ -421,7 +424,7 @@ var config = &configuration{
 			RefuseAny:              true,
 			UpstreamMode:           dnsforward.UpstreamModeLoadBalance,
 			HandleDDR:              true,
-			FastestTimeout:         timeutil.Duration(fastip.DefaultPingWaitTimeout),
+			FastestTimeout:         timeutil.Duration(defaultFastestTimeout),
 
 			TrustedProxies: []netutil.Prefix{{
 				Prefix: netip.MustParsePrefix("127.0.0.0/8"),
