@@ -374,6 +374,25 @@ describe('getTlsStatus', () => {
 
         expectValidationStatusCleared();
     });
+
+    it('marks initialized after a successful request', async () => {
+        encryptionState.initialized = false;
+        mocks.tlsStatus.mockResolvedValue({ ...RESPONSE_WITHOUT_EMPTIES });
+
+        await getTlsStatus();
+
+        expect(encryptionState.initialized).toBe(true);
+    });
+
+    it('marks initialized after a failed request so the loader cannot get stuck', async () => {
+        encryptionState.initialized = false;
+        mocks.tlsStatus.mockRejectedValue(new Error('network'));
+
+        await getTlsStatus();
+
+        expect(encryptionState.initialized).toBe(true);
+        expect(mocks.addErrorToast).toHaveBeenCalled();
+    });
 });
 
 describe('stale validation status', () => {

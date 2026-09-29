@@ -9,8 +9,8 @@ type StatsStateMock = {
     processingGetConfig: boolean;
     processingStats: boolean;
     configLoaded: boolean;
-    configAttempted: boolean;
-    statsAttempted: boolean;
+    configInitialized: boolean;
+    statsInitialized: boolean;
     interval: number;
     enabled: boolean;
     numDnsQueries: number;
@@ -40,8 +40,8 @@ vi.mock('panel/stores/stats', async () => {
         processingGetConfig: false,
         processingStats: true,
         configLoaded: false,
-        configAttempted: false,
-        statsAttempted: false,
+        configInitialized: false,
+        statsInitialized: false,
         interval: DAY,
         enabled: true,
         numDnsQueries: 0,
@@ -144,14 +144,14 @@ const resolveConfigWith = (interval: number) => {
         const statsState = mocks.statsState as StatsStateMock;
         statsState.interval = interval;
         statsState.configLoaded = true;
-        statsState.configAttempted = true;
+        statsState.configInitialized = true;
     });
 };
 
 /** Resolves the config request the way a failed `getStatsConfig` does. */
 const failConfig = () => {
     mocks.getStatsConfig.mockImplementation(async () => {
-        (mocks.statsState as StatsStateMock).configAttempted = true;
+        (mocks.statsState as StatsStateMock).configInitialized = true;
     });
 };
 
@@ -164,8 +164,8 @@ describe('Dashboard stats period', () => {
         statsState.processingGetConfig = false;
         statsState.processingStats = true;
         statsState.configLoaded = false;
-        statsState.configAttempted = false;
-        statsState.statsAttempted = false;
+        statsState.configInitialized = false;
+        statsState.statsInitialized = false;
         statsState.interval = DAY;
     });
 
@@ -233,7 +233,7 @@ describe('Dashboard stats period', () => {
                         const statsState = mocks.statsState as StatsStateMock;
                         statsState.interval = DAY * 30;
                         statsState.configLoaded = true;
-                        statsState.configAttempted = true;
+                        statsState.configInitialized = true;
                         resolve();
                     };
                 }),

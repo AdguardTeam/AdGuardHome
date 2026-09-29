@@ -318,7 +318,7 @@ export const TopClientsPage = () => {
                 columns={columns()}
                 getRowId={(row) => row.name}
                 defaultSort={{ key: 'queries', direction: 'desc' }}
-                loading={statsState.processingStats || accessState.processing}
+                loading={!statsState.statsInitialized || !accessState.initialized}
                 emptyText={intl.getMessage('nothing_found')}
                 onRefresh={handleRefresh}
                 searchTextForRow={(row) => `${row.name} ${row.info?.name ?? ''}`}
