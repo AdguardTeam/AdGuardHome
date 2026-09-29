@@ -30,7 +30,7 @@ export const UserRules = () => {
     const [lastSubmittedCheck, setLastSubmittedCheck] = createSignal<CheckFormValues | null>(null);
     const [isResultVisible, setIsResultVisible] = createSignal(false);
     const [isResultRefreshing, setIsResultRefreshing] = createSignal(false);
-    // Skip loader if store already has data (SPA revisit, no page reload).
+
     const [isLoaded, setIsLoaded] = createSignal(filteringState.filters.length > 0);
 
     const [userRulesValue, setUserRulesValue] = createSignal(filteringState.userRules || '');

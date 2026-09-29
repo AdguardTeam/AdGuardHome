@@ -114,9 +114,7 @@ describe('Dashboard "Show more" links', () => {
                 numBlockedFiltering={100}
             />
         ));
-        expect(screen.getByTestId('blocked-total-link').textContent).toBe(
-            formatCompactNumber(100),
-        );
+        expect(screen.getByTestId('blocked-total-link').textContent).toBe(formatCompactNumber(100));
     });
 
     it('Top upstreams card links to /top_upstreams', () => {

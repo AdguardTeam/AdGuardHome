@@ -573,6 +573,17 @@ friendly:
   template literals, or concatenation (e.g. `getMessage(\`btn\_\${action}\`)`).
   Dynamic keys cannot be statically detected, so the translation tooling will
   not pick them up and the strings will go untranslated.
+- **Translate while rendering, never at module load.** `getMessage`/`getPlural`
+  track the language signal, but a call at module scope — or in a plain `const`
+  in a component body, which SolidJS runs once per mount — happens outside any
+  tracked scope, so the string keeps whichever language was active when it ran.
+  Resolve the translation where it is rendered: inline in JSX, by reading a
+  `createMemo` in the JSX expression (`<For each={items()}>`,
+  `options={options()}`), or by calling a per-render accessor
+  (`label: () => intl.getMessage('key')`, rendered as `config.label()` — see
+  `DnsSettings/Cache/blocks/CacheInputDialog.tsx`). `For`'s row mapper runs
+  untracked, so only its `each` expression is reactive: a value read inside the
+  row body must be resolved at the JSX read site, not in the mapper.
 - Do not add duplicate keys to any locale file.
 - Run `npm run translations:check` after adding or editing translation keys.
 - Every `aria-*` string must have its own dedicated translation key.
