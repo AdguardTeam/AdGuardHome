@@ -138,7 +138,7 @@ export const TopClientsPage = () => {
             header: { text: intl.getMessage('status_table_header') },
             accessor: (row) => (isBlocked(row.name) ? 'blocked' : 'unblocked'),
             sortable: false,
-            width: 93,
+            width: 120,
             render: (_v, row) => (
                 <Show when={isBlocked(row.name)}>
                     <span class={cn(theme.text.t3, s.blockedStatus)}>
@@ -209,9 +209,7 @@ export const TopClientsPage = () => {
                             <div class={s.protectionMenu}>
                                 <ClientBlockMenuItem
                                     action={isBlocked(row.name) ? 'unblock' : 'block'}
-                                    onClick={(action) =>
-                                        openClientConfirmDialog(row.name, action)
-                                    }
+                                    onClick={(action) => openClientConfirmDialog(row.name, action)}
                                 />
                             </div>
                         }
