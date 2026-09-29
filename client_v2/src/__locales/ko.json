@@ -735,7 +735,6 @@
   "setup_ui_desc": "이 주소를 사용하여 AdGuard Home의 웹 사용자 인터페이스에 접근하세요. 필요한 경우, 포트를 변경하세요.",
   "setup_ui_title": "AdGuard Home의 웹 UI 주소 설정",
   "setup_ui_title_banner": "웹 UI 설정",
-  "show_blocked_responses": "차단됨",
   "show_more": "자세히 보기",
   "show_more_count": "+ %count%개 더보기",
   "show_processed_responses": "처리됨",

@@ -735,7 +735,6 @@
   "setup_ui_desc": "Käytä näitä osoitteita AdGuard Homen verkkokäyttöliittymään siirtymiseen. Vaihda portti tarvittaessa",
   "setup_ui_title": "Aseta AdGuard Homen verkkokäyttöliittymän osoite",
   "setup_ui_title_banner": "Verkkokäyttöliittymän asetukset",
-  "show_blocked_responses": "Estetty",
   "show_more": "Näytä enemmän",
   "show_more_count": "+ %count% lisää",
   "show_processed_responses": "Käsitelty",

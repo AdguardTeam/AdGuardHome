@@ -735,7 +735,6 @@
   "setup_ui_desc": "ใช้ที่อยู่เหล่านี้เพื่อเข้าถึงอินเตอร์เฟซผู้ใช้ Web ของ AdGuard Home หากจำเป็น ให้เปลี่ยนพอร์ต",
   "setup_ui_title": "ตั้งค่าที่อยู่ Web UI สำหรับ AdGuard Home",
   "setup_ui_title_banner": "การตั้งค่า Web UI",
-  "show_blocked_responses": "ปิดกั้นแล้ว",
   "show_more": "แสดงเพิ่มอีก",
   "show_more_count": "+ อีก %count%",
   "show_processed_responses": "ประมวลผลแล้ว",

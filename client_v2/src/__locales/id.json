@@ -735,7 +735,6 @@
   "setup_ui_desc": "Gunakan alamat ini untuk mengakses antar muka pengguna Web dari AdGuard Home. Jika perlu, ubah port",
   "setup_ui_title": "Persiap alamat Web UI untuk AdGuard Home",
   "setup_ui_title_banner": "Pengaturan Web UI",
-  "show_blocked_responses": "Diblokir",
   "show_more": "Tampilkan lebih banyak",
   "show_more_count": "+ %count% lainnya",
   "show_processed_responses": "Terproses",

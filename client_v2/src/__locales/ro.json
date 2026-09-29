@@ -735,7 +735,6 @@
   "setup_ui_desc": "Utilizați aceste adrese pentru a accesa interfața web a AdGuard Home. Dacă este necesar, schimbați portul",
   "setup_ui_title": "Setați adresa interfeței web pentru AdGuard Home",
   "setup_ui_title_banner": "Setările interfeței web",
-  "show_blocked_responses": "Blocat",
   "show_more": "Arată mai mult",
   "show_more_count": "+ încă %count%",
   "show_processed_responses": "Procesat",

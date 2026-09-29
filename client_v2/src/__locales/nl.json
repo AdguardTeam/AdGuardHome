@@ -735,7 +735,6 @@
   "setup_ui_desc": "Gebruik deze adressen om toegang te krijgen tot de webgebruikersinterface van AdGuard Home. Wijzig indien nodig de poort",
   "setup_ui_title": "Stel het webinterface-adres in voor AdGuard Home",
   "setup_ui_title_banner": "Instellingen webinterface",
-  "show_blocked_responses": "Geblokkeerd",
   "show_more": "Meer weergeven",
   "show_more_count": "+ %count% meer",
   "show_processed_responses": "Verwerkt",
