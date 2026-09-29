@@ -382,7 +382,7 @@
   "filter_category_security": "Безопасность",
   "filter_category_security_desc": "Списки, созданные специально для блокировки вредоносных, фишинговых и мошеннических доменов",
   "filter_removed_successfully": "Удалён чёрный список: <strong>%value%</strong>",
-  "filter_removed_successfully_allowlist": "Удалён чёрный список: <strong>%value%</strong>",
+  "filter_removed_successfully_allowlist": "Удалён белый список: <strong>%value%</strong>",
   "filters": "Фильтры",
   "fix": "Исправить",
   "forgot_password": "Забыли пароль?",
