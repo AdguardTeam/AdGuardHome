@@ -1,16 +1,14 @@
 .statRow {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
-    flex-wrap: wrap;
-    gap: 0 24px;
+    column-gap: 24px;
     padding: 16px;
     min-height: 40px;
     transition: background-color var(--t2);
 
     @media (min-width: 768px) {
         padding: 8px 16px;
-        flex-wrap: nowrap;
     }
 
     &.dnsQueries {
@@ -66,8 +64,9 @@
 
 .statRowDropdown {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     flex-direction: column;
+    min-width: 0;
 }
 
 .statRowLeft {
@@ -170,6 +169,7 @@
 
 .queryBarMobile {
     display: block;
+    grid-column: 1 / -1;
     margin: 16px 0 0;
 
     @media (min-width: 768px) {

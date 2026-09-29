@@ -184,16 +184,18 @@ export const ActionFooter = (props: Props) => {
                 <For each={actions()}>
                     {(actionId, index) => {
                         const config = ACTION_CONFIG[actionId];
+                        const variant = () =>
+                            index() > 0 && config.secondaryVariant
+                                ? config.secondaryVariant
+                                : config.variant;
+
                         return (
                             <Button
                                 data-testid={config.testId}
                                 data-action={config.dataAction}
                                 type="button"
-                                variant={
-                                    index() > 0 && config.secondaryVariant
-                                        ? config.secondaryVariant
-                                        : config.variant
-                                }
+                                variant={variant()}
+                                onCard={variant() === 'secondary'}
                                 size="small"
                                 compact
                                 class={s.actionButton}
