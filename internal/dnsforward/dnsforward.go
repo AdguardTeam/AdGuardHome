@@ -302,12 +302,10 @@ func (s *Server) WriteDiskConfig(dc *configmgr.DNSConfig) {
 
 	sc := s.conf.Config
 
-	if sc.EDNSClientSubnet != nil {
-		dc.EDNSClientSubnet = &configmgr.EDNSClientSubnet{
-			CustomIP:  sc.EDNSClientSubnet.CustomIP,
-			Enabled:   sc.EDNSClientSubnet.Enabled,
-			UseCustom: sc.EDNSClientSubnet.UseCustom,
-		}
+	dc.EDNSClientSubnet = &configmgr.EDNSClientSubnet{
+		CustomIP:  sc.EDNSClientSubnet.CustomIP,
+		Enabled:   sc.EDNSClientSubnet.Enabled,
+		UseCustom: sc.EDNSClientSubnet.UseCustom,
 	}
 
 	dc.IpsetListFileName = sc.IpsetListFileName
@@ -349,14 +347,6 @@ func (s *Server) WriteDiskConfig(dc *configmgr.DNSConfig) {
 	dc.UsePrivateRDNS = s.conf.UsePrivateRDNS
 }
 
-// LocalPTRResolvers returns the current local PTR resolver configuration.
-func (s *Server) LocalPTRResolvers() (localPTRResolvers []string) {
-	s.serverLock.RLock()
-	defer s.serverLock.RUnlock()
-
-	return slices.Clone(s.conf.LocalPTRResolvers)
-}
-
 // AddrProcConfig returns the current address processing configuration.  Only
 // fields c.UsePrivateRDNS, c.UseRDNS, and c.UseWHOIS are filled.
 func (s *Server) AddrProcConfig() (c *client.DefaultAddrProcConfig) {
@@ -368,14 +358,6 @@ func (s *Server) AddrProcConfig() (c *client.DefaultAddrProcConfig) {
 		UseRDNS:        s.conf.AddrProcConf.UseRDNS,
 		UseWHOIS:       s.conf.AddrProcConf.UseWHOIS,
 	}
-}
-
-// UpstreamTimeout returns the current upstream timeout configuration.
-func (s *Server) UpstreamTimeout() (t time.Duration) {
-	s.serverLock.RLock()
-	defer s.serverLock.RUnlock()
-
-	return s.conf.UpstreamTimeout
 }
 
 // Resolve gets IP addresses by host name from an upstream server.  No

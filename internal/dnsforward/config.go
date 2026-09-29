@@ -142,7 +142,8 @@ type Config struct {
 	// upstream requests.
 	EnableDNSSEC bool `yaml:"enable_dnssec"`
 
-	// EDNSClientSubnet is the settings list for EDNS Client Subnet.
+	// EDNSClientSubnet is the settings list for EDNS Client Subnet.  It must
+	// not be nil.
 	EDNSClientSubnet *EDNSClientSubnet `yaml:"edns_client_subnet"`
 
 	// MaxGoroutines is the max number of parallel goroutines for processing

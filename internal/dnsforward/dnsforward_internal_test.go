@@ -588,8 +588,9 @@ func TestServerRace(t *testing.T) {
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		Config: Config{
-			UpstreamMode: proxy.UpstreamModeLoadBalance,
-			UpstreamDNS:  []string{"8.8.8.8:53", "8.8.4.4:53"},
+			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+			UpstreamMode:     proxy.UpstreamModeLoadBalance,
+			UpstreamDNS:      []string{"8.8.8.8:53", "8.8.4.4:53"},
 		},
 		ConfModifier:  agh.EmptyConfigModifier{},
 		ServePlainDNS: true,
