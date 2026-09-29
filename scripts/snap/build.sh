@@ -22,6 +22,7 @@ log() {
 snapcraft_cmd="${SNAPCRAFT_CMD:-snapcraft}"
 readonly snapcraft_cmd
 
+chmod +x ./AdGuardHome_amd64
 version="$(./AdGuardHome_amd64 --version | cut -d ' ' -f 4)"
 if [ "$version" = '' ]; then
 	log 'empty version from ./AdGuardHome_amd64'

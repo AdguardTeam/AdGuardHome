@@ -4,8 +4,6 @@
     gap: 12px;
     padding: 24px 16px;
     border-radius: 8px;
-    background-color: var(--default-cards-background);
-    box-shadow: 8px 8px 24px 0 rgba(0, 0, 0, 0.1);
 }
 
 .title {
@@ -17,14 +15,16 @@
     word-break: break-word;
 }
 
-.titleLink {
+.cardLink {
+    cursor: pointer;
     color: inherit;
     text-decoration: none;
 
     &:hover,
-    &:focus {
+    &:focus,
+    &:active {
         color: inherit;
-        text-decoration: underline;
+        text-decoration: none;
     }
 }
 

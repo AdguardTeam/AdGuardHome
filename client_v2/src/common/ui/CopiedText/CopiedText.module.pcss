@@ -15,8 +15,10 @@
 }
 
 .container {
-    &:hover {
-        background: var(--page-background-additional-hovered);
+    @media (hover: hover) {
+        &:hover {
+            background: var(--page-background-additional-hovered);
+        }
     }
 
     &:focus {

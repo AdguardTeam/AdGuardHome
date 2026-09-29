@@ -65,6 +65,7 @@ export const PemSourceFields = (props: Props) => {
                             errorMessage={props.errorFor(config.fields.path)}
                             label={config.texts.pathLabel()}
                             size="large"
+                            onCard
                             data-testid={`${config.testIdPrefix}-path`}
                         />
                         <Show when={pathWarning()}>
@@ -91,6 +92,7 @@ export const PemSourceFields = (props: Props) => {
                         isClearable
                         onClear={fields.handleClear}
                         size={fields.dropzoneVisible() ? 'compact' : 'large'}
+                        onCard
                         data-testid={`${config.testIdPrefix}-content`}
                     />
                     <Show when={contentWarning()}>

@@ -32,8 +32,10 @@
     background-color: var(--fills-switch-off-default);
     transition: background-color var(--t2);
 
-    &:hover {
-        background-color: var(--fills-switch-off-hovered);
+    @media (hover: hover) {
+        &:hover {
+            background-color: var(--fills-switch-off-hovered);
+        }
     }
 
     &:before {
@@ -58,8 +60,10 @@
 .input:checked + .handler {
     background-color: var(--fills-switch-on-default);
 
-    &:hover {
-        background-color: var(--fills-switch-on-hovered);
+    @media (hover: hover) {
+        &:hover {
+            background-color: var(--fills-switch-on-hovered);
+        }
     }
 
     &:before {
@@ -75,8 +79,10 @@
     cursor: default;
     background-color: var(--fills-switch-off-disabled);
 
-    &:hover {
-        background-color: var(--fills-switch-off-disabled);
+    @media (hover: hover) {
+        &:hover {
+            background-color: var(--fills-switch-off-disabled);
+        }
     }
 
     &:before {
@@ -87,8 +93,10 @@
 .input:checked:disabled + .handler {
     background-color: var(--fills-switch-on-disabled);
 
-    &:hover {
-        background-color: var(--fills-switch-on-disabled);
+    @media (hover: hover) {
+        &:hover {
+            background-color: var(--fills-switch-on-disabled);
+        }
     }
 
     &:before {

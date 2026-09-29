@@ -14,6 +14,7 @@ import {
 } from '../validate';
 import { getExternalPorts } from './helpers';
 import { ServerSettingsFields } from './ServerSettingsFields';
+import { createServerNameCheck } from './useServerNameCheck';
 
 type Props = {
     open: boolean;
@@ -31,19 +32,23 @@ export const ServerSettingsModal = (props: Props) => {
     const [values, setValues] = createStore<ServerSettingsValues>({ ...defaults });
     const [errors, setErrors] = createSignal<Record<string, string>>({});
 
+    const nameCheck = createServerNameCheck({ values });
+
     createEffect(
         on(
             () => props.open,
             (open) => {
                 if (!open) return;
 
+                const name = encryptionState.server_name || '';
                 setValues({
-                    server_name: encryptionState.server_name || '',
+                    server_name: name,
                     port_https: Number(encryptionState.port_https) || 0,
                     port_dns_over_tls: Number(encryptionState.port_dns_over_tls) || 0,
                     port_dns_over_quic: Number(encryptionState.port_dns_over_quic) || 0,
                 });
                 setErrors({});
+                nameCheck.reset(name);
             },
         ),
     );
@@ -75,17 +80,29 @@ export const ServerSettingsModal = (props: Props) => {
     const handleFieldChange = (field: ServerSettingsField, raw: string) => {
         setFieldError(field);
         if (field === 'server_name') {
+            // The clear button reports through `change` only, so this is what
+            // keeps the live name in step there.
+            nameCheck.onNameInput(raw);
             setValues('server_name', raw);
             return;
         }
         setValues(field, toNumber(raw));
     };
 
+    /** Typing invalidates the warning: it belongs to the name it was reported for. */
+    const handleFieldInput = (field: ServerSettingsField, raw: string) => {
+        if (field === 'server_name') nameCheck.onNameInput(raw);
+    };
+
     const handleFieldBlur = (field: ServerSettingsField) => {
         if (field === 'server_name') {
             const normalized = normalizeServerName(String(values.server_name ?? ''));
             setValues('server_name', normalized);
-            setFieldError(field, validateServerName(normalized));
+            nameCheck.onNameInput(normalized);
+            const error = validateServerName(normalized);
+            setFieldError(field, error);
+
+            if (!error) nameCheck.checkOnBlur(normalized);
             return;
         }
 
@@ -93,12 +110,14 @@ export const ServerSettingsModal = (props: Props) => {
         setFieldError(field, validatePortField(field, port));
     };
 
-    const save = () => {
+    const save = async () => {
         const errs = clientErrors();
         if (Object.values(errs).some(Boolean)) {
             setErrors(errs);
             return;
         }
+
+        if (!(await nameCheck.confirmSave())) return;
 
         setTlsConfig({ ...values });
         props.onClose();
@@ -116,12 +135,19 @@ export const ServerSettingsModal = (props: Props) => {
             onSubmit={save}
             processing={processing()}
             submitDisabled={processing() || hasErrors()}
+            buttonText={nameCheck.warningText() ? intl.getMessage('save_anyway') : undefined}
+            buttonVariant={nameCheck.warningText() ? 'warning' : undefined}
         >
             <ServerSettingsFields
                 values={values}
                 onFieldChange={handleFieldChange}
+                onFieldInput={handleFieldInput}
                 onFieldBlur={handleFieldBlur}
                 errorFor={fieldError}
+                warningFor={(field) =>
+                    field === 'server_name' ? nameCheck.warningText() : undefined
+                }
+                testIdPrefix="server-settings"
                 clearable
             />
         </ConfigDialog>

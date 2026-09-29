@@ -34,6 +34,7 @@ import type { QueryLogItemClient } from 'panel/api/model/queryLogItemClient';
 import type { QueryLogItemClientWhois } from 'panel/api/model/queryLogItemClientWhois';
 import type { QueryLogItemClientProto } from 'panel/api/model/queryLogItemClientProto';
 import type { QueryLogItem } from 'panel/api/model/queryLogItem';
+import type { QueryParams } from 'panel/components/Routes/Paths';
 
 export type NormalizedDnsResponse = {
     value?: string;
@@ -833,6 +834,15 @@ export const getLogsUrlParams = (search: string, status: string, reason: string)
         status: status || undefined,
         reason: reason || undefined,
     })}`;
+
+/**
+ * Query-log search params matching a single client or domain. The value is
+ * quoted so the query log treats it as an exact match.
+ *
+ * @param {string} value
+ * @returns {QueryParams}
+ */
+export const queryLogSearchQuery = (value: string): QueryParams => ({ search: `"${value}"` });
 
 /**
  * @param ip
