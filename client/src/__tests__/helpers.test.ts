@@ -1,7 +1,71 @@
 import { describe, expect, test, afterEach, vi, beforeEach, it } from 'vitest';
 
-import { sortIp, countClientsStatistics, findAddressType, subnetMaskToBitMask } from '../helpers/helpers';
+import { sortIp, countClientsStatistics, findAddressType, subnetMaskToBitMask, mergeRefreshedLogs } from '../helpers/helpers';
 import { ADDRESS_TYPES } from '../helpers/constants';
+
+describe('mergeRefreshedLogs', () => {
+    const makeLog = (overrides: Record<string, any>) => ({
+        time: '2026-08-03T10:00:00.000000000Z',
+        domain: 'a.example.com',
+        type: 'A',
+        client: '192.168.1.1',
+        client_id: '',
+        upstream: '8.8.8.8',
+        status: 'NOERROR',
+        cached: false,
+        ...overrides,
+    });
+
+    test('keeps a distinct entry that shares a timestamp with an already-loaded entry', () => {
+        const entryA = makeLog({ domain: 'a.example.com' });
+        const entryB = makeLog({ domain: 'b.example.com' });
+
+        const previousLogs = [entryA];
+        const refreshedLogs = [entryB, entryA];
+
+        const merged = mergeRefreshedLogs(previousLogs, refreshedLogs);
+
+        expect(merged).toHaveLength(2);
+        expect(merged.filter((log) => log.domain === 'a.example.com')).toHaveLength(1);
+        expect(merged.filter((log) => log.domain === 'b.example.com')).toHaveLength(1);
+    });
+
+    test('keeps a distinct entry that shares a timestamp but differs only by client', () => {
+        const entryA = makeLog({ client: '192.168.1.1' });
+        const entryB = makeLog({ client: '192.168.1.2' });
+
+        const previousLogs = [entryA];
+        const refreshedLogs = [entryB, entryA];
+
+        const merged = mergeRefreshedLogs(previousLogs, refreshedLogs);
+
+        expect(merged).toHaveLength(2);
+        expect(merged.filter((log) => log.client === '192.168.1.1')).toHaveLength(1);
+        expect(merged.filter((log) => log.client === '192.168.1.2')).toHaveLength(1);
+    });
+
+    test('still deduplicates a genuine repeat of the same entry', () => {
+        const entryA = makeLog({});
+
+        const previousLogs = [entryA];
+        const refreshedLogs = [entryA];
+
+        const merged = mergeRefreshedLogs(previousLogs, refreshedLogs);
+
+        expect(merged).toHaveLength(1);
+    });
+
+    test('keeps two legitimately identical entries that occurred at the same timestamp', () => {
+        const entryA = makeLog({});
+
+        const previousLogs = [entryA];
+        const refreshedLogs = [entryA, entryA];
+
+        const merged = mergeRefreshedLogs(previousLogs, refreshedLogs);
+
+        expect(merged).toHaveLength(2);
+    });
+});
 
 describe('sortIp', () => {
     describe('ipv4', () => {

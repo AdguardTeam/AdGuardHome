@@ -10,6 +10,7 @@ import { Checkbox } from '../../ui/Controls/Checkbox';
 import { Input } from '../../ui/Controls/Input';
 import { toNumber } from '../../../helpers/form';
 import { Textarea } from '../../ui/Controls/Textarea';
+import AutoRefreshInterval from './AutoRefreshInterval';
 
 const getIntervalTitle = (interval: number) => {
     switch (interval) {
@@ -181,6 +182,8 @@ export const Form = ({ initialValues, processing, processingReset, onSubmit, onR
                     ))}
                 </div>
             </div>
+
+            <AutoRefreshInterval />
 
             <div className="form__group form__group--settings">
                 <Controller

@@ -6,6 +6,7 @@
 .page-header--logs {
     flex-direction: row;
     align-items: flex-end;
+    gap: 1.0rem;
     margin: 0.5rem 0 2.8rem;
 }
 

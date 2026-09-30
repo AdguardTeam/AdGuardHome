@@ -2,7 +2,7 @@ import { createAction } from 'redux-actions';
 
 import apiClient from '../api/Api';
 
-import { normalizeLogs } from '../helpers/helpers';
+import { mergeRefreshedLogs, normalizeLogs } from '../helpers/helpers';
 import { DEFAULT_LOGS_FILTER, QUERY_LOGS_PAGE_LIMIT } from '../helpers/constants';
 import { addErrorToast, addSuccessToast } from './toasts';
 import { SearchFormValues } from '../components/Logs';
@@ -156,8 +156,34 @@ export const setFilteredLogs = (filter?: SearchFormValues) => async (dispatch: a
 export const resetFilteredLogs = () => setFilteredLogs(DEFAULT_LOGS_FILTER);
 
 export const refreshFilteredLogs = () => async (dispatch: any, getState: any) => {
-    const { filter } = getState().queryLogs;
-    await dispatch(setFilteredLogs(filter));
+    const { filter, logs: previousLogs, oldest: previousOldest } = getState().queryLogs;
+
+    dispatch(setFilteredLogsRequest());
+    try {
+        const data = await getLogsWithParams({ older_than: '', filter });
+        const currentQuery = filter?.search;
+
+        const additionalData = await shortPollQueryLogs(data, filter, dispatch, currentQuery);
+        const updatedData = additionalData.logs ? { ...data, ...additionalData } : data;
+
+        const mergedLogs = mergeRefreshedLogs(previousLogs, updatedData.logs);
+
+        // Keep the previously loaded pagination cursor so infinite scroll continues
+        // from where the user left off, instead of restarting from the newest page.
+        const oldest = previousLogs.length > updatedData.logs.length ? previousOldest : updatedData.oldest;
+
+        dispatch(
+            setFilteredLogsSuccess({
+                ...updatedData,
+                logs: mergedLogs,
+                oldest,
+                filter,
+            }),
+        );
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(setFilteredLogsFailure(error));
+    }
 };
 
 export const clearLogsRequest = createAction('CLEAR_LOGS_REQUEST');

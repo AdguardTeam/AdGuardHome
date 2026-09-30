@@ -127,6 +127,48 @@ export const normalizeLogs = (logs: any) =>
         };
     });
 
+/**
+ * Builds a collision-resistant identity for a query log entry.
+ *
+ * The backend assigns `time` via `time.Now()`, and on machines with
+ * low-resolution clocks two distinct entries can end up sharing the exact
+ * same timestamp, so `time` alone cannot be used as a unique key.
+ */
+const getLogIdentityKey = (log: any) =>
+    [log.time, log.domain, log.type, log.client, log.client_id, log.upstream, log.status, log.cached].join('|');
+
+/**
+ * Merges a freshly fetched page of logs with the previously loaded logs,
+ * without dropping entries that share an identity key (e.g. same
+ * timestamp) with an existing entry but are otherwise distinct.
+ *
+ * Entries are matched by occurrence count per identity key, so legitimate
+ * duplicates (the same entry re-fetched on refresh) are still deduplicated,
+ * while distinct entries that collide only on the key are kept.
+ */
+export const mergeRefreshedLogs = (previousLogs: any[], refreshedLogs: any[]) => {
+    const previousKeyCounts = new Map<string, number>();
+
+    previousLogs.forEach((log) => {
+        const key = getLogIdentityKey(log);
+        previousKeyCounts.set(key, (previousKeyCounts.get(key) ?? 0) + 1);
+    });
+
+    const freshLogs = refreshedLogs.filter((log) => {
+        const key = getLogIdentityKey(log);
+        const remaining = previousKeyCounts.get(key) ?? 0;
+
+        if (remaining > 0) {
+            previousKeyCounts.set(key, remaining - 1);
+            return false;
+        }
+
+        return true;
+    });
+
+    return [...freshLogs, ...previousLogs];
+};
+
 export const normalizeHistory = (history: any) =>
     history.map((item, idx) => ({
         x: idx,
