@@ -277,8 +277,6 @@ func (l *queryLog) decodeResultRules(ctx context.Context, dec *json.Decoder, ent
 
 		err = l.decodeResultRuleToken(ctx, dec, ent)
 		switch {
-		case err == nil:
-			continue
 		case
 			err == io.EOF,
 			errors.Is(err, ErrEndOfToken):
@@ -292,7 +290,8 @@ func (l *queryLog) decodeResultRules(ctx context.Context, dec *json.Decoder, ent
 }
 
 // decodeResultRuleToken decodes the tokens of "Rules" type to the logEntry ent.
-// All arguments must not be nil.
+// All arguments must not be nil.  It returns [io.EOF] when the end of the token
+// stream is reached.
 func (l *queryLog) decodeResultRuleToken(
 	ctx context.Context,
 	dec *json.Decoder,

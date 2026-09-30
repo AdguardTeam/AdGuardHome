@@ -380,11 +380,9 @@ func (s *Server) Exchange(
 
 	arpa = dns.Fqdn(arpa)
 	req := &dns.Msg{
-		MsgHdr: dns.MsgHdr{
-			Id:               dns.Id(),
-			RecursionDesired: true,
-		},
-		Compress: true,
+		Id:               dns.Id(),
+		RecursionDesired: true,
+		Compress:         true,
 		Question: []dns.Question{{
 			Name:   arpa,
 			Qtype:  dns.TypePTR,
