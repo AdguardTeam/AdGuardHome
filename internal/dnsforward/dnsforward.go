@@ -341,11 +341,20 @@ func (s *Server) UpstreamTimeout() (t time.Duration) {
 // Resolve gets IP addresses by host name from an upstream server.  No
 // request/response filtering is performed.  Query log and Stats are not
 // updated.  This method may be called before [Server.Start].
+//
+// serverLock is only held long enough to read the internalProxy pointer, not
+// for the whole lookup, since the lookup performs network I/O that can take
+// as long as the upstream timeout (e.g. when there is no Internet
+// connectivity) and must not block unrelated readers and writers of
+// [Server], such as live query processing and the HTTP API, for that long.
+//
+// See https://github.com/AdguardTeam/AdGuardHome/issues/6920.
 func (s *Server) Resolve(ctx context.Context, net, host string) (addr []netip.Addr, err error) {
 	s.serverLock.RLock()
-	defer s.serverLock.RUnlock()
+	prx := s.internalProxy
+	s.serverLock.RUnlock()
 
-	return s.internalProxy.LookupNetIP(ctx, net, host)
+	return prx.LookupNetIP(ctx, net, host)
 }
 
 const (
@@ -362,12 +371,17 @@ const (
 var _ rdns.Exchanger = (*Server)(nil)
 
 // Exchange implements the [rdns.Exchanger] interface for *Server.
+//
+// serverLock is only held long enough to read the fields it needs, not for
+// the network exchange itself, for the same reason as in [Server.Resolve].
 func (s *Server) Exchange(
 	ctx context.Context,
 	ip netip.Addr,
 ) (host string, ttl time.Duration, err error) {
 	s.serverLock.RLock()
-	defer s.serverLock.RUnlock()
+	prx := s.internalProxy
+	usePrivateRDNS := s.conf.UsePrivateRDNS
+	s.serverLock.RUnlock()
 
 	// TODO(e.burkov):  Migrate to [netip.Addr] already.
 	arpa, err := netutil.IPToReversedAddr(ip.AsSlice())
@@ -397,7 +411,7 @@ func (s *Server) Exchange(
 
 	var errMsg string
 	if s.privateNets.Contains(ip) {
-		if !s.conf.UsePrivateRDNS {
+		if !usePrivateRDNS {
 			return "", 0, nil
 		}
 
@@ -406,7 +420,7 @@ func (s *Server) Exchange(
 	} else {
 		errMsg = "resolving an address: %w"
 	}
-	if err = s.internalProxy.Resolve(ctx, dctx); err != nil {
+	if err = prx.Resolve(ctx, dctx); err != nil {
 		return "", 0, fmt.Errorf(errMsg, err)
 	}
 

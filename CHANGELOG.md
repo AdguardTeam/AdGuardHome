@@ -28,6 +28,11 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - DHCP server persisting uncommitted leases with zero expiry after `DHCPDISCOVER` messages ([#8572]).
 
+- DNS resolution (including of cached and local/private entries) and the web UI stalling or timing out while the internet connection is down ([#6920]).
+
+    This was caused by internal, network-dependent lookups (used for filter list updates and update checks) holding a lock for as long as their upstream timeout instead of only while reading the resolver reference, which could starve out unrelated readers and writers of the DNS server state, such as ordinary query processing and the HTTP API, whenever those lookups couldn't reach the network.
+
+[#6920]:     https://github.com/AdguardTeam/AdGuardHome/issues/6920
 [#8565]:     https://github.com/AdguardTeam/AdGuardHome/issues/8565
 [#8572]:     https://github.com/AdguardTeam/AdGuardHome/issues/8572
 [go-1.26.8]: https://groups.google.com/g/golang-announce/c/QiTRm-HGGtI
