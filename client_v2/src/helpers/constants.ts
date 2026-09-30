@@ -11,10 +11,11 @@ export const R_HOST = /^(\*\.)?[\w.-]+$/;
 export const R_IPV4 = /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
 
 // Mirrors the backend's net.ParseMAC: exactly two hex digits per field, a
-// uniform separator, and the six- and eight-byte field counts, so over-long
-// fields and mixed separators are rejected by the form as well.
+// uniform separator, and the six-, eight-, and twenty-octet field counts
+// (EUI-48, EUI-64, and InfiniBand link-layer addresses), so over-long fields
+// and mixed separators are rejected by the form as well.
 export const R_MAC =
-    /^(([a-fA-F0-9]{2}:){5}[a-fA-F0-9]{2})$|^(([a-fA-F0-9]{2}-){5}[a-fA-F0-9]{2})$|^(([a-fA-F0-9]{2}:){7}[a-fA-F0-9]{2})$|^(([a-fA-F0-9]{2}-){7}[a-fA-F0-9]{2})$|^(([a-fA-F0-9]{4}\.){2}[a-fA-F0-9]{4})$|^(([a-fA-F0-9]{4}\.){3}[a-fA-F0-9]{4})$/;
+    /^(([a-fA-F0-9]{2}:){5}[a-fA-F0-9]{2})$|^(([a-fA-F0-9]{2}-){5}[a-fA-F0-9]{2})$|^(([a-fA-F0-9]{2}:){7}[a-fA-F0-9]{2})$|^(([a-fA-F0-9]{2}-){7}[a-fA-F0-9]{2})$|^(([a-fA-F0-9]{2}:){19}[a-fA-F0-9]{2})$|^(([a-fA-F0-9]{2}-){19}[a-fA-F0-9]{2})$|^(([a-fA-F0-9]{4}\.){2}[a-fA-F0-9]{4})$|^(([a-fA-F0-9]{4}\.){3}[a-fA-F0-9]{4})$|^(([a-fA-F0-9]{4}\.){9}[a-fA-F0-9]{4})$/;
 export const R_MAC_WITHOUT_COLON =
     /^([a-fA-F0-9]{2}){5}([a-fA-F0-9]{2})$|^([a-fA-F0-9]{2}){7}([a-fA-F0-9]{2})$/;
 
@@ -29,9 +30,12 @@ export const R_WIN_ABSOLUTE_PATH =
     // eslint-disable-next-line no-control-regex
     /^([a-zA-Z]:)?(\\|\/)(?:[^\\/:*?"<>|\x00]+\\)*[^\\/:*?"<>|\x00]*$/;
 
-// Mirrors the backend's netutil.ValidateHostnameLabel: 1–63 lowercase
-// alphanumerics and hyphens, but the first and last runes must be
-// alphanumeric, so values like "-abc" or "abc-" are rejected by the server.
+// Mirrors the backend's netutil.ValidateHostnameLabel: 1–63 alphanumerics and
+// hyphens, with the first and last runes alphanumeric, so values like "-abc"
+// or "abc-" are rejected by the server.  Lowercase only is an intentional UI
+// restriction: the backend lowercases the ClientID of a request before
+// matching it and stores persistent-client IDs in lowercase, so an uppercase
+// entry would never match an access list.
 export const R_CLIENT_ID = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/;
 
 export const R_HOSTNAME = /^[a-z0-9-]+$/;

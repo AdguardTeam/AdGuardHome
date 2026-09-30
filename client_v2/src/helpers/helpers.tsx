@@ -607,26 +607,46 @@ export const isIpInCidr = (ip: string, cidr: string): boolean => {
 };
 
 /**
- * Validates an IPv6 address using ipaddr.js, including zone IDs (e.g., fe80::1%eth0).
- * A mixed-notation address with a dotted-decimal IPv4 tail must use a canonical
- * IPv4 spelling there as well: netip.ParseAddr, which the backend uses, rejects
- * the leading-zero form (e.g. ::ffff:192.168.01.1).
+ * Matches the dotted-decimal IPv4 tail of a mixed-notation IPv6 address, if
+ * there is one, against the canonical spelling netip.ParseAddr requires.
+ * @param addr - An IPv6 address without a zone ID.
+ * @returns true if the address has no IPv4 tail or the tail is canonical.
+ */
+const hasCanonicalIpv4Tail = (addr: string): boolean => {
+    const tail = addr.slice(addr.lastIndexOf(':') + 1);
+
+    return !tail.includes('.') || R_IPV4.test(tail);
+};
+
+/**
+ * Validates an IPv6 address the way the backend parses it with
+ * netip.ParseAddr.  The zone ID, if any, is everything after the first `%`,
+ * and its contents are not restricted, so `fe80::1%eth0/64` is an address with
+ * the zone `eth0/64` rather than a CIDR.  A mixed-notation address with a
+ * dotted-decimal IPv4 tail must use a canonical IPv4 spelling there as well:
+ * netip.ParseAddr rejects the leading-zero form (e.g. ::ffff:192.168.01.1).
  * @param value - The string to validate.
  * @returns true if the value is a valid IPv6 address.
  */
 export const isValidIpv6 = (value: string): boolean => {
+    const zoneIdx = value.indexOf('%');
+    const addr = zoneIdx === -1 ? value : value.slice(0, zoneIdx);
+
+    // netip.ParseAddr requires a non-empty zone ID, but does not restrict its
+    // contents.
+    if (zoneIdx !== -1 && zoneIdx === value.length - 1) {
+        return false;
+    }
+
     try {
-        if (!ipaddr.IPv6.isValid(value)) {
+        if (!ipaddr.IPv6.isValid(addr)) {
             return false;
         }
     } catch (_e) {
         return false;
     }
 
-    const addr = value.split('%')[0];
-    const tail = addr.slice(addr.lastIndexOf(':') + 1);
-
-    return !tail.includes('.') || R_IPV4.test(tail);
+    return hasCanonicalIpv4Tail(addr);
 };
 
 /**
@@ -666,12 +686,9 @@ export const isValidCidr = (value: string): boolean => {
         if (!R_IPV4.test(addr)) {
             return false;
         }
-    } else {
+    } else if (!hasCanonicalIpv4Tail(addr)) {
         // The same applies to the IPv4 tail of a mixed-notation IPv6 address.
-        const ipv4Part = addr.slice(colon + 1);
-        if (ipv4Part.includes('.') && !R_IPV4.test(ipv4Part)) {
-            return false;
-        }
+        return false;
     }
 
     try {

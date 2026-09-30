@@ -26,6 +26,17 @@ describe('validateClientsPerLine', () => {
         expect(validateClientsPerLine('2001:db8::1')).toBeUndefined();
     });
 
+    // The backend parses an entry as an address before it tries a prefix, so
+    // this is an address with the zone `eth0/64` for the server as well.
+    it('returns undefined for an IPv6 address with a zone ID', () => {
+        expect(validateClientsPerLine('fe80::1%eth0')).toBeUndefined();
+        expect(validateClientsPerLine('fe80::1%eth0/64')).toBeUndefined();
+    });
+
+    it('rejects an IPv6 address with an empty zone ID', () => {
+        expect(validateClientsPerLine('fe80::1%')).toBe(copy('form_error_format'));
+    });
+
     it('returns undefined for valid IPv4 CIDR', () => {
         expect(validateClientsPerLine('192.168.1.0/24')).toBeUndefined();
         expect(validateClientsPerLine('10.0.0.0/8')).toBeUndefined();
@@ -43,9 +54,7 @@ describe('validateClientsPerLine', () => {
     });
 
     it('rejects IPv6 CIDR with an out-of-range embedded IPv4 octet', () => {
-        expect(validateClientsPerLine('::ffff:192.168.1.256/120')).toBe(
-            copy('form_error_format'),
-        );
+        expect(validateClientsPerLine('::ffff:192.168.1.256/120')).toBe(copy('form_error_format'));
     });
 
     it('returns undefined for valid ClientID', () => {

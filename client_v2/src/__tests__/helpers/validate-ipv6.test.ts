@@ -12,6 +12,20 @@ describe('isValidIpv6', () => {
         expect(isValidIpv6('fe80::%eth0')).toBe(true);
     });
 
+    // REGRESSION: netip.ParseAddr treats everything after the first `%` as the
+    // zone ID without restricting its contents, so the server accepts this
+    // value as an address with a zone ID, not as a CIDR.  ipaddr.js only takes
+    // [0-9a-z]+ zones and anchors them, so the zone is split off first.
+    it('accepts a zone ID with any non-empty contents', () => {
+        expect(isValidIpv6('fe80::1%eth0/64')).toBe(true);
+        expect(isValidIpv6('2001:db8::1%eth0')).toBe(true);
+        expect(isValidIpv6('fe80::1%a-b')).toBe(true);
+    });
+
+    it('rejects an empty zone ID', () => {
+        expect(isValidIpv6('fe80::1%')).toBe(false);
+    });
+
     it('rejects a zone ID on an address with no group after fe80:', () => {
         expect(isValidIpv6('fe80:%eth0')).toBe(false);
     });

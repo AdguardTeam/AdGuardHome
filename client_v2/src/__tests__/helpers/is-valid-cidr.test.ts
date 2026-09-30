@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isValidCidr } from 'panel/helpers/helpers';
+import { isValidCidr, isValidIpv6 } from 'panel/helpers/helpers';
 
 describe('isValidCidr', () => {
     it('accepts IPv4 CIDR ranges', () => {
@@ -28,6 +28,15 @@ describe('isValidCidr', () => {
     it('rejects IPv6 CIDR ranges with a zone ID', () => {
         // netip.ParsePrefix rejects zones in a prefix, even though
         // netip.ParseAddr accepts them on a bare address.
+        expect(isValidCidr('fe80::1%eth0/64')).toBe(false);
+    });
+
+    // The identifier and access-list validators try isValidIpv6 before
+    // isValidCidr, the way the backend parses an address before a prefix, so
+    // they accept fe80::1%eth0/64 as an address while this helper rejects it as
+    // a range.
+    it('rejects a zone ID even when the same value is a valid address', () => {
+        expect(isValidIpv6('fe80::1%eth0/64')).toBe(true);
         expect(isValidCidr('fe80::1%eth0/64')).toBe(false);
     });
 
