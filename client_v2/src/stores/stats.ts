@@ -28,10 +28,8 @@ type StatsState = {
     processingReset: boolean;
     /** Whether the stats config (interval etc.) has been fetched from the server. */
     configLoaded: boolean;
-    /** Whether a stats-config request has settled, successfully or not. */
-    configAttempted: boolean;
-    /** Whether a stats request has settled, successfully or not. */
-    statsAttempted: boolean;
+    configInitialized: boolean;
+    statsInitialized: boolean;
     interval: number;
     customInterval: number | null;
     dnsQueries: number[];
@@ -65,8 +63,8 @@ const initialState: StatsState = {
     processingStats: true,
     processingReset: false,
     configLoaded: false,
-    configAttempted: false,
-    statsAttempted: false,
+    configInitialized: false,
+    statsInitialized: false,
     interval: DAY,
     customInterval: null,
     dnsQueries: [],
@@ -130,11 +128,11 @@ export const getStats = async (period?: number) => {
             ),
             topUpstreamsResponses: normalizeTopStats(data.top_upstreams_responses || []),
             processingStats: false,
-            statsAttempted: true,
+            statsInitialized: true,
         });
     } catch (error) {
         addErrorToast({ error });
-        setState({ processingStats: false, statsAttempted: true });
+        setState({ processingStats: false, statsInitialized: true });
     }
 };
 
@@ -152,11 +150,11 @@ export const getStatsConfig = async () => {
             ignored_enabled: data.ignored_enabled ?? false,
             processingGetConfig: false,
             configLoaded: true,
-            configAttempted: true,
+            configInitialized: true,
         });
     } catch (error) {
         addErrorToast({ error });
-        setState({ processingGetConfig: false, configAttempted: true });
+        setState({ processingGetConfig: false, configInitialized: true });
     }
 };
 

@@ -1,4 +1,4 @@
-import { For } from 'solid-js';
+import { For, createMemo } from 'solid-js';
 import cn from 'clsx';
 
 import intl from 'panel/common/intl';
@@ -7,18 +7,18 @@ import { Icon } from 'panel/common/ui/Icon';
 import theme from 'panel/lib/theme';
 import s from './ConfigureRewritesModal.module.pcss';
 
-const items = [
-    {
-        message: intl.getMessage('rewrites_tooltip_examples_item1'),
-        code: 'example.org',
-    },
-    {
-        message: intl.getMessage('rewrites_tooltip_examples_item2'),
-        code: '*.example.org',
-    },
-];
-
 export const DomainFaqTooltip = () => {
+    const items = createMemo(() => [
+        {
+            message: intl.getMessage('rewrites_tooltip_examples_item1'),
+            code: 'example.org',
+        },
+        {
+            message: intl.getMessage('rewrites_tooltip_examples_item2'),
+            code: '*.example.org',
+        },
+    ]);
+
     return (
         <FaqTooltip
             overlayClass={s.dropdown}
@@ -29,7 +29,7 @@ export const DomainFaqTooltip = () => {
                         {intl.getMessage('upstream_examples_title')}
                     </div>
 
-                    <For each={items}>
+                    <For each={items()}>
                         {(item) => (
                             <div class={s.tooltipItem}>
                                 <Icon icon="label" class={s.icon} />

@@ -72,8 +72,10 @@ export const Clients = () => {
         handleDeleteClose();
     };
 
+    // The tables show a loader only until their first request settles; later
+    // refetches keep the previous rows painted.
     const isLoading = createMemo(
-        () => dashboardState.processingClients || statsState.processingStats,
+        () => !dashboardState.clientsInitialized || !statsState.statsInitialized,
     );
 
     const serviceMap = createMemo(() => {
