@@ -24,6 +24,7 @@ import (
 
 	//lint:ignore SA1019 See the TODO in go.mod.
 	"github.com/go-ping/ping"
+	"github.com/insomniacslk/dhcp/iana"
 )
 
 // v4Server is a DHCPv4 server.
@@ -1251,6 +1252,54 @@ func (s *v4Server) updateOptions(req, resp *dhcpv4.DHCPv4) {
 // client(255.255.255.255:68) <- (Reply:YourIP,ClientMAC,Type=Offer,ServerID,SubnetMask,LeaseTime) <- server(<IP>:67)
 // client(0.0.0.0:68) -> (Request:ClientMAC,Type=Request,ClientID,ReqIP||ClientIP,HostName,ServerID,ParamReqList) -> server(255.255.255.255:67)
 // client(255.255.255.255:68) <- (Reply:YourIP,ClientMAC,Type=ACK,ServerID,SubnetMask,LeaseTime) <- server(<IP>:67)
+
+// clientMAC returns the hardware address of the client sending the request,
+// preferring the chaddr field and falling back to the legacy Ethernet MAC
+// carried by the client identifier option (61) when chaddr is not usable.
+//
+// See https://datatracker.ietf.org/doc/html/rfc4361#section-6.3.
+func clientMAC(req *dhcpv4.DHCPv4) (mac net.HardwareAddr) {
+	if mac = clientIDMAC(req.Options.Get(dhcpv4.OptionClientIdentifier)); mac != nil &&
+		!hwAddrSet(req.ClientHWAddr) {
+		return mac
+	}
+
+	return req.ClientHWAddr
+}
+
+// clientIDMAC extracts the legacy Ethernet MAC address from the DHCP client
+// identifier option (option 61), if it contains one.  It returns nil if the
+// option doesn't contain a hardware address.
+//
+// The value of the client identifier option consists of a hardware type byte
+// followed by the client identifier itself.  Only the legacy form — hardware
+// type 1 (Ethernet) followed by a six-byte MAC address — is treated as a
+// hardware address.  All other forms, most notably the type-255 (IAID + DUID)
+// form defined by RFC 4361, carry an opaque client identity and must not be
+// interpreted as a hardware address.
+//
+// See https://datatracker.ietf.org/doc/html/rfc4361#section-6.1.
+func clientIDMAC(opt []byte) (mac net.HardwareAddr) {
+	// The client identifier is a hardware type byte followed by the
+	// identifier, so the legacy Ethernet form is seven bytes long.
+	if len(opt) != 7 || opt[0] != byte(iana.HWTypeEthernet) {
+		return nil
+	}
+
+	return net.HardwareAddr(opt[1:])
+}
+
+// hwAddrSet returns true if hw contains at least one non-zero byte.
+func hwAddrSet(hw net.HardwareAddr) (ok bool) {
+	for _, b := range hw {
+		if b != 0 {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (s *v4Server) packetHandler(conn net.PacketConn, peer net.Addr, req *dhcpv4.DHCPv4) {
 	log.Debug("dhcpv4: received message: %s", req.Summary())
 
@@ -1273,6 +1322,15 @@ func (s *v4Server) packetHandler(conn net.PacketConn, peer net.Addr, req *dhcpv4
 
 		return
 	}
+
+	// Some clients, e.g. those compliant with RFC 4361, may not fill in the
+	// chaddr field with a usable hardware address.  In that case, fall back to
+	// the legacy Ethernet MAC carried by the client identifier option (61)
+	// when it contains one.  A non-zero chaddr is always preferred, so the
+	// option is never used to overwrite a usable hardware address.
+	//
+	// See https://datatracker.ietf.org/doc/html/rfc4361#section-6.3.
+	req.ClientHWAddr = clientMAC(req)
 
 	err = netutil.ValidateMAC(req.ClientHWAddr)
 	if err != nil {
