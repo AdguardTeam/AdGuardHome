@@ -259,7 +259,7 @@ func newWebAPI(ctx context.Context, conf *webAPIConfig) (w *webAPI) {
 		hostsContainer: conf.hostsContainer,
 	}
 
-	clientFS := http.FileServer(http.FS(conf.clientFS))
+	clientFS := aghhttp.NewStaticFileServer(conf.clientFS)
 
 	mux := conf.mux
 	// if not configured, redirect / to /install.html, otherwise redirect /install.html to /
