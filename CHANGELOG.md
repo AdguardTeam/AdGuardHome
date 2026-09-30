@@ -24,6 +24,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- A panic when updating AdGuard Home binary via the command line with `use_private_ptr_resolvers` set to true ([#8613]).
+
 - `log.enabled` set to `false` leaving the legacy logger enabled ([#8565]).
 
 - DHCP server persisting uncommitted leases with zero expiry after `DHCPDISCOVER` messages ([#8572]).
@@ -43,6 +45,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#8608]:     https://github.com/AdguardTeam/AdGuardHome/issues/8608
 [#8609]:     https://github.com/AdguardTeam/AdGuardHome/issues/8609
 [#8610]:     https://github.com/AdguardTeam/AdGuardHome/issues/8610
+[#8613]:     https://github.com/AdguardTeam/AdGuardHome/issues/8613
 [go-1.26.8]: https://groups.google.com/g/golang-announce/c/QiTRm-HGGtI
 
 <!--

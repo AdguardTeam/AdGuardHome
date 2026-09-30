@@ -26,8 +26,6 @@ export const Encryption = () => {
     const [serverSettingsOpen, setServerSettingsOpen] = createSignal(false);
     const [addCertOpen, setAddCertOpen] = createSignal(false);
 
-    const [tlsStatusLoaded, setTlsStatusLoaded] = createSignal(false);
-
     /**
      * Shadows encryptionState.enabled with {@code equals: false} so we can
      * force a DOM re-sync even when the value is unchanged (e.g. reverting
@@ -46,9 +44,8 @@ export const Encryption = () => {
 
     const [validateConfig, cancelValidation] = createDebouncedValidator();
 
-    onMount(async () => {
-        await getTlsStatus();
-        setTlsStatusLoaded(true);
+    onMount(() => {
+        getTlsStatus();
     });
 
     onCleanup(() => {
@@ -60,7 +57,7 @@ export const Encryption = () => {
     }>();
 
     createEffect(() => {
-        if (!tlsStatusLoaded() || !searchParams[TLS_WIZARD_QUERY_KEY]) return;
+        if (!encryptionState.initialized || !searchParams[TLS_WIZARD_QUERY_KEY]) return;
 
         setAddCertOpen(true);
         setSearchParams({ [TLS_WIZARD_QUERY_KEY]: undefined }, { replace: true });
@@ -115,7 +112,7 @@ export const Encryption = () => {
      * whenever encryption is enabled and cert/key values are present.
      */
     createEffect(() => {
-        if (!tlsStatusLoaded()) return;
+        if (!encryptionState.initialized) return;
         if (!encryptionState.enabled) return;
         const hasCert = !!(encryptionState.certificate_chain || encryptionState.certificate_path);
         const hasKey = !!(
@@ -137,7 +134,7 @@ export const Encryption = () => {
                     </h1>
                 </div>
 
-                <Show when={tlsStatusLoaded()} fallback={<PageLoader />}>
+                <Show when={encryptionState.initialized} fallback={<PageLoader />}>
                     <PlainDnsToggle />
 
                     <h2

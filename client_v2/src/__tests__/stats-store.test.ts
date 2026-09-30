@@ -50,15 +50,15 @@ describe('getStats', () => {
         expect(mocks.stats).toHaveBeenCalledWith(undefined);
     });
 
-    it('marks statsAttempted after a successful stats request', async () => {
+    it('marks statsInitialized after a successful stats request', async () => {
         await getStats();
-        expect(statsState.statsAttempted).toBe(true);
+        expect(statsState.statsInitialized).toBe(true);
     });
 
-    it('marks statsAttempted after a failed stats request', async () => {
+    it('marks statsInitialized after a failed stats request', async () => {
         mocks.stats.mockRejectedValue(new Error('network'));
         await getStats();
-        expect(statsState.statsAttempted).toBe(true);
+        expect(statsState.statsInitialized).toBe(true);
         expect(mocks.addErrorToast).toHaveBeenCalled();
     });
 
@@ -116,23 +116,23 @@ describe('getStatsConfig', () => {
         vi.clearAllMocks();
     });
 
-    it('marks configAttempted but not configLoaded on failure', async () => {
+    it('marks configInitialized but not configLoaded on failure', async () => {
         mocks.getStatsConfig.mockRejectedValue(new Error('network'));
 
         await getStatsConfig();
 
-        expect(statsState.configAttempted).toBe(true);
+        expect(statsState.configInitialized).toBe(true);
         expect(statsState.configLoaded).toBe(false);
         expect(mocks.addErrorToast).toHaveBeenCalled();
     });
 
-    it('marks configLoaded and configAttempted on success', async () => {
+    it('marks configLoaded and configInitialized on success', async () => {
         mocks.getStatsConfig.mockResolvedValue({ interval: DAY * 30, enabled: true });
 
         await getStatsConfig();
 
         expect(statsState.configLoaded).toBe(true);
-        expect(statsState.configAttempted).toBe(true);
+        expect(statsState.configInitialized).toBe(true);
         expect(statsState.interval).toBe(DAY * 30);
     });
 });

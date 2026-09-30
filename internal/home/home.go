@@ -1425,8 +1425,9 @@ func cmdlineUpdate(
 	err := initDNSServer(
 		ctx,
 		dnsforward.DNSCreateParams{
-			Logger:     l,
-			TLSManager: tlsMgr,
+			Logger:      l,
+			TLSManager:  tlsMgr,
+			PrivateNets: parseSubnetSet(config.DNS.PrivateNets),
 		},
 		nil,
 		agh.EmptyConfigModifier{},

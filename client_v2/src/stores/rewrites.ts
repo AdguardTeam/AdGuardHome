@@ -15,6 +15,7 @@ import type { RewriteSettings } from 'panel/api/model/rewriteSettings';
 
 type RewritesState = {
     processing: boolean;
+    initialized: boolean;
     processingAdd: boolean;
     processingDelete: boolean;
     processingUpdate: boolean;
@@ -28,6 +29,7 @@ type RewritesState = {
 
 const initialState: RewritesState = {
     processing: true,
+    initialized: false,
     processingAdd: false,
     processingDelete: false,
     processingUpdate: false,
@@ -58,10 +60,10 @@ export const getRewritesList = async () => {
     setState('processing', true);
     try {
         const data = await rewriteList();
-        setState({ list: data || [], processing: false });
+        setState({ list: data || [], processing: false, initialized: true });
     } catch (error) {
         addErrorToast({ error });
-        setState('processing', false);
+        setState({ processing: false, initialized: true });
     }
 };
 
@@ -140,16 +142,12 @@ export const getRewriteSettings = async () => {
 };
 
 /** Finds the rewrite rule that produced the given query log entry. */
-export const findRewriteRuleByDomain = (
-    domain: string,
-): RewriteEntry | undefined => {
+export const findRewriteRuleByDomain = (domain: string): RewriteEntry | undefined => {
     const exact = state.list.find((r) => r.domain === domain);
     if (exact) return exact;
     const wildcard = state.list.find((r) => r.domain === `*.${domain}`);
     if (wildcard) return wildcard;
-    return state.list.find(
-        (r) => r.domain?.startsWith('*.') && domain.endsWith(r.domain.slice(1)),
-    );
+    return state.list.find((r) => r.domain?.startsWith('*.') && domain.endsWith(r.domain.slice(1)));
 };
 
 export const updateRewriteSettings = async (values: RewriteSettings) => {

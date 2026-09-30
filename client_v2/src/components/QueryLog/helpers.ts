@@ -103,7 +103,7 @@ export const getStatusLabel = (
         case FILTERED_STATUS.FILTERED_SAFE_SEARCH:
             return intl.getMessage('safe_search');
         case FILTERED_STATUS.FILTERED_BLACK_LIST:
-            return intl.getMessage('show_blocked_responses');
+            return intl.getMessage('blocked');
         case FILTERED_STATUS.REWRITE:
         case FILTERED_STATUS.REWRITE_HOSTS:
         case FILTERED_STATUS.REWRITE_RULE:
@@ -300,7 +300,11 @@ export const filterLogsByStatus = <
 };
 
 export const hasPersistentClient = (
-    entry: { client: string; client_id?: string; client_info?: { name?: string; ids?: string[] } | null },
+    entry: {
+        client: string;
+        client_id?: string;
+        client_info?: { name?: string; ids?: string[] } | null;
+    },
     persistentClientIds: string[],
 ): boolean => {
     const entryIds = [entry.client, entry.client_id, ...(entry.client_info?.ids ?? [])].filter(

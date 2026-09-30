@@ -1,4 +1,4 @@
-import { For } from 'solid-js';
+import { For, createMemo } from 'solid-js';
 import cn from 'clsx';
 
 import intl from 'panel/common/intl';
@@ -10,7 +10,7 @@ import { Icon } from 'panel/common/ui/Icon';
 import s from './Examples.module.pcss';
 
 export const Examples = () => {
-    const examples = [
+    const examples = createMemo(() => [
         intl.getMessage('upstream_example_udp', {
             ipv4: '94.140.14.140',
             ipv6: '2a10:50c0::1:ff',
@@ -130,12 +130,12 @@ export const Examples = () => {
         intl.getMessage('upstream_example_upstream_comment', {
             value: `${COMMENT_LINE_DEFAULT_TOKEN} comment`,
         }),
-    ];
+    ]);
 
     return (
         <Accordion title={intl.getMessage('upstream_examples_title')} compact>
             <div class={s.list}>
-                <For each={examples}>
+                <For each={examples()}>
                     {(example) => (
                         <div class={cn(theme.text.t3, s.listItem)}>
                             <Icon icon="label" class={s.icon} />

@@ -1,9 +1,10 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { getAdditionalLogs, setFilteredLogs, queryLogsState } from 'panel/stores/queryLogs';
-import { queryLog } from 'panel/api/generated';
+import { getAdditionalLogs, setFilteredLogs, getLogsConfig, queryLogsState } from 'panel/stores/queryLogs';
+import { queryLog, getQueryLogConfig } from 'panel/api/generated';
 
 vi.mock('panel/api/generated', () => ({
     queryLog: vi.fn(),
+    getQueryLogConfig: vi.fn(),
 }));
 
 vi.mock('panel/stores/toasts', () => ({
@@ -142,5 +143,28 @@ describe('queryLogs store', () => {
         await getAdditionalLogs();
 
         expect(queryLog).toHaveBeenCalledWith(expect.objectContaining({ limit: 20 }));
+    });
+});
+
+describe('getLogsConfig — configInitialized flag', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        queryLogsState.configInitialized = false;
+    });
+
+    it('marks configInitialized after a successful request', async () => {
+        (getQueryLogConfig as any).mockResolvedValue({});
+
+        await getLogsConfig();
+
+        expect(queryLogsState.configInitialized).toBe(true);
+    });
+
+    it('marks configInitialized after a failed request so the loader cannot get stuck', async () => {
+        (getQueryLogConfig as any).mockRejectedValue(new Error('network'));
+
+        await getLogsConfig();
+
+        expect(queryLogsState.configInitialized).toBe(true);
     });
 });
