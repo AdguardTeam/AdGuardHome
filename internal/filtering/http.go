@@ -112,9 +112,7 @@ func (d *DNSFilter) handleFilteringAddURL(w http.ResponseWriter, r *http.Request
 		URL:     fj.URL,
 		Name:    fj.Name,
 		white:   fj.Whitelist,
-		Filter: Filter{
-			ID: d.idGen.next(),
-		},
+		ID:      d.idGen.next(),
 	}
 
 	// Download the filter contents

@@ -20,13 +20,11 @@ func TestGenAnswerHTTPS_andSVCB(t *testing.T) {
 			BlockingMode: filtering.BlockingModeDefault,
 		},
 		ServerConfig{
-			TLSConf: &TLSConfig{},
-			Config: Config{
-				UpstreamMode:     UpstreamModeLoadBalance,
-				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
-				ClientsContainer: EmptyClientsContainer{},
-			},
-			ServePlainDNS: true,
+			TLSConf:          &TLSConfig{},
+			UpstreamMode:     UpstreamModeLoadBalance,
+			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+			ClientsContainer: EmptyClientsContainer{},
+			ServePlainDNS:    true,
 		},
 		testTLSManager,
 	)
