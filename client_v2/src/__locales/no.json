@@ -735,7 +735,6 @@
   "setup_ui_desc": "Bruk disse adressene for å få tilgang til Web-brukergrensesnittet til AdGuard Home. Endre porten om nødvendig",
   "setup_ui_title": "Angi Web UI-adressen for AdGuard Home",
   "setup_ui_title_banner": "Web UI-innstillinger",
-  "show_blocked_responses": "Blokkert",
   "show_more": "Vis mer",
   "show_more_count": "+ %count% flere",
   "show_processed_responses": "Behandlet",

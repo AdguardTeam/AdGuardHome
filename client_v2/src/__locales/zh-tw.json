@@ -735,7 +735,6 @@
   "setup_ui_desc": "使用這些位址存取 AdGuard Home 的 Web 使用者介面。如有需要，可變更連接埠。",
   "setup_ui_title": "設定 AdGuard Home 的 Web UI 位址",
   "setup_ui_title_banner": "Web UI 設定",
-  "show_blocked_responses": "已封鎖的",
   "show_more": "顯示更多",
   "show_more_count": "另外 %count% 個",
   "show_processed_responses": "已處理的",

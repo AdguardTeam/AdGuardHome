@@ -735,7 +735,6 @@
   "setup_ui_desc": "Használja ezeket a címeket az AdGuard Home Web felhasználói interfészének eléréséhez. Szükség esetén módosítsa a portot",
   "setup_ui_title": "Állítsa be az AdGuard Home Web UI címét",
   "setup_ui_title_banner": "Web UI beállítások",
-  "show_blocked_responses": "Tiltva",
   "show_more": "Többet mutatni",
   "show_more_count": "+ %count% további",
   "show_processed_responses": "Feldolgozott",

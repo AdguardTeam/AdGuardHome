@@ -735,7 +735,6 @@
   "setup_ui_desc": "Koristite te adrese za pristup web sučelju AdGuard Home. Ako je potrebno, promijenite priključak",
   "setup_ui_title": "Postavite adresu web sučelja za AdGuard Home",
   "setup_ui_title_banner": "Postavke web sučelja",
-  "show_blocked_responses": "Blokirano",
   "show_more": "Prikaži više",
   "show_more_count": "+ %count% više",
   "show_processed_responses": "Obrađeno",

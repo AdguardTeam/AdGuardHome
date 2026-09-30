@@ -735,7 +735,6 @@
   "setup_ui_desc": "Utilisez ces adresses pour accéder à l'interface utilisateur Web d'AdGuard Home. Si nécessaire, modifiez le port",
   "setup_ui_title": "Définissez l'adresse de l'interface web pour AdGuard Home",
   "setup_ui_title_banner": "Paramètres de l’interface Web",
-  "show_blocked_responses": "Bloqué",
   "show_more": "Afficher plus",
   "show_more_count": "+ %count% de plus",
   "show_processed_responses": "Traités",

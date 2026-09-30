@@ -735,7 +735,6 @@
   "setup_ui_desc": "از این نشانی‌ها برای دسترسی به رابط کاربری وب AdGuard Home استفاده کنید. در صورت نیاز، درگاه را تغییر دهید",
   "setup_ui_title": "نشانی رابط وب را برای AdGuard Home تنظیم کنید",
   "setup_ui_title_banner": "تنظيمات رابط وب",
-  "show_blocked_responses": "مسدود شده",
   "show_more": "نمایش بیشتر",
   "show_more_count": "+ %count% مورد دیگر",
   "show_processed_responses": "پردازش شده",

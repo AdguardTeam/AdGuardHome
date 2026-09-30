@@ -735,7 +735,6 @@
   "setup_ui_desc": "Използвайте тези адреси за достъп до уеб потребителския интерфейс на AdGuard Home. Ако е необходимо, променете порта",
   "setup_ui_title": "Задайте адреса на уеб интерфейса за AdGuard Home",
   "setup_ui_title_banner": "Настройки на уеб интерфейса",
-  "show_blocked_responses": "Блокирано",
   "show_more": "Покажи повече",
   "show_more_count": "+ %count% още",
   "show_processed_responses": "Обработен",

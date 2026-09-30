@@ -735,7 +735,6 @@
   "setup_ui_desc": "Koristite ove adrese za pristup veb korisničkom interfejsu AdGuard Home. Ako je potrebno, promenite port",
   "setup_ui_title": "Podesite adresu veb korisničkog interfejsa za AdGuard Home",
   "setup_ui_title_banner": "Postavke veb korisničkog interfejsa",
-  "show_blocked_responses": "Blokirano",
   "show_more": "Prikaži više",
   "show_more_count": "+ %count% još",
   "show_processed_responses": "Obrađeno",
