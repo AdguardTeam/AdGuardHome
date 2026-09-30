@@ -38,13 +38,62 @@ export const validateRequiredValue = (value: any) => {
  * Checks whether a DHCP form section has any values entered.  DHCPv4 and
  * DHCPv6 share a single react-hook-form instance, so "the user has not touched
  * this section" is the condition both the section-aware validators and the
- * save buttons key off.
+ * save buttons key off.  Values coming from the server must be normalized with
+ * `getDefaultV4Values` or `getDefaultV6Values` first, since the backend
+ * reports default values even for a section that is not configured.
  *
  * @param {object} sectionValues Values of one DHCP form section.
  * @returns {boolean} True if at least one value is set.
  */
 export const isSectionFilled = (sectionValues: any) =>
     Boolean(sectionValues) && Object.values(sectionValues).some(Boolean);
+
+/**
+ * Normalizes DHCPv4 form values coming from the server.  A lease duration that
+ * is set while the rest of the section is empty must not make the section look
+ * filled in.
+ *
+ * @param {object} v4 Values of the DHCPv4 form section.
+ * @returns {object} Normalized values of the DHCPv4 form section.
+ */
+export const getDefaultV4Values = (v4: any) => {
+    if (!v4) {
+        return v4;
+    }
+
+    const emptyForm = Object.entries(v4).every(([key, value]) => key === 'lease_duration' || value === '');
+
+    if (emptyForm) {
+        return {
+            ...v4,
+            lease_duration: undefined,
+        };
+    }
+
+    return v4;
+};
+
+/**
+ * Normalizes DHCPv6 form values coming from the server.  Unlike DHCPv4, the
+ * backend keeps the default lease duration of a DHCPv6 section that has never
+ * been configured, while the section counts as configured only when its range
+ * start is set.  Without this normalization `isSectionFilled` reports such a
+ * section as filled in, so it gets sent to the backend, which replaces the
+ * stored DHCPv6 configuration with a disabled one.
+ *
+ * @param {object} v6 Values of the DHCPv6 form section.
+ * @returns {object} Normalized values of the DHCPv6 form section.
+ */
+export const getDefaultV6Values = (v6: any) => {
+    if (!v6 || v6.range_start) {
+        return v6;
+    }
+
+    return {
+        ...v6,
+        lease_duration: undefined,
+    };
+};
 
 /**
  * Returns the DHCP form sections that have values, leaving out the untouched
@@ -241,6 +290,9 @@ export const validateClientId = (value: string) => {
         return undefined;
     }
     const formattedValue = value.trim();
+    // The backend parses an identifier as an IP address first, then as a MAC
+    // address, a CIDR, and finally as a ClientID, so a value like
+    // `fe80::1%eth0/64` is an address with a zone ID rather than a CIDR.
     if (
         formattedValue &&
         !(

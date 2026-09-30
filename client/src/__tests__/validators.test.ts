@@ -1,6 +1,8 @@
 import { describe, expect, test, vi } from 'vitest';
 
 import {
+    getDefaultV4Values,
+    getDefaultV6Values,
     isSectionFilled,
     omitEmptySections,
     validateClientId,
@@ -134,6 +136,15 @@ describe('validateClientId', () => {
         expect(validateClientId('fe80::%eth0')).toBeUndefined();
         expect(validateClientId('fe80::1%eth0')).toBeUndefined();
     });
+
+    // REGRESSION: netip.ParseAddr treats everything after the first `%` as the
+    // zone ID without restricting its contents, so the server accepts this
+    // value as an address with a zone ID, not as a CIDR.
+    test('accepts IPv6 addresses with a zone ID the server parses as addresses', () => {
+        expect(validateClientId('fe80::1%eth0/64')).toBeUndefined();
+        expect(validateClientId('2001:db8::1%eth0')).toBeUndefined();
+        expect(validateClientId('fe80::1%')).toBe('form_error_client_id_format');
+    });
 });
 
 describe('validateIpv4', () => {
@@ -203,8 +214,64 @@ describe('isSectionFilled', () => {
     });
 
     test('is true as soon as one value is set', () => {
-        expect(isSectionFilled({ range_start: '', lease_duration: 86400 })).toBe(true);
+        expect(isSectionFilled({ range_start: 'fe80::1' })).toBe(true);
         expect(isSectionFilled({ gateway_ip: '192.168.1.1' })).toBe(true);
+    });
+
+    // The backend reports the default lease duration of a DHCPv6 section that
+    // has never been configured, so raw server values must be normalized with
+    // `getDefaultV6Values` before the section is checked.
+    test('reports a raw unconfigured DHCPv6 section as filled in', () => {
+        const rawV6 = { range_start: '', lease_duration: 86400 };
+
+        expect(isSectionFilled(rawV6)).toBe(true);
+        expect(isSectionFilled(getDefaultV6Values(rawV6))).toBe(false);
+    });
+});
+
+describe('getDefaultV4Values', () => {
+    test('clears the lease duration of an untouched section', () => {
+        expect(
+            getDefaultV4Values({
+                gateway_ip: '',
+                subnet_mask: '',
+                range_start: '',
+                range_end: '',
+                lease_duration: 86400,
+            }),
+        ).toEqual({
+            gateway_ip: '',
+            subnet_mask: '',
+            range_start: '',
+            range_end: '',
+            lease_duration: undefined,
+        });
+    });
+
+    test('keeps a configured section intact', () => {
+        const v4 = { gateway_ip: '192.168.1.1', subnet_mask: '255.255.255.0', lease_duration: 86400 };
+
+        expect(getDefaultV4Values(v4)).toBe(v4);
+    });
+});
+
+describe('getDefaultV6Values', () => {
+    // REGRESSION: the backend keeps the default lease duration of an
+    // unconfigured DHCPv6 section, which used to make the section look filled
+    // in, so it was sent to the backend and wiped the stored configuration.
+    test('clears the lease duration of an untouched section', () => {
+        const rawV6 = { range_start: '', lease_duration: 86400 };
+        const normalizedV6 = { range_start: '', lease_duration: undefined };
+
+        expect(getDefaultV6Values(rawV6)).toEqual(normalizedV6);
+        expect(omitEmptySections({ v4: {}, v6: getDefaultV6Values(rawV6) })).toEqual({});
+    });
+
+    test('keeps a configured section intact', () => {
+        const v6 = { range_start: 'fe80::1', lease_duration: 86400 };
+
+        expect(getDefaultV6Values(v6)).toBe(v6);
+        expect(omitEmptySections({ v4: {}, v6: getDefaultV6Values(v6) })).toEqual({ v6 });
     });
 });
 

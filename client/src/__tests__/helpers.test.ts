@@ -524,6 +524,19 @@ describe('isValidIpv6', () => {
         expect(isValidIpv6('::ffff:192.168.1.1')).toBe(true);
     });
 
+    // REGRESSION: netip.ParseAddr does not restrict the contents of a zone ID,
+    // so this value is an address with the zone `eth0/64`, not a CIDR.
+    test('accepts a zone ID with any non-empty contents', () => {
+        expect(isValidIpv6('fe80::1%eth0/64')).toBe(true);
+        expect(isValidIpv6('2001:db8::1%eth0')).toBe(true);
+        expect(isValidIpv6('fe80::1%a%b')).toBe(true);
+    });
+
+    test('rejects an empty zone ID', () => {
+        expect(isValidIpv6('fe80::1%')).toBe(false);
+        expect(isValidIpv6('%eth0')).toBe(false);
+    });
+
     // REGRESSION: netip.ParseAddr rejects the dotted-decimal IPv4 tail of a
     // mixed-notation IPv6 address when an octet has a leading zero.
     test('rejects a non-canonical embedded IPv4 tail', () => {

@@ -37,7 +37,12 @@ import {
     calculateDhcpPlaceholdersIpv6,
     subnetMaskToBitMask,
 } from '../../../helpers/helpers';
-import { isSectionFilled, omitEmptySections } from '../../../helpers/validators';
+import {
+    getDefaultV4Values,
+    getDefaultV6Values,
+    isSectionFilled,
+    omitEmptySections,
+} from '../../../helpers/validators';
 import './index.css';
 import { RootState } from '../../../initialState';
 
@@ -53,19 +58,6 @@ type IPv6FormValues = {
     range_start?: string;
     range_end?: string;
     lease_duration?: number;
-};
-
-const getDefaultV4Values = (v4: IPv4FormValues) => {
-    const emptyForm = Object.entries(v4).every(([key, value]) => key === 'lease_duration' || value === '');
-
-    if (emptyForm) {
-        return {
-            ...v4,
-            lease_duration: undefined,
-        };
-    }
-
-    return v4;
 };
 
 export type DhcpFormValues = {
@@ -117,7 +109,7 @@ const Dhcp = () => {
         mode: 'onBlur',
         defaultValues: {
             v4: getDefaultV4Values(v4),
-            v6,
+            v6: getDefaultV6Values(v6),
             interface_name: interfaceName || '',
         },
     });
@@ -151,7 +143,7 @@ const Dhcp = () => {
                 },
                 v6: {
                     ...DEFAULT_V6_VALUES,
-                    ...v6,
+                    ...getDefaultV6Values(v6),
                 },
                 interface_name: interfaceName || '',
             });
@@ -203,7 +195,11 @@ const Dhcp = () => {
 
     const enteredSomeV4Value = isSectionFilled(v4);
 
-    const enteredSomeV6Value = isSectionFilled(v6);
+    // The backend reports the default lease duration for a DHCPv6 section that
+    // has never been configured, so it must be normalized before checking
+    // whether the user has filled the section in.
+    const v6Values = getDefaultV6Values(v6);
+    const enteredSomeV6Value = isSectionFilled(v6Values);
     const enteredSomeValue = enteredSomeV4Value || enteredSomeV6Value || interfaceName;
 
     const getToggleDhcpButton = () => {
@@ -220,7 +216,7 @@ const Dhcp = () => {
                 toggleDhcp({
                     enabled,
                     interface_name,
-                    ...omitEmptySections({ v4, v6 }),
+                    ...omitEmptySections({ v4, v6: v6Values }),
                 }),
             );
         };

@@ -612,18 +612,28 @@ export const isValidCidr = (value: string) => {
 
 /**
  * Checks that the value is an IPv6 address the way the backend parses it with
- * netip.ParseAddr.  Zone IDs are allowed, but a mixed-notation address with a
- * dotted-decimal IPv4 tail must use a canonical IPv4 spelling there as well.
+ * netip.ParseAddr.  The zone ID, if any, is everything after the first `%`,
+ * and its contents are not restricted, so `fe80::1%eth0/64` is an address
+ * with the zone `eth0/64` rather than a CIDR.  A mixed-notation address with
+ * a dotted-decimal IPv4 tail must use a canonical IPv4 spelling there as
+ * well.
  *
  * @param {string} value Value to check.
  * @returns {boolean} True if the value is a valid IPv6 address.
  */
 export const isValidIpv6 = (value: string) => {
-    if (!R_IPV6.test(value)) {
+    const zoneIdx = value.indexOf('%');
+    const addr = zoneIdx === -1 ? value : value.slice(0, zoneIdx);
+
+    // netip.ParseAddr requires a non-empty zone ID.
+    if (zoneIdx !== -1 && zoneIdx === value.length - 1) {
         return false;
     }
 
-    const addr = value.split('%')[0];
+    if (!R_IPV6.test(addr)) {
+        return false;
+    }
+
     const tail = addr.slice(addr.lastIndexOf(':') + 1);
 
     return !tail.includes('.') || R_IPV4.test(tail);
