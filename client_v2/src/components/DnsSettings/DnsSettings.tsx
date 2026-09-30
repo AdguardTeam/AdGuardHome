@@ -26,7 +26,7 @@ export const DnsSettings = () => {
                 </h1>
 
                 <Show
-                    when={!(dnsConfigState.processingGetConfig || accessState.processing)}
+                    when={dnsConfigState.initialized && accessState.initialized}
                     fallback={<PageLoader />}
                 >
                     <Upstream />

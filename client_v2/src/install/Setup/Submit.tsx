@@ -49,6 +49,7 @@ export const Submit = (props: Props) => {
                     class={styles.button}
                     disabled={installState.processingSubmit}
                     onClick={props.onSubmit}
+                    compact
                 >
                     {intl.getMessage('open_dashboard')}
                 </Button>

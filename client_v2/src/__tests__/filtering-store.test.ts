@@ -59,6 +59,24 @@ describe('getFilteringStatus', () => {
             rulesCount: 9,
         });
     });
+
+    it('marks filtersInitialized after a successful request', async () => {
+        filteringState.filtersInitialized = false;
+
+        await getFilteringStatus();
+
+        expect(filteringState.filtersInitialized).toBe(true);
+    });
+
+    it('marks filtersInitialized after a failed request so the loader cannot get stuck', async () => {
+        filteringState.filtersInitialized = false;
+        mocks.apiGetFilteringStatus.mockRejectedValue(new Error('network'));
+
+        await getFilteringStatus();
+
+        expect(filteringState.filtersInitialized).toBe(true);
+        expect(mocks.addErrorToast).toHaveBeenCalled();
+    });
 });
 
 describe('setRules', () => {

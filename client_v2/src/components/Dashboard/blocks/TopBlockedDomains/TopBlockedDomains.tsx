@@ -6,7 +6,6 @@ import { Link } from 'panel/common/ui/Link';
 import { RoutePath } from 'panel/components/Routes/Paths';
 import { QUERY_LOG_STATUS_FILTER } from 'panel/helpers/constants';
 import { formatCompactNumber } from 'panel/helpers/helpers';
-import { useIsDesktop } from 'panel/hooks/useMediaQuery';
 import theme from 'panel/lib/theme';
 import { getTrackerData } from 'panel/helpers/trackers/trackers';
 import { TableHeader } from '../TableHeader';
@@ -30,7 +29,6 @@ type Props = {
 };
 
 export const TopBlockedDomains = (props: Props) => {
-    const isDesktop = useIsDesktop();
     const { sortedData: sortedDomains, hasMore } = useSortedData(() => props.topBlockedDomains);
 
     const hasStats = createMemo(() => props.topBlockedDomains.length > 0);
@@ -50,11 +48,7 @@ export const TopBlockedDomains = (props: Props) => {
                             class={s.cardSubtitleLink}
                             data-testid="blocked-total-link"
                         >
-                            {isDesktop()
-                                ? intl.getMessage('blocked_total', {
-                                      value: formatCompactNumber(props.numBlockedFiltering),
-                                  })
-                                : formatCompactNumber(props.numBlockedFiltering)}
+                            {formatCompactNumber(props.numBlockedFiltering)}
                         </Link>
                     </div>
                 </Show>
