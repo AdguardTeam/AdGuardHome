@@ -62,7 +62,7 @@ export const UpstreamAvgTimePage = () => {
             columns={columns()}
             getRowId={(row) => row.name}
             defaultSort={{ key: 'time', direction: 'desc' }}
-            loading={statsState.processingStats}
+            loading={!statsState.statsInitialized}
             emptyText={intl.getMessage('nothing_found')}
             onRefresh={refreshStats}
             searchTextForRow={(row) => row.name}
