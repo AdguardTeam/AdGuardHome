@@ -106,7 +106,7 @@ describe('Dashboard "Show more" links', () => {
         expect(screen.getByTestId('blocked-total-link').textContent).toBe(formatCompactNumber(100));
     });
 
-    it('Top blocked domains shows the blocked total copy on desktop', () => {
+    it('Top blocked domains shows the blocked total number on desktop', () => {
         mockMatchMedia(true);
         renderWithRouter(() => (
             <TopBlockedDomains
@@ -114,9 +114,7 @@ describe('Dashboard "Show more" links', () => {
                 numBlockedFiltering={100}
             />
         ));
-        expect(screen.getByTestId('blocked-total-link').textContent).toBe(
-            copyInDom('blocked_total', { value: formatCompactNumber(100) }),
-        );
+        expect(screen.getByTestId('blocked-total-link').textContent).toBe(formatCompactNumber(100));
     });
 
     it('Top upstreams card links to /top_upstreams', () => {

@@ -7,7 +7,7 @@
     overflow: hidden;
 
     @media (min-width: 768px) {
-        height: 360px;
+        min-height: 360px;
         padding: 8px;
     }
 }
@@ -30,11 +30,17 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 16px;
     padding: 16px 24px 24px;
 
     @media (min-width: 768px) {
         padding: 16px 16px 24px;
     }
+}
+
+.cardTitle {
+    flex: 1;
+    min-width: 0;
 }
 
 .cardSubtitle {
@@ -101,7 +107,8 @@
 }
 
 .tableRows {
-    height: 100%;
+    flex: 1 1 auto;
+    min-height: 0;
 
     /* A divider separates two rows, so the last row must not have one.  A
        tooltip trigger wraps its row and is followed by its overlay, so the

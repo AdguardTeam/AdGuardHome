@@ -124,9 +124,9 @@ export const Settings = () => {
 
     const isLoading = createMemo(() => {
         return (
-            settingsState.processing ||
-            statsState.processingGetConfig ||
-            queryLogsState.processingGetConfig
+            !settingsState.initialized ||
+            !statsState.configInitialized ||
+            !queryLogsState.configInitialized
         );
     });
 

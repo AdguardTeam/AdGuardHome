@@ -80,7 +80,7 @@ export const PrivateReverse = () => {
     };
 
     return (
-        <Show when={!dnsConfigState.processingGetConfig} fallback={<PageLoader />}>
+        <Show when={dnsConfigState.initialized} fallback={<PageLoader />}>
             <div class={cn(theme.layout.container, s.container)}>
                 <div class={cn(theme.layout.containerIn, theme.layout.containerIn_one_col)}>
                     <div class={s.breadcrumbs}>

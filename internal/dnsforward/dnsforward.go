@@ -196,13 +196,16 @@ const defaultLocalDomainSuffix = "lan"
 
 // DNSCreateParams are parameters to create a new server.
 type DNSCreateParams struct {
-	DNSFilter   *filtering.DNSFilter
-	Stats       stats.Interface
-	QueryLog    querylog.QueryLog
-	DHCPServer  DHCP
+	DNSFilter  *filtering.DNSFilter
+	Stats      stats.Interface
+	QueryLog   querylog.QueryLog
+	DHCPServer DHCP
+
+	// PrivateNets contains the private network subnets.  It must not be nil.
 	PrivateNets netutil.SubnetSet
-	Anonymizer  *aghnet.IPMut
-	EtcHosts    *aghnet.HostsContainer
+
+	Anonymizer *aghnet.IPMut
+	EtcHosts   *aghnet.HostsContainer
 
 	// TLSManager provides a TLS configuration for the server.  It must
 	// not be nil.

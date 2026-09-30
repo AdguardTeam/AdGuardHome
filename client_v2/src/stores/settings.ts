@@ -19,6 +19,7 @@ import type { UpstreamsConfig } from 'panel/api/model/upstreamsConfig';
 
 type SettingsState = {
     processing: boolean;
+    initialized: boolean;
     processingTestUpstream: boolean;
     processingDhcpStatus: boolean;
     settingsList: {
@@ -30,6 +31,7 @@ type SettingsState = {
 
 const initialState: SettingsState = {
     processing: true,
+    initialized: false,
     processingTestUpstream: false,
     processingDhcpStatus: false,
     settingsList: {
@@ -53,10 +55,11 @@ export const initSettings = async () => {
                 safesearch: { ...safesearchStatusData },
             },
             processing: false,
+            initialized: true,
         });
     } catch (error) {
         addErrorToast({ error });
-        setState('processing', false);
+        setState({ processing: false, initialized: true });
     }
 };
 

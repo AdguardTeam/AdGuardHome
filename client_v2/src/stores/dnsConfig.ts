@@ -9,6 +9,7 @@ import type { DNSConfig, DNSConfigBlockingMode, DNSConfigUpstreamMode } from 'pa
 
 type DnsConfigState = {
     processingGetConfig: boolean;
+    initialized: boolean;
     processingSetConfig: boolean;
     blocking_mode: DNSConfigBlockingMode;
     ratelimit: number;
@@ -45,6 +46,7 @@ export const DEFAULT_BLOCKING_IPV6 = '::';
 
 const initialState: DnsConfigState = {
     processingGetConfig: true,
+    initialized: false,
     processingSetConfig: false,
     blocking_mode: BLOCKING_MODES.default,
     ratelimit: 20,
@@ -85,10 +87,11 @@ export const getDnsConfig = async () => {
             upstream_dns: data.upstream_dns?.join('\n') || '',
             ratelimit_whitelist: data.ratelimit_whitelist?.join('\n') || '',
             processingGetConfig: false,
+            initialized: true,
         });
     } catch (error) {
         addErrorToast({ error });
-        setState('processingGetConfig', false);
+        setState({ processingGetConfig: false, initialized: true });
     }
 };
 

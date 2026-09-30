@@ -40,6 +40,25 @@ describe('getDnsConfig', () => {
         expect(dnsConfigState.blocking_ipv6).toBe('::');
         expect(dnsConfigState.upstream_mode).toBe('load_balance');
     });
+
+    it('marks initialized after a successful request', async () => {
+        dnsConfigState.initialized = false;
+        mocks.dnsInfo.mockResolvedValue({});
+
+        await getDnsConfig();
+
+        expect(dnsConfigState.initialized).toBe(true);
+    });
+
+    it('marks initialized after a failed request so the loader cannot get stuck', async () => {
+        dnsConfigState.initialized = false;
+        mocks.dnsInfo.mockRejectedValue(new Error('network'));
+
+        await getDnsConfig();
+
+        expect(dnsConfigState.initialized).toBe(true);
+        expect(mocks.addErrorToast).toHaveBeenCalled();
+    });
 });
 
 describe('toggleResolveClients', () => {
