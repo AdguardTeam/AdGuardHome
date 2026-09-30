@@ -52,6 +52,7 @@ export const getRetentionSummary = (intervalMs: number) => {
 
 const SAFESEARCH_TITLES = {
     bing: 'Bing',
+    brave: 'Brave',
     duckduckgo: 'DuckDuckGo',
     ecosia: 'Ecosia',
     google: 'Google',

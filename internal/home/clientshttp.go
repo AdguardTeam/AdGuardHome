@@ -252,6 +252,7 @@ func copySafeSearch(
 	// Set default service flags for enabled safesearch.
 	if conf.Enabled {
 		conf.Bing = true
+		conf.Brave = true
 		conf.DuckDuckGo = true
 		conf.Ecosia = true
 		conf.Google = true

@@ -30,6 +30,7 @@ type SettingsStatuses = {
     safesearch: {
         enabled: boolean;
         bing: boolean;
+        brave: boolean;
         duckduckgo: boolean;
         google: boolean;
         pixabay: boolean;
@@ -100,6 +101,7 @@ const DEFAULT_SETTINGS_STATUSES: SettingsStatuses = {
     safesearch: {
         enabled: false,
         bing: true,
+        brave: true,
         duckduckgo: true,
         google: true,
         pixabay: true,

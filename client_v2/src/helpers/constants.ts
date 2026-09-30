@@ -177,6 +177,7 @@ export const SAFE_SEARCH_PROVIDERS: Record<SafeSearchProviderKey, string> = {
     google: 'Google',
     youtube: 'YouTube',
     bing: 'Bing',
+    brave: 'Brave',
     duckduckgo: 'DuckDuckGo',
     yandex: 'Yandex',
     pixabay: 'Pixabay',
