@@ -226,10 +226,8 @@ type arpdbs struct {
 func newARPDBs(arps ...Interface) (arp *arpdbs) {
 	return &arpdbs{
 		arps: arps,
-		neighs: neighs{
-			mu: &sync.RWMutex{},
-			ns: make([]Neighbor, 0),
-		},
+		mu:   &sync.RWMutex{},
+		ns:   make([]Neighbor, 0),
 	}
 }
 

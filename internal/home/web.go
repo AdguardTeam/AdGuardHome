@@ -542,11 +542,9 @@ func (web *webAPI) handleTLSStatus(w http.ResponseWriter, r *http.Request) {
 	tlsConf := web.tlsManager.ExtendedTLSConfig()
 
 	data := &tlsConfig{
-		tlsConfigSettingsExt: tlsConfigSettingsExt{
-			tlsConfigSettings: confToTLSSettings(tlsConf),
-			ServePlainDNS:     aghalg.BoolToNullBool(tlsConf.ServePlainDNS),
-		},
-		tlsConfigStatus: tlsConfigStatusFromConf(&tlsConf.Status),
+		tlsConfigSettings: confToTLSSettings(tlsConf),
+		ServePlainDNS:     aghalg.BoolToNullBool(tlsConf.ServePlainDNS),
+		tlsConfigStatus:   tlsConfigStatusFromConf(&tlsConf.Status),
 	}
 
 	marshalTLS(r.Context(), web.logger, w, r, data)

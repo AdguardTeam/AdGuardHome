@@ -20,7 +20,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Security
 
-- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.26.8][go-1.26.8].
+- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.27.1][go-1.27.1].
 
 ### Fixed
 
@@ -33,7 +33,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#8565]:     https://github.com/AdguardTeam/AdGuardHome/issues/8565
 [#8572]:     https://github.com/AdguardTeam/AdGuardHome/issues/8572
 [#8613]:     https://github.com/AdguardTeam/AdGuardHome/issues/8613
-[go-1.26.8]: https://groups.google.com/g/golang-announce/c/QiTRm-HGGtI
+[go-1.27.1]: https://groups.google.com/g/golang-announce/c/QiTRm-HGGtI
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

@@ -34,14 +34,12 @@ func TestServer_ServeDNS(t *testing.T) {
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		TLSConf:        &TLSConfig{},
-		Config: Config{
-			UpstreamMode: UpstreamModeLoadBalance,
-			EDNSClientSubnet: &EDNSClientSubnet{
-				Enabled: false,
-			},
-			ClientsContainer: EmptyClientsContainer{},
+		UpstreamMode:   UpstreamModeLoadBalance,
+		EDNSClientSubnet: &EDNSClientSubnet{
+			Enabled: false,
 		},
-		ServePlainDNS: true,
+		ClientsContainer: EmptyClientsContainer{},
+		ServePlainDNS:    true,
 	}
 	filters := []filtering.Filter{{
 		ID: 0, Data: []byte(rules),
@@ -254,12 +252,10 @@ func TestServer_ServeDNS_restrictLocal(t *testing.T) {
 			TLSConf:        &TLSConfig{},
 			// TODO(s.chzhen):  Add tests where EDNSClientSubnet.Enabled is true.
 			// Improve Config declaration for tests.
-			Config: Config{
-				UpstreamDNS:      []string{localUpsAddr},
-				UpstreamMode:     UpstreamModeLoadBalance,
-				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
-				ClientsContainer: EmptyClientsContainer{},
-			},
+			UpstreamDNS:       []string{localUpsAddr},
+			UpstreamMode:      UpstreamModeLoadBalance,
+			EDNSClientSubnet:  &EDNSClientSubnet{Enabled: false},
+			ClientsContainer:  EmptyClientsContainer{},
 			UsePrivateRDNS:    true,
 			LocalPTRResolvers: []string{localUpsAddr},
 			ServePlainDNS:     true,

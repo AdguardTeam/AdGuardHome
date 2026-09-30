@@ -479,12 +479,12 @@ var config = &configuration{
 	// TODO(a.garipov): Think of a way to make scripts/vetted-filters update
 	// these as well if necessary.
 	Filters: []filtering.FilterYAML{{
-		Filter:  filtering.Filter{ID: 1},
+		ID:      1,
 		Enabled: true,
 		URL:     "https://adguardteam.github.io/HostlistsRegistry/assets/filter_1.txt",
 		Name:    "AdGuard DNS filter",
 	}, {
-		Filter:  filtering.Filter{ID: 2},
+		ID:      2,
 		Enabled: false,
 		URL:     "https://adguardteam.github.io/HostlistsRegistry/assets/filter_2.txt",
 		Name:    "AdAway Default Blocklist",
