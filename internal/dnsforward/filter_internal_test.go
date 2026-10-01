@@ -183,14 +183,12 @@ func TestServer_filterDNSResponse(t *testing.T) {
 // newSVCBHintsAnswer returns a test HTTPS answer RRs with SVCB hints.
 func newSVCBHintsAnswer(target string, hints []dns.SVCBKeyValue) (rrs []dns.RR) {
 	return []dns.RR{&dns.HTTPS{
-		SVCB: dns.SVCB{
-			Hdr: dns.RR_Header{
-				Name:   target,
-				Rrtype: dns.TypeHTTPS,
-				Class:  dns.ClassINET,
-			},
-			Target: target,
-			Value:  hints,
+		Hdr: dns.RR_Header{
+			Name:   target,
+			Rrtype: dns.TypeHTTPS,
+			Class:  dns.ClassINET,
 		},
+		Target: target,
+		Value:  hints,
 	}}
 }

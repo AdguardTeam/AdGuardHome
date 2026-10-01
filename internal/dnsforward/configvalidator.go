@@ -413,10 +413,8 @@ type healthchecker struct {
 // check exchanges with u and validates the response.
 func (h *healthchecker) check(u upstream.Upstream) (err error) {
 	req := &dns.Msg{
-		MsgHdr: dns.MsgHdr{
-			Id:               dns.Id(),
-			RecursionDesired: true,
-		},
+		Id:               dns.Id(),
+		RecursionDesired: true,
 		Question: []dns.Question{{
 			Name:   h.hostname,
 			Qtype:  h.qtype,
