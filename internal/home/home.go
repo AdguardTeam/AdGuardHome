@@ -28,6 +28,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghslog"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/arpdb"
+	"github.com/AdguardTeam/AdGuardHome/internal/configmgr"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
@@ -325,6 +326,43 @@ func newHostsContainer(
 	return etcHosts, watcher, watcher.Start(ctx)
 }
 
+// dhcpConfigToInternal converts c to the DHCP server settings.  All arguments
+// must not be nil.
+func dhcpConfigToInternal(
+	c *configmgr.DHCPConfig,
+	baseLogger *slog.Logger,
+	confModifier agh.ConfigModifier,
+	httpReg aghhttp.Registrar,
+	workDir string,
+) (s *dhcpd.ServerConfig) {
+	return &dhcpd.ServerConfig{
+		Conf6: dhcpd.V6ServerConf{
+			RangeStart:    c.Conf6.RangeStart,
+			LeaseDuration: c.Conf6.LeaseDuration,
+			RASLAACOnly:   c.Conf6.RASLAACOnly,
+			RAAllowSLAAC:  c.Conf6.RAAllowSLAAC,
+		},
+		CommandConstructor: executil.SystemCommandConstructor{},
+		ConfModifier:       confModifier,
+		HTTPReg:            httpReg,
+		Logger:             baseLogger.With(slogutil.KeyPrefix, "dhcpd"),
+		InterfaceName:      c.InterfaceName,
+		LocalDomainName:    c.LocalDomainName,
+		WorkDir:            workDir,
+		DataDir:            filepath.Join(workDir, dataDir),
+		Conf4: dhcpd.V4ServerConf{
+			GatewayIP:     c.Conf4.GatewayIP,
+			RangeStart:    c.Conf4.RangeStart,
+			RangeEnd:      c.Conf4.RangeEnd,
+			SubnetMask:    c.Conf4.SubnetMask,
+			Options:       c.Conf4.Options,
+			LeaseDuration: c.Conf4.LeaseDuration,
+			ICMPTimeout:   c.Conf4.ICMPTimeout,
+		},
+		Enabled: c.Enabled,
+	}
+}
+
 // initContextClients initializes Context clients and related fields.  All
 // arguments except hc must not be nil.
 func initContextClients(
@@ -336,21 +374,13 @@ func initContextClients(
 	workDir string,
 	hc *aghnet.HostsContainer,
 ) (err error) {
-	//lint:ignore SA1019 Migration is not over.
-	config.DHCP.WorkDir = workDir
-	config.DHCP.DataDir = filepath.Join(workDir, dataDir)
-	config.DHCP.HTTPReg = httpReg
-	config.DHCP.CommandConstructor = executil.SystemCommandConstructor{}
-	config.DHCP.Logger = logger.With(slogutil.KeyPrefix, "dhcpd")
-	config.DHCP.ConfModifier = confModifier
-
-	globalContext.dhcpServer, err = dhcpd.Create(ctx, config.DHCP)
+	serverConf := dhcpConfigToInternal(config.DHCP, logger, confModifier, httpReg, workDir)
+	globalContext.dhcpServer, err = dhcpd.Create(ctx, serverConf)
 	if globalContext.dhcpServer == nil || err != nil {
-		// TODO(a.garipov): There are a lot of places in the code right
-		// now which assume that the DHCP server can be nil despite this
-		// condition.  Inspect them and perhaps rewrite them to use
-		// Enabled() instead.
-		return fmt.Errorf("initing dhcp: %w", err)
+		// TODO(a.garipov):  There are a lot of places in the code right now
+		// which assume that the DHCP server can be nil despite this condition.
+		// Inspect them and perhaps rewrite them to use Enabled() instead.
+		return fmt.Errorf("initializing dhcp: %w", err)
 	}
 
 	var arpDB arpdb.Interface

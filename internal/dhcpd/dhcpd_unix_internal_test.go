@@ -32,7 +32,7 @@ func TestDB(t *testing.T) {
 		},
 	}
 
-	s.srv4, err = v4Create(&V4ServerConf{
+	s.srv4, err = newV4Server(&V4ServerConf{
 		Enabled:    true,
 		RangeStart: netip.MustParseAddr("192.168.10.100"),
 		RangeEnd:   netip.MustParseAddr("192.168.10.200"),
@@ -42,7 +42,7 @@ func TestDB(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	s.srv6, err = v6Create(V6ServerConf{})
+	s.srv6, err = newV6Server(V6ServerConf{})
 	require.NoError(t, err)
 
 	leases := []*dhcpsvc.Lease{{
@@ -123,7 +123,7 @@ func TestV4Server_badRange(t *testing.T) {
 				notify:     testNotify,
 			}
 
-			_, err := v4Create(&conf)
+			_, err := newV4Server(&conf)
 			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
 		})
 	}

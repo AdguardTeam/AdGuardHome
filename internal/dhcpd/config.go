@@ -11,30 +11,34 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/configmgr"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/osutil/executil"
 )
 
-// ServerConfig is the configuration for the DHCP server.  The order of YAML
-// fields is important, since the YAML configuration file follows it.
+// ServerConfig is the configuration for the DHCP server.
 type ServerConfig struct {
-	// Logger is used for logging the operation of the DHCP server.  It must not
-	// be nil.
-	Logger *slog.Logger `yaml:"-"`
+	// Conf6 is the configuration of the DHCPv6 server.
+	Conf6 V6ServerConf
 
 	// CommandConstructor is used to run external commands.  It must not be nil.
-	CommandConstructor executil.CommandConstructor `yaml:"-"`
+	CommandConstructor executil.CommandConstructor
 
 	// ConfModifier is used to update the global configuration.  It must not be
 	// nil.
-	ConfModifier agh.ConfigModifier `yaml:"-"`
+	ConfModifier agh.ConfigModifier
 
-	// Register an HTTP handler
-	HTTPReg aghhttp.Registrar `yaml:"-"`
+	// HTTPReg is used to register an HTTP handler.
+	HTTPReg aghhttp.Registrar
 
-	Enabled       bool   `yaml:"enabled"`
-	InterfaceName string `yaml:"interface_name"`
+	// Logger is used for logging the operation of the DHCP server.  It must not
+	// be nil.
+	Logger *slog.Logger
+
+	// InterfaceName is the name of the network interface the DHCP server
+	// listens on.
+	InterfaceName string
 
 	// LocalDomainName is the domain name used for DHCP hosts.  For example, a
 	// DHCP client with the hostname "myhost" can be addressed as "myhost.lan"
@@ -42,21 +46,24 @@ type ServerConfig struct {
 	//
 	// TODO(e.burkov):  Probably, remove this field.  See the TODO on
 	// [Interface.Enabled].
-	LocalDomainName string `yaml:"local_domain_name"`
-
-	Conf4 V4ServerConf `yaml:"dhcpv4"`
-	Conf6 V6ServerConf `yaml:"dhcpv6"`
+	LocalDomainName string
 
 	// WorkDir is used to store DHCP leases.
 	//
 	// Deprecated:  Remove it when migration of DHCP leases will not be needed.
-	WorkDir string `yaml:"-"`
+	WorkDir string
 
 	// DataDir is used to store DHCP leases.
-	DataDir string `yaml:"-"`
+	DataDir string
 
 	// dbFilePath is the path to the file with stored DHCP leases.
-	dbFilePath string `yaml:"-"`
+	dbFilePath string
+
+	// Conf4 is the configuration of the DHCPv4 server.
+	Conf4 V4ServerConf
+
+	// Enabled defines if the DHCP server is enabled.
+	Enabled bool
 }
 
 // DHCPServer - DHCP server interface
@@ -85,10 +92,11 @@ type DHCPServer interface {
 	// one.
 	IPByHost(host string) (ip netip.Addr)
 
-	// WriteDiskConfig4 - copy disk configuration
-	WriteDiskConfig4(c *V4ServerConf)
-	// WriteDiskConfig6 - copy disk configuration
-	WriteDiskConfig6(c *V6ServerConf)
+	// WriteDiskConfig4 copies IPv4 configuration, dc must not be nil.
+	WriteDiskConfig4(dc *configmgr.DHCPv4Config)
+
+	// WriteDiskConfig6 copy IPv6 configuration, dc must not be nil.
+	WriteDiskConfig6(dc *configmgr.DHCPv6Config)
 
 	// Start - start server
 	Start(ctx context.Context) (err error)
@@ -97,50 +105,33 @@ type DHCPServer interface {
 	getLeasesRef() []*dhcpsvc.Lease
 }
 
-// V4ServerConf - server configuration
+// V4ServerConf is the configuration of the DHCPv4 server.
 type V4ServerConf struct {
-	// Logger is used for logging the operation of the DHCPv4 server.  It must
-	// not be nil.
-	Logger *slog.Logger `yaml:"-" json:"-"`
-
-	Enabled       bool   `yaml:"-" json:"-"`
-	InterfaceName string `yaml:"-" json:"-"`
-
-	GatewayIP  netip.Addr `yaml:"gateway_ip" json:"gateway_ip"`
-	SubnetMask netip.Addr `yaml:"subnet_mask" json:"subnet_mask"`
 	// broadcastIP is the broadcasting address pre-calculated from the
 	// configured gateway IP and subnet mask.
 	broadcastIP netip.Addr
 
-	// The first & the last IP address for dynamic leases
-	// Bytes [0..2] of the last allowed IP address must match the first IP
-	RangeStart netip.Addr `yaml:"range_start" json:"range_start"`
-	RangeEnd   netip.Addr `yaml:"range_end" json:"range_end"`
+	// GatewayIP is the IPv4 address of the network gateway advertised to DHCP
+	// clients.  It must be outside the RangeStart–RangeEnd range.
+	GatewayIP netip.Addr `json:"gateway_ip"`
 
-	LeaseDuration uint32 `yaml:"lease_duration" json:"lease_duration"` // in seconds
-
-	// IP conflict detector: time (ms) to wait for ICMP reply
-	// 0: disable
-	ICMPTimeout uint32 `yaml:"icmp_timeout_msec" json:"-"`
-
-	// Custom Options.
+	// RangeStart is the first IPv4 address of the dynamic lease range.
 	//
-	// Option with arbitrary hexadecimal data:
-	//     DEC_CODE hex HEX_DATA
-	// where DEC_CODE is a decimal DHCPv4 option code in range [1..255]
-	//
-	// Option with IP data (only 1 IP is supported):
-	//     DEC_CODE ip IP_ADDR
-	Options []string `yaml:"options" json:"-"`
+	// Bytes [0..2] of the last allowed IP address must match the first IP.
+	RangeStart netip.Addr `json:"range_start"`
 
+	// RangeEnd is the last IPv4 address of the dynamic lease range.
+	RangeEnd netip.Addr `json:"range_end"`
+
+	// SubnetMask is the IPv4 subnet mask of the served network.
+	SubnetMask netip.Addr `json:"subnet_mask"`
+
+	// ipRange is the dynamic lease range.  It must not be nil.
 	ipRange *ipRange
 
-	leaseTime  time.Duration // the time during which a dynamic lease is considered valid
-	dnsIPAddrs []netip.Addr  // IPv4 addresses to return to DHCP clients as DNS server addresses
-
-	// subnet contains the DHCP server's subnet.  The IP is the IP of the
-	// gateway.
-	subnet netip.Prefix
+	// Logger is used for logging the operation of the DHCPv4 server.  It must
+	// not be nil.
+	Logger *slog.Logger `json:"-"`
 
 	// notify is a way to signal to other components that leases have been
 	// changed.  notify must be called outside of locked sections, since the
@@ -149,6 +140,41 @@ type V4ServerConf struct {
 	// TODO(a.garipov): This is utter madness and must be refactored.  It just
 	// begs for deadlock bugs and other nastiness.
 	notify func(uint32)
+
+	// subnet contains the DHCP server's subnet.  The IP is the IP of the
+	// gateway.
+	subnet netip.Prefix
+
+	// InterfaceName is the name of the network interface the DHCPv4 server
+	// listens on.
+	InterfaceName string `json:"-"`
+
+	// Options is the list of custom DHCPv4 options.
+	//
+	// Option with arbitrary hexadecimal data:
+	//     DEC_CODE hex HEX_DATA
+	// where DEC_CODE is a decimal DHCPv4 option code in range [1..255]
+	//
+	// Option with IP data (only 1 IP is supported):
+	//     DEC_CODE ip IP_ADDR
+	Options []string `json:"-"`
+
+	// dnsIPAddrs is the IPv4 addresses to return to DHCP clients as DNS server
+	// addresses.
+	dnsIPAddrs []netip.Addr
+
+	// leaseTime is the time during which a dynamic lease is considered valid.
+	leaseTime time.Duration
+
+	// LeaseDuration is the duration of a lease in seconds.
+	LeaseDuration uint32 `json:"lease_duration"`
+
+	// ICMPTimeout is the time in milliseconds to wait for an ICMP reply during
+	// IP conflict detection.  A value of 0 disables the detection.
+	ICMPTimeout uint32 `json:"-"`
+
+	// Enabled defines if the DHCPv4 server is enabled.
+	Enabled bool `json:"-"`
 }
 
 // errNilConfig is an error returned by validation method if the config is nil.
@@ -243,28 +269,42 @@ func (c *V4ServerConf) Validate() (err error) {
 	return nil
 }
 
-// V6ServerConf - server configuration
+// V6ServerConf is the configuration of the DHCPv6 server.
 type V6ServerConf struct {
 	// Logger is used for logging the operation of the DHCPv6 server.  It must
 	// not be nil.
-	Logger *slog.Logger `yaml:"-" json:"-"`
+	Logger *slog.Logger `json:"-"`
 
-	Enabled       bool   `yaml:"-" json:"-"`
-	InterfaceName string `yaml:"-" json:"-"`
-
-	// The first IP address for dynamic leases
-	// The last allowed IP address ends with 0xff byte
-	RangeStart net.IP `yaml:"range_start" json:"range_start"`
-
-	LeaseDuration uint32 `yaml:"lease_duration" json:"lease_duration"` // in seconds
-
-	RASLAACOnly  bool `yaml:"ra_slaac_only" json:"-"`  // send ICMPv6.RA packets without MO flags
-	RAAllowSLAAC bool `yaml:"ra_allow_slaac" json:"-"` // send ICMPv6.RA packets with MO flags
-
-	ipStart    net.IP        // starting IP address for dynamic leases
-	leaseTime  time.Duration // the time during which a dynamic lease is considered valid
-	dnsIPAddrs []net.IP      // IPv6 addresses to return to DHCP clients as DNS server addresses
-
-	// Server calls this function when leases data changes
+	// notify is called when the leases data changes.
 	notify func(uint32)
+
+	// InterfaceName is the name of the network interface the DHCPv6 server
+	// listens on.
+	InterfaceName string `json:"-"`
+
+	// RangeStart is the first IPv6 address of the dynamic lease range.  The
+	// last allowed IP address ends with the 0xff byte.
+	RangeStart net.IP `json:"range_start"`
+
+	// ipStart is the starting IP address for dynamic leases.
+	ipStart net.IP
+
+	// dnsIPAddrs is the IPv6 addresses to return to DHCP clients as DNS server
+	// addresses.
+	dnsIPAddrs []net.IP
+
+	// leaseTime is the time during which a dynamic lease is considered valid.
+	leaseTime time.Duration
+
+	// LeaseDuration is the duration of a lease in seconds.
+	LeaseDuration uint32 `json:"lease_duration"`
+
+	// Enabled defines if the DHCPv6 server is enabled.
+	Enabled bool `json:"-"`
+
+	// RASLAACOnly defines whether to send ICMPv6.RA packets without MO flags.
+	RASLAACOnly bool `json:"-"`
+
+	// RAAllowSLAAC defines whether to send ICMPv6.RA packets with MO flags.
+	RAAllowSLAAC bool `json:"-"`
 }

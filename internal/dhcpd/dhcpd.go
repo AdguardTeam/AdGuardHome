@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/configmgr"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/timeutil"
@@ -84,7 +85,8 @@ type Interface interface {
 	// due to an assumption that a DHCP client must always have an IP address.
 	IPByHost(host string) (ip netip.Addr)
 
-	WriteDiskConfig(c *ServerConfig)
+	// WriteDiskConfig writes the configuration to dc, dc must not be nil.
+	WriteDiskConfig(dc *configmgr.DHCPConfig)
 }
 
 // server is the DHCP service that handles DHCPv4, DHCPv6, and HTTP API.
@@ -170,7 +172,7 @@ func (s *server) setServers(
 	v4conf.notify = s.onNotify
 	v4conf.Enabled = s.conf.Enabled && v4conf.RangeStart.IsValid()
 
-	s.srv4, err = v4Create(&v4conf)
+	s.srv4, err = newV4Server(&v4conf)
 	if err != nil {
 		if v4conf.Enabled {
 			return false, false, fmt.Errorf("creating dhcpv4 srv: %w", err)
@@ -185,7 +187,7 @@ func (s *server) setServers(
 	v6conf.notify = s.onNotify
 	v6conf.Enabled = s.conf.Enabled && len(v6conf.RangeStart) != 0
 
-	s.srv6, err = v6Create(v6conf)
+	s.srv6, err = newV6Server(v6conf)
 	if err != nil {
 		return v4conf.Enabled, false, fmt.Errorf("creating dhcpv6 srv: %w", err)
 	}
@@ -237,14 +239,14 @@ func (s *server) notify(flags int) {
 	}
 }
 
-// WriteDiskConfig - write configuration
-func (s *server) WriteDiskConfig(c *ServerConfig) {
-	c.Enabled = s.conf.Enabled
-	c.InterfaceName = s.conf.InterfaceName
-	c.LocalDomainName = s.conf.LocalDomainName
+// WriteDiskConfig implements the [Interface] interface for *server.
+func (s *server) WriteDiskConfig(dc *configmgr.DHCPConfig) {
+	dc.Enabled = s.conf.Enabled
+	dc.InterfaceName = s.conf.InterfaceName
+	dc.LocalDomainName = s.conf.LocalDomainName
 
-	s.srv4.WriteDiskConfig4(&c.Conf4)
-	s.srv6.WriteDiskConfig6(&c.Conf6)
+	s.srv4.WriteDiskConfig4(dc.Conf4)
+	s.srv6.WriteDiskConfig6(dc.Conf6)
 }
 
 // Start will listen on port 67 and serve DHCP requests.

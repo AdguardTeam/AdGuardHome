@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/configmgr"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
@@ -38,13 +39,17 @@ type v6Server struct {
 	ipAddrs    [256]byte
 }
 
-// WriteDiskConfig4 - write configuration
-func (s *v6Server) WriteDiskConfig4(c *V4ServerConf) {
+// WriteDiskConfig4 implements the [DHCPServer] interface for *v6Server.
+func (s *v6Server) WriteDiskConfig4(_ *configmgr.DHCPv4Config) {
+	// Do nothing.
 }
 
-// WriteDiskConfig6 - write configuration
-func (s *v6Server) WriteDiskConfig6(c *V6ServerConf) {
-	*c = s.conf
+// WriteDiskConfig6 implements the [DHCPServer] interface for *v6Server.
+func (s *v6Server) WriteDiskConfig6(dc *configmgr.DHCPv6Config) {
+	dc.RangeStart = s.conf.RangeStart
+	dc.LeaseDuration = s.conf.LeaseDuration
+	dc.RASLAACOnly = s.conf.RASLAACOnly
+	dc.RAAllowSLAAC = s.conf.RAAllowSLAAC
 }
 
 // Return TRUE if IP address is within range [start..0xff]
@@ -802,8 +807,8 @@ func (s *v6Server) Stop() (err error) {
 	return nil
 }
 
-// Create DHCPv6 server
-func v6Create(conf V6ServerConf) (DHCPServer, error) {
+// newV6Server creates a new IPv6 DHCP server.
+func newV6Server(conf V6ServerConf) (srv DHCPServer, err error) {
 	s := &v6Server{}
 	s.conf = conf
 

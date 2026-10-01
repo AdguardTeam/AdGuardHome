@@ -126,8 +126,11 @@ type configuration struct {
 	WhitelistFilters []filtering.FilterYAML `yaml:"whitelist_filters"`
 	UserRules        []string               `yaml:"user_rules"`
 
-	DHCP      *dhcpd.ServerConfig `yaml:"dhcp"`
-	Filtering *filtering.Config   `yaml:"filtering"`
+	// DHCP is a block with DHCP configuration params.
+	DHCP *configmgr.DHCPConfig `yaml:"dhcp"`
+
+	// Filtering is a block with DNS filtering configuration settings.
+	Filtering *filtering.Config `yaml:"filtering"`
 
 	// Clients contains the YAML representations of the persistent clients.
 	// This field is only used for reading and writing persistent client data.
@@ -407,15 +410,17 @@ var config = &configuration{
 		ParentalBlockHost:     defaultParentalBlockHost,
 		SafeBrowsingBlockHost: defaultSafeBrowsingBlockHost,
 	},
-	DHCP: &dhcpd.ServerConfig{
-		LocalDomainName: "lan",
-		Conf4: dhcpd.V4ServerConf{
-			LeaseDuration: dhcpd.DefaultDHCPLeaseTTL,
+	DHCP: &configmgr.DHCPConfig{
+		Conf4: &configmgr.DHCPv4Config{
 			ICMPTimeout:   dhcpd.DefaultDHCPTimeoutICMP,
-		},
-		Conf6: dhcpd.V6ServerConf{
 			LeaseDuration: dhcpd.DefaultDHCPLeaseTTL,
 		},
+		Conf6: &configmgr.DHCPv6Config{
+			LeaseDuration: dhcpd.DefaultDHCPLeaseTTL,
+		},
+		InterfaceName:   "",
+		LocalDomainName: "lan",
+		Enabled:         false,
 	},
 	Clients: &clientsConfig{
 		Sources: &clientSourcesConfig{
@@ -625,6 +630,10 @@ func validateConfig(ctx context.Context, l *slog.Logger, fileData []byte) (err e
 
 	if !filtering.ValidateUpdateIvl(config.Filtering.FiltersUpdateIntervalHours) {
 		config.Filtering.FiltersUpdateIntervalHours = 24
+	}
+
+	if err = config.DHCP.Validate(); err != nil {
+		return fmt.Errorf("validating dhcp config: %w", err)
 	}
 
 	if len(config.Users) == 0 {

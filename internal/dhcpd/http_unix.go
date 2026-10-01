@@ -18,6 +18,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/configmgr"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
@@ -139,16 +140,29 @@ func leasesToDynamic(leases []*dhcpsvc.Lease) (dynamic []*leaseDynamic) {
 	return dynamic
 }
 
+// handleDHCPStatus is the handler for the GET /control/dhcp/status HTTP API.
 func (s *server) handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
+	dc4 := &configmgr.DHCPv4Config{}
+	s.srv4.WriteDiskConfig4(dc4)
+
+	dc6 := &configmgr.DHCPv6Config{}
+	s.srv6.WriteDiskConfig6(dc6)
+
 	status := &dhcpStatusResponse{
 		Enabled:   s.conf.Enabled,
 		IfaceName: s.conf.InterfaceName,
-		V4:        V4ServerConf{},
-		V6:        V6ServerConf{},
+		V4: V4ServerConf{
+			GatewayIP:     dc4.GatewayIP,
+			RangeStart:    dc4.RangeStart,
+			RangeEnd:      dc4.RangeEnd,
+			SubnetMask:    dc4.SubnetMask,
+			LeaseDuration: dc4.LeaseDuration,
+		},
+		V6: V6ServerConf{
+			RangeStart:    dc6.RangeStart,
+			LeaseDuration: dc6.LeaseDuration,
+		},
 	}
-
-	s.srv4.WriteDiskConfig4(&status.V4)
-	s.srv6.WriteDiskConfig6(&status.V6)
 
 	leases := s.Leases()
 	slices.SortFunc(leases, func(a, b *dhcpsvc.Lease) (res int) {
@@ -247,18 +261,18 @@ func (s *server) handleDHCPSetConfigV4(
 	v4Conf.Logger = s.conf.Logger.With("ip_version", "4")
 
 	// Set the default values for the fields not configurable via web API.
-	c4 := &V4ServerConf{
-		notify:      s.onNotify,
+	c4 := &configmgr.DHCPv4Config{
 		ICMPTimeout: s.conf.Conf4.ICMPTimeout,
 		Options:     s.conf.Conf4.Options,
 	}
 
 	s.srv4.WriteDiskConfig4(c4)
-	v4Conf.notify = c4.notify
+
+	v4Conf.notify = s.onNotify
 	v4Conf.ICMPTimeout = c4.ICMPTimeout
 	v4Conf.Options = c4.Options
 
-	srv4, err := v4Create(v4Conf)
+	srv4, err := newV4Server(v4Conf)
 
 	return srv4, srv4.enabled(), err
 }
@@ -288,7 +302,7 @@ func (s *server) handleDHCPSetConfigV6(
 	v6Conf.Logger = s.conf.Logger.With("ip_version", "6")
 	v6Conf.notify = s.onNotify
 
-	srv6, err = v6Create(v6Conf)
+	srv6, err = newV6Server(v6Conf)
 
 	return srv6, enabled, err
 }
@@ -760,14 +774,14 @@ func (s *server) handleReset(w http.ResponseWriter, r *http.Request) {
 		ICMPTimeout:   DefaultDHCPTimeoutICMP,
 		notify:        s.onNotify,
 	}
-	s.srv4, _ = v4Create(v4conf)
+	s.srv4, _ = newV4Server(v4conf)
 
 	v6conf := V6ServerConf{
 		Logger:        s.conf.Logger.With("ip_version", "6"),
 		LeaseDuration: DefaultDHCPLeaseTTL,
 		notify:        s.onNotify,
 	}
-	s.srv6, _ = v6Create(v6conf)
+	s.srv6, _ = newV6Server(v6conf)
 
 	s.conf.ConfModifier.Apply(ctx)
 }

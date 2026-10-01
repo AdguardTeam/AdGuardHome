@@ -11,10 +11,10 @@ import (
 
 // DHCPConfig is the on-disk DHCP configuration.
 type DHCPConfig struct {
-	// Conf4 is the configuration of the DHCPv4 server.
+	// Conf4 is the configuration of the DHCPv4 server.  It must not be nil.
 	Conf4 *DHCPv4Config `yaml:"dhcpv4"`
 
-	// Conf6 is the configuration of the DHCPv6 server.
+	// Conf6 is the configuration of the DHCPv6 server.  It must not be nil.
 	Conf6 *DHCPv6Config `yaml:"dhcpv6"`
 
 	// InterfaceName is the name of the network interface the DHCP server
@@ -96,7 +96,10 @@ func (c *DHCPConfig) Validate() (err error) {
 	}
 
 	if !c.Enabled {
-		return nil
+		return errors.Join(
+			validate.NotNil("dhcpv4", c.Conf4),
+			validate.NotNil("dhcpv6", c.Conf6),
+		)
 	}
 
 	// TODO(d.kolyshev):  Add validations.
