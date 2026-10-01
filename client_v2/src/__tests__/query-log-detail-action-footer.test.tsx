@@ -113,6 +113,27 @@ describe('ActionFooter', () => {
         expect(props.onClose).toHaveBeenCalled();
     });
 
+    it('styles secondary actions for the card surface', () => {
+        const props = {
+            ...defaultProps,
+            entry: makeEntry({
+                reason: 'FilteredBlackList',
+                rules: [{ filter_list_id: 5 }],
+            }),
+            filters: [testFilter],
+        };
+        render(() => <ActionFooter {...props} />);
+
+        // The footer paints --default-cards-background, so secondary buttons
+        // must opt into the on-card background; the primary action must not.
+        expect(screen.getByTestId('query-log-detail-action-disable-filter').className).toContain(
+            'onCard',
+        );
+        expect(screen.getByTestId('query-log-detail-action-allowlist').className).not.toContain(
+            'onCard',
+        );
+    });
+
     it('blocked service → Allow service calls onAllowService with the service id and onClose', () => {
         const props = {
             ...defaultProps,

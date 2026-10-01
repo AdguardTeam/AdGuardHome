@@ -13,7 +13,11 @@ import type { ServiceGroup } from 'panel/api/model/serviceGroup';
 
 type ServicesState = {
     processing: boolean;
+    /** Whether the blocked-services schedule request has settled at least once. */
+    initialized: boolean;
     processingAll: boolean;
+    /** Whether the all-blocked-services request has settled at least once. */
+    allInitialized: boolean;
     processingSet: boolean;
     list: BlockedServicesSchedule;
     allServices: BlockedService[];
@@ -22,7 +26,9 @@ type ServicesState = {
 
 const initialState: ServicesState = {
     processing: true,
+    initialized: false,
     processingAll: true,
+    allInitialized: false,
     processingSet: false,
     list: {},
     allServices: [],
@@ -35,10 +41,10 @@ export const getBlockedServices = async () => {
     setState('processing', true);
     try {
         const data = await blockedServicesSchedule();
-        setState({ list: data, processing: false });
+        setState({ list: data, processing: false, initialized: true });
     } catch (error) {
         addErrorToast({ error });
-        setState('processing', false);
+        setState({ processing: false, initialized: true });
     }
 };
 
@@ -50,10 +56,11 @@ export const getAllBlockedServices = async () => {
             allServices: data.blocked_services || [],
             allGroups: data.groups || [],
             processingAll: false,
+            allInitialized: true,
         });
     } catch (error) {
         addErrorToast({ error });
-        setState('processingAll', false);
+        setState({ processingAll: false, allInitialized: true });
     }
 };
 

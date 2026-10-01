@@ -107,7 +107,7 @@ export const ActionFooter = (props: Props) => {
         secondaryVariant?: ButtonVariant;
         testId: string;
         dataAction: string;
-        label: string;
+        label: () => string;
         onClick: () => void;
     };
 
@@ -117,63 +117,63 @@ export const ActionFooter = (props: Props) => {
             secondaryVariant: 'secondary-danger',
             testId: 'query-log-detail-action-block',
             dataAction: 'block',
-            label: intl.getMessage('block'),
+            label: () => intl.getMessage('block'),
             onClick: handleBlock,
         },
         'add-to-allowlist': {
             variant: 'primary',
             testId: 'query-log-detail-action-allowlist',
             dataAction: 'allowlist',
-            label: intl.getMessage('user_rules_add_to_allowlist'),
+            label: () => intl.getMessage('user_rules_add_to_allowlist'),
             onClick: handleAddToAllowlist,
         },
         'allow-service': {
             variant: 'secondary',
             testId: 'query-log-detail-action-allow-service',
             dataAction: 'allow-service',
-            label: intl.getMessage('user_rules_allow_service'),
+            label: () => intl.getMessage('user_rules_allow_service'),
             onClick: handleAllowService,
         },
         'disable-filter': {
             variant: 'secondary',
             testId: 'query-log-detail-action-disable-filter',
             dataAction: 'disable-filter',
-            label: intl.getMessage('user_rules_disable_filter'),
+            label: () => intl.getMessage('user_rules_disable_filter'),
             onClick: handleDisableFilter,
         },
         'disable-browsing-security': {
             variant: 'secondary',
             testId: 'query-log-detail-action-disable-browsing-security',
             dataAction: 'disable-browsing-security',
-            label: intl.getMessage('user_rules_disable_browsing_security'),
+            label: () => intl.getMessage('user_rules_disable_browsing_security'),
             onClick: handleDisableSafeBrowsing,
         },
         'disable-parental': {
             variant: 'secondary',
             testId: 'query-log-detail-action-disable-parental',
             dataAction: 'disable-parental',
-            label: intl.getMessage('user_rules_disable_parental_control'),
+            label: () => intl.getMessage('user_rules_disable_parental_control'),
             onClick: handleDisableParental,
         },
         'disable-safe-search': {
             variant: 'secondary',
             testId: 'query-log-detail-action-disable-safe-search',
             dataAction: 'disable-safe-search',
-            label: intl.getMessage('user_rules_disable_safe_search'),
+            label: () => intl.getMessage('user_rules_disable_safe_search'),
             onClick: handleDisableSafeSearch,
         },
         'remove-dns-rewrite': {
             variant: 'primary',
             testId: 'query-log-detail-action-remove-dns-rewrite',
             dataAction: 'remove-dns-rewrite',
-            label: intl.getMessage('user_rules_remove_dns_rewrite'),
+            label: () => intl.getMessage('user_rules_remove_dns_rewrite'),
             onClick: handleRemoveRewrite,
         },
         'edit-dns-rewrite': {
             variant: 'secondary',
             testId: 'query-log-detail-action-edit-dns-rewrite',
             dataAction: 'edit-dns-rewrite',
-            label: intl.getMessage('user_rules_edit_dns_rewrite'),
+            label: () => intl.getMessage('user_rules_edit_dns_rewrite'),
             onClick: handleEditRewrite,
         },
     };
@@ -184,22 +184,24 @@ export const ActionFooter = (props: Props) => {
                 <For each={actions()}>
                     {(actionId, index) => {
                         const config = ACTION_CONFIG[actionId];
+                        const variant = () =>
+                            index() > 0 && config.secondaryVariant
+                                ? config.secondaryVariant
+                                : config.variant;
+
                         return (
                             <Button
                                 data-testid={config.testId}
                                 data-action={config.dataAction}
                                 type="button"
-                                variant={
-                                    index() > 0 && config.secondaryVariant
-                                        ? config.secondaryVariant
-                                        : config.variant
-                                }
+                                variant={variant()}
+                                onCard={variant() === 'secondary'}
                                 size="small"
                                 compact
                                 class={s.actionButton}
                                 onClick={config.onClick}
                             >
-                                {config.label}
+                                {config.label()}
                             </Button>
                         );
                     }}

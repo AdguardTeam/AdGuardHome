@@ -29,7 +29,9 @@ export type LeaseModalType = 'ADD_LEASE' | 'EDIT_LEASE' | 'MAKE_STATIC';
 type DhcpState = {
     processing: boolean;
     processingStatus: boolean;
+    statusInitialized: boolean;
     processingInterfaces: boolean;
+    interfacesInitialized: boolean;
     processingDhcp: boolean;
     processingConfig: boolean;
     processingAdding: boolean;
@@ -63,7 +65,9 @@ type DhcpState = {
 const initialState: DhcpState = {
     processing: true,
     processingStatus: false,
+    statusInitialized: false,
     processingInterfaces: false,
+    interfacesInitialized: false,
     processingDhcp: false,
     processingConfig: false,
     processingAdding: false,
@@ -126,13 +130,19 @@ export const getDhcpStatus = async () => {
                 dhcp_available: true,
                 processingStatus: false,
                 processing: false,
+                statusInitialized: true,
             });
         } else {
-            setState({ dhcp_available: false, processingStatus: false, processing: false });
+            setState({
+                dhcp_available: false,
+                processingStatus: false,
+                processing: false,
+                statusInitialized: true,
+            });
         }
     } catch (error) {
         addErrorToast({ error });
-        setState({ processingStatus: false, processing: false });
+        setState({ processingStatus: false, processing: false, statusInitialized: true });
     }
 };
 
@@ -143,10 +153,11 @@ export const getDhcpInterfaces = async () => {
         setState({
             interfaces: data,
             processingInterfaces: false,
+            interfacesInitialized: true,
         });
     } catch (error) {
         addErrorToast({ error });
-        setState('processingInterfaces', false);
+        setState({ processingInterfaces: false, interfacesInitialized: true });
     }
 };
 
