@@ -11,6 +11,7 @@ import (
 	"net/netip"
 	"runtime"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agh"
@@ -231,6 +232,13 @@ type webAPI struct {
 	// nil.
 	httpsServer *httpsServer
 
+	// dohSrv is the DNS-over-HTTPS server, the routes of which are served by
+	// the handlers returned by [webAPI.wrapMux] in front of the authentication
+	// middleware.
+	//
+	// TODO(d.kolyshev): Remove after DoH is served on a separate address.
+	dohSrv atomic.Pointer[doHServer]
+
 	// pidFilePath is used for cleanup.
 	pidFilePath string
 
@@ -248,15 +256,15 @@ func newWebAPI(ctx context.Context, conf *webAPIConfig) (w *webAPI) {
 	w = &webAPI{
 		conf:           conf,
 		confModifier:   conf.confModifier,
-		httpReg:        conf.httpReg,
 		cmdCons:        conf.CommandConstructor,
+		httpReg:        conf.httpReg,
 		logger:         conf.logger,
 		baseLogger:     conf.baseLogger,
 		tlsManager:     conf.tlsManager,
 		auth:           conf.auth,
+		hostsContainer: conf.hostsContainer,
 		pidFilePath:    conf.pidFilePath,
 		startTime:      time.Now(),
-		hostsContainer: conf.hostsContainer,
 	}
 
 	clientFS := http.FileServer(http.FS(conf.clientFS))
@@ -389,6 +397,13 @@ func (web *webAPI) start(ctx context.Context) {
 	}
 }
 
+// setDoHServer sets the DoH server, the routes of which are served by the
+// handlers returned by [webAPI.wrapMux], including the ones created before this
+// call.  srv must not be nil.
+func (web *webAPI) setDoHServer(srv *doHServer) {
+	web.dohSrv.Store(srv)
+}
+
 // wrapMux wraps mux with common middlewares.  l must not be nil.
 func (web *webAPI) wrapMux(l *slog.Logger) (h http.Handler) {
 	h = httputil.Wrap(web.conf.mux, httputil.MiddlewareFunc(limitRequestBody))
@@ -397,7 +412,28 @@ func (web *webAPI) wrapMux(l *slog.Logger) (h http.Handler) {
 	logMw := httputil.NewLogMiddleware(l, slog.LevelDebug)
 	h = logMw.Wrap(h)
 
-	return web.auth.middleware().Wrap(h)
+	h = web.auth.middleware().Wrap(h)
+
+	// TODO(d.kolyshev):  Remove after DoH is served on a separate address.
+	h = web.wrapDoHRoutes(h)
+
+	return h
+}
+
+// wrapDoHRoutes returns a handler that serves the DoH routes in front of the
+// authentication middleware as soon as the DoH server is set via
+// [webAPI.setDoHServer], including for the handlers created before that, and
+// passes all other requests to h.  h must not be nil.
+func (web *webAPI) wrapDoHRoutes(h http.Handler) (wrapped http.Handler) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		srv := web.dohSrv.Load()
+
+		if srv != nil && srv.tryServe(w, r) {
+			return
+		}
+
+		h.ServeHTTP(w, r)
+	})
 }
 
 // close gracefully shuts down the HTTP servers.
@@ -871,6 +907,7 @@ func (web *webAPI) reconfigureDNSServer(ctx context.Context) (err error) {
 		config.Clients.Sources,
 		config.HTTPConfig.DoH,
 		web.tlsManager,
+		config.HTTPConfig.Address,
 		web.httpReg,
 		globalContext.clients.storage,
 		web.confModifier,
