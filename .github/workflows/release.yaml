@@ -283,9 +283,8 @@
     'uses': 'AdGuardSoftwareLimited/actions/.github/workflows/create-gh-release.yml@master'
     'with':
       'artifact_name': 'adguardhome-github'
+      # TODO(e.burkov):  Set the 'prerelease' argument based on the channel.
       'draft': true
-      'prerelease': |
-        ${{ startsWith(github.ref_name, 'beta-v') }}
       # Use the actual application version, e.g. v0.108.1, as the tag, and not
       # the branch name, so that it matches the announcement_url written to
       # version.json by scripts/make/pack-release.sh.
