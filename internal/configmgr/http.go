@@ -12,10 +12,10 @@ import (
 
 // HTTPConfig is the on-disk web API configuration.
 type HTTPConfig struct {
-	// DoH contains DNS-over-HTTPS configuration.
+	// DoH contains DNS-over-HTTPS configuration.  It must not be nil.
 	DoH *DoHConfig `yaml:"doh"`
 
-	// Pprof defines the profiling HTTP handler.
+	// Pprof defines the profiling HTTP handler.  It must not be nil.
 	Pprof *HTTPPprofConfig `yaml:"pprof"`
 
 	// Address is the addresses on which to serve web API.
@@ -72,7 +72,7 @@ var _ validate.Interface = (*DoHConfig)(nil)
 // Validate implements the [validate.Interface] interface for *DoHConfig.
 func (c *DoHConfig) Validate() (err error) {
 	if c == nil {
-		return nil
+		return errors.ErrNoValue
 	}
 
 	var errs []error
@@ -92,6 +92,10 @@ var _ validate.Interface = (*HTTPPprofConfig)(nil)
 
 // Validate implements the [validate.Interface] interface for *HTTPPprofConfig.
 func (c *HTTPPprofConfig) Validate() (err error) {
+	if c == nil {
+		return errors.ErrNoValue
+	}
+
 	// TODO(d.kolyshev):  Validate.
 
 	return nil

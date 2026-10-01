@@ -85,7 +85,8 @@ type configuration struct {
 	fileData []byte
 
 	// HTTPConfig is the block with http conf.
-	HTTPConfig httpConfig `yaml:"http"`
+	HTTPConfig configmgr.HTTPConfig `yaml:"http"`
+
 	// Users are the clients capable for accessing the web interface.
 	Users []webUser `yaml:"users"`
 	// AuthAttempts is the maximum number of failed login attempts a user
@@ -143,52 +144,6 @@ type configuration struct {
 	// NOTE: It's only exists for testing purposes and should not be used in
 	// release.
 	UnsafeUseCustomUpdateIndexURL bool `yaml:"unsafe_use_custom_update_index_url,omitempty"`
-}
-
-// httpConfig is a block with HTTP configuration params.
-//
-// Field ordering is important, YAML fields better not to be reordered, if it's
-// not absolutely necessary.
-type httpConfig struct {
-	// Pprof defines the profiling HTTP handler.  It is never nil.
-	Pprof *httpPprofConfig `yaml:"pprof"`
-
-	// DoH contains DNS-over-HTTPS configuration.  It is never nil.
-	DoH *doHConfig `yaml:"doh"`
-
-	// Address is the address to serve the web UI on.
-	Address netip.AddrPort
-
-	// SessionTTL for a web session.
-	// An active session is automatically refreshed once a day.
-	SessionTTL timeutil.Duration `yaml:"session_ttl"`
-}
-
-// httpPprofConfig is the block with pprof HTTP configuration.
-type httpPprofConfig struct {
-	// Port for the profiling handler.
-	Port uint16 `yaml:"port"`
-
-	// Enabled defines if the profiling handler is enabled.
-	Enabled bool `yaml:"enabled"`
-}
-
-// doHConfig is the block with DNS-over-HTTPS configuration.
-type doHConfig struct {
-	// Routes is the list of HTTP route patterns for DoH requests.  Default
-	// routes are:
-	//   - "GET /dns-query"
-	//   - "POST /dns-query"
-	//   - "GET /dns-query/{ClientID}"
-	//   - "POST /dns-query/{ClientID}"
-	//
-	// TODO(d.kolyshev):  Validate.
-	// TODO(d.kolyshev):  Since we have multiple muxes now serving on one
-	// address, the user can register e.g. GET /control/status.
-	Routes []string `yaml:"routes"`
-
-	// InsecureEnabled allows DoH queries via unencrypted HTTP.
-	InsecureEnabled bool `yaml:"insecure_enabled"`
 }
 
 // dnsConfig is a block with DNS configuration params.
@@ -398,14 +353,8 @@ const (
 var config = &configuration{
 	AuthAttempts: 5,
 	AuthBlockMin: 15,
-	HTTPConfig: httpConfig{
-		Address:    netip.AddrPortFrom(netip.IPv4Unspecified(), 3000),
-		SessionTTL: timeutil.Duration(30 * timeutil.Day),
-		Pprof: &httpPprofConfig{
-			Enabled: false,
-			Port:    6060,
-		},
-		DoH: &doHConfig{
+	HTTPConfig: configmgr.HTTPConfig{
+		DoH: &configmgr.DoHConfig{
 			Routes: []string{
 				"GET /dns-query",
 				"POST /dns-query",
@@ -414,6 +363,12 @@ var config = &configuration{
 			},
 			InsecureEnabled: false,
 		},
+		Pprof: &configmgr.HTTPPprofConfig{
+			Port:    6060,
+			Enabled: false,
+		},
+		Address:    netip.AddrPortFrom(netip.IPv4Unspecified(), 3000),
+		SessionTTL: timeutil.Duration(30 * timeutil.Day),
 	},
 	DNS: dnsConfig{
 		BindHosts: []netip.Addr{netip.IPv4Unspecified()},
@@ -749,6 +704,10 @@ func validateConfig(ctx context.Context, l *slog.Logger, fileData []byte) (err e
 
 	if !filtering.ValidateUpdateIvl(config.Filtering.FiltersUpdateIntervalHours) {
 		config.Filtering.FiltersUpdateIntervalHours = 24
+	}
+
+	if err = config.HTTPConfig.Validate(); err != nil {
+		return fmt.Errorf("validating http config: %w", err)
 	}
 
 	if len(config.Users) == 0 {
