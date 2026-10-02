@@ -7,7 +7,7 @@
     overflow: hidden;
 
     @media (min-width: 768px) {
-        height: 360px;
+        min-height: 360px;
         padding: 8px;
     }
 }
@@ -30,11 +30,17 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 16px;
     padding: 16px 24px 24px;
 
     @media (min-width: 768px) {
         padding: 16px 16px 24px;
     }
+}
+
+.cardTitle {
+    flex: 1;
+    min-width: 0;
 }
 
 .cardSubtitle {
@@ -61,21 +67,11 @@
     min-height: 40px;
     gap: 0 24px;
     padding: 16px 24px 24px;
-    transition: background-color var(--t2);
     border-bottom: 1px solid var(--default-item-divider);
-
-    &:hover,
-    &:focus {
-        background-color: var(--hovered-page-background);
-    }
 
     @media (min-width: 768px) {
         border-radius: 8px;
         padding: 8px 16px;
-        border: none;
-    }
-
-    &:last-child {
         border: none;
     }
 
@@ -111,7 +107,16 @@
 }
 
 .tableRows {
-    height: 100%;
+    flex: 1 1 auto;
+    min-height: 0;
+
+    /* A divider separates two rows, so the last row must not have one.  A
+       tooltip trigger wraps its row and is followed by its overlay, so the
+       row is never the list's last child. */
+    & > *:has(> .tableRow):not(:has(~ * > .tableRow)) > .tableRow,
+    & > .tableRow:last-child {
+        border-bottom: none;
+    }
 }
 
 .domainIcon {
@@ -134,12 +139,6 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-
-    &:hover,
-    &:focus {
-        color: inherit;
-        text-decoration: underline;
-    }
 }
 
 .queryCount {
@@ -153,12 +152,6 @@
 .queryCountLink {
     color: inherit;
     text-decoration: none;
-
-    &:hover,
-    &:focus {
-        color: inherit;
-        text-decoration: underline;
-    }
 }
 
 .dropdownWrapper {
@@ -210,5 +203,31 @@
         height: 8px;
         border-radius: 50%;
         background-color: var(--default-gray-icons);
+    }
+}
+
+.tableRowLink {
+    cursor: pointer;
+    color: inherit;
+    text-decoration: none;
+    transition: background-color var(--t2);
+
+    @media (hover: hover) {
+        &:hover,
+        &:focus {
+            background-color: var(--hovered-page-background);
+        }
+    }
+
+    &:hover,
+    &:focus,
+    &:active {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--product-primary-90);
+        outline-offset: -2px;
     }
 }

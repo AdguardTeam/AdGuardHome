@@ -20,17 +20,27 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Security
 
-- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.26.8][go-1.26.8].
+- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.27.1][go-1.27.1].
 
 ### Fixed
+
+- Reading partially received TCP prefix.
+
+- A panic when updating AdGuard Home binary via the command line with `use_private_ptr_resolvers` set to true ([#8613]).
 
 - `log.enabled` set to `false` leaving the legacy logger enabled ([#8565]).
 
 - DHCP server persisting uncommitted leases with zero expiry after `DHCPDISCOVER` messages ([#8572]).
 
-[#8565]:     https://github.com/AdguardTeam/AdGuardHome/issues/8565
-[#8572]:     https://github.com/AdguardTeam/AdGuardHome/issues/8572
-[go-1.26.8]: https://groups.google.com/g/golang-announce/c/QiTRm-HGGtI
+### Removed
+
+- The support for macOS 13 Ventura, see [Go 1.27 release notes][go-1.27.1-notes].
+
+[#8565]:           https://github.com/AdguardTeam/AdGuardHome/issues/8565
+[#8572]:           https://github.com/AdguardTeam/AdGuardHome/issues/8572
+[#8613]:           https://github.com/AdguardTeam/AdGuardHome/issues/8613
+[go-1.27.1]:       https://groups.google.com/g/golang-announce/c/QiTRm-HGGtI
+[go-1.27.1-notes]: https://go.dev/doc/go1.27#darwin
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

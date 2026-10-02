@@ -59,6 +59,7 @@ export const TimeoutDialog = (props: Props) => {
                     max={UPSTREAM_TIMEOUT.MAX}
                     errorMessage={field.error()}
                     size="large"
+                    onCard
                 />
             </div>
         </ConfigDialog>

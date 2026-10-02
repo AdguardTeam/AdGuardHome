@@ -52,6 +52,7 @@ export const RetentionCustomInput = (props: Props) => {
                 error={!!props.error}
                 errorMessage={props.error}
                 size="large"
+                onCard
             />
         </div>
     );

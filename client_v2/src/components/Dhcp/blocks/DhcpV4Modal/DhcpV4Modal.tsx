@@ -196,6 +196,7 @@ export const DhcpV4Modal = (props: Props) => {
                     disabled={!hasIpv4()}
                     errorMessage={gatewayIpError()}
                     size="large"
+                    onCard
                 />
             </div>
             <div class={s.formField}>
@@ -215,6 +216,7 @@ export const DhcpV4Modal = (props: Props) => {
                             disabled={!hasIpv4()}
                             errorMessage={rangeStartError()}
                             size="large"
+                            onCard
                         />
                     </div>
                     <div>
@@ -229,6 +231,7 @@ export const DhcpV4Modal = (props: Props) => {
                             disabled={!hasIpv4()}
                             errorMessage={rangeEndError()}
                             size="large"
+                            onCard
                         />
                     </div>
                 </div>
@@ -244,6 +247,7 @@ export const DhcpV4Modal = (props: Props) => {
                     disabled={!hasIpv4()}
                     errorMessage={subnetMaskError()}
                     size="large"
+                    onCard
                 />
             </div>
             <div class={theme.form.input}>
@@ -258,6 +262,7 @@ export const DhcpV4Modal = (props: Props) => {
                     disabled={!hasIpv4()}
                     size="large"
                     inputError={leaseDurationError()}
+                    onCard
                 />
             </div>
         </ConfigDialog>

@@ -62,16 +62,21 @@
     border-radius: 4px;
     cursor: pointer;
 
-    &:hover,
-    &:focus {
+    &:hover:not(:disabled),
+    &:focus:not(:disabled) {
         background-color: var(--hovered-main-button);
         color: var(--default-primary-button-text);
+
+        .arrow {
+            color: var(--default-primary-button-text);
+        }
     }
 
     &:disabled {
         cursor: default;
 
         .arrow {
+            color: var(--disabled-gray-icons);
             cursor: default;
         }
 

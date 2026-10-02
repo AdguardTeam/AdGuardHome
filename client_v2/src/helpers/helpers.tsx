@@ -14,6 +14,7 @@ import {
     FILTERED,
     FILTERED_STATUS,
     R_CLIENT_ID,
+    R_IPV4,
     STANDARD_HTTPS_PORT,
     STANDARD_WEB_PORT,
     SPECIAL_FILTER_ID,
@@ -34,6 +35,7 @@ import type { QueryLogItemClient } from 'panel/api/model/queryLogItemClient';
 import type { QueryLogItemClientWhois } from 'panel/api/model/queryLogItemClientWhois';
 import type { QueryLogItemClientProto } from 'panel/api/model/queryLogItemClientProto';
 import type { QueryLogItem } from 'panel/api/model/queryLogItem';
+import type { QueryParams } from 'panel/components/Routes/Paths';
 
 export type NormalizedDnsResponse = {
     value?: string;
@@ -605,13 +607,93 @@ export const isIpInCidr = (ip: string, cidr: string): boolean => {
 };
 
 /**
- * Validates an IPv6 address using ipaddr.js, including zone IDs (e.g., fe80::1%eth0).
+ * Matches the dotted-decimal IPv4 tail of a mixed-notation IPv6 address, if
+ * there is one, against the canonical spelling netip.ParseAddr requires.
+ * @param addr - An IPv6 address without a zone ID.
+ * @returns true if the address has no IPv4 tail or the tail is canonical.
+ */
+const hasCanonicalIpv4Tail = (addr: string): boolean => {
+    const tail = addr.slice(addr.lastIndexOf(':') + 1);
+
+    return !tail.includes('.') || R_IPV4.test(tail);
+};
+
+/**
+ * Validates an IPv6 address the way the backend parses it with
+ * netip.ParseAddr.  The zone ID, if any, is everything after the first `%`,
+ * and its contents are not restricted, so `fe80::1%eth0/64` is an address with
+ * the zone `eth0/64` rather than a CIDR.  A mixed-notation address with a
+ * dotted-decimal IPv4 tail must use a canonical IPv4 spelling there as well:
+ * netip.ParseAddr rejects the leading-zero form (e.g. ::ffff:192.168.01.1).
  * @param value - The string to validate.
  * @returns true if the value is a valid IPv6 address.
  */
 export const isValidIpv6 = (value: string): boolean => {
+    const zoneIdx = value.indexOf('%');
+    const addr = zoneIdx === -1 ? value : value.slice(0, zoneIdx);
+
+    // netip.ParseAddr requires a non-empty zone ID, but does not restrict its
+    // contents.
+    if (zoneIdx !== -1 && zoneIdx === value.length - 1) {
+        return false;
+    }
+
     try {
-        return ipaddr.IPv6.isValid(value);
+        if (!ipaddr.IPv6.isValid(addr)) {
+            return false;
+        }
+    } catch (_e) {
+        return false;
+    }
+
+    return hasCanonicalIpv4Tail(addr);
+};
+
+/**
+ * Matches a prefix length without leading zeros, as netip.ParsePrefix requires.
+ */
+const R_PREFIX_LENGTH = /^(0|[1-9]\d*)$/;
+
+/**
+ * Validates an IP range in CIDR notation the way the backend parses it with
+ * netip.ParsePrefix: both address families, including IPv6 with an embedded
+ * dotted-decimal IPv4 address.  The extra checks keep out the spellings
+ * ipaddr.js accepts but netip rejects — zone IDs, prefix lengths with leading
+ * zeros, and non-canonical IPv4 addresses — so the form never accepts a value
+ * the server would refuse on save.
+ * @param value - The string to validate.
+ * @returns true if the value is a valid CIDR range.
+ */
+export const isValidCidr = (value: string): boolean => {
+    const slash = value.lastIndexOf('/');
+    if (slash <= 0) {
+        return false;
+    }
+
+    const addr = value.slice(0, slash);
+    const bits = value.slice(slash + 1);
+
+    // netip.ParsePrefix rejects IPv6 zones in a prefix and prefix lengths
+    // spelled with leading zeros.
+    if (addr.includes('%') || !R_PREFIX_LENGTH.test(bits)) {
+        return false;
+    }
+
+    const colon = addr.lastIndexOf(':');
+    if (colon === -1) {
+        // netip.ParseAddr requires canonical dotted-decimal IPv4, while
+        // ipaddr.js also takes octal, hexadecimal and single-number spellings.
+        if (!R_IPV4.test(addr)) {
+            return false;
+        }
+    } else if (!hasCanonicalIpv4Tail(addr)) {
+        // The same applies to the IPv4 tail of a mixed-notation IPv6 address.
+        return false;
+    }
+
+    try {
+        ipaddr.parseCIDR(value);
+        return true;
     } catch (_e) {
         return false;
     }
@@ -833,6 +915,15 @@ export const getLogsUrlParams = (search: string, status: string, reason: string)
         status: status || undefined,
         reason: reason || undefined,
     })}`;
+
+/**
+ * Query-log search params matching a single client or domain. The value is
+ * quoted so the query log treats it as an exact match.
+ *
+ * @param {string} value
+ * @returns {QueryParams}
+ */
+export const queryLogSearchQuery = (value: string): QueryParams => ({ search: `"${value}"` });
 
 /**
  * @param ip

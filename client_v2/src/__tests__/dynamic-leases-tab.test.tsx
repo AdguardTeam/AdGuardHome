@@ -113,7 +113,7 @@ describe('DynamicLeasesTab', () => {
         fireEvent.click(screen.getByTestId('dynamic-lease-delete-button'));
 
         // Click the confirm button
-        const confirmButton = screen.getByText('delete_table_action_confirm');
+        const confirmButton = screen.getByText('yes_remove');
         fireEvent.click(confirmButton);
 
         expect(mocks.removeStaticLease).toHaveBeenCalledWith(MOCK_LEASE);

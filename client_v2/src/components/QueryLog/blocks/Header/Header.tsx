@@ -11,7 +11,7 @@ import { FaqTooltip } from 'panel/common/ui/FaqTooltip';
 import { InlineLoader } from 'panel/common/ui/Loader';
 import { IOption } from 'panel/lib/helpers/utils';
 import { DEBOUNCE_FILTER_TIMEOUT } from 'panel/helpers/constants';
-import { useIsMobile } from 'panel/hooks/useIsMobile';
+import { useIsMobile } from 'panel/hooks/useMediaQuery';
 
 import s from './Header.module.pcss';
 

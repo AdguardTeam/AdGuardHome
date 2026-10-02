@@ -149,6 +149,7 @@ export const FilterUpdateModal = () => {
                             size="small"
                             onClick={onClose}
                             class={theme.dialog.button}
+                            onCard
                         >
                             {intl.getMessage('cancel')}
                         </Button>

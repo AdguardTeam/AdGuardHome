@@ -259,8 +259,8 @@ func (s *v4Server) send(peer net.Addr, conn net.PacketConn, req, resp *dhcpv4.DH
 		// Unicast DHCPOFFER and DHCPACK messages to the client's hardware
 		// address and yiaddr.
 		peer = &dhcpUnicastAddr{
-			Addr:   raw.Addr{HardwareAddr: req.ClientHWAddr},
-			yiaddr: resp.YourIPAddr,
+			HardwareAddr: req.ClientHWAddr,
+			yiaddr:       resp.YourIPAddr,
 		}
 	default:
 		// Go on since peer is already set to broadcast.

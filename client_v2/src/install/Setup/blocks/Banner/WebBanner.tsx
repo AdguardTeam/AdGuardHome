@@ -62,6 +62,7 @@ export const WebBanner = (props: Props) => {
                         size="responsive"
                         height="big"
                         id="install_web_ip"
+                        onCard
                     />
                 </div>
 
@@ -78,6 +79,7 @@ export const WebBanner = (props: Props) => {
                         onChange={handlePortChange}
                         onInput={handlePortChange}
                         size="large"
+                        onCard
                     />
                 </div>
 

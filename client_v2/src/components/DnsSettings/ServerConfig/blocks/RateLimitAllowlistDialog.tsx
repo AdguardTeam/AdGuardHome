@@ -47,6 +47,7 @@ export const RateLimitAllowlistDialog = (props: Props) => {
                     placeholder={intl.getMessage('dns_rate_limit_allowlist_placeholder')}
                     size="medium"
                     errorMessage={field.error()}
+                    onCard
                 />
             </div>
         </ConfigDialog>

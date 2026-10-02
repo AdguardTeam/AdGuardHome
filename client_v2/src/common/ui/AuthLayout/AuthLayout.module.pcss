@@ -1,0 +1,51 @@
+@media screen and (max-width: 767px) {
+    input,
+    select,
+    textarea {
+        font-size: 1rem;
+    }
+}
+
+.wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: var(--default-page-background);
+}
+
+.content {
+    display: flex;
+    flex: 1 0 auto;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+
+    @media screen and (min-width: 768px) {
+        padding: 40px 16px;
+    }
+}
+
+.card {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 632px;
+    padding-bottom: 24px;
+    box-sizing: border-box;
+
+    @media screen and (min-width: 768px) {
+        padding: 0 24px;
+        background-color: var(--default-cards-background);
+        border-radius: 16px;
+    }
+}
+
+.title {
+    margin: 0;
+    padding: 40px 16px 0;
+    color: var(--default-main-text);
+
+    @media screen and (min-width: 768px) {
+        padding: 48px 16px 16px;
+    }
+}

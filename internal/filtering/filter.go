@@ -295,9 +295,7 @@ func (d *DNSFilter) listsToUpdate(filters *[]FilterYAML, force bool) (toUpd []Fi
 		}
 
 		toUpd = append(toUpd, FilterYAML{
-			Filter: Filter{
-				ID: flt.ID,
-			},
+			ID:       flt.ID,
 			URL:      flt.URL,
 			Name:     flt.Name,
 			checksum: flt.checksum,

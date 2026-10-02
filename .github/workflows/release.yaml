@@ -1,6 +1,6 @@
 'env':
   'BASE_IMAGE': |-
-    ${{ vars.BASE_IMAGE || 'adguard/go-builder:1.26.8--1' }}
+    ${{ vars.BASE_IMAGE || 'adguard/go-builder:1.27.1--1' }}
   'BUILD_DIR': |-
     build
   'CHANNEL': |-
@@ -12,7 +12,6 @@
   'CLIENT_DIR': |-
     ${{ case(
       startsWith(github.ref_name, 'release-v'), 'client',
-      startsWith(github.ref_name, 'beta-v'), 'client',
       'client_v2'
     ) }}
   'DIST_DIR': |-
@@ -197,9 +196,15 @@
             VERSION=${{ needs.Build.outputs.app_version }}
       - 'uses': 'actions/upload-artifact@v7'
         'with':
-          'name': 'adguardhome'
+          'name': 'adguardhome-static'
           'path': |
             ${{ env.DIST_DIR }}/*.*
+      - 'uses': 'actions/upload-artifact@v7'
+        'with':
+          'name': 'adguardhome-github'
+          'path': |
+            ${{ env.DIST_DIR }}/*.*
+            !${{ env.DIST_DIR }}/version.json
   'DeployToStaticStorage':
     'if': |
       ${{ github.repository_owner == 'AdGuardSoftwareLimited' }}
@@ -218,7 +223,7 @@
           startsWith(github.ref_name, 'beta-v'), 'beta',
           'edge'
         ) }}
-      'artifact-name': 'adguardhome'
+      'artifact-name': 'adguardhome-static'
       'environment': |-
         ${{ case(
           startsWith(github.ref_name, 'release-v'), 'release',
@@ -277,8 +282,10 @@
       'id-token': 'write'
     'uses': 'AdGuardSoftwareLimited/actions/.github/workflows/create-gh-release.yml@master'
     'with':
-      'artifact_name': 'adguardhome'
+      'artifact_name': 'adguardhome-github'
       'draft': true
+      'prerelease': |
+        ${{ startsWith(github.ref_name, 'beta-v') }}
       # Use the actual application version, e.g. v0.108.1, as the tag, and not
       # the branch name, so that it matches the announcement_url written to
       # version.json by scripts/make/pack-release.sh.
