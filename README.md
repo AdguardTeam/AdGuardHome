@@ -92,7 +92,7 @@ Note that options `-r` and `-u` are mutually exclusive.
 
 #### <a href="#manual-installation" id="manual-installation" name="manual-installation"></a> Manual installation
 
-Please read the **[Getting Started][wiki-start]** article on our Wiki to learn how to install AdGuard Home manually, and how to configure your devices to use it.
+Please read the **[Getting Started][wiki-start]** article on our Knowledge Base to learn how to install AdGuard Home manually, and how to configure your devices to use it.
 
 #### <a href="#docker" id="docker" name="docker"></a> Docker
 
@@ -108,9 +108,9 @@ If you're running **Linux,** there's a secure and easy way to install AdGuard Ho
 
 ### <a href="#guides" id="guides" name="guides"></a> Guides
 
-See our [Wiki][wiki].
+See our [Knowledge Base][wiki].
 
-[wiki]: https://github.com/AdguardTeam/AdGuardHome/wiki
+[wiki]: https://adguard-dns.io/kb/adguard-home/overview/
 
 ### <a href="#api" id="api" name="api"></a> API
 
