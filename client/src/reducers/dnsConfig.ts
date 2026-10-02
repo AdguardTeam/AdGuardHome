@@ -68,6 +68,7 @@ const dnsConfig = handleActions(
         blocked_response_ttl: 10,
         upstream_timeout: 10,
         edns_cs_enabled: false,
+        edns_cs_use_in_stats: false,
         disable_ipv6: false,
         dnssec_enabled: false,
         upstream_dns_file: '',

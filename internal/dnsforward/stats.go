@@ -30,6 +30,9 @@ func (s *Server) processQueryLogsAndStats(
 	processingTime := time.Since(dctx.startTime)
 
 	ip := pctx.Addr.Addr().AsSlice()
+	if s.conf.EDNSClientSubnet != nil && s.conf.EDNSClientSubnet.UseInStats && pctx.ReqECS != nil {
+		ip = pctx.ReqECS.IP
+	}
 	s.anonymizer.Load()(ip)
 	ipStr := net.IP(ip).String()
 

@@ -19,6 +19,7 @@ type FormData = {
     edns_cs_enabled: boolean;
     edns_cs_use_custom: boolean;
     edns_cs_custom_ip?: string;
+    edns_cs_use_in_stats: boolean;
     dnssec_enabled: boolean;
     disable_ipv6: boolean;
     blocking_mode: string;
@@ -253,6 +254,24 @@ const Form = ({ processing, initialValues, onSubmit }: Props) => {
                                 />
                             )}
                         />
+                    </div>
+
+                    <div className="col-12">
+                        <div className="form__group form__group--settings">
+                            <Controller
+                                name="edns_cs_use_in_stats"
+                                control={control}
+                                render={({ field }) => (
+                                    <Checkbox
+                                        {...field}
+                                        data-testid="dns_config_edns_use_in_stats"
+                                        title={t('edns_use_in_stats')}
+                                        subtitle={t('edns_use_in_stats_desc')}
+                                        disabled={processing || !edns_cs_enabled}
+                                    />
+                                )}
+                            />
+                        </div>
                     </div>
 
                     {edns_cs_use_custom && (
