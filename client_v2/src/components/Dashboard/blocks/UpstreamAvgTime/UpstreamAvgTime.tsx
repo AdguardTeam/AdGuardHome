@@ -1,9 +1,12 @@
 import { Show, For, createMemo } from 'solid-js';
 import intl from 'panel/common/intl';
 import theme from 'panel/lib/theme';
+import { TruncatedText } from 'panel/common/ui/TruncatedText';
+import { RoutePath } from 'panel/components/Routes/Paths';
 import cn from 'clsx';
 import { TableHeader } from '../TableHeader';
 import { EmptyState } from '../EmptyState';
+import { CardFooter } from '../CardFooter';
 import { useSortedData } from '../../hooks/useSortedData';
 
 import s from '../TableCard.module.pcss';
@@ -16,10 +19,14 @@ type UpstreamInfo = {
 type Props = {
     topUpstreamsAvgTime: UpstreamInfo[];
     avgUpstreamResponseTime: number;
+    avgProcessingTime: number;
+    period?: number;
 };
 
 export const UpstreamAvgTime = (props: Props) => {
-    const { sortedData: sortedUpstreams } = useSortedData(() => props.topUpstreamsAvgTime);
+    const { sortedData: sortedUpstreams, hasMore } = useSortedData(
+        () => props.topUpstreamsAvgTime,
+    );
 
     const hasStats = createMemo(() => props.topUpstreamsAvgTime.length > 0);
 
@@ -53,7 +60,11 @@ export const UpstreamAvgTime = (props: Props) => {
                                 <div
                                     class={cn(theme.text.t3, theme.text.condenced, s.tableRowLeft)}
                                 >
-                                    <span class={s.domainName}>{upstream.name}</span>
+                                    <TruncatedText
+                                        text={upstream.name}
+                                        testId="upstream-avg-time-name"
+                                        class={s.domainName}
+                                    />
                                 </div>
                                 <div class={s.tableRowRight}>
                                     <div
@@ -72,6 +83,14 @@ export const UpstreamAvgTime = (props: Props) => {
                     </For>
                 </Show>
             </div>
+
+            <Show when={hasMore()}>
+                <CardFooter
+                    to={RoutePath.UpstreamAvgTime}
+                    testId="show-more-upstream-avg-time"
+                    query={props.period ? { period: props.period } : undefined}
+                />
+            </Show>
         </div>
     );
 };

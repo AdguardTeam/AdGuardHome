@@ -63,7 +63,7 @@
   "blocking_mode_refused": "REFUSED : Répondre avec le code REFUSED",
   "blocklist": "Liste de blocage",
   "bootstrap_dns": "Serveurs DNS d'amorçage",
-  "bootstrap_dns_desc": "Les adresses IP des serveurs DNS utilisées pour résoudre les adresses IP des résolveurs DoH/DoT que vous spécifiez comme en amont. Les commentaires ne sont pas autorisés.",
+  "bootstrap_dns_desc": "Les adresses IP des serveurs DNS utilisés pour résoudre les noms d'hôte des résolveurs en amont DNS-over-HTTPS/DNS-over-TLS. Saisissez une adresse IP par ligne. Les commentaires doivent commencer sur une nouvelle ligne par le caractère #. Les lignes vides et les commentaires sont ignorés.",
   "cache_cleared": "Le cache DNS a été vidé",
   "cache_enabled": "Activer le cache",
   "cache_enabled_desc": "Stockez les réponses DNS localement.",

@@ -110,6 +110,21 @@ export function createCursorLinePlugin(color: string): Plugin<'line'> {
     };
 }
 
+/** Gap between the cursor and the tooltip, in CSS pixels. */
+const TOOLTIP_GAP = 12;
+
+/** Minimum distance between the tooltip and the viewport edges, in CSS pixels. */
+const VIEWPORT_MARGIN = 8;
+
+/**
+ * Clamps `value` to the `[min, max]` range. When `max` is less than `min`
+ * (the tooltip is wider than the available space) `min` wins, so the value
+ * still stays at the leading edge of the viewport.
+ */
+function clamp(value: number, min: number, max: number): number {
+    return Math.min(Math.max(value, min), Math.max(min, max));
+}
+
 /**
  * Creates a Chart.js `external` tooltip handler that renders custom HTML
  * into a DOM element with recharts-style positioning (right of cursor,
@@ -120,6 +135,9 @@ export function createCursorLinePlugin(color: string): Plugin<'line'> {
  * converts viewport coordinates to coordinates relative to that ancestor,
  * so the tooltip scrolls together with the chart instead of staying fixed
  * to the viewport.
+ *
+ * The position is clamped to the visible area of the page: a tooltip
+ * sticking out of the viewport widens the document and adds scrollbars.
  *
  * @param getTooltipEl - accessor for the tooltip DOM element
  * @param renderContent - returns the innerHTML string for a data point
@@ -153,20 +171,27 @@ export function createExternalTooltipHandler(
         const tooltipWidth = el.offsetWidth;
         const tooltipHeight = el.offsetHeight;
 
-        // Position to the right of cursor; fall back to left near viewport edge
-        let left = rect.left + tooltip.caretX + 12;
-        if (left + tooltipWidth > window.innerWidth - 12) {
-            left = rect.left + tooltip.caretX - tooltipWidth - 12;
-        }
-        left -= parentRect.left;
+        // Unlike `innerWidth`/`innerHeight`, these describe the visible area
+        // of the page without the scrollbars. Keeping the tooltip inside it
+        // prevents the document from growing past the viewport.
+        const viewportWidth = document.documentElement.clientWidth;
+        const viewportHeight = document.documentElement.clientHeight;
 
-        let top = rect.top + tooltip.caretY - tooltipHeight / 2;
-        // Keep tooltip vertically within viewport
-        if (top < 8) top = 8;
-        if (top + tooltipHeight > window.innerHeight - 8) {
-            top = window.innerHeight - tooltipHeight - 8;
+        // Position to the right of cursor; fall back to left near viewport edge
+        let left = rect.left + tooltip.caretX + TOOLTIP_GAP;
+        if (left + tooltipWidth > viewportWidth - VIEWPORT_MARGIN) {
+            left = rect.left + tooltip.caretX - tooltipWidth - TOOLTIP_GAP;
         }
-        top -= parentRect.top;
+        left =
+            clamp(left, VIEWPORT_MARGIN, viewportWidth - tooltipWidth - VIEWPORT_MARGIN) -
+            parentRect.left;
+
+        const top =
+            clamp(
+                rect.top + tooltip.caretY - tooltipHeight / 2,
+                VIEWPORT_MARGIN,
+                viewportHeight - tooltipHeight - VIEWPORT_MARGIN,
+            ) - parentRect.top;
 
         el.style.left = `${left}px`;
         el.style.top = `${top}px`;

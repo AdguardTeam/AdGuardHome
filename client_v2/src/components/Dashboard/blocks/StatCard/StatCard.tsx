@@ -137,7 +137,7 @@ export const StatCard = (props: StatCardProps) => {
         maintainAspectRatio: false,
         animation: false as const,
         layout: {
-            padding: { top: 6, bottom: 12 },
+            padding: { top: 6, bottom: 12, left: 8, right: 8 },
         },
         plugins: {
             tooltip: {

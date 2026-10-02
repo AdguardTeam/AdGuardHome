@@ -105,6 +105,7 @@ export const Controls = (props: Props) => {
                                 props.openDashboard(props.ip, props.port);
                             }
                         }}
+                        compact
                     >
                         {intl.getMessage('open_dashboard')}
                     </Button>

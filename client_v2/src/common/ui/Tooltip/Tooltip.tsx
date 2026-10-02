@@ -2,7 +2,7 @@ import { type JSX, Show, createMemo, createSignal } from 'solid-js';
 import cn from 'clsx';
 import { Tooltip as ArkTooltip } from '@ark-ui/solid';
 
-import { useMediaQuery } from 'panel/helpers/useMediaQuery';
+import { useIsTouchDevice } from 'panel/hooks/useMediaQuery';
 import { useOutsideDismiss } from 'panel/hooks/useOutsideDismiss';
 
 import './Tooltip.pcss';
@@ -18,6 +18,7 @@ type Props = {
     class?: string;
     disabled?: boolean;
     children?: JSX.Element;
+    triggerAttrs?: JSX.HTMLAttributes<HTMLDivElement>;
 };
 
 export const Tooltip = (props: Props) => {
@@ -47,7 +48,7 @@ export const Tooltip = (props: Props) => {
     }));
 
     // Touch-device detection via hover-media query.
-    const isTouch = useMediaQuery('(hover: none)');
+    const isTouch = useIsTouchDevice();
 
     // Managed open-state: hover-driven on desktop, tap-driven on touch.
     const [hoverOpen, setHoverOpen] = createSignal(false);
@@ -89,6 +90,7 @@ export const Tooltip = (props: Props) => {
                     asChild={(triggerProps) => (
                         <div
                             {...triggerProps}
+                            {...props.triggerAttrs}
                             ref={(el) => {
                                 triggerRef = el;
                             }}

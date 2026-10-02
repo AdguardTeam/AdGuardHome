@@ -1,0 +1,51 @@
+import { Show, createSignal } from 'solid-js';
+import cn from 'clsx';
+
+import { Tooltip } from 'panel/common/ui/Tooltip';
+import { useIsTouchDevice } from 'panel/hooks/useMediaQuery';
+import { useIsTruncated } from 'panel/hooks/useIsTruncated';
+import theme from 'panel/lib/theme';
+
+import s from './HeaderLabel.module.pcss';
+
+export type HeaderLabelProps = {
+    columnKey: string;
+    text: string;
+    tooltip?: boolean;
+};
+
+export const HeaderLabel = (props: HeaderLabelProps) => {
+    const [labelRef, setLabelRef] = createSignal<HTMLSpanElement>();
+
+    const isTouch = useIsTouchDevice();
+
+    const useTooltip = () => !!props.tooltip && !isTouch();
+
+    const isTruncated = useIsTruncated(labelRef, {
+        enabled: useTooltip,
+        source: () => props.text,
+    });
+
+    const label = (
+        <span
+            ref={setLabelRef}
+            data-testid={`table-header-${props.columnKey}`}
+            class={cn(theme.text.t3, theme.text.condenced, theme.text.semibold, s.text)}
+        >
+            {props.text}
+        </span>
+    );
+
+    return (
+        <Show when={props.tooltip} fallback={label}>
+            <Tooltip
+                content={<div class={cn(theme.text.t3, s.tooltipContent)}>{props.text}</div>}
+                position="bottomLeft"
+                disabled={!useTooltip() || !isTruncated()}
+                class={s.labelWrapper}
+            >
+                {label}
+            </Tooltip>
+        </Show>
+    );
+};

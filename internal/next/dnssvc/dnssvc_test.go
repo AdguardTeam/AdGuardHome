@@ -78,10 +78,8 @@ func TestService(t *testing.T) {
 
 	t.Run("dns", func(t *testing.T) {
 		req := &dns.Msg{
-			MsgHdr: dns.MsgHdr{
-				Id:               dns.Id(),
-				RecursionDesired: true,
-			},
+			Id:               dns.Id(),
+			RecursionDesired: true,
 			Question: []dns.Question{{
 				Name:   "example.com.",
 				Qtype:  dns.TypeA,

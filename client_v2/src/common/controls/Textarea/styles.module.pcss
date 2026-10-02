@@ -3,6 +3,14 @@
     flex-direction: column;
 }
 
+/* Wraps only the field itself so the clear button is positioned relative to
+   it, not to the label or the error message. */
+.fieldWrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
 .textarea {
     font-size: 16px;
     line-height: 1.3;
@@ -23,8 +31,10 @@
         border-color: var(--pressed-link);
     }
 
-    &:hover {
-        background-color: var(--default-input-background);
+    @media (hover: hover) {
+        &:hover {
+            background-color: var(--default-input-background);
+        }
     }
 
     &::placeholder {
@@ -54,6 +64,43 @@
     &.large {
         min-height: 200px;
     }
+
+    /* Field that shares its space with a dropzone below it. */
+    &.compact {
+        min-height: 116px;
+    }
+
+    &.onCard:not(:disabled) {
+        background-color: var(--page-background-additional);
+
+        @media (hover: hover) {
+            &:hover {
+                background-color: var(--page-background-additional-hovered);
+            }
+        }
+    }
+}
+
+/* Leaves room for the clear button (16px inset + 24px icon + 16px gap). */
+.clearable {
+    padding-right: 56px;
+}
+
+.clearButton {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--default-gray-icons);
+    cursor: pointer;
 }
 
 .label {
@@ -79,8 +126,10 @@
         border-color: var(--pressed-link);
     }
 
-    &:hover {
-        background-color: var(--default-input-background);
+    @media (hover: hover) {
+        &:hover {
+            background-color: var(--default-input-background);
+        }
     }
 
     &.error {
@@ -93,6 +142,20 @@
 
     &.large {
         min-height: 200px;
+    }
+
+    &.compact {
+        min-height: 116px;
+    }
+
+    &.onCard:not(:has(:disabled)) {
+        background-color: var(--page-background-additional);
+
+        @media (hover: hover) {
+            &:hover {
+                background-color: var(--page-background-additional-hovered);
+            }
+        }
     }
 }
 

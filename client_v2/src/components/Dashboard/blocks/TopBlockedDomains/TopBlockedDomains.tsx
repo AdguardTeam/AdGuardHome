@@ -2,16 +2,17 @@ import { Show, For, createMemo } from 'solid-js';
 import cn from 'clsx';
 import intl from 'panel/common/intl';
 import { Icon } from 'panel/common/ui/Icon';
-import { Tooltip } from 'panel/common/ui/Tooltip';
-import { QueriesTooltip } from 'panel/common/ui/QueriesTooltip';
 import { Link } from 'panel/common/ui/Link';
 import { RoutePath } from 'panel/components/Routes/Paths';
+import { QUERY_LOG_STATUS_FILTER } from 'panel/helpers/constants';
 import { formatCompactNumber } from 'panel/helpers/helpers';
 import theme from 'panel/lib/theme';
 import { getTrackerData } from 'panel/helpers/trackers/trackers';
 import { TableHeader } from '../TableHeader';
 import { TrackerTooltip } from '../TrackerTooltip';
+import { RowTooltip } from '../RowTooltip';
 import { EmptyState } from '../EmptyState';
+import { CardFooter } from '../CardFooter';
 import { useSortedData } from '../../hooks/useSortedData';
 
 import s from '../TableCard.module.pcss';
@@ -24,10 +25,11 @@ type DomainInfo = {
 type Props = {
     topBlockedDomains: DomainInfo[];
     numBlockedFiltering: number;
+    period?: number;
 };
 
 export const TopBlockedDomains = (props: Props) => {
-    const { sortedData: sortedDomains } = useSortedData(() => props.topBlockedDomains);
+    const { sortedData: sortedDomains, hasMore } = useSortedData(() => props.topBlockedDomains);
 
     const hasStats = createMemo(() => props.topBlockedDomains.length > 0);
 
@@ -40,9 +42,14 @@ export const TopBlockedDomains = (props: Props) => {
 
                 <Show when={hasStats()}>
                     <div class={cn(theme.text.t3, s.cardSubtitle)}>
-                        {intl.getMessage('blocked_total', {
-                            value: formatCompactNumber(props.numBlockedFiltering),
-                        })}
+                        <Link
+                            to={RoutePath.QueryLog}
+                            query={{ status: QUERY_LOG_STATUS_FILTER.BLOCKED.QUERY }}
+                            class={s.cardSubtitleLink}
+                            data-testid="blocked-total-link"
+                        >
+                            {formatCompactNumber(props.numBlockedFiltering)}
+                        </Link>
                     </div>
                 </Show>
             </div>
@@ -66,34 +73,46 @@ export const TopBlockedDomains = (props: Props) => {
                             const trackerData = getTrackerData(domain.name);
 
                             return (
-                                <div class={cn(s.tableRow, s.statRowValue)}>
-                                    <div
-                                        class={cn(
-                                            theme.text.t3,
-                                            theme.text.condenced,
-                                            s.tableRowLeft,
-                                        )}
+                                <RowTooltip
+                                    content={
+                                        <TrackerTooltip
+                                            domain={domain.name}
+                                            trackerData={trackerData}
+                                        />
+                                    }
+                                >
+                                    <Link
+                                        to={RoutePath.QueryLog}
+                                        query={{ search: `"${domain.name}"` }}
+                                        class={cn(s.tableRow, s.statRowValue, s.tableRowLink)}
+                                        data-testid="top-domain-row"
                                     >
-                                        <Show
-                                            when={trackerData}
-                                            fallback={<div class={s.tableRowDot} />}
+                                        <div
+                                            class={cn(
+                                                theme.text.t3,
+                                                theme.text.condenced,
+                                                s.tableRowLeft,
+                                            )}
                                         >
-                                            <Tooltip
-                                                content={
-                                                    <TrackerTooltip trackerData={trackerData!} />
-                                                }
-                                                position="bottomLeft"
-                                                class={theme.common.noShrink}
+                                            <Show
+                                                when={trackerData}
+                                                fallback={<div class={s.tableRowDot} />}
                                             >
                                                 <Icon icon="eye_open" class={s.tableRowIcon} />
-                                            </Tooltip>
-                                        </Show>
-                                        <span class={s.domainName}>{domain.name}</span>
-                                    </div>
+                                            </Show>
+                                            <span
+                                                class={cn(
+                                                    theme.text.t3,
+                                                    theme.text.condenced,
+                                                    s.domainNameLink,
+                                                )}
+                                            >
+                                                <span class={s.domainName}>{domain.name}</span>
+                                            </span>
+                                        </div>
 
-                                    <div class={s.tableRowRight}>
-                                        <div class={s.dropdowWrapper}>
-                                            <QueriesTooltip count={domain.count}>
+                                        <div class={s.tableRowRight}>
+                                            <div class={s.dropdownWrapper}>
                                                 <div
                                                     class={cn(
                                                         theme.text.t3,
@@ -101,9 +120,7 @@ export const TopBlockedDomains = (props: Props) => {
                                                         s.queryCount,
                                                     )}
                                                 >
-                                                    <Link
-                                                        to={RoutePath.QueryLog}
-                                                        query={{ search: `"${domain.name}"` }}
+                                                    <span
                                                         class={cn(
                                                             theme.text.t3,
                                                             theme.text.condenced,
@@ -111,7 +128,7 @@ export const TopBlockedDomains = (props: Props) => {
                                                         )}
                                                     >
                                                         {formatCompactNumber(domain.count)}
-                                                    </Link>
+                                                    </span>
 
                                                     <div
                                                         class={cn(
@@ -123,29 +140,37 @@ export const TopBlockedDomains = (props: Props) => {
                                                         ({percent().toFixed(2)}%)
                                                     </div>
                                                 </div>
-                                            </QueriesTooltip>
+                                            </div>
+
+                                            <div class={s.queryBar}>
+                                                <div
+                                                    class={cn(s.queryBarFill)}
+                                                    style={{ width: `${percent()}%` }}
+                                                />
+                                            </div>
                                         </div>
 
                                         <div class={s.queryBar}>
                                             <div
-                                                class={cn(s.queryBarFill)}
+                                                class={s.queryBarFill}
                                                 style={{ width: `${percent()}%` }}
                                             />
                                         </div>
-                                    </div>
-
-                                    <div class={s.queryBar}>
-                                        <div
-                                            class={s.queryBarFill}
-                                            style={{ width: `${percent()}%` }}
-                                        />
-                                    </div>
-                                </div>
+                                    </Link>
+                                </RowTooltip>
                             );
                         }}
                     </For>
                 </Show>
             </div>
+
+            <Show when={hasMore()}>
+                <CardFooter
+                    to={RoutePath.TopBlockedDomains}
+                    testId="show-more-top-blocked-domains"
+                    query={props.period ? { period: props.period } : undefined}
+                />
+            </Show>
         </div>
     );
 };

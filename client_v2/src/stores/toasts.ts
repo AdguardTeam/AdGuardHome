@@ -69,22 +69,47 @@ export const createUndoToast = (
     return { message, actionLabel, undoId };
 };
 
-export const addErrorToast = (payload: ErrorToastPayload) => {
+/**
+ * Adds a problem notice, collapsing a repeat of the same problem instead of
+ * stacking a copy — a request that keeps failing must not flood the screen with
+ * identical toasts.  Notices carrying an action always get their own entry
+ * because the action belongs to that particular occurrence.
+ */
+const pushProblemToast = (type: 'error' | 'warning', payload: ErrorToastPayload) => {
     const { error, options, action, noIcon } = payload;
     const message = error instanceof Error ? error.message : String(error);
-    console.error(message); // eslint-disable-line no-console
+
+    if (type === 'error') {
+        console.error(message); // eslint-disable-line no-console
+    }
+
     const notice: ToastNotice = {
         id: nanoid(),
         message,
         options,
-        type: 'error' as const,
+        type,
         noIcon,
     };
     if (action) {
         notice.action = action;
     }
-    setState('notices', (prev) => [...prev, notice]);
+
+    setState('notices', (prev) => {
+        const isDuplicate = (n: ToastNotice) =>
+            !action && n.type === type && n.message === message && !n.action && !n.undoId;
+
+        if (prev.some(isDuplicate)) {
+            // The fresh id makes the toast render as a new notice, which
+            // restarts its dismiss timer so the user gets the full time to read
+            // the repeated message.
+            return prev.map((n) => (isDuplicate(n) ? notice : n));
+        }
+
+        return [...prev, notice];
+    });
 };
+
+export const addErrorToast = (payload: ErrorToastPayload) => pushProblemToast('error', payload);
 
 export const addSuccessToast = (message: SuccessToastPayload) => {
     const notice: ToastNotice = {
@@ -100,21 +125,7 @@ export const addSuccessToast = (message: SuccessToastPayload) => {
     setState('notices', (prev) => [...prev, notice]);
 };
 
-export const addWarningToast = (payload: ErrorToastPayload) => {
-    const { error, options, action, noIcon } = payload;
-    const message = error instanceof Error ? error.message : String(error);
-    const notice: ToastNotice = {
-        id: nanoid(),
-        message,
-        options,
-        type: 'warning' as const,
-        noIcon,
-    };
-    if (action) {
-        notice.action = action;
-    }
-    setState('notices', (prev) => [...prev, notice]);
-};
+export const addWarningToast = (payload: ErrorToastPayload) => pushProblemToast('warning', payload);
 
 export const addNoticeToast = (message: string) => {
     setState('notices', (prev) => [

@@ -6,6 +6,7 @@ import (
 	"io"
 	"log/slog"
 	"os"
+	"slices"
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
@@ -64,8 +65,8 @@ func newQLogReader(ctx context.Context, logger *slog.Logger, files []string) (*q
 // timestamp.  If the record is found, it sets qLogReader's position to point
 // to that line, so that the next ReadNext call returned this line.
 func (r *qLogReader) seekTS(ctx context.Context, timestamp int64) (err error) {
-	for i := len(r.qFiles) - 1; i >= 0; i-- {
-		q := r.qFiles[i]
+	for i, q := range slices.Backward(r.qFiles) {
+
 		_, _, err = q.seekTS(ctx, r.logger, timestamp)
 		if err != nil {
 			if errors.Is(err, errTSTooEarly) {

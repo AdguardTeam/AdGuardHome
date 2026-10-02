@@ -1,5 +1,5 @@
 {
-  "timeUpdated": "2026-02-09T10:25:05.786Z",
+  "timeUpdated": "2026-09-21T10:11:33.965Z",
   "categories": {
     "0": "audio_video_player",
     "1": "comments",
@@ -22364,6 +22364,7 @@
     "gcp.gvt2.com": "google_cloud_platform",
     "storage.googleapis.com": "google_cloud_storage",
     "adsensecustomsearchads.com": "google_custom_search",
+    "syndicatedsearch.goog": "google_custom_search",
     "dns.google": "google_dns",
     "dns.google.com": "google_dns",
     "google-public-dns-a.google.com": "google_dns",

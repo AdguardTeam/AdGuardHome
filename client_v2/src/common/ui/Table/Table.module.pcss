@@ -12,12 +12,21 @@
 }
 
 .table {
+    --table-row-min-height: 42px;
+    --table-header-height: 50px;
+
     display: flex;
     flex-direction: column;
     gap: 16px;
 
     @media (min-width: 768px) {
         gap: 0;
+    }
+}
+
+.tableWithPagination {
+    @media (min-width: 768px) {
+        min-height: calc(var(--table-row-min-height) * 10 + var(--table-header-height));
     }
 }
 
@@ -51,22 +60,15 @@
 
 .tableHeaderCell {
     @media (min-width: 768px) {
-        min-height: 42px;
+        min-height: var(--table-row-min-height);
         padding: 8px 12px;
         overflow: hidden;
     }
 }
 
-.tableHeaderText {
-    min-width: 0;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-
 .tableBodyCell {
     @media (min-width: 768px) {
-        min-height: 42px;
+        min-height: var(--table-row-min-height);
         padding: 8px 12px;
         align-items: center;
     }
@@ -78,7 +80,7 @@
     border-radius: 8px;
     padding: 8px 16px;
     background-color: var(--default-cards-background);
-    box-shadow: 8px 8px 24px 0 rgba(0, 0, 0, 0.1);
+    box-shadow: var(--default-cards-box-shadow);
     transition: background-color var(--t2);
 
     @media (min-width: 768px) {
@@ -88,9 +90,11 @@
         background-color: transparent;
         box-shadow: none;
 
-        &:hover,
-        &:focus {
-            background-color: var(--page-background-additional);
+        @media (hover: hover) {
+            &:hover,
+            &:focus {
+                background-color: var(--page-background-additional);
+            }
         }
     }
 
@@ -105,10 +109,30 @@
     cursor: pointer;
 }
 
+.tableRowLink {
+    cursor: pointer;
+    color: inherit;
+    text-decoration: none;
+
+    &:hover,
+    &:focus,
+    &:active {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--product-primary-90);
+        outline-offset: -2px;
+    }
+}
+
 .sortIcon {
     flex-shrink: 0;
     opacity: 0;
-    transition: opacity var(--t2), transform var(--t2);
+    transition:
+        opacity var(--t2),
+        transform var(--t2);
 }
 
 .sortAsc {
@@ -125,7 +149,7 @@
 }
 
 .tablePagination {
-    margin-top: auto;
+    margin-top: 0;
 }
 
 .emptyTableWrapper {

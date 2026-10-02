@@ -91,11 +91,7 @@ export const ConfigureRewritesModal = (props: Props) => {
             validateRequiredValue(answer()) ||
             validateAnswer(answer()) ||
             validateRewriteNotSame(domain(), answer()) ||
-            validateRewriteNotExists(
-                domain(),
-                rewritesState.list as { domain: string }[],
-                props.rewriteToEdit?.domain,
-            );
+            validateRewriteNotExists(domain(), answer(), rewritesState.list, props.rewriteToEdit);
         setAnswerError(err || undefined);
         return !err;
     };
@@ -180,10 +176,13 @@ export const ConfigureRewritesModal = (props: Props) => {
                                     onChange={(e) => {
                                         setDomain((e.target as HTMLInputElement).value);
                                         setDomainError(undefined);
+                                        // The duplicate check depends on both fields.
+                                        setAnswerError(undefined);
                                     }}
                                     onBlur={validateDomainField}
                                     errorMessage={domainError()}
                                     size="large"
+                                    onCard
                                 />
                             </div>
 
@@ -209,6 +208,7 @@ export const ConfigureRewritesModal = (props: Props) => {
                                     onBlur={validateAnswerField}
                                     errorMessage={answerError()}
                                     size="large"
+                                    onCard
                                 />
                             </div>
                         </div>
@@ -240,6 +240,7 @@ export const ConfigureRewritesModal = (props: Props) => {
                             size="small"
                             onClick={handleCancel}
                             class={theme.dialog.button}
+                            onCard
                         >
                             {intl.getMessage('cancel')}
                         </Button>

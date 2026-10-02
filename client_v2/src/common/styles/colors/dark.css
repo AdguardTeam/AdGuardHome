@@ -8,6 +8,7 @@
     --page-background-additional-pressed: var(--gray-70);
     /* Cards background */
     --default-cards-background: var(--gray-80);
+    --default-cards-box-shadow: none;
     /* Popup background */
     --default-popup-background: var(--gray-90);
     /* Footer background */
@@ -58,6 +59,11 @@
     --pressed-danger-button: var(--red-70);
     --disabled-danger-button: var(--red-30);
     --hovered-secondary-danger-button: var(--red-100);
+    /* Warning button */
+    --default-warning-button: var(--orange-50);
+    --hovered-warning-button: var(--orange-60);
+    --pressed-warning-button: var(--orange-70);
+    --disabled-warning-button: var(--orange-30);
     /* Link */
     --default-link: var(--product-primary-50);
     --hovered-link: var(--product-primary-60);

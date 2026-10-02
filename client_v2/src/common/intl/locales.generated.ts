@@ -41,7 +41,6 @@ export const LOCALE_LOADERS: Record<string, () => Promise<any>> = {
     uk: () => import(/* webpackChunkName: "locale.uk" */ 'panel/__locales/uk.json'),
     vi: () => import(/* webpackChunkName: "locale.vi" */ 'panel/__locales/vi.json'),
     'zh-cn': () => import(/* webpackChunkName: "locale.zh-cn" */ 'panel/__locales/zh-cn.json'),
-    'zh-hk': () => import(/* webpackChunkName: "locale.zh-hk" */ 'panel/__locales/zh-hk.json'),
     'zh-tw': () => import(/* webpackChunkName: "locale.zh-tw" */ 'panel/__locales/zh-tw.json'),
 };
 
@@ -80,7 +79,6 @@ export const LOCALE_CODES = new Set([
     'uk',
     'vi',
     'zh-cn',
-    'zh-hk',
     'zh-tw',
 ]);
 

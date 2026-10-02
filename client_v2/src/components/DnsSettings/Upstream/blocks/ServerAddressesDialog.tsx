@@ -84,6 +84,7 @@ export const ServerAddressesDialog = (props: Props) => {
                         errorMessage={field.error()}
                         size="medium"
                         highlightComments
+                        onCard
                     />
                 </div>
                 <Examples />

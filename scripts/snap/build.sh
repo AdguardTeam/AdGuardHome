@@ -14,8 +14,7 @@ set -e -f -u
 # TODO(a.garipov): Add to helpers.sh and use more actively in scripts.
 log() {
 	if [ "$verbose" -gt '0' ]; then
-		# Don't use quotes to get word splitting.
-		echo "$1" 1>&2
+		printf '%s\n' "$1" 1>&2
 	fi
 }
 
@@ -23,6 +22,7 @@ log() {
 snapcraft_cmd="${SNAPCRAFT_CMD:-snapcraft}"
 readonly snapcraft_cmd
 
+chmod +x ./AdGuardHome_amd64
 version="$(./AdGuardHome_amd64 --version | cut -d ' ' -f 4)"
 if [ "$version" = '' ]; then
 	log 'empty version from ./AdGuardHome_amd64'

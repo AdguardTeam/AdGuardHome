@@ -1,0 +1,210 @@
+.containerOverride {
+    padding-top: 0;
+}
+
+.page {
+    display: flex;
+    flex-direction: column;
+    padding: 0 16px;
+    gap: 16px;
+
+    @media (min-width: 1024px) {
+        gap: 32px;
+    }
+}
+
+.header {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+
+    @media (min-width: 1024px) {
+        flex-direction: row;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+}
+
+.headerUnderTitle {
+    @media (min-width: 1024px) {
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: flex-start;
+        flex-wrap: nowrap;
+
+        & .headerControls {
+            flex-direction: row;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        & .controlAfter {
+            order: 0;
+            margin-inline-end: auto;
+        }
+
+        & .controlBefore {
+            order: 1;
+        }
+
+        & .searchField {
+            order: 2;
+        }
+
+        & .refreshButtonDesktop {
+            order: 3;
+        }
+    }
+}
+
+.headerLeft {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    @media (min-width: 1024px) {
+        gap: 48px;
+    }
+}
+
+.titleRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.pageTitle {
+    margin: 0;
+}
+
+.headerControls {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+
+    @media (min-width: 1024px) {
+        flex-direction: row;
+        align-items: center;
+    }
+}
+
+.controlSlot {
+    min-width: 0;
+}
+
+.controlAfter {
+    order: 0;
+}
+
+.controlBefore {
+    order: 1;
+
+    @media (min-width: 1024px) {
+        order: 0;
+    }
+}
+
+.searchField {
+    flex: 0 1 auto;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    order: 2;
+    overflow: visible;
+
+    @media (min-width: 1024px) {
+        flex: 1 1 220px;
+        max-width: 320px;
+        min-width: 180px;
+        width: auto;
+        order: 0;
+    }
+}
+
+.searchIcon {
+    width: 24px;
+    height: 24px;
+    color: var(--default-gray-icons);
+}
+
+.refreshButton {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    max-width: none;
+    padding: 0;
+}
+
+.refreshButtonMobile {
+    display: block;
+
+    @media (min-width: 1024px) {
+        display: none;
+    }
+}
+
+.refreshButtonDesktop {
+    display: none;
+
+    @media (min-width: 1024px) {
+        display: block;
+    }
+}
+
+.refreshIcon {
+    width: 24px;
+    height: 24px;
+    color: var(--default-product-icon);
+}
+
+.mobileContent {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.mobileSort {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-bottom: 8px;
+}
+
+.mobileSortLabel {
+    color: var(--default-description-text);
+}
+
+.mobileCards {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.mobilePagination {
+    padding-top: 8px;
+}
+
+.mobileEmptyState {
+    min-height: 120px;
+    padding: 24px 16px;
+}
+
+.mobileLoader {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+}
+
+.mobileLoaderIcon {
+    width: 48px;
+    height: 48px;
+    color: var(--default-product-icon);
+}

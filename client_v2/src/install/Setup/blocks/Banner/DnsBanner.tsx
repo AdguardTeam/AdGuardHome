@@ -76,6 +76,7 @@ export const DnsBanner = (props: Props) => {
                             height="big"
                             id="install_dns_ip"
                             isSearchable={false}
+                            onCard
                         />
                     </div>
 
@@ -92,6 +93,7 @@ export const DnsBanner = (props: Props) => {
                             onChange={handlePortChange}
                             onInput={handlePortChange}
                             size="large"
+                            onCard
                         />
                     </div>
 

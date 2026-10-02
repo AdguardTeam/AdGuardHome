@@ -22,6 +22,7 @@ import type { FilterConfig } from 'panel/api/model/filterConfig';
 type FilteringState = {
     isModalOpen: boolean;
     processingFilters: boolean;
+    filtersInitialized: boolean;
     processingRules: boolean;
     processingAddFilter: boolean;
     processingRefreshFilters: boolean;
@@ -45,6 +46,7 @@ type FilteringState = {
 const initialState: FilteringState = {
     isModalOpen: false,
     processingFilters: false,
+    filtersInitialized: false,
     processingRules: false,
     processingAddFilter: false,
     processingRefreshFilters: false,
@@ -74,10 +76,11 @@ export const getFilteringStatus = async () => {
         setState({
             ...normalizeFilteringStatus(data),
             processingFilters: false,
+            filtersInitialized: true,
         });
     } catch (error) {
         addErrorToast({ error });
-        setState('processingFilters', false);
+        setState({ processingFilters: false, filtersInitialized: true });
     }
 };
 

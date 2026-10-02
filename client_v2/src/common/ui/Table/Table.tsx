@@ -3,14 +3,16 @@ import { createStore } from 'solid-js/store';
 import cn from 'clsx';
 
 import { Loader } from 'panel/common/ui/Loader';
-import theme from 'panel/lib/theme';
+import { Link } from 'panel/common/ui/Link';
+import type { QueryParams, RoutePathKey } from 'panel/components/Routes/Paths';
 import { Pagination } from './blocks/Pagination/Pagination';
+import { HeaderLabel } from './blocks/HeaderLabel/HeaderLabel';
 
 import s from './Table.module.pcss';
 
 import { Icon } from '../Icon';
 
-const DEFAULT_PAGE_SIZE_OPTIONS = [10, 20, 30, 40, 50];
+export const DEFAULT_PAGE_SIZE_OPTIONS = [10, 20, 30, 40, 50];
 export const DEFAULT_PAGE_SIZE = DEFAULT_PAGE_SIZE_OPTIONS[0];
 
 export interface TableColumn<T = any> {
@@ -49,8 +51,18 @@ export interface TableProps<T = any> {
     onSortChange?: (key: string, direction: 'asc' | 'desc') => void;
     getRowId?: (row: T, index: number) => string | number;
     onRowClick?: (row: T) => void;
+    /**
+     * When it returns a target, the whole row is rendered as a link to it
+     * instead of a plain container.
+     */
+    rowLink?: (row: T) => { to: RoutePathKey; query?: QueryParams } | undefined;
     tableHeaderClass?: string;
     tableRowClass?: string;
+    /**
+     * Show a tooltip with the full label when a column header's text is
+     * clipped by `text-overflow: ellipsis`
+     */
+    headerTooltip?: boolean;
 }
 
 export const Table = <T extends Record<string, any>>(props: TableProps<T>) => {
@@ -195,6 +207,12 @@ export const Table = <T extends Record<string, any>>(props: TableProps<T>) => {
 
     const hasData = () => paginatedData().length > 0;
 
+    // The rows-per-page select lives in the pagination footer, so the whole
+    // footer is hidden until the data needs more than one page at the default
+    // size.
+    const showPagination = () =>
+        (props.pagination ?? true) && sortedData().length > DEFAULT_PAGE_SIZE;
+
     return (
         <Show
             when={!props.loading}
@@ -206,7 +224,11 @@ export const Table = <T extends Record<string, any>>(props: TableProps<T>) => {
         >
             <div class={s.tableContainer}>
                 <div class={s.tableMain}>
-                    <div class={cn(s.table, props.class)}>
+                    <div
+                        class={cn(s.table, props.class, {
+                            [s.tableWithPagination]: showPagination(),
+                        })}
+                    >
                         <div class={cn(s.tableHeader, props.tableHeaderClass)} style={tableStyle()}>
                             <For each={props.columns}>
                                 {(column) => (
@@ -229,18 +251,11 @@ export const Table = <T extends Record<string, any>>(props: TableProps<T>) => {
                                         {column.header.render ? (
                                             column.header.render()
                                         ) : (
-                                            <span
-                                                data-testid={`table-header-${column.key}`}
-                                                title={column.header.text}
-                                                class={cn(
-                                                    theme.text.t3,
-                                                    theme.text.condenced,
-                                                    theme.text.semibold,
-                                                    s.tableHeaderText,
-                                                )}
-                                            >
-                                                {column.header.text}
-                                            </span>
+                                            <HeaderLabel
+                                                columnKey={column.key}
+                                                text={column.header.text}
+                                                tooltip={props.headerTooltip}
+                                            />
                                         )}
 
                                         {(props.sortable ?? true) && column.sortable && (
@@ -265,31 +280,57 @@ export const Table = <T extends Record<string, any>>(props: TableProps<T>) => {
                         <Show when={hasData()}>
                             <For each={paginatedData()}>
                                 {(row, index) => {
+                                    const rowLink = () => props.rowLink?.(row);
+
+                                    const rowCells = () => (
+                                        <For each={props.columns}>
+                                            {(column) => (
+                                                <div
+                                                    class={cn(
+                                                        s.tableCell,
+                                                        s.tableBodyCell,
+                                                        column.class,
+                                                        {
+                                                            [s.fitContent]: column.fitContent,
+                                                            [s.clickableCell]:
+                                                                !!props.onRowClick && !rowLink(),
+                                                        },
+                                                    )}
+                                                >
+                                                    {renderCell(column, row, index())}
+                                                </div>
+                                            )}
+                                        </For>
+                                    );
+
                                     return (
-                                        <div
-                                            class={cn(s.tableRow, props.tableRowClass)}
-                                            style={tableStyle()}
-                                            onClick={() => props.onRowClick?.(row)}
+                                        <Show
+                                            when={rowLink()}
+                                            fallback={
+                                                <div
+                                                    class={cn(s.tableRow, props.tableRowClass)}
+                                                    style={tableStyle()}
+                                                    onClick={() => props.onRowClick?.(row)}
+                                                >
+                                                    {rowCells()}
+                                                </div>
+                                            }
                                         >
-                                            <For each={props.columns}>
-                                                {(column) => (
-                                                    <div
-                                                        class={cn(
-                                                            s.tableCell,
-                                                            s.tableBodyCell,
-                                                            column.class,
-                                                            {
-                                                                [s.fitContent]: column.fitContent,
-                                                                [s.clickableCell]:
-                                                                    !!props.onRowClick,
-                                                            },
-                                                        )}
-                                                    >
-                                                        {renderCell(column, row, index())}
-                                                    </div>
-                                                )}
-                                            </For>
-                                        </div>
+                                            {(link) => (
+                                                <Link
+                                                    to={link().to}
+                                                    query={link().query}
+                                                    class={cn(
+                                                        s.tableRow,
+                                                        s.tableRowLink,
+                                                        props.tableRowClass,
+                                                    )}
+                                                    style={tableStyle()}
+                                                >
+                                                    {rowCells()}
+                                                </Link>
+                                            )}
+                                        </Show>
                                     );
                                 }}
                             </For>
@@ -299,21 +340,21 @@ export const Table = <T extends Record<string, any>>(props: TableProps<T>) => {
                     <Show when={!hasData() && props.emptyTable}>
                         <div class={s.emptyTableWrapper}>{props.emptyTable}</div>
                     </Show>
-                </div>
 
-                <Show when={(props.pagination ?? true) && sortedData().length >= DEFAULT_PAGE_SIZE}>
-                    <div class={s.tablePagination}>
-                        <Pagination
-                            currentPage={state.currentPage}
-                            totalPages={totalPages()}
-                            pageSize={state.pageSize}
-                            totalItems={sortedData().length}
-                            pageSizeOptions={props.pageSizeOptions ?? DEFAULT_PAGE_SIZE_OPTIONS}
-                            onPageChange={handlePageChange}
-                            onPageSizeChange={handlePageSizeChange}
-                        />
-                    </div>
-                </Show>
+                    <Show when={showPagination()}>
+                        <div class={s.tablePagination}>
+                            <Pagination
+                                currentPage={state.currentPage}
+                                totalPages={totalPages()}
+                                pageSize={state.pageSize}
+                                totalItems={sortedData().length}
+                                pageSizeOptions={props.pageSizeOptions ?? DEFAULT_PAGE_SIZE_OPTIONS}
+                                onPageChange={handlePageChange}
+                                onPageSizeChange={handlePageSizeChange}
+                            />
+                        </div>
+                    </Show>
+                </div>
             </div>
         </Show>
     );

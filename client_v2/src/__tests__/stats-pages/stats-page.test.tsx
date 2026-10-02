@@ -1,0 +1,281 @@
+import { render, screen, fireEvent, waitFor } from '@solidjs/testing-library';
+import { HashRouter, Route } from '@solidjs/router';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+import { StatsPage } from 'panel/components/Stats/StatsPage';
+import { DEFAULT_PAGE_SIZE } from 'panel/common/ui/Table/Table';
+import type { TableColumn } from 'panel/common/ui/Table';
+import { LocalStorageHelper } from 'panel/helpers/localStorageHelper';
+import type { IOption } from 'panel/lib/helpers/utils';
+import { copy, copyInDom } from 'panel/__tests__/helpers/copy';
+import { mockMatchMedia } from 'panel/__tests__/helpers/matchMedia';
+
+type Row = { name: string; count: number };
+
+const rows: Row[] = [
+    { name: 'a.org', count: 1 },
+    { name: 'b.org', count: 2 },
+    { name: 'c.org', count: 3 },
+];
+
+const columns: TableColumn<Row>[] = [
+    { key: 'name', header: { text: 'Domain' }, accessor: 'name', sortable: true },
+    {
+        key: 'count',
+        header: { text: 'Queries' },
+        accessor: 'count',
+        sortable: true,
+    },
+];
+
+const mobileSortOptions: IOption<string>[] = [
+    { value: 'name:asc', label: 'Name asc' },
+    { value: 'name:desc', label: 'Name desc' },
+    { value: 'count:desc', label: 'Count desc' },
+    { value: 'count:asc', label: 'Count asc' },
+];
+
+const renderPage = (overrides: Partial<Parameters<typeof StatsPage<Row>>[0]> = {}) =>
+    render(() => (
+        <HashRouter>
+            <Route
+                path="/"
+                component={() => (
+                    <StatsPage<Row>
+                        title={copy('stats_query_domain')}
+                        rows={rows}
+                        columns={columns}
+                        getRowId={(row) => row.name}
+                        defaultSort={{ key: 'count', direction: 'desc' }}
+                        loading={false}
+                        emptyText={copyInDom('nothing_found')}
+                        onRefresh={vi.fn()}
+                        searchTextForRow={(row) => row.name}
+                        pageSizeKey="top_queried_domains_page_size"
+                        sortStorageKey="top_queried_domains_sort"
+                        mobileSortOptions={mobileSortOptions}
+                        renderMobileCard={(row) => (
+                            <div data-testid="mobile-card">
+                                {row.name}: {row.count}
+                            </div>
+                        )}
+                        {...overrides}
+                    />
+                )}
+            />
+        </HashRouter>
+    ));
+
+const getRowsText = () =>
+    Array.from(document.querySelectorAll('[class*="tableRow"]')).map((el) => el.textContent ?? '');
+
+describe('StatsPage', () => {
+    beforeEach(() => {
+        mockMatchMedia(true);
+        localStorage.clear();
+        window.location.hash = '#/';
+    });
+
+    it('renders breadcrumb, title, search and refresh controls (desktop)', () => {
+        renderPage();
+        expect(screen.getByText(copyInDom('dashboard'))).toBeInTheDocument();
+        expect(
+            screen.getByRole('heading', { name: copyInDom('stats_query_domain') }),
+        ).toBeInTheDocument();
+        expect(screen.getByTestId('stats-search-input')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: copyInDom('refresh_btn') })).toBeInTheDocument();
+    });
+
+    it('sorts by defaultSort count desc and filters client-side on search', () => {
+        renderPage();
+        const firstRowText = () =>
+            Array.from(document.querySelectorAll('[class*="tableRow"]'))
+                .map((el) => el.textContent)
+                .join(' ');
+
+        expect(firstRowText()).toContain('c.org');
+        expect(firstRowText()).toContain('a.org');
+
+        fireEvent.input(screen.getByTestId('stats-search-input'), {
+            target: { value: 'b' },
+        });
+        expect(firstRowText()).toContain('b.org');
+        expect(firstRowText()).not.toContain('a.org');
+    });
+
+    it('renders mobile cards and filters them (mobile viewport)', () => {
+        mockMatchMedia(false);
+        renderPage();
+        expect(screen.getAllByTestId('mobile-card').length).toBe(3);
+
+        fireEvent.input(screen.getByTestId('stats-search-input'), {
+            target: { value: 'a' },
+        });
+        expect(screen.getAllByTestId('mobile-card').length).toBe(1);
+        expect(screen.getByTestId('mobile-card').textContent).toContain('a.org');
+    });
+
+    it('renders children between the header and the table', () => {
+        renderPage({ children: <div data-testid="below-header-content">Add client</div> });
+        expect(screen.getByTestId('below-header-content')).toBeInTheDocument();
+    });
+
+    it('calls onRefresh when refresh is clicked', () => {
+        const onRefresh = vi.fn();
+        renderPage({ onRefresh });
+        fireEvent.click(screen.getByRole('button', { name: copyInDom('refresh_btn') }));
+        expect(onRefresh).toHaveBeenCalledTimes(1);
+    });
+
+    it('labels the refresh control with aria-label instead of a native title', () => {
+        const { container } = renderPage();
+
+        const refresh = screen.getByRole('button', { name: copyInDom('refresh_btn') });
+        expect(refresh).not.toHaveAttribute('title');
+        expect(container.querySelectorAll('[title]').length).toBe(0);
+    });
+
+    it('shows the empty state text when nothing matches', () => {
+        renderPage();
+        fireEvent.input(screen.getByTestId('stats-search-input'), {
+            target: { value: 'zzz' },
+        });
+        expect(screen.getByText(copyInDom('nothing_found'))).toBeInTheDocument();
+    });
+
+    it('uses the stored sort when no URL params are present', () => {
+        LocalStorageHelper.setItem('top_queried_domains_sort', {
+            key: 'name',
+            direction: 'asc',
+        });
+        renderPage();
+
+        const rowsText = getRowsText();
+        expect(rowsText[0]).toContain('a.org');
+        expect(rowsText[2]).toContain('c.org');
+    });
+
+    it('uses sort from URL params, overriding stored options', () => {
+        LocalStorageHelper.setItem('top_queried_domains_sort', {
+            key: 'name',
+            direction: 'asc',
+        });
+        window.location.hash = '#/?sort=name&dir=desc';
+        renderPage();
+
+        const rowsText = getRowsText();
+        expect(rowsText[0]).toContain('c.org');
+        expect(rowsText[2]).toContain('a.org');
+    });
+
+    it('persists sort to localStorage and URL on header click', async () => {
+        // jsdom does not reflect history.replaceState in location.hash, so
+        // assert on the history call itself.
+        const replaceSpy = vi.spyOn(window.history, 'replaceState');
+
+        renderPage();
+        fireEvent.click(screen.getByTestId('table-header-count'));
+
+        expect(LocalStorageHelper.getItem('top_queried_domains_sort')).toEqual({
+            key: 'count',
+            direction: 'asc',
+        });
+
+        // The router navigates inside a Solid transition, flushed in a microtask.
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        const calls = replaceSpy.mock.calls.map((call) => String(call[2]));
+        expect(calls.some((url) => url.includes('sort=count') && url.includes('dir=asc'))).toBe(
+            true,
+        );
+    });
+
+    it('shows a loader instead of the empty state while loading on mobile', () => {
+        mockMatchMedia(false);
+        renderPage({ loading: true, rows: [] });
+
+        expect(screen.getByTestId('stats-mobile-loader')).toBeInTheDocument();
+        expect(screen.queryByTestId('stats-empty-state')).not.toBeInTheDocument();
+    });
+
+    it('shows the empty state once loading finishes with no rows on mobile', () => {
+        mockMatchMedia(false);
+        renderPage({ loading: false, rows: [] });
+
+        expect(screen.queryByTestId('stats-mobile-loader')).not.toBeInTheDocument();
+        expect(screen.getByTestId('stats-empty-state')).toBeInTheDocument();
+        expect(screen.getByText(copyInDom('nothing_found'))).toBeInTheDocument();
+    });
+
+    it('shows a loader on mobile during refresh even when rows are present', () => {
+        mockMatchMedia(false);
+        renderPage({ loading: true });
+
+        expect(screen.getByTestId('stats-mobile-loader')).toBeInTheDocument();
+        expect(screen.queryAllByTestId('mobile-card')).toHaveLength(0);
+    });
+
+    it('shows the table loader instead of the empty state on desktop while loading', async () => {
+        mockMatchMedia(true);
+        renderPage({ loading: true, rows: [] });
+
+        await waitFor(() => {
+            expect(document.querySelector('[class*="tableLoader"]')).toBeInTheDocument();
+        });
+        expect(screen.queryByTestId('stats-empty-state')).not.toBeInTheDocument();
+        expect(screen.queryByTestId('stats-mobile-list')).not.toBeInTheDocument();
+    });
+
+    it('renders every row as a link when rowLink is provided', () => {
+        const { container } = renderPage({
+            rowLink: (row) => ({ to: 'QueryLog', query: { search: `"${row.name}"` } }),
+        });
+
+        const rows = Array.from(container.querySelectorAll('[class*="tableRow"]'));
+        expect(rows.length).toBe(3);
+        rows.forEach((row) => {
+            expect(row.tagName).toBe('A');
+            expect(row.getAttribute('href')).toContain('/logs');
+        });
+        expect(container.querySelectorAll('a a').length).toBe(0);
+    });
+
+    it('keeps rows as plain containers when rowLink is not provided', () => {
+        const { container } = renderPage();
+
+        const rows = Array.from(container.querySelectorAll('[class*="tableRow"]'));
+        rows.forEach((row) => expect(row.tagName).toBe('DIV'));
+    });
+});
+
+describe('StatsPage — the pagination footer', () => {
+    // The rows-per-page select lives in the footer, so the footer is only
+    // worth showing once the list needs more than one page.
+    const makeRows = (count: number): Row[] =>
+        Array.from({ length: count }, (_, index) => ({
+            name: `domain-${index}.org`,
+            count: index,
+        }));
+
+    it('hides the rows-per-page select when the list fits one page (desktop)', () => {
+        mockMatchMedia(true);
+        renderPage({ rows: makeRows(DEFAULT_PAGE_SIZE) });
+
+        expect(screen.queryByTestId('pagination-page-size-select')).toBeNull();
+    });
+
+    it('hides the rows-per-page select when the list fits one page (mobile)', () => {
+        mockMatchMedia(false);
+        renderPage({ rows: makeRows(DEFAULT_PAGE_SIZE) });
+
+        expect(screen.queryByTestId('pagination-page-size-select')).toBeNull();
+    });
+
+    it('shows the rows-per-page select once the list needs a second page', () => {
+        mockMatchMedia(true);
+        renderPage({ rows: makeRows(DEFAULT_PAGE_SIZE + 1) });
+
+        expect(screen.getByTestId('pagination-page-size-select')).toBeInTheDocument();
+    });
+});

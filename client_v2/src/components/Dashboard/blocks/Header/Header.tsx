@@ -9,7 +9,7 @@ import { Select } from 'panel/common/controls/Select';
 import { Icon } from 'panel/common/ui/Icon';
 import { Link } from 'panel/common/ui/Link';
 import { RoutePath, SCROLL_QUERY_KEY } from 'panel/components/Routes/Paths';
-import { useIsMobile } from 'panel/hooks/useIsMobile';
+import { useIsMobile } from 'panel/hooks/useMediaQuery';
 import { DISABLE_PROTECTION_TIMINGS, ONE_SECOND_IN_MS } from 'panel/helpers/constants';
 import { msToSeconds, msToMinutes, msToHours } from 'panel/helpers/helpers';
 
@@ -229,10 +229,10 @@ export const Header = (props: Props) => {
                 </Show>
             </div>
 
-            <div class={s.headerRight}>
+            <div class={cn(s.headerRight, s.onlyDesktop)}>
                 <button
                     type="button"
-                    class={cn(s.refreshButton, s.refreshDesktopButton, s.onlyDesktop)}
+                    class={cn(s.refreshButton, s.refreshDesktopButton)}
                     onClick={() => props.onRefreshStats?.()}
                     disabled={props.isLoading}
                     aria-label={intl.getMessage('refresh_btn')}
@@ -249,7 +249,7 @@ export const Header = (props: Props) => {
                     value={props.periodOptions.find((o) => o.value === props.selectedPeriod)}
                     onChange={(option: any) => props.onPeriodChange(option.value)}
                     size="responsive"
-                    height="small"
+                    height={isMobile() ? 'big' : 'small'}
                     isSearchable={false}
                     borderless={!isMobile()}
                     menuSize="big"

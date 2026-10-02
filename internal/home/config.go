@@ -181,6 +181,10 @@ type doHConfig struct {
 	//   - "POST /dns-query"
 	//   - "GET /dns-query/{ClientID}"
 	//   - "POST /dns-query/{ClientID}"
+	//
+	// TODO(d.kolyshev):  Validate.
+	// TODO(d.kolyshev):  Since we have multiple muxes now serving on one
+	// address, the user can register e.g. GET /control/status.
 	Routes []string `yaml:"routes"`
 
 	// InsecureEnabled allows DoH queries via unencrypted HTTP.
@@ -479,12 +483,12 @@ var config = &configuration{
 	// TODO(a.garipov): Think of a way to make scripts/vetted-filters update
 	// these as well if necessary.
 	Filters: []filtering.FilterYAML{{
-		Filter:  filtering.Filter{ID: 1},
+		ID:      1,
 		Enabled: true,
 		URL:     "https://adguardteam.github.io/HostlistsRegistry/assets/filter_1.txt",
 		Name:    "AdGuard DNS filter",
 	}, {
-		Filter:  filtering.Filter{ID: 2},
+		ID:      2,
 		Enabled: false,
 		URL:     "https://adguardteam.github.io/HostlistsRegistry/assets/filter_2.txt",
 		Name:    "AdAway Default Blocklist",

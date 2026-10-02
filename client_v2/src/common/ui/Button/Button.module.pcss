@@ -97,6 +97,23 @@
     }
 }
 
+.secondary.onCard {
+    background: var(--default-secondary-card-button);
+
+    &:hover,
+    &:focus-visible {
+        background: var(--hovered-secondary-card-button);
+    }
+
+    &:active {
+        background: var(--pressed-secondary-card-button);
+    }
+
+    &:disabled {
+        background-color: var(--disabled-secondary-card-button);
+    }
+}
+
 .ghost {
     color: var(--default-main-text);
     background: none;
@@ -157,6 +174,28 @@
     &:disabled {
         background: var(--disabled-danger-button);
         border-color: var(--disabled-danger-button);
+    }
+}
+
+.warning {
+    color: var(--gray-0);
+    background: var(--default-warning-button);
+    border-color: var(--default-warning-button);
+
+    &:hover,
+    &:focus-visible {
+        background: var(--hovered-warning-button);
+        border-color: var(--hovered-warning-button);
+    }
+
+    &:active {
+        background: var(--pressed-warning-button);
+        border-color: var(--pressed-warning-button);
+    }
+
+    &:disabled {
+        background: var(--disabled-warning-button);
+        border-color: var(--disabled-warning-button);
     }
 }
 

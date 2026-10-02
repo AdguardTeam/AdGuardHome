@@ -13,6 +13,7 @@ type Props<T = string | number | boolean> = {
     value: T;
     options: { text: string; value: T; description?: JSX.Element; disabled?: boolean }[];
     name?: string;
+    optionTestIdPrefix?: string;
     textClass?: string;
     verticalAlign?: 'center' | 'start' | 'end';
     ref?: HTMLDivElement | ((el: HTMLDivElement) => void);
@@ -40,6 +41,11 @@ export const Radio = <T extends number | string | boolean = string>(props: Props
                                 [s.modal]: props.inModal,
                             },
                         )}
+                        data-testid={
+                            props.optionTestIdPrefix
+                                ? `${props.optionTestIdPrefix}-${o.value}`
+                                : undefined
+                        }
                     >
                         <input
                             id={props.name ? `${props.name}-${o.value}` : String(o.value)}

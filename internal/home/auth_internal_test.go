@@ -1,7 +1,6 @@
 package home
 
 import (
-	"net/http"
 	"path/filepath"
 	"testing"
 
@@ -31,7 +30,6 @@ func TestAuth_UsersList(t *testing.T) {
 
 	auth, err := newAuth(testutil.ContextWithTimeout(t, testTimeout), &authConfig{
 		baseLogger:     testLogger,
-		mux:            http.NewServeMux(),
 		rateLimiter:    emptyRateLimiter{},
 		trustedProxies: testTrustedProxies,
 		dbFilename:     sessionsDB,

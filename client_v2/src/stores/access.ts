@@ -8,6 +8,7 @@ import type { AccessList } from 'panel/api/model/accessList';
 
 type AccessState = {
     processing: boolean;
+    initialized: boolean;
     processingSet: boolean;
     allowed_clients: string;
     disallowed_clients: string;
@@ -16,6 +17,7 @@ type AccessState = {
 
 const initialState: AccessState = {
     processing: true,
+    initialized: false,
     processingSet: false,
     allowed_clients: '',
     disallowed_clients: '',
@@ -33,10 +35,11 @@ export const getAccessList = async () => {
             disallowed_clients: data.disallowed_clients?.join('\n') || '',
             blocked_hosts: data.blocked_hosts?.join('\n') || '',
             processing: false,
+            initialized: true,
         });
     } catch (error) {
         addErrorToast({ error });
-        setState('processing', false);
+        setState({ processing: false, initialized: true });
     }
 };
 

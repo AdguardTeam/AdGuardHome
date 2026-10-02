@@ -9,6 +9,8 @@ import (
 )
 
 // Theme is an enum of all allowed UI themes.
+//
+// TODO(d.kolyshev):  Use [configmgr.Theme].
 type Theme string
 
 // Allowed [Theme] values.

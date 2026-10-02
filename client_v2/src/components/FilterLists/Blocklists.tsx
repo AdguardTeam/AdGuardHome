@@ -1,4 +1,4 @@
-import { createSignal, createMemo, createEffect, Show, onMount } from 'solid-js';
+import { createSignal, Show, onMount } from 'solid-js';
 import cn from 'clsx';
 
 import intl from 'panel/common/intl';
@@ -31,19 +31,9 @@ export const Blocklists = () => {
         name: '',
     });
 
-    const [isInitialLoad, setIsInitialLoad] = createSignal(true);
-
     onMount(() => {
         getFilteringStatus();
     });
-
-    createEffect(() => {
-        if (!filteringState.processingFilters && isInitialLoad()) {
-            setIsInitialLoad(false);
-        }
-    });
-
-    const isDataReady = createMemo(() => filteringState.processingFilters && isInitialLoad());
 
     const toggleFilter = (url: string, data: { name: string; url: string; enabled: boolean }) => {
         toggleFilterStatus(url, data, false);
@@ -75,7 +65,7 @@ export const Blocklists = () => {
         <div class={theme.layout.container}>
             <div class={theme.layout.containerIn}>
                 <Show
-                    when={isDataReady()}
+                    when={!filteringState.filtersInitialized}
                     fallback={
                         <>
                             <div class={s.header}>

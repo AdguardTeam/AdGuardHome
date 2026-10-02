@@ -5,6 +5,7 @@ import {
     validateHostnameNotDuplicate,
     validateLeaseTime,
 } from 'panel/helpers/validators';
+import { copy } from 'panel/__tests__/helpers/copy';
 
 describe('validateHostname', () => {
     it('accepts hostnames up to the 253-char backend limit', () => {
@@ -13,7 +14,7 @@ describe('validateHostname', () => {
 
     it('rejects hostnames longer than 253 chars', () => {
         expect(validateHostname('a'.repeat(254))).toBe(
-            'Hostname must not be longer than 253 characters',
+            copy('form_error_hostname_length', { max: 253 }),
         );
     });
 
@@ -27,13 +28,13 @@ describe('validateHostnameNotDuplicate', () => {
 
     it('rejects a hostname that already exists', () => {
         expect(validateHostnameNotDuplicate(leases)('router')).toBe(
-            'This hostname is already added',
+            copy('dhcp_hostname_already_added'),
         );
     });
 
     it('is case-insensitive', () => {
         expect(validateHostnameNotDuplicate(leases)('Router')).toBe(
-            'This hostname is already added',
+            copy('dhcp_hostname_already_added'),
         );
     });
 
@@ -51,7 +52,9 @@ describe('validateLeaseTime', () => {
     const formattedMax = maxLeaseTime.toLocaleString();
 
     it('rejects non-integer values', () => {
-        expect(validateLeaseTime('1.5')).toBe(`Enter a value from 1 and ${formattedMax}`);
+        expect(validateLeaseTime('1.5')).toBe(
+            copy('form_value_value_from_error', { min_value: 1, max_value: formattedMax }),
+        );
     });
 
     it('accepts an integer number of seconds', () => {
@@ -60,7 +63,7 @@ describe('validateLeaseTime', () => {
 
     it('rejects values above uint32 max', () => {
         expect(validateLeaseTime(String(maxLeaseTime + 1))).toBe(
-            `Enter a value from 1 and ${formattedMax}`,
+            copy('form_value_value_from_error', { min_value: 1, max_value: formattedMax }),
         );
     });
 });

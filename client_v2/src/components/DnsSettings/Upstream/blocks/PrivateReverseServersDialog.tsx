@@ -5,6 +5,7 @@ import { ConfigDialog } from 'panel/common/ui/ConfigDialog';
 import { Textarea } from 'panel/common/controls/Textarea';
 import { validateUpstreams } from 'panel/helpers/validators';
 import { useField } from 'panel/hooks/useField';
+import { hasUsablePrivatePtrUpstreams } from '../../helpers';
 import { Examples } from './Examples';
 import theme from 'panel/lib/theme';
 
@@ -15,10 +16,32 @@ type Props = {
 };
 
 export const PrivateReverseServersDialog = (props: Props) => {
+    /**
+     * An empty list is only safe while the private resolvers are off or while
+     * the OS defaults are there to fall back to.  Saving it with the feature on
+     * and no defaults leaves the backend unable to prepare the resolvers.
+     */
+    const validateServers = (value: string): string => {
+        const formatError = validateUpstreams(value);
+        if (formatError) {
+            return formatError;
+        }
+
+        const needsServers =
+            dnsConfigState.use_private_ptr_resolvers &&
+            dnsConfigState.default_local_ptr_upstreams.length === 0;
+
+        if (needsServers && !hasUsablePrivatePtrUpstreams(value, [])) {
+            return intl.getMessage('dns_private_reverse_servers_required');
+        }
+
+        return '';
+    };
+
     const field = useField<string>(
         () => props.open(),
         () => dnsConfigState.local_ptr_upstreams,
-        { validate: (v) => (v ? validateUpstreams(v) || '' : '') },
+        { validate: validateServers },
     );
 
     return (
@@ -58,6 +81,7 @@ export const PrivateReverseServersDialog = (props: Props) => {
                     errorMessage={field.error()}
                     size="medium"
                     highlightComments
+                    onCard
                 />
             </div>
             <Examples />

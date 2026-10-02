@@ -13,8 +13,14 @@ type Props = {
     id: string;
     title: string;
     titleClass?: string;
+    /** Renders the title in the link color ("add"/"set up" style rows). */
+    titleLink?: boolean;
     description?: string | JSX.Element;
     descriptionClass?: string;
+    /** Optional icon rendered before the title/description block. */
+    prefixIcon?: JSX.Element;
+    /** Hides the trailing chevron button of the `link` variant. */
+    hideArrow?: boolean;
     value?: string;
     variant: SettingRowVariant;
     checked?: boolean;
@@ -22,6 +28,7 @@ type Props = {
     onChange?: (checked: boolean) => void;
     onClick?: () => void;
     class?: string;
+    rowClass?: string;
     children?: JSX.Element;
     divider?: boolean;
     align?: 'top' | 'center';
@@ -107,14 +114,18 @@ export const SettingRow = (props: Props) => {
             }}
         >
             <div
-                class={cn(s.row, {
+                class={cn(s.row, props.rowClass, {
                     [s.rowTop]: props.align === 'top',
                     [s.rowCenter]: props.align === 'center',
                 })}
             >
+                <Show when={props.prefixIcon}>
+                    <div class={s.prefixIcon}>{props.prefixIcon}</div>
+                </Show>
                 <div class={s.text}>
                     <div
                         class={cn(s.title, props.titleClass, {
+                            [s.titleLink]: props.titleLink,
                             [s.titleDisabled]: props.disabled,
                         })}
                     >
@@ -157,7 +168,7 @@ export const SettingRow = (props: Props) => {
                             }}
                         />
                     </Show>
-                    <Show when={isLinkVariant()}>
+                    <Show when={isLinkVariant() && !props.hideArrow}>
                         <button
                             type="button"
                             class={s.link}

@@ -51,6 +51,7 @@ export const BootstrapDnsDialog = (props: Props) => {
                     errorMessage={field.error()}
                     size="medium"
                     highlightComments
+                    onCard
                 />
             </div>
         </ConfigDialog>

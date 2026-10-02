@@ -3,9 +3,12 @@ import intl from 'panel/common/intl';
 import { formatCompactNumber } from 'panel/helpers/helpers';
 import theme from 'panel/lib/theme';
 import { QueriesTooltip } from 'panel/common/ui/QueriesTooltip';
+import { TruncatedText } from 'panel/common/ui/TruncatedText';
+import { RoutePath } from 'panel/components/Routes/Paths';
 import cn from 'clsx';
 import { TableHeader } from '../TableHeader';
 import { EmptyState } from '../EmptyState';
+import { CardFooter } from '../CardFooter';
 import { useSortedData } from '../../hooks/useSortedData';
 
 import s from '../TableCard.module.pcss';
@@ -18,10 +21,13 @@ type UpstreamInfo = {
 type Props = {
     topUpstreamsResponses: UpstreamInfo[];
     numDnsQueries: number;
+    period?: number;
 };
 
 export const TopUpstreams = (props: Props) => {
-    const { sortedData: sortedUpstreams } = useSortedData(() => props.topUpstreamsResponses);
+    const { sortedData: sortedUpstreams, hasMore } = useSortedData(
+        () => props.topUpstreamsResponses,
+    );
 
     const hasStats = createMemo(() => props.topUpstreamsResponses.length > 0);
 
@@ -59,7 +65,11 @@ export const TopUpstreams = (props: Props) => {
                                             s.tableRowLeft,
                                         )}
                                     >
-                                        <span class={s.domainName}>{upstream.name}</span>
+                                        <TruncatedText
+                                            text={upstream.name}
+                                            testId="top-upstream-name"
+                                            class={s.domainName}
+                                        />
                                     </div>
 
                                     <div class={s.tableRowRight}>
@@ -107,6 +117,14 @@ export const TopUpstreams = (props: Props) => {
                     </For>
                 </Show>
             </div>
+
+            <Show when={hasMore()}>
+                <CardFooter
+                    to={RoutePath.TopUpstreams}
+                    testId="show-more-top-upstreams"
+                    query={props.period ? { period: props.period } : undefined}
+                />
+            </Show>
         </div>
     );
 };

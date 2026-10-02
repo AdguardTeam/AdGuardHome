@@ -1,8 +1,6 @@
 import intl from 'panel/common/intl';
 import {
     MAX_PORT,
-    R_CIDR,
-    R_CIDR_IPV6,
     R_HOST,
     R_IPV4,
     R_MAC,
@@ -19,7 +17,7 @@ import {
 
 import { ip4ToInt, isValidAbsolutePath } from './form';
 
-import { isIpInCidr, isValidIpv6, parseSubnetMask } from './helpers';
+import { isIpInCidr, isValidCidr, isValidIpv6, parseSubnetMask } from './helpers';
 
 /** Return type for all validators: `undefined` means valid, string is the i18n error message. */
 type ValidationResult = string | undefined;
@@ -332,8 +330,7 @@ export const validateClientsPerLine = (value: string): string | undefined =>
         (line) =>
             R_IPV4.test(line) ||
             isValidIpv6(line) ||
-            R_CIDR.test(line) ||
-            R_CIDR_IPV6.test(line) ||
+            isValidCidr(line) ||
             R_CLIENT_ID.test(line),
     );
 
@@ -423,27 +420,55 @@ export const validateAnswer = (value?: string): ValidationResult => {
 };
 
 /**
- * Validates that a DNS rewrite with the given domain doesn't already exist.
- * When editing, the `currentDomain` is excluded from the duplicate check.
+ * Normalizes a rewrite's domain or answer for duplicate comparison.
+ */
+const normalizeRewriteValue = (value?: string): string => (value ?? '').trim().toLowerCase();
+
+/**
+ * Validates that a fully duplicated DNS rewrite (same domain AND same answer)
+ * doesn't already exist. Rewrites that share a domain but have different
+ * answers are allowed. When editing, the rewrite being edited is excluded from
+ * the duplicate check.
  *
- * @example validateRewriteNotExists("example.com", [{ domain: "example.com" }])
+ * @example validateRewriteNotExists("example.com", "1.2.3.4", [{ domain: "example.com", answer: "5.6.7.8" }])
+ *          // undefined (same domain, different answer)
+ * @example validateRewriteNotExists("example.com", "1.2.3.4", [{ domain: "example.com", answer: "1.2.3.4" }])
  *          // "This DNS rewrite already exists"
- * @example validateRewriteNotExists("example.com", [{ domain: "example.com" }], "example.com")
- *          // undefined (editing the same rewrite)
+ * @example validateRewriteNotExists(
+ *          "example.com",
+ *          "1.2.3.4",
+ *          [{ domain: "example.com", answer: "1.2.3.4" }],
+ *          { domain: "example.com", answer: "1.2.3.4" },
+ *          ) // undefined (editing the same rewrite)
  */
 export const validateRewriteNotExists = (
     domain: string,
-    existingList: Array<{ domain: string }>,
-    currentDomain?: string,
+    answer: string,
+    existingList: Array<{ domain?: string; answer?: string }>,
+    currentRewrite?: { domain?: string; answer?: string },
 ): ValidationResult => {
-    if (!domain) {
+    if (!domain || !answer) {
         return undefined;
     }
 
-    const isDuplicate = existingList.some(
-        (item) =>
-            item.domain.toLowerCase() === domain.toLowerCase() && item.domain !== currentDomain,
-    );
+    const normalizedDomain = normalizeRewriteValue(domain);
+    const normalizedAnswer = normalizeRewriteValue(answer);
+
+    const isDuplicate = existingList.some((item) => {
+        if (
+            normalizeRewriteValue(item.domain) !== normalizedDomain ||
+            normalizeRewriteValue(item.answer) !== normalizedAnswer
+        ) {
+            return false;
+        }
+
+        const isCurrentRewrite =
+            currentRewrite !== undefined &&
+            normalizeRewriteValue(item.domain) === normalizeRewriteValue(currentRewrite.domain) &&
+            normalizeRewriteValue(item.answer) === normalizeRewriteValue(currentRewrite.answer);
+
+        return !isCurrentRewrite;
+    });
 
     if (isDuplicate) {
         return intl.getMessage('dns_rewrite_exists');
@@ -613,8 +638,7 @@ export const validateIdentifier = (
         R_IPV4.test(trimmed) ||
         isValidIpv6(trimmed) ||
         R_MAC.test(trimmed) ||
-        R_CIDR.test(trimmed) ||
-        R_CIDR_IPV6.test(trimmed) ||
+        isValidCidr(trimmed) ||
         R_CLIENT_ID.test(trimmed);
 
     if (!isValidFormat) {

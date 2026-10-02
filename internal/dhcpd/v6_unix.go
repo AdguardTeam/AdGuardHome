@@ -750,7 +750,7 @@ func (s *v6Server) Start(ctx context.Context) (err error) {
 		Time:          dhcpv6.GetTime(),
 	}
 
-	s.srv, err = server6.NewServer(iface.Name, nil, s.packetHandler, server6.WithDebugLogger())
+	s.srv, err = server6.NewServer(iface.Name, nil, s.packetHandler, dhcpv6ServerOptions()...)
 	if err != nil {
 		return err
 	}
@@ -766,6 +766,16 @@ func (s *v6Server) Start(ctx context.Context) (err error) {
 	}()
 
 	return nil
+}
+
+// dhcpv6ServerOptions returns the options for the DHCPv6 server.
+func dhcpv6ServerOptions() (opts []server6.ServerOpt) {
+	opts = []server6.ServerOpt{}
+	if log.GetLevel() != log.OFF {
+		opts = append(opts, server6.WithDebugLogger())
+	}
+
+	return opts
 }
 
 // Stop - stop server

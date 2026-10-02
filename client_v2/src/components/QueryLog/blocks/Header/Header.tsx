@@ -11,7 +11,7 @@ import { FaqTooltip } from 'panel/common/ui/FaqTooltip';
 import { InlineLoader } from 'panel/common/ui/Loader';
 import { IOption } from 'panel/lib/helpers/utils';
 import { DEBOUNCE_FILTER_TIMEOUT } from 'panel/helpers/constants';
-import { useIsMobile } from 'panel/hooks/useIsMobile';
+import { useIsMobile } from 'panel/hooks/useMediaQuery';
 
 import s from './Header.module.pcss';
 
@@ -191,7 +191,7 @@ export const Header = (props: Props) => {
                                     <InlineLoader class={s.searchLoader} />
                                 </Show>
 
-                                <FaqTooltip text={intl.getMessage('query_log_strict_search')} />
+                                <FaqTooltip text={intl.getMessage('stats_strict_search')} />
                             </div>
                         }
                     />

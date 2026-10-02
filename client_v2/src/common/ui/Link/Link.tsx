@@ -11,10 +11,12 @@ import {
 import theme from 'panel/lib/theme';
 
 type Props = {
+    'data-testid'?: string;
     to: RoutePathKey;
     hash?: string;
     props?: LinkParams;
     class?: string;
+    style?: JSX.CSSProperties | string;
     type?: string;
     stop?: boolean;
     disabled?: boolean;
@@ -37,8 +39,10 @@ export const Link = (linkProps: Props) => {
     });
 
     const handleClick = (e: MouseEvent) => {
+        // A nested control cancelled the navigation (a row's action button), so
+        // the page must not jump to the top as if the link had been followed.
         // Don't scroll to top when navigating to a specific section (scroll handled by the target page)
-        if (!linkProps.query?.[SCROLL_QUERY_KEY]) {
+        if (!e.defaultPrevented && !linkProps.query?.[SCROLL_QUERY_KEY]) {
             setTimeout(() => {
                 window.scrollTo({ top: 0 });
             }, 100);
@@ -56,7 +60,14 @@ export const Link = (linkProps: Props) => {
         <Show
             when={!linkProps.disabled}
             fallback={
-                <div id={linkProps.id} tabIndex={0} title={linkProps.title} class={cn(linkProps.class)}>
+                <div
+                    id={linkProps.id}
+                    tabIndex={0}
+                    title={linkProps.title}
+                    class={cn(linkProps.class)}
+                    style={linkProps.style}
+                    data-testid={linkProps['data-testid']}
+                >
                     {linkProps.children}
                 </div>
             }
@@ -65,6 +76,7 @@ export const Link = (linkProps: Props) => {
                 id={linkProps.id}
                 title={linkProps.title}
                 class={cn(theme.link.link, linkProps.class)}
+                style={linkProps.style}
                 href={linkPathBuilder(
                     linkProps.to,
                     linkProps.props,
@@ -72,6 +84,7 @@ export const Link = (linkProps: Props) => {
                     linkProps.hash,
                 )}
                 onClick={handleClick}
+                data-testid={linkProps['data-testid']}
             >
                 {linkProps.children}
             </A>

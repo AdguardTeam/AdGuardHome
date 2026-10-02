@@ -97,6 +97,7 @@ export const DhcpV6Modal = (props: Props) => {
                     onChange={(e: Event) => setRangeStart((e.target as HTMLInputElement).value)}
                     onBlur={validateRangeStart}
                     errorMessage={rangeStartError()}
+                    onCard
                 />
             </div>
 
@@ -113,6 +114,7 @@ export const DhcpV6Modal = (props: Props) => {
                     onChange={(e: Event) => setLeaseDuration((e.target as HTMLInputElement).value)}
                     onBlur={() => validateLeaseDuration()}
                     inputError={leaseDurationError()}
+                    onCard
                 />
             </div>
         </ConfigDialog>

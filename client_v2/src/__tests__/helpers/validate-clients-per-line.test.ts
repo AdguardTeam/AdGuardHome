@@ -1,21 +1,10 @@
 import { describe, it, expect, vi } from 'vitest';
 
-vi.mock('panel/common/intl', () => ({
-    default: {
-        getMessage: vi.fn((key: string, values?: Record<string, string | number>) => {
-            if (key === 'form_error_format_line') {
-                return `Invalid format on line ${values?.line}`;
-            }
-            if (key === 'form_error_format_lines') {
-                return `Invalid format on lines ${values?.lines}`;
-            }
-            if (key === 'form_error_format') {
-                return 'Invalid format';
-            }
-            return key;
-        }),
-    },
-}));
+import { copy } from './copy';
+
+// The validator reports localized copy; serve it from the base locale so the
+// assertions can name the key instead of re-stating the text.
+vi.mock('panel/common/intl', async () => (await import('./copy')).createIntlMock());
 
 import { validateClientsPerLine } from 'panel/helpers/validators';
 
@@ -28,9 +17,24 @@ describe('validateClientsPerLine', () => {
         expect(validateClientsPerLine('192.168.1.1')).toBeUndefined();
     });
 
+    it('rejects a non-canonical IPv4 address', () => {
+        expect(validateClientsPerLine('192.168.01.1')).toBe(copy('form_error_format'));
+    });
+
     it('returns undefined for valid IPv6', () => {
         expect(validateClientsPerLine('::1')).toBeUndefined();
         expect(validateClientsPerLine('2001:db8::1')).toBeUndefined();
+    });
+
+    // The backend parses an entry as an address before it tries a prefix, so
+    // this is an address with the zone `eth0/64` for the server as well.
+    it('returns undefined for an IPv6 address with a zone ID', () => {
+        expect(validateClientsPerLine('fe80::1%eth0')).toBeUndefined();
+        expect(validateClientsPerLine('fe80::1%eth0/64')).toBeUndefined();
+    });
+
+    it('rejects an IPv6 address with an empty zone ID', () => {
+        expect(validateClientsPerLine('fe80::1%')).toBe(copy('form_error_format'));
     });
 
     it('returns undefined for valid IPv4 CIDR', () => {
@@ -40,6 +44,17 @@ describe('validateClientsPerLine', () => {
 
     it('returns undefined for valid IPv6 CIDR', () => {
         expect(validateClientsPerLine('2001:db8::/32')).toBeUndefined();
+    });
+
+    // REGRESSION: GH #8610 — mixed-notation ranges were rejected by the retired
+    // R_CIDR_IPV6, which matched the hex form only.
+    it('returns undefined for IPv6 CIDR with an embedded IPv4 address', () => {
+        expect(validateClientsPerLine('::ffff:192.168.1.0/120')).toBeUndefined();
+        expect(validateClientsPerLine('::ffff:c0a8:100/120')).toBeUndefined();
+    });
+
+    it('rejects IPv6 CIDR with an out-of-range embedded IPv4 octet', () => {
+        expect(validateClientsPerLine('::ffff:192.168.1.256/120')).toBe(copy('form_error_format'));
     });
 
     it('returns undefined for valid ClientID', () => {
@@ -52,41 +67,47 @@ describe('validateClientsPerLine', () => {
     });
 
     it('returns "Invalid format" for single invalid line', () => {
-        expect(validateClientsPerLine('BAD ENTRY!')).toBe('Invalid format');
+        expect(validateClientsPerLine('BAD ENTRY!')).toBe(copy('form_error_format'));
     });
 
     it('returns "Invalid format on line N" when specific line is invalid', () => {
-        expect(validateClientsPerLine('192.168.1.1\nBAD!')).toBe('Invalid format on line 2');
+        expect(validateClientsPerLine('192.168.1.1\nBAD!')).toBe(
+            copy('form_error_format_line', { line: 2 }),
+        );
     });
 
     it('returns "Invalid format on lines N, M" when multiple lines invalid', () => {
         expect(validateClientsPerLine('BAD1!\n192.168.1.1\nBAD2!')).toBe(
-            'Invalid format on lines 1, 3',
+            copy('form_error_format_lines', { lines: '1, 3' }),
         );
     });
 
     it('rejects MAC address', () => {
-        expect(validateClientsPerLine('aa:bb:cc:dd:ee:ff')).toBe('Invalid format');
+        expect(validateClientsPerLine('aa:bb:cc:dd:ee:ff')).toBe(copy('form_error_format'));
     });
 
     it('rejects CIDR with bad prefix', () => {
-        expect(validateClientsPerLine('192.168.1.0/33')).toBe('Invalid format');
+        expect(validateClientsPerLine('192.168.1.0/33')).toBe(copy('form_error_format'));
     });
 
     it('returns "Invalid format" for single invalid line with trailing newline', () => {
-        expect(validateClientsPerLine('BAD ENTRY!\n')).toBe('Invalid format');
+        expect(validateClientsPerLine('BAD ENTRY!\n')).toBe(copy('form_error_format'));
     });
 
     it('returns "Invalid format" for single invalid line with leading newline', () => {
-        expect(validateClientsPerLine('\nBAD ENTRY!')).toBe('Invalid format');
+        expect(validateClientsPerLine('\nBAD ENTRY!')).toBe(copy('form_error_format'));
     });
 
     it('returns "Invalid format on lines 1, 2" when both lines invalid', () => {
-        expect(validateClientsPerLine('BAD1!\nBAD2!')).toBe('Invalid format on lines 1, 2');
+        expect(validateClientsPerLine('BAD1!\nBAD2!')).toBe(
+            copy('form_error_format_lines', { lines: '1, 2' }),
+        );
     });
 
     it('returns "Invalid format on line 2" when second line invalid in multi-content input', () => {
-        expect(validateClientsPerLine('192.168.1.1\nBAD!')).toBe('Invalid format on line 2');
+        expect(validateClientsPerLine('192.168.1.1\nBAD!')).toBe(
+            copy('form_error_format_line', { line: 2 }),
+        );
     });
 
     it('returns undefined for all-blank input', () => {

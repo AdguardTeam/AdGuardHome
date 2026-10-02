@@ -36,6 +36,13 @@ import { Protection } from '../Clients/AddClient/blocks/Protection/Protection';
 import { ClientBlockedServices } from '../Clients/AddClient/blocks/ClientBlockedServices';
 import { ClientSchedule } from '../Clients/AddClient/blocks/ClientSchedule';
 import { Paths } from '../Routes/Paths';
+import {
+    TopClientsPage,
+    TopQueriedDomainsPage,
+    TopBlockedDomainsPage,
+    TopUpstreamsPage,
+    UpstreamAvgTimePage,
+} from '../Stats';
 
 const SetupGuideRoute = () => <SetupGuide />;
 const BlockedServicesRoute = () => <BlockedServices />;
@@ -127,6 +134,11 @@ const App = () => {
             )}
         >
             <Route path={Paths.Dashboard} component={Dashboard} />
+            <Route path={Paths.TopClients} component={TopClientsPage} />
+            <Route path={Paths.TopQueriedDomains} component={TopQueriedDomainsPage} />
+            <Route path={Paths.TopBlockedDomains} component={TopBlockedDomainsPage} />
+            <Route path={Paths.TopUpstreams} component={TopUpstreamsPage} />
+            <Route path={Paths.UpstreamAvgTime} component={UpstreamAvgTimePage} />
             <Route path={Paths.SettingsPage} component={Settings} />
             <Route path={Paths.Encryption} component={Encryption} />
             <Route path={Paths.Dns} component={DnsSettings} />

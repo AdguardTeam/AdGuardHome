@@ -3,11 +3,18 @@ import cn from 'clsx';
 
 import s from './Button.module.pcss';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'secondary-danger';
+export type ButtonVariant =
+    | 'primary'
+    | 'secondary'
+    | 'ghost'
+    | 'danger'
+    | 'secondary-danger'
+    | 'warning';
 
 export type ButtonProps = JSX.ButtonHTMLAttributes<HTMLButtonElement> & {
     size?: 'very-small' | 'small' | 'medium' | 'big';
     variant?: ButtonVariant;
+    onCard?: boolean;
     leftAddon?: JSX.Element;
     rightAddon?: JSX.Element;
     compact?: boolean;
@@ -22,6 +29,7 @@ export const Button = (props: ButtonProps) => {
         'className',
         'children',
         'disabled',
+        'onCard',
         'leftAddon',
         'rightAddon',
         'compact',
@@ -35,6 +43,7 @@ export const Button = (props: ButtonProps) => {
             class={cn(
                 s.button,
                 s[local.variant || 'primary'],
+                { [s.onCard]: local.onCard },
                 {
                     [s.height_xs]: local.size === 'very-small',
                     [s.height_s]: local.size === 'small',
