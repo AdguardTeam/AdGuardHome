@@ -735,7 +735,6 @@
   "setup_ui_desc": "Выкарыстоўвайце гэтыя адрасы, каб атрымаць доступ да вэб-інтэрфейсу карыстальніка AdGuard Home. Пры неабходнасці змяніце порт",
   "setup_ui_title": "Задаць адрас вэб-інтэрфейсу для AdGuard Home",
   "setup_ui_title_banner": "Налады вэб-інтэрфейсу",
-  "show_blocked_responses": "Заблакіравана",
   "show_more": "Паказаць больш",
   "show_more_count": "+ %count% больш",
   "show_processed_responses": "Апрацавана",

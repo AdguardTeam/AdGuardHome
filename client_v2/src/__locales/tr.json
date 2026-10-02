@@ -735,7 +735,6 @@
   "setup_ui_desc": "AdGuard Home Web kullanıcı arayüzüne erişmek için bu adresleri kullanın. Gerekirse bağlantı noktasını değiştirin",
   "setup_ui_title": "AdGuard Home için Web arayüzü adresini ayarlayın",
   "setup_ui_title_banner": "Web arayüzü ayarları",
-  "show_blocked_responses": "Engellendi",
   "show_more": "Daha fazla göster",
   "show_more_count": "+ %count% daha fazla",
   "show_processed_responses": "İşlendi",

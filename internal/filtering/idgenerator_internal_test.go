@@ -29,36 +29,22 @@ func TestIDGenerator_Fix(t *testing.T) {
 	}, {
 		name: "many_good",
 		in: []FilterYAML{{
-			Filter: Filter{
-				ID: 1,
-			},
+			ID: 1,
 		}, {
-			Filter: Filter{
-				ID: 2,
-			},
+			ID: 2,
 		}, {
-			Filter: Filter{
-				ID: 3,
-			},
+			ID: 3,
 		}},
 	}, {
 		name: "two_dups",
 		in: []FilterYAML{{
-			Filter: Filter{
-				ID: 1,
-			},
+			ID: 1,
 		}, {
-			Filter: Filter{
-				ID: 3,
-			},
+			ID: 3,
 		}, {
-			Filter: Filter{
-				ID: 1,
-			},
+			ID: 1,
 		}, {
-			Filter: Filter{
-				ID: 2,
-			},
+			ID: 2,
 		}},
 	}}
 

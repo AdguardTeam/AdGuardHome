@@ -56,13 +56,11 @@ func TestWebAPI_HandleTLSConfigure(t *testing.T) {
 	err = globalContext.dnsServer.Prepare(
 		testutil.ContextWithTimeout(t, testTimeout),
 		&dnsforward.ServerConfig{
-			TLSConf: &dnsforward.TLSConfig{},
-			Config: dnsforward.Config{
-				UpstreamMode:     proxy.UpstreamModeLoadBalance,
-				EDNSClientSubnet: &dnsforward.EDNSClientSubnet{Enabled: false},
-				ClientsContainer: dnsforward.EmptyClientsContainer{},
-			},
-			ServePlainDNS: true,
+			TLSConf:          &dnsforward.TLSConfig{},
+			UpstreamMode:     proxy.UpstreamModeLoadBalance,
+			EDNSClientSubnet: &dnsforward.EDNSClientSubnet{Enabled: false},
+			ClientsContainer: dnsforward.EmptyClientsContainer{},
+			ServePlainDNS:    true,
 		},
 	)
 	require.NoError(t, err)
@@ -109,12 +107,10 @@ func TestWebAPI_HandleTLSConfigure(t *testing.T) {
 
 	// Prepare a request with the new TLS configuration.
 	setts := &tlsConfigSettingsExt{
-		tlsConfigSettings: tlsConfigSettings{
-			Enabled:         true,
-			PortHTTPS:       4433,
-			CertificatePath: testCertificatePath,
-			PrivateKeyPath:  testPrivateKeyPath,
-		},
+		Enabled:         true,
+		PortHTTPS:       4433,
+		CertificatePath: testCertificatePath,
+		PrivateKeyPath:  testPrivateKeyPath,
 	}
 
 	req, err := json.Marshal(setts)
@@ -240,38 +236,30 @@ func TestWebAPI_ValidateTLSSettings(t *testing.T) {
 		name:    "busy_https_port",
 		wantErr: fmt.Sprintf("port %d for HTTPS is not available", busyTCPPort),
 		setts: &tlsConfigSettingsExt{
-			tlsConfigSettings: tlsConfigSettings{
-				Enabled:   true,
-				PortHTTPS: uint16(busyTCPPort),
-			},
+			Enabled:   true,
+			PortHTTPS: uint16(busyTCPPort),
 		},
 	}, {
 		name:    "busy_dot_port",
 		wantErr: fmt.Sprintf("port %d for DNS-over-TLS is not available", busyTCPPort),
 		setts: &tlsConfigSettingsExt{
-			tlsConfigSettings: tlsConfigSettings{
-				Enabled:        true,
-				PortDNSOverTLS: uint16(busyTCPPort),
-			},
+			Enabled:        true,
+			PortDNSOverTLS: uint16(busyTCPPort),
 		},
 	}, {
 		name:    "busy_doq_port",
 		wantErr: fmt.Sprintf("port %d for DNS-over-QUIC is not available", busyUDPPort),
 		setts: &tlsConfigSettingsExt{
-			tlsConfigSettings: tlsConfigSettings{
-				Enabled:         true,
-				PortDNSOverQUIC: uint16(busyUDPPort),
-			},
+			Enabled:         true,
+			PortDNSOverQUIC: uint16(busyUDPPort),
 		},
 	}, {
 		name:    "duplicate_port",
 		wantErr: "validating tcp ports: duplicated values: [4433]",
 		setts: &tlsConfigSettingsExt{
-			tlsConfigSettings: tlsConfigSettings{
-				Enabled:        true,
-				PortHTTPS:      4433,
-				PortDNSOverTLS: 4433,
-			},
+			Enabled:        true,
+			PortHTTPS:      4433,
+			PortDNSOverTLS: 4433,
 		},
 	}}
 
@@ -301,11 +289,9 @@ func TestWebAPI_HandleTLSValidate(t *testing.T) {
 	web := newTestWeb(t, &webConfig{tlsManager: m})
 
 	setts := &tlsConfigSettingsExt{
-		tlsConfigSettings: tlsConfigSettings{
-			Enabled:         true,
-			CertificatePath: testCertificatePath,
-			PrivateKeyPath:  testPrivateKeyPath,
-		},
+		Enabled:         true,
+		CertificatePath: testCertificatePath,
+		PrivateKeyPath:  testPrivateKeyPath,
 	}
 
 	req, err := json.Marshal(setts)

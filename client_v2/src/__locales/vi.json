@@ -735,7 +735,6 @@
   "setup_ui_desc": "Sử dụng các địa chỉ này để truy cập giao diện người dùng Web của AdGuard Home. Nếu cần, hãy thay đổi cổng",
   "setup_ui_title": "Thiết lập địa chỉ giao diện web cho AdGuard Home",
   "setup_ui_title_banner": "Cài đặt giao diện web",
-  "show_blocked_responses": "Bị chặn",
   "show_more": "Hiển thị thêm",
   "show_more_count": "+ %count% nữa",
   "show_processed_responses": "Đã xử lý",

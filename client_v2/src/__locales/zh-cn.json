@@ -735,7 +735,6 @@
   "setup_ui_desc": "使用这些地址访问 AdGuard Home 的 Web 用户界面。如有需要，可更改端口。",
   "setup_ui_title": "设置 AdGuard Home 的 Web UI 地址",
   "setup_ui_title_banner": "Web UI 设置",
-  "show_blocked_responses": "已拦截",
   "show_more": "显示更多",
   "show_more_count": "另外 %count% 个",
   "show_processed_responses": "已处理",

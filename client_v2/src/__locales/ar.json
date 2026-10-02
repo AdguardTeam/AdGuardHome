@@ -735,7 +735,6 @@
   "setup_ui_desc": "استخدم هذه العناوين للوصول إلى واجهة المستخدم Web الخاصة بـ AdGuard Home. إذا لزم الأمر، قم بتغيير المنفذ",
   "setup_ui_title": "إعداد عنوان واجهة Web لـ AdGuard Home",
   "setup_ui_title_banner": "إعدادات واجهة الويب",
-  "show_blocked_responses": "محظور",
   "show_more": "إظهار المزيد",
   "show_more_count": "+ %count% عنصر إضافي",
   "show_processed_responses": "تم معالجته",
