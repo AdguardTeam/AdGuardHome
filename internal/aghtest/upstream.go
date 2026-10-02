@@ -1,6 +1,7 @@
 package aghtest
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -28,7 +29,7 @@ func NewExchangingUpstream(
 	ups = &dnsproxytest.Upstream{
 		OnAddress: func() (addr string) { return "upstream.example" },
 		OnClose:   func() (err error) { return nil },
-		OnExchange: func(m *dns.Msg) (resp *dns.Msg, err error) {
+		OnExchange: func(_ context.Context, m *dns.Msg) (resp *dns.Msg, err error) {
 			resp = new(dns.Msg).SetReply(m)
 
 			if len(m.Question) == 0 {
@@ -177,7 +178,7 @@ func NewUpstream() (u *dnsproxytest.Upstream) {
 	return &dnsproxytest.Upstream{
 		OnAddress: func() (addr string) { return "upstream.example" },
 		OnClose:   func() (err error) { return nil },
-		OnExchange: func(req *dns.Msg) (resp *dns.Msg, err error) {
+		OnExchange: func(_ context.Context, req *dns.Msg) (resp *dns.Msg, err error) {
 			panic(testutil.UnexpectedCall(req))
 		},
 	}
@@ -209,7 +210,7 @@ func NewBlockUpstream(hostname string, shouldBlock bool) (u *dnsproxytest.Upstre
 
 	return &dnsproxytest.Upstream{
 		OnAddress: func() (addr string) { return "sbpc.upstream.example" },
-		OnExchange: func(req *dns.Msg) (resp *dns.Msg, err error) {
+		OnExchange: func(_ context.Context, req *dns.Msg) (resp *dns.Msg, err error) {
 			resp = respTmpl.Copy()
 			resp.SetReply(req)
 			resp.Answer[0].(*dns.TXT).Hdr.Name = req.Question[0].Name
@@ -229,7 +230,7 @@ const ErrUpstream errors.Error = "test upstream error"
 func NewErrorUpstream() (u *dnsproxytest.Upstream) {
 	return &dnsproxytest.Upstream{
 		OnAddress: func() (addr string) { return "error.upstream.example" },
-		OnExchange: func(_ *dns.Msg) (resp *dns.Msg, err error) {
+		OnExchange: func(_ context.Context, _ *dns.Msg) (resp *dns.Msg, err error) {
 			return nil, ErrUpstream
 		},
 		OnClose: func() (err error) { return nil },
