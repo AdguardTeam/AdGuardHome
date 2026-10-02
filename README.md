@@ -10,8 +10,8 @@
   Free and open source, powerful network-wide DNS server blocking ads & trackers.
 </p>
 <p align="center">
-  <a href="https://adguard.com/">Website</a> |
-  <a href="https://github.com/AdguardTeam/AdGuardHome/wiki">Wiki</a> |
+  <a href="https://adguard.com/adguard-home/overview.html">Website</a> |
+  <a href="https://adguard-dns.io/kb/adguard-home/overview/">Knowledge Base</a> |
   <a href="https://reddit.com/r/Adguard">Reddit</a> |
   <a href="https://x.com/AdGuard">X</a> |
   <a href="https://t.me/adguard_en">Telegram</a>
