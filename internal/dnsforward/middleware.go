@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net"
+	"net/netip"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
@@ -34,7 +36,15 @@ func (s *Server) Wrap(h proxy.Handler) (wrapped proxy.Handler) {
 			return nil
 		}
 
-		blocked, _ := s.IsBlockedClient(pctx.Addr.Addr(), clientID)
+		// Try to extract the client address from the EDNS Client Subnet option.
+		clientAddr := pctx.Addr.Addr()
+		if s.conf.EDNSClientSubnet.UseClientAddrFromECS {
+			if ecsAddr, ok := ecsClientAddr(pctx.Req); ok {
+				clientAddr = ecsAddr
+			}
+		}
+
+		blocked, _ := s.IsBlockedClient(clientAddr, clientID)
 		if blocked {
 			return s.serveBlockedResponse(pctx)
 		}
@@ -48,10 +58,64 @@ func (s *Server) Wrap(h proxy.Handler) (wrapped proxy.Handler) {
 			ctx = contextWithClientID(ctx, clientID)
 		}
 
+		// Store the ECS client address in context for downstream processors.
+		if clientAddr != pctx.Addr.Addr() {
+			ctx = contextWithECSClientAddr(ctx, clientAddr)
+		}
+
 		return h.ServeDNS(ctx, p, pctx)
 	}
 
 	return proxy.HandlerFunc(f)
+}
+
+// ecsClientAddr extracts the client IP from the EDNS Client Subnet option, or
+// the zero address and false if absent.
+func ecsClientAddr(req *dns.Msg) (addr netip.Addr, ok bool) {
+	opt := req.IsEdns0()
+	if opt == nil {
+		return netip.Addr{}, false
+	}
+
+	for _, o := range opt.Option {
+		ecs, ok := o.(*dns.EDNS0_SUBNET)
+		if !ok {
+			continue
+		}
+
+		if addr, ok = ecsSubnetAddr(ecs); ok {
+			return addr, true
+		}
+	}
+
+	return netip.Addr{}, false
+}
+
+// ecsSubnetAddr returns the client address from an EDNS Client Subnet option,
+// or the zero address and false if the option is absent or invalid.
+func ecsSubnetAddr(ecs *dns.EDNS0_SUBNET) (addr netip.Addr, ok bool) {
+	var ip net.IP
+	switch ecs.Family {
+	case 1:
+		// IPv4.
+		ip = ecs.Address.To4()
+	case 2:
+		// IPv6.
+		ip = ecs.Address
+	default:
+		return netip.Addr{}, false
+	}
+
+	if ip == nil {
+		return netip.Addr{}, false
+	}
+
+	addr, ok = netip.AddrFromSlice(ip)
+	if !ok || !addr.IsValid() || addr.IsUnspecified() {
+		return netip.Addr{}, false
+	}
+
+	return addr, true
 }
 
 // serveBlockedResponse sets a protocol-appropriate response for a request that
