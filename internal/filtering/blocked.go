@@ -59,16 +59,28 @@ func initBlockedServices(ctx context.Context, l *slog.Logger) {
 	l.DebugContext(ctx, "initialized services", "svc_len", svcLen)
 }
 
+// ServiceSchedule represents a schedule for a single blocked service.
+type ServiceSchedule struct {
+	ID       string           `json:"id" yaml:"id"`
+	Schedule *schedule.Weekly `json:"schedule" yaml:"schedule"`
+}
+
 // BlockedServices is the configuration of blocked services.
 //
 // TODO(s.chzhen):  Move to a higher-level package to allow importing the client
 // package into the filtering package.
 type BlockedServices struct {
 	// Schedule is blocked services schedule for every day of the week.
+	// Deprecated: Use Services for per-service scheduling.
 	Schedule *schedule.Weekly `json:"schedule" yaml:"schedule"`
 
 	// IDs is the names of blocked services.
 	IDs []string `json:"ids" yaml:"ids"`
+
+	// Services is the list of services with their individual schedules.
+	// When a service has a schedule, it is blocked during the scheduled times
+	// and not blocked outside those times (regardless of whether it's in IDs).
+	Services []ServiceSchedule `json:"services" yaml:"services"`
 }
 
 // Clone returns a deep copy of blocked services.
@@ -77,9 +89,18 @@ func (s *BlockedServices) Clone() (c *BlockedServices) {
 		return nil
 	}
 
+	services := make([]ServiceSchedule, len(s.Services))
+	for i, svc := range s.Services {
+		services[i] = ServiceSchedule{
+			ID:       svc.ID,
+			Schedule: svc.Schedule.Clone(),
+		}
+	}
+
 	return &BlockedServices{
 		Schedule: s.Schedule.Clone(),
 		IDs:      slices.Clone(s.IDs),
+		Services: services,
 	}
 }
 
@@ -118,6 +139,13 @@ func (s *BlockedServices) Validate() (err error) {
 		}
 	}
 
+	for _, svc := range s.Services {
+		_, ok := serviceRules[svc.ID]
+		if !ok {
+			errs = append(errs, fmt.Errorf("unknown blocked-service %q", svc.ID))
+		}
+	}
+
 	return errors.Join(errs...)
 }
 
@@ -129,11 +157,38 @@ func (d *DNSFilter) ApplyBlockedServices(setts *Settings) {
 	setts.ServicesRules = []ServiceEntry{}
 
 	bsvc := d.conf.BlockedServices
+	now := time.Now()
 
-	// TODO(s.chzhen):  Use startTime from [dnsforward.dnsContext].
-	if !bsvc.Schedule.Contains(time.Now()) {
-		d.ApplyBlockedServicesList(setts, bsvc.IDs)
+	// Start with default blocked services
+	blockedIDs := slices.Clone(bsvc.IDs)
+
+	// Apply per-service schedules
+	for _, svc := range bsvc.Services {
+		isScheduled := svc.Schedule != nil && svc.Schedule.Contains(now)
+		isInDefaultList := slices.Contains(blockedIDs, svc.ID)
+
+		if isScheduled && !isInDefaultList {
+			// Service has active schedule but not in default list - add it
+			blockedIDs = append(blockedIDs, svc.ID)
+		} else if !isScheduled && isInDefaultList {
+			// Service has no active schedule but is in default list - remove it
+			blockedIDs = slices.DeleteFunc(blockedIDs, func(id string) bool {
+				return id == svc.ID
+			})
+		}
 	}
+
+	// Apply legacy single schedule if no per-service schedules exist
+	if len(bsvc.Services) == 0 && bsvc.Schedule != nil {
+		if bsvc.Schedule.Contains(now) {
+			d.ApplyBlockedServicesList(setts, blockedIDs)
+		}
+
+		return
+	}
+
+	// Apply the computed blocked services list
+	d.ApplyBlockedServicesList(setts, blockedIDs)
 }
 
 // ApplyBlockedServicesList appends filtering rules to the settings.
