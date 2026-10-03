@@ -163,6 +163,7 @@ export const BLOCKING_MODES: { readonly [K in DNSConfigBlockingMode]: K } = {
     default: 'default',
     refused: 'refused',
     nxdomain: 'nxdomain',
+    noerror: 'noerror',
     null_ip: 'null_ip',
     custom_ip: 'custom_ip',
 };
