@@ -12,6 +12,16 @@ import (
 	"github.com/bluele/gcache"
 )
 
+// maxErrorCacheTTL is the maximum period during which failed lookups aren't
+// retried.  It prevents request floods while allowing recovery from temporary
+// resolver outages sooner than the regular cache TTL.
+const maxErrorCacheTTL = 1 * time.Minute
+
+// ErrNoData is returned by an [Exchanger] when a successful DNS response has
+// no PTR data.  It is cached for the regular cache TTL rather than treated as a
+// temporary resolver failure.
+const ErrNoData errors.Error = "no ptr data in response"
+
 // Interface processes rDNS queries.
 type Interface interface {
 	// Process makes rDNS request and returns domain name.  changed indicates
@@ -96,9 +106,14 @@ func (r *Default) Process(ctx context.Context, ip netip.Addr) (host string, chan
 	host, ttl, err := r.exchanger.Exchange(ctx, ip)
 	if err != nil {
 		r.logger.DebugContext(ctx, "resolving", "ip", ip, slogutil.KeyError, err)
+		if errors.Is(err, ErrNoData) {
+			ttl = max(ttl, r.cacheTTL)
+		} else {
+			ttl = min(r.cacheTTL, maxErrorCacheTTL)
+		}
+	} else {
+		ttl = max(ttl, r.cacheTTL)
 	}
-
-	ttl = max(ttl, r.cacheTTL)
 
 	item := &cacheItem{
 		expiry: time.Now().Add(ttl),
