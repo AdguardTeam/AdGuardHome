@@ -2,6 +2,7 @@ package dnsforward
 
 import (
 	"cmp"
+	"context"
 	"crypto/ecdsa"
 	"crypto/rand"
 	"crypto/rsa"
@@ -295,7 +296,7 @@ func createGoogleATestMessage() *dns.Msg {
 func newGoogleUpstream() (u upstream.Upstream) {
 	return &dnsproxytest.Upstream{
 		OnAddress: func() (addr string) { return "google.upstream.example" },
-		OnExchange: func(req *dns.Msg) (resp *dns.Msg, err error) {
+		OnExchange: func(_ context.Context, req *dns.Msg) (resp *dns.Msg, err error) {
 			return cmp.Or(
 				aghtest.MatchedResponse(req, dns.TypeA, googleDomainName, "8.8.8.8"),
 				new(dns.Msg).SetRcode(req, dns.RcodeNameError),
@@ -557,7 +558,9 @@ func TestDoQServer(t *testing.T) {
 
 	// Send the test message.
 	req := createGoogleATestMessage()
-	res, err := u.Exchange(req)
+
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	res, err := u.Exchange(ctx, req)
 	require.NoError(t, err)
 
 	assertGoogleAResponse(t, res)
@@ -639,7 +642,7 @@ func TestSafeSearch(t *testing.T) {
 
 	pt := testutil.NewPanicT(t)
 	ups := aghtest.NewUpstream()
-	ups.OnExchange = func(req *dns.Msg) (resp *dns.Msg, err error) {
+	ups.OnExchange = func(_ context.Context, req *dns.Msg) (resp *dns.Msg, err error) {
 		assert.Equal(pt, googleSafeSearch, req.Question[0].Name)
 
 		return aghtest.MatchedResponse(req, dns.TypeA, googleSafeSearch, "1.2.3.4"), nil
@@ -812,7 +815,7 @@ func TestServerCustomClientUpstream(t *testing.T) {
 	)
 
 	ups := aghtest.NewUpstream()
-	ups.OnExchange = func(req *dns.Msg) (resp *dns.Msg, err error) {
+	ups.OnExchange = func(_ context.Context, req *dns.Msg) (resp *dns.Msg, err error) {
 		upsCalledCounter.Add(1)
 
 		return cmp.Or(
@@ -1330,7 +1333,7 @@ func TestRewrite(t *testing.T) {
 	}))
 
 	ups := aghtest.NewUpstream()
-	ups.OnExchange = func(req *dns.Msg) (resp *dns.Msg, err error) {
+	ups.OnExchange = func(_ context.Context, req *dns.Msg) (resp *dns.Msg, err error) {
 		return cmp.Or(
 			aghtest.MatchedResponse(req, dns.TypeA, "example.org", "4.3.2.1"),
 			new(dns.Msg).SetRcode(req, dns.RcodeNameError),

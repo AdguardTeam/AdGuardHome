@@ -23,7 +23,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
-	"github.com/AdguardTeam/dnsproxy/fastip"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
@@ -41,6 +40,10 @@ const (
 	// userFilterDataDir is the name of the directory used to store users'
 	// FS-based rule lists.
 	userFilterDataDir = "userfilters"
+
+	// defaultFastestTimeout is the default timeout for proxy fastest upstream
+	// mode.
+	defaultFastestTimeout = 1 * time.Second
 )
 
 // osConfig contains OS-related configuration.
@@ -339,7 +342,7 @@ var config = &configuration{
 		}},
 		CacheOptimisticAnswerTTL: timeutil.Duration(30 * time.Second),
 		CacheOptimisticMaxAge:    timeutil.Duration(12 * time.Hour),
-		FastestTimeout:           timeutil.Duration(fastip.DefaultPingWaitTimeout),
+		FastestTimeout:           timeutil.Duration(defaultFastestTimeout),
 		UpstreamTimeout:          timeutil.Duration(dnsforward.DefaultTimeout),
 
 		// set default maximum concurrent queries to 300

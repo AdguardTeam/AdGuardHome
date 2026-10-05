@@ -6,8 +6,8 @@ cloud.google.com/go/compute/metadata v0.10.0 h1:pyKMUQSwchgkIBBJGdILqQbs/BNJXqwS
 cloud.google.com/go/compute/metadata v0.10.0/go.mod h1:rGFHRrIif570kSibjFTMbt6/4/tzgJWFGI/HVol4GIk=
 github.com/AdguardTeam/dnscrypt v0.0.3 h1:o2Zg+/CRCPS2lPobMzYs59aE3RNdMKfOBk34bPbbUbg=
 github.com/AdguardTeam/dnscrypt v0.0.3/go.mod h1:qCFs51rLfNzEDZqb6nz1tocVLnEearJ1zng6O3I6ecA=
-github.com/AdguardTeam/dnsproxy v0.85.0 h1:zi4cPvQfpb19cBJUFiFMJBktqSLAmc1X0thbR9r9yls=
-github.com/AdguardTeam/dnsproxy v0.85.0/go.mod h1:6kCM5M/gtuQr/0BjtnReHlK6+N0BTee+WHOq3m1JNq4=
+github.com/AdguardTeam/dnsproxy v0.86.0 h1:t9966vx4c3Wm6/9dhM4YI9L6uvIJ/EMNw9JpbEAyKYw=
+github.com/AdguardTeam/dnsproxy v0.86.0/go.mod h1:6kCM5M/gtuQr/0BjtnReHlK6+N0BTee+WHOq3m1JNq4=
 github.com/AdguardTeam/golibs v0.35.16 h1:e9dyk7jfzpxMcyVZ8RktKV6JMeiQ9MpEhp/Ahm3j/R4=
 github.com/AdguardTeam/golibs v0.35.16/go.mod h1:lGsRwlo3R3ma5o8mgdDv3I+6DYTiCHfrhNyUamqhbK8=
 github.com/AdguardTeam/urlfilter v0.23.4 h1:3cwt5xj7lpK2t3sWtr9WI8mmsKP+RtpkdnEy7lrn8cg=
