@@ -1,6 +1,13 @@
 import { describe, expect, test, afterEach, vi, beforeEach, it } from 'vitest';
 
-import { sortIp, countClientsStatistics, findAddressType, subnetMaskToBitMask } from '../helpers/helpers';
+import {
+    sortIp,
+    countClientsStatistics,
+    findAddressType,
+    isValidCidr,
+    isValidIpv6,
+    subnetMaskToBitMask,
+} from '../helpers/helpers';
 import { ADDRESS_TYPES } from '../helpers/constants';
 
 describe('sortIp', () => {
@@ -466,5 +473,84 @@ describe('subnetMaskToBitMask', () => {
                 })
                 .every((res) => res === true),
         ).toEqual(true);
+    });
+});
+
+describe('isValidCidr', () => {
+    test('accepts IPv4 and IPv6 CIDR ranges', () => {
+        expect(isValidCidr('192.168.1.0/24')).toBe(true);
+        expect(isValidCidr('0.0.0.0/0')).toBe(true);
+        expect(isValidCidr('2001:db8::/64')).toBe(true);
+    });
+
+    // REGRESSION: GH #8610 — the retired R_CIDR_IPV6 used a literal `d` where
+    // it needed `\d`, so mixed-notation ranges were rejected.
+    test('accepts IPv6 CIDRs with an embedded dotted-decimal IPv4 address', () => {
+        expect(isValidCidr('::ffff:192.168.1.0/120')).toBe(true);
+        expect(isValidCidr('::ffff:1.2.3.4/128')).toBe(true);
+    });
+
+    test('rejects IPv6 CIDRs with a zone ID', () => {
+        // netip.ParsePrefix rejects zones in a prefix, even though
+        // netip.ParseAddr accepts them on a bare address.
+        expect(isValidCidr('fe80::1%eth0/64')).toBe(false);
+    });
+
+    test('rejects prefix lengths spelled with leading zeros', () => {
+        expect(isValidCidr('192.168.1.0/024')).toBe(false);
+        expect(isValidCidr('2001:db8::/064')).toBe(false);
+    });
+
+    test('rejects non-canonical IPv4 addresses', () => {
+        expect(isValidCidr('127.1/24')).toBe(false);
+        expect(isValidCidr('0x7f.0.0.1/8')).toBe(false);
+        expect(isValidCidr('010.0.0.1/8')).toBe(false);
+        expect(isValidCidr('12345/8')).toBe(false);
+    });
+
+    test('rejects invalid octets, prefix lengths and malformed input', () => {
+        expect(isValidCidr('192.168.1.256/24')).toBe(false);
+        expect(isValidCidr('2001:db8::/129')).toBe(false);
+        expect(isValidCidr('192.168.1.0')).toBe(false);
+        expect(isValidCidr('')).toBe(false);
+    });
+});
+
+describe('isValidIpv6', () => {
+    test('accepts IPv6 addresses, including zone IDs', () => {
+        expect(isValidIpv6('2001:db8::1')).toBe(true);
+        expect(isValidIpv6('fe80::1%eth0')).toBe(true);
+        expect(isValidIpv6('fe80::%eth0')).toBe(true);
+        expect(isValidIpv6('::ffff:192.168.1.1')).toBe(true);
+    });
+
+    // REGRESSION: netip.ParseAddr does not restrict the contents of a zone ID,
+    // so this value is an address with the zone `eth0/64`, not a CIDR.
+    test('accepts a zone ID with any non-empty contents', () => {
+        expect(isValidIpv6('fe80::1%eth0/64')).toBe(true);
+        expect(isValidIpv6('2001:db8::1%eth0')).toBe(true);
+        expect(isValidIpv6('fe80::1%a%b')).toBe(true);
+    });
+
+    test('rejects an empty zone ID', () => {
+        expect(isValidIpv6('fe80::1%')).toBe(false);
+        expect(isValidIpv6('%eth0')).toBe(false);
+    });
+
+    // REGRESSION: netip.ParseAddr rejects the dotted-decimal IPv4 tail of a
+    // mixed-notation IPv6 address when an octet has a leading zero.
+    test('rejects a non-canonical embedded IPv4 tail', () => {
+        expect(isValidIpv6('::ffff:192.168.01.1')).toBe(false);
+    });
+
+    // REGRESSION: netip.ParseAddr rejects an fe80 address with a zone ID but
+    // no groups after the colon.
+    test('rejects an fe80 address with no groups before the zone ID', () => {
+        expect(isValidIpv6('fe80:%eth0')).toBe(false);
+    });
+
+    test('rejects non-IPv6 values', () => {
+        expect(isValidIpv6('192.168.1.1')).toBe(false);
+        expect(isValidIpv6('')).toBe(false);
     });
 });
