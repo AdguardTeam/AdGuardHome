@@ -24,6 +24,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Invalid secondary bootstrap resolver IPv4 address.
+
 - Reading partially received TCP prefix.
 
 - A panic when updating AdGuard Home binary via the command line with `use_private_ptr_resolvers` set to true ([#8613]).
