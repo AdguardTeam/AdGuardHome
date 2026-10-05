@@ -18,7 +18,7 @@ import { accessState, getAccessList } from 'panel/stores/access';
 import { initClientForm } from 'panel/stores/clientForm';
 import { LOCAL_STORAGE_KEYS } from 'panel/helpers/localStorageHelper';
 import { computePercent } from 'panel/helpers/statistics';
-import { queryLogSearchQuery, splitByNewLine } from 'panel/helpers/helpers';
+import { queryLogSearchQuery, sortIpOrString, splitByNewLine } from 'panel/helpers/helpers';
 import type { IOption } from 'panel/lib/helpers/utils';
 import { PlusButton } from 'panel/common/ui/PlusButton';
 import { TruncatedText } from 'panel/common/ui/TruncatedText';
@@ -162,6 +162,7 @@ export const TopClientsPage = () => {
             header: { text: intl.getMessage('ip_address') },
             accessor: (row) => row.name,
             sortable: true,
+            sortFn: sortIpOrString,
             render: (_v, row) => (
                 <TruncatedText
                     text={row.name}
