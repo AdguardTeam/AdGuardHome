@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/netip"
 	"testing"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
 	"github.com/AdguardTeam/golibs/testutil"
@@ -63,6 +64,15 @@ func TestDHCPServer_ServeEther4_discover(t *testing.T) {
 			newOptServerID(t, testIfaceAddrV4),
 			newOptLeaseTime(t, testLeaseTTL),
 			newOptHostname(t, testLease4HostnameDynamic),
+		},
+	}, {
+		name: "existing_dynamic_near_expiry",
+		in:   newDHCPDISCOVER(t, testHWRenewing),
+		wantOpts: layers.DHCPOptions{
+			newOptMessageType(t, layers.DHCPMsgTypeOffer),
+			newOptServerID(t, testIfaceAddrV4),
+			newOptLeaseTime(t, testLeaseTTL),
+			newOptHostname(t, testLease4HostnameRenewing),
 		},
 	}, {
 		name: "existing_dynamic_expired",
@@ -479,6 +489,20 @@ func TestDHCPServer_ServeEther4_requestRenewSuccess(t *testing.T) {
 			newOptServerID(t, testIfaceAddrV4),
 			newOptLeaseTime(t, testLeaseTTL),
 			newOptHostname(t, testLease4HostnameStatic),
+		},
+	}, {
+		req: newDHCPREQUEST(t, &dhcpRequestConfig{
+			clientHWAddr: testHWRenewing,
+			clientIP:     testIPv4Renewing,
+			flags:        dhcpsvc.FlagsBroadcast,
+		}),
+		want: testLease4Renewing,
+		name: "near_expiry",
+		wantOpts: layers.DHCPOptions{
+			newOptMessageType(t, layers.DHCPMsgTypeAck),
+			newOptServerID(t, testIfaceAddrV4),
+			newOptLeaseTime(t, time.Hour),
+			newOptHostname(t, testLease4HostnameRenewing),
 		},
 	}, {
 		req: newDHCPREQUEST(t, &dhcpRequestConfig{

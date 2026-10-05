@@ -390,54 +390,30 @@ func respond6(fd *frameData6, resp *layers.DHCPv6) (err error) {
 	return nil
 }
 
-// allocateForSolicit allocates a lease for the first IA_NA option in req and
-// returns it.  It returns a zero iaid if there is no IA_NA option, if the
-// option is malformed.  lease is nil if there is no address available for
-// leasing.  mac must be a valid MAC address according to [netutil.ValidateMAC],
-// req must be a valid DHCPv6 message of SOLICIT type, iface.common.indexMu
-// must be locked.
+// allocateForSolicit returns the lease of the client identified by mac, either
+// the already existing one or a newly allocated one.  It returns nil if there
+// is no address available for leasing.  mac must be a valid MAC address
+// according to [netutil.ValidateMAC], iface.common.indexMu must be locked.
 func (iface *dhcpInterfaceV6) allocateForSolicit(
 	ctx context.Context,
 	mac net.HardwareAddr,
-	req *layers.DHCPv6,
-) (lease *Lease, iaid uint32) {
+) (lease *Lease) {
 	l := iface.common.logger
 	key := macToKey(mac)
-	now := iface.clock.Now()
 
-	for i, reqOpt := range req.Options {
-		if reqOpt.Code != layers.DHCPv6OptIANA {
-			continue
-		}
-
-		var iana IANAOption
-		err := iana.UnmarshalBinary(reqOpt.Data)
-		if err != nil {
-			l.DebugContext(ctx, "malformed ia_na", "idx", i, slogutil.KeyError, err)
-
-			continue
-		}
-
-		// TODO(e.burkov):  Check if the IA actually requests any address.
-
-		var ok bool
-		if lease, ok = iface.common.leases[key]; ok {
-			return lease, iana.ID
-		}
-
-		lease, err = iface.common.allocateLease(ctx, mac, key, now)
-		if err != nil {
-			l.DebugContext(ctx, "no address available", "iaid", iana.ID, slogutil.KeyError, err)
-
-			continue
-		}
-
-		return lease, iana.ID
+	lease, ok := iface.common.leases[key]
+	if ok {
+		return lease
 	}
 
-	l.DebugContext(ctx, "no valid ia_na in solicit")
+	lease, err := iface.common.allocateLease(ctx, mac, key, iface.clock.Now())
+	if err != nil {
+		l.DebugContext(ctx, "no address available", slogutil.KeyError, err)
 
-	return nil, 0
+		return nil
+	}
+
+	return lease
 }
 
 // firstIANAAddr returns the IAID and the first address of the first valid
@@ -505,10 +481,12 @@ func (iface *dhcpInterfaceV6) firstIANA(
 }
 
 // confirmAddrsOnLink checks whether every address in every IA_NA option of req
-// is appropriate for the link, i.e., lies within iface.subnetPrefix.  It
-// returns true in hasAddrs if at least one address was found across all IA_NA
-// options.  If all addresses are on-link, allOnLink is true.  req must be a
-// valid DHCPv6 message of CONFIRM type.
+// is appropriate for the link, i.e., lies within iface.subnetPrefix.  Note that
+// an address is not required to be within the lease range, nor to be assigned
+// by this server, to be appropriate for the link.  It returns true in hasAddrs
+// if at least one address was found across all IA_NA options.  If all addresses
+// are on-link, allOnLink is true.  req must be a valid DHCPv6 message of
+// CONFIRM type.
 //
 // See RFC 9915 Section 18.3.3.
 func (iface *dhcpInterfaceV6) confirmAddrsOnLink(
@@ -532,7 +510,7 @@ func (iface *dhcpInterfaceV6) confirmAddrsOnLink(
 
 		for _, addr := range iana.Nested {
 			hasAddrs = true
-			if !iface.common.addrSpace.contains(addr.Addr) {
+			if !iface.subnetPrefix.Contains(addr.Addr) {
 				return false, true
 			}
 		}
@@ -542,10 +520,13 @@ func (iface *dhcpInterfaceV6) confirmAddrsOnLink(
 }
 
 // newSolicitRespOpts returns the common option list for Advertise and
-// rapid-commit Reply responses to a Solicit request.  Nil lease creates an
-// option with Status Code NoAddrsAvail.  rapidCommit defines whether the
+// rapid-commit Reply responses to a Solicit request.  If lease is nil, it
+// creates an IA_NA option with no addresses and the encapsulated Status Code
+// [layers.DHCPv6StatusCodeNoAddrsAvail].  rapidCommit defines whether the
 // response should include the Rapid Commit option.  fd, req, and cliID must not
-// be nil.
+// be nil, iaid must not be zero.
+//
+// See RFC 9915 Section 18.3.9.
 func (iface *dhcpInterfaceV6) newSolicitRespOpts(
 	fd *frameData6,
 	req *layers.DHCPv6,
@@ -557,13 +538,13 @@ func (iface *dhcpInterfaceV6) newSolicitRespOpts(
 	opts = append(opts, layers.NewDHCPv6Option(layers.DHCPv6OptServerID, fd.duidData))
 	opts = append(opts, layers.NewDHCPv6Option(layers.DHCPv6OptClientID, cliID.Encode()))
 
-	// For Solicit without IA_NA options, respond with safe Advertise with no
-	// IA_NA options and Status Code NoAddrsAvail.
-	if lease == nil {
-		opts = append(opts, newStatusCodeOption(layers.DHCPv6StatusCodeNoAddrsAvail))
-	} else {
-		opts = append(opts, iface.iaNAFromLease(lease, iaid))
-	}
+	// If the server will not assign any addresses to an IA_NA in subsequent
+	// Request messages from the client, the server MUST include the IA option
+	// in the Advertise message with no addresses in that IA and a Status Code
+	// option encapsulated in the IA option containing status code NoAddrsAvail.
+	//
+	// See RFC 9915 Section 18.3.9.
+	opts = append(opts, iface.iaNAFromLease(lease, iaid))
 
 	// The server preference value MUST default to 0 unless otherwise configured
 	// by the server administrator.
@@ -637,11 +618,10 @@ func (iface *dhcpInterfaceV6) newConfirmRespOpts(
 }
 
 // newUpdateRespOpts returns the common option list for Reply responses to
-// RENEW, REBIND, and RELEASE messages.  fd, req, and cliID must not be nil.
-// iana must be a valid IA_NA option, or have a zero code if the response should
-// not include one.
+// RENEW, REBIND, RELEASE, and DECLINE messages.  fd, req, and cliID must not be
+// nil.  extra are the additional options to include to the result, e.g. IA_NA.
 //
-// See RFC 9915 Section 18.3.4.
+// See RFC 9915 Sections 18.3.4, 18.3.5, 18.3.7, and 18.3.8.
 //
 // TODO(e.burkov):  DRY with other options builders
 //
@@ -650,14 +630,12 @@ func (iface *dhcpInterfaceV6) newUpdateRespOpts(
 	fd *frameData6,
 	req *layers.DHCPv6,
 	cliID *layers.DHCPv6DUID,
-	iana layers.DHCPv6Option,
+	extra ...layers.DHCPv6Option,
 ) (opts layers.DHCPv6Options) {
 	opts = append(opts, layers.NewDHCPv6Option(layers.DHCPv6OptServerID, fd.duidData))
 	opts = append(opts, layers.NewDHCPv6Option(layers.DHCPv6OptClientID, cliID.Encode()))
 
-	if iana.Code != 0 {
-		opts = append(opts, iana)
-	}
+	opts = append(opts, extra...)
 
 	// The server preference value MUST default to 0 unless otherwise configured
 	// by the server administrator.
@@ -669,11 +647,11 @@ func (iface *dhcpInterfaceV6) newUpdateRespOpts(
 	return iface.appendRequestedOptions(opts, req)
 }
 
-// newNoBindingRespOpts returns the option list for a Reply to a RENEW or REBIND
-// message when the server has no binding for the client.  fd, req, and cliID
-// must not be nil.  iaid must not be zero.
+// newNoBindingRespOpts returns the option list for a Reply to a RENEW, REBIND,
+// RELEASE, or DECLINE message when the server has no binding for the client.
+// fd, req, and cliID must not be nil.  iaid must not be zero.
 //
-// See RFC 9915 Section 18.3.4 and 18.3.5.
+// See RFC 9915 Sections 18.3.4, 18.3.5, 18.3.7, and 18.3.8.
 func (iface *dhcpInterfaceV6) newNoBindingRespOpts(
 	fd *frameData6,
 	req *layers.DHCPv6,
@@ -683,6 +661,29 @@ func (iface *dhcpInterfaceV6) newNoBindingRespOpts(
 	respIANA := newIANAWithStatus(iaid, layers.DHCPv6StatusCodeNoBinding)
 
 	return iface.newUpdateRespOpts(fd, req, cliID, respIANA)
+}
+
+// newSuccessRespOpts returns the option list for a Reply to a RELEASE or a
+// DECLINE message which the server has processed successfully.  The Reply
+// carries the top-level Status Code option with the value Success and, unless
+// iaid is zero, the IA_NA option with that iaid and no addresses, since the
+// binding of the client is not valid anymore.  fd, req, and cliID must not be
+// nil.
+//
+// See RFC 9915 Sections 18.3.7 and 18.3.8.
+func (iface *dhcpInterfaceV6) newSuccessRespOpts(
+	fd *frameData6,
+	req *layers.DHCPv6,
+	cliID *layers.DHCPv6DUID,
+	iaid uint32,
+) (opts layers.DHCPv6Options) {
+	status := newStatusCodeOption(layers.DHCPv6StatusCodeSuccess)
+
+	if iaid != 0 {
+		return iface.newUpdateRespOpts(fd, req, cliID, status, IANAOption{ID: iaid}.Encode())
+	}
+
+	return iface.newUpdateRespOpts(fd, req, cliID, status)
 }
 
 // newInfoRespOpts returns the option list for a Reply to an INFORMATION-REQUEST
@@ -710,7 +711,8 @@ func (iface *dhcpInterfaceV6) newInfoRespOpts(
 // iaNAFromLease returns an IA_NA option with a single IA Address sub-option
 // corresponding to lease and with the given iaid.  The T1 and T2 values are set
 // according to iface.t1 and iface.t2.  If lease is nil, it returns an IA_NA
-// option with the Status Code [layers.NoAddrsAvail].  iaid must not be zero.
+// option with no addresses and the encapsulated Status Code
+// [layers.DHCPv6StatusCodeNoAddrsAvail].  iaid must not be zero.
 func (iface *dhcpInterfaceV6) iaNAFromLease(lease *Lease, iaid uint32) (iana layers.DHCPv6Option) {
 	if lease == nil {
 		return newIANAWithStatus(iaid, layers.DHCPv6StatusCodeNoAddrsAvail)
@@ -806,10 +808,10 @@ func (iface *dhcpInterfaceV6) ianaForUpdate(
 }
 
 // commit updates the lease allocated previously via a SOLICIT, or during
-// handling the Rapid Commit option, assigning a hostname according to req.  It
-// deallocates the lease if the one fails to be committed.  lease must be
-// non-nil and allocated for the client corresponding to req,
-// iface.common.indexMu mutex must be locked.
+// handling the Rapid Commit option, assigning a hostname according to req and
+// extending the expiry of a dynamic lease.  It deallocates the lease if the one
+// fails to be committed.  lease must be non-nil and allocated for the client
+// corresponding to req, iface.common.indexMu mutex must be locked.
 func (iface *dhcpInterfaceV6) commit(
 	ctx context.Context,
 	req *layers.DHCPv6,
@@ -829,11 +831,12 @@ func (iface *dhcpInterfaceV6) commit(
 		l.DebugContext(ctx, "updated lease hostname", "hostname", hostname, "ip", lease.IP)
 	}
 
-	if now := iface.clock.Now(); lease.isExpiredAt(now) {
-		lease.updateExpiry(now, iface.common.leaseTTL)
-
-		l.DebugContext(ctx, "updated lease expiry", "expires", lease.Expiry, "ip", lease.IP)
-	}
+	// Every successful commit extends the lifetimes of the addresses of a
+	// dynamic lease, in particular, on receiving the RENEW and REBIND messages.
+	// Static leases have no expiry.
+	//
+	// See RFC 9915 Sections 18.3.4 and 18.3.5.
+	lease.updateExpiry(iface.clock.Now(), iface.common.leaseTTL)
 
 	err = iface.common.index.update(ctx, lease, iface.common)
 	if err != nil {

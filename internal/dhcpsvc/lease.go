@@ -61,24 +61,10 @@ func (l *Lease) IsBlocked() (blocked bool) {
 	return bytes.Equal(l.HWAddr, blockedHardwareAddr)
 }
 
-// isExpiredAt returns true if the lease is expired at now.  For static leases,
-// it always returns false.
-func (l *Lease) isExpiredAt(now time.Time) (ok bool) {
-	if l.IsStatic {
-		return false
-	}
-
-	return l.Expiry.Before(now)
-}
-
-// updateExpiry updates the lease expiry time if the current time is past the
-// expiry.  For static leases, this operation is a no-op.
+// updateExpiry refreshes the lease expiry time to now plus ttl.  For static
+// leases, this operation is a no-op.
 func (l *Lease) updateExpiry(now time.Time, ttl time.Duration) {
 	if l.IsStatic {
-		return
-	}
-
-	if now.Before(l.Expiry) {
 		return
 	}
 

@@ -65,6 +65,10 @@ const (
 	// lease.
 	testLease4HostnameExpired = "expired4"
 
+	// testLease4HostnameRenewing is the test hostname for a renewing DHCPv4
+	// lease.
+	testLease4HostnameRenewing = "renewing4"
+
 	// testLease6HostnameUnknown is the test hostname for an unknown DHCPv6
 	// lease.
 	testLease6HostnameUnknown = "unknown6"
@@ -78,6 +82,10 @@ const (
 	// testLease6HostnameExpired is the test hostname for an expired DHCPv6
 	// lease.
 	testLease6HostnameExpired = "expired6"
+
+	// testLease6HostnameRenewing is the test hostname for a renewing DHCPv6
+	// lease.
+	testLease6HostnameRenewing = "renewing6"
 )
 
 const (
@@ -225,6 +233,10 @@ var (
 
 	// testHWAnother is the test MAC address for a lease with another IP.
 	testHWAnother = net.HardwareAddr{0x00, 0x00, 0x5E, 0x00, 0x53, 0x05}
+
+	// testHWRenewing is the test MAC address for a client holding a valid
+	// dynamic lease that expires earlier than a full lease TTL.
+	testHWRenewing = net.HardwareAddr{0x00, 0x00, 0x5E, 0x00, 0x53, 0x06}
 )
 
 // IPv4 addresses for tests.
@@ -242,6 +254,10 @@ var (
 
 	// testIPv4Expired is the test IP address for a known expired lease.
 	testIPv4Expired = netip.MustParseAddr("192.0.2.103")
+
+	// testIPv4Renewing is the test IP address for a lease that is about to be
+	// renewed.
+	testIPv4Renewing = netip.MustParseAddr("192.0.2.104")
 
 	// testIPv4OtherSubnet is the test IP address for a client on another
 	// subnet.
@@ -267,6 +283,10 @@ var (
 	// testIPv6Static is the test IP address for a known static lease.
 	testIPv6Static = netip.MustParseAddr("2001:db8::65")
 
+	// testIPv6Renewing is the test IP address for a lease that is about to be
+	// renewed.
+	testIPv6Renewing = netip.MustParseAddr("2001:db8::68")
+
 	// testIPv6OtherSubnet is the test IP address for a client on another
 	// subnet.
 	testIPv6OtherSubnet = netip.MustParseAddr(testAnotherRangeStartV6Str)
@@ -279,6 +299,11 @@ var (
 	// testExpiryDynamicLease is the test expiry time for a dynamic lease, not
 	// yet expired according to [testClock].
 	testExpiryDynamicLease = testCurrentTime.Add(testLeaseTTL)
+
+	// testExpiryRenewingLease is the test expiry time for a valid dynamic
+	// lease that expires earlier than a full lease TTL from now, i.e. one
+	// whose remaining lease time is less than [testLeaseTTL].
+	testExpiryRenewingLease = testCurrentTime.Add(time.Hour)
 
 	// testExpiryExpiredLease is the test expiry time for an expired lease
 	// according to [testClock].
@@ -313,6 +338,16 @@ var (
 		IsStatic: false,
 	}
 
+	// testLease4Renewing is a common valid dynamic DHCPv4 lease expiring
+	// earlier than a full lease TTL from now, see [testExpiryRenewingLease].
+	testLease4Renewing = &dhcpsvc.Lease{
+		IP:       testIPv4Renewing,
+		HWAddr:   testHWRenewing,
+		Expiry:   testExpiryRenewingLease,
+		Hostname: testLease4HostnameRenewing,
+		IsStatic: false,
+	}
+
 	// testLease6Dynamic is a common valid dynamic DHCPv6 lease for tests.
 	testLease6Dynamic = &dhcpsvc.Lease{
 		IP:       testIPv6Dynamic,
@@ -340,13 +375,44 @@ var (
 		IsStatic: false,
 	}
 
+	// testLease6Renewing is a common valid dynamic DHCPv6 lease expiring
+	// earlier than full [testLeaseTTL] from [testCurrentTime].
+	testLease6Renewing = &dhcpsvc.Lease{
+		IP:       testIPv6Renewing,
+		HWAddr:   testHWRenewing,
+		Expiry:   testExpiryRenewingLease,
+		Hostname: testLease6HostnameRenewing,
+		IsStatic: false,
+	}
+
+	// testLease6Renewed is [testLease6Renewing] with its expiry extended by a
+	// full [testLeaseTTL] from [testCurrentTime], as expected after a
+	// successful renewal.
+	testLease6Renewed = &dhcpsvc.Lease{
+		IP:       testIPv6Renewing,
+		HWAddr:   testHWRenewing,
+		Expiry:   testExpiryDynamicLease,
+		Hostname: testLease6HostnameRenewing,
+		IsStatic: false,
+	}
+
 	// testLeases4 is a common set of leases for tests, containing only IPv4
 	// leases.
-	testLeases4 = []*dhcpsvc.Lease{testLease4Dynamic, testLease4Expired, testLease4Static}
+	testLeases4 = []*dhcpsvc.Lease{
+		testLease4Dynamic,
+		testLease4Expired,
+		testLease4Renewing,
+		testLease4Static,
+	}
 
 	// testLeases6 is a common set of leases for tests, containing only IPv6
 	// leases.
-	testLeases6 = []*dhcpsvc.Lease{testLease6Dynamic, testLease6Expired, testLease6Static}
+	testLeases6 = []*dhcpsvc.Lease{
+		testLease6Dynamic,
+		testLease6Expired,
+		testLease6Renewing,
+		testLease6Static,
+	}
 
 	// testLeases is a set of leases for tests, containing both IPv4 and IPv6
 	// leases.

@@ -6,6 +6,7 @@ import (
 	"net/netip"
 	"slices"
 	"testing"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
@@ -83,6 +84,10 @@ func TestDHCPServer_ServeEther6_solicit(t *testing.T) {
 			defaultOptPref,
 			defaultOptSolMaxRT,
 		),
+	}, {
+		in:       newDHCPv6Solicit(t, testHWUnknown, netip.Addr{}, false),
+		name:     "no_iana",
+		wantOpts: nil,
 	}}
 
 	for _, tc := range testCases {
@@ -105,6 +110,84 @@ func TestDHCPServer_ServeEther6_solicit(t *testing.T) {
 			testutil.RequireSend(t, inCh, tc.in, testTimeout)
 
 			assertValidResponse6(t, req, outCh, tc.wantOpts)
+		})
+	}
+}
+
+func TestDHCPServer_ServeEther6_solicitExhausted(t *testing.T) {
+	t.Parallel()
+
+	var (
+		exhaustedRangeStart = netip.MustParseAddr("2001:db8::fe")
+		exhaustedRangeEnd   = netip.MustParseAddr("2001:db8::ff")
+	)
+
+	ifacesConf := map[string]*dhcpsvc.InterfaceConfig{
+		testIfaceName: {
+			IPv4: disabledIPv4Conf,
+			IPv6: &dhcpsvc.IPv6Config{
+				Enabled:       true,
+				Clock:         testClock,
+				RangeStart:    exhaustedRangeStart,
+				LeaseDuration: testLeaseTTL,
+			},
+		},
+	}
+
+	db := newTestDatabase(t)
+	db.onLoad = func(_ context.Context) (leases []*dhcpsvc.Lease, err error) {
+		return []*dhcpsvc.Lease{{
+			IP:       exhaustedRangeStart,
+			HWAddr:   testHWDynamic,
+			Expiry:   time.Time{},
+			Hostname: aghnet.GenerateHostname(exhaustedRangeStart),
+			IsStatic: true,
+		}, {
+			IP:       exhaustedRangeEnd,
+			HWAddr:   testHWAnother,
+			Expiry:   time.Time{},
+			Hostname: aghnet.GenerateHostname(exhaustedRangeEnd),
+			IsStatic: true,
+		}}, nil
+	}
+
+	wantOpts := newWantDHCPv6Opts(
+		t,
+		testHWUnknown,
+		newOptIANAStatus(t, testIAID, layers.DHCPv6StatusCodeNoAddrsAvail),
+		defaultOptPref,
+		defaultOptSolMaxRT,
+	)
+
+	testCases := []struct {
+		in   gopacket.Packet
+		name string
+	}{{
+		in:   newDHCPv6Solicit(t, testHWUnknown, testIPv6Unknown, false),
+		name: "advertise",
+	}, {
+		in:   newDHCPv6Solicit(t, testHWUnknown, testIPv6Unknown, true),
+		name: "rapid_commit",
+	}}
+
+	for _, tc := range testCases {
+		req := testutil.RequireTypeAssert[*layers.DHCPv6](t, tc.in.Layer(layers.LayerTypeDHCPv6))
+
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			ndMgr, inCh, outCh := newTestNetworkDeviceManager(t, testIfaceAddrV6)
+			startTestDHCPServer(t, &dhcpsvc.Config{
+				Database:             db,
+				Interfaces:           ifacesConf,
+				Logger:               testLogger,
+				NetworkDeviceManager: ndMgr,
+				Enabled:              true,
+			})
+
+			testutil.RequireSend(t, inCh, tc.in, testTimeout)
+
+			assertValidResponse6(t, req, outCh, wantOpts)
 		})
 	}
 }
@@ -157,6 +240,18 @@ func TestDHCPServer_ServeEther6_solicitRapidCommit(t *testing.T) {
 			t,
 			testHWDynamic,
 			newDefaultOptIANA(t, testIPv6Dynamic),
+			defaultOptPref,
+			defaultOptSolMaxRT,
+			rapidCommitOpt,
+		),
+	}, {
+		in:   newDHCPv6Solicit(t, testHWRenewing, testIPv6Renewing, true),
+		want: testLease6Renewed,
+		name: "existing_dynamic_extends_expiry",
+		wantOpts: newWantDHCPv6Opts(
+			t,
+			testHWRenewing,
+			newDefaultOptIANA(t, testIPv6Renewing),
 			defaultOptPref,
 			defaultOptSolMaxRT,
 			rapidCommitOpt,
@@ -261,6 +356,17 @@ func TestDHCPServer_ServeEther6_request(t *testing.T) {
 			t,
 			testHWStatic,
 			newDefaultOptIANA(t, testIPv6Static),
+			defaultOptPref,
+			defaultOptSolMaxRT,
+		),
+	}, {
+		in:   newDHCPv6Request(t, testHWRenewing, testIPv6Renewing),
+		want: testLease6Renewed,
+		name: "existing_dynamic_extends_expiry",
+		wantOpts: newWantDHCPv6Opts(
+			t,
+			testHWRenewing,
+			newDefaultOptIANA(t, testIPv6Renewing),
 			defaultOptPref,
 			defaultOptSolMaxRT,
 		),
@@ -409,6 +515,16 @@ func TestDHCPServer_ServeEther6_confirm(t *testing.T) {
 		name:     "success_multiple",
 		wantOpts: newWantDHCPv6Opts(t, testHWDynamic),
 	}, {
+		// The address is within the subnet prefix of the interface, but outside
+		// of its lease range, so it is still appropriate for the link.
+		in: newDHCPv6Confirm(
+			t,
+			testHWUnknown,
+			newOptIANA(t, testIAID, testIfaceAddrV6, 0),
+		),
+		name:     "success_outside_range",
+		wantOpts: newWantDHCPv6Opts(t, testHWUnknown),
+	}, {
 		in: newDHCPv6Confirm(
 			t,
 			testHWUnknown,
@@ -502,6 +618,17 @@ func TestDHCPServer_ServeEther6_renew(t *testing.T) {
 			defaultOptSolMaxRT,
 		),
 	}, {
+		in:   newDHCPv6Renew(t, testHWRenewing, testIPv6Renewing),
+		name: "extends_expiry",
+		want: testLease6Renewed,
+		wantOpts: newWantDHCPv6Opts(
+			t,
+			testHWRenewing,
+			newDefaultOptIANA(t, testIPv6Renewing),
+			defaultOptPref,
+			defaultOptSolMaxRT,
+		),
+	}, {
 		in:   newDHCPv6Renew(t, testHWUnknown, testIPv6Unknown),
 		name: "no_binding",
 		want: nil,
@@ -580,6 +707,17 @@ func TestDHCPServer_ServeEther6_rebind(t *testing.T) {
 			t,
 			testHWStatic,
 			newDefaultOptIANA(t, testIPv6Static),
+			defaultOptPref,
+			defaultOptSolMaxRT,
+		),
+	}, {
+		in:   newDHCPv6Rebind(t, testHWRenewing, testIPv6Renewing),
+		name: "extends_expiry",
+		want: testLease6Renewed,
+		wantOpts: newWantDHCPv6Opts(
+			t,
+			testHWRenewing,
+			newDefaultOptIANA(t, testIPv6Renewing),
 			defaultOptPref,
 			defaultOptSolMaxRT,
 		),
@@ -703,6 +841,7 @@ func TestDHCPServer_ServeEther6_release(t *testing.T) {
 		wantOpts: newWantDHCPv6Opts(
 			t,
 			testHWDynamic,
+			newOptStatusCode(t, layers.DHCPv6StatusCodeSuccess),
 			newOptIANAStatus(t, testIAID, layers.DHCPv6StatusCodeSuccess),
 			defaultOptPref,
 			defaultOptSolMaxRT,
@@ -714,6 +853,7 @@ func TestDHCPServer_ServeEther6_release(t *testing.T) {
 		wantOpts: newWantDHCPv6Opts(
 			t,
 			testHWStatic,
+			newOptStatusCode(t, layers.DHCPv6StatusCodeSuccess),
 			newOptIANAStatus(t, testIAID, layers.DHCPv6StatusCodeSuccess),
 			defaultOptPref,
 			defaultOptSolMaxRT,
@@ -730,10 +870,16 @@ func TestDHCPServer_ServeEther6_release(t *testing.T) {
 			defaultOptSolMaxRT,
 		),
 	}, {
-		in:       newDHCPv6Release(t, testHWDynamic, netip.Addr{}),
-		want:     nil,
-		name:     "no_iana",
-		wantOpts: newWantDHCPv6Opts(t, testHWDynamic, defaultOptPref, defaultOptSolMaxRT),
+		in:   newDHCPv6Release(t, testHWDynamic, netip.Addr{}),
+		want: nil,
+		name: "no_iana",
+		wantOpts: newWantDHCPv6Opts(
+			t,
+			testHWDynamic,
+			newOptStatusCode(t, layers.DHCPv6StatusCodeSuccess),
+			defaultOptPref,
+			defaultOptSolMaxRT,
+		),
 	}, {
 		in:   newDHCPv6Release(t, testHWDynamic, testIPv6Unknown),
 		want: nil,
@@ -802,6 +948,7 @@ func TestDHCPServer_ServeEther6_decline(t *testing.T) {
 		wantOpts: newWantDHCPv6Opts(
 			t,
 			testHWDynamic,
+			newOptStatusCode(t, layers.DHCPv6StatusCodeSuccess),
 			newOptIANAStatus(t, testIAID, layers.DHCPv6StatusCodeSuccess),
 			defaultOptPref,
 			defaultOptSolMaxRT,
@@ -829,10 +976,16 @@ func TestDHCPServer_ServeEther6_decline(t *testing.T) {
 			defaultOptSolMaxRT,
 		),
 	}, {
-		in:       newDHCPv6Decline(t, testHWDynamic, netip.Addr{}),
-		want:     nil,
-		name:     "no_iana",
-		wantOpts: newWantDHCPv6Opts(t, testHWDynamic, defaultOptPref, defaultOptSolMaxRT),
+		in:   newDHCPv6Decline(t, testHWDynamic, netip.Addr{}),
+		want: nil,
+		name: "no_iana",
+		wantOpts: newWantDHCPv6Opts(
+			t,
+			testHWDynamic,
+			newOptStatusCode(t, layers.DHCPv6StatusCodeSuccess),
+			defaultOptPref,
+			defaultOptSolMaxRT,
+		),
 	}}
 
 	for _, tc := range testCases {
