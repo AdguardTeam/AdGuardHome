@@ -77,7 +77,7 @@ type Config struct {
 	FallbackDNS []string `yaml:"fallback_dns"`
 
 	// UpstreamMode determines the logic through which upstreams will be used.
-	UpstreamMode UpstreamMode `yaml:"upstream_mode"`
+	UpstreamMode proxy.UpstreamMode `yaml:"upstream_mode"`
 
 	// FastestTimeout replaces the default timeout for dialing IP addresses
 	// when FastestAddr is true.
@@ -142,7 +142,8 @@ type Config struct {
 	// upstream requests.
 	EnableDNSSEC bool `yaml:"enable_dnssec"`
 
-	// EDNSClientSubnet is the settings list for EDNS Client Subnet.
+	// EDNSClientSubnet is the settings list for EDNS Client Subnet.  It must
+	// not be nil.
 	EDNSClientSubnet *EDNSClientSubnet `yaml:"edns_client_subnet"`
 
 	// MaxGoroutines is the max number of parallel goroutines for processing
@@ -307,35 +308,6 @@ type ServerConfig struct {
 	PendingRequestsEnabled bool
 }
 
-// UpstreamMode is a enumeration of upstream mode representations.  See
-// [proxy.UpstreamModeType].
-//
-// TODO(d.kolyshev): Consider using [proxy.UpstreamMode].
-type UpstreamMode string
-
-// Allowed [UpstreamMode] values.
-const (
-	UpstreamModeFastestAddr UpstreamMode = "fastest_addr"
-	UpstreamModeLoadBalance UpstreamMode = "load_balance"
-	UpstreamModeParallel    UpstreamMode = "parallel"
-)
-
-// NewUpstreamMode converts a simple string into an [UpstreamMode] and makes
-// sure it's valid.
-func NewUpstreamMode(s string) (m UpstreamMode, err error) {
-	switch m = UpstreamMode(s); m {
-	case UpstreamModeFastestAddr, UpstreamModeLoadBalance, UpstreamModeParallel:
-		return m, nil
-	default:
-		return "", fmt.Errorf(
-			"%w: %q, supported: %q",
-			errors.ErrBadEnumValue,
-			s,
-			[]UpstreamMode{UpstreamModeFastestAddr, UpstreamModeLoadBalance, UpstreamModeParallel},
-		)
-	}
-}
-
 // newProxyConfig creates and validates configuration for the main proxy.
 // s.serverLock must be locked.
 //
@@ -379,18 +351,15 @@ func (s *Server) newProxyConfig(ctx context.Context) (conf *proxy.Config, err er
 		PendingRequests: &proxy.PendingRequestsConfig{
 			Enabled: srvConf.PendingRequestsEnabled,
 		},
-		HTTPConfig:    httpConf,
-		DNSSECEnabled: srvConf.EnableDNSSEC,
+		HTTPConfig:         httpConf,
+		UpstreamMode:       srvConf.UpstreamMode,
+		DNSSECEnabled:      srvConf.EnableDNSSEC,
+		FastestPingTimeout: time.Duration(srvConf.FastestTimeout),
 	}
 
 	if srvConf.EDNSClientSubnet.UseCustom {
 		// TODO(s.chzhen):  Use netip.Addr instead of net.IP inside dnsproxy.
 		conf.EDNSAddr = net.IP(srvConf.EDNSClientSubnet.CustomIP.AsSlice())
-	}
-
-	err = setProxyUpstreamMode(conf, srvConf.UpstreamMode, time.Duration(srvConf.FastestTimeout))
-	if err != nil {
-		return nil, fmt.Errorf("upstream mode: %w", err)
 	}
 
 	conf.BogusNXDomain, err = parseBogusNXDOMAIN(srvConf.BogusNXDomain)
