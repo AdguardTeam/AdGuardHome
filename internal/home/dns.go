@@ -248,7 +248,10 @@ func newServerConfig(
 	clientsContainer dnsforward.ClientsContainer,
 	confModifier agh.ConfigModifier,
 ) (newConf *dnsforward.ServerConfig, err error) {
-	hosts := aghalg.CoalesceSlice(dnsConf.BindHosts, []netip.Addr{netutil.IPv4Localhost()})
+	hosts := aghalg.CoalesceSlice(dnsConf.BindHosts, []netip.Addr{
+		netutil.IPv4Localhost(),
+		netutil.IPv6Localhost(),
+	})
 
 	intTLSConf, err := newDNSTLSConfig(tlsManager, dohAddr.Addr(), hosts)
 	if err != nil {
