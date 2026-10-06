@@ -229,7 +229,7 @@ func TestServer_middlewareUDP(t *testing.T) {
 					DisallowedClients: tc.disallowedClients,
 					BlockedHosts:      tc.blockedHosts,
 					UpstreamDNS:       []string{localUpsAddr},
-					UpstreamMode:      UpstreamModeLoadBalance,
+					UpstreamMode:      proxy.UpstreamModeLoadBalance,
 					EDNSClientSubnet:  &EDNSClientSubnet{Enabled: false},
 					ClientsContainer:  EmptyClientsContainer{},
 					ServePlainDNS:     true,
