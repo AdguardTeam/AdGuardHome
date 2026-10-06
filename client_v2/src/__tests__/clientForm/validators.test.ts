@@ -4,6 +4,7 @@ import {
     validateUpstreams,
     validateRequiredValue,
     validateIpv4,
+    validateMac,
     validatePort,
     validateInstallPort,
     validatePlainDns,
@@ -51,6 +52,71 @@ describe('validateIdentifier', () => {
     it('returns undefined for valid CIDR', () => {
         const result = validateIdentifier('192.168.1.0/24', ['192.168.1.0/24'], 0);
         expect(result).toBeUndefined();
+    });
+
+    it('returns undefined for valid IPv6 CIDR', () => {
+        expect(validateIdentifier('2001:db8::/64', [], 0)).toBeUndefined();
+    });
+
+    // REGRESSION: GH #8610 — mixed-notation ranges were rejected by the retired
+    // R_CIDR_IPV6, which matched the hex form only.
+    it('returns undefined for IPv6 CIDR with an embedded IPv4 address', () => {
+        expect(validateIdentifier('::ffff:192.168.1.0/120', [], 0)).toBeUndefined();
+        expect(validateIdentifier('::ffff:c0a8:100/120', [], 0)).toBeUndefined();
+    });
+
+    it('returns format error for IPv6 CIDR with an out-of-range embedded IPv4 octet', () => {
+        expect(validateIdentifier('::ffff:192.168.1.256/120', [], 0)).toBe(
+            copy('clients_identifier_format_error'),
+        );
+    });
+
+    // REGRESSION: netip.ParseAddr rejects IPv4 addresses with leading-zero
+    // octets, so the backend answers 400 for identifiers the form accepted.
+    it('returns format error for non-canonical IPv4 addresses with leading zeros', () => {
+        expect(validateIdentifier('192.168.01.1', [], 0)).toBeTruthy();
+        expect(validateIdentifier('010.0.0.1', [], 0)).toBeTruthy();
+        expect(validateIdentifier('192.168.001.1', [], 0)).toBeTruthy();
+    });
+
+    it('returns format error for an IPv6 address with a non-canonical embedded IPv4 tail', () => {
+        expect(validateIdentifier('::ffff:192.168.01.1', [], 0)).toBeTruthy();
+        expect(validateIdentifier('::ffff:192.168.1.1', [], 0)).toBeUndefined();
+    });
+
+    // REGRESSION: netip.ParseAddr takes everything after the first `%` as the
+    // zone ID, so the server parses this value as an address, not as a CIDR.
+    it('returns undefined for an IPv6 address with a zone ID', () => {
+        expect(validateIdentifier('fe80::1%eth0', [], 0)).toBeUndefined();
+        expect(validateIdentifier('fe80::1%eth0/64', [], 0)).toBeUndefined();
+        expect(validateIdentifier('2001:db8::1%eth0', [], 0)).toBeUndefined();
+    });
+
+    it('returns format error for an IPv6 address with an empty zone ID', () => {
+        expect(validateIdentifier('fe80::1%', [], 0)).toBe(copy('clients_identifier_format_error'));
+    });
+
+    // Same outer-rune rule as the backend's ValidateHostnameLabel.
+    it('returns format error for client IDs with leading or trailing hyphens', () => {
+        expect(validateIdentifier('-abc', [], 0)).toBeTruthy();
+        expect(validateIdentifier('abc-', [], 0)).toBeTruthy();
+        expect(validateIdentifier('-', [], 0)).toBeTruthy();
+        expect(validateIdentifier('a-b', [], 0)).toBeUndefined();
+    });
+
+    // Same net.ParseMAC rules as the backend.
+    it('returns format error for MAC spellings the server refuses', () => {
+        expect(validateIdentifier('aaaa:bb:cc:dd:ee:ff', [], 0)).toBeTruthy();
+        expect(validateIdentifier('aa:bb-cc:dd:ee:ff', [], 0)).toBeTruthy();
+        expect(validateIdentifier('aaaaa.bbbbb.cccc', [], 0)).toBeTruthy();
+        expect(validateIdentifier('aa:bb:cc:dd:ee:ff', [], 0)).toBeUndefined();
+        expect(
+            validateIdentifier(
+                '00:00:00:00:fe:80:00:00:00:00:00:00:02:00:5e:10:00:00:00:01',
+                [],
+                0,
+            ),
+        ).toBeUndefined();
     });
 
     it('returns undefined for valid ClientID', () => {
@@ -200,12 +266,41 @@ describe('validateIpv4', () => {
         expect(validateIpv4('999.999.999.999')).toBeTruthy();
     });
 
+    it('returns error for non-canonical IPv4 addresses with leading zeros', () => {
+        expect(validateIpv4('192.168.01.1')).toBeTruthy();
+        expect(validateIpv4('010.0.0.1')).toBeTruthy();
+        expect(validateIpv4('192.168.1.01')).toBeTruthy();
+    });
+
     it('returns undefined for empty string (skip)', () => {
         expect(validateIpv4('')).toBeUndefined();
     });
 
     it('returns undefined for undefined (skip)', () => {
         expect(validateIpv4(undefined)).toBeUndefined();
+    });
+});
+
+describe('validateMac', () => {
+    it('accepts the formats the server parses', () => {
+        expect(validateMac('aa:bb:cc:dd:ee:ff')).toBeUndefined();
+        expect(validateMac('AA:BB:CC:DD:EE:FF')).toBeUndefined();
+        expect(validateMac('aabb.ccdd.eeff')).toBeUndefined();
+    });
+
+    // REGRESSION: net.ParseMAC also accepts 20-octet InfiniBand link-layer
+    // addresses, which the six- and eight-octet forms did not cover.
+    it('accepts 20-octet InfiniBand addresses', () => {
+        expect(
+            validateMac('00:00:00:00:fe:80:00:00:00:00:00:00:02:00:5e:10:00:00:00:01'),
+        ).toBeUndefined();
+        expect(validateMac('0000.0000.fe80.0000.0000.0000.0200.5e10.0000.0001')).toBeUndefined();
+    });
+
+    it('rejects over-long fields and mixed separators', () => {
+        expect(validateMac('aaaa:bb:cc:dd:ee:ff')).toBeTruthy();
+        expect(validateMac('aa:bb-cc:dd:ee:ff')).toBeTruthy();
+        expect(validateMac('aaaaa.bbbbb.cccc')).toBeTruthy();
     });
 });
 

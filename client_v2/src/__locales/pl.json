@@ -735,7 +735,6 @@
   "setup_ui_desc": "Użyj tych adresów, aby uzyskać dostęp do interfejsu użytkownika Sieci AdGuard Home. W razie potrzeby zmień port",
   "setup_ui_title": "Ustaw adres interfejsu użytkownika Sieci dla AdGuard Home",
   "setup_ui_title_banner": "Ustawienia interfejsu użytkownika Sieci",
-  "show_blocked_responses": "Zablokowane",
   "show_more": "Pokaż więcej",
   "show_more_count": "+ %count% więcej",
   "show_processed_responses": "Przetworzony",

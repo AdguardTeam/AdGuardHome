@@ -735,7 +735,6 @@
   "setup_ui_desc": "Använd dessa adresser för att komma åt AdGuard Homes webbgränssnitt. Ändra porten vid behov",
   "setup_ui_title": "Ange adressen till AdGuard Homes webbgränssnitt",
   "setup_ui_title_banner": "Inställningar för webbgränssnitt",
-  "show_blocked_responses": "Blockerade",
   "show_more": "Visa mer",
   "show_more_count": "+ %count% till",
   "show_processed_responses": "Utförda",

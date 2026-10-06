@@ -20,6 +20,8 @@ import {
     FILTERED,
     FILTERED_STATUS,
     R_CLIENT_ID,
+    R_IPV4,
+    R_IPV6,
     STANDARD_DNS_PORT,
     STANDARD_HTTPS_PORT,
     STANDARD_WEB_PORT,
@@ -555,6 +557,89 @@ export const isIpInCidr = (ip: any, cidr: any) => {
 };
 
 /**
+ * Matches a prefix length without leading zeros, as netip.ParsePrefix requires.
+ */
+const R_PREFIX_LENGTH = /^(0|[1-9]\d*)$/;
+
+/**
+ * Checks that the value is an IP range in CIDR notation the way the backend
+ * parses it with netip.ParsePrefix.  Both address families are supported,
+ * including IPv6 ranges with an embedded dotted-decimal IPv4 address.  The
+ * extra checks keep out the spellings ipaddr.js accepts but netip rejects —
+ * zone IDs, prefix lengths with leading zeros, and non-canonical IPv4
+ * addresses — so the form never accepts a value the server would refuse.
+ *
+ * @param {string} value Value to check.
+ * @returns {boolean} True if the value is a valid CIDR range.
+ */
+export const isValidCidr = (value: string) => {
+    const slash = value.lastIndexOf('/');
+    if (slash <= 0) {
+        return false;
+    }
+
+    const addr = value.slice(0, slash);
+    const bits = value.slice(slash + 1);
+
+    // netip.ParsePrefix rejects IPv6 zones in a prefix and prefix lengths
+    // spelled with leading zeros.
+    if (addr.includes('%') || !R_PREFIX_LENGTH.test(bits)) {
+        return false;
+    }
+
+    const colon = addr.lastIndexOf(':');
+    if (colon === -1) {
+        // netip.ParseAddr requires canonical dotted-decimal IPv4, while
+        // ipaddr.js also takes octal, hexadecimal and single-number spellings.
+        if (!R_IPV4.test(addr)) {
+            return false;
+        }
+    } else {
+        // The same applies to the IPv4 tail of a mixed-notation IPv6 address.
+        const ipv4Part = addr.slice(colon + 1);
+        if (ipv4Part.includes('.') && !R_IPV4.test(ipv4Part)) {
+            return false;
+        }
+    }
+
+    try {
+        ipaddr.parseCIDR(value);
+        return true;
+    } catch (e) {
+        return false;
+    }
+};
+
+/**
+ * Checks that the value is an IPv6 address the way the backend parses it with
+ * netip.ParseAddr.  The zone ID, if any, is everything after the first `%`,
+ * and its contents are not restricted, so `fe80::1%eth0/64` is an address
+ * with the zone `eth0/64` rather than a CIDR.  A mixed-notation address with
+ * a dotted-decimal IPv4 tail must use a canonical IPv4 spelling there as
+ * well.
+ *
+ * @param {string} value Value to check.
+ * @returns {boolean} True if the value is a valid IPv6 address.
+ */
+export const isValidIpv6 = (value: string) => {
+    const zoneIdx = value.indexOf('%');
+    const addr = zoneIdx === -1 ? value : value.slice(0, zoneIdx);
+
+    // netip.ParseAddr requires a non-empty zone ID.
+    if (zoneIdx !== -1 && zoneIdx === value.length - 1) {
+        return false;
+    }
+
+    if (!R_IPV6.test(addr)) {
+        return false;
+    }
+
+    const tail = addr.slice(addr.lastIndexOf(':') + 1);
+
+    return !tail.includes('.') || R_IPV4.test(tail);
+};
+
+/**
  *
  * @param {string} subnetMask
  * @returns {IPv4 | null}
@@ -665,9 +750,7 @@ export const formatElapsedMs = (elapsedMs: string, t: (key: string) => string) =
         return elapsedMs;
     }
 
-    const formattedValue = parsedElapsedMs < 1
-        ? parsedElapsedMs.toFixed(2)
-        : Math.floor(parsedElapsedMs).toString();
+    const formattedValue = parsedElapsedMs < 1 ? parsedElapsedMs.toFixed(2) : Math.floor(parsedElapsedMs).toString();
 
     return `${formattedValue} ${t('milliseconds_abbreviation')}`;
 };

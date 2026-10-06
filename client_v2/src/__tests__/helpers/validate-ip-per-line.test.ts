@@ -23,6 +23,10 @@ describe('validateIpPerLine', () => {
         expect(validateIpPerLine('not-an-ip')).toBe(copy('form_error_format'));
     });
 
+    it('rejects a non-canonical IPv4 address', () => {
+        expect(validateIpPerLine('192.168.01.1')).toBe(copy('form_error_format'));
+    });
+
     it('returns "Invalid format on line 2" when second line is invalid', () => {
         expect(validateIpPerLine('192.168.1.1\nbad-ip')).toBe(
             copy('form_error_format_line', { line: 2 }),

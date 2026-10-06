@@ -22,7 +22,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
 	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
-	"github.com/AdguardTeam/dnsproxy/fastip"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
@@ -40,6 +39,10 @@ const (
 	// userFilterDataDir is the name of the directory used to store users'
 	// FS-based rule lists.
 	userFilterDataDir = "userfilters"
+
+	// defaultFastestTimeout is the default timeout for proxy fastest upstream
+	// mode.
+	defaultFastestTimeout = 1 * time.Second
 )
 
 // osConfig contains OS-related configuration.
@@ -191,6 +194,10 @@ type doHConfig struct {
 	//   - "POST /dns-query"
 	//   - "GET /dns-query/{ClientID}"
 	//   - "POST /dns-query/{ClientID}"
+	//
+	// TODO(d.kolyshev):  Validate.
+	// TODO(d.kolyshev):  Since we have multiple muxes now serving on one
+	// address, the user can register e.g. GET /control/status.
 	Routes []string `yaml:"routes"`
 
 	// InsecureEnabled allows DoH queries via unencrypted HTTP.
@@ -313,7 +320,7 @@ var config = &configuration{
 		}},
 		CacheOptimisticAnswerTTL: timeutil.Duration(30 * time.Second),
 		CacheOptimisticMaxAge:    timeutil.Duration(12 * time.Hour),
-		FastestTimeout:           timeutil.Duration(fastip.DefaultPingWaitTimeout),
+		FastestTimeout:           timeutil.Duration(defaultFastestTimeout),
 		UpstreamTimeout:          timeutil.Duration(dnsforward.DefaultTimeout),
 
 		// set default maximum concurrent queries to 300
@@ -362,12 +369,12 @@ var config = &configuration{
 	// TODO(a.garipov): Think of a way to make scripts/vetted-filters update
 	// these as well if necessary.
 	Filters: []filtering.FilterYAML{{
-		Filter:  filtering.Filter{ID: 1},
+		ID:      1,
 		Enabled: true,
 		URL:     "https://adguardteam.github.io/HostlistsRegistry/assets/filter_1.txt",
 		Name:    "AdGuard DNS filter",
 	}, {
-		Filter:  filtering.Filter{ID: 2},
+		ID:      2,
 		Enabled: false,
 		URL:     "https://adguardteam.github.io/HostlistsRegistry/assets/filter_2.txt",
 		Name:    "AdAway Default Blocklist",

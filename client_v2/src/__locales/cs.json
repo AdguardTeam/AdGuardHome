@@ -735,7 +735,6 @@
   "setup_ui_desc": "Pomocí těchto adres získáte přístup k Webovému uživatelskému rozhraní AdGuard Home. V případě potřeby změňte port",
   "setup_ui_title": "Nastavte adresu Webového rozhraní pro AdGuard Home",
   "setup_ui_title_banner": "Nastavení webového rozhraní",
-  "show_blocked_responses": "Zablokováno",
   "show_more": "Zobrazit více",
   "show_more_count": "+ %count% další",
   "show_processed_responses": "Zpracováno",

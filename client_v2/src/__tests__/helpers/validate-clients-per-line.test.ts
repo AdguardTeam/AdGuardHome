@@ -17,9 +17,24 @@ describe('validateClientsPerLine', () => {
         expect(validateClientsPerLine('192.168.1.1')).toBeUndefined();
     });
 
+    it('rejects a non-canonical IPv4 address', () => {
+        expect(validateClientsPerLine('192.168.01.1')).toBe(copy('form_error_format'));
+    });
+
     it('returns undefined for valid IPv6', () => {
         expect(validateClientsPerLine('::1')).toBeUndefined();
         expect(validateClientsPerLine('2001:db8::1')).toBeUndefined();
+    });
+
+    // The backend parses an entry as an address before it tries a prefix, so
+    // this is an address with the zone `eth0/64` for the server as well.
+    it('returns undefined for an IPv6 address with a zone ID', () => {
+        expect(validateClientsPerLine('fe80::1%eth0')).toBeUndefined();
+        expect(validateClientsPerLine('fe80::1%eth0/64')).toBeUndefined();
+    });
+
+    it('rejects an IPv6 address with an empty zone ID', () => {
+        expect(validateClientsPerLine('fe80::1%')).toBe(copy('form_error_format'));
     });
 
     it('returns undefined for valid IPv4 CIDR', () => {
@@ -29,6 +44,17 @@ describe('validateClientsPerLine', () => {
 
     it('returns undefined for valid IPv6 CIDR', () => {
         expect(validateClientsPerLine('2001:db8::/32')).toBeUndefined();
+    });
+
+    // REGRESSION: GH #8610 — mixed-notation ranges were rejected by the retired
+    // R_CIDR_IPV6, which matched the hex form only.
+    it('returns undefined for IPv6 CIDR with an embedded IPv4 address', () => {
+        expect(validateClientsPerLine('::ffff:192.168.1.0/120')).toBeUndefined();
+        expect(validateClientsPerLine('::ffff:c0a8:100/120')).toBeUndefined();
+    });
+
+    it('rejects IPv6 CIDR with an out-of-range embedded IPv4 octet', () => {
+        expect(validateClientsPerLine('::ffff:192.168.1.256/120')).toBe(copy('form_error_format'));
     });
 
     it('returns undefined for valid ClientID', () => {
