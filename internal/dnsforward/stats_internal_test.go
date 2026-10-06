@@ -300,10 +300,10 @@ func TestServer_stats_upstreamTimes(t *testing.T) {
 		// https://github.com/AdguardTeam/AdGuardHome/issues/8457.
 		const upsTimeout = 1 * time.Second
 
-		for _, mode := range []UpstreamMode{
-			UpstreamModeLoadBalance,
-			UpstreamModeParallel,
-			UpstreamModeFastestAddr,
+		for _, mode := range []proxy.UpstreamMode{
+			proxy.UpstreamModeLoadBalance,
+			proxy.UpstreamModeParallel,
+			proxy.UpstreamModeFastestAddr,
 		} {
 			t.Run(string(mode), func(t *testing.T) {
 				var dropFirst atomic.Bool
@@ -334,7 +334,7 @@ func TestServer_stats_upstreamTimes(t *testing.T) {
 
 		st := &testStats{}
 		addr := newStatsTestServer(
-			t, st, UpstreamModeLoadBalance, domain, 10*time.Second, &dropFirst, true,
+			t, st, proxy.UpstreamModeLoadBalance, domain, 10*time.Second, &dropFirst, true,
 		)
 
 		req := (&dns.Msg{}).SetQuestion(domain, dns.TypeA)
@@ -374,7 +374,7 @@ const testCacheTTL = 1 * time.Second
 func newStatsTestServer(
 	t *testing.T,
 	st stats.Interface,
-	mode UpstreamMode,
+	mode proxy.UpstreamMode,
 	domain string,
 	upsTimeout time.Duration,
 	dropFirst *atomic.Bool,
