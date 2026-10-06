@@ -3,7 +3,7 @@ package configmigrate
 import (
 	"context"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
+	"github.com/AdguardTeam/dnsproxy/proxy"
 )
 
 // migrateTo28 performs the following changes:
@@ -31,13 +31,13 @@ func (m *Migrator) migrateTo28(_ context.Context, diskConf yobj) (err error) {
 	allServers, _, _ := fieldVal[bool](dns, "all_servers")
 	fastestAddr, _, _ := fieldVal[bool](dns, "fastest_addr")
 
-	var upstreamModeType dnsforward.UpstreamMode
+	var upstreamModeType proxy.UpstreamMode
 	if allServers {
-		upstreamModeType = dnsforward.UpstreamModeParallel
+		upstreamModeType = proxy.UpstreamModeParallel
 	} else if fastestAddr {
-		upstreamModeType = dnsforward.UpstreamModeFastestAddr
+		upstreamModeType = proxy.UpstreamModeFastestAddr
 	} else {
-		upstreamModeType = dnsforward.UpstreamModeLoadBalance
+		upstreamModeType = proxy.UpstreamModeLoadBalance
 	}
 
 	dns["upstream_mode"] = upstreamModeType

@@ -34,7 +34,7 @@ func TestServer_ServeDNS(t *testing.T) {
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		TLSConf:        &TLSConfig{},
-		UpstreamMode:   UpstreamModeLoadBalance,
+		UpstreamMode:   proxy.UpstreamModeLoadBalance,
 		EDNSClientSubnet: &EDNSClientSubnet{
 			Enabled: false,
 		},
@@ -253,7 +253,7 @@ func TestServer_ServeDNS_restrictLocal(t *testing.T) {
 			// TODO(s.chzhen):  Add tests where EDNSClientSubnet.Enabled is true.
 			// Improve Config declaration for tests.
 			UpstreamDNS:       []string{localUpsAddr},
-			UpstreamMode:      UpstreamModeLoadBalance,
+			UpstreamMode:      proxy.UpstreamModeLoadBalance,
 			EDNSClientSubnet:  &EDNSClientSubnet{Enabled: false},
 			ClientsContainer:  EmptyClientsContainer{},
 			UsePrivateRDNS:    true,
