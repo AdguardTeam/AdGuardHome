@@ -44,6 +44,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - IP addresses being sorted lexicographically instead of numerically in the web interface ([#8636]).
 
+- Invalid secondary bootstrap resolver IPv4 address ([#8637]).
+
 ### Removed
 
 - The support for macOS 13 Ventura, see [Go 1.27 release notes][go-1.27.1-notes].
@@ -55,6 +57,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#8610]:           https://github.com/AdguardTeam/AdGuardHome/issues/8610
 [#8613]:           https://github.com/AdguardTeam/AdGuardHome/issues/8613
 [#8636]:           https://github.com/AdguardTeam/AdGuardHome/issues/8636
+[#8637]:           https://github.com/AdguardTeam/AdGuardHome/issues/8637
 [go-1.27.1]:       https://groups.google.com/g/golang-announce/c/QiTRm-HGGtI
 [go-1.27.1-notes]: https://go.dev/doc/go1.27#darwin
 

@@ -430,6 +430,15 @@ func setupBindOpts(opts options) (err error) {
 	return nil
 }
 
+// safeBrowsingResolvers is a slice of static IP addresses of the safebrowsing
+// bootstrap DNS resolvers.
+var safeBrowsingResolvers = upstream.StaticResolver{
+	netip.MustParseAddr("94.140.14.15"),
+	netip.MustParseAddr("94.140.15.16"),
+	netip.MustParseAddr("2a10:50c0::bad1:ff"),
+	netip.MustParseAddr("2a10:50c0::bad2:ff"),
+}
+
 // setupDNSFilteringConf sets up DNS filtering configuration settings.  All
 // arguments except hc must not be nil.
 func setupDNSFilteringConf(
@@ -472,18 +481,9 @@ func setupDNSFilteringConf(
 	cacheTime := time.Duration(conf.CacheTime) * time.Minute
 
 	upsOpts := &upstream.Options{
-		Logger:  aghslog.NewForUpstream(baseLogger, aghslog.UpstreamTypeService),
-		Timeout: dnsTimeout,
-		Bootstrap: upstream.StaticResolver{
-			// 94.140.14.15.
-			netip.AddrFrom4([4]byte{94, 140, 14, 15}),
-			// 94.140.14.16.
-			netip.AddrFrom4([4]byte{94, 140, 14, 16}),
-			// 2a10:50c0::bad1:ff.
-			netip.AddrFrom16([16]byte{42, 16, 80, 192, 12: 186, 209, 0, 255}),
-			// 2a10:50c0::bad2:ff.
-			netip.AddrFrom16([16]byte{42, 16, 80, 192, 12: 186, 210, 0, 255}),
-		},
+		Logger:    aghslog.NewForUpstream(baseLogger, aghslog.UpstreamTypeService),
+		Timeout:   dnsTimeout,
+		Bootstrap: safeBrowsingResolvers,
 	}
 
 	sbUps, err := upstream.AddressToUpstream(defaultSafeBrowsingServer, upsOpts)
