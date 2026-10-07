@@ -1,12 +1,12 @@
 'body':
   - 'attributes':
       'description': >
-        Please make sure that the issue is not a duplicate or a question. If it's a duplicate, please react to the original issue with a thumbs up.  If it's a question, please post it to the GitHub Discussions page.
+        Please make sure that the issue is not a duplicate or a question. If it's a duplicate, please react to the original issue with a thumbs up. If it's a question, please post it to the GitHub Discussions page.
 
       'label': 'Prerequisites'
       'options':
         - 'label': >
-            I have checked the [Wiki](https://github.com/AdguardTeam/AdGuardHome/wiki) and [Discussions](https://github.com/AdguardTeam/AdGuardHome/discussions/categories/q-a) and found no answer
+            I have checked the [AdGuard DNS Knowledge Base](https://adguard-dns.io/kb/adguard-home/overview/) and [Discussions](https://github.com/AdguardTeam/AdGuardHome/discussions/categories/q-a) and found no answer
 
           'required': true
         - 'label': >
@@ -18,14 +18,14 @@
 
           'required': true
         - 'label': >
-            I have set up AdGuard Home correctly and [configured clients to use it](https://github.com/AdguardTeam/AdGuardHome/wiki/Clients). (Use the [Discussions](https://github.com/AdguardTeam/AdGuardHome/discussions/categories/q-a) for help with installing and configuring clients.)
+            I have set up AdGuard Home correctly and [configured clients to use it](https://adguard-dns.io/kb/adguard-home/clients/). (Use the [Discussions](https://github.com/AdguardTeam/AdGuardHome/discussions/categories/q-a) for help with installing and configuring clients.)
 
           'required': true
     'id': 'prerequisites'
     'type': 'checkboxes'
   - 'attributes':
       'description': 'On which Platform does the issue occur?'
-      'label': 'Platform (OS and CPU architecture)'
+      'label': 'Platform (OS and CPU Architecture)'
       # NOTE: Keep the 386 at the bottom for each OS, because a lot of people
       # Seem to confuse them with AMD64, which is what they actually need.
       'options':
@@ -85,7 +85,7 @@
       'required': true
   - 'attributes':
       'description': 'What version of AdGuard Home are you using?'
-      'label': 'AdGuard Home version'
+      'label': 'AdGuard Home Version'
     'id': 'version'
     'type': 'input'
     'validations':
@@ -110,7 +110,7 @@
       'description': >
         What did you expect to see?  Please add a description and/or screenshots, if applicable.
 
-      'label': 'Expected result'
+      'label': 'Expected Result'
       'placeholder': >
         What did you expect to see?
 
@@ -120,9 +120,9 @@
       'required': true
   - 'attributes':
       'description': >
-        What happened instead?  Please add a description and/or screenshots, if applicable.
+        What happened instead? Please add a description and/or screenshots, if applicable.
 
-      'label': 'Actual result'
+      'label': 'Actual Result'
       'placeholder': >
         What did you see instead?
 
@@ -132,9 +132,9 @@
       'required': true
   - 'attributes':
       'description': >
-        Please add additional information, such as non-standard OS or port, here.  You can also put screenshots here, if applicable.  For example, it is better to copy and paste text from a terminal instead of posting a screenshot of the terminal.
+        Please add additional information, such as non-standard OS or port, here. You can also put screenshots here, if applicable.  For example, it is better to copy and paste text from a terminal instead of posting a screenshot of the terminal.
 
-      'label': 'Additional information and/or screenshots'
+      'label': 'Additional Information and/or Screenshots'
       'placeholder': >
         Additional OS information, screenshots of the UI, etc.
 
@@ -145,7 +145,7 @@
 # NOTE: GitHub limits the description length to 200 characters.  Also, Markdown
 # doesn't work here.
 'description': |
-  For help, use the Discussions section instead.  Write the title in English
-  to make it easier for other people to search for duplicates.  (Any language
+  For help, use the Discussions section instead. Write the title in English
+  to make it easier for other people to search for duplicates. (Any language
   is fine in the body.)
 'name': 'Bug'
