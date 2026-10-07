@@ -1,6 +1,7 @@
 package configmgr_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/configmgr"
@@ -29,25 +30,25 @@ func TestDoHConfig_Validate_routes(t *testing.T) {
 		},
 	}, {
 		name:        "empty",
-		wantMessage: `routes: route "" at index 0: http: invalid pattern`,
+		wantMessage: `routes: route at index 0: "": http: invalid pattern`,
 		routes:      []string{""},
 	}, {
 		name: "bad_wildcard",
-		wantMessage: `routes: route "GET /dns-query/{ClientID" at index 0: parsing ` +
+		wantMessage: `routes: route at index 0: "GET /dns-query/{ClientID": parsing ` +
 			`"GET /dns-query/{ClientID"`,
 		routes: []string{
 			"GET /dns-query/{ClientID",
 		},
 	}, {
 		name:        "duplicate",
-		wantMessage: `routes: route "GET /dns-query" at index 1: pattern "GET /dns-query"`,
+		wantMessage: `routes: route at index 1: "GET /dns-query": pattern "GET /dns-query"`,
 		routes: []string{
 			"GET /dns-query",
 			"GET /dns-query",
 		},
 	}, {
 		name: "conflict",
-		wantMessage: `routes: route "GET /dns-query/{Other}" at index 1: pattern ` +
+		wantMessage: `routes: route at index 1: "GET /dns-query/{Other}": pattern ` +
 			`"GET /dns-query/{Other}"`,
 		routes: []string{
 			"GET /dns-query/{ClientID}",
@@ -71,6 +72,7 @@ func TestDoHConfig_Validate_routes(t *testing.T) {
 			}
 
 			require.Error(t, err)
+			fmt.Println(err)
 			assert.Contains(t, err.Error(), tc.wantMessage)
 		})
 	}

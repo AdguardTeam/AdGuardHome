@@ -85,7 +85,7 @@ func validateRoutes(routes []string) (err error) {
 	var errs []error
 	for i, route := range routes {
 		if err = validateRoute(mux, route); err != nil {
-			errs = append(errs, fmt.Errorf("route %q at index %d: %w", route, i, err))
+			errs = append(errs, fmt.Errorf("route at index %d: %q: %w", i, route, err))
 		}
 	}
 
@@ -95,6 +95,8 @@ func validateRoutes(routes []string) (err error) {
 // validateRoute tries registering route on mux, converting the panic that
 // [http.ServeMux.Handle] raises for an invalid or conflicting pattern into an
 // error.  mux must not be nil.
+//
+// TODO(a.garipov):  Find out better solution.
 func validateRoute(mux *http.ServeMux, route string) (err error) {
 	defer func() {
 		err = errors.FromRecovered(recover())
