@@ -8,6 +8,7 @@ import (
 	"net/netip"
 	"testing"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/configmgr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"howett.net/plist"
@@ -24,7 +25,7 @@ func setupDNSIPs(tb testing.TB) {
 	})
 
 	config = &configuration{
-		DNS: dnsConfig{
+		DNS: configmgr.DNSConfig{
 			BindHosts: []netip.Addr{netip.IPv4Unspecified()},
 			Port:      defaultPortDNS,
 		},

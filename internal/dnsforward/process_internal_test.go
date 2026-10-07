@@ -79,7 +79,7 @@ func TestServer_ProcessInitial(t *testing.T) {
 			c := ServerConfig{
 				TLSConf:          &TLSConfig{},
 				AAAADisabled:     tc.aaaaDisabled,
-				UpstreamMode:     UpstreamModeLoadBalance,
+				UpstreamMode:     proxy.UpstreamModeLoadBalance,
 				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 				ClientsContainer: EmptyClientsContainer{},
 				ServePlainDNS:    true,
@@ -181,7 +181,7 @@ func TestServer_ProcessFilteringAfterResponse(t *testing.T) {
 			c := ServerConfig{
 				TLSConf:          &TLSConfig{},
 				AAAADisabled:     tc.aaaaDisabled,
-				UpstreamMode:     UpstreamModeLoadBalance,
+				UpstreamMode:     proxy.UpstreamModeLoadBalance,
 				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 				ClientsContainer: EmptyClientsContainer{},
 				ServePlainDNS:    true,
@@ -339,7 +339,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 				},
 				ServerConfig{
 					HandleDDR:        tc.ddrEnabled,
-					UpstreamMode:     UpstreamModeLoadBalance,
+					UpstreamMode:     proxy.UpstreamModeLoadBalance,
 					EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 					ClientsContainer: EmptyClientsContainer{},
 					TLSConf: &TLSConfig{
@@ -677,7 +677,7 @@ func TestServer_ProcessUpstream_localPTR(t *testing.T) {
 				UDPListenAddrs:    []*net.UDPAddr{{}},
 				TCPListenAddrs:    []*net.TCPAddr{{}},
 				TLSConf:           &TLSConfig{},
-				UpstreamMode:      UpstreamModeLoadBalance,
+				UpstreamMode:      proxy.UpstreamModeLoadBalance,
 				EDNSClientSubnet:  &EDNSClientSubnet{Enabled: false},
 				ClientsContainer:  EmptyClientsContainer{},
 				UsePrivateRDNS:    true,
@@ -706,7 +706,7 @@ func TestServer_ProcessUpstream_localPTR(t *testing.T) {
 				UDPListenAddrs:    []*net.UDPAddr{{}},
 				TCPListenAddrs:    []*net.TCPAddr{{}},
 				TLSConf:           &TLSConfig{},
-				UpstreamMode:      UpstreamModeLoadBalance,
+				UpstreamMode:      proxy.UpstreamModeLoadBalance,
 				EDNSClientSubnet:  &EDNSClientSubnet{Enabled: false},
 				ClientsContainer:  EmptyClientsContainer{},
 				UsePrivateRDNS:    false,

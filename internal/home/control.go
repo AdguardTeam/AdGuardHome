@@ -12,7 +12,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
-	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/httphdr"
 	"github.com/AdguardTeam/golibs/netutil"
@@ -134,13 +133,10 @@ func (web *webAPI) handleStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var (
-		fltConf           *dnsforward.Config
 		protDisabledUntil *time.Time
 		protEnabled       bool
 	)
 	if globalContext.dnsServer != nil {
-		fltConf = &dnsforward.Config{}
-		globalContext.dnsServer.WriteDiskConfig(fltConf)
 		protEnabled, protDisabledUntil = globalContext.dnsServer.UpdatedProtectionStatus(ctx)
 	}
 
