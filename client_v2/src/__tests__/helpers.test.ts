@@ -2,6 +2,7 @@ import { describe, expect, test, afterEach, vi, beforeEach, it } from 'vitest';
 
 import {
     sortIp,
+    sortIpOrString,
     countClientsStatistics,
     findAddressType,
     subnetMaskToBitMask,
@@ -370,6 +371,49 @@ describe('sortIp', () => {
 
             expect(arr.sort(sortIp)).toStrictEqual(sortedArr);
         });
+    });
+});
+
+describe('sortIpOrString', () => {
+    test('sorts ip addresses numerically, not lexicographically', () => {
+        const arr = ['10.0.0.10', '10.0.0.2', '10.0.0.1', '10.0.0.35', '10.0.0.123', '10.0.0.6'];
+        const sortedArr = [
+            '10.0.0.1',
+            '10.0.0.2',
+            '10.0.0.6',
+            '10.0.0.10',
+            '10.0.0.35',
+            '10.0.0.123',
+        ];
+
+        expect(arr.sort(sortIpOrString)).toStrictEqual(sortedArr);
+    });
+
+    test('sorts mixed ipv4, ipv6, and cidr values like sortIp', () => {
+        const arr = ['2001:db8::1', '192.168.1.1/24', '192.168.1.2', '::1', '192.168.1.1'];
+        const sortedArr = ['192.168.1.1/24', '192.168.1.1', '192.168.1.2', '::1', '2001:db8::1'];
+
+        expect(arr.sort(sortIpOrString)).toStrictEqual(sortedArr);
+    });
+
+    test('falls back to case-insensitive string comparison for non-ip values', () => {
+        const arr = ['iPhone', 'android', 'MacBook', 'aPhone'];
+        const sortedArr = ['android', 'aPhone', 'iPhone', 'MacBook'];
+
+        expect(arr.sort(sortIpOrString)).toStrictEqual(sortedArr);
+    });
+
+    test('sorts a mix of ip addresses and names without warnings', () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const arr = ['10.0.0.2', 'server', '10.0.0.1'];
+        const sortedArr = ['10.0.0.1', '10.0.0.2', 'server'];
+
+        try {
+            expect(arr.sort(sortIpOrString)).toStrictEqual(sortedArr);
+            expect(warn).not.toHaveBeenCalled();
+        } finally {
+            warn.mockRestore();
+        }
     });
 });
 

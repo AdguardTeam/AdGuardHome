@@ -993,6 +993,42 @@ export const sortIp = (a: string, b: string): number => {
 };
 
 /**
+ * Checks whether the value can be handled by `sortIp`: a valid IP address or
+ * a CIDR range.
+ * @param value - The string to check.
+ * @returns true if the value is an IP address or a CIDR range.
+ */
+const isIpOrCidr = (value: string): boolean => {
+    if (ipaddr.isValid(value)) {
+        return true;
+    }
+
+    try {
+        ipaddr.parseCIDR(value);
+        return true;
+    } catch (_e) {
+        return false;
+    }
+};
+
+/**
+ * Compare function for values that are either IP addresses/CIDR ranges or
+ * arbitrary strings, such as client names or identifiers.  IP-like values are
+ * compared numerically; any other pair falls back to a case-insensitive
+ * string comparison.
+ * @param a
+ * @param b
+ * @returns {number} -1 | 0 | 1
+ */
+export const sortIpOrString = (a: string, b: string): number => {
+    if (isIpOrCidr(a) && isIpOrCidr(b)) {
+        return sortIp(a, b);
+    }
+
+    return a.toLowerCase().localeCompare(b.toLowerCase());
+};
+
+/**
  * @param {number} filterId
  * @returns {string}
  */
