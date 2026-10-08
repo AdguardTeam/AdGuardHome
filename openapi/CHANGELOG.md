@@ -4,6 +4,10 @@
 
 ## v0.107.79: API changes
 
+- The `rules` fields in `GET /control/filtering/check_host` and
+  `GET /control/querylog` now contain all effective basic blocking rules that
+  matched a blocked request.  The selected rule remains the first item.
+
 - Field `bootstrap_dns` in `POST /control/dns_config` now accepts comments.  A comment must start with the `#` symbol.
 
 - Fixed wrong property names: `enable` → `enabled` in the Parental status response, `protection_disabled_until` → `protection_disabled_duration` in `ServerStatus`, `ratelimit_subnet_subnet_len_ipv4` and `ratelimit_subnet_subnet_len_ipv6` in `DNSConfig`.
