@@ -19,6 +19,8 @@ export interface Stats {
     num_replaced_parental?: number;
     /** Average time in seconds on processing a DNS request */
     avg_processing_time?: number;
+    /** Average time in seconds that the upstream DNS servers took to respond */
+    avg_upstream_response_time?: number;
     top_queried_domains?: TopArrayEntry[];
     top_clients?: TopArrayEntry[];
     top_blocked_domains?: TopArrayEntry[];

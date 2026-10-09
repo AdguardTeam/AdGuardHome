@@ -53,7 +53,16 @@ type StatsResp struct {
 	NumReplacedSafesearch   uint64 `json:"num_replaced_safesearch"`
 	NumReplacedParental     uint64 `json:"num_replaced_parental"`
 
+	// AvgProcessingTime is the average time of processing a request by AdGuard
+	// Home itself, in seconds.  It covers every request, including the ones
+	// answered from the cache or blocked by a filter, which take almost no
+	// time, so it is normally much lower than AvgUpstreamResponseTime.
 	AvgProcessingTime float64 `json:"avg_processing_time"`
+
+	// AvgUpstreamResponseTime is the average time that the upstream DNS servers
+	// took to respond, in seconds.  Unlike AvgProcessingTime, it only covers
+	// the requests that have actually been sent to an upstream server.
+	AvgUpstreamResponseTime float64 `json:"avg_upstream_response_time"`
 }
 
 // handleStats is the handler for the GET /control/stats HTTP API.

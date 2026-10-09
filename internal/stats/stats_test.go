@@ -15,7 +15,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
-	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
@@ -83,19 +82,21 @@ func TestStats(t *testing.T) {
 			Client:         cliIPStr,
 			Result:         stats.RFiltered,
 			ProcessingTime: time.Microsecond * 123456,
-			UpstreamStats: []*proxy.UpstreamStatistics{{
-				Address:       respUpstream,
-				QueryDuration: time.Microsecond * 222222,
-			}},
 		}, {
 			Domain:         reqDomain,
 			Client:         cliIPStr,
 			Result:         stats.RNotFiltered,
 			ProcessingTime: time.Microsecond * 123456,
-			UpstreamStats: []*proxy.UpstreamStatistics{{
-				Address:       respUpstream,
-				QueryDuration: time.Microsecond * 222222,
-			}},
+		}}
+
+		upsEntries := []*stats.UpstreamEntry{{
+			Address:       respUpstream,
+			Domain:        reqDomain,
+			QueryDuration: time.Microsecond * 222222,
+		}, {
+			Address:       respUpstream,
+			Domain:        reqDomain,
+			QueryDuration: time.Microsecond * 222222,
 		}}
 
 		wantData := &stats.StatsResp{
@@ -127,10 +128,15 @@ func TestStats(t *testing.T) {
 			NumReplacedSafesearch:   0,
 			NumReplacedParental:     0,
 			AvgProcessingTime:       0.123456,
+			AvgUpstreamResponseTime: 0.222222,
 		}
 
 		for _, e := range entries {
 			s.Update(e)
+		}
+
+		for _, e := range upsEntries {
+			s.UpdateUpstream(e)
 		}
 
 		data := &stats.StatsResp{}
