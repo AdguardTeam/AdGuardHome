@@ -61,14 +61,12 @@ func (l *Lease) IsBlocked() (blocked bool) {
 	return bytes.Equal(l.HWAddr, blockedHardwareAddr)
 }
 
-// updateExpiry refreshes the lease expiry time to now plus ttl.  For static
-// leases, this operation is a no-op.
-func (l *Lease) updateExpiry(now time.Time, ttl time.Duration) {
-	if l.IsStatic {
-		return
+// setExpiry sets the lease expiry time to expiry.  For static leases, this
+// operation is a no-op.
+func (l *Lease) setExpiry(expiry time.Time) {
+	if !l.IsStatic {
+		l.Expiry = expiry
 	}
-
-	l.Expiry = now.Add(ttl)
 }
 
 // compareLeases is a helper function that sorts a slice of leases according to

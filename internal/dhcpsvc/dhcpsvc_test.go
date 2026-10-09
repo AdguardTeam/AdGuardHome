@@ -348,6 +348,28 @@ var (
 		IsStatic: false,
 	}
 
+	// testLease4Renewed is [testLease4Renewing] with its expiry extended by a
+	// full [testLeaseTTL] from [testCurrentTime], as expected after a
+	// successful renewal.
+	testLease4Renewed = &dhcpsvc.Lease{
+		IP:       testIPv4Renewing,
+		HWAddr:   testHWRenewing,
+		Expiry:   testExpiryDynamicLease,
+		Hostname: testLease4HostnameRenewing,
+		IsStatic: false,
+	}
+
+	// testLease4ExpiredRenewed is [testLease4Expired] with its expiry extended
+	// by a full [testLeaseTTL] from [testCurrentTime], as expected after a
+	// successful renew or init-reboot of an expired lease.
+	testLease4ExpiredRenewed = &dhcpsvc.Lease{
+		IP:       testIPv4Expired,
+		HWAddr:   testHWExpired,
+		Expiry:   testExpiryExpiredLease,
+		Hostname: testLease4HostnameExpired,
+		IsStatic: false,
+	}
+
 	// testLease6Dynamic is a common valid dynamic DHCPv6 lease for tests.
 	testLease6Dynamic = &dhcpsvc.Lease{
 		IP:       testIPv6Dynamic,

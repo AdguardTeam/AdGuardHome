@@ -140,7 +140,7 @@ func (iface *dhcpInterfaceV4) handleDiscover(
 			l.DebugContext(ctx, "different requested ip", "requested", reqIP, "lease", lease.IP)
 		}
 
-		lease.updateExpiry(now, iface.common.leaseTTL)
+		lease.setExpiry(now.Add(iface.common.leaseTTL))
 		iface.respondOffer(ctx, req, fd, lease, idOpt)
 
 		return
@@ -312,6 +312,13 @@ func (iface *dhcpInterfaceV4) handleInitReboot(
 
 	lease.Hostname = cmp.Or(hostname4(req), lease.Hostname)
 
+	// If the client has not requested a specific lease in the DHCPDISCOVER
+	// message and the client already has an assigned network address, the
+	// server returns the lease expiration time previously assigned to that
+	// address.
+	//
+	// See https://datatracker.ietf.org/doc/html/rfc2131#section-4.3.1.
+
 	err := iface.updateLease(ctx, lease)
 	if err != nil {
 		l.ErrorContext(ctx, "init-reboot request failed", slogutil.KeyError, err)
@@ -359,6 +366,12 @@ func (iface *dhcpInterfaceV4) handleRenew(
 	}
 
 	lease.Hostname = cmp.Or(hostname4(req), lease.Hostname)
+
+	// Update the lease's expiry so that the client extending the lease will not
+	// get an already-expired one.
+	//
+	// See https://datatracker.ietf.org/doc/html/rfc2131#section-4.3.2.
+	lease.setExpiry(iface.clock.Now().Add(iface.common.leaseTTL))
 
 	err := iface.updateLease(ctx, lease)
 	if err != nil {

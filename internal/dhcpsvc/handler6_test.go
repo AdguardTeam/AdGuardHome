@@ -159,37 +159,45 @@ func TestDHCPServer_ServeEther6_solicitExhausted(t *testing.T) {
 		defaultOptSolMaxRT,
 	)
 
-	testCases := []struct {
-		in   gopacket.Packet
-		name string
-	}{{
-		in:   newDHCPv6Solicit(t, testHWUnknown, testIPv6Unknown, false),
-		name: "advertise",
-	}, {
-		in:   newDHCPv6Solicit(t, testHWUnknown, testIPv6Unknown, true),
-		name: "rapid_commit",
-	}}
+	t.Run("advertise", func(t *testing.T) {
+		t.Parallel()
 
-	for _, tc := range testCases {
-		req := testutil.RequireTypeAssert[*layers.DHCPv6](t, tc.in.Layer(layers.LayerTypeDHCPv6))
-
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-
-			ndMgr, inCh, outCh := newTestNetworkDeviceManager(t, testIfaceAddrV6)
-			startTestDHCPServer(t, &dhcpsvc.Config{
-				Database:             db,
-				Interfaces:           ifacesConf,
-				Logger:               testLogger,
-				NetworkDeviceManager: ndMgr,
-				Enabled:              true,
-			})
-
-			testutil.RequireSend(t, inCh, tc.in, testTimeout)
-
-			assertValidResponse6(t, req, outCh, wantOpts)
+		ndMgr, inCh, outCh := newTestNetworkDeviceManager(t, testIfaceAddrV6)
+		startTestDHCPServer(t, &dhcpsvc.Config{
+			Database:             db,
+			Interfaces:           ifacesConf,
+			Logger:               testLogger,
+			NetworkDeviceManager: ndMgr,
+			Enabled:              true,
 		})
-	}
+
+		in := newDHCPv6Solicit(t, testHWUnknown, testIPv6Unknown, false)
+		req := testutil.RequireTypeAssert[*layers.DHCPv6](t, in.Layer(layers.LayerTypeDHCPv6))
+
+		testutil.RequireSend(t, inCh, in, testTimeout)
+
+		assertValidResponse6(t, req, outCh, wantOpts)
+	})
+
+	t.Run("rapid_commit", func(t *testing.T) {
+		t.Parallel()
+
+		ndMgr, inCh, outCh := newTestNetworkDeviceManager(t, testIfaceAddrV6)
+		startTestDHCPServer(t, &dhcpsvc.Config{
+			Database:             db,
+			Interfaces:           ifacesConf,
+			Logger:               testLogger,
+			NetworkDeviceManager: ndMgr,
+			Enabled:              true,
+		})
+
+		in := newDHCPv6Solicit(t, testHWUnknown, testIPv6Unknown, true)
+		req := testutil.RequireTypeAssert[*layers.DHCPv6](t, in.Layer(layers.LayerTypeDHCPv6))
+
+		testutil.RequireSend(t, inCh, in, testTimeout)
+
+		assertValidResponse6(t, req, outCh, wantOpts)
+	})
 }
 
 func TestDHCPServer_ServeEther6_solicitRapidCommit(t *testing.T) {
@@ -841,8 +849,8 @@ func TestDHCPServer_ServeEther6_release(t *testing.T) {
 		wantOpts: newWantDHCPv6Opts(
 			t,
 			testHWDynamic,
-			newOptStatusCode(t, layers.DHCPv6StatusCodeSuccess),
 			newOptIANAStatus(t, testIAID, layers.DHCPv6StatusCodeSuccess),
+			newOptStatusCode(t, layers.DHCPv6StatusCodeSuccess),
 			defaultOptPref,
 			defaultOptSolMaxRT,
 		),
@@ -853,8 +861,8 @@ func TestDHCPServer_ServeEther6_release(t *testing.T) {
 		wantOpts: newWantDHCPv6Opts(
 			t,
 			testHWStatic,
-			newOptStatusCode(t, layers.DHCPv6StatusCodeSuccess),
 			newOptIANAStatus(t, testIAID, layers.DHCPv6StatusCodeSuccess),
+			newOptStatusCode(t, layers.DHCPv6StatusCodeSuccess),
 			defaultOptPref,
 			defaultOptSolMaxRT,
 		),
@@ -866,6 +874,18 @@ func TestDHCPServer_ServeEther6_release(t *testing.T) {
 			t,
 			testHWUnknown,
 			newOptIANAStatus(t, testIAID, layers.DHCPv6StatusCodeNoBinding),
+			defaultOptPref,
+			defaultOptSolMaxRT,
+		),
+	}, {
+		in:   newDHCPv6ReleaseIAID(t, testHWDynamic, testIPv6Dynamic, 0),
+		want: testLease6Dynamic,
+		name: "success_zero_iaid",
+		wantOpts: newWantDHCPv6Opts(
+			t,
+			testHWDynamic,
+			newOptIANAStatus(t, 0, layers.DHCPv6StatusCodeSuccess),
+			newOptStatusCode(t, layers.DHCPv6StatusCodeSuccess),
 			defaultOptPref,
 			defaultOptSolMaxRT,
 		),
@@ -948,8 +968,8 @@ func TestDHCPServer_ServeEther6_decline(t *testing.T) {
 		wantOpts: newWantDHCPv6Opts(
 			t,
 			testHWDynamic,
-			newOptStatusCode(t, layers.DHCPv6StatusCodeSuccess),
 			newOptIANAStatus(t, testIAID, layers.DHCPv6StatusCodeSuccess),
+			newOptStatusCode(t, layers.DHCPv6StatusCodeSuccess),
 			defaultOptPref,
 			defaultOptSolMaxRT,
 		),
@@ -1260,13 +1280,25 @@ func newDHCPv6Info(
 func newDHCPv6Release(tb testing.TB, mac net.HardwareAddr, reqIP netip.Addr) (pkt gopacket.Packet) {
 	tb.Helper()
 
+	return newDHCPv6ReleaseIAID(tb, mac, reqIP, testIAID)
+}
+
+// newDHCPv6ReleaseIAID is like [newDHCPv6Release] but uses the given IAID.
+func newDHCPv6ReleaseIAID(
+	tb testing.TB,
+	mac net.HardwareAddr,
+	reqIP netip.Addr,
+	iaid uint32,
+) (pkt gopacket.Packet) {
+	tb.Helper()
+
 	opts := layers.DHCPv6Options{
 		newOptClientDUID(tb, mac),
 		newOptServerDUID(tb, testIfaceHWAddr),
 	}
 
 	if reqIP.Is6() {
-		opts = append(opts, newOptIANA(tb, testIAID, reqIP, testLeaseTTL))
+		opts = append(opts, newOptIANA(tb, iaid, reqIP, testLeaseTTL))
 	}
 
 	eth := newEthernetLayer(tb, mac, testIfaceHWAddr, layers.EthernetTypeIPv6)
