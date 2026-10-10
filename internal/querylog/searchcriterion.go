@@ -100,6 +100,10 @@ type searchCriterion struct {
 	// value rather than the part of it.  That is, equality and not containment.
 	// It is used by [ctTerm].
 	strict bool
+
+	// negative, if true, inverts the matching logic so that entries matching
+	// this criterion are excluded from results.
+	negative bool
 }
 
 func ctDomainOrClientCaseStrict(
@@ -152,11 +156,18 @@ func (c *searchCriterion) quickMatch(
 			name = cli.Name
 		}
 
+		var matched bool
 		if c.strict {
-			return ctDomainOrClientCaseStrict(c.value, c.asciiVal, clientID, name, host, ip)
+			matched = ctDomainOrClientCaseStrict(c.value, c.asciiVal, clientID, name, host, ip)
+		} else {
+			matched = ctDomainOrClientCaseNonStrict(c.value, c.asciiVal, clientID, name, host, ip)
 		}
 
-		return ctDomainOrClientCaseNonStrict(c.value, c.asciiVal, clientID, name, host, ip)
+		if c.negative {
+			return !matched
+		}
+
+		return matched
 	case ctFilteringStatus:
 		// Go on, as we currently don't do quick matches against
 		// filtering statuses.
@@ -182,18 +193,25 @@ func (c *searchCriterion) quickMatch(
 // match checks if the log entry matches this search criterion.  entry must not
 // be nil.
 func (c *searchCriterion) match(entry *logEntry) bool {
+	var matched bool
 	switch c.criterionType {
 	case ctTerm:
-		return c.ctDomainOrClientCase(entry)
+		matched = c.ctDomainOrClientCase(entry)
 	case ctFilteringStatus:
-		return c.ctFilteringStatusCase(entry.Result.Reason, entry.Result.IsFiltered)
+		matched = c.ctFilteringStatusCase(entry.Result.Reason, entry.Result.IsFiltered)
 	case ctReason:
 		// TODO(f.setrakov): Consider comparing [filtering.Reason] instead of
 		// strings.
-		return slices.Contains(c.values, entry.Result.Reason.String())
+		matched = slices.Contains(c.values, entry.Result.Reason.String())
+	default:
+		return false
 	}
 
-	return false
+	if c.negative {
+		return !matched
+	}
+
+	return matched
 }
 
 func (c *searchCriterion) ctDomainOrClientCase(e *logEntry) bool {
