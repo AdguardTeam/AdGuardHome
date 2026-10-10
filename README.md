@@ -118,9 +118,9 @@ If you're running **Linux,** there's a secure and easy way to install AdGuard Ho
 
 ### <a href="#guides" id="guides" name="guides">Guides</a>
 
-See our [Wiki][wiki].
+See our [AdGuard DNS Knowledge Base][AdGuard DNS Knowledge Base].
 
-[wiki]: https://github.com/AdguardTeam/AdGuardHome/wiki
+[AdGuard DNS Knowledge Base]: https://adguard-dns.io/kb/adguard-home/overview/
 
 ### <a href="#api" id="api" name="api">API</a>
 
