@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"syscall"
 	"testing"
 	"time"
 
@@ -127,6 +128,49 @@ func TestUpdater_internal(t *testing.T) {
 			assert.Equal(t, "AdGuardHome.yaml", string(d))
 		}))
 	}
+}
+
+func TestUpdater_replaceRollback(t *testing.T) {
+	wd := t.TempDir()
+	currentExeName := filepath.Join(wd, "AdGuardHome")
+	updateExeName := filepath.Join(t.TempDir(), "AdGuardHome")
+	backupDir := filepath.Join(wd, "agh-backup")
+	backupExeName := filepath.Join(backupDir, "AdGuardHome")
+
+	require.NoError(t, os.WriteFile(currentExeName, []byte("current"), 0o755))
+	require.NoError(t, os.WriteFile(updateExeName, []byte("update"), 0o755))
+	require.NoError(t, os.Mkdir(backupDir, 0o755))
+
+	u := &Updater{
+		logger:         slogutil.NewDiscardLogger(),
+		goos:           "linux",
+		workDir:        wd,
+		updateDir:      filepath.Dir(updateExeName),
+		currentExeName: currentExeName,
+		updateExeName:  updateExeName,
+		backupExeName:  backupExeName,
+	}
+
+	renameCalls := 0
+	u.rename = func(oldPath, newPath string) (err error) {
+		renameCalls++
+		if renameCalls == 2 {
+			return syscall.EXDEV
+		}
+
+		return os.Rename(oldPath, newPath)
+	}
+
+	err := u.replace(newCtx(t))
+	assert.ErrorIs(t, err, syscall.EXDEV)
+	assert.Equal(t, 3, renameCalls)
+
+	got, err := os.ReadFile(currentExeName)
+	require.NoError(t, err)
+	assert.Equal(t, "current", string(got))
+
+	_, err = os.Stat(backupExeName)
+	assert.ErrorIs(t, err, os.ErrNotExist)
 }
 
 // newCtx is a helper that returns a new context with a timeout.
