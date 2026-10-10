@@ -79,11 +79,17 @@ func (d *DNSFilter) handleRewriteAdd(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	added := false
 	func() {
 		d.confMu.Lock()
 		defer d.confMu.Unlock()
 
+		if slices.ContainsFunc(d.conf.Rewrites, rw.equal) {
+			return
+		}
+
 		d.conf.Rewrites = append(d.conf.Rewrites, rw)
+		added = true
 		l.DebugContext(
 			ctx,
 			"added rewrite element",
@@ -93,7 +99,9 @@ func (d *DNSFilter) handleRewriteAdd(w http.ResponseWriter, r *http.Request) {
 		)
 	}()
 
-	d.conf.ConfModifier.Apply(ctx)
+	if added {
+		d.conf.ConfModifier.Apply(ctx)
+	}
 }
 
 // handleRewriteDelete is the handler for the POST /control/rewrite/delete HTTP
