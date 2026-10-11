@@ -770,9 +770,6 @@ func (s *Server) handleCacheClear(w http.ResponseWriter, _ *http.Request) {
 
 // cacheInfoJSON is the response to the GET /control/cache_info HTTP API.
 type cacheInfoJSON struct {
-	// Enabled shows if the DNS cache is enabled.
-	Enabled bool `json:"enabled"`
-
 	// Entries is the number of entries currently stored in the DNS cache.
 	Entries uint64 `json:"entries"`
 
@@ -783,6 +780,9 @@ type cacheInfoJSON struct {
 	// MaxSizeBytes is the maximum size of the data that can be stored in the
 	// DNS cache, in bytes.
 	MaxSizeBytes uint64 `json:"max_size_bytes"`
+
+	// Enabled shows if the DNS cache is enabled.
+	Enabled bool `json:"enabled"`
 }
 
 // handleCacheInfo is the handler for the GET /control/cache_info HTTP API.
@@ -790,14 +790,7 @@ func (s *Server) handleCacheInfo(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	l := s.logger
 
-	var resp *cacheInfoJSON
-	var err error
-	func() {
-		s.serverLock.RLock()
-		defer s.serverLock.RUnlock()
-
-		resp, err = s.cacheInfo()
-	}()
+	resp, err := s.cacheInfo()
 	if err != nil {
 		aghhttp.ErrorAndLog(
 			ctx,
@@ -815,9 +808,12 @@ func (s *Server) handleCacheInfo(w http.ResponseWriter, r *http.Request) {
 	aghhttp.WriteJSONResponseOK(ctx, l, w, r, resp)
 }
 
-// cacheInfo returns the current state of the DNS cache.  s.serverLock is
-// expected to be locked.
+// cacheInfo returns the current state of the DNS cache.  It's safe for
+// concurrent use.
 func (s *Server) cacheInfo() (info *cacheInfoJSON, err error) {
+	s.serverLock.RLock()
+	defer s.serverLock.RUnlock()
+
 	info = &cacheInfoJSON{
 		Enabled: s.conf.CacheEnabled,
 	}

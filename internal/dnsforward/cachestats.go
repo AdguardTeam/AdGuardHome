@@ -24,16 +24,21 @@ type cacheStats struct {
 	size uint64
 }
 
+// add adds the statistics of a single cache to cs.  cs must not be nil.
+func (cs *cacheStats) add(st glcache.Stats) {
+	cs.entries += uint64(max(st.Count, 0))
+	cs.size += uint64(max(st.Size, 0))
+}
+
 // proxyCacheStats returns the current state of the general and the subnet
 // caches of p.  It returns a zero cacheStats if p has no cache.  p must not be
 // nil.
 //
-// dnsproxy doesn't provide any API to inspect its cache, so the unexported
-// fields are accessed using reflection.  The layout is checked by tests, so a
-// dnsproxy update that changes it is detected early.  This is the only reason
-// this file is excluded from the blocklisted imports check in go-lint.sh.
-//
-// TODO:  Use the public API when dnsproxy provides one.
+// Packages reflect and unsafe are used here, because dnsproxy doesn't provide
+// any API to inspect its cache, so its unexported fields have to be read
+// directly.  The layout is checked by tests, so a dnsproxy update that changes
+// it is detected early.  This is also the reason this file is excluded from
+// the blocklisted imports check in go-lint.sh.
 func proxyCacheStats(p *proxy.Proxy) (cs cacheStats, err error) {
 	cacheField := reflect.ValueOf(p).Elem().FieldByName("cache")
 	if !cacheField.IsValid() || cacheField.Kind() != reflect.Pointer {
@@ -43,19 +48,19 @@ func proxyCacheStats(p *proxy.Proxy) (cs cacheStats, err error) {
 	}
 
 	c := cacheField.Elem()
-	for _, names := range [...][2]string{
-		{"items", "itemsLock"},
-		{"itemsWithSubnet", "itemsWithSubnetLock"},
-	} {
-		var st glcache.Stats
-		st, err = lockedCacheStats(c, names[0], names[1])
-		if err != nil {
-			return cacheStats{}, err
-		}
 
-		cs.entries += uint64(max(st.Count, 0))
-		cs.size += uint64(max(st.Size, 0))
+	general, err := lockedCacheStats(c, "items", "itemsLock")
+	if err != nil {
+		return cacheStats{}, err
 	}
+
+	subnet, err := lockedCacheStats(c, "itemsWithSubnet", "itemsWithSubnetLock")
+	if err != nil {
+		return cacheStats{}, err
+	}
+
+	cs.add(general)
+	cs.add(subnet)
 
 	return cs, nil
 }
@@ -63,15 +68,20 @@ func proxyCacheStats(p *proxy.Proxy) (cs cacheStats, err error) {
 // lockedCacheStats returns the statistics of the [glcache.Cache] stored in the
 // field of c named itemsName, which is protected by the [*sync.RWMutex] stored
 // in the field named lockName.  It returns zero statistics if the cache is nil.
-func lockedCacheStats(c reflect.Value, itemsName, lockName string) (st glcache.Stats, err error) {
-	items, ok := exportedField[glcache.Cache](c, itemsName)
+// c must be an addressable struct value.
+func lockedCacheStats(
+	c reflect.Value,
+	itemsName string,
+	lockName string,
+) (st glcache.Stats, err error) {
+	items, ok := fieldValue[glcache.Cache](c, itemsName)
 	if !ok {
 		return glcache.Stats{}, errCacheLayout
 	} else if items == nil {
 		return glcache.Stats{}, nil
 	}
 
-	mu, ok := exportedField[*sync.RWMutex](c, lockName)
+	mu, ok := fieldValue[*sync.RWMutex](c, lockName)
 	if !ok || mu == nil {
 		return glcache.Stats{}, errCacheLayout
 	}
@@ -84,13 +94,15 @@ func lockedCacheStats(c reflect.Value, itemsName, lockName string) (st glcache.S
 	return items.Stats(), nil
 }
 
-// exportedField returns the value of the possibly unexported field of the
+// fieldValue returns the value of the possibly unexported field of the
 // addressable struct value v with the given name.  ok is false if there is no
 // such field or it has a type other than T.
-func exportedField[T any](v reflect.Value, name string) (val T, ok bool) {
+func fieldValue[T any](v reflect.Value, name string) (val T, ok bool) {
 	f := v.FieldByName(name)
 	if !f.IsValid() || !f.CanAddr() || f.Type() != reflect.TypeFor[T]() {
-		return val, false
+		var zero T
+
+		return zero, false
 	}
 
 	// #nosec G103 -- The field is addressable and its type has been checked

@@ -494,29 +494,29 @@ func TestDNSForwardHTTP_handleCacheInfo(t *testing.T) {
 	const cacheSize = 4096
 
 	testCases := []struct {
-		want    cacheInfoJSON
 		name    string
+		want    cacheInfoJSON
 		cacheOn bool
 		ecsOn   bool
 	}{{
-		want:    cacheInfoJSON{},
 		name:    "disabled",
+		want:    cacheInfoJSON{},
 		cacheOn: false,
 		ecsOn:   false,
 	}, {
+		name: "enabled",
 		want: cacheInfoJSON{
-			Enabled:      true,
 			MaxSizeBytes: cacheSize,
+			Enabled:      true,
 		},
-		name:    "enabled",
 		cacheOn: true,
 		ecsOn:   false,
 	}, {
+		name: "enabled_ecs",
 		want: cacheInfoJSON{
-			Enabled:      true,
 			MaxSizeBytes: 2 * cacheSize,
+			Enabled:      true,
 		},
-		name:    "enabled_ecs",
 		cacheOn: true,
 		ecsOn:   true,
 	}}
@@ -543,7 +543,6 @@ func TestDNSForwardHTTP_handleCacheInfo(t *testing.T) {
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest(http.MethodGet, "/control/cache_info", nil)
 			s.handleCacheInfo(w, r)
-
 			require.Equal(t, http.StatusOK, w.Code)
 
 			got := cacheInfoJSON{}
