@@ -34,8 +34,10 @@ export const GeneralStatistics = (props: Props) => {
     const safesearchPercent = () =>
         props.numDnsQueries > 0 ? (props.numReplacedSafesearch / props.numDnsQueries) * 100 : 0;
 
-    // Blocked and rewritten queries never reach the cache, so the hit ratio is
-    // relative to the cache lookups rather than to all the queries.
+    /**
+     * Blocked and rewritten queries never reach the cache, so the hit ratio is
+     * relative to the cache lookups rather than to all the queries.
+     */
     const cacheHits = () => props.numCacheHits ?? 0;
     const cacheLookups = () => cacheHits() + (props.numCacheMisses ?? 0);
     const cacheHitsPercent = () =>

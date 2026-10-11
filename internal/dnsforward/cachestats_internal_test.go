@@ -40,24 +40,24 @@ func TestProxyCacheStats(t *testing.T) {
 
 	testCases := []struct {
 		name        string
+		wantEntries uint64
 		cacheOn     bool
 		ecsOn       bool
-		wantEntries uint64
 	}{{
 		name:        "disabled",
+		wantEntries: 0,
 		cacheOn:     false,
 		ecsOn:       false,
-		wantEntries: 0,
 	}, {
 		name:        "enabled",
+		wantEntries: 1,
 		cacheOn:     true,
 		ecsOn:       false,
-		wantEntries: 1,
 	}, {
 		name:        "enabled_ecs",
+		wantEntries: 1,
 		cacheOn:     true,
 		ecsOn:       true,
-		wantEntries: 1,
 	}}
 
 	for _, tc := range testCases {

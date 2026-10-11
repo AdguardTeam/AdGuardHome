@@ -182,16 +182,16 @@ type unitDB struct {
 	// NTotal is the total number of requests.
 	NTotal uint64
 
-	// TimeAvg is the average of processing times in microseconds of all the
-	// requests in the unit.
-	TimeAvg uint32
-
 	// NCacheHits is the number of requests answered from the DNS cache.
 	NCacheHits uint64
 
 	// NCacheMisses is the number of requests sent to the upstream servers
 	// since they were not found in the DNS cache.
 	NCacheMisses uint64
+
+	// TimeAvg is the average of processing times in microseconds of all the
+	// requests in the unit.
+	TimeAvg uint32
 }
 
 // newUnitID is the default UnitIDGenFunc that generates the unique id hourly.

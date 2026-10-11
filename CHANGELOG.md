@@ -20,7 +20,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Added
 
-- DNS cache statistics on the dashboard: the number and the percentage of cache hits, the number of cache entries, and the cache memory usage.  See `openapi/CHANGELOG.md`.
+- DNS cache statistics on the dashboard: the number and the percentage of cache hits, the number of cache entries, and the cache memory usage. See `openapi/CHANGELOG.md`.
 
 ### Security
 
