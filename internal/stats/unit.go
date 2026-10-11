@@ -126,6 +126,13 @@ type unit struct {
 	// timeSum stores the sum of processing time in microseconds of each request
 	// written by the unit.
 	timeSum uint64
+
+	// nCacheHits stores the number of requests answered from the DNS cache.
+	nCacheHits uint64
+
+	// nCacheMisses stores the number of requests that were not found in the
+	// DNS cache and were sent to the upstream servers.
+	nCacheMisses uint64
 }
 
 // newUnit allocates the new *unit.
@@ -178,6 +185,13 @@ type unitDB struct {
 	// TimeAvg is the average of processing times in microseconds of all the
 	// requests in the unit.
 	TimeAvg uint32
+
+	// NCacheHits is the number of requests answered from the DNS cache.
+	NCacheHits uint64
+
+	// NCacheMisses is the number of requests sent to the upstream servers
+	// since they were not found in the DNS cache.
+	NCacheMisses uint64
 }
 
 // newUnitID is the default UnitIDGenFunc that generates the unique id hourly.
@@ -270,6 +284,8 @@ func (u *unit) serialize() (udb *unitDB) {
 		UpstreamsResponses: convertMapToSlice(u.upstreamsResponses, maxUpstreams),
 		UpstreamsTimeSum:   convertMapToSlice(u.upstreamsTimeSum, maxUpstreams),
 		TimeAvg:            timeAvg,
+		NCacheHits:         u.nCacheHits,
+		NCacheMisses:       u.nCacheMisses,
 	}
 }
 
@@ -312,6 +328,8 @@ func (u *unit) deserialize(udb *unitDB) {
 	u.upstreamsResponses = convertSliceToMap(udb.UpstreamsResponses)
 	u.upstreamsTimeSum = convertSliceToMap(udb.UpstreamsTimeSum)
 	u.timeSum = uint64(udb.TimeAvg) * udb.NTotal
+	u.nCacheHits = udb.NCacheHits
+	u.nCacheMisses = udb.NCacheMisses
 }
 
 // add adds new data to u.  It's safe for concurrent use.
@@ -328,6 +346,8 @@ func (u *unit) add(e *Entry) {
 	u.timeSum += pt
 	u.nTotal++
 
+	u.addCacheStats(e.UpstreamStats)
+
 	for _, s := range e.UpstreamStats {
 		if s.IsCached || s.Error != nil {
 			continue
@@ -337,6 +357,25 @@ func (u *unit) add(e *Entry) {
 		u.upstreamsResponses[addr]++
 		u.upstreamsTimeSum[addr] += uint64(s.QueryDuration.Microseconds())
 	}
+}
+
+// addCacheStats counts the request with the given upstream statistics as either
+// a cache hit or a cache miss.  Requests without upstream statistics, e.g.
+// blocked or rewritten ones, never reach the DNS cache and aren't counted.
+func (u *unit) addCacheStats(upsStats []*proxy.UpstreamStatistics) {
+	if len(upsStats) == 0 {
+		return
+	}
+
+	for _, s := range upsStats {
+		if s.IsCached {
+			u.nCacheHits++
+
+			return
+		}
+	}
+
+	u.nCacheMisses++
 }
 
 // flushUnitToDB puts udb to the database at id.
@@ -464,6 +503,8 @@ func (s *StatsCtx) dataFromUnits(units []*unitDB, curID uint32) (resp *StatsResp
 		sum.NResult[RSafeBrowsing] += u.NResult[RSafeBrowsing]
 		sum.NResult[RSafeSearch] += u.NResult[RSafeSearch]
 		sum.NResult[RParental] += u.NResult[RParental]
+		sum.NCacheHits += u.NCacheHits
+		sum.NCacheMisses += u.NCacheMisses
 	}
 
 	resp.NumDNSQueries = sum.NTotal
@@ -471,6 +512,8 @@ func (s *StatsCtx) dataFromUnits(units []*unitDB, curID uint32) (resp *StatsResp
 	resp.NumReplacedSafebrowsing = sum.NResult[RSafeBrowsing]
 	resp.NumReplacedSafesearch = sum.NResult[RSafeSearch]
 	resp.NumReplacedParental = sum.NResult[RParental]
+	resp.NumCacheHits = sum.NCacheHits
+	resp.NumCacheMisses = sum.NCacheMisses
 
 	if timeN != 0 {
 		resp.AvgProcessingTime = microsecondsToSeconds(float64(sum.TimeAvg / timeN))

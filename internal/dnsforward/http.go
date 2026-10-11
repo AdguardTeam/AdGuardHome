@@ -768,6 +768,82 @@ func (s *Server) handleCacheClear(w http.ResponseWriter, _ *http.Request) {
 	_, _ = io.WriteString(w, "OK")
 }
 
+// cacheInfoJSON is the response to the GET /control/cache_info HTTP API.
+type cacheInfoJSON struct {
+	// Enabled shows if the DNS cache is enabled.
+	Enabled bool `json:"enabled"`
+
+	// Entries is the number of entries currently stored in the DNS cache.
+	Entries uint64 `json:"entries"`
+
+	// SizeBytes is the size of the data currently stored in the DNS cache, in
+	// bytes.
+	SizeBytes uint64 `json:"size_bytes"`
+
+	// MaxSizeBytes is the maximum size of the data that can be stored in the
+	// DNS cache, in bytes.
+	MaxSizeBytes uint64 `json:"max_size_bytes"`
+}
+
+// handleCacheInfo is the handler for the GET /control/cache_info HTTP API.
+func (s *Server) handleCacheInfo(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	l := s.logger
+
+	var resp *cacheInfoJSON
+	var err error
+	func() {
+		s.serverLock.RLock()
+		defer s.serverLock.RUnlock()
+
+		resp, err = s.cacheInfo()
+	}()
+	if err != nil {
+		aghhttp.ErrorAndLog(
+			ctx,
+			l,
+			r,
+			w,
+			http.StatusInternalServerError,
+			"getting cache info: %s",
+			err,
+		)
+
+		return
+	}
+
+	aghhttp.WriteJSONResponseOK(ctx, l, w, r, resp)
+}
+
+// cacheInfo returns the current state of the DNS cache.  s.serverLock is
+// expected to be locked.
+func (s *Server) cacheInfo() (info *cacheInfoJSON, err error) {
+	info = &cacheInfoJSON{
+		Enabled: s.conf.CacheEnabled,
+	}
+
+	if !info.Enabled || s.dnsProxy == nil {
+		return info, nil
+	}
+
+	// The subnet cache has the same maximum size as the general one.
+	info.MaxSizeBytes = uint64(s.conf.CacheSize)
+	if s.conf.EDNSClientSubnet.Enabled {
+		info.MaxSizeBytes *= 2
+	}
+
+	cs, err := proxyCacheStats(s.dnsProxy)
+	if err != nil {
+		// Don't wrap the error, since it's informative enough as is.
+		return nil, err
+	}
+
+	info.Entries = cs.entries
+	info.SizeBytes = cs.size
+
+	return info, nil
+}
+
 // protectionJSON is an object for /control/protection endpoint.
 type protectionJSON struct {
 	Enabled  bool `json:"enabled"`
@@ -833,6 +909,7 @@ func (s *Server) registerHandlers() {
 	s.conf.HTTPReg.Register(http.MethodPost, "/control/access/set", s.handleAccessSet)
 
 	s.conf.HTTPReg.Register(http.MethodPost, "/control/cache_clear", s.handleCacheClear)
+	s.conf.HTTPReg.Register(http.MethodGet, "/control/cache_info", s.handleCacheInfo)
 
 	webRegistered = true
 }

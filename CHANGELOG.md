@@ -18,6 +18,10 @@ See also the [v0.107.80 GitHub milestone][ms-v0.107.80].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Added
+
+- DNS cache statistics on the dashboard: the number and the percentage of cache hits, the number of cache entries, and the cache memory usage.  See `openapi/CHANGELOG.md`.
+
 ### Security
 
 - Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.27.1][go-1.27.1].
