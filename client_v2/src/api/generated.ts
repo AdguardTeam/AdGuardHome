@@ -5,6 +5,7 @@ import type {
     BlockedServicesAll,
     BlockedServicesArray,
     BlockedServicesSchedule,
+    CacheInfo,
     CheckConfigRequest,
     CheckConfigResponse,
     Client,
@@ -138,6 +139,20 @@ export const cacheClear = async (options?: RequestInit): Promise<void> => {
     return customFetch<void>(getCacheClearUrl(), {
         ...options,
         method: 'POST',
+    });
+};
+
+export const getCacheInfoUrl = () => {
+    return `control/cache_info`;
+};
+
+/**
+ * @summary Get the current state of the DNS cache
+ */
+export const cacheInfo = async (options?: RequestInit): Promise<CacheInfo> => {
+    return customFetch<CacheInfo>(getCacheInfoUrl(), {
+        ...options,
+        method: 'GET',
     });
 };
 

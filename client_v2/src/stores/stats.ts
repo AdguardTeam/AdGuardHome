@@ -6,6 +6,7 @@ import {
     putStatsConfig,
     statsReset,
     clientsSearch,
+    cacheInfo as fetchCacheInfo,
 } from 'panel/api/generated';
 import { addErrorToast, addSuccessToast } from './toasts';
 import intl from 'panel/common/intl';
@@ -20,6 +21,7 @@ import {
 } from 'panel/helpers/helpers';
 import type { GetStatsConfigResponse } from 'panel/api/model/getStatsConfigResponse';
 import type { ClientFindSubEntry } from 'panel/api/model/clientFindSubEntry';
+import type { CacheInfo } from 'panel/api/model/cacheInfo';
 
 type StatsState = {
     processingGetConfig: boolean;
@@ -48,6 +50,10 @@ type StatsState = {
     numReplacedParental: number;
     numReplacedSafebrowsing: number;
     numReplacedSafesearch: number;
+    numCacheHits: number;
+    numCacheMisses: number;
+    /** Live DNS cache state; null until the first successful request. */
+    cacheInfo: CacheInfo | null;
     avgProcessingTime: number;
     timeUnits: string;
     enabled: boolean;
@@ -80,6 +86,9 @@ const initialState: StatsState = {
     numReplacedParental: 0,
     numReplacedSafebrowsing: 0,
     numReplacedSafesearch: 0,
+    numCacheHits: 0,
+    numCacheMisses: 0,
+    cacheInfo: null,
     avgProcessingTime: 0,
     timeUnits: TIME_UNITS?.HOURS || 'hours',
     enabled: true,
@@ -118,6 +127,8 @@ export const getStats = async (period?: number) => {
             numReplacedParental: data.num_replaced_parental || 0,
             numReplacedSafebrowsing: data.num_replaced_safebrowsing || 0,
             numReplacedSafesearch: data.num_replaced_safesearch || 0,
+            numCacheHits: data.num_cache_hits || 0,
+            numCacheMisses: data.num_cache_misses || 0,
             avgProcessingTime: secondsToMilliseconds(data.avg_processing_time),
             timeUnits: data.time_units || initialState.timeUnits,
             topUpstreamsAvgTime: normalizeTopStats(data.top_upstreams_avg_time || []).map(
@@ -133,6 +144,15 @@ export const getStats = async (period?: number) => {
     } catch (error) {
         addErrorToast({ error });
         setState({ processingStats: false, statsInitialized: true });
+    }
+};
+
+export const getCacheInfo = async () => {
+    try {
+        const data = await fetchCacheInfo();
+        setState('cacheInfo', data);
+    } catch (error) {
+        addErrorToast({ error });
     }
 };
 

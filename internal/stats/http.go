@@ -53,6 +53,13 @@ type StatsResp struct {
 	NumReplacedSafesearch   uint64 `json:"num_replaced_safesearch"`
 	NumReplacedParental     uint64 `json:"num_replaced_parental"`
 
+	// NumCacheHits is the number of requests answered from the DNS cache.
+	NumCacheHits uint64 `json:"num_cache_hits"`
+
+	// NumCacheMisses is the number of requests sent to the upstream servers
+	// since they were not found in the DNS cache.
+	NumCacheMisses uint64 `json:"num_cache_misses"`
+
 	AvgProcessingTime float64 `json:"avg_processing_time"`
 }
 

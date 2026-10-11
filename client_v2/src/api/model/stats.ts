@@ -17,6 +17,10 @@ export interface Stats {
     num_replaced_safesearch?: number;
     /** Number of blocked adult websites */
     num_replaced_parental?: number;
+    /** Number of requests answered from the DNS cache */
+    num_cache_hits?: number;
+    /** Number of requests sent to the upstream servers since they were not found in the DNS cache */
+    num_cache_misses?: number;
     /** Average time in seconds on processing a DNS request */
     avg_processing_time?: number;
     top_queried_domains?: TopArrayEntry[];

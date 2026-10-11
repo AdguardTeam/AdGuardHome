@@ -9,6 +9,8 @@ import s from './GeneralStatistics.module.pcss';
 import { StatRow } from '../StatRow';
 import { RoutePath } from 'panel/components/Routes/Paths';
 import { QUERY_LOG_REASON_FILTER, QUERY_LOG_STATUS_FILTER } from 'panel/helpers/constants';
+import { formatBytes, formatNumber } from 'panel/helpers/helpers';
+import type { CacheInfo } from 'panel/api/model/cacheInfo';
 
 type Props = {
     numDnsQueries: number;
@@ -16,6 +18,9 @@ type Props = {
     numReplacedSafebrowsing: number;
     numReplacedParental: number;
     numReplacedSafesearch: number;
+    numCacheHits?: number;
+    numCacheMisses?: number;
+    cacheInfo?: CacheInfo | null;
     avgProcessingTime: number;
 };
 
@@ -28,6 +33,13 @@ export const GeneralStatistics = (props: Props) => {
         props.numDnsQueries > 0 ? (props.numReplacedParental / props.numDnsQueries) * 100 : 0;
     const safesearchPercent = () =>
         props.numDnsQueries > 0 ? (props.numReplacedSafesearch / props.numDnsQueries) * 100 : 0;
+
+    // Blocked and rewritten queries never reach the cache, so the hit ratio is
+    // relative to the cache lookups rather than to all the queries.
+    const cacheHits = () => props.numCacheHits ?? 0;
+    const cacheLookups = () => cacheHits() + (props.numCacheMisses ?? 0);
+    const cacheHitsPercent = () =>
+        cacheLookups() > 0 ? (cacheHits() / cacheLookups()) * 100 : 0;
 
     const hasStats = () => props.numDnsQueries > 0;
 
@@ -107,6 +119,15 @@ export const GeneralStatistics = (props: Props) => {
                         }}
                     />
 
+                    <StatRow
+                        label={intl.getMessage('cache_hits')}
+                        value={cacheHits()}
+                        percent={cacheHitsPercent()}
+                        icon="refresh"
+                        rowTheme="cacheHits"
+                        tooltip={intl.getMessage('cache_hits_tooltip')}
+                    />
+
                     <div class={s.rowDivider} />
 
                     <div class={s.processingTimeRow}>
@@ -121,6 +142,33 @@ export const GeneralStatistics = (props: Props) => {
                             tooltip={intl.getMessage('average_time_processing_tooltip')}
                         />
                     </div>
+
+                    <Show when={props.cacheInfo?.enabled && props.cacheInfo}>
+                        {(info) => (
+                            <>
+                                <StatRow
+                                    label={intl.getMessage('cache_entries')}
+                                    value={formatNumber(info().entries)}
+                                    isQueriesValue={false}
+                                    icon="bullets"
+                                    rowTheme="cacheInfo"
+                                    tooltip={intl.getMessage('cache_entries_tooltip')}
+                                />
+
+                                <StatRow
+                                    label={intl.getMessage('cache_memory')}
+                                    value={intl.getMessage('cache_memory_value', {
+                                        size: formatBytes(info().size_bytes),
+                                        max: formatBytes(info().max_size_bytes),
+                                    })}
+                                    isQueriesValue={false}
+                                    icon="router"
+                                    rowTheme="cacheInfo"
+                                    tooltip={intl.getMessage('cache_memory_tooltip')}
+                                />
+                            </>
+                        )}
+                    </Show>
                 </div>
             </Show>
         </div>

@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
     putStatsConfig: vi.fn(),
     statsReset: vi.fn(),
     clientsSearch: vi.fn(),
+    cacheInfo: vi.fn(),
     addErrorToast: vi.fn(),
     addSuccessToast: vi.fn(),
 }));
@@ -16,6 +17,7 @@ vi.mock('panel/api/generated', () => ({
     putStatsConfig: mocks.putStatsConfig,
     statsReset: mocks.statsReset,
     clientsSearch: mocks.clientsSearch,
+    cacheInfo: mocks.cacheInfo,
 }));
 vi.mock('panel/stores/toasts', () => ({
     addErrorToast: mocks.addErrorToast,
@@ -27,7 +29,7 @@ vi.mock('panel/common/intl', () => ({
 
 import { DAY } from 'panel/helpers/constants';
 
-import { getStats, getStatsConfig, statsState } from 'panel/stores/stats';
+import { getCacheInfo, getStats, getStatsConfig, statsState } from 'panel/stores/stats';
 
 describe('getStats', () => {
     beforeEach(() => {
@@ -92,6 +94,18 @@ describe('getStats', () => {
         expect(statsState.avgProcessingTime).toBe(0); // not NaN
     });
 
+    it('stores the cache hits and misses, defaulting to zero', async () => {
+        mocks.stats.mockResolvedValue({ num_cache_hits: 30, num_cache_misses: 10 });
+        await getStats();
+        expect(statsState.numCacheHits).toBe(30);
+        expect(statsState.numCacheMisses).toBe(10);
+
+        mocks.stats.mockResolvedValue({});
+        await getStats();
+        expect(statsState.numCacheHits).toBe(0);
+        expect(statsState.numCacheMisses).toBe(0);
+    });
+
     it('converts top_upstreams_avg_time entries from seconds to milliseconds', async () => {
         mocks.stats.mockResolvedValue({
             top_upstreams_avg_time: [{ '1.1.1.1': 0.012 }, { '9.9.9.9': 0.3 }],
@@ -134,5 +148,32 @@ describe('getStatsConfig', () => {
         expect(statsState.configLoaded).toBe(true);
         expect(statsState.configInitialized).toBe(true);
         expect(statsState.interval).toBe(DAY * 30);
+    });
+});
+
+describe('getCacheInfo', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
+    it('stores the cache info on success', async () => {
+        const info = { enabled: true, entries: 12, size_bytes: 2048, max_size_bytes: 4096 };
+        mocks.cacheInfo.mockResolvedValue(info);
+
+        await getCacheInfo();
+
+        expect(statsState.cacheInfo).toEqual(info);
+    });
+
+    it('keeps the previous cache info and shows a toast on failure', async () => {
+        const info = { enabled: true, entries: 1, size_bytes: 10, max_size_bytes: 20 };
+        mocks.cacheInfo.mockResolvedValue(info);
+        await getCacheInfo();
+
+        mocks.cacheInfo.mockRejectedValue(new Error('network'));
+        await getCacheInfo();
+
+        expect(statsState.cacheInfo).toEqual(info);
+        expect(mocks.addErrorToast).toHaveBeenCalled();
     });
 });
