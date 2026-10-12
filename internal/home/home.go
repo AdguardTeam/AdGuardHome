@@ -203,6 +203,8 @@ func setupContext(
 		checkNetworkPermissions(ctx, baseLogger)
 	}
 
+	confFileExists := false
+
 	// TODO(s.chzhen):  Consider adding a key prefix.
 	err := parseConfig(ctx, baseLogger, workDir, confPath)
 	if err != nil {
@@ -216,14 +218,23 @@ func setupContext(
 			os.Exit(osutil.ExitCodeFailure)
 		}
 
-		baseLogger.InfoContext(ctx, "configuration file does not exist, because this is the first run")
+		baseLogger.InfoContext(
+			ctx,
+			"configuration file does not exist, because this is the first run",
+		)
+	} else {
+		confFileExists = true
 	}
 
-	if opts.checkConfig {
+	if !opts.checkConfig {
+		return
+	}
+
+	if confFileExists {
 		baseLogger.InfoContext(ctx, "configuration file is ok")
-
-		os.Exit(osutil.ExitCodeSuccess)
 	}
+
+	os.Exit(osutil.ExitCodeSuccess)
 }
 
 // logIfUnsupported logs a formatted warning if the error is one of the

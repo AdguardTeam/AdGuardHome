@@ -55,8 +55,8 @@ type options struct {
 
 	// checkConfig is true if the current invocation is only required to check
 	// the configuration file and exit.  The checkConfig flag checks whether the
-	// the configuration file exists, can be parsed, and is valid, unless it is
-	// the first run.  In this case, missing configuration is considered valid.
+	// configuration file exists, can be parsed, and is valid, unless it is the
+	// first run.  In this case, missing configuration is considered valid.
 	checkConfig bool
 
 	// disableUpdate, if set, makes AdGuard Home not check for updates.
