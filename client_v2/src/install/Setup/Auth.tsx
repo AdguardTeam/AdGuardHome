@@ -13,7 +13,7 @@ import {
     hasMinLength,
     hasLowercase,
     hasUppercase,
-    hasAllowedAsciiOnly,
+    hasAllowedChars,
     hasNumberOrSpecial,
 } from './helpers/helpers';
 import styles from './styles.module.pcss';
@@ -79,7 +79,7 @@ export const Auth = (props: Props) => {
     };
 
     const validatePasswordSpecial = (value: string) => {
-        if (value && !(hasAllowedAsciiOnly(value) && hasNumberOrSpecial(value))) {
+        if (value && !(hasAllowedChars(value) && hasNumberOrSpecial(value))) {
             return intl.getMessage('password_requirements_special');
         }
         return undefined;
@@ -90,7 +90,7 @@ export const Auth = (props: Props) => {
         const confirmPwd = confirmPassword();
         return {
             minLength: pwd.length > 0 && hasMinLength(pwd),
-            allowedChars: pwd.length > 0 && hasAllowedAsciiOnly(pwd) && hasNumberOrSpecial(pwd),
+            allowedChars: pwd.length > 0 && hasAllowedChars(pwd) && hasNumberOrSpecial(pwd),
             lowercase: pwd.length > 0 && hasLowercase(pwd),
             uppercase: pwd.length > 0 && hasUppercase(pwd),
             match: pwd.length > 0 && confirmPwd.length > 0 && pwd === confirmPwd,
@@ -100,6 +100,21 @@ export const Auth = (props: Props) => {
     const isPrivacyValid = createMemo(() =>
         Boolean(getValue(authForm, 'privacy_consent') as boolean | undefined),
     );
+
+    const isAuthFormValid = createMemo(() => {
+        const requirementsMet = requirements();
+
+        return (
+            validateRequiredValue(getValue(authForm, 'username') as string) === undefined &&
+            validatePasswordLength(password()) === undefined &&
+            requirementsMet.minLength &&
+            requirementsMet.allowedChars &&
+            requirementsMet.lowercase &&
+            requirementsMet.uppercase &&
+            requirementsMet.match &&
+            isPrivacyValid()
+        );
+    });
 
     return (
         <div class={styles.configSetting}>
@@ -227,7 +242,7 @@ export const Auth = (props: Props) => {
                         </Field>
                     </div>
 
-                    <Controls isDirty={authForm.dirty} isValid={isPrivacyValid()} />
+                    <Controls isDirty={authForm.dirty} isValid={isAuthFormValid()} />
                 </div>
 
                 <div class={styles.content}>
