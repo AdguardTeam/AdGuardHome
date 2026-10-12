@@ -31,6 +31,12 @@ const cookieTTL = 365 * timeutil.Day
 // sessionCookieName is the name of the session cookie.
 const sessionCookieName = "agh_session"
 
+// fakePassword is used to emulate the password verification for unknown
+// usernames, mitigating timing attacks.
+var fakePassword = aghuser.NewDefaultPassword(
+	"$2a$10$aGCqdlW./wwSzcge191oEuQ6Wl/oA2JCl3BZsKFxTgLhnoFk1K0Au",
+)
+
 // loginJSON is the JSON structure for authentication.
 type loginJSON struct {
 	Name     string `json:"name"`
@@ -214,6 +220,10 @@ func newCookie(
 	rateLimiter := auth.rateLimiter
 	if user == nil {
 		rateLimiter.inc(addr)
+
+		// Run fakePassword.Authenticate against received password for unknown
+		// usernames so known and unknown paths take comparable time.
+		fakePassword.Authenticate(ctx, req.Password)
 
 		return nil, errInvalidLogin
 	}
@@ -575,6 +585,10 @@ func (mw *authMiddlewareDefault) userFromRequestBasicAuth(
 
 	user, _ = mw.users.ByLogin(ctx, aghuser.Login(login))
 	if user == nil {
+		// Run fakePassword.Authenticate against received password for unknown
+		// usernames so known and unknown paths take comparable time.
+		fakePassword.Authenticate(ctx, pass)
+
 		return nil, errInvalidLogin
 	}
 
