@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
-	"runtime"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/errors"
@@ -19,6 +18,9 @@ import (
 // TODO(e.burkov):  Declare managers for each OS.
 
 // manager is the implementation of [Manager] that uses [service.Service].
+//
+// TODO(e.burkov):  Replace it with the native implementations for every
+// supported OS and remove it along with this file.
 type manager struct {
 	logger        *slog.Logger
 	clock         timeutil.Clock
@@ -131,18 +133,45 @@ func (m *manager) Reload(ctx context.Context, name ServiceName) (err error) {
 	return m.reload(ctx, name)
 }
 
+// optionSvcInfo is the name of the [service.Config] option holding the
+// information about the service, see [templateData.SvcInfo].
+//
+// TODO(e.burkov):  Remove it along with the *manager type when all the native
+// managers are implemented.
+const optionSvcInfo = "SvcInfo"
+
 // install installs the service in the service manager.
 func (m *manager) install(ctx context.Context, action *ActionInstall) (err error) {
 	m.logger.InfoContext(ctx, "installing service", "name", action.ServiceName)
 
+	execPath := action.ExecutablePath
+	if execPath == "" {
+		execPath, err = os.Executable()
+		if err != nil {
+			return fmt.Errorf("getting executable path: %w", err)
+		}
+	}
+
+	execPath, err = filepath.Abs(execPath)
+	if err != nil {
+		return fmt.Errorf("getting absolute executable path: %w", err)
+	}
+
+	// TODO(e.burkov):  Render the service configuration file from the template
+	// data directly and get rid of the conversion to [service.Config] along
+	// with the *manager type when all the native managers are implemented.
 	conf := &service.Config{
 		Name:             string(action.ServiceName),
 		DisplayName:      action.DisplayName,
 		Description:      action.Description,
 		WorkingDirectory: action.WorkingDirectory,
+		Executable:       execPath,
 		Arguments:        action.Arguments,
+		Option: map[string]any{
+			optionSvcInfo: fmt.Sprintf("%s %s", action.Version, m.clock.Now()),
+		},
 	}
-	ConfigureServiceOptions(conf, m.clock.Now(), action.Version)
+	configureOSOptions(conf)
 
 	s, err := service.New(emptyInterface{}, conf)
 	if err != nil {
@@ -271,39 +300,7 @@ func (m *manager) uninstall(ctx context.Context, action *ActionUninstall) (err e
 		return fmt.Errorf("uninstalling service: %w", err)
 	}
 
-	if runtime.GOOS == "darwin" {
-		removeLaunchdStdLogs(ctx, m.logger)
-	}
-
 	return nil
-}
-
-// Paths to stdout and stderr logs for Darwin service manager.
-//
-// TODO(e.burkov):  Move to config_darwin.go.
-const (
-	launchdStdoutPath = "/var/log/AdGuardHome.stdout.log"
-	launchdStderrPath = "/var/log/AdGuardHome.stderr.log"
-)
-
-// removeLaunchdStdLogs removes launchd stdout and stderr log files, if needed,
-// and logs errors at warning level.
-//
-// TODO(e.burkov):  Move to manager_darwin.go.
-func removeLaunchdStdLogs(ctx context.Context, logger *slog.Logger) {
-	if runtime.GOOS != "darwin" {
-		return
-	}
-
-	err := os.Remove(launchdStdoutPath)
-	if err != nil && !errors.Is(err, os.ErrNotExist) {
-		logger.WarnContext(ctx, "removing stdout file", "err", err)
-	}
-
-	err = os.Remove(launchdStderrPath)
-	if err != nil && !errors.Is(err, os.ErrNotExist) {
-		logger.WarnContext(ctx, "removing stderr file", "err", err)
-	}
 }
 
 // runInitdCommand runs init.d service command.  Returns an error if any.

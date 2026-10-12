@@ -102,6 +102,24 @@ func newDarwinService(c *darwinServiceConfig) (d *darwinService) {
 // type check
 var _ service.Service = (*darwinService)(nil)
 
+// Uninstall implements the [service.Service] interface for *darwinService.
+func (d *darwinService) Uninstall() (err error) {
+	err = d.Service.Uninstall()
+	if err != nil {
+		// Don't wrap the error to keep it as close to the original one as
+		// possible.
+		return err
+	}
+
+	// Unlike the other systems, launchd doesn't remove the log files it was
+	// configured to write into, so remove them here.
+	//
+	// TODO(e.burkov): Pass context.
+	removeLaunchdStdLogs(context.TODO(), d.logger)
+
+	return nil
+}
+
 // Status implements the [service.Service] interface for *darwinService.
 func (d *darwinService) Status() (status service.Status, err error) {
 	// TODO(f.setrakov): Pass context.
@@ -172,4 +190,26 @@ func parseLaunchctlList(output io.Reader) (status service.Status, err error) {
 	}
 
 	return statusRestartOnFail, nil
+}
+
+// Paths to stdout and stderr logs for the launchd service manager.
+//
+// TODO(e.burkov):  Make them relative to the root directory of the manager.
+const (
+	launchdStdoutPath = "/var/log/AdGuardHome.stdout.log"
+	launchdStderrPath = "/var/log/AdGuardHome.stderr.log"
+)
+
+// removeLaunchdStdLogs removes launchd stdout and stderr log files, if needed,
+// and logs errors at warning level.
+func removeLaunchdStdLogs(ctx context.Context, logger *slog.Logger) {
+	err := os.Remove(launchdStdoutPath)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		logger.WarnContext(ctx, "removing stdout file", "err", err)
+	}
+
+	err = os.Remove(launchdStderrPath)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		logger.WarnContext(ctx, "removing stderr file", "err", err)
+	}
 }

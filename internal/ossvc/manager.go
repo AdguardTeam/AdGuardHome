@@ -3,9 +3,12 @@ package ossvc
 import (
 	"context"
 	"log/slog"
+	"os"
 
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/osutil/executil"
 	"github.com/AdguardTeam/golibs/timeutil"
+	"github.com/AdguardTeam/golibs/validate"
 )
 
 // Manager is the interface for communication with the OS service manager.
@@ -27,14 +30,36 @@ type ManagerConfig struct {
 	// Logger is the logger to use.  It must not be nil.
 	Logger *slog.Logger
 
-	// CommandConstructor is the constructor to use for creating commands.
+	// CommandConstructor is the constructor to use for creating commands.  It
+	// must not be nil.
 	CommandConstructor executil.CommandConstructor
+
+	// RootDir is the root directory of the current OS.  It's used to access the
+	// configuration files of the services.  It must not be nil.
+	RootDir *os.Root
+}
+
+// type check
+var _ validate.Interface = (*ManagerConfig)(nil)
+
+// Validate implements the [validate.Interface] interface for *ManagerConfig.
+func (conf *ManagerConfig) Validate() (err error) {
+	if conf == nil {
+		return errors.ErrNoValue
+	}
+
+	return errors.Join(
+		validate.NotNilInterface("Clock", conf.Clock),
+		validate.NotNil("Logger", conf.Logger),
+		validate.NotNilInterface("CommandConstructor", conf.CommandConstructor),
+		validate.NotNil("RootDir", conf.RootDir),
+	)
 }
 
 // NewManager returns a new properly initialized [Manager], appropriate for the
-// current platform.
-func NewManager(ctx context.Context, conf *ManagerConfig) (mgr Manager, err error) {
-	return newManager(ctx, conf), nil
+// current platform.  conf must be valid.
+func NewManager(ctx context.Context, conf *ManagerConfig) (mgr Manager) {
+	return newManager(ctx, conf)
 }
 
 // EmptyManager is an empty implementation of [Manager] that does nothing.

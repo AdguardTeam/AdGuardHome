@@ -35,7 +35,6 @@ const svcLogPrefix = "service_manager"
 // action.
 type program struct {
 	ctx             context.Context
-	clock           timeutil.Clock
 	clientBuildFS   fs.FS
 	signals         chan os.Signal
 	done            chan struct{}
@@ -109,7 +108,6 @@ func (p *program) handleRun(
 		WorkingDirectory: pwd,
 		Arguments:        args,
 	}
-	ossvc.ConfigureServiceOptions(svcConfig, p.clock.Now(), version.Full())
 
 	s, err := service.New(p, svcConfig)
 	if err != nil {
@@ -122,14 +120,18 @@ func (p *program) handleRun(
 // restartService restarts the service.  It returns error if the service is not
 // running.  l must not be nil.
 func restartService(ctx context.Context, baseLogger *slog.Logger) (err error) {
-	svcMgr, err := ossvc.NewManager(ctx, &ossvc.ManagerConfig{
+	root, err := os.OpenRoot(aghos.RootDir())
+	if err != nil {
+		return fmt.Errorf("opening root directory: %w", err)
+	}
+	defer func() { err = errors.WithDeferred(err, root.Close()) }()
+
+	svcMgr := ossvc.NewManager(ctx, &ossvc.ManagerConfig{
 		Clock:              timeutil.SystemClock{},
 		Logger:             baseLogger.With(slogutil.KeyPrefix, svcLogPrefix),
 		CommandConstructor: executil.SystemCommandConstructor{},
+		RootDir:            root,
 	})
-	if err != nil {
-		return fmt.Errorf("initializing service manager: %w", err)
-	}
 
 	act := &ossvc.ActionRestart{
 		ServiceName: serviceName,
@@ -173,18 +175,20 @@ func handleServiceControlAction(
 	l.InfoContext(ctx, version.Full())
 	l.InfoContext(ctx, "control", "action", actionName)
 
-	clock := timeutil.SystemClock{}
+	root, err := os.OpenRoot(aghos.RootDir())
+	if err != nil {
+		return fmt.Errorf("opening root directory: %w", err)
+	}
+	defer func() { err = errors.WithDeferred(err, root.Close()) }()
 
 	// Create a service manager before even a run action, since it picks the
 	// correct system implementation.
-	svcMgr, err := ossvc.NewManager(ctx, &ossvc.ManagerConfig{
-		Clock:              clock,
+	svcMgr := ossvc.NewManager(ctx, &ossvc.ManagerConfig{
+		Clock:              timeutil.SystemClock{},
 		Logger:             baseLogger.With(slogutil.KeyPrefix, svcLogPrefix),
 		CommandConstructor: executil.SystemCommandConstructor{},
+		RootDir:            root,
 	})
-	if err != nil {
-		return fmt.Errorf("initializing service manager: %w", err)
-	}
 
 	if actionName == "run" {
 		runOpts := opts
@@ -192,7 +196,6 @@ func handleServiceControlAction(
 
 		p := &program{
 			ctx:             ctx,
-			clock:           clock,
 			clientBuildFS:   clientBuildFS,
 			signals:         signals,
 			done:            done,

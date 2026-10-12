@@ -124,9 +124,6 @@ const (
 	// optionUserService is the UserService option name.
 	optionUserService = "UserService"
 
-	// optionSvcInfo is the name of the option associated with service info.
-	optionSvcInfo = "SvcInfo"
-
 	// errNoUserServiceRunCom is returned when the service uses some custom
 	// path to script.
 	errNoUserServiceRunCom errors.Error = "user services are not supported on " + sysVersion
