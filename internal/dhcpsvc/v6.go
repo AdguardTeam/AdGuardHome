@@ -455,8 +455,9 @@ func (iface *dhcpInterfaceV6) firstIANAAddr(
 
 // leaseForIANAAddr returns the IAID and the lease binding for the first IA_NA
 // option with an address in req.  If ok is true but the returned lease is nil,
-// there is no binding for the client and the address.  iface.common.indexMu
-// must be locked.
+// there is no binding for the client and the address.  req must be a valid
+// DHCPv6 request, mac must be a valid MAC address according to
+// [netutil.ValidateMAC].  iface.common.indexMu must be locked.
 func (iface *dhcpInterfaceV6) leaseForIANAAddr(
 	ctx context.Context,
 	req *layers.DHCPv6,
