@@ -2,7 +2,7 @@ import { createStore } from 'solid-js/store';
 import { untrack } from 'solid-js';
 import { tlsStatus, tlsConfigure, tlsValidate } from 'panel/api/generated';
 import { addErrorToast, addSuccessToast } from './toasts';
-import { dashboardState } from './dashboard';
+import { dashboardState, refreshDnsStatus } from './dashboard';
 import { redirectToCurrentProtocol } from '../helpers/helpers';
 import intl from 'panel/common/intl';
 import type { TlsConfig } from 'panel/api/model/tlsConfig';
@@ -151,7 +151,8 @@ export const getTlsStatus = async () => {
  * callers are unaffected.  With `suppressErrorToast` the error is returned
  * instead of toasted so callers can render it inline.  A save that turns
  * encryption on is confirmed with its own toast, whichever caller asked for
- * it.
+ * it.  A successful save also refreshes the dashboard DNS status, since the
+ * change can add or remove the addresses the Setup Guide renders.
  */
 export const setTlsConfig = async (
     values: TlsConfigBody,
@@ -202,6 +203,12 @@ export const setTlsConfig = async (
                     : intl.getMessage('settings_notify_changes_saved'),
             );
         }
+
+        // The dashboard store holds the DNS addresses the Setup Guide
+        // renders, and only fills them on app start.  Enabling encryption
+        // changes them, so refresh the status — otherwise the guide stays
+        // stale until a page reload.
+        await refreshDnsStatus();
 
         return { ok: true };
     } catch (error) {

@@ -171,6 +171,34 @@ export const getDnsStatus = async () => {
     }
 };
 
+/**
+ * Refreshes the server status fields other pages derive from — the DNS
+ * addresses above all.  Unlike `getDnsStatus` it leaves the global
+ * `processing` flag alone (that flag gates the whole routed content), skips
+ * the version, TLS status and profile requests, and keeps the previous values
+ * on failure instead of reloading the page.  Settings that change the
+ * addresses (enabling encryption above all) call it so pages like the Setup
+ * Guide show the new values without a full reload.
+ */
+export const refreshDnsStatus = async (): Promise<void> => {
+    try {
+        const dnsStatus = await customFetch<ServerStatus>(getStatusUrl(), {
+            method: 'GET',
+            skipAuthRedirect: true,
+        });
+        if (!dnsStatus || dnsStatus.running !== true) {
+            return;
+        }
+        setState({
+            dnsPort: dnsStatus.dns_port,
+            dnsAddresses: dnsStatus.dns_addresses || [],
+            httpPort: dnsStatus.http_port,
+        });
+    } catch {
+        // A background refresh must not interrupt the UI: keep the old values.
+    }
+};
+
 export const getTimerStatus = async () => {
     const handleRequestError = () => {
         addErrorToast({ error: 'dns_status_error' });
