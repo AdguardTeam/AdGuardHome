@@ -204,10 +204,6 @@ export const setTlsConfig = async (
             );
         }
 
-        // The dashboard store holds the DNS addresses the Setup Guide
-        // renders, and only fills them on app start.  Enabling encryption
-        // changes them, so refresh the status — otherwise the guide stays
-        // stale until a page reload.
         await refreshDnsStatus();
 
         return { ok: true };
