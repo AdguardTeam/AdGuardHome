@@ -338,7 +338,7 @@ func (iface *dhcpInterfaceV4) appendTimeOptions(
 	if lease.IsStatic {
 		dur = iface.common.leaseTTL
 	} else {
-		dur = lease.Expiry.Sub(iface.clock.Now())
+		dur = max(lease.Expiry.Sub(iface.clock.Now()), 0)
 	}
 
 	leaseTimeOpt := [4]byte{}

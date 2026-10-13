@@ -257,7 +257,7 @@ func (iface *netInterface) reserveLease(
 	lease.HWAddr = slices.Clone(mac)
 	lease.Hostname = ""
 	lease.IsStatic = false
-	lease.updateExpiry(now, iface.leaseTTL)
+	lease.setExpiry(now.Add(iface.leaseTTL))
 
 	iface.leases[macToKey(mac)] = lease
 
