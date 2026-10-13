@@ -603,10 +603,10 @@ func validateConfig(ctx context.Context, l *slog.Logger, fileData []byte) (err e
 		addPorts(udpPorts, udpPort(config.TLS.PortDNSOverQUIC))
 	}
 
-	if err = tcpPorts.Validate(); err != nil {
-		return fmt.Errorf("validating tcp ports: %w", err)
-	} else if err = udpPorts.Validate(); err != nil {
-		return fmt.Errorf("validating udp ports: %w", err)
+	err = validateTransportPorts(tcpPorts, udpPorts)
+	if err != nil {
+		// Don't wrap the error, because it is informative enough as is.
+		return err
 	}
 
 	if !filtering.ValidateUpdateIvl(config.Filtering.FiltersUpdateIntervalHours) {
@@ -617,19 +617,48 @@ func validateConfig(ctx context.Context, l *slog.Logger, fileData []byte) (err e
 		return fmt.Errorf("validating http config: %w", err)
 	}
 
+	if config.TLS.Enabled && config.TLS.PortHTTPS != 0 && len(config.HTTPConfig.DoH.Routes) == 0 {
+		return errors.Error("doh is enabled but no routes are configured")
+	}
+
 	if len(config.Users) == 0 {
 		l.WarnContext(ctx, "no users in the configuration file; authentication is disabled")
 	}
 
-	if config.Language != "" && !allowedLanguages.Has(config.Language) {
-		l.WarnContext(ctx, "unsupported language", "lang", config.Language)
+	validateLanguage(l, ctx, config.Language)
+
+	return nil
+}
+
+// validateTransportPorts validates the specified TCP and UDP ports and returns
+// an error if any of them are invalid.
+func validateTransportPorts(
+	tcpPorts aghalg.UniqChecker[tcpPort],
+	udpPorts aghalg.UniqChecker[udpPort],
+) (err error) {
+	err = tcpPorts.Validate()
+	if err != nil {
+		return fmt.Errorf("validating tcp ports: %w", err)
+	}
+
+	err = udpPorts.Validate()
+	if err != nil {
+		return fmt.Errorf("validating udp ports: %w", err)
+	}
+
+	return nil
+}
+
+// validateLanguage validates the specified language and clears with a warning
+// if it is unsupported.  l must not be nil.
+func validateLanguage(l *slog.Logger, ctx context.Context, language string) {
+	if language != "" && !allowedLanguages.Has(language) {
+		l.WarnContext(ctx, "unsupported language", "lang", language)
 
 		// Clear the language so the frontend can use the client's browser
 		// language.
 		config.Language = ""
 	}
-
-	return nil
 }
 
 // udpPort is the port number for UDP protocol.
