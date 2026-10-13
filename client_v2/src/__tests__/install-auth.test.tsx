@@ -97,9 +97,7 @@ describe('install wizard Auth step', () => {
 
         submitForm();
         await waitFor(() =>
-            expect(errorTextFor('install_password')).toBe(
-                copy('password_requirements_uppercase'),
-            ),
+            expect(errorTextFor('install_password')).toBe(copy('password_requirements_uppercase')),
         );
         expect(onAuthSubmit).not.toHaveBeenCalled();
     });
@@ -120,9 +118,7 @@ describe('install wizard Auth step', () => {
 
         submitForm();
         await waitFor(() =>
-            expect(errorTextFor('install_password')).toBe(
-                copy('password_requirements_characters'),
-            ),
+            expect(errorTextFor('install_password')).toBe(copy('password_requirements_characters')),
         );
     });
 
